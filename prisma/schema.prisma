@@ -1,0 +1,141 @@
+generator client {
+    provider        = "prisma-client-js"
+    previewFeatures = ["jsonProtocol"]
+}
+
+datasource db {
+    provider             = "mysql"
+    relationMode         = "prisma"
+    url                  = env("DATABASE_URL")
+}
+
+model Account {
+    id                String  @id @default(cuid())
+    userId            String
+    type              String
+    provider          String
+    providerAccountId String
+    refresh_token     String? @db.Text
+    access_token      String? @db.Text
+    expires_at        Int?
+    token_type        String?
+    scope             String?
+    id_token          String? @db.Text
+    session_state     String?
+    user              User    @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+    @@unique([provider, providerAccountId])
+    @@index([userId])
+}
+
+model Session {
+    id           String   @id @default(cuid())
+    sessionToken String   @unique
+    userId       String
+    expires      DateTime
+    user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+    @@index([userId])
+}
+
+model User {
+    id            String      @id @default(cuid())
+    name          String?
+    email         String?     @unique
+    emailVerified DateTime?
+    image         String?
+    accounts      Account[]
+    sessions      Session[]
+    characters    Character[]
+}
+
+model VerificationToken {
+    identifier String
+    token      String   @unique
+    expires    DateTime
+
+    @@unique([identifier, token])
+}
+
+model Character {
+    id                  String   @id @unique @default(cuid())
+    name                String
+    race                String?
+    class               String?
+    campaign            String?
+    image_url           String?
+    character_sheet_url String?
+    user                User     @relation(fields: [userId], references: [id])
+    userId              String
+    logs                Log[]
+    created_at          DateTime @default(now())
+
+    @@index([userId])
+}
+
+model Log {
+    id                  String         @id @unique @default(cuid())
+    date                DateTime
+    name                String
+    description         String?        @db.Text
+    type                LogType        @default(game)
+    dm                  DungeonMaster? @relation(fields: [dungeonMasterId], references: [id])
+    is_dm_log           Boolean        @default(false)
+    applied_date        DateTime?      
+    dungeonMasterId     String?
+    experience          Int
+    acp                 Int
+    tcp                 Int
+    level               Int
+    gold                Float
+    dtd                 Int            @default(0)
+    magic_items_gained  MagicItem[]    @relation("magic_items_gained")
+    magic_items_lost    MagicItem[]    @relation("magic_items_lost")
+    story_awards_gained StoryAward[]   @relation("story_awards_gained")
+    story_awards_lost   StoryAward[]   @relation("story_awards_lost")
+    character           Character?     @relation(fields: [characterId], references: [id])
+    characterId         String?
+    created_at          DateTime       @default(now())
+
+    @@index([dungeonMasterId])
+    @@index([characterId])
+}
+
+enum LogType {
+    game
+    nongame
+}
+
+model DungeonMaster {
+    id    String  @id @unique @default(cuid())
+    name  String
+    DCI   String?
+    uid   String?
+    logs  Log[]
+}
+
+model MagicItem {
+    id           String  @id @unique @default(cuid())
+    name         String
+    description  String? @db.Text
+    logGained    Log?    @relation("magic_items_gained", fields: [logGainedId], references: [id])
+    logGainedId  String?
+    logLost      Log?    @relation("magic_items_lost", fields: [logLostId], references: [id])
+    logLostId    String?
+
+    @@index([logGainedId])
+    @@index([logLostId])
+}
+
+model StoryAward {
+    id           String   @id @unique @default(cuid())
+    name         String
+    description  String?  @db.Text
+    logGained    Log?     @relation("story_awards_gained", fields: [logGainedId], references: [id])
+    logGainedId  String?
+    logLost      Log?     @relation("story_awards_lost", fields: [logLostId], references: [id])
+    logLostId    String?
+
+    @@index([logGainedId])
+    @@index([logLostId])
+}
