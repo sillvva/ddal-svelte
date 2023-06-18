@@ -16,6 +16,16 @@ export async function setCookie(name: string, value: string | number | boolean |
 	}
 }
 
+export function serverGetCookie<T>(cookies: Cookies, name: string, defaultCookie: T) {
+	const cookie = JSON.parse(cookies.get("characters") || JSON.stringify(defaultCookie)) as typeof defaultCookie;
+	if (typeof cookie === "object")
+		return {
+			...defaultCookie,
+			...cookie
+		};
+	else return cookie;
+}
+
 export function serverSetCookie(cookies: Cookies, name: string, value: string) {
 	if (browser) return null;
 	const parts = name.split(":");
