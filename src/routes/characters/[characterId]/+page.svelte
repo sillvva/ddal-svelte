@@ -239,7 +239,7 @@
 			<input
 				type="text"
 				placeholder="Search"
-				on:change={(e) => (search = e.currentTarget.value)}
+				bind:value={search}
 				class="input-bordered input input-sm w-full sm:max-w-xs"
 			/>
 			{#if myCharacter}
