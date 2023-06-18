@@ -1,29 +1,40 @@
 <script lang="ts">
 	import { enhance } from "$app/forms";
+	import { newCharacterSchema } from "$src/types/zod-schema.js";
 	import { twMerge } from "tailwind-merge";
+	import type { ZodError } from "zod";
 
 	export let data;
 	export let form;
 
-	let changes: string[] = [];
+	const character = data.character;
+
 	let saving = false;
-
-	function checkErrors(field: string) {
-		return saving || changes.includes(field);
-	}
-
-	$: character = data.character;
-	$: errors = {
-		name: checkErrors("name") && character.name.length < 1 ? "Name is required" : "",
-		campaign: checkErrors("campaign") && (character.campaign?.length || 0) < 1 ? "Campaign is required" : "",
-		race: "",
-		class: "",
-		character_sheet_url: "",
-		image_url: ""
-	};
-
 	$: {
 		if (form && saving) saving = false;
+	}
+
+	let changes: string[] = [];
+	function addChanges(field: string) {
+		changes = [...changes.filter((c) => c !== field), field];
+	}
+
+	let errors: Record<string, string> = {};
+	$: {
+		if (changes.length) {
+			try {
+				newCharacterSchema.parse(character);
+			} catch (error) {
+				changes.forEach((c) => {
+					errors[c] = "";
+					(error as ZodError).errors
+						.filter((e) => e.path[0] === c)
+						.forEach((e) => {
+							errors[e.path[0].toString()] = e.message;
+						});
+				});
+			}
+		}
 	}
 </script>
 
@@ -59,12 +70,12 @@
 <form
 	method="POST"
 	action="?/saveCharacter"
-	use:enhance={() => {
+	use:enhance={(t) => {
 		form = null;
 		saving = true;
 		if (Object.values(errors).find((e) => e.length > 0)) {
 			saving = false;
-			return;
+			return t.cancel();
 		}
 		return async ({ update }) => {
 			await update({ reset: false });
@@ -85,12 +96,13 @@
 					type="text"
 					name="name"
 					required
-					value={character.name}
 					disabled={saving}
+					bind:value={character.name}
+					on:input={() => addChanges("name")}
 					class="input-bordered input w-full focus:border-primary"
 				/>
 				<label for="name" class="label">
-					<span class="label-text-alt text-error">{errors.name}</span>
+					<span class="label-text-alt text-error">{errors.name || ""}</span>
 				</label>
 			</div>
 		</div>
@@ -106,12 +118,13 @@
 					type="text"
 					name="campaign"
 					required
-					value={character.campaign || ""}
 					disabled={saving}
+					bind:value={character.campaign}
+					on:input={() => addChanges("campaign")}
 					class="input-bordered input w-full focus:border-primary"
 				/>
 				<label for="campaign" class="label">
-					<span class="label-text-alt text-error">{errors.campaign}</span>
+					<span class="label-text-alt text-error">{errors.campaign || ""}</span>
 				</label>
 			</div>
 		</div>
@@ -123,12 +136,13 @@
 				<input
 					type="text"
 					name="race"
-					value={character.race}
 					disabled={saving}
+					bind:value={character.race}
+					on:input={() => addChanges("race")}
 					class="input-bordered input w-full focus:border-primary"
 				/>
 				<label for="race" class="label">
-					<span class="label-text-alt text-error">{errors.race}</span>
+					<span class="label-text-alt text-error">{errors.race || ""}</span>
 				</label>
 			</div>
 		</div>
@@ -140,12 +154,13 @@
 				<input
 					type="text"
 					name="class"
-					value={character.class}
 					disabled={saving}
+					bind:value={character.class}
+					on:input={() => addChanges("class")}
 					class="input-bordered input w-full focus:border-primary"
 				/>
 				<label for="class" class="label">
-					<span class="label-text-alt text-error">{errors.class}</span>
+					<span class="label-text-alt text-error">{errors.class || ""}</span>
 				</label>
 			</div>
 		</div>
@@ -157,12 +172,13 @@
 				<input
 					type="text"
 					name="character_sheet_url"
-					value={character.character_sheet_url}
 					disabled={saving}
+					bind:value={character.character_sheet_url}
+					on:input={() => addChanges("character_sheet_url")}
 					class="input-bordered input w-full focus:border-primary"
 				/>
 				<label for="character_sheet_url" class="label">
-					<span class="label-text-alt text-error">{errors.character_sheet_url}</span>
+					<span class="label-text-alt text-error">{errors.character_sheet_url || ""}</span>
 				</label>
 			</div>
 		</div>
@@ -174,12 +190,13 @@
 				<input
 					type="text"
 					name="image_url"
-					value={character.image_url}
 					disabled={saving}
+					bind:value={character.image_url}
+					on:input={() => addChanges("image_url")}
 					class="input-bordered input w-full focus:border-primary"
 				/>
 				<label for="image_url" class="label">
-					<span class="label-text-alt text-error">{errors.image_url}</span>
+					<span class="label-text-alt text-error">{errors.image_url || ""}</span>
 				</label>
 			</div>
 		</div>

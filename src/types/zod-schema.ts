@@ -48,8 +48,8 @@ export const logSchema = z.object({
 });
 
 export const newCharacterSchema = z.object({
-	name: z.string().min(1),
-	campaign: z.string().min(1),
+	name: z.string().min(1, "Required"),
+	campaign: z.string().min(1, "Required"),
 	race: z.string().optional(),
 	class: z.string().optional(),
 	character_sheet_url: z.union([z.literal(""), z.string().url()]),
