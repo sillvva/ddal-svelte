@@ -1,6 +1,6 @@
-import { prisma } from '$src/server/db';
+import { prisma } from "$src/server/db";
 
-import type { DungeonMaster, Log, MagicItem, StoryAward } from '@prisma/client';
+import type { DungeonMaster, Log, MagicItem, StoryAward } from "@prisma/client";
 
 export async function getCharacter(characterId: string) {
 	const character = await prisma.character.findFirst({
@@ -15,7 +15,7 @@ export async function getCharacter(characterId: string) {
 					story_awards_lost: true
 				},
 				orderBy: {
-					date: 'asc'
+					date: "asc"
 				}
 			}
 		},
@@ -45,7 +45,7 @@ export async function getCharacters(userId: string) {
 					story_awards_lost: true
 				},
 				orderBy: {
-					date: 'asc'
+					date: "asc"
 				}
 			}
 		},
@@ -103,7 +103,7 @@ export async function getCharacterLogs(characterId: string) {
 			story_awards_lost: true
 		},
 		orderBy: {
-			date: 'asc'
+			date: "asc"
 		},
 		where: { characterId: characterId }
 	});
@@ -120,8 +120,8 @@ export function getLevels(
 	const log_levels: { id: string; levels: number }[] = [];
 
 	const xpLevels = [
-		0, 300, 900, 2700, 6500, 14000, 23000, 34000, 48000, 64000, 85000, 100000, 120000, 140000,
-		165000, 195000, 225000, 265000, 305000, 355000
+		0, 300, 900, 2700, 6500, 14000, 23000, 34000, 48000, 64000, 85000, 100000, 120000, 140000, 165000, 195000, 225000,
+		265000, 305000, 355000
 	];
 	let totalXp = base.level || 0;
 	let next = 1;
@@ -145,9 +145,7 @@ export function getLevels(
 	if (totalLevel < 20) {
 		const acpLevels = [0];
 		for (let i = 1; i < 20; i++) acpLevels.push((acpLevels[i - 1] as number) + (i <= 3 ? 4 : 8));
-		let totalAcp = Math.round(
-			(acpLevels[totalLevel - 1] as number) + xpDiff * (totalLevel <= 3 ? 4 : 8)
-		);
+		let totalAcp = Math.round((acpLevels[totalLevel - 1] as number) + xpDiff * (totalLevel <= 3 ? 4 : 8));
 		totalAcp += base.acp || 0;
 		let acpDiff = 0;
 		next = totalLevel;

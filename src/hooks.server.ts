@@ -1,12 +1,12 @@
-import Google from '@auth/core/providers/google';
-import { PrismaAdapter } from '@auth/prisma-adapter';
-import { SvelteKitAuth } from '@auth/sveltekit';
-import { prisma } from './server/db';
+import Google from "@auth/core/providers/google";
+import { PrismaAdapter } from "@auth/prisma-adapter";
+import { SvelteKitAuth } from "@auth/sveltekit";
+import { prisma } from "./server/db";
 
-import type { SvelteKitAuthConfig } from '@auth/sveltekit';
-import type { Handle } from '@sveltejs/kit';
-import type { Provider } from '@auth/core/providers';
-import type { Profile } from '@auth/core/types';
+import type { SvelteKitAuthConfig } from "@auth/sveltekit";
+import type { Handle } from "@sveltejs/kit";
+import type { Provider } from "@auth/core/providers";
+import type { Profile } from "@auth/core/types";
 
 export const authOptions = {
 	// Include user.id on session

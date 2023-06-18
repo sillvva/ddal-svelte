@@ -3,6 +3,7 @@
 	import type { PageData } from "./$types";
 	import MiniSearch from "minisearch";
 	import { twMerge } from "tailwind-merge";
+	import { setCookie } from "$src/server/cookie";
 
 	export let data: PageData;
 
@@ -40,7 +41,6 @@
 	minisearch.addAll(indexed);
 
 	let search = "";
-	let magicItems = false;
 
 	$: msResults = minisearch.search(search);
 	$: results =
@@ -58,6 +58,12 @@
 			: characters
 					.sort((a, b) => a.total_level - b.total_level || a.name.localeCompare(b.name))
 					.map((character) => ({ ...character, score: 0, match: [] }));
+
+	let magicItems = data.magicItems;
+
+	$: {
+		setCookie("characters:magicItems", magicItems);
+	}
 </script>
 
 <div class="flex flex-col gap-4">
