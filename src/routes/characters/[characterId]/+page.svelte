@@ -12,7 +12,7 @@
 	export let data: PageData;
 	export let form;
 	const character = data.character;
-	const myCharacter = data.character.userId === data.session?.user?.id;
+	const myCharacter = character.userId === data.session?.user?.id;
 
 	let deletingCharater = false;
 	let deletingLog: string[] = [];
@@ -131,8 +131,12 @@
 					<form
 						method="POST"
 						action="?/deleteCharacter"
-						on:submit={() => (deletingCharater = true)}
-						use:enhance
+						use:enhance={() => {
+							deletingCharater = true;
+							return ({ update }) => {
+								update();
+							};
+						}}
 						class="bg-red-800 hover:bg-red-900"
 					>
 						<button>Delete Character</button>

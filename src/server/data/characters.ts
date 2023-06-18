@@ -2,32 +2,43 @@ import { prisma } from "$src/server/db";
 
 import type { DungeonMaster, Log, MagicItem, StoryAward } from "@prisma/client";
 
-export async function getCharacter(characterId: string) {
-	const character = await prisma.character.findFirst({
-		include: {
-			user: true,
-			logs: {
-				include: {
-					dm: true,
-					magic_items_gained: true,
-					magic_items_lost: true,
-					story_awards_gained: true,
-					story_awards_lost: true
-				},
-				orderBy: {
-					date: "asc"
+export async function getCharacter(characterId: string, includeLogs = true) {
+	if (includeLogs) {
+		const character = await prisma.character.findFirst({
+			include: {
+				user: true,
+				logs: {
+					include: {
+						dm: true,
+						magic_items_gained: true,
+						magic_items_lost: true,
+						story_awards_gained: true,
+						story_awards_lost: true
+					},
+					orderBy: {
+						date: "asc"
+					}
 				}
-			}
-		},
-		where: { id: characterId }
-	});
+			},
+			where: { id: characterId }
+		});
 
-	if (!character) return null;
+		if (!character) return null;
 
-	return {
-		...character,
-		...getLogsSummary(character.logs || [])
-	};
+		return {
+			...character,
+			...getLogsSummary(character.logs || [])
+		};
+	} else {
+		const character = await prisma.character.findFirst({
+			where: { id: characterId }
+		});
+		if (!character) return null;
+		return {
+			...character,
+			...getLogsSummary([])
+		};
+	}
 }
 
 export type CharacterData = Exclude<Awaited<ReturnType<typeof getCharacter>>, null>;

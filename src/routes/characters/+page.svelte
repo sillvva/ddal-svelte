@@ -80,7 +80,7 @@
 		</div>
 		<div class="flex-1" />
 		{#if characters.length > 0}
-			<a href="/characters/new" class="btn-primary btn-sm btn">
+			<a href="/characters/new/edit" class="btn-primary btn-sm btn">
 				<span class="hidden sm:inline">New Character</span>
 				<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" class="inline w-4 sm:hidden"
 					><title>plus</title><path fill="currentColor" d="M19,13H13V19H11V13H5V11H11V5H13V11H19V13Z" /></svg
