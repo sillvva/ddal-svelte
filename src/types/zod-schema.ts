@@ -8,7 +8,7 @@ export const logSchema = z.object({
 	characterName: z.string().default(""),
 	logId: z.string().default(""),
 	name: z.string().min(1, "Required"),
-	date: z.string().regex(dateRegex, "Not a valid date"),
+	date: z.date(),
 	type: z.union([z.literal("game"), z.literal("nongame")]).default("game"),
 	experience: z.number().default(0),
 	acp: z.number().default(0),
@@ -24,7 +24,7 @@ export const logSchema = z.object({
 		uid: z.string().default("")
 	}),
 	is_dm_log: z.boolean().default(false),
-	applied_date: z.union([z.null(), z.string().regex(dateRegex, "Not a valid date")]).default(null),
+	applied_date: z.union([z.null(), z.date()]).default(null),
 	magic_items_gained: z
 		.array(
 			z.object({
@@ -48,8 +48,8 @@ export const logSchema = z.object({
 });
 
 export const newCharacterSchema = z.object({
-	name: z.string().min(1),
-	campaign: z.string().min(1),
+	name: z.string().min(1, "Required"),
+	campaign: z.string().min(1, "Required"),
 	race: z.string().optional(),
 	class: z.string().optional(),
 	character_sheet_url: z.union([z.literal(""), z.string().url()]),
