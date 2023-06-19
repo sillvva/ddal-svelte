@@ -1,8 +1,10 @@
 import { prisma } from "$src/server/db";
 
+import type { LogType } from "@prisma/client";
+
 export type LogData = Exclude<Awaited<ReturnType<typeof getLog>>, null>;
-export async function getLog(logId: string) {
-	return await prisma.log.findFirst({
+export async function getLog(logId: string, characterId = "") {
+	const log = await prisma.log.findFirst({
 		where: { id: logId },
 		include: {
 			dm: true,
@@ -12,6 +14,36 @@ export async function getLog(logId: string) {
 			story_awards_lost: true
 		}
 	});
+	return (
+		log || {
+			characterId: characterId,
+			id: "",
+			name: "",
+			description: "",
+			date: new Date(),
+			type: "game" as LogType,
+			created_at: new Date(),
+			experience: 0,
+			acp: 0,
+			tcp: 0,
+			level: 0,
+			gold: 0,
+			dtd: 0,
+			dungeonMasterId: "",
+			dm: {
+				id: "",
+				name: "",
+				DCI: null,
+				uid: ""
+			},
+			applied_date: new Date(),
+			is_dm_log: false,
+			magic_items_gained: [],
+			magic_items_lost: [],
+			story_awards_gained: [],
+			story_awards_lost: []
+		}
+	);
 }
 
 export type DMLogData = Exclude<Awaited<ReturnType<typeof getDMLog>>, null>;

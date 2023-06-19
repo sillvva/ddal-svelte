@@ -1,6 +1,7 @@
 <script lang="ts">
 	import { enhance } from "$app/forms";
 	import AutoFillSelect from "$src/components/AutoFillSelect.svelte";
+	import AutoResizeTextArea from "$src/components/AutoResizeTextArea.svelte";
 	import { getMagicItems, getStoryAwards } from "$src/lib/entities.js";
 	import { formatDate } from "$src/lib/misc.js";
 	import { logSchema } from "$src/types/zod-schema.js";
@@ -47,6 +48,20 @@
 		} else {
 			errors = {};
 		}
+	}
+
+	function checkErrors() {
+		let result = null;
+		try {
+			result = logSchema.parse(log);
+		} catch (error) {
+			(error as ZodError).errors.forEach((e) => {
+				errors[e.path[0].toString()] = e.message;
+			});
+			mutError = "Please fix the errors below.";
+		}
+
+		return result;
 	}
 
 	const setDM = (dm?: DungeonMaster) => {
@@ -139,10 +154,14 @@
 	use:enhance={(f) => {
 		form = null;
 		saving = true;
+
+		checkErrors();
 		if (Object.values(errors).find((e) => e.length > 0)) {
 			saving = false;
 			return f.cancel();
 		}
+
+		f.formData.append("log", JSON.stringify(log));
 		return async ({ update }) => {
 			await update({ reset: false });
 			saving = false;
@@ -383,10 +402,12 @@
 			<label for="description" class="label">
 				<span class="label-text">Notes</span>
 			</label>
-			<!-- <AutoResizeTextArea
-				{...form.register("description", { value: log.description || "", disabled: saving })}
+			<AutoResizeTextArea
+				name="description"
+				bind:value={log.description}
+				disabled={saving}
 				class="textarea-bordered textarea w-full focus:border-primary"
-			/> -->
+			/>
 			<label for="description" class="label">
 				<span class="label-text-alt text-error">{errors.description || ""}</span>
 				<span class="label-text-alt">Markdown Allowed</span>
@@ -422,169 +443,210 @@
 				{/if}
 			{/if}
 		</div>
-		<!-- <div class="col-span-12 grid grid-cols-12 gap-4">
-			{magicItemsGained.map((item, index) => (
-				<div key={`magicItemsGained${index}`} class="card col-span-12 h-[370px] bg-base-300/70 sm:col-span-6">
+		<div class="col-span-12 grid grid-cols-12 gap-4">
+			{#each magicItemsGained as item, index}
+				<div class="card col-span-12 h-[370px] bg-base-300/70 sm:col-span-6">
 					<div class="card-body flex flex-col gap-4">
 						<h4 class="text-2xl">Add Magic Item</h4>
 						<div class="flex gap-4">
 							<div class="form-control flex-1">
-								<label class="label">
+								<label for={`magic_items_gained.${index}.name`} class="label">
 									<span class="label-text">Name</span>
 								</label>
 								<input
 									type="text"
+									name={`magic_items_gained.${index}.name`}
 									value={item.name}
-									onChange={e => {
-										setMagicItemsGained(magicItemsGained.map((item, i) => (i === index ? { ...item, name: e.target.value } : item)));
+									on:change={(e) => {
+										magicItemsGained = magicItemsGained.map((item, i) =>
+											i === index ? { ...item, name: e.currentTarget.value } : item
+										);
+										addChanges(`magic_items_gained.${index}.name`);
 									}}
 									disabled={saving}
 									class="input-bordered input w-full focus:border-primary"
 								/>
-								<label class="label">
-									<span class="label-text-alt text-error">{(form.formState.errors.magic_items_gained || [])[index]?.name?.message}</span>
+								<label for={`magic_items_gained.${index}.name`} class="label">
+									<span class="label-text-alt text-error">{errors[`magic_items_gained.${index}.name`] || ""}</span>
 								</label>
 							</div>
-							<button type="button" class="btn-danger btn mt-9" onClick={() => removeMagicItem(index)}>
-								<Icon path={mdiTrashCan} size={1} />
+							<button type="button" class="btn-danger btn mt-9" on:click={() => removeMagicItem(index)}>
+								<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" class="w-6"
+									><title>trash-can</title><path
+										fill="currentColor"
+										d="M9,3V4H4V6H5V19A2,2 0 0,0 7,21H17A2,2 0 0,0 19,19V6H20V4H15V3H9M9,8H11V17H9V8M13,8H15V17H13V8Z"
+									/></svg
+								>
 							</button>
 						</div>
 						<div class="form-control w-full">
-							<label class="label">
+							<label for={`magic_items_gained.${index}.description`} class="label">
 								<span class="label-text">Description</span>
 							</label>
 							<textarea
-								onChange={e => {
-									setMagicItemsGained(magicItemsGained.map((item, i) => (i === index ? { ...item, description: e.target.value } : item)));
+								name={`magic_items_gained.${index}.description`}
+								on:change={(e) => {
+									magicItemsGained = magicItemsGained.map((item, i) =>
+										i === index ? { ...item, description: e.currentTarget.value } : item
+									);
 								}}
 								disabled={saving}
 								class="textarea-bordered textarea w-full focus:border-primary"
-								style={{ resize: "none" }}
+								style="resize: none;"
 								value={item.description}
 							/>
-							<label class="label">
-								<span class="label-text-alt text-error"></span>
+							<label for={`magic_items_gained.${index}.description`} class="label">
+								<span class="label-text-alt text-error" />
 								<span class="label-text-alt">Markdown Allowed</span>
 							</label>
 						</div>
 					</div>
 				</div>
-			))}
-			{magicItemsLost.map((id, index) => (
-				<div key={`magicItemsLost${index}`} class="card col-span-12 bg-base-300/70 shadow-xl sm:col-span-6">
+			{/each}
+			{#each magicItemsLost as id, index}
+				<div class="card col-span-12 bg-base-300/70 shadow-xl sm:col-span-6">
 					<div class="card-body flex flex-col gap-4">
 						<h4 class="text-2xl">Drop Magic Item</h4>
 						<div class="flex gap-4">
 							<div class="form-control flex-1">
-								<label class="label">
+								<label for={`magic_items_lost.${index}`} class="label">
 									<span class="label-text">Select an Item</span>
 								</label>
 								<select
 									value={id}
-									onChange={e => {
-										setMagicItemsLost(magicItemsLost.map((item, i) => (i === index ? e.target.value : item)));
+									name={`magic_items_lost.${index}`}
+									on:change={(e) => {
+										magicItemsLost = magicItemsLost.map((item, i) => (i === index ? e.currentTarget.value : item));
+										addChanges(`magic_items_lost.${index}`);
 									}}
 									disabled={saving}
-									class="select-bordered select w-full">
-									{[...log.magic_items_lost.filter(i => i.id === id), ...magicItems].map(item => (
-										<option key={item.id} value={item.id}>
+									class="select-bordered select w-full"
+								>
+									{#each [...log.magic_items_lost.filter((i) => i.id === id), ...magicItems] as item}
+										<option value={item.id}>
 											{item.name}
 										</option>
-									))}
+									{/each}
 								</select>
-								<label class="label">
-									<span class="label-text-alt text-error">{(form.formState.errors.magic_items_lost || [])[index]?.message}</span>
+								<label for={`magic_items_lost.${index}`} class="label">
+									<span class="label-text-alt text-error">{errors[`magic_items_lost.${index}`] || ""}</span>
 								</label>
 							</div>
-							<button type="button" class="btn-danger btn mt-9" onClick={() => removeLostMagicItem(index)}>
-								<Icon path={mdiTrashCan} size={1} />
+							<button type="button" class="btn-danger btn mt-9" on:click={() => removeLostMagicItem(index)}>
+								<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" class="w-6"
+									><title>trash-can</title><path
+										fill="currentColor"
+										d="M9,3V4H4V6H5V19A2,2 0 0,0 7,21H17A2,2 0 0,0 19,19V6H20V4H15V3H9M9,8H11V17H9V8M13,8H15V17H13V8Z"
+									/></svg
+								>
 							</button>
 						</div>
-						<div class="text-sm">{magicItems.find(item => magicItemsLost[index] === item.id)?.description}</div>
+						<div class="text-sm">{magicItems.find((item) => magicItemsLost[index] === item.id)?.description}</div>
 					</div>
 				</div>
-			))}
-			{storyAwardsGained.map((item, index) => (
-				<div key={`storyAwardsGained${index}`} class="card col-span-12 h-[370px] bg-base-300/70 sm:col-span-6">
+			{/each}
+			{#each storyAwardsGained as item, index}
+				<div class="card col-span-12 h-[370px] bg-base-300/70 sm:col-span-6">
 					<div class="card-body flex flex-col gap-4">
 						<h4 class="text-2xl">Add Story Award</h4>
 						<div class="flex gap-4">
 							<div class="form-control flex-1">
-								<label class="label">
+								<label for={`story_awards_gained.${index}.name`} class="label">
 									<span class="label-text">Name</span>
 								</label>
 								<input
 									type="text"
+									name={`story_awards_gained.${index}.name`}
 									value={item.name}
-									onChange={e => {
-										setStoryAwardsGained(storyAwardsGained.map((item, i) => (i === index ? { ...item, name: e.target.value } : item)));
+									on:change={(e) => {
+										storyAwardsGained = storyAwardsGained.map((item, i) =>
+											i === index ? { ...item, name: e.currentTarget.value } : item
+										);
+										addChanges(`story_awards_gained.${index}.name`);
 									}}
 									disabled={saving}
 									class="input-bordered input w-full focus:border-primary"
-									style={{ resize: "none" }}
 								/>
-								<label class="label">
-									<span class="label-text-alt text-error">{(form.formState.errors.story_awards_gained || [])[index]?.name?.message}</span>
+								<label for={`story_awards_gained.${index}.name`} class="label">
+									<span class="label-text-alt text-error">{errors[`story_awards_gained.${index}.name`] || ""}</span>
 								</label>
 							</div>
-							<button type="button" class="btn-danger btn mt-9" onClick={() => removeStoryAward(index)}>
-								<Icon path={mdiTrashCan} size={1} />
+							<button type="button" class="btn-danger btn mt-9" on:click={() => removeStoryAward(index)}>
+								<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" class="w-6"
+									><title>trash-can</title><path
+										fill="currentColor"
+										d="M9,3V4H4V6H5V19A2,2 0 0,0 7,21H17A2,2 0 0,0 19,19V6H20V4H15V3H9M9,8H11V17H9V8M13,8H15V17H13V8Z"
+									/></svg
+								>
 							</button>
 						</div>
 						<div class="form-control w-full">
-							<label class="label">
+							<label for={`story_awards_gained.${index}.description`} class="label">
 								<span class="label-text">Description</span>
 							</label>
 							<textarea
-								onChange={e => {
-									setStoryAwardsGained(storyAwardsGained.map((item, i) => (i === index ? { ...item, description: e.target.value } : item)));
+								name={`story_awards_gained.${index}.description`}
+								on:change={(e) => {
+									storyAwardsGained = storyAwardsGained.map((item, i) =>
+										i === index ? { ...item, description: e.currentTarget.value } : item
+									);
 								}}
 								disabled={saving}
 								class="textarea-bordered textarea w-full focus:border-primary"
+								style="resize: none;"
 								value={item.description}
 							/>
-							<label class="label">
-								<span class="label-text-alt text-error"></span>
+							<label for={`story_awards_gained.${index}.description`} class="label">
+								<span class="label-text-alt text-error" />
 								<span class="label-text-alt">Markdown Allowed</span>
 							</label>
 						</div>
 					</div>
 				</div>
-			))}
-			{storyAwardsLost.map((id, index) => (
-				<div key={`storyAwardsLost${index}`} class="card col-span-12 bg-base-300/70 shadow-xl sm:col-span-6">
+			{/each}
+			{#each storyAwardsLost as id, index}
+				<div class="card col-span-12 bg-base-300/70 shadow-xl sm:col-span-6">
 					<div class="card-body flex flex-col gap-4">
 						<h4 class="text-2xl">Drop Story Award</h4>
 						<div class="flex gap-4">
 							<div class="form-control flex-1">
-								<label class="label">
-									<span class="label-text">Select a Story Award</span>
+								<label for={`story_awards_lost.${index}`} class="label">
+									<span class="label-text">Select an Item</span>
 								</label>
 								<select
 									value={id}
-									onChange={e => {
-										setStoryAwardsLost(storyAwardsLost.map((item, i) => (i === index ? e.target.value : item)));
+									name={`story_awards_lost.${index}`}
+									on:change={(e) => {
+										storyAwardsLost = storyAwardsLost.map((item, i) => (i === index ? e.currentTarget.value : item));
+										addChanges(`story_awards_lost.${index}`);
 									}}
-									class="select-bordered select w-full">
-									{[...log.story_awards_lost.filter(i => i.id === id), ...storyAwards].map(item => (
-										<option key={item.id} value={item.id}>
+									disabled={saving}
+									class="select-bordered select w-full"
+								>
+									{#each [...log.story_awards_lost.filter((i) => i.id === id), ...storyAwards] as item}
+										<option value={item.id}>
 											{item.name}
 										</option>
-									))}
+									{/each}
 								</select>
-								<label class="label">
-									<span class="label-text-alt text-error">{(form.formState.errors.story_awards_lost || [])[index]?.message}</span>
+								<label for={`story_awards_lost.${index}`} class="label">
+									<span class="label-text-alt text-error">{errors[`story_awards_lost.${index}`] || ""}</span>
 								</label>
 							</div>
-							<button type="button" class="btn-danger btn mt-9" onClick={() => removeLostStoryAward(index)}>
-								<Icon path={mdiTrashCan} size={1} />
+							<button type="button" class="btn-danger btn mt-9" on:click={() => removeLostStoryAward(index)}>
+								<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" class="w-6"
+									><title>trash-can</title><path
+										fill="currentColor"
+										d="M9,3V4H4V6H5V19A2,2 0 0,0 7,21H17A2,2 0 0,0 19,19V6H20V4H15V3H9M9,8H11V17H9V8M13,8H15V17H13V8Z"
+									/></svg
+								>
 							</button>
 						</div>
-						<div class="text-sm">{storyAwards.find(item => storyAwardsLost[index] === item.id)?.description}</div>
+						<div class="text-sm">{storyAwards.find((item) => storyAwardsLost[index] === item.id)?.description}</div>
 					</div>
 				</div>
-			))}
-		</div> -->
+			{/each}
+		</div>
 		<div class="col-span-12 text-center">
 			<button type="submit" class={twMerge("btn-primary btn", saving && "loading")} disabled={saving}> Save Log </button>
 		</div>

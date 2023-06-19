@@ -3,9 +3,7 @@
 	import { twMerge } from "tailwind-merge";
 
 	export let values: { key?: string | number | null; value: string }[] = [];
-	export let name: string;
 	export let value: string | number = "";
-	export let disabled = false;
 	export let onSelect: (value: string | number) => void;
 	export let onChange: (
 		e: Event & {
@@ -48,9 +46,8 @@
 	<label>
 		<input
 			type="text"
-			{name}
 			bind:value
-			{disabled}
+			{...$$props}
 			on:input={(e) => {
 				selected = false;
 				keysel = 0;
