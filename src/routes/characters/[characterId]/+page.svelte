@@ -1,13 +1,13 @@
 <script lang="ts">
-	import { enhance, applyAction } from "$app/forms";
-	import { slugify } from "$src/lib/misc";
-	import { setCookie } from "$src/server/cookie";
-	import type { PageData } from "./$types";
-	import Items from "$src/components/Items.svelte";
+	import { applyAction, enhance } from "$app/forms";
+	import Items from "$components/Items.svelte";
+	import Markdown from "$components/Markdown.svelte";
+	import SearchResults from "$components/SearchResults.svelte";
+	import { slugify } from "$lib/misc";
+	import { setCookie } from "$server/cookie";
 	import MiniSearch from "minisearch";
 	import { twMerge } from "tailwind-merge";
-	import SearchResults from "$src/components/SearchResults.svelte";
-	import Markdown from "$src/components/Markdown.svelte";
+	import type { PageData } from "./$types";
 
 	export let data: PageData;
 	export let form;
@@ -45,14 +45,10 @@
 	const indexed = logs.map((log) => ({
 		logId: log.id,
 		logName: log.name,
-		magicItems: [
-			...log.magic_items_gained.map((item) => item.name),
-			...log.magic_items_lost.map((item) => item.name)
-		].join(", "),
-		storyAwards: [
-			...log.story_awards_gained.map((item) => item.name),
-			...log.story_awards_lost.map((item) => item.name)
-		].join(", ")
+		magicItems: [...log.magic_items_gained.map((item) => item.name), ...log.magic_items_lost.map((item) => item.name)].join(", "),
+		storyAwards: [...log.story_awards_gained.map((item) => item.name), ...log.story_awards_lost.map((item) => item.name)].join(
+			", "
+		)
 	}));
 
 	if (indexed.length) logSearch.addAll(indexed);
@@ -182,11 +178,7 @@
 							rel="noreferrer noopener"
 							class="mask mask-squircle mx-auto h-52 w-full bg-primary"
 						>
-							<img
-								src={character.image_url}
-								class="h-full w-full object-cover object-top transition-all"
-								alt={character.name}
-							/>
+							<img src={character.image_url} class="h-full w-full object-cover object-top transition-all" alt={character.name} />
 						</a>
 					</div>
 				{/if}
@@ -240,12 +232,7 @@
 			</a>
 		{/if}
 		{#if logs.length}
-			<input
-				type="text"
-				placeholder="Search"
-				bind:value={search}
-				class="input-bordered input input-sm w-full sm:max-w-xs"
-			/>
+			<input type="text" placeholder="Search" bind:value={search} class="input-bordered input input-sm w-full sm:max-w-xs" />
 			{#if myCharacter}
 				<div class="form-control">
 					<label class="label cursor-pointer py-1">
@@ -279,12 +266,7 @@
 			</thead>
 			<tbody>
 				{#each results as log}
-					<tr
-						class={twMerge(
-							"border-b-0 border-t-2 border-t-base-200 print:text-sm",
-							deletingLog.includes(log.id) && "hidden"
-						)}
-					>
+					<tr class={twMerge("border-b-0 border-t-2 border-t-base-200 print:text-sm", deletingLog.includes(log.id) && "hidden")}>
 						<td
 							class={twMerge(
 								"!static align-top print:p-2",

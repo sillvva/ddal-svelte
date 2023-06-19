@@ -1,8 +1,8 @@
 <script lang="ts">
 	import type { MagicItem, StoryAward } from "@prisma/client";
-	import SearchResults from "./SearchResults.svelte";
 	import { twMerge } from "tailwind-merge";
 	import Markdown from "./Markdown.svelte";
+	import SearchResults from "./SearchResults.svelte";
 
 	export let title: string = "";
 	export let items: (MagicItem | StoryAward)[];
@@ -16,11 +16,7 @@
 
 <div class={twMerge("flex-1 flex-col", collapsible && !items.length ? "hidden md:flex" : "flex")}>
 	{#if title}
-		<h4
-			class="flex font-semibold"
-			on:click={collapsible ? () => (collapsed = !collapsed) : () => {}}
-			on:keypress={() => {}}
-		>
+		<h4 class="flex font-semibold" on:click={collapsible ? () => (collapsed = !collapsed) : () => {}} on:keypress={() => {}}>
 			<span class="flex-1">{title}</span>
 			{#if collapsible}
 				{#if collapsed}
@@ -47,12 +43,7 @@
 			{/if}
 		</h4>
 	{/if}
-	<p
-		class={twMerge(
-			"divide-x whitespace-pre-wrap text-sm print:text-xs",
-			collapsed ? "hidden print:block md:block" : ""
-		)}
-	>
+	<p class={twMerge("divide-x whitespace-pre-wrap text-sm print:text-xs", collapsed ? "hidden print:block md:block" : "")}>
 		{#if items.length}
 			{#each items as mi}
 				<span
@@ -79,17 +70,9 @@
 		{/if}
 	</p>
 </div>
-<div
-	class={twMerge("modal cursor-pointer", modal && "modal-open")}
-	on:click={() => (modal = null)}
-	on:keypress={() => null}
->
+<div class={twMerge("modal cursor-pointer", modal && "modal-open")} on:click={() => (modal = null)} on:keypress={() => null}>
 	{#if modal}
-		<div
-			class="modal-box relative cursor-default drop-shadow-lg"
-			on:click={(e) => e.stopPropagation()}
-			on:keypress={() => null}
-		>
+		<div class="modal-box relative cursor-default drop-shadow-lg" on:click={(e) => e.stopPropagation()} on:keypress={() => null}>
 			<h3 class="cursor-text text-lg font-bold text-accent-content">{modal.name}</h3>
 			{#if modal.date}
 				<p class="text-xs">{modal.date.toLocaleString()}</p>

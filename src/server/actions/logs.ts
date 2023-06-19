@@ -1,4 +1,4 @@
-import { parseError } from "$src/lib/misc";
+import { parseError } from "$lib/misc";
 import { getLevels } from "../data/characters";
 import { prisma } from "../db";
 

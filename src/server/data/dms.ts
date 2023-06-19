@@ -1,4 +1,4 @@
-import { prisma } from "$src/server/db";
+import { prisma } from "$server/db";
 
 export type UserDMs = Awaited<ReturnType<typeof getUserDMs>>;
 export async function getUserDMs(userId: string) {

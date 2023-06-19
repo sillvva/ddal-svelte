@@ -1,4 +1,4 @@
-import { serverSetCookie } from "$src/server/cookie";
+import { serverSetCookie } from "$server/cookie";
 import { json } from "@sveltejs/kit";
 
 import type { RequestEvent } from "../$types";

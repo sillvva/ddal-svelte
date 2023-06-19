@@ -1,9 +1,9 @@
 <script lang="ts">
-	import SearchResults from "$src/components/SearchResults.svelte";
-	import type { PageData } from "./$types";
+	import SearchResults from "$components/SearchResults.svelte";
+	import { setCookie } from "$server/cookie";
 	import MiniSearch from "minisearch";
 	import { twMerge } from "tailwind-merge";
-	import { setCookie } from "$src/server/cookie";
+	import type { PageData } from "./$types";
 
 	export let data: PageData;
 
@@ -29,9 +29,7 @@
 				level: `L${character.total_level}`,
 				magicItems: character.logs
 					.reduce((acc, log) => {
-						acc.push(
-							...log.magic_items_gained.filter((magicItem) => !magicItem.logLostId).map((magicItem) => magicItem.name)
-						);
+						acc.push(...log.magic_items_gained.filter((magicItem) => !magicItem.logLostId).map((magicItem) => magicItem.name));
 						return acc;
 					}, [] as string[])
 					.join(", ")
@@ -98,12 +96,7 @@
 			</span>
 			<ul tabIndex={1} class="dropdown-content menu rounded-box w-52 bg-base-100 p-2 shadow">
 				<li>
-					<a
-						download={`characters.json`}
-						href={`/api/exports/characters/all`}
-						target="_blank"
-						rel="noreferrer noopener"
-					>
+					<a download={`characters.json`} href={`/api/exports/characters/all`} target="_blank" rel="noreferrer noopener">
 						Export
 					</a>
 				</li>

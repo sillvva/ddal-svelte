@@ -1,5 +1,5 @@
-import { saveCharacter } from "$src/server/actions/characters";
-import { getCharacter } from "$src/server/data/characters";
+import { saveCharacter } from "$server/actions/characters";
+import { getCharacter } from "$server/data/characters";
 import { redirect } from "@sveltejs/kit";
 
 import type { Actions, PageServerLoad } from "../$types";

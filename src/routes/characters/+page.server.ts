@@ -1,5 +1,5 @@
-import { serverGetCookie } from "$src/server/cookie";
-import { getCharacters } from "$src/server/data/characters";
+import { serverGetCookie } from "$server/cookie";
+import { getCharacters } from "$server/data/characters";
 import { redirect } from "@sveltejs/kit";
 
 import type { PageServerLoad } from "./$types";
