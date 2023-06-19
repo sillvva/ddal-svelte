@@ -22,11 +22,13 @@
 	let errors: Record<string, string> = {};
 	$: {
 		if (changes.length) {
+			changes.forEach((c) => {
+				errors[c] = "";
+			});
 			try {
 				newCharacterSchema.parse(character);
 			} catch (error) {
 				changes.forEach((c) => {
-					errors[c] = "";
 					(error as ZodError).errors
 						.filter((e) => e.path[0] === c)
 						.forEach((e) => {
@@ -34,6 +36,8 @@
 						});
 				});
 			}
+		} else {
+			errors = {};
 		}
 	}
 </script>
@@ -70,12 +74,12 @@
 <form
 	method="POST"
 	action="?/saveCharacter"
-	use:enhance={(t) => {
+	use:enhance={(f) => {
 		form = null;
 		saving = true;
 		if (Object.values(errors).find((e) => e.length > 0)) {
 			saving = false;
-			return t.cancel();
+			return f.cancel();
 		}
 		return async ({ update }) => {
 			await update({ reset: false });
