@@ -7,14 +7,14 @@
 	import { setCookie } from "$src/server/cookie";
 	import MiniSearch from "minisearch";
 	import { twMerge } from "tailwind-merge";
-	import type { PageData } from "./$types";
 
-	export let data: PageData;
+	export let data;
 	export let form;
+
 	const character = data.character;
 	const myCharacter = character.userId === data.session?.user?.id;
 
-	let deletingCharater = false;
+	let deletingCharacter = false;
 	let deletingLog: string[] = [];
 
 	let search = "";
@@ -116,7 +116,7 @@
 				<li>
 					<a
 						download={`${slugify(character.name)}.json`}
-						href={`/api/exports/characters/${character.id}`}
+						href={`/export/characters/${character.id}`}
 						target="_blank"
 						rel="noreferrer noopener"
 					>
@@ -128,7 +128,7 @@
 						method="POST"
 						action="?/deleteCharacter"
 						use:enhance={() => {
-							deletingCharater = true;
+							deletingCharacter = true;
 							return ({ update }) => {
 								update();
 							};
@@ -214,7 +214,7 @@
 	</div>
 </section>
 
-{#if deletingCharater}
+{#if deletingCharacter}
 	<div class="fixed inset-0 z-40 flex items-center justify-center bg-black/50" />
 	<div class="fixed inset-0 z-50 flex items-center justify-center">
 		<span class="loading loading-spinner w-16 text-secondary" />
