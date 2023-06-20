@@ -118,7 +118,7 @@
 							</td>
 						</tr>
 					{:else}
-						{#each logs as log}
+						{#each results as log}
 							<tr class={twMerge(deletingLog.includes(log.id) && "hidden")}>
 								<th
 									class={twMerge(
