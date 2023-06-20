@@ -107,6 +107,7 @@
 						type="text"
 						name="name"
 						bind:value={dm.name}
+						on:input={() => addChanges("name")}
 						required
 						disabled={saving}
 						class="input-bordered input w-full focus:border-primary"
@@ -125,6 +126,7 @@
 						type="text"
 						name="DCI"
 						bind:value={dm.DCI}
+						on:input={() => addChanges("DCI")}
 						disabled={saving}
 						class="input-bordered input w-full focus:border-primary"
 					/>
