@@ -1,30 +1,26 @@
 import { logSchema } from "$lib/types/zod-schema";
 import { saveLog } from "$src/server/actions/logs";
-import { getCharacter } from "$src/server/data/characters";
-import { getUserDMs } from "$src/server/data/dms";
-import { getLog } from "$src/server/data/logs";
+import { getCharacter, getCharacters } from "$src/server/data/characters";
+import { getDMLog, getLog } from "$src/server/data/logs";
 import { z } from "zod";
 import { redirect } from "@sveltejs/kit";
 
 import type { Actions } from "@sveltejs/kit";
 import type { PageServerLoad } from "./$types";
-
 export const load = (async (event) => {
 	const session = await event.locals.getSession();
 	if (!session?.user) throw redirect(301, "/");
 
-	const character = await getCharacter(event.params.characterId, false);
-	if (!character) throw redirect(301, "/characters");
+	const log = await getDMLog(event.params.logId);
+	if (event.params.logId !== "new" && !log.id) throw redirect(301, `/dm-logs`);
 
-	const log = await getLog(event.params.logId, character.id);
-	if (event.params.logId !== "new" && !log.id) throw redirect(301, `/characters/${character.id}`);
-
-	const dms = await getUserDMs(session.user.id);
+	const characters = await getCharacters(session.user.id);
+	const character = characters.find((c) => c.id === log.characterId);
 
 	return {
 		log,
+		characters,
 		character,
-		dms,
 		...event.params
 	};
 }) satisfies PageServerLoad;
@@ -34,11 +30,8 @@ export const actions = {
 		const session = await event.locals.getSession();
 		if (!session?.user) throw redirect(301, "/");
 
-		const character = await getCharacter(event.params.characterId || "", false);
-		if (!character) throw redirect(301, "/characters");
-
-		const log = await getLog(event.params.logId || "", character.id);
-		if (event.params.logId !== "new" && !log.id) throw redirect(301, `/characters/${character.id}`);
+		const log = await getLog(event.params.logId || "");
+		if (event.params.logId !== "new" && !log.id) throw redirect(301, `/dm-logs`);
 
 		try {
 			const formData = await event.request.formData();
@@ -57,8 +50,13 @@ export const actions = {
 				created_at: new Date(parsedData.created_at)
 			});
 
+			if (!logData.is_dm_log) throw new Error("Only DM logs can be saved here");
+
+			const character = await getCharacter(logData.characterId, false);
+			if (!character) throw new Error("Character not found");
+
 			const result = await saveLog(character.id, log.id, logData, session.user);
-			if (result && result.id) throw redirect(301, `/characters/${character.id}`);
+			if (result && result.id) throw redirect(301, `/dm-logs`);
 
 			return { id: null, error: result.error || "An unknown error occurred." };
 		} catch (error) {

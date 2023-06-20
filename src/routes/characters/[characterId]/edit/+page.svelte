@@ -1,6 +1,6 @@
 <script lang="ts">
 	import { enhance } from "$app/forms";
-	import { newCharacterSchema } from "$src/types/zod-schema.js";
+	import { newCharacterSchema } from "$lib/types/zod-schema.js";
 	import { twMerge } from "tailwind-merge";
 	import type { ZodError } from "zod";
 
@@ -50,7 +50,7 @@
 			>
 		</li>
 		<li>
-			<a href="/characters" class="text-secondary"> Characters </a>
+			<a href="/characters" class="text-secondary">Characters</a>
 		</li>
 		{#if data.characterId == "new"}
 			<li class="dark:drop-shadow-md">New Character</li>

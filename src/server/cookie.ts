@@ -4,7 +4,7 @@ import type { Cookies } from "@sveltejs/kit";
 
 export async function setCookie(name: string, value: string | number | boolean | object | null) {
 	if (!browser) return;
-	const response = await fetch("/cookie", {
+	const response = await fetch("/api/cookie", {
 		method: "POST",
 		headers: {
 			"Content-Type": "application/json"

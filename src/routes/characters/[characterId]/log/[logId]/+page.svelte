@@ -1,10 +1,10 @@
 <script lang="ts">
 	import { enhance } from "$app/forms";
-	import AutoFillSelect from "$src/components/AutoFillSelect.svelte";
-	import AutoResizeTextArea from "$src/components/AutoResizeTextArea.svelte";
-	import { getMagicItems, getStoryAwards } from "$src/lib/entities.js";
-	import { formatDate } from "$src/lib/misc.js";
-	import { logSchema } from "$src/types/zod-schema.js";
+	import AutoFillSelect from "$lib/components/AutoFillSelect.svelte";
+	import AutoResizeTextArea from "$lib/components/AutoResizeTextArea.svelte";
+	import { getMagicItems, getStoryAwards } from "$lib/entities.js";
+	import { formatDate } from "$lib/misc.js";
+	import { logSchema } from "$lib/types/zod-schema.js";
 	import type { DungeonMaster } from "@prisma/client";
 	import { twMerge } from "tailwind-merge";
 	import type { ZodError } from "zod";
@@ -119,7 +119,7 @@
 			>
 		</li>
 		<li>
-			<a href="/characters" class="text-secondary"> Characters </a>
+			<a href="/characters" class="text-secondary">Characters</a>
 		</li>
 		<li>
 			<a href={`/characters/${data.characterId}`} class="text-secondary">
@@ -135,16 +135,14 @@
 </div>
 
 {#if mutError}
-	<div class="alert alert-error shadow-lg">
-		<div>
-			<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" class="w-6"
-				><title>alert-circle</title><path
-					fill="currentColor"
-					d="M13,13H11V7H13M13,17H11V15H13M12,2A10,10 0 0,0 2,12A10,10 0 0,0 12,22A10,10 0 0,0 22,12A10,10 0 0,0 12,2Z"
-				/></svg
-			>
-			<span>Error! {mutError}</span>
-		</div>
+	<div class="alert alert-error shadow-lg mb-4">
+		<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" class="w-6"
+			><title>alert-circle</title><path
+				fill="currentColor"
+				d="M13,13H11V7H13M13,17H11V15H13M12,2A10,10 0 0,0 2,12A10,10 0 0,0 12,22A10,10 0 0,0 22,12A10,10 0 0,0 12,2Z"
+			/></svg
+		>
+		<span>Error! {mutError}</span>
 	</div>
 {/if}
 
@@ -648,7 +646,7 @@
 			{/each}
 		</div>
 		<div class="col-span-12 text-center">
-			<button type="submit" class={twMerge("btn-primary btn", saving && "loading")} disabled={saving}> Save Log </button>
+			<button type="submit" class={twMerge("btn-primary btn", saving && "loading")} disabled={saving}>Save Log</button>
 		</div>
 	</div>
 </form>

@@ -1,20 +1,20 @@
 <script lang="ts">
-	import { enhance, applyAction } from "$app/forms";
-	import { slugify } from "$src/lib/misc";
+	import { applyAction, enhance } from "$app/forms";
+	import Items from "$lib/components/Items.svelte";
+	import Markdown from "$lib/components/Markdown.svelte";
+	import SearchResults from "$lib/components/SearchResults.svelte";
+	import { slugify } from "$lib/misc";
 	import { setCookie } from "$src/server/cookie";
-	import type { PageData } from "./$types";
-	import Items from "$src/components/Items.svelte";
 	import MiniSearch from "minisearch";
 	import { twMerge } from "tailwind-merge";
-	import SearchResults from "$src/components/SearchResults.svelte";
-	import Markdown from "$src/components/Markdown.svelte";
 
-	export let data: PageData;
+	export let data;
 	export let form;
+
 	const character = data.character;
 	const myCharacter = character.userId === data.session?.user?.id;
 
-	let deletingCharater = false;
+	let deletingCharacter = false;
 	let deletingLog: string[] = [];
 
 	let search = "";
@@ -45,14 +45,10 @@
 	const indexed = logs.map((log) => ({
 		logId: log.id,
 		logName: log.name,
-		magicItems: [
-			...log.magic_items_gained.map((item) => item.name),
-			...log.magic_items_lost.map((item) => item.name)
-		].join(", "),
-		storyAwards: [
-			...log.story_awards_gained.map((item) => item.name),
-			...log.story_awards_lost.map((item) => item.name)
-		].join(", ")
+		magicItems: [...log.magic_items_gained.map((item) => item.name), ...log.magic_items_lost.map((item) => item.name)].join(", "),
+		storyAwards: [...log.story_awards_gained.map((item) => item.name), ...log.story_awards_lost.map((item) => item.name)].join(
+			", "
+		)
 	}));
 
 	if (indexed.length) logSearch.addAll(indexed);
@@ -97,13 +93,13 @@
 				>
 			</li>
 			<li>
-				<a href="/characters" class="text-secondary"> Characters </a>
+				<a href="/characters" class="text-secondary">Characters</a>
 			</li>
 			<li class="overflow-hidden text-ellipsis whitespace-nowrap dark:drop-shadow-md">{character.name}</li>
 		</ul>
 	</div>
 	{#if myCharacter}
-		<a href={`/characters/${character.id}/edit`} class="btn-primary btn-sm btn hidden sm:flex"> Edit </a>
+		<a href={`/characters/${character.id}/edit`} class="btn-primary btn-sm btn hidden sm:flex">Edit</a>
 		<div class="dropdown-end dropdown">
 			<span tabIndex={1} class="btn-sm btn">
 				<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" class="w-6"
@@ -120,7 +116,7 @@
 				<li>
 					<a
 						download={`${slugify(character.name)}.json`}
-						href={`/api/exports/characters/${character.id}`}
+						href={`/api/export/characters/${character.id}`}
 						target="_blank"
 						rel="noreferrer noopener"
 					>
@@ -132,7 +128,7 @@
 						method="POST"
 						action="?/deleteCharacter"
 						use:enhance={() => {
-							deletingCharater = true;
+							deletingCharacter = true;
 							return ({ update }) => {
 								update();
 							};
@@ -182,11 +178,7 @@
 							rel="noreferrer noopener"
 							class="mask mask-squircle mx-auto h-52 w-full bg-primary"
 						>
-							<img
-								src={character.image_url}
-								class="h-full w-full object-cover object-top transition-all"
-								alt={character.name}
-							/>
+							<img src={character.image_url} class="h-full w-full object-cover object-top transition-all" alt={character.name} />
 						</a>
 					</div>
 				{/if}
@@ -222,7 +214,7 @@
 	</div>
 </section>
 
-{#if deletingCharater}
+{#if deletingCharacter}
 	<div class="fixed inset-0 z-40 flex items-center justify-center bg-black/50" />
 	<div class="fixed inset-0 z-50 flex items-center justify-center">
 		<span class="loading loading-spinner w-16 text-secondary" />
@@ -240,12 +232,7 @@
 			</a>
 		{/if}
 		{#if logs.length}
-			<input
-				type="text"
-				placeholder="Search"
-				bind:value={search}
-				class="input-bordered input input-sm w-full sm:max-w-xs"
-			/>
+			<input type="text" placeholder="Search" bind:value={search} class="input-bordered input input-sm w-full sm:max-w-xs" />
 			{#if myCharacter}
 				<div class="form-control">
 					<label class="label cursor-pointer py-1">
@@ -279,12 +266,7 @@
 			</thead>
 			<tbody>
 				{#each results as log}
-					<tr
-						class={twMerge(
-							"border-b-0 border-t-2 border-t-base-200 print:text-sm",
-							deletingLog.includes(log.id) && "hidden"
-						)}
-					>
+					<tr class={twMerge("border-b-0 border-t-2 border-t-base-200 print:text-sm", deletingLog.includes(log.id) && "hidden")}>
 						<td
 							class={twMerge(
 								"!static align-top print:p-2",

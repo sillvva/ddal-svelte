@@ -1,9 +1,9 @@
 <script lang="ts">
-	import "../app.css";
 	import { page } from "$app/stores";
+	import Drawer from "$lib/components/Drawer.svelte";
 	import { signIn, signOut } from "@auth/sveltekit/client";
+	import "../app.css";
 	import type { PageData } from "./$types";
-	import Drawer from "$src/components/Drawer.svelte";
 
 	export let data: PageData;
 </script>
@@ -24,9 +24,9 @@
 					<h1 class="text-base leading-4 text-accent-content">Adventurers League</h1>
 					<h2 class="text-3xl leading-7">Log Sheet</h2>
 				</a>
-				<a href="/characters" class="hidden items-center p-2 md:flex"> Character Logs </a>
-				<a href="/dm-logs" class="hidden items-center p-2 md:flex"> DM Logs </a>
-				<a href="/dms" class="hidden items-center p-2 md:flex"> DMs </a>
+				<a href="/characters" class="hidden items-center p-2 md:flex">Character Logs</a>
+				<a href="/dm-logs" class="hidden items-center p-2 md:flex">DM Logs</a>
+				<a href="/dms" class="hidden items-center p-2 md:flex">DMs</a>
 				<div class="flex-1">&nbsp;</div>
 				<a
 					href="https://github.com/sillvva/ddal-next13"
@@ -41,12 +41,7 @@
 						/></svg
 					>
 				</a>
-				<a
-					href="http://paypal.me/Sillvva"
-					target="_blank"
-					rel="noreferrer noopener"
-					class="hidden items-center p-2 sm:flex"
-				>
+				<a href="http://paypal.me/Sillvva" target="_blank" rel="noreferrer noopener" class="hidden items-center p-2 sm:flex">
 					Contribute
 				</a>
 				{#if data.session?.user}
@@ -56,9 +51,7 @@
 								{data.session?.user?.name}
 							</div>
 							<div class="avatar">
-								<div
-									class="relative w-11 overflow-hidden rounded-full ring ring-primary ring-offset-2 ring-offset-base-100"
-								>
+								<div class="relative w-11 overflow-hidden rounded-full ring ring-primary ring-offset-2 ring-offset-base-100">
 									<img
 										src={data.session?.user?.image || ""}
 										alt={data.session?.user?.name}
@@ -106,21 +99,11 @@
 						images
 					</a>
 					and the name
-					<a
-						href="https://dnd.wizards.com/adventurers-league"
-						target="_blank"
-						rel="noreferrer noopener"
-						class="text-secondary"
-					>
+					<a href="https://dnd.wizards.com/adventurers-league" target="_blank" rel="noreferrer noopener" class="text-secondary">
 						Adventurers League
 					</a>
 					are property of Hasbro and
-					<a
-						href="https://dnd.wizards.com/adventurers-league"
-						target="_blank"
-						rel="noreferrer noopener"
-						class="text-secondary"
-					>
+					<a href="https://dnd.wizards.com/adventurers-league" target="_blank" rel="noreferrer noopener" class="text-secondary">
 						Wizards of the Coast
 					</a>. This website is affiliated with neither.
 				</p>
