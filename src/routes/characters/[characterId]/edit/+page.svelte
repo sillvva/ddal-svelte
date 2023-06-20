@@ -87,9 +87,9 @@
 			saving = false;
 			return f.cancel();
 		}
-		return async ({ update }) => {
+		return async ({ update, result }) => {
 			await update({ reset: false });
-			saving = false;
+			if (result.type !== "redirect") saving = false;
 		};
 	}}
 >

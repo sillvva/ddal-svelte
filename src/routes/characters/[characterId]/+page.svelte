@@ -129,8 +129,9 @@
 						action="?/deleteCharacter"
 						use:enhance={() => {
 							deletingCharacter = true;
-							return ({ update }) => {
+							return ({ update, result }) => {
 								update();
+								if (result.type !== "redirect") deletingCharacter = false;
 							};
 						}}
 						class="bg-red-800 hover:bg-red-900"

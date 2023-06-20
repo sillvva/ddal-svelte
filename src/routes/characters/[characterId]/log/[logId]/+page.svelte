@@ -160,7 +160,7 @@
 		f.formData.append("log", JSON.stringify(log));
 		return async ({ update, result }) => {
 			await update({ reset: false });
-			saving = false;
+			if (result.type !== "redirect") saving = false;
 		};
 	}}
 >
