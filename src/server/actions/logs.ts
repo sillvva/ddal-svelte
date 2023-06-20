@@ -8,7 +8,7 @@ import type { DungeonMaster, Log } from "@prisma/client";
 import type { User } from "@auth/core/types";
 
 export type SaveLogResult = ReturnType<typeof saveLog>;
-export async function saveLog(characterId: string, logId: string, input: z.infer<typeof logSchema>, user?: User) {
+export async function saveLog(input: z.infer<typeof logSchema>, user?: User) {
 	try {
 		let dm: DungeonMaster | null = null;
 		if (!user) throw new Error("Not authenticated");
@@ -74,9 +74,9 @@ export async function saveLog(characterId: string, logId: string, input: z.infer
 				if (!character) throw new Error("Character not found");
 
 				const currentLevel = getLevels(character.logs).total;
-				const logACP = character.logs.find((log) => log.id === input.logId)?.acp || 0;
+				const logACP = character.logs.find((log) => log.id === input.id)?.acp || 0;
 				if (currentLevel == 20 && input.acp - logACP > 0) throw new Error("Character is already level 20");
-				const logLevel = character.logs.find((log) => log.id === input.logId)?.level || 0;
+				const logLevel = character.logs.find((log) => log.id === input.id)?.level || 0;
 				if (currentLevel + input.level - logLevel > 20) throw new Error("Character cannot level past 20");
 			}
 
@@ -99,7 +99,7 @@ export async function saveLog(characterId: string, logId: string, input: z.infer
 
 			const log: Log = await tx.log.upsert({
 				where: {
-					id: input.logId
+					id: input.id
 				},
 				update: data,
 				create: data
@@ -302,6 +302,6 @@ export async function deleteLog(logId: string, userId?: string) {
 		return { id: result?.id || null, error: null };
 	} catch (error) {
 		if (error instanceof Error) return { id: null, error: error.message };
-		else return { id: null, error: "Unknown error" };
+		else return { id: null, error: "An unknown error has occurred." };
 	}
 }

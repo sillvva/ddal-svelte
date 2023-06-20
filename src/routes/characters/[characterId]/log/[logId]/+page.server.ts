@@ -57,10 +57,10 @@ export const actions = {
 				created_at: new Date(parsedData.created_at)
 			});
 
-			const result = await saveLog(character.id, log.id, logData, session.user);
+			const result = await saveLog(logData, session.user);
 			if (result && result.id) throw redirect(301, `/characters/${character.id}`);
 
-			return { id: null, error: result.error || "An unknown error occurred." };
+			return { id: null, error: result.error };
 		} catch (error) {
 			if (error instanceof z.ZodError) {
 				return {
@@ -74,10 +74,7 @@ export const actions = {
 					error: error.message
 				};
 			}
-			return {
-				id: null,
-				error: "An unknown error occurred."
-			};
+			throw error;
 		}
 	}
 } satisfies Actions;
