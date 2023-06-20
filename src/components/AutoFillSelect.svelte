@@ -35,7 +35,7 @@
 
 	const selectHandler = (key: number) => {
 		const match = matches[key];
-		if (match) onSelect(match.key || "");
+		onSelect(match?.key || "");
 		keysel = match ? key : 0;
 		selected = !!match;
 		valSearch = "";
