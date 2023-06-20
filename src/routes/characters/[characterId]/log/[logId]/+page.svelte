@@ -1,9 +1,9 @@
 <script lang="ts">
 	import { enhance } from "$app/forms";
-	import AutoFillSelect from "$components/AutoFillSelect.svelte";
-	import AutoResizeTextArea from "$components/AutoResizeTextArea.svelte";
 	import { getMagicItems, getStoryAwards } from "$lib/entities.js";
 	import { formatDate } from "$lib/misc.js";
+	import AutoFillSelect from "$src/components/AutoFillSelect.svelte";
+	import AutoResizeTextArea from "$src/components/AutoResizeTextArea.svelte";
 	import { logSchema } from "$src/types/zod-schema.js";
 	import type { DungeonMaster } from "@prisma/client";
 	import { twMerge } from "tailwind-merge";
@@ -119,7 +119,7 @@
 			>
 		</li>
 		<li>
-			<a href="/characters" class="text-secondary"> Characters </a>
+			<a href="/characters" class="text-secondary">Characters</a>
 		</li>
 		<li>
 			<a href={`/characters/${data.characterId}`} class="text-secondary">
@@ -648,7 +648,7 @@
 			{/each}
 		</div>
 		<div class="col-span-12 text-center">
-			<button type="submit" class={twMerge("btn-primary btn", saving && "loading")} disabled={saving}> Save Log </button>
+			<button type="submit" class={twMerge("btn-primary btn", saving && "loading")} disabled={saving}>Save Log</button>
 		</div>
 	</div>
 </form>

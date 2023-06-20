@@ -40,7 +40,7 @@
 			</a>
 		</li>
 		<li>
-			<a href="http://paypal.me/Sillvva" target="_blank" rel="noreferrer noopener"> Contribute </a>
+			<a href="http://paypal.me/Sillvva" target="_blank" rel="noreferrer noopener">Contribute</a>
 		</li>
 	</ul>
 </div>

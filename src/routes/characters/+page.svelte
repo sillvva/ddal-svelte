@@ -1,6 +1,6 @@
 <script lang="ts">
-	import SearchResults from "$components/SearchResults.svelte";
-	import { setCookie } from "$server/cookie";
+	import SearchResults from "$src/components/SearchResults.svelte";
+	import { setCookie } from "$src/server/cookie";
 	import MiniSearch from "minisearch";
 	import { twMerge } from "tailwind-merge";
 	import type { PageData } from "./$types";
@@ -133,7 +133,7 @@
 					<div class="py-20 text-center">
 						<p class="mb-4">You have no log sheets.</p>
 						<p>
-							<a href="/characters/new" class="btn-primary btn"> Create one now </a>
+							<a href="/characters/new" class="btn-primary btn">Create one now</a>
 						</p>
 					</div>
 				</section>

@@ -1,7 +1,7 @@
-import { deleteCharacter } from "$server/actions/characters";
-import { deleteLog } from "$server/actions/logs";
-import { serverGetCookie } from "$server/cookie";
-import { getCharacter } from "$server/data/characters";
+import { deleteCharacter } from "$src/server/actions/characters";
+import { deleteLog } from "$src/server/actions/logs";
+import { serverGetCookie } from "$src/server/cookie";
+import { getCharacter } from "$src/server/data/characters";
 import { redirect } from "@sveltejs/kit";
 
 import type { Actions, PageServerLoad } from "./$types";

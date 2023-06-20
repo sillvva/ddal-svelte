@@ -1,4 +1,4 @@
-import { prisma } from "$server/db";
+import { prisma } from "$src/server/db";
 
 import type { DungeonMaster, Log, MagicItem, StoryAward } from "@prisma/client";
 

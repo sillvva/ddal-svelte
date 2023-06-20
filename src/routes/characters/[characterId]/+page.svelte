@@ -1,10 +1,10 @@
 <script lang="ts">
 	import { applyAction, enhance } from "$app/forms";
-	import Items from "$components/Items.svelte";
-	import Markdown from "$components/Markdown.svelte";
-	import SearchResults from "$components/SearchResults.svelte";
 	import { slugify } from "$lib/misc";
-	import { setCookie } from "$server/cookie";
+	import Items from "$src/components/Items.svelte";
+	import Markdown from "$src/components/Markdown.svelte";
+	import SearchResults from "$src/components/SearchResults.svelte";
+	import { setCookie } from "$src/server/cookie";
 	import MiniSearch from "minisearch";
 	import { twMerge } from "tailwind-merge";
 	import type { PageData } from "./$types";
@@ -93,13 +93,13 @@
 				>
 			</li>
 			<li>
-				<a href="/characters" class="text-secondary"> Characters </a>
+				<a href="/characters" class="text-secondary">Characters</a>
 			</li>
 			<li class="overflow-hidden text-ellipsis whitespace-nowrap dark:drop-shadow-md">{character.name}</li>
 		</ul>
 	</div>
 	{#if myCharacter}
-		<a href={`/characters/${character.id}/edit`} class="btn-primary btn-sm btn hidden sm:flex"> Edit </a>
+		<a href={`/characters/${character.id}/edit`} class="btn-primary btn-sm btn hidden sm:flex">Edit</a>
 		<div class="dropdown-end dropdown">
 			<span tabIndex={1} class="btn-sm btn">
 				<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" class="w-6"

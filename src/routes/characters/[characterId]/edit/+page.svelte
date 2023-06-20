@@ -50,7 +50,7 @@
 			>
 		</li>
 		<li>
-			<a href="/characters" class="text-secondary"> Characters </a>
+			<a href="/characters" class="text-secondary">Characters</a>
 		</li>
 		{#if data.characterId == "new"}
 			<li class="dark:drop-shadow-md">New Character</li>

@@ -1,4 +1,4 @@
-import type { getCharacter } from "$server/data/characters";
+import type { getCharacter } from "$src/server/data/characters";
 import type { MagicItem, StoryAward } from "@prisma/client";
 
 export const getMagicItems = (

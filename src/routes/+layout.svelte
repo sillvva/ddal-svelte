@@ -1,6 +1,6 @@
 <script lang="ts">
 	import { page } from "$app/stores";
-	import Drawer from "$components/Drawer.svelte";
+	import Drawer from "$src/components/Drawer.svelte";
 	import { signIn, signOut } from "@auth/sveltekit/client";
 	import "../app.css";
 	import type { PageData } from "./$types";
@@ -24,9 +24,9 @@
 					<h1 class="text-base leading-4 text-accent-content">Adventurers League</h1>
 					<h2 class="text-3xl leading-7">Log Sheet</h2>
 				</a>
-				<a href="/characters" class="hidden items-center p-2 md:flex"> Character Logs </a>
-				<a href="/dm-logs" class="hidden items-center p-2 md:flex"> DM Logs </a>
-				<a href="/dms" class="hidden items-center p-2 md:flex"> DMs </a>
+				<a href="/characters" class="hidden items-center p-2 md:flex">Character Logs</a>
+				<a href="/dm-logs" class="hidden items-center p-2 md:flex">DM Logs</a>
+				<a href="/dms" class="hidden items-center p-2 md:flex">DMs</a>
 				<div class="flex-1">&nbsp;</div>
 				<a
 					href="https://github.com/sillvva/ddal-next13"

@@ -1,7 +1,7 @@
-import { saveLog } from "$server/actions/logs";
-import { getCharacter } from "$server/data/characters";
-import { getUserDMs } from "$server/data/dms";
-import { getLog } from "$server/data/logs";
+import { saveLog } from "$src/server/actions/logs";
+import { getCharacter } from "$src/server/data/characters";
+import { getUserDMs } from "$src/server/data/dms";
+import { getLog } from "$src/server/data/logs";
 import { logSchema } from "$src/types/zod-schema";
 import { z } from "zod";
 import { redirect } from "@sveltejs/kit";
