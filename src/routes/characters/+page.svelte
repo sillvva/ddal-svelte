@@ -1,5 +1,5 @@
 <script lang="ts">
-	import SearchResults from "$src/components/SearchResults.svelte";
+	import SearchResults from "$lib/components/SearchResults.svelte";
 	import { setCookie } from "$src/server/cookie";
 	import MiniSearch from "minisearch";
 	import { twMerge } from "tailwind-merge";

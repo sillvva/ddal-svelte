@@ -1,4 +1,4 @@
-import { parseError } from "$src/lib/misc";
+import { parseError } from "$lib/misc";
 import { getCharacter, getCharacters } from "$src/server/data/characters";
 import { json } from "@sveltejs/kit";
 

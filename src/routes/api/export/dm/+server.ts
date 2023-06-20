@@ -1,4 +1,4 @@
-import { parseError } from "$src/lib/misc";
+import { parseError } from "$lib/misc";
 import { getDMLogs } from "$src/server/data/logs";
 import { json } from "@sveltejs/kit";
 

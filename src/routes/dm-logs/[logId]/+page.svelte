@@ -1,9 +1,9 @@
 <script lang="ts">
 	import { enhance } from "$app/forms";
+	import AutoFillSelect from "$lib/components/AutoFillSelect.svelte";
+	import AutoResizeTextArea from "$lib/components/AutoResizeTextArea.svelte";
+	import { formatDate } from "$lib/misc";
 	import { logSchema } from "$lib/types/zod-schema.js";
-	import AutoFillSelect from "$src/components/AutoFillSelect.svelte";
-	import AutoResizeTextArea from "$src/components/AutoResizeTextArea.svelte";
-	import { formatDate } from "$src/lib/misc";
 	import { twMerge } from "tailwind-merge";
 	import type { ZodError } from "zod";
 

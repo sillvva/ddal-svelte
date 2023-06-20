@@ -1,4 +1,4 @@
-import { logSchema } from "$src/lib/types/zod-schema";
+import { logSchema } from "$lib/types/zod-schema";
 import { saveLog } from "$src/server/actions/logs";
 import { getCharacter, getCharacters } from "$src/server/data/characters";
 import { getDMLog, getLog } from "$src/server/data/logs";

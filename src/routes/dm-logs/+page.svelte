@@ -1,9 +1,9 @@
 <script lang="ts">
 	import { applyAction, enhance } from "$app/forms";
-	import Items from "$src/components/Items.svelte";
-	import Markdown from "$src/components/Markdown.svelte";
-	import SearchResults from "$src/components/SearchResults.svelte";
-	import { formatDate } from "$src/lib/misc.js";
+	import Items from "$lib/components/Items.svelte";
+	import Markdown from "$lib/components/Markdown.svelte";
+	import SearchResults from "$lib/components/SearchResults.svelte";
+	import { formatDate } from "$lib/misc.js";
 	import MiniSearch from "minisearch";
 	import { twMerge } from "tailwind-merge";
 

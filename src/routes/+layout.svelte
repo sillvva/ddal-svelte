@@ -1,6 +1,6 @@
 <script lang="ts">
 	import { page } from "$app/stores";
-	import Drawer from "$src/components/Drawer.svelte";
+	import Drawer from "$lib/components/Drawer.svelte";
 	import { signIn, signOut } from "@auth/sveltekit/client";
 	import "../app.css";
 	import type { PageData } from "./$types";
