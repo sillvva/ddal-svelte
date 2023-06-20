@@ -57,12 +57,11 @@
 				>
 					{#if formatting && !mi.name.match(/^(\d+x? )?((Potion|Scroll|Spell Scroll|Charm|Elixir)s? of)/)}
 						<strong class="text-secondary-content/70 print:text-neutral-content">
-							<SearchResults text={mi.name} search={search || ""} />
+							<SearchResults text={mi.name + (mi.description && "*")} search={search || ""} />
 						</strong>
 					{:else}
-						<SearchResults text={mi.name} search={search || ""} />
+						<SearchResults text={mi.name + (mi.description && "*")} search={search || ""} />
 					{/if}
-					{mi.description && "*"}
 				</span>
 			{/each}
 		{:else}
