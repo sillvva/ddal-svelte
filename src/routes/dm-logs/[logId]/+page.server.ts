@@ -55,7 +55,7 @@ export const actions = {
 			const character = await getCharacter(logData.characterId, false);
 			if (!character) throw new Error("Character not found");
 
-			const result = await saveLog(character.id, log.id, logData, session.user);
+			const result = await saveLog(logData, session.user);
 			if (result && result.id) throw redirect(301, `/dm-logs`);
 
 			return { id: null, error: result.error || "An unknown error occurred." };
@@ -72,10 +72,7 @@ export const actions = {
 					error: error.message
 				};
 			}
-			return {
-				id: null,
-				error: "An unknown error occurred."
-			};
+			throw error;
 		}
 	}
 } satisfies Actions;

@@ -6,7 +6,7 @@ const dateRegex =
 export const logSchema = z.object({
 	characterId: z.string().default(""),
 	characterName: z.string().default(""),
-	logId: z.string().default(""),
+	id: z.string().default(""),
 	name: z.string().min(1, "Required"),
 	date: z.date(),
 	type: z.union([z.literal("game"), z.literal("nongame")]).default("game"),
@@ -64,6 +64,7 @@ export const editCharacterSchema = z
 
 export const dungeonMasterSchema = z.object({
 	id: z.string().default(""),
-	name: z.string().default(""),
-	DCI: z.string().nullable().default(null)
+	name: z.string().min(1).default(""),
+	DCI: z.string().nullable().default(null),
+	uid: z.string().nullable().default("")
 });
