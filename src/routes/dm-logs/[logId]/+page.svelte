@@ -524,7 +524,7 @@
 			{/each}
 		</div>
 		<div class="col-span-12 text-center">
-			<button type="submit" class={twMerge("btn-primary btn", saving && "loading")} disabled={saving}> Save Log </button>
+			<button type="submit" class={twMerge("btn-primary btn", saving && "loading")} disabled={saving}>Save Log</button>
 		</div>
 	</div>
 </form>
