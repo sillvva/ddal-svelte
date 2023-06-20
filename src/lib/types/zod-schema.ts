@@ -64,6 +64,7 @@ export const editCharacterSchema = z
 
 export const dungeonMasterSchema = z.object({
 	id: z.string().default(""),
-	name: z.string().default(""),
-	DCI: z.string().nullable().default(null)
+	name: z.string().min(1).default(""),
+	DCI: z.string().nullable().default(null),
+	uid: z.string().nullable().default("")
 });
