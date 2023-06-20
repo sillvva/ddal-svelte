@@ -116,7 +116,7 @@
 				<li>
 					<a
 						download={`${slugify(character.name)}.json`}
-						href={`/export/characters/${character.id}`}
+						href={`/api/export/characters/${character.id}`}
 						target="_blank"
 						rel="noreferrer noopener"
 					>

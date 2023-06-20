@@ -96,7 +96,7 @@
 			</span>
 			<ul tabIndex={1} class="dropdown-content menu rounded-box w-52 bg-base-100 p-2 shadow">
 				<li>
-					<a download={`characters.json`} href={`/export/characters/all`} target="_blank" rel="noreferrer noopener">Export</a>
+					<a download={`characters.json`} href={`/api/export/characters/all`} target="_blank" rel="noreferrer noopener">Export</a>
 				</li>
 			</ul>
 		</div>

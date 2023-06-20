@@ -1,4 +1,4 @@
-import type { newCharacterSchema } from "$src/types/zod-schema";
+import type { newCharacterSchema } from "$src/lib/types/zod-schema";
 import type { z } from "zod";
 import { getCharacter } from "../data/characters";
 import { prisma } from "../db";

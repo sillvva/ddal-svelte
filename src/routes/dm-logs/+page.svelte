@@ -84,7 +84,7 @@
 			</span>
 			<ul tabIndex={1} class="dropdown-content menu rounded-box w-52 bg-base-100 p-2 shadow">
 				<li>
-					<a download={`dm.json`} href={`/export/dm`} target="_blank" rel="noreferrer noopener">Export</a>
+					<a download={`dm.json`} href={`/api/export/dm`} target="_blank" rel="noreferrer noopener">Export</a>
 				</li>
 			</ul>
 		</div>

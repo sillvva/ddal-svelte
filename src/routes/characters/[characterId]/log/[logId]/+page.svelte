@@ -2,9 +2,9 @@
 	import { enhance } from "$app/forms";
 	import { getMagicItems, getStoryAwards } from "$lib/entities.js";
 	import { formatDate } from "$lib/misc.js";
+	import { logSchema } from "$lib/types/zod-schema.js";
 	import AutoFillSelect from "$src/components/AutoFillSelect.svelte";
 	import AutoResizeTextArea from "$src/components/AutoResizeTextArea.svelte";
-	import { logSchema } from "$src/types/zod-schema.js";
 	import type { DungeonMaster } from "@prisma/client";
 	import { twMerge } from "tailwind-merge";
 	import type { ZodError } from "zod";

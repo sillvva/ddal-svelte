@@ -1,6 +1,6 @@
 <script lang="ts">
 	import { enhance } from "$app/forms";
-	import { newCharacterSchema } from "$src/types/zod-schema.js";
+	import { newCharacterSchema } from "$lib/types/zod-schema.js";
 	import { twMerge } from "tailwind-merge";
 	import type { ZodError } from "zod";
 

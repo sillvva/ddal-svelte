@@ -2,7 +2,7 @@ import { parseError } from "$lib/misc";
 import { getLevels } from "../data/characters";
 import { prisma } from "../db";
 
-import type { logSchema } from "$src/types/zod-schema";
+import type { logSchema } from "$src/lib/types/zod-schema";
 import type { z } from "zod";
 import type { DungeonMaster, Log } from "@prisma/client";
 import type { User } from "@auth/core/types";
