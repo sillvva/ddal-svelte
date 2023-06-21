@@ -35,7 +35,7 @@
 	<div class="divider" />
 	<ul class="menu w-full">
 		<li>
-			<a href="https://github.com/sillvva/ddal-next13" target="_blank" rel="noreferrer noopener" class="items-center sm:hidden">
+			<a href="https://github.com/sillvva/ddal-next13" target="_blank" rel="noreferrer noopener" class="items-center md:hidden">
 				Github
 			</a>
 		</li>

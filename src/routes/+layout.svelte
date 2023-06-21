@@ -32,7 +32,7 @@
 					href="https://github.com/sillvva/ddal-next13"
 					target="_blank"
 					rel="noreferrer noopener"
-					class="hidden items-center p-2 sm:flex"
+					class="hidden items-center p-2 lg:flex"
 				>
 					<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" class="w-6"
 						><title>github</title><path
@@ -41,7 +41,7 @@
 						/></svg
 					>
 				</a>
-				<a href="http://paypal.me/Sillvva" target="_blank" rel="noreferrer noopener" class="hidden items-center p-2 sm:flex">
+				<a href="http://paypal.me/Sillvva" target="_blank" rel="noreferrer noopener" class="hidden items-center p-2 lg:flex">
 					Contribute
 				</a>
 				{#if data.session?.user}

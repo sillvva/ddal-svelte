@@ -41,9 +41,9 @@
 				<table class="table w-full">
 					<thead>
 						<tr class="bg-base-300">
-							<th class="">Name</th>
-							<th class="">DCI</th>
-							<th class="">Logs</th>
+							<th class="">DM</th>
+							<th class="hidden xs:table-cell">DCI</th>
+							<th class="hidden xs:table-cell">Logs</th>
 							<th class="print:hidden" />
 						</tr>
 					</thead>
@@ -57,9 +57,17 @@
 						{:else}
 							{#each dms as dm}
 								<tr class={twMerge(deletingDM.includes(dm.id) && "hidden")}>
-									<td>{dm.name}</td>
-									<td>{dm.DCI || ""}</td>
-									<td>{dm.logs.length}</td>
+									<td>
+										{dm.name}
+										<div class="block xs:hidden">
+											{#if dm.DCI}
+												<p class="text-xs text-gray-500">DCI: {dm.DCI}</p>
+											{/if}
+											<p class="text-xs text-gray-500">{dm.logs.length} logs</p>
+										</div>
+									</td>
+									<td class="hidden xs:table-cell">{dm.DCI || ""}</td>
+									<td class="hidden xs:table-cell">{dm.logs.length}</td>
 									<td class="w-16 print:hidden">
 										<div class="flex flex-row justify-center gap-2">
 											<a href="/dms/{dm.id}" class="btn-primary btn-sm btn">
