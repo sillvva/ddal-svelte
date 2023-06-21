@@ -79,7 +79,7 @@
 								callbackUrl: `${$page.url.origin}/characters`
 							})}
 					>
-						<img src="images/google.svg" width="24" height="24" alt="Google" />
+						<img src="/images/google.svg" width="24" height="24" alt="Google" />
 						<span class="flex h-full flex-1 items-center justify-center font-semibold">Sign In</span>
 					</button>
 				{/if}

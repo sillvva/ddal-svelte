@@ -16,7 +16,7 @@
 				callbackUrl: `${$page.url.origin}/characters`
 			})}
 	>
-		<img src="images/google.svg" width="32" height="32" alt="Google" />
+		<img src="/images/google.svg" width="32" height="32" alt="Google" />
 		<span class="flex h-full flex-1 items-center justify-center text-xl font-semibold">Sign In</span>
 	</button>
 </main>
