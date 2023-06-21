@@ -88,7 +88,7 @@
 <svelte:head>
 	<Meta
 		title="{character.name} - Adventurers League Log Sheet"
-		description="{character.race} {character.class}"
+		description="A level {character.total_level} {character.race} {character.class}"
 		image={character.image_url}
 	/>
 </svelte:head>
