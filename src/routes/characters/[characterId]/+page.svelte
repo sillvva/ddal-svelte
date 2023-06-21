@@ -109,7 +109,7 @@
 					/></svg
 				>
 			</span>
-			<ul tabIndex={1} class="dropdown-content menu rounded-box w-52 bg-base-100 p-2 shadow">
+			<ul tabIndex={1} class="dropdown-content menu rounded-box w-52 bg-base-100 p-2 shadow z-20">
 				<li class="flex sm:hidden">
 					<a href={`/characters/${character.id}/edit`}>Edit</a>
 				</li>
@@ -158,28 +158,42 @@
 
 <section class="flex">
 	<div class="flex flex-1 flex-col gap-6">
-		<div class="flex flex-col">
-			<h3 class="flex-1 font-vecna text-4xl font-bold text-accent-content">{character.name}</h3>
-			<p class="flex-1 text-sm font-semibold">
-				{character.race}
-				{character.class}
-			</p>
-			<p class="flex-1 text-xs">
-				{character.campaign}
-				{#if character.character_sheet_url}
-					<span class="print:hidden">
-						-
-						<a
-							href={character.character_sheet_url}
-							target="_blank"
-							rel="noreferrer noopner"
-							class="font-semibold text-secondary dark:drop-shadow-sm"
-						>
-							Character Sheet
-						</a>
-					</span>
-				{/if}
-			</p>
+		<div class="flex">
+			{#if character.image_url}
+				<div class="relative hidden flex-col items-end justify-center print:hidden xs:flex md:hidden mr-4">
+					<a
+						href={character.image_url}
+						target="_blank"
+						rel="noreferrer noopener"
+						class="mask mask-squircle mx-auto h-20 w-full bg-primary"
+					>
+						<img src={character.image_url} class="h-full w-full object-cover object-top transition-all" alt={character.name} />
+					</a>
+				</div>
+			{/if}
+			<div class="flex flex-col">
+				<h3 class="flex-1 font-vecna text-4xl font-bold text-accent-content">{character.name}</h3>
+				<p class="flex-1 text-sm font-semibold">
+					{character.race}
+					{character.class}
+				</p>
+				<p class="flex-1 text-xs">
+					{character.campaign}
+					{#if character.character_sheet_url}
+						<span class="print:hidden">
+							-
+							<a
+								href={character.character_sheet_url}
+								target="_blank"
+								rel="noreferrer noopner"
+								class="font-semibold text-secondary dark:drop-shadow-sm"
+							>
+								Character Sheet
+							</a>
+						</span>
+					{/if}
+				</p>
+			</div>
 		</div>
 		<div class="flex flex-1 flex-wrap gap-4 print:flex-nowrap xs:flex-nowrap sm:gap-4 md:gap-6">
 			<div class="flex basis-full xs:basis-1/2 sm:basis-1/3 flex-col gap-2 print:basis-1/3 sm:gap-4 md:basis-52">

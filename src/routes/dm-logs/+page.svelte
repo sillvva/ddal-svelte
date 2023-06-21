@@ -115,7 +115,7 @@
 						<th class="hidden print:table-cell sm:table-cell">Title</th>
 						<th class="hidden print:table-cell sm:table-cell">Advancement</th>
 						<th class="hidden print:table-cell sm:table-cell">Treasure</th>
-						<th class="hidden print:!hidden sm:table-cell">Story Awards</th>
+						<th class="hidden print:!hidden md:table-cell">Story Awards</th>
 						<th class="print:hidden" />
 					</tr>
 				</thead>
