@@ -112,7 +112,7 @@
 
 <svelte:head>
 	{#if data.logId == "new"}
-		<Meta title="New Log" />
+		<Meta title="{character.name} - New Log" />
 	{:else}
 		<Meta title="Edit {log.name}" />
 	{/if}
