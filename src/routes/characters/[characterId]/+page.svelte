@@ -181,8 +181,8 @@
 				{/if}
 			</p>
 		</div>
-		<div class="flex flex-1 flex-wrap gap-4 print:flex-nowrap sm:flex-nowrap sm:gap-4 md:gap-6">
-			<div class="flex basis-full flex-col gap-2 print:basis-1/3 sm:gap-4 md:basis-52">
+		<div class="flex flex-1 flex-wrap gap-4 print:flex-nowrap xs:flex-nowrap sm:gap-4 md:gap-6">
+			<div class="flex basis-full xs:basis-1/2 sm:basis-1/3 flex-col gap-2 print:basis-1/3 sm:gap-4 md:basis-52">
 				{#if character.image_url}
 					<div class="relative hidden flex-col items-end justify-center print:hidden md:flex">
 						<a
@@ -213,9 +213,9 @@
 				</div>
 			</div>
 			<div
-				class="divider hidden sm:divider-horizontal before:bg-neutral-content/50 after:bg-neutral-content/50 print:flex sm:flex"
+				class="divider hidden xs:divider-horizontal xs:mx-0 before:bg-neutral-content/50 after:bg-neutral-content/50 print:flex xs:flex"
 			/>
-			<div class="flex flex-1 basis-full flex-col print:basis-2/3 sm:basis-2/3 lg:basis-2/3">
+			<div class="flex basis-full xs:basis-1/2 flex-col print:basis-2/3 sm:basis-2/3 lg:basis-2/3">
 				{#if character}
 					<div class="flex flex-col gap-4">
 						<Items title="Story Awards" items={character.story_awards} collapsible />

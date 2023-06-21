@@ -10,6 +10,14 @@ export default {
         draconis: ["Draconis"],
         vecna: ["Vecna"]
       }
+    },
+    screens: {
+      'xs': '500px',
+      'sm': '640px',
+      'md': '768px',
+      'lg': '1024px',
+      'xl': '1280px',
+      '2xl': '1440px'
     }
   },
   plugins: [require("daisyui")],
