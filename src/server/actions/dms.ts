@@ -2,7 +2,7 @@ import { prisma } from "$src/server/db";
 import { getUserDMs, getUserDMsWithLogs } from "../data/dms";
 
 import type { z } from "zod";
-import type { dungeonMasterSchema } from "$src/lib/types/zod-schema";
+import type { dungeonMasterSchema } from "$lib/types/zod-schema";
 
 export type SaveDMResult = ReturnType<typeof saveDM>;
 export async function saveDM(dmId: string, userId: string, data: z.infer<typeof dungeonMasterSchema>) {

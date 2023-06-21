@@ -1,6 +1,6 @@
 <script lang="ts">
+	import Meta from "$lib/components/Meta.svelte";
 	import SearchResults from "$lib/components/SearchResults.svelte";
-	import Meta from "$src/lib/components/Meta.svelte";
 	import { setCookie } from "$src/server/cookie";
 	import MiniSearch from "minisearch";
 	import { twMerge } from "tailwind-merge";

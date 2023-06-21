@@ -2,9 +2,9 @@
 	import { applyAction, enhance } from "$app/forms";
 	import Items from "$lib/components/Items.svelte";
 	import Markdown from "$lib/components/Markdown.svelte";
+	import Meta from "$lib/components/Meta.svelte";
 	import SearchResults from "$lib/components/SearchResults.svelte";
 	import { slugify } from "$lib/misc";
-	import Meta from "$src/lib/components/Meta.svelte";
 	import { setCookie } from "$src/server/cookie";
 	import MiniSearch from "minisearch";
 	import { twMerge } from "tailwind-merge";

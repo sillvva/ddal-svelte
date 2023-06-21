@@ -1,7 +1,7 @@
 <script lang="ts">
 	import { applyAction, enhance } from "$app/forms";
-	import Meta from "$src/lib/components/Meta.svelte";
-	import { dungeonMasterSchema } from "$src/lib/types/zod-schema.js";
+	import Meta from "$lib/components/Meta.svelte";
+	import { dungeonMasterSchema } from "$lib/types/zod-schema.js";
 	import { twMerge } from "tailwind-merge";
 	import type { ZodError } from "zod";
 

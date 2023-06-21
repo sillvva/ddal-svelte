@@ -1,6 +1,6 @@
 <script lang="ts">
 	import { page } from "$app/stores";
-	import Meta from "$src/lib/components/Meta.svelte";
+	import Meta from "$lib/components/Meta.svelte";
 	import { signIn } from "@auth/sveltekit/client";
 </script>
 

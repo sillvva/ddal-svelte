@@ -2,10 +2,10 @@
 	import { enhance } from "$app/forms";
 	import AutoFillSelect from "$lib/components/AutoFillSelect.svelte";
 	import AutoResizeTextArea from "$lib/components/AutoResizeTextArea.svelte";
+	import Meta from "$lib/components/Meta.svelte";
 	import { getMagicItems, getStoryAwards } from "$lib/entities.js";
 	import { formatDate } from "$lib/misc.js";
 	import { logSchema } from "$lib/types/zod-schema.js";
-	import Meta from "$src/lib/components/Meta.svelte";
 	import type { DungeonMaster } from "@prisma/client";
 	import { twMerge } from "tailwind-merge";
 	import type { ZodError } from "zod";
