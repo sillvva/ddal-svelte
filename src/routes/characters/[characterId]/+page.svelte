@@ -2,9 +2,9 @@
 	import { applyAction, enhance } from "$app/forms";
 	import Items from "$lib/components/Items.svelte";
 	import Markdown from "$lib/components/Markdown.svelte";
+	import Meta from "$lib/components/Meta.svelte";
 	import SearchResults from "$lib/components/SearchResults.svelte";
 	import { slugify } from "$lib/misc";
-	import Meta from "$src/lib/components/Meta.svelte";
 	import { setCookie } from "$src/server/cookie";
 	import MiniSearch from "minisearch";
 	import { twMerge } from "tailwind-merge";
@@ -85,13 +85,11 @@
 	}
 </script>
 
-<svelte:head>
-	<Meta
-		title="{character.name} - Adventurers League Log Sheet"
-		description="A level {character.total_level} {character.race} {character.class}"
-		image={character.image_url}
-	/>
-</svelte:head>
+<Meta
+	title="{character.name} - Adventurers League Log Sheet"
+	description="A level {character.total_level} {character.race} {character.class}"
+	image={character.image_url}
+/>
 
 <div class="flex gap-4 print:hidden">
 	<div class="breadcrumbs mb-4 flex-1 text-sm">

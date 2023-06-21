@@ -1,7 +1,7 @@
 <script lang="ts">
 	import { enhance } from "$app/forms";
+	import Meta from "$lib/components/Meta.svelte";
 	import { newCharacterSchema } from "$lib/types/zod-schema.js";
-	import Meta from "$src/lib/components/Meta.svelte";
 	import { twMerge } from "tailwind-merge";
 	import type { ZodError } from "zod";
 
@@ -43,13 +43,11 @@
 	}
 </script>
 
-<svelte:head>
-	{#if data.characterId == "new"}
-		<Meta title="New Character" />
-	{:else}
-		<Meta title="Edit {character.name}" />
-	{/if}
-</svelte:head>
+{#if data.characterId == "new"}
+	<Meta title="New Character" />
+{:else}
+	<Meta title="Edit {character.name}" />
+{/if}
 
 <div class="breadcrumbs mb-4 text-sm">
 	<ul>

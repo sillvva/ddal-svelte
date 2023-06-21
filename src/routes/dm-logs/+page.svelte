@@ -2,9 +2,9 @@
 	import { applyAction, enhance } from "$app/forms";
 	import Items from "$lib/components/Items.svelte";
 	import Markdown from "$lib/components/Markdown.svelte";
+	import Meta from "$lib/components/Meta.svelte";
 	import SearchResults from "$lib/components/SearchResults.svelte";
 	import { formatDate } from "$lib/misc.js";
-	import Meta from "$src/lib/components/Meta.svelte";
 	import MiniSearch from "minisearch";
 	import { twMerge } from "tailwind-merge";
 
@@ -57,9 +57,7 @@
 			: logs.sort((a, b) => a.date.getTime() - b.date.getTime());
 </script>
 
-<svelte:head>
-	<Meta title="{data.session?.user?.name}'s DM Logs" />
-</svelte:head>
+<Meta title="{data.session?.user?.name}'s DM Logs" />
 
 <div class="flex flex-col gap-4">
 	<div class="flex gap-4 print:hidden">

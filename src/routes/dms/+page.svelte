@@ -1,6 +1,6 @@
 <script lang="ts">
 	import { applyAction, enhance } from "$app/forms";
-	import Meta from "$src/lib/components/Meta.svelte";
+	import Meta from "$lib/components/Meta.svelte";
 	import { twMerge } from "tailwind-merge";
 
 	export let data;
@@ -10,9 +10,7 @@
 	let deletingDM: string[] = [];
 </script>
 
-<svelte:head>
-	<Meta title="{data.session?.user?.name}'s DMs" />
-</svelte:head>
+<Meta title="{data.session?.user?.name}'s DMs" />
 
 <div class="flex flex-col gap-4">
 	<div class="flex gap-4 print:hidden">

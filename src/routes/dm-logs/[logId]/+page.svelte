@@ -2,9 +2,9 @@
 	import { enhance } from "$app/forms";
 	import AutoFillSelect from "$lib/components/AutoFillSelect.svelte";
 	import AutoResizeTextArea from "$lib/components/AutoResizeTextArea.svelte";
+	import Meta from "$lib/components/Meta.svelte";
 	import { formatDate } from "$lib/misc";
 	import { logSchema } from "$lib/types/zod-schema.js";
-	import Meta from "$src/lib/components/Meta.svelte";
 	import { twMerge } from "tailwind-merge";
 	import type { ZodError } from "zod";
 
@@ -95,13 +95,11 @@
 	const removeStoryAward = (index: number) => (storyAwardsGained = storyAwardsGained.filter((_, i) => i !== index));
 </script>
 
-<svelte:head>
-	{#if data.logId == "new"}
-		<Meta title="New Log" />
-	{:else}
-		<Meta title="Edit {log.name}" />
-	{/if}
-</svelte:head>
+{#if data.logId == "new"}
+	<Meta title="New Log" />
+{:else}
+	<Meta title="Edit {log.name}" />
+{/if}
 
 <div class="breadcrumbs mb-4 text-sm">
 	<ul>
