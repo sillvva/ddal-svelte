@@ -29,7 +29,7 @@
 				<a href="/dms" class="hidden items-center p-2 md:flex">DMs</a>
 				<div class="flex-1">&nbsp;</div>
 				<a
-					href="https://github.com/sillvva/ddal-next13"
+					href="https://github.com/sillvva/ddal-svelte"
 					target="_blank"
 					rel="noreferrer noopener"
 					class="hidden items-center p-2 lg:flex"
