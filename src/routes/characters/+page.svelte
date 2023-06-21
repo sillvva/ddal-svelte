@@ -65,9 +65,7 @@
 	}
 </script>
 
-<svelte:head>
-	<Meta title="{data.session?.user?.name}'s Characters" />
-</svelte:head>
+<Meta title="{data.session?.user?.name}'s Characters" />
 
 <div class="flex flex-col gap-4">
 	<div class="flex gap-4">

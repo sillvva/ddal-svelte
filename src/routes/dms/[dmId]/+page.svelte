@@ -56,9 +56,7 @@
 	}
 </script>
 
-<svelte:head>
-	<Meta title="Edit {dm.name}" />
-</svelte:head>
+<Meta title="Edit {dm.name}" />
 
 <div class="flex flex-col gap-4">
 	<div class="flex gap-4 print:hidden">

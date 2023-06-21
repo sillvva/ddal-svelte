@@ -43,13 +43,11 @@
 	}
 </script>
 
-<svelte:head>
-	{#if data.characterId == "new"}
-		<Meta title="New Character" />
-	{:else}
-		<Meta title="Edit {character.name}" />
-	{/if}
-</svelte:head>
+{#if data.characterId == "new"}
+	<Meta title="New Character" />
+{:else}
+	<Meta title="Edit {character.name}" />
+{/if}
 
 <div class="breadcrumbs mb-4 text-sm">
 	<ul>

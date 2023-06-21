@@ -95,13 +95,11 @@
 	const removeStoryAward = (index: number) => (storyAwardsGained = storyAwardsGained.filter((_, i) => i !== index));
 </script>
 
-<svelte:head>
-	{#if data.logId == "new"}
-		<Meta title="New Log" />
-	{:else}
-		<Meta title="Edit {log.name}" />
-	{/if}
-</svelte:head>
+{#if data.logId == "new"}
+	<Meta title="New Log" />
+{:else}
+	<Meta title="Edit {log.name}" />
+{/if}
 
 <div class="breadcrumbs mb-4 text-sm">
 	<ul>

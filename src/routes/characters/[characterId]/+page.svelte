@@ -85,13 +85,11 @@
 	}
 </script>
 
-<svelte:head>
-	<Meta
-		title="{character.name} - Adventurers League Log Sheet"
-		description="A level {character.total_level} {character.race} {character.class}"
-		image={character.image_url}
-	/>
-</svelte:head>
+<Meta
+	title="{character.name} - Adventurers League Log Sheet"
+	description="A level {character.total_level} {character.race} {character.class}"
+	image={character.image_url}
+/>
 
 <div class="flex gap-4 print:hidden">
 	<div class="breadcrumbs mb-4 flex-1 text-sm">
