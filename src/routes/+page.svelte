@@ -1,7 +1,12 @@
 <script lang="ts">
 	import { page } from "$app/stores";
+	import Meta from "$src/lib/components/Meta.svelte";
 	import { signIn } from "@auth/sveltekit/client";
 </script>
+
+<svelte:head>
+	<Meta />
+</svelte:head>
 
 <main class="container relative mx-auto flex min-h-screen flex-col items-center justify-center p-4">
 	<h1 class="mb-20 text-center font-draconis text-4xl text-base-content dark:text-white lg:text-6xl">

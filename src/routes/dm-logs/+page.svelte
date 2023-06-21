@@ -4,6 +4,7 @@
 	import Markdown from "$lib/components/Markdown.svelte";
 	import SearchResults from "$lib/components/SearchResults.svelte";
 	import { formatDate } from "$lib/misc.js";
+	import Meta from "$src/lib/components/Meta.svelte";
 	import MiniSearch from "minisearch";
 	import { twMerge } from "tailwind-merge";
 
@@ -55,6 +56,10 @@
 					.sort((a, b) => a.date.getTime() - b.date.getTime())
 			: logs.sort((a, b) => a.date.getTime() - b.date.getTime());
 </script>
+
+<svelte:head>
+	<Meta title="{data.session?.user?.name}'s DM Logs" />
+</svelte:head>
 
 <div class="flex flex-col gap-4">
 	<div class="flex gap-4 print:hidden">
