@@ -4,6 +4,7 @@
 	import Markdown from "$lib/components/Markdown.svelte";
 	import SearchResults from "$lib/components/SearchResults.svelte";
 	import { slugify } from "$lib/misc";
+	import Meta from "$src/lib/components/Meta.svelte";
 	import { setCookie } from "$src/server/cookie";
 	import MiniSearch from "minisearch";
 	import { twMerge } from "tailwind-merge";
@@ -83,6 +84,14 @@
 		}
 	}
 </script>
+
+<svelte:head>
+	<Meta
+		title="{character.name} - Adventurers League Log Sheet"
+		description="{character.race} {character.class}"
+		image={character.image_url}
+	/>
+</svelte:head>
 
 <div class="flex gap-4 print:hidden">
 	<div class="breadcrumbs mb-4 flex-1 text-sm">
