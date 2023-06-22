@@ -8,7 +8,7 @@
 	import { logSchema } from "$lib/types/zod-schema.js";
 	import type { DungeonMaster } from "@prisma/client";
 	import { twMerge } from "tailwind-merge";
-	import type { ZodError } from "zod";
+	import type { ZodError, z } from "zod";
 
 	export let data;
 	export let form;
@@ -17,6 +17,23 @@
 	let log = data.log;
 
 	let season: 1 | 8 | 9 = log.experience ? 1 : log.acp ? 8 : 9;
+
+	$: values = {
+		...log,
+		characterId: character?.id || "",
+		characterName: character?.name || "",
+		description: log.description || "",
+		magic_items_gained: magicItemsGained,
+		magic_items_lost: magicItemsLost,
+		story_awards_gained: storyAwardsGained,
+		story_awards_lost: storyAwardsLost,
+		dm: {
+			id: log.dm?.id || "",
+			name: log.dm?.name || "",
+			DCI: log.dm?.DCI || null,
+			uid: log.dm?.uid || ""
+		}
+	};
 
 	let saving = false;
 	$: {
@@ -50,7 +67,7 @@
 		}
 	}
 
-	function checkErrors() {
+	function checkErrors(log: z.infer<typeof logSchema>) {
 		let result = null;
 		try {
 			result = logSchema.parse(log);
@@ -158,13 +175,13 @@
 		form = null;
 		saving = true;
 
-		checkErrors();
+		checkErrors(values);
 		if (Object.values(errors).find((e) => e.length > 0)) {
 			saving = false;
 			return f.cancel();
 		}
 
-		f.formData.append("log", JSON.stringify(log));
+		f.formData.append("log", JSON.stringify(values));
 		return async ({ update, result }) => {
 			await update({ reset: false });
 			if (result.type !== "redirect") saving = false;
