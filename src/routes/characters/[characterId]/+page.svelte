@@ -108,7 +108,7 @@
 	{#if myCharacter}
 		<a href={`/characters/${character.id}/edit`} class="btn-primary btn-sm btn hidden sm:flex">Edit</a>
 		<div class="dropdown-end dropdown">
-			<span tabIndex={1} class="btn-sm btn">
+			<span role="button" tabindex="0" class="btn-sm btn">
 				<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" class="w-6"
 					><title>dots-horizontal</title><path
 						fill="currentColor"
@@ -116,7 +116,7 @@
 					/></svg
 				>
 			</span>
-			<ul tabIndex={1} class="dropdown-content menu rounded-box w-52 bg-base-100 p-2 shadow z-20">
+			<ul class="dropdown-content menu rounded-box w-52 bg-base-100 p-2 shadow z-20">
 				<li class="flex sm:hidden">
 					<a href={`/characters/${character.id}/edit`}>Edit</a>
 				</li>
@@ -299,7 +299,7 @@
 				</tr>
 			</thead>
 			<tbody>
-				{#each results as log}
+				{#each results as log, i}
 					<tr class={twMerge("border-b-0 border-t-2 border-t-base-200 print:text-sm", deletingLog.includes(log.id) && "hidden")}>
 						<td
 							class={twMerge(
@@ -309,13 +309,15 @@
 									"border-b-0"
 							)}
 						>
-							<p
+							<div
 								class="whitespace-pre-wrap font-semibold text-accent-content"
 								on:click={() => triggerModal(log)}
 								on:keypress={() => null}
+								role="button"
+								tabindex="0"
 							>
 								<SearchResults text={log.name} {search} />
-							</p>
+							</div>
 							<p class="text-netural-content mb-2 text-xs font-normal">
 								{new Date(log.is_dm_log && log.applied_date ? log.applied_date : log.date).toLocaleString()}
 							</p>

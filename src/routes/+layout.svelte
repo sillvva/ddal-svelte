@@ -46,7 +46,7 @@
 				</a>
 				{#if data.session?.user}
 					<div class="dropdown-end dropdown">
-						<div tabIndex={0} class="flex cursor-pointer">
+						<div role="button" tabindex="0" class="flex cursor-pointer">
 							<div class="hidden items-center px-4 text-accent-content print:flex sm:flex">
 								{data.session?.user?.name}
 							</div>
@@ -62,7 +62,7 @@
 								</div>
 							</div>
 						</div>
-						<ul tabIndex={0} class="dropdown-content menu rounded-box w-52 bg-base-100 p-2 shadow">
+						<ul class="dropdown-content menu rounded-box w-52 bg-base-100 p-2 shadow">
 							<li class="sm:hidden">
 								<span>{data.session?.user?.name}</span>
 							</li>
