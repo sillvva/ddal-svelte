@@ -144,13 +144,22 @@
 						<div class="pr-0 transition-colors sm:pr-2">
 							<div class="avatar">
 								<div class="mask mask-squircle h-12 w-12 bg-primary">
-									<img
-										src={character.image_url || ""}
-										width={48}
-										height={48}
-										class="h-full w-full object-cover object-top transition-all hover:scale-125"
-										alt={character.name}
-									/>
+									{#if character.image_url}
+										<img
+											src={character.image_url}
+											width={48}
+											height={48}
+											class="h-full w-full object-cover object-top transition-all hover:scale-125"
+											alt={character.name}
+										/>
+									{:else}
+										<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" class="w-12"
+											><title>account</title><path
+												fill="currentColor"
+												d="M12,4A4,4 0 0,1 16,8A4,4 0 0,1 12,12A4,4 0 0,1 8,8A4,4 0 0,1 12,4M12,14C16.42,14 20,15.79 20,18V20H4V18C4,15.79 7.58,14 12,14Z"
+											/></svg
+										>
+									{/if}
 								</div>
 							</div>
 						</div>
