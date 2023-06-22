@@ -4,4 +4,9 @@
 	let el: HTMLTextAreaElement;
 </script>
 
-<textarea bind:this={el} bind:value {...$$props} style={`min-height: ${el?.scrollHeight + 10}px; height: auto; resize: none;`} />
+<textarea
+	bind:this={el}
+	bind:value
+	{...$$restProps}
+	style={`min-height: ${el?.scrollHeight + 10}px; height: auto; resize: none;`}
+/>

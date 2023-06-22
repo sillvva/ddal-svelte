@@ -45,14 +45,14 @@
 <div
 	class="dropdown"
 	role="combobox"
-	aria-controls="options-{$$props.name}"
+	aria-controls="options-{$$restProps.name}"
 	aria-expanded={!!(parsedValues && parsedValues.length > 0 && valSearch.trim() && !selected)}
 >
 	<label>
 		<input
 			type="text"
 			bind:value
-			{...$$props}
+			{...$$restProps}
 			on:input={(e) => {
 				selected = false;
 				keysel = 0;
@@ -97,7 +97,7 @@
 		/>
 	</label>
 	{#if parsedValues && parsedValues.length > 0 && valSearch.trim() && !selected}
-		<ul id="options-{$$props.name}" class="dropdown-content menu w-full rounded-lg bg-base-100 p-2 shadow dark:bg-base-200">
+		<ul id="options-{$$restProps.name}" class="dropdown-content menu w-full rounded-lg bg-base-100 p-2 shadow dark:bg-base-200">
 			{#each matches.slice(0, 8) as kv, i}
 				<li class={twMerge("hover:bg-primary/50", keysel === i && "bg-primary text-primary-content")}>
 					<span
