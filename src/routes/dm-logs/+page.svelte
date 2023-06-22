@@ -77,7 +77,7 @@
 			</div>
 		{/if}
 		<div class="dropdown-end dropdown">
-			<span tabIndex={1} class="btn-sm btn">
+			<span role="button" tabindex="0" class="btn-sm btn">
 				<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" class="w-6"
 					><title>dots-horizontal</title><path
 						fill="currentColor"
@@ -85,7 +85,7 @@
 					/></svg
 				>
 			</span>
-			<ul tabIndex={1} class="dropdown-content menu rounded-box w-52 bg-base-100 p-2 shadow">
+			<ul class="dropdown-content menu rounded-box w-52 bg-base-100 p-2 shadow">
 				<li>
 					<a download={`dm.json`} href={`/api/export/dm`} target="_blank" rel="noreferrer noopener">Export</a>
 				</li>
@@ -341,9 +341,14 @@
 			</table>
 		</div>
 
-		<div class={twMerge("modal cursor-pointer", modal && "modal-open")} on:click={() => (modal = null)} on:keypress={() => null}>
+		<div
+			role="presentation"
+			class={twMerge("modal cursor-pointer", modal && "modal-open")}
+			on:click={() => (modal = null)}
+			on:keypress={() => null}
+		>
 			{#if modal}
-				<div class="modal-box relative">
+				<div class="modal-box relative" role="presentation" on:click={(e) => e.stopPropagation()} on:keypress={() => null}>
 					<h3 class="text-lg font-bold text-accent-content">{modal.name}</h3>
 					{#if modal.date}
 						<p class="text-xs">{modal.date.toLocaleString()}</p>

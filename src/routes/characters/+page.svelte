@@ -89,7 +89,7 @@
 			</a>
 		{/if}
 		<div class="dropdown-end dropdown">
-			<span tabIndex={1} class="btn-sm btn">
+			<span role="button" tabindex="0" class="btn-sm btn">
 				<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" class="w-6"
 					><title>dots-horizontal</title><path
 						fill="currentColor"
@@ -97,7 +97,7 @@
 					/></svg
 				>
 			</span>
-			<ul tabIndex={1} class="dropdown-content menu rounded-box w-52 bg-base-100 p-2 shadow">
+			<ul class="dropdown-content menu rounded-box w-52 bg-base-100 p-2 shadow">
 				<li>
 					<a download={`characters.json`} href={`/api/export/characters/all`} target="_blank" rel="noreferrer noopener">Export</a>
 				</li>

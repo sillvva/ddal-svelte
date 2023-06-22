@@ -42,7 +42,12 @@
 	};
 </script>
 
-<div class="dropdown">
+<div
+	class="dropdown"
+	role="combobox"
+	aria-controls="options-{$$props.name}"
+	aria-expanded={!!(parsedValues && parsedValues.length > 0 && valSearch.trim() && !selected)}
+>
 	<label>
 		<input
 			type="text"
@@ -92,10 +97,16 @@
 		/>
 	</label>
 	{#if parsedValues && parsedValues.length > 0 && valSearch.trim() && !selected}
-		<ul class="dropdown-content menu w-full rounded-lg bg-base-100 p-2 shadow dark:bg-base-200">
+		<ul id="options-{$$props.name}" class="dropdown-content menu w-full rounded-lg bg-base-100 p-2 shadow dark:bg-base-200">
 			{#each matches.slice(0, 8) as kv, i}
 				<li class={twMerge("hover:bg-primary/50", keysel === i && "bg-primary text-primary-content")}>
-					<span class="rounded-none px-4 py-2" on:mousedown={() => selectHandler(i)}>
+					<span
+						class="rounded-none px-4 py-2"
+						role="option"
+						tabindex="0"
+						aria-selected={keysel === i}
+						on:mousedown={() => selectHandler(i)}
+					>
 						{kv.value}
 					</span>
 				</li>

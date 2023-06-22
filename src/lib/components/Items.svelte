@@ -16,8 +16,12 @@
 
 <div class={twMerge("flex-1 flex-col", collapsible && !items.length ? "hidden md:flex" : "flex")}>
 	{#if title}
-		<h4 class="flex font-semibold" on:click={collapsible ? () => (collapsed = !collapsed) : () => {}} on:keypress={() => {}}>
-			<span class="flex-1">{title}</span>
+		<h4 class="flex font-semibold text-left">
+			<span class="flex-1">
+				<button on:click={collapsible ? () => (collapsed = !collapsed) : () => {}} on:keypress={() => {}}>
+					{title}
+				</button>
+			</span>
 			{#if collapsible}
 				{#if collapsed}
 					<svg
@@ -46,8 +50,10 @@
 	<p class={twMerge("divide-x whitespace-pre-wrap text-sm print:text-xs", collapsed ? "hidden print:block md:block" : "")}>
 		{#if items.length}
 			{#each items as mi}
-				<span
-					class="whitespace-pre-wrap pl-2 pr-1 first:pl-0"
+				<div
+					role="button"
+					tabindex="0"
+					class="whitespace-pre-wrap pl-2 pr-1 first:pl-0 inline"
 					on:click={() => {
 						if (mi.description) {
 							modal = { name: mi.name, description: mi.description };
@@ -62,16 +68,26 @@
 					{:else}
 						<SearchResults text={mi.name + (mi.description && "*")} search={search || ""} />
 					{/if}
-				</span>
+				</div>
 			{/each}
 		{:else}
 			None
 		{/if}
 	</p>
 </div>
-<div class={twMerge("modal cursor-pointer", modal && "modal-open")} on:click={() => (modal = null)} on:keypress={() => null}>
+<div
+	role="presentation"
+	class={twMerge("modal cursor-pointer", modal && "modal-open")}
+	on:click={() => (modal = null)}
+	on:keypress={() => null}
+>
 	{#if modal}
-		<div class="modal-box relative cursor-default drop-shadow-lg" on:click={(e) => e.stopPropagation()} on:keypress={() => null}>
+		<div
+			role="presentation"
+			class="modal-box relative cursor-default drop-shadow-lg"
+			on:click={(e) => e.stopPropagation()}
+			on:keypress={() => null}
+		>
 			<h3 class="cursor-text text-lg font-bold text-accent-content">{modal.name}</h3>
 			{#if modal.date}
 				<p class="text-xs">{modal.date.toLocaleString()}</p>

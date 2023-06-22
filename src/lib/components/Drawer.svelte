@@ -21,15 +21,15 @@
 	>
 </button>
 <div class={twMerge("fixed -left-72 bottom-0 top-0 z-50 w-72 bg-base-100 px-4 py-4 transition-all", drawer && "left-0")}>
-	<ul class="menu w-full" on:keydown={() => toggleDrawer(false)} on:click={() => toggleDrawer(false)}>
+	<ul class="menu w-full">
 		<li>
-			<a href="/characters">Character Logs</a>
+			<a href="/characters" on:keydown={() => toggleDrawer(false)} on:click={() => toggleDrawer(false)}>Character Logs</a>
 		</li>
 		<li>
-			<a href="/dm-logs">DM Logs</a>
+			<a href="/dm-logs" on:keydown={() => toggleDrawer(false)} on:click={() => toggleDrawer(false)}>DM Logs</a>
 		</li>
 		<li>
-			<a href="/dms">DMs</a>
+			<a href="/dms" on:keydown={() => toggleDrawer(false)} on:click={() => toggleDrawer(false)}>DMs</a>
 		</li>
 	</ul>
 	<div class="divider" />
@@ -52,4 +52,5 @@
 	)}
 	on:keydown={() => toggleDrawer(false)}
 	on:click={() => toggleDrawer(false)}
+	role="none"
 />
