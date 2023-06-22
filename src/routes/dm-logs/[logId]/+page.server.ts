@@ -17,6 +17,8 @@ export const load = (async (event) => {
 	const characters = await getCharacters(session.user.id);
 	const character = characters.find((c) => c.id === log.characterId);
 
+	log.dm = log.dm?.name ? log.dm : { name: session.user.name || "", id: "", DCI: null, uid: session.user.id };
+
 	return {
 		log,
 		characters,
@@ -44,16 +46,21 @@ export const actions = {
 				date: new Date(parsedData.date),
 				applied_date: parsedData.applied_date
 					? new Date(parsedData.applied_date)
-					: log.is_dm_log
-					? new Date(log.created_at)
-					: null,
-				created_at: new Date(parsedData.created_at)
+					: !log.is_dm_log
+					? new Date(parsedData.date)
+					: null
 			});
 
-			if (!logData.is_dm_log) throw new Error("Only DM logs can be saved here");
+			if (!logData.is_dm_log) throw new Error("Only DM logs can be saved here.");
 
-			const character = await getCharacter(logData.characterId, false);
-			if (!character) throw new Error("Character not found");
+			if (logData.characterId && logData.applied_date) {
+				const character = await getCharacter(logData.characterId, false);
+				if (!character) throw new Error("Character not found");
+			} else if (logData.characterId && !logData.applied_date) {
+				throw new Error("Applied date is required if character is selected.");
+			} else if (!logData.characterId && logData.applied_date) {
+				throw new Error("Character is required if applied date is entered.");
+			}
 
 			const result = await saveLog(logData, session.user);
 			if (result && result.id) throw redirect(301, `/dm-logs`);

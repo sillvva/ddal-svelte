@@ -47,7 +47,7 @@
 		{#if items.length}
 			{#each items as mi}
 				<span
-					class="whitespace-pre-wrap pl-2 first:pl-0"
+					class="whitespace-pre-wrap pl-2 pr-1 first:pl-0"
 					on:click={() => {
 						if (mi.description) {
 							modal = { name: mi.name, description: mi.description };
