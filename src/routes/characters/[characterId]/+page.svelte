@@ -303,7 +303,7 @@
 					<tr class={twMerge("border-b-0 border-t-2 border-t-base-200 print:text-sm", deletingLog.includes(log.id) && "hidden")}>
 						<td
 							class={twMerge(
-								"!static align-top print:p-2",
+								"!static align-top print:p-2 pb-0 sm:pb-3",
 								log.saving && "bg-neutral-focus",
 								(log.description?.trim() || log.story_awards_gained.length > 0 || log.story_awards_lost.length > 0) &&
 									"border-b-0"
@@ -359,12 +359,6 @@
 										{log.gold.toLocaleString("en-US")}
 									</p>
 								{/if}
-								<div>
-									<Items title="Magic Items" items={log.magic_items_gained} {search} />
-									<p class="whitespace-pre-wrap text-sm line-through">
-										<SearchResults text={log.magic_items_lost.map((mi) => mi.name).join(" | ")} {search} />
-									</p>
-								</div>
 							</div>
 						</td>
 						<td
@@ -419,7 +413,7 @@
 							{/if}
 							{#if log.magic_items_gained.length > 0 || log.magic_items_lost.length > 0}
 								<div>
-									<Items title="Magic Items" items={log.magic_items_gained} {search} />
+									<Items title="Magic Items:" items={log.magic_items_gained} {search} />
 									<div class="whitespace-pre-wrap text-sm line-through">
 										<SearchResults text={log.magic_items_lost.map((mi) => mi.name).join(" | ")} {search} />
 									</div>
@@ -500,27 +494,40 @@
 							<td
 								colSpan={100}
 								class={twMerge(
-									"max-w-[calc(100vw_-_50px)] whitespace-pre-wrap pt-0 text-sm print:p-2 print:text-xs",
+									"max-w-[calc(100vw_-_50px)] pt-0 text-sm print:p-2 print:text-xs",
 									log.saving && "bg-neutral-focus"
 								)}
 							>
-								<h4 class="text-base font-semibold">Notes:</h4>
-								<Markdown content={log.description || ""} />
+								{#if log.description?.trim()}
+									<h4 class="text-base font-semibold">Notes:</h4>
+									<Markdown content={log.description} />
+								{/if}
+								{#if log.magic_items_gained.length > 0 || log.magic_items_lost.length > 0}
+									<div class="print:hidden sm:hidden mt-2">
+										<Items title="Magic Items:" items={log.magic_items_gained} {search} />
+										{#if log.magic_items_lost.length}
+											<p class="whitespace-pre-wrap text-sm line-through mt-2">
+												<SearchResults text={log.magic_items_lost.map((mi) => mi.name).join(" | ")} {search} />
+											</p>
+										{/if}
+									</div>
+								{/if}
 								{#if log.story_awards_gained.length > 0 || log.story_awards_lost.length > 0}
-									<div>
-										{#each log.story_awards_gained as mi}
-											<div class="whitespace-pre-wrap text-sm">
-												<span class="pr-2 font-semibold print:block">
-													{mi.name}
-													{mi.description ? ":" : ""}
-												</span>
+									{#each log.story_awards_gained as mi}
+										<div class="whitespace-pre-wrap text-sm mt-2">
+											<span class="pr-2 font-semibold print:block">
+												{mi.name}{mi.description ? ":" : ""}
+											</span>
+											{#if mi.description}
 												<Markdown content={mi.description || ""} />
-											</div>
-										{/each}
+											{/if}
+										</div>
+									{/each}
+									{#if log.story_awards_lost.length}
 										<p class="whitespace-pre-wrap text-sm line-through">
 											{log.story_awards_lost.map((mi) => mi.name).join(" | ")}
 										</p>
-									</div>
+									{/if}
 								{/if}
 							</td>
 						</tr>
