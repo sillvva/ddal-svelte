@@ -6,7 +6,7 @@
 	import { formatDate } from "$lib/misc";
 	import { logSchema } from "$lib/types/zod-schema.js";
 	import { twMerge } from "tailwind-merge";
-	import type { ZodError } from "zod";
+	import type { z, ZodError } from "zod";
 
 	export let data;
 	export let form;
@@ -14,6 +14,23 @@
 	let log = data.log;
 	let character = data.character;
 	let season: 1 | 8 | 9 = log.experience ? 1 : log.acp ? 8 : 9;
+
+	$: values = {
+		...log,
+		characterId: character?.id || "",
+		characterName: character?.name || "",
+		description: log.description || "",
+		magic_items_gained: magicItemsGained,
+		magic_items_lost: [],
+		story_awards_gained: storyAwardsGained,
+		story_awards_lost: [],
+		dm: {
+			id: log.dm?.id || "",
+			name: log.dm?.name || "",
+			DCI: log.dm?.DCI || null,
+			uid: log.dm?.uid || ""
+		}
+	};
 
 	let saving = false;
 	$: {
@@ -43,13 +60,13 @@
 				});
 			}
 
-			extraErrors();
+			extraErrors(values);
 		} else {
 			errors = {};
 		}
 	}
 
-	function extraErrors() {
+	function extraErrors(log: z.infer<typeof logSchema>) {
 		if (log.characterId && !(data.characters || []).find((c) => c.id === log.characterId)) {
 			errors["characterId"] = "Character not found";
 		}
@@ -63,11 +80,11 @@
 		}
 	}
 
-	function checkErrors(formError = false) {
+	function checkErrors(log: z.infer<typeof logSchema>) {
 		let result = null;
 		try {
 			result = logSchema.parse(log);
-			extraErrors();
+			extraErrors(log);
 		} catch (error) {
 			(error as ZodError).errors.forEach((e) => {
 				errors[e.path[0].toString()] = e.message;
@@ -138,17 +155,17 @@
 		form = null;
 		saving = true;
 
-		checkErrors();
+		if (log.applied_date?.getTime() === 0) {
+			log.applied_date = null;
+		}
+
+		checkErrors(values);
 		if (Object.values(errors).find((e) => e.length > 0)) {
 			saving = false;
 			return f.cancel();
 		}
 
-		if (log.applied_date?.getTime() === 0) {
-			log.applied_date = null;
-		}
-
-		f.formData.append("log", JSON.stringify(log));
+		f.formData.append("log", JSON.stringify(values));
 		return async ({ update, result }) => {
 			await update({ reset: false });
 			if (result.type !== "redirect") saving = false;
