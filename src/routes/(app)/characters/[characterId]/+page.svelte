@@ -91,65 +91,67 @@
 	image={character.image_url}
 />
 
-<div class="flex gap-4 print:hidden">
-	<div class="breadcrumbs mb-4 flex-1 text-sm">
-		<ul>
-			<li>
-				<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" class="w-4"
-					><title>home</title><path fill="currentColor" d="M10,20V14H14V20H19V12H22L12,3L2,12H5V20H10Z" /></svg
-				>
-			</li>
-			<li>
-				<a href="/characters" class="text-secondary">Characters</a>
-			</li>
-			<li class="overflow-hidden text-ellipsis whitespace-nowrap dark:drop-shadow-md">{character.name}</li>
-		</ul>
-	</div>
-	{#if myCharacter}
-		<a href={`/characters/${character.id}/edit`} class="btn-primary btn-sm btn hidden sm:flex">Edit</a>
-		<div class="dropdown-end dropdown">
-			<span role="button" tabindex="0" class="btn-sm btn">
-				<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" class="w-6"
-					><title>dots-horizontal</title><path
-						fill="currentColor"
-						d="M16,12A2,2 0 0,1 18,10A2,2 0 0,1 20,12A2,2 0 0,1 18,14A2,2 0 0,1 16,12M10,12A2,2 0 0,1 12,10A2,2 0 0,1 14,12A2,2 0 0,1 12,14A2,2 0 0,1 10,12M4,12A2,2 0 0,1 6,10A2,2 0 0,1 8,12A2,2 0 0,1 6,14A2,2 0 0,1 4,12Z"
-					/></svg
-				>
-			</span>
-			<ul class="dropdown-content menu rounded-box w-52 bg-base-100 p-2 shadow z-20">
-				<li class="flex sm:hidden">
-					<a href={`/characters/${character.id}/edit`}>Edit</a>
+{#if data.session?.user}
+	<div class="flex gap-4 print:hidden">
+		<div class="breadcrumbs mb-4 flex-1 text-sm">
+			<ul>
+				<li>
+					<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" class="w-4"
+						><title>home</title><path fill="currentColor" d="M10,20V14H14V20H19V12H22L12,3L2,12H5V20H10Z" /></svg
+					>
 				</li>
 				<li>
-					<a
-						download={`${slugify(character.name)}.json`}
-						href={`/api/export/characters/${character.id}`}
-						target="_blank"
-						rel="noreferrer noopener"
-					>
-						Export
-					</a>
+					<a href="/characters" class="text-secondary">Characters</a>
 				</li>
-				<li>
-					<form
-						method="POST"
-						action="?/deleteCharacter"
-						use:enhance={() => {
-							$pageLoader = true;
-							return ({ update, result }) => {
-								update();
-								if (result.type !== "redirect") $pageLoader = false;
-							};
-						}}
-						class="bg-red-800 hover:bg-red-900"
-					>
-						<button>Delete Character</button>
-					</form>
-				</li>
+				<li class="overflow-hidden text-ellipsis whitespace-nowrap dark:drop-shadow-md">{character.name}</li>
 			</ul>
 		</div>
-	{/if}
-</div>
+		{#if myCharacter}
+			<a href={`/characters/${character.id}/edit`} class="btn-primary btn-sm btn hidden sm:flex">Edit</a>
+			<div class="dropdown-end dropdown">
+				<span role="button" tabindex="0" class="btn-sm btn">
+					<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" class="w-6"
+						><title>dots-horizontal</title><path
+							fill="currentColor"
+							d="M16,12A2,2 0 0,1 18,10A2,2 0 0,1 20,12A2,2 0 0,1 18,14A2,2 0 0,1 16,12M10,12A2,2 0 0,1 12,10A2,2 0 0,1 14,12A2,2 0 0,1 12,14A2,2 0 0,1 10,12M4,12A2,2 0 0,1 6,10A2,2 0 0,1 8,12A2,2 0 0,1 6,14A2,2 0 0,1 4,12Z"
+						/></svg
+					>
+				</span>
+				<ul class="dropdown-content menu rounded-box w-52 bg-base-100 p-2 shadow z-20">
+					<li class="flex sm:hidden">
+						<a href={`/characters/${character.id}/edit`}>Edit</a>
+					</li>
+					<li>
+						<a
+							download={`${slugify(character.name)}.json`}
+							href={`/api/export/characters/${character.id}`}
+							target="_blank"
+							rel="noreferrer noopener"
+						>
+							Export
+						</a>
+					</li>
+					<li>
+						<form
+							method="POST"
+							action="?/deleteCharacter"
+							use:enhance={() => {
+								$pageLoader = true;
+								return ({ update, result }) => {
+									update();
+									if (result.type !== "redirect") $pageLoader = false;
+								};
+							}}
+							class="bg-red-800 hover:bg-red-900"
+						>
+							<button>Delete Character</button>
+						</form>
+					</li>
+				</ul>
+			</div>
+		{/if}
+	</div>
+{/if}
 
 {#if form?.error}
 	<div class="alert alert-error shadow-lg mb-4">
