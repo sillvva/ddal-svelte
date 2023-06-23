@@ -4,12 +4,11 @@ import { serverGetCookie } from "$src/server/cookie";
 import { getCharacter } from "$src/server/data/characters";
 import { redirect } from "@sveltejs/kit";
 
-import type { Actions, PageServerLoad } from "./$types";
 const defaultCookie = {
 	descriptions: false
 };
 
-export const load = (async (event) => {
+export const load = async (event) => {
 	const character = await getCharacter(event.params.characterId);
 	if (!character) throw redirect(301, "/characters");
 	const cookie = serverGetCookie(event.cookies, "characters", defaultCookie);
@@ -17,7 +16,7 @@ export const load = (async (event) => {
 		character,
 		...cookie
 	};
-}) satisfies PageServerLoad;
+};
 
 export const actions = {
 	deleteCharacter: async (event) => {
@@ -37,4 +36,4 @@ export const actions = {
 		const logId = (data.get("logId") || "") as string;
 		return await deleteLog(logId, session.user.id);
 	}
-} satisfies Actions;
+};

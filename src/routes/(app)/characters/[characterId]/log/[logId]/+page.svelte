@@ -1,14 +1,13 @@
 <script lang="ts">
-	import { enhance } from "$app/forms";
 	import AutoFillSelect from "$lib/components/AutoFillSelect.svelte";
 	import AutoResizeTextArea from "$lib/components/AutoResizeTextArea.svelte";
 	import Meta from "$lib/components/Meta.svelte";
 	import { getMagicItems, getStoryAwards } from "$lib/entities.js";
 	import { formatDate } from "$lib/misc.js";
 	import { logSchema } from "$lib/types/zod-schema.js";
+	import SchemaForm from "$src/lib/components/SchemaForm.svelte";
 	import type { DungeonMaster } from "@prisma/client";
 	import { twMerge } from "tailwind-merge";
-	import type { ZodError, z } from "zod";
 
 	export let data;
 	export let form;
@@ -16,7 +15,8 @@
 	const character = data.character;
 	let log = data.log;
 
-	let season: 1 | 8 | 9 = log.experience ? 1 : log.acp ? 8 : 9;
+	let saving = false;
+	let errors: Record<string, string> = {};
 
 	$: values = {
 		...log,
@@ -35,51 +35,6 @@
 		}
 	};
 
-	let saving = false;
-	$: {
-		if (form && saving) saving = false;
-	}
-
-	let changes: string[] = [];
-	function addChanges(field: string) {
-		changes = [...changes.filter((c) => c !== field), field];
-	}
-
-	let errors: Record<string, string> = {};
-	$: {
-		if (changes.length) {
-			changes.forEach((c) => {
-				errors[c] = "";
-			});
-			try {
-				logSchema.parse(log);
-			} catch (error) {
-				changes.forEach((c) => {
-					(error as ZodError).errors
-						.filter((e) => e.path[0] === c)
-						.forEach((e) => {
-							errors[e.path[0].toString()] = e.message;
-						});
-				});
-			}
-		} else {
-			errors = {};
-		}
-	}
-
-	function checkErrors(log: z.infer<typeof logSchema>) {
-		let result = null;
-		try {
-			result = logSchema.parse(log);
-		} catch (error) {
-			(error as ZodError).errors.forEach((e) => {
-				errors[e.path[0].toString()] = e.message;
-			});
-		}
-
-		return result;
-	}
-
 	const setDM = (dm?: DungeonMaster) => {
 		log = {
 			...log,
@@ -92,6 +47,7 @@
 		};
 	};
 
+	let season: 1 | 8 | 9 = log.experience ? 1 : log.acp ? 8 : 9;
 	let magicItemsGained = log.magic_items_gained.map((mi) => ({
 		id: mi.id,
 		name: mi.name,
@@ -168,26 +124,7 @@
 	</div>
 {/if}
 
-<form
-	method="POST"
-	action="?/saveLog"
-	use:enhance={(f) => {
-		form = null;
-		saving = true;
-
-		checkErrors(values);
-		if (Object.values(errors).find((e) => e.length > 0)) {
-			saving = false;
-			return f.cancel();
-		}
-
-		f.formData.append("log", JSON.stringify(values));
-		return async ({ update, result }) => {
-			await update({ reset: false });
-			if (result.type !== "redirect") saving = false;
-		};
-	}}
->
+<SchemaForm action="?/saveLog" data={values} bind:form bind:saving bind:errors schema={logSchema} stringify="log">
 	<input type="hidden" name="characterId" value={character.id} />
 	<input type="hidden" name="logId" value={data.logId === "new" ? "" : data.logId} />
 	<input type="hidden" name="is_dm_log" value={log.is_dm_log} />
@@ -197,13 +134,7 @@
 				<label for="type" class="label">
 					<span class="label-text">Log Type</span>
 				</label>
-				<select
-					name="type"
-					bind:value={log.type}
-					on:input={() => addChanges("type")}
-					disabled={saving}
-					class="select-bordered select w-full"
-				>
+				<select name="type" bind:value={log.type} disabled={saving} class="select-bordered select w-full">
 					<option value="game">Game</option>
 					<option value="nongame">Non-Game (Purchase, Trade, etc)</option>
 				</select>
@@ -222,7 +153,6 @@
 				required
 				disabled={saving}
 				bind:value={log.name}
-				on:input={(e) => addChanges(e.currentTarget.name)}
 				class="input-bordered input w-full focus:border-primary"
 				aria-invalid={errors.name ? "true" : "false"}
 			/>
@@ -245,7 +175,6 @@
 				value={formatDate(log.date)}
 				on:input={(e) => {
 					log.date = new Date(e.currentTarget.value);
-					addChanges(e.currentTarget.name);
 				}}
 				class="input-bordered input w-full focus:border-primary"
 				aria-invalid={errors.date ? "true" : "false"}
@@ -273,7 +202,6 @@
 							values={data.dms.map((dm) => ({ key: dm.name, value: dm.name + (dm.DCI ? ` (${dm.DCI})` : "") })) || []}
 							onSelect={(val) => {
 								setDM(data.dms.find((dm) => dm.name === val));
-								addChanges("dmName");
 							}}
 						/>
 						<label for="dmName" class="label">
@@ -291,7 +219,6 @@
 							values={data.dms.map((dm) => ({ key: dm.DCI, value: dm.name + (dm.DCI ? ` (${dm.DCI})` : "") })) || []}
 							onSelect={(val) => {
 								setDM(data.dms.find((dm) => dm.DCI === val));
-								addChanges("dmDCI");
 							}}
 						/>
 						<label for="dmDCI" class="label">
@@ -320,7 +247,6 @@
 							min="0"
 							disabled={saving}
 							bind:value={log.experience}
-							on:input={(e) => addChanges(e.currentTarget.name)}
 							class="input-bordered input w-full focus:border-primary"
 						/>
 						<label for="experience" class="label">
@@ -340,7 +266,6 @@
 							max={Math.max(log.level, character ? 20 - character.total_level : 19)}
 							disabled={saving}
 							bind:value={log.level}
-							on:input={(e) => addChanges(e.currentTarget.name)}
 							class="input-bordered input w-full focus:border-primary"
 						/>
 						<label for="level" class="label">
@@ -360,7 +285,6 @@
 							name="acp"
 							disabled={saving}
 							bind:value={log.acp}
-							on:input={(e) => addChanges(e.currentTarget.name)}
 							class="input-bordered input w-full focus:border-primary"
 						/>
 						<label for="acp" class="label">
@@ -377,7 +301,6 @@
 						name="tcp"
 						disabled={saving}
 						bind:value={log.tcp}
-						on:input={(e) => addChanges(e.currentTarget.name)}
 						class="input-bordered input w-full focus:border-primary"
 					/>
 					<label for="tcp" class="label">
@@ -394,7 +317,6 @@
 					name="gold"
 					disabled={saving}
 					bind:value={log.gold}
-					on:input={(e) => addChanges(e.currentTarget.name)}
 					class="input-bordered input w-full focus:border-primary"
 				/>
 				<label for="gold" class="label">
@@ -410,7 +332,6 @@
 					name="dtd"
 					disabled={saving}
 					bind:value={log.dtd}
-					on:input={(e) => addChanges(e.currentTarget.name)}
 					class="input-bordered input w-full focus:border-primary"
 				/>
 				<label for="dtd" class="label">
@@ -481,7 +402,6 @@
 										magicItemsGained = magicItemsGained.map((item, i) =>
 											i === index ? { ...item, name: e.currentTarget.value } : item
 										);
-										addChanges(`magic_items_gained.${index}.name`);
 									}}
 									disabled={saving}
 									class="input-bordered input w-full focus:border-primary"
@@ -537,7 +457,6 @@
 									name={`magic_items_lost.${index}`}
 									on:change={(e) => {
 										magicItemsLost = magicItemsLost.map((item, i) => (i === index ? e.currentTarget.value : item));
-										addChanges(`magic_items_lost.${index}`);
 									}}
 									disabled={saving}
 									class="select-bordered select w-full"
@@ -582,7 +501,6 @@
 										storyAwardsGained = storyAwardsGained.map((item, i) =>
 											i === index ? { ...item, name: e.currentTarget.value } : item
 										);
-										addChanges(`story_awards_gained.${index}.name`);
 									}}
 									disabled={saving}
 									class="input-bordered input w-full focus:border-primary"
@@ -638,7 +556,6 @@
 									name={`story_awards_lost.${index}`}
 									on:change={(e) => {
 										storyAwardsLost = storyAwardsLost.map((item, i) => (i === index ? e.currentTarget.value : item));
-										addChanges(`story_awards_lost.${index}`);
 									}}
 									disabled={saving}
 									class="select-bordered select w-full"
@@ -671,4 +588,4 @@
 			<button type="submit" class={twMerge("btn-primary btn", saving && "loading")} disabled={saving}>Save Log</button>
 		</div>
 	</div>
-</form>
+</SchemaForm>

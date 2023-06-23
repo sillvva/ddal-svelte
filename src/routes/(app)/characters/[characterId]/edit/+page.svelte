@@ -1,9 +1,8 @@
 <script lang="ts">
-	import { enhance } from "$app/forms";
 	import Meta from "$lib/components/Meta.svelte";
 	import { newCharacterSchema } from "$lib/types/zod-schema.js";
+	import SchemaForm from "$src/lib/components/SchemaForm.svelte";
 	import { twMerge } from "tailwind-merge";
-	import type { ZodError } from "zod";
 
 	export let data;
 	export let form;
@@ -11,36 +10,7 @@
 	const character = data.character;
 
 	let saving = false;
-	$: {
-		if (form && saving) saving = false;
-	}
-
-	let changes: string[] = [];
-	function addChanges(field: string) {
-		changes = [...changes.filter((c) => c !== field), field];
-	}
-
 	let errors: Record<string, string> = {};
-	$: {
-		if (changes.length) {
-			changes.forEach((c) => {
-				errors[c] = "";
-			});
-			try {
-				newCharacterSchema.parse(character);
-			} catch (error) {
-				changes.forEach((c) => {
-					(error as ZodError).errors
-						.filter((e) => e.path[0] === c)
-						.forEach((e) => {
-							errors[e.path[0].toString()] = e.message;
-						});
-				});
-			}
-		} else {
-			errors = {};
-		}
-	}
 </script>
 
 {#if data.characterId == "new"}
@@ -84,22 +54,7 @@
 	</div>
 {/if}
 
-<form
-	method="POST"
-	action="?/saveCharacter"
-	use:enhance={(f) => {
-		form = null;
-		saving = true;
-		if (Object.values(errors).find((e) => e.length > 0)) {
-			saving = false;
-			return f.cancel();
-		}
-		return async ({ update, result }) => {
-			await update({ reset: false });
-			if (result.type !== "redirect") saving = false;
-		};
-	}}
->
+<SchemaForm action="?/saveCharacter" data={character} bind:form bind:errors schema={newCharacterSchema}>
 	<div class="flex flex-wrap">
 		<div class="basis-full px-2 sm:basis-1/2">
 			<div class="form-control w-full">
@@ -115,7 +70,6 @@
 					required
 					disabled={saving}
 					bind:value={character.name}
-					on:input={() => addChanges("name")}
 					class="input-bordered input w-full focus:border-primary"
 				/>
 				<label for="name" class="label">
@@ -137,7 +91,6 @@
 					required
 					disabled={saving}
 					bind:value={character.campaign}
-					on:input={() => addChanges("campaign")}
 					class="input-bordered input w-full focus:border-primary"
 				/>
 				<label for="campaign" class="label">
@@ -155,7 +108,6 @@
 					name="race"
 					disabled={saving}
 					bind:value={character.race}
-					on:input={() => addChanges("race")}
 					class="input-bordered input w-full focus:border-primary"
 				/>
 				<label for="race" class="label">
@@ -173,7 +125,6 @@
 					name="class"
 					disabled={saving}
 					bind:value={character.class}
-					on:input={() => addChanges("class")}
 					class="input-bordered input w-full focus:border-primary"
 				/>
 				<label for="class" class="label">
@@ -191,7 +142,6 @@
 					name="character_sheet_url"
 					disabled={saving}
 					bind:value={character.character_sheet_url}
-					on:input={() => addChanges("character_sheet_url")}
 					class="input-bordered input w-full focus:border-primary"
 				/>
 				<label for="character_sheet_url" class="label">
@@ -209,7 +159,6 @@
 					name="image_url"
 					disabled={saving}
 					bind:value={character.image_url}
-					on:input={() => addChanges("image_url")}
 					class="input-bordered input w-full focus:border-primary"
 				/>
 				<label for="image_url" class="label">
@@ -221,4 +170,4 @@
 			<button type="submit" class={twMerge("btn-primary btn", saving && "loading")} disabled={saving}>Save</button>
 		</div>
 	</div>
-</form>
+</SchemaForm>

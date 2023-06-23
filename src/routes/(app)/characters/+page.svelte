@@ -59,10 +59,10 @@
 					.map((character) => ({ ...character, score: 0, match: [] }));
 
 	let magicItems = data.magicItems;
+	let display = data.display;
 
-	$: {
-		setCookie("characters:magicItems", magicItems);
-	}
+	$: setCookie("characters:magicItems", magicItems);
+	$: setCookie("characters:display", display);
 </script>
 
 <Meta title="{data.session?.user?.name}'s Characters" />
@@ -82,8 +82,8 @@
 		<div class="flex-1" />
 		{#if characters.length > 0}
 			<a href="/characters/new/edit" class="btn-primary btn-sm btn">
-				<span class="hidden sm:inline">New Character</span>
-				<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" class="inline w-4 sm:hidden"
+				<span class="hidden xs:inline">New Character</span>
+				<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" class="inline w-4 xs:hidden"
 					><title>plus</title><path fill="currentColor" d="M19,13H13V19H11V13H5V11H11V5H13V11H19V13Z" /></svg
 				>
 			</a>
@@ -105,29 +105,53 @@
 		</div>
 	</div>
 
-	<div class="flex gap-4">
+	<div class="flex flex-wrap gap-2">
 		<input
 			type="text"
 			placeholder="Search by name, race, class, items, etc."
 			bind:value={search}
-			class="input-bordered input input-sm w-full max-w-xs"
+			class="input-bordered input input-sm w-full sm:max-w-xs"
 		/>
-		<div class="form-control">
+		<div class="flex-1" />
+		<div class={twMerge("form-control", display == "grid" && "block sm:hidden")}>
 			<label class="label cursor-pointer py-1">
-				<span class="label-text hidden pr-4 sm:inline">Items</span>
+				<span class="label-text pr-4 sm:inline">Show Items</span>
 				<input type="checkbox" class="toggle-primary toggle" bind:checked={magicItems} />
 			</label>
 		</div>
+		<div class="join hidden xs:flex">
+			<button
+				class={twMerge("btn btn-sm join-item hover:btn-primary", display == "list" && "bg-primary")}
+				on:click={() => (display = "list")}
+				on:keypress
+			>
+				<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" class="w-4"
+					><title>format-list-text</title><path
+						fill="currentColor"
+						d="M2 14H8V20H2M16 8H10V10H16M2 10H8V4H2M10 4V6H22V4M10 20H16V18H10M10 16H22V14H10"
+					/></svg
+				>
+			</button>
+			<button
+				class={twMerge("btn btn-sm join-item hover:btn-primary", display == "grid" && "bg-primary")}
+				on:click={() => (display = "grid")}
+				on:keypress
+			>
+				<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" class="w-4"
+					><title>view-grid</title><path fill="currentColor" d="M3,11H11V3H3M3,21H11V13H3M13,21H21V13H13M13,3V11H21V3" /></svg
+				>
+			</button>
+		</div>
 	</div>
 
-	<div class="w-full overflow-x-auto rounded-lg">
+	<div class={twMerge("w-full overflow-x-auto rounded-lg", display == "grid" && "block xs:hidden")}>
 		<div class={twMerge("grid-table", characters.length && "grid-characters-mobile sm:grid-characters")}>
-			<header>
+			<header class="!hidden sm:!contents">
 				<div />
 				<div>Name</div>
-				<div class="hidden sm:block">Campaign</div>
-				<div class="hidden sm:block text-center">Tier</div>
-				<div class="hidden sm:block text-center">Level</div>
+				<div>Campaign</div>
+				<div class="text-center">Tier</div>
+				<div class="text-center">Level</div>
 			</header>
 			{#if !characters.length}
 				<section class="bg-base-100">
@@ -196,4 +220,53 @@
 			{/if}
 		</div>
 	</div>
+
+	{#if !characters.length}
+		<section class="bg-base-100">
+			<div class="py-20 text-center">
+				<p class="mb-4">You have no log sheets.</p>
+				<p>
+					<a href="/characters/new" class="btn-primary btn">Create one now</a>
+				</p>
+			</div>
+		</section>
+	{:else}
+		{#each [1, 2, 3, 4] as tier}
+			{#if results.filter((c) => c.tier == tier).length}
+				<h1
+					class={twMerge(
+						"text-2xl font-bold dark:text-white",
+						display == "list" && "hidden",
+						display == "grid" && "hidden xs:block"
+					)}
+				>
+					Tier {tier}
+				</h1>
+				<div
+					class={twMerge(
+						"w-full",
+						display == "list" && "hidden",
+						display == "grid" && "hidden xs:grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4"
+					)}
+				>
+					{#each results.filter((c) => c.tier == tier) as character}
+						<a href={`/characters/${character.id}`} class="img-grow card card-compact bg-base-100 shadow-xl">
+							<figure class="max-h-36 aspect-square overflow-hidden">
+								<img src={character.image_url} alt={character.name} class="object-cover object-top w-full h-full" />
+							</figure>
+							<div class="card-body">
+								<div class="flex flex-col gap-1">
+									<h2 class="card-title block whitespace-nowrap text-ellipsis overflow-hidden text-sm dark:text-white">
+										<SearchResults text={character.name} {search} />
+									</h2>
+									<p class="text-xs"><SearchResults text={`${character.race} ${character.class}`} {search} /></p>
+									<p class="text-xs">Level {character.total_level} | Tier {character.tier}</p>
+								</div>
+							</div>
+						</a>
+					{/each}
+				</div>
+			{/if}
+		{/each}
+	{/if}
 </div>

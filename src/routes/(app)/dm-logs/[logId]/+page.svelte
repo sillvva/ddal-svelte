@@ -1,22 +1,25 @@
 <script lang="ts">
-	import { enhance } from "$app/forms";
 	import AutoFillSelect from "$lib/components/AutoFillSelect.svelte";
 	import AutoResizeTextArea from "$lib/components/AutoResizeTextArea.svelte";
 	import Meta from "$lib/components/Meta.svelte";
 	import { formatDate } from "$lib/misc";
 	import { logSchema } from "$lib/types/zod-schema.js";
+	import SchemaForm from "$src/lib/components/SchemaForm.svelte";
 	import { twMerge } from "tailwind-merge";
-	import type { z, ZodError } from "zod";
+	import type { z } from "zod";
 
 	export let data;
 	export let form;
 
 	let log = data.log;
 	let character = data.character;
-	let season: 1 | 8 | 9 = log.experience ? 1 : log.acp ? 8 : 9;
+
+	let saving = false;
+	let errors: Record<string, string> = {};
 
 	$: values = {
 		...log,
+		applied_date: log.applied_date?.getTime() == 0 ? null : log.applied_date,
 		characterId: character?.id || "",
 		characterName: character?.name || "",
 		description: log.description || "",
@@ -32,40 +35,6 @@
 		}
 	};
 
-	let saving = false;
-	$: {
-		if (form && saving) saving = false;
-	}
-
-	let changes: string[] = [];
-	function addChanges(field: string) {
-		changes = [...changes.filter((c) => c !== field), field];
-	}
-
-	let errors: Record<string, string> = {};
-	$: {
-		if (changes.length) {
-			changes.forEach((c) => {
-				errors[c] = "";
-			});
-			try {
-				logSchema.parse(log);
-			} catch (error) {
-				changes.forEach((c) => {
-					(error as ZodError).errors
-						.filter((e) => e.path[0] === c)
-						.forEach((e) => {
-							errors[e.path[0].toString()] = e.message;
-						});
-				});
-			}
-
-			extraErrors(values);
-		} else {
-			errors = {};
-		}
-	}
-
 	function extraErrors(log: z.infer<typeof logSchema>) {
 		if (log.characterId && !(data.characters || []).find((c) => c.id === log.characterId)) {
 			errors["characterId"] = "Character not found";
@@ -80,20 +49,7 @@
 		}
 	}
 
-	function checkErrors(log: z.infer<typeof logSchema>) {
-		let result = null;
-		try {
-			result = logSchema.parse(log);
-			extraErrors(log);
-		} catch (error) {
-			(error as ZodError).errors.forEach((e) => {
-				errors[e.path[0].toString()] = e.message;
-			});
-		}
-
-		return result;
-	}
-
+	let season: 1 | 8 | 9 = log.experience ? 1 : log.acp ? 8 : 9;
 	let magicItemsGained = log.magic_items_gained.map((mi) => ({
 		id: mi.id,
 		name: mi.name,
@@ -148,28 +104,18 @@
 	</div>
 {/if}
 
-<form
-	method="POST"
+<SchemaForm
 	action="?/saveLog"
-	use:enhance={(f) => {
-		form = null;
-		saving = true;
-
+	data={values}
+	bind:form
+	bind:errors
+	schema={logSchema}
+	stringify="log"
+	on:check-errors={() => extraErrors(values)}
+	on:before-submit={() => {
 		if (log.applied_date?.getTime() === 0) {
 			log.applied_date = null;
 		}
-
-		checkErrors(values);
-		if (Object.values(errors).find((e) => e.length > 0)) {
-			saving = false;
-			return f.cancel();
-		}
-
-		f.formData.append("log", JSON.stringify(values));
-		return async ({ update, result }) => {
-			await update({ reset: false });
-			if (result.type !== "redirect") saving = false;
-		};
 	}}
 >
 	<input type="hidden" name="logId" value={data.logId === "new" ? "" : data.logId} />
@@ -440,7 +386,6 @@
 										magicItemsGained = magicItemsGained.map((item, i) =>
 											i === index ? { ...item, name: e.currentTarget.value } : item
 										);
-										addChanges(`magic_items_gained.${index}.name`);
 									}}
 									disabled={saving}
 									class="input-bordered input w-full focus:border-primary"
@@ -468,7 +413,6 @@
 									magicItemsGained = magicItemsGained.map((item, i) =>
 										i === index ? { ...item, description: e.currentTarget.value } : item
 									);
-									addChanges(`magic_items_gained.${index}.name`);
 								}}
 								disabled={saving}
 								class="textarea-bordered textarea w-full focus:border-primary"
@@ -500,7 +444,6 @@
 										storyAwardsGained = storyAwardsGained.map((item, i) =>
 											i === index ? { ...item, name: e.currentTarget.value } : item
 										);
-										addChanges(`story_awards_gained.${index}.name`);
 									}}
 									disabled={saving}
 									class="input-bordered input w-full focus:border-primary"
@@ -528,7 +471,6 @@
 									storyAwardsGained = storyAwardsGained.map((item, i) =>
 										i === index ? { ...item, description: e.currentTarget.value } : item
 									);
-									addChanges(`story_awards_gained.${index}.name`);
 								}}
 								disabled={saving}
 								class="textarea-bordered textarea w-full focus:border-primary"
@@ -548,4 +490,4 @@
 			<button type="submit" class={twMerge("btn-primary btn", saving && "loading")} disabled={saving}>Save Log</button>
 		</div>
 	</div>
-</form>
+</SchemaForm>

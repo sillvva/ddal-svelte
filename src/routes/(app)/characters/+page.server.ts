@@ -2,12 +2,12 @@ import { serverGetCookie } from "$src/server/cookie";
 import { getCharacters } from "$src/server/data/characters";
 import { redirect } from "@sveltejs/kit";
 
-import type { PageServerLoad } from "./$types";
 const defaultCookie = {
-	magicItems: false
+	magicItems: false,
+	display: "list"
 };
 
-export const load = (async (event) => {
+export const load = async (event) => {
 	const session = await event.locals.getSession();
 	if (!session?.user) throw redirect(301, "/");
 	const characters = await getCharacters(session.user.id);
@@ -16,4 +16,4 @@ export const load = (async (event) => {
 		characters,
 		...cookie
 	};
-}) satisfies PageServerLoad;
+};

@@ -1,9 +1,10 @@
 <script lang="ts">
-	import { applyAction, enhance } from "$app/forms";
+	import { enhance } from "$app/forms";
 	import Meta from "$lib/components/Meta.svelte";
 	import { dungeonMasterSchema } from "$lib/types/zod-schema.js";
+	import SchemaForm from "$src/lib/components/SchemaForm.svelte";
+	import { pageLoader } from "$src/lib/store.js";
 	import { twMerge } from "tailwind-merge";
-	import type { ZodError } from "zod";
 
 	export let data;
 	export let form;
@@ -11,49 +12,7 @@
 	let dm = data.dm;
 
 	let saving = false;
-	$: {
-		if (form && saving) saving = false;
-	}
-
-	let changes: string[] = [];
-	function addChanges(field: string) {
-		changes = [...changes.filter((c) => c !== field), field];
-	}
-
 	let errors: Record<string, string> = {};
-	$: {
-		if (changes.length) {
-			changes.forEach((c) => {
-				errors[c] = "";
-			});
-			try {
-				dungeonMasterSchema.parse(dm);
-			} catch (error) {
-				changes.forEach((c) => {
-					(error as ZodError).errors
-						.filter((e) => e.path[0] === c)
-						.forEach((e) => {
-							errors[e.path[0].toString()] = e.message;
-						});
-				});
-			}
-		} else {
-			errors = {};
-		}
-	}
-
-	function checkErrors() {
-		let result = null;
-		try {
-			result = dungeonMasterSchema.parse(dm);
-		} catch (error) {
-			(error as ZodError).errors.forEach((e) => {
-				errors[e.path[0].toString()] = e.message;
-			});
-		}
-
-		return result;
-	}
 </script>
 
 <Meta title="Edit {dm.name}" />
@@ -87,25 +46,7 @@
 		</div>
 	{/if}
 
-	<form
-		method="POST"
-		action="?/saveDM"
-		use:enhance={(f) => {
-			form = null;
-			saving = true;
-
-			checkErrors();
-			if (Object.values(errors).find((e) => e.length > 0)) {
-				saving = false;
-				return f.cancel();
-			}
-
-			return async ({ update, result }) => {
-				await update({ reset: false });
-				if (result.type !== "redirect") saving = false;
-			};
-		}}
-	>
+	<SchemaForm action="?/saveDM" data={dm} bind:form bind:saving bind:errors schema={dungeonMasterSchema}>
 		<input type="hidden" name="dmID" value={dm.id} />
 		<div class="flex flex-wrap">
 			<div class="basis-full px-2 sm:basis-1/2">
@@ -120,7 +61,6 @@
 						type="text"
 						name="name"
 						bind:value={dm.name}
-						on:input={() => addChanges("name")}
 						required
 						disabled={saving}
 						class="input-bordered input w-full focus:border-primary"
@@ -139,7 +79,6 @@
 						type="text"
 						name="DCI"
 						bind:value={dm.DCI}
-						on:input={() => addChanges("DCI")}
 						disabled={saving}
 						class="input-bordered input w-full focus:border-primary"
 					/>
@@ -152,7 +91,7 @@
 				<button type="submit" class={twMerge("btn-primary btn", saving && "loading")} disabled={saving}>Update</button>
 			</div>
 		</div>
-	</form>
+	</SchemaForm>
 
 	<div class="mt-8 flex flex-col gap-4">
 		<section>
@@ -176,12 +115,16 @@
 										method="POST"
 										action="?/deleteDM"
 										use:enhance={() => {
+											$pageLoader = true;
 											saving = true;
-											return async ({ result }) => {
-												await applyAction(result);
-												if (form?.error) {
+											return async ({ update, result }) => {
+												update();
+												if (result.type !== "redirect") {
+													$pageLoader = false;
 													saving = false;
-													alert(form.error);
+													if (form?.error) {
+														alert(form.error);
+													}
 												}
 											};
 										}}

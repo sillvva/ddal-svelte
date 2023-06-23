@@ -2,10 +2,7 @@ import { deleteDM, saveDM } from "$src/server/actions/dms";
 import { getUserDMWithLogs } from "$src/server/data/dms";
 import { redirect } from "@sveltejs/kit";
 
-import type { Actions } from "@sveltejs/kit";
-import type { PageServerLoad } from "./$types";
-
-export const load = (async (event) => {
+export const load = async (event) => {
 	const session = await event.locals.getSession();
 	if (!session?.user) throw redirect(301, "/");
 
@@ -16,7 +13,7 @@ export const load = (async (event) => {
 		dm,
 		...event.params
 	};
-}) satisfies PageServerLoad;
+};
 
 export const actions = {
 	saveDM: async (event) => {
@@ -53,4 +50,4 @@ export const actions = {
 
 		return await deleteDM(dmId, session.user.id);
 	}
-} satisfies Actions;
+};
