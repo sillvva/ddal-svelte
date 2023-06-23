@@ -51,10 +51,9 @@ export const actions = {
 				date: new Date(parsedData.date),
 				applied_date: parsedData.applied_date
 					? new Date(parsedData.applied_date)
-					: log.is_dm_log
-					? new Date(log.created_at)
-					: null,
-				created_at: new Date(parsedData.created_at)
+					: !log.is_dm_log
+					? new Date(parsedData.date)
+					: null
 			});
 
 			const result = await saveLog(logData, session.user);
