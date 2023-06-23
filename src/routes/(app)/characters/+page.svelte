@@ -82,8 +82,8 @@
 		<div class="flex-1" />
 		{#if characters.length > 0}
 			<a href="/characters/new/edit" class="btn-primary btn-sm btn">
-				<span class="hidden sm:inline">New Character</span>
-				<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" class="inline w-4 sm:hidden"
+				<span class="hidden xs:inline">New Character</span>
+				<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" class="inline w-4 xs:hidden"
 					><title>plus</title><path fill="currentColor" d="M19,13H13V19H11V13H5V11H11V5H13V11H19V13Z" /></svg
 				>
 			</a>
@@ -233,7 +233,15 @@
 	{:else}
 		{#each [1, 2, 3, 4] as tier}
 			{#if results.filter((c) => c.tier == tier).length}
-				<h1 class="text-2xl font-bold dark:text-white">Tier {tier}</h1>
+				<h1
+					class={twMerge(
+						"text-2xl font-bold dark:text-white",
+						display == "list" && "hidden",
+						display == "grid" && "hidden xs:block"
+					)}
+				>
+					Tier {tier}
+				</h1>
 				<div
 					class={twMerge(
 						"w-full",
