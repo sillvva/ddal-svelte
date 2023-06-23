@@ -12,6 +12,7 @@
 	export let data: object;
 	export let action: string;
 	export let stringify = "";
+	export let resetOnSave = false;
 
 	export let saving = false;
 	$: {
@@ -19,6 +20,7 @@
 	}
 
 	export let changes: string[] = [];
+	let savedChanges: string[] = [];
 	export function addChanges(field: string) {
 		changes = [...changes.filter((c) => c !== field), field];
 	}
@@ -91,11 +93,11 @@
 	{action}
 	bind:this={elForm}
 	use:enhance={(f) => {
+		dispatch("before-submit");
+		savedChanges = [...changes];
+		changes = [];
 		form = null;
 		saving = true;
-
-		dispatch("before-submit");
-		console.log(data);
 
 		checkErrors(data);
 		if (Object.values(errors).find((e) => e.length > 0)) {
@@ -105,9 +107,13 @@
 
 		if (stringify) f.formData.append(stringify, JSON.stringify(data));
 		return async ({ update, result }) => {
-			await update({ reset: false });
-			if (result.type !== "redirect") saving = false;
-			dispatch("save");
+			dispatch("after-submit", result);
+			await update({ reset: resetOnSave });
+			if (result.type !== "redirect") {
+				changes = [...savedChanges];
+				savedChanges = [];
+				saving = false;
+			}
 		};
 	}}
 >
