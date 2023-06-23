@@ -245,10 +245,10 @@
 					</figure>
 					<div class="card-body">
 						<div class="flex flex-col gap-1">
-							<h2 class="card-title whitespace-nowrap text-ellipsis overflow-hidden text-sm dark:text-white">
-								{character.name}
+							<h2 class="card-title block whitespace-nowrap text-ellipsis overflow-hidden text-sm dark:text-white">
+								<SearchResults text={character.name} {search} />
 							</h2>
-							<p class="text-xs">{character.race} {character.class}</p>
+							<p class="text-xs"><SearchResults text={`${character.race} ${character.class}`} {search} /></p>
 							<p class="text-xs">Level {character.total_level} | Tier {character.tier}</p>
 						</div>
 					</div>
