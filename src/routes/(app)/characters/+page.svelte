@@ -221,39 +221,44 @@
 		</div>
 	</div>
 
-	<div
-		class={twMerge(
-			"w-full",
-			display == "list" && "hidden",
-			display == "grid" && "hidden xs:grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4"
-		)}
-	>
-		{#if !characters.length}
-			<section class="bg-base-100">
-				<div class="py-20 text-center">
-					<p class="mb-4">You have no log sheets.</p>
-					<p>
-						<a href="/characters/new" class="btn-primary btn">Create one now</a>
-					</p>
+	{#if !characters.length}
+		<section class="bg-base-100">
+			<div class="py-20 text-center">
+				<p class="mb-4">You have no log sheets.</p>
+				<p>
+					<a href="/characters/new" class="btn-primary btn">Create one now</a>
+				</p>
+			</div>
+		</section>
+	{:else}
+		{#each [1, 2, 3, 4] as tier}
+			{#if results.filter((c) => c.tier == tier).length}
+				<h1 class="text-2xl font-bold dark:text-white">Tier {tier}</h1>
+				<div
+					class={twMerge(
+						"w-full",
+						display == "list" && "hidden",
+						display == "grid" && "hidden xs:grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4"
+					)}
+				>
+					{#each results.filter((c) => c.tier == tier) as character}
+						<a href={`/characters/${character.id}`} class="img-grow card card-compact bg-base-100 shadow-xl">
+							<figure class="max-h-36 aspect-square overflow-hidden">
+								<img src={character.image_url} alt={character.name} class="object-cover object-top w-full h-full" />
+							</figure>
+							<div class="card-body">
+								<div class="flex flex-col gap-1">
+									<h2 class="card-title block whitespace-nowrap text-ellipsis overflow-hidden text-sm dark:text-white">
+										<SearchResults text={character.name} {search} />
+									</h2>
+									<p class="text-xs"><SearchResults text={`${character.race} ${character.class}`} {search} /></p>
+									<p class="text-xs">Level {character.total_level} | Tier {character.tier}</p>
+								</div>
+							</div>
+						</a>
+					{/each}
 				</div>
-			</section>
-		{:else}
-			{#each results as character}
-				<a href={`/characters/${character.id}`} class="img-grow card card-compact bg-base-100 shadow-xl">
-					<figure class="max-h-36 aspect-square overflow-hidden">
-						<img src={character.image_url} alt={character.name} class="object-cover object-top w-full h-full" />
-					</figure>
-					<div class="card-body">
-						<div class="flex flex-col gap-1">
-							<h2 class="card-title block whitespace-nowrap text-ellipsis overflow-hidden text-sm dark:text-white">
-								<SearchResults text={character.name} {search} />
-							</h2>
-							<p class="text-xs"><SearchResults text={`${character.race} ${character.class}`} {search} /></p>
-							<p class="text-xs">Level {character.total_level} | Tier {character.tier}</p>
-						</div>
-					</div>
-				</a>
-			{/each}
-		{/if}
-	</div>
+			{/if}
+		{/each}
+	{/if}
 </div>
