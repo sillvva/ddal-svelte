@@ -1,9 +1,11 @@
 <script lang="ts">
 	import { enhance } from "$app/forms";
+	import { beforeNavigate } from "$app/navigation";
 	import { createEventDispatcher } from "svelte";
 	import type { ZodError, z } from "zod";
 
 	const dispatch = createEventDispatcher();
+	let elForm: HTMLFormElement;
 
 	export let form: object | null;
 	export let schema: z.ZodObject<any, any>;
@@ -65,11 +67,29 @@
 			dispatch("errors", null);
 		}
 	}
+
+	const inputChanged = (ev: Event) => {
+		const name = (ev.currentTarget as HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement | null)?.getAttribute("name");
+		if (name) addChanges(name);
+	};
+
+	$: {
+		if (elForm && data) {
+			elForm.querySelectorAll("input, textarea, select").forEach((el) => el.addEventListener("input", inputChanged));
+		}
+	}
+
+	beforeNavigate((nav) => {
+		if (changes.length) {
+			if (!confirm("You have unsaved changes. Are you sure you want to leave this page?")) nav.cancel();
+		}
+	});
 </script>
 
 <form
 	method="POST"
 	{action}
+	bind:this={elForm}
 	use:enhance={(f) => {
 		form = null;
 		saving = true;

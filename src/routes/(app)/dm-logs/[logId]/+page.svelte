@@ -14,7 +14,6 @@
 	let log = data.log;
 	let character = data.character;
 
-	let saveForm: SchemaForm;
 	let saving = false;
 	let errors: Record<string, string> = {};
 
@@ -108,7 +107,6 @@
 <SchemaForm
 	action="?/saveLog"
 	data={values}
-	bind:this={saveForm}
 	bind:form
 	bind:errors
 	schema={logSchema}
@@ -141,7 +139,6 @@
 				disabled={saving}
 				class="input-bordered input w-full focus:border-primary"
 				aria-invalid={errors.name ? "true" : "false"}
-				on:input={() => saveForm.addChanges("name")}
 			/>
 			<label for="name" class="label">
 				<span class="label-text-alt text-error">{errors.name || ""}</span>
@@ -158,7 +155,6 @@
 				type="datetime-local"
 				name="date"
 				value={log.date.getTime() > 0 ? formatDate(log.date) : ""}
-				on:input={() => saveForm.addChanges("date")}
 				on:blur={(e) =>
 					(log.date = formatDate(e.currentTarget.value) !== "Invalid Date" ? new Date(e.currentTarget.value) : new Date(0))}
 				required
@@ -186,7 +182,6 @@
 				on:input={(e) => {
 					log.characterId = "";
 					log.applied_date = null;
-					saveForm.addChanges("characterId");
 				}}
 				disabled={saving}
 				required={!!log.applied_date}
@@ -219,7 +214,6 @@
 				type="datetime-local"
 				name="applied_date"
 				value={log.applied_date ? formatDate(log.applied_date) : ""}
-				on:input={() => saveForm.addChanges("applied_date")}
 				on:blur={(e) =>
 					(log.applied_date = formatDate(e.currentTarget.value) !== "Invalid Date" ? new Date(e.currentTarget.value) : null)}
 				required={!!log.characterId}
@@ -252,7 +246,6 @@
 						bind:value={log.experience}
 						min="0"
 						disabled={saving}
-						on:input={() => saveForm.addChanges("experience")}
 						class="input-bordered input w-full focus:border-primary"
 					/>
 					<label for="experience" class="label">
@@ -271,7 +264,6 @@
 						min="0"
 						bind:value={log.level}
 						disabled={saving}
-						on:input={() => saveForm.addChanges("level")}
 						class="input-bordered input w-full focus:border-primary"
 					/>
 					<label for="level" class="label">
@@ -290,7 +282,6 @@
 						min="0"
 						bind:value={log.acp}
 						disabled={saving}
-						on:input={() => saveForm.addChanges("acp")}
 						class="input-bordered input w-full focus:border-primary"
 					/>
 					<label for="acp" class="label">
@@ -306,7 +297,6 @@
 						name="tcp"
 						bind:value={log.tcp}
 						disabled={saving}
-						on:input={() => saveForm.addChanges("tcp")}
 						class="input-bordered input w-full focus:border-primary"
 					/>
 					<label for="tcp" class="label">
@@ -323,7 +313,6 @@
 					name="gold"
 					bind:value={log.gold}
 					disabled={saving}
-					on:input={() => saveForm.addChanges("gold")}
 					class="input-bordered input w-full focus:border-primary"
 				/>
 				<label for="gold" class="label">
@@ -339,7 +328,6 @@
 					name="dtd"
 					bind:value={log.dtd}
 					disabled={saving}
-					on:input={() => saveForm.addChanges("dtd")}
 					class="input-bordered input w-full focus:border-primary"
 				/>
 				<label for="dtd" class="label">
@@ -355,7 +343,6 @@
 				name="description"
 				bind:value={log.description}
 				disabled={saving}
-				on:input={() => saveForm.addChanges("description")}
 				class="textarea-bordered textarea w-full focus:border-primary"
 			/>
 			<label for="description" class="label">
@@ -399,7 +386,6 @@
 										magicItemsGained = magicItemsGained.map((item, i) =>
 											i === index ? { ...item, name: e.currentTarget.value } : item
 										);
-										saveForm.addChanges(`magic_items_gained.${index}.name`);
 									}}
 									disabled={saving}
 									class="input-bordered input w-full focus:border-primary"
@@ -427,7 +413,6 @@
 									magicItemsGained = magicItemsGained.map((item, i) =>
 										i === index ? { ...item, description: e.currentTarget.value } : item
 									);
-									saveForm.addChanges(`magic_items_gained.${index}.name`);
 								}}
 								disabled={saving}
 								class="textarea-bordered textarea w-full focus:border-primary"
@@ -459,7 +444,6 @@
 										storyAwardsGained = storyAwardsGained.map((item, i) =>
 											i === index ? { ...item, name: e.currentTarget.value } : item
 										);
-										saveForm.addChanges(`story_awards_gained.${index}.name`);
 									}}
 									disabled={saving}
 									class="input-bordered input w-full focus:border-primary"
@@ -487,7 +471,6 @@
 									storyAwardsGained = storyAwardsGained.map((item, i) =>
 										i === index ? { ...item, description: e.currentTarget.value } : item
 									);
-									saveForm.addChanges(`story_awards_gained.${index}.name`);
 								}}
 								disabled={saving}
 								class="textarea-bordered textarea w-full focus:border-primary"

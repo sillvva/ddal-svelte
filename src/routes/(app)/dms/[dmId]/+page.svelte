@@ -11,7 +11,6 @@
 
 	let dm = data.dm;
 
-	let saveForm: SchemaForm;
 	let saving = false;
 	let errors: Record<string, string> = {};
 </script>
@@ -47,7 +46,7 @@
 		</div>
 	{/if}
 
-	<SchemaForm action="?/saveDM" data={dm} bind:this={saveForm} bind:form bind:saving bind:errors schema={dungeonMasterSchema}>
+	<SchemaForm action="?/saveDM" data={dm} bind:form bind:saving bind:errors schema={dungeonMasterSchema}>
 		<input type="hidden" name="dmID" value={dm.id} />
 		<div class="flex flex-wrap">
 			<div class="basis-full px-2 sm:basis-1/2">
@@ -62,7 +61,6 @@
 						type="text"
 						name="name"
 						bind:value={dm.name}
-						on:input={() => saveForm.addChanges("name")}
 						required
 						disabled={saving}
 						class="input-bordered input w-full focus:border-primary"
@@ -81,7 +79,6 @@
 						type="text"
 						name="DCI"
 						bind:value={dm.DCI}
-						on:input={() => saveForm.addChanges("DCI")}
 						disabled={saving}
 						class="input-bordered input w-full focus:border-primary"
 					/>

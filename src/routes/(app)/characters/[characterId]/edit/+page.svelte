@@ -9,7 +9,6 @@
 
 	const character = data.character;
 
-	let saveForm: SchemaForm;
 	let saving = false;
 	let errors: Record<string, string> = {};
 </script>
@@ -55,7 +54,7 @@
 	</div>
 {/if}
 
-<SchemaForm action="?/saveCharacter" data={character} bind:this={saveForm} bind:form bind:errors schema={newCharacterSchema}>
+<SchemaForm action="?/saveCharacter" data={character} bind:form bind:errors schema={newCharacterSchema}>
 	<div class="flex flex-wrap">
 		<div class="basis-full px-2 sm:basis-1/2">
 			<div class="form-control w-full">
@@ -71,7 +70,6 @@
 					required
 					disabled={saving}
 					bind:value={character.name}
-					on:input={() => saveForm.addChanges("name")}
 					class="input-bordered input w-full focus:border-primary"
 				/>
 				<label for="name" class="label">
@@ -93,7 +91,6 @@
 					required
 					disabled={saving}
 					bind:value={character.campaign}
-					on:input={() => saveForm.addChanges("campaign")}
 					class="input-bordered input w-full focus:border-primary"
 				/>
 				<label for="campaign" class="label">
@@ -111,7 +108,6 @@
 					name="race"
 					disabled={saving}
 					bind:value={character.race}
-					on:input={() => saveForm.addChanges("race")}
 					class="input-bordered input w-full focus:border-primary"
 				/>
 				<label for="race" class="label">
@@ -129,7 +125,6 @@
 					name="class"
 					disabled={saving}
 					bind:value={character.class}
-					on:input={() => saveForm.addChanges("class")}
 					class="input-bordered input w-full focus:border-primary"
 				/>
 				<label for="class" class="label">
@@ -147,7 +142,6 @@
 					name="character_sheet_url"
 					disabled={saving}
 					bind:value={character.character_sheet_url}
-					on:input={() => saveForm.addChanges("character_sheet_url")}
 					class="input-bordered input w-full focus:border-primary"
 				/>
 				<label for="character_sheet_url" class="label">
@@ -165,7 +159,6 @@
 					name="image_url"
 					disabled={saving}
 					bind:value={character.image_url}
-					on:input={() => saveForm.addChanges("image_url")}
 					class="input-bordered input w-full focus:border-primary"
 				/>
 				<label for="image_url" class="label">
