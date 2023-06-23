@@ -42,11 +42,7 @@ export const actions = {
 			const logData = logSchema.parse({
 				...parsedData,
 				date: new Date(parsedData.date),
-				applied_date: parsedData.applied_date
-					? new Date(parsedData.applied_date)
-					: !log.is_dm_log
-					? new Date(parsedData.date)
-					: null
+				applied_date: parsedData.applied_date ? new Date(parsedData.applied_date) : null
 			});
 
 			if (!logData.is_dm_log) throw new Error("Only DM logs can be saved here.");
