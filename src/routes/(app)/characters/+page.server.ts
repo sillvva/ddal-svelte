@@ -3,7 +3,8 @@ import { getCharacters } from "$src/server/data/characters";
 import { redirect } from "@sveltejs/kit";
 
 const defaultCookie = {
-	magicItems: false
+	magicItems: false,
+	display: "list"
 };
 
 export const load = async (event) => {
