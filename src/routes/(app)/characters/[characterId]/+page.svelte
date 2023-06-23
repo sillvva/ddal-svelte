@@ -5,6 +5,7 @@
 	import Meta from "$lib/components/Meta.svelte";
 	import SearchResults from "$lib/components/SearchResults.svelte";
 	import { slugify } from "$lib/misc";
+	import { pageLoader } from "$src/lib/store";
 	import { setCookie } from "$src/server/cookie";
 	import MiniSearch from "minisearch";
 	import { twMerge } from "tailwind-merge";
@@ -15,7 +16,6 @@
 	const character = data.character;
 	const myCharacter = character.userId === data.session?.user?.id;
 
-	let deletingCharacter = false;
 	let deletingLog: string[] = [];
 
 	let search = "";
@@ -135,10 +135,10 @@
 						method="POST"
 						action="?/deleteCharacter"
 						use:enhance={() => {
-							deletingCharacter = true;
+							$pageLoader = true;
 							return ({ update, result }) => {
 								update();
-								if (result.type !== "redirect") deletingCharacter = false;
+								if (result.type !== "redirect") $pageLoader = false;
 							};
 						}}
 						class="bg-red-800 hover:bg-red-900"
@@ -247,13 +247,6 @@
 		</div>
 	</div>
 </section>
-
-{#if deletingCharacter}
-	<div class="fixed inset-0 z-40 flex items-center justify-center bg-black/50" />
-	<div class="fixed inset-0 z-50 flex items-center justify-center">
-		<span class="loading loading-spinner w-16 text-secondary" />
-	</div>
-{/if}
 
 <div class="mt-4 flex">
 	<div class="flex gap-4 print:hidden">

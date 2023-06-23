@@ -1,7 +1,8 @@
 <script lang="ts">
-	import { applyAction, enhance } from "$app/forms";
+	import { enhance } from "$app/forms";
 	import Meta from "$lib/components/Meta.svelte";
 	import { dungeonMasterSchema } from "$lib/types/zod-schema.js";
+	import { pageLoader } from "$src/lib/store.js";
 	import { twMerge } from "tailwind-merge";
 	import type { ZodError } from "zod";
 
@@ -176,12 +177,16 @@
 										method="POST"
 										action="?/deleteDM"
 										use:enhance={() => {
+											$pageLoader = true;
 											saving = true;
-											return async ({ result }) => {
-												await applyAction(result);
-												if (form?.error) {
+											return async ({ update, result }) => {
+												update();
+												if (result.type !== "redirect") {
+													$pageLoader = false;
 													saving = false;
-													alert(form.error);
+													if (form?.error) {
+														alert(form.error);
+													}
 												}
 											};
 										}}
