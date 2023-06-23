@@ -6,10 +6,7 @@ import { getLog } from "$src/server/data/logs";
 import { z } from "zod";
 import { redirect } from "@sveltejs/kit";
 
-import type { Actions } from "@sveltejs/kit";
-import type { PageServerLoad } from "./$types";
-
-export const load = (async (event) => {
+export const load = async (event) => {
 	const session = await event.locals.getSession();
 	if (!session?.user) throw redirect(301, "/");
 
@@ -27,7 +24,7 @@ export const load = (async (event) => {
 		dms,
 		...event.params
 	};
-}) satisfies PageServerLoad;
+};
 
 export const actions = {
 	saveLog: async (event) => {
@@ -76,4 +73,4 @@ export const actions = {
 			throw error;
 		}
 	}
-} satisfies Actions;
+};

@@ -2,8 +2,7 @@ import { saveCharacter } from "$src/server/actions/characters";
 import { getCharacter } from "$src/server/data/characters";
 import { redirect } from "@sveltejs/kit";
 
-import type { Actions, PageServerLoad } from "../$types";
-export const load = (async (event) => {
+export const load = async (event) => {
 	const session = await event.locals.getSession();
 	if (!session?.user) throw redirect(301, "/");
 
@@ -30,7 +29,7 @@ export const load = (async (event) => {
 		character,
 		...event.params
 	};
-}) satisfies PageServerLoad;
+};
 
 export const actions = {
 	saveCharacter: async (event) => {
@@ -49,4 +48,4 @@ export const actions = {
 		if (result && result.id) throw redirect(301, `/characters/${result.id}`);
 		return result;
 	}
-} satisfies Actions;
+};
