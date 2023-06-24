@@ -173,18 +173,18 @@
 				type="text"
 				name="characterName"
 				value={data.characters.find((c) => c.id === log.characterId)?.name || ""}
-				on:input={(e) => {
+				values={data.characters?.map((char) => ({ key: char.id, value: char.name })) || []}
+				disabled={saving}
+				required={!!log.applied_date}
+				searchBy="value"
+				on:input={() => {
 					log.characterId = "";
 					log.applied_date = null;
 				}}
-				disabled={saving}
-				required={!!log.applied_date}
-				values={data.characters?.map((char) => ({ key: char.id, value: char.name })) || []}
-				searchBy="value"
-				onSelect={(val) => {
-					const character = data.characters.find((c) => c.id === val);
+				on:select={(ev) => {
+					const character = data.characters.find((c) => c.id === ev.detail);
 					if (character) {
-						log.characterId = val.toString();
+						log.characterId = ev.detail.toString();
 					} else {
 						log.characterId = "";
 					}

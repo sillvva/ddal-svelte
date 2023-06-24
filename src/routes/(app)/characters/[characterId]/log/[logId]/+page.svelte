@@ -7,7 +7,6 @@
 	import { logSchema } from "$lib/types/zod-schema.js";
 	import Icon from "$src/lib/components/Icon.svelte";
 	import SchemaForm from "$src/lib/components/SchemaForm.svelte";
-	import type { DungeonMaster } from "@prisma/client";
 	import { twMerge } from "tailwind-merge";
 
 	export let data;
@@ -19,6 +18,13 @@
 	let saving = false;
 	let errors: Record<string, string> = {};
 
+	let dm = log.dm || {
+		id: "",
+		name: "",
+		DCI: null,
+		uid: ""
+	};
+
 	$: values = {
 		...log,
 		characterId: character?.id || "",
@@ -29,47 +35,11 @@
 		story_awards_gained: storyAwardsGained,
 		story_awards_lost: storyAwardsLost,
 		dm: {
-			id: log.dm?.id || "",
-			name: log.dm?.name || "",
-			DCI: log.dm?.DCI || null,
-			uid: log.dm?.uid || ""
+			id: dm.id,
+			name: dm.name.trim(),
+			DCI: dm.DCI,
+			uid: dm.uid
 		}
-	};
-
-	const setDM = (dm?: DungeonMaster) => {
-		log = {
-			...log,
-			dm: {
-				id: dm?.id || "",
-				name: dm?.name || "",
-				DCI: dm?.DCI || null,
-				uid: dm?.uid || ""
-			}
-		};
-	};
-
-	const setDMName = (name: string) => {
-		log = {
-			...log,
-			dm: {
-				id: log.dm?.id || "",
-				name,
-				DCI: log.dm?.DCI || null,
-				uid: log.dm?.uid || ""
-			}
-		};
-	};
-
-	const setDMDCI = (DCI: string | null) => {
-		log = {
-			...log,
-			dm: {
-				id: log.dm?.id || "",
-				name: log.dm?.name || "",
-				DCI,
-				uid: log.dm?.uid || ""
-			}
-		};
 	};
 
 	let season: 1 | 8 | 9 = log.experience ? 1 : log.acp ? 8 : 9;
@@ -203,11 +173,11 @@
 		</div>
 		<div class="col-span-12 grid grid-cols-12 gap-4">
 			{#if log.type === "game"}
-				<input type="hidden" name="dmId" value={log.dm?.id || ""} />
+				<input type="hidden" name="dmId" value={dm.id} />
 				{#if log.is_dm_log}
-					<input type="hidden" name="dmName" value={log.dm?.name || ""} />
-					<input type="hidden" name="dmDCI" value={log.dm?.DCI || ""} />
-					<input type="hidden" name="dmUID" value={log.dm?.uid || ""} />
+					<input type="hidden" name="dmName" value={dm.name} />
+					<input type="hidden" name="dmDCI" value={dm.DCI} />
+					<input type="hidden" name="dmUID" value={dm.uid} />
 				{:else}
 					<div class="form-control col-span-12 sm:col-span-6">
 						<label for="dmName" class="label">
@@ -215,13 +185,12 @@
 						</label>
 						<AutoFillSelect
 							name="dmName"
-							value={log.dm?.name || ""}
-							disabled={saving}
+							bind:value={dm.name}
 							values={data.dms.map((dm) => ({ key: dm.name, value: dm.name + (dm.DCI ? ` (${dm.DCI})` : "") })) || []}
-							onSelect={(val) => {
-								const dm = data.dms.find((dm) => dm.name === val);
-								if (dm) setDM(dm);
-								else setDMName(val.toString());
+							disabled={saving}
+							on:select={(ev) => {
+								const updated = data.dms.find((dm) => dm.name === ev.detail);
+								if (updated) dm = updated;
 							}}
 						/>
 						<label for="dmName" class="label">
@@ -234,13 +203,12 @@
 						</label>
 						<AutoFillSelect
 							name="dmDCI"
-							value={log.dm?.DCI || ""}
-							disabled={saving}
+							bind:value={dm.DCI}
 							values={data.dms.map((dm) => ({ key: dm.DCI, value: dm.name + (dm.DCI ? ` (${dm.DCI})` : "") })) || []}
-							onSelect={(val) => {
-								const dm = data.dms.find((dm) => dm.name === val);
-								if (dm) setDM(dm);
-								else setDMDCI(val.toString());
+							disabled={saving}
+							on:select={(ev) => {
+								const updated = data.dms.find((dm) => dm.DCI === ev.detail);
+								if (updated) dm = updated;
 							}}
 						/>
 						<label for="dmDCI" class="label">
