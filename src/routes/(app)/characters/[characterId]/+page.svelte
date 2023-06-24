@@ -302,7 +302,7 @@
 							{#if log.dm && log.type === "game" && log.dm.uid !== character.userId}
 								<p class="text-sm font-normal">
 									<span class="font-semibold">DM:</span>
-									{log.dm.name}
+									<a href="/dms/{log.dm.id}" class="text-secondary">{log.dm.name}</a>
 								</p>
 							{/if}
 							<div class="table-cell font-normal print:hidden sm:hidden">
