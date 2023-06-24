@@ -264,8 +264,7 @@ export async function deleteLog(logId: string, userId?: string) {
 					character: true
 				}
 			});
-			if (log?.character && log.character.userId !== userId) throw new Error("Not authorized");
-			else if (log?.dm && log.dm.uid !== userId) throw new Error("Not authorized");
+			if (log && log.character?.userId !== userId && log.dm?.uid !== userId) throw new Error("Not authorized");
 			await tx.magicItem.updateMany({
 				where: {
 					logLostId: logId
@@ -292,11 +291,12 @@ export async function deleteLog(logId: string, userId?: string) {
 					logGainedId: logId
 				}
 			});
-			await tx.log.delete({
-				where: {
-					id: logId
-				}
-			});
+			if (log)
+				await tx.log.delete({
+					where: {
+						id: logId
+					}
+				});
 			return log;
 		});
 		return { id: result?.id || null, error: null };

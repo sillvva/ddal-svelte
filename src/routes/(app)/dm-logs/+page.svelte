@@ -5,6 +5,7 @@
 	import Meta from "$lib/components/Meta.svelte";
 	import SearchResults from "$lib/components/SearchResults.svelte";
 	import { formatDate } from "$lib/misc.js";
+	import Icon from "$src/lib/components/Icon.svelte";
 	import MiniSearch from "minisearch";
 	import { twMerge } from "tailwind-merge";
 
@@ -64,9 +65,7 @@
 		<div class="breadcrumbs flex-1 text-sm">
 			<ul>
 				<li>
-					<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" class="w-4"
-						><title>home</title><path fill="currentColor" d="M10,20V14H14V20H19V12H22L12,3L2,12H5V20H10Z" /></svg
-					>
+					<Icon src="home" class="w-4" />
 				</li>
 				<li class="dark:drop-shadow-md">DM Logs</li>
 			</ul>
@@ -78,12 +77,7 @@
 		{/if}
 		<div class="dropdown-end dropdown">
 			<span role="button" tabindex="0" class="btn-sm btn">
-				<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" class="w-6"
-					><title>dots-horizontal</title><path
-						fill="currentColor"
-						d="M16,12A2,2 0 0,1 18,10A2,2 0 0,1 20,12A2,2 0 0,1 18,14A2,2 0 0,1 16,12M10,12A2,2 0 0,1 12,10A2,2 0 0,1 14,12A2,2 0 0,1 12,14A2,2 0 0,1 10,12M4,12A2,2 0 0,1 6,10A2,2 0 0,1 8,12A2,2 0 0,1 6,14A2,2 0 0,1 4,12Z"
-					/></svg
-				>
+				<Icon src="dots-horizontal" class="w-6" />
 			</span>
 			<ul class="dropdown-content menu rounded-box w-52 bg-base-100 p-2 shadow">
 				<li>
@@ -94,13 +88,8 @@
 	</div>
 
 	{#if form?.error}
-		<div class="alert alert-error shadow-lg mb-4">
-			<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" class="w-6"
-				><title>alert-circle</title><path
-					fill="currentColor"
-					d="M13,13H11V7H13M13,17H11V15H13M12,2A10,10 0 0,0 2,12A10,10 0 0,0 12,22A10,10 0 0,0 22,12A10,10 0 0,0 12,2Z"
-				/></svg
-			>
+		<div class="alert alert-error mb-4 shadow-lg">
+			<Icon src="alert-circle" class="w-6" />
 			{form.error}
 		</div>
 	{/if}
@@ -271,13 +260,8 @@
 								</td>
 								<td class="w-8 print:hidden">
 									<div class="flex flex-col justify-center gap-2">
-										<a href="/dm-logs/{log.id}" class="btn-primary btn-sm btn">
-											<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" class="w-4"
-												><title>pencil</title><path
-													fill="currentColor"
-													d="M20.71,7.04C21.1,6.65 21.1,6 20.71,5.63L18.37,3.29C18,2.9 17.35,2.9 16.96,3.29L15.12,5.12L18.87,8.87M3,17.25V21H6.75L17.81,9.93L14.06,6.18L3,17.25Z"
-												/></svg
-											>
+										<a href="/dm-logs/{log.id}" class="btn-primary btn-sm btn" aria-label="Edit Log">
+											<Icon src="pencil" class="w-4" />
 										</a>
 										<form
 											method="POST"
@@ -300,13 +284,9 @@
 													if (confirm(`Are you sure you want to delete ${log.name}? This action cannot be reversed.`))
 														e.currentTarget.form?.requestSubmit();
 												}}
+												aria-label="Delete Log"
 											>
-												<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" class="w-4"
-													><title>trash-can</title><path
-														fill="currentColor"
-														d="M9,3V4H4V6H5V19A2,2 0 0,0 7,21H17A2,2 0 0,0 19,19V6H20V4H15V3H9M9,8H11V17H9V8M13,8H15V17H13V8Z"
-													/></svg
-												>
+												<Icon src="trash-can" class="w-4" />
 											</button>
 										</form>
 									</div>

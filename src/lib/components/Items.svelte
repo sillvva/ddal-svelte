@@ -1,6 +1,7 @@
 <script lang="ts">
 	import type { MagicItem, StoryAward } from "@prisma/client";
 	import { twMerge } from "tailwind-merge";
+	import Icon from "./Icon.svelte";
 	import Markdown from "./Markdown.svelte";
 	import SearchResults from "./SearchResults.svelte";
 
@@ -16,7 +17,7 @@
 
 <div class={twMerge("flex-1 flex-col", collapsible && !items.length ? "hidden md:flex" : "flex")}>
 	{#if title}
-		<h4 class="flex font-semibold text-left">
+		<h4 class="flex text-left font-semibold">
 			<span class="flex-1">
 				<button on:click={collapsible ? () => (collapsed = !collapsed) : () => {}} on:keypress={() => {}}>
 					{title}
@@ -24,25 +25,9 @@
 			</span>
 			{#if collapsible}
 				{#if collapsed}
-					<svg
-						xmlns="http://www.w3.org/2000/svg"
-						viewBox="0 0 24 24"
-						class="ml-2 inline w-4 justify-self-end print:hidden md:hidden"
-						><title>chevron-down</title><path
-							fill="currentColor"
-							d="M7.41,8.58L12,13.17L16.59,8.58L18,10L12,16L6,10L7.41,8.58Z"
-						/></svg
-					>
+					<Icon src="chevron-down" class="ml-2 inline w-4 justify-self-end print:hidden md:hidden" />
 				{:else}
-					<svg
-						xmlns="http://www.w3.org/2000/svg"
-						viewBox="0 0 24 24"
-						class="ml-2 inline w-4 justify-self-end print:hidden md:hidden"
-						><title>chevron-up</title><path
-							fill="currentColor"
-							d="M7.41,15.41L12,10.83L16.59,15.41L18,14L12,8L6,14L7.41,15.41Z"
-						/></svg
-					>
+					<Icon src="chevron-up" class="ml-2 inline w-4 justify-self-end print:hidden md:hidden" />
 				{/if}
 			{/if}
 		</h4>
@@ -53,7 +38,7 @@
 				<div
 					role="button"
 					tabindex="0"
-					class="whitespace-pre-wrap pl-2 pr-1 first:pl-0 inline"
+					class="inline whitespace-pre-wrap pl-2 pr-1 first:pl-0"
 					on:click={() => {
 						if (mi.description) {
 							modal = { name: mi.name, description: mi.description };

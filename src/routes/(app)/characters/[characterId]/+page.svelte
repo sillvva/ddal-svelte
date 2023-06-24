@@ -5,6 +5,7 @@
 	import Meta from "$lib/components/Meta.svelte";
 	import SearchResults from "$lib/components/SearchResults.svelte";
 	import { slugify } from "$lib/misc";
+	import Icon from "$src/lib/components/Icon.svelte";
 	import { pageLoader } from "$src/lib/store";
 	import { setCookie } from "$src/server/cookie";
 	import MiniSearch from "minisearch";
@@ -67,13 +68,9 @@
 			: logs.sort((a, b) => a.date.getTime() - b.date.getTime());
 
 	let descriptions = data.descriptions;
-
-	$: {
-		setCookie("characters:descriptions", descriptions);
-	}
+	$: setCookie("characters:descriptions", descriptions);
 
 	let modal: { name: string; description: string; date: Date } | null = null;
-
 	function triggerModal(log: (typeof results)[0]) {
 		if (log.description && !descriptions) {
 			modal = {
@@ -96,9 +93,7 @@
 		<div class="breadcrumbs mb-4 flex-1 text-sm">
 			<ul>
 				<li>
-					<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" class="w-4"
-						><title>home</title><path fill="currentColor" d="M10,20V14H14V20H19V12H22L12,3L2,12H5V20H10Z" /></svg
-					>
+					<Icon src="home" class="w-4" />
 				</li>
 				<li>
 					<a href="/characters" class="text-secondary">Characters</a>
@@ -110,14 +105,9 @@
 			<a href={`/characters/${character.id}/edit`} class="btn-primary btn-sm btn hidden sm:flex">Edit</a>
 			<div class="dropdown-end dropdown">
 				<span role="button" tabindex="0" class="btn-sm btn">
-					<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" class="w-6"
-						><title>dots-horizontal</title><path
-							fill="currentColor"
-							d="M16,12A2,2 0 0,1 18,10A2,2 0 0,1 20,12A2,2 0 0,1 18,14A2,2 0 0,1 16,12M10,12A2,2 0 0,1 12,10A2,2 0 0,1 14,12A2,2 0 0,1 12,14A2,2 0 0,1 10,12M4,12A2,2 0 0,1 6,10A2,2 0 0,1 8,12A2,2 0 0,1 6,14A2,2 0 0,1 4,12Z"
-						/></svg
-					>
+					<Icon src="dots-horizontal" class="w-6" />
 				</span>
-				<ul class="dropdown-content menu rounded-box w-52 bg-base-100 p-2 shadow z-20">
+				<ul class="dropdown-content menu rounded-box z-20 w-52 bg-base-100 p-2 shadow">
 					<li class="flex sm:hidden">
 						<a href={`/characters/${character.id}/edit`}>Edit</a>
 					</li>
@@ -154,13 +144,8 @@
 {/if}
 
 {#if form?.error}
-	<div class="alert alert-error shadow-lg mb-4">
-		<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" class="w-6"
-			><title>alert-circle</title><path
-				fill="currentColor"
-				d="M13,13H11V7H13M13,17H11V15H13M12,2A10,10 0 0,0 2,12A10,10 0 0,0 12,22A10,10 0 0,0 22,12A10,10 0 0,0 12,2Z"
-			/></svg
-		>
+	<div class="alert alert-error mb-4 shadow-lg">
+		<Icon src="alert-circle" class="w-6" />
 		{form.error}
 	</div>
 {/if}
@@ -169,7 +154,7 @@
 	<div class="flex flex-1 flex-col gap-6">
 		<div class="flex">
 			{#if character.image_url}
-				<div class="relative hidden flex-col items-end justify-center print:hidden xs:flex md:hidden mr-4">
+				<div class="relative mr-4 hidden flex-col items-end justify-center print:hidden xs:flex md:hidden">
 					<a
 						href={character.image_url}
 						target="_blank"
@@ -205,7 +190,7 @@
 			</div>
 		</div>
 		<div class="flex flex-1 flex-wrap gap-4 print:flex-nowrap xs:flex-nowrap sm:gap-4 md:gap-6">
-			<div class="flex basis-full xs:basis-1/2 sm:basis-1/3 flex-col gap-2 print:basis-1/3 sm:gap-4 md:basis-52">
+			<div class="flex basis-full flex-col gap-2 print:basis-1/3 xs:basis-1/2 sm:basis-1/3 sm:gap-4 md:basis-52">
 				{#if character.image_url}
 					<div class="relative hidden flex-col items-end justify-center print:hidden md:flex">
 						<a
@@ -236,9 +221,9 @@
 				</div>
 			</div>
 			<div
-				class="divider hidden xs:divider-horizontal xs:mx-0 before:bg-neutral-content/50 after:bg-neutral-content/50 print:flex xs:flex"
+				class="divider hidden xs:divider-horizontal before:bg-neutral-content/50 after:bg-neutral-content/50 print:flex xs:mx-0 xs:flex"
 			/>
-			<div class="flex basis-full xs:basis-1/2 flex-col print:basis-2/3 sm:basis-2/3 lg:basis-2/3">
+			<div class="flex basis-full flex-col print:basis-2/3 xs:basis-1/2 sm:basis-2/3 lg:basis-2/3">
 				{#if character}
 					<div class="flex flex-col gap-4">
 						<Items title="Story Awards" items={character.story_awards} collapsible />
@@ -253,11 +238,9 @@
 <div class="mt-4 flex">
 	<div class="flex gap-4 print:hidden">
 		{#if myCharacter}
-			<a href={`/characters/${character.id}/log/new`} class="btn-primary btn-sm btn px-2 sm:px-3">
+			<a href={`/characters/${character.id}/log/new`} class="btn-primary btn-sm btn px-2 sm:px-3" aria-label="New Log">
 				<span class="hidden sm:inline">New Log</span>
-				<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" class="inline w-4 sm:hidden"
-					><title>plus</title><path fill="currentColor" d="M19,13H13V19H11V13H5V11H11V5H13V11H19V13Z" /></svg
-				>
+				<Icon src="plus" class="inline w-4 sm:hidden" />
 			</a>
 		{/if}
 		{#if logs.length}
@@ -298,7 +281,7 @@
 					<tr class={twMerge("border-b-0 border-t-2 border-t-base-200 print:text-sm", deletingLog.includes(log.id) && "hidden")}>
 						<td
 							class={twMerge(
-								"!static align-top print:p-2 pb-0 sm:pb-3",
+								"!static pb-0 align-top print:p-2 sm:pb-3",
 								log.saving && "bg-neutral-focus",
 								(log.description?.trim() || log.story_awards_gained.length > 0 || log.story_awards_lost.length > 0) &&
 									"border-b-0"
@@ -444,13 +427,8 @@
 								)}
 							>
 								<div class="flex flex-col justify-center gap-2">
-									<a href={`/characters/${log.characterId}/log/${log.id}`} class="btn-primary btn-sm btn">
-										<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" class="w-4"
-											><title>pencil</title><path
-												fill="currentColor"
-												d="M20.71,7.04C21.1,6.65 21.1,6 20.71,5.63L18.37,3.29C18,2.9 17.35,2.9 16.96,3.29L15.12,5.12L18.87,8.87M3,17.25V21H6.75L17.81,9.93L14.06,6.18L3,17.25Z"
-											/></svg
-										>
+									<a href={`/characters/${log.characterId}/log/${log.id}`} class="btn-primary btn-sm btn" aria-label="Edit Log">
+										<Icon src="pencil" class="w-4" />
 									</a>
 									<form
 										method="POST"
@@ -473,13 +451,9 @@
 												if (confirm(`Are you sure you want to delete ${log.name}? This action cannot be reversed.`))
 													e.currentTarget.form?.requestSubmit();
 											}}
+											aria-label="Delete Log"
 										>
-											<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" class="w-4"
-												><title>trash-can</title><path
-													fill="currentColor"
-													d="M9,3V4H4V6H5V19A2,2 0 0,0 7,21H17A2,2 0 0,0 19,19V6H20V4H15V3H9M9,8H11V17H9V8M13,8H15V17H13V8Z"
-												/></svg
-											>
+											<Icon src="trash-can" class="w-4" />
 										</button>
 									</form>
 								</div>
@@ -500,10 +474,10 @@
 									<Markdown content={log.description} />
 								{/if}
 								{#if log.magic_items_gained.length > 0 || log.magic_items_lost.length > 0}
-									<div class="print:hidden sm:hidden mt-2">
+									<div class="mt-2 print:hidden sm:hidden">
 										<Items title="Magic Items:" items={log.magic_items_gained} {search} />
 										{#if log.magic_items_lost.length}
-											<p class="whitespace-pre-wrap text-sm line-through mt-2">
+											<p class="mt-2 whitespace-pre-wrap text-sm line-through">
 												<SearchResults text={log.magic_items_lost.map((mi) => mi.name).join(" | ")} {search} />
 											</p>
 										{/if}
@@ -511,7 +485,7 @@
 								{/if}
 								{#if log.story_awards_gained.length > 0 || log.story_awards_lost.length > 0}
 									{#each log.story_awards_gained as mi}
-										<div class="whitespace-pre-wrap text-sm mt-2">
+										<div class="mt-2 whitespace-pre-wrap text-sm">
 											<span class="pr-2 font-semibold print:block">
 												{mi.name}{mi.description ? ":" : ""}
 											</span>

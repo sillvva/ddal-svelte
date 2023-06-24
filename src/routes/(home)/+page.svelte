@@ -13,11 +13,12 @@
 		Log Sheet
 	</h1>
 	<button
-		class="items-centers flex h-16 gap-4 rounded-lg bg-base-200/50 px-8 py-4 text-base-content transition-colors hover:bg-base-300"
+		class="flex h-16 items-center gap-4 rounded-lg bg-base-200/50 px-8 py-4 text-base-content transition-colors hover:bg-base-300"
 		on:click={() =>
 			signIn("google", {
 				callbackUrl: `${$page.url.origin}/characters`
 			})}
+		aria-label="Sign in with Google"
 	>
 		<img src="/images/google.svg" width="32" height="32" alt="Google" />
 		<span class="flex h-full flex-1 items-center justify-center text-xl font-semibold">Sign In</span>

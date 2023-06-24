@@ -4,6 +4,7 @@
 	import Meta from "$lib/components/Meta.svelte";
 	import { formatDate } from "$lib/misc";
 	import { logSchema } from "$lib/types/zod-schema.js";
+	import Icon from "$src/lib/components/Icon.svelte";
 	import SchemaForm from "$src/lib/components/SchemaForm.svelte";
 	import { twMerge } from "tailwind-merge";
 	import type { z } from "zod";
@@ -77,9 +78,7 @@
 <div class="breadcrumbs mb-4 text-sm">
 	<ul>
 		<li>
-			<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" class="w-4"
-				><title>home</title><path fill="currentColor" d="M10,20V14H14V20H19V12H22L12,3L2,12H5V20H10Z" /></svg
-			>
+			<Icon src="home" class="w-4" />
 		</li>
 		<li>
 			<a href="/dm-logs" class="text-secondary">DM Logs</a>
@@ -93,13 +92,8 @@
 </div>
 
 {#if form?.error}
-	<div class="alert alert-error shadow-lg mb-4">
-		<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" class="w-6"
-			><title>alert-circle</title><path
-				fill="currentColor"
-				d="M13,13H11V7H13M13,17H11V15H13M12,2A10,10 0 0,0 2,12A10,10 0 0,0 12,22A10,10 0 0,0 22,12A10,10 0 0,0 12,2Z"
-			/></svg
-		>
+	<div class="alert alert-error mb-4 shadow-lg">
+		<Icon src="alert-circle" class="w-6" />
 		{form.error}
 	</div>
 {/if}
@@ -395,12 +389,7 @@
 								</label>
 							</div>
 							<button type="button" class="btn-danger btn mt-9" on:click={() => removeMagicItem(index)} disabled={saving}>
-								<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" class="w-6"
-									><title>trash-can</title><path
-										fill="currentColor"
-										d="M9,3V4H4V6H5V19A2,2 0 0,0 7,21H17A2,2 0 0,0 19,19V6H20V4H15V3H9M9,8H11V17H9V8M13,8H15V17H13V8Z"
-									/></svg
-								>
+								<Icon src="trash-can" class="w-6" />
 							</button>
 						</div>
 						<div class="form-control w-full">
@@ -453,12 +442,7 @@
 								</label>
 							</div>
 							<button type="button" class="btn-danger btn mt-9" on:click={() => removeStoryAward(index)} disabled={saving}>
-								<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" class="w-6"
-									><title>trash-can</title><path
-										fill="currentColor"
-										d="M9,3V4H4V6H5V19A2,2 0 0,0 7,21H17A2,2 0 0,0 19,19V6H20V4H15V3H9M9,8H11V17H9V8M13,8H15V17H13V8Z"
-									/></svg
-								>
+								<Icon src="trash-can" class="w-6" />
 							</button>
 						</div>
 						<div class="form-control w-full">

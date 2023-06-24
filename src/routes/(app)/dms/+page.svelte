@@ -1,6 +1,7 @@
 <script lang="ts">
 	import { applyAction, enhance } from "$app/forms";
 	import Meta from "$lib/components/Meta.svelte";
+	import Icon from "$src/lib/components/Icon.svelte";
 	import { twMerge } from "tailwind-merge";
 
 	export let data;
@@ -17,9 +18,7 @@
 		<div class="breadcrumbs flex-1 text-sm">
 			<ul>
 				<li>
-					<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" class="w-4"
-						><title>home</title><path fill="currentColor" d="M10,20V14H14V20H19V12H22L12,3L2,12H5V20H10Z" /></svg
-					>
+					<Icon src="home" class="w-4" />
 				</li>
 				<li class="dark:drop-shadow-md">DMs</li>
 			</ul>
@@ -27,13 +26,8 @@
 	</div>
 
 	{#if form?.error}
-		<div class="alert alert-error shadow-lg mb-4">
-			<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" class="w-6"
-				><title>alert-circle</title><path
-					fill="currentColor"
-					d="M13,13H11V7H13M13,17H11V15H13M12,2A10,10 0 0,0 2,12A10,10 0 0,0 12,22A10,10 0 0,0 22,12A10,10 0 0,0 12,2Z"
-				/></svg
-			>
+		<div class="alert alert-error mb-4 shadow-lg">
+			<Icon src="alert-circle" class="w-6" />
 			{form.error}
 		</div>
 	{/if}
@@ -73,13 +67,8 @@
 									<td class="hidden xs:table-cell">{dm.logs.length}</td>
 									<td class="w-16 print:hidden">
 										<div class="flex flex-row justify-center gap-2">
-											<a href="/dms/{dm.id}" class="btn-primary btn-sm btn">
-												<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" class="w-4"
-													><title>pencil</title><path
-														fill="currentColor"
-														d="M20.71,7.04C21.1,6.65 21.1,6 20.71,5.63L18.37,3.29C18,2.9 17.35,2.9 16.96,3.29L15.12,5.12L18.87,8.87M3,17.25V21H6.75L17.81,9.93L14.06,6.18L3,17.25Z"
-													/></svg
-												>
+											<a href="/dms/{dm.id}" class="btn-primary btn-sm btn" aria-label="Edit DM">
+												<Icon src="pencil" class="w-4" />
 											</a>
 											{#if dm.logs.length == 0}
 												<form
@@ -103,13 +92,9 @@
 															if (confirm(`Are you sure you want to delete ${dm.name}? This action cannot be reversed.`))
 																e.currentTarget.form?.requestSubmit();
 														}}
+														aria-label="Delete DM"
 													>
-														<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" class="w-4"
-															><title>trash-can</title><path
-																fill="currentColor"
-																d="M9,3V4H4V6H5V19A2,2 0 0,0 7,21H17A2,2 0 0,0 19,19V6H20V4H15V3H9M9,8H11V17H9V8M13,8H15V17H13V8Z"
-															/></svg
-														>
+														<Icon src="trash-can" class="w-4" />
 													</button>
 												</form>
 											{/if}

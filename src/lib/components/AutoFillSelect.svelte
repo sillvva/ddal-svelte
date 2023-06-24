@@ -40,6 +40,12 @@
 		selected = !!match;
 		valSearch = "";
 	};
+
+	const selectNew = (value: string) => {
+		onSelect(value);
+		selected = true;
+		valSearch = "";
+	};
 </script>
 
 <div
@@ -78,8 +84,8 @@
 				if (e.code === "Enter" || e.code === "Tab") {
 					e.preventDefault();
 					if (selected) return false;
-					selectHandler(keysel);
-					return false;
+					if (matches.length) selectHandler(keysel);
+					else selectNew(valSearch);
 				}
 				if (e.code === "Escape") {
 					e.preventDefault();
@@ -89,8 +95,13 @@
 				}
 			}}
 			on:blur={(e) => {
-				if (!selected && valSearch.trim())
-					selectHandler(matches.findIndex((v) => v[searchBy].toString().toLowerCase() === e.currentTarget.value.toLowerCase()));
+				if (!selected && valSearch.trim()) {
+					if (matches.length)
+						selectHandler(matches.findIndex((v) => v[searchBy].toString().toLowerCase() === e.currentTarget.value.toLowerCase()));
+					else {
+						selectNew(valSearch);
+					}
+				}
 				if (onBlur) onBlur(e);
 			}}
 			class="input-bordered input w-full focus:border-primary"
