@@ -118,7 +118,7 @@
 		</div>
 		<div class="join hidden xs:flex">
 			<button
-				class={twMerge("btn btn-sm join-item hover:btn-primary", display == "list" && "bg-primary")}
+				class={twMerge("btn-sm join-item btn hover:btn-primary", display == "list" && "bg-primary")}
 				on:click={() => (display = "list")}
 				on:keypress
 				aria-label="List View"
@@ -131,7 +131,7 @@
 				>
 			</button>
 			<button
-				class={twMerge("btn btn-sm join-item hover:btn-primary", display == "grid" && "bg-primary")}
+				class={twMerge("btn-sm join-item btn hover:btn-primary", display == "grid" && "bg-primary")}
 				on:click={() => (display = "grid")}
 				on:keypress
 				aria-label="Grid View"
@@ -245,17 +245,17 @@
 					class={twMerge(
 						"w-full",
 						display == "list" && "hidden",
-						display == "grid" && "hidden xs:grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4"
+						display == "grid" && "hidden grid-cols-2 gap-4 xs:grid sm:grid-cols-3 md:grid-cols-4"
 					)}
 				>
 					{#each results.filter((c) => c.tier == tier) as character}
 						<a href={`/characters/${character.id}`} class="img-grow card card-compact bg-base-100 shadow-xl">
 							<figure class="aspect-square overflow-hidden">
-								<img src={character.image_url} alt={character.name} class="object-cover object-top w-full h-full" />
+								<img src={character.image_url} alt={character.name} class="h-full w-full object-cover object-top" />
 							</figure>
 							<div class="card-body">
 								<div class="flex flex-col gap-1">
-									<h2 class="card-title block whitespace-nowrap text-ellipsis overflow-hidden text-sm dark:text-white">
+									<h2 class="card-title block overflow-hidden text-ellipsis whitespace-nowrap text-sm dark:text-white">
 										<SearchResults text={character.name} {search} />
 									</h2>
 									<p class="text-xs"><SearchResults text={`${character.race} ${character.class}`} {search} /></p>

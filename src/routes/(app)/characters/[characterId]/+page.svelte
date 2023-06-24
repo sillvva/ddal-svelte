@@ -113,7 +113,7 @@
 						/></svg
 					>
 				</span>
-				<ul class="dropdown-content menu rounded-box w-52 bg-base-100 p-2 shadow z-20">
+				<ul class="dropdown-content menu rounded-box z-20 w-52 bg-base-100 p-2 shadow">
 					<li class="flex sm:hidden">
 						<a href={`/characters/${character.id}/edit`}>Edit</a>
 					</li>
@@ -150,7 +150,7 @@
 {/if}
 
 {#if form?.error}
-	<div class="alert alert-error shadow-lg mb-4">
+	<div class="alert alert-error mb-4 shadow-lg">
 		<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" class="w-6"
 			><title>alert-circle</title><path
 				fill="currentColor"
@@ -165,7 +165,7 @@
 	<div class="flex flex-1 flex-col gap-6">
 		<div class="flex">
 			{#if character.image_url}
-				<div class="relative hidden flex-col items-end justify-center print:hidden xs:flex md:hidden mr-4">
+				<div class="relative mr-4 hidden flex-col items-end justify-center print:hidden xs:flex md:hidden">
 					<a
 						href={character.image_url}
 						target="_blank"
@@ -201,7 +201,7 @@
 			</div>
 		</div>
 		<div class="flex flex-1 flex-wrap gap-4 print:flex-nowrap xs:flex-nowrap sm:gap-4 md:gap-6">
-			<div class="flex basis-full xs:basis-1/2 sm:basis-1/3 flex-col gap-2 print:basis-1/3 sm:gap-4 md:basis-52">
+			<div class="flex basis-full flex-col gap-2 print:basis-1/3 xs:basis-1/2 sm:basis-1/3 sm:gap-4 md:basis-52">
 				{#if character.image_url}
 					<div class="relative hidden flex-col items-end justify-center print:hidden md:flex">
 						<a
@@ -232,9 +232,9 @@
 				</div>
 			</div>
 			<div
-				class="divider hidden xs:divider-horizontal xs:mx-0 before:bg-neutral-content/50 after:bg-neutral-content/50 print:flex xs:flex"
+				class="divider hidden xs:divider-horizontal before:bg-neutral-content/50 after:bg-neutral-content/50 print:flex xs:mx-0 xs:flex"
 			/>
-			<div class="flex basis-full xs:basis-1/2 flex-col print:basis-2/3 sm:basis-2/3 lg:basis-2/3">
+			<div class="flex basis-full flex-col print:basis-2/3 xs:basis-1/2 sm:basis-2/3 lg:basis-2/3">
 				{#if character}
 					<div class="flex flex-col gap-4">
 						<Items title="Story Awards" items={character.story_awards} collapsible />
@@ -294,7 +294,7 @@
 					<tr class={twMerge("border-b-0 border-t-2 border-t-base-200 print:text-sm", deletingLog.includes(log.id) && "hidden")}>
 						<td
 							class={twMerge(
-								"!static align-top print:p-2 pb-0 sm:pb-3",
+								"!static pb-0 align-top print:p-2 sm:pb-3",
 								log.saving && "bg-neutral-focus",
 								(log.description?.trim() || log.story_awards_gained.length > 0 || log.story_awards_lost.length > 0) &&
 									"border-b-0"
@@ -497,10 +497,10 @@
 									<Markdown content={log.description} />
 								{/if}
 								{#if log.magic_items_gained.length > 0 || log.magic_items_lost.length > 0}
-									<div class="print:hidden sm:hidden mt-2">
+									<div class="mt-2 print:hidden sm:hidden">
 										<Items title="Magic Items:" items={log.magic_items_gained} {search} />
 										{#if log.magic_items_lost.length}
-											<p class="whitespace-pre-wrap text-sm line-through mt-2">
+											<p class="mt-2 whitespace-pre-wrap text-sm line-through">
 												<SearchResults text={log.magic_items_lost.map((mi) => mi.name).join(" | ")} {search} />
 											</p>
 										{/if}
@@ -508,7 +508,7 @@
 								{/if}
 								{#if log.story_awards_gained.length > 0 || log.story_awards_lost.length > 0}
 									{#each log.story_awards_gained as mi}
-										<div class="whitespace-pre-wrap text-sm mt-2">
+										<div class="mt-2 whitespace-pre-wrap text-sm">
 											<span class="pr-2 font-semibold print:block">
 												{mi.name}{mi.description ? ":" : ""}
 											</span>

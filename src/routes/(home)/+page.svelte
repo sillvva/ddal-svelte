@@ -13,7 +13,7 @@
 		Log Sheet
 	</h1>
 	<button
-		class="items-centers flex h-16 gap-4 rounded-lg bg-base-200/50 px-8 py-4 text-base-content transition-colors hover:bg-base-300"
+		class="flex h-16 items-center gap-4 rounded-lg bg-base-200/50 px-8 py-4 text-base-content transition-colors hover:bg-base-300"
 		on:click={() =>
 			signIn("google", {
 				callbackUrl: `${$page.url.origin}/characters`

@@ -27,7 +27,7 @@
 	</div>
 
 	{#if form?.error}
-		<div class="alert alert-error shadow-lg mb-4">
+		<div class="alert alert-error mb-4 shadow-lg">
 			<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" class="w-6"
 				><title>alert-circle</title><path
 					fill="currentColor"
