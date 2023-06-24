@@ -251,7 +251,7 @@
 				>
 					{#each results.filter((c) => c.tier == tier) as character}
 						<a href={`/characters/${character.id}`} class="img-grow card card-compact bg-base-100 shadow-xl">
-							<figure class="max-h-36 aspect-square overflow-hidden">
+							<figure class="aspect-square overflow-hidden">
 								<img src={character.image_url} alt={character.name} class="object-cover object-top w-full h-full" />
 							</figure>
 							<div class="card-body">
