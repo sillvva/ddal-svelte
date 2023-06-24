@@ -48,6 +48,30 @@
 		};
 	};
 
+	const setDMName = (name: string) => {
+		log = {
+			...log,
+			dm: {
+				id: log.dm?.id || "",
+				name,
+				DCI: log.dm?.DCI || null,
+				uid: log.dm?.uid || ""
+			}
+		};
+	};
+
+	const setDMDCI = (DCI: string | null) => {
+		log = {
+			...log,
+			dm: {
+				id: log.dm?.id || "",
+				name: log.dm?.name || "",
+				DCI,
+				uid: log.dm?.uid || ""
+			}
+		};
+	};
+
 	let season: 1 | 8 | 9 = log.experience ? 1 : log.acp ? 8 : 9;
 	let magicItemsGained = log.magic_items_gained.map((mi) => ({
 		id: mi.id,
@@ -195,7 +219,9 @@
 							disabled={saving}
 							values={data.dms.map((dm) => ({ key: dm.name, value: dm.name + (dm.DCI ? ` (${dm.DCI})` : "") })) || []}
 							onSelect={(val) => {
-								setDM(data.dms.find((dm) => dm.name === val));
+								const dm = data.dms.find((dm) => dm.name === val);
+								if (dm) setDM(dm);
+								else setDMName(val.toString());
 							}}
 						/>
 						<label for="dmName" class="label">
@@ -212,7 +238,9 @@
 							disabled={saving}
 							values={data.dms.map((dm) => ({ key: dm.DCI, value: dm.name + (dm.DCI ? ` (${dm.DCI})` : "") })) || []}
 							onSelect={(val) => {
-								setDM(data.dms.find((dm) => dm.DCI === val));
+								const dm = data.dms.find((dm) => dm.name === val);
+								if (dm) setDM(dm);
+								else setDMDCI(val.toString());
 							}}
 						/>
 						<label for="dmDCI" class="label">
