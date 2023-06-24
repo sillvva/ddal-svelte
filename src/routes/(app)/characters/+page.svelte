@@ -1,6 +1,7 @@
 <script lang="ts">
 	import Meta from "$lib/components/Meta.svelte";
 	import SearchResults from "$lib/components/SearchResults.svelte";
+	import Icon from "$src/lib/components/Icon.svelte";
 	import { setCookie } from "$src/server/cookie";
 	import MiniSearch from "minisearch";
 	import { twMerge } from "tailwind-merge";
@@ -69,9 +70,7 @@
 		<div class="breadcrumbs text-sm">
 			<ul>
 				<li>
-					<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" class="w-4"
-						><title>home</title><path fill="currentColor" d="M10,20V14H14V20H19V12H22L12,3L2,12H5V20H10Z" /></svg
-					>
+					<Icon src="home" class="w-4" />
 				</li>
 				<li class="dark:drop-shadow-md">Characters</li>
 			</ul>
@@ -80,19 +79,12 @@
 		{#if characters.length > 0}
 			<a href="/characters/new/edit" class="btn-primary btn-sm btn" aria-label="New Character">
 				<span class="hidden xs:inline">New Character</span>
-				<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" class="inline w-4 xs:hidden"
-					><title>plus</title><path fill="currentColor" d="M19,13H13V19H11V13H5V11H11V5H13V11H19V13Z" /></svg
-				>
+				<Icon src="plus" class="inline w-4 sm:hidden" />
 			</a>
 		{/if}
 		<div class="dropdown-end dropdown">
 			<span role="button" tabindex="0" class="btn-sm btn">
-				<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" class="w-6"
-					><title>dots-horizontal</title><path
-						fill="currentColor"
-						d="M16,12A2,2 0 0,1 18,10A2,2 0 0,1 20,12A2,2 0 0,1 18,14A2,2 0 0,1 16,12M10,12A2,2 0 0,1 12,10A2,2 0 0,1 14,12A2,2 0 0,1 12,14A2,2 0 0,1 10,12M4,12A2,2 0 0,1 6,10A2,2 0 0,1 8,12A2,2 0 0,1 6,14A2,2 0 0,1 4,12Z"
-					/></svg
-				>
+				<Icon src="dots-horizontal" class="w-6" />
 			</span>
 			<ul class="dropdown-content menu rounded-box w-52 bg-base-100 p-2 shadow">
 				<li>
@@ -123,12 +115,7 @@
 				on:keypress
 				aria-label="List View"
 			>
-				<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" class="w-4"
-					><title>format-list-text</title><path
-						fill="currentColor"
-						d="M2 14H8V20H2M16 8H10V10H16M2 10H8V4H2M10 4V6H22V4M10 20H16V18H10M10 16H22V14H10"
-					/></svg
-				>
+				<Icon src="format-list-text" class="w-4" />
 			</button>
 			<button
 				class={twMerge("btn-sm join-item btn hover:btn-primary", display == "grid" && "bg-primary")}
@@ -136,9 +123,7 @@
 				on:keypress
 				aria-label="Grid View"
 			>
-				<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" class="w-4"
-					><title>view-grid</title><path fill="currentColor" d="M3,11H11V3H3M3,21H11V13H3M13,21H21V13H13M13,3V11H21V3" /></svg
-				>
+				<Icon src="view-grid" class="w-4" />
 			</button>
 		</div>
 	</div>
@@ -176,12 +161,7 @@
 											alt={character.name}
 										/>
 									{:else}
-										<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" class="w-12"
-											><title>account</title><path
-												fill="currentColor"
-												d="M12,4A4,4 0 0,1 16,8A4,4 0 0,1 12,12A4,4 0 0,1 8,8A4,4 0 0,1 12,4M12,14C16.42,14 20,15.79 20,18V20H4V18C4,15.79 7.58,14 12,14Z"
-											/></svg
-										>
+										<Icon src="account" class="w-12" />
 									{/if}
 								</div>
 							</div>

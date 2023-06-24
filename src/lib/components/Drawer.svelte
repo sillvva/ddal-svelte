@@ -1,5 +1,6 @@
 <script lang="ts">
 	import { twMerge } from "tailwind-merge";
+	import Icon from "./Icon.svelte";
 
 	let drawer = false;
 	let backdrop = false;
@@ -16,9 +17,7 @@
 </script>
 
 <button class="flex py-3 pr-4 print:hidden md:hidden" on:click={() => toggleDrawer(true)}>
-	<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" class="w-6"
-		><title>menu</title><path fill="currentColor" d="M3,6H21V8H3V6M3,11H21V13H3V11M3,16H21V18H3V16Z" /></svg
-	>
+	<Icon src="menu" class="w-6" />
 </button>
 <div class={twMerge("fixed -left-72 bottom-0 top-0 z-50 w-72 bg-base-100 px-4 py-4 transition-all", drawer && "left-0")}>
 	<ul class="menu w-full">
