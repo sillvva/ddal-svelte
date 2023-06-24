@@ -67,13 +67,9 @@
 			: logs.sort((a, b) => a.date.getTime() - b.date.getTime());
 
 	let descriptions = data.descriptions;
-
-	$: {
-		setCookie("characters:descriptions", descriptions);
-	}
+	$: setCookie("characters:descriptions", descriptions);
 
 	let modal: { name: string; description: string; date: Date } | null = null;
-
 	function triggerModal(log: (typeof results)[0]) {
 		if (log.description && !descriptions) {
 			modal = {
@@ -253,7 +249,7 @@
 <div class="mt-4 flex">
 	<div class="flex gap-4 print:hidden">
 		{#if myCharacter}
-			<a href={`/characters/${character.id}/log/new`} class="btn-primary btn-sm btn px-2 sm:px-3">
+			<a href={`/characters/${character.id}/log/new`} class="btn-primary btn-sm btn px-2 sm:px-3" aria-label="New Log">
 				<span class="hidden sm:inline">New Log</span>
 				<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" class="inline w-4 sm:hidden"
 					><title>plus</title><path fill="currentColor" d="M19,13H13V19H11V13H5V11H11V5H13V11H19V13Z" /></svg
@@ -444,7 +440,7 @@
 								)}
 							>
 								<div class="flex flex-col justify-center gap-2">
-									<a href={`/characters/${log.characterId}/log/${log.id}`} class="btn-primary btn-sm btn">
+									<a href={`/characters/${log.characterId}/log/${log.id}`} class="btn-primary btn-sm btn" aria-label="Edit Log">
 										<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" class="w-4"
 											><title>pencil</title><path
 												fill="currentColor"
@@ -473,6 +469,7 @@
 												if (confirm(`Are you sure you want to delete ${log.name}? This action cannot be reversed.`))
 													e.currentTarget.form?.requestSubmit();
 											}}
+											aria-label="Delete Log"
 										>
 											<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" class="w-4"
 												><title>trash-can</title><path

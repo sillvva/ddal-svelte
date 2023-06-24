@@ -37,10 +37,8 @@
 		  }))
 		: [];
 
-	minisearch.addAll(indexed);
-
 	let search = "";
-
+	minisearch.addAll(indexed);
 	$: msResults = minisearch.search(search);
 	$: results =
 		indexed.length && search.length > 1
@@ -60,7 +58,6 @@
 
 	let magicItems = data.magicItems;
 	let display = data.display;
-
 	$: setCookie("characters:magicItems", magicItems);
 	$: setCookie("characters:display", display);
 </script>
@@ -81,7 +78,7 @@
 		</div>
 		<div class="flex-1" />
 		{#if characters.length > 0}
-			<a href="/characters/new/edit" class="btn-primary btn-sm btn">
+			<a href="/characters/new/edit" class="btn-primary btn-sm btn" aria-label="New Character">
 				<span class="hidden xs:inline">New Character</span>
 				<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" class="inline w-4 xs:hidden"
 					><title>plus</title><path fill="currentColor" d="M19,13H13V19H11V13H5V11H11V5H13V11H19V13Z" /></svg
@@ -115,7 +112,7 @@
 		<div class="flex-1" />
 		<div class={twMerge("form-control", display == "grid" && "block sm:hidden")}>
 			<label class="label cursor-pointer py-1">
-				<span class="label-text pr-4 sm:inline">Show Items</span>
+				<span class="label-text pr-4">Show Items</span>
 				<input type="checkbox" class="toggle-primary toggle" bind:checked={magicItems} />
 			</label>
 		</div>
@@ -124,6 +121,7 @@
 				class={twMerge("btn btn-sm join-item hover:btn-primary", display == "list" && "bg-primary")}
 				on:click={() => (display = "list")}
 				on:keypress
+				aria-label="List View"
 			>
 				<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" class="w-4"
 					><title>format-list-text</title><path
@@ -136,6 +134,7 @@
 				class={twMerge("btn btn-sm join-item hover:btn-primary", display == "grid" && "bg-primary")}
 				on:click={() => (display = "grid")}
 				on:keypress
+				aria-label="Grid View"
 			>
 				<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" class="w-4"
 					><title>view-grid</title><path fill="currentColor" d="M3,11H11V3H3M3,21H11V13H3M13,21H21V13H13M13,3V11H21V3" /></svg

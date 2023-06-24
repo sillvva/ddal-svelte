@@ -271,7 +271,7 @@
 								</td>
 								<td class="w-8 print:hidden">
 									<div class="flex flex-col justify-center gap-2">
-										<a href="/dm-logs/{log.id}" class="btn-primary btn-sm btn">
+										<a href="/dm-logs/{log.id}" class="btn-primary btn-sm btn" aria-label="Edit Log">
 											<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" class="w-4"
 												><title>pencil</title><path
 													fill="currentColor"
@@ -300,6 +300,7 @@
 													if (confirm(`Are you sure you want to delete ${log.name}? This action cannot be reversed.`))
 														e.currentTarget.form?.requestSubmit();
 												}}
+												aria-label="Delete Log"
 											>
 												<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" class="w-4"
 													><title>trash-can</title><path
