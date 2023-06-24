@@ -182,13 +182,9 @@
 					log.applied_date = null;
 				}}
 				on:select={(ev) => {
-					const character = data.characters.find((c) => c.id === ev.detail);
-					if (character) {
-						log.characterId = ev.detail.toString();
-					} else {
-						log.characterId = "";
-					}
-					log.applied_date = null;
+					const char = data.characters.find((c) => c.id === ev.detail);
+					log.characterId = char ? ev.detail.toString() : "";
+					log.applied_date = character && log.applied_date ? log.applied_date : null;
 				}}
 			/>
 			<label for="characterName" class="label">

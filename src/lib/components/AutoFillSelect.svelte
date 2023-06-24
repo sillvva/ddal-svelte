@@ -2,7 +2,21 @@
 	import { createEventDispatcher, onMount } from "svelte";
 	import { twMerge } from "tailwind-merge";
 
-	const dispatch = createEventDispatcher<{ select: string | number }>();
+	const dispatch = createEventDispatcher<{
+		select: string | number;
+		input: Event & {
+			currentTarget: EventTarget & HTMLInputElement;
+		};
+		change: Event & {
+			currentTarget: EventTarget & HTMLInputElement;
+		};
+		blur: Event & {
+			currentTarget: EventTarget & HTMLInputElement;
+		};
+		focus: Event & {
+			currentTarget: EventTarget & HTMLInputElement;
+		};
+	}>();
 
 	export let values: { key?: string | number | null; value: string }[] = [];
 	export let value: string | number | null = "";
@@ -54,7 +68,10 @@
 				selected = false;
 				keysel = 0;
 				search = e.currentTarget.value;
+				dispatch("input", e);
 			}}
+			on:change={(e) => dispatch("change", e)}
+			on:focus={(e) => dispatch("focus", e)}
 			on:keydown={(e) => {
 				if (!parsedValues.length || !search.trim()) return;
 				if (e.code === "ArrowDown") {
@@ -92,6 +109,7 @@
 						selectNew(search);
 					}
 				}
+				dispatch("blur", e);
 			}}
 			class="input-bordered input w-full focus:border-primary"
 		/>
