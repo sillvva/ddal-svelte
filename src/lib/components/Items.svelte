@@ -32,13 +32,13 @@
 			{/if}
 		</h4>
 	{/if}
-	<p class={twMerge("divide-x whitespace-pre-wrap text-sm print:text-xs", collapsed ? "hidden print:block md:block" : "")}>
+	<p class={twMerge("divide-x text-sm print:text-xs", collapsed ? "hidden print:inline md:inline" : "")}>
 		{#if items.length}
 			{#each items as mi}
-				<div
+				<span
 					role="button"
 					tabindex="0"
-					class="inline whitespace-pre-wrap pl-2 pr-1 first:pl-0"
+					class="inline pl-2 pr-1 first:pl-0"
 					on:click={() => {
 						if (mi.description) {
 							modal = { name: mi.name, description: mi.description };
@@ -53,7 +53,7 @@
 					{:else}
 						<SearchResults text={mi.name + (mi.description && "*")} search={search || ""} />
 					{/if}
-				</div>
+				</span>
 			{/each}
 		{:else}
 			None
