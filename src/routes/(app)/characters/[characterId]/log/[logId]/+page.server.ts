@@ -4,17 +4,17 @@ import { getCharacter } from "$src/server/data/characters";
 import { getUserDMs } from "$src/server/data/dms";
 import { getLog } from "$src/server/data/logs";
 import { z } from "zod";
-import { redirect } from "@sveltejs/kit";
+import { error, redirect } from "@sveltejs/kit";
 
 export const load = async (event) => {
 	const session = await event.locals.getSession();
 	if (!session?.user) throw redirect(301, "/");
 
 	const character = await getCharacter(event.params.characterId, false);
-	if (!character) throw redirect(301, "/characters");
+	if (!character) throw error(404, "Character not found");
 
 	const log = await getLog(event.params.logId, character.id);
-	if (event.params.logId !== "new" && !log.id) throw redirect(301, `/characters/${character.id}`);
+	if (event.params.logId !== "new" && !log.id) throw error(404, "Log not found");
 
 	const dms = await getUserDMs(session.user.id);
 

@@ -1,31 +1,36 @@
 <script lang="ts">
-	import { onMount } from "svelte";
+	import { createEventDispatcher, onMount } from "svelte";
 	import { twMerge } from "tailwind-merge";
 
+	const dispatch = createEventDispatcher<{
+		select: string | number;
+		input: Event & {
+			currentTarget: EventTarget & HTMLInputElement;
+		};
+		change: Event & {
+			currentTarget: EventTarget & HTMLInputElement;
+		};
+		blur: Event & {
+			currentTarget: EventTarget & HTMLInputElement;
+		};
+		focus: Event & {
+			currentTarget: EventTarget & HTMLInputElement;
+		};
+	}>();
+
 	export let values: { key?: string | number | null; value: string }[] = [];
-	export let value: string | number = "";
-	export let onSelect: (value: string | number) => void;
-	export let onChange: (
-		e: Event & {
-			currentTarget: EventTarget & HTMLInputElement;
-		}
-	) => void = (e) => {};
-	export let onBlur: (
-		e: FocusEvent & {
-			currentTarget: EventTarget & HTMLInputElement;
-		}
-	) => void = (e) => {};
+	export let value: string | number | null = "";
 	export let searchBy: "key" | "value" = "key";
 
 	let keysel = 0;
-	let valSearch = value?.toString();
+	let search = value?.toString() || "";
 	let selected = false;
 
 	$: parsedValues = values.map((v) => ({ key: v.key ?? v.value, value: v.value })).filter((v) => v.key !== null);
 	$: matches =
-		parsedValues && parsedValues.length > 0 && valSearch.trim()
+		parsedValues && parsedValues.length > 0 && search.trim()
 			? parsedValues
-					.filter((v) => `${searchBy == "key" ? v.key : v.value}`.toLowerCase().includes(valSearch.toLowerCase()))
+					.filter((v) => `${searchBy == "key" ? v.key : v.value}`.toLowerCase().includes(search.toLowerCase()))
 					.sort((a, b) => (a.value > b.value ? 1 : -1))
 			: [];
 
@@ -35,16 +40,16 @@
 
 	const selectHandler = (key: number) => {
 		const match = matches[key];
-		onSelect(match?.key || "");
+		dispatch("select", match?.key || "");
 		keysel = match ? key : 0;
 		selected = !!match;
-		valSearch = "";
+		search = "";
 	};
 
 	const selectNew = (value: string) => {
-		onSelect(value);
+		dispatch("select", value);
 		selected = true;
-		valSearch = "";
+		search = "";
 	};
 </script>
 
@@ -52,7 +57,7 @@
 	class="dropdown"
 	role="combobox"
 	aria-controls="options-{$$restProps.name}"
-	aria-expanded={!!(parsedValues && parsedValues.length > 0 && valSearch.trim() && !selected)}
+	aria-expanded={!!(parsedValues && parsedValues.length > 0 && search.trim() && !selected)}
 >
 	<label>
 		<input
@@ -62,11 +67,13 @@
 			on:input={(e) => {
 				selected = false;
 				keysel = 0;
-				valSearch = e.currentTarget.value;
-				if (onChange) onChange(e);
+				search = e.currentTarget.value;
+				dispatch("input", e);
 			}}
+			on:change={(e) => dispatch("change", e)}
+			on:focus={(e) => dispatch("focus", e)}
 			on:keydown={(e) => {
-				if (!parsedValues.length || !valSearch.trim()) return;
+				if (!parsedValues.length || !search.trim()) return;
 				if (e.code === "ArrowDown") {
 					e.preventDefault();
 					if (selected) return false;
@@ -85,7 +92,7 @@
 					e.preventDefault();
 					if (selected) return false;
 					if (matches.length) selectHandler(keysel);
-					else selectNew(valSearch);
+					else selectNew(search);
 				}
 				if (e.code === "Escape") {
 					e.preventDefault();
@@ -95,19 +102,19 @@
 				}
 			}}
 			on:blur={(e) => {
-				if (!selected && valSearch.trim()) {
+				if (!selected && search.trim()) {
 					if (matches.length)
 						selectHandler(matches.findIndex((v) => v[searchBy].toString().toLowerCase() === e.currentTarget.value.toLowerCase()));
 					else {
-						selectNew(valSearch);
+						selectNew(search);
 					}
 				}
-				if (onBlur) onBlur(e);
+				dispatch("blur", e);
 			}}
 			class="input-bordered input w-full focus:border-primary"
 		/>
 	</label>
-	{#if parsedValues && parsedValues.length > 0 && valSearch.trim() && !selected}
+	{#if parsedValues && parsedValues.length > 0 && search.trim() && !selected}
 		<ul id="options-{$$restProps.name}" class="dropdown-content menu w-full rounded-lg bg-base-100 p-2 shadow dark:bg-base-200">
 			{#each matches.slice(0, 8) as kv, i}
 				<li class={twMerge("hover:bg-primary/50", keysel === i && "bg-primary text-primary-content")}>

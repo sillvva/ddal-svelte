@@ -1,6 +1,6 @@
 import { saveCharacter } from "$src/server/actions/characters";
 import { getCharacter } from "$src/server/data/characters";
-import { redirect } from "@sveltejs/kit";
+import { error, redirect } from "@sveltejs/kit";
 
 export const load = async (event) => {
 	const session = await event.locals.getSession();
@@ -16,7 +16,7 @@ export const load = async (event) => {
 	};
 	if (event.params.characterId !== "new") {
 		const data = await getCharacter(event.params.characterId, false);
-		if (!data) throw redirect(301, "/characters");
+		if (!data) throw error(404, "Character not found");
 		character.name = data.name;
 		character.campaign = data.campaign || "";
 		character.race = data.race || "";
