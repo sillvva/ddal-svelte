@@ -2,7 +2,17 @@ import { browser } from "$app/environment";
 
 import type { Cookies } from "@sveltejs/kit";
 
-export async function setCookie(name: string, value: string | number | boolean | object | null) {
+/**
+ * Set a http-only cookie from the browser using a fetch request to the server. The server function should call
+ * `serverSetCookie` to set the cookie.
+ *
+ * To update a specific property of an object stored in a cookie, the name of the cookie would be `cookieName:propertyName`.
+ * For example, to update the `descriptions` property on the cookie `settings`, the name would be `settings:descriptions`.
+ *
+ * @param name Name of the cookie
+ * @param value Value of the cookie
+ */
+export async function setCookie(name: string, value: string | number | boolean | object) {
 	if (!browser) return;
 	const response = await fetch("/api/cookie", {
 		method: "POST",
@@ -16,9 +26,44 @@ export async function setCookie(name: string, value: string | number | boolean |
 	}
 }
 
-export function serverGetCookie<T>(cookies: Cookies, name: string, defaultCookie: T) {
-	const cookie = JSON.parse(cookies.get("characters") || JSON.stringify(defaultCookie)) as typeof defaultCookie;
-	if (typeof cookie === "object")
+/**
+ * Get a cookie from the server.
+ *
+ * The function should be called from the `load` function of a page/layout server route. The cookie will be returned as part
+ * of the `load` function's return value.
+ *
+ * ```ts
+ * const defaultValue = {
+ * 	descriptions: false
+ * };
+ *
+ * export const load = async (event) => {
+ * 	const cookie = serverGetCookie(event.cookies, "settings", defaultValue);
+ * 	return {
+ * 		...cookie // {descriptions: boolean}
+ * 	};
+ * };
+ * ```
+ *
+ * Then the cookie can be accessed an updated from the page/layout like so:
+ *
+ * ```ts
+ * let descriptions = data.descriptions; // boolean
+ * $: setCookie("settings:descriptions", descriptions);
+ * ```
+ *
+ * The above example will *ONLY* set the `descriptions` property on the object stored in the `settings` cookie whenever the
+ * `descriptions` variable changes and when the page/layout mounts.
+ *
+ * @param cookies Cookies object from the server
+ * @param name Name of the cookie
+ * @param defaultCookie Default value of the cookie
+ * @returns The cookie value
+ */
+export function serverGetCookie<T extends string | number | boolean | object>(cookies: Cookies, name: string, defaultCookie: T) {
+	const cookie = JSON.parse(cookies.get(name) || JSON.stringify(defaultCookie)) as typeof defaultCookie;
+	if (typeof cookie !== typeof defaultCookie) throw new Error(`Cookie "${name}" is not of type ${typeof defaultCookie}`);
+	if (typeof cookie === "object" && typeof defaultCookie === "object")
 		return {
 			...defaultCookie,
 			...cookie
@@ -26,7 +71,19 @@ export function serverGetCookie<T>(cookies: Cookies, name: string, defaultCookie
 	else return cookie;
 }
 
-export function serverSetCookie(cookies: Cookies, name: string, value: string) {
+/**
+ * Set a http-only cookie from the server.
+ *
+ * This function should be called from a server action or server endpoint. The cookie will be set as http-only. It can then
+ * be accessed from the `load` function of a page/layout server route using `serverGetCookie`.
+ *
+ * @param cookies Cookies object from the server
+ * @param name Name of the cookie
+ * @param value Value of the cookie
+ * @param expires Expiration time of the cookie
+ * @returns The cookie value
+ */
+export function serverSetCookie(cookies: Cookies, name: string, value: string, expires = 1000 * 60 * 60 * 24 * 365) {
 	if (browser) return null;
 	const parts = name.split(":");
 	if (parts[1]) {
@@ -36,14 +93,14 @@ export function serverSetCookie(cookies: Cookies, name: string, value: string) {
 		cookies.set(prefix, JSON.stringify(existing), {
 			httpOnly: true,
 			path: "/",
-			expires: new Date(Date.now() + 1000 * 60 * 60 * 24 * 365)
+			expires: new Date(Date.now() + expires)
 		});
 		return existing;
 	} else {
 		cookies.set(name, value, {
 			httpOnly: true,
 			path: "/",
-			expires: new Date(Date.now() + 1000 * 60 * 60 * 24 * 365)
+			expires: new Date(Date.now() + expires)
 		});
 		return value;
 	}
