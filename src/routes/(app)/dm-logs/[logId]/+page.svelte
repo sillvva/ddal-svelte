@@ -75,7 +75,7 @@
 	<Meta title="Edit {log.name}" />
 {/if}
 
-<div class="breadcrumbs mb-4 text-sm">
+<div class="breadcrumbs mb-4 hidden text-sm sm:flex">
 	<ul>
 		<li>
 			<Icon src="home" class="w-4" />
@@ -227,7 +227,7 @@
 				</select>
 			</div>
 			{#if season === 1}
-				<div class="form-control col-span-6 w-full sm:col-span-4">
+				<div class="form-control col-span-12 w-full sm:col-span-4">
 					<label for="experience" class="label">
 						<span class="label-text">Experience</span>
 					</label>
@@ -294,7 +294,7 @@
 					</label>
 				</div>
 			{/if}
-			<div class={twMerge("form-control w-full", "col-span-12 sm:col-span-2")}>
+			<div class={twMerge("form-control w-full", "col-span-6 sm:col-span-2")}>
 				<label for="gold" class="label">
 					<span class="label-text">Gold</span>
 				</label>
@@ -309,7 +309,7 @@
 					<span class="label-text-alt text-error">{errors.gold || ""}</span>
 				</label>
 			</div>
-			<div class={twMerge("form-control w-full", "col-span-12 sm:col-span-2")}>
+			<div class={twMerge("form-control w-full", "col-span-6 sm:col-span-2")}>
 				<label for="dtd" class="label">
 					<span class="label-text overflow-hidden text-ellipsis whitespace-nowrap">Downtime Days</span>
 				</label>
@@ -343,7 +343,7 @@
 		<div class="col-span-12 flex flex-wrap gap-4">
 			<button
 				type="button"
-				class="btn-primary btn-sm btn min-w-fit flex-1 sm:flex-none"
+				class="btn-primary btn min-w-fit flex-1 sm:btn-sm sm:flex-none"
 				on:click={addMagicItem}
 				disabled={saving}
 			>
@@ -351,7 +351,7 @@
 			</button>
 			<button
 				type="button"
-				class="btn-primary btn-sm btn min-w-fit flex-1 sm:flex-none"
+				class="btn-primary btn min-w-fit flex-1 sm:btn-sm sm:flex-none"
 				on:click={addStoryAward}
 				disabled={saving}
 			>

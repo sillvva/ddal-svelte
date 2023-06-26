@@ -61,7 +61,7 @@
 <Meta title="{data.session?.user?.name}'s DM Logs" />
 
 <div class="flex flex-col gap-4">
-	<div class="flex gap-4 print:hidden">
+	<div class="hidden gap-4 print:hidden sm:flex">
 		<div class="breadcrumbs flex-1 text-sm">
 			<ul>
 				<li>
@@ -95,7 +95,7 @@
 	{/if}
 
 	<div class="flex gap-4">
-		<input type="text" placeholder="Search" bind:value={search} class="input-bordered input input-sm w-full sm:max-w-xs" />
+		<input type="text" placeholder="Search" bind:value={search} class="input-bordered input w-full sm:input-sm sm:max-w-xs" />
 	</div>
 
 	<section>
@@ -258,9 +258,9 @@
 										</div>
 									{/if}
 								</td>
-								<td class="w-8 print:hidden">
-									<div class="flex flex-col justify-center gap-2">
-										<a href="/dm-logs/{log.id}" class="btn-primary btn-sm btn" aria-label="Edit Log">
+								<td class="w-8 align-top print:hidden">
+									<div class="flex flex-col gap-2">
+										<a href="/dm-logs/{log.id}" class="btn-primary btn sm:btn-sm" aria-label="Edit Log">
 											<Icon src="pencil" class="w-4" />
 										</a>
 										<form
@@ -279,7 +279,7 @@
 										>
 											<input type="hidden" name="logId" value={log.id} />
 											<button
-												class="btn-sm btn"
+												class="btn sm:btn-sm"
 												on:click|preventDefault={(e) => {
 													if (confirm(`Are you sure you want to delete ${log.name}? This action cannot be reversed.`))
 														e.currentTarget.form?.requestSubmit();

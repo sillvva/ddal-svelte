@@ -14,7 +14,7 @@
 <Meta title="{data.session?.user?.name}'s DMs" />
 
 <div class="flex flex-col gap-4">
-	<div class="flex gap-4 print:hidden">
+	<div class="hidden gap-4 print:hidden sm:flex">
 		<div class="breadcrumbs flex-1 text-sm">
 			<ul>
 				<li>
@@ -66,10 +66,7 @@
 									<td class="hidden xs:table-cell">{dm.DCI || ""}</td>
 									<td class="hidden xs:table-cell">{dm.logs.length}</td>
 									<td class="w-16 print:hidden">
-										<div class="flex flex-row justify-center gap-2">
-											<a href="/dms/{dm.id}" class="btn-primary btn-sm btn" aria-label="Edit DM">
-												<Icon src="pencil" class="w-4" />
-											</a>
+										<div class="flex flex-row justify-end gap-2">
 											{#if dm.logs.length == 0}
 												<form
 													method="POST"
@@ -87,7 +84,7 @@
 												>
 													<input type="hidden" name="dmId" value={dm.id} />
 													<button
-														class="btn-sm btn"
+														class="btn sm:btn-sm"
 														on:click|preventDefault={(e) => {
 															if (confirm(`Are you sure you want to delete ${dm.name}? This action cannot be reversed.`))
 																e.currentTarget.form?.requestSubmit();
@@ -98,6 +95,9 @@
 													</button>
 												</form>
 											{/if}
+											<a href="/dms/{dm.id}" class="btn-primary btn sm:btn-sm" aria-label="Edit DM">
+												<Icon src="pencil" class="w-4" />
+											</a>
 										</div>
 									</td>
 								</tr>
