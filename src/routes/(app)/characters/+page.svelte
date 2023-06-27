@@ -116,7 +116,7 @@
 				</btn>
 			{/if}
 		</div>
-		<div class="hidden flex-1 sm:block" />
+		<div class="hidden flex-1 xs:block" />
 		<div class={twMerge("form-control hidden md:flex", display == "grid" && "hidden md:hidden")}>
 			<label class="label cursor-pointer py-1">
 				<span class="label-text pr-4">Show Items</span>
@@ -257,7 +257,7 @@
 					)}
 				>
 					{#each results.filter((c) => c.tier == tier) as character}
-						<a href={`/characters/${character.id}`} class="img-grow card card-compact bg-base-100 shadow-xl">
+						<a href={`/characters/${character.id}`} class="img-grow card-compact card bg-base-100 shadow-xl">
 							<figure class="relative aspect-square overflow-hidden">
 								<img src={character.image_url} alt={character.name} class="h-full w-full object-cover object-top" />
 								{#if search.length >= 1 && indexed.length}
