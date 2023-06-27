@@ -2,9 +2,7 @@ import { parseError } from "$lib/misc";
 import { getCharacter, getCharacters } from "$src/server/data/characters";
 import { json } from "@sveltejs/kit";
 
-import type { RequestEvent } from "./$types";
-
-export async function GET({ params, locals }: RequestEvent) {
+export async function GET({ params, locals }) {
 	const session = await locals.getSession();
 	if (!session?.user) return json({ error: "Unauthorized" }, { status: 401 });
 
