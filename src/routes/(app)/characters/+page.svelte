@@ -200,7 +200,7 @@
 							{#if (character.match.includes("magicItems") || magicItems) && character.magic_items.length}
 								<div class="mb-2">
 									<p class="font-semibold">Magic Items:</p>
-									<SearchResults text={character.magic_items.map((item) => item.name).join(" | ")} {search} />
+									<SearchResults text={character.magic_items.map((item) => item.name)} {search} />
 								</div>
 							{/if}
 						</div>
@@ -245,10 +245,17 @@
 				>
 					{#each results.filter((c) => c.tier == tier) as character}
 						<a href={`/characters/${character.id}`} class="img-grow card card-compact bg-base-100 shadow-xl">
-							<figure class="aspect-square overflow-hidden">
+							<figure class="relative aspect-square overflow-hidden">
 								<img src={character.image_url} alt={character.name} class="h-full w-full object-cover object-top" />
+								{#if search.length >= 1 && indexed.length}
+									<div class="absolute inset-0 flex items-center bg-black/50 p-2 text-center text-xs text-white">
+										<div class="flex-1">
+											<SearchResults text={character.magic_items.map((item) => item.name)} {search} filtered />
+										</div>
+									</div>
+								{/if}
 							</figure>
-							<div class="card-body">
+							<div class="card-body text-center">
 								<div class="flex flex-col gap-1">
 									<h2 class="card-title block overflow-hidden text-ellipsis whitespace-nowrap text-sm dark:text-white">
 										<SearchResults text={character.name} {search} />
