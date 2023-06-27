@@ -1,5 +1,6 @@
 <script lang="ts">
 	import type { MagicItem, StoryAward } from "@prisma/client";
+	import type { SearchResult } from "minisearch";
 	import { twMerge } from "tailwind-merge";
 	import Icon from "./Icon.svelte";
 	import Markdown from "./Markdown.svelte";
@@ -10,6 +11,7 @@
 	export let formatting: boolean = false;
 	export let search: string = "";
 	export let collapsible: boolean = false;
+	export let msResult: SearchResult | null | undefined = null;
 
 	let modal: { name: string; description: string; date?: Date } | null = null;
 	let collapsed = collapsible;
@@ -48,10 +50,10 @@
 				>
 					{#if formatting && !mi.name.match(/^(\d+x? )?((Potion|Scroll|Spell Scroll|Charm|Elixir)s? of)/)}
 						<strong class="text-secondary-content/70 print:text-neutral-content">
-							<SearchResults text={mi.name + (mi.description && "*")} search={search || ""} />
+							<SearchResults text={mi.name + (mi.description && "*")} search={search || ""} {msResult} />
 						</strong>
 					{:else}
-						<SearchResults text={mi.name + (mi.description && "*")} search={search || ""} />
+						<SearchResults text={mi.name + (mi.description && "*")} search={search || ""} {msResult} />
 					{/if}
 				</span>
 			{/each}
