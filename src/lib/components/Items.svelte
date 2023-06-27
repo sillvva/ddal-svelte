@@ -19,20 +19,24 @@
 
 <div class={twMerge("flex-1 flex-col", collapsible && !items.length ? "hidden md:flex" : "flex")}>
 	{#if title}
-		<h4 class="flex text-left font-semibold">
-			<span class="flex-1">
-				<button on:click={collapsible ? () => (collapsed = !collapsed) : () => {}} on:keypress={() => {}}>
+		<button
+			on:click={collapsible ? () => (collapsed = !collapsed) : () => {}}
+			on:keypress={() => {}}
+			class="md:cursor-text md:select-text"
+		>
+			<h4 class="flex text-left font-semibold">
+				<span class="flex-1">
 					{title}
-				</button>
-			</span>
-			{#if collapsible}
-				{#if collapsed}
-					<Icon src="chevron-down" class="ml-2 inline w-4 justify-self-end print:hidden md:hidden" />
-				{:else}
-					<Icon src="chevron-up" class="ml-2 inline w-4 justify-self-end print:hidden md:hidden" />
+				</span>
+				{#if collapsible}
+					{#if collapsed}
+						<Icon src="chevron-down" class="ml-2 inline w-4 justify-self-end print:hidden md:hidden" />
+					{:else}
+						<Icon src="chevron-up" class="ml-2 inline w-4 justify-self-end print:hidden md:hidden" />
+					{/if}
 				{/if}
-			{/if}
-		</h4>
+			</h4>
+		</button>
 	{/if}
 	<p class={twMerge("divide-x text-sm print:text-xs", collapsed ? "hidden print:inline md:inline" : "")}>
 		{#if items.length}
