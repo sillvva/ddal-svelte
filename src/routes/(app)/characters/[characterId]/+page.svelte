@@ -266,7 +266,7 @@
 </section>
 
 <div class="mt-4 flex flex-wrap gap-2">
-	<div class="flex w-full gap-4 print:hidden sm:max-w-md">
+	<div class="flex w-full gap-2 print:hidden sm:max-w-md">
 		{#if myCharacter}
 			<a
 				href={`/characters/${character.id}/log/new`}
@@ -297,7 +297,7 @@
 		{/if}
 	</div>
 	{#if logs.length}
-		<div class="flex-1" />
+		<div class="hidden flex-1 sm:block" />
 		<div class="form-control hidden sm:flex">
 			<label class="label cursor-pointer py-1">
 				<span class="label-text pr-4">Notes</span>
