@@ -10,7 +10,7 @@ export const load = async (event) => {
 	const session = await event.locals.getSession();
 	if (!session?.user) throw redirect(301, "/");
 
-	const character = await getCharacter(event.params.characterId, false);
+	const character = await getCharacter(event.params.characterId);
 	if (!character) throw error(404, "Character not found");
 
 	const log = await getLog(event.params.logId, character.id);

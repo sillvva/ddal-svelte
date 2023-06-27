@@ -20,7 +20,7 @@
 	let deletingLog: string[] = [];
 
 	let search = "";
-	let stopWords = new Set(["and", "or", "to", "in", "a", "the"]);
+	let stopWords = new Set(["and", "or", "to", "in", "a", "the", "of"]);
 	const logSearch = new MiniSearch({
 		fields: ["logName", "magicItems", "storyAwards"],
 		idField: "logId",
@@ -89,7 +89,7 @@
 />
 
 {#if data.session?.user}
-	<div class="flex gap-4 print:hidden">
+	<div class="hidden gap-4 print:hidden sm:flex">
 		<div class="breadcrumbs mb-4 flex-1 text-sm">
 			<ul>
 				<li>
@@ -102,15 +102,12 @@
 			</ul>
 		</div>
 		{#if myCharacter}
-			<a href={`/characters/${character.id}/edit`} class="btn-primary btn-sm btn hidden sm:flex">Edit</a>
+			<a href={`/characters/${character.id}/edit`} class="btn-primary btn-sm btn">Edit</a>
 			<div class="dropdown-end dropdown">
 				<span role="button" tabindex="0" class="btn-sm btn">
 					<Icon src="dots-horizontal" class="w-6" />
 				</span>
 				<ul class="dropdown-content menu rounded-box z-20 w-52 bg-base-100 p-2 shadow">
-					<li class="flex sm:hidden">
-						<a href={`/characters/${character.id}/edit`}>Edit</a>
-					</li>
 					<li>
 						<a
 							download={`${slugify(character.name)}.json`}
@@ -165,9 +162,42 @@
 					</a>
 				</div>
 			{/if}
-			<div class="flex flex-col">
-				<h3 class="flex-1 font-vecna text-4xl font-bold text-accent-content">{character.name}</h3>
-				<p class="flex-1 text-sm font-semibold">
+			<div class="flex w-full flex-col">
+				<div class="mb-2 flex gap-4 sm:mb-0">
+					<h3 class="flex-1 py-2 font-vecna text-3xl font-bold text-accent-content sm:py-0 sm:text-4xl">{character.name}</h3>
+					<div class="dropdown-end dropdown sm:hidden">
+						<span role="button" tabindex="0" class="btn">
+							<Icon src="dots-horizontal" class="w-6" />
+						</span>
+						<ul class="dropdown-content menu rounded-box z-20 w-52 bg-base-100 p-2 shadow">
+							{#if character.image_url}
+								<li>
+									<a href={character.image_url} target="_blank">View Image</a>
+								</li>
+							{/if}
+							<li>
+								<a href={`/characters/${character.id}/edit`}>Edit</a>
+							</li>
+							<li>
+								<form
+									method="POST"
+									action="?/deleteCharacter"
+									use:enhance={() => {
+										$pageLoader = true;
+										return ({ update, result }) => {
+											update();
+											if (result.type !== "redirect") $pageLoader = false;
+										};
+									}}
+									class="bg-red-800 hover:bg-red-900"
+								>
+									<button>Delete Character</button>
+								</form>
+							</li>
+						</ul>
+					</div>
+				</div>
+				<p class="flex-1 text-xs font-semibold xs:text-sm">
 					{character.race}
 					{character.class}
 				</p>
@@ -235,31 +265,51 @@
 	</div>
 </section>
 
-<div class="mt-4 flex">
-	<div class="flex gap-4 print:hidden">
+<div class="mt-4 flex flex-wrap gap-2">
+	<div class="flex w-full gap-4 print:hidden sm:max-w-md">
 		{#if myCharacter}
-			<a href={`/characters/${character.id}/log/new`} class="btn-primary btn-sm btn px-2 sm:px-3" aria-label="New Log">
-				<span class="hidden sm:inline">New Log</span>
-				<Icon src="plus" class="inline w-4 sm:hidden" />
+			<a
+				href={`/characters/${character.id}/log/new`}
+				class="btn-primary btn hidden sm:btn-sm sm:inline-flex sm:px-3"
+				aria-label="New Log"
+			>
+				New Log
 			</a>
 		{/if}
 		{#if logs.length}
-			<input type="text" placeholder="Search" bind:value={search} class="input-bordered input input-sm w-full sm:max-w-xs" />
-			{#if myCharacter}
-				<div class="form-control">
-					<label class="label cursor-pointer py-1">
-						<span class="label-text hidden pr-4 sm:inline">Notes</span>
-						<input
-							type="checkbox"
-							class="toggle-primary toggle"
-							checked={descriptions}
-							on:change={() => (descriptions = !descriptions)}
-						/>
-					</label>
-				</div>
-			{/if}
+			<input type="text" placeholder="Search" bind:value={search} class="input-bordered input flex-1 sm:input-sm sm:max-w-xs" />
+		{/if}
+		{#if myCharacter}
+			<a href={`/characters/${character.id}/log/new`} class="btn-primary btn sm:btn-sm sm:hidden sm:px-3" aria-label="New Log">
+				<Icon src="plus" class="w-6" />
+			</a>
+			<btn
+				class="btn sm:hidden"
+				on:click={() => (descriptions = !descriptions)}
+				on:keypress={() => null}
+				on:keypress
+				role="button"
+				aria-label="Toggle Notes"
+				tabindex="0"
+			>
+				<Icon src={descriptions ? "chevron-down" : "chevron-up"} class="w-6" />
+			</btn>
 		{/if}
 	</div>
+	{#if logs.length}
+		<div class="flex-1" />
+		<div class="form-control hidden sm:flex">
+			<label class="label cursor-pointer py-1">
+				<span class="label-text pr-4">Notes</span>
+				<input
+					type="checkbox"
+					class="toggle-primary toggle toggle-lg mt-1 sm:toggle-md sm:mt-0"
+					checked={descriptions}
+					on:change={() => (descriptions = !descriptions)}
+				/>
+			</label>
+		</div>
+	{/if}
 </div>
 
 <section class="mt-4">
@@ -282,6 +332,7 @@
 						<td
 							class={twMerge(
 								"!static pb-0 align-top print:p-2 sm:pb-3",
+								(!descriptions || !log.description) && "pb-3",
 								log.saving && "bg-neutral-focus",
 								(log.description?.trim() || log.story_awards_gained.length > 0 || log.story_awards_lost.length > 0) &&
 									"border-b-0"
@@ -427,8 +478,12 @@
 								)}
 							>
 								<div class="flex flex-col justify-center gap-2">
-									<a href={`/characters/${log.characterId}/log/${log.id}`} class="btn-primary btn-sm btn" aria-label="Edit Log">
-										<Icon src="pencil" class="w-4" />
+									<a
+										href={`/characters/${log.characterId}/log/${log.id}`}
+										class="btn-primary btn sm:btn-sm"
+										aria-label="Edit Log"
+									>
+										<Icon src="pencil" class="w-6 sm:w-4" />
 									</a>
 									<form
 										method="POST"
@@ -446,14 +501,14 @@
 									>
 										<input type="hidden" name="logId" value={log.id} />
 										<button
-											class="btn-sm btn"
+											class="btn sm:btn-sm"
 											on:click|preventDefault={(e) => {
 												if (confirm(`Are you sure you want to delete ${log.name}? This action cannot be reversed.`))
 													e.currentTarget.form?.requestSubmit();
 											}}
 											aria-label="Delete Log"
 										>
-											<Icon src="trash-can" class="w-4" />
+											<Icon src="trash-can" class="w-6 sm:w-4" />
 										</button>
 									</form>
 								</div>

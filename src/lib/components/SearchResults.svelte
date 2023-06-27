@@ -1,11 +1,20 @@
 <script lang="ts">
-	export let text: string | null = null;
+	export let text: string | string[] | null = null;
 	export let search: string = "";
+	export let filtered = false;
+	export let separator = " | ";
 
 	$: regex = new RegExp(search, "gi");
-	$: match = text?.match(regex);
 
-	$: parts = text?.split(regex) || [];
+	$: items = Array.isArray(text)
+		? text.filter((item) => !filtered || item.match(regex)).join(separator)
+		: text
+				?.split(separator)
+				.filter((item) => !filtered || item.match(regex))
+				.join(separator);
+	$: match = items?.match(regex);
+
+	$: parts = items?.split(regex) || [];
 	$: for (let i = 1; i < parts.length; i += 2) {
 		parts.splice(i, 0, match?.[(i - 1) / 2] || "");
 	}

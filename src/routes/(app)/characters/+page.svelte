@@ -9,7 +9,7 @@
 
 	export let data: PageData;
 
-	let stopWords = new Set(["and", "or", "to", "in", "a", "the"]);
+	let stopWords = new Set(["and", "or", "to", "in", "a", "the", "of"]);
 	const minisearch = new MiniSearch({
 		fields: ["characterName", "campaign", "race", "class", "magicItems", "tier", "level"],
 		idField: "characterId",
@@ -66,7 +66,7 @@
 <Meta title="{data.session?.user?.name}'s Characters" />
 
 <div class="flex flex-col gap-4">
-	<div class="flex gap-4">
+	<div class="hidden gap-4 sm:flex">
 		<div class="breadcrumbs text-sm">
 			<ul>
 				<li>
@@ -76,12 +76,6 @@
 			</ul>
 		</div>
 		<div class="flex-1" />
-		{#if characters.length > 0}
-			<a href="/characters/new/edit" class="btn-primary btn-sm btn" aria-label="New Character">
-				<span class="hidden xs:inline">New Character</span>
-				<Icon src="plus" class="inline w-4 sm:hidden" />
-			</a>
-		{/if}
 		<div class="dropdown-end dropdown">
 			<span role="button" tabindex="0" class="btn-sm btn">
 				<Icon src="dots-horizontal" class="w-6" />
@@ -95,22 +89,43 @@
 	</div>
 
 	<div class="flex flex-wrap gap-2">
-		<input
-			type="text"
-			placeholder="Search by name, race, class, items, etc."
-			bind:value={search}
-			class="input-bordered input input-sm w-full sm:max-w-xs"
-		/>
+		<div class="flex w-full gap-4 sm:max-w-md">
+			{#if characters.length > 0}
+				<a href="/characters/new/edit" class="btn-primary btn-sm btn hidden sm:inline-flex" aria-label="New Character">
+					New Character
+				</a>
+				<input
+					type="text"
+					placeholder="Search by name, race, class, items, etc."
+					bind:value={search}
+					class="input-bordered input flex-1 sm:input-sm"
+				/>
+				<a href="/characters/new/edit" class="btn-primary btn inline-flex sm:hidden" aria-label="New Character">
+					<Icon src="plus" class="inline w-6" />
+				</a>
+				<btn
+					class={twMerge("btn inline-flex sm:hidden")}
+					on:click={() => (magicItems = !magicItems)}
+					on:keypress={() => null}
+					on:keypress
+					role="button"
+					aria-label="Toggle Magic Items"
+					tabindex="0"
+				>
+					<Icon src={magicItems ? "chevron-down" : "chevron-up"} class="w-6" />
+				</btn>
+			{/if}
+		</div>
 		<div class="flex-1" />
-		<div class={twMerge("form-control", display == "grid" && "block sm:hidden")}>
+		<div class={twMerge("form-control hidden sm:flex", display == "grid" && "hidden")}>
 			<label class="label cursor-pointer py-1">
 				<span class="label-text pr-4">Show Items</span>
-				<input type="checkbox" class="toggle-primary toggle" bind:checked={magicItems} />
+				<input type="checkbox" class="toggle-primary toggle toggle-lg sm:toggle-md" bind:checked={magicItems} />
 			</label>
 		</div>
 		<div class="join hidden xs:flex">
 			<button
-				class={twMerge("btn-sm join-item btn hover:btn-primary", display == "list" && "bg-primary")}
+				class={twMerge("join-item btn hover:btn-primary sm:btn-sm", display == "list" && "bg-primary")}
 				on:click={() => (display = "list")}
 				on:keypress
 				aria-label="List View"
@@ -118,7 +133,7 @@
 				<Icon src="format-list-text" class="w-4" />
 			</button>
 			<button
-				class={twMerge("btn-sm join-item btn hover:btn-primary", display == "grid" && "bg-primary")}
+				class={twMerge("join-item btn hover:btn-primary sm:btn-sm", display == "grid" && "bg-primary")}
 				on:click={() => (display = "grid")}
 				on:keypress
 				aria-label="Grid View"
@@ -185,7 +200,7 @@
 							{#if (character.match.includes("magicItems") || magicItems) && character.magic_items.length}
 								<div class="mb-2">
 									<p class="font-semibold">Magic Items:</p>
-									<SearchResults text={character.magic_items.map((item) => item.name).join(" | ")} {search} />
+									<SearchResults text={character.magic_items.map((item) => item.name)} {search} />
 								</div>
 							{/if}
 						</div>
@@ -230,10 +245,17 @@
 				>
 					{#each results.filter((c) => c.tier == tier) as character}
 						<a href={`/characters/${character.id}`} class="img-grow card card-compact bg-base-100 shadow-xl">
-							<figure class="aspect-square overflow-hidden">
+							<figure class="relative aspect-square overflow-hidden">
 								<img src={character.image_url} alt={character.name} class="h-full w-full object-cover object-top" />
+								{#if search.length >= 1 && indexed.length}
+									<div class="absolute inset-0 flex items-center bg-black/50 p-2 text-center text-xs text-white">
+										<div class="flex-1">
+											<SearchResults text={character.magic_items.map((item) => item.name)} {search} filtered />
+										</div>
+									</div>
+								{/if}
 							</figure>
-							<div class="card-body">
+							<div class="card-body text-center">
 								<div class="flex flex-col gap-1">
 									<h2 class="card-title block overflow-hidden text-ellipsis whitespace-nowrap text-sm dark:text-white">
 										<SearchResults text={character.name} {search} />

@@ -20,7 +20,7 @@
 	<Meta title="Edit {character.name}" />
 {/if}
 
-<div class="breadcrumbs mb-4 text-sm">
+<div class="breadcrumbs mb-4 hidden text-sm sm:flex">
 	<ul>
 		<li>
 			<Icon src="home" class="w-4" />
@@ -40,6 +40,11 @@
 		{/if}
 	</ul>
 </div>
+
+<a href={`/characters/${data.characterId}`} class="mb-4 flex gap-4 text-secondary sm:hidden">
+	<Icon src="chevron-left" class="w-6" />
+	<span>Back to {character.name}</span>
+</a>
 
 {#if form?.error}
 	<div class="alert alert-error mb-4 shadow-lg">

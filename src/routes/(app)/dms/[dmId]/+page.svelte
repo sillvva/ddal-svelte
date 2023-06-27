@@ -19,7 +19,7 @@
 <Meta title="Edit {dm.name}" />
 
 <div class="flex flex-col gap-4">
-	<div class="flex gap-4 print:hidden">
+	<div class="hidden gap-4 print:hidden sm:flex">
 		<div class="breadcrumbs flex-1 text-sm">
 			<ul>
 				<li>
@@ -87,7 +87,7 @@
 		</div>
 	</SchemaForm>
 
-	<div class="mt-8 flex flex-col gap-4">
+	<div class="mt-4 flex flex-col gap-4 sm:mt-8">
 		<section>
 			<h2 class="mb-2 text-2xl">Logs</h2>
 			<div class="w-full overflow-x-auto rounded-lg bg-base-100">
@@ -95,8 +95,8 @@
 					<thead>
 						<tr class="bg-base-300">
 							<th class="">Date</th>
-							<th class="">Adventure</th>
-							<th class="">Character</th>
+							<th class="hidden sm:table-cell">Adventure</th>
+							<th class="hidden sm:table-cell">Character</th>
 							<th class="print:hidden" />
 						</tr>
 					</thead>
@@ -139,16 +139,26 @@
 						{:else}
 							{#each dm.logs.sort((a, b) => (a.date > b.date ? 1 : -1)) as log}
 								<tr>
-									<td>{log.date.toLocaleString()}</td>
-									<td>{log.name}</td>
 									<td>
+										<div class="flex flex-col gap-1">
+											<span class="sm:hidden">{log.name}</span>
+											<span>{log.date.toLocaleString()}</span>
+											<span class="sm:hidden">
+												<a href={`/characters/${log.character?.id}`} class="text-secondary">
+													{log.character?.name}
+												</a>
+											</span>
+										</div>
+									</td>
+									<td class="hidden sm:table-cell">{log.name}</td>
+									<td class="hidden sm:table-cell">
 										<a href={`/characters/${log.character?.id}`} class="text-secondary">
 											{log.character?.name}
 										</a>
 									</td>
-									<td class="w-8 print:hidden">
+									<td class="w-8 align-top print:hidden">
 										<div class="flex flex-row justify-center gap-2">
-											<a href={`/characters/${log.character?.id}/log/${log.id}`} class="btn-primary btn-sm btn">
+											<a href={`/characters/${log.character?.id}/log/${log.id}`} class="btn-primary btn sm:btn-sm">
 												<Icon src="pencil" class="w-4" />
 											</a>
 										</div>

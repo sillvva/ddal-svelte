@@ -84,7 +84,7 @@
 	<Meta title="Edit {log.name}" />
 {/if}
 
-<div class="breadcrumbs mb-4 text-sm">
+<div class="breadcrumbs mb-4 hidden text-sm sm:flex">
 	<ul>
 		<li>
 			<Icon src="home" class="w-4" />
@@ -104,6 +104,11 @@
 		{/if}
 	</ul>
 </div>
+
+<a href={`/characters/${data.characterId}`} class="mb-4 flex gap-4 text-secondary sm:hidden">
+	<Icon src="chevron-left" class="w-6" />
+	<span>Back to {character.name}</span>
+</a>
 
 {#if form?.error}
 	<div class="alert alert-error mb-4 shadow-lg">
@@ -179,7 +184,7 @@
 					<input type="hidden" name="dmDCI" value={dm.DCI} />
 					<input type="hidden" name="dmUID" value={dm.uid} />
 				{:else}
-					<div class="form-control col-span-12 sm:col-span-6">
+					<div class="form-control col-span-6">
 						<label for="dmName" class="label">
 							<span class="label-text">DM Name</span>
 						</label>
@@ -197,7 +202,7 @@
 							<span class="label-text-alt text-error">{errors.dmName || ""}</span>
 						</label>
 					</div>
-					<div class="form-control col-span-12 sm:col-span-6">
+					<div class="form-control col-span-6">
 						<label for="dmDCI" class="label">
 							<span class="label-text">DM DCI</span>
 						</label>
@@ -298,7 +303,7 @@
 					</label>
 				</div>
 			{/if}
-			<div class={twMerge("form-control w-full", log.type === "game" ? "col-span-12 sm:col-span-2" : "col-span-4")}>
+			<div class={twMerge("form-control w-full", log.type === "game" ? "col-span-6 sm:col-span-2" : "col-span-4")}>
 				<label for="gold" class="label">
 					<span class="label-text">Gold</span>
 				</label>
@@ -313,7 +318,7 @@
 					<span class="label-text-alt text-error">{errors.gold || ""}</span>
 				</label>
 			</div>
-			<div class={twMerge("form-control w-full", log.type === "game" ? "col-span-12 sm:col-span-2" : "col-span-4")}>
+			<div class={twMerge("form-control w-full", log.type === "game" ? "col-span-6 sm:col-span-2" : "col-span-4")}>
 				<label for="dtd" class="label">
 					<span class="label-text overflow-hidden text-ellipsis whitespace-nowrap">Downtime Days</span>
 				</label>
@@ -347,28 +352,33 @@
 		<div class="col-span-12 flex flex-wrap gap-4">
 			<button
 				type="button"
-				class="btn-primary btn-sm btn min-w-fit flex-1 sm:flex-none"
+				class="btn-primary btn min-w-fit flex-1 sm:btn-sm sm:flex-none"
 				on:click={addMagicItem}
 				disabled={saving}
 			>
 				Add Magic Item
 			</button>
 			{#if !log.is_dm_log && magicItems.filter((item) => !magicItemsLost.includes(item.id)).length > 0}
-				<button type="button" class="btn-sm btn min-w-fit flex-1 sm:flex-none" on:click={addLostMagicItem} disabled={saving}>
+				<button type="button" class="btn min-w-fit flex-1 sm:btn-sm sm:flex-none" on:click={addLostMagicItem} disabled={saving}>
 					Drop Magic Item
 				</button>
 			{/if}
 			{#if log.type === "game"}
 				<button
 					type="button"
-					class="btn-primary btn-sm btn min-w-fit flex-1 sm:flex-none"
+					class="btn-primary btn min-w-fit flex-1 sm:btn-sm sm:flex-none"
 					on:click={addStoryAward}
 					disabled={saving}
 				>
 					Add Story Award
 				</button>
 				{#if !log.is_dm_log && storyAwards.filter((item) => !storyAwardsLost.includes(item.id)).length > 0}
-					<button type="button" class="btn-sm btn min-w-fit flex-1 sm:flex-none" on:click={addLostStoryAward} disabled={saving}>
+					<button
+						type="button"
+						class="btn min-w-fit flex-1 sm:btn-sm sm:flex-none"
+						on:click={addLostStoryAward}
+						disabled={saving}
+					>
 						Drop Story Award
 					</button>
 				{/if}
@@ -460,7 +470,7 @@
 								<Icon src="trash-can" class="w-6" />
 							</button>
 						</div>
-						<div class="text-sm">{magicItems.find((item) => magicItemsLost[index] === item.id)?.description}</div>
+						<div class="text-sm">{magicItems.find((item) => magicItemsLost[index] === item.id)?.description || ""}</div>
 					</div>
 				</div>
 			{/each}
@@ -549,7 +559,7 @@
 								<Icon src="trash-can" class="w-6" />
 							</button>
 						</div>
-						<div class="text-sm">{storyAwards.find((item) => storyAwardsLost[index] === item.id)?.description}</div>
+						<div class="text-sm">{storyAwards.find((item) => storyAwardsLost[index] === item.id)?.description || ""}</div>
 					</div>
 				</div>
 			{/each}
