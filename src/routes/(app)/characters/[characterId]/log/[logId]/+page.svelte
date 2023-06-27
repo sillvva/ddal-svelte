@@ -565,7 +565,16 @@
 			{/each}
 		</div>
 		<div class="col-span-12 text-center">
-			<button type="submit" class={twMerge("btn-primary btn", saving && "loading")} disabled={saving}>Save Log</button>
+			<button
+				type="submit"
+				class="btn-primary btn disabled:bg-primary disabled:bg-opacity-50 disabled:text-opacity-50"
+				disabled={saving}
+			>
+				{#if saving}
+					<span class="loading" />
+				{/if}
+				Save Log
+			</button>
 		</div>
 	</div>
 </SchemaForm>

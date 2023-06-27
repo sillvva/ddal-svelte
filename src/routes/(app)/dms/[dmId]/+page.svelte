@@ -5,7 +5,6 @@
 	import Icon from "$src/lib/components/Icon.svelte";
 	import SchemaForm from "$src/lib/components/SchemaForm.svelte";
 	import { pageLoader } from "$src/lib/store.js";
-	import { twMerge } from "tailwind-merge";
 
 	export let data;
 	export let form;
@@ -82,7 +81,16 @@
 				</div>
 			</div>
 			<div class="m-4 basis-full text-center">
-				<button type="submit" class={twMerge("btn-primary btn", saving && "loading")} disabled={saving}>Update</button>
+				<button
+					type="submit"
+					class="btn-primary btn disabled:bg-primary disabled:bg-opacity-50 disabled:text-opacity-50"
+					disabled={saving}
+				>
+					{#if saving}
+						<span class="loading" />
+					{/if}
+					Save DM
+				</button>
 			</div>
 		</div>
 	</SchemaForm>

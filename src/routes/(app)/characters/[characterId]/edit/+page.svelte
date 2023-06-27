@@ -3,7 +3,6 @@
 	import { newCharacterSchema } from "$lib/types/zod-schema.js";
 	import Icon from "$src/lib/components/Icon.svelte";
 	import SchemaForm from "$src/lib/components/SchemaForm.svelte";
-	import { twMerge } from "tailwind-merge";
 
 	export let data;
 	export let form;
@@ -53,7 +52,7 @@
 	</div>
 {/if}
 
-<SchemaForm action="?/saveCharacter" data={character} bind:form bind:errors schema={newCharacterSchema}>
+<SchemaForm action="?/saveCharacter" data={character} bind:form bind:errors bind:saving schema={newCharacterSchema}>
 	<div class="flex flex-wrap">
 		<div class="basis-full px-2 sm:basis-1/2">
 			<div class="form-control w-full">
@@ -166,7 +165,16 @@
 			</div>
 		</div>
 		<div class="m-4 basis-full text-center">
-			<button type="submit" class={twMerge("btn-primary btn", saving && "loading")} disabled={saving}>Save</button>
+			<button
+				type="submit"
+				class="btn-primary btn disabled:bg-primary disabled:bg-opacity-50 disabled:text-opacity-50"
+				disabled={saving}
+			>
+				{#if saving}
+					<span class="loading" />
+				{/if}
+				Save Character
+			</button>
 		</div>
 	</div>
 </SchemaForm>
