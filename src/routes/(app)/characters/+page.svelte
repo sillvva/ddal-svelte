@@ -89,7 +89,7 @@
 	</div>
 
 	<div class="flex flex-wrap gap-2">
-		<div class="flex w-full gap-4 sm:max-w-md">
+		<div class="flex w-full gap-2 sm:max-w-md">
 			{#if characters.length > 0}
 				<a href="/characters/new/edit" class="btn-primary btn-sm btn hidden sm:inline-flex" aria-label="New Character">
 					New Character
@@ -116,13 +116,26 @@
 				</btn>
 			{/if}
 		</div>
-		<div class="flex-1" />
-		<div class={twMerge("form-control hidden sm:flex", display == "grid" && "hidden")}>
+		<div class="hidden flex-1 sm:block" />
+		<div class={twMerge("form-control hidden md:flex", display == "grid" && "hidden md:hidden")}>
 			<label class="label cursor-pointer py-1">
 				<span class="label-text pr-4">Show Items</span>
-				<input type="checkbox" class="toggle-primary toggle toggle-lg sm:toggle-md" bind:checked={magicItems} />
+				<input type="checkbox" class="toggle-primary toggle toggle-lg md:toggle-md" bind:checked={magicItems} />
 			</label>
 		</div>
+		{#if display != "grid"}
+			<btn
+				class={twMerge("btn-sm btn hidden sm:inline-flex md:hidden")}
+				on:click={() => (magicItems = !magicItems)}
+				on:keypress={() => null}
+				on:keypress
+				role="button"
+				aria-label="Toggle Magic Items"
+				tabindex="0"
+			>
+				<Icon src={magicItems ? "chevron-down" : "chevron-up"} class="w-6" />
+			</btn>
+		{/if}
 		<div class="join hidden xs:flex">
 			<button
 				class={twMerge("join-item btn hover:btn-primary sm:btn-sm", display == "list" && "bg-primary")}
