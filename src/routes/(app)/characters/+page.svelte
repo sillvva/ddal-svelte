@@ -106,7 +106,7 @@
 					<Icon src="plus" class="inline w-6" />
 				</a>
 				<btn
-					class={twMerge("btn inline-flex sm:hidden")}
+					class="btn inline-flex xs:hidden"
 					on:click={() => (magicItems = !magicItems)}
 					on:keypress={() => null}
 					on:keypress
@@ -114,20 +114,14 @@
 					aria-label="Toggle Magic Items"
 					tabindex="0"
 				>
-					<Icon src={magicItems ? "chevron-down" : "chevron-up"} class="w-6" />
+					<Icon src={magicItems ? "show" : "hide"} class="w-6" />
 				</btn>
 			{/if}
 		</div>
 		<div class="hidden flex-1 xs:block" />
-		<div class={twMerge("form-control hidden md:flex", display == "grid" && "hidden md:hidden")}>
-			<label class="label cursor-pointer py-1">
-				<span class="label-text pr-4">Show Items</span>
-				<input type="checkbox" class="toggle-primary toggle toggle-lg md:toggle-md" bind:checked={magicItems} />
-			</label>
-		</div>
 		{#if display != "grid"}
 			<btn
-				class={twMerge("btn-sm btn hidden sm:inline-flex md:hidden")}
+				class="btn hidden sm:btn-sm xs:inline-flex"
 				on:click={() => (magicItems = !magicItems)}
 				on:keypress={() => null}
 				on:keypress
@@ -135,7 +129,8 @@
 				aria-label="Toggle Magic Items"
 				tabindex="0"
 			>
-				<Icon src={magicItems ? "chevron-down" : "chevron-up"} class="w-6" />
+				<Icon src={magicItems ? "show" : "hide"} class="w-6" />
+				<span class="hidden xs:inline-flex sm:hidden md:inline-flex">Magic Items</span>
 			</btn>
 		{/if}
 		<div class="join hidden xs:flex">

@@ -289,29 +289,28 @@
 			<btn
 				class="btn sm:hidden"
 				on:click={() => (descriptions = !descriptions)}
-				on:keypress={() => null}
 				on:keypress
 				role="button"
 				aria-label="Toggle Notes"
 				tabindex="0"
 			>
-				<Icon src={descriptions ? "chevron-down" : "chevron-up"} class="w-6" />
+				<Icon src={descriptions ? "show" : "hide"} class="w-6" />
 			</btn>
 		{/if}
 	</div>
 	{#if logs.length}
 		<div class="hidden flex-1 sm:block" />
-		<div class="form-control hidden sm:flex">
-			<label class="label cursor-pointer py-1">
-				<span class="label-text pr-4">Notes</span>
-				<input
-					type="checkbox"
-					class="toggle-primary toggle toggle-lg mt-1 sm:toggle-md sm:mt-0"
-					checked={descriptions}
-					on:change={() => (descriptions = !descriptions)}
-				/>
-			</label>
-		</div>
+		<btn
+			class="btn hidden sm:btn-sm sm:inline-flex"
+			on:click={() => (descriptions = !descriptions)}
+			on:keypress
+			role="button"
+			aria-label="Toggle Notes"
+			tabindex="0"
+		>
+			<Icon src={descriptions ? "show" : "hide"} class="w-6" />
+			<span class="hidden sm:inline-flex">Notes</span>
+		</btn>
 	{/if}
 </div>
 
