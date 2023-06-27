@@ -297,7 +297,7 @@
 		{/if}
 	</div>
 	{#if logs.length}
-		<div class="hidden flex-1 sm:block" />
+		<div class="hidden flex-1 xs:block" />
 		<div class="form-control hidden sm:flex">
 			<label class="label cursor-pointer py-1">
 				<span class="label-text pr-4">Notes</span>
