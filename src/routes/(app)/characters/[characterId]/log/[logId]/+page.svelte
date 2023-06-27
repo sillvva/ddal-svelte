@@ -470,7 +470,7 @@
 								<Icon src="trash-can" class="w-6" />
 							</button>
 						</div>
-						<div class="text-sm">{magicItems.find((item) => magicItemsLost[index] === item.id)?.description}</div>
+						<div class="text-sm">{magicItems.find((item) => magicItemsLost[index] === item.id)?.description || ""}</div>
 					</div>
 				</div>
 			{/each}
@@ -559,7 +559,7 @@
 								<Icon src="trash-can" class="w-6" />
 							</button>
 						</div>
-						<div class="text-sm">{storyAwards.find((item) => storyAwardsLost[index] === item.id)?.description}</div>
+						<div class="text-sm">{storyAwards.find((item) => storyAwardsLost[index] === item.id)?.description || ""}</div>
 					</div>
 				</div>
 			{/each}

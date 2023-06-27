@@ -21,7 +21,7 @@ export const logSchema = z.object({
 		id: z.string().default(""),
 		name: z.string().default(""),
 		DCI: z.string().nullable().default(null),
-		uid: z.string().default("")
+		uid: z.string().nullable().default("")
 	}),
 	is_dm_log: z.boolean().default(false),
 	applied_date: z.union([z.null(), z.date()]).default(null),
