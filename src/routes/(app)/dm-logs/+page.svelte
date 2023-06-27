@@ -33,7 +33,7 @@
 		  }))
 		: [];
 
-	let stopWords = new Set(["and", "or", "to", "in", "a", "the"]);
+	let stopWords = new Set(["and", "or", "to", "in", "a", "the", "of"]);
 	const dmLogSearch = new MiniSearch({
 		fields: ["logName", "characterName", "magicItems", "storyAwards"],
 		idField: "logId",

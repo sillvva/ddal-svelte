@@ -9,7 +9,7 @@
 
 	export let data: PageData;
 
-	let stopWords = new Set(["and", "or", "to", "in", "a", "the"]);
+	let stopWords = new Set(["and", "or", "to", "in", "a", "the", "of"]);
 	const minisearch = new MiniSearch({
 		fields: ["characterName", "campaign", "race", "class", "magicItems", "tier", "level"],
 		idField: "characterId",

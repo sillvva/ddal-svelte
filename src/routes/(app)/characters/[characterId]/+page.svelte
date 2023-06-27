@@ -20,7 +20,7 @@
 	let deletingLog: string[] = [];
 
 	let search = "";
-	let stopWords = new Set(["and", "or", "to", "in", "a", "the"]);
+	let stopWords = new Set(["and", "or", "to", "in", "a", "the", "of"]);
 	const logSearch = new MiniSearch({
 		fields: ["logName", "magicItems", "storyAwards"],
 		idField: "logId",
