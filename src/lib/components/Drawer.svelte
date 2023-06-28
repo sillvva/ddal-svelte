@@ -1,4 +1,5 @@
 <script lang="ts">
+	import { page } from "$app/stores";
 	import { twMerge } from "tailwind-merge";
 	import Icon from "./Icon.svelte";
 
@@ -20,19 +21,40 @@
 	<Icon src="menu" class="w-6" />
 </button>
 <div class={twMerge("fixed -left-72 bottom-0 top-0 z-50 w-72 bg-base-100 px-4 py-4 transition-all", drawer && "left-0")}>
-	<ul class="menu w-full">
+	<ul class="menu menu-lg w-full">
 		<li>
-			<a href="/characters" on:keydown={() => toggleDrawer(false)} on:click={() => toggleDrawer(false)}>Character Logs</a>
+			<a
+				href="/characters"
+				on:keydown={() => toggleDrawer(false)}
+				on:click={() => toggleDrawer(false)}
+				class:bg-primary={$page.url.pathname.startsWith("/characters")}
+			>
+				Character Logs
+			</a>
 		</li>
 		<li>
-			<a href="/dm-logs" on:keydown={() => toggleDrawer(false)} on:click={() => toggleDrawer(false)}>DM Logs</a>
+			<a
+				href="/dm-logs"
+				on:keydown={() => toggleDrawer(false)}
+				on:click={() => toggleDrawer(false)}
+				class:bg-primary={$page.url.pathname.startsWith("/dm-logs")}
+			>
+				DM Logs
+			</a>
 		</li>
 		<li>
-			<a href="/dms" on:keydown={() => toggleDrawer(false)} on:click={() => toggleDrawer(false)}>DMs</a>
+			<a
+				href="/dms"
+				on:keydown={() => toggleDrawer(false)}
+				on:click={() => toggleDrawer(false)}
+				class:bg-primary={$page.url.pathname.startsWith("/dms")}
+			>
+				DMs
+			</a>
 		</li>
 	</ul>
-	<div class="divider" />
-	<ul class="menu w-full">
+	<div class="divider my-0" />
+	<ul class="menu menu-lg w-full">
 		<li>
 			<a href="https://github.com/sillvva/ddal-next13" target="_blank" rel="noreferrer noopener" class="items-center md:hidden">
 				Github
