@@ -6,7 +6,7 @@
 <svelte:body class="min-h-screen text-base-content" />
 
 <img
-	src="/images/barovia-gate.jpg"
+	src="/images/barovia-gate.webp"
 	alt="Background"
 	class="!fixed z-0 min-h-screen min-w-full object-cover object-center opacity-40 dark:opacity-20 print:hidden"
 />
