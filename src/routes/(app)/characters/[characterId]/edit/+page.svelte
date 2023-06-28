@@ -40,9 +40,9 @@
 	</ul>
 </div>
 
-<a href={`/characters/${data.characterId}`} class="mb-4 flex gap-4 text-secondary sm:hidden">
+<a href="/characters{data.characterId == 'new' ? '' : `/${data.characterId}`}" class="mb-4 flex gap-4 text-secondary sm:hidden">
 	<Icon src="chevron-left" class="w-6" />
-	<span>Back to {character.name}</span>
+	<span>Back to {data.characterId == "new" ? "Characters" : character.name}</span>
 </a>
 
 {#if form?.error}
