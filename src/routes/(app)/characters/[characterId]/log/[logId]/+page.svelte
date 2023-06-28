@@ -1,4 +1,5 @@
 <script lang="ts">
+	import { goto } from "$app/navigation";
 	import AutoFillSelect from "$lib/components/AutoFillSelect.svelte";
 	import AutoResizeTextArea from "$lib/components/AutoResizeTextArea.svelte";
 	import Meta from "$lib/components/Meta.svelte";
@@ -17,6 +18,9 @@
 
 	let saving = false;
 	let errors: Record<string, string> = {};
+	$: if (form?.id && saving) {
+		goto(`/characters/${character.id}`);
+	}
 
 	let dm = log.dm || {
 		id: "",

@@ -29,10 +29,10 @@ export async function saveCharacter(characterId: string, userId: string, data: z
 				}
 			});
 		}
-		return { id: result.id, error: null };
+		return { id: result.id, character: result, error: null };
 	} catch (error) {
-		if (error instanceof Error) return { id: null, error: error.message };
-		else return { id: null, error: "An unknown error has occurred." };
+		if (error instanceof Error) return { id: null, character: null, error: error.message };
+		else return { id: null, character: null, error: "An unknown error has occurred." };
 	}
 }
 

@@ -28,6 +28,7 @@ export const actions = {
 			if (result.id) throw redirect(301, "/characters");
 			if (result.error) throw new Error(result.error);
 		}
+		return result;
 	},
 	deleteLog: async (event) => {
 		const session = await event.locals.getSession();

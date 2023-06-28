@@ -236,17 +236,18 @@ export async function saveLog(input: z.infer<typeof logSchema>, user?: User) {
 
 		return log
 			? {
-					...log,
-					error: null,
-					saving: true
+					id: log.id,
+					log,
+					error: null
 			  }
 			: {
 					id: null,
+					log: null,
 					error: "Could not save log"
 			  };
 	} catch (error) {
-		if (error instanceof Error) return { id: null, error: error.message };
-		else return { id: null, error: "An unknown error has occurred." };
+		if (error instanceof Error) return { id: null, log: null, error: error.message };
+		else return { id: null, log: null, error: "An unknown error has occurred." };
 	}
 }
 

@@ -113,12 +113,11 @@
 
 		if (stringify) f.formData.append(stringify, JSON.stringify(data));
 		return async ({ update, result }) => {
-			dispatch("after-submit", result);
 			await update({ reset: resetOnSave });
+			dispatch("after-submit", result);
 			if (result.type !== "redirect") {
 				changes = [...savedChanges];
 				savedChanges = [];
-				saving = false;
 			}
 		};
 	}}

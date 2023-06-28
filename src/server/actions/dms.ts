@@ -15,10 +15,10 @@ export async function saveDM(dmId: string, userId: string, data: z.infer<typeof 
 				...data
 			}
 		});
-		return { id: result.id, error: null };
+		return { id: result.id, dm: result, error: null };
 	} catch (error) {
-		if (error instanceof Error) return { id: null, error: error.message };
-		else return { id: null, error: "An unknown error has occurred." };
+		if (error instanceof Error) return { id: null, dm: null, error: error.message };
+		else return { id: null, dm: null, error: "An unknown error has occurred." };
 	}
 }
 
