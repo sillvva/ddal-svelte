@@ -45,7 +45,6 @@ export const actions = {
 			character_sheet_url: data.get("character_sheet_url") as string,
 			image_url: data.get("image_url") as string
 		});
-		if (result && result.id) throw redirect(301, `/characters/${result.id}`);
 		return result;
 	}
 };

@@ -32,8 +32,6 @@ export const actions = {
 			uid: dm.uid || ""
 		});
 
-		if (result && result.id) throw redirect(301, `/dms`);
-
 		return result;
 	},
 	deleteDM: async (event) => {

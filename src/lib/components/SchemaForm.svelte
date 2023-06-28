@@ -1,10 +1,16 @@
 <script lang="ts">
 	import { enhance } from "$app/forms";
 	import { beforeNavigate } from "$app/navigation";
+	import type { ActionResult } from "@sveltejs/kit";
 	import { createEventDispatcher } from "svelte";
 	import type { ZodError, z } from "zod";
 
-	const dispatch = createEventDispatcher();
+	const dispatch = createEventDispatcher<{
+		"before-submit": null;
+		"after-submit": ActionResult;
+		errors: Record<string, string> | null;
+		"check-errors": null;
+	}>();
 	let elForm: HTMLFormElement;
 
 	export let form: object | null;
@@ -107,12 +113,11 @@
 
 		if (stringify) f.formData.append(stringify, JSON.stringify(data));
 		return async ({ update, result }) => {
-			dispatch("after-submit", result);
 			await update({ reset: resetOnSave });
+			dispatch("after-submit", result);
 			if (result.type !== "redirect") {
 				changes = [...savedChanges];
 				savedChanges = [];
-				saving = false;
 			}
 		};
 	}}

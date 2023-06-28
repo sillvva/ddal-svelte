@@ -1,5 +1,6 @@
 <script lang="ts">
 	import { enhance } from "$app/forms";
+	import { goto } from "$app/navigation";
 	import Meta from "$lib/components/Meta.svelte";
 	import { dungeonMasterSchema } from "$lib/types/zod-schema.js";
 	import Icon from "$src/lib/components/Icon.svelte";
@@ -13,6 +14,9 @@
 
 	let saving = false;
 	let errors: Record<string, string> = {};
+	$: if (form?.id && saving) {
+		goto(`/dms`);
+	}
 </script>
 
 <Meta title="Edit {dm.name}" />

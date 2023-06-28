@@ -57,19 +57,21 @@ export const actions = {
 			}
 
 			const result = await saveLog(logData, session.user);
-			if (result && result.id) throw redirect(301, `/dm-logs`);
+			if (result && result.id) throw redirect(301, `/dm-logs/`);
 
-			return { id: null, error: result.error || "An unknown error occurred." };
+			return result;
 		} catch (error) {
 			if (error instanceof z.ZodError) {
 				return {
 					id: null,
+					log: null,
 					error: error.errors[0].message
 				};
 			}
 			if (error instanceof Error) {
 				return {
 					id: null,
+					log: null,
 					error: error.message
 				};
 			}

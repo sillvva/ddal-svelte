@@ -3,7 +3,7 @@
 	export let title = defaultTitle;
 	let defaultDescription = "A tool for tracking your Adventurers League characters and magic items.";
 	export let description = defaultDescription;
-	let defaultImage = "https://ddal.dekok.app/images/barovia-gate.jpg";
+	let defaultImage = "https://ddal.dekok.app/images/barovia-gate.webp";
 	export let image: string | null = defaultImage;
 </script>
 
