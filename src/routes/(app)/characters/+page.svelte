@@ -2,20 +2,21 @@
 	import Meta from "$lib/components/Meta.svelte";
 	import SearchResults from "$lib/components/SearchResults.svelte";
 	import Icon from "$src/lib/components/Icon.svelte";
+	import { stopWords } from "$src/lib/misc";
 	import { setCookie } from "$src/server/cookie";
 	import MiniSearch from "minisearch";
 	import { twMerge } from "tailwind-merge";
-	import type { PageData } from "./$types";
 
-	export let data: PageData;
+	export let data;
 
-	let stopWords = new Set(["and", "or", "to", "in", "a", "the", "of"]);
 	const minisearch = new MiniSearch({
 		fields: ["characterName", "campaign", "race", "class", "magicItems", "tier", "level"],
 		idField: "characterId",
 		processTerm: (term) => (stopWords.has(term) ? null : term.toLowerCase()),
+		tokenize: (term) => term.split(/[^A-Z0-9\.']/gi),
 		searchOptions: {
-			prefix: true
+			prefix: true,
+			combineWith: "AND"
 		}
 	});
 
@@ -104,7 +105,7 @@
 					<Icon src="plus" class="inline w-6" />
 				</a>
 				<btn
-					class={twMerge("btn inline-flex sm:hidden")}
+					class="btn inline-flex xs:hidden"
 					on:click={() => (magicItems = !magicItems)}
 					on:keypress={() => null}
 					on:keypress
@@ -112,20 +113,14 @@
 					aria-label="Toggle Magic Items"
 					tabindex="0"
 				>
-					<Icon src={magicItems ? "chevron-down" : "chevron-up"} class="w-6" />
+					<Icon src={magicItems ? "show" : "hide"} class="w-6" />
 				</btn>
 			{/if}
 		</div>
 		<div class="hidden flex-1 xs:block" />
-		<div class={twMerge("form-control hidden md:flex", display == "grid" && "hidden md:hidden")}>
-			<label class="label cursor-pointer py-1">
-				<span class="label-text pr-4">Show Items</span>
-				<input type="checkbox" class="toggle-primary toggle toggle-lg md:toggle-md" bind:checked={magicItems} />
-			</label>
-		</div>
 		{#if display != "grid"}
 			<btn
-				class={twMerge("btn-sm btn hidden sm:inline-flex md:hidden")}
+				class="btn hidden sm:btn-sm xs:inline-flex"
 				on:click={() => (magicItems = !magicItems)}
 				on:keypress={() => null}
 				on:keypress
@@ -133,7 +128,8 @@
 				aria-label="Toggle Magic Items"
 				tabindex="0"
 			>
-				<Icon src={magicItems ? "chevron-down" : "chevron-up"} class="w-6" />
+				<Icon src={magicItems ? "show" : "hide"} class="w-6" />
+				<span class="hidden xs:inline-flex sm:hidden md:inline-flex">Magic Items</span>
 			</btn>
 		{/if}
 		<div class="join hidden xs:flex">
@@ -213,7 +209,11 @@
 							{#if (character.match.includes("magicItems") || magicItems) && character.magic_items.length}
 								<div class="mb-2">
 									<p class="font-semibold">Magic Items:</p>
-									<SearchResults text={character.magic_items.map((item) => item.name)} {search} />
+									<SearchResults
+										text={character.magic_items.map((item) => item.name)}
+										{search}
+										msResult={msResults.find((result) => result.id === character.id)}
+									/>
 								</div>
 							{/if}
 						</div>
@@ -257,13 +257,22 @@
 					)}
 				>
 					{#each results.filter((c) => c.tier == tier) as character}
+						{@const miMatches = msResults.find(
+							(result) => result.id == character.id && result.terms.find((term) => result.match[term].includes("magicItems"))
+						)}
 						<a href={`/characters/${character.id}`} class="img-grow card-compact card bg-base-100 shadow-xl">
 							<figure class="relative aspect-square overflow-hidden">
 								<img src={character.image_url} alt={character.name} class="h-full w-full object-cover object-top" />
-								{#if search.length >= 1 && indexed.length}
+
+								{#if search.length >= 1 && indexed.length && miMatches}
 									<div class="absolute inset-0 flex items-center bg-black/50 p-2 text-center text-xs text-white">
 										<div class="flex-1">
-											<SearchResults text={character.magic_items.map((item) => item.name)} {search} filtered />
+											<SearchResults
+												text={character.magic_items.map((item) => item.name)}
+												{search}
+												msResult={msResults.find((result) => result.id === character.id)}
+												filtered
+											/>
 										</div>
 									</div>
 								{/if}

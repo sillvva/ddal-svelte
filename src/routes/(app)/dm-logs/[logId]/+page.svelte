@@ -91,6 +91,11 @@
 	</ul>
 </div>
 
+<a href="/dm-logs" class="mb-4 flex gap-4 text-secondary sm:hidden">
+	<Icon src="chevron-left" class="w-6" />
+	<span>Back to DM Logs</span>
+</a>
+
 {#if form?.error}
 	<div class="alert alert-error mb-4 shadow-lg">
 		<Icon src="alert-circle" class="w-6" />
@@ -103,6 +108,7 @@
 	data={values}
 	bind:form
 	bind:errors
+	bind:saving
 	schema={logSchema}
 	stringify="log"
 	on:check-errors={() => extraErrors(values)}
@@ -467,7 +473,16 @@
 			{/each}
 		</div>
 		<div class="col-span-12 text-center">
-			<button type="submit" class={twMerge("btn-primary btn", saving && "loading")} disabled={saving}>Save Log</button>
+			<button
+				type="submit"
+				class="btn-primary btn disabled:bg-primary disabled:bg-opacity-50 disabled:text-opacity-50"
+				disabled={saving}
+			>
+				{#if saving}
+					<span class="loading" />
+				{/if}
+				Save Log
+			</button>
 		</div>
 	</div>
 </SchemaForm>

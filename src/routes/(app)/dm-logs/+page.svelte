@@ -4,7 +4,7 @@
 	import Markdown from "$lib/components/Markdown.svelte";
 	import Meta from "$lib/components/Meta.svelte";
 	import SearchResults from "$lib/components/SearchResults.svelte";
-	import { formatDate } from "$lib/misc.js";
+	import { formatDate, stopWords } from "$lib/misc.js";
 	import Icon from "$src/lib/components/Icon.svelte";
 	import MiniSearch from "minisearch";
 	import { twMerge } from "tailwind-merge";
@@ -33,14 +33,14 @@
 		  }))
 		: [];
 
-	let stopWords = new Set(["and", "or", "to", "in", "a", "the", "of"]);
 	const dmLogSearch = new MiniSearch({
 		fields: ["logName", "characterName", "magicItems", "storyAwards"],
 		idField: "logId",
 		processTerm: (term) => (stopWords.has(term) ? null : term.toLowerCase()),
+		tokenize: (term) => term.split(/[^A-Z0-9\.']/gi),
 		searchOptions: {
-			boost: { logName: 2 },
-			prefix: true
+			prefix: true,
+			combineWith: "AND"
 		}
 	});
 
@@ -70,11 +70,6 @@
 				<li class="dark:drop-shadow-md">DM Logs</li>
 			</ul>
 		</div>
-		{#if logs && logs.length > 0}
-			<div class="flex flex-1 justify-end">
-				<a href="/dm-logs/new" class="btn-primary btn-sm btn">New Log</a>
-			</div>
-		{/if}
 		<div class="dropdown-end dropdown">
 			<span role="button" tabindex="0" class="btn-sm btn">
 				<Icon src="dots-horizontal" class="w-6" />
@@ -95,7 +90,11 @@
 	{/if}
 
 	<div class="flex gap-4">
+		<a href="/dm-logs/new" class="btn-primary btn-sm btn hidden sm:inline-flex" aria-label="New Log">New Log</a>
 		<input type="text" placeholder="Search" bind:value={search} class="input-bordered input w-full sm:input-sm sm:max-w-xs" />
+		<a href="/dm-logs/new" class="btn-primary btn inline-flex sm:hidden" aria-label="New Log">
+			<Icon src="plus" class="inline w-6" />
+		</a>
 	</div>
 
 	<section>
@@ -183,7 +182,12 @@
 											</p>
 										{/if}
 										<div>
-											<Items title="Magic Items" items={log.magic_items_gained} {search} />
+											<Items
+												title="Magic Items"
+												items={log.magic_items_gained}
+												{search}
+												msResult={msResults.find((result) => result.id === log.id)}
+											/>
 										</div>
 									</div>
 								</th>
@@ -242,7 +246,12 @@
 									{/if}
 									{#if log.magic_items_gained.length > 0}
 										<div>
-											<Items title="Magic Items" items={log.magic_items_gained} {search} />
+											<Items
+												title="Magic Items"
+												items={log.magic_items_gained}
+												{search}
+												msResult={msResults.find((result) => result.id === log.id)}
+											/>
 										</div>
 									{/if}
 								</td>
@@ -254,7 +263,11 @@
 								>
 									{#if log.story_awards_gained.length > 0}
 										<div>
-											<Items items={log.story_awards_gained} {search} />
+											<Items
+												items={log.story_awards_gained}
+												{search}
+												msResult={msResults.find((result) => result.id === log.id)}
+											/>
 										</div>
 									{/if}
 								</td>

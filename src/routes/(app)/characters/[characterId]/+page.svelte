@@ -4,7 +4,7 @@
 	import Markdown from "$lib/components/Markdown.svelte";
 	import Meta from "$lib/components/Meta.svelte";
 	import SearchResults from "$lib/components/SearchResults.svelte";
-	import { slugify } from "$lib/misc";
+	import { slugify, stopWords } from "$lib/misc";
 	import Icon from "$src/lib/components/Icon.svelte";
 	import { pageLoader } from "$src/lib/store";
 	import { setCookie } from "$src/server/cookie";
@@ -20,13 +20,14 @@
 	let deletingLog: string[] = [];
 
 	let search = "";
-	let stopWords = new Set(["and", "or", "to", "in", "a", "the", "of"]);
 	const logSearch = new MiniSearch({
 		fields: ["logName", "magicItems", "storyAwards"],
 		idField: "logId",
 		processTerm: (term) => (stopWords.has(term) ? null : term.toLowerCase()),
+		tokenize: (term) => term.split(/[^A-Z0-9\.']/gi),
 		searchOptions: {
-			prefix: true
+			prefix: true,
+			combineWith: "AND"
 		}
 	});
 
@@ -47,9 +48,11 @@
 	const indexed = logs.map((log) => ({
 		logId: log.id,
 		logName: log.name,
-		magicItems: [...log.magic_items_gained.map((item) => item.name), ...log.magic_items_lost.map((item) => item.name)].join(", "),
+		magicItems: [...log.magic_items_gained.map((item) => item.name), ...log.magic_items_lost.map((item) => item.name)].join(
+			" | "
+		),
 		storyAwards: [...log.story_awards_gained.map((item) => item.name), ...log.story_awards_lost.map((item) => item.name)].join(
-			", "
+			" | "
 		)
 	}));
 
@@ -163,7 +166,7 @@
 				</div>
 			{/if}
 			<div class="flex w-full flex-col">
-				<div class="mb-2 flex gap-4 sm:mb-0">
+				<div class="mb-2 flex gap-4 xs:mb-0">
 					<h3 class="flex-1 py-2 font-vecna text-3xl font-bold text-accent-content sm:py-0 sm:text-4xl">{character.name}</h3>
 					<div class="dropdown-end dropdown sm:hidden">
 						<span role="button" tabindex="0" class="btn">
@@ -171,7 +174,7 @@
 						</span>
 						<ul class="dropdown-content menu rounded-box z-20 w-52 bg-base-100 p-2 shadow">
 							{#if character.image_url}
-								<li>
+								<li class="xs:hidden">
 									<a href={character.image_url} target="_blank">View Image</a>
 								</li>
 							{/if}
@@ -286,29 +289,28 @@
 			<btn
 				class="btn sm:hidden"
 				on:click={() => (descriptions = !descriptions)}
-				on:keypress={() => null}
 				on:keypress
 				role="button"
 				aria-label="Toggle Notes"
 				tabindex="0"
 			>
-				<Icon src={descriptions ? "chevron-down" : "chevron-up"} class="w-6" />
+				<Icon src={descriptions ? "show" : "hide"} class="w-6" />
 			</btn>
 		{/if}
 	</div>
 	{#if logs.length}
-		<div class="hidden flex-1 xs:block" />
-		<div class="form-control hidden sm:flex">
-			<label class="label cursor-pointer py-1">
-				<span class="label-text pr-4">Notes</span>
-				<input
-					type="checkbox"
-					class="toggle-primary toggle toggle-lg mt-1 sm:toggle-md sm:mt-0"
-					checked={descriptions}
-					on:change={() => (descriptions = !descriptions)}
-				/>
-			</label>
-		</div>
+		<div class="hidden flex-1 sm:block" />
+		<btn
+			class="btn hidden sm:btn-sm sm:inline-flex"
+			on:click={() => (descriptions = !descriptions)}
+			on:keypress
+			role="button"
+			aria-label="Toggle Notes"
+			tabindex="0"
+		>
+			<Icon src={descriptions ? "show" : "hide"} class="w-6" />
+			<span class="hidden sm:inline-flex">Notes</span>
+		</btn>
 	{/if}
 </div>
 
@@ -353,7 +355,11 @@
 							{#if log.dm && log.type === "game" && log.dm.uid !== character.userId}
 								<p class="text-sm font-normal">
 									<span class="font-semibold">DM:</span>
-									<a href="/dms/{log.dm.id}" class="text-secondary">{log.dm.name}</a>
+									{#if myCharacter}
+										<a href="/dms/{log.dm.id}" class="text-secondary">{log.dm.name}</a>
+									{:else}
+										{log.dm.name}
+									{/if}
 								</p>
 							{/if}
 							<div class="table-cell font-normal print:hidden sm:hidden">
@@ -444,9 +450,18 @@
 							{/if}
 							{#if log.magic_items_gained.length > 0 || log.magic_items_lost.length > 0}
 								<div>
-									<Items title="Magic Items:" items={log.magic_items_gained} {search} />
+									<Items
+										title="Magic Items:"
+										items={log.magic_items_gained}
+										{search}
+										msResult={msResults.find((result) => result.id === log.id)}
+									/>
 									<div class="whitespace-pre-wrap text-sm line-through">
-										<SearchResults text={log.magic_items_lost.map((mi) => mi.name).join(" | ")} {search} />
+										<SearchResults
+											text={log.magic_items_lost.map((mi) => mi.name).join(" | ")}
+											{search}
+											msResult={msResults.find((result) => result.id === log.id)}
+										/>
 									</div>
 								</div>
 							{/if}
@@ -461,9 +476,13 @@
 						>
 							{#if log.story_awards_gained.length > 0 || log.story_awards_lost.length > 0}
 								<div>
-									<Items items={log.story_awards_gained} {search} />
+									<Items items={log.story_awards_gained} {search} msResult={msResults.find((result) => result.id === log.id)} />
 									<div class="whitespace-pre-wrap text-sm line-through">
-										<SearchResults text={log.story_awards_lost.map((mi) => mi.name).join(" | ")} {search} />
+										<SearchResults
+											text={log.story_awards_lost.map((mi) => mi.name).join(" | ")}
+											{search}
+											msResult={msResults.find((result) => result.id === log.id)}
+										/>
 									</div>
 								</div>
 							{/if}
@@ -530,10 +549,19 @@
 								{/if}
 								{#if log.magic_items_gained.length > 0 || log.magic_items_lost.length > 0}
 									<div class="mt-2 print:hidden sm:hidden">
-										<Items title="Magic Items:" items={log.magic_items_gained} {search} />
+										<Items
+											title="Magic Items:"
+											items={log.magic_items_gained}
+											{search}
+											msResult={msResults.find((result) => result.id === log.id)}
+										/>
 										{#if log.magic_items_lost.length}
 											<p class="mt-2 whitespace-pre-wrap text-sm line-through">
-												<SearchResults text={log.magic_items_lost.map((mi) => mi.name).join(" | ")} {search} />
+												<SearchResults
+													text={log.magic_items_lost.map((mi) => mi.name).join(" | ")}
+													{search}
+													msResult={msResults.find((result) => result.id === log.id)}
+												/>
 											</p>
 										{/if}
 									</div>

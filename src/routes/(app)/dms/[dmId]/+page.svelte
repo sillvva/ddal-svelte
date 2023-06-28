@@ -5,7 +5,6 @@
 	import Icon from "$src/lib/components/Icon.svelte";
 	import SchemaForm from "$src/lib/components/SchemaForm.svelte";
 	import { pageLoader } from "$src/lib/store.js";
-	import { twMerge } from "tailwind-merge";
 
 	export let data;
 	export let form;
@@ -32,6 +31,11 @@
 			</ul>
 		</div>
 	</div>
+
+	<a href="/dms" class="mb-4 flex gap-4 text-secondary sm:hidden">
+		<Icon src="chevron-left" class="w-6" />
+		<span>Back to DMs</span>
+	</a>
 
 	{#if form?.error}
 		<div class="alert alert-error mb-4 shadow-lg">
@@ -82,7 +86,16 @@
 				</div>
 			</div>
 			<div class="m-4 basis-full text-center">
-				<button type="submit" class={twMerge("btn-primary btn", saving && "loading")} disabled={saving}>Update</button>
+				<button
+					type="submit"
+					class="btn-primary btn disabled:bg-primary disabled:bg-opacity-50 disabled:text-opacity-50"
+					disabled={saving}
+				>
+					{#if saving}
+						<span class="loading" />
+					{/if}
+					Save DM
+				</button>
 			</div>
 		</div>
 	</SchemaForm>

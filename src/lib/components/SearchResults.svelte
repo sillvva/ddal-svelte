@@ -1,20 +1,39 @@
 <script lang="ts">
-	export let text: string | string[] | null = null;
+	import type { SearchResult } from "minisearch";
+	import { stopWords } from "../misc";
+
+	export let text: string | string[] | null = "";
 	export let search: string = "";
 	export let filtered = false;
 	export let separator = " | ";
+	export let msResult: SearchResult | null | undefined = null;
 
-	$: regex = new RegExp(search, "gi");
+	$: regexes = search
+		.replace(new RegExp(` ?\\b(${[...stopWords].join("|")})\\b ?`, "gi"), " ")
+		.trim()
+		.split(" ")
+		.map((word) => new RegExp(word, "gi"));
+	$: regex = new RegExp(
+		search
+			.replace(new RegExp(` ?\\b(${[...stopWords].join("|")})\\b ?`, "gi"), " ")
+			.trim()
+			.replace(/ /gi, "|"),
+		"gi"
+	);
 
-	$: items = Array.isArray(text)
-		? text.filter((item) => !filtered || item.match(regex)).join(separator)
-		: text
-				?.split(separator)
-				.filter((item) => !filtered || item.match(regex))
-				.join(separator);
-	$: match = items?.match(regex);
+	$: items1 = Array.isArray(text)
+		? text.filter((item) => !filtered || regexes.every((regex) => item.match(regex)))
+		: text?.split(separator).filter((item) => !filtered || regexes.every((regex) => item.match(regex))) || [];
+	$: items =
+		msResult && !items1.length
+			? (Array.isArray(text)
+					? text.filter((item) => !filtered || item.match(regex))
+					: text?.split(separator).filter((item) => !filtered || item.match(regex)) || []
+			  ).join(separator)
+			: items1.join(separator);
 
-	$: parts = items?.split(regex) || [];
+	$: match = items.match(regex);
+	$: parts = items.split(regex) || [];
 	$: for (let i = 1; i < parts.length; i += 2) {
 		parts.splice(i, 0, match?.[(i - 1) / 2] || "");
 	}

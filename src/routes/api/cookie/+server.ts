@@ -1,9 +1,7 @@
 import { serverSetCookie } from "$src/server/cookie";
 import { json } from "@sveltejs/kit";
 
-import type { RequestEvent } from "./$types";
-
-export async function POST({ request, cookies }: RequestEvent) {
+export async function POST({ request, cookies }) {
 	const { name, value } = (await request.json()) as { name: string; value: string };
 
 	const result = serverSetCookie(cookies, name, value);

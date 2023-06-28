@@ -1,41 +1,42 @@
 <script lang="ts">
+	import account from "@iconify/icons-mdi/account";
+	import alertCircle from "@iconify/icons-mdi/alert-circle";
+	import chevronDown from "@iconify/icons-mdi/chevron-down";
+	import chevronLeft from "@iconify/icons-mdi/chevron-left";
+	import chevronUp from "@iconify/icons-mdi/chevron-up";
+	import dotsHorizontal from "@iconify/icons-mdi/dots-horizontal";
+	import formatListText from "@iconify/icons-mdi/format-list-text";
+	import github from "@iconify/icons-mdi/github";
+	import hide from "@iconify/icons-mdi/hide";
+	import home from "@iconify/icons-mdi/home";
+	import menu from "@iconify/icons-mdi/menu";
+	import pencil from "@iconify/icons-mdi/pencil";
+	import plus from "@iconify/icons-mdi/plus";
+	import show from "@iconify/icons-mdi/show";
+	import trashCan from "@iconify/icons-mdi/trash-can";
+	import viewGrid from "@iconify/icons-mdi/view-grid";
+	import Icon from "@iconify/svelte";
+
 	let paths = {
-		account:
-			"M12,4A4,4 0 0,1 16,8A4,4 0 0,1 12,12A4,4 0 0,1 8,8A4,4 0 0,1 12,4M12,14C16.42,14 20,15.79 20,18V20H4V18C4,15.79 7.58,14 12,14Z",
-		"alert-circle": "M13,13H11V7H13M13,17H11V15H13M12,2A10,10 0 0,0 2,12A10,10 0 0,0 12,22A10,10 0 0,0 22,12A10,10 0 0,0 12,2Z",
-		"chevron-down": "M7.41,8.58L12,13.17L16.59,8.58L18,10L12,16L6,10L7.41,8.58Z",
-		"chevron-left": "M15.41,16.58L10.83,12L15.41,7.41L14,6L8,12L14,18L15.41,16.58Z",
-		"chevron-up": "M7.41,15.42L12,10.83L16.59,15.42L18,14L12,8L6,14L7.41,15.42Z",
-		"dots-horizontal":
-			"M16,12A2,2 0 0,1 18,10A2,2 0 0,1 20,12A2,2 0 0,1 18,14A2,2 0 0,1 16,12M10,12A2,2 0 0,1 12,10A2,2 0 0,1 14,12A2,2 0 0,1 12,14A2,2 0 0,1 10,12M4,12A2,2 0 0,1 6,10A2,2 0 0,1 8,12A2,2 0 0,1 6,14A2,2 0 0,1 4,12Z",
-		"format-list-text": "M2 14H8V20H2M16 8H10V10H16M2 10H8V4H2M10 4V6H22V4M10 20H16V18H10M10 16H22V14H10",
-		github:
-			"M12,2A10,10 0 0,0 2,12C2,16.42 4.87,20.17 8.84,21.5C9.34,21.58 9.5,21.27 9.5,21C9.5,20.77 9.5,20.14 9.5,19.31C6.73,19.91 6.14,17.97 6.14,17.97C5.68,16.81 5.03,16.5 5.03,16.5C4.12,15.88 5.1,15.9 5.1,15.9C6.1,15.97 6.63,16.93 6.63,16.93C7.5,18.45 8.97,18 9.54,17.76C9.63,17.11 9.89,16.67 10.17,16.42C7.95,16.17 5.62,15.31 5.62,11.5C5.62,10.39 6,9.5 6.65,8.79C6.55,8.54 6.2,7.5 6.75,6.15C6.75,6.15 7.59,5.88 9.5,7.17C10.29,6.95 11.15,6.84 12,6.84C12.85,6.84 13.71,6.95 14.5,7.17C16.41,5.88 17.25,6.15 17.25,6.15C17.8,7.5 17.45,8.54 17.35,8.79C18,9.5 18.38,10.39 18.38,11.5C18.38,15.32 16.04,16.16 13.81,16.41C14.17,16.72 14.5,17.33 14.5,18.26C14.5,19.6 14.5,20.68 14.5,21C14.5,21.27 14.66,21.59 15.17,21.5C19.14,20.16 22,16.42 22,12A10,10 0 0,0 12,2Z",
-		home: "M10,20V14H14V20H19V12H22L12,3L2,12H5V20H10Z",
-		menu: "M3,6H21V8H3V6M3,11H21V13H3V11M3,16H21V18H3V16Z",
-		pencil:
-			"M20.71,7.04C21.1,6.65 21.1,6 20.71,5.63L18.37,3.29C18,2.9 17.35,2.9 16.96,3.29L15.12,5.12L18.87,8.87M3,17.25V21H6.75L17.81,9.93L14.06,6.18L3,17.25Z",
-		plus: "M19,13H13V19H11V13H5V11H11V5H13V11H19V13Z",
-		"trash-can": "M9,3V4H4V6H5V19A2,2 0 0,0 7,21H17A2,2 0 0,0 19,19V6H20V4H15V3H9M9,8H11V17H9V8M13,8H15V17H13V8Z",
-		"view-grid": "M3,11H11V3H3M3,21H11V13H3M13,21H21V13H13M13,3V11H21V3"
+		account,
+		"alert-circle": alertCircle,
+		"chevron-down": chevronDown,
+		"chevron-left": chevronLeft,
+		"chevron-up": chevronUp,
+		"dots-horizontal": dotsHorizontal,
+		"format-list-text": formatListText,
+		github,
+		hide,
+		home,
+		menu,
+		pencil,
+		plus,
+		show,
+		"trash-can": trashCan,
+		"view-grid": viewGrid
 	};
 
 	export let src: keyof typeof paths;
-
-	let className = "";
-	export { className as class };
 </script>
 
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" class={className}>
-	<title>{src}</title>
-	<path d={paths[src]} />
-</svg>
-
-<style>
-	svg {
-		flex-shrink: 0;
-	}
-	path {
-		fill: currentColor;
-	}
-</style>
+<Icon icon={paths[src]} {...$$restProps} width="auto" height="auto" />
