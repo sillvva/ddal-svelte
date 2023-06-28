@@ -50,6 +50,7 @@ export const actions = {
 			});
 
 			const result = await saveLog(logData, session.user);
+			if (result && result.id) throw redirect(301, `/characters/${character.id}`);
 
 			return result;
 		} catch (error) {

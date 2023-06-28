@@ -57,6 +57,7 @@ export const actions = {
 			}
 
 			const result = await saveLog(logData, session.user);
+			if (result && result.id) throw redirect(301, `/dm-logs/`);
 
 			return result;
 		} catch (error) {
