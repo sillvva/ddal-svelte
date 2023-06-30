@@ -105,7 +105,7 @@
 					<Icon src="plus" class="inline w-6" />
 				</a>
 				<btn
-					class="btn inline-flex xs:hidden"
+					class={twMerge("btn inline-flex xs:hidden", magicItems && "btn-primary")}
 					on:click={() => (magicItems = !magicItems)}
 					on:keypress={() => null}
 					on:keypress
@@ -120,7 +120,7 @@
 		<div class="hidden flex-1 xs:block" />
 		{#if display != "grid"}
 			<btn
-				class="btn hidden sm:btn-sm xs:inline-flex"
+				class={twMerge("btn hidden sm:btn-sm xs:inline-flex", magicItems && "btn-primary")}
 				on:click={() => (magicItems = !magicItems)}
 				on:keypress={() => null}
 				on:keypress
@@ -260,7 +260,7 @@
 						{@const miMatches = msResults.find(
 							(result) => result.id == character.id && result.terms.find((term) => result.match[term].includes("magicItems"))
 						)}
-						<a href={`/characters/${character.id}`} class="img-grow card-compact card bg-base-100 shadow-xl">
+						<a href={`/characters/${character.id}`} class="img-grow card card-compact bg-base-100 shadow-xl">
 							<figure class="relative aspect-square overflow-hidden">
 								<img src={character.image_url} alt={character.name} class="h-full w-full object-cover object-top" />
 

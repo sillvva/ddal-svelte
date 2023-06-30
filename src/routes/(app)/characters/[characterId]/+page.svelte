@@ -287,7 +287,7 @@
 				<Icon src="plus" class="w-6" />
 			</a>
 			<btn
-				class="btn sm:hidden"
+				class={twMerge("btn sm:hidden", descriptions && "btn-primary")}
 				on:click={() => (descriptions = !descriptions)}
 				on:keypress
 				role="button"
@@ -301,7 +301,7 @@
 	{#if logs.length}
 		<div class="hidden flex-1 sm:block" />
 		<btn
-			class="btn hidden sm:btn-sm sm:inline-flex"
+			class={twMerge("btn hidden sm:btn-sm sm:inline-flex", descriptions && "btn-primary")}
 			on:click={() => (descriptions = !descriptions)}
 			on:keypress
 			role="button"
