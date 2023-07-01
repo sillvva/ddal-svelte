@@ -1,6 +1,8 @@
 <script lang="ts">
 	import Meta from "$lib/components/Meta.svelte";
 	import SearchResults from "$lib/components/SearchResults.svelte";
+	import BreadCrumb from "$src/lib/components/BreadCrumb.svelte";
+	import BreadCrumbs from "$src/lib/components/BreadCrumbs.svelte";
 	import Icon from "$src/lib/components/Icon.svelte";
 	import { stopWords } from "$src/lib/misc";
 	import { setCookie } from "$src/server/cookie";
@@ -68,15 +70,10 @@
 
 <div class="flex flex-col gap-4">
 	<div class="hidden gap-4 sm:flex">
-		<div class="breadcrumbs text-sm">
-			<ul>
-				<li>
-					<Icon src="home" class="w-4" />
-				</li>
-				<li class="dark:drop-shadow-md">Characters</li>
-			</ul>
-		</div>
-		<div class="flex-1" />
+		<BreadCrumbs>
+			<BreadCrumb>Characters</BreadCrumb>
+		</BreadCrumbs>
+
 		<div class="dropdown-end dropdown">
 			<span role="button" tabindex="0" class="btn-sm btn">
 				<Icon src="dots-horizontal" class="w-6" />

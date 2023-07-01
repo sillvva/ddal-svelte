@@ -5,6 +5,8 @@
 	import Meta from "$lib/components/Meta.svelte";
 	import SearchResults from "$lib/components/SearchResults.svelte";
 	import { slugify, stopWords } from "$lib/misc";
+	import BreadCrumb from "$src/lib/components/BreadCrumb.svelte";
+	import BreadCrumbs from "$src/lib/components/BreadCrumbs.svelte";
 	import Icon from "$src/lib/components/Icon.svelte";
 	import { pageLoader } from "$src/lib/store";
 	import { setCookie } from "$src/server/cookie";
@@ -93,17 +95,11 @@
 
 {#if data.session?.user}
 	<div class="hidden gap-4 print:hidden sm:flex">
-		<div class="breadcrumbs mb-4 flex-1 text-sm">
-			<ul>
-				<li>
-					<Icon src="home" class="w-4" />
-				</li>
-				<li>
-					<a href="/characters" class="text-secondary">Characters</a>
-				</li>
-				<li class="overflow-hidden text-ellipsis whitespace-nowrap dark:drop-shadow-md">{character.name}</li>
-			</ul>
-		</div>
+		<BreadCrumbs>
+			<BreadCrumb href="/characters">Characters</BreadCrumb>
+			<BreadCrumb>{character.name}</BreadCrumb>
+		</BreadCrumbs>
+
 		{#if myCharacter}
 			<a href={`/characters/${character.id}/edit`} class="btn-primary btn-sm btn">Edit</a>
 			<div class="dropdown-end dropdown">

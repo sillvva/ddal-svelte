@@ -3,6 +3,9 @@
 	import { goto } from "$app/navigation";
 	import Meta from "$lib/components/Meta.svelte";
 	import { dungeonMasterSchema } from "$lib/types/zod-schema.js";
+	import BackButton from "$src/lib/components/BackButton.svelte";
+	import BreadCrumb from "$src/lib/components/BreadCrumb.svelte";
+	import BreadCrumbs from "$src/lib/components/BreadCrumbs.svelte";
 	import Icon from "$src/lib/components/Icon.svelte";
 	import SchemaForm from "$src/lib/components/SchemaForm.svelte";
 	import { pageLoader } from "$src/lib/store.js";
@@ -22,24 +25,12 @@
 <Meta title="Edit {dm.name}" />
 
 <div class="flex flex-col gap-4">
-	<div class="hidden gap-4 print:hidden sm:flex">
-		<div class="breadcrumbs flex-1 text-sm">
-			<ul>
-				<li>
-					<Icon src="home" class="w-4" />
-				</li>
-				<li>
-					<a href="/dms" class="text-secondary">DMs</a>
-				</li>
-				<li class="dark:drop-shadow-md">Edit {dm.name}</li>
-			</ul>
-		</div>
-	</div>
+	<BreadCrumbs>
+		<BreadCrumb href="/dms">DMs</BreadCrumb>
+		<BreadCrumb>{dm.name}</BreadCrumb>
+	</BreadCrumbs>
 
-	<a href="/dms" class="mb-4 flex gap-4 text-secondary sm:hidden">
-		<Icon src="chevron-left" class="w-6" />
-		<span>Back to DMs</span>
-	</a>
+	<BackButton href="/dms">DMs</BackButton>
 
 	{#if form?.error}
 		<div class="alert alert-error mb-4 shadow-lg">

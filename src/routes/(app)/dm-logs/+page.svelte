@@ -5,6 +5,8 @@
 	import Meta from "$lib/components/Meta.svelte";
 	import SearchResults from "$lib/components/SearchResults.svelte";
 	import { formatDate, stopWords } from "$lib/misc.js";
+	import BreadCrumb from "$src/lib/components/BreadCrumb.svelte";
+	import BreadCrumbs from "$src/lib/components/BreadCrumbs.svelte";
 	import Icon from "$src/lib/components/Icon.svelte";
 	import MiniSearch from "minisearch";
 	import { twMerge } from "tailwind-merge";
@@ -62,14 +64,10 @@
 
 <div class="flex flex-col gap-4">
 	<div class="hidden gap-4 print:hidden sm:flex">
-		<div class="breadcrumbs flex-1 text-sm">
-			<ul>
-				<li>
-					<Icon src="home" class="w-4" />
-				</li>
-				<li class="dark:drop-shadow-md">DM Logs</li>
-			</ul>
-		</div>
+		<BreadCrumbs>
+			<BreadCrumb>DM Logs</BreadCrumb>
+		</BreadCrumbs>
+
 		<div class="dropdown-end dropdown">
 			<span role="button" tabindex="0" class="btn-sm btn">
 				<Icon src="dots-horizontal" class="w-6" />

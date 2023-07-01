@@ -5,6 +5,9 @@
 	import { getMagicItems, getStoryAwards } from "$lib/entities.js";
 	import { formatDate } from "$lib/misc.js";
 	import { logSchema } from "$lib/types/zod-schema.js";
+	import BackButton from "$src/lib/components/BackButton.svelte";
+	import BreadCrumb from "$src/lib/components/BreadCrumb.svelte";
+	import BreadCrumbs from "$src/lib/components/BreadCrumbs.svelte";
 	import Icon from "$src/lib/components/Icon.svelte";
 	import SchemaForm from "$src/lib/components/SchemaForm.svelte";
 	import { twMerge } from "tailwind-merge";
@@ -84,31 +87,17 @@
 	<Meta title="Edit {log.name}" />
 {/if}
 
-<div class="breadcrumbs mb-4 hidden text-sm sm:flex">
-	<ul>
-		<li>
-			<Icon src="home" class="w-4" />
-		</li>
-		<li>
-			<a href="/characters" class="text-secondary">Characters</a>
-		</li>
-		<li>
-			<a href={`/characters/${data.characterId}`} class="text-secondary">
-				{character.name}
-			</a>
-		</li>
-		{#if log.name}
-			<li class="overflow-hidden text-ellipsis whitespace-nowrap dark:drop-shadow-md">{log.name}</li>
-		{:else}
-			<li class="dark:drop-shadow-md">New Log</li>
-		{/if}
-	</ul>
-</div>
+<BreadCrumbs>
+	<BreadCrumb href="/characters">Characters</BreadCrumb>
+	<BreadCrumb href={`/characters/${data.characterId}`}>{character.name}</BreadCrumb>
+	{#if log.name}
+		<BreadCrumb>{log.name}</BreadCrumb>
+	{:else}
+		<BreadCrumb>New Log</BreadCrumb>
+	{/if}
+</BreadCrumbs>
 
-<a href={`/characters/${data.characterId}`} class="mb-4 flex gap-4 text-secondary sm:hidden">
-	<Icon src="chevron-left" class="w-6" />
-	<span>Back to {character.name}</span>
-</a>
+<BackButton href={`/characters/${data.characterId}`}>{character.name}</BackButton>
 
 {#if form?.error}
 	<div class="alert alert-error mb-4 shadow-lg">

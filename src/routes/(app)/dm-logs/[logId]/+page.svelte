@@ -4,6 +4,9 @@
 	import Meta from "$lib/components/Meta.svelte";
 	import { formatDate } from "$lib/misc";
 	import { logSchema } from "$lib/types/zod-schema.js";
+	import BackButton from "$src/lib/components/BackButton.svelte";
+	import BreadCrumb from "$src/lib/components/BreadCrumb.svelte";
+	import BreadCrumbs from "$src/lib/components/BreadCrumbs.svelte";
 	import Icon from "$src/lib/components/Icon.svelte";
 	import SchemaForm from "$src/lib/components/SchemaForm.svelte";
 	import { twMerge } from "tailwind-merge";
@@ -75,26 +78,16 @@
 	<Meta title="Edit {log.name}" />
 {/if}
 
-<div class="breadcrumbs mb-4 hidden text-sm sm:flex">
-	<ul>
-		<li>
-			<Icon src="home" class="w-4" />
-		</li>
-		<li>
-			<a href="/dm-logs" class="text-secondary">DM Logs</a>
-		</li>
-		{#if data.logId !== "new"}
-			<li class="overflow-hidden text-ellipsis whitespace-nowrap dark:drop-shadow-md">{log.name}</li>
-		{:else}
-			<li class="dark:drop-shadow-md">New Log</li>
-		{/if}
-	</ul>
-</div>
+<BreadCrumbs>
+	<BreadCrumb href="/dm-logs">DM Logs</BreadCrumb>
+	{#if data.logId !== "new"}
+		<BreadCrumb>{log.name}</BreadCrumb>
+	{:else}
+		<BreadCrumb>New Log</BreadCrumb>
+	{/if}
+</BreadCrumbs>
 
-<a href="/dm-logs" class="mb-4 flex gap-4 text-secondary sm:hidden">
-	<Icon src="chevron-left" class="w-6" />
-	<span>Back to DM Logs</span>
-</a>
+<BackButton href="/dm-logs">DM Logs</BackButton>
 
 {#if form?.error}
 	<div class="alert alert-error mb-4 shadow-lg">

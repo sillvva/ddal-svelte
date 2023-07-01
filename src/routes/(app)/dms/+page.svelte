@@ -1,6 +1,8 @@
 <script lang="ts">
 	import { applyAction, enhance } from "$app/forms";
 	import Meta from "$lib/components/Meta.svelte";
+	import BreadCrumb from "$src/lib/components/BreadCrumb.svelte";
+	import BreadCrumbs from "$src/lib/components/BreadCrumbs.svelte";
 	import Icon from "$src/lib/components/Icon.svelte";
 	import { twMerge } from "tailwind-merge";
 
@@ -14,16 +16,9 @@
 <Meta title="{data.session?.user?.name}'s DMs" />
 
 <div class="flex flex-col gap-4">
-	<div class="hidden gap-4 print:hidden sm:flex">
-		<div class="breadcrumbs flex-1 text-sm">
-			<ul>
-				<li>
-					<Icon src="home" class="w-4" />
-				</li>
-				<li class="dark:drop-shadow-md">DMs</li>
-			</ul>
-		</div>
-	</div>
+	<BreadCrumbs>
+		<BreadCrumb>DMs</BreadCrumb>
+	</BreadCrumbs>
 
 	{#if form?.error}
 		<div class="alert alert-error mb-4 shadow-lg">
