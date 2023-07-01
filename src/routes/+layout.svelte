@@ -2,6 +2,15 @@
 	import { navigating } from "$app/stores";
 	import { pageLoader } from "$src/lib/store";
 	import "../app.css";
+
+	let loading = false;
+	$: if ($navigating) {
+		setTimeout(() => {
+			loading = true;
+		}, 200);
+	} else {
+		loading = false;
+	}
 </script>
 
 <svelte:body class="min-h-screen text-base-content" />
@@ -14,7 +23,7 @@
 
 <slot />
 
-{#if $pageLoader || $navigating}
+{#if $pageLoader || loading}
 	<div class="fixed inset-0 z-40 flex items-center justify-center bg-black/50" />
 	<div class="fixed inset-0 z-50 flex items-center justify-center">
 		<span class="loading loading-spinner w-16 text-secondary" />
