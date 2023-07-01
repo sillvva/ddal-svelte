@@ -219,7 +219,7 @@
 			</div>
 		</div>
 		<div class="flex flex-1 flex-wrap gap-4 print:flex-nowrap xs:flex-nowrap sm:gap-4 md:gap-6">
-			<div class="flex basis-full flex-col gap-2 print:basis-1/3 xs:basis-1/2 sm:basis-1/3 sm:gap-4 md:basis-52">
+			<div class="flex basis-full flex-col gap-2 print:basis-1/3 xs:basis-[40%] sm:basis-1/3 sm:gap-4 md:basis-52">
 				{#if character.image_url}
 					<div class="relative hidden flex-col items-end justify-center print:hidden md:flex">
 						<a
@@ -252,7 +252,7 @@
 			<div
 				class="divider hidden xs:divider-horizontal before:bg-neutral-content/50 after:bg-neutral-content/50 print:flex xs:mx-0 xs:flex"
 			/>
-			<div class="flex basis-full flex-col print:basis-2/3 xs:basis-1/2 sm:basis-2/3 lg:basis-2/3">
+			<div class="flex basis-full flex-col print:basis-2/3 xs:basis-[60%] sm:basis-2/3 lg:basis-2/3">
 				{#if character}
 					<div class="flex flex-col gap-4">
 						<Items title="Story Awards" items={character.story_awards} collapsible />
@@ -276,7 +276,12 @@
 			</a>
 		{/if}
 		{#if logs.length}
-			<input type="text" placeholder="Search" bind:value={search} class="input-bordered input flex-1 sm:input-sm sm:max-w-xs" />
+			<input
+				type="text"
+				placeholder="Search"
+				bind:value={search}
+				class="input-bordered input min-w-0 flex-1 sm:input-sm sm:max-w-xs"
+			/>
 		{/if}
 		{#if myCharacter}
 			<a href={`/characters/${character.id}/log/new`} class="btn-primary btn sm:btn-sm sm:hidden sm:px-3" aria-label="New Log">
