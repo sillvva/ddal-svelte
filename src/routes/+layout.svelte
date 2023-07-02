@@ -16,8 +16,12 @@
 <slot />
 
 {#if $pageLoader || $navigating}
-	<div class="fixed inset-0 z-40 flex items-center justify-center bg-black/50" transition:fade />
-	<div class="fixed inset-0 z-50 flex items-center justify-center" transition:fade>
+	<div class="fixed inset-0 z-40 flex items-center justify-center bg-black/50" in:fade out:fade={{ duration: 200 }} />
+	<div
+		class="fixed inset-0 z-50 flex items-center justify-center"
+		in:fade={{ duration: 200, delay: 200 }}
+		out:fade={{ duration: 200 }}
+	>
 		<span class="loading loading-spinner w-16 text-secondary" />
 	</div>
 {/if}
