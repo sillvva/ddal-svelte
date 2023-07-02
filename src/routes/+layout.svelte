@@ -1,8 +1,13 @@
 <script lang="ts">
+	import { afterNavigate } from "$app/navigation";
 	import { navigating } from "$app/stores";
 	import { pageLoader } from "$src/lib/store";
 	import { fade } from "svelte/transition";
 	import "../app.css";
+
+	afterNavigate(() => {
+		pageLoader.set(false);
+	});
 </script>
 
 <svelte:body class="min-h-screen text-base-content" />
