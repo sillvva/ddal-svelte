@@ -9,6 +9,7 @@ const defaultCookie = {
 };
 
 export const load = async (event) => {
+	if (event.params.characterId === "new") throw redirect(301, "/characters/new/edit");
 	const character = await getCharacter(event.params.characterId);
 	if (!character) throw error(404, "Character not found");
 	const cookie = serverGetCookie(event.cookies, "characters", defaultCookie);

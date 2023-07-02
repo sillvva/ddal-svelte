@@ -177,22 +177,23 @@
 							<li>
 								<a href={`/characters/${character.id}/edit`}>Edit</a>
 							</li>
-							<li>
-								<form
-									method="POST"
-									action="?/deleteCharacter"
-									use:enhance={() => {
-										$pageLoader = true;
-										return ({ update, result }) => {
-											update();
-											if (result.type !== "redirect") $pageLoader = false;
-										};
-									}}
-									class="bg-red-800 hover:bg-red-900"
-								>
+							<form
+								method="POST"
+								action="?/deleteCharacter"
+								use:enhance={() => {
+									$pageLoader = true;
+									return ({ update, result }) => {
+										console.log(result);
+										update();
+										if (result.type !== "redirect") $pageLoader = false;
+									};
+								}}
+								class="bg-red-800 hover:bg-red-900"
+							>
+								<li>
 									<button>Delete Character</button>
-								</form>
-							</li>
+								</li>
+							</form>
 						</ul>
 					</div>
 				</div>

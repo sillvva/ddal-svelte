@@ -1,5 +1,4 @@
 <script lang="ts">
-	import { goto } from "$app/navigation";
 	import Meta from "$lib/components/Meta.svelte";
 	import { newCharacterSchema } from "$lib/types/zod-schema.js";
 	import BackButton from "$src/lib/components/BackButton.svelte";
@@ -15,9 +14,6 @@
 
 	let saving = false;
 	let errors: Record<string, string> = {};
-	$: if (form?.id && saving) {
-		goto(`/characters/${data.characterId}`);
-	}
 </script>
 
 {#if data.characterId == "new"}
