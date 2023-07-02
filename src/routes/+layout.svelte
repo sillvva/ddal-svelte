@@ -1,15 +1,17 @@
-<script>
+<script lang="ts">
 	import { navigating } from "$app/stores";
 	import { pageLoader } from "$src/lib/store";
 	import "../app.css";
 
 	let loading = false;
+	let timeout: number;
 	$: if ($navigating) {
-		setTimeout(() => {
+		timeout = setTimeout(() => {
 			loading = true;
 		}, 200);
 	} else {
 		loading = false;
+		clearTimeout(timeout);
 	}
 </script>
 
