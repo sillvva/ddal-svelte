@@ -19,6 +19,7 @@ export const load = async (event) => {
 	const dms = await getUserDMs(session.user.id);
 
 	return {
+		title: event.params.logId === "new" ? `New Log - ${character.name}` : `Edit ${log.name}`,
 		log,
 		character,
 		dms,

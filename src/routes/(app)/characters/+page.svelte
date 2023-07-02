@@ -1,5 +1,4 @@
 <script lang="ts">
-	import Meta from "$lib/components/Meta.svelte";
 	import SearchResults from "$lib/components/SearchResults.svelte";
 	import BreadCrumb from "$src/lib/components/BreadCrumb.svelte";
 	import BreadCrumbs from "$src/lib/components/BreadCrumbs.svelte";
@@ -65,8 +64,6 @@
 	$: setCookie("characters:magicItems", magicItems);
 	$: setCookie("characters:display", display);
 </script>
-
-<Meta title="{data.session?.user?.name}'s Characters" />
 
 <div class="flex flex-col gap-4">
 	<div class="hidden gap-4 sm:flex">

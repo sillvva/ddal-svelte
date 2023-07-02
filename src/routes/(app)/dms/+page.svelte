@@ -1,6 +1,5 @@
 <script lang="ts">
 	import { applyAction, enhance } from "$app/forms";
-	import Meta from "$lib/components/Meta.svelte";
 	import BreadCrumb from "$src/lib/components/BreadCrumb.svelte";
 	import BreadCrumbs from "$src/lib/components/BreadCrumbs.svelte";
 	import Icon from "$src/lib/components/Icon.svelte";
@@ -12,8 +11,6 @@
 	let dms = data.dms;
 	let deletingDM: string[] = [];
 </script>
-
-<Meta title="{data.session?.user?.name}'s DMs" />
 
 <div class="flex flex-col gap-4">
 	<BreadCrumbs>

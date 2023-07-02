@@ -26,6 +26,7 @@ export const load = async (event) => {
 	}
 
 	return {
+		title: event.params.characterId === "new" ? "New Character" : `Edit ${character.name}`,
 		character,
 		...event.params
 	};

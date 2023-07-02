@@ -1,7 +1,6 @@
 <script lang="ts">
 	import AutoFillSelect from "$lib/components/AutoFillSelect.svelte";
 	import AutoResizeTextArea from "$lib/components/AutoResizeTextArea.svelte";
-	import Meta from "$lib/components/Meta.svelte";
 	import { getMagicItems, getStoryAwards } from "$lib/entities.js";
 	import { formatDate } from "$lib/misc.js";
 	import { logSchema } from "$lib/types/zod-schema.js";
@@ -80,12 +79,6 @@
 	const addLostStoryAward = () => (storyAwardsLost = [...storyAwardsLost, storyAwards[0]?.id || ""]);
 	const removeLostStoryAward = (index: number) => (storyAwardsLost = storyAwardsLost.filter((_, i) => i !== index));
 </script>
-
-{#if data.logId == "new"}
-	<Meta title="{character.name} - New Log" />
-{:else}
-	<Meta title="Edit {log.name}" />
-{/if}
 
 <BreadCrumbs>
 	<BreadCrumb href="/characters">Characters</BreadCrumb>

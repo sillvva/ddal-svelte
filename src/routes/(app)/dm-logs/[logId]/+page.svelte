@@ -1,7 +1,6 @@
 <script lang="ts">
 	import AutoFillSelect from "$lib/components/AutoFillSelect.svelte";
 	import AutoResizeTextArea from "$lib/components/AutoResizeTextArea.svelte";
-	import Meta from "$lib/components/Meta.svelte";
 	import { formatDate } from "$lib/misc";
 	import { logSchema } from "$lib/types/zod-schema.js";
 	import BackButton from "$src/lib/components/BackButton.svelte";
@@ -71,12 +70,6 @@
 	const addStoryAward = () => (storyAwardsGained = [...storyAwardsGained, { id: "", name: "", description: "" }]);
 	const removeStoryAward = (index: number) => (storyAwardsGained = storyAwardsGained.filter((_, i) => i !== index));
 </script>
-
-{#if data.logId == "new"}
-	<Meta title="New Log" />
-{:else}
-	<Meta title="Edit {log.name}" />
-{/if}
 
 <BreadCrumbs>
 	<BreadCrumb href="/dm-logs">DM Logs</BreadCrumb>

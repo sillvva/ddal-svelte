@@ -16,12 +16,6 @@
 	let errors: Record<string, string> = {};
 </script>
 
-{#if data.characterId == "new"}
-	<Meta title="New Character" />
-{:else}
-	<Meta title="Edit {character.name}" />
-{/if}
-
 <BreadCrumbs>
 	<BreadCrumb href="/characters">Characters</BreadCrumb>
 	{#if data.characterId == "new"}
