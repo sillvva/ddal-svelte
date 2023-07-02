@@ -183,7 +183,6 @@
 								use:enhance={() => {
 									$pageLoader = true;
 									return ({ update, result }) => {
-										console.log(result);
 										update();
 										if (result.type !== "redirect") $pageLoader = false;
 									};
