@@ -5,6 +5,8 @@
 	import Meta from "$lib/components/Meta.svelte";
 	import SearchResults from "$lib/components/SearchResults.svelte";
 	import { slugify, stopWords } from "$lib/misc";
+	import BreadCrumb from "$src/lib/components/BreadCrumb.svelte";
+	import BreadCrumbs from "$src/lib/components/BreadCrumbs.svelte";
 	import Icon from "$src/lib/components/Icon.svelte";
 	import { pageLoader } from "$src/lib/store";
 	import { setCookie } from "$src/server/cookie";
@@ -93,17 +95,11 @@
 
 {#if data.session?.user}
 	<div class="hidden gap-4 print:hidden sm:flex">
-		<div class="breadcrumbs mb-4 flex-1 text-sm">
-			<ul>
-				<li>
-					<Icon src="home" class="w-4" />
-				</li>
-				<li>
-					<a href="/characters" class="text-secondary">Characters</a>
-				</li>
-				<li class="overflow-hidden text-ellipsis whitespace-nowrap dark:drop-shadow-md">{character.name}</li>
-			</ul>
-		</div>
+		<BreadCrumbs>
+			<BreadCrumb href="/characters">Characters</BreadCrumb>
+			<BreadCrumb>{character.name}</BreadCrumb>
+		</BreadCrumbs>
+
 		{#if myCharacter}
 			<a href={`/characters/${character.id}/edit`} class="btn-primary btn-sm btn">Edit</a>
 			<div class="dropdown-end dropdown">
@@ -181,22 +177,23 @@
 							<li>
 								<a href={`/characters/${character.id}/edit`}>Edit</a>
 							</li>
-							<li>
-								<form
-									method="POST"
-									action="?/deleteCharacter"
-									use:enhance={() => {
-										$pageLoader = true;
-										return ({ update, result }) => {
-											update();
-											if (result.type !== "redirect") $pageLoader = false;
-										};
-									}}
-									class="bg-red-800 hover:bg-red-900"
-								>
+							<form
+								method="POST"
+								action="?/deleteCharacter"
+								use:enhance={() => {
+									$pageLoader = true;
+									return ({ update, result }) => {
+										console.log(result);
+										update();
+										if (result.type !== "redirect") $pageLoader = false;
+									};
+								}}
+								class="bg-red-800 hover:bg-red-900"
+							>
+								<li>
 									<button>Delete Character</button>
-								</form>
-							</li>
+								</li>
+							</form>
 						</ul>
 					</div>
 				</div>
@@ -223,7 +220,7 @@
 			</div>
 		</div>
 		<div class="flex flex-1 flex-wrap gap-4 print:flex-nowrap xs:flex-nowrap sm:gap-4 md:gap-6">
-			<div class="flex basis-full flex-col gap-2 print:basis-1/3 xs:basis-1/2 sm:basis-1/3 sm:gap-4 md:basis-52">
+			<div class="flex basis-full flex-col gap-2 print:basis-1/3 xs:basis-[40%] sm:basis-1/3 sm:gap-4 md:basis-52">
 				{#if character.image_url}
 					<div class="relative hidden flex-col items-end justify-center print:hidden md:flex">
 						<a
@@ -256,7 +253,7 @@
 			<div
 				class="divider hidden xs:divider-horizontal before:bg-neutral-content/50 after:bg-neutral-content/50 print:flex xs:mx-0 xs:flex"
 			/>
-			<div class="flex basis-full flex-col print:basis-2/3 xs:basis-1/2 sm:basis-2/3 lg:basis-2/3">
+			<div class="flex basis-full flex-col print:basis-2/3 xs:basis-[60%] sm:basis-2/3 lg:basis-2/3">
 				{#if character}
 					<div class="flex flex-col gap-4">
 						<Items title="Story Awards" items={character.story_awards} collapsible />
@@ -280,14 +277,19 @@
 			</a>
 		{/if}
 		{#if logs.length}
-			<input type="text" placeholder="Search" bind:value={search} class="input-bordered input flex-1 sm:input-sm sm:max-w-xs" />
+			<input
+				type="text"
+				placeholder="Search"
+				bind:value={search}
+				class="input-bordered input min-w-0 flex-1 sm:input-sm sm:max-w-xs"
+			/>
 		{/if}
 		{#if myCharacter}
 			<a href={`/characters/${character.id}/log/new`} class="btn-primary btn sm:btn-sm sm:hidden sm:px-3" aria-label="New Log">
 				<Icon src="plus" class="w-6" />
 			</a>
 			<btn
-				class="btn sm:hidden"
+				class={twMerge("btn sm:hidden", descriptions && "btn-primary")}
 				on:click={() => (descriptions = !descriptions)}
 				on:keypress
 				role="button"
@@ -301,7 +303,7 @@
 	{#if logs.length}
 		<div class="hidden flex-1 sm:block" />
 		<btn
-			class="btn hidden sm:btn-sm sm:inline-flex"
+			class={twMerge("btn hidden sm:btn-sm sm:inline-flex", descriptions && "btn-primary")}
 			on:click={() => (descriptions = !descriptions)}
 			on:keypress
 			role="button"

@@ -13,7 +13,7 @@
 	}>();
 	let elForm: HTMLFormElement;
 
-	export let form: object | null;
+	export let form: (object & { error: string | null | undefined }) | null;
 	export let schema: z.ZodObject<any, any>;
 	export let data: object;
 	export let action: string;
@@ -22,7 +22,8 @@
 
 	export let saving = false;
 	$: {
-		if (form && saving) saving = false;
+		if (form?.error && saving) saving = false;
+		else if (form && saving) changes = [];
 	}
 
 	export let changes: string[] = [];

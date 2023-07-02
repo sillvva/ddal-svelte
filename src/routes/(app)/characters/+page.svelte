@@ -1,6 +1,8 @@
 <script lang="ts">
 	import Meta from "$lib/components/Meta.svelte";
 	import SearchResults from "$lib/components/SearchResults.svelte";
+	import BreadCrumb from "$src/lib/components/BreadCrumb.svelte";
+	import BreadCrumbs from "$src/lib/components/BreadCrumbs.svelte";
 	import Icon from "$src/lib/components/Icon.svelte";
 	import { stopWords } from "$src/lib/misc";
 	import { setCookie } from "$src/server/cookie";
@@ -68,15 +70,10 @@
 
 <div class="flex flex-col gap-4">
 	<div class="hidden gap-4 sm:flex">
-		<div class="breadcrumbs text-sm">
-			<ul>
-				<li>
-					<Icon src="home" class="w-4" />
-				</li>
-				<li class="dark:drop-shadow-md">Characters</li>
-			</ul>
-		</div>
-		<div class="flex-1" />
+		<BreadCrumbs>
+			<BreadCrumb>Characters</BreadCrumb>
+		</BreadCrumbs>
+
 		<div class="dropdown-end dropdown">
 			<span role="button" tabindex="0" class="btn-sm btn">
 				<Icon src="dots-horizontal" class="w-6" />
@@ -105,7 +102,7 @@
 					<Icon src="plus" class="inline w-6" />
 				</a>
 				<btn
-					class="btn inline-flex xs:hidden"
+					class={twMerge("btn inline-flex xs:hidden", magicItems && "btn-primary")}
 					on:click={() => (magicItems = !magicItems)}
 					on:keypress={() => null}
 					on:keypress
@@ -120,7 +117,7 @@
 		<div class="hidden flex-1 xs:block" />
 		{#if display != "grid"}
 			<btn
-				class="btn hidden sm:btn-sm xs:inline-flex"
+				class={twMerge("btn hidden sm:btn-sm xs:inline-flex", magicItems && "btn-primary")}
 				on:click={() => (magicItems = !magicItems)}
 				on:keypress={() => null}
 				on:keypress
@@ -260,7 +257,7 @@
 						{@const miMatches = msResults.find(
 							(result) => result.id == character.id && result.terms.find((term) => result.match[term].includes("magicItems"))
 						)}
-						<a href={`/characters/${character.id}`} class="img-grow card-compact card bg-base-100 shadow-xl">
+						<a href={`/characters/${character.id}`} class="img-grow card card-compact bg-base-100 shadow-xl">
 							<figure class="relative aspect-square overflow-hidden">
 								<img src={character.image_url} alt={character.name} class="h-full w-full object-cover object-top" />
 

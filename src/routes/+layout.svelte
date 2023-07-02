@@ -1,6 +1,13 @@
-<script>
+<script lang="ts">
+	import { afterNavigate } from "$app/navigation";
+	import { navigating } from "$app/stores";
 	import { pageLoader } from "$src/lib/store";
+	import { fade } from "svelte/transition";
 	import "../app.css";
+
+	afterNavigate(() => {
+		pageLoader.set(false);
+	});
 </script>
 
 <svelte:body class="min-h-screen text-base-content" />
@@ -13,9 +20,13 @@
 
 <slot />
 
-{#if $pageLoader}
-	<div class="fixed inset-0 z-40 flex items-center justify-center bg-black/50" />
-	<div class="fixed inset-0 z-50 flex items-center justify-center">
+{#if $pageLoader || $navigating}
+	<div class="fixed inset-0 z-40 flex items-center justify-center bg-black/50" in:fade out:fade={{ duration: 200 }} />
+	<div
+		class="fixed inset-0 z-50 flex items-center justify-center"
+		in:fade={{ duration: 200, delay: 200 }}
+		out:fade={{ duration: 200 }}
+	>
 		<span class="loading loading-spinner w-16 text-secondary" />
 	</div>
 {/if}

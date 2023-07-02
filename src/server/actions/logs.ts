@@ -1,12 +1,11 @@
 import { parseError } from "$lib/misc";
-import { getLevels } from "../data/characters";
+import { getLevels } from "$src/lib/entities";
 import { prisma } from "../db";
 
 import type { logSchema } from "$lib/types/zod-schema";
 import type { z } from "zod";
 import type { DungeonMaster, Log } from "@prisma/client";
 import type { User } from "@auth/core/types";
-
 export type SaveLogResult = ReturnType<typeof saveLog>;
 export async function saveLog(input: z.infer<typeof logSchema>, user?: User) {
 	try {

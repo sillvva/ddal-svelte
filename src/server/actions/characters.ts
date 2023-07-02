@@ -8,7 +8,7 @@ import type { Character } from "@prisma/client";
 export type SaveCharacterResult = ReturnType<typeof saveCharacter>;
 export async function saveCharacter(characterId: string, userId: string, data: z.infer<typeof newCharacterSchema>) {
 	try {
-		if (!characterId) throw new Error("No character ID provided.");
+		if (!characterId) throw new Error("No character ID provided");
 		if (!userId) throw new Error("Not authenticated");
 		let result: Character;
 		if (characterId == "new") {
@@ -19,9 +19,9 @@ export async function saveCharacter(characterId: string, userId: string, data: z
 				}
 			});
 		} else {
-			const character = await getCharacter(characterId);
-			if (!character) throw new Error("Character not found.");
-			if (character.userId !== userId) throw new Error("Not authorized.");
+			const character = await getCharacter(characterId, false);
+			if (!character) throw new Error("Character not found");
+			if (character.userId !== userId) throw new Error("Not authorized");
 			result = await prisma.character.update({
 				where: { id: characterId },
 				data: {
@@ -32,7 +32,7 @@ export async function saveCharacter(characterId: string, userId: string, data: z
 		return { id: result.id, character: result, error: null };
 	} catch (error) {
 		if (error instanceof Error) return { id: null, character: null, error: error.message };
-		else return { id: null, character: null, error: "An unknown error has occurred." };
+		else return { id: null, character: null, error: "An unknown error has occurred" };
 	}
 }
 
