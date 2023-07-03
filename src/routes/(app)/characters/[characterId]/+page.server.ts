@@ -14,6 +14,9 @@ export const load = async (event) => {
 	if (!character) throw error(404, "Character not found");
 	const cookie = serverGetCookie(event.cookies, "characters", defaultCookie);
 	return {
+		title: character.name,
+		description: `Level ${character.total_level} ${character.race} ${character.class}`.replace(/ {2,}/g, " ").trim(),
+		image: character.image_url,
 		character,
 		...cookie
 	};

@@ -1,6 +1,5 @@
 <script lang="ts">
 	import { enhance } from "$app/forms";
-	import Meta from "$lib/components/Meta.svelte";
 	import { dungeonMasterSchema } from "$lib/types/zod-schema.js";
 	import BackButton from "$src/lib/components/BackButton.svelte";
 	import BreadCrumb from "$src/lib/components/BreadCrumb.svelte";
@@ -17,8 +16,6 @@
 	let saving = false;
 	let errors: Record<string, string> = {};
 </script>
-
-<Meta title="Edit {dm.name}" />
 
 <div class="flex flex-col gap-4">
 	<BreadCrumbs>

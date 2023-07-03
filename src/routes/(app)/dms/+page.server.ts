@@ -4,11 +4,12 @@ import { redirect } from "@sveltejs/kit";
 
 export const load = async (event) => {
 	const session = await event.locals.getSession();
-	if (!session?.user) throw redirect(301, "/");
+	if (!session?.user?.name) throw redirect(301, "/");
 
 	const dms = await getUserDMsWithLogs(session.user.id);
 
 	return {
+		title: `${session.user.name}'s DMs`,
 		dms: dms
 			.sort((a, b) => (a.name.toLowerCase() > b.name.toLowerCase() ? 1 : -1))
 			.filter((dm) => dm.name != session?.user?.name),

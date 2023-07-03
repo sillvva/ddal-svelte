@@ -18,6 +18,7 @@ export const load = async (event) => {
 	log.dm = log.dm?.name ? log.dm : { name: session.user.name || "", id: "", DCI: null, uid: session.user.id };
 
 	return {
+		title: event.params.logId === "new" ? "New DM Log" : `Edit ${log.name}`,
 		log,
 		characters,
 		character,

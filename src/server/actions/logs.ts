@@ -10,7 +10,14 @@ export type SaveLogResult = ReturnType<typeof saveLog>;
 export async function saveLog(input: z.infer<typeof logSchema>, user?: User) {
 	try {
 		let dm: DungeonMaster | null = null;
-		if (!user) throw new Error("Not authenticated");
+		if (!user?.name) throw new Error("Not authenticated");
+
+		if (!input.dm.name.trim()) {
+			input.dm.uid = user.id;
+			input.dm.name = user.name;
+			input.dm.DCI = null;
+		}
+
 		const isMe = input.dm?.name.trim() === user.name?.trim();
 
 		const log = await prisma.$transaction(async (tx) => {

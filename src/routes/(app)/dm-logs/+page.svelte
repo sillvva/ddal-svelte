@@ -2,9 +2,8 @@
 	import { applyAction, enhance } from "$app/forms";
 	import Items from "$lib/components/Items.svelte";
 	import Markdown from "$lib/components/Markdown.svelte";
-	import Meta from "$lib/components/Meta.svelte";
 	import SearchResults from "$lib/components/SearchResults.svelte";
-	import { formatDate, stopWords } from "$lib/misc.js";
+	import { stopWords } from "$lib/misc.js";
 	import BreadCrumb from "$src/lib/components/BreadCrumb.svelte";
 	import BreadCrumbs from "$src/lib/components/BreadCrumbs.svelte";
 	import Icon from "$src/lib/components/Icon.svelte";
@@ -59,8 +58,6 @@
 					.sort((a, b) => a.date.getTime() - b.date.getTime())
 			: logs.sort((a, b) => a.date.getTime() - b.date.getTime());
 </script>
-
-<Meta title="{data.session?.user?.name}'s DM Logs" />
 
 <div class="flex flex-col gap-4">
 	<div class="hidden gap-4 print:hidden sm:flex">
@@ -131,7 +128,7 @@
 									<p class="whitespace-pre-wrap font-semibold text-accent-content">
 										<SearchResults text={log.name} {search} />
 									</p>
-									<p class="text-netural-content text-xs font-normal">{formatDate(log.date)}</p>
+									<p class="text-netural-content text-xs font-normal">{new Date(log.date).toLocaleString()}</p>
 									{#if log.character}
 										<p class="text-sm font-normal">
 											<span class="font-semibold">Character:</span>

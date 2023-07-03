@@ -2,7 +2,6 @@
 	import { applyAction, enhance } from "$app/forms";
 	import Items from "$lib/components/Items.svelte";
 	import Markdown from "$lib/components/Markdown.svelte";
-	import Meta from "$lib/components/Meta.svelte";
 	import SearchResults from "$lib/components/SearchResults.svelte";
 	import { slugify, stopWords } from "$lib/misc";
 	import BreadCrumb from "$src/lib/components/BreadCrumb.svelte";
@@ -86,12 +85,6 @@
 		}
 	}
 </script>
-
-<Meta
-	title="{character.name} - Adventurers League Log Sheet"
-	description="A level {character.total_level} {character.race} {character.class}"
-	image={character.image_url}
-/>
 
 {#if data.session?.user}
 	<div class="hidden gap-4 print:hidden sm:flex">
@@ -183,7 +176,6 @@
 								use:enhance={() => {
 									$pageLoader = true;
 									return ({ update, result }) => {
-										console.log(result);
 										update();
 										if (result.type !== "redirect") $pageLoader = false;
 									};

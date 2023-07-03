@@ -10,6 +10,7 @@ export const load = async (event) => {
 	if (!dm) throw error(404, "DM not found");
 
 	return {
+		title: `Edit ${dm.name}`,
 		dm,
 		...event.params
 	};

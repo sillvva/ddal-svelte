@@ -13,6 +13,7 @@ export const load = async (event) => {
 	const characters = await getCharacters(session.user.id);
 	const cookie = serverGetCookie(event.cookies, "characters", defaultCookie);
 	return {
+		title: `${session.user.name}'s Characters`,
 		characters,
 		...cookie
 	};

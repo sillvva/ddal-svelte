@@ -1,7 +1,6 @@
 <script lang="ts">
 	import AutoFillSelect from "$lib/components/AutoFillSelect.svelte";
 	import AutoResizeTextArea from "$lib/components/AutoResizeTextArea.svelte";
-	import Meta from "$lib/components/Meta.svelte";
 	import { getMagicItems, getStoryAwards } from "$lib/entities.js";
 	import { formatDate } from "$lib/misc.js";
 	import { logSchema } from "$lib/types/zod-schema.js";
@@ -69,23 +68,7 @@
 				a.name.localeCompare(b.name)
 		  )
 		: [];
-
-	const addMagicItem = () => (magicItemsGained = [...magicItemsGained, { id: "", name: "", description: "" }]);
-	const removeMagicItem = (index: number) => (magicItemsGained = magicItemsGained.filter((_, i) => i !== index));
-	const addLostMagicItem = () => (magicItemsLost = [...magicItemsLost, magicItems[0]?.id || ""]);
-	const removeLostMagicItem = (index: number) => (magicItemsLost = magicItemsLost.filter((_, i) => i !== index));
-
-	const addStoryAward = () => (storyAwardsGained = [...storyAwardsGained, { id: "", name: "", description: "" }]);
-	const removeStoryAward = (index: number) => (storyAwardsGained = storyAwardsGained.filter((_, i) => i !== index));
-	const addLostStoryAward = () => (storyAwardsLost = [...storyAwardsLost, storyAwards[0]?.id || ""]);
-	const removeLostStoryAward = (index: number) => (storyAwardsLost = storyAwardsLost.filter((_, i) => i !== index));
 </script>
-
-{#if data.logId == "new"}
-	<Meta title="{character.name} - New Log" />
-{:else}
-	<Meta title="Edit {log.name}" />
-{/if}
 
 <BreadCrumbs>
 	<BreadCrumb href="/characters">Characters</BreadCrumb>
@@ -342,13 +325,18 @@
 			<button
 				type="button"
 				class="btn-primary btn min-w-fit flex-1 sm:btn-sm sm:flex-none"
-				on:click={addMagicItem}
+				on:click={() => (magicItemsGained = [...magicItemsGained, { id: "", name: "", description: "" }])}
 				disabled={saving}
 			>
 				Add Magic Item
 			</button>
 			{#if !log.is_dm_log && magicItems.filter((item) => !magicItemsLost.includes(item.id)).length > 0}
-				<button type="button" class="btn min-w-fit flex-1 sm:btn-sm sm:flex-none" on:click={addLostMagicItem} disabled={saving}>
+				<button
+					type="button"
+					class="btn min-w-fit flex-1 sm:btn-sm sm:flex-none"
+					on:click={() => (magicItemsLost = [...magicItemsLost, magicItems[0]?.id || ""])}
+					disabled={saving}
+				>
 					Drop Magic Item
 				</button>
 			{/if}
@@ -356,7 +344,7 @@
 				<button
 					type="button"
 					class="btn-primary btn min-w-fit flex-1 sm:btn-sm sm:flex-none"
-					on:click={addStoryAward}
+					on:click={() => (storyAwardsGained = [...storyAwardsGained, { id: "", name: "", description: "" }])}
 					disabled={saving}
 				>
 					Add Story Award
@@ -365,7 +353,7 @@
 					<button
 						type="button"
 						class="btn min-w-fit flex-1 sm:btn-sm sm:flex-none"
-						on:click={addLostStoryAward}
+						on:click={() => (storyAwardsLost = [...storyAwardsLost, storyAwards[0]?.id || ""])}
 						disabled={saving}
 					>
 						Drop Story Award
@@ -388,9 +376,7 @@
 									name={`magic_items_gained.${index}.name`}
 									value={item.name}
 									on:change={(e) => {
-										magicItemsGained = magicItemsGained.map((item, i) =>
-											i === index ? { ...item, name: e.currentTarget.value } : item
-										);
+										if (magicItemsGained[index]) magicItemsGained[index].name = e.currentTarget.value;
 									}}
 									disabled={saving}
 									class="input-bordered input w-full focus:border-primary"
@@ -399,7 +385,11 @@
 									<span class="label-text-alt text-error">{errors[`magic_items_gained.${index}.name`] || ""}</span>
 								</label>
 							</div>
-							<button type="button" class="btn-danger btn mt-9" on:click={() => removeMagicItem(index)}>
+							<button
+								type="button"
+								class="btn-danger btn mt-9"
+								on:click={() => (magicItemsGained = magicItemsGained.filter((_, i) => i !== index))}
+							>
 								<Icon src="trash-can" class="w-6" />
 							</button>
 						</div>
@@ -410,9 +400,7 @@
 							<textarea
 								name={`magic_items_gained.${index}.description`}
 								on:change={(e) => {
-									magicItemsGained = magicItemsGained.map((item, i) =>
-										i === index ? { ...item, description: e.currentTarget.value } : item
-									);
+									if (magicItemsGained[index]) magicItemsGained[index].description = e.currentTarget.value;
 								}}
 								disabled={saving}
 								class="textarea-bordered textarea w-full focus:border-primary"
@@ -440,7 +428,7 @@
 									value={id}
 									name={`magic_items_lost.${index}`}
 									on:change={(e) => {
-										magicItemsLost = magicItemsLost.map((item, i) => (i === index ? e.currentTarget.value : item));
+										if (magicItemsLost[index]) magicItemsLost[index] = e.currentTarget.value;
 									}}
 									disabled={saving}
 									class="select-bordered select w-full"
@@ -455,7 +443,11 @@
 									<span class="label-text-alt text-error">{errors[`magic_items_lost.${index}`] || ""}</span>
 								</label>
 							</div>
-							<button type="button" class="btn-danger btn mt-9" on:click={() => removeLostMagicItem(index)}>
+							<button
+								type="button"
+								class="btn-danger btn mt-9"
+								on:click={() => (magicItemsLost = magicItemsLost.filter((_, i) => i !== index))}
+							>
 								<Icon src="trash-can" class="w-6" />
 							</button>
 						</div>
@@ -477,9 +469,7 @@
 									name={`story_awards_gained.${index}.name`}
 									value={item.name}
 									on:change={(e) => {
-										storyAwardsGained = storyAwardsGained.map((item, i) =>
-											i === index ? { ...item, name: e.currentTarget.value } : item
-										);
+										if (storyAwardsGained[index]) storyAwardsGained[index].name = e.currentTarget.value;
 									}}
 									disabled={saving}
 									class="input-bordered input w-full focus:border-primary"
@@ -488,7 +478,11 @@
 									<span class="label-text-alt text-error">{errors[`story_awards_gained.${index}.name`] || ""}</span>
 								</label>
 							</div>
-							<button type="button" class="btn-danger btn mt-9" on:click={() => removeStoryAward(index)}>
+							<button
+								type="button"
+								class="btn-danger btn mt-9"
+								on:click={() => (storyAwardsGained = storyAwardsGained.filter((_, i) => i !== index))}
+							>
 								<Icon src="trash-can" class="w-6" />
 							</button>
 						</div>
@@ -499,9 +493,7 @@
 							<textarea
 								name={`story_awards_gained.${index}.description`}
 								on:change={(e) => {
-									storyAwardsGained = storyAwardsGained.map((item, i) =>
-										i === index ? { ...item, description: e.currentTarget.value } : item
-									);
+									if (storyAwardsGained[index]) storyAwardsGained[index].description = e.currentTarget.value;
 								}}
 								disabled={saving}
 								class="textarea-bordered textarea w-full focus:border-primary"
@@ -529,7 +521,7 @@
 									value={id}
 									name={`story_awards_lost.${index}`}
 									on:change={(e) => {
-										storyAwardsLost = storyAwardsLost.map((item, i) => (i === index ? e.currentTarget.value : item));
+										if (storyAwardsLost[index]) storyAwardsLost[index] = e.currentTarget.value;
 									}}
 									disabled={saving}
 									class="select-bordered select w-full"
@@ -544,7 +536,11 @@
 									<span class="label-text-alt text-error">{errors[`story_awards_lost.${index}`] || ""}</span>
 								</label>
 							</div>
-							<button type="button" class="btn-danger btn mt-9" on:click={() => removeLostStoryAward(index)}>
+							<button
+								type="button"
+								class="btn-danger btn mt-9"
+								on:click={() => (storyAwardsLost = storyAwardsLost.filter((_, i) => i !== index))}
+							>
 								<Icon src="trash-can" class="w-6" />
 							</button>
 						</div>
