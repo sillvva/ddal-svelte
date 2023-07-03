@@ -1,5 +1,4 @@
 <script lang="ts">
-	import Meta from "$lib/components/Meta.svelte";
 	import { newCharacterSchema } from "$lib/types/zod-schema.js";
 	import BackButton from "$src/lib/components/BackButton.svelte";
 	import BreadCrumb from "$src/lib/components/BreadCrumb.svelte";
