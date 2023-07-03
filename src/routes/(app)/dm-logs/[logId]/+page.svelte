@@ -39,15 +39,15 @@
 	};
 
 	function extraErrors(log: z.infer<typeof logSchema>) {
-		if (log.characterId && !(data.characters || []).find((c) => c.id === log.characterId)) {
+		if (values.characterId && !(data.characters || []).find((c) => c.id === values.characterId)) {
 			errors["characterId"] = "Character not found";
 		}
 
-		if (character?.name && !log.applied_date) {
+		if (character?.name && !values.applied_date) {
 			errors["applied_date"] = "Applied date is required if assigned character is entered";
 		}
 
-		if (log.applied_date && !log.characterId) {
+		if (values.applied_date && !values.characterId) {
 			errors["characterId"] = "Assigned character is required if applied date is entered";
 		}
 	}
@@ -168,9 +168,9 @@
 					log.applied_date = null;
 				}}
 				on:select={(ev) => {
-					const char = data.characters.find((c) => c.id === ev.detail);
-					log.characterId = char ? ev.detail.toString() : "";
-					log.applied_date = character && log.applied_date ? log.applied_date : null;
+					character = data.characters.find((c) => c.id === ev.detail);
+					log.characterId = character ? ev.detail.toString() : "";
+					log.applied_date = data.character && log.applied_date ? log.applied_date : null;
 				}}
 			/>
 			<label for="characterName" class="label">
