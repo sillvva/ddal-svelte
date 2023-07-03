@@ -63,12 +63,6 @@
 		name: mi.name,
 		description: mi.description || ""
 	}));
-
-	const addMagicItem = () => (magicItemsGained = [...magicItemsGained, { id: "", name: "", description: "" }]);
-	const removeMagicItem = (index: number) => (magicItemsGained = magicItemsGained.filter((_, i) => i !== index));
-
-	const addStoryAward = () => (storyAwardsGained = [...storyAwardsGained, { id: "", name: "", description: "" }]);
-	const removeStoryAward = (index: number) => (storyAwardsGained = storyAwardsGained.filter((_, i) => i !== index));
 </script>
 
 <BreadCrumbs>
@@ -336,7 +330,7 @@
 			<button
 				type="button"
 				class="btn-primary btn min-w-fit flex-1 sm:btn-sm sm:flex-none"
-				on:click={addMagicItem}
+				on:click={() => (magicItemsGained = [...magicItemsGained, { id: "", name: "", description: "" }])}
 				disabled={saving}
 			>
 				Add Magic Item
@@ -344,7 +338,7 @@
 			<button
 				type="button"
 				class="btn-primary btn min-w-fit flex-1 sm:btn-sm sm:flex-none"
-				on:click={addStoryAward}
+				on:click={() => (storyAwardsGained = [...storyAwardsGained, { id: "", name: "", description: "" }])}
 				disabled={saving}
 			>
 				Add Story Award
@@ -365,9 +359,7 @@
 									name={`magic_items_gained.${index}.name`}
 									value={item.name}
 									on:change={(e) => {
-										magicItemsGained = magicItemsGained.map((item, i) =>
-											i === index ? { ...item, name: e.currentTarget.value } : item
-										);
+										if (magicItemsGained[index]) magicItemsGained[index].name = e.currentTarget.value;
 									}}
 									disabled={saving}
 									class="input-bordered input w-full focus:border-primary"
@@ -376,7 +368,12 @@
 									<span class="label-text-alt text-error">{errors[`magic_items_gained.${index}.name`] || ""}</span>
 								</label>
 							</div>
-							<button type="button" class="btn-danger btn mt-9" on:click={() => removeMagicItem(index)} disabled={saving}>
+							<button
+								type="button"
+								class="btn-danger btn mt-9"
+								on:click={() => (magicItemsGained = magicItemsGained.filter((_, i) => i !== index))}
+								disabled={saving}
+							>
 								<Icon src="trash-can" class="w-6" />
 							</button>
 						</div>
@@ -387,9 +384,7 @@
 							<textarea
 								name={`magic_items_gained.${index}.description`}
 								on:change={(e) => {
-									magicItemsGained = magicItemsGained.map((item, i) =>
-										i === index ? { ...item, description: e.currentTarget.value } : item
-									);
+									if (magicItemsGained[index]) magicItemsGained[index].description = e.currentTarget.value;
 								}}
 								disabled={saving}
 								class="textarea-bordered textarea w-full focus:border-primary"
@@ -418,9 +413,7 @@
 									name={`story_awards_gained.${index}.name`}
 									value={item.name}
 									on:change={(e) => {
-										storyAwardsGained = storyAwardsGained.map((item, i) =>
-											i === index ? { ...item, name: e.currentTarget.value } : item
-										);
+										if (storyAwardsGained[index]) storyAwardsGained[index].name = e.currentTarget.value;
 									}}
 									disabled={saving}
 									class="input-bordered input w-full focus:border-primary"
@@ -429,7 +422,12 @@
 									<span class="label-text-alt text-error">{errors[`story_awards_gained.${index}.name`] || ""}</span>
 								</label>
 							</div>
-							<button type="button" class="btn-danger btn mt-9" on:click={() => removeStoryAward(index)} disabled={saving}>
+							<button
+								type="button"
+								class="btn-danger btn mt-9"
+								on:click={() => (storyAwardsGained = storyAwardsGained.filter((_, i) => i !== index))}
+								disabled={saving}
+							>
 								<Icon src="trash-can" class="w-6" />
 							</button>
 						</div>
@@ -440,9 +438,7 @@
 							<textarea
 								name={`story_awards_gained.${index}.description`}
 								on:change={(e) => {
-									storyAwardsGained = storyAwardsGained.map((item, i) =>
-										i === index ? { ...item, description: e.currentTarget.value } : item
-									);
+									if (storyAwardsGained[index]) storyAwardsGained[index].description = e.currentTarget.value;
 								}}
 								disabled={saving}
 								class="textarea-bordered textarea w-full focus:border-primary"
