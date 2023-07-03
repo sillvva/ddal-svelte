@@ -3,7 +3,7 @@
 	import Items from "$lib/components/Items.svelte";
 	import Markdown from "$lib/components/Markdown.svelte";
 	import SearchResults from "$lib/components/SearchResults.svelte";
-	import { formatDate, stopWords } from "$lib/misc.js";
+	import { stopWords } from "$lib/misc.js";
 	import BreadCrumb from "$src/lib/components/BreadCrumb.svelte";
 	import BreadCrumbs from "$src/lib/components/BreadCrumbs.svelte";
 	import Icon from "$src/lib/components/Icon.svelte";
@@ -128,7 +128,7 @@
 									<p class="whitespace-pre-wrap font-semibold text-accent-content">
 										<SearchResults text={log.name} {search} />
 									</p>
-									<p class="text-netural-content text-xs font-normal">{formatDate(log.date)}</p>
+									<p class="text-netural-content text-xs font-normal">{new Date(log.date).toLocaleString()}</p>
 									{#if log.character}
 										<p class="text-sm font-normal">
 											<span class="font-semibold">Character:</span>
