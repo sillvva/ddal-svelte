@@ -20,12 +20,37 @@
 	let saving = false;
 	let errors: Record<string, string> = {};
 
+	$: magicItems = character
+		? getMagicItems(character, { excludeDropped: true, lastLogDate: log.date.toISOString() }).sort((a, b) =>
+				a.name.localeCompare(b.name)
+		  )
+		: [];
+	$: storyAwards = character
+		? getStoryAwards(character, { excludeDropped: true, lastLogDate: log.date.toISOString() }).sort((a, b) =>
+				a.name.localeCompare(b.name)
+		  )
+		: [];
+
 	let dm = log.dm || {
 		id: "",
 		name: "",
 		DCI: null,
 		uid: ""
 	};
+
+	let season: 1 | 8 | 9 = log.experience ? 1 : log.acp ? 8 : 9;
+	let magicItemsGained = log.magic_items_gained.map((mi) => ({
+		id: mi.id,
+		name: mi.name,
+		description: mi.description || ""
+	}));
+	$: magicItemsLost = log.magic_items_lost.map((mi) => mi.id).filter((id) => !!magicItems.find((mi) => mi.id === id));
+	let storyAwardsGained = log.story_awards_gained.map((mi) => ({
+		id: mi.id,
+		name: mi.name,
+		description: mi.description || ""
+	}));
+	$: storyAwardsLost = log.story_awards_lost.map((mi) => mi.id).filter((id) => !!storyAwards.find((mi) => mi.id === id));
 
 	$: values = {
 		...log,
@@ -43,31 +68,6 @@
 			uid: dm.uid
 		}
 	};
-
-	let season: 1 | 8 | 9 = log.experience ? 1 : log.acp ? 8 : 9;
-	let magicItemsGained = log.magic_items_gained.map((mi) => ({
-		id: mi.id,
-		name: mi.name,
-		description: mi.description || ""
-	}));
-	let magicItemsLost = log.magic_items_lost.map((mi) => mi.id);
-	let storyAwardsGained = log.story_awards_gained.map((mi) => ({
-		id: mi.id,
-		name: mi.name,
-		description: mi.description || ""
-	}));
-	let storyAwardsLost = log.story_awards_lost.map((mi) => mi.id);
-
-	$: magicItems = character
-		? getMagicItems(character, { excludeDropped: true, lastLogId: data.logId === "new" ? "" : data.logId }).sort((a, b) =>
-				a.name.localeCompare(b.name)
-		  )
-		: [];
-	$: storyAwards = character
-		? getStoryAwards(character, { excludeDropped: true, lastLogId: data.logId === "new" ? "" : data.logId }).sort((a, b) =>
-				a.name.localeCompare(b.name)
-		  )
-		: [];
 </script>
 
 <BreadCrumbs>

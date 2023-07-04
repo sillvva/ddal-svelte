@@ -40,3 +40,9 @@ export const tooltipClasses = (text?: string | null, align = "center") => {
 export function canUseDOM() {
 	return !!(typeof window !== "undefined" && window.document && window.document.createElement);
 }
+
+export function sorter(a: string | number | Date, b: string | number | Date) {
+	if (a < b) return -1;
+	if (a > b) return 1;
+	return 0;
+}
