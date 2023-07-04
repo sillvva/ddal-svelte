@@ -18,13 +18,16 @@
 	let modal: { name: string; description: string; date?: Date } | null = null;
 	let collapsed = collapsible;
 
-	function sorterName(name: string) {
-		return name
-			.replace(/^\d+x? ?/, "")
-			.replace("Spell Scroll", "Scroll")
-			.replace(/^(\w+)s/, "$1")
-			.replace(/^(A|An|The) /, "");
-	}
+	const sorterName = (name: string) =>
+		sort
+			? name
+					.replace(/^\d+x? ?/, "")
+					.replace("Spell Scroll", "Scroll")
+					.replace(/^(\w+)s/, "$1")
+					.replace(/^(A|An|The) /, "")
+			: name;
+
+	const isConsumable = (name: string) => name.trim().match(/^((Potion|Scroll|Spell Scroll|Charm|Elixir)s? of)/);
 
 	$: dupItems = JSON.parse(JSON.stringify(items)) as typeof items;
 
@@ -40,11 +43,11 @@
 			const existingQty = existingQtyM ? parseInt(existingQtyM[1]) : 1;
 
 			const newQty = existingQty + qty;
-			let newName = acc[existing].name.replace(/^\d+x? ?/, "").replace(/^(\w+)s/, "$1");
+			let newName = acc[existing].name.replace(/^\d+x? ?/, "");
+			if (isConsumable(newName)) newName = newName.replace(/^(\w+)s/, "$1");
 
 			if (newQty > 1) {
-				if (newName.trim().match(/^((Potion|Scroll|Spell Scroll|Charm|Elixir)s? of)/))
-					newName = newName.replace(/^(\w+)( .+)$/, "$1s$2");
+				if (isConsumable(newName)) newName = newName.replace(/^(\w+)( .+)$/, "$1s$2");
 				acc[existing].name = `${newQty} ${newName}`;
 			} else {
 				acc[existing].name = newName;
@@ -52,11 +55,11 @@
 
 			return acc;
 		} else {
-			let newName = item.name.replace(/^\d+x? ?/, "").replace(/^(\w+)s/, "$1");
+			let newName = item.name.replace(/^\d+x? ?/, "");
+			if (isConsumable(newName)) newName = newName.replace(/^(\w+)s/, "$1");
 
 			if (qty > 1) {
-				if (newName.trim().match(/^((Potion|Scroll|Spell Scroll|Charm|Elixir)s? of)/))
-					newName = newName.replace(/^(\w+)( .+)$/, "$1s$2");
+				if (isConsumable(newName)) newName = newName.replace(/^(\w+)( .+)$/, "$1s$2");
 				item.name = `${qty} ${newName}`;
 			} else {
 				item.name = newName;
@@ -104,7 +107,7 @@
 					}}
 					on:keypress={() => null}
 				>
-					{#if formatting && !mi.name.match(/^(\d+x? )?((Potion|Scroll|Spell Scroll|Charm|Elixir)s? of)/)}
+					{#if formatting && !isConsumable(mi.name)}
 						<strong class="text-secondary-content/70 print:text-neutral-content">
 							<SearchResults text={mi.name + (mi.description && "*")} search={search || ""} {msResult} />
 						</strong>
