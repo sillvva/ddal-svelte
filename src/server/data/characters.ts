@@ -15,6 +15,7 @@ export async function getCharacter(characterId: string, includeLogs = true) {
 
 	const logs = includeLogs
 		? await prisma.log.findMany({
+				where: { characterId: character.id },
 				include: {
 					dm: true,
 					magic_items_gained: true,
