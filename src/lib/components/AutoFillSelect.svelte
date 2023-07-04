@@ -1,6 +1,7 @@
 <script lang="ts">
 	import { createEventDispatcher, onMount } from "svelte";
 	import { twMerge } from "tailwind-merge";
+	import { sorter } from "../misc";
 
 	const dispatch = createEventDispatcher<{
 		select: string | number;
@@ -31,7 +32,7 @@
 		parsedValues && parsedValues.length > 0 && search.trim()
 			? parsedValues
 					.filter((v) => `${searchBy == "key" ? v.key : v.value}`.toLowerCase().includes(search.toLowerCase()))
-					.sort((a, b) => (a.value > b.value ? 1 : -1))
+					.sort((a, b) => sorter(a.value, b.value))
 			: [];
 
 	onMount(() => {

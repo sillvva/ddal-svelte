@@ -6,6 +6,7 @@
 	import BreadCrumbs from "$src/lib/components/BreadCrumbs.svelte";
 	import Icon from "$src/lib/components/Icon.svelte";
 	import SchemaForm from "$src/lib/components/SchemaForm.svelte";
+	import { sorter } from "$src/lib/misc.js";
 	import { pageLoader } from "$src/lib/store.js";
 
 	export let data;
@@ -138,7 +139,7 @@
 								</td>
 							</tr>
 						{:else}
-							{#each dm.logs.sort((a, b) => (a.date > b.date ? 1 : -1)) as log}
+							{#each dm.logs.sort((a, b) => sorter(a.date, b.date)) as log}
 								<tr>
 									<td>
 										<div class="flex flex-col gap-1">

@@ -2,7 +2,7 @@
 	import AutoFillSelect from "$lib/components/AutoFillSelect.svelte";
 	import AutoResizeTextArea from "$lib/components/AutoResizeTextArea.svelte";
 	import { getMagicItems, getStoryAwards } from "$lib/entities.js";
-	import { formatDate } from "$lib/misc.js";
+	import { formatDate, sorter } from "$lib/misc.js";
 	import { logSchema } from "$lib/types/zod-schema.js";
 	import BackButton from "$src/lib/components/BackButton.svelte";
 	import BreadCrumb from "$src/lib/components/BreadCrumb.svelte";
@@ -22,12 +22,12 @@
 
 	$: magicItems = character
 		? getMagicItems(character, { excludeDropped: true, lastLogDate: log.date.toISOString() }).sort((a, b) =>
-				a.name.localeCompare(b.name)
+				sorter(a.name, b.name)
 		  )
 		: [];
 	$: storyAwards = character
 		? getStoryAwards(character, { excludeDropped: true, lastLogDate: log.date.toISOString() }).sort((a, b) =>
-				a.name.localeCompare(b.name)
+				sorter(a.name, b.name)
 		  )
 		: [];
 

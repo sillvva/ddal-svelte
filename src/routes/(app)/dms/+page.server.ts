@@ -1,3 +1,4 @@
+import { sorter } from "$src/lib/misc.js";
 import { deleteDM } from "$src/server/actions/dms";
 import { getUserDMsWithLogs } from "$src/server/data/dms";
 import { redirect } from "@sveltejs/kit";
@@ -10,9 +11,7 @@ export const load = async (event) => {
 
 	return {
 		title: `${session.user.name}'s DMs`,
-		dms: dms
-			.sort((a, b) => (a.name.toLowerCase() > b.name.toLowerCase() ? 1 : -1))
-			.filter((dm) => dm.name != session?.user?.name),
+		dms: dms.sort((a, b) => sorter(a.name.toLowerCase(), b.name.toLowerCase())).filter((dm) => dm.name != session?.user?.name),
 		...event.params
 	};
 };

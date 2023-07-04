@@ -42,7 +42,8 @@ export function canUseDOM() {
 }
 
 export function sorter(a: string | number | Date, b: string | number | Date) {
-	if (a < b) return -1;
-	if (a > b) return 1;
+	if (typeof a === "string" && typeof b === "string") return a.localeCompare(b);
+	if (typeof a === "number" && typeof b === "number") return a - b;
+	if (a instanceof Date && b instanceof Date) return a.getTime() - b.getTime();
 	return 0;
 }

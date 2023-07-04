@@ -3,7 +3,7 @@
 	import BreadCrumb from "$src/lib/components/BreadCrumb.svelte";
 	import BreadCrumbs from "$src/lib/components/BreadCrumbs.svelte";
 	import Icon from "$src/lib/components/Icon.svelte";
-	import { stopWords } from "$src/lib/misc";
+	import { sorter, stopWords } from "$src/lib/misc";
 	import { setCookie } from "$src/server/cookie";
 	import MiniSearch from "minisearch";
 	import { twMerge } from "tailwind-merge";
@@ -54,9 +54,9 @@
 							.map(([, value]) => value[0] || "")
 							.filter((v) => !!v)
 					}))
-					.sort((a, b) => a.total_level - b.total_level || a.name.localeCompare(b.name))
+					.sort((a, b) => sorter(a.total_level, b.total_level) || sorter(a.name, b.name))
 			: characters
-					.sort((a, b) => a.total_level - b.total_level || a.name.localeCompare(b.name))
+					.sort((a, b) => sorter(a.total_level, b.total_level) || sorter(a.name, b.name))
 					.map((character) => ({ ...character, score: 0, match: [] }));
 
 	let magicItems = data.magicItems;

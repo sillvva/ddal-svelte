@@ -3,7 +3,7 @@
 	import Items from "$lib/components/Items.svelte";
 	import Markdown from "$lib/components/Markdown.svelte";
 	import SearchResults from "$lib/components/SearchResults.svelte";
-	import { stopWords } from "$lib/misc.js";
+	import { sorter, stopWords } from "$lib/misc.js";
 	import BreadCrumb from "$src/lib/components/BreadCrumb.svelte";
 	import BreadCrumbs from "$src/lib/components/BreadCrumbs.svelte";
 	import Icon from "$src/lib/components/Icon.svelte";
@@ -55,8 +55,8 @@
 						...log,
 						score: msResults.find((result) => result.id === log.id)?.score || 0 - log.date.getTime()
 					}))
-					.sort((a, b) => a.date.getTime() - b.date.getTime())
-			: logs.sort((a, b) => a.date.getTime() - b.date.getTime());
+					.sort((a, b) => sorter(a.date, b.date))
+			: logs.sort((a, b) => sorter(a.date, b.date));
 </script>
 
 <div class="flex flex-col gap-4">
