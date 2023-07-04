@@ -1,13 +1,13 @@
 <script lang="ts">
 	import { applyAction, enhance } from "$app/forms";
+	import BreadCrumb from "$lib/components/BreadCrumb.svelte";
+	import BreadCrumbs from "$lib/components/BreadCrumbs.svelte";
+	import Icon from "$lib/components/Icon.svelte";
 	import Items from "$lib/components/Items.svelte";
 	import Markdown from "$lib/components/Markdown.svelte";
 	import SearchResults from "$lib/components/SearchResults.svelte";
-	import { slugify, stopWords } from "$lib/misc";
-	import BreadCrumb from "$src/lib/components/BreadCrumb.svelte";
-	import BreadCrumbs from "$src/lib/components/BreadCrumbs.svelte";
-	import Icon from "$src/lib/components/Icon.svelte";
-	import { pageLoader } from "$src/lib/store";
+	import { pageLoader } from "$lib/store";
+	import { slugify, sorter, stopWords } from "$lib/utils";
 	import { setCookie } from "$src/server/cookie";
 	import MiniSearch from "minisearch";
 	import { twMerge } from "tailwind-merge";
@@ -68,8 +68,8 @@
 						...log,
 						score: msResults.find((result) => result.id === log.id)?.score || 0 - log.date.getTime()
 					}))
-					.sort((a, b) => a.date.getTime() - b.date.getTime())
-			: logs.sort((a, b) => a.date.getTime() - b.date.getTime());
+					.sort((a, b) => sorter(a.date, b.date))
+			: logs.sort((a, b) => sorter(a.date, b.date));
 
 	let descriptions = data.descriptions;
 	$: setCookie("characters:descriptions", descriptions);
@@ -248,8 +248,8 @@
 			<div class="flex basis-full flex-col print:basis-2/3 xs:basis-[60%] sm:basis-2/3 lg:basis-2/3">
 				{#if character}
 					<div class="flex flex-col gap-4">
-						<Items title="Story Awards" items={character.story_awards} collapsible />
-						<Items title="Magic Items" items={character.magic_items} collapsible formatting />
+						<Items title="Story Awards" items={character.story_awards} collapsible sort />
+						<Items title="Magic Items" items={character.magic_items} collapsible formatting sort />
 					</div>
 				{/if}
 			</div>
@@ -449,6 +449,7 @@
 										items={log.magic_items_gained}
 										{search}
 										msResult={msResults.find((result) => result.id === log.id)}
+										sort
 									/>
 									<div class="whitespace-pre-wrap text-sm line-through">
 										<SearchResults
@@ -548,6 +549,7 @@
 											items={log.magic_items_gained}
 											{search}
 											msResult={msResults.find((result) => result.id === log.id)}
+											sort
 										/>
 										{#if log.magic_items_lost.length}
 											<p class="mt-2 whitespace-pre-wrap text-sm line-through">

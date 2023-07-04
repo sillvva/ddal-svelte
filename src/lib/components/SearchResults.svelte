@@ -1,6 +1,6 @@
 <script lang="ts">
+	import { stopWords } from "$lib/utils";
 	import type { SearchResult } from "minisearch";
-	import { stopWords } from "../misc";
 
 	export let text: string | string[] | null = "";
 	export let search: string = "";

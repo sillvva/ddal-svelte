@@ -1,5 +1,5 @@
-import { parseError } from "$lib/misc";
-import { getLevels } from "$src/lib/entities";
+import { getLevels } from "$lib/entities";
+import { parseError } from "$lib/utils";
 import { prisma } from "../db";
 
 import type { logSchema } from "$lib/types/zod-schema";
