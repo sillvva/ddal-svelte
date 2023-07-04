@@ -1,8 +1,8 @@
 <script lang="ts">
+	import { sorter } from "$lib/utils";
 	import type { MagicItem, StoryAward } from "@prisma/client";
 	import type { SearchResult } from "minisearch";
 	import { twMerge } from "tailwind-merge";
-	import { sorter } from "../misc";
 	import Icon from "./Icon.svelte";
 	import Markdown from "./Markdown.svelte";
 	import SearchResults from "./SearchResults.svelte";

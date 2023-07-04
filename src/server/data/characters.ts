@@ -1,4 +1,4 @@
-import { getLevels, getLogsSummary } from "$src/lib/entities";
+import { getLevels, getLogsSummary } from "$lib/entities";
 import { prisma } from "$src/server/db";
 
 import type { MagicItem, StoryAward } from "@prisma/client";

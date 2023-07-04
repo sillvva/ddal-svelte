@@ -1,5 +1,5 @@
 <script lang="ts">
-	import { slugify } from "$lib/misc";
+	import { slugify } from "$lib/utils";
 	import { twMerge } from "tailwind-merge";
 	export let depth: number;
 	export let raw: any = "";

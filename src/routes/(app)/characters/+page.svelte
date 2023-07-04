@@ -1,9 +1,9 @@
 <script lang="ts">
+	import BreadCrumb from "$lib/components/BreadCrumb.svelte";
+	import BreadCrumbs from "$lib/components/BreadCrumbs.svelte";
+	import Icon from "$lib/components/Icon.svelte";
 	import SearchResults from "$lib/components/SearchResults.svelte";
-	import BreadCrumb from "$src/lib/components/BreadCrumb.svelte";
-	import BreadCrumbs from "$src/lib/components/BreadCrumbs.svelte";
-	import Icon from "$src/lib/components/Icon.svelte";
-	import { sorter, stopWords } from "$src/lib/misc";
+	import { sorter, stopWords } from "$lib/utils";
 	import { setCookie } from "$src/server/cookie";
 	import MiniSearch from "minisearch";
 	import { twMerge } from "tailwind-merge";

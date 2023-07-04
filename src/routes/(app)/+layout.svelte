@@ -1,7 +1,7 @@
 <script lang="ts">
 	import { page } from "$app/stores";
 	import Drawer from "$lib/components/Drawer.svelte";
-	import Icon from "$src/lib/components/Icon.svelte";
+	import Icon from "$lib/components/Icon.svelte";
 	import { signIn, signOut } from "@auth/sveltekit/client";
 
 	export let data;

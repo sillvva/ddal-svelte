@@ -2,7 +2,7 @@
 	import { afterNavigate } from "$app/navigation";
 	import { base } from "$app/paths";
 	import { page } from "$app/stores";
-	import Icon from "$src/lib/components/Icon.svelte";
+	import Icon from "$lib/components/Icon.svelte";
 
 	let previousPage: string = base || "/";
 

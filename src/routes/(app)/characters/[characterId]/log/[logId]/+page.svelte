@@ -1,14 +1,14 @@
 <script lang="ts">
 	import AutoFillSelect from "$lib/components/AutoFillSelect.svelte";
 	import AutoResizeTextArea from "$lib/components/AutoResizeTextArea.svelte";
-	import { getMagicItems, getStoryAwards } from "$lib/entities.js";
-	import { formatDate, sorter } from "$lib/misc.js";
-	import { logSchema } from "$lib/types/zod-schema.js";
-	import BackButton from "$src/lib/components/BackButton.svelte";
-	import BreadCrumb from "$src/lib/components/BreadCrumb.svelte";
-	import BreadCrumbs from "$src/lib/components/BreadCrumbs.svelte";
-	import Icon from "$src/lib/components/Icon.svelte";
-	import SchemaForm from "$src/lib/components/SchemaForm.svelte";
+	import BackButton from "$lib/components/BackButton.svelte";
+	import BreadCrumb from "$lib/components/BreadCrumb.svelte";
+	import BreadCrumbs from "$lib/components/BreadCrumbs.svelte";
+	import Icon from "$lib/components/Icon.svelte";
+	import SchemaForm from "$lib/components/SchemaForm.svelte";
+	import { getMagicItems, getStoryAwards } from "$lib/entities";
+	import { logSchema } from "$lib/types/zod-schema";
+	import { formatDate, sorter } from "$lib/utils";
 	import { twMerge } from "tailwind-merge";
 
 	export let data;

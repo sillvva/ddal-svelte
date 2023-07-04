@@ -1,13 +1,13 @@
 <script lang="ts">
 	import { enhance } from "$app/forms";
-	import { dungeonMasterSchema } from "$lib/types/zod-schema.js";
-	import BackButton from "$src/lib/components/BackButton.svelte";
-	import BreadCrumb from "$src/lib/components/BreadCrumb.svelte";
-	import BreadCrumbs from "$src/lib/components/BreadCrumbs.svelte";
-	import Icon from "$src/lib/components/Icon.svelte";
-	import SchemaForm from "$src/lib/components/SchemaForm.svelte";
-	import { sorter } from "$src/lib/misc.js";
-	import { pageLoader } from "$src/lib/store.js";
+	import BackButton from "$lib/components/BackButton.svelte";
+	import BreadCrumb from "$lib/components/BreadCrumb.svelte";
+	import BreadCrumbs from "$lib/components/BreadCrumbs.svelte";
+	import Icon from "$lib/components/Icon.svelte";
+	import SchemaForm from "$lib/components/SchemaForm.svelte";
+	import { pageLoader } from "$lib/store";
+	import { dungeonMasterSchema } from "$lib/types/zod-schema";
+	import { sorter } from "$lib/utils";
 
 	export let data;
 	export let form;

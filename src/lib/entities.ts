@@ -1,6 +1,6 @@
 import type { getCharacter } from "$src/server/data/characters";
 import type { DungeonMaster, Log, LogType, MagicItem, StoryAward } from "@prisma/client";
-import { sorter } from "./misc";
+import { sorter } from "./utils";
 
 export const getMagicItems = (
 	character: Exclude<Awaited<ReturnType<typeof getCharacter>>, null>,

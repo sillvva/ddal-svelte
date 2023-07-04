@@ -1,12 +1,12 @@
 <script lang="ts">
 	import { applyAction, enhance } from "$app/forms";
+	import BreadCrumb from "$lib/components/BreadCrumb.svelte";
+	import BreadCrumbs from "$lib/components/BreadCrumbs.svelte";
+	import Icon from "$lib/components/Icon.svelte";
 	import Items from "$lib/components/Items.svelte";
 	import Markdown from "$lib/components/Markdown.svelte";
 	import SearchResults from "$lib/components/SearchResults.svelte";
-	import { sorter, stopWords } from "$lib/misc.js";
-	import BreadCrumb from "$src/lib/components/BreadCrumb.svelte";
-	import BreadCrumbs from "$src/lib/components/BreadCrumbs.svelte";
-	import Icon from "$src/lib/components/Icon.svelte";
+	import { sorter, stopWords } from "$lib/utils";
 	import MiniSearch from "minisearch";
 	import { twMerge } from "tailwind-merge";
 

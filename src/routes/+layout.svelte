@@ -1,7 +1,7 @@
 <script lang="ts">
 	import { afterNavigate } from "$app/navigation";
 	import { navigating, page } from "$app/stores";
-	import { pageLoader } from "$src/lib/store";
+	import { pageLoader } from "$lib/store";
 	import { fade } from "svelte/transition";
 	import "../app.css";
 

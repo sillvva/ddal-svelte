@@ -1,7 +1,7 @@
 <script lang="ts">
+	import { sorter } from "$lib/utils";
 	import { createEventDispatcher, onMount } from "svelte";
 	import { twMerge } from "tailwind-merge";
-	import { sorter } from "../misc";
 
 	const dispatch = createEventDispatcher<{
 		select: string | number;

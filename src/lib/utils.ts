@@ -37,13 +37,11 @@ export const tooltipClasses = (text?: string | null, align = "center") => {
 	);
 };
 
-export function canUseDOM() {
-	return !!(typeof window !== "undefined" && window.document && window.document.createElement);
-}
+export const canUseDOM = () => !!(typeof window !== "undefined" && window.document && window.document.createElement);
 
-export function sorter(a: string | number | Date, b: string | number | Date) {
+export const sorter = (a: string | number | Date, b: string | number | Date) => {
 	if (typeof a === "string" && typeof b === "string") return a.localeCompare(b);
 	if (typeof a === "number" && typeof b === "number") return a - b;
 	if (a instanceof Date && b instanceof Date) return a.getTime() - b.getTime();
 	return 0;
-}
+};

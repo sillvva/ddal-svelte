@@ -1,4 +1,4 @@
-import { defaultLog } from "$src/lib/entities";
+import { defaultLog } from "$lib/entities";
 import { prisma } from "$src/server/db";
 
 export type LogData = Exclude<Awaited<ReturnType<typeof getLog>>, null>;

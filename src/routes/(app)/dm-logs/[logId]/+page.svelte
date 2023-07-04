@@ -1,13 +1,13 @@
 <script lang="ts">
 	import AutoFillSelect from "$lib/components/AutoFillSelect.svelte";
 	import AutoResizeTextArea from "$lib/components/AutoResizeTextArea.svelte";
-	import { formatDate } from "$lib/misc";
-	import { logSchema } from "$lib/types/zod-schema.js";
-	import BackButton from "$src/lib/components/BackButton.svelte";
-	import BreadCrumb from "$src/lib/components/BreadCrumb.svelte";
-	import BreadCrumbs from "$src/lib/components/BreadCrumbs.svelte";
-	import Icon from "$src/lib/components/Icon.svelte";
-	import SchemaForm from "$src/lib/components/SchemaForm.svelte";
+	import BackButton from "$lib/components/BackButton.svelte";
+	import BreadCrumb from "$lib/components/BreadCrumb.svelte";
+	import BreadCrumbs from "$lib/components/BreadCrumbs.svelte";
+	import Icon from "$lib/components/Icon.svelte";
+	import SchemaForm from "$lib/components/SchemaForm.svelte";
+	import { logSchema } from "$lib/types/zod-schema";
+	import { formatDate } from "$lib/utils";
 	import { twMerge } from "tailwind-merge";
 	import type { z } from "zod";
 

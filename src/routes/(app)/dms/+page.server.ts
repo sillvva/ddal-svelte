@@ -1,4 +1,4 @@
-import { sorter } from "$src/lib/misc.js";
+import { sorter } from "$lib/utils";
 import { deleteDM } from "$src/server/actions/dms";
 import { getUserDMsWithLogs } from "$src/server/data/dms";
 import { redirect } from "@sveltejs/kit";
