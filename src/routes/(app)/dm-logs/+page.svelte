@@ -182,6 +182,7 @@
 												items={log.magic_items_gained}
 												{search}
 												msResult={msResults.find((result) => result.id === log.id)}
+												sort
 											/>
 										</div>
 									</div>
@@ -246,6 +247,7 @@
 												items={log.magic_items_gained}
 												{search}
 												msResult={msResults.find((result) => result.id === log.id)}
+												sort
 											/>
 										</div>
 									{/if}

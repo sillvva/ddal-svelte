@@ -248,8 +248,8 @@
 			<div class="flex basis-full flex-col print:basis-2/3 xs:basis-[60%] sm:basis-2/3 lg:basis-2/3">
 				{#if character}
 					<div class="flex flex-col gap-4">
-						<Items title="Story Awards" items={character.story_awards} collapsible />
-						<Items title="Magic Items" items={character.magic_items} collapsible formatting />
+						<Items title="Story Awards" items={character.story_awards} collapsible sort />
+						<Items title="Magic Items" items={character.magic_items} collapsible formatting sort />
 					</div>
 				{/if}
 			</div>
@@ -449,6 +449,7 @@
 										items={log.magic_items_gained}
 										{search}
 										msResult={msResults.find((result) => result.id === log.id)}
+										sort
 									/>
 									<div class="whitespace-pre-wrap text-sm line-through">
 										<SearchResults
@@ -548,6 +549,7 @@
 											items={log.magic_items_gained}
 											{search}
 											msResult={msResults.find((result) => result.id === log.id)}
+											sort
 										/>
 										{#if log.magic_items_lost.length}
 											<p class="mt-2 whitespace-pre-wrap text-sm line-through">
