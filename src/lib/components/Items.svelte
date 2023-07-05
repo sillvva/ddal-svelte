@@ -27,7 +27,7 @@
 					.replace(/^(A|An|The) /, "")
 			: name;
 
-	const isConsumable = (name: string) => name.trim().match(/^((Potion|Scroll|Spell Scroll|Charm|Elixir)s? of)/);
+	const isConsumable = (name: string) => name.trim().match(/^(\d+x? )?((Potion|Scroll|Spell Scroll|Charm|Elixir)s? of)/);
 
 	$: dupItems = JSON.parse(JSON.stringify(items)) as typeof items;
 
@@ -74,11 +74,7 @@
 
 <div class={twMerge("flex-1 flex-col", collapsible && !items.length ? "hidden md:flex" : "flex")}>
 	{#if title}
-		<button
-			on:click={collapsible ? () => (collapsed = !collapsed) : () => {}}
-			on:keypress={() => {}}
-			class="md:cursor-text md:select-text"
-		>
+		<div role="presentation" on:click={collapsible ? () => (collapsed = !collapsed) : () => {}} on:keypress={() => {}}>
 			<h4 class="flex text-left font-semibold">
 				<span class="flex-1">
 					{title}
@@ -91,14 +87,18 @@
 					{/if}
 				{/if}
 			</h4>
-		</button>
+		</div>
 	{/if}
-	<p class={twMerge("divide-x text-sm print:text-xs", collapsed ? "hidden print:inline md:inline" : "")}>
+	<p
+		class={twMerge(
+			"divide-x divide-black/50 text-sm dark:divide-white/50 print:text-xs",
+			collapsed ? "hidden print:inline md:inline" : ""
+		)}
+	>
 		{#if items.length}
 			{#each sortedItems as mi}
 				<span
-					role="button"
-					tabindex="0"
+					role={mi.description ? "button" : "presentation"}
 					class="inline pl-2 pr-1 first:pl-0"
 					on:click={() => {
 						if (mi.description) {
@@ -107,12 +107,14 @@
 					}}
 					on:keypress={() => null}
 				>
-					{#if formatting && !isConsumable(mi.name)}
-						<strong class="text-secondary-content/70 print:text-neutral-content">
+					{#if formatting && isConsumable(mi.name)}
+						<em class:text-secondary={mi.description}>
 							<SearchResults text={mi.name + (mi.description && "*")} search={search || ""} {msResult} />
-						</strong>
+						</em>
 					{:else}
-						<SearchResults text={mi.name + (mi.description && "*")} search={search || ""} {msResult} />
+						<span class:text-secondary={mi.description}>
+							<SearchResults text={mi.name + (mi.description && "*")} search={search || ""} {msResult} />
+						</span>
 					{/if}
 				</span>
 			{/each}
