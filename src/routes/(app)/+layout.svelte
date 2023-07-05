@@ -104,7 +104,7 @@
 
 <div
 	role="presentation"
-	class={twMerge("modal cursor-pointer", $modal && "modal-open")}
+	class={twMerge("modal cursor-pointer !bg-black/50", $modal && "modal-open")}
 	on:click={() => ($modal = null)}
 	on:keypress={() => null}
 >
