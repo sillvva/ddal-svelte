@@ -2,7 +2,10 @@
 	import { page } from "$app/stores";
 	import Drawer from "$lib/components/Drawer.svelte";
 	import Icon from "$lib/components/Icon.svelte";
+	import Markdown from "$src/lib/components/Markdown.svelte";
+	import { modal } from "$src/lib/store.js";
 	import { signIn, signOut } from "@auth/sveltekit/client";
+	import { twMerge } from "tailwind-merge";
 
 	export let data;
 </script>
@@ -97,4 +100,26 @@
 			</p>
 		</div>
 	</footer>
+</div>
+
+<div
+	role="presentation"
+	class={twMerge("modal cursor-pointer", $modal && "modal-open")}
+	on:click={() => ($modal = null)}
+	on:keypress={() => null}
+>
+	{#if $modal}
+		<div
+			role="presentation"
+			class="modal-box relative cursor-default drop-shadow-lg"
+			on:click={(e) => e.stopPropagation()}
+			on:keypress={() => null}
+		>
+			<h3 class="cursor-text text-lg font-bold text-accent-content">{$modal.name}</h3>
+			{#if $modal.date}
+				<p class="text-xs">{$modal.date.toLocaleString()}</p>
+			{/if}
+			<Markdown content={$modal.description} class="cursor-text whitespace-pre-wrap pt-4 text-xs sm:text-sm" />
+		</div>
+	{/if}
 </div>

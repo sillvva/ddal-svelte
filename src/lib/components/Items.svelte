@@ -3,8 +3,8 @@
 	import type { MagicItem, StoryAward } from "@prisma/client";
 	import type { SearchResult } from "minisearch";
 	import { twMerge } from "tailwind-merge";
+	import { modal } from "../store";
 	import Icon from "./Icon.svelte";
-	import Markdown from "./Markdown.svelte";
 	import SearchResults from "./SearchResults.svelte";
 
 	export let title: string = "";
@@ -15,7 +15,6 @@
 	export let msResult: SearchResult | null | undefined = null;
 	export let sort = false;
 
-	let modal: { name: string; description: string; date?: Date } | null = null;
 	let collapsed = collapsible;
 
 	const sorterName = (name: string) =>
@@ -102,7 +101,7 @@
 					class="inline pl-2 pr-1 first:pl-0"
 					on:click={() => {
 						if (mi.description) {
-							modal = { name: mi.name, description: mi.description };
+							$modal = { name: mi.name, description: mi.description };
 						}
 					}}
 					on:keypress={() => null}
@@ -122,25 +121,4 @@
 			None
 		{/if}
 	</p>
-</div>
-<div
-	role="presentation"
-	class={twMerge("modal cursor-pointer", modal && "modal-open")}
-	on:click={() => (modal = null)}
-	on:keypress={() => null}
->
-	{#if modal}
-		<div
-			role="presentation"
-			class="modal-box relative cursor-default drop-shadow-lg"
-			on:click={(e) => e.stopPropagation()}
-			on:keypress={() => null}
-		>
-			<h3 class="cursor-text text-lg font-bold text-accent-content">{modal.name}</h3>
-			{#if modal.date}
-				<p class="text-xs">{modal.date.toLocaleString()}</p>
-			{/if}
-			<Markdown content={modal.description} class="cursor-text whitespace-pre-wrap pt-4 text-xs sm:text-sm" />
-		</div>
-	{/if}
 </div>

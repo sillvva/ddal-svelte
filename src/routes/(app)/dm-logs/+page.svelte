@@ -4,9 +4,9 @@
 	import BreadCrumbs from "$lib/components/BreadCrumbs.svelte";
 	import Icon from "$lib/components/Icon.svelte";
 	import Items from "$lib/components/Items.svelte";
-	import Markdown from "$lib/components/Markdown.svelte";
 	import SearchResults from "$lib/components/SearchResults.svelte";
 	import { sorter, stopWords } from "$lib/utils";
+	import { modal } from "$src/lib/store.js";
 	import MiniSearch from "minisearch";
 	import { twMerge } from "tailwind-merge";
 
@@ -16,7 +16,6 @@
 	const logs = data.logs;
 
 	let search = "";
-	let modal: { name: string; description: string; date?: Date } | null = null;
 	let deletingLog: string[] = [];
 
 	const indexed = logs
@@ -57,6 +56,16 @@
 					}))
 					.sort((a, b) => sorter(a.date, b.date))
 			: logs.sort((a, b) => sorter(a.date, b.date));
+
+	function triggerModal(log: (typeof results)[number]) {
+		if (log.description) {
+			$modal = {
+				name: log.name,
+				description: log.description,
+				date: log.date
+			};
+		}
+	}
 </script>
 
 <div class="flex flex-col gap-4">
@@ -125,7 +134,11 @@
 											"print:border-b-0"
 									)}
 								>
-									<p class="whitespace-pre-wrap font-semibold text-accent-content">
+									<p
+										class="whitespace-pre-wrap font-semibold text-accent-content"
+										role="presentation"
+										on:click={() => triggerModal(log)}
+									>
 										<SearchResults text={log.name} {search} />
 									</p>
 									<p class="text-netural-content text-xs font-normal">{new Date(log.date).toLocaleString()}</p>
@@ -329,23 +342,6 @@
 					{/if}
 				</tbody>
 			</table>
-		</div>
-
-		<div
-			role="presentation"
-			class={twMerge("modal cursor-pointer", modal && "modal-open")}
-			on:click={() => (modal = null)}
-			on:keypress={() => null}
-		>
-			{#if modal}
-				<div class="modal-box relative" role="presentation" on:click={(e) => e.stopPropagation()} on:keypress={() => null}>
-					<h3 class="text-lg font-bold text-accent-content">{modal.name}</h3>
-					{#if modal.date}
-						<p class="text-xs">{modal.date.toLocaleString()}</p>
-					{/if}
-					<Markdown class="whitespace-pre-wrap pt-4 text-xs sm:text-sm" content={modal.description} />
-				</div>
-			{/if}
 		</div>
 	</section>
 </div>

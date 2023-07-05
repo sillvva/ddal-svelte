@@ -6,7 +6,7 @@
 	import Items from "$lib/components/Items.svelte";
 	import Markdown from "$lib/components/Markdown.svelte";
 	import SearchResults from "$lib/components/SearchResults.svelte";
-	import { pageLoader } from "$lib/store";
+	import { modal, pageLoader } from "$lib/store";
 	import { slugify, sorter, stopWords } from "$lib/utils";
 	import { setCookie } from "$src/server/cookie";
 	import MiniSearch from "minisearch";
@@ -74,10 +74,9 @@
 	let descriptions = data.descriptions;
 	$: setCookie("characters:descriptions", descriptions);
 
-	let modal: { name: string; description: string; date: Date } | null = null;
-	function triggerModal(log: (typeof results)[0]) {
+	function triggerModal(log: (typeof results)[number]) {
 		if (log.description && !descriptions) {
-			modal = {
+			$modal = {
 				name: log.name,
 				description: log.description,
 				date: log.date
