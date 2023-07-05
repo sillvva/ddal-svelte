@@ -243,7 +243,7 @@
 				</div>
 			</div>
 			<div
-				class="divider hidden xs:divider-horizontal before:bg-neutral-content/50 after:bg-neutral-content/50 print:flex xs:mx-0 xs:flex"
+				class="divider hidden xs:divider-horizontal before:bg-black/50 after:bg-black/50 dark:before:bg-white/50 dark:after:bg-white/50 print:flex xs:mx-0 xs:flex"
 			/>
 			<div class="flex basis-full flex-col print:basis-2/3 xs:basis-[60%] sm:basis-2/3 lg:basis-2/3">
 				{#if character}
