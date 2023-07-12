@@ -4,16 +4,19 @@ settings:
   autoInstallPeers: true
   excludeLinksFromLockfile: false
 
+overrides:
+  '@auth/core': ^0.9.0
+
 dependencies:
   '@auth/core':
-    specifier: ^0.8.2
-    version: 0.8.2
+    specifier: ^0.9.0
+    version: 0.9.0
   '@auth/prisma-adapter':
     specifier: ^1.0.1
     version: 1.0.1(@prisma/client@5.0.0)
   '@auth/sveltekit':
-    specifier: ^0.3.3
-    version: 0.3.3(@sveltejs/kit@1.20.4)(svelte@4.0.5)
+    specifier: ^0.3.5
+    version: 0.3.5(@sveltejs/kit@1.20.4)(svelte@4.0.5)
   '@prisma/client':
     specifier: ^5.0.0
     version: 5.0.0(prisma@5.0.0)
@@ -118,22 +121,6 @@ packages:
       '@jridgewell/gen-mapping': 0.3.3
       '@jridgewell/trace-mapping': 0.3.18
 
-  /@auth/core@0.8.2:
-    resolution: {integrity: sha512-swqJ7tKFlqiYIl1znFGrrawUv1F6rwL+/f3DoeWDaZLnr2phiHFaZsvNvLK7WBJhnJbel78Vd3GznuR31AnFUw==}
-    peerDependencies:
-      nodemailer: ^6.8.0
-    peerDependenciesMeta:
-      nodemailer:
-        optional: true
-    dependencies:
-      '@panva/hkdf': 1.1.1
-      cookie: 0.5.0
-      jose: 4.14.4
-      oauth4webapi: 2.3.0
-      preact: 10.11.3
-      preact-render-to-string: 5.2.3(preact@10.11.3)
-    dev: false
-
   /@auth/core@0.9.0:
     resolution: {integrity: sha512-W2WO0WCBg1T3P8+yjQPzurTQhPv6ecBYfJ2oE3uvXPAX5ZLWAMSjKFAIa9oLZy5pwrB+YehJZPnlIxVilhrVcg==}
     peerDependencies:
@@ -161,13 +148,13 @@ packages:
       - nodemailer
     dev: false
 
-  /@auth/sveltekit@0.3.3(@sveltejs/kit@1.20.4)(svelte@4.0.5):
-    resolution: {integrity: sha512-Yj+xHiqxWmJoq6ZJijDufiqonw33Zk2JjAPFJ6DvISVURUSMz/co0B5MS6rcW/1iER+t86opzjbQUjmmB1BKCQ==}
+  /@auth/sveltekit@0.3.5(@sveltejs/kit@1.20.4)(svelte@4.0.5):
+    resolution: {integrity: sha512-V76eB54YeZ2RG5Copl5ztwpOharhbouj12aP8nZPMgho087Ksq/DbsWJdyS7FTlyj8x57asopJl4gTPMXwmLxA==}
     peerDependencies:
       '@sveltejs/kit': ^1.0.0
-      svelte: ^3.54.0
+      svelte: ^3.54.0 || ^4.0.0
     dependencies:
-      '@auth/core': 0.8.2
+      '@auth/core': 0.9.0
       '@sveltejs/kit': 1.20.4(svelte@4.0.5)(vite@4.3.9)
       svelte: 4.0.5
     transitivePeerDependencies:
