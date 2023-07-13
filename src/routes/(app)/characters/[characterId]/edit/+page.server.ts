@@ -1,10 +1,11 @@
 import { saveCharacter } from "$src/server/actions/characters";
-import { getCharacter } from "$src/server/data/characters";
 import { error, redirect } from "@sveltejs/kit";
 
 export const load = async (event) => {
 	const session = await event.locals.getSession();
 	if (!session?.user) throw redirect(301, "/");
+
+	const parent = await event.parent();
 
 	const character = {
 		name: "",
@@ -15,20 +16,23 @@ export const load = async (event) => {
 		image_url: ""
 	};
 	if (event.params.characterId !== "new") {
-		const data = await getCharacter(event.params.characterId, false);
-		if (!data) throw error(404, "Character not found");
-		character.name = data.name;
-		character.campaign = data.campaign || "";
-		character.race = data.race || "";
-		character.class = data.class || "";
-		character.character_sheet_url = data.character_sheet_url || "";
-		character.image_url = data.image_url || "";
+		if (!parent.character) throw error(404, "Character not found");
+		character.name = parent.character.name;
+		character.campaign = parent.character.campaign || "";
+		character.race = parent.character.race || "";
+		character.class = parent.character.class || "";
+		character.character_sheet_url = parent.character.character_sheet_url || "";
+		character.image_url = parent.character.image_url || "";
 	}
 
 	return {
 		title: event.params.characterId === "new" ? "New Character" : `Edit ${character.name}`,
 		character,
-		...event.params
+		...event.params,
+		breadcrumbs: parent.breadcrumbs.concat({
+			name: event.params.characterId === "new" ? "New Character" : character.name,
+			href: `/characters/${event.params.characterId}`
+		})
 	};
 };
 

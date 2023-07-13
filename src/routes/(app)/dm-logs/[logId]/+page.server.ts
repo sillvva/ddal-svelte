@@ -1,27 +1,16 @@
 import { logSchema } from "$lib/types/zod-schema";
 import { saveLog } from "$src/server/actions/logs";
-import { getCharacter, getCharacters } from "$src/server/data/characters";
-import { getDMLog, getLog } from "$src/server/data/logs";
+import { getCharacter } from "$src/server/data/characters";
+import { getLog } from "$src/server/data/logs";
 import { z } from "zod";
-import { error, redirect } from "@sveltejs/kit";
+import { redirect } from "@sveltejs/kit";
 
 export const load = async (event) => {
-	const session = await event.locals.getSession();
-	if (!session?.user) throw redirect(301, "/");
-
-	const log = await getDMLog(event.params.logId);
-	if (event.params.logId !== "new" && !log.id) throw error(404, "Log not found");
-
-	const characters = await getCharacters(session.user.id);
-	const character = characters.find((c) => c.id === log.characterId);
-
-	log.dm = log.dm?.name ? log.dm : { name: session.user.name || "", id: "", DCI: null, uid: session.user.id };
+	const parent = await event.parent();
+	const log = parent.log;
 
 	return {
 		title: event.params.logId === "new" ? "New DM Log" : `Edit ${log.name}`,
-		log,
-		characters,
-		character,
 		...event.params
 	};
 };
