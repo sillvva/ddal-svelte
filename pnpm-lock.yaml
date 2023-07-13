@@ -16,7 +16,7 @@ dependencies:
     version: 1.0.1(@prisma/client@5.0.0)
   '@auth/sveltekit':
     specifier: ^0.3.5
-    version: 0.3.5(@sveltejs/kit@1.20.4)(svelte@4.0.5)
+    version: 0.3.5(@sveltejs/kit@1.22.3)(svelte@4.0.5)
   '@prisma/client':
     specifier: ^5.0.0
     version: 5.0.0(prisma@5.0.0)
@@ -39,10 +39,10 @@ devDependencies:
     version: 3.1.4(svelte@4.0.5)
   '@sveltejs/adapter-auto':
     specifier: ^2.0.0
-    version: 2.1.0(@sveltejs/kit@1.20.4)
+    version: 2.1.0(@sveltejs/kit@1.22.3)
   '@sveltejs/kit':
-    specifier: ^1.20.4
-    version: 1.20.4(svelte@4.0.5)(vite@4.3.9)
+    specifier: ^1.22.3
+    version: 1.22.3(svelte@4.0.5)(vite@4.3.9)
   '@types/qs':
     specifier: ^6.9.7
     version: 6.9.7
@@ -56,8 +56,8 @@ devDependencies:
     specifier: ^10.4.14
     version: 10.4.14(postcss@8.4.25)
   daisyui:
-    specifier: ^3.1.1
-    version: 3.1.1(postcss@8.4.25)
+    specifier: ^3.2.1
+    version: 3.2.1
   eslint:
     specifier: ^8.28.0
     version: 8.43.0
@@ -71,7 +71,7 @@ devDependencies:
     specifier: ^8.4.25
     version: 8.4.25
   prettier:
-    specifier: ^2.8.0
+    specifier: ^2.8.8
     version: 2.8.8
   prettier-plugin-svelte:
     specifier: ^2.10.1
@@ -148,14 +148,14 @@ packages:
       - nodemailer
     dev: false
 
-  /@auth/sveltekit@0.3.5(@sveltejs/kit@1.20.4)(svelte@4.0.5):
+  /@auth/sveltekit@0.3.5(@sveltejs/kit@1.22.3)(svelte@4.0.5):
     resolution: {integrity: sha512-V76eB54YeZ2RG5Copl5ztwpOharhbouj12aP8nZPMgho087Ksq/DbsWJdyS7FTlyj8x57asopJl4gTPMXwmLxA==}
     peerDependencies:
       '@sveltejs/kit': ^1.0.0
       svelte: ^3.54.0 || ^4.0.0
     dependencies:
       '@auth/core': 0.9.0
-      '@sveltejs/kit': 1.20.4(svelte@4.0.5)(vite@4.3.9)
+      '@sveltejs/kit': 1.22.3(svelte@4.0.5)(vite@4.3.9)
       svelte: 4.0.5
     transitivePeerDependencies:
       - nodemailer
@@ -491,17 +491,17 @@ packages:
     resolution: {integrity: sha512-kyT/8fd0OpWmhAU5YnY7eP31brW1q1YrTGoblWrhQJDiN/1K+Z8S1kylcmtjqx5wsUGcP1HBWutayA/jtyt+sg==}
     requiresBuild: true
 
-  /@sveltejs/adapter-auto@2.1.0(@sveltejs/kit@1.20.4):
+  /@sveltejs/adapter-auto@2.1.0(@sveltejs/kit@1.22.3):
     resolution: {integrity: sha512-o2pZCfATFtA/Gw/BB0Xm7k4EYaekXxaPGER3xGSY3FvzFJGTlJlZjBseaXwYSM94lZ0HniOjTokN3cWaLX6fow==}
     peerDependencies:
       '@sveltejs/kit': ^1.0.0
     dependencies:
-      '@sveltejs/kit': 1.20.4(svelte@4.0.5)(vite@4.3.9)
+      '@sveltejs/kit': 1.22.3(svelte@4.0.5)(vite@4.3.9)
       import-meta-resolve: 3.0.0
     dev: true
 
-  /@sveltejs/kit@1.20.4(svelte@4.0.5)(vite@4.3.9):
-    resolution: {integrity: sha512-MmAzIuMrP7A+8fqDVbxm6ekGHRHL/+Fk8sQPAzPG4G2TxUDtHdn/WcIxeEqHzARMf0OtGSC+VPyOSFuw2Cy2Mg==}
+  /@sveltejs/kit@1.22.3(svelte@4.0.5)(vite@4.3.9):
+    resolution: {integrity: sha512-IpHD5wvuoOIHYaHQUBJ1zERD2Iz+fB/rBXhXjl8InKw6X4VKE9BSus+ttHhE7Ke+Ie9ecfilzX8BnWE3FeQyng==}
     engines: {node: ^16.14 || >=18}
     hasBin: true
     requiresBuild: true
@@ -948,11 +948,9 @@ packages:
     hasBin: true
     dev: true
 
-  /daisyui@3.1.1(postcss@8.4.25):
-    resolution: {integrity: sha512-+SPwlCvbk/dQd40Op3jv+C8s5pL/Ix4z/U+Q8KDKnF7oXNmvDYZlZ9e2RkouoevaW/Jta4e/iLTj5ve2WBoSkw==}
+  /daisyui@3.2.1:
+    resolution: {integrity: sha512-gIqE6wiqoJt9G8+n3R/SwLeUnpNCE2eDhT73rP0yZYVaM7o6zVcakBH3aEW5RGpx3UkonPiLuvcgxRcb2lE8TA==}
     engines: {node: '>=16.9.0'}
-    peerDependencies:
-      postcss: ^8
     dependencies:
       colord: 2.9.3
       css-selector-tokenizer: 0.8.0
