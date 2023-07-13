@@ -31,41 +31,34 @@
 	$: dupItems = JSON.parse(JSON.stringify(items)) as typeof items;
 
 	$: consolidatedItems = dupItems.reduce((acc, item) => {
+		let existing = acc.findIndex(
+			(ex) => sorterName(ex.name) === sorterName(item.name) && ex.description?.trim() === item.description?.trim()
+		);
+
+		let existingQty = 0;
+		if (existing < 0) {
+			existing = acc.length;
+			acc.push(item);
+		} else {
+			const existingQtyM = acc[existing].name.match(/^(\d+)x? /);
+			existingQty = existingQtyM ? parseInt(existingQtyM[1]) : 1;
+		}
+
 		const qtyM = item.name.match(/^(\d+)x? /);
 		const qty = qtyM ? parseInt(qtyM[1]) : 1;
 
-		const existing = acc.findIndex(
-			(ex) => sorterName(ex.name) === sorterName(item.name) && ex.description?.trim() === item.description?.trim()
-		);
-		if (existing >= 0) {
-			const existingQtyM = acc[existing].name.match(/^(\d+)x? /);
-			const existingQty = existingQtyM ? parseInt(existingQtyM[1]) : 1;
+		const newQty = existingQty + qty;
+		let newName = acc[existing].name.replace(/^\d+x? ?/, "");
+		if (isConsumable(newName)) newName = newName.replace(/^(\w+)s/, "$1");
 
-			const newQty = existingQty + qty;
-			let newName = acc[existing].name.replace(/^\d+x? ?/, "");
-			if (isConsumable(newName)) newName = newName.replace(/^(\w+)s/, "$1");
-
-			if (newQty > 1) {
-				if (isConsumable(newName)) newName = newName.replace(/^(\w+)( .+)$/, "$1s$2");
-				acc[existing].name = `${newQty} ${newName}`;
-			} else {
-				acc[existing].name = newName;
-			}
-
-			return acc;
+		if (newQty > 1) {
+			if (isConsumable(newName)) newName = newName.replace(/^(\w+)( .+)$/, "$1s$2");
+			acc[existing].name = `${newQty} ${newName}`;
 		} else {
-			let newName = item.name.replace(/^\d+x? ?/, "");
-			if (isConsumable(newName)) newName = newName.replace(/^(\w+)s/, "$1");
-
-			if (qty > 1) {
-				if (isConsumable(newName)) newName = newName.replace(/^(\w+)( .+)$/, "$1s$2");
-				item.name = `${qty} ${newName}`;
-			} else {
-				item.name = newName;
-			}
+			acc[existing].name = newName;
 		}
 
-		return [...acc, item];
+		return acc;
 	}, [] as typeof items);
 
 	$: sortedItems = sort ? consolidatedItems.sort((a, b) => sorter(sorterName(a.name), sorterName(b.name))) : consolidatedItems;
