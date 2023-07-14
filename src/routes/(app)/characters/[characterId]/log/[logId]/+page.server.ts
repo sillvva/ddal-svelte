@@ -7,11 +7,11 @@ import { z } from "zod";
 import { error, redirect } from "@sveltejs/kit";
 
 export const load = async (event) => {
-	const session = await event.locals.getSession();
-	if (!session?.user) throw redirect(301, "/");
-
 	const parent = await event.parent();
 	const character = parent.character;
+
+	const session = parent.session;
+	if (!session?.user) throw redirect(301, "/");
 
 	const log = await getLog(event.params.logId, character.id);
 	if (event.params.logId !== "new" && !log.id) throw error(404, "Log not found");

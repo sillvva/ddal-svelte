@@ -6,10 +6,10 @@ import { z } from "zod";
 import { error, redirect } from "@sveltejs/kit";
 
 export const load = async (event) => {
-	const session = await event.locals.getSession();
-	if (!session?.user) throw redirect(301, "/");
-
   const parent = await event.parent();
+
+	const session = parent.session;
+	if (!session?.user) throw redirect(301, "/");
 
 	const log = await getDMLog(event.params.logId);
 	if (event.params.logId !== "new" && !log.id) throw error(404, "Log not found");
