@@ -8,10 +8,14 @@ const defaultCookie = {
 };
 
 export const load = async (event) => {
-	const session = await event.locals.getSession();
+	const parent = await event.parent();
+
+	const session = parent.session;
 	if (!session?.user) throw redirect(301, "/");
+
 	const characters = await getCharacters(session.user.id);
 	const cookie = serverGetCookie(event.cookies, "characters", defaultCookie);
+
 	return {
 		title: `${session.user.name}'s Characters`,
 		characters,

@@ -7,11 +7,12 @@ import { z } from "zod";
 import { error, redirect } from "@sveltejs/kit";
 
 export const load = async (event) => {
-	const session = await event.locals.getSession();
-	if (!session?.user) throw redirect(301, "/");
-
-	const character = await getCharacter(event.params.characterId);
+	const parent = await event.parent();
+	const character = parent.character;
 	if (!character) throw error(404, "Character not found");
+
+	const session = parent.session;
+	if (!session?.user) throw redirect(301, "/");
 
 	const log = await getLog(event.params.logId, character.id);
 	if (event.params.logId !== "new" && !log.id) throw error(404, "Log not found");
@@ -20,10 +21,14 @@ export const load = async (event) => {
 
 	return {
 		title: event.params.logId === "new" ? `New Log - ${character.name}` : `Edit ${log.name}`,
+		breadcrumbs: parent.breadcrumbs.concat({
+			name: event.params.logId === "new" ? `New Log` : log.name,
+			href: `/characters/${character.id}/log/${log.id}`
+		}),
+		...event.params,
 		log,
 		character,
-		dms,
-		...event.params
+		dms
 	};
 };
 

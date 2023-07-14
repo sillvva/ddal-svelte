@@ -1,6 +1,5 @@
 <script lang="ts">
 	import BackButton from "$lib/components/BackButton.svelte";
-	import BreadCrumb from "$lib/components/BreadCrumb.svelte";
 	import BreadCrumbs from "$lib/components/BreadCrumbs.svelte";
 	import Icon from "$lib/components/Icon.svelte";
 	import SchemaForm from "$lib/components/SchemaForm.svelte";
@@ -15,15 +14,7 @@
 	let errors: Record<string, string> = {};
 </script>
 
-<BreadCrumbs>
-	<BreadCrumb href="/characters">Characters</BreadCrumb>
-	{#if data.characterId == "new"}
-		<BreadCrumb>New Character</BreadCrumb>
-	{:else}
-		<BreadCrumb href={`/characters/${data.characterId}`}>{character.name}</BreadCrumb>
-		<BreadCrumb>Edit</BreadCrumb>
-	{/if}
-</BreadCrumbs>
+<BreadCrumbs />
 
 <BackButton href="/characters{data.characterId == 'new' ? '' : `/${data.characterId}`}">
 	{data.characterId == "new" ? "Characters" : character.name}

@@ -1,7 +1,6 @@
 <script lang="ts">
 	import { enhance } from "$app/forms";
 	import BackButton from "$lib/components/BackButton.svelte";
-	import BreadCrumb from "$lib/components/BreadCrumb.svelte";
 	import BreadCrumbs from "$lib/components/BreadCrumbs.svelte";
 	import Icon from "$lib/components/Icon.svelte";
 	import SchemaForm from "$lib/components/SchemaForm.svelte";
@@ -19,10 +18,7 @@
 </script>
 
 <div class="flex flex-col gap-4">
-	<BreadCrumbs>
-		<BreadCrumb href="/dms">DMs</BreadCrumb>
-		<BreadCrumb>{dm.name}</BreadCrumb>
-	</BreadCrumbs>
+	<BreadCrumbs />
 
 	<BackButton href="/dms">DMs</BackButton>
 

@@ -4,8 +4,10 @@ import { getUserDMsWithLogs } from "$src/server/data/dms";
 import { redirect } from "@sveltejs/kit";
 
 export const load = async (event) => {
-	const session = await event.locals.getSession();
-	if (!session?.user?.name) throw redirect(301, "/");
+	const parent = await event.parent();
+
+	const session = parent.session;
+	if (!session?.user) throw redirect(301, "/");
 
 	const dms = await getUserDMsWithLogs(session.user.id);
 

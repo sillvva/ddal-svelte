@@ -2,7 +2,6 @@
 	import AutoFillSelect from "$lib/components/AutoFillSelect.svelte";
 	import AutoResizeTextArea from "$lib/components/AutoResizeTextArea.svelte";
 	import BackButton from "$lib/components/BackButton.svelte";
-	import BreadCrumb from "$lib/components/BreadCrumb.svelte";
 	import BreadCrumbs from "$lib/components/BreadCrumbs.svelte";
 	import Icon from "$lib/components/Icon.svelte";
 	import SchemaForm from "$lib/components/SchemaForm.svelte";
@@ -65,14 +64,7 @@
 	}));
 </script>
 
-<BreadCrumbs>
-	<BreadCrumb href="/dm-logs">DM Logs</BreadCrumb>
-	{#if data.logId !== "new"}
-		<BreadCrumb>{log.name}</BreadCrumb>
-	{:else}
-		<BreadCrumb>New Log</BreadCrumb>
-	{/if}
-</BreadCrumbs>
+<BreadCrumbs />
 
 <BackButton href="/dm-logs">DM Logs</BackButton>
 

@@ -1,6 +1,5 @@
 <script lang="ts">
 	import { applyAction, enhance } from "$app/forms";
-	import BreadCrumb from "$lib/components/BreadCrumb.svelte";
 	import BreadCrumbs from "$lib/components/BreadCrumbs.svelte";
 	import Icon from "$lib/components/Icon.svelte";
 	import { twMerge } from "tailwind-merge";
@@ -13,9 +12,7 @@
 </script>
 
 <div class="flex flex-col gap-4">
-	<BreadCrumbs>
-		<BreadCrumb>DMs</BreadCrumb>
-	</BreadCrumbs>
+	<BreadCrumbs/>
 
 	{#if form?.error}
 		<div class="alert alert-error mb-4 shadow-lg">

@@ -3,7 +3,9 @@ import { getUserDMWithLogs } from "$src/server/data/dms";
 import { error, redirect } from "@sveltejs/kit";
 
 export const load = async (event) => {
-	const session = await event.locals.getSession();
+	const parent = await event.parent();
+
+	const session = parent.session;
 	if (!session?.user) throw redirect(301, "/");
 
 	const dm = await getUserDMWithLogs(session.user.id, event.params.dmId);
@@ -11,8 +13,12 @@ export const load = async (event) => {
 
 	return {
 		title: `Edit ${dm.name}`,
-		dm,
-		...event.params
+		breadcrumbs: parent.breadcrumbs.concat({
+			name: dm.name,
+			href: `/dms/${dm.id}`
+		}),
+		...event.params,
+		dm
 	};
 };
 

@@ -1,5 +1,4 @@
 <script lang="ts">
-	import BreadCrumb from "$lib/components/BreadCrumb.svelte";
 	import BreadCrumbs from "$lib/components/BreadCrumbs.svelte";
 	import Icon from "$lib/components/Icon.svelte";
 	import SearchResults from "$lib/components/SearchResults.svelte";
@@ -67,9 +66,7 @@
 
 <div class="flex flex-col gap-4">
 	<div class="hidden gap-4 sm:flex">
-		<BreadCrumbs>
-			<BreadCrumb>Characters</BreadCrumb>
-		</BreadCrumbs>
+		<BreadCrumbs />
 
 		<div class="dropdown-end dropdown">
 			<span role="button" tabindex="0" class="btn-sm btn">

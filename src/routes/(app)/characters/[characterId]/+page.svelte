@@ -1,6 +1,5 @@
 <script lang="ts">
 	import { applyAction, enhance } from "$app/forms";
-	import BreadCrumb from "$lib/components/BreadCrumb.svelte";
 	import BreadCrumbs from "$lib/components/BreadCrumbs.svelte";
 	import Icon from "$lib/components/Icon.svelte";
 	import Items from "$lib/components/Items.svelte";
@@ -87,10 +86,7 @@
 
 {#if data.session?.user}
 	<div class="hidden gap-4 print:hidden sm:flex">
-		<BreadCrumbs>
-			<BreadCrumb href="/characters">Characters</BreadCrumb>
-			<BreadCrumb>{character.name}</BreadCrumb>
-		</BreadCrumbs>
+		<BreadCrumbs />
 
 		{#if myCharacter}
 			<a href={`/characters/${character.id}/edit`} class="btn-primary btn-sm btn">Edit</a>
