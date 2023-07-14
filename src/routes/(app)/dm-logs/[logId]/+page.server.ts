@@ -1,17 +1,25 @@
 import { logSchema } from "$lib/types/zod-schema";
 import { saveLog } from "$src/server/actions/logs";
-import { getCharacter } from "$src/server/data/characters";
+import { getCharacter, getCharacters } from "$src/server/data/characters";
 import { getLog } from "$src/server/data/logs";
 import { z } from "zod";
 import { redirect } from "@sveltejs/kit";
 
 export const load = async (event) => {
+	const session = await event.locals.getSession();
+	if (!session?.user) throw redirect(301, "/");
+
 	const parent = await event.parent();
 	const log = parent.log;
 
+	const characters = await getCharacters(session.user.id);
+	const character = characters.find((c) => c.id === log.characterId);
+
 	return {
 		title: event.params.logId === "new" ? "New DM Log" : `Edit ${log.name}`,
-		...event.params
+		...event.params,
+		characters,
+		character,
 	};
 };
 
