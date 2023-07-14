@@ -17,7 +17,8 @@ export const load = async (event) => {
 			name: dm.name,
 			href: `/dms/${dm.id}`
 		}),
-		...event.params
+		...event.params,
+		dm
 	};
 };
 

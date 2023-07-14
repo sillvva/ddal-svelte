@@ -30,6 +30,7 @@ export const load = async (event) => {
 		...event.params,
 		characters,
 		character,
+		log
 	};
 };
 
