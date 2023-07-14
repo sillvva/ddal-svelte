@@ -9,6 +9,7 @@ import { error, redirect } from "@sveltejs/kit";
 export const load = async (event) => {
 	const parent = await event.parent();
 	const character = parent.character;
+	if (!character) throw error(404, "Character not found");
 
 	const session = parent.session;
 	if (!session?.user) throw redirect(301, "/");
