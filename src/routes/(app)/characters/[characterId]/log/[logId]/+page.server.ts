@@ -12,17 +12,22 @@ export const load = async (event) => {
 
 	const parent = await event.parent();
 	const character = parent.character;
-	if (!character) throw error(404, "Character not found");
-	const log = parent.log;
+
+	const log = await getLog(event.params.logId, character.id);
+	if (event.params.logId !== "new" && !log.id) throw error(404, "Log not found");
 
 	const dms = await getUserDMs(session.user.id);
 
 	return {
 		title: event.params.logId === "new" ? `New Log - ${character.name}` : `Edit ${log.name}`,
+		breadcrumbs: parent.breadcrumbs.concat({
+			name: event.params.logId === "new" ? `New Log` : log.name,
+			href: `/characters/${character.id}/log/${log.id}`
+		}),
+		...event.params,
 		log,
 		character,
-		dms,
-		...event.params
+		dms
 	};
 };
 

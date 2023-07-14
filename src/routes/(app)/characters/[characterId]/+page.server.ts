@@ -1,18 +1,20 @@
 import { deleteCharacter } from "$src/server/actions/characters";
 import { deleteLog } from "$src/server/actions/logs";
 import { serverGetCookie } from "$src/server/cookie";
-import { error, redirect } from "@sveltejs/kit";
+import { redirect } from "@sveltejs/kit";
 
 const defaultCookie = {
 	descriptions: false
 };
 
 export const load = async (event) => {
-	const parent = await event.parent();
 	if (event.params.characterId === "new") throw redirect(301, "/characters/new/edit");
+
+	const parent = await event.parent();
 	const character = parent.character;
-	if (!character) throw error(404, "Character not found");
+
 	const cookie = serverGetCookie(event.cookies, "characters", defaultCookie);
+
 	return {
 		title: character.name,
 		description: `Level ${character.total_level} ${character.race} ${character.class}`.replace(/ {2,}/g, " ").trim(),
