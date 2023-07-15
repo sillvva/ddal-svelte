@@ -119,7 +119,7 @@
 			{#if $modal.date}
 				<p class="text-xs">{$modal.date.toLocaleString()}</p>
 			{/if}
-			<Markdown content={$modal.description} class="cursor-text whitespace-pre-wrap pt-4 text-xs sm:text-sm" />
+			<Markdown content={$modal.description} class="cursor-text whitespace-pre-wrap pt-4 text-sm sm:text-md" />
 		</div>
 	{/if}
 </div>
