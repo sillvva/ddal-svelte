@@ -3,7 +3,7 @@
 	import Drawer from "$lib/components/Drawer.svelte";
 	import Icon from "$lib/components/Icon.svelte";
 	import Markdown from "$src/lib/components/Markdown.svelte";
-	import { modal } from "$src/lib/store.js";
+	import { modal } from "$src/lib/store";
 	import { signIn, signOut } from "@auth/sveltekit/client";
 	import { twMerge } from "tailwind-merge";
 

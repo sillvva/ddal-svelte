@@ -5,7 +5,7 @@
 	import Items from "$lib/components/Items.svelte";
 	import SearchResults from "$lib/components/SearchResults.svelte";
 	import { sorter, stopWords } from "$lib/utils";
-	import { modal } from "$src/lib/store.js";
+	import { modal } from "$src/lib/store";
 	import MiniSearch from "minisearch";
 	import { twMerge } from "tailwind-merge";
 

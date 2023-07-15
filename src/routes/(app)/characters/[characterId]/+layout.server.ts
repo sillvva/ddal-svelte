@@ -1,4 +1,4 @@
-import { getCharacter } from "$src/server/data/characters.js";
+import { getCharacter } from "$src/server/data/characters";
 
 export const load = async (event) => {
 	const parent = await event.parent();
