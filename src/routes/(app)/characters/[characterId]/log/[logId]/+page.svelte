@@ -153,7 +153,7 @@
 						</label>
 						<AutoFillSelect
 							name="dmName"
-							bind:value={dm.name}
+							value={dm.name}
 							values={data.dms.map((dm) => ({ key: dm.name, value: dm.name + (dm.DCI ? ` (${dm.DCI})` : "") })) || []}
 							disabled={saving}
 							on:select={(ev) => {
@@ -171,7 +171,7 @@
 						</label>
 						<AutoFillSelect
 							name="dmDCI"
-							bind:value={dm.DCI}
+							value={dm.DCI}
 							values={data.dms.map((dm) => ({ key: dm.DCI, value: dm.name + (dm.DCI ? ` (${dm.DCI})` : "") })) || []}
 							disabled={saving}
 							on:select={(ev) => {
