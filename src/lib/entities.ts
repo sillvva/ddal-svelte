@@ -192,7 +192,7 @@ export const getLogsSummary = (
 		magic_items,
 		story_awards,
 		log_levels: levels.log_levels,
-		tier: total_level >= 17 ? 4 : total_level >= 11 ? 3 : total_level >= 5 ? 2 : 1,
+		tier: Math.floor((total_level + 1) / 6) + 1,
 		logs: logs.map((log) => ({ ...log, saving: false }))
 	};
 };
