@@ -125,7 +125,7 @@
 		{/if}
 		<div class="join hidden xs:flex">
 			<button
-				class={twMerge("join-item btn hover:btn-primary sm:btn-sm", display == "list" && "bg-primary")}
+				class={twMerge("join-item btn sm:btn-sm", display == "list" ? "btn-primary" : "hover:btn-primary")}
 				on:click={() => (display = "list")}
 				on:keypress
 				aria-label="List View"
@@ -133,7 +133,7 @@
 				<Icon src="format-list-text" class="w-4" />
 			</button>
 			<button
-				class={twMerge("join-item btn hover:btn-primary sm:btn-sm", display == "grid" && "bg-primary")}
+				class={twMerge("join-item btn sm:btn-sm", display == "grid" ? "btn-primary" : "hover:btn-primary")}
 				on:click={() => (display = "grid")}
 				on:keypress
 				aria-label="Grid View"
