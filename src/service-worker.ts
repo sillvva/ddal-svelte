@@ -46,7 +46,8 @@ sw.addEventListener("fetch", (event) => {
 
 		// `build`/`files` can always be served from the cache
 		if (ASSETS.includes(url.pathname)) {
-			return cache.match(url.pathname);
+			const result = await cache.match(url.pathname);
+			return result || new Response(null, { status: 404 });
 		}
 
 		// for everything else, try the network first, but
@@ -54,17 +55,16 @@ sw.addEventListener("fetch", (event) => {
 		try {
 			const response = await fetch(event.request);
 
-			if (response.status === 200) {
+			if (response.status === 200 && !event.request.url.startsWith("chrome-extension:")) {
 				cache.put(event.request, response.clone());
 			}
 
 			return response;
 		} catch {
-			return cache.match(event.request);
+			const result = await cache.match(event.request);
+			return result || new Response(null, { status: 404 });
 		}
 	}
 
-	respond().then((response) => {
-		event.respondWith(response || new Response("Not found", { status: 404 }));
-	});
+	event.respondWith(respond());
 });
