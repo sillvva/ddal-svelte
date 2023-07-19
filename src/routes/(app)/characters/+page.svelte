@@ -255,8 +255,12 @@
 						)}
 						<a href={`/characters/${character.id}`} class="img-grow card card-compact bg-base-100 shadow-xl">
 							<figure class="relative aspect-square overflow-hidden">
-								<img data-src={character.image_url} alt={character.name} class="h-full w-full object-cover object-top" use:lazy={{ rootMargin: "100px" }} />
-
+								<img
+									data-src={character.image_url}
+									alt={character.name}
+									class="h-full w-full object-cover object-top"
+									use:lazy={{ rootMargin: "100px" }}
+								/>
 								{#if search.length >= 1 && indexed.length && miMatches}
 									<div class="absolute inset-0 flex items-center bg-black/50 p-2 text-center text-xs text-white">
 										<div class="flex-1">

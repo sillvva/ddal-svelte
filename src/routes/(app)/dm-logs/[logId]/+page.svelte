@@ -1,5 +1,4 @@
 <script lang="ts">
-	import AutoFillSelect from "$lib/components/AutoFillSelect.svelte";
 	import AutoResizeTextArea from "$lib/components/AutoResizeTextArea.svelte";
 	import BackButton from "$lib/components/BackButton.svelte";
 	import BreadCrumbs from "$lib/components/BreadCrumbs.svelte";
@@ -7,6 +6,7 @@
 	import SchemaForm from "$lib/components/SchemaForm.svelte";
 	import { logSchema } from "$lib/types/zod-schema";
 	import { formatDate } from "$lib/utils";
+	import ComboBox from "$src/lib/components/ComboBox.svelte";
 	import { twMerge } from "tailwind-merge";
 	import type { z } from "zod";
 
@@ -147,7 +147,7 @@
 					{/if}
 				</span>
 			</label>
-			<AutoFillSelect
+			<ComboBox
 				type="text"
 				name="characterName"
 				value={data.characters.find((c) => c.id === log.characterId)?.name || ""}

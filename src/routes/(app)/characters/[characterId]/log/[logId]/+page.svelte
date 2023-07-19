@@ -1,5 +1,4 @@
 <script lang="ts">
-	import AutoFillSelect from "$lib/components/AutoFillSelect.svelte";
 	import AutoResizeTextArea from "$lib/components/AutoResizeTextArea.svelte";
 	import BackButton from "$lib/components/BackButton.svelte";
 	import BreadCrumbs from "$lib/components/BreadCrumbs.svelte";
@@ -8,6 +7,7 @@
 	import { getMagicItems, getStoryAwards } from "$lib/entities";
 	import { logSchema } from "$lib/types/zod-schema";
 	import { formatDate, sorter } from "$lib/utils";
+	import ComboBox from "$src/lib/components/ComboBox.svelte";
 	import { twMerge } from "tailwind-merge";
 
 	export let data;
@@ -151,7 +151,7 @@
 						<label for="dmName" class="label">
 							<span class="label-text">DM Name</span>
 						</label>
-						<AutoFillSelect
+						<ComboBox
 							name="dmName"
 							value={dm.name}
 							values={data.dms.map((dm) => ({ key: dm.name, value: dm.name + (dm.DCI ? ` (${dm.DCI})` : "") })) || []}
@@ -169,7 +169,7 @@
 						<label for="dmDCI" class="label">
 							<span class="label-text">DM DCI</span>
 						</label>
-						<AutoFillSelect
+						<ComboBox
 							name="dmDCI"
 							value={dm.DCI}
 							values={data.dms.map((dm) => ({ key: dm.DCI, value: dm.name + (dm.DCI ? ` (${dm.DCI})` : "") })) || []}
