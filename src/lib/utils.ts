@@ -3,7 +3,7 @@ import { twMerge } from "tailwind-merge";
 
 export const stopWords = new Set(["and", "or", "to", "in", "a", "the", "of"]);
 
-export const parseError = (e: unknown) => {
+export const parseError = (e: NonNullable<unknown>) => {
 	if (e instanceof Error) return e.message;
 	if (typeof e === "string") return e;
 	if (typeof e === "object") return JSON.stringify(e);
@@ -33,7 +33,7 @@ export const tooltipClasses = (text?: string | null, align = "center") => {
 		"before:z-20 before:whitespace-normal before:![content:attr(data-tip)]",
 		align == "left" && "before:left-0 before:translate-x-0",
 		align == "right" && "before:right-0 before:translate-x-0",
-		text?.trim() && "tooltip"
+		text.trim() && "tooltip"
 	);
 };
 

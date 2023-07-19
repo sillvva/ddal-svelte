@@ -28,38 +28,39 @@
 
 	const isConsumable = (name: string) => name.trim().match(/^(\d+x? )?((Potion|Scroll|Spell Scroll|Charm|Elixir)s? of)/);
 
-	$: dupItems = JSON.parse(JSON.stringify(items)) as typeof items;
+	$: consolidatedItems = structuredClone(items).reduce(
+		(acc, item) => {
+			let existing = acc.findIndex(
+				(ex) => sorterName(ex.name) === sorterName(item.name) && ex.description?.trim() === item.description?.trim()
+			);
 
-	$: consolidatedItems = dupItems.reduce((acc, item) => {
-		let existing = acc.findIndex(
-			(ex) => sorterName(ex.name) === sorterName(item.name) && ex.description?.trim() === item.description?.trim()
-		);
+			let existingQty = 0;
+			if (existing < 0) {
+				existing = acc.length;
+				acc.push(item);
+			} else {
+				const existingQtyM = acc[existing].name.match(/^(\d+)x? /);
+				existingQty = existingQtyM ? parseInt(existingQtyM[1]) : 1;
+			}
 
-		let existingQty = 0;
-		if (existing < 0) {
-			existing = acc.length;
-			acc.push(item);
-		} else {
-			const existingQtyM = acc[existing].name.match(/^(\d+)x? /);
-			existingQty = existingQtyM ? parseInt(existingQtyM[1]) : 1;
-		}
+			const qtyM = item.name.match(/^(\d+)x? /);
+			const qty = qtyM ? parseInt(qtyM[1]) : 1;
 
-		const qtyM = item.name.match(/^(\d+)x? /);
-		const qty = qtyM ? parseInt(qtyM[1]) : 1;
+			const newQty = existingQty + qty;
+			let newName = acc[existing].name.replace(/^\d+x? ?/, "");
+			if (isConsumable(newName)) newName = newName.replace(/^(\w+)s/, "$1");
 
-		const newQty = existingQty + qty;
-		let newName = acc[existing].name.replace(/^\d+x? ?/, "");
-		if (isConsumable(newName)) newName = newName.replace(/^(\w+)s/, "$1");
+			if (newQty > 1) {
+				if (isConsumable(newName)) newName = newName.replace(/^(\w+)( .+)$/, "$1s$2");
+				acc[existing].name = `${newQty} ${newName}`;
+			} else {
+				acc[existing].name = newName;
+			}
 
-		if (newQty > 1) {
-			if (isConsumable(newName)) newName = newName.replace(/^(\w+)( .+)$/, "$1s$2");
-			acc[existing].name = `${newQty} ${newName}`;
-		} else {
-			acc[existing].name = newName;
-		}
-
-		return acc;
-	}, [] as typeof items);
+			return acc;
+		},
+		[] as typeof items
+	);
 
 	$: sortedItems = sort ? consolidatedItems.sort((a, b) => sorter(sorterName(a.name), sorterName(b.name))) : consolidatedItems;
 </script>
