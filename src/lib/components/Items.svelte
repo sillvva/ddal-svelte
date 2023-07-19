@@ -1,7 +1,6 @@
 <script lang="ts">
 	import { sorter } from "$lib/utils";
 	import type { MagicItem, StoryAward } from "@prisma/client";
-	import cloneDeep from "lodash.cloneDeep";
 	import type { SearchResult } from "minisearch";
 	import { twMerge } from "tailwind-merge";
 	import { modal } from "../store";
@@ -29,7 +28,7 @@
 
 	const isConsumable = (name: string) => name.trim().match(/^(\d+x? )?((Potion|Scroll|Spell Scroll|Charm|Elixir)s? of)/);
 
-	$: consolidatedItems = cloneDeep(items).reduce(
+	$: consolidatedItems = structuredClone(items).reduce(
 		(acc, item) => {
 			let existing = acc.findIndex(
 				(ex) => sorterName(ex.name) === sorterName(item.name) && ex.description?.trim() === item.description?.trim()
