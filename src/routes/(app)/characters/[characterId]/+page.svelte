@@ -338,7 +338,7 @@
 							>
 								<SearchResults text={log.name} {search} />
 							</div>
-							<p class="text-netural-content mb-2 text-xs font-normal">
+							<p class="text-netural-content mb-2 text-xs font-normal whitespace-nowrap">
 								{new Date(log.is_dm_log && log.applied_date ? log.applied_date : log.date).toLocaleString()}
 							</p>
 							{#if log.dm && log.type === "game" && log.dm.uid !== character.userId}
