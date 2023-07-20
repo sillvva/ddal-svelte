@@ -12,8 +12,6 @@
 		"format": "prettier --plugin-search-dir . --write ."
 	},
 	"devDependencies": {
-		"@iconify/icons-mdi": "^1.2.47",
-		"@iconify/svelte": "^3.1.4",
 		"@sveltejs/adapter-auto": "^2.1.0",
 		"@sveltejs/kit": "^1.22.3",
 		"@types/qs": "^6.9.7",
@@ -44,7 +42,6 @@
 		"@auth/prisma-adapter": "^1.0.1",
 		"@auth/sveltekit": "^0.3.6",
 		"@prisma/client": "^5.0.0",
-		"cross-fetch": "^4.0.0",
 		"dayjs": "^1.11.9",
 		"minisearch": "^6.1.0",
 		"zod": "^3.21.4"

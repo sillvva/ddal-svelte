@@ -2,9 +2,9 @@
 	import { page } from "$app/stores";
 	import Icon from "./Icon.svelte";
 
-	let breadcrumbs = ($page.data.breadcrumbs as { name: string, href?: string }[]).map((bc, i) => ({
+	let breadcrumbs = ($page.data.breadcrumbs as { name: string; href?: string }[]).map((bc, i) => ({
 		name: bc.name,
-		href: !bc.href || i === $page.data.breadcrumbs.length - 1 ? null : bc.href,
+		href: !bc.href || i === $page.data.breadcrumbs.length - 1 ? null : bc.href
 	}));
 </script>
 
