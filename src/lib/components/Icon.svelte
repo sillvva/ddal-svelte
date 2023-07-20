@@ -15,7 +15,10 @@
 	import show from "@iconify/icons-mdi/show";
 	import trashCan from "@iconify/icons-mdi/trash-can";
 	import viewGrid from "@iconify/icons-mdi/view-grid";
-	import Icon from "@iconify/svelte";
+	import Icon, { _api } from "@iconify/svelte";
+	import fetch from "cross-fetch";
+
+	_api.setFetch(fetch);
 
 	let paths = {
 		account,
