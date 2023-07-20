@@ -138,7 +138,7 @@
 									>
 										<SearchResults text={log.name} {search} />
 									</p>
-									<p class="text-netural-content text-xs font-normal">{new Date(log.date).toLocaleString()}</p>
+									<p class="text-netural-content text-xs font-normal whitespace-nowrap">{new Date(log.date).toLocaleString()}</p>
 									{#if log.character}
 										<p class="text-sm font-normal">
 											<span class="font-semibold">Character:</span>
