@@ -6,6 +6,8 @@
 	import { fade } from "svelte/transition";
 	import "../app.css";
 
+	export let data;
+
 	afterNavigate(() => {
 		pageLoader.set(false);
 	});
@@ -39,11 +41,13 @@
 
 <svelte:body class="min-h-screen text-base-content" />
 
-<img
-	src="/images/barovia-gate.webp"
-	alt="Background"
-	class="!fixed z-0 min-h-screen min-w-full object-cover object-center opacity-25 dark:opacity-20 print:hidden"
-/>
+{#if !data.mobile}
+	<img
+		src="/images/barovia-gate.webp"
+		alt="Background"
+		class="!fixed z-0 min-h-screen min-w-full object-cover object-center opacity-25 dark:opacity-20 print:hidden"
+	/>
+{/if}
 
 <slot />
 
