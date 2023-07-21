@@ -1,4 +1,5 @@
 <script lang="ts">
+	import { dev } from "$app/environment";
 	import { afterNavigate } from "$app/navigation";
 	import { navigating, page } from "$app/stores";
 	import { pageLoader } from "$lib/store";
@@ -55,5 +56,19 @@
 		out:fade={{ duration: 200 }}
 	>
 		<span class="loading loading-spinner w-16 text-secondary" />
+	</div>
+{/if}
+
+{#if dev}
+	<div class="absolute bottom-0 right-0 z-50">
+		<div class="[&>*]:bg-lime-700 [&>*]:p-1 [&>*]:text-xs [&>*]:font-bold [&>*]:text-white">
+			<div class="xs:hidden">xxs</div>
+			<div class="hidden xs:block sm:hidden">xs</div>
+			<div class="hidden sm:block md:hidden">sm</div>
+			<div class="hidden md:block lg:hidden">md</div>
+			<div class="hidden lg:block xl:hidden">lg</div>
+			<div class="hidden xl:block 2xl:hidden">xl</div>
+			<div class="hidden 2xl:block">2xl</div>
+		</div>
 	</div>
 {/if}
