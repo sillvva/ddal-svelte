@@ -3,102 +3,97 @@
 @tailwind utilities;
 
 body {
-  min-height: 100vh;
+	min-height: 100vh;
 }
 
 @media (prefers-color-scheme: dark) {
-  :root {
-    color-scheme: dark;
-  }
+	:root {
+		color-scheme: dark;
+	}
 }
 
 @font-face {
-  font-family: "Draconis";
-  src: url("/fonts/Draconis.ttf") format("truetype");
-  font-weight: normal;
-  font-style: normal;
-  font-display: swap;
+	font-family: "Draconis";
+	src: url("/fonts/Draconis.ttf") format("truetype");
+	font-weight: normal;
+	font-style: normal;
+	font-display: swap;
 }
 
 @font-face {
-  font-family: "Vecna";
-  src: url("/fonts/Vecna.ttf") format("truetype");
-  font-weight: normal;
-  font-style: normal;
-  font-display: swap;
+	font-family: "Vecna";
+	src: url("/fonts/Vecna.ttf") format("truetype");
+	font-weight: normal;
+	font-style: normal;
+	font-display: swap;
 }
 
 @font-face {
-  font-family: "Vecna";
-  src: url("/fonts/VecnaBold.ttf") format("truetype");
-  font-weight: bold;
-  font-style: normal;
-  font-display: swap;
+	font-family: "Vecna";
+	src: url("/fonts/VecnaBold.ttf") format("truetype");
+	font-weight: bold;
+	font-style: normal;
+	font-display: swap;
 }
 
 @layer base {
-  body {
-    overflow-x: hidden;
-    overflow-y: scroll;
-  }
-  thead {
-    display: table-row-group;
-  }
+	body {
+		overflow-x: hidden;
+		overflow-y: scroll;
+	}
+	thead {
+		display: table-row-group;
+	}
 }
 
 @layer utilities {
-  .text-accent-content {
-    @apply print:text-gray-700;
-  }
-  .text-secondary {
-    --tw-drop-shadow: drop-shadow(0 4px 3px rgb(0 0 0 / 0.2)) drop-shadow(0 1px 1px rgb(0 0 0 / 1));
-    @apply print:drop-shadow-none;
-  }
-  .grid-characters {
-    grid-template-columns: auto 1fr auto auto auto;
-  }
-  .grid-characters-mobile {
-    grid-template-columns: auto 1fr;
-  }
+	.text-accent-content {
+		@apply print:text-gray-700;
+	}
+	.text-secondary {
+		--tw-drop-shadow: drop-shadow(0 4px 3px rgb(0 0 0 / 0.2)) drop-shadow(0 1px 1px rgb(0 0 0 / 1));
+		@apply print:drop-shadow-none;
+	}
+	.btn {
+		@apply bg-base-100 text-base-content;
+	}
+	.btn-primary {
+		@apply bg-primary text-white;
+	}
+	.btn-delete {
+		@apply bg-red-800 text-white hover:bg-red-900;
+	}
+	.grid-characters {
+		grid-template-columns: auto 1fr auto auto auto;
+	}
+	.grid-characters-mobile {
+		grid-template-columns: auto 1fr;
+	}
 }
 
 @layer components {
-  .img-grow:hover img {
-    @apply motion-safe:scale-125 transition-transform;
-  }
-  .grid-table {
-    @apply grid w-full;
-    text-align: left;
-    font-size: 0.875rem;
-    line-height: 1.25rem;
-  }
-  .grid-table :where(header, section, a):not(:first-child, :last-child) > * {
-    border-bottom-width: 1px;
-    --tw-border-opacity: 1;
-    border-bottom-color: hsl(var(--b2) / var(--tw-border-opacity));
-  }
-  .grid-table header {
-    white-space: nowrap;
-    font-size: 0.75rem;
-    line-height: 1rem;
-    font-weight: 700;
-    color: hsl(var(--bc) / 0.6);
-    display: contents;
-  }
-  .grid-table :where(section, a) {
-    display: contents;
-  }
-  .grid-table :where(header, section, a) > * {
-    padding-left: 1rem;
-    padding-right: 1rem;
-    padding-top: 0.75rem;
-    padding-bottom: 0.75rem;
-    vertical-align: middle;
-  }
-  .grid-table header > * {
-    @apply bg-base-200;
-  }
-  .grid-table :where(section, a) > * {
-    @apply bg-base-100 items-center;
-  }
+	.img-grow:hover img {
+		@apply transition-transform motion-safe:scale-125;
+	}
+	.grid-table {
+		@apply grid w-full text-left text-sm;
+	}
+	.grid-table :where(header, section, a):not(:first-child, :last-child) > * {
+		@apply border-b-[1px] border-b-base-200;
+	}
+	.grid-table header {
+		@apply contents whitespace-nowrap text-base font-bold text-base-content;
+	}
+	.grid-table :where(section, a) {
+		@apply contents;
+	}
+	.grid-table :where(header, section, a) > * {
+		@apply px-4 py-3 align-middle;
+	}
+	.grid-table header > * {
+		@apply bg-base-300;
+	}
+	.grid-table :where(section, a) > * {
+		@apply items-center bg-base-100;
+	}
 }

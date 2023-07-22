@@ -12,7 +12,7 @@
 </script>
 
 <div class="flex flex-col gap-4">
-	<BreadCrumbs/>
+	<BreadCrumbs />
 
 	{#if form?.error}
 		<div class="alert alert-error mb-4 shadow-lg">
