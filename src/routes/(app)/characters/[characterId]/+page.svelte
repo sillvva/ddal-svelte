@@ -118,7 +118,12 @@
 							}}
 							class="btn-delete"
 						>
-							<button>Delete Character</button>
+							<button
+								on:click|preventDefault={(e) => {
+									if (confirm(`Are you sure you want to delete ${character.name}? This action cannot be reversed.`))
+										e.currentTarget.form?.requestSubmit();
+								}}>Delete Character</button
+							>
 						</form>
 					</li>
 				</ul>
@@ -162,25 +167,32 @@
 									<a href={character.image_url} target="_blank">View Image</a>
 								</li>
 							{/if}
-							<li>
-								<a href={`/characters/${character.id}/edit`}>Edit</a>
-							</li>
-							<form
-								method="POST"
-								action="?/deleteCharacter"
-								use:enhance={() => {
-									$pageLoader = true;
-									return ({ update, result }) => {
-										update();
-										if (result.type !== "redirect") $pageLoader = false;
-									};
-								}}
-								class="bg-red-800 hover:bg-red-900"
-							>
+							{#if myCharacter}
 								<li>
-									<button>Delete Character</button>
+									<a href={`/characters/${character.id}/edit`}>Edit</a>
 								</li>
-							</form>
+								<li>
+									<form
+										method="POST"
+										action="?/deleteCharacter"
+										use:enhance={() => {
+											$pageLoader = true;
+											return ({ update, result }) => {
+												update();
+												if (result.type !== "redirect") $pageLoader = false;
+											};
+										}}
+										class="btn-delete"
+									>
+										<button
+											on:click|preventDefault={(e) => {
+												if (confirm(`Are you sure you want to delete ${character.name}? This action cannot be reversed.`))
+													e.currentTarget.form?.requestSubmit();
+											}}>Delete Character</button
+										>
+									</form>
+								</li>
+							{/if}
 						</ul>
 					</div>
 				</div>
