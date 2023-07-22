@@ -4,6 +4,7 @@
 	import { navigating, page } from "$app/stores";
 	import { pageLoader } from "$lib/store";
 	import { fade } from "svelte/transition";
+	import { twMerge } from "tailwind-merge";
 	import "../app.css";
 
 	export let data;
@@ -39,8 +40,6 @@
 	<meta name="twitter:image" content={image?.trim() || defaultImage} />
 </svelte:head>
 
-<svelte:body class="min-h-screen text-base-content" />
-
 {#if !data.mobile}
 	<img
 		src="/images/barovia-gate.webp"
@@ -49,7 +48,9 @@
 	/>
 {/if}
 
-<slot />
+<div class={twMerge("min-h-screen text-base-content", data.mobile && "bg-base-200 dark:[--b1:212_18%_16%]")}>
+	<slot />
+</div>
 
 {#if $pageLoader || $navigating}
 	<div class="fixed inset-0 z-40 flex items-center justify-center bg-black/50" in:fade out:fade={{ duration: 200 }} />
@@ -63,7 +64,7 @@
 {/if}
 
 {#if dev}
-	<div class="absolute bottom-0 right-0 z-50">
+	<div class="fixed bottom-0 right-0 z-50">
 		<div class="[&>*]:bg-lime-700 [&>*]:p-1 [&>*]:text-xs [&>*]:font-bold [&>*]:text-white">
 			<div class="xs:hidden">xxs</div>
 			<div class="hidden xs:block sm:hidden">xs</div>

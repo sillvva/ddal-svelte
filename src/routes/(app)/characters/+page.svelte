@@ -70,7 +70,7 @@
 		<BreadCrumbs />
 
 		<div class="dropdown-end dropdown">
-			<span role="button" tabindex="0" class="btn-sm btn">
+			<span role="button" tabindex="0" class="btn-sm btn bg-base-100">
 				<Icon src="dots-horizontal" class="w-6" />
 			</span>
 			<ul class="dropdown-content menu rounded-box w-52 bg-base-100 p-2 shadow">

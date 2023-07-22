@@ -299,7 +299,7 @@
 										>
 											<input type="hidden" name="logId" value={log.id} />
 											<button
-												class="btn sm:btn-sm"
+												class="btn sm:btn-sm btn-delete"
 												on:click|preventDefault={(e) => {
 													if (confirm(`Are you sure you want to delete ${log.name}? This action cannot be reversed.`))
 														e.currentTarget.form?.requestSubmit();

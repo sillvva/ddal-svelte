@@ -11,7 +11,12 @@
 </script>
 
 <div class="relative flex min-h-screen flex-col">
-	<header class="relative z-20 w-full border-b-[1px] border-slate-500">
+	<header
+		class={twMerge(
+			"relative z-20 w-full border-b-[1px] border-slate-500",
+			data.mobile && "bg-base-300 border-slate-300 dark:border-slate-700"
+		)}
+	>
 		<nav class="container mx-auto flex max-w-5xl gap-2 p-4">
 			<Drawer />
 			<a href={data.session?.user ? "/characters" : "/"} class="mr-8 flex flex-col text-center font-draconis">

@@ -91,7 +91,7 @@
 		{#if myCharacter}
 			<a href={`/characters/${character.id}/edit`} class="btn-primary btn-sm btn">Edit</a>
 			<div class="dropdown-end dropdown">
-				<span role="button" tabindex="0" class="btn-sm btn">
+				<span role="button" tabindex="0" class="btn-sm btn bg-base-100">
 					<Icon src="dots-horizontal" class="w-6" />
 				</span>
 				<ul class="dropdown-content menu rounded-box z-20 w-52 bg-base-100 p-2 shadow">
@@ -116,7 +116,7 @@
 									if (result.type !== "redirect") $pageLoader = false;
 								};
 							}}
-							class="bg-red-800 hover:bg-red-900"
+							class="btn-delete"
 						>
 							<button>Delete Character</button>
 						</form>
@@ -510,7 +510,7 @@
 									>
 										<input type="hidden" name="logId" value={log.id} />
 										<button
-											class="btn sm:btn-sm"
+											class="btn sm:btn-sm btn-delete"
 											on:click|preventDefault={(e) => {
 												if (confirm(`Are you sure you want to delete ${log.name}? This action cannot be reversed.`))
 													e.currentTarget.form?.requestSubmit();
