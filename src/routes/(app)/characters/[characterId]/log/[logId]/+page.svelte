@@ -67,6 +67,11 @@
 			uid: dm.uid
 		}
 	};
+
+	export const snapshot = {
+		capture: () => log,
+		restore: (values) => (log = values)
+	};
 </script>
 
 <BreadCrumbs />

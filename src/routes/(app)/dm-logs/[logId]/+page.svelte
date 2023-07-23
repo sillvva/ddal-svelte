@@ -62,6 +62,11 @@
 		name: mi.name,
 		description: mi.description || ""
 	}));
+
+	export const snapshot = {
+		capture: () => log,
+		restore: (values) => (log = values)
+	};
 </script>
 
 <BreadCrumbs />

@@ -8,10 +8,15 @@
 	export let data;
 	export let form;
 
-	const character = data.character;
+	let character = data.character;
 
 	let saving = false;
 	let errors: Record<string, string> = {};
+
+	export const snapshot = {
+		capture: () => character,
+		restore: (values) => (character = values)
+	};
 </script>
 
 <BreadCrumbs />
