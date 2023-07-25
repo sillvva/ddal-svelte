@@ -6,13 +6,13 @@ import {
 	GOOGLE_CLIENT_ID,
 	GOOGLE_CLIENT_SECRET
 } from "$env/static/private";
-import { equal, minLength, nullish, object, string, url, ValiError } from "valibot";
+import { equal, minLength, object, string, union, url, ValiError } from "valibot";
 
 const envSchema = object({
 	DATABASE_URL: string([url()]),
 	AUTH_SECRET: string([minLength(10)]),
 	AUTH_URL: string([url()]),
-	AUTH_TRUST_HOST: nullish(string([equal("true")])),
+	AUTH_TRUST_HOST: union([string([equal("true")]), string([equal("false")])]),
 	GOOGLE_CLIENT_ID: string([minLength(1)]),
 	GOOGLE_CLIENT_SECRET: string([minLength(1)]),
 	CRON_CHARACTER_ID: string([minLength(1)])
@@ -24,7 +24,7 @@ export const checkEnv = async () => {
 			DATABASE_URL: DATABASE_URL,
 			AUTH_SECRET: AUTH_SECRET,
 			AUTH_URL: AUTH_URL,
-			AUTH_TRUST_HOST: (await import("$env/static/private"))["AUTH_TRUST_HOST"],
+			AUTH_TRUST_HOST: AUTH_URL.includes("localhost") ? (await import("$env/static/private"))["AUTH_TRUST_HOST"] : "false",
 			GOOGLE_CLIENT_ID: GOOGLE_CLIENT_ID,
 			GOOGLE_CLIENT_SECRET: GOOGLE_CLIENT_SECRET,
 			CRON_CHARACTER_ID: CRON_CHARACTER_ID
