@@ -5,8 +5,8 @@
 	import Icon from "$lib/components/Icon.svelte";
 	import SchemaForm from "$lib/components/SchemaForm.svelte";
 	import { pageLoader } from "$lib/store";
-	import { dungeonMasterSchema } from "$lib/types/zod-schema";
 	import { sorter } from "$lib/utils";
+	import { dungeonMasterSchema } from "$src/lib/types/schemas";
 
 	export let data;
 	export let form;

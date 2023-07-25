@@ -1,12 +1,11 @@
-import type { newCharacterSchema } from "$lib/types/zod-schema";
-import type { z } from "zod";
+import type { NewCharacterSchema } from "$src/lib/types/schemas";
 import { getCharacter } from "../data/characters";
 import { prisma } from "../db";
 
 import type { Character } from "@prisma/client";
 
 export type SaveCharacterResult = ReturnType<typeof saveCharacter>;
-export async function saveCharacter(characterId: string, userId: string, data: z.infer<typeof newCharacterSchema>) {
+export async function saveCharacter(characterId: string, userId: string, data: NewCharacterSchema) {
 	try {
 		if (!characterId) throw new Error("No character ID provided");
 		if (!userId) throw new Error("Not authenticated");

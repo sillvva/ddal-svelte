@@ -5,9 +5,9 @@
 	import Icon from "$lib/components/Icon.svelte";
 	import SchemaForm from "$lib/components/SchemaForm.svelte";
 	import { getMagicItems, getStoryAwards } from "$lib/entities";
-	import { logSchema } from "$lib/types/zod-schema";
 	import { formatDate, sorter } from "$lib/utils";
 	import ComboBox from "$src/lib/components/ComboBox.svelte";
+	import { logSchema } from "$src/lib/types/schemas";
 	import { twMerge } from "tailwind-merge";
 
 	export let data;
@@ -20,12 +20,12 @@
 	let errors: Record<string, string> = {};
 
 	$: magicItems = character
-		? getMagicItems(character, { excludeDropped: true, lastLogDate: log.date.toISOString() }).sort((a, b) =>
+		? getMagicItems(character, { excludeDropped: true, lastLogDate: new Date(log.date).toISOString() }).sort((a, b) =>
 				sorter(a.name, b.name)
 		  )
 		: [];
 	$: storyAwards = character
-		? getStoryAwards(character, { excludeDropped: true, lastLogDate: log.date.toISOString() }).sort((a, b) =>
+		? getStoryAwards(character, { excludeDropped: true, lastLogDate: new Date(log.date).toISOString() }).sort((a, b) =>
 				sorter(a.name, b.name)
 		  )
 		: [];
@@ -371,7 +371,7 @@
 									type="text"
 									name={`magic_items_gained.${index}.name`}
 									value={item.name}
-									on:change={(e) => {
+									on:input={(e) => {
 										if (magicItemsGained[index]) magicItemsGained[index].name = e.currentTarget.value;
 									}}
 									disabled={saving}
@@ -395,7 +395,7 @@
 							</label>
 							<textarea
 								name={`magic_items_gained.${index}.description`}
-								on:change={(e) => {
+								on:input={(e) => {
 									if (magicItemsGained[index]) magicItemsGained[index].description = e.currentTarget.value;
 								}}
 								disabled={saving}
@@ -464,7 +464,7 @@
 									type="text"
 									name={`story_awards_gained.${index}.name`}
 									value={item.name}
-									on:change={(e) => {
+									on:input={(e) => {
 										if (storyAwardsGained[index]) storyAwardsGained[index].name = e.currentTarget.value;
 									}}
 									disabled={saving}
@@ -488,7 +488,7 @@
 							</label>
 							<textarea
 								name={`story_awards_gained.${index}.description`}
-								on:change={(e) => {
+								on:input={(e) => {
 									if (storyAwardsGained[index]) storyAwardsGained[index].description = e.currentTarget.value;
 								}}
 								disabled={saving}

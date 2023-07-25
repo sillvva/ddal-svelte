@@ -3,7 +3,8 @@
 	import { beforeNavigate } from "$app/navigation";
 	import type { ActionResult } from "@sveltejs/kit";
 	import { createEventDispatcher } from "svelte";
-	import type { ZodError, z } from "zod";
+	import type { ObjectSchema, Output } from "valibot";
+	import { ValiError } from "valibot";
 
 	const dispatch = createEventDispatcher<{
 		"before-submit": null;
@@ -11,10 +12,11 @@
 		errors: Record<string, string> | null;
 		"check-errors": null;
 	}>();
+
 	let elForm: HTMLFormElement;
 
 	export let form: (object & { error: string | null | undefined }) | null;
-	export let schema: z.ZodObject<any, any>;
+	export let schema: ObjectSchema<any, any>;
 	export let data: object;
 	export let action: string;
 	export let stringify = "";
@@ -42,11 +44,13 @@
 				schema.parse(data);
 			} catch (error) {
 				changes.forEach((c) => {
-					(error as ZodError).errors
-						.filter((e) => e.path[0] === c)
-						.forEach((e) => {
-							errors[e.path[0].toString()] = e.message;
+					if (error instanceof ValiError) {
+						error.issues.forEach((issue) => {
+							const path = issue.path?.map((p) => p.key).join(".");
+							console.log(path, issue.path);
+							if (path === c) errors[c] = issue.message;
 						});
+					}
 				});
 			}
 
@@ -56,14 +60,17 @@
 		}
 	}
 
-	function checkErrors(data: z.infer<typeof schema>) {
+	function checkErrors(data: Output<ObjectSchema<any, any>>) {
 		let result = null;
 		try {
 			result = schema.parse(data);
 		} catch (error) {
-			(error as ZodError).errors.forEach((e) => {
-				errors[e.path[0].toString()] = e.message;
-			});
+			if (error instanceof ValiError) {
+				error.issues.forEach((issue) => {
+					const path = issue.path?.map((p) => p.key).join(".");
+					if (path) errors[path] = issue.message;
+				});
+			}
 		}
 
 		return result;
@@ -84,7 +91,9 @@
 
 	$: {
 		if (elForm && data) {
-			elForm.querySelectorAll("input, textarea, select").forEach((el) => el.addEventListener("input", inputChanged));
+			setTimeout(() => {
+				elForm.querySelectorAll("input, textarea, select").forEach((el) => el.addEventListener("input", inputChanged));
+			}, 10);
 		}
 	}
 

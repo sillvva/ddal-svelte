@@ -4,11 +4,10 @@
 	import BreadCrumbs from "$lib/components/BreadCrumbs.svelte";
 	import Icon from "$lib/components/Icon.svelte";
 	import SchemaForm from "$lib/components/SchemaForm.svelte";
-	import { logSchema } from "$lib/types/zod-schema";
 	import { formatDate } from "$lib/utils";
 	import ComboBox from "$src/lib/components/ComboBox.svelte";
+	import { logSchema } from "$src/lib/types/schemas";
 	import { twMerge } from "tailwind-merge";
-	import type { z } from "zod";
 
 	export let data;
 	export let form;
@@ -37,7 +36,7 @@
 		}
 	};
 
-	function extraErrors(log: z.infer<typeof logSchema>) {
+	function extraErrors() {
 		if (values.characterId && !(data.characters || []).find((c) => c.id === values.characterId)) {
 			errors["characterId"] = "Character not found";
 		}
@@ -88,7 +87,7 @@
 	bind:saving
 	schema={logSchema}
 	stringify="log"
-	on:check-errors={() => extraErrors(values)}
+	on:check-errors={() => extraErrors()}
 	on:before-submit={() => {
 		if (log.applied_date?.getTime() === 0) {
 			log.applied_date = null;

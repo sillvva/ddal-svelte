@@ -1,12 +1,11 @@
-import { logSchema } from "$lib/types/zod-schema";
+import { logSchema } from "$src/lib/types/schemas";
 import { saveLog } from "$src/server/actions/logs";
 import { getCharacter, getCharacters } from "$src/server/data/characters";
 import { getDMLog, getLog } from "$src/server/data/logs";
-import { z } from "zod";
 import { error, redirect } from "@sveltejs/kit";
 
 export const load = async (event) => {
-  const parent = await event.parent();
+	const parent = await event.parent();
 
 	const session = parent.session;
 	if (!session?.user) throw redirect(301, "/");
@@ -21,12 +20,10 @@ export const load = async (event) => {
 
 	return {
 		title: event.params.logId === "new" ? "New DM Log" : `Edit ${log.name}`,
-    breadcrumbs: parent.breadcrumbs.concat(
-      {
-        name: event.params.logId === "new" ? "New DM Log" : `${log.name}`,
-        href: `/dm-logs/${event.params.logId}`
-      }
-    ),
+		breadcrumbs: parent.breadcrumbs.concat({
+			name: event.params.logId === "new" ? "New DM Log" : `${log.name}`,
+			href: `/dm-logs/${event.params.logId}`
+		}),
 		...event.params,
 		characters,
 		character,
@@ -70,13 +67,6 @@ export const actions = {
 
 			return result;
 		} catch (error) {
-			if (error instanceof z.ZodError) {
-				return {
-					id: null,
-					log: null,
-					error: error.errors[0].message
-				};
-			}
 			if (error instanceof Error) {
 				return {
 					id: null,
