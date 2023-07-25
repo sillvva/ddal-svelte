@@ -1,6 +1,5 @@
 import {
 	AUTH_SECRET,
-	AUTH_TRUST_HOST,
 	AUTH_URL,
 	CRON_CHARACTER_ID,
 	DATABASE_URL,
@@ -19,13 +18,13 @@ const envSchema = object({
 	CRON_CHARACTER_ID: string([minLength(1)])
 });
 
-export const checkEnv = () => {
+export const checkEnv = async () => {
 	try {
 		return envSchema.parse({
 			DATABASE_URL: DATABASE_URL,
 			AUTH_SECRET: AUTH_SECRET,
 			AUTH_URL: AUTH_URL,
-			AUTH_TRUST_HOST: AUTH_TRUST_HOST,
+			AUTH_TRUST_HOST: (await import("$env/static/private"))["AUTH_TRUST_HOST"],
 			GOOGLE_CLIENT_ID: GOOGLE_CLIENT_ID,
 			GOOGLE_CLIENT_SECRET: GOOGLE_CLIENT_SECRET,
 			CRON_CHARACTER_ID: CRON_CHARACTER_ID
