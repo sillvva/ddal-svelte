@@ -1,33 +1,24 @@
-import {
-	AUTH_SECRET,
-	AUTH_URL,
-	CRON_CHARACTER_ID,
-	DATABASE_URL,
-	GOOGLE_CLIENT_ID,
-	GOOGLE_CLIENT_SECRET
-} from "$env/static/private";
-import { equal, minLength, object, string, union, url, ValiError } from "valibot";
-
-const envSchema = object({
-	DATABASE_URL: string([url()]),
-	AUTH_SECRET: string([minLength(10)]),
-	AUTH_URL: string([url()]),
-	AUTH_TRUST_HOST: union([string([equal("true")]), string([equal("false")])]),
-	GOOGLE_CLIENT_ID: string([minLength(1)]),
-	GOOGLE_CLIENT_SECRET: string([minLength(1)]),
-	CRON_CHARACTER_ID: string([minLength(1)])
-});
+import { equal, minLength, object, string, undefinedType, url, ValiError } from "valibot";
 
 export const checkEnv = async () => {
 	try {
+		const env = await import("$env/static/private");
+
+		const envSchema = object({
+			DATABASE_URL: string([url()]),
+			AUTH_SECRET: string([minLength(10, "Must be a string of at least 10 characters")]),
+			AUTH_URL: string([url()]),
+			AUTH_TRUST_HOST: env["AUTH_URL"]?.includes("localhost")
+				? string([equal("true", "Required. Must be 'true'")])
+				: undefinedType("For localhost only"),
+			GOOGLE_CLIENT_ID: string([minLength(1, "Required")]),
+			GOOGLE_CLIENT_SECRET: string([minLength(1, "Required")]),
+			CRON_CHARACTER_ID: string([minLength(1, "Required")])
+		});
+
 		return envSchema.parse({
-			DATABASE_URL: DATABASE_URL,
-			AUTH_SECRET: AUTH_SECRET,
-			AUTH_URL: AUTH_URL,
-			AUTH_TRUST_HOST: AUTH_URL.includes("localhost") ? (await import("$env/static/private"))["AUTH_TRUST_HOST"] : "false",
-			GOOGLE_CLIENT_ID: GOOGLE_CLIENT_ID,
-			GOOGLE_CLIENT_SECRET: GOOGLE_CLIENT_SECRET,
-			CRON_CHARACTER_ID: CRON_CHARACTER_ID
+			...env,
+			AUTH_TRUST_HOST: env["AUTH_URL"]?.includes("localhost") ? env["AUTH_TRUST_HOST"] : undefined
 		});
 	} catch (err) {
 		if (err instanceof ValiError) {
