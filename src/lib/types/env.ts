@@ -22,14 +22,15 @@ export const checkEnv = async () => {
 		});
 	} catch (err) {
 		if (err instanceof ValiError) {
-			const formatErrors = (error: ValiError) =>
-				error.issues
+			console.error(
+				"❌ Invalid environment variables:\n",
+				...err.issues
 					.map((issue) => {
 						const path = issue.path?.map((p) => p.key).join(".");
 						if (path) return `${path}: ${issue.message}: ${issue.input}\n`;
 					})
-					.filter(Boolean);
-			console.error("❌ Invalid environment variables:\n", ...formatErrors(err));
+					.filter(Boolean)
+			);
 			process.exit(1);
 		}
 	}
