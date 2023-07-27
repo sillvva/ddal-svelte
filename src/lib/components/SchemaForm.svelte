@@ -4,7 +4,7 @@
 	import type { ActionResult } from "@sveltejs/kit";
 	import { createEventDispatcher } from "svelte";
 	import type { ObjectSchema, Output } from "valibot";
-	import { ValiError } from "valibot";
+	import { ValiError, flatten } from "valibot";
 
 	const dispatch = createEventDispatcher<{
 		"before-submit": null;
@@ -37,19 +37,18 @@
 	export let errors: Record<string, string> = {};
 	$: {
 		if (changes.length) {
-			changes.forEach((c) => {
-				errors[c] = "";
-			});
+			errors = {};
 			try {
 				schema.parse(data);
 			} catch (error) {
 				changes.forEach((c) => {
 					if (error instanceof ValiError) {
-						error.issues.forEach((issue) => {
-							const path = issue.path?.map((p) => p.key).join(".");
-							console.log(path, issue.path);
-							if (path === c) errors[c] = issue.message;
-						});
+						const flatErrors = flatten(error);
+						for (const path in flatErrors.nested) {
+							for (const err in flatErrors.nested[path]) {
+								if (path === c && !errors[c]) errors[c] = err;
+							}
+						}
 					}
 				});
 			}
@@ -66,10 +65,12 @@
 			result = schema.parse(data);
 		} catch (error) {
 			if (error instanceof ValiError) {
-				error.issues.forEach((issue) => {
-					const path = issue.path?.map((p) => p.key).join(".");
-					if (path) errors[path] = issue.message;
-				});
+				const flatErrors = flatten(error);
+				for (const path in flatErrors.nested) {
+					for (const err in flatErrors.nested[path]) {
+						if (path && !errors[path]) errors[path] = err;
+					}
+				}
 			}
 		}
 
