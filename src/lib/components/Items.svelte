@@ -26,41 +26,54 @@
 					.replace(/^(A|An|The) /, "")
 			: name;
 
+	const clonedItems = structuredClone(items);
+	const itemsMap = new Map<string, number>();
 	const isConsumable = (name: string) => name.trim().match(/^(\d+x? )?((Potion|Scroll|Spell Scroll|Charm|Elixir)s? of)/);
+	const itemQty = (item: { name: string }) => parseInt(item.name.match(/^(\d+)x? /)?.[1] || "1");
+	const clearQty = (name: string) => name.replace(/^\d+x? ?/, "");
 
-	$: consolidatedItems = structuredClone(items).reduce(
-		(acc, item) => {
-			let existing = acc.findIndex(
-				(ex) => sorterName(ex.name) === sorterName(item.name) && ex.description?.trim() === item.description?.trim()
-			);
+	$: consolidatedItems = clonedItems
+		.map((item, index) => {
+			const name = clearQty(item.name);
+			const desc = item.description?.trim();
+			const key = `${name}_${desc}`;
+			const qty = itemQty(item);
+			const cons = isConsumable(sorterName(name));
 
-			let existingQty = 0;
-			if (existing < 0) {
-				existing = acc.length;
-				acc.push(item);
-			} else {
-				const existingQtyM = acc[existing].name.match(/^(\d+)x? /);
-				existingQty = existingQtyM ? parseInt(existingQtyM[1]) : 1;
-			}
+			return {
+				name,
+				desc,
+				qty,
+				index,
+				cons,
+				key
+			};
+		})
+		.reduce(
+			(acc, { name, qty, key, index, cons }) => {
+				const existingIndex = itemsMap.get(key);
+				if (existingIndex) {
+					const existingQty = itemQty(acc[existingIndex]);
 
-			const qtyM = item.name.match(/^(\d+)x? /);
-			const qty = qtyM ? parseInt(qtyM[1]) : 1;
+					const newQty = existingQty + qty;
+					let newName = name;
+					if (cons) newName = newName.replace(/^(\w+)s/, "$1");
 
-			const newQty = existingQty + qty;
-			let newName = acc[existing].name.replace(/^\d+x? ?/, "");
-			if (isConsumable(newName)) newName = newName.replace(/^(\w+)s/, "$1");
+					if (newQty > 1) {
+						if (cons) newName = newName.replace(/^(\w+)( .+)$/, "$1s$2");
+						acc[existingIndex].name = `${newQty} ${newName}`;
+					} else {
+						acc[existingIndex].name = newName;
+					}
+				} else {
+					acc.push(clonedItems[index]);
+					itemsMap.set(key, acc.length - 1);
+				}
 
-			if (newQty > 1) {
-				if (isConsumable(newName)) newName = newName.replace(/^(\w+)( .+)$/, "$1s$2");
-				acc[existing].name = `${newQty} ${newName}`;
-			} else {
-				acc[existing].name = newName;
-			}
-
-			return acc;
-		},
-		[] as typeof items
-	);
+				return acc;
+			},
+			[] as typeof items
+		);
 
 	$: sortedItems = sort ? consolidatedItems.sort((a, b) => sorter(sorterName(a.name), sorterName(b.name))) : consolidatedItems;
 </script>
