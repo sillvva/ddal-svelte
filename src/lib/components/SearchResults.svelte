@@ -48,5 +48,5 @@
 		{/if}
 	{/each}
 {:else}
-	{text}
+	{items}
 {/if}
