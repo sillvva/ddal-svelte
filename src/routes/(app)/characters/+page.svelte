@@ -43,17 +43,21 @@
 	let search = "";
 	minisearch.addAll(indexed);
 	$: msResults = minisearch.search(search);
+	$: resultsMap = new Map(msResults.map((result) => [result.id, result]));
 	$: results =
 		indexed.length && search.length > 1
 			? characters
-					.filter((character) => msResults.find((result) => result.id === character.id))
-					.map((character) => ({
-						...character,
-						score: msResults.find((result) => result.id === character.id)?.score || character.name,
-						match: Object.entries(msResults.find((result) => result.id === character.id)?.match || {})
-							.map(([, value]) => value[0] || "")
-							.filter((v) => !!v)
-					}))
+					.filter((character) => resultsMap.has(character.id))
+					.map((character) => {
+						const { score = character.name, match = {} } = resultsMap.get(character.id) || {};
+						return {
+							...character,
+							score: score,
+							match: Object.values(match)
+								.map((value) => value[0])
+								.filter(Boolean)
+						};
+					})
 					.sort((a, b) => sorter(a.total_level, b.total_level) || sorter(a.name, b.name))
 			: characters
 					.sort((a, b) => sorter(a.total_level, b.total_level) || sorter(a.name, b.name))
