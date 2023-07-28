@@ -69,6 +69,9 @@ body {
 	.grid-characters-mobile {
 		grid-template-columns: 1fr;
 	}
+	.grid-characters-mobile-sm {
+		grid-template-columns: 1fr auto auto auto;
+	}
 }
 
 @layer components {

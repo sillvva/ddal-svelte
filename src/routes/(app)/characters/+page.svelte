@@ -149,10 +149,16 @@
 	</div>
 
 	<div class={twMerge("w-full overflow-x-auto rounded-lg", display == "grid" && "block xs:hidden")}>
-		<div class={twMerge("grid-table", characters.length && "grid-characters-mobile sm:grid-characters")}>
+		<div
+			class={twMerge(
+				"grid-table",
+				!data.mobile && "grid-characters-mobile sm:grid-characters",
+				characters.length && data.mobile && "grid-characters-mobile sm:grid-characters-mobile-sm"
+			)}
+		>
 			<header class="!hidden sm:!contents">
 				{#if !data.mobile}
-					<div />
+					<div class="hidden sm:block" />
 				{/if}
 				<div>Name</div>
 				<div>Campaign</div>
@@ -172,7 +178,7 @@
 				{#each results as character}
 					<a href={`/characters/${character.id}`} class="img-grow">
 						{#if !data.mobile}
-							<div class="pr-0 transition-colors sm:pr-2">
+							<div class="pr-0 transition-colors sm:pr-2 hidden sm:block">
 								<div class="avatar">
 									<div class="mask mask-squircle h-12 w-12 bg-primary">
 										{#if character.image_url}
