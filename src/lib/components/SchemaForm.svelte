@@ -3,7 +3,8 @@
 	import { beforeNavigate } from "$app/navigation";
 	import type { ActionResult } from "@sveltejs/kit";
 	import { createEventDispatcher } from "svelte";
-	import type { ZodError, z } from "zod";
+	import type { ObjectSchema, Output } from "valibot";
+	import { ValiError, flatten } from "valibot";
 
 	const dispatch = createEventDispatcher<{
 		"before-submit": null;
@@ -11,10 +12,11 @@
 		errors: Record<string, string> | null;
 		"check-errors": null;
 	}>();
+
 	let elForm: HTMLFormElement;
 
 	export let form: (object & { error: string | null | undefined }) | null;
-	export let schema: z.ZodObject<any, any>;
+	export let schema: ObjectSchema<any, any>;
 	export let data: object;
 	export let action: string;
 	export let stringify = "";
@@ -35,18 +37,19 @@
 	export let errors: Record<string, string> = {};
 	$: {
 		if (changes.length) {
-			changes.forEach((c) => {
-				errors[c] = "";
-			});
+			errors = {};
 			try {
 				schema.parse(data);
 			} catch (error) {
 				changes.forEach((c) => {
-					(error as ZodError).errors
-						.filter((e) => e.path[0] === c)
-						.forEach((e) => {
-							errors[e.path[0].toString()] = e.message;
-						});
+					if (error instanceof ValiError) {
+						const flatErrors = flatten(error);
+						for (const path in flatErrors.nested) {
+							for (const err in flatErrors.nested[path]) {
+								if (path === c && !errors[c]) errors[c] = err;
+							}
+						}
+					}
 				});
 			}
 
@@ -56,14 +59,19 @@
 		}
 	}
 
-	function checkErrors(data: z.infer<typeof schema>) {
+	function checkErrors(data: Output<ObjectSchema<any, any>>) {
 		let result = null;
 		try {
 			result = schema.parse(data);
 		} catch (error) {
-			(error as ZodError).errors.forEach((e) => {
-				errors[e.path[0].toString()] = e.message;
-			});
+			if (error instanceof ValiError) {
+				const flatErrors = flatten(error);
+				for (const path in flatErrors.nested) {
+					for (const err in flatErrors.nested[path]) {
+						if (path && !errors[path]) errors[path] = err;
+					}
+				}
+			}
 		}
 
 		return result;
@@ -84,7 +92,9 @@
 
 	$: {
 		if (elForm && data) {
-			elForm.querySelectorAll("input, textarea, select").forEach((el) => el.addEventListener("input", inputChanged));
+			setTimeout(() => {
+				elForm.querySelectorAll("input, textarea, select").forEach((el) => el.addEventListener("input", inputChanged));
+			}, 10);
 		}
 	}
 

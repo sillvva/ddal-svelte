@@ -3,15 +3,20 @@
 	import BreadCrumbs from "$lib/components/BreadCrumbs.svelte";
 	import Icon from "$lib/components/Icon.svelte";
 	import SchemaForm from "$lib/components/SchemaForm.svelte";
-	import { newCharacterSchema } from "$lib/types/zod-schema";
+	import { newCharacterSchema } from "$src/lib/types/schemas";
 
 	export let data;
 	export let form;
 
-	const character = data.character;
+	let character = data.character;
 
 	let saving = false;
 	let errors: Record<string, string> = {};
+
+	export const snapshot = {
+		capture: () => character,
+		restore: (values) => (character = values)
+	};
 </script>
 
 <BreadCrumbs />

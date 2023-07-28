@@ -1,3 +1,12 @@
+import { building } from "$app/environment";
+import { checkEnv } from "$src/lib/types/env.js";
+
+if (building) {
+	checkEnv().then((env) => {
+		if (env) console.log("✅ Environment variables are valid");
+	});
+}
+
 export const load = async (event) => {
 	return {
 		session: await event.locals.getSession(),

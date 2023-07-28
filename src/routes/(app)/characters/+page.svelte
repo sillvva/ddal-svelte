@@ -43,17 +43,21 @@
 	let search = "";
 	minisearch.addAll(indexed);
 	$: msResults = minisearch.search(search);
+	$: resultsMap = new Map(msResults.map((result) => [result.id, result]));
 	$: results =
 		indexed.length && search.length > 1
 			? characters
-					.filter((character) => msResults.find((result) => result.id === character.id))
-					.map((character) => ({
-						...character,
-						score: msResults.find((result) => result.id === character.id)?.score || character.name,
-						match: Object.entries(msResults.find((result) => result.id === character.id)?.match || {})
-							.map(([, value]) => value[0] || "")
-							.filter((v) => !!v)
-					}))
+					.filter((character) => resultsMap.has(character.id))
+					.map((character) => {
+						const { score = character.name, match = {} } = resultsMap.get(character.id) || {};
+						return {
+							...character,
+							score: score,
+							match: Object.values(match)
+								.map((value) => value[0])
+								.filter(Boolean)
+						};
+					})
 					.sort((a, b) => sorter(a.total_level, b.total_level) || sorter(a.name, b.name))
 			: characters
 					.sort((a, b) => sorter(a.total_level, b.total_level) || sorter(a.name, b.name))
@@ -145,9 +149,17 @@
 	</div>
 
 	<div class={twMerge("w-full overflow-x-auto rounded-lg", display == "grid" && "block xs:hidden")}>
-		<div class={twMerge("grid-table", characters.length && "grid-characters-mobile sm:grid-characters")}>
+		<div
+			class={twMerge(
+				"grid-table",
+				!data.mobile && "grid-characters-mobile sm:grid-characters",
+				characters.length && data.mobile && "grid-characters-mobile sm:grid-characters-mobile-sm"
+			)}
+		>
 			<header class="!hidden sm:!contents">
-				<div />
+				{#if !data.mobile}
+					<div class="hidden sm:block" />
+				{/if}
 				<div>Name</div>
 				<div>Campaign</div>
 				<div class="text-center">Tier</div>
@@ -165,24 +177,26 @@
 			{:else}
 				{#each results as character}
 					<a href={`/characters/${character.id}`} class="img-grow">
-						<div class="pr-0 transition-colors sm:pr-2">
-							<div class="avatar">
-								<div class="mask mask-squircle h-12 w-12 bg-primary">
-									{#if character.image_url}
-										<img
-											data-src={character.image_url}
-											width={48}
-											height={48}
-											class="h-full w-full object-cover object-top transition-all hover:scale-125"
-											alt={character.name}
-											use:lazy={{ rootMargin: "100px" }}
-										/>
-									{:else}
-										<Icon src="account" class="w-12" />
-									{/if}
+						{#if !data.mobile}
+							<div class="pr-0 transition-colors sm:pr-2 hidden sm:block">
+								<div class="avatar">
+									<div class="mask mask-squircle h-12 w-12 bg-primary">
+										{#if character.image_url}
+											<img
+												data-src={character.image_url}
+												width={48}
+												height={48}
+												class="h-full w-full object-cover object-top transition-all hover:scale-125"
+												alt={character.name}
+												use:lazy={{ rootMargin: "100px" }}
+											/>
+										{:else}
+											<Icon src="account" class="w-12" />
+										{/if}
+									</div>
 								</div>
 							</div>
-						</div>
+						{/if}
 						<div>
 							<div class="whitespace-pre-wrap text-base font-bold text-accent-content sm:text-xl">
 								<SearchResults text={character.name} {search} />

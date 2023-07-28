@@ -8,7 +8,6 @@ import type { SvelteKitAuthConfig } from "@auth/sveltekit";
 import type { Handle } from "@sveltejs/kit";
 import type { Provider } from "@auth/core/providers";
 import type { Profile } from "@auth/core/types";
-
 export const authOptions = {
 	// Include user.id on session
 	callbacks: {

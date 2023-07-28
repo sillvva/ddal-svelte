@@ -67,7 +67,10 @@ body {
 		grid-template-columns: auto 1fr auto auto auto;
 	}
 	.grid-characters-mobile {
-		grid-template-columns: auto 1fr;
+		grid-template-columns: 1fr;
+	}
+	.grid-characters-mobile-sm {
+		grid-template-columns: 1fr auto auto auto;
 	}
 }
 

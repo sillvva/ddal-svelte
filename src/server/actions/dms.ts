@@ -1,11 +1,10 @@
 import { prisma } from "$src/server/db";
 import { getUserDMs, getUserDMsWithLogs } from "../data/dms";
 
-import type { z } from "zod";
-import type { dungeonMasterSchema } from "$lib/types/zod-schema";
+import type { DungeonMasterSchema } from "$src/lib/types/schemas";
 
 export type SaveDMResult = ReturnType<typeof saveDM>;
-export async function saveDM(dmId: string, userId: string, data: z.infer<typeof dungeonMasterSchema>) {
+export async function saveDM(dmId: string, userId: string, data: DungeonMasterSchema) {
 	try {
 		const dms = await getUserDMs(userId);
 		if (!dms.find((dm) => dm.id === dmId)) throw new Error("You do not have permission to edit this DM");
