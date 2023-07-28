@@ -147,7 +147,9 @@
 	<div class={twMerge("w-full overflow-x-auto rounded-lg", display == "grid" && "block xs:hidden")}>
 		<div class={twMerge("grid-table", characters.length && "grid-characters-mobile sm:grid-characters")}>
 			<header class="!hidden sm:!contents">
-				<div />
+				{#if !data.mobile}
+					<div />
+				{/if}
 				<div>Name</div>
 				<div>Campaign</div>
 				<div class="text-center">Tier</div>
@@ -165,24 +167,26 @@
 			{:else}
 				{#each results as character}
 					<a href={`/characters/${character.id}`} class="img-grow">
-						<div class="pr-0 transition-colors sm:pr-2">
-							<div class="avatar">
-								<div class="mask mask-squircle h-12 w-12 bg-primary">
-									{#if character.image_url}
-										<img
-											data-src={character.image_url}
-											width={48}
-											height={48}
-											class="h-full w-full object-cover object-top transition-all hover:scale-125"
-											alt={character.name}
-											use:lazy={{ rootMargin: "100px" }}
-										/>
-									{:else}
-										<Icon src="account" class="w-12" />
-									{/if}
+						{#if !data.mobile}
+							<div class="pr-0 transition-colors sm:pr-2">
+								<div class="avatar">
+									<div class="mask mask-squircle h-12 w-12 bg-primary">
+										{#if character.image_url}
+											<img
+												data-src={character.image_url}
+												width={48}
+												height={48}
+												class="h-full w-full object-cover object-top transition-all hover:scale-125"
+												alt={character.name}
+												use:lazy={{ rootMargin: "100px" }}
+											/>
+										{:else}
+											<Icon src="account" class="w-12" />
+										{/if}
+									</div>
 								</div>
 							</div>
-						</div>
+						{/if}
 						<div>
 							<div class="whitespace-pre-wrap text-base font-bold text-accent-content sm:text-xl">
 								<SearchResults text={character.name} {search} />
