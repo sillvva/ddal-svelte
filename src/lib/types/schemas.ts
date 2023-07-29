@@ -19,14 +19,13 @@ import {
 
 import type { Output } from "valibot";
 
-export const dateRegex =
-	/^(-?(?:[1-9][0-9]*)?[0-9]{4})-(1[0-2]|0[1-9])-(3[01]|0[1-9]|[12][0-9])T(2[0-3]|[01][0-9]):([0-5][0-9]):([0-5][0-9])(\.[0-9]+)?(Z|[+-](?:2[0-3]|[01][0-9]):[0-5][0-9])?$/;
+export const dateSchema = union([date(), string([isoTimestamp()])]);
 
 export type LogSchema = Output<typeof logSchema>;
 export const logSchema = object({
 	id: useDefault(string(), ""),
 	name: string([minLength(1, "Required")]),
-	date: union([date(), string([isoTimestamp()])]),
+	date: dateSchema,
 	characterId: useDefault(string(), ""),
 	characterName: useDefault(string(), ""),
 	type: useDefault(union([literal("game"), literal("nongame")]), "game"),
@@ -44,7 +43,7 @@ export const logSchema = object({
 		uid: useDefault(string(), "")
 	}),
 	is_dm_log: useDefault(boolean(), false),
-	applied_date: useDefault(nullable(union([date(), string([isoTimestamp()])])), null),
+	applied_date: useDefault(nullable(dateSchema), null),
 	magic_items_gained: useDefault(
 		array(
 			object({
