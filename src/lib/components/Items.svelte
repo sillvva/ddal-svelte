@@ -16,6 +16,7 @@
 	export let sort = false;
 
 	let collapsed = collapsible;
+	const itemsMap = new Map<string, number>();
 
 	const sorterName = (name: string) =>
 		sort
@@ -25,12 +26,12 @@
 					.replace(/^(\w+)s/, "$1")
 					.replace(/^(A|An|The) /, "")
 			: name;
-
-	const clonedItems = structuredClone(items);
-	const itemsMap = new Map<string, number>();
 	const isConsumable = (name: string) => name.trim().match(/^(\d+x? )?((Potion|Scroll|Spell Scroll|Charm|Elixir)s? of)/);
 	const itemQty = (item: { name: string }) => parseInt(item.name.match(/^(\d+)x? /)?.[1] || "1");
 	const clearQty = (name: string) => name.replace(/^\d+x? ?/, "");
+
+	$: clonedItems = structuredClone(items);
+	$: if (items) itemsMap.clear();
 
 	$: consolidatedItems = clonedItems
 		.map((item, index) => {
@@ -52,7 +53,7 @@
 		.reduce(
 			(acc, { name, qty, key, index, cons }) => {
 				const existingIndex = itemsMap.get(key);
-				if (existingIndex) {
+				if (existingIndex && existingIndex >= 0) {
 					const existingQty = itemQty(acc[existingIndex]);
 
 					const newQty = existingQty + qty;
