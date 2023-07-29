@@ -36,8 +36,8 @@
 
 	export let errors = new SvelteMap<string, string>();
 	$: {
+		errors = errors.clear();
 		if (changes.size) {
-			errors = errors.clear();
 			try {
 				schema.parse(data);
 			} catch (error) {
@@ -54,16 +54,13 @@
 			}
 
 			dispatch("check-errors");
-		} else {
-			errors = errors.clear();
 		}
 	}
 
 	function checkErrors(data: Output<ObjectSchema<any, any>>) {
-		let result = null;
 		errors = errors.clear();
 		try {
-			result = schema.parse(data);
+			schema.parse(data);
 		} catch (error) {
 			if (error instanceof ValiError) {
 				const flatErrors = flatten(error);
@@ -74,7 +71,6 @@
 				}
 			}
 		}
-		return result;
 	}
 
 	$: dispatch("errors", errors);
