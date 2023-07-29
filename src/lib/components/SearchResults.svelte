@@ -39,7 +39,7 @@
 	}
 </script>
 
-{#if search.length}
+{#if search.length > 1}
 	{#each parts as part}
 		{#if regex.test(part)}
 			<span class="bg-secondary px-1 text-black">{part}</span>
