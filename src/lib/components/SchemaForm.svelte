@@ -25,18 +25,18 @@
 	export let saving = false;
 	$: {
 		if (form?.error && saving) saving = false;
-		else if (form && saving) changes = [];
+		else if (form && saving) changes = new Set<string>();
 	}
 
-	export let changes: string[] = [];
-	let savedChanges: string[] = [];
+	export let changes = new Set<string>();
+	let savedChanges = new Set<string>();
 	export function addChanges(field: string) {
-		changes = [...changes.filter((c) => c !== field), field];
+		changes.add(field);
 	}
 
 	export let errors: Record<string, string> = {};
 	$: {
-		if (changes.length) {
+		if (changes.size) {
 			errors = {};
 			try {
 				schema.parse(data);
@@ -99,7 +99,7 @@
 	}
 
 	beforeNavigate((nav) => {
-		if (changes.length) {
+		if (changes.size) {
 			if (!confirm("You have unsaved changes. Are you sure you want to leave this page?")) nav.cancel();
 		}
 	});
@@ -111,8 +111,8 @@
 	bind:this={elForm}
 	use:enhance={(f) => {
 		dispatch("before-submit");
-		savedChanges = [...changes];
-		changes = [];
+		savedChanges = new Set([...changes]);
+		changes.clear();
 		form = null;
 		saving = true;
 
@@ -126,9 +126,9 @@
 		return async ({ update, result }) => {
 			await update({ reset: resetOnSave });
 			dispatch("after-submit", result);
-			if (result.type !== "redirect") {
-				changes = [...savedChanges];
-				savedChanges = [];
+			if (!["redirect", "success"].includes(result.type)) {
+				changes = new Set([...savedChanges]);
+				savedChanges.clear();
 			}
 		};
 	}}
