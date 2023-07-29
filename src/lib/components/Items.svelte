@@ -1,7 +1,6 @@
 <script lang="ts">
 	import { sorter } from "$lib/utils";
 	import type { MagicItem, StoryAward } from "@prisma/client";
-	import type { SearchResult } from "minisearch";
 	import { twMerge } from "tailwind-merge";
 	import { modal } from "../store";
 	import Icon from "./Icon.svelte";
@@ -12,7 +11,6 @@
 	export let formatting: boolean = false;
 	export let search: string = "";
 	export let collapsible: boolean = false;
-	export let msResult: SearchResult | null | undefined = null;
 	export let sort = false;
 
 	let collapsed = collapsible;
@@ -116,11 +114,11 @@
 				>
 					{#if formatting && isConsumable(mi.name)}
 						<em class:text-secondary={mi.description}>
-							<SearchResults text={mi.name + (mi.description && "*")} search={search || ""} {msResult} />
+							<SearchResults text={mi.name + (mi.description && "*")} search={search || ""} />
 						</em>
 					{:else}
 						<span class:text-secondary={mi.description}>
-							<SearchResults text={mi.name + (mi.description && "*")} search={search || ""} {msResult} />
+							<SearchResults text={mi.name + (mi.description && "*")} search={search || ""} />
 						</span>
 					{/if}
 				</span>
