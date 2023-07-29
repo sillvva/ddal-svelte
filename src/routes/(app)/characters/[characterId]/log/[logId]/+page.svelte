@@ -7,6 +7,7 @@
 	import { getMagicItems, getStoryAwards } from "$lib/entities";
 	import { formatDate, sorter } from "$lib/utils";
 	import ComboBox from "$src/lib/components/ComboBox.svelte";
+	import { SvelteMap } from "$src/lib/store.js";
 	import { logSchema } from "$src/lib/types/schemas";
 	import { twMerge } from "tailwind-merge";
 
@@ -17,7 +18,7 @@
 	let log = data.log;
 
 	let saving = false;
-	let errors: Record<string, string> = {};
+	let errors: SvelteMap<string, string> = new SvelteMap();
 
 	$: magicItems = character
 		? getMagicItems(character, { excludeDropped: true, lastLogDate: new Date(log.date).toISOString() }).sort((a, b) =>
@@ -30,12 +31,15 @@
 		  )
 		: [];
 
-	let dm = log.dm || {
+	const defaultDM = {
 		id: "",
 		name: "",
 		DCI: null,
 		uid: ""
 	};
+	let dm = log.dm || defaultDM;
+	$: dmName = dm.name.trim();
+	$: dmDCI = dm.DCI;
 
 	let season: 1 | 8 | 9 = log.experience ? 1 : log.acp ? 8 : 9;
 	let magicItemsGained = log.magic_items_gained.map((mi) => ({
@@ -62,8 +66,8 @@
 		story_awards_lost: storyAwardsLost,
 		dm: {
 			id: dm.id,
-			name: dm.name.trim(),
-			DCI: dm.DCI,
+			name: dmName,
+			DCI: dmDCI,
 			uid: dm.uid
 		}
 	};
@@ -115,10 +119,10 @@
 				disabled={saving}
 				bind:value={log.name}
 				class="input-bordered input w-full focus:border-primary"
-				aria-invalid={errors.name ? "true" : "false"}
+				aria-invalid={errors.get("name") ? "true" : "false"}
 			/>
 			<label for="name" class="label">
-				<span class="label-text-alt text-error">{errors.name || ""}</span>
+				<span class="label-text-alt text-error">{errors.get("name") || ""}</span>
 			</label>
 		</div>
 		<div class={twMerge("form-control col-span-12", log.is_dm_log ? "sm:col-span-6" : "sm:col-span-4")}>
@@ -138,10 +142,10 @@
 					log.date = new Date(e.currentTarget.value);
 				}}
 				class="input-bordered input w-full focus:border-primary"
-				aria-invalid={errors.date ? "true" : "false"}
+				aria-invalid={errors.get("date") ? "true" : "false"}
 			/>
 			<label for="date" class="label">
-				<span class="label-text-alt text-error">{errors.date || ""}</span>
+				<span class="label-text-alt text-error">{errors.get("date") || ""}</span>
 			</label>
 		</div>
 		<div class="col-span-12 grid grid-cols-12 gap-4">
@@ -157,17 +161,20 @@
 							<span class="label-text">DM Name</span>
 						</label>
 						<ComboBox
-							name="dmName"
+							name="dm.name"
 							value={dm.name}
 							values={data.dms.map((dm) => ({ key: dm.name, value: dm.name + (dm.DCI ? ` (${dm.DCI})` : "") })) || []}
 							disabled={saving}
 							on:select={(ev) => {
-								const updated = data.dms.find((dm) => dm.name === ev.detail);
-								if (updated) dm = updated;
+								if (ev.detail) {
+									const updated = data.dms.find((dm) => dm.name === ev.detail);
+									if (updated) dm = updated;
+									else dm = { ...(dm.name ? dm : defaultDM), name: ev.detail.toString().trim() };
+								} else dm = defaultDM;
 							}}
 						/>
 						<label for="dmName" class="label">
-							<span class="label-text-alt text-error">{errors.dmName || ""}</span>
+							<span class="label-text-alt text-error">{errors.get("dm.name") || ""}</span>
 						</label>
 					</div>
 					<div class="form-control col-span-6">
@@ -175,17 +182,21 @@
 							<span class="label-text">DM DCI</span>
 						</label>
 						<ComboBox
-							name="dmDCI"
+							name="dm.DCI"
+							type="number"
 							value={dm.DCI}
 							values={data.dms.map((dm) => ({ key: dm.DCI, value: dm.name + (dm.DCI ? ` (${dm.DCI})` : "") })) || []}
 							disabled={saving}
 							on:select={(ev) => {
-								const updated = data.dms.find((dm) => dm.DCI === ev.detail);
-								if (updated) dm = updated;
+								if (ev.detail) {
+									const updated = data.dms.find((dm) => dm.DCI === ev.detail);
+									if (updated) dm = updated;
+									else dm = { ...(dm.name ? dm : defaultDM), DCI: ev.detail.toString().trim() };
+								} else dm = { ...(dm.name ? dm : defaultDM), DCI: null };
 							}}
 						/>
 						<label for="dmDCI" class="label">
-							<span class="label-text-alt text-error">{errors.dmDCI || ""}</span>
+							<span class="label-text-alt text-error">{errors.get("dm.DCI") || ""}</span>
 						</label>
 					</div>
 				{/if}
@@ -213,7 +224,7 @@
 							class="input-bordered input w-full focus:border-primary"
 						/>
 						<label for="experience" class="label">
-							<span class="label-text-alt text-error">{errors.experience || ""}</span>
+							<span class="label-text-alt text-error">{errors.get("experience") || ""}</span>
 						</label>
 					</div>
 				{/if}
@@ -232,7 +243,7 @@
 							class="input-bordered input w-full focus:border-primary"
 						/>
 						<label for="level" class="label">
-							<span class="label-text-alt text-error">{errors.level || ""}</span>
+							<span class="label-text-alt text-error">{errors.get("level") || ""}</span>
 						</label>
 					</div>
 				{/if}
@@ -251,7 +262,7 @@
 							class="input-bordered input w-full focus:border-primary"
 						/>
 						<label for="acp" class="label">
-							<span class="label-text-alt text-error">{errors.acp || ""}</span>
+							<span class="label-text-alt text-error">{errors.get("acp") || ""}</span>
 						</label>
 					</div>
 				{/if}
@@ -267,7 +278,7 @@
 						class="input-bordered input w-full focus:border-primary"
 					/>
 					<label for="tcp" class="label">
-						<span class="label-text-alt text-error">{errors.tcp || ""}</span>
+						<span class="label-text-alt text-error">{errors.get("tcp") || ""}</span>
 					</label>
 				</div>
 			{/if}
@@ -283,7 +294,7 @@
 					class="input-bordered input w-full focus:border-primary"
 				/>
 				<label for="gold" class="label">
-					<span class="label-text-alt text-error">{errors.gold || ""}</span>
+					<span class="label-text-alt text-error">{errors.get("gold") || ""}</span>
 				</label>
 			</div>
 			<div class={twMerge("form-control w-full", log.type === "game" ? "col-span-6 sm:col-span-2" : "col-span-4")}>
@@ -298,7 +309,7 @@
 					class="input-bordered input w-full focus:border-primary"
 				/>
 				<label for="dtd" class="label">
-					<span class="label-text-alt text-error">{errors.dtd || ""}</span>
+					<span class="label-text-alt text-error">{errors.get("dtd") || ""}</span>
 				</label>
 			</div>
 		</div>
@@ -313,7 +324,7 @@
 				class="textarea-bordered textarea w-full focus:border-primary"
 			/>
 			<label for="description" class="label">
-				<span class="label-text-alt text-error">{errors.description || ""}</span>
+				<span class="label-text-alt text-error">{errors.get("description") || ""}</span>
 				<span class="label-text-alt">Markdown Allowed</span>
 			</label>
 		</div>
@@ -378,7 +389,7 @@
 									class="input-bordered input w-full focus:border-primary"
 								/>
 								<label for={`magic_items_gained.${index}.name`} class="label">
-									<span class="label-text-alt text-error">{errors[`magic_items_gained.${index}.name`] || ""}</span>
+									<span class="label-text-alt text-error">{errors.get(`magic_items_gained.${index}.name`) || ""}</span>
 								</label>
 							</div>
 							<button
@@ -436,7 +447,7 @@
 									{/each}
 								</select>
 								<label for={`magic_items_lost.${index}`} class="label">
-									<span class="label-text-alt text-error">{errors[`magic_items_lost.${index}`] || ""}</span>
+									<span class="label-text-alt text-error">{errors.get(`magic_items_lost.${index}`) || ""}</span>
 								</label>
 							</div>
 							<button
@@ -471,7 +482,7 @@
 									class="input-bordered input w-full focus:border-primary"
 								/>
 								<label for={`story_awards_gained.${index}.name`} class="label">
-									<span class="label-text-alt text-error">{errors[`story_awards_gained.${index}.name`] || ""}</span>
+									<span class="label-text-alt text-error">{errors.get(`story_awards_gained.${index}.name`) || ""}</span>
 								</label>
 							</div>
 							<button
@@ -529,7 +540,7 @@
 									{/each}
 								</select>
 								<label for={`story_awards_lost.${index}`} class="label">
-									<span class="label-text-alt text-error">{errors[`story_awards_lost.${index}`] || ""}</span>
+									<span class="label-text-alt text-error">{errors.get(`story_awards_lost.${index}`) || ""}</span>
 								</label>
 							</div>
 							<button

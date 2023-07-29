@@ -27,7 +27,7 @@
 	let search = value?.toString() || "";
 	let selected = false;
 
-	$: parsedValues = values.map((v) => ({ key: v.key ?? v.value, value: v.value })).filter((v) => v.key !== null);
+	$: parsedValues = values.map((v) => ({ key: v.key ?? "", value: v.value })).filter((v) => v.key !== null);
 	$: matches =
 		parsedValues && parsedValues.length > 0 && search.trim()
 			? parsedValues
@@ -103,12 +103,12 @@
 				}
 			}}
 			on:blur={(e) => {
-				if (!selected && search.trim()) {
-					if (matches.length)
-						selectHandler(matches.findIndex((v) => v[searchBy].toString().toLowerCase() === e.currentTarget.value.toLowerCase()));
-					else {
-						selectNew(search);
-					}
+				if (!selected) {
+					if (search.trim()) {
+						const match = matches.findIndex((v) => v[searchBy].toString().toLowerCase() === e.currentTarget.value.toLowerCase());
+						if (match >= 0) selectHandler(match);
+						else selectNew(search.trim());
+					} else selectNew(search.trim());
 				}
 				dispatch("blur", e);
 			}}
