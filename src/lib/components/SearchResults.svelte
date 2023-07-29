@@ -8,18 +8,15 @@
 	export let separator = " | ";
 	export let msResult: SearchResult | null | undefined = null;
 
-	$: regexes = search
+	$: term = (search.length > 1 ? search : "")
 		.replace(new RegExp(` ?\\b(${[...stopWords].join("|")})\\b ?`, "gi"), " ")
-		.trim()
+		.replace(/([^ a-z0-9])/gi, "\\$1")
+		.trim();
+	$: regexes = term
 		.split(" ")
+		.filter(Boolean)
 		.map((word) => new RegExp(word, "gi"));
-	$: regex = new RegExp(
-		search
-			.replace(new RegExp(` ?\\b(${[...stopWords].join("|")})\\b ?`, "gi"), " ")
-			.trim()
-			.replace(/ /gi, "|"),
-		"gi"
-	);
+	$: regex = term ? new RegExp(term.replace(/ /gi, "|"), "gi") : null;
 
 	$: items1 = Array.isArray(text)
 		? text.filter((item) => !filtered || regexes.every((regex) => item.match(regex)))
@@ -27,19 +24,18 @@
 	$: items =
 		msResult && !items1.length
 			? (Array.isArray(text)
-					? text.filter((item) => !filtered || item.match(regex))
-					: text?.split(separator).filter((item) => !filtered || item.match(regex)) || []
+					? text.filter((item) => !filtered || !regex || item.match(regex))
+					: text?.split(separator).filter((item) => !filtered || !regex || item.match(regex)) || []
 			  ).join(separator)
 			: items1.join(separator);
-
-	$: match = items.match(regex);
-	$: parts = items.split(regex) || [];
+	$: match = regex ? items.match(regex) : [];
+	$: parts = (regex && items.split(regex)) || [];
 	$: for (let i = 1; i < parts.length; i += 2) {
 		parts.splice(i, 0, match?.[(i - 1) / 2] || "");
 	}
 </script>
 
-{#if search.length > 1}
+{#if parts.length && regex}
 	{#each parts as part}
 		{#if regex.test(part)}
 			<span class="bg-secondary px-1 text-black">{part}</span>
