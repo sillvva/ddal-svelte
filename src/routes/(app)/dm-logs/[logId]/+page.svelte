@@ -6,7 +6,7 @@
 	import SchemaForm from "$lib/components/SchemaForm.svelte";
 	import { formatDate } from "$lib/utils";
 	import ComboBox from "$src/lib/components/ComboBox.svelte";
-	import { SvelteMap } from "$src/lib/store.js";
+	import { SvelteMap } from "$src/lib/store";
 	import { logSchema } from "$src/lib/types/schemas";
 	import { twMerge } from "tailwind-merge";
 
