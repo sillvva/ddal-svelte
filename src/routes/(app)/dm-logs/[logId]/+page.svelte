@@ -17,7 +17,7 @@
 	let character = data.character;
 
 	let saving = false;
-	let errors: SvelteMap<string, string> = new SvelteMap();
+	let errors = new SvelteMap<string, string>();
 
 	$: values = {
 		...log,

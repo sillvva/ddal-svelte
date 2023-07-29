@@ -18,7 +18,7 @@
 	let log = data.log;
 
 	let saving = false;
-	let errors: SvelteMap<string, string> = new SvelteMap();
+	let errors = new SvelteMap<string, string>();
 
 	$: magicItems = character
 		? getMagicItems(character, { excludeDropped: true, lastLogDate: new Date(log.date).toISOString() }).sort((a, b) =>

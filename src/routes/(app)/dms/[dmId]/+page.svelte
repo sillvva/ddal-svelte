@@ -14,7 +14,7 @@
 	let dm = data.dm;
 
 	let saving = false;
-	let errors: SvelteMap<string, string> = new SvelteMap();
+	let errors = new SvelteMap<string, string>();
 </script>
 
 <div class="flex flex-col gap-4">
