@@ -105,6 +105,8 @@
 				<span
 					role={mi.description ? "button" : "presentation"}
 					class="inline pl-2 pr-1 first:pl-0"
+					class:text-secondary={mi.description}
+					class:italic={formatting && isConsumable(mi.name)}
 					on:click={() => {
 						if (mi.description) {
 							$modal = { name: mi.name, description: mi.description };
@@ -112,15 +114,7 @@
 					}}
 					on:keypress={() => null}
 				>
-					{#if formatting && isConsumable(mi.name)}
-						<em class:text-secondary={mi.description}>
-							<SearchResults text={mi.name + (mi.description && "*")} search={search || ""} />
-						</em>
-					{:else}
-						<span class:text-secondary={mi.description}>
-							<SearchResults text={mi.name + (mi.description && "*")} search={search || ""} />
-						</span>
-					{/if}
+					<SearchResults text={mi.name} search={search || ""} />
 				</span>
 			{/each}
 		{:else}
