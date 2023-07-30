@@ -451,19 +451,9 @@
 							{/if}
 							{#if log.magic_items_gained.length > 0 || log.magic_items_lost.length > 0}
 								<div>
-									<Items
-										title="Magic Items:"
-										items={log.magic_items_gained}
-										{search}
-										msResult={msResults.find((result) => result.id === log.id)}
-										sort
-									/>
+									<Items title="Magic Items:" items={log.magic_items_gained} {search} sort />
 									<div class="whitespace-pre-wrap text-sm line-through">
-										<SearchResults
-											text={log.magic_items_lost.map((mi) => mi.name).join(" | ")}
-											{search}
-											msResult={msResults.find((result) => result.id === log.id)}
-										/>
+										<SearchResults text={log.magic_items_lost.map((mi) => mi.name).join(" | ")} {search} />
 									</div>
 								</div>
 							{/if}
@@ -478,13 +468,9 @@
 						>
 							{#if log.story_awards_gained.length > 0 || log.story_awards_lost.length > 0}
 								<div>
-									<Items items={log.story_awards_gained} {search} msResult={msResults.find((result) => result.id === log.id)} />
+									<Items items={log.story_awards_gained} {search} />
 									<div class="whitespace-pre-wrap text-sm line-through">
-										<SearchResults
-											text={log.story_awards_lost.map((mi) => mi.name).join(" | ")}
-											{search}
-											msResult={msResults.find((result) => result.id === log.id)}
-										/>
+										<SearchResults text={log.story_awards_lost.map((mi) => mi.name).join(" | ")} {search} />
 									</div>
 								</div>
 							{/if}
@@ -551,20 +537,10 @@
 								{/if}
 								{#if log.magic_items_gained.length > 0 || log.magic_items_lost.length > 0}
 									<div class="mt-2 print:hidden sm:hidden">
-										<Items
-											title="Magic Items:"
-											items={log.magic_items_gained}
-											{search}
-											msResult={msResults.find((result) => result.id === log.id)}
-											sort
-										/>
+										<Items title="Magic Items:" items={log.magic_items_gained} {search} sort />
 										{#if log.magic_items_lost.length}
 											<p class="mt-2 whitespace-pre-wrap text-sm line-through">
-												<SearchResults
-													text={log.magic_items_lost.map((mi) => mi.name).join(" | ")}
-													{search}
-													msResult={msResults.find((result) => result.id === log.id)}
-												/>
+												<SearchResults text={log.magic_items_lost.map((mi) => mi.name).join(" | ")} {search} />
 											</p>
 										{/if}
 									</div>

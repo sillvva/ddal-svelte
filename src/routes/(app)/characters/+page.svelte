@@ -216,11 +216,7 @@
 							{#if (character.match.includes("magicItems") || magicItems) && character.magic_items.length}
 								<div class="mb-2">
 									<p class="font-semibold">Magic Items:</p>
-									<SearchResults
-										text={character.magic_items.map((item) => item.name)}
-										{search}
-										msResult={msResults.find((result) => result.id === character.id)}
-									/>
+									<SearchResults text={character.magic_items.map((item) => item.name)} {search} />
 								</div>
 							{/if}
 						</div>
@@ -278,12 +274,7 @@
 								{#if search.length >= 1 && indexed.length && miMatches}
 									<div class="absolute inset-0 flex items-center bg-black/50 p-2 text-center text-xs text-white">
 										<div class="flex-1">
-											<SearchResults
-												text={character.magic_items.map((item) => item.name)}
-												{search}
-												msResult={msResults.find((result) => result.id === character.id)}
-												filtered
-											/>
+											<SearchResults text={character.magic_items.map((item) => item.name)} {search} filtered />
 										</div>
 									</div>
 								{/if}

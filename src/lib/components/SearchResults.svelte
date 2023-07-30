@@ -1,45 +1,59 @@
 <script lang="ts">
 	import { stopWords } from "$lib/utils";
-	import type { SearchResult } from "minisearch";
 
 	export let text: string | string[] | null = "";
 	export let search: string = "";
 	export let filtered = false;
 	export let separator = " | ";
-	export let msResult: SearchResult | null | undefined = null;
 
-	$: regexes = search
-		.replace(new RegExp(` ?\\b(${[...stopWords].join("|")})\\b ?`, "gi"), " ")
-		.trim()
-		.split(" ")
-		.map((word) => new RegExp(word, "gi"));
-	$: regex = new RegExp(
-		search
+	$: terms = getSearchTerms(search);
+	$: regexes = getRegexesFromTerms(terms);
+	$: regex = getJoinedRegexFromTerms(terms);
+	$: items = getTextItems(text, filtered, regexes);
+	$: match = getMatchedItems(items, regex);
+	$: parts = getPartionedItems(items, match, regex);
+
+	function getSearchTerms(search: string): string[] {
+		return (search.length > 1 ? search : "")
 			.replace(new RegExp(` ?\\b(${[...stopWords].join("|")})\\b ?`, "gi"), " ")
+			.replace(/([^ a-z0-9])/gi, "\\$1")
 			.trim()
-			.replace(/ /gi, "|"),
-		"gi"
-	);
+			.split(" ")
+			.filter(Boolean);
+	}
 
-	$: items1 = Array.isArray(text)
-		? text.filter((item) => !filtered || regexes.every((regex) => item.match(regex)))
-		: text?.split(separator).filter((item) => !filtered || regexes.every((regex) => item.match(regex))) || [];
-	$: items =
-		msResult && !items1.length
-			? (Array.isArray(text)
-					? text.filter((item) => !filtered || item.match(regex))
-					: text?.split(separator).filter((item) => !filtered || item.match(regex)) || []
-			  ).join(separator)
-			: items1.join(separator);
+	function getRegexesFromTerms(terms: string[]) {
+		return terms.map((term) => new RegExp(term, "gi"));
+	}
 
-	$: match = items.match(regex);
-	$: parts = items.split(regex) || [];
-	$: for (let i = 1; i < parts.length; i += 2) {
-		parts.splice(i, 0, match?.[(i - 1) / 2] || "");
+	function getJoinedRegexFromTerms(terms: string[]) {
+		return terms.length ? new RegExp(terms.join("|"), "gi") : null;
+	}
+
+	function getTextItems(text: string | string[] | null, filtered: boolean, regexes: RegExp[]) {
+		return (Array.isArray(text) ? text : text?.split(separator) || [])
+			.filter((item) => !filtered || regexes.every((regex) => item.match(regex)))
+			.join(separator);
+	}
+
+	function getMatchedItems(items: string, regex: RegExp | null) {
+		return regex && items.match(regex);
+	}
+
+	function getPartionedItems(items: string, match: RegExpMatchArray | null, regex: RegExp | null) {
+		if (!match) return [];
+
+		const splittedItems = regex ? items.split(regex) : [];
+
+		for (let i = 1; i < splittedItems.length; i += 2) {
+			splittedItems.splice(i, 0, match[(i - 1) / 2] || "");
+		}
+
+		return splittedItems;
 	}
 </script>
 
-{#if search.length}
+{#if parts.length && regex}
 	{#each parts as part}
 		{#if regex.test(part)}
 			<span class="bg-secondary px-1 text-black">{part}</span>

@@ -5,11 +5,12 @@
 	import { createEventDispatcher } from "svelte";
 	import type { ObjectSchema, Output } from "valibot";
 	import { ValiError, flatten } from "valibot";
+	import { SvelteMap, SvelteSet } from "../store";
 
 	const dispatch = createEventDispatcher<{
 		"before-submit": null;
 		"after-submit": ActionResult;
-		errors: Record<string, string> | null;
+		errors: SvelteMap<string, string>;
 		"check-errors": null;
 	}>();
 
@@ -25,19 +26,18 @@
 	export let saving = false;
 	$: {
 		if (form?.error && saving) saving = false;
-		else if (form && saving) changes = [];
+		else if (form && saving) changes = changes.clear();
 	}
 
-	export let changes: string[] = [];
-	let savedChanges: string[] = [];
+	export let changes = new SvelteSet<string>();
 	export function addChanges(field: string) {
-		changes = [...changes.filter((c) => c !== field), field];
+		changes = changes.add(field);
 	}
 
-	export let errors: Record<string, string> = {};
+	export let errors = new SvelteMap<string, string>();
 	$: {
-		if (changes.length) {
-			errors = {};
+		errors = errors.clear();
+		if (changes.size) {
 			try {
 				schema.parse(data);
 			} catch (error) {
@@ -45,8 +45,8 @@
 					if (error instanceof ValiError) {
 						const flatErrors = flatten(error);
 						for (const path in flatErrors.nested) {
-							for (const err in flatErrors.nested[path]) {
-								if (path === c && !errors[c]) errors[c] = err;
+							for (const err of flatErrors.nested[path] || []) {
+								if (path === c && !errors.has(c)) errors = errors.set(c, err);
 							}
 						}
 					}
@@ -54,36 +54,26 @@
 			}
 
 			dispatch("check-errors");
-		} else {
-			errors = {};
 		}
 	}
 
 	function checkErrors(data: Output<ObjectSchema<any, any>>) {
-		let result = null;
+		errors = errors.clear();
 		try {
-			result = schema.parse(data);
+			schema.parse(data);
 		} catch (error) {
 			if (error instanceof ValiError) {
 				const flatErrors = flatten(error);
 				for (const path in flatErrors.nested) {
-					for (const err in flatErrors.nested[path]) {
-						if (path && !errors[path]) errors[path] = err;
+					for (const err of flatErrors.nested[path] || []) {
+						if (path && !errors.has(path)) errors = errors.set(path, err);
 					}
 				}
 			}
 		}
-
-		return result;
 	}
 
-	$: {
-		if (Object.values(errors).length) {
-			dispatch("errors", errors);
-		} else {
-			dispatch("errors", null);
-		}
-	}
+	$: dispatch("errors", errors);
 
 	const inputChanged = (ev: Event) => {
 		const name = (ev.currentTarget as HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement | null)?.getAttribute("name");
@@ -93,13 +83,14 @@
 	$: {
 		if (elForm && data) {
 			setTimeout(() => {
-				elForm.querySelectorAll("input, textarea, select").forEach((el) => el.addEventListener("input", inputChanged));
+				if (elForm)
+					elForm.querySelectorAll("input, textarea, select").forEach((el) => el.addEventListener("input", inputChanged));
 			}, 10);
 		}
 	}
 
 	beforeNavigate((nav) => {
-		if (changes.length) {
+		if (changes.size) {
 			if (!confirm("You have unsaved changes. Are you sure you want to leave this page?")) nav.cancel();
 		}
 	});
@@ -111,8 +102,8 @@
 	bind:this={elForm}
 	use:enhance={(f) => {
 		dispatch("before-submit");
-		savedChanges = [...changes];
-		changes = [];
+		const savedChanges = new SvelteSet([...changes]);
+		changes.clear();
 		form = null;
 		saving = true;
 
@@ -126,9 +117,9 @@
 		return async ({ update, result }) => {
 			await update({ reset: resetOnSave });
 			dispatch("after-submit", result);
-			if (result.type !== "redirect") {
-				changes = [...savedChanges];
-				savedChanges = [];
+			if (!["redirect", "success"].includes(result.type)) {
+				changes = new SvelteSet([...savedChanges]);
+				savedChanges.clear();
 			}
 		};
 	}}

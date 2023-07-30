@@ -6,6 +6,7 @@
 	import SchemaForm from "$lib/components/SchemaForm.svelte";
 	import { formatDate } from "$lib/utils";
 	import ComboBox from "$src/lib/components/ComboBox.svelte";
+	import { SvelteMap } from "$src/lib/store";
 	import { logSchema } from "$src/lib/types/schemas";
 	import { twMerge } from "tailwind-merge";
 
@@ -16,7 +17,7 @@
 	let character = data.character;
 
 	let saving = false;
-	let errors: Record<string, string> = {};
+	let errors = new SvelteMap<string, string>();
 
 	$: values = {
 		...log,
@@ -38,15 +39,15 @@
 
 	function extraErrors() {
 		if (values.characterId && !(data.characters || []).find((c) => c.id === values.characterId)) {
-			errors["characterId"] = "Character not found";
+			errors = errors.set("characterId", "Character not found");
 		}
 
 		if (character?.name && !values.applied_date) {
-			errors["applied_date"] = "Applied date is required if assigned character is entered";
+			errors = errors.set("applied_date", "Applied date is required if assigned character is entered");
 		}
 
 		if (values.applied_date && !values.characterId) {
-			errors["characterId"] = "Assigned character is required if applied date is entered";
+			errors = errors.set("characterId", "Assigned character is required if applied date is entered");
 		}
 	}
 
@@ -114,10 +115,10 @@
 				bind:value={log.name}
 				disabled={saving}
 				class="input-bordered input w-full focus:border-primary"
-				aria-invalid={errors.name ? "true" : "false"}
+				aria-invalid={errors.get("name") ? "true" : "false"}
 			/>
 			<label for="name" class="label">
-				<span class="label-text-alt text-error">{errors.name || ""}</span>
+				<span class="label-text-alt text-error">{errors.get("name") || ""}</span>
 			</label>
 		</div>
 		<div class={twMerge("form-control col-span-12", log.is_dm_log ? "sm:col-span-6 lg:col-span-3" : "sm:col-span-4")}>
@@ -138,7 +139,7 @@
 				class="input-bordered input w-full focus:border-primary"
 			/>
 			<label for="date" class="label">
-				<span class="label-text-alt text-error">{errors.date || ""}</span>
+				<span class="label-text-alt text-error">{errors.get("date") || ""}</span>
 			</label>
 		</div>
 		<input type="hidden" name="characterId" bind:value={log.characterId} />
@@ -170,7 +171,7 @@
 				}}
 			/>
 			<label for="characterName" class="label">
-				<span class="label-text-alt text-error">{errors.characterId || ""}</span>
+				<span class="label-text-alt text-error">{errors.get("characterId") || ""}</span>
 			</label>
 		</div>
 		<div class={twMerge("form-control col-span-12", "sm:col-span-6 lg:col-span-3")}>
@@ -191,10 +192,10 @@
 				required={!!log.characterId}
 				disabled={saving}
 				class="input-bordered input w-full focus:border-primary"
-				aria-invalid={errors.applied_date ? "true" : "false"}
+				aria-invalid={errors.get("applied_date") ? "true" : "false"}
 			/>
 			<label for="applied_date" class="label">
-				<span class="label-text-alt text-error">{errors.applied_date || ""}</span>
+				<span class="label-text-alt text-error">{errors.get("applied_date") || ""}</span>
 			</label>
 		</div>
 		<div class="col-span-12 grid grid-cols-12 gap-4">
@@ -221,7 +222,7 @@
 						class="input-bordered input w-full focus:border-primary"
 					/>
 					<label for="experience" class="label">
-						<span class="label-text-alt text-error">{errors.experience || ""}</span>
+						<span class="label-text-alt text-error">{errors.get("experience") || ""}</span>
 					</label>
 				</div>
 			{/if}
@@ -239,7 +240,7 @@
 						class="input-bordered input w-full focus:border-primary"
 					/>
 					<label for="level" class="label">
-						<span class="label-text-alt text-error">{errors.level || ""}</span>
+						<span class="label-text-alt text-error">{errors.get("level") || ""}</span>
 					</label>
 				</div>
 			{/if}
@@ -257,7 +258,7 @@
 						class="input-bordered input w-full focus:border-primary"
 					/>
 					<label for="acp" class="label">
-						<span class="label-text-alt text-error">{errors.acp || ""}</span>
+						<span class="label-text-alt text-error">{errors.get("acp") || ""}</span>
 					</label>
 				</div>
 				<div class={twMerge("form-control w-full", "col-span-6 sm:col-span-2")}>
@@ -272,7 +273,7 @@
 						class="input-bordered input w-full focus:border-primary"
 					/>
 					<label for="tcp" class="label">
-						<span class="label-text-alt text-error">{errors.tcp || ""}</span>
+						<span class="label-text-alt text-error">{errors.get("tcp") || ""}</span>
 					</label>
 				</div>
 			{/if}
@@ -288,7 +289,7 @@
 					class="input-bordered input w-full focus:border-primary"
 				/>
 				<label for="gold" class="label">
-					<span class="label-text-alt text-error">{errors.gold || ""}</span>
+					<span class="label-text-alt text-error">{errors.get("gold") || ""}</span>
 				</label>
 			</div>
 			<div class={twMerge("form-control w-full", "col-span-6 sm:col-span-2")}>
@@ -303,7 +304,7 @@
 					class="input-bordered input w-full focus:border-primary"
 				/>
 				<label for="dtd" class="label">
-					<span class="label-text-alt text-error">{errors.dtd || ""}</span>
+					<span class="label-text-alt text-error">{errors.get("dtd") || ""}</span>
 				</label>
 			</div>
 		</div>
@@ -318,7 +319,7 @@
 				class="textarea-bordered textarea w-full focus:border-primary"
 			/>
 			<label for="description" class="label">
-				<span class="label-text-alt text-error">{errors.description || ""}</span>
+				<span class="label-text-alt text-error">{errors.get("description") || ""}</span>
 				<span class="label-text-alt">Markdown Allowed</span>
 			</label>
 		</div>
@@ -361,7 +362,7 @@
 									class="input-bordered input w-full focus:border-primary"
 								/>
 								<label for={`magic_items_gained.${index}.name`} class="label">
-									<span class="label-text-alt text-error">{errors[`magic_items_gained.${index}.name`] || ""}</span>
+									<span class="label-text-alt text-error">{errors.get(`magic_items_gained.${index}.name`) || ""}</span>
 								</label>
 							</div>
 							<button
@@ -415,7 +416,7 @@
 									class="input-bordered input w-full focus:border-primary"
 								/>
 								<label for={`story_awards_gained.${index}.name`} class="label">
-									<span class="label-text-alt text-error">{errors[`story_awards_gained.${index}.name`] || ""}</span>
+									<span class="label-text-alt text-error">{errors.get(`story_awards_gained.${index}.name`) || ""}</span>
 								</label>
 							</div>
 							<button

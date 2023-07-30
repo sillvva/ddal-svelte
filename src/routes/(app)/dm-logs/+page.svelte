@@ -187,13 +187,7 @@
 											</p>
 										{/if}
 										<div>
-											<Items
-												title="Magic Items"
-												items={log.magic_items_gained}
-												{search}
-												msResult={msResults.find((result) => result.id === log.id)}
-												sort
-											/>
+											<Items title="Magic Items" items={log.magic_items_gained} {search} sort />
 										</div>
 									</div>
 								</th>
@@ -252,13 +246,7 @@
 									{/if}
 									{#if log.magic_items_gained.length > 0}
 										<div>
-											<Items
-												title="Magic Items"
-												items={log.magic_items_gained}
-												{search}
-												msResult={msResults.find((result) => result.id === log.id)}
-												sort
-											/>
+											<Items title="Magic Items" items={log.magic_items_gained} {search} sort />
 										</div>
 									{/if}
 								</td>
@@ -270,11 +258,7 @@
 								>
 									{#if log.story_awards_gained.length > 0}
 										<div>
-											<Items
-												items={log.story_awards_gained}
-												{search}
-												msResult={msResults.find((result) => result.id === log.id)}
-											/>
+											<Items items={log.story_awards_gained} {search} />
 										</div>
 									{/if}
 								</td>
