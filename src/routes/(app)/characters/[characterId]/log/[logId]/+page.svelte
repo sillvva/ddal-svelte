@@ -31,15 +31,8 @@
 		  )
 		: [];
 
-	const defaultDM = {
-		id: "",
-		name: "",
-		DCI: null,
-		uid: ""
-	};
+	const defaultDM = { id: "", name: "", DCI: null, uid: "" };
 	let dm = log.dm || defaultDM;
-	$: dmName = dm.name.trim();
-	$: dmDCI = dm.DCI;
 
 	let season: 1 | 8 | 9 = log.experience ? 1 : log.acp ? 8 : 9;
 	let magicItemsGained = log.magic_items_gained.map((mi) => ({
@@ -66,8 +59,8 @@
 		story_awards_lost: storyAwardsLost,
 		dm: {
 			id: dm.id,
-			name: dmName,
-			DCI: dmDCI,
+			name: dm.name.trim(),
+			DCI: dm.DCI,
 			uid: dm.uid
 		}
 	};
