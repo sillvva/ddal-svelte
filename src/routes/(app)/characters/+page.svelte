@@ -196,14 +196,16 @@
 								<div class="avatar">
 									<div class="mask mask-squircle h-12 w-12 bg-primary">
 										{#if character.image_url}
-											<img
-												data-src={character.image_url}
-												width={48}
-												height={48}
-												class="h-full w-full object-cover object-top transition-all hover:scale-125"
-												alt={character.name}
-												use:lazy={{ rootMargin: "100px" }}
-											/>
+											{#key character.image_url}
+												<img
+													data-src={character.image_url}
+													width={48}
+													height={48}
+													class="h-full w-full object-cover object-top transition-all hover:scale-125"
+													alt={character.name}
+													use:lazy={{ rootMargin: "100px" }}
+												/>
+											{/key}
 										{:else}
 											<Icon src="account" class="w-12" />
 										{/if}
@@ -268,12 +270,14 @@
 						)}
 						<a href={`/characters/${character.id}`} class="img-grow card card-compact bg-base-100 shadow-xl">
 							<figure class="relative aspect-square overflow-hidden">
-								<img
-									data-src={character.image_url}
-									alt={character.name}
-									class="h-full w-full object-cover object-top"
-									use:lazy={{ rootMargin: "100px" }}
-								/>
+								{#key character.image_url}
+									<img
+										data-src={character.image_url}
+										alt={character.name}
+										class="h-full w-full object-cover object-top"
+										use:lazy={{ rootMargin: "100px" }}
+									/>
+								{/key}
 								{#if search.length >= 1 && indexed.length && miMatches}
 									<div class="absolute inset-0 flex items-center bg-black/50 p-2 text-center text-xs text-white">
 										<div class="flex-1">
