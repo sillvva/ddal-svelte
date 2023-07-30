@@ -8,7 +8,7 @@ export const modal = writable<{ name: string; description: string; date?: Date }
 export class SvelteMap<TKey, TVal> {
 	private map: Map<TKey, TVal>;
 
-	constructor(iterable?: Iterable<readonly [TKey, TVal]> | null | undefined) {
+	constructor(iterable?: Iterable<readonly [TKey, TVal]> | null) {
 		this.map = new Map<TKey, TVal>(iterable);
 	}
 
@@ -16,20 +16,20 @@ export class SvelteMap<TKey, TVal> {
 		return this.map.entries();
 	}
 
-	public has(key: TKey): boolean {
+	public has(key: TKey) {
 		return this.map.has(key);
 	}
 
-	public get(key: TKey): TVal | undefined {
+	public get(key: TKey) {
 		return this.map.get(key);
 	}
 
-	public set(key: TKey, val: TVal): this {
+	public set(key: TKey, val: TVal) {
 		this.map.set(key, val);
 		return this;
 	}
 
-	public clear(): this {
+	public clear() {
 		this.map.clear();
 		return this;
 	}
@@ -42,7 +42,7 @@ export class SvelteMap<TKey, TVal> {
 export class SvelteSet<TVal> {
 	private set: Set<TVal>;
 
-	constructor(iterable?: Iterable<TVal> | null | undefined) {
+	constructor(iterable?: Iterable<TVal> | null) {
 		this.set = new Set<TVal>(iterable);
 	}
 

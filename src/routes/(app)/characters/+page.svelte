@@ -5,7 +5,7 @@
 	import { sorter, stopWords } from "$lib/utils";
 	import { lazy } from "$src/lib/actions";
 	import { setCookie } from "$src/server/cookie";
-	import type { CharactersData } from "$src/server/data/characters.js";
+	import type { CharactersData } from "$src/server/data/characters";
 	import MiniSearch from "minisearch";
 	import { twMerge } from "tailwind-merge";
 
