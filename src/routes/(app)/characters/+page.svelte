@@ -3,12 +3,14 @@
 	import Icon from "$lib/components/Icon.svelte";
 	import SearchResults from "$lib/components/SearchResults.svelte";
 	import { sorter, stopWords } from "$lib/utils";
-	import { lazy } from "$src/lib/actions.js";
+	import { lazy } from "$src/lib/actions";
 	import { setCookie } from "$src/server/cookie";
+	import type { CharactersData } from "$src/server/data/characters.js";
 	import MiniSearch from "minisearch";
 	import { twMerge } from "tailwind-merge";
 
 	export let data;
+	let search = "";
 
 	const minisearch = new MiniSearch({
 		fields: ["characterName", "campaign", "race", "class", "magicItems", "tier", "level"],
@@ -21,8 +23,16 @@
 		}
 	});
 
-	let characters = data.characters;
-	let indexed = characters
+	let characters: CharactersData = [];
+	let loading = true;
+	$: {
+		data.streamed.characters.then((c) => {
+			characters = c;
+			loading = false;
+		});
+	}
+
+	$: indexed = characters
 		? characters.map((character) => ({
 				characterId: character.id,
 				characterName: character.name,
@@ -40,8 +50,10 @@
 		  }))
 		: [];
 
-	let search = "";
-	minisearch.addAll(indexed);
+	$: {
+		minisearch.removeAll();
+		minisearch.addAll(indexed);
+	}
 	$: msResults = minisearch.search(search);
 	$: resultsMap = new Map(msResults.map((result) => [result.id, result]));
 	$: results =
@@ -85,9 +97,23 @@
 		</div>
 	</div>
 
-	<div class="flex flex-wrap gap-2">
-		<div class="flex w-full gap-2 sm:max-w-md">
-			{#if characters.length > 0}
+	{#if loading}
+		<div class="fixed inset-0 z-40 flex items-center justify-center bg-black/50" />
+		<div class="fixed inset-0 z-50 flex items-center justify-center">
+			<span class="loading loading-spinner w-16 text-secondary" />
+		</div>
+	{:else if !characters.length}
+		<section class="bg-base-100">
+			<div class="py-20 text-center">
+				<p class="mb-4">You have no log sheets.</p>
+				<p>
+					<a href="/characters/new" class="btn-primary btn">Create one now</a>
+				</p>
+			</div>
+		</section>
+	{:else}
+		<div class="flex flex-wrap gap-2">
+			<div class="flex w-full gap-2 sm:max-w-md">
 				<a href="/characters/new/edit" class="btn-primary btn-sm btn hidden sm:inline-flex" aria-label="New Character">
 					New Character
 				</a>
@@ -111,70 +137,58 @@
 				>
 					<Icon src={magicItems ? "show" : "hide"} class="w-6" />
 				</btn>
+			</div>
+			<div class="hidden flex-1 xs:block" />
+			{#if display != "grid"}
+				<btn
+					class={twMerge("btn hidden sm:btn-sm xs:inline-flex", magicItems && "btn-primary")}
+					on:click={() => (magicItems = !magicItems)}
+					on:keypress={() => null}
+					on:keypress
+					role="button"
+					aria-label="Toggle Magic Items"
+					tabindex="0"
+				>
+					<Icon src={magicItems ? "show" : "hide"} class="w-6" />
+					<span class="hidden xs:inline-flex sm:hidden md:inline-flex">Magic Items</span>
+				</btn>
 			{/if}
+			<div class="join hidden xs:flex">
+				<button
+					class={twMerge("join-item btn sm:btn-sm", display == "list" ? "btn-primary" : "hover:btn-primary")}
+					on:click={() => (display = "list")}
+					on:keypress
+					aria-label="List View"
+				>
+					<Icon src="format-list-text" class="w-4" />
+				</button>
+				<button
+					class={twMerge("join-item btn sm:btn-sm", display == "grid" ? "btn-primary" : "hover:btn-primary")}
+					on:click={() => (display = "grid")}
+					on:keypress
+					aria-label="Grid View"
+				>
+					<Icon src="view-grid" class="w-4" />
+				</button>
+			</div>
 		</div>
-		<div class="hidden flex-1 xs:block" />
-		{#if display != "grid"}
-			<btn
-				class={twMerge("btn hidden sm:btn-sm xs:inline-flex", magicItems && "btn-primary")}
-				on:click={() => (magicItems = !magicItems)}
-				on:keypress={() => null}
-				on:keypress
-				role="button"
-				aria-label="Toggle Magic Items"
-				tabindex="0"
-			>
-				<Icon src={magicItems ? "show" : "hide"} class="w-6" />
-				<span class="hidden xs:inline-flex sm:hidden md:inline-flex">Magic Items</span>
-			</btn>
-		{/if}
-		<div class="join hidden xs:flex">
-			<button
-				class={twMerge("join-item btn sm:btn-sm", display == "list" ? "btn-primary" : "hover:btn-primary")}
-				on:click={() => (display = "list")}
-				on:keypress
-				aria-label="List View"
-			>
-				<Icon src="format-list-text" class="w-4" />
-			</button>
-			<button
-				class={twMerge("join-item btn sm:btn-sm", display == "grid" ? "btn-primary" : "hover:btn-primary")}
-				on:click={() => (display = "grid")}
-				on:keypress
-				aria-label="Grid View"
-			>
-				<Icon src="view-grid" class="w-4" />
-			</button>
-		</div>
-	</div>
 
-	<div class={twMerge("w-full overflow-x-auto rounded-lg", display == "grid" && "block xs:hidden")}>
-		<div
-			class={twMerge(
-				"grid-table",
-				!data.mobile && "grid-characters-mobile sm:grid-characters",
-				characters.length && data.mobile && "grid-characters-mobile sm:grid-characters-mobile-sm"
-			)}
-		>
-			<header class="!hidden sm:!contents">
-				{#if !data.mobile}
-					<div class="hidden sm:block" />
-				{/if}
-				<div>Name</div>
-				<div>Campaign</div>
-				<div class="text-center">Tier</div>
-				<div class="text-center">Level</div>
-			</header>
-			{#if !characters.length}
-				<section class="bg-base-100">
-					<div class="py-20 text-center">
-						<p class="mb-4">You have no log sheets.</p>
-						<p>
-							<a href="/characters/new" class="btn-primary btn">Create one now</a>
-						</p>
-					</div>
-				</section>
-			{:else}
+		<div class={twMerge("w-full overflow-x-auto rounded-lg", display == "grid" && "block xs:hidden")}>
+			<div
+				class={twMerge(
+					"grid-table",
+					data.mobile ? "grid-characters-mobile sm:grid-characters-mobile-sm" : "grid-characters-mobile sm:grid-characters"
+				)}
+			>
+				<header class="!hidden sm:!contents">
+					{#if !data.mobile}
+						<div class="hidden sm:block" />
+					{/if}
+					<div>Name</div>
+					<div>Campaign</div>
+					<div class="text-center">Tier</div>
+					<div class="text-center">Level</div>
+				</header>
 				{#each results as character}
 					<a href={`/characters/${character.id}`} class="img-grow">
 						{#if !data.mobile}
@@ -227,20 +241,9 @@
 						<div class="hidden justify-center transition-colors sm:flex">{character.total_level}</div>
 					</a>
 				{/each}
-			{/if}
-		</div>
-	</div>
-
-	{#if !characters.length}
-		<section class="bg-base-100">
-			<div class="py-20 text-center">
-				<p class="mb-4">You have no log sheets.</p>
-				<p>
-					<a href="/characters/new" class="btn-primary btn">Create one now</a>
-				</p>
 			</div>
-		</section>
-	{:else}
+		</div>
+
 		{#each [1, 2, 3, 4] as tier}
 			{#if results.filter((c) => c.tier == tier).length}
 				<h1

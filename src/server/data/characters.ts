@@ -3,6 +3,7 @@ import { prisma } from "$src/server/db";
 
 import type { MagicItem, StoryAward } from "@prisma/client";
 
+export type CharacterData = Exclude<Awaited<ReturnType<typeof getCharacter>>, null>;
 export async function getCharacter(characterId: string, includeLogs = true) {
 	const character = await prisma.character.findFirst({
 		include: {
@@ -35,8 +36,7 @@ export async function getCharacter(characterId: string, includeLogs = true) {
 	};
 }
 
-export type CharacterData = Exclude<Awaited<ReturnType<typeof getCharacter>>, null>;
-
+export type CharactersData = Awaited<ReturnType<typeof getCharacters>>;
 export async function getCharacters(userId: string) {
 	const characters = await prisma.character.findMany({
 		include: {
@@ -95,8 +95,6 @@ export async function getCharacters(userId: string) {
 		};
 	});
 }
-
-export type CharactersData = Awaited<ReturnType<typeof getCharacters>>;
 
 export async function getCharacterLogs(characterId: string) {
 	const logs = await prisma.log.findMany({

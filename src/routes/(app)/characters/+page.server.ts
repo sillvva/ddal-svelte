@@ -4,7 +4,8 @@ import { redirect } from "@sveltejs/kit";
 
 const defaultCookie = {
 	magicItems: false,
-	display: "list"
+	display: "list",
+	cacheCharacters: false
 };
 
 export const load = async (event) => {
@@ -13,12 +14,13 @@ export const load = async (event) => {
 	const session = parent.session;
 	if (!session?.user) throw redirect(301, "/");
 
-	const characters = await getCharacters(session.user.id);
 	const cookie = serverGetCookie(event.cookies, "characters", defaultCookie);
 
 	return {
 		title: `${session.user.name}'s Characters`,
-		characters,
+		streamed: {
+			characters: getCharacters(session.user.id)
+		},
 		...cookie
 	};
 };
