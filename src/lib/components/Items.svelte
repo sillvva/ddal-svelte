@@ -85,11 +85,7 @@
 					{title}
 				</span>
 				{#if collapsible}
-					{#if collapsed}
-						<Icon src="chevron-down" class="ml-2 inline w-4 justify-self-end print:hidden md:hidden" />
-					{:else}
-						<Icon src="chevron-up" class="ml-2 inline w-4 justify-self-end print:hidden md:hidden" />
-					{/if}
+					<Icon src="chevron-{collapsed ? 'down' : 'up'}" class="ml-2 inline w-4 justify-self-end print:hidden md:hidden" />
 				{/if}
 			</h4>
 		</div>
