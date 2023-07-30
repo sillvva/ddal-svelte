@@ -29,9 +29,18 @@ export class SvelteMap<TKey, TVal> {
 		return this;
 	}
 
+	public delete(key: TKey) {
+		this.map.delete(key);
+		return this;
+	}
+
 	public clear() {
 		this.map.clear();
 		return this;
+	}
+
+	public forEach(callbackfn: (value: TVal, key: TKey, map: Map<TKey, TVal>) => void, thisArg?: unknown) {
+		this.map.forEach(callbackfn, thisArg);
 	}
 
 	get size(): number {
@@ -50,8 +59,17 @@ export class SvelteSet<TVal> {
 		return this.set.values();
 	}
 
+	public has(val: TVal) {
+		return this.set.has(val);
+	}
+
 	public add(val: TVal) {
 		this.set.add(val);
+		return this;
+	}
+
+	public delete(val: TVal) {
+		this.set.delete(val);
 		return this;
 	}
 
