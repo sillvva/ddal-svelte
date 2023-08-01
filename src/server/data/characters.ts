@@ -95,21 +95,3 @@ export async function getCharacters(userId: string) {
 		};
 	});
 }
-
-export async function getCharacterLogs(characterId: string) {
-	const logs = await prisma.log.findMany({
-		include: {
-			dm: true,
-			magic_items_gained: true,
-			magic_items_lost: true,
-			story_awards_gained: true,
-			story_awards_lost: true
-		},
-		orderBy: {
-			date: "asc"
-		},
-		where: { characterId: characterId }
-	});
-
-	return getLogsSummary(logs);
-}

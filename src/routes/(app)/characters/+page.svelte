@@ -126,32 +126,30 @@
 				<a href="/characters/new/edit" class="btn-primary btn inline-flex sm:hidden" aria-label="New Character">
 					<Icon src="plus" class="inline w-6" />
 				</a>
-				<btn
+				<button
 					class={twMerge("btn inline-flex xs:hidden", magicItems && "btn-primary")}
 					on:click={() => (magicItems = !magicItems)}
 					on:keypress={() => null}
 					on:keypress
-					role="button"
 					aria-label="Toggle Magic Items"
 					tabindex="0"
 				>
 					<Icon src={magicItems ? "show" : "hide"} class="w-6" />
-				</btn>
+				</button>
 			</div>
 			<div class="hidden flex-1 xs:block" />
 			{#if display != "grid"}
-				<btn
+				<button
 					class={twMerge("btn hidden sm:btn-sm xs:inline-flex", magicItems && "btn-primary")}
 					on:click={() => (magicItems = !magicItems)}
 					on:keypress={() => null}
 					on:keypress
-					role="button"
 					aria-label="Toggle Magic Items"
 					tabindex="0"
 				>
 					<Icon src={magicItems ? "show" : "hide"} class="w-6" />
 					<span class="hidden xs:inline-flex sm:hidden md:inline-flex">Magic Items</span>
-				</btn>
+				</button>
 			{/if}
 			<div class="join hidden xs:flex">
 				<button
