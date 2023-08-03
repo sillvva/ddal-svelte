@@ -5,8 +5,6 @@ export async function cache<TReturnType>(
 	tags: [string, ...string[]],
 	revalidate = 3 * 86400
 ) {
-	clearOldCaches();
-
 	const key = tags.join("|");
 	const currentTime = Date.now();
 	const dCache = dataCache.get(key) as { data: TReturnType; timestamp: number; revalidate: number } | undefined;
