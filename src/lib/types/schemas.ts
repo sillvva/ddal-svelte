@@ -2,7 +2,6 @@ import {
 	array,
 	boolean,
 	date,
-	isoTimestamp,
 	literal,
 	merge,
 	minLength,
@@ -20,7 +19,9 @@ import {
 
 import type { Output } from "valibot";
 
-export const dateSchema = union([date(), string([isoTimestamp()])]);
+const dateRegex =
+	/^\d{4}-(0[1-9]|1[0-2])-([12]\d|0[1-9]|3[01])T((0|1)\d|2[0-4]):[0-5]\d:[0-5]\d(\.\d{3})?(Z|(\+|-)((0|1)\d|2[0-4]):[0-5]\d)$/;
+export const dateSchema = union([date(), string([regex(dateRegex)])], "Invalid Date Format");
 
 export type DungeonMasterSchema = Output<typeof dungeonMasterSchema>;
 export const dungeonMasterSchema = object({
