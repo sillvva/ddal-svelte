@@ -1,6 +1,6 @@
 import { logSchema } from "$src/lib/types/schemas";
 import { saveLog } from "$src/server/actions/logs";
-import { getCharacter } from "$src/server/data/characters";
+import { getCharacterCache } from "$src/server/data/characters";
 import { getUserDMs } from "$src/server/data/dms";
 import { getLog } from "$src/server/data/logs";
 import { error, redirect } from "@sveltejs/kit";
@@ -36,7 +36,7 @@ export const actions = {
 		const session = await event.locals.getSession();
 		if (!session?.user) throw redirect(301, "/");
 
-		const character = await getCharacter(event.params.characterId || "", false);
+		const character = await getCharacterCache(event.params.characterId || "", false);
 		if (!character) throw redirect(301, "/characters");
 
 		const log = await getLog(event.params.logId || "", character.id);

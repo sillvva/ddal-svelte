@@ -1,6 +1,8 @@
 import { serverGetCookie } from "$src/server/cookie";
-import { getCharacters } from "$src/server/data/characters";
+import { getCharacterCache, getCharactersCache } from "$src/server/data/characters";
 import { redirect } from "@sveltejs/kit";
+
+import type { CharacterData } from "$src/server/data/characters";
 
 const defaultCookie = {
 	magicItems: false,
@@ -19,7 +21,16 @@ export const load = async (event) => {
 	return {
 		title: `${session.user.name}'s Characters`,
 		streamed: {
-			characters: getCharacters(session.user.id)
+			characters: new Promise<CharacterData[]>((resolve) => {
+				getCharactersCache(session.user.id).then(async (characters) => {
+					const charData: CharacterData[] = [];
+					for (const character of characters) {
+						const data = await getCharacterCache(character.id);
+						if (data) charData.push(data);
+					}
+					resolve(charData);
+				});
+			})
 		},
 		...cookie
 	};

@@ -1,6 +1,6 @@
 import { sorter } from "$lib/utils";
 import { deleteDM } from "$src/server/actions/dms";
-import { getUserDMsWithLogs } from "$src/server/data/dms";
+import { getUserDMsWithLogsCache } from "$src/server/data/dms";
 import { redirect } from "@sveltejs/kit";
 
 export const load = async (event) => {
@@ -9,7 +9,7 @@ export const load = async (event) => {
 	const session = parent.session;
 	if (!session?.user) throw redirect(301, "/");
 
-	const dms = await getUserDMsWithLogs(session.user.id);
+	const dms = await getUserDMsWithLogsCache(session.user.id);
 
 	return {
 		title: `${session.user.name}'s DMs`,

@@ -1,5 +1,5 @@
 import { parseError } from "$lib/utils";
-import { getDMLogs } from "$src/server/data/logs";
+import { getDMLogsCache } from "$src/server/data/logs";
 import { json } from "@sveltejs/kit";
 
 export async function GET({ locals }) {
@@ -7,7 +7,7 @@ export async function GET({ locals }) {
 	if (!session?.user) return json({ error: "Unauthorized" }, { status: 401 });
 
 	try {
-		const dmLogs = await getDMLogs(session.user.id, session.user.name || "");
+		const dmLogs = await getDMLogsCache(session.user.id, session.user.name || "");
 
 		return json(dmLogs);
 	} catch (err) {

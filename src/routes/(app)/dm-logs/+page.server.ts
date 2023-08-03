@@ -1,5 +1,5 @@
 import { deleteLog } from "$src/server/actions/logs";
-import { getDMLogs } from "$src/server/data/logs";
+import { getDMLogsCache } from "$src/server/data/logs";
 import { redirect } from "@sveltejs/kit";
 
 export const load = async (event) => {
@@ -8,7 +8,7 @@ export const load = async (event) => {
 	const session = parent.session;
 	if (!session?.user?.name) throw redirect(301, "/");
 
-	const logs = await getDMLogs(session.user.id, session.user.name);
+	const logs = await getDMLogsCache(session.user.id, session.user.name);
 
 	return {
 		title: `${session.user.name}'s DM Logs`,

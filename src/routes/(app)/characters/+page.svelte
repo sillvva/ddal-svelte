@@ -5,7 +5,6 @@
 	import { sorter, stopWords } from "$lib/utils";
 	import { lazy } from "$src/lib/actions";
 	import { setCookie } from "$src/server/cookie";
-	import type { CharactersData } from "$src/server/data/characters";
 	import MiniSearch from "minisearch";
 	import { twMerge } from "tailwind-merge";
 
@@ -23,7 +22,7 @@
 		}
 	});
 
-	let characters: CharactersData = [];
+	let characters: Awaited<typeof data.streamed.characters> = [];
 	let loading = true;
 	$: {
 		data.streamed.characters.then((c) => {

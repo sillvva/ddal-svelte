@@ -1,5 +1,5 @@
 import { deleteDM, saveDM } from "$src/server/actions/dms";
-import { getUserDMWithLogs } from "$src/server/data/dms";
+import { getUserDMsWithLogsCache } from "$src/server/data/dms";
 import { error, redirect } from "@sveltejs/kit";
 
 export const load = async (event) => {
@@ -8,7 +8,8 @@ export const load = async (event) => {
 	const session = parent.session;
 	if (!session?.user) throw redirect(301, "/");
 
-	const dm = await getUserDMWithLogs(session.user.id, event.params.dmId);
+	const dms = await getUserDMsWithLogsCache(session.user.id);
+	const dm = dms.find((dm) => dm.id == event.params.dmId);
 	if (!dm) throw error(404, "DM not found");
 
 	return {
@@ -28,7 +29,8 @@ export const actions = {
 		if (!session?.user) throw redirect(301, "/");
 		if (!event.params.dmId) throw redirect(301, "/dms");
 
-		const dm = await getUserDMWithLogs(session.user.id, event.params.dmId);
+		const dms = await getUserDMsWithLogsCache(session.user.id);
+		const dm = dms.find((dm) => dm.id == event.params.dmId);
 		if (!dm) throw redirect(301, "/dms");
 
 		const data = await event.request.formData();
@@ -48,7 +50,8 @@ export const actions = {
 		const data = await event.request.formData();
 		const dmId = (data.get("dmId") || "") as string;
 
-		const dm = await getUserDMWithLogs(session.user.id, dmId);
+		const dms = await getUserDMsWithLogsCache(session.user.id);
+		const dm = dms.find((dm) => dm.id == event.params.dmId);
 		if (!dm) throw redirect(301, "/dms");
 
 		if (dm.logs.length) return { id: null, error: "You cannot delete a DM that has logs" };

@@ -1,5 +1,6 @@
 import { defaultLog } from "$lib/entities";
 import { prisma } from "$src/server/db";
+import { cache } from "../cache";
 
 export type LogData = Exclude<Awaited<ReturnType<typeof getLog>>, null>;
 export async function getLog(logId: string, characterId = "") {
@@ -60,4 +61,8 @@ export async function getDMLogs(userId = "", userName = "") {
 			}
 		}
 	});
+}
+
+export async function getDMLogsCache(userId = "", userName = "") {
+	return await cache(() => getDMLogs(userId, userName), ["dm-logs", userId]);
 }
