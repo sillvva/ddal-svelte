@@ -1,8 +1,8 @@
-import { getCharacter } from "$src/server/data/characters";
+import { getCharacterCache } from "$src/server/data/characters";
 
 export const load = async (event) => {
 	const parent = await event.parent();
-	const character = await getCharacter(event.params.characterId);
+	const character = await getCharacterCache(event.params.characterId);
 
 	return {
 		breadcrumbs: character

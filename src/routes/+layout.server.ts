@@ -1,5 +1,5 @@
 import { building } from "$app/environment";
-import { checkEnv } from "$src/lib/types/env.js";
+import { checkEnv } from "$src/lib/types/env";
 
 if (building) {
 	checkEnv().then((env) => {

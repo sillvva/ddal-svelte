@@ -1,4 +1,5 @@
 import { prisma } from "$src/server/db";
+import { cache } from "../cache";
 
 export type UserDMs = Awaited<ReturnType<typeof getUserDMs>>;
 export async function getUserDMs(userId: string) {
@@ -56,37 +57,6 @@ export async function getUserDMsWithLogs(userId: string) {
 	});
 }
 
-export type UserDMWithLogs = Awaited<ReturnType<typeof getUserDMWithLogs>>;
-export async function getUserDMWithLogs(userId: string, dmId: string) {
-	return await prisma.dungeonMaster.findFirst({
-		where: {
-			id: dmId,
-			OR: [
-				{
-					logs: {
-						every: {
-							character: {
-								userId: userId
-							}
-						}
-					}
-				},
-				{
-					uid: userId
-				}
-			]
-		},
-		include: {
-			logs: {
-				include: {
-					character: {
-						select: {
-							id: true,
-							name: true
-						}
-					}
-				}
-			}
-		}
-	});
+export async function getUserDMsWithLogsCache(userId: string) {
+	return cache(() => getUserDMsWithLogs(userId), ["dms", userId]);
 }

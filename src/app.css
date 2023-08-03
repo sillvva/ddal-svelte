@@ -85,7 +85,7 @@ body {
 		@apply border-b-[1px] border-b-base-200;
 	}
 	.grid-table header {
-		@apply contents whitespace-nowrap text-base font-bold text-base-content;
+		@apply contents whitespace-nowrap text-xs font-bold text-base-content text-opacity-60;
 	}
 	.grid-table :where(section, a) {
 		@apply contents;

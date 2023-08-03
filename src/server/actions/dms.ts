@@ -1,8 +1,8 @@
 import { prisma } from "$src/server/db";
+import { revalidateTags } from "../cache";
 import { getUserDMs, getUserDMsWithLogs } from "../data/dms";
 
 import type { DungeonMasterSchema } from "$src/lib/types/schemas";
-
 export type SaveDMResult = ReturnType<typeof saveDM>;
 export async function saveDM(dmId: string, userId: string, data: DungeonMasterSchema) {
 	try {
@@ -14,6 +14,7 @@ export async function saveDM(dmId: string, userId: string, data: DungeonMasterSc
 				...data
 			}
 		});
+		revalidateTags(["dms", userId]);
 		return { id: result.id, dm: result, error: null };
 	} catch (error) {
 		if (error instanceof Error) return { id: null, dm: null, error: error.message };
@@ -32,6 +33,7 @@ export async function deleteDM(dmId: string, userId?: string) {
 		const result = await prisma.dungeonMaster.delete({
 			where: { id: dmId }
 		});
+		revalidateTags(["dms", userId]);
 		return { id: result.id, error: null };
 	} catch (error) {
 		if (error instanceof Error) return { id: null, error: error.message };

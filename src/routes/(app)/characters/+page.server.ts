@@ -1,10 +1,13 @@
 import { serverGetCookie } from "$src/server/cookie";
-import { getCharacters } from "$src/server/data/characters";
+import { getCharacterCache, getCharactersCache } from "$src/server/data/characters";
 import { redirect } from "@sveltejs/kit";
+
+import type { CharacterData } from "$src/server/data/characters";
 
 const defaultCookie = {
 	magicItems: false,
-	display: "list"
+	display: "list",
+	cacheCharacters: false
 };
 
 export const load = async (event) => {
@@ -13,12 +16,22 @@ export const load = async (event) => {
 	const session = parent.session;
 	if (!session?.user) throw redirect(301, "/");
 
-	const characters = await getCharacters(session.user.id);
 	const cookie = serverGetCookie(event.cookies, "characters", defaultCookie);
 
 	return {
 		title: `${session.user.name}'s Characters`,
-		characters,
+		streamed: {
+			characters: new Promise<CharacterData[]>((resolve) => {
+				getCharactersCache(session.user.id).then(async (characters) => {
+					const charData: CharacterData[] = [];
+					for (const character of characters) {
+						const data = await getCharacterCache(character.id);
+						if (data) charData.push(data);
+					}
+					resolve(charData);
+				});
+			})
+		},
 		...cookie
 	};
 };

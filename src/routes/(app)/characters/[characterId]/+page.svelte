@@ -287,31 +287,29 @@
 			<a href={`/characters/${character.id}/log/new`} class="btn-primary btn sm:btn-sm sm:hidden sm:px-3" aria-label="New Log">
 				<Icon src="plus" class="w-6" />
 			</a>
-			<btn
+			<button
 				class={twMerge("btn sm:hidden", descriptions && "btn-primary")}
 				on:click={() => (descriptions = !descriptions)}
 				on:keypress
-				role="button"
 				aria-label="Toggle Notes"
 				tabindex="0"
 			>
 				<Icon src={descriptions ? "show" : "hide"} class="w-6" />
-			</btn>
+			</button>
 		{/if}
 	</div>
 	{#if logs.length}
 		<div class="hidden flex-1 sm:block" />
-		<btn
+		<button
 			class={twMerge("btn hidden sm:btn-sm sm:inline-flex", descriptions && "btn-primary")}
 			on:click={() => (descriptions = !descriptions)}
 			on:keypress
-			role="button"
 			aria-label="Toggle Notes"
 			tabindex="0"
 		>
 			<Icon src={descriptions ? "show" : "hide"} class="w-6" />
 			<span class="hidden sm:inline-flex">Notes</span>
-		</btn>
+		</button>
 	{/if}
 </div>
 

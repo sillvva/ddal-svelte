@@ -1,5 +1,6 @@
 import type { NewCharacterSchema } from "$src/lib/types/schemas";
-import { getCharacter } from "../data/characters";
+import { revalidateTags } from "../cache";
+import { getCharacterCache } from "../data/characters";
 import { prisma } from "../db";
 
 import type { Character } from "@prisma/client";
@@ -18,7 +19,7 @@ export async function saveCharacter(characterId: string, userId: string, data: N
 				}
 			});
 		} else {
-			const character = await getCharacter(characterId, false);
+			const character = await getCharacterCache(characterId, false);
 			if (!character) throw new Error("Character not found");
 			if (character.userId !== userId) throw new Error("Not authorized");
 			result = await prisma.character.update({
@@ -28,6 +29,9 @@ export async function saveCharacter(characterId: string, userId: string, data: N
 				}
 			});
 		}
+		revalidateTags(["character", result.id, "logs"]);
+		revalidateTags(["character", result.id, "no-logs"]);
+		if (characterId == "new") revalidateTags(["characters", userId]);
 		return { id: result.id, character: result, error: null };
 	} catch (error) {
 		if (error instanceof Error) return { id: null, character: null, error: error.message };
@@ -72,6 +76,9 @@ export async function deleteCharacter(characterId: string, userId?: string) {
 				where: { id: characterId }
 			});
 		});
+		revalidateTags(["character", result.id, "logs"]);
+		revalidateTags(["character", result.id, "no-logs"]);
+		revalidateTags(["characters", userId]);
 		return { id: result.id, error: null };
 	} catch (error) {
 		if (error instanceof Error) return { id: null, error: error.message };

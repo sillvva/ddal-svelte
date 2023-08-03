@@ -1,6 +1,6 @@
 import { logSchema } from "$src/lib/types/schemas";
 import { saveLog } from "$src/server/actions/logs";
-import { getCharacter, getCharacters } from "$src/server/data/characters";
+import { getCharacterCache, getCharactersCache } from "$src/server/data/characters";
 import { getDMLog, getLog } from "$src/server/data/logs";
 import { error, redirect } from "@sveltejs/kit";
 
@@ -15,7 +15,7 @@ export const load = async (event) => {
 
 	log.dm = log.dm?.name ? log.dm : { name: session.user.name || "", id: "", DCI: null, uid: session.user.id };
 
-	const characters = await getCharacters(session.user.id);
+	const characters = await getCharactersCache(session.user.id);
 	const character = characters.find((c) => c.id === log.characterId);
 
 	return {
@@ -54,7 +54,7 @@ export const actions = {
 			if (!logData.is_dm_log) throw new Error("Only DM logs can be saved here.");
 
 			if (logData.characterId && logData.applied_date) {
-				const character = await getCharacter(logData.characterId, false);
+				const character = await getCharacterCache(logData.characterId, false);
 				if (!character) throw new Error("Character not found");
 			} else if (logData.characterId && !logData.applied_date) {
 				throw new Error("Applied date is required if character is selected.");

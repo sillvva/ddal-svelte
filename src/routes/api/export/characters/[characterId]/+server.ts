@@ -1,5 +1,5 @@
 import { parseError } from "$lib/utils";
-import { getCharacter, getCharacters } from "$src/server/data/characters";
+import { getCharacterCache, getCharactersCache } from "$src/server/data/characters";
 import { json } from "@sveltejs/kit";
 
 export async function GET({ params, locals }) {
@@ -10,12 +10,12 @@ export async function GET({ params, locals }) {
 
 	try {
 		if (characterId === "all") {
-			const characters = await getCharacters(session.user.id);
+			const characters = await getCharactersCache(session.user.id);
 			return json(characters);
 		} else {
 			if (typeof characterId !== "string") return json({ error: "Invalid character ID" }, { status: 400 });
 
-			const character = await getCharacter(characterId);
+			const character = await getCharacterCache(characterId);
 
 			if (!character) return json({ error: "Character not found" }, { status: 404 });
 			if (character.userId !== session.user.id) return json({ error: "Unauthorized" }, { status: 401 });

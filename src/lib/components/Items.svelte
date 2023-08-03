@@ -28,51 +28,38 @@
 	const itemQty = (item: { name: string }) => parseInt(item.name.match(/^(\d+)x? /)?.[1] || "1");
 	const clearQty = (name: string) => name.replace(/^\d+x? ?/, "");
 
-	$: clonedItems = structuredClone(items);
 	$: if (items) itemsMap.clear();
-
-	$: consolidatedItems = clonedItems
-		.map((item, index) => {
+	$: consolidatedItems = structuredClone(items).reduce(
+		(acc, item, index, arr) => {
 			const name = clearQty(item.name);
 			const desc = item.description?.trim();
 			const key = `${name}_${desc}`;
 			const qty = itemQty(item);
 			const cons = isConsumable(sorterName(name));
 
-			return {
-				name,
-				desc,
-				qty,
-				index,
-				cons,
-				key
-			};
-		})
-		.reduce(
-			(acc, { name, qty, key, index, cons }) => {
-				const existingIndex = itemsMap.get(key);
-				if (existingIndex && existingIndex >= 0) {
-					const existingQty = itemQty(acc[existingIndex]);
+			const existingIndex = itemsMap.get(key);
+			if (existingIndex && existingIndex >= 0) {
+				const existingQty = itemQty(acc[existingIndex]);
 
-					const newQty = existingQty + qty;
-					let newName = name;
-					if (cons) newName = newName.replace(/^(\w+)s/, "$1");
+				const newQty = existingQty + qty;
+				let newName = name;
+				if (cons) newName = newName.replace(/^(\w+)s/, "$1");
 
-					if (newQty > 1) {
-						if (cons) newName = newName.replace(/^(\w+)( .+)$/, "$1s$2");
-						acc[existingIndex].name = `${newQty} ${newName}`;
-					} else {
-						acc[existingIndex].name = newName;
-					}
+				if (newQty > 1) {
+					if (cons) newName = newName.replace(/^(\w+)( .+)$/, "$1s$2");
+					acc[existingIndex].name = `${newQty} ${newName}`;
 				} else {
-					acc.push(clonedItems[index]);
-					itemsMap.set(key, acc.length - 1);
+					acc[existingIndex].name = newName;
 				}
+			} else {
+				acc.push(arr[index]);
+				itemsMap.set(key, acc.length - 1);
+			}
 
-				return acc;
-			},
-			[] as typeof items
-		);
+			return acc;
+		},
+		[] as typeof items
+	);
 
 	$: sortedItems = sort ? consolidatedItems.sort((a, b) => sorter(sorterName(a.name), sorterName(b.name))) : consolidatedItems;
 </script>
@@ -85,11 +72,7 @@
 					{title}
 				</span>
 				{#if collapsible}
-					{#if collapsed}
-						<Icon src="chevron-down" class="ml-2 inline w-4 justify-self-end print:hidden md:hidden" />
-					{:else}
-						<Icon src="chevron-up" class="ml-2 inline w-4 justify-self-end print:hidden md:hidden" />
-					{/if}
+					<Icon src="chevron-{collapsed ? 'down' : 'up'}" class="ml-2 inline w-4 justify-self-end print:hidden md:hidden" />
 				{/if}
 			</h4>
 		</div>
@@ -105,6 +88,8 @@
 				<span
 					role={mi.description ? "button" : "presentation"}
 					class="inline pl-2 pr-1 first:pl-0"
+					class:text-secondary={mi.description}
+					class:italic={formatting && isConsumable(mi.name)}
 					on:click={() => {
 						if (mi.description) {
 							$modal = { name: mi.name, description: mi.description };
@@ -112,15 +97,7 @@
 					}}
 					on:keypress={() => null}
 				>
-					{#if formatting && isConsumable(mi.name)}
-						<em class:text-secondary={mi.description}>
-							<SearchResults text={mi.name + (mi.description && "*")} search={search || ""} />
-						</em>
-					{:else}
-						<span class:text-secondary={mi.description}>
-							<SearchResults text={mi.name + (mi.description && "*")} search={search || ""} />
-						</span>
-					{/if}
+					<SearchResults text={mi.name} search={search || ""} />
 				</span>
 			{/each}
 		{:else}
