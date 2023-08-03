@@ -27,8 +27,8 @@ dependencies:
     specifier: ^6.1.0
     version: 6.1.0
   valibot:
-    specifier: ^0.2.0
-    version: 0.2.0
+    specifier: ^0.8.0
+    version: 0.8.0
 
 devDependencies:
   '@sveltejs/adapter-auto':
@@ -2363,8 +2363,8 @@ packages:
     resolution: {integrity: sha512-EPD5q1uXyFxJpCrLnCc1nHnq3gOa6DZBocAIiI2TaSCA7VCJ1UJDMagCzIkXNsUYfD1daK//LTEQ8xiIbrHtcw==}
     dev: true
 
-  /valibot@0.2.0:
-    resolution: {integrity: sha512-SEc1NIKm0AI2D6moW6pV9MII12FSLBhQG1EPT8IxB+XnnlAbWB2IFqZ6mSa+I0FCei2QloLPAw0VNUi4ZW7xwQ==}
+  /valibot@0.8.0:
+    resolution: {integrity: sha512-wQHXVkVFj6Z0R3297icGCp3UX8S66onuIg03ihJ8aVgMn8pMJvYSfmrKb+aIg7w/Aw08togrklaMSqDP2vKtIA==}
     dev: false
 
   /vite@4.4.4:

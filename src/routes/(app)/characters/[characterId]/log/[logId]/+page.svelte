@@ -8,6 +8,7 @@
 	import { formatDate, sorter } from "$lib/utils";
 	import ComboBox from "$src/lib/components/ComboBox.svelte";
 	import { SvelteMap } from "$src/lib/store";
+	import type { LogSchema } from "$src/lib/types/schemas";
 	import { logSchema } from "$src/lib/types/schemas";
 	import { twMerge } from "tailwind-merge";
 
@@ -61,9 +62,9 @@
 			id: dm.id,
 			name: dm.name.trim(),
 			DCI: dm.DCI,
-			uid: dm.uid
+			uid: dm.uid || ""
 		}
-	};
+	} satisfies LogSchema;
 
 	export const snapshot = {
 		capture: () => log,

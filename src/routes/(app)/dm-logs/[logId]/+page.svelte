@@ -7,6 +7,7 @@
 	import { formatDate } from "$lib/utils";
 	import ComboBox from "$src/lib/components/ComboBox.svelte";
 	import { SvelteMap } from "$src/lib/store";
+	import type { LogSchema } from "$src/lib/types/schemas";
 	import { logSchema } from "$src/lib/types/schemas";
 	import { twMerge } from "tailwind-merge";
 
@@ -35,7 +36,7 @@
 			DCI: log.dm?.DCI || null,
 			uid: log.dm?.uid || ""
 		}
-	};
+	} satisfies LogSchema;
 
 	function extraErrors() {
 		if (values.characterId && !(data.characters || []).find((c) => c.id === values.characterId)) {
