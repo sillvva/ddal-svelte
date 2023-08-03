@@ -28,51 +28,38 @@
 	const itemQty = (item: { name: string }) => parseInt(item.name.match(/^(\d+)x? /)?.[1] || "1");
 	const clearQty = (name: string) => name.replace(/^\d+x? ?/, "");
 
-	$: clonedItems = structuredClone(items);
 	$: if (items) itemsMap.clear();
-
-	$: consolidatedItems = clonedItems
-		.map((item, index) => {
+	$: consolidatedItems = structuredClone(items).reduce(
+		(acc, item, index, arr) => {
 			const name = clearQty(item.name);
 			const desc = item.description?.trim();
 			const key = `${name}_${desc}`;
 			const qty = itemQty(item);
 			const cons = isConsumable(sorterName(name));
 
-			return {
-				name,
-				desc,
-				qty,
-				index,
-				cons,
-				key
-			};
-		})
-		.reduce(
-			(acc, { name, qty, key, index, cons }) => {
-				const existingIndex = itemsMap.get(key);
-				if (existingIndex && existingIndex >= 0) {
-					const existingQty = itemQty(acc[existingIndex]);
+			const existingIndex = itemsMap.get(key);
+			if (existingIndex && existingIndex >= 0) {
+				const existingQty = itemQty(acc[existingIndex]);
 
-					const newQty = existingQty + qty;
-					let newName = name;
-					if (cons) newName = newName.replace(/^(\w+)s/, "$1");
+				const newQty = existingQty + qty;
+				let newName = name;
+				if (cons) newName = newName.replace(/^(\w+)s/, "$1");
 
-					if (newQty > 1) {
-						if (cons) newName = newName.replace(/^(\w+)( .+)$/, "$1s$2");
-						acc[existingIndex].name = `${newQty} ${newName}`;
-					} else {
-						acc[existingIndex].name = newName;
-					}
+				if (newQty > 1) {
+					if (cons) newName = newName.replace(/^(\w+)( .+)$/, "$1s$2");
+					acc[existingIndex].name = `${newQty} ${newName}`;
 				} else {
-					acc.push(clonedItems[index]);
-					itemsMap.set(key, acc.length - 1);
+					acc[existingIndex].name = newName;
 				}
+			} else {
+				acc.push(arr[index]);
+				itemsMap.set(key, acc.length - 1);
+			}
 
-				return acc;
-			},
-			[] as typeof items
-		);
+			return acc;
+		},
+		[] as typeof items
+	);
 
 	$: sortedItems = sort ? consolidatedItems.sort((a, b) => sorter(sorterName(a.name), sorterName(b.name))) : consolidatedItems;
 </script>
