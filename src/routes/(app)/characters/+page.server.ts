@@ -6,8 +6,7 @@ import type { CharacterData } from "$src/server/data/characters";
 
 const defaultCookie = {
 	magicItems: false,
-	display: "list",
-	cacheCharacters: false
+	display: "list"
 };
 
 export const load = async (event) => {
