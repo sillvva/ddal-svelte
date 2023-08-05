@@ -46,12 +46,8 @@ export const actions = {
 
 		try {
 			const formData = await event.request.formData();
-			const parsedData = JSON.parse((formData.get("log") as string) || "{}") as DatesToStrings<typeof log>;
-			const logData = logSchema.parse({
-				...parsedData,
-				date: new Date(parsedData.date),
-				applied_date: new Date(parsedData.date)
-			});
+			const parsedData = JSON.parse((formData.get("form") as string) || "{}") as DatesToStrings<typeof log>;
+			const logData = logSchema.parse(parsedData);
 
 			const result = await saveLog(logData, session.user);
 			if (result && result.id) throw redirect(301, `/characters/${character.id}`);

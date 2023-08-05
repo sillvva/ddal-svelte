@@ -27,7 +27,7 @@
 	export let data: InferIn<TSchema>;
 	export let validatedData: Infer<TSchema> | undefined = undefined;
 	export let action: string;
-	export let stringify = "";
+	export let stringify = "form";
 	export let resetOnSave = false;
 	export let saving = false;
 
@@ -106,7 +106,7 @@
 			return f.cancel();
 		}
 
-		if (stringify) f.formData.append(stringify, JSON.stringify(data));
+		if (stringify && !(stringify in data)) f.formData.append(stringify, JSON.stringify(data));
 		return async ({ update, result }) => {
 			await update({ reset: resetOnSave });
 			dispatch("after-submit", result);

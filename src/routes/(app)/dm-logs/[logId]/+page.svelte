@@ -87,7 +87,6 @@
 	data={values}
 	bind:errors
 	bind:saving
-	stringify="log"
 	on:check-errors={() => extraErrors()}
 	on:before-submit={() => {
 		if (log.applied_date?.getTime() === 0) {
@@ -132,8 +131,6 @@
 				type="datetime-local"
 				name="date"
 				value={log.date.getTime() > 0 ? formatDate(log.date) : ""}
-				on:blur={(e) =>
-					(log.date = formatDate(e.currentTarget.value) !== "Invalid Date" ? new Date(e.currentTarget.value) : new Date(0))}
 				required
 				disabled={saving}
 				class="input-bordered input w-full focus:border-primary"
@@ -187,8 +184,6 @@
 				type="datetime-local"
 				name="applied_date"
 				value={log.applied_date ? formatDate(log.applied_date) : ""}
-				on:blur={(e) =>
-					(log.applied_date = formatDate(e.currentTarget.value) !== "Invalid Date" ? new Date(e.currentTarget.value) : null)}
 				required={!!log.characterId}
 				disabled={saving}
 				class="input-bordered input w-full focus:border-primary"

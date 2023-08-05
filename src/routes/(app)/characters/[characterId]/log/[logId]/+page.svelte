@@ -83,7 +83,7 @@
 	</div>
 {/if}
 
-<SchemaForm action="?/saveLog" schema={logSchema} data={values} bind:saving bind:errors stringify="log">
+<SchemaForm action="?/saveLog" schema={logSchema} data={values} bind:saving bind:errors>
 	<input type="hidden" name="characterId" value={character.id} />
 	<input type="hidden" name="logId" value={data.logId === "new" ? "" : data.logId} />
 	<input type="hidden" name="is_dm_log" value={log.is_dm_log} />
@@ -132,9 +132,6 @@
 				required
 				disabled={saving}
 				value={formatDate(log.date)}
-				on:input={(e) => {
-					log.date = new Date(e.currentTarget.value);
-				}}
 				class="input-bordered input w-full focus:border-primary"
 				aria-invalid={errors.get("date") ? "true" : "false"}
 			/>

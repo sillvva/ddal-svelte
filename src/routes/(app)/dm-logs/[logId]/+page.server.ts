@@ -43,12 +43,8 @@ export const actions = {
 
 		try {
 			const formData = await event.request.formData();
-			const parsedData = JSON.parse((formData.get("log") as string) || "{}") as DatesToStrings<typeof log>;
-			const logData = logSchema.parse({
-				...parsedData,
-				date: new Date(parsedData.date),
-				applied_date: parsedData.applied_date ? new Date(parsedData.applied_date) : null
-			});
+			const parsedData = JSON.parse((formData.get("form") as string) || "{}") as DatesToStrings<typeof log>;
+			const logData = logSchema.parse(parsedData);
 
 			if (!logData.is_dm_log) throw new Error("Only DM logs can be saved here.");
 

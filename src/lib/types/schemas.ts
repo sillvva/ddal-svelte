@@ -1,6 +1,7 @@
 import {
 	array,
 	boolean,
+	coerce,
 	date,
 	literal,
 	merge,
@@ -15,11 +16,10 @@ import {
 	url,
 	useDefault
 } from "valibot";
-import { iso } from "./valibot/iso";
 
 import type { Output } from "valibot";
 
-export const dateSchema = union([date(), string([iso()])], "Invalid Date Format");
+export const dateSchema = coerce(date(), (input) => new Date(input as string | number | Date));
 
 export type DungeonMasterSchema = Output<typeof dungeonMasterSchema>;
 export const dungeonMasterSchema = object({
