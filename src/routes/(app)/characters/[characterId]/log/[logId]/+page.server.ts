@@ -5,6 +5,8 @@ import { getUserDMs } from "$src/server/data/dms";
 import { getLog } from "$src/server/data/logs";
 import { error, redirect } from "@sveltejs/kit";
 
+import type { DatesToStrings } from "$src/lib/types/util";
+
 export const load = async (event) => {
 	const parent = await event.parent();
 	const character = parent.character;
@@ -44,10 +46,7 @@ export const actions = {
 
 		try {
 			const formData = await event.request.formData();
-			const parsedData = JSON.parse((formData.get("log") as string) || "{}") as Omit<
-				typeof log,
-				"date" | "applied_date" | "created_at"
-			> & { date: string; applied_date: string; created_at: string };
+			const parsedData = JSON.parse((formData.get("log") as string) || "{}") as DatesToStrings<typeof log>;
 			const logData = logSchema.parse({
 				...parsedData,
 				date: new Date(parsedData.date),

@@ -1,32 +1,42 @@
-<script lang="ts">
+<script lang="ts" generics="TSchema extends BaseSchema | BaseSchemaAsync">
+	// TSchema extends Schema
+	// TSchema extends BaseSchema | BaseSchemaAsync
 	import { enhance } from "$app/forms";
 	import { beforeNavigate } from "$app/navigation";
+	import type { BaseSchema, BaseSchemaAsync, Input, Output } from "valibot";
+	import { ValiError, flatten } from "valibot";
+	// import type { Infer, InferIn, Schema } from "@decs/typeschema";
+	// import { validate } from "@decs/typeschema";
 	import type { ActionResult } from "@sveltejs/kit";
 	import { createEventDispatcher } from "svelte";
-	import type { ObjectSchema, Output } from "valibot";
-	import { ValiError, flatten } from "valibot";
 	import { SvelteMap, SvelteSet } from "../store";
+
+	type InferIn<TInput extends TSchema> = Input<TInput>;
+	type Infer<TOutput extends TSchema> = Output<TOutput>;
 
 	const dispatch = createEventDispatcher<{
 		"before-submit": null;
 		"after-submit": ActionResult;
 		errors: SvelteMap<string, string>;
-		"check-errors": null;
+		validate: { data?: Infer<TSchema>; errors: SvelteMap<string, string> };
 	}>();
 
 	let elForm: HTMLFormElement;
 
-	export let form: (object & { error: string | null | undefined }) | null;
-	export let schema: ObjectSchema<any, any>;
-	export let data: object;
+	export let form: (Record<string, unknown> & { error: unknown }) | null;
+	export let schema: TSchema;
+	export let data: InferIn<TSchema>;
+	export let validatedData: Infer<TSchema> | undefined = undefined;
 	export let action: string;
 	export let stringify = "";
 	export let resetOnSave = false;
-
 	export let saving = false;
+
 	$: {
-		if (form?.error && saving) saving = false;
-		else if (form && saving) changes = changes.clear();
+		if (form) {
+			if ("error" in form && saving) saving = false;
+			else if (saving) changes = changes.clear();
+		}
 	}
 
 	export let changes = new SvelteSet<string>();
@@ -35,42 +45,34 @@
 	}
 
 	export let errors = new SvelteMap<string, string>();
-	$: {
-		errors = errors.clear();
-		if (changes.size) {
-			try {
-				schema.parse(data);
-			} catch (error) {
-				changes.forEach((c) => {
-					if (error instanceof ValiError) {
-						const flatErrors = flatten(error);
-						for (const path in flatErrors.nested) {
-							for (const err of flatErrors.nested[path] || []) {
-								if (path === c && !errors.has(c)) errors = errors.set(c, err);
-							}
-						}
-					}
-				});
-			}
+	$: checkErrors(data);
 
-			dispatch("check-errors");
-		}
-	}
-
-	function checkErrors(data: Output<ObjectSchema<any, any>>) {
+	async function checkErrors(data: InferIn<TSchema>, onlyChanges = true) {
 		errors = errors.clear();
+		// const result = await validate(schema, data);
+		// if ("issues" in result) {
+		// 	result.issues.forEach((issue) => {
+		// 		if (issue.path && (!onlyChanges || changes.has(issue.path.join(".")))) {
+		// 			errors = errors.set(issue.path.join("."), issue.message);
+		// 		}
+		// 	});
+		// }
+		// if ("data" in result) {
+		// 	validatedData = result.data;
+		// }
 		try {
-			schema.parse(data);
+			validatedData = schema.parse(data);
 		} catch (error) {
 			if (error instanceof ValiError) {
 				const flatErrors = flatten(error);
 				for (const path in flatErrors.nested) {
 					for (const err of flatErrors.nested[path] || []) {
-						if (path && !errors.has(path)) errors = errors.set(path, err);
+						if (!onlyChanges || changes.has(path)) errors = errors.set(path, err);
 					}
 				}
 			}
 		}
+		dispatch("validate", { data: validatedData, errors });
 	}
 
 	$: dispatch("errors", errors);
@@ -104,10 +106,10 @@
 		dispatch("before-submit");
 		const savedChanges = new SvelteSet([...changes]);
 		changes.clear();
-		form = null;
 		saving = true;
+		form = null;
 
-		checkErrors(data);
+		checkErrors(data, false);
 		if (Object.values(errors).find((e) => e.length > 0)) {
 			saving = false;
 			return f.cancel();

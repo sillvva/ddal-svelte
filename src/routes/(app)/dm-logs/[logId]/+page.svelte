@@ -83,11 +83,11 @@
 
 <SchemaForm
 	action="?/saveLog"
+	schema={logSchema}
 	data={values}
 	bind:form
 	bind:errors
 	bind:saving
-	schema={logSchema}
 	stringify="log"
 	on:check-errors={() => extraErrors()}
 	on:before-submit={() => {
