@@ -2,7 +2,6 @@ import {
 	array,
 	boolean,
 	date,
-	isoTimestamp,
 	literal,
 	merge,
 	minLength,
@@ -16,10 +15,11 @@ import {
 	url,
 	useDefault
 } from "valibot";
+import { iso } from "./valibot/iso";
 
 import type { Output } from "valibot";
 
-export const dateSchema = union([date(), string([isoTimestamp()])], "Invalid Date Format");
+export const dateSchema = union([date(), string([iso()])], "Invalid Date Format");
 
 export type DungeonMasterSchema = Output<typeof dungeonMasterSchema>;
 export const dungeonMasterSchema = object({
