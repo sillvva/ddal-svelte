@@ -85,7 +85,6 @@
 	action="?/saveLog"
 	schema={logSchema}
 	data={values}
-	bind:form
 	bind:errors
 	bind:saving
 	stringify="log"

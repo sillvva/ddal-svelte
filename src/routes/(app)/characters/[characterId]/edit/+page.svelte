@@ -33,7 +33,7 @@
 	</div>
 {/if}
 
-<SchemaForm action="?/saveCharacter" schema={newCharacterSchema} data={character} bind:form bind:errors bind:saving>
+<SchemaForm action="?/saveCharacter" schema={newCharacterSchema} data={character} bind:errors bind:saving>
 	<div class="flex flex-wrap">
 		<div class="basis-full px-2 sm:basis-1/2">
 			<div class="form-control w-full">

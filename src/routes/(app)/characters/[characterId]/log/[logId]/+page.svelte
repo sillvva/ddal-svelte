@@ -83,7 +83,7 @@
 	</div>
 {/if}
 
-<SchemaForm action="?/saveLog" schema={logSchema} data={values} bind:form bind:saving bind:errors stringify="log">
+<SchemaForm action="?/saveLog" schema={logSchema} data={values} bind:saving bind:errors stringify="log">
 	<input type="hidden" name="characterId" value={character.id} />
 	<input type="hidden" name="logId" value={data.logId === "new" ? "" : data.logId} />
 	<input type="hidden" name="is_dm_log" value={log.is_dm_log} />

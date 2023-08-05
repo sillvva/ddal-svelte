@@ -23,7 +23,6 @@
 
 	let elForm: HTMLFormElement;
 
-	export let form: (Record<string, unknown> & { error: unknown }) | null;
 	export let schema: TSchema;
 	export let data: InferIn<TSchema>;
 	export let validatedData: Infer<TSchema> | undefined = undefined;
@@ -31,13 +30,6 @@
 	export let stringify = "";
 	export let resetOnSave = false;
 	export let saving = false;
-
-	$: {
-		if (form) {
-			if ("error" in form && saving) saving = false;
-			else if (saving) changes = changes.clear();
-		}
-	}
 
 	export let changes = new SvelteSet<string>();
 	export function addChanges(field: string) {
@@ -105,9 +97,8 @@
 	use:enhance={(f) => {
 		dispatch("before-submit");
 		const savedChanges = new SvelteSet([...changes]);
-		changes.clear();
+		changes = changes.clear();
 		saving = true;
-		form = null;
 
 		checkErrors(data, false);
 		if (Object.values(errors).find((e) => e.length > 0)) {
@@ -119,9 +110,13 @@
 		return async ({ update, result }) => {
 			await update({ reset: resetOnSave });
 			dispatch("after-submit", result);
-			if (!["redirect", "success"].includes(result.type)) {
+			if (
+				(result.type === "success" && result.data && "error" in result.data) ||
+				!["redirect", "success"].includes(result.type)
+			) {
 				changes = new SvelteSet([...savedChanges]);
 				savedChanges.clear();
+				saving = false;
 			}
 		};
 	}}
