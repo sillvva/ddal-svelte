@@ -152,11 +152,13 @@
 			<ComboBox
 				type="text"
 				name="characterName"
-				value={data.characters.find((c) => c.id === log.characterId)?.name || ""}
-				values={data.characters?.map((char) => ({ key: char.id, value: char.name })) || []}
+				options={{
+					values: data.characters?.map((char) => ({ key: char.id, value: char.name })) || [],
+					value: data.characters.find((c) => c.id === log.characterId)?.name || "",
+					searchBy: "value"
+				}}
 				disabled={saving}
 				required={!!log.applied_date}
-				searchBy="value"
 				on:input={() => {
 					log.characterId = "";
 					log.applied_date = null;

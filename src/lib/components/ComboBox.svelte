@@ -19,15 +19,59 @@
 		};
 	}>();
 
-	export let values: { key?: string | number | null; value: string }[] = [];
-	export let value: string | number | null = "";
-	export let searchBy: "key" | "value" = "key";
+	export let options:
+		| {
+				values: { key: string; value: string }[];
+				value: string;
+				searchBy?: "key" | "value";
+		  }
+		| {
+				values: { key: number; value: string }[];
+				value: number;
+				searchBy?: "key";
+		  }
+		| {
+				values: { key: number; value: string }[];
+				value: string;
+				searchBy: "value";
+		  }
+		| {
+				values: { key: string | null; value: string }[];
+				value: string | null;
+				searchBy?: "key";
+		  }
+		| {
+				values: { key: string | null; value: string }[];
+				value: string;
+				searchBy?: "value";
+		  }
+		| {
+				values: { key: number | null; value: string }[];
+				value: number | null;
+				searchBy?: "key";
+		  }
+		| {
+				values: { key: number | null; value: string }[];
+				value: string | null;
+				searchBy: "value";
+		  }
+		| {
+				values: { value: string }[];
+				value: string;
+				searchBy: "value";
+		  } = {
+		values: [],
+		value: "",
+		searchBy: "key"
+	};
+
+	let { values, value, searchBy } = options;
 
 	let keysel = 0;
 	let search = value?.toString() || "";
 	let selected = false;
 
-	$: parsedValues = values.map((v) => ({ key: v.key ?? "", value: v.value })).filter((v) => v.key !== null);
+	$: parsedValues = values.map((v) => ({ key: "key" in v ? v.key : "", value: v.value })).filter((v) => v.key !== null);
 	$: matches =
 		parsedValues && parsedValues.length > 0 && search.trim()
 			? parsedValues
@@ -105,7 +149,9 @@
 			on:blur={(e) => {
 				if (!selected) {
 					if (search.trim()) {
-						const match = matches.findIndex((v) => v[searchBy].toString().toLowerCase() === e.currentTarget.value.toLowerCase());
+						const match = matches.findIndex(
+							(v) => v[searchBy || "key"]?.toString().toLowerCase() === e.currentTarget.value.toLowerCase()
+						);
 						if (match >= 0) selectHandler(match);
 						else selectNew(search.trim());
 					} else selectNew(search.trim());

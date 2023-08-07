@@ -153,8 +153,10 @@
 						</label>
 						<ComboBox
 							name="dm.name"
-							value={dm.name}
-							values={data.dms.map((dm) => ({ key: dm.name, value: dm.name + (dm.DCI ? ` (${dm.DCI})` : "") })) || []}
+							options={{
+								values: data.dms.map((dm) => ({ key: dm.name, value: dm.name + (dm.DCI ? ` (${dm.DCI})` : "") })) || [],
+								value: dm.name
+							}}
 							disabled={saving}
 							on:select={(ev) => {
 								if (ev.detail) {
@@ -175,8 +177,10 @@
 						<ComboBox
 							name="dm.DCI"
 							type="number"
-							value={dm.DCI}
-							values={data.dms.map((dm) => ({ key: dm.DCI, value: dm.name + (dm.DCI ? ` (${dm.DCI})` : "") })) || []}
+							options={{
+								values: data.dms.map((dm) => ({ key: dm.DCI, value: dm.name + (dm.DCI ? ` (${dm.DCI})` : "") })) || [],
+								value: dm.DCI
+							}}
 							disabled={saving}
 							on:select={(ev) => {
 								if (ev.detail) {
