@@ -18,16 +18,16 @@
 		"before-submit": null;
 		"after-submit": ActionResult;
 		errors: SvelteMap<string, string>;
-		validate: { data?: Infer<TSchema>; errors: SvelteMap<string, string> };
+		validate: { data?: Infer<TSchema>; errors?: SvelteMap<string, string> };
 	}>();
 
 	let elForm: HTMLFormElement;
+	let stringify = "form";
 
 	export let schema: TSchema;
 	export let data: InferIn<TSchema>;
-	export let validatedData: Infer<TSchema> | undefined = undefined;
 	export let action: string;
-	export let stringify = "form";
+	export let method = "POST";
 	export let resetOnSave = false;
 	export let saving = false;
 
@@ -42,18 +42,19 @@
 	async function checkErrors(data: InferIn<TSchema>, onlyChanges = true) {
 		errors = errors.clear();
 		// const result = await validate(schema, data);
-		// if ("issues" in result) {
+		// if ("data" in result) {
+		// 	dispatch("validate", { data: result.data });
+		// }
+		// else if ("issues" in result) {
 		// 	result.issues.forEach((issue) => {
 		// 		if (issue.path && (!onlyChanges || changes.has(issue.path.join(".")))) {
 		// 			errors = errors.set(issue.path.join("."), issue.message);
 		// 		}
 		// 	});
-		// }
-		// if ("data" in result) {
-		// 	validatedData = result.data;
+		// 	dispatch("validate", { errors });
 		// }
 		try {
-			validatedData = schema.parse(data);
+			dispatch("validate", { data: await schema.parse(data) });
 		} catch (error) {
 			if (error instanceof ValiError) {
 				const flatErrors = flatten(error);
@@ -63,8 +64,8 @@
 					}
 				}
 			}
+			dispatch("validate", { errors });
 		}
-		dispatch("validate", { data: validatedData, errors });
 	}
 
 	$: dispatch("errors", errors);
@@ -91,8 +92,9 @@
 </script>
 
 <form
-	method="POST"
+	{method}
 	{action}
+	{...$$restProps}
 	bind:this={elForm}
 	use:enhance={(f) => {
 		dispatch("before-submit");
