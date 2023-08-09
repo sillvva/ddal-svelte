@@ -33,39 +33,15 @@
 		| {
 				values: { key: number; value: string }[];
 				value: string;
-				searchBy: "value";
-		  }
-		| {
-				values: { key: string | null; value: string }[];
-				value: string | null;
-				searchBy?: "key";
-		  }
-		| {
-				values: { key: string | null; value: string }[];
-				value: string;
 				searchBy?: "value";
 		  }
 		| {
-				values: { key: number | null; value: string }[];
-				value: number | null;
-				searchBy?: "key";
-		  }
-		| {
-				values: { key: number | null; value: string }[];
-				value: string | null;
-				searchBy: "value";
-		  }
-		| {
-				values: { value: string }[];
+				values: { key?: undefined; value: string }[];
 				value: string;
-				searchBy: "value";
-		  } = {
-		values: [],
-		value: "",
-		searchBy: "key"
-	};
+				searchBy?: "value";
+		  };
 
-	let { values, value, searchBy } = options;
+	let { values, value, searchBy = "key" in values[0] && typeof value === typeof values[0]?.key ? "key" : "value" } = options;
 
 	let keysel = 0;
 	let search = value?.toString() || "";

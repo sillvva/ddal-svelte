@@ -178,8 +178,8 @@
 							name="dm.DCI"
 							type="number"
 							options={{
-								values: data.dms.map((dm) => ({ key: dm.DCI, value: dm.name + (dm.DCI ? ` (${dm.DCI})` : "") })) || [],
-								value: dm.DCI
+								values: data.dms.map((dm) => ({ key: dm.DCI || "", value: dm.name + (dm.DCI ? ` (${dm.DCI})` : "") })) || [],
+								value: dm.DCI || ""
 							}}
 							disabled={saving}
 							on:select={(ev) => {
