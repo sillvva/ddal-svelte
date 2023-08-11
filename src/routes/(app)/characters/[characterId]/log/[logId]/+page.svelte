@@ -58,12 +58,20 @@
 		magic_items_lost: magicItemsLost,
 		story_awards_gained: storyAwardsGained,
 		story_awards_lost: storyAwardsLost,
-		dm: {
-			id: dm.id,
-			name: dm.name.trim(),
-			DCI: dm.DCI,
-			uid: dm.uid || ""
-		}
+		dm:
+			!(dm.uid || dm.name.trim()) && data.session?.user?.id
+				? {
+						id: "",
+						name: data.session.user.name || "Me",
+						DCI: null,
+						uid: data.session.user.id
+				  }
+				: {
+						id: dm.id,
+						name: dm.name.trim(),
+						DCI: dm.DCI,
+						uid: dm.uid
+				  }
 	} satisfies LogSchema;
 
 	export const snapshot = {
@@ -141,11 +149,11 @@
 		</div>
 		<div class="col-span-12 grid grid-cols-12 gap-4">
 			{#if log.type === "game"}
-				<input type="hidden" name="dmId" value={dm.id} />
+				<input type="hidden" name="dm.id" value={dm.id} />
+				<input type="hidden" name="dm.uid" value={dm.uid} />
 				{#if log.is_dm_log}
-					<input type="hidden" name="dmName" value={dm.name} />
-					<input type="hidden" name="dmDCI" value={dm.DCI} />
-					<input type="hidden" name="dmUID" value={dm.uid} />
+					<input type="hidden" name="dm.name" value={dm.name} />
+					<input type="hidden" name="dm.DCI" value={dm.DCI} />
 				{:else}
 					<div class="form-control col-span-6">
 						<label for="dmName" class="label">

@@ -12,13 +12,8 @@ export async function saveLog(input: LogSchema, user?: User) {
 		let dm: DungeonMaster | null = null;
 		if (!user?.name) throw new Error("Not authenticated");
 
-		if (!input.dm.name.trim()) {
-			input.dm.uid = user.id;
-			input.dm.name = user.name;
-			input.dm.DCI = null;
-		}
-
-		const isMe = input.dm?.name.trim() === user.name?.trim();
+		if (input.dm.name.trim() === "Me") input.dm.name = user.name || "Me";
+		const isMe = input.dm.name.trim() === user.name?.trim() || input.dm.name === "Me";
 
 		const log = await prisma.$transaction(async (tx) => {
 			if (input.dm?.name.trim()) {
