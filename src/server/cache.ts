@@ -8,6 +8,12 @@ export async function cache<TReturnType>(
 	const key = tags.join("|");
 	const currentTime = Date.now();
 	const dCache = dataCache.get(key) as { data: TReturnType; timestamp: number; revalidate: number } | undefined;
+
+	if (dCache && currentTime - dCache.timestamp < 12 * 3600 * 1000) {
+		dCache.timestamp = currentTime;
+		dataCache.set(key, dCache);
+	}
+
 	if (dCache && dCache.data) return dCache.data;
 
 	const result = await callback();
