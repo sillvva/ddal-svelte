@@ -12,13 +12,8 @@ export async function saveLog(input: LogSchema, user?: User) {
 		let dm: DungeonMaster | null = null;
 		if (!user?.name) throw new Error("Not authenticated");
 
-		if (!input.dm.name.trim()) {
-			input.dm.uid = user.id;
-			input.dm.name = user.name;
-			input.dm.DCI = null;
-		}
-
-		const isMe = input.dm?.name.trim() === user.name?.trim();
+		if (input.dm.name.trim() === "Me") input.dm.name = user.name || "Me";
+		const isMe = input.dm.name.trim() === user.name?.trim() || input.dm.name === "Me";
 
 		const log = await prisma.$transaction(async (tx) => {
 			if (input.dm?.name.trim()) {
@@ -241,6 +236,7 @@ export async function saveLog(input: LogSchema, user?: User) {
 		});
 
 		if (log?.is_dm_log && log.dm?.uid) revalidateTags(["dm-logs", log.dm.uid]);
+		if (log?.characterId) revalidateTags(["character", log.characterId, "logs"]);
 
 		return log
 			? {
@@ -309,6 +305,7 @@ export async function deleteLog(logId: string, userId?: string) {
 			return log;
 		});
 		if (result?.is_dm_log && result.dm?.uid) revalidateTags(["dm-logs", result.dm.uid]);
+		if (result?.characterId) revalidateTags(["character", result.characterId, "logs"]);
 		return { id: result?.id || null, error: null };
 	} catch (error) {
 		if (error instanceof Error) return { id: null, error: error.message };

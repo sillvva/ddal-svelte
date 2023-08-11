@@ -4,6 +4,8 @@ import { getCharacterCache, getCharactersCache } from "$src/server/data/characte
 import { getDMLog, getLog } from "$src/server/data/logs";
 import { error, redirect } from "@sveltejs/kit";
 
+import type { DatesToStrings } from "$src/lib/types/util";
+
 export const load = async (event) => {
 	const parent = await event.parent();
 
@@ -41,15 +43,8 @@ export const actions = {
 
 		try {
 			const formData = await event.request.formData();
-			const parsedData = JSON.parse((formData.get("log") as string) || "{}") as Omit<
-				typeof log,
-				"date" | "applied_date" | "created_at"
-			> & { date: string; applied_date: string; created_at: string };
-			const logData = logSchema.parse({
-				...parsedData,
-				date: new Date(parsedData.date),
-				applied_date: parsedData.applied_date ? new Date(parsedData.applied_date) : null
-			});
+			const parsedData = JSON.parse((formData.get("form") as string) || "{}") as DatesToStrings<typeof log>;
+			const logData = logSchema.parse(parsedData);
 
 			if (!logData.is_dm_log) throw new Error("Only DM logs can be saved here.");
 

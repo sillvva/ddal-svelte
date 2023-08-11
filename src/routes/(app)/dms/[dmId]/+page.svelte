@@ -29,7 +29,7 @@
 		</div>
 	{/if}
 
-	<SchemaForm action="?/saveDM" data={dm} bind:form bind:saving bind:errors schema={dungeonMasterSchema}>
+	<SchemaForm action="?/saveDM" schema={dungeonMasterSchema} data={dm} bind:saving bind:errors>
 		<input type="hidden" name="dmID" value={dm.id} />
 		<div class="flex flex-wrap">
 			<div class="basis-full px-2 sm:basis-1/2">

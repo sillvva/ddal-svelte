@@ -28,7 +28,7 @@ export const load = async (event) => {
 	return {
 		title: event.params.characterId === "new" ? "New Character" : `Edit ${character.name}`,
 		breadcrumbs: parent.breadcrumbs.concat({
-			name: event.params.characterId === "new" ? "New Character" : character.name,
+			name: event.params.characterId === "new" ? "New Character" : "Edit",
 			href: `/characters/${event.params.characterId}/edit`
 		}),
 		...event.params,

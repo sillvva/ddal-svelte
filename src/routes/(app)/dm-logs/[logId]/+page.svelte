@@ -7,6 +7,7 @@
 	import { formatDate } from "$lib/utils";
 	import ComboBox from "$src/lib/components/ComboBox.svelte";
 	import { SvelteMap } from "$src/lib/store";
+	import type { LogSchema } from "$src/lib/types/schemas";
 	import { logSchema } from "$src/lib/types/schemas";
 	import { twMerge } from "tailwind-merge";
 
@@ -35,7 +36,7 @@
 			DCI: log.dm?.DCI || null,
 			uid: log.dm?.uid || ""
 		}
-	};
+	} satisfies LogSchema;
 
 	function extraErrors() {
 		if (values.characterId && !(data.characters || []).find((c) => c.id === values.characterId)) {
@@ -82,12 +83,10 @@
 
 <SchemaForm
 	action="?/saveLog"
+	schema={logSchema}
 	data={values}
-	bind:form
 	bind:errors
 	bind:saving
-	schema={logSchema}
-	stringify="log"
 	on:check-errors={() => extraErrors()}
 	on:before-submit={() => {
 		if (log.applied_date?.getTime() === 0) {
@@ -132,8 +131,6 @@
 				type="datetime-local"
 				name="date"
 				value={log.date.getTime() > 0 ? formatDate(log.date) : ""}
-				on:blur={(e) =>
-					(log.date = formatDate(e.currentTarget.value) !== "Invalid Date" ? new Date(e.currentTarget.value) : new Date(0))}
 				required
 				disabled={saving}
 				class="input-bordered input w-full focus:border-primary"
@@ -155,11 +152,13 @@
 			<ComboBox
 				type="text"
 				name="characterName"
-				value={data.characters.find((c) => c.id === log.characterId)?.name || ""}
-				values={data.characters?.map((char) => ({ key: char.id, value: char.name })) || []}
+				options={{
+					values: data.characters?.map((char) => ({ key: char.id, value: char.name })) || [],
+					value: data.characters.find((c) => c.id === log.characterId)?.name || "",
+					searchBy: "value"
+				}}
 				disabled={saving}
 				required={!!log.applied_date}
-				searchBy="value"
 				on:input={() => {
 					log.characterId = "";
 					log.applied_date = null;
@@ -187,8 +186,6 @@
 				type="datetime-local"
 				name="applied_date"
 				value={log.applied_date ? formatDate(log.applied_date) : ""}
-				on:blur={(e) =>
-					(log.applied_date = formatDate(e.currentTarget.value) !== "Invalid Date" ? new Date(e.currentTarget.value) : null)}
 				required={!!log.characterId}
 				disabled={saving}
 				class="input-bordered input w-full focus:border-primary"

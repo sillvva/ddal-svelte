@@ -12,7 +12,7 @@
 	let character = data.character;
 
 	let saving = false;
-	let errors = new SvelteMap<string, string>();
+	let errors = new SvelteMap<keyof typeof character, string>();
 
 	export const snapshot = {
 		capture: () => character,
@@ -33,7 +33,7 @@
 	</div>
 {/if}
 
-<SchemaForm action="?/saveCharacter" data={character} bind:form bind:errors bind:saving schema={newCharacterSchema}>
+<SchemaForm action="?/saveCharacter" schema={newCharacterSchema} data={character} bind:errors bind:saving>
 	<div class="flex flex-wrap">
 		<div class="basis-full px-2 sm:basis-1/2">
 			<div class="form-control w-full">

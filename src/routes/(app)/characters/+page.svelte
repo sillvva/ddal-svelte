@@ -9,6 +9,7 @@
 	import { twMerge } from "tailwind-merge";
 
 	export let data;
+	let characters = data.characters;
 	let search = "";
 
 	const minisearch = new MiniSearch({
@@ -21,15 +22,6 @@
 			combineWith: "AND"
 		}
 	});
-
-	let characters: Awaited<typeof data.streamed.characters> = [];
-	let loading = true;
-	$: {
-		data.streamed.characters.then((c) => {
-			characters = c;
-			loading = false;
-		});
-	}
 
 	$: indexed = characters
 		? characters.map((character) => ({
@@ -96,12 +88,7 @@
 		</div>
 	</div>
 
-	{#if loading}
-		<div class="fixed inset-0 z-40 flex items-center justify-center bg-black/50" />
-		<div class="fixed inset-0 z-50 flex items-center justify-center">
-			<span class="loading loading-spinner w-16 text-secondary" />
-		</div>
-	{:else if !characters.length}
+	{#if !characters.length}
 		<section class="bg-base-100">
 			<div class="py-20 text-center">
 				<p class="mb-4">You have no log sheets.</p>

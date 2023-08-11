@@ -6,8 +6,7 @@ import type { CharacterData } from "$src/server/data/characters";
 
 const defaultCookie = {
 	magicItems: false,
-	display: "list",
-	cacheCharacters: false
+	display: "list"
 };
 
 export const load = async (event) => {
@@ -18,20 +17,18 @@ export const load = async (event) => {
 
 	const cookie = serverGetCookie(event.cookies, "characters", defaultCookie);
 
+	const characters = await getCharactersCache(session.user.id).then(async (characters) => {
+		const charData: CharacterData[] = [];
+		for (const character of characters) {
+			const data = await getCharacterCache(character.id);
+			if (data) charData.push(data);
+		}
+		return charData;
+	});
+
 	return {
 		title: `${session.user.name}'s Characters`,
-		streamed: {
-			characters: new Promise<CharacterData[]>((resolve) => {
-				getCharactersCache(session.user.id).then(async (characters) => {
-					const charData: CharacterData[] = [];
-					for (const character of characters) {
-						const data = await getCharacterCache(character.id);
-						if (data) charData.push(data);
-					}
-					resolve(charData);
-				});
-			})
-		},
+		characters,
 		...cookie
 	};
 };

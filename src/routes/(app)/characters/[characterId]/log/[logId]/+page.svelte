@@ -8,6 +8,7 @@
 	import { formatDate, sorter } from "$lib/utils";
 	import ComboBox from "$src/lib/components/ComboBox.svelte";
 	import { SvelteMap } from "$src/lib/store";
+	import type { LogSchema } from "$src/lib/types/schemas";
 	import { logSchema } from "$src/lib/types/schemas";
 	import { twMerge } from "tailwind-merge";
 
@@ -57,13 +58,21 @@
 		magic_items_lost: magicItemsLost,
 		story_awards_gained: storyAwardsGained,
 		story_awards_lost: storyAwardsLost,
-		dm: {
-			id: dm.id,
-			name: dm.name.trim(),
-			DCI: dm.DCI,
-			uid: dm.uid
-		}
-	};
+		dm:
+			!(dm.uid || dm.name.trim()) && data.session?.user?.id
+				? {
+						id: "",
+						name: data.session.user.name || "Me",
+						DCI: null,
+						uid: data.session.user.id
+				  }
+				: {
+						id: dm.id,
+						name: dm.name.trim(),
+						DCI: dm.DCI,
+						uid: dm.uid
+				  }
+	} satisfies LogSchema;
 
 	export const snapshot = {
 		capture: () => log,
@@ -82,7 +91,7 @@
 	</div>
 {/if}
 
-<SchemaForm action="?/saveLog" data={values} bind:form bind:saving bind:errors schema={logSchema} stringify="log">
+<SchemaForm action="?/saveLog" schema={logSchema} data={values} bind:saving bind:errors>
 	<input type="hidden" name="characterId" value={character.id} />
 	<input type="hidden" name="logId" value={data.logId === "new" ? "" : data.logId} />
 	<input type="hidden" name="is_dm_log" value={log.is_dm_log} />
@@ -131,9 +140,6 @@
 				required
 				disabled={saving}
 				value={formatDate(log.date)}
-				on:input={(e) => {
-					log.date = new Date(e.currentTarget.value);
-				}}
 				class="input-bordered input w-full focus:border-primary"
 				aria-invalid={errors.get("date") ? "true" : "false"}
 			/>
@@ -143,11 +149,11 @@
 		</div>
 		<div class="col-span-12 grid grid-cols-12 gap-4">
 			{#if log.type === "game"}
-				<input type="hidden" name="dmId" value={dm.id} />
+				<input type="hidden" name="dm.id" value={dm.id} />
+				<input type="hidden" name="dm.uid" value={dm.uid} />
 				{#if log.is_dm_log}
-					<input type="hidden" name="dmName" value={dm.name} />
-					<input type="hidden" name="dmDCI" value={dm.DCI} />
-					<input type="hidden" name="dmUID" value={dm.uid} />
+					<input type="hidden" name="dm.name" value={dm.name} />
+					<input type="hidden" name="dm.DCI" value={dm.DCI} />
 				{:else}
 					<div class="form-control col-span-6">
 						<label for="dmName" class="label">
@@ -155,8 +161,10 @@
 						</label>
 						<ComboBox
 							name="dm.name"
-							value={dm.name}
-							values={data.dms.map((dm) => ({ key: dm.name, value: dm.name + (dm.DCI ? ` (${dm.DCI})` : "") })) || []}
+							options={{
+								values: data.dms.map((dm) => ({ key: dm.name, value: dm.name + (dm.DCI ? ` (${dm.DCI})` : "") })) || [],
+								value: dm.name
+							}}
 							disabled={saving}
 							on:select={(ev) => {
 								if (ev.detail) {
@@ -177,8 +185,10 @@
 						<ComboBox
 							name="dm.DCI"
 							type="number"
-							value={dm.DCI}
-							values={data.dms.map((dm) => ({ key: dm.DCI, value: dm.name + (dm.DCI ? ` (${dm.DCI})` : "") })) || []}
+							options={{
+								values: data.dms.map((dm) => ({ key: dm.DCI || "", value: dm.name + (dm.DCI ? ` (${dm.DCI})` : "") })) || [],
+								value: dm.DCI || ""
+							}}
 							disabled={saving}
 							on:select={(ev) => {
 								if (ev.detail) {

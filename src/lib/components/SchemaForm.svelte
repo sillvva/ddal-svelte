@@ -1,33 +1,35 @@
-<script lang="ts">
+<script lang="ts" generics="TSchema extends BaseSchema | BaseSchemaAsync">
+	// TSchema extends Schema
+	// TSchema extends BaseSchema | BaseSchemaAsync
 	import { enhance } from "$app/forms";
 	import { beforeNavigate } from "$app/navigation";
+	import type { BaseSchema, BaseSchemaAsync, Input, Output } from "valibot";
+	import { ValiError, flatten } from "valibot";
+	// import type { Infer, InferIn, Schema } from "@decs/typeschema";
+	// import { validate } from "@decs/typeschema";
 	import type { ActionResult } from "@sveltejs/kit";
 	import { createEventDispatcher } from "svelte";
-	import type { ObjectSchema, Output } from "valibot";
-	import { ValiError, flatten } from "valibot";
 	import { SvelteMap, SvelteSet } from "../store";
+
+	type InferIn<TInput extends TSchema> = Input<TInput>;
+	type Infer<TOutput extends TSchema> = Output<TOutput>;
 
 	const dispatch = createEventDispatcher<{
 		"before-submit": null;
 		"after-submit": ActionResult;
 		errors: SvelteMap<string, string>;
-		"check-errors": null;
+		validate: { data?: Infer<TSchema>; errors?: SvelteMap<string, string> };
 	}>();
 
 	let elForm: HTMLFormElement;
+	let stringify = "form";
 
-	export let form: (object & { error: string | null | undefined }) | null;
-	export let schema: ObjectSchema<any, any>;
-	export let data: object;
+	export let schema: TSchema;
+	export let data: InferIn<TSchema>;
 	export let action: string;
-	export let stringify = "";
+	export let method = "POST";
 	export let resetOnSave = false;
-
 	export let saving = false;
-	$: {
-		if (form?.error && saving) saving = false;
-		else if (form && saving) changes = changes.clear();
-	}
 
 	export let changes = new SvelteSet<string>();
 	export function addChanges(field: string) {
@@ -35,41 +37,34 @@
 	}
 
 	export let errors = new SvelteMap<string, string>();
-	$: {
-		errors = errors.clear();
-		if (changes.size) {
-			try {
-				schema.parse(data);
-			} catch (error) {
-				changes.forEach((c) => {
-					if (error instanceof ValiError) {
-						const flatErrors = flatten(error);
-						for (const path in flatErrors.nested) {
-							for (const err of flatErrors.nested[path] || []) {
-								if (path === c && !errors.has(c)) errors = errors.set(c, err);
-							}
-						}
-					}
-				});
-			}
+	$: checkErrors(data);
 
-			dispatch("check-errors");
-		}
-	}
-
-	function checkErrors(data: Output<ObjectSchema<any, any>>) {
+	async function checkErrors(data: InferIn<TSchema>, onlyChanges = true) {
 		errors = errors.clear();
+		// const result = await validate(schema, data);
+		// if ("data" in result) {
+		// 	dispatch("validate", { data: result.data });
+		// }
+		// else if ("issues" in result) {
+		// 	result.issues.forEach((issue) => {
+		// 		if (issue.path && (!onlyChanges || changes.has(issue.path.join(".")))) {
+		// 			errors = errors.set(issue.path.join("."), issue.message);
+		// 		}
+		// 	});
+		// 	dispatch("validate", { errors });
+		// }
 		try {
-			schema.parse(data);
+			dispatch("validate", { data: await schema.parse(data) });
 		} catch (error) {
 			if (error instanceof ValiError) {
 				const flatErrors = flatten(error);
 				for (const path in flatErrors.nested) {
 					for (const err of flatErrors.nested[path] || []) {
-						if (path && !errors.has(path)) errors = errors.set(path, err);
+						if (!onlyChanges || changes.has(path)) errors = errors.set(path, err);
 					}
 				}
 			}
+			dispatch("validate", { errors });
 		}
 	}
 
@@ -97,29 +92,33 @@
 </script>
 
 <form
-	method="POST"
+	{method}
 	{action}
+	{...$$restProps}
 	bind:this={elForm}
 	use:enhance={(f) => {
 		dispatch("before-submit");
 		const savedChanges = new SvelteSet([...changes]);
-		changes.clear();
-		form = null;
+		changes = changes.clear();
 		saving = true;
 
-		checkErrors(data);
+		checkErrors(data, false);
 		if (Object.values(errors).find((e) => e.length > 0)) {
 			saving = false;
 			return f.cancel();
 		}
 
-		if (stringify) f.formData.append(stringify, JSON.stringify(data));
+		if (stringify && !(stringify in data)) f.formData.append(stringify, JSON.stringify(data));
 		return async ({ update, result }) => {
 			await update({ reset: resetOnSave });
 			dispatch("after-submit", result);
-			if (!["redirect", "success"].includes(result.type)) {
+			if (
+				(result.type === "success" && result.data && "error" in result.data) ||
+				!["redirect", "success"].includes(result.type)
+			) {
 				changes = new SvelteSet([...savedChanges]);
 				savedChanges.clear();
+				saving = false;
 			}
 		};
 	}}
