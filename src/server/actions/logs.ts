@@ -236,6 +236,7 @@ export async function saveLog(input: LogSchema, user?: User) {
 		});
 
 		if (log?.is_dm_log && log.dm?.uid) revalidateTags(["dm-logs", log.dm.uid]);
+		if (log?.characterId) revalidateTags(["character", log.characterId, "logs"]);
 
 		return log
 			? {
@@ -304,6 +305,7 @@ export async function deleteLog(logId: string, userId?: string) {
 			return log;
 		});
 		if (result?.is_dm_log && result.dm?.uid) revalidateTags(["dm-logs", result.dm.uid]);
+		if (result?.characterId) revalidateTags(["character", result.characterId, "logs"]);
 		return { id: result?.id || null, error: null };
 	} catch (error) {
 		if (error instanceof Error) return { id: null, error: error.message };

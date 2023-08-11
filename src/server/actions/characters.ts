@@ -29,9 +29,12 @@ export async function saveCharacter(characterId: string, userId: string, data: N
 				}
 			});
 		}
+
 		revalidateTags(["character", result.id, "logs"]);
 		revalidateTags(["character", result.id, "no-logs"]);
 		if (characterId == "new") revalidateTags(["characters", userId]);
+		revalidateTags(["dms", userId]);
+
 		return { id: result.id, character: result, error: null };
 	} catch (error) {
 		if (error instanceof Error) return { id: null, character: null, error: error.message };
@@ -76,9 +79,12 @@ export async function deleteCharacter(characterId: string, userId?: string) {
 				where: { id: characterId }
 			});
 		});
+
 		revalidateTags(["character", result.id, "logs"]);
 		revalidateTags(["character", result.id, "no-logs"]);
 		revalidateTags(["characters", userId]);
+		revalidateTags(["dms", userId]);
+
 		return { id: result.id, error: null };
 	} catch (error) {
 		if (error instanceof Error) return { id: null, error: error.message };
