@@ -1,10 +1,10 @@
 <script lang="ts" context="module">
 	export type DeepStringify<T> = {
-		[K in keyof T]: T[K] extends object ? DeepStringify<T[K]> : string;
+		[K in keyof T]: T[K] extends Date ? string : T[K] extends object ? DeepStringify<T[K]> : string;
 	};
 
 	export function schemaErrors<S extends Schema, T extends InferIn<S>>(data: T): DeepStringify<T> {
-		const result: any = Array.isArray(data) ? [] : ({} as T);
+		const result: any = Array.isArray(data) ? [] : {};
 		for (const key in data) {
 			if (Array.isArray(data[key])) {
 				result[key] = schemaErrors(data[key]);
