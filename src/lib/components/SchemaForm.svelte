@@ -43,12 +43,10 @@
 	export let method = "POST";
 	export let resetOnSave = false;
 	export let saving = false;
-
 	export let errors = schemaErrors(data);
-	let errorCnt = 0;
 
-	export let changes = new SvelteSet<string>();
-	export function addChanges(field: string) {
+	let changes = new SvelteSet<string>();
+	function addChanges(field: string) {
 		changes = changes.add(field);
 	}
 
@@ -56,7 +54,6 @@
 
 	async function checkErrors(data: InferIn<TSchema>, onlyChanges = true) {
 		errors = schemaErrors(data);
-		errorCnt = 0;
 		const result = await validate(schema, data);
 		if ("data" in result) {
 			dispatch("validate", { data: result.data });
@@ -64,7 +61,6 @@
 			result.issues.forEach((issue) => {
 				if (issue.path && (!onlyChanges || changes.has(issue.path.join(".")))) {
 					setNestedError(errors, issue.path, issue.message);
-					errorCnt = errorCnt + 1;
 					errors = errors;
 				}
 			});
