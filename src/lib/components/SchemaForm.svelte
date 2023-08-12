@@ -1,15 +1,16 @@
 <script lang="ts" generics="TSchema extends BaseSchema | BaseSchemaAsync">
+	import { deepStringify, setNestedError } from "../types/util";
 	// TSchema extends Schema
 	// TSchema extends BaseSchema | BaseSchemaAsync
 	import { enhance } from "$app/forms";
 	import { beforeNavigate } from "$app/navigation";
 	import type { BaseSchema, BaseSchemaAsync, Input, Output } from "valibot";
-	import { ValiError, flatten } from "valibot";
+	import { ValiError } from "valibot";
 	// import type { Infer, InferIn, Schema } from "@decs/typeschema";
 	// import { validate } from "@decs/typeschema";
 	import type { ActionResult } from "@sveltejs/kit";
 	import { createEventDispatcher } from "svelte";
-	import { SvelteMap, SvelteSet } from "../store";
+	import { SvelteSet } from "../store";
 
 	type InferIn<TInput extends TSchema> = Input<TInput>;
 	type Infer<TOutput extends TSchema> = Output<TOutput>;
@@ -17,8 +18,8 @@
 	const dispatch = createEventDispatcher<{
 		"before-submit": null;
 		"after-submit": ActionResult;
-		errors: SvelteMap<string, string>;
-		validate: { data?: Infer<TSchema>; errors?: SvelteMap<string, string> };
+		errors: typeof errors;
+		validate: { data?: Infer<TSchema>; errors?: typeof errors };
 	}>();
 
 	let elForm: HTMLFormElement;
@@ -31,16 +32,17 @@
 	export let resetOnSave = false;
 	export let saving = false;
 
+	export let errors = deepStringify(data);
+
 	export let changes = new SvelteSet<string>();
 	export function addChanges(field: string) {
 		changes = changes.add(field);
 	}
 
-	export let errors = new SvelteMap<string, string>();
-	$: checkErrors(data);
+	$: changes && checkErrors(data);
 
 	async function checkErrors(data: InferIn<TSchema>, onlyChanges = true) {
-		errors = errors.clear();
+		errors = deepStringify(data);
 		// const result = await validate(schema, data);
 		// if ("data" in result) {
 		// 	dispatch("validate", { data: result.data });
@@ -57,12 +59,16 @@
 			dispatch("validate", { data: await schema.parse(data) });
 		} catch (error) {
 			if (error instanceof ValiError) {
-				const flatErrors = flatten(error);
-				for (const path in flatErrors.nested) {
-					for (const err of flatErrors.nested[path] || []) {
-						if (!onlyChanges || changes.has(path)) errors = errors.set(path, err);
+				error.issues.forEach((issue) => {
+					if (issue.path && (!onlyChanges || changes.has(issue.path.map((p) => p.key).join(".")))) {
+						setNestedError(
+							errors,
+							issue.path.map((p) => p.key),
+							issue.message
+						);
+						errors = errors;
 					}
-				}
+				});
 			}
 			dispatch("validate", { errors });
 		}

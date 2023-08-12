@@ -7,9 +7,9 @@
 	import { getMagicItems, getStoryAwards } from "$lib/entities";
 	import { formatDate, sorter } from "$lib/utils";
 	import ComboBox from "$src/lib/components/ComboBox.svelte";
-	import { SvelteMap } from "$src/lib/store";
 	import type { LogSchema } from "$src/lib/types/schemas";
 	import { logSchema } from "$src/lib/types/schemas";
+	import { deepStringify } from "$src/lib/types/util.js";
 	import { twMerge } from "tailwind-merge";
 
 	export let data;
@@ -19,7 +19,6 @@
 	let log = data.log;
 
 	let saving = false;
-	let errors = new SvelteMap<string, string>();
 
 	$: magicItems = character
 		? getMagicItems(character, { excludeDropped: true, lastLogDate: new Date(log.date).toISOString() }).sort((a, b) =>
@@ -49,30 +48,34 @@
 	}));
 	$: storyAwardsLost = log.story_awards_lost.map((mi) => mi.id).filter((id) => !!storyAwards.find((mi) => mi.id === id));
 
-	$: values = {
-		...log,
-		characterId: character?.id || "",
-		characterName: character?.name || "",
-		description: log.description || "",
-		magic_items_gained: magicItemsGained,
-		magic_items_lost: magicItemsLost,
-		story_awards_gained: storyAwardsGained,
-		story_awards_lost: storyAwardsLost,
-		dm:
-			!(dm.uid || dm.name.trim()) && data.session?.user?.id
-				? {
-						id: "",
-						name: data.session.user.name || "Me",
-						DCI: null,
-						uid: data.session.user.id
-				  }
-				: {
-						id: dm.id,
-						name: dm.name.trim(),
-						DCI: dm.DCI,
-						uid: dm.uid
-				  }
-	} satisfies LogSchema;
+	const logValues = (...watching: unknown[]) =>
+		({
+			...log,
+			characterId: character?.id || "",
+			characterName: character?.name || "",
+			description: log.description || "",
+			magic_items_gained: magicItemsGained,
+			magic_items_lost: magicItemsLost,
+			story_awards_gained: storyAwardsGained,
+			story_awards_lost: storyAwardsLost,
+			dm:
+				!(dm.uid || dm.name.trim()) && data.session?.user?.id
+					? {
+							id: "",
+							name: data.session.user.name || "Me",
+							DCI: null,
+							uid: data.session.user.id
+					  }
+					: {
+							id: dm.id,
+							name: dm.name.trim(),
+							DCI: dm.DCI,
+							uid: dm.uid
+					  }
+		}) satisfies LogSchema;
+
+	$: values = logValues(log, dm, magicItemsGained, magicItemsLost, storyAwardsGained, storyAwardsLost);
+	let errors = deepStringify(logValues());
 
 	export const snapshot = {
 		capture: () => log,
@@ -121,10 +124,10 @@
 				disabled={saving}
 				bind:value={log.name}
 				class="input-bordered input w-full focus:border-primary"
-				aria-invalid={errors.get("name") ? "true" : "false"}
+				aria-invalid={errors.name ? "true" : "false"}
 			/>
 			<label for="name" class="label">
-				<span class="label-text-alt text-error">{errors.get("name") || ""}</span>
+				<span class="label-text-alt text-error">{errors.name}</span>
 			</label>
 		</div>
 		<div class={twMerge("form-control col-span-12", log.is_dm_log ? "sm:col-span-6" : "sm:col-span-4")}>
@@ -141,10 +144,10 @@
 				disabled={saving}
 				value={formatDate(log.date)}
 				class="input-bordered input w-full focus:border-primary"
-				aria-invalid={errors.get("date") ? "true" : "false"}
+				aria-invalid={errors.date ? "true" : "false"}
 			/>
 			<label for="date" class="label">
-				<span class="label-text-alt text-error">{errors.get("date") || ""}</span>
+				<span class="label-text-alt text-error">{errors.date}</span>
 			</label>
 		</div>
 		<div class="col-span-12 grid grid-cols-12 gap-4">
@@ -175,7 +178,7 @@
 							}}
 						/>
 						<label for="dmName" class="label">
-							<span class="label-text-alt text-error">{errors.get("dm.name") || ""}</span>
+							<span class="label-text-alt text-error">{errors.dm.name}</span>
 						</label>
 					</div>
 					<div class="form-control col-span-6">
@@ -199,7 +202,7 @@
 							}}
 						/>
 						<label for="dmDCI" class="label">
-							<span class="label-text-alt text-error">{errors.get("dm.DCI") || ""}</span>
+							<span class="label-text-alt text-error">{errors.dm.DCI}</span>
 						</label>
 					</div>
 				{/if}
@@ -227,7 +230,7 @@
 							class="input-bordered input w-full focus:border-primary"
 						/>
 						<label for="experience" class="label">
-							<span class="label-text-alt text-error">{errors.get("experience") || ""}</span>
+							<span class="label-text-alt text-error">{errors.experience}</span>
 						</label>
 					</div>
 				{/if}
@@ -246,7 +249,7 @@
 							class="input-bordered input w-full focus:border-primary"
 						/>
 						<label for="level" class="label">
-							<span class="label-text-alt text-error">{errors.get("level") || ""}</span>
+							<span class="label-text-alt text-error">{errors.level}</span>
 						</label>
 					</div>
 				{/if}
@@ -265,7 +268,7 @@
 							class="input-bordered input w-full focus:border-primary"
 						/>
 						<label for="acp" class="label">
-							<span class="label-text-alt text-error">{errors.get("acp") || ""}</span>
+							<span class="label-text-alt text-error">{errors.acp}</span>
 						</label>
 					</div>
 				{/if}
@@ -281,7 +284,7 @@
 						class="input-bordered input w-full focus:border-primary"
 					/>
 					<label for="tcp" class="label">
-						<span class="label-text-alt text-error">{errors.get("tcp") || ""}</span>
+						<span class="label-text-alt text-error">{errors.tcp}</span>
 					</label>
 				</div>
 			{/if}
@@ -297,7 +300,7 @@
 					class="input-bordered input w-full focus:border-primary"
 				/>
 				<label for="gold" class="label">
-					<span class="label-text-alt text-error">{errors.get("gold") || ""}</span>
+					<span class="label-text-alt text-error">{errors.gold}</span>
 				</label>
 			</div>
 			<div class={twMerge("form-control w-full", log.type === "game" ? "col-span-6 sm:col-span-2" : "col-span-4")}>
@@ -312,7 +315,7 @@
 					class="input-bordered input w-full focus:border-primary"
 				/>
 				<label for="dtd" class="label">
-					<span class="label-text-alt text-error">{errors.get("dtd") || ""}</span>
+					<span class="label-text-alt text-error">{errors.dtd}</span>
 				</label>
 			</div>
 		</div>
@@ -327,7 +330,7 @@
 				class="textarea-bordered textarea w-full focus:border-primary"
 			/>
 			<label for="description" class="label">
-				<span class="label-text-alt text-error">{errors.get("description") || ""}</span>
+				<span class="label-text-alt text-error">{errors.description}</span>
 				<span class="label-text-alt">Markdown Allowed</span>
 			</label>
 		</div>
@@ -392,7 +395,7 @@
 									class="input-bordered input w-full focus:border-primary"
 								/>
 								<label for={`magic_items_gained.${index}.name`} class="label">
-									<span class="label-text-alt text-error">{errors.get(`magic_items_gained.${index}.name`) || ""}</span>
+									<span class="label-text-alt text-error">{errors.magic_items_gained[index].name}</span>
 								</label>
 							</div>
 							<button
@@ -437,7 +440,7 @@
 								<select
 									value={id}
 									name={`magic_items_lost.${index}`}
-									on:change={(e) => {
+									on:input={(e) => {
 										if (magicItemsLost[index]) magicItemsLost[index] = e.currentTarget.value;
 									}}
 									disabled={saving}
@@ -450,7 +453,7 @@
 									{/each}
 								</select>
 								<label for={`magic_items_lost.${index}`} class="label">
-									<span class="label-text-alt text-error">{errors.get(`magic_items_lost.${index}`) || ""}</span>
+									<span class="label-text-alt text-error">{errors.magic_items_lost[index]}</span>
 								</label>
 							</div>
 							<button
@@ -485,7 +488,7 @@
 									class="input-bordered input w-full focus:border-primary"
 								/>
 								<label for={`story_awards_gained.${index}.name`} class="label">
-									<span class="label-text-alt text-error">{errors.get(`story_awards_gained.${index}.name`) || ""}</span>
+									<span class="label-text-alt text-error">{errors.story_awards_gained[index].name}</span>
 								</label>
 							</div>
 							<button
@@ -530,7 +533,7 @@
 								<select
 									value={id}
 									name={`story_awards_lost.${index}`}
-									on:change={(e) => {
+									on:input={(e) => {
 										if (storyAwardsLost[index]) storyAwardsLost[index] = e.currentTarget.value;
 									}}
 									disabled={saving}
@@ -543,7 +546,7 @@
 									{/each}
 								</select>
 								<label for={`story_awards_lost.${index}`} class="label">
-									<span class="label-text-alt text-error">{errors.get(`story_awards_lost.${index}`) || ""}</span>
+									<span class="label-text-alt text-error">{errors.story_awards_lost[index]}</span>
 								</label>
 							</div>
 							<button

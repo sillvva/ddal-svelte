@@ -4,9 +4,10 @@
 	import BreadCrumbs from "$lib/components/BreadCrumbs.svelte";
 	import Icon from "$lib/components/Icon.svelte";
 	import SchemaForm from "$lib/components/SchemaForm.svelte";
-	import { SvelteMap, pageLoader } from "$lib/store";
+	import { pageLoader } from "$lib/store";
 	import { sorter } from "$lib/utils";
 	import { dungeonMasterSchema } from "$src/lib/types/schemas";
+	import { deepStringify } from "$src/lib/types/util.js";
 
 	export let data;
 	export let form;
@@ -14,7 +15,7 @@
 	let dm = data.dm;
 
 	let saving = false;
-	let errors = new SvelteMap<string, string>();
+	let errors = deepStringify(dm);
 </script>
 
 <div class="flex flex-col gap-4">
@@ -49,7 +50,7 @@
 						class="input-bordered input w-full focus:border-primary"
 					/>
 					<label for="name" class="label">
-						<span class="label-text-alt text-error">{errors.get("name") || ""}</span>
+						<span class="label-text-alt text-error">{errors.name}</span>
 					</label>
 				</div>
 			</div>
@@ -66,7 +67,7 @@
 						class="input-bordered input w-full focus:border-primary"
 					/>
 					<label for="DCI" class="label">
-						<span class="label-text-alt text-error">{errors.get("DCI") || ""}</span>
+						<span class="label-text-alt text-error">{errors.DCI}</span>
 					</label>
 				</div>
 			</div>
