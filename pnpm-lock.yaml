@@ -17,6 +17,9 @@ dependencies:
   '@auth/sveltekit':
     specifier: ^0.3.6
     version: 0.3.6(@sveltejs/kit@1.22.3)(svelte@4.0.5)
+  '@decs/typeschema':
+    specifier: 0.9.1
+    version: 0.9.1(valibot@0.12.0)(vite@4.4.4)
   '@prisma/client':
     specifier: ^5.0.0
     version: 5.0.0(prisma@5.0.0)
@@ -158,6 +161,57 @@ packages:
       svelte: 4.0.5
     transitivePeerDependencies:
       - nodemailer
+    dev: false
+
+  /@decs/typeschema@0.9.1(valibot@0.12.0)(vite@4.4.4):
+    resolution: {integrity: sha512-ikzD68ViSorw8ad8KvmgDXDmK9ZappOtwis7z87l3357PU/vCgh/2a574jkoNGlT2zmMwzYnj8fAmEdN/idGXw==}
+    peerDependencies:
+      '@deepkit/type': ^1.0.1-alpha.97
+      '@sinclair/typebox': ^0.31.0
+      ajv: ^8.12.0
+      arktype: ^1.0.19-alpha
+      fp-ts: ^2.16.0
+      io-ts: ^2.2.20
+      joi: ^17.9.2
+      ow: ^0.28.2
+      runtypes: ^6.7.0
+      superstruct: ^1.0.3
+      valibot: ^0.12.0
+      vite: ^4.4.9
+      yup: ^1.2.0
+      zod: ^3.21.4
+    peerDependenciesMeta:
+      '@deepkit/type':
+        optional: true
+      '@sinclair/typebox':
+        optional: true
+      ajv:
+        optional: true
+      arktype:
+        optional: true
+      fp-ts:
+        optional: true
+      io-ts:
+        optional: true
+      joi:
+        optional: true
+      ow:
+        optional: true
+      runtypes:
+        optional: true
+      superstruct:
+        optional: true
+      valibot:
+        optional: true
+      vite:
+        optional: true
+      yup:
+        optional: true
+      zod:
+        optional: true
+    dependencies:
+      valibot: 0.12.0
+      vite: 4.4.4
     dev: false
 
   /@esbuild/android-arm64@0.18.11:

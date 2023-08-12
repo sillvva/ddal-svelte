@@ -2,9 +2,8 @@
 	import BackButton from "$lib/components/BackButton.svelte";
 	import BreadCrumbs from "$lib/components/BreadCrumbs.svelte";
 	import Icon from "$lib/components/Icon.svelte";
-	import SchemaForm from "$lib/components/SchemaForm.svelte";
+	import SchemaForm, { schemaErrors } from "$lib/components/SchemaForm.svelte";
 	import { newCharacterSchema } from "$src/lib/types/schemas";
-	import { deepStringify } from "$src/lib/types/util.js";
 
 	export let data;
 	export let form;
@@ -12,7 +11,7 @@
 	let character = data.character;
 
 	let saving = false;
-	let errors = deepStringify(character);
+	let errors = schemaErrors(character);
 
 	export const snapshot = {
 		capture: () => character,

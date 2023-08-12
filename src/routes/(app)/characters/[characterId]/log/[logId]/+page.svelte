@@ -3,13 +3,12 @@
 	import BackButton from "$lib/components/BackButton.svelte";
 	import BreadCrumbs from "$lib/components/BreadCrumbs.svelte";
 	import Icon from "$lib/components/Icon.svelte";
-	import SchemaForm from "$lib/components/SchemaForm.svelte";
+	import SchemaForm, { schemaErrors } from "$lib/components/SchemaForm.svelte";
 	import { getMagicItems, getStoryAwards } from "$lib/entities";
 	import { formatDate, sorter } from "$lib/utils";
 	import ComboBox from "$src/lib/components/ComboBox.svelte";
 	import type { LogSchema } from "$src/lib/types/schemas";
 	import { logSchema } from "$src/lib/types/schemas";
-	import { deepStringify } from "$src/lib/types/util.js";
 	import { twMerge } from "tailwind-merge";
 
 	export let data;
@@ -75,7 +74,7 @@
 		}) satisfies LogSchema;
 
 	$: values = logValues(log, dm, magicItemsGained, magicItemsLost, storyAwardsGained, storyAwardsLost);
-	let errors = deepStringify(logValues());
+	let errors = schemaErrors(logValues());
 
 	export const snapshot = {
 		capture: () => log,

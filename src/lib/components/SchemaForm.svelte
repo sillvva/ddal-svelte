@@ -1,19 +1,31 @@
-<script lang="ts" generics="TSchema extends BaseSchema | BaseSchemaAsync">
-	import { deepStringify, setNestedError } from "../types/util";
-	// TSchema extends Schema
-	// TSchema extends BaseSchema | BaseSchemaAsync
+<script lang="ts" context="module">
+	export type DeepStringify<T> = {
+		[K in keyof T]: T[K] extends object ? DeepStringify<T[K]> : string;
+	};
+
+	export function schemaErrors<S extends Schema, T extends InferIn<S>>(data: T): DeepStringify<T> {
+		const result: any = Array.isArray(data) ? [] : ({} as T);
+		for (const key in data) {
+			if (Array.isArray(data[key])) {
+				result[key] = schemaErrors(data[key]);
+			} else if (data[key] && typeof data[key] === "object" && !((data[key] as object) instanceof Date)) {
+				result[key] = schemaErrors(data[key]);
+			} else {
+				result[key] = "";
+			}
+		}
+		return result;
+	}
+</script>
+
+<script lang="ts" generics="TSchema extends Schema">
 	import { enhance } from "$app/forms";
 	import { beforeNavigate } from "$app/navigation";
-	import type { BaseSchema, BaseSchemaAsync, Input, Output } from "valibot";
-	import { ValiError } from "valibot";
-	// import type { Infer, InferIn, Schema } from "@decs/typeschema";
-	// import { validate } from "@decs/typeschema";
+	import type { Infer, InferIn, Schema } from "@decs/typeschema";
+	import { validate } from "@decs/typeschema";
 	import type { ActionResult } from "@sveltejs/kit";
 	import { createEventDispatcher } from "svelte";
 	import { SvelteSet } from "../store";
-
-	type InferIn<TInput extends TSchema> = Input<TInput>;
-	type Infer<TOutput extends TSchema> = Output<TOutput>;
 
 	const dispatch = createEventDispatcher<{
 		"before-submit": null;
@@ -32,7 +44,8 @@
 	export let resetOnSave = false;
 	export let saving = false;
 
-	export let errors = deepStringify(data);
+	export let errors = schemaErrors(data);
+	let errorCnt = 0;
 
 	export let changes = new SvelteSet<string>();
 	export function addChanges(field: string) {
@@ -42,34 +55,19 @@
 	$: changes && checkErrors(data);
 
 	async function checkErrors(data: InferIn<TSchema>, onlyChanges = true) {
-		errors = deepStringify(data);
-		// const result = await validate(schema, data);
-		// if ("data" in result) {
-		// 	dispatch("validate", { data: result.data });
-		// }
-		// else if ("issues" in result) {
-		// 	result.issues.forEach((issue) => {
-		// 		if (issue.path && (!onlyChanges || changes.has(issue.path.join(".")))) {
-		// 			errors = errors.set(issue.path.join("."), issue.message);
-		// 		}
-		// 	});
-		// 	dispatch("validate", { errors });
-		// }
-		try {
-			dispatch("validate", { data: await schema.parse(data) });
-		} catch (error) {
-			if (error instanceof ValiError) {
-				error.issues.forEach((issue) => {
-					if (issue.path && (!onlyChanges || changes.has(issue.path.map((p) => p.key).join(".")))) {
-						setNestedError(
-							errors,
-							issue.path.map((p) => p.key),
-							issue.message
-						);
-						errors = errors;
-					}
-				});
-			}
+		errors = schemaErrors(data);
+		errorCnt = 0;
+		const result = await validate(schema, data);
+		if ("data" in result) {
+			dispatch("validate", { data: result.data });
+		} else if ("issues" in result) {
+			result.issues.forEach((issue) => {
+				if (issue.path && (!onlyChanges || changes.has(issue.path.join(".")))) {
+					setNestedError(errors, issue.path, issue.message);
+					errorCnt = errorCnt + 1;
+					errors = errors;
+				}
+			});
 			dispatch("validate", { errors });
 		}
 	}
@@ -95,6 +93,22 @@
 			if (!confirm("You have unsaved changes. Are you sure you want to leave this page?")) nav.cancel();
 		}
 	});
+
+	const hasValues = (obj: Record<string, unknown>): boolean => {
+		return Object.values(obj).some((v) => (typeof v == "object" ? hasValues(v as Record<string, unknown>) : v));
+	};
+
+	const setNestedError = <T,>(err: T, keysArray: (string | number | symbol)[], value: string) => {
+		let current: any = err;
+		for (let i = 0; i < keysArray.length - 1; i++) {
+			const key = keysArray[i];
+			if (!(current[key] instanceof Object)) {
+				current[key] = {};
+			}
+			current = current[key];
+		}
+		current[keysArray[keysArray.length - 1]] = value;
+	};
 </script>
 
 <form
@@ -109,12 +123,12 @@
 		saving = true;
 
 		checkErrors(data, false);
-		if (Object.values(errors).find((e) => e.length > 0)) {
+		if (hasValues(errors)) {
 			saving = false;
 			return f.cancel();
 		}
 
-		if (stringify && !(stringify in data)) f.formData.append(stringify, JSON.stringify(data));
+		if (stringify && data && typeof data === "object" && !(stringify in data)) f.formData.append(stringify, JSON.stringify(data));
 		return async ({ update, result }) => {
 			await update({ reset: resetOnSave });
 			dispatch("after-submit", result);
