@@ -5,8 +5,9 @@
 	import Icon from "$lib/components/Icon.svelte";
 	import SchemaForm from "$lib/components/SchemaForm.svelte";
 	import { getMagicItems, getStoryAwards } from "$lib/entities";
-	import { formatDate, sorter } from "$lib/utils";
+	import { sorter } from "$lib/utils";
 	import ComboBox from "$src/lib/components/ComboBox.svelte";
+	import DateTimeInput from "$src/lib/components/DateTimeInput.svelte";
 	import type { LogSchema } from "$src/lib/types/schemas";
 	import { logSchema } from "$src/lib/types/schemas";
 	import { twMerge } from "tailwind-merge";
@@ -135,12 +136,11 @@
 					<span class="text-error">*</span>
 				</span>
 			</label>
-			<input
-				type="datetime-local"
+			<DateTimeInput
 				name="date"
 				required
 				disabled={saving}
-				value={formatDate(log.date)}
+				bind:value={log.date}
 				class="input-bordered input w-full focus:border-primary"
 				aria-invalid={errors.date ? "true" : "false"}
 			/>

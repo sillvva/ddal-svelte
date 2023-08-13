@@ -4,8 +4,8 @@
 	import BreadCrumbs from "$lib/components/BreadCrumbs.svelte";
 	import Icon from "$lib/components/Icon.svelte";
 	import SchemaForm from "$lib/components/SchemaForm.svelte";
-	import { formatDate } from "$lib/utils";
 	import ComboBox from "$src/lib/components/ComboBox.svelte";
+	import DateTimeInput from "$src/lib/components/DateTimeInput.svelte";
 	import type { LogSchema } from "$src/lib/types/schemas";
 	import { logSchema } from "$src/lib/types/schemas";
 	import { twMerge } from "tailwind-merge";
@@ -31,7 +31,6 @@
 	const logValues = (...watching: unknown[]) =>
 		({
 			...log,
-			applied_date: log.applied_date?.getTime() == 0 ? null : log.applied_date,
 			characterId: character?.id || "",
 			characterName: character?.name || "",
 			description: log.description || "",
@@ -127,10 +126,9 @@
 					<span class="text-error">*</span>
 				</span>
 			</label>
-			<input
-				type="datetime-local"
+			<DateTimeInput
 				name="date"
-				value={new Date(log.date).getTime() > 0 ? formatDate(log.date) : ""}
+				bind:value={log.date}
 				required
 				disabled={saving}
 				class="input-bordered input w-full focus:border-primary"
@@ -184,10 +182,9 @@
 					{/if}
 				</span>
 			</label>
-			<input
-				type="datetime-local"
+			<DateTimeInput
 				name="applied_date"
-				value={log.applied_date ? formatDate(log.applied_date) : ""}
+				bind:value={log.applied_date}
 				required={!!log.characterId}
 				disabled={saving}
 				class="input-bordered input w-full focus:border-primary"
