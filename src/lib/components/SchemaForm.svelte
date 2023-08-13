@@ -1,19 +1,3 @@
-<script lang="ts" context="module">
-	export type DeepStringify<T> = {
-		[K in keyof T]: T[K] extends Date ? string : T[K] extends object ? DeepStringify<T[K]> : string;
-	};
-
-	export function emptyClone<S extends Schema, T extends InferIn<S>>(data: T): DeepStringify<T> {
-		const result: any = Array.isArray(data) ? [] : {};
-		for (const key in data) {
-			if (data[key] && ["Object", "Array"].includes((data[key] as object).constructor.name)) {
-				result[key] = emptyClone(data[key]);
-			} else result[key] = "";
-		}
-		return result;
-	}
-</script>
-
 <script lang="ts" generics="TSchema extends Schema">
 	import { enhance } from "$app/forms";
 	import { beforeNavigate } from "$app/navigation";
@@ -87,6 +71,20 @@
 
 	function hasValues(obj: Record<string, unknown>): boolean {
 		return Object.values(obj).some((v) => (typeof v == "object" ? hasValues(v as Record<string, unknown>) : v));
+	}
+
+	type DeepStringify<T> = {
+		[K in keyof T]: T[K] extends Date ? string : T[K] extends object ? DeepStringify<T[K]> : string;
+	};
+
+	function emptyClone<S extends Schema, T extends InferIn<S>>(data: T): DeepStringify<T> {
+		const result: any = Array.isArray(data) ? [] : {};
+		for (const key in data) {
+			if (data[key] && ["Object", "Array"].includes((data[key] as object).constructor.name)) {
+				result[key] = emptyClone(data[key]);
+			} else result[key] = "";
+		}
+		return result;
 	}
 
 	function setNestedError<T extends DeepStringify<object>>(err: T, keysArray: (string | number | symbol)[], value: string) {
