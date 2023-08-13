@@ -100,7 +100,7 @@
 		}
 		const key = keysArray[keysArray.length - 1] as keyof typeof current;
 		if (!(key in current)) throw new Error(`Key ${keysArray.join(".")} not found`);
-		if (typeof current[key] === "string") current[key] = value as any;
+		if (typeof current[key] === "string") current[key] = value.trim() as any;
 		else throw new Error(`Cannot set nested error on ${keysArray.join(".")}`);
 		return err;
 	}
@@ -138,5 +138,5 @@
 		};
 	}}
 >
-	<slot />
+	<slot {errors} {saving} />
 </form>

@@ -3,7 +3,7 @@
 	import BackButton from "$lib/components/BackButton.svelte";
 	import BreadCrumbs from "$lib/components/BreadCrumbs.svelte";
 	import Icon from "$lib/components/Icon.svelte";
-	import SchemaForm, { emptyClone } from "$lib/components/SchemaForm.svelte";
+	import SchemaForm from "$lib/components/SchemaForm.svelte";
 	import { formatDate } from "$lib/utils";
 	import ComboBox from "$src/lib/components/ComboBox.svelte";
 	import type { LogSchema } from "$src/lib/types/schemas";
@@ -15,30 +15,6 @@
 
 	let log = data.log;
 	let character = data.character;
-
-	let saving = false;
-	function extraErrors() {
-		if (values.characterId && !(data.characters || []).find((c) => c.id === values.characterId)) {
-			errors = {
-				...errors,
-				characterId: "Character not found"
-			};
-		}
-
-		if (character?.name && !values.applied_date) {
-			errors = {
-				...errors,
-				applied_date: "Applied date is required if assigned character is entered"
-			};
-		}
-
-		if (values.applied_date && !values.characterId) {
-			errors = {
-				...errors,
-				characterId: "Assigned character is required if applied date is entered"
-			};
-		}
-	}
 
 	let season: 1 | 8 | 9 = log.experience ? 1 : log.acp ? 8 : 9;
 	let magicItemsGained = log.magic_items_gained.map((mi) => ({
@@ -71,7 +47,6 @@
 			}
 		}) satisfies LogSchema;
 	$: values = logValues(log, character, magicItemsGained, storyAwardsGained);
-	let errors = emptyClone(logValues());
 
 	export const snapshot = {
 		capture: () => log,
@@ -94,9 +69,23 @@
 	action="?/saveLog"
 	schema={logSchema}
 	data={values}
-	bind:errors
-	bind:saving
-	on:check-errors={() => extraErrors()}
+	let:errors
+	let:saving
+	on:errors={(event) => {
+		const errors = event.detail;
+
+		if (!errors.characterId && values.characterId && !(data.characters || []).find((c) => c.id === values.characterId)) {
+			errors.characterId = "Character not found";
+		}
+
+		if (!errors.applied_date && character?.name && !values.applied_date) {
+			errors.applied_date = "Applied date is required if assigned character is entered";
+		}
+
+		if (!errors.characterId && values.applied_date && !values.characterId) {
+			errors.characterId = "Assigned character is required if applied date is entered";
+		}
+	}}
 	on:before-submit={() => {
 		if (log.applied_date?.getTime() === 0) {
 			log.applied_date = null;

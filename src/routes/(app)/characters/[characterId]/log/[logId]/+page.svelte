@@ -3,7 +3,7 @@
 	import BackButton from "$lib/components/BackButton.svelte";
 	import BreadCrumbs from "$lib/components/BreadCrumbs.svelte";
 	import Icon from "$lib/components/Icon.svelte";
-	import SchemaForm, { emptyClone } from "$lib/components/SchemaForm.svelte";
+	import SchemaForm from "$lib/components/SchemaForm.svelte";
 	import { getMagicItems, getStoryAwards } from "$lib/entities";
 	import { formatDate, sorter } from "$lib/utils";
 	import ComboBox from "$src/lib/components/ComboBox.svelte";
@@ -16,8 +16,6 @@
 
 	const character = data.character;
 	let log = data.log;
-
-	let saving = false;
 
 	$: magicItems = character
 		? getMagicItems(character, { excludeDropped: true, lastLogDate: new Date(log.date).toISOString() }).sort((a, b) =>
@@ -74,7 +72,6 @@
 		}) satisfies LogSchema;
 
 	$: values = logValues(log, dm, magicItemsGained, magicItemsLost, storyAwardsGained, storyAwardsLost);
-	let errors = emptyClone(logValues());
 
 	export const snapshot = {
 		capture: () => log,
@@ -93,7 +90,7 @@
 	</div>
 {/if}
 
-<SchemaForm action="?/saveLog" schema={logSchema} data={values} bind:saving bind:errors>
+<SchemaForm action="?/saveLog" schema={logSchema} data={values} let:saving let:errors>
 	<input type="hidden" name="characterId" value={character.id} />
 	<input type="hidden" name="logId" value={data.logId === "new" ? "" : data.logId} />
 	<input type="hidden" name="is_dm_log" value={log.is_dm_log} />
