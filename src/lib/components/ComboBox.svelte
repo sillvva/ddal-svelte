@@ -19,29 +19,9 @@
 		};
 	}>();
 
-	export let options:
-		| {
-				values: { key: string; value: string }[];
-				value: string;
-				searchBy?: "key" | "value";
-		  }
-		| {
-				values: { key: number; value: string }[];
-				value: number;
-				searchBy?: "key";
-		  }
-		| {
-				values: { key: number; value: string }[];
-				value: string;
-				searchBy?: "value";
-		  }
-		| {
-				values: { key?: undefined; value: string }[];
-				value: string;
-				searchBy?: "value";
-		  };
-
-	let { values, value, searchBy = "key" in values[0] && typeof value === typeof values[0]?.key ? "key" : "value" } = options;
+	export let values: { key?: string | number | null; value: string }[] = [];
+	export let value: string | number | null = "";
+	export let searchBy: "key" | "value" = "key";
 
 	let keysel = 0;
 	let search = value?.toString() || "";

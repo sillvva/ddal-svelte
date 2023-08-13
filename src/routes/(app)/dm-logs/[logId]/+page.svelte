@@ -139,7 +139,7 @@
 			<input
 				type="datetime-local"
 				name="date"
-				value={log.date.getTime() > 0 ? formatDate(log.date) : ""}
+				value={new Date(log.date).getTime() > 0 ? formatDate(log.date) : ""}
 				required
 				disabled={saving}
 				class="input-bordered input w-full focus:border-primary"
@@ -161,13 +161,11 @@
 			<ComboBox
 				type="text"
 				name="characterName"
-				options={{
-					values: data.characters?.map((char) => ({ key: char.id, value: char.name })) || [],
-					value: data.characters.find((c) => c.id === log.characterId)?.name || "",
-					searchBy: "value"
-				}}
+				value={character?.name || ""}
+				values={data.characters?.map((char) => ({ key: char.id, value: char.name })) || []}
 				disabled={saving}
 				required={!!log.applied_date}
+				searchBy="value"
 				on:input={() => {
 					log.characterId = "";
 					log.applied_date = null;
