@@ -1,24 +1,33 @@
-<script lang="ts" generics="TSchema extends BaseSchema | BaseSchemaAsync">
-	// TSchema extends Schema
-	// TSchema extends BaseSchema | BaseSchemaAsync
+<script lang="ts" context="module">
+	export type DeepStringify<T> = {
+		[K in keyof T]: T[K] extends Date ? string : T[K] extends object ? DeepStringify<T[K]> : string;
+	};
+
+	export function emptyClone<S extends Schema, T extends InferIn<S>>(data: T): DeepStringify<T> {
+		const result: any = Array.isArray(data) ? [] : {};
+		for (const key in data) {
+			if (data[key] && ["Object", "Array"].includes((data[key] as object).constructor.name)) {
+				result[key] = emptyClone(data[key]);
+			} else result[key] = "";
+		}
+		return result;
+	}
+</script>
+
+<script lang="ts" generics="TSchema extends Schema">
 	import { enhance } from "$app/forms";
 	import { beforeNavigate } from "$app/navigation";
-	import type { BaseSchema, BaseSchemaAsync, Input, Output } from "valibot";
-	import { ValiError, flatten } from "valibot";
-	// import type { Infer, InferIn, Schema } from "@decs/typeschema";
-	// import { validate } from "@decs/typeschema";
+	import type { Infer, InferIn, Schema } from "@decs/typeschema";
+	import { validate } from "@decs/typeschema";
 	import type { ActionResult } from "@sveltejs/kit";
 	import { createEventDispatcher } from "svelte";
-	import { SvelteMap, SvelteSet } from "../store";
-
-	type InferIn<TInput extends TSchema> = Input<TInput>;
-	type Infer<TOutput extends TSchema> = Output<TOutput>;
+	import { SvelteSet } from "../store";
 
 	const dispatch = createEventDispatcher<{
 		"before-submit": null;
 		"after-submit": ActionResult;
-		errors: SvelteMap<string, string>;
-		validate: { data?: Infer<TSchema>; errors?: SvelteMap<string, string> };
+		errors: typeof errors;
+		validate: { data?: Infer<TSchema>; errors?: typeof errors };
 	}>();
 
 	let elForm: HTMLFormElement;
@@ -30,50 +39,36 @@
 	export let method = "POST";
 	export let resetOnSave = false;
 	export let saving = false;
+	export let errors = emptyClone(data);
 
-	export let changes = new SvelteSet<string>();
-	export function addChanges(field: string) {
+	let changes = new SvelteSet<string>();
+	function addChanges(field: string) {
 		changes = changes.add(field);
 	}
 
-	export let errors = new SvelteMap<string, string>();
-	$: checkErrors(data);
+	$: changes && checkErrors(data);
 
 	async function checkErrors(data: InferIn<TSchema>, onlyChanges = true) {
-		errors = errors.clear();
-		// const result = await validate(schema, data);
-		// if ("data" in result) {
-		// 	dispatch("validate", { data: result.data });
-		// }
-		// else if ("issues" in result) {
-		// 	result.issues.forEach((issue) => {
-		// 		if (issue.path && (!onlyChanges || changes.has(issue.path.join(".")))) {
-		// 			errors = errors.set(issue.path.join("."), issue.message);
-		// 		}
-		// 	});
-		// 	dispatch("validate", { errors });
-		// }
-		try {
-			dispatch("validate", { data: await schema.parse(data) });
-		} catch (error) {
-			if (error instanceof ValiError) {
-				const flatErrors = flatten(error);
-				for (const path in flatErrors.nested) {
-					for (const err of flatErrors.nested[path] || []) {
-						if (!onlyChanges || changes.has(path)) errors = errors.set(path, err);
-					}
+		errors = emptyClone(data);
+		const result = await validate(schema, data);
+		if ("data" in result) {
+			dispatch("validate", { data: result.data });
+		} else if ("issues" in result) {
+			result.issues.forEach((issue) => {
+				if (issue.path && (!onlyChanges || changes.has(issue.path.join(".")))) {
+					errors = setNestedError(errors, issue.path, issue.message);
 				}
-			}
+			});
 			dispatch("validate", { errors });
 		}
 	}
 
 	$: dispatch("errors", errors);
 
-	const inputChanged = (ev: Event) => {
+	function inputChanged(ev: Event) {
 		const name = (ev.currentTarget as HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement | null)?.getAttribute("name");
 		if (name) addChanges(name);
-	};
+	}
 
 	$: {
 		if (elForm && data) {
@@ -89,6 +84,26 @@
 			if (!confirm("You have unsaved changes. Are you sure you want to leave this page?")) nav.cancel();
 		}
 	});
+
+	function hasValues(obj: Record<string, unknown>): boolean {
+		return Object.values(obj).some((v) => (typeof v == "object" ? hasValues(v as Record<string, unknown>) : v));
+	}
+
+	function setNestedError<T extends DeepStringify<object>>(err: T, keysArray: (string | number | symbol)[], value: string) {
+		let current = err;
+		for (let i = 0; i < keysArray.length - 1; i++) {
+			const key = keysArray[i] as keyof typeof current;
+			if (!(key in current)) throw new Error(`Key ${keysArray.slice(0, i + 1).join(".")} not found`);
+			if (!["Object", "Array"].includes((current[key] as object).constructor.name))
+				throw new Error(`Cannot set nested error on non-object ${keysArray.slice(0, i + 1).join(".")}`);
+			current = current[key];
+		}
+		const key = keysArray[keysArray.length - 1] as keyof typeof current;
+		if (!(key in current)) throw new Error(`Key ${keysArray.join(".")} not found`);
+		if (typeof current[key] === "string") current[key] = value as any;
+		else throw new Error(`Cannot set nested error on ${keysArray.join(".")}`);
+		return err;
+	}
 </script>
 
 <form
@@ -103,12 +118,12 @@
 		saving = true;
 
 		checkErrors(data, false);
-		if (Object.values(errors).find((e) => e.length > 0)) {
+		if (hasValues(errors)) {
 			saving = false;
 			return f.cancel();
 		}
 
-		if (stringify && !(stringify in data)) f.formData.append(stringify, JSON.stringify(data));
+		if (stringify && data && typeof data === "object" && !(stringify in data)) f.formData.append(stringify, JSON.stringify(data));
 		return async ({ update, result }) => {
 			await update({ reset: resetOnSave });
 			dispatch("after-submit", result);

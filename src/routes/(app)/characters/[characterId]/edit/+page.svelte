@@ -2,8 +2,7 @@
 	import BackButton from "$lib/components/BackButton.svelte";
 	import BreadCrumbs from "$lib/components/BreadCrumbs.svelte";
 	import Icon from "$lib/components/Icon.svelte";
-	import SchemaForm from "$lib/components/SchemaForm.svelte";
-	import { SvelteMap } from "$src/lib/store";
+	import SchemaForm, { emptyClone } from "$lib/components/SchemaForm.svelte";
 	import { newCharacterSchema } from "$src/lib/types/schemas";
 
 	export let data;
@@ -12,7 +11,7 @@
 	let character = data.character;
 
 	let saving = false;
-	let errors = new SvelteMap<keyof typeof character, string>();
+	let errors = emptyClone(character);
 
 	export const snapshot = {
 		capture: () => character,
@@ -52,7 +51,7 @@
 					class="input-bordered input w-full focus:border-primary"
 				/>
 				<label for="name" class="label">
-					<span class="label-text-alt text-error">{errors.get("name") || ""}</span>
+					<span class="label-text-alt text-error">{errors.name}</span>
 				</label>
 			</div>
 		</div>
@@ -73,7 +72,7 @@
 					class="input-bordered input w-full focus:border-primary"
 				/>
 				<label for="campaign" class="label">
-					<span class="label-text-alt text-error">{errors.get("campaign") || ""}</span>
+					<span class="label-text-alt text-error">{errors.campaign}</span>
 				</label>
 			</div>
 		</div>
@@ -90,7 +89,7 @@
 					class="input-bordered input w-full focus:border-primary"
 				/>
 				<label for="race" class="label">
-					<span class="label-text-alt text-error">{errors.get("race") || ""}</span>
+					<span class="label-text-alt text-error">{errors.race}</span>
 				</label>
 			</div>
 		</div>
@@ -107,7 +106,7 @@
 					class="input-bordered input w-full focus:border-primary"
 				/>
 				<label for="class" class="label">
-					<span class="label-text-alt text-error">{errors.get("class") || ""}</span>
+					<span class="label-text-alt text-error">{errors.class}</span>
 				</label>
 			</div>
 		</div>
@@ -124,7 +123,7 @@
 					class="input-bordered input w-full focus:border-primary"
 				/>
 				<label for="character_sheet_url" class="label">
-					<span class="label-text-alt text-error">{errors.get("character_sheet_url") || ""}</span>
+					<span class="label-text-alt text-error">{errors.character_sheet_url}</span>
 				</label>
 			</div>
 		</div>
@@ -141,7 +140,7 @@
 					class="input-bordered input w-full focus:border-primary"
 				/>
 				<label for="image_url" class="label">
-					<span class="label-text-alt text-error">{errors.get("image_url") || ""}</span>
+					<span class="label-text-alt text-error">{errors.image_url}</span>
 				</label>
 			</div>
 		</div>
