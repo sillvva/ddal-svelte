@@ -3,7 +3,7 @@
 	import BackButton from "$lib/components/BackButton.svelte";
 	import BreadCrumbs from "$lib/components/BreadCrumbs.svelte";
 	import Icon from "$lib/components/Icon.svelte";
-	import SchemaForm, { schemaErrors } from "$lib/components/SchemaForm.svelte";
+	import SchemaForm, { emptyClone } from "$lib/components/SchemaForm.svelte";
 	import { pageLoader } from "$lib/store";
 	import { sorter } from "$lib/utils";
 	import { dungeonMasterSchema } from "$src/lib/types/schemas";
@@ -14,7 +14,7 @@
 	let dm = data.dm;
 
 	let saving = false;
-	let errors = schemaErrors(dm);
+	let errors = emptyClone(dm);
 </script>
 
 <div class="flex flex-col gap-4">

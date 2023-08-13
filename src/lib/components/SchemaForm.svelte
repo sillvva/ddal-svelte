@@ -3,16 +3,12 @@
 		[K in keyof T]: T[K] extends Date ? string : T[K] extends object ? DeepStringify<T[K]> : string;
 	};
 
-	export function schemaErrors<S extends Schema, T extends InferIn<S>>(data: T): DeepStringify<T> {
+	export function emptyClone<S extends Schema, T extends InferIn<S>>(data: T): DeepStringify<T> {
 		const result: any = Array.isArray(data) ? [] : {};
 		for (const key in data) {
-			if (Array.isArray(data[key])) {
-				result[key] = schemaErrors(data[key]);
-			} else if (data[key] && typeof data[key] === "object" && !((data[key] as object) instanceof Date)) {
-				result[key] = schemaErrors(data[key]);
-			} else {
-				result[key] = "";
-			}
+			if (data[key] && ["Object", "Array"].includes((data[key] as object).constructor.name)) {
+				result[key] = emptyClone(data[key]);
+			} else result[key] = "";
 		}
 		return result;
 	}
@@ -43,7 +39,7 @@
 	export let method = "POST";
 	export let resetOnSave = false;
 	export let saving = false;
-	export let errors = schemaErrors(data);
+	export let errors = emptyClone(data);
 
 	let changes = new SvelteSet<string>();
 	function addChanges(field: string) {
@@ -53,15 +49,14 @@
 	$: changes && checkErrors(data);
 
 	async function checkErrors(data: InferIn<TSchema>, onlyChanges = true) {
-		errors = schemaErrors(data);
+		errors = emptyClone(data);
 		const result = await validate(schema, data);
 		if ("data" in result) {
 			dispatch("validate", { data: result.data });
 		} else if ("issues" in result) {
 			result.issues.forEach((issue) => {
 				if (issue.path && (!onlyChanges || changes.has(issue.path.join(".")))) {
-					setNestedError(errors, issue.path, issue.message);
-					errors = errors;
+					errors = setNestedError(errors, issue.path, issue.message);
 				}
 			});
 			dispatch("validate", { errors });
@@ -70,10 +65,10 @@
 
 	$: dispatch("errors", errors);
 
-	const inputChanged = (ev: Event) => {
+	function inputChanged(ev: Event) {
 		const name = (ev.currentTarget as HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement | null)?.getAttribute("name");
 		if (name) addChanges(name);
-	};
+	}
 
 	$: {
 		if (elForm && data) {
@@ -90,21 +85,25 @@
 		}
 	});
 
-	const hasValues = (obj: Record<string, unknown>): boolean => {
+	function hasValues(obj: Record<string, unknown>): boolean {
 		return Object.values(obj).some((v) => (typeof v == "object" ? hasValues(v as Record<string, unknown>) : v));
-	};
+	}
 
-	const setNestedError = <T,>(err: T, keysArray: (string | number | symbol)[], value: string) => {
-		let current: any = err;
+	function setNestedError<T extends DeepStringify<object>>(err: T, keysArray: (string | number | symbol)[], value: string) {
+		let current = err;
 		for (let i = 0; i < keysArray.length - 1; i++) {
-			const key = keysArray[i];
-			if (!(current[key] instanceof Object)) {
-				current[key] = {};
-			}
+			const key = keysArray[i] as keyof typeof current;
+			if (!(key in current)) throw new Error(`Key ${keysArray.slice(0, i + 1).join(".")} not found`);
+			if (!["Object", "Array"].includes((current[key] as object).constructor.name))
+				throw new Error(`Cannot set nested error on non-object ${keysArray.slice(0, i + 1).join(".")}`);
 			current = current[key];
 		}
-		current[keysArray[keysArray.length - 1]] = value;
-	};
+		const key = keysArray[keysArray.length - 1] as keyof typeof current;
+		if (!(key in current)) throw new Error(`Key ${keysArray.join(".")} not found`);
+		if (typeof current[key] === "string") current[key] = value as any;
+		else throw new Error(`Cannot set nested error on ${keysArray.join(".")}`);
+		return err;
+	}
 </script>
 
 <form

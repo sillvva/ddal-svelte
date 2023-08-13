@@ -2,7 +2,7 @@
 	import BackButton from "$lib/components/BackButton.svelte";
 	import BreadCrumbs from "$lib/components/BreadCrumbs.svelte";
 	import Icon from "$lib/components/Icon.svelte";
-	import SchemaForm, { schemaErrors } from "$lib/components/SchemaForm.svelte";
+	import SchemaForm, { emptyClone } from "$lib/components/SchemaForm.svelte";
 	import { newCharacterSchema } from "$src/lib/types/schemas";
 
 	export let data;
@@ -11,7 +11,7 @@
 	let character = data.character;
 
 	let saving = false;
-	let errors = schemaErrors(character);
+	let errors = emptyClone(character);
 
 	export const snapshot = {
 		capture: () => character,

@@ -3,7 +3,7 @@
 	import BackButton from "$lib/components/BackButton.svelte";
 	import BreadCrumbs from "$lib/components/BreadCrumbs.svelte";
 	import Icon from "$lib/components/Icon.svelte";
-	import SchemaForm, { schemaErrors } from "$lib/components/SchemaForm.svelte";
+	import SchemaForm, { emptyClone } from "$lib/components/SchemaForm.svelte";
 	import { formatDate } from "$lib/utils";
 	import ComboBox from "$src/lib/components/ComboBox.svelte";
 	import type { LogSchema } from "$src/lib/types/schemas";
@@ -71,7 +71,7 @@
 			}
 		}) satisfies LogSchema;
 	$: values = logValues(log, character, magicItemsGained, storyAwardsGained);
-	let errors = schemaErrors(logValues());
+	let errors = emptyClone(logValues());
 
 	export const snapshot = {
 		capture: () => log,
