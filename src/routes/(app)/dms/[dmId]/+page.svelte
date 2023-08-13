@@ -31,8 +31,8 @@
 
 	<SchemaForm action="?/saveDM" schema={dungeonMasterSchema} data={dm} bind:saving bind:errors>
 		<input type="hidden" name="dmID" value={dm.id} />
-		<div class="flex flex-wrap">
-			<div class="basis-full px-2 sm:basis-1/2">
+		<div class="grid grid-cols-12 gap-4">
+			<div class="col-span-12 sm:col-span-6">
 				<div class="form-control w-full">
 					<label for="name" class="label">
 						<span class="label-text">
@@ -53,7 +53,7 @@
 					</label>
 				</div>
 			</div>
-			<div class="basis-full px-2 sm:basis-1/2">
+			<div class="col-span-12 sm:col-span-6">
 				<div class="form-control w-full">
 					<label for="DCI" class="label">
 						<span class="label-text">DCI</span>
@@ -70,7 +70,7 @@
 					</label>
 				</div>
 			</div>
-			<div class="m-4 basis-full text-center">
+			<div class="m-4 col-span-12 text-center">
 				<button
 					type="submit"
 					class="btn-primary btn disabled:bg-primary disabled:bg-opacity-50 disabled:text-opacity-50"

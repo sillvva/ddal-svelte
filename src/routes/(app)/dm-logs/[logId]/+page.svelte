@@ -125,9 +125,11 @@
 				class="input-bordered input w-full focus:border-primary"
 				aria-invalid={errors.name ? "true" : "false"}
 			/>
-			<label for="name" class="label">
-				<span class="label-text-alt text-error">{errors.name}</span>
-			</label>
+			{#if errors.name}
+				<label for="name" class="label">
+					<span class="label-text-alt text-error">{errors.name}</span>
+				</label>
+			{/if}
 		</div>
 		<div class={twMerge("form-control col-span-12", log.is_dm_log ? "sm:col-span-6 lg:col-span-3" : "sm:col-span-4")}>
 			<label for="date" class="label">
@@ -144,9 +146,11 @@
 				disabled={saving}
 				class="input-bordered input w-full focus:border-primary"
 			/>
-			<label for="date" class="label">
-				<span class="label-text-alt text-error">{errors.date}</span>
-			</label>
+			{#if errors.date}
+				<label for="date" class="label">
+					<span class="label-text-alt text-error">{errors.date}</span>
+				</label>
+			{/if}
 		</div>
 		<input type="hidden" name="characterId" bind:value={log.characterId} />
 		<div class="form-control col-span-12 sm:col-span-6 lg:col-span-3">
@@ -176,9 +180,11 @@
 					log.applied_date = data.character && log.applied_date ? log.applied_date : null;
 				}}
 			/>
-			<label for="characterName" class="label">
-				<span class="label-text-alt text-error">{errors.characterId}</span>
-			</label>
+			{#if errors.characterId}
+				<label for="characterName" class="label">
+					<span class="label-text-alt text-error">{errors.characterId}</span>
+				</label>
+			{/if}
 		</div>
 		<div class={twMerge("form-control col-span-12", "sm:col-span-6 lg:col-span-3")}>
 			<label for="applied_date" class="label">
@@ -198,9 +204,11 @@
 				class="input-bordered input w-full focus:border-primary"
 				aria-invalid={errors.applied_date ? "true" : "false"}
 			/>
-			<label for="applied_date" class="label">
-				<span class="label-text-alt text-error">{errors.applied_date}</span>
-			</label>
+			{#if errors.applied_date}
+				<label for="applied_date" class="label">
+					<span class="label-text-alt text-error">{errors.applied_date}</span>
+				</label>
+			{/if}
 		</div>
 		<div class="col-span-12 grid grid-cols-12 gap-4">
 			<div class="form-control col-span-12 sm:col-span-4">
@@ -225,9 +233,11 @@
 						disabled={saving}
 						class="input-bordered input w-full focus:border-primary"
 					/>
-					<label for="experience" class="label">
-						<span class="label-text-alt text-error">{errors.experience}</span>
-					</label>
+					{#if errors.experience}
+						<label for="experience" class="label">
+							<span class="label-text-alt text-error">{errors.experience}</span>
+						</label>
+					{/if}
 				</div>
 			{/if}
 			{#if season === 9}
@@ -243,9 +253,11 @@
 						disabled={saving}
 						class="input-bordered input w-full focus:border-primary"
 					/>
-					<label for="level" class="label">
-						<span class="label-text-alt text-error">{errors.level}</span>
-					</label>
+					{#if errors.level}
+						<label for="level" class="label">
+							<span class="label-text-alt text-error">{errors.level}</span>
+						</label>
+					{/if}
 				</div>
 			{/if}
 			{#if season === 8}
@@ -261,9 +273,11 @@
 						disabled={saving}
 						class="input-bordered input w-full focus:border-primary"
 					/>
-					<label for="acp" class="label">
-						<span class="label-text-alt text-error">{errors.acp}</span>
-					</label>
+					{#if errors.acp}
+						<label for="acp" class="label">
+							<span class="label-text-alt text-error">{errors.acp}</span>
+						</label>
+					{/if}
 				</div>
 				<div class={twMerge("form-control w-full", "col-span-6 sm:col-span-2")}>
 					<label for="tcp" class="label">
@@ -276,9 +290,11 @@
 						disabled={saving}
 						class="input-bordered input w-full focus:border-primary"
 					/>
-					<label for="tcp" class="label">
-						<span class="label-text-alt text-error">{errors.tcp}</span>
-					</label>
+					{#if errors.tcp}
+						<label for="tcp" class="label">
+							<span class="label-text-alt text-error">{errors.tcp}</span>
+						</label>
+					{/if}
 				</div>
 			{/if}
 			<div class={twMerge("form-control w-full", "col-span-6 sm:col-span-2")}>
@@ -292,9 +308,11 @@
 					disabled={saving}
 					class="input-bordered input w-full focus:border-primary"
 				/>
-				<label for="gold" class="label">
-					<span class="label-text-alt text-error">{errors.gold}</span>
-				</label>
+				{#if errors.gold}
+					<label for="gold" class="label">
+						<span class="label-text-alt text-error">{errors.gold}</span>
+					</label>
+				{/if}
 			</div>
 			<div class={twMerge("form-control w-full", "col-span-6 sm:col-span-2")}>
 				<label for="dtd" class="label">
@@ -307,9 +325,11 @@
 					disabled={saving}
 					class="input-bordered input w-full focus:border-primary"
 				/>
-				<label for="dtd" class="label">
-					<span class="label-text-alt text-error">{errors.dtd}</span>
-				</label>
+				{#if errors.dtd}
+					<label for="dtd" class="label">
+						<span class="label-text-alt text-error">{errors.dtd}</span>
+					</label>
+				{/if}
 			</div>
 		</div>
 		<div class="form-control col-span-12 w-full">
@@ -323,7 +343,9 @@
 				class="textarea-bordered textarea w-full focus:border-primary"
 			/>
 			<label for="description" class="label">
-				<span class="label-text-alt text-error">{errors.description}</span>
+				{#if errors.description}
+					<span class="label-text-alt text-error">{errors.description}</span>
+				{/if}
 				<span class="label-text-alt">Markdown Allowed</span>
 			</label>
 		</div>
@@ -365,9 +387,11 @@
 									disabled={saving}
 									class="input-bordered input w-full focus:border-primary"
 								/>
-								<label for={`magic_items_gained.${index}.name`} class="label">
-									<span class="label-text-alt text-error">{errors.magic_items_gained[index].name}</span>
-								</label>
+								{#if errors.magic_items_gained[index].name}
+									<label for={`magic_items_gained.${index}.name`} class="label">
+										<span class="label-text-alt text-error">{errors.magic_items_gained[index].name}</span>
+									</label>
+								{/if}
 							</div>
 							<button
 								type="button"
@@ -419,9 +443,11 @@
 									disabled={saving}
 									class="input-bordered input w-full focus:border-primary"
 								/>
-								<label for={`story_awards_gained.${index}.name`} class="label">
-									<span class="label-text-alt text-error">{errors.story_awards_gained[index].name}</span>
-								</label>
+								{#if errors.story_awards_gained[index].name}
+									<label for={`story_awards_gained.${index}.name`} class="label">
+										<span class="label-text-alt text-error">{errors.story_awards_gained[index].name}</span>
+									</label>
+								{/if}
 							</div>
 							<button
 								type="button"
