@@ -1,4 +1,3 @@
-import dayjs from "dayjs";
 import { twMerge } from "tailwind-merge";
 
 export const stopWords = new Set(["and", "or", "to", "in", "a", "the", "of"]);
@@ -8,10 +7,6 @@ export const parseError = (e: unknown) => {
 	if (typeof e === "string") return e;
 	if (typeof e === "object") return JSON.stringify(e);
 	return "Unknown error";
-};
-
-export const formatDate = (date: Date | string) => {
-	return dayjs(date).format("YYYY-MM-DDTHH:mm");
 };
 
 export const slugify = (text: string) => {

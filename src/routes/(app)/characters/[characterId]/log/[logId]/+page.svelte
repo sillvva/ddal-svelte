@@ -3,10 +3,11 @@
 	import BackButton from "$lib/components/BackButton.svelte";
 	import BreadCrumbs from "$lib/components/BreadCrumbs.svelte";
 	import Icon from "$lib/components/Icon.svelte";
-	import SchemaForm, { emptyClone } from "$lib/components/SchemaForm.svelte";
+	import SchemaForm from "$lib/components/SchemaForm.svelte";
 	import { getMagicItems, getStoryAwards } from "$lib/entities";
-	import { formatDate, sorter } from "$lib/utils";
+	import { sorter } from "$lib/utils";
 	import ComboBox from "$src/lib/components/ComboBox.svelte";
+	import DateTimeInput from "$src/lib/components/DateTimeInput.svelte";
 	import type { LogSchema } from "$src/lib/types/schemas";
 	import { logSchema } from "$src/lib/types/schemas";
 	import { twMerge } from "tailwind-merge";
@@ -16,8 +17,6 @@
 
 	const character = data.character;
 	let log = data.log;
-
-	let saving = false;
 
 	$: magicItems = character
 		? getMagicItems(character, { excludeDropped: true, lastLogDate: new Date(log.date).toISOString() }).sort((a, b) =>
@@ -74,7 +73,6 @@
 		}) satisfies LogSchema;
 
 	$: values = logValues(log, dm, magicItemsGained, magicItemsLost, storyAwardsGained, storyAwardsLost);
-	let errors = emptyClone(logValues());
 
 	export const snapshot = {
 		capture: () => log,
@@ -93,7 +91,7 @@
 	</div>
 {/if}
 
-<SchemaForm action="?/saveLog" schema={logSchema} data={values} bind:saving bind:errors>
+<SchemaForm action="?/saveLog" schema={logSchema} data={values} let:saving let:errors>
 	<input type="hidden" name="characterId" value={character.id} />
 	<input type="hidden" name="logId" value={data.logId === "new" ? "" : data.logId} />
 	<input type="hidden" name="is_dm_log" value={log.is_dm_log} />
@@ -125,9 +123,11 @@
 				class="input-bordered input w-full focus:border-primary"
 				aria-invalid={errors.name ? "true" : "false"}
 			/>
-			<label for="name" class="label">
-				<span class="label-text-alt text-error">{errors.name}</span>
-			</label>
+			{#if errors.name}
+				<label for="name" class="label">
+					<span class="label-text-alt text-error">{errors.name}</span>
+				</label>
+			{/if}
 		</div>
 		<div class={twMerge("form-control col-span-12", log.is_dm_log ? "sm:col-span-6" : "sm:col-span-4")}>
 			<label for="date" class="label">
@@ -136,18 +136,19 @@
 					<span class="text-error">*</span>
 				</span>
 			</label>
-			<input
-				type="datetime-local"
+			<DateTimeInput
 				name="date"
 				required
 				disabled={saving}
-				value={formatDate(log.date)}
+				bind:value={log.date}
 				class="input-bordered input w-full focus:border-primary"
 				aria-invalid={errors.date ? "true" : "false"}
 			/>
-			<label for="date" class="label">
-				<span class="label-text-alt text-error">{errors.date}</span>
-			</label>
+			{#if errors.date}
+				<label for="date" class="label">
+					<span class="label-text-alt text-error">{errors.date}</span>
+				</label>
+			{/if}
 		</div>
 		<div class="col-span-12 grid grid-cols-12 gap-4">
 			{#if log.type === "game"}
@@ -174,9 +175,11 @@
 								} else dm = defaultDM;
 							}}
 						/>
-						<label for="dmName" class="label">
-							<span class="label-text-alt text-error">{errors.dm.name}</span>
-						</label>
+						{#if errors.dm.name}
+							<label for="dmName" class="label">
+								<span class="label-text-alt text-error">{errors.dm.name}</span>
+							</label>
+						{/if}
 					</div>
 					<div class="form-control col-span-6">
 						<label for="dmDCI" class="label">
@@ -196,9 +199,11 @@
 								} else dm = { ...(dm.name ? dm : defaultDM), DCI: null };
 							}}
 						/>
-						<label for="dmDCI" class="label">
-							<span class="label-text-alt text-error">{errors.dm.DCI}</span>
-						</label>
+						{#if errors.dm.DCI}
+							<label for="dmDCI" class="label">
+								<span class="label-text-alt text-error">{errors.dm.DCI}</span>
+							</label>
+						{/if}
 					</div>
 				{/if}
 				<div class="form-control col-span-12 sm:col-span-4">
@@ -224,9 +229,11 @@
 							bind:value={log.experience}
 							class="input-bordered input w-full focus:border-primary"
 						/>
-						<label for="experience" class="label">
-							<span class="label-text-alt text-error">{errors.experience}</span>
-						</label>
+						{#if errors.experience}
+							<label for="experience" class="label">
+								<span class="label-text-alt text-error">{errors.experience}</span>
+							</label>
+						{/if}
 					</div>
 				{/if}
 				{#if season === 9}
@@ -243,9 +250,11 @@
 							bind:value={log.level}
 							class="input-bordered input w-full focus:border-primary"
 						/>
-						<label for="level" class="label">
-							<span class="label-text-alt text-error">{errors.level}</span>
-						</label>
+						{#if errors.level}
+							<label for="level" class="label">
+								<span class="label-text-alt text-error">{errors.level}</span>
+							</label>
+						{/if}
 					</div>
 				{/if}
 			{/if}
@@ -262,9 +271,11 @@
 							bind:value={log.acp}
 							class="input-bordered input w-full focus:border-primary"
 						/>
-						<label for="acp" class="label">
-							<span class="label-text-alt text-error">{errors.acp}</span>
-						</label>
+						{#if errors.acp}
+							<label for="acp" class="label">
+								<span class="label-text-alt text-error">{errors.acp}</span>
+							</label>
+						{/if}
 					</div>
 				{/if}
 				<div class={twMerge("form-control w-full", log.type === "nongame" ? "col-span-4" : "col-span-6 sm:col-span-2")}>
@@ -278,9 +289,11 @@
 						bind:value={log.tcp}
 						class="input-bordered input w-full focus:border-primary"
 					/>
-					<label for="tcp" class="label">
-						<span class="label-text-alt text-error">{errors.tcp}</span>
-					</label>
+					{#if errors.tcp}
+						<label for="tcp" class="label">
+							<span class="label-text-alt text-error">{errors.tcp}</span>
+						</label>
+					{/if}
 				</div>
 			{/if}
 			<div class={twMerge("form-control w-full", log.type === "game" ? "col-span-6 sm:col-span-2" : "col-span-4")}>
@@ -294,9 +307,11 @@
 					bind:value={log.gold}
 					class="input-bordered input w-full focus:border-primary"
 				/>
-				<label for="gold" class="label">
-					<span class="label-text-alt text-error">{errors.gold}</span>
-				</label>
+				{#if errors.gold}
+					<label for="gold" class="label">
+						<span class="label-text-alt text-error">{errors.gold}</span>
+					</label>
+				{/if}
 			</div>
 			<div class={twMerge("form-control w-full", log.type === "game" ? "col-span-6 sm:col-span-2" : "col-span-4")}>
 				<label for="dtd" class="label">
@@ -309,9 +324,11 @@
 					bind:value={log.dtd}
 					class="input-bordered input w-full focus:border-primary"
 				/>
-				<label for="dtd" class="label">
-					<span class="label-text-alt text-error">{errors.dtd}</span>
-				</label>
+				{#if errors.dtd}
+					<label for="dtd" class="label">
+						<span class="label-text-alt text-error">{errors.dtd}</span>
+					</label>
+				{/if}
 			</div>
 		</div>
 		<div class="form-control col-span-12 w-full">
@@ -325,7 +342,9 @@
 				class="textarea-bordered textarea w-full focus:border-primary"
 			/>
 			<label for="description" class="label">
-				<span class="label-text-alt text-error">{errors.description}</span>
+				{#if errors.description}
+					<span class="label-text-alt text-error">{errors.description}</span>
+				{/if}
 				<span class="label-text-alt">Markdown Allowed</span>
 			</label>
 		</div>
@@ -389,9 +408,11 @@
 									disabled={saving}
 									class="input-bordered input w-full focus:border-primary"
 								/>
-								<label for={`magic_items_gained.${index}.name`} class="label">
-									<span class="label-text-alt text-error">{errors.magic_items_gained[index].name}</span>
-								</label>
+								{#if errors.magic_items_gained[index].name}
+									<label for={`magic_items_gained.${index}.name`} class="label">
+										<span class="label-text-alt text-error">{errors.magic_items_gained[index].name}</span>
+									</label>
+								{/if}
 							</div>
 							<button
 								type="button"
@@ -447,9 +468,11 @@
 										</option>
 									{/each}
 								</select>
-								<label for={`magic_items_lost.${index}`} class="label">
-									<span class="label-text-alt text-error">{errors.magic_items_lost[index]}</span>
-								</label>
+								{#if errors.magic_items_lost[index]}
+									<label for={`magic_items_lost.${index}`} class="label">
+										<span class="label-text-alt text-error">{errors.magic_items_lost[index]}</span>
+									</label>
+								{/if}
 							</div>
 							<button
 								type="button"
@@ -482,9 +505,11 @@
 									disabled={saving}
 									class="input-bordered input w-full focus:border-primary"
 								/>
-								<label for={`story_awards_gained.${index}.name`} class="label">
-									<span class="label-text-alt text-error">{errors.story_awards_gained[index].name}</span>
-								</label>
+								{#if errors.story_awards_gained[index].name}
+									<label for={`story_awards_gained.${index}.name`} class="label">
+										<span class="label-text-alt text-error">{errors.story_awards_gained[index].name}</span>
+									</label>
+								{/if}
 							</div>
 							<button
 								type="button"
@@ -540,9 +565,11 @@
 										</option>
 									{/each}
 								</select>
-								<label for={`story_awards_lost.${index}`} class="label">
-									<span class="label-text-alt text-error">{errors.story_awards_lost[index]}</span>
-								</label>
+								{#if errors.story_awards_lost[index]}
+									<label for={`story_awards_lost.${index}`} class="label">
+										<span class="label-text-alt text-error">{errors.story_awards_lost[index]}</span>
+									</label>
+								{/if}
 							</div>
 							<button
 								type="button"

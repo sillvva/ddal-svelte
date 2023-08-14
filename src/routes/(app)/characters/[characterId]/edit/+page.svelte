@@ -2,16 +2,13 @@
 	import BackButton from "$lib/components/BackButton.svelte";
 	import BreadCrumbs from "$lib/components/BreadCrumbs.svelte";
 	import Icon from "$lib/components/Icon.svelte";
-	import SchemaForm, { emptyClone } from "$lib/components/SchemaForm.svelte";
+	import SchemaForm from "$lib/components/SchemaForm.svelte";
 	import { newCharacterSchema } from "$src/lib/types/schemas";
 
 	export let data;
 	export let form;
 
 	let character = data.character;
-
-	let saving = false;
-	let errors = emptyClone(character);
 
 	export const snapshot = {
 		capture: () => character,
@@ -32,9 +29,9 @@
 	</div>
 {/if}
 
-<SchemaForm action="?/saveCharacter" schema={newCharacterSchema} data={character} bind:errors bind:saving>
-	<div class="flex flex-wrap">
-		<div class="basis-full px-2 sm:basis-1/2">
+<SchemaForm action="?/saveCharacter" schema={newCharacterSchema} data={character} let:errors let:saving>
+	<div class="grid grid-cols-12 gap-4">
+		<div class="col-span-12 sm:col-span-6">
 			<div class="form-control w-full">
 				<label for="name" class="label">
 					<span class="label-text">
@@ -50,18 +47,17 @@
 					bind:value={character.name}
 					class="input-bordered input w-full focus:border-primary"
 				/>
-				<label for="name" class="label">
-					<span class="label-text-alt text-error">{errors.name}</span>
-				</label>
+				{#if errors.name}
+					<label for="name" class="label">
+						<span class="label-text-alt text-error">{errors.name}</span>
+					</label>
+				{/if}
 			</div>
 		</div>
-		<div class="basis-full px-2 sm:basis-1/2">
+		<div class="col-span-12 sm:col-span-6">
 			<div class="form-control w-full">
 				<label for="campaign" class="label">
-					<span class="label-text">
-						Campaign
-						<span class="text-error">*</span>
-					</span>
+					<span class="label-text">Campaign</span>
 				</label>
 				<input
 					type="text"
@@ -71,15 +67,17 @@
 					bind:value={character.campaign}
 					class="input-bordered input w-full focus:border-primary"
 				/>
-				<label for="campaign" class="label">
-					<span class="label-text-alt text-error">{errors.campaign}</span>
-				</label>
+				{#if errors.campaign}
+					<label for="campaign" class="label">
+						<span class="label-text-alt text-error">{errors.campaign}</span>
+					</label>
+				{/if}
 			</div>
 		</div>
-		<div class="basis-full px-2 sm:basis-1/2">
+		<div class="col-span-12 sm:col-span-6">
 			<div class="form-control w-full">
 				<label for="race" class="label">
-					<span class="label-text">Race</span>
+					<span class="label-text">Species</span>
 				</label>
 				<input
 					type="text"
@@ -88,12 +86,14 @@
 					bind:value={character.race}
 					class="input-bordered input w-full focus:border-primary"
 				/>
-				<label for="race" class="label">
-					<span class="label-text-alt text-error">{errors.race}</span>
-				</label>
+				{#if errors.race}
+					<label for="race" class="label">
+						<span class="label-text-alt text-error">{errors.race}</span>
+					</label>
+				{/if}
 			</div>
 		</div>
-		<div class="basis-full px-2 sm:basis-1/2">
+		<div class="col-span-12 sm:col-span-6">
 			<div class="form-control w-full">
 				<label for="class" class="label">
 					<span class="label-text">Class</span>
@@ -105,12 +105,14 @@
 					bind:value={character.class}
 					class="input-bordered input w-full focus:border-primary"
 				/>
-				<label for="class" class="label">
-					<span class="label-text-alt text-error">{errors.class}</span>
-				</label>
+				{#if errors.class}
+					<label for="class" class="label">
+						<span class="label-text-alt text-error">{errors.class}</span>
+					</label>
+				{/if}
 			</div>
 		</div>
-		<div class="basis-full px-2">
+		<div class="col-span-12">
 			<div class="form-control w-full">
 				<label for="character_sheet_url" class="label">
 					<span class="label-text">Character Sheet URL</span>
@@ -122,12 +124,14 @@
 					bind:value={character.character_sheet_url}
 					class="input-bordered input w-full focus:border-primary"
 				/>
-				<label for="character_sheet_url" class="label">
-					<span class="label-text-alt text-error">{errors.character_sheet_url}</span>
-				</label>
+				{#if errors.character_sheet_url}
+					<label for="character_sheet_url" class="label">
+						<span class="label-text-alt text-error">{errors.character_sheet_url}</span>
+					</label>
+				{/if}
 			</div>
 		</div>
-		<div class="basis-full px-2">
+		<div class="col-span-12">
 			<div class="form-control w-full">
 				<label for="image_url" class="label">
 					<span class="label-text">Image URL</span>
@@ -139,12 +143,14 @@
 					bind:value={character.image_url}
 					class="input-bordered input w-full focus:border-primary"
 				/>
-				<label for="image_url" class="label">
-					<span class="label-text-alt text-error">{errors.image_url}</span>
-				</label>
+				{#if errors.image_url}
+					<label for="image_url" class="label">
+						<span class="label-text-alt text-error">{errors.image_url}</span>
+					</label>
+				{/if}
 			</div>
 		</div>
-		<div class="m-4 basis-full text-center">
+		<div class="m-4 col-span-12 text-center">
 			<button
 				type="submit"
 				class="btn-primary btn disabled:bg-primary disabled:bg-opacity-50 disabled:text-opacity-50"

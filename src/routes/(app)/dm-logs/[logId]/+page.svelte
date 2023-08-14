@@ -3,9 +3,9 @@
 	import BackButton from "$lib/components/BackButton.svelte";
 	import BreadCrumbs from "$lib/components/BreadCrumbs.svelte";
 	import Icon from "$lib/components/Icon.svelte";
-	import SchemaForm, { emptyClone } from "$lib/components/SchemaForm.svelte";
-	import { formatDate } from "$lib/utils";
+	import SchemaForm from "$lib/components/SchemaForm.svelte";
 	import ComboBox from "$src/lib/components/ComboBox.svelte";
+	import DateTimeInput from "$src/lib/components/DateTimeInput.svelte";
 	import type { LogSchema } from "$src/lib/types/schemas";
 	import { logSchema } from "$src/lib/types/schemas";
 	import { twMerge } from "tailwind-merge";
@@ -15,30 +15,6 @@
 
 	let log = data.log;
 	let character = data.character;
-
-	let saving = false;
-	function extraErrors() {
-		if (values.characterId && !(data.characters || []).find((c) => c.id === values.characterId)) {
-			errors = {
-				...errors,
-				characterId: "Character not found"
-			};
-		}
-
-		if (character?.name && !values.applied_date) {
-			errors = {
-				...errors,
-				applied_date: "Applied date is required if assigned character is entered"
-			};
-		}
-
-		if (values.applied_date && !values.characterId) {
-			errors = {
-				...errors,
-				characterId: "Assigned character is required if applied date is entered"
-			};
-		}
-	}
 
 	let season: 1 | 8 | 9 = log.experience ? 1 : log.acp ? 8 : 9;
 	let magicItemsGained = log.magic_items_gained.map((mi) => ({
@@ -55,7 +31,6 @@
 	const logValues = (...watching: unknown[]) =>
 		({
 			...log,
-			applied_date: log.applied_date?.getTime() == 0 ? null : log.applied_date,
 			characterId: character?.id || "",
 			characterName: character?.name || "",
 			description: log.description || "",
@@ -71,7 +46,6 @@
 			}
 		}) satisfies LogSchema;
 	$: values = logValues(log, character, magicItemsGained, storyAwardsGained);
-	let errors = emptyClone(logValues());
 
 	export const snapshot = {
 		capture: () => log,
@@ -94,9 +68,23 @@
 	action="?/saveLog"
 	schema={logSchema}
 	data={values}
-	bind:errors
-	bind:saving
-	on:check-errors={() => extraErrors()}
+	let:errors
+	let:saving
+	on:errors={(event) => {
+		const errors = event.detail;
+
+		if (!errors.characterId && values.characterId && !(data.characters || []).find((c) => c.id === values.characterId)) {
+			errors.characterId = "Character not found";
+		}
+
+		if (!errors.applied_date && character?.name && !values.applied_date) {
+			errors.applied_date = "Applied date is required if assigned character is entered";
+		}
+
+		if (!errors.characterId && values.applied_date && !values.characterId) {
+			errors.characterId = "Assigned character is required if applied date is entered";
+		}
+	}}
 	on:before-submit={() => {
 		if (log.applied_date?.getTime() === 0) {
 			log.applied_date = null;
@@ -125,9 +113,11 @@
 				class="input-bordered input w-full focus:border-primary"
 				aria-invalid={errors.name ? "true" : "false"}
 			/>
-			<label for="name" class="label">
-				<span class="label-text-alt text-error">{errors.name}</span>
-			</label>
+			{#if errors.name}
+				<label for="name" class="label">
+					<span class="label-text-alt text-error">{errors.name}</span>
+				</label>
+			{/if}
 		</div>
 		<div class={twMerge("form-control col-span-12", log.is_dm_log ? "sm:col-span-6 lg:col-span-3" : "sm:col-span-4")}>
 			<label for="date" class="label">
@@ -136,17 +126,18 @@
 					<span class="text-error">*</span>
 				</span>
 			</label>
-			<input
-				type="datetime-local"
+			<DateTimeInput
 				name="date"
-				value={new Date(log.date).getTime() > 0 ? formatDate(log.date) : ""}
+				bind:value={log.date}
 				required
 				disabled={saving}
 				class="input-bordered input w-full focus:border-primary"
 			/>
-			<label for="date" class="label">
-				<span class="label-text-alt text-error">{errors.date}</span>
-			</label>
+			{#if errors.date}
+				<label for="date" class="label">
+					<span class="label-text-alt text-error">{errors.date}</span>
+				</label>
+			{/if}
 		</div>
 		<input type="hidden" name="characterId" bind:value={log.characterId} />
 		<div class="form-control col-span-12 sm:col-span-6 lg:col-span-3">
@@ -176,9 +167,11 @@
 					log.applied_date = data.character && log.applied_date ? log.applied_date : null;
 				}}
 			/>
-			<label for="characterName" class="label">
-				<span class="label-text-alt text-error">{errors.characterId}</span>
-			</label>
+			{#if errors.characterId}
+				<label for="characterName" class="label">
+					<span class="label-text-alt text-error">{errors.characterId}</span>
+				</label>
+			{/if}
 		</div>
 		<div class={twMerge("form-control col-span-12", "sm:col-span-6 lg:col-span-3")}>
 			<label for="applied_date" class="label">
@@ -189,18 +182,19 @@
 					{/if}
 				</span>
 			</label>
-			<input
-				type="datetime-local"
+			<DateTimeInput
 				name="applied_date"
-				value={log.applied_date ? formatDate(log.applied_date) : ""}
+				bind:value={log.applied_date}
 				required={!!log.characterId}
 				disabled={saving}
 				class="input-bordered input w-full focus:border-primary"
 				aria-invalid={errors.applied_date ? "true" : "false"}
 			/>
-			<label for="applied_date" class="label">
-				<span class="label-text-alt text-error">{errors.applied_date}</span>
-			</label>
+			{#if errors.applied_date}
+				<label for="applied_date" class="label">
+					<span class="label-text-alt text-error">{errors.applied_date}</span>
+				</label>
+			{/if}
 		</div>
 		<div class="col-span-12 grid grid-cols-12 gap-4">
 			<div class="form-control col-span-12 sm:col-span-4">
@@ -225,9 +219,11 @@
 						disabled={saving}
 						class="input-bordered input w-full focus:border-primary"
 					/>
-					<label for="experience" class="label">
-						<span class="label-text-alt text-error">{errors.experience}</span>
-					</label>
+					{#if errors.experience}
+						<label for="experience" class="label">
+							<span class="label-text-alt text-error">{errors.experience}</span>
+						</label>
+					{/if}
 				</div>
 			{/if}
 			{#if season === 9}
@@ -243,9 +239,11 @@
 						disabled={saving}
 						class="input-bordered input w-full focus:border-primary"
 					/>
-					<label for="level" class="label">
-						<span class="label-text-alt text-error">{errors.level}</span>
-					</label>
+					{#if errors.level}
+						<label for="level" class="label">
+							<span class="label-text-alt text-error">{errors.level}</span>
+						</label>
+					{/if}
 				</div>
 			{/if}
 			{#if season === 8}
@@ -261,9 +259,11 @@
 						disabled={saving}
 						class="input-bordered input w-full focus:border-primary"
 					/>
-					<label for="acp" class="label">
-						<span class="label-text-alt text-error">{errors.acp}</span>
-					</label>
+					{#if errors.acp}
+						<label for="acp" class="label">
+							<span class="label-text-alt text-error">{errors.acp}</span>
+						</label>
+					{/if}
 				</div>
 				<div class={twMerge("form-control w-full", "col-span-6 sm:col-span-2")}>
 					<label for="tcp" class="label">
@@ -276,9 +276,11 @@
 						disabled={saving}
 						class="input-bordered input w-full focus:border-primary"
 					/>
-					<label for="tcp" class="label">
-						<span class="label-text-alt text-error">{errors.tcp}</span>
-					</label>
+					{#if errors.tcp}
+						<label for="tcp" class="label">
+							<span class="label-text-alt text-error">{errors.tcp}</span>
+						</label>
+					{/if}
 				</div>
 			{/if}
 			<div class={twMerge("form-control w-full", "col-span-6 sm:col-span-2")}>
@@ -292,9 +294,11 @@
 					disabled={saving}
 					class="input-bordered input w-full focus:border-primary"
 				/>
-				<label for="gold" class="label">
-					<span class="label-text-alt text-error">{errors.gold}</span>
-				</label>
+				{#if errors.gold}
+					<label for="gold" class="label">
+						<span class="label-text-alt text-error">{errors.gold}</span>
+					</label>
+				{/if}
 			</div>
 			<div class={twMerge("form-control w-full", "col-span-6 sm:col-span-2")}>
 				<label for="dtd" class="label">
@@ -307,9 +311,11 @@
 					disabled={saving}
 					class="input-bordered input w-full focus:border-primary"
 				/>
-				<label for="dtd" class="label">
-					<span class="label-text-alt text-error">{errors.dtd}</span>
-				</label>
+				{#if errors.dtd}
+					<label for="dtd" class="label">
+						<span class="label-text-alt text-error">{errors.dtd}</span>
+					</label>
+				{/if}
 			</div>
 		</div>
 		<div class="form-control col-span-12 w-full">
@@ -323,7 +329,9 @@
 				class="textarea-bordered textarea w-full focus:border-primary"
 			/>
 			<label for="description" class="label">
-				<span class="label-text-alt text-error">{errors.description}</span>
+				{#if errors.description}
+					<span class="label-text-alt text-error">{errors.description}</span>
+				{/if}
 				<span class="label-text-alt">Markdown Allowed</span>
 			</label>
 		</div>
@@ -365,9 +373,11 @@
 									disabled={saving}
 									class="input-bordered input w-full focus:border-primary"
 								/>
-								<label for={`magic_items_gained.${index}.name`} class="label">
-									<span class="label-text-alt text-error">{errors.magic_items_gained[index].name}</span>
-								</label>
+								{#if errors.magic_items_gained[index].name}
+									<label for={`magic_items_gained.${index}.name`} class="label">
+										<span class="label-text-alt text-error">{errors.magic_items_gained[index].name}</span>
+									</label>
+								{/if}
 							</div>
 							<button
 								type="button"
@@ -419,9 +429,11 @@
 									disabled={saving}
 									class="input-bordered input w-full focus:border-primary"
 								/>
-								<label for={`story_awards_gained.${index}.name`} class="label">
-									<span class="label-text-alt text-error">{errors.story_awards_gained[index].name}</span>
-								</label>
+								{#if errors.story_awards_gained[index].name}
+									<label for={`story_awards_gained.${index}.name`} class="label">
+										<span class="label-text-alt text-error">{errors.story_awards_gained[index].name}</span>
+									</label>
+								{/if}
 							</div>
 							<button
 								type="button"

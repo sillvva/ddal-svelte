@@ -1,19 +1,3 @@
-<script lang="ts" context="module">
-	export type DeepStringify<T> = {
-		[K in keyof T]: T[K] extends Date ? string : T[K] extends object ? DeepStringify<T[K]> : string;
-	};
-
-	export function emptyClone<S extends Schema, T extends InferIn<S>>(data: T): DeepStringify<T> {
-		const result: any = Array.isArray(data) ? [] : {};
-		for (const key in data) {
-			if (data[key] && ["Object", "Array"].includes((data[key] as object).constructor.name)) {
-				result[key] = emptyClone(data[key]);
-			} else result[key] = "";
-		}
-		return result;
-	}
-</script>
-
 <script lang="ts" generics="TSchema extends Schema">
 	import { enhance } from "$app/forms";
 	import { beforeNavigate } from "$app/navigation";
@@ -89,6 +73,20 @@
 		return Object.values(obj).some((v) => (typeof v == "object" ? hasValues(v as Record<string, unknown>) : v));
 	}
 
+	type DeepStringify<T> = {
+		[K in keyof T]: T[K] extends Date ? string : T[K] extends object ? DeepStringify<T[K]> : string;
+	};
+
+	function emptyClone<S extends Schema, T extends InferIn<S>>(data: T): DeepStringify<T> {
+		const result: any = Array.isArray(data) ? [] : {};
+		for (const key in data) {
+			if (data[key] && ["Object", "Array"].includes((data[key] as object).constructor.name)) {
+				result[key] = emptyClone(data[key]);
+			} else result[key] = "";
+		}
+		return result;
+	}
+
 	function setNestedError<T extends DeepStringify<object>>(err: T, keysArray: (string | number | symbol)[], value: string) {
 		let current = err;
 		for (let i = 0; i < keysArray.length - 1; i++) {
@@ -100,7 +98,7 @@
 		}
 		const key = keysArray[keysArray.length - 1] as keyof typeof current;
 		if (!(key in current)) throw new Error(`Key ${keysArray.join(".")} not found`);
-		if (typeof current[key] === "string") current[key] = value as any;
+		if (typeof current[key] === "string") current[key] = value.trim() as any;
 		else throw new Error(`Cannot set nested error on ${keysArray.join(".")}`);
 		return err;
 	}
@@ -138,5 +136,5 @@
 		};
 	}}
 >
-	<slot />
+	<slot {errors} {saving} />
 </form>
