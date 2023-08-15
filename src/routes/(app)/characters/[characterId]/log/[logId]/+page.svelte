@@ -46,33 +46,30 @@
 	}));
 	$: storyAwardsLost = log.story_awards_lost.map((mi) => mi.id).filter((id) => !!storyAwards.find((mi) => mi.id === id));
 
-	const logValues = (...watching: unknown[]) =>
-		({
-			...log,
-			characterId: character?.id || "",
-			characterName: character?.name || "",
-			description: log.description || "",
-			magic_items_gained: magicItemsGained,
-			magic_items_lost: magicItemsLost,
-			story_awards_gained: storyAwardsGained,
-			story_awards_lost: storyAwardsLost,
-			dm:
-				!(dm.uid || dm.name.trim()) && data.session?.user?.id
-					? {
-							id: "",
-							name: data.session.user.name || "Me",
-							DCI: null,
-							uid: data.session.user.id
-					  }
-					: {
-							id: dm.id,
-							name: dm.name.trim(),
-							DCI: dm.DCI,
-							uid: dm.uid
-					  }
-		}) satisfies LogSchema;
-
-	$: values = logValues(log, dm, magicItemsGained, magicItemsLost, storyAwardsGained, storyAwardsLost);
+	$: values = {
+		...log,
+		characterId: character?.id || "",
+		characterName: character?.name || "",
+		description: log.description || "",
+		magic_items_gained: magicItemsGained,
+		magic_items_lost: magicItemsLost,
+		story_awards_gained: storyAwardsGained,
+		story_awards_lost: storyAwardsLost,
+		dm:
+			!(dm.uid || dm.name.trim()) && data.session?.user?.id
+				? {
+						id: "",
+						name: data.session.user.name || "Me",
+						DCI: null,
+						uid: data.session.user.id
+				  }
+				: {
+						id: dm.id,
+						name: dm.name.trim(),
+						DCI: dm.DCI,
+						uid: dm.uid
+				  }
+	} satisfies LogSchema;
 
 	export const snapshot = {
 		capture: () => log,

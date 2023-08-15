@@ -28,24 +28,22 @@
 		description: mi.description || ""
 	}));
 
-	const logValues = (...watching: unknown[]) =>
-		({
-			...log,
-			characterId: character?.id || "",
-			characterName: character?.name || "",
-			description: log.description || "",
-			magic_items_gained: magicItemsGained,
-			magic_items_lost: [],
-			story_awards_gained: storyAwardsGained,
-			story_awards_lost: [],
-			dm: {
-				id: log.dm?.id || "",
-				name: log.dm?.name || "",
-				DCI: log.dm?.DCI || null,
-				uid: log.dm?.uid || ""
-			}
-		}) satisfies LogSchema;
-	$: values = logValues(log, character, magicItemsGained, storyAwardsGained);
+	$: values = {
+		...log,
+		characterId: character?.id || "",
+		characterName: character?.name || "",
+		description: log.description || "",
+		magic_items_gained: magicItemsGained,
+		magic_items_lost: [],
+		story_awards_gained: storyAwardsGained,
+		story_awards_lost: [],
+		dm: {
+			id: log.dm?.id || "",
+			name: log.dm?.name || "",
+			DCI: log.dm?.DCI || null,
+			uid: log.dm?.uid || ""
+		}
+	} satisfies LogSchema;
 
 	export const snapshot = {
 		capture: () => log,
