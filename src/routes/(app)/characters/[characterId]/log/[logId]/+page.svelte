@@ -8,6 +8,7 @@
 	import { sorter } from "$lib/utils";
 	import ComboBox from "$src/lib/components/ComboBox.svelte";
 	import DateTimeInput from "$src/lib/components/DateTimeInput.svelte";
+	import Markdown from "$src/lib/components/Markdown.svelte";
 	import type { LogSchema } from "$src/lib/types/schemas";
 	import { logSchema } from "$src/lib/types/schemas";
 	import { twMerge } from "tailwind-merge";
@@ -31,6 +32,9 @@
 
 	const defaultDM = { id: "", name: "", DCI: null, uid: "" };
 	let dm = log.dm || defaultDM;
+	let previews = {
+		description: false
+	};
 
 	let season: 1 | 8 | 9 = log.experience ? 1 : log.acp ? 8 : 9;
 	let magicItemsGained = log.magic_items_gained.map((mi) => ({
@@ -332,15 +336,31 @@
 			<label for="description" class="label">
 				<span class="label-text">Notes</span>
 			</label>
+			<div class="tabs tabs-boxed rounded-b-none border-base-content border-b-0 border-[1px] [--tw-border-opacity:0.2]">
+				<button type="button" class="tab" class:tab-active={!previews.description} on:click={() => (previews.description = false)}
+					>Edit</button
+				>
+				<button type="button" class="tab" class:tab-active={previews.description} on:click={() => (previews.description = true)}
+					>Preview</button
+				>
+			</div>
 			<AutoResizeTextArea
 				name="description"
 				bind:value={log.description}
 				disabled={saving}
-				class="textarea-bordered textarea w-full focus:border-primary"
+				class={twMerge("textarea-bordered rounded-t-none textarea w-full focus:border-primary", previews.description && "hidden")}
 			/>
+			<div
+				class="p-4 bg-base-100 border-base-content border-[1px] [--tw-border-opacity:0.2]"
+				class:hidden={!previews.description}
+			>
+				<Markdown content={log.description || ""} />
+			</div>
 			<label for="description" class="label">
 				{#if errors.description}
 					<span class="label-text-alt text-error">{errors.description}</span>
+				{:else}
+					<span class="label-text-alt" />
 				{/if}
 				<span class="label-text-alt">Markdown Allowed</span>
 			</label>
