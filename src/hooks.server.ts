@@ -82,6 +82,15 @@ export const authOptions = {
 	secret: AUTH_SECRET,
 	// Configure one or more authentication providers
 	adapter: PrismaAdapter(prisma),
+	trustHost: true,
+	cookies: {
+		sessionToken: {
+			name: "next-auth.session-token",
+			options: {
+				expires: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000) // 30 days
+			}
+		}
+	},
 	providers: [
 		Google({
 			clientId: GOOGLE_CLIENT_ID,
