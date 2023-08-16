@@ -34,8 +34,9 @@ export const authOptions = {
 				where: { userId: user.id, provider: "google" }
 			});
 			if (!google.expires_at || google.expires_at * 1000 < Date.now()) {
-				// If the access token has expired, try to refresh it
 				try {
+					if (!google.refresh_token) throw new Error("No refresh token");
+
 					// https://accounts.google.com/.well-known/openid-configuration
 					// We need the `token_endpoint`.
 					const response = await fetch("https://oauth2.googleapis.com/token", {
@@ -44,7 +45,7 @@ export const authOptions = {
 							client_id: GOOGLE_CLIENT_ID,
 							client_secret: GOOGLE_CLIENT_SECRET,
 							grant_type: "refresh_token",
-							refresh_token: google.refresh_token || ""
+							refresh_token: google.refresh_token
 						}),
 						method: "POST"
 					});
@@ -69,7 +70,6 @@ export const authOptions = {
 					});
 				} catch (error) {
 					console.error("Error refreshing access token", error);
-					// The error property will be used client-side to handle the refresh token error
 					session.error = "RefreshAccessTokenError";
 				}
 			}
