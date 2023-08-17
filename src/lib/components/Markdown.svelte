@@ -2,6 +2,7 @@
 	import SvelteMarkdown from "svelte-markdown";
 
 	// Renderers
+	import blockquote from "$lib/components/renderers/blockquote.svelte";
 	import heading from "$lib/components/renderers/heading.svelte";
 	import image from "$lib/components/renderers/image.svelte";
 	import link from "$lib/components/renderers/link.svelte";
@@ -21,6 +22,7 @@
 	<SvelteMarkdown
 		source={content}
 		renderers={{
+			blockquote,
 			heading,
 			paragraph,
 			image,

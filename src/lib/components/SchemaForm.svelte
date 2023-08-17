@@ -90,15 +90,15 @@
 	function setNestedError<T extends DeepStringify<object>>(err: T, keysArray: (string | number | symbol)[], value: string) {
 		let current = err;
 		for (let i = 0; i < keysArray.length - 1; i++) {
-			const key = keysArray[i] as keyof typeof current;
+			const key = keysArray[i] as keyof T;
 			if (!(key in current)) throw new Error(`Key ${keysArray.slice(0, i + 1).join(".")} not found`);
 			if (!["Object", "Array"].includes((current[key] as object).constructor.name))
 				throw new Error(`Cannot set nested error on non-object ${keysArray.slice(0, i + 1).join(".")}`);
 			current = current[key];
 		}
-		const key = keysArray[keysArray.length - 1] as keyof typeof current;
+		const key = keysArray[keysArray.length - 1] as keyof T;
 		if (!(key in current)) throw new Error(`Key ${keysArray.join(".")} not found`);
-		if (typeof current[key] === "string") current[key] = value.trim() as any;
+		if (typeof current[key] === "string") current[key] = value.trim() as T[keyof T];
 		else throw new Error(`Cannot set nested error on ${keysArray.join(".")}`);
 		return err;
 	}
