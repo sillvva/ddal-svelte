@@ -63,7 +63,7 @@
 	<label>
 		<input
 			type="text"
-			bind:value
+			{value}
 			{...$$restProps}
 			on:input={(e) => {
 				selected = false;
