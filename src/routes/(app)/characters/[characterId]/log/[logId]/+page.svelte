@@ -82,17 +82,16 @@
 </script>
 
 <BreadCrumbs />
-
 <BackButton href={`/characters/${data.characterId}`}>{character.name}</BackButton>
 
-{#if form?.error}
-	<div class="alert alert-error mb-4 shadow-lg">
-		<Icon src="alert-circle" class="w-6" />
-		{form.error}
-	</div>
-{/if}
-
 <SchemaForm action="?/saveLog" schema={logSchema} data={values} let:saving let:errors>
+	{#if form?.error || errors.form}
+		<div class="alert alert-error mb-4 shadow-lg">
+			<Icon src="alert-circle" class="w-6" />
+			{form?.error || errors.form}
+		</div>
+	{/if}
+
 	<input type="hidden" name="characterId" value={character.id} />
 	<input type="hidden" name="logId" value={data.logId === "new" ? "" : data.logId} />
 	<input type="hidden" name="is_dm_log" value={log.is_dm_log} />

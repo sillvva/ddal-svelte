@@ -56,15 +56,7 @@
 </script>
 
 <BreadCrumbs />
-
 <BackButton href="/dm-logs">DM Logs</BackButton>
-
-{#if form?.error}
-	<div class="alert alert-error mb-4 shadow-lg">
-		<Icon src="alert-circle" class="w-6" />
-		{form.error}
-	</div>
-{/if}
 
 <SchemaForm
 	action="?/saveLog"
@@ -93,6 +85,13 @@
 		}
 	}}
 >
+	{#if form?.error || errors.form}
+		<div class="alert alert-error mb-4 shadow-lg">
+			<Icon src="alert-circle" class="w-6" />
+			{form?.error || errors.form}
+		</div>
+	{/if}
+
 	<input type="hidden" name="logId" value={data.logId === "new" ? "" : data.logId} />
 	<input type="hidden" name="dm.id" value={log.dm?.id || ""} />
 	<input type="hidden" name="dm.DCI" value={null} />

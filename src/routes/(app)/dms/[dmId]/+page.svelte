@@ -17,17 +17,16 @@
 
 <div class="flex flex-col gap-4">
 	<BreadCrumbs />
-
 	<BackButton href="/dms">DMs</BackButton>
 
-	{#if form?.error}
-		<div class="alert alert-error mb-4 shadow-lg">
-			<Icon src="alert-circle" class="w-6" />
-			{form.error}
-		</div>
-	{/if}
-
 	<SchemaForm action="?/saveDM" schema={dungeonMasterSchema} data={dm} bind:saving let:errors>
+		{#if form?.error || errors.form}
+			<div class="alert alert-error mb-4 shadow-lg">
+				<Icon src="alert-circle" class="w-6" />
+				{form?.error || errors.form}
+			</div>
+		{/if}
+
 		<input type="hidden" name="dmID" value={dm.id} />
 		<div class="grid grid-cols-12 gap-4">
 			<div class="col-span-12 sm:col-span-6">

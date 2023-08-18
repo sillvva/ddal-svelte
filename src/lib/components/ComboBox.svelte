@@ -63,7 +63,7 @@
 	<label>
 		<input
 			type="text"
-			bind:value
+			{value}
 			{...$$restProps}
 			on:input={(e) => {
 				selected = false;
@@ -118,7 +118,10 @@
 		/>
 	</label>
 	{#if parsedValues && parsedValues.length > 0 && search.trim() && !selected}
-		<ul id="options-{$$restProps.name}" class="dropdown-content menu w-full rounded-lg bg-base-100 p-2 shadow dark:bg-base-200">
+		<ul
+			id="options-{$$restProps.name}"
+			class="dropdown-content menu z-10 w-full rounded-lg bg-base-100 p-2 shadow dark:bg-base-200"
+		>
 			{#each matches.slice(0, 8) as kv, i}
 				<li class={twMerge("hover:bg-primary/50", keysel === i && "bg-primary text-primary-content")}>
 					<span
