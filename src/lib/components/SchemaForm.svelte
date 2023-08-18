@@ -74,7 +74,13 @@
 	}
 
 	type DeepStringify<T> = {
-		[K in keyof T]: T[K] extends Date ? string : T[K] extends object ? DeepStringify<T[K]> : string;
+		[K in keyof T]: T[K] extends (infer E)[]
+			? DeepStringify<E[]>
+			: T[K] extends Date
+			? string
+			: T[K] extends object
+			? DeepStringify<T[K]>
+			: string;
 	};
 
 	function emptyClone<S extends Schema, T extends InferIn<S>>(data: T): DeepStringify<T> {
@@ -87,19 +93,26 @@
 		return result;
 	}
 
-	function setNestedError<T extends DeepStringify<object>>(err: T, keysArray: (string | number | symbol)[], value: string) {
-		let current = err;
-		for (let i = 0; i < keysArray.length - 1; i++) {
-			const key = keysArray[i] as keyof T;
-			if (!(key in current)) throw new Error(`Key ${keysArray.slice(0, i + 1).join(".")} not found`);
-			if (!["Object", "Array"].includes((current[key] as object).constructor.name))
-				throw new Error(`Cannot set nested error on non-object ${keysArray.slice(0, i + 1).join(".")}`);
-			current = current[key];
+	function setNestedError<T extends DeepStringify<object>>(
+		err: T,
+		keysArray: (string | number | symbol)[],
+		value: string,
+		previousKeys: (string | number | symbol)[] = []
+	): T {
+		const [key, ...restKeys] = keysArray as [keyof T, ...(string | number | symbol)[]];
+		const keyPath = [...previousKeys, key]
+			.map((c, i) => {
+				if (typeof c === "number") return `[${c}]`;
+				return `${i == 0 ? "" : "."}${c.toString()}`;
+			})
+			.join("");
+		if (!(key in err)) throw new Error(`Key ${keyPath} not found`);
+		if (restKeys.length && ["Object", "Array"].includes((err[key] as object).constructor.name)) {
+			err[key] = setNestedError(err[key], restKeys, value, [...previousKeys, key]);
+		} else {
+			if (restKeys.length) throw new Error(`Cannot set nested error on non-object ${keyPath}`);
+			err[key] = value.trim() as T[keyof T];
 		}
-		const key = keysArray[keysArray.length - 1] as keyof T;
-		if (!(key in current)) throw new Error(`Key ${keysArray.join(".")} not found`);
-		if (typeof current[key] === "string") current[key] = value.trim() as T[keyof T];
-		else throw new Error(`Cannot set nested error on ${keysArray.join(".")}`);
 		return err;
 	}
 </script>
