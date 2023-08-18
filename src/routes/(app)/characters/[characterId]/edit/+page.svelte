@@ -17,19 +17,18 @@
 </script>
 
 <BreadCrumbs />
-
 <BackButton href="/characters{data.characterId == 'new' ? '' : `/${data.characterId}`}">
 	{data.characterId == "new" ? "Characters" : character.name}
 </BackButton>
 
-{#if form?.error}
-	<div class="alert alert-error mb-4 shadow-lg">
-		<Icon src="alert-circle" class="w-6" />
-		{form.error}
-	</div>
-{/if}
-
 <SchemaForm action="?/saveCharacter" schema={newCharacterSchema} data={character} let:errors let:saving>
+	{#if form?.error || errors.form}
+		<div class="alert alert-error mb-4 shadow-lg">
+			<Icon src="alert-circle" class="w-6" />
+			{form?.error || errors.form}
+		</div>
+	{/if}
+
 	<div class="grid grid-cols-12 gap-4">
 		<div class="col-span-12 sm:col-span-6">
 			<div class="form-control w-full">

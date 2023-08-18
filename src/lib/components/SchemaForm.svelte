@@ -23,7 +23,10 @@
 	export let method = "POST";
 	export let resetOnSave = false;
 	export let saving = false;
-	export let errors = emptyClone(data);
+	export let errors = {
+		form: "",
+		...emptyClone(data)
+	};
 
 	let changes = new SvelteSet<string>();
 	function addChanges(field: string) {
@@ -33,13 +36,17 @@
 	$: changes && checkErrors(data);
 
 	async function checkErrors(data: InferIn<TSchema>, onlyChanges = true) {
-		errors = emptyClone(data);
+		errors = {
+			form: "",
+			...emptyClone(data)
+		};
 		const result = await validate(schema, data);
 		if ("data" in result) {
 			dispatch("validate", { data: result.data });
 		} else if ("issues" in result) {
 			result.issues.forEach((issue) => {
-				if (issue.path && (!onlyChanges || changes.has(issue.path.join(".")))) {
+				if (!issue.path) issue.path = ["form"];
+				if (!onlyChanges || changes.has(issue.path.join("."))) {
 					errors = setNestedError(errors, issue.path, issue.message);
 				}
 			});
@@ -74,11 +81,11 @@
 	}
 
 	type DeepStringify<T> = {
-		[K in keyof T]: T[K] extends (infer E)[]
-			? DeepStringify<E[]>
+		[K in keyof T]: T[K] extends Array<infer E>
+			? DeepStringify<Array<E>>
 			: T[K] extends Date
 			? string
-			: T[K] extends object
+			: T[K] extends Object
 			? DeepStringify<T[K]>
 			: string;
 	};
@@ -93,25 +100,26 @@
 		return result;
 	}
 
-	function setNestedError<T extends DeepStringify<object>>(
-		err: T,
+	function setNestedError<TErrorObj extends object>(
+		err: TErrorObj,
 		keysArray: (string | number | symbol)[],
 		value: string,
 		previousKeys: (string | number | symbol)[] = []
-	): T {
-		const [key, ...restKeys] = keysArray as [keyof T, ...(string | number | symbol)[]];
-		const keyPath = [...previousKeys, key]
+	): TErrorObj {
+		if (!keysArray.length) throw new Error("Keys array must have at least one key");
+		const key = keysArray.shift() as keyof TErrorObj;
+		const path = [...previousKeys, key]
 			.map((c, i) => {
 				if (typeof c === "number") return `[${c}]`;
 				return `${i == 0 ? "" : "."}${c.toString()}`;
 			})
 			.join("");
-		if (!(key in err)) throw new Error(`Key ${keyPath} not found`);
-		if (restKeys.length && ["Object", "Array"].includes((err[key] as object).constructor.name)) {
-			err[key] = setNestedError(err[key], restKeys, value, [...previousKeys, key]);
+		if (!(key in err)) throw new Error(`Key ${path} not found`);
+		if (keysArray.length && ["Object", "Array"].includes((err[key] as object).constructor.name)) {
+			err[key] = setNestedError(err[key], keysArray, value, [...previousKeys, key]);
 		} else {
-			if (restKeys.length) throw new Error(`Cannot set nested error on non-object ${keyPath}`);
-			err[key] = value.trim() as T[keyof T];
+			if (keysArray.length) throw new Error(`Cannot set nested error on non-object ${path}`);
+			err[key] = value.trim() as TErrorObj[keyof TErrorObj];
 		}
 		return err;
 	}
