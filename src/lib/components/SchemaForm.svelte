@@ -102,9 +102,9 @@
 
 	function setNestedError<TErrorObj extends object>(
 		err: TErrorObj,
-		keysArray: (string | number | symbol)[],
+		keysArray: Array<string | number | symbol>,
 		value: string,
-		previousKeys: (string | number | symbol)[] = []
+		previousKeys: Array<string | number | symbol> = []
 	): TErrorObj {
 		if (!keysArray.length) throw new Error("Keys array must have at least one key");
 		const key = keysArray.shift() as keyof TErrorObj;

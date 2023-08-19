@@ -19,7 +19,7 @@
 		};
 	}>();
 
-	export let values: { key?: string | number | null; value: string }[] = [];
+	export let values: Array<{ key?: string | number | null; value: string }> = [];
 	export let value: string | number | null = "";
 	export let searchBy: "key" | "value" = "key";
 

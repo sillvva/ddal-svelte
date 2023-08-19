@@ -7,7 +7,7 @@
 	import SearchResults from "./SearchResults.svelte";
 
 	export let title: string = "";
-	export let items: (MagicItem | StoryAward)[];
+	export let items: Array<MagicItem | StoryAward>;
 	export let formatting: boolean = false;
 	export let search: string = "";
 	export let collapsible: boolean = false;

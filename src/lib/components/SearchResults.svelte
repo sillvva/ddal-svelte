@@ -13,24 +13,24 @@
 	$: match = getMatchedItems(items, regex);
 	$: parts = getPartionedItems(items, match, regex);
 
-	function getSearchTerms(search: string): string[] {
+	function getSearchTerms(search: string) {
 		return (search.length > 1 ? search : "")
 			.replace(new RegExp(` ?\\b(${[...stopWords].join("|")})\\b ?`, "gi"), " ")
 			.replace(/([^ a-z0-9])/gi, "\\$1")
 			.trim()
 			.split(" ")
-			.filter(Boolean);
+			.filter((i) => !!i);
 	}
 
-	function getRegexesFromTerms(terms: string[]) {
+	function getRegexesFromTerms(terms: Array<string>) {
 		return terms.map((term) => new RegExp(term, "gi"));
 	}
 
-	function getJoinedRegexFromTerms(terms: string[]) {
+	function getJoinedRegexFromTerms(terms: Array<string>) {
 		return terms.length ? new RegExp(terms.join("|"), "gi") : null;
 	}
 
-	function getTextItems(text: string | string[] | null, filtered: boolean, regexes: RegExp[]) {
+	function getTextItems(text: string | string[] | null, filtered: boolean, regexes: Array<RegExp>) {
 		return (Array.isArray(text) ? text : text?.split(separator) || [])
 			.filter((item) => !filtered || regexes.every((regex) => item.match(regex)))
 			.join(separator);
