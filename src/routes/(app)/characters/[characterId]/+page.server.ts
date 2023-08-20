@@ -33,7 +33,7 @@ export const actions = {
 		const result = await deleteCharacter(characterId, session.user.id);
 		if (result) {
 			if (result.id) throw redirect(301, "/characters");
-			if (result.error) throw new Error(result.error);
+			if (result.error) throw error(400, result.error);
 		}
 		return result;
 	},
