@@ -1,16 +1,16 @@
 import { logSchema } from "$src/lib/types/schemas";
 import { saveLog } from "$src/server/actions/logs";
+import { signInRedirect } from "$src/server/auth.js";
 import { getCharacterCache, getCharactersCache } from "$src/server/data/characters";
 import { getDMLog, getLog } from "$src/server/data/logs";
 import { error, redirect } from "@sveltejs/kit";
 
 import type { DatesToStrings } from "$src/lib/types/util";
-
 export const load = async (event) => {
 	const parent = await event.parent();
 
 	const session = parent.session;
-	if (!session?.user) throw redirect(301, "/");
+	if (!session?.user?.name) throw signInRedirect(event.url);
 
 	const log = await getDMLog(event.params.logId);
 	if (event.params.logId !== "new" && !log.id) throw error(404, "Log not found");

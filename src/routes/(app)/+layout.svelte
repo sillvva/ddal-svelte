@@ -63,17 +63,14 @@
 							<span>{data.session?.user?.name}</span>
 						</li>
 						<li>
-							<a href="#top" on:click={() => signOut()}>Logout</a>
+							<a href="#top" on:click={() => signOut({ callbackUrl: "/" })}>Logout</a>
 						</li>
 					</ul>
 				</div>
 			{:else}
 				<button
 					class="flex h-12 items-center gap-2 rounded-lg bg-base-200/50 p-2 text-base-content transition-colors hover:bg-base-300"
-					on:click={() =>
-						signIn("google", {
-							callbackUrl: `${$page.url.origin}/characters`
-						})}
+					on:click={() => signIn("google", { callbackUrl: `${$page.url.origin}${$page.url.pathname}${$page.url.search}` })}
 				>
 					<img src="/images/google.svg" width="24" height="24" alt="Google" />
 					<span class="flex h-full flex-1 items-center justify-center font-semibold">Sign In</span>

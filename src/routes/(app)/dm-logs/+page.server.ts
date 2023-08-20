@@ -1,4 +1,5 @@
 import { deleteLog } from "$src/server/actions/logs";
+import { signInRedirect } from "$src/server/auth.js";
 import { getDMLogsCache } from "$src/server/data/logs";
 import { redirect } from "@sveltejs/kit";
 
@@ -6,7 +7,7 @@ export const load = async (event) => {
 	const parent = await event.parent();
 
 	const session = parent.session;
-	if (!session?.user?.name) throw redirect(301, "/");
+	if (!session?.user?.name) throw signInRedirect(event.url);
 
 	const logs = await getDMLogsCache(session.user.id, session.user.name);
 
