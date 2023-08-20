@@ -86,7 +86,7 @@
 	type DeepStringify<T> = {
 		[K in keyof T]: T[K] extends Array<infer E>
 			? DeepStringify<Array<E>>
-			: T[K] extends Date
+			: T[K] extends Date | Blob | File
 			? string
 			: T[K] extends Object
 			? DeepStringify<T[K]>

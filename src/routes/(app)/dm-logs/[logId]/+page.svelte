@@ -174,7 +174,7 @@
 				</label>
 			{/if}
 		</div>
-		<div class={twMerge("form-control col-span-12", "sm:col-span-6 lg:col-span-3")}>
+		<div class="form-control col-span-12 sm:col-span-6 lg:col-span-3">
 			<label for="applied_date" class="label">
 				<span class="label-text">
 					Assigned Date
@@ -266,7 +266,7 @@
 						</label>
 					{/if}
 				</div>
-				<div class={twMerge("form-control w-full", "col-span-6 sm:col-span-2")}>
+				<div class="form-control w-full col-span-6 sm:col-span-2">
 					<label for="tcp" class="label">
 						<span class="label-text">TCP</span>
 					</label>
@@ -284,7 +284,7 @@
 					{/if}
 				</div>
 			{/if}
-			<div class={twMerge("form-control w-full", "col-span-6 sm:col-span-2")}>
+			<div class="form-control w-full col-span-6 sm:col-span-2">
 				<label for="gold" class="label">
 					<span class="label-text">Gold</span>
 				</label>
@@ -301,7 +301,7 @@
 					</label>
 				{/if}
 			</div>
-			<div class={twMerge("form-control w-full", "col-span-6 sm:col-span-2")}>
+			<div class="form-control w-full col-span-6 sm:col-span-2">
 				<label for="dtd" class="label">
 					<span class="label-text overflow-hidden text-ellipsis whitespace-nowrap">Downtime Days</span>
 				</label>
