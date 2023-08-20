@@ -14,12 +14,15 @@
 	<header
 		class={twMerge(
 			"relative z-20 w-full border-b-[1px] border-slate-500",
-			data.mobile && "bg-base-300 border-slate-300 dark:border-slate-700"
+			data.mobile && "bg-base-300 border-slate-300 dark:border-slate-700 sticky top-0"
 		)}
 	>
 		<nav class="container mx-auto flex max-w-5xl gap-2 p-4">
 			<Drawer />
-			<a href={data.session?.user ? "/characters" : "/"} class="mr-8 flex flex-col text-center font-draconis">
+			<a
+				href={data.session?.user ? "/characters" : "/"}
+				class={twMerge("mr-8 flex flex-col text-center font-draconis", data.mobile && "flex-1 mr-2")}
+			>
 				<h1 class="text-base leading-4 text-accent-content">Adventurers League</h1>
 				<h2 class="text-3xl leading-7">Log Sheet</h2>
 			</a>
@@ -28,7 +31,9 @@
 				<a href="/dm-logs" class="hidden items-center p-2 md:flex">DM Logs</a>
 				<a href="/dms" class="hidden items-center p-2 md:flex">DMs</a>
 			{/if}
-			<div class="flex-1">&nbsp;</div>
+			{#if !data.mobile}
+				<div class="flex-1">&nbsp;</div>
+			{/if}
 			<a
 				href="https://github.com/sillvva/ddal-svelte"
 				target="_blank"
@@ -42,12 +47,17 @@
 			</a>
 			{#if data.session?.user}
 				<div class="dropdown-end dropdown">
-					<div role="button" tabindex="0" class="flex cursor-pointer">
+					<div role="button" tabindex="0" class="flex cursor-pointer h-full items-center">
 						<div class="hidden items-center px-4 text-accent-content print:flex sm:flex">
 							{data.session?.user?.name}
 						</div>
 						<div class="avatar">
-							<div class="relative w-11 overflow-hidden rounded-full ring ring-primary ring-offset-2 ring-offset-base-100">
+							<div
+								class={twMerge(
+									"relative w-11 overflow-hidden rounded-full ring ring-primary ring-offset-2 ring-offset-base-100",
+									data.mobile && "w-9"
+								)}
+							>
 								<img
 									src={data.session?.user?.image || ""}
 									alt={data.session?.user?.name}
