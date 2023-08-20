@@ -64,19 +64,19 @@
 	data={values}
 	let:errors
 	let:saving
-	on:errors={(event) => {
-		const errors = event.detail;
+	on:validate={(event) => {
+		const { addError } = event.detail;
 
-		if (!errors.characterId && values.characterId && !(data.characters || []).find((c) => c.id === values.characterId)) {
-			errors.characterId = "Character not found";
+		if (values.characterId && !(data.characters || []).find((c) => c.id === values.characterId)) {
+			addError(["characterId"], "Character not found");
 		}
 
-		if (!errors.applied_date && character?.name && !values.applied_date) {
-			errors.applied_date = "Applied date is required if assigned character is entered";
+		if (character?.name && !values.applied_date) {
+			addError(["applied_date"], "Applied date is required if assigned character is entered");
 		}
 
-		if (!errors.characterId && values.applied_date && !values.characterId) {
-			errors.characterId = "Assigned character is required if applied date is entered";
+		if (values.applied_date && !values.characterId) {
+			addError(["characterId"], "Assigned character is required if applied date is entered");
 		}
 	}}
 	on:before-submit={() => {

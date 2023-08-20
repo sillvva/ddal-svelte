@@ -1,6 +1,15 @@
 import { ValiError } from "valibot";
 
-import type { ValidateInfo } from "valibot";
+import type { BaseSchema, BaseSchemaAsync, Input, ValidateInfo } from "valibot";
+
+export function withDefault<TSchema extends BaseSchema | BaseSchemaAsync>(schema: TSchema, value: Input<TSchema>) {
+	return {
+		...schema,
+		parse(input: Input<TSchema>, info?: ValidateInfo) {
+			return schema.parse(!input || (typeof value == "number" && isNaN(input)) ? value : input, info);
+		}
+	};
+}
 
 // const dateRegex = /^((\d\d[2468][048]|\d\d[13579][26]|\d\d0[48]|[02468][048]00|[13579][26]00)-02-29|d{4}-((0[13578]|1[02])-(0[1-9]|[12]\d|3[01])|(0[469]|11)-(0[1-9]|[12]\d|30)|(02)-(0[1-9]|1\d|2[0-8])))T([01]\d|2[0-3]):[0-5]\d:[0-5]\d\.\d{3}([+-]([01]\d|2[0-3]):[0-5]\d|Z)$/;
 

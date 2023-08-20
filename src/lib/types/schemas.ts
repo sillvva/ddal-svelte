@@ -1,3 +1,4 @@
+import { withDefault } from "$lib/types/valibot/custom";
 import {
 	array,
 	boolean,
@@ -13,8 +14,7 @@ import {
 	regex,
 	string,
 	union,
-	url,
-	withDefault
+	url
 } from "valibot";
 
 import type { Output } from "valibot";
@@ -42,7 +42,7 @@ export const logSchema = object({
 	tcp: withDefault(number("TCP must be a number"), 0),
 	level: withDefault(number([minValue(0, "Level must be a non-negative number")]), 0),
 	gold: withDefault(number("Gold must be a number"), 0),
-	dtd: withDefault(number("Downtime Days must be a number"), 0),
+	dtd: withDefault(number("Downtime days must be a number"), 0),
 	description: withDefault(string(), ""),
 	dm: dungeonMasterSchema,
 	is_dm_log: withDefault(boolean(), false),
