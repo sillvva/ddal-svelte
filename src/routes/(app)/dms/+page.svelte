@@ -8,7 +8,7 @@
 	export let form;
 
 	let dms = data.dms;
-	let deletingDM: string[] = [];
+	let deletingDM: Array<string> = [];
 </script>
 
 <div class="flex flex-col gap-4">

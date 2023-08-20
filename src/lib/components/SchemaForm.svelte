@@ -10,8 +10,12 @@
 	const dispatch = createEventDispatcher<{
 		"before-submit": null;
 		"after-submit": ActionResult;
-		errors: typeof errors;
-		validate: { data?: Infer<TSchema>; errors?: typeof errors };
+		validate: {
+			data?: Infer<TSchema>;
+			changes: typeof changes;
+			errors: typeof errors;
+			addError: typeof addError;
+		};
 	}>();
 
 	let elForm: HTMLFormElement;
@@ -23,17 +27,18 @@
 	export let method = "POST";
 	export let resetOnSave = false;
 	export let saving = false;
-	export let errors = {
-		form: "",
-		...emptyClone(data)
-	};
+	export let errors = { form: "", ...emptyClone(data) };
 
 	let changes = new SvelteSet<string>();
 	function addChanges(field: string) {
+		if (changes.has(field)) return;
 		changes = changes.add(field);
 	}
 
-	$: changes && checkErrors(data);
+	$: checkErrors(data);
+	function addError(keysArray: Array<string | number | symbol>, value: string) {
+		errors = setNestedError(errors, keysArray, value);
+	}
 
 	async function checkErrors(data: InferIn<TSchema>, onlyChanges = true) {
 		errors = {
@@ -42,19 +47,17 @@
 		};
 		const result = await validate(schema, data);
 		if ("data" in result) {
-			dispatch("validate", { data: result.data });
+			dispatch("validate", { data: result.data, changes, errors, addError });
 		} else if ("issues" in result) {
 			result.issues.forEach((issue) => {
 				if (!issue.path) issue.path = ["form"];
 				if (!onlyChanges || changes.has(issue.path.join("."))) {
-					errors = setNestedError(errors, issue.path, issue.message);
+					addError(issue.path, issue.message);
 				}
 			});
-			dispatch("validate", { errors });
+			dispatch("validate", { changes, errors, addError });
 		}
 	}
-
-	$: dispatch("errors", errors);
 
 	function inputChanged(ev: Event) {
 		const name = (ev.currentTarget as HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement | null)?.getAttribute("name");
@@ -83,7 +86,7 @@
 	type DeepStringify<T> = {
 		[K in keyof T]: T[K] extends Array<infer E>
 			? DeepStringify<Array<E>>
-			: T[K] extends Date
+			: T[K] extends Date | Blob | File
 			? string
 			: T[K] extends Object
 			? DeepStringify<T[K]>
@@ -102,10 +105,10 @@
 
 	function setNestedError<TErrorObj extends object>(
 		err: TErrorObj,
-		keysArray: (string | number | symbol)[],
+		keysArray: Array<string | number | symbol>,
 		value: string,
-		previousKeys: (string | number | symbol)[] = []
-	): TErrorObj {
+		previousKeys: Array<string | number | symbol> = []
+	) {
 		if (!keysArray.length) throw new Error("Keys array must have at least one key");
 		const key = keysArray.shift() as keyof TErrorObj;
 		const path = [...previousKeys, key]
@@ -119,7 +122,7 @@
 			err[key] = setNestedError(err[key], keysArray, value, [...previousKeys, key]);
 		} else {
 			if (keysArray.length) throw new Error(`Cannot set nested error on non-object ${path}`);
-			err[key] = value.trim() as TErrorObj[keyof TErrorObj];
+			if (!err[key]) err[key] = value.trim() as TErrorObj[keyof TErrorObj];
 		}
 		return err;
 	}

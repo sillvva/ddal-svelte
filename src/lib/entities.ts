@@ -11,7 +11,7 @@ export const getMagicItems = (
 	}
 ) => {
 	const { lastLogId = "", lastLogDate = "", excludeDropped = false } = options || {};
-	const magicItems: MagicItem[] = [];
+	const magicItems: Array<MagicItem> = [];
 	let lastLog = false;
 	character.logs
 		.sort((a, b) => sorter(a.date, b.date))
@@ -47,7 +47,7 @@ export const getStoryAwards = (
 	}
 ) => {
 	const { lastLogId = "", lastLogDate = "", excludeDropped = false } = options || {};
-	const storyAwards: StoryAward[] = [];
+	const storyAwards: Array<StoryAward> = [];
 	let lastLog = false;
 	character.logs
 		.sort((a, b) => sorter(a.date, b.date))
@@ -75,12 +75,12 @@ export const getStoryAwards = (
 };
 
 export function getLevels(
-	logs: Log[],
+	logs: Array<Log>,
 	base: { level?: number; experience?: number; acp?: number } = { level: 0, experience: 0, acp: 0 }
 ) {
 	if (!logs) logs = [];
 	let totalLevel = 1;
-	const log_levels: { id: string; levels: number }[] = [];
+	const log_levels: Array<{ id: string; levels: number }> = [];
 
 	const xpLevels = [
 		0, 300, 900, 2700, 6500, 14000, 23000, 34000, 48000, 64000, 85000, 100000, 120000, 140000, 165000, 195000, 225000, 265000,
@@ -153,13 +153,15 @@ export function getLevels(
 }
 
 export const getLogsSummary = (
-	logs: (Log & {
-		dm: DungeonMaster | null;
-		magic_items_gained: MagicItem[];
-		magic_items_lost: MagicItem[];
-		story_awards_gained: StoryAward[];
-		story_awards_lost: StoryAward[];
-	})[]
+	logs: Array<
+		Log & {
+			dm: DungeonMaster | null;
+			magic_items_gained: Array<MagicItem>;
+			magic_items_lost: Array<MagicItem>;
+			story_awards_gained: Array<StoryAward>;
+			story_awards_lost: Array<StoryAward>;
+		}
+	>
 ) => {
 	logs = logs.sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime());
 
@@ -175,7 +177,7 @@ export const getLogsSummary = (
 			})
 		);
 		return acc;
-	}, [] as MagicItem[]);
+	}, [] as Array<MagicItem>);
 	const story_awards = logs.reduce((acc, log) => {
 		acc.push(
 			...log.story_awards_gained.filter((storyAward) => {
@@ -183,7 +185,7 @@ export const getLogsSummary = (
 			})
 		);
 		return acc;
-	}, [] as StoryAward[]);
+	}, [] as Array<StoryAward>);
 
 	return {
 		total_level,

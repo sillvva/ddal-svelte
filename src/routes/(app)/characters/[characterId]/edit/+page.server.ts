@@ -1,11 +1,12 @@
 import { saveCharacter } from "$src/server/actions/characters";
+import { signInRedirect } from "$src/server/auth.js";
 import { error, redirect } from "@sveltejs/kit";
 
 export const load = async (event) => {
 	const parent = await event.parent();
 
 	const session = parent.session;
-	if (!session?.user) throw redirect(301, "/");
+	if (!session?.user) throw signInRedirect(event.url);
 
 	const character = {
 		name: "",

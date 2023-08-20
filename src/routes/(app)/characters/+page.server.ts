@@ -1,9 +1,8 @@
+import { signInRedirect } from "$src/server/auth.js";
 import { serverGetCookie } from "$src/server/cookie";
 import { getCharacterCache, getCharactersCache } from "$src/server/data/characters";
-import { redirect } from "@sveltejs/kit";
 
 import type { CharacterData } from "$src/server/data/characters";
-
 const defaultCookie = {
 	magicItems: false,
 	display: "list"
@@ -13,7 +12,7 @@ export const load = async (event) => {
 	const parent = await event.parent();
 
 	const session = parent.session;
-	if (!session?.user) throw redirect(301, "/");
+	if (!session?.user) throw signInRedirect(event.url);
 
 	const cookie = serverGetCookie(event.cookies, "characters", defaultCookie);
 

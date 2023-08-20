@@ -1,6 +1,6 @@
 <script lang="ts">
 	export let value: Date | null = null;
-	let date = value ? new Date(value).toISOString().substring(0, 16) : null;
+	let date = value ? new Date(value).toLocaleString("sv").substring(0, 16) : null;
 </script>
 
 <input

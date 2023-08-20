@@ -43,6 +43,7 @@
 		"@auth/sveltekit": "^0.3.6",
 		"@decs/typeschema": "0.9.1",
 		"@prisma/client": "^5.0.0",
+		"ioredis": "^5.3.2",
 		"minisearch": "^6.1.0",
 		"valibot": "^0.12.0"
 	},
