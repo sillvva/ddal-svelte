@@ -38,7 +38,15 @@ export async function saveCharacter(characterId: string, userId: string, data: N
 
 		return { id: result.id, character: result, error: null };
 	} catch (err) {
-		if (err && typeof err == "object" && "status" in err && "body" in err) throw err;
+		if (
+			err &&
+			typeof err == "object" &&
+			"status" in err &&
+			typeof err.status == "number" &&
+			"body" in err &&
+			typeof err.body == "string"
+		)
+			throw error(err.status, err.body);
 		if (err instanceof Error) return { id: null, dm: null, error: err.message };
 		return { id: null, dm: null, error: "An unknown error has occurred." };
 	}
@@ -89,7 +97,15 @@ export async function deleteCharacter(characterId: string, userId?: string) {
 
 		return { id: result.id, error: null };
 	} catch (err) {
-		if (err && typeof err == "object" && "status" in err && "body" in err) throw err;
+		if (
+			err &&
+			typeof err == "object" &&
+			"status" in err &&
+			typeof err.status == "number" &&
+			"body" in err &&
+			typeof err.body == "string"
+		)
+			throw error(err.status, err.body);
 		if (err instanceof Error) return { id: null, dm: null, error: err.message };
 		return { id: null, dm: null, error: "An unknown error has occurred." };
 	}
