@@ -1,5 +1,5 @@
 import type { NewCharacterSchema } from "$src/lib/types/schemas";
-import { error, HttpError } from "@sveltejs/kit";
+import { error } from "@sveltejs/kit";
 import { revalidateTags } from "../cache";
 import { getCharacterCache } from "../data/characters";
 import { prisma } from "../db";
@@ -38,7 +38,7 @@ export async function saveCharacter(characterId: string, userId: string, data: N
 
 		return { id: result.id, character: result, error: null };
 	} catch (err) {
-		if (err instanceof HttpError) throw err;
+		if (err && typeof err == "object" && "status" in err && "body" in err) throw err;
 		if (err instanceof Error) return { id: null, dm: null, error: err.message };
 		return { id: null, dm: null, error: "An unknown error has occurred." };
 	}
@@ -89,7 +89,7 @@ export async function deleteCharacter(characterId: string, userId?: string) {
 
 		return { id: result.id, error: null };
 	} catch (err) {
-		if (err instanceof HttpError) throw err;
+		if (err && typeof err == "object" && "status" in err && "body" in err) throw err;
 		if (err instanceof Error) return { id: null, dm: null, error: err.message };
 		return { id: null, dm: null, error: "An unknown error has occurred." };
 	}

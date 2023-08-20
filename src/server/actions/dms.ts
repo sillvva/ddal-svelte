@@ -1,5 +1,5 @@
 import { prisma } from "$src/server/db";
-import { error, HttpError } from "@sveltejs/kit";
+import { error } from "@sveltejs/kit";
 import { revalidateTags } from "../cache";
 import { getUserDMsWithLogsCache } from "../data/dms";
 
@@ -23,7 +23,7 @@ export async function saveDM(dmId: string, userId: string, data: DungeonMasterSc
 
 		return { id: result.id, dm: result, error: null };
 	} catch (err) {
-		if (err instanceof HttpError) throw err;
+		if (err && typeof err == "object" && "status" in err && "body" in err) throw err;
 		if (err instanceof Error) return { id: null, dm: null, error: err.message };
 		return { id: null, dm: null, error: "An unknown error has occurred." };
 	}
@@ -43,7 +43,7 @@ export async function deleteDM(dmId: string, userId?: string) {
 		revalidateTags(["dms", userId]);
 		return { id: result.id, error: null };
 	} catch (err) {
-		if (err instanceof HttpError) throw err;
+		if (err && typeof err == "object" && "status" in err && "body" in err) throw err;
 		if (err instanceof Error) return { id: null, dm: null, error: err.message };
 		return { id: null, dm: null, error: "An unknown error has occurred." };
 	}

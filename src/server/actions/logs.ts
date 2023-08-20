@@ -1,6 +1,6 @@
 import { getLevels } from "$lib/entities";
 import { parseError } from "$lib/utils";
-import { error, HttpError } from "@sveltejs/kit";
+import { error } from "@sveltejs/kit";
 import { revalidateTags } from "../cache";
 import { prisma } from "../db";
 
@@ -251,7 +251,7 @@ export async function saveLog(input: LogSchema, user?: User) {
 					error: "Could not save log"
 			  };
 	} catch (err) {
-		if (err instanceof HttpError) throw err;
+		if (err && typeof err == "object" && "status" in err && "body" in err) throw err;
 		if (err instanceof Error) return { id: null, dm: null, error: err.message };
 		return { id: null, dm: null, error: "An unknown error has occurred." };
 	}
@@ -310,7 +310,7 @@ export async function deleteLog(logId: string, userId?: string) {
 		if (result?.characterId) revalidateTags(["character", result.characterId, "logs"]);
 		return { id: result?.id || null, error: null };
 	} catch (err) {
-		if (err instanceof HttpError) throw err;
+		if (err && typeof err == "object" && "status" in err && "body" in err) throw err;
 		if (err instanceof Error) return { id: null, dm: null, error: err.message };
 		return { id: null, dm: null, error: "An unknown error has occurred." };
 	}
