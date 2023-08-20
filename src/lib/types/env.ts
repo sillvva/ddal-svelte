@@ -1,4 +1,4 @@
-import { equal, minLength, object, string, undefinedType, url, ValiError } from "valibot";
+import { equal, minLength, object, startsWith, string, undefinedType, url, ValiError } from "valibot";
 
 export const checkEnv = async () => {
 	try {
@@ -6,6 +6,7 @@ export const checkEnv = async () => {
 
 		const envSchema = object({
 			DATABASE_URL: string([url()]),
+			REDIS_URL: string([startsWith("redis://")]),
 			AUTH_SECRET: string([minLength(10, "Must be a string of at least 10 characters")]),
 			AUTH_URL: string([url()]),
 			AUTH_TRUST_HOST: env["AUTH_URL"]?.includes("localhost")

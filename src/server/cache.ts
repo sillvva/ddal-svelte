@@ -1,4 +1,7 @@
-const dataCache = new Map<string, { data: unknown; timestamp: number; revalidate: number }>();
+import { REDIS_URL } from "$env/static/private";
+import { Redis } from "ioredis";
+
+export const redis = new Redis(REDIS_URL);
 
 export async function cache<TReturnType>(
 	callback: () => Promise<TReturnType>,
@@ -7,28 +10,26 @@ export async function cache<TReturnType>(
 ) {
 	const key = tags.join("|");
 	const currentTime = Date.now();
-	const dCache = dataCache.get(key) as { data: TReturnType; timestamp: number; revalidate: number } | undefined;
+	const cache = JSON.parse((await redis.get(key)) || "null") as {
+		data: TReturnType;
+		timestamp: number;
+		revalidate: number;
+	} | null;
+	if (cache) {
+		if (currentTime - cache.timestamp < 12 * 3600 * 1000) {
+			cache.timestamp = currentTime;
+			redis.setex(key, revalidate, JSON.stringify(cache));
+		}
 
-	if (dCache && currentTime - dCache.timestamp < 12 * 3600 * 1000) {
-		dCache.timestamp = currentTime;
-		dataCache.set(key, dCache);
+		if (cache && cache.data) return cache.data;
 	}
 
-	if (dCache && dCache.data) return dCache.data;
-
 	const result = await callback();
-	dataCache.set(key, { data: result, timestamp: currentTime, revalidate });
+	redis.setex(key, revalidate, JSON.stringify({ data: result, timestamp: currentTime, revalidate }));
 	return result;
 }
 
 export function revalidateTags(tags: [string, ...string[]]) {
 	const key = tags.join("|");
-	dataCache.delete(key);
-}
-
-export function clearOldCaches() {
-	const currentTime = Date.now();
-	for (const [key, value] of dataCache.entries()) {
-		if (currentTime - value.timestamp > value.revalidate * 1000) dataCache.delete(key);
-	}
+	redis.del(key);
 }
