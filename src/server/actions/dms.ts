@@ -17,10 +17,10 @@ export async function saveDM(dmId: string, userId: string, data: DungeonMasterSc
 			}
 		});
 
-		revalidateTags(["dms", userId]);
-		for (const { characterId } of dm.logs) {
-			if (characterId) revalidateTags(["character", characterId, "logs"]);
-		}
+		revalidateTags([
+			["dms", userId],
+			...dm.logs.filter((l) => l.characterId).map((l) => ["character", l.characterId as string, "logs"])
+		]);
 
 		return { id: result.id, dm: result, error: null };
 	} catch (err) {
@@ -41,7 +41,7 @@ export async function deleteDM(dmId: string, userId?: string) {
 		const result = await prisma.dungeonMaster.delete({
 			where: { id: dmId }
 		});
-		revalidateTags(["dms", userId]);
+		revalidateTags([["dms", userId]]);
 		return { id: result.id, error: null };
 	} catch (err) {
 		handleSKitError(err);

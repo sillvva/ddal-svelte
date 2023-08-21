@@ -31,10 +31,12 @@ export async function saveCharacter(characterId: string, userId: string, data: N
 			});
 		}
 
-		revalidateTags(["character", result.id, "logs"]);
-		revalidateTags(["character", result.id, "no-logs"]);
-		if (characterId == "new") revalidateTags(["characters", userId]);
-		revalidateTags(["dms", userId]);
+		revalidateTags([
+			["character", result.id, "logs"],
+			["character", result.id, "no-logs"],
+			["dms", userId],
+			characterId == "new" && ["characters", userId]
+		]);
 
 		return { id: result.id, character: result, error: null };
 	} catch (err) {
@@ -82,10 +84,12 @@ export async function deleteCharacter(characterId: string, userId?: string) {
 			});
 		});
 
-		revalidateTags(["character", result.id, "logs"]);
-		revalidateTags(["character", result.id, "no-logs"]);
-		revalidateTags(["characters", userId]);
-		revalidateTags(["dms", userId]);
+		revalidateTags([
+			["character", result.id, "logs"],
+			["character", result.id, "no-logs"],
+			["characters", userId],
+			["dms", userId]
+		]);
 
 		return { id: result.id, error: null };
 	} catch (err) {

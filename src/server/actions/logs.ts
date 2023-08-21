@@ -237,8 +237,10 @@ export async function saveLog(input: LogSchema, user?: User) {
 			return updated;
 		});
 
-		if (log?.is_dm_log && log.dm?.uid) revalidateTags(["dm-logs", log.dm.uid]);
-		if (log?.characterId) revalidateTags(["character", log.characterId, "logs"]);
+		revalidateTags([
+			log?.is_dm_log && log.dm?.uid && ["dm-logs", log.dm.uid],
+			log?.characterId && ["character", log.characterId, "logs"]
+		]);
 
 		return log
 			? {
@@ -262,7 +264,7 @@ export type DeleteLogResult = ReturnType<typeof deleteLog>;
 export async function deleteLog(logId: string, userId?: string) {
 	try {
 		if (!userId) throw error(401, "Not authenticated");
-		const result = await prisma.$transaction(async (tx) => {
+		const log = await prisma.$transaction(async (tx) => {
 			const log = await tx.log.findUnique({
 				where: {
 					id: logId
@@ -307,9 +309,13 @@ export async function deleteLog(logId: string, userId?: string) {
 				});
 			return log;
 		});
-		if (result?.is_dm_log && result.dm?.uid) revalidateTags(["dm-logs", result.dm.uid]);
-		if (result?.characterId) revalidateTags(["character", result.characterId, "logs"]);
-		return { id: result?.id || null, error: null };
+
+		revalidateTags([
+			log?.is_dm_log && log.dm?.uid && ["dm-logs", log.dm.uid],
+			log?.characterId && ["character", log.characterId, "logs"]
+		]);
+
+		return { id: log?.id || null, error: null };
 	} catch (err) {
 		handleSKitError(err);
 		if (err instanceof Error) return { id: null, dm: null, error: err.message };

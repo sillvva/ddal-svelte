@@ -10,11 +10,8 @@ export async function cache<TReturnType>(
 ) {
 	const key = tags.join("|");
 	const currentTime = Date.now();
-	const cache = JSON.parse((await redis.get(key)) || "null") as {
-		data: TReturnType;
-		timestamp: number;
-		revalidate: number;
-	} | null;
+	const cache = JSON.parse((await redis.get(key)) || "null") as { data: TReturnType; timestamp: number } | null;
+
 	if (cache) {
 		if (currentTime - cache.timestamp < 12 * 3600 * 1000) {
 			cache.timestamp = currentTime;
@@ -25,7 +22,7 @@ export async function cache<TReturnType>(
 	}
 
 	const result = await callback();
-	redis.setex(key, revalidate, JSON.stringify({ data: result, timestamp: currentTime, revalidate }));
+	redis.setex(key, revalidate, JSON.stringify({ data: result, timestamp: currentTime }));
 	return result;
 }
 
@@ -41,11 +38,7 @@ export async function mcache<TReturnType>(
 		const currentTime = Date.now();
 		const cacheString = caches[i];
 		if (cacheString) {
-			const cache: {
-				data: TReturnType;
-				timestamp: number;
-				revalidate: number;
-			} = JSON.parse(cacheString);
+			const cache: { data: TReturnType; timestamp: number } = JSON.parse(cacheString);
 
 			if (currentTime - cache.timestamp < 12 * 3600 * 1000) {
 				cache.timestamp = currentTime;
@@ -57,14 +50,13 @@ export async function mcache<TReturnType>(
 		}
 
 		const result = await callback(tags[i]);
-		redis.setex(keys[i], revalidate, JSON.stringify({ data: result, timestamp: currentTime, revalidate }));
+		redis.setex(keys[i], revalidate, JSON.stringify({ data: result, timestamp: currentTime }));
 		results[i] = result;
 	}
 
 	return results;
 }
 
-export function revalidateTags(tags: [string, ...string[]]) {
-	const key = tags.join("|");
-	redis.del(key);
+export function revalidateTags(tags: Array<[string, ...string[]] | string[] | "" | false | null | undefined>) {
+	redis.del(...tags.filter((t) => Array.isArray(t) && t.length).map((t) => (t as Array<string>).join("|")));
 }
