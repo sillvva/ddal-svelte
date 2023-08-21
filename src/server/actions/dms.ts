@@ -4,7 +4,9 @@ import { error } from "@sveltejs/kit";
 import { revalidateTags } from "../cache";
 import { getUserDMsWithLogsCache } from "../data/dms";
 
+import type { CacheKey } from "../cache";
 import type { DungeonMasterSchema } from "$src/lib/types/schemas";
+
 export type SaveDMResult = ReturnType<typeof saveDM>;
 export async function saveDM(dmId: string, userId: string, data: DungeonMasterSchema) {
 	try {
@@ -19,7 +21,7 @@ export async function saveDM(dmId: string, userId: string, data: DungeonMasterSc
 
 		revalidateTags([
 			["dms", userId],
-			...dm.logs.filter((l) => l.characterId).map((l) => ["character", l.characterId as string, "logs"])
+			...dm.logs.filter((l) => l.characterId).map((l) => ["character", l.characterId as string, "logs"] as CacheKey)
 		]);
 
 		return { id: result.id, dm: result, error: null };
