@@ -29,6 +29,41 @@ export async function cache<TReturnType>(
 	return result;
 }
 
+export async function mcache<TReturnType>(
+	callback: (tags: [string, ...string[]]) => Promise<TReturnType>,
+	tags: [string, ...string[]][],
+	revalidate = 3 * 86400
+) {
+	const keys = tags.map((t) => t.join("|"));
+	const caches = await redis.mget(keys);
+	const results: TReturnType[] = [];
+	for (let i = 0; i < caches.length; i++) {
+		const currentTime = Date.now();
+		const cacheString = caches[i];
+		if (cacheString) {
+			const cache: {
+				data: TReturnType;
+				timestamp: number;
+				revalidate: number;
+			} = JSON.parse(cacheString);
+
+			if (currentTime - cache.timestamp < 12 * 3600 * 1000) {
+				cache.timestamp = currentTime;
+				redis.setex(keys[i], revalidate, cacheString);
+			}
+
+			if (cache.data) results[i] = cache.data;
+			continue;
+		}
+
+		const result = await callback(tags[i]);
+		redis.setex(keys[i], revalidate, JSON.stringify({ data: result, timestamp: currentTime, revalidate }));
+		results[i] = result;
+	}
+
+	return results;
+}
+
 export function revalidateTags(tags: [string, ...string[]]) {
 	const key = tags.join("|");
 	redis.del(key);
