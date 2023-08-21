@@ -16,7 +16,7 @@ export async function cache<TReturnType>(callback: () => Promise<TReturnType>, k
 			redis.setex(rkey, revalidate, JSON.stringify(cache));
 		}
 
-		if (cache && cache.data) return cache.data;
+		return cache.data;
 	}
 
 	const result = await callback();
@@ -44,7 +44,7 @@ export async function mcache<TReturnType>(
 				redis.setex(keys[i], revalidate, cacheString);
 			}
 
-			if (cache.data) results[i] = cache.data;
+			results[i] = cache.data;
 			continue;
 		}
 

@@ -64,5 +64,5 @@ export async function getDMLogs(userId = "", userName = "") {
 }
 
 export async function getDMLogsCache(userId = "", userName = "") {
-	return await cache(() => getDMLogs(userId, userName), ["dm-logs", userId]);
+	return await cache(() => getDMLogs(userId, userName), ["dm-logs", userId], 86400);
 }

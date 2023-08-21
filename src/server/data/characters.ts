@@ -2,6 +2,8 @@ import { getLogsSummary } from "$lib/entities";
 import { prisma } from "$src/server/db";
 import { cache, mcache } from "../cache";
 
+import type { CacheKey } from "../cache";
+
 export type CharacterData = Exclude<Awaited<ReturnType<typeof getCharacter>>, null>;
 export async function getCharacter(characterId: string, includeLogs = true) {
 	const character = await prisma.character.findFirst({
@@ -40,7 +42,7 @@ export async function getCharacterCache(characterId: string, includeLogs = true)
 }
 
 export async function getCharacterCaches(characterIds: Array<string>, includeLogs = true) {
-	const keys: [string, ...string[]][] = characterIds.map((id) => ["character", id, includeLogs ? "logs" : "no-logs"]);
+	const keys: Array<CacheKey> = characterIds.map((id) => ["character", id, includeLogs ? "logs" : "no-logs"]);
 	return await mcache((tags) => getCharacter(tags[1], tags[2] == "logs"), keys);
 }
 
