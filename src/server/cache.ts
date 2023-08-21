@@ -56,6 +56,7 @@ export async function mcache<TReturnType>(
 	return results;
 }
 
-export function revalidateTags(key: Array<CacheKey | "" | false | null | undefined>) {
-	redis.del(...key.filter((t) => Array.isArray(t) && t.length).map((t) => (t as Array<string>).join("|")));
+export function revalidateTags(keys: Array<CacheKey | "" | false | null | undefined>) {
+	const cacheKeys = keys.filter((t) => Array.isArray(t) && t.length).map((t) => (t as Array<string>).join("|"));
+	if (cacheKeys.length) redis.del(...cacheKeys);
 }
