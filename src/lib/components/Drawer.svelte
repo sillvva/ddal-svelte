@@ -35,7 +35,7 @@
 				href="/characters"
 				on:keydown={() => toggleDrawer(false)}
 				on:click={() => toggleDrawer(false)}
-				class:bg-primary={$page.url.pathname.startsWith("/characters")}
+				class={twMerge($page.url.pathname.startsWith("/characters") && "bg-primary text-white")}
 			>
 				Character Logs
 			</a>
@@ -45,7 +45,7 @@
 				href="/dm-logs"
 				on:keydown={() => toggleDrawer(false)}
 				on:click={() => toggleDrawer(false)}
-				class:bg-primary={$page.url.pathname.startsWith("/dm-logs")}
+				class={twMerge($page.url.pathname.startsWith("/dm-logs") && "bg-primary text-white")}
 			>
 				DM Logs
 			</a>
@@ -55,7 +55,7 @@
 				href="/dms"
 				on:keydown={() => toggleDrawer(false)}
 				on:click={() => toggleDrawer(false)}
-				class:bg-primary={$page.url.pathname.startsWith("/dms")}
+				class={twMerge($page.url.pathname.startsWith("/dms") && "bg-primary text-white")}
 			>
 				DMs
 			</a>

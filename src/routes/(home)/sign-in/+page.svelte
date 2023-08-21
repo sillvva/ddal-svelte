@@ -1,4 +1,5 @@
 <script lang="ts">
+	import { goto } from "$app/navigation";
 	import { page } from "$app/stores";
 	import { signIn } from "@auth/sveltekit/client";
 	import { onMount } from "svelte";
@@ -6,9 +7,9 @@
 	onMount(() => {
 		const redirectTo = $page.url.searchParams.get("redirect") || "/characters";
 		if (!$page.data.session?.user) {
-			signIn("google", {
-				callbackUrl: `${$page.url.origin}${redirectTo}`
-			});
+			signIn("google", { callbackUrl: `${$page.url.origin}${redirectTo}` });
+		} else {
+			goto(redirectTo, { replaceState: true });
 		}
 	});
 </script>

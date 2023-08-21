@@ -1,3 +1,5 @@
+import { error } from "@sveltejs/kit";
+
 export type DatesToStrings<T> = {
 	[K in keyof T]: T[K] extends Date
 		? string
@@ -11,3 +13,15 @@ export type DatesToStrings<T> = {
 		? DatesToStrings<T[K]>
 		: T[K];
 };
+
+export function handleSKitError(err: unknown) {
+	if (
+		err &&
+		typeof err == "object" &&
+		"status" in err &&
+		typeof err.status == "number" &&
+		"body" in err &&
+		typeof err.body == "string"
+	)
+		throw error(err.status, err.body);
+}

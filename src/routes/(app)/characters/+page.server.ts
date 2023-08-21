@@ -1,6 +1,6 @@
 import { signInRedirect } from "$src/server/auth.js";
 import { serverGetCookie } from "$src/server/cookie";
-import { getCharacterCache, getCharactersCache } from "$src/server/data/characters";
+import { getCharacterCaches, getCharactersCache } from "$src/server/data/characters";
 
 import type { CharacterData } from "$src/server/data/characters";
 const defaultCookie = {
@@ -18,8 +18,8 @@ export const load = async (event) => {
 
 	const characters = await getCharactersCache(session.user.id).then(async (characters) => {
 		const charData: CharacterData[] = [];
-		for (const character of characters) {
-			const data = await getCharacterCache(character.id);
+		const caches = await getCharacterCaches(characters.map((c) => c.id));
+		for (const data of caches) {
 			if (data) charData.push(data);
 		}
 		return charData;

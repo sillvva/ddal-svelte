@@ -1,11 +1,11 @@
 import type { NewCharacterSchema } from "$src/lib/types/schemas";
+import { handleSKitError } from "$src/lib/types/util";
 import { error } from "@sveltejs/kit";
 import { revalidateTags } from "../cache";
 import { getCharacterCache } from "../data/characters";
 import { prisma } from "../db";
 
 import type { Character } from "@prisma/client";
-
 export type SaveCharacterResult = ReturnType<typeof saveCharacter>;
 export async function saveCharacter(characterId: string, userId: string, data: NewCharacterSchema) {
 	try {
@@ -31,22 +31,16 @@ export async function saveCharacter(characterId: string, userId: string, data: N
 			});
 		}
 
-		revalidateTags(["character", result.id, "logs"]);
-		revalidateTags(["character", result.id, "no-logs"]);
-		if (characterId == "new") revalidateTags(["characters", userId]);
-		revalidateTags(["dms", userId]);
+		revalidateTags([
+			["character", result.id, "logs"],
+			["character", result.id, "no-logs"],
+			["dms", userId],
+			characterId == "new" && ["characters", userId]
+		]);
 
 		return { id: result.id, character: result, error: null };
 	} catch (err) {
-		if (
-			err &&
-			typeof err == "object" &&
-			"status" in err &&
-			typeof err.status == "number" &&
-			"body" in err &&
-			typeof err.body == "string"
-		)
-			throw error(err.status, err.body);
+		handleSKitError(err);
 		if (err instanceof Error) return { id: null, dm: null, error: err.message };
 		return { id: null, dm: null, error: "An unknown error has occurred." };
 	}
@@ -90,22 +84,16 @@ export async function deleteCharacter(characterId: string, userId?: string) {
 			});
 		});
 
-		revalidateTags(["character", result.id, "logs"]);
-		revalidateTags(["character", result.id, "no-logs"]);
-		revalidateTags(["characters", userId]);
-		revalidateTags(["dms", userId]);
+		revalidateTags([
+			["character", result.id, "logs"],
+			["character", result.id, "no-logs"],
+			["characters", userId],
+			["dms", userId]
+		]);
 
 		return { id: result.id, error: null };
 	} catch (err) {
-		if (
-			err &&
-			typeof err == "object" &&
-			"status" in err &&
-			typeof err.status == "number" &&
-			"body" in err &&
-			typeof err.body == "string"
-		)
-			throw error(err.status, err.body);
+		handleSKitError(err);
 		if (err instanceof Error) return { id: null, dm: null, error: err.message };
 		return { id: null, dm: null, error: "An unknown error has occurred." };
 	}

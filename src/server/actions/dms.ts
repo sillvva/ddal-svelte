@@ -1,9 +1,12 @@
+import { handleSKitError } from "$src/lib/types/util";
 import { prisma } from "$src/server/db";
 import { error } from "@sveltejs/kit";
 import { revalidateTags } from "../cache";
 import { getUserDMsWithLogsCache } from "../data/dms";
 
+import type { CacheKey } from "../cache";
 import type { DungeonMasterSchema } from "$src/lib/types/schemas";
+
 export type SaveDMResult = ReturnType<typeof saveDM>;
 export async function saveDM(dmId: string, userId: string, data: DungeonMasterSchema) {
 	try {
@@ -16,22 +19,14 @@ export async function saveDM(dmId: string, userId: string, data: DungeonMasterSc
 			}
 		});
 
-		revalidateTags(["dms", userId]);
-		for (const { characterId } of dm.logs) {
-			if (characterId) revalidateTags(["character", characterId, "logs"]);
-		}
+		revalidateTags([
+			["dms", userId],
+			...dm.logs.filter((l) => l.characterId).map((l) => ["character", l.characterId as string, "logs"] as CacheKey)
+		]);
 
 		return { id: result.id, dm: result, error: null };
 	} catch (err) {
-		if (
-			err &&
-			typeof err == "object" &&
-			"status" in err &&
-			typeof err.status == "number" &&
-			"body" in err &&
-			typeof err.body == "string"
-		)
-			throw error(err.status, err.body);
+		handleSKitError(err);
 		if (err instanceof Error) return { id: null, dm: null, error: err.message };
 		return { id: null, dm: null, error: "An unknown error has occurred." };
 	}
@@ -48,18 +43,10 @@ export async function deleteDM(dmId: string, userId?: string) {
 		const result = await prisma.dungeonMaster.delete({
 			where: { id: dmId }
 		});
-		revalidateTags(["dms", userId]);
+		revalidateTags([["dms", userId]]);
 		return { id: result.id, error: null };
 	} catch (err) {
-		if (
-			err &&
-			typeof err == "object" &&
-			"status" in err &&
-			typeof err.status == "number" &&
-			"body" in err &&
-			typeof err.body == "string"
-		)
-			throw error(err.status, err.body);
+		handleSKitError(err);
 		if (err instanceof Error) return { id: null, dm: null, error: err.message };
 		return { id: null, dm: null, error: "An unknown error has occurred." };
 	}

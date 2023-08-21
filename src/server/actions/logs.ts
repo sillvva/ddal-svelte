@@ -1,5 +1,6 @@
 import { getLevels } from "$lib/entities";
 import { parseError } from "$lib/utils";
+import { handleSKitError } from "$src/lib/types/util";
 import { error } from "@sveltejs/kit";
 import { revalidateTags } from "../cache";
 import { prisma } from "../db";
@@ -236,8 +237,10 @@ export async function saveLog(input: LogSchema, user?: User) {
 			return updated;
 		});
 
-		if (log?.is_dm_log && log.dm?.uid) revalidateTags(["dm-logs", log.dm.uid]);
-		if (log?.characterId) revalidateTags(["character", log.characterId, "logs"]);
+		revalidateTags([
+			log?.is_dm_log && log.dm?.uid && ["dm-logs", log.dm.uid],
+			log?.characterId && ["character", log.characterId, "logs"]
+		]);
 
 		return log
 			? {
@@ -251,15 +254,7 @@ export async function saveLog(input: LogSchema, user?: User) {
 					error: "Could not save log"
 			  };
 	} catch (err) {
-		if (
-			err &&
-			typeof err == "object" &&
-			"status" in err &&
-			typeof err.status == "number" &&
-			"body" in err &&
-			typeof err.body == "string"
-		)
-			throw error(err.status, err.body);
+		handleSKitError(err);
 		if (err instanceof Error) return { id: null, dm: null, error: err.message };
 		return { id: null, dm: null, error: "An unknown error has occurred." };
 	}
@@ -269,7 +264,7 @@ export type DeleteLogResult = ReturnType<typeof deleteLog>;
 export async function deleteLog(logId: string, userId?: string) {
 	try {
 		if (!userId) throw error(401, "Not authenticated");
-		const result = await prisma.$transaction(async (tx) => {
+		const log = await prisma.$transaction(async (tx) => {
 			const log = await tx.log.findUnique({
 				where: {
 					id: logId
@@ -314,19 +309,15 @@ export async function deleteLog(logId: string, userId?: string) {
 				});
 			return log;
 		});
-		if (result?.is_dm_log && result.dm?.uid) revalidateTags(["dm-logs", result.dm.uid]);
-		if (result?.characterId) revalidateTags(["character", result.characterId, "logs"]);
-		return { id: result?.id || null, error: null };
+
+		revalidateTags([
+			log?.is_dm_log && log.dm?.uid && ["dm-logs", log.dm.uid],
+			log?.characterId && ["character", log.characterId, "logs"]
+		]);
+
+		return { id: log?.id || null, error: null };
 	} catch (err) {
-		if (
-			err &&
-			typeof err == "object" &&
-			"status" in err &&
-			typeof err.status == "number" &&
-			"body" in err &&
-			typeof err.body == "string"
-		)
-			throw error(err.status, err.body);
+		handleSKitError(err);
 		if (err instanceof Error) return { id: null, dm: null, error: err.message };
 		return { id: null, dm: null, error: "An unknown error has occurred." };
 	}
