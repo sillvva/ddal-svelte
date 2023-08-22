@@ -1,3 +1,4 @@
+import { defaultLog } from "$src/lib/entities.js";
 import { logSchema } from "$src/lib/types/schemas";
 import { saveLog } from "$src/server/actions/logs";
 import { signInRedirect } from "$src/server/auth.js";
@@ -15,8 +16,13 @@ export const load = async (event) => {
 	const session = parent.session;
 	if (!session?.user) throw signInRedirect(event.url);
 
-	const log = await getLog(event.params.logId, character.id);
-	if (event.params.logId !== "new" && !log.id) throw error(404, "Log not found");
+	const log =
+		event.params.logId !== "new"
+			? await getLog(event.params.logId, character.id).then((log) => {
+					if (!log.id) throw error(404, "Log not found");
+					return log;
+			  })
+			: defaultLog(character.id);
 
 	const dms = await getUserDMs(session.user.id);
 

@@ -32,10 +32,13 @@
 		description: mi.description || ""
 	}));
 
+	$: characterId = log.characterId || character?.id || "";
+	$: characterName = data.characters.find((c) => c.id === characterId)?.name || character?.name || "";
+
 	$: values = {
 		...log,
-		characterId: character?.id || "",
-		characterName: character?.name || "",
+		characterId: characterId,
+		characterName: characterName,
 		description: log.description || "",
 		magic_items_gained: magicItemsGained,
 		magic_items_lost: [],

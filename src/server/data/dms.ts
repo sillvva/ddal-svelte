@@ -58,5 +58,5 @@ export async function getUserDMsWithLogs(userId: string) {
 }
 
 export async function getUserDMsWithLogsCache(userId: string) {
-	return cache(() => getUserDMsWithLogs(userId), ["dms", userId]);
+	return cache(() => getUserDMsWithLogs(userId), ["dms", userId], 3 * 3600);
 }

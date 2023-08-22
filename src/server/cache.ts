@@ -11,12 +11,12 @@ export async function cache<TReturnType>(callback: () => Promise<TReturnType>, k
 	const cache = JSON.parse((await redis.get(rkey)) || "null") as { data: TReturnType; timestamp: number } | null;
 
 	if (cache) {
-		if (currentTime - cache.timestamp < 12 * 3600 * 1000) {
+		if (revalidate * 1000 - currentTime + cache.timestamp < 8 * 3600 * 1000) {
 			cache.timestamp = currentTime;
 			redis.setex(rkey, revalidate, JSON.stringify(cache));
 		}
 
-		if (cache && cache.data) return cache.data;
+		return cache.data;
 	}
 
 	const result = await callback();
@@ -39,12 +39,12 @@ export async function mcache<TReturnType>(
 		if (cacheString) {
 			const cache: { data: TReturnType; timestamp: number } = JSON.parse(cacheString);
 
-			if (currentTime - cache.timestamp < 12 * 3600 * 1000) {
+			if (revalidate * 1000 - currentTime + cache.timestamp < 8 * 3600 * 1000) {
 				cache.timestamp = currentTime;
 				redis.setex(keys[i], revalidate, cacheString);
 			}
 
-			if (cache.data) results[i] = cache.data;
+			results[i] = cache.data;
 			continue;
 		}
 
