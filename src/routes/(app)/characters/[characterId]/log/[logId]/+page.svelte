@@ -52,7 +52,7 @@
 
 	$: values = {
 		...log,
-		characterId: character?.id || "",
+		characterId: log.characterId || character?.id || "",
 		characterName: character?.name || "",
 		description: log.description || "",
 		magic_items_gained: magicItemsGained,
