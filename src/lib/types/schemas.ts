@@ -5,6 +5,7 @@ import {
 	coerce,
 	date,
 	literal,
+	maxLength,
 	merge,
 	minLength,
 	minValue,
@@ -65,14 +66,16 @@ export const logSchema = object({
 	story_awards_lost: array(string([minLength(1, "Invalid Story Award ID")]))
 });
 
+const optionalURL = withDefault(union([string([url("Invalid URL")]), string([maxLength(0)])]), "");
+
 export type NewCharacterSchema = Output<typeof newCharacterSchema>;
 export const newCharacterSchema = object({
 	name: string([minLength(1, "Character Name Required")]),
 	campaign: withDefault(string(), ""),
 	race: withDefault(string(), ""),
 	class: withDefault(string(), ""),
-	character_sheet_url: withDefault(string([url()]), ""),
-	image_url: withDefault(string([url()]), "")
+	character_sheet_url: optionalURL,
+	image_url: optionalURL
 });
 
 export type EditCharacterSchema = Output<typeof editCharacterSchema>;
