@@ -1,5 +1,5 @@
 <script lang="ts">
-	import { dev } from "$app/environment";
+	import { browser, dev } from "$app/environment";
 	import { afterNavigate } from "$app/navigation";
 	import { navigating, page } from "$app/stores";
 	import { pageLoader } from "$lib/store";
@@ -12,6 +12,11 @@
 	afterNavigate(() => {
 		pageLoader.set(false);
 	});
+
+	$: if (browser) {
+		const hasCookie = document.cookie.includes("session-token");
+		if (!$page.data.session?.user && hasCookie) location.reload();
+	}
 
 	let defaultTitle = "Adventurers League Log Sheet";
 	$: title = $page.data.title ? $page.data.title + " - " + defaultTitle : defaultTitle;

@@ -4,8 +4,8 @@ import { PrismaAdapter } from "@auth/prisma-adapter";
 import { SvelteKitAuth } from "@auth/sveltekit";
 import { prisma } from "./server/db";
 
-import type { SvelteKitAuthConfig } from "@auth/sveltekit";
 import type { Handle } from "@sveltejs/kit";
+import type { SvelteKitAuthConfig } from "@auth/sveltekit";
 import type { Provider } from "@auth/core/providers";
 import type { Profile, TokenSet } from "@auth/core/types";
 
@@ -30,12 +30,12 @@ export const authOptions = {
 			return true;
 		},
 		async session({ session, user }) {
-			const [google] = await prisma.account.findMany({
+			const account = await prisma.account.findFirst({
 				where: { userId: user.id, provider: "google" }
 			});
-			if (!google.expires_at || google.expires_at * 1000 < Date.now()) {
+			if (account && (!account.expires_at || account.expires_at * 1000 < Date.now())) {
 				try {
-					if (!google.refresh_token) throw new Error("No refresh token");
+					if (!account.refresh_token) throw new Error("No refresh token");
 
 					// https://accounts.google.com/.well-known/openid-configuration
 					// We need the `token_endpoint`.
@@ -45,7 +45,7 @@ export const authOptions = {
 							client_id: GOOGLE_CLIENT_ID,
 							client_secret: GOOGLE_CLIENT_SECRET,
 							grant_type: "refresh_token",
-							refresh_token: google.refresh_token
+							refresh_token: account.refresh_token
 						}),
 						method: "POST"
 					});
@@ -59,17 +59,17 @@ export const authOptions = {
 						data: {
 							access_token: tokens.access_token,
 							expires_at: Math.floor(Date.now() / 1000 + tokens.expires_in),
-							refresh_token: tokens.refresh_token ?? google.refresh_token
+							refresh_token: tokens.refresh_token ?? account.refresh_token
 						},
 						where: {
 							provider_providerAccountId: {
 								provider: "google",
-								providerAccountId: google.providerAccountId
+								providerAccountId: account.providerAccountId
 							}
 						}
 					});
 				} catch (error) {
-					console.error("Error refreshing access token", error);
+					console.error("Error refreshing access token:", error);
 					session.error = "RefreshAccessTokenError";
 				}
 			}
@@ -80,7 +80,6 @@ export const authOptions = {
 		}
 	},
 	secret: AUTH_SECRET,
-	// Configure one or more authentication providers
 	adapter: PrismaAdapter(prisma),
 	providers: [
 		Google({

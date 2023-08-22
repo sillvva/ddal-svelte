@@ -8,6 +8,16 @@ if (building) {
 }
 
 export const load = async (event) => {
+	// Refresh session token expiration
+	const cookies = event.cookies.getAll();
+	const cSession = cookies.find((c) => c.name.includes("session-token"));
+	if (cSession)
+		event.cookies.set(cSession.name, cSession.value, {
+			expires: new Date(Date.now() + 30 * 86400 * 1000),
+			httpOnly: true,
+			path: "/"
+		});
+
 	return {
 		session: await event.locals.getSession(),
 		breadcrumbs: [] as { name: string; href?: string }[],
