@@ -5,12 +5,14 @@
 	import { onMount } from "svelte";
 
 	onMount(() => {
-		const redirectTo = $page.url.searchParams.get("redirect") || "/characters";
-		if (!$page.data.session?.user) {
-			signIn("google", { callbackUrl: `${$page.url.origin}${redirectTo}` });
-		} else {
-			goto(redirectTo, { replaceState: true });
-		}
+		setTimeout(() => {
+			const redirectTo = $page.url.searchParams.get("redirect") || "/characters";
+			if (!$page.data.session?.user) {
+				signIn("google", { callbackUrl: `${$page.url.origin}${redirectTo}` });
+			} else {
+				goto(redirectTo, { replaceState: true });
+			}
+		}, 500);
 	});
 </script>
 
