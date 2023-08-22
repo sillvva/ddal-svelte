@@ -36,7 +36,7 @@
 					.reduce((acc, log) => {
 						acc.push(...log.magic_items_gained.filter((magicItem) => !magicItem.logLostId).map((magicItem) => magicItem.name));
 						return acc;
-					}, [] as Array<string>)
+					}, [] as string[])
 					.join(", ")
 		  }))
 		: [];

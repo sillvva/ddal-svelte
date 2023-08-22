@@ -22,11 +22,11 @@
 			.filter((i) => !!i);
 	}
 
-	function getRegexesFromTerms(terms: Array<string>) {
+	function getRegexesFromTerms(terms: string[]) {
 		return terms.map((term) => new RegExp(term, "gi"));
 	}
 
-	function getJoinedRegexFromTerms(terms: Array<string>) {
+	function getJoinedRegexFromTerms(terms: string[]) {
 		return terms.length ? new RegExp(terms.join("|"), "gi") : null;
 	}
 

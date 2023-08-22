@@ -15,7 +15,7 @@
 	const logs = data.logs;
 
 	let search = "";
-	let deletingLog: Array<string> = [];
+	let deletingLog: string[] = [];
 
 	const indexed = logs
 		? logs.map((log) => ({

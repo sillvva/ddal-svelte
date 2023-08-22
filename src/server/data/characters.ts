@@ -41,7 +41,7 @@ export async function getCharacterCache(characterId: string, includeLogs = true)
 	return await cache(() => getCharacter(characterId, includeLogs), ["character", characterId, includeLogs ? "logs" : "no-logs"]);
 }
 
-export async function getCharacterCaches(characterIds: Array<string>, includeLogs = true) {
+export async function getCharacterCaches(characterIds: string[], includeLogs = true) {
 	const keys: Array<CacheKey> = characterIds.map((id) => ["character", id, includeLogs ? "logs" : "no-logs"]);
 	return await mcache((tags) => getCharacter(tags[1], tags[2] == "logs"), keys);
 }

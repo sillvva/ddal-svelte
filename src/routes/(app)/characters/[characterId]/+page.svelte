@@ -17,7 +17,7 @@
 	const character = data.character;
 	const myCharacter = character.userId === data.session?.user?.id;
 
-	let deletingLog: Array<string> = [];
+	let deletingLog: string[] = [];
 
 	let search = "";
 	const logSearch = new MiniSearch({
