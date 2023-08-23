@@ -46,11 +46,10 @@
 
 	let changes = new SvelteSet<string>();
 	function addChanges(field: string) {
-		if (changes.has(field)) return;
-		changes = changes.add(field);
+		if (!changes.has(field)) changes = changes.add(field);
+		checkErrors(data);
 	}
 
-	$: checkErrors(data);
 	function addError(keysArray: Array<string | number | symbol>, value: string) {
 		errors = setNestedError(errors, keysArray, value);
 	}
