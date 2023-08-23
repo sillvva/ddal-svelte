@@ -20,7 +20,7 @@ export const load = async (event) => {
 
 	return {
 		session: await event.locals.getSession(),
-		breadcrumbs: [] as { name: string; href?: string }[],
+		breadcrumbs: [] as Array<{ name: string; href?: string }>,
 		mobile: !!event.request.headers
 			.get("user-agent")
 			?.match(

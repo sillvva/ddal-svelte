@@ -31,7 +31,7 @@ export async function mcache<TReturnType>(
 ) {
 	const keys = key.map((t) => t.join("|"));
 	const caches = await redis.mget(keys);
-	const results: TReturnType[] = [];
+	const results: Array<TReturnType> = [];
 
 	for (let i = 0; i < caches.length; i++) {
 		const currentTime = Date.now();
@@ -57,6 +57,6 @@ export async function mcache<TReturnType>(
 }
 
 export function revalidateTags(keys: Array<CacheKey | "" | false | null | undefined>) {
-	const cacheKeys = keys.filter((t) => Array.isArray(t) && t.length).map((t) => (t as Array<string>).join("|"));
+	const cacheKeys = keys.filter((t) => Array.isArray(t) && t.length).map((t) => (t as string[]).join("|"));
 	if (cacheKeys.length) redis.del(...cacheKeys);
 }

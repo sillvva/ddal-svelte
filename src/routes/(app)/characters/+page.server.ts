@@ -17,7 +17,7 @@ export const load = async (event) => {
 	const cookie = serverGetCookie(event.cookies, "characters", defaultCookie);
 
 	const characters = await getCharactersCache(session.user.id).then(async (characters) => {
-		const charData: CharacterData[] = [];
+		const charData: Array<CharacterData> = [];
 		const caches = await getCharacterCaches(characters.map((c) => c.id));
 		for (const data of caches) {
 			if (data) charData.push(data);

@@ -6,6 +6,7 @@ export function withDefault<TSchema extends BaseSchema | BaseSchemaAsync>(schema
 	return {
 		...schema,
 		parse(input: Input<TSchema>, info?: ValidateInfo) {
+			if (value === "") return schema.parse(!input ? value : input.trim());
 			return schema.parse(!input || (typeof value == "number" && isNaN(input)) ? value : input, info);
 		}
 	};
