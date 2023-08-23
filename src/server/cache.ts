@@ -35,13 +35,13 @@ export async function mcache<TReturnType>(
 
 	for (let i = 0; i < caches.length; i++) {
 		const currentTime = Date.now();
-		const cacheString = caches[i];
-		if (cacheString) {
-			const cache: { data: TReturnType; timestamp: number } = JSON.parse(cacheString);
+		const value = caches[i];
+		if (value) {
+			const cache: { data: TReturnType; timestamp: number } = JSON.parse(value);
 
 			if (revalidate * 1000 - currentTime + cache.timestamp < 8 * 3600 * 1000) {
 				cache.timestamp = currentTime;
-				redis.setex(keys[i], revalidate, cacheString);
+				redis.setex(keys[i], revalidate, JSON.stringify(cache));
 			}
 
 			results[i] = cache.data;
