@@ -9,7 +9,7 @@ import type { SvelteKitAuthConfig } from "@auth/sveltekit";
 import type { Provider } from "@auth/core/providers";
 import type { Profile, TokenSet } from "@auth/core/types";
 
-export const authOptions = {
+export const auth = SvelteKitAuth({
 	callbacks: {
 		async signIn({ account }) {
 			if (account?.refresh_token && account.expires_in) {
@@ -88,6 +88,6 @@ export const authOptions = {
 			authorization: { params: { access_type: "offline", prompt: "consent" } }
 		}) as Provider<Profile>
 	]
-} satisfies SvelteKitAuthConfig;
+} satisfies SvelteKitAuthConfig) satisfies Handle;
 
-export const handle = SvelteKitAuth(authOptions) satisfies Handle;
+export const handle = auth;

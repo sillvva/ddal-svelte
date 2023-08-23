@@ -1,3 +1,5 @@
+import { parseFormData } from "$src/lib/components/SchemaForm.svelte";
+import { dungeonMasterSchema } from "$src/lib/types/schemas.js";
 import { deleteDM, saveDM } from "$src/server/actions/dms";
 import { signInRedirect } from "$src/server/auth.js";
 import { getUserDMsWithLogsCache } from "$src/server/data/dms";
@@ -35,12 +37,8 @@ export const actions = {
 		if (!dm) throw redirect(301, "/dms");
 
 		const data = await event.request.formData();
-		const result = await saveDM(event.params.dmId, session.user.id, {
-			id: dm.id,
-			name: data.get("name") as string,
-			DCI: (data.get("DCI") as string) || null,
-			uid: dm.uid || ""
-		});
+		const parsedData = await parseFormData(data, dungeonMasterSchema);
+		const result = await saveDM(event.params.dmId, session.user.id, parsedData);
 
 		return result;
 	},

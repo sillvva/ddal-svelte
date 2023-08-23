@@ -1,11 +1,11 @@
-import { logSchema } from "$src/lib/types/schemas";
+import { parseFormData } from "$src/lib/components/SchemaForm.svelte";
+import { logSchema } from "$src/lib/types/schemas.js";
 import { saveLog } from "$src/server/actions/logs";
 import { signInRedirect } from "$src/server/auth.js";
 import { getCharacterCache, getCharactersCache } from "$src/server/data/characters";
 import { getDMLog, getLog } from "$src/server/data/logs";
 import { error, redirect } from "@sveltejs/kit";
 
-import type { DatesToStrings } from "$src/lib/types/util";
 export const load = async (event) => {
 	const parent = await event.parent();
 
@@ -43,9 +43,7 @@ export const actions = {
 
 		try {
 			const formData = await event.request.formData();
-			const parsedData = JSON.parse((formData.get("form") as string) || "{}") as DatesToStrings<typeof log>;
-			const logData = logSchema.parse(parsedData);
-
+			const logData = await parseFormData(formData, logSchema);
 			if (!logData.is_dm_log) throw new Error("Only DM logs can be saved here.");
 
 			if (logData.characterId && logData.applied_date) {
