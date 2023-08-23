@@ -61,7 +61,6 @@
 				<input
 					type="text"
 					name="campaign"
-					required
 					disabled={saving}
 					bind:value={character.campaign}
 					class="input-bordered input w-full focus:border-primary"

@@ -1,8 +1,8 @@
 import { getLogsSummary } from "$lib/entities";
+import { cache, mcache } from "$src/server/cache";
 import { prisma } from "$src/server/db";
-import { cache, mcache } from "../cache";
 
-import type { CacheKey } from "../cache";
+import type { CacheKey } from "$src/server/cache";
 
 export type CharacterData = Exclude<Awaited<ReturnType<typeof getCharacter>>, null>;
 export async function getCharacter(characterId: string, includeLogs = true) {

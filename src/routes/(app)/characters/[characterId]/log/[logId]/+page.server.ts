@@ -1,3 +1,4 @@
+import { parseFormData } from "$src/lib/components/SchemaForm.svelte";
 import { defaultLog } from "$src/lib/entities.js";
 import { logSchema } from "$src/lib/types/schemas";
 import { saveLog } from "$src/server/actions/logs";
@@ -7,7 +8,6 @@ import { getUserDMs } from "$src/server/data/dms";
 import { getLog } from "$src/server/data/logs";
 import { error, redirect } from "@sveltejs/kit";
 
-import type { DatesToStrings } from "$src/lib/types/util";
 export const load = async (event) => {
 	const parent = await event.parent();
 	const character = parent.character;
@@ -52,9 +52,7 @@ export const actions = {
 
 		try {
 			const formData = await event.request.formData();
-			const parsedData = JSON.parse((formData.get("form") as string) || "{}") as DatesToStrings<typeof log>;
-			const logData = logSchema.parse(parsedData);
-
+			const logData = await parseFormData(formData, logSchema);
 			const result = await saveLog(logData, session.user);
 			if (result && result.id) throw redirect(301, `/characters/${character.id}`);
 

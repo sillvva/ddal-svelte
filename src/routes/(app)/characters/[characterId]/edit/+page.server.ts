@@ -1,3 +1,5 @@
+import { parseFormData } from "$src/lib/components/SchemaForm.svelte";
+import { newCharacterSchema } from "$src/lib/types/schemas.js";
 import { saveCharacter } from "$src/server/actions/characters";
 import { signInRedirect } from "$src/server/auth.js";
 import { error, redirect } from "@sveltejs/kit";
@@ -42,16 +44,15 @@ export const actions = {
 		const session = await event.locals.getSession();
 		if (!session?.user) throw redirect(301, "/");
 		const characterId = event.params.characterId;
-		const data = await event.request.formData();
-		const result = await saveCharacter(characterId, session.user.id, {
-			name: data.get("name") as string,
-			campaign: data.get("campaign") as string,
-			race: data.get("race") as string,
-			class: data.get("class") as string,
-			character_sheet_url: data.get("character_sheet_url") as string,
-			image_url: data.get("image_url") as string
-		});
-		if (result && result.id) throw redirect(301, `/characters/${result.id}`);
-		return result;
+		try {
+			const data = await event.request.formData();
+			const parsedData = await parseFormData(data, newCharacterSchema);
+			const result = await saveCharacter(characterId, session.user.id, parsedData);
+			if (result && result.id) throw redirect(301, `/characters/${result.id}`);
+			return result;
+		} catch (error) {
+			if (error instanceof Error) return { id: characterId, error: error.message };
+			throw error;
+		}
 	}
 };

@@ -1,8 +1,23 @@
+<script lang="ts" context="module">
+	import type { Infer, InferIn, Schema } from "@decs/typeschema";
+	import { validate } from "@decs/typeschema";
+
+	const stringify = "validated";
+
+	export async function parseFormData<TSchema extends Schema>(formData: FormData, schema: TSchema): Promise<Infer<TSchema>> {
+		const data = (formData.get(stringify) as string) || "{}";
+		const result = await validate(schema, JSON.parse(data));
+		if ("issues" in result && result.issues.length) {
+			throw new Error(result.issues.map((i) => i.message).join("\n"));
+		}
+		if (!("data" in result)) throw new Error("No data returned");
+		return result.data;
+	}
+</script>
+
 <script lang="ts" generics="TSchema extends Schema">
 	import { enhance } from "$app/forms";
 	import { beforeNavigate } from "$app/navigation";
-	import type { Infer, InferIn, Schema } from "@decs/typeschema";
-	import { validate } from "@decs/typeschema";
 	import type { ActionResult } from "@sveltejs/kit";
 	import { createEventDispatcher } from "svelte";
 	import { SvelteSet } from "../store";
@@ -19,7 +34,7 @@
 	}>();
 
 	let elForm: HTMLFormElement;
-	let stringify = "form";
+	let validatedData: Infer<Schema>;
 
 	export let schema: TSchema;
 	export let data: InferIn<TSchema>;
@@ -47,6 +62,7 @@
 		};
 		const result = await validate(schema, data);
 		if ("data" in result) {
+			validatedData = result.data;
 			dispatch("validate", { data: result.data, changes, errors, addError });
 		} else if ("issues" in result) {
 			result.issues.forEach((issue) => {
@@ -79,8 +95,8 @@
 		}
 	});
 
-	function hasValues(obj: Record<string, unknown>): boolean {
-		return Object.values(obj).some((v) => (typeof v == "object" ? hasValues(v as Record<string, unknown>) : v));
+	function hasValues(obj: object): boolean {
+		return Object.values(obj).some((v) => (v && typeof v == "object" ? hasValues(v) : v));
 	}
 
 	type DeepStringify<T> = {
@@ -133,19 +149,23 @@
 	{action}
 	{...$$restProps}
 	bind:this={elForm}
-	use:enhance={(f) => {
+	novalidate
+	use:enhance={async (f) => {
 		dispatch("before-submit");
 		const savedChanges = new SvelteSet([...changes]);
 		changes = changes.clear();
 		saving = true;
 
-		checkErrors(data, false);
+		await checkErrors(data, false);
 		if (hasValues(errors)) {
 			saving = false;
 			return f.cancel();
 		}
 
-		if (stringify && data && typeof data === "object" && !(stringify in data)) f.formData.append(stringify, JSON.stringify(data));
+		if (validatedData && typeof validatedData === "object" && !(stringify in validatedData)) {
+			f.formData.append(stringify, JSON.stringify(validatedData));
+		}
+
 		return async ({ update, result }) => {
 			await update({ reset: resetOnSave });
 			dispatch("after-submit", result);
