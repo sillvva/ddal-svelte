@@ -61,8 +61,7 @@
 		};
 		const result = await validate(schema, data);
 		if ("data" in result) {
-			validatedData = result.data;
-			dispatch("validate", { data: result.data, changes, errors, addError });
+			dispatch("validate", { data: (validatedData = result.data), changes, errors, addError });
 		} else if ("issues" in result) {
 			result.issues.forEach((issue) => {
 				if (!issue.path) issue.path = ["form"];
