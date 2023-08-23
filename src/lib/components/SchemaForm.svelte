@@ -46,7 +46,7 @@
 
 	let changes = new SvelteSet<string>();
 	function addChanges(field: string) {
-		if (!changes.has(field)) changes = changes.add(field);
+		changes = changes.add(field);
 		checkErrors(data);
 	}
 
