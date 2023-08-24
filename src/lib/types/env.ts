@@ -1,4 +1,4 @@
-import { equal, minLength, object, startsWith, string, undefinedType, url, ValiError } from "valibot";
+import { equal, minLength, object, parse, startsWith, string, undefinedType, url, ValiError } from "valibot";
 
 export const checkEnv = async () => {
 	try {
@@ -17,7 +17,7 @@ export const checkEnv = async () => {
 			CRON_CHARACTER_ID: string([minLength(1, "Required")])
 		});
 
-		return envSchema.parse({
+		return parse(envSchema, {
 			...env,
 			AUTH_TRUST_HOST: env["AUTH_URL"]?.includes("localhost") ? env["AUTH_TRUST_HOST"] : undefined
 		});

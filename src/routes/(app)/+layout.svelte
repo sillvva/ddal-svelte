@@ -21,7 +21,7 @@
 			<Drawer />
 			<a
 				href={data.session?.user ? "/characters" : "/"}
-				class={twMerge("mr-8 flex flex-col text-center font-draconis", data.mobile && "flex-1 mr-2")}
+				class={twMerge("mr-8 flex flex-col text-center font-draconis", data.mobile && "flex-1 sm:flex-none mr-2 md:mr-8")}
 			>
 				<h1 class="text-base leading-4 text-accent-content">Adventurers League</h1>
 				<h2 class="text-3xl leading-7">Log Sheet</h2>
@@ -31,9 +31,7 @@
 				<a href="/dm-logs" class="hidden items-center p-2 md:flex">DM Logs</a>
 				<a href="/dms" class="hidden items-center p-2 md:flex">DMs</a>
 			{/if}
-			{#if !data.mobile}
-				<div class="flex-1">&nbsp;</div>
-			{/if}
+			<div class={twMerge("flex-1", data.mobile && "hidden sm:block")}>&nbsp;</div>
 			<a
 				href="https://github.com/sillvva/ddal-svelte"
 				target="_blank"

@@ -14,11 +14,10 @@ import {
 	regex,
 	string,
 	union,
-	url,
-	ValiError
+	url
 } from "valibot";
 
-import type { BaseSchema, Input, Output, ValidateInfo } from "valibot";
+import type { BaseSchema, Input, Output } from "valibot";
 
 export const dateSchema = coerce(date(), (input) => new Date(input as string | number | Date));
 
@@ -125,7 +124,7 @@ export function iso<TInput extends string>(
 	},
 	error?: string
 ) {
-	return (input: TInput, info: ValidateInfo) => {
+	return (input: TInput) => {
 		// override default date and time options to true if options is undefined
 		const {
 			date = false,
@@ -142,15 +141,13 @@ export function iso<TInput extends string>(
 		const regex = new RegExp(`^${date ? dateRegex : ""}${date && time ? "T" : time ? "T?" : ""}${time ? timeRegex : ""}$`);
 
 		if (!regex.test(input)) {
-			throw new ValiError([
-				{
+			return {
+				issue: {
 					validation: "iso",
-					origin: "value",
 					message: error || "Invalid iso string",
-					input,
-					...info
+					input
 				}
-			]);
+			};
 		}
 		return input;
 	};

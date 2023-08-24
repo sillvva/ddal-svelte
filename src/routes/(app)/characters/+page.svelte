@@ -107,7 +107,7 @@
 					type="text"
 					placeholder="Search by name, race, class, items, etc."
 					bind:value={search}
-					class="input-bordered input flex-1 sm:input-sm"
+					class="input-bordered input flex-1 sm:input-sm min-w-0"
 				/>
 				<a href="/characters/new/edit" class="btn-primary btn inline-flex sm:hidden" aria-label="New Character">
 					<Icon src="plus" class="inline w-6" />
