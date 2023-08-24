@@ -2,12 +2,12 @@ import { getLevels } from "$lib/entities";
 import { parseError } from "$lib/utils";
 import { handleSKitError } from "$src/lib/types/util";
 import { error } from "@sveltejs/kit";
-import { revalidateTags } from "../cache";
+import { revalidateKeys } from "../cache";
 import { prisma } from "../db";
 
 import type { LogSchema } from "$src/lib/types/schemas";
-import type { DungeonMaster, Log } from "@prisma/client";
 import type { User } from "@auth/core/types";
+import type { DungeonMaster, Log } from "@prisma/client";
 export type SaveLogResult = ReturnType<typeof saveLog>;
 export async function saveLog(input: LogSchema, user?: User) {
 	try {
@@ -237,7 +237,7 @@ export async function saveLog(input: LogSchema, user?: User) {
 			return updated;
 		});
 
-		revalidateTags([
+		revalidateKeys([
 			log?.is_dm_log && log.dm?.uid && ["dm-logs", log.dm.uid],
 			log?.characterId && ["character", log.characterId, "logs"]
 		]);
@@ -310,7 +310,7 @@ export async function deleteLog(logId: string, userId?: string) {
 			return log;
 		});
 
-		revalidateTags([
+		revalidateKeys([
 			log?.is_dm_log && log.dm?.uid && ["dm-logs", log.dm.uid],
 			log?.characterId && ["character", log.characterId, "logs"]
 		]);

@@ -1,7 +1,7 @@
 import { handleSKitError } from "$src/lib/types/util";
 import { prisma } from "$src/server/db";
 import { error } from "@sveltejs/kit";
-import { revalidateTags, type CacheKey } from "../cache";
+import { revalidateKeys, type CacheKey } from "../cache";
 import { getUserDMsWithLogsCache } from "../data/dms";
 
 import type { DungeonMasterSchema } from "$src/lib/types/schemas";
@@ -18,7 +18,7 @@ export async function saveDM(dmId: string, userId: string, data: DungeonMasterSc
 			}
 		});
 
-		revalidateTags([
+		revalidateKeys([
 			["dms", userId],
 			...dm.logs.filter((l) => l.characterId).map((l) => ["character", l.characterId as string, "logs"] as CacheKey)
 		]);
@@ -42,7 +42,7 @@ export async function deleteDM(dmId: string, userId?: string) {
 		const result = await prisma.dungeonMaster.delete({
 			where: { id: dmId }
 		});
-		revalidateTags([["dms", userId]]);
+		revalidateKeys([["dms", userId]]);
 		return { id: result.id, error: null };
 	} catch (err) {
 		handleSKitError(err);

@@ -5,6 +5,14 @@ const redis = new Redis(REDIS_URL);
 
 export type CacheKey = [string, ...string[]];
 
+/**
+ * Caches the result of a callback function using Redis.
+ * @template TReturnType The return type of the callback function.
+ * @param {() => Promise<TReturnType>} callback The callback function to cache.
+ * @param {CacheKey} key The cache key as an array of strings.
+ * @param {number} [revalidate=259200] The cache revalidation time in seconds. Defaults to 3 days.
+ * @returns {Promise<TReturnType>} The cached result of the callback function.
+ */
 export async function cache<TReturnType>(callback: () => Promise<TReturnType>, key: CacheKey, revalidate = 3 * 86400) {
 	const rkey = key.join("|");
 	const currentTime = Date.now();
@@ -24,6 +32,14 @@ export async function cache<TReturnType>(callback: () => Promise<TReturnType>, k
 	return result;
 }
 
+/**
+ * Caches the results of a callback function for multiple keys using Redis.
+ * @template TReturnType The return type of the callback function.
+ * @param {(key: CacheKey) => Promise<TReturnType>} callback The callback function to cache.
+ * @param {Array<CacheKey>} key The cache keys as an array of arrays of strings.
+ * @param {number} [revalidate=259200] The cache revalidation time in seconds. Defaults to 3 days.
+ * @returns {Promise<Array<TReturnType>>} An array of cached results of the callback function for each key.
+ */
 export async function mcache<TReturnType>(
 	callback: (key: CacheKey) => Promise<TReturnType>,
 	key: Array<CacheKey>,
@@ -56,7 +72,12 @@ export async function mcache<TReturnType>(
 	return results;
 }
 
-export function revalidateTags(keys: Array<CacheKey | "" | false | null | undefined>) {
+/**
+ * Invalidates Redis cache based on an array of cache keys.
+ * @param {Array<CacheKey | "" | false | null | undefined>} keys The cache keys as an array of arrays of strings. Empty strings, false, null, and undefined are ignored.
+ * @returns {void}
+ */
+export function revalidateKeys(keys: Array<CacheKey | "" | false | null | undefined>) {
 	const cacheKeys = keys.filter((t) => Array.isArray(t) && t.length).map((t) => (t as string[]).join("|"));
 	if (cacheKeys.length) redis.del(...cacheKeys);
 }
