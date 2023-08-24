@@ -20,7 +20,6 @@
 	import { beforeNavigate } from "$app/navigation";
 	import type { ActionResult } from "@sveltejs/kit";
 	import { createEventDispatcher } from "svelte";
-	import { SvelteSet } from "../store";
 
 	const dispatch = createEventDispatcher<{
 		"before-submit": null;
@@ -44,7 +43,7 @@
 	export let saving = false;
 	export let errors = { form: "", ...emptyClone(data) };
 
-	let changes = new SvelteSet<string>();
+	let changes = new Set<string>();
 	function addChanges(field: string) {
 		changes = changes.add(field);
 		checkErrors(data);
@@ -150,8 +149,8 @@
 	novalidate
 	use:enhance={async (f) => {
 		dispatch("before-submit");
-		const savedChanges = new SvelteSet([...changes]);
-		changes = changes.clear();
+		const savedChanges = new Set([...changes]);
+		changes = new Set();
 		saving = true;
 
 		await checkErrors(data, false);
@@ -175,8 +174,7 @@
 				(result.type === "success" && result.data && "error" in result.data) ||
 				!["redirect", "success"].includes(result.type)
 			) {
-				changes = new SvelteSet([...savedChanges]);
-				savedChanges.clear();
+				changes = new Set([...savedChanges]);
 				saving = false;
 			}
 		};
