@@ -1,13 +1,12 @@
 import { AUTH_SECRET, GOOGLE_CLIENT_ID, GOOGLE_CLIENT_SECRET } from "$env/static/private";
 import Google from "@auth/core/providers/google";
 import { PrismaAdapter } from "@auth/prisma-adapter";
-import { SvelteKitAuth } from "@auth/sveltekit";
+import { SvelteKitAuth, type SvelteKitAuthConfig } from "@auth/sveltekit";
 import { prisma } from "./server/db";
 
-import type { Handle } from "@sveltejs/kit";
-import type { SvelteKitAuthConfig } from "@auth/sveltekit";
 import type { Provider } from "@auth/core/providers";
 import type { Profile, TokenSet } from "@auth/core/types";
+import type { Handle } from "@sveltejs/kit";
 
 export const auth = SvelteKitAuth({
 	callbacks: {

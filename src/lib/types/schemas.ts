@@ -14,10 +14,11 @@ import {
 	regex,
 	string,
 	union,
-	url
+	url,
+	type BaseSchema,
+	type Input,
+	type Output
 } from "valibot";
-
-import type { BaseSchema, Input, Output } from "valibot";
 
 export const dateSchema = coerce(date(), (input) => new Date(input as string | number | Date));
 

@@ -7,8 +7,7 @@
 	import ComboBox from "$src/lib/components/ComboBox.svelte";
 	import DateTimeInput from "$src/lib/components/DateTimeInput.svelte";
 	import Markdown from "$src/lib/components/Markdown.svelte";
-	import type { LogSchema } from "$src/lib/types/schemas";
-	import { logSchema } from "$src/lib/types/schemas";
+	import { logSchema, type LogSchema } from "$src/lib/types/schemas";
 	import { twMerge } from "tailwind-merge";
 
 	export let data;
