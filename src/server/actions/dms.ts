@@ -1,10 +1,9 @@
 import { handleSKitError } from "$src/lib/types/util";
 import { prisma } from "$src/server/db";
 import { error } from "@sveltejs/kit";
-import { revalidateTags } from "../cache";
+import { revalidateTags, type CacheKey } from "../cache";
 import { getUserDMsWithLogsCache } from "../data/dms";
 
-import type { CacheKey } from "../cache";
 import type { DungeonMasterSchema } from "$src/lib/types/schemas";
 
 export type SaveDMResult = ReturnType<typeof saveDM>;

@@ -161,7 +161,11 @@
 		}
 
 		if (validatedData && typeof validatedData === "object" && !(stringify in validatedData)) {
-			f.formData.append(stringify, JSON.stringify(validatedData));
+			for (const key of [...f.formData.keys()]) {
+				if (key === stringify) continue;
+				f.formData.delete(key);
+			}
+			f.formData.set(stringify, JSON.stringify(validatedData));
 		}
 
 		return async ({ update, result }) => {
