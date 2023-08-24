@@ -162,6 +162,7 @@
 		if (validatedData && typeof validatedData === "object" && !(stringify in validatedData)) {
 			for (const key of [...f.formData.keys()]) {
 				if (key === stringify) continue;
+				if (f.formData.get(key) instanceof File) continue;
 				f.formData.delete(key);
 			}
 			f.formData.set(stringify, JSON.stringify(validatedData));
