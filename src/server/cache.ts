@@ -10,25 +10,23 @@ export type CacheKey = [string, ...string[]];
  * @template TReturnType The return type of the callback function.
  * @param {() => Promise<TReturnType>} callback The callback function to cache.
  * @param {CacheKey} key The cache key as an array of strings.
- * @param {number} [revalidate=259200] The cache revalidation time in seconds. Defaults to 3 days.
+ * @param {number} [expires=259200] The cache expiration time in seconds. Defaults to 3 days.
  * @returns {Promise<TReturnType>} The cached result of the callback function.
  */
-export async function cache<TReturnType>(callback: () => Promise<TReturnType>, key: CacheKey, revalidate = 3 * 86400) {
+export async function cache<TReturnType>(callback: () => Promise<TReturnType>, key: CacheKey, expires = 3 * 86400) {
 	const rkey = key.join("|");
 	const currentTime = Date.now();
 	const cache = JSON.parse((await redis.get(rkey)) || "null") as { data: TReturnType; timestamp: number } | null;
 
 	if (cache) {
-		if (revalidate * 1000 - currentTime + cache.timestamp < 8 * 3600 * 1000) {
-			cache.timestamp = currentTime;
-			redis.setex(rkey, revalidate, JSON.stringify(cache));
-		}
+		cache.timestamp = currentTime;
+		redis.setex(rkey, expires, JSON.stringify(cache));
 
 		return cache.data;
 	}
 
 	const result = await callback();
-	redis.setex(rkey, revalidate, JSON.stringify({ data: result, timestamp: currentTime }));
+	redis.setex(rkey, expires, JSON.stringify({ data: result, timestamp: currentTime }));
 	return result;
 }
 
@@ -37,13 +35,13 @@ export async function cache<TReturnType>(callback: () => Promise<TReturnType>, k
  * @template TReturnType The return type of the callback function.
  * @param {(key: CacheKey) => Promise<TReturnType>} callback The callback function to cache.
  * @param {Array<CacheKey>} key The cache keys as an array of arrays of strings.
- * @param {number} [revalidate=259200] The cache revalidation time in seconds. Defaults to 3 days.
+ * @param {number} [expires=259200] The cache expiration time in seconds. Defaults to 3 days.
  * @returns {Promise<Array<TReturnType>>} An array of cached results of the callback function for each key.
  */
 export async function mcache<TReturnType>(
 	callback: (key: CacheKey) => Promise<TReturnType>,
 	key: Array<CacheKey>,
-	revalidate = 3 * 86400
+	expires = 3 * 86400
 ) {
 	const keys = key.map((t) => t.join("|"));
 	const caches = await redis.mget(keys);
@@ -54,18 +52,15 @@ export async function mcache<TReturnType>(
 		const value = caches[i];
 		if (value) {
 			const cache: { data: TReturnType; timestamp: number } = JSON.parse(value);
-
-			if (revalidate * 1000 - currentTime + cache.timestamp < 8 * 3600 * 1000) {
-				cache.timestamp = currentTime;
-				redis.setex(keys[i], revalidate, JSON.stringify(cache));
-			}
+			cache.timestamp = currentTime;
+			redis.setex(keys[i], expires, JSON.stringify(cache));
 
 			results[i] = cache.data;
 			continue;
 		}
 
 		const result = await callback(key[i]);
-		redis.setex(keys[i], revalidate, JSON.stringify({ data: result, timestamp: currentTime }));
+		redis.setex(keys[i], expires, JSON.stringify({ data: result, timestamp: currentTime }));
 		results[i] = result;
 	}
 
