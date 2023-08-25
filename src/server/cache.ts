@@ -3,6 +3,9 @@ import { Redis } from "ioredis";
 
 const redis = new Redis(REDIS_URL);
 
+/**
+ * A cache key as an array of strings with at least one element.
+ */
 export type CacheKey = [string, ...string[]];
 
 /**
@@ -16,15 +19,19 @@ export type CacheKey = [string, ...string[]];
 export async function cache<TReturnType>(callback: () => Promise<TReturnType>, key: CacheKey, expires = 3 * 86400) {
 	const rkey = key.join("|");
 	const currentTime = Date.now();
+
+	// Get the cache from Redis
 	const cache = JSON.parse((await redis.get(rkey)) || "null") as { data: TReturnType; timestamp: number } | null;
 
 	if (cache) {
+		// Update the timestamp and reset the cache expiration
 		cache.timestamp = currentTime;
 		redis.setex(rkey, expires, JSON.stringify(cache));
 
 		return cache.data;
 	}
 
+	// Call the callback function and cache the result
 	const result = await callback();
 	redis.setex(rkey, expires, JSON.stringify({ data: result, timestamp: currentTime }));
 	return result;
@@ -44,23 +51,31 @@ export async function mcache<TReturnType>(
 	expires = 3 * 86400
 ) {
 	const keys = key.map((t) => t.join("|"));
-	const caches = await redis.mget(keys);
-	const results: Array<TReturnType> = [];
 
+	// Get the caches from Redis
+	const caches = await redis.mget(keys);
+
+	const results: Array<TReturnType> = [];
 	for (let i = 0; i < caches.length; i++) {
 		const currentTime = Date.now();
 		const value = caches[i];
 		if (value) {
 			const cache: { data: TReturnType; timestamp: number } = JSON.parse(value);
+
+			// Update the timestamp and reset the cache expiration
 			cache.timestamp = currentTime;
 			redis.setex(keys[i], expires, JSON.stringify(cache));
 
+			// Add the cached result to the results array
 			results[i] = cache.data;
 			continue;
 		}
 
+		// Call the callback function and cache the result
 		const result = await callback(key[i]);
 		redis.setex(keys[i], expires, JSON.stringify({ data: result, timestamp: currentTime }));
+
+		// Add the result to the results array
 		results[i] = result;
 	}
 
@@ -68,7 +83,7 @@ export async function mcache<TReturnType>(
 }
 
 /**
- * Invalidates Redis cache based on an array of cache keys.
+ * Invalidates Redis caches based on an array of keys.
  * @param {Array<CacheKey | "" | false | null | undefined>} keys The cache keys as an array of arrays of strings. Empty strings, false, null, and undefined are ignored.
  * @returns {void}
  */
