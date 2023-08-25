@@ -44,11 +44,9 @@
 	export let errors = { form: "", ...emptyClone(data) };
 
 	let changes = new Set<string>();
-	let changesSize = 0;
 	function addChanges(field: string) {
-		changes = changes.add(field);
-		if (changes.size > changesSize) {
-			changesSize = changes.size;
+		if (!changes.has(field)) {
+			changes = changes.add(field);
 			checkErrors(data);
 		}
 	}
