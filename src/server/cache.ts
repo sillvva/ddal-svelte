@@ -6,7 +6,7 @@ const redis = new Redis(REDIS_URL);
 export type CacheKey = [string, ...string[]];
 
 /**
- * Caches the result of a callback function using Redis.
+ * Retrieves a cache from Redis or caches the results of a callback function.
  * @template TReturnType The return type of the callback function.
  * @param {() => Promise<TReturnType>} callback The callback function to cache.
  * @param {CacheKey} key The cache key as an array of strings.
@@ -31,7 +31,7 @@ export async function cache<TReturnType>(callback: () => Promise<TReturnType>, k
 }
 
 /**
- * Caches the results of a callback function for multiple keys using Redis.
+ * Retrieves caches from Redis or caches the results of a callback function for each key.
  * @template TReturnType The return type of the callback function.
  * @param {(key: CacheKey) => Promise<TReturnType>} callback The callback function to cache.
  * @param {Array<CacheKey>} key The cache keys as an array of arrays of strings.
