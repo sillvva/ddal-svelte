@@ -30,6 +30,13 @@ export const dungeonMasterSchema = object({
 	uid: withDefault(nullable(string()), "")
 });
 
+const itemSchema = (type: "Item" | "Story Award") =>
+	object({
+		id: withDefault(string(), ""),
+		name: withDefault(string([minLength(1, `${type} Required`)]), ""),
+		description: withDefault(string(), "")
+	});
+
 export type LogSchema = Output<typeof logSchema>;
 export const logSchema = object({
 	id: withDefault(string(), ""),
@@ -48,21 +55,9 @@ export const logSchema = object({
 	dm: dungeonMasterSchema,
 	is_dm_log: withDefault(boolean(), false),
 	applied_date: withDefault(nullable(dateSchema), null),
-	magic_items_gained: array(
-		object({
-			id: withDefault(string(), ""),
-			name: string([minLength(1, "Item Name Required")]),
-			description: withDefault(string(), "")
-		})
-	),
+	magic_items_gained: array(itemSchema("Item")),
 	magic_items_lost: array(string([minLength(1, "Invalid Item ID")])),
-	story_awards_gained: array(
-		object({
-			id: withDefault(string(), ""),
-			name: string([minLength(1, "Story Award Name Required")]),
-			description: withDefault(string(), "")
-		})
-	),
+	story_awards_gained: array(itemSchema("Story Award")),
 	story_awards_lost: array(string([minLength(1, "Invalid Story Award ID")]))
 });
 
