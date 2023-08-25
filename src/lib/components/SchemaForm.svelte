@@ -44,11 +44,16 @@
 	export let errors = { form: "", ...emptyClone(data) };
 
 	let changes = new Set<string>();
+	let changesSize = 0;
 	function addChanges(field: string) {
 		changes = changes.add(field);
-		checkErrors(data);
+		if (changes.size > changesSize) {
+			changesSize = changes.size;
+			checkErrors(data);
+		}
 	}
 
+	$: checkErrors(data);
 	function addError(keysArray: Array<string | number | symbol>, value: string) {
 		errors = setNestedError(errors, keysArray, value);
 	}
