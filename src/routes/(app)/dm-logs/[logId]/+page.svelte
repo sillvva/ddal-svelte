@@ -392,7 +392,7 @@
 									disabled={saving}
 									class="input-bordered input w-full focus:border-primary"
 								/>
-								{#if errors.magic_items_gained[index].name}
+								{#if errors.magic_items_gained[index]?.name}
 									<label for={`magic_items_gained.${index}.name`} class="label">
 										<span class="label-text-alt text-error">{errors.magic_items_gained[index].name}</span>
 									</label>
@@ -448,7 +448,7 @@
 									disabled={saving}
 									class="input-bordered input w-full focus:border-primary"
 								/>
-								{#if errors.story_awards_gained[index].name}
+								{#if errors.story_awards_gained[index]?.name}
 									<label for={`story_awards_gained.${index}.name`} class="label">
 										<span class="label-text-alt text-error">{errors.story_awards_gained[index].name}</span>
 									</label>
