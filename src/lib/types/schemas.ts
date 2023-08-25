@@ -13,14 +13,19 @@ import {
 	object,
 	regex,
 	string,
+	transform,
 	union,
 	url,
 	type BaseSchema,
 	type Input,
-	type Output
+	type Output,
+	type PipeResult
 } from "valibot";
 
-export const dateSchema = coerce(date(), (input) => new Date(input as string | number | Date));
+export const dateSchema = transform(
+	union([date(), string([iso()]), number([minValue(0)])], "Must be a valid date/time"),
+	(input) => new Date(input)
+);
 
 export type DungeonMasterSchema = Output<typeof dungeonMasterSchema>;
 export const dungeonMasterSchema = object({
@@ -110,24 +115,23 @@ export function withDefault<TSchema extends BaseSchema>(schema: TSchema, value: 
  *
  * @returns A validation function.
  */
-export function iso<TInput extends string>(
-	options?: {
-		date?: boolean;
-		time?: boolean;
-		seconds?: boolean;
-		milliseconds?: boolean;
-		timezone?: boolean;
-	},
-	error?: string
-) {
-	return (input: TInput) => {
+export function iso<TInput extends string>(options?: {
+	date?: boolean;
+	time?: boolean;
+	seconds?: boolean;
+	milliseconds?: boolean;
+	timezone?: boolean;
+	error?: string;
+}) {
+	return (input: TInput): PipeResult<TInput> => {
 		// override default date and time options to true if options is undefined
 		const {
 			date = false,
 			time = false,
 			seconds = true,
 			milliseconds = true,
-			timezone = true
+			timezone = true,
+			error = "Invalid ISO string"
 		} = options || { date: true, time: true };
 
 		const dateRegex = `((\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-((0[13578]|1[02])-(0[1-9]|[12]\\d|3[01])|(0[469]|11)-(0[1-9]|[12]\\d|30)|(02)-(0[1-9]|1\\d|2[0-8])))`;
@@ -140,11 +144,11 @@ export function iso<TInput extends string>(
 			return {
 				issue: {
 					validation: "iso",
-					message: error || "Invalid iso string",
+					message: error,
 					input
 				}
 			};
 		}
-		return input;
+		return { output: input };
 	};
 }
