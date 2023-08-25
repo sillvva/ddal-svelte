@@ -1,7 +1,7 @@
 import type { NewCharacterSchema } from "$src/lib/types/schemas";
 import { handleSKitError } from "$src/lib/types/util";
 import { error } from "@sveltejs/kit";
-import { revalidateTags } from "../cache";
+import { revalidateKeys } from "../cache";
 import { getCharacterCache } from "../data/characters";
 import { prisma } from "../db";
 
@@ -31,7 +31,7 @@ export async function saveCharacter(characterId: string, userId: string, data: N
 			});
 		}
 
-		revalidateTags([
+		revalidateKeys([
 			["character", result.id, "logs"],
 			["character", result.id, "no-logs"],
 			["dms", userId],
@@ -84,7 +84,7 @@ export async function deleteCharacter(characterId: string, userId?: string) {
 			});
 		});
 
-		revalidateTags([
+		revalidateKeys([
 			["character", result.id, "logs"],
 			["character", result.id, "no-logs"],
 			["characters", userId],

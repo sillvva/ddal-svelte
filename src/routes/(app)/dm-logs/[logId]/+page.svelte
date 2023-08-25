@@ -7,8 +7,7 @@
 	import ComboBox from "$src/lib/components/ComboBox.svelte";
 	import DateTimeInput from "$src/lib/components/DateTimeInput.svelte";
 	import Markdown from "$src/lib/components/Markdown.svelte";
-	import type { LogSchema } from "$src/lib/types/schemas";
-	import { logSchema } from "$src/lib/types/schemas";
+	import { logSchema, type LogSchema } from "$src/lib/types/schemas";
 	import { twMerge } from "tailwind-merge";
 
 	export let data;
@@ -393,7 +392,7 @@
 									disabled={saving}
 									class="input-bordered input w-full focus:border-primary"
 								/>
-								{#if errors.magic_items_gained[index].name}
+								{#if errors.magic_items_gained[index]?.name}
 									<label for={`magic_items_gained.${index}.name`} class="label">
 										<span class="label-text-alt text-error">{errors.magic_items_gained[index].name}</span>
 									</label>
@@ -449,7 +448,7 @@
 									disabled={saving}
 									class="input-bordered input w-full focus:border-primary"
 								/>
-								{#if errors.story_awards_gained[index].name}
+								{#if errors.story_awards_gained[index]?.name}
 									<label for={`story_awards_gained.${index}.name`} class="label">
 										<span class="label-text-alt text-error">{errors.story_awards_gained[index].name}</span>
 									</label>

@@ -20,7 +20,6 @@
 	import { beforeNavigate } from "$app/navigation";
 	import type { ActionResult } from "@sveltejs/kit";
 	import { createEventDispatcher } from "svelte";
-	import { SvelteSet } from "../store";
 
 	const dispatch = createEventDispatcher<{
 		"before-submit": null;
@@ -44,7 +43,7 @@
 	export let saving = false;
 	export let errors = { form: "", ...emptyClone(data) };
 
-	let changes = new SvelteSet<string>();
+	let changes = new Set<string>();
 	function addChanges(field: string) {
 		changes = changes.add(field);
 		checkErrors(data);
@@ -150,8 +149,8 @@
 	novalidate
 	use:enhance={async (f) => {
 		dispatch("before-submit");
-		const savedChanges = new SvelteSet([...changes]);
-		changes = changes.clear();
+		const savedChanges = new Set([...changes]);
+		changes = new Set();
 		saving = true;
 
 		await checkErrors(data, false);
@@ -161,7 +160,12 @@
 		}
 
 		if (validatedData && typeof validatedData === "object" && !(stringify in validatedData)) {
-			f.formData.append(stringify, JSON.stringify(validatedData));
+			for (const key of [...f.formData.keys()]) {
+				if (key === stringify) continue;
+				if (f.formData.get(key) instanceof File) continue;
+				f.formData.delete(key);
+			}
+			f.formData.set(stringify, JSON.stringify(validatedData));
 		}
 
 		return async ({ update, result }) => {
@@ -171,8 +175,7 @@
 				(result.type === "success" && result.data && "error" in result.data) ||
 				!["redirect", "success"].includes(result.type)
 			) {
-				changes = new SvelteSet([...savedChanges]);
-				savedChanges.clear();
+				changes = new Set([...savedChanges]);
 				saving = false;
 			}
 		};

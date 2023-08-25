@@ -1,8 +1,7 @@
 import { signInRedirect } from "$src/server/auth.js";
 import { serverGetCookie } from "$src/server/cookie";
-import { getCharacterCaches, getCharactersCache } from "$src/server/data/characters";
+import { getCharacterCaches, getCharactersCache, type CharacterData } from "$src/server/data/characters";
 
-import type { CharacterData } from "$src/server/data/characters";
 const defaultCookie = {
 	magicItems: false,
 	display: "list"
