@@ -34,6 +34,7 @@
 
 	let elForm: HTMLFormElement;
 	let validatedData: Infer<Schema>;
+	let changes: Array<string> = [];
 
 	export let schema: TSchema;
 	export let data: InferIn<TSchema>;
@@ -43,33 +44,20 @@
 	export let saving = false;
 	export let errors = { form: "", ...emptyClone(data) };
 
-	let changes = new Set<string>();
-	let changesSize = 0;
-	function addChanges(field: string) {
-		changes = changes.add(field);
-		if (changes.size > changesSize) {
-			changesSize = changes.size;
-			checkErrors(data);
-		}
-	}
-
-	$: checkErrors(data);
+	let initialErrors = structuredClone(errors);
 	function addError(keysArray: Array<string | number | symbol>, value: string) {
 		errors = setNestedError(errors, keysArray, value);
 	}
 
 	async function checkErrors(data: InferIn<TSchema>, onlyChanges = true) {
-		errors = {
-			form: "",
-			...emptyClone(data)
-		};
+		errors = { form: "", ...emptyClone(data) };
 		const result = await validate(schema, data);
 		if ("data" in result) {
 			dispatch("validate", { data: (validatedData = result.data), changes, errors, addError });
 		} else if ("issues" in result) {
 			result.issues.forEach((issue) => {
 				if (!issue.path) issue.path = ["form"];
-				if (!onlyChanges || changes.has(issue.path.join("."))) {
+				if (!onlyChanges || changes.includes(issue.path.join("."))) {
 					addError(issue.path, issue.message);
 				}
 			});
@@ -77,22 +65,36 @@
 		}
 	}
 
-	function inputChanged(ev: Event) {
-		const name = (ev.currentTarget as HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement | null)?.getAttribute("name");
-		if (name) addChanges(name);
-	}
-
 	$: {
 		if (elForm && data) {
 			setTimeout(() => {
-				if (elForm)
-					elForm.querySelectorAll("input, textarea, select").forEach((el) => el.addEventListener("input", inputChanged));
+				if (elForm) {
+					elForm.querySelectorAll("input, textarea, select").forEach((el) =>
+						el.addEventListener("input", (ev: Event) => {
+							if (ev.currentTarget instanceof Element && !ev.currentTarget.hasAttribute("data-dirty")) {
+								ev.currentTarget.setAttribute("data-dirty", "");
+								checkChanges();
+							}
+						})
+					);
+				}
 			}, 10);
 		}
 	}
 
+	$: elForm && data && checkChanges();
+	function checkChanges() {
+		changes = [...elForm.querySelectorAll("[data-dirty]")].map((el) => el.getAttribute("name") || "hidden").filter(Boolean);
+
+		const formStructureIsDiff = JSON.stringify(emptyClone(errors)) !== JSON.stringify(initialErrors);
+		if (formStructureIsDiff) changes = [...changes, formStructureIsDiff ? "form" : ""];
+
+		checkErrors(data);
+	}
+
 	beforeNavigate((nav) => {
-		if (changes.size) {
+		checkChanges();
+		if (changes.length) {
 			if (!confirm("You have unsaved changes. Are you sure you want to leave this page?")) nav.cancel();
 		}
 	});
@@ -154,8 +156,8 @@
 	novalidate
 	use:enhance={async (f) => {
 		dispatch("before-submit");
-		const savedChanges = new Set([...changes]);
-		changes = new Set();
+		const savedChanges = [...changes];
+		changes = [];
 		saving = true;
 
 		await checkErrors(data, false);
@@ -180,7 +182,7 @@
 				(result.type === "success" && result.data && "error" in result.data) ||
 				!["redirect", "success"].includes(result.type)
 			) {
-				changes = new Set([...savedChanges]);
+				changes = [...savedChanges];
 				saving = false;
 			}
 		};
