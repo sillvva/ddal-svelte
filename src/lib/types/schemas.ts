@@ -88,7 +88,7 @@ export const editCharacterSchema = merge([object({ id: string() }), newCharacter
 export function withDefault<TSchema extends BaseSchema>(schema: TSchema, value: Input<TSchema>) {
 	return coerce(schema, (input) =>
 		typeof value === "string"
-			? `${input || value}`.trim()
+			? `${input}`.trim() || value
 			: !input || (typeof value == "number" && isNaN(Number(input)))
 			? value
 			: input
