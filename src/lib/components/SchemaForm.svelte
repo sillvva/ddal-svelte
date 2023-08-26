@@ -65,29 +65,28 @@
 		}
 	}
 
+	const inputListener = (ev: Event) => {
+		if (ev.currentTarget instanceof Element && !ev.currentTarget.hasAttribute("data-dirty")) {
+			ev.currentTarget.setAttribute("data-dirty", "");
+			checkChanges();
+		}
+	};
+
 	$: {
 		if (elForm && data) {
+			checkChanges();
 			setTimeout(() => {
-				if (elForm) {
-					elForm.querySelectorAll("input, textarea, select").forEach((el) =>
-						el.addEventListener("input", (ev: Event) => {
-							if (ev.currentTarget instanceof Element && !ev.currentTarget.hasAttribute("data-dirty")) {
-								ev.currentTarget.setAttribute("data-dirty", "");
-								checkChanges();
-							}
-						})
-					);
-				}
+				elForm.querySelectorAll("input, textarea, select").forEach((el) => el.addEventListener("input", inputListener));
 			}, 10);
 		}
 	}
 
-	$: elForm && data && checkChanges();
 	function checkChanges() {
-		changes = [...elForm.querySelectorAll("[data-dirty]")].map((el) => el.getAttribute("name") || "hidden").filter(Boolean);
-
 		const formStructureIsDiff = JSON.stringify(emptyClone(errors)) !== JSON.stringify(initialErrors);
-		if (formStructureIsDiff) changes = [...changes, formStructureIsDiff ? "form" : ""];
+		changes = [...elForm.querySelectorAll("[data-dirty]")]
+			.map((el) => el.getAttribute("name") || "hidden")
+			.concat(formStructureIsDiff ? "form" : "")
+			.filter(Boolean);
 
 		checkErrors(data);
 	}
