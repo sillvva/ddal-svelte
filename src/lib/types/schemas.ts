@@ -70,7 +70,7 @@ const optionalURL = withDefault(union([string([url("Invalid URL")]), string([max
 
 export type NewCharacterSchema = Output<typeof newCharacterSchema>;
 export const newCharacterSchema = object({
-	name: string([minLength(1, "Character Name Required")]),
+	name: withDefault(string([minLength(1, "Character Name Required")]), ""),
 	campaign: withDefault(string(), ""),
 	race: withDefault(string(), ""),
 	class: withDefault(string(), ""),
