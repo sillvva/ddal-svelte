@@ -155,8 +155,8 @@
 	novalidate
 	use:enhance={async (f) => {
 		dispatch("before-submit");
-		const savedChanges = [...changes];
-		changes = [];
+		const changedEls = elForm.querySelectorAll("[data-dirty]");
+		changedEls.forEach((el) => el.removeAttribute("data-dirty"));
 		saving = true;
 
 		await checkErrors(data, false);
@@ -181,7 +181,7 @@
 				(result.type === "success" && result.data && "error" in result.data) ||
 				!["redirect", "success"].includes(result.type)
 			) {
-				changes = [...savedChanges];
+				changedEls.forEach((el) => el.setAttribute("data-dirty", ""));
 				saving = false;
 			}
 		};
