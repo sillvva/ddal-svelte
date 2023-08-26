@@ -8,10 +8,9 @@ export const getMagicItems = (
 		lastLogId?: string;
 		lastLogDate?: string;
 		excludeDropped?: boolean;
-		includeDropped?: string[];
 	}
 ) => {
-	const { lastLogId = "", lastLogDate = "", excludeDropped = false, includeDropped = [] } = options || {};
+	const { lastLogId = "", lastLogDate = "", excludeDropped = false } = options || {};
 	const magicItems: Array<MagicItem> = [];
 	let lastLog = false;
 	character.logs
@@ -20,11 +19,12 @@ export const getMagicItems = (
 			if (lastLog) return;
 			if (lastLogId && log.id === lastLogId) lastLog = true;
 			if (lastLogDate && log.date >= new Date(lastLogDate)) lastLog = true;
-			log.magic_items_gained.forEach((item) => {
-				magicItems.push(item);
-			});
+			if (!lastLog)
+				log.magic_items_gained.forEach((item) => {
+					magicItems.push(item);
+				});
 			log.magic_items_lost.forEach((item) => {
-				if (excludeDropped && !includeDropped.includes(item.id) && !lastLog)
+				if (excludeDropped && !lastLog)
 					magicItems.splice(
 						magicItems.findIndex((i) => i.id === item.id),
 						1
@@ -40,10 +40,9 @@ export const getStoryAwards = (
 		lastLogId?: string;
 		lastLogDate?: string;
 		excludeDropped?: boolean;
-		includeDropped?: string[];
 	}
 ) => {
-	const { lastLogId = "", lastLogDate = "", excludeDropped = false, includeDropped = [] } = options || {};
+	const { lastLogId = "", lastLogDate = "", excludeDropped = false } = options || {};
 	const storyAwards: Array<StoryAward> = [];
 	let lastLog = false;
 	character.logs
@@ -52,11 +51,12 @@ export const getStoryAwards = (
 			if (lastLog) return;
 			if (lastLogId && log.id === lastLogId) lastLog = true;
 			if (lastLogDate && log.date >= new Date(lastLogDate)) lastLog = true;
-			log.story_awards_gained.forEach((item) => {
-				storyAwards.push(item);
-			});
+			if (!lastLog)
+				log.story_awards_gained.forEach((item) => {
+					storyAwards.push(item);
+				});
 			log.story_awards_lost.forEach((item) => {
-				if (excludeDropped && !includeDropped.includes(item.id) && !lastLog)
+				if (excludeDropped && !lastLog)
 					storyAwards.splice(
 						storyAwards.findIndex((i) => i.id === item.id),
 						1
