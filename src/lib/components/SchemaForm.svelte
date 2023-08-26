@@ -84,10 +84,11 @@
 
 	$: elForm && data && checkChanges();
 	function checkChanges() {
-		changes = [...elForm.querySelectorAll("[data-dirty]")].map((el) => el.getAttribute("name") || "hidden").filter(Boolean);
-
 		const formStructureIsDiff = JSON.stringify(emptyClone(errors)) !== JSON.stringify(initialErrors);
-		if (formStructureIsDiff) changes = [...changes, formStructureIsDiff ? "form" : ""];
+		changes = [...elForm.querySelectorAll("[data-dirty]")]
+			.map((el) => el.getAttribute("name") || "hidden")
+			.concat(formStructureIsDiff ? "form" : "")
+			.filter(Boolean);
 
 		checkErrors(data);
 	}
