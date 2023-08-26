@@ -52,8 +52,16 @@
 	} satisfies LogSchema;
 
 	export const snapshot = {
-		capture: () => log,
-		restore: (values) => (log = values)
+		capture: () => ({
+			log,
+			magicItemsGained,
+			storyAwardsGained
+		}),
+		restore: (values) => {
+			log = values.log;
+			magicItemsGained = values.magicItemsGained;
+			storyAwardsGained = values.storyAwardsGained;
+		}
 	};
 </script>
 
