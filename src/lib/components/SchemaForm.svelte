@@ -65,24 +65,22 @@
 		}
 	}
 
+	const inputListener = (ev: Event) => {
+		if (ev.currentTarget instanceof Element && !ev.currentTarget.hasAttribute("data-dirty")) {
+			ev.currentTarget.setAttribute("data-dirty", "");
+			checkChanges();
+		}
+	};
+
 	$: {
 		if (elForm && data) {
+			checkChanges();
 			setTimeout(() => {
-				if (elForm) {
-					elForm.querySelectorAll("input, textarea, select").forEach((el) =>
-						el.addEventListener("input", (ev: Event) => {
-							if (ev.currentTarget instanceof Element && !ev.currentTarget.hasAttribute("data-dirty")) {
-								ev.currentTarget.setAttribute("data-dirty", "");
-								checkChanges();
-							}
-						})
-					);
-				}
+				elForm.querySelectorAll("input, textarea, select").forEach((el) => el.addEventListener("input", inputListener));
 			}, 10);
 		}
 	}
 
-	$: elForm && data && checkChanges();
 	function checkChanges() {
 		const formStructureIsDiff = JSON.stringify(emptyClone(errors)) !== JSON.stringify(initialErrors);
 		changes = [...elForm.querySelectorAll("[data-dirty]")]
