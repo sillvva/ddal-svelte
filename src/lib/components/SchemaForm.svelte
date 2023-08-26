@@ -85,7 +85,7 @@
 		const formStructureIsDiff = JSON.stringify(emptyClone(errors)) !== JSON.stringify(initialErrors);
 		changes = [...elForm.querySelectorAll("[data-dirty]")]
 			.map((el) => el.getAttribute("name") || "hidden")
-			.concat(formStructureIsDiff ? "form" : "")
+			.concat(formStructureIsDiff && !saving ? "form" : "")
 			.filter(Boolean);
 
 		checkErrors(data);

@@ -19,14 +19,10 @@
 	let log = data.log;
 
 	$: magicItems = character
-		? getMagicItems(character, { excludeDropped: true, lastLogDate: new Date(log.date).toISOString() }).sort((a, b) =>
-				sorter(a.name, b.name)
-		  )
+		? getMagicItems(character, { excludeDropped: true, lastLogId: log.id }).sort((a, b) => sorter(a.name, b.name))
 		: [];
 	$: storyAwards = character
-		? getStoryAwards(character, { excludeDropped: true, lastLogDate: new Date(log.date).toISOString() }).sort((a, b) =>
-				sorter(a.name, b.name)
-		  )
+		? getStoryAwards(character, { excludeDropped: true, lastLogId: log.id }).sort((a, b) => sorter(a.name, b.name))
 		: [];
 
 	const defaultDM = { id: "", name: "", DCI: null, uid: "" };
