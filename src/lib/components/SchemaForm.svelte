@@ -49,7 +49,7 @@
 		errors = setNestedError(errors, keysArray, value);
 	}
 
-	async function checkErrors(data: InferIn<TSchema>, onlyChanges = true) {
+	async function checkErrors(data: InferIn<TSchema>) {
 		errors = { form: "", ...emptyClone(data) };
 		const result = await validate(schema, data);
 		if ("data" in result) {
@@ -57,7 +57,7 @@
 		} else if ("issues" in result) {
 			result.issues.forEach((issue) => {
 				if (!issue.path) issue.path = ["form"];
-				if (!onlyChanges || changes.includes(issue.path.join("."))) {
+				if (saving || changes.includes(issue.path.join("."))) {
 					addError(issue.path, issue.message);
 				}
 			});
@@ -65,30 +65,33 @@
 		}
 	}
 
-	const inputListener = (ev: Event) => {
-		if (ev.currentTarget instanceof Element && !ev.currentTarget.hasAttribute("data-dirty")) {
-			ev.currentTarget.setAttribute("data-dirty", "");
-			checkChanges();
-		}
-	};
-
-	$: {
-		if (elForm && data) {
-			checkChanges();
-			setTimeout(() => {
-				elForm.querySelectorAll("input, textarea, select").forEach((el) => el.addEventListener("input", inputListener));
-			}, 10);
-		}
-	}
-
 	function checkChanges() {
 		const formStructureIsDiff = JSON.stringify(emptyClone(errors)) !== JSON.stringify(initialErrors);
-		changes = [...elForm.querySelectorAll("[data-dirty]")]
-			.map((el) => el.getAttribute("name") || "hidden")
-			.concat(formStructureIsDiff && !saving ? "form" : "")
-			.filter(Boolean);
+		changes = !saving
+			? [...elForm.querySelectorAll("[data-dirty]")]
+					.map((el) => el.getAttribute("name") || "hidden")
+					.concat(formStructureIsDiff ? "form" : "")
+					.filter(Boolean)
+			: [];
 
 		checkErrors(data);
+	}
+
+	$: {
+		if (saving || (elForm && data)) {
+			checkChanges();
+			setTimeout(() => {
+				elForm.querySelectorAll(":is(input, textarea, select):not([data-listener])").forEach((el) => {
+					el.setAttribute("data-listener", "");
+					el.addEventListener("input", (ev: Event) => {
+						if (ev.currentTarget instanceof Element && !ev.currentTarget.hasAttribute("data-dirty")) {
+							ev.currentTarget.setAttribute("data-dirty", "");
+							checkChanges();
+						}
+					});
+				});
+			}, 10);
+		}
 	}
 
 	beforeNavigate((nav) => {
@@ -155,11 +158,9 @@
 	novalidate
 	use:enhance={async (f) => {
 		dispatch("before-submit");
-		const changedEls = elForm.querySelectorAll("[data-dirty]");
-		changedEls.forEach((el) => el.removeAttribute("data-dirty"));
 		saving = true;
 
-		await checkErrors(data, false);
+		await checkErrors(data);
 		if (hasValues(errors)) {
 			saving = false;
 			return f.cancel();
@@ -181,7 +182,6 @@
 				(result.type === "success" && result.data && "error" in result.data) ||
 				!["redirect", "success"].includes(result.type)
 			) {
-				changedEls.forEach((el) => el.setAttribute("data-dirty", ""));
 				saving = false;
 			}
 		};
