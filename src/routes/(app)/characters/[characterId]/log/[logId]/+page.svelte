@@ -487,7 +487,7 @@
 									disabled={saving}
 									class="select-bordered select w-full"
 								>
-									{#each [...log.magic_items_lost.filter((i) => i.id === id), ...magicItems] as item}
+									{#each magicItems.filter((item) => item.id === id || !magicItemsLost.includes(item.id)) as item}
 										<option value={item.id}>
 											{item.name}
 										</option>
@@ -584,7 +584,7 @@
 									disabled={saving}
 									class="select-bordered select w-full"
 								>
-									{#each [...log.story_awards_lost.filter((i) => i.id === id), ...storyAwards] as item}
+									{#each storyAwards.filter((item) => item.id === id || !storyAwardsLost.includes(item.id)) as item}
 										<option value={item.id}>
 											{item.name}
 										</option>
