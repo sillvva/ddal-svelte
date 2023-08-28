@@ -38,7 +38,7 @@ export const dungeonMasterSchema = object({
 const itemSchema = (type: "Item" | "Story Award") =>
 	object({
 		id: withDefault(string(), ""),
-		name: withDefault(string([minLength(1, `${type} Required`)]), ""),
+		name: withDefault(string([minLength(1, `${type} Name Required`)]), ""),
 		description: withDefault(string(), "")
 	});
 
@@ -124,7 +124,6 @@ export function iso<TInput extends string>(options?: {
 	error?: string;
 }) {
 	return (input: TInput): PipeResult<TInput> => {
-		// override default date and time options to true if options is undefined
 		const {
 			date = true,
 			time = true,
