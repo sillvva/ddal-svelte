@@ -110,7 +110,7 @@
 			? DeepStringify<Array<E>>
 			: T[K] extends Date | Blob | File
 			? string
-			: T[K] extends Object
+			: T[K] extends object
 			? DeepStringify<T[K]>
 			: string;
 	};
