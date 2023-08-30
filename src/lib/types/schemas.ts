@@ -99,11 +99,11 @@ export function withDefault<TSchema extends BaseSchema>(schema: TSchema, value: 
 
 /**
  * Creates a complete, customizable validation function that validates a datetime.
- *
  * The correct number of days in a month is validated, including leap year.
  *
  * Date Format: yyyy-mm-dd
- * Time Formats: [T]hh:mm[:ss[.sss]][+/-hh:mm] or [T]hh:mm[:ss[.sss]][Z]
+ *
+ * Time Formats: [T]hh:mm[:ss[.sss]][Z|+/-hh:mm]
  *
  * @param {Object} options The configuration options.
  * @param {boolean} options.date Whether to validate the date.
