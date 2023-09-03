@@ -460,6 +460,7 @@
 								class="textarea-bordered textarea w-full focus:border-primary"
 								style="resize: none;"
 								value={item.description}
+								spellcheck="true"
 							/>
 							<label for={`magic_items_gained.${index}.description`} class="label">
 								<span class="label-text-alt text-error" />
@@ -557,6 +558,7 @@
 								class="textarea-bordered textarea w-full focus:border-primary"
 								style="resize: none;"
 								value={item.description}
+								spellcheck="true"
 							/>
 							<label for={`story_awards_gained.${index}.description`} class="label">
 								<span class="label-text-alt text-error" />
