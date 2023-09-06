@@ -125,12 +125,14 @@
 		return result;
 	}
 
-	function setNestedError<TErrorObj extends object>(
+	function setNestedError<TErrorObj>(
 		err: TErrorObj,
 		keysArray: Array<string | number | symbol>,
 		value: string,
 		previousKeys: Array<string | number | symbol> = []
-	) {
+	): TErrorObj {
+		if (!err || typeof err !== "object" || !["String", "Object", "Array"].includes((err as object).constructor.name))
+			throw new Error("Error must be an object");
 		if (!keysArray.length) throw new Error("Keys array must have at least one key");
 		const key = keysArray.shift() as keyof TErrorObj;
 		const path = [...previousKeys, key]
@@ -140,11 +142,11 @@
 			})
 			.join("");
 		if (!(key in err)) throw new Error(`Key ${path} not found`);
-		if (keysArray.length && ["Object", "Array"].includes((err[key] as object).constructor.name)) {
+		if (keysArray.length && typeof err[key] === "object" && ["Object", "Array"].includes((err[key] as object).constructor.name)) {
 			err[key] = setNestedError(err[key], keysArray, value, [...previousKeys, key]);
 		} else {
 			if (keysArray.length) throw new Error(`Cannot set nested error on non-object ${path}`);
-			if (!err[key]) err[key] = value.trim() as TErrorObj[keyof TErrorObj];
+			if (!err[key]) err[key] = value.trim() as (TErrorObj & object)[keyof TErrorObj];
 		}
 		return err;
 	}
