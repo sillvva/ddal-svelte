@@ -2,7 +2,7 @@
 	import BreadCrumbs from "$lib/components/BreadCrumbs.svelte";
 	import Icon from "$lib/components/Icon.svelte";
 	import SearchResults from "$lib/components/SearchResults.svelte";
-	import { sorter, stopWords } from "$lib/utils";
+	import { slugify, sorter, stopWords } from "$lib/utils";
 	import { lazy } from "$src/lib/actions";
 	import { setCookie } from "$src/server/cookie";
 	import MiniSearch from "minisearch";
@@ -178,7 +178,10 @@
 						{#if !data.mobile}
 							<div class="pr-0 transition-colors sm:pr-2 hidden sm:block">
 								<div class="avatar">
-									<div class="mask mask-squircle h-12 w-12 bg-primary">
+									<div
+										class="mask mask-squircle h-12 w-12 bg-primary"
+										style:view-transition-name={slugify("Image: " + character.name)}
+									>
 										{#if character.image_url}
 											{#key character.image_url}
 												<img
@@ -260,6 +263,7 @@
 										alt={character.name}
 										class="h-full w-full object-cover object-top"
 										use:lazy={{ rootMargin: "100px" }}
+										style:view-transition-name={slugify("Image: " + character.name)}
 									/>
 								{/key}
 								{#if search.length >= 1 && indexed.length && miMatches}

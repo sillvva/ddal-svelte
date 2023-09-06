@@ -149,6 +149,7 @@
 						target="_blank"
 						rel="noreferrer noopener"
 						class="mask mask-squircle mx-auto h-20 w-full bg-primary"
+						style:view-transition-name={slugify("Image: " + character.name)}
 					>
 						<img src={character.image_url} class="h-full w-full object-cover object-top transition-all" alt={character.name} />
 					</a>
@@ -156,7 +157,9 @@
 			{/if}
 			<div class="flex w-full flex-col">
 				<div class="mb-2 flex gap-4 xs:mb-0">
-					<h3 class="flex-1 py-2 font-vecna text-3xl font-bold text-accent-content sm:py-0 sm:text-4xl">{character.name}</h3>
+					<h3 class="flex-1 py-2 font-vecna text-3xl font-bold text-accent-content sm:py-0 sm:text-4xl">
+						{character.name}
+					</h3>
 					<div class="dropdown-end dropdown sm:hidden">
 						<span role="button" tabindex="0" class="btn">
 							<Icon src="dots-horizontal" class="w-6" />
@@ -227,6 +230,7 @@
 							target="_blank"
 							rel="noreferrer noopener"
 							class="mask mask-squircle mx-auto h-52 w-full bg-primary"
+							style:view-transition-name={slugify("Image: " + character.name)}
 						>
 							<img src={character.image_url} class="h-full w-full object-cover object-top transition-all" alt={character.name} />
 						</a>
