@@ -145,7 +145,7 @@
 		}, errors);
 		if (typeof lastKey !== "undefined") {
 			pointer[lastKey] = value;
-			errors = pointer as any;
+			errors = errors;
 		}
 	}
 </script>
