@@ -19,6 +19,7 @@
 	import { enhance } from "$app/forms";
 	import { beforeNavigate } from "$app/navigation";
 	import type { ActionResult } from "@sveltejs/kit";
+	import set from "lodash.set";
 	import { createEventDispatcher } from "svelte";
 
 	const dispatch = createEventDispatcher<{
@@ -55,8 +56,7 @@
 			result.issues.forEach((issue) => {
 				if (!issue.path) issue.path = ["form"];
 				if (saving || changes.includes(issue.path.join("."))) {
-					// @ts-ignore
-					setError(issue.path.join("."), issue.message);
+					errors = set(errors, issue.path, issue.message);
 				}
 			});
 			dispatch("validate", { changes, errors, setError });
@@ -145,17 +145,8 @@
 			: never
 		: Idx<T, P>;
 
-	function setError<T extends typeof errors, K extends Paths<T, 4>>(path: K, value: PathValue<T, K>) {
-		const keys = `${path}`.split(".");
-		const lastKey = keys.pop();
-		const pointer = keys.reduce((accumulator: { [x: string]: any }, currentValue: string | number) => {
-			if (accumulator[currentValue] === undefined) accumulator[currentValue] = {};
-			return accumulator[currentValue];
-		}, errors);
-		if (typeof lastKey !== "undefined") {
-			pointer[lastKey] = value;
-			errors = errors;
-		}
+	function setError<T extends typeof errors, K extends Paths<T, 4>>(path: K, message: PathValue<T, K>) {
+		errors = set(errors, path, message);
 	}
 </script>
 
