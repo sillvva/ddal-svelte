@@ -55,7 +55,8 @@
 			result.issues.forEach((issue) => {
 				if (!issue.path) issue.path = ["form"];
 				if (saving || changes.includes(issue.path.join("."))) {
-					setError(issue.path.join(".") as Paths<typeof errors, 4>, issue.message);
+					// @ts-ignore
+					setError(issue.path.join("."), issue.message);
 				}
 			});
 			dispatch("validate", { changes, errors, setError });
@@ -122,6 +123,8 @@
 		return result;
 	}
 
+	type Idx<T, K> = K extends keyof T ? T[K] : number extends keyof T ? (K extends `${number}` ? T[number] : never) : never;
+
 	type Join<K, P> = K extends string | number
 		? P extends string | number
 			? `${K}${"" extends P ? "" : "."}${P}`
@@ -136,7 +139,13 @@
 		? { [K in keyof T]-?: K extends string | number ? `${K}` | Join<K, Paths<T[K], Prev[D]>> : never }[keyof T]
 		: "";
 
-	function setError(path: Paths<typeof errors, 4>, value: string) {
+	type PathValue<T, P extends Paths<T, 4>> = P extends `${infer Key}.${infer Rest}`
+		? Rest extends Paths<Idx<T, Key>, 4>
+			? PathValue<Idx<T, Key>, Rest>
+			: never
+		: Idx<T, P>;
+
+	function setError<T extends typeof errors, K extends Paths<T, 4>>(path: K, value: PathValue<T, K>) {
 		const keys = `${path}`.split(".");
 		const lastKey = keys.pop();
 		const pointer = keys.reduce((accumulator: { [x: string]: any }, currentValue: string | number) => {
