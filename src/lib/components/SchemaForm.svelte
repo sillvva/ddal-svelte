@@ -28,7 +28,7 @@
 			data?: Infer<TSchema>;
 			changes: typeof changes;
 			errors: typeof errors;
-			addError: typeof addError;
+			setError: typeof setError;
 		};
 	}>();
 
@@ -45,23 +45,20 @@
 	export let errors = { form: "", ...emptyClone(data) };
 
 	let initialErrors = structuredClone(errors);
-	function addError(keysArray: Array<string | number | symbol>, value: string) {
-		errors = setNestedError(errors, keysArray, value);
-	}
 
 	async function checkErrors(data: InferIn<TSchema>) {
 		errors = { form: "", ...emptyClone(data) };
 		const result = await validate(schema, data);
 		if ("data" in result) {
-			dispatch("validate", { data: (validatedData = result.data), changes, errors, addError });
+			dispatch("validate", { data: (validatedData = result.data), changes, errors, setError });
 		} else if ("issues" in result) {
 			result.issues.forEach((issue) => {
 				if (!issue.path) issue.path = ["form"];
 				if (saving || changes.includes(issue.path.join("."))) {
-					addError(issue.path, issue.message);
+					setError(issue.path.join(".") as Paths<typeof errors, 4>, issue.message);
 				}
 			});
-			dispatch("validate", { changes, errors, addError });
+			dispatch("validate", { changes, errors, setError });
 		}
 	}
 
@@ -125,30 +122,31 @@
 		return result;
 	}
 
-	function setNestedError<TErrorObj>(
-		err: TErrorObj,
-		keysArray: Array<string | number | symbol>,
-		value: string,
-		previousKeys: Array<string | number | symbol> = []
-	): TErrorObj {
-		if (!err || typeof err !== "object" || !["String", "Object", "Array"].includes((err as object).constructor.name))
-			throw new Error("Error must be an object");
-		if (!keysArray.length) throw new Error("Keys array must have at least one key");
-		const key = keysArray.shift() as keyof TErrorObj;
-		const path = [...previousKeys, key]
-			.map((c, i) => {
-				if (typeof c === "number") return `[${c}]`;
-				return `${i == 0 ? "" : "."}${c.toString()}`;
-			})
-			.join("");
-		if (!(key in err)) throw new Error(`Key ${path} not found`);
-		if (keysArray.length && typeof err[key] === "object" && ["Object", "Array"].includes((err[key] as object).constructor.name)) {
-			err[key] = setNestedError(err[key], keysArray, value, [...previousKeys, key]);
-		} else {
-			if (keysArray.length) throw new Error(`Cannot set nested error on non-object ${path}`);
-			if (!err[key]) err[key] = value.trim() as (TErrorObj & object)[keyof TErrorObj];
+	type Join<K, P> = K extends string | number
+		? P extends string | number
+			? `${K}${"" extends P ? "" : "."}${P}`
+			: never
+		: never;
+
+	type Prev = [never, 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, ...0[]];
+
+	type Paths<T, D extends number = 10> = [D] extends [never]
+		? never
+		: T extends object
+		? { [K in keyof T]-?: K extends string | number ? `${K}` | Join<K, Paths<T[K], Prev[D]>> : never }[keyof T]
+		: "";
+
+	function setError(path: Paths<typeof errors, 4>, value: string) {
+		const keys = `${path}`.split(".");
+		const lastKey = keys.pop();
+		const pointer = keys.reduce((accumulator: { [x: string]: any }, currentValue: string | number) => {
+			if (accumulator[currentValue] === undefined) accumulator[currentValue] = {};
+			return accumulator[currentValue];
+		}, errors);
+		if (typeof lastKey !== "undefined") {
+			pointer[lastKey] = value;
+			errors = pointer as any;
 		}
-		return err;
 	}
 </script>
 

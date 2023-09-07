@@ -75,18 +75,18 @@
 	let:errors
 	let:saving
 	on:validate={(event) => {
-		const { addError } = event.detail;
+		const { setError } = event.detail;
 
 		if (values.characterId && !(data.characters || []).find((c) => c.id === values.characterId)) {
-			addError(["characterId"], "Character not found");
+			setError("characterId", "Character not found");
 		}
 
 		if (character?.name && !values.applied_date) {
-			addError(["applied_date"], "Applied date is required if assigned character is entered");
+			setError("applied_date", "Applied date is required if assigned character is entered");
 		}
 
 		if (values.applied_date && !values.characterId) {
-			addError(["characterId"], "Assigned character is required if applied date is entered");
+			setError("characterId", "Assigned character is required if applied date is entered");
 		}
 	}}
 	on:before-submit={() => {
