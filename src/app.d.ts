@@ -9,7 +9,7 @@ declare global {
 	}
 
 	interface Document {
-		startViewTransition: (callback: () => Promise<undefined>) => void;
+		startViewTransition: (callback: (() => Promise<undefined>) | (() => void)) => void;
 	}
 }
 
