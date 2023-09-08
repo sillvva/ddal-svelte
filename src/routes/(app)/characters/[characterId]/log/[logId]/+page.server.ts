@@ -18,11 +18,11 @@ export const load = async (event) => {
 
 	const log =
 		event.params.logId !== "new"
-			? await getLog(event.params.logId, character.id).then((log) => {
+			? await getLog(event.params.logId, session.user.id, character.id).then((log) => {
 					if (!log.id) throw error(404, "Log not found");
 					return log;
 			  })
-			: defaultLog(character.id);
+			: defaultLog(session.user.id, character.id);
 
 	const dms = await getUserDMs(session.user.id);
 
@@ -35,7 +35,8 @@ export const load = async (event) => {
 		...event.params,
 		log,
 		character,
-		dms
+		dms,
+		user: session.user
 	};
 };
 
@@ -47,7 +48,7 @@ export const actions = {
 		const character = await getCharacterCache(event.params.characterId || "", false);
 		if (!character) throw redirect(301, "/characters");
 
-		const log = await getLog(event.params.logId || "", character.id);
+		const log = await getLog(event.params.logId || "", session.user.id, character.id);
 		if (event.params.logId !== "new" && !log.id) throw redirect(301, `/characters/${character.id}`);
 
 		try {

@@ -191,7 +191,7 @@ export const getLogsSummary = (
 	};
 };
 
-export const defaultLog = (characterId = "") => ({
+export const defaultLog = (userId: string, characterId = "") => ({
 	characterId: characterId,
 	id: "",
 	name: "",
@@ -210,7 +210,8 @@ export const defaultLog = (characterId = "") => ({
 		id: "",
 		name: "",
 		DCI: null,
-		uid: ""
+		uid: "",
+		owner: userId
 	},
 	applied_date: null,
 	is_dm_log: !characterId,

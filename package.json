@@ -13,7 +13,8 @@
 	},
 	"devDependencies": {
 		"@sveltejs/adapter-auto": "^2.1.0",
-		"@sveltejs/kit": "^1.22.3",
+		"@sveltejs/kit": "^1.24.1",
+		"@types/lodash": "^4.14.198",
 		"@types/qs": "^6.9.7",
 		"@typescript-eslint/eslint-plugin": "^5.62.0",
 		"@typescript-eslint/parser": "^5.62.0",
@@ -43,7 +44,10 @@
 		"@auth/sveltekit": "^0.3.6",
 		"@decs/typeschema": "0.10.0",
 		"@prisma/client": "^5.0.0",
+		"@types/lodash.set": "^4.3.7",
 		"ioredis": "^5.3.2",
+		"lodash": "^4.17.21",
+		"lodash.set": "^4.3.2",
 		"minisearch": "^6.1.0",
 		"valibot": "^0.13.1"
 	},

@@ -1,6 +1,6 @@
 <script lang="ts">
 	import { browser, dev } from "$app/environment";
-	import { afterNavigate } from "$app/navigation";
+	import { afterNavigate, onNavigate } from "$app/navigation";
 	import { navigating, page } from "$app/stores";
 	import { pageLoader } from "$lib/store";
 	import { fade } from "svelte/transition";
@@ -11,6 +11,17 @@
 
 	afterNavigate(() => {
 		pageLoader.set(false);
+	});
+
+	onNavigate((navigation) => {
+		if (!document.startViewTransition) return;
+
+		return new Promise((resolve) => {
+			document.startViewTransition(async () => {
+				resolve();
+				await navigation.complete;
+			});
+		});
 	});
 
 	$: if (browser) {

@@ -3,7 +3,7 @@ import { prisma } from "$src/server/db";
 import { cache } from "../cache";
 
 export type LogData = Exclude<Awaited<ReturnType<typeof getLog>>, null>;
-export async function getLog(logId: string, characterId = "") {
+export async function getLog(logId: string, userId: string, characterId = "") {
 	const log = await prisma.log.findFirst({
 		where: { id: logId },
 		include: {
@@ -14,11 +14,11 @@ export async function getLog(logId: string, characterId = "") {
 			story_awards_lost: true
 		}
 	});
-	return log || defaultLog(characterId);
+	return log || defaultLog(userId, characterId);
 }
 
 export type DMLogData = Exclude<Awaited<ReturnType<typeof getDMLog>>, null>;
-export async function getDMLog(logId: string) {
+export async function getDMLog(logId: string, userId: string) {
 	const log = await prisma.log.findFirst({
 		where: { id: logId, is_dm_log: true },
 		include: {
@@ -29,7 +29,7 @@ export async function getDMLog(logId: string) {
 			story_awards_lost: true
 		}
 	});
-	return log || defaultLog();
+	return log || defaultLog(userId);
 }
 
 export type DMLogsData = Awaited<ReturnType<typeof getDMLogs>>;

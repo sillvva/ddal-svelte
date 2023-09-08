@@ -32,7 +32,8 @@ export const dungeonMasterSchema = object({
 	id: withDefault(string(), ""),
 	name: withDefault(string(), "Me"),
 	DCI: withDefault(nullable(string([regex(/[0-9]{0,10}/, "Invalid DCI Format")])), null),
-	uid: withDefault(nullable(string()), "")
+	uid: withDefault(nullable(string()), ""),
+	owner: string()
 });
 
 const itemSchema = (type: "Item" | "Story Award") =>

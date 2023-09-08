@@ -25,7 +25,7 @@
 		? getStoryAwards(character, { excludeDropped: true, lastLogId: log.id }).sort((a, b) => sorter(a.name, b.name))
 		: [];
 
-	const defaultDM = { id: "", name: "", DCI: null, uid: "" };
+	const defaultDM = { id: "", name: "", DCI: null, uid: "", owner: data.user.id };
 	let dm = log.dm || defaultDM;
 	let previews = {
 		description: false
@@ -55,18 +55,20 @@
 		story_awards_gained: storyAwardsGained,
 		story_awards_lost: storyAwardsLost,
 		dm:
-			!(dm.uid || dm.name.trim()) && data.session?.user?.id
+			!(dm.uid || dm.name.trim()) && data.user.id
 				? {
 						id: "",
-						name: data.session.user.name || "Me",
+						name: data.user.name || "Me",
 						DCI: null,
-						uid: data.session.user.id
+						uid: data.user.id,
+						owner: data.user.id
 				  }
 				: {
 						id: dm.id,
 						name: dm.name.trim(),
 						DCI: dm.DCI,
-						uid: dm.uid
+						uid: dm.uid,
+						owner: data.user.id
 				  }
 	} satisfies LogSchema;
 
@@ -460,6 +462,7 @@
 								class="textarea-bordered textarea w-full focus:border-primary"
 								style="resize: none;"
 								value={item.description}
+								spellcheck="true"
 							/>
 							<label for={`magic_items_gained.${index}.description`} class="label">
 								<span class="label-text-alt text-error" />
@@ -557,6 +560,7 @@
 								class="textarea-bordered textarea w-full focus:border-primary"
 								style="resize: none;"
 								value={item.description}
+								spellcheck="true"
 							/>
 							<label for={`story_awards_gained.${index}.description`} class="label">
 								<span class="label-text-alt text-error" />

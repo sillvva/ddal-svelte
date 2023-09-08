@@ -9,4 +9,5 @@
 	bind:value
 	{...$$restProps}
 	style={`min-height: ${el?.scrollHeight + 10}px; height: auto; resize: none;`}
+	spellcheck="true"
 />

@@ -19,6 +19,7 @@
 	import { enhance } from "$app/forms";
 	import { beforeNavigate } from "$app/navigation";
 	import type { ActionResult } from "@sveltejs/kit";
+	import set from "lodash.set";
 	import { createEventDispatcher } from "svelte";
 
 	const dispatch = createEventDispatcher<{
@@ -28,7 +29,7 @@
 			data?: Infer<TSchema>;
 			changes: typeof changes;
 			errors: typeof errors;
-			addError: typeof addError;
+			setError: typeof setError;
 		};
 	}>();
 
@@ -45,23 +46,20 @@
 	export let errors = { form: "", ...emptyClone(data) };
 
 	let initialErrors = structuredClone(errors);
-	function addError(keysArray: Array<string | number | symbol>, value: string) {
-		errors = setNestedError(errors, keysArray, value);
-	}
 
 	async function checkErrors(data: InferIn<TSchema>) {
 		errors = { form: "", ...emptyClone(data) };
 		const result = await validate(schema, data);
 		if ("data" in result) {
-			dispatch("validate", { data: (validatedData = result.data), changes, errors, addError });
+			dispatch("validate", { data: (validatedData = result.data), changes, errors, setError });
 		} else if ("issues" in result) {
 			result.issues.forEach((issue) => {
 				if (!issue.path) issue.path = ["form"];
 				if (saving || changes.includes(issue.path.join("."))) {
-					addError(issue.path, issue.message);
+					errors = set(errors, issue.path, issue.message);
 				}
 			});
-			dispatch("validate", { changes, errors, addError });
+			dispatch("validate", { changes, errors, setError });
 		}
 	}
 
@@ -125,28 +123,30 @@
 		return result;
 	}
 
-	function setNestedError<TErrorObj extends object>(
-		err: TErrorObj,
-		keysArray: Array<string | number | symbol>,
-		value: string,
-		previousKeys: Array<string | number | symbol> = []
-	) {
-		if (!keysArray.length) throw new Error("Keys array must have at least one key");
-		const key = keysArray.shift() as keyof TErrorObj;
-		const path = [...previousKeys, key]
-			.map((c, i) => {
-				if (typeof c === "number") return `[${c}]`;
-				return `${i == 0 ? "" : "."}${c.toString()}`;
-			})
-			.join("");
-		if (!(key in err)) throw new Error(`Key ${path} not found`);
-		if (keysArray.length && ["Object", "Array"].includes((err[key] as object).constructor.name)) {
-			err[key] = setNestedError(err[key], keysArray, value, [...previousKeys, key]);
-		} else {
-			if (keysArray.length) throw new Error(`Cannot set nested error on non-object ${path}`);
-			if (!err[key]) err[key] = value.trim() as TErrorObj[keyof TErrorObj];
-		}
-		return err;
+	type Idx<T, K> = K extends keyof T ? T[K] : number extends keyof T ? (K extends `${number}` ? T[number] : never) : never;
+
+	type Join<K, P> = K extends string | number
+		? P extends string | number
+			? `${K}${"" extends P ? "" : "."}${P}`
+			: never
+		: never;
+
+	type Prev = [never, 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, ...0[]];
+
+	type Paths<T, D extends number = 10> = [D] extends [never]
+		? never
+		: T extends object
+		? { [K in keyof T]-?: K extends string | number ? `${K}` | Join<K, Paths<T[K], Prev[D]>> : never }[keyof T]
+		: "";
+
+	type PathValue<T, P extends Paths<T, 4>> = P extends `${infer Key}.${infer Rest}`
+		? Rest extends Paths<Idx<T, Key>, 4>
+			? PathValue<Idx<T, Key>, Rest>
+			: never
+		: Idx<T, P>;
+
+	function setError<T extends typeof errors, K extends Paths<T, 4>>(path: K, message: PathValue<T, K>) {
+		errors = set(errors, path, message);
 	}
 </script>
 
