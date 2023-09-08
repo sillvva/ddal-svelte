@@ -3,6 +3,7 @@
 	import { afterNavigate, onNavigate } from "$app/navigation";
 	import { navigating, page } from "$app/stores";
 	import { pageLoader } from "$lib/store";
+	import { transition } from "$src/lib/utils";
 	import { fade } from "svelte/transition";
 	import { twMerge } from "tailwind-merge";
 	import "../app.css";
@@ -14,10 +15,8 @@
 	});
 
 	onNavigate((navigation) => {
-		if (!document.startViewTransition) return;
-
 		return new Promise((resolve) => {
-			document.startViewTransition(async () => {
+			transition(async () => {
 				resolve();
 				await navigation.complete;
 			});

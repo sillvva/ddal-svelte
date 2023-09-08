@@ -38,3 +38,8 @@ export const sorter = (a: string | number | Date, b: string | number | Date) => 
 	if (a instanceof Date && b instanceof Date) return a.getTime() - b.getTime();
 	return 0;
 };
+
+export const transition = (action: (() => Promise<undefined>) | (() => void)) => {
+	if (!document.startViewTransition) return;
+	document.startViewTransition(action);
+};

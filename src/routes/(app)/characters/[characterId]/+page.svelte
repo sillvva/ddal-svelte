@@ -6,7 +6,7 @@
 	import Markdown from "$lib/components/Markdown.svelte";
 	import SearchResults from "$lib/components/SearchResults.svelte";
 	import { modal, pageLoader } from "$lib/store";
-	import { slugify, sorter, stopWords } from "$lib/utils";
+	import { slugify, sorter, stopWords, transition } from "$lib/utils";
 	import { setCookie } from "$src/server/cookie";
 	import MiniSearch from "minisearch";
 	import { twMerge } from "tailwind-merge";
@@ -149,7 +149,7 @@
 						target="_blank"
 						rel="noreferrer noopener"
 						class="mask mask-squircle mx-auto h-20 w-full bg-primary"
-						style:view-transition-name={slugify("Image: " + character.name)}
+						style:view-transition-name={slugify("image-" + character.id)}
 					>
 						<img src={character.image_url} class="h-full w-full object-cover object-top transition-all" alt={character.name} />
 					</a>
@@ -230,7 +230,7 @@
 							target="_blank"
 							rel="noreferrer noopener"
 							class="mask mask-squircle mx-auto h-52 w-full bg-primary"
-							style:view-transition-name={slugify("Image: " + character.name)}
+							style:view-transition-name={slugify("image-" + character.id)}
 						>
 							<img src={character.image_url} class="h-full w-full object-cover object-top transition-all" alt={character.name} />
 						</a>
@@ -293,7 +293,7 @@
 			</a>
 			<button
 				class={twMerge("btn sm:hidden", descriptions && "btn-primary")}
-				on:click={() => (descriptions = !descriptions)}
+				on:click={() => transition(() => (descriptions = !descriptions))}
 				on:keypress
 				aria-label="Toggle Notes"
 				tabindex="0"
@@ -306,7 +306,7 @@
 		<div class="hidden flex-1 sm:block" />
 		<button
 			class={twMerge("btn hidden sm:btn-sm sm:inline-flex", descriptions && "btn-primary")}
-			on:click={() => (descriptions = !descriptions)}
+			on:click={() => transition(() => (descriptions = !descriptions))}
 			on:keypress
 			aria-label="Toggle Notes"
 			tabindex="0"
@@ -525,7 +525,10 @@
 						{/if}
 					</tr>
 					{#if log.description?.trim() || log.story_awards_gained.length > 0 || log.story_awards_lost.length > 0}
-						<tr class={twMerge(!descriptions && "hidden print:table-row")}>
+						<tr
+							class={twMerge(!descriptions && "hidden print:table-row")}
+							style:view-transition-name={slugify(`notes-${log.id}`)}
+						>
 							<td
 								colSpan={100}
 								class={twMerge(
