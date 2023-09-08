@@ -24,7 +24,7 @@ export async function saveLog(input: LogSchema, user?: User) {
 						where: {
 							OR:
 								input.is_dm_log || isMe
-									? [{ uid: user.id }]
+									? [{ uid: user.id }, { owner: user.id }]
 									: input.dm.DCI === null
 									? [{ name: input.dm.name.trim() }]
 									: [{ name: input.dm.name.trim() }, { DCI: input.dm.DCI }]
@@ -36,7 +36,8 @@ export async function saveLog(input: LogSchema, user?: User) {
 							data: {
 								name: input.dm.name.trim(),
 								DCI: input.dm.DCI,
-								uid: input.is_dm_log || isMe ? user.id : null
+								uid: input.is_dm_log || isMe ? user.id : null,
+								owner: user.id
 							}
 						});
 				} else {
@@ -48,7 +49,8 @@ export async function saveLog(input: LogSchema, user?: User) {
 							data: {
 								name: input.dm.name.trim(),
 								DCI: input.dm.DCI,
-								uid: input.is_dm_log || isMe ? user.id : null
+								uid: input.is_dm_log || isMe ? user.id : null,
+								owner: user.id
 							}
 						});
 					} catch (err) {

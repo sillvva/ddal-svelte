@@ -47,7 +47,8 @@
 			id: log.dm?.id || "",
 			name: log.dm?.name || "",
 			DCI: log.dm?.DCI || null,
-			uid: log.dm?.uid || ""
+			uid: log.dm?.uid || data.user.id,
+			owner: data.user.id
 		}
 	} satisfies LogSchema;
 

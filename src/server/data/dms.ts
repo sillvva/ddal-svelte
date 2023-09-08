@@ -3,17 +3,20 @@ import { cache } from "../cache";
 
 export type UserDMs = Awaited<ReturnType<typeof getUserDMs>>;
 export async function getUserDMs(userId: string) {
-	return await prisma.dungeonMaster.findMany({
+	const dms = await prisma.dungeonMaster.findMany({
 		where: {
 			OR: [
+				// {
+				// 	logs: {
+				// 		every: {
+				// 			character: {
+				// 				userId: userId
+				// 			}
+				// 		}
+				// 	}
+				// },
 				{
-					logs: {
-						every: {
-							character: {
-								userId: userId
-							}
-						}
-					}
+					owner: userId
 				},
 				{
 					uid: userId
@@ -21,26 +24,37 @@ export async function getUserDMs(userId: string) {
 			]
 		}
 	});
+
+	return dms
+		.filter((dm) => dm.owner === userId || dm.uid === userId)
+		.map((dm) => ({
+			...dm,
+			owner: userId
+		}));
 }
 
 export type UserDMsWithLogs = Awaited<ReturnType<typeof getUserDMsWithLogs>>;
 export async function getUserDMsWithLogs(userId: string) {
-	return await prisma.dungeonMaster.findMany({
+	const dms = await prisma.dungeonMaster.findMany({
 		where: {
 			OR: [
+				// {
+				// 	logs: {
+				// 		every: {
+				// 			character: {
+				// 				userId: userId
+				// 			}
+				// 		}
+				// 	}
+				// },
 				{
-					logs: {
-						every: {
-							character: {
-								userId: userId
-							}
-						}
-					}
+					owner: userId
 				},
 				{
 					uid: userId
 				}
-			]
+			],
+			logs: {}
 		},
 		include: {
 			logs: {
@@ -48,15 +62,23 @@ export async function getUserDMsWithLogs(userId: string) {
 					character: {
 						select: {
 							id: true,
-							name: true
+							name: true,
+							userId: true
 						}
 					}
 				}
 			}
 		}
 	});
+
+	return dms
+		.filter((dm) => dm.owner === userId || dm.uid === userId)
+		.map((dm) => ({
+			...dm,
+			owner: userId
+		}));
 }
 
 export async function getUserDMsWithLogsCache(userId: string) {
-	return cache(() => getUserDMsWithLogs(userId), ["dms", userId], 3 * 3600);
+	return cache(() => getUserDMsWithLogs(userId), ["dms", userId, "logs"], 3 * 3600);
 }

@@ -12,10 +12,12 @@ export const load = async (event) => {
 	const session = parent.session;
 	if (!session?.user?.name) throw signInRedirect(event.url);
 
-	const log = await getDMLog(event.params.logId);
+	const log = await getDMLog(event.params.logId, session.user.id);
 	if (event.params.logId !== "new" && !log.id) throw error(404, "Log not found");
 
-	log.dm = log.dm?.name ? log.dm : { name: session.user.name || "", id: "", DCI: null, uid: session.user.id };
+	log.dm = log.dm?.name
+		? log.dm
+		: { name: session.user.name || "", id: "", DCI: null, uid: session.user.id, owner: session.user.id };
 
 	const characters = await getCharactersCache(session.user.id);
 	const character = characters.find((c) => c.id === log.characterId);
@@ -29,7 +31,8 @@ export const load = async (event) => {
 		...event.params,
 		characters,
 		character,
-		log
+		log,
+		user: session.user
 	};
 };
 
@@ -38,7 +41,7 @@ export const actions = {
 		const session = await event.locals.getSession();
 		if (!session?.user) throw redirect(301, "/");
 
-		const log = await getLog(event.params.logId || "");
+		const log = await getLog(event.params.logId || "", session.user.id);
 		if (event.params.logId !== "new" && !log.id) throw redirect(301, `/dm-logs`);
 
 		try {

@@ -46,7 +46,7 @@ model User {
     accounts      Account[]
     sessions      Session[]
     characters    Character[]
-    // settings      UserSettings?
+    dms           DungeonMaster[]
 }
 
 // model UserSettings {
@@ -120,7 +120,11 @@ model DungeonMaster {
     name  String
     DCI   String?
     uid   String?
+    owner String?
     logs  Log[]
+    user  User?   @relation(fields: [owner], references: [id])
+
+    @@index([owner])
 }
 
 model MagicItem {
