@@ -39,7 +39,10 @@ export const sorter = (a: string | number | Date, b: string | number | Date) => 
 	return 0;
 };
 
-export const transition = (action: (() => Promise<undefined>) | (() => void)) => {
-	if (!document.startViewTransition) return;
-	document.startViewTransition(action);
+export const transition = (action: ViewTransitionCallback) => {
+	if (!document.startViewTransition) {
+		action();
+		return;
+	}
+	return document.startViewTransition(action);
 };
