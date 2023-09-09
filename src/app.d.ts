@@ -8,8 +8,17 @@ declare global {
 		// interface Platform {}
 	}
 
+	interface ViewTransition {
+		finished: Promise<void>;
+		ready: Promise<void>;
+		updateCallbackDone: Promise<void>;
+		skipTransition: () => void;
+	}
+
+	type ViewTransitionCallback = (() => Promise<void>) | (() => void);
+
 	interface Document {
-		startViewTransition: (callback: (() => Promise<undefined>) | (() => void)) => void;
+		startViewTransition: (callback: ViewTransitionCallback) => ViewTransition;
 	}
 }
 
