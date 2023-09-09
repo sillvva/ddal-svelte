@@ -40,6 +40,9 @@ export const sorter = (a: string | number | Date, b: string | number | Date) => 
 };
 
 export const transition = (action: ViewTransitionCallback) => {
-	if (!document.startViewTransition) return;
+	if (!document.startViewTransition) {
+		action();
+		return;
+	}
 	return document.startViewTransition(action);
 };
