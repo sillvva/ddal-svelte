@@ -9,7 +9,7 @@
 	import ComboBox from "$src/lib/components/ComboBox.svelte";
 	import DateTimeInput from "$src/lib/components/DateTimeInput.svelte";
 	import Markdown from "$src/lib/components/Markdown.svelte";
-	import { logSchema, type LogSchema } from "$src/lib/types/schemas";
+	import { logSchema, type LogSchemaIn } from "$src/lib/types/schemas";
 	import { twMerge } from "tailwind-merge";
 
 	export let data;
@@ -47,9 +47,9 @@
 
 	$: values = {
 		...log,
-		characterId: log.characterId || character?.id || "",
-		characterName: character?.name || "",
-		description: log.description || "",
+		characterId: log.characterId || character.id,
+		characterName: character.name,
+		description: log.description,
 		magic_items_gained: magicItemsGained,
 		magic_items_lost: magicItemsLost,
 		story_awards_gained: storyAwardsGained,
@@ -57,7 +57,6 @@
 		dm:
 			!(dm.uid || dm.name.trim()) && data.user.id
 				? {
-						id: "",
 						name: data.user.name || "Me",
 						DCI: null,
 						uid: data.user.id,
@@ -70,7 +69,7 @@
 						uid: dm.uid,
 						owner: data.user.id
 				  }
-	} satisfies LogSchema;
+	} satisfies LogSchemaIn;
 
 	export const snapshot = {
 		capture: () => ({

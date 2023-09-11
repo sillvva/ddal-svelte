@@ -7,7 +7,7 @@
 	import ComboBox from "$src/lib/components/ComboBox.svelte";
 	import DateTimeInput from "$src/lib/components/DateTimeInput.svelte";
 	import Markdown from "$src/lib/components/Markdown.svelte";
-	import { logSchema, type LogSchema } from "$src/lib/types/schemas";
+	import { logSchema, type LogSchemaIn } from "$src/lib/types/schemas";
 	import { twMerge } from "tailwind-merge";
 
 	export let data;
@@ -31,26 +31,24 @@
 		description: mi.description || ""
 	}));
 
-	$: characterId = log.characterId || character?.id || "";
-	$: characterName = data.characters.find((c) => c.id === characterId)?.name || character?.name || "";
-
+	$: characterId = log.characterId || character?.id;
 	$: values = {
 		...log,
 		characterId: characterId,
-		characterName: characterName,
-		description: log.description || "",
+		characterName: data.characters.find((c) => c.id === characterId)?.name || character?.name,
+		description: log.description,
 		magic_items_gained: magicItemsGained,
 		magic_items_lost: [],
 		story_awards_gained: storyAwardsGained,
 		story_awards_lost: [],
 		dm: {
-			id: log.dm?.id || "",
-			name: log.dm?.name || "",
-			DCI: log.dm?.DCI || null,
+			id: log.dm?.id,
+			name: log.dm?.name,
+			DCI: log.dm?.DCI,
 			uid: log.dm?.uid || data.user.id,
 			owner: data.user.id
 		}
-	} satisfies LogSchema;
+	} satisfies LogSchemaIn;
 
 	export const snapshot = {
 		capture: () => ({

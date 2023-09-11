@@ -42,14 +42,14 @@
 		"@auth/core": "^0.10.0",
 		"@auth/prisma-adapter": "^1.0.1",
 		"@auth/sveltekit": "^0.3.6",
-		"@decs/typeschema": "0.10.0",
+		"@decs/typeschema": "0.10.2",
 		"@prisma/client": "^5.0.0",
 		"@types/lodash.set": "^4.3.7",
 		"ioredis": "^5.3.2",
 		"lodash": "^4.17.21",
 		"lodash.set": "^4.3.2",
 		"minisearch": "^6.1.0",
-		"valibot": "^0.13.1"
+		"valibot": "^0.15.0"
 	},
 	"pnpm": {
 		"overrides": {
