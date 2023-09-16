@@ -26,6 +26,16 @@ export function handleSKitError(err: unknown) {
 		throw error(err.status, err.body);
 }
 
+export type LimitDepth<T, TLength = 5, TDepth extends unknown[] = []> = TDepth["length"] extends TLength
+	? never
+	: T extends object
+	? {
+			[K in keyof T]: LimitDepth<T[K], TLength, [unknown, ...TDepth]>;
+	  }
+	: T extends Array<infer U>
+	? Array<LimitDepth<U, TLength, [unknown, ...TDepth]>>
+	: T;
+
 export type DeepStringify<T> = {
 	[K in keyof T]: T[K] extends Array<infer E>
 		? DeepStringify<Array<E>>
@@ -54,11 +64,11 @@ export type Paths<T, D extends number = 10> = [D] extends [never]
 	  }[keyof T]
 	: "";
 
-export type PathValue<T, P extends Paths<T, 4>> = P extends `${infer Key}.${infer Rest}`
-	? Rest extends Paths<Idx<T, Key>, 4>
-		? PathValue<Idx<T, Key>, Rest>
+export type PathValue<T, P extends Paths<T, 5>, TLength = 5> = P extends `${infer Key}.${infer Rest}`
+	? Rest extends Paths<Idx<LimitDepth<T, TLength>, Key>, 5>
+		? PathValue<Idx<LimitDepth<T, TLength>, Key>, Rest>
 		: never
-	: Idx<T, P>;
+	: Idx<LimitDepth<T, TLength>, P>;
 
 /**
  * `SvelteMap` class, a subclass of JavaScript's `Map` class

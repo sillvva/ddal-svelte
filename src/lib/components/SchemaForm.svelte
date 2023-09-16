@@ -43,12 +43,14 @@
 	export let method = "POST";
 	export let resetOnSave = false;
 	export let saving = false;
-	export let errors = new SvelteMap<"form" | Paths<InferIn<TSchema>>, string>();
 
-	let initialErrors = structuredClone(errors);
+	let initialStructure = emptyClone(data);
+	$: currentStructure = emptyClone(data);
+
+	export let errors = new SvelteMap<"form" | Paths<typeof initialStructure, 6>, string>();
 
 	async function checkErrors(data: InferIn<TSchema>) {
-		errors = new SvelteMap<"form" | Paths<InferIn<TSchema>>, string>();
+		errors = new SvelteMap<"form" | Paths<typeof initialStructure, 6>, string>();
 		const result = await validate(schema, data);
 		if ("data" in result) {
 			dispatch("validate", { data: (validatedData = result.data), changes, errors, setError });
@@ -64,7 +66,7 @@
 	}
 
 	function checkChanges() {
-		const formStructureIsDiff = JSON.stringify(emptyClone(errors)) !== JSON.stringify(initialErrors);
+		const formStructureIsDiff = JSON.stringify(currentStructure) !== JSON.stringify(initialStructure);
 		changes = !saving
 			? [...elForm.querySelectorAll("[data-dirty]")]
 					.map((el) => el.getAttribute("name") || "hidden")
@@ -109,7 +111,7 @@
 		return result;
 	}
 
-	function setError<K extends "form" | Paths<InferIn<TSchema>>>(path: K, message: string) {
+	function setError<K extends "form" | Paths<typeof initialStructure, 6>>(path: K, message: string) {
 		errors = errors.set(path, message);
 	}
 </script>
