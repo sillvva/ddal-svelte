@@ -20,10 +20,10 @@
 	<BackButton href="/dms">DMs</BackButton>
 
 	<SchemaForm action="?/saveDM" schema={dungeonMasterSchema} data={dm} bind:saving let:errors>
-		{#if form?.error || errors.form}
+		{#if form?.error || errors.has("form")}
 			<div class="alert alert-error mb-4 shadow-lg">
 				<Icon src="alert-circle" class="w-6" />
-				{form?.error || errors.form}
+				{form?.error || errors.get("form")}
 			</div>
 		{/if}
 
@@ -45,9 +45,11 @@
 						disabled={saving}
 						class="input-bordered input w-full focus:border-primary"
 					/>
-					<label for="name" class="label">
-						<span class="label-text-alt text-error">{errors.name}</span>
-					</label>
+					{#if errors.has("name")}
+						<label for="name" class="label">
+							<span class="label-text-alt text-error">{errors.get("name")}</span>
+						</label>
+					{/if}
 				</div>
 			</div>
 			<div class="col-span-12 sm:col-span-6">
@@ -62,9 +64,11 @@
 						disabled={saving}
 						class="input-bordered input w-full focus:border-primary"
 					/>
-					<label for="DCI" class="label">
-						<span class="label-text-alt text-error">{errors.DCI}</span>
-					</label>
+					{#if errors.has("DCI")}
+						<label for="DCI" class="label">
+							<span class="label-text-alt text-error">{errors.get("DCI")}</span>
+						</label>
+					{/if}
 				</div>
 			</div>
 			<div class="m-4 col-span-12 text-center">

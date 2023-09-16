@@ -94,10 +94,10 @@
 		}
 	}}
 >
-	{#if form?.error || errors.form}
+	{#if form?.error || errors.has("form")}
 		<div class="alert alert-error mb-4 shadow-lg">
 			<Icon src="alert-circle" class="w-6" />
-			{form?.error || errors.form}
+			{form?.error || errors.get("form")}
 		</div>
 	{/if}
 
@@ -121,11 +121,11 @@
 				bind:value={log.name}
 				disabled={saving}
 				class="input-bordered input w-full focus:border-primary"
-				aria-invalid={errors.name ? "true" : "false"}
+				aria-invalid={errors.get("name") ? "true" : "false"}
 			/>
-			{#if errors.name}
+			{#if errors.has("name")}
 				<label for="name" class="label">
-					<span class="label-text-alt text-error">{errors.name}</span>
+					<span class="label-text-alt text-error">{errors.get("name")}</span>
 				</label>
 			{/if}
 		</div>
@@ -143,9 +143,9 @@
 				disabled={saving}
 				class="input-bordered input w-full focus:border-primary"
 			/>
-			{#if errors.date}
+			{#if errors.has("date")}
 				<label for="date" class="label">
-					<span class="label-text-alt text-error">{errors.date}</span>
+					<span class="label-text-alt text-error">{errors.get("date")}</span>
 				</label>
 			{/if}
 		</div>
@@ -177,9 +177,9 @@
 					log.applied_date = data.character && log.applied_date ? log.applied_date : null;
 				}}
 			/>
-			{#if errors.characterId}
+			{#if errors.has("characterId")}
 				<label for="characterName" class="label">
-					<span class="label-text-alt text-error">{errors.characterId}</span>
+					<span class="label-text-alt text-error">{errors.get("characterId")}</span>
 				</label>
 			{/if}
 		</div>
@@ -198,11 +198,11 @@
 				required={!!log.characterId}
 				disabled={saving}
 				class="input-bordered input w-full focus:border-primary"
-				aria-invalid={errors.applied_date ? "true" : "false"}
+				aria-invalid={errors.get("applied_date") ? "true" : "false"}
 			/>
-			{#if errors.applied_date}
+			{#if errors.has("applied_date")}
 				<label for="applied_date" class="label">
-					<span class="label-text-alt text-error">{errors.applied_date}</span>
+					<span class="label-text-alt text-error">{errors.get("applied_date")}</span>
 				</label>
 			{/if}
 		</div>
@@ -229,9 +229,9 @@
 						disabled={saving}
 						class="input-bordered input w-full focus:border-primary"
 					/>
-					{#if errors.experience}
+					{#if errors.has("experience")}
 						<label for="experience" class="label">
-							<span class="label-text-alt text-error">{errors.experience}</span>
+							<span class="label-text-alt text-error">{errors.get("experience")}</span>
 						</label>
 					{/if}
 				</div>
@@ -249,9 +249,9 @@
 						disabled={saving}
 						class="input-bordered input w-full focus:border-primary"
 					/>
-					{#if errors.level}
+					{#if errors.has("level")}
 						<label for="level" class="label">
-							<span class="label-text-alt text-error">{errors.level}</span>
+							<span class="label-text-alt text-error">{errors.get("level")}</span>
 						</label>
 					{/if}
 				</div>
@@ -269,9 +269,9 @@
 						disabled={saving}
 						class="input-bordered input w-full focus:border-primary"
 					/>
-					{#if errors.acp}
+					{#if errors.has("acp")}
 						<label for="acp" class="label">
-							<span class="label-text-alt text-error">{errors.acp}</span>
+							<span class="label-text-alt text-error">{errors.get("acp")}</span>
 						</label>
 					{/if}
 				</div>
@@ -286,9 +286,9 @@
 						disabled={saving}
 						class="input-bordered input w-full focus:border-primary"
 					/>
-					{#if errors.tcp}
+					{#if errors.has("tcp")}
 						<label for="tcp" class="label">
-							<span class="label-text-alt text-error">{errors.tcp}</span>
+							<span class="label-text-alt text-error">{errors.get("tcp")}</span>
 						</label>
 					{/if}
 				</div>
@@ -304,9 +304,9 @@
 					disabled={saving}
 					class="input-bordered input w-full focus:border-primary"
 				/>
-				{#if errors.gold}
+				{#if errors.has("gold")}
 					<label for="gold" class="label">
-						<span class="label-text-alt text-error">{errors.gold}</span>
+						<span class="label-text-alt text-error">{errors.get("gold")}</span>
 					</label>
 				{/if}
 			</div>
@@ -321,9 +321,9 @@
 					disabled={saving}
 					class="input-bordered input w-full focus:border-primary"
 				/>
-				{#if errors.dtd}
+				{#if errors.has("dtd")}
 					<label for="dtd" class="label">
-						<span class="label-text-alt text-error">{errors.dtd}</span>
+						<span class="label-text-alt text-error">{errors.get("dtd")}</span>
 					</label>
 				{/if}
 			</div>
@@ -353,8 +353,8 @@
 				<Markdown content={log.description || ""} />
 			</div>
 			<label for="description" class="label">
-				{#if errors.description}
-					<span class="label-text-alt text-error">{errors.description}</span>
+				{#if errors.has("description")}
+					<span class="label-text-alt text-error">{errors.get("description")}</span>
 				{:else}
 					<span class="label-text-alt" />
 				{/if}
@@ -399,9 +399,9 @@
 									disabled={saving}
 									class="input-bordered input w-full focus:border-primary"
 								/>
-								{#if errors.magic_items_gained[index].name}
+								{#if errors.has(`magic_items_gained.${index}.name`)}
 									<label for={`magic_items_gained.${index}.name`} class="label">
-										<span class="label-text-alt text-error">{errors.magic_items_gained[index].name}</span>
+										<span class="label-text-alt text-error">{errors.get(`magic_items_gained.${index}.name`)}</span>
 									</label>
 								{/if}
 							</div>
@@ -456,9 +456,9 @@
 									disabled={saving}
 									class="input-bordered input w-full focus:border-primary"
 								/>
-								{#if errors.story_awards_gained[index].name}
+								{#if errors.has(`story_awards_gained.${index}.name`)}
 									<label for={`story_awards_gained.${index}.name`} class="label">
-										<span class="label-text-alt text-error">{errors.story_awards_gained[index].name}</span>
+										<span class="label-text-alt text-error">{errors.get(`story_awards_gained.${index}.name`)}</span>
 									</label>
 								{/if}
 							</div>

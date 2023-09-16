@@ -22,10 +22,10 @@
 </BackButton>
 
 <SchemaForm action="?/saveCharacter" schema={newCharacterSchema} data={character} let:errors let:saving>
-	{#if form?.error || errors.form}
+	{#if form?.error || errors.has("form")}
 		<div class="alert alert-error mb-4 shadow-lg">
 			<Icon src="alert-circle" class="w-6" />
-			{form?.error || errors.form}
+			{form?.error || errors.get("form")}
 		</div>
 	{/if}
 
@@ -46,9 +46,9 @@
 					bind:value={character.name}
 					class="input-bordered input w-full focus:border-primary"
 				/>
-				{#if errors.name}
+				{#if errors.has("name")}
 					<label for="name" class="label">
-						<span class="label-text-alt text-error">{errors.name}</span>
+						<span class="label-text-alt text-error">{errors.get("name")}</span>
 					</label>
 				{/if}
 			</div>
@@ -65,9 +65,9 @@
 					bind:value={character.campaign}
 					class="input-bordered input w-full focus:border-primary"
 				/>
-				{#if errors.campaign}
+				{#if errors.has("campaign")}
 					<label for="campaign" class="label">
-						<span class="label-text-alt text-error">{errors.campaign}</span>
+						<span class="label-text-alt text-error">{errors.get("campaign")}</span>
 					</label>
 				{/if}
 			</div>
@@ -84,9 +84,9 @@
 					bind:value={character.race}
 					class="input-bordered input w-full focus:border-primary"
 				/>
-				{#if errors.race}
+				{#if errors.has("race")}
 					<label for="race" class="label">
-						<span class="label-text-alt text-error">{errors.race}</span>
+						<span class="label-text-alt text-error">{errors.get("race")}</span>
 					</label>
 				{/if}
 			</div>
@@ -103,9 +103,9 @@
 					bind:value={character.class}
 					class="input-bordered input w-full focus:border-primary"
 				/>
-				{#if errors.class}
+				{#if errors.has("class")}
 					<label for="class" class="label">
-						<span class="label-text-alt text-error">{errors.class}</span>
+						<span class="label-text-alt text-error">{errors.get("class")}</span>
 					</label>
 				{/if}
 			</div>
@@ -122,9 +122,9 @@
 					bind:value={character.character_sheet_url}
 					class="input-bordered input w-full focus:border-primary"
 				/>
-				{#if errors.character_sheet_url}
+				{#if errors.has("character_sheet_url")}
 					<label for="character_sheet_url" class="label">
-						<span class="label-text-alt text-error">{errors.character_sheet_url}</span>
+						<span class="label-text-alt text-error">{errors.get("character_sheet_url")}</span>
 					</label>
 				{/if}
 			</div>
@@ -141,9 +141,9 @@
 					bind:value={character.image_url}
 					class="input-bordered input w-full focus:border-primary"
 				/>
-				{#if errors.image_url}
+				{#if errors.has("image_url")}
 					<label for="image_url" class="label">
-						<span class="label-text-alt text-error">{errors.image_url}</span>
+						<span class="label-text-alt text-error">{errors.get("image_url")}</span>
 					</label>
 				{/if}
 			</div>

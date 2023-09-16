@@ -25,3 +25,66 @@ export function handleSKitError(err: unknown) {
 	)
 		throw error(err.status, err.body);
 }
+
+export type DeepStringify<T> = {
+	[K in keyof T]: T[K] extends Array<infer E>
+		? DeepStringify<Array<E>>
+		: T[K] extends Date | Blob | File
+		? string
+		: T[K] extends object
+		? DeepStringify<T[K]>
+		: string;
+};
+
+type Idx<T, K> = K extends keyof T ? T[K] : number extends keyof T ? (K extends `${number}` ? T[number] : never) : never;
+
+type Join<K, P> = K extends string | number ? (P extends string | number ? `${K}${"" extends P ? "" : "."}${P}` : never) : never;
+
+type Prev = [never, 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, ...0[]];
+
+export type Paths<T, D extends number = 10> = [D] extends [never]
+	? never
+	: T extends object
+	? {
+			[K in keyof T]-?: K extends string | number
+				? DeepStringify<T>[K] extends string
+					? `${K}` | Join<K, Paths<T[K], Prev[D]>>
+					: Join<K, Paths<T[K], Prev[D]>>
+				: never;
+	  }[keyof T]
+	: "";
+
+export type PathValue<T, P extends Paths<T, 4>> = P extends `${infer Key}.${infer Rest}`
+	? Rest extends Paths<Idx<T, Key>, 4>
+		? PathValue<Idx<T, Key>, Rest>
+		: never
+	: Idx<T, P>;
+
+/**
+ * `SvelteMap` class, a subclass of JavaScript's `Map` class
+ * with modified methods for remove and clear operations that return the `Map` itself for chain invocations.
+ */
+export class SvelteMap<TKey, TVal> extends Map<TKey, TVal> {
+	constructor(iterable?: Iterable<readonly [TKey, TVal]> | null) {
+		super(iterable);
+	}
+
+	/**
+	 * `remove` method for `SvelteMap`, deletes an element with the specified key from the Map.
+	 * @param key - Key of the element to remove from the Map.
+	 * @returns `this` - Returns the `Map` itself after removal for chain invocations.
+	 */
+	public remove(key: TKey) {
+		super.delete(key);
+		return this;
+	}
+
+	/**
+	 * `clear` method for `SvelteMap`, removes all elements from the Map.
+	 * @returns `this` - Returns the `Map` itself after the operation for chain invocations.
+	 */
+	public clear() {
+		super.clear();
+		return this;
+	}
+}
