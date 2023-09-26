@@ -3,6 +3,8 @@ import {
 	boolean,
 	custom,
 	date,
+	getOutput,
+	getPipeIssues,
 	literal,
 	maxLength,
 	merge,
@@ -136,15 +138,7 @@ export function iso<TInput extends string>(options?: {
 		const timeRegex = `([01]\\d|2[0-3]):[0-5]\\d${secondsRegex}${timezoneRegex}`;
 		const regex = new RegExp(`^${date ? dateRegex : ""}${date && time ? "T" : time ? "T?" : ""}${time ? timeRegex : ""}$`);
 
-		if (!regex.test(input)) {
-			return {
-				issue: {
-					validation: "iso",
-					message: error,
-					input
-				}
-			};
-		}
-		return { output: input };
+		if (!regex.test(input)) return getPipeIssues("iso", error, input);
+		return getOutput(input);
 	};
 }
