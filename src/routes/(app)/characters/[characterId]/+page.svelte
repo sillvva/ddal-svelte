@@ -89,12 +89,12 @@
 		<BreadCrumbs />
 
 		{#if myCharacter}
-			<a href={`/characters/${character.id}/edit`} class="btn-primary btn-sm btn">Edit</a>
-			<div class="dropdown-end dropdown">
-				<span role="button" tabindex="0" class="btn-sm btn bg-base-100">
+			<a href={`/characters/${character.id}/edit`} class="btn btn-primary btn-sm">Edit</a>
+			<div class="dropdown dropdown-end">
+				<span role="button" tabindex="0" class="btn btn-sm bg-base-100">
 					<Icon src="dots-horizontal" class="w-6" />
 				</span>
-				<ul class="dropdown-content menu rounded-box z-20 w-52 bg-base-100 p-2 shadow">
+				<ul class="menu dropdown-content rounded-box z-20 w-52 bg-base-100 p-2 shadow">
 					<li>
 						<a
 							download={`${slugify(character.name)}.json`}
@@ -164,7 +164,7 @@
 						<span role="button" tabindex="0" class="btn">
 							<Icon src="dots-horizontal" class="w-6" />
 						</span>
-						<ul class="dropdown-content menu rounded-box z-20 w-52 bg-base-100 p-2 shadow">
+						<ul class="menu dropdown-content rounded-box z-20 w-52 bg-base-100 p-2 shadow">
 							{#if character.image_url}
 								<li class="xs:hidden">
 									<a href={character.image_url} target="_blank">View Image</a>
@@ -273,22 +273,19 @@
 		{#if myCharacter}
 			<a
 				href={`/characters/${character.id}/log/new`}
-				class="btn-primary btn hidden sm:btn-sm sm:inline-flex sm:px-3"
+				class="btn btn-primary hidden sm:btn-sm sm:inline-flex sm:px-3"
 				aria-label="New Log"
 			>
 				New Log
 			</a>
 		{/if}
 		{#if logs.length}
-			<input
-				type="text"
-				placeholder="Search"
-				bind:value={search}
-				class="input-bordered input min-w-0 flex-1 sm:input-sm sm:max-w-xs"
-			/>
+			<search class="min-w-0 flex-1 sm:max-w-xs">
+				<input type="text" placeholder="Search" bind:value={search} class="input input-bordered w-full sm:input-sm" />
+			</search>
 		{/if}
 		{#if myCharacter}
-			<a href={`/characters/${character.id}/log/new`} class="btn-primary btn sm:btn-sm sm:hidden sm:px-3" aria-label="New Log">
+			<a href={`/characters/${character.id}/log/new`} class="btn btn-primary sm:btn-sm sm:hidden sm:px-3" aria-label="New Log">
 				<Icon src="plus" class="w-6" />
 			</a>
 			<button
@@ -352,7 +349,7 @@
 							>
 								<SearchResults text={log.name} {search} />
 							</div>
-							<p class="text-netural-content mb-2 text-xs font-normal whitespace-nowrap">
+							<p class="text-netural-content mb-2 whitespace-nowrap text-xs font-normal">
 								{new Date(log.is_dm_log && log.applied_date ? log.applied_date : log.date).toLocaleString()}
 							</p>
 							{#if log.dm && log.type === "game" && log.dm.uid !== character.userId}
@@ -489,7 +486,7 @@
 								<div class="flex flex-col justify-center gap-2">
 									<a
 										href={`/characters/${log.characterId}/log/${log.id}`}
-										class="btn-primary btn sm:btn-sm"
+										class="btn btn-primary sm:btn-sm"
 										aria-label="Edit Log"
 									>
 										<Icon src="pencil" class="w-6 sm:w-4" />
@@ -510,7 +507,7 @@
 									>
 										<input type="hidden" name="logId" value={log.id} />
 										<button
-											class="btn sm:btn-sm btn-delete"
+											class="btn-delete btn sm:btn-sm"
 											on:click|preventDefault={(e) => {
 												if (confirm(`Are you sure you want to delete ${log.name}? This action cannot be reversed.`))
 													e.currentTarget.form?.requestSubmit();

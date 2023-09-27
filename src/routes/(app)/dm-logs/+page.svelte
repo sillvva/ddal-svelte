@@ -71,11 +71,11 @@
 	<div class="hidden gap-4 print:hidden sm:flex">
 		<BreadCrumbs />
 
-		<div class="dropdown-end dropdown">
-			<span role="button" tabindex="0" class="btn-sm btn">
+		<div class="dropdown dropdown-end">
+			<span role="button" tabindex="0" class="btn btn-sm">
 				<Icon src="dots-horizontal" class="w-6" />
 			</span>
-			<ul class="dropdown-content menu rounded-box w-52 bg-base-100 p-2 shadow">
+			<ul class="menu dropdown-content rounded-box w-52 bg-base-100 p-2 shadow">
 				<li>
 					<a download={`dm.json`} href={`/api/export/dm`} target="_blank" rel="noreferrer noopener">Export</a>
 				</li>
@@ -91,9 +91,11 @@
 	{/if}
 
 	<div class="flex gap-4">
-		<a href="/dm-logs/new" class="btn-primary btn-sm btn hidden sm:inline-flex" aria-label="New Log">New Log</a>
-		<input type="text" placeholder="Search" bind:value={search} class="input-bordered input w-full sm:input-sm sm:max-w-xs" />
-		<a href="/dm-logs/new" class="btn-primary btn inline-flex sm:hidden" aria-label="New Log">
+		<a href="/dm-logs/new" class="btn btn-primary btn-sm hidden sm:inline-flex" aria-label="New Log">New Log</a>
+		<search class="w-full">
+			<input type="text" placeholder="Search" bind:value={search} class="input input-bordered w-full sm:input-sm sm:max-w-xs" />
+		</search>
+		<a href="/dm-logs/new" class="btn btn-primary inline-flex sm:hidden" aria-label="New Log">
 			<Icon src="plus" class="inline w-6" />
 		</a>
 	</div>
@@ -117,7 +119,7 @@
 							<td colSpan={5} class="py-20 text-center">
 								<p class="mb-4">You have no DM logs.</p>
 								<p>
-									<a href="/dm-logs/new" class="btn-primary btn">Create one now</a>
+									<a href="/dm-logs/new" class="btn btn-primary">Create one now</a>
 								</p>
 							</td>
 						</tr>
@@ -138,7 +140,7 @@
 									>
 										<SearchResults text={log.name} {search} />
 									</p>
-									<p class="text-netural-content text-xs font-normal whitespace-nowrap">{new Date(log.date).toLocaleString()}</p>
+									<p class="text-netural-content whitespace-nowrap text-xs font-normal">{new Date(log.date).toLocaleString()}</p>
 									{#if log.character}
 										<p class="text-sm font-normal">
 											<span class="font-semibold">Character:</span>
@@ -264,7 +266,7 @@
 								</td>
 								<td class="w-8 align-top print:hidden">
 									<div class="flex flex-col gap-2">
-										<a href="/dm-logs/{log.id}" class="btn-primary btn sm:btn-sm" aria-label="Edit Log">
+										<a href="/dm-logs/{log.id}" class="btn btn-primary sm:btn-sm" aria-label="Edit Log">
 											<Icon src="pencil" class="w-4" />
 										</a>
 										<form
@@ -283,7 +285,7 @@
 										>
 											<input type="hidden" name="logId" value={log.id} />
 											<button
-												class="btn sm:btn-sm btn-delete"
+												class="btn-delete btn sm:btn-sm"
 												on:click|preventDefault={(e) => {
 													if (confirm(`Are you sure you want to delete ${log.name}? This action cannot be reversed.`))
 														e.currentTarget.form?.requestSubmit();
