@@ -29,6 +29,8 @@ export const auth = SvelteKitAuth({
 			return true;
 		},
 		async session({ session, user }) {
+			let error = "";
+			let userId = "";
 			const account = await prisma.account.findFirst({
 				where: { userId: user.id, provider: "google" }
 			});
@@ -67,15 +69,22 @@ export const auth = SvelteKitAuth({
 							}
 						}
 					});
-				} catch (error) {
-					console.error("Error refreshing access token:", error);
-					session.error = "RefreshAccessTokenError";
+				} catch (err) {
+					console.error("Error refreshing access token:", err);
+					error = "RefreshAccessTokenError";
 				}
 			}
 			if (session.user) {
-				session.user.id = user.id;
+				userId = user.id;
 			}
-			return session;
+			return {
+				...session,
+				error,
+				user: {
+					...session.user,
+					id: userId
+				}
+			} satisfies CustomSession;
 		}
 	},
 	secret: AUTH_SECRET,

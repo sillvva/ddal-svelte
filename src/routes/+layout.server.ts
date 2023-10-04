@@ -18,8 +18,16 @@ export const load = async (event) => {
 			path: "/"
 		});
 
+	const session: CustomSession | null = await event.locals.getSession();
+
 	return {
-		session: await event.locals.getSession(),
+		session: session && {
+			...session,
+			user: session.user && {
+				...session.user,
+				id: session.user?.id ?? ""
+			}
+		},
 		breadcrumbs: [] as Array<{ name: string; href?: string }>,
 		mobile: !!event.request.headers
 			.get("user-agent")

@@ -9,8 +9,8 @@ overrides:
 
 dependencies:
   '@auth/core':
-    specifier: ^0.10.0
-    version: 0.10.0
+    specifier: ^0.16.1
+    version: 0.16.1
   '@auth/prisma-adapter':
     specifier: ^1.0.3
     version: 1.0.3(@prisma/client@5.4.0)
@@ -120,8 +120,8 @@ packages:
       '@jridgewell/gen-mapping': 0.3.3
       '@jridgewell/trace-mapping': 0.3.19
 
-  /@auth/core@0.10.0:
-    resolution: {integrity: sha512-mmvAzFUcDHG0m6avQ6/sYI3wtQtt3Tjbk4wCr27OlCeNnlzqK8lDQJIDFbJOTXEu/dNUx8sUQ0xMp7A6GAaHQw==}
+  /@auth/core@0.10.4:
+    resolution: {integrity: sha512-g4rwt0tUZ9FI1weB+FdfgOrO8StJAZ+A7aR7J0smfgXCJFOBiYeKL6ZLY/xG7c6jloncIK6PTArYpc1L98PUWA==}
     peerDependencies:
       nodemailer: ^6.8.0
     peerDependenciesMeta:
@@ -136,12 +136,28 @@ packages:
       preact-render-to-string: 5.2.3(preact@10.11.3)
     dev: false
 
+  /@auth/core@0.16.1:
+    resolution: {integrity: sha512-V+YifnjpyOadiiTbxfYDV2xYWo8xpKNtwYVskAEKUSwMvE0FlSlP+10QGBpf0axS/AJFOO61IR6GncFF/IOrHQ==}
+    peerDependencies:
+      nodemailer: ^6.8.0
+    peerDependenciesMeta:
+      nodemailer:
+        optional: true
+    dependencies:
+      '@panva/hkdf': 1.1.1
+      cookie: 0.5.0
+      jose: 4.15.2
+      oauth4webapi: 2.3.0
+      preact: 10.11.3
+      preact-render-to-string: 5.2.3(preact@10.11.3)
+    dev: false
+
   /@auth/prisma-adapter@1.0.3(@prisma/client@5.4.0):
     resolution: {integrity: sha512-AMwQbO7OiBYRCA6VNfv9CpcpiRh0BP4EKhPdtO+pom9Uhuor2ioE4IqvhUfJyBkSjAP2Gt9WbKqr9kzL9LrtIg==}
     peerDependencies:
       '@prisma/client': '>=2.26.0 || >=3 || >=4 || >=5'
     dependencies:
-      '@auth/core': 0.10.0
+      '@auth/core': 0.10.4
       '@prisma/client': 5.4.0(prisma@5.4.0)
     transitivePeerDependencies:
       - nodemailer
@@ -153,7 +169,7 @@ packages:
       '@sveltejs/kit': ^1.0.0
       svelte: ^3.54.0 || ^4.0.0
     dependencies:
-      '@auth/core': 0.10.0
+      '@auth/core': 0.10.4
       '@sveltejs/kit': 1.25.1(svelte@4.2.1)(vite@4.4.10)
       svelte: 4.2.1
     transitivePeerDependencies:
@@ -1542,6 +1558,10 @@ packages:
 
   /jose@4.14.4:
     resolution: {integrity: sha512-j8GhLiKmUAh+dsFXlX1aJCbt5KMibuKb+d7j1JaOJG6s2UjX1PQlW+OKB/sD4a/5ZYF4RcmYmLSndOoU3Lt/3g==}
+    dev: false
+
+  /jose@4.15.2:
+    resolution: {integrity: sha512-IY73F228OXRl9ar3jJagh7Vnuhj/GzBunPiZP13K0lOl7Am9SoWW3kEzq3MCllJMTtZqHTiDXQvoRd4U95aU6A==}
     dev: false
 
   /js-yaml@4.1.0:

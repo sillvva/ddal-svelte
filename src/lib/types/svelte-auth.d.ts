@@ -1,9 +1,9 @@
-import "@auth/core/types";
+import type { DefaultSession } from "@auth/core/types";
 
-declare module "@auth/core/types" {
-	interface Session {
+declare global {
+	interface CustomSession {
 		user?: {
-			id: string;
+			id?: string;
 		} & DefaultSession["user"];
 		error?: string;
 	}
