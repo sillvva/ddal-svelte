@@ -85,7 +85,7 @@ export const auth = SvelteKitAuth({
 					...session.user,
 					id: userId
 				}
-			} satisfies CustomSession;
+			} satisfies LocalsSession;
 		}
 	},
 	secret: AUTH_SECRET,
