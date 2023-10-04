@@ -18,8 +18,8 @@ dependencies:
     specifier: ^0.3.9
     version: 0.3.9(@sveltejs/kit@1.25.1)(svelte@4.2.1)
   '@decs/typeschema':
-    specifier: 0.11.7
-    version: 0.11.7(valibot@0.18.0)(vite@4.4.10)
+    specifier: 0.12.0
+    version: 0.12.0(valibot@0.18.0)(vite@4.4.10)
   '@prisma/client':
     specifier: ^5.4.0
     version: 5.4.0(prisma@5.4.0)
@@ -130,7 +130,7 @@ packages:
     dependencies:
       '@panva/hkdf': 1.1.1
       cookie: 0.5.0
-      jose: 4.14.4
+      jose: 4.15.2
       oauth4webapi: 2.3.0
       preact: 10.11.3
       preact-render-to-string: 5.2.3(preact@10.11.3)
@@ -176,8 +176,8 @@ packages:
       - nodemailer
     dev: false
 
-  /@decs/typeschema@0.11.7(valibot@0.18.0)(vite@4.4.10):
-    resolution: {integrity: sha512-GfeuQNvf1Hfp8qdL6JQEEpTZ+Nl1cmOSy19nlF+98e06oZ4/S8PWjpTGaX2N1mXHOrRwkpjWOY97X+xyczlDfQ==}
+  /@decs/typeschema@0.12.0(valibot@0.18.0)(vite@4.4.10):
+    resolution: {integrity: sha512-ltkDEpJvQ2LWCltsk2tzjO+rnCzdZzmgq6whYxDKac0wB0AqH8eYKdOcyWr0TklemDaebCdOpUACiMn7j1OZzQ==}
     peerDependencies:
       '@deepkit/type': ^1.0.1-alpha.97
       '@effect/data': ^0.18.6
@@ -192,7 +192,7 @@ packages:
       runtypes: ^6.7.0
       superstruct: ^1.0.3
       valibot: ^0.17.0
-      vite: ^4.4.9
+      vite: ^4.4.10
       yup: ^1.2.0
       zod: ^3.22.2
     peerDependenciesMeta:
@@ -1555,10 +1555,6 @@ packages:
     resolution: {integrity: sha512-oVhqoRDaBXf7sjkll95LHVS6Myyyb1zaunVwk4Z0+WPSW4gjS0pl01zYKHScTuyEhQsFxV5L4DR5r+YqSyqyyg==}
     hasBin: true
     dev: true
-
-  /jose@4.14.4:
-    resolution: {integrity: sha512-j8GhLiKmUAh+dsFXlX1aJCbt5KMibuKb+d7j1JaOJG6s2UjX1PQlW+OKB/sD4a/5ZYF4RcmYmLSndOoU3Lt/3g==}
-    dev: false
 
   /jose@4.15.2:
     resolution: {integrity: sha512-IY73F228OXRl9ar3jJagh7Vnuhj/GzBunPiZP13K0lOl7Am9SoWW3kEzq3MCllJMTtZqHTiDXQvoRd4U95aU6A==}

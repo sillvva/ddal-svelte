@@ -1,7 +1,6 @@
-import { defineConfig } from "vite";
-import { typeschemaPlugin } from "@decs/typeschema/vite";
 import { sveltekit } from "@sveltejs/kit/vite";
+import { defineConfig } from "vite";
 
 export default defineConfig({
-	plugins: [sveltekit(), typeschemaPlugin()]
+	plugins: [sveltekit()]
 });
