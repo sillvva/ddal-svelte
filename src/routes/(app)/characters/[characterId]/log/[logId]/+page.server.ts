@@ -42,7 +42,7 @@ export const load = async (event) => {
 
 export const actions = {
 	saveLog: async (event) => {
-		const session = await event.locals.getSession();
+		const session = await event.locals.session;
 		if (!session?.user) throw redirect(301, "/");
 
 		const character = await getCharacterCache(event.params.characterId || "", false);

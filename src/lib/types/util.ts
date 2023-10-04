@@ -98,3 +98,21 @@ export class SvelteMap<TKey, TVal> extends Map<TKey, TVal> {
 		return this;
 	}
 }
+
+export type Prettify<T> = {
+	[K in keyof T]: T[K];
+} & unknown;
+
+export async function getSession(locals: App.Locals) {
+	const session: CustomSession | null = await locals.getSession();
+
+	return {
+		session: session && {
+			...session,
+			user: session.user && {
+				...session.user,
+				id: session.user?.id ?? ""
+			}
+		}
+	};
+}

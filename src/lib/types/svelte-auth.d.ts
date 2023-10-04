@@ -7,4 +7,11 @@ declare global {
 		} & DefaultSession["user"];
 		error?: string;
 	}
+
+	interface LocalsSession {
+		user?: {
+			id: string;
+		} & DefaultSession["user"];
+		error?: string;
+	}
 }

@@ -20,7 +20,7 @@ export const load = async (event) => {
 
 export const actions = {
 	deleteLog: async (event) => {
-		const session = await event.locals.getSession();
+		const session = await event.locals.session;
 		if (!session?.user) throw redirect(301, "/");
 		const data = await event.request.formData();
 		const logId = (data.get("logId") || "") as string;

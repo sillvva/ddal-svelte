@@ -21,7 +21,7 @@ export const load = async (event) => {
 
 export const actions = {
 	deleteDM: async (event) => {
-		const session = await event.locals.getSession();
+		const session = await event.locals.session;
 		if (!session?.user) throw redirect(301, "/");
 		const data = await event.request.formData();
 		const dmId = (data.get("dmId") || "") as string;

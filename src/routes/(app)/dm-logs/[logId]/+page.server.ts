@@ -38,7 +38,7 @@ export const load = async (event) => {
 
 export const actions = {
 	saveLog: async (event) => {
-		const session = await event.locals.getSession();
+		const session = event.locals.session;
 		if (!session?.user) throw redirect(301, "/");
 
 		const log = await getLog(event.params.logId || "", session.user.id);
