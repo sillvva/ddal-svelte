@@ -4,7 +4,7 @@ import { logSchema } from "$src/lib/types/schemas";
 import { saveLog } from "$src/server/actions/logs";
 import { signInRedirect } from "$src/server/auth.js";
 import { getCharacterCache } from "$src/server/data/characters";
-import { getUserDMs } from "$src/server/data/dms";
+import { getUserDMsWithLogs } from "$src/server/data/dms";
 import { getLog } from "$src/server/data/logs";
 import { error, redirect } from "@sveltejs/kit";
 
@@ -24,7 +24,7 @@ export const load = async (event) => {
 			  })
 			: defaultLog(session.user.id, character.id);
 
-	const dms = await getUserDMs(session.user.id);
+	const dms = await getUserDMsWithLogs(session.user.id);
 
 	return {
 		title: event.params.logId === "new" ? `New Log - ${character.name}` : `Edit ${log.name}`,

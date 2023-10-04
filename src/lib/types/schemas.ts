@@ -1,24 +1,28 @@
 import {
 	array,
 	boolean,
-	coerce,
+	custom,
 	date,
+	getOutput,
+	getPipeIssues,
 	literal,
 	maxLength,
 	merge,
 	minLength,
 	minValue,
 	nullable,
+	nullish,
 	number,
 	object,
+	optional,
 	regex,
 	string,
 	transform,
 	union,
 	url,
-	type BaseSchema,
 	type Input,
 	type Output,
+	type Pipe,
 	type PipeResult
 } from "valibot";
 
@@ -29,52 +33,55 @@ export const dateSchema = transform(
 
 export type DungeonMasterSchema = Output<typeof dungeonMasterSchema>;
 export const dungeonMasterSchema = object({
-	id: withDefault(string(), ""),
-	name: withDefault(string(), "Me"),
-	DCI: withDefault(nullable(string([regex(/[0-9]{0,10}/, "Invalid DCI Format")])), null),
-	uid: withDefault(nullable(string()), ""),
+	id: optional(string(), ""),
+	name: optional(string(), "Me"),
+	DCI: nullish(string([regex(/[0-9]{0,10}/, "Invalid DCI Format")])),
+	uid: nullable(string()),
 	owner: string()
 });
 
 const itemSchema = (type: "Item" | "Story Award") =>
 	object({
-		id: withDefault(string(), ""),
-		name: withDefault(string([minLength(1, `${type} Name Required`)]), ""),
-		description: withDefault(string(), "")
+		id: optional(string(), ""),
+		name: optional(string([minLength(1, `${type} Name Required`)]), ""),
+		description: optional(string(), "")
 	});
 
+const notNaN: Pipe<number> = [custom((input) => !isNaN(input))];
+
 export type LogSchema = Output<typeof logSchema>;
+export type LogSchemaIn = Input<typeof logSchema>;
 export const logSchema = object({
-	id: withDefault(string(), ""),
-	name: withDefault(string([minLength(1, "Log Name Required")]), ""),
+	id: nullish(string(), ""),
+	name: optional(string([minLength(1, "Log Name Required")]), ""),
 	date: dateSchema,
-	characterId: withDefault(string(), ""),
-	characterName: withDefault(string(), ""),
-	type: withDefault(union([literal("game"), literal("nongame")]), "game"),
-	experience: withDefault(number("Experience must be a number"), 0),
-	acp: withDefault(number([minValue(0, "ACP must be a non-negative number")]), 0),
-	tcp: withDefault(number("TCP must be a number"), 0),
-	level: withDefault(number([minValue(0, "Level must be a non-negative number")]), 0),
-	gold: withDefault(number("Gold must be a number"), 0),
-	dtd: withDefault(number("Downtime days must be a number"), 0),
-	description: withDefault(string(), ""),
+	characterId: optional(string(), ""),
+	characterName: optional(string(), ""),
+	type: optional(union([literal("game"), literal("nongame")]), "game"),
+	experience: optional(number("Experience must be a number", notNaN), 0),
+	acp: optional(number([minValue(0, "ACP must be a non-negative number"), ...notNaN]), 0),
+	tcp: optional(number("TCP must be a number", notNaN), 0),
+	level: optional(number([minValue(0, "Level must be a non-negative number"), ...notNaN]), 0),
+	gold: optional(number("Gold must be a number", notNaN), 0),
+	dtd: optional(number("Downtime days must be a number", notNaN), 0),
+	description: nullish(string(), ""),
 	dm: dungeonMasterSchema,
-	is_dm_log: withDefault(boolean(), false),
-	applied_date: withDefault(nullable(dateSchema), null),
+	is_dm_log: optional(boolean(), false),
+	applied_date: nullable(dateSchema),
 	magic_items_gained: array(itemSchema("Item")),
 	magic_items_lost: array(string([minLength(1, "Invalid Item ID")])),
 	story_awards_gained: array(itemSchema("Story Award")),
 	story_awards_lost: array(string([minLength(1, "Invalid Story Award ID")]))
 });
 
-const optionalURL = withDefault(union([string([url("Invalid URL")]), string([maxLength(0)])], "Invalid URL"), "");
+const optionalURL = optional(union([string([url("Invalid URL")]), string([maxLength(0)])], "Invalid URL"), "");
 
 export type NewCharacterSchema = Output<typeof newCharacterSchema>;
 export const newCharacterSchema = object({
-	name: withDefault(string([minLength(1, "Character Name Required")]), ""),
-	campaign: withDefault(string(), ""),
-	race: withDefault(string(), ""),
-	class: withDefault(string(), ""),
+	name: optional(string([minLength(1, "Character Name Required")]), ""),
+	campaign: optional(string(), ""),
+	race: optional(string(), ""),
+	class: optional(string(), ""),
 	character_sheet_url: optionalURL,
 	image_url: optionalURL
 });
@@ -85,16 +92,6 @@ export const editCharacterSchema = merge([object({ id: string() }), newCharacter
 /**
  * Custom Validators
  */
-
-export function withDefault<TSchema extends BaseSchema>(schema: TSchema, value: Input<TSchema>) {
-	return coerce(schema, (input) =>
-		typeof value === "string"
-			? `${input}`.trim() || value
-			: !input || (typeof value == "number" && isNaN(Number(input)))
-			? value
-			: input
-	);
-}
 
 // const dateRegex = /^((\d\d[2468][048]|\d\d[13579][26]|\d\d0[48]|[02468][048]00|[13579][26]00)-02-29|d{4}-((0[13578]|1[02])-(0[1-9]|[12]\d|3[01])|(0[469]|11)-(0[1-9]|[12]\d|30)|(02)-(0[1-9]|1\d|2[0-8])))T([01]\d|2[0-3]):[0-5]\d:[0-5]\d\.\d{3}([+-]([01]\d|2[0-3]):[0-5]\d|Z)$/;
 
@@ -141,15 +138,7 @@ export function iso<TInput extends string>(options?: {
 		const timeRegex = `([01]\\d|2[0-3]):[0-5]\\d${secondsRegex}${timezoneRegex}`;
 		const regex = new RegExp(`^${date ? dateRegex : ""}${date && time ? "T" : time ? "T?" : ""}${time ? timeRegex : ""}$`);
 
-		if (!regex.test(input)) {
-			return {
-				issue: {
-					validation: "iso",
-					message: error,
-					input
-				}
-			};
-		}
-		return { output: input };
+		if (!regex.test(input)) return getPipeIssues("iso", error, input);
+		return getOutput(input);
 	};
 }

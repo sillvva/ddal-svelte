@@ -76,11 +76,11 @@
 	<div class="hidden gap-4 sm:flex">
 		<BreadCrumbs />
 
-		<div class="dropdown-end dropdown">
-			<span role="button" tabindex="0" class="btn-sm btn bg-base-100">
+		<div class="dropdown dropdown-end">
+			<span role="button" tabindex="0" class="btn btn-sm bg-base-100">
 				<Icon src="dots-horizontal" class="w-6" />
 			</span>
-			<ul class="dropdown-content menu rounded-box w-52 bg-base-100 p-2 shadow">
+			<ul class="menu dropdown-content rounded-box w-52 bg-base-100 p-2 shadow">
 				<li>
 					<a download={`characters.json`} href={`/api/export/characters/all`} target="_blank" rel="noreferrer noopener">Export</a>
 				</li>
@@ -93,23 +93,23 @@
 			<div class="py-20 text-center">
 				<p class="mb-4">You have no log sheets.</p>
 				<p>
-					<a href="/characters/new" class="btn-primary btn">Create one now</a>
+					<a href="/characters/new" class="btn btn-primary">Create one now</a>
 				</p>
 			</div>
 		</section>
 	{:else}
 		<div class="flex flex-wrap gap-2">
 			<div class="flex w-full gap-2 sm:max-w-md">
-				<a href="/characters/new/edit" class="btn-primary btn-sm btn hidden sm:inline-flex" aria-label="New Character">
-					New Character
-				</a>
-				<input
-					type="text"
-					placeholder="Search by name, race, class, items, etc."
-					bind:value={search}
-					class="input-bordered input flex-1 sm:input-sm min-w-0"
-				/>
-				<a href="/characters/new/edit" class="btn-primary btn inline-flex sm:hidden" aria-label="New Character">
+				<a href="/characters/new/edit" class="btn btn-primary btn-sm hidden sm:inline-flex">New Character</a>
+				<search class="min-w-0 flex-1">
+					<input
+						type="text"
+						placeholder="Search by name, race, class, items, etc."
+						bind:value={search}
+						class="input input-bordered w-full min-w-0 sm:input-sm md:w-80"
+					/>
+				</search>
+				<a href="/characters/new/edit" class="btn btn-primary inline-flex sm:hidden" aria-label="New Character">
 					<Icon src="plus" class="inline w-6" />
 				</a>
 				<button
@@ -139,7 +139,7 @@
 			{/if}
 			<div class="join hidden xs:flex">
 				<button
-					class={twMerge("join-item btn sm:btn-sm", display == "list" ? "btn-primary" : "hover:btn-primary")}
+					class={twMerge("btn join-item sm:btn-sm", display == "list" ? "btn-primary" : "hover:btn-primary")}
 					on:click={() => transition(() => (display = "list"))}
 					on:keypress
 					aria-label="List View"
@@ -147,7 +147,7 @@
 					<Icon src="format-list-text" class="w-4" />
 				</button>
 				<button
-					class={twMerge("join-item btn sm:btn-sm", display == "grid" ? "btn-primary" : "hover:btn-primary")}
+					class={twMerge("btn join-item sm:btn-sm", display == "grid" ? "btn-primary" : "hover:btn-primary")}
 					on:click={() => transition(() => (display = "grid"))}
 					on:keypress
 					aria-label="Grid View"
@@ -177,7 +177,7 @@
 					{#each results as character}
 						<a href={`/characters/${character.id}`} class="img-grow">
 							{#if !data.mobile}
-								<div class="pr-0 transition-colors sm:pr-2 hidden sm:block">
+								<div class="hidden pr-0 transition-colors sm:block sm:pr-2">
 									<div class="avatar">
 										<div
 											class="mask mask-squircle h-12 w-12 bg-primary"

@@ -9,7 +9,7 @@
 	import ComboBox from "$src/lib/components/ComboBox.svelte";
 	import DateTimeInput from "$src/lib/components/DateTimeInput.svelte";
 	import Markdown from "$src/lib/components/Markdown.svelte";
-	import { logSchema, type LogSchema } from "$src/lib/types/schemas";
+	import { logSchema, type LogSchemaIn } from "$src/lib/types/schemas";
 	import { twMerge } from "tailwind-merge";
 
 	export let data;
@@ -47,9 +47,9 @@
 
 	$: values = {
 		...log,
-		characterId: log.characterId || character?.id || "",
-		characterName: character?.name || "",
-		description: log.description || "",
+		characterId: log.characterId || character.id,
+		characterName: character.name,
+		description: log.description,
 		magic_items_gained: magicItemsGained,
 		magic_items_lost: magicItemsLost,
 		story_awards_gained: storyAwardsGained,
@@ -57,7 +57,6 @@
 		dm:
 			!(dm.uid || dm.name.trim()) && data.user.id
 				? {
-						id: "",
 						name: data.user.name || "Me",
 						DCI: null,
 						uid: data.user.id,
@@ -70,7 +69,7 @@
 						uid: dm.uid,
 						owner: data.user.id
 				  }
-	} satisfies LogSchema;
+	} satisfies LogSchemaIn;
 
 	export const snapshot = {
 		capture: () => ({
@@ -96,10 +95,10 @@
 <BackButton href={`/characters/${data.characterId}`}>{character.name}</BackButton>
 
 <SchemaForm action="?/saveLog" schema={logSchema} data={values} let:saving let:errors>
-	{#if form?.error || errors.form}
+	{#if form?.error || errors.has("form")}
 		<div class="alert alert-error mb-4 shadow-lg">
 			<Icon src="alert-circle" class="w-6" />
-			{form?.error || errors.form}
+			{form?.error || errors.get("form")}
 		</div>
 	{/if}
 
@@ -132,11 +131,11 @@
 				disabled={saving}
 				bind:value={log.name}
 				class="input-bordered input w-full focus:border-primary"
-				aria-invalid={errors.name ? "true" : "false"}
+				aria-invalid={errors.get("name") ? "true" : "false"}
 			/>
-			{#if errors.name}
+			{#if errors.has("name")}
 				<label for="name" class="label">
-					<span class="label-text-alt text-error">{errors.name}</span>
+					<span class="label-text-alt text-error">{errors.get("name")}</span>
 				</label>
 			{/if}
 		</div>
@@ -153,11 +152,11 @@
 				disabled={saving}
 				bind:value={log.date}
 				class="input-bordered input w-full focus:border-primary"
-				aria-invalid={errors.date ? "true" : "false"}
+				aria-invalid={errors.get("date") ? "true" : "false"}
 			/>
-			{#if errors.date}
+			{#if errors.has("date")}
 				<label for="date" class="label">
-					<span class="label-text-alt text-error">{errors.date}</span>
+					<span class="label-text-alt text-error">{errors.get("date")}</span>
 				</label>
 			{/if}
 		</div>
@@ -186,9 +185,9 @@
 								} else dm = defaultDM;
 							}}
 						/>
-						{#if errors.dm.name}
+						{#if errors.has("dm.name")}
 							<label for="dmName" class="label">
-								<span class="label-text-alt text-error">{errors.dm.name}</span>
+								<span class="label-text-alt text-error">{errors.get("dm.name")}</span>
 							</label>
 						{/if}
 					</div>
@@ -210,9 +209,9 @@
 								} else dm = { ...(dm.name ? dm : defaultDM), DCI: null };
 							}}
 						/>
-						{#if errors.dm.DCI}
+						{#if errors.has("dm.DCI")}
 							<label for="dmDCI" class="label">
-								<span class="label-text-alt text-error">{errors.dm.DCI}</span>
+								<span class="label-text-alt text-error">{errors.get("dm.DCI")}</span>
 							</label>
 						{/if}
 					</div>
@@ -240,9 +239,9 @@
 							bind:value={log.experience}
 							class="input-bordered input w-full focus:border-primary"
 						/>
-						{#if errors.experience}
+						{#if errors.has("experience")}
 							<label for="experience" class="label">
-								<span class="label-text-alt text-error">{errors.experience}</span>
+								<span class="label-text-alt text-error">{errors.get("experience")}</span>
 							</label>
 						{/if}
 					</div>
@@ -261,9 +260,9 @@
 							bind:value={log.level}
 							class="input-bordered input w-full focus:border-primary"
 						/>
-						{#if errors.level}
+						{#if errors.has("level")}
 							<label for="level" class="label">
-								<span class="label-text-alt text-error">{errors.level}</span>
+								<span class="label-text-alt text-error">{errors.get("level")}</span>
 							</label>
 						{/if}
 					</div>
@@ -282,9 +281,9 @@
 							bind:value={log.acp}
 							class="input-bordered input w-full focus:border-primary"
 						/>
-						{#if errors.acp}
+						{#if errors.has("acp")}
 							<label for="acp" class="label">
-								<span class="label-text-alt text-error">{errors.acp}</span>
+								<span class="label-text-alt text-error">{errors.get("acp")}</span>
 							</label>
 						{/if}
 					</div>
@@ -300,9 +299,9 @@
 						bind:value={log.tcp}
 						class="input-bordered input w-full focus:border-primary"
 					/>
-					{#if errors.tcp}
+					{#if errors.has("tcp")}
 						<label for="tcp" class="label">
-							<span class="label-text-alt text-error">{errors.tcp}</span>
+							<span class="label-text-alt text-error">{errors.get("tcp")}</span>
 						</label>
 					{/if}
 				</div>
@@ -318,9 +317,9 @@
 					bind:value={log.gold}
 					class="input-bordered input w-full focus:border-primary"
 				/>
-				{#if errors.gold}
+				{#if errors.has("gold")}
 					<label for="gold" class="label">
-						<span class="label-text-alt text-error">{errors.gold}</span>
+						<span class="label-text-alt text-error">{errors.get("gold")}</span>
 					</label>
 				{/if}
 			</div>
@@ -335,9 +334,9 @@
 					bind:value={log.dtd}
 					class="input-bordered input w-full focus:border-primary"
 				/>
-				{#if errors.dtd}
+				{#if errors.has("dtd")}
 					<label for="dtd" class="label">
-						<span class="label-text-alt text-error">{errors.dtd}</span>
+						<span class="label-text-alt text-error">{errors.get("dtd")}</span>
 					</label>
 				{/if}
 			</div>
@@ -367,8 +366,8 @@
 				<Markdown content={log.description || ""} />
 			</div>
 			<label for="description" class="label">
-				{#if errors.description}
-					<span class="label-text-alt text-error">{errors.description}</span>
+				{#if errors.has("description")}
+					<span class="label-text-alt text-error">{errors.get("description")}</span>
 				{:else}
 					<span class="label-text-alt" />
 				{/if}
@@ -435,9 +434,9 @@
 									disabled={saving}
 									class="input-bordered input w-full focus:border-primary"
 								/>
-								{#if errors.magic_items_gained[index].name}
+								{#if errors.has(`magic_items_gained.${index}.name`)}
 									<label for={`magic_items_gained.${index}.name`} class="label">
-										<span class="label-text-alt text-error">{errors.magic_items_gained[index].name}</span>
+										<span class="label-text-alt text-error">{errors.get(`magic_items_gained.${index}.name`)}</span>
 									</label>
 								{/if}
 							</div>
@@ -496,9 +495,9 @@
 										</option>
 									{/each}
 								</select>
-								{#if errors.magic_items_lost[index]}
+								{#if errors.has(`magic_items_lost.${index}`)}
 									<label for={`magic_items_lost.${index}`} class="label">
-										<span class="label-text-alt text-error">{errors.magic_items_lost[index]}</span>
+										<span class="label-text-alt text-error">{errors.get(`magic_items_lost.${index}`)}</span>
 									</label>
 								{/if}
 							</div>
@@ -533,9 +532,9 @@
 									disabled={saving}
 									class="input-bordered input w-full focus:border-primary"
 								/>
-								{#if errors.story_awards_gained[index].name}
+								{#if errors.has(`story_awards_gained.${index}.name`)}
 									<label for={`story_awards_gained.${index}.name`} class="label">
-										<span class="label-text-alt text-error">{errors.story_awards_gained[index].name}</span>
+										<span class="label-text-alt text-error">{errors.get(`story_awards_gained.${index}.name`)}</span>
 									</label>
 								{/if}
 							</div>
@@ -594,9 +593,9 @@
 										</option>
 									{/each}
 								</select>
-								{#if errors.story_awards_lost[index]}
+								{#if errors.has(`story_awards_lost.${index}`)}
 									<label for={`story_awards_lost.${index}`} class="label">
-										<span class="label-text-alt text-error">{errors.story_awards_lost[index]}</span>
+										<span class="label-text-alt text-error">{errors.get(`story_awards_lost.${index}`)}</span>
 									</label>
 								{/if}
 							</div>

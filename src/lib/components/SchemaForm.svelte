@@ -19,8 +19,8 @@
 	import { enhance } from "$app/forms";
 	import { beforeNavigate } from "$app/navigation";
 	import type { ActionResult } from "@sveltejs/kit";
-	import set from "lodash.set";
 	import { createEventDispatcher } from "svelte";
+	import { SvelteMap, type DeepStringify, type Paths } from "../types/util";
 
 	const dispatch = createEventDispatcher<{
 		"before-submit": null;
@@ -43,12 +43,14 @@
 	export let method = "POST";
 	export let resetOnSave = false;
 	export let saving = false;
-	export let errors = { form: "", ...emptyClone(data) };
 
-	let initialErrors = structuredClone(errors);
+	let initialStructure = emptyClone(data);
+	$: currentStructure = emptyClone(data);
+
+	export let errors = new SvelteMap<"form" | Paths<typeof initialStructure, 6>, string>();
 
 	async function checkErrors(data: InferIn<TSchema>) {
-		errors = { form: "", ...emptyClone(data) };
+		errors = new SvelteMap<"form" | Paths<typeof initialStructure, 6>, string>();
 		const result = await validate(schema, data);
 		if ("data" in result) {
 			dispatch("validate", { data: (validatedData = result.data), changes, errors, setError });
@@ -56,7 +58,7 @@
 			result.issues.forEach((issue) => {
 				if (!issue.path) issue.path = ["form"];
 				if (saving || changes.includes(issue.path.join("."))) {
-					errors = set(errors, issue.path, issue.message);
+					errors = errors.set(issue.path.join(".") as any, issue.message);
 				}
 			});
 			dispatch("validate", { changes, errors, setError });
@@ -64,7 +66,7 @@
 	}
 
 	function checkChanges() {
-		const formStructureIsDiff = JSON.stringify(emptyClone(errors)) !== JSON.stringify(initialErrors);
+		const formStructureIsDiff = JSON.stringify(currentStructure) !== JSON.stringify(initialStructure);
 		changes = !saving
 			? [...elForm.querySelectorAll("[data-dirty]")]
 					.map((el) => el.getAttribute("name") || "hidden")
@@ -99,20 +101,6 @@
 		}
 	});
 
-	function hasValues(obj: object): boolean {
-		return Object.values(obj).some((v) => (v && typeof v == "object" ? hasValues(v) : v));
-	}
-
-	type DeepStringify<T> = {
-		[K in keyof T]: T[K] extends Array<infer E>
-			? DeepStringify<Array<E>>
-			: T[K] extends Date | Blob | File
-			? string
-			: T[K] extends object
-			? DeepStringify<T[K]>
-			: string;
-	};
-
 	function emptyClone<S extends Schema, T extends InferIn<S>>(data: T): DeepStringify<T> {
 		const result: any = Array.isArray(data) ? [] : {};
 		for (const key in data) {
@@ -123,30 +111,8 @@
 		return result;
 	}
 
-	type Idx<T, K> = K extends keyof T ? T[K] : number extends keyof T ? (K extends `${number}` ? T[number] : never) : never;
-
-	type Join<K, P> = K extends string | number
-		? P extends string | number
-			? `${K}${"" extends P ? "" : "."}${P}`
-			: never
-		: never;
-
-	type Prev = [never, 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, ...0[]];
-
-	type Paths<T, D extends number = 10> = [D] extends [never]
-		? never
-		: T extends object
-		? { [K in keyof T]-?: K extends string | number ? `${K}` | Join<K, Paths<T[K], Prev[D]>> : never }[keyof T]
-		: "";
-
-	type PathValue<T, P extends Paths<T, 4>> = P extends `${infer Key}.${infer Rest}`
-		? Rest extends Paths<Idx<T, Key>, 4>
-			? PathValue<Idx<T, Key>, Rest>
-			: never
-		: Idx<T, P>;
-
-	function setError<T extends typeof errors, K extends Paths<T, 4>>(path: K, message: PathValue<T, K>) {
-		errors = set(errors, path, message);
+	function setError<K extends "form" | Paths<typeof initialStructure, 6>>(path: K, message: string) {
+		errors = errors.set(path, message);
 	}
 </script>
 
@@ -161,7 +127,7 @@
 		saving = true;
 
 		await checkErrors(data);
-		if (hasValues(errors)) {
+		if (errors.size) {
 			saving = false;
 			return f.cancel();
 		}
