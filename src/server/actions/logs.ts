@@ -14,6 +14,7 @@ export async function saveLog(input: LogSchema, user?: CustomSession["user"]) {
 		let dm: DungeonMaster | null = null;
 		if (!user?.name) throw error(401, "Not authenticated");
 
+		if (input.is_dm_log) input.dm.name = user.name || "Me";
 		if (input.dm.name.trim() === "Me") input.dm.name = user.name || "Me";
 		const isMe = input.dm.name.trim() === user.name?.trim() || input.dm.name === "Me";
 
@@ -24,7 +25,7 @@ export async function saveLog(input: LogSchema, user?: CustomSession["user"]) {
 						where: {
 							OR:
 								input.is_dm_log || isMe
-									? [{ uid: user.id }, { owner: user.id }]
+									? [{ uid: user.id }]
 									: input.dm.DCI === null
 									? [{ name: input.dm.name.trim() }]
 									: [{ name: input.dm.name.trim() }, { DCI: input.dm.DCI }]
@@ -59,7 +60,7 @@ export async function saveLog(input: LogSchema, user?: CustomSession["user"]) {
 				}
 			}
 
-			if (input.type == "game" && !dm?.id) throw new Error("Could not save Dungeon Master");
+			if (!dm?.id) throw new Error("Could not save Dungeon Master");
 
 			const applied_date: Date | null = input.is_dm_log
 				? input.characterId && input.applied_date !== null
@@ -90,7 +91,7 @@ export async function saveLog(input: LogSchema, user?: CustomSession["user"]) {
 				date: new Date(input.date),
 				description: input.description,
 				type: input.type,
-				dungeonMasterId: (dm || {}).id || null,
+				dungeonMasterId: dm.id,
 				is_dm_log: input.is_dm_log,
 				applied_date: applied_date,
 				characterId: input.characterId,
