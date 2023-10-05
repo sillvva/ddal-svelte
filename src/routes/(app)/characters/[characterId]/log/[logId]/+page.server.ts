@@ -13,7 +13,7 @@ export const load = async (event) => {
 	const character = parent.character;
 	if (!character) throw error(404, "Character not found");
 
-	const session = parent.session;
+	const session = event.locals.session;
 	if (!session?.user) throw signInRedirect(event.url);
 
 	const log =
@@ -42,7 +42,7 @@ export const load = async (event) => {
 
 export const actions = {
 	saveLog: async (event) => {
-		const session = await event.locals.getSession();
+		const session = await event.locals.session;
 		if (!session?.user) throw redirect(301, "/");
 
 		const character = await getCharacterCache(event.params.characterId || "", false);

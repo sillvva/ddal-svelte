@@ -6,10 +6,10 @@ import { revalidateKeys } from "../cache";
 import { prisma } from "../db";
 
 import type { LogSchema } from "$src/lib/types/schemas";
-import type { User } from "@auth/core/types";
 import type { DungeonMaster, Log } from "@prisma/client";
+
 export type SaveLogResult = ReturnType<typeof saveLog>;
-export async function saveLog(input: LogSchema, user?: User) {
+export async function saveLog(input: LogSchema, user?: CustomSession["user"]) {
 	try {
 		let dm: DungeonMaster | null = null;
 		if (!user?.name) throw error(401, "Not authenticated");

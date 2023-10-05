@@ -1,11 +1,35 @@
 // See https://kit.svelte.dev/docs/types#app
 // for information about these interfaces
+
+import type { Prettify } from "$lib/types/util";
+import type { DefaultSession } from "@auth/core/types";
+
 declare global {
 	namespace App {
 		// interface Error {}
-		// interface Locals {}
+		interface Locals {
+			session: LocalsSession | null;
+		}
 		// interface PageData {}
 		// interface Platform {}
+	}
+
+	interface CustomSession {
+		user?: Prettify<
+			{
+				id?: string;
+			} & DefaultSession["user"]
+		>;
+		error?: string;
+	}
+
+	interface LocalsSession {
+		user?: Prettify<
+			{
+				id: string;
+			} & DefaultSession["user"]
+		>;
+		error?: string;
 	}
 
 	interface ViewTransition {

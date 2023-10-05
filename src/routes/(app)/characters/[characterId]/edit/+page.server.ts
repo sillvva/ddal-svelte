@@ -7,7 +7,7 @@ import { error, redirect } from "@sveltejs/kit";
 export const load = async (event) => {
 	const parent = await event.parent();
 
-	const session = parent.session;
+	const session = event.locals.session;
 	if (!session?.user) throw signInRedirect(event.url);
 
 	const character = {
@@ -41,7 +41,7 @@ export const load = async (event) => {
 
 export const actions = {
 	saveCharacter: async (event) => {
-		const session = await event.locals.getSession();
+		const session = await event.locals.session;
 		if (!session?.user) throw redirect(301, "/");
 		const characterId = event.params.characterId;
 		try {

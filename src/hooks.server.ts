@@ -7,6 +7,7 @@ import { prisma } from "./server/db";
 import type { Provider } from "@auth/core/providers";
 import type { Profile, TokenSet } from "@auth/core/types";
 import type { Handle } from "@sveltejs/kit";
+import { sequence } from "@sveltejs/kit/hooks";
 
 export const auth = SvelteKitAuth({
 	callbacks: {
@@ -29,6 +30,8 @@ export const auth = SvelteKitAuth({
 			return true;
 		},
 		async session({ session, user }) {
+			let error = "";
+			let userId = "";
 			const account = await prisma.account.findFirst({
 				where: { userId: user.id, provider: "google" }
 			});
@@ -67,15 +70,22 @@ export const auth = SvelteKitAuth({
 							}
 						}
 					});
-				} catch (error) {
-					console.error("Error refreshing access token:", error);
-					session.error = "RefreshAccessTokenError";
+				} catch (err) {
+					console.error("Error refreshing access token:", err);
+					error = "RefreshAccessTokenError";
 				}
 			}
 			if (session.user) {
-				session.user.id = user.id;
+				userId = user.id;
 			}
-			return session;
+			return {
+				...session,
+				error,
+				user: session.user && {
+					...session.user,
+					id: userId
+				}
+			} satisfies LocalsSession;
 		}
 	},
 	secret: AUTH_SECRET,
@@ -89,4 +99,28 @@ export const auth = SvelteKitAuth({
 	]
 } satisfies SvelteKitAuthConfig) satisfies Handle;
 
-export const handle = auth;
+export const session: Handle = async ({ event, resolve }) => {
+	const session: CustomSession | null = await event.locals.getSession();
+
+	event.locals.session = session && {
+		...session,
+		user: session.user && {
+			...session.user,
+			id: session.user?.id ?? ""
+		}
+	};
+
+	const cookies = event.cookies.getAll();
+	const cSession = cookies.find((c) => c.name.includes("session-token"));
+	if (cSession)
+		event.cookies.set(cSession.name, cSession.value, {
+			expires: new Date(Date.now() + 30 * 86400 * 1000),
+			httpOnly: true,
+			path: "/"
+		});
+
+	const response = await resolve(event);
+	return response;
+};
+
+export const handle = sequence(auth, session);
