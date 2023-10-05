@@ -81,7 +81,7 @@ export const auth = SvelteKitAuth({
 			return {
 				...session,
 				error,
-				user: {
+				user: session.user && {
 					...session.user,
 					id: userId
 				}
