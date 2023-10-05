@@ -4,9 +4,6 @@ settings:
   autoInstallPeers: true
   excludeLinksFromLockfile: false
 
-overrides:
-  '@auth/core': ^0.10.0
-
 dependencies:
   '@auth/core':
     specifier: ^0.16.1
