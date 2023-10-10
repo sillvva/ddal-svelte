@@ -27,8 +27,9 @@ import {
 } from "valibot";
 
 export const dateSchema = transform(
-	union([date(), string([iso()]), number([minValue(0)])], "Must be a valid date/time"),
-	(input) => new Date(input)
+	union([date(), string([iso()]), number([minValue(0)])], "Must be a valid date/time or unix timestamp"),
+	(input) => new Date(input),
+	[custom((input) => !isNaN(input.getTime()), "Invalid Date")]
 );
 
 export type DungeonMasterSchema = Output<typeof dungeonMasterSchema>;
