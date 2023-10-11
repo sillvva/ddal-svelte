@@ -10,6 +10,7 @@ import {
 	merge,
 	minLength,
 	minValue,
+	nonNullable,
 	nullable,
 	nullish,
 	number,
@@ -27,17 +28,14 @@ import {
 } from "valibot";
 
 export const dateSchema = transform(
-	union([date(), string([iso()]), number([minValue(0)])], "Must be a valid date/time or unix timestamp"),
-	(input) => new Date(input),
-	[custom((input) => !isNaN(input.getTime()), "Invalid Date")]
-);
-
-export const nullableDateSchema = nullable(
-	transform(union([date(), string([iso()]), number([minValue(0)])], "Must be a valid date/time or unix timestamp"), (input) => {
+	nullable(union([literal(""), date(), string([iso()]), number([minValue(0)])], "Must be a valid date/time or unix timestamp")),
+	(input) => {
+		if (input === null || input === "") return null;
 		const d = new Date(input);
 		if (isNaN(d.getTime())) return null;
 		return d;
-	})
+	},
+	[custom((input) => input === null || !isNaN(input.getTime()), "Invalid Date")]
 );
 
 export type DungeonMasterSchema = Output<typeof dungeonMasterSchema>;
@@ -63,7 +61,7 @@ export type LogSchemaIn = Input<typeof logSchema>;
 export const logSchema = object({
 	id: nullish(string(), ""),
 	name: optional(string([minLength(1, "Log Name Required")]), ""),
-	date: dateSchema,
+	date: nonNullable(dateSchema),
 	characterId: optional(string(), ""),
 	characterName: optional(string(), ""),
 	type: optional(union([literal("game"), literal("nongame")]), "game"),
@@ -76,7 +74,7 @@ export const logSchema = object({
 	description: nullish(string(), ""),
 	dm: dungeonMasterSchema,
 	is_dm_log: optional(boolean(), false),
-	applied_date: nullableDateSchema,
+	applied_date: dateSchema,
 	magic_items_gained: array(itemSchema("Item")),
 	magic_items_lost: array(string([minLength(1, "Invalid Item ID")])),
 	story_awards_gained: array(itemSchema("Story Award")),

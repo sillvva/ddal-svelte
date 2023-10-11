@@ -14,12 +14,15 @@
 			numbers: string[];
 		}>
 	): Promise<Infer<TSchema>> {
-		const formValues = decode(formData, info);
+		const formValues = decode(formData, {
+			...info,
+			dates: info?.dates?.filter((d) => formData.get(d))
+		});
 		const result = await validate(schema, formValues);
 		if ("issues" in result && result.issues.length) {
 			console.log("Value:", formValues);
 			console.error("Issues:", result.issues);
-			throw new Error([...new Set(...result.issues.map((i) => i.message))].join(";\n"));
+			throw new Error([...new Set(result.issues.map((i) => i.message))].join(";\n"));
 		}
 		if (!("data" in result)) throw new Error("No data returned");
 		return result.data;
