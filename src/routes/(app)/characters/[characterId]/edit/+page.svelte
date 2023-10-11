@@ -44,7 +44,7 @@
 					required
 					disabled={saving}
 					bind:value={character.name}
-					class="input-bordered input w-full focus:border-primary"
+					class="input input-bordered w-full focus:border-primary"
 				/>
 				{#if errors.has("name")}
 					<label for="name" class="label">
@@ -63,7 +63,7 @@
 					name="campaign"
 					disabled={saving}
 					bind:value={character.campaign}
-					class="input-bordered input w-full focus:border-primary"
+					class="input input-bordered w-full focus:border-primary"
 				/>
 				{#if errors.has("campaign")}
 					<label for="campaign" class="label">
@@ -82,7 +82,7 @@
 					name="race"
 					disabled={saving}
 					bind:value={character.race}
-					class="input-bordered input w-full focus:border-primary"
+					class="input input-bordered w-full focus:border-primary"
 				/>
 				{#if errors.has("race")}
 					<label for="race" class="label">
@@ -101,7 +101,7 @@
 					name="class"
 					disabled={saving}
 					bind:value={character.class}
-					class="input-bordered input w-full focus:border-primary"
+					class="input input-bordered w-full focus:border-primary"
 				/>
 				{#if errors.has("class")}
 					<label for="class" class="label">
@@ -120,7 +120,7 @@
 					name="character_sheet_url"
 					disabled={saving}
 					bind:value={character.character_sheet_url}
-					class="input-bordered input w-full focus:border-primary"
+					class="input input-bordered w-full focus:border-primary"
 				/>
 				{#if errors.has("character_sheet_url")}
 					<label for="character_sheet_url" class="label">
@@ -139,7 +139,7 @@
 					name="image_url"
 					disabled={saving}
 					bind:value={character.image_url}
-					class="input-bordered input w-full focus:border-primary"
+					class="input input-bordered w-full focus:border-primary"
 				/>
 				{#if errors.has("image_url")}
 					<label for="image_url" class="label">
@@ -148,10 +148,10 @@
 				{/if}
 			</div>
 		</div>
-		<div class="m-4 col-span-12 text-center">
+		<div class="col-span-12 m-4 text-center">
 			<button
 				type="submit"
-				class="btn-primary btn disabled:bg-primary disabled:bg-opacity-50 disabled:text-opacity-50"
+				class="btn btn-primary disabled:bg-primary disabled:bg-opacity-50 disabled:text-opacity-50"
 				disabled={saving}
 			>
 				{#if saving}

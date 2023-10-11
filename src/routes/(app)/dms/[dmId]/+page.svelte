@@ -28,6 +28,8 @@
 		{/if}
 
 		<input type="hidden" name="dmID" value={dm.id} />
+		<input type="hidden" name="uid" value={dm.uid} />
+		<input type="hidden" name="owner" value={dm.owner} />
 		<div class="grid grid-cols-12 gap-4">
 			<div class="col-span-12 sm:col-span-6">
 				<div class="form-control w-full">
@@ -43,7 +45,7 @@
 						bind:value={dm.name}
 						required
 						disabled={saving}
-						class="input-bordered input w-full focus:border-primary"
+						class="input input-bordered w-full focus:border-primary"
 					/>
 					{#if errors.has("name")}
 						<label for="name" class="label">
@@ -62,7 +64,7 @@
 						name="DCI"
 						bind:value={dm.DCI}
 						disabled={saving}
-						class="input-bordered input w-full focus:border-primary"
+						class="input input-bordered w-full focus:border-primary"
 					/>
 					{#if errors.has("DCI")}
 						<label for="DCI" class="label">
@@ -71,10 +73,10 @@
 					{/if}
 				</div>
 			</div>
-			<div class="m-4 col-span-12 text-center">
+			<div class="col-span-12 m-4 text-center">
 				<button
 					type="submit"
-					class="btn-primary btn disabled:bg-primary disabled:bg-opacity-50 disabled:text-opacity-50"
+					class="btn btn-primary disabled:bg-primary disabled:bg-opacity-50 disabled:text-opacity-50"
 					disabled={saving}
 				>
 					{#if saving}
@@ -113,7 +115,7 @@
 						<p class="mb-4">This DM has no logs.</p>
 						<input type="hidden" name="dmId" value={dm.id} />
 						<button
-							class="btn-sm btn"
+							class="btn btn-sm"
 							on:click|preventDefault={(e) => {
 								if (confirm(`Are you sure you want to delete ${dm.name}? This action cannot be reversed.`))
 									e.currentTarget.form?.requestSubmit();
@@ -154,7 +156,7 @@
 									</td>
 									<td class="w-8 align-top print:hidden">
 										<div class="flex flex-row justify-center gap-2">
-											<a href={`/characters/${log.character?.id}/log/${log.id}`} class="btn-primary btn sm:btn-sm">
+											<a href={`/characters/${log.character?.id}/log/${log.id}`} class="btn btn-primary sm:btn-sm">
 												<Icon src="pencil" class="w-4" />
 											</a>
 										</div>

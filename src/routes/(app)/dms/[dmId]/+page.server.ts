@@ -36,11 +36,16 @@ export const actions = {
 		const dm = dms.find((dm) => dm.id == event.params.dmId);
 		if (!dm) throw redirect(301, "/dms");
 
-		const data = await event.request.formData();
-		const parsedData = await parseFormData(data, dungeonMasterSchema);
-		const result = await saveDM(event.params.dmId, session.user.id, parsedData);
+		try {
+			const data = await event.request.formData();
+			const parsedData = await parseFormData(data, dungeonMasterSchema);
+			const result = await saveDM(event.params.dmId, session.user.id, parsedData);
 
-		return result;
+			return result;
+		} catch (err) {
+			if (err instanceof Error) return { id: event.params.dmId, error: err.message };
+			throw err;
+		}
 	},
 	deleteDM: async (event) => {
 		const session = await event.locals.session;

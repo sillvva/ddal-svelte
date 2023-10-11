@@ -1,14 +1,25 @@
 <script lang="ts" context="module">
 	import type { Infer, InferIn, Schema } from "@decs/typeschema";
 	import { validate } from "@decs/typeschema";
+	import { decode } from "decode-formdata";
 
-	const stringify = "validated";
-
-	export async function parseFormData<TSchema extends Schema>(formData: FormData, schema: TSchema): Promise<Infer<TSchema>> {
-		const data = (formData.get(stringify) as string) || "{}";
-		const result = await validate(schema, JSON.parse(data));
+	export async function parseFormData<TSchema extends Schema>(
+		formData: FormData,
+		schema: TSchema,
+		info?: Partial<{
+			arrays: string[];
+			booleans: string[];
+			dates: string[];
+			files: string[];
+			numbers: string[];
+		}>
+	): Promise<Infer<TSchema>> {
+		const formValues = decode(formData, info);
+		const result = await validate(schema, formValues);
 		if ("issues" in result && result.issues.length) {
-			throw new Error(result.issues.map((i) => i.message).join("\n"));
+			console.log("Value:", formValues);
+			console.error("Issues:", result.issues);
+			throw new Error([...new Set(...result.issues.map((i) => i.message))].join(";\n"));
 		}
 		if (!("data" in result)) throw new Error("No data returned");
 		return result.data;
@@ -34,7 +45,6 @@
 	}>();
 
 	let elForm: HTMLFormElement;
-	let validatedData: Infer<Schema>;
 	let changes: Array<string> = [];
 
 	export let schema: TSchema;
@@ -53,7 +63,7 @@
 		errors = new SvelteMap<"form" | Paths<typeof initialStructure, 6>, string>();
 		const result = await validate(schema, data);
 		if ("data" in result) {
-			dispatch("validate", { data: (validatedData = result.data), changes, errors, setError });
+			dispatch("validate", { data: result.data, changes, errors, setError });
 		} else if ("issues" in result) {
 			result.issues.forEach((issue) => {
 				if (!issue.path) issue.path = ["form"];
@@ -130,15 +140,6 @@
 		if (errors.size) {
 			saving = false;
 			return f.cancel();
-		}
-
-		if (validatedData && typeof validatedData === "object" && !(stringify in validatedData)) {
-			for (const key of [...f.formData.keys()]) {
-				if (key === stringify) continue;
-				if (f.formData.get(key) instanceof File) continue;
-				f.formData.delete(key);
-			}
-			f.formData.set(stringify, JSON.stringify(validatedData));
 		}
 
 		return async ({ update, result }) => {

@@ -101,11 +101,13 @@
 		</div>
 	{/if}
 
-	<input type="hidden" name="logId" value={data.logId === "new" ? "" : data.logId} />
+	<input type="hidden" name="id" value={data.logId === "new" ? "" : data.logId} />
 	<input type="hidden" name="dm.id" value={log.dm?.id || ""} />
 	<input type="hidden" name="dm.DCI" value={null} />
 	<input type="hidden" name="dm.name" value={log.dm?.name || ""} />
 	<input type="hidden" name="dm.uid" value={log.dm?.uid || ""} />
+	<input type="hidden" name="dm.owner" value={data.user.id} />
+	<input type="hidden" name="is_dm_log" value="true" />
 	<div class="grid grid-cols-12 gap-4">
 		<div class={twMerge("form-control col-span-12", log.is_dm_log ? "sm:col-span-6 lg:col-span-3" : "sm:col-span-4")}>
 			<label for="name" class="label">

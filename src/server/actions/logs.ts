@@ -19,20 +19,40 @@ export async function saveLog(input: LogSchema, user?: CustomSession["user"]) {
 		const isMe = input.dm.name.trim() === user.name?.trim() || input.dm.name === "Me";
 
 		const log = await prisma.$transaction(async (tx) => {
+			if (!user?.id) throw error(401, "Not authenticated");
+
 			if (input.dm?.name.trim()) {
 				if (!input.dm.id) {
 					const search = await tx.dungeonMaster.findFirst({
 						where: {
+							owner: user.id,
 							OR:
 								input.is_dm_log || isMe
 									? [{ uid: user.id }]
-									: input.dm.DCI === null
-									? [{ name: input.dm.name.trim() }]
-									: [{ name: input.dm.name.trim() }, { DCI: input.dm.DCI }]
+									: input.dm.DCI
+									? [{ name: input.dm.name.trim() }, { DCI: input.dm.DCI }]
+									: [{ name: input.dm.name.trim() }]
 						}
 					});
-					if (search) dm = search;
-					else
+					if (search) {
+						dm = search;
+						if (!dm.id) {
+							await tx.dungeonMaster.delete({
+								where: {
+									id: search.id,
+									owner: user.id
+								}
+							});
+							dm = await tx.dungeonMaster.create({
+								data: {
+									name: input.dm.name.trim(),
+									DCI: input.dm.DCI,
+									uid: input.is_dm_log || isMe ? user.id : null,
+									owner: user.id
+								}
+							});
+						}
+					} else
 						dm = await tx.dungeonMaster.create({
 							data: {
 								name: input.dm.name.trim(),
@@ -242,7 +262,8 @@ export async function saveLog(input: LogSchema, user?: CustomSession["user"]) {
 
 		revalidateKeys([
 			log?.is_dm_log && log.dm?.uid && ["dm-logs", log.dm.uid],
-			log?.characterId && ["character", log.characterId, "logs"]
+			log?.characterId && ["character", log.characterId, "logs"],
+			user.id && ["dms", user.id, "logs"]
 		]);
 
 		return log

@@ -32,6 +32,14 @@ export const dateSchema = transform(
 	[custom((input) => !isNaN(input.getTime()), "Invalid Date")]
 );
 
+export const nullableDateSchema = nullable(
+	transform(union([date(), string([iso()]), number([minValue(0)])], "Must be a valid date/time or unix timestamp"), (input) => {
+		const d = new Date(input);
+		if (isNaN(d.getTime())) return null;
+		return d;
+	})
+);
+
 export type DungeonMasterSchema = Output<typeof dungeonMasterSchema>;
 export const dungeonMasterSchema = object({
 	id: optional(string(), ""),
@@ -68,7 +76,7 @@ export const logSchema = object({
 	description: nullish(string(), ""),
 	dm: dungeonMasterSchema,
 	is_dm_log: optional(boolean(), false),
-	applied_date: nullable(dateSchema),
+	applied_date: nullableDateSchema,
 	magic_items_gained: array(itemSchema("Item")),
 	magic_items_lost: array(string([minLength(1, "Invalid Item ID")])),
 	story_awards_gained: array(itemSchema("Story Award")),
