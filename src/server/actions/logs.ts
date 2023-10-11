@@ -15,7 +15,7 @@ export async function saveLog(input: LogSchema, user?: CustomSession["user"]) {
 		if (!user?.name) throw error(401, "Not authenticated");
 
 		if (input.is_dm_log) input.dm.name = user.name || "Me";
-		if (input.dm.name.trim() === "Me") input.dm.name = user.name || "Me";
+		if (["Me", ""].includes(input.dm.name.trim())) input.dm.name = user.name || "Me";
 		const isMe = input.dm.name.trim() === user.name?.trim() || input.dm.name === "Me";
 
 		const log = await prisma.$transaction(async (tx) => {
