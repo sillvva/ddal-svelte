@@ -39,8 +39,7 @@ export async function saveLog(input: LogSchema, user?: CustomSession["user"]) {
 						if (!dm.id) {
 							await tx.dungeonMaster.delete({
 								where: {
-									id: search.id,
-									owner: user.id
+									id: search.id
 								}
 							});
 							dm = await tx.dungeonMaster.create({
