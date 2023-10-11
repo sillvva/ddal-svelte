@@ -145,6 +145,15 @@
 			return f.cancel();
 		}
 
+		// Change dates to ISO format in client to prevent timezone issues
+		f.formData.forEach((value, key) => {
+			const inputType = document.querySelector(`[name="${key}"]`)?.getAttribute("type");
+			if (inputType?.includes("date") && typeof value === "string") {
+				const d = new Date(value);
+				if (!isNaN(d.getTime())) f.formData.set(key, d.toISOString());
+			}
+		});
+
 		return async ({ update, result }) => {
 			await update({ reset: resetOnSave });
 			dispatch("after-submit", result);
