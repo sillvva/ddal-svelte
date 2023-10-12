@@ -21,11 +21,12 @@ import {
 	url,
 	type Input,
 	type Output,
-	type Pipe
+	type Pipe,
+	type PipeResult
 } from "valibot";
 
 export const nullableDateSchema = transform(
-	nullable(union([literal(""), date()])),
+	nullable(union([literal(""), date(), string([iso()])], "Invalid Date")),
 	(input) => (!input ? null : new Date(input)),
 	[custom((input) => input === null || !isNaN(input.getTime()), "Invalid Date")]
 );
@@ -87,3 +88,44 @@ export const newCharacterSchema = object({
 
 export type EditCharacterSchema = Output<typeof editCharacterSchema>;
 export const editCharacterSchema = merge([object({ id: string() }), newCharacterSchema]);
+
+export function iso<TInput extends string>(options?: {
+	date?: boolean;
+	time?: boolean;
+	seconds?: boolean | "optional";
+	milliseconds?: boolean | "optional";
+	timezone?: boolean | "optional";
+	error?: string;
+}) {
+	return (input: TInput): PipeResult<TInput> => {
+		const {
+			date = true,
+			time = true,
+			seconds = "optional",
+			milliseconds = "optional",
+			timezone = "optional",
+			error = "Invalid ISO string"
+		} = options || {};
+
+		const dateRegex =
+			"((\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-((0[13578]|1[02])-(0[1-9]|[12]\\d|3[01])|(0[469]|11)-(0[1-9]|[12]\\d|30)|(02)-(0[1-9]|1\\d|2[0-8])))";
+		const millisecondsRegex = milliseconds ? `(\\.\\d{3})${milliseconds === "optional" ? "?" : ""}` : "";
+		const secondsRegex = seconds ? `(:[0-5]\\d${millisecondsRegex})${seconds === "optional" ? "?" : ""}` : "";
+		const timezoneRegex = timezone ? `([+-]([01]\\d|2[0-3]):[0-5]\\d|Z)${timezone === "optional" ? "?" : ""}` : "";
+		const timeRegex = `([01]\\d|2[0-3]):[0-5]\\d${secondsRegex}${timezoneRegex}`;
+		const regex = new RegExp(`^${date ? dateRegex : ""}${date && time ? "T" : time ? "T?" : ""}${time ? timeRegex : ""}$`);
+
+		if (!regex.test(input)) {
+			return {
+				issues: [
+					{
+						validation: "iso",
+						message: error,
+						input
+					}
+				]
+			};
+		}
+		return { output: input };
+	};
+}

@@ -49,18 +49,18 @@
 
 	let elForm: HTMLFormElement;
 	let changes: Array<string> = [];
+	let saving = false;
 
 	export let schema: TSchema;
 	export let data: InferIn<TSchema>;
 	export let action: string;
 	export let method = "POST";
 	export let resetOnSave = false;
-	export let saving = false;
 
 	let initialStructure = emptyClone(data);
 	$: currentStructure = emptyClone(data);
 
-	export let errors = new SvelteMap<"form" | Paths<typeof initialStructure, 6>, string>();
+	let errors = new SvelteMap<"form" | Paths<typeof initialStructure, 6>, string>();
 
 	async function checkErrors(data: InferIn<TSchema>) {
 		errors = new SvelteMap<"form" | Paths<typeof initialStructure, 6>, string>();
@@ -78,7 +78,7 @@
 		}
 	}
 
-	function checkChanges() {
+	async function checkChanges() {
 		const formStructureIsDiff = JSON.stringify(currentStructure) !== JSON.stringify(initialStructure);
 		changes = !saving
 			? [...elForm.querySelectorAll("[data-dirty]")]
@@ -87,11 +87,11 @@
 					.filter(Boolean)
 			: [];
 
-		checkErrors(data);
+		await checkErrors(data);
 	}
 
 	$: {
-		if (saving || (elForm && data)) {
+		if (elForm && data) {
 			checkChanges();
 			setTimeout(() => {
 				elForm.querySelectorAll(":is(input, textarea, select):not([data-listener])").forEach((el) => {
@@ -139,7 +139,7 @@
 		dispatch("before-submit");
 		saving = true;
 
-		await checkErrors(data);
+		await checkChanges();
 		if (errors.size) {
 			saving = false;
 			return f.cancel();
