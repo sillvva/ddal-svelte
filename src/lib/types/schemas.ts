@@ -8,7 +8,7 @@ import {
 	merge,
 	minLength,
 	minValue,
-	nonNullish,
+	nonNullable,
 	nullable,
 	nullish,
 	number,
@@ -16,7 +16,6 @@ import {
 	optional,
 	regex,
 	string,
-	transform,
 	union,
 	url,
 	type Input,
@@ -24,10 +23,7 @@ import {
 	type Pipe
 } from "valibot";
 
-export const nullableDateSchema = transform(
-	nullish(date([custom((input) => !!input.getTime(), "Invalid Date")])),
-	(input) => input || null
-);
+export const nullableDateSchema = nullable(date([custom((input) => !!input.getTime(), "Invalid Date")]));
 
 export type DungeonMasterSchema = Output<typeof dungeonMasterSchema>;
 export const dungeonMasterSchema = object({
@@ -52,7 +48,7 @@ export type LogSchemaIn = Input<typeof logSchema>;
 export const logSchema = object({
 	id: nullish(string(), ""),
 	name: optional(string([minLength(1, "Log Name Required")]), ""),
-	date: nonNullish(nullableDateSchema, "Required"),
+	date: nonNullable(nullableDateSchema, "Required"),
 	characterId: optional(string(), ""),
 	characterName: optional(string(), ""),
 	type: optional(union([literal("game"), literal("nongame")]), "game"),
