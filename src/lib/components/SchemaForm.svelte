@@ -47,10 +47,6 @@
 		};
 	}>();
 
-	let elForm: HTMLFormElement;
-	let changes: Array<string> = [];
-	let saving = false;
-
 	export let schema: TSchema;
 	export let data: InferIn<TSchema>;
 	export let action: string;
@@ -61,8 +57,19 @@
 	$: currentStructure = emptyClone(data);
 
 	let errors = new SvelteMap<"form" | Paths<typeof initialStructure, 6>, string>();
+	let elForm: HTMLFormElement;
+	let changes: Array<string> = [];
+	let saving = false;
 
-	async function checkErrors(data: InferIn<TSchema>) {
+	async function checkChanges() {
+		const formStructureIsDiff = JSON.stringify(currentStructure) !== JSON.stringify(initialStructure);
+		changes = !saving
+			? [...elForm.querySelectorAll("[data-dirty]")]
+					.map((el) => el.getAttribute("name") || "hidden")
+					.concat(formStructureIsDiff ? "form" : "")
+					.filter(Boolean)
+			: [];
+
 		errors = new SvelteMap<"form" | Paths<typeof initialStructure, 6>, string>();
 		const result = await validate(schema, data);
 		if ("data" in result) {
@@ -76,18 +83,6 @@
 			});
 			dispatch("validate", { changes, errors, setError });
 		}
-	}
-
-	async function checkChanges() {
-		const formStructureIsDiff = JSON.stringify(currentStructure) !== JSON.stringify(initialStructure);
-		changes = !saving
-			? [...elForm.querySelectorAll("[data-dirty]")]
-					.map((el) => el.getAttribute("name") || "hidden")
-					.concat(formStructureIsDiff ? "form" : "")
-					.filter(Boolean)
-			: [];
-
-		await checkErrors(data);
 	}
 
 	$: {
