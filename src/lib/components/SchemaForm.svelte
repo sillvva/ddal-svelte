@@ -3,14 +3,44 @@
 	import { validate } from "@decs/typeschema";
 	import { decode } from "decode-formdata";
 
+	/**
+	 * Parse form data from strings to their correct types and
+	 * validate them against a schema from Zod, Yup, Valibot, etc.
+	 *
+	 * @param formData The form data to parse
+	 * @param schema The schema to validate against
+	 * @param info Arrays of field names that should be parsed as arrays, booleans, dates, files or numbers
+	 * @param info.arrays Field names that should be parsed as arrays
+	 * @param info.booleans Field names that should be parsed as booleans
+	 * @param info.dates Field names that should be parsed as dates
+	 * @param info.files Field names that should be parsed as files
+	 * @param info.numbers Field names that should be parsed as numbers
+	 *
+	 * @returns The parsed and validated data
+	 */
 	export async function parseFormData<TSchema extends Schema>(
 		formData: FormData,
 		schema: TSchema,
 		info?: Partial<{
+			/**
+			 * Field names that should be parsed as arrays
+			 */
 			arrays: string[];
+			/**
+			 * Field names that should be parsed as booleans
+			 */
 			booleans: string[];
+			/**
+			 * Field names that should be parsed as dates
+			 */
 			dates: string[];
+			/**
+			 * Field names that should be parsed as files
+			 */
 			files: string[];
+			/**
+			 * Field names that should be parsed as numbers
+			 */
 			numbers: string[];
 		}>
 	): Promise<Infer<TSchema>> {
@@ -47,10 +77,25 @@
 		};
 	}>();
 
+	/**
+	 * A schema from Zod, Yup, Valibot, etc. to validate the form against
+	 */
 	export let schema: TSchema;
+	/**
+	 * The data to be validated
+	 */
 	export let data: InferIn<TSchema>;
+	/**
+	 * The URL to submit the form to
+	 */
 	export let action: string;
+	/**
+	 * The HTTP method to use when submitting the form
+	 */
 	export let method = "POST";
+	/**
+	 * Whether to reset the form after submitting
+	 */
 	export let resetOnSave = false;
 
 	let initialStructure = emptyClone(data);
@@ -62,6 +107,7 @@
 	let saving = false;
 
 	async function checkChanges() {
+		// Check for changes
 		const formStructureIsDiff = JSON.stringify(currentStructure) !== JSON.stringify(initialStructure);
 		changes = !saving
 			? [...elForm.querySelectorAll("[data-dirty]")]
@@ -70,6 +116,7 @@
 					.filter(Boolean)
 			: [];
 
+		// Check for errors
 		errors = new SvelteMap<"form" | Paths<typeof initialStructure, 6>, string>();
 		const result = await validate(schema, data);
 		if ("data" in result) {
@@ -134,6 +181,7 @@
 		dispatch("before-submit");
 		saving = true;
 
+		// Check for errors before submitting
 		await checkChanges();
 		if (errors.size) {
 			saving = false;
