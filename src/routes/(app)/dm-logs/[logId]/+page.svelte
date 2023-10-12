@@ -41,6 +41,8 @@
 		magic_items_lost: [],
 		story_awards_gained: storyAwardsGained,
 		story_awards_lost: [],
+		date: log.date && new Date(log.date),
+		applied_date: log.applied_date ? new Date(log.applied_date) : null,
 		dm: {
 			id: log.dm?.id,
 			name: log.dm?.name,

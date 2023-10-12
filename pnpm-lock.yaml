@@ -21,8 +21,8 @@ dependencies:
     specifier: ^5.4.2
     version: 5.4.2(prisma@5.4.2)
   decode-formdata:
-    specifier: ^0.2.0
-    version: 0.2.0
+    specifier: ^0.3.0
+    version: 0.3.0
   ioredis:
     specifier: ^5.3.2
     version: 5.3.2
@@ -1031,8 +1031,8 @@ packages:
     dependencies:
       ms: 2.1.2
 
-  /decode-formdata@0.2.0:
-    resolution: {integrity: sha512-jHJX7QS657Cxq7M4NZihQNYJxU0Gd1ydxVlMIdCVJNCmhPHpvkTTFeh52FwDOsRDpOdlbTqobMtKCmxFPu8h5Q==}
+  /decode-formdata@0.3.0:
+    resolution: {integrity: sha512-78p4qpuUCKxqtpRsdwo88Xr8z3/A6KQBOGu6naTuyeUlZPnKsKQDu/vqu3TPFfjDA/FQUX1XbCHT7mawRlpWCQ==}
     dev: false
 
   /deep-is@0.1.4:

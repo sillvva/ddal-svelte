@@ -54,6 +54,8 @@
 		magic_items_lost: magicItemsLost,
 		story_awards_gained: storyAwardsGained,
 		story_awards_lost: storyAwardsLost,
+		date: log.date && new Date(log.date),
+		applied_date: log.applied_date ? new Date(log.applied_date) : null,
 		dm:
 			!(dm.uid || dm.name.trim()) && data.user.id
 				? {

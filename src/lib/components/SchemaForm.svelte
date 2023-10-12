@@ -44,10 +44,7 @@
 			numbers: string[];
 		}>
 	): Promise<Infer<TSchema>> {
-		const formValues = decode(formData, {
-			...info,
-			dates: info?.dates?.filter((d) => formData.get(d))
-		});
+		const formValues = decode(formData, info);
 		const result = await validate(schema, formValues);
 		if ("issues" in result && result.issues.length) {
 			console.log("Value:", formValues);
