@@ -178,6 +178,8 @@
 	bind:this={elForm}
 	novalidate
 	use:enhance={async (f) => {
+		if (saving) return f.cancel();
+
 		dispatch("before-submit");
 		saving = true;
 
