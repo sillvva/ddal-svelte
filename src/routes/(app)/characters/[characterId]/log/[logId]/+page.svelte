@@ -270,6 +270,12 @@
 						{/if}
 					</div>
 				{/if}
+			{:else}
+				<input type="hidden" name="dm.id" value={dm.id} />
+				<input type="hidden" name="dm.uid" value={dm.uid} />
+				<input type="hidden" name="dm.owner" value={dm.owner} />
+				<input type="hidden" name="dm.name" value={dm.name} />
+				<input type="hidden" name="dm.DCI" value={dm.DCI} />
 			{/if}
 			{#if season === 8 || log.type === "nongame"}
 				{#if log.type === "game"}
