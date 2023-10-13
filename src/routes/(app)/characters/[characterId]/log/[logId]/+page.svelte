@@ -1,6 +1,5 @@
 <script lang="ts">
 	import AutoResizeTextArea from "$lib/components/AutoResizeTextArea.svelte";
-	import BackButton from "$lib/components/BackButton.svelte";
 	import BreadCrumbs from "$lib/components/BreadCrumbs.svelte";
 	import Icon from "$lib/components/Icon.svelte";
 	import SchemaForm from "$lib/components/SchemaForm.svelte";
@@ -94,7 +93,6 @@
 </script>
 
 <BreadCrumbs />
-<BackButton href={`/characters/${data.characterId}`}>{character.name}</BackButton>
 
 <SchemaForm action="?/saveLog" schema={logSchema} data={values} let:saving let:errors>
 	{#if form?.error || errors.has("form")}
@@ -104,8 +102,8 @@
 		</div>
 	{/if}
 
-	<input type="hidden" name="characterId" value={character.id} />
 	<input type="hidden" name="id" value={data.logId === "new" ? "" : data.logId} />
+	<input type="hidden" name="characterId" value={character.id} />
 	<input type="hidden" name="applied_date" value={log.applied_date} />
 	<div class="grid grid-cols-12 gap-4">
 		{#if !log.is_dm_log}

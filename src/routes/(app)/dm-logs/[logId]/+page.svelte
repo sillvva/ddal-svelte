@@ -1,6 +1,5 @@
 <script lang="ts">
 	import AutoResizeTextArea from "$lib/components/AutoResizeTextArea.svelte";
-	import BackButton from "$lib/components/BackButton.svelte";
 	import BreadCrumbs from "$lib/components/BreadCrumbs.svelte";
 	import Icon from "$lib/components/Icon.svelte";
 	import SchemaForm from "$lib/components/SchemaForm.svelte";
@@ -67,7 +66,6 @@
 </script>
 
 <BreadCrumbs />
-<BackButton href="/dm-logs">DM Logs</BackButton>
 
 <SchemaForm
 	action="?/saveLog"

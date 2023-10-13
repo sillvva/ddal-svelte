@@ -70,7 +70,6 @@
 <div class="flex flex-col gap-4">
 	<div class="hidden gap-4 print:hidden sm:flex">
 		<BreadCrumbs />
-
 		<div class="dropdown dropdown-end">
 			<span role="button" tabindex="0" class="btn btn-sm">
 				<Icon src="dots-horizontal" class="w-6" />

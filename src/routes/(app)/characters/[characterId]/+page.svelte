@@ -85,47 +85,86 @@
 </script>
 
 {#if data.session?.user}
-	<div class="hidden gap-4 print:hidden sm:flex">
+	<div class="group flex gap-4">
 		<BreadCrumbs />
-
 		{#if myCharacter}
-			<a href={`/characters/${character.id}/edit`} class="btn btn-primary btn-sm">Edit</a>
-			<div class="dropdown dropdown-end">
-				<span role="button" tabindex="0" class="btn btn-sm bg-base-100">
+			<div class="hidden gap-4 print:hidden sm:flex">
+				<a href={`/characters/${character.id}/edit`} class="btn btn-primary btn-sm">Edit</a>
+				<div class="dropdown dropdown-end">
+					<span role="button" tabindex="0" class="btn btn-sm bg-base-100">
+						<Icon src="dots-horizontal" class="w-6" />
+					</span>
+					<ul class="menu dropdown-content rounded-box z-20 w-52 bg-base-100 p-2 shadow">
+						<li>
+							<a
+								download={`${slugify(character.name)}.json`}
+								href={`/api/export/characters/${character.id}`}
+								target="_blank"
+								rel="noreferrer noopener"
+							>
+								Export
+							</a>
+						</li>
+						<li>
+							<form
+								method="POST"
+								action="?/deleteCharacter"
+								use:enhance={() => {
+									$pageLoader = true;
+									return ({ update, result }) => {
+										update();
+										if (result.type !== "redirect") $pageLoader = false;
+									};
+								}}
+								class="btn-delete"
+							>
+								<button
+									on:click|preventDefault={(e) => {
+										if (confirm(`Are you sure you want to delete ${character.name}? This action cannot be reversed.`))
+											e.currentTarget.form?.requestSubmit();
+									}}>Delete Character</button
+								>
+							</form>
+						</li>
+					</ul>
+				</div>
+			</div>
+			<div class="dropdown-end dropdown sm:hidden">
+				<span role="button" tabindex="0" class="btn">
 					<Icon src="dots-horizontal" class="w-6" />
 				</span>
 				<ul class="menu dropdown-content rounded-box z-20 w-52 bg-base-100 p-2 shadow">
-					<li>
-						<a
-							download={`${slugify(character.name)}.json`}
-							href={`/api/export/characters/${character.id}`}
-							target="_blank"
-							rel="noreferrer noopener"
-						>
-							Export
-						</a>
-					</li>
-					<li>
-						<form
-							method="POST"
-							action="?/deleteCharacter"
-							use:enhance={() => {
-								$pageLoader = true;
-								return ({ update, result }) => {
-									update();
-									if (result.type !== "redirect") $pageLoader = false;
-								};
-							}}
-							class="btn-delete"
-						>
-							<button
-								on:click|preventDefault={(e) => {
-									if (confirm(`Are you sure you want to delete ${character.name}? This action cannot be reversed.`))
-										e.currentTarget.form?.requestSubmit();
-								}}>Delete Character</button
+					{#if character.image_url}
+						<li class="xs:hidden">
+							<a href={character.image_url} target="_blank">View Image</a>
+						</li>
+					{/if}
+					{#if myCharacter}
+						<li>
+							<a href={`/characters/${character.id}/edit`}>Edit</a>
+						</li>
+						<li>
+							<form
+								method="POST"
+								action="?/deleteCharacter"
+								use:enhance={() => {
+									$pageLoader = true;
+									return ({ update, result }) => {
+										update();
+										if (result.type !== "redirect") $pageLoader = false;
+									};
+								}}
+								class="btn-delete"
 							>
-						</form>
-					</li>
+								<button
+									on:click|preventDefault={(e) => {
+										if (confirm(`Are you sure you want to delete ${character.name}? This action cannot be reversed.`))
+											e.currentTarget.form?.requestSubmit();
+									}}>Delete Character</button
+								>
+							</form>
+						</li>
+					{/if}
 				</ul>
 			</div>
 		{/if}
@@ -160,44 +199,6 @@
 					<h3 class="flex-1 py-2 font-vecna text-3xl font-bold text-accent-content sm:py-0 sm:text-4xl">
 						{character.name}
 					</h3>
-					<div class="dropdown-end dropdown sm:hidden">
-						<span role="button" tabindex="0" class="btn">
-							<Icon src="dots-horizontal" class="w-6" />
-						</span>
-						<ul class="menu dropdown-content rounded-box z-20 w-52 bg-base-100 p-2 shadow">
-							{#if character.image_url}
-								<li class="xs:hidden">
-									<a href={character.image_url} target="_blank">View Image</a>
-								</li>
-							{/if}
-							{#if myCharacter}
-								<li>
-									<a href={`/characters/${character.id}/edit`}>Edit</a>
-								</li>
-								<li>
-									<form
-										method="POST"
-										action="?/deleteCharacter"
-										use:enhance={() => {
-											$pageLoader = true;
-											return ({ update, result }) => {
-												update();
-												if (result.type !== "redirect") $pageLoader = false;
-											};
-										}}
-										class="btn-delete"
-									>
-										<button
-											on:click|preventDefault={(e) => {
-												if (confirm(`Are you sure you want to delete ${character.name}? This action cannot be reversed.`))
-													e.currentTarget.form?.requestSubmit();
-											}}>Delete Character</button
-										>
-									</form>
-								</li>
-							{/if}
-						</ul>
-					</div>
 				</div>
 				<p class="flex-1 text-xs font-semibold xs:text-sm">
 					{character.race}

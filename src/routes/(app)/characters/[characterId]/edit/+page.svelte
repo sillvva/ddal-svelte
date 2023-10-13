@@ -1,5 +1,4 @@
 <script lang="ts">
-	import BackButton from "$lib/components/BackButton.svelte";
 	import BreadCrumbs from "$lib/components/BreadCrumbs.svelte";
 	import Icon from "$lib/components/Icon.svelte";
 	import SchemaForm from "$lib/components/SchemaForm.svelte";
@@ -17,9 +16,6 @@
 </script>
 
 <BreadCrumbs />
-<BackButton href="/characters{data.characterId == 'new' ? '' : `/${data.characterId}`}">
-	{data.characterId == "new" ? "Characters" : character.name}
-</BackButton>
 
 <SchemaForm action="?/saveCharacter" schema={newCharacterSchema} data={character} let:errors let:saving>
 	{#if form?.error || errors.has("form")}
