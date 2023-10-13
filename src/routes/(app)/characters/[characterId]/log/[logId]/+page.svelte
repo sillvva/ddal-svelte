@@ -54,6 +54,8 @@
 		magic_items_lost: magicItemsLost,
 		story_awards_gained: storyAwardsGained,
 		story_awards_lost: storyAwardsLost,
+		date: log.date && new Date(log.date),
+		applied_date: log.applied_date ? new Date(log.applied_date) : null,
 		dm:
 			!(dm.uid || dm.name.trim()) && data.user.id
 				? {
@@ -103,15 +105,15 @@
 	{/if}
 
 	<input type="hidden" name="characterId" value={character.id} />
-	<input type="hidden" name="logId" value={data.logId === "new" ? "" : data.logId} />
-	<input type="hidden" name="is_dm_log" value={log.is_dm_log} />
+	<input type="hidden" name="id" value={data.logId === "new" ? "" : data.logId} />
+	<input type="hidden" name="applied_date" value={log.applied_date} />
 	<div class="grid grid-cols-12 gap-4">
 		{#if !log.is_dm_log}
 			<div class="form-control col-span-12 sm:col-span-4">
 				<label for="type" class="label">
 					<span class="label-text">Log Type</span>
 				</label>
-				<select name="type" bind:value={log.type} disabled={saving} class="select-bordered select w-full">
+				<select name="type" bind:value={log.type} disabled={saving} class="select select-bordered w-full">
 					<option value="game">Game</option>
 					<option value="nongame">Non-Game (Purchase, Trade, etc)</option>
 				</select>
@@ -130,7 +132,7 @@
 				required
 				disabled={saving}
 				bind:value={log.name}
-				class="input-bordered input w-full focus:border-primary"
+				class="input input-bordered w-full focus:border-primary"
 				aria-invalid={errors.get("name") ? "true" : "false"}
 			/>
 			{#if errors.has("name")}
@@ -151,7 +153,7 @@
 				required
 				disabled={saving}
 				bind:value={log.date}
-				class="input-bordered input w-full focus:border-primary"
+				class="input input-bordered w-full focus:border-primary"
 				aria-invalid={errors.get("date") ? "true" : "false"}
 			/>
 			{#if errors.has("date")}
@@ -164,6 +166,7 @@
 			{#if log.type === "game"}
 				<input type="hidden" name="dm.id" value={dm.id} />
 				<input type="hidden" name="dm.uid" value={dm.uid} />
+				<input type="hidden" name="dm.owner" value={dm.owner} />
 				{#if log.is_dm_log}
 					<input type="hidden" name="dm.name" value={dm.name} />
 					<input type="hidden" name="dm.DCI" value={dm.DCI} />
@@ -181,7 +184,7 @@
 								if (ev.detail) {
 									const updated = data.dms.find((dm) => dm.name === ev.detail);
 									if (updated) dm = updated;
-									else dm = { ...(dm.name ? dm : defaultDM), name: ev.detail.toString().trim() };
+									else dm = { ...defaultDM, name: ev.detail.toString().trim(), DCI: dm.DCI };
 								} else dm = defaultDM;
 							}}
 						/>
@@ -205,7 +208,7 @@
 								if (ev.detail) {
 									const updated = data.dms.find((dm) => dm.DCI === ev.detail);
 									if (updated) dm = updated;
-									else dm = { ...(dm.name ? dm : defaultDM), DCI: ev.detail.toString().trim() };
+									else dm = { ...defaultDM, DCI: ev.detail.toString().trim(), name: dm.name };
 								} else dm = { ...(dm.name ? dm : defaultDM), DCI: null };
 							}}
 						/>
@@ -220,7 +223,7 @@
 					<label for="season" class="label">
 						<span class="label-text">Season</span>
 					</label>
-					<select name="season" bind:value={season} disabled={saving} class="select-bordered select w-full">
+					<select name="season" bind:value={season} disabled={saving} class="select select-bordered w-full">
 						<option value={9}>Season 9+</option>
 						<option value={8}>Season 8</option>
 						<option value={1}>Season 1-7</option>
@@ -237,7 +240,7 @@
 							min="0"
 							disabled={saving}
 							bind:value={log.experience}
-							class="input-bordered input w-full focus:border-primary"
+							class="input input-bordered w-full focus:border-primary"
 						/>
 						{#if errors.has("experience")}
 							<label for="experience" class="label">
@@ -258,7 +261,7 @@
 							max={Math.max(log.level, character ? 20 - character.total_level : 19)}
 							disabled={saving}
 							bind:value={log.level}
-							class="input-bordered input w-full focus:border-primary"
+							class="input input-bordered w-full focus:border-primary"
 						/>
 						{#if errors.has("level")}
 							<label for="level" class="label">
@@ -267,6 +270,12 @@
 						{/if}
 					</div>
 				{/if}
+			{:else}
+				<input type="hidden" name="dm.id" value={dm.id} />
+				<input type="hidden" name="dm.uid" value={dm.uid} />
+				<input type="hidden" name="dm.owner" value={dm.owner} />
+				<input type="hidden" name="dm.name" value={dm.name} />
+				<input type="hidden" name="dm.DCI" value={dm.DCI} />
 			{/if}
 			{#if season === 8 || log.type === "nongame"}
 				{#if log.type === "game"}
@@ -279,7 +288,7 @@
 							name="acp"
 							disabled={saving}
 							bind:value={log.acp}
-							class="input-bordered input w-full focus:border-primary"
+							class="input input-bordered w-full focus:border-primary"
 						/>
 						{#if errors.has("acp")}
 							<label for="acp" class="label">
@@ -297,7 +306,7 @@
 						name="tcp"
 						disabled={saving}
 						bind:value={log.tcp}
-						class="input-bordered input w-full focus:border-primary"
+						class="input input-bordered w-full focus:border-primary"
 					/>
 					{#if errors.has("tcp")}
 						<label for="tcp" class="label">
@@ -315,7 +324,7 @@
 					name="gold"
 					disabled={saving}
 					bind:value={log.gold}
-					class="input-bordered input w-full focus:border-primary"
+					class="input input-bordered w-full focus:border-primary"
 				/>
 				{#if errors.has("gold")}
 					<label for="gold" class="label">
@@ -332,7 +341,7 @@
 					name="dtd"
 					disabled={saving}
 					bind:value={log.dtd}
-					class="input-bordered input w-full focus:border-primary"
+					class="input input-bordered w-full focus:border-primary"
 				/>
 				{#if errors.has("dtd")}
 					<label for="dtd" class="label">
@@ -345,7 +354,7 @@
 			<label for="description" class="label">
 				<span class="label-text">Notes</span>
 			</label>
-			<div class="tabs tabs-boxed rounded-b-none border-base-content border-b-0 border-[1px] [--tw-border-opacity:0.2]">
+			<div class="tabs-boxed tabs rounded-b-none border-[1px] border-b-0 border-base-content [--tw-border-opacity:0.2]">
 				<button type="button" class="tab" class:tab-active={!previews.description} on:click={() => (previews.description = false)}
 					>Edit</button
 				>
@@ -357,10 +366,10 @@
 				name="description"
 				bind:value={log.description}
 				disabled={saving}
-				class={twMerge("textarea-bordered rounded-t-none textarea w-full focus:border-primary", previews.description && "hidden")}
+				class={twMerge("textarea textarea-bordered w-full rounded-t-none focus:border-primary", previews.description && "hidden")}
 			/>
 			<div
-				class="p-4 bg-base-100 border-base-content border-[1px] [--tw-border-opacity:0.2]"
+				class="border-[1px] border-base-content bg-base-100 p-4 [--tw-border-opacity:0.2]"
 				class:hidden={!previews.description}
 			>
 				<Markdown content={log.description || ""} />
@@ -377,7 +386,7 @@
 		<div class="col-span-12 flex flex-wrap gap-4">
 			<button
 				type="button"
-				class="btn-primary btn min-w-fit flex-1 sm:btn-sm sm:flex-none"
+				class="btn btn-primary min-w-fit flex-1 sm:btn-sm sm:flex-none"
 				on:click={() => (magicItemsGained = [...magicItemsGained, { id: "", name: "", description: "" }])}
 				disabled={saving}
 			>
@@ -396,7 +405,7 @@
 			{#if log.type === "game"}
 				<button
 					type="button"
-					class="btn-primary btn min-w-fit flex-1 sm:btn-sm sm:flex-none"
+					class="btn btn-primary min-w-fit flex-1 sm:btn-sm sm:flex-none"
 					on:click={() => (storyAwardsGained = [...storyAwardsGained, { id: "", name: "", description: "" }])}
 					disabled={saving}
 				>
@@ -419,6 +428,7 @@
 				<div class="card col-span-12 h-[370px] bg-base-300/70 sm:col-span-6">
 					<div class="card-body flex flex-col gap-4">
 						<h4 class="text-2xl">Add Magic Item</h4>
+						<input type="hidden" name={`magic_items_gained.${index}.id`} value={item.id} />
 						<div class="flex gap-4">
 							<div class="form-control flex-1">
 								<label for={`magic_items_gained.${index}.name`} class="label">
@@ -432,7 +442,7 @@
 										if (magicItemsGained[index]) magicItemsGained[index].name = e.currentTarget.value;
 									}}
 									disabled={saving}
-									class="input-bordered input w-full focus:border-primary"
+									class="input input-bordered w-full focus:border-primary"
 								/>
 								{#if errors.has(`magic_items_gained.${index}.name`)}
 									<label for={`magic_items_gained.${index}.name`} class="label">
@@ -458,7 +468,7 @@
 									if (magicItemsGained[index]) magicItemsGained[index].description = e.currentTarget.value;
 								}}
 								disabled={saving}
-								class="textarea-bordered textarea w-full focus:border-primary"
+								class="textarea textarea-bordered w-full focus:border-primary"
 								style="resize: none;"
 								value={item.description}
 								spellcheck="true"
@@ -487,7 +497,7 @@
 										if (magicItemsLost[index]) magicItemsLost[index] = e.currentTarget.value;
 									}}
 									disabled={saving}
-									class="select-bordered select w-full"
+									class="select select-bordered w-full"
 								>
 									{#each magicItems.filter((item) => item.id === id || !magicItemsLost.includes(item.id)) as item}
 										<option value={item.id}>
@@ -517,6 +527,7 @@
 				<div class="card col-span-12 h-[370px] bg-base-300/70 sm:col-span-6">
 					<div class="card-body flex flex-col gap-4">
 						<h4 class="text-2xl">Add Story Award</h4>
+						<input type="hidden" name={`story_awards_gained.${index}.id`} value={item.id} />
 						<div class="flex gap-4">
 							<div class="form-control flex-1">
 								<label for={`story_awards_gained.${index}.name`} class="label">
@@ -530,7 +541,7 @@
 										if (storyAwardsGained[index]) storyAwardsGained[index].name = e.currentTarget.value;
 									}}
 									disabled={saving}
-									class="input-bordered input w-full focus:border-primary"
+									class="input input-bordered w-full focus:border-primary"
 								/>
 								{#if errors.has(`story_awards_gained.${index}.name`)}
 									<label for={`story_awards_gained.${index}.name`} class="label">
@@ -556,7 +567,7 @@
 									if (storyAwardsGained[index]) storyAwardsGained[index].description = e.currentTarget.value;
 								}}
 								disabled={saving}
-								class="textarea-bordered textarea w-full focus:border-primary"
+								class="textarea textarea-bordered w-full focus:border-primary"
 								style="resize: none;"
 								value={item.description}
 								spellcheck="true"
@@ -585,7 +596,7 @@
 										if (storyAwardsLost[index]) storyAwardsLost[index] = e.currentTarget.value;
 									}}
 									disabled={saving}
-									class="select-bordered select w-full"
+									class="select select-bordered w-full"
 								>
 									{#each storyAwards.filter((item) => item.id === id || !storyAwardsLost.includes(item.id)) as item}
 										<option value={item.id}>
@@ -615,7 +626,7 @@
 		<div class="col-span-12 text-center">
 			<button
 				type="submit"
-				class="btn-primary btn disabled:bg-primary disabled:bg-opacity-50 disabled:text-opacity-50"
+				class="btn btn-primary disabled:bg-primary disabled:bg-opacity-50 disabled:text-opacity-50"
 				disabled={saving}
 			>
 				{#if saving}

@@ -248,9 +248,10 @@
 				{#if results.filter((c) => c.tier == tier).length}
 					<h1
 						class={twMerge(
-							"text-2xl font-bold dark:text-white",
+							"pb-2 font-vecna text-3xl font-bold dark:text-white",
 							display == "list" && "hidden",
-							display == "grid" && "hidden xs:block"
+							display == "grid" && "hidden xs:block",
+							tier > 1 && "pt-6"
 						)}
 					>
 						Tier {tier}
@@ -268,7 +269,7 @@
 							)}
 							<a
 								href={`/characters/${character.id}`}
-								class="img-grow card card-compact bg-base-100 shadow-xl"
+								class="card card-compact bg-base-100 shadow-xl transition-transform duration-200 motion-safe:hover:scale-105"
 								style:view-transition-name={slugify("image-" + character.id)}
 							>
 								<figure class="relative aspect-square overflow-hidden">

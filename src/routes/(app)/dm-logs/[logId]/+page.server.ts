@@ -46,7 +46,12 @@ export const actions = {
 
 		try {
 			const formData = await event.request.formData();
-			const logData = await parseFormData(formData, logSchema);
+			const logData = await parseFormData(formData, logSchema, {
+				arrays: ["magic_items_gained", "story_awards_gained", "magic_items_lost", "story_awards_lost"],
+				dates: ["date", "applied_date"],
+				booleans: ["is_dm_log"],
+				numbers: ["season", "level", "gold", "acp", "tcp", "experience", "dtd"]
+			});
 			if (!logData.is_dm_log) throw new Error("Only DM logs can be saved here.");
 
 			if (logData.characterId && logData.applied_date) {

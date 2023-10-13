@@ -1,7 +1,7 @@
 import { parseFormData } from "$src/lib/components/SchemaForm.svelte";
 import { defaultLog } from "$src/lib/entities.js";
 import { logSchema } from "$src/lib/types/schemas";
-import { saveLog } from "$src/server/actions/logs";
+import { saveLog } from "$src/server/actions/logs.js";
 import { signInRedirect } from "$src/server/auth.js";
 import { getCharacterCache } from "$src/server/data/characters";
 import { getUserDMsWithLogs } from "$src/server/data/dms";
@@ -53,7 +53,12 @@ export const actions = {
 
 		try {
 			const formData = await event.request.formData();
-			const logData = await parseFormData(formData, logSchema);
+			const logData = await parseFormData(formData, logSchema, {
+				arrays: ["magic_items_gained", "story_awards_gained", "magic_items_lost", "story_awards_lost"],
+				dates: ["date", "applied_date"],
+				booleans: ["is_dm_log"],
+				numbers: ["season", "level", "gold", "acp", "tcp", "experience", "dtd"]
+			});
 			const result = await saveLog(logData, session.user);
 			if (result && result.id) throw redirect(301, `/characters/${character.id}`);
 

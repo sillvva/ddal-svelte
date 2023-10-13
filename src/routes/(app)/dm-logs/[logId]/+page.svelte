@@ -41,6 +41,8 @@
 		magic_items_lost: [],
 		story_awards_gained: storyAwardsGained,
 		story_awards_lost: [],
+		date: log.date && new Date(log.date),
+		applied_date: log.applied_date ? new Date(log.applied_date) : null,
 		dm: {
 			id: log.dm?.id,
 			name: log.dm?.name,
@@ -101,11 +103,13 @@
 		</div>
 	{/if}
 
-	<input type="hidden" name="logId" value={data.logId === "new" ? "" : data.logId} />
+	<input type="hidden" name="id" value={data.logId === "new" ? "" : data.logId} />
 	<input type="hidden" name="dm.id" value={log.dm?.id || ""} />
 	<input type="hidden" name="dm.DCI" value={null} />
 	<input type="hidden" name="dm.name" value={log.dm?.name || ""} />
 	<input type="hidden" name="dm.uid" value={log.dm?.uid || ""} />
+	<input type="hidden" name="dm.owner" value={data.user.id} />
+	<input type="hidden" name="is_dm_log" value="true" />
 	<div class="grid grid-cols-12 gap-4">
 		<div class={twMerge("form-control col-span-12", log.is_dm_log ? "sm:col-span-6 lg:col-span-3" : "sm:col-span-4")}>
 			<label for="name" class="label">
@@ -120,7 +124,7 @@
 				required
 				bind:value={log.name}
 				disabled={saving}
-				class="input-bordered input w-full focus:border-primary"
+				class="input input-bordered w-full focus:border-primary"
 				aria-invalid={errors.get("name") ? "true" : "false"}
 			/>
 			{#if errors.has("name")}
@@ -141,7 +145,7 @@
 				bind:value={log.date}
 				required
 				disabled={saving}
-				class="input-bordered input w-full focus:border-primary"
+				class="input input-bordered w-full focus:border-primary"
 			/>
 			{#if errors.has("date")}
 				<label for="date" class="label">
@@ -175,6 +179,7 @@
 					character = data.characters.find((c) => c.id === ev.detail);
 					log.characterId = character ? ev.detail.toString() : "";
 					log.applied_date = data.character && log.applied_date ? log.applied_date : null;
+					if (log.characterId) log.applied_date = log.applied_date || new Date();
 				}}
 			/>
 			{#if errors.has("characterId")}
@@ -197,7 +202,7 @@
 				bind:value={log.applied_date}
 				required={!!log.characterId}
 				disabled={saving}
-				class="input-bordered input w-full focus:border-primary"
+				class="input input-bordered w-full focus:border-primary"
 				aria-invalid={errors.get("applied_date") ? "true" : "false"}
 			/>
 			{#if errors.has("applied_date")}
@@ -211,7 +216,7 @@
 				<label for="season" class="label">
 					<span class="label-text">Season</span>
 				</label>
-				<select bind:value={season} disabled={saving} class="select-bordered select w-full">
+				<select bind:value={season} disabled={saving} class="select select-bordered w-full">
 					<option value={9}>Season 9+</option>
 					<option value={8}>Season 8</option>
 					<option value={1}>Season 1-7</option>
@@ -227,7 +232,7 @@
 						bind:value={log.experience}
 						min="0"
 						disabled={saving}
-						class="input-bordered input w-full focus:border-primary"
+						class="input input-bordered w-full focus:border-primary"
 					/>
 					{#if errors.has("experience")}
 						<label for="experience" class="label">
@@ -247,7 +252,7 @@
 						min="0"
 						bind:value={log.level}
 						disabled={saving}
-						class="input-bordered input w-full focus:border-primary"
+						class="input input-bordered w-full focus:border-primary"
 					/>
 					{#if errors.has("level")}
 						<label for="level" class="label">
@@ -267,7 +272,7 @@
 						min="0"
 						bind:value={log.acp}
 						disabled={saving}
-						class="input-bordered input w-full focus:border-primary"
+						class="input input-bordered w-full focus:border-primary"
 					/>
 					{#if errors.has("acp")}
 						<label for="acp" class="label">
@@ -275,7 +280,7 @@
 						</label>
 					{/if}
 				</div>
-				<div class="form-control w-full col-span-6 sm:col-span-2">
+				<div class="form-control col-span-6 w-full sm:col-span-2">
 					<label for="tcp" class="label">
 						<span class="label-text">TCP</span>
 					</label>
@@ -284,7 +289,7 @@
 						name="tcp"
 						bind:value={log.tcp}
 						disabled={saving}
-						class="input-bordered input w-full focus:border-primary"
+						class="input input-bordered w-full focus:border-primary"
 					/>
 					{#if errors.has("tcp")}
 						<label for="tcp" class="label">
@@ -293,7 +298,7 @@
 					{/if}
 				</div>
 			{/if}
-			<div class="form-control w-full col-span-6 sm:col-span-2">
+			<div class="form-control col-span-6 w-full sm:col-span-2">
 				<label for="gold" class="label">
 					<span class="label-text">Gold</span>
 				</label>
@@ -302,7 +307,7 @@
 					name="gold"
 					bind:value={log.gold}
 					disabled={saving}
-					class="input-bordered input w-full focus:border-primary"
+					class="input input-bordered w-full focus:border-primary"
 				/>
 				{#if errors.has("gold")}
 					<label for="gold" class="label">
@@ -310,7 +315,7 @@
 					</label>
 				{/if}
 			</div>
-			<div class="form-control w-full col-span-6 sm:col-span-2">
+			<div class="form-control col-span-6 w-full sm:col-span-2">
 				<label for="dtd" class="label">
 					<span class="label-text overflow-hidden text-ellipsis whitespace-nowrap">Downtime Days</span>
 				</label>
@@ -319,7 +324,7 @@
 					name="dtd"
 					bind:value={log.dtd}
 					disabled={saving}
-					class="input-bordered input w-full focus:border-primary"
+					class="input input-bordered w-full focus:border-primary"
 				/>
 				{#if errors.has("dtd")}
 					<label for="dtd" class="label">
@@ -332,7 +337,7 @@
 			<label for="description" class="label">
 				<span class="label-text">Notes</span>
 			</label>
-			<div class="tabs tabs-boxed rounded-b-none border-base-content border-b-0 border-[1px] [--tw-border-opacity:0.2]">
+			<div class="tabs-boxed tabs rounded-b-none border-[1px] border-b-0 border-base-content [--tw-border-opacity:0.2]">
 				<button type="button" class="tab" class:tab-active={!previews.description} on:click={() => (previews.description = false)}
 					>Edit</button
 				>
@@ -344,10 +349,10 @@
 				name="description"
 				bind:value={log.description}
 				disabled={saving}
-				class={twMerge("textarea-bordered rounded-t-none textarea w-full focus:border-primary", previews.description && "hidden")}
+				class={twMerge("textarea textarea-bordered w-full rounded-t-none focus:border-primary", previews.description && "hidden")}
 			/>
 			<div
-				class="p-4 bg-base-100 border-base-content border-[1px] [--tw-border-opacity:0.2]"
+				class="border-[1px] border-base-content bg-base-100 p-4 [--tw-border-opacity:0.2]"
 				class:hidden={!previews.description}
 			>
 				<Markdown content={log.description || ""} />
@@ -364,7 +369,7 @@
 		<div class="col-span-12 flex flex-wrap gap-4">
 			<button
 				type="button"
-				class="btn-primary btn min-w-fit flex-1 sm:btn-sm sm:flex-none"
+				class="btn btn-primary min-w-fit flex-1 sm:btn-sm sm:flex-none"
 				on:click={() => (magicItemsGained = [...magicItemsGained, { id: "", name: "", description: "" }])}
 				disabled={saving}
 			>
@@ -372,7 +377,7 @@
 			</button>
 			<button
 				type="button"
-				class="btn-primary btn min-w-fit flex-1 sm:btn-sm sm:flex-none"
+				class="btn btn-primary min-w-fit flex-1 sm:btn-sm sm:flex-none"
 				on:click={() => (storyAwardsGained = [...storyAwardsGained, { id: "", name: "", description: "" }])}
 				disabled={saving}
 			>
@@ -397,7 +402,7 @@
 										if (magicItemsGained[index]) magicItemsGained[index].name = e.currentTarget.value;
 									}}
 									disabled={saving}
-									class="input-bordered input w-full focus:border-primary"
+									class="input input-bordered w-full focus:border-primary"
 								/>
 								{#if errors.has(`magic_items_gained.${index}.name`)}
 									<label for={`magic_items_gained.${index}.name`} class="label">
@@ -424,7 +429,7 @@
 									if (magicItemsGained[index]) magicItemsGained[index].description = e.currentTarget.value;
 								}}
 								disabled={saving}
-								class="textarea-bordered textarea w-full focus:border-primary"
+								class="textarea textarea-bordered w-full focus:border-primary"
 								style="resize: none;"
 								value={item.description}
 								spellcheck="true"
@@ -454,7 +459,7 @@
 										if (storyAwardsGained[index]) storyAwardsGained[index].name = e.currentTarget.value;
 									}}
 									disabled={saving}
-									class="input-bordered input w-full focus:border-primary"
+									class="input input-bordered w-full focus:border-primary"
 								/>
 								{#if errors.has(`story_awards_gained.${index}.name`)}
 									<label for={`story_awards_gained.${index}.name`} class="label">
@@ -481,7 +486,7 @@
 									if (storyAwardsGained[index]) storyAwardsGained[index].description = e.currentTarget.value;
 								}}
 								disabled={saving}
-								class="textarea-bordered textarea w-full focus:border-primary"
+								class="textarea textarea-bordered w-full focus:border-primary"
 								style="resize: none;"
 								value={item.description}
 								spellcheck="true"
@@ -498,7 +503,7 @@
 		<div class="col-span-12 text-center">
 			<button
 				type="submit"
-				class="btn-primary btn disabled:bg-primary disabled:bg-opacity-50 disabled:text-opacity-50"
+				class="btn btn-primary disabled:bg-primary disabled:bg-opacity-50 disabled:text-opacity-50"
 				disabled={saving}
 			>
 				{#if saving}

@@ -1,14 +1,57 @@
 <script lang="ts" context="module">
 	import type { Infer, InferIn, Schema } from "@decs/typeschema";
 	import { validate } from "@decs/typeschema";
+	import { decode } from "decode-formdata";
 
-	const stringify = "validated";
-
-	export async function parseFormData<TSchema extends Schema>(formData: FormData, schema: TSchema): Promise<Infer<TSchema>> {
-		const data = (formData.get(stringify) as string) || "{}";
-		const result = await validate(schema, JSON.parse(data));
+	/**
+	 * Parse form data from strings to their correct types and
+	 * validate them against a schema from Zod, Yup, Valibot, etc.
+	 *
+	 * @param formData The form data to parse
+	 * @param schema The schema to validate against
+	 * @param info Arrays of field names that should be parsed as arrays, booleans, dates, files or numbers
+	 * @param info.arrays Field names that should be parsed as arrays
+	 * @param info.booleans Field names that should be parsed as booleans. "false", "0" or undefined will
+	 * be converted to false. Everything else will be converted to true.
+	 * @param info.dates Field names that should be parsed as dates. Empty dates will be converted to null.
+	 * @param info.files Field names that should be parsed as files
+	 * @param info.numbers Field names that should be parsed as numbers
+	 *
+	 * @returns The parsed and validated data
+	 */
+	export async function parseFormData<TSchema extends Schema>(
+		formData: FormData,
+		schema: TSchema,
+		info?: Partial<{
+			/**
+			 * Field names that should be parsed as arrays
+			 */
+			arrays: string[];
+			/**
+			 * Field names that should be parsed as booleans. "false", "0" or undefined will
+			 * be converted to false. Everything else will be converted to true.
+			 */
+			booleans: string[];
+			/**
+			 * Field names that should be parsed as dates. Empty dates will be converted to null.
+			 */
+			dates: string[];
+			/**
+			 * Field names that should be parsed as files
+			 */
+			files: string[];
+			/**
+			 * Field names that should be parsed as numbers
+			 */
+			numbers: string[];
+		}>
+	): Promise<Infer<TSchema>> {
+		const formValues = decode(formData, info);
+		const result = await validate(schema, formValues);
 		if ("issues" in result && result.issues.length) {
-			throw new Error(result.issues.map((i) => i.message).join("\n"));
+			console.log("Value:", formValues);
+			console.error("Issues:", result.issues);
+			throw new Error([...new Set(result.issues.map((i) => i.message))].join(";\n"));
 		}
 		if (!("data" in result)) throw new Error("No data returned");
 		return result.data;
@@ -33,27 +76,50 @@
 		};
 	}>();
 
-	let elForm: HTMLFormElement;
-	let validatedData: Infer<Schema>;
-	let changes: Array<string> = [];
-
+	/**
+	 * A schema from Zod, Yup, Valibot, etc. to validate the form against
+	 */
 	export let schema: TSchema;
+	/**
+	 * The data to be validated
+	 */
 	export let data: InferIn<TSchema>;
+	/**
+	 * The URL to submit the form to
+	 */
 	export let action: string;
+	/**
+	 * The HTTP method to use when submitting the form
+	 */
 	export let method = "POST";
+	/**
+	 * Whether to reset the form after submitting
+	 */
 	export let resetOnSave = false;
-	export let saving = false;
 
 	let initialStructure = emptyClone(data);
 	$: currentStructure = emptyClone(data);
 
-	export let errors = new SvelteMap<"form" | Paths<typeof initialStructure, 6>, string>();
+	let errors = new SvelteMap<"form" | Paths<typeof initialStructure, 6>, string>();
+	let elForm: HTMLFormElement;
+	let changes: Array<string> = [];
+	let saving = false;
 
-	async function checkErrors(data: InferIn<TSchema>) {
+	async function checkChanges() {
+		// Check for changes
+		const formStructureIsDiff = JSON.stringify(currentStructure) !== JSON.stringify(initialStructure);
+		changes = !saving
+			? [...elForm.querySelectorAll("[data-dirty]")]
+					.map((el) => el.getAttribute("name") || "hidden")
+					.concat(formStructureIsDiff ? "form" : "")
+					.filter(Boolean)
+			: [];
+
+		// Check for errors
 		errors = new SvelteMap<"form" | Paths<typeof initialStructure, 6>, string>();
 		const result = await validate(schema, data);
 		if ("data" in result) {
-			dispatch("validate", { data: (validatedData = result.data), changes, errors, setError });
+			dispatch("validate", { data: result.data, changes, errors, setError });
 		} else if ("issues" in result) {
 			result.issues.forEach((issue) => {
 				if (!issue.path) issue.path = ["form"];
@@ -65,20 +131,8 @@
 		}
 	}
 
-	function checkChanges() {
-		const formStructureIsDiff = JSON.stringify(currentStructure) !== JSON.stringify(initialStructure);
-		changes = !saving
-			? [...elForm.querySelectorAll("[data-dirty]")]
-					.map((el) => el.getAttribute("name") || "hidden")
-					.concat(formStructureIsDiff ? "form" : "")
-					.filter(Boolean)
-			: [];
-
-		checkErrors(data);
-	}
-
 	$: {
-		if (saving || (elForm && data)) {
+		if (elForm && data) {
 			checkChanges();
 			setTimeout(() => {
 				elForm.querySelectorAll(":is(input, textarea, select):not([data-listener])").forEach((el) => {
@@ -123,23 +177,26 @@
 	bind:this={elForm}
 	novalidate
 	use:enhance={async (f) => {
+		if (saving) return f.cancel();
+
 		dispatch("before-submit");
 		saving = true;
 
-		await checkErrors(data);
+		// Check for errors before submitting
+		await checkChanges();
 		if (errors.size) {
 			saving = false;
 			return f.cancel();
 		}
 
-		if (validatedData && typeof validatedData === "object" && !(stringify in validatedData)) {
-			for (const key of [...f.formData.keys()]) {
-				if (key === stringify) continue;
-				if (f.formData.get(key) instanceof File) continue;
-				f.formData.delete(key);
+		// Change dates to ISO format in client to prevent timezone issues
+		f.formData.forEach((value, key) => {
+			const inputType = document.querySelector(`[name="${key}"]`)?.getAttribute("type");
+			if (inputType?.includes("date") && typeof value === "string") {
+				const d = new Date(value);
+				if (!isNaN(d.getTime())) f.formData.set(key, d.toISOString());
 			}
-			f.formData.set(stringify, JSON.stringify(validatedData));
-		}
+		});
 
 		return async ({ update, result }) => {
 			await update({ reset: resetOnSave });

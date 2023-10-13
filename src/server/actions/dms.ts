@@ -19,7 +19,7 @@ export async function saveDM(dmId: string, userId: string, data: DungeonMasterSc
 		});
 
 		revalidateKeys([
-			["dms", userId],
+			["dms", userId, "logs"],
 			...dm.logs.filter((l) => l.characterId).map((l) => ["character", l.characterId as string, "logs"] as CacheKey)
 		]);
 
@@ -42,7 +42,7 @@ export async function deleteDM(dmId: string, userId?: string) {
 		const result = await prisma.dungeonMaster.delete({
 			where: { id: dmId }
 		});
-		revalidateKeys([["dms", userId]]);
+		revalidateKeys([["dms", userId, "logs"]]);
 		return { id: result.id, error: null };
 	} catch (err) {
 		handleSKitError(err);
