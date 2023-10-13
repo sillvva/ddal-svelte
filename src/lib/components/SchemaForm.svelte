@@ -11,8 +11,9 @@
 	 * @param schema The schema to validate against
 	 * @param info Arrays of field names that should be parsed as arrays, booleans, dates, files or numbers
 	 * @param info.arrays Field names that should be parsed as arrays
-	 * @param info.booleans Field names that should be parsed as booleans
-	 * @param info.dates Field names that should be parsed as dates
+	 * @param info.booleans Field names that should be parsed as booleans. "false", "0" or undefined will
+	 * be converted to false. Everything else will be converted to true.
+	 * @param info.dates Field names that should be parsed as dates. Empty dates will be converted to null.
 	 * @param info.files Field names that should be parsed as files
 	 * @param info.numbers Field names that should be parsed as numbers
 	 *
@@ -27,11 +28,12 @@
 			 */
 			arrays: string[];
 			/**
-			 * Field names that should be parsed as booleans
+			 * Field names that should be parsed as booleans. "false", "0" or undefined will
+			 * be converted to false. Everything else will be converted to true.
 			 */
 			booleans: string[];
 			/**
-			 * Field names that should be parsed as dates
+			 * Field names that should be parsed as dates. Empty dates will be converted to null.
 			 */
 			dates: string[];
 			/**
