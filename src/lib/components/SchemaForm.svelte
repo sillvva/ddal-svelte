@@ -4,8 +4,9 @@
 	import { decode } from "decode-formdata";
 
 	/**
-	 * Parse form data from strings to their correct types and
-	 * validate them against a schema from Zod, Yup, Valibot, etc.
+	 * A function that is called in the server action to parse
+	 * the form data to the correct types and validate them
+	 * against a schema from Zod, Yup, Valibot, etc.
 	 *
 	 * @param formData The form data to parse
 	 * @param schema The schema to validate against
