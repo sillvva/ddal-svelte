@@ -18,10 +18,8 @@ export async function saveDM(dmId: string, userId: string, data: DungeonMasterSc
 			}
 		});
 
-		revalidateKeys([
-			["dms", userId, "logs"],
-			...dm.logs.filter((l) => l.characterId).map((l) => ["character", l.characterId as string, "logs"] as CacheKey)
-		]);
+		const characterIds = [...new Set(dm.logs.filter((l) => l.characterId).map((l) => l.characterId))];
+		revalidateKeys([["dms", userId, "logs"], ...characterIds.map((id) => ["character", id as string, "logs"] as CacheKey)]);
 
 		return { id: result.id, dm: result, error: null };
 	} catch (err) {

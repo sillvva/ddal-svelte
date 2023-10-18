@@ -1,6 +1,5 @@
 <script lang="ts">
 	import AutoResizeTextArea from "$lib/components/AutoResizeTextArea.svelte";
-	import BackButton from "$lib/components/BackButton.svelte";
 	import BreadCrumbs from "$lib/components/BreadCrumbs.svelte";
 	import Icon from "$lib/components/Icon.svelte";
 	import SchemaForm from "$lib/components/SchemaForm.svelte";
@@ -73,6 +72,12 @@
 				  }
 	} satisfies LogSchemaIn;
 
+	// For some reason, using bind:value doesn't work for only this field...
+	// but only for the first attempt. After that, it works fine.
+	function setLogType(type: unknown) {
+		log.type = type as "game" | "nongame";
+	}
+
 	export const snapshot = {
 		capture: () => ({
 			log,
@@ -94,7 +99,6 @@
 </script>
 
 <BreadCrumbs />
-<BackButton href={`/characters/${data.characterId}`}>{character.name}</BackButton>
 
 <SchemaForm action="?/saveLog" schema={logSchema} data={values} let:saving let:errors>
 	{#if form?.error || errors.has("form")}
@@ -104,8 +108,8 @@
 		</div>
 	{/if}
 
-	<input type="hidden" name="characterId" value={character.id} />
 	<input type="hidden" name="id" value={data.logId === "new" ? "" : data.logId} />
+	<input type="hidden" name="characterId" value={character.id} />
 	<input type="hidden" name="applied_date" value={log.applied_date} />
 	<div class="grid grid-cols-12 gap-4">
 		{#if !log.is_dm_log}
@@ -113,7 +117,13 @@
 				<label for="type" class="label">
 					<span class="label-text">Log Type</span>
 				</label>
-				<select name="type" bind:value={log.type} disabled={saving} class="select select-bordered w-full">
+				<select
+					name="type"
+					value={log.type}
+					on:change={(ev) => setLogType(ev.currentTarget.value)}
+					disabled={saving}
+					class="select select-bordered w-full"
+				>
 					<option value="game">Game</option>
 					<option value="nongame">Non-Game (Purchase, Trade, etc)</option>
 				</select>
@@ -164,6 +174,7 @@
 		</div>
 		<div class="col-span-12 grid grid-cols-12 gap-4">
 			{#if log.type === "game"}
+				<input type="hidden" name="dungeonMasterId" value={dm.id} />
 				<input type="hidden" name="dm.id" value={dm.id} />
 				<input type="hidden" name="dm.uid" value={dm.uid} />
 				<input type="hidden" name="dm.owner" value={dm.owner} />

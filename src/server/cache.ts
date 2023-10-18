@@ -89,5 +89,6 @@ export async function mcache<TReturnType>(
  */
 export function revalidateKeys(keys: Array<CacheKey | "" | false | null | undefined>) {
 	const cacheKeys = keys.filter((t) => Array.isArray(t) && t.length).map((t) => (t as string[]).join("|"));
+	// console.log(cacheKeys);
 	if (cacheKeys.length) redis.del(...cacheKeys);
 }

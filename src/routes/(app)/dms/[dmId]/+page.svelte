@@ -1,6 +1,5 @@
 <script lang="ts">
 	import { enhance } from "$app/forms";
-	import BackButton from "$lib/components/BackButton.svelte";
 	import BreadCrumbs from "$lib/components/BreadCrumbs.svelte";
 	import Icon from "$lib/components/Icon.svelte";
 	import SchemaForm from "$lib/components/SchemaForm.svelte";
@@ -17,7 +16,6 @@
 
 <div class="flex flex-col gap-4">
 	<BreadCrumbs />
-	<BackButton href="/dms">DMs</BackButton>
 
 	<SchemaForm action="?/saveDM" schema={dungeonMasterSchema} data={dm} bind:saving let:errors>
 		{#if form?.error || errors.has("form")}
@@ -27,7 +25,7 @@
 			</div>
 		{/if}
 
-		<input type="hidden" name="dmID" value={dm.id} />
+		<input type="hidden" name="id" value={dm.id} />
 		<input type="hidden" name="uid" value={dm.uid} />
 		<input type="hidden" name="owner" value={dm.owner} />
 		<div class="grid grid-cols-12 gap-4">

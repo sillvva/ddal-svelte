@@ -35,31 +35,20 @@ export async function saveLog(input: LogSchema, user?: CustomSession["user"]) {
 						}
 					});
 					if (search) {
-						dm = search;
-						if (!dm.id) {
-							await tx.dungeonMaster.delete({
-								where: {
-									id: search.id
-								}
-							});
-							dm = await tx.dungeonMaster.create({
-								data: {
-									name: input.dm.name.trim(),
-									DCI: input.dm.DCI,
-									uid: input.is_dm_log || isMe ? user.id : null,
-									owner: user.id
-								}
-							});
+						input.dm.id = search.id;
+						if (!input.dm.owner) input.dm.owner = search.owner || user.id;
+					}
+				}
+
+				if (!input.dm.id) {
+					dm = await tx.dungeonMaster.create({
+						data: {
+							name: input.dm.name.trim(),
+							DCI: input.dm.DCI,
+							uid: input.is_dm_log || isMe ? user.id : null,
+							owner: user.id
 						}
-					} else
-						dm = await tx.dungeonMaster.create({
-							data: {
-								name: input.dm.name.trim(),
-								DCI: input.dm.DCI,
-								uid: input.is_dm_log || isMe ? user.id : null,
-								owner: user.id
-							}
-						});
+					});
 				} else {
 					try {
 						dm = await tx.dungeonMaster.update({
