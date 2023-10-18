@@ -1,6 +1,8 @@
 <script lang="ts">
+	import { enhance } from "$app/forms";
 	import { page } from "$app/stores";
 	import { twMerge } from "tailwind-merge";
+	import { pageLoader } from "../store";
 	import Icon from "./Icon.svelte";
 
 	let drawer = false;
@@ -60,6 +62,25 @@
 				DMs
 			</a>
 		</li>
+	</ul>
+	<div class="divider my-0" />
+	<ul class="menu menu-lg w-full">
+		<form
+			method="POST"
+			action="/characters?/clearCaches"
+			use:enhance={() => {
+				$pageLoader = true;
+				return ({ update, result }) => {
+					update();
+					toggleDrawer(false);
+					if (result.type !== "redirect") $pageLoader = false;
+				};
+			}}
+		>
+			<li>
+				<button>Clear My Cache</button>
+			</li>
+		</form>
 	</ul>
 	<div class="divider my-0" />
 	<ul class="menu menu-lg w-full">

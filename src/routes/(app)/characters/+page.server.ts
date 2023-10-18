@@ -1,6 +1,8 @@
+import { clearUserCache } from "$src/server/actions/users.js";
 import { signInRedirect } from "$src/server/auth.js";
 import { serverGetCookie } from "$src/server/cookie";
 import { getCharacterCaches, getCharactersCache, type CharacterData } from "$src/server/data/characters";
+import { redirect } from "@sveltejs/kit";
 
 const defaultCookie = {
 	magicItems: false,
@@ -27,4 +29,12 @@ export const load = async (event) => {
 		characters,
 		...cookie
 	};
+};
+
+export const actions = {
+	clearCaches: async (event) => {
+		const session = await event.locals.session;
+		if (!session?.user) throw redirect(301, "/");
+		return await clearUserCache(session.user.id);
+	}
 };

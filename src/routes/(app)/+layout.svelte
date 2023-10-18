@@ -1,9 +1,10 @@
 <script lang="ts">
+	import { enhance } from "$app/forms";
 	import { page } from "$app/stores";
 	import Drawer from "$lib/components/Drawer.svelte";
 	import Icon from "$lib/components/Icon.svelte";
 	import Markdown from "$src/lib/components/Markdown.svelte";
-	import { modal } from "$src/lib/store";
+	import { modal, pageLoader } from "$src/lib/store";
 	import { signIn, signOut } from "@auth/sveltekit/client";
 	import { twMerge } from "tailwind-merge";
 
@@ -14,14 +15,14 @@
 	<header
 		class={twMerge(
 			"relative z-20 w-full border-b-[1px] border-slate-500",
-			data.mobile && "bg-base-300 border-slate-300 dark:border-slate-700 sticky top-0"
+			data.mobile && "sticky top-0 border-slate-300 bg-base-300 dark:border-slate-700"
 		)}
 	>
 		<nav class="container mx-auto flex max-w-5xl gap-2 p-4">
 			<Drawer />
 			<a
 				href={data.session?.user ? "/characters" : "/"}
-				class={twMerge("mr-8 flex flex-col text-center font-draconis", data.mobile && "flex-1 sm:flex-none mr-2 md:mr-8")}
+				class={twMerge("mr-8 flex flex-col text-center font-draconis", data.mobile && "mr-2 flex-1 sm:flex-none md:mr-8")}
 			>
 				<h1 class="text-base leading-4 text-accent-content">Adventurers League</h1>
 				<h2 class="text-3xl leading-7">Log Sheet</h2>
@@ -45,7 +46,7 @@
 			</a>
 			{#if data.session?.user}
 				<div class="dropdown-end dropdown">
-					<div role="button" tabindex="0" class="flex cursor-pointer h-full items-center">
+					<div role="button" tabindex="0" class="flex h-full cursor-pointer items-center">
 						<div class="hidden items-center px-4 text-accent-content print:flex sm:flex">
 							{data.session?.user?.name}
 						</div>
@@ -66,10 +67,25 @@
 							</div>
 						</div>
 					</div>
-					<ul class="dropdown-content menu rounded-box w-52 bg-base-100 p-2 shadow">
+					<ul class="menu dropdown-content rounded-box w-52 bg-base-100 p-2 shadow">
 						<li class="sm:hidden">
 							<span>{data.session?.user?.name}</span>
 						</li>
+						<form
+							method="POST"
+							action="/characters?/clearCaches"
+							use:enhance={() => {
+								$pageLoader = true;
+								return ({ update, result }) => {
+									update();
+									if (result.type !== "redirect") $pageLoader = false;
+								};
+							}}
+						>
+							<li class="btn-delete rounded-lg">
+								<button class="h-full w-full">Clear My Cache</button>
+							</li>
+						</form>
 						<li>
 							<a href="#top" on:click={() => signOut({ callbackUrl: "/" })}>Logout</a>
 						</li>
@@ -129,7 +145,7 @@
 			{#if $modal.date}
 				<p class="text-xs">{$modal.date.toLocaleString()}</p>
 			{/if}
-			<Markdown content={$modal.description} class="cursor-text whitespace-pre-wrap pt-4 text-sm sm:text-md" />
+			<Markdown content={$modal.description} class="sm:text-md cursor-text whitespace-pre-wrap pt-4 text-sm" />
 		</div>
 	{/if}
 </div>
