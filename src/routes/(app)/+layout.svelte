@@ -45,7 +45,7 @@
 				Contribute
 			</a>
 			{#if data.session?.user}
-				<div class="dropdown-end dropdown">
+				<div class="dropdown dropdown-end">
 					<div role="button" tabindex="0" class="flex h-full cursor-pointer items-center">
 						<div class="hidden items-center px-4 text-accent-content print:flex sm:flex">
 							{data.session?.user?.name}
@@ -82,7 +82,7 @@
 								};
 							}}
 						>
-							<li class="btn-delete rounded-lg">
+							<li class="rounded-lg">
 								<button class="h-full w-full">Clear My Cache</button>
 							</li>
 						</form>
