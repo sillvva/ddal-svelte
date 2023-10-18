@@ -41,6 +41,8 @@ export const actions = {
 			const parsedData = await parseFormData(data, dungeonMasterSchema);
 			const result = await saveDM(event.params.dmId, session.user.id, parsedData);
 
+			if (result && result.id) throw redirect(301, `/dms`);
+
 			return result;
 		} catch (err) {
 			if (err instanceof Error) return { id: event.params.dmId, error: err.message };

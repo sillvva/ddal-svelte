@@ -25,7 +25,7 @@
 			</div>
 		{/if}
 
-		<input type="hidden" name="dmID" value={dm.id} />
+		<input type="hidden" name="id" value={dm.id} />
 		<input type="hidden" name="uid" value={dm.uid} />
 		<input type="hidden" name="owner" value={dm.owner} />
 		<div class="grid grid-cols-12 gap-4">
