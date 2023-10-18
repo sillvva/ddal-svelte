@@ -34,7 +34,10 @@ export async function saveLog(input: LogSchema, user?: CustomSession["user"]) {
 									: [{ name: input.dm.name.trim() }]
 						}
 					});
-					if (search) input.dm.id = search.id;
+					if (search) {
+						input.dm.id = search.id;
+						if (!input.dm.owner) input.dm.owner = search.owner || user.id;
+					}
 				}
 
 				if (!input.dm.id) {
