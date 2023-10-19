@@ -38,7 +38,6 @@
 					type="text"
 					name="name"
 					required
-					disabled={saving}
 					bind:value={character.name}
 					class="input input-bordered w-full focus:border-primary"
 				/>
@@ -57,7 +56,6 @@
 				<input
 					type="text"
 					name="campaign"
-					disabled={saving}
 					bind:value={character.campaign}
 					class="input input-bordered w-full focus:border-primary"
 				/>
@@ -73,13 +71,7 @@
 				<label for="race" class="label">
 					<span class="label-text">Species</span>
 				</label>
-				<input
-					type="text"
-					name="race"
-					disabled={saving}
-					bind:value={character.race}
-					class="input input-bordered w-full focus:border-primary"
-				/>
+				<input type="text" name="race" bind:value={character.race} class="input input-bordered w-full focus:border-primary" />
 				{#if errors.has("race")}
 					<label for="race" class="label">
 						<span class="label-text-alt text-error">{errors.get("race")}</span>
@@ -92,13 +84,7 @@
 				<label for="class" class="label">
 					<span class="label-text">Class</span>
 				</label>
-				<input
-					type="text"
-					name="class"
-					disabled={saving}
-					bind:value={character.class}
-					class="input input-bordered w-full focus:border-primary"
-				/>
+				<input type="text" name="class" bind:value={character.class} class="input input-bordered w-full focus:border-primary" />
 				{#if errors.has("class")}
 					<label for="class" class="label">
 						<span class="label-text-alt text-error">{errors.get("class")}</span>
@@ -114,7 +100,6 @@
 				<input
 					type="text"
 					name="character_sheet_url"
-					disabled={saving}
 					bind:value={character.character_sheet_url}
 					class="input input-bordered w-full focus:border-primary"
 				/>
@@ -133,7 +118,6 @@
 				<input
 					type="text"
 					name="image_url"
-					disabled={saving}
 					bind:value={character.image_url}
 					class="input input-bordered w-full focus:border-primary"
 				/>
@@ -145,11 +129,7 @@
 			</div>
 		</div>
 		<div class="col-span-12 m-4 text-center">
-			<button
-				type="submit"
-				class="btn btn-primary disabled:bg-primary disabled:bg-opacity-50 disabled:text-opacity-50"
-				disabled={saving}
-			>
+			<button type="submit" class="btn btn-primary disabled:bg-primary disabled:bg-opacity-50 disabled:text-opacity-50">
 				{#if saving}
 					<span class="loading" />
 				{/if}

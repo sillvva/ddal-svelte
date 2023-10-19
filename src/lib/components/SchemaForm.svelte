@@ -60,6 +60,8 @@
 </script>
 
 <script lang="ts" generics="TSchema extends Schema">
+	import { twMerge } from "tailwind-merge";
+
 	import { enhance } from "$app/forms";
 	import { beforeNavigate } from "$app/navigation";
 	import type { ActionResult } from "@sveltejs/kit";
@@ -97,6 +99,9 @@
 	 * Whether to reset the form after submitting
 	 */
 	export let resetOnSave = false;
+
+	let className = "";
+	export { className as class };
 
 	let initialStructure = emptyClone(data);
 	$: currentStructure = emptyClone(data);
@@ -177,6 +182,8 @@
 	{...$$restProps}
 	bind:this={elForm}
 	novalidate
+	inert={saving || undefined}
+	class={twMerge(className, saving && "opacity-50 [&>button]:text-opacity-50")}
 	use:enhance={async (f) => {
 		if (saving) return f.cancel();
 
