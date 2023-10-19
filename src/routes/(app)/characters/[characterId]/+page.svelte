@@ -249,6 +249,12 @@
 					<h4 class="font-semibold">Gold</h4>
 					<div class="flex-1 text-right">{character.total_gold.toLocaleString("en-US")}</div>
 				</div>
+				{#if character.total_tcp}
+					<div class="flex">
+						<h4 class="font-semibold">TCP</h4>
+						<div class="flex-1 text-right">{character.total_tcp}</div>
+					</div>
+				{/if}
 				<div class="flex">
 					<h4 class="font-semibold">Downtime</h4>
 					<div class="flex-1 text-right">{character.total_dtd}</div>
