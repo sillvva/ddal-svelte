@@ -94,13 +94,12 @@ export async function saveLog(input: LogSchema, user?: CustomSession["user"]) {
 				if (currentLevel + input.level - logLevel > 20) throw new Error("Character cannot level past 20");
 			}
 
-			const data: Omit<Log, "id" | "created_at"> = {
+			const data: Omit<Log, "id" | "created_at" | "is_dm_log"> = {
 				name: input.name,
 				date: new Date(input.date),
 				description: input.description,
 				type: input.type,
 				dungeonMasterId: dm.id,
-				is_dm_log: input.is_dm_log,
 				applied_date: applied_date,
 				characterId: input.characterId,
 				acp: input.acp,
@@ -116,7 +115,10 @@ export async function saveLog(input: LogSchema, user?: CustomSession["user"]) {
 					id: input.id
 				},
 				update: data,
-				create: data
+				create: {
+					...data,
+					is_dm_log: input.is_dm_log
+				}
 			});
 
 			if (!log.id) throw new Error("Could not save log");
