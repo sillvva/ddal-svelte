@@ -17,10 +17,10 @@
 	const character = data.character;
 	let log = data.log;
 
-	$: magicItems = character
+	let magicItems = character
 		? getMagicItems(character, { excludeDropped: true, lastLogId: log.id }).sort((a, b) => sorter(a.name, b.name))
 		: [];
-	$: storyAwards = character
+	let storyAwards = character
 		? getStoryAwards(character, { excludeDropped: true, lastLogId: log.id }).sort((a, b) => sorter(a.name, b.name))
 		: [];
 
@@ -36,13 +36,13 @@
 		name: mi.name,
 		description: mi.description || ""
 	}));
-	$: magicItemsLost = log.magic_items_lost.map((mi) => mi.id).filter((id) => !!magicItems.find((mi) => mi.id === id));
+	let magicItemsLost = log.magic_items_lost.map((mi) => mi.id).filter((id) => !!magicItems.find((mi) => mi.id === id));
 	let storyAwardsGained = log.story_awards_gained.map((mi) => ({
 		id: mi.id,
 		name: mi.name,
 		description: mi.description || ""
 	}));
-	$: storyAwardsLost = log.story_awards_lost.map((mi) => mi.id).filter((id) => !!storyAwards.find((mi) => mi.id === id));
+	let storyAwardsLost = log.story_awards_lost.map((mi) => mi.id).filter((id) => !!storyAwards.find((mi) => mi.id === id));
 
 	$: values = {
 		...log,
@@ -502,11 +502,8 @@
 									<span class="label-text">Select an Item</span>
 								</label>
 								<select
-									value={id}
+									bind:value={magicItemsLost[index]}
 									name={`magic_items_lost.${index}`}
-									on:input={(e) => {
-										if (magicItemsLost[index]) magicItemsLost[index] = e.currentTarget.value;
-									}}
 									disabled={saving}
 									class="select select-bordered w-full"
 								>
@@ -601,11 +598,8 @@
 									<span class="label-text">Select an Item</span>
 								</label>
 								<select
-									value={id}
+									bind:value={storyAwardsLost[index]}
 									name={`story_awards_lost.${index}`}
-									on:input={(e) => {
-										if (storyAwardsLost[index]) storyAwardsLost[index] = e.currentTarget.value;
-									}}
 									disabled={saving}
 									class="select select-bordered w-full"
 								>
