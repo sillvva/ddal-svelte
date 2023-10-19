@@ -39,10 +39,10 @@ export const load = async (event) => {
 export const actions = {
 	saveLog: async (event) => {
 		const session = event.locals.session;
-		if (!session?.user) throw redirect(301, "/");
+		if (!session?.user) throw redirect(307, "/");
 
 		const log = await getLog(event.params.logId || "", session.user.id);
-		if (event.params.logId !== "new" && !log.id) throw redirect(301, `/dm-logs`);
+		if (event.params.logId !== "new" && !log.id) throw redirect(307, `/dm-logs`);
 
 		try {
 			const formData = await event.request.formData();
@@ -64,7 +64,7 @@ export const actions = {
 			}
 
 			const result = await saveLog(logData, session.user);
-			if (result && result.id) throw redirect(301, `/dm-logs/`);
+			if (result && result.id) throw redirect(307, `/dm-logs/`);
 
 			return result;
 		} catch (error) {

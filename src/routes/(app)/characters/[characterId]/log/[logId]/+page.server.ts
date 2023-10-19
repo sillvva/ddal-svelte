@@ -24,6 +24,8 @@ export const load = async (event) => {
 			  })
 			: defaultLog(session.user.id, character.id);
 
+	if (log.is_dm_log) throw redirect(307, `/dm-logs/${log.id}`);
+
 	const dms = await getUserDMsWithLogs(session.user.id);
 
 	return {
@@ -43,13 +45,13 @@ export const load = async (event) => {
 export const actions = {
 	saveLog: async (event) => {
 		const session = await event.locals.session;
-		if (!session?.user) throw redirect(301, "/");
+		if (!session?.user) throw redirect(307, "/");
 
 		const character = await getCharacterCache(event.params.characterId || "", false);
-		if (!character) throw redirect(301, "/characters");
+		if (!character) throw redirect(307, "/characters");
 
 		const log = await getLog(event.params.logId || "", session.user.id, character.id);
-		if (event.params.logId !== "new" && !log.id) throw redirect(301, `/characters/${character.id}`);
+		if (event.params.logId !== "new" && !log.id) throw redirect(307, `/characters/${character.id}`);
 
 		try {
 			const formData = await event.request.formData();
@@ -60,7 +62,7 @@ export const actions = {
 				numbers: ["season", "level", "gold", "acp", "tcp", "experience", "dtd"]
 			});
 			const result = await saveLog(logData, session.user);
-			if (result && result.id) throw redirect(301, `/characters/${character.id}`);
+			if (result && result.id) throw redirect(307, `/characters/${character.id}`);
 
 			return result;
 		} catch (error) {

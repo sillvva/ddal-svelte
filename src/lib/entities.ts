@@ -161,6 +161,7 @@ export const getLogsSummary = (
 
 	const total_level = levels.total;
 	const total_gold = logs.reduce((acc, log) => acc + log.gold, 0);
+	const total_tcp = logs.reduce((acc, log) => acc + log.tcp, 0);
 	const total_dtd = logs.reduce((acc, log) => acc + log.dtd, 0);
 	const magic_items = logs.reduce((acc, log) => {
 		acc.push(
@@ -182,6 +183,7 @@ export const getLogsSummary = (
 	return {
 		total_level,
 		total_gold,
+		total_tcp,
 		total_dtd,
 		magic_items,
 		story_awards,

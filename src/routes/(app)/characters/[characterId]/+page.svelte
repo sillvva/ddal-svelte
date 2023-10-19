@@ -40,6 +40,7 @@
 					...log,
 					level_gained: level_gained?.levels || 0,
 					total_level: level,
+					show_date: log.is_dm_log && log.applied_date ? log.applied_date : log.date,
 					score: 0
 				};
 		  })
@@ -67,8 +68,8 @@
 						...log,
 						score: msResults.find((result) => result.id === log.id)?.score || 0 - log.date.getTime()
 					}))
-					.sort((a, b) => sorter(a.date, b.date))
-			: logs.sort((a, b) => sorter(a.date, b.date));
+					.sort((a, b) => sorter(a.show_date, b.show_date))
+			: logs.sort((a, b) => sorter(a.show_date, b.show_date));
 
 	let descriptions = data.descriptions;
 	$: setCookie("characters:descriptions", descriptions);
@@ -249,6 +250,12 @@
 					<h4 class="font-semibold">Gold</h4>
 					<div class="flex-1 text-right">{character.total_gold.toLocaleString("en-US")}</div>
 				</div>
+				{#if character.total_tcp}
+					<div class="flex">
+						<h4 class="font-semibold">TCP</h4>
+						<div class="flex-1 text-right">{character.total_tcp}</div>
+					</div>
+				{/if}
 				<div class="flex">
 					<h4 class="font-semibold">Downtime</h4>
 					<div class="flex-1 text-right">{character.total_dtd}</div>
@@ -351,7 +358,7 @@
 								<SearchResults text={log.name} {search} />
 							</div>
 							<p class="text-netural-content mb-2 whitespace-nowrap text-xs font-normal">
-								{new Date(log.is_dm_log && log.applied_date ? log.applied_date : log.date).toLocaleString()}
+								{new Date(log.show_date).toLocaleString()}
 							</p>
 							{#if log.dm && log.type === "game" && log.dm.uid !== character.userId}
 								<p class="text-sm font-normal">
@@ -486,7 +493,7 @@
 							>
 								<div class="flex flex-col justify-center gap-2">
 									<a
-										href={`/characters/${log.characterId}/log/${log.id}`}
+										href={log.is_dm_log ? `/dm-logs/${log.id}` : `/characters/${log.characterId}/log/${log.id}`}
 										class="btn btn-primary sm:btn-sm"
 										aria-label="Edit Log"
 									>
