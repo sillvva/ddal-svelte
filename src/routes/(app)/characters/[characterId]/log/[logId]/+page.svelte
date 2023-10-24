@@ -400,7 +400,7 @@
 		</div>
 		<div class="col-span-12 grid grid-cols-12 gap-4">
 			{#each magicItemsGained as item, index}
-				<div class="card col-span-12 h-[370px] bg-base-300/70 sm:col-span-6">
+				<div class="card col-span-12 bg-base-300/70 sm:col-span-6">
 					<div class="card-body flex flex-col gap-4">
 						<h4 class="text-2xl">Add Magic Item</h4>
 						<input type="hidden" name={`magic_items_gained.${index}.id`} value={item.id} />
@@ -436,15 +436,12 @@
 							<label for={`magic_items_gained.${index}.description`} class="label">
 								<span class="label-text">Description</span>
 							</label>
-							<textarea
+							<AutoResizeTextArea
 								name={`magic_items_gained.${index}.description`}
-								on:input={(e) => {
-									if (magicItemsGained[index]) magicItemsGained[index].description = e.currentTarget.value;
-								}}
 								class="textarea textarea-bordered w-full focus:border-primary"
-								style="resize: none;"
-								value={item.description}
-								spellcheck="true"
+								bind:value={item.description}
+								minRows={3}
+								maxRows={8}
 							/>
 							<label for={`magic_items_gained.${index}.description`} class="label">
 								<span class="label-text-alt text-error" />
@@ -493,7 +490,7 @@
 				</div>
 			{/each}
 			{#each storyAwardsGained as item, index}
-				<div class="card col-span-12 h-[370px] bg-base-300/70 sm:col-span-6">
+				<div class="card col-span-12 bg-base-300/70 sm:col-span-6">
 					<div class="card-body flex flex-col gap-4">
 						<h4 class="text-2xl">Add Story Award</h4>
 						<input type="hidden" name={`story_awards_gained.${index}.id`} value={item.id} />
@@ -529,15 +526,12 @@
 							<label for={`story_awards_gained.${index}.description`} class="label">
 								<span class="label-text">Description</span>
 							</label>
-							<textarea
+							<AutoResizeTextArea
 								name={`story_awards_gained.${index}.description`}
-								on:input={(e) => {
-									if (storyAwardsGained[index]) storyAwardsGained[index].description = e.currentTarget.value;
-								}}
 								class="textarea textarea-bordered w-full focus:border-primary"
-								style="resize: none;"
-								value={item.description}
-								spellcheck="true"
+								bind:value={item.description}
+								minRows={3}
+								maxRows={8}
 							/>
 							<label for={`story_awards_gained.${index}.description`} class="label">
 								<span class="label-text-alt text-error" />
