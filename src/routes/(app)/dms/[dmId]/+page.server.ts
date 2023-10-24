@@ -29,19 +29,19 @@ export const load = async (event) => {
 export const actions = {
 	saveDM: async (event) => {
 		const session = await event.locals.session;
-		if (!session?.user) throw redirect(307, "/");
-		if (!event.params.dmId) throw redirect(307, "/dms");
+		if (!session?.user) throw redirect(302, "/");
+		if (!event.params.dmId) throw redirect(302, "/dms");
 
 		const dms = await getUserDMsWithLogsCache(session.user.id);
 		const dm = dms.find((dm) => dm.id == event.params.dmId);
-		if (!dm) throw redirect(307, "/dms");
+		if (!dm) throw redirect(302, "/dms");
 
 		try {
 			const data = await event.request.formData();
 			const parsedData = await parseFormData(data, dungeonMasterSchema);
 			const result = await saveDM(event.params.dmId, session.user.id, parsedData);
 
-			if (result && result.id) throw redirect(307, `/dms`);
+			if (result && result.id) throw redirect(302, `/dms`);
 
 			return result;
 		} catch (err) {
@@ -51,19 +51,19 @@ export const actions = {
 	},
 	deleteDM: async (event) => {
 		const session = await event.locals.session;
-		if (!session?.user) throw redirect(307, "/");
+		if (!session?.user) throw redirect(302, "/");
 
 		const data = await event.request.formData();
 		const dmId = (data.get("dmId") || "") as string;
 
 		const dms = await getUserDMsWithLogsCache(session.user.id);
 		const dm = dms.find((dm) => dm.id == event.params.dmId);
-		if (!dm) throw redirect(307, "/dms");
+		if (!dm) throw redirect(302, "/dms");
 
 		if (dm.logs.length) return { id: null, error: "You cannot delete a DM that has logs" };
 
 		const result = await deleteDM(dmId, session.user.id);
-		if (result && result.id) throw redirect(307, `/dms`);
+		if (result && result.id) throw redirect(302, `/dms`);
 
 		return result;
 	}

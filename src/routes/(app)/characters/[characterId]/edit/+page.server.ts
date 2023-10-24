@@ -42,13 +42,13 @@ export const load = async (event) => {
 export const actions = {
 	saveCharacter: async (event) => {
 		const session = await event.locals.session;
-		if (!session?.user) throw redirect(307, "/");
+		if (!session?.user) throw redirect(302, "/");
 		const characterId = event.params.characterId;
 		try {
 			const data = await event.request.formData();
 			const parsedData = await parseFormData(data, newCharacterSchema);
 			const result = await saveCharacter(characterId, session.user.id, parsedData);
-			if (result && result.id) throw redirect(307, `/characters/${result.id}`);
+			if (result && result.id) throw redirect(302, `/characters/${result.id}`);
 			return result;
 		} catch (error) {
 			if (error instanceof Error) return { id: characterId, error: error.message };
