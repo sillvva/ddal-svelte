@@ -121,7 +121,6 @@
 					name="type"
 					value={log.type}
 					on:change={(ev) => setLogType(ev.currentTarget.value)}
-					disabled={saving}
 					class="select select-bordered w-full"
 				>
 					<option value="game">Game</option>
@@ -140,7 +139,6 @@
 				type="text"
 				name="name"
 				required
-				disabled={saving}
 				bind:value={log.name}
 				class="input input-bordered w-full focus:border-primary"
 				aria-invalid={errors.get("name") ? "true" : "false"}
@@ -161,8 +159,7 @@
 			<DateTimeInput
 				name="date"
 				required
-				disabled={saving}
-				bind:value={log.date}
+				bind:date={log.date}
 				class="input input-bordered w-full focus:border-primary"
 				aria-invalid={errors.get("date") ? "true" : "false"}
 			/>
@@ -190,7 +187,6 @@
 							name="dm.name"
 							value={dm.name}
 							values={data.dms.map((dm) => ({ key: dm.name, value: dm.name + (dm.DCI ? ` (${dm.DCI})` : "") })) || []}
-							disabled={saving}
 							on:select={(ev) => {
 								if (ev.detail) {
 									const updated = data.dms.find((dm) => dm.name === ev.detail);
@@ -214,7 +210,6 @@
 							type="number"
 							value={dm.DCI}
 							values={data.dms.map((dm) => ({ key: dm.DCI, value: dm.name + (dm.DCI ? ` (${dm.DCI})` : "") })) || []}
-							disabled={saving}
 							on:select={(ev) => {
 								if (ev.detail) {
 									const updated = data.dms.find((dm) => dm.DCI === ev.detail);
@@ -234,7 +229,7 @@
 					<label for="season" class="label">
 						<span class="label-text">Season</span>
 					</label>
-					<select name="season" bind:value={season} disabled={saving} class="select select-bordered w-full">
+					<select name="season" bind:value={season} class="select select-bordered w-full">
 						<option value={9}>Season 9+</option>
 						<option value={8}>Season 8</option>
 						<option value={1}>Season 1-7</option>
@@ -249,7 +244,6 @@
 							type="number"
 							name="experience"
 							min="0"
-							disabled={saving}
 							bind:value={log.experience}
 							class="input input-bordered w-full focus:border-primary"
 						/>
@@ -270,7 +264,6 @@
 							name="level"
 							min="0"
 							max={Math.max(log.level, character ? 20 - character.total_level : 19)}
-							disabled={saving}
 							bind:value={log.level}
 							class="input input-bordered w-full focus:border-primary"
 						/>
@@ -294,13 +287,7 @@
 						<label for="acp" class="label">
 							<span class="label-text">ACP</span>
 						</label>
-						<input
-							type="number"
-							name="acp"
-							disabled={saving}
-							bind:value={log.acp}
-							class="input input-bordered w-full focus:border-primary"
-						/>
+						<input type="number" name="acp" bind:value={log.acp} class="input input-bordered w-full focus:border-primary" />
 						{#if errors.has("acp")}
 							<label for="acp" class="label">
 								<span class="label-text-alt text-error">{errors.get("acp")}</span>
@@ -312,13 +299,7 @@
 					<label for="tcp" class="label">
 						<span class="label-text">TCP</span>
 					</label>
-					<input
-						type="number"
-						name="tcp"
-						disabled={saving}
-						bind:value={log.tcp}
-						class="input input-bordered w-full focus:border-primary"
-					/>
+					<input type="number" name="tcp" bind:value={log.tcp} class="input input-bordered w-full focus:border-primary" />
 					{#if errors.has("tcp")}
 						<label for="tcp" class="label">
 							<span class="label-text-alt text-error">{errors.get("tcp")}</span>
@@ -330,13 +311,7 @@
 				<label for="gold" class="label">
 					<span class="label-text">Gold</span>
 				</label>
-				<input
-					type="number"
-					name="gold"
-					disabled={saving}
-					bind:value={log.gold}
-					class="input input-bordered w-full focus:border-primary"
-				/>
+				<input type="number" name="gold" bind:value={log.gold} class="input input-bordered w-full focus:border-primary" />
 				{#if errors.has("gold")}
 					<label for="gold" class="label">
 						<span class="label-text-alt text-error">{errors.get("gold")}</span>
@@ -347,13 +322,7 @@
 				<label for="dtd" class="label">
 					<span class="label-text overflow-hidden text-ellipsis whitespace-nowrap">Downtime Days</span>
 				</label>
-				<input
-					type="number"
-					name="dtd"
-					disabled={saving}
-					bind:value={log.dtd}
-					class="input input-bordered w-full focus:border-primary"
-				/>
+				<input type="number" name="dtd" bind:value={log.dtd} class="input input-bordered w-full focus:border-primary" />
 				{#if errors.has("dtd")}
 					<label for="dtd" class="label">
 						<span class="label-text-alt text-error">{errors.get("dtd")}</span>
@@ -376,7 +345,6 @@
 			<AutoResizeTextArea
 				name="description"
 				bind:value={log.description}
-				disabled={saving}
 				class={twMerge("textarea textarea-bordered w-full rounded-t-none focus:border-primary", previews.description && "hidden")}
 			/>
 			<div
@@ -399,7 +367,6 @@
 				type="button"
 				class="btn btn-primary min-w-fit flex-1 sm:btn-sm sm:flex-none"
 				on:click={() => (magicItemsGained = [...magicItemsGained, { id: "", name: "", description: "" }])}
-				disabled={saving}
 			>
 				Add Magic Item
 			</button>
@@ -408,7 +375,6 @@
 					type="button"
 					class="btn min-w-fit flex-1 sm:btn-sm sm:flex-none"
 					on:click={() => (magicItemsLost = [...magicItemsLost, magicItems[0]?.id || ""])}
-					disabled={saving}
 				>
 					Drop Magic Item
 				</button>
@@ -418,7 +384,6 @@
 					type="button"
 					class="btn btn-primary min-w-fit flex-1 sm:btn-sm sm:flex-none"
 					on:click={() => (storyAwardsGained = [...storyAwardsGained, { id: "", name: "", description: "" }])}
-					disabled={saving}
 				>
 					Add Story Award
 				</button>
@@ -427,7 +392,6 @@
 						type="button"
 						class="btn min-w-fit flex-1 sm:btn-sm sm:flex-none"
 						on:click={() => (storyAwardsLost = [...storyAwardsLost, storyAwards[0]?.id || ""])}
-						disabled={saving}
 					>
 						Drop Story Award
 					</button>
@@ -436,7 +400,7 @@
 		</div>
 		<div class="col-span-12 grid grid-cols-12 gap-4">
 			{#each magicItemsGained as item, index}
-				<div class="card col-span-12 h-[370px] bg-base-300/70 sm:col-span-6">
+				<div class="card col-span-12 bg-base-300/70 sm:col-span-6">
 					<div class="card-body flex flex-col gap-4">
 						<h4 class="text-2xl">Add Magic Item</h4>
 						<input type="hidden" name={`magic_items_gained.${index}.id`} value={item.id} />
@@ -452,7 +416,6 @@
 									on:input={(e) => {
 										if (magicItemsGained[index]) magicItemsGained[index].name = e.currentTarget.value;
 									}}
-									disabled={saving}
 									class="input input-bordered w-full focus:border-primary"
 								/>
 								{#if errors.has(`magic_items_gained.${index}.name`)}
@@ -473,16 +436,12 @@
 							<label for={`magic_items_gained.${index}.description`} class="label">
 								<span class="label-text">Description</span>
 							</label>
-							<textarea
+							<AutoResizeTextArea
 								name={`magic_items_gained.${index}.description`}
-								on:input={(e) => {
-									if (magicItemsGained[index]) magicItemsGained[index].description = e.currentTarget.value;
-								}}
-								disabled={saving}
 								class="textarea textarea-bordered w-full focus:border-primary"
-								style="resize: none;"
-								value={item.description}
-								spellcheck="true"
+								bind:value={item.description}
+								minRows={3}
+								maxRows={8}
 							/>
 							<label for={`magic_items_gained.${index}.description`} class="label">
 								<span class="label-text-alt text-error" />
@@ -504,7 +463,6 @@
 								<select
 									bind:value={magicItemsLost[index]}
 									name={`magic_items_lost.${index}`}
-									disabled={saving}
 									class="select select-bordered w-full"
 								>
 									{#each magicItems.filter((item) => item.id === id || !magicItemsLost.includes(item.id)) as item}
@@ -532,7 +490,7 @@
 				</div>
 			{/each}
 			{#each storyAwardsGained as item, index}
-				<div class="card col-span-12 h-[370px] bg-base-300/70 sm:col-span-6">
+				<div class="card col-span-12 bg-base-300/70 sm:col-span-6">
 					<div class="card-body flex flex-col gap-4">
 						<h4 class="text-2xl">Add Story Award</h4>
 						<input type="hidden" name={`story_awards_gained.${index}.id`} value={item.id} />
@@ -548,7 +506,6 @@
 									on:input={(e) => {
 										if (storyAwardsGained[index]) storyAwardsGained[index].name = e.currentTarget.value;
 									}}
-									disabled={saving}
 									class="input input-bordered w-full focus:border-primary"
 								/>
 								{#if errors.has(`story_awards_gained.${index}.name`)}
@@ -569,16 +526,12 @@
 							<label for={`story_awards_gained.${index}.description`} class="label">
 								<span class="label-text">Description</span>
 							</label>
-							<textarea
+							<AutoResizeTextArea
 								name={`story_awards_gained.${index}.description`}
-								on:input={(e) => {
-									if (storyAwardsGained[index]) storyAwardsGained[index].description = e.currentTarget.value;
-								}}
-								disabled={saving}
 								class="textarea textarea-bordered w-full focus:border-primary"
-								style="resize: none;"
-								value={item.description}
-								spellcheck="true"
+								bind:value={item.description}
+								minRows={3}
+								maxRows={8}
 							/>
 							<label for={`story_awards_gained.${index}.description`} class="label">
 								<span class="label-text-alt text-error" />
@@ -600,7 +553,6 @@
 								<select
 									bind:value={storyAwardsLost[index]}
 									name={`story_awards_lost.${index}`}
-									disabled={saving}
 									class="select select-bordered w-full"
 								>
 									{#each storyAwards.filter((item) => item.id === id || !storyAwardsLost.includes(item.id)) as item}
@@ -629,11 +581,7 @@
 			{/each}
 		</div>
 		<div class="col-span-12 text-center">
-			<button
-				type="submit"
-				class="btn btn-primary disabled:bg-primary disabled:bg-opacity-50 disabled:text-opacity-50"
-				disabled={saving}
-			>
+			<button type="submit" class="btn btn-primary disabled:bg-primary disabled:bg-opacity-50 disabled:text-opacity-50">
 				{#if saving}
 					<span class="loading" />
 				{/if}

@@ -1,14 +1,20 @@
 <script lang="ts">
-	export let value: Date | null = null;
-	$: date = value ? new Date(value).toLocaleString("sv").substring(0, 16) : "";
+	import type { HTMLTextareaAttributes } from "svelte/elements";
+
+	interface $$Props extends HTMLTextareaAttributes {
+		date?: Date | null;
+	}
+
+	export let date: Date | null = null;
+	$: value = date ? new Date(date).toLocaleString("sv").substring(0, 16) : "";
 </script>
 
 <input
-	type="datetime-local"
-	value={date}
 	{...$$restProps}
+	type="datetime-local"
+	{value}
 	on:input={(ev) => {
-		const date = ev.currentTarget.value;
-		value = date ? new Date(date) : null;
+		const value = ev.currentTarget.value;
+		date = value ? new Date(value) : null;
 	}}
 />

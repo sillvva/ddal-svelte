@@ -61,5 +61,3 @@ declare global {
 		startViewTransition: (callback: ViewTransitionCallback) => ViewTransition;
 	}
 }
-
-export {};

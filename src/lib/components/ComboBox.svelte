@@ -1,6 +1,7 @@
 <script lang="ts">
 	import { sorter } from "$lib/utils";
 	import { createEventDispatcher, onMount } from "svelte";
+	import type { HTMLInputAttributes } from "svelte/elements";
 	import { twMerge } from "tailwind-merge";
 
 	const dispatch = createEventDispatcher<{
@@ -18,6 +19,12 @@
 			currentTarget: EventTarget & HTMLInputElement;
 		};
 	}>();
+
+	interface $$Props extends HTMLInputAttributes {
+		values?: Array<{ key?: string | number | null; value: string }>;
+		value?: string | number | null;
+		searchBy?: "key" | "value";
+	}
 
 	export let values: Array<{ key?: string | number | null; value: string }> = [];
 	export let value: string | number | null = "";
@@ -62,9 +69,9 @@
 >
 	<label>
 		<input
+			{...$$restProps}
 			type="text"
 			{value}
-			{...$$restProps}
 			on:input={(e) => {
 				selected = false;
 				keysel = 0;
@@ -114,13 +121,13 @@
 				}
 				dispatch("blur", e);
 			}}
-			class="input-bordered input w-full focus:border-primary"
+			class="input input-bordered w-full focus:border-primary"
 		/>
 	</label>
 	{#if parsedValues && parsedValues.length > 0 && search.trim() && !selected}
 		<ul
 			id="options-{$$restProps.name}"
-			class="dropdown-content menu z-10 w-full rounded-lg bg-base-100 p-2 shadow dark:bg-base-200"
+			class="menu dropdown-content z-10 w-full rounded-lg bg-base-100 p-2 shadow dark:bg-base-200"
 		>
 			{#each matches.slice(0, 8) as kv, i}
 				<li class={twMerge("hover:bg-primary/50", keysel === i && "bg-primary text-primary-content")}>

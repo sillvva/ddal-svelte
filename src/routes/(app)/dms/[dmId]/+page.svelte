@@ -37,14 +37,7 @@
 							<span class="text-error">*</span>
 						</span>
 					</label>
-					<input
-						type="text"
-						name="name"
-						bind:value={dm.name}
-						required
-						disabled={saving}
-						class="input input-bordered w-full focus:border-primary"
-					/>
+					<input type="text" name="name" bind:value={dm.name} required class="input input-bordered w-full focus:border-primary" />
 					{#if errors.has("name")}
 						<label for="name" class="label">
 							<span class="label-text-alt text-error">{errors.get("name")}</span>
@@ -57,13 +50,7 @@
 					<label for="DCI" class="label">
 						<span class="label-text">DCI</span>
 					</label>
-					<input
-						type="text"
-						name="DCI"
-						bind:value={dm.DCI}
-						disabled={saving}
-						class="input input-bordered w-full focus:border-primary"
-					/>
+					<input type="text" name="DCI" bind:value={dm.DCI} class="input input-bordered w-full focus:border-primary" />
 					{#if errors.has("DCI")}
 						<label for="DCI" class="label">
 							<span class="label-text-alt text-error">{errors.get("DCI")}</span>
@@ -72,11 +59,7 @@
 				</div>
 			</div>
 			<div class="col-span-12 m-4 text-center">
-				<button
-					type="submit"
-					class="btn btn-primary disabled:bg-primary disabled:bg-opacity-50 disabled:text-opacity-50"
-					disabled={saving}
-				>
+				<button type="submit" class="btn btn-primary disabled:bg-primary disabled:bg-opacity-50 disabled:text-opacity-50">
 					{#if saving}
 						<span class="loading" />
 					{/if}

@@ -29,6 +29,9 @@ dependencies:
   minisearch:
     specifier: ^6.1.0
     version: 6.1.0
+  svelte-autosize:
+    specifier: ^1.1.0
+    version: 1.1.0
   valibot:
     specifier: ^0.19.0
     version: 0.19.0
@@ -849,6 +852,10 @@ packages:
       postcss: 8.4.31
       postcss-value-parser: 4.2.0
     dev: true
+
+  /autosize@6.0.1:
+    resolution: {integrity: sha512-f86EjiUKE6Xvczc4ioP1JBlWG7FKrE13qe/DxBCpe8GCipCq2nFw73aO8QEBKHfSbYGDN5eB9jXWKen7tspDqQ==}
+    dev: false
 
   /axobject-query@3.2.1:
     resolution: {integrity: sha512-jsyHu61e6N4Vbz/v18DHwWYKK0bSWLqn47eeDSKPB7m8tqMHF9YJ+mhIk2lVteyZrY8tnSj/jHOv4YiTCuCJgg==}
@@ -2245,6 +2252,12 @@ packages:
     resolution: {integrity: sha512-ot0WnXS9fgdkgIcePe6RHNk1WA8+muPa6cSjeR3V8K27q9BB1rTE3R1p7Hv0z1ZyAc8s6Vvv8DIyWf681MAt0w==}
     engines: {node: '>= 0.4'}
     dev: true
+
+  /svelte-autosize@1.1.0:
+    resolution: {integrity: sha512-CPHq/K0ssrwuHBxFCCOtpWtXZwk4edjEIZ2mJT4KKzjSBq+CO9nOmstjpOh5TpoOf/4MtDcwAwnWmktqANjU6A==}
+    dependencies:
+      autosize: 6.0.1
+    dev: false
 
   /svelte-check@3.5.2(postcss@8.4.31)(svelte@4.2.1):
     resolution: {integrity: sha512-5a/YWbiH4c+AqAUP+0VneiV5bP8YOk9JL3jwvN+k2PEPLgpu85bjQc5eE67+eIZBBwUEJzmO3I92OqKcqbp3fw==}

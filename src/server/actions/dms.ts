@@ -11,6 +11,7 @@ export async function saveDM(dmId: string, userId: string, data: DungeonMasterSc
 	try {
 		const dm = (await getUserDMsWithLogsCache(userId)).find((dm) => dm.id === dmId);
 		if (!dm) throw error(401, "You do not have permission to edit this DM");
+
 		const result = await prisma.dungeonMaster.update({
 			where: { id: dmId },
 			data: {
@@ -33,14 +34,19 @@ export type DeleteDMResult = ReturnType<typeof deleteDM>;
 export async function deleteDM(dmId: string, userId?: string) {
 	try {
 		if (!userId) throw error(401, "You must be logged in to delete a DM");
+
 		const dms = (await getUserDMsWithLogsCache(userId)).filter((dm) => dm.id === dmId);
 		if (!dms.length) throw error(401, "You do not have permission to delete this DM");
+
 		const dm = dms.find((dm) => dm.logs.length);
 		if (dm) throw new Error("You cannot delete a DM that has logs");
+
 		const result = await prisma.dungeonMaster.delete({
 			where: { id: dmId }
 		});
+
 		revalidateKeys([["dms", userId, "logs"]]);
+
 		return { id: result.id, error: null };
 	} catch (err) {
 		handleSKitError(err);
