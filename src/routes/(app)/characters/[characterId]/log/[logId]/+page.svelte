@@ -159,7 +159,7 @@
 			<DateTimeInput
 				name="date"
 				required
-				bind:value={log.date}
+				bind:date={log.date}
 				class="input input-bordered w-full focus:border-primary"
 				aria-invalid={errors.get("date") ? "true" : "false"}
 			/>

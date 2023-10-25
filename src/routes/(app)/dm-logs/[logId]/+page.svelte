@@ -137,7 +137,7 @@
 					<span class="text-error">*</span>
 				</span>
 			</label>
-			<DateTimeInput name="date" bind:value={log.date} required class="input input-bordered w-full focus:border-primary" />
+			<DateTimeInput name="date" bind:date={log.date} required class="input input-bordered w-full focus:border-primary" />
 			{#if errors.has("date")}
 				<label for="date" class="label">
 					<span class="label-text-alt text-error">{errors.get("date")}</span>
@@ -189,7 +189,7 @@
 			</label>
 			<DateTimeInput
 				name="applied_date"
-				bind:value={log.applied_date}
+				bind:date={log.applied_date}
 				required={!!log.characterId}
 				class="input input-bordered w-full focus:border-primary"
 				aria-invalid={errors.get("applied_date") ? "true" : "false"}

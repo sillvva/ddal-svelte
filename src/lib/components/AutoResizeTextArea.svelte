@@ -8,7 +8,7 @@
 	}>();
 
 	interface $$Props extends HTMLTextareaAttributes {
-		value?: any;
+		value?: string | null;
 		minRows?: number;
 		maxRows?: number;
 	}
