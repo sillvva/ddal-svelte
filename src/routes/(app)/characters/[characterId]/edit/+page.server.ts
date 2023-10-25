@@ -26,14 +26,16 @@ export const load = async (event) => {
 		character.class = parent.character.class || "";
 		character.character_sheet_url = parent.character.character_sheet_url || "";
 		character.image_url = parent.character.image_url || "";
+
+		parent.breadcrumbs = parent.breadcrumbs.concat({
+			name: character.name,
+			href: `/characters/${event.params.characterId}`
+		});
 	}
 
 	return {
 		title: event.params.characterId === "new" ? "New Character" : `Edit ${character.name}`,
-		breadcrumbs: parent.breadcrumbs.concat({
-			name: event.params.characterId === "new" ? "New Character" : "Edit",
-			href: `/characters/${event.params.characterId}/edit`
-		}),
+		breadcrumbs: parent.breadcrumbs,
 		...event.params,
 		character
 	};
