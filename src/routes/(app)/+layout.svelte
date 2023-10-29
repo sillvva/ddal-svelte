@@ -45,7 +45,7 @@
 				Contribute
 			</a>
 			{#if data.session?.user}
-				<div class="dropdown dropdown-end">
+				<div class="dropdown-end dropdown">
 					<div role="button" tabindex="0" class="flex h-full cursor-pointer items-center">
 						<div class="hidden items-center px-4 text-accent-content print:flex sm:flex">
 							{data.session?.user?.name}
@@ -76,9 +76,9 @@
 							action="/characters?/clearCaches"
 							use:enhance={() => {
 								$pageLoader = true;
-								return ({ update, result }) => {
-									update();
-									if (result.type !== "redirect") $pageLoader = false;
+								return async ({ update }) => {
+									await update();
+									$pageLoader = false;
 								};
 							}}
 						>
