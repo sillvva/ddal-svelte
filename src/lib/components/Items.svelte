@@ -34,6 +34,7 @@
 			.replace("Spell Scroll", "Scroll")
 			.replace(/^(\d+)x? /, "");
 
+		if (val.startsWith("Scroll")) console.log(qty, val);
 		if (qty > 1) {
 			if (cons) val = val.replace(/^(Potion|Scroll|Spell Scroll)( .+)$/, "$1s$2");
 			val = `${qty} ${val}`;
@@ -46,20 +47,17 @@
 	$: if (items) itemsMap.clear();
 	$: consolidatedItems = structuredClone(items).reduce(
 		(acc, item, index, arr) => {
-			const name = clearQty(item.name);
+			let name = clearQty(item.name);
+			const cons = isConsumable(sorterName(name));
+			const qty = itemQty(item);
+			name = fixName(name, !!cons, qty);
 			const desc = item.description?.trim();
 			const key = `${name}_${desc}`;
-			const qty = itemQty(item);
-			const cons = isConsumable(sorterName(name));
 
 			const existingIndex = itemsMap.get(key);
 			if (existingIndex && existingIndex >= 0) {
 				const existingQty = itemQty(acc[existingIndex]);
-
-				const newQty = existingQty + qty;
-				let newName = name;
-				if (cons) newName = fixName(newName, !!cons, newQty);
-				acc[existingIndex].name = newName;
+				acc[existingIndex].name = fixName(name, !!cons, existingQty + qty);
 			} else {
 				acc.push({
 					...arr[index],
