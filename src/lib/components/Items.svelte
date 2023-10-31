@@ -34,7 +34,6 @@
 			.replace("Spell Scroll", "Scroll")
 			.replace(/^(\d+)x? /, "");
 
-		if (val.startsWith("Scroll")) console.log(qty, val);
 		if (qty > 1) {
 			if (cons) val = val.replace(/^(Potion|Scroll|Spell Scroll)( .+)$/, "$1s$2");
 			val = `${qty} ${val}`;
