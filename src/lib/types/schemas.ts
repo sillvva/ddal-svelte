@@ -8,7 +8,6 @@ import {
 	merge,
 	minLength,
 	minValue,
-	nonNullable,
 	nullable,
 	nullish,
 	number,
@@ -22,8 +21,6 @@ import {
 	type Output,
 	type Pipe
 } from "valibot";
-
-export const nullableDateSchema = nullable(date([custom((input) => !!input.getTime(), "Invalid Date")]));
 
 export type DungeonMasterSchema = Output<typeof dungeonMasterSchema>;
 export const dungeonMasterSchema = object({
@@ -48,7 +45,7 @@ export type LogSchemaIn = Input<typeof logSchema>;
 export const logSchema = object({
 	id: nullish(string(), ""),
 	name: optional(string([minLength(1, "Log Name Required")]), ""),
-	date: nonNullable(nullableDateSchema, "Required"),
+	date: date("Invalid Date"),
 	characterId: optional(string(), ""),
 	characterName: optional(string(), ""),
 	type: optional(union([literal("game"), literal("nongame")]), "game"),
@@ -61,7 +58,7 @@ export const logSchema = object({
 	description: nullish(string(), ""),
 	dm: dungeonMasterSchema,
 	is_dm_log: optional(boolean(), false),
-	applied_date: nullableDateSchema,
+	applied_date: nullable(date("Invalid Date")),
 	magic_items_gained: array(itemSchema("Item")),
 	magic_items_lost: array(string([minLength(1, "Invalid Item ID")])),
 	story_awards_gained: array(itemSchema("Story Award")),

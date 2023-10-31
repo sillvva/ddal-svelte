@@ -70,10 +70,10 @@
 			action="/characters?/clearCaches"
 			use:enhance={() => {
 				$pageLoader = true;
-				return ({ update, result }) => {
-					update();
+				return async ({ update }) => {
+					await update();
 					toggleDrawer(false);
-					if (result.type !== "redirect") $pageLoader = false;
+					$pageLoader = false;
 				};
 			}}
 		>
