@@ -2,6 +2,7 @@ import { AUTH_SECRET, GOOGLE_CLIENT_ID, GOOGLE_CLIENT_SECRET } from "$env/static
 import Google from "@auth/core/providers/google";
 import { PrismaAdapter } from "@auth/prisma-adapter";
 import { SvelteKitAuth, type SvelteKitAuthConfig } from "@auth/sveltekit";
+import { handle as documentHandle } from "@sveltekit-addons/document/hooks";
 import { prisma } from "./server/db";
 
 import type { Provider } from "@auth/core/providers";
@@ -123,4 +124,4 @@ export const session: Handle = async ({ event, resolve }) => {
 	return response;
 };
 
-export const handle = sequence(auth, session);
+export const handle = sequence(auth, session, documentHandle);

@@ -1,3 +1,4 @@
-export const defaultUserCookie = {
-	hideBackground: false
+export const defaultSettingsCookie = {
+	hideBackground: false,
+	theme: "system"
 };

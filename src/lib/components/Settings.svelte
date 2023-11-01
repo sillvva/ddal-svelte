@@ -1,0 +1,95 @@
+<script lang="ts">
+	import { enhance } from "$app/forms";
+	import { page } from "$app/stores";
+	import { setCookie } from "$src/server/cookie";
+	import { twMerge } from "tailwind-merge";
+	import { pageLoader } from "../store";
+
+	export let open = false;
+	let backdrop = false;
+	let theme = $page.data.theme;
+
+	const toggleDrawer = (to: boolean) => {
+		if (!to) {
+			setTimeout(() => (backdrop = false), 150);
+		} else {
+			backdrop = true;
+		}
+	};
+
+	$: toggleDrawer(open);
+	$: setCookie("settings:theme", theme);
+</script>
+
+<ska:html data-theme={theme} />
+
+<div
+	id="settings"
+	class={twMerge("fixed -right-72 bottom-0 top-0 z-50 w-72 bg-base-100 px-4 py-4 transition-all", open && "right-0")}
+>
+	<ul class="menu menu-lg w-full">
+		<li>
+			<label class="flex flex-row items-center gap-2 hover:bg-transparent">
+				<span class="flex-1">Theme</span>
+				<select class="select select-bordered select-sm" bind:value={theme}>
+					<option value="system">System</option>
+					<option value="light">Light</option>
+					<option value="dark">Dark</option>
+				</select>
+			</label>
+		</li>
+		<form
+			method="POST"
+			action="/characters?/toggleBackgroundImage"
+			use:enhance={() => {
+				$pageLoader = true;
+				open = false;
+				return async ({ update }) => {
+					await update();
+					$pageLoader = false;
+				};
+			}}
+		>
+			<li class="hidden rounded-lg lg:flex">
+				<button class="h-full w-full">Toggle Background</button>
+			</li>
+		</form>
+		<form
+			method="POST"
+			action="/characters?/clearCaches"
+			use:enhance={() => {
+				$pageLoader = true;
+				open = false;
+				return async ({ update }) => {
+					await update();
+					$pageLoader = false;
+				};
+			}}
+		>
+			<li class="rounded-lg">
+				<button class="h-full w-full">Clear Cache</button>
+			</li>
+		</form>
+	</ul>
+	<div class="divider my-0" />
+	<ul class="menu menu-lg w-full">
+		<li>
+			<a href="https://github.com/sillvva/ddal-next13" target="_blank" rel="noreferrer noopener" class="items-center md:hidden">
+				Github
+			</a>
+		</li>
+		<li>
+			<a href="http://paypal.me/Sillvva" target="_blank" rel="noreferrer noopener">Contribute</a>
+		</li>
+	</ul>
+</div>
+<div
+	class={twMerge(
+		"fixed inset-0 bg-black/50 transition-all",
+		backdrop ? "block" : "hidden",
+		open ? "z-40 opacity-100" : "-z-10 opacity-0"
+	)}
+	on:keydown={() => (open = false)}
+	on:click={() => (open = false)}
+	role="none"
+/>

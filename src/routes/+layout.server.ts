@@ -1,7 +1,7 @@
 import { building } from "$app/environment";
 import { checkEnv } from "$src/lib/types/env";
 import { serverGetCookie } from "$src/server/cookie.js";
-import { defaultUserCookie } from "$src/server/data/cookies.js";
+import { defaultSettingsCookie } from "$src/server/data/cookies.js";
 
 if (building) {
 	checkEnv().then((env) => {
@@ -10,13 +10,14 @@ if (building) {
 }
 
 export const load = async (event) => {
-	const userCookie = serverGetCookie(event.cookies, "user", defaultUserCookie);
+	const settingsCookie = serverGetCookie(event.cookies, "settings", defaultSettingsCookie);
 
 	return {
 		session: event.locals.session,
 		breadcrumbs: [] as Array<{ name: string; href?: string }>,
+		theme: settingsCookie.theme,
 		mobile:
-			userCookie.hideBackground ||
+			settingsCookie.hideBackground ||
 			!!event.request.headers
 				.get("user-agent")
 				?.match(

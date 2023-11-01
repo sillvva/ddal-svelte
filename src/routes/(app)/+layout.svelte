@@ -1,14 +1,16 @@
 <script lang="ts">
-	import { enhance } from "$app/forms";
 	import { page } from "$app/stores";
 	import Drawer from "$lib/components/Drawer.svelte";
 	import Icon from "$lib/components/Icon.svelte";
+	import Settings from "$lib/components/Settings.svelte";
 	import Markdown from "$src/lib/components/Markdown.svelte";
-	import { modal, pageLoader } from "$src/lib/store";
+	import { modal } from "$src/lib/store";
 	import { signIn, signOut } from "@auth/sveltekit/client";
 	import { twMerge } from "tailwind-merge";
 
 	export let data;
+
+	let settingsOpen = false;
 </script>
 
 <div class="relative flex min-h-screen flex-col">
@@ -20,6 +22,7 @@
 	>
 		<nav class="container mx-auto flex max-w-5xl gap-2 p-4">
 			<Drawer />
+			<Settings bind:open={settingsOpen} />
 			<a
 				href={data.session?.user ? "/characters" : "/"}
 				class={twMerge("mr-8 flex flex-col text-center font-draconis", data.mobile && "mr-2 flex-1 sm:flex-none md:mr-8")}
@@ -41,13 +44,10 @@
 			>
 				<Icon src="github" class="w-6" />
 			</a>
-			<a href="http://paypal.me/Sillvva" target="_blank" rel="noreferrer noopener" class="hidden items-center p-2 lg:flex">
-				Contribute
-			</a>
 			{#if data.session?.user}
-				<div class="dropdown-end dropdown">
-					<div role="button" tabindex="0" class="flex h-full cursor-pointer items-center">
-						<div class="hidden items-center px-4 text-accent-content print:flex sm:flex">
+				<div class="dropdown dropdown-end">
+					<div role="button" tabindex="0" class="flex h-full cursor-pointer items-center pl-4">
+						<div class="hidden items-center pr-4 text-accent-content print:flex sm:flex">
 							{data.session?.user?.name}
 						</div>
 						<div class="avatar">
@@ -71,36 +71,9 @@
 						<li class="sm:hidden">
 							<span>{data.session?.user?.name}</span>
 						</li>
-						<form
-							method="POST"
-							action="/characters?/toggleBackgroundImage"
-							use:enhance={() => {
-								$pageLoader = true;
-								return async ({ update }) => {
-									await update();
-									$pageLoader = false;
-								};
-							}}
-						>
-							<li class="rounded-lg">
-								<button class="h-full w-full">Toggle Background</button>
-							</li>
-						</form>
-						<form
-							method="POST"
-							action="/characters?/clearCaches"
-							use:enhance={() => {
-								$pageLoader = true;
-								return async ({ update }) => {
-									await update();
-									$pageLoader = false;
-								};
-							}}
-						>
-							<li class="rounded-lg">
-								<button class="h-full w-full">Clear Cache</button>
-							</li>
-						</form>
+						<li>
+							<button on:click={() => (settingsOpen = true)} aria-controls="settings">Settings</button>
+						</li>
 						<li>
 							<a href="#top" on:click={() => signOut({ callbackUrl: "/" })}>Logout</a>
 						</li>
