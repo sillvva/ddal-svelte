@@ -83,7 +83,7 @@ export function serverGetCookie<T extends string | number | boolean | object>(co
  * @param expires Expiration time of the cookie
  * @returns The cookie value
  */
-export function serverSetCookie(cookies: Cookies, name: string, value: string, expires = 1000 * 60 * 60 * 24 * 365) {
+export function serverSetCookie(cookies: Cookies, name: string, value: unknown, expires = 1000 * 60 * 60 * 24 * 365) {
 	if (browser) return null;
 	const parts = name.split(":");
 	if (parts[1]) {
@@ -97,7 +97,7 @@ export function serverSetCookie(cookies: Cookies, name: string, value: string, e
 		});
 		return existing;
 	} else {
-		cookies.set(name, value, {
+		cookies.set(name, typeof value !== "string" ? JSON.stringify(value) : value, {
 			httpOnly: true,
 			path: "/",
 			expires: new Date(Date.now() + expires)

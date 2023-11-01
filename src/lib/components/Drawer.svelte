@@ -78,7 +78,7 @@
 			}}
 		>
 			<li>
-				<button>Clear My Cache</button>
+				<button>Clear Cache</button>
 			</li>
 		</form>
 	</ul>

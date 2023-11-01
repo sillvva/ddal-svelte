@@ -1,7 +1,8 @@
 import { clearUserCache } from "$src/server/actions/users.js";
 import { signInRedirect } from "$src/server/auth.js";
-import { serverGetCookie } from "$src/server/cookie";
+import { serverGetCookie, serverSetCookie } from "$src/server/cookie";
 import { getCharacterCaches, getCharactersCache, type CharacterData } from "$src/server/data/characters";
+import { defaultUserCookie } from "$src/server/data/cookies.js";
 import { redirect } from "@sveltejs/kit";
 
 const defaultCookie = {
@@ -36,5 +37,9 @@ export const actions = {
 		const session = await event.locals.session;
 		if (!session?.user) throw redirect(302, "/");
 		return await clearUserCache(session.user.id);
+	},
+	toggleBackgroundImage: async (event) => {
+		const userCookie = serverGetCookie(event.cookies, "user", defaultUserCookie);
+		serverSetCookie(event.cookies, "user:hideBackground", !userCookie.hideBackground);
 	}
 };

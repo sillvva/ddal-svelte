@@ -73,6 +73,21 @@
 						</li>
 						<form
 							method="POST"
+							action="/characters?/toggleBackgroundImage"
+							use:enhance={() => {
+								$pageLoader = true;
+								return async ({ update }) => {
+									await update();
+									$pageLoader = false;
+								};
+							}}
+						>
+							<li class="rounded-lg">
+								<button class="h-full w-full">Toggle Background</button>
+							</li>
+						</form>
+						<form
+							method="POST"
 							action="/characters?/clearCaches"
 							use:enhance={() => {
 								$pageLoader = true;
@@ -83,7 +98,7 @@
 							}}
 						>
 							<li class="rounded-lg">
-								<button class="h-full w-full">Clear My Cache</button>
+								<button class="h-full w-full">Clear Cache</button>
 							</li>
 						</form>
 						<li>
