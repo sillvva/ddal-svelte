@@ -3,7 +3,7 @@
 	import { enhance } from "$app/forms";
 	import { page } from "$app/stores";
 	import { setCookie } from "$src/server/cookie";
-	import { ModeWatcher, resetMode, setMode } from "mode-watcher";
+	import { ModeWatcher, mode, resetMode, setMode } from "mode-watcher";
 	import { twMerge } from "tailwind-merge";
 	import { hideBg, pageLoader } from "../store";
 
@@ -34,7 +34,7 @@
 </script>
 
 <ModeWatcher />
-<ska:html data-theme={theme} />
+<ska:html data-theme={theme} class={$mode} />
 
 <div
 	id="settings"
