@@ -4,6 +4,7 @@
 	import SearchResults from "$lib/components/SearchResults.svelte";
 	import { slugify, sorter, stopWords, transition } from "$lib/utils";
 	import { lazy } from "$src/lib/actions";
+	import { hideBg } from "$src/lib/store.js";
 	import { setCookie } from "$src/server/cookie";
 	import MiniSearch from "minisearch";
 	import { twMerge } from "tailwind-merge";
@@ -162,11 +163,13 @@
 				<div
 					class={twMerge(
 						"grid-table",
-						data.mobile ? "grid-characters-mobile sm:grid-characters-mobile-sm" : "grid-characters-mobile sm:grid-characters"
+						data.mobile || $hideBg
+							? "grid-characters-mobile sm:grid-characters-mobile-sm"
+							: "grid-characters-mobile sm:grid-characters"
 					)}
 				>
 					<header class="!hidden sm:!contents">
-						{#if !data.mobile}
+						{#if !data.mobile && !hideBg}
 							<div class="hidden sm:block" />
 						{/if}
 						<div>Name</div>
@@ -176,7 +179,7 @@
 					</header>
 					{#each results as character}
 						<a href={`/characters/${character.id}`} class="img-grow">
-							{#if !data.mobile}
+							{#if !data.mobile && !hideBg}
 								<div class="hidden pr-0 transition-colors sm:block sm:pr-2">
 									<div class="avatar">
 										<div
