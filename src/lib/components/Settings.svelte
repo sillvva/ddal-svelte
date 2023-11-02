@@ -3,11 +3,11 @@
 	import { page } from "$app/stores";
 	import { setCookie } from "$src/server/cookie";
 	import { twMerge } from "tailwind-merge";
-	import { pageLoader } from "../store";
+	import { hideBg, pageLoader } from "../store";
 
 	export let open = false;
 	let backdrop = false;
-	let theme = $page.data.theme;
+	let theme = $page.data.settings.theme;
 
 	const toggleDrawer = (to: boolean) => {
 		if (!to) {
@@ -38,22 +38,19 @@
 				</select>
 			</label>
 		</li>
-		<form
-			method="POST"
-			action="/characters?/toggleBackgroundImage"
-			use:enhance={() => {
-				$pageLoader = true;
-				open = false;
-				return async ({ update }) => {
-					await update();
-					$pageLoader = false;
-				};
-			}}
-		>
-			<li class="hidden rounded-lg lg:flex">
-				<button class="h-full w-full">Toggle Background</button>
-			</li>
-		</form>
+		<li class="hidden rounded-lg lg:flex">
+			<label class="flex flex-row items-center">
+				<span class="flex-1 text-left">Background</span>
+				<input
+					type="checkbox"
+					class="toggle"
+					checked={!$hideBg}
+					on:change={() => {
+						$hideBg = !$hideBg;
+					}}
+				/>
+			</label>
+		</li>
 		<form
 			method="POST"
 			action="/characters?/clearCaches"
@@ -73,10 +70,8 @@
 	</ul>
 	<div class="divider my-0" />
 	<ul class="menu menu-lg w-full">
-		<li>
-			<a href="https://github.com/sillvva/ddal-next13" target="_blank" rel="noreferrer noopener" class="items-center md:hidden">
-				Github
-			</a>
+		<li class="md:hidden">
+			<a href="https://github.com/sillvva/ddal-next13" target="_blank" rel="noreferrer noopener">Github</a>
 		</li>
 		<li>
 			<a href="http://paypal.me/Sillvva" target="_blank" rel="noreferrer noopener">Contribute</a>
@@ -93,3 +88,12 @@
 	on:click={() => (open = false)}
 	role="none"
 />
+
+<style>
+	.menu-lg li {
+		height: 3.5rem;
+	}
+	.menu-lg li * {
+		line-height: 2rem;
+	}
+</style>

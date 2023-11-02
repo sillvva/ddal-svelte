@@ -1,8 +1,8 @@
+import { defaultSettingsCookie } from "$src/lib/store.js";
 import { clearUserCache } from "$src/server/actions/users.js";
 import { signInRedirect } from "$src/server/auth.js";
 import { serverGetCookie, serverSetCookie } from "$src/server/cookie";
 import { getCharacterCaches, getCharactersCache, type CharacterData } from "$src/server/data/characters";
-import { defaultSettingsCookie } from "$src/server/data/cookies.js";
 import { redirect } from "@sveltejs/kit";
 
 const defaultCookie = {

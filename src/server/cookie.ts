@@ -1,6 +1,7 @@
 import { browser } from "$app/environment";
 
 import type { Cookies } from "@sveltejs/kit";
+import { writable } from "svelte/store";
 
 /**
  * Set a http-only cookie from the browser using a fetch request to the server. The server function should call
@@ -25,6 +26,27 @@ export async function setCookie(name: string, value: string | number | boolean |
 		throw new Error(`Failed to set cookie "${name}"`);
 	}
 }
+
+/**
+ * Create a cookie store that will automatically update the cookie whenever the store is updated.
+ *
+ * @param cookie The name of the cookie
+ * @param initial The initial value of the cookie
+ * @returns The cookie store
+ */
+export const cookieStore = function <T extends string | number | boolean | object>(cookie: string, initial: T) {
+	const { subscribe, set, update } = writable(initial);
+
+	subscribe((value) => {
+		setCookie(cookie, value);
+	});
+
+	return {
+		subscribe,
+		set,
+		update
+	};
+};
 
 /**
  * Get a cookie from the server.
