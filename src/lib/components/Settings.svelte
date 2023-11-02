@@ -1,7 +1,9 @@
 <script lang="ts">
+	import { browser } from "$app/environment";
 	import { enhance } from "$app/forms";
 	import { page } from "$app/stores";
 	import { setCookie } from "$src/server/cookie";
+	import { ModeWatcher, resetMode, setMode } from "mode-watcher";
 	import { twMerge } from "tailwind-merge";
 	import { hideBg, pageLoader } from "../store";
 
@@ -17,10 +19,21 @@
 		}
 	};
 
+	const handleThemeChange = (value: string) => {
+		theme = value;
+		if (value === "light" || value === "dark") {
+			setMode(value);
+		} else {
+			resetMode();
+		}
+	};
+
 	$: toggleDrawer(open);
 	$: setCookie("settings:theme", theme);
+	$: browser && handleThemeChange(theme);
 </script>
 
+<ModeWatcher />
 <ska:html data-theme={theme} />
 
 <div

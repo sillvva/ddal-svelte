@@ -4,7 +4,7 @@ const themes = require("daisyui/src/theming/themes");
 /** @type {import('tailwindcss').Config} */
 export default {
 	content: ["./src/**/*.{html,js,svelte,ts}"],
-	darkMode: ['[data-mode="dark"]'],
+	darkMode: ["class"],
 	theme: {
 		extend: {
 			fontFamily: {

@@ -262,7 +262,10 @@
 				</div>
 			</div>
 			<div
-				class="divider hidden xs:divider-horizontal before:bg-black/50 after:bg-black/50 dark:before:bg-white/50 dark:after:bg-white/50 print:flex xs:mx-0 xs:flex"
+				class={twMerge(
+					"divider hidden xs:divider-horizontal print:flex xs:mx-0 xs:flex",
+					"before:bg-black/50 after:bg-black/50 dark:before:bg-white/50 dark:after:bg-white/50"
+				)}
 			/>
 			<div class="flex basis-full flex-col print:basis-2/3 xs:basis-[60%] sm:basis-2/3 lg:basis-2/3">
 				{#if character}
