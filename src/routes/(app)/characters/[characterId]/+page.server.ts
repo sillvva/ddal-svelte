@@ -1,6 +1,6 @@
 import { deleteCharacter } from "$src/server/actions/characters";
 import { deleteLog } from "$src/server/actions/logs";
-import { serverGetCookie } from "$src/server/cookie";
+import { serverGetCookie, serverSetCookie } from "$src/server/cookie";
 import { error, redirect } from "@sveltejs/kit";
 
 const defaultCookie = {
@@ -26,6 +26,9 @@ export const load = async (event) => {
 };
 
 export const actions = {
+	default: () => {
+		return;
+	},
 	deleteCharacter: async (event) => {
 		const session = await event.locals.session;
 		if (!session?.user) throw redirect(302, "/");
@@ -43,5 +46,13 @@ export const actions = {
 		const data = await event.request.formData();
 		const logId = (data.get("logId") || "") as string;
 		return await deleteLog(logId, session.user.id);
+	},
+	toggleDescriptions: async (event) => {
+		const cookie = serverGetCookie(event.cookies, "characters", defaultCookie);
+		serverSetCookie(event.cookies, "characters", {
+			...cookie,
+			descriptions: !cookie.descriptions
+		});
+		return true;
 	}
 };

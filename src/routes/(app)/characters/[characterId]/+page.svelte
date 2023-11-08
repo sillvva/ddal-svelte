@@ -306,29 +306,33 @@
 			<a href={`/characters/${character.id}/log/new`} class="btn btn-primary sm:btn-sm sm:hidden sm:px-3" aria-label="New Log">
 				<Icon src="plus" class="w-6" />
 			</a>
+			<form action="?/toggleDescriptions" method="post" use:enhance={(f) => f.cancel()}>
+				<button
+					class={twMerge("btn sm:hidden", descriptions && "btn-primary")}
+					on:click={() => transition(() => (descriptions = !descriptions))}
+					on:keypress
+					aria-label="Toggle Notes"
+					tabindex="0"
+				>
+					<Icon src={descriptions ? "show" : "hide"} class="w-6" />
+				</button>
+			</form>
+		{/if}
+	</div>
+	{#if logs.length}
+		<div class="hidden flex-1 sm:block" />
+		<form action="?/toggleDescriptions" method="post" use:enhance={(f) => f.cancel()}>
 			<button
-				class={twMerge("btn sm:hidden", descriptions && "btn-primary")}
+				class={twMerge("btn hidden sm:btn-sm sm:inline-flex", descriptions && "btn-primary")}
 				on:click={() => transition(() => (descriptions = !descriptions))}
 				on:keypress
 				aria-label="Toggle Notes"
 				tabindex="0"
 			>
 				<Icon src={descriptions ? "show" : "hide"} class="w-6" />
+				<span class="hidden sm:inline-flex">Notes</span>
 			</button>
-		{/if}
-	</div>
-	{#if logs.length}
-		<div class="hidden flex-1 sm:block" />
-		<button
-			class={twMerge("btn hidden sm:btn-sm sm:inline-flex", descriptions && "btn-primary")}
-			on:click={() => transition(() => (descriptions = !descriptions))}
-			on:keypress
-			aria-label="Toggle Notes"
-			tabindex="0"
-		>
-			<Icon src={descriptions ? "show" : "hide"} class="w-6" />
-			<span class="hidden sm:inline-flex">Notes</span>
-		</button>
+		</form>
 	{/if}
 </div>
 
