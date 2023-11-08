@@ -26,9 +26,6 @@ export const load = async (event) => {
 };
 
 export const actions = {
-	default: () => {
-		return;
-	},
 	deleteCharacter: async (event) => {
 		const session = await event.locals.session;
 		if (!session?.user) throw redirect(302, "/");
