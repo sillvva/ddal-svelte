@@ -9,7 +9,7 @@
 	export let title: string = "";
 	export let items: Array<MagicItem | StoryAward>;
 	export let formatting: boolean = false;
-	export let search: string = "";
+	export let search: string | null = "";
 	export let collapsible: boolean = false;
 	export let sort = false;
 

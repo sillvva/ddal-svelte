@@ -2,11 +2,11 @@
 	import { stopWords } from "$lib/utils";
 
 	export let text: string | string[] | null = "";
-	export let search: string = "";
+	export let search: string | null = "";
 	export let filtered = false;
 	export let separator = " | ";
 
-	$: terms = getSearchTerms(search);
+	$: terms = getSearchTerms(search || "");
 	$: regexes = getRegexesFromTerms(terms);
 	$: regex = getJoinedRegexFromTerms(terms);
 	$: items = getTextItems(text, filtered, regexes);

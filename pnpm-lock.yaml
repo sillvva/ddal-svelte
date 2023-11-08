@@ -16,7 +16,7 @@ dependencies:
     version: 0.3.11(@sveltejs/kit@1.27.2)(svelte@4.2.2)
   '@decs/typeschema':
     specifier: 0.12.1
-    version: 0.12.1(valibot@0.20.0)(vite@4.5.0)
+    version: 0.12.1(valibot@0.20.1)(vite@4.5.0)
   '@prisma/client':
     specifier: ^5.5.2
     version: 5.5.2(prisma@5.5.2)
@@ -30,14 +30,14 @@ dependencies:
     specifier: ^6.2.0
     version: 6.2.0
   mode-watcher:
-    specifier: ^0.0.5
-    version: 0.0.5(svelte@4.2.2)
+    specifier: ^0.0.7
+    version: 0.0.7(svelte@4.2.2)
   svelte-autosize:
     specifier: ^1.1.0
     version: 1.1.0
   valibot:
-    specifier: ^0.20.0
-    version: 0.20.0
+    specifier: ^0.20.1
+    version: 0.20.1
 
 devDependencies:
   '@sveltejs/adapter-auto':
@@ -94,6 +94,9 @@ devDependencies:
   svelte-markdown:
     specifier: ^0.4.0
     version: 0.4.0(svelte@4.2.2)
+  sveltekit-search-params:
+    specifier: ^1.0.15
+    version: 1.0.15(@sveltejs/kit@1.27.2)(svelte@4.2.2)
   tailwind-merge:
     specifier: ^2.0.0
     version: 2.0.0
@@ -176,7 +179,7 @@ packages:
       regenerator-runtime: 0.14.0
     dev: true
 
-  /@decs/typeschema@0.12.1(valibot@0.20.0)(vite@4.5.0):
+  /@decs/typeschema@0.12.1(valibot@0.20.1)(vite@4.5.0):
     resolution: {integrity: sha512-PhoCbaJ6T+9EfvUkemgYVnNfLmLoP2+Aa5yvQ3sIzH4fmIgDEFPGSRPuaTO04c99sqLeKuhHEY+WLzNubGABOA==}
     peerDependencies:
       '@deepkit/type': ^1.0.1-alpha.97
@@ -229,7 +232,7 @@ packages:
       zod:
         optional: true
     dependencies:
-      valibot: 0.20.0
+      valibot: 0.20.1
       vite: 4.5.0
     dev: false
 
@@ -1784,8 +1787,8 @@ packages:
       minimist: 1.2.8
     dev: true
 
-  /mode-watcher@0.0.5(svelte@4.2.2):
-    resolution: {integrity: sha512-a1ygOGLeHeJHM7uZYxzcV1QRsBjNRhr+YnbtcAgP9PGS3JIeJMmSntOKVc0anhRibGCq3omiGRamSt1eAAmpag==}
+  /mode-watcher@0.0.7(svelte@4.2.2):
+    resolution: {integrity: sha512-3/RXHKzg9TjhkYo8YTx++Ai7a2Qd7BkYS3RFWaIhj0NPonXAF5JNegiZ3CTk1Q/k0wyhPQUlsWW0Y5ByCp6Y1g==}
     peerDependencies:
       svelte: ^4.0.0
     dependencies:
@@ -2511,6 +2514,16 @@ packages:
       magic-string: 0.30.5
       periscopic: 3.1.0
 
+  /sveltekit-search-params@1.0.15(@sveltejs/kit@1.27.2)(svelte@4.2.2):
+    resolution: {integrity: sha512-LLuG961adpMMnyG/5Ixj9Cv++62ol7aSpVpE0qIFzQuOZ/5J3PwSoXu06pBw9DZi5Awj40OXtGLtpyh6WZjqVQ==}
+    peerDependencies:
+      '@sveltejs/kit': ^1.0.0
+      svelte: ^3.55.0 || ^4.0.0
+    dependencies:
+      '@sveltejs/kit': 1.27.2(svelte@4.2.2)(vite@4.5.0)
+      svelte: 4.2.2
+    dev: true
+
   /tailwind-merge@2.0.0:
     resolution: {integrity: sha512-WO8qghn9yhsldLSg80au+3/gY9E4hFxIvQ3qOmlpXnqpDKoMruKfi/56BbbMg6fHTQJ9QD3cc79PoWqlaQE4rw==}
     dependencies:
@@ -2644,8 +2657,8 @@ packages:
     resolution: {integrity: sha512-EPD5q1uXyFxJpCrLnCc1nHnq3gOa6DZBocAIiI2TaSCA7VCJ1UJDMagCzIkXNsUYfD1daK//LTEQ8xiIbrHtcw==}
     dev: true
 
-  /valibot@0.20.0:
-    resolution: {integrity: sha512-a2Vy4oPIHvrwfPZF0Cl83yBn17Zgekp6IQ0PzdUFTPWtlwWFCJNHtOm/nypzv5o/6llKBsIEErswWHbvjNGzNw==}
+  /valibot@0.20.1:
+    resolution: {integrity: sha512-7lToTLG5wtK76u32gq8dUK0bAw7bknTGbeNSKRJunAC2soGVnNrKngg+38Jjt6FOwH+MshUONHoFz+LgmjeYKQ==}
     dev: false
 
   /vite@4.5.0:
