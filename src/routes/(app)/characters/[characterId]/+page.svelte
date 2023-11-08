@@ -21,7 +21,7 @@
 	let deletingLog: string[] = [];
 
 	const search = queryParam("s", {
-		encode: (value) => encodeURIComponent(value),
+		encode: (value) => encodeURIComponent(value) || undefined,
 		decode: (value) => decodeURIComponent(value || ""),
 		defaultValue: ""
 	});
