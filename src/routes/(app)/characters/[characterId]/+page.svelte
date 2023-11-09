@@ -9,7 +9,7 @@
 	import { slugify, sorter, stopWords, transition } from "$lib/utils";
 	import { setCookie } from "$src/server/cookie";
 	import MiniSearch from "minisearch";
-	import { queryParam } from "sveltekit-search-params";
+	import { queryParam, ssp } from "sveltekit-search-params";
 	import { twMerge } from "tailwind-merge";
 
 	export let data;
@@ -20,11 +20,7 @@
 
 	let deletingLog: string[] = [];
 
-	const search = queryParam("s", {
-		encode: (value) => encodeURIComponent(value) || undefined,
-		decode: (value) => decodeURIComponent(value || ""),
-		defaultValue: ""
-	});
+	const search = queryParam("s", ssp.string(""));
 	const logSearch = new MiniSearch({
 		fields: ["logName", "magicItems", "storyAwards"],
 		idField: "logId",
