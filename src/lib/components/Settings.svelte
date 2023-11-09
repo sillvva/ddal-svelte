@@ -19,12 +19,6 @@
 		});
 	});
 
-	$: setCookie("settings", {
-		...$page.data.settings,
-		theme,
-		mode
-	});
-
 	$: if (browser) {
 		if (theme === "system") {
 			const mql = window.matchMedia("(prefers-color-scheme: dark)");
@@ -32,6 +26,12 @@
 		} else {
 			mode = theme;
 		}
+
+		setCookie("settings", {
+			...$page.data.settings,
+			theme,
+			mode
+		});
 	}
 
 	$: if (browser) {
