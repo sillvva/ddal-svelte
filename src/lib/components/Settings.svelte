@@ -3,13 +3,21 @@
 	import { enhance } from "$app/forms";
 	import { page } from "$app/stores";
 	import { setCookie } from "$src/server/cookie";
-	import { ModeWatcher, mode, resetMode, setMode } from "mode-watcher";
+	import { onMount } from "svelte";
 	import { twMerge } from "tailwind-merge";
 	import { hideBg, pageLoader } from "../store";
 
 	export let open = false;
 	let backdrop = false;
 	let theme = $page.data.settings.theme;
+	let mode = theme;
+
+	onMount(() => {
+		const mql = window.matchMedia("(prefers-color-scheme: dark)");
+		mql.addEventListener("change", (ev) => {
+			if (theme == "system") mode = ev.matches ? "dark" : "light";
+		});
+	});
 
 	const toggleDrawer = (to: boolean) => {
 		if (!to) {
@@ -21,10 +29,11 @@
 
 	const handleThemeChange = (value: string) => {
 		theme = value;
-		if (value === "light" || value === "dark") {
-			setMode(value);
+		if (value === "system") {
+			const mql = window.matchMedia("(prefers-color-scheme: dark)");
+			mode = mql.matches ? "dark" : "light";
 		} else {
-			resetMode();
+			mode = value;
 		}
 	};
 
@@ -33,8 +42,7 @@
 	$: browser && handleThemeChange(theme);
 </script>
 
-<ModeWatcher />
-<ska:html data-theme={theme} class={$mode} />
+<ska:html data-theme={theme} class={mode} />
 
 <div
 	id="settings"
