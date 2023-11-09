@@ -19,27 +19,22 @@
 		});
 	});
 
-	const toggleDrawer = (to: boolean) => {
-		if (!to) {
+	$: setCookie("settings:theme", theme);
+	$: if (browser) {
+		if (theme === "system") {
+			const mql = window.matchMedia("(prefers-color-scheme: dark)");
+			mode = mql.matches ? "dark" : "light";
+		} else {
+			mode = theme;
+		}
+	}
+	$: if (browser) {
+		if (!open) {
 			setTimeout(() => (backdrop = false), 150);
 		} else {
 			backdrop = true;
 		}
-	};
-
-	const handleThemeChange = (value: string) => {
-		theme = value;
-		if (value === "system") {
-			const mql = window.matchMedia("(prefers-color-scheme: dark)");
-			mode = mql.matches ? "dark" : "light";
-		} else {
-			mode = value;
-		}
-	};
-
-	$: toggleDrawer(open);
-	$: setCookie("settings:theme", theme);
-	$: browser && handleThemeChange(theme);
+	}
 </script>
 
 <ska:html data-theme={theme} class={mode} />
