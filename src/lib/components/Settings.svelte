@@ -10,7 +10,7 @@
 	export let open = false;
 	let backdrop = false;
 	let theme = $page.data.settings.theme;
-	let mode = theme;
+	let mode = $page.data.settings.mode || theme;
 
 	onMount(() => {
 		const mql = window.matchMedia("(prefers-color-scheme: dark)");
@@ -19,7 +19,12 @@
 		});
 	});
 
-	$: setCookie("settings:theme", theme);
+	$: setCookie("settings", {
+		...$page.data.settings,
+		theme,
+		mode
+	});
+
 	$: if (browser) {
 		if (theme === "system") {
 			const mql = window.matchMedia("(prefers-color-scheme: dark)");
@@ -28,6 +33,7 @@
 			mode = theme;
 		}
 	}
+
 	$: if (browser) {
 		if (!open) {
 			setTimeout(() => (backdrop = false), 150);

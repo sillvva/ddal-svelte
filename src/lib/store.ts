@@ -8,7 +8,8 @@ export const modal = writable<{ name: string; description: string; date?: Date }
 
 export const defaultSettingsCookie = {
 	hideBackground: false,
-	theme: "system"
+	theme: "system",
+	mode: "dark"
 };
 
 export const hideBg = cookieStore<typeof defaultSettingsCookie.hideBackground>("settings:hideBackground", false);
