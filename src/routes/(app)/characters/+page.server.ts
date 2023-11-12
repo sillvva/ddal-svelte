@@ -40,6 +40,6 @@ export const actions = {
 	},
 	toggleBackgroundImage: async (event) => {
 		const settingsCookie = serverGetCookie(event.cookies, "settings", defaultSettingsCookie);
-		serverSetCookie(event.cookies, "settings:hideBackground", !settingsCookie.hideBackground);
+		serverSetCookie(event.cookies, "settings:showBackground", !settingsCookie.showBackground);
 	}
 };

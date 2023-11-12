@@ -5,7 +5,7 @@
 	import { setCookie } from "$src/server/cookie";
 	import { onMount } from "svelte";
 	import { twMerge } from "tailwind-merge";
-	import { hideBg, pageLoader } from "../store";
+	import { pageLoader, showBg } from "../store";
 
 	export let open = false;
 	let backdrop = false;
@@ -63,14 +63,7 @@
 		<li class="hidden rounded-lg lg:flex">
 			<label class="flex flex-row items-center">
 				<span class="flex-1 text-left">Background</span>
-				<input
-					type="checkbox"
-					class="toggle"
-					checked={!$hideBg}
-					on:change={() => {
-						$hideBg = !$hideBg;
-					}}
-				/>
+				<input type="checkbox" class="toggle" bind:checked={$showBg} />
 			</label>
 		</li>
 		<form
