@@ -12,4 +12,7 @@ export const defaultSettingsCookie = {
 	mode: "dark"
 };
 
-export const showBg = cookieStore<typeof defaultSettingsCookie.showBackground>("settings:showBackground", true);
+export const showBg = cookieStore<typeof defaultSettingsCookie.showBackground>(
+	"settings:showBackground",
+	defaultSettingsCookie.showBackground
+);
