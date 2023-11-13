@@ -28,14 +28,15 @@
 		name.trim().match(/^(\d+x? )?((Potion|Scroll|Spell Scroll|Charm|Elixir)s? of)|Alchemist('?s)? Fire|Antitoxin/);
 	const itemQty = (item: { name: string }) => parseInt(item.name.match(/^(\d+)x? /)?.[1] || "1");
 	const clearQty = (name: string) => name.replace(/^\d+x? ?/, "");
-	const fixName = (name: string, cons: boolean, qty: number) => {
+	const fixName = (name: string, qty = 1) => {
 		let val = name
+			.trim()
 			.replace(/^(Potion|Scroll|Spell Scroll)s/, "$1")
 			.replace("Spell Scroll", "Scroll")
 			.replace(/^(\d+)x? /, "");
 
 		if (qty > 1) {
-			if (cons) val = val.replace(/^(Potion|Scroll|Spell Scroll)( .+)$/, "$1s$2");
+			if (isConsumable(name)) val = val.replace(/^(Potion|Scroll|Spell Scroll)( .+)$/, "$1s$2");
 			val = `${qty} ${val}`;
 		} else {
 			val = val;
@@ -46,21 +47,19 @@
 	$: if (items) itemsMap.clear();
 	$: consolidatedItems = structuredClone(items).reduce(
 		(acc, item, index, arr) => {
-			let name = clearQty(item.name);
-			const cons = isConsumable(sorterName(name));
+			const name = fixName(clearQty(item.name));
 			const qty = itemQty(item);
-			name = fixName(name, !!cons, qty);
 			const desc = item.description?.trim();
 			const key = `${name}_${desc}`;
 
 			const existingIndex = itemsMap.get(key);
 			if (existingIndex && existingIndex >= 0) {
 				const existingQty = itemQty(acc[existingIndex]);
-				acc[existingIndex].name = fixName(name, !!cons, existingQty + qty);
+				acc[existingIndex].name = fixName(name, existingQty + qty);
 			} else {
 				acc.push({
 					...arr[index],
-					name: fixName(arr[index].name, !!cons, qty)
+					name: fixName(arr[index].name, qty)
 				});
 				itemsMap.set(key, acc.length - 1);
 			}
