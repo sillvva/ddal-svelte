@@ -7,12 +7,9 @@ export const pageLoader = writable(false);
 export const modal = writable<{ name: string; description: string; date?: Date } | null>(null);
 
 export const defaultSettingsCookie = {
-	showBackground: true,
+	background: true,
 	theme: "system",
 	mode: "dark"
 };
 
-export const showBg = cookieStore<typeof defaultSettingsCookie.showBackground>(
-	"settings:showBackground",
-	defaultSettingsCookie.showBackground
-);
+export const settings = cookieStore<typeof defaultSettingsCookie>("settings", defaultSettingsCookie);

@@ -1,37 +1,27 @@
 <script lang="ts">
 	import { browser } from "$app/environment";
 	import { enhance } from "$app/forms";
-	import { page } from "$app/stores";
-	import { setCookie } from "$src/server/cookie";
 	import { onMount } from "svelte";
 	import { twMerge } from "tailwind-merge";
-	import { pageLoader, showBg } from "../store";
+	import { pageLoader, settings } from "../store";
 
 	export let open = false;
 	let backdrop = false;
-	let theme = $page.data.settings.theme;
-	let mode = $page.data.settings.mode || theme;
 
 	onMount(() => {
 		const mql = window.matchMedia("(prefers-color-scheme: dark)");
 		mql.addEventListener("change", (ev) => {
-			if (theme == "system") mode = ev.matches ? "dark" : "light";
+			if ($settings.theme == "system") $settings.mode = ev.matches ? "dark" : "light";
 		});
 	});
 
 	$: if (browser) {
-		if (theme === "system") {
+		if ($settings.theme === "system") {
 			const mql = window.matchMedia("(prefers-color-scheme: dark)");
-			mode = mql.matches ? "dark" : "light";
+			$settings.mode = mql.matches ? "dark" : "light";
 		} else {
-			mode = theme;
+			$settings.mode = $settings.theme;
 		}
-
-		setCookie("settings", {
-			...$page.data.settings,
-			theme,
-			mode
-		});
 	}
 
 	$: if (browser) {
@@ -43,7 +33,7 @@
 	}
 </script>
 
-<ska:html data-theme={theme} class={mode} />
+<ska:html data-theme={$settings.theme} class={$settings.mode} />
 
 <div
 	id="settings"
@@ -53,7 +43,7 @@
 		<li>
 			<label class="flex flex-row items-center gap-2 hover:bg-transparent">
 				<span class="flex-1">Theme</span>
-				<select class="select select-bordered select-sm" bind:value={theme}>
+				<select class="select select-bordered select-sm" bind:value={$settings.theme}>
 					<option value="system">System</option>
 					<option value="light">Light</option>
 					<option value="dark">Dark</option>
@@ -63,7 +53,7 @@
 		<li class="hidden rounded-lg lg:flex">
 			<label class="flex flex-row items-center">
 				<span class="flex-1 text-left">Background</span>
-				<input type="checkbox" class="toggle" bind:checked={$showBg} />
+				<input type="checkbox" class="toggle" bind:checked={$settings.background} />
 			</label>
 		</li>
 		<form

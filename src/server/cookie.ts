@@ -1,29 +1,38 @@
 import { browser } from "$app/environment";
 
 import type { Cookies } from "@sveltejs/kit";
+import Cookie from "js-cookie";
 import { writable } from "svelte/store";
 
 /**
- * Set a http-only cookie from the browser using a fetch request to the server. The server function should call
- * `serverSetCookie` to set the cookie.
+ * Set a cookie from the browser using `js-cookie`.
  *
  * To update a specific property of an object stored in a cookie, the name of the cookie would be `cookieName:propertyName`.
  * For example, to update the `descriptions` property on the cookie `settings`, the name would be `settings:descriptions`.
  *
  * @param name Name of the cookie
  * @param value Value of the cookie
+ * @param expires Expiration time of the cookie in milliseconds
  */
-export async function setCookie(name: string, value: string | number | boolean | object) {
+export function setCookie(name: string, value: string | number | boolean | object, expires = 1000 * 60 * 60 * 24 * 365) {
 	if (!browser) return;
-	const response = await fetch("/api/cookie", {
-		method: "POST",
-		headers: {
-			"Content-Type": "application/json"
-		},
-		body: JSON.stringify({ name, value })
-	});
-	if (!response.ok) {
-		throw new Error(`Failed to set cookie "${name}"`);
+	const parts = name.split(":");
+	if (parts[1]) {
+		const [prefix, suffix] = parts;
+		const val = Cookie.get(prefix) || "%7B%7D";
+		const existing = JSON.parse(val.startsWith("%") ? decodeURIComponent(val) : val) as Record<string, unknown>;
+		existing[suffix] = value;
+		Cookie.set(prefix, JSON.stringify(existing), {
+			path: "/",
+			expires: new Date(Date.now() + expires)
+		});
+		return existing;
+	} else {
+		Cookie.set(name, typeof value !== "string" ? JSON.stringify(value) : value, {
+			path: "/",
+			expires: new Date(Date.now() + expires)
+		});
+		return value;
 	}
 }
 
@@ -34,18 +43,14 @@ export async function setCookie(name: string, value: string | number | boolean |
  * @param initial The initial value of the cookie
  * @returns The cookie store
  */
-export const cookieStore = function <T extends string | number | boolean | object>(cookie: string, initial: T) {
-	const { subscribe, set, update } = writable(initial);
+export const cookieStore = function <T extends string | number | boolean | object>(name: string, initial: T) {
+	const cookie = writable(initial);
 
-	subscribe((value) => {
-		setCookie(cookie, value);
+	cookie.subscribe((value) => {
+		setCookie(name, value);
 	});
 
-	return {
-		subscribe,
-		set,
-		update
-	};
+	return cookie;
 };
 
 /**
@@ -113,14 +118,14 @@ export function serverSetCookie(cookies: Cookies, name: string, value: unknown, 
 		const existing = JSON.parse(cookies.get(prefix) || "{}") as Record<string, unknown>;
 		existing[suffix] = value;
 		cookies.set(prefix, JSON.stringify(existing), {
-			httpOnly: true,
+			// httpOnly: true,
 			path: "/",
 			expires: new Date(Date.now() + expires)
 		});
 		return existing;
 	} else {
 		cookies.set(name, typeof value !== "string" ? JSON.stringify(value) : value, {
-			httpOnly: true,
+			// httpOnly: true,
 			path: "/",
 			expires: new Date(Date.now() + expires)
 		});
