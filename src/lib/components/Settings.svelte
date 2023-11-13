@@ -1,6 +1,7 @@
 <script lang="ts">
 	import { browser } from "$app/environment";
 	import { enhance } from "$app/forms";
+	import { page } from "$app/stores";
 	import { onMount } from "svelte";
 	import { twMerge } from "tailwind-merge";
 	import { app, pageLoader } from "../store";
@@ -50,12 +51,14 @@
 				</select>
 			</label>
 		</li>
-		<li class="hidden rounded-lg lg:flex">
-			<label class="flex flex-row items-center">
-				<span class="flex-1 text-left">Background</span>
-				<input type="checkbox" class="toggle" bind:checked={$app.settings.background} />
-			</label>
-		</li>
+		{#if !$page.data.mobile}
+			<li class="hidden rounded-lg lg:flex">
+				<label class="flex flex-row items-center">
+					<span class="flex-1 text-left">Background</span>
+					<input type="checkbox" class="toggle" bind:checked={$app.settings.background} />
+				</label>
+			</li>
+		{/if}
 		<form
 			method="POST"
 			action="/characters?/clearCaches"
