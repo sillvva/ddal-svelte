@@ -4,13 +4,15 @@
 	import SearchResults from "$lib/components/SearchResults.svelte";
 	import { slugify, sorter, stopWords, transition } from "$lib/utils";
 	import { lazy } from "$src/lib/actions";
-	import { setCookie } from "$src/server/cookie";
+	import { app } from "$src/lib/store.js";
 	import MiniSearch from "minisearch";
 	import { twMerge } from "tailwind-merge";
 
 	export let data;
-	let characters = data.characters;
+
 	let search = "";
+	let characters = data.characters;
+	$app = data.app;
 
 	const minisearch = new MiniSearch({
 		fields: ["characterName", "campaign", "race", "class", "magicItems", "tier", "level"],
@@ -65,11 +67,6 @@
 			: characters
 					.sort((a, b) => sorter(a.total_level, b.total_level) || sorter(a.name, b.name))
 					.map((character) => ({ ...character, score: 0, match: [] }));
-
-	let magicItems = data.magicItems;
-	let display = data.display;
-	$: setCookie("characters:magicItems", magicItems);
-	$: setCookie("characters:display", display);
 </script>
 
 <div class="flex flex-col gap-4">
@@ -113,42 +110,42 @@
 					<Icon src="plus" class="inline w-6" />
 				</a>
 				<button
-					class={twMerge("btn inline-flex xs:hidden", magicItems && "btn-primary")}
-					on:click={() => (magicItems = !magicItems)}
+					class={twMerge("btn inline-flex xs:hidden", $app.characters.magicItems && "btn-primary")}
+					on:click={() => ($app.characters.magicItems = !$app.characters.magicItems)}
 					on:keypress={() => null}
 					on:keypress
 					aria-label="Toggle Magic Items"
 					tabindex="0"
 				>
-					<Icon src={magicItems ? "show" : "hide"} class="w-6" />
+					<Icon src={$app.characters.magicItems ? "show" : "hide"} class="w-6" />
 				</button>
 			</div>
 			<div class="hidden flex-1 xs:block" />
-			{#if display != "grid"}
+			{#if $app.characters.display != "grid"}
 				<button
-					class={twMerge("btn hidden sm:btn-sm xs:inline-flex", magicItems && "btn-primary")}
-					on:click={() => transition(() => (magicItems = !magicItems))}
+					class={twMerge("btn hidden sm:btn-sm xs:inline-flex", $app.characters.magicItems && "btn-primary")}
+					on:click={() => transition(() => ($app.characters.magicItems = !$app.characters.magicItems))}
 					on:keypress={() => null}
 					on:keypress
 					aria-label="Toggle Magic Items"
 					tabindex="0"
 				>
-					<Icon src={magicItems ? "show" : "hide"} class="w-6" />
+					<Icon src={$app.characters.magicItems ? "show" : "hide"} class="w-6" />
 					<span class="hidden xs:inline-flex sm:hidden md:inline-flex">Magic Items</span>
 				</button>
 			{/if}
 			<div class="join hidden xs:flex">
 				<button
-					class={twMerge("btn join-item sm:btn-sm", display == "list" ? "btn-primary" : "hover:btn-primary")}
-					on:click={() => transition(() => (display = "list"))}
+					class={twMerge("btn join-item sm:btn-sm", $app.characters.display == "list" ? "btn-primary" : "hover:btn-primary")}
+					on:click={() => transition(() => ($app.characters.display = "list"))}
 					on:keypress
 					aria-label="List View"
 				>
 					<Icon src="format-list-text" class="w-4" />
 				</button>
 				<button
-					class={twMerge("btn join-item sm:btn-sm", display == "grid" ? "btn-primary" : "hover:btn-primary")}
-					on:click={() => transition(() => (display = "grid"))}
+					class={twMerge("btn join-item sm:btn-sm", $app.characters.display == "grid" ? "btn-primary" : "hover:btn-primary")}
+					on:click={() => transition(() => ($app.characters.display = "grid"))}
 					on:keypress
 					aria-label="Grid View"
 				>
@@ -158,7 +155,7 @@
 		</div>
 
 		<div style:view-transition-name={slugify(`characters`)}>
-			<div class={twMerge("w-full overflow-x-auto rounded-lg", display == "grid" && "block xs:hidden")}>
+			<div class={twMerge("w-full overflow-x-auto rounded-lg", $app.characters.display == "grid" && "block xs:hidden")}>
 				<div
 					class={twMerge(
 						"grid-table",
@@ -217,7 +214,7 @@
 										<SearchResults text={character.campaign} {search} />
 									</p>
 								</div>
-								{#if (character.match.includes("magicItems") || magicItems) && character.magic_items.length}
+								{#if (character.match.includes("magicItems") || $app.characters.magicItems) && character.magic_items.length}
 									<div class="mb-2" style:view-transition-name={slugify(`items-${character.id}`)}>
 										<p class="font-semibold">Magic Items:</p>
 										<SearchResults text={character.magic_items.map((item) => item.name)} {search} />
@@ -249,8 +246,8 @@
 					<h1
 						class={twMerge(
 							"pb-2 font-vecna text-3xl font-bold dark:text-white",
-							display == "list" && "hidden",
-							display == "grid" && "hidden xs:block",
+							$app.characters.display == "list" && "hidden",
+							$app.characters.display == "grid" && "hidden xs:block",
 							tier > 1 && "pt-6"
 						)}
 					>
@@ -259,8 +256,8 @@
 					<div
 						class={twMerge(
 							"w-full",
-							display == "list" && "hidden",
-							display == "grid" && "hidden grid-cols-2 gap-4 xs:grid sm:grid-cols-3 md:grid-cols-4"
+							$app.characters.display == "list" && "hidden",
+							$app.characters.display == "grid" && "hidden grid-cols-2 gap-4 xs:grid sm:grid-cols-3 md:grid-cols-4"
 						)}
 					>
 						{#each results.filter((c) => c.tier == tier) as character}

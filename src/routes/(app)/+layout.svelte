@@ -4,12 +4,12 @@
 	import Icon from "$lib/components/Icon.svelte";
 	import Settings from "$lib/components/Settings.svelte";
 	import Markdown from "$src/lib/components/Markdown.svelte";
-	import { modal, settings } from "$src/lib/store";
+	import { app, modal } from "$src/lib/store";
 	import { signIn, signOut } from "@auth/sveltekit/client";
 	import { twMerge } from "tailwind-merge";
 
 	export let data;
-	$settings = data.settings;
+	$app = data.app;
 
 	let settingsOpen = false;
 </script>
@@ -18,7 +18,7 @@
 	<header
 		class={twMerge(
 			"relative z-20 w-full border-b-[1px] border-slate-500",
-			(data.mobile || !$settings.background) && "sticky top-0 border-slate-300 bg-base-300 dark:border-slate-700"
+			(data.mobile || !$app.settings.background) && "sticky top-0 border-slate-300 bg-base-300 dark:border-slate-700"
 		)}
 	>
 		<nav class="container mx-auto flex max-w-5xl gap-2 p-4">
@@ -28,7 +28,7 @@
 				href={data.session?.user ? "/characters" : "/"}
 				class={twMerge(
 					"mr-8 flex flex-col text-center font-draconis",
-					(data.mobile || !$settings.background) && "mr-2 flex-1 sm:flex-none md:mr-8"
+					(data.mobile || !$app.settings.background) && "mr-2 flex-1 sm:flex-none md:mr-8"
 				)}
 			>
 				<h1 class="text-base leading-4 text-accent-content">Adventurers League</h1>
@@ -39,7 +39,7 @@
 				<a href="/dm-logs" class="hidden items-center p-2 md:flex">DM Logs</a>
 				<a href="/dms" class="hidden items-center p-2 md:flex">DMs</a>
 			{/if}
-			<div class={twMerge("flex-1", (data.mobile || !$settings.background) && "hidden sm:block")}>&nbsp;</div>
+			<div class={twMerge("flex-1", (data.mobile || !$app.settings.background) && "hidden sm:block")}>&nbsp;</div>
 			<a
 				href="https://github.com/sillvva/ddal-svelte"
 				target="_blank"
@@ -58,7 +58,7 @@
 							<div
 								class={twMerge(
 									"relative w-11 overflow-hidden rounded-full ring ring-primary ring-offset-2 ring-offset-base-100",
-									(data.mobile || !$settings.background) && "w-9 lg:w-11"
+									(data.mobile || !$app.settings.background) && "w-9 lg:w-11"
 								)}
 							>
 								<img

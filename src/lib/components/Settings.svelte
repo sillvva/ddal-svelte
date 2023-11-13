@@ -3,7 +3,7 @@
 	import { enhance } from "$app/forms";
 	import { onMount } from "svelte";
 	import { twMerge } from "tailwind-merge";
-	import { pageLoader, settings } from "../store";
+	import { app, pageLoader } from "../store";
 
 	export let open = false;
 	let backdrop = false;
@@ -11,16 +11,16 @@
 	onMount(() => {
 		const mql = window.matchMedia("(prefers-color-scheme: dark)");
 		mql.addEventListener("change", (ev) => {
-			if ($settings.theme == "system") $settings.mode = ev.matches ? "dark" : "light";
+			if ($app.settings.theme == "system") $app.settings.mode = ev.matches ? "dark" : "light";
 		});
 	});
 
 	$: if (browser) {
-		if ($settings.theme === "system") {
+		if ($app.settings.theme === "system") {
 			const mql = window.matchMedia("(prefers-color-scheme: dark)");
-			$settings.mode = mql.matches ? "dark" : "light";
+			$app.settings.mode = mql.matches ? "dark" : "light";
 		} else {
-			$settings.mode = $settings.theme;
+			$app.settings.mode = $app.settings.theme;
 		}
 	}
 
@@ -33,7 +33,7 @@
 	}
 </script>
 
-<ska:html data-theme={$settings.theme} class={$settings.mode} />
+<ska:html data-theme={$app.settings.theme} class={$app.settings.mode} />
 
 <div
 	id="settings"
@@ -43,7 +43,7 @@
 		<li>
 			<label class="flex flex-row items-center gap-2 hover:bg-transparent">
 				<span class="flex-1">Theme</span>
-				<select class="select select-bordered select-sm" bind:value={$settings.theme}>
+				<select class="select select-bordered select-sm" bind:value={$app.settings.theme}>
 					<option value="system">System</option>
 					<option value="light">Light</option>
 					<option value="dark">Dark</option>
@@ -53,7 +53,7 @@
 		<li class="hidden rounded-lg lg:flex">
 			<label class="flex flex-row items-center">
 				<span class="flex-1 text-left">Background</span>
-				<input type="checkbox" class="toggle" bind:checked={$settings.background} />
+				<input type="checkbox" class="toggle" bind:checked={$app.settings.background} />
 			</label>
 		</li>
 		<form

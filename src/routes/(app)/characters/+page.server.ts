@@ -1,19 +1,11 @@
 import { clearUserCache } from "$src/server/actions/users.js";
 import { signInRedirect } from "$src/server/auth.js";
-import { serverGetCookie } from "$src/server/cookie";
 import { getCharacterCaches, getCharactersCache, type CharacterData } from "$src/server/data/characters";
 import { redirect } from "@sveltejs/kit";
-
-const defaultCookie = {
-	magicItems: false,
-	display: "list"
-};
 
 export const load = async (event) => {
 	const session = event.locals.session;
 	if (!session?.user) throw signInRedirect(event.url);
-
-	const cookie = serverGetCookie(event.cookies, "characters", defaultCookie);
 
 	const characters = await getCharactersCache(session.user.id).then(async (characters) => {
 		const charData: Array<CharacterData> = [];
@@ -26,8 +18,7 @@ export const load = async (event) => {
 
 	return {
 		title: `${session.user.name}'s Characters`,
-		characters,
-		...cookie
+		characters
 	};
 };
 

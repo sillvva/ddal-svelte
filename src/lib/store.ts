@@ -6,10 +6,17 @@ export const pageLoader = writable(false);
 
 export const modal = writable<{ name: string; description: string; date?: Date } | null>(null);
 
-export const defaultSettingsCookie = {
-	background: true,
-	theme: "system",
-	mode: "dark"
-};
-
-export const settings = cookieStore<typeof defaultSettingsCookie>("settings", defaultSettingsCookie);
+export const app = cookieStore("app", {
+	settings: {
+		background: true,
+		theme: "system",
+		mode: "dark"
+	},
+	character: {
+		descriptions: false
+	},
+	characters: {
+		magicItems: false,
+		display: "list"
+	}
+});

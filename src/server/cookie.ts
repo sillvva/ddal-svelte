@@ -50,7 +50,10 @@ export const cookieStore = function <T extends string | number | boolean | objec
 		setCookie(name, value);
 	});
 
-	return cookie;
+	return {
+		...cookie,
+		initial
+	};
 };
 
 /**
@@ -107,10 +110,25 @@ export function serverGetCookie<T extends string | number | boolean | object>(co
  * @param cookies Cookies object from the server
  * @param name Name of the cookie
  * @param value Value of the cookie
- * @param expires Expiration time of the cookie
+ * @param options Options for the cookie
+ * @param options.expires Expiration time of the cookie in milliseconds
+ * @param options.httpOnly Whether the cookie should be http-only. This prevents the cookie from being accessed from the browser.
  * @returns The cookie value
  */
-export function serverSetCookie(cookies: Cookies, name: string, value: unknown, expires = 1000 * 60 * 60 * 24 * 365) {
+export function serverSetCookie(
+	cookies: Cookies,
+	name: string,
+	value: unknown,
+	options?: {
+		expires?: number;
+		httpOnly?: boolean;
+	}
+) {
+	const opts = {
+		expires: 1000 * 60 * 60 * 24 * 365,
+		httpOnly: false,
+		...options
+	};
 	if (browser) return null;
 	const parts = name.split(":");
 	if (parts[1]) {
@@ -118,16 +136,16 @@ export function serverSetCookie(cookies: Cookies, name: string, value: unknown, 
 		const existing = JSON.parse(cookies.get(prefix) || "{}") as Record<string, unknown>;
 		existing[suffix] = value;
 		cookies.set(prefix, JSON.stringify(existing), {
-			// httpOnly: true,
 			path: "/",
-			expires: new Date(Date.now() + expires)
+			expires: new Date(Date.now() + opts.expires),
+			httpOnly: opts.httpOnly
 		});
 		return existing;
 	} else {
 		cookies.set(name, typeof value !== "string" ? JSON.stringify(value) : value, {
-			// httpOnly: true,
 			path: "/",
-			expires: new Date(Date.now() + expires)
+			expires: new Date(Date.now() + opts.expires),
+			httpOnly: opts.httpOnly
 		});
 		return value;
 	}
