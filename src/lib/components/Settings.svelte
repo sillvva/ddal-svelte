@@ -7,7 +7,6 @@
 	import { app, pageLoader } from "../store";
 
 	export let open = false;
-	let backdrop = false;
 
 	onMount(() => {
 		const mql = window.matchMedia("(prefers-color-scheme: dark)");
@@ -22,14 +21,6 @@
 			$app.settings.mode = mql.matches ? "dark" : "light";
 		} else {
 			$app.settings.mode = $app.settings.theme;
-		}
-	}
-
-	$: if (browser) {
-		if (!open) {
-			setTimeout(() => (backdrop = false), 150);
-		} else {
-			backdrop = true;
 		}
 	}
 </script>
@@ -89,7 +80,7 @@
 <div
 	class={twMerge(
 		"fixed inset-0 bg-black/50 transition-all",
-		backdrop ? "block" : "hidden",
+		open ? "block" : "hidden",
 		open ? "z-40 opacity-100" : "-z-10 opacity-0"
 	)}
 	on:keydown={() => (open = false)}
