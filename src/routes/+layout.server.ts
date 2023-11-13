@@ -1,5 +1,5 @@
 import { building } from "$app/environment";
-import { defaultSettingsCookie } from "$src/lib/store.js";
+import { app } from "$src/lib/store.js";
 import { checkEnv } from "$src/lib/types/env";
 import { serverGetCookie } from "$src/server/cookie.js";
 
@@ -10,12 +10,12 @@ if (building) {
 }
 
 export const load = async (event) => {
-	const settingsCookie = serverGetCookie(event.cookies, "settings", defaultSettingsCookie);
+	const appCookie = serverGetCookie(event.cookies, "app", app.initial);
 
 	return {
 		session: event.locals.session,
 		breadcrumbs: [] as Array<{ name: string; href?: string }>,
-		settings: settingsCookie,
+		app: appCookie,
 		mobile: !!event.request.headers
 			.get("user-agent")
 			?.match(

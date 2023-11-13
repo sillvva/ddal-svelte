@@ -5,26 +5,22 @@
 	import Items from "$lib/components/Items.svelte";
 	import Markdown from "$lib/components/Markdown.svelte";
 	import SearchResults from "$lib/components/SearchResults.svelte";
-	import { modal, pageLoader } from "$lib/store";
+	import { app, modal, pageLoader } from "$lib/store";
 	import { slugify, sorter, stopWords, transition } from "$lib/utils";
-	import { setCookie } from "$src/server/cookie";
 	import MiniSearch from "minisearch";
-	import { queryParam } from "sveltekit-search-params";
+	import { queryParam, ssp } from "sveltekit-search-params";
 	import { twMerge } from "tailwind-merge";
 
 	export let data;
 	export let form;
 
+	$app = data.app;
 	const character = data.character;
 	const myCharacter = character.userId === data.session?.user?.id;
 
 	let deletingLog: string[] = [];
 
-	const search = queryParam("s", {
-		encode: (value) => encodeURIComponent(value) || undefined,
-		decode: (value) => decodeURIComponent(value || ""),
-		defaultValue: ""
-	});
+	const search = queryParam("s", ssp.string(""));
 	const logSearch = new MiniSearch({
 		fields: ["logName", "magicItems", "storyAwards"],
 		idField: "logId",
@@ -76,11 +72,8 @@
 					.sort((a, b) => sorter(a.show_date, b.show_date))
 			: logs.sort((a, b) => sorter(a.show_date, b.show_date));
 
-	let descriptions = data.descriptions;
-	$: setCookie("characters:descriptions", descriptions);
-
 	function triggerModal(log: (typeof results)[number]) {
-		if (log.description && !descriptions) {
+		if (log.description && !$app.character.descriptions) {
 			$modal = {
 				name: log.name,
 				description: log.description,
@@ -306,33 +299,29 @@
 			<a href={`/characters/${character.id}/log/new`} class="btn btn-primary sm:btn-sm sm:hidden sm:px-3" aria-label="New Log">
 				<Icon src="plus" class="w-6" />
 			</a>
-			<form action="?/toggleDescriptions" method="post" use:enhance={(f) => f.cancel()}>
-				<button
-					class={twMerge("btn sm:hidden", descriptions && "btn-primary")}
-					on:click={() => transition(() => (descriptions = !descriptions))}
-					on:keypress
-					aria-label="Toggle Notes"
-					tabindex="0"
-				>
-					<Icon src={descriptions ? "show" : "hide"} class="w-6" />
-				</button>
-			</form>
-		{/if}
-	</div>
-	{#if logs.length}
-		<div class="hidden flex-1 sm:block" />
-		<form action="?/toggleDescriptions" method="post" use:enhance={(f) => f.cancel()}>
 			<button
-				class={twMerge("btn hidden sm:btn-sm sm:inline-flex", descriptions && "btn-primary")}
-				on:click={() => transition(() => (descriptions = !descriptions))}
+				class={twMerge("btn sm:hidden", $app.character.descriptions && "btn-primary")}
+				on:click={() => transition(() => ($app.character.descriptions = !$app.character.descriptions))}
 				on:keypress
 				aria-label="Toggle Notes"
 				tabindex="0"
 			>
-				<Icon src={descriptions ? "show" : "hide"} class="w-6" />
-				<span class="hidden sm:inline-flex">Notes</span>
+				<Icon src={$app.character.descriptions ? "show" : "hide"} class="w-6" />
 			</button>
-		</form>
+		{/if}
+	</div>
+	{#if logs.length}
+		<div class="hidden flex-1 sm:block" />
+		<button
+			class={twMerge("btn hidden sm:btn-sm sm:inline-flex", $app.character.descriptions && "btn-primary")}
+			on:click={() => transition(() => ($app.character.descriptions = !$app.character.descriptions))}
+			on:keypress
+			aria-label="Toggle Notes"
+			tabindex="0"
+		>
+			<Icon src={$app.character.descriptions ? "show" : "hide"} class="w-6" />
+			<span class="hidden sm:inline-flex">Notes</span>
+		</button>
 	{/if}
 </div>
 
@@ -356,7 +345,7 @@
 						<td
 							class={twMerge(
 								"!static pb-0 align-top print:p-2 sm:pb-3",
-								(!descriptions || !log.description) && "pb-3",
+								(!$app.character.descriptions || !log.description) && "pb-3",
 								log.saving && "bg-neutral-focus",
 								(log.description?.trim() || log.story_awards_gained.length > 0 || log.story_awards_lost.length > 0) &&
 									"border-b-0"
@@ -545,7 +534,7 @@
 					</tr>
 					{#if log.description?.trim() || log.story_awards_gained.length > 0 || log.story_awards_lost.length > 0}
 						<tr
-							class={twMerge(!descriptions && "hidden print:table-row")}
+							class={twMerge(!$app.character.descriptions && "hidden print:table-row")}
 							style:view-transition-name={slugify(`notes-${log.id}`)}
 						>
 							<td

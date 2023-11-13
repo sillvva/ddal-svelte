@@ -2,15 +2,14 @@
 	import { browser, dev } from "$app/environment";
 	import { afterNavigate, onNavigate } from "$app/navigation";
 	import { navigating, page } from "$app/stores";
-	import { hideBg, pageLoader } from "$lib/store";
+	import { app, pageLoader } from "$lib/store";
 	import { transition } from "$src/lib/utils";
 	import { fade } from "svelte/transition";
 	import { twMerge } from "tailwind-merge";
 	import "../app.css";
 
 	export let data;
-
-	$hideBg = data.settings.hideBackground;
+	$app = data.app;
 
 	afterNavigate(() => {
 		pageLoader.set(false);
@@ -57,7 +56,7 @@
 	<meta name="twitter:image" content={image?.trim() || defaultImage} />
 </svelte:head>
 
-{#if !data.mobile && !$hideBg}
+{#if !data.mobile && $app.settings.background}
 	<img
 		src="/images/barovia-gate.webp"
 		alt="Background"
@@ -65,7 +64,12 @@
 	/>
 {/if}
 
-<div class={twMerge("min-h-screen text-base-content", (data.mobile || $hideBg) && "bg-base-200 dark:[--b1:212_18%_16%]")}>
+<div
+	class={twMerge(
+		"min-h-screen text-base-content",
+		(data.mobile || !$app.settings.background) && "bg-base-200 dark:[--b1:212_18%_16%]"
+	)}
+>
 	<slot />
 </div>
 

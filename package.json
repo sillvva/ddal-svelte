@@ -15,6 +15,7 @@
 		"@sveltejs/adapter-auto": "^2.1.0",
 		"@sveltejs/kit": "^1.27.2",
 		"@sveltekit-addons/document": "^1.0.1",
+		"@types/js-cookie": "^3.0.6",
 		"@typescript-eslint/eslint-plugin": "^6.9.1",
 		"@typescript-eslint/parser": "^6.9.1",
 		"autoprefixer": "^10.4.16",
@@ -46,8 +47,8 @@
 		"@prisma/client": "^5.5.2",
 		"decode-formdata": "^0.3.0",
 		"ioredis": "^5.3.2",
+		"js-cookie": "^3.0.5",
 		"minisearch": "^6.2.0",
-		"mode-watcher": "^0.0.7",
 		"svelte-autosize": "^1.1.0",
 		"valibot": "^0.20.1"
 	}

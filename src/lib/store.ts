@@ -6,9 +6,17 @@ export const pageLoader = writable(false);
 
 export const modal = writable<{ name: string; description: string; date?: Date } | null>(null);
 
-export const defaultSettingsCookie = {
-	hideBackground: false,
-	theme: "system"
-};
-
-export const hideBg = cookieStore<typeof defaultSettingsCookie.hideBackground>("settings:hideBackground", false);
+export const app = cookieStore("app", {
+	settings: {
+		background: true,
+		theme: "system",
+		mode: "dark"
+	},
+	character: {
+		descriptions: false
+	},
+	characters: {
+		magicItems: false,
+		display: "list"
+	}
+});
