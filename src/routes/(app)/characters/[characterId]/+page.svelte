@@ -195,7 +195,7 @@
 			{/if}
 			<div class="flex w-full flex-col">
 				<div class="mb-2 flex gap-4 xs:mb-0">
-					<h3 class="flex-1 py-2 font-vecna text-3xl font-bold text-accent-content sm:py-0 sm:text-4xl">
+					<h3 class="flex-1 py-2 font-vecna text-3xl font-bold text-black dark:text-white sm:py-0 sm:text-4xl">
 						{character.name}
 					</h3>
 				</div>
@@ -352,7 +352,7 @@
 							)}
 						>
 							<div
-								class="whitespace-pre-wrap font-semibold text-accent-content"
+								class="whitespace-pre-wrap font-semibold text-black dark:text-white"
 								on:click={() => triggerModal(log)}
 								on:keypress={() => null}
 								role="button"
