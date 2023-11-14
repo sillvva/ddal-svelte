@@ -16,6 +16,7 @@ import { writable } from "svelte/store";
  */
 export function setCookie(name: string, value: string | number | boolean | object, expires = 1000 * 60 * 60 * 24 * 365) {
 	if (!browser) return;
+	if (typeof value === "undefined") throw new Error("Value is undefined");
 	const parts = name.split(":");
 	if (parts[1]) {
 		const [prefix, suffix] = parts;
@@ -91,7 +92,8 @@ export const cookieStore = function <T extends string | number | boolean | objec
  * @returns The cookie value
  */
 export function serverGetCookie<T extends string | number | boolean | object>(cookies: Cookies, name: string, defaultCookie: T) {
-	const cookie = JSON.parse(cookies.get(name) || JSON.stringify(defaultCookie)) as typeof defaultCookie;
+	const val = cookies.get(name) === "undefined" ? undefined : cookies.get(name);
+	const cookie = JSON.parse(val || JSON.stringify(defaultCookie)) as typeof defaultCookie;
 	if (typeof cookie !== typeof defaultCookie) throw new Error(`Cookie "${name}" is not of type ${typeof defaultCookie}`);
 	if (typeof cookie === "object" && typeof defaultCookie === "object")
 		return {
@@ -130,6 +132,7 @@ export function serverSetCookie(
 		...options
 	};
 	if (browser) return null;
+	if (typeof value === "undefined") throw new Error("Value is undefined");
 	const parts = name.split(":");
 	if (parts[1]) {
 		const [prefix, suffix] = parts;
