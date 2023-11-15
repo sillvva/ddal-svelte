@@ -31,7 +31,7 @@
 					(data.mobile || !$app.settings.background) && "mr-2 flex-1 sm:flex-none md:mr-8"
 				)}
 			>
-				<h1 class="text-base leading-4 text-accent-content">Adventurers League</h1>
+				<h1 class="text-base leading-4 text-black dark:text-white">Adventurers League</h1>
 				<h2 class="text-3xl leading-7">Log Sheet</h2>
 			</a>
 			{#if data.session?.user}
@@ -51,7 +51,7 @@
 			{#if data.session?.user}
 				<div class="dropdown dropdown-end">
 					<div role="button" tabindex="0" class="flex h-full cursor-pointer items-center pl-4">
-						<div class="hidden items-center pr-4 text-accent-content print:flex sm:flex">
+						<div class="hidden items-center pr-4 text-black dark:text-white print:flex sm:flex">
 							{data.session?.user?.name}
 						</div>
 						<div class="avatar">
@@ -133,7 +133,7 @@
 			on:click={(e) => e.stopPropagation()}
 			on:keypress={() => null}
 		>
-			<h3 class="cursor-text text-lg font-bold text-accent-content">{$modal.name}</h3>
+			<h3 class="cursor-text text-lg font-bold text-black dark:text-white">{$modal.name}</h3>
 			{#if $modal.date}
 				<p class="text-xs">{$modal.date.toLocaleString()}</p>
 			{/if}

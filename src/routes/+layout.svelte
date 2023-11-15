@@ -67,7 +67,7 @@
 <div
 	class={twMerge(
 		"min-h-screen text-base-content",
-		(data.mobile || !$app.settings.background) && "bg-base-200 dark:[--b1:212_18%_16%]"
+		(data.mobile || !$app.settings.background) && "bg-base-200 dark:[--b1:27.35%_0.018_251.92]"
 	)}
 >
 	<slot />

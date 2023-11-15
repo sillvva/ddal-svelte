@@ -26,13 +26,14 @@ export default {
 		themes: [
 			{
 				light: {
-					...themes["[data-theme=light]"],
+					...themes["light"],
 					primary: "#1b5be4",
 					secondary: "#2F63FF",
 					accent: "#6b6b6b"
 				},
 				dark: {
-					...themes["[data-theme=dark]"],
+					...themes["dark"],
+					primary: "#6419e6",
 					secondary: "#c881ff"
 				}
 			}

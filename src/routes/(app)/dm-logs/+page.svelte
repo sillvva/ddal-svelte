@@ -133,7 +133,7 @@
 									)}
 								>
 									<p
-										class="whitespace-pre-wrap font-semibold text-accent-content"
+										class="whitespace-pre-wrap font-semibold text-black dark:text-white"
 										role="presentation"
 										on:click={() => triggerModal(log)}
 									>

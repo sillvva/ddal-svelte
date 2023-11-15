@@ -199,7 +199,7 @@
 								</div>
 							{/if}
 							<div style:view-transition-name={slugify(`details-${character.id}`)}>
-								<div class="whitespace-pre-wrap text-base font-bold text-accent-content sm:text-xl">
+								<div class="whitespace-pre-wrap text-base font-bold text-black dark:text-white sm:text-xl">
 									<SearchResults text={character.name} {search} />
 								</div>
 								<div class="whitespace-pre-wrap text-xs sm:text-sm">

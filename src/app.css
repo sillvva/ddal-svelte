@@ -47,7 +47,7 @@ body {
 }
 
 @layer utilities {
-	.text-accent-content {
+	.text-black dark:text-white {
 		@apply print:text-gray-700;
 	}
 	.text-secondary {
