@@ -2,7 +2,7 @@ import { browser } from "$app/environment";
 
 import type { Cookies } from "@sveltejs/kit";
 import Cookie from "js-cookie";
-import { writable } from "svelte/store";
+import { writable, type Writable } from "svelte/store";
 
 /**
  * Set a cookie from the browser using `js-cookie`.
@@ -36,6 +36,8 @@ export function setCookie(name: string, value: string | number | boolean | objec
 		return value;
 	}
 }
+
+export type CookieStore<T> = Writable<T> & { initial: T };
 
 /**
  * Create a cookie store that will automatically update the cookie whenever the store is updated.
