@@ -1,12 +1,11 @@
-import { cookieStore } from "$src/server/cookie";
-import { writable } from "svelte/store";
+import { writable, type Writable } from "svelte/store";
 
 // Show/Hide the full page loader with backdrop
 export const pageLoader = writable(false);
 
 export const modal = writable<{ name: string; description: string; date?: Date } | null>(null);
 
-export const app = cookieStore<{
+export type App = {
 	settings: {
 		background: boolean;
 		theme: "system" | "dark" | "light";
@@ -19,17 +18,5 @@ export const app = cookieStore<{
 		magicItems: boolean;
 		display: "list" | "grid";
 	};
-}>("app", {
-	settings: {
-		background: true,
-		theme: "system",
-		mode: "dark"
-	},
-	character: {
-		descriptions: false
-	},
-	characters: {
-		magicItems: false,
-		display: "list"
-	}
-});
+};
+export type AppStore = Writable<App>;

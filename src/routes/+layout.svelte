@@ -2,14 +2,17 @@
 	import { browser, dev } from "$app/environment";
 	import { afterNavigate, onNavigate } from "$app/navigation";
 	import { navigating, page } from "$app/stores";
-	import { app, pageLoader } from "$lib/store";
+	import { pageLoader } from "$lib/store";
 	import { transition } from "$src/lib/utils";
+	import { cookieStore } from "$src/server/cookie";
+	import { setContext } from "svelte";
 	import { fade } from "svelte/transition";
 	import { twMerge } from "tailwind-merge";
 	import "../app.css";
 
 	export let data;
-	$app = data.app;
+
+	const app = setContext("app", cookieStore("app", data.app));
 
 	afterNavigate(() => {
 		pageLoader.set(false);

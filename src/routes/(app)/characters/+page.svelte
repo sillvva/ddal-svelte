@@ -4,15 +4,16 @@
 	import SearchResults from "$lib/components/SearchResults.svelte";
 	import { slugify, sorter, stopWords, transition } from "$lib/utils";
 	import { lazy } from "$src/lib/actions";
-	import { app } from "$src/lib/store.js";
+	import type { AppStore } from "$src/lib/store.js";
 	import MiniSearch from "minisearch";
+	import { getContext } from "svelte";
 	import { twMerge } from "tailwind-merge";
 
 	export let data;
 
 	let search = "";
 	let characters = data.characters;
-	$app = data.app;
+	const app = getContext<AppStore>("app");
 
 	const minisearch = new MiniSearch({
 		fields: ["characterName", "campaign", "race", "class", "magicItems", "tier", "level"],
@@ -77,7 +78,7 @@
 			<span role="button" tabindex="0" class="btn btn-sm bg-base-100">
 				<Icon src="dots-horizontal" class="w-6" />
 			</span>
-			<ul class="menu dropdown-content rounded-box w-52 bg-base-100 p-2 shadow">
+			<ul class="menu dropdown-content w-52 rounded-box bg-base-100 p-2 shadow">
 				<li>
 					<a download={`characters.json`} href={`/api/export/characters/all`} target="_blank" rel="noreferrer noopener">Export</a>
 				</li>
