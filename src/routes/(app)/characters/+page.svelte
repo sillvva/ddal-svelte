@@ -199,7 +199,7 @@
 									</div>
 								</div>
 							{/if}
-							<div style:view-transition-name={slugify(`details-${character.id}`)}>
+							<div>
 								<div class="whitespace-pre-wrap text-base font-bold text-black dark:text-white sm:text-xl">
 									<SearchResults text={character.name} {search} />
 								</div>
@@ -211,30 +211,22 @@
 									<SearchResults text={character.class} {search} />
 								</div>
 								<div class="mb-2 block text-xs sm:hidden">
-									<p>
-										<SearchResults text={character.campaign} {search} />
-									</p>
+									<SearchResults text={character.campaign} {search} />
 								</div>
 								{#if (character.match.includes("magicItems") || $app.characters.magicItems) && character.magic_items.length}
-									<div class="mb-2" style:view-transition-name={slugify(`items-${character.id}`)}>
+									<div class="mb-2">
 										<p class="font-semibold">Magic Items:</p>
 										<SearchResults text={character.magic_items.map((item) => item.name)} {search} />
 									</div>
 								{/if}
 							</div>
-							<div class="hidden transition-colors sm:flex" style:view-transition-name={slugify(`campaign-${character.id}`)}>
+							<div class="hidden transition-colors sm:flex">
 								<SearchResults text={character.campaign} {search} />
 							</div>
-							<div
-								class="hidden justify-center transition-colors sm:flex"
-								style:view-transition-name={slugify(`tier-${character.id}`)}
-							>
+							<div class="hidden justify-center transition-colors sm:flex">
 								{character.tier}
 							</div>
-							<div
-								class="hidden justify-center transition-colors sm:flex"
-								style:view-transition-name={slugify(`level-${character.id}`)}
-							>
+							<div class="hidden justify-center transition-colors sm:flex">
 								{character.total_level}
 							</div>
 						</a>
