@@ -4,15 +4,21 @@
 	import SearchResults from "$lib/components/SearchResults.svelte";
 	import { slugify, sorter, stopWords, transition } from "$lib/utils";
 	import { lazy } from "$src/lib/actions";
-	import { app } from "$src/lib/store.js";
+	import type { AppStore } from "$src/lib/store.js";
 	import MiniSearch from "minisearch";
+	import { getContext, onMount } from "svelte";
 	import { twMerge } from "tailwind-merge";
 
 	export let data;
 
 	let search = "";
 	let characters = data.characters;
-	$app = data.app;
+	let loaded = false;
+	const app = getContext<AppStore>("app");
+
+	onMount(() => {
+		setTimeout(() => (loaded = true), 1000);
+	});
 
 	const minisearch = new MiniSearch({
 		fields: ["characterName", "campaign", "race", "class", "magicItems", "tier", "level"],
@@ -77,7 +83,7 @@
 			<span role="button" tabindex="0" class="btn btn-sm bg-base-100">
 				<Icon src="dots-horizontal" class="w-6" />
 			</span>
-			<ul class="menu dropdown-content rounded-box w-52 bg-base-100 p-2 shadow">
+			<ul class="menu dropdown-content w-52 rounded-box bg-base-100 p-2 shadow">
 				<li>
 					<a download={`characters.json`} href={`/api/export/characters/all`} target="_blank" rel="noreferrer noopener">Export</a>
 				</li>
@@ -198,43 +204,45 @@
 									</div>
 								</div>
 							{/if}
-							<div style:view-transition-name={slugify(`details-${character.id}`)}>
+							<div>
 								<div class="whitespace-pre-wrap text-base font-bold text-black dark:text-white sm:text-xl">
-									<SearchResults text={character.name} {search} />
+									<span style:view-transition-name={loaded ? slugify("name-" + character.id) : undefined}>
+										<SearchResults text={character.name} {search} />
+									</span>
 								</div>
 								<div class="whitespace-pre-wrap text-xs sm:text-sm">
-									<span class="inline pr-1 sm:hidden">Level {character.total_level}</span><SearchResults
-										text={character.race}
-										{search}
-									/>
-									<SearchResults text={character.class} {search} />
+									<p style:view-transition-name={loaded ? slugify("details-" + character.id) : undefined}>
+										<span class="inline pr-1 sm:hidden">Level {character.total_level}</span><SearchResults
+											text={character.race}
+											{search}
+										/>
+										<SearchResults text={character.class} {search} />
+									</p>
 								</div>
 								<div class="mb-2 block text-xs sm:hidden">
-									<p>
+									<p style:view-transition-name={loaded ? slugify("campaign-" + character.id) : undefined}>
 										<SearchResults text={character.campaign} {search} />
 									</p>
 								</div>
 								{#if (character.match.includes("magicItems") || $app.characters.magicItems) && character.magic_items.length}
-									<div class="mb-2" style:view-transition-name={slugify(`items-${character.id}`)}>
+									<div class="mb-2">
 										<p class="font-semibold">Magic Items:</p>
 										<SearchResults text={character.magic_items.map((item) => item.name)} {search} />
 									</div>
 								{/if}
 							</div>
-							<div class="hidden transition-colors sm:flex" style:view-transition-name={slugify(`campaign-${character.id}`)}>
-								<SearchResults text={character.campaign} {search} />
+							<div class="hidden transition-colors sm:flex">
+								<span style:view-transition-name={loaded ? slugify("campaign-" + character.id) : undefined}>
+									<SearchResults text={character.campaign} {search} />
+								</span>
 							</div>
-							<div
-								class="hidden justify-center transition-colors sm:flex"
-								style:view-transition-name={slugify(`tier-${character.id}`)}
-							>
-								{character.tier}
+							<div class="hidden justify-center transition-colors sm:flex">
+								<span style:view-transition-name={loaded ? slugify("tier-" + character.id) : undefined}>{character.tier}</span>
 							</div>
-							<div
-								class="hidden justify-center transition-colors sm:flex"
-								style:view-transition-name={slugify(`level-${character.id}`)}
-							>
-								{character.total_level}
+							<div class="hidden justify-center transition-colors sm:flex">
+								<span style:view-transition-name={loaded ? slugify("level-" + character.id) : undefined}
+									>{character.total_level}</span
+								>
 							</div>
 						</a>
 					{/each}

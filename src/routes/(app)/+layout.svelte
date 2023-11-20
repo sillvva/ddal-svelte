@@ -4,12 +4,13 @@
 	import Icon from "$lib/components/Icon.svelte";
 	import Settings from "$lib/components/Settings.svelte";
 	import Markdown from "$src/lib/components/Markdown.svelte";
-	import { app, modal } from "$src/lib/store";
+	import { modal, type AppStore } from "$src/lib/store";
 	import { signIn, signOut } from "@auth/sveltekit/client";
+	import { getContext } from "svelte";
 	import { twMerge } from "tailwind-merge";
 
 	export let data;
-	$app = data.app;
+	const app = getContext<AppStore>("app");
 
 	let settingsOpen = false;
 </script>
@@ -71,7 +72,7 @@
 							</div>
 						</div>
 					</div>
-					<ul class="menu dropdown-content rounded-box w-52 bg-base-100 p-2 shadow">
+					<ul class="menu dropdown-content w-52 rounded-box bg-base-100 p-2 shadow">
 						<li class="sm:hidden">
 							<span>{data.session?.user?.name}</span>
 						</li>

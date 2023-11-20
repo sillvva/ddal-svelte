@@ -2,14 +2,17 @@
 	import { browser, dev } from "$app/environment";
 	import { afterNavigate, onNavigate } from "$app/navigation";
 	import { navigating, page } from "$app/stores";
-	import { app, pageLoader } from "$lib/store";
+	import { pageLoader } from "$lib/store";
 	import { transition } from "$src/lib/utils";
+	import { cookieStore } from "$src/server/cookie";
+	import { setContext } from "svelte";
 	import { fade } from "svelte/transition";
 	import { twMerge } from "tailwind-merge";
 	import "../app.css";
 
 	export let data;
-	$app = data.app;
+
+	const app = setContext("app", cookieStore("app", data.app));
 
 	afterNavigate(() => {
 		pageLoader.set(false);
@@ -74,7 +77,11 @@
 </div>
 
 {#if $pageLoader || $navigating}
-	<div class="fixed inset-0 z-40 flex items-center justify-center bg-black/50" in:fade out:fade={{ duration: 200 }} />
+	<div
+		class="fixed inset-0 z-40 flex items-center justify-center bg-black/50"
+		in:fade={{ duration: 100, delay: 400 }}
+		out:fade={{ duration: 200 }}
+	/>
 	<div
 		class="fixed inset-0 z-50 flex items-center justify-center"
 		in:fade={{ duration: 200, delay: 500 }}

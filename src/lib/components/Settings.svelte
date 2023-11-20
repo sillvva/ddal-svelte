@@ -2,11 +2,12 @@
 	import { browser } from "$app/environment";
 	import { enhance } from "$app/forms";
 	import { page } from "$app/stores";
-	import { onMount } from "svelte";
+	import { getContext, onMount } from "svelte";
 	import { twMerge } from "tailwind-merge";
-	import { app, pageLoader } from "../store";
+	import { pageLoader, type AppStore } from "../store";
 
 	export let open = false;
+	const app = getContext<AppStore>("app");
 
 	onMount(() => {
 		const mql = window.matchMedia("(prefers-color-scheme: dark)");

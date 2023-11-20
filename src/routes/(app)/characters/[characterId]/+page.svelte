@@ -5,16 +5,17 @@
 	import Items from "$lib/components/Items.svelte";
 	import Markdown from "$lib/components/Markdown.svelte";
 	import SearchResults from "$lib/components/SearchResults.svelte";
-	import { app, modal, pageLoader } from "$lib/store";
+	import { modal, pageLoader, type AppStore } from "$lib/store";
 	import { slugify, sorter, stopWords, transition } from "$lib/utils";
 	import MiniSearch from "minisearch";
+	import { getContext } from "svelte";
 	import { queryParam, ssp } from "sveltekit-search-params";
 	import { twMerge } from "tailwind-merge";
 
 	export let data;
 	export let form;
 
-	$app = data.app;
+	const app = getContext<AppStore>("app");
 	const character = data.character;
 	const myCharacter = character.userId === data.session?.user?.id;
 
@@ -93,7 +94,7 @@
 					<span role="button" tabindex="0" class="btn btn-sm bg-base-100">
 						<Icon src="dots-horizontal" class="w-6" />
 					</span>
-					<ul class="menu dropdown-content rounded-box z-20 w-52 bg-base-100 p-2 shadow">
+					<ul class="menu dropdown-content z-20 w-52 rounded-box bg-base-100 p-2 shadow">
 						<li>
 							<a
 								download={`${slugify(character.name)}.json`}
@@ -132,7 +133,7 @@
 				<span role="button" tabindex="0" class="btn">
 					<Icon src="dots-horizontal" class="w-6" />
 				</span>
-				<ul class="menu dropdown-content rounded-box z-20 w-52 bg-base-100 p-2 shadow">
+				<ul class="menu dropdown-content z-20 w-52 rounded-box bg-base-100 p-2 shadow">
 					{#if character.image_url}
 						<li class="xs:hidden">
 							<a href={character.image_url} target="_blank">View Image</a>

@@ -461,7 +461,10 @@
 									<span class="label-text">Select an Item</span>
 								</label>
 								<select
-									bind:value={magicItemsLost[index]}
+									value={magicItemsLost[index]}
+									on:input={(e) => {
+										magicItemsLost[index] = e.currentTarget.value;
+									}}
 									name={`magic_items_lost.${index}`}
 									class="select select-bordered w-full"
 								>
@@ -551,7 +554,10 @@
 									<span class="label-text">Select an Item</span>
 								</label>
 								<select
-									bind:value={storyAwardsLost[index]}
+									value={storyAwardsLost[index]}
+									on:input={(e) => {
+										storyAwardsLost[index] = e.currentTarget.value;
+									}}
 									name={`story_awards_lost.${index}`}
 									class="select select-bordered w-full"
 								>
