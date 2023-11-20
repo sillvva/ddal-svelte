@@ -374,7 +374,8 @@
 				<button
 					type="button"
 					class="btn min-w-fit flex-1 sm:btn-sm sm:flex-none"
-					on:click={() => (magicItemsLost = [...magicItemsLost, magicItems[0]?.id || ""])}
+					on:click={() =>
+						(magicItemsLost = [...magicItemsLost, magicItems.filter((item) => !magicItemsLost.includes(item.id))[0].id])}
 				>
 					Drop Magic Item
 				</button>
@@ -391,7 +392,11 @@
 					<button
 						type="button"
 						class="btn min-w-fit flex-1 sm:btn-sm sm:flex-none"
-						on:click={() => (storyAwardsLost = [...storyAwardsLost, storyAwards[0]?.id || ""])}
+						on:click={() =>
+							(storyAwardsLost = [
+								...storyAwardsLost,
+								storyAwards.filter((item) => !storyAwardsLost.includes(item.id))[0].id || ""
+							])}
 					>
 						Drop Story Award
 					</button>
