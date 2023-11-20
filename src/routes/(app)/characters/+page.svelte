@@ -6,14 +6,19 @@
 	import { lazy } from "$src/lib/actions";
 	import type { AppStore } from "$src/lib/store.js";
 	import MiniSearch from "minisearch";
-	import { getContext } from "svelte";
+	import { getContext, onMount } from "svelte";
 	import { twMerge } from "tailwind-merge";
 
 	export let data;
 
 	let search = "";
 	let characters = data.characters;
+	let loaded = false;
 	const app = getContext<AppStore>("app");
+
+	onMount(() => {
+		setTimeout(() => (loaded = true), 1000);
+	});
 
 	const minisearch = new MiniSearch({
 		fields: ["characterName", "campaign", "race", "class", "magicItems", "tier", "level"],
@@ -201,17 +206,23 @@
 							{/if}
 							<div>
 								<div class="whitespace-pre-wrap text-base font-bold text-black dark:text-white sm:text-xl">
-									<SearchResults text={character.name} {search} />
+									<span style:view-transition-name={loaded ? slugify("name-" + character.id) : undefined}>
+										<SearchResults text={character.name} {search} />
+									</span>
 								</div>
 								<div class="whitespace-pre-wrap text-xs sm:text-sm">
-									<span class="inline pr-1 sm:hidden">Level {character.total_level}</span><SearchResults
-										text={character.race}
-										{search}
-									/>
-									<SearchResults text={character.class} {search} />
+									<p style:view-transition-name={loaded ? slugify("details-" + character.id) : undefined}>
+										<span class="inline pr-1 sm:hidden">Level {character.total_level}</span><SearchResults
+											text={character.race}
+											{search}
+										/>
+										<SearchResults text={character.class} {search} />
+									</p>
 								</div>
 								<div class="mb-2 block text-xs sm:hidden">
-									<SearchResults text={character.campaign} {search} />
+									<p style:view-transition-name={loaded ? slugify("campaign-" + character.id) : undefined}>
+										<SearchResults text={character.campaign} {search} />
+									</p>
 								</div>
 								{#if (character.match.includes("magicItems") || $app.characters.magicItems) && character.magic_items.length}
 									<div class="mb-2">
@@ -221,13 +232,17 @@
 								{/if}
 							</div>
 							<div class="hidden transition-colors sm:flex">
-								<SearchResults text={character.campaign} {search} />
+								<span style:view-transition-name={loaded ? slugify("campaign-" + character.id) : undefined}>
+									<SearchResults text={character.campaign} {search} />
+								</span>
 							</div>
 							<div class="hidden justify-center transition-colors sm:flex">
-								{character.tier}
+								<span style:view-transition-name={loaded ? slugify("tier-" + character.id) : undefined}>{character.tier}</span>
 							</div>
 							<div class="hidden justify-center transition-colors sm:flex">
-								{character.total_level}
+								<span style:view-transition-name={loaded ? slugify("level-" + character.id) : undefined}
+									>{character.total_level}</span
+								>
 							</div>
 						</a>
 					{/each}
