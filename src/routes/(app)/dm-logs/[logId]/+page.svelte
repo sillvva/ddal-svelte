@@ -294,7 +294,12 @@
 			<label for="description" class="label">
 				<span class="label-text">Notes</span>
 			</label>
-			<div class="tabs-boxed tabs rounded-b-none border-[1px] border-b-0 border-base-content [--tw-border-opacity:0.2]">
+			<div
+				class={twMerge(
+					"no-script-hide tabs-boxed tabs",
+					"rounded-b-none border-[1px] border-b-0 border-base-content [--tw-border-opacity:0.2]"
+				)}
+			>
 				<button type="button" class="tab" class:tab-active={!previews.description} on:click={() => (previews.description = false)}
 					>Edit</button
 				>
@@ -322,7 +327,7 @@
 				<span class="label-text-alt">Markdown Allowed</span>
 			</label>
 		</div>
-		<div class="col-span-12 flex flex-wrap gap-4">
+		<div class="no-script-hide col-span-12 flex flex-wrap gap-4">
 			<button
 				type="button"
 				class="btn btn-primary min-w-fit flex-1 sm:btn-sm sm:flex-none"
@@ -338,6 +343,9 @@
 				Add Story Award
 			</button>
 		</div>
+		<noscript class="col-span-12 flex flex-wrap justify-center gap-4 text-center font-bold">
+			<div>JavaScript is required to add/remove magic items and story awards.</div>
+		</noscript>
 		<div class="col-span-12 grid grid-cols-12 gap-4">
 			{#each magicItemsGained as item, index}
 				<div class="card col-span-12 h-[338px] bg-base-300/70 sm:col-span-6">
@@ -365,7 +373,7 @@
 							</div>
 							<button
 								type="button"
-								class="btn-danger btn mt-9"
+								class="btn-danger no-script-hide btn mt-9"
 								on:click={() => (magicItemsGained = magicItemsGained.filter((_, i) => i !== index))}
 							>
 								<Icon src="trash-can" class="w-6" />
@@ -419,7 +427,7 @@
 							</div>
 							<button
 								type="button"
-								class="btn-danger btn mt-9"
+								class="btn-danger no-script-hide btn mt-9"
 								on:click={() => (storyAwardsGained = storyAwardsGained.filter((_, i) => i !== index))}
 							>
 								<Icon src="trash-can" class="w-6" />

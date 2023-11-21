@@ -3,7 +3,6 @@
 	import Icon from "$lib/components/Icon.svelte";
 	import SearchResults from "$lib/components/SearchResults.svelte";
 	import { slugify, sorter, stopWords, transition } from "$lib/utils";
-	import { lazy } from "$src/lib/actions";
 	import type { AppStore } from "$src/lib/store.js";
 	import MiniSearch from "minisearch";
 	import { getContext, onMount } from "svelte";
@@ -104,7 +103,7 @@
 		<div class="flex flex-wrap gap-2">
 			<div class="flex w-full gap-2 sm:max-w-md">
 				<a href="/characters/new/edit" class="btn btn-primary btn-sm hidden sm:inline-flex">New Character</a>
-				<search class="min-w-0 flex-1">
+				<search class="no-script-hide min-w-0 flex-1">
 					<input
 						type="text"
 						placeholder="Search by name, race, class, items, etc."
@@ -116,7 +115,7 @@
 					<Icon src="plus" class="inline w-6" />
 				</a>
 				<button
-					class={twMerge("btn inline-flex xs:hidden", $app.characters.magicItems && "btn-primary")}
+					class={twMerge("no-script-hide btn inline-flex xs:hidden", $app.characters.magicItems && "btn-primary")}
 					on:click={() => ($app.characters.magicItems = !$app.characters.magicItems)}
 					on:keypress={() => null}
 					on:keypress
@@ -140,7 +139,7 @@
 					<span class="hidden xs:inline-flex sm:hidden md:inline-flex">Magic Items</span>
 				</button>
 			{/if}
-			<div class="join hidden xs:flex">
+			<div class="no-script-hide join hidden xs:flex">
 				<button
 					class={twMerge("btn join-item sm:btn-sm", $app.characters.display == "list" ? "btn-primary" : "hover:btn-primary")}
 					on:click={() => transition(() => ($app.characters.display = "list"))}
@@ -189,12 +188,12 @@
 											{#if character.image_url}
 												{#key character.image_url}
 													<img
-														data-src={character.image_url}
+														src={character.image_url}
 														width={48}
 														height={48}
-														class="h-full w-full object-cover object-top transition-all hover:scale-125"
+														class="h-full w-full object-cover object-top"
 														alt={character.name}
-														use:lazy={{ rootMargin: "100px" }}
+														loading="lazy"
 													/>
 												{/key}
 											{:else}
@@ -280,10 +279,10 @@
 								<figure class="relative aspect-square overflow-hidden">
 									{#key character.image_url}
 										<img
-											data-src={character.image_url}
+											src={character.image_url}
 											alt={character.name}
 											class="h-full w-full object-cover object-top"
-											use:lazy={{ rootMargin: "100px" }}
+											loading="lazy"
 										/>
 									{/key}
 									{#if search.length >= 1 && indexed.length && miMatches}

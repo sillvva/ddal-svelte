@@ -74,7 +74,7 @@
 			<span role="button" tabindex="0" class="btn btn-sm">
 				<Icon src="dots-horizontal" class="w-6" />
 			</span>
-			<ul class="menu dropdown-content rounded-box w-52 bg-base-100 p-2 shadow">
+			<ul class="menu dropdown-content w-52 rounded-box bg-base-100 p-2 shadow">
 				<li>
 					<a download={`dm.json`} href={`/api/export/dm`} target="_blank" rel="noreferrer noopener">Export</a>
 				</li>
@@ -91,10 +91,10 @@
 
 	<div class="flex gap-4">
 		<a href="/dm-logs/new" class="btn btn-primary btn-sm hidden sm:inline-flex" aria-label="New Log">New Log</a>
-		<search class="w-full">
+		<search class="no-script-hide w-full">
 			<input type="text" placeholder="Search" bind:value={search} class="input input-bordered w-full sm:input-sm sm:max-w-xs" />
 		</search>
-		<a href="/dm-logs/new" class="btn btn-primary inline-flex sm:hidden" aria-label="New Log">
+		<a href="/dm-logs/new" class="no-script-hide btn btn-primary inline-flex sm:hidden" aria-label="New Log">
 			<Icon src="plus" class="inline w-6" />
 		</a>
 	</div>

@@ -290,7 +290,7 @@
 			</a>
 		{/if}
 		{#if logs.length}
-			<search class="min-w-0 flex-1 sm:max-w-xs">
+			<search class="no-script-hide min-w-0 flex-1 sm:max-w-xs">
 				<form>
 					<input type="text" name="s" placeholder="Search" bind:value={$search} class="input input-bordered w-full sm:input-sm" />
 				</form>
@@ -301,7 +301,7 @@
 				<Icon src="plus" class="w-6" />
 			</a>
 			<button
-				class={twMerge("btn sm:hidden", $app.character.descriptions && "btn-primary")}
+				class={twMerge("no-script-hide btn sm:hidden", $app.character.descriptions && "btn-primary")}
 				on:click={() => transition(() => ($app.character.descriptions = !$app.character.descriptions))}
 				on:keypress
 				aria-label="Toggle Notes"
@@ -314,7 +314,7 @@
 	{#if logs.length}
 		<div class="hidden flex-1 sm:block" />
 		<button
-			class={twMerge("btn hidden sm:btn-sm sm:inline-flex", $app.character.descriptions && "btn-primary")}
+			class={twMerge("no-script-hide btn hidden sm:btn-sm sm:inline-flex", $app.character.descriptions && "btn-primary")}
 			on:click={() => transition(() => ($app.character.descriptions = !$app.character.descriptions))}
 			on:keypress
 			aria-label="Toggle Notes"

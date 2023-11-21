@@ -76,7 +76,7 @@
 						<li class="sm:hidden">
 							<span>{data.session?.user?.name}</span>
 						</li>
-						<li>
+						<li class="no-script-hide">
 							<button on:click={() => (settingsOpen = true)} aria-controls="settings">Settings</button>
 						</li>
 						<li>
