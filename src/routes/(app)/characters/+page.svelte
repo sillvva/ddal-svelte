@@ -10,7 +10,7 @@
 
 	export let data;
 
-	let search = "";
+	let search = data.search || "";
 	let characters = data.characters;
 	let loaded = false;
 	const app = getContext<AppStore>("app");
@@ -100,16 +100,30 @@
 			</div>
 		</section>
 	{:else}
-		<div class="flex flex-wrap gap-2">
-			<div class="flex w-full gap-2 sm:max-w-md">
+		<div class="flex flex-wrap justify-between gap-2">
+			<div class="flex w-full gap-2 sm:max-w-lg">
 				<a href="/characters/new/edit" class="btn btn-primary btn-sm hidden sm:inline-flex">New Character</a>
-				<search class="no-script-hide min-w-0 flex-1">
+				<search class="min-w-0 flex-1">
 					<input
 						type="text"
 						placeholder="Search by name, race, class, items, etc."
 						bind:value={search}
-						class="input input-bordered w-full min-w-0 sm:input-sm md:w-80"
+						class="no-script-hide input join-item input-bordered w-full min-w-0 flex-1 sm:input-sm md:w-80"
 					/>
+					<noscript>
+						<form class="join flex">
+							<input
+								type="text"
+								name="q"
+								placeholder="Search by name, race, class, items, etc."
+								bind:value={search}
+								class="input join-item input-bordered w-full min-w-0 flex-1 sm:input-sm md:w-80"
+							/>
+							<button type="submit" class="btn btn-primary join-item sm:btn-sm">
+								<Icon src="magnify" class="w-6 sm:w-4" />
+							</button>
+						</form>
+					</noscript>
 				</search>
 				<a href="/characters/new/edit" class="btn btn-primary inline-flex sm:hidden" aria-label="New Character">
 					<Icon src="plus" class="inline w-6" />
@@ -125,7 +139,7 @@
 					<Icon src={$app.characters.magicItems ? "show" : "hide"} class="w-6" />
 				</button>
 			</div>
-			<div class="hidden flex-1 xs:block" />
+			<div class="hidden xs:block" />
 			{#if $app.characters.display != "grid"}
 				<button
 					class={twMerge("btn hidden sm:btn-sm xs:inline-flex", $app.characters.magicItems && "btn-primary")}
