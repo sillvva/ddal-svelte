@@ -20,13 +20,16 @@
 </script>
 
 <button
-	class="flex py-3 pr-4 print:hidden md:hidden"
+	class="no-script-hide flex py-3 pr-4 print:hidden md:hidden"
 	on:click={() => toggleDrawer(true)}
 	aria-expanded={drawer}
 	aria-controls="drawer"
 >
 	<Icon src="menu" class="w-6" />
 </button>
+<noscript>
+	<span class="flex w-[52px] py-3 pr-4"> </span>
+</noscript>
 <div
 	id="drawer"
 	class={twMerge("fixed -left-72 bottom-0 top-0 z-50 w-72 bg-base-100 px-4 py-4 transition-all", drawer && "left-0")}

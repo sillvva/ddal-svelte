@@ -21,7 +21,8 @@
 
 	let deletingLog: string[] = [];
 
-	const search = queryParam("s", ssp.string(""));
+	const s = queryParam("s", ssp.string(""));
+	$: search = $s || "";
 	const logSearch = new MiniSearch({
 		fields: ["logName", "magicItems", "storyAwards"],
 		idField: "logId",
@@ -61,9 +62,9 @@
 
 	if (indexed.length) logSearch.addAll(indexed);
 
-	$: msResults = logSearch.search($search || "");
+	$: msResults = logSearch.search(search);
 	$: results =
-		indexed.length && ($search || "").length > 1
+		indexed.length && search.length > 1
 			? logs
 					.filter((log) => msResults.find((result) => result.id === log.id))
 					.map((log) => ({
@@ -290,10 +291,27 @@
 			</a>
 		{/if}
 		{#if logs.length}
-			<search class="no-script-hide min-w-0 flex-1 sm:max-w-xs">
-				<form>
-					<input type="text" name="s" placeholder="Search" bind:value={$search} class="input input-bordered w-full sm:input-sm" />
-				</form>
+			<search class="min-w-0 flex-1">
+				<input
+					type="text"
+					placeholder="Search"
+					bind:value={$s}
+					class="no-script-hide input join-item input-bordered w-full flex-1 sm:input-sm"
+				/>
+				<noscript>
+					<form class="join flex">
+						<input
+							type="text"
+							name="s"
+							placeholder="Search"
+							bind:value={$s}
+							class="input join-item input-bordered w-full flex-1 sm:input-sm"
+						/>
+						<button type="submit" class="btn btn-primary join-item sm:btn-sm">
+							<Icon src="magnify" class="w-6 sm:w-4" />
+						</button>
+					</form>
+				</noscript>
 			</search>
 		{/if}
 		{#if myCharacter}
@@ -359,7 +377,7 @@
 								role="button"
 								tabindex="0"
 							>
-								<SearchResults text={log.name} search={$search} />
+								<SearchResults text={log.name} {search} />
 							</div>
 							<p class="text-netural-content mb-2 whitespace-nowrap text-xs font-normal">
 								{new Date(log.show_date).toLocaleString()}
@@ -462,9 +480,9 @@
 							{/if}
 							{#if log.magic_items_gained.length > 0 || log.magic_items_lost.length > 0}
 								<div>
-									<Items title="Magic Items:" items={log.magic_items_gained} search={$search} sort />
+									<Items title="Magic Items:" items={log.magic_items_gained} {search} sort />
 									<div class="whitespace-pre-wrap text-sm line-through">
-										<SearchResults text={log.magic_items_lost.map((mi) => mi.name).join(" | ")} search={$search} />
+										<SearchResults text={log.magic_items_lost.map((mi) => mi.name).join(" | ")} {search} />
 									</div>
 								</div>
 							{/if}
@@ -479,9 +497,9 @@
 						>
 							{#if log.story_awards_gained.length > 0 || log.story_awards_lost.length > 0}
 								<div>
-									<Items items={log.story_awards_gained} search={$search} />
+									<Items items={log.story_awards_gained} {search} />
 									<div class="whitespace-pre-wrap text-sm line-through">
-										<SearchResults text={log.story_awards_lost.map((mi) => mi.name).join(" | ")} search={$search} />
+										<SearchResults text={log.story_awards_lost.map((mi) => mi.name).join(" | ")} {search} />
 									</div>
 								</div>
 							{/if}
@@ -551,10 +569,10 @@
 								{/if}
 								{#if log.magic_items_gained.length > 0 || log.magic_items_lost.length > 0}
 									<div class="mt-2 print:hidden sm:hidden">
-										<Items title="Magic Items:" items={log.magic_items_gained} search={$search} sort />
+										<Items title="Magic Items:" items={log.magic_items_gained} {search} sort />
 										{#if log.magic_items_lost.length}
 											<p class="mt-2 whitespace-pre-wrap text-sm line-through">
-												<SearchResults text={log.magic_items_lost.map((mi) => mi.name).join(" | ")} search={$search} />
+												<SearchResults text={log.magic_items_lost.map((mi) => mi.name).join(" | ")} {search} />
 											</p>
 										{/if}
 									</div>

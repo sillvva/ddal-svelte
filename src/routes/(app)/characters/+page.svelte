@@ -6,14 +6,16 @@
 	import type { AppStore } from "$src/lib/store.js";
 	import MiniSearch from "minisearch";
 	import { getContext, onMount } from "svelte";
+	import { queryParam, ssp } from "sveltekit-search-params";
 	import { twMerge } from "tailwind-merge";
 
 	export let data;
 
-	let search = data.search || "";
 	let characters = data.characters;
 	let loaded = false;
 	const app = getContext<AppStore>("app");
+	const s = queryParam("s", ssp.string(""));
+	$: search = $s || "";
 
 	onMount(() => {
 		setTimeout(() => (loaded = true), 1000);
@@ -107,16 +109,16 @@
 					<input
 						type="text"
 						placeholder="Search by name, race, class, items, etc."
-						bind:value={search}
+						bind:value={$s}
 						class="no-script-hide input join-item input-bordered w-full min-w-0 flex-1 sm:input-sm md:w-80"
 					/>
 					<noscript>
 						<form class="join flex">
 							<input
 								type="text"
-								name="q"
+								name="s"
 								placeholder="Search by name, race, class, items, etc."
-								bind:value={search}
+								bind:value={$s}
 								class="input join-item input-bordered w-full min-w-0 flex-1 sm:input-sm md:w-80"
 							/>
 							<button type="submit" class="btn btn-primary join-item sm:btn-sm">

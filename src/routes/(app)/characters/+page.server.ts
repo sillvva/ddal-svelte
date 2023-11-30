@@ -7,8 +7,6 @@ export const load = async (event) => {
 	const session = event.locals.session;
 	if (!session?.user) throw signInRedirect(event.url);
 
-	const search = event.url.searchParams.get("q");
-
 	const characters = await getCharactersCache(session.user.id).then(async (characters) => {
 		const charData: Array<CharacterData> = [];
 		const caches = await getCharacterCaches(characters.map((c) => c.id));
@@ -20,8 +18,7 @@ export const load = async (event) => {
 
 	return {
 		title: `${session.user.name}'s Characters`,
-		characters,
-		search
+		characters
 	};
 };
 
