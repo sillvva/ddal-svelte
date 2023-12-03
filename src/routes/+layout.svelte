@@ -83,8 +83,7 @@
 		}
 	</style>
 	<div class="fixed bottom-0 left-0 right-0 z-50 flex justify-center bg-red-800 p-2 text-center font-bold">
-		Without JavaScript enabled, several features of the app will be disabled.<br />Your experience will be significantly
-		downgraded.
+		Without JavaScript enabled, several features of the app will be disabled.<br />Your experience will be downgraded.
 	</div>
 </noscript>
 
