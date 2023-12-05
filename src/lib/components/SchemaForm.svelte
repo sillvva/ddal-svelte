@@ -110,6 +110,7 @@
 	let elForm: HTMLFormElement;
 	let changes: Array<string> = [];
 	let saving = false;
+	let submitted = false;
 
 	async function checkChanges() {
 		// Check for changes
@@ -120,6 +121,8 @@
 					.concat(formStructureIsDiff ? "form" : "")
 					.filter(Boolean)
 			: [];
+
+		if (!submitted) return;
 
 		// Check for errors
 		errors = new SvelteMap<"form" | Paths<typeof initialStructure, 6>, string>();
@@ -133,6 +136,7 @@
 					errors = errors.set(issue.path.join(".") as any, issue.message);
 				}
 			});
+			if (!errors.get("form")) errors = errors.set("form", "Please fix the errors below");
 			dispatch("validate", { changes, errors, setError });
 		}
 	}
@@ -189,11 +193,13 @@
 
 		dispatch("before-submit");
 		saving = true;
+		submitted = true;
 
 		// Check for errors before submitting
 		await checkChanges();
 		if (errors.size) {
 			saving = false;
+			window.scrollTo({ top: 0, behavior: "smooth" });
 			return f.cancel();
 		}
 
