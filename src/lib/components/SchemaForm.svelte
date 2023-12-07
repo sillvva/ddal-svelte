@@ -60,13 +60,12 @@
 </script>
 
 <script lang="ts" generics="TSchema extends Schema">
-	import { twMerge } from "tailwind-merge";
-
 	import { dev } from "$app/environment";
 	import { enhance } from "$app/forms";
 	import { beforeNavigate } from "$app/navigation";
 	import type { ActionResult } from "@sveltejs/kit";
 	import { createEventDispatcher } from "svelte";
+	import { twMerge } from "tailwind-merge";
 	import { SvelteMap, type DeepStringify, type Paths } from "../types/util";
 
 	const dispatch = createEventDispatcher<{

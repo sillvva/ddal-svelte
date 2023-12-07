@@ -14,6 +14,7 @@ export const load = async (event) => {
 
 	const log = await getDMLog(event.params.logId, session.user.id);
 	if (event.params.logId !== "new" && !log.id) throw error(404, "Log not found");
+	if (!log.is_dm_log) throw redirect(302, `/characters/${log.characterId}/log/${log.id}`);
 
 	log.dm = log.dm?.name
 		? log.dm
