@@ -1,5 +1,5 @@
 import { parseFormData } from "$src/lib/components/SchemaForm.svelte";
-import { logSchema } from "$src/lib/types/schemas.js";
+import { dMLogSchema } from "$src/lib/types/schemas.js";
 import { saveLog } from "$src/server/actions/logs";
 import { signInRedirect } from "$src/server/auth.js";
 import { getCharacterCache, getCharactersCache } from "$src/server/data/characters";
@@ -46,7 +46,8 @@ export const actions = {
 
 		try {
 			const formData = await event.request.formData();
-			const logData = await parseFormData(formData, logSchema, {
+			const characters = await getCharactersCache(session.user.id);
+			const logData = await parseFormData(formData, dMLogSchema(characters), {
 				arrays: ["magic_items_gained", "story_awards_gained", "magic_items_lost", "story_awards_lost"],
 				dates: ["date", "applied_date"],
 				booleans: ["is_dm_log"],

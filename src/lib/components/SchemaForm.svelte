@@ -62,6 +62,7 @@
 <script lang="ts" generics="TSchema extends Schema">
 	import { twMerge } from "tailwind-merge";
 
+	import { dev } from "$app/environment";
 	import { enhance } from "$app/forms";
 	import { beforeNavigate } from "$app/navigation";
 	import type { ActionResult } from "@sveltejs/kit";
@@ -122,13 +123,12 @@
 					.filter(Boolean)
 			: [];
 
-		if (!submitted) return;
-
 		// Check for errors
 		errors = new SvelteMap<"form" | Paths<typeof initialStructure, 6>, string>();
 		const result = await validate(schema, data);
 		if ("data" in result) {
 			dispatch("validate", { data: result.data, changes, errors, setError });
+			submitted = false;
 		} else if ("issues" in result) {
 			result.issues.forEach((issue) => {
 				if (!issue.path) issue.path = ["form"];
@@ -136,7 +136,7 @@
 					errors = errors.set(issue.path.join(".") as any, issue.message);
 				}
 			});
-			if (!errors.get("form")) errors = errors.set("form", "Please fix the errors below");
+			if (submitted && errors.size && !errors.get("form")) errors = errors.set("form", "Please fix the errors below");
 			dispatch("validate", { changes, errors, setError });
 		}
 	}
@@ -225,4 +225,7 @@
 	}}
 >
 	<slot {errors} {saving} />
+	{#if dev}
+		<pre>{JSON.stringify(data, null, 2)}</pre>
+	{/if}
 </form>

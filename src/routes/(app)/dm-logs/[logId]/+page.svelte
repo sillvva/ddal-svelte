@@ -6,7 +6,7 @@
 	import ComboBox from "$src/lib/components/ComboBox.svelte";
 	import DateTimeInput from "$src/lib/components/DateTimeInput.svelte";
 	import Markdown from "$src/lib/components/Markdown.svelte";
-	import { logSchema, type LogSchemaIn } from "$src/lib/types/schemas";
+	import { dMLogSchema, type LogSchemaIn } from "$src/lib/types/schemas";
 	import { twMerge } from "tailwind-merge";
 
 	export let data;
@@ -31,6 +31,9 @@
 	}));
 
 	$: characterId = log.characterId || character?.id;
+	$: if (!character && log.characterId && data.characters.find((c) => c.id === log.characterId)) {
+		character = data.characters.find((c) => c.id === log.characterId);
+	}
 	$: values = {
 		...log,
 		characterId: characterId,
@@ -69,27 +72,12 @@
 
 <SchemaForm
 	action="?/saveLog"
-	schema={logSchema}
+	schema={dMLogSchema(data.characters)}
 	data={values}
 	let:errors
 	let:saving
-	on:validate={(event) => {
-		const { setError } = event.detail;
-
-		if (values.characterId && !(data.characters || []).find((c) => c.id === values.characterId)) {
-			setError("characterId", "Character not found");
-		}
-
-		if (character?.name && !values.applied_date) {
-			setError("applied_date", "Applied date is required if assigned character is entered");
-		}
-
-		if (values.applied_date && !values.characterId) {
-			setError("characterId", "Assigned character is required if applied date is entered");
-		}
-	}}
 	on:before-submit={() => {
-		if (log.applied_date?.getTime() === 0) {
+		if (new Date(log.applied_date || 0).getTime() === 0) {
 			log.applied_date = null;
 		}
 	}}
@@ -163,12 +151,12 @@
 				searchBy="value"
 				on:input={() => {
 					log.characterId = "";
-					log.applied_date = null;
+					// log.applied_date = null;
 				}}
 				on:select={(ev) => {
 					character = data.characters.find((c) => c.id === ev.detail);
 					log.characterId = character ? ev.detail.toString() : "";
-					log.applied_date = data.character && log.applied_date ? log.applied_date : null;
+					// log.applied_date = data.character && log.applied_date ? log.applied_date : null;
 					if (log.characterId) log.applied_date = log.applied_date || new Date();
 				}}
 			/>
