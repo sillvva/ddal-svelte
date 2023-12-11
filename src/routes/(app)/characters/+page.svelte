@@ -141,37 +141,38 @@
 					<Icon src={$app.characters.magicItems ? "show" : "hide"} class="w-6" />
 				</button>
 			</div>
-			<div class="hidden xs:block" />
-			{#if $app.characters.display != "grid"}
-				<button
-					class={twMerge("btn hidden sm:btn-sm xs:inline-flex", $app.characters.magicItems && "btn-primary")}
-					on:click={() => transition(() => ($app.characters.magicItems = !$app.characters.magicItems))}
-					on:keypress={() => null}
-					on:keypress
-					aria-label="Toggle Magic Items"
-					tabindex="0"
-				>
-					<Icon src={$app.characters.magicItems ? "show" : "hide"} class="w-6" />
-					<span class="hidden xs:inline-flex sm:hidden md:inline-flex">Magic Items</span>
-				</button>
-			{/if}
-			<div class="no-script-hide join hidden xs:flex">
-				<button
-					class={twMerge("btn join-item sm:btn-sm", $app.characters.display == "list" ? "btn-primary" : "hover:btn-primary")}
-					on:click={() => transition(() => ($app.characters.display = "list"))}
-					on:keypress
-					aria-label="List View"
-				>
-					<Icon src="format-list-text" class="w-4" />
-				</button>
-				<button
-					class={twMerge("btn join-item sm:btn-sm", $app.characters.display == "grid" ? "btn-primary" : "hover:btn-primary")}
-					on:click={() => transition(() => ($app.characters.display = "grid"))}
-					on:keypress
-					aria-label="Grid View"
-				>
-					<Icon src="view-grid" class="w-4" />
-				</button>
+			<div class="flex gap-2">
+				{#if $app.characters.display != "grid"}
+					<button
+						class={twMerge("btn hidden sm:btn-sm xs:inline-flex", $app.characters.magicItems && "btn-primary")}
+						on:click={() => transition(() => ($app.characters.magicItems = !$app.characters.magicItems))}
+						on:keypress={() => null}
+						on:keypress
+						aria-label="Toggle Magic Items"
+						tabindex="0"
+					>
+						<Icon src={$app.characters.magicItems ? "show" : "hide"} class="w-6" />
+						<span class="hidden xs:inline-flex sm:hidden md:inline-flex">Magic Items</span>
+					</button>
+				{/if}
+				<div class="no-script-hide join hidden xs:flex">
+					<button
+						class={twMerge("btn join-item sm:btn-sm", $app.characters.display == "list" ? "btn-primary" : "hover:btn-primary")}
+						on:click={() => transition(() => ($app.characters.display = "list"))}
+						on:keypress
+						aria-label="List View"
+					>
+						<Icon src="format-list-text" class="w-4" />
+					</button>
+					<button
+						class={twMerge("btn join-item sm:btn-sm", $app.characters.display == "grid" ? "btn-primary" : "hover:btn-primary")}
+						on:click={() => transition(() => ($app.characters.display = "grid"))}
+						on:keypress
+						aria-label="Grid View"
+					>
+						<Icon src="view-grid" class="w-4" />
+					</button>
+				</div>
 			</div>
 		</div>
 

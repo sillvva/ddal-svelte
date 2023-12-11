@@ -22,6 +22,9 @@ export const load = async (event) => {
 		characters: {
 			magicItems: false,
 			display: "list"
+		},
+		dmLogs: {
+			sort: "asc"
 		}
 	});
 

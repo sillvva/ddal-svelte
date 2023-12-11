@@ -20,5 +20,8 @@ export type App = {
 		magicItems: boolean;
 		display: "list" | "grid";
 	};
+	dmLogs: {
+		sort: "asc" | "desc";
+	};
 };
 export type AppStore = CookieStore<App>;

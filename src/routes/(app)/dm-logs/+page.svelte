@@ -5,14 +5,16 @@
 	import Items from "$lib/components/Items.svelte";
 	import SearchResults from "$lib/components/SearchResults.svelte";
 	import { sorter, stopWords } from "$lib/utils";
-	import { modal } from "$src/lib/store";
+	import { modal, type AppStore } from "$src/lib/store";
 	import MiniSearch from "minisearch";
+	import { getContext } from "svelte";
 	import { twMerge } from "tailwind-merge";
 
 	export let data;
 	export let form;
 
 	const logs = data.logs;
+	const app = getContext<AppStore>("app");
 
 	let search = "";
 	let deletingLog: string[] = [];
@@ -53,8 +55,9 @@
 						...log,
 						score: msResults.find((result) => result.id === log.id)?.score || 0 - log.date.getTime()
 					}))
-					.sort((a, b) => sorter(a.date, b.date))
-			: logs.sort((a, b) => sorter(a.date, b.date));
+					.sort((a, b) => ($app.dmLogs.sort === "asc" ? sorter(a.date, b.date) : sorter(b.date, a.date)))
+			: logs.sort((a, b) => ($app.dmLogs.sort === "asc" ? sorter(a.date, b.date) : sorter(b.date, a.date)));
+	$: hasStoryAwards = results.find((log) => log.story_awards_gained.length);
 
 	function triggerModal(log: (typeof results)[number]) {
 		if (log.description) {
@@ -89,14 +92,22 @@
 		</div>
 	{/if}
 
-	<div class="flex gap-4">
-		<a href="/dm-logs/new" class="btn btn-primary btn-sm hidden sm:inline-flex" aria-label="New Log">New Log</a>
-		<search class="no-script-hide w-full">
-			<input type="text" placeholder="Search" bind:value={search} class="input input-bordered w-full sm:input-sm sm:max-w-xs" />
-		</search>
-		<a href="/dm-logs/new" class="no-script-hide btn btn-primary inline-flex sm:hidden" aria-label="New Log">
-			<Icon src="plus" class="inline w-6" />
-		</a>
+	<div class="flex justify-between gap-2">
+		<div class="flex gap-2">
+			<a href="/dm-logs/new" class="btn btn-primary btn-sm hidden sm:inline-flex" aria-label="New Log">New Log</a>
+			<search class="no-script-hide w-full">
+				<input type="text" placeholder="Search" bind:value={search} class="input input-bordered w-full sm:input-sm sm:max-w-xs" />
+			</search>
+			<a href="/dm-logs/new" class="btn btn-primary inline-flex sm:hidden" aria-label="New Log">
+				<Icon src="plus" class="inline w-6" />
+			</a>
+		</div>
+		<button
+			class="no-script-hide btn btn-primary btn-sm"
+			on:click={() => ($app.dmLogs.sort = $app.dmLogs.sort === "asc" ? "desc" : "asc")}
+		>
+			<Icon src="sort-calendar-{$app.dmLogs.sort}ending" class="w-6" />
+		</button>
 	</div>
 
 	<section>
@@ -108,7 +119,9 @@
 						<th class="hidden print:table-cell sm:table-cell">Title</th>
 						<th class="hidden print:table-cell sm:table-cell">Advancement</th>
 						<th class="hidden print:table-cell sm:table-cell">Treasure</th>
-						<th class="hidden print:!hidden md:table-cell">Story Awards</th>
+						{#if hasStoryAwards}
+							<th class="hidden print:table-cell sm:table-cell">Story Awards</th>
+						{/if}
 						<th class="print:hidden" />
 					</tr>
 				</thead>
@@ -251,18 +264,20 @@
 										</div>
 									{/if}
 								</td>
-								<td
-									class={twMerge(
-										"hidden align-top print:!hidden md:table-cell",
-										(log.description?.trim() || log.story_awards_gained.length > 0) && "print:border-b-0"
-									)}
-								>
-									{#if log.story_awards_gained.length > 0}
-										<div>
-											<Items items={log.story_awards_gained} {search} />
-										</div>
-									{/if}
-								</td>
+								{#if hasStoryAwards}
+									<td
+										class={twMerge(
+											"hidden align-top print:!hidden md:table-cell",
+											(log.description?.trim() || log.story_awards_gained.length > 0) && "print:border-b-0"
+										)}
+									>
+										{#if log.story_awards_gained.length > 0}
+											<div>
+												<Items items={log.story_awards_gained} {search} />
+											</div>
+										{/if}
+									</td>
+								{/if}
 								<td class="w-8 align-top print:hidden">
 									<div class="flex flex-col gap-2">
 										<a href="/dm-logs/{log.id}" class="btn btn-primary sm:btn-sm" aria-label="Edit Log">
