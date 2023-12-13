@@ -5,7 +5,8 @@
 	import Items from "$lib/components/Items.svelte";
 	import SearchResults from "$lib/components/SearchResults.svelte";
 	import { sorter, stopWords } from "$lib/utils";
-	import { modal, type AppStore } from "$src/lib/store";
+	import { modal } from "$src/lib/store";
+	import type { AppStore } from "$src/lib/types/schemas";
 	import MiniSearch from "minisearch";
 	import { getContext } from "svelte";
 	import { twMerge } from "tailwind-merge";

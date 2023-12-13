@@ -1,3 +1,4 @@
+import type { CookieStore } from "$src/server/cookie";
 import type { Character } from "@prisma/client";
 import {
 	array,
@@ -101,3 +102,22 @@ export const newCharacterSchema = object({
 
 export type EditCharacterSchema = Output<typeof editCharacterSchema>;
 export const editCharacterSchema = merge([object({ id: string() }), newCharacterSchema]);
+
+export type App = {
+	settings: {
+		background: boolean;
+		theme: "system" | "dark" | "light";
+		mode: "dark" | "light";
+	};
+	character: {
+		descriptions: boolean;
+	};
+	characters: {
+		magicItems: boolean;
+		display: "list" | "grid";
+	};
+	dmLogs: {
+		sort: "asc" | "desc";
+	};
+};
+export type AppStore = CookieStore<App>;

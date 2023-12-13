@@ -3,7 +3,7 @@
 	import Icon from "$lib/components/Icon.svelte";
 	import SearchResults from "$lib/components/SearchResults.svelte";
 	import { slugify, sorter, stopWords, transition } from "$lib/utils";
-	import type { AppStore } from "$src/lib/store.js";
+	import type { AppStore } from "$src/lib/types/schemas";
 	import MiniSearch from "minisearch";
 	import { getContext, onMount } from "svelte";
 	import { queryParam, ssp } from "sveltekit-search-params";

@@ -5,8 +5,9 @@
 	import Items from "$lib/components/Items.svelte";
 	import Markdown from "$lib/components/Markdown.svelte";
 	import SearchResults from "$lib/components/SearchResults.svelte";
-	import { modal, pageLoader, type AppStore } from "$lib/store";
+	import { modal, pageLoader } from "$lib/store";
 	import { slugify, sorter, stopWords, transition } from "$lib/utils";
+	import type { AppStore } from "$src/lib/types/schemas";
 	import MiniSearch from "minisearch";
 	import { getContext } from "svelte";
 	import { queryParam, ssp } from "sveltekit-search-params";
