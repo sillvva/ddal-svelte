@@ -4,5 +4,5 @@ export const load = async (event) => {
 	await event.parent();
 	const session = event.locals.session;
 	const redirectTo = event.url.searchParams.get("redirect") || "/characters";
-	if (session?.user) throw redirect(302, redirectTo);
+	if (session?.user) redirect(302, redirectTo);
 };

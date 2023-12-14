@@ -19,7 +19,7 @@ export async function saveLog(input: LogSchema, user?: CustomSession["user"]) {
 		const isMe = input.dm.name.trim() === user.name?.trim() || input.dm.name === "Me";
 
 		const log = await prisma.$transaction(async (tx) => {
-			if (!user?.id) throw error(401, "Not authenticated");
+			if (!user?.id) error(401, "Not authenticated");
 
 			if (input.dm?.name.trim()) {
 				if (!input.dm.id) {
@@ -277,7 +277,7 @@ export async function saveLog(input: LogSchema, user?: CustomSession["user"]) {
 export type DeleteLogResult = ReturnType<typeof deleteLog>;
 export async function deleteLog(logId: string, userId?: string) {
 	try {
-		if (!userId) throw error(401, "Not authenticated");
+		if (!userId) error(401, "Not authenticated");
 		const log = await prisma.$transaction(async (tx) => {
 			const log = await tx.log.findUnique({
 				where: {
@@ -288,7 +288,7 @@ export async function deleteLog(logId: string, userId?: string) {
 					character: true
 				}
 			});
-			if (log && log.character?.userId !== userId && log.dm?.uid !== userId) throw error(401, "Not authorized");
+			if (log && log.character?.userId !== userId && log.dm?.uid !== userId) error(401, "Not authorized");
 			await tx.magicItem.updateMany({
 				where: {
 					logLostId: logId

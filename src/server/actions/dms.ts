@@ -36,10 +36,10 @@ export async function deleteDM(dmId: string, userId?: string) {
 		if (!userId) throw error(401, "You must be logged in to delete a DM");
 
 		const dms = (await getUserDMsWithLogsCache(userId)).filter((dm) => dm.id === dmId);
-		if (!dms.length) throw error(401, "You do not have permission to delete this DM");
+		if (!dms.length) error(401, "You do not have permission to delete this DM");
 
 		const dm = dms.find((dm) => dm.logs.length);
-		if (dm) throw new Error("You cannot delete a DM that has logs");
+		if (dm) throw error(401, "You cannot delete a DM that has logs");
 
 		const result = await prisma.dungeonMaster.delete({
 			where: { id: dmId }

@@ -19,12 +19,12 @@ export const load = async (event) => {
 	const log =
 		event.params.logId !== "new"
 			? await getLog(event.params.logId, session.user.id, character.id).then((log) => {
-					if (!log.id) throw error(404, "Log not found");
+					if (!log.id) error(404, "Log not found");
 					return log;
 			  })
 			: defaultLog(session.user.id, character.id);
 
-	if (log.is_dm_log) throw redirect(302, `/dm-logs/${log.id}`);
+	if (log.is_dm_log) redirect(302, `/dm-logs/${log.id}`);
 
 	const dms = await getUserDMsWithLogs(session.user.id);
 
@@ -51,7 +51,7 @@ export const actions = {
 		if (!character) throw redirect(302, "/characters");
 
 		const log = await getLog(event.params.logId || "", session.user.id, character.id);
-		if (event.params.logId !== "new" && !log.id) throw redirect(302, `/characters/${character.id}`);
+		if (event.params.logId !== "new" && !log.id) redirect(302, `/characters/${character.id}`);
 
 		try {
 			const formData = await event.request.formData();
@@ -62,7 +62,7 @@ export const actions = {
 				numbers: ["season", "level", "gold", "acp", "tcp", "experience", "dtd"]
 			});
 			const result = await saveLog(logData, session.user);
-			if (result && result.id) throw redirect(302, `/characters/${character.id}`);
+			if (result && result.id) redirect(302, `/characters/${character.id}`);
 
 			return result;
 		} catch (error) {

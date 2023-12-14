@@ -23,7 +23,7 @@ export function handleSKitError(err: unknown) {
 		"body" in err &&
 		typeof err.body == "string"
 	)
-		throw error(err.status, err.body);
+		error(err.status, err.body);
 }
 
 export type LimitDepth<T, TLength = 5, TDepth extends unknown[] = []> = TDepth["length"] extends TLength

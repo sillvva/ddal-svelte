@@ -10,7 +10,7 @@ export type SaveCharacterResult = ReturnType<typeof saveCharacter>;
 export async function saveCharacter(characterId: string, userId: string, data: NewCharacterSchema) {
 	try {
 		if (!characterId) throw new Error("No character ID provided");
-		if (!userId) throw error(401, "Not authenticated");
+		if (!userId) error(401, "Not authenticated");
 		let result: Character;
 		if (characterId == "new") {
 			result = await prisma.character.create({
@@ -22,7 +22,7 @@ export async function saveCharacter(characterId: string, userId: string, data: N
 		} else {
 			const character = await getCharacterCache(characterId, false);
 			if (!character) throw new Error("Character not found");
-			if (character.userId !== userId) throw error(401, "Not authorized");
+			if (character.userId !== userId) error(401, "Not authorized");
 			result = await prisma.character.update({
 				where: { id: characterId },
 				data: {
@@ -55,7 +55,7 @@ export async function deleteCharacter(characterId: string, userId?: string) {
 			include: { logs: { include: { character: true } } }
 		});
 		if (!character) throw new Error("Character not found");
-		if (character.userId !== userId) throw error(401, "Not authorized");
+		if (character.userId !== userId) error(401, "Not authorized");
 		const logIds = character.logs.map((log) => log.id);
 		const result = await prisma.$transaction(async (tx) => {
 			await tx.magicItem.deleteMany({

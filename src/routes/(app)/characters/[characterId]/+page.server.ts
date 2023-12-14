@@ -3,7 +3,7 @@ import { deleteLog } from "$src/server/actions/logs";
 import { error, redirect } from "@sveltejs/kit";
 
 export const load = async (event) => {
-	if (event.params.characterId === "new") throw redirect(301, "/characters/new/edit");
+	if (event.params.characterId === "new") redirect(301, "/characters/new/edit");
 
 	const parent = await event.parent();
 	const character = parent.character;
@@ -24,8 +24,8 @@ export const actions = {
 		const characterId = event.params.characterId;
 		const result = await deleteCharacter(characterId, session.user.id);
 		if (result) {
-			if (result.id) throw redirect(302, "/characters");
-			if (result.error) throw error(400, result.error);
+			if (result.id) redirect(302, "/characters");
+			if (result.error) error(400, result.error);
 		}
 		return result;
 	},
