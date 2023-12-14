@@ -12,7 +12,7 @@ export type SaveLogResult = ReturnType<typeof saveLog>;
 export async function saveLog(input: LogSchema, user?: CustomSession["user"]) {
 	try {
 		let dm: DungeonMaster | null = null;
-		if (!user?.name) throw error(401, "Not authenticated");
+		if (!user?.name) error(401, "Not authenticated");
 
 		if (input.is_dm_log) input.dm.name = user.name || "Me";
 		if (["Me", ""].includes(input.dm.name.trim())) input.dm.name = user.name || "Me";
@@ -30,8 +30,8 @@ export async function saveLog(input: LogSchema, user?: CustomSession["user"]) {
 								input.is_dm_log || isMe
 									? [{ uid: user.id }]
 									: input.dm.DCI
-									? [{ name: input.dm.name.trim() }, { DCI: input.dm.DCI }]
-									: [{ name: input.dm.name.trim() }]
+										? [{ name: input.dm.name.trim() }, { DCI: input.dm.DCI }]
+										: [{ name: input.dm.name.trim() }]
 						}
 					});
 					if (search) {
@@ -63,19 +63,19 @@ export async function saveLog(input: LogSchema, user?: CustomSession["user"]) {
 							}
 						});
 					} catch (err) {
-						throw new Error(parseError(err));
+						error(500, parseError(err));
 					}
 				}
 			}
 
-			if (!dm?.id) throw new Error("Could not save Dungeon Master");
+			if (!dm?.id) error(500, "Could not save Dungeon Master");
 
 			const applied_date: Date | null = input.is_dm_log
 				? input.characterId && input.applied_date !== null
 					? new Date(input.applied_date)
 					: null
 				: new Date(input.date);
-			if (input.characterId && applied_date === null) throw new Error("Applied date is required");
+			if (input.characterId && applied_date === null) error(400, "Applied date is required");
 
 			if (input.characterId) {
 				const character = await tx.character.findFirst({
@@ -85,13 +85,13 @@ export async function saveLog(input: LogSchema, user?: CustomSession["user"]) {
 					where: { id: input.characterId }
 				});
 
-				if (!character) throw new Error("Character not found");
+				if (!character) error(404, "Character not found");
 
 				const currentLevel = getLevels(character.logs).total;
 				const logACP = character.logs.find((log) => log.id === input.id)?.acp || 0;
-				if (currentLevel == 20 && input.acp - logACP > 0) throw new Error("Character is already level 20");
+				if (currentLevel == 20 && input.acp - logACP > 0) error(400, "Character is already level 20");
 				const logLevel = character.logs.find((log) => log.id === input.id)?.level || 0;
-				if (currentLevel + input.level - logLevel > 20) throw new Error("Character cannot level past 20");
+				if (currentLevel + input.level - logLevel > 20) error(400, "Character cannot level past 20");
 			}
 
 			const data: Omit<Log, "id" | "created_at" | "is_dm_log"> = {
@@ -121,7 +121,7 @@ export async function saveLog(input: LogSchema, user?: CustomSession["user"]) {
 				}
 			});
 
-			if (!log.id) throw new Error("Could not save log");
+			if (!log.id) error(500, "Could not save log");
 
 			const itemsToUpdate = input.magic_items_gained.filter((item) => item.id);
 
@@ -261,12 +261,12 @@ export async function saveLog(input: LogSchema, user?: CustomSession["user"]) {
 					id: log.id,
 					log,
 					error: null
-			  }
+				}
 			: {
 					id: null,
 					log: null,
 					error: "Could not save log"
-			  };
+				};
 	} catch (err) {
 		handleSKitError(err);
 		if (err instanceof Error) return { id: null, dm: null, error: err.message };

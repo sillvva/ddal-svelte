@@ -7,7 +7,7 @@ export const load = async (event) => {
 
 	const parent = await event.parent();
 	const character = parent.character;
-	if (!character) throw error(404, "Character not found");
+	if (!character) error(404, "Character not found");
 
 	return {
 		title: character.name,
@@ -20,7 +20,7 @@ export const load = async (event) => {
 export const actions = {
 	deleteCharacter: async (event) => {
 		const session = await event.locals.session;
-		if (!session?.user) throw redirect(302, "/");
+		if (!session?.user) redirect(302, "/");
 		const characterId = event.params.characterId;
 		const result = await deleteCharacter(characterId, session.user.id);
 		if (result) {
@@ -31,7 +31,7 @@ export const actions = {
 	},
 	deleteLog: async (event) => {
 		const session = await event.locals.session;
-		if (!session?.user) throw redirect(302, "/");
+		if (!session?.user) redirect(302, "/");
 		const data = await event.request.formData();
 		const logId = (data.get("logId") || "") as string;
 		return await deleteLog(logId, session.user.id);

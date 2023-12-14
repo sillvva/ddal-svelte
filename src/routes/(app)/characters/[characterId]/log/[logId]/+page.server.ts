@@ -11,7 +11,7 @@ import { error, redirect } from "@sveltejs/kit";
 export const load = async (event) => {
 	const parent = await event.parent();
 	const character = parent.character;
-	if (!character) throw error(404, "Character not found");
+	if (!character) error(404, "Character not found");
 
 	const session = event.locals.session;
 	if (!session?.user) throw signInRedirect(event.url);
@@ -21,7 +21,7 @@ export const load = async (event) => {
 			? await getLog(event.params.logId, session.user.id, character.id).then((log) => {
 					if (!log.id) error(404, "Log not found");
 					return log;
-			  })
+				})
 			: defaultLog(session.user.id, character.id);
 
 	if (log.is_dm_log) redirect(302, `/dm-logs/${log.id}`);
@@ -45,10 +45,10 @@ export const load = async (event) => {
 export const actions = {
 	saveLog: async (event) => {
 		const session = await event.locals.session;
-		if (!session?.user) throw redirect(302, "/");
+		if (!session?.user) redirect(302, "/");
 
 		const character = await getCharacterCache(event.params.characterId || "", false);
-		if (!character) throw redirect(302, "/characters");
+		if (!character) redirect(302, "/characters");
 
 		const log = await getLog(event.params.logId || "", session.user.id, character.id);
 		if (event.params.logId !== "new" && !log.id) redirect(302, `/characters/${character.id}`);

@@ -25,7 +25,7 @@ export const load = async (event) => {
 export const actions = {
 	clearCaches: async (event) => {
 		const session = await event.locals.session;
-		if (!session?.user) throw redirect(302, "/");
+		if (!session?.user) redirect(302, "/");
 		return await clearUserCache(session.user.id);
 	}
 };

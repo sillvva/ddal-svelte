@@ -40,7 +40,7 @@ export const load = async (event) => {
 export const actions = {
 	saveLog: async (event) => {
 		const session = event.locals.session;
-		if (!session?.user) throw redirect(302, "/");
+		if (!session?.user) redirect(302, "/");
 
 		const log = await getLog(event.params.logId || "", session.user.id);
 		if (event.params.logId !== "new" && !log.id) redirect(302, `/dm-logs`);
