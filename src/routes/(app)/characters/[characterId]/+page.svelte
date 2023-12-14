@@ -1,11 +1,12 @@
 <script lang="ts">
 	import { applyAction, enhance } from "$app/forms";
+	import { pushState } from "$app/navigation";
 	import BreadCrumbs from "$lib/components/BreadCrumbs.svelte";
 	import Icon from "$lib/components/Icon.svelte";
 	import Items from "$lib/components/Items.svelte";
 	import Markdown from "$lib/components/Markdown.svelte";
 	import SearchResults from "$lib/components/SearchResults.svelte";
-	import { modal, pageLoader } from "$lib/store";
+	import { pageLoader } from "$lib/store";
 	import { slugify, sorter, stopWords, transition } from "$lib/utils";
 	import type { AppStore } from "$src/lib/types/schemas";
 	import MiniSearch from "minisearch";
@@ -47,7 +48,7 @@
 					show_date: log.is_dm_log && log.applied_date ? log.applied_date : log.date,
 					score: 0
 				};
-		  })
+			})
 		: [];
 
 	const indexed = logs.map((log) => ({
@@ -77,11 +78,13 @@
 
 	function triggerModal(log: (typeof results)[number]) {
 		if (log.description && !$app.character.descriptions) {
-			$modal = {
-				name: log.name,
-				description: log.description,
-				date: log.date
-			};
+			pushState("", {
+				modal: {
+					name: log.name,
+					description: log.description,
+					date: log.date
+				}
+			});
 		}
 	}
 </script>

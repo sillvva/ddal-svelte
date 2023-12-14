@@ -1,8 +1,8 @@
 <script lang="ts">
+	import { pushState } from "$app/navigation";
 	import { sorter } from "$lib/utils";
 	import type { MagicItem, StoryAward } from "@prisma/client";
 	import { twMerge } from "tailwind-merge";
-	import { modal } from "../store";
 	import Icon from "./Icon.svelte";
 	import SearchResults from "./SearchResults.svelte";
 
@@ -100,7 +100,7 @@
 					class:italic={formatting && isConsumable(mi.name)}
 					on:click={() => {
 						if (mi.description) {
-							$modal = { name: mi.name, description: mi.description };
+							pushState("", { modal: { name: mi.name, description: mi.description } });
 						}
 					}}
 					on:keypress={() => null}

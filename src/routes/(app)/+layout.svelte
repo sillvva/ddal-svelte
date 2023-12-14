@@ -1,13 +1,12 @@
 <script lang="ts">
 	import { browser } from "$app/environment";
-	import { afterNavigate, onNavigate } from "$app/navigation";
+	import { afterNavigate, onNavigate, pushState } from "$app/navigation";
 	import { navigating, page } from "$app/stores";
 	import Drawer from "$lib/components/Drawer.svelte";
 	import Icon from "$lib/components/Icon.svelte";
 	import Settings from "$lib/components/Settings.svelte";
 	import { pageLoader } from "$lib/store";
 	import Markdown from "$src/lib/components/Markdown.svelte";
-	import { modal } from "$src/lib/store";
 	import type { AppStore } from "$src/lib/types/schemas";
 	import { transition } from "$src/lib/utils.js";
 	import { signIn, signOut } from "@auth/sveltekit/client";
@@ -188,22 +187,22 @@
 
 <div
 	role="presentation"
-	class={twMerge("modal cursor-pointer !bg-black/50", $modal && "modal-open")}
-	on:click={() => ($modal = null)}
+	class={twMerge("modal cursor-pointer !bg-black/50", $page.state.modal && "modal-open")}
+	on:click={() => pushState("", { modal: null })}
 	on:keypress={() => null}
 >
-	{#if $modal}
+	{#if $page.state.modal}
 		<div
 			role="presentation"
 			class="modal-box relative cursor-default drop-shadow-lg"
 			on:click={(e) => e.stopPropagation()}
 			on:keypress={() => null}
 		>
-			<h3 class="cursor-text text-lg font-bold text-black dark:text-white">{$modal.name}</h3>
-			{#if $modal.date}
-				<p class="text-xs">{$modal.date.toLocaleString()}</p>
+			<h3 class="cursor-text text-lg font-bold text-black dark:text-white">{$page.state.modal.name}</h3>
+			{#if $page.state.modal.date}
+				<p class="text-xs">{$page.state.modal.date.toLocaleString()}</p>
 			{/if}
-			<Markdown content={$modal.description} class="sm:text-md cursor-text whitespace-pre-wrap pt-4 text-sm" />
+			<Markdown content={$page.state.modal.description} class="sm:text-md cursor-text whitespace-pre-wrap pt-4 text-sm" />
 		</div>
 	{/if}
 </div>

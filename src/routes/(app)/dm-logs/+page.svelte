@@ -1,11 +1,11 @@
 <script lang="ts">
 	import { applyAction, enhance } from "$app/forms";
+	import { pushState } from "$app/navigation";
 	import BreadCrumbs from "$lib/components/BreadCrumbs.svelte";
 	import Icon from "$lib/components/Icon.svelte";
 	import Items from "$lib/components/Items.svelte";
 	import SearchResults from "$lib/components/SearchResults.svelte";
 	import { sorter, stopWords } from "$lib/utils";
-	import { modal } from "$src/lib/store";
 	import type { AppStore } from "$src/lib/types/schemas";
 	import MiniSearch from "minisearch";
 	import { getContext } from "svelte";
@@ -32,7 +32,7 @@
 					...log.story_awards_gained.map((item) => item.name),
 					...log.story_awards_lost.map((item) => item.name)
 				].join(", ")
-		  }))
+			}))
 		: [];
 
 	const dmLogSearch = new MiniSearch({
@@ -62,11 +62,13 @@
 
 	function triggerModal(log: (typeof results)[number]) {
 		if (log.description) {
-			$modal = {
-				name: log.name,
-				description: log.description,
-				date: log.date
-			};
+			pushState("", {
+				modal: {
+					name: log.name,
+					description: log.description,
+					date: log.date
+				}
+			});
 		}
 	}
 </script>
