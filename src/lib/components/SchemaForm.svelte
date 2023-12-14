@@ -60,12 +60,12 @@
 </script>
 
 <script lang="ts" generics="TSchema extends Schema">
-	import { twMerge } from "tailwind-merge";
-
+	import { dev } from "$app/environment";
 	import { enhance } from "$app/forms";
 	import { beforeNavigate } from "$app/navigation";
 	import type { ActionResult } from "@sveltejs/kit";
 	import { createEventDispatcher } from "svelte";
+	import { twMerge } from "tailwind-merge";
 	import { SvelteMap, type DeepStringify, type Paths } from "../types/util";
 
 	const dispatch = createEventDispatcher<{
@@ -110,6 +110,7 @@
 	let elForm: HTMLFormElement;
 	let changes: Array<string> = [];
 	let saving = false;
+	let submitted = false;
 
 	async function checkChanges() {
 		// Check for changes
@@ -126,6 +127,7 @@
 		const result = await validate(schema, data);
 		if ("data" in result) {
 			dispatch("validate", { data: result.data, changes, errors, setError });
+			submitted = false;
 		} else if ("issues" in result) {
 			result.issues.forEach((issue) => {
 				if (!issue.path) issue.path = ["form"];
@@ -133,6 +135,7 @@
 					errors = errors.set(issue.path.join(".") as any, issue.message);
 				}
 			});
+			if (submitted && errors.size && !errors.get("form")) errors = errors.set("form", "Please fix the errors below");
 			dispatch("validate", { changes, errors, setError });
 		}
 	}
@@ -189,11 +192,13 @@
 
 		dispatch("before-submit");
 		saving = true;
+		submitted = true;
 
 		// Check for errors before submitting
 		await checkChanges();
 		if (errors.size) {
 			saving = false;
+			window.scrollTo({ top: 0, behavior: "smooth" });
 			return f.cancel();
 		}
 
@@ -219,4 +224,7 @@
 	}}
 >
 	<slot {errors} {saving} />
+	{#if dev}
+		<pre>{JSON.stringify(data, null, 2)}</pre>
+	{/if}
 </form>

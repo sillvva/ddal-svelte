@@ -3,18 +3,19 @@
 	import Icon from "$lib/components/Icon.svelte";
 	import SearchResults from "$lib/components/SearchResults.svelte";
 	import { slugify, sorter, stopWords, transition } from "$lib/utils";
-	import { lazy } from "$src/lib/actions";
-	import type { AppStore } from "$src/lib/store.js";
+	import type { AppStore } from "$src/lib/types/schemas";
 	import MiniSearch from "minisearch";
 	import { getContext, onMount } from "svelte";
+	import { queryParam, ssp } from "sveltekit-search-params";
 	import { twMerge } from "tailwind-merge";
 
 	export let data;
 
-	let search = "";
 	let characters = data.characters;
 	let loaded = false;
 	const app = getContext<AppStore>("app");
+	const s = queryParam("s", ssp.string(""));
+	$: search = $s || "";
 
 	onMount(() => {
 		setTimeout(() => (loaded = true), 1000);
@@ -101,22 +102,36 @@
 			</div>
 		</section>
 	{:else}
-		<div class="flex flex-wrap gap-2">
-			<div class="flex w-full gap-2 sm:max-w-md">
+		<div class="flex flex-wrap justify-between gap-2">
+			<div class="flex w-full gap-2 sm:max-w-lg">
 				<a href="/characters/new/edit" class="btn btn-primary btn-sm hidden sm:inline-flex">New Character</a>
 				<search class="min-w-0 flex-1">
 					<input
 						type="text"
 						placeholder="Search by name, race, class, items, etc."
-						bind:value={search}
-						class="input input-bordered w-full min-w-0 sm:input-sm md:w-80"
+						bind:value={$s}
+						class="no-script-hide input join-item input-bordered w-full min-w-0 flex-1 sm:input-sm md:w-80"
 					/>
+					<noscript>
+						<form class="join flex">
+							<input
+								type="text"
+								name="s"
+								placeholder="Search by name, race, class, items, etc."
+								bind:value={$s}
+								class="input join-item input-bordered w-full min-w-0 flex-1 sm:input-sm md:w-80"
+							/>
+							<button type="submit" class="btn btn-primary join-item sm:btn-sm">
+								<Icon src="magnify" class="w-6 sm:w-4" />
+							</button>
+						</form>
+					</noscript>
 				</search>
 				<a href="/characters/new/edit" class="btn btn-primary inline-flex sm:hidden" aria-label="New Character">
 					<Icon src="plus" class="inline w-6" />
 				</a>
 				<button
-					class={twMerge("btn inline-flex xs:hidden", $app.characters.magicItems && "btn-primary")}
+					class={twMerge("no-script-hide btn inline-flex xs:hidden", $app.characters.magicItems && "btn-primary")}
 					on:click={() => ($app.characters.magicItems = !$app.characters.magicItems)}
 					on:keypress={() => null}
 					on:keypress
@@ -126,37 +141,38 @@
 					<Icon src={$app.characters.magicItems ? "show" : "hide"} class="w-6" />
 				</button>
 			</div>
-			<div class="hidden flex-1 xs:block" />
-			{#if $app.characters.display != "grid"}
-				<button
-					class={twMerge("btn hidden sm:btn-sm xs:inline-flex", $app.characters.magicItems && "btn-primary")}
-					on:click={() => transition(() => ($app.characters.magicItems = !$app.characters.magicItems))}
-					on:keypress={() => null}
-					on:keypress
-					aria-label="Toggle Magic Items"
-					tabindex="0"
-				>
-					<Icon src={$app.characters.magicItems ? "show" : "hide"} class="w-6" />
-					<span class="hidden xs:inline-flex sm:hidden md:inline-flex">Magic Items</span>
-				</button>
-			{/if}
-			<div class="join hidden xs:flex">
-				<button
-					class={twMerge("btn join-item sm:btn-sm", $app.characters.display == "list" ? "btn-primary" : "hover:btn-primary")}
-					on:click={() => transition(() => ($app.characters.display = "list"))}
-					on:keypress
-					aria-label="List View"
-				>
-					<Icon src="format-list-text" class="w-4" />
-				</button>
-				<button
-					class={twMerge("btn join-item sm:btn-sm", $app.characters.display == "grid" ? "btn-primary" : "hover:btn-primary")}
-					on:click={() => transition(() => ($app.characters.display = "grid"))}
-					on:keypress
-					aria-label="Grid View"
-				>
-					<Icon src="view-grid" class="w-4" />
-				</button>
+			<div class="flex gap-2">
+				{#if $app.characters.display != "grid"}
+					<button
+						class={twMerge("btn hidden sm:btn-sm xs:inline-flex", $app.characters.magicItems && "btn-primary")}
+						on:click={() => transition(() => ($app.characters.magicItems = !$app.characters.magicItems))}
+						on:keypress={() => null}
+						on:keypress
+						aria-label="Toggle Magic Items"
+						tabindex="0"
+					>
+						<Icon src={$app.characters.magicItems ? "show" : "hide"} class="w-6" />
+						<span class="hidden xs:inline-flex sm:hidden md:inline-flex">Magic Items</span>
+					</button>
+				{/if}
+				<div class="no-script-hide join hidden xs:flex">
+					<button
+						class={twMerge("btn join-item sm:btn-sm", $app.characters.display == "list" ? "btn-primary" : "hover:btn-primary")}
+						on:click={() => transition(() => ($app.characters.display = "list"))}
+						on:keypress
+						aria-label="List View"
+					>
+						<Icon src="format-list-text" class="w-4" />
+					</button>
+					<button
+						class={twMerge("btn join-item sm:btn-sm", $app.characters.display == "grid" ? "btn-primary" : "hover:btn-primary")}
+						on:click={() => transition(() => ($app.characters.display = "grid"))}
+						on:keypress
+						aria-label="Grid View"
+					>
+						<Icon src="view-grid" class="w-4" />
+					</button>
+				</div>
 			</div>
 		</div>
 
@@ -189,12 +205,12 @@
 											{#if character.image_url}
 												{#key character.image_url}
 													<img
-														data-src={character.image_url}
+														src={character.image_url}
 														width={48}
 														height={48}
-														class="h-full w-full object-cover object-top transition-all hover:scale-125"
+														class="h-full w-full object-cover object-top"
 														alt={character.name}
-														use:lazy={{ rootMargin: "100px" }}
+														loading="lazy"
 													/>
 												{/key}
 											{:else}
@@ -280,10 +296,10 @@
 								<figure class="relative aspect-square overflow-hidden">
 									{#key character.image_url}
 										<img
-											data-src={character.image_url}
+											src={character.image_url}
 											alt={character.name}
 											class="h-full w-full object-cover object-top"
-											use:lazy={{ rootMargin: "100px" }}
+											loading="lazy"
 										/>
 									{/key}
 									{#if search.length >= 1 && indexed.length && miMatches}

@@ -2,9 +2,10 @@
 	import { browser } from "$app/environment";
 	import { enhance } from "$app/forms";
 	import { page } from "$app/stores";
+	import type { AppStore } from "$src/lib/types/schemas";
 	import { getContext, onMount } from "svelte";
 	import { twMerge } from "tailwind-merge";
-	import { pageLoader, type AppStore } from "../store";
+	import { pageLoader } from "../store";
 
 	export let open = false;
 	const app = getContext<AppStore>("app");

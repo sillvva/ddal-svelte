@@ -1,8 +1,11 @@
+import type { CookieStore } from "$src/server/cookie";
+import type { Character } from "@prisma/client";
 import {
 	array,
 	boolean,
 	custom,
 	date,
+	forward,
 	literal,
 	maxLength,
 	merge,
@@ -65,6 +68,26 @@ export const logSchema = object({
 	story_awards_lost: array(string([minLength(1, "Invalid Story Award ID")]))
 });
 
+export const dMLogSchema = (characters: Character[]) =>
+	object(logSchema.entries, [
+		custom((input) => input.is_dm_log, "Only DM logs can be saved here."),
+		forward(
+			custom(
+				(input) => !(!!input.characterId && !(characters || []).find((c) => c.id === input.characterId)),
+				"Character not found"
+			),
+			["characterId"]
+		),
+		forward(
+			custom((input) => !(!input.applied_date && !!input.characterId), "Date must be set if applied to a character"),
+			["applied_date"]
+		),
+		forward(
+			custom((input) => !(!input.characterId && !!input.applied_date), "Character must be selected if applied date is set"),
+			["characterId"]
+		)
+	]);
+
 const optionalURL = optional(union([string([url("Invalid URL")]), string([maxLength(0)])], "Invalid URL"), "");
 
 export type NewCharacterSchema = Output<typeof newCharacterSchema>;
@@ -79,3 +102,22 @@ export const newCharacterSchema = object({
 
 export type EditCharacterSchema = Output<typeof editCharacterSchema>;
 export const editCharacterSchema = merge([object({ id: string() }), newCharacterSchema]);
+
+export type App = {
+	settings: {
+		background: boolean;
+		theme: "system" | "dark" | "light";
+		mode: "dark" | "light";
+	};
+	character: {
+		descriptions: boolean;
+	};
+	characters: {
+		magicItems: boolean;
+		display: "list" | "grid";
+	};
+	dmLogs: {
+		sort: "asc" | "desc";
+	};
+};
+export type AppStore = CookieStore<App>;

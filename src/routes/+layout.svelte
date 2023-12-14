@@ -63,7 +63,7 @@
 	<img
 		src="/images/barovia-gate.webp"
 		alt="Background"
-		class="!fixed z-0 min-h-screen min-w-full object-cover object-center opacity-25 dark:opacity-20 print:hidden"
+		class="no-script-hide !fixed z-0 min-h-screen min-w-full object-cover object-center opacity-25 dark:opacity-20 print:hidden"
 	/>
 {/if}
 
@@ -75,6 +75,17 @@
 >
 	<slot />
 </div>
+
+<noscript>
+	<style>
+		.no-script-hide {
+			display: none;
+		}
+	</style>
+	<div class="fixed bottom-0 left-0 right-0 z-50 flex justify-center bg-red-800 p-2 text-center font-bold">
+		Without JavaScript enabled, several features of the app will be disabled.<br />Your experience will be downgraded.
+	</div>
+</noscript>
 
 {#if $pageLoader || $navigating}
 	<div

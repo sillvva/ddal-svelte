@@ -6,7 +6,7 @@
 	import ComboBox from "$src/lib/components/ComboBox.svelte";
 	import DateTimeInput from "$src/lib/components/DateTimeInput.svelte";
 	import Markdown from "$src/lib/components/Markdown.svelte";
-	import { logSchema, type LogSchemaIn } from "$src/lib/types/schemas";
+	import { dMLogSchema, type LogSchemaIn } from "$src/lib/types/schemas";
 	import { twMerge } from "tailwind-merge";
 
 	export let data;
@@ -31,6 +31,9 @@
 	}));
 
 	$: characterId = log.characterId || character?.id;
+	$: if (!character && log.characterId && data.characters.find((c) => c.id === log.characterId)) {
+		character = data.characters.find((c) => c.id === log.characterId);
+	}
 	$: values = {
 		...log,
 		characterId: characterId,
@@ -69,27 +72,12 @@
 
 <SchemaForm
 	action="?/saveLog"
-	schema={logSchema}
+	schema={dMLogSchema(data.characters)}
 	data={values}
 	let:errors
 	let:saving
-	on:validate={(event) => {
-		const { setError } = event.detail;
-
-		if (values.characterId && !(data.characters || []).find((c) => c.id === values.characterId)) {
-			setError("characterId", "Character not found");
-		}
-
-		if (character?.name && !values.applied_date) {
-			setError("applied_date", "Applied date is required if assigned character is entered");
-		}
-
-		if (values.applied_date && !values.characterId) {
-			setError("characterId", "Assigned character is required if applied date is entered");
-		}
-	}}
 	on:before-submit={() => {
-		if (log.applied_date?.getTime() === 0) {
+		if (new Date(log.applied_date || 0).getTime() === 0) {
 			log.applied_date = null;
 		}
 	}}
@@ -163,12 +151,12 @@
 				searchBy="value"
 				on:input={() => {
 					log.characterId = "";
-					log.applied_date = null;
+					// log.applied_date = null;
 				}}
 				on:select={(ev) => {
 					character = data.characters.find((c) => c.id === ev.detail);
 					log.characterId = character ? ev.detail.toString() : "";
-					log.applied_date = data.character && log.applied_date ? log.applied_date : null;
+					// log.applied_date = data.character && log.applied_date ? log.applied_date : null;
 					if (log.characterId) log.applied_date = log.applied_date || new Date();
 				}}
 			/>
@@ -294,7 +282,12 @@
 			<label for="description" class="label">
 				<span class="label-text">Notes</span>
 			</label>
-			<div class="tabs-boxed tabs rounded-b-none border-[1px] border-b-0 border-base-content [--tw-border-opacity:0.2]">
+			<div
+				class={twMerge(
+					"no-script-hide tabs-boxed tabs",
+					"rounded-b-none border-[1px] border-b-0 border-base-content [--tw-border-opacity:0.2]"
+				)}
+			>
 				<button type="button" class="tab" class:tab-active={!previews.description} on:click={() => (previews.description = false)}
 					>Edit</button
 				>
@@ -322,7 +315,7 @@
 				<span class="label-text-alt">Markdown Allowed</span>
 			</label>
 		</div>
-		<div class="col-span-12 flex flex-wrap gap-4">
+		<div class="no-script-hide col-span-12 flex flex-wrap gap-4">
 			<button
 				type="button"
 				class="btn btn-primary min-w-fit flex-1 sm:btn-sm sm:flex-none"
@@ -338,6 +331,9 @@
 				Add Story Award
 			</button>
 		</div>
+		<noscript class="col-span-12 flex flex-wrap justify-center gap-4 text-center font-bold">
+			<div>JavaScript is required to add/remove magic items and story awards.</div>
+		</noscript>
 		<div class="col-span-12 grid grid-cols-12 gap-4">
 			{#each magicItemsGained as item, index}
 				<div class="card col-span-12 h-[338px] bg-base-300/70 sm:col-span-6">
@@ -365,7 +361,7 @@
 							</div>
 							<button
 								type="button"
-								class="btn-danger btn mt-9"
+								class="btn-danger no-script-hide btn mt-9"
 								on:click={() => (magicItemsGained = magicItemsGained.filter((_, i) => i !== index))}
 							>
 								<Icon src="trash-can" class="w-6" />
@@ -419,7 +415,7 @@
 							</div>
 							<button
 								type="button"
-								class="btn-danger btn mt-9"
+								class="btn-danger no-script-hide btn mt-9"
 								on:click={() => (storyAwardsGained = storyAwardsGained.filter((_, i) => i !== index))}
 							>
 								<Icon src="trash-can" class="w-6" />

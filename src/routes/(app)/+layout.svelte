@@ -4,7 +4,8 @@
 	import Icon from "$lib/components/Icon.svelte";
 	import Settings from "$lib/components/Settings.svelte";
 	import Markdown from "$src/lib/components/Markdown.svelte";
-	import { modal, type AppStore } from "$src/lib/store";
+	import { modal } from "$src/lib/store";
+	import type { AppStore } from "$src/lib/types/schemas";
 	import { signIn, signOut } from "@auth/sveltekit/client";
 	import { getContext } from "svelte";
 	import { twMerge } from "tailwind-merge";
@@ -76,7 +77,7 @@
 						<li class="sm:hidden">
 							<span>{data.session?.user?.name}</span>
 						</li>
-						<li>
+						<li class="no-script-hide">
 							<button on:click={() => (settingsOpen = true)} aria-controls="settings">Settings</button>
 						</li>
 						<li>
