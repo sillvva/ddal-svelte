@@ -1,20 +1,37 @@
 <script lang="ts">
 	import { browser } from "$app/environment";
-	import { page } from "$app/stores";
+	import { afterNavigate, onNavigate } from "$app/navigation";
+	import { navigating, page } from "$app/stores";
 	import Drawer from "$lib/components/Drawer.svelte";
 	import Icon from "$lib/components/Icon.svelte";
 	import Settings from "$lib/components/Settings.svelte";
+	import { pageLoader } from "$lib/store";
 	import Markdown from "$src/lib/components/Markdown.svelte";
 	import { modal } from "$src/lib/store";
 	import type { AppStore } from "$src/lib/types/schemas";
+	import { transition } from "$src/lib/utils.js";
 	import { signIn, signOut } from "@auth/sveltekit/client";
 	import { getContext } from "svelte";
+	import { fade } from "svelte/transition";
 	import { twMerge } from "tailwind-merge";
 
 	export let data;
 	const app = getContext<AppStore>("app");
 
 	let settingsOpen = false;
+
+	afterNavigate(() => {
+		pageLoader.set(false);
+	});
+
+	onNavigate((navigation) => {
+		return new Promise((resolve) => {
+			transition(async () => {
+				resolve();
+				await navigation.complete;
+			});
+		});
+	});
 
 	$: if (browser) {
 		const hasCookie = document.cookie.includes("session-token");
@@ -47,6 +64,21 @@
 	<meta name="twitter:description" content={description.trim() || defaultDescription} />
 	<meta name="twitter:image" content={image?.trim() || defaultImage} />
 </svelte:head>
+
+{#if $pageLoader || $navigating}
+	<div
+		class="fixed inset-0 z-40 flex items-center justify-center bg-black/50"
+		in:fade={{ duration: 100, delay: 400 }}
+		out:fade={{ duration: 200 }}
+	/>
+	<div
+		class="fixed inset-0 z-50 flex items-center justify-center"
+		in:fade={{ duration: 200, delay: 500 }}
+		out:fade={{ duration: 200 }}
+	>
+		<span class="loading loading-spinner w-16 text-secondary" />
+	</div>
+{/if}
 
 <div class="relative flex min-h-screen flex-col">
 	<header

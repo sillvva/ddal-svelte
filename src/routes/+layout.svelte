@@ -1,31 +1,13 @@
 <script lang="ts">
 	import { dev } from "$app/environment";
-	import { afterNavigate, onNavigate } from "$app/navigation";
-	import { navigating } from "$app/stores";
-	import { pageLoader } from "$lib/store";
-	import { transition } from "$src/lib/utils";
 	import { cookieStore } from "$src/server/cookie";
 	import { setContext } from "svelte";
-	import { fade } from "svelte/transition";
 	import { twMerge } from "tailwind-merge";
 	import "../app.css";
 
 	export let data;
 
 	const app = setContext("app", cookieStore("app", data.app));
-
-	afterNavigate(() => {
-		pageLoader.set(false);
-	});
-
-	onNavigate((navigation) => {
-		return new Promise((resolve) => {
-			transition(async () => {
-				resolve();
-				await navigation.complete;
-			});
-		});
-	});
 </script>
 
 {#if !data.mobile && $app.settings.background}
@@ -55,21 +37,6 @@
 		Without JavaScript enabled, several features of the app will be disabled.<br />Your experience will be downgraded.
 	</div>
 </noscript>
-
-{#if $pageLoader || $navigating}
-	<div
-		class="fixed inset-0 z-40 flex items-center justify-center bg-black/50"
-		in:fade={{ duration: 100, delay: 400 }}
-		out:fade={{ duration: 200 }}
-	/>
-	<div
-		class="fixed inset-0 z-50 flex items-center justify-center"
-		in:fade={{ duration: 200, delay: 500 }}
-		out:fade={{ duration: 200 }}
-	>
-		<span class="loading loading-spinner w-16 text-secondary" />
-	</div>
-{/if}
 
 {#if dev}
 	<div class="fixed bottom-0 right-0 z-50">
