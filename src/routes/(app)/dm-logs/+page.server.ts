@@ -5,7 +5,7 @@ import { redirect } from "@sveltejs/kit";
 
 export const load = async (event) => {
 	const session = event.locals.session;
-	if (!session?.user?.name) throw signInRedirect(event.url);
+	if (!session?.user?.name) signInRedirect(event.url);
 
 	const logs = await getDMLogsCache(session.user.id, session.user.name);
 

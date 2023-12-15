@@ -9,7 +9,7 @@ export const load = async (event) => {
 	const parent = await event.parent();
 
 	const session = event.locals.session;
-	if (!session?.user?.name) throw signInRedirect(event.url);
+	if (!session?.user?.name) signInRedirect(event.url);
 
 	const dms = await getUserDMsWithLogsCache(session.user.id);
 	const dm = dms.find((dm) => dm.id == event.params.dmId);

@@ -10,7 +10,7 @@ export const load = async (event) => {
 	const parent = await event.parent();
 
 	const session = event.locals.session;
-	if (!session?.user?.name) throw signInRedirect(event.url);
+	if (!session?.user?.name) signInRedirect(event.url);
 
 	const log = await getDMLog(event.params.logId, session.user.id);
 	if (event.params.logId !== "new" && !log.id) error(404, "Log not found");

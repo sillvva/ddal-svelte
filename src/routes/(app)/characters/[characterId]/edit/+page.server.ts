@@ -8,7 +8,7 @@ export const load = async (event) => {
 	const parent = await event.parent();
 
 	const session = event.locals.session;
-	if (!session?.user) throw signInRedirect(event.url);
+	if (!session?.user) signInRedirect(event.url);
 
 	const character = {
 		name: "",

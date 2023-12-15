@@ -14,7 +14,7 @@ export const load = async (event) => {
 	if (!character) error(404, "Character not found");
 
 	const session = event.locals.session;
-	if (!session?.user) throw signInRedirect(event.url);
+	if (!session?.user) signInRedirect(event.url);
 
 	const log =
 		event.params.logId !== "new"
