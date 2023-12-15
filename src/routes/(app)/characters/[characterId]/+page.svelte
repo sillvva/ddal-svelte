@@ -87,6 +87,17 @@
 			});
 		}
 	}
+
+	function triggerImageModal() {
+		if (character.image_url) {
+			pushState("", {
+				modal: {
+					name: character.name,
+					imageUrl: character.image_url
+				}
+			});
+		}
+	}
 </script>
 
 {#if data.session?.user}
@@ -194,6 +205,12 @@
 						rel="noreferrer noopener"
 						class="mask mask-squircle mx-auto h-20 w-full bg-primary"
 						style:view-transition-name={slugify("image-" + character.id)}
+						on:click={(e) => {
+							if (!data.mobile) {
+								e.preventDefault();
+								triggerImageModal();
+							}
+						}}
 					>
 						<img src={character.image_url} class="h-full w-full object-cover object-top transition-all" alt={character.name} />
 					</a>
@@ -237,6 +254,12 @@
 							rel="noreferrer noopener"
 							class="mask mask-squircle mx-auto h-52 w-full bg-primary"
 							style:view-transition-name={slugify("image-" + character.id)}
+							on:click={(e) => {
+								if (!data.mobile) {
+									e.preventDefault();
+									triggerImageModal();
+								}
+							}}
 						>
 							<img src={character.image_url} class="h-full w-full object-cover object-top transition-all" alt={character.name} />
 						</a>

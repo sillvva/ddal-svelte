@@ -13,11 +13,17 @@ declare global {
 		// interface PageData {}
 		// interface Platform {}
 		interface PageState {
-			modal?: {
-				name: string;
-				description: string;
-				date?: Date;
-			} | null;
+			modal?:
+				| {
+						name: string;
+						description: string;
+						date?: Date;
+				  }
+				| {
+						name: string;
+						imageUrl: string;
+				  }
+				| null;
 		}
 	}
 
