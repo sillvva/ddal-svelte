@@ -24,8 +24,7 @@ declare global {
 						type: "image";
 						name: string;
 						imageUrl: string;
-				  }
-				| null;
+				  };
 		}
 	}
 
