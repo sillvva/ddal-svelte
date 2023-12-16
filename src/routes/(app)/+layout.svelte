@@ -1,6 +1,6 @@
 <script lang="ts">
 	import { browser } from "$app/environment";
-	import { afterNavigate, onNavigate, pushState } from "$app/navigation";
+	import { afterNavigate, onNavigate } from "$app/navigation";
 	import { navigating, page } from "$app/stores";
 	import Drawer from "$lib/components/Drawer.svelte";
 	import Icon from "$lib/components/Icon.svelte";
@@ -44,6 +44,12 @@
 	let defaultImage = "https://ddal.dekok.app/images/barovia-gate.webp";
 	$: image = $page.data.image || defaultImage;
 </script>
+
+<svelte:window
+	on:keydown={(e) => {
+		if ($page.state.modal && e.key === "Escape") history.back();
+	}}
+/>
 
 <svelte:head>
 	<title>{title.trim() || defaultTitle}</title>
@@ -188,8 +194,7 @@
 <div
 	role="presentation"
 	class={twMerge("modal cursor-pointer !bg-black/50", $page.state.modal && "modal-open")}
-	on:click={() => pushState("", { modal: null })}
-	on:keypress={() => null}
+	on:click={() => history.back()}
 >
 	{#if $page.state.modal?.type === "text"}
 		<div
@@ -207,6 +212,6 @@
 	{/if}
 
 	{#if $page.state.modal?.type === "image"}
-		<img src={$page.state.modal.imageUrl} alt={$page.state.modal.name} class="max-w-screen max-h-screen" />
+		<img src={$page.state.modal.imageUrl} alt={$page.state.modal.name} class="max-h-screen w-full max-w-screen-xs" />
 	{/if}
 </div>

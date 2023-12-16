@@ -154,7 +154,16 @@
 				<ul class="menu dropdown-content z-20 w-52 rounded-box bg-base-100 p-2 shadow">
 					{#if character.image_url}
 						<li class="xs:hidden">
-							<a href={character.image_url} target="_blank">View Image</a>
+							<a
+								href={character.image_url}
+								target="_blank"
+								on:click={(e) => {
+									if (!data.mobile) {
+										e.preventDefault();
+										triggerImageModal();
+									}
+								}}>View Image</a
+							>
 						</li>
 					{/if}
 					{#if myCharacter}
