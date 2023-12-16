@@ -64,6 +64,7 @@
 		if (log.description) {
 			pushState("", {
 				modal: {
+					type: "text",
 					name: log.name,
 					description: log.description,
 					date: log.date

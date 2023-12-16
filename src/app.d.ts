@@ -15,11 +15,13 @@ declare global {
 		interface PageState {
 			modal?:
 				| {
+						type: "text";
 						name: string;
 						description: string;
 						date?: Date;
 				  }
 				| {
+						type: "image";
 						name: string;
 						imageUrl: string;
 				  }

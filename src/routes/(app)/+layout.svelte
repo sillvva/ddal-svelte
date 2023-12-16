@@ -192,7 +192,7 @@
 	on:keypress={() => null}
 >
 	{#if $page.state.modal}
-		{#if "description" in $page.state.modal}
+		{#if $page.state.modal.type === "text"}
 			<div
 				role="presentation"
 				class="modal-box relative cursor-default drop-shadow-lg"
@@ -207,7 +207,7 @@
 			</div>
 		{/if}
 
-		{#if "imageUrl" in $page.state.modal}
+		{#if $page.state.modal.type === "image"}
 			<img src={$page.state.modal.imageUrl} alt={$page.state.modal.name} class="max-w-screen max-h-screen" />
 		{/if}
 	{/if}

@@ -100,7 +100,7 @@
 					class:italic={formatting && isConsumable(mi.name)}
 					on:click={() => {
 						if (mi.description) {
-							pushState("", { modal: { name: mi.name, description: mi.description } });
+							pushState("", { modal: { type: "text", name: mi.name, description: mi.description } });
 						}
 					}}
 					on:keypress={() => null}

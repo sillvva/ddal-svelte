@@ -80,6 +80,7 @@
 		if (log.description && !$app.character.descriptions) {
 			pushState("", {
 				modal: {
+					type: "text",
 					name: log.name,
 					description: log.description,
 					date: log.date
@@ -92,6 +93,7 @@
 		if (character.image_url) {
 			pushState("", {
 				modal: {
+					type: "image",
 					name: character.name,
 					imageUrl: character.image_url
 				}
