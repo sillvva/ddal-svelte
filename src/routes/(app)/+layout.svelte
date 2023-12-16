@@ -191,24 +191,22 @@
 	on:click={() => pushState("", { modal: null })}
 	on:keypress={() => null}
 >
-	{#if $page.state.modal}
-		{#if $page.state.modal.type === "text"}
-			<div
-				role="presentation"
-				class="modal-box relative cursor-default drop-shadow-lg"
-				on:click={(e) => e.stopPropagation()}
-				on:keypress={() => null}
-			>
-				<h3 class="cursor-text text-lg font-bold text-black dark:text-white">{$page.state.modal.name}</h3>
-				{#if $page.state.modal.date}
-					<p class="text-xs">{$page.state.modal.date.toLocaleString()}</p>
-				{/if}
-				<Markdown content={$page.state.modal.description} class="sm:text-md cursor-text whitespace-pre-wrap pt-4 text-sm" />
-			</div>
-		{/if}
+	{#if $page.state.modal?.type === "text"}
+		<div
+			role="presentation"
+			class="modal-box relative cursor-default drop-shadow-lg"
+			on:click={(e) => e.stopPropagation()}
+			on:keypress={() => null}
+		>
+			<h3 class="cursor-text text-lg font-bold text-black dark:text-white">{$page.state.modal.name}</h3>
+			{#if $page.state.modal.date}
+				<p class="text-xs">{$page.state.modal.date.toLocaleString()}</p>
+			{/if}
+			<Markdown content={$page.state.modal.description} class="sm:text-md cursor-text whitespace-pre-wrap pt-4 text-sm" />
+		</div>
+	{/if}
 
-		{#if $page.state.modal.type === "image"}
-			<img src={$page.state.modal.imageUrl} alt={$page.state.modal.name} class="max-w-screen max-h-screen" />
-		{/if}
+	{#if $page.state.modal?.type === "image"}
+		<img src={$page.state.modal.imageUrl} alt={$page.state.modal.name} class="max-w-screen max-h-screen" />
 	{/if}
 </div>
