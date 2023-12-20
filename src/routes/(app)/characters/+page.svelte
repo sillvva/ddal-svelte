@@ -47,7 +47,7 @@
 						return acc;
 					}, [] as string[])
 					.join(", ")
-		  }))
+			}))
 		: [];
 
 	$: {
@@ -199,7 +199,7 @@
 								<div class="hidden pr-0 transition-colors sm:block sm:pr-2">
 									<div class="avatar">
 										<div
-											class="mask mask-squircle h-12 w-12 bg-primary"
+											class="mask mask-squircle size-12 bg-primary"
 											style:view-transition-name={slugify("image-" + character.id)}
 										>
 											{#if character.image_url}
@@ -208,7 +208,7 @@
 														src={character.image_url}
 														width={48}
 														height={48}
-														class="h-full w-full object-cover object-top"
+														class="size-full object-cover object-top"
 														alt={character.name}
 														loading="lazy"
 													/>
@@ -221,7 +221,7 @@
 								</div>
 							{/if}
 							<div>
-								<div class="whitespace-pre-wrap text-base font-bold text-black dark:text-white sm:text-xl">
+								<div class="whitespace-pre-wrap text-base font-bold text-black sm:text-xl dark:text-white">
 									<span style:view-transition-name={loaded ? slugify("name-" + character.id) : undefined}>
 										<SearchResults text={character.name} {search} />
 									</span>
@@ -298,7 +298,7 @@
 										<img
 											src={character.image_url}
 											alt={character.name}
-											class="h-full w-full object-cover object-top"
+											class="size-full object-cover object-top"
 											loading="lazy"
 										/>
 									{/key}
@@ -312,10 +312,12 @@
 								</figure>
 								<div class="card-body text-center">
 									<div class="flex flex-col gap-1">
-										<h2 class="card-title block overflow-hidden text-ellipsis whitespace-nowrap text-sm dark:text-white">
+										<h2
+											class="card-title block overflow-hidden text-ellipsis whitespace-nowrap text-balance text-sm dark:text-white"
+										>
 											<SearchResults text={character.name} {search} />
 										</h2>
-										<p class="text-xs"><SearchResults text={`${character.race} ${character.class}`} {search} /></p>
+										<p class="text-balance text-xs"><SearchResults text={`${character.race} ${character.class}`} {search} /></p>
 										<p class="text-xs">Level {character.total_level} | Tier {character.tier}</p>
 									</div>
 								</div>

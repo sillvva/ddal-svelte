@@ -9,7 +9,7 @@
 	}
 
 	const title = "Adventurers League Log Sheet";
- 	const description = "A tool for tracking your Adventurers League characters and magic items.";
+	const description = "A tool for tracking your Adventurers League characters and magic items.";
 	const image = "https://ddal.dekok.app/images/barovia-gate.webp";
 </script>
 
@@ -32,8 +32,8 @@
 	<meta name="twitter:image" content={image} />
 </svelte:head>
 
-<main class="container relative mx-auto flex min-h-screen flex-col items-center justify-center p-4">
-	<h1 class="mb-20 text-center font-draconis text-4xl text-base-content dark:text-white lg:text-6xl">
+<main class="container relative mx-auto flex min-h-dvh flex-col items-center justify-center p-4">
+	<h1 class="mb-20 text-center font-draconis text-4xl text-base-content lg:text-6xl dark:text-white">
 		Adventurers League
 		<br />
 		Log Sheet

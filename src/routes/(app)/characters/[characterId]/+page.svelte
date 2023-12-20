@@ -223,13 +223,13 @@
 							}
 						}}
 					>
-						<img src={character.image_url} class="h-full w-full object-cover object-top transition-all" alt={character.name} />
+						<img src={character.image_url} class="size-full object-cover object-top transition-all" alt={character.name} />
 					</a>
 				</div>
 			{/if}
 			<div class="flex w-full flex-col">
 				<div class="mb-2 flex gap-4 xs:mb-0">
-					<h3 class="flex-1 py-2 font-vecna text-3xl font-bold text-black dark:text-white sm:py-0 sm:text-4xl">
+					<h3 class="flex-1 py-2 font-vecna text-3xl font-bold text-black sm:py-0 sm:text-4xl dark:text-white">
 						{character.name}
 					</h3>
 				</div>
@@ -272,7 +272,7 @@
 								}
 							}}
 						>
-							<img src={character.image_url} class="h-full w-full object-cover object-top transition-all" alt={character.name} />
+							<img src={character.image_url} class="size-full object-cover object-top transition-all" alt={character.name} />
 						</a>
 					</div>
 				{/if}

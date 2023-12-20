@@ -14,13 +14,13 @@
 	<img
 		src="/images/barovia-gate.webp"
 		alt="Background"
-		class="no-script-hide !fixed z-0 min-h-screen min-w-full object-cover object-center opacity-25 dark:opacity-20 print:hidden"
+		class="no-script-hide !fixed z-0 min-h-dvh min-w-full object-cover object-center opacity-25 print:hidden dark:opacity-20"
 	/>
 {/if}
 
 <div
 	class={twMerge(
-		"min-h-screen text-base-content",
+		"min-h-dvh text-base-content",
 		(data.mobile || !$app.settings.background) && "bg-base-200 dark:[--b1:27.35%_0.018_251.92]"
 	)}
 >
@@ -40,7 +40,7 @@
 
 {#if dev}
 	<div class="fixed bottom-0 right-0 z-50">
-		<div class="[&>*]:bg-lime-700 [&>*]:p-1 [&>*]:text-xs [&>*]:font-bold [&>*]:text-white">
+		<div class="*:bg-lime-700 *:p-1 *:text-xs *:font-bold *:text-white">
 			<div class="xs:hidden">xxs</div>
 			<div class="hidden xs:block sm:hidden">xs</div>
 			<div class="hidden sm:block md:hidden">sm</div>

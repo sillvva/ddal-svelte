@@ -122,7 +122,7 @@
 			{#if data.session?.user}
 				<div class="dropdown dropdown-end">
 					<div role="button" tabindex="0" class="flex h-full cursor-pointer items-center pl-4">
-						<div class="hidden items-center pr-4 text-black dark:text-white print:flex sm:flex">
+						<div class="hidden items-center pr-4 text-black print:flex sm:flex dark:text-white">
 							{data.session?.user?.name}
 						</div>
 						<div class="avatar">
@@ -212,6 +212,6 @@
 	{/if}
 
 	{#if $page.state.modal?.type === "image"}
-		<img src={$page.state.modal.imageUrl} alt={$page.state.modal.name} class="max-h-screen w-full max-w-screen-xs" />
+		<img src={$page.state.modal.imageUrl} alt={$page.state.modal.name} class="max-h-dvh w-full max-w-screen-xs" />
 	{/if}
 </div>
