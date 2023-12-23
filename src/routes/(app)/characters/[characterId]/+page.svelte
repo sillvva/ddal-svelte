@@ -7,8 +7,9 @@
 	import Markdown from "$lib/components/Markdown.svelte";
 	import SearchResults from "$lib/components/SearchResults.svelte";
 	import { pageLoader } from "$lib/store";
-	import { slugify, sorter, stopWords, transition } from "$lib/utils";
+	import { createTransition, slugify, sorter, stopWords } from "$lib/utils";
 	import type { AppStore } from "$src/lib/types/schemas";
+	import type { TransitionAction } from "$src/lib/types/util.js";
 	import MiniSearch from "minisearch";
 	import { getContext } from "svelte";
 	import { queryParam, ssp } from "sveltekit-search-params";
@@ -18,6 +19,8 @@
 	export let form;
 
 	const app = getContext<AppStore>("app");
+	const transition = getContext<TransitionAction>("transition");
+
 	const character = data.character;
 	const myCharacter = character.userId === data.session?.user?.id;
 
@@ -215,7 +218,7 @@
 						target="_blank"
 						rel="noreferrer noopener"
 						class="mask mask-squircle mx-auto h-20 w-full bg-primary"
-						style:view-transition-name={slugify("image-" + character.id)}
+						use:transition={slugify("image-" + character.id)}
 						on:click={(e) => {
 							if (!data.mobile) {
 								e.preventDefault();
@@ -264,7 +267,7 @@
 							target="_blank"
 							rel="noreferrer noopener"
 							class="mask mask-squircle mx-auto h-52 w-full bg-primary"
-							style:view-transition-name={slugify("image-" + character.id)}
+							use:transition={slugify("image-" + character.id)}
 							on:click={(e) => {
 								if (!data.mobile) {
 									e.preventDefault();
@@ -358,7 +361,7 @@
 			</a>
 			<button
 				class={twMerge("no-script-hide btn sm:hidden", $app.character.descriptions && "btn-primary")}
-				on:click={() => transition(() => ($app.character.descriptions = !$app.character.descriptions))}
+				on:click={() => createTransition(() => ($app.character.descriptions = !$app.character.descriptions))}
 				on:keypress
 				aria-label="Toggle Notes"
 				tabindex="0"
@@ -371,7 +374,7 @@
 		<div class="hidden flex-1 sm:block" />
 		<button
 			class={twMerge("no-script-hide btn hidden sm:btn-sm sm:inline-flex", $app.character.descriptions && "btn-primary")}
-			on:click={() => transition(() => ($app.character.descriptions = !$app.character.descriptions))}
+			on:click={() => createTransition(() => ($app.character.descriptions = !$app.character.descriptions))}
 			on:keypress
 			aria-label="Toggle Notes"
 			tabindex="0"
@@ -592,7 +595,7 @@
 					{#if log.description?.trim() || log.story_awards_gained.length > 0 || log.story_awards_lost.length > 0}
 						<tr
 							class={twMerge(!$app.character.descriptions && "hidden print:table-row")}
-							style:view-transition-name={slugify(`notes-${log.id}`)}
+							use:transition={slugify(`notes-${log.id}`)}
 						>
 							<td
 								colSpan={100}

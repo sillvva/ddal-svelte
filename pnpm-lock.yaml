@@ -106,6 +106,9 @@ devDependencies:
   sveltekit-search-params:
     specifier: ^1.1.1
     version: 1.1.1(@sveltejs/kit@2.0.6)(svelte@4.2.8)
+  sveltekit-view-transition:
+    specifier: ^0.5.3
+    version: 0.5.3(@sveltejs/kit@2.0.6)(svelte@4.2.8)
   tailwind-merge:
     specifier: ^2.2.0
     version: 2.2.0
@@ -2657,6 +2660,16 @@ packages:
     peerDependencies:
       '@sveltejs/kit': ^1.0.0 || ^2.0.0
       svelte: ^3.55.0 || ^4.0.0 || ^5.0.0
+    dependencies:
+      '@sveltejs/kit': 2.0.6(@sveltejs/vite-plugin-svelte@3.0.1)(svelte@4.2.8)(vite@5.0.10)
+      svelte: 4.2.8
+    dev: true
+
+  /sveltekit-view-transition@0.5.3(@sveltejs/kit@2.0.6)(svelte@4.2.8):
+    resolution: {integrity: sha512-qm8NDhpgIyiM3TJfO26iMGZWcWW3/GqsX9KctNWJaZ5ySdnkzZ4p74fkYWelaM2LLEpLDJqzouQLyrgnbszfVA==}
+    peerDependencies:
+      '@sveltejs/kit': ^1.20.4 || ^2.0.0
+      svelte: ^4.0.0 || ^5.0.0
     dependencies:
       '@sveltejs/kit': 2.0.6(@sveltejs/vite-plugin-svelte@3.0.1)(svelte@4.2.8)(vite@5.0.10)
       svelte: 4.2.8

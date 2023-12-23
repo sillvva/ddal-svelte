@@ -2,12 +2,16 @@
 	import { dev } from "$app/environment";
 	import { cookieStore } from "$src/server/cookie";
 	import { setContext } from "svelte";
+	import { setupViewTransition } from "sveltekit-view-transition";
 	import { twMerge } from "tailwind-merge";
 	import "../app.css";
 
 	export let data;
 
 	const app = setContext("app", cookieStore("app", data.app));
+
+	const { transition } = setupViewTransition();
+	setContext("transition", transition);
 </script>
 
 {#if !data.mobile && $app.settings.background}

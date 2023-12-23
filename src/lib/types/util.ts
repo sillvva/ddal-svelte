@@ -1,17 +1,18 @@
 import { error } from "@sveltejs/kit";
+import type { setupViewTransition } from "sveltekit-view-transition";
 
 export type DatesToStrings<T> = {
 	[K in keyof T]: T[K] extends Date
 		? string
 		: T[K] extends Date | null
-		? string | null
-		: T[K] extends Date | undefined
-		? string | undefined
-		: T[K] extends Date | null | undefined
-		? string | null | undefined
-		: T[K] extends object
-		? DatesToStrings<T[K]>
-		: T[K];
+			? string | null
+			: T[K] extends Date | undefined
+				? string | undefined
+				: T[K] extends Date | null | undefined
+					? string | null | undefined
+					: T[K] extends object
+						? DatesToStrings<T[K]>
+						: T[K];
 };
 
 export function handleSKitError(err: unknown) {
@@ -22,28 +23,30 @@ export function handleSKitError(err: unknown) {
 		typeof err.status == "number" &&
 		"body" in err &&
 		typeof err.body == "string"
-	)
+	) {
+		//@ts-expect-error Cannot use type narrowing on number range
 		error(err.status, err.body);
+	}
 }
 
 export type LimitDepth<T, TLength = 5, TDepth extends unknown[] = []> = TDepth["length"] extends TLength
 	? never
 	: T extends object
-	? {
-			[K in keyof T]: LimitDepth<T[K], TLength, [unknown, ...TDepth]>;
-	  }
-	: T extends Array<infer U>
-	? Array<LimitDepth<U, TLength, [unknown, ...TDepth]>>
-	: T;
+		? {
+				[K in keyof T]: LimitDepth<T[K], TLength, [unknown, ...TDepth]>;
+			}
+		: T extends Array<infer U>
+			? Array<LimitDepth<U, TLength, [unknown, ...TDepth]>>
+			: T;
 
 export type DeepStringify<T> = {
 	[K in keyof T]: T[K] extends Array<infer E>
 		? DeepStringify<Array<E>>
 		: T[K] extends Date | Blob | File
-		? string
-		: T[K] extends object
-		? DeepStringify<T[K]>
-		: string;
+			? string
+			: T[K] extends object
+				? DeepStringify<T[K]>
+				: string;
 };
 
 type Idx<T, K> = K extends keyof T ? T[K] : number extends keyof T ? (K extends `${number}` ? T[number] : never) : never;
@@ -55,14 +58,14 @@ type Prev = [never, 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17
 export type Paths<T, D extends number = 10> = [D] extends [never]
 	? never
 	: T extends object
-	? {
-			[K in keyof T]-?: K extends string | number
-				? DeepStringify<T>[K] extends string
-					? `${K}` | Join<K, Paths<T[K], Prev[D]>>
-					: Join<K, Paths<T[K], Prev[D]>>
-				: never;
-	  }[keyof T]
-	: "";
+		? {
+				[K in keyof T]-?: K extends string | number
+					? DeepStringify<T>[K] extends string
+						? `${K}` | Join<K, Paths<T[K], Prev[D]>>
+						: Join<K, Paths<T[K], Prev[D]>>
+					: never;
+			}[keyof T]
+		: "";
 
 export type PathValue<T, P extends Paths<T, 5>, TLength = 5> = P extends `${infer Key}.${infer Rest}`
 	? Rest extends Paths<Idx<LimitDepth<T, TLength>, Key>, 5>
@@ -116,3 +119,5 @@ export async function getSession(locals: App.Locals) {
 		}
 	};
 }
+
+export type TransitionAction = ReturnType<typeof setupViewTransition>["transition"];

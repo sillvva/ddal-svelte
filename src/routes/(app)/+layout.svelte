@@ -1,6 +1,6 @@
 <script lang="ts">
 	import { browser } from "$app/environment";
-	import { afterNavigate, onNavigate } from "$app/navigation";
+	import { afterNavigate } from "$app/navigation";
 	import { navigating, page } from "$app/stores";
 	import Drawer from "$lib/components/Drawer.svelte";
 	import Icon from "$lib/components/Icon.svelte";
@@ -8,7 +8,6 @@
 	import { pageLoader } from "$lib/store";
 	import Markdown from "$src/lib/components/Markdown.svelte";
 	import type { AppStore } from "$src/lib/types/schemas";
-	import { transition } from "$src/lib/utils.js";
 	import { signIn, signOut } from "@auth/sveltekit/client";
 	import { getContext } from "svelte";
 	import { fade } from "svelte/transition";
@@ -21,15 +20,6 @@
 
 	afterNavigate(() => {
 		pageLoader.set(false);
-	});
-
-	onNavigate((navigation) => {
-		return new Promise((resolve) => {
-			transition(async () => {
-				resolve();
-				await navigation.complete;
-			});
-		});
 	});
 
 	$: if (browser) {
