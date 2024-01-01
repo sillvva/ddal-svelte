@@ -10,7 +10,7 @@ export type LogData = Log & {
 	story_awards_gained: Array<StoryAward>;
 	story_awards_lost: Array<StoryAward>;
 };
-export async function getLog(logId: string, userId: string, characterId = "") {
+export async function getLog(logId: string, userId: string, characterId = ""): Promise<LogData> {
 	const log = (await prisma.log.findFirst({
 		where: { id: logId },
 		include: {
@@ -24,7 +24,7 @@ export async function getLog(logId: string, userId: string, characterId = "") {
 	return { ...log, dm: log.dm || defaultDM(userId) };
 }
 
-export async function getDMLog(logId: string, userId: string) {
+export async function getDMLog(logId: string, userId: string): Promise<LogData> {
 	const log = (await prisma.log.findFirst({
 		where: { id: logId, is_dm_log: true },
 		include: {
