@@ -1,10 +1,17 @@
 import { defaultLog } from "$lib/entities";
 import { prisma } from "$src/server/db";
+import type { DungeonMaster, Log, MagicItem, StoryAward } from "@prisma/client";
 import { cache } from "../cache";
 
-export type LogData = Exclude<Awaited<ReturnType<typeof getLog>>, null>;
+export type LogData = Log & {
+	dm: DungeonMaster | null;
+	magic_items_gained: Array<MagicItem>;
+	magic_items_lost: Array<MagicItem>;
+	story_awards_gained: Array<StoryAward>;
+	story_awards_lost: Array<StoryAward>;
+};
 export async function getLog(logId: string, userId: string, characterId = "") {
-	const log = await prisma.log.findFirst({
+	const log: LogData | null = await prisma.log.findFirst({
 		where: { id: logId },
 		include: {
 			dm: true,
@@ -17,9 +24,8 @@ export async function getLog(logId: string, userId: string, characterId = "") {
 	return log || defaultLog(userId, characterId);
 }
 
-export type DMLogData = Exclude<Awaited<ReturnType<typeof getDMLog>>, null>;
 export async function getDMLog(logId: string, userId: string) {
-	const log = await prisma.log.findFirst({
+	const log: LogData | null = await prisma.log.findFirst({
 		where: { id: logId, is_dm_log: true },
 		include: {
 			dm: true,

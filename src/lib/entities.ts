@@ -1,5 +1,6 @@
 import type { getCharacter } from "$src/server/data/characters";
-import type { DungeonMaster, Log, LogType, MagicItem, StoryAward } from "@prisma/client";
+import type { LogData } from "$src/server/data/logs";
+import type { DungeonMaster, Log, MagicItem, StoryAward } from "@prisma/client";
 import { sorter } from "./utils";
 
 export const getMagicItems = (
@@ -193,32 +194,34 @@ export const getLogsSummary = (
 	};
 };
 
-export const defaultLog = (userId: string, characterId = "") => ({
-	characterId: characterId,
-	id: "",
-	name: "",
-	description: "",
-	date: new Date(),
-	type: "game" as LogType,
-	created_at: new Date(),
-	experience: 0,
-	acp: 0,
-	tcp: 0,
-	level: 0,
-	gold: 0,
-	dtd: 0,
-	dungeonMasterId: "",
-	dm: {
+export function defaultLog(userId: string, characterId = ""): LogData {
+	return {
+		characterId: characterId,
 		id: "",
 		name: "",
-		DCI: null,
-		uid: "",
-		owner: userId
-	},
-	applied_date: null,
-	is_dm_log: !characterId,
-	magic_items_gained: [],
-	magic_items_lost: [],
-	story_awards_gained: [],
-	story_awards_lost: []
-});
+		description: "",
+		date: new Date(),
+		type: "game",
+		created_at: new Date(),
+		experience: 0,
+		acp: 0,
+		tcp: 0,
+		level: 0,
+		gold: 0,
+		dtd: 0,
+		dungeonMasterId: "",
+		dm: {
+			id: "",
+			name: "",
+			DCI: null,
+			uid: "",
+			owner: userId
+		},
+		applied_date: null,
+		is_dm_log: !characterId,
+		magic_items_gained: [],
+		magic_items_lost: [],
+		story_awards_gained: [],
+		story_awards_lost: []
+	};
+}
