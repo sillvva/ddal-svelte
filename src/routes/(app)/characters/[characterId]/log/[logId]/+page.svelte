@@ -3,7 +3,7 @@
 	import BreadCrumbs from "$lib/components/BreadCrumbs.svelte";
 	import Icon from "$lib/components/Icon.svelte";
 	import SchemaForm from "$lib/components/SchemaForm.svelte";
-	import { getMagicItems, getStoryAwards } from "$lib/entities";
+	import { defaultDM, getMagicItems, getStoryAwards } from "$lib/entities";
 	import { sorter } from "$lib/utils";
 	import ComboBox from "$src/lib/components/ComboBox.svelte";
 	import DateTimeInput from "$src/lib/components/DateTimeInput.svelte";
@@ -24,8 +24,7 @@
 		? getStoryAwards(character, { excludeDropped: true, lastLogId: log.id }).sort((a, b) => sorter(a.name, b.name))
 		: [];
 
-	const defaultDM = { id: "", name: "", DCI: null, uid: "", owner: data.user.id };
-	let dm = log.dm || defaultDM;
+	let dm = log.dm;
 	let previews = {
 		description: false
 	};
@@ -191,8 +190,8 @@
 								if (ev.detail) {
 									const updated = data.dms.find((dm) => dm.name === ev.detail);
 									if (updated) dm = updated;
-									else dm = { ...defaultDM, name: ev.detail.toString().trim(), DCI: dm.DCI };
-								} else dm = defaultDM;
+									else dm = { ...defaultDM(data.user.id), name: ev.detail.toString().trim(), DCI: dm.DCI };
+								} else dm = defaultDM(data.user.id);
 							}}
 						/>
 						{#if errors.has("dm.name")}
@@ -214,8 +213,8 @@
 								if (ev.detail) {
 									const updated = data.dms.find((dm) => dm.DCI === ev.detail);
 									if (updated) dm = updated;
-									else dm = { ...defaultDM, DCI: ev.detail.toString().trim(), name: dm.name };
-								} else dm = { ...(dm.name ? dm : defaultDM), DCI: null };
+									else dm = { ...defaultDM(data.user.id), DCI: ev.detail.toString().trim(), name: dm.name };
+								} else dm = { ...(dm.name ? dm : defaultDM(data.user.id)), DCI: null };
 							}}
 						/>
 						{#if errors.has("dm.DCI")}

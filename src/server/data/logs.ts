@@ -1,17 +1,17 @@
-import { defaultLog } from "$lib/entities";
+import { defaultDM, defaultLog } from "$lib/entities";
 import { prisma } from "$src/server/db";
 import type { DungeonMaster, Log, MagicItem, StoryAward } from "@prisma/client";
 import { cache } from "../cache";
 
 export type LogData = Log & {
-	dm: DungeonMaster | null;
+	dm: DungeonMaster;
 	magic_items_gained: Array<MagicItem>;
 	magic_items_lost: Array<MagicItem>;
 	story_awards_gained: Array<StoryAward>;
 	story_awards_lost: Array<StoryAward>;
 };
 export async function getLog(logId: string, userId: string, characterId = "") {
-	const log: LogData | null = await prisma.log.findFirst({
+	const log = (await prisma.log.findFirst({
 		where: { id: logId },
 		include: {
 			dm: true,
@@ -20,12 +20,12 @@ export async function getLog(logId: string, userId: string, characterId = "") {
 			story_awards_gained: true,
 			story_awards_lost: true
 		}
-	});
-	return log || defaultLog(userId, characterId);
+	})) || defaultLog(userId, characterId);
+	return { ...log, dm: log.dm || defaultDM(userId) };
 }
 
 export async function getDMLog(logId: string, userId: string) {
-	const log: LogData | null = await prisma.log.findFirst({
+	const log = (await prisma.log.findFirst({
 		where: { id: logId, is_dm_log: true },
 		include: {
 			dm: true,
@@ -34,8 +34,8 @@ export async function getDMLog(logId: string, userId: string) {
 			story_awards_gained: true,
 			story_awards_lost: true
 		}
-	});
-	return log || defaultLog(userId);
+	})) || defaultLog(userId);
+	return { ...log, dm: log.dm || defaultDM(userId) };
 }
 
 export type DMLogsData = Awaited<ReturnType<typeof getDMLogs>>;

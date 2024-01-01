@@ -194,6 +194,10 @@ export const getLogsSummary = (
 	};
 };
 
+export function defaultDM(userId: string): DungeonMaster {
+	return { id: "", name: "", DCI: null, uid: "", owner: userId };
+}
+
 export function defaultLog(userId: string, characterId = ""): LogData {
 	return {
 		characterId: characterId,
@@ -210,13 +214,7 @@ export function defaultLog(userId: string, characterId = ""): LogData {
 		gold: 0,
 		dtd: 0,
 		dungeonMasterId: "",
-		dm: {
-			id: "",
-			name: "",
-			DCI: null,
-			uid: "",
-			owner: userId
-		},
+		dm: defaultDM(userId),
 		applied_date: null,
 		is_dm_log: !characterId,
 		magic_items_gained: [],
