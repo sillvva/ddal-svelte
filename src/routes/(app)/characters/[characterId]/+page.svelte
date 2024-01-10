@@ -26,8 +26,9 @@
 
 	let deletingLog: string[] = [];
 
-	const s = queryParam("s", ssp.string(""));
+	const s = queryParam("s", ssp.string());
 	$: search = $s || "";
+
 	const logSearch = new MiniSearch({
 		fields: ["logName", "magicItems", "storyAwards"],
 		idField: "logId",

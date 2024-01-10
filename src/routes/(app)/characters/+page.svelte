@@ -18,7 +18,7 @@
 	const app = getContext<AppStore>("app");
 	const transition = getContext<TransitionAction>("transition");
 
-	const s = queryParam("s", ssp.string(""));
+	const s = queryParam("s", ssp.string());
 	$: search = $s || "";
 
 	onMount(() => {
@@ -113,7 +113,6 @@
 					<input
 						type="text"
 						placeholder="Search by name, race, class, items, etc."
-						bind:value={$s}
 						class="no-script-hide input join-item input-bordered w-full min-w-0 flex-1 sm:input-sm md:w-80"
 					/>
 					<noscript>
@@ -122,7 +121,6 @@
 								type="text"
 								name="s"
 								placeholder="Search by name, race, class, items, etc."
-								bind:value={$s}
 								class="input join-item input-bordered w-full min-w-0 flex-1 sm:input-sm md:w-80"
 							/>
 							<button type="submit" class="btn btn-primary join-item sm:btn-sm">
