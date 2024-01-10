@@ -5,7 +5,7 @@ import { redirect } from "@sveltejs/kit";
 
 export const load = async (event) => {
 	const session = event.locals.session;
-	if (!session?.user) throw signInRedirect(event.url);
+	if (!session?.user) signInRedirect(event.url);
 
 	const characters = await getCharactersCache(session.user.id).then(async (characters) => {
 		const charData: Array<CharacterData> = [];
@@ -25,7 +25,7 @@ export const load = async (event) => {
 export const actions = {
 	clearCaches: async (event) => {
 		const session = await event.locals.session;
-		if (!session?.user) throw redirect(302, "/");
+		if (!session?.user) redirect(302, "/");
 		return await clearUserCache(session.user.id);
 	}
 };

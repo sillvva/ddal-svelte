@@ -65,7 +65,7 @@
 			}}
 		>
 			<li class="rounded-lg">
-				<button class="h-full w-full">Clear Cache</button>
+				<button class="size-full">Clear Cache</button>
 			</li>
 		</form>
 	</ul>

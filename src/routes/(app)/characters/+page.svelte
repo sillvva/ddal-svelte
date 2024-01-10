@@ -2,8 +2,9 @@
 	import BreadCrumbs from "$lib/components/BreadCrumbs.svelte";
 	import Icon from "$lib/components/Icon.svelte";
 	import SearchResults from "$lib/components/SearchResults.svelte";
-	import { slugify, sorter, stopWords, transition } from "$lib/utils";
+	import { createTransition, slugify, sorter, stopWords } from "$lib/utils";
 	import type { AppStore } from "$src/lib/types/schemas";
+	import type { TransitionAction } from "$src/lib/types/util.js";
 	import MiniSearch from "minisearch";
 	import { getContext, onMount } from "svelte";
 	import { queryParam, ssp } from "sveltekit-search-params";
@@ -13,8 +14,11 @@
 
 	let characters = data.characters;
 	let loaded = false;
+
 	const app = getContext<AppStore>("app");
-	const s = queryParam("s", ssp.string(""));
+	const transition = getContext<TransitionAction>("transition");
+
+	const s = queryParam("s", ssp.string());
 	$: search = $s || "";
 
 	onMount(() => {
@@ -47,7 +51,7 @@
 						return acc;
 					}, [] as string[])
 					.join(", ")
-		  }))
+			}))
 		: [];
 
 	$: {
@@ -145,7 +149,7 @@
 				{#if $app.characters.display != "grid"}
 					<button
 						class={twMerge("btn hidden sm:btn-sm xs:inline-flex", $app.characters.magicItems && "btn-primary")}
-						on:click={() => transition(() => ($app.characters.magicItems = !$app.characters.magicItems))}
+						on:click={() => createTransition(() => ($app.characters.magicItems = !$app.characters.magicItems))}
 						on:keypress={() => null}
 						on:keypress
 						aria-label="Toggle Magic Items"
@@ -158,7 +162,7 @@
 				<div class="no-script-hide join hidden xs:flex">
 					<button
 						class={twMerge("btn join-item sm:btn-sm", $app.characters.display == "list" ? "btn-primary" : "hover:btn-primary")}
-						on:click={() => transition(() => ($app.characters.display = "list"))}
+						on:click={() => createTransition(() => ($app.characters.display = "list"))}
 						on:keypress
 						aria-label="List View"
 					>
@@ -166,7 +170,7 @@
 					</button>
 					<button
 						class={twMerge("btn join-item sm:btn-sm", $app.characters.display == "grid" ? "btn-primary" : "hover:btn-primary")}
-						on:click={() => transition(() => ($app.characters.display = "grid"))}
+						on:click={() => createTransition(() => ($app.characters.display = "grid"))}
 						on:keypress
 						aria-label="Grid View"
 					>
@@ -176,7 +180,7 @@
 			</div>
 		</div>
 
-		<div style:view-transition-name={slugify(`characters`)}>
+		<div>
 			<div class={twMerge("w-full overflow-x-auto rounded-lg", $app.characters.display == "grid" && "block xs:hidden")}>
 				<div
 					class={twMerge(
@@ -198,17 +202,14 @@
 							{#if !data.mobile}
 								<div class="hidden pr-0 transition-colors sm:block sm:pr-2">
 									<div class="avatar">
-										<div
-											class="mask mask-squircle h-12 w-12 bg-primary"
-											style:view-transition-name={slugify("image-" + character.id)}
-										>
+										<div class="mask mask-squircle size-12 bg-primary" use:transition={slugify("image-" + character.id)}>
 											{#if character.image_url}
 												{#key character.image_url}
 													<img
 														src={character.image_url}
 														width={48}
 														height={48}
-														class="h-full w-full object-cover object-top"
+														class="size-full object-cover object-top"
 														alt={character.name}
 														loading="lazy"
 													/>
@@ -221,13 +222,23 @@
 								</div>
 							{/if}
 							<div>
-								<div class="whitespace-pre-wrap text-base font-bold text-black dark:text-white sm:text-xl">
-									<span style:view-transition-name={loaded ? slugify("name-" + character.id) : undefined}>
+								<div class="whitespace-pre-wrap text-base font-bold text-black sm:text-xl dark:text-white">
+									<span
+										use:transition={{
+											name: slugify("name-" + character.id),
+											shouldApply: loaded
+										}}
+									>
 										<SearchResults text={character.name} {search} />
 									</span>
 								</div>
 								<div class="whitespace-pre-wrap text-xs sm:text-sm">
-									<p style:view-transition-name={loaded ? slugify("details-" + character.id) : undefined}>
+									<p
+										use:transition={{
+											name: slugify("details-" + character.id),
+											shouldApply: loaded
+										}}
+									>
 										<span class="inline pr-1 sm:hidden">Level {character.total_level}</span><SearchResults
 											text={character.race}
 											{search}
@@ -236,7 +247,12 @@
 									</p>
 								</div>
 								<div class="mb-2 block text-xs sm:hidden">
-									<p style:view-transition-name={loaded ? slugify("campaign-" + character.id) : undefined}>
+									<p
+										use:transition={{
+											name: slugify("campaign-" + character.id),
+											shouldApply: loaded
+										}}
+									>
 										<SearchResults text={character.campaign} {search} />
 									</p>
 								</div>
@@ -248,16 +264,29 @@
 								{/if}
 							</div>
 							<div class="hidden transition-colors sm:flex">
-								<span style:view-transition-name={loaded ? slugify("campaign-" + character.id) : undefined}>
+								<span
+									use:transition={{
+										name: slugify("campaign-" + character.id),
+										shouldApply: loaded
+									}}
+								>
 									<SearchResults text={character.campaign} {search} />
 								</span>
 							</div>
 							<div class="hidden justify-center transition-colors sm:flex">
-								<span style:view-transition-name={loaded ? slugify("tier-" + character.id) : undefined}>{character.tier}</span>
+								<span
+									use:transition={{
+										name: slugify("tier-" + character.id),
+										shouldApply: loaded
+									}}>{character.tier}</span
+								>
 							</div>
 							<div class="hidden justify-center transition-colors sm:flex">
-								<span style:view-transition-name={loaded ? slugify("level-" + character.id) : undefined}
-									>{character.total_level}</span
+								<span
+									use:transition={{
+										name: slugify("level-" + character.id),
+										shouldApply: loaded
+									}}>{character.total_level}</span
 								>
 							</div>
 						</a>
@@ -291,14 +320,14 @@
 							<a
 								href={`/characters/${character.id}`}
 								class="card card-compact bg-base-100 shadow-xl transition-transform duration-200 motion-safe:hover:scale-105"
-								style:view-transition-name={slugify("image-" + character.id)}
+								use:transition={slugify("image-" + character.id)}
 							>
 								<figure class="relative aspect-square overflow-hidden">
 									{#key character.image_url}
 										<img
 											src={character.image_url}
 											alt={character.name}
-											class="h-full w-full object-cover object-top"
+											class="size-full object-cover object-top"
 											loading="lazy"
 										/>
 									{/key}
@@ -312,10 +341,12 @@
 								</figure>
 								<div class="card-body text-center">
 									<div class="flex flex-col gap-1">
-										<h2 class="card-title block overflow-hidden text-ellipsis whitespace-nowrap text-sm dark:text-white">
+										<h2
+											class="card-title block overflow-hidden text-ellipsis whitespace-nowrap text-balance text-sm dark:text-white"
+										>
 											<SearchResults text={character.name} {search} />
 										</h2>
-										<p class="text-xs"><SearchResults text={`${character.race} ${character.class}`} {search} /></p>
+										<p class="text-balance text-xs"><SearchResults text={`${character.race} ${character.class}`} {search} /></p>
 										<p class="text-xs">Level {character.total_level} | Tier {character.tier}</p>
 									</div>
 								</div>

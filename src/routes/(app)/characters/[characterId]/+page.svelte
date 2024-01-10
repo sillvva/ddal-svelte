@@ -1,13 +1,15 @@
 <script lang="ts">
 	import { applyAction, enhance } from "$app/forms";
+	import { pushState } from "$app/navigation";
 	import BreadCrumbs from "$lib/components/BreadCrumbs.svelte";
 	import Icon from "$lib/components/Icon.svelte";
 	import Items from "$lib/components/Items.svelte";
 	import Markdown from "$lib/components/Markdown.svelte";
 	import SearchResults from "$lib/components/SearchResults.svelte";
-	import { modal, pageLoader } from "$lib/store";
-	import { slugify, sorter, stopWords, transition } from "$lib/utils";
+	import { pageLoader } from "$lib/store";
+	import { createTransition, slugify, sorter, stopWords } from "$lib/utils";
 	import type { AppStore } from "$src/lib/types/schemas";
+	import type { TransitionAction } from "$src/lib/types/util.js";
 	import MiniSearch from "minisearch";
 	import { getContext } from "svelte";
 	import { queryParam, ssp } from "sveltekit-search-params";
@@ -17,13 +19,16 @@
 	export let form;
 
 	const app = getContext<AppStore>("app");
+	const transition = getContext<TransitionAction>("transition");
+
 	const character = data.character;
 	const myCharacter = character.userId === data.session?.user?.id;
 
 	let deletingLog: string[] = [];
 
-	const s = queryParam("s", ssp.string(""));
+	const s = queryParam("s", ssp.string());
 	$: search = $s || "";
+
 	const logSearch = new MiniSearch({
 		fields: ["logName", "magicItems", "storyAwards"],
 		idField: "logId",
@@ -47,7 +52,7 @@
 					show_date: log.is_dm_log && log.applied_date ? log.applied_date : log.date,
 					score: 0
 				};
-		  })
+			})
 		: [];
 
 	const indexed = logs.map((log) => ({
@@ -77,11 +82,26 @@
 
 	function triggerModal(log: (typeof results)[number]) {
 		if (log.description && !$app.character.descriptions) {
-			$modal = {
-				name: log.name,
-				description: log.description,
-				date: log.date
-			};
+			pushState("", {
+				modal: {
+					type: "text",
+					name: log.name,
+					description: log.description,
+					date: log.date
+				}
+			});
+		}
+	}
+
+	function triggerImageModal() {
+		if (character.image_url) {
+			pushState("", {
+				modal: {
+					type: "image",
+					name: character.name,
+					imageUrl: character.image_url
+				}
+			});
 		}
 	}
 </script>
@@ -138,7 +158,16 @@
 				<ul class="menu dropdown-content z-20 w-52 rounded-box bg-base-100 p-2 shadow">
 					{#if character.image_url}
 						<li class="xs:hidden">
-							<a href={character.image_url} target="_blank">View Image</a>
+							<a
+								href={character.image_url}
+								target="_blank"
+								on:click={(e) => {
+									if (!data.mobile) {
+										e.preventDefault();
+										triggerImageModal();
+									}
+								}}>View Image</a
+							>
 						</li>
 					{/if}
 					{#if myCharacter}
@@ -190,15 +219,21 @@
 						target="_blank"
 						rel="noreferrer noopener"
 						class="mask mask-squircle mx-auto h-20 w-full bg-primary"
-						style:view-transition-name={slugify("image-" + character.id)}
+						use:transition={slugify("image-" + character.id)}
+						on:click={(e) => {
+							if (!data.mobile) {
+								e.preventDefault();
+								triggerImageModal();
+							}
+						}}
 					>
-						<img src={character.image_url} class="h-full w-full object-cover object-top transition-all" alt={character.name} />
+						<img src={character.image_url} class="size-full object-cover object-top transition-all" alt={character.name} />
 					</a>
 				</div>
 			{/if}
 			<div class="flex w-full flex-col">
 				<div class="mb-2 flex gap-4 xs:mb-0">
-					<h3 class="flex-1 py-2 font-vecna text-3xl font-bold text-black dark:text-white sm:py-0 sm:text-4xl">
+					<h3 class="flex-1 py-2 font-vecna text-3xl font-bold text-black sm:py-0 sm:text-4xl dark:text-white">
 						{character.name}
 					</h3>
 				</div>
@@ -233,9 +268,15 @@
 							target="_blank"
 							rel="noreferrer noopener"
 							class="mask mask-squircle mx-auto h-52 w-full bg-primary"
-							style:view-transition-name={slugify("image-" + character.id)}
+							use:transition={slugify("image-" + character.id)}
+							on:click={(e) => {
+								if (!data.mobile) {
+									e.preventDefault();
+									triggerImageModal();
+								}
+							}}
 						>
-							<img src={character.image_url} class="h-full w-full object-cover object-top transition-all" alt={character.name} />
+							<img src={character.image_url} class="size-full object-cover object-top transition-all" alt={character.name} />
 						</a>
 					</div>
 				{/if}
@@ -321,7 +362,7 @@
 			</a>
 			<button
 				class={twMerge("no-script-hide btn sm:hidden", $app.character.descriptions && "btn-primary")}
-				on:click={() => transition(() => ($app.character.descriptions = !$app.character.descriptions))}
+				on:click={() => createTransition(() => ($app.character.descriptions = !$app.character.descriptions))}
 				on:keypress
 				aria-label="Toggle Notes"
 				tabindex="0"
@@ -334,7 +375,7 @@
 		<div class="hidden flex-1 sm:block" />
 		<button
 			class={twMerge("no-script-hide btn hidden sm:btn-sm sm:inline-flex", $app.character.descriptions && "btn-primary")}
-			on:click={() => transition(() => ($app.character.descriptions = !$app.character.descriptions))}
+			on:click={() => createTransition(() => ($app.character.descriptions = !$app.character.descriptions))}
 			on:keypress
 			aria-label="Toggle Notes"
 			tabindex="0"
@@ -555,7 +596,7 @@
 					{#if log.description?.trim() || log.story_awards_gained.length > 0 || log.story_awards_lost.length > 0}
 						<tr
 							class={twMerge(!$app.character.descriptions && "hidden print:table-row")}
-							style:view-transition-name={slugify(`notes-${log.id}`)}
+							use:transition={slugify(`notes-${log.id}`)}
 						>
 							<td
 								colSpan={100}

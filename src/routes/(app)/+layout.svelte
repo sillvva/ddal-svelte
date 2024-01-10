@@ -1,20 +1,79 @@
 <script lang="ts">
-	import { page } from "$app/stores";
+	import { browser } from "$app/environment";
+	import { afterNavigate } from "$app/navigation";
+	import { navigating, page } from "$app/stores";
 	import Drawer from "$lib/components/Drawer.svelte";
 	import Icon from "$lib/components/Icon.svelte";
 	import Settings from "$lib/components/Settings.svelte";
+	import { pageLoader } from "$lib/store";
 	import Markdown from "$src/lib/components/Markdown.svelte";
-	import { modal } from "$src/lib/store";
 	import type { AppStore } from "$src/lib/types/schemas";
 	import { signIn, signOut } from "@auth/sveltekit/client";
 	import { getContext } from "svelte";
+	import { fade } from "svelte/transition";
 	import { twMerge } from "tailwind-merge";
 
 	export let data;
 	const app = getContext<AppStore>("app");
 
 	let settingsOpen = false;
+
+	afterNavigate(() => {
+		pageLoader.set(false);
+	});
+
+	$: if (browser) {
+		const hasCookie = document.cookie.includes("session-token");
+		if (!$page.data.session?.user && hasCookie) location.reload();
+	}
+
+	let defaultTitle = "Adventurers League Log Sheet";
+	$: title = $page.data.title ? $page.data.title + " - " + defaultTitle : defaultTitle;
+	let defaultDescription = "A tool for tracking your Adventurers League characters and magic items.";
+	$: description = $page.data.description || defaultDescription;
+	let defaultImage = "https://ddal.dekok.app/images/barovia-gate.webp";
+	$: image = $page.data.image || defaultImage;
 </script>
+
+<svelte:window
+	on:keydown={(e) => {
+		if ($page.state.modal && e.key === "Escape") history.back();
+	}}
+/>
+
+<svelte:head>
+	<title>{title.trim() || defaultTitle}</title>
+	<meta name="title" content={title.trim() || defaultTitle} />
+	<meta name="description" content={description.trim() || defaultDescription} />
+	<meta property="og:title" content={title.trim() || defaultTitle} />
+	<meta property="og:site_name" content="Adventurers League Log Sheet" />
+	<meta property="og:description" content={description.trim() || defaultDescription} />
+	<meta property="og:image" content={image?.trim() || defaultImage} />
+	<meta property="og:type" content="website" />
+	<meta property="og:locale" content="en_US" />
+	<meta name="twitter:card" content="summary_large_image" />
+	<meta name="twitter:creator" content="@sillvvasensei" />
+	<meta name="twitter:creator:id" content="1006748654391169029" />
+	<meta name="twitter:title" content={title.trim() || defaultTitle} />
+	<meta name="twitter:site" content="Adventurers League Log Sheet" />
+	<meta name="twitter:description" content={description.trim() || defaultDescription} />
+	<meta name="twitter:image" content={image?.trim() || defaultImage} />
+</svelte:head>
+
+{#if $pageLoader || $navigating}
+	<div
+		class="fixed inset-0 z-40 flex items-center justify-center bg-black/50"
+		in:fade={{ duration: 100, delay: 400 }}
+		out:fade={{ duration: 200 }}
+	/>
+	<div
+		class="fixed inset-0 z-50 flex items-center justify-center"
+		in:fade={{ duration: 200, delay: 500 }}
+		out:fade={{ duration: 200 }}
+	>
+		<span class="loading loading-spinner w-16 text-secondary" />
+	</div>
+{/if}
 
 <div class="relative flex min-h-screen flex-col">
 	<header
@@ -53,7 +112,7 @@
 			{#if data.session?.user}
 				<div class="dropdown dropdown-end">
 					<div role="button" tabindex="0" class="flex h-full cursor-pointer items-center pl-4">
-						<div class="hidden items-center pr-4 text-black dark:text-white print:flex sm:flex">
+						<div class="hidden items-center pr-4 text-black print:flex sm:flex dark:text-white">
 							{data.session?.user?.name}
 						</div>
 						<div class="avatar">
@@ -124,22 +183,25 @@
 
 <div
 	role="presentation"
-	class={twMerge("modal cursor-pointer !bg-black/50", $modal && "modal-open")}
-	on:click={() => ($modal = null)}
-	on:keypress={() => null}
+	class={twMerge("modal cursor-pointer !bg-black/50", $page.state.modal && "modal-open")}
+	on:click={() => history.back()}
 >
-	{#if $modal}
+	{#if $page.state.modal?.type === "text"}
 		<div
 			role="presentation"
 			class="modal-box relative cursor-default drop-shadow-lg"
 			on:click={(e) => e.stopPropagation()}
 			on:keypress={() => null}
 		>
-			<h3 class="cursor-text text-lg font-bold text-black dark:text-white">{$modal.name}</h3>
-			{#if $modal.date}
-				<p class="text-xs">{$modal.date.toLocaleString()}</p>
+			<h3 class="cursor-text text-lg font-bold text-black dark:text-white">{$page.state.modal.name}</h3>
+			{#if $page.state.modal.date}
+				<p class="text-xs">{$page.state.modal.date.toLocaleString()}</p>
 			{/if}
-			<Markdown content={$modal.description} class="sm:text-md cursor-text whitespace-pre-wrap pt-4 text-sm" />
+			<Markdown content={$page.state.modal.description} class="sm:text-md cursor-text whitespace-pre-wrap pt-4 text-sm" />
 		</div>
+	{/if}
+
+	{#if $page.state.modal?.type === "image"}
+		<img src={$page.state.modal.imageUrl} alt={$page.state.modal.name} class="max-h-dvh w-full max-w-screen-xs" />
 	{/if}
 </div>

@@ -12,6 +12,20 @@ declare global {
 		}
 		// interface PageData {}
 		// interface Platform {}
+		interface PageState {
+			modal?:
+				| {
+						type: "text";
+						name: string;
+						description: string;
+						date?: Date;
+				  }
+				| {
+						type: "image";
+						name: string;
+						imageUrl: string;
+				  };
+		}
 	}
 
 	interface CustomSession {

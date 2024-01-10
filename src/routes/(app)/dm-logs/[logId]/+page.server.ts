@@ -10,11 +10,11 @@ export const load = async (event) => {
 	const parent = await event.parent();
 
 	const session = event.locals.session;
-	if (!session?.user?.name) throw signInRedirect(event.url);
+	if (!session?.user?.name) signInRedirect(event.url);
 
 	const log = await getDMLog(event.params.logId, session.user.id);
-	if (event.params.logId !== "new" && !log.id) throw error(404, "Log not found");
-	if (!log.is_dm_log) throw redirect(302, `/characters/${log.characterId}/log/${log.id}`);
+	if (event.params.logId !== "new" && !log.id) error(404, "Log not found");
+	if (!log.is_dm_log) redirect(302, `/characters/${log.characterId}/log/${log.id}`);
 
 	log.dm = log.dm?.name
 		? log.dm
@@ -40,10 +40,10 @@ export const load = async (event) => {
 export const actions = {
 	saveLog: async (event) => {
 		const session = event.locals.session;
-		if (!session?.user) throw redirect(302, "/");
+		if (!session?.user) redirect(302, "/");
 
 		const log = await getLog(event.params.logId || "", session.user.id);
-		if (event.params.logId !== "new" && !log.id) throw redirect(302, `/dm-logs`);
+		if (event.params.logId !== "new" && !log.id) redirect(302, `/dm-logs`);
 
 		try {
 			const formData = await event.request.formData();
@@ -66,7 +66,7 @@ export const actions = {
 			}
 
 			const result = await saveLog(logData, session.user);
-			if (result && result.id) throw redirect(302, `/dm-logs/`);
+			if (result && result.id) redirect(302, `/dm-logs/`);
 
 			return result;
 		} catch (error) {

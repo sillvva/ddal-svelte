@@ -1,23 +1,11 @@
-import { equal, minLength, object, parse, regex, string, undefinedType, url, ValiError } from "valibot";
+import { parse, ValiError } from "valibot";
+import { envSchema } from "./schemas";
 
 export const checkEnv = async () => {
 	try {
 		const env = await import("$env/static/private");
 
-		const envSchema = object({
-			DATABASE_URL: string([url()]),
-			REDIS_URL: string([regex(/^rediss?:\/\//, "Must be a valid Redis URL")]),
-			AUTH_SECRET: string([minLength(10, "Must be a string of at least 10 characters")]),
-			AUTH_URL: string([url()]),
-			AUTH_TRUST_HOST: env["AUTH_URL"]?.includes("localhost")
-				? string([equal("true", "Required. Must be 'true'")])
-				: undefinedType("For localhost only"),
-			GOOGLE_CLIENT_ID: string([minLength(1, "Required")]),
-			GOOGLE_CLIENT_SECRET: string([minLength(1, "Required")]),
-			CRON_CHARACTER_ID: string([minLength(1, "Required")])
-		});
-
-		return parse(envSchema, {
+		return parse(envSchema(env), {
 			...env,
 			AUTH_TRUST_HOST: env["AUTH_URL"]?.includes("localhost") ? env["AUTH_TRUST_HOST"] : undefined
 		});

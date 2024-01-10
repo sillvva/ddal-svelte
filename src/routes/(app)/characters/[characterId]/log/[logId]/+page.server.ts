@@ -11,20 +11,19 @@ import { error, redirect } from "@sveltejs/kit";
 export const load = async (event) => {
 	const parent = await event.parent();
 	const character = parent.character;
-	if (!character) throw error(404, "Character not found");
+	if (!character) error(404, "Character not found");
 
 	const session = event.locals.session;
-	if (!session?.user) throw signInRedirect(event.url);
+	if (!session?.user) signInRedirect(event.url);
 
-	const log =
-		event.params.logId !== "new"
-			? await getLog(event.params.logId, session.user.id, character.id).then((log) => {
-					if (!log.id) throw error(404, "Log not found");
-					return log;
-			  })
-			: defaultLog(session.user.id, character.id);
+	let log = defaultLog(session.user.id, character.id);
+	if (event.params.logId !== "new")
+		log = await getLog(event.params.logId, session.user.id, character.id).then((log) => {
+			if (!log.id) error(404, "Log not found");
+			return log;
+		});
 
-	if (log.is_dm_log) throw redirect(302, `/dm-logs/${log.id}`);
+	if (log.is_dm_log) redirect(302, `/dm-logs/${log.id}`);
 
 	const dms = await getUserDMsWithLogs(session.user.id);
 
@@ -45,13 +44,13 @@ export const load = async (event) => {
 export const actions = {
 	saveLog: async (event) => {
 		const session = await event.locals.session;
-		if (!session?.user) throw redirect(302, "/");
+		if (!session?.user) redirect(302, "/");
 
 		const character = await getCharacterCache(event.params.characterId || "", false);
-		if (!character) throw redirect(302, "/characters");
+		if (!character) redirect(302, "/characters");
 
 		const log = await getLog(event.params.logId || "", session.user.id, character.id);
-		if (event.params.logId !== "new" && !log.id) throw redirect(302, `/characters/${character.id}`);
+		if (event.params.logId !== "new" && !log.id) redirect(302, `/characters/${character.id}`);
 
 		try {
 			const formData = await event.request.formData();
@@ -62,7 +61,7 @@ export const actions = {
 				numbers: ["season", "level", "gold", "acp", "tcp", "experience", "dtd"]
 			});
 			const result = await saveLog(logData, session.user);
-			if (result && result.id) throw redirect(302, `/characters/${character.id}`);
+			if (result && result.id) redirect(302, `/characters/${character.id}`);
 
 			return result;
 		} catch (error) {
