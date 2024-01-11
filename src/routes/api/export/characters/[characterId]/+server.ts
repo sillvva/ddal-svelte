@@ -4,7 +4,7 @@ import { json } from "@sveltejs/kit";
 
 export async function GET({ params, locals }) {
 	const session = await locals.getSession();
-	if (!session?.user) return json({ error: "Unauthorized" }, { status: 401 });
+	if (!session?.user?.id) return json({ error: "Unauthorized" }, { status: 401 });
 
 	const { characterId } = params;
 
