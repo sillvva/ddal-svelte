@@ -1,11 +1,11 @@
 import type { NewCharacterSchema } from "$src/lib/types/schemas";
 import { handleSKitError } from "$src/lib/types/util";
+import type { Character } from "@prisma/client";
 import { error } from "@sveltejs/kit";
 import { revalidateKeys } from "../cache";
 import { getCharacterCache } from "../data/characters";
 import { prisma } from "../db";
 
-import type { Character } from "@prisma/client";
 export type SaveCharacterResult = ReturnType<typeof saveCharacter>;
 export async function saveCharacter(characterId: string, userId: string, data: NewCharacterSchema) {
 	try {
