@@ -3,7 +3,7 @@ import { envSchema } from "./schemas";
 
 export const checkEnv = async () => {
 	try {
-		const env = await import("$env/static/private");
+		const { default: def, ...env } = await import("$env/static/private");
 
 		return parse(envSchema(env), {
 			...env,

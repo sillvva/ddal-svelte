@@ -27,8 +27,7 @@ import {
 	type Pipe
 } from "valibot";
 
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-export const envSchema = (env: Record<string, any>) =>
+export const envSchema = (env: Record<string, string>) =>
 	object({
 		DATABASE_URL: string([url()]),
 		REDIS_URL: string([regex(/^rediss?:\/\//, "Must be a valid Redis URL")]),
