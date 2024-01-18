@@ -18,7 +18,7 @@
 	<img
 		src="/images/barovia-gate.webp"
 		alt="Background"
-		class="no-script-hide !fixed z-0 min-h-dvh min-w-full object-cover object-center opacity-25 print:hidden dark:opacity-20"
+		class="no-script-hide !fixed z-0 min-h-dvh min-w-full object-cover object-center opacity-25 dark:opacity-20 print:hidden"
 	/>
 {/if}
 

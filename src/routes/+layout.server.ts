@@ -16,12 +16,12 @@ export const load = async (event) => {
 			theme: "system",
 			mode: "dark"
 		},
-		character: {
-			descriptions: false
-		},
 		characters: {
 			magicItems: false,
 			display: "list"
+		},
+		log: {
+			descriptions: false
 		},
 		dmLogs: {
 			sort: "asc"

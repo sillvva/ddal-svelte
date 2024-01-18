@@ -125,12 +125,12 @@ export type App = {
 		theme: "system" | "dark" | "light";
 		mode: "dark" | "light";
 	};
-	character: {
-		descriptions: boolean;
-	};
 	characters: {
 		magicItems: boolean;
 		display: "list" | "grid";
+	};
+	log: {
+		descriptions: boolean;
 	};
 	dmLogs: {
 		sort: "asc" | "desc";
