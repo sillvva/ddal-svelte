@@ -11,9 +11,13 @@
 	export let open = false;
 	const app = getContext<AppStore>("app");
 
-	let accounts: Account[] = [];
-	$: accounts = $page.data.accounts;
-	$: hasGoogle = accounts.find((a) => a.provider === "google");
+	$: accounts = $page.data.accounts as Account[];
+	$: authProviders = [
+		{
+			name: "Google",
+			account: accounts.find((a) => a.provider === "google")
+		}
+	];
 
 	onMount(() => {
 		const mql = window.matchMedia("(prefers-color-scheme: dark)");
@@ -79,22 +83,24 @@
 		<li class="menu-title">
 			<span class="font-bold text-white">Linked Accounts</span>
 		</li>
-		<li>
-			<div class="flex justify-between">
-				<span>Google</span>
-				<span>
-					{#if hasGoogle}
-						{#if accounts.length > 1}
-							<button class="btn btn-error btn-sm">Unlink</button>
+		{#each authProviders as provider}
+			<li>
+				<div class="flex justify-between">
+					<span>{provider.name}</span>
+					<span>
+						{#if provider.account}
+							{#if accounts.length > 1}
+								<button class="btn btn-error btn-sm">Unlink</button>
+							{:else}
+								Linked
+							{/if}
 						{:else}
-							Linked
+							<button class="btn btn-primary btn-sm">Link</button>
 						{/if}
-					{:else}
-						<button class="btn btn-primary btn-sm">Link</button>
-					{/if}
-				</span>
-			</div>
-		</li>
+					</span>
+				</div>
+			</li>
+		{/each}
 	</ul>
 	<div class="divider my-0" />
 	<ul class="menu menu-lg w-full">
