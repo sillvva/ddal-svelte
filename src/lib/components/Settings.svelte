@@ -3,12 +3,17 @@
 	import { enhance } from "$app/forms";
 	import { page } from "$app/stores";
 	import type { AppStore } from "$src/lib/types/schemas";
+	import type { Account } from "@prisma/client";
 	import { getContext, onMount } from "svelte";
 	import { twMerge } from "tailwind-merge";
 	import { pageLoader } from "../store";
 
 	export let open = false;
 	const app = getContext<AppStore>("app");
+
+	let accounts: Account[] = [];
+	$: accounts = $page.data.accounts;
+	$: hasGoogle = accounts.find((a) => a.provider === "google");
 
 	onMount(() => {
 		const mql = window.matchMedia("(prefers-color-scheme: dark)");
@@ -68,6 +73,28 @@
 				<button class="size-full">Clear Cache</button>
 			</li>
 		</form>
+	</ul>
+	<div class="divider my-0" />
+	<ul class="menu menu-lg w-full">
+		<li class="menu-title">
+			<span class="font-bold text-white">Linked Accounts</span>
+		</li>
+		<li>
+			<div class="flex justify-between">
+				<span>Google</span>
+				<span>
+					{#if hasGoogle}
+						{#if accounts.length > 1}
+							<button class="btn btn-error btn-sm">Unlink</button>
+						{:else}
+							Linked
+						{/if}
+					{:else}
+						<button class="btn btn-primary btn-sm">Link</button>
+					{/if}
+				</span>
+			</div>
+		</li>
 	</ul>
 	<div class="divider my-0" />
 	<ul class="menu menu-lg w-full">
