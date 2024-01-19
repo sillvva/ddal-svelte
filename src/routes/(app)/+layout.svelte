@@ -8,7 +8,7 @@
 	import { pageLoader } from "$lib/store";
 	import Markdown from "$src/lib/components/Markdown.svelte";
 	import type { AppStore } from "$src/lib/types/schemas";
-	import { signIn, signOut } from "@auth/sveltekit/client";
+	import { signOut } from "@auth/sveltekit/client";
 	import { getContext } from "svelte";
 	import { fade } from "svelte/transition";
 	import { twMerge } from "tailwind-merge";
@@ -112,7 +112,7 @@
 			{#if data.session?.user}
 				<div class="dropdown dropdown-end">
 					<div role="button" tabindex="0" class="flex h-full cursor-pointer items-center pl-4">
-						<div class="hidden items-center pr-4 text-black print:flex sm:flex dark:text-white">
+						<div class="hidden items-center pr-4 text-black dark:text-white sm:flex print:flex">
 							{data.session?.user?.name}
 						</div>
 						<div class="avatar">
@@ -145,13 +145,12 @@
 					</ul>
 				</div>
 			{:else}
-				<button
+				<a
+					href={`/?redirect=${encodeURIComponent(`${$page.url.pathname}${$page.url.search}`)}`}
 					class="flex h-12 items-center gap-2 rounded-lg bg-base-200/50 p-2 text-base-content transition-colors hover:bg-base-300"
-					on:click={() => signIn("google", { callbackUrl: `${$page.url.origin}${$page.url.pathname}${$page.url.search}` })}
 				>
-					<img src="/images/google.svg" width="24" height="24" alt="Google" />
 					<span class="flex h-full flex-1 items-center justify-center font-semibold">Sign In</span>
-				</button>
+				</a>
 			{/if}
 		</nav>
 	</header>

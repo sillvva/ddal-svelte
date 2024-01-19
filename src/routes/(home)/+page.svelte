@@ -3,6 +3,8 @@
 	import { page } from "$app/stores";
 	import { signIn } from "@auth/sveltekit/client";
 
+	export let data;
+
 	$: if (browser) {
 		const hasCookie = document.cookie.includes("session-token");
 		if (!$page.data.session?.user && hasCookie) location.reload();
@@ -33,7 +35,7 @@
 </svelte:head>
 
 <main class="container relative mx-auto flex min-h-dvh flex-col items-center justify-center p-4">
-	<h1 class="mb-20 text-center font-draconis text-4xl text-base-content lg:text-6xl dark:text-white">
+	<h1 class="mb-20 text-center font-draconis text-4xl text-base-content dark:text-white lg:text-6xl">
 		Adventurers League
 		<br />
 		Log Sheet
@@ -42,7 +44,7 @@
 		class="flex h-16 items-center gap-4 rounded-lg bg-base-200/50 px-8 py-4 text-base-content transition-colors hover:bg-base-300"
 		on:click={() =>
 			signIn("google", {
-				callbackUrl: `${$page.url.origin}/characters`
+				callbackUrl: `${$page.url.origin}${data.redirectTo || "/characters"}`
 			})}
 		aria-label="Sign in with Google"
 	>
