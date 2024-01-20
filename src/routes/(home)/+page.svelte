@@ -56,16 +56,18 @@
 			</button>
 		{/each}
 	</div>
-	<div class="flex gap-4">
-		<a
-			href="/"
-			class="tooltip tooltip-bottom tooltip-open tooltip-warning before:bg-warning/60"
-			data-tip={"To link multiple auth providers to the same account, first sign in to your main account. " +
-				"Then link additional auth providers in the settings menu. " +
-				"If you sign in with a second provider here before linking, it will create a separate account. " +
-				"If this happens, the accounts cannot be linked."}
-		>
-			Tip: Linking Accounts
-		</a>
-	</div>
+	{#if providers.length > 1}
+		<div class="flex gap-4">
+			<a
+				href="/"
+				class="tooltip tooltip-bottom tooltip-open tooltip-warning before:bg-warning/60"
+				data-tip={"To link multiple auth providers to the same account, first sign in to your main account. " +
+					"Then link additional auth providers in the settings menu. " +
+					"If you sign in with a second provider here before linking, it will create a separate account. " +
+					"If this happens, the accounts cannot be linked."}
+			>
+				Tip: Linking Accounts
+			</a>
+		</div>
+	{/if}
 </main>

@@ -18,10 +18,15 @@ type Provider = {
 	logo?: string;
 	account?: Account;
 };
-export const providers: Provider[] = [
+export const providers = [
 	{
 		name: "Google",
 		id: "google",
 		logo: "/images/google.svg"
+	},
+	{
+		name: "Discord",
+		id: "discord",
+		logo: "/images/discord.svg"
 	}
-];
+] as const satisfies Provider[];

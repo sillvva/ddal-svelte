@@ -1,4 +1,4 @@
-import { clearUserCache } from "$src/server/actions/users.js";
+import { clearUserCache, unlinkProvider, type ProviderId } from "$src/server/actions/users.js";
 import { signInRedirect } from "$src/server/auth.js";
 import { getCharacterCaches, getCharactersCache, type CharacterData } from "$src/server/data/characters";
 import { redirect } from "@sveltejs/kit";
@@ -24,8 +24,31 @@ export const load = async (event) => {
 
 export const actions = {
 	clearCaches: async (event) => {
-		const session = await event.locals.session;
+		const session = event.locals.session;
 		if (!session?.user) redirect(302, "/");
 		return await clearUserCache(session.user.id);
+	},
+	unlinkProvider: async (event) => {
+		const session = event.locals.session;
+		if (!session?.user) redirect(302, "/");
+
+		try {
+			const formData = await event.request.formData();
+			const provider = formData.get("provider") as ProviderId;
+			if (!provider) throw new Error("No provider specified");
+
+			await unlinkProvider(session.user.id, provider);
+
+			const newSession = await event.locals.getSession();
+			if (!newSession?.user) redirect(302, "/");
+
+			return { success: true };
+		} catch (e) {
+			if (e instanceof Error) return { success: false, error: e.message };
+			else {
+				console.error(e);
+				return { success: false, error: "Unknown error" };
+			}
+		}
 	}
 };
