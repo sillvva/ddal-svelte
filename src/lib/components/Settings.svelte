@@ -4,6 +4,7 @@
 	import { page } from "$app/stores";
 	import type { AppStore } from "$src/lib/types/schemas";
 	import { providers } from "$src/server/auth";
+	import { signIn } from "@auth/sveltekit/client";
 	import type { Account } from "@prisma/client";
 	import { getContext, onMount } from "svelte";
 	import { twMerge } from "tailwind-merge";
@@ -14,7 +15,7 @@
 
 	$: accounts = $page.data.accounts as Account[];
 	$: authProviders = providers.map((p) => ({
-		name: p.name,
+		...p,
 		account: accounts.find((a) => a.provider === p.name)
 	}));
 
@@ -94,7 +95,13 @@
 								Linked
 							{/if}
 						{:else}
-							<button class="btn btn-primary btn-sm">Link</button>
+							<button
+								class="btn btn-primary btn-sm"
+								on:click={() =>
+									signIn(provider.id, {
+										callbackUrl: `${$page.url.origin}${$page.url.pathname}${$page.url.search}`
+									})}>Link</button
+							>
 						{/if}
 					</span>
 				</div>
