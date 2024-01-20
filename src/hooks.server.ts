@@ -53,15 +53,26 @@ export const auth = SvelteKitAuth(async (event) => {
 							type: "oauth",
 							access_token: account.access_token,
 							expires_at: account.expires_in ? Math.floor(Date.now() / 1000 + account.expires_in) : undefined,
-							refresh_token: account.refresh_token
+							refresh_token: account.refresh_token,
+							token_type: account.token_type,
+							scope: account.scope,
+							id_token: account.id_token
 						}
 					});
 				} else if (account?.refresh_token && account.expires_in) {
+					event.cookies.set("authjs.provider", account.provider, {
+						path: "/",
+						expires: new Date(new Date().getTime() + 30 * 86400 * 1000)
+					});
+
 					await prisma.account.update({
 						data: {
 							access_token: account.access_token,
 							expires_at: Math.floor(Date.now() / 1000 + account.expires_in),
-							refresh_token: account.refresh_token
+							refresh_token: account.refresh_token,
+							token_type: account.token_type,
+							scope: account.scope,
+							id_token: account.id_token
 						},
 						where: {
 							provider_providerAccountId: {
@@ -77,17 +88,24 @@ export const auth = SvelteKitAuth(async (event) => {
 			async session({ session, ...params }) {
 				let error = "";
 				let userId = "";
+
 				if ("user" in params) {
+					const currentProvider = event.cookies.get("authjs.provider");
 					const account = await prisma.account.findFirst({
-						where: { userId: params.user.id }
+						where: { userId: params.user.id, provider: currentProvider }
 					});
+
+					if (account) event.cookies.set("authjs.provider", account.provider, { path: "/", expires: new Date(session.expires) });
+					else event.cookies.delete("authjs.provider", { path: "/" });
+
 					if (account && (!account.expires_at || account.expires_at * 1000 < Date.now())) {
 						try {
 							if (!account.refresh_token) throw new Error("No refresh token");
 
+							let tokens: TokenSet | undefined;
+
 							if (account.provider === "google") {
 								// https://accounts.google.com/.well-known/openid-configuration
-								// We need the `token_endpoint`.
 								const response = await fetch("https://oauth2.googleapis.com/token", {
 									headers: { "Content-Type": "application/x-www-form-urlencoded" },
 									body: new URLSearchParams({
@@ -99,24 +117,8 @@ export const auth = SvelteKitAuth(async (event) => {
 									method: "POST"
 								});
 
-								const tokens: TokenSet = await response.json();
-
+								tokens = await response.json();
 								if (!response.ok) throw tokens;
-								if (!tokens.expires_in) throw new Error("No expires_in in token response");
-
-								await prisma.account.update({
-									data: {
-										access_token: tokens.access_token,
-										expires_at: Math.floor(Date.now() / 1000 + tokens.expires_in),
-										refresh_token: tokens.refresh_token ?? account.refresh_token
-									},
-									where: {
-										provider_providerAccountId: {
-											provider: account.provider,
-											providerAccountId: account.providerAccountId
-										}
-									}
-								});
 							}
 
 							if (account.provider === "discord") {
@@ -131,16 +133,21 @@ export const auth = SvelteKitAuth(async (event) => {
 									method: "POST"
 								});
 
-								const tokens: TokenSet = await response.json();
-
+								tokens = await response.json();
 								if (!response.ok) throw tokens;
+							}
+
+							if (tokens) {
 								if (!tokens.expires_in) throw new Error("No expires_in in token response");
 
 								await prisma.account.update({
 									data: {
 										access_token: tokens.access_token,
 										expires_at: Math.floor(Date.now() / 1000 + tokens.expires_in),
-										refresh_token: tokens.refresh_token ?? account.refresh_token
+										refresh_token: tokens.refresh_token ?? account.refresh_token,
+										token_type: account.token_type,
+										scope: account.scope,
+										id_token: account.id_token
 									},
 									where: {
 										provider_providerAccountId: {
@@ -159,6 +166,7 @@ export const auth = SvelteKitAuth(async (event) => {
 						userId = params.user.id;
 					}
 				}
+
 				return {
 					...session,
 					error,
