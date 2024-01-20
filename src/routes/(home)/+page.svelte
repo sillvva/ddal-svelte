@@ -1,6 +1,7 @@
 <script lang="ts">
 	import { browser } from "$app/environment";
 	import { page } from "$app/stores";
+	import { providers } from "$src/server/auth.js";
 	import { signIn } from "@auth/sveltekit/client";
 
 	export let data;
@@ -34,21 +35,37 @@
 	<meta name="twitter:image" content={image} />
 </svelte:head>
 
-<main class="container relative mx-auto flex min-h-dvh flex-col items-center justify-center p-4">
-	<h1 class="mb-20 text-center font-draconis text-4xl text-base-content dark:text-white lg:text-6xl">
+<main class="container relative mx-auto flex min-h-dvh flex-col items-center justify-center gap-12 p-4">
+	<h1 class="text-center font-draconis text-4xl text-base-content dark:text-white lg:text-6xl">
 		Adventurers League
 		<br />
 		Log Sheet
 	</h1>
-	<button
-		class="flex h-16 items-center gap-4 rounded-lg bg-base-200/50 px-8 py-4 text-base-content transition-colors hover:bg-base-300"
-		on:click={() =>
-			signIn("google", {
-				callbackUrl: `${$page.url.origin}${data.redirectTo || "/characters"}`
-			})}
-		aria-label="Sign in with Google"
-	>
-		<img src="/images/google.svg" width="32" height="32" alt="Google" />
-		<span class="flex h-full flex-1 items-center justify-center text-xl font-semibold">Sign In</span>
-	</button>
+	<div class="flex flex-col gap-4">
+		{#each providers as provider}
+			<button
+				class="flex h-16 items-center gap-4 rounded-lg bg-base-200/50 px-8 py-4 text-base-content transition-colors hover:bg-base-300"
+				on:click={() =>
+					signIn(provider.id, {
+						callbackUrl: `${$page.url.origin}${data.redirectTo || "/characters"}`
+					})}
+				aria-label="Sign in with {provider.name}"
+			>
+				<img src={provider.logo} width="32" height="32" alt={provider.name} />
+				<span class="flex h-full flex-1 items-center justify-center text-xl font-semibold">Sign In with {provider.name}</span>
+			</button>
+		{/each}
+	</div>
+	<div class="flex gap-4">
+		<a
+			href="/"
+			class="tooltip tooltip-bottom tooltip-open tooltip-warning before:bg-warning/60"
+			data-tip={"To link multiple auth providers to the same account, first sign in to your main account. " +
+				"Then link additional auth providers in the settings menu. " +
+				"If you sign in with a second provider here before linking, it will create a separate account. " +
+				"If this happens, the accounts cannot be linked."}
+		>
+			Tip: Linking Accounts
+		</a>
+	</div>
 </main>

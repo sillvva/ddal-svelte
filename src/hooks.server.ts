@@ -5,8 +5,7 @@ import { SvelteKitAuth, type SvelteKitAuthConfig } from "@auth/sveltekit";
 import { handle as documentHandle } from "@sveltekit-addons/document/hooks";
 import { prisma } from "./server/db";
 
-import type { Provider } from "@auth/core/providers";
-import type { Profile, TokenSet } from "@auth/core/types";
+import type { TokenSet } from "@auth/core/types";
 import type { Handle } from "@sveltejs/kit";
 import { sequence } from "@sveltejs/kit/hooks";
 
@@ -20,6 +19,14 @@ export const auth = SvelteKitAuth(async (event) => {
 				// If there is a user logged in already that we recognize,
 				// and we have an account that is being signed in with
 				if (account && currentUserId) {
+					const currentAccounts = await prisma.account.findFirst({
+						where: { userId: currentUserId, provider: account.provider }
+					});
+
+					if (currentAccounts) {
+						throw new Error("You already have an account with this provider!");
+					}
+
 					// Do the account linking
 					const existingAccount = await prisma.account.findFirst({
 						where: { provider: account.provider, providerAccountId: account.providerAccountId }
@@ -130,7 +137,7 @@ export const auth = SvelteKitAuth(async (event) => {
 				clientId: GOOGLE_CLIENT_ID,
 				clientSecret: GOOGLE_CLIENT_SECRET,
 				authorization: { params: { access_type: "offline", prompt: "consent" } }
-			}) as Provider<Profile>
+			})
 		]
 	} satisfies SvelteKitAuthConfig;
 }) satisfies Handle;

@@ -3,6 +3,7 @@
 	import { enhance } from "$app/forms";
 	import { page } from "$app/stores";
 	import type { AppStore } from "$src/lib/types/schemas";
+	import { providers } from "$src/server/auth";
 	import type { Account } from "@prisma/client";
 	import { getContext, onMount } from "svelte";
 	import { twMerge } from "tailwind-merge";
@@ -12,12 +13,10 @@
 	const app = getContext<AppStore>("app");
 
 	$: accounts = $page.data.accounts as Account[];
-	$: authProviders = [
-		{
-			name: "Google",
-			account: accounts.find((a) => a.provider === "google")
-		}
-	];
+	$: authProviders = providers.map((p) => ({
+		name: p.name,
+		account: accounts.find((a) => a.provider === p.name)
+	}));
 
 	onMount(() => {
 		const mql = window.matchMedia("(prefers-color-scheme: dark)");
