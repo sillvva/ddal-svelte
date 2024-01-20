@@ -118,6 +118,38 @@ export const auth = SvelteKitAuth(async (event) => {
 									}
 								});
 							}
+
+							if (account.provider === "discord") {
+								const response = await fetch("https://discord.com/api/v10/oauth2/token", {
+									headers: { "Content-Type": "application/x-www-form-urlencoded" },
+									body: new URLSearchParams({
+										client_id: DISCORD_CLIENT_ID,
+										client_secret: DISCORD_CLIENT_SECRET,
+										grant_type: "refresh_token",
+										refresh_token: account.refresh_token
+									}),
+									method: "POST"
+								});
+
+								const tokens: TokenSet = await response.json();
+
+								if (!response.ok) throw tokens;
+								if (!tokens.expires_in) throw new Error("No expires_in in token response");
+
+								await prisma.account.update({
+									data: {
+										access_token: tokens.access_token,
+										expires_at: Math.floor(Date.now() / 1000 + tokens.expires_in),
+										refresh_token: tokens.refresh_token ?? account.refresh_token
+									},
+									where: {
+										provider_providerAccountId: {
+											provider: account.provider,
+											providerAccountId: account.providerAccountId
+										}
+									}
+								});
+							}
 						} catch (err) {
 							console.error("Error refreshing access token:", err);
 							error = "RefreshAccessTokenError";
