@@ -16,7 +16,7 @@
 	$: accounts = $page.data.accounts as Account[];
 	$: authProviders = providers.map((p) => ({
 		...p,
-		account: accounts.find((a) => a.provider === p.name)
+		account: accounts.find((a) => a.provider === p.id)
 	}));
 
 	onMount(() => {

@@ -16,13 +16,12 @@ type Provider = {
 	name: string;
 	id: string;
 	logo?: string;
-	account: Account | null;
+	account?: Account;
 };
 export const providers: Provider[] = [
 	{
 		name: "Google",
 		id: "google",
-		logo: "/images/google.svg",
-		account: null
+		logo: "/images/google.svg"
 	}
 ];
