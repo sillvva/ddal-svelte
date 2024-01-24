@@ -5,16 +5,16 @@ import {
 	GOOGLE_CLIENT_ID,
 	GOOGLE_CLIENT_SECRET
 } from "$env/static/private";
+import { prisma } from "$src/server/db";
 import Discord from "@auth/core/providers/discord";
 import Google from "@auth/core/providers/google";
+import type { TokenSet } from "@auth/core/types";
 import { PrismaAdapter } from "@auth/prisma-adapter";
 import { SvelteKitAuth, type SvelteKitAuthConfig } from "@auth/sveltekit";
-import { handle as documentHandle } from "@sveltekit-addons/document/hooks";
-import { prisma } from "./server/db";
-
-import type { TokenSet } from "@auth/core/types";
+import type { Account } from "@prisma/client";
 import type { Handle } from "@sveltejs/kit";
 import { sequence } from "@sveltejs/kit/hooks";
+import { handle as documentHandle } from "@sveltekit-addons/document/hooks";
 
 export const auth = SvelteKitAuth(async (event) => {
 	return {
@@ -95,73 +95,34 @@ export const auth = SvelteKitAuth(async (event) => {
 						where: { userId: params.user.id, provider: currentProvider }
 					});
 
-					if (account) event.cookies.set("authjs.provider", account.provider, { path: "/", expires: new Date(session.expires) });
-					else event.cookies.delete("authjs.provider", { path: "/" });
+					if (account) {
+						event.cookies.set("authjs.provider", account.provider, { path: "/", expires: new Date(session.expires) });
 
-					if (account && (!account.expires_at || account.expires_at * 1000 < Date.now())) {
-						try {
-							if (!account.refresh_token) throw new Error("No refresh token");
+						if (account.provider === "google") {
+							const result = await refreshToken(
+								account,
+								"https://oauth2.googleapis.com/token",
+								GOOGLE_CLIENT_ID,
+								GOOGLE_CLIENT_SECRET
+							);
 
-							let tokens: TokenSet | undefined;
-
-							if (account.provider === "google") {
-								// https://accounts.google.com/.well-known/openid-configuration
-								const response = await fetch("https://oauth2.googleapis.com/token", {
-									headers: { "Content-Type": "application/x-www-form-urlencoded" },
-									body: new URLSearchParams({
-										client_id: GOOGLE_CLIENT_ID,
-										client_secret: GOOGLE_CLIENT_SECRET,
-										grant_type: "refresh_token",
-										refresh_token: account.refresh_token
-									}),
-									method: "POST"
-								});
-
-								tokens = await response.json();
-								if (!response.ok) throw tokens;
-							}
-
-							if (account.provider === "discord") {
-								const response = await fetch("https://discord.com/api/v10/oauth2/token", {
-									headers: { "Content-Type": "application/x-www-form-urlencoded" },
-									body: new URLSearchParams({
-										client_id: DISCORD_CLIENT_ID,
-										client_secret: DISCORD_CLIENT_SECRET,
-										grant_type: "refresh_token",
-										refresh_token: account.refresh_token
-									}),
-									method: "POST"
-								});
-
-								tokens = await response.json();
-								if (!response.ok) throw tokens;
-							}
-
-							if (tokens) {
-								if (!tokens.expires_in) throw new Error("No expires_in in token response");
-
-								await prisma.account.update({
-									data: {
-										access_token: tokens.access_token,
-										expires_at: Math.floor(Date.now() / 1000 + tokens.expires_in),
-										refresh_token: tokens.refresh_token ?? account.refresh_token,
-										token_type: account.token_type,
-										scope: account.scope,
-										id_token: account.id_token
-									},
-									where: {
-										provider_providerAccountId: {
-											provider: account.provider,
-											providerAccountId: account.providerAccountId
-										}
-									}
-								});
-							}
-						} catch (err) {
-							console.error("Error refreshing access token:", err);
-							error = "RefreshAccessTokenError";
+							if (result instanceof Error) error = `RefreshAccessTokenError: ${result.message}`;
 						}
+
+						if (account.provider === "discord") {
+							const result = await refreshToken(
+								account,
+								"https://discord.com/api/v10/oauth2/token",
+								DISCORD_CLIENT_ID,
+								DISCORD_CLIENT_SECRET
+							);
+
+							if (result instanceof Error) error = `RefreshAccessTokenError: ${result.message}`;
+						}
+					} else {
+						event.cookies.delete("authjs.provider", { path: "/" });
 					}
+
 					if (session.user) {
 						userId = params.user.id;
 					}
@@ -216,3 +177,55 @@ export const session: Handle = async ({ event, resolve }) => {
 };
 
 export const handle = sequence(auth, session, documentHandle);
+
+async function refreshToken(account: Account, url: string, clientId: string, clientSecret: string) {
+	try {
+		if (!account.refresh_token) throw new Error("No refresh token");
+
+		if (!account.expires_at || account.expires_at * 1000 < Date.now()) {
+			const response = await fetch(url, {
+				headers: { "Content-Type": "application/x-www-form-urlencoded" },
+				body: new URLSearchParams({
+					client_id: clientId,
+					client_secret: clientSecret,
+					grant_type: "refresh_token",
+					refresh_token: account.refresh_token
+				}),
+				method: "POST"
+			});
+
+			const tokens: TokenSet = await response.json();
+
+			if (!response.ok) {
+				console.error("Error refreshing access token:", tokens);
+				throw new Error("See logs for details");
+			}
+
+			if (tokens) {
+				if (!tokens.expires_in) throw new Error("No expires_in in token response");
+
+				return await prisma.account.update({
+					data: {
+						access_token: tokens.access_token,
+						expires_at: Math.floor(Date.now() / 1000 + tokens.expires_in),
+						refresh_token: tokens.refresh_token ?? account.refresh_token,
+						token_type: account.token_type,
+						scope: account.scope,
+						id_token: account.id_token
+					},
+					where: {
+						provider_providerAccountId: {
+							provider: account.provider,
+							providerAccountId: account.providerAccountId
+						}
+					}
+				});
+			}
+		}
+
+		return null;
+	} catch (err) {
+		if (err instanceof Error) return err;
+		else return new Error("Unknown error");
+	}
+}
