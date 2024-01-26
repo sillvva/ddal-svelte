@@ -6,6 +6,7 @@ import {
 	GOOGLE_CLIENT_SECRET
 } from "$env/static/private";
 import { prisma } from "$src/server/db";
+import type { Provider } from "@auth/core/providers";
 import Discord from "@auth/core/providers/discord";
 import Google from "@auth/core/providers/google";
 import type { TokenSet } from "@auth/core/types";
@@ -15,6 +16,41 @@ import type { Account } from "@prisma/client";
 import type { Handle } from "@sveltejs/kit";
 import { sequence } from "@sveltejs/kit/hooks";
 import { handle as documentHandle } from "@sveltekit-addons/document/hooks";
+
+interface OAuthProvider {
+	id: string;
+	tokenUrl: string;
+	clientId: string;
+	clientSecret: string;
+	oauth: () => Provider;
+}
+const providers: OAuthProvider[] = [
+	{
+		id: "google",
+		tokenUrl: "https://oauth2.googleapis.com/token",
+		clientId: GOOGLE_CLIENT_ID,
+		clientSecret: GOOGLE_CLIENT_SECRET,
+		oauth: function () {
+			return Google({
+				clientId: this.clientId,
+				clientSecret: this.clientSecret,
+				authorization: { params: { access_type: "offline", prompt: "consent" } }
+			});
+		}
+	},
+	{
+		id: "discord",
+		tokenUrl: "https://discord.com/api/v10/oauth2/token",
+		clientId: DISCORD_CLIENT_ID,
+		clientSecret: DISCORD_CLIENT_SECRET,
+		oauth: function () {
+			return Discord({
+				clientId: this.clientId,
+				clientSecret: this.clientSecret
+			});
+		}
+	}
+];
 
 export const auth = SvelteKitAuth(async (event) => {
 	return {
@@ -98,29 +134,11 @@ export const auth = SvelteKitAuth(async (event) => {
 					if (account) {
 						event.cookies.set("authjs.provider", account.provider, { path: "/", expires: new Date(session.expires) });
 
-						if (account.provider === "google") {
-							const result = await refreshToken(
-								account,
-								"https://oauth2.googleapis.com/token",
-								GOOGLE_CLIENT_ID,
-								GOOGLE_CLIENT_SECRET
-							);
-
-							if (result instanceof Error) error = `RefreshAccessTokenError: ${result.message}`;
-						}
-
-						if (account.provider === "discord") {
-							const result = await refreshToken(
-								account,
-								"https://discord.com/api/v10/oauth2/token",
-								DISCORD_CLIENT_ID,
-								DISCORD_CLIENT_SECRET
-							);
-
-							if (result instanceof Error) error = `RefreshAccessTokenError: ${result.message}`;
-						}
+						const result = await refreshToken(account);
+						if (result instanceof Error) error = `RefreshAccessTokenError: ${result.message}`;
 					} else {
 						event.cookies.delete("authjs.provider", { path: "/" });
+						error = "NoAccountError: No account found";
 					}
 
 					if (session.user) {
@@ -140,14 +158,7 @@ export const auth = SvelteKitAuth(async (event) => {
 		},
 		secret: AUTH_SECRET,
 		adapter: PrismaAdapter(prisma),
-		providers: [
-			Google({
-				clientId: GOOGLE_CLIENT_ID,
-				clientSecret: GOOGLE_CLIENT_SECRET,
-				authorization: { params: { access_type: "offline", prompt: "consent" } }
-			}),
-			Discord({ clientId: DISCORD_CLIENT_ID, clientSecret: DISCORD_CLIENT_SECRET })
-		],
+		providers: providers.map((p) => p.oauth()),
 		trustHost: true
 	} satisfies SvelteKitAuthConfig;
 }) satisfies Handle;
@@ -178,16 +189,18 @@ export const session: Handle = async ({ event, resolve }) => {
 
 export const handle = sequence(auth, session, documentHandle);
 
-async function refreshToken(account: Account, url: string, clientId: string, clientSecret: string) {
+async function refreshToken(account: Account) {
 	try {
+		const provider = providers.find((p) => p.id === account.provider);
+		if (!provider) throw new Error(`Provider '${account.provider}' not found`);
 		if (!account.refresh_token) throw new Error("No refresh token");
 
 		if (!account.expires_at || account.expires_at * 1000 < Date.now()) {
-			const response = await fetch(url, {
+			const response = await fetch(provider.tokenUrl, {
 				headers: { "Content-Type": "application/x-www-form-urlencoded" },
 				body: new URLSearchParams({
-					client_id: clientId,
-					client_secret: clientSecret,
+					client_id: provider.clientId,
+					client_secret: provider.clientSecret,
 					grant_type: "refresh_token",
 					refresh_token: account.refresh_token
 				}),
@@ -226,6 +239,9 @@ async function refreshToken(account: Account, url: string, clientId: string, cli
 		return null;
 	} catch (err) {
 		if (err instanceof Error) return err;
-		else return new Error("Unknown error");
+		else {
+			console.error(err);
+			return new Error("Unknown error. See logs for details");
+		}
 	}
 }
