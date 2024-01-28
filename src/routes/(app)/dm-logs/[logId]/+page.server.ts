@@ -1,7 +1,7 @@
 import { parseFormData } from "$lib/components/SchemaForm.svelte";
 import { dMLogSchema } from "$lib/schemas";
-import { signInRedirect } from "$lib/server/auth";
 import { saveLog } from "$src/server/actions/logs";
+import { signInRedirect } from "$src/server/auth";
 import { getCharacterCache, getCharactersCache } from "$src/server/data/characters";
 import { getDMLog, getLog } from "$src/server/data/logs";
 import { error, redirect } from "@sveltejs/kit";

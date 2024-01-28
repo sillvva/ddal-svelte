@@ -1,5 +1,5 @@
-import { signInRedirect } from "$lib/server/auth";
 import { deleteLog } from "$src/server/actions/logs";
+import { signInRedirect } from "$src/server/auth";
 import { getDMLogsCache } from "$src/server/data/logs";
 import { redirect } from "@sveltejs/kit";
 

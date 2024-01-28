@@ -1,5 +1,5 @@
-import { signInRedirect } from "$lib/server/auth";
 import { clearUserCache, unlinkProvider, type ProviderId } from "$src/server/actions/users.js";
+import { signInRedirect } from "$src/server/auth";
 import { getCharacterCaches, getCharactersCache, type CharacterData } from "$src/server/data/characters";
 import { redirect } from "@sveltejs/kit";
 
