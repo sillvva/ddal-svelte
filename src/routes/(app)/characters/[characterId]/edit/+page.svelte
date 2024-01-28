@@ -2,7 +2,7 @@
 	import BreadCrumbs from "$lib/components/BreadCrumbs.svelte";
 	import Icon from "$lib/components/Icon.svelte";
 	import SchemaForm from "$lib/components/SchemaForm.svelte";
-	import { newCharacterSchema } from "$src/lib/types/schemas";
+	import { newCharacterSchema } from "$lib/schemas";
 
 	export let data;
 	export let form;

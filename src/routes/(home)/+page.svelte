@@ -1,7 +1,7 @@
 <script lang="ts">
 	import { browser } from "$app/environment";
 	import { page } from "$app/stores";
-	import { providers } from "$src/server/auth.js";
+	import { providers } from "$lib/schemas";
 	import { signIn } from "@auth/sveltekit/client";
 
 	export let data;

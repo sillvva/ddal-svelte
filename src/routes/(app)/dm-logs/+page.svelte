@@ -5,8 +5,8 @@
 	import Icon from "$lib/components/Icon.svelte";
 	import Items from "$lib/components/Items.svelte";
 	import SearchResults from "$lib/components/SearchResults.svelte";
+	import type { AppStore } from "$lib/schemas";
 	import { sorter, stopWords } from "$lib/utils";
-	import type { AppStore } from "$src/lib/types/schemas";
 	import MiniSearch from "minisearch";
 	import { getContext } from "svelte";
 	import { twMerge } from "tailwind-merge";
@@ -75,7 +75,7 @@
 </script>
 
 <div class="flex flex-col gap-4">
-	<div class="hidden gap-4 print:hidden sm:flex">
+	<div class="hidden gap-4 sm:flex print:hidden">
 		<BreadCrumbs />
 		<div class="dropdown dropdown-end">
 			<span role="button" tabindex="0" class="btn btn-sm">
@@ -119,12 +119,12 @@
 			<table class="table w-full">
 				<thead>
 					<tr class="bg-base-300">
-						<th class="table-cell print:hidden sm:hidden">Game</th>
-						<th class="hidden print:table-cell sm:table-cell">Title</th>
-						<th class="hidden print:table-cell sm:table-cell">Advancement</th>
-						<th class="hidden print:table-cell sm:table-cell">Treasure</th>
+						<th class="table-cell sm:hidden print:hidden">Game</th>
+						<th class="hidden sm:table-cell print:table-cell">Title</th>
+						<th class="hidden sm:table-cell print:table-cell">Advancement</th>
+						<th class="hidden sm:table-cell print:table-cell">Treasure</th>
 						{#if hasStoryAwards}
-							<th class="hidden print:table-cell sm:table-cell">Story Awards</th>
+							<th class="hidden sm:table-cell print:table-cell">Story Awards</th>
 						{/if}
 						<th class="print:hidden" />
 					</tr>
@@ -165,7 +165,7 @@
 											</a>
 										</p>
 									{/if}
-									<div class="table-cell font-normal print:hidden sm:hidden">
+									<div class="table-cell font-normal sm:hidden print:hidden">
 										{#if log.type === "game"}
 											{#if log.experience > 0}
 												<p>
@@ -211,7 +211,7 @@
 								</th>
 								<td
 									class={twMerge(
-										"hidden align-top print:table-cell sm:table-cell",
+										"hidden align-top sm:table-cell print:table-cell",
 										(log.description?.trim() || log.story_awards_gained.length > 0 || log.story_awards_lost.length > 0) &&
 											"print:border-b-0"
 									)}
@@ -245,7 +245,7 @@
 								</td>
 								<td
 									class={twMerge(
-										"hidden align-top print:table-cell sm:table-cell",
+										"hidden align-top sm:table-cell print:table-cell",
 										(log.description?.trim() || log.story_awards_gained.length > 0 || log.story_awards_lost.length > 0) &&
 											"print:border-b-0"
 									)}
@@ -271,7 +271,7 @@
 								{#if hasStoryAwards}
 									<td
 										class={twMerge(
-											"hidden align-top print:!hidden md:table-cell",
+											"hidden align-top md:table-cell print:!hidden",
 											(log.description?.trim() || log.story_awards_gained.length > 0) && "print:border-b-0"
 										)}
 									>

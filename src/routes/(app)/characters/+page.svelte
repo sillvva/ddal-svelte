@@ -2,9 +2,9 @@
 	import BreadCrumbs from "$lib/components/BreadCrumbs.svelte";
 	import Icon from "$lib/components/Icon.svelte";
 	import SearchResults from "$lib/components/SearchResults.svelte";
+	import type { AppStore } from "$lib/schemas";
+	import type { TransitionAction } from "$lib/util";
 	import { createTransition, slugify, sorter, stopWords } from "$lib/utils";
-	import type { AppStore } from "$src/lib/types/schemas";
-	import type { TransitionAction } from "$src/lib/types/util.js";
 	import MiniSearch from "minisearch";
 	import { getContext, onMount } from "svelte";
 	import { queryParam, ssp } from "sveltekit-search-params";
@@ -222,7 +222,7 @@
 								</div>
 							{/if}
 							<div>
-								<div class="whitespace-pre-wrap text-base font-bold text-black sm:text-xl dark:text-white">
+								<div class="whitespace-pre-wrap text-base font-bold text-black dark:text-white sm:text-xl">
 									<span
 										use:transition={{
 											name: slugify("name-" + character.id),

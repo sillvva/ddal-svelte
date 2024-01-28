@@ -3,6 +3,7 @@ import { envSchema } from "./schemas";
 
 export const checkEnv = async () => {
 	try {
+		// eslint-disable-next-line @typescript-eslint/no-unused-vars
 		const { default: def, ...env } = await import("$env/static/private");
 		if (!env) throw new Error("No environment variables found");
 

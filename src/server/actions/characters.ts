@@ -1,5 +1,5 @@
-import type { NewCharacterSchema } from "$src/lib/types/schemas";
-import { handleSKitError } from "$src/lib/types/util";
+import type { NewCharacterSchema } from "$lib/schemas";
+import { handleSKitError } from "$lib/util";
 import type { Character } from "@prisma/client";
 import { error } from "@sveltejs/kit";
 import { revalidateKeys } from "../cache";

@@ -1,5 +1,5 @@
 import type { CookieStore } from "$src/server/cookie";
-import type { Character } from "@prisma/client";
+import type { Account, Character } from "@prisma/client";
 import {
 	array,
 	boolean,
@@ -137,3 +137,22 @@ export type App = {
 	};
 };
 export type AppStore = CookieStore<App>;
+
+type Provider = {
+	name: string;
+	id: string;
+	logo?: string;
+	account?: Account;
+};
+export const providers = [
+	{
+		name: "Google",
+		id: "google",
+		logo: "/images/google.svg"
+	},
+	{
+		name: "Discord",
+		id: "discord",
+		logo: "/images/discord.svg"
+	}
+] as const satisfies Provider[];

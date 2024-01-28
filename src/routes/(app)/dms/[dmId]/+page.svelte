@@ -3,9 +3,9 @@
 	import BreadCrumbs from "$lib/components/BreadCrumbs.svelte";
 	import Icon from "$lib/components/Icon.svelte";
 	import SchemaForm from "$lib/components/SchemaForm.svelte";
+	import { dungeonMasterSchema } from "$lib/schemas";
 	import { pageLoader } from "$lib/store";
 	import { sorter } from "$lib/utils";
-	import { dungeonMasterSchema } from "$src/lib/types/schemas";
 
 	export let data;
 	export let form;

@@ -4,10 +4,10 @@
 	import { navigating, page } from "$app/stores";
 	import Drawer from "$lib/components/Drawer.svelte";
 	import Icon from "$lib/components/Icon.svelte";
+	import Markdown from "$lib/components/Markdown.svelte";
 	import Settings from "$lib/components/Settings.svelte";
+	import type { AppStore } from "$lib/schemas";
 	import { pageLoader } from "$lib/store";
-	import Markdown from "$src/lib/components/Markdown.svelte";
-	import type { AppStore } from "$src/lib/types/schemas";
 	import { signOut } from "@auth/sveltekit/client";
 	import { getContext } from "svelte";
 	import { fade } from "svelte/transition";

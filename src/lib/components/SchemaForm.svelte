@@ -66,7 +66,7 @@
 	import type { ActionResult } from "@sveltejs/kit";
 	import { createEventDispatcher } from "svelte";
 	import { twMerge } from "tailwind-merge";
-	import { SvelteMap, type DeepStringify, type Paths } from "../types/util";
+	import { SvelteMap, type DeepStringify, type Paths } from "../util";
 
 	const dispatch = createEventDispatcher<{
 		"before-submit": null;
@@ -116,7 +116,7 @@
 		// Check for changes
 		const formStructureIsDiff = JSON.stringify(currentStructure) !== JSON.stringify(initialStructure);
 		changes = !saving
-			? [...elForm.querySelectorAll("[data-dirty]")]
+			? [...Array.from(elForm.querySelectorAll("[data-dirty]"))]
 					.map((el) => el.getAttribute("name") || "hidden")
 					.concat(formStructureIsDiff ? "form" : "")
 					.filter(Boolean)

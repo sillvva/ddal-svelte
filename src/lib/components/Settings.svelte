@@ -2,8 +2,7 @@
 	import { browser } from "$app/environment";
 	import { enhance } from "$app/forms";
 	import { page } from "$app/stores";
-	import type { AppStore } from "$src/lib/types/schemas";
-	import { providers } from "$src/server/auth";
+	import { providers, type AppStore } from "$lib/schemas";
 	import { signIn } from "@auth/sveltekit/client";
 	import type { Account } from "@prisma/client";
 	import { getContext, onMount } from "svelte";

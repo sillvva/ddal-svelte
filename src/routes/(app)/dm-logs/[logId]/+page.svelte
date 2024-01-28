@@ -1,12 +1,12 @@
 <script lang="ts">
 	import AutoResizeTextArea from "$lib/components/AutoResizeTextArea.svelte";
 	import BreadCrumbs from "$lib/components/BreadCrumbs.svelte";
+	import ComboBox from "$lib/components/ComboBox.svelte";
+	import DateTimeInput from "$lib/components/DateTimeInput.svelte";
 	import Icon from "$lib/components/Icon.svelte";
+	import Markdown from "$lib/components/Markdown.svelte";
 	import SchemaForm from "$lib/components/SchemaForm.svelte";
-	import ComboBox from "$src/lib/components/ComboBox.svelte";
-	import DateTimeInput from "$src/lib/components/DateTimeInput.svelte";
-	import Markdown from "$src/lib/components/Markdown.svelte";
-	import { dMLogSchema, type LogSchemaIn } from "$src/lib/types/schemas";
+	import { dMLogSchema, type LogSchemaIn } from "$lib/schemas";
 	import { twMerge } from "tailwind-merge";
 
 	export let data;

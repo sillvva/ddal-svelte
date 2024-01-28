@@ -1,14 +1,14 @@
 <script lang="ts">
 	import AutoResizeTextArea from "$lib/components/AutoResizeTextArea.svelte";
 	import BreadCrumbs from "$lib/components/BreadCrumbs.svelte";
+	import ComboBox from "$lib/components/ComboBox.svelte";
+	import DateTimeInput from "$lib/components/DateTimeInput.svelte";
 	import Icon from "$lib/components/Icon.svelte";
+	import Markdown from "$lib/components/Markdown.svelte";
 	import SchemaForm from "$lib/components/SchemaForm.svelte";
 	import { defaultDM, getMagicItems, getStoryAwards } from "$lib/entities";
+	import { logSchema, type LogSchemaIn } from "$lib/schemas";
 	import { sorter } from "$lib/utils";
-	import ComboBox from "$src/lib/components/ComboBox.svelte";
-	import DateTimeInput from "$src/lib/components/DateTimeInput.svelte";
-	import Markdown from "$src/lib/components/Markdown.svelte";
-	import { logSchema, type LogSchemaIn } from "$src/lib/types/schemas";
 	import { twMerge } from "tailwind-merge";
 
 	export let data;
@@ -61,14 +61,14 @@
 						DCI: null,
 						uid: data.user.id,
 						owner: data.user.id
-				  }
+					}
 				: {
 						id: dm.id,
 						name: dm.name.trim(),
 						DCI: dm.DCI,
 						uid: dm.uid,
 						owner: data.user.id
-				  }
+					}
 	} satisfies LogSchemaIn;
 
 	// For some reason, using bind:value doesn't work for only this field...

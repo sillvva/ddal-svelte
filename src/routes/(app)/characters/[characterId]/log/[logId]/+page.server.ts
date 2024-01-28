@@ -1,6 +1,6 @@
-import { parseFormData } from "$src/lib/components/SchemaForm.svelte";
-import { defaultLog } from "$src/lib/entities.js";
-import { logSchema } from "$src/lib/types/schemas";
+import { parseFormData } from "$lib/components/SchemaForm.svelte";
+import { defaultLog } from "$lib/entities.js";
+import { logSchema } from "$lib/schemas";
 import { saveLog } from "$src/server/actions/logs.js";
 import { signInRedirect } from "$src/server/auth.js";
 import { getCharacterCache } from "$src/server/data/characters";

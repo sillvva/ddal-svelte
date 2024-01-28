@@ -6,10 +6,10 @@
 	import Items from "$lib/components/Items.svelte";
 	import Markdown from "$lib/components/Markdown.svelte";
 	import SearchResults from "$lib/components/SearchResults.svelte";
+	import type { AppStore } from "$lib/schemas";
 	import { pageLoader } from "$lib/store";
+	import type { TransitionAction } from "$lib/util";
 	import { createTransition, slugify, sorter, stopWords } from "$lib/utils";
-	import type { AppStore } from "$src/lib/types/schemas";
-	import type { TransitionAction } from "$src/lib/types/util.js";
 	import MiniSearch from "minisearch";
 	import { getContext } from "svelte";
 	import { queryParam, ssp } from "sveltekit-search-params";
