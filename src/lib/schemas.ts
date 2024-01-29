@@ -38,6 +38,8 @@ export const envSchema = (env: Record<string, string>) =>
 			: undefined_("For localhost only"),
 		GOOGLE_CLIENT_ID: string([minLength(1, "Required")]),
 		GOOGLE_CLIENT_SECRET: string([minLength(1, "Required")]),
+		DISCORD_CLIENT_ID: string([minLength(1, "Required")]),
+		DISCORD_CLIENT_SECRET: string([minLength(1, "Required")]),
 		CRON_CHARACTER_ID: string([minLength(1, "Required")])
 	});
 
