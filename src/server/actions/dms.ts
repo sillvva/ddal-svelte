@@ -1,10 +1,9 @@
-import { handleSKitError } from "$src/lib/types/util";
+import type { DungeonMasterSchema } from "$lib/schemas";
+import { handleSKitError } from "$lib/util";
 import { prisma } from "$src/server/db";
 import { error } from "@sveltejs/kit";
 import { revalidateKeys, type CacheKey } from "../cache";
 import { getUserDMsWithLogsCache } from "../data/dms";
-
-import type { DungeonMasterSchema } from "$src/lib/types/schemas";
 
 export type SaveDMResult = ReturnType<typeof saveDM>;
 export async function saveDM(dmId: string, userId: string, data: DungeonMasterSchema) {

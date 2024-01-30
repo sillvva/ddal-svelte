@@ -1,11 +1,11 @@
 import { getLevels } from "$lib/entities";
+import { handleSKitError } from "$lib/util";
 import { parseError } from "$lib/utils";
-import { handleSKitError } from "$src/lib/types/util";
 import { error } from "@sveltejs/kit";
 import { revalidateKeys } from "../cache";
 import { prisma } from "../db";
 
-import type { LogSchema } from "$src/lib/types/schemas";
+import type { LogSchema } from "$lib/schemas";
 import type { DungeonMaster, Log } from "@prisma/client";
 
 export type SaveLogResult = ReturnType<typeof saveLog>;

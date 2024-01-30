@@ -1,5 +1,5 @@
 import type { CookieStore } from "$src/server/cookie";
-import type { Character } from "@prisma/client";
+import type { Account, Character } from "@prisma/client";
 import {
 	array,
 	boolean,
@@ -27,8 +27,7 @@ import {
 	type Pipe
 } from "valibot";
 
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-export const envSchema = (env: Record<string, any>) =>
+export const envSchema = (env: Record<string, string>) =>
 	object({
 		DATABASE_URL: string([url()]),
 		REDIS_URL: string([regex(/^rediss?:\/\//, "Must be a valid Redis URL")]),
@@ -39,6 +38,8 @@ export const envSchema = (env: Record<string, any>) =>
 			: undefined_("For localhost only"),
 		GOOGLE_CLIENT_ID: string([minLength(1, "Required")]),
 		GOOGLE_CLIENT_SECRET: string([minLength(1, "Required")]),
+		DISCORD_CLIENT_ID: string([minLength(1, "Required")]),
+		DISCORD_CLIENT_SECRET: string([minLength(1, "Required")]),
 		CRON_CHARACTER_ID: string([minLength(1, "Required")])
 	});
 
@@ -126,15 +127,34 @@ export type App = {
 		theme: "system" | "dark" | "light";
 		mode: "dark" | "light";
 	};
-	character: {
-		descriptions: boolean;
-	};
 	characters: {
 		magicItems: boolean;
 		display: "list" | "grid";
+	};
+	log: {
+		descriptions: boolean;
 	};
 	dmLogs: {
 		sort: "asc" | "desc";
 	};
 };
 export type AppStore = CookieStore<App>;
+
+type Provider = {
+	name: string;
+	id: string;
+	logo?: string;
+	account?: Account;
+};
+export const providers = [
+	{
+		name: "Google",
+		id: "google",
+		logo: "/images/google.svg"
+	},
+	{
+		name: "Discord",
+		id: "discord",
+		logo: "/images/discord.svg"
+	}
+] as const satisfies Provider[];

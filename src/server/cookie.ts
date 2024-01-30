@@ -37,7 +37,7 @@ export function setCookie(name: string, value: string | number | boolean | objec
 	}
 }
 
-export type CookieStore<T> = Writable<T> & { initial: T };
+export type CookieStore<T extends string | number | boolean | object> = Writable<T> & { initial: T };
 
 /**
  * Create a cookie store that will automatically update the cookie whenever the store is updated.

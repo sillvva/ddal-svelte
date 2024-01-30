@@ -7,5 +7,6 @@ import { redirect } from "@sveltejs/kit";
  * @return {never}
  */
 export function signInRedirect(url: URL): never {
-	redirect(302, `/sign-in?redirect=${encodeURIComponent(`${url.pathname}${url.search}`)}`);
+	// redirect(302, `/sign-in?redirect=${encodeURIComponent(`${url.pathname}${url.search}`)}`);
+	redirect(302, `/?redirect=${encodeURIComponent(`${url.pathname}${url.search}`)}`);
 }

@@ -1,6 +1,6 @@
 import { building } from "$app/environment";
-import { checkEnv } from "$src/lib/types/env";
-import type { App } from "$src/lib/types/schemas";
+import { checkEnv } from "$lib/env";
+import type { App } from "$lib/schemas";
 import { serverGetCookie } from "$src/server/cookie.js";
 
 if (building) {
@@ -16,12 +16,12 @@ export const load = async (event) => {
 			theme: "system",
 			mode: "dark"
 		},
-		character: {
-			descriptions: false
-		},
 		characters: {
 			magicItems: false,
 			display: "list"
+		},
+		log: {
+			descriptions: false
 		},
 		dmLogs: {
 			sort: "asc"

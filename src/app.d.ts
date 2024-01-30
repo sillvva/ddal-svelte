@@ -1,7 +1,7 @@
 // See https://kit.svelte.dev/docs/types#app
 // for information about these interfaces
 
-import type { Prettify } from "$lib/types/util";
+import type { Prettify } from "$lib/util";
 import type { DefaultSession } from "@auth/core/types";
 
 declare global {

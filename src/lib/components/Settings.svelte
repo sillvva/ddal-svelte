@@ -2,13 +2,21 @@
 	import { browser } from "$app/environment";
 	import { enhance } from "$app/forms";
 	import { page } from "$app/stores";
-	import type { AppStore } from "$src/lib/types/schemas";
+	import { providers, type AppStore } from "$lib/schemas";
+	import { signIn } from "@auth/sveltekit/client";
+	import type { Account } from "@prisma/client";
 	import { getContext, onMount } from "svelte";
 	import { twMerge } from "tailwind-merge";
 	import { pageLoader } from "../store";
 
 	export let open = false;
 	const app = getContext<AppStore>("app");
+
+	$: accounts = $page.data.accounts as Account[];
+	$: authProviders = providers.map((p) => ({
+		...p,
+		account: accounts.find((a) => a.provider === p.id)
+	}));
 
 	onMount(() => {
 		const mql = window.matchMedia("(prefers-color-scheme: dark)");
@@ -69,6 +77,52 @@
 			</li>
 		</form>
 	</ul>
+	{#if authProviders.length > 0}
+		<div class="divider my-0" />
+		<ul class="menu menu-lg w-full">
+			<li class="menu-title">
+				<span class="font-bold text-white">Linked Accounts</span>
+			</li>
+			{#each authProviders as provider}
+				<li>
+					<div class="flex justify-between">
+						<span>{provider.name}</span>
+						<span>
+							{#if provider.account}
+								{#if accounts.length > 1}
+									<form
+										method="POST"
+										action="/characters?/unlinkProvider"
+										use:enhance={() => {
+											$pageLoader = true;
+											open = false;
+											return async ({ update }) => {
+												await update();
+												$pageLoader = false;
+											};
+										}}
+									>
+										<input type="hidden" name="provider" value={provider.id} />
+										<button class="btn btn-error btn-sm">Unlink</button>
+									</form>
+								{:else}
+									Linked
+								{/if}
+							{:else}
+								<button
+									class="btn btn-primary btn-sm"
+									on:click={() =>
+										signIn(provider.id, {
+											callbackUrl: `${$page.url.origin}${$page.url.pathname}${$page.url.search}`
+										})}>Link</button
+								>
+							{/if}
+						</span>
+					</div>
+				</li>
+			{/each}
+		</ul>
+	{/if}
 	<div class="divider my-0" />
 	<ul class="menu menu-lg w-full">
 		<li class="md:hidden">

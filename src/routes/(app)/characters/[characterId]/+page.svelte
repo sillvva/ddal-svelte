@@ -6,10 +6,10 @@
 	import Items from "$lib/components/Items.svelte";
 	import Markdown from "$lib/components/Markdown.svelte";
 	import SearchResults from "$lib/components/SearchResults.svelte";
+	import type { AppStore } from "$lib/schemas";
 	import { pageLoader } from "$lib/store";
+	import type { TransitionAction } from "$lib/util";
 	import { createTransition, slugify, sorter, stopWords } from "$lib/utils";
-	import type { AppStore } from "$src/lib/types/schemas";
-	import type { TransitionAction } from "$src/lib/types/util.js";
 	import MiniSearch from "minisearch";
 	import { getContext } from "svelte";
 	import { queryParam, ssp } from "sveltekit-search-params";
@@ -81,7 +81,7 @@
 			: logs.sort((a, b) => sorter(a.show_date, b.show_date));
 
 	function triggerModal(log: (typeof results)[number]) {
-		if (log.description && !$app.character.descriptions) {
+		if (log.description && !$app.log.descriptions) {
 			pushState("", {
 				modal: {
 					type: "text",
@@ -110,7 +110,7 @@
 	<div class="group flex gap-4">
 		<BreadCrumbs />
 		{#if myCharacter}
-			<div class="hidden gap-4 print:hidden sm:flex">
+			<div class="hidden gap-4 sm:flex print:hidden">
 				<a href={`/characters/${character.id}/edit`} class="btn btn-primary btn-sm">Edit</a>
 				<div class="dropdown dropdown-end">
 					<span role="button" tabindex="0" class="btn btn-sm bg-base-100">
@@ -213,7 +213,7 @@
 	<div class="flex flex-1 flex-col gap-6">
 		<div class="flex">
 			{#if character.image_url}
-				<div class="relative mr-4 hidden flex-col items-end justify-center print:hidden xs:flex md:hidden">
+				<div class="relative mr-4 hidden flex-col items-end justify-center xs:flex md:hidden print:hidden">
 					<a
 						href={character.image_url}
 						target="_blank"
@@ -233,7 +233,7 @@
 			{/if}
 			<div class="flex w-full flex-col">
 				<div class="mb-2 flex gap-4 xs:mb-0">
-					<h3 class="flex-1 py-2 font-vecna text-3xl font-bold text-black sm:py-0 sm:text-4xl dark:text-white">
+					<h3 class="flex-1 py-2 font-vecna text-3xl font-bold text-black dark:text-white sm:py-0 sm:text-4xl">
 						{character.name}
 					</h3>
 				</div>
@@ -259,10 +259,10 @@
 				</p>
 			</div>
 		</div>
-		<div class="flex flex-1 flex-wrap gap-4 print:flex-nowrap xs:flex-nowrap sm:gap-4 md:gap-6">
-			<div class="flex basis-full flex-col gap-2 print:basis-1/3 xs:basis-[40%] sm:basis-1/3 sm:gap-4 md:basis-52">
+		<div class="flex flex-1 flex-wrap gap-4 xs:flex-nowrap sm:gap-4 md:gap-6 print:flex-nowrap">
+			<div class="flex basis-full flex-col gap-2 xs:basis-[40%] sm:basis-1/3 sm:gap-4 md:basis-52 print:basis-1/3">
 				{#if character.image_url}
-					<div class="relative hidden flex-col items-end justify-center print:hidden md:flex">
+					<div class="relative hidden flex-col items-end justify-center md:flex print:hidden">
 						<a
 							href={character.image_url}
 							target="_blank"
@@ -305,11 +305,11 @@
 			</div>
 			<div
 				class={twMerge(
-					"divider hidden xs:divider-horizontal print:flex xs:mx-0 xs:flex",
+					"divider hidden xs:divider-horizontal xs:mx-0 xs:flex print:flex",
 					"before:bg-black/50 after:bg-black/50 dark:before:bg-white/50 dark:after:bg-white/50"
 				)}
 			/>
-			<div class="flex basis-full flex-col print:basis-2/3 xs:basis-[60%] sm:basis-2/3 lg:basis-2/3">
+			<div class="flex basis-full flex-col xs:basis-[60%] sm:basis-2/3 lg:basis-2/3 print:basis-2/3">
 				{#if character}
 					<div class="flex flex-col gap-4">
 						<Items title="Story Awards" items={character.story_awards} collapsible sort />
@@ -322,7 +322,7 @@
 </section>
 
 <div class="mt-4 flex flex-wrap gap-2">
-	<div class="flex w-full gap-2 print:hidden sm:max-w-md">
+	<div class="flex w-full gap-2 sm:max-w-md print:hidden">
 		{#if myCharacter}
 			<a
 				href={`/characters/${character.id}/log/new`}
@@ -361,26 +361,26 @@
 				<Icon src="plus" class="w-6" />
 			</a>
 			<button
-				class={twMerge("no-script-hide btn sm:hidden", $app.character.descriptions && "btn-primary")}
-				on:click={() => createTransition(() => ($app.character.descriptions = !$app.character.descriptions))}
+				class={twMerge("no-script-hide btn sm:hidden", $app.log.descriptions && "btn-primary")}
+				on:click={() => createTransition(() => ($app.log.descriptions = !$app.log.descriptions))}
 				on:keypress
 				aria-label="Toggle Notes"
 				tabindex="0"
 			>
-				<Icon src={$app.character.descriptions ? "show" : "hide"} class="w-6" />
+				<Icon src={$app.log.descriptions ? "show" : "hide"} class="w-6" />
 			</button>
 		{/if}
 	</div>
 	{#if logs.length}
 		<div class="hidden flex-1 sm:block" />
 		<button
-			class={twMerge("no-script-hide btn hidden sm:btn-sm sm:inline-flex", $app.character.descriptions && "btn-primary")}
-			on:click={() => createTransition(() => ($app.character.descriptions = !$app.character.descriptions))}
+			class={twMerge("no-script-hide btn hidden sm:btn-sm sm:inline-flex", $app.log.descriptions && "btn-primary")}
+			on:click={() => createTransition(() => ($app.log.descriptions = !$app.log.descriptions))}
 			on:keypress
 			aria-label="Toggle Notes"
 			tabindex="0"
 		>
-			<Icon src={$app.character.descriptions ? "show" : "hide"} class="w-6" />
+			<Icon src={$app.log.descriptions ? "show" : "hide"} class="w-6" />
 			<span class="hidden sm:inline-flex">Notes</span>
 		</button>
 	{/if}
@@ -392,9 +392,9 @@
 			<thead>
 				<tr class="bg-base-300">
 					<td class="print:p-2">Log Entry</td>
-					<td class="hidden print:table-cell print:p-2 sm:table-cell">Advancement</td>
-					<td class="hidden print:table-cell print:p-2 sm:table-cell">Treasure</td>
-					<td class="hidden print:!hidden md:table-cell">Story Awards</td>
+					<td class="hidden sm:table-cell print:table-cell print:p-2">Advancement</td>
+					<td class="hidden sm:table-cell print:table-cell print:p-2">Treasure</td>
+					<td class="hidden md:table-cell print:!hidden">Story Awards</td>
 					{#if myCharacter}
 						<td class="print:hidden" />
 					{/if}
@@ -405,8 +405,8 @@
 					<tr class={twMerge("border-b-0 border-t-2 border-t-base-200 print:text-sm", deletingLog.includes(log.id) && "hidden")}>
 						<td
 							class={twMerge(
-								"!static pb-0 align-top print:p-2 sm:pb-3",
-								(!$app.character.descriptions || !log.description) && "pb-3",
+								"!static pb-0 align-top sm:pb-3 print:p-2",
+								(!$app.log.descriptions || !log.description) && "pb-3",
 								log.saving && "bg-neutral-focus",
 								(log.description?.trim() || log.story_awards_gained.length > 0 || log.story_awards_lost.length > 0) &&
 									"border-b-0"
@@ -434,7 +434,7 @@
 									{/if}
 								</p>
 							{/if}
-							<div class="table-cell font-normal print:hidden sm:hidden">
+							<div class="table-cell font-normal sm:hidden print:hidden">
 								{#if log.type === "game"}
 									{#if log.experience > 0}
 										<p>
@@ -472,7 +472,7 @@
 						</td>
 						<td
 							class={twMerge(
-								"hidden align-top print:table-cell print:p-2 sm:table-cell",
+								"hidden align-top sm:table-cell print:table-cell print:p-2",
 								log.saving && "bg-neutral-focus",
 								(log.description?.trim() || log.story_awards_gained.length > 0 || log.story_awards_lost.length > 0) &&
 									"border-b-0"
@@ -502,7 +502,7 @@
 						</td>
 						<td
 							class={twMerge(
-								"hidden align-top print:table-cell print:p-2 sm:table-cell",
+								"hidden align-top sm:table-cell print:table-cell print:p-2",
 								log.saving && "bg-neutral-focus",
 								(log.description?.trim() || log.story_awards_gained.length > 0 || log.story_awards_lost.length > 0) &&
 									"border-b-0"
@@ -531,7 +531,7 @@
 						</td>
 						<td
 							class={twMerge(
-								"hidden align-top print:!hidden md:table-cell",
+								"hidden align-top md:table-cell print:!hidden",
 								log.saving && "bg-neutral-focus",
 								(log.description?.trim() || log.story_awards_gained.length > 0 || log.story_awards_lost.length > 0) &&
 									"border-b-0"
@@ -594,10 +594,7 @@
 						{/if}
 					</tr>
 					{#if log.description?.trim() || log.story_awards_gained.length > 0 || log.story_awards_lost.length > 0}
-						<tr
-							class={twMerge(!$app.character.descriptions && "hidden print:table-row")}
-							use:transition={slugify(`notes-${log.id}`)}
-						>
+						<tr class={twMerge(!$app.log.descriptions && "hidden print:table-row")} use:transition={slugify(`notes-${log.id}`)}>
 							<td
 								colSpan={100}
 								class={twMerge(
@@ -610,7 +607,7 @@
 									<Markdown content={log.description} />
 								{/if}
 								{#if log.magic_items_gained.length > 0 || log.magic_items_lost.length > 0}
-									<div class="mt-2 print:hidden sm:hidden">
+									<div class="mt-2 sm:hidden print:hidden">
 										<Items title="Magic Items:" items={log.magic_items_gained} {search} sort />
 										{#if log.magic_items_lost.length}
 											<p class="mt-2 whitespace-pre-wrap text-sm line-through">

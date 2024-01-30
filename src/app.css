@@ -33,6 +33,10 @@
 }
 
 @layer base {
+	* {
+		box-sizing: border-box;
+		min-width: 0;
+	}
 	body {
 		overflow-x: hidden;
 		overflow-y: scroll;

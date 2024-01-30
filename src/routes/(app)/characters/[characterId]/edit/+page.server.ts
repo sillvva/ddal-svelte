@@ -1,7 +1,7 @@
-import { parseFormData } from "$src/lib/components/SchemaForm.svelte";
-import { newCharacterSchema } from "$src/lib/types/schemas.js";
+import { parseFormData } from "$lib/components/SchemaForm.svelte";
+import { newCharacterSchema } from "$lib/schemas";
 import { saveCharacter } from "$src/server/actions/characters";
-import { signInRedirect } from "$src/server/auth.js";
+import { signInRedirect } from "$src/server/auth";
 import { error, redirect } from "@sveltejs/kit";
 
 export const load = async (event) => {

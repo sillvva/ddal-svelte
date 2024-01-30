@@ -1,5 +1,5 @@
-import { parseFormData } from "$src/lib/components/SchemaForm.svelte";
-import { dungeonMasterSchema } from "$src/lib/types/schemas.js";
+import { parseFormData } from "$lib/components/SchemaForm.svelte";
+import { dungeonMasterSchema } from "$lib/schemas";
 import { deleteDM, saveDM } from "$src/server/actions/dms";
 import { signInRedirect } from "$src/server/auth.js";
 import { getUserDMsWithLogsCache } from "$src/server/data/dms";
