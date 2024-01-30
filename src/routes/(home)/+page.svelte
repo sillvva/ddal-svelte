@@ -1,10 +1,14 @@
 <script lang="ts">
 	import { browser } from "$app/environment";
 	import { page } from "$app/stores";
-	import { providers } from "$lib/schemas";
+	import { providers, type AppStore } from "$lib/schemas";
 	import { signIn } from "@auth/sveltekit/client";
+	import { getContext } from "svelte";
+	import { twMerge } from "tailwind-merge";
 
 	export let data;
+
+	const app = getContext<AppStore>("app");
 
 	$: if (browser) {
 		const hasCookie = document.cookie.includes("session-token");
@@ -44,7 +48,10 @@
 	<div class="flex flex-col gap-4">
 		{#each providers as provider}
 			<button
-				class="flex h-16 items-center gap-4 rounded-lg bg-base-200/50 px-8 py-4 text-base-content transition-colors hover:bg-base-300"
+				class={twMerge(
+					"flex h-16 items-center gap-4 rounded-lg px-8 py-4 text-base-content transition-colors hover:bg-base-300",
+					$app.settings.background ? "bg-base-200/50" : "bg-base-100"
+				)}
 				on:click={() =>
 					signIn(provider.id, {
 						callbackUrl: `${$page.url.origin}${data.redirectTo || "/characters"}`
