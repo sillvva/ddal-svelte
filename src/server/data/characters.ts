@@ -28,7 +28,7 @@ export async function getCharacter(characterId: string, includeLogs = true) {
 				orderBy: {
 					date: "asc"
 				}
-		  })
+			})
 		: [];
 
 	return {

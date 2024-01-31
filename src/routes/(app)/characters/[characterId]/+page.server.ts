@@ -19,7 +19,7 @@ export const load = async (event) => {
 
 export const actions = {
 	deleteCharacter: async (event) => {
-		const session = await event.locals.session;
+		const session = event.locals.session;
 		if (!session?.user) redirect(302, "/");
 		const characterId = event.params.characterId;
 		const result = await deleteCharacter(characterId, session.user.id);
@@ -30,7 +30,7 @@ export const actions = {
 		return result;
 	},
 	deleteLog: async (event) => {
-		const session = await event.locals.session;
+		const session = event.locals.session;
 		if (!session?.user) redirect(302, "/");
 		const data = await event.request.formData();
 		const logId = (data.get("logId") || "") as string;

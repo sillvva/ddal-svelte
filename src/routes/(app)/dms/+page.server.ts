@@ -1,4 +1,4 @@
-import { sorter } from "$lib/utils";
+import { sorter } from "$lib/util";
 import { deleteDM } from "$src/server/actions/dms";
 import { signInRedirect } from "$src/server/auth";
 import { getUserDMsWithLogsCache } from "$src/server/data/dms";
@@ -19,7 +19,7 @@ export const load = async (event) => {
 
 export const actions = {
 	deleteDM: async (event) => {
-		const session = await event.locals.session;
+		const session = event.locals.session;
 		if (!session?.user) redirect(302, "/");
 		const data = await event.request.formData();
 		const dmId = (data.get("dmId") || "") as string;

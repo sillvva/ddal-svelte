@@ -28,7 +28,7 @@ export const load = async (event) => {
 
 export const actions = {
 	saveDM: async (event) => {
-		const session = await event.locals.session;
+		const session = event.locals.session;
 		if (!session?.user) redirect(302, "/");
 		if (!event.params.dmId) redirect(302, "/dms");
 
@@ -50,7 +50,7 @@ export const actions = {
 		}
 	},
 	deleteDM: async (event) => {
-		const session = await event.locals.session;
+		const session = event.locals.session;
 		if (!session?.user) redirect(302, "/");
 
 		const data = await event.request.formData();

@@ -55,27 +55,37 @@ const providers: OAuthProvider[] = [
 export const auth = SvelteKitAuth(async (event) => {
 	return {
 		callbacks: {
-			async signIn({ account }) {
-				const currentSession = await event.locals.getSession();
+			async signIn({ account, user }) {
+				const currentSession = await event.locals.auth();
 				const currentUserId = currentSession?.user?.id;
 
 				// If there is a user logged in already that we recognize,
 				// and we have an account that is being signed in with
 				if (account && currentUserId) {
-					const currentAccounts = await prisma.account.findFirst({
+					const currentAccount = await prisma.account.findFirst({
 						where: { userId: currentUserId, provider: account.provider }
 					});
 
-					if (currentAccounts) {
+					if (currentAccount) {
 						throw new Error("You already have an account with this provider!");
 					}
 
 					// Do the account linking
 					const existingAccount = await prisma.account.findFirst({
-						where: { provider: account.provider, providerAccountId: account.providerAccountId }
+						where: {
+							OR: [
+								{ provider: account.provider, providerAccountId: account.providerAccountId },
+								{
+									user: {
+										email: user.email
+									},
+									provider: account.provider
+								}
+							]
+						}
 					});
 
-					if (existingAccount) {
+					if (existingAccount && existingAccount.userId !== currentUserId) {
 						throw new Error("Account is already connected to another user!");
 					}
 
@@ -86,7 +96,7 @@ export const auth = SvelteKitAuth(async (event) => {
 							provider: account.provider,
 							providerAccountId: account.providerAccountId,
 							userId: currentUserId,
-							type: "oauth",
+							type: account.type,
 							access_token: account.access_token,
 							expires_at: account.expires_in ? Math.floor(Date.now() / 1000 + account.expires_in) : undefined,
 							refresh_token: account.refresh_token,
@@ -101,22 +111,54 @@ export const auth = SvelteKitAuth(async (event) => {
 						expires: new Date(new Date().getTime() + 30 * 86400 * 1000)
 					});
 
-					await prisma.account.update({
-						data: {
-							access_token: account.access_token,
-							expires_at: Math.floor(Date.now() / 1000 + account.expires_in),
-							refresh_token: account.refresh_token,
-							token_type: account.token_type,
-							scope: account.scope,
-							id_token: account.id_token
-						},
-						where: {
-							provider_providerAccountId: {
-								provider: account.provider,
-								providerAccountId: account.providerAccountId
-							}
-						}
+					const existingAccount = await prisma.account.findFirst({
+						where: { provider: account.provider, providerAccountId: account.providerAccountId }
 					});
+
+					if (existingAccount) {
+						await prisma.account.update({
+							data: {
+								access_token: account.access_token,
+								expires_at: Math.floor(Date.now() / 1000 + account.expires_in),
+								refresh_token: account.refresh_token,
+								token_type: account.token_type,
+								scope: account.scope,
+								id_token: account.id_token,
+								type: account.type
+							},
+							where: {
+								provider_providerAccountId: {
+									provider: existingAccount.provider || account.provider,
+									providerAccountId: existingAccount.providerAccountId || account.providerAccountId
+								}
+							}
+						});
+
+						return true;
+					}
+
+					const existingUser = await prisma.user.findFirst({
+						where: { email: user.email }
+					});
+
+					if (existingUser) {
+						await prisma.account.create({
+							data: {
+								provider: account.provider,
+								providerAccountId: account.providerAccountId,
+								userId: existingUser.id,
+								type: account.type,
+								access_token: account.access_token,
+								expires_at: Math.floor(Date.now() / 1000 + account.expires_in),
+								refresh_token: account.refresh_token,
+								token_type: account.token_type,
+								scope: account.scope,
+								id_token: account.id_token
+							}
+						});
+
+						return true;
+					}
 				}
 
 				return true;
@@ -164,7 +206,7 @@ export const auth = SvelteKitAuth(async (event) => {
 }) satisfies Handle;
 
 export const session: Handle = async ({ event, resolve }) => {
-	const session: CustomSession | null = await event.locals.getSession();
+	const session = await event.locals.auth();
 
 	event.locals.session = session && {
 		...session,
