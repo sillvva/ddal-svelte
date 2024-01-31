@@ -43,7 +43,7 @@ export const load = async (event) => {
 
 export const actions = {
 	saveCharacter: async (event) => {
-		const session = event.locals.session;
+		const session = await event.locals.session;
 		if (!session?.user) redirect(302, "/");
 		const characterId = event.params.characterId;
 		try {

@@ -1,5 +1,5 @@
 <script lang="ts">
-	import { sorter } from "$lib/util";
+	import { sorter } from "$lib/utils";
 	import { createEventDispatcher, onMount } from "svelte";
 	import type { HTMLInputAttributes } from "svelte/elements";
 	import { twMerge } from "tailwind-merge";

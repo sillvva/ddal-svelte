@@ -9,7 +9,7 @@
 	import type { AppStore } from "$lib/schemas";
 	import { pageLoader } from "$lib/store";
 	import type { TransitionAction } from "$lib/util";
-	import { createTransition, slugify, sorter, stopWords } from "$lib/util";
+	import { createTransition, slugify, sorter, stopWords } from "$lib/utils";
 	import MiniSearch from "minisearch";
 	import { getContext } from "svelte";
 	import { queryParam, ssp } from "sveltekit-search-params";

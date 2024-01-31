@@ -39,7 +39,7 @@ export const actions = {
 
 			await unlinkProvider(session.user.id, provider);
 
-			const newSession = await event.locals.auth();
+			const newSession = await event.locals.getSession();
 			if (!newSession?.user) redirect(302, "/");
 
 			return { success: true };

@@ -1,6 +1,6 @@
 <script lang="ts">
 	import { pushState } from "$app/navigation";
-	import { sorter } from "$lib/util";
+	import { sorter } from "$lib/utils";
 	import type { MagicItem, StoryAward } from "@prisma/client";
 	import { twMerge } from "tailwind-merge";
 	import Icon from "./Icon.svelte";
@@ -80,7 +80,7 @@
 					{title}
 				</span>
 				{#if collapsible}
-					<Icon src="chevron-{collapsed ? 'down' : 'up'}" class="ml-2 inline w-4 justify-self-end md:hidden print:hidden" />
+					<Icon src="chevron-{collapsed ? 'down' : 'up'}" class="ml-2 inline w-4 justify-self-end print:hidden md:hidden" />
 				{/if}
 			</h4>
 		</div>
@@ -88,7 +88,7 @@
 	<p
 		class={twMerge(
 			"divide-x divide-black/50 text-sm dark:divide-white/50 print:text-xs",
-			collapsed ? "hidden md:inline print:inline" : ""
+			collapsed ? "hidden print:inline md:inline" : ""
 		)}
 	>
 		{#if items.length}

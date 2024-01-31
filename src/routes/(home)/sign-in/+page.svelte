@@ -4,13 +4,11 @@
 	import { signIn } from "@auth/sveltekit/client";
 	import { onMount } from "svelte";
 
-	export let data;
-
 	onMount(() => {
 		setTimeout(() => {
 			const redirectTo = $page.url.searchParams.get("redirect") || "/characters";
 			if (!$page.data.session?.user) {
-				signIn(data.provider, { callbackUrl: `${$page.url.origin}${redirectTo}` });
+				signIn("google", { callbackUrl: `${$page.url.origin}${redirectTo}` });
 			} else {
 				goto(redirectTo, { replaceState: true });
 			}

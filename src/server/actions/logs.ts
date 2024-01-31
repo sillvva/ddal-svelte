@@ -1,5 +1,6 @@
 import { getLevels } from "$lib/entities";
-import { handleSKitError, parseError } from "$lib/util";
+import { handleSKitError } from "$lib/util";
+import { parseError } from "$lib/utils";
 import { error } from "@sveltejs/kit";
 import { revalidateKeys } from "../cache";
 import { prisma } from "../db";

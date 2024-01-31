@@ -1,9 +1,9 @@
-import { parseError } from "$lib/util";
+import { parseError } from "$lib/utils";
 import { getCharacterCache, getCharactersCache } from "$src/server/data/characters";
 import { json } from "@sveltejs/kit";
 
 export async function GET({ params, locals }) {
-	const session = locals.session;
+	const session = await locals.getSession();
 	if (!session?.user?.id) return json({ error: "Unauthorized" }, { status: 401 });
 
 	const { characterId } = params;
