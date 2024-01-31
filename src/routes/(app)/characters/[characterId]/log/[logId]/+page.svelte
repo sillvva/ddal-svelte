@@ -8,7 +8,7 @@
 	import SchemaForm from "$lib/components/SchemaForm.svelte";
 	import { defaultDM, getMagicItems, getStoryAwards } from "$lib/entities";
 	import { logSchema, type LogSchemaIn } from "$lib/schemas";
-	import { sorter } from "$lib/utils";
+	import { sorter } from "$lib/util";
 	import { twMerge } from "tailwind-merge";
 
 	export let data;

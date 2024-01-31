@@ -55,18 +55,18 @@ const providers: OAuthProvider[] = [
 export const auth = SvelteKitAuth(async (event) => {
 	return {
 		callbacks: {
-			async signIn({ account }) {
+			async signIn({ account, user }) {
 				const currentSession = await event.locals.getSession();
 				const currentUserId = currentSession?.user?.id;
 
 				// If there is a user logged in already that we recognize,
 				// and we have an account that is being signed in with
 				if (account && currentUserId) {
-					const currentAccounts = await prisma.account.findFirst({
+					const currentAccount = await prisma.account.findFirst({
 						where: { userId: currentUserId, provider: account.provider }
 					});
 
-					if (currentAccounts) {
+					if (currentAccount) {
 						throw new Error("You already have an account with this provider!");
 					}
 
@@ -86,7 +86,7 @@ export const auth = SvelteKitAuth(async (event) => {
 							provider: account.provider,
 							providerAccountId: account.providerAccountId,
 							userId: currentUserId,
-							type: "oauth",
+							type: account.type,
 							access_token: account.access_token,
 							expires_at: account.expires_in ? Math.floor(Date.now() / 1000 + account.expires_in) : undefined,
 							refresh_token: account.refresh_token,
@@ -101,22 +101,34 @@ export const auth = SvelteKitAuth(async (event) => {
 						expires: new Date(new Date().getTime() + 30 * 86400 * 1000)
 					});
 
-					await prisma.account.update({
-						data: {
-							access_token: account.access_token,
-							expires_at: Math.floor(Date.now() / 1000 + account.expires_in),
-							refresh_token: account.refresh_token,
-							token_type: account.token_type,
-							scope: account.scope,
-							id_token: account.id_token
-						},
+					const existingAccount = await prisma.account.findFirst({
 						where: {
-							provider_providerAccountId: {
-								provider: account.provider,
-								providerAccountId: account.providerAccountId
-							}
+							OR: [
+								{ provider: account.provider, providerAccountId: account.providerAccountId },
+								{ user: { email: user.email }, provider: account.provider }
+							]
 						}
 					});
+
+					if (existingAccount) {
+						await prisma.account.update({
+							data: {
+								type: account.type,
+								access_token: account.access_token,
+								expires_at: Math.floor(Date.now() / 1000 + account.expires_in),
+								refresh_token: account.refresh_token,
+								token_type: account.token_type,
+								scope: account.scope,
+								id_token: account.id_token
+							},
+							where: {
+								provider_providerAccountId: {
+									provider: existingAccount.provider,
+									providerAccountId: existingAccount.providerAccountId
+								}
+							}
+						});
+					}
 				}
 
 				return true;

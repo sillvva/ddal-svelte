@@ -1,5 +1,5 @@
 <script lang="ts">
-	import { slugify } from "$lib/utils";
+	import { slugify } from "$lib/util";
 	import { twMerge } from "tailwind-merge";
 	export let depth: number;
 	export let raw: any = "";
@@ -12,15 +12,15 @@
 </script>
 
 {#if depth === 1}
-	<h1 {id} class={twMerge("text-3xl mt-6 mb-2 first:mt-0 font-bold", className)}>
+	<h1 {id} class={twMerge("mb-2 mt-6 text-3xl font-bold first:mt-0", className)}>
 		<slot />
 	</h1>
 {:else if depth === 2}
-	<h2 {id} class={twMerge("text-2xl mt-4 mb-2 first:mt-0 font-bold", className)}>
+	<h2 {id} class={twMerge("mb-2 mt-4 text-2xl font-bold first:mt-0", className)}>
 		<slot />
 	</h2>
 {:else if depth === 3}
-	<h3 {id} class={twMerge("text-xl mt-4 mb-2 first:mt-0 font-semibold", className)}>
+	<h3 {id} class={twMerge("mb-2 mt-4 text-xl font-semibold first:mt-0", className)}>
 		<slot />
 	</h3>
 {:else if depth === 4}

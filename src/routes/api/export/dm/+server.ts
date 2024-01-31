@@ -1,9 +1,9 @@
-import { parseError } from "$lib/utils";
+import { parseError } from "$lib/util";
 import { getDMLogsCache } from "$src/server/data/logs";
 import { json } from "@sveltejs/kit";
 
 export async function GET({ locals }) {
-	const session = await locals.getSession();
+	const session = locals.session;
 	if (!session?.user) return json({ error: "Unauthorized" }, { status: 401 });
 
 	try {
