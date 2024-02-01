@@ -139,8 +139,9 @@ export const auth = SvelteKitAuth(async (event) => {
 						}
 					});
 
+					account.providerAccountId = providerAccountId;
+
 					if (existingAccount) {
-						account.providerAccountId = providerAccountId;
 						await prisma.account.update({
 							data: {
 								providerAccountId: account.providerAccountId,
