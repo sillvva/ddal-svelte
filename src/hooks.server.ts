@@ -64,44 +64,44 @@ export const auth = SvelteKitAuth(async (event) => {
 	return {
 		callbacks: {
 			async signIn({ account, profile, user }) {
-				const currentSession = await event.locals.auth();
-				const currentUserId = currentSession?.user?.id;
-
 				if (!account) throw new Error("No account found");
 				if (!profile) throw new Error("No profile found");
+
+				const provider = providers.find((p) => p.id === account.provider);
+				if (!provider) throw new Error(`Provider '${account.provider}' not found`);
 
 				const providerAccountId = user.email
 					? createHash("sha1").update(`${account.provider} ${user.email}`).digest("hex")
 					: null;
 				if (!providerAccountId) throw new Error("No email found in profile");
 
+				const currentSession = await event.locals.auth();
+				const currentUserId = currentSession?.user?.id;
+
+				const existingAccount = await prisma.account.findFirst({
+					where: {
+						OR: [
+							{ provider: account.provider, providerAccountId: providerAccountId },
+							{ provider: account.provider, providerAccountId: account.providerAccountId },
+							{ userId: currentUserId, provider: provider.accountId(profile) }
+						]
+					}
+				});
+
 				// If there is a user logged in already that we recognize,
 				// and we have an account that is being signed in with
 				if (account && currentUserId) {
 					// Only link accounts that have not yet been linked
+					if (existingAccount) {
+						throw new Error("Account is already connected to another user!");
+					}
+
 					const currentAccount = await prisma.account.findFirst({
 						where: { userId: currentUserId, provider: account.provider }
 					});
 
 					if (currentAccount) {
 						throw new Error("You already have an account with this provider!");
-					}
-
-					const provider = providers.find((p) => p.id === account.provider);
-					if (!provider) throw new Error(`Provider '${account.provider}' not found`);
-
-					const existingAccount = await prisma.account.findFirst({
-						where: {
-							OR: [
-								{ provider: account.provider, providerAccountId: providerAccountId },
-								{ provider: account.provider, providerAccountId: account.providerAccountId },
-								{ userId: currentUserId, provider: provider.accountId(profile) }
-							]
-						}
-					});
-
-					if (existingAccount) {
-						throw new Error("Account is already connected to another user!");
 					}
 
 					// Do the account linking
@@ -124,19 +124,6 @@ export const auth = SvelteKitAuth(async (event) => {
 					event.cookies.set("authjs.provider", account.provider, {
 						path: "/",
 						expires: new Date(new Date().getTime() + 30 * 86400 * 1000)
-					});
-
-					const provider = providers.find((p) => p.id === account.provider);
-					if (!provider) throw new Error(`Provider '${account.provider}' not found`);
-
-					const existingAccount = await prisma.account.findFirst({
-						where: {
-							OR: [
-								{ provider: account.provider, providerAccountId: providerAccountId },
-								{ provider: account.provider, providerAccountId: account.providerAccountId },
-								{ provider: account.provider, providerAccountId: provider.accountId(profile) }
-							]
-						}
 					});
 
 					account.providerAccountId = providerAccountId;
