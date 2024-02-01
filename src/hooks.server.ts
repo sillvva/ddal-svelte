@@ -9,19 +9,21 @@ import { prisma } from "$src/server/db";
 import type { Provider } from "@auth/core/providers";
 import Discord from "@auth/core/providers/discord";
 import Google from "@auth/core/providers/google";
-import type { TokenSet } from "@auth/core/types";
+import type { Profile, TokenSet } from "@auth/core/types";
 import { PrismaAdapter } from "@auth/prisma-adapter";
 import { SvelteKitAuth, type SvelteKitAuthConfig } from "@auth/sveltekit";
 import type { Account } from "@prisma/client";
 import type { Handle } from "@sveltejs/kit";
 import { sequence } from "@sveltejs/kit/hooks";
 import { handle as documentHandle } from "@sveltekit-addons/document/hooks";
+import { createHash } from "crypto";
 
 interface OAuthProvider {
 	id: string;
 	tokenUrl: string;
 	clientId: string;
 	clientSecret: string;
+	accountId: (profile: Profile) => string;
 	oauth: () => Provider;
 }
 const providers: OAuthProvider[] = [
@@ -30,6 +32,9 @@ const providers: OAuthProvider[] = [
 		tokenUrl: "https://oauth2.googleapis.com/token",
 		clientId: GOOGLE_CLIENT_ID,
 		clientSecret: GOOGLE_CLIENT_SECRET,
+		accountId: function (profile: Profile) {
+			return profile.sub as string;
+		},
 		oauth: function () {
 			return Google({
 				clientId: this.clientId,
@@ -43,6 +48,9 @@ const providers: OAuthProvider[] = [
 		tokenUrl: "https://discord.com/api/v10/oauth2/token",
 		clientId: DISCORD_CLIENT_ID,
 		clientSecret: DISCORD_CLIENT_SECRET,
+		accountId: function (profile: Profile) {
+			return profile.id as string;
+		},
 		oauth: function () {
 			return Discord({
 				clientId: this.clientId,
@@ -55,13 +63,22 @@ const providers: OAuthProvider[] = [
 export const auth = SvelteKitAuth(async (event) => {
 	return {
 		callbacks: {
-			async signIn({ account, user }) {
-				const currentSession = await event.locals.getSession();
+			async signIn({ account, profile, user }) {
+				const currentSession = await event.locals.auth();
 				const currentUserId = currentSession?.user?.id;
+
+				if (!account) throw new Error("No account found");
+				if (!profile) throw new Error("No profile found");
+
+				const providerAccountId = user.email
+					? createHash("sha1").update(`${account.provider} ${user.email}`).digest("hex")
+					: null;
+				if (!providerAccountId) throw new Error("No email found in profile");
 
 				// If there is a user logged in already that we recognize,
 				// and we have an account that is being signed in with
 				if (account && currentUserId) {
+					// Only link accounts that have not yet been linked
 					const currentAccount = await prisma.account.findFirst({
 						where: { userId: currentUserId, provider: account.provider }
 					});
@@ -70,17 +87,25 @@ export const auth = SvelteKitAuth(async (event) => {
 						throw new Error("You already have an account with this provider!");
 					}
 
-					// Do the account linking
+					const provider = providers.find((p) => p.id === account.provider);
+					if (!provider) throw new Error(`Provider '${account.provider}' not found`);
+
 					const existingAccount = await prisma.account.findFirst({
-						where: { provider: account.provider, providerAccountId: account.providerAccountId }
+						where: {
+							OR: [
+								{ provider: account.provider, providerAccountId: providerAccountId },
+								{ provider: account.provider, providerAccountId: account.providerAccountId },
+								{ userId: currentUserId, provider: provider.accountId(profile) }
+							]
+						}
 					});
 
 					if (existingAccount) {
 						throw new Error("Account is already connected to another user!");
 					}
 
-					// Only link accounts that have not yet been linked
-					// Link the new account
+					// Do the account linking
+					account.providerAccountId = providerAccountId;
 					await prisma.account.create({
 						data: {
 							provider: account.provider,
@@ -95,24 +120,30 @@ export const auth = SvelteKitAuth(async (event) => {
 							id_token: account.id_token
 						}
 					});
-				} else if (account?.refresh_token && account.expires_in) {
+				} else if (account?.refresh_token && account.expires_in && profile) {
 					event.cookies.set("authjs.provider", account.provider, {
 						path: "/",
 						expires: new Date(new Date().getTime() + 30 * 86400 * 1000)
 					});
 
+					const provider = providers.find((p) => p.id === account.provider);
+					if (!provider) throw new Error(`Provider '${account.provider}' not found`);
+
 					const existingAccount = await prisma.account.findFirst({
 						where: {
 							OR: [
+								{ provider: account.provider, providerAccountId: providerAccountId },
 								{ provider: account.provider, providerAccountId: account.providerAccountId },
-								{ user: { email: user.email }, provider: account.provider }
+								{ provider: account.provider, providerAccountId: provider.accountId(profile) }
 							]
 						}
 					});
 
 					if (existingAccount) {
+						account.providerAccountId = providerAccountId;
 						await prisma.account.update({
 							data: {
+								providerAccountId: account.providerAccountId,
 								type: account.type,
 								access_token: account.access_token,
 								expires_at: Math.floor(Date.now() / 1000 + account.expires_in),
@@ -176,7 +207,7 @@ export const auth = SvelteKitAuth(async (event) => {
 }) satisfies Handle;
 
 export const session: Handle = async ({ event, resolve }) => {
-	const session: CustomSession | null = await event.locals.getSession();
+	const session: CustomSession | null = await event.locals.auth();
 
 	event.locals.session = session && {
 		...session,
