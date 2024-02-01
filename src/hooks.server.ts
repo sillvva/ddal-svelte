@@ -13,10 +13,11 @@ import type { Profile, TokenSet } from "@auth/core/types";
 import { PrismaAdapter } from "@auth/prisma-adapter";
 import { SvelteKitAuth, type SvelteKitAuthConfig } from "@auth/sveltekit";
 import type { Account } from "@prisma/client";
-import type { Handle } from "@sveltejs/kit";
+import { type Handle } from "@sveltejs/kit";
 import { sequence } from "@sveltejs/kit/hooks";
 import { handle as documentHandle } from "@sveltekit-addons/document/hooks";
 import { createHash } from "crypto";
+import { authErrRedirect } from "./server/auth";
 
 interface OAuthProvider {
 	id: string;
@@ -64,16 +65,16 @@ export const auth = SvelteKitAuth(async (event) => {
 	return {
 		callbacks: {
 			async signIn({ account, profile, user }) {
-				if (!account) throw new Error("No account found");
-				if (!profile) throw new Error("No profile found");
+				if (!account) authErrRedirect(500, "Account not found");
+				if (!profile) authErrRedirect(500, "Profile not found");
 
 				const provider = providers.find((p) => p.id === account.provider);
-				if (!provider) throw new Error(`Provider '${account.provider}' not found`);
+				if (!provider) authErrRedirect(500, `Provider '${account.provider}' not found`);
 
 				const providerAccountId = user.email
 					? createHash("sha1").update(`${account.provider} ${user.email}`).digest("hex")
 					: null;
-				if (!providerAccountId) throw new Error("No email found in profile");
+				if (!providerAccountId) authErrRedirect(500, "Email not found");
 
 				const currentSession = await event.locals.auth();
 				const currentUserId = currentSession?.user?.id;
@@ -92,17 +93,13 @@ export const auth = SvelteKitAuth(async (event) => {
 				// and we have an account that is being signed in with
 				if (account && currentUserId) {
 					// Only link accounts that have not yet been linked
-					if (existingAccount) {
-						throw new Error("Account is already connected to another user!");
-					}
+					if (existingAccount) authErrRedirect(401, "Account already linked to another user");
 
 					const currentAccount = await prisma.account.findFirst({
 						where: { userId: currentUserId, provider: account.provider }
 					});
 
-					if (currentAccount) {
-						throw new Error("You already have an account with this provider!");
-					}
+					if (currentAccount) authErrRedirect(401, "Account already linked to you");
 
 					// Do the account linking
 					account.providerAccountId = providerAccountId;
@@ -190,7 +187,11 @@ export const auth = SvelteKitAuth(async (event) => {
 		secret: AUTH_SECRET,
 		adapter: PrismaAdapter(prisma),
 		providers: providers.map((p) => p.oauth()),
-		trustHost: true
+		trustHost: true,
+		pages: {
+			signIn: "/",
+			error: "/auth/err"
+		}
 	} satisfies SvelteKitAuthConfig;
 }) satisfies Handle;
 
