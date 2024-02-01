@@ -65,44 +65,43 @@ export const auth = SvelteKitAuth(async (event) => {
 	return {
 		callbacks: {
 			async signIn({ account, profile, user }) {
-				if (!account) authErrRedirect(500, "Account not found");
-				if (!profile) authErrRedirect(500, "Profile not found");
+				if (!account) authErrRedirect(401, "Account not found");
+				if (!profile) authErrRedirect(401, "Profile not found");
 
 				const provider = providers.find((p) => p.id === account.provider);
-				if (!provider) authErrRedirect(500, `Provider '${account.provider}' not found`);
+				if (!provider) authErrRedirect(401, `Provider '${account.provider}' not found`);
 
-				const providerAccountId = user.email
-					? createHash("sha1").update(`${account.provider} ${user.email}`).digest("hex")
-					: null;
-				if (!providerAccountId) authErrRedirect(500, "Email not found");
+				if (!user.email) authErrRedirect(401, "Email not found");
 
+				const providerAccountId = createHash("sha1").update(`${account.provider} ${user.email}`).digest("hex");
 				const currentSession = await event.locals.auth();
 				const currentUserId = currentSession?.user?.id;
 
 				const existingAccount = await prisma.account.findFirst({
 					where: {
+						provider: account.provider,
 						OR: [
-							{ provider: account.provider, providerAccountId: providerAccountId },
-							{ provider: account.provider, providerAccountId: account.providerAccountId },
-							{ userId: currentUserId, provider: provider.accountId(profile) }
+							{ providerAccountId: providerAccountId },
+							{ providerAccountId: account.providerAccountId },
+							{ providerAccountId: provider.accountId(profile) }
 						]
 					}
 				});
 
+				account.providerAccountId = providerAccountId;
+
+				event.cookies.set("authjs.provider", account.provider, {
+					path: "/",
+					expires: new Date(new Date().getTime() + 30 * 86400 * 1000)
+				});
+
 				// If there is a user logged in already that we recognize,
 				// and we have an account that is being signed in with
-				if (account && currentUserId) {
+				if (currentUserId) {
 					// Only link accounts that have not yet been linked
-					if (existingAccount) authErrRedirect(401, "Account already linked to another user");
-
-					const currentAccount = await prisma.account.findFirst({
-						where: { userId: currentUserId, provider: account.provider }
-					});
-
-					if (currentAccount) authErrRedirect(401, "Account already linked to you");
+					if (existingAccount) authErrRedirect(401, "Account already linked to a user");
 
 					// Do the account linking
-					account.providerAccountId = providerAccountId;
 					await prisma.account.create({
 						data: {
 							provider: account.provider,
@@ -117,34 +116,25 @@ export const auth = SvelteKitAuth(async (event) => {
 							id_token: account.id_token
 						}
 					});
-				} else if (account?.refresh_token && account.expires_in && profile) {
-					event.cookies.set("authjs.provider", account.provider, {
-						path: "/",
-						expires: new Date(new Date().getTime() + 30 * 86400 * 1000)
-					});
-
-					account.providerAccountId = providerAccountId;
-
-					if (existingAccount) {
-						await prisma.account.update({
-							data: {
-								providerAccountId: account.providerAccountId,
-								type: account.type,
-								access_token: account.access_token,
-								expires_at: Math.floor(Date.now() / 1000 + account.expires_in),
-								refresh_token: account.refresh_token,
-								token_type: account.token_type,
-								scope: account.scope,
-								id_token: account.id_token
-							},
-							where: {
-								provider_providerAccountId: {
-									provider: existingAccount.provider,
-									providerAccountId: existingAccount.providerAccountId
-								}
+				} else if (existingAccount && account.refresh_token && account.expires_in) {
+					await prisma.account.update({
+						data: {
+							providerAccountId: account.providerAccountId,
+							type: account.type,
+							access_token: account.access_token,
+							expires_at: Math.floor(Date.now() / 1000 + account.expires_in),
+							refresh_token: account.refresh_token,
+							token_type: account.token_type,
+							scope: account.scope,
+							id_token: account.id_token
+						},
+						where: {
+							provider_providerAccountId: {
+								provider: existingAccount.provider,
+								providerAccountId: existingAccount.providerAccountId
 							}
-						});
-					}
+						}
+					});
 				}
 
 				return true;
@@ -196,7 +186,7 @@ export const auth = SvelteKitAuth(async (event) => {
 }) satisfies Handle;
 
 export const session: Handle = async ({ event, resolve }) => {
-	const session: CustomSession | null = await event.locals.auth();
+	const session = await event.locals.auth();
 
 	event.locals.session = session && {
 		...session,
