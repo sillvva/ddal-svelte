@@ -4,7 +4,7 @@
 	import SearchResults from "$lib/components/SearchResults.svelte";
 	import type { AppStore } from "$lib/schemas";
 	import type { TransitionAction } from "$lib/util";
-	import { createTransition, slugify, sorter, stopWords } from "$lib/utils";
+	import { createTransition, slugify, sorter, stopWords } from "$lib/util";
 	import MiniSearch from "minisearch";
 	import { getContext, onMount } from "svelte";
 	import { queryParam, ssp } from "sveltekit-search-params";

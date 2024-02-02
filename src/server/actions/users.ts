@@ -1,4 +1,4 @@
-import { providers } from "../auth";
+import type { providers } from "$src/lib/schemas";
 import { revalidateKeys, type CacheKey } from "../cache";
 import { getCharactersCache } from "../data/characters";
 import { prisma } from "../db";
@@ -16,17 +16,9 @@ export async function clearUserCache(userId: string) {
 
 export type ProviderId = (typeof providers)[number]["id"];
 export async function unlinkProvider(userId: string, provider: ProviderId) {
-	const account = await prisma.account.findFirst({
-		where: { userId, provider }
-	});
-
-	if (!account) {
-		throw new Error("No account found");
-	}
-
 	try {
-		await prisma.account.delete({
-			where: { id: account.id }
+		await prisma.account.deleteMany({
+			where: { userId, provider }
 		});
 
 		return true;
