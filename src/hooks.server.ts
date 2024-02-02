@@ -64,16 +64,18 @@ export const auth = SvelteKitAuth(async (event) => {
 	return {
 		callbacks: {
 			async signIn({ account, profile }) {
-				if (!account) authErrRedirect(401, "Account not found");
-				if (!profile) authErrRedirect(401, "Profile not found");
+				const redirectTo = event.url.searchParams.get("redirect") || undefined;
+				const redirectUrl = redirectTo ? new URL(redirectTo, event.url.origin) : undefined;
+
+				if (!account) authErrRedirect("MissingAccountData", "Account not found", redirectUrl);
+				if (!profile) authErrRedirect("MissingAccountData", "Profile not found", redirectUrl);
 
 				const provider = providers.find((p) => p.id === account.provider);
-				if (!provider) authErrRedirect(401, `Provider '${account.provider}' not found`);
-
-				const currentSession = await event.locals.auth();
-				const currentUserId = currentSession?.user?.id;
+				if (!provider) authErrRedirect("InvalidProvider", `Provider '${account.provider}' not found`, redirectUrl);
 
 				account.providerAccountId = provider.accountId(profile);
+				if (!account.providerAccountId) authErrRedirect("MissingAccountData", "Account ID not found in profile", redirectUrl);
+
 				const existingAccount = await prisma.account.findFirst({
 					where: {
 						provider: account.provider,
@@ -81,11 +83,14 @@ export const auth = SvelteKitAuth(async (event) => {
 					}
 				});
 
+				const currentSession = await event.locals.auth();
+				const currentUserId = currentSession?.user?.id;
+
 				// If there is a user logged in already that we recognize,
 				// and we have an account that is being signed in with
 				if (currentUserId) {
 					// Only link accounts that have not yet been linked
-					if (existingAccount) authErrRedirect(401, "Account already linked to a user");
+					if (existingAccount) authErrRedirect("AccountLinkError", "Account already linked to a user", redirectUrl);
 
 					// Do the account linking
 					await prisma.account.create({
@@ -175,7 +180,7 @@ export const auth = SvelteKitAuth(async (event) => {
 		trustHost: true,
 		pages: {
 			signIn: "/",
-			error: "/auth/err"
+			error: "/"
 		}
 	} satisfies SvelteKitAuthConfig;
 }) satisfies Handle;

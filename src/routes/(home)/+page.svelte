@@ -1,6 +1,7 @@
 <script lang="ts">
 	import { browser } from "$app/environment";
 	import { page } from "$app/stores";
+	import Icon from "$lib/components/Icon.svelte";
 	import { providers, type AppStore } from "$lib/schemas";
 	import { signIn } from "@auth/sveltekit/client";
 	import { getContext } from "svelte";
@@ -18,6 +19,10 @@
 	const title = "Adventurers League Log Sheet";
 	const description = "A tool for tracking your Adventurers League characters and magic items.";
 	const image = "https://ddal.dekok.app/images/barovia-gate.webp";
+
+	let code = $page.url.searchParams.get("code");
+	if (code === "undefined") code = "UnknownError";
+	const message = $page.url.searchParams.get("message");
 </script>
 
 <svelte:head>
@@ -39,12 +44,23 @@
 	<meta name="twitter:image" content={image} />
 </svelte:head>
 
-<main class="container relative mx-auto flex min-h-dvh flex-col items-center justify-center gap-12 p-4">
+<main class="container relative mx-auto flex min-h-dvh flex-col items-center justify-center gap-8 p-4">
 	<h1 class="text-center font-draconis text-4xl text-base-content dark:text-white lg:text-6xl">
 		Adventurers League
 		<br />
 		Log Sheet
 	</h1>
+	{#if code}
+		<div class="flex justify-center">
+			<div class="alert alert-error w-80 shadow-lg">
+				<Icon src="alert-circle" class="w-6" />
+				<div>
+					<h3 class="font-bold">Error: {code}</h3>
+					{#if message !== null}<div class="text-xs">{message || "Something went wrong"}</div>{/if}
+				</div>
+			</div>
+		</div>
+	{/if}
 	<div class="flex flex-col gap-4">
 		{#each providers as provider}
 			<button
@@ -67,7 +83,7 @@
 		<div class="flex gap-4">
 			<a
 				href="/"
-				class="tooltip tooltip-bottom tooltip-open tooltip-warning before:bg-warning/60"
+				class="tooltip tooltip-bottom tooltip-open tooltip-warning mb-32 before:bg-warning/60"
 				data-tip={"To link multiple auth providers to the same account, first sign in to your main account. " +
 					"Then link additional auth providers in the settings menu. " +
 					"If you sign in with a second provider here before linking, it will create a separate account. " +
