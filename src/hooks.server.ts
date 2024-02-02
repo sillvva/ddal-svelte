@@ -16,7 +16,6 @@ import type { Account } from "@prisma/client";
 import { redirect, type Handle } from "@sveltejs/kit";
 import { sequence } from "@sveltejs/kit/hooks";
 import { handle as documentHandle } from "@sveltekit-addons/document/hooks";
-import { createHash } from "crypto";
 import { authErrRedirect } from "./server/auth";
 
 interface OAuthProvider {
@@ -64,31 +63,23 @@ const providers: OAuthProvider[] = [
 export const auth = SvelteKitAuth(async (event) => {
 	return {
 		callbacks: {
-			async signIn({ account, profile, user }) {
+			async signIn({ account, profile }) {
 				if (!account) authErrRedirect(401, "Account not found");
 				if (!profile) authErrRedirect(401, "Profile not found");
 
 				const provider = providers.find((p) => p.id === account.provider);
 				if (!provider) authErrRedirect(401, `Provider '${account.provider}' not found`);
 
-				if (!user.email) authErrRedirect(401, "Email not found");
-
-				const providerAccountId = createHash("sha1").update(`${account.provider} ${user.email}`).digest("hex");
 				const currentSession = await event.locals.auth();
 				const currentUserId = currentSession?.user?.id;
 
+				account.providerAccountId = provider.accountId(profile);
 				const existingAccount = await prisma.account.findFirst({
 					where: {
 						provider: account.provider,
-						OR: [
-							{ providerAccountId: providerAccountId },
-							{ providerAccountId: account.providerAccountId },
-							{ providerAccountId: provider.accountId(profile) }
-						]
+						providerAccountId: account.providerAccountId
 					}
 				});
-
-				account.providerAccountId = provider.accountId(profile);
 
 				// If there is a user logged in already that we recognize,
 				// and we have an account that is being signed in with
