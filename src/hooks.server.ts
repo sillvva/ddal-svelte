@@ -88,7 +88,7 @@ export const auth = SvelteKitAuth(async (event) => {
 					}
 				});
 
-				account.providerAccountId = providerAccountId;
+				account.providerAccountId = provider.accountId(profile);
 
 				// If there is a user logged in already that we recognize,
 				// and we have an account that is being signed in with
