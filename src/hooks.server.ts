@@ -148,13 +148,13 @@ export const auth = SvelteKitAuth(async (event) => {
 				});
 
 				if (account && account.userId === user.id) {
-					event.cookies.set("authjs.provider", account.provider, { path: "/", expires: session.expires });
+					event.cookies.set("authjs.provider", account.provider, {
+						path: "/",
+						expires: new Date(new Date().getTime() + 30 * 86400 * 1000)
+					});
 
 					const result = await refreshToken(account);
 					if (result instanceof Error) console.error(`RefreshAccessTokenError: ${result.message}`);
-				} else {
-					event.cookies.delete("authjs.provider", { path: "/" });
-					console.error("NoAccountError: No account found");
 				}
 
 				return session satisfies LocalsSession;
