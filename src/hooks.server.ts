@@ -139,39 +139,23 @@ export const auth = SvelteKitAuth(async (event) => {
 
 				return true;
 			},
-			async session({ session, ...params }) {
-				let error = "";
-				let userId = "";
+			async session({ session, user }) {
+				const currentProvider = event.cookies.get("authjs.provider");
+				const account = await prisma.account.findFirst({
+					where: { userId: user.id, provider: currentProvider }
+				});
 
-				if ("user" in params) {
-					const currentProvider = event.cookies.get("authjs.provider");
-					const account = await prisma.account.findFirst({
-						where: { userId: params.user.id, provider: currentProvider }
-					});
+				if (account && account.userId === user.id) {
+					event.cookies.set("authjs.provider", account.provider, { path: "/", expires: new Date(session.expires) });
 
-					if (account) {
-						event.cookies.set("authjs.provider", account.provider, { path: "/", expires: new Date(session.expires) });
-
-						const result = await refreshToken(account);
-						if (result instanceof Error) error = `RefreshAccessTokenError: ${result.message}`;
-					} else {
-						event.cookies.delete("authjs.provider", { path: "/" });
-						error = "NoAccountError: No account found";
-					}
-
-					if (session.user) {
-						userId = params.user.id;
-					}
+					const result = await refreshToken(account);
+					if (result instanceof Error) console.error(`RefreshAccessTokenError: ${result.message}`);
+				} else {
+					event.cookies.delete("authjs.provider", { path: "/" });
+					console.error("NoAccountError: No account found");
 				}
 
-				return {
-					...session,
-					error,
-					user: session.user && {
-						...session.user,
-						id: userId
-					}
-				} satisfies LocalsSession;
+				return session satisfies LocalsSession;
 			}
 		},
 		secret: AUTH_SECRET,
