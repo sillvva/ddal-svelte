@@ -140,13 +140,15 @@ export const auth = SvelteKitAuth(async (event) => {
 				return true;
 			},
 			async session({ session, user }) {
+				if (session.expires >= new Date()) return session satisfies LocalsSession;
+
 				const currentProvider = event.cookies.get("authjs.provider");
 				const account = await prisma.account.findFirst({
 					where: { userId: user.id, provider: currentProvider }
 				});
 
 				if (account && account.userId === user.id) {
-					event.cookies.set("authjs.provider", account.provider, { path: "/", expires: new Date(session.expires) });
+					event.cookies.set("authjs.provider", account.provider, { path: "/", expires: session.expires });
 
 					const result = await refreshToken(account);
 					if (result instanceof Error) console.error(`RefreshAccessTokenError: ${result.message}`);
@@ -170,15 +172,7 @@ export const auth = SvelteKitAuth(async (event) => {
 }) satisfies Handle;
 
 export const session: Handle = async ({ event, resolve }) => {
-	const session = await event.locals.auth();
-
-	event.locals.session = session && {
-		...session,
-		user: session.user && {
-			...session.user,
-			id: session.user?.id ?? ""
-		}
-	};
+	event.locals.session = await event.locals.auth();
 
 	const cookies = event.cookies.getAll();
 	const cSession = cookies.find((c) => c.name.includes("session-token"));

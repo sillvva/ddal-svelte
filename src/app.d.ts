@@ -9,6 +9,7 @@ declare global {
 		// interface Error {}
 		interface Locals {
 			session: LocalsSession | null;
+			auth(): Promise<LocalsSession | null>;
 		}
 		// interface PageData {}
 		// interface Platform {}
