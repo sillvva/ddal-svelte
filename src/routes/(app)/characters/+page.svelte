@@ -1,4 +1,5 @@
 <script lang="ts">
+	import { goto } from "$app/navigation";
 	import BreadCrumbs from "$lib/components/BreadCrumbs.svelte";
 	import Icon from "$lib/components/Icon.svelte";
 	import SearchResults from "$lib/components/SearchResults.svelte";
@@ -6,6 +7,7 @@
 	import type { TransitionAction } from "$lib/util";
 	import { createTransition, slugify, sorter, stopWords } from "$lib/util";
 	import Dropdown from "$src/lib/components/Dropdown.svelte";
+	import { download, hotkey } from "@svelteuidev/composables";
 	import MiniSearch from "minisearch";
 	import { getContext, onMount } from "svelte";
 	import { queryParam, ssp } from "sveltekit-search-params";
@@ -81,6 +83,17 @@
 					.map((character) => ({ ...character, score: 0, match: [] }));
 </script>
 
+<div
+	use:hotkey={[
+		[
+			"n",
+			() => {
+				goto(`/characters/new`);
+			}
+		]
+	]}
+/>
+
 <div class="flex flex-col gap-4">
 	<div class="hidden gap-4 sm:flex">
 		<BreadCrumbs />
@@ -91,7 +104,7 @@
 			</summary>
 			<ul class="menu dropdown-content w-52 rounded-box bg-base-100 p-2 shadow">
 				<li>
-					<a download={`characters.json`} href={`/api/export/characters/all`} target="_blank" rel="noreferrer noopener">Export</a>
+					<button use:download={{ blob: new Blob([JSON.stringify(characters)]), filename: "characters.json" }}>Export</button>
 				</li>
 			</ul>
 		</Dropdown>
