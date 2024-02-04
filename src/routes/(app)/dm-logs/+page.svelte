@@ -7,6 +7,7 @@
 	import SearchResults from "$lib/components/SearchResults.svelte";
 	import type { AppStore } from "$lib/schemas";
 	import { sorter, stopWords } from "$lib/util";
+	import Dropdown from "$src/lib/components/Dropdown.svelte";
 	import MiniSearch from "minisearch";
 	import { getContext } from "svelte";
 	import { twMerge } from "tailwind-merge";
@@ -77,16 +78,16 @@
 <div class="flex flex-col gap-4">
 	<div class="hidden gap-4 sm:flex print:hidden">
 		<BreadCrumbs />
-		<div class="dropdown dropdown-end">
-			<span role="button" tabindex="0" class="btn btn-sm">
+		<Dropdown class="dropdown-end">
+			<summary tabindex="0" class="btn btn-sm">
 				<Icon src="dots-horizontal" class="w-6" />
-			</span>
+			</summary>
 			<ul class="menu dropdown-content w-52 rounded-box bg-base-100 p-2 shadow">
 				<li>
 					<a download={`dm.json`} href={`/api/export/dm`} target="_blank" rel="noreferrer noopener">Export</a>
 				</li>
 			</ul>
-		</div>
+		</Dropdown>
 	</div>
 
 	{#if form?.error}

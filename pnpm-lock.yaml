@@ -20,6 +20,9 @@ dependencies:
   '@prisma/client':
     specifier: ^5.9.1
     version: 5.9.1(prisma@5.9.1)
+  '@svelteuidev/composables':
+    specifier: ^0.15.4
+    version: 0.15.4(svelte@4.2.9)
   decode-formdata:
     specifier: ^0.5.0
     version: 0.5.0
@@ -777,6 +780,14 @@ packages:
       svelte: 4.2.9
       svelte-parse-markup: 0.1.2(svelte@4.2.9)
     dev: true
+
+  /@svelteuidev/composables@0.15.4(svelte@4.2.9):
+    resolution: {integrity: sha512-GN7ZiUOCptgeLXs2HGcg6iuxo4aVeiV02tynofFNeVAFKSHX10FXhN1kWx8cDDJlW3/BjEP2qXa2qn4XrYNqTA==}
+    peerDependencies:
+      svelte: '>=3.55.0'
+    dependencies:
+      svelte: 4.2.9
+    dev: false
 
   /@types/cookie@0.6.0:
     resolution: {integrity: sha512-4Kh9a6B2bQciAhf7FSuMRRkUWecJgJu9nPnx3yzpsfXX/c50REIqpHY4C82bXP90qrLtXtkDxTZosYO3UpOwlA==}

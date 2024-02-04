@@ -16,7 +16,6 @@ import type { Account } from "@prisma/client";
 import { redirect, type Handle } from "@sveltejs/kit";
 import { sequence } from "@sveltejs/kit/hooks";
 import { handle as documentHandle } from "@sveltekit-addons/document/hooks";
-import { createHash } from "crypto";
 import { authErrRedirect } from "./server/auth";
 
 interface OAuthProvider {
@@ -64,37 +63,34 @@ const providers: OAuthProvider[] = [
 export const auth = SvelteKitAuth(async (event) => {
 	return {
 		callbacks: {
-			async signIn({ account, profile, user }) {
-				if (!account) authErrRedirect(401, "Account not found");
-				if (!profile) authErrRedirect(401, "Profile not found");
+			async signIn({ account, profile }) {
+				const redirectTo = event.url.searchParams.get("redirect") || undefined;
+				const redirectUrl = redirectTo ? new URL(redirectTo, event.url.origin) : undefined;
+
+				if (!account) authErrRedirect("MissingAccountData", "Account not found", redirectUrl);
+				if (!profile) authErrRedirect("MissingAccountData", "Profile not found", redirectUrl);
 
 				const provider = providers.find((p) => p.id === account.provider);
-				if (!provider) authErrRedirect(401, `Provider '${account.provider}' not found`);
+				if (!provider) authErrRedirect("InvalidProvider", `Provider '${account.provider}' not found`, redirectUrl);
 
-				if (!user.email) authErrRedirect(401, "Email not found");
-
-				const providerAccountId = createHash("sha1").update(`${account.provider} ${user.email}`).digest("hex");
-				const currentSession = await event.locals.auth();
-				const currentUserId = currentSession?.user?.id;
+				account.providerAccountId = provider.accountId(profile);
+				if (!account.providerAccountId) authErrRedirect("MissingAccountData", "Account ID not found in profile", redirectUrl);
 
 				const existingAccount = await prisma.account.findFirst({
 					where: {
 						provider: account.provider,
-						OR: [
-							{ providerAccountId: providerAccountId },
-							{ providerAccountId: account.providerAccountId },
-							{ providerAccountId: provider.accountId(profile) }
-						]
+						providerAccountId: account.providerAccountId
 					}
 				});
 
-				account.providerAccountId = provider.accountId(profile);
+				const currentSession = await event.locals.auth();
+				const currentUserId = currentSession?.user?.id;
 
 				// If there is a user logged in already that we recognize,
 				// and we have an account that is being signed in with
 				if (currentUserId) {
 					// Only link accounts that have not yet been linked
-					if (existingAccount) authErrRedirect(401, "Account already linked to a user");
+					if (existingAccount) authErrRedirect("AccountLinkError", "Account already linked to a user", redirectUrl);
 
 					// Do the account linking
 					await prisma.account.create({
@@ -143,39 +139,25 @@ export const auth = SvelteKitAuth(async (event) => {
 
 				return true;
 			},
-			async session({ session, ...params }) {
-				let error = "";
-				let userId = "";
+			async session({ session, user }) {
+				if (session.expires >= new Date()) return session satisfies LocalsSession;
 
-				if ("user" in params) {
-					const currentProvider = event.cookies.get("authjs.provider");
-					const account = await prisma.account.findFirst({
-						where: { userId: params.user.id, provider: currentProvider }
+				const currentProvider = event.cookies.get("authjs.provider");
+				const account = await prisma.account.findFirst({
+					where: { userId: user.id, provider: currentProvider }
+				});
+
+				if (account && account.userId === user.id) {
+					event.cookies.set("authjs.provider", account.provider, {
+						path: "/",
+						expires: new Date(new Date().getTime() + 30 * 86400 * 1000)
 					});
 
-					if (account) {
-						event.cookies.set("authjs.provider", account.provider, { path: "/", expires: new Date(session.expires) });
-
-						const result = await refreshToken(account);
-						if (result instanceof Error) error = `RefreshAccessTokenError: ${result.message}`;
-					} else {
-						event.cookies.delete("authjs.provider", { path: "/" });
-						error = "NoAccountError: No account found";
-					}
-
-					if (session.user) {
-						userId = params.user.id;
-					}
+					const result = await refreshToken(account);
+					if (result instanceof Error) console.error(`RefreshAccessTokenError: ${result.message}`);
 				}
 
-				return {
-					...session,
-					error,
-					user: session.user && {
-						...session.user,
-						id: userId
-					}
-				} satisfies LocalsSession;
+				return session satisfies LocalsSession;
 			}
 		},
 		secret: AUTH_SECRET,
@@ -184,21 +166,13 @@ export const auth = SvelteKitAuth(async (event) => {
 		trustHost: true,
 		pages: {
 			signIn: "/",
-			error: "/auth/err"
+			error: "/"
 		}
 	} satisfies SvelteKitAuthConfig;
 }) satisfies Handle;
 
 export const session: Handle = async ({ event, resolve }) => {
-	const session = await event.locals.auth();
-
-	event.locals.session = session && {
-		...session,
-		user: session.user && {
-			...session.user,
-			id: session.user?.id ?? ""
-		}
-	};
+	event.locals.session = await event.locals.auth();
 
 	const cookies = event.cookies.getAll();
 	const cSession = cookies.find((c) => c.name.includes("session-token"));

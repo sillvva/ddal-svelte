@@ -8,6 +8,7 @@
 	import Settings from "$lib/components/Settings.svelte";
 	import type { AppStore } from "$lib/schemas";
 	import { pageLoader } from "$lib/store";
+	import Dropdown from "$src/lib/components/Dropdown.svelte";
 	import { signOut } from "@auth/sveltekit/client";
 	import { getContext } from "svelte";
 	import { fade } from "svelte/transition";
@@ -110,8 +111,8 @@
 				<Icon src="github" class="w-6" />
 			</a>
 			{#if data.session?.user}
-				<div class="dropdown dropdown-end">
-					<div role="button" tabindex="0" class="flex h-full cursor-pointer items-center pl-4">
+				<Dropdown class="dropdown-end">
+					<summary tabindex="0" class="flex h-full cursor-pointer items-center pl-4">
 						<div class="hidden items-center pr-4 text-black dark:text-white sm:flex print:flex">
 							{data.session?.user?.name}
 						</div>
@@ -131,7 +132,7 @@
 								/>
 							</div>
 						</div>
-					</div>
+					</summary>
 					<ul class="menu dropdown-content w-52 rounded-box bg-base-100 p-2 shadow">
 						<li class="sm:hidden">
 							<span>{data.session?.user?.name}</span>
@@ -143,7 +144,7 @@
 							<a href="#top" on:click={() => signOut({ callbackUrl: "/" })}>Logout</a>
 						</li>
 					</ul>
-				</div>
+				</Dropdown>
 			{:else}
 				<a
 					href={`/?redirect=${encodeURIComponent(`${$page.url.pathname}${$page.url.search}`)}`}

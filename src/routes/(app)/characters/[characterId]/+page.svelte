@@ -10,6 +10,7 @@
 	import { pageLoader } from "$lib/store";
 	import type { TransitionAction } from "$lib/util";
 	import { createTransition, slugify, sorter, stopWords } from "$lib/util";
+	import Dropdown from "$src/lib/components/Dropdown.svelte";
 	import MiniSearch from "minisearch";
 	import { getContext } from "svelte";
 	import { queryParam, ssp } from "sveltekit-search-params";
@@ -112,10 +113,10 @@
 		{#if myCharacter}
 			<div class="hidden gap-4 sm:flex print:hidden">
 				<a href={`/characters/${character.id}/edit`} class="btn btn-primary btn-sm">Edit</a>
-				<div class="dropdown dropdown-end">
-					<span role="button" tabindex="0" class="btn btn-sm bg-base-100">
+				<Dropdown class="dropdown-end">
+					<summary tabindex="0" class="btn btn-sm bg-base-100">
 						<Icon src="dots-horizontal" class="w-6" />
-					</span>
+					</summary>
 					<ul class="menu dropdown-content z-20 w-52 rounded-box bg-base-100 p-2 shadow">
 						<li>
 							<a
@@ -149,12 +150,12 @@
 							</form>
 						</li>
 					</ul>
-				</div>
+				</Dropdown>
 			</div>
-			<div class="dropdown dropdown-end sm:hidden">
-				<span role="button" tabindex="0" class="btn">
+			<Dropdown class="dropdown-end sm:hidden">
+				<summary tabindex="0" class="btn">
 					<Icon src="dots-horizontal" class="w-6" />
-				</span>
+				</summary>
 				<ul class="menu dropdown-content z-20 w-52 rounded-box bg-base-100 p-2 shadow">
 					{#if character.image_url}
 						<li class="xs:hidden">
@@ -197,7 +198,7 @@
 						</li>
 					{/if}
 				</ul>
-			</div>
+			</Dropdown>
 		{/if}
 	</div>
 {/if}
@@ -213,12 +214,12 @@
 	<div class="flex flex-1 flex-col gap-6">
 		<div class="flex">
 			{#if character.image_url}
-				<div class="relative mr-4 hidden flex-col items-end justify-center xs:flex md:hidden print:hidden">
+				<div class="relative mr-4 hidden w-20 flex-col items-end justify-center xs:flex md:hidden print:hidden">
 					<a
 						href={character.image_url}
 						target="_blank"
 						rel="noreferrer noopener"
-						class="mask mask-squircle mx-auto h-20 w-full bg-primary"
+						class="mask mask-squircle mx-auto h-20 bg-primary"
 						use:transition={slugify("image-" + character.id)}
 						on:click={(e) => {
 							if (!data.mobile) {

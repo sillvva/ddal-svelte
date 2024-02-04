@@ -5,6 +5,7 @@
 	import type { AppStore } from "$lib/schemas";
 	import type { TransitionAction } from "$lib/util";
 	import { createTransition, slugify, sorter, stopWords } from "$lib/util";
+	import Dropdown from "$src/lib/components/Dropdown.svelte";
 	import MiniSearch from "minisearch";
 	import { getContext, onMount } from "svelte";
 	import { queryParam, ssp } from "sveltekit-search-params";
@@ -84,16 +85,16 @@
 	<div class="hidden gap-4 sm:flex">
 		<BreadCrumbs />
 
-		<div class="dropdown dropdown-end">
-			<span role="button" tabindex="0" class="btn btn-sm bg-base-100">
+		<Dropdown class="dropdown-end">
+			<summary tabindex="0" class="btn btn-sm bg-base-100">
 				<Icon src="dots-horizontal" class="w-6" />
-			</span>
+			</summary>
 			<ul class="menu dropdown-content w-52 rounded-box bg-base-100 p-2 shadow">
 				<li>
 					<a download={`characters.json`} href={`/api/export/characters/all`} target="_blank" rel="noreferrer noopener">Export</a>
 				</li>
 			</ul>
-		</div>
+		</Dropdown>
 	</div>
 
 	{#if !characters.length}
@@ -107,7 +108,7 @@
 		</section>
 	{:else}
 		<div class="flex flex-wrap justify-between gap-2">
-			<div class="flex w-full gap-2 sm:max-w-lg">
+			<div class="flex w-full gap-2 sm:max-w-md md:max-w-md">
 				<a href="/characters/new/edit" class="btn btn-primary btn-sm hidden sm:inline-flex">New Character</a>
 				<search class="min-w-0 flex-1">
 					<input
@@ -145,7 +146,7 @@
 					<Icon src={$app.characters.magicItems ? "show" : "hide"} class="w-6" />
 				</button>
 			</div>
-			<div class="flex gap-2">
+			<div class="ml-auto flex gap-2 sm:ml-0">
 				{#if $app.characters.display != "grid"}
 					<button
 						class={twMerge("btn hidden sm:btn-sm xs:inline-flex", $app.characters.magicItems && "btn-primary")}
