@@ -177,9 +177,11 @@
 </div>
 
 <div
-	role="presentation"
+	role="button"
+	tabindex="0"
 	class={twMerge("modal cursor-pointer !bg-black/50", $page.state.modal && "modal-open")}
 	on:click={() => history.back()}
+	on:keydown={(e) => null}
 	use:hotkey={[
 		[
 			"Escape",
@@ -190,12 +192,7 @@
 	]}
 >
 	{#if $page.state.modal?.type === "text"}
-		<div
-			role="presentation"
-			class="modal-box relative cursor-default drop-shadow-lg"
-			on:click={(e) => e.stopPropagation()}
-			on:keypress={() => null}
-		>
+		<div role="presentation" class="modal-box relative cursor-default drop-shadow-lg" on:click={(e) => e.stopPropagation()}>
 			<h3 class="cursor-text text-lg font-bold text-black dark:text-white">{$page.state.modal.name}</h3>
 			{#if $page.state.modal.date}
 				<p class="text-xs">{$page.state.modal.date.toLocaleString()}</p>
