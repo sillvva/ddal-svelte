@@ -10,6 +10,7 @@
 	import { pageLoader } from "$lib/store";
 	import Dropdown from "$src/lib/components/Dropdown.svelte";
 	import { signOut } from "@auth/sveltekit/client";
+	import { hotkey } from "@svelteuidev/composables";
 	import { getContext } from "svelte";
 	import { fade } from "svelte/transition";
 	import { twMerge } from "tailwind-merge";
@@ -35,12 +36,6 @@
 	let defaultImage = "https://ddal.dekok.app/images/barovia-gate.webp";
 	$: image = $page.data.image || defaultImage;
 </script>
-
-<svelte:window
-	on:keydown={(e) => {
-		if ($page.state.modal && e.key === "Escape") history.back();
-	}}
-/>
 
 <svelte:head>
 	<title>{title.trim() || defaultTitle}</title>
@@ -185,6 +180,14 @@
 	role="presentation"
 	class={twMerge("modal cursor-pointer !bg-black/50", $page.state.modal && "modal-open")}
 	on:click={() => history.back()}
+	use:hotkey={[
+		[
+			"Escape",
+			() => {
+				if ($page.state.modal) history.back();
+			}
+		]
+	]}
 >
 	{#if $page.state.modal?.type === "text"}
 		<div
