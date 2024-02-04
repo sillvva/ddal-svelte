@@ -35,15 +35,6 @@
 	$: description = $page.data.description || defaultDescription;
 	let defaultImage = "https://ddal.dekok.app/images/barovia-gate.webp";
 	$: image = $page.data.image || defaultImage;
-
-	let elDialog: HTMLDialogElement;
-	$: if (elDialog) {
-		if ($page.state.modal) {
-			elDialog.showModal();
-		} else {
-			elDialog.close();
-		}
-	}
 </script>
 
 <svelte:head>
@@ -186,8 +177,8 @@
 </div>
 
 <dialog
-	bind:this={elDialog}
 	class={twMerge("modal !bg-black/50")}
+	open={!!$page.state.modal || undefined}
 	aria-labelledby="modal-title"
 	aria-describedby="modal-content"
 	use:hotkey={[
