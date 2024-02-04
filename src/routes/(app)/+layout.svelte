@@ -216,14 +216,14 @@
 		{/if}
 
 		{#if $page.state.modal.type === "image"}
-			<img
-				src={$page.state.modal.imageUrl}
-				alt={$page.state.modal.name}
-				class="relative max-h-dvh w-full max-w-screen-xs"
-				style:grid-row-start="1"
-				style:grid-column-start="1"
-				id="modal-content"
-			/>
+			<div class="glass modal-box">
+				<img
+					src={$page.state.modal.imageUrl}
+					alt={$page.state.modal.name}
+					class="relative max-h-dvh w-full max-w-screen-xs"
+					id="modal-content"
+				/>
+			</div>
 		{/if}
 
 		<button class="modal-backdrop" on:click={() => history.back()}>✕</button>
