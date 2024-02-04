@@ -35,6 +35,15 @@
 	$: description = $page.data.description || defaultDescription;
 	let defaultImage = "https://ddal.dekok.app/images/barovia-gate.webp";
 	$: image = $page.data.image || defaultImage;
+
+	let elDialog: HTMLDialogElement;
+	$: if (elDialog) {
+		if ($page.state.modal) {
+			elDialog.showModal();
+		} else {
+			elDialog.close();
+		}
+	}
 </script>
 
 <svelte:head>
@@ -176,12 +185,11 @@
 	</footer>
 </div>
 
-<div
-	role="button"
-	tabindex="0"
-	class={twMerge("modal cursor-pointer !bg-black/50", $page.state.modal && "modal-open")}
-	on:click={() => history.back()}
-	on:keydown={(e) => null}
+<dialog
+	bind:this={elDialog}
+	class={twMerge("modal !bg-black/50")}
+	aria-labelledby="modal-title"
+	aria-describedby="modal-content"
 	use:hotkey={[
 		[
 			"Escape",
@@ -191,17 +199,33 @@
 		]
 	]}
 >
-	{#if $page.state.modal?.type === "text"}
-		<div role="presentation" class="modal-box relative cursor-default drop-shadow-lg" on:click={(e) => e.stopPropagation()}>
-			<h3 class="cursor-text text-lg font-bold text-black dark:text-white">{$page.state.modal.name}</h3>
-			{#if $page.state.modal.date}
-				<p class="text-xs">{$page.state.modal.date.toLocaleString()}</p>
-			{/if}
-			<Markdown content={$page.state.modal.description} class="sm:text-md cursor-text whitespace-pre-wrap pt-4 text-sm" />
-		</div>
-	{/if}
+	{#if $page.state.modal}
+		{#if $page.state.modal.type === "text"}
+			<div class="modal-box relative cursor-default drop-shadow-lg">
+				<button class="btn btn-circle btn-ghost btn-sm absolute right-2 top-2" on:click={() => history.back()}>✕</button>
+				<h3 id="modal-title" class="cursor-text text-lg font-bold text-black dark:text-white">{$page.state.modal.name}</h3>
+				{#if $page.state.modal.date}
+					<p class="text-xs">{$page.state.modal.date.toLocaleString()}</p>
+				{/if}
+				<Markdown
+					id="modal-content"
+					content={$page.state.modal.description}
+					class="sm:text-md cursor-text whitespace-pre-wrap pt-4 text-sm"
+				/>
+			</div>
+		{/if}
 
-	{#if $page.state.modal?.type === "image"}
-		<img src={$page.state.modal.imageUrl} alt={$page.state.modal.name} class="max-h-dvh w-full max-w-screen-xs" />
+		{#if $page.state.modal.type === "image"}
+			<img
+				src={$page.state.modal.imageUrl}
+				alt={$page.state.modal.name}
+				class="relative max-h-dvh w-full max-w-screen-xs"
+				style:grid-row-start="1"
+				style:grid-column-start="1"
+				id="modal-content"
+			/>
+		{/if}
+
+		<button class="modal-backdrop" on:click={() => history.back()}>✕</button>
 	{/if}
-</div>
+</dialog>

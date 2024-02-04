@@ -12,13 +12,16 @@
 	import table from "$lib/components/renderers/table.svelte";
 	import tablecell from "$lib/components/renderers/tablecell.svelte";
 	import tablerow from "$lib/components/renderers/tablerow.svelte";
+	import type { HTMLAttributes } from "svelte/elements";
 
-	let className = "";
-	export { className as class };
 	export let content: string = "";
+
+	interface $$Props extends HTMLAttributes<HTMLDivElement> {
+		content: string;
+	}
 </script>
 
-<div class={className}>
+<div {...$$restProps}>
 	<SvelteMarkdown
 		source={content}
 		renderers={{
