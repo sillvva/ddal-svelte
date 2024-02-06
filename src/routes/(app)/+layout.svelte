@@ -168,7 +168,7 @@
 					Adventurers League
 				</a>
 				are property of Hasbro and
-				<a href="https://dnd.wizards.com/adventurers-league" target="_blank" rel="noreferrer noopener" class="text-secondary">
+				<a href="https://dnd.wizards.com/" target="_blank" rel="noreferrer noopener" class="text-secondary">
 					Wizards of the Coast
 				</a>. This website is affiliated with neither.
 			</p>
