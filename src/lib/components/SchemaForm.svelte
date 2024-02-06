@@ -60,6 +60,8 @@
 </script>
 
 <script lang="ts" generics="TSchema extends Schema">
+	import { hotkey } from "@svelteuidev/composables";
+
 	import { dev } from "$app/environment";
 	import { enhance } from "$app/forms";
 	import { beforeNavigate } from "$app/navigation";
@@ -178,6 +180,17 @@
 		errors = errors.set(path, message);
 	}
 </script>
+
+<div
+	use:hotkey={[
+		[
+			"mod+Enter",
+			() => {
+				if (elForm) elForm.requestSubmit();
+			}
+		]
+	]}
+/>
 
 <form
 	{method}

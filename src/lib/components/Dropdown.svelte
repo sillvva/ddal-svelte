@@ -26,7 +26,7 @@
 
 <details
 	use:clickoutside={{
-		enabled: true,
+		enabled: open,
 		callback: () => {
 			open = false;
 		}

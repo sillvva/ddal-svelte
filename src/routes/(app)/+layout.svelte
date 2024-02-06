@@ -10,6 +10,7 @@
 	import { pageLoader } from "$lib/store";
 	import Dropdown from "$src/lib/components/Dropdown.svelte";
 	import { signOut } from "@auth/sveltekit/client";
+	import { hotkey } from "@svelteuidev/composables";
 	import { getContext } from "svelte";
 	import { fade } from "svelte/transition";
 	import { twMerge } from "tailwind-merge";
@@ -35,12 +36,6 @@
 	let defaultImage = "https://ddal.dekok.app/images/barovia-gate.webp";
 	$: image = $page.data.image || defaultImage;
 </script>
-
-<svelte:window
-	on:keydown={(e) => {
-		if ($page.state.modal && e.key === "Escape") history.back();
-	}}
-/>
 
 <svelte:head>
 	<title>{title.trim() || defaultTitle}</title>
@@ -181,27 +176,47 @@
 	</footer>
 </div>
 
-<div
-	role="presentation"
-	class={twMerge("modal cursor-pointer !bg-black/50", $page.state.modal && "modal-open")}
-	on:click={() => history.back()}
+<dialog
+	class={twMerge("modal !bg-black/50")}
+	open={!!$page.state.modal || undefined}
+	aria-labelledby="modal-title"
+	aria-describedby="modal-content"
+	use:hotkey={[
+		[
+			"Escape",
+			() => {
+				if ($page.state.modal) history.back();
+			}
+		]
+	]}
 >
-	{#if $page.state.modal?.type === "text"}
-		<div
-			role="presentation"
-			class="modal-box relative cursor-default drop-shadow-lg"
-			on:click={(e) => e.stopPropagation()}
-			on:keypress={() => null}
-		>
-			<h3 class="cursor-text text-lg font-bold text-black dark:text-white">{$page.state.modal.name}</h3>
-			{#if $page.state.modal.date}
-				<p class="text-xs">{$page.state.modal.date.toLocaleString()}</p>
-			{/if}
-			<Markdown content={$page.state.modal.description} class="sm:text-md cursor-text whitespace-pre-wrap pt-4 text-sm" />
-		</div>
-	{/if}
+	{#if $page.state.modal}
+		{#if $page.state.modal.type === "text"}
+			<div class="modal-box relative cursor-default drop-shadow-lg">
+				<button class="btn btn-circle btn-ghost btn-sm absolute right-2 top-2" on:click={() => history.back()}>✕</button>
+				<h3 id="modal-title" class="cursor-text text-lg font-bold text-black dark:text-white">{$page.state.modal.name}</h3>
+				{#if $page.state.modal.date}
+					<p class="text-xs">{$page.state.modal.date.toLocaleString()}</p>
+				{/if}
+				<Markdown
+					id="modal-content"
+					content={$page.state.modal.description}
+					class="sm:text-md cursor-text whitespace-pre-wrap pt-4 text-sm"
+				/>
+			</div>
+		{/if}
 
-	{#if $page.state.modal?.type === "image"}
-		<img src={$page.state.modal.imageUrl} alt={$page.state.modal.name} class="max-h-dvh w-full max-w-screen-xs" />
+		{#if $page.state.modal.type === "image"}
+			<div class="glass modal-box">
+				<img
+					src={$page.state.modal.imageUrl}
+					alt={$page.state.modal.name}
+					class="relative max-h-dvh w-full max-w-screen-xs"
+					id="modal-content"
+				/>
+			</div>
+		{/if}
+
+		<button class="modal-backdrop" on:click={() => history.back()}>✕</button>
 	{/if}
-</div>
+</dialog>

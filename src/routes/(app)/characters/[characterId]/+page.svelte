@@ -1,6 +1,6 @@
 <script lang="ts">
 	import { applyAction, enhance } from "$app/forms";
-	import { pushState } from "$app/navigation";
+	import { goto, pushState } from "$app/navigation";
 	import BreadCrumbs from "$lib/components/BreadCrumbs.svelte";
 	import Icon from "$lib/components/Icon.svelte";
 	import Items from "$lib/components/Items.svelte";
@@ -11,6 +11,7 @@
 	import type { TransitionAction } from "$lib/util";
 	import { createTransition, slugify, sorter, stopWords } from "$lib/util";
 	import Dropdown from "$src/lib/components/Dropdown.svelte";
+	import { download, hotkey } from "@svelteuidev/composables";
 	import MiniSearch from "minisearch";
 	import { getContext } from "svelte";
 	import { queryParam, ssp } from "sveltekit-search-params";
@@ -107,6 +108,17 @@
 	}
 </script>
 
+<div
+	use:hotkey={[
+		[
+			"n",
+			() => {
+				goto(`/characters/${character.id}/log/new`);
+			}
+		]
+	]}
+/>
+
 {#if data.session?.user}
 	<div class="group flex gap-4">
 		<BreadCrumbs />
@@ -119,14 +131,9 @@
 					</summary>
 					<ul class="menu dropdown-content z-20 w-52 rounded-box bg-base-100 p-2 shadow">
 						<li>
-							<a
-								download={`${slugify(character.name)}.json`}
-								href={`/api/export/characters/${character.id}`}
-								target="_blank"
-								rel="noreferrer noopener"
-							>
+							<button use:download={{ blob: new Blob([JSON.stringify(character)]), filename: `${slugify(character.name)}.json` }}>
 								Export
-							</a>
+							</button>
 						</li>
 						<li>
 							<form

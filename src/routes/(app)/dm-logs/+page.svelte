@@ -1,6 +1,6 @@
 <script lang="ts">
 	import { applyAction, enhance } from "$app/forms";
-	import { pushState } from "$app/navigation";
+	import { goto, pushState } from "$app/navigation";
 	import BreadCrumbs from "$lib/components/BreadCrumbs.svelte";
 	import Icon from "$lib/components/Icon.svelte";
 	import Items from "$lib/components/Items.svelte";
@@ -8,6 +8,7 @@
 	import type { AppStore } from "$lib/schemas";
 	import { sorter, stopWords } from "$lib/util";
 	import Dropdown from "$src/lib/components/Dropdown.svelte";
+	import { download, hotkey } from "@svelteuidev/composables";
 	import MiniSearch from "minisearch";
 	import { getContext } from "svelte";
 	import { twMerge } from "tailwind-merge";
@@ -75,6 +76,17 @@
 	}
 </script>
 
+<div
+	use:hotkey={[
+		[
+			"n",
+			() => {
+				goto(`/dm-logs/new`);
+			}
+		]
+	]}
+/>
+
 <div class="flex flex-col gap-4">
 	<div class="hidden gap-4 sm:flex print:hidden">
 		<BreadCrumbs />
@@ -84,7 +96,7 @@
 			</summary>
 			<ul class="menu dropdown-content w-52 rounded-box bg-base-100 p-2 shadow">
 				<li>
-					<a download={`dm.json`} href={`/api/export/dm`} target="_blank" rel="noreferrer noopener">Export</a>
+					<button use:download={{ blob: new Blob([JSON.stringify(logs)]), filename: "dm-logs.json" }}> Export </button>
 				</li>
 			</ul>
 		</Dropdown>
