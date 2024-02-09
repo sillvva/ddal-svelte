@@ -12,7 +12,7 @@ export const getMagicItems = (
 	}
 ) => {
 	const { lastLogId = "", lastLogDate = "", excludeDropped = false } = options || {};
-	const magicItems: Array<MagicItem> = [];
+	const magicItems: MagicItem[] = [];
 	let lastLog = false;
 	character.logs
 		.sort((a, b) => sorter(a.date, b.date))
@@ -44,7 +44,7 @@ export const getStoryAwards = (
 	}
 ) => {
 	const { lastLogId = "", lastLogDate = "", excludeDropped = false } = options || {};
-	const storyAwards: Array<StoryAward> = [];
+	const storyAwards: StoryAward[] = [];
 	let lastLog = false;
 	character.logs
 		.sort((a, b) => sorter(a.date, b.date))
@@ -68,7 +68,7 @@ export const getStoryAwards = (
 };
 
 export function getLevels(
-	logs: Array<Log>,
+	logs: Log[],
 	base: { level?: number; experience?: number; acp?: number } = { level: 0, experience: 0, acp: 0 }
 ) {
 	if (!logs) logs = [];
@@ -149,10 +149,10 @@ export const getLogsSummary = (
 	logs: Array<
 		Log & {
 			dm: DungeonMaster | null;
-			magic_items_gained: Array<MagicItem>;
-			magic_items_lost: Array<MagicItem>;
-			story_awards_gained: Array<StoryAward>;
-			story_awards_lost: Array<StoryAward>;
+			magic_items_gained: MagicItem[];
+			magic_items_lost: MagicItem[];
+			story_awards_gained: StoryAward[];
+			story_awards_lost: StoryAward[];
 		}
 	>
 ) => {
@@ -171,7 +171,7 @@ export const getLogsSummary = (
 			})
 		);
 		return acc;
-	}, [] as Array<MagicItem>);
+	}, [] as MagicItem[]);
 	const story_awards = logs.reduce((acc, log) => {
 		acc.push(
 			...log.story_awards_gained.filter((storyAward) => {
@@ -179,7 +179,7 @@ export const getLogsSummary = (
 			})
 		);
 		return acc;
-	}, [] as Array<StoryAward>);
+	}, [] as StoryAward[]);
 
 	return {
 		total_level,

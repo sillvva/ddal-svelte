@@ -169,7 +169,7 @@ export const auth = SvelteKitAuth(async (event) => {
 			error: "/"
 		}
 	} satisfies SvelteKitAuthConfig;
-}) satisfies Handle;
+});
 
 export const session: Handle = async ({ event, resolve }) => {
 	event.locals.session = await event.locals.auth();
@@ -187,7 +187,7 @@ export const session: Handle = async ({ event, resolve }) => {
 	return response;
 };
 
-export const handle = sequence(auth, session, documentHandle);
+export const handle = sequence(auth.handle, session, documentHandle);
 
 async function refreshToken(account: Account) {
 	try {

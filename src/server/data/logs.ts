@@ -5,36 +5,38 @@ import { cache } from "../cache";
 
 export type LogData = Log & {
 	dm: DungeonMaster;
-	magic_items_gained: Array<MagicItem>;
-	magic_items_lost: Array<MagicItem>;
-	story_awards_gained: Array<StoryAward>;
-	story_awards_lost: Array<StoryAward>;
+	magic_items_gained: MagicItem[];
+	magic_items_lost: MagicItem[];
+	story_awards_gained: StoryAward[];
+	story_awards_lost: StoryAward[];
 };
 export async function getLog(logId: string, userId: string, characterId = ""): Promise<LogData> {
-	const log = (await prisma.log.findFirst({
-		where: { id: logId },
-		include: {
-			dm: true,
-			magic_items_gained: true,
-			magic_items_lost: true,
-			story_awards_gained: true,
-			story_awards_lost: true
-		}
-	})) || defaultLog(userId, characterId);
+	const log =
+		(await prisma.log.findFirst({
+			where: { id: logId },
+			include: {
+				dm: true,
+				magic_items_gained: true,
+				magic_items_lost: true,
+				story_awards_gained: true,
+				story_awards_lost: true
+			}
+		})) || defaultLog(userId, characterId);
 	return { ...log, dm: log.dm || defaultDM(userId) };
 }
 
 export async function getDMLog(logId: string, userId: string): Promise<LogData> {
-	const log = (await prisma.log.findFirst({
-		where: { id: logId, is_dm_log: true },
-		include: {
-			dm: true,
-			magic_items_gained: true,
-			magic_items_lost: true,
-			story_awards_gained: true,
-			story_awards_lost: true
-		}
-	})) || defaultLog(userId);
+	const log =
+		(await prisma.log.findFirst({
+			where: { id: logId, is_dm_log: true },
+			include: {
+				dm: true,
+				magic_items_gained: true,
+				magic_items_lost: true,
+				story_awards_gained: true,
+				story_awards_lost: true
+			}
+		})) || defaultLog(userId);
 	return { ...log, dm: log.dm || defaultDM(userId) };
 }
 

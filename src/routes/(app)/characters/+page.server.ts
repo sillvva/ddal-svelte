@@ -8,7 +8,7 @@ export const load = async (event) => {
 	if (!session?.user) signInRedirect(event.url);
 
 	const characters = await getCharactersCache(session.user.id).then(async (characters) => {
-		const charData: Array<CharacterData> = [];
+		const charData: CharacterData[] = [];
 		const caches = await getCharacterCaches(characters.map((c) => c.id));
 		for (const data of caches) {
 			if (data) charData.push(data);
