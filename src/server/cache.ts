@@ -40,41 +40,26 @@ export async function cache<TReturnType>(callback: () => Promise<TReturnType>, k
 /**
  * Retrieves caches from Redis or caches the results of a callback function for each key.
  * @template TReturnType The return type of the callback function.
- * @param {(key: CacheKey) => Promise<TReturnType>} [callback] The callback function to cache.
+ * @param {(keys: CacheKey[], hits: TReturnType[]) => Promise<Array<{ key: CacheKey; value: TReturnType }>} callback
+ * The callback function to cache. The hits parameter is an array of cached results of the callback function for each key.
  * @param {CacheKey[]} [keys] The cache keys as an array of arrays of strings.
- * @param options The options for the mcache function.
- * @param {(keys: CacheKey[]) => Promise<Array<{ key: CacheKey; value: TReturnType }>} [options.massCallback]
- * The mass callback function to cache. If provided, this function is called instead of the callback function if any of the caches are missing.
- * @param {number} [options.expires=259200] The cache expiration time in seconds. Defaults to 3 days.
+ * @param {number} [expires=259200] The cache expiration time in seconds. Defaults to 3 days.
  * @returns {Promise<TReturnType[]>} An array of cached results of the callback function for each key.
  */
 export async function mcache<TReturnType>(
-	callback: (key: CacheKey) => Promise<TReturnType>,
+	callback: (keys: CacheKey[], hits: TReturnType[]) => Promise<Array<{ key: CacheKey; value: TReturnType }>>,
 	keys: CacheKey[],
-	options: {
-		/**
-		 * The mass callback function to cache. If provided, this function is called instead of the callback function if any of the caches are missing.
-		 * @param keys The cache keys as an array of arrays of strings with at least one element.
-		 * @returns An array of cached results of the callback function for each key.
-		 */
-		massCallback?: (keys: CacheKey[], hits: TReturnType[]) => Promise<Array<{ key: CacheKey; value: TReturnType }>>;
-		/**
-		 * The cache expiration time in seconds. Defaults to 3 days.
-		 */
-		expires?: number;
-	}
+	expires = 3 * 86400
 ) {
-	const { massCallback, expires = 3 * 86400 } = options;
-
 	const joinedKeys = keys.map((t) => t.join("|"));
 
 	// Get the caches from Redis
 	const caches = await redis.mget(joinedKeys);
 	const hits = caches.filter(Boolean) as string[];
 
-	if (massCallback && hits.length < keys.length) {
+	if (hits.length < keys.length) {
 		// Call the mass callback function
-		const results = await massCallback(
+		const results = await callback(
 			keys,
 			hits.map((t) => {
 				const cache: { data: TReturnType; timestamp: number } = JSON.parse(t);
@@ -110,13 +95,6 @@ export async function mcache<TReturnType>(
 				console.error(e);
 			}
 		}
-
-		// Call the callback function and cache the result
-		const result = await callback(keys[i]);
-		multi.setex(joinedKeys[i], expires, JSON.stringify({ data: result, timestamp: currentTime }));
-
-		// Add the result to the results array
-		results.push(result);
 	}
 
 	multi.exec();
