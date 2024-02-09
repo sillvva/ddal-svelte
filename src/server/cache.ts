@@ -40,46 +40,88 @@ export async function cache<TReturnType>(callback: () => Promise<TReturnType>, k
 /**
  * Retrieves caches from Redis or caches the results of a callback function for each key.
  * @template TReturnType The return type of the callback function.
- * @param {(key: CacheKey) => Promise<TReturnType>} callback The callback function to cache.
- * @param {CacheKey[]} key The cache keys as an array of arrays of strings.
- * @param {number} [expires=259200] The cache expiration time in seconds. Defaults to 3 days.
+ * @param {(key: CacheKey) => Promise<TReturnType>} [callback] The callback function to cache.
+ * @param {CacheKey[]} [key] The cache keys as an array of arrays of strings.
+ * @param options The options for the mcache function.
+ * @param {(keys: CacheKey[]) => Promise<Array<{ key: CacheKey; value: TReturnType }>} [options.massCallback]
+ * The mass callback function to cache. If provided, this function is called instead of the callback function if any of the caches are missing.
+ * @param {number} [options.expires=259200] The cache expiration time in seconds. Defaults to 3 days.
  * @returns {Promise<TReturnType[]>} An array of cached results of the callback function for each key.
  */
 export async function mcache<TReturnType>(
 	callback: (key: CacheKey) => Promise<TReturnType>,
 	key: CacheKey[],
-	expires = 3 * 86400
+	options: {
+		/**
+		 * The mass callback function to cache. If provided, this function is called instead of the callback function if any of the caches are missing.
+		 * @param keys The cache keys as an array of arrays of strings with at least one element.
+		 * @returns An array of cached results of the callback function for each key.
+		 */
+		massCallback?: (keys: CacheKey[]) => Promise<Array<{ key: CacheKey; value: TReturnType }>>;
+		/**
+		 * The cache expiration time in seconds. Defaults to 3 days.
+		 */
+		expires?: number;
+	}
 ) {
+	const { massCallback, expires = 3 * 86400 } = options;
+
 	const keys = key.map((t) => t.join("|"));
 
 	// Get the caches from Redis
 	const caches = await redis.mget(keys);
 
-	const results: TReturnType[] = [];
-	for (let i = 0; i < caches.length; i++) {
-		const currentTime = Date.now();
-		const value = caches[i];
-		if (value) {
-			const cache: { data: TReturnType; timestamp: number } = JSON.parse(value);
+	const multi = redis.multi();
+	if (caches.length === key.length || !massCallback) {
+		const results: TReturnType[] = [];
+		for (let i = 0; i < caches.length; i++) {
+			const currentTime = Date.now();
+			const value = caches[i];
+			if (value) {
+				try {
+					const cache: { data: TReturnType; timestamp: number } = JSON.parse(value);
 
-			// Update the timestamp and reset the cache expiration
-			cache.timestamp = currentTime;
-			redis.setex(keys[i], expires, JSON.stringify(cache));
+					// Update the timestamp and reset the cache expiration
+					cache.timestamp = currentTime;
+					multi.setex(keys[i], expires, JSON.stringify(cache));
 
-			// Add the cached result to the results array
-			results[i] = cache.data;
-			continue;
+					// Add the cached result to the results array
+					results.push(cache.data);
+					continue;
+				} catch (e) {
+					console.error(e);
+				}
+			}
+
+			// Call the callback function and cache the result
+			const result = await callback(key[i]);
+			multi.setex(keys[i], expires, JSON.stringify({ data: result, timestamp: currentTime }));
+
+			// Add the result to the results array
+			results.push(result);
 		}
 
-		// Call the callback function and cache the result
-		const result = await callback(key[i]);
-		redis.setex(keys[i], expires, JSON.stringify({ data: result, timestamp: currentTime }));
+		multi.exec();
 
-		// Add the result to the results array
-		results[i] = result;
+		// Return the results
+		return results;
+	} else if (massCallback) {
+		// Call the mass callback function and cache the results
+		const results = await massCallback(key);
+		const currentTime = Date.now();
+
+		// Cache the results
+		for (let i = 0; i < results.length; i++) {
+			multi.setex(results[i].key.join("|"), expires, JSON.stringify({ data: results[i].value, timestamp: currentTime }));
+		}
+
+		multi.exec();
+
+		// Return the results
+		return results.map((t) => t.value);
 	}
 
-	return results;
+	return [];
 }
 
 /**
