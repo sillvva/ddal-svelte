@@ -41,7 +41,7 @@ export async function cache<TReturnType>(callback: () => Promise<TReturnType>, k
  * Retrieves caches from Redis or caches the results of a callback function for each key.
  * @template TReturnType The return type of the callback function.
  * @param {(key: CacheKey) => Promise<TReturnType>} [callback] The callback function to cache.
- * @param {CacheKey[]} [key] The cache keys as an array of arrays of strings.
+ * @param {CacheKey[]} [keys] The cache keys as an array of arrays of strings.
  * @param options The options for the mcache function.
  * @param {(keys: CacheKey[]) => Promise<Array<{ key: CacheKey; value: TReturnType }>} [options.massCallback]
  * The mass callback function to cache. If provided, this function is called instead of the callback function if any of the caches are missing.
@@ -50,7 +50,7 @@ export async function cache<TReturnType>(callback: () => Promise<TReturnType>, k
  */
 export async function mcache<TReturnType>(
 	callback: (key: CacheKey) => Promise<TReturnType>,
-	key: CacheKey[],
+	keys: CacheKey[],
 	options: {
 		/**
 		 * The mass callback function to cache. If provided, this function is called instead of the callback function if any of the caches are missing.
@@ -66,16 +66,16 @@ export async function mcache<TReturnType>(
 ) {
 	const { massCallback, expires = 3 * 86400 } = options;
 
-	const keys = key.map((t) => t.join("|"));
+	const joinedKeys = keys.map((t) => t.join("|"));
 
 	// Get the caches from Redis
-	const caches = await redis.mget(keys);
+	const caches = await redis.mget(joinedKeys);
 	const hits = caches.filter(Boolean) as string[];
 
-	if (massCallback && hits.length < key.length) {
+	if (massCallback && hits.length < keys.length) {
 		// Call the mass callback function
 		const results = await massCallback(
-			key,
+			keys,
 			hits.map((t) => {
 				const cache: { data: TReturnType; timestamp: number } = JSON.parse(t);
 				return cache.data;
@@ -85,7 +85,7 @@ export async function mcache<TReturnType>(
 		// Update the results in the caches array
 		for (const result of results) {
 			const k = result.key.join("|");
-			const index = keys.indexOf(k);
+			const index = joinedKeys.indexOf(k);
 			if (index >= 0) caches[index] = JSON.stringify({ data: result.value, timestamp: Date.now() });
 		}
 	}
@@ -101,7 +101,7 @@ export async function mcache<TReturnType>(
 
 				// Update the timestamp and reset the cache expiration
 				cache.timestamp = currentTime;
-				multi.setex(keys[i], expires, JSON.stringify(cache));
+				multi.setex(joinedKeys[i], expires, JSON.stringify(cache));
 
 				// Add the cached result to the results array
 				results.push(cache.data);
@@ -112,8 +112,8 @@ export async function mcache<TReturnType>(
 		}
 
 		// Call the callback function and cache the result
-		const result = await callback(key[i]);
-		multi.setex(keys[i], expires, JSON.stringify({ data: result, timestamp: currentTime }));
+		const result = await callback(keys[i]);
+		multi.setex(joinedKeys[i], expires, JSON.stringify({ data: result, timestamp: currentTime }));
 
 		// Add the result to the results array
 		results.push(result);
