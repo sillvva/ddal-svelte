@@ -46,7 +46,10 @@ export async function getCharacterCache(characterId: string, includeLogs = true)
 export async function getCharacterCaches(characterIds: string[], includeLogs = true) {
 	const keys: CacheKey[] = characterIds.map((id) => ["character", id, includeLogs ? "logs" : "no-logs"]);
 	return await mcache((key) => getCharacter(key[1], key[2] === "logs"), keys, {
-		massCallback: async (keys) => {
+		massCallback: async (keys, hits) => {
+			const missingKeys = keys.filter((k) => !hits.find((h) => h?.id === k[1]));
+			const characterIds = missingKeys.map((k) => k[1]);
+
 			if (includeLogs) {
 				const characters = await prisma.character.findMany({
 					where: { id: { in: characterIds } },
@@ -77,6 +80,7 @@ export async function getCharacterCaches(characterIds: string[], includeLogs = t
 						user: true
 					}
 				});
+
 				return characters.map((c) => ({ key: keys.find((k) => k[1] === c.id)!, value: { ...c, ...getLogsSummary([]) } }));
 			}
 		}
