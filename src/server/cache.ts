@@ -41,13 +41,13 @@ export async function cache<TReturnType>(callback: () => Promise<TReturnType>, k
  * Retrieves caches from Redis or caches the results of a callback function for each key.
  * @template TReturnType The return type of the callback function.
  * @param {(key: CacheKey) => Promise<TReturnType>} callback The callback function to cache.
- * @param {Array<CacheKey>} key The cache keys as an array of arrays of strings.
+ * @param {CacheKey[]} key The cache keys as an array of arrays of strings.
  * @param {number} [expires=259200] The cache expiration time in seconds. Defaults to 3 days.
- * @returns {Promise<Array<TReturnType>>} An array of cached results of the callback function for each key.
+ * @returns {Promise<TReturnType[]>} An array of cached results of the callback function for each key.
  */
 export async function mcache<TReturnType>(
 	callback: (key: CacheKey) => Promise<TReturnType>,
-	key: Array<CacheKey>,
+	key: CacheKey[],
 	expires = 3 * 86400
 ) {
 	const keys = key.map((t) => t.join("|"));
@@ -55,7 +55,7 @@ export async function mcache<TReturnType>(
 	// Get the caches from Redis
 	const caches = await redis.mget(keys);
 
-	const results: Array<TReturnType> = [];
+	const results: TReturnType[] = [];
 	for (let i = 0; i < caches.length; i++) {
 		const currentTime = Date.now();
 		const value = caches[i];
