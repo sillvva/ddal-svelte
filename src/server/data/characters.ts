@@ -43,45 +43,34 @@ export async function getCharacterCache(characterId: string, includeLogs = true)
 		: null;
 }
 
-export async function getCharacterCaches(characterIds: string[], includeLogs = true) {
-	const keys: CacheKey[] = characterIds.map((id) => ["character", id, includeLogs ? "logs" : "no-logs"]);
+export async function getCharacterCaches(characterIds: string[]) {
+	const keys: CacheKey[] = characterIds.map((id) => ["character", id, "logs"]);
 	return await mcache<CharacterData>(async (keys, hits) => {
 		const missingKeys = keys.filter((k) => !hits.find((h) => h.id === k[1]));
 		const characterIds = missingKeys.map((k) => k[1]);
 
-		if (includeLogs) {
-			const characters = await prisma.character.findMany({
-				where: { id: { in: characterIds } },
-				include: {
-					user: true,
-					logs: {
-						include: {
-							dm: true,
-							magic_items_gained: true,
-							magic_items_lost: true,
-							story_awards_gained: true,
-							story_awards_lost: true
-						},
-						orderBy: {
-							date: "asc"
-						}
+		const characters = await prisma.character.findMany({
+			where: { id: { in: characterIds } },
+			include: {
+				user: true,
+				logs: {
+					include: {
+						dm: true,
+						magic_items_gained: true,
+						magic_items_lost: true,
+						story_awards_gained: true,
+						story_awards_lost: true
+					},
+					orderBy: {
+						date: "asc"
 					}
 				}
-			});
+			}
+		});
 
-			return characters
-				.map((c) => ({ key: keys.find((k) => k[1] === c.id)!, value: { ...c, ...getLogsSummary(c.logs) } }))
-				.filter((c) => c.key);
-		} else {
-			const characters = await prisma.character.findMany({
-				where: { id: { in: characterIds } },
-				include: {
-					user: true
-				}
-			});
-
-			return characters.map((c) => ({ key: keys.find((k) => k[1] === c.id)!, value: { ...c, ...getLogsSummary([]) } }));
-		}
+		return characters
+			.map((c) => ({ key: keys.find((k) => k[1] === c.id)!, value: { ...c, ...getLogsSummary(c.logs) } }))
+			.filter((c) => c.key);
 	}, keys);
 }
 
