@@ -83,7 +83,7 @@
 		<div class="flex gap-4">
 			<a
 				href="/"
-				class="tooltip tooltip-bottom tooltip-open tooltip-warning mb-32 before:bg-warning/60"
+				class="tooltip tooltip-bottom tooltip-open mb-32 text-white before:text-warning-content"
 				data-tip={"To link multiple auth providers to the same account, first sign in to your main account. " +
 					"Then link additional auth providers in the settings menu. " +
 					"If you sign in with a second provider here before linking, it will create a separate account. " +
@@ -94,3 +94,9 @@
 		</div>
 	{/if}
 </main>
+
+<style>
+	.tooltip {
+		--tooltip-color: oklch(var(--wa) / 0.6);
+	}
+</style>
