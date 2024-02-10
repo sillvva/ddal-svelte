@@ -4,8 +4,8 @@
 	import Icon from "$lib/components/Icon.svelte";
 	import SchemaForm from "$lib/components/SchemaForm.svelte";
 	import { dungeonMasterSchema } from "$lib/schemas";
-	import { pageLoader } from "$lib/store";
 	import { sorter } from "$lib/util";
+	import { pageLoader } from "$src/routes/(app)/+layout.svelte";
 
 	export let data;
 	export let form;

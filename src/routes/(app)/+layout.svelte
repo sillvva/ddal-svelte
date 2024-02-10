@@ -1,3 +1,7 @@
+<script lang="ts" context="module">
+	export const pageLoader = writable(false);
+</script>
+
 <script lang="ts">
 	import { browser } from "$app/environment";
 	import { afterNavigate } from "$app/navigation";
@@ -7,11 +11,11 @@
 	import Markdown from "$lib/components/Markdown.svelte";
 	import Settings from "$lib/components/Settings.svelte";
 	import type { AppStore } from "$lib/schemas";
-	import { pageLoader } from "$lib/store";
 	import Dropdown from "$src/lib/components/Dropdown.svelte";
 	import { signOut } from "@auth/sveltekit/client";
 	import { hotkey } from "@svelteuidev/composables";
 	import { getContext } from "svelte";
+	import { writable } from "svelte/store";
 	import { fade } from "svelte/transition";
 	import { twMerge } from "tailwind-merge";
 

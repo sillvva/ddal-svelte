@@ -1,8 +1,8 @@
 <script lang="ts">
 	import { enhance } from "$app/forms";
 	import { page } from "$app/stores";
+	import { pageLoader } from "$src/routes/(app)/+layout.svelte";
 	import { twMerge } from "tailwind-merge";
-	import { pageLoader } from "../store";
 	import Icon from "./Icon.svelte";
 
 	let drawer = false;
@@ -20,7 +20,7 @@
 </script>
 
 <button
-	class="no-script-hide flex py-3 pr-4 print:hidden md:hidden"
+	class="no-script-hide flex py-3 pr-4 md:hidden print:hidden"
 	on:click={() => toggleDrawer(true)}
 	aria-expanded={drawer}
 	aria-controls="drawer"
