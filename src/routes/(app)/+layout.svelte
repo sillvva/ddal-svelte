@@ -1,4 +1,5 @@
 <script lang="ts" context="module">
+	import { writable } from "svelte/store";
 	export const pageLoader = writable(false);
 </script>
 
@@ -15,7 +16,6 @@
 	import { signOut } from "@auth/sveltekit/client";
 	import { hotkey } from "@svelteuidev/composables";
 	import { getContext } from "svelte";
-	import { writable } from "svelte/store";
 	import { fade } from "svelte/transition";
 	import { twMerge } from "tailwind-merge";
 
