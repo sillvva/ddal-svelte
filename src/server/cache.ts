@@ -45,7 +45,7 @@ export async function cache<TReturnType>(callback: () => Promise<TReturnType>, k
  * @param [expires=259200] The cache expiration time in seconds. Defaults to 3 days.
  * @returns An array of cached results of the callback function for each key.
  */
-export async function mcache<TReturnType>(
+export async function mcache<TReturnType extends object>(
 	callback: (keys: CacheKey[], hits: TReturnType[]) => Promise<Array<{ key: CacheKey; value: TReturnType }>>,
 	keys: CacheKey[],
 	expires = 3 * 86400
