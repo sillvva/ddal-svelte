@@ -4,7 +4,7 @@ import { signInRedirect } from "$src/server/auth";
 import { getCharacterCache, getCharactersCache } from "$src/server/data/characters";
 import { getDMLog, getLog } from "$src/server/data/logs";
 import { error, fail, redirect } from "@sveltejs/kit";
-import { superValidate } from "sveltekit-superforms";
+import { message, setError, superValidate } from "sveltekit-superforms";
 import { valibot } from "sveltekit-superforms/adapters";
 
 export const load = async (event) => {
@@ -70,15 +70,18 @@ export const actions = {
 		const form = await superValidate(event, valibot(logSchema));
 		if (!form.valid) return fail(400, { form });
 
-		if (!form.data.is_dm_log) throw new Error("Only DM logs can be saved here.");
+		if (!form.data.is_dm_log)
+			return message(form, "Only DM logs can be saved here.", {
+				status: 400
+			});
 
 		if (form.data.characterId && form.data.applied_date) {
 			const character = await getCharacterCache(form.data.characterId, false);
-			if (!character) throw new Error("Character not found");
+			if (!character) return setError(form, "characterId", "Character not found");
 		} else if (form.data.characterId && !form.data.applied_date) {
-			throw new Error("Applied date is required if character is selected.");
+			return setError(form, "applied_date", "Applied date is required if character is selected.");
 		} else if (!form.data.characterId && form.data.applied_date) {
-			throw new Error("Character is required if applied date is entered.");
+			return setError(form, "characterId", "Character is required if applied date is entered.");
 		}
 
 		const result = await saveLog(form.data, session.user);
