@@ -11,7 +11,7 @@ export async function saveCharacter(
 	characterId: string,
 	userId: string,
 	data: NewCharacterSchema
-): SaveResult<{ id: string; character: Character }> {
+): SaveResult<{ id: string; character: Character }, NewCharacterSchema> {
 	try {
 		if (!characterId) throw new SaveError(400, "No character ID provided");
 		if (!userId) throw new SaveError(401, "Not authenticated");

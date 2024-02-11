@@ -8,7 +8,7 @@ import { SaveError, type LogSchema, type SaveResult } from "$lib/schemas";
 import type { DungeonMaster, Log } from "@prisma/client";
 
 export type SaveLogResult = ReturnType<typeof saveLog>;
-export async function saveLog(input: LogSchema, user?: CustomSession["user"]): SaveResult<{ id: string; log: Log }> {
+export async function saveLog(input: LogSchema, user?: CustomSession["user"]): SaveResult<{ id: string; log: Log }, LogSchema> {
 	try {
 		let dm: DungeonMaster | null = null;
 		if (!user?.name) throw new SaveError(401, "Not authenticated");
@@ -74,7 +74,10 @@ export async function saveLog(input: LogSchema, user?: CustomSession["user"]): S
 					? new Date(input.applied_date)
 					: null
 				: new Date(input.date);
-			if (input.characterId && applied_date === null) throw new SaveError(400, "Applied date is required");
+			if (input.characterId && applied_date === null)
+				throw new SaveError<LogSchema>(400, "Applied date is required", {
+					field: "applied_date"
+				});
 
 			if (input.characterId) {
 				const character = await tx.character.findFirst({
@@ -84,13 +87,22 @@ export async function saveLog(input: LogSchema, user?: CustomSession["user"]): S
 					where: { id: input.characterId }
 				});
 
-				if (!character) throw new SaveError(404, "Character not found");
+				if (!character)
+					throw new SaveError<LogSchema>(404, "Character not found", {
+						field: "characterId"
+					});
 
 				const currentLevel = getLevels(character.logs).total;
 				const logACP = character.logs.find((log) => log.id === input.id)?.acp || 0;
-				if (currentLevel == 20 && input.acp - logACP > 0) throw new SaveError(400, "Character is already level 20");
+				if (currentLevel == 20 && input.acp - logACP > 0)
+					throw new SaveError<LogSchema>(400, "Character is already level 20", {
+						field: "acp"
+					});
 				const logLevel = character.logs.find((log) => log.id === input.id)?.level || 0;
-				if (currentLevel + input.level - logLevel > 20) throw new SaveError(400, "Character cannot level past 20");
+				if (currentLevel + input.level - logLevel > 20)
+					throw new SaveError<LogSchema>(400, "Character cannot level past 20", {
+						field: "level"
+					});
 			}
 
 			const data: Omit<Log, "id" | "created_at" | "is_dm_log"> = {

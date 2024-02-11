@@ -1,6 +1,7 @@
 import type { CookieStore } from "$src/server/cookie";
 import type { Account, Character } from "@prisma/client";
 import type { NumericRange } from "@sveltejs/kit";
+import type { FormPathLeaves } from "sveltekit-superforms";
 import {
 	ValiError,
 	array,
@@ -191,11 +192,12 @@ export const providers = [
 	}
 ] as const satisfies Provider[];
 
-export type SaveResult<T extends object | null> = Promise<T | SaveError>;
+export type SaveResult<T extends object | null, S extends Record<string, unknown>> = Promise<T | SaveError<S>>;
 
-export class SaveError {
+export class SaveError<T extends Record<string, unknown>> {
 	constructor(
 		public status: NumericRange<400, 599>,
-		public error: string
+		public error: string,
+		public options?: { field?: FormPathLeaves<T> }
 	) {}
 }

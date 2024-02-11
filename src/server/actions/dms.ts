@@ -9,7 +9,7 @@ export async function saveDM(
 	dmId: string,
 	userId: string,
 	data: DungeonMasterSchema
-): SaveResult<{ id: string; dm: DungeonMaster }> {
+): SaveResult<{ id: string; dm: DungeonMaster }, DungeonMasterSchema> {
 	try {
 		const dm = (await getUserDMsWithLogsCache(userId)).find((dm) => dm.id === dmId);
 		if (!dm) throw new SaveError(401, "You do not have permission to edit this DM");
@@ -33,7 +33,7 @@ export async function saveDM(
 }
 
 export type DeleteDMResult = ReturnType<typeof deleteDM>;
-export async function deleteDM(dmId: string, userId?: string): SaveResult<{ id: string }> {
+export async function deleteDM(dmId: string, userId?: string): SaveResult<{ id: string }, DungeonMasterSchema> {
 	try {
 		if (!userId) throw new SaveError(401, "You must be logged in to delete a DM");
 

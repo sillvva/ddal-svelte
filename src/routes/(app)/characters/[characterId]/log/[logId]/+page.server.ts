@@ -6,7 +6,7 @@ import { getCharacterCache } from "$src/server/data/characters";
 import { getUserDMsWithLogs } from "$src/server/data/dms";
 import { getLog } from "$src/server/data/logs";
 import { error, fail, redirect } from "@sveltejs/kit";
-import { superValidate } from "sveltekit-superforms";
+import { message, setError, superValidate } from "sveltekit-superforms";
 import { valibot } from "sveltekit-superforms/adapters";
 
 export const load = async (event) => {
@@ -31,6 +31,10 @@ export const load = async (event) => {
 	const form = await superValidate(valibot(logSchema), {
 		defaults: {
 			...log,
+			dm: {
+				...log.dm,
+				owner: log.dm.owner || session.user.id
+			},
 			characterId: character.id,
 			characterName: character.name,
 			magic_items_gained: log.magic_items_gained.map((item) => ({
@@ -79,6 +83,14 @@ export const actions = {
 		const result = await saveLog(form.data, session.user);
 		if ("id" in result) redirect(302, `/characters/${character.id}`);
 
-		return { form };
+		const field = result.options?.field;
+		if (field === "acp") return setError(form, "acp", result.error);
+		if (field === "level") return setError(form, "level", result.error);
+		if (field === "applied_date") return setError(form, "applied_date", result.error);
+		if (field === "characterId") return setError(form, "characterId", result.error);
+
+		return message(form, result.error, {
+			status: result.status
+		});
 	}
 };
