@@ -43,13 +43,6 @@
 		</div>
 	{/if}
 
-	<input type="hidden" name="id" value={$form.id} />
-	<input type="hidden" name="dm.id" value={$form.dm.id} />
-	<input type="hidden" name="dm.DCI" value={$form.dm.DCI} />
-	<input type="hidden" name="dm.name" value={$form.dm.name} />
-	<input type="hidden" name="dm.uid" value={$form.dm.uid} />
-	<input type="hidden" name="dm.owner" value={$form.dm.owner} />
-	<input type="hidden" name="is_dm_log" value="true" />
 	<div class="grid grid-cols-12 gap-4">
 		<div class={twMerge("form-control col-span-12 sm:col-span-6 lg:col-span-3")}>
 			<label for="name" class="label">

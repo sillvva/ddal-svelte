@@ -20,6 +20,7 @@
 	const { form: dmFormData, errors, submitting, message } = dmForm;
 
 	const deleteForm = superForm(data.deleteForm, {
+		dataType: "json",
 		onSubmit: async ({ cancel }) => {
 			if (!confirm(`Are you sure you want to delete ${data.name}? This action cannot be reversed.`)) return cancel();
 			$pageLoader = true;
@@ -29,6 +30,8 @@
 			$pageLoader = false;
 		}
 	});
+
+	const { form: delData } = deleteForm;
 </script>
 
 <div class="flex flex-col gap-4">
@@ -41,10 +44,6 @@
 				{$message}
 			</div>
 		{/if}
-
-		<input type="hidden" name="id" value={$dmFormData.id} />
-		<input type="hidden" name="uid" value={$dmFormData.uid} />
-		<input type="hidden" name="owner" value={$dmFormData.owner} />
 
 		<div class="grid grid-cols-12 gap-4">
 			<div class="col-span-12 sm:col-span-6">

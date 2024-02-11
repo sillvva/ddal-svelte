@@ -71,12 +71,12 @@ export const actions = {
 		if (!form.valid) return fail(400, { form });
 
 		const dms = await getUserDMsWithLogsCache(session.user.id);
-		const dm = dms.find((dm) => dm.id == event.params.dmId);
+		const dm = dms.find((dm) => dm.id == form.data.id);
 		if (!dm) redirect(302, "/dms");
 
 		if (dm.logs.length) return message(form, "This DM has logs and cannot be deleted.", { status: 400 });
 
-		const result = await deleteDM(event.params.dmId, session.user.id);
+		const result = await deleteDM(form.data.id, session.user.id);
 		if ("id" in result) redirect(302, `/dms`);
 
 		return message(form, result.error, { status: result.status });

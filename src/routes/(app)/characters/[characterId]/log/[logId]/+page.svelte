@@ -50,9 +50,6 @@
 		</div>
 	{/if}
 
-	<input type="hidden" name="id" value={$form.id} />
-	<input type="hidden" name="characterId" value={$form.characterId} />
-	<input type="hidden" name="applied_date" value={$form.applied_date} />
 	<div class="grid grid-cols-12 gap-4">
 		<div class="form-control col-span-12 sm:col-span-4">
 			<label for="type" class="label">
@@ -106,10 +103,6 @@
 		</div>
 		<div class="col-span-12 grid grid-cols-12 gap-4">
 			{#if $form.type === "game"}
-				<input type="hidden" name="dungeonMasterId" value={$form.dm.id} />
-				<input type="hidden" name="dm.id" value={$form.dm.id} />
-				<input type="hidden" name="dm.uid" value={$form.dm.uid} />
-				<input type="hidden" name="dm.owner" value={$form.dm.owner} />
 				<div class="form-control col-span-6">
 					<label for="dmName" class="label">
 						<span class="label-text">DM Name</span>
@@ -230,12 +223,6 @@
 						{/if}
 					</div>
 				{/if}
-			{:else}
-				<input type="hidden" name="dm.id" value={dm.id} />
-				<input type="hidden" name="dm.uid" value={dm.uid} />
-				<input type="hidden" name="dm.owner" value={dm.owner} />
-				<input type="hidden" name="dm.name" value={dm.name} />
-				<input type="hidden" name="dm.DCI" value={dm.DCI} />
 			{/if}
 			{#if season === 8 || $form.type === "nongame"}
 				{#if $form.type === "game"}
@@ -375,7 +362,6 @@
 				<div class="card col-span-12 bg-base-300/70 sm:col-span-6">
 					<div class="card-body flex flex-col gap-4">
 						<h4 class="text-2xl">Add Magic Item</h4>
-						<input type="hidden" name={`magic_items_gained.${index}.id`} value={item.id} />
 						<div class="flex gap-4">
 							<div class="form-control flex-1">
 								<label for={`magic_items_gained.${index}.name`} class="label">
@@ -468,7 +454,6 @@
 				<div class="card col-span-12 bg-base-300/70 sm:col-span-6">
 					<div class="card-body flex flex-col gap-4">
 						<h4 class="text-2xl">Add Story Award</h4>
-						<input type="hidden" name={`story_awards_gained.${index}.id`} value={item.id} />
 						<div class="flex gap-4">
 							<div class="form-control flex-1">
 								<label for={`story_awards_gained.${index}.name`} class="label">
