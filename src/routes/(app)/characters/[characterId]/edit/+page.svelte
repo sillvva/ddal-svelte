@@ -36,7 +36,14 @@
 						<span class="text-error">*</span>
 					</span>
 				</label>
-				<input type="text" required bind:value={$form.name} class="input input-bordered w-full focus:border-primary" />
+				<input
+					type="text"
+					name="name"
+					id="name"
+					required
+					bind:value={$form.name}
+					class="input input-bordered w-full focus:border-primary"
+				/>
 				{#if $errors.name}
 					<label for="name" class="label">
 						<span class="label-text-alt text-error">{$errors.name}</span>
@@ -49,7 +56,13 @@
 				<label for="campaign" class="label">
 					<span class="label-text">Campaign</span>
 				</label>
-				<input type="text" bind:value={$form.campaign} class="input input-bordered w-full focus:border-primary" />
+				<input
+					type="text"
+					name="campaign"
+					id="campaign"
+					bind:value={$form.campaign}
+					class="input input-bordered w-full focus:border-primary"
+				/>
 				{#if $errors.campaign}
 					<label for="campaign" class="label">
 						<span class="label-text-alt text-error">{$errors.campaign}</span>
@@ -62,7 +75,13 @@
 				<label for="race" class="label">
 					<span class="label-text">Species</span>
 				</label>
-				<input type="text" bind:value={$form.race} class="input input-bordered w-full focus:border-primary" />
+				<input
+					type="text"
+					name="race"
+					id="race"
+					bind:value={$form.race}
+					class="input input-bordered w-full focus:border-primary"
+				/>
 				{#if $errors.race}
 					<label for="race" class="label">
 						<span class="label-text-alt text-error">{$errors.race}</span>
@@ -75,7 +94,13 @@
 				<label for="class" class="label">
 					<span class="label-text">Class</span>
 				</label>
-				<input type="text" bind:value={$form.class} class="input input-bordered w-full focus:border-primary" />
+				<input
+					type="text"
+					name="class"
+					id="class"
+					bind:value={$form.class}
+					class="input input-bordered w-full focus:border-primary"
+				/>
 				{#if $errors.class}
 					<label for="class" class="label">
 						<span class="label-text-alt text-error">{$errors.class}</span>
@@ -91,6 +116,7 @@
 				<input
 					type="text"
 					name="character_sheet_url"
+					id="character_sheet_url"
 					bind:value={$form.character_sheet_url}
 					class="input input-bordered w-full focus:border-primary"
 				/>
@@ -109,6 +135,7 @@
 				<input
 					type="text"
 					name="image_url"
+					id="image_url"
 					bind:value={$form.image_url}
 					class="input input-bordered w-full focus:border-primary"
 				/>

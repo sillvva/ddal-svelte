@@ -20,6 +20,9 @@ dependencies:
   '@svelteuidev/composables':
     specifier: ^0.15.4
     version: 0.15.4(svelte@4.2.10)
+  devalue:
+    specifier: ^4.3.2
+    version: 4.3.2
   ioredis:
     specifier: ^5.3.2
     version: 5.3.2

@@ -25,7 +25,7 @@
 <div class="flex flex-col gap-4">
 	<BreadCrumbs />
 
-	<SuperForm action="?/saveDM" superForm={dmForm} method="post">
+	<SuperForm action="?/saveDM" superForm={dmForm}>
 		{#if $message}
 			<div class="alert alert-error mb-4 shadow-lg">
 				<Icon src="alert-circle" class="w-6" />

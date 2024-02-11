@@ -1,24 +1,23 @@
 <script lang="ts" context="module">
-	type T = Record<string, unknown>;
+	type FormObj = Record<string, unknown>;
 </script>
 
-<script lang="ts" generics="T extends Record<string, unknown>">
+<script lang="ts" generics="T extends FormObj">
 	import { dev } from "$app/environment";
-
+	import { stringify } from "devalue";
 	import type { HTMLFormAttributes } from "svelte/elements";
 	import SuperDebug, { type SuperForm } from "sveltekit-superforms";
 
 	export let superForm: SuperForm<T, unknown>;
-	export let method = "post";
-	export const style = "margin-bottom: 1rem;";
+	export let basic = false;
 
-	interface $$Props extends HTMLFormAttributes {
+	type $$Props = HTMLFormAttributes & {
 		superForm: SuperForm<T, unknown>;
-		method?: "get" | "post";
-		style?: string;
-	}
+		basic?: boolean;
+	};
 
-	const { form, errors, capture, restore, submitting, enhance } = superForm;
+	const { form, errors, capture, restore, submitting, enhance, formId } = superForm;
+	const method = $$props.method || "post";
 
 	let refForm: HTMLFormElement;
 	$: if (refForm) {
@@ -37,8 +36,20 @@
 	};
 </script>
 
-<form bind:this={refForm} {...$$restProps} {method} {style} use:enhance>
-	<slot />
-</form>
+{#if basic}
+	<form bind:this={refForm} {method} {...$$restProps}>
+		<input type="hidden" name="__superform_id" value={$formId} />
+		<input type="hidden" name="__superform_json" value={stringify($form)} />
+		<slot />
+	</form>
+{:else}
+	<form bind:this={refForm} {method} {...$$restProps} use:enhance>
+		<slot />
+	</form>
+{/if}
 
-<SuperDebug data={{ $form, $errors }} display={dev} />
+{#if dev}
+	<div class="my-4">
+		<SuperDebug data={{ $form, $errors }} />
+	</div>
+{/if}
