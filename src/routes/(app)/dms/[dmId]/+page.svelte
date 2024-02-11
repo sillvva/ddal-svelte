@@ -1,5 +1,5 @@
 <script lang="ts">
-	import { enhance } from "$app/forms";
+	// import { enhance } from "$app/forms";
 	import BreadCrumbs from "$lib/components/BreadCrumbs.svelte";
 	import Icon from "$lib/components/Icon.svelte";
 	import SuperForm from "$lib/components/SuperForm.svelte";
@@ -10,23 +10,30 @@
 	import { pageLoader } from "../../+layout.svelte";
 
 	export let data;
-	export let form;
 
-	let dm = data.dm;
-	let saving = false;
-
-	const sForm = superForm(data.form, {
+	const dmForm = superForm(data.dmForm, {
 		dataType: "json",
 		validators: valibotClient(dungeonMasterSchema)
 	});
 
-	const { form: dmForm, errors, submitting, message } = sForm;
+	const { form: dmFormData, errors, submitting, message } = dmForm;
+
+	const deleteForm = superForm(data.deleteForm, {
+		onSubmit: async ({ cancel }) => {
+			if (!confirm(`Are you sure you want to delete ${data.name}? This action cannot be reversed.`)) return cancel();
+			$pageLoader = true;
+		},
+		onError: ({ result: { error } }) => {
+			alert(error.message);
+			$pageLoader = false;
+		}
+	});
 </script>
 
 <div class="flex flex-col gap-4">
 	<BreadCrumbs />
 
-	<SuperForm action="?/saveDM" superForm={sForm}>
+	<SuperForm action="?/saveDM" superForm={dmForm} method="post">
 		{#if $message}
 			<div class="alert alert-error mb-4 shadow-lg">
 				<Icon src="alert-circle" class="w-6" />
@@ -34,9 +41,10 @@
 			</div>
 		{/if}
 
-		<input type="hidden" name="id" value={$dmForm.id} />
-		<input type="hidden" name="uid" value={$dmForm.uid} />
-		<input type="hidden" name="owner" value={$dmForm.owner} />
+		<input type="hidden" name="id" value={$dmFormData.id} />
+		<input type="hidden" name="uid" value={$dmFormData.uid} />
+		<input type="hidden" name="owner" value={$dmFormData.owner} />
+
 		<div class="grid grid-cols-12 gap-4">
 			<div class="col-span-12 sm:col-span-6">
 				<div class="form-control w-full">
@@ -49,7 +57,7 @@
 					<input
 						type="text"
 						name="name"
-						bind:value={$dmForm.name}
+						bind:value={$dmFormData.name}
 						required
 						class="input input-bordered w-full focus:border-primary"
 					/>
@@ -65,7 +73,7 @@
 					<label for="DCI" class="label">
 						<span class="label-text">DCI</span>
 					</label>
-					<input type="text" name="DCI" bind:value={$dmForm.DCI} class="input input-bordered w-full focus:border-primary" />
+					<input type="text" name="DCI" bind:value={$dmFormData.DCI} class="input input-bordered w-full focus:border-primary" />
 					{#if $errors.DCI}
 						<label for="DCI" class="label">
 							<span class="label-text-alt text-error">{$errors.DCI}</span>
@@ -88,38 +96,16 @@
 		<section>
 			<h2 class="mb-2 text-2xl">Logs</h2>
 			<div class="w-full overflow-x-auto rounded-lg bg-base-100">
-				{#if dm.logs.length == 0}
-					<form
-						class="py-20 text-center"
-						method="POST"
-						action="?/deleteDM"
-						use:enhance={() => {
-							$pageLoader = true;
-							saving = true;
-							return async ({ update, result }) => {
-								update();
-								if (result.type !== "redirect") {
-									$pageLoader = false;
-									saving = false;
-									if (form?.error) {
-										alert(form.error);
-									}
-								}
-							};
-						}}
-					>
-						<p class="mb-4">This DM has no logs.</p>
-						<input type="hidden" name="dmId" value={dm.id} />
-						<button
-							class="btn btn-error btn-sm"
-							on:click|preventDefault={(e) => {
-								if (confirm(`Are you sure you want to delete ${dm.name}? This action cannot be reversed.`))
-									e.currentTarget.form?.requestSubmit();
-							}}
-						>
+				{#if data.logs.length == 0}
+					<SuperForm class="flex flex-col items-center gap-4 py-20" action="?/deleteDM" superForm={deleteForm}>
+						<p>This DM has no logs.</p>
+						<button type="submit" class="btn btn-error btn-sm hover:font-bold hover:text-white">
+							{#if $submitting}
+								<span class="loading" />
+							{/if}
 							Delete DM
 						</button>
-					</form>
+					</SuperForm>
 				{:else}
 					<table class="table w-full">
 						<thead>
@@ -131,7 +117,7 @@
 							</tr>
 						</thead>
 						<tbody>
-							{#each dm.logs.sort((a, b) => sorter(a.date, b.date)) as log}
+							{#each data.logs.sort((a, b) => sorter(a.date, b.date)) as log}
 								<tr>
 									<td>
 										<div class="flex flex-col gap-1">

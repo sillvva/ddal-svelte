@@ -8,17 +8,17 @@
 
 	export let data;
 
-	const sForm = superForm(data.form, {
+	const characterForm = superForm(data.form, {
 		dataType: "json",
 		validators: valibotClient(newCharacterSchema)
 	});
 
-	const { form, errors, submitting, message } = sForm;
+	const { form, errors, submitting, message } = characterForm;
 </script>
 
 <BreadCrumbs />
 
-<SuperForm action="?/saveCharacter" superForm={sForm}>
+<SuperForm action="?/saveCharacter" superForm={characterForm}>
 	{#if $message}
 		<div class="alert alert-error mb-4 shadow-lg">
 			<Icon src="alert-circle" class="w-6" />

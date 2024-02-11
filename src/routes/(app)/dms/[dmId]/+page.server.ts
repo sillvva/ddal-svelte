@@ -5,6 +5,9 @@ import { getUserDMsWithLogsCache } from "$src/server/data/dms";
 import { error, fail, redirect } from "@sveltejs/kit";
 import { message, superValidate } from "sveltekit-superforms";
 import { valibot } from "sveltekit-superforms/adapters";
+import { object, string } from "valibot";
+
+const deleteDmSchema = object({ id: string() });
 
 export const load = async (event) => {
 	const parent = await event.parent();
@@ -16,7 +19,7 @@ export const load = async (event) => {
 	const dm = dms.find((dm) => dm.id == event.params.dmId);
 	if (!dm) error(404, "DM not found");
 
-	const form = await superValidate(valibot(dungeonMasterSchema), {
+	const dmForm = await superValidate(valibot(dungeonMasterSchema), {
 		defaults: {
 			id: dm.id,
 			name: dm.name,
@@ -26,15 +29,23 @@ export const load = async (event) => {
 		}
 	});
 
+	const deleteForm = await superValidate(valibot(deleteDmSchema), {
+		defaults: {
+			id: dm.id
+		}
+	});
+
 	return {
+		...event.params,
 		title: `Edit ${dm.name}`,
 		breadcrumbs: parent.breadcrumbs.concat({
 			name: dm.name,
 			href: `/dms/${dm.id}`
 		}),
-		...event.params,
-		form,
-		dm
+		name: dm.name,
+		logs: dm.logs,
+		dmForm,
+		deleteForm
 	};
 };
 
@@ -50,26 +61,24 @@ export const actions = {
 		const result = await saveDM(event.params.dmId, session.user.id, form.data);
 		if ("id" in result) redirect(302, `/dms`);
 
-		return message(form, result.error, {
-			status: result.status
-		});
+		return message(form, result.error, { status: result.status });
 	},
 	deleteDM: async (event) => {
 		const session = await event.locals.session;
 		if (!session?.user) redirect(302, "/");
 
-		const data = await event.request.formData();
-		const dmId = (data.get("dmId") || "") as string;
+		const form = await superValidate(event, valibot(deleteDmSchema));
+		if (!form.valid) return fail(400, { form });
 
 		const dms = await getUserDMsWithLogsCache(session.user.id);
 		const dm = dms.find((dm) => dm.id == event.params.dmId);
 		if (!dm) redirect(302, "/dms");
 
-		if (dm.logs.length) return { id: null, error: "You cannot delete a DM that has logs" };
+		if (dm.logs.length) return message(form, "This DM has logs and cannot be deleted.", { status: 400 });
 
-		const result = await deleteDM(dmId, session.user.id);
-		if (result && result.id) redirect(302, `/dms`);
+		const result = await deleteDM(event.params.dmId, session.user.id);
+		if ("id" in result) redirect(302, `/dms`);
 
-		return result;
+		return message(form, result.error, { status: result.status });
 	}
 };

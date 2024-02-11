@@ -1,8 +1,6 @@
 import { SaveError, type DungeonMasterSchema, type SaveResult } from "$lib/schemas";
-import { handleSKitError } from "$lib/util";
 import { prisma } from "$src/server/db";
 import type { DungeonMaster } from "@prisma/client";
-import { error } from "@sveltejs/kit";
 import { revalidateKeys, type CacheKey } from "../cache";
 import { getUserDMsWithLogsCache } from "../data/dms";
 
@@ -35,15 +33,15 @@ export async function saveDM(
 }
 
 export type DeleteDMResult = ReturnType<typeof deleteDM>;
-export async function deleteDM(dmId: string, userId?: string) {
+export async function deleteDM(dmId: string, userId?: string): SaveResult<{ id: string }> {
 	try {
-		if (!userId) error(401, "You must be logged in to delete a DM");
+		if (!userId) throw new SaveError(401, "You must be logged in to delete a DM");
 
 		const dms = (await getUserDMsWithLogsCache(userId)).filter((dm) => dm.id === dmId);
-		if (!dms.length) error(401, "You do not have permission to delete this DM");
+		if (!dms.length) throw new SaveError(401, "You do not have permission to delete this DM");
 
 		const dm = dms.find((dm) => dm.logs.length);
-		if (dm) error(401, "You cannot delete a DM that has logs");
+		if (dm) throw new SaveError(401, "You cannot delete a DM that has logs");
 
 		const result = await prisma.dungeonMaster.delete({
 			where: { id: dmId }
@@ -51,10 +49,10 @@ export async function deleteDM(dmId: string, userId?: string) {
 
 		revalidateKeys([["dms", userId, "logs"]]);
 
-		return { id: result.id, error: null };
+		return { id: result.id };
 	} catch (err) {
-		handleSKitError(err);
-		if (err instanceof Error) return { id: null, dm: null, error: err.message };
-		return { id: null, dm: null, error: "An unknown error has occurred." };
+		if (err instanceof SaveError) return err;
+		if (err instanceof Error) return { status: 500, error: err.message };
+		return { status: 500, error: "An unknown error has occurred." };
 	}
 }

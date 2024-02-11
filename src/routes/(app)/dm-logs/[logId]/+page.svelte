@@ -18,12 +18,12 @@
 		description: false
 	};
 
-	let sForm = superForm(data.form, {
+	let logForm = superForm(data.form, {
 		dataType: "json",
 		validators: valibotClient(logSchema)
 	});
 
-	const { form, errors, submitting, message } = sForm;
+	const { form, errors, submitting, message } = logForm;
 
 	let season: 1 | 8 | 9 = $form.experience ? 1 : $form.acp ? 8 : 9;
 
@@ -34,7 +34,7 @@
 
 <BreadCrumbs />
 
-<SuperForm action="?/saveLog" superForm={sForm}>
+<SuperForm action="?/saveLog" superForm={logForm}>
 	{#if $message}
 		<div class="alert alert-error mb-4 shadow-lg">
 			<Icon src="alert-circle" class="w-6" />

@@ -46,13 +46,13 @@ export const load = async (event) => {
 	});
 
 	return {
+		...event.params,
 		title: event.params.logId === "new" ? "New DM Log" : `Edit ${log.name}`,
 		breadcrumbs: parent.breadcrumbs.concat({
 			name: event.params.logId === "new" ? "New DM Log" : `${log.name}`,
 			href: `/dm-logs/${event.params.logId}`
 		}),
 		user: session.user,
-		...event.params,
 		characters,
 		character,
 		form

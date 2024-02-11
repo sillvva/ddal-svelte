@@ -17,12 +17,12 @@
 
 	const character = data.character;
 
-	let sForm = superForm(data.form, {
+	let logForm = superForm(data.form, {
 		dataType: "json",
 		validators: valibotClient(logSchema)
 	});
 
-	const { form, errors, submitting, message } = sForm;
+	const { form, errors, submitting, message } = logForm;
 
 	let magicItems = character
 		? getMagicItems(character, { excludeDropped: true, lastLogId: $form.id }).sort((a, b) => sorter(a.name, b.name))
@@ -41,7 +41,7 @@
 
 <BreadCrumbs />
 
-<SuperForm action="?/saveLog" superForm={sForm}>
+<SuperForm action="?/saveLog" superForm={logForm}>
 	{#if $message}
 		<div class="alert alert-error mb-4 shadow-lg">
 			<Icon src="alert-circle" class="w-6" />

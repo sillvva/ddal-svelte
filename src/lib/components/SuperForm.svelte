@@ -17,7 +17,6 @@
 	const { form, submitting, enhance } = superForm;
 
 	let refForm: HTMLFormElement;
-
 	$: if (refForm) {
 		refForm.querySelectorAll("input, select, textarea, button").forEach((el) => {
 			if ($submitting) {
