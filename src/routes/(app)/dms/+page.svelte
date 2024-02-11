@@ -1,11 +1,11 @@
 <script lang="ts">
 	import { applyAction, enhance } from "$app/forms";
+	import { page } from "$app/stores";
 	import BreadCrumbs from "$lib/components/BreadCrumbs.svelte";
 	import Icon from "$lib/components/Icon.svelte";
 	import { twMerge } from "tailwind-merge";
 
 	export let data;
-	export let form;
 
 	let dms = data.dms;
 	let deletingDM: string[] = [];
@@ -13,13 +13,6 @@
 
 <div class="flex flex-col gap-4">
 	<BreadCrumbs />
-
-	{#if form?.error}
-		<div class="alert alert-error mb-4 shadow-lg">
-			<Icon src="alert-circle" class="w-6" />
-			{form.error}
-		</div>
-	{/if}
 
 	<div class="flex flex-col gap-4">
 		<section>
@@ -59,32 +52,28 @@
 											{#if dm.logs.length == 0}
 												<form
 													method="POST"
-													action="?/deleteDM"
-													use:enhance={() => {
+													action={`/dms/${dm.id}?/deleteDM`}
+													use:enhance={({ cancel }) => {
+														if (!confirm(`Are you sure you want to delete ${dm.name}? This action cannot be reversed.`))
+															return cancel();
+
 														deletingDM = [...deletingDM, dm.id];
 														return async ({ result }) => {
 															await applyAction(result);
-															if (form?.error) {
+															if ($page.form?.message) {
+																alert($page.form.message);
 																deletingDM = deletingDM.filter((id) => id !== dm.id);
-																alert(form.error);
 															}
 														};
 													}}
 												>
 													<input type="hidden" name="dmId" value={dm.id} />
-													<button
-														class="btn sm:btn-sm"
-														on:click|preventDefault={(e) => {
-															if (confirm(`Are you sure you want to delete ${dm.name}? This action cannot be reversed.`))
-																e.currentTarget.form?.requestSubmit();
-														}}
-														aria-label="Delete DM"
-													>
+													<button type="submit" class="btn sm:btn-sm" aria-label="Delete DM">
 														<Icon src="trash-can" class="w-4" />
 													</button>
 												</form>
 											{/if}
-											<a href="/dms/{dm.id}" class="btn-primary btn sm:btn-sm" aria-label="Edit DM">
+											<a href="/dms/{dm.id}" class="btn btn-primary sm:btn-sm" aria-label="Edit DM">
 												<Icon src="pencil" class="w-4" />
 											</a>
 										</div>

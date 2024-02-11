@@ -1,5 +1,6 @@
 <script lang="ts">
 	// import { enhance } from "$app/forms";
+	import { applyAction, enhance } from "$app/forms";
 	import BreadCrumbs from "$lib/components/BreadCrumbs.svelte";
 	import Icon from "$lib/components/Icon.svelte";
 	import SuperForm from "$lib/components/SuperForm.svelte";
@@ -10,28 +11,15 @@
 	import { pageLoader } from "../../+layout.svelte";
 
 	export let data;
+	export let form;
 
-	const dmForm = superForm(data.dmForm, {
+	const dmForm = superForm(data.form, {
 		dataType: "json",
 		validators: valibotClient(dungeonMasterSchema),
 		taintedMessage: "You have unsaved changes. Are you sure you want to leave?"
 	});
 
 	const { form: dmFormData, errors, submitting, message } = dmForm;
-
-	const deleteForm = superForm(data.deleteForm, {
-		dataType: "json",
-		onSubmit: async ({ cancel }) => {
-			if (!confirm(`Are you sure you want to delete ${data.name}? This action cannot be reversed.`)) return cancel();
-			$pageLoader = true;
-		},
-		onError: ({ result: { error } }) => {
-			alert(error.message);
-			$pageLoader = false;
-		}
-	});
-
-	const { form: delData } = deleteForm;
 </script>
 
 <div class="flex flex-col gap-4">
@@ -97,15 +85,27 @@
 			<h2 class="mb-2 text-2xl">Logs</h2>
 			<div class="w-full overflow-x-auto rounded-lg bg-base-100">
 				{#if data.logs.length == 0}
-					<SuperForm class="flex flex-col items-center gap-4 py-20" action="?/deleteDM" superForm={deleteForm}>
+					<form
+						method="POST"
+						action={`?/deleteDM`}
+						class="flex flex-col items-center gap-4 py-20"
+						use:enhance={({ cancel }) => {
+							if (!confirm(`Are you sure you want to delete ${data.name}? This action cannot be reversed.`)) return cancel();
+							$pageLoader = true;
+							return async ({ result }) => {
+								await applyAction(result);
+								if (form?.message) {
+									alert(form.message);
+									$pageLoader = false;
+								}
+							};
+						}}
+					>
 						<p>This DM has no logs.</p>
-						<button type="submit" class="btn btn-error btn-sm hover:font-bold hover:text-white">
-							{#if $submitting}
-								<span class="loading" />
-							{/if}
+						<button type="submit" class="btn btn-error btn-sm hover:font-bold hover:text-white" aria-label="Delete DM">
 							Delete DM
 						</button>
-					</SuperForm>
+					</form>
 				{:else}
 					<table class="table w-full">
 						<thead>
