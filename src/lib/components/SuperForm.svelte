@@ -14,7 +14,7 @@
 		method?: "get" | "post";
 	}
 
-	const { form, submitting, enhance } = superForm;
+	const { capture, restore, submitting, enhance } = superForm;
 
 	let refForm: HTMLFormElement;
 	$: if (refForm) {
@@ -28,8 +28,8 @@
 	}
 
 	export const snapshot = {
-		capture: () => $form,
-		restore: (values: T) => ($form = values)
+		capture,
+		restore
 	};
 </script>
 
