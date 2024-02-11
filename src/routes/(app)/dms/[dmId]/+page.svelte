@@ -13,7 +13,8 @@
 
 	const dmForm = superForm(data.dmForm, {
 		dataType: "json",
-		validators: valibotClient(dungeonMasterSchema)
+		validators: valibotClient(dungeonMasterSchema),
+		taintedMessage: "You have unsaved changes. Are you sure you want to leave?"
 	});
 
 	const { form: dmFormData, errors, submitting, message } = dmForm;

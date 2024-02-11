@@ -19,7 +19,8 @@
 
 	let logForm = superForm(data.form, {
 		dataType: "json",
-		validators: valibotClient(logSchema)
+		validators: valibotClient(logSchema),
+		taintedMessage: "You have unsaved changes. Are you sure you want to leave?"
 	});
 
 	const { form, errors, submitting, message } = logForm;

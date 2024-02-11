@@ -10,7 +10,8 @@
 
 	const characterForm = superForm(data.form, {
 		dataType: "json",
-		validators: valibotClient(newCharacterSchema)
+		validators: valibotClient(newCharacterSchema),
+		taintedMessage: "You have unsaved changes. Are you sure you want to leave?"
 	});
 
 	const { form, errors, submitting, message } = characterForm;
