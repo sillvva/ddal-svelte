@@ -1,5 +1,6 @@
 import type { CookieStore } from "$src/server/cookie";
 import type { Account, Character } from "@prisma/client";
+import type { NumericRange } from "@sveltejs/kit";
 import {
 	ValiError,
 	array,
@@ -12,6 +13,7 @@ import {
 	merge,
 	minLength,
 	minValue,
+	null_,
 	nullable,
 	nullish,
 	number,
@@ -73,11 +75,12 @@ export const checkEnv = async () => {
 };
 
 export type DungeonMasterSchema = Output<typeof dungeonMasterSchema>;
+export type DungeonMasterSchemaIn = Input<typeof dungeonMasterSchema>;
 export const dungeonMasterSchema = object({
 	id: optional(string(), ""),
 	name: optional(string(), "Me"),
-	DCI: nullish(string([regex(/[0-9]{0,10}/, "Invalid DCI Format")])),
-	uid: nullable(string()),
+	DCI: nullable(union([string([regex(/[0-9]{0,10}/, "Invalid DCI Format")]), null_()]), null),
+	uid: nullable(union([string(), null_()]), ""),
 	owner: string()
 });
 
@@ -105,14 +108,14 @@ export const logSchema = object({
 	level: optional(number([minValue(0, "Level must be a non-negative number"), ...notNaN]), 0),
 	gold: optional(number("Gold must be a number", notNaN), 0),
 	dtd: optional(number("Downtime days must be a number", notNaN), 0),
-	description: nullish(string(), ""),
+	description: nullish(union([string(), null_()]), ""),
 	dm: dungeonMasterSchema,
 	is_dm_log: optional(boolean(), false),
-	applied_date: nullable(date("Invalid Date")),
-	magic_items_gained: array(itemSchema("Item")),
-	magic_items_lost: array(string([minLength(1, "Invalid Item ID")])),
-	story_awards_gained: array(itemSchema("Story Award")),
-	story_awards_lost: array(string([minLength(1, "Invalid Story Award ID")]))
+	applied_date: nullable(union([date("Invalid Date"), null_()]), null),
+	magic_items_gained: optional(array(itemSchema("Item")), []),
+	magic_items_lost: optional(array(string([minLength(1, "Invalid Item ID")])), []),
+	story_awards_gained: optional(array(itemSchema("Story Award")), []),
+	story_awards_lost: optional(array(string([minLength(1, "Invalid Story Award ID")])), [])
 });
 
 export const dMLogSchema = (characters: Character[]) =>
@@ -187,3 +190,12 @@ export const providers = [
 		logo: "/images/discord.svg"
 	}
 ] as const satisfies Provider[];
+
+export type SaveResult<T extends object | null> = Promise<T | SaveError>;
+
+export class SaveError {
+	constructor(
+		public status: NumericRange<400, 599>,
+		public error: string
+	) {}
+}

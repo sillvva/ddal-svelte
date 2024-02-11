@@ -2,32 +2,41 @@
 	import { enhance } from "$app/forms";
 	import BreadCrumbs from "$lib/components/BreadCrumbs.svelte";
 	import Icon from "$lib/components/Icon.svelte";
-	import SchemaForm from "$lib/components/SchemaForm.svelte";
+	import SuperForm from "$lib/components/SuperForm.svelte";
 	import { dungeonMasterSchema } from "$lib/schemas";
 	import { sorter } from "$lib/util";
-	import { pageLoader } from "$src/routes/(app)/+layout.svelte";
+	import { superForm } from "sveltekit-superforms";
+	import { valibotClient } from "sveltekit-superforms/adapters";
+	import { pageLoader } from "../../+layout.svelte";
 
 	export let data;
 	export let form;
 
 	let dm = data.dm;
 	let saving = false;
+
+	const sForm = superForm(data.form, {
+		dataType: "json",
+		validators: valibotClient(dungeonMasterSchema)
+	});
+
+	const { form: dmForm, errors, submitting, message } = sForm;
 </script>
 
 <div class="flex flex-col gap-4">
 	<BreadCrumbs />
 
-	<SchemaForm action="?/saveDM" schema={dungeonMasterSchema} data={dm} bind:saving let:errors>
-		{#if form?.error || errors.has("form")}
+	<SuperForm action="?/saveDM" superForm={sForm}>
+		{#if $message}
 			<div class="alert alert-error mb-4 shadow-lg">
 				<Icon src="alert-circle" class="w-6" />
-				{form?.error || errors.get("form")}
+				{$message}
 			</div>
 		{/if}
 
-		<input type="hidden" name="id" value={dm.id} />
-		<input type="hidden" name="uid" value={dm.uid} />
-		<input type="hidden" name="owner" value={dm.owner} />
+		<input type="hidden" name="id" value={$dmForm.id} />
+		<input type="hidden" name="uid" value={$dmForm.uid} />
+		<input type="hidden" name="owner" value={$dmForm.owner} />
 		<div class="grid grid-cols-12 gap-4">
 			<div class="col-span-12 sm:col-span-6">
 				<div class="form-control w-full">
@@ -37,10 +46,16 @@
 							<span class="text-error">*</span>
 						</span>
 					</label>
-					<input type="text" name="name" bind:value={dm.name} required class="input input-bordered w-full focus:border-primary" />
-					{#if errors.has("name")}
+					<input
+						type="text"
+						name="name"
+						bind:value={$dmForm.name}
+						required
+						class="input input-bordered w-full focus:border-primary"
+					/>
+					{#if $errors.name}
 						<label for="name" class="label">
-							<span class="label-text-alt text-error">{errors.get("name")}</span>
+							<span class="label-text-alt text-error">{$errors.name}</span>
 						</label>
 					{/if}
 				</div>
@@ -50,24 +65,24 @@
 					<label for="DCI" class="label">
 						<span class="label-text">DCI</span>
 					</label>
-					<input type="text" name="DCI" bind:value={dm.DCI} class="input input-bordered w-full focus:border-primary" />
-					{#if errors.has("DCI")}
+					<input type="text" name="DCI" bind:value={$dmForm.DCI} class="input input-bordered w-full focus:border-primary" />
+					{#if $errors.DCI}
 						<label for="DCI" class="label">
-							<span class="label-text-alt text-error">{errors.get("DCI")}</span>
+							<span class="label-text-alt text-error">{$errors.DCI}</span>
 						</label>
 					{/if}
 				</div>
 			</div>
 			<div class="col-span-12 m-4 text-center">
 				<button type="submit" class="btn btn-primary disabled:bg-primary disabled:bg-opacity-50 disabled:text-opacity-50">
-					{#if saving}
+					{#if $submitting}
 						<span class="loading" />
 					{/if}
 					Save DM
 				</button>
 			</div>
 		</div>
-	</SchemaForm>
+	</SuperForm>
 
 	<div class="mt-4 flex flex-col gap-4 sm:mt-8">
 		<section>
@@ -96,7 +111,7 @@
 						<p class="mb-4">This DM has no logs.</p>
 						<input type="hidden" name="dmId" value={dm.id} />
 						<button
-							class="btn btn-sm"
+							class="btn btn-error btn-sm"
 							on:click|preventDefault={(e) => {
 								if (confirm(`Are you sure you want to delete ${dm.name}? This action cannot be reversed.`))
 									e.currentTarget.form?.requestSubmit();

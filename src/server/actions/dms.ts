@@ -1,15 +1,20 @@
-import type { DungeonMasterSchema } from "$lib/schemas";
+import { SaveError, type DungeonMasterSchema, type SaveResult } from "$lib/schemas";
 import { handleSKitError } from "$lib/util";
 import { prisma } from "$src/server/db";
+import type { DungeonMaster } from "@prisma/client";
 import { error } from "@sveltejs/kit";
 import { revalidateKeys, type CacheKey } from "../cache";
 import { getUserDMsWithLogsCache } from "../data/dms";
 
 export type SaveDMResult = ReturnType<typeof saveDM>;
-export async function saveDM(dmId: string, userId: string, data: DungeonMasterSchema) {
+export async function saveDM(
+	dmId: string,
+	userId: string,
+	data: DungeonMasterSchema
+): SaveResult<{ id: string; dm: DungeonMaster }> {
 	try {
 		const dm = (await getUserDMsWithLogsCache(userId)).find((dm) => dm.id === dmId);
-		if (!dm) error(401, "You do not have permission to edit this DM");
+		if (!dm) throw new SaveError(401, "You do not have permission to edit this DM");
 
 		const result = await prisma.dungeonMaster.update({
 			where: { id: dmId },
@@ -21,11 +26,11 @@ export async function saveDM(dmId: string, userId: string, data: DungeonMasterSc
 		const characterIds = [...new Set(dm.logs.filter((l) => l.characterId).map((l) => l.characterId))];
 		revalidateKeys([["dms", userId, "logs"], ...characterIds.map((id) => ["character", id as string, "logs"] as CacheKey)]);
 
-		return { id: result.id, dm: result, error: null };
+		return { id: result.id, dm: result };
 	} catch (err) {
-		handleSKitError(err);
-		if (err instanceof Error) return { id: null, dm: null, error: err.message };
-		return { id: null, dm: null, error: "An unknown error has occurred." };
+		if (err instanceof SaveError) return err;
+		if (err instanceof Error) return { status: 500, error: err.message };
+		return { status: 500, error: "An unknown error has occurred." };
 	}
 }
 

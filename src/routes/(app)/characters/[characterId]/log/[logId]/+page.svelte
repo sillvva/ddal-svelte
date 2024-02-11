@@ -5,129 +5,64 @@
 	import DateTimeInput from "$lib/components/DateTimeInput.svelte";
 	import Icon from "$lib/components/Icon.svelte";
 	import Markdown from "$lib/components/Markdown.svelte";
-	import SchemaForm from "$lib/components/SchemaForm.svelte";
+	import SuperForm from "$lib/components/SuperForm.svelte";
 	import { defaultDM, getMagicItems, getStoryAwards } from "$lib/entities";
-	import { logSchema, type LogSchemaIn } from "$lib/schemas";
+	import { logSchema } from "$lib/schemas";
 	import { sorter } from "$lib/util";
+	import { superForm } from "sveltekit-superforms";
+	import { valibotClient } from "sveltekit-superforms/adapters";
 	import { twMerge } from "tailwind-merge";
 
 	export let data;
-	export let form;
 
 	const character = data.character;
-	let log = data.log;
+
+	let sForm = superForm(data.form, {
+		dataType: "json",
+		validators: valibotClient(logSchema)
+	});
+
+	const { form, errors, submitting, message } = sForm;
 
 	let magicItems = character
-		? getMagicItems(character, { excludeDropped: true, lastLogId: log.id }).sort((a, b) => sorter(a.name, b.name))
+		? getMagicItems(character, { excludeDropped: true, lastLogId: $form.id }).sort((a, b) => sorter(a.name, b.name))
 		: [];
 	let storyAwards = character
-		? getStoryAwards(character, { excludeDropped: true, lastLogId: log.id }).sort((a, b) => sorter(a.name, b.name))
+		? getStoryAwards(character, { excludeDropped: true, lastLogId: $form.id }).sort((a, b) => sorter(a.name, b.name))
 		: [];
 
-	let dm = log.dm;
+	let dm = $form.dm;
 	let previews = {
 		description: false
 	};
 
-	let season: 1 | 8 | 9 = log.experience ? 1 : log.acp ? 8 : 9;
-	let magicItemsGained = log.magic_items_gained.map((mi) => ({
-		id: mi.id,
-		name: mi.name,
-		description: mi.description || ""
-	}));
-	let magicItemsLost = log.magic_items_lost.map((mi) => mi.id).filter((id) => !!magicItems.find((mi) => mi.id === id));
-	let storyAwardsGained = log.story_awards_gained.map((mi) => ({
-		id: mi.id,
-		name: mi.name,
-		description: mi.description || ""
-	}));
-	let storyAwardsLost = log.story_awards_lost.map((mi) => mi.id).filter((id) => !!storyAwards.find((mi) => mi.id === id));
-
-	$: values = {
-		...log,
-		characterId: log.characterId || character.id,
-		characterName: character.name,
-		description: log.description,
-		magic_items_gained: magicItemsGained,
-		magic_items_lost: magicItemsLost,
-		story_awards_gained: storyAwardsGained,
-		story_awards_lost: storyAwardsLost,
-		date: log.date && new Date(log.date),
-		applied_date: log.applied_date ? new Date(log.applied_date) : null,
-		dm:
-			!(dm.uid || dm.name.trim()) && data.user.id
-				? {
-						name: data.user.name || "Me",
-						DCI: null,
-						uid: data.user.id,
-						owner: data.user.id
-					}
-				: {
-						id: dm.id,
-						name: dm.name.trim(),
-						DCI: dm.DCI,
-						uid: dm.uid,
-						owner: data.user.id
-					}
-	} satisfies LogSchemaIn;
-
-	// For some reason, using bind:value doesn't work for only this field...
-	// but only for the first attempt. After that, it works fine.
-	function setLogType(type: unknown) {
-		log.type = type as "game" | "nongame";
-	}
-
-	export const snapshot = {
-		capture: () => ({
-			log,
-			dm,
-			magicItemsGained,
-			magicItemsLost,
-			storyAwardsGained,
-			storyAwardsLost
-		}),
-		restore: (values) => {
-			log = values.log;
-			dm = values.dm;
-			magicItemsGained = values.magicItemsGained;
-			magicItemsLost = values.magicItemsLost;
-			storyAwardsGained = values.storyAwardsGained;
-			storyAwardsLost = values.storyAwardsLost;
-		}
-	};
+	let season: 1 | 8 | 9 = $form.experience ? 1 : $form.acp ? 8 : 9;
 </script>
 
 <BreadCrumbs />
 
-<SchemaForm action="?/saveLog" schema={logSchema} data={values} let:saving let:errors>
-	{#if form?.error || errors.has("form")}
+<SuperForm action="?/saveLog" superForm={sForm}>
+	{#if $message}
 		<div class="alert alert-error mb-4 shadow-lg">
 			<Icon src="alert-circle" class="w-6" />
-			{form?.error || errors.get("form")}
+			{$message}
 		</div>
 	{/if}
 
-	<input type="hidden" name="id" value={data.logId === "new" ? "" : data.logId} />
-	<input type="hidden" name="characterId" value={character.id} />
-	<input type="hidden" name="applied_date" value={log.applied_date} />
+	<input type="hidden" name="id" value={$form.id} />
+	<input type="hidden" name="characterId" value={$form.characterId} />
+	<input type="hidden" name="applied_date" value={$form.applied_date} />
 	<div class="grid grid-cols-12 gap-4">
-		{#if !log.is_dm_log}
-			<div class="form-control col-span-12 sm:col-span-4">
-				<label for="type" class="label">
-					<span class="label-text">Log Type</span>
-				</label>
-				<select
-					name="type"
-					value={log.type}
-					on:change={(ev) => setLogType(ev.currentTarget.value)}
-					class="select select-bordered w-full"
-				>
-					<option value="game">Game</option>
-					<option value="nongame">Non-Game (Purchase, Trade, etc)</option>
-				</select>
-			</div>
-		{/if}
-		<div class={twMerge("form-control col-span-12", log.is_dm_log ? "sm:col-span-6" : "sm:col-span-4")}>
+		<div class="form-control col-span-12 sm:col-span-4">
+			<label for="type" class="label">
+				<span class="label-text">Log Type</span>
+			</label>
+			<select name="type" bind:value={$form.type} class="select select-bordered w-full">
+				<option value="game">Game</option>
+				<option value="nongame">Non-Game (Purchase, Trade, etc)</option>
+			</select>
+		</div>
+		<div class={twMerge("form-control col-span-12 sm:col-span-4")}>
 			<label for="name" class="label">
 				<span class="label-text">
 					Title
@@ -138,17 +73,17 @@
 				type="text"
 				name="name"
 				required
-				bind:value={log.name}
+				bind:value={$form.name}
 				class="input input-bordered w-full focus:border-primary"
-				aria-invalid={errors.get("name") ? "true" : "false"}
+				aria-invalid={$errors.name ? "true" : "false"}
 			/>
-			{#if errors.has("name")}
+			{#if $errors.name}
 				<label for="name" class="label">
-					<span class="label-text-alt text-error">{errors.get("name")}</span>
+					<span class="label-text-alt text-error">{$errors.name}</span>
 				</label>
 			{/if}
 		</div>
-		<div class={twMerge("form-control col-span-12", log.is_dm_log ? "sm:col-span-6" : "sm:col-span-4")}>
+		<div class={twMerge("form-control col-span-12 sm:col-span-4")}>
 			<label for="date" class="label">
 				<span class="label-text">
 					Date
@@ -158,72 +93,93 @@
 			<DateTimeInput
 				name="date"
 				required
-				bind:date={log.date}
+				bind:date={$form.date}
 				class="input input-bordered w-full focus:border-primary"
-				aria-invalid={errors.get("date") ? "true" : "false"}
+				aria-invalid={$errors.date ? "true" : "false"}
 			/>
-			{#if errors.has("date")}
+			{#if $errors.date}
 				<label for="date" class="label">
-					<span class="label-text-alt text-error">{errors.get("date")}</span>
+					<span class="label-text-alt text-error">{$errors.date}</span>
 				</label>
 			{/if}
 		</div>
 		<div class="col-span-12 grid grid-cols-12 gap-4">
-			{#if log.type === "game"}
-				<input type="hidden" name="dungeonMasterId" value={dm.id} />
-				<input type="hidden" name="dm.id" value={dm.id} />
-				<input type="hidden" name="dm.uid" value={dm.uid} />
-				<input type="hidden" name="dm.owner" value={dm.owner} />
-				{#if log.is_dm_log}
-					<input type="hidden" name="dm.name" value={dm.name} />
-					<input type="hidden" name="dm.DCI" value={dm.DCI} />
-				{:else}
-					<div class="form-control col-span-6">
+			{#if $form.type === "game"}
+				<input type="hidden" name="dungeonMasterId" value={$form.dm.id} />
+				<input type="hidden" name="dm.id" value={$form.dm.id} />
+				<input type="hidden" name="dm.uid" value={$form.dm.uid} />
+				<input type="hidden" name="dm.owner" value={$form.dm.owner} />
+				<div class="form-control col-span-6">
+					<label for="dmName" class="label">
+						<span class="label-text">DM Name</span>
+					</label>
+					<ComboBox
+						name="dm.name"
+						value={$form.dm.name}
+						values={data.dms.map((dm) => ({ key: dm.name, value: dm.name + (dm.DCI ? ` (${dm.DCI})` : "") })) || []}
+						on:select={(ev) => {
+							if (ev.detail) {
+								const updated = data.dms.find((dm) => dm.name === ev.detail);
+								if (updated)
+									$form.dm = {
+										id: updated.id,
+										name: updated.name,
+										DCI: updated.DCI,
+										uid: updated.uid,
+										owner: updated.owner
+									};
+								else
+									$form.dm = {
+										...defaultDM(data.user.id),
+										name: ev.detail.toString().trim(),
+										DCI: dm.DCI,
+										owner: data.user.id
+									};
+							} else $form.dm = { ...defaultDM(data.user.id), owner: data.user.id };
+						}}
+					/>
+					{#if $errors.dm?.name}
 						<label for="dmName" class="label">
-							<span class="label-text">DM Name</span>
+							<span class="label-text-alt text-error">{$errors.dm?.name}</span>
 						</label>
-						<ComboBox
-							name="dm.name"
-							value={dm.name}
-							values={data.dms.map((dm) => ({ key: dm.name, value: dm.name + (dm.DCI ? ` (${dm.DCI})` : "") })) || []}
-							on:select={(ev) => {
-								if (ev.detail) {
-									const updated = data.dms.find((dm) => dm.name === ev.detail);
-									if (updated) dm = updated;
-									else dm = { ...defaultDM(data.user.id), name: ev.detail.toString().trim(), DCI: dm.DCI };
-								} else dm = defaultDM(data.user.id);
-							}}
-						/>
-						{#if errors.has("dm.name")}
-							<label for="dmName" class="label">
-								<span class="label-text-alt text-error">{errors.get("dm.name")}</span>
-							</label>
-						{/if}
-					</div>
-					<div class="form-control col-span-6">
+					{/if}
+				</div>
+				<div class="form-control col-span-6">
+					<label for="dmDCI" class="label">
+						<span class="label-text">DM DCI</span>
+					</label>
+					<ComboBox
+						name="dm.DCI"
+						type="number"
+						value={$form.dm.DCI}
+						values={data.dms.map((dm) => ({ key: dm.DCI, value: dm.name + (dm.DCI ? ` (${dm.DCI})` : "") })) || []}
+						on:select={(ev) => {
+							if (ev.detail) {
+								const updated = data.dms.find((dm) => dm.DCI === ev.detail);
+								if (updated)
+									$form.dm = {
+										id: updated.id,
+										name: updated.name,
+										DCI: updated.DCI,
+										uid: updated.uid,
+										owner: updated.owner
+									};
+								else
+									dm = {
+										...defaultDM(data.user.id),
+										DCI: ev.detail.toString().trim(),
+										name: $form.dm.name,
+										owner: data.user.id
+									};
+							} else $form.dm = { ...defaultDM(data.user.id), owner: data.user.id };
+						}}
+					/>
+					{#if $errors.dm?.DCI}
 						<label for="dmDCI" class="label">
-							<span class="label-text">DM DCI</span>
+							<span class="label-text-alt text-error">{$errors.dm?.DCI}</span>
 						</label>
-						<ComboBox
-							name="dm.DCI"
-							type="number"
-							value={dm.DCI}
-							values={data.dms.map((dm) => ({ key: dm.DCI, value: dm.name + (dm.DCI ? ` (${dm.DCI})` : "") })) || []}
-							on:select={(ev) => {
-								if (ev.detail) {
-									const updated = data.dms.find((dm) => dm.DCI === ev.detail);
-									if (updated) dm = updated;
-									else dm = { ...defaultDM(data.user.id), DCI: ev.detail.toString().trim(), name: dm.name };
-								} else dm = { ...(dm.name ? dm : defaultDM(data.user.id)), DCI: null };
-							}}
-						/>
-						{#if errors.has("dm.DCI")}
-							<label for="dmDCI" class="label">
-								<span class="label-text-alt text-error">{errors.get("dm.DCI")}</span>
-							</label>
-						{/if}
-					</div>
-				{/if}
+					{/if}
+				</div>
 				<div class="form-control col-span-12 sm:col-span-4">
 					<label for="season" class="label">
 						<span class="label-text">Season</span>
@@ -243,12 +199,12 @@
 							type="number"
 							name="experience"
 							min="0"
-							bind:value={log.experience}
+							bind:value={$form.experience}
 							class="input input-bordered w-full focus:border-primary"
 						/>
-						{#if errors.has("experience")}
+						{#if $errors.experience}
 							<label for="experience" class="label">
-								<span class="label-text-alt text-error">{errors.get("experience")}</span>
+								<span class="label-text-alt text-error">{$errors.experience}</span>
 							</label>
 						{/if}
 					</div>
@@ -262,13 +218,13 @@
 							type="number"
 							name="level"
 							min="0"
-							max={Math.max(log.level, character ? 20 - character.total_level : 19)}
-							bind:value={log.level}
+							max={Math.max($form.level, character ? 20 - character.total_level : 19)}
+							bind:value={$form.level}
 							class="input input-bordered w-full focus:border-primary"
 						/>
-						{#if errors.has("level")}
+						{#if $errors.level}
 							<label for="level" class="label">
-								<span class="label-text-alt text-error">{errors.get("level")}</span>
+								<span class="label-text-alt text-error">{$errors.level}</span>
 							</label>
 						{/if}
 					</div>
@@ -280,51 +236,51 @@
 				<input type="hidden" name="dm.name" value={dm.name} />
 				<input type="hidden" name="dm.DCI" value={dm.DCI} />
 			{/if}
-			{#if season === 8 || log.type === "nongame"}
-				{#if log.type === "game"}
+			{#if season === 8 || $form.type === "nongame"}
+				{#if $form.type === "game"}
 					<div class="form-control col-span-6 w-full sm:col-span-2">
 						<label for="acp" class="label">
 							<span class="label-text">ACP</span>
 						</label>
-						<input type="number" name="acp" bind:value={log.acp} class="input input-bordered w-full focus:border-primary" />
-						{#if errors.has("acp")}
+						<input type="number" name="acp" bind:value={$form.acp} class="input input-bordered w-full focus:border-primary" />
+						{#if $errors.acp}
 							<label for="acp" class="label">
-								<span class="label-text-alt text-error">{errors.get("acp")}</span>
+								<span class="label-text-alt text-error">{$errors.acp}</span>
 							</label>
 						{/if}
 					</div>
 				{/if}
-				<div class={twMerge("form-control w-full", log.type === "nongame" ? "col-span-4" : "col-span-6 sm:col-span-2")}>
+				<div class={twMerge("form-control w-full", $form.type === "nongame" ? "col-span-4" : "col-span-6 sm:col-span-2")}>
 					<label for="tcp" class="label">
 						<span class="label-text">TCP</span>
 					</label>
-					<input type="number" name="tcp" bind:value={log.tcp} class="input input-bordered w-full focus:border-primary" />
-					{#if errors.has("tcp")}
+					<input type="number" name="tcp" bind:value={$form.tcp} class="input input-bordered w-full focus:border-primary" />
+					{#if $errors.tcp}
 						<label for="tcp" class="label">
-							<span class="label-text-alt text-error">{errors.get("tcp")}</span>
+							<span class="label-text-alt text-error">{$errors.tcp}</span>
 						</label>
 					{/if}
 				</div>
 			{/if}
-			<div class={twMerge("form-control w-full", log.type === "game" ? "col-span-6 sm:col-span-2" : "col-span-4")}>
+			<div class={twMerge("form-control w-full", $form.type === "game" ? "col-span-6 sm:col-span-2" : "col-span-4")}>
 				<label for="gold" class="label">
 					<span class="label-text">Gold</span>
 				</label>
-				<input type="number" name="gold" bind:value={log.gold} class="input input-bordered w-full focus:border-primary" />
-				{#if errors.has("gold")}
+				<input type="number" name="gold" bind:value={$form.gold} class="input input-bordered w-full focus:border-primary" />
+				{#if $errors.gold}
 					<label for="gold" class="label">
-						<span class="label-text-alt text-error">{errors.get("gold")}</span>
+						<span class="label-text-alt text-error">{$errors.gold}</span>
 					</label>
 				{/if}
 			</div>
-			<div class={twMerge("form-control w-full", log.type === "game" ? "col-span-6 sm:col-span-2" : "col-span-4")}>
+			<div class={twMerge("form-control w-full", $form.type === "game" ? "col-span-6 sm:col-span-2" : "col-span-4")}>
 				<label for="dtd" class="label">
 					<span class="label-text overflow-hidden text-ellipsis whitespace-nowrap">Downtime Days</span>
 				</label>
-				<input type="number" name="dtd" bind:value={log.dtd} class="input input-bordered w-full focus:border-primary" />
-				{#if errors.has("dtd")}
+				<input type="number" name="dtd" bind:value={$form.dtd} class="input input-bordered w-full focus:border-primary" />
+				{#if $errors.dtd}
 					<label for="dtd" class="label">
-						<span class="label-text-alt text-error">{errors.get("dtd")}</span>
+						<span class="label-text-alt text-error">{$errors.dtd}</span>
 					</label>
 				{/if}
 			</div>
@@ -348,18 +304,18 @@
 			</div>
 			<AutoResizeTextArea
 				name="description"
-				bind:value={log.description}
+				bind:value={$form.description}
 				class={twMerge("textarea textarea-bordered w-full rounded-t-none focus:border-primary", previews.description && "hidden")}
 			/>
 			<div
 				class="border-[1px] border-base-content bg-base-100 p-4 [--tw-border-opacity:0.2]"
 				class:hidden={!previews.description}
 			>
-				<Markdown content={log.description || ""} />
+				<Markdown content={$form.description || ""} />
 			</div>
 			<label for="description" class="label">
-				{#if errors.has("description")}
-					<span class="label-text-alt text-error">{errors.get("description")}</span>
+				{#if $errors.description}
+					<span class="label-text-alt text-error">{$errors.description}</span>
 				{:else}
 					<span class="label-text-alt" />
 				{/if}
@@ -370,36 +326,39 @@
 			<button
 				type="button"
 				class="btn btn-primary min-w-fit flex-1 sm:btn-sm sm:flex-none"
-				on:click={() => (magicItemsGained = [...magicItemsGained, { id: "", name: "", description: "" }])}
+				on:click={() => ($form.magic_items_gained = [...$form.magic_items_gained, { id: "", name: "", description: "" }])}
 			>
 				Add Magic Item
 			</button>
-			{#if !log.is_dm_log && magicItems.filter((item) => !magicItemsLost.includes(item.id)).length > 0}
+			{#if magicItems.filter((item) => !$form.magic_items_lost.includes(item.id)).length > 0}
 				<button
 					type="button"
 					class="btn min-w-fit flex-1 sm:btn-sm sm:flex-none"
 					on:click={() =>
-						(magicItemsLost = [...magicItemsLost, magicItems.filter((item) => !magicItemsLost.includes(item.id))[0].id])}
+						($form.magic_items_lost = [
+							...$form.magic_items_lost,
+							magicItems.filter((item) => !$form.magic_items_lost.includes(item.id))[0].id
+						])}
 				>
 					Drop Magic Item
 				</button>
 			{/if}
-			{#if log.type === "game"}
+			{#if $form.type === "game"}
 				<button
 					type="button"
 					class="btn btn-primary min-w-fit flex-1 sm:btn-sm sm:flex-none"
-					on:click={() => (storyAwardsGained = [...storyAwardsGained, { id: "", name: "", description: "" }])}
+					on:click={() => ($form.story_awards_gained = [...$form.story_awards_gained, { id: "", name: "", description: "" }])}
 				>
 					Add Story Award
 				</button>
-				{#if !log.is_dm_log && storyAwards.filter((item) => !storyAwardsLost.includes(item.id)).length > 0}
+				{#if storyAwards.filter((item) => !$form.story_awards_lost.includes(item.id)).length > 0}
 					<button
 						type="button"
 						class="btn min-w-fit flex-1 sm:btn-sm sm:flex-none"
 						on:click={() =>
-							(storyAwardsLost = [
-								...storyAwardsLost,
-								storyAwards.filter((item) => !storyAwardsLost.includes(item.id))[0].id || ""
+							($form.story_awards_lost = [
+								...$form.story_awards_lost,
+								storyAwards.filter((item) => !$form.story_awards_lost.includes(item.id))[0].id || ""
 							])}
 					>
 						Drop Story Award
@@ -411,7 +370,7 @@
 			<div>JavaScript is required to add/remove magic items and story awards.</div>
 		</noscript>
 		<div class="col-span-12 grid grid-cols-12 gap-4">
-			{#each magicItemsGained as item, index}
+			{#each $form.magic_items_gained as item, index}
 				<div class="card col-span-12 bg-base-300/70 sm:col-span-6">
 					<div class="card-body flex flex-col gap-4">
 						<h4 class="text-2xl">Add Magic Item</h4>
@@ -426,20 +385,20 @@
 									name={`magic_items_gained.${index}.name`}
 									value={item.name}
 									on:input={(e) => {
-										if (magicItemsGained[index]) magicItemsGained[index].name = e.currentTarget.value;
+										if ($form.magic_items_gained[index]) $form.magic_items_gained[index].name = e.currentTarget.value;
 									}}
 									class="input input-bordered w-full focus:border-primary"
 								/>
-								{#if errors.has(`magic_items_gained.${index}.name`)}
+								{#if $errors.magic_items_gained?.[index]?.name}
 									<label for={`magic_items_gained.${index}.name`} class="label">
-										<span class="label-text-alt text-error">{errors.get(`magic_items_gained.${index}.name`)}</span>
+										<span class="label-text-alt text-error">{$errors.magic_items_gained?.[index]?.name}</span>
 									</label>
 								{/if}
 							</div>
 							<button
 								type="button"
 								class="btn-danger no-script-hide btn mt-9"
-								on:click={() => (magicItemsGained = magicItemsGained.filter((_, i) => i !== index))}
+								on:click={() => ($form.magic_items_gained = $form.magic_items_gained.filter((_, i) => i !== index))}
 							>
 								<Icon src="trash-can" class="w-6" />
 							</button>
@@ -463,7 +422,7 @@
 					</div>
 				</div>
 			{/each}
-			{#each magicItemsLost as id, index}
+			{#each $form.magic_items_lost as id, index}
 				<div class="card col-span-12 bg-base-300/70 shadow-xl sm:col-span-6">
 					<div class="card-body flex flex-col gap-4">
 						<h4 class="text-2xl">Drop Magic Item</h4>
@@ -473,38 +432,38 @@
 									<span class="label-text">Select an Item</span>
 								</label>
 								<select
-									value={magicItemsLost[index]}
+									value={$form.magic_items_lost[index]}
 									on:input={(e) => {
-										magicItemsLost[index] = e.currentTarget.value;
+										$form.magic_items_lost[index] = e.currentTarget.value;
 									}}
 									name={`magic_items_lost.${index}`}
 									class="select select-bordered w-full"
 								>
-									{#each magicItems.filter((item) => item.id === id || !magicItemsLost.includes(item.id)) as item}
+									{#each magicItems.filter((item) => item.id === id || !$form.magic_items_lost.includes(item.id)) as item}
 										<option value={item.id}>
 											{item.name}
 										</option>
 									{/each}
 								</select>
-								{#if errors.has(`magic_items_lost.${index}`)}
+								{#if $errors.magic_items_lost?.[index]}
 									<label for={`magic_items_lost.${index}`} class="label">
-										<span class="label-text-alt text-error">{errors.get(`magic_items_lost.${index}`)}</span>
+										<span class="label-text-alt text-error">{$errors.magic_items_lost?.[index]}</span>
 									</label>
 								{/if}
 							</div>
 							<button
 								type="button"
 								class="btn-danger no-script-hide btn mt-9"
-								on:click={() => (magicItemsLost = magicItemsLost.filter((_, i) => i !== index))}
+								on:click={() => ($form.magic_items_lost = $form.magic_items_lost.filter((_, i) => i !== index))}
 							>
 								<Icon src="trash-can" class="w-6" />
 							</button>
 						</div>
-						<div class="text-sm">{magicItems.find((item) => magicItemsLost[index] === item.id)?.description || ""}</div>
+						<div class="text-sm">{magicItems.find((item) => $form.magic_items_lost[index] === item.id)?.description || ""}</div>
 					</div>
 				</div>
 			{/each}
-			{#each storyAwardsGained as item, index}
+			{#each $form.story_awards_gained as item, index}
 				<div class="card col-span-12 bg-base-300/70 sm:col-span-6">
 					<div class="card-body flex flex-col gap-4">
 						<h4 class="text-2xl">Add Story Award</h4>
@@ -519,20 +478,20 @@
 									name={`story_awards_gained.${index}.name`}
 									value={item.name}
 									on:input={(e) => {
-										if (storyAwardsGained[index]) storyAwardsGained[index].name = e.currentTarget.value;
+										if ($form.story_awards_gained[index]) $form.story_awards_gained[index].name = e.currentTarget.value;
 									}}
 									class="input input-bordered w-full focus:border-primary"
 								/>
-								{#if errors.has(`story_awards_gained.${index}.name`)}
+								{#if $errors.story_awards_gained?.[index]?.name}
 									<label for={`story_awards_gained.${index}.name`} class="label">
-										<span class="label-text-alt text-error">{errors.get(`story_awards_gained.${index}.name`)}</span>
+										<span class="label-text-alt text-error">{$errors.story_awards_gained?.[index]?.name}</span>
 									</label>
 								{/if}
 							</div>
 							<button
 								type="button"
 								class="btn-danger no-script-hide btn mt-9"
-								on:click={() => (storyAwardsGained = storyAwardsGained.filter((_, i) => i !== index))}
+								on:click={() => ($form.story_awards_gained = $form.story_awards_gained.filter((_, i) => i !== index))}
 							>
 								<Icon src="trash-can" class="w-6" />
 							</button>
@@ -556,7 +515,7 @@
 					</div>
 				</div>
 			{/each}
-			{#each storyAwardsLost as id, index}
+			{#each $form.story_awards_lost as id, index}
 				<div class="card col-span-12 bg-base-300/70 shadow-xl sm:col-span-6">
 					<div class="card-body flex flex-col gap-4">
 						<h4 class="text-2xl">Drop Story Award</h4>
@@ -566,45 +525,45 @@
 									<span class="label-text">Select an Item</span>
 								</label>
 								<select
-									value={storyAwardsLost[index]}
+									value={$form.story_awards_lost[index]}
 									on:input={(e) => {
-										storyAwardsLost[index] = e.currentTarget.value;
+										$form.story_awards_lost[index] = e.currentTarget.value;
 									}}
 									name={`story_awards_lost.${index}`}
 									class="select select-bordered w-full"
 								>
-									{#each storyAwards.filter((item) => item.id === id || !storyAwardsLost.includes(item.id)) as item}
+									{#each storyAwards.filter((item) => item.id === id || !$form.story_awards_lost.includes(item.id)) as item}
 										<option value={item.id}>
 											{item.name}
 										</option>
 									{/each}
 								</select>
-								{#if errors.has(`story_awards_lost.${index}`)}
+								{#if $errors.story_awards_lost?.[index]}
 									<label for={`story_awards_lost.${index}`} class="label">
-										<span class="label-text-alt text-error">{errors.get(`story_awards_lost.${index}`)}</span>
+										<span class="label-text-alt text-error">{$errors.story_awards_lost?.[index]}</span>
 									</label>
 								{/if}
 							</div>
 							<button
 								type="button"
 								class="btn-danger no-script-hide btn mt-9"
-								on:click={() => (storyAwardsLost = storyAwardsLost.filter((_, i) => i !== index))}
+								on:click={() => ($form.story_awards_lost = $form.story_awards_lost.filter((_, i) => i !== index))}
 							>
 								<Icon src="trash-can" class="w-6" />
 							</button>
 						</div>
-						<div class="text-sm">{storyAwards.find((item) => storyAwardsLost[index] === item.id)?.description || ""}</div>
+						<div class="text-sm">{storyAwards.find((item) => $form.story_awards_lost[index] === item.id)?.description || ""}</div>
 					</div>
 				</div>
 			{/each}
 		</div>
 		<div class="col-span-12 text-center">
 			<button type="submit" class="btn btn-primary disabled:bg-primary disabled:bg-opacity-50 disabled:text-opacity-50">
-				{#if saving}
+				{#if $submitting}
 					<span class="loading" />
 				{/if}
 				Save Log
 			</button>
 		</div>
 	</div>
-</SchemaForm>
+</SuperForm>
