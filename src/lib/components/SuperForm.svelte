@@ -22,6 +22,12 @@
 	let refForm: HTMLFormElement;
 	$: if (refForm) {
 		refForm.querySelectorAll("input, select, textarea, button").forEach((el) => {
+			const name = el.getAttribute("name");
+			if (name) {
+				const label = refForm.querySelector(`label[for="${name}"]`);
+				if (label) el.setAttribute("id", name);
+			}
+
 			if ($submitting) {
 				el.setAttribute("disabled", "disabled");
 			} else {

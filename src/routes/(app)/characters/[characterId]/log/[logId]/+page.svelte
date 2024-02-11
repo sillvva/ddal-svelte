@@ -178,7 +178,7 @@
 					<label for="season" class="label">
 						<span class="label-text">Season</span>
 					</label>
-					<select name="season" bind:value={season} class="select select-bordered w-full">
+					<select id="season" bind:value={season} class="select select-bordered w-full">
 						<option value={9}>Season 9+</option>
 						<option value={8}>Season 8</option>
 						<option value={1}>Season 1-7</option>
