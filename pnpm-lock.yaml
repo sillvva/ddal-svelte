@@ -35,6 +35,9 @@ dependencies:
   svelte-autosize:
     specifier: ^1.1.0
     version: 1.1.0
+  svelte-headlessui:
+    specifier: ^0.0.33
+    version: 0.0.33
   valibot:
     specifier: ^0.28.1
     version: 0.28.1
@@ -3013,6 +3016,10 @@ packages:
       postcss-scss: 4.0.9(postcss@8.4.35)
       svelte: 4.2.10
     dev: true
+
+  /svelte-headlessui@0.0.33:
+    resolution: {integrity: sha512-GYEkYtXLrF1Yqyea7K6U63HMhNtZG9YSFwhedlQ8DpYsHmHztwSTZaLlEJIoygeyIKCSDmgomSTai7t8fj2yIw==}
+    dev: false
 
   /svelte-hmr@0.15.3(svelte@4.2.10):
     resolution: {integrity: sha512-41snaPswvSf8TJUhlkoJBekRrABDXDMdpNpT2tfHIv4JuhgvHqLMhEPGtaQn0BmbNSTkuz2Ed20DF2eHw0SmBQ==}

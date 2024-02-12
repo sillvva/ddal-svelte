@@ -1,14 +1,14 @@
 <script lang="ts">
 	import AutoResizeTextArea from "$lib/components/AutoResizeTextArea.svelte";
 	import BreadCrumbs from "$lib/components/BreadCrumbs.svelte";
-	import ComboBox from "$lib/components/ComboBox.svelte";
 	import DateTimeInput from "$lib/components/DateTimeInput.svelte";
 	import Icon from "$lib/components/Icon.svelte";
 	import Markdown from "$lib/components/Markdown.svelte";
 	import SuperForm from "$lib/components/SuperForm.svelte";
-	import { defaultDM, getMagicItems, getStoryAwards } from "$lib/entities";
+	import { getMagicItems, getStoryAwards } from "$lib/entities";
 	import { logSchema } from "$lib/schemas";
 	import { sorter } from "$lib/util";
+	import HComboBox from "$src/lib/components/HComboBox.svelte";
 	import { superForm } from "sveltekit-superforms";
 	import { valibotClient } from "sveltekit-superforms/adapters";
 	import { twMerge } from "tailwind-merge";
@@ -107,30 +107,22 @@
 					<label for="dmName" class="label">
 						<span class="label-text">DM Name</span>
 					</label>
-					<ComboBox
-						name="dm.name"
-						value={$form.dm.name}
-						values={data.dms.map((dm) => ({ key: dm.name, value: dm.name + (dm.DCI ? ` (${dm.DCI})` : "") })) || []}
-						on:select={(ev) => {
-							if (ev.detail) {
-								const updated = data.dms.find((dm) => dm.name === ev.detail);
-								if (updated)
-									$form.dm = {
-										id: updated.id,
-										name: updated.name,
-										DCI: updated.DCI,
-										uid: updated.uid,
-										owner: updated.owner
-									};
-								else
-									$form.dm = {
-										...defaultDM(data.user.id),
-										name: ev.detail.toString().trim(),
-										DCI: dm.DCI,
-										owner: data.user.id
-									};
-							} else $form.dm = { ...defaultDM(data.user.id), owner: data.user.id };
+					<HComboBox
+						name="dmName"
+						bind:value={$form.dm.name}
+						values={data.dms.map((dm) => ({ key: dm.id, value: dm.name, label: dm.name + (dm.DCI ? ` (${dm.DCI})` : "") })) || []}
+						on:select={(e) => {
+							const dm = data.dms.find((dm) => dm.id === e.detail.key) || {
+								id: "",
+								name: $form.dm.name,
+								DCI: $form.dm.DCI || null,
+								uid: "",
+								owner: data.user.id
+							};
+							const { id, name, DCI, uid, owner } = dm;
+							$form.dm = { id, name, DCI, uid, owner };
 						}}
+						canCreate
 					/>
 					{#if $errors.dm?.name}
 						<label for="dmName" class="label">
@@ -142,31 +134,24 @@
 					<label for="dmDCI" class="label">
 						<span class="label-text">DM DCI</span>
 					</label>
-					<ComboBox
-						name="dm.DCI"
-						type="number"
-						value={$form.dm.DCI}
-						values={data.dms.map((dm) => ({ key: dm.DCI, value: dm.name + (dm.DCI ? ` (${dm.DCI})` : "") })) || []}
-						on:select={(ev) => {
-							if (ev.detail) {
-								const updated = data.dms.find((dm) => dm.DCI === ev.detail);
-								if (updated)
-									$form.dm = {
-										id: updated.id,
-										name: updated.name,
-										DCI: updated.DCI,
-										uid: updated.uid,
-										owner: updated.owner
-									};
-								else
-									dm = {
-										...defaultDM(data.user.id),
-										DCI: ev.detail.toString().trim(),
-										name: $form.dm.name,
-										owner: data.user.id
-									};
-							} else $form.dm = { ...defaultDM(data.user.id), owner: data.user.id };
+					<HComboBox
+						name="dmDCI"
+						bind:value={$form.dm.DCI}
+						values={data.dms
+							.filter((dm) => dm.DCI)
+							.map((dm) => ({ key: dm.id, value: `${dm.DCI}`, label: `${dm.DCI} (${dm.name})` })) || []}
+						on:select={(e) => {
+							const dm = data.dms.find((dm) => dm.id === e.detail.key) || {
+								id: "",
+								name: $form.dm.name,
+								DCI: $form.dm.DCI || null,
+								uid: "",
+								owner: data.user.id
+							};
+							const { id, name, DCI, uid, owner } = dm;
+							$form.dm = { id, name, DCI, uid, owner };
 						}}
+						canCreate
 					/>
 					{#if $errors.dm?.DCI}
 						<label for="dmDCI" class="label">

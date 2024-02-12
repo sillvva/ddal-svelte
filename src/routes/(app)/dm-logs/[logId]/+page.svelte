@@ -1,12 +1,12 @@
 <script lang="ts">
 	import AutoResizeTextArea from "$lib/components/AutoResizeTextArea.svelte";
 	import BreadCrumbs from "$lib/components/BreadCrumbs.svelte";
-	import ComboBox from "$lib/components/ComboBox.svelte";
 	import DateTimeInput from "$lib/components/DateTimeInput.svelte";
 	import Icon from "$lib/components/Icon.svelte";
 	import Markdown from "$lib/components/Markdown.svelte";
 	import SuperForm from "$lib/components/SuperForm.svelte";
 	import { logSchema } from "$lib/schemas";
+	import HComboBox from "$src/lib/components/HComboBox.svelte";
 	import { superForm } from "sveltekit-superforms";
 	import { valibotClient } from "sveltekit-superforms/adapters";
 	import { twMerge } from "tailwind-merge";
@@ -89,20 +89,24 @@
 					{/if}
 				</span>
 			</label>
-			<ComboBox
-				type="text"
+			<HComboBox
 				name="characterName"
-				value={character?.name || ""}
-				values={data.characters?.map((char) => ({ key: char.id, value: char.name })) || []}
 				required={!!$form.applied_date}
-				searchBy="value"
+				bind:value={$form.characterName}
+				values={data.characters.map((char) => ({ key: char.id, value: char.name, label: char.name }))}
+				on:select={(e) => {
+					const character = data.characters.find((c) => c.id === e.detail.key);
+					if (character && character.name === $form.characterName) {
+						$form.characterId = character.id;
+						$form.applied_date = $form.applied_date || new Date();
+					} else {
+						$form.characterName = "";
+						$form.characterId = "";
+						if (data.logId === "new") $form.applied_date = null;
+					}
+				}}
 				on:input={() => {
 					$form.characterId = "";
-				}}
-				on:select={(ev) => {
-					character = data.characters.find((c) => c.id === ev.detail);
-					$form.characterId = character ? ev.detail.toString() : "";
-					if ($form.characterId) $form.applied_date = $form.applied_date || new Date();
 				}}
 			/>
 			{#if $errors.characterId}
