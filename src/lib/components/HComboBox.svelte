@@ -8,6 +8,7 @@
 	export let values: Array<{ key?: string; value: string; label: string }> = [];
 	export let value: string | null = "";
 	export let canCreate: boolean = false;
+	export let showOnEmpty: boolean = false;
 
 	const dispatch = createEventDispatcher<{
 		select: (typeof values)[number];
@@ -18,6 +19,7 @@
 		values: typeof values;
 		value: typeof value;
 		canCreate?: typeof canCreate;
+		showOnEmpty?: typeof showOnEmpty;
 	}
 
 	const combobox = createCombobox();
@@ -30,7 +32,7 @@
 				.replace(/\s+/g, "")
 				.includes((value || "").toLowerCase().replace(/\s+/g, ""))
 		).length === 1;
-	$: withCustom = matched ? sorted : [{ value, label: `Create "${value}"` }, ...sorted];
+	$: withCustom = matched || !value?.trim() ? sorted : [{ value, label: `Create "${value}"` }, ...sorted];
 	$: filtered = withCustom.filter((v) =>
 		v.label
 			.toLowerCase()
@@ -65,7 +67,7 @@
 			class="input input-bordered w-full focus:border-primary"
 		/>
 	</label>
-	{#if $combobox.expanded && (value || "").trim() && (filtered.length || canCreate)}
+	{#if $combobox.expanded && (showOnEmpty || value?.trim()) && (filtered.length || canCreate)}
 		<ul
 			use:combobox.items
 			id="options-{$$restProps.name}"
