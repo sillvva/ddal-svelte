@@ -45,11 +45,10 @@
 	}
 </script>
 
-<div class="dropdown" role="combobox" aria-controls="options-{$$restProps.name}" aria-expanded={$combobox.expanded}>
+<div class="dropdown">
 	<label>
 		<input
 			{...$$restProps}
-			type="text"
 			bind:value
 			use:combobox.input
 			on:select={() => {
@@ -70,7 +69,6 @@
 	{#if $combobox.expanded && (showOnEmpty || value?.trim()) && (filtered.length || allowCustom)}
 		<ul
 			use:combobox.items
-			id="options-{$$restProps.name}"
 			class="menu dropdown-content z-10 w-full rounded-lg bg-base-100 p-2 shadow dark:bg-base-200"
 			transition:fade={{ duration: 150 }}
 		>
@@ -78,8 +76,6 @@
 				{@const active = $combobox.active === value}
 				{@const selected = $combobox.selected === value}
 				<li
-					role="option"
-					aria-selected="false"
 					class={twMerge(
 						"hover:bg-primary/50",
 						(active || selected) && "bg-primary text-primary-content",
