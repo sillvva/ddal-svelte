@@ -32,7 +32,7 @@
 				.replace(/\s+/g, "")
 				.includes((value || "").toLowerCase().replace(/\s+/g, ""))
 		).length === 1;
-	$: withCustom = matched || !value?.trim() ? sorted : [{ value, label: `Create "${value}"` }, ...sorted];
+	$: withCustom = matched || !value?.trim() || !allowCustom ? sorted : [{ value, label: `Create "${value}"` }, ...sorted];
 	$: filtered = withCustom.filter((v) =>
 		v.label
 			.toLowerCase()
@@ -51,19 +51,15 @@
 			{...$$restProps}
 			bind:value
 			use:combobox.input
+			class="input input-bordered w-full focus:border-primary"
+			on:input={() => dispatch("input", null)}
 			on:select={() => {
 				value = $combobox.selected.value;
 				dispatch("select", $combobox.selected);
 			}}
 			on:blur={() => {
-				setTimeout(() => {
-					dispatch("select", $combobox.selected || { value, label: value });
-				}, 100);
+				if (!allowCustom && !$combobox.selected) value = "";
 			}}
-			on:input={() => {
-				dispatch("input", null);
-			}}
-			class="input input-bordered w-full focus:border-primary"
 		/>
 	</label>
 	{#if $combobox.expanded && (showOnEmpty || value?.trim()) && (filtered.length || allowCustom)}

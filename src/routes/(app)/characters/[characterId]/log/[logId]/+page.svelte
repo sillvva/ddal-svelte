@@ -112,7 +112,7 @@
 						bind:value={$form.dm.name}
 						values={data.dms.map((dm) => ({ key: dm.id, value: dm.name, label: dm.name + (dm.DCI ? ` (${dm.DCI})` : "") })) || []}
 						on:select={(e) => {
-							const dm = data.dms.find((dm) => dm.id === e.detail.key) || {
+							const dm = data.dms.find((dm) => dm.id === e.detail?.key) || {
 								id: "",
 								name: $form.dm.name,
 								DCI: $form.dm.DCI || null,
@@ -141,7 +141,7 @@
 							.filter((dm) => dm.DCI)
 							.map((dm) => ({ key: dm.id, value: `${dm.DCI}`, label: `${dm.DCI} (${dm.name})` })) || []}
 						on:select={(e) => {
-							const dm = data.dms.find((dm) => dm.id === e.detail.key) || {
+							const dm = data.dms.find((dm) => dm.id === e.detail?.key) || {
 								id: "",
 								name: $form.dm.name,
 								DCI: $form.dm.DCI || null,

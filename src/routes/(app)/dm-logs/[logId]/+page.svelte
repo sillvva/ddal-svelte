@@ -95,7 +95,7 @@
 				bind:value={$form.characterName}
 				values={data.characters.map((char) => ({ key: char.id, value: char.name, label: char.name }))}
 				on:select={(e) => {
-					const character = data.characters.find((c) => c.id === e.detail.key);
+					const character = data.characters.find((c) => c.id === e.detail?.key);
 					if (character && character.name === $form.characterName) {
 						$form.characterId = character.id;
 						$form.applied_date = $form.applied_date || new Date();
