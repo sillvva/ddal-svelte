@@ -23,7 +23,7 @@ interface OAuthProvider {
 	tokenUrl: string;
 	clientId: string;
 	clientSecret: string;
-	accountId: (profile: Profile) => string;
+	accountId: (profile: Profile) => string | null | undefined;
 	oauth: () => Provider;
 }
 const providers: OAuthProvider[] = [
@@ -33,7 +33,7 @@ const providers: OAuthProvider[] = [
 		clientId: GOOGLE_CLIENT_ID,
 		clientSecret: GOOGLE_CLIENT_SECRET,
 		accountId: function (profile: Profile) {
-			return profile.sub as string;
+			return profile.sub;
 		},
 		oauth: function () {
 			return Google({
@@ -49,7 +49,7 @@ const providers: OAuthProvider[] = [
 		clientId: DISCORD_CLIENT_ID,
 		clientSecret: DISCORD_CLIENT_SECRET,
 		accountId: function (profile: Profile) {
-			return profile.id as string;
+			return profile.id as string | null | undefined;
 		},
 		oauth: function () {
 			return Discord({
@@ -73,9 +73,10 @@ export const auth = SvelteKitAuth(async (event) => {
 				const provider = providers.find((p) => p.id === account.provider);
 				if (!provider) authErrRedirect("InvalidProvider", `Provider '${account.provider}' not found`, redirectUrl);
 
-				account.providerAccountId = provider.accountId(profile);
-				if (!account.providerAccountId) authErrRedirect("MissingAccountData", "Account ID not found in profile", redirectUrl);
+				const providerAccountId = provider.accountId(profile);
+				if (!providerAccountId) authErrRedirect("MissingProfileData", "Account ID not found in profile", redirectUrl);
 
+				account.providerAccountId = providerAccountId;
 				const existingAccount = await prisma.account.findFirst({
 					where: {
 						provider: account.provider,
