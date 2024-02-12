@@ -32,7 +32,7 @@
 				.replace(/\s+/g, "")
 				.includes((value || "").toLowerCase().replace(/\s+/g, ""))
 		).length === 1;
-	$: withCustom = matched || !value?.trim() || !allowCustom ? sorted : [{ value, label: `Create "${value}"` }, ...sorted];
+	$: withCustom = matched || !value?.trim() || !allowCustom ? sorted : [{ value, label: `Add "${value}"` }, ...sorted];
 	$: filtered = withCustom.filter((v) =>
 		v.label
 			.toLowerCase()
