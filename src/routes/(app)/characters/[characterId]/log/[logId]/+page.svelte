@@ -122,7 +122,7 @@
 							const { id, name, DCI, uid, owner } = dm;
 							$form.dm = { id, name, DCI, uid, owner };
 						}}
-						canCreate
+						allowCustom
 					/>
 					{#if $errors.dm?.name}
 						<label for="dmName" class="label">
@@ -151,7 +151,7 @@
 							const { id, name, DCI, uid, owner } = dm;
 							$form.dm = { id, name, DCI, uid, owner };
 						}}
-						canCreate
+						allowCustom
 					/>
 					{#if $errors.dm?.DCI}
 						<label for="dmDCI" class="label">

@@ -7,7 +7,7 @@
 
 	export let values: Array<{ key?: string; value: string; label: string }> = [];
 	export let value: string | null = "";
-	export let canCreate: boolean = false;
+	export let allowCustom: boolean = false;
 	export let showOnEmpty: boolean = false;
 
 	const dispatch = createEventDispatcher<{
@@ -18,7 +18,7 @@
 	interface $$Props extends HTMLInputAttributes {
 		values: typeof values;
 		value: typeof value;
-		canCreate?: typeof canCreate;
+		allowCustom?: typeof allowCustom;
 		showOnEmpty?: typeof showOnEmpty;
 	}
 
@@ -67,7 +67,7 @@
 			class="input input-bordered w-full focus:border-primary"
 		/>
 	</label>
-	{#if $combobox.expanded && (showOnEmpty || value?.trim()) && (filtered.length || canCreate)}
+	{#if $combobox.expanded && (showOnEmpty || value?.trim()) && (filtered.length || allowCustom)}
 		<ul
 			use:combobox.items
 			id="options-{$$restProps.name}"
