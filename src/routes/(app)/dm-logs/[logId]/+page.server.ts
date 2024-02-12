@@ -12,16 +12,15 @@ export const load = async (event) => {
 
 	const session = event.locals.session;
 	if (!session?.user?.name) signInRedirect(event.url);
+	const user = session.user;
 
-	const log = await getDMLog(event.params.logId, session.user.id);
+	const log = await getDMLog(event.params.logId, user.id);
 	if (event.params.logId !== "new" && !log.id) error(404, "Log not found");
 	if (!log.is_dm_log) redirect(302, `/characters/${log.characterId}/log/${log.id}`);
 
-	log.dm = log.dm?.name
-		? log.dm
-		: { name: session.user.name || "", id: "", DCI: null, uid: session.user.id, owner: session.user.id };
+	log.dm = log.dm?.name ? log.dm : { name: session.user.name || "", id: "", DCI: null, uid: user.id, owner: user.id };
 
-	const characters = await getCharactersCache(session.user.id);
+	const characters = await getCharactersCache(user.id);
 	const character = characters.find((c) => c.id === log.characterId);
 
 	const form = await superValidate(valibot(logSchema), {
@@ -29,7 +28,7 @@ export const load = async (event) => {
 			...log,
 			dm: {
 				...log.dm,
-				owner: log.dm.owner || session.user.id
+				owner: log.dm.owner || user.id
 			},
 			characterId: character?.id || "",
 			characterName: character?.name || "",
@@ -56,7 +55,7 @@ export const load = async (event) => {
 			name: event.params.logId === "new" ? "New DM Log" : `${log.name}`,
 			href: `/dm-logs/${event.params.logId}`
 		}),
-		user: session.user,
+		user,
 		characters,
 		character,
 		form
