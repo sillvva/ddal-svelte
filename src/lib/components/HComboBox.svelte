@@ -2,6 +2,7 @@
 	import { createEventDispatcher } from "svelte";
 	import { createCombobox } from "svelte-headlessui";
 	import type { HTMLInputAttributes } from "svelte/elements";
+	import { fade } from "svelte/transition";
 	import { twMerge } from "tailwind-merge";
 
 	export let values: Array<{ key?: string; value: string; label: string }> = [];
@@ -69,6 +70,7 @@
 			use:combobox.items
 			id="options-{$$restProps.name}"
 			class="menu dropdown-content z-10 w-full rounded-lg bg-base-100 p-2 shadow dark:bg-base-200"
+			transition:fade={{ duration: 150 }}
 		>
 			{#each filtered.slice(0, 8) as value}
 				{@const active = $combobox.active === value}
