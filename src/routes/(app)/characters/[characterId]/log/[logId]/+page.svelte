@@ -38,6 +38,7 @@
 	};
 
 	let season: 1 | 8 | 9 = $form.experience ? 1 : $form.acp ? 8 : 9;
+	let dmSelected = false;
 </script>
 
 <BreadCrumbs />
@@ -115,10 +116,11 @@
 							const dm = data.dms.find((dm) => dm.id === e.detail.key) || {
 								id: "",
 								name: $form.dm.name,
-								DCI: $form.dm.DCI || null,
+								DCI: dmSelected ? null : $form.dm.DCI || null,
 								uid: "",
 								owner: data.user.id
 							};
+							dmSelected = !!dm.id;
 							const { id, name, DCI, uid, owner } = dm;
 							$form.dm = { id, name, DCI, uid, owner };
 						}}
@@ -144,10 +146,11 @@
 							const dm = data.dms.find((dm) => dm.id === e.detail.key) || {
 								id: "",
 								name: $form.dm.name,
-								DCI: $form.dm.DCI || null,
+								DCI: dmSelected ? null : $form.dm.DCI || null,
 								uid: "",
 								owner: data.user.id
 							};
+							dmSelected = !!dm.id;
 							const { id, name, DCI, uid, owner } = dm;
 							$form.dm = { id, name, DCI, uid, owner };
 						}}
