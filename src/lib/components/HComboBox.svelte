@@ -58,7 +58,9 @@
 				dispatch("select", $combobox.selected);
 			}}
 			on:blur={() => {
-				if (!allowCustom && !$combobox.selected) value = "";
+				setTimeout(() => {
+					if (!allowCustom && !$combobox.selected) value = "";
+				}, 100);
 			}}
 		/>
 	</label>

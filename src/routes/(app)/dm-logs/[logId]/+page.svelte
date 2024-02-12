@@ -5,7 +5,7 @@
 	import Icon from "$lib/components/Icon.svelte";
 	import Markdown from "$lib/components/Markdown.svelte";
 	import SuperForm from "$lib/components/SuperForm.svelte";
-	import { logSchema } from "$lib/schemas";
+	import { dMLogSchema } from "$lib/schemas";
 	import HComboBox from "$src/lib/components/HComboBox.svelte";
 	import { superForm } from "sveltekit-superforms";
 	import { valibotClient } from "sveltekit-superforms/adapters";
@@ -20,7 +20,7 @@
 
 	let logForm = superForm(data.form, {
 		dataType: "json",
-		validators: valibotClient(logSchema),
+		validators: valibotClient(dMLogSchema(data.characters)),
 		taintedMessage: "You have unsaved changes. Are you sure you want to leave?"
 	});
 
