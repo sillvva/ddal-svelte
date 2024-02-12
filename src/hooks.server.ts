@@ -18,12 +18,13 @@ import { sequence } from "@sveltejs/kit/hooks";
 import { handle as documentHandle } from "@sveltekit-addons/document/hooks";
 import { authErrRedirect } from "./server/auth";
 
+type ProfileWithId = Profile & { id?: string | null };
 interface OAuthProvider {
 	id: string;
 	tokenUrl: string;
 	clientId: string;
 	clientSecret: string;
-	accountId: (profile: Profile) => string | null | undefined;
+	accountId: (profile: ProfileWithId) => ProfileWithId["id"] | ProfileWithId["sub"];
 	oauth: () => Provider;
 }
 const providers: OAuthProvider[] = [
@@ -32,7 +33,7 @@ const providers: OAuthProvider[] = [
 		tokenUrl: "https://oauth2.googleapis.com/token",
 		clientId: GOOGLE_CLIENT_ID,
 		clientSecret: GOOGLE_CLIENT_SECRET,
-		accountId: function (profile: Profile) {
+		accountId: function (profile) {
 			return profile.sub;
 		},
 		oauth: function () {
@@ -48,8 +49,8 @@ const providers: OAuthProvider[] = [
 		tokenUrl: "https://discord.com/api/v10/oauth2/token",
 		clientId: DISCORD_CLIENT_ID,
 		clientSecret: DISCORD_CLIENT_SECRET,
-		accountId: function (profile: Profile) {
-			return profile.id as string | null | undefined;
+		accountId: function (profile) {
+			return profile.id;
 		},
 		oauth: function () {
 			return Discord({
