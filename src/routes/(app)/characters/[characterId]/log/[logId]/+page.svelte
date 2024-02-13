@@ -110,7 +110,11 @@
 					<HComboBox
 						name="dmName"
 						bind:value={$form.dm.name}
-						values={data.dms.map((dm) => ({ key: dm.id, value: dm.name, label: dm.name + (dm.DCI ? ` (${dm.DCI})` : "") })) || []}
+						values={data.dms.map((dm) => ({
+							key: dm.id,
+							value: dm.name,
+							label: dm.name + (dm.uid === data.user.id ? ` (Me)` : "") + (dm.DCI ? ` (${dm.DCI})` : "")
+						})) || []}
 						bind:selected={dmSelected}
 						on:select={(e) => {
 							const dm = data.dms.find((dm) => dm.id === e.detail?.key) || {
@@ -142,7 +146,11 @@
 						bind:value={$form.dm.DCI}
 						values={data.dms
 							.filter((dm) => dm.DCI)
-							.map((dm) => ({ key: dm.id, value: `${dm.DCI}`, label: `${dm.DCI} (${dm.name})` })) || []}
+							.map((dm) => ({
+								key: dm.id,
+								value: `${dm.DCI}`,
+								label: `${dm.DCI} (${dm.name}${dm.uid === data.user.id ? `, Me` : ""})`
+							})) || []}
 						bind:selected={dmSelected}
 						on:select={(e) => {
 							const dm = data.dms.find((dm) => dm.id === e.detail?.key) || {
