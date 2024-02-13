@@ -5,6 +5,7 @@
 <script lang="ts" generics="T extends FormObj">
 	import { dev } from "$app/environment";
 	import { stringify } from "devalue";
+	import { onMount } from "svelte";
 	import type { HTMLFormAttributes } from "svelte/elements";
 	import SuperDebug, { type SuperForm } from "sveltekit-superforms";
 
@@ -20,17 +21,26 @@
 	const method = $$props.method || "post";
 
 	let refForm: HTMLFormElement;
+
+	onMount(() => {
+		if (refForm) {
+			refForm.querySelectorAll("input, select, textarea, button").forEach((el) => {
+				const name = el.getAttribute("name");
+				if (name) {
+					const label = refForm.querySelector(`label[for="${name}"]`);
+					if (label) el.setAttribute("id", name);
+				}
+
+				if (el.hasAttribute("disabled")) (el as HTMLElement).dataset.disabled = "true";
+			});
+		}
+	});
+
 	$: if (refForm) {
 		refForm.querySelectorAll("input, select, textarea, button").forEach((el) => {
-			const name = el.getAttribute("name");
-			if (name) {
-				const label = refForm.querySelector(`label[for="${name}"]`);
-				if (label) el.setAttribute("id", name);
-			}
-
 			if ($submitting) {
 				el.setAttribute("disabled", "disabled");
-			} else {
+			} else if (!(el as HTMLElement).dataset.disabled) {
 				el.removeAttribute("disabled");
 			}
 		});

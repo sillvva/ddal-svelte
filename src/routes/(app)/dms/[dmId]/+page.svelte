@@ -48,6 +48,7 @@
 						bind:value={$dmFormData.name}
 						required
 						class="input input-bordered w-full focus:border-primary"
+						disabled={$dmFormData.uid === data.user.id}
 					/>
 					{#if $errors.name}
 						<label for="name" class="label">

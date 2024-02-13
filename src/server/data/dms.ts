@@ -2,7 +2,9 @@ import { prisma } from "$src/server/db";
 import { cache } from "../cache";
 
 export type UserDMsWithLogs = Awaited<ReturnType<typeof getUserDMsWithLogs>>;
-export async function getUserDMsWithLogs(userId: string) {
+export async function getUserDMsWithLogs(user: LocalsSession["user"]) {
+	if (!user || !user.id) return [];
+
 	const dms = await prisma.dungeonMaster.findMany({
 		where: {
 			OR: [
@@ -10,16 +12,16 @@ export async function getUserDMsWithLogs(userId: string) {
 					logs: {
 						every: {
 							character: {
-								userId: userId
+								userId: user.id
 							}
 						}
 					}
 				},
 				{
-					owner: userId
+					owner: user.id
 				},
 				{
-					uid: userId
+					uid: user.id
 				}
 			],
 			logs: {}
@@ -39,15 +41,26 @@ export async function getUserDMsWithLogs(userId: string) {
 		}
 	});
 
+	if (!dms.find((dm) => dm.uid === user.id)) {
+		dms.push({
+			id: "",
+			uid: user.id,
+			name: user.name || "Me",
+			DCI: null,
+			owner: user.id,
+			logs: []
+		});
+	}
+
 	return dms
-		.filter((dm) => dm.owner === userId || dm.uid === userId)
+		.filter((dm) => dm.owner === user.id || dm.uid === user.id)
 		.map((dm) => ({
 			...dm,
-			owner: userId
+			owner: user.id
 		}));
 }
 
-export async function getUserDMsWithLogsCache(userId: string) {
-	// await updateDMOwners();
-	return cache(() => getUserDMsWithLogs(userId), ["dms", userId, "logs"], 3 * 3600);
+export async function getUserDMsWithLogsCache(user: LocalsSession["user"]) {
+	if (!user || !user.id) return [];
+	return cache(() => getUserDMsWithLogs(user), ["dms", user.id, "logs"], 3 * 3600);
 }

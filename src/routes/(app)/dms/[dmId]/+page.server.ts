@@ -12,7 +12,7 @@ export const load = async (event) => {
 	const session = event.locals.session;
 	if (!session?.user?.name) signInRedirect(event.url);
 
-	const dms = await getUserDMsWithLogsCache(session.user.id);
+	const dms = await getUserDMsWithLogsCache(session.user);
 	const dm = dms.find((dm) => dm.id == event.params.dmId);
 	if (!dm) error(404, "DM not found");
 
@@ -35,6 +35,7 @@ export const load = async (event) => {
 		}),
 		name: dm.name,
 		logs: dm.logs,
+		user: session.user,
 		form
 	};
 };
@@ -48,7 +49,7 @@ export const actions = {
 		const form = await superValidate(event, valibot(dungeonMasterSchema));
 		if (!form.valid) return fail(400, { form });
 
-		const result = await saveDM(event.params.dmId, session.user.id, form.data);
+		const result = await saveDM(event.params.dmId, session.user, form.data);
 		if ("id" in result) redirect(302, `/dms`);
 
 		return message(form, result.error, { status: result.status });
@@ -57,13 +58,13 @@ export const actions = {
 		const session = await event.locals.session;
 		if (!session?.user) redirect(302, "/");
 
-		const dms = await getUserDMsWithLogsCache(session.user.id);
+		const dms = await getUserDMsWithLogsCache(session.user);
 		const dm = dms.find((dm) => dm.id == event.params.dmId);
 		if (!dm) redirect(302, "/dms");
 
 		if (dm.logs.length) return fail(400, { message: "Cannot delete a DM with logs" });
 
-		const result = await deleteDM(event.params.dmId, session.user.id);
+		const result = await deleteDM(event.params.dmId, session.user);
 		if ("id" in result) redirect(302, `/dms`);
 
 		return fail(result.status, { message: result.error });
