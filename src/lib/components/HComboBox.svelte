@@ -13,6 +13,7 @@
 	export let allowCustom: boolean = false;
 	export let showOnEmpty: boolean = false;
 	export let clearable: boolean = false;
+	export let selected: boolean = false;
 
 	let debug = false;
 
@@ -28,9 +29,12 @@
 		allowCustom?: typeof allowCustom;
 		showOnEmpty?: typeof showOnEmpty;
 		clearable?: typeof clearable;
+		selected?: typeof selected;
 	}
 
 	const combobox = createCombobox();
+
+	$: selected = !!$combobox.selected;
 
 	$: sorted = values.sort((a, b) => a.label.localeCompare(b.label));
 	$: matched =
@@ -96,7 +100,7 @@
 			</ul>
 		{/if}
 	</div>
-	{#if $combobox.selected && clearable}
+	{#if value && selected && clearable}
 		<button
 			class="btn join-item input-bordered"
 			on:click|preventDefault={() => {

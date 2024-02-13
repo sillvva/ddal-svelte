@@ -5,7 +5,7 @@
 	import Icon from "$lib/components/Icon.svelte";
 	import Markdown from "$lib/components/Markdown.svelte";
 	import SuperForm from "$lib/components/SuperForm.svelte";
-	import { getMagicItems, getStoryAwards } from "$lib/entities";
+	import { defaultDM, getMagicItems, getStoryAwards } from "$lib/entities";
 	import { logSchema } from "$lib/schemas";
 	import { sorter } from "$lib/util";
 	import HComboBox from "$src/lib/components/HComboBox.svelte";
@@ -32,12 +32,12 @@
 		? getStoryAwards(character, { excludeDropped: true, lastLogId: $form.id }).sort((a, b) => sorter(a.name, b.name))
 		: [];
 
-	let dm = $form.dm;
 	let previews = {
 		description: false
 	};
 
 	let season: 1 | 8 | 9 = $form.experience ? 1 : $form.acp ? 8 : 9;
+	let dmSelected = false;
 </script>
 
 <BreadCrumbs />
@@ -111,6 +111,7 @@
 						name="dmName"
 						bind:value={$form.dm.name}
 						values={data.dms.map((dm) => ({ key: dm.id, value: dm.name, label: dm.name + (dm.DCI ? ` (${dm.DCI})` : "") })) || []}
+						bind:selected={dmSelected}
 						on:select={(e) => {
 							const dm = data.dms.find((dm) => dm.id === e.detail?.key) || {
 								id: "",
@@ -122,7 +123,9 @@
 							const { id, name, DCI, uid, owner } = dm;
 							$form.dm = { id, name, DCI, uid, owner };
 						}}
+						on:clear={() => ($form.dm = defaultDM(data.user.id))}
 						allowCustom
+						clearable
 					/>
 					{#if $errors.dm?.name}
 						<label for="dmName" class="label">
@@ -140,6 +143,7 @@
 						values={data.dms
 							.filter((dm) => dm.DCI)
 							.map((dm) => ({ key: dm.id, value: `${dm.DCI}`, label: `${dm.DCI} (${dm.name})` })) || []}
+						bind:selected={dmSelected}
 						on:select={(e) => {
 							const dm = data.dms.find((dm) => dm.id === e.detail?.key) || {
 								id: "",
@@ -151,7 +155,9 @@
 							const { id, name, DCI, uid, owner } = dm;
 							$form.dm = { id, name, DCI, uid, owner };
 						}}
+						on:clear={() => ($form.dm = defaultDM(data.user.id))}
 						allowCustom
+						clearable
 					/>
 					{#if $errors.dm?.DCI}
 						<label for="dmDCI" class="label">
