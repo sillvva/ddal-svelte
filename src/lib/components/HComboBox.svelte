@@ -61,7 +61,7 @@
 				setTimeout(() => {
 					if (!allowCustom && !$combobox.selected) value = "";
 					dispatch("select", $combobox.selected);
-				}, 100);
+				}, 10);
 			}}
 		/>
 	</label>
