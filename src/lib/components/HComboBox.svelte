@@ -36,15 +36,14 @@
 
 	$: selected = !!$combobox.selected;
 
-	$: sorted = values.sort((a, b) => a.label.localeCompare(b.label));
 	$: matched =
-		sorted.filter((v) =>
+		values.filter((v) =>
 			v.label
 				.toLowerCase()
 				.replace(/\s+/g, "")
 				.includes((value || "").toLowerCase().replace(/\s+/g, ""))
 		).length === 1;
-	$: withCustom = matched || !value?.trim() || !allowCustom ? sorted : [{ value, label: `Add "${value}"` }, ...sorted];
+	$: withCustom = matched || !value?.trim() || !allowCustom ? values : [{ value, label: `Add "${value}"` }, ...values];
 	$: filtered = withCustom.filter((v) =>
 		v.label
 			.toLowerCase()

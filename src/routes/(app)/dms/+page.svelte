@@ -3,12 +3,11 @@
 	import { page } from "$app/stores";
 	import BreadCrumbs from "$lib/components/BreadCrumbs.svelte";
 	import Icon from "$lib/components/Icon.svelte";
-	import { sorter } from "$src/lib/util.js";
 	import { twMerge } from "tailwind-merge";
 
 	export let data;
 
-	let dms = data.dms.sort((a, b) => sorter(b.uid || "", a.uid || "") || sorter(a.name, b.name));
+	let dms = data.dms;
 	let deletingDM: string[] = [];
 </script>
 

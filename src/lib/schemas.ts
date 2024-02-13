@@ -87,7 +87,7 @@ export const dungeonMasterSchema = object(
 	},
 	[
 		forward(
-			custom((input) => !!(input.DCI || "").trim() && !input.name.trim(), "DM Name Required if DCI is set"),
+			custom((input) => !(!!input.DCI?.trim() && !input.name.trim()), "DM Name Required if DCI is set"),
 			["name"]
 		)
 	]
