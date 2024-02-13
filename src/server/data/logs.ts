@@ -67,6 +67,9 @@ export async function getDMLogs(userId = "", userName = "") {
 					user: true
 				}
 			}
+		},
+		orderBy: {
+			date: "asc"
 		}
 	});
 }

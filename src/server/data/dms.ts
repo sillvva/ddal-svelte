@@ -1,4 +1,3 @@
-import { sorter } from "$src/lib/util";
 import { prisma } from "$src/server/db";
 import { cache } from "../cache";
 
@@ -39,7 +38,15 @@ export async function getUserDMsWithLogs(user: LocalsSession["user"]) {
 					}
 				}
 			}
-		}
+		},
+		orderBy: [
+			{
+				uid: "desc"
+			},
+			{
+				name: "asc"
+			}
+		]
 	});
 
 	if (!dms.find((dm) => dm.uid === user.id)) {
@@ -63,7 +70,5 @@ export async function getUserDMsWithLogs(user: LocalsSession["user"]) {
 
 export async function getUserDMsWithLogsCache(user: LocalsSession["user"]) {
 	if (!user || !user.id) return [];
-	return cache(() => getUserDMsWithLogs(user), ["dms", user.id, "logs"], 3 * 3600).then((dms) =>
-		dms.sort((a, b) => sorter(b.uid || "", a.uid || "") || sorter(a.name, b.name))
-	);
+	return cache(() => getUserDMsWithLogs(user), ["dms", user.id, "logs"], 3 * 3600);
 }
