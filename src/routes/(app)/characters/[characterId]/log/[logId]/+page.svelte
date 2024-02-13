@@ -105,7 +105,12 @@
 			{#if $form.type === "game"}
 				<div class="form-control col-span-6">
 					<label for="dmName" class="label">
-						<span class="label-text">DM Name</span>
+						<span class="label-text">
+							DM Name
+							{#if $form.dm.DCI}
+								<span class="text-error">*</span>
+							{/if}
+						</span>
 					</label>
 					<HComboBox
 						name="dmName"
@@ -130,6 +135,7 @@
 						on:clear={() => ($form.dm = defaultDM(data.user.id))}
 						allowCustom
 						clearable
+						required={!!$form.dm.DCI}
 					/>
 					{#if $errors.dm?.name}
 						<label for="dmName" class="label">
