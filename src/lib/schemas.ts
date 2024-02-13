@@ -77,13 +77,21 @@ export const checkEnv = async () => {
 
 export type DungeonMasterSchema = Output<typeof dungeonMasterSchema>;
 export type DungeonMasterSchemaIn = Input<typeof dungeonMasterSchema>;
-export const dungeonMasterSchema = object({
-	id: optional(string(), ""),
-	name: optional(string(), "Me"),
-	DCI: nullable(union([string([regex(/[0-9]{0,10}/, "Invalid DCI Format")]), null_()]), null),
-	uid: nullable(union([string(), null_()]), ""),
-	owner: string()
-});
+export const dungeonMasterSchema = object(
+	{
+		id: optional(string(), ""),
+		name: optional(string(), "Me"),
+		DCI: nullable(union([string([regex(/[0-9]{0,10}/, "Invalid DCI Format")]), null_()]), null),
+		uid: nullable(union([string(), null_()]), ""),
+		owner: string()
+	},
+	[
+		forward(
+			custom((input) => !!(input.DCI || "").trim() && !input.name.trim(), "DM Name Required if DCI is set"),
+			["name"]
+		)
+	]
+);
 
 const itemSchema = (type: "Item" | "Story Award") =>
 	object({
