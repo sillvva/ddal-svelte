@@ -21,22 +21,22 @@
 	const method = $$props.method || "post";
 
 	let refForm: HTMLFormElement;
+	let mounted = false;
 
 	onMount(() => {
-		if (refForm) {
-			refForm.querySelectorAll("input, select, textarea, button").forEach((el) => {
-				const name = el.getAttribute("name");
-				if (name) {
-					const label = refForm.querySelector(`label[for="${name}"]`);
-					if (label) el.setAttribute("id", name);
-				}
+		refForm.querySelectorAll("input, select, textarea, button").forEach((el) => {
+			const name = el.getAttribute("name");
+			if (name) {
+				const label = refForm.querySelector(`label[for="${name}"]`);
+				if (label) el.setAttribute("id", name);
+			}
 
-				if (el.hasAttribute("disabled")) (el as HTMLElement).dataset.disabled = "true";
-			});
-		}
+			if (el.hasAttribute("disabled")) (el as HTMLElement).dataset.disabled = "true";
+		});
+		mounted = true;
 	});
 
-	$: if (refForm) {
+	$: if (refForm && mounted) {
 		refForm.querySelectorAll("input, select, textarea, button").forEach((el) => {
 			if ($submitting) {
 				el.setAttribute("disabled", "disabled");
