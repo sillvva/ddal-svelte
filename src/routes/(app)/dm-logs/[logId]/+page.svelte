@@ -93,7 +93,7 @@
 				name="characterName"
 				required={!!$form.applied_date}
 				bind:value={$form.characterName}
-				values={data.characters.map((char) => ({ key: char.id, value: char.name, label: char.name }))}
+				values={data.characters.map((char) => ({ key: char.id, value: char.name }))}
 				on:input={() => {
 					$form.characterId = "";
 				}}

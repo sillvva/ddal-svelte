@@ -8,7 +8,7 @@
 	import { twMerge } from "tailwind-merge";
 	import Icon from "./Icon.svelte";
 
-	export let values: Array<{ key?: string; value: string; label: string }> = [];
+	export let values: Array<{ key?: string; value: string; label?: string }> = [];
 	export let value: string | null = "";
 	export let allowCustom: boolean = false;
 	export let showOnEmpty: boolean = false;
@@ -36,14 +36,15 @@
 
 	$: selected = !!$combobox.selected;
 
+	$: withLabel = values.map((v) => ({ ...v, label: v.label || v.value }));
 	$: matched =
-		values.filter((v) =>
+		withLabel.filter((v) =>
 			v.label
 				.toLowerCase()
 				.replace(/\s+/g, "")
 				.includes((value || "").toLowerCase().replace(/\s+/g, ""))
 		).length === 1;
-	$: withCustom = matched || !value?.trim() || !allowCustom ? values : [{ value, label: `Add "${value}"` }, ...values];
+	$: withCustom = matched || !value?.trim() || !allowCustom ? withLabel : [{ value, label: `Add "${value}"` }, ...withLabel];
 	$: filtered = withCustom.filter((v) =>
 		v.label
 			.toLowerCase()
