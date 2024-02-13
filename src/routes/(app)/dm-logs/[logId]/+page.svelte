@@ -94,6 +94,9 @@
 				required={!!$form.applied_date}
 				bind:value={$form.characterName}
 				values={data.characters.map((char) => ({ key: char.id, value: char.name, label: char.name }))}
+				on:input={() => {
+					$form.characterId = "";
+				}}
 				on:select={(e) => {
 					const character = data.characters.find((c) => c.id === e.detail?.key);
 					if (character && character.name === $form.characterName) {
@@ -104,9 +107,6 @@
 						$form.characterId = "";
 						if (data.logId === "new") $form.applied_date = null;
 					}
-				}}
-				on:input={() => {
-					$form.characterId = "";
 				}}
 			/>
 			{#if $errors.characterId}
