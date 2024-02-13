@@ -1,27 +1,29 @@
 <script lang="ts">
 	import BreadCrumbs from "$lib/components/BreadCrumbs.svelte";
-	import Icon from "$lib/components/Icon.svelte";
-	import SchemaForm from "$lib/components/SchemaForm.svelte";
+	import SuperForm from "$lib/components/SuperForm.svelte";
 	import { newCharacterSchema } from "$lib/schemas";
+	import Icon from "$src/lib/components/Icon.svelte";
+	import { superForm } from "sveltekit-superforms";
+	import { valibotClient } from "sveltekit-superforms/adapters";
 
 	export let data;
-	export let form;
 
-	let character = data.character;
+	const characterForm = superForm(data.form, {
+		dataType: "json",
+		validators: valibotClient(newCharacterSchema),
+		taintedMessage: "You have unsaved changes. Are you sure you want to leave?"
+	});
 
-	export const snapshot = {
-		capture: () => character,
-		restore: (values) => (character = values)
-	};
+	const { form, errors, submitting, message } = characterForm;
 </script>
 
 <BreadCrumbs />
 
-<SchemaForm action="?/saveCharacter" schema={newCharacterSchema} data={character} let:errors let:saving>
-	{#if form?.error || errors.has("form")}
+<SuperForm action="?/saveCharacter" superForm={characterForm}>
+	{#if $message}
 		<div class="alert alert-error mb-4 shadow-lg">
 			<Icon src="alert-circle" class="w-6" />
-			{form?.error || errors.get("form")}
+			{$message}
 		</div>
 	{/if}
 
@@ -38,12 +40,12 @@
 					type="text"
 					name="name"
 					required
-					bind:value={character.name}
+					bind:value={$form.name}
 					class="input input-bordered w-full focus:border-primary"
 				/>
-				{#if errors.has("name")}
+				{#if $errors.name}
 					<label for="name" class="label">
-						<span class="label-text-alt text-error">{errors.get("name")}</span>
+						<span class="label-text-alt text-error">{$errors.name}</span>
 					</label>
 				{/if}
 			</div>
@@ -53,15 +55,10 @@
 				<label for="campaign" class="label">
 					<span class="label-text">Campaign</span>
 				</label>
-				<input
-					type="text"
-					name="campaign"
-					bind:value={character.campaign}
-					class="input input-bordered w-full focus:border-primary"
-				/>
-				{#if errors.has("campaign")}
+				<input type="text" name="campaign" bind:value={$form.campaign} class="input input-bordered w-full focus:border-primary" />
+				{#if $errors.campaign}
 					<label for="campaign" class="label">
-						<span class="label-text-alt text-error">{errors.get("campaign")}</span>
+						<span class="label-text-alt text-error">{$errors.campaign}</span>
 					</label>
 				{/if}
 			</div>
@@ -71,10 +68,10 @@
 				<label for="race" class="label">
 					<span class="label-text">Species</span>
 				</label>
-				<input type="text" name="race" bind:value={character.race} class="input input-bordered w-full focus:border-primary" />
-				{#if errors.has("race")}
+				<input type="text" name="race" bind:value={$form.race} class="input input-bordered w-full focus:border-primary" />
+				{#if $errors.race}
 					<label for="race" class="label">
-						<span class="label-text-alt text-error">{errors.get("race")}</span>
+						<span class="label-text-alt text-error">{$errors.race}</span>
 					</label>
 				{/if}
 			</div>
@@ -84,10 +81,10 @@
 				<label for="class" class="label">
 					<span class="label-text">Class</span>
 				</label>
-				<input type="text" name="class" bind:value={character.class} class="input input-bordered w-full focus:border-primary" />
-				{#if errors.has("class")}
+				<input type="text" name="class" bind:value={$form.class} class="input input-bordered w-full focus:border-primary" />
+				{#if $errors.class}
 					<label for="class" class="label">
-						<span class="label-text-alt text-error">{errors.get("class")}</span>
+						<span class="label-text-alt text-error">{$errors.class}</span>
 					</label>
 				{/if}
 			</div>
@@ -100,12 +97,12 @@
 				<input
 					type="text"
 					name="character_sheet_url"
-					bind:value={character.character_sheet_url}
+					bind:value={$form.character_sheet_url}
 					class="input input-bordered w-full focus:border-primary"
 				/>
-				{#if errors.has("character_sheet_url")}
+				{#if $errors.character_sheet_url}
 					<label for="character_sheet_url" class="label">
-						<span class="label-text-alt text-error">{errors.get("character_sheet_url")}</span>
+						<span class="label-text-alt text-error">{$errors.character_sheet_url}</span>
 					</label>
 				{/if}
 			</div>
@@ -118,23 +115,23 @@
 				<input
 					type="text"
 					name="image_url"
-					bind:value={character.image_url}
+					bind:value={$form.image_url}
 					class="input input-bordered w-full focus:border-primary"
 				/>
-				{#if errors.has("image_url")}
+				{#if $errors.image_url}
 					<label for="image_url" class="label">
-						<span class="label-text-alt text-error">{errors.get("image_url")}</span>
+						<span class="label-text-alt text-error">{$errors.image_url}</span>
 					</label>
 				{/if}
 			</div>
 		</div>
 		<div class="col-span-12 m-4 text-center">
 			<button type="submit" class="btn btn-primary disabled:bg-primary disabled:bg-opacity-50 disabled:text-opacity-50">
-				{#if saving}
+				{#if $submitting}
 					<span class="loading" />
 				{/if}
 				Save Character
 			</button>
 		</div>
 	</div>
-</SchemaForm>
+</SuperForm>

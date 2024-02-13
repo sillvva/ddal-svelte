@@ -24,7 +24,7 @@
 
 <div
 	class={twMerge(
-		"min-h-dvh text-base-content",
+		"no-script-hide min-h-dvh text-base-content",
 		(data.mobile || !$app.settings.background) && "bg-base-200 dark:[--b1:27.35%_0.018_251.92]"
 	)}
 >
@@ -37,9 +37,7 @@
 			display: none;
 		}
 	</style>
-	<div class="fixed bottom-0 left-0 right-0 z-50 flex justify-center bg-red-800 p-2 text-center font-bold">
-		Without JavaScript enabled, several features of the app will be disabled.<br />Your experience will be downgraded.
-	</div>
+	<div class="flex min-h-dvh items-center justify-center text-2xl">This site requires JavaScript to function properly.</div>
 </noscript>
 
 {#if dev}

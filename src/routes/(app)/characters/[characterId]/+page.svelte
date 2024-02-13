@@ -7,10 +7,10 @@
 	import Markdown from "$lib/components/Markdown.svelte";
 	import SearchResults from "$lib/components/SearchResults.svelte";
 	import type { AppStore } from "$lib/schemas";
-	import { pageLoader } from "$lib/store";
 	import type { TransitionAction } from "$lib/util";
 	import { createTransition, slugify, sorter, stopWords } from "$lib/util";
 	import Dropdown from "$src/lib/components/Dropdown.svelte";
+	import { pageLoader } from "$src/routes/(app)/+layout.svelte";
 	import { download, hotkey } from "@svelteuidev/composables";
 	import MiniSearch from "minisearch";
 	import { getContext } from "svelte";

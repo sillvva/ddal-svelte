@@ -3,11 +3,11 @@
 	import { enhance } from "$app/forms";
 	import { page } from "$app/stores";
 	import { providers, type AppStore } from "$lib/schemas";
+	import { pageLoader } from "$src/routes/(app)/+layout.svelte";
 	import { signIn } from "@auth/sveltekit/client";
 	import type { Account } from "@prisma/client";
 	import { getContext, onMount } from "svelte";
 	import { twMerge } from "tailwind-merge";
-	import { pageLoader } from "../store";
 
 	export let open = false;
 	const app = getContext<AppStore>("app");

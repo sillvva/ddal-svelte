@@ -1,7 +1,7 @@
 import { building } from "$app/environment";
-import { checkEnv } from "$lib/env";
-import type { App } from "$lib/schemas";
+import { type App } from "$lib/schemas";
 import { serverGetCookie } from "$src/server/cookie.js";
+import { checkEnv } from "$src/server/env.js";
 
 if (building) {
 	checkEnv().then((env) => {

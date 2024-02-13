@@ -1,4 +1,4 @@
-import type { NewCharacterSchema } from "$lib/schemas";
+import { SaveError, type NewCharacterSchema, type SaveResult } from "$lib/schemas";
 import { handleSKitError } from "$lib/util";
 import type { Character } from "@prisma/client";
 import { error } from "@sveltejs/kit";
@@ -7,10 +7,14 @@ import { getCharacterCache } from "../data/characters";
 import { prisma } from "../db";
 
 export type SaveCharacterResult = ReturnType<typeof saveCharacter>;
-export async function saveCharacter(characterId: string, userId: string, data: NewCharacterSchema) {
+export async function saveCharacter(
+	characterId: string,
+	userId: string,
+	data: NewCharacterSchema
+): SaveResult<{ id: string; character: Character }, NewCharacterSchema> {
 	try {
-		if (!characterId) error(400, "No character ID provided");
-		if (!userId) error(401, "Not authenticated");
+		if (!characterId) throw new SaveError(400, "No character ID provided");
+		if (!userId) throw new SaveError(401, "Not authenticated");
 		let result: Character;
 		if (characterId == "new") {
 			result = await prisma.character.create({
@@ -21,8 +25,8 @@ export async function saveCharacter(characterId: string, userId: string, data: N
 			});
 		} else {
 			const character = await getCharacterCache(characterId, false);
-			if (!character) error(404, "Character not found");
-			if (character.userId !== userId) error(401, "Not authorized");
+			if (!character) throw new SaveError(404, "Character not found");
+			if (character.userId !== userId) throw new SaveError(401, "Not authorized");
 			result = await prisma.character.update({
 				where: { id: characterId },
 				data: {
@@ -38,11 +42,11 @@ export async function saveCharacter(characterId: string, userId: string, data: N
 			characterId == "new" && ["characters", userId]
 		]);
 
-		return { id: result.id, character: result, error: null };
+		return { id: result.id, character: result };
 	} catch (err) {
-		handleSKitError(err);
-		if (err instanceof Error) return { id: null, dm: null, error: err.message };
-		return { id: null, dm: null, error: "An unknown error has occurred." };
+		if (err instanceof SaveError) return err;
+		if (err instanceof Error) return { status: 500, error: err.message };
+		throw new SaveError(500, "An unknown error has occurred.");
 	}
 }
 

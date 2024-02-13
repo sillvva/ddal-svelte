@@ -1,103 +1,50 @@
 <script lang="ts">
 	import AutoResizeTextArea from "$lib/components/AutoResizeTextArea.svelte";
 	import BreadCrumbs from "$lib/components/BreadCrumbs.svelte";
-	import ComboBox from "$lib/components/ComboBox.svelte";
 	import DateTimeInput from "$lib/components/DateTimeInput.svelte";
 	import Icon from "$lib/components/Icon.svelte";
 	import Markdown from "$lib/components/Markdown.svelte";
-	import SchemaForm from "$lib/components/SchemaForm.svelte";
-	import { dMLogSchema, type LogSchemaIn } from "$lib/schemas";
+	import SuperForm from "$lib/components/SuperForm.svelte";
+	import { dMLogSchema } from "$lib/schemas";
+	import HComboBox from "$src/lib/components/HComboBox.svelte";
+	import { superForm } from "sveltekit-superforms";
+	import { valibotClient } from "sveltekit-superforms/adapters";
 	import { twMerge } from "tailwind-merge";
 
 	export let data;
-	export let form;
 
-	let log = data.log;
 	let character = data.character;
 	let previews = {
 		description: false
 	};
 
-	let season: 1 | 8 | 9 = log.experience ? 1 : log.acp ? 8 : 9;
-	let magicItemsGained = log.magic_items_gained.map((mi) => ({
-		id: mi.id,
-		name: mi.name,
-		description: mi.description || ""
-	}));
-	let storyAwardsGained = log.story_awards_gained.map((mi) => ({
-		id: mi.id,
-		name: mi.name,
-		description: mi.description || ""
-	}));
+	let logForm = superForm(data.form, {
+		dataType: "json",
+		validators: valibotClient(dMLogSchema(data.characters)),
+		taintedMessage: "You have unsaved changes. Are you sure you want to leave?"
+	});
 
-	$: characterId = log.characterId || character?.id;
-	$: if (!character && log.characterId && data.characters.find((c) => c.id === log.characterId)) {
-		character = data.characters.find((c) => c.id === log.characterId);
+	const { form, errors, submitting, message } = logForm;
+
+	let season: 1 | 8 | 9 = $form.experience ? 1 : $form.acp ? 8 : 9;
+
+	$: if (!character && $form.characterId && data.characters.find((c) => c.id === $form.characterId)) {
+		character = data.characters.find((c) => c.id === $form.characterId);
 	}
-	$: values = {
-		...log,
-		characterId: characterId,
-		characterName: data.characters.find((c) => c.id === characterId)?.name || character?.name,
-		description: log.description,
-		magic_items_gained: magicItemsGained,
-		magic_items_lost: [],
-		story_awards_gained: storyAwardsGained,
-		story_awards_lost: [],
-		date: log.date && new Date(log.date),
-		applied_date: log.applied_date ? new Date(log.applied_date) : null,
-		dm: {
-			id: log.dm?.id,
-			name: log.dm?.name,
-			DCI: log.dm?.DCI,
-			uid: log.dm?.uid || data.user.id,
-			owner: data.user.id
-		}
-	} satisfies LogSchemaIn;
-
-	export const snapshot = {
-		capture: () => ({
-			log,
-			magicItemsGained,
-			storyAwardsGained
-		}),
-		restore: (values) => {
-			log = values.log;
-			magicItemsGained = values.magicItemsGained;
-			storyAwardsGained = values.storyAwardsGained;
-		}
-	};
 </script>
 
 <BreadCrumbs />
 
-<SchemaForm
-	action="?/saveLog"
-	schema={dMLogSchema(data.characters)}
-	data={values}
-	let:errors
-	let:saving
-	on:before-submit={() => {
-		if (new Date(log.applied_date || 0).getTime() === 0) {
-			log.applied_date = null;
-		}
-	}}
->
-	{#if form?.error || errors.has("form")}
+<SuperForm action="?/saveLog" superForm={logForm}>
+	{#if $message}
 		<div class="alert alert-error mb-4 shadow-lg">
 			<Icon src="alert-circle" class="w-6" />
-			{form?.error || errors.get("form")}
+			{$message}
 		</div>
 	{/if}
 
-	<input type="hidden" name="id" value={data.logId === "new" ? "" : data.logId} />
-	<input type="hidden" name="dm.id" value={log.dm?.id || ""} />
-	<input type="hidden" name="dm.DCI" value={null} />
-	<input type="hidden" name="dm.name" value={log.dm?.name || ""} />
-	<input type="hidden" name="dm.uid" value={log.dm?.uid || ""} />
-	<input type="hidden" name="dm.owner" value={data.user.id} />
-	<input type="hidden" name="is_dm_log" value="true" />
 	<div class="grid grid-cols-12 gap-4">
-		<div class={twMerge("form-control col-span-12", log.is_dm_log ? "sm:col-span-6 lg:col-span-3" : "sm:col-span-4")}>
+		<div class={twMerge("form-control col-span-12 sm:col-span-6 lg:col-span-3")}>
 			<label for="name" class="label">
 				<span class="label-text">
 					Title
@@ -108,61 +55,69 @@
 				type="text"
 				name="name"
 				required
-				bind:value={log.name}
+				bind:value={$form.name}
 				class="input input-bordered w-full focus:border-primary"
-				aria-invalid={errors.get("name") ? "true" : "false"}
+				aria-invalid={$errors.name ? "true" : "false"}
 			/>
-			{#if errors.has("name")}
+			{#if $errors.name}
 				<label for="name" class="label">
-					<span class="label-text-alt text-error">{errors.get("name")}</span>
+					<span class="label-text-alt text-error">{$errors.name}</span>
 				</label>
 			{/if}
 		</div>
-		<div class={twMerge("form-control col-span-12", log.is_dm_log ? "sm:col-span-6 lg:col-span-3" : "sm:col-span-4")}>
+		<div class={twMerge("form-control col-span-12 sm:col-span-6 lg:col-span-3")}>
 			<label for="date" class="label">
 				<span class="label-text">
 					Date
 					<span class="text-error">*</span>
 				</span>
 			</label>
-			<DateTimeInput name="date" bind:date={log.date} required class="input input-bordered w-full focus:border-primary" />
-			{#if errors.has("date")}
+			<DateTimeInput name="date" bind:date={$form.date} required class="input input-bordered w-full focus:border-primary" />
+			{#if $errors.date}
 				<label for="date" class="label">
-					<span class="label-text-alt text-error">{errors.get("date")}</span>
+					<span class="label-text-alt text-error">{$errors.date}</span>
 				</label>
 			{/if}
 		</div>
-		<input type="hidden" name="characterId" bind:value={log.characterId} />
+		<input type="hidden" name="characterId" bind:value={$form.characterId} />
 		<div class="form-control col-span-12 sm:col-span-6 lg:col-span-3">
 			<label for="characterName" class="label">
 				<span class="label-text">
 					Assigned Character
-					{#if log.applied_date}
+					{#if $form.applied_date}
 						<span class="text-error">*</span>
 					{/if}
 				</span>
 			</label>
-			<ComboBox
-				type="text"
+			<HComboBox
 				name="characterName"
-				value={character?.name || ""}
-				values={data.characters?.map((char) => ({ key: char.id, value: char.name })) || []}
-				required={!!log.applied_date}
-				searchBy="value"
+				required={!!$form.applied_date}
+				bind:value={$form.characterName}
+				values={data.characters.map((char) => ({ key: char.id, value: char.name, label: char.name }))}
 				on:input={() => {
-					log.characterId = "";
-					// log.applied_date = null;
+					$form.characterId = "";
 				}}
-				on:select={(ev) => {
-					character = data.characters.find((c) => c.id === ev.detail);
-					log.characterId = character ? ev.detail.toString() : "";
-					// log.applied_date = data.character && log.applied_date ? log.applied_date : null;
-					if (log.characterId) log.applied_date = log.applied_date || new Date();
+				on:select={(e) => {
+					const character = data.characters.find((c) => c.id === e.detail?.key);
+					if (character && character.name === $form.characterName) {
+						$form.characterId = character.id;
+						$form.applied_date = $form.applied_date || new Date();
+					} else {
+						$form.characterName = "";
+						$form.characterId = "";
+						if (data.logId === "new") $form.applied_date = null;
+					}
 				}}
+				on:clear={() => {
+					$form.characterName = "";
+					$form.characterId = "";
+					$form.applied_date = null;
+				}}
+				clearable
 			/>
-			{#if errors.has("characterId")}
+			{#if $errors.characterId}
 				<label for="characterName" class="label">
-					<span class="label-text-alt text-error">{errors.get("characterId")}</span>
+					<span class="label-text-alt text-error">{$errors.characterId}</span>
 				</label>
 			{/if}
 		</div>
@@ -170,21 +125,21 @@
 			<label for="applied_date" class="label">
 				<span class="label-text">
 					Assigned Date
-					{#if log.characterId}
+					{#if $form.characterId}
 						<span class="text-error">*</span>
 					{/if}
 				</span>
 			</label>
 			<DateTimeInput
 				name="applied_date"
-				bind:date={log.applied_date}
-				required={!!log.characterId}
+				bind:date={$form.applied_date}
+				required={!!$form.characterId}
 				class="input input-bordered w-full focus:border-primary"
-				aria-invalid={errors.get("applied_date") ? "true" : "false"}
+				aria-invalid={$errors.applied_date ? "true" : "false"}
 			/>
-			{#if errors.has("applied_date")}
+			{#if $errors.applied_date}
 				<label for="applied_date" class="label">
-					<span class="label-text-alt text-error">{errors.get("applied_date")}</span>
+					<span class="label-text-alt text-error">{$errors.applied_date}</span>
 				</label>
 			{/if}
 		</div>
@@ -193,7 +148,7 @@
 				<label for="season" class="label">
 					<span class="label-text">Season</span>
 				</label>
-				<select bind:value={season} class="select select-bordered w-full">
+				<select id="season" bind:value={season} class="select select-bordered w-full">
 					<option value={9}>Season 9+</option>
 					<option value={8}>Season 8</option>
 					<option value={1}>Season 1-7</option>
@@ -204,10 +159,10 @@
 					<label for="experience" class="label">
 						<span class="label-text">Experience</span>
 					</label>
-					<input type="number" bind:value={log.experience} min="0" class="input input-bordered w-full focus:border-primary" />
-					{#if errors.has("experience")}
+					<input type="number" bind:value={$form.experience} min="0" class="input input-bordered w-full focus:border-primary" />
+					{#if $errors.experience}
 						<label for="experience" class="label">
-							<span class="label-text-alt text-error">{errors.get("experience")}</span>
+							<span class="label-text-alt text-error">{$errors.experience}</span>
 						</label>
 					{/if}
 				</div>
@@ -221,12 +176,12 @@
 						type="number"
 						name="level"
 						min="0"
-						bind:value={log.level}
+						bind:value={$form.level}
 						class="input input-bordered w-full focus:border-primary"
 					/>
-					{#if errors.has("level")}
+					{#if $errors.level}
 						<label for="level" class="label">
-							<span class="label-text-alt text-error">{errors.get("level")}</span>
+							<span class="label-text-alt text-error">{$errors.level}</span>
 						</label>
 					{/if}
 				</div>
@@ -236,10 +191,16 @@
 					<label for="acp" class="label">
 						<span class="label-text">ACP</span>
 					</label>
-					<input type="number" name="acp" min="0" bind:value={log.acp} class="input input-bordered w-full focus:border-primary" />
-					{#if errors.has("acp")}
+					<input
+						type="number"
+						name="acp"
+						min="0"
+						bind:value={$form.acp}
+						class="input input-bordered w-full focus:border-primary"
+					/>
+					{#if $errors.acp}
 						<label for="acp" class="label">
-							<span class="label-text-alt text-error">{errors.get("acp")}</span>
+							<span class="label-text-alt text-error">{$errors.acp}</span>
 						</label>
 					{/if}
 				</div>
@@ -247,10 +208,10 @@
 					<label for="tcp" class="label">
 						<span class="label-text">TCP</span>
 					</label>
-					<input type="number" name="tcp" bind:value={log.tcp} class="input input-bordered w-full focus:border-primary" />
-					{#if errors.has("tcp")}
+					<input type="number" name="tcp" bind:value={$form.tcp} class="input input-bordered w-full focus:border-primary" />
+					{#if $errors.tcp}
 						<label for="tcp" class="label">
-							<span class="label-text-alt text-error">{errors.get("tcp")}</span>
+							<span class="label-text-alt text-error">{$errors.tcp}</span>
 						</label>
 					{/if}
 				</div>
@@ -259,10 +220,10 @@
 				<label for="gold" class="label">
 					<span class="label-text">Gold</span>
 				</label>
-				<input type="number" name="gold" bind:value={log.gold} class="input input-bordered w-full focus:border-primary" />
-				{#if errors.has("gold")}
+				<input type="number" name="gold" bind:value={$form.gold} class="input input-bordered w-full focus:border-primary" />
+				{#if $errors.gold}
 					<label for="gold" class="label">
-						<span class="label-text-alt text-error">{errors.get("gold")}</span>
+						<span class="label-text-alt text-error">{$errors.gold}</span>
 					</label>
 				{/if}
 			</div>
@@ -270,10 +231,10 @@
 				<label for="dtd" class="label">
 					<span class="label-text overflow-hidden text-ellipsis whitespace-nowrap">Downtime Days</span>
 				</label>
-				<input type="number" name="dtd" bind:value={log.dtd} class="input input-bordered w-full focus:border-primary" />
-				{#if errors.has("dtd")}
+				<input type="number" name="dtd" bind:value={$form.dtd} class="input input-bordered w-full focus:border-primary" />
+				{#if $errors.dtd}
 					<label for="dtd" class="label">
-						<span class="label-text-alt text-error">{errors.get("dtd")}</span>
+						<span class="label-text-alt text-error">{$errors.dtd}</span>
 					</label>
 				{/if}
 			</div>
@@ -288,27 +249,32 @@
 					"rounded-b-none border-[1px] border-b-0 border-base-content [--tw-border-opacity:0.2]"
 				)}
 			>
-				<button type="button" class="tab" class:tab-active={!previews.description} on:click={() => (previews.description = false)}
-					>Edit</button
+				<button
+					type="button"
+					class="tab"
+					class:tab-active={!previews.description}
+					on:click={() => (previews.description = false)}
 				>
-				<button type="button" class="tab" class:tab-active={previews.description} on:click={() => (previews.description = true)}
-					>Preview</button
-				>
+					Edit
+				</button>
+				<button type="button" class="tab" class:tab-active={previews.description} on:click={() => (previews.description = true)}>
+					Preview
+				</button>
 			</div>
 			<AutoResizeTextArea
 				name="description"
-				bind:value={log.description}
+				bind:value={$form.description}
 				class={twMerge("textarea textarea-bordered w-full rounded-t-none focus:border-primary", previews.description && "hidden")}
 			/>
 			<div
 				class="border-[1px] border-base-content bg-base-100 p-4 [--tw-border-opacity:0.2]"
 				class:hidden={!previews.description}
 			>
-				<Markdown content={log.description || ""} />
+				<Markdown content={$form.description || ""} />
 			</div>
 			<label for="description" class="label">
-				{#if errors.has("description")}
-					<span class="label-text-alt text-error">{errors.get("description")}</span>
+				{#if $errors.description}
+					<span class="label-text-alt text-error">{$errors.description}</span>
 				{:else}
 					<span class="label-text-alt" />
 				{/if}
@@ -319,14 +285,14 @@
 			<button
 				type="button"
 				class="btn btn-primary min-w-fit flex-1 sm:btn-sm sm:flex-none"
-				on:click={() => (magicItemsGained = [...magicItemsGained, { id: "", name: "", description: "" }])}
+				on:click={() => ($form.magic_items_gained = [...$form.magic_items_gained, { id: "", name: "", description: "" }])}
 			>
 				Add Magic Item
 			</button>
 			<button
 				type="button"
 				class="btn btn-primary min-w-fit flex-1 sm:btn-sm sm:flex-none"
-				on:click={() => (storyAwardsGained = [...storyAwardsGained, { id: "", name: "", description: "" }])}
+				on:click={() => ($form.story_awards_gained = [...$form.story_awards_gained, { id: "", name: "", description: "" }])}
 			>
 				Add Story Award
 			</button>
@@ -335,7 +301,7 @@
 			<div>JavaScript is required to add/remove magic items and story awards.</div>
 		</noscript>
 		<div class="col-span-12 grid grid-cols-12 gap-4">
-			{#each magicItemsGained as item, index}
+			{#each $form.magic_items_gained as item, index}
 				<div class="card col-span-12 h-[338px] bg-base-300/70 sm:col-span-6">
 					<div class="card-body flex flex-col gap-4">
 						<h4 class="text-2xl">Add Magic Item</h4>
@@ -349,20 +315,20 @@
 									name={`magic_items_gained.${index}.name`}
 									value={item.name}
 									on:input={(e) => {
-										if (magicItemsGained[index]) magicItemsGained[index].name = e.currentTarget.value;
+										if ($form.magic_items_gained[index]) $form.magic_items_gained[index].name = e.currentTarget.value;
 									}}
 									class="input input-bordered w-full focus:border-primary"
 								/>
-								{#if errors.has(`magic_items_gained.${index}.name`)}
+								{#if $errors.magic_items_gained?.[index]?.name}
 									<label for={`magic_items_gained.${index}.name`} class="label">
-										<span class="label-text-alt text-error">{errors.get(`magic_items_gained.${index}.name`)}</span>
+										<span class="label-text-alt text-error">{$errors.magic_items_gained?.[index]?.name}</span>
 									</label>
 								{/if}
 							</div>
 							<button
 								type="button"
 								class="btn-danger no-script-hide btn mt-9"
-								on:click={() => (magicItemsGained = magicItemsGained.filter((_, i) => i !== index))}
+								on:click={() => ($form.magic_items_gained = $form.magic_items_gained.filter((_, i) => i !== index))}
 							>
 								<Icon src="trash-can" class="w-6" />
 							</button>
@@ -374,7 +340,7 @@
 							<textarea
 								name={`magic_items_gained.${index}.description`}
 								on:input={(e) => {
-									if (magicItemsGained[index]) magicItemsGained[index].description = e.currentTarget.value;
+									if ($form.magic_items_gained[index]) $form.magic_items_gained[index].description = e.currentTarget.value;
 								}}
 								class="textarea textarea-bordered w-full focus:border-primary"
 								style="resize: none;"
@@ -389,7 +355,7 @@
 					</div>
 				</div>
 			{/each}
-			{#each storyAwardsGained as item, index}
+			{#each $form.story_awards_gained as item, index}
 				<div class="card col-span-12 h-[338px] bg-base-300/70 sm:col-span-6">
 					<div class="card-body flex flex-col gap-4">
 						<h4 class="text-2xl">Add Story Award</h4>
@@ -403,20 +369,20 @@
 									name={`story_awards_gained.${index}.name`}
 									value={item.name}
 									on:input={(e) => {
-										if (storyAwardsGained[index]) storyAwardsGained[index].name = e.currentTarget.value;
+										if ($form.story_awards_gained[index]) $form.story_awards_gained[index].name = e.currentTarget.value;
 									}}
 									class="input input-bordered w-full focus:border-primary"
 								/>
-								{#if errors.has(`story_awards_gained.${index}.name`)}
+								{#if $errors.story_awards_gained?.[index]?.name}
 									<label for={`story_awards_gained.${index}.name`} class="label">
-										<span class="label-text-alt text-error">{errors.get(`story_awards_gained.${index}.name`)}</span>
+										<span class="label-text-alt text-error">{$errors.story_awards_gained?.[index]?.name}</span>
 									</label>
 								{/if}
 							</div>
 							<button
 								type="button"
 								class="btn-danger no-script-hide btn mt-9"
-								on:click={() => (storyAwardsGained = storyAwardsGained.filter((_, i) => i !== index))}
+								on:click={() => ($form.story_awards_gained = $form.story_awards_gained.filter((_, i) => i !== index))}
 							>
 								<Icon src="trash-can" class="w-6" />
 							</button>
@@ -428,7 +394,7 @@
 							<textarea
 								name={`story_awards_gained.${index}.description`}
 								on:input={(e) => {
-									if (storyAwardsGained[index]) storyAwardsGained[index].description = e.currentTarget.value;
+									if ($form.story_awards_gained[index]) $form.story_awards_gained[index].description = e.currentTarget.value;
 								}}
 								class="textarea textarea-bordered w-full focus:border-primary"
 								style="resize: none;"
@@ -446,11 +412,11 @@
 		</div>
 		<div class="col-span-12 text-center">
 			<button type="submit" class="btn btn-primary disabled:bg-primary disabled:bg-opacity-50 disabled:text-opacity-50">
-				{#if saving}
+				{#if $submitting}
 					<span class="loading" />
 				{/if}
 				Save Log
 			</button>
 		</div>
 	</div>
-</SchemaForm>
+</SuperForm>

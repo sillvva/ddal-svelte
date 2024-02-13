@@ -1,58 +1,11 @@
+import { sorter } from "$src/lib/util";
 import { prisma } from "$src/server/db";
 import { cache } from "../cache";
 
-// async function updateDMOwners() {
-// 	const dms = await prisma.dungeonMaster.findMany({
-// 		include: {
-// 			logs: {
-// 				include: {
-// 					character: {
-// 						select: {
-// 							id: true,
-// 							name: true,
-// 							userId: true
-// 						}
-// 					}
-// 				}
-// 			}
-// 		}
-// 	});
-
-// 	const users = await prisma.user.findMany();
-
-// 	const updated = dms
-// 		.map((dm) => {
-// 			const char = dm.logs?.find((log) => log.character?.userId)?.character;
-// 			const user = users.find((user) => user.name === dm.name);
-// 			const userId = dm.uid || char?.userId || user?.id;
-// 			if (!userId) return null;
-// 			return {
-// 				id: dm.id,
-// 				name: dm.name,
-// 				DCI: dm.DCI,
-// 				uid: dm.uid,
-// 				owner: userId
-// 			};
-// 		})
-// 		.filter(Boolean);
-
-// 	for (const dm of updated) {
-// 		if (!dm) continue;
-// 		await prisma.dungeonMaster.update({
-// 			where: {
-// 				id: dm.id
-// 			},
-// 			data: {
-// 				owner: dm.owner
-// 			}
-// 		});
-// 	}
-
-// 	console.log(`Updated ${updated.length} DMs`);
-// }
-
 export type UserDMsWithLogs = Awaited<ReturnType<typeof getUserDMsWithLogs>>;
-export async function getUserDMsWithLogs(userId: string) {
+export async function getUserDMsWithLogs(user: LocalsSession["user"]) {
+	if (!user || !user.id) return [];
+
 	const dms = await prisma.dungeonMaster.findMany({
 		where: {
 			OR: [
@@ -60,16 +13,16 @@ export async function getUserDMsWithLogs(userId: string) {
 					logs: {
 						every: {
 							character: {
-								userId: userId
+								userId: user.id
 							}
 						}
 					}
 				},
 				{
-					owner: userId
+					owner: user.id
 				},
 				{
-					uid: userId
+					uid: user.id
 				}
 			],
 			logs: {}
@@ -89,15 +42,28 @@ export async function getUserDMsWithLogs(userId: string) {
 		}
 	});
 
+	if (!dms.find((dm) => dm.uid === user.id)) {
+		dms.push({
+			id: "",
+			uid: user.id,
+			name: user.name || "Me",
+			DCI: null,
+			owner: user.id,
+			logs: []
+		});
+	}
+
 	return dms
-		.filter((dm) => dm.owner === userId || dm.uid === userId)
+		.filter((dm) => dm.owner === user.id || dm.uid === user.id)
 		.map((dm) => ({
 			...dm,
-			owner: userId
+			owner: user.id
 		}));
 }
 
-export async function getUserDMsWithLogsCache(userId: string) {
-	// await updateDMOwners();
-	return cache(() => getUserDMsWithLogs(userId), ["dms", userId, "logs"], 3 * 3600);
+export async function getUserDMsWithLogsCache(user: LocalsSession["user"]) {
+	if (!user || !user.id) return [];
+	return cache(() => getUserDMsWithLogs(user), ["dms", user.id, "logs"], 3 * 3600).then((dms) =>
+		dms.sort((a, b) => sorter(b.uid || "", a.uid || "") || sorter(a.name, b.name))
+	);
 }

@@ -111,7 +111,7 @@ model DungeonMaster {
     name  String
     DCI   String?
     uid   String?
-    owner String?
+    owner String
     logs  Log[]
     user  User?   @relation(fields: [owner], references: [id])
 
