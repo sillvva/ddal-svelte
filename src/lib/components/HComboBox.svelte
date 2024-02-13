@@ -39,10 +39,6 @@
 			.replace(/\s+/g, "")
 			.includes((value || "").toLowerCase().replace(/\s+/g, ""))
 	);
-
-	$: if ($combobox.selected && $combobox.selected.value !== value) {
-		$combobox.selected = null;
-	}
 </script>
 
 <div class="dropdown">
@@ -58,6 +54,7 @@
 				dispatch("select", $combobox.selected);
 			}}
 			on:change={() => {
+				if ($combobox.selected && $combobox.selected.value !== value) $combobox.selected = null;
 				setTimeout(() => {
 					if (!allowCustom && !$combobox.selected) value = "";
 					dispatch("select", $combobox.selected);
