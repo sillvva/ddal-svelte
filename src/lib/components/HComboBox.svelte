@@ -1,14 +1,19 @@
 <script lang="ts">
+	import { dev } from "$app/environment";
 	import { createEventDispatcher } from "svelte";
 	import { createCombobox } from "svelte-headlessui";
 	import type { HTMLInputAttributes } from "svelte/elements";
 	import { fade } from "svelte/transition";
+	import SuperDebug from "sveltekit-superforms";
 	import { twMerge } from "tailwind-merge";
+	import Icon from "./Icon.svelte";
 
 	export let values: Array<{ key?: string; value: string; label: string }> = [];
 	export let value: string | null = "";
 	export let allowCustom: boolean = false;
 	export let showOnEmpty: boolean = false;
+
+	let debug = false;
 
 	const dispatch = createEventDispatcher<{
 		input?: null;
@@ -41,49 +46,60 @@
 	);
 </script>
 
-<div class="dropdown">
-	<label>
-		<input
-			{...$$restProps}
-			bind:value
-			use:combobox.input
-			class="input input-bordered w-full focus:border-primary"
-			on:input={() => dispatch("input", null)}
-			on:select={() => {
-				value = $combobox.selected.value;
-				dispatch("select", $combobox.selected);
-			}}
-			on:change={() => {
-				if ($combobox.selected && $combobox.selected.value !== value) $combobox.selected = null;
-				setTimeout(() => {
-					if (!allowCustom && !$combobox.selected) value = "";
+<div class="join">
+	<div class="dropdown w-full">
+		<label>
+			<input
+				{...$$restProps}
+				bind:value
+				use:combobox.input
+				class="input join-item input-bordered w-full focus:border-primary"
+				on:input={() => dispatch("input", null)}
+				on:select={() => {
+					value = $combobox.selected.value;
 					dispatch("select", $combobox.selected);
-				}, 10);
-			}}
-		/>
-	</label>
-	{#if $combobox.expanded && (showOnEmpty || value?.trim()) && (filtered.length || allowCustom)}
-		<ul
-			use:combobox.items
-			class="menu dropdown-content z-10 w-full rounded-lg bg-base-100 p-2 shadow dark:bg-base-200"
-			transition:fade={{ duration: 150 }}
-		>
-			{#each filtered.slice(0, 8) as value}
-				{@const active = $combobox.active === value}
-				{@const selected = $combobox.selected === value}
-				<li
-					class={twMerge(
-						"hover:bg-primary/50",
-						(active || selected) && "bg-primary text-primary-content",
-						selected && "font-bold"
-					)}
-					use:combobox.item={{ value }}
-				>
-					<span class="rounded-none px-4 py-2">
-						{value.label}
-					</span>
-				</li>
-			{/each}
-		</ul>
+				}}
+				on:change={() => {
+					if ($combobox.selected && $combobox.selected.value !== value) $combobox.selected = null;
+					setTimeout(() => {
+						if (!allowCustom && !$combobox.selected) value = "";
+						dispatch("select", $combobox.selected);
+					}, 10);
+				}}
+			/>
+		</label>
+		{#if $combobox.expanded && (showOnEmpty || value?.trim()) && (filtered.length || allowCustom)}
+			<ul
+				use:combobox.items
+				class="menu dropdown-content z-10 w-full rounded-lg bg-base-100 p-2 shadow dark:bg-base-200"
+				transition:fade={{ duration: 150 }}
+			>
+				{#each filtered.slice(0, 8) as value}
+					{@const active = $combobox.active === value}
+					{@const selected = $combobox.selected === value}
+					<li
+						class={twMerge(
+							"hover:bg-primary/50",
+							(active || selected) && "bg-primary text-primary-content",
+							selected && "font-bold"
+						)}
+						use:combobox.item={{ value }}
+					>
+						<span class="rounded-none px-4 py-2">
+							{value.label}
+						</span>
+					</li>
+				{/each}
+			</ul>
+		{/if}
+	</div>
+	{#if dev}
+		<button class="btn join-item input-bordered" on:click|preventDefault={() => (debug = !debug)}>
+			<Icon src="info" class="w-6" />
+		</button>
 	{/if}
 </div>
+
+{#if debug}
+	<SuperDebug data={$combobox} />
+{/if}
