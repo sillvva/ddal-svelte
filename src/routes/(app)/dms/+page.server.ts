@@ -1,4 +1,3 @@
-import { sorter } from "$lib/util";
 import { signInRedirect } from "$src/server/auth";
 import { getUserDMsWithLogsCache } from "$src/server/data/dms";
 
@@ -10,7 +9,7 @@ export const load = async (event) => {
 
 	return {
 		title: `${session.user.name}'s DMs`,
-		dms: dms.sort((a, b) => sorter(a.name.toLowerCase(), b.name.toLowerCase())),
-		...event.params
+		...event.params,
+		dms
 	};
 };
