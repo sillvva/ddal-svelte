@@ -1,7 +1,7 @@
-import { logSchema } from "$lib/schemas";
+import { dMLogSchema } from "$lib/schemas";
 import { saveLog } from "$src/server/actions/logs";
 import { signInRedirect } from "$src/server/auth";
-import { getCharacterCache, getCharactersCache } from "$src/server/data/characters";
+import { getCharactersCache } from "$src/server/data/characters";
 import { getDMLog, getLog } from "$src/server/data/logs";
 import { error, fail, redirect } from "@sveltejs/kit";
 import { message, setError, superValidate } from "sveltekit-superforms";
@@ -23,7 +23,7 @@ export const load = async (event) => {
 	const characters = await getCharactersCache(user.id);
 	const character = characters.find((c) => c.id === log.characterId);
 
-	const form = await superValidate(valibot(logSchema), {
+	const form = await superValidate(valibot(dMLogSchema(characters)), {
 		defaults: {
 			...log,
 			dm: {
@@ -70,22 +70,14 @@ export const actions = {
 		const log = await getLog(event.params.logId || "", session.user.id);
 		if (event.params.logId !== "new" && !log.id) redirect(302, `/dm-logs`);
 
-		const form = await superValidate(event, valibot(logSchema));
+		const characters = await getCharactersCache(session.user.id);
+		const form = await superValidate(event, valibot(dMLogSchema(characters)));
 		if (!form.valid) return fail(400, { form });
 
 		if (!form.data.is_dm_log)
 			return message(form, "Only DM logs can be saved here.", {
 				status: 400
 			});
-
-		if (form.data.characterId && form.data.applied_date) {
-			const character = await getCharacterCache(form.data.characterId, false);
-			if (!character) return setError(form, "characterId", "Character not found");
-		} else if (form.data.characterId && !form.data.applied_date) {
-			return setError(form, "applied_date", "Applied date is required if character is selected.");
-		} else if (!form.data.characterId && form.data.applied_date) {
-			return setError(form, "characterId", "Character is required if applied date is entered.");
-		}
 
 		const result = await saveLog(form.data, session.user);
 		if ("id" in result) redirect(302, `/dm-logs/`);
