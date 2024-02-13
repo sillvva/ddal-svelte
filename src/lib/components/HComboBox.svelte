@@ -11,8 +11,8 @@
 	export let showOnEmpty: boolean = false;
 
 	const dispatch = createEventDispatcher<{
-		select: (typeof values)[number];
 		input?: null;
+		select: (typeof values)[number] | null;
 	}>();
 
 	interface $$Props extends HTMLInputAttributes {
@@ -57,9 +57,10 @@
 				value = $combobox.selected.value;
 				dispatch("select", $combobox.selected);
 			}}
-			on:blur={() => {
+			on:change={() => {
 				setTimeout(() => {
 					if (!allowCustom && !$combobox.selected) value = "";
+					dispatch("select", $combobox.selected);
 				}, 100);
 			}}
 		/>
