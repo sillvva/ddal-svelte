@@ -65,6 +65,9 @@ export async function getCharacterCaches(characterIds: string[]) {
 						date: "asc"
 					}
 				}
+			},
+			orderBy: {
+				name: "asc"
 			}
 		});
 
@@ -80,6 +83,9 @@ export async function getCharacters(userId: string) {
 		where: { userId: userId },
 		include: {
 			user: true
+		},
+		orderBy: {
+			name: "asc"
 		}
 	});
 }
