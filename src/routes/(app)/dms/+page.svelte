@@ -7,7 +7,7 @@
 
 	export let data;
 
-	let dms = data.dms;
+	let dms = data.dms.sort((a, b) => (b.uid || "").localeCompare(a.uid || "") || a.name.localeCompare(b.name));
 	let deletingDM: string[] = [];
 </script>
 
