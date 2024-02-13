@@ -83,7 +83,7 @@ export const dungeonMasterSchema = object(
 		name: optional(string(), "Me"),
 		DCI: nullable(union([string([regex(/[0-9]{0,10}/, "Invalid DCI Format")]), null_()]), null),
 		uid: nullable(union([string(), null_()]), ""),
-		owner: string()
+		owner: string([minLength(1, "Owner Required")])
 	},
 	[
 		forward(
