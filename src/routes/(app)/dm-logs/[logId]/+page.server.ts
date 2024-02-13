@@ -26,10 +26,6 @@ export const load = async (event) => {
 	const form = await superValidate(valibot(dMLogSchema(characters)), {
 		defaults: {
 			...log,
-			dm: {
-				...log.dm,
-				owner: log.dm.owner || user.id
-			},
 			characterId: character?.id || "",
 			characterName: character?.name || "",
 			magic_items_gained: log.magic_items_gained.map((item) => ({
