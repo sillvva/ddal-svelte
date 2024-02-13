@@ -31,19 +31,24 @@
 		"sort-calendar-descending":
 			"M19 7h-3l4-4l4 4h-3v14h-2V7M8 16h3v-3H8v3m5-11h-1V3h-2v2H6V3H4v2H3c-1.11 0-2 .89-2 2v11c0 1.11.89 2 2 2h10c1.11 0 2-.89 2-2V7c0-1.11-.89-2-2-2M3 18v-7h10v7H3Z",
 		"trash-can": "M9,3V4H4V6H5V19A2,2 0 0,0 7,21H17A2,2 0 0,0 19,19V6H20V4H15V3H9M9,8H11V17H9V8M13,8H15V17H13V8Z",
-		"view-grid": "M3,11H11V3H3M3,21H11V13H3M13,21H21V13H13M13,3V11H21V3"
+		"view-grid": "M3,11H11V3H3M3,21H11V13H3M13,21H21V13H13M13,3V11H21V3",
+		x: "M19 6.41L17.59 5L12 10.59L6.41 5L5 6.41L10.59 12L5 17.59L6.41 19L12 13.41L17.59 19L19 17.59L13.41 12z"
 	};
 
 	interface $$Props extends HTMLAttributes<SVGElement> {
 		src: keyof typeof paths;
+		fill?: string;
+		stroke?: string;
 	}
 
 	export let src: keyof typeof paths;
+	export let fill = "currentColor";
+	export let stroke = "none";
 </script>
 
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" {...$$restProps}>
 	<title>{src}</title>
-	<path d={paths[src]} />
+	<path d={paths[src]} {fill} {stroke} />
 </svg>
 
 <style>

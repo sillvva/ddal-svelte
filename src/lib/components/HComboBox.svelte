@@ -12,12 +12,14 @@
 	export let value: string | null = "";
 	export let allowCustom: boolean = false;
 	export let showOnEmpty: boolean = false;
+	export let clearable: boolean = false;
 
 	let debug = false;
 
 	const dispatch = createEventDispatcher<{
-		input?: null;
+		input: void;
 		select: (typeof values)[number] | null;
+		clear: void;
 	}>();
 
 	interface $$Props extends HTMLInputAttributes {
@@ -25,6 +27,7 @@
 		value: typeof value;
 		allowCustom?: typeof allowCustom;
 		showOnEmpty?: typeof showOnEmpty;
+		clearable?: typeof clearable;
 	}
 
 	const combobox = createCombobox();
@@ -54,7 +57,7 @@
 				bind:value
 				use:combobox.input
 				class="input join-item input-bordered w-full focus:border-primary"
-				on:input={() => dispatch("input", null)}
+				on:input={() => dispatch("input")}
 				on:select={() => {
 					value = $combobox.selected.value;
 					dispatch("select", $combobox.selected);
@@ -93,6 +96,17 @@
 			</ul>
 		{/if}
 	</div>
+	{#if $combobox.selected && clearable}
+		<button
+			class="btn join-item input-bordered"
+			on:click|preventDefault={() => {
+				dispatch("clear");
+				$combobox.selected = null;
+			}}
+		>
+			<Icon src="x" class="w-6" color="red" />
+		</button>
+	{/if}
 	{#if dev}
 		<button class="btn join-item input-bordered" on:click|preventDefault={() => (debug = !debug)}>
 			<Icon src="info" class="w-6" />
