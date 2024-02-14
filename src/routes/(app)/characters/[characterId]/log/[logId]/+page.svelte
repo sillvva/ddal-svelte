@@ -120,6 +120,8 @@
 							value: dm.name,
 							label: dm.name + (dm.uid === data.user.id ? ` (Me)` : "") + (dm.DCI ? ` (${dm.DCI})` : "")
 						})) || []}
+						allowCustom
+						required={!!$form.dm.DCI}
 						bind:selected={dmSelected}
 						on:select={(e) => {
 							const dm = data.dms.find((dm) => dm.id === e.detail?.key) || {
@@ -132,10 +134,8 @@
 							const { id, name, DCI, uid, owner } = dm;
 							$form.dm = { id, name, DCI, uid, owner };
 						}}
-						on:clear={() => ($form.dm = defaultDM(data.user.id))}
-						allowCustom
 						clearable
-						required={!!$form.dm.DCI}
+						on:clear={() => ($form.dm = defaultDM(data.user.id))}
 					/>
 					{#if $errors.dm?.name}
 						<label for="dmName" class="label">
@@ -157,6 +157,7 @@
 								value: `${dm.DCI}`,
 								label: `${dm.DCI} (${dm.name}${dm.uid === data.user.id ? `, Me` : ""})`
 							})) || []}
+						allowCustom
 						bind:selected={dmSelected}
 						on:select={(e) => {
 							const dm = data.dms.find((dm) => dm.id === e.detail?.key) || {
@@ -169,9 +170,8 @@
 							const { id, name, DCI, uid, owner } = dm;
 							$form.dm = { id, name, DCI, uid, owner };
 						}}
-						on:clear={() => ($form.dm = defaultDM(data.user.id))}
-						allowCustom
 						clearable
+						on:clear={() => ($form.dm = defaultDM(data.user.id))}
 					/>
 					{#if $errors.dm?.DCI}
 						<label for="dmDCI" class="label">

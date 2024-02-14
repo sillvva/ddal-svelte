@@ -34,7 +34,7 @@
 
 	const combobox = createCombobox();
 
-	$: selected = !!$combobox.selected;
+	$: if (!selected) $combobox.selected = null;
 
 	$: withLabel = values.map((v) => ({ ...v, label: v.label || v.value }));
 	$: matched =
@@ -64,10 +64,14 @@
 				on:input={() => dispatch("input")}
 				on:select={() => {
 					value = $combobox.selected.value;
+					selected = true;
 					dispatch("select", $combobox.selected);
 				}}
 				on:change={() => {
-					if ($combobox.selected && $combobox.selected.value !== value) $combobox.selected = null;
+					if ($combobox.selected && $combobox.selected.value !== value) {
+						$combobox.selected = null;
+						selected = false;
+					}
 					setTimeout(() => {
 						if (!allowCustom && !$combobox.selected) value = "";
 						dispatch("select", $combobox.selected);
@@ -106,6 +110,7 @@
 			on:click|preventDefault={() => {
 				dispatch("clear");
 				$combobox.selected = null;
+				selected = false;
 			}}
 		>
 			<Icon src="x" class="w-6" color="red" />

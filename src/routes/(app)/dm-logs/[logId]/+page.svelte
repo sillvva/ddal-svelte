@@ -108,12 +108,12 @@
 						if (data.logId === "new") $form.applied_date = null;
 					}
 				}}
+				clearable
 				on:clear={() => {
 					$form.characterName = "";
 					$form.characterId = "";
 					$form.applied_date = null;
 				}}
-				clearable
 			/>
 			{#if $errors.characterId}
 				<label for="characterName" class="label">
