@@ -35,15 +35,6 @@
 	}
 </script>
 
-<ska:html
-	data-theme={$page.data.mobile || !$app.settings.background
-		? $app.settings.mode === "dark"
-			? "black"
-			: "light"
-		: $app.settings.theme}
-	class={$app.settings.mode}
-/>
-
 <div
 	id="settings"
 	class={twMerge("fixed -right-72 bottom-0 top-0 z-50 w-72 bg-base-100 px-4 py-4 transition-all", open && "right-0")}

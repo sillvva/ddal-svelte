@@ -14,6 +14,15 @@
 	setContext("transition", transition);
 </script>
 
+<ska:html
+	data-theme={data.mobile || !$app.settings.background
+		? $app.settings.mode === "dark"
+			? "black"
+			: "light"
+		: $app.settings.theme}
+	class={$app.settings.mode}
+/>
+
 {#if !data.mobile && $app.settings.background}
 	<img
 		src="/images/barovia-gate.webp"
