@@ -9,7 +9,7 @@ import { prisma } from "$src/server/db";
 import type { Provider } from "@auth/core/providers";
 import Discord from "@auth/core/providers/discord";
 import Google from "@auth/core/providers/google";
-import type { Profile, TokenSet } from "@auth/core/types";
+import type { TokenSet } from "@auth/core/types";
 import { PrismaAdapter } from "@auth/prisma-adapter";
 import { SvelteKitAuth, type SvelteKitAuthConfig } from "@auth/sveltekit";
 import type { Account } from "@prisma/client";
@@ -18,13 +18,12 @@ import { sequence } from "@sveltejs/kit/hooks";
 import { handle as documentHandle } from "@sveltekit-addons/document/hooks";
 import { authErrRedirect } from "./server/auth";
 
-type ProfileWithId = Profile & { id?: string | null };
 interface OAuthProvider {
 	id: string;
 	tokenUrl: string;
 	clientId: string;
 	clientSecret: string;
-	accountId: (profile: ProfileWithId) => ProfileWithId["id"] | ProfileWithId["sub"];
+	// accountId: (profile: Profile) => Profile["id"] | Profile["sub"];
 	oauth: () => Provider;
 }
 const providers: OAuthProvider[] = [
@@ -33,9 +32,9 @@ const providers: OAuthProvider[] = [
 		tokenUrl: "https://oauth2.googleapis.com/token",
 		clientId: GOOGLE_CLIENT_ID,
 		clientSecret: GOOGLE_CLIENT_SECRET,
-		accountId: function (profile) {
-			return profile.sub;
-		},
+		// accountId: function (profile) {
+		// 	return profile.sub;
+		// },
 		oauth: function () {
 			return Google({
 				clientId: this.clientId,
@@ -49,9 +48,9 @@ const providers: OAuthProvider[] = [
 		tokenUrl: "https://discord.com/api/v10/oauth2/token",
 		clientId: DISCORD_CLIENT_ID,
 		clientSecret: DISCORD_CLIENT_SECRET,
-		accountId: function (profile) {
-			return profile.id;
-		},
+		// accountId: function (profile) {
+		// 	return profile.id;
+		// },
 		oauth: function () {
 			return Discord({
 				clientId: this.clientId,
@@ -64,20 +63,20 @@ const providers: OAuthProvider[] = [
 export const auth = SvelteKitAuth(async (event) => {
 	return {
 		callbacks: {
-			async signIn({ account, profile }) {
+			async signIn({ account }) {
 				const redirectTo = event.url.searchParams.get("redirect") || undefined;
 				const redirectUrl = redirectTo ? new URL(redirectTo, event.url.origin) : undefined;
 
 				if (!account) authErrRedirect("MissingAccountData", "Account not found", redirectUrl);
-				if (!profile) authErrRedirect("MissingAccountData", "Profile not found", redirectUrl);
+				// if (!profile) authErrRedirect("MissingAccountData", "Profile not found", redirectUrl);
 
-				const provider = providers.find((p) => p.id === account.provider);
-				if (!provider) authErrRedirect("InvalidProvider", `Provider '${account.provider}' not found`, redirectUrl);
+				// const provider = providers.find((p) => p.id === account.provider);
+				// if (!provider) authErrRedirect("InvalidProvider", `Provider '${account.provider}' not found`, redirectUrl);
 
-				const providerAccountId = provider.accountId(profile);
-				if (!providerAccountId) authErrRedirect("MissingProfileData", "Account ID not found in profile", redirectUrl);
+				// const providerAccountId = provider.accountId(profile);
+				// if (!providerAccountId) authErrRedirect("MissingProfileData", "Account ID not found in profile", redirectUrl);
 
-				account.providerAccountId = providerAccountId;
+				// account.providerAccountId = providerAccountId;
 				const existingAccount = await prisma.account.findFirst({
 					where: {
 						provider: account.provider,
