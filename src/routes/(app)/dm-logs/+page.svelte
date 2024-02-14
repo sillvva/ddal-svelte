@@ -96,7 +96,7 @@
 			</summary>
 			<ul class="menu dropdown-content w-52 rounded-box bg-base-200 p-2 shadow">
 				<li>
-					<button use:download={{ blob: new Blob([JSON.stringify(logs)]), filename: "dm-logs.json" }}> Export </button>
+					<button use:download={{ blob: new Blob([JSON.stringify(logs)]), filename: "dm-logs.json" }}>Export</button>
 				</li>
 			</ul>
 		</Dropdown>
@@ -316,7 +316,7 @@
 										>
 											<input type="hidden" name="logId" value={log.id} />
 											<button
-												class="btn-delete btn sm:btn-sm"
+												class="btn btn-error sm:btn-sm"
 												on:click|preventDefault={(e) => {
 													if (confirm(`Are you sure you want to delete ${log.name}? This action cannot be reversed.`))
 														e.currentTarget.form?.requestSubmit();

@@ -68,7 +68,7 @@
 													}}
 												>
 													<input type="hidden" name="dmId" value={dm.id} />
-													<button type="submit" class="btn sm:btn-sm" aria-label="Delete DM">
+													<button type="submit" class="btn btn-error sm:btn-sm" aria-label="Delete DM">
 														<Icon src="trash-can" class="w-4" />
 													</button>
 												</form>

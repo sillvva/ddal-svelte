@@ -129,7 +129,7 @@
 					<summary tabindex="0" class="btn btn-sm bg-base-100">
 						<Icon src="dots-horizontal" class="w-6" />
 					</summary>
-					<ul class="menu dropdown-content z-20 w-52 rounded-box bg-base-100 p-2 shadow">
+					<ul class="menu dropdown-content z-20 w-52 rounded-box bg-base-200 p-2 shadow">
 						<li>
 							<button use:download={{ blob: new Blob([JSON.stringify(character)]), filename: `${slugify(character.name)}.json` }}>
 								Export
@@ -146,7 +146,7 @@
 										if (result.type !== "redirect") $pageLoader = false;
 									};
 								}}
-								class="btn-delete"
+								class="btn btn-error btn-sm"
 							>
 								<button
 									on:click|preventDefault={(e) => {
@@ -163,7 +163,7 @@
 				<summary tabindex="0" class="btn">
 					<Icon src="dots-horizontal" class="w-6" />
 				</summary>
-				<ul class="menu dropdown-content z-20 w-52 rounded-box bg-base-100 p-2 shadow">
+				<ul class="menu dropdown-content z-20 w-52 rounded-box bg-base-200 p-2 shadow">
 					{#if character.image_url}
 						<li class="xs:hidden">
 							<a
@@ -193,7 +193,7 @@
 										if (result.type !== "redirect") $pageLoader = false;
 									};
 								}}
-								class="btn-delete"
+								class="btn-error"
 							>
 								<button
 									on:click|preventDefault={(e) => {

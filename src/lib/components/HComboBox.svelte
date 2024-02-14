@@ -82,7 +82,7 @@
 		{#if $combobox.expanded && (showOnEmpty || value?.trim()) && (filtered.length || allowCustom)}
 			<ul
 				use:combobox.items
-				class="menu dropdown-content z-10 w-full rounded-lg bg-base-100 p-2 shadow dark:bg-base-200"
+				class="menu dropdown-content z-10 w-full rounded-lg bg-base-200 p-2 shadow"
 				transition:fade={{ duration: 150 }}
 			>
 				{#each filtered.slice(0, 8) as value}
