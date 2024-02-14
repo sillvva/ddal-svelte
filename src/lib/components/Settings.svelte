@@ -35,7 +35,14 @@
 	}
 </script>
 
-<ska:html data-theme={$app.settings.theme} class={$app.settings.mode} />
+<ska:html
+	data-theme={$page.data.mobile || !$app.settings.background
+		? $app.settings.mode === "dark"
+			? "black"
+			: "light"
+		: $app.settings.theme}
+	class={$app.settings.mode}
+/>
 
 <div
 	id="settings"
@@ -81,7 +88,7 @@
 		<div class="divider my-0" />
 		<ul class="menu menu-lg w-full">
 			<li class="menu-title">
-				<span class="font-bold text-white">Linked Accounts</span>
+				<span class="font-bold">Linked Accounts</span>
 			</li>
 			{#each authProviders as provider}
 				<li>
@@ -135,7 +142,7 @@
 </div>
 <div
 	class={twMerge(
-		"fixed inset-0 bg-black/50 transition-all",
+		"fixed inset-0 bg-base-200/50 transition-all",
 		open ? "block" : "hidden",
 		open ? "z-40 opacity-100" : "-z-10 opacity-0"
 	)}

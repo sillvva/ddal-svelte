@@ -364,7 +364,7 @@
 		</noscript>
 		<div class="col-span-12 grid grid-cols-12 gap-4">
 			{#each $form.magic_items_gained as item, index}
-				<div class="card col-span-12 bg-base-300/70 sm:col-span-6">
+				<div class="card col-span-12 bg-base-300/70 shadow-xl sm:col-span-6">
 					<div class="card-body flex flex-col gap-4">
 						<h4 class="text-2xl">Add Magic Item</h4>
 						<div class="flex gap-4">
@@ -389,7 +389,7 @@
 							</div>
 							<button
 								type="button"
-								class="btn-danger no-script-hide btn mt-9"
+								class="no-script-hide btn btn-error mt-9"
 								on:click={() => ($form.magic_items_gained = $form.magic_items_gained.filter((_, i) => i !== index))}
 							>
 								<Icon src="trash-can" class="w-6" />
@@ -445,7 +445,7 @@
 							</div>
 							<button
 								type="button"
-								class="btn-danger no-script-hide btn mt-9"
+								class="no-script-hide btn btn-error mt-9"
 								on:click={() => ($form.magic_items_lost = $form.magic_items_lost.filter((_, i) => i !== index))}
 							>
 								<Icon src="trash-can" class="w-6" />
@@ -456,7 +456,7 @@
 				</div>
 			{/each}
 			{#each $form.story_awards_gained as item, index}
-				<div class="card col-span-12 bg-base-300/70 sm:col-span-6">
+				<div class="card col-span-12 bg-base-300/70 shadow-xl sm:col-span-6">
 					<div class="card-body flex flex-col gap-4">
 						<h4 class="text-2xl">Add Story Award</h4>
 						<div class="flex gap-4">
@@ -481,7 +481,7 @@
 							</div>
 							<button
 								type="button"
-								class="btn-danger no-script-hide btn mt-9"
+								class="no-script-hide btn btn-error mt-9"
 								on:click={() => ($form.story_awards_gained = $form.story_awards_gained.filter((_, i) => i !== index))}
 							>
 								<Icon src="trash-can" class="w-6" />
@@ -537,7 +537,7 @@
 							</div>
 							<button
 								type="button"
-								class="btn-danger no-script-hide btn mt-9"
+								class="no-script-hide btn btn-error mt-9"
 								on:click={() => ($form.story_awards_lost = $form.story_awards_lost.filter((_, i) => i !== index))}
 							>
 								<Icon src="trash-can" class="w-6" />

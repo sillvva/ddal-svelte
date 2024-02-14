@@ -395,7 +395,7 @@
 </div>
 
 <section class="mt-4">
-	<div class="w-full overflow-x-auto rounded-lg bg-base-100">
+	<div class="w-full overflow-x-auto rounded-lg bg-base-200">
 		<table class="table w-full">
 			<thead>
 				<tr class="bg-base-300">
@@ -587,7 +587,7 @@
 									>
 										<input type="hidden" name="logId" value={log.id} />
 										<button
-											class="btn-delete btn sm:btn-sm"
+											class="btn btn-error sm:btn-sm"
 											on:click|preventDefault={(e) => {
 												if (confirm(`Are you sure you want to delete ${log.name}? This action cannot be reversed.`))
 													e.currentTarget.form?.requestSubmit();

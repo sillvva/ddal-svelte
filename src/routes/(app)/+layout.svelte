@@ -79,7 +79,7 @@
 	<header
 		class={twMerge(
 			"relative z-20 w-full border-b-[1px] border-slate-500",
-			(data.mobile || !$app.settings.background) && "sticky top-0 border-slate-300 bg-base-300 dark:border-slate-700"
+			(data.mobile || !$app.settings.background) && "sticky top-0 border-base-300 bg-base-100"
 		)}
 	>
 		<nav class="container mx-auto flex max-w-5xl gap-2 p-4">
@@ -132,7 +132,7 @@
 							</div>
 						</div>
 					</summary>
-					<ul class="menu dropdown-content w-52 rounded-box bg-base-100 p-2 shadow">
+					<ul class="menu dropdown-content w-52 rounded-box bg-base-200 p-2 shadow">
 						<li class="sm:hidden">
 							<span>{data.session?.user?.name}</span>
 						</li>

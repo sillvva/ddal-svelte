@@ -94,7 +94,7 @@
 			<summary tabindex="0" class="btn btn-sm">
 				<Icon src="dots-horizontal" class="w-6" />
 			</summary>
-			<ul class="menu dropdown-content w-52 rounded-box bg-base-100 p-2 shadow">
+			<ul class="menu dropdown-content w-52 rounded-box bg-base-200 p-2 shadow">
 				<li>
 					<button use:download={{ blob: new Blob([JSON.stringify(logs)]), filename: "dm-logs.json" }}> Export </button>
 				</li>
@@ -128,7 +128,7 @@
 	</div>
 
 	<section>
-		<div class="w-full overflow-x-auto rounded-lg bg-base-100">
+		<div class="w-full overflow-x-auto rounded-lg bg-base-200">
 			<table class="table w-full">
 				<thead>
 					<tr class="bg-base-300">

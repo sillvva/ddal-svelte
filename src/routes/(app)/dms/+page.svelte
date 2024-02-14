@@ -16,7 +16,7 @@
 
 	<div class="flex flex-col gap-4">
 		<section>
-			<div class="w-full overflow-x-auto rounded-lg bg-base-100">
+			<div class="w-full overflow-x-auto rounded-lg bg-base-200">
 				<table class="table w-full">
 					<thead>
 						<tr class="bg-base-300">

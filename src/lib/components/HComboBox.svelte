@@ -106,7 +106,7 @@
 	</div>
 	{#if value && selected && clearable}
 		<button
-			class="btn join-item input-bordered"
+			class="btn join-item input-bordered !bg-base-100"
 			on:click|preventDefault={() => {
 				dispatch("clear");
 				$combobox.selected = null;
