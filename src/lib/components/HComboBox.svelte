@@ -8,6 +8,15 @@
 	import { twMerge } from "tailwind-merge";
 	import Icon from "./Icon.svelte";
 
+	interface $$Props extends HTMLInputAttributes {
+		values: typeof values;
+		value: typeof value;
+		allowCustom?: typeof allowCustom;
+		showOnEmpty?: typeof showOnEmpty;
+		clearable?: typeof clearable;
+		selected?: typeof selected;
+	}
+
 	export let values: Array<{ key?: string; value: string; label?: string }> = [];
 	export let value: string | null = "";
 	export let allowCustom: boolean = false;
@@ -22,15 +31,6 @@
 		select: (typeof values)[number] | null;
 		clear: void;
 	}>();
-
-	interface $$Props extends HTMLInputAttributes {
-		values: typeof values;
-		value: typeof value;
-		allowCustom?: typeof allowCustom;
-		showOnEmpty?: typeof showOnEmpty;
-		clearable?: typeof clearable;
-		selected?: typeof selected;
-	}
 
 	const combobox = createCombobox();
 
