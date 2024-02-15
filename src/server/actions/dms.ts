@@ -19,7 +19,9 @@ export async function saveDM(
 		const result = await prisma.dungeonMaster.update({
 			where: { id: dmId },
 			data: {
-				...data
+				...data,
+				DCI: data.DCI || null,
+				uid: data.uid || null
 			}
 		});
 
