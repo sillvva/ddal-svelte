@@ -9,11 +9,11 @@
 	import type { HTMLFormAttributes } from "svelte/elements";
 	import SuperDebug, { type SuperForm } from "sveltekit-superforms";
 
-	export let superForm: SuperForm<T, unknown>;
+	export let superForm: SuperForm<T, any>;
 	export let basic = false;
 
 	type $$Props = HTMLFormAttributes & {
-		superForm: SuperForm<T, unknown>;
+		superForm: SuperForm<T, any>;
 		basic?: boolean;
 	};
 

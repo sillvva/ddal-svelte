@@ -21,7 +21,7 @@ export const load = async (event) => {
 			id: dm.id,
 			name: dm.name,
 			DCI: dm.DCI || null,
-			uid: dm.uid || session.user.id,
+			uid: dm.uid,
 			owner: dm.owner
 		}
 	});
@@ -50,9 +50,16 @@ export const actions = {
 		if (!form.valid) return fail(400, { form });
 
 		const result = await saveDM(event.params.dmId, session.user, form.data);
-		if ("id" in result) redirect(302, `/dms`);
+		if ("id" in result) return message(form, { type: "success", text: "Dungeon Master saved successfully" });
 
-		return message(form, result.error, { status: result.status });
+		return message(
+			form,
+			{
+				type: "error",
+				text: result.error
+			},
+			{ status: result.status }
+		);
 	},
 	deleteDM: async (event) => {
 		const session = await event.locals.session;

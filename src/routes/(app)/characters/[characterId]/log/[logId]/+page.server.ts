@@ -85,8 +85,15 @@ export const actions = {
 		if (field === "applied_date") return setError(form, "applied_date", result.error);
 		if (field === "characterId") return setError(form, "characterId", result.error);
 
-		return message(form, result.error, {
-			status: result.status
-		});
+		return message(
+			form,
+			{
+				type: "error",
+				text: result.error
+			},
+			{
+				status: result.status
+			}
+		);
 	}
 };

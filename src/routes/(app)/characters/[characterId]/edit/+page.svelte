@@ -2,7 +2,7 @@
 	import BreadCrumbs from "$lib/components/BreadCrumbs.svelte";
 	import SuperForm from "$lib/components/SuperForm.svelte";
 	import { newCharacterSchema } from "$lib/schemas";
-	import Icon from "$src/lib/components/Icon.svelte";
+	import FormMessage from "$src/lib/components/FormMessage.svelte";
 	import { superForm } from "sveltekit-superforms";
 	import { valibotClient } from "sveltekit-superforms/adapters";
 
@@ -20,13 +20,7 @@
 <BreadCrumbs />
 
 <SuperForm action="?/saveCharacter" superForm={characterForm}>
-	{#if $message}
-		<div class="alert alert-error mb-4 shadow-lg">
-			<Icon src="alert-circle" class="w-6" />
-			{$message}
-		</div>
-	{/if}
-
+	<FormMessage message={$message} />
 	<div class="grid grid-cols-12 gap-4">
 		<div class="col-span-12 sm:col-span-6">
 			<div class="form-control w-full">
