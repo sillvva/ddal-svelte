@@ -66,7 +66,7 @@
 			<button
 				class={twMerge(
 					"flex h-16 items-center gap-4 rounded-lg px-8 py-4 text-base-content transition-colors hover:bg-base-300",
-					$app.settings.background ? "bg-base-200/50" : "bg-base-100"
+					$app.settings.background ? "bg-base-200/50" : "bg-base-200"
 				)}
 				on:click={() =>
 					signIn(provider.id, {

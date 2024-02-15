@@ -16,10 +16,10 @@
 
 	<div class="flex flex-col gap-4">
 		<section>
-			<div class="w-full overflow-x-auto rounded-lg bg-base-100">
+			<div class="w-full overflow-x-auto rounded-lg bg-base-200">
 				<table class="table w-full">
 					<thead>
-						<tr class="bg-base-300">
+						<tr class="bg-base-300 text-base-content/70">
 							<th class="">DM</th>
 							<th class="hidden xs:table-cell">DCI</th>
 							<th class="hidden xs:table-cell">Logs</th>
@@ -68,7 +68,7 @@
 													}}
 												>
 													<input type="hidden" name="dmId" value={dm.id} />
-													<button type="submit" class="btn sm:btn-sm" aria-label="Delete DM">
+													<button type="submit" class="btn btn-error sm:btn-sm" aria-label="Delete DM">
 														<Icon src="trash-can" class="w-4" />
 													</button>
 												</form>

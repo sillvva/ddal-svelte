@@ -75,7 +75,7 @@
 <div class={twMerge("flex-1 flex-col", collapsible && !items.length ? "hidden md:flex" : "flex")}>
 	{#if title}
 		<div role="presentation" on:click={collapsible ? () => (collapsed = !collapsed) : () => {}} on:keypress={() => {}}>
-			<h4 class="flex text-left font-semibold">
+			<h4 class="flex text-left font-semibold leading-8 dark:text-white [table_&]:leading-5">
 				<span class="flex-1">
 					{title}
 				</span>
@@ -87,7 +87,7 @@
 	{/if}
 	<p
 		class={twMerge(
-			"divide-x divide-black/50 text-sm dark:divide-white/50 print:text-xs",
+			"divide-x divide-black/50 text-sm leading-6 dark:divide-white/50 print:text-xs [table_&]:leading-5",
 			collapsed ? "hidden md:inline print:inline" : ""
 		)}
 	>

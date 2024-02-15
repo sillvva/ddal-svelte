@@ -23,6 +23,7 @@ export default {
 	},
 	plugins: [require("daisyui")],
 	daisyui: {
+		// darkTheme: "black",
 		themes: [
 			{
 				light: {
@@ -30,11 +31,21 @@ export default {
 					primary: "#1b5be4",
 					secondary: "#2F63FF",
 					accent: "#6b6b6b"
-				},
+				}
+			},
+			{
+				black: {
+					...themes["black"],
+					primary: "#6419e6",
+					secondary: "#c881ff"
+				}
+			},
+			{
 				dark: {
 					...themes["dark"],
 					primary: "#6419e6",
-					secondary: "#c881ff"
+					secondary: "#c881ff",
+					"base-content": "#c4ccca"
 				}
 			}
 		]

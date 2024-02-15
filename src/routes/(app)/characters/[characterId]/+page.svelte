@@ -129,7 +129,7 @@
 					<summary tabindex="0" class="btn btn-sm bg-base-100">
 						<Icon src="dots-horizontal" class="w-6" />
 					</summary>
-					<ul class="menu dropdown-content z-20 w-52 rounded-box bg-base-100 p-2 shadow">
+					<ul class="menu dropdown-content z-20 w-52 rounded-box bg-base-200 p-2 shadow">
 						<li>
 							<button use:download={{ blob: new Blob([JSON.stringify(character)]), filename: `${slugify(character.name)}.json` }}>
 								Export
@@ -146,7 +146,7 @@
 										if (result.type !== "redirect") $pageLoader = false;
 									};
 								}}
-								class="btn-delete"
+								class="btn btn-error btn-sm"
 							>
 								<button
 									on:click|preventDefault={(e) => {
@@ -163,7 +163,7 @@
 				<summary tabindex="0" class="btn">
 					<Icon src="dots-horizontal" class="w-6" />
 				</summary>
-				<ul class="menu dropdown-content z-20 w-52 rounded-box bg-base-100 p-2 shadow">
+				<ul class="menu dropdown-content z-20 w-52 rounded-box bg-base-200 p-2 shadow">
 					{#if character.image_url}
 						<li class="xs:hidden">
 							<a
@@ -193,7 +193,7 @@
 										if (result.type !== "redirect") $pageLoader = false;
 									};
 								}}
-								class="btn-delete"
+								class="btn-error"
 							>
 								<button
 									on:click|preventDefault={(e) => {
@@ -289,25 +289,25 @@
 					</div>
 				{/if}
 				<div class="flex">
-					<h4 class="font-semibold">Level</h4>
+					<h4 class="font-semibold dark:text-white">Level</h4>
 					<div class="flex-1 text-right">{character.total_level}</div>
 				</div>
 				<div class="flex">
-					<h4 class="font-semibold">Tier</h4>
+					<h4 class="font-semibold dark:text-white">Tier</h4>
 					<div class="flex-1 text-right">{character.tier}</div>
 				</div>
 				<div class="flex">
-					<h4 class="font-semibold">Gold</h4>
+					<h4 class="font-semibold dark:text-white">Gold</h4>
 					<div class="flex-1 text-right">{character.total_gold.toLocaleString("en-US")}</div>
 				</div>
 				{#if character.total_tcp}
 					<div class="flex">
-						<h4 class="font-semibold">TCP</h4>
+						<h4 class="font-semibold dark:text-white">TCP</h4>
 						<div class="flex-1 text-right">{character.total_tcp}</div>
 					</div>
 				{/if}
 				<div class="flex">
-					<h4 class="font-semibold">Downtime</h4>
+					<h4 class="font-semibold dark:text-white">Downtime</h4>
 					<div class="flex-1 text-right">{character.total_dtd}</div>
 				</div>
 			</div>
@@ -395,10 +395,10 @@
 </div>
 
 <section class="mt-4">
-	<div class="w-full overflow-x-auto rounded-lg bg-base-100">
-		<table class="table w-full">
+	<div class="w-full overflow-x-auto rounded-lg bg-base-200">
+		<table class="table w-full leading-5">
 			<thead>
-				<tr class="bg-base-300">
+				<tr class="bg-base-300 text-base-content/70">
 					<td class="print:p-2">Log Entry</td>
 					<td class="hidden sm:table-cell print:table-cell print:p-2">Advancement</td>
 					<td class="hidden sm:table-cell print:table-cell print:p-2">Treasure</td>
@@ -429,12 +429,12 @@
 							>
 								<SearchResults text={log.name} {search} />
 							</div>
-							<p class="text-netural-content mb-2 whitespace-nowrap text-xs font-normal">
+							<p class="text-netural-content mb-2 whitespace-nowrap text-sm font-normal">
 								{new Date(log.show_date).toLocaleString()}
 							</p>
 							{#if log.dm && log.type === "game" && log.dm.uid !== character.userId}
 								<p class="text-sm font-normal">
-									<span class="font-semibold">DM:</span>
+									<span class="font-semibold dark:text-white">DM:</span>
 									{#if myCharacter}
 										<a href="/dms/{log.dm.id}" class="text-secondary">{log.dm.name}</a>
 									{:else}
@@ -446,33 +446,33 @@
 								{#if log.type === "game"}
 									{#if log.experience > 0}
 										<p>
-											<span class="font-semibold">Experience:</span>&nbsp;{log.experience}
+											<span class="font-semibold dark:text-white">Experience:</span>&nbsp;{log.experience}
 										</p>
 									{/if}
 									{#if log.acp > 0}
 										<p>
-											<span class="font-semibold">ACP:</span>
+											<span class="font-semibold dark:text-white">ACP:</span>
 											{log.acp}
 										</p>
 									{/if}
 									<p>
-										<span class="font-semibold">Levels:</span>&nbsp;{log.level_gained}&nbsp;({log.total_level})
+										<span class="font-semibold dark:text-white">Levels:</span>&nbsp;{log.level_gained}&nbsp;({log.total_level})
 									</p>
 								{/if}
 								{#if log.dtd !== 0}
 									<p>
-										<span class="font-semibold">Downtime&nbsp;Days:</span>&nbsp;{log.dtd}
+										<span class="font-semibold dark:text-white">Downtime&nbsp;Days:</span>&nbsp;{log.dtd}
 									</p>
 								{/if}
 								{#if log.tcp !== 0}
 									<p>
-										<span class="font-semibold">TCP:</span>
+										<span class="font-semibold dark:text-white">TCP:</span>
 										{log.tcp}
 									</p>
 								{/if}
 								{#if log.gold !== 0}
 									<p>
-										<span class="font-semibold">Gold:</span>
+										<span class="font-semibold dark:text-white">Gold:</span>
 										{log.gold.toLocaleString("en-US")}
 									</p>
 								{/if}
@@ -488,23 +488,23 @@
 						>
 							{#if log.experience > 0}
 								<p>
-									<span class="font-semibold">Experience:</span>&nbsp;{log.experience}
+									<span class="font-semibold dark:text-white">Experience:</span>&nbsp;{log.experience}
 								</p>
 							{/if}
 							{#if log.acp > 0}
 								<p>
-									<span class="font-semibold">ACP:</span>
+									<span class="font-semibold dark:text-white">ACP:</span>
 									{log.acp}
 								</p>
 							{/if}
 							{#if log.level_gained > 0}
 								<p>
-									<span class="font-semibold">Levels:</span>&nbsp;{log.level_gained}&nbsp;({log.total_level})
+									<span class="font-semibold dark:text-white">Levels:</span>&nbsp;{log.level_gained}&nbsp;({log.total_level})
 								</p>
 							{/if}
 							{#if log.dtd !== 0}
 								<p>
-									<span class="text-sm font-semibold">Downtime&nbsp;Days:</span>&nbsp;{log.dtd}
+									<span class="text-sm font-semibold dark:text-white">Downtime&nbsp;Days:</span>&nbsp;{log.dtd}
 								</p>
 							{/if}
 						</td>
@@ -518,13 +518,13 @@
 						>
 							{#if log.tcp !== 0}
 								<p>
-									<span class="font-semibold">TCP:</span>
+									<span class="font-semibold dark:text-white">TCP:</span>
 									{log.tcp}
 								</p>
 							{/if}
 							{#if log.gold !== 0}
 								<p>
-									<span class="font-semibold">Gold:</span>
+									<span class="font-semibold dark:text-white">Gold:</span>
 									{log.gold.toLocaleString("en-US")}
 								</p>
 							{/if}
@@ -587,7 +587,7 @@
 									>
 										<input type="hidden" name="logId" value={log.id} />
 										<button
-											class="btn-delete btn sm:btn-sm"
+											class="btn btn-error sm:btn-sm"
 											on:click|preventDefault={(e) => {
 												if (confirm(`Are you sure you want to delete ${log.name}? This action cannot be reversed.`))
 													e.currentTarget.form?.requestSubmit();

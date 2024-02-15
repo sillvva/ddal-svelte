@@ -14,6 +14,15 @@
 	setContext("transition", transition);
 </script>
 
+<ska:html
+	data-theme={data.mobile || !$app.settings.background
+		? $app.settings.mode === "dark"
+			? "black"
+			: "light"
+		: $app.settings.theme}
+	class={$app.settings.mode}
+/>
+
 {#if !data.mobile && $app.settings.background}
 	<img
 		src="/images/barovia-gate.webp"
@@ -24,8 +33,8 @@
 
 <div
 	class={twMerge(
-		"no-script-hide min-h-dvh text-base-content",
-		(data.mobile || !$app.settings.background) && "bg-base-200 dark:[--b1:27.35%_0.018_251.92]"
+		"no-script-hide min-h-dvh bg-[oklch(0.232607_0.013807_253.101)] text-base-content",
+		(data.mobile || !$app.settings.background) && "bg-base-100"
 	)}
 >
 	<slot />

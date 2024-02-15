@@ -79,7 +79,7 @@
 	<header
 		class={twMerge(
 			"relative z-20 w-full border-b-[1px] border-slate-500",
-			(data.mobile || !$app.settings.background) && "sticky top-0 border-slate-300 bg-base-300 dark:border-slate-700"
+			(data.mobile || !$app.settings.background) && "sticky top-0 border-base-300 bg-base-100"
 		)}
 	>
 		<nav class="container mx-auto flex max-w-5xl gap-2 p-4">
@@ -132,7 +132,7 @@
 							</div>
 						</div>
 					</summary>
-					<ul class="menu dropdown-content w-52 rounded-box bg-base-100 p-2 shadow">
+					<ul class="menu dropdown-content w-52 rounded-box bg-base-200 p-2 shadow">
 						<li class="sm:hidden">
 							<span>{data.session?.user?.name}</span>
 						</li>
@@ -181,7 +181,7 @@
 </div>
 
 <dialog
-	class={twMerge("modal !bg-black/50")}
+	class={twMerge("modal !bg-base-200/50")}
 	open={!!$page.state.modal || undefined}
 	aria-labelledby="modal-title"
 	aria-describedby="modal-content"
@@ -196,7 +196,7 @@
 >
 	{#if $page.state.modal}
 		{#if $page.state.modal.type === "text"}
-			<div class="modal-box relative cursor-default drop-shadow-lg">
+			<div class="modal-box relative cursor-default bg-base-300 drop-shadow-lg">
 				<button class="btn btn-circle btn-ghost btn-sm absolute right-2 top-2" on:click={() => history.back()}>✕</button>
 				<h3 id="modal-title" class="cursor-text text-lg font-bold text-black dark:text-white">{$page.state.modal.name}</h3>
 				{#if $page.state.modal.date}

@@ -17,7 +17,7 @@
 		basic?: boolean;
 	};
 
-	const { form, errors, capture, restore, submitting, enhance, formId } = superForm;
+	const { form, errors, allErrors, capture, restore, submitting, enhance, formId } = superForm;
 	const method = $$props.method || "post";
 
 	let refForm: HTMLFormElement;
@@ -43,6 +43,13 @@
 			} else if (!(el as HTMLElement).dataset.disabled) {
 				el.removeAttribute("disabled");
 			}
+		});
+	}
+
+	$: if (refForm && mounted) {
+		refForm.querySelectorAll(`[type="submit"]`).forEach((el) => {
+			if ($allErrors.length) el.setAttribute("disabled", "disabled");
+			else el.removeAttribute("disabled");
 		});
 	}
 

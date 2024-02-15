@@ -8,7 +8,16 @@
 	import { twMerge } from "tailwind-merge";
 	import Icon from "./Icon.svelte";
 
-	export let values: Array<{ key?: string; value: string; label: string }> = [];
+	interface $$Props extends HTMLInputAttributes {
+		values: typeof values;
+		value: typeof value;
+		allowCustom?: typeof allowCustom;
+		showOnEmpty?: typeof showOnEmpty;
+		clearable?: typeof clearable;
+		selected?: typeof selected;
+	}
+
+	export let values: Array<{ key?: string; value: string; label?: string }> = [];
 	export let value: string | null = "";
 	export let allowCustom: boolean = false;
 	export let showOnEmpty: boolean = false;
@@ -23,27 +32,19 @@
 		clear: void;
 	}>();
 
-	interface $$Props extends HTMLInputAttributes {
-		values: typeof values;
-		value: typeof value;
-		allowCustom?: typeof allowCustom;
-		showOnEmpty?: typeof showOnEmpty;
-		clearable?: typeof clearable;
-		selected?: typeof selected;
-	}
-
 	const combobox = createCombobox();
 
-	$: selected = !!$combobox.selected;
+	$: if (!selected) $combobox.selected = null;
 
+	$: withLabel = values.map((v) => ({ ...v, label: v.label || v.value }));
 	$: matched =
-		values.filter((v) =>
+		withLabel.filter((v) =>
 			v.label
 				.toLowerCase()
 				.replace(/\s+/g, "")
 				.includes((value || "").toLowerCase().replace(/\s+/g, ""))
 		).length === 1;
-	$: withCustom = matched || !value?.trim() || !allowCustom ? values : [{ value, label: `Add "${value}"` }, ...values];
+	$: withCustom = matched || !value?.trim() || !allowCustom ? withLabel : [{ value, label: `Add "${value}"` }, ...withLabel];
 	$: filtered = withCustom.filter((v) =>
 		v.label
 			.toLowerCase()
@@ -63,10 +64,14 @@
 				on:input={() => dispatch("input")}
 				on:select={() => {
 					value = $combobox.selected.value;
+					selected = true;
 					dispatch("select", $combobox.selected);
 				}}
 				on:change={() => {
-					if ($combobox.selected && $combobox.selected.value !== value) $combobox.selected = null;
+					if ($combobox.selected && $combobox.selected.value !== value) {
+						$combobox.selected = null;
+						selected = false;
+					}
 					setTimeout(() => {
 						if (!allowCustom && !$combobox.selected) value = "";
 						dispatch("select", $combobox.selected);
@@ -77,7 +82,7 @@
 		{#if $combobox.expanded && (showOnEmpty || value?.trim()) && (filtered.length || allowCustom)}
 			<ul
 				use:combobox.items
-				class="menu dropdown-content z-10 w-full rounded-lg bg-base-100 p-2 shadow dark:bg-base-200"
+				class="menu dropdown-content z-10 w-full rounded-lg bg-base-200 p-2 shadow"
 				transition:fade={{ duration: 150 }}
 			>
 				{#each filtered.slice(0, 8) as value}
@@ -102,16 +107,18 @@
 	{#if value && selected && clearable}
 		<button
 			class="btn join-item input-bordered"
+			type="button"
 			on:click|preventDefault={() => {
 				dispatch("clear");
 				$combobox.selected = null;
+				selected = false;
 			}}
 		>
 			<Icon src="x" class="w-6" color="red" />
 		</button>
 	{/if}
 	{#if dev}
-		<button class="btn join-item input-bordered" on:click|preventDefault={() => (debug = !debug)}>
+		<button type="button" class="btn join-item input-bordered" on:click|preventDefault={() => (debug = !debug)}>
 			<Icon src="info" class="w-6" />
 		</button>
 	{/if}

@@ -102,7 +102,7 @@
 			<summary tabindex="0" class="btn btn-sm bg-base-100">
 				<Icon src="dots-horizontal" class="w-6" />
 			</summary>
-			<ul class="menu dropdown-content w-52 rounded-box bg-base-100 p-2 shadow">
+			<ul class="menu dropdown-content w-52 rounded-box bg-base-200 p-2 shadow">
 				<li>
 					<button use:download={{ blob: new Blob([JSON.stringify(characters)]), filename: "characters.json" }}>Export</button>
 				</li>
@@ -111,7 +111,7 @@
 	</div>
 
 	{#if !characters.length}
-		<section class="bg-base-100">
+		<section class="bg-base-200">
 			<div class="py-20 text-center">
 				<p class="mb-4">You have no log sheets.</p>
 				<p>
@@ -198,11 +198,11 @@
 			<div class={twMerge("w-full overflow-x-auto rounded-lg", $app.characters.display == "grid" && "block xs:hidden")}>
 				<div
 					class={twMerge(
-						"grid-table",
+						"grid-table bg-base-200",
 						data.mobile ? "grid-characters-mobile sm:grid-characters-mobile-sm" : "grid-characters-mobile sm:grid-characters"
 					)}
 				>
-					<header class="!hidden sm:!contents">
+					<header class="!hidden text-base-content/70 sm:!contents">
 						{#if !data.mobile}
 							<div class="hidden sm:block" />
 						{/if}
@@ -333,7 +333,7 @@
 							)}
 							<a
 								href={`/characters/${character.id}`}
-								class="card card-compact bg-base-100 shadow-xl transition-transform duration-200 motion-safe:hover:scale-105"
+								class="card card-compact bg-base-200 shadow-xl transition-transform duration-200 motion-safe:hover:scale-105"
 								use:transition={slugify("image-" + character.id)}
 							>
 								<figure class="relative aspect-square overflow-hidden">

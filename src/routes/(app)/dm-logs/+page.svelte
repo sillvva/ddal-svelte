@@ -94,9 +94,9 @@
 			<summary tabindex="0" class="btn btn-sm">
 				<Icon src="dots-horizontal" class="w-6" />
 			</summary>
-			<ul class="menu dropdown-content w-52 rounded-box bg-base-100 p-2 shadow">
+			<ul class="menu dropdown-content w-52 rounded-box bg-base-200 p-2 shadow">
 				<li>
-					<button use:download={{ blob: new Blob([JSON.stringify(logs)]), filename: "dm-logs.json" }}> Export </button>
+					<button use:download={{ blob: new Blob([JSON.stringify(logs)]), filename: "dm-logs.json" }}>Export</button>
 				</li>
 			</ul>
 		</Dropdown>
@@ -128,10 +128,10 @@
 	</div>
 
 	<section>
-		<div class="w-full overflow-x-auto rounded-lg bg-base-100">
+		<div class="w-full overflow-x-auto rounded-lg bg-base-200">
 			<table class="table w-full">
 				<thead>
-					<tr class="bg-base-300">
+					<tr class="bg-base-300 text-base-content/70">
 						<th class="table-cell sm:hidden print:hidden">Game</th>
 						<th class="hidden sm:table-cell print:table-cell">Title</th>
 						<th class="hidden sm:table-cell print:table-cell">Advancement</th>
@@ -316,7 +316,7 @@
 										>
 											<input type="hidden" name="logId" value={log.id} />
 											<button
-												class="btn-delete btn sm:btn-sm"
+												class="btn btn-error sm:btn-sm"
 												on:click|preventDefault={(e) => {
 													if (confirm(`Are you sure you want to delete ${log.name}? This action cannot be reversed.`))
 														e.currentTarget.form?.requestSubmit();

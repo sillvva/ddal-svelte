@@ -37,6 +37,10 @@
 		box-sizing: border-box;
 		min-width: 0;
 	}
+	[data-theme="black"] {
+		--rounded-btn: 0.5rem;
+		--rounded-box: 0.5rem;
+	}
 	body {
 		overflow-x: hidden;
 		overflow-y: scroll;
@@ -56,13 +60,13 @@
 		@apply print:drop-shadow-none;
 	}
 	.btn {
-		@apply bg-base-100 text-base-content;
+		@apply border-base-300 bg-base-300 text-base-content;
 	}
 	.btn-primary {
 		@apply bg-primary text-white;
 	}
-	.btn-delete {
-		@apply bg-red-800 text-white hover:bg-red-900;
+	.btn-error {
+		@apply bg-error text-white hover:text-white dark:border-error dark:bg-base-100 dark:hover:bg-error;
 	}
 	.grid-characters {
 		grid-template-columns: auto 1fr auto auto auto;
@@ -98,6 +102,12 @@
 		@apply bg-base-300;
 	}
 	.grid-table :where(section, a) > * {
-		@apply items-center bg-base-100;
+		@apply items-center bg-base-200;
+	}
+	.input[aria-invalid] {
+		@apply input-error;
+	}
+	.select[aria-invalid] {
+		@apply select-error;
 	}
 }
