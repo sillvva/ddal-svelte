@@ -104,4 +104,10 @@
 	.grid-table :where(section, a) > * {
 		@apply items-center bg-base-200;
 	}
+	.input[aria-invalid] {
+		@apply input-error;
+	}
+	.select[aria-invalid] {
+		@apply select-error;
+	}
 }

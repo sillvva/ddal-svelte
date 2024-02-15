@@ -57,7 +57,7 @@
 				required
 				bind:value={$form.name}
 				class="input input-bordered w-full focus:border-primary"
-				aria-invalid={$errors.name ? "true" : "false"}
+				aria-invalid={$errors.name ? "true" : undefined}
 			/>
 			{#if $errors.name}
 				<label for="name" class="label">
@@ -72,7 +72,13 @@
 					<span class="text-error">*</span>
 				</span>
 			</label>
-			<DateTimeInput name="date" bind:date={$form.date} required class="input input-bordered w-full focus:border-primary" />
+			<DateTimeInput
+				name="date"
+				bind:date={$form.date}
+				required
+				class="input input-bordered w-full focus:border-primary"
+				aria-invalid={$errors.date ? "true" : undefined}
+			/>
 			{#if $errors.date}
 				<label for="date" class="label">
 					<span class="label-text-alt text-error">{$errors.date}</span>
@@ -114,6 +120,7 @@
 					$form.characterId = "";
 					$form.applied_date = null;
 				}}
+				aria-invalid={$errors.characterId ? "true" : undefined}
 			/>
 			{#if $errors.characterId}
 				<label for="characterName" class="label">
@@ -135,7 +142,7 @@
 				bind:date={$form.applied_date}
 				required={!!$form.characterId}
 				class="input input-bordered w-full focus:border-primary"
-				aria-invalid={$errors.applied_date ? "true" : "false"}
+				aria-invalid={$errors.applied_date ? "true" : undefined}
 			/>
 			{#if $errors.applied_date}
 				<label for="applied_date" class="label">
@@ -159,7 +166,13 @@
 					<label for="experience" class="label">
 						<span class="label-text">Experience</span>
 					</label>
-					<input type="number" bind:value={$form.experience} min="0" class="input input-bordered w-full focus:border-primary" />
+					<input
+						type="number"
+						bind:value={$form.experience}
+						min="0"
+						class="input input-bordered w-full focus:border-primary"
+						aria-invalid={$errors.experience ? "true" : undefined}
+					/>
 					{#if $errors.experience}
 						<label for="experience" class="label">
 							<span class="label-text-alt text-error">{$errors.experience}</span>
@@ -178,6 +191,7 @@
 						min="0"
 						bind:value={$form.level}
 						class="input input-bordered w-full focus:border-primary"
+						aria-invalid={$errors.level ? "true" : undefined}
 					/>
 					{#if $errors.level}
 						<label for="level" class="label">
@@ -197,6 +211,7 @@
 						min="0"
 						bind:value={$form.acp}
 						class="input input-bordered w-full focus:border-primary"
+						aria-invalid={$errors.acp ? "true" : undefined}
 					/>
 					{#if $errors.acp}
 						<label for="acp" class="label">
@@ -208,7 +223,13 @@
 					<label for="tcp" class="label">
 						<span class="label-text">TCP</span>
 					</label>
-					<input type="number" name="tcp" bind:value={$form.tcp} class="input input-bordered w-full focus:border-primary" />
+					<input
+						type="number"
+						name="tcp"
+						bind:value={$form.tcp}
+						class="input input-bordered w-full focus:border-primary"
+						aria-invalid={$errors.tcp ? "true" : undefined}
+					/>
 					{#if $errors.tcp}
 						<label for="tcp" class="label">
 							<span class="label-text-alt text-error">{$errors.tcp}</span>
@@ -220,7 +241,13 @@
 				<label for="gold" class="label">
 					<span class="label-text">Gold</span>
 				</label>
-				<input type="number" name="gold" bind:value={$form.gold} class="input input-bordered w-full focus:border-primary" />
+				<input
+					type="number"
+					name="gold"
+					bind:value={$form.gold}
+					class="input input-bordered w-full focus:border-primary"
+					aria-invalid={$errors.gold ? "true" : undefined}
+				/>
 				{#if $errors.gold}
 					<label for="gold" class="label">
 						<span class="label-text-alt text-error">{$errors.gold}</span>
@@ -231,7 +258,13 @@
 				<label for="dtd" class="label">
 					<span class="label-text overflow-hidden text-ellipsis whitespace-nowrap">Downtime Days</span>
 				</label>
-				<input type="number" name="dtd" bind:value={$form.dtd} class="input input-bordered w-full focus:border-primary" />
+				<input
+					type="number"
+					name="dtd"
+					bind:value={$form.dtd}
+					class="input input-bordered w-full focus:border-primary"
+					aria-invalid={$errors.dtd ? "true" : undefined}
+				/>
 				{#if $errors.dtd}
 					<label for="dtd" class="label">
 						<span class="label-text-alt text-error">{$errors.dtd}</span>
@@ -318,6 +351,7 @@
 										if ($form.magic_items_gained[index]) $form.magic_items_gained[index].name = e.currentTarget.value;
 									}}
 									class="input input-bordered w-full focus:border-primary"
+									aria-invalid={$errors.magic_items_gained?.[index]?.name ? "true" : undefined}
 								/>
 								{#if $errors.magic_items_gained?.[index]?.name}
 									<label for={`magic_items_gained.${index}.name`} class="label">
@@ -372,6 +406,7 @@
 										if ($form.story_awards_gained[index]) $form.story_awards_gained[index].name = e.currentTarget.value;
 									}}
 									class="input input-bordered w-full focus:border-primary"
+									aria-invalid={$errors.story_awards_gained?.[index]?.name ? "true" : undefined}
 								/>
 								{#if $errors.story_awards_gained?.[index]?.name}
 									<label for={`story_awards_gained.${index}.name`} class="label">

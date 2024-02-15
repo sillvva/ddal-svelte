@@ -73,7 +73,7 @@
 				required
 				bind:value={$form.name}
 				class="input input-bordered w-full focus:border-primary"
-				aria-invalid={$errors.name ? "true" : "false"}
+				aria-invalid={$errors.name ? "true" : undefined}
 			/>
 			{#if $errors.name}
 				<label for="name" class="label">
@@ -93,7 +93,7 @@
 				required
 				bind:date={$form.date}
 				class="input input-bordered w-full focus:border-primary"
-				aria-invalid={$errors.date ? "true" : "false"}
+				aria-invalid={$errors.date ? "true" : undefined}
 			/>
 			{#if $errors.date}
 				<label for="date" class="label">
@@ -136,6 +136,7 @@
 						}}
 						clearable
 						on:clear={() => ($form.dm = defaultDM(data.user.id))}
+						aria-invalid={$errors.dm?.name ? "true" : undefined}
 					/>
 					{#if $errors.dm?.name}
 						<label for="dmName" class="label">
@@ -172,6 +173,7 @@
 						}}
 						clearable
 						on:clear={() => ($form.dm = defaultDM(data.user.id))}
+						aria-invalid={$errors.dm?.DCI ? "true" : undefined}
 					/>
 					{#if $errors.dm?.DCI}
 						<label for="dmDCI" class="label">
@@ -200,6 +202,7 @@
 							min="0"
 							bind:value={$form.experience}
 							class="input input-bordered w-full focus:border-primary"
+							aria-invalid={$errors.experience ? "true" : undefined}
 						/>
 						{#if $errors.experience}
 							<label for="experience" class="label">
@@ -220,6 +223,7 @@
 							max={Math.max($form.level, character ? 20 - character.total_level : 19)}
 							bind:value={$form.level}
 							class="input input-bordered w-full focus:border-primary"
+							aria-invalid={$errors.level ? "true" : undefined}
 						/>
 						{#if $errors.level}
 							<label for="level" class="label">
@@ -235,7 +239,13 @@
 						<label for="acp" class="label">
 							<span class="label-text">ACP</span>
 						</label>
-						<input type="number" name="acp" bind:value={$form.acp} class="input input-bordered w-full focus:border-primary" />
+						<input
+							type="number"
+							name="acp"
+							bind:value={$form.acp}
+							class="input input-bordered w-full focus:border-primary"
+							aria-invalid={$errors.acp ? "true" : undefined}
+						/>
 						{#if $errors.acp}
 							<label for="acp" class="label">
 								<span class="label-text-alt text-error">{$errors.acp}</span>
@@ -247,7 +257,13 @@
 					<label for="tcp" class="label">
 						<span class="label-text">TCP</span>
 					</label>
-					<input type="number" name="tcp" bind:value={$form.tcp} class="input input-bordered w-full focus:border-primary" />
+					<input
+						type="number"
+						name="tcp"
+						bind:value={$form.tcp}
+						class="input input-bordered w-full focus:border-primary"
+						aria-invalid={$errors.tcp ? "true" : undefined}
+					/>
 					{#if $errors.tcp}
 						<label for="tcp" class="label">
 							<span class="label-text-alt text-error">{$errors.tcp}</span>
@@ -259,7 +275,13 @@
 				<label for="gold" class="label">
 					<span class="label-text">Gold</span>
 				</label>
-				<input type="number" name="gold" bind:value={$form.gold} class="input input-bordered w-full focus:border-primary" />
+				<input
+					type="number"
+					name="gold"
+					bind:value={$form.gold}
+					class="input input-bordered w-full focus:border-primary"
+					aria-invalid={$errors.gold ? "true" : undefined}
+				/>
 				{#if $errors.gold}
 					<label for="gold" class="label">
 						<span class="label-text-alt text-error">{$errors.gold}</span>
@@ -270,7 +292,13 @@
 				<label for="dtd" class="label">
 					<span class="label-text overflow-hidden text-ellipsis whitespace-nowrap">Downtime Days</span>
 				</label>
-				<input type="number" name="dtd" bind:value={$form.dtd} class="input input-bordered w-full focus:border-primary" />
+				<input
+					type="number"
+					name="dtd"
+					bind:value={$form.dtd}
+					class="input input-bordered w-full focus:border-primary"
+					aria-invalid={$errors.dtd ? "true" : undefined}
+				/>
 				{#if $errors.dtd}
 					<label for="dtd" class="label">
 						<span class="label-text-alt text-error">{$errors.dtd}</span>
@@ -380,6 +408,7 @@
 										if ($form.magic_items_gained[index]) $form.magic_items_gained[index].name = e.currentTarget.value;
 									}}
 									class="input input-bordered w-full focus:border-primary"
+									aria-invalid={$errors.magic_items_gained?.[index]?.name ? "true" : undefined}
 								/>
 								{#if $errors.magic_items_gained?.[index]?.name}
 									<label for={`magic_items_gained.${index}.name`} class="label">
@@ -430,6 +459,7 @@
 									}}
 									name={`magic_items_lost.${index}`}
 									class="select select-bordered w-full"
+									aria-invalid={$errors.magic_items_lost?.[index] ? "true" : undefined}
 								>
 									{#each magicItems.filter((item) => item.id === id || !$form.magic_items_lost.includes(item.id)) as item}
 										<option value={item.id}>
@@ -472,6 +502,7 @@
 										if ($form.story_awards_gained[index]) $form.story_awards_gained[index].name = e.currentTarget.value;
 									}}
 									class="input input-bordered w-full focus:border-primary"
+									aria-invalid={$errors.story_awards_gained?.[index]?.name ? "true" : undefined}
 								/>
 								{#if $errors.story_awards_gained?.[index]?.name}
 									<label for={`story_awards_gained.${index}.name`} class="label">
@@ -522,6 +553,7 @@
 									}}
 									name={`story_awards_lost.${index}`}
 									class="select select-bordered w-full"
+									aria-invalid={$errors.story_awards_lost?.[index] ? "true" : undefined}
 								>
 									{#each storyAwards.filter((item) => item.id === id || !$form.story_awards_lost.includes(item.id)) as item}
 										<option value={item.id}>

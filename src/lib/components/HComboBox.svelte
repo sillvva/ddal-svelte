@@ -107,6 +107,7 @@
 	{#if value && selected && clearable}
 		<button
 			class="btn join-item input-bordered"
+			type="button"
 			on:click|preventDefault={() => {
 				dispatch("clear");
 				$combobox.selected = null;
@@ -117,7 +118,7 @@
 		</button>
 	{/if}
 	{#if dev}
-		<button class="btn join-item input-bordered" on:click|preventDefault={() => (debug = !debug)}>
+		<button type="button" class="btn join-item input-bordered" on:click|preventDefault={() => (debug = !debug)}>
 			<Icon src="info" class="w-6" />
 		</button>
 	{/if}
