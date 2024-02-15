@@ -202,7 +202,7 @@
 						data.mobile ? "grid-characters-mobile sm:grid-characters-mobile-sm" : "grid-characters-mobile sm:grid-characters"
 					)}
 				>
-					<header class="!hidden sm:!contents">
+					<header class="!hidden text-base-content/70 sm:!contents">
 						{#if !data.mobile}
 							<div class="hidden sm:block" />
 						{/if}

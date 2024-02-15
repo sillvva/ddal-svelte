@@ -362,7 +362,7 @@
 		<noscript class="col-span-12 flex flex-wrap justify-center gap-4 text-center font-bold">
 			<div>JavaScript is required to add/remove magic items and story awards.</div>
 		</noscript>
-		<div class="col-span-12 grid grid-cols-12 gap-4">
+		<div class="col-span-12 grid grid-cols-12 gap-4 dark:text-white">
 			{#each $form.magic_items_gained as item, index}
 				<div class="card col-span-12 bg-base-300/70 shadow-xl sm:col-span-6">
 					<div class="card-body flex flex-col gap-4">

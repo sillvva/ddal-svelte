@@ -131,7 +131,7 @@
 		<div class="w-full overflow-x-auto rounded-lg bg-base-200">
 			<table class="table w-full">
 				<thead>
-					<tr class="bg-base-300">
+					<tr class="bg-base-300 text-base-content/70">
 						<th class="table-cell sm:hidden print:hidden">Game</th>
 						<th class="hidden sm:table-cell print:table-cell">Title</th>
 						<th class="hidden sm:table-cell print:table-cell">Advancement</th>

@@ -19,7 +19,7 @@
 			<div class="w-full overflow-x-auto rounded-lg bg-base-200">
 				<table class="table w-full">
 					<thead>
-						<tr class="bg-base-300">
+						<tr class="bg-base-300 text-base-content/70">
 							<th class="">DM</th>
 							<th class="hidden xs:table-cell">DCI</th>
 							<th class="hidden xs:table-cell">Logs</th>

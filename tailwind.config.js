@@ -44,7 +44,8 @@ export default {
 				dark: {
 					...themes["dark"],
 					primary: "#6419e6",
-					secondary: "#c881ff"
+					secondary: "#c881ff",
+					"base-content": "#c4ccca"
 				}
 			}
 		]
