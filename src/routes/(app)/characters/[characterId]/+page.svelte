@@ -146,7 +146,7 @@
 										if (result.type !== "redirect") $pageLoader = false;
 									};
 								}}
-								class="btn btn-error btn-sm"
+								class="menu-item-error"
 							>
 								<button
 									on:click|preventDefault={(e) => {
