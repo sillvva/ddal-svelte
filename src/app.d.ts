@@ -27,6 +27,12 @@ declare global {
 						imageUrl: string;
 				  };
 		}
+		namespace Superforms {
+			type Message = {
+				type: "error" | "success";
+				text: string;
+			};
+		}
 	}
 
 	interface CustomSession {

@@ -65,8 +65,9 @@
 	.btn-primary {
 		@apply bg-primary text-white;
 	}
-	.btn-error {
-		@apply bg-error text-white hover:text-white dark:border-error dark:bg-base-100 dark:hover:bg-error;
+	.btn-error,
+	.menu-item-error {
+		@apply bg-error text-white hover:text-white dark:border dark:border-error dark:bg-base-100 dark:hover:bg-error;
 	}
 	.grid-characters {
 		grid-template-columns: auto 1fr auto auto auto;

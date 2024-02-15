@@ -6,6 +6,7 @@
 	import SuperForm from "$lib/components/SuperForm.svelte";
 	import { dungeonMasterSchema } from "$lib/schemas";
 	import { sorter } from "$lib/util";
+	import FormMessage from "$src/lib/components/FormMessage.svelte";
 	import { superForm } from "sveltekit-superforms";
 	import { valibotClient } from "sveltekit-superforms/adapters";
 	import { pageLoader } from "../../+layout.svelte";
@@ -26,13 +27,7 @@
 	<BreadCrumbs />
 
 	<SuperForm action="?/saveDM" superForm={dmForm}>
-		{#if $message}
-			<div class="alert alert-error mb-4 shadow-lg">
-				<Icon src="alert-circle" class="w-6" />
-				{$message}
-			</div>
-		{/if}
-
+		<FormMessage message={$message} />
 		<div class="grid grid-cols-12 gap-4">
 			<div class="col-span-12 sm:col-span-6">
 				<div class="form-control w-full">
@@ -48,7 +43,7 @@
 						bind:value={$dmFormData.name}
 						required
 						class="input input-bordered w-full focus:border-primary"
-						disabled={$dmFormData.uid === data.user.id}
+						disabled={$dmFormData.uid === data.user.id ? true : undefined}
 					/>
 					{#if $errors.name}
 						<label for="name" class="label">

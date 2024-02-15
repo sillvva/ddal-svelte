@@ -54,8 +54,15 @@ export const actions = {
 		const result = await saveCharacter(characterId, session.user.id, form.data);
 		if ("id" in result) redirect(302, `/characters/${result.id}`);
 
-		return message(form, result.error, {
-			status: result.status
-		});
+		return message(
+			form,
+			{
+				type: "error",
+				text: result.error
+			},
+			{
+				status: result.status
+			}
+		);
 	}
 };

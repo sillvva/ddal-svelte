@@ -71,9 +71,16 @@ export const actions = {
 		if (!form.valid) return fail(400, { form });
 
 		if (!form.data.is_dm_log)
-			return message(form, "Only DM logs can be saved here.", {
-				status: 400
-			});
+			return message(
+				form,
+				{
+					type: "error",
+					text: "Only DM logs can be saved here."
+				},
+				{
+					status: 400
+				}
+			);
 
 		const result = await saveLog(form.data, session.user);
 		if ("id" in result) redirect(302, `/dm-logs/`);
@@ -84,8 +91,15 @@ export const actions = {
 		if (field === "applied_date") return setError(form, "applied_date", result.error);
 		if (field === "characterId") return setError(form, "characterId", result.error);
 
-		return message(form, result.error, {
-			status: result.status
-		});
+		return message(
+			form,
+			{
+				type: "error",
+				text: result.error
+			},
+			{
+				status: result.status
+			}
+		);
 	}
 };

@@ -6,6 +6,7 @@
 	import Markdown from "$lib/components/Markdown.svelte";
 	import SuperForm from "$lib/components/SuperForm.svelte";
 	import { dMLogSchema } from "$lib/schemas";
+	import FormMessage from "$src/lib/components/FormMessage.svelte";
 	import HComboBox from "$src/lib/components/HComboBox.svelte";
 	import { superForm } from "sveltekit-superforms";
 	import { valibotClient } from "sveltekit-superforms/adapters";
@@ -36,13 +37,7 @@
 <BreadCrumbs />
 
 <SuperForm action="?/saveLog" superForm={logForm}>
-	{#if $message}
-		<div class="alert alert-error mb-4 shadow-lg">
-			<Icon src="alert-circle" class="w-6" />
-			{$message}
-		</div>
-	{/if}
-
+	<FormMessage message={$message} />
 	<div class="grid grid-cols-12 gap-4">
 		<div class={twMerge("form-control col-span-12 sm:col-span-6 lg:col-span-3")}>
 			<label for="name" class="label">
