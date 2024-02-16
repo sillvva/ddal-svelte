@@ -8,11 +8,11 @@
 	import { afterNavigate } from "$app/navigation";
 	import { navigating, page } from "$app/stores";
 	import Drawer from "$lib/components/Drawer.svelte";
+	import Dropdown from "$lib/components/Dropdown.svelte";
 	import Icon from "$lib/components/Icon.svelte";
 	import Markdown from "$lib/components/Markdown.svelte";
 	import Settings from "$lib/components/Settings.svelte";
-	import type { AppStore } from "$lib/schemas";
-	import Dropdown from "$src/lib/components/Dropdown.svelte";
+	import type { CookieStore } from "$src/server/cookie.js";
 	import { signOut } from "@auth/sveltekit/client";
 	import { hotkey } from "@svelteuidev/composables";
 	import { getContext } from "svelte";
@@ -20,7 +20,7 @@
 	import { twMerge } from "tailwind-merge";
 
 	export let data;
-	const app = getContext<AppStore>("app");
+	const app = getContext<CookieStore<App.Cookie>>("app");
 
 	let settingsOpen = false;
 

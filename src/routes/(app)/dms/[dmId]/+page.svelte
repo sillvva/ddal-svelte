@@ -2,11 +2,11 @@
 	// import { enhance } from "$app/forms";
 	import { applyAction, enhance } from "$app/forms";
 	import BreadCrumbs from "$lib/components/BreadCrumbs.svelte";
+	import FormMessage from "$lib/components/FormMessage.svelte";
 	import Icon from "$lib/components/Icon.svelte";
 	import SuperForm from "$lib/components/SuperForm.svelte";
 	import { dungeonMasterSchema } from "$lib/schemas";
 	import { sorter } from "$lib/util";
-	import FormMessage from "$src/lib/components/FormMessage.svelte";
 	import { superForm } from "sveltekit-superforms";
 	import { valibotClient } from "sveltekit-superforms/adapters";
 	import { pageLoader } from "../../+layout.svelte";

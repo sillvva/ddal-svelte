@@ -2,15 +2,15 @@
 	import { applyAction, enhance } from "$app/forms";
 	import { goto, pushState } from "$app/navigation";
 	import BreadCrumbs from "$lib/components/BreadCrumbs.svelte";
+	import Dropdown from "$lib/components/Dropdown.svelte";
 	import Icon from "$lib/components/Icon.svelte";
 	import Items from "$lib/components/Items.svelte";
 	import Markdown from "$lib/components/Markdown.svelte";
 	import SearchResults from "$lib/components/SearchResults.svelte";
-	import type { AppStore } from "$lib/schemas";
 	import type { TransitionAction } from "$lib/util";
 	import { createTransition, slugify, sorter, stopWords } from "$lib/util";
-	import Dropdown from "$src/lib/components/Dropdown.svelte";
 	import { pageLoader } from "$src/routes/(app)/+layout.svelte";
+	import type { CookieStore } from "$src/server/cookie.js";
 	import { download, hotkey } from "@svelteuidev/composables";
 	import MiniSearch from "minisearch";
 	import { getContext } from "svelte";
@@ -20,7 +20,7 @@
 	export let data;
 	export let form;
 
-	const app = getContext<AppStore>("app");
+	const app = getContext<CookieStore<App.Cookie>>("app");
 	const transition = getContext<TransitionAction>("transition");
 
 	const character = data.character;

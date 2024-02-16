@@ -2,14 +2,15 @@
 	import { browser } from "$app/environment";
 	import { page } from "$app/stores";
 	import Icon from "$lib/components/Icon.svelte";
-	import { providers, type AppStore } from "$lib/schemas";
+	import { providers } from "$lib/components/Settings.svelte";
+	import type { CookieStore } from "$src/server/cookie.js";
 	import { signIn } from "@auth/sveltekit/client";
 	import { getContext } from "svelte";
 	import { twMerge } from "tailwind-merge";
 
 	export let data;
 
-	const app = getContext<AppStore>("app");
+	const app = getContext<CookieStore<App.Cookie>>("app");
 
 	$: if (browser) {
 		const hasCookie = document.cookie.includes("session-token");

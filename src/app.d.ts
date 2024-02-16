@@ -33,6 +33,24 @@ declare global {
 				text: string;
 			};
 		}
+
+		interface Cookie {
+			settings: {
+				background: boolean;
+				theme: "system" | "dark" | "light";
+				mode: "dark" | "light";
+			};
+			characters: {
+				magicItems: boolean;
+				display: "list" | "grid";
+			};
+			log: {
+				descriptions: boolean;
+			};
+			dmLogs: {
+				sort: "asc" | "desc";
+			};
+		}
 	}
 
 	interface CustomSession {

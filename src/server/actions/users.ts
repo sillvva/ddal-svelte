@@ -1,4 +1,4 @@
-import type { providers } from "$src/lib/schemas";
+import type { providers } from "$lib/components/Settings.svelte";
 import { revalidateKeys, type CacheKey } from "../cache";
 import { getCharactersCache } from "../data/characters";
 import { prisma } from "../db";

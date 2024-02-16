@@ -1,5 +1,4 @@
 import { building } from "$app/environment";
-import { type App } from "$lib/schemas";
 import { serverGetCookie } from "$src/server/cookie.js";
 import { checkEnv } from "$src/server/env.js";
 
@@ -10,7 +9,7 @@ if (building) {
 }
 
 export const load = async (event) => {
-	const appCookie = serverGetCookie<App>(event.cookies, "app", {
+	const appCookie = serverGetCookie<App.Cookie>(event.cookies, "app", {
 		settings: {
 			background: true,
 			theme: "system",

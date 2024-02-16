@@ -1,5 +1,4 @@
-import type { CookieStore } from "$src/server/cookie";
-import type { Account, Character } from "@prisma/client";
+import type { Character } from "@prisma/client";
 import type { NumericRange } from "@sveltejs/kit";
 import type { FormPathLeaves } from "sveltekit-superforms";
 import {
@@ -132,44 +131,6 @@ export const newCharacterSchema = object({
 
 export type EditCharacterSchema = Output<typeof editCharacterSchema>;
 export const editCharacterSchema = merge([object({ id: string() }), newCharacterSchema]);
-
-export type App = {
-	settings: {
-		background: boolean;
-		theme: "system" | "dark" | "light";
-		mode: "dark" | "light";
-	};
-	characters: {
-		magicItems: boolean;
-		display: "list" | "grid";
-	};
-	log: {
-		descriptions: boolean;
-	};
-	dmLogs: {
-		sort: "asc" | "desc";
-	};
-};
-export type AppStore = CookieStore<App>;
-
-type Provider = {
-	name: string;
-	id: string;
-	logo?: string;
-	account?: Account;
-};
-export const providers = [
-	{
-		name: "Google",
-		id: "google",
-		logo: "/images/google.svg"
-	},
-	{
-		name: "Discord",
-		id: "discord",
-		logo: "/images/discord.svg"
-	}
-] as const satisfies Provider[];
 
 export type SaveResult<T extends object | null, S extends Record<string, unknown>> = Promise<T | SaveError<S>>;
 

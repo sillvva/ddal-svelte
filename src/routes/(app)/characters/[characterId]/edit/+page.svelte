@@ -1,8 +1,8 @@
 <script lang="ts">
 	import BreadCrumbs from "$lib/components/BreadCrumbs.svelte";
+	import FormMessage from "$lib/components/FormMessage.svelte";
 	import SuperForm from "$lib/components/SuperForm.svelte";
 	import { newCharacterSchema } from "$lib/schemas";
-	import FormMessage from "$src/lib/components/FormMessage.svelte";
 	import { superForm } from "sveltekit-superforms";
 	import { valibotClient } from "sveltekit-superforms/adapters";
 

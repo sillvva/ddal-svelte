@@ -1,4 +1,4 @@
-import { envSchema } from "$src/lib/schemas";
+import { envSchema } from "$lib/schemas";
 import { ValiError, parse } from "valibot";
 
 export const checkEnv = async () => {
