@@ -40,14 +40,7 @@
 	}
 
 	$: withLabel = values.map((v) => ({ ...v, label: v.label || v.value }));
-	$: matched =
-		withLabel.filter((v) =>
-			v.label
-				.toLowerCase()
-				.replace(/\s+/g, "")
-				.includes((value || "").toLowerCase().replace(/\s+/g, ""))
-		).length === 1;
-	$: withCustom = matched || !value?.trim() || !allowCustom ? withLabel : [{ value, label: `Add "${value}"` }, ...withLabel];
+	$: withCustom = !value?.trim() || !allowCustom ? withLabel : [{ value, label: `Add "${value}"` }, ...withLabel];
 	$: filtered = withCustom.filter((v) =>
 		v.label
 			.toLowerCase()
