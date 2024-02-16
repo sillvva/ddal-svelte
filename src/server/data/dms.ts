@@ -38,15 +38,7 @@ export async function getUserDMsWithLogs(user: LocalsSession["user"]) {
 					}
 				}
 			}
-		},
-		orderBy: [
-			{
-				uid: "desc"
-			},
-			{
-				name: "asc"
-			}
-		]
+		}
 	});
 
 	if (!dms.find((dm) => dm.uid === user.id)) {
@@ -64,8 +56,10 @@ export async function getUserDMsWithLogs(user: LocalsSession["user"]) {
 		.filter((dm) => dm.owner === user.id || dm.uid === user.id)
 		.map((dm) => ({
 			...dm,
+			uid: dm.uid || null,
 			owner: user.id
-		}));
+		}))
+		.sort((a, b) => (b.uid || "").localeCompare(a.uid || "") || a.name.localeCompare(b.name));
 }
 
 export async function getUserDMsWithLogsCache(user: LocalsSession["user"]) {

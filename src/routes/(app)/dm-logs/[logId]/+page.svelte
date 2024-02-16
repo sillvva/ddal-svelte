@@ -1,14 +1,13 @@
 <script lang="ts">
 	import AutoResizeTextArea from "$lib/components/AutoResizeTextArea.svelte";
 	import BreadCrumbs from "$lib/components/BreadCrumbs.svelte";
-	import DateTimeInput from "$lib/components/DateTimeInput.svelte";
 	import Icon from "$lib/components/Icon.svelte";
 	import Markdown from "$lib/components/Markdown.svelte";
 	import SuperForm from "$lib/components/SuperForm.svelte";
 	import { dMLogSchema } from "$lib/schemas";
 	import FormMessage from "$src/lib/components/FormMessage.svelte";
 	import HComboBox from "$src/lib/components/HComboBox.svelte";
-	import { superForm } from "sveltekit-superforms";
+	import { dateProxy, superForm } from "sveltekit-superforms";
 	import { valibotClient } from "sveltekit-superforms/adapters";
 	import { twMerge } from "tailwind-merge";
 
@@ -25,7 +24,10 @@
 		taintedMessage: "You have unsaved changes. Are you sure you want to leave?"
 	});
 
-	const { form, errors, submitting, message } = logForm;
+	const { form, errors, submitting, message, constraints } = logForm;
+
+	const proxyDate = dateProxy(form, "date", { format: "datetime-local" });
+	const proxyAppliedDate = dateProxy(form, "applied_date", { format: "datetime-local", empty: "null" });
 
 	let season: 1 | 8 | 9 = $form.experience ? 1 : $form.acp ? 8 : 9;
 
@@ -37,7 +39,7 @@
 <BreadCrumbs />
 
 <SuperForm action="?/saveLog" superForm={logForm}>
-	<FormMessage message={$message} />
+	<FormMessage {message} />
 	<div class="grid grid-cols-12 gap-4">
 		<div class={twMerge("form-control col-span-12 sm:col-span-6 lg:col-span-3")}>
 			<label for="name" class="label">
@@ -67,12 +69,13 @@
 					<span class="text-error">*</span>
 				</span>
 			</label>
-			<DateTimeInput
-				name="date"
-				bind:date={$form.date}
-				required
+			<input
+				type="datetime-local"
+				bind:value={$proxyDate}
 				class="input input-bordered w-full focus:border-primary"
+				required
 				aria-invalid={$errors.date ? "true" : undefined}
+				{...$constraints.date}
 			/>
 			{#if $errors.date}
 				<label for="date" class="label">
@@ -132,12 +135,14 @@
 					{/if}
 				</span>
 			</label>
-			<DateTimeInput
-				name="applied_date"
-				bind:date={$form.applied_date}
-				required={!!$form.characterId}
+			<input
+				type="datetime-local"
+				bind:value={$proxyAppliedDate}
 				class="input input-bordered w-full focus:border-primary"
+				required={!!$form.characterId}
 				aria-invalid={$errors.applied_date ? "true" : undefined}
+				{...$constraints.applied_date}
+				min={$proxyDate}
 			/>
 			{#if $errors.applied_date}
 				<label for="applied_date" class="label">

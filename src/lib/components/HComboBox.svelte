@@ -34,17 +34,13 @@
 
 	const combobox = createCombobox();
 
-	$: if (!selected) $combobox.selected = null;
+	$: if (!selected) {
+		$combobox.selected = null;
+		$combobox.active = 0;
+	}
 
 	$: withLabel = values.map((v) => ({ ...v, label: v.label || v.value }));
-	$: matched =
-		withLabel.filter((v) =>
-			v.label
-				.toLowerCase()
-				.replace(/\s+/g, "")
-				.includes((value || "").toLowerCase().replace(/\s+/g, ""))
-		).length === 1;
-	$: withCustom = matched || !value?.trim() || !allowCustom ? withLabel : [{ value, label: `Add "${value}"` }, ...withLabel];
+	$: withCustom = !value?.trim() || !allowCustom ? withLabel : [{ value, label: `Add "${value}"` }, ...withLabel];
 	$: filtered = withCustom.filter((v) =>
 		v.label
 			.toLowerCase()
@@ -69,7 +65,6 @@
 				}}
 				on:change={() => {
 					if ($combobox.selected && $combobox.selected.value !== value) {
-						$combobox.selected = null;
 						selected = false;
 					}
 					setTimeout(() => {
@@ -110,7 +105,6 @@
 			type="button"
 			on:click|preventDefault={() => {
 				dispatch("clear");
-				$combobox.selected = null;
 				selected = false;
 			}}
 		>

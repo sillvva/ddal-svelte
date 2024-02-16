@@ -1,7 +1,6 @@
 <script lang="ts">
 	import AutoResizeTextArea from "$lib/components/AutoResizeTextArea.svelte";
 	import BreadCrumbs from "$lib/components/BreadCrumbs.svelte";
-	import DateTimeInput from "$lib/components/DateTimeInput.svelte";
 	import Icon from "$lib/components/Icon.svelte";
 	import Markdown from "$lib/components/Markdown.svelte";
 	import SuperForm from "$lib/components/SuperForm.svelte";
@@ -10,7 +9,7 @@
 	import { sorter } from "$lib/util";
 	import FormMessage from "$src/lib/components/FormMessage.svelte";
 	import HComboBox from "$src/lib/components/HComboBox.svelte";
-	import { superForm } from "sveltekit-superforms";
+	import { dateProxy, superForm } from "sveltekit-superforms";
 	import { valibotClient } from "sveltekit-superforms/adapters";
 	import { twMerge } from "tailwind-merge";
 
@@ -24,7 +23,9 @@
 		taintedMessage: "You have unsaved changes. Are you sure you want to leave?"
 	});
 
-	const { form, errors, submitting, message } = logForm;
+	const { form, errors, submitting, message, constraints } = logForm;
+
+	const proxyDate = dateProxy(form, "date", { format: "datetime-local" });
 
 	let magicItems = character
 		? getMagicItems(character, { excludeDropped: true, lastLogId: $form.id }).sort((a, b) => sorter(a.name, b.name))
@@ -44,7 +45,7 @@
 <BreadCrumbs />
 
 <SuperForm action="?/saveLog" superForm={logForm}>
-	<FormMessage message={$message} />
+	<FormMessage {message} />
 	<div class="grid grid-cols-12 gap-4">
 		<div class="form-control col-span-12 sm:col-span-4">
 			<label for="type" class="label">
@@ -83,12 +84,13 @@
 					<span class="text-error">*</span>
 				</span>
 			</label>
-			<DateTimeInput
-				name="date"
-				required
-				bind:date={$form.date}
+			<input
+				type="datetime-local"
+				bind:value={$proxyDate}
 				class="input input-bordered w-full focus:border-primary"
+				required
 				aria-invalid={$errors.date ? "true" : undefined}
+				{...$constraints.date}
 			/>
 			{#if $errors.date}
 				<label for="date" class="label">

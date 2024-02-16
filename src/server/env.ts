@@ -12,18 +12,18 @@ export const checkEnv = async () => {
 			AUTH_TRUST_HOST: env.AUTH_URL?.includes("localhost") ? env.AUTH_TRUST_HOST : undefined
 		});
 	} catch (err) {
-		if (err instanceof Error) console.error("❌ Invalid environment variables:\n", err.message);
-		if (err instanceof ValiError) {
-			console.error(
-				"❌ Invalid environment variables:\n",
-				...err.issues
-					.map((issue) => {
-						const path = issue.path?.map((p) => p.key).join(".");
-						if (path) return `${path}: ${issue.message}: ${issue.input}\n`;
-					})
-					.filter(Boolean)
-			);
-			process.exit(1);
+		let message = err;
+		if (err instanceof Error) message = err.message;
+		else if (err instanceof ValiError) {
+			message = err.issues
+				.map((issue) => {
+					const path = issue.path?.map((p) => p.key).join(".");
+					if (path) return `${path}: ${issue.message}: ${issue.input}`;
+					return `${issue.message}: ${issue.input}`;
+				})
+				.join("\n");
 		}
+		console.error("❌ Invalid environment variables:\n", message);
+		process.exit(1);
 	}
 };
