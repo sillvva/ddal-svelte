@@ -102,18 +102,22 @@ export const dMLogSchema = (characters: Character[]) =>
 		custom((input) => input.is_dm_log, "Only DM logs can be saved here."),
 		forward(
 			custom(
-				(input) => !(!!input.characterId && !(characters || []).find((c) => c.id === input.characterId)),
+				(input) => !input.characterId && !!(characters || []).find((c) => c.id === input.characterId),
 				"Character not found"
 			),
 			["characterId"]
 		),
 		forward(
-			custom((input) => !(!input.applied_date && !!input.characterId), "Date must be set if applied to a character"),
+			custom((input) => !!input.characterId || !input.applied_date, "Character must be selected if applied date is set"),
+			["characterId"]
+		),
+		forward(
+			custom((input) => !!input.applied_date || !input.characterId, "Date must be set if applied to a character"),
 			["applied_date"]
 		),
 		forward(
-			custom((input) => !(!input.characterId && !!input.applied_date), "Character must be selected if applied date is set"),
-			["characterId"]
+			custom((input) => !input.applied_date || input.date < input.applied_date, "Applied date must be after log date"),
+			["applied_date"]
 		)
 	]);
 
