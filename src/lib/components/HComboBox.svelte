@@ -34,7 +34,10 @@
 
 	const combobox = createCombobox();
 
-	$: if (!selected) $combobox.selected = null;
+	$: if (!selected) {
+		$combobox.selected = null;
+		$combobox.active = 0;
+	}
 
 	$: withLabel = values.map((v) => ({ ...v, label: v.label || v.value }));
 	$: matched =
@@ -69,7 +72,6 @@
 				}}
 				on:change={() => {
 					if ($combobox.selected && $combobox.selected.value !== value) {
-						$combobox.selected = null;
 						selected = false;
 					}
 					setTimeout(() => {
@@ -110,7 +112,6 @@
 			type="button"
 			on:click|preventDefault={() => {
 				dispatch("clear");
-				$combobox.selected = null;
 				selected = false;
 			}}
 		>
