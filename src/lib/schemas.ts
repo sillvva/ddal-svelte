@@ -29,9 +29,8 @@ import {
 	type Pipe
 } from "valibot";
 
-export const envSchema = (env: Record<string, string>) =>
+export const envSchemaPrivate = (env: Record<string, string>) =>
 	object({
-		PRODUCTION_URL: string([url()]),
 		DATABASE_URL: string([url()]),
 		REDIS_URL: string([regex(/^rediss?:\/\//, "Must be a valid Redis URL")]),
 		AUTH_SECRET: string([minLength(10, "Must be a string of at least 10 characters")]),
@@ -45,6 +44,10 @@ export const envSchema = (env: Record<string, string>) =>
 		DISCORD_CLIENT_SECRET: string([minLength(1, "Required")]),
 		CRON_CHARACTER_ID: string([minLength(1, "Required")])
 	});
+
+export const envSchemaPublic = object({
+	PUBLIC_PRODUCTION_URL: string([url()])
+});
 
 export type DungeonMasterSchema = Output<typeof dungeonMasterSchema>;
 export type DungeonMasterSchemaIn = Input<typeof dungeonMasterSchema>;

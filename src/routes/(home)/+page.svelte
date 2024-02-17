@@ -2,7 +2,7 @@
 	import { browser } from "$app/environment";
 	import { page } from "$app/stores";
 	import Icon from "$lib/components/Icon.svelte";
-	import { providers } from "$lib/components/Settings.svelte";
+	import { PROVIDERS } from "$lib/constants.js";
 	import type { CookieStore } from "$src/server/cookie.js";
 	import { signIn } from "@auth/sveltekit/client";
 	import { getContext } from "svelte";
@@ -63,7 +63,7 @@
 		</div>
 	{/if}
 	<div class="flex flex-col gap-4">
-		{#each providers as provider}
+		{#each PROVIDERS as provider}
 			<button
 				class={twMerge(
 					"flex h-16 items-center gap-4 rounded-lg px-8 py-4 text-base-content transition-colors hover:bg-base-300",
@@ -80,7 +80,7 @@
 			</button>
 		{/each}
 	</div>
-	{#if providers.length > 1}
+	{#if PROVIDERS.length > 1}
 		<div class="flex gap-4">
 			<a
 				href="/"
