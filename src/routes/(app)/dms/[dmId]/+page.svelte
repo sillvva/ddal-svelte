@@ -21,7 +21,7 @@
 		taintedMessage: "You have unsaved changes. Are you sure you want to leave?"
 	});
 
-	const { form: dmFormData, errors, submitting, message } = dmForm;
+	const { form: dmFormData, submitting, message } = dmForm;
 </script>
 
 <div class="flex flex-col gap-4">
