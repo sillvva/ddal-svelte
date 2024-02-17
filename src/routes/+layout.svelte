@@ -33,8 +33,9 @@
 
 <div
 	class={twMerge(
-		"no-script-hide min-h-dvh bg-[oklch(0.232607_0.013807_253.101)] text-base-content",
-		(data.mobile || !$app.settings.background) && "bg-base-100"
+		"no-script-hide min-h-dvh text-base-content",
+		(data.mobile || !$app.settings.background) && "bg-base-100",
+		$app.settings.mode === "dark" && $app.settings.background && "bg-[oklch(0.232607_0.013807_253.101)]"
 	)}
 >
 	<slot />
