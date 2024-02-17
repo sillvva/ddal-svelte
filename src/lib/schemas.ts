@@ -107,7 +107,7 @@ export const characterLogSchema = (character: CharacterData) =>
 			custom((input) => {
 				const logACP = character.logs.find((log) => log.id === input.id)?.acp || 0;
 				return character.total_level < 20 || input.acp - logACP === 0;
-			}, "Character is already level 20"),
+			}, "Cannot increase level above 20"),
 			["acp"]
 		),
 		forward(
@@ -144,7 +144,7 @@ export const dMLogSchema = (characters: CharacterData[]) =>
 				if (!character) return true;
 				const logACP = character.logs.find((log) => log.id === input.id)?.acp || 0;
 				return character.total_level < 20 || input.acp - logACP === 0;
-			}, "Character is already level 20"),
+			}, "Cannot increase level above 20"),
 			["acp"]
 		),
 		forward(
@@ -153,7 +153,7 @@ export const dMLogSchema = (characters: CharacterData[]) =>
 				if (!character) return true;
 				const logLevel = character.logs.find((log) => log.id === input.id)?.level || 0;
 				return character.total_level + input.level - logLevel <= 20;
-			}, "Character is already level 20"),
+			}, "Cannot increase level above 20"),
 			["level"]
 		)
 	]);
