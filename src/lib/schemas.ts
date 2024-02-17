@@ -46,7 +46,7 @@ export const envSchemaPrivate = (env: Record<string, string>) =>
 	});
 
 export const envSchemaPublic = object({
-	PUBLIC_PRODUCTION_URL: string([url()])
+	PUBLIC_URL: string([url()])
 });
 
 export type DungeonMasterSchema = Output<typeof dungeonMasterSchema>;
