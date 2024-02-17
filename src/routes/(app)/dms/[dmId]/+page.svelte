@@ -30,17 +30,13 @@
 	<SuperForm action="?/saveDM" superForm={dmForm}>
 		<FormMessage {message} />
 		<div class="grid grid-cols-12 gap-4">
-			<div class="col-span-12 sm:col-span-6">
-				<div class="form-control w-full">
-					<TextInput superform={dmForm} field="name" required disabled={$dmFormData.uid === data.user.id ? true : undefined}>
-						DM Name
-					</TextInput>
-				</div>
+			<div class="form-control col-span-12 sm:col-span-6">
+				<TextInput superform={dmForm} field="name" required disabled={$dmFormData.uid === data.user.id ? true : undefined}>
+					DM Name
+				</TextInput>
 			</div>
-			<div class="col-span-12 sm:col-span-6">
-				<div class="form-control w-full">
-					<TextInput superform={dmForm} field="DCI">DCI</TextInput>
-				</div>
+			<div class="form-control col-span-12 sm:col-span-6">
+				<TextInput superform={dmForm} field="DCI">DCI</TextInput>
 			</div>
 			<div class="col-span-12 m-4 text-center">
 				<button type="submit" class="btn btn-primary disabled:bg-primary disabled:bg-opacity-50 disabled:text-opacity-50">

@@ -23,22 +23,22 @@
 <SuperForm action="?/saveCharacter" superForm={characterForm}>
 	<FormMessage {message} />
 	<div class="grid grid-cols-12 gap-4">
-		<div class="col-span-12 sm:col-span-6">
+		<div class="form-control col-span-12 sm:col-span-6">
 			<TextInput superform={characterForm} field="name" required>Character Name</TextInput>
 		</div>
-		<div class="col-span-12 sm:col-span-6">
+		<div class="form-control col-span-12 sm:col-span-6">
 			<TextInput superform={characterForm} field="campaign">Campaign</TextInput>
 		</div>
-		<div class="col-span-12 sm:col-span-6">
+		<div class="form-control col-span-12 sm:col-span-6">
 			<TextInput superform={characterForm} field="race">Species</TextInput>
 		</div>
-		<div class="col-span-12 sm:col-span-6">
+		<div class="form-control col-span-12 sm:col-span-6">
 			<TextInput superform={characterForm} field="class">Class</TextInput>
 		</div>
-		<div class="col-span-12">
+		<div class="form-control col-span-12">
 			<TextInput superform={characterForm} field="character_sheet_url">Character Sheet URL</TextInput>
 		</div>
-		<div class="col-span-12">
+		<div class="form-control col-span-12">
 			<TextInput superform={characterForm} field="image_url" placeholder={data.BLANK_CHARACTER}>Image URL</TextInput>
 		</div>
 		<div class="col-span-12 m-4 text-center">
