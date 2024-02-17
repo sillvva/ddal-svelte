@@ -111,6 +111,7 @@
 					name="image_url"
 					bind:value={$form.image_url}
 					class="input input-bordered w-full focus:border-primary"
+					placeholder={data.BLANK_CHARACTER}
 				/>
 				{#if $errors.image_url}
 					<label for="image_url" class="label">

@@ -6,9 +6,9 @@ import {
 	boolean,
 	custom,
 	date,
+	fallback,
 	forward,
 	literal,
-	maxLength,
 	merge,
 	minLength,
 	minValue,
@@ -31,6 +31,7 @@ import {
 
 export const envSchema = (env: Record<string, string>) =>
 	object({
+		PRODUCTION_URL: string([url()]),
 		DATABASE_URL: string([url()]),
 		REDIS_URL: string([regex(/^rediss?:\/\//, "Must be a valid Redis URL")]),
 		AUTH_SECRET: string([minLength(10, "Must be a string of at least 10 characters")]),
@@ -121,7 +122,7 @@ export const dMLogSchema = (characters: Character[]) =>
 		)
 	]);
 
-const optionalURL = optional(union([string([url("Invalid URL")]), string([maxLength(0)])], "Invalid URL"), "");
+const optionalURL = fallback(string([url("Invalid URL")]), "");
 
 export type NewCharacterSchema = Output<typeof newCharacterSchema>;
 export const newCharacterSchema = object({

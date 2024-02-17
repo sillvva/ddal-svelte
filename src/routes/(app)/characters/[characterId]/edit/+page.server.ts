@@ -1,9 +1,12 @@
+import { PRODUCTION_URL } from "$env/static/private";
 import { newCharacterSchema } from "$lib/schemas";
 import { saveCharacter } from "$src/server/actions/characters.js";
 import { signInRedirect } from "$src/server/auth";
 import { error, fail, redirect } from "@sveltejs/kit";
 import { message, superValidate } from "sveltekit-superforms";
 import { valibot } from "sveltekit-superforms/adapters";
+
+const BLANK_CHARACTER = `${PRODUCTION_URL}/images/blank-character.webp` as const;
 
 export const load = async (event) => {
 	const parent = await event.parent();
@@ -29,7 +32,7 @@ export const load = async (event) => {
 					race: parent.character.race || "",
 					class: parent.character.class || "",
 					character_sheet_url: parent.character.character_sheet_url || "",
-					image_url: parent.character.image_url || ""
+					image_url: parent.character.image_url?.replace(BLANK_CHARACTER, "") || ""
 				}
 			: undefined
 	});
@@ -38,7 +41,8 @@ export const load = async (event) => {
 		title,
 		breadcrumbs: parent.breadcrumbs,
 		...event.params,
-		form
+		form,
+		BLANK_CHARACTER
 	};
 };
 
@@ -51,7 +55,10 @@ export const actions = {
 		if (!form.valid) return fail(400, { form });
 
 		const characterId = event.params.characterId;
-		const result = await saveCharacter(characterId, session.user.id, form.data);
+		const result = await saveCharacter(characterId, session.user.id, {
+			...form.data,
+			image_url: form.data.image_url || BLANK_CHARACTER
+		});
 		if ("id" in result) redirect(302, `/characters/${result.id}`);
 
 		return message(
