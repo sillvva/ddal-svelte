@@ -45,7 +45,7 @@
 		<Markdown content={$value} />
 	</div>
 {/if}
-<label for="description" class="label">
+<label for={field} class="label">
 	{#if $errors}
 		<span class="label-text-alt text-error">{$errors}</span>
 	{:else}

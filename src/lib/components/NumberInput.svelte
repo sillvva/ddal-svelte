@@ -39,7 +39,7 @@
 	{...$$restProps}
 />
 {#if $errors}
-	<label for="name" class="label">
+	<label for={field} class="label">
 		<span class="label-text-alt text-error">{$errors}</span>
 	</label>
 {/if}

@@ -7,6 +7,7 @@
 	import { defaultDM, getMagicItems, getStoryAwards } from "$lib/entities";
 	import { characterLogSchema } from "$lib/schemas";
 	import { sorter } from "$lib/util";
+	import DateInput from "$src/lib/components/DateInput.svelte";
 	import GenericInput from "$src/lib/components/GenericInput.svelte";
 	import MdTextInput from "$src/lib/components/MDTextInput.svelte";
 	import NumberInput from "$src/lib/components/NumberInput.svelte";
@@ -50,28 +51,23 @@
 	<FormMessage {message} />
 	<div class="grid grid-cols-12 gap-4">
 		<div class="form-control col-span-12 sm:col-span-4">
-			<label for="type" class="label">
-				<span class="label-text">Log Type</span>
-			</label>
-			<select name="type" bind:value={$form.type} class="select select-bordered w-full">
-				<option value="game">Game</option>
-				<option value="nongame">Non-Game (Purchase, Trade, etc)</option>
-			</select>
+			<GenericInput superform={logForm} field="type" label="Log Type">
+				<select
+					name="type"
+					bind:value={$form.type}
+					class="select select-bordered w-full"
+					aria-invalid={$errors.type ? "true" : undefined}
+				>
+					<option value="game">Game</option>
+					<option value="nongame">Non-Game (Purchase, Trade, etc)</option>
+				</select>
+			</GenericInput>
 		</div>
 		<div class="form-control col-span-12 sm:col-span-4">
 			<TextInput superform={logForm} field="name" required>Title</TextInput>
 		</div>
 		<div class="form-control col-span-12 sm:col-span-4">
-			<GenericInput superform={logForm} field="date" required label="Date">
-				<input
-					type="datetime-local"
-					bind:value={$proxyDate}
-					class="input input-bordered w-full focus:border-primary"
-					required
-					aria-invalid={$errors.date ? "true" : undefined}
-					{...$constraints.date}
-				/>
-			</GenericInput>
+			<DateInput superform={logForm} field="date" bind:proxy={$proxyDate} required>Date</DateInput>
 		</div>
 		<div class="col-span-12 grid grid-cols-12 gap-4">
 			{#if $form.type === "game"}
@@ -137,14 +133,13 @@
 					</GenericInput>
 				</div>
 				<div class="form-control col-span-12 sm:col-span-4">
-					<label for="season" class="label">
-						<span class="label-text">Season</span>
-					</label>
-					<select id="season" bind:value={season} class="select select-bordered w-full">
-						<option value={9}>Season 9+</option>
-						<option value={8}>Season 8</option>
-						<option value={1}>Season 1-7</option>
-					</select>
+					<GenericInput labelFor="season" label="Season">
+						<select id="season" bind:value={season} class="select select-bordered w-full">
+							<option value={9}>Season 9+</option>
+							<option value={8}>Season 8</option>
+							<option value={1}>Season 1-7</option>
+						</select>
+					</GenericInput>
 				</div>
 				{#if season === 1}
 					<div class="form-control col-span-6 w-full sm:col-span-4">

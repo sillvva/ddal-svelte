@@ -5,6 +5,7 @@
 	import Icon from "$lib/components/Icon.svelte";
 	import SuperForm from "$lib/components/SuperForm.svelte";
 	import { dMLogSchema } from "$lib/schemas";
+	import DateInput from "$src/lib/components/DateInput.svelte";
 	import GenericInput from "$src/lib/components/GenericInput.svelte";
 	import MdTextInput from "$src/lib/components/MDTextInput.svelte";
 	import NumberInput from "$src/lib/components/NumberInput.svelte";
@@ -42,16 +43,7 @@
 			<TextInput superform={logForm} field="name" required>Title</TextInput>
 		</div>
 		<div class={twMerge("form-control col-span-12 sm:col-span-6 lg:col-span-3")}>
-			<GenericInput superform={logForm} field="date" required label="Date">
-				<input
-					type="datetime-local"
-					bind:value={$proxyDate}
-					class="input input-bordered w-full focus:border-primary"
-					required
-					aria-invalid={$errors.date ? "true" : undefined}
-					{...$constraints.date}
-				/>
-			</GenericInput>
+			<DateInput superform={logForm} field="date" bind:proxy={$proxyDate} required>Date</DateInput>
 		</div>
 		<div class="form-control col-span-12 sm:col-span-6 lg:col-span-3">
 			<GenericInput
@@ -92,28 +84,25 @@
 			</GenericInput>
 		</div>
 		<div class="form-control col-span-12 sm:col-span-6 lg:col-span-3">
-			<GenericInput superform={logForm} field="applied_date" label="Assigned Date" required={!!$form.characterId}>
-				<input
-					type="datetime-local"
-					bind:value={$proxyAppliedDate}
-					class="input input-bordered w-full focus:border-primary"
-					required={!!$form.characterId}
-					aria-invalid={$errors.applied_date ? "true" : undefined}
-					{...$constraints.applied_date}
-					min={$proxyDate}
-				/>
-			</GenericInput>
+			<DateInput
+				superform={logForm}
+				field="applied_date"
+				bind:proxy={$proxyAppliedDate}
+				min={$proxyDate}
+				required={!!$form.characterId}
+			>
+				Assigned Date
+			</DateInput>
 		</div>
 		<div class="col-span-12 grid grid-cols-12 gap-4">
 			<div class="form-control col-span-12 sm:col-span-4">
-				<label for="season" class="label">
-					<span class="label-text">Season</span>
-				</label>
-				<select id="season" bind:value={season} class="select select-bordered w-full">
-					<option value={9}>Season 9+</option>
-					<option value={8}>Season 8</option>
-					<option value={1}>Season 1-7</option>
-				</select>
+				<GenericInput labelFor="season" label="Season">
+					<select id="season" bind:value={season} class="select select-bordered w-full">
+						<option value={9}>Season 9+</option>
+						<option value={8}>Season 8</option>
+						<option value={1}>Season 1-7</option>
+					</select>
+				</GenericInput>
 			</div>
 			{#if season === 1}
 				<div class="form-control col-span-12 w-full sm:col-span-4">
