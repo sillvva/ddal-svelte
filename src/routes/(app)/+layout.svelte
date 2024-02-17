@@ -23,6 +23,7 @@
 	const app = getContext<CookieStore<App.Cookie>>("app");
 
 	let settingsOpen = false;
+	let y = 0;
 
 	afterNavigate(() => {
 		pageLoader.set(false);
@@ -60,6 +61,8 @@
 	<meta name="twitter:image" content={image?.trim() || defaultImage} />
 </svelte:head>
 
+<svelte:window bind:scrollY={y} />
+
 {#if $pageLoader || $navigating}
 	<div
 		class="fixed inset-0 z-40 flex items-center justify-center bg-black/50"
@@ -78,11 +81,15 @@
 <div class="relative flex min-h-screen flex-col">
 	<header
 		class={twMerge(
-			"relative z-20 w-full border-b-[1px] border-slate-500",
-			(data.mobile || !$app.settings.background) && "sticky top-0 border-base-300 bg-base-100"
+			"static -top-16 z-20 w-full border-b-[1px] border-slate-500 transition-all",
+			(data.mobile || !$app.settings.background) && "sticky top-0 border-base-300 bg-base-100",
+			!data.mobile && $app.settings.background && y >= 4 * 16 && "sticky top-0 border-slate-500/50"
 		)}
 	>
-		<nav class="container mx-auto flex max-w-5xl gap-2 p-4">
+		{#if $app.settings.background && !data.mobile}
+			<div class={twMerge("absolute inset-0 transition-all", y >= 4 * 16 && "backdrop-blur-lg")} />
+		{/if}
+		<nav class="container relative z-10 mx-auto flex max-w-5xl gap-2 p-4">
 			<Drawer />
 			<Settings bind:open={settingsOpen} />
 			<a
