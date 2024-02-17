@@ -22,7 +22,15 @@ export const load = async (event) => {
 
 	const characters = await getCharactersCache(user.id)
 		.then(async (characters) => await getCharacterCaches(characters.map((c) => c.id)))
-		.then((characters) => characters.map((c) => ({ ...c, logs: c.logs.filter((l) => l.id !== log.id) })));
+		.then((characters) =>
+			characters.map((c) => ({
+				...c,
+				logs: c.logs.filter((l) => l.id !== log.id),
+				magic_items: [],
+				story_awards: [],
+				log_levels: []
+			}))
+		);
 	const character = characters.find((c) => c.id === log.characterId);
 
 	const form = await superValidate(valibot(dMLogSchema(characters)), {
@@ -53,9 +61,7 @@ export const load = async (event) => {
 			name: event.params.logId === "new" ? "New DM Log" : `${log.name}`,
 			href: `/dm-logs/${event.params.logId}`
 		}),
-		user,
 		characters,
-		character,
 		form
 	};
 };
@@ -68,9 +74,9 @@ export const actions = {
 		const log = await getLog(event.params.logId || "", session.user.id);
 		if (event.params.logId !== "new" && !log.id) redirect(302, `/dm-logs`);
 
-		const characters = await getCharactersCache(session.user.id)
-			.then(async (characters) => await getCharacterCaches(characters.map((c) => c.id)))
-			.then((characters) => characters.map((c) => ({ ...c, logs: c.logs.filter((l) => l.id !== log.id) })));
+		const characters = await getCharactersCache(session.user.id).then(
+			async (characters) => await getCharacterCaches(characters.map((c) => c.id))
+		);
 
 		const form = await superValidate(event, valibot(dMLogSchema(characters)));
 		if (!form.valid) return fail(400, { form });
