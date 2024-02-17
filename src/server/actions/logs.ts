@@ -20,6 +20,42 @@ export async function saveLog(input: LogSchema, user?: CustomSession["user"]): S
 		const log = await prisma.$transaction(async (tx) => {
 			if (!user?.id) throw new SaveError(401, "Not authenticated");
 
+			const applied_date: Date | null = input.is_dm_log
+				? input.characterId && input.applied_date !== null
+					? new Date(input.applied_date)
+					: null
+				: new Date(input.date);
+			if (input.characterId && applied_date === null)
+				throw new SaveError<LogSchema>(400, "Applied date is required", {
+					field: "applied_date"
+				});
+
+			if (input.characterId) {
+				const character = await tx.character.findFirst({
+					include: {
+						logs: true
+					},
+					where: { id: input.characterId }
+				});
+
+				if (!character)
+					throw new SaveError<LogSchema>(404, "Character not found", {
+						field: input.is_dm_log ? "characterId" : undefined
+					});
+
+				const currentLevel = getLevels(character.logs).total;
+				const logACP = character.logs.find((log) => log.id === input.id)?.acp || 0;
+				if (currentLevel == 20 && input.acp - logACP > 0)
+					throw new SaveError<LogSchema>(400, "Cannot increase level above 20", {
+						field: "acp"
+					});
+				const logLevel = character.logs.find((log) => log.id === input.id)?.level || 0;
+				if (currentLevel + input.level - logLevel > 20)
+					throw new SaveError<LogSchema>(400, "Cannot increase level above 20", {
+						field: "level"
+					});
+			}
+
 			if (input.dm?.name.trim()) {
 				if (!input.dm.id) {
 					const search = await tx.dungeonMaster.findFirst({
@@ -68,42 +104,6 @@ export async function saveLog(input: LogSchema, user?: CustomSession["user"]): S
 			}
 
 			if (!dm?.id) throw new SaveError(500, "Could not save Dungeon Master");
-
-			const applied_date: Date | null = input.is_dm_log
-				? input.characterId && input.applied_date !== null
-					? new Date(input.applied_date)
-					: null
-				: new Date(input.date);
-			if (input.characterId && applied_date === null)
-				throw new SaveError<LogSchema>(400, "Applied date is required", {
-					field: "applied_date"
-				});
-
-			if (input.characterId) {
-				const character = await tx.character.findFirst({
-					include: {
-						logs: true
-					},
-					where: { id: input.characterId }
-				});
-
-				if (!character)
-					throw new SaveError<LogSchema>(404, "Character not found", {
-						field: "characterId"
-					});
-
-				const currentLevel = getLevels(character.logs).total;
-				const logACP = character.logs.find((log) => log.id === input.id)?.acp || 0;
-				if (currentLevel == 20 && input.acp - logACP > 0)
-					throw new SaveError<LogSchema>(400, "Character is already level 20", {
-						field: "acp"
-					});
-				const logLevel = character.logs.find((log) => log.id === input.id)?.level || 0;
-				if (currentLevel + input.level - logLevel > 20)
-					throw new SaveError<LogSchema>(400, "Character cannot level past 20", {
-						field: "level"
-					});
-			}
 
 			const data: Omit<Log, "id" | "created_at" | "is_dm_log"> = {
 				name: input.name,

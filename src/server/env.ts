@@ -1,16 +1,27 @@
-import { envSchema } from "$src/lib/schemas";
+import { envSchemaPrivate, envSchemaPublic } from "$lib/schemas";
 import { ValiError, parse } from "valibot";
 
 export const checkEnv = async () => {
 	try {
 		// eslint-disable-next-line @typescript-eslint/no-unused-vars
-		const { default: def, ...env } = await import("$env/static/private");
-		if (!env) throw new Error("No environment variables found");
+		const { default: dpriv, ...priv } = await import("$env/static/private");
+		if (!priv) throw new Error("No environment variables found");
 
-		return parse(envSchema(env), {
-			...env,
-			AUTH_TRUST_HOST: env.AUTH_URL?.includes("localhost") ? env.AUTH_TRUST_HOST : undefined
+		const privateResult = parse(envSchemaPrivate(priv), {
+			...priv,
+			AUTH_TRUST_HOST: priv.AUTH_URL?.includes("localhost") ? priv.AUTH_TRUST_HOST : undefined
 		});
+
+		// eslint-disable-next-line @typescript-eslint/no-unused-vars
+		const { default: dpub, ...pub } = await import("$env/static/public");
+		if (!pub) throw new Error("No environment variables found");
+
+		const publicResult = parse(envSchemaPublic, pub);
+
+		return {
+			...privateResult,
+			...publicResult
+		};
 	} catch (err) {
 		let message = err;
 		if (err instanceof Error) message = err.message;

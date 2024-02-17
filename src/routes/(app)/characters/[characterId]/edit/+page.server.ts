@@ -1,4 +1,5 @@
 import { newCharacterSchema } from "$lib/schemas";
+import { BLANK_CHARACTER } from "$src/lib/constants.js";
 import { saveCharacter } from "$src/server/actions/characters.js";
 import { signInRedirect } from "$src/server/auth";
 import { error, fail, redirect } from "@sveltejs/kit";
@@ -29,7 +30,7 @@ export const load = async (event) => {
 					race: parent.character.race || "",
 					class: parent.character.class || "",
 					character_sheet_url: parent.character.character_sheet_url || "",
-					image_url: parent.character.image_url || ""
+					image_url: parent.character.image_url.replace(BLANK_CHARACTER, "")
 				}
 			: undefined
 	});
@@ -38,7 +39,8 @@ export const load = async (event) => {
 		title,
 		breadcrumbs: parent.breadcrumbs,
 		...event.params,
-		form
+		form,
+		BLANK_CHARACTER
 	};
 };
 

@@ -1,12 +1,12 @@
 <script lang="ts">
 	import { goto } from "$app/navigation";
 	import BreadCrumbs from "$lib/components/BreadCrumbs.svelte";
+	import Dropdown from "$lib/components/Dropdown.svelte";
 	import Icon from "$lib/components/Icon.svelte";
 	import SearchResults from "$lib/components/SearchResults.svelte";
-	import type { AppStore } from "$lib/schemas";
 	import type { TransitionAction } from "$lib/util";
 	import { createTransition, slugify, sorter, stopWords } from "$lib/util";
-	import Dropdown from "$src/lib/components/Dropdown.svelte";
+	import type { CookieStore } from "$src/server/cookie.js";
 	import { download, hotkey } from "@svelteuidev/composables";
 	import MiniSearch from "minisearch";
 	import { getContext, onMount } from "svelte";
@@ -18,7 +18,7 @@
 	let characters = data.characters;
 	let loaded = false;
 
-	const app = getContext<AppStore>("app");
+	const app = getContext<CookieStore<App.Cookie>>("app");
 	const transition = getContext<TransitionAction>("transition");
 
 	const s = queryParam("s", ssp.string());

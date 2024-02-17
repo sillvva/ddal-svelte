@@ -2,18 +2,19 @@
 	import { browser } from "$app/environment";
 	import { enhance } from "$app/forms";
 	import { page } from "$app/stores";
-	import { providers, type AppStore } from "$lib/schemas";
+	import { PROVIDERS } from "$lib/constants";
 	import { pageLoader } from "$src/routes/(app)/+layout.svelte";
+	import type { CookieStore } from "$src/server/cookie";
 	import { signIn } from "@auth/sveltekit/client";
 	import type { Account } from "@prisma/client";
 	import { getContext, onMount } from "svelte";
 	import { twMerge } from "tailwind-merge";
 
 	export let open = false;
-	const app = getContext<AppStore>("app");
+	const app = getContext<CookieStore<App.Cookie>>("app");
 
 	$: accounts = $page.data.accounts as Account[];
-	$: authProviders = providers.map((p) => ({
+	$: authProviders = PROVIDERS.map((p) => ({
 		...p,
 		account: accounts.find((a) => a.provider === p.id)
 	}));

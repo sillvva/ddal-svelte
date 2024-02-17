@@ -1,5 +1,4 @@
-import type { CookieStore } from "$src/server/cookie";
-import type { Account, Character } from "@prisma/client";
+import type { CharacterData } from "$src/server/data/characters";
 import type { NumericRange } from "@sveltejs/kit";
 import type { FormPathLeaves } from "sveltekit-superforms";
 import {
@@ -7,9 +6,9 @@ import {
 	boolean,
 	custom,
 	date,
+	fallback,
 	forward,
 	literal,
-	maxLength,
 	merge,
 	minLength,
 	minValue,
@@ -30,7 +29,7 @@ import {
 	type Pipe
 } from "valibot";
 
-export const envSchema = (env: Record<string, string>) =>
+export const envSchemaPrivate = (env: Record<string, string>) =>
 	object({
 		DATABASE_URL: string([url()]),
 		REDIS_URL: string([regex(/^rediss?:\/\//, "Must be a valid Redis URL")]),
@@ -45,6 +44,10 @@ export const envSchema = (env: Record<string, string>) =>
 		DISCORD_CLIENT_SECRET: string([minLength(1, "Required")]),
 		CRON_CHARACTER_ID: string([minLength(1, "Required")])
 	});
+
+export const envSchemaPublic = object({
+	PUBLIC_URL: string([url()])
+});
 
 export type DungeonMasterSchema = Output<typeof dungeonMasterSchema>;
 export type DungeonMasterSchemaIn = Input<typeof dungeonMasterSchema>;
@@ -98,27 +101,64 @@ export const logSchema = object({
 	story_awards_lost: optional(array(string([minLength(1, "Invalid Story Award ID")])), [])
 });
 
-export const dMLogSchema = (characters: Character[]) =>
+export const characterLogSchema = (character: CharacterData) =>
 	object(logSchema.entries, [
-		custom((input) => input.is_dm_log, "Only DM logs can be saved here."),
 		forward(
-			custom(
-				(input) => !(!!input.characterId && !(characters || []).find((c) => c.id === input.characterId)),
-				"Character not found"
-			),
-			["characterId"]
+			custom((input) => {
+				const logACP = character.logs.find((log) => log.id === input.id)?.acp || 0;
+				return character.total_level < 20 || input.acp - logACP === 0;
+			}, "Cannot increase level above 20"),
+			["acp"]
 		),
 		forward(
-			custom((input) => !(!input.applied_date && !!input.characterId), "Date must be set if applied to a character"),
-			["applied_date"]
-		),
-		forward(
-			custom((input) => !(!input.characterId && !!input.applied_date), "Character must be selected if applied date is set"),
-			["characterId"]
+			custom((input) => {
+				const logLevel = character.logs.find((log) => log.id === input.id)?.level || 0;
+				return character.total_level + input.level - logLevel <= 20;
+			}, "Character cannot level past 20"),
+			["level"]
 		)
 	]);
 
-const optionalURL = optional(union([string([url("Invalid URL")]), string([maxLength(0)])], "Invalid URL"), "");
+export const dMLogSchema = (characters: CharacterData[]) =>
+	object(logSchema.entries, [
+		custom((input) => input.is_dm_log, "Only DM logs can be saved here."),
+		forward(
+			custom((input) => !input.characterId || !!characters.find((c) => c.id === input.characterId), "Character not found"),
+			["characterId"]
+		),
+		forward(
+			custom((input) => !!input.characterId || !input.applied_date, "Character must be selected if applied date is set"),
+			["characterId"]
+		),
+		forward(
+			custom((input) => !!input.applied_date || !input.characterId, "Date must be set if applied to a character"),
+			["applied_date"]
+		),
+		forward(
+			custom((input) => !input.applied_date || input.date < input.applied_date, "Applied date must be after log date"),
+			["applied_date"]
+		),
+		forward(
+			custom((input) => {
+				const character = characters.find((c) => c.id === input.characterId);
+				if (!character) return true;
+				const logACP = character.logs.find((log) => log.id === input.id)?.acp || 0;
+				return character.total_level < 20 || input.acp - logACP === 0;
+			}, "Cannot increase level above 20"),
+			["acp"]
+		),
+		forward(
+			custom((input) => {
+				const character = characters.find((c) => c.id === input.characterId);
+				if (!character) return true;
+				const logLevel = character.logs.find((log) => log.id === input.id)?.level || 0;
+				return character.total_level + input.level - logLevel <= 20;
+			}, "Cannot increase level above 20"),
+			["level"]
+		)
+	]);
+
+const optionalURL = fallback(string([url("Invalid URL")]), "");
 
 export type NewCharacterSchema = Output<typeof newCharacterSchema>;
 export const newCharacterSchema = object({
@@ -132,44 +172,6 @@ export const newCharacterSchema = object({
 
 export type EditCharacterSchema = Output<typeof editCharacterSchema>;
 export const editCharacterSchema = merge([object({ id: string() }), newCharacterSchema]);
-
-export type App = {
-	settings: {
-		background: boolean;
-		theme: "system" | "dark" | "light";
-		mode: "dark" | "light";
-	};
-	characters: {
-		magicItems: boolean;
-		display: "list" | "grid";
-	};
-	log: {
-		descriptions: boolean;
-	};
-	dmLogs: {
-		sort: "asc" | "desc";
-	};
-};
-export type AppStore = CookieStore<App>;
-
-type Provider = {
-	name: string;
-	id: string;
-	logo?: string;
-	account?: Account;
-};
-export const providers = [
-	{
-		name: "Google",
-		id: "google",
-		logo: "/images/google.svg"
-	},
-	{
-		name: "Discord",
-		id: "discord",
-		logo: "/images/discord.svg"
-	}
-] as const satisfies Provider[];
 
 export type SaveResult<T extends object | null, S extends Record<string, unknown>> = Promise<T | SaveError<S>>;
 

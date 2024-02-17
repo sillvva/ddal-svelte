@@ -1,8 +1,8 @@
 <script lang="ts">
 	import BreadCrumbs from "$lib/components/BreadCrumbs.svelte";
+	import FormMessage from "$lib/components/FormMessage.svelte";
 	import SuperForm from "$lib/components/SuperForm.svelte";
 	import { newCharacterSchema } from "$lib/schemas";
-	import FormMessage from "$src/lib/components/FormMessage.svelte";
 	import { superForm } from "sveltekit-superforms";
 	import { valibotClient } from "sveltekit-superforms/adapters";
 
@@ -111,6 +111,7 @@
 					name="image_url"
 					bind:value={$form.image_url}
 					class="input input-bordered w-full focus:border-primary"
+					placeholder={data.BLANK_CHARACTER}
 				/>
 				{#if $errors.image_url}
 					<label for="image_url" class="label">

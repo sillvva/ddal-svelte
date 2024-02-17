@@ -1,4 +1,5 @@
 import { getLogsSummary } from "$lib/entities";
+import { BLANK_CHARACTER } from "$src/lib/constants";
 import { cache, mcache, type CacheKey } from "$src/server/cache";
 import { prisma } from "$src/server/db";
 
@@ -33,6 +34,7 @@ export async function getCharacter(characterId: string, includeLogs = true) {
 
 	return {
 		...character,
+		image_url: character.image_url || BLANK_CHARACTER,
 		...getLogsSummary(logs)
 	};
 }
@@ -72,7 +74,10 @@ export async function getCharacterCaches(characterIds: string[]) {
 		});
 
 		return characters
-			.map((c) => ({ key: keys.find((k) => k[1] === c.id)!, value: { ...c, ...getLogsSummary(c.logs) } }))
+			.map((c) => ({
+				key: keys.find((k) => k[1] === c.id)!,
+				value: { ...c, image_url: c.image_url || BLANK_CHARACTER, ...getLogsSummary(c.logs) }
+			}))
 			.filter((c) => c.key);
 	}, keys);
 }

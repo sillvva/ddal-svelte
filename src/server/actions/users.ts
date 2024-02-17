@@ -1,4 +1,4 @@
-import type { providers } from "$src/lib/schemas";
+import type { PROVIDERS } from "$lib/constants";
 import { revalidateKeys, type CacheKey } from "../cache";
 import { getCharactersCache } from "../data/characters";
 import { prisma } from "../db";
@@ -14,7 +14,7 @@ export async function clearUserCache(userId: string) {
 	]);
 }
 
-export type ProviderId = (typeof providers)[number]["id"];
+export type ProviderId = (typeof PROVIDERS)[number]["id"];
 export async function unlinkProvider(userId: string, provider: ProviderId) {
 	try {
 		await prisma.account.deleteMany({

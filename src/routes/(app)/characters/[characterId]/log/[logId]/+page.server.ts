@@ -1,12 +1,12 @@
 import { defaultLog } from "$lib/entities.js";
-import { logSchema } from "$lib/schemas";
+import { characterLogSchema } from "$lib/schemas";
 import { saveLog } from "$src/server/actions/logs.js";
 import { signInRedirect } from "$src/server/auth.js";
 import { getCharacterCache } from "$src/server/data/characters";
 import { getUserDMsWithLogsCache } from "$src/server/data/dms";
 import { getLog } from "$src/server/data/logs";
 import { error, fail, redirect } from "@sveltejs/kit";
-import { message, setError, superValidate } from "sveltekit-superforms";
+import { message, superValidate } from "sveltekit-superforms";
 import { valibot } from "sveltekit-superforms/adapters";
 
 export const load = async (event) => {
@@ -28,7 +28,7 @@ export const load = async (event) => {
 
 	const dms = await getUserDMsWithLogsCache(session.user);
 
-	const form = await superValidate(valibot(logSchema), {
+	const form = await superValidate(valibot(characterLogSchema(character)), {
 		defaults: {
 			...log,
 			characterId: character.id,
@@ -56,7 +56,7 @@ export const load = async (event) => {
 			href: `/characters/${character.id}/log/${log.id}`
 		}),
 		user: session.user,
-		character,
+		character: character,
 		dms,
 		form
 	};
@@ -70,20 +70,14 @@ export const actions = {
 		const character = await getCharacterCache(event.params.characterId || "", false);
 		if (!character) redirect(302, "/characters");
 
-		const log = await getLog(event.params.logId || "", session.user.id, character.id);
+		const log = await getLog(event.params.logId, session.user.id, character.id);
 		if (event.params.logId !== "new" && !log.id) redirect(302, `/characters/${character.id}`);
 
-		const form = await superValidate(event, valibot(logSchema));
+		const form = await superValidate(event, valibot(characterLogSchema(character)));
 		if (!form.valid) return fail(400, { form });
 
 		const result = await saveLog(form.data, session.user);
 		if ("id" in result) redirect(302, `/characters/${character.id}`);
-
-		const field = result.options?.field;
-		if (field === "acp") return setError(form, "acp", result.error);
-		if (field === "level") return setError(form, "level", result.error);
-		if (field === "applied_date") return setError(form, "applied_date", result.error);
-		if (field === "characterId") return setError(form, "characterId", result.error);
 
 		return message(
 			form,

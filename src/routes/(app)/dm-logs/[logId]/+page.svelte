@@ -1,19 +1,18 @@
 <script lang="ts">
 	import AutoResizeTextArea from "$lib/components/AutoResizeTextArea.svelte";
 	import BreadCrumbs from "$lib/components/BreadCrumbs.svelte";
+	import FormMessage from "$lib/components/FormMessage.svelte";
+	import HComboBox from "$lib/components/HComboBox.svelte";
 	import Icon from "$lib/components/Icon.svelte";
 	import Markdown from "$lib/components/Markdown.svelte";
 	import SuperForm from "$lib/components/SuperForm.svelte";
 	import { dMLogSchema } from "$lib/schemas";
-	import FormMessage from "$src/lib/components/FormMessage.svelte";
-	import HComboBox from "$src/lib/components/HComboBox.svelte";
 	import { dateProxy, superForm } from "sveltekit-superforms";
 	import { valibotClient } from "sveltekit-superforms/adapters";
 	import { twMerge } from "tailwind-merge";
 
 	export let data;
 
-	let character = data.character;
 	let previews = {
 		description: false
 	};
@@ -30,10 +29,6 @@
 	const proxyAppliedDate = dateProxy(form, "applied_date", { format: "datetime-local", empty: "null" });
 
 	let season: 1 | 8 | 9 = $form.experience ? 1 : $form.acp ? 8 : 9;
-
-	$: if (!character && $form.characterId && data.characters.find((c) => c.id === $form.characterId)) {
-		character = data.characters.find((c) => c.id === $form.characterId);
-	}
 </script>
 
 <BreadCrumbs />

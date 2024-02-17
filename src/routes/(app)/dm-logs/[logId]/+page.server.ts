@@ -1,10 +1,10 @@
 import { dMLogSchema } from "$lib/schemas";
 import { saveLog } from "$src/server/actions/logs";
 import { signInRedirect } from "$src/server/auth";
-import { getCharactersCache } from "$src/server/data/characters";
+import { getCharacterCaches, getCharactersCache } from "$src/server/data/characters";
 import { getDMLog, getLog } from "$src/server/data/logs";
 import { error, fail, redirect } from "@sveltejs/kit";
-import { message, setError, superValidate } from "sveltekit-superforms";
+import { message, superValidate } from "sveltekit-superforms";
 import { valibot } from "sveltekit-superforms/adapters";
 
 export const load = async (event) => {
@@ -20,7 +20,17 @@ export const load = async (event) => {
 
 	log.dm = log.dm?.name ? log.dm : { name: session.user.name || "", id: "", DCI: null, uid: user.id, owner: user.id };
 
-	const characters = await getCharactersCache(user.id);
+	const characters = await getCharactersCache(user.id)
+		.then(async (characters) => await getCharacterCaches(characters.map((c) => c.id)))
+		.then((characters) =>
+			characters.map((c) => ({
+				...c,
+				logs: c.logs.filter((l) => l.id !== log.id),
+				magic_items: [],
+				story_awards: [],
+				log_levels: []
+			}))
+		);
 	const character = characters.find((c) => c.id === log.characterId);
 
 	const form = await superValidate(valibot(dMLogSchema(characters)), {
@@ -51,9 +61,7 @@ export const load = async (event) => {
 			name: event.params.logId === "new" ? "New DM Log" : `${log.name}`,
 			href: `/dm-logs/${event.params.logId}`
 		}),
-		user,
 		characters,
-		character,
 		form
 	};
 };
@@ -66,30 +74,15 @@ export const actions = {
 		const log = await getLog(event.params.logId || "", session.user.id);
 		if (event.params.logId !== "new" && !log.id) redirect(302, `/dm-logs`);
 
-		const characters = await getCharactersCache(session.user.id);
+		const characters = await getCharactersCache(session.user.id).then(
+			async (characters) => await getCharacterCaches(characters.map((c) => c.id))
+		);
+
 		const form = await superValidate(event, valibot(dMLogSchema(characters)));
 		if (!form.valid) return fail(400, { form });
 
-		if (!form.data.is_dm_log)
-			return message(
-				form,
-				{
-					type: "error",
-					text: "Only DM logs can be saved here."
-				},
-				{
-					status: 400
-				}
-			);
-
 		const result = await saveLog(form.data, session.user);
 		if ("id" in result) redirect(302, `/dm-logs/`);
-
-		const field = result.options?.field;
-		if (field === "acp") return setError(form, "acp", result.error);
-		if (field === "level") return setError(form, "level", result.error);
-		if (field === "applied_date") return setError(form, "applied_date", result.error);
-		if (field === "characterId") return setError(form, "characterId", result.error);
 
 		return message(
 			form,
