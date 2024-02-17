@@ -104,10 +104,6 @@ export const logSchema = object({
 export const characterLogSchema = (character: CharacterData) =>
 	object(logSchema.entries, [
 		forward(
-			custom((input) => !input.characterId || input.characterId === character.id, "Character not found"),
-			["characterId"]
-		),
-		forward(
 			custom((input) => {
 				const logACP = character.logs.find((log) => log.id === input.id)?.acp || 0;
 				return character.total_level < 20 || input.acp - logACP === 0;

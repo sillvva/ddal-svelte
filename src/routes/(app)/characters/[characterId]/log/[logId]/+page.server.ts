@@ -70,7 +70,7 @@ export const actions = {
 		const character = await getCharacterCache(event.params.characterId || "", false);
 		if (!character) redirect(302, "/characters");
 
-		const log = await getLog(event.params.logId || "", session.user.id, character.id);
+		const log = await getLog(event.params.logId, session.user.id, character.id);
 		if (event.params.logId !== "new" && !log.id) redirect(302, `/characters/${character.id}`);
 
 		const form = await superValidate(event, valibot(characterLogSchema(character)));
