@@ -7,7 +7,7 @@
 	import Markdown from "$lib/components/Markdown.svelte";
 	import SuperForm from "$lib/components/SuperForm.svelte";
 	import { defaultDM, getMagicItems, getStoryAwards } from "$lib/entities";
-	import { logSchema } from "$lib/schemas";
+	import { characterLogSchema } from "$lib/schemas";
 	import { sorter } from "$lib/util";
 	import { dateProxy, superForm } from "sveltekit-superforms";
 	import { valibotClient } from "sveltekit-superforms/adapters";
@@ -19,7 +19,7 @@
 
 	let logForm = superForm(data.form, {
 		dataType: "json",
-		validators: valibotClient(logSchema),
+		validators: valibotClient(characterLogSchema(character)),
 		taintedMessage: "You have unsaved changes. Are you sure you want to leave?"
 	});
 

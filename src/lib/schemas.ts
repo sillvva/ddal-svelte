@@ -1,4 +1,4 @@
-import type { Character } from "@prisma/client";
+import type { CharacterData } from "$src/server/data/characters";
 import type { NumericRange } from "@sveltejs/kit";
 import type { FormPathLeaves } from "sveltekit-superforms";
 import {
@@ -101,14 +101,33 @@ export const logSchema = object({
 	story_awards_lost: optional(array(string([minLength(1, "Invalid Story Award ID")])), [])
 });
 
-export const dMLogSchema = (characters: Character[]) =>
+export const characterLogSchema = (character: CharacterData) =>
+	object(logSchema.entries, [
+		forward(
+			custom((input) => !input.characterId || input.characterId === character.id, "Character not found"),
+			["characterId"]
+		),
+		forward(
+			custom((input) => {
+				const logACP = character.logs.find((log) => log.id === input.id)?.acp || 0;
+				return character.total_level < 20 || input.acp - logACP === 0;
+			}, "Character is already level 20"),
+			["acp"]
+		),
+		forward(
+			custom((input) => {
+				const logLevel = character.logs.find((log) => log.id === input.id)?.level || 0;
+				return character.total_level + input.level - logLevel <= 20;
+			}, "Character cannot level past 20"),
+			["level"]
+		)
+	]);
+
+export const dMLogSchema = (characters: CharacterData[]) =>
 	object(logSchema.entries, [
 		custom((input) => input.is_dm_log, "Only DM logs can be saved here."),
 		forward(
-			custom(
-				(input) => !input.characterId && !!(characters || []).find((c) => c.id === input.characterId),
-				"Character not found"
-			),
+			custom((input) => !input.characterId || !!characters.find((c) => c.id === input.characterId), "Character not found"),
 			["characterId"]
 		),
 		forward(
@@ -122,6 +141,24 @@ export const dMLogSchema = (characters: Character[]) =>
 		forward(
 			custom((input) => !input.applied_date || input.date < input.applied_date, "Applied date must be after log date"),
 			["applied_date"]
+		),
+		forward(
+			custom((input) => {
+				const character = characters.find((c) => c.id === input.characterId);
+				if (!character) return true;
+				const logACP = character.logs.find((log) => log.id === input.id)?.acp || 0;
+				return character.total_level < 20 || input.acp - logACP === 0;
+			}, "Character is already level 20"),
+			["acp"]
+		),
+		forward(
+			custom((input) => {
+				const character = characters.find((c) => c.id === input.characterId);
+				if (!character) return true;
+				const logLevel = character.logs.find((log) => log.id === input.id)?.level || 0;
+				return character.total_level + input.level - logLevel <= 20;
+			}, "Character is already level 20"),
+			["level"]
 		)
 	]);
 

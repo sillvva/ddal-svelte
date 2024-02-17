@@ -13,7 +13,6 @@
 
 	export let data;
 
-	let character = data.character;
 	let previews = {
 		description: false
 	};
@@ -30,10 +29,6 @@
 	const proxyAppliedDate = dateProxy(form, "applied_date", { format: "datetime-local", empty: "null" });
 
 	let season: 1 | 8 | 9 = $form.experience ? 1 : $form.acp ? 8 : 9;
-
-	$: if (!character && $form.characterId && data.characters.find((c) => c.id === $form.characterId)) {
-		character = data.characters.find((c) => c.id === $form.characterId);
-	}
 </script>
 
 <BreadCrumbs />

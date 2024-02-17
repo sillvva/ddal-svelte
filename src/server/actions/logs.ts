@@ -100,7 +100,7 @@ export async function saveLog(input: LogSchema, user?: CustomSession["user"]): S
 					});
 				const logLevel = character.logs.find((log) => log.id === input.id)?.level || 0;
 				if (currentLevel + input.level - logLevel > 20)
-					throw new SaveError<LogSchema>(400, "Character cannot level past 20", {
+					throw new SaveError<LogSchema>(400, "Character is already level 20", {
 						field: "level"
 					});
 			}
