@@ -1,4 +1,10 @@
-<script lang="ts">
+<script lang="ts" context="module">
+	type TRec = Record<string, unknown>;
+</script>
+
+<script lang="ts" generics="T extends TRec">
+	import type { FormPathLeaves, FormPathType } from "sveltekit-superforms";
+
 	import { createEventDispatcher, tick } from "svelte";
 	import autosize from "svelte-autosize";
 	import type { HTMLTextareaAttributes } from "svelte/elements";
@@ -8,18 +14,18 @@
 	}>();
 
 	interface $$Props extends HTMLTextareaAttributes {
-		value?: string | null;
+		content?: string | FormPathType<T, FormPathLeaves<T>> | null;
 		minRows?: number;
 		maxRows?: number;
 	}
 
-	export let value: string | null = "";
+	export let content: string | FormPathType<T, FormPathLeaves<T>> | null = "";
 	export let minRows: number | undefined = undefined;
 	export let maxRows: number | undefined = undefined;
 
 	let el: HTMLTextAreaElement;
 
-	$: if (value) {
+	$: if (content) {
 		tick().then(() => {
 			autosize.update(el);
 		});
@@ -29,7 +35,7 @@
 <textarea
 	{...$$restProps}
 	bind:this={el}
-	bind:value
+	bind:value={content}
 	style:--minRows={minRows && `${minRows}lh`}
 	style:--maxRows={maxRows && `${maxRows}lh`}
 	spellcheck="true"
