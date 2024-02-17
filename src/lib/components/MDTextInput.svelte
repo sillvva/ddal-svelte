@@ -11,6 +11,8 @@
 	export let superform: SuperForm<T>;
 	export let field: FormPathLeaves<T>;
 	export let preview = false;
+	export let minRows: number | undefined = undefined;
+	export let maxRows: number | undefined = undefined;
 
 	let prev = false;
 
@@ -35,6 +37,8 @@
 	name={field}
 	bind:content={$value}
 	class={twMerge("textarea textarea-bordered w-full focus:border-primary", prev && "hidden", preview && "rounded-t-none")}
+	{minRows}
+	{maxRows}
 />
 {#if preview}
 	<div class="border-[1px] border-base-content bg-base-100 p-4 [--tw-border-opacity:0.2]" class:hidden={!prev}>

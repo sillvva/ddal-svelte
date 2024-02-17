@@ -158,34 +158,14 @@
 					Add Story Award
 				</button>
 			</div>
-			<noscript class="col-span-12 flex flex-wrap justify-center gap-4 text-center font-bold">
-				<div>JavaScript is required to add/remove magic items and story awards.</div>
-			</noscript>
 			<div class="col-span-12 grid grid-cols-12 gap-4 dark:text-white">
-				{#each $form.magic_items_gained as item, index}
-					<div class="card col-span-12 h-[338px] bg-base-300/70 shadow-xl sm:col-span-6">
+				{#each $form.magic_items_gained as _, index}
+					<div class="card col-span-12 bg-base-300/70 shadow-xl sm:col-span-6">
 						<div class="card-body flex flex-col gap-4">
 							<h4 class="text-2xl">Add Magic Item</h4>
 							<div class="flex gap-4">
 								<div class="form-control flex-1">
-									<label for={`magic_items_gained.${index}.name`} class="label">
-										<span class="label-text">Name</span>
-									</label>
-									<input
-										type="text"
-										name={`magic_items_gained.${index}.name`}
-										value={item.name}
-										on:input={(e) => {
-											if ($form.magic_items_gained[index]) $form.magic_items_gained[index].name = e.currentTarget.value;
-										}}
-										class="input input-bordered w-full focus:border-primary"
-										aria-invalid={$errors.magic_items_gained?.[index]?.name ? "true" : undefined}
-									/>
-									{#if $errors.magic_items_gained?.[index]?.name}
-										<label for={`magic_items_gained.${index}.name`} class="label">
-											<span class="label-text-alt text-error">{$errors.magic_items_gained?.[index]?.name}</span>
-										</label>
-									{/if}
+									<TextInput superform={logForm} field={`magic_items_gained[${index}].name`} required>Name</TextInput>
 								</div>
 								<button
 									type="button"
@@ -196,51 +176,20 @@
 								</button>
 							</div>
 							<div class="form-control w-full">
-								<label for={`magic_items_gained.${index}.description`} class="label">
-									<span class="label-text">Description</span>
-								</label>
-								<textarea
-									name={`magic_items_gained.${index}.description`}
-									on:input={(e) => {
-										if ($form.magic_items_gained[index]) $form.magic_items_gained[index].description = e.currentTarget.value;
-									}}
-									class="textarea textarea-bordered w-full focus:border-primary"
-									style="resize: none;"
-									value={item.description}
-									spellcheck="true"
-								/>
-								<label for={`magic_items_gained.${index}.description`} class="label">
-									<span class="label-text-alt text-error" />
-									<span class="label-text-alt">Markdown Allowed</span>
-								</label>
+								<MdTextInput superform={logForm} field={`magic_items_gained[${index}].description`} minRows={3} maxRows={8}>
+									Description
+								</MdTextInput>
 							</div>
 						</div>
 					</div>
 				{/each}
-				{#each $form.story_awards_gained as item, index}
-					<div class="card col-span-12 h-[338px] bg-base-300/70 shadow-xl sm:col-span-6">
+				{#each $form.story_awards_gained as _, index}
+					<div class="card col-span-12 bg-base-300/70 shadow-xl sm:col-span-6">
 						<div class="card-body flex flex-col gap-4">
 							<h4 class="text-2xl">Add Story Award</h4>
 							<div class="flex gap-4">
 								<div class="form-control flex-1">
-									<label for={`story_awards_gained.${index}.name`} class="label">
-										<span class="label-text">Name</span>
-									</label>
-									<input
-										type="text"
-										name={`story_awards_gained.${index}.name`}
-										value={item.name}
-										on:input={(e) => {
-											if ($form.story_awards_gained[index]) $form.story_awards_gained[index].name = e.currentTarget.value;
-										}}
-										class="input input-bordered w-full focus:border-primary"
-										aria-invalid={$errors.story_awards_gained?.[index]?.name ? "true" : undefined}
-									/>
-									{#if $errors.story_awards_gained?.[index]?.name}
-										<label for={`story_awards_gained.${index}.name`} class="label">
-											<span class="label-text-alt text-error">{$errors.story_awards_gained?.[index]?.name}</span>
-										</label>
-									{/if}
+									<TextInput superform={logForm} field={`story_awards_gained[${index}].name`} required>Name</TextInput>
 								</div>
 								<button
 									type="button"
@@ -251,23 +200,9 @@
 								</button>
 							</div>
 							<div class="form-control w-full">
-								<label for={`story_awards_gained.${index}.description`} class="label">
-									<span class="label-text">Description</span>
-								</label>
-								<textarea
-									name={`story_awards_gained.${index}.description`}
-									on:input={(e) => {
-										if ($form.story_awards_gained[index]) $form.story_awards_gained[index].description = e.currentTarget.value;
-									}}
-									class="textarea textarea-bordered w-full focus:border-primary"
-									style="resize: none;"
-									value={item.description}
-									spellcheck="true"
-								/>
-								<label for={`story_awards_gained.${index}.description`} class="label">
-									<span class="label-text-alt text-error" />
-									<span class="label-text-alt">Markdown Allowed</span>
-								</label>
+								<MdTextInput superform={logForm} field={`story_awards_gained[${index}].description`} minRows={3} maxRows={8}>
+									Description
+								</MdTextInput>
 							</div>
 						</div>
 					</div>
@@ -282,5 +217,5 @@
 				</button>
 			</div>
 		</div>
-	</div></SuperForm
->
+	</div>
+</SuperForm>
