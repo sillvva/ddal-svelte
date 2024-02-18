@@ -14,14 +14,14 @@
 	}>();
 
 	interface $$Props extends HTMLTextareaAttributes {
-		content?: string | FormPathType<T, FormPathLeaves<T>> | null;
+		content: string | FormPathType<T, FormPathLeaves<T>> | null;
 		minRows?: number;
 		maxRows?: number;
 	}
 
-	export let content: string | FormPathType<T, FormPathLeaves<T>> | null = "";
-	export let minRows: number | undefined = undefined;
-	export let maxRows: number | undefined = undefined;
+	export let content: string | FormPathType<T, FormPathLeaves<T>> | null;
+	export let minRows: number = 3;
+	export let maxRows: number = 50;
 
 	let el: HTMLTextAreaElement;
 
