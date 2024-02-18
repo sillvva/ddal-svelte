@@ -1,10 +1,5 @@
-<script lang="ts" context="module">
-	type TRec = Record<string, unknown>;
-</script>
-
-<script lang="ts" generics="T extends TRec">
+<script lang="ts">
 	import SvelteMarkdown from "svelte-markdown";
-	import type { FormPathLeaves, FormPathType } from "sveltekit-superforms";
 	// Renderers
 	import blockquote from "$lib/components/renderers/blockquote.svelte";
 	import heading from "$lib/components/renderers/heading.svelte";
@@ -18,11 +13,10 @@
 	import tablerow from "$lib/components/renderers/tablerow.svelte";
 	import type { HTMLAttributes } from "svelte/elements";
 
-	// export let superform: SuperForm<T> | undefined;
-	export let content: string | FormPathType<T, FormPathLeaves<T>> = "";
+	export let content: string = "";
 
 	interface $$Props extends HTMLAttributes<HTMLDivElement> {
-		content: string | FormPathType<T, FormPathLeaves<T>>;
+		content: string;
 	}
 </script>
 

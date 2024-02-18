@@ -36,13 +36,13 @@
 <AutoResizeTextArea
 	name={field}
 	bind:content={$value}
-	class={twMerge("textarea textarea-bordered w-full focus:border-primary", prev && "hidden", preview && "rounded-t-none")}
+	class={twMerge("textarea textarea-bordered w-full focus:border-primary", preview && "rounded-t-none", prev && "hidden")}
 	{minRows}
 	{maxRows}
 />
-{#if preview}
-	<div class="border-[1px] border-base-content bg-base-100 p-4 [--tw-border-opacity:0.2]" class:hidden={!prev}>
-		<Markdown content={$value} />
+{#if preview && prev}
+	<div class="rounded-b-lg border-[1px] border-base-content bg-base-100 p-4 [--tw-border-opacity:0.2]">
+		<Markdown content={`${$value}`} />
 	</div>
 {/if}
 <label for={field} class="label">

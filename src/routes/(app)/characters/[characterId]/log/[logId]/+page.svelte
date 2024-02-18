@@ -175,7 +175,7 @@
 			</div>
 		</div>
 		<div class="form-control col-span-12 w-full">
-			<MdTextInput superform={logForm} field="description" preview>Notes</MdTextInput>
+			<MdTextInput superform={logForm} field="description" maxRows={20} preview>Notes</MdTextInput>
 		</div>
 		<div class="no-script-hide col-span-12 flex flex-wrap gap-4">
 			<button
@@ -239,7 +239,7 @@
 							</button>
 						</div>
 						<div class="form-control w-full">
-							<MdTextInput superform={logForm} field={`magic_items_gained[${index}].description`} minRows={3} maxRows={8}>
+							<MdTextInput superform={logForm} field={`magic_items_gained[${index}].description`} minRows={3} maxRows={8} preview>
 								Description
 							</MdTextInput>
 						</div>

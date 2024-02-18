@@ -129,7 +129,7 @@
 				<NumberInput superform={logForm} field="dtd" min="0">Downtime</NumberInput>
 			</div>
 			<div class="form-control col-span-12 w-full">
-				<MdTextInput superform={logForm} field="description" preview>Notes</MdTextInput>
+				<MdTextInput superform={logForm} field="description" maxRows={20} preview>Notes</MdTextInput>
 			</div>
 			<div class="no-script-hide col-span-12 flex flex-wrap gap-4">
 				<button
