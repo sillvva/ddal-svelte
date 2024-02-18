@@ -60,7 +60,7 @@ const providers: OAuthProvider[] = [
 	}
 ];
 
-export const auth = SvelteKitAuth(async (event) => {
+const auth = SvelteKitAuth(async (event) => {
 	return {
 		callbacks: {
 			async signIn({ account }) {
@@ -172,7 +172,7 @@ export const auth = SvelteKitAuth(async (event) => {
 	} satisfies SvelteKitAuthConfig;
 });
 
-export const session: Handle = async ({ event, resolve }) => {
+const session: Handle = async ({ event, resolve }) => {
 	event.locals.session = await event.locals.auth();
 
 	const cookies = event.cookies.getAll();
