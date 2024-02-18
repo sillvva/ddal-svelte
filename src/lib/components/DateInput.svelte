@@ -37,6 +37,7 @@
 </label>
 <input
 	type="datetime-local"
+	id={field}
 	bind:value={$proxyDate}
 	class="input input-bordered w-full focus:border-primary"
 	aria-invalid={$errors ? "true" : undefined}

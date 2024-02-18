@@ -37,7 +37,7 @@
 		<div class="form-control col-span-12 sm:col-span-4">
 			<GenericInput {superform} field="type" label="Log Type">
 				<select
-					name="type"
+					id="type"
 					bind:value={$form.type}
 					class="select select-bordered w-full"
 					aria-invalid={$errors.type ? "true" : undefined}
@@ -237,7 +237,7 @@
 										on:input={(e) => {
 											$form.magic_items_lost[index] = e.currentTarget.value;
 										}}
-										name={`magic_items_lost.${index}`}
+										id={`magic_items_lost[${index}]`}
 										class="select select-bordered w-full"
 										aria-invalid={$errors.magic_items_lost?.[index] ? "true" : undefined}
 									>
@@ -299,7 +299,7 @@
 										on:input={(e) => {
 											$form.story_awards_lost[index] = e.currentTarget.value;
 										}}
-										name={`story_awards_lost.${index}`}
+										id={`story_awards_lost[${index}]`}
 										class="select select-bordered w-full"
 										aria-invalid={$errors.story_awards_lost?.[index] ? "true" : undefined}
 									>

@@ -32,7 +32,6 @@
 </label>
 <input
 	type="text"
-	name={field}
 	id={field}
 	bind:value={$value}
 	class="input input-bordered w-full focus:border-primary"

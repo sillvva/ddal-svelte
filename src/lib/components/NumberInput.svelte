@@ -27,7 +27,6 @@
 </label>
 <input
 	type="number"
-	name={field}
 	id={field}
 	bind:value={$value}
 	class="input input-bordered w-full focus:border-primary"
