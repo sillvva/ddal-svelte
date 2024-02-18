@@ -163,29 +163,31 @@
 		</nav>
 	</header>
 	<div class="container relative z-10 mx-auto max-w-5xl flex-1 p-4"><slot /></div>
-	<footer class="z-16 footer footer-center relative bg-base-300/50 p-4 text-base-content print:hidden">
-		<div>
-			<p>
-				All
-				<a
-					href="https://www.dndbeyond.com/sources/cos/the-lands-of-barovia#BGatesofBarovia"
-					target="_blank"
-					rel="noreferrer noopener"
-					class="text-secondary"
-				>
-					images
-				</a>
-				and the name
-				<a href="https://dnd.wizards.com/adventurers-league" target="_blank" rel="noreferrer noopener" class="text-secondary">
-					Adventurers League
-				</a>
-				are property of Hasbro and
-				<a href="https://dnd.wizards.com/" target="_blank" rel="noreferrer noopener" class="text-secondary">
-					Wizards of the Coast
-				</a>. This website is affiliated with neither.
-			</p>
-		</div>
-	</footer>
+	{#if $app.settings.background}
+		<footer class="z-16 footer footer-center relative bg-base-300/50 p-4 text-base-content print:hidden">
+			<div>
+				<p>
+					All
+					<a
+						href="https://www.dndbeyond.com/sources/cos/the-lands-of-barovia#BGatesofBarovia"
+						target="_blank"
+						rel="noreferrer noopener"
+						class="text-secondary"
+					>
+						images
+					</a>
+					and the name
+					<a href="https://dnd.wizards.com/adventurers-league" target="_blank" rel="noreferrer noopener" class="text-secondary">
+						Adventurers League
+					</a>
+					are property of Hasbro and
+					<a href="https://dnd.wizards.com/" target="_blank" rel="noreferrer noopener" class="text-secondary">
+						Wizards of the Coast
+					</a>. This website is affiliated with neither.
+				</p>
+			</div>
+		</footer>
+	{/if}
 </div>
 
 <dialog

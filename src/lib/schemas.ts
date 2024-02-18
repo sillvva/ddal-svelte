@@ -135,7 +135,10 @@ export const dMLogSchema = (characters: CharacterData[]) =>
 			["applied_date"]
 		),
 		forward(
-			custom((input) => !input.applied_date || input.date < input.applied_date, "Applied date must be after log date"),
+			custom(
+				(input) => !input.applied_date || (input.applied_date.getTime() - input.date.getTime()) / 1000 > -60,
+				"Applied date must be after log date"
+			),
 			["applied_date"]
 		),
 		forward(

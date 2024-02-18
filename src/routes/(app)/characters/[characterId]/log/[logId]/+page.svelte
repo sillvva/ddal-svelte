@@ -26,7 +26,7 @@
 		taintedMessage: "You have unsaved changes. Are you sure you want to leave?"
 	});
 
-	const { form, errors, submitting, message, constraints } = logForm;
+	const { form, errors, submitting, message } = logForm;
 
 	const proxyDate = dateProxy(form, "date", { format: "datetime-local" });
 
@@ -36,10 +36,6 @@
 	let storyAwards = character
 		? getStoryAwards(character, { excludeDropped: true, lastLogId: $form.id }).sort((a, b) => sorter(a.name, b.name))
 		: [];
-
-	let previews = {
-		description: false
-	};
 
 	let season: 1 | 8 | 9 = $form.experience ? 1 : $form.acp ? 8 : 9;
 	let dmSelected = false;
@@ -163,7 +159,7 @@
 						<NumberInput superform={logForm} field="acp" min="0">ACP</NumberInput>
 					</div>
 				{/if}
-				<div class={twMerge("form-control w-full", $form.type === "nongame" ? "col-span-4" : "col-span-6 sm:col-span-2")}>
+				<div class={twMerge("form-control w-full", $form.type === "game" ? "col-span-6 sm:col-span-2" : "col-span-4")}>
 					<NumberInput superform={logForm} field="tcp" min="0">TCP</NumberInput>
 				</div>
 			{/if}
@@ -239,7 +235,7 @@
 							</button>
 						</div>
 						<div class="form-control w-full">
-							<MdTextInput superform={logForm} field={`magic_items_gained[${index}].description`} minRows={3} maxRows={8} preview>
+							<MdTextInput superform={logForm} field={`magic_items_gained[${index}].description`} maxRows={8} preview>
 								Description
 							</MdTextInput>
 						</div>
@@ -299,7 +295,7 @@
 							</button>
 						</div>
 						<div class="form-control w-full">
-							<MdTextInput superform={logForm} field={`story_awards_gained[${index}].description`} minRows={3} maxRows={8}>
+							<MdTextInput superform={logForm} field={`story_awards_gained[${index}].description`} maxRows={8} preview>
 								Description
 							</MdTextInput>
 						</div>
