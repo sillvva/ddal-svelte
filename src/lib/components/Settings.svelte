@@ -134,7 +134,7 @@
 </div>
 <div
 	class={twMerge(
-		"fixed inset-0 bg-base-200/50 transition-all",
+		"fixed inset-0 bg-base-300/50 transition-all",
 		open ? "block" : "hidden",
 		open ? "z-40 opacity-100" : "-z-10 opacity-0"
 	)}
