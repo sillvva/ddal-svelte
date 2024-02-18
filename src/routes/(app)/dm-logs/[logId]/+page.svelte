@@ -45,8 +45,8 @@
 			<GenericInput
 				superform={logForm}
 				field="characterId"
-				labelFor="characterName"
 				required={!!$form.applied_date}
+				labelFor="characterName"
 				label="Assigned Character"
 			>
 				<input type="hidden" name="characterId" bind:value={$form.characterId} />

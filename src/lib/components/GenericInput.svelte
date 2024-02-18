@@ -3,9 +3,8 @@
 </script>
 
 <script lang="ts" generics="T extends TRec">
-	import { readable } from "svelte/store";
-
 	import type { HTMLInputAttributes } from "svelte/elements";
+	import { readable } from "svelte/store";
 	import { formFieldProxy, type FormPathLeaves, type SuperForm } from "sveltekit-superforms";
 
 	interface $$Props extends HTMLInputAttributes {
