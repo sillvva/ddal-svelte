@@ -2,11 +2,11 @@
 	import BreadCrumbs from "$lib/components/BreadCrumbs.svelte";
 	import FormMessage from "$lib/components/FormMessage.svelte";
 	import HComboBox from "$lib/components/HComboBox.svelte";
-	import Icon from "$lib/components/Icon.svelte";
 	import SuperForm from "$lib/components/SuperForm.svelte";
 	import { defaultDM } from "$lib/entities";
 	import { logSchema } from "$lib/schemas";
 	import DateInput from "$src/lib/components/DateInput.svelte";
+	import EntityCard from "$src/lib/components/EntityCard.svelte";
 	import GenericInput from "$src/lib/components/GenericInput.svelte";
 	import MdTextInput from "$src/lib/components/MDTextInput.svelte";
 	import NumberInput from "$src/lib/components/NumberInput.svelte";
@@ -202,128 +202,46 @@
 		</div>
 		<div class="col-span-12 grid grid-cols-12 gap-4 dark:text-white">
 			{#each $form.magic_items_gained as _, index}
-				<div class="card col-span-12 bg-base-300/70 shadow-xl sm:col-span-6">
-					<div class="card-body flex flex-col gap-4">
-						<h4 class="text-2xl">Add Magic Item</h4>
-						<div class="flex gap-4">
-							<div class="form-control flex-1">
-								<TextInput {superform} field={`magic_items_gained[${index}].name`} required>Name</TextInput>
-							</div>
-							<button
-								type="button"
-								class="no-script-hide btn btn-error mt-9"
-								on:click={() => ($form.magic_items_gained = $form.magic_items_gained.filter((_, i) => i !== index))}
-							>
-								<Icon src="trash-can" class="w-6" />
-							</button>
-						</div>
-						<div class="form-control w-full">
-							<MdTextInput {superform} field={`magic_items_gained[${index}].description`} maxRows={8} preview>
-								Description
-							</MdTextInput>
-						</div>
-					</div>
-				</div>
+				<EntityCard
+					{superform}
+					type="add"
+					entity="magic_items"
+					nameField={`magic_items_gained[${index}].name`}
+					descField={`magic_items_gained[${index}].description`}
+					on:delete={() => ($form.magic_items_gained = $form.magic_items_gained.filter((_, i) => i !== index))}
+				/>
 			{/each}
-			{#each $form.magic_items_lost as id, index}
-				<div class="card col-span-12 bg-base-300/70 shadow-xl sm:col-span-6">
-					<div class="card-body flex flex-col gap-4">
-						<h4 class="text-2xl">Drop Magic Item</h4>
-						<div class="flex gap-4">
-							<div class="form-control flex-1">
-								<GenericInput {superform} field={`magic_items_lost[${index}]`} label="Select an Item">
-									<select
-										value={$form.magic_items_lost[index]}
-										on:input={(e) => {
-											$form.magic_items_lost[index] = e.currentTarget.value;
-										}}
-										id={`magic_items_lost[${index}]`}
-										class="select select-bordered w-full"
-										aria-invalid={$errors.magic_items_lost?.[index] ? "true" : undefined}
-									>
-										{#each data.magicItems.filter((item) => item.id === id || !$form.magic_items_lost.includes(item.id)) as item}
-											<option value={item.id}>
-												{item.name}
-											</option>
-										{/each}
-									</select>
-								</GenericInput>
-							</div>
-							<button
-								type="button"
-								class="no-script-hide btn btn-error mt-9"
-								on:click={() => ($form.magic_items_lost = $form.magic_items_lost.filter((_, i) => i !== index))}
-							>
-								<Icon src="trash-can" class="w-6" />
-							</button>
-						</div>
-						<div class="text-sm">
-							{data.magicItems.find((item) => $form.magic_items_lost[index] === item.id)?.description || ""}
-						</div>
-					</div>
-				</div>
+			{#each $form.magic_items_lost as _, index}
+				<EntityCard
+					{superform}
+					type="drop"
+					entity="magic_items"
+					lostField={`magic_items_lost[${index}]`}
+					data={data.magicItems}
+					arrValue={$form.magic_items_lost}
+					on:delete={() => ($form.magic_items_lost = $form.magic_items_lost.filter((_, i) => i !== index))}
+				/>
 			{/each}
 			{#each $form.story_awards_gained as _, index}
-				<div class="card col-span-12 bg-base-300/70 shadow-xl sm:col-span-6">
-					<div class="card-body flex flex-col gap-4">
-						<h4 class="text-2xl">Add Story Award</h4>
-						<div class="flex gap-4">
-							<div class="form-control flex-1">
-								<TextInput {superform} field={`story_awards_gained[${index}].name`} required>Name</TextInput>
-							</div>
-							<button
-								type="button"
-								class="no-script-hide btn btn-error mt-9"
-								on:click={() => ($form.story_awards_gained = $form.story_awards_gained.filter((_, i) => i !== index))}
-							>
-								<Icon src="trash-can" class="w-6" />
-							</button>
-						</div>
-						<div class="form-control w-full">
-							<MdTextInput {superform} field={`story_awards_gained[${index}].description`} maxRows={8} preview>
-								Description
-							</MdTextInput>
-						</div>
-					</div>
-				</div>
+				<EntityCard
+					{superform}
+					type="add"
+					entity="story_awards"
+					nameField={`story_awards_gained[${index}].name`}
+					descField={`story_awards_gained[${index}].description`}
+					on:delete={() => ($form.story_awards_gained = $form.story_awards_gained.filter((_, i) => i !== index))}
+				/>
 			{/each}
-			{#each $form.story_awards_lost as id, index}
-				<div class="card col-span-12 bg-base-300/70 shadow-xl sm:col-span-6">
-					<div class="card-body flex flex-col gap-4">
-						<h4 class="text-2xl">Drop Story Award</h4>
-						<div class="flex gap-4">
-							<div class="form-control flex-1">
-								<GenericInput {superform} field={`story_awards_lost[${index}]`} label="Select an Item">
-									<select
-										value={$form.story_awards_lost[index]}
-										on:input={(e) => {
-											$form.story_awards_lost[index] = e.currentTarget.value;
-										}}
-										id={`story_awards_lost[${index}]`}
-										class="select select-bordered w-full"
-										aria-invalid={$errors.story_awards_lost?.[index] ? "true" : undefined}
-									>
-										{#each data.storyAwards.filter((item) => item.id === id || !$form.story_awards_lost.includes(item.id)) as item}
-											<option value={item.id}>
-												{item.name}
-											</option>
-										{/each}
-									</select>
-								</GenericInput>
-							</div>
-							<button
-								type="button"
-								class="no-script-hide btn btn-error mt-9"
-								on:click={() => ($form.story_awards_lost = $form.story_awards_lost.filter((_, i) => i !== index))}
-							>
-								<Icon src="trash-can" class="w-6" />
-							</button>
-						</div>
-						<div class="text-sm">
-							{data.storyAwards.find((item) => $form.story_awards_lost[index] === item.id)?.description || ""}
-						</div>
-					</div>
-				</div>
+			{#each $form.story_awards_lost as _, index}
+				<EntityCard
+					{superform}
+					type="drop"
+					entity="story_awards"
+					lostField={`story_awards_lost[${index}]`}
+					data={data.storyAwards}
+					arrValue={$form.story_awards_lost}
+					on:delete={() => ($form.story_awards_lost = $form.story_awards_lost.filter((_, i) => i !== index))}
+				/>
 			{/each}
 		</div>
 		<div class="col-span-12 text-center">
