@@ -7,17 +7,17 @@
 	import { readable } from "svelte/store";
 	import { formFieldProxy, type FormPathLeaves, type SuperForm } from "sveltekit-superforms";
 
-	interface $$Props extends HTMLInputAttributes {
+	interface $$Props {
 		superform?: SuperForm<T>;
 		field?: FormPathLeaves<T>;
-		required?: boolean;
+		required?: HTMLInputAttributes["required"];
 		label: string;
 		labelFor?: string;
 	}
 
 	export let superform: SuperForm<T> | undefined = undefined;
 	export let field: FormPathLeaves<T> | undefined = undefined;
-	export let required = false;
+	export let required: HTMLInputAttributes["required"] = false;
 	export let label: string;
 	export let labelFor = "";
 

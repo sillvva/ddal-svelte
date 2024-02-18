@@ -14,12 +14,10 @@
 	interface $$Props extends HTMLInputAttributes {
 		superform: SuperForm<T>;
 		field: FormPathLeaves<T>;
-		required?: boolean;
 	}
 
 	export let superform: SuperForm<T>;
 	export let field: FormPathLeaves<T>;
-	export let required = false;
 
 	const { value, errors, constraints } = formFieldProxy(superform, field);
 </script>
@@ -27,7 +25,7 @@
 <label for={field} class="label">
 	<span class="label-text">
 		<slot />
-		{#if required}
+		{#if $$props.required}
 			<span class="text-error">*</span>
 		{/if}
 	</span>
@@ -36,7 +34,6 @@
 	type="text"
 	name={field}
 	id={field}
-	{required}
 	bind:value={$value}
 	class="input input-bordered w-full focus:border-primary"
 	aria-invalid={$errors ? "true" : undefined}
