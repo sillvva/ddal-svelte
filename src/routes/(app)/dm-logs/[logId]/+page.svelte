@@ -10,7 +10,7 @@
 	import MdTextInput from "$src/lib/components/MDTextInput.svelte";
 	import NumberInput from "$src/lib/components/NumberInput.svelte";
 	import TextInput from "$src/lib/components/TextInput.svelte";
-	import { dateProxy, superForm } from "sveltekit-superforms";
+	import { superForm } from "sveltekit-superforms";
 	import { valibotClient } from "sveltekit-superforms/adapters";
 	import { twMerge } from "tailwind-merge";
 
@@ -24,9 +24,6 @@
 
 	const { form, errors, submitting, message } = logForm;
 
-	const proxyDate = dateProxy(form, "date", { format: "datetime-local" });
-	const proxyAppliedDate = dateProxy(form, "applied_date", { format: "datetime-local", empty: "null" });
-
 	let season: 1 | 8 | 9 = $form.experience ? 1 : $form.acp ? 8 : 9;
 </script>
 
@@ -39,14 +36,14 @@
 			<TextInput superform={logForm} field="name" required>Title</TextInput>
 		</div>
 		<div class={twMerge("form-control col-span-12 sm:col-span-6 lg:col-span-3")}>
-			<DateInput superform={logForm} field="date" bind:proxy={$proxyDate} required>Date</DateInput>
+			<DateInput superform={logForm} field="date" required>Date</DateInput>
 		</div>
 		<div class="form-control col-span-12 sm:col-span-6 lg:col-span-3">
 			<GenericInput
 				superform={logForm}
 				field="characterId"
-				labelFor="characterName"
 				required={!!$form.applied_date}
+				labelFor="characterName"
 				label="Assigned Character"
 			>
 				<input type="hidden" name="characterId" bind:value={$form.characterId} />
@@ -80,13 +77,7 @@
 			</GenericInput>
 		</div>
 		<div class="form-control col-span-12 sm:col-span-6 lg:col-span-3">
-			<DateInput
-				superform={logForm}
-				field="applied_date"
-				bind:proxy={$proxyAppliedDate}
-				min={$proxyDate}
-				required={!!$form.characterId}
-			>
+			<DateInput superform={logForm} field="applied_date" empty="null" minField="date" required={!!$form.characterId}>
 				Assigned Date
 			</DateInput>
 		</div>

@@ -61,7 +61,7 @@ export const load = async (event) => {
 			name: event.params.logId === "new" ? "New DM Log" : `${log.name}`,
 			href: `/dm-logs/${event.params.logId}`
 		}),
-		characters,
+		characters: characters.map((c) => ({ id: c.id, name: c.name })),
 		form
 	};
 };

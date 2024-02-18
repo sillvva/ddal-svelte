@@ -1,9 +1,10 @@
-import { defaultLog } from "$lib/entities.js";
+import { defaultLog, getMagicItems, getStoryAwards } from "$lib/entities.js";
 import { characterLogSchema } from "$lib/schemas";
+import { sorter } from "$src/lib/util.js";
 import { saveLog } from "$src/server/actions/logs.js";
 import { signInRedirect } from "$src/server/auth.js";
 import { getCharacterCache } from "$src/server/data/characters";
-import { getUserDMsWithLogsCache } from "$src/server/data/dms";
+import { getUserDMsCache } from "$src/server/data/dms";
 import { getLog } from "$src/server/data/logs";
 import { error, fail, redirect } from "@sveltejs/kit";
 import { message, superValidate } from "sveltekit-superforms";
@@ -26,7 +27,7 @@ export const load = async (event) => {
 
 	if (log.is_dm_log) redirect(302, `/dm-logs/${log.id}`);
 
-	const dms = await getUserDMsWithLogsCache(session.user);
+	const dms = await getUserDMsCache(session.user);
 
 	const form = await superValidate(valibot(characterLogSchema(character)), {
 		defaults: {
@@ -48,6 +49,11 @@ export const load = async (event) => {
 		}
 	});
 
+	const magicItems = getMagicItems(character, { excludeDropped: true, lastLogId: log.id }).sort((a, b) => sorter(a.name, b.name));
+	const storyAwards = getStoryAwards(character, { excludeDropped: true, lastLogId: log.id }).sort((a, b) =>
+		sorter(a.name, b.name)
+	);
+
 	return {
 		...event.params,
 		title: event.params.logId === "new" ? `New Log - ${character.name}` : `Edit ${log.name}`,
@@ -56,7 +62,9 @@ export const load = async (event) => {
 			href: `/characters/${character.id}/log/${log.id}`
 		}),
 		user: session.user,
-		character: character,
+		totalLevel: character.total_level,
+		magicItems,
+		storyAwards,
 		dms,
 		form
 	};

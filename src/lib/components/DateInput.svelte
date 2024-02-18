@@ -3,23 +3,26 @@
 </script>
 
 <script lang="ts" generics="T extends TRec">
-	import { createEventDispatcher } from "svelte";
 	import type { HTMLInputAttributes } from "svelte/elements";
-	import { formFieldProxy, type FormPathLeaves, type SuperForm } from "sveltekit-superforms";
-
-	const dispatch = createEventDispatcher<{
-		input: string;
-	}>();
+	import { dateProxy, formFieldProxy, type FormPathLeaves, type SuperForm } from "sveltekit-superforms";
 
 	interface $$Props extends HTMLInputAttributes {
-		superform: SuperForm<T>;
+		superform: SuperForm<T, any>;
 		field: FormPathLeaves<T>;
-		proxy: string;
+		empty?: "null" | "undefined";
+		minField?: FormPathLeaves<T>;
+		maxField?: FormPathLeaves<T>;
 	}
 
-	export let superform: SuperForm<T>;
+	export let superform: SuperForm<T, any>;
 	export let field: FormPathLeaves<T>;
-	export let proxy: string;
+	export let empty: "null" | "undefined" = "null";
+	export let minField: FormPathLeaves<T> | undefined = undefined;
+	export let maxField: FormPathLeaves<T> | undefined = undefined;
+
+	const proxyDate = dateProxy(superform, field, { format: "datetime-local", empty });
+	const proxyMinDate = minField ? dateProxy(superform, minField, { format: "datetime-local" }) : undefined;
+	const proxyMaxDate = maxField ? dateProxy(superform, maxField, { format: "datetime-local" }) : undefined;
 
 	const { errors, constraints } = formFieldProxy(superform, field);
 </script>
@@ -34,9 +37,11 @@
 </label>
 <input
 	type="datetime-local"
-	bind:value={proxy}
+	bind:value={$proxyDate}
 	class="input input-bordered w-full focus:border-primary"
 	aria-invalid={$errors ? "true" : undefined}
+	min={$proxyMinDate}
+	max={$proxyMaxDate}
 	{...$constraints}
 	{...$$restProps}
 />

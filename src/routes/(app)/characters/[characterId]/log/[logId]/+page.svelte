@@ -4,38 +4,26 @@
 	import HComboBox from "$lib/components/HComboBox.svelte";
 	import Icon from "$lib/components/Icon.svelte";
 	import SuperForm from "$lib/components/SuperForm.svelte";
-	import { defaultDM, getMagicItems, getStoryAwards } from "$lib/entities";
-	import { characterLogSchema } from "$lib/schemas";
-	import { sorter } from "$lib/util";
+	import { defaultDM } from "$lib/entities";
+	import { logSchema } from "$lib/schemas";
 	import DateInput from "$src/lib/components/DateInput.svelte";
 	import GenericInput from "$src/lib/components/GenericInput.svelte";
 	import MdTextInput from "$src/lib/components/MDTextInput.svelte";
 	import NumberInput from "$src/lib/components/NumberInput.svelte";
 	import TextInput from "$src/lib/components/TextInput.svelte";
-	import { dateProxy, superForm } from "sveltekit-superforms";
+	import { superForm } from "sveltekit-superforms";
 	import { valibotClient } from "sveltekit-superforms/adapters";
 	import { twMerge } from "tailwind-merge";
 
 	export let data;
 
-	const character = data.character;
-
 	let logForm = superForm(data.form, {
 		dataType: "json",
-		validators: valibotClient(characterLogSchema(character)),
+		validators: valibotClient(logSchema),
 		taintedMessage: "You have unsaved changes. Are you sure you want to leave?"
 	});
 
 	const { form, errors, submitting, message } = logForm;
-
-	const proxyDate = dateProxy(form, "date", { format: "datetime-local" });
-
-	let magicItems = character
-		? getMagicItems(character, { excludeDropped: true, lastLogId: $form.id }).sort((a, b) => sorter(a.name, b.name))
-		: [];
-	let storyAwards = character
-		? getStoryAwards(character, { excludeDropped: true, lastLogId: $form.id }).sort((a, b) => sorter(a.name, b.name))
-		: [];
 
 	let season: 1 | 8 | 9 = $form.experience ? 1 : $form.acp ? 8 : 9;
 	let dmSelected = false;
@@ -63,7 +51,7 @@
 			<TextInput superform={logForm} field="name" required>Title</TextInput>
 		</div>
 		<div class="form-control col-span-12 sm:col-span-4">
-			<DateInput superform={logForm} field="date" bind:proxy={$proxyDate} required>Date</DateInput>
+			<DateInput superform={logForm} field="date" required>Date</DateInput>
 		</div>
 		<div class="col-span-12 grid grid-cols-12 gap-4">
 			{#if $form.type === "game"}
@@ -144,12 +132,9 @@
 				{/if}
 				{#if season === 9}
 					<div class="form-control col-span-12 w-full sm:col-span-4">
-						<NumberInput
-							superform={logForm}
-							field="level"
-							min="0"
-							max={Math.max($form.level, character ? 20 - character.total_level : 19)}>Level</NumberInput
-						>
+						<NumberInput superform={logForm} field="level" min="0" max={Math.max($form.level, 20 - data.totalLevel)}>
+							Level
+						</NumberInput>
 					</div>
 				{/if}
 			{/if}
@@ -181,14 +166,14 @@
 			>
 				Add Magic Item
 			</button>
-			{#if magicItems.filter((item) => !$form.magic_items_lost.includes(item.id)).length > 0}
+			{#if data.magicItems.filter((item) => !$form.magic_items_lost.includes(item.id)).length > 0}
 				<button
 					type="button"
 					class="btn min-w-fit flex-1 sm:btn-sm sm:flex-none"
 					on:click={() =>
 						($form.magic_items_lost = [
 							...$form.magic_items_lost,
-							magicItems.filter((item) => !$form.magic_items_lost.includes(item.id))[0].id
+							data.magicItems.filter((item) => !$form.magic_items_lost.includes(item.id))[0].id
 						])}
 				>
 					Drop Magic Item
@@ -202,14 +187,14 @@
 				>
 					Add Story Award
 				</button>
-				{#if storyAwards.filter((item) => !$form.story_awards_lost.includes(item.id)).length > 0}
+				{#if data.storyAwards.filter((item) => !$form.story_awards_lost.includes(item.id)).length > 0}
 					<button
 						type="button"
 						class="btn min-w-fit flex-1 sm:btn-sm sm:flex-none"
 						on:click={() =>
 							($form.story_awards_lost = [
 								...$form.story_awards_lost,
-								storyAwards.filter((item) => !$form.story_awards_lost.includes(item.id))[0].id || ""
+								data.storyAwards.filter((item) => !$form.story_awards_lost.includes(item.id))[0].id || ""
 							])}
 					>
 						Drop Story Award
@@ -258,7 +243,7 @@
 										class="select select-bordered w-full"
 										aria-invalid={$errors.magic_items_lost?.[index] ? "true" : undefined}
 									>
-										{#each magicItems.filter((item) => item.id === id || !$form.magic_items_lost.includes(item.id)) as item}
+										{#each data.magicItems.filter((item) => item.id === id || !$form.magic_items_lost.includes(item.id)) as item}
 											<option value={item.id}>
 												{item.name}
 											</option>
@@ -274,7 +259,9 @@
 								<Icon src="trash-can" class="w-6" />
 							</button>
 						</div>
-						<div class="text-sm">{magicItems.find((item) => $form.magic_items_lost[index] === item.id)?.description || ""}</div>
+						<div class="text-sm">
+							{data.magicItems.find((item) => $form.magic_items_lost[index] === item.id)?.description || ""}
+						</div>
 					</div>
 				</div>
 			{/each}
@@ -318,7 +305,7 @@
 										class="select select-bordered w-full"
 										aria-invalid={$errors.story_awards_lost?.[index] ? "true" : undefined}
 									>
-										{#each storyAwards.filter((item) => item.id === id || !$form.story_awards_lost.includes(item.id)) as item}
+										{#each data.storyAwards.filter((item) => item.id === id || !$form.story_awards_lost.includes(item.id)) as item}
 											<option value={item.id}>
 												{item.name}
 											</option>
@@ -334,7 +321,9 @@
 								<Icon src="trash-can" class="w-6" />
 							</button>
 						</div>
-						<div class="text-sm">{storyAwards.find((item) => $form.story_awards_lost[index] === item.id)?.description || ""}</div>
+						<div class="text-sm">
+							{data.storyAwards.find((item) => $form.story_awards_lost[index] === item.id)?.description || ""}
+						</div>
 					</div>
 				</div>
 			{/each}
