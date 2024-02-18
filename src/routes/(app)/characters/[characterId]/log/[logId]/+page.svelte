@@ -159,7 +159,7 @@
 						<NumberInput superform={logForm} field="acp" min="0">ACP</NumberInput>
 					</div>
 				{/if}
-				<div class={twMerge("form-control w-full", $form.type === "nongame" ? "col-span-4" : "col-span-6 sm:col-span-2")}>
+				<div class={twMerge("form-control w-full", $form.type === "game" ? "col-span-6 sm:col-span-2" : "col-span-4")}>
 					<NumberInput superform={logForm} field="tcp" min="0">TCP</NumberInput>
 				</div>
 			{/if}
