@@ -11,7 +11,7 @@
 	import MdTextInput from "$src/lib/components/MDTextInput.svelte";
 	import NumberInput from "$src/lib/components/NumberInput.svelte";
 	import TextInput from "$src/lib/components/TextInput.svelte";
-	import { dateProxy, superForm } from "sveltekit-superforms";
+	import { superForm } from "sveltekit-superforms";
 	import { valibotClient } from "sveltekit-superforms/adapters";
 	import { twMerge } from "tailwind-merge";
 
@@ -24,8 +24,6 @@
 	});
 
 	const { form, errors, submitting, message } = logForm;
-
-	const proxyDate = dateProxy(form, "date", { format: "datetime-local" });
 
 	let season: 1 | 8 | 9 = $form.experience ? 1 : $form.acp ? 8 : 9;
 	let dmSelected = false;
@@ -53,7 +51,7 @@
 			<TextInput superform={logForm} field="name" required>Title</TextInput>
 		</div>
 		<div class="form-control col-span-12 sm:col-span-4">
-			<DateInput superform={logForm} field="date" bind:proxy={$proxyDate} required>Date</DateInput>
+			<DateInput superform={logForm} field="date" required>Date</DateInput>
 		</div>
 		<div class="col-span-12 grid grid-cols-12 gap-4">
 			{#if $form.type === "game"}
