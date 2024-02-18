@@ -16,17 +16,13 @@
 
 	export let data;
 
-	let previews = {
-		description: false
-	};
-
 	let logForm = superForm(data.form, {
 		dataType: "json",
 		validators: valibotClient(dMLogSchema(data.characters)),
 		taintedMessage: "You have unsaved changes. Are you sure you want to leave?"
 	});
 
-	const { form, errors, submitting, message, constraints } = logForm;
+	const { form, errors, submitting, message } = logForm;
 
 	const proxyDate = dateProxy(form, "date", { format: "datetime-local" });
 	const proxyAppliedDate = dateProxy(form, "applied_date", { format: "datetime-local", empty: "null" });

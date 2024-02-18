@@ -26,7 +26,7 @@
 		taintedMessage: "You have unsaved changes. Are you sure you want to leave?"
 	});
 
-	const { form, errors, submitting, message, constraints } = logForm;
+	const { form, errors, submitting, message } = logForm;
 
 	const proxyDate = dateProxy(form, "date", { format: "datetime-local" });
 
@@ -36,10 +36,6 @@
 	let storyAwards = character
 		? getStoryAwards(character, { excludeDropped: true, lastLogId: $form.id }).sort((a, b) => sorter(a.name, b.name))
 		: [];
-
-	let previews = {
-		description: false
-	};
 
 	let season: 1 | 8 | 9 = $form.experience ? 1 : $form.acp ? 8 : 9;
 	let dmSelected = false;
