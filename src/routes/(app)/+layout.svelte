@@ -81,9 +81,10 @@
 <div class="relative flex min-h-screen flex-col">
 	<header
 		class={twMerge(
-			"static -top-16 z-20 w-full border-b-[1px] border-slate-500 transition-all",
+			"relative top-0 z-20 w-full border-b-[1px] border-slate-500/50 transition-all",
 			(data.mobile || !$app.settings.background) && "sticky top-0 border-base-300 bg-base-100",
-			!data.mobile && $app.settings.background && y >= 4 * 16 && "sticky top-0 border-slate-500/50"
+			!data.mobile && $app.settings.background && y >= 2 * 16 && y < 4 * 16 && "-top-16",
+			!data.mobile && $app.settings.background && y >= 4 * 16 && "sticky border-slate-500/50"
 		)}
 	>
 		{#if $app.settings.background && !data.mobile}

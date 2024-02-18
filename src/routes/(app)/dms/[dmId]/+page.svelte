@@ -7,6 +7,7 @@
 	import SuperForm from "$lib/components/SuperForm.svelte";
 	import { dungeonMasterSchema } from "$lib/schemas";
 	import { sorter } from "$lib/util";
+	import TextInput from "$src/lib/components/TextInput.svelte";
 	import { superForm } from "sveltekit-superforms";
 	import { valibotClient } from "sveltekit-superforms/adapters";
 	import { pageLoader } from "../../+layout.svelte";
@@ -20,7 +21,7 @@
 		taintedMessage: "You have unsaved changes. Are you sure you want to leave?"
 	});
 
-	const { form: dmFormData, errors, submitting, message } = dmForm;
+	const { form: dmFormData, submitting, message } = dmForm;
 </script>
 
 <div class="flex flex-col gap-4">
@@ -29,41 +30,13 @@
 	<SuperForm action="?/saveDM" superForm={dmForm}>
 		<FormMessage {message} />
 		<div class="grid grid-cols-12 gap-4">
-			<div class="col-span-12 sm:col-span-6">
-				<div class="form-control w-full">
-					<label for="name" class="label">
-						<span class="label-text">
-							DM Name
-							<span class="text-error">*</span>
-						</span>
-					</label>
-					<input
-						type="text"
-						name="name"
-						bind:value={$dmFormData.name}
-						required
-						class="input input-bordered w-full focus:border-primary"
-						disabled={$dmFormData.uid === data.user.id ? true : undefined}
-					/>
-					{#if $errors.name}
-						<label for="name" class="label">
-							<span class="label-text-alt text-error">{$errors.name}</span>
-						</label>
-					{/if}
-				</div>
+			<div class="form-control col-span-12 sm:col-span-6">
+				<TextInput superform={dmForm} field="name" required disabled={$dmFormData.uid === data.user.id ? true : undefined}>
+					DM Name
+				</TextInput>
 			</div>
-			<div class="col-span-12 sm:col-span-6">
-				<div class="form-control w-full">
-					<label for="DCI" class="label">
-						<span class="label-text">DCI</span>
-					</label>
-					<input type="text" name="DCI" bind:value={$dmFormData.DCI} class="input input-bordered w-full focus:border-primary" />
-					{#if $errors.DCI}
-						<label for="DCI" class="label">
-							<span class="label-text-alt text-error">{$errors.DCI}</span>
-						</label>
-					{/if}
-				</div>
+			<div class="form-control col-span-12 sm:col-span-6">
+				<TextInput superform={dmForm} field="DCI">DCI</TextInput>
 			</div>
 			<div class="col-span-12 m-4 text-center">
 				<button type="submit" class="btn btn-primary disabled:bg-primary disabled:bg-opacity-50 disabled:text-opacity-50">

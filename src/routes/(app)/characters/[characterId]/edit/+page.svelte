@@ -3,6 +3,7 @@
 	import FormMessage from "$lib/components/FormMessage.svelte";
 	import SuperForm from "$lib/components/SuperForm.svelte";
 	import { newCharacterSchema } from "$lib/schemas";
+	import TextInput from "$src/lib/components/TextInput.svelte";
 	import { superForm } from "sveltekit-superforms";
 	import { valibotClient } from "sveltekit-superforms/adapters";
 
@@ -14,7 +15,7 @@
 		taintedMessage: "You have unsaved changes. Are you sure you want to leave?"
 	});
 
-	const { form, errors, submitting, message } = characterForm;
+	const { submitting, message } = characterForm;
 </script>
 
 <BreadCrumbs />
@@ -22,103 +23,23 @@
 <SuperForm action="?/saveCharacter" superForm={characterForm}>
 	<FormMessage {message} />
 	<div class="grid grid-cols-12 gap-4">
-		<div class="col-span-12 sm:col-span-6">
-			<div class="form-control w-full">
-				<label for="name" class="label">
-					<span class="label-text">
-						Character Name
-						<span class="text-error">*</span>
-					</span>
-				</label>
-				<input
-					type="text"
-					name="name"
-					required
-					bind:value={$form.name}
-					class="input input-bordered w-full focus:border-primary"
-				/>
-				{#if $errors.name}
-					<label for="name" class="label">
-						<span class="label-text-alt text-error">{$errors.name}</span>
-					</label>
-				{/if}
-			</div>
+		<div class="form-control col-span-12 sm:col-span-6">
+			<TextInput superform={characterForm} field="name" required>Character Name</TextInput>
 		</div>
-		<div class="col-span-12 sm:col-span-6">
-			<div class="form-control w-full">
-				<label for="campaign" class="label">
-					<span class="label-text">Campaign</span>
-				</label>
-				<input type="text" name="campaign" bind:value={$form.campaign} class="input input-bordered w-full focus:border-primary" />
-				{#if $errors.campaign}
-					<label for="campaign" class="label">
-						<span class="label-text-alt text-error">{$errors.campaign}</span>
-					</label>
-				{/if}
-			</div>
+		<div class="form-control col-span-12 sm:col-span-6">
+			<TextInput superform={characterForm} field="campaign">Campaign</TextInput>
 		</div>
-		<div class="col-span-12 sm:col-span-6">
-			<div class="form-control w-full">
-				<label for="race" class="label">
-					<span class="label-text">Species</span>
-				</label>
-				<input type="text" name="race" bind:value={$form.race} class="input input-bordered w-full focus:border-primary" />
-				{#if $errors.race}
-					<label for="race" class="label">
-						<span class="label-text-alt text-error">{$errors.race}</span>
-					</label>
-				{/if}
-			</div>
+		<div class="form-control col-span-12 sm:col-span-6">
+			<TextInput superform={characterForm} field="race">Species</TextInput>
 		</div>
-		<div class="col-span-12 sm:col-span-6">
-			<div class="form-control w-full">
-				<label for="class" class="label">
-					<span class="label-text">Class</span>
-				</label>
-				<input type="text" name="class" bind:value={$form.class} class="input input-bordered w-full focus:border-primary" />
-				{#if $errors.class}
-					<label for="class" class="label">
-						<span class="label-text-alt text-error">{$errors.class}</span>
-					</label>
-				{/if}
-			</div>
+		<div class="form-control col-span-12 sm:col-span-6">
+			<TextInput superform={characterForm} field="class">Class</TextInput>
 		</div>
-		<div class="col-span-12">
-			<div class="form-control w-full">
-				<label for="character_sheet_url" class="label">
-					<span class="label-text">Character Sheet URL</span>
-				</label>
-				<input
-					type="text"
-					name="character_sheet_url"
-					bind:value={$form.character_sheet_url}
-					class="input input-bordered w-full focus:border-primary"
-				/>
-				{#if $errors.character_sheet_url}
-					<label for="character_sheet_url" class="label">
-						<span class="label-text-alt text-error">{$errors.character_sheet_url}</span>
-					</label>
-				{/if}
-			</div>
+		<div class="form-control col-span-12">
+			<TextInput superform={characterForm} field="character_sheet_url">Character Sheet URL</TextInput>
 		</div>
-		<div class="col-span-12">
-			<div class="form-control w-full">
-				<label for="image_url" class="label">
-					<span class="label-text">Image URL</span>
-				</label>
-				<input
-					type="text"
-					name="image_url"
-					bind:value={$form.image_url}
-					class="input input-bordered w-full focus:border-primary"
-					placeholder={data.BLANK_CHARACTER}
-				/>
-				{#if $errors.image_url}
-					<label for="image_url" class="label">
-						<span class="label-text-alt text-error">{$errors.image_url}</span>
-					</label>
-				{/if}
-			</div>
+		<div class="form-control col-span-12">
+			<TextInput superform={characterForm} field="image_url" placeholder={data.BLANK_CHARACTER}>Image URL</TextInput>
 		</div>
 		<div class="col-span-12 m-4 text-center">
 			<button type="submit" class="btn btn-primary disabled:bg-primary disabled:bg-opacity-50 disabled:text-opacity-50">
