@@ -239,7 +239,7 @@
 							</button>
 						</div>
 						<div class="form-control w-full">
-							<MdTextInput superform={logForm} field={`magic_items_gained[${index}].description`} minRows={3} maxRows={8} preview>
+							<MdTextInput superform={logForm} field={`magic_items_gained[${index}].description`} maxRows={8} preview>
 								Description
 							</MdTextInput>
 						</div>
@@ -299,7 +299,7 @@
 							</button>
 						</div>
 						<div class="form-control w-full">
-							<MdTextInput superform={logForm} field={`story_awards_gained[${index}].description`} minRows={3} maxRows={8}>
+							<MdTextInput superform={logForm} field={`story_awards_gained[${index}].description`} maxRows={8}>
 								Description
 							</MdTextInput>
 						</div>
