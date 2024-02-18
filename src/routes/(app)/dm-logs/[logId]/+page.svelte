@@ -16,31 +16,31 @@
 
 	export let data;
 
-	let logForm = superForm(data.form, {
+	let superform = superForm(data.form, {
 		dataType: "json",
 		validators: valibotClient(dMLogSchema(data.characters)),
 		taintedMessage: "You have unsaved changes. Are you sure you want to leave?"
 	});
 
-	const { form, errors, submitting, message } = logForm;
+	const { form, errors, submitting, message } = superform;
 
 	let season: 1 | 8 | 9 = $form.experience ? 1 : $form.acp ? 8 : 9;
 </script>
 
 <BreadCrumbs />
 
-<SuperForm action="?/saveLog" superForm={logForm}>
+<SuperForm action="?/saveLog" {superform}>
 	<FormMessage {message} />
 	<div class="grid grid-cols-12 gap-4">
 		<div class={twMerge("form-control col-span-12 sm:col-span-6 lg:col-span-3")}>
-			<TextInput superform={logForm} field="name" required>Title</TextInput>
+			<TextInput {superform} field="name" required>Title</TextInput>
 		</div>
 		<div class={twMerge("form-control col-span-12 sm:col-span-6 lg:col-span-3")}>
-			<DateInput superform={logForm} field="date" required>Date</DateInput>
+			<DateInput {superform} field="date" required>Date</DateInput>
 		</div>
 		<div class="form-control col-span-12 sm:col-span-6 lg:col-span-3">
 			<GenericInput
-				superform={logForm}
+				{superform}
 				field="characterId"
 				required={!!$form.applied_date}
 				labelFor="characterName"
@@ -77,7 +77,7 @@
 			</GenericInput>
 		</div>
 		<div class="form-control col-span-12 sm:col-span-6 lg:col-span-3">
-			<DateInput superform={logForm} field="applied_date" empty="null" minField="date" required={!!$form.characterId}>
+			<DateInput {superform} field="applied_date" empty="null" minField="date" required={!!$form.characterId}>
 				Assigned Date
 			</DateInput>
 		</div>
@@ -93,30 +93,30 @@
 			</div>
 			{#if season === 1}
 				<div class="form-control col-span-12 w-full sm:col-span-4">
-					<NumberInput superform={logForm} field="experience" min="0">Experience</NumberInput>
+					<NumberInput {superform} field="experience" min="0">Experience</NumberInput>
 				</div>
 			{/if}
 			{#if season === 9}
 				<div class="form-control col-span-12 w-full sm:col-span-4">
-					<NumberInput superform={logForm} field="level" min="0">Level</NumberInput>
+					<NumberInput {superform} field="level" min="0">Level</NumberInput>
 				</div>
 			{/if}
 			{#if season === 8}
 				<div class="form-control col-span-6 w-full sm:col-span-2">
-					<NumberInput superform={logForm} field="acp" min="0">ACP</NumberInput>
+					<NumberInput {superform} field="acp" min="0">ACP</NumberInput>
 				</div>
 				<div class="form-control col-span-6 w-full sm:col-span-2">
-					<NumberInput superform={logForm} field="tcp" min="0">TCP</NumberInput>
+					<NumberInput {superform} field="tcp" min="0">TCP</NumberInput>
 				</div>
 			{/if}
 			<div class="form-control col-span-6 w-full sm:col-span-2">
-				<NumberInput superform={logForm} field="gold" min="0">Gold</NumberInput>
+				<NumberInput {superform} field="gold" min="0">Gold</NumberInput>
 			</div>
 			<div class="form-control col-span-6 w-full sm:col-span-2">
-				<NumberInput superform={logForm} field="dtd" min="0">Downtime</NumberInput>
+				<NumberInput {superform} field="dtd" min="0">Downtime</NumberInput>
 			</div>
 			<div class="form-control col-span-12 w-full">
-				<MdTextInput superform={logForm} field="description" maxRows={20} preview>Notes</MdTextInput>
+				<MdTextInput {superform} field="description" maxRows={20} preview>Notes</MdTextInput>
 			</div>
 			<div class="no-script-hide col-span-12 flex flex-wrap gap-4">
 				<button
@@ -141,7 +141,7 @@
 							<h4 class="text-2xl">Add Magic Item</h4>
 							<div class="flex gap-4">
 								<div class="form-control flex-1">
-									<TextInput superform={logForm} field={`magic_items_gained[${index}].name`} required>Name</TextInput>
+									<TextInput {superform} field={`magic_items_gained[${index}].name`} required>Name</TextInput>
 								</div>
 								<button
 									type="button"
@@ -152,7 +152,7 @@
 								</button>
 							</div>
 							<div class="form-control w-full">
-								<MdTextInput superform={logForm} field={`magic_items_gained[${index}].description`} maxRows={8} preview>
+								<MdTextInput {superform} field={`magic_items_gained[${index}].description`} maxRows={8} preview>
 									Description
 								</MdTextInput>
 							</div>
@@ -165,7 +165,7 @@
 							<h4 class="text-2xl">Add Story Award</h4>
 							<div class="flex gap-4">
 								<div class="form-control flex-1">
-									<TextInput superform={logForm} field={`story_awards_gained[${index}].name`} required>Name</TextInput>
+									<TextInput {superform} field={`story_awards_gained[${index}].name`} required>Name</TextInput>
 								</div>
 								<button
 									type="button"
@@ -176,7 +176,7 @@
 								</button>
 							</div>
 							<div class="form-control w-full">
-								<MdTextInput superform={logForm} field={`story_awards_gained[${index}].description`} maxRows={8} preview>
+								<MdTextInput {superform} field={`story_awards_gained[${index}].description`} maxRows={8} preview>
 									Description
 								</MdTextInput>
 							</div>

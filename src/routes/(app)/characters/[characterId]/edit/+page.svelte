@@ -9,37 +9,37 @@
 
 	export let data;
 
-	const characterForm = superForm(data.form, {
+	const superform = superForm(data.form, {
 		dataType: "json",
 		validators: valibotClient(newCharacterSchema),
 		taintedMessage: "You have unsaved changes. Are you sure you want to leave?"
 	});
 
-	const { submitting, message } = characterForm;
+	const { submitting, message } = superform;
 </script>
 
 <BreadCrumbs />
 
-<SuperForm action="?/saveCharacter" superForm={characterForm}>
+<SuperForm action="?/saveCharacter" {superform}>
 	<FormMessage {message} />
 	<div class="grid grid-cols-12 gap-4">
 		<div class="form-control col-span-12 sm:col-span-6">
-			<TextInput superform={characterForm} field="name" required>Character Name</TextInput>
+			<TextInput {superform} field="name" required>Character Name</TextInput>
 		</div>
 		<div class="form-control col-span-12 sm:col-span-6">
-			<TextInput superform={characterForm} field="campaign">Campaign</TextInput>
+			<TextInput {superform} field="campaign">Campaign</TextInput>
 		</div>
 		<div class="form-control col-span-12 sm:col-span-6">
-			<TextInput superform={characterForm} field="race">Species</TextInput>
+			<TextInput {superform} field="race">Species</TextInput>
 		</div>
 		<div class="form-control col-span-12 sm:col-span-6">
-			<TextInput superform={characterForm} field="class">Class</TextInput>
+			<TextInput {superform} field="class">Class</TextInput>
 		</div>
 		<div class="form-control col-span-12">
-			<TextInput superform={characterForm} field="character_sheet_url">Character Sheet URL</TextInput>
+			<TextInput {superform} field="character_sheet_url">Character Sheet URL</TextInput>
 		</div>
 		<div class="form-control col-span-12">
-			<TextInput superform={characterForm} field="image_url" placeholder={data.BLANK_CHARACTER}>Image URL</TextInput>
+			<TextInput {superform} field="image_url" placeholder={data.BLANK_CHARACTER}>Image URL</TextInput>
 		</div>
 		<div class="col-span-12 m-4 text-center">
 			<button type="submit" class="btn btn-primary disabled:bg-primary disabled:bg-opacity-50 disabled:text-opacity-50">

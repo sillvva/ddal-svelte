@@ -17,13 +17,13 @@
 
 	export let data;
 
-	let logForm = superForm(data.form, {
+	let superform = superForm(data.form, {
 		dataType: "json",
 		validators: valibotClient(logSchema),
 		taintedMessage: "You have unsaved changes. Are you sure you want to leave?"
 	});
 
-	const { form, errors, submitting, message } = logForm;
+	const { form, errors, submitting, message } = superform;
 
 	let season: 1 | 8 | 9 = $form.experience ? 1 : $form.acp ? 8 : 9;
 	let dmSelected = false;
@@ -31,11 +31,11 @@
 
 <BreadCrumbs />
 
-<SuperForm action="?/saveLog" superForm={logForm}>
+<SuperForm action="?/saveLog" {superform}>
 	<FormMessage {message} />
 	<div class="grid grid-cols-12 gap-4">
 		<div class="form-control col-span-12 sm:col-span-4">
-			<GenericInput superform={logForm} field="type" label="Log Type">
+			<GenericInput {superform} field="type" label="Log Type">
 				<select
 					name="type"
 					bind:value={$form.type}
@@ -48,15 +48,15 @@
 			</GenericInput>
 		</div>
 		<div class="form-control col-span-12 sm:col-span-4">
-			<TextInput superform={logForm} field="name" required>Title</TextInput>
+			<TextInput {superform} field="name" required>Title</TextInput>
 		</div>
 		<div class="form-control col-span-12 sm:col-span-4">
-			<DateInput superform={logForm} field="date" required>Date</DateInput>
+			<DateInput {superform} field="date" required>Date</DateInput>
 		</div>
 		<div class="col-span-12 grid grid-cols-12 gap-4">
 			{#if $form.type === "game"}
 				<div class="form-control col-span-6">
-					<GenericInput superform={logForm} field="dm.name" label="DM Name" required={!!$form.dm.DCI}>
+					<GenericInput {superform} field="dm.name" label="DM Name" required={!!$form.dm.DCI}>
 						<HComboBox
 							name="dmName"
 							bind:value={$form.dm.name}
@@ -86,7 +86,7 @@
 					</GenericInput>
 				</div>
 				<div class="form-control col-span-6">
-					<GenericInput superform={logForm} field="dm.DCI" label="DM DCI">
+					<GenericInput {superform} field="dm.DCI" label="DM DCI">
 						<HComboBox
 							name="dmDCI"
 							bind:value={$form.dm.DCI}
@@ -127,36 +127,34 @@
 				</div>
 				{#if season === 1}
 					<div class="form-control col-span-6 w-full sm:col-span-4">
-						<NumberInput superform={logForm} field="experience" min="0">Experience</NumberInput>
+						<NumberInput {superform} field="experience" min="0">Experience</NumberInput>
 					</div>
 				{/if}
 				{#if season === 9}
 					<div class="form-control col-span-12 w-full sm:col-span-4">
-						<NumberInput superform={logForm} field="level" min="0" max={Math.max($form.level, 20 - data.totalLevel)}>
-							Level
-						</NumberInput>
+						<NumberInput {superform} field="level" min="0" max={Math.max($form.level, 20 - data.totalLevel)}>Level</NumberInput>
 					</div>
 				{/if}
 			{/if}
 			{#if season === 8 || $form.type === "nongame"}
 				{#if $form.type === "game"}
 					<div class="form-control col-span-6 w-full sm:col-span-2">
-						<NumberInput superform={logForm} field="acp" min="0">ACP</NumberInput>
+						<NumberInput {superform} field="acp" min="0">ACP</NumberInput>
 					</div>
 				{/if}
 				<div class={twMerge("form-control w-full", $form.type === "game" ? "col-span-6 sm:col-span-2" : "col-span-4")}>
-					<NumberInput superform={logForm} field="tcp" min="0">TCP</NumberInput>
+					<NumberInput {superform} field="tcp" min="0">TCP</NumberInput>
 				</div>
 			{/if}
 			<div class={twMerge("form-control w-full", $form.type === "game" ? "col-span-6 sm:col-span-2" : "col-span-4")}>
-				<NumberInput superform={logForm} field="gold" min="0">Gold</NumberInput>
+				<NumberInput {superform} field="gold" min="0">Gold</NumberInput>
 			</div>
 			<div class={twMerge("form-control w-full", $form.type === "game" ? "col-span-6 sm:col-span-2" : "col-span-4")}>
-				<NumberInput superform={logForm} field="dtd" min="0">Downtime</NumberInput>
+				<NumberInput {superform} field="dtd" min="0">Downtime</NumberInput>
 			</div>
 		</div>
 		<div class="form-control col-span-12 w-full">
-			<MdTextInput superform={logForm} field="description" maxRows={20} preview>Notes</MdTextInput>
+			<MdTextInput {superform} field="description" maxRows={20} preview>Notes</MdTextInput>
 		</div>
 		<div class="no-script-hide col-span-12 flex flex-wrap gap-4">
 			<button
@@ -209,7 +207,7 @@
 						<h4 class="text-2xl">Add Magic Item</h4>
 						<div class="flex gap-4">
 							<div class="form-control flex-1">
-								<TextInput superform={logForm} field={`magic_items_gained[${index}].name`} required>Name</TextInput>
+								<TextInput {superform} field={`magic_items_gained[${index}].name`} required>Name</TextInput>
 							</div>
 							<button
 								type="button"
@@ -220,7 +218,7 @@
 							</button>
 						</div>
 						<div class="form-control w-full">
-							<MdTextInput superform={logForm} field={`magic_items_gained[${index}].description`} maxRows={8} preview>
+							<MdTextInput {superform} field={`magic_items_gained[${index}].description`} maxRows={8} preview>
 								Description
 							</MdTextInput>
 						</div>
@@ -233,7 +231,7 @@
 						<h4 class="text-2xl">Drop Magic Item</h4>
 						<div class="flex gap-4">
 							<div class="form-control flex-1">
-								<GenericInput superform={logForm} field={`magic_items_lost[${index}]`} label="Select an Item">
+								<GenericInput {superform} field={`magic_items_lost[${index}]`} label="Select an Item">
 									<select
 										value={$form.magic_items_lost[index]}
 										on:input={(e) => {
@@ -271,7 +269,7 @@
 						<h4 class="text-2xl">Add Story Award</h4>
 						<div class="flex gap-4">
 							<div class="form-control flex-1">
-								<TextInput superform={logForm} field={`story_awards_gained[${index}].name`} required>Name</TextInput>
+								<TextInput {superform} field={`story_awards_gained[${index}].name`} required>Name</TextInput>
 							</div>
 							<button
 								type="button"
@@ -282,7 +280,7 @@
 							</button>
 						</div>
 						<div class="form-control w-full">
-							<MdTextInput superform={logForm} field={`story_awards_gained[${index}].description`} maxRows={8} preview>
+							<MdTextInput {superform} field={`story_awards_gained[${index}].description`} maxRows={8} preview>
 								Description
 							</MdTextInput>
 						</div>
@@ -295,7 +293,7 @@
 						<h4 class="text-2xl">Drop Story Award</h4>
 						<div class="flex gap-4">
 							<div class="form-control flex-1">
-								<GenericInput superform={logForm} field={`story_awards_lost[${index}]`} label="Select an Item">
+								<GenericInput {superform} field={`story_awards_lost[${index}]`} label="Select an Item">
 									<select
 										value={$form.story_awards_lost[index]}
 										on:input={(e) => {

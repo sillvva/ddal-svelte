@@ -13,30 +13,27 @@
 	import { pageLoader } from "../../+layout.svelte";
 
 	export let data;
-	export let form;
 
-	const dmForm = superForm(data.form, {
+	const superform = superForm(data.form, {
 		dataType: "json",
 		validators: valibotClient(dungeonMasterSchema),
 		taintedMessage: "You have unsaved changes. Are you sure you want to leave?"
 	});
 
-	const { form: dmFormData, submitting, message } = dmForm;
+	const { form, submitting, message } = superform;
 </script>
 
 <div class="flex flex-col gap-4">
 	<BreadCrumbs />
 
-	<SuperForm action="?/saveDM" superForm={dmForm}>
+	<SuperForm action="?/saveDM" {superform}>
 		<FormMessage {message} />
 		<div class="grid grid-cols-12 gap-4">
 			<div class="form-control col-span-12 sm:col-span-6">
-				<TextInput superform={dmForm} field="name" required disabled={$dmFormData.uid === data.user.id ? true : undefined}>
-					DM Name
-				</TextInput>
+				<TextInput {superform} field="name" required disabled={$form.uid === data.user.id ? true : undefined}>DM Name</TextInput>
 			</div>
 			<div class="form-control col-span-12 sm:col-span-6">
-				<TextInput superform={dmForm} field="DCI">DCI</TextInput>
+				<TextInput {superform} field="DCI">DCI</TextInput>
 			</div>
 			<div class="col-span-12 m-4 text-center">
 				<button type="submit" class="btn btn-primary disabled:bg-primary disabled:bg-opacity-50 disabled:text-opacity-50">
@@ -63,8 +60,8 @@
 							$pageLoader = true;
 							return async ({ result }) => {
 								await applyAction(result);
-								if (form?.message) {
-									alert(form.message);
+								if ("data" in result && result.data?.message) {
+									alert(result.data.message);
 									$pageLoader = false;
 								}
 							};

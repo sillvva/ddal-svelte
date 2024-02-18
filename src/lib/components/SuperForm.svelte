@@ -9,15 +9,15 @@
 	import type { HTMLFormAttributes } from "svelte/elements";
 	import SuperDebug, { type SuperForm } from "sveltekit-superforms";
 
-	export let superForm: SuperForm<T, any>;
+	export let superform: SuperForm<T, any>;
 	export let basic = false;
 
 	type $$Props = HTMLFormAttributes & {
-		superForm: SuperForm<T, any>;
+		superform: SuperForm<T, any>;
 		basic?: boolean;
 	};
 
-	const { form, errors, allErrors, capture, restore, submitting, enhance, formId } = superForm;
+	const { form, errors, allErrors, capture, restore, submitting, enhance, formId } = superform;
 	const method = $$props.method || "post";
 
 	let refForm: HTMLFormElement;
