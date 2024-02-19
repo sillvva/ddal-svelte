@@ -57,7 +57,7 @@
 				<div class="form-control col-span-6">
 					<GenericInput {superform} field="dm.name" label="DM Name" required={!!$form.dm.DCI}>
 						<HComboBox
-							name="dmName"
+							id="dm.name"
 							bind:value={$form.dm.name}
 							values={data.dms.map((dm) => ({
 								key: dm.id,
@@ -87,7 +87,7 @@
 				<div class="form-control col-span-6">
 					<GenericInput {superform} field="dm.DCI" label="DM DCI">
 						<HComboBox
-							name="dmDCI"
+							id="dm.DCI"
 							bind:value={$form.dm.DCI}
 							values={data.dms
 								.filter((dm) => dm.DCI)
