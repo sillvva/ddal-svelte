@@ -40,13 +40,16 @@
 	}
 
 	$: withLabel = values.map((v) => ({ ...v, label: v.label || v.value }));
-	$: withCustom = !value?.trim() || !allowCustom ? withLabel : [{ value, label: `Add "${value}"` }, ...withLabel];
-	$: filtered = withCustom.filter((v) =>
+	$: prefiltered = withLabel.filter((v) =>
 		v.label
 			.toLowerCase()
 			.replace(/\s+/g, "")
 			.includes((value || "").toLowerCase().replace(/\s+/g, ""))
 	);
+	$: filtered =
+		!value?.trim() || !allowCustom || prefiltered.length === 1
+			? prefiltered
+			: [{ value, label: `Add "${value}"` }, ...prefiltered.slice(0, -1)];
 </script>
 
 <div class="join">
