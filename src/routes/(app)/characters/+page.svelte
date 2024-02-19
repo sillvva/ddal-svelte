@@ -1,28 +1,27 @@
 <script lang="ts">
 	import { goto } from "$app/navigation";
+	import { page } from "$app/stores";
 	import BreadCrumbs from "$lib/components/BreadCrumbs.svelte";
 	import Dropdown from "$lib/components/Dropdown.svelte";
 	import Icon from "$lib/components/Icon.svelte";
 	import SearchResults from "$lib/components/SearchResults.svelte";
 	import type { TransitionAction } from "$lib/util";
 	import { createTransition, slugify, sorter, stopWords } from "$lib/util";
+	import Search from "$src/lib/components/Search.svelte";
 	import type { CookieStore } from "$src/server/cookie.js";
 	import { download, hotkey } from "@svelteuidev/composables";
 	import MiniSearch from "minisearch";
 	import { getContext, onMount } from "svelte";
-	import { queryParam, ssp } from "sveltekit-search-params";
 	import { twMerge } from "tailwind-merge";
 
 	export let data;
 
 	let characters = data.characters;
+	let search = $page.url.searchParams.get("s") || "";
 	let loaded = false;
 
 	const app = getContext<CookieStore<App.Cookie>>("app");
 	const transition = getContext<TransitionAction>("transition");
-
-	const s = queryParam("s", ssp.string());
-	$: search = $s || "";
 
 	onMount(() => {
 		setTimeout(() => (loaded = true), 1000);
@@ -123,28 +122,7 @@
 		<div class="flex flex-wrap justify-between gap-2">
 			<div class="flex w-full gap-2 sm:max-w-md md:max-w-md">
 				<a href="/characters/new/edit" class="btn btn-primary btn-sm hidden sm:inline-flex">New Character</a>
-				<search class="min-w-0 flex-1">
-					<input
-						type="text"
-						placeholder="Search by name, race, class, items, etc."
-						bind:value={$s}
-						class="no-script-hide input join-item input-bordered w-full min-w-0 flex-1 sm:input-sm md:w-80"
-					/>
-					<noscript>
-						<form class="join flex">
-							<input
-								type="text"
-								name="s"
-								placeholder="Search by name, race, class, items, etc."
-								bind:value={$s}
-								class="input join-item input-bordered w-full min-w-0 flex-1 sm:input-sm md:w-80"
-							/>
-							<button type="submit" class="btn btn-primary join-item sm:btn-sm">
-								<Icon src="magnify" class="w-6 sm:w-4" />
-							</button>
-						</form>
-					</noscript>
-				</search>
+				<Search bind:value={search} placeholder="Search by name, race, class, items, etc." />
 				<a href="/characters/new/edit" class="btn btn-primary inline-flex sm:hidden" aria-label="New Character">
 					<Icon src="plus" class="inline w-6" />
 				</a>
