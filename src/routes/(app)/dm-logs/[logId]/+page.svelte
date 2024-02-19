@@ -1,7 +1,7 @@
 <script lang="ts">
 	import BreadCrumbs from "$lib/components/BreadCrumbs.svelte";
 	import FormMessage from "$lib/components/FormMessage.svelte";
-	import HComboBox from "$lib/components/HComboBox.svelte";
+	import Combobox from "$lib/components/Combobox.svelte";
 	import Icon from "$lib/components/Icon.svelte";
 	import SuperForm from "$lib/components/SuperForm.svelte";
 	import { dMLogSchema } from "$lib/schemas";
@@ -47,16 +47,16 @@
 				label="Assigned Character"
 			>
 				<input type="hidden" name="characterId" bind:value={$form.characterId} />
-				<HComboBox
-					name="characterName"
-					required={!!$form.applied_date}
-					bind:value={$form.characterName}
-					values={data.characters.map((char) => ({ key: char.id, value: char.name }))}
+				<Combobox
+					id="characterName"
+					bind:value={$form.characterId}
+					values={data.characters.map((char) => ({ value: char.id, label: char.name }))}
 					on:input={() => {
 						$form.characterId = "";
 					}}
+					required={!!$form.applied_date}
 					on:select={(e) => {
-						const character = data.characters.find((c) => c.id === e.detail?.key);
+						const character = data.characters.find((c) => c.id === e.detail?.value);
 						if (character && character.name === $form.characterName) {
 							$form.characterId = character.id;
 							$form.applied_date = $form.applied_date || new Date();
@@ -72,7 +72,7 @@
 						$form.characterId = "";
 						$form.applied_date = null;
 					}}
-					aria-invalid={$errors.characterId ? "true" : undefined}
+					errors={$errors.characterId}
 				/>
 			</GenericInput>
 		</div>
