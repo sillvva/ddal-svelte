@@ -8,6 +8,7 @@
 
 	const s = queryParam("s", ssp.string());
 	$: value = $s || "";
+	$: if ($s === "") $s = null;
 </script>
 
 <search class="min-w-0 flex-1">
