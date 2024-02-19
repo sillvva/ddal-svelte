@@ -3,13 +3,14 @@
 </script>
 
 <script lang="ts" generics="T extends TRec">
+	import Input from "./Input.svelte";
+
 	import { createEventDispatcher } from "svelte";
 	import { writable } from "svelte/store";
 	import { formFieldProxy, type FormPathLeaves, type SuperForm } from "sveltekit-superforms";
 	import GenericInput from "./GenericInput.svelte";
 	import Icon from "./Icon.svelte";
 	import MdTextInput from "./MDTextInput.svelte";
-	import TextInput from "./TextInput.svelte";
 
 	export let type: "add" | "drop";
 	export let entity: "magic_items" | "story_awards";
@@ -37,7 +38,7 @@
 			{/if}
 			<div class="flex gap-4">
 				<div class="form-control flex-1">
-					<TextInput {superform} field={nameField} required>Name</TextInput>
+					<Input type="text" {superform} field={nameField} required>Name</Input>
 				</div>
 				<button type="button" class="no-script-hide btn btn-error mt-9" on:click={() => dispatch("delete")}>
 					<Icon src="trash-can" class="w-6" />

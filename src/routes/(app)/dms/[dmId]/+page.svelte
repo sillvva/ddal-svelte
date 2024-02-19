@@ -1,5 +1,4 @@
 <script lang="ts">
-	// import { enhance } from "$app/forms";
 	import { applyAction, enhance } from "$app/forms";
 	import BreadCrumbs from "$lib/components/BreadCrumbs.svelte";
 	import FormMessage from "$lib/components/FormMessage.svelte";
@@ -7,7 +6,7 @@
 	import SuperForm from "$lib/components/SuperForm.svelte";
 	import { dungeonMasterSchema } from "$lib/schemas";
 	import { sorter } from "$lib/util";
-	import TextInput from "$src/lib/components/TextInput.svelte";
+	import Input from "$src/lib/components/Input.svelte";
 	import { superForm } from "sveltekit-superforms";
 	import { valibotClient } from "sveltekit-superforms/adapters";
 	import { pageLoader } from "../../+layout.svelte";
@@ -30,10 +29,12 @@
 		<FormMessage {message} />
 		<div class="grid grid-cols-12 gap-4">
 			<div class="form-control col-span-12 sm:col-span-6">
-				<TextInput {superform} field="name" required disabled={$form.uid === data.user.id ? true : undefined}>DM Name</TextInput>
+				<Input type="text" {superform} field="name" required disabled={$form.uid === data.user.id ? true : undefined}>
+					DM Name
+				</Input>
 			</div>
 			<div class="form-control col-span-12 sm:col-span-6">
-				<TextInput {superform} field="DCI">DCI</TextInput>
+				<Input type="text" {superform} field="DCI">DCI</Input>
 			</div>
 			<div class="col-span-12 m-4 text-center">
 				<button type="submit" class="btn btn-primary disabled:bg-primary disabled:bg-opacity-50 disabled:text-opacity-50">

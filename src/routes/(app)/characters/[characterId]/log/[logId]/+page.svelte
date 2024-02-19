@@ -8,9 +8,8 @@
 	import DateInput from "$src/lib/components/DateInput.svelte";
 	import EntityCard from "$src/lib/components/EntityCard.svelte";
 	import GenericInput from "$src/lib/components/GenericInput.svelte";
+	import Input from "$src/lib/components/Input.svelte";
 	import MdTextInput from "$src/lib/components/MDTextInput.svelte";
-	import NumberInput from "$src/lib/components/NumberInput.svelte";
-	import TextInput from "$src/lib/components/TextInput.svelte";
 	import { superForm } from "sveltekit-superforms";
 	import { valibotClient } from "sveltekit-superforms/adapters";
 	import { twMerge } from "tailwind-merge";
@@ -48,7 +47,7 @@
 			</GenericInput>
 		</div>
 		<div class="form-control col-span-12 sm:col-span-4">
-			<TextInput {superform} field="name" required>Title</TextInput>
+			<Input type="text" {superform} field="name" required>Title</Input>
 		</div>
 		<div class="form-control col-span-12 sm:col-span-4">
 			<DateInput {superform} field="date" required>Date</DateInput>
@@ -127,30 +126,30 @@
 				</div>
 				{#if season === 1}
 					<div class="form-control col-span-6 w-full sm:col-span-4">
-						<NumberInput {superform} field="experience" min="0">Experience</NumberInput>
+						<Input type="number" {superform} field="experience" min="0">Experience</Input>
 					</div>
 				{/if}
 				{#if season === 9}
 					<div class="form-control col-span-12 w-full sm:col-span-4">
-						<NumberInput {superform} field="level" min="0" max={Math.max($form.level, 20 - data.totalLevel)}>Level</NumberInput>
+						<Input type="number" {superform} field="level" min="0" max={Math.max($form.level, 20 - data.totalLevel)}>Level</Input>
 					</div>
 				{/if}
 			{/if}
 			{#if season === 8 || $form.type === "nongame"}
 				{#if $form.type === "game"}
 					<div class="form-control col-span-6 w-full sm:col-span-2">
-						<NumberInput {superform} field="acp" min="0">ACP</NumberInput>
+						<Input type="number" {superform} field="acp" min="0">ACP</Input>
 					</div>
 				{/if}
 				<div class={twMerge("form-control w-full", $form.type === "game" ? "col-span-6 sm:col-span-2" : "col-span-4")}>
-					<NumberInput {superform} field="tcp" min="0">TCP</NumberInput>
+					<Input type="number" {superform} field="tcp" min="0">TCP</Input>
 				</div>
 			{/if}
 			<div class={twMerge("form-control w-full", $form.type === "game" ? "col-span-6 sm:col-span-2" : "col-span-4")}>
-				<NumberInput {superform} field="gold" min="0">Gold</NumberInput>
+				<Input type="number" {superform} field="gold" min="0">Gold</Input>
 			</div>
 			<div class={twMerge("form-control w-full", $form.type === "game" ? "col-span-6 sm:col-span-2" : "col-span-4")}>
-				<NumberInput {superform} field="dtd" min="0">Downtime</NumberInput>
+				<Input type="number" {superform} field="dtd" min="0">Downtime</Input>
 			</div>
 		</div>
 		<div class="form-control col-span-12 w-full">
