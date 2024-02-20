@@ -13,6 +13,7 @@
 		required?: HTMLInputAttributes["required"];
 		label: string;
 		labelFor?: string;
+		fieldErrors?: string[];
 	}
 
 	export let superform: SuperForm<T> | undefined = undefined;
@@ -20,8 +21,9 @@
 	export let required: HTMLInputAttributes["required"] = false;
 	export let label: string;
 	export let labelFor = "";
+	export let fieldErrors: string[] = [];
 
-	const { errors } = superform && field ? formFieldProxy(superform, field) : { errors: readable("") };
+	const { errors } = superform && field ? formFieldProxy(superform, field) : { errors: readable(fieldErrors) };
 </script>
 
 <label for={labelFor || field} class="label">

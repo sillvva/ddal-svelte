@@ -67,46 +67,44 @@
 		<div class="col-span-12 grid grid-cols-12 gap-4">
 			{#if $form.type === "game"}
 				<div class="form-control col-span-6">
-					<GenericInput {superform} field="dm.name" label="DM Name" required={!!$form.dm.DCI}>
-						<Combobox
-							id="dm.name"
-							bind:value={$form.dm.id}
-							bind:inputValue={$form.dm.name}
-							values={data.dms.map((dm) => ({
-								value: dm.id,
-								label: dm.name,
-								itemLabel: dm.name + (dm.uid === data.user.id ? ` (Me)` : "") + (dm.DCI ? ` (${dm.DCI})` : "")
-							})) || []}
-							allowCustom
-							required={!!$form.dm.DCI}
-							on:select={(e) => setDM(e.detail?.selected?.value || "", { name: e.detail?.input })}
-							clearable
-							on:clear={() => ($form.dm = defaultDM(data.user.id))}
-							errors={$errors.dm?.name}
-						/>
-					</GenericInput>
+					<Combobox
+						id="dm.name"
+						label="DM Name"
+						bind:value={$form.dm.id}
+						bind:inputValue={$form.dm.name}
+						values={data.dms.map((dm) => ({
+							value: dm.id,
+							label: dm.name,
+							itemLabel: dm.name + (dm.uid === data.user.id ? ` (Me)` : "") + (dm.DCI ? ` (${dm.DCI})` : "")
+						})) || []}
+						allowCustom
+						required={!!$form.dm.DCI}
+						on:select={(e) => setDM(e.detail?.selected?.value || "", { name: e.detail?.input })}
+						clearable
+						on:clear={() => ($form.dm = defaultDM(data.user.id))}
+						errors={$errors.dm?.name}
+					/>
 				</div>
 				<div class="form-control col-span-6">
-					<GenericInput {superform} field="dm.DCI" label="DM DCI">
-						<Combobox
-							id="dm.DCI"
-							bind:value={$form.dm.id}
-							bind:inputValue={DCI}
-							values={data.dms
-								.filter((dm) => dm.DCI)
-								.map((dm) => ({
-									value: dm.id,
-									label: dm.DCI || "",
-									itemLabel: `${dm.DCI} (${dm.name}${dm.uid === data.user.id ? `, Me` : ""})`
-								})) || []}
-							allowCustom
-							on:input={() => ($form.dm.DCI = DCI || null)}
-							on:select={(e) => setDM(e.detail?.selected?.value || "", { DCI: e.detail?.input || null })}
-							clearable
-							on:clear={() => ($form.dm = defaultDM(data.user.id))}
-							errors={$errors.dm?.DCI}
-						/>
-					</GenericInput>
+					<Combobox
+						id="dm.DCI"
+						label="DM DCI"
+						bind:value={$form.dm.id}
+						bind:inputValue={DCI}
+						values={data.dms
+							.filter((dm) => dm.DCI)
+							.map((dm) => ({
+								value: dm.id,
+								label: dm.DCI || "",
+								itemLabel: `${dm.DCI} (${dm.name}${dm.uid === data.user.id ? `, Me` : ""})`
+							})) || []}
+						allowCustom
+						on:input={() => ($form.dm.DCI = DCI || null)}
+						on:select={(e) => setDM(e.detail?.selected?.value || "", { DCI: e.detail?.input || null })}
+						clearable
+						on:clear={() => ($form.dm = defaultDM(data.user.id))}
+						errors={$errors.dm?.DCI}
+					/>
 				</div>
 				<div class="form-control col-span-12 sm:col-span-4">
 					<GenericInput labelFor="season" label="Season">

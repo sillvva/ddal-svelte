@@ -7,6 +7,8 @@
 	import Icon from "./Icon.svelte";
 
 	export let id = "";
+	export let name = "";
+	export let label: string;
 	export let values: Array<{ value: string; label?: string; itemLabel?: string }> = [];
 	export let value = "";
 	export let inputValue = "";
@@ -50,25 +52,34 @@
 	$: if (!((showOnEmpty || inputValue?.trim()) && filtered.length)) open = false;
 </script>
 
-<div class="join">
-	<div class="dropdown w-full">
-		<Combobox.Root
-			items={filtered}
-			bind:inputValue
-			bind:open
-			{disabled}
-			{required}
-			onSelectedChange={(sel) => {
-				dispatch("select", { selected: sel, input: inputValue });
-			}}
-			onOpenChange={() => {
-				setTimeout(() => {
-					dispatch("select", { selected: selectedItem, input: inputValue });
-				}, 10);
-			}}
-		>
+<Combobox.Root
+	items={filtered}
+	bind:inputValue
+	bind:open
+	let:ids
+	{disabled}
+	{required}
+	onSelectedChange={(sel) => {
+		dispatch("select", { selected: sel, input: inputValue });
+	}}
+	onOpenChange={() => {
+		setTimeout(() => {
+			dispatch("select", { selected: selectedItem, input: inputValue });
+		}, 10);
+	}}
+>
+	<label for={ids.trigger} class="label">
+		<span class="label-text">
+			{label}
+			{#if required}
+				<span class="text-error">*</span>
+			{/if}
+		</span>
+	</label>
+	<div class="join">
+		<div class="dropdown w-full">
 			<label>
-				<Combobox.Input asChild let:builder {id}>
+				<Combobox.Input asChild let:builder>
 					<input
 						bind:value={inputValue}
 						class="input join-item input-bordered w-full rounded-r-none focus:border-primary"
@@ -117,27 +128,33 @@
 					</ul>
 				</Combobox.Content>
 			{/if}
-		</Combobox.Root>
+		</div>
+		{#if inputValue && selectedItem && clearable}
+			<button
+				class="btn join-item input-bordered"
+				type="button"
+				on:click|preventDefault={() => {
+					dispatch("clear");
+					selectedItem = undefined;
+					inputValue = "";
+				}}
+			>
+				<Icon src="x" class="w-6" color="red" />
+			</button>
+		{/if}
+		{#if dev}
+			<button type="button" class="btn join-item input-bordered" on:click|preventDefault={() => (debug = !debug)}>
+				<Icon src="info" class="w-6" />
+			</button>
+		{/if}
 	</div>
-	{#if inputValue && selectedItem && clearable}
-		<button
-			class="btn join-item input-bordered"
-			type="button"
-			on:click|preventDefault={() => {
-				dispatch("clear");
-				selectedItem = undefined;
-				inputValue = "";
-			}}
-		>
-			<Icon src="x" class="w-6" color="red" />
-		</button>
+	<Combobox.HiddenInput name={name || id} />
+	{#if errors}
+		<label for={ids.trigger} class="label">
+			<span class="label-text-alt text-error">{errors}</span>
+		</label>
 	{/if}
-	{#if dev}
-		<button type="button" class="btn join-item input-bordered" on:click|preventDefault={() => (debug = !debug)}>
-			<Icon src="info" class="w-6" />
-		</button>
-	{/if}
-</div>
+</Combobox.Root>
 
 {#if debug}
 	<SuperDebug data={selectedItem} />
