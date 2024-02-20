@@ -47,16 +47,17 @@
 			>
 				<input type="hidden" name="characterId" bind:value={$form.characterId} />
 				<HComboBox
-					name="characterName"
+					id="characterName"
+					bind:value={$form.characterId}
+					bind:inputValue={$form.characterName}
+					values={data.characters.map((char) => ({ value: char.id, label: char.name }))}
 					required={!!$form.applied_date}
-					bind:value={$form.characterName}
-					values={data.characters.map((char) => ({ key: char.id, value: char.name }))}
 					on:input={() => {
 						$form.characterId = "";
 					}}
 					on:select={(e) => {
-						const character = data.characters.find((c) => c.id === e.detail?.key);
-						if (character && character.name === $form.characterName) {
+						const character = data.characters.find((c) => c.id === e.detail?.selected?.value);
+						if (character) {
 							$form.characterId = character.id;
 							$form.applied_date = $form.applied_date || new Date();
 						} else {
@@ -71,7 +72,7 @@
 						$form.characterId = "";
 						$form.applied_date = null;
 					}}
-					aria-invalid={$errors.characterId ? "true" : undefined}
+					errors={$errors.characterId}
 				/>
 			</GenericInput>
 		</div>

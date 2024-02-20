@@ -25,7 +25,7 @@
 	const { form, errors, submitting, message } = superform;
 
 	let season: 1 | 8 | 9 = $form.experience ? 1 : $form.acp ? 8 : 9;
-	let dmSelected = false;
+	let DCI = $form.dm.DCI || "";
 </script>
 
 <BreadCrumbs />
@@ -58,29 +58,28 @@
 					<GenericInput {superform} field="dm.name" label="DM Name" required={!!$form.dm.DCI}>
 						<HComboBox
 							id="dm.name"
-							bind:value={$form.dm.name}
+							bind:value={$form.dm.id}
+							bind:inputValue={$form.dm.name}
 							values={data.dms.map((dm) => ({
-								key: dm.id,
-								value: dm.name,
-								label: dm.name + (dm.uid === data.user.id ? ` (Me)` : "") + (dm.DCI ? ` (${dm.DCI})` : "")
+								value: dm.id,
+								label: dm.name,
+								itemLabel: dm.name + (dm.uid === data.user.id ? ` (Me)` : "") + (dm.DCI ? ` (${dm.DCI})` : "")
 							})) || []}
 							allowCustom
 							required={!!$form.dm.DCI}
-							bind:selected={dmSelected}
 							on:select={(e) => {
-								const dm = data.dms.find((dm) => dm.id === e.detail?.key) || {
+								$form.dm = data.dms.find((dm) => dm.id === e.detail?.selected?.value) || {
 									id: "",
-									name: $form.dm.name,
+									name: e.detail?.input || "",
 									DCI: $form.dm.DCI || null,
 									uid: "",
 									owner: data.user.id
 								};
-								const { id, name, DCI, uid, owner } = dm;
-								$form.dm = { id, name, DCI, uid, owner };
+								DCI = $form.dm.DCI || "";
 							}}
 							clearable
 							on:clear={() => ($form.dm = defaultDM(data.user.id))}
-							aria-invalid={$errors.dm?.name ? "true" : undefined}
+							errors={$errors.dm?.name}
 						/>
 					</GenericInput>
 				</div>
@@ -88,30 +87,29 @@
 					<GenericInput {superform} field="dm.DCI" label="DM DCI">
 						<HComboBox
 							id="dm.DCI"
-							bind:value={$form.dm.DCI}
+							bind:value={$form.dm.id}
+							bind:inputValue={DCI}
 							values={data.dms
 								.filter((dm) => dm.DCI)
 								.map((dm) => ({
-									key: dm.id,
-									value: `${dm.DCI}`,
-									label: `${dm.DCI} (${dm.name}${dm.uid === data.user.id ? `, Me` : ""})`
+									value: dm.id,
+									label: dm.DCI || "",
+									itemLabel: `${dm.DCI} (${dm.name}${dm.uid === data.user.id ? `, Me` : ""})`
 								})) || []}
 							allowCustom
-							bind:selected={dmSelected}
+							on:input={() => ($form.dm.DCI = DCI || null)}
 							on:select={(e) => {
-								const dm = data.dms.find((dm) => dm.id === e.detail?.key) || {
+								$form.dm = data.dms.find((dm) => dm.id === e.detail?.selected?.value) || {
 									id: "",
 									name: $form.dm.name,
-									DCI: $form.dm.DCI || null,
+									DCI: e.detail?.input || null,
 									uid: "",
 									owner: data.user.id
 								};
-								const { id, name, DCI, uid, owner } = dm;
-								$form.dm = { id, name, DCI, uid, owner };
 							}}
 							clearable
 							on:clear={() => ($form.dm = defaultDM(data.user.id))}
-							aria-invalid={$errors.dm?.DCI ? "true" : undefined}
+							errors={$errors.dm?.DCI}
 						/>
 					</GenericInput>
 				</div>

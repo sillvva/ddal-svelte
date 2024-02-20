@@ -1,114 +1,122 @@
 <script lang="ts">
 	import { dev } from "$app/environment";
+	import { Combobox } from "bits-ui";
 	import { createEventDispatcher } from "svelte";
-	import { createCombobox } from "svelte-headlessui";
-	import type { HTMLInputAttributes } from "svelte/elements";
-	import { fade } from "svelte/transition";
 	import SuperDebug from "sveltekit-superforms";
 	import { twMerge } from "tailwind-merge";
 	import Icon from "./Icon.svelte";
 
-	interface $$Props extends HTMLInputAttributes {
-		values: typeof values;
-		value: typeof value;
-		allowCustom?: typeof allowCustom;
-		showOnEmpty?: typeof showOnEmpty;
-		clearable?: typeof clearable;
-		selected?: typeof selected;
-	}
-
-	export let values: Array<{ key?: string; value: string; label?: string }> = [];
-	export let value: string | null = "";
-	export let allowCustom: boolean = false;
-	export let showOnEmpty: boolean = false;
-	export let clearable: boolean = false;
-	export let selected: boolean = false;
+	export let id = "";
+	export let values: Array<{ value: string; label?: string; itemLabel?: string }> = [];
+	export let value = "";
+	export let inputValue = "";
+	export let allowCustom = false;
+	export let showOnEmpty = false;
+	export let clearable = false;
+	export let disabled = false;
+	export let required = false;
+	export let errors: string[] | undefined = [];
 
 	let debug = false;
+	let open = false;
 
 	const dispatch = createEventDispatcher<{
 		input: void;
-		select: (typeof values)[number] | null;
+		select: { selected: (typeof values)[number] | undefined; input: string } | undefined;
 		clear: void;
 	}>();
 
-	const combobox = createCombobox();
-
-	$: if (!selected) {
-		$combobox.selected = null;
-		$combobox.active = 0;
-	}
-
-	$: withLabel = values.map((v) => ({ ...v, label: v.label || v.value }));
+	$: withLabel = values.map(({ value, label, itemLabel }) => ({
+		value,
+		label: label || value,
+		itemLabel: itemLabel || label || value
+	}));
 	$: prefiltered = withLabel.filter((v) =>
-		v.label
+		v.itemLabel
 			.toLowerCase()
 			.replace(/\s+/g, "")
-			.includes((value || "").toLowerCase().replace(/\s+/g, ""))
+			.includes((inputValue || "").toLowerCase().replace(/\s+/g, ""))
 	);
 	$: filtered =
-		!value?.trim() || !allowCustom || prefiltered.length === 1
+		!inputValue?.trim() || !allowCustom || prefiltered.length === 1
 			? prefiltered
-			: [{ value, label: `Add "${value}"` }, ...prefiltered.slice(0, -1)];
+			: [{ value: inputValue, label: inputValue, itemLabel: `Add "${inputValue}"` }, ...prefiltered.slice(0, -1)];
+	$: if (!value) inputValue = "";
+	$: selectedItem = value
+		? values.find((v) => v.value === value)
+		: inputValue.trim() && allowCustom
+			? { value: "", label: inputValue, itemLabel: `Add "${inputValue}"` }
+			: undefined;
 </script>
 
 <div class="join">
 	<div class="dropdown w-full">
-		<label>
-			<input
-				{...$$restProps}
-				bind:value
-				use:combobox.input
-				class="input join-item input-bordered w-full focus:border-primary"
-				on:input={() => dispatch("input")}
-				on:select={() => {
-					value = $combobox.selected.value;
-					selected = true;
-					dispatch("select", $combobox.selected);
-				}}
-				on:change={() => {
-					if ($combobox.selected && $combobox.selected.value !== value) {
-						selected = false;
-					}
-					setTimeout(() => {
-						if (!allowCustom && !$combobox.selected) value = "";
-						dispatch("select", $combobox.selected);
-					}, 10);
-				}}
-			/>
-		</label>
-		{#if $combobox.expanded && (showOnEmpty || value?.trim()) && (filtered.length || allowCustom)}
-			<ul
-				use:combobox.items
-				class="menu dropdown-content z-10 w-full rounded-lg bg-base-200 p-2 shadow"
-				transition:fade={{ duration: 150 }}
-			>
-				{#each filtered.slice(0, 8) as value}
-					{@const active = $combobox.active === value}
-					{@const selected = $combobox.selected === value}
-					<li
-						class={twMerge(
-							"hover:bg-primary/50",
-							(active || selected) && "bg-primary text-primary-content",
-							selected && "font-bold"
-						)}
-						use:combobox.item={{ value }}
-					>
-						<span class="rounded-none px-4 py-2">
-							{value.label}
-						</span>
-					</li>
-				{/each}
-			</ul>
-		{/if}
+		<Combobox.Root
+			items={filtered}
+			bind:inputValue
+			bind:open
+			{disabled}
+			{required}
+			onSelectedChange={(sel) => {
+				dispatch("select", { selected: sel, input: inputValue });
+			}}
+			onOpenChange={() => {
+				setTimeout(() => {
+					dispatch("select", { selected: selectedItem, input: inputValue });
+				}, 10);
+			}}
+		>
+			<label>
+				<Combobox.Input asChild let:builder {id}>
+					<input
+						bind:value={inputValue}
+						class="input join-item input-bordered w-full rounded-r-none focus:border-primary"
+						on:input={() => {
+							dispatch("input");
+							if (selectedItem && selectedItem.label !== inputValue) {
+								selectedItem = undefined;
+							}
+						}}
+						aria-invalid={(errors || []).length ? "true" : undefined}
+						use:builder.action
+						{...builder}
+					/>
+				</Combobox.Input>
+			</label>
+			{#if (showOnEmpty || inputValue?.trim()) && filtered.length}
+				<Combobox.Content class="menu dropdown-content z-10 w-full rounded-lg bg-base-200 p-2 shadow">
+					{#each filtered.slice(0, 8) as item}
+						<Combobox.Item asChild value={item.value} label={item.label} let:builder>
+							<li
+								class={twMerge(
+									"hover:bg-primary/50",
+									"data-[highlighted]:bg-primary data-[highlighted]:text-primary-content",
+									"data-[selected]:bg-primary data-[selected]:font-bold data-[selected]:text-primary-content"
+								)}
+								use:builder.action
+								{...builder}
+								data-selected={selectedItem?.value === item.value ? "true" : undefined}
+							>
+								<span class="rounded-none px-4 py-2">
+									{item.itemLabel}
+								</span>
+							</li>
+						</Combobox.Item>
+					{:else}
+						<span class="block px-5 py-2 text-sm"> No results found </span>
+					{/each}
+				</Combobox.Content>
+			{/if}
+		</Combobox.Root>
 	</div>
-	{#if value && selected && clearable}
+	{#if inputValue && selectedItem && clearable}
 		<button
 			class="btn join-item input-bordered"
 			type="button"
 			on:click|preventDefault={() => {
 				dispatch("clear");
-				selected = false;
+				selectedItem = undefined;
+				inputValue = "";
 			}}
 		>
 			<Icon src="x" class="w-6" color="red" />
@@ -122,5 +130,5 @@
 </div>
 
 {#if debug}
-	<SuperDebug data={$combobox} />
+	<SuperDebug data={selectedItem} />
 {/if}
