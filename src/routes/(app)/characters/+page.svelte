@@ -4,10 +4,10 @@
 	import BreadCrumbs from "$lib/components/BreadCrumbs.svelte";
 	import Dropdown from "$lib/components/Dropdown.svelte";
 	import Icon from "$lib/components/Icon.svelte";
+	import Search from "$lib/components/Search.svelte";
 	import SearchResults from "$lib/components/SearchResults.svelte";
 	import type { TransitionAction } from "$lib/util";
 	import { createTransition, slugify, sorter, stopWords } from "$lib/util";
-	import Search from "$lib/components/Search.svelte";
 	import type { CookieStore } from "$src/server/cookie.js";
 	import { download, hotkey } from "@svelteuidev/composables";
 	import MiniSearch from "minisearch";
