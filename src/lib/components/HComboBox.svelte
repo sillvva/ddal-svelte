@@ -78,9 +78,8 @@
 							}
 						}}
 						on:blur={() => {
-							if (!filtered.length) {
-								dispatch("select", { selected: undefined, input: inputValue });
-							}
+							if (!filtered.length) dispatch("select", { selected: undefined, input: inputValue });
+							if (!((showOnEmpty || inputValue?.trim()) && filtered.length)) open = false;
 						}}
 						aria-invalid={(errors || []).length ? "true" : undefined}
 						use:builder.action

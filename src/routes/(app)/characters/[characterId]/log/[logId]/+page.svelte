@@ -68,11 +68,15 @@
 							allowCustom
 							required={!!$form.dm.DCI}
 							on:select={(e) => {
-								$form.dm = data.dms.find((dm) => dm.id === e.detail?.selected?.value) || {
-									...$form.dm,
-									name: e.detail?.input || "",
-									owner: data.user.id
-								};
+								$form.dm =
+									data.dms.find((dm) => dm.id === e.detail?.selected?.value) ||
+									(e.detail?.input || $form.dm.DCI
+										? {
+												...$form.dm,
+												name: e.detail?.input || "",
+												owner: data.user.id
+											}
+										: defaultDM(data.user.id));
 								DCI = $form.dm.DCI || "";
 							}}
 							clearable
@@ -97,11 +101,15 @@
 							allowCustom
 							on:input={() => ($form.dm.DCI = DCI || null)}
 							on:select={(e) => {
-								$form.dm = data.dms.find((dm) => dm.id === e.detail?.selected?.value) || {
-									...$form.dm,
-									DCI: e.detail?.input || null,
-									owner: data.user.id
-								};
+								$form.dm =
+									data.dms.find((dm) => dm.id === e.detail?.selected?.value) ||
+									($form.dm.name || e.detail?.input
+										? {
+												...$form.dm,
+												DCI: e.detail?.input || null,
+												owner: data.user.id
+											}
+										: defaultDM(data.user.id));
 							}}
 							clearable
 							on:clear={() => ($form.dm = defaultDM(data.user.id))}
