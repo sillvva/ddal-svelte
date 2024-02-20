@@ -7,10 +7,10 @@
 	import GenericInput from "$lib/components/GenericInput.svelte";
 	import Input from "$lib/components/Input.svelte";
 	import MdTextInput from "$lib/components/MDTextInput.svelte";
+	import Submit from "$lib/components/Submit.svelte";
 	import SuperForm from "$lib/components/SuperForm.svelte";
 	import { defaultDM } from "$lib/entities";
 	import { logSchema } from "$lib/schemas";
-	import Submit from "$src/lib/components/Submit.svelte";
 	import { superForm } from "sveltekit-superforms";
 	import { valibotClient } from "sveltekit-superforms/adapters";
 

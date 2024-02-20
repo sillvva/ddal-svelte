@@ -2,9 +2,9 @@
 	import BreadCrumbs from "$lib/components/BreadCrumbs.svelte";
 	import Control from "$lib/components/Control.svelte";
 	import Input from "$lib/components/Input.svelte";
+	import Submit from "$lib/components/Submit.svelte";
 	import SuperForm from "$lib/components/SuperForm.svelte";
 	import { newCharacterSchema } from "$lib/schemas";
-	import Submit from "$src/lib/components/Submit.svelte";
 	import { superForm } from "sveltekit-superforms";
 	import { valibotClient } from "sveltekit-superforms/adapters";
 
