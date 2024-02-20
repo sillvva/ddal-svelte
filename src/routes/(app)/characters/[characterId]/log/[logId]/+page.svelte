@@ -68,6 +68,7 @@
 							allowCustom
 							required={!!$form.dm.DCI}
 							on:select={(e) => {
+								console.log(e.detail?.selected?.value);
 								$form.dm =
 									data.dms.find((dm) => dm.id === e.detail?.selected?.value) ||
 									(e.detail?.input || $form.dm.DCI

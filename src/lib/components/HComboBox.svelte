@@ -47,6 +47,7 @@
 		: inputValue.trim() && allowCustom
 			? { value: "", label: inputValue, itemLabel: `Add "${inputValue}"` }
 			: undefined;
+	$: if (!((showOnEmpty || inputValue?.trim()) && filtered.length)) open = false;
 </script>
 
 <div class="join">
@@ -76,10 +77,13 @@
 							if (selectedItem && selectedItem.label !== inputValue) {
 								selectedItem = undefined;
 							}
+							if (!inputValue) {
+								dispatch("clear");
+								selectedItem = undefined;
+							}
 						}}
 						on:blur={() => {
 							if (!filtered.length) dispatch("select", { selected: undefined, input: inputValue });
-							if (!((showOnEmpty || inputValue?.trim()) && filtered.length)) open = false;
 						}}
 						aria-invalid={(errors || []).length ? "true" : undefined}
 						use:builder.action
