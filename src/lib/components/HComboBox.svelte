@@ -95,7 +95,9 @@
 								)}
 								use:builder.action
 								{...builder}
+								role="option"
 								data-selected={selectedItem?.value === item.value ? "true" : undefined}
+								aria-selected={selectedItem?.value === item.value}
 							>
 								<span class="rounded-none px-4 py-2">
 									{item.itemLabel}
