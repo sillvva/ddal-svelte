@@ -19,8 +19,6 @@
 		validators: valibotClient(dungeonMasterSchema),
 		taintedMessage: "You have unsaved changes. Are you sure you want to leave?"
 	});
-
-	const { form } = superform;
 </script>
 
 <div class="flex flex-col gap-4">
@@ -28,7 +26,7 @@
 
 	<SuperForm action="?/saveDM" {superform} showMessage>
 		<Control class="col-span-12 sm:col-span-6">
-			<Input type="text" {superform} field="name" required disabled={$form.uid === data.user.id ? true : undefined}>
+			<Input type="text" {superform} field="name" required disabled={data.form.data.uid === data.user.id ? true : undefined}>
 				DM Name
 			</Input>
 		</Control>
