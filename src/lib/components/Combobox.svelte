@@ -6,7 +6,6 @@
 	import { twMerge } from "tailwind-merge";
 	import Icon from "./Icon.svelte";
 
-	export let id = "";
 	export let name = "";
 	export let label: string;
 	export let values: Array<{ value: string; label?: string; itemLabel?: string }> = [];
@@ -148,7 +147,7 @@
 			</button>
 		{/if}
 	</div>
-	<Combobox.HiddenInput name={name || id} />
+	{#if name}<Combobox.HiddenInput {name} />{/if}
 	{#if errors}
 		<label for={ids.trigger} class="label">
 			<span class="label-text-alt text-error">{errors}</span>

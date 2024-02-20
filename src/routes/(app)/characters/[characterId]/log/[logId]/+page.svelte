@@ -68,7 +68,6 @@
 			{#if $form.type === "game"}
 				<div class="form-control col-span-6">
 					<Combobox
-						id="dm.name"
 						label="DM Name"
 						bind:value={$form.dm.id}
 						bind:inputValue={$form.dm.name}
@@ -87,7 +86,6 @@
 				</div>
 				<div class="form-control col-span-6">
 					<Combobox
-						id="dm.DCI"
 						label="DM DCI"
 						bind:value={$form.dm.id}
 						bind:inputValue={DCI}
