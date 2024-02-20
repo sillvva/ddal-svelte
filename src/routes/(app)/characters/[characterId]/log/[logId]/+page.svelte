@@ -64,7 +64,7 @@
 		</div>
 		<div class="col-span-12 grid grid-cols-12 gap-4">
 			{#if $form.type === "game"}
-				<div class="form-control col-span-6">
+				<div class="form-control col-span-12 sm:col-span-6">
 					<Combobox
 						{superform}
 						idField="dm.id"
@@ -83,7 +83,7 @@
 						DM Name
 					</Combobox>
 				</div>
-				<div class="form-control col-span-6">
+				<div class="form-control col-span-12 sm:col-span-6">
 					<Combobox
 						{superform}
 						idField="dm.id"
