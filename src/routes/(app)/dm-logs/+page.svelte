@@ -1,10 +1,12 @@
 <script lang="ts">
 	import { applyAction, enhance } from "$app/forms";
 	import { goto, pushState } from "$app/navigation";
+	import { page } from "$app/stores";
 	import BreadCrumbs from "$lib/components/BreadCrumbs.svelte";
 	import Dropdown from "$lib/components/Dropdown.svelte";
 	import Icon from "$lib/components/Icon.svelte";
 	import Items from "$lib/components/Items.svelte";
+	import Search from "$lib/components/Search.svelte";
 	import SearchResults from "$lib/components/SearchResults.svelte";
 	import { sorter, stopWords } from "$lib/util";
 	import type { CookieStore } from "$src/server/cookie.js";
@@ -19,7 +21,7 @@
 	const logs = data.logs;
 	const app = getContext<CookieStore<App.Cookie>>("app");
 
-	let search = "";
+	let search = $page.url.searchParams.get("s") || "";
 	let deletingLog: string[] = [];
 
 	const indexed = logs
@@ -109,18 +111,16 @@
 		</div>
 	{/if}
 
-	<div class="flex justify-between gap-2">
-		<div class="flex gap-2">
+	<div class="flex gap-2 sm:justify-between">
+		<div class="flex w-full gap-2 sm:w-96">
 			<a href="/dm-logs/new" class="btn btn-primary btn-sm hidden sm:inline-flex" aria-label="New Log">New Log</a>
-			<search class="no-script-hide w-full">
-				<input type="text" placeholder="Search" bind:value={search} class="input input-bordered w-full sm:input-sm sm:max-w-xs" />
-			</search>
+			<Search bind:value={search} placeholder="Search by name, race, class, items, etc." />
 			<a href="/dm-logs/new" class="btn btn-primary inline-flex sm:hidden" aria-label="New Log">
 				<Icon src="plus" class="inline w-6" />
 			</a>
 		</div>
 		<button
-			class="no-script-hide btn btn-primary btn-sm"
+			class="no-script-hide btn btn-primary sm:btn-sm"
 			on:click={() => ($app.dmLogs.sort = $app.dmLogs.sort === "asc" ? "desc" : "asc")}
 		>
 			<Icon src="sort-calendar-{$app.dmLogs.sort}ending" class="w-6" />

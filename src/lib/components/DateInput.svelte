@@ -37,6 +37,7 @@
 </label>
 <input
 	type="datetime-local"
+	id={field}
 	bind:value={$proxyDate}
 	class="input input-bordered w-full focus:border-primary"
 	aria-invalid={$errors ? "true" : undefined}
@@ -45,7 +46,7 @@
 	{...$constraints}
 	{...$$restProps}
 />
-{#if $errors}
+{#if $errors?.length}
 	<label for={field} class="label">
 		<span class="label-text-alt text-error">{$errors}</span>
 	</label>

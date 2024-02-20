@@ -1,340 +1,139 @@
 <script lang="ts">
+	import AddDropItems from "$lib/components/AddDropItems.svelte";
 	import BreadCrumbs from "$lib/components/BreadCrumbs.svelte";
-	import FormMessage from "$lib/components/FormMessage.svelte";
-	import HComboBox from "$lib/components/HComboBox.svelte";
-	import Icon from "$lib/components/Icon.svelte";
+	import Combobox from "$lib/components/Combobox.svelte";
+	import Control from "$lib/components/Control.svelte";
+	import DateInput from "$lib/components/DateInput.svelte";
+	import GenericInput from "$lib/components/GenericInput.svelte";
+	import Input from "$lib/components/Input.svelte";
+	import MdTextInput from "$lib/components/MDTextInput.svelte";
+	import Submit from "$lib/components/Submit.svelte";
 	import SuperForm from "$lib/components/SuperForm.svelte";
 	import { defaultDM } from "$lib/entities";
 	import { logSchema } from "$lib/schemas";
-	import DateInput from "$src/lib/components/DateInput.svelte";
-	import GenericInput from "$src/lib/components/GenericInput.svelte";
-	import MdTextInput from "$src/lib/components/MDTextInput.svelte";
-	import NumberInput from "$src/lib/components/NumberInput.svelte";
-	import TextInput from "$src/lib/components/TextInput.svelte";
 	import { superForm } from "sveltekit-superforms";
 	import { valibotClient } from "sveltekit-superforms/adapters";
-	import { twMerge } from "tailwind-merge";
 
 	export let data;
 
-	let logForm = superForm(data.form, {
+	let superform = superForm(data.form, {
 		dataType: "json",
 		validators: valibotClient(logSchema),
 		taintedMessage: "You have unsaved changes. Are you sure you want to leave?"
 	});
 
-	const { form, errors, submitting, message } = logForm;
+	const { form } = superform;
 
 	let season: 1 | 8 | 9 = $form.experience ? 1 : $form.acp ? 8 : 9;
-	let dmSelected = false;
+
+	function setDM(id: string, value: Partial<{ name: string; DCI: string | null }>) {
+		$form.dm =
+			data.dms.find((dm) => dm.id === id) ||
+			(("name" in value ? value.name : $form.dm.name) || ("DCI" in value ? value.DCI : $form.dm.DCI)
+				? {
+						...$form.dm,
+						...value
+					}
+				: defaultDM(data.user.id));
+	}
 </script>
 
 <BreadCrumbs />
 
-<SuperForm action="?/saveLog" superForm={logForm}>
-	<FormMessage {message} />
-	<div class="grid grid-cols-12 gap-4">
-		<div class="form-control col-span-12 sm:col-span-4">
-			<GenericInput superform={logForm} field="type" label="Log Type">
-				<select
-					name="type"
-					bind:value={$form.type}
-					class="select select-bordered w-full"
-					aria-invalid={$errors.type ? "true" : undefined}
-				>
-					<option value="game">Game</option>
-					<option value="nongame">Non-Game (Purchase, Trade, etc)</option>
+<SuperForm action="?/saveLog" {superform} showMessage>
+	<Control class="col-span-12 sm:col-span-4">
+		<GenericInput {superform} field="type" label="Log Type">
+			<select id="type" bind:value={$form.type} class="select select-bordered w-full">
+				<option value="game">Game</option>
+				<option value="nongame">Non-Game (Purchase, Trade, etc)</option>
+			</select>
+		</GenericInput>
+	</Control>
+	<Control class="col-span-12 sm:col-span-4">
+		<Input type="text" {superform} field="name" required>Title</Input>
+	</Control>
+	<Control class="col-span-12 sm:col-span-4">
+		<DateInput {superform} field="date" required>Date</DateInput>
+	</Control>
+	{#if $form.type === "game"}
+		<Control class="col-span-12 sm:col-span-6">
+			<Combobox
+				{superform}
+				idField="dm.id"
+				field="dm.name"
+				values={data.dms.map((dm) => ({
+					value: dm.id,
+					label: dm.name,
+					itemLabel: dm.name + (dm.uid === data.user.id ? ` (Me)` : "") + (dm.DCI ? ` (${dm.DCI})` : "")
+				})) || []}
+				allowCustom
+				required={!!$form.dm.DCI}
+				on:select={(e) => setDM(e.detail?.selected?.value || "", { name: e.detail?.input })}
+				clearable
+				on:clear={() => ($form.dm = defaultDM(data.user.id))}
+			>
+				DM Name
+			</Combobox>
+		</Control>
+		<Control class="col-span-12 sm:col-span-6">
+			<Combobox
+				{superform}
+				idField="dm.id"
+				field="dm.DCI"
+				values={data.dms
+					.filter((dm) => dm.DCI)
+					.map((dm) => ({
+						value: dm.id,
+						label: dm.DCI || "",
+						itemLabel: `${dm.DCI} (${dm.name}${dm.uid === data.user.id ? `, Me` : ""})`
+					})) || []}
+				allowCustom
+				on:select={(e) => setDM(e.detail?.selected?.value || "", { DCI: e.detail?.input || null })}
+				clearable
+				on:clear={() => ($form.dm = defaultDM(data.user.id))}
+			>
+				DM DCI
+			</Combobox>
+		</Control>
+		<Control class="col-span-12 sm:col-span-4">
+			<GenericInput labelFor="season" label="Season">
+				<select id="season" bind:value={season} class="select select-bordered w-full">
+					<option value={9}>Season 9+</option>
+					<option value={8}>Season 8</option>
+					<option value={1}>Season 1-7</option>
 				</select>
 			</GenericInput>
-		</div>
-		<div class="form-control col-span-12 sm:col-span-4">
-			<TextInput superform={logForm} field="name" required>Title</TextInput>
-		</div>
-		<div class="form-control col-span-12 sm:col-span-4">
-			<DateInput superform={logForm} field="date" required>Date</DateInput>
-		</div>
-		<div class="col-span-12 grid grid-cols-12 gap-4">
-			{#if $form.type === "game"}
-				<div class="form-control col-span-6">
-					<GenericInput superform={logForm} field="dm.name" label="DM Name" required={!!$form.dm.DCI}>
-						<HComboBox
-							name="dmName"
-							bind:value={$form.dm.name}
-							values={data.dms.map((dm) => ({
-								key: dm.id,
-								value: dm.name,
-								label: dm.name + (dm.uid === data.user.id ? ` (Me)` : "") + (dm.DCI ? ` (${dm.DCI})` : "")
-							})) || []}
-							allowCustom
-							required={!!$form.dm.DCI}
-							bind:selected={dmSelected}
-							on:select={(e) => {
-								const dm = data.dms.find((dm) => dm.id === e.detail?.key) || {
-									id: "",
-									name: $form.dm.name,
-									DCI: $form.dm.DCI || null,
-									uid: "",
-									owner: data.user.id
-								};
-								const { id, name, DCI, uid, owner } = dm;
-								$form.dm = { id, name, DCI, uid, owner };
-							}}
-							clearable
-							on:clear={() => ($form.dm = defaultDM(data.user.id))}
-							aria-invalid={$errors.dm?.name ? "true" : undefined}
-						/>
-					</GenericInput>
-				</div>
-				<div class="form-control col-span-6">
-					<GenericInput superform={logForm} field="dm.DCI" label="DM DCI">
-						<HComboBox
-							name="dmDCI"
-							bind:value={$form.dm.DCI}
-							values={data.dms
-								.filter((dm) => dm.DCI)
-								.map((dm) => ({
-									key: dm.id,
-									value: `${dm.DCI}`,
-									label: `${dm.DCI} (${dm.name}${dm.uid === data.user.id ? `, Me` : ""})`
-								})) || []}
-							allowCustom
-							bind:selected={dmSelected}
-							on:select={(e) => {
-								const dm = data.dms.find((dm) => dm.id === e.detail?.key) || {
-									id: "",
-									name: $form.dm.name,
-									DCI: $form.dm.DCI || null,
-									uid: "",
-									owner: data.user.id
-								};
-								const { id, name, DCI, uid, owner } = dm;
-								$form.dm = { id, name, DCI, uid, owner };
-							}}
-							clearable
-							on:clear={() => ($form.dm = defaultDM(data.user.id))}
-							aria-invalid={$errors.dm?.DCI ? "true" : undefined}
-						/>
-					</GenericInput>
-				</div>
-				<div class="form-control col-span-12 sm:col-span-4">
-					<GenericInput labelFor="season" label="Season">
-						<select id="season" bind:value={season} class="select select-bordered w-full">
-							<option value={9}>Season 9+</option>
-							<option value={8}>Season 8</option>
-							<option value={1}>Season 1-7</option>
-						</select>
-					</GenericInput>
-				</div>
-				{#if season === 1}
-					<div class="form-control col-span-6 w-full sm:col-span-4">
-						<NumberInput superform={logForm} field="experience" min="0">Experience</NumberInput>
-					</div>
-				{/if}
-				{#if season === 9}
-					<div class="form-control col-span-12 w-full sm:col-span-4">
-						<NumberInput superform={logForm} field="level" min="0" max={Math.max($form.level, 20 - data.totalLevel)}>
-							Level
-						</NumberInput>
-					</div>
-				{/if}
-			{/if}
-			{#if season === 8 || $form.type === "nongame"}
-				{#if $form.type === "game"}
-					<div class="form-control col-span-6 w-full sm:col-span-2">
-						<NumberInput superform={logForm} field="acp" min="0">ACP</NumberInput>
-					</div>
-				{/if}
-				<div class={twMerge("form-control w-full", $form.type === "game" ? "col-span-6 sm:col-span-2" : "col-span-4")}>
-					<NumberInput superform={logForm} field="tcp" min="0">TCP</NumberInput>
-				</div>
-			{/if}
-			<div class={twMerge("form-control w-full", $form.type === "game" ? "col-span-6 sm:col-span-2" : "col-span-4")}>
-				<NumberInput superform={logForm} field="gold" min="0">Gold</NumberInput>
-			</div>
-			<div class={twMerge("form-control w-full", $form.type === "game" ? "col-span-6 sm:col-span-2" : "col-span-4")}>
-				<NumberInput superform={logForm} field="dtd" min="0">Downtime</NumberInput>
-			</div>
-		</div>
-		<div class="form-control col-span-12 w-full">
-			<MdTextInput superform={logForm} field="description" maxRows={20} preview>Notes</MdTextInput>
-		</div>
-		<div class="no-script-hide col-span-12 flex flex-wrap gap-4">
-			<button
-				type="button"
-				class="btn btn-primary min-w-fit flex-1 sm:btn-sm sm:flex-none"
-				on:click={() => ($form.magic_items_gained = [...$form.magic_items_gained, { id: "", name: "", description: "" }])}
-			>
-				Add Magic Item
-			</button>
-			{#if data.magicItems.filter((item) => !$form.magic_items_lost.includes(item.id)).length > 0}
-				<button
-					type="button"
-					class="btn min-w-fit flex-1 sm:btn-sm sm:flex-none"
-					on:click={() =>
-						($form.magic_items_lost = [
-							...$form.magic_items_lost,
-							data.magicItems.filter((item) => !$form.magic_items_lost.includes(item.id))[0].id
-						])}
-				>
-					Drop Magic Item
-				</button>
-			{/if}
-			{#if $form.type === "game"}
-				<button
-					type="button"
-					class="btn btn-primary min-w-fit flex-1 sm:btn-sm sm:flex-none"
-					on:click={() => ($form.story_awards_gained = [...$form.story_awards_gained, { id: "", name: "", description: "" }])}
-				>
-					Add Story Award
-				</button>
-				{#if data.storyAwards.filter((item) => !$form.story_awards_lost.includes(item.id)).length > 0}
-					<button
-						type="button"
-						class="btn min-w-fit flex-1 sm:btn-sm sm:flex-none"
-						on:click={() =>
-							($form.story_awards_lost = [
-								...$form.story_awards_lost,
-								data.storyAwards.filter((item) => !$form.story_awards_lost.includes(item.id))[0].id || ""
-							])}
-					>
-						Drop Story Award
-					</button>
-				{/if}
-			{/if}
-		</div>
-		<div class="col-span-12 grid grid-cols-12 gap-4 dark:text-white">
-			{#each $form.magic_items_gained as _, index}
-				<div class="card col-span-12 bg-base-300/70 shadow-xl sm:col-span-6">
-					<div class="card-body flex flex-col gap-4">
-						<h4 class="text-2xl">Add Magic Item</h4>
-						<div class="flex gap-4">
-							<div class="form-control flex-1">
-								<TextInput superform={logForm} field={`magic_items_gained[${index}].name`} required>Name</TextInput>
-							</div>
-							<button
-								type="button"
-								class="no-script-hide btn btn-error mt-9"
-								on:click={() => ($form.magic_items_gained = $form.magic_items_gained.filter((_, i) => i !== index))}
-							>
-								<Icon src="trash-can" class="w-6" />
-							</button>
-						</div>
-						<div class="form-control w-full">
-							<MdTextInput superform={logForm} field={`magic_items_gained[${index}].description`} maxRows={8} preview>
-								Description
-							</MdTextInput>
-						</div>
-					</div>
-				</div>
-			{/each}
-			{#each $form.magic_items_lost as id, index}
-				<div class="card col-span-12 bg-base-300/70 shadow-xl sm:col-span-6">
-					<div class="card-body flex flex-col gap-4">
-						<h4 class="text-2xl">Drop Magic Item</h4>
-						<div class="flex gap-4">
-							<div class="form-control flex-1">
-								<GenericInput superform={logForm} field={`magic_items_lost[${index}]`} label="Select an Item">
-									<select
-										value={$form.magic_items_lost[index]}
-										on:input={(e) => {
-											$form.magic_items_lost[index] = e.currentTarget.value;
-										}}
-										name={`magic_items_lost.${index}`}
-										class="select select-bordered w-full"
-										aria-invalid={$errors.magic_items_lost?.[index] ? "true" : undefined}
-									>
-										{#each data.magicItems.filter((item) => item.id === id || !$form.magic_items_lost.includes(item.id)) as item}
-											<option value={item.id}>
-												{item.name}
-											</option>
-										{/each}
-									</select>
-								</GenericInput>
-							</div>
-							<button
-								type="button"
-								class="no-script-hide btn btn-error mt-9"
-								on:click={() => ($form.magic_items_lost = $form.magic_items_lost.filter((_, i) => i !== index))}
-							>
-								<Icon src="trash-can" class="w-6" />
-							</button>
-						</div>
-						<div class="text-sm">
-							{data.magicItems.find((item) => $form.magic_items_lost[index] === item.id)?.description || ""}
-						</div>
-					</div>
-				</div>
-			{/each}
-			{#each $form.story_awards_gained as _, index}
-				<div class="card col-span-12 bg-base-300/70 shadow-xl sm:col-span-6">
-					<div class="card-body flex flex-col gap-4">
-						<h4 class="text-2xl">Add Story Award</h4>
-						<div class="flex gap-4">
-							<div class="form-control flex-1">
-								<TextInput superform={logForm} field={`story_awards_gained[${index}].name`} required>Name</TextInput>
-							</div>
-							<button
-								type="button"
-								class="no-script-hide btn btn-error mt-9"
-								on:click={() => ($form.story_awards_gained = $form.story_awards_gained.filter((_, i) => i !== index))}
-							>
-								<Icon src="trash-can" class="w-6" />
-							</button>
-						</div>
-						<div class="form-control w-full">
-							<MdTextInput superform={logForm} field={`story_awards_gained[${index}].description`} maxRows={8} preview>
-								Description
-							</MdTextInput>
-						</div>
-					</div>
-				</div>
-			{/each}
-			{#each $form.story_awards_lost as id, index}
-				<div class="card col-span-12 bg-base-300/70 shadow-xl sm:col-span-6">
-					<div class="card-body flex flex-col gap-4">
-						<h4 class="text-2xl">Drop Story Award</h4>
-						<div class="flex gap-4">
-							<div class="form-control flex-1">
-								<GenericInput superform={logForm} field={`story_awards_lost[${index}]`} label="Select an Item">
-									<select
-										value={$form.story_awards_lost[index]}
-										on:input={(e) => {
-											$form.story_awards_lost[index] = e.currentTarget.value;
-										}}
-										name={`story_awards_lost.${index}`}
-										class="select select-bordered w-full"
-										aria-invalid={$errors.story_awards_lost?.[index] ? "true" : undefined}
-									>
-										{#each data.storyAwards.filter((item) => item.id === id || !$form.story_awards_lost.includes(item.id)) as item}
-											<option value={item.id}>
-												{item.name}
-											</option>
-										{/each}
-									</select>
-								</GenericInput>
-							</div>
-							<button
-								type="button"
-								class="no-script-hide btn btn-error mt-9"
-								on:click={() => ($form.story_awards_lost = $form.story_awards_lost.filter((_, i) => i !== index))}
-							>
-								<Icon src="trash-can" class="w-6" />
-							</button>
-						</div>
-						<div class="text-sm">
-							{data.storyAwards.find((item) => $form.story_awards_lost[index] === item.id)?.description || ""}
-						</div>
-					</div>
-				</div>
-			{/each}
-		</div>
-		<div class="col-span-12 text-center">
-			<button type="submit" class="btn btn-primary disabled:bg-primary disabled:bg-opacity-50 disabled:text-opacity-50">
-				{#if $submitting}
-					<span class="loading" />
-				{/if}
-				Save Log
-			</button>
-		</div>
-	</div>
+		</Control>
+		{#if season === 1}
+			<Control class="col-span-12 sm:col-span-4">
+				<Input type="number" {superform} field="experience" min="0">Experience</Input>
+			</Control>
+		{/if}
+		{#if season === 8}
+			<Control class="col-span-6 sm:col-span-2">
+				<Input type="number" {superform} field="acp" min="0">ACP</Input>
+			</Control>
+		{/if}
+		{#if season === 9}
+			<Control class="col-span-12 sm:col-span-4">
+				<Input type="number" {superform} field="level" min="0" max={Math.max($form.level, 20 - data.totalLevel)}>Level</Input>
+			</Control>
+		{/if}
+	{/if}
+	{#if season === 8 || $form.type === "nongame"}
+		<Control class={$form.type === "game" ? "col-span-6 sm:col-span-2" : "col-span-4"}>
+			<Input type="number" {superform} field="tcp" min="0">TCP</Input>
+		</Control>
+	{/if}
+	<Control class={$form.type === "game" ? "col-span-6 sm:col-span-2" : "col-span-4"}>
+		<Input type="number" {superform} field="gold" min="0">Gold</Input>
+	</Control>
+	<Control class={$form.type === "game" ? "col-span-6 sm:col-span-2" : "col-span-4"}>
+		<Input type="number" {superform} field="dtd" min="0">Downtime</Input>
+	</Control>
+	<Control class="col-span-12 w-full">
+		<MdTextInput {superform} field="description" maxRows={20} preview>Notes</MdTextInput>
+	</Control>
+	<AddDropItems {superform} magicItems={data.magicItems} storyAwards={data.storyAwards} />
+	<Submit {superform}>Save Log</Submit>
 </SuperForm>

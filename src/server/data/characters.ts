@@ -1,5 +1,5 @@
+import { BLANK_CHARACTER } from "$lib/constants";
 import { getLogsSummary } from "$lib/entities";
-import { BLANK_CHARACTER } from "$src/lib/constants";
 import { cache, mcache, type CacheKey } from "$src/server/cache";
 import { prisma } from "$src/server/db";
 

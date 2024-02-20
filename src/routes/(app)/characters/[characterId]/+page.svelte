@@ -1,11 +1,13 @@
 <script lang="ts">
 	import { applyAction, enhance } from "$app/forms";
 	import { goto, pushState } from "$app/navigation";
+	import { page } from "$app/stores";
 	import BreadCrumbs from "$lib/components/BreadCrumbs.svelte";
 	import Dropdown from "$lib/components/Dropdown.svelte";
 	import Icon from "$lib/components/Icon.svelte";
 	import Items from "$lib/components/Items.svelte";
 	import Markdown from "$lib/components/Markdown.svelte";
+	import Search from "$lib/components/Search.svelte";
 	import SearchResults from "$lib/components/SearchResults.svelte";
 	import type { TransitionAction } from "$lib/util";
 	import { createTransition, slugify, sorter, stopWords } from "$lib/util";
@@ -14,7 +16,6 @@
 	import { download, hotkey } from "@svelteuidev/composables";
 	import MiniSearch from "minisearch";
 	import { getContext } from "svelte";
-	import { queryParam, ssp } from "sveltekit-search-params";
 	import { twMerge } from "tailwind-merge";
 
 	export let data;
@@ -27,9 +28,7 @@
 	const myCharacter = character.userId === data.session?.user?.id;
 
 	let deletingLog: string[] = [];
-
-	const s = queryParam("s", ssp.string());
-	$: search = $s || "";
+	let search = $page.url.searchParams.get("s") || "";
 
 	const logSearch = new MiniSearch({
 		fields: ["logName", "magicItems", "storyAwards"],
@@ -341,28 +340,7 @@
 			</a>
 		{/if}
 		{#if logs.length}
-			<search class="min-w-0 flex-1">
-				<input
-					type="text"
-					placeholder="Search"
-					bind:value={$s}
-					class="no-script-hide input join-item input-bordered w-full flex-1 sm:input-sm"
-				/>
-				<noscript>
-					<form class="join flex">
-						<input
-							type="text"
-							name="s"
-							placeholder="Search"
-							bind:value={$s}
-							class="input join-item input-bordered w-full flex-1 sm:input-sm"
-						/>
-						<button type="submit" class="btn btn-primary join-item sm:btn-sm">
-							<Icon src="magnify" class="w-6 sm:w-4" />
-						</button>
-					</form>
-				</noscript>
-			</search>
+			<Search bind:value={search} placeholder="Search Logs" />
 		{/if}
 		{#if myCharacter}
 			<a href={`/characters/${character.id}/log/new`} class="btn btn-primary sm:btn-sm sm:hidden sm:px-3" aria-label="New Log">

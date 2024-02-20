@@ -1,52 +1,39 @@
 <script lang="ts">
-	// import { enhance } from "$app/forms";
 	import { applyAction, enhance } from "$app/forms";
 	import BreadCrumbs from "$lib/components/BreadCrumbs.svelte";
-	import FormMessage from "$lib/components/FormMessage.svelte";
+	import Control from "$lib/components/Control.svelte";
 	import Icon from "$lib/components/Icon.svelte";
+	import Input from "$lib/components/Input.svelte";
+	import Submit from "$lib/components/Submit.svelte";
 	import SuperForm from "$lib/components/SuperForm.svelte";
 	import { dungeonMasterSchema } from "$lib/schemas";
 	import { sorter } from "$lib/util";
-	import TextInput from "$src/lib/components/TextInput.svelte";
 	import { superForm } from "sveltekit-superforms";
 	import { valibotClient } from "sveltekit-superforms/adapters";
 	import { pageLoader } from "../../+layout.svelte";
 
 	export let data;
-	export let form;
 
-	const dmForm = superForm(data.form, {
+	const superform = superForm(data.form, {
 		dataType: "json",
 		validators: valibotClient(dungeonMasterSchema),
 		taintedMessage: "You have unsaved changes. Are you sure you want to leave?"
 	});
-
-	const { form: dmFormData, submitting, message } = dmForm;
 </script>
 
 <div class="flex flex-col gap-4">
 	<BreadCrumbs />
 
-	<SuperForm action="?/saveDM" superForm={dmForm}>
-		<FormMessage {message} />
-		<div class="grid grid-cols-12 gap-4">
-			<div class="form-control col-span-12 sm:col-span-6">
-				<TextInput superform={dmForm} field="name" required disabled={$dmFormData.uid === data.user.id ? true : undefined}>
-					DM Name
-				</TextInput>
-			</div>
-			<div class="form-control col-span-12 sm:col-span-6">
-				<TextInput superform={dmForm} field="DCI">DCI</TextInput>
-			</div>
-			<div class="col-span-12 m-4 text-center">
-				<button type="submit" class="btn btn-primary disabled:bg-primary disabled:bg-opacity-50 disabled:text-opacity-50">
-					{#if $submitting}
-						<span class="loading" />
-					{/if}
-					Save DM
-				</button>
-			</div>
-		</div>
+	<SuperForm action="?/saveDM" {superform} showMessage>
+		<Control class="col-span-12 sm:col-span-6">
+			<Input type="text" {superform} field="name" required disabled={data.form.data.uid === data.user.id ? true : undefined}>
+				DM Name
+			</Input>
+		</Control>
+		<Control class="col-span-12 sm:col-span-6">
+			<Input type="text" {superform} field="DCI">DCI</Input>
+		</Control>
+		<Submit {superform}>Save DM</Submit>
 	</SuperForm>
 
 	<div class="mt-4 flex flex-col gap-4 sm:mt-8">
@@ -63,8 +50,8 @@
 							$pageLoader = true;
 							return async ({ result }) => {
 								await applyAction(result);
-								if (form?.message) {
-									alert(form.message);
+								if ("data" in result && result.data?.message) {
+									alert(result.data.message);
 									$pageLoader = false;
 								}
 							};

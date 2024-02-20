@@ -34,7 +34,7 @@
 	</div>
 {/if}
 <AutoResizeTextArea
-	name={field}
+	id={field}
 	bind:content={$value}
 	class={twMerge("textarea textarea-bordered w-full focus:border-primary", preview && "rounded-t-none", prev && "hidden")}
 	{minRows}
@@ -46,10 +46,6 @@
 	</div>
 {/if}
 <label for={field} class="label">
-	{#if $errors}
-		<span class="label-text-alt text-error">{$errors}</span>
-	{:else}
-		<span class="label-text-alt" />
-	{/if}
+	<span class="label-text-alt text-error">{$errors || ""}</span>
 	<span class="label-text-alt">Markdown Allowed</span>
 </label>
