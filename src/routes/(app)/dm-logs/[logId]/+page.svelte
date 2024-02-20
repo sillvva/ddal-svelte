@@ -45,12 +45,8 @@
 				errorField="characterId"
 				values={data.characters.map((char) => ({ value: char.id, label: char.name }))}
 				required={!!$form.applied_date}
-				on:input={() => {
-					// $form.characterId = "";
-				}}
 				on:select={(e) => {
 					const character = data.characters.find((c) => c.id === e.detail?.selected?.value);
-					console.log(character);
 					if (character) {
 						$form.characterId = character.id;
 						$form.characterName = character.name;
