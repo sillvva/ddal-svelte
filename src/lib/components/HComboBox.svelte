@@ -77,6 +77,11 @@
 								selectedItem = undefined;
 							}
 						}}
+						on:blur={() => {
+							if (!filtered.length) {
+								dispatch("select", { selected: undefined, input: inputValue });
+							}
+						}}
 						aria-invalid={(errors || []).length ? "true" : undefined}
 						use:builder.action
 						{...builder}
@@ -84,29 +89,29 @@
 				</Combobox.Input>
 			</label>
 			{#if (showOnEmpty || inputValue?.trim()) && filtered.length}
-				<Combobox.Content class="menu dropdown-content z-10 w-full rounded-lg bg-base-200 p-2 shadow">
-					{#each filtered.slice(0, 8) as item}
-						<Combobox.Item asChild value={item.value} label={item.label} let:builder>
-							<li
-								class={twMerge(
-									"hover:bg-primary/50",
-									"data-[highlighted]:bg-primary data-[highlighted]:text-primary-content",
-									"data-[selected]:bg-primary data-[selected]:font-bold data-[selected]:text-primary-content"
-								)}
-								use:builder.action
-								{...builder}
-								role="option"
-								data-selected={selectedItem?.value === item.value ? "true" : undefined}
-								aria-selected={selectedItem?.value === item.value}
-							>
-								<span class="rounded-none px-4 py-2">
-									{item.itemLabel}
-								</span>
-							</li>
-						</Combobox.Item>
-					{:else}
-						<span class="block px-5 py-2 text-sm"> No results found </span>
-					{/each}
+				<Combobox.Content asChild let:builder>
+					<ul class="menu dropdown-content z-10 w-full rounded-lg bg-base-200 p-2 shadow" use:builder.action {...builder}>
+						{#each filtered.slice(0, 8) as item}
+							<Combobox.Item asChild value={item.value} label={item.label} let:builder>
+								<li
+									class={twMerge(
+										"hover:bg-primary/50",
+										"data-[highlighted]:bg-primary data-[highlighted]:text-primary-content",
+										"data-[selected]:bg-primary data-[selected]:font-bold data-[selected]:text-primary-content"
+									)}
+									use:builder.action
+									{...builder}
+									role="option"
+									data-selected={selectedItem?.value === item.value ? "true" : undefined}
+									aria-selected={selectedItem?.value === item.value}
+								>
+									<span class="rounded-none px-4 py-2">
+										{item.itemLabel}
+									</span>
+								</li>
+							</Combobox.Item>
+						{/each}
+					</ul>
 				</Combobox.Content>
 			{/if}
 		</Combobox.Root>
