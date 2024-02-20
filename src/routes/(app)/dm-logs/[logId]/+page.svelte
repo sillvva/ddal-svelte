@@ -1,9 +1,9 @@
 <script lang="ts">
 	import BreadCrumbs from "$lib/components/BreadCrumbs.svelte";
 	import FormMessage from "$lib/components/FormMessage.svelte";
-	import HComboBox from "$lib/components/HComboBox.svelte";
 	import SuperForm from "$lib/components/SuperForm.svelte";
 	import { dMLogSchema } from "$lib/schemas";
+	import Combobox from "$src/lib/components/Combobox.svelte";
 	import DateInput from "$src/lib/components/DateInput.svelte";
 	import EntityCard from "$src/lib/components/EntityCard.svelte";
 	import GenericInput from "$src/lib/components/GenericInput.svelte";
@@ -46,7 +46,7 @@
 				label="Assigned Character"
 			>
 				<input type="hidden" name="characterId" bind:value={$form.characterId} />
-				<HComboBox
+				<Combobox
 					id="characterName"
 					bind:value={$form.characterId}
 					bind:inputValue={$form.characterName}

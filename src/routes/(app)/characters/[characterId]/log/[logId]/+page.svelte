@@ -1,10 +1,10 @@
 <script lang="ts">
 	import BreadCrumbs from "$lib/components/BreadCrumbs.svelte";
 	import FormMessage from "$lib/components/FormMessage.svelte";
-	import HComboBox from "$lib/components/HComboBox.svelte";
 	import SuperForm from "$lib/components/SuperForm.svelte";
 	import { defaultDM } from "$lib/entities";
 	import { logSchema } from "$lib/schemas";
+	import Combobox from "$src/lib/components/Combobox.svelte";
 	import DateInput from "$src/lib/components/DateInput.svelte";
 	import EntityCard from "$src/lib/components/EntityCard.svelte";
 	import GenericInput from "$src/lib/components/GenericInput.svelte";
@@ -56,7 +56,7 @@
 			{#if $form.type === "game"}
 				<div class="form-control col-span-6">
 					<GenericInput {superform} field="dm.name" label="DM Name" required={!!$form.dm.DCI}>
-						<HComboBox
+						<Combobox
 							id="dm.name"
 							bind:value={$form.dm.id}
 							bind:inputValue={$form.dm.name}
@@ -88,7 +88,7 @@
 				</div>
 				<div class="form-control col-span-6">
 					<GenericInput {superform} field="dm.DCI" label="DM DCI">
-						<HComboBox
+						<Combobox
 							id="dm.DCI"
 							bind:value={$form.dm.id}
 							bind:inputValue={DCI}
