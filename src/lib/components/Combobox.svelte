@@ -81,10 +81,7 @@
 				<Combobox.Input asChild let:builder>
 					<input
 						bind:value={inputValue}
-						class={twMerge(
-							"input join-item input-bordered w-full rounded-r-none focus:border-primary",
-							!(inputValue && selectedItem && clearable) && !dev && "rounded-r-lg"
-						)}
+						class="input join-item input-bordered w-full focus:border-primary"
 						on:input={() => {
 							dispatch("input");
 							if (selectedItem && selectedItem.label !== inputValue) {
