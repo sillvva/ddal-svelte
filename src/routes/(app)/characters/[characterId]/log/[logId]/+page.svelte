@@ -69,10 +69,8 @@
 							required={!!$form.dm.DCI}
 							on:select={(e) => {
 								$form.dm = data.dms.find((dm) => dm.id === e.detail?.selected?.value) || {
-									id: "",
+									...$form.dm,
 									name: e.detail?.input || "",
-									DCI: $form.dm.DCI || null,
-									uid: "",
 									owner: data.user.id
 								};
 								DCI = $form.dm.DCI || "";
@@ -100,10 +98,8 @@
 							on:input={() => ($form.dm.DCI = DCI || null)}
 							on:select={(e) => {
 								$form.dm = data.dms.find((dm) => dm.id === e.detail?.selected?.value) || {
-									id: "",
-									name: $form.dm.name,
+									...$form.dm,
 									DCI: e.detail?.input || null,
-									uid: "",
 									owner: data.user.id
 								};
 							}}
