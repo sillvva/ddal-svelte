@@ -1,5 +1,5 @@
+import { BLANK_CHARACTER } from "$lib/constants.js";
 import { newCharacterSchema } from "$lib/schemas";
-import { BLANK_CHARACTER } from "$src/lib/constants.js";
 import { saveCharacter } from "$src/server/actions/characters.js";
 import { signInRedirect } from "$src/server/auth";
 import { error, fail, redirect } from "@sveltejs/kit";

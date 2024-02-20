@@ -3,21 +3,25 @@
 </script>
 
 <script lang="ts" generics="T extends FormObj">
+	import FormMessage from "./FormMessage.svelte";
+
 	import { dev } from "$app/environment";
 	import { stringify } from "devalue";
 	import { onMount } from "svelte";
 	import type { HTMLFormAttributes } from "svelte/elements";
 	import SuperDebug, { type SuperForm } from "sveltekit-superforms";
 
-	export let superform: SuperForm<T, any>;
-	export let basic = false;
-
 	type $$Props = HTMLFormAttributes & {
 		superform: SuperForm<T, any>;
 		basic?: boolean;
+		showMessage?: boolean;
 	};
 
-	const { form, errors, allErrors, capture, restore, submitting, enhance, formId } = superform;
+	export let superform: SuperForm<T, any>;
+	export let basic = false;
+	export let showMessage = false;
+
+	const { form, errors, allErrors, capture, restore, submitting, enhance, formId, message } = superform;
 	const method = $$props.method || "post";
 
 	let refForm: HTMLFormElement;
@@ -59,15 +63,23 @@
 	};
 </script>
 
+{#if showMessage}
+	<FormMessage {message} />
+{/if}
+
 {#if basic}
 	<form bind:this={refForm} {method} {...$$restProps}>
 		<input type="hidden" name="__superform_id" value={$formId} />
 		<input type="hidden" name="__superform_json" value={stringify($form)} />
-		<slot />
+		<div class="grid grid-cols-12 gap-4">
+			<slot />
+		</div>
 	</form>
 {:else}
 	<form bind:this={refForm} {method} {...$$restProps} use:enhance>
-		<slot />
+		<div class="grid grid-cols-12 gap-4">
+			<slot />
+		</div>
 	</form>
 {/if}
 

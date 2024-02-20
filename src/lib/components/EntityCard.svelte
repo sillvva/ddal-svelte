@@ -3,6 +3,8 @@
 </script>
 
 <script lang="ts" generics="T extends TRec">
+	import Control from "./Control.svelte";
+
 	import Input from "./Input.svelte";
 
 	import { createEventDispatcher } from "svelte";
@@ -37,16 +39,16 @@
 				<h4 class="text-2xl">Add Story Award</h4>
 			{/if}
 			<div class="flex gap-4">
-				<div class="form-control flex-1">
+				<Control class="flex-1">
 					<Input type="text" {superform} field={nameField} required>Name</Input>
-				</div>
+				</Control>
 				<button type="button" class="no-script-hide btn btn-error mt-9" on:click={() => dispatch("delete")}>
 					<Icon src="trash-can" class="w-6" />
 				</button>
 			</div>
-			<div class="form-control w-full">
+			<Control>
 				<MdTextInput {superform} field={descField} maxRows={8} preview>Description</MdTextInput>
-			</div>
+			</Control>
 		</div>
 	</div>
 {:else if type === "drop"}
@@ -58,7 +60,7 @@
 				<h4 class="text-2xl">Drop Story Award</h4>
 			{/if}
 			<div class="flex gap-4">
-				<div class="form-control flex-1">
+				<Control class="flex-1">
 					<GenericInput {superform} field={lostField} label="Select an Item">
 						<select bind:value={$lostValue} id={lostField} class="select select-bordered w-full">
 							{#each data.filter((item) => item.id === $lostValue || !arrValue.includes(item.id)) as item}
@@ -68,7 +70,7 @@
 							{/each}
 						</select>
 					</GenericInput>
-				</div>
+				</Control>
 				<button type="button" class="no-script-hide btn btn-error mt-9" on:click={() => dispatch("delete")}>
 					<Icon src="trash-can" class="w-6" />
 				</button>

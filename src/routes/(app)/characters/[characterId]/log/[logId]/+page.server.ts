@@ -1,6 +1,6 @@
 import { defaultLog, getMagicItems, getStoryAwards } from "$lib/entities.js";
 import { characterLogSchema } from "$lib/schemas";
-import { sorter } from "$src/lib/util.js";
+import { sorter } from "$lib/util.js";
 import { saveLog } from "$src/server/actions/logs.js";
 import { signInRedirect } from "$src/server/auth.js";
 import { getCharacterCache } from "$src/server/data/characters";

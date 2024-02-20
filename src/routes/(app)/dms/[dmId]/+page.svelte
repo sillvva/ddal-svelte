@@ -1,12 +1,12 @@
 <script lang="ts">
 	import { applyAction, enhance } from "$app/forms";
 	import BreadCrumbs from "$lib/components/BreadCrumbs.svelte";
-	import FormMessage from "$lib/components/FormMessage.svelte";
+	import Control from "$lib/components/Control.svelte";
 	import Icon from "$lib/components/Icon.svelte";
+	import Input from "$lib/components/Input.svelte";
 	import SuperForm from "$lib/components/SuperForm.svelte";
 	import { dungeonMasterSchema } from "$lib/schemas";
 	import { sorter } from "$lib/util";
-	import Input from "$src/lib/components/Input.svelte";
 	import { superForm } from "sveltekit-superforms";
 	import { valibotClient } from "sveltekit-superforms/adapters";
 	import { pageLoader } from "../../+layout.svelte";
@@ -25,25 +25,22 @@
 <div class="flex flex-col gap-4">
 	<BreadCrumbs />
 
-	<SuperForm action="?/saveDM" {superform}>
-		<FormMessage {message} />
-		<div class="grid grid-cols-12 gap-4">
-			<div class="form-control col-span-12 sm:col-span-6">
-				<Input type="text" {superform} field="name" required disabled={$form.uid === data.user.id ? true : undefined}>
-					DM Name
-				</Input>
-			</div>
-			<div class="form-control col-span-12 sm:col-span-6">
-				<Input type="text" {superform} field="DCI">DCI</Input>
-			</div>
-			<div class="col-span-12 m-4 text-center">
-				<button type="submit" class="btn btn-primary disabled:bg-primary disabled:bg-opacity-50 disabled:text-opacity-50">
-					{#if $submitting}
-						<span class="loading" />
-					{/if}
-					Save DM
-				</button>
-			</div>
+	<SuperForm action="?/saveDM" {superform} showMessage>
+		<Control class="col-span-12 sm:col-span-6">
+			<Input type="text" {superform} field="name" required disabled={$form.uid === data.user.id ? true : undefined}>
+				DM Name
+			</Input>
+		</Control>
+		<Control class="col-span-12 sm:col-span-6">
+			<Input type="text" {superform} field="DCI">DCI</Input>
+		</Control>
+		<div class="col-span-12 m-4 text-center">
+			<button type="submit" class="btn btn-primary disabled:bg-primary disabled:bg-opacity-50 disabled:text-opacity-50">
+				{#if $submitting}
+					<span class="loading" />
+				{/if}
+				Save DM
+			</button>
 		</div>
 	</SuperForm>
 

@@ -8,7 +8,7 @@
 	import Items from "$lib/components/Items.svelte";
 	import SearchResults from "$lib/components/SearchResults.svelte";
 	import { sorter, stopWords } from "$lib/util";
-	import Search from "$src/lib/components/Search.svelte";
+	import Search from "$lib/components/Search.svelte";
 	import type { CookieStore } from "$src/server/cookie.js";
 	import { download, hotkey } from "@svelteuidev/composables";
 	import MiniSearch from "minisearch";

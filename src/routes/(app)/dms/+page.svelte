@@ -3,9 +3,9 @@
 	import { page } from "$app/stores";
 	import BreadCrumbs from "$lib/components/BreadCrumbs.svelte";
 	import Icon from "$lib/components/Icon.svelte";
-	import Search from "$src/lib/components/Search.svelte";
-	import SearchResults from "$src/lib/components/SearchResults.svelte";
-	import { sorter, stopWords } from "$src/lib/util";
+	import Search from "$lib/components/Search.svelte";
+	import SearchResults from "$lib/components/SearchResults.svelte";
+	import { sorter, stopWords } from "$lib/util";
 	import MiniSearch from "minisearch";
 	import { twMerge } from "tailwind-merge";
 

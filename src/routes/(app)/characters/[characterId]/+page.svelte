@@ -10,7 +10,7 @@
 	import SearchResults from "$lib/components/SearchResults.svelte";
 	import type { TransitionAction } from "$lib/util";
 	import { createTransition, slugify, sorter, stopWords } from "$lib/util";
-	import Search from "$src/lib/components/Search.svelte";
+	import Search from "$lib/components/Search.svelte";
 	import { pageLoader } from "$src/routes/(app)/+layout.svelte";
 	import type { CookieStore } from "$src/server/cookie.js";
 	import { download, hotkey } from "@svelteuidev/composables";
