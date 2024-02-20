@@ -107,6 +107,9 @@
 								dispatch("clear");
 								selectedItem = undefined;
 							}
+							setTimeout(() => {
+								$value = inputValue;
+							});
 						}}
 						on:blur={() => {
 							if (!filtered.length) dispatch("select", { selected: undefined, input: inputValue });
