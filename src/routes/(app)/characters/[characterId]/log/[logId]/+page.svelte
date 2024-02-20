@@ -105,22 +105,22 @@
 			</GenericInput>
 		</Control>
 		{#if season === 1}
-			<Control class="col-span-6 w-full sm:col-span-4">
+			<Control class="col-span-12 sm:col-span-4">
 				<Input type="number" {superform} field="experience" min="0">Experience</Input>
 			</Control>
 		{/if}
+		{#if season === 8}
+			<Control class="col-span-6 sm:col-span-2">
+				<Input type="number" {superform} field="acp" min="0">ACP</Input>
+			</Control>
+		{/if}
 		{#if season === 9}
-			<Control class="col-span-12 w-full sm:col-span-4">
+			<Control class="col-span-12 sm:col-span-4">
 				<Input type="number" {superform} field="level" min="0" max={Math.max($form.level, 20 - data.totalLevel)}>Level</Input>
 			</Control>
 		{/if}
 	{/if}
 	{#if season === 8 || $form.type === "nongame"}
-		{#if $form.type === "game"}
-			<Control class="col-span-6 w-full sm:col-span-2">
-				<Input type="number" {superform} field="acp" min="0">ACP</Input>
-			</Control>
-		{/if}
 		<Control class={$form.type === "game" ? "col-span-6 sm:col-span-2" : "col-span-4"}>
 			<Input type="number" {superform} field="tcp" min="0">TCP</Input>
 		</Control>
