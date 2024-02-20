@@ -26,6 +26,18 @@
 
 	let season: 1 | 8 | 9 = $form.experience ? 1 : $form.acp ? 8 : 9;
 	let DCI = $form.dm.DCI || "";
+
+	function setDM(id: string, value: Partial<{ name: string; DCI: string | null }>) {
+		$form.dm =
+			data.dms.find((dm) => dm.id === id) ||
+			(("name" in value ? value.name : $form.dm.name) || ("DCI" in value ? value.DCI : $form.dm.DCI)
+				? {
+						...$form.dm,
+						...value
+					}
+				: defaultDM(data.user.id));
+		DCI = $form.dm.DCI || "";
+	}
 </script>
 
 <BreadCrumbs />
@@ -67,19 +79,7 @@
 							})) || []}
 							allowCustom
 							required={!!$form.dm.DCI}
-							on:select={(e) => {
-								console.log(e.detail?.selected?.value);
-								$form.dm =
-									data.dms.find((dm) => dm.id === e.detail?.selected?.value) ||
-									(e.detail?.input || $form.dm.DCI
-										? {
-												...$form.dm,
-												name: e.detail?.input || "",
-												owner: data.user.id
-											}
-										: defaultDM(data.user.id));
-								DCI = $form.dm.DCI || "";
-							}}
+							on:select={(e) => setDM(e.detail?.selected?.value || "", { name: e.detail?.input })}
 							clearable
 							on:clear={() => ($form.dm = defaultDM(data.user.id))}
 							errors={$errors.dm?.name}
@@ -101,17 +101,7 @@
 								})) || []}
 							allowCustom
 							on:input={() => ($form.dm.DCI = DCI || null)}
-							on:select={(e) => {
-								$form.dm =
-									data.dms.find((dm) => dm.id === e.detail?.selected?.value) ||
-									($form.dm.name || e.detail?.input
-										? {
-												...$form.dm,
-												DCI: e.detail?.input || null,
-												owner: data.user.id
-											}
-										: defaultDM(data.user.id));
-							}}
+							on:select={(e) => setDM(e.detail?.selected?.value || "", { DCI: e.detail?.input || null })}
 							clearable
 							on:clear={() => ($form.dm = defaultDM(data.user.id))}
 							errors={$errors.dm?.DCI}
