@@ -1,15 +1,16 @@
 <script lang="ts">
+	import AddDropItems from "$lib/components/AddDropItems.svelte";
 	import BreadCrumbs from "$lib/components/BreadCrumbs.svelte";
 	import Combobox from "$lib/components/Combobox.svelte";
 	import Control from "$lib/components/Control.svelte";
 	import DateInput from "$lib/components/DateInput.svelte";
-	import EntityCard from "$lib/components/EntityCard.svelte";
 	import GenericInput from "$lib/components/GenericInput.svelte";
 	import Input from "$lib/components/Input.svelte";
 	import MdTextInput from "$lib/components/MDTextInput.svelte";
 	import SuperForm from "$lib/components/SuperForm.svelte";
 	import { defaultDM } from "$lib/entities";
 	import { logSchema } from "$lib/schemas";
+	import Submit from "$src/lib/components/Submit.svelte";
 	import { superForm } from "sveltekit-superforms";
 	import { valibotClient } from "sveltekit-superforms/adapters";
 
@@ -21,7 +22,7 @@
 		taintedMessage: "You have unsaved changes. Are you sure you want to leave?"
 	});
 
-	const { form, errors, submitting, message } = superform;
+	const { form } = superform;
 
 	let season: 1 | 8 | 9 = $form.experience ? 1 : $form.acp ? 8 : 9;
 
@@ -42,12 +43,7 @@
 <SuperForm action="?/saveLog" {superform} showMessage>
 	<Control class="col-span-12 sm:col-span-4">
 		<GenericInput {superform} field="type" label="Log Type">
-			<select
-				id="type"
-				bind:value={$form.type}
-				class="select select-bordered w-full"
-				aria-invalid={$errors.type ? "true" : undefined}
-			>
+			<select id="type" bind:value={$form.type} class="select select-bordered w-full">
 				<option value="game">Game</option>
 				<option value="nongame">Non-Game (Purchase, Trade, etc)</option>
 			</select>
@@ -138,100 +134,6 @@
 	<Control class="col-span-12 w-full">
 		<MdTextInput {superform} field="description" maxRows={20} preview>Notes</MdTextInput>
 	</Control>
-	<div class="no-script-hide col-span-12 flex flex-wrap gap-4">
-		<button
-			type="button"
-			class="btn btn-primary min-w-fit flex-1 sm:btn-sm sm:flex-none"
-			on:click={() => ($form.magic_items_gained = [...$form.magic_items_gained, { id: "", name: "", description: "" }])}
-		>
-			Add Magic Item
-		</button>
-		{#if data.magicItems.filter((item) => !$form.magic_items_lost.includes(item.id)).length > 0}
-			<button
-				type="button"
-				class="btn min-w-fit flex-1 sm:btn-sm sm:flex-none"
-				on:click={() =>
-					($form.magic_items_lost = [
-						...$form.magic_items_lost,
-						data.magicItems.filter((item) => !$form.magic_items_lost.includes(item.id))[0].id
-					])}
-			>
-				Drop Magic Item
-			</button>
-		{/if}
-		{#if $form.type === "game"}
-			<button
-				type="button"
-				class="btn btn-primary min-w-fit flex-1 sm:btn-sm sm:flex-none"
-				on:click={() => ($form.story_awards_gained = [...$form.story_awards_gained, { id: "", name: "", description: "" }])}
-			>
-				Add Story Award
-			</button>
-			{#if data.storyAwards.filter((item) => !$form.story_awards_lost.includes(item.id)).length > 0}
-				<button
-					type="button"
-					class="btn min-w-fit flex-1 sm:btn-sm sm:flex-none"
-					on:click={() =>
-						($form.story_awards_lost = [
-							...$form.story_awards_lost,
-							data.storyAwards.filter((item) => !$form.story_awards_lost.includes(item.id))[0].id || ""
-						])}
-				>
-					Drop Story Award
-				</button>
-			{/if}
-		{/if}
-	</div>
-	<div class="col-span-12 grid grid-cols-12 gap-4 dark:text-white">
-		{#each $form.magic_items_gained as _, index}
-			<EntityCard
-				{superform}
-				type="add"
-				entity="magic_items"
-				nameField={`magic_items_gained[${index}].name`}
-				descField={`magic_items_gained[${index}].description`}
-				on:delete={() => ($form.magic_items_gained = $form.magic_items_gained.filter((_, i) => i !== index))}
-			/>
-		{/each}
-		{#each $form.magic_items_lost as _, index}
-			<EntityCard
-				{superform}
-				type="drop"
-				entity="magic_items"
-				lostField={`magic_items_lost[${index}]`}
-				data={data.magicItems}
-				arrValue={$form.magic_items_lost}
-				on:delete={() => ($form.magic_items_lost = $form.magic_items_lost.filter((_, i) => i !== index))}
-			/>
-		{/each}
-		{#each $form.story_awards_gained as _, index}
-			<EntityCard
-				{superform}
-				type="add"
-				entity="story_awards"
-				nameField={`story_awards_gained[${index}].name`}
-				descField={`story_awards_gained[${index}].description`}
-				on:delete={() => ($form.story_awards_gained = $form.story_awards_gained.filter((_, i) => i !== index))}
-			/>
-		{/each}
-		{#each $form.story_awards_lost as _, index}
-			<EntityCard
-				{superform}
-				type="drop"
-				entity="story_awards"
-				lostField={`story_awards_lost[${index}]`}
-				data={data.storyAwards}
-				arrValue={$form.story_awards_lost}
-				on:delete={() => ($form.story_awards_lost = $form.story_awards_lost.filter((_, i) => i !== index))}
-			/>
-		{/each}
-	</div>
-	<div class="col-span-12 text-center">
-		<button type="submit" class="btn btn-primary disabled:bg-primary disabled:bg-opacity-50 disabled:text-opacity-50">
-			{#if $submitting}
-				<span class="loading" />
-			{/if}
-			Save Log
-		</button>
-	</div>
+	<AddDropItems {superform} magicItems={data.magicItems} storyAwards={data.storyAwards} />
+	<Submit {superform}>Save Log</Submit>
 </SuperForm>

@@ -3,15 +3,13 @@
 </script>
 
 <script lang="ts" generics="T extends TRec">
-	import Control from "./Control.svelte";
-
-	import Input from "./Input.svelte";
-
 	import { createEventDispatcher } from "svelte";
 	import { writable } from "svelte/store";
 	import { formFieldProxy, type FormPathLeaves, type SuperForm } from "sveltekit-superforms";
+	import Control from "./Control.svelte";
 	import GenericInput from "./GenericInput.svelte";
 	import Icon from "./Icon.svelte";
+	import Input from "./Input.svelte";
 	import MdTextInput from "./MDTextInput.svelte";
 
 	export let type: "add" | "drop";

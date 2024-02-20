@@ -7,6 +7,7 @@
 	import SuperForm from "$lib/components/SuperForm.svelte";
 	import { dungeonMasterSchema } from "$lib/schemas";
 	import { sorter } from "$lib/util";
+	import Submit from "$src/lib/components/Submit.svelte";
 	import { superForm } from "sveltekit-superforms";
 	import { valibotClient } from "sveltekit-superforms/adapters";
 	import { pageLoader } from "../../+layout.svelte";
@@ -19,7 +20,7 @@
 		taintedMessage: "You have unsaved changes. Are you sure you want to leave?"
 	});
 
-	const { form, submitting, message } = superform;
+	const { form } = superform;
 </script>
 
 <div class="flex flex-col gap-4">
@@ -34,14 +35,7 @@
 		<Control class="col-span-12 sm:col-span-6">
 			<Input type="text" {superform} field="DCI">DCI</Input>
 		</Control>
-		<div class="col-span-12 m-4 text-center">
-			<button type="submit" class="btn btn-primary disabled:bg-primary disabled:bg-opacity-50 disabled:text-opacity-50">
-				{#if $submitting}
-					<span class="loading" />
-				{/if}
-				Save DM
-			</button>
-		</div>
+		<Submit {superform}>Save DM</Submit>
 	</SuperForm>
 
 	<div class="mt-4 flex flex-col gap-4 sm:mt-8">
