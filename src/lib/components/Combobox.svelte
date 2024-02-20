@@ -40,7 +40,7 @@
 	$: filtered =
 		!inputValue?.trim() || !allowCustom || prefiltered.length === 1
 			? prefiltered
-			: [{ value: inputValue, label: inputValue, itemLabel: `Add "${inputValue}"` }, ...prefiltered.slice(0, -1)];
+			: [{ value: inputValue, label: inputValue, itemLabel: `Add "${inputValue}"` }, ...prefiltered];
 	$: if (!value) inputValue = "";
 	$: selectedItem = value
 		? values.find((v) => v.value === value)
