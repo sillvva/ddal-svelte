@@ -46,7 +46,7 @@
 	{...$constraints}
 	{...$$restProps}
 />
-{#if $errors}
+{#if $errors?.length}
 	<label for={field} class="label">
 		<span class="label-text-alt text-error">{$errors}</span>
 	</label>

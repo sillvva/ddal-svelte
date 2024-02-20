@@ -48,7 +48,7 @@
 {:else if type === "number"}
 	<input type="number" bind:value={$value} on:input={inputHandler} {...commonProps} />
 {/if}
-{#if $errors}
+{#if $errors?.length}
 	<label for={field} class="label">
 		<span class="label-text-alt text-error">{$errors}</span>
 	</label>
