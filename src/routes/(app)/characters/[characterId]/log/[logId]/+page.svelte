@@ -25,7 +25,6 @@
 	const { form, errors, submitting, message } = superform;
 
 	let season: 1 | 8 | 9 = $form.experience ? 1 : $form.acp ? 8 : 9;
-	let DCI = $form.dm.DCI || "";
 
 	function setDM(id: string, value: Partial<{ name: string; DCI: string | null }>) {
 		$form.dm =
@@ -36,7 +35,6 @@
 						...value
 					}
 				: defaultDM(data.user.id));
-		DCI = $form.dm.DCI || "";
 	}
 </script>
 
@@ -68,9 +66,9 @@
 			{#if $form.type === "game"}
 				<div class="form-control col-span-6">
 					<Combobox
-						label="DM Name"
-						bind:value={$form.dm.id}
-						bind:inputValue={$form.dm.name}
+						{superform}
+						idField="dm.id"
+						field="dm.name"
 						values={data.dms.map((dm) => ({
 							value: dm.id,
 							label: dm.name,
@@ -81,14 +79,15 @@
 						on:select={(e) => setDM(e.detail?.selected?.value || "", { name: e.detail?.input })}
 						clearable
 						on:clear={() => ($form.dm = defaultDM(data.user.id))}
-						errors={$errors.dm?.name}
-					/>
+					>
+						DM Name
+					</Combobox>
 				</div>
 				<div class="form-control col-span-6">
 					<Combobox
-						label="DM DCI"
-						bind:value={$form.dm.id}
-						bind:inputValue={DCI}
+						{superform}
+						idField="dm.id"
+						field="dm.DCI"
 						values={data.dms
 							.filter((dm) => dm.DCI)
 							.map((dm) => ({
@@ -97,12 +96,12 @@
 								itemLabel: `${dm.DCI} (${dm.name}${dm.uid === data.user.id ? `, Me` : ""})`
 							})) || []}
 						allowCustom
-						on:input={() => ($form.dm.DCI = DCI || null)}
 						on:select={(e) => setDM(e.detail?.selected?.value || "", { DCI: e.detail?.input || null })}
 						clearable
 						on:clear={() => ($form.dm = defaultDM(data.user.id))}
-						errors={$errors.dm?.DCI}
-					/>
+					>
+						DM DCI
+					</Combobox>
 				</div>
 				<div class="form-control col-span-12 sm:col-span-4">
 					<GenericInput labelFor="season" label="Season">

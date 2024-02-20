@@ -38,35 +38,38 @@
 			<DateInput {superform} field="date" required>Date</DateInput>
 		</div>
 		<div class="form-control col-span-12 sm:col-span-6 lg:col-span-3">
-			<!-- <input type="hidden" name="characterId" bind:value={$form.characterId} /> -->
 			<Combobox
-				label="Assigned Character"
-				bind:value={$form.characterId}
-				bind:inputValue={$form.characterName}
+				{superform}
+				idField="characterId"
+				field="characterName"
+				errorField="characterId"
 				values={data.characters.map((char) => ({ value: char.id, label: char.name }))}
 				required={!!$form.applied_date}
 				on:input={() => {
-					$form.characterId = "";
+					// $form.characterId = "";
 				}}
 				on:select={(e) => {
 					const character = data.characters.find((c) => c.id === e.detail?.selected?.value);
+					console.log(character);
 					if (character) {
 						$form.characterId = character.id;
+						$form.characterName = character.name;
 						$form.applied_date = $form.applied_date || new Date();
 					} else {
-						$form.characterName = "";
 						$form.characterId = "";
-						if (data.logId === "new") $form.applied_date = null;
+						$form.characterName = "";
+						// if (data.logId === "new") $form.applied_date = null;
 					}
 				}}
 				clearable
 				on:clear={() => {
-					$form.characterName = "";
 					$form.characterId = "";
+					$form.characterName = "";
 					$form.applied_date = null;
 				}}
-				errors={$errors.characterId}
-			/>
+			>
+				Assigned Character
+			</Combobox>
 		</div>
 		<div class="form-control col-span-12 sm:col-span-6 lg:col-span-3">
 			<DateInput {superform} field="applied_date" empty="null" minField="date" required={!!$form.characterId}>

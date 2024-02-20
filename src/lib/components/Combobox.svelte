@@ -1,25 +1,35 @@
-<script lang="ts">
+<script lang="ts" context="module">
+	type TRec = Record<string, unknown>;
+</script>
+
+<script lang="ts" generics="T extends TRec">
 	import { dev } from "$app/environment";
 	import { Combobox } from "bits-ui";
 	import { createEventDispatcher } from "svelte";
-	import SuperDebug from "sveltekit-superforms";
+	import SuperDebug, { formFieldProxy, stringProxy, type FormPathLeaves, type SuperForm } from "sveltekit-superforms";
 	import { twMerge } from "tailwind-merge";
 	import Icon from "./Icon.svelte";
 
+	export let superform: SuperForm<T, any>;
+	export let idField: FormPathLeaves<T>;
+	export let field: FormPathLeaves<T> = idField;
+	export let errorField: FormPathLeaves<T> = field;
 	export let name = "";
-	export let label: string;
 	export let values: Array<{ value: string; label?: string; itemLabel?: string }> = [];
-	export let value = "";
-	export let inputValue = "";
 	export let allowCustom = false;
 	export let showOnEmpty = false;
 	export let clearable = false;
 	export let disabled = false;
 	export let required = false;
-	export let errors: string[] | undefined = [];
 
 	let debug = false;
 	let open = false;
+	let changed = false;
+
+	let inputValue = "";
+	const { errors } = formFieldProxy(superform, errorField);
+	const idValue = stringProxy(superform, idField, { empty: "null" });
+	const value = stringProxy(superform, field, { empty: "null" });
 
 	const dispatch = createEventDispatcher<{
 		input: void;
@@ -36,19 +46,19 @@
 		v.itemLabel
 			.toLowerCase()
 			.replace(/\s+/g, "")
-			.includes((inputValue || "").toLowerCase().replace(/\s+/g, ""))
+			.includes(($value || "").toLowerCase().replace(/\s+/g, ""))
 	);
 	$: filtered =
-		!inputValue?.trim() || !allowCustom || prefiltered.length === 1
+		!$value?.trim() || !allowCustom || prefiltered.length === 1
 			? prefiltered
-			: [{ value: inputValue, label: inputValue, itemLabel: `Add "${inputValue}"` }, ...prefiltered];
-	$: if (!value) inputValue = "";
-	$: selectedItem = value
-		? values.find((v) => v.value === value)
-		: inputValue.trim() && allowCustom
-			? { value: "", label: inputValue, itemLabel: `Add "${inputValue}"` }
+			: [{ value: $value, label: $value, itemLabel: `Add "${$value}"` }, ...prefiltered];
+	$: selectedItem = $idValue
+		? values.find((v) => v.value === $idValue)
+		: $value.trim() && allowCustom
+			? { value: "", label: $value, itemLabel: `Add "${$value}"` }
 			: undefined;
-	$: if (!((showOnEmpty || inputValue?.trim()) && filtered.length)) open = false;
+	$: if ($idValue) inputValue = selectedItem?.label || "";
+	$: if (!$idValue) inputValue = "";
 </script>
 
 <Combobox.Root
@@ -63,13 +73,19 @@
 	}}
 	onOpenChange={() => {
 		setTimeout(() => {
-			dispatch("select", { selected: selectedItem, input: inputValue });
-		}, 10);
+			if (!open) {
+				if (changed) {
+					dispatch("select", { selected: selectedItem, input: inputValue });
+					if (!allowCustom && !selectedItem) inputValue = "";
+					changed = false;
+				}
+			}
+		}, 50);
 	}}
 >
 	<label for={ids.trigger} class="label">
 		<span class="label-text">
-			{label}
+			<slot />
 			{#if required}
 				<span class="text-error">*</span>
 			{/if}
@@ -80,9 +96,9 @@
 			<label>
 				<Combobox.Input asChild let:builder>
 					<input
-						bind:value={inputValue}
 						class="input join-item input-bordered w-full focus:border-primary"
 						on:input={() => {
+							changed = true;
 							dispatch("input");
 							if (selectedItem && selectedItem.label !== inputValue) {
 								selectedItem = undefined;
@@ -95,7 +111,7 @@
 						on:blur={() => {
 							if (!filtered.length) dispatch("select", { selected: undefined, input: inputValue });
 						}}
-						aria-invalid={(errors || []).length ? "true" : undefined}
+						aria-invalid={($errors || []).length ? "true" : undefined}
 						use:builder.action
 						{...builder}
 					/>
@@ -136,6 +152,8 @@
 					dispatch("clear");
 					selectedItem = undefined;
 					inputValue = "";
+					$idValue = "";
+					$value = "";
 				}}
 			>
 				<Icon src="x" class="w-6" color="red" />
@@ -148,9 +166,9 @@
 		{/if}
 	</div>
 	{#if name}<Combobox.HiddenInput {name} />{/if}
-	{#if errors}
+	{#if $errors}
 		<label for={ids.trigger} class="label">
-			<span class="label-text-alt text-error">{errors}</span>
+			<span class="label-text-alt text-error">{$errors}</span>
 		</label>
 	{/if}
 </Combobox.Root>
