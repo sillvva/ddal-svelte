@@ -21,6 +21,7 @@
 	export let clearable = false;
 	export let disabled = false;
 	export let required = false;
+	export let link = "";
 
 	let debug = false;
 	let open = false;
@@ -155,6 +156,11 @@
 			<button class="btn join-item input-bordered" type="button" on:click|preventDefault={() => clear()}>
 				<Icon src="x" class="w-6" color="red" />
 			</button>
+		{/if}
+		{#if link}
+			<a href={link} class="btn join-item input-bordered" role="button" target="_blank">
+				<Icon src="pencil" class="w-6" />
+			</a>
 		{/if}
 		{#if dev}
 			<button type="button" class="btn join-item input-bordered" on:click|preventDefault={() => (debug = !debug)}>
