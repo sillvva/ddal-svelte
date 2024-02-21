@@ -25,7 +25,7 @@
 
 	<SuperForm action="?/saveDM" {superform} showMessage>
 		<Control class="col-span-12 sm:col-span-6">
-			<Input type="text" {superform} field="name" required disabled={data.form.data.uid === data.user.id ? true : undefined}>
+			<Input type="text" {superform} field="name" disabled={data.form.data.uid === data.user.id ? true : undefined}>
 				DM Name
 			</Input>
 		</Control>

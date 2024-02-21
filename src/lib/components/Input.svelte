@@ -17,6 +17,7 @@
 	export let superform: SuperForm<T>;
 	export let field: FormPathLeaves<T>;
 	export let type: InputType = "text";
+	export let description = "";
 	export let oninput = (value: typeof $value) => {};
 
 	const { value, errors, constraints } = formFieldProxy(superform, field);
@@ -43,8 +44,12 @@
 {:else if type === "number"}
 	<input type="number" bind:value={$value} on:input={() => oninput($value)} {...commonProps} />
 {/if}
-{#if $errors?.length}
+{#if $errors?.length || description}
 	<label for={field} class="label">
-		<span class="label-text-alt text-error">{$errors}</span>
+		{#if $errors?.length}
+			<span class="label-text-alt text-error">{$errors[0]}</span>
+		{:else}
+			<span class="label-text-alt text-neutral-500">{description}</span>
+		{/if}
 	</label>
 {/if}

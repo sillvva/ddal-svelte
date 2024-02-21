@@ -21,7 +21,7 @@
 
 <SuperForm action="?/saveCharacter" {superform} showMessage>
 	<Control class="col-span-12 sm:col-span-6">
-		<Input type="text" {superform} field="name" required>Character Name</Input>
+		<Input type="text" {superform} field="name">Character Name</Input>
 	</Control>
 	<Control class="col-span-12 sm:col-span-6">
 		<Input type="text" {superform} field="campaign">Campaign</Input>

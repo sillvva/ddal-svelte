@@ -19,8 +19,10 @@
 	export let showOnEmpty = false;
 	export let clearable = false;
 	export let disabled = false;
-	export let required = false;
+	export let required: true | undefined = undefined;
 	export let link = "";
+	export let description = "";
+	export let placeholder = "";
 	export let oninput = (el?: HTMLInputElement, value?: string) => {};
 	export let onselect = (sel: { selected?: (typeof values)[number]; input: string }) => {};
 	export let onclear = () => {};
@@ -29,9 +31,12 @@
 	let open = false;
 	let changed = false;
 
+	const { constraints } = formFieldProxy(superform, field);
 	const idValue = stringProxy(superform, idField, { empty: "undefined" });
 	const value = stringProxy(superform, field, { empty: "undefined" });
 	const { errors } = formFieldProxy(superform, errorField);
+
+	if ($constraints?.required) required = true;
 
 	$: withLabel = values.map(({ value, label, itemLabel }) => ({
 		value,
@@ -118,6 +123,8 @@
 						aria-invalid={($errors || []).length ? "true" : undefined}
 						use:builder.action
 						{...builder}
+						{required}
+						{placeholder}
 					/>
 				</Combobox.Input>
 			</label>
@@ -165,9 +172,13 @@
 		{/if}
 	</div>
 	{#if name}<Combobox.HiddenInput {name} />{/if}
-	{#if $errors}
-		<label for={ids.trigger} class="label">
-			<span class="label-text-alt text-error">{$errors}</span>
+	{#if $errors?.length || description}
+		<label for={field} class="label">
+			{#if $errors?.length}
+				<span class="label-text-alt text-error">{$errors[0]}</span>
+			{:else}
+				<span class="label-text-alt text-neutral-500">{description}</span>
+			{/if}
 		</label>
 	{/if}
 </Combobox.Root>

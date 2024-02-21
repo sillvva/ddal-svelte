@@ -30,10 +30,10 @@
 
 <SuperForm action="?/saveLog" {superform} showMessage>
 	<Control class="col-span-12 sm:col-span-6 lg:col-span-3">
-		<Input type="text" {superform} field="name" required>Title</Input>
+		<Input type="text" {superform} field="name">Title</Input>
 	</Control>
 	<Control class="col-span-12 sm:col-span-6 lg:col-span-3">
-		<DateInput {superform} field="date" required>Date</DateInput>
+		<DateInput {superform} field="date">Date</DateInput>
 	</Control>
 	<Control class="col-span-12 sm:col-span-6 lg:col-span-3">
 		<Combobox
@@ -42,7 +42,7 @@
 			field="characterName"
 			errorField="characterId"
 			values={data.characters.map((char) => ({ value: char.id, label: char.name }))}
-			required={!!$form.applied_date}
+			required={!!$form.applied_date || undefined}
 			onselect={() => {
 				$form.applied_date = $form.applied_date || new Date();
 			}}
@@ -70,17 +70,17 @@
 	</Control>
 	{#if season === 1}
 		<Control class="col-span-12 sm:col-span-4">
-			<Input type="number" {superform} field="experience" min="0">Experience</Input>
+			<Input type="number" {superform} field="experience">Experience</Input>
 		</Control>
 	{/if}
 	{#if season === 9}
 		<Control class="col-span-12 sm:col-span-4">
-			<Input type="number" {superform} field="level" min="0">Level</Input>
+			<Input type="number" {superform} field="level">Level</Input>
 		</Control>
 	{/if}
 	{#if season === 8}
 		<Control class="col-span-6 sm:col-span-2">
-			<Input type="number" {superform} field="acp" min="0">ACP</Input>
+			<Input type="number" {superform} field="acp">ACP</Input>
 		</Control>
 		<Control class="col-span-6 sm:col-span-2">
 			<Input type="number" {superform} field="tcp">TCP</Input>

@@ -15,9 +15,9 @@ export const load = async (event) => {
 	let title = "New Character";
 	if (event.params.characterId !== "new") {
 		if (!parent.character) error(404, "Character not found");
-		title = `Edit ${parent.character.name}`;
+		title = "Edit";
 		parent.breadcrumbs = parent.breadcrumbs.concat({
-			name: parent.character.name,
+			name: title,
 			href: `/characters/${event.params.characterId}`
 		});
 	}
