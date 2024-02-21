@@ -43,11 +43,11 @@
 			errorField="characterId"
 			values={data.characters.map((char) => ({ value: char.id, label: char.name }))}
 			required={!!$form.applied_date}
-			on:select={(e) => {
+			onselect={() => {
 				$form.applied_date = $form.applied_date || new Date();
 			}}
 			clearable
-			on:clear={() => {
+			onclear={() => {
 				$form.applied_date = null;
 			}}
 		>

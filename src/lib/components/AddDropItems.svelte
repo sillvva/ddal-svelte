@@ -63,7 +63,7 @@
 			entity="magic_items"
 			nameField={`magic_items_gained[${index}].name`}
 			descField={`magic_items_gained[${index}].description`}
-			on:delete={() => ($form.magic_items_gained = $form.magic_items_gained.filter((_, i) => i !== index))}
+			ondelete={() => ($form.magic_items_gained = $form.magic_items_gained.filter((_, i) => i !== index))}
 		/>
 	{/each}
 	{#each $form.magic_items_lost as _, index}
@@ -74,7 +74,7 @@
 			lostField={`magic_items_lost[${index}]`}
 			data={magicItems}
 			arrValue={$form.magic_items_lost}
-			on:delete={() => ($form.magic_items_lost = $form.magic_items_lost.filter((_, i) => i !== index))}
+			ondelete={() => ($form.magic_items_lost = $form.magic_items_lost.filter((_, i) => i !== index))}
 		/>
 	{/each}
 	{#each $form.story_awards_gained as _, index}
@@ -84,7 +84,7 @@
 			entity="story_awards"
 			nameField={`story_awards_gained[${index}].name`}
 			descField={`story_awards_gained[${index}].description`}
-			on:delete={() => ($form.story_awards_gained = $form.story_awards_gained.filter((_, i) => i !== index))}
+			ondelete={() => ($form.story_awards_gained = $form.story_awards_gained.filter((_, i) => i !== index))}
 		/>
 	{/each}
 	{#each $form.story_awards_lost as _, index}
@@ -95,7 +95,7 @@
 			lostField={`story_awards_lost[${index}]`}
 			data={storyAwards}
 			arrValue={$form.story_awards_lost}
-			on:delete={() => ($form.story_awards_lost = $form.story_awards_lost.filter((_, i) => i !== index))}
+			ondelete={() => ($form.story_awards_lost = $form.story_awards_lost.filter((_, i) => i !== index))}
 		/>
 	{/each}
 </div>

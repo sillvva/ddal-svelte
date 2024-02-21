@@ -5,7 +5,6 @@
 <script lang="ts" generics="T extends TRec">
 	import { dev } from "$app/environment";
 	import { Combobox } from "bits-ui";
-	import { createEventDispatcher } from "svelte";
 	import SuperDebug, { formFieldProxy, stringProxy, type FormPathLeaves, type SuperForm } from "sveltekit-superforms";
 	import { twMerge } from "tailwind-merge";
 	import Icon from "./Icon.svelte";
@@ -22,6 +21,9 @@
 	export let disabled = false;
 	export let required = false;
 	export let link = "";
+	export let oninput = (el?: HTMLInputElement, value?: string) => {};
+	export let onselect = (sel: { selected?: (typeof values)[number]; input: string }) => {};
+	export let onclear = () => {};
 
 	let debug = false;
 	let open = false;
@@ -30,12 +32,6 @@
 	const idValue = stringProxy(superform, idField, { empty: "undefined" });
 	const value = stringProxy(superform, field, { empty: "undefined" });
 	const { errors } = formFieldProxy(superform, errorField);
-
-	const dispatch = createEventDispatcher<{
-		input: void;
-		select: { selected: (typeof values)[number] | undefined; input: string } | undefined;
-		clear: void;
-	}>();
 
 	$: withLabel = values.map(({ value, label, itemLabel }) => ({
 		value,
@@ -61,7 +57,7 @@
 	function clear() {
 		$idValue = "";
 		$value = "";
-		dispatch("clear");
+		onclear();
 		open = false;
 	}
 </script>
@@ -76,7 +72,7 @@
 	onSelectedChange={(sel) => {
 		$idValue = sel?.value || "";
 		$value = sel?.label || "";
-		dispatch("select", { selected: sel, input: $value });
+		onselect({ selected: sel, input: $value });
 	}}
 	preventScroll={false}
 	onOpenChange={() => {
@@ -112,7 +108,7 @@
 							if (selectedItem && selectedItem.label !== cValue) selectedItem = undefined;
 							if (!cValue) clear();
 							$value = cValue;
-							dispatch("input");
+							oninput(e.currentTarget, cValue);
 							changed = true;
 						}}
 						on:blur={() => {

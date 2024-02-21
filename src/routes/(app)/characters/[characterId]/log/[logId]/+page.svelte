@@ -57,13 +57,13 @@
 				})) || []}
 				allowCustom
 				required={!!$form.dm.DCI}
-				on:select={(e) => {
-					const id = e.detail?.selected?.value;
-					const name = e.detail?.selected?.label;
+				onselect={({ selected }) => {
+					const id = selected?.value;
+					const name = selected?.label;
 					$form.dm = data.dms.find((dm) => dm.id === id) || (name ? { ...$form.dm, name } : defaultDM(data.user.id));
 				}}
 				clearable
-				on:clear={() => ($form.dm = defaultDM(data.user.id))}
+				onclear={() => ($form.dm = defaultDM(data.user.id))}
 				link={$form.dm.id ? `/dms/${$form.dm.id}` : ""}
 			>
 				DM Name
