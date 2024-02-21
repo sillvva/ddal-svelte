@@ -26,10 +26,9 @@
 	let open = false;
 	let changed = false;
 
-	let inputValue = "";
+	const idValue = stringProxy(superform, idField, { empty: "undefined" });
+	const value = stringProxy(superform, field, { empty: "undefined" });
 	const { errors } = formFieldProxy(superform, errorField);
-	const idValue = stringProxy(superform, idField, { empty: "null" });
-	const value = stringProxy(superform, field, { empty: "null" });
 
 	const dispatch = createEventDispatcher<{
 		input: void;
@@ -51,36 +50,46 @@
 	$: filtered =
 		!$value?.trim() || !allowCustom || prefiltered.length === 1
 			? prefiltered
-			: [{ value: $value, label: $value, itemLabel: `Add "${$value}"` }, ...prefiltered];
+			: [{ value: "", label: $value, itemLabel: `Add "${$value}"` }, ...prefiltered];
 	$: selectedItem = $idValue
 		? values.find((v) => v.value === $idValue)
 		: $value.trim() && allowCustom
 			? { value: "", label: $value, itemLabel: `Add "${$value}"` }
 			: undefined;
-	$: if ($idValue) inputValue = selectedItem?.label || "";
-	$: if (!$idValue) inputValue = "";
+
+	function clear() {
+		$idValue = "";
+		$value = "";
+		dispatch("clear");
+		open = false;
+	}
 </script>
 
 <Combobox.Root
 	items={filtered}
-	bind:inputValue
+	bind:inputValue={$value}
 	bind:open
 	let:ids
 	{disabled}
 	{required}
 	onSelectedChange={(sel) => {
-		dispatch("select", { selected: sel, input: inputValue });
+		$idValue = sel?.value || "";
+		$value = sel?.label || "";
+		dispatch("select", { selected: sel, input: $value });
 	}}
+	preventScroll={false}
 	onOpenChange={() => {
 		setTimeout(() => {
 			if (!open) {
 				if (changed) {
-					dispatch("select", { selected: selectedItem, input: inputValue });
-					if (!allowCustom && !selectedItem) inputValue = "";
+					if (!allowCustom && !selectedItem) clear();
 					changed = false;
 				}
 			}
 		}, 50);
+	}}
+	onOutsideClick={() => {
+		open = false;
 	}}
 >
 	<label for={ids.trigger} class="label">
@@ -97,22 +106,17 @@
 				<Combobox.Input asChild let:builder>
 					<input
 						class="input join-item input-bordered w-full focus:border-primary"
-						on:input={() => {
-							changed = true;
+						on:input={(e) => {
+							let cValue = e.currentTarget.value;
+							if (selectedItem && selectedItem.label !== cValue) selectedItem = undefined;
+							if (!cValue) clear();
+							$value = cValue;
 							dispatch("input");
-							if (selectedItem && selectedItem.label !== inputValue) {
-								selectedItem = undefined;
-							}
-							if (!inputValue) {
-								dispatch("clear");
-								selectedItem = undefined;
-							}
-							setTimeout(() => {
-								$value = inputValue;
-							});
+							changed = true;
 						}}
 						on:blur={() => {
-							if (!filtered.length) dispatch("select", { selected: undefined, input: inputValue });
+							if (!allowCustom && !selectedItem && !filtered.length) clear();
+							if (!$value) open = false;
 						}}
 						aria-invalid={($errors || []).length ? "true" : undefined}
 						use:builder.action
@@ -120,7 +124,7 @@
 					/>
 				</Combobox.Input>
 			</label>
-			{#if (showOnEmpty || inputValue?.trim()) && filtered.length}
+			{#if (showOnEmpty || $value?.trim()) && filtered.length}
 				<Combobox.Content asChild let:builder>
 					<ul class="menu dropdown-content z-10 w-full rounded-lg bg-base-200 p-2 shadow" use:builder.action {...builder}>
 						{#each filtered.slice(0, 8) as item}
@@ -147,18 +151,8 @@
 				</Combobox.Content>
 			{/if}
 		</div>
-		{#if inputValue && selectedItem && clearable}
-			<button
-				class="btn join-item input-bordered"
-				type="button"
-				on:click|preventDefault={() => {
-					dispatch("clear");
-					selectedItem = undefined;
-					inputValue = "";
-					$idValue = "";
-					$value = "";
-				}}
-			>
+		{#if $value && clearable}
+			<button class="btn join-item input-bordered" type="button" on:click|preventDefault={() => clear()}>
 				<Icon src="x" class="w-6" color="red" />
 			</button>
 		{/if}

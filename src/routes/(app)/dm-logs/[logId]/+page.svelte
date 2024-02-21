@@ -44,21 +44,10 @@
 			values={data.characters.map((char) => ({ value: char.id, label: char.name }))}
 			required={!!$form.applied_date}
 			on:select={(e) => {
-				const character = data.characters.find((c) => c.id === e.detail?.selected?.value);
-				if (character) {
-					$form.characterId = character.id;
-					$form.characterName = character.name;
-					$form.applied_date = $form.applied_date || new Date();
-				} else {
-					$form.characterId = "";
-					$form.characterName = "";
-					// if (data.logId === "new") $form.applied_date = null;
-				}
+				$form.applied_date = $form.applied_date || new Date();
 			}}
 			clearable
 			on:clear={() => {
-				$form.characterId = "";
-				$form.characterName = "";
 				$form.applied_date = null;
 			}}
 		>
