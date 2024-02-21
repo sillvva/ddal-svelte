@@ -94,14 +94,14 @@
 			<Input type="number" {superform} field="acp" min="0">ACP</Input>
 		</Control>
 		<Control class="col-span-6 sm:col-span-2">
-			<Input type="number" {superform} field="tcp" min="0">TCP</Input>
+			<Input type="number" {superform} field="tcp">TCP</Input>
 		</Control>
 	{/if}
 	<Control class="col-span-6 sm:col-span-2">
-		<Input type="number" {superform} field="gold" min="0">Gold</Input>
+		<Input type="number" {superform} field="gold">Gold</Input>
 	</Control>
 	<Control class="col-span-6 sm:col-span-2">
-		<Input type="number" {superform} field="dtd" min="0">Downtime</Input>
+		<Input type="number" {superform} field="dtd">Downtime</Input>
 	</Control>
 	<Control class="col-span-12">
 		<MdTextInput {superform} field="description" maxRows={20} preview>Notes</MdTextInput>
