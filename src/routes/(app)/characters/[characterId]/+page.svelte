@@ -277,10 +277,8 @@
 							class="mask mask-squircle mx-auto h-52 w-full bg-primary"
 							use:transition={slugify("image-" + character.id)}
 							on:click={(e) => {
-								// if (!data.mobile) {
 								e.preventDefault();
 								triggerImageModal();
-								// }
 							}}
 						>
 							<img src={character.image_url} class="size-full object-cover object-top transition-all" alt={character.name} />
