@@ -27,6 +27,7 @@ export async function saveDM(
 
 		const characterIds = [...new Set(dm.logs.filter((l) => l.characterId).map((l) => l.characterId))];
 		revalidateKeys([["dms", user.id, "logs"], ...characterIds.map((id) => ["character", id as string, "logs"] as CacheKey)]);
+		revalidateKeys([["dms", user.id]]);
 
 		return { id: result.id, dm: result };
 	} catch (err) {
