@@ -70,9 +70,7 @@
 			</Combobox>
 		</Control>
 		<Control class="col-span-12 sm:col-span-6">
-			{#if $form.dm.name}
-				<Input type="text" {superform} field="dm.DCI">DM DCI</Input>
-			{/if}
+			<Input type="text" {superform} field="dm.DCI" disabled={!$form.dm.name}>DM DCI</Input>
 		</Control>
 		<Control class="col-span-12 sm:col-span-4">
 			<GenericInput labelFor="season" label="Season">
