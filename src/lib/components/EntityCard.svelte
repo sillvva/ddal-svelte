@@ -12,6 +12,23 @@
 	import Input from "./Input.svelte";
 	import MdTextInput from "./MDTextInput.svelte";
 
+	type $$Props = {
+		entity: "magic_items" | "story_awards";
+		superform: SuperForm<T, any>;
+	} & (
+		| {
+				type: "add";
+				nameField: FormPathLeaves<T>;
+				descField: FormPathLeaves<T>;
+		  }
+		| {
+				type: "drop";
+				lostField: FormPathLeaves<T>;
+				arrValue: string[];
+				data: { id: string; name: string; description: string | null }[];
+		  }
+	);
+
 	export let type: "add" | "drop";
 	export let entity: "magic_items" | "story_awards";
 	export let superform: SuperForm<T, any>;
