@@ -16,6 +16,8 @@ export async function saveDM(
 		const dm = (await getUserDMsWithLogsCache(user)).find((dm) => dm.id === dmId);
 		if (!dm) throw new SaveError(401, "You do not have permission to edit this DM");
 
+		if (data.name === "" && data.uid) data.name = user.name || "Me";
+
 		const result = await prisma.dungeonMaster.update({
 			where: { id: dmId },
 			data: {

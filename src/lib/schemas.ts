@@ -54,7 +54,7 @@ export type DungeonMasterSchemaIn = Input<typeof dungeonMasterSchema>;
 export const dungeonMasterSchema = object(
 	{
 		id: optional(string(), ""),
-		name: optional(string(), "Me"),
+		name: optional(string(), ""),
 		DCI: nullable(union([string([regex(/[0-9]{0,10}/, "Invalid DCI Format")]), null_()]), null),
 		uid: nullable(union([string(), null_()]), ""),
 		owner: string([minLength(1, "Owner Required")])
