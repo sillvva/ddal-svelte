@@ -10,13 +10,13 @@ dependencies:
     version: 0.27.0
   '@auth/prisma-adapter':
     specifier: ^1.4.0
-    version: 1.4.0(@prisma/client@5.10.0)
+    version: 1.4.0(@prisma/client@5.10.2)
   '@auth/sveltekit':
     specifier: ^0.13.0
-    version: 0.13.0(@sveltejs/kit@2.5.0)(svelte@4.2.11)
+    version: 0.13.0(@sveltejs/kit@2.5.1)(svelte@4.2.11)
   '@prisma/client':
-    specifier: ^5.10.0
-    version: 5.10.0(prisma@5.10.0)
+    specifier: ^5.10.2
+    version: 5.10.2(prisma@5.10.2)
   '@svelteuidev/composables':
     specifier: ^0.15.4
     version: 0.15.4(svelte@4.2.11)
@@ -45,13 +45,13 @@ dependencies:
 devDependencies:
   '@sveltejs/adapter-auto':
     specifier: ^3.1.0
-    version: 3.1.1(@sveltejs/kit@2.5.0)
+    version: 3.1.1(@sveltejs/kit@2.5.1)
   '@sveltejs/kit':
-    specifier: 2.5.0
-    version: 2.5.0(@sveltejs/vite-plugin-svelte@3.0.2)(svelte@4.2.11)(vite@5.1.3)
+    specifier: 2.5.1
+    version: 2.5.1(@sveltejs/vite-plugin-svelte@3.0.2)(svelte@4.2.11)(vite@5.1.4)
   '@sveltejs/vite-plugin-svelte':
     specifier: ^3.0.0
-    version: 3.0.2(svelte@4.2.11)(vite@5.1.3)
+    version: 3.0.2(svelte@4.2.11)(vite@5.1.4)
   '@sveltekit-addons/document':
     specifier: ^1.0.1
     version: 1.0.1(svelte@4.2.11)
@@ -92,8 +92,8 @@ devDependencies:
     specifier: ^0.5.11
     version: 0.5.11(prettier-plugin-svelte@3.2.1)(prettier@3.2.5)
   prisma:
-    specifier: ^5.10.0
-    version: 5.10.0
+    specifier: ^5.10.2
+    version: 5.10.2
   svelte:
     specifier: ^4.2.11
     version: 4.2.11
@@ -105,13 +105,13 @@ devDependencies:
     version: 0.4.1(svelte@4.2.11)
   sveltekit-search-params:
     specifier: ^2.1.1
-    version: 2.1.1(@sveltejs/kit@2.5.0)(svelte@4.2.11)
+    version: 2.1.1(@sveltejs/kit@2.5.1)(svelte@4.2.11)
   sveltekit-superforms:
-    specifier: 2.4.0
-    version: 2.4.0(@sveltejs/kit@2.5.0)(@types/json-schema@7.0.15)(esbuild-runner@2.2.2)(esbuild@0.20.1)(svelte@4.2.11)
+    specifier: 2.5.0
+    version: 2.5.0(@sveltejs/kit@2.5.1)(@types/json-schema@7.0.15)(esbuild-runner@2.2.2)(esbuild@0.20.1)(svelte@4.2.11)
   sveltekit-view-transition:
     specifier: ^0.5.3
-    version: 0.5.3(@sveltejs/kit@2.5.0)(svelte@4.2.11)
+    version: 0.5.3(@sveltejs/kit@2.5.1)(svelte@4.2.11)
   tailwind-merge:
     specifier: ^2.2.0
     version: 2.2.1
@@ -125,8 +125,8 @@ devDependencies:
     specifier: ^5.3.3
     version: 5.3.3
   vite:
-    specifier: 5.1.3
-    version: 5.1.3
+    specifier: 5.1.4
+    version: 5.1.4
 
 packages:
 
@@ -170,27 +170,27 @@ packages:
       preact-render-to-string: 5.2.3(preact@10.11.3)
     dev: false
 
-  /@auth/prisma-adapter@1.4.0(@prisma/client@5.10.0):
+  /@auth/prisma-adapter@1.4.0(@prisma/client@5.10.2):
     resolution: {integrity: sha512-k5D6ajX8MZv9107WWaIpzcNmsB8+sumyc7y46lnAMbLdgBoUcwAYtxGLbwEFSvzgjDcxjWqzlB5AIAED4vioDA==}
     peerDependencies:
       '@prisma/client': '>=2.26.0 || >=3 || >=4 || >=5'
     dependencies:
       '@auth/core': 0.27.0
-      '@prisma/client': 5.10.0(prisma@5.10.0)
+      '@prisma/client': 5.10.2(prisma@5.10.2)
     transitivePeerDependencies:
       - '@simplewebauthn/browser'
       - '@simplewebauthn/server'
       - nodemailer
     dev: false
 
-  /@auth/sveltekit@0.13.0(@sveltejs/kit@2.5.0)(svelte@4.2.11):
+  /@auth/sveltekit@0.13.0(@sveltejs/kit@2.5.1)(svelte@4.2.11):
     resolution: {integrity: sha512-o0WZWsgscWuaSqWeEom3qy8Xw9jrCdpKiH6Tte7yB17iSll2WcVPpT2DAPUqLw3E7DtRpE8JGloWMsAlw11N0A==}
     peerDependencies:
       '@sveltejs/kit': ^1.0.0 || ^2.0.0
       svelte: ^3.54.0 || ^4.0.0 || ^5
     dependencies:
       '@auth/core': 0.27.0
-      '@sveltejs/kit': 2.5.0(@sveltejs/vite-plugin-svelte@3.0.2)(svelte@4.2.11)(vite@5.1.3)
+      '@sveltejs/kit': 2.5.1(@sveltejs/vite-plugin-svelte@3.0.2)(svelte@4.2.11)(vite@5.1.4)
       set-cookie-parser: 2.6.0
       svelte: 4.2.11
     transitivePeerDependencies:
@@ -805,8 +805,8 @@ packages:
     dev: true
     optional: true
 
-  /@prisma/client@5.10.0(prisma@5.10.0):
-    resolution: {integrity: sha512-JQqKYpKplsAaPDk0RVKBsN4ly6AWJys6Hkjh9PJMgtdY0IME1C0aHckyGUhHpenmOO2J6liPDDm1svSrzce8BQ==}
+  /@prisma/client@5.10.2(prisma@5.10.2):
+    resolution: {integrity: sha512-ef49hzB2yJZCvM5gFHMxSFL9KYrIP9udpT5rYo0CsHD4P9IKj473MbhU1gjKKftiwWBTIyrt9jukprzZXazyag==}
     engines: {node: '>=16.13'}
     requiresBuild: true
     peerDependencies:
@@ -815,35 +815,35 @@ packages:
       prisma:
         optional: true
     dependencies:
-      prisma: 5.10.0
+      prisma: 5.10.2
     dev: false
 
-  /@prisma/debug@5.10.0:
-    resolution: {integrity: sha512-xBs8M4bGIBUqJ/9lZM+joEJkrNaGPKMUcK3a5JqUDQtwPDaWDTq24wOpkHfoJtvNbmGtlDl9Ky5HAbctN5+x7g==}
+  /@prisma/debug@5.10.2:
+    resolution: {integrity: sha512-bkBOmH9dpEBbMKFJj8V+Zp8IZHIBjy3fSyhLhxj4FmKGb/UBSt9doyfA6k1UeUREsMJft7xgPYBbHSOYBr8XCA==}
 
   /@prisma/engines-version@5.10.0-34.5a9203d0590c951969e85a7d07215503f4672eb9:
     resolution: {integrity: sha512-uCy/++3Jx/O3ufM+qv2H1L4tOemTNqcP/gyEVOlZqTpBvYJUe0tWtW0y3o2Ueq04mll4aM5X3f6ugQftOSLdFQ==}
 
-  /@prisma/engines@5.10.0:
-    resolution: {integrity: sha512-9NVgMD3bjB5fsxVnrqbasZG3PwurfI2/XKhFfKuZulVRldm5Nz/SJ38t+o0DcOoOmuYMrY4R+UFO57QAB6hCeA==}
+  /@prisma/engines@5.10.2:
+    resolution: {integrity: sha512-HkSJvix6PW8YqEEt3zHfCYYJY69CXsNdhU+wna+4Y7EZ+AwzeupMnUThmvaDA7uqswiHkgm5/SZ6/4CStjaGmw==}
     requiresBuild: true
     dependencies:
-      '@prisma/debug': 5.10.0
+      '@prisma/debug': 5.10.2
       '@prisma/engines-version': 5.10.0-34.5a9203d0590c951969e85a7d07215503f4672eb9
-      '@prisma/fetch-engine': 5.10.0
-      '@prisma/get-platform': 5.10.0
+      '@prisma/fetch-engine': 5.10.2
+      '@prisma/get-platform': 5.10.2
 
-  /@prisma/fetch-engine@5.10.0:
-    resolution: {integrity: sha512-6A7Rh7ItuenDo0itgJ8V90cTeLejN1+vUjUzgdonhcNN+7UhZczZfEGe16nI+steW6+ScB5O8+LZybRLNBb0HA==}
+  /@prisma/fetch-engine@5.10.2:
+    resolution: {integrity: sha512-dSmXcqSt6DpTmMaLQ9K8ZKzVAMH3qwGCmYEZr/uVnzVhxRJ1EbT/w2MMwIdBNq1zT69Rvh0h75WMIi0mrIw7Hg==}
     dependencies:
-      '@prisma/debug': 5.10.0
+      '@prisma/debug': 5.10.2
       '@prisma/engines-version': 5.10.0-34.5a9203d0590c951969e85a7d07215503f4672eb9
-      '@prisma/get-platform': 5.10.0
+      '@prisma/get-platform': 5.10.2
 
-  /@prisma/get-platform@5.10.0:
-    resolution: {integrity: sha512-pSxK2RTVhnG6FVkTlSBdBPuvf8087VliR1MMF5ca8/loyY07FtvYF02SP9ZQZITvbZ+6XX1LTwo8WjIp/EHgIQ==}
+  /@prisma/get-platform@5.10.2:
+    resolution: {integrity: sha512-nqXP6vHiY2PIsebBAuDeWiUYg8h8mfjBckHh6Jezuwej0QJNnjDiOq30uesmg+JXxGk99nqyG3B7wpcOODzXvg==}
     dependencies:
-      '@prisma/debug': 5.10.0
+      '@prisma/debug': 5.10.2
 
   /@rollup/rollup-android-arm-eabi@4.12.0:
     resolution: {integrity: sha512-+ac02NL/2TCKRrJu2wffk1kZ+RyqxVUlbjSagNgPm94frxtr+XDL12E5Ll1enWskLrtrZ2r8L3wED1orIibV/w==}
@@ -968,17 +968,17 @@ packages:
     dev: true
     optional: true
 
-  /@sveltejs/adapter-auto@3.1.1(@sveltejs/kit@2.5.0):
+  /@sveltejs/adapter-auto@3.1.1(@sveltejs/kit@2.5.1):
     resolution: {integrity: sha512-6LeZft2Fo/4HfmLBi5CucMYmgRxgcETweQl/yQoZo/895K3S9YWYN4Sfm/IhwlIpbJp3QNvhKmwCHbsqQNYQpw==}
     peerDependencies:
       '@sveltejs/kit': ^2.0.0
     dependencies:
-      '@sveltejs/kit': 2.5.0(@sveltejs/vite-plugin-svelte@3.0.2)(svelte@4.2.11)(vite@5.1.3)
+      '@sveltejs/kit': 2.5.1(@sveltejs/vite-plugin-svelte@3.0.2)(svelte@4.2.11)(vite@5.1.4)
       import-meta-resolve: 4.0.0
     dev: true
 
-  /@sveltejs/kit@2.5.0(@sveltejs/vite-plugin-svelte@3.0.2)(svelte@4.2.11)(vite@5.1.3):
-    resolution: {integrity: sha512-1uyXvzC2Lu1FZa30T4y5jUAC21R309ZMRG0TPt+PPPbNUoDpy8zSmSNVWYaBWxYDqLGQ5oPNWvjvvF2IjJ1jmA==}
+  /@sveltejs/kit@2.5.1(@sveltejs/vite-plugin-svelte@3.0.2)(svelte@4.2.11)(vite@5.1.4):
+    resolution: {integrity: sha512-TKj08o3mJCoQNLTdRdGkHPePTCPUGTgkew65RDqjVU3MtPVxljsofXQYfXndHfq0P7KoPRO/0/reF6HesU0Djw==}
     engines: {node: '>=18.13'}
     hasBin: true
     requiresBuild: true
@@ -987,7 +987,7 @@ packages:
       svelte: ^4.0.0 || ^5.0.0-next.0
       vite: ^5.0.3
     dependencies:
-      '@sveltejs/vite-plugin-svelte': 3.0.2(svelte@4.2.11)(vite@5.1.3)
+      '@sveltejs/vite-plugin-svelte': 3.0.2(svelte@4.2.11)(vite@5.1.4)
       '@types/cookie': 0.6.0
       cookie: 0.6.0
       devalue: 4.3.2
@@ -1001,9 +1001,9 @@ packages:
       sirv: 2.0.4
       svelte: 4.2.11
       tiny-glob: 0.2.9
-      vite: 5.1.3
+      vite: 5.1.4
 
-  /@sveltejs/vite-plugin-svelte-inspector@2.0.0(@sveltejs/vite-plugin-svelte@3.0.2)(svelte@4.2.11)(vite@5.1.3):
+  /@sveltejs/vite-plugin-svelte-inspector@2.0.0(@sveltejs/vite-plugin-svelte@3.0.2)(svelte@4.2.11)(vite@5.1.4):
     resolution: {integrity: sha512-gjr9ZFg1BSlIpfZ4PRewigrvYmHWbDrq2uvvPB1AmTWKuM+dI1JXQSUu2pIrYLb/QncyiIGkFDFKTwJ0XqQZZg==}
     engines: {node: ^18.0.0 || >=20}
     peerDependencies:
@@ -1011,29 +1011,29 @@ packages:
       svelte: ^4.0.0 || ^5.0.0-next.0
       vite: ^5.0.0
     dependencies:
-      '@sveltejs/vite-plugin-svelte': 3.0.2(svelte@4.2.11)(vite@5.1.3)
+      '@sveltejs/vite-plugin-svelte': 3.0.2(svelte@4.2.11)(vite@5.1.4)
       debug: 4.3.4
       svelte: 4.2.11
-      vite: 5.1.3
+      vite: 5.1.4
     transitivePeerDependencies:
       - supports-color
 
-  /@sveltejs/vite-plugin-svelte@3.0.2(svelte@4.2.11)(vite@5.1.3):
+  /@sveltejs/vite-plugin-svelte@3.0.2(svelte@4.2.11)(vite@5.1.4):
     resolution: {integrity: sha512-MpmF/cju2HqUls50WyTHQBZUV3ovV/Uk8k66AN2gwHogNAG8wnW8xtZDhzNBsFJJuvmq1qnzA5kE7YfMJNFv2Q==}
     engines: {node: ^18.0.0 || >=20}
     peerDependencies:
       svelte: ^4.0.0 || ^5.0.0-next.0
       vite: ^5.0.0
     dependencies:
-      '@sveltejs/vite-plugin-svelte-inspector': 2.0.0(@sveltejs/vite-plugin-svelte@3.0.2)(svelte@4.2.11)(vite@5.1.3)
+      '@sveltejs/vite-plugin-svelte-inspector': 2.0.0(@sveltejs/vite-plugin-svelte@3.0.2)(svelte@4.2.11)(vite@5.1.4)
       debug: 4.3.4
       deepmerge: 4.3.1
       kleur: 4.1.5
       magic-string: 0.30.7
       svelte: 4.2.11
       svelte-hmr: 0.15.3(svelte@4.2.11)
-      vite: 5.1.3
-      vitefu: 0.2.5(vite@5.1.3)
+      vite: 5.1.4
+      vitefu: 0.2.5(vite@5.1.4)
     transitivePeerDependencies:
       - supports-color
 
@@ -2241,8 +2241,8 @@ packages:
     hasBin: true
     dev: true
 
-  /joi@17.12.1:
-    resolution: {integrity: sha512-vtxmq+Lsc5SlfqotnfVjlViWfOL9nt/avKNbKYizwf6gsCfq9NYY/ceYRMFD8XDdrjJ9abJyScWmhmIiy+XRtQ==}
+  /joi@17.12.2:
+    resolution: {integrity: sha512-RonXAIzCiHLc8ss3Ibuz45u28GOsWE1UpfDXLbN/9NKbL4tCJf8TWYVKsoYuuh+sAUt7fsSNpA+r2+TBA6Wjmw==}
     requiresBuild: true
     dependencies:
       '@hapi/hoek': 9.3.0
@@ -2811,13 +2811,13 @@ packages:
     resolution: {integrity: sha512-WuxUnVtlWL1OfZFQFuqvnvs6MiAGk9UNsBostyBOB0Is9wb5uRESevA6rnl/rkksXaGX3GzZhPup5d6Vp1nFew==}
     dev: false
 
-  /prisma@5.10.0:
-    resolution: {integrity: sha512-uN3jT1v1XP12tvatsBsMUDC/aK+3kA2VUXznl3UutgK4XHdVjM3SBW8bFb/bT9dHU40apwsEazUK9M/vG13YmA==}
+  /prisma@5.10.2:
+    resolution: {integrity: sha512-hqb/JMz9/kymRE25pMWCxkdyhbnIWrq+h7S6WysJpdnCvhstbJSNP/S6mScEcqiB8Qv2F+0R3yG+osRaWqZacQ==}
     engines: {node: '>=16.13'}
     hasBin: true
     requiresBuild: true
     dependencies:
-      '@prisma/engines': 5.10.0
+      '@prisma/engines': 5.10.2
 
   /property-expr@2.0.6:
     resolution: {integrity: sha512-SVtmxhRE/CGkn3eZY1T6pC8Nln6Fr/lu1mKSgRud0eC73whjGfoAogbn78LkD8aFL0zz3bAFerKSnOl7NlErBA==}
@@ -3232,18 +3232,18 @@ packages:
       magic-string: 0.30.7
       periscopic: 3.1.0
 
-  /sveltekit-search-params@2.1.1(@sveltejs/kit@2.5.0)(svelte@4.2.11):
+  /sveltekit-search-params@2.1.1(@sveltejs/kit@2.5.1)(svelte@4.2.11):
     resolution: {integrity: sha512-tmsvdTV0DwXAXbVv7Iz+eULd/QPYbNWKNUnRiascK0Qiu9afAMMQdIZejVg1TQEpy441h2ZHbqyUnpcFg3eUHQ==}
     peerDependencies:
       '@sveltejs/kit': ^1.0.0 || ^2.0.0
       svelte: ^3.55.0 || ^4.0.0 || ^5.0.0
     dependencies:
-      '@sveltejs/kit': 2.5.0(@sveltejs/vite-plugin-svelte@3.0.2)(svelte@4.2.11)(vite@5.1.3)
+      '@sveltejs/kit': 2.5.1(@sveltejs/vite-plugin-svelte@3.0.2)(svelte@4.2.11)(vite@5.1.4)
       svelte: 4.2.11
     dev: true
 
-  /sveltekit-superforms@2.4.0(@sveltejs/kit@2.5.0)(@types/json-schema@7.0.15)(esbuild-runner@2.2.2)(esbuild@0.20.1)(svelte@4.2.11):
-    resolution: {integrity: sha512-hVX6nDN4LdGDf8asygI9c7W/M4o0hSv0HwsCMYlBIVwb/LnWUDa7Nt+fc0Ro7iKtOu52u71yGsDXv8kbjYpJbg==}
+  /sveltekit-superforms@2.5.0(@sveltejs/kit@2.5.1)(@types/json-schema@7.0.15)(esbuild-runner@2.2.2)(esbuild@0.20.1)(svelte@4.2.11):
+    resolution: {integrity: sha512-mMWvmpHpq1iYyawnb8H7NZb+f79z0I81Dx1xPbOak7yIrrwR8wdFnFCCXxdLnIXVAhwhd60jAQraYHcvCaZGgQ==}
     requiresBuild: true
     peerDependencies:
       '@sveltejs/kit': 1.x || 2.x
@@ -3266,7 +3266,7 @@ packages:
       zod:
         optional: true
     dependencies:
-      '@sveltejs/kit': 2.5.0(@sveltejs/vite-plugin-svelte@3.0.2)(svelte@4.2.11)(vite@5.1.3)
+      '@sveltejs/kit': 2.5.1(@sveltejs/vite-plugin-svelte@3.0.2)(svelte@4.2.11)(vite@5.1.4)
       devalue: 4.3.2
       just-clone: 6.2.0
       memoize-weak: 1.0.2
@@ -3278,7 +3278,7 @@ packages:
       '@sodaru/yup-to-json-schema': 2.0.1
       '@vinejs/vine': 1.7.1
       arktype: 1.0.29-alpha
-      joi: 17.12.1
+      joi: 17.12.2
       superstruct: 1.0.3
       valibot: 0.28.1
       yup: 1.3.3
@@ -3290,13 +3290,13 @@ packages:
       - esbuild-runner
     dev: true
 
-  /sveltekit-view-transition@0.5.3(@sveltejs/kit@2.5.0)(svelte@4.2.11):
+  /sveltekit-view-transition@0.5.3(@sveltejs/kit@2.5.1)(svelte@4.2.11):
     resolution: {integrity: sha512-qm8NDhpgIyiM3TJfO26iMGZWcWW3/GqsX9KctNWJaZ5ySdnkzZ4p74fkYWelaM2LLEpLDJqzouQLyrgnbszfVA==}
     peerDependencies:
       '@sveltejs/kit': ^1.20.4 || ^2.0.0
       svelte: ^4.0.0 || ^5.0.0
     dependencies:
-      '@sveltejs/kit': 2.5.0(@sveltejs/vite-plugin-svelte@3.0.2)(svelte@4.2.11)(vite@5.1.3)
+      '@sveltejs/kit': 2.5.1(@sveltejs/vite-plugin-svelte@3.0.2)(svelte@4.2.11)(vite@5.1.4)
       svelte: 4.2.11
     dev: true
 
@@ -3476,8 +3476,8 @@ packages:
     dev: true
     optional: true
 
-  /vite@5.1.3:
-    resolution: {integrity: sha512-UfmUD36DKkqhi/F75RrxvPpry+9+tTkrXfMNZD+SboZqBCMsxKtO52XeGzzuh7ioz+Eo/SYDBbdb0Z7vgcDJew==}
+  /vite@5.1.4:
+    resolution: {integrity: sha512-n+MPqzq+d9nMVTKyewqw6kSt+R3CkvF9QAKY8obiQn8g1fwTscKxyfaYnC632HtBXAQGc1Yjomphwn1dtwGAHg==}
     engines: {node: ^18.0.0 || >=20.0.0}
     hasBin: true
     peerDependencies:
@@ -3510,7 +3510,7 @@ packages:
     optionalDependencies:
       fsevents: 2.3.3
 
-  /vitefu@0.2.5(vite@5.1.3):
+  /vitefu@0.2.5(vite@5.1.4):
     resolution: {integrity: sha512-SgHtMLoqaeeGnd2evZ849ZbACbnwQCIwRH57t18FxcXoZop0uQu0uzlIhJBlF/eWVzuce0sHeqPcDo+evVcg8Q==}
     peerDependencies:
       vite: ^3.0.0 || ^4.0.0 || ^5.0.0
@@ -3518,7 +3518,7 @@ packages:
       vite:
         optional: true
     dependencies:
-      vite: 5.1.3
+      vite: 5.1.4
 
   /which@2.0.2:
     resolution: {integrity: sha512-BLI3Tl1TW3Pvl70l3yq3Y64i+awpwXqsGBYWkkqMtnbXgrMD+yj7rhW0kuEDxzJaYXGjEW5ogapKNMEKNMjibA==}
