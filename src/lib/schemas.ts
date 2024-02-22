@@ -54,14 +54,14 @@ export type DungeonMasterSchemaIn = Input<typeof dungeonMasterSchema>;
 export const dungeonMasterSchema = object(
 	{
 		id: string(),
-		name: string([minLength(1, "Name Required")]),
+		name: string([minLength(1)]),
 		DCI: nullable(union([string([regex(/[0-9]{0,10}/, "Invalid DCI Format")]), null_()]), null),
 		uid: nullable(union([string(), null_()]), ""),
-		owner: string([minLength(1, "Owner Required")])
+		owner: string([minLength(1, "DM is not assigned to a user")])
 	},
 	[
 		forward(
-			custom((input) => !(!!input.DCI?.trim() && !input.name.trim()), "DM Name Required if DCI is set"),
+			custom((input) => !input.DCI?.trim() || !!input.name.trim(), "DM Name required if DCI is set"),
 			["name"]
 		)
 	]
@@ -78,7 +78,7 @@ export type LogSchemaIn = Input<typeof logSchema>;
 export const logSchema = object({
 	id: nullish(string(), ""),
 	name: string([minLength(1)]),
-	date: date("Invalid Date"),
+	date: date(),
 	characterId: optional(string(), ""),
 	characterName: optional(string(), ""),
 	type: optional(union([literal("game"), literal("nongame")]), "game"),
@@ -94,11 +94,11 @@ export const logSchema = object({
 		name: optional(string(), "")
 	}),
 	is_dm_log: optional(boolean(), false),
-	applied_date: nullable(union([date("Invalid Date"), null_()]), null),
+	applied_date: nullable(union([date(), null_()]), null),
 	magic_items_gained: optional(array(itemSchema), []),
-	magic_items_lost: optional(array(string([minLength(1, "Invalid Item ID")])), []),
+	magic_items_lost: optional(array(string([minLength(1)])), []),
 	story_awards_gained: optional(array(itemSchema), []),
-	story_awards_lost: optional(array(string([minLength(1, "Invalid Story Award ID")])), [])
+	story_awards_lost: optional(array(string([minLength(1)])), [])
 });
 
 export const characterLogSchema = (character: CharacterData) =>
@@ -162,11 +162,11 @@ export const dMLogSchema = (characters: (CharacterData | { id: string; name: str
 		)
 	]);
 
-const optionalURL = optional(fallback(string([url("Invalid URL")]), ""), "");
+const optionalURL = optional(fallback(string([url()]), ""), "");
 
 export type NewCharacterSchema = Output<typeof newCharacterSchema>;
 export const newCharacterSchema = object({
-	name: string([minLength(1, "Character Name Required")]),
+	name: string([minLength(1)]),
 	campaign: optional(string(), ""),
 	race: optional(string(), ""),
 	class: optional(string(), ""),
