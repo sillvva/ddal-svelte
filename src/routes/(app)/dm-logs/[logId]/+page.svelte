@@ -62,9 +62,9 @@
 	<Control class="col-span-12 sm:col-span-4">
 		<GenericInput labelFor="season" label="Season">
 			<select id="season" bind:value={season} class="select select-bordered w-full">
-				<option value={9}>Season 9+</option>
-				<option value={8}>Season 8</option>
-				<option value={1}>Season 1-7</option>
+				<option value={9}>Season 9+ (Level)</option>
+				<option value={8}>Season 8 (ACP/TCP)</option>
+				<option value={1}>Season 1-7 (Experience)</option>
 			</select>
 		</GenericInput>
 	</Control>
