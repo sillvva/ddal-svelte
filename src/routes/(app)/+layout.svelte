@@ -295,15 +295,9 @@
 	aria-describedby="modal-content"
 	use:hotkey={[
 		[
-			"meta+k",
+			data.isMac ? "meta+k" : "ctrl+k",
 			() => {
-				if (data.isMac) cmdOpen = true;
-			}
-		],
-		[
-			"ctrl+k",
-			() => {
-				if (!data.isMac) cmdOpen = true;
+				cmdOpen = true;
 			}
 		],
 		[
