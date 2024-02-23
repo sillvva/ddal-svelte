@@ -64,7 +64,7 @@
 				.then((res) => res.json())
 				.then((res) => (searchData = res))
 				.then(() => {
-					if (browser) localStorage.setItem("searchData", JSON.stringify(searchData));
+					localStorage.setItem("searchData", JSON.stringify(searchData));
 				});
 		}
 	}
