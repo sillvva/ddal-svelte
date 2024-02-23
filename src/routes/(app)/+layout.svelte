@@ -55,13 +55,24 @@
 	let selected = defaultSelected;
 
 	let searchData: SearchData = [];
-	$: if (!searchData.length) {
-		fetch(`/api/command`)
-			.then((res) => res.json())
-			.then((res) => (searchData = res));
+	$: if (!searchData.length && browser) {
+		const lsData = localStorage.getItem("searchData");
+		if (lsData) {
+			searchData = JSON.parse(lsData);
+		} else {
+			fetch(`/api/command`)
+				.then((res) => res.json())
+				.then((res) => (searchData = res))
+				.then(() => {
+					localStorage.setItem("searchData", JSON.stringify(searchData));
+				});
+		}
 	}
 
-	$: if (data.clearCache) searchData = [];
+	$: if (data.clearCache && browser) {
+		localStorage.removeItem("searchData");
+		searchData = [];
+	}
 
 	$: if (!cmdOpen) {
 		search = "";
@@ -72,7 +83,16 @@
 		?.map((section) => {
 			return {
 				...section,
-				items: section.items.filter((item) => item.name.toLowerCase().includes(search.toLowerCase()))
+				items: section.items
+					.filter((item) => {
+						if (item.type === "character") {
+							if (item.magic_items.some((magicItem) => magicItem.name.toLowerCase().includes(search.toLowerCase()))) return true;
+							if (item.story_awards.some((storyAward) => storyAward.name.toLowerCase().includes(search.toLowerCase())))
+								return true;
+						}
+						return item.name.toLowerCase().includes(search.toLowerCase());
+					})
+					.sort((a, b) => a.name.localeCompare(b.name))
 			};
 		})
 		.filter((section) => section.items.length);
@@ -365,17 +385,49 @@
 							<Command.Group asChild let:group>
 								<ul class="menu p-0" {...group.attrs}>
 									<li class="menu-title">{section.title}</li>
-									{#each section.items.slice(0, 5) as item}
+									{#each section.items.slice(0, search ? 8 : 5) as item}
 										<Command.Item asChild let:attrs value={item.url}>
 											<li {...attrs} data-selected={selected === item.url ? "true" : undefined}>
-												<a href={item.url} on:click={() => (cmdOpen = false)} class="flex gap-2">
+												<a href={item.url} on:click={() => (cmdOpen = false)} class="flex gap-4">
 													{#if item.type === "character"}
-														<img src={item.image_url} alt={item.name} class="mask mask-squircle h-12 min-w-12 max-w-12" />
+														<span class="mask mask-squircle h-12 min-w-12 max-w-12 bg-primary">
+															<img
+																src={item.image_url}
+																class="size-full object-cover object-top transition-all"
+																alt={item.name}
+															/>
+														</span>
 														<div class="flex flex-col">
 															<span>{item.name}</span>
-															<div class="flex gap-2 opacity-70">
-																<span class="text-xs">Level {item.total_level} {item.race} {item.class}</span>
-															</div>
+															<span class="text-xs opacity-70">
+																Level {item.total_level}
+																{item.race}
+																{item.class}
+															</span>
+															{#if search.length >= 2 && item.magic_items.some((magicItem) => magicItem.name
+																		.toLowerCase()
+																		.includes(search.toLowerCase()))}
+																<span class="flex gap-1 text-xs">
+																	<span class="whitespace-nowrap font-bold">Magic Items:</span>
+																	<span class="flex-1 opacity-70">
+																		{[...new Set(item.magic_items.map((item) => item.name))]
+																			.filter((item) => item.toLowerCase().includes(search.toLowerCase()))
+																			.join(", ")}
+																	</span>
+																</span>
+															{/if}
+															{#if search.length >= 2 && item.story_awards.some((storyAward) => storyAward.name
+																		.toLowerCase()
+																		.includes(search.toLowerCase()))}
+																<span class="flex gap-2 text-xs">
+																	<span class="whitespace-nowrap font-bold">Story Awards:</span>
+																	<span class="flex-1 opacity-70">
+																		{[...new Set(item.story_awards.map((item) => item.name))]
+																			.filter((item) => item.toLowerCase().includes(search.toLowerCase()))
+																			.join(", ")}
+																	</span>
+																</span>
+															{/if}
 														</div>
 													{:else if item.type === "log"}
 														<div class="flex flex-col">
