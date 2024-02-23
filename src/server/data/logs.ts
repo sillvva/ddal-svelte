@@ -110,5 +110,5 @@ export async function getUserSearchLogs(userId: string) {
 }
 
 export async function getUserSearchLogsCache(userId: string) {
-	return await cache(() => getUserSearchLogs(userId), ["search-logs", userId]);
+	return await cache(() => getUserSearchLogs(userId), ["search-data", userId]);
 }

@@ -17,24 +17,29 @@ export type CacheKey = [string, ...string[]];
  * @returns The cached result of the callback function.
  */
 export async function cache<TReturnType>(callback: () => Promise<TReturnType>, key: CacheKey, expires = 3 * 86400) {
-	const rkey = key.join("|");
-	const currentTime = Date.now();
+	try {
+		const rkey = key.join("|");
+		const currentTime = Date.now();
 
-	// Get the cache from Redis
-	const cache = JSON.parse((await redis.get(rkey)) || "null") as { data: TReturnType; timestamp: number } | null;
+		// Get the cache from Redis
+		const cache = JSON.parse((await redis.get(rkey)) || "null") as { data: TReturnType; timestamp: number } | null;
 
-	if (cache) {
-		// Update the timestamp and reset the cache expiration
-		cache.timestamp = currentTime;
-		redis.setex(rkey, expires, JSON.stringify(cache));
+		if (cache) {
+			// Update the timestamp and reset the cache expiration
+			cache.timestamp = currentTime;
+			redis.setex(rkey, expires, JSON.stringify(cache));
 
-		return cache.data;
+			return cache.data;
+		}
+
+		// Call the callback function and cache the result
+		const result = await callback();
+		redis.setex(rkey, expires, JSON.stringify({ data: result, timestamp: currentTime }));
+		return result;
+	} catch (e) {
+		console.error(e);
+		return await callback();
 	}
-
-	// Call the callback function and cache the result
-	const result = await callback();
-	redis.setex(rkey, expires, JSON.stringify({ data: result, timestamp: currentTime }));
-	return result;
 }
 
 /**

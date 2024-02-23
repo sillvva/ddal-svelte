@@ -39,6 +39,36 @@ export async function getCharacter(characterId: string, includeLogs = true) {
 	};
 }
 
+export async function getCharactersWithLogs(userId: string, includeLogs = true) {
+	const characters = await prisma.character.findMany({
+		include: {
+			user: true,
+			logs: {
+				include: {
+					dm: true,
+					magic_items_gained: true,
+					magic_items_lost: true,
+					story_awards_gained: true,
+					story_awards_lost: true
+				},
+				orderBy: {
+					date: "asc"
+				}
+			}
+		},
+		where: {
+			userId
+		}
+	});
+
+	return characters.map((c) => ({
+		...c,
+		image_url: c.image_url || BLANK_CHARACTER,
+		...getLogsSummary(c.logs),
+		logs: includeLogs ? c.logs : []
+	}));
+}
+
 export async function getCharacterCache(characterId: string, includeLogs = true) {
 	return characterId !== "new"
 		? await cache(() => getCharacter(characterId, includeLogs), ["character", characterId, includeLogs ? "logs" : "no-logs"])

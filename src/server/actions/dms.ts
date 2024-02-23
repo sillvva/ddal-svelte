@@ -28,9 +28,12 @@ export async function saveDM(
 		});
 
 		const characterIds = [...new Set(dm.logs.filter((l) => l.characterId).map((l) => l.characterId))];
-		revalidateKeys([["dms", user.id, "logs"], ...characterIds.map((id) => ["character", id as string, "logs"] as CacheKey)]);
-		revalidateKeys([["dms", user.id]]);
-		revalidateKeys([["search-logs", user.id]]);
+		revalidateKeys([
+			["dms", user.id, "logs"],
+			...characterIds.map((id) => ["character", id as string, "logs"] as CacheKey),
+			["dms", user.id],
+			["search-data", user.id]
+		]);
 
 		return { id: result.id, dm: result };
 	} catch (err) {
@@ -55,7 +58,10 @@ export async function deleteDM(dmId: string, user?: LocalsSession["user"]): Save
 			where: { id: dmId }
 		});
 
-		revalidateKeys([["dms", user.id, "logs"]]);
+		revalidateKeys([
+			["dms", user.id, "logs"],
+			["search-data", user.id]
+		]);
 
 		return { id: result.id };
 	} catch (err) {
