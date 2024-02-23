@@ -49,6 +49,10 @@
 		{ title: "DMs", url: "/dms" }
 	];
 
+	/**
+	 * Command Palette
+	 */
+
 	const defaultSelected = sections[0].url;
 	let search = "";
 	let cmdOpen = false;
