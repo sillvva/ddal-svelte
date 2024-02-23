@@ -43,9 +43,10 @@
 	let defaultImage = "https://ddal.dekok.app/images/barovia-gate.webp";
 	$: image = $page.data.image || defaultImage;
 
+	const defaultSelected = "/characters";
 	let search = "";
 	let cmdOpen = false;
-	let selected = "";
+	let selected = defaultSelected;
 
 	let sections = [
 		{ title: "Characters", url: "/characters" },
@@ -64,7 +65,7 @@
 
 	$: if (!cmdOpen) {
 		search = "";
-		selected = "";
+		selected = defaultSelected;
 	}
 
 	$: results = searchData
@@ -77,10 +78,16 @@
 		.filter((section) => section.items.length);
 
 	$: if (search) {
+		const selectedResult = results
+			.find((section) => section.items.some((item) => item.url === selected))
+			?.items.find((item) => item.url === selected)?.url;
 		const firstResult = results[0]?.items[0]?.url;
-		if (!selected && firstResult) {
+		if (!selectedResult && firstResult) {
 			selected = firstResult;
 		}
+	}
+	$: if (!search) {
+		selected = defaultSelected;
 	}
 </script>
 
