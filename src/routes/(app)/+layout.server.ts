@@ -12,9 +12,10 @@ export const load = async (event) => {
 	}
 
 	const userAgent = event.request.headers.get("user-agent");
+	const isMac = userAgent?.includes("Mac OS");
 
 	return {
 		accounts,
-		userAgent
+		isMac
 	};
 };

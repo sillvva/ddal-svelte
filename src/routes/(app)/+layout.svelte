@@ -158,7 +158,7 @@
 			<label class="input input-bordered hidden items-center gap-2 sm:flex">
 				<input type="text" class="max-w-20 grow" placeholder="Search" on:focus={() => (cmdOpen = true)} />
 				<kbd class="kbd kbd-sm">
-					{#if data.userAgent?.includes("Mac OS")}
+					{#if data.isMac}
 						⌘
 					{:else}
 						CTRL
@@ -290,13 +290,13 @@
 		[
 			"meta+k",
 			() => {
-				cmdOpen = true;
+				if (data.isMac) cmdOpen = true;
 			}
 		],
 		[
 			"ctrl+k",
 			() => {
-				cmdOpen = true;
+				if (!data.isMac) cmdOpen = true;
 			}
 		],
 		[
