@@ -78,7 +78,7 @@ export async function getDMLogsCache(userId = "", userName = "") {
 	return await cache(() => getDMLogs(userId, userName), ["dm-logs", userId], 86400);
 }
 
-export async function getUserSearchLogs(userId: string) {
+export async function getUserLogs(userId: string) {
 	return prisma.log.findMany({
 		where: {
 			character: {
@@ -107,8 +107,4 @@ export async function getUserSearchLogs(userId: string) {
 			date: "desc"
 		}
 	});
-}
-
-export async function getUserSearchLogsCache(userId: string) {
-	return await cache(() => getUserSearchLogs(userId), ["search-data", userId]);
 }

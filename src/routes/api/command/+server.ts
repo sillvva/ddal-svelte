@@ -1,7 +1,7 @@
 import { cache } from "$src/server/cache.js";
 import { getCharactersWithLogs } from "$src/server/data/characters.js";
 import { getUserDMs } from "$src/server/data/dms.js";
-import { getUserSearchLogs } from "$src/server/data/logs.js";
+import { getUserLogs } from "$src/server/data/logs.js";
 import { json } from "@sveltejs/kit";
 
 export type SearchData = Awaited<ReturnType<typeof getData>>;
@@ -23,7 +23,7 @@ async function getData(user: NonNullable<LocalsSession["user"]>) {
 		},
 		{
 			title: "Logs",
-			items: await getUserSearchLogs(user.id).then((logs) =>
+			items: await getUserLogs(user.id).then((logs) =>
 				logs.map(
 					(log) =>
 						({
