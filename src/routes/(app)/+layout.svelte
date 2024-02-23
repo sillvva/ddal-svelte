@@ -361,8 +361,31 @@
 									{#each section.items.slice(0, 5) as item}
 										<Command.Item asChild let:attrs value={item.url}>
 											<li {...attrs} data-selected={selected === item.url ? "true" : undefined}>
-												<a href={item.url} on:click={() => (cmdOpen = false)}>
-													{item.name}
+												<a href={item.url} on:click={() => (cmdOpen = false)} class="flex gap-2">
+													{#if item.type === "character"}
+														<img src={item.image_url} alt={item.name} class="mask mask-squircle h-12 w-12" />
+														<div class="flex flex-col">
+															<span>{item.name}</span>
+															<div class="flex gap-2 opacity-70">
+																<span class="text-xs">Level {item.total_level} {item.race} {item.class}</span>
+															</div>
+														</div>
+													{:else if item.type === "log"}
+														<div class="flex flex-col">
+															<span>{item.name}</span>
+															<div class="flex gap-2 opacity-70">
+																<span class="text-xs">{new Date(item.date).toLocaleDateString()}</span>
+																<div class="divider divider-horizontal mx-0 w-0" />
+																{#if item.character}
+																	<span class="text-xs">{item.character.name}</span>
+																{:else}
+																	<span class="text-xs italic">Unassigned</span>
+																{/if}
+															</div>
+														</div>
+													{:else}
+														{item.name}
+													{/if}
 												</a>
 											</li>
 										</Command.Item>

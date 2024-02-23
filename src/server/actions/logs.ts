@@ -266,7 +266,8 @@ export async function saveLog(input: LogSchema, user?: CustomSession["user"]): S
 		revalidateKeys([
 			log.is_dm_log && log.dm?.uid && ["dm-logs", log.dm.uid],
 			log.characterId && ["character", log.characterId, "logs"],
-			user.id && ["dms", user.id, "logs"]
+			user.id && ["dms", user.id, "logs"],
+			user.id && ["search-logs", user.id]
 		]);
 
 		return { id: log.id, log };
