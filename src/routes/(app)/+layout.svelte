@@ -294,6 +294,12 @@
 			}
 		],
 		[
+			"ctrl+k",
+			() => {
+				cmdOpen = true;
+			}
+		],
+		[
 			"Escape",
 			() => {
 				cmdOpen = false;
