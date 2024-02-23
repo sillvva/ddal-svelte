@@ -23,6 +23,9 @@ dependencies:
   bits-ui:
     specifier: ^0.18.1
     version: 0.18.1(svelte@4.2.11)
+  cmdk-sv:
+    specifier: ^0.0.13
+    version: 0.0.13(svelte@4.2.11)
   devalue:
     specifier: ^4.3.2
     version: 4.3.2
@@ -749,6 +752,20 @@ packages:
       '@jridgewell/resolve-uri': 3.1.1
       '@jridgewell/sourcemap-codec': 1.4.15
 
+  /@melt-ui/svelte@0.61.2(svelte@4.2.11):
+    resolution: {integrity: sha512-BHkD9G31zQBToA4euDRBgTQRvWxT9scufOVCXgDO6HKTvyxFspbWT2bgiSFqAK4BbAGDn9Ao36Q8F9O71KN4OQ==}
+    peerDependencies:
+      svelte: '>=3 <5'
+    dependencies:
+      '@floating-ui/core': 1.6.0
+      '@floating-ui/dom': 1.6.3
+      '@internationalized/date': 3.5.2
+      dequal: 2.0.3
+      focus-trap: 7.5.4
+      nanoid: 4.0.2
+      svelte: 4.2.11
+    dev: false
+
   /@melt-ui/svelte@0.71.2(svelte@4.2.11):
     resolution: {integrity: sha512-GDUErhAphEoEOLpcBjQ84BgzRR6M3344fQE4QYFffwT7aedWak7CvNsECgeig1Y5xvfDmeEaFnGlOQXIBucJYw==}
     peerDependencies:
@@ -1378,6 +1395,16 @@ packages:
       svelte: 4.2.11
     dev: false
 
+  /bits-ui@0.9.9(svelte@4.2.11):
+    resolution: {integrity: sha512-LkdkyTtpXdkjBzPZJVJgpcre4fut6DONoprMfadHFo82HNUhph+02CxDjYEcZcThb5z4YjSxMlCYvQPZm+YtfQ==}
+    peerDependencies:
+      svelte: ^4.0.0
+    dependencies:
+      '@melt-ui/svelte': 0.61.2(svelte@4.2.11)
+      nanoid: 5.0.5
+      svelte: 4.2.11
+    dev: false
+
   /boolbase@1.0.0:
     resolution: {integrity: sha512-JZOSA7Mo9sNGB8+UjSgzdLtokWAky1zbztM3WRLCbZ70/3cTANmQmOdR7y2g+J0e2WXywy1yS468tY+IruqEww==}
     dev: true
@@ -1493,6 +1520,16 @@ packages:
   /cluster-key-slot@1.1.2:
     resolution: {integrity: sha512-RMr0FhtfXemyinomL4hrWcYJxmX6deFdCxpJzhDttxgO1+bcCnkk+9drydLVDmAMG7NE6aN/fl4F7ucU/90gAA==}
     engines: {node: '>=0.10.0'}
+    dev: false
+
+  /cmdk-sv@0.0.13(svelte@4.2.11):
+    resolution: {integrity: sha512-WrYn0MMdVyzJx+KuOQy028/7mv+uMwO1cxVBM0uJ4KA+50PX792epsj8Yw3It8WfWR8Rae7siBCg54mIAlKsiw==}
+    peerDependencies:
+      svelte: ^4.0.0
+    dependencies:
+      bits-ui: 0.9.9(svelte@4.2.11)
+      nanoid: 5.0.5
+      svelte: 4.2.11
     dev: false
 
   /code-red@1.0.4:
@@ -2455,6 +2492,12 @@ packages:
     resolution: {integrity: sha512-eSRppjcPIatRIMC1U6UngP8XFcz8MQWGQdt1MTBQ7NaAmvXDfvNxbvWV3x2y6CdEUciCSsDHDQZbhYaB8QEo2g==}
     engines: {node: ^10 || ^12 || ^13.7 || ^14 || >=15.0.1}
     hasBin: true
+
+  /nanoid@4.0.2:
+    resolution: {integrity: sha512-7ZtY5KTCNheRGfEFxnedV5zFiORN1+Y1N6zvPTnHQd8ENUvfaDBeuJDZb2bN/oXwXxu3qkTXDzy57W5vAmDTBw==}
+    engines: {node: ^14 || ^16 || >=18}
+    hasBin: true
+    dev: false
 
   /nanoid@5.0.5:
     resolution: {integrity: sha512-/Veqm+QKsyMY3kqi4faWplnY1u+VuKO3dD2binyPIybP31DRO29bPF+1mszgLnrR2KqSLceFLBNw0zmvDzN1QQ==}

@@ -5,7 +5,7 @@
 
 <script lang="ts">
 	import { browser } from "$app/environment";
-	import { afterNavigate } from "$app/navigation";
+	import { afterNavigate, goto } from "$app/navigation";
 	import { navigating, page } from "$app/stores";
 	import Drawer from "$lib/components/Drawer.svelte";
 	import Dropdown from "$lib/components/Dropdown.svelte";
@@ -15,9 +15,11 @@
 	import type { CookieStore } from "$src/server/cookie.js";
 	import { signOut } from "@auth/sveltekit/client";
 	import { hotkey } from "@svelteuidev/composables";
-	import { getContext } from "svelte";
+	import { Command } from "cmdk-sv";
+	import { getContext, onMount } from "svelte";
 	import { fade } from "svelte/transition";
 	import { twMerge } from "tailwind-merge";
+	import type { SearchData } from "../api/command/+server.js";
 
 	export let data;
 	const app = getContext<CookieStore<App.Cookie>>("app");
@@ -40,6 +42,46 @@
 	$: description = $page.data.description || defaultDescription;
 	let defaultImage = "https://ddal.dekok.app/images/barovia-gate.webp";
 	$: image = $page.data.image || defaultImage;
+
+	let search = "";
+	let cmdOpen = false;
+	let selected = "";
+
+	let sections = [
+		{ title: "Characters", url: "/characters" },
+		{ title: "DM Logs", url: "/dm-logs" },
+		{ title: "DMs", url: "/dms" }
+	];
+
+	let searchData: SearchData = [];
+	onMount(() => {
+		if (!searchData.length) {
+			fetch(`/api/command`)
+				.then((res) => res.json())
+				.then((res) => (searchData = res));
+		}
+	});
+
+	$: if (!cmdOpen) {
+		search = "";
+		selected = "";
+	}
+
+	$: results = searchData
+		?.map((section) => {
+			return {
+				...section,
+				items: section.items.filter((item) => item.name.toLowerCase().includes(search.toLowerCase()))
+			};
+		})
+		.filter((section) => section.items.length);
+
+	$: if (search) {
+		const firstResult = results[0]?.items[0]?.url;
+		if (!selected && firstResult) {
+			selected = firstResult;
+		}
+	}
 </script>
 
 <svelte:head>
@@ -93,6 +135,7 @@
 		<nav class="container relative z-10 mx-auto flex max-w-5xl gap-2 p-4">
 			<Drawer />
 			<Settings bind:open={settingsOpen} />
+			<div class="ml-4 inline w-6 sm:hidden">&nbsp;</div>
 			<a
 				href={data.session?.user ? "/characters" : "/"}
 				class={twMerge(
@@ -109,20 +152,23 @@
 				<a href="/dms" class="hidden items-center p-2 md:flex">DMs</a>
 			{/if}
 			<div class={twMerge("flex-1", (data.mobile || !$app.settings.background) && "hidden sm:block")}>&nbsp;</div>
-			<a
-				href="https://github.com/sillvva/ddal-svelte"
-				target="_blank"
-				rel="noreferrer noopener"
-				class="hidden items-center p-2 lg:flex"
-			>
-				<Icon src="github" class="w-6" />
-			</a>
+			<button on:focus={() => (cmdOpen = true)} class="inline sm:hidden">
+				<Icon src="magnify" class="w-6" />
+			</button>
+			<label class="input input-bordered hidden items-center gap-2 sm:flex">
+				<input type="text" class="max-w-20 grow" placeholder="Search" on:focus={() => (cmdOpen = true)} />
+				<kbd class="kbd kbd-sm">
+					{#if data.userAgent?.includes("Mac OS")}
+						⌘
+					{:else}
+						CTRL
+					{/if}
+				</kbd>
+				<kbd class="kbd kbd-sm">K</kbd>
+			</label>
 			{#if data.session?.user}
 				<Dropdown class="dropdown-end">
 					<summary tabindex="0" class="flex h-full cursor-pointer items-center pl-4">
-						<div class="hidden items-center pr-4 text-black dark:text-white sm:flex print:flex">
-							{data.session?.user?.name}
-						</div>
 						<div class="avatar">
 							<div
 								class={twMerge(
@@ -234,3 +280,108 @@
 		<button class="modal-backdrop" on:click={() => history.back()}>✕</button>
 	{/if}
 </dialog>
+
+<dialog
+	class={twMerge("modal !bg-base-200/50")}
+	open={!!cmdOpen || undefined}
+	aria-labelledby="modal-title"
+	aria-describedby="modal-content"
+	use:hotkey={[
+		[
+			"meta+k",
+			() => {
+				cmdOpen = true;
+			}
+		],
+		[
+			"Escape",
+			() => {
+				cmdOpen = false;
+			}
+		]
+	]}
+>
+	{#if cmdOpen}
+		<div class="modal-box relative cursor-default bg-base-300 drop-shadow-lg">
+			<div class="modal-content">
+				<Command.Dialog
+					label="Command Menu"
+					portal={null}
+					bind:open={cmdOpen}
+					bind:value={selected}
+					class="flex flex-col gap-4"
+					loop
+				>
+					<label class="input input-bordered flex items-center gap-2">
+						<input
+							class="grow"
+							type="search"
+							bind:value={search}
+							placeholder="Search"
+							on:keydown={(e) => {
+								if (e.key === "Enter") {
+									const selectedItem = document.querySelector("li[data-selected]")?.getAttribute("data-value");
+									const firstResult = results[0]?.items[0]?.url;
+									const url = selectedItem || selected || firstResult;
+									if (url) {
+										goto(url);
+										cmdOpen = false;
+									}
+								}
+							}}
+						/>
+						<Icon src="magnify" class="w-6" />
+					</label>
+					<Command.List class="flex max-h-96 flex-col gap-2 overflow-y-scroll">
+						<Command.Empty class="p-4 text-center font-bold">No results found.</Command.Empty>
+
+						{#if !search.trim()}
+							<Command.Group asChild let:group>
+								<ul class="menu p-0" {...group.attrs}>
+									<li class="menu-title">Sections</li>
+									{#each sections as item}
+										<Command.Item asChild let:attrs value={item.url}>
+											<li {...attrs}>
+												<a href={item.url} on:click={() => (cmdOpen = false)}>
+													{item.title}
+												</a>
+											</li>
+										</Command.Item>
+									{/each}
+								</ul>
+							</Command.Group>
+						{/if}
+						{#each results as section, i}
+							{#if i > 0 || !search.trim()}
+								<div class="divider" />
+							{/if}
+							<Command.Group asChild let:group>
+								<ul class="menu p-0" {...group.attrs}>
+									<li class="menu-title">{section.title}</li>
+									{#each section.items.slice(0, 5) as item}
+										<Command.Item asChild let:attrs value={item.url}>
+											<li {...attrs} data-selected={selected === item.url ? "true" : undefined}>
+												<a href={item.url} on:click={() => (cmdOpen = false)}>
+													{item.name}
+												</a>
+											</li>
+										</Command.Item>
+									{/each}
+								</ul>
+							</Command.Group>
+						{/each}
+					</Command.List>
+				</Command.Dialog>
+			</div>
+		</div>
+
+		<button class="modal-backdrop" on:click={() => (cmdOpen = false)}>✕</button>
+	{/if}
+</dialog>
+
+<style>
+	.menu li[data-selected] a {
+		--tw-bg-opacity: 0.5;
+		background-color: rgb(115 115 115 / var(--tw-bg-opacity));
+	}
+</style>

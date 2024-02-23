@@ -42,7 +42,7 @@
 	});
 
 	let level = 1;
-	const logs = character
+	$: logs = character
 		? character.logs.map((log) => {
 				const level_gained = character.log_levels.find((gl) => gl.id === log.id);
 				if (level_gained) level += level_gained.levels;
@@ -56,7 +56,7 @@
 			})
 		: [];
 
-	const indexed = logs.map((log) => ({
+	$: indexed = logs.map((log) => ({
 		logId: log.id,
 		logName: log.name,
 		magicItems: [...log.magic_items_gained.map((item) => item.name), ...log.magic_items_lost.map((item) => item.name)].join(
@@ -67,7 +67,10 @@
 		)
 	}));
 
-	if (indexed.length) logSearch.addAll(indexed);
+	$: {
+		logSearch.removeAll();
+		logSearch.addAll(indexed);
+	}
 
 	$: msResults = logSearch.search(search);
 	$: results =
