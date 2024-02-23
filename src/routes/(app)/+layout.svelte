@@ -56,12 +56,23 @@
 
 	let searchData: SearchData = [];
 	$: if (!searchData.length) {
-		fetch(`/api/command`)
-			.then((res) => res.json())
-			.then((res) => (searchData = res));
+		const lsData = localStorage.getItem("searchData");
+		if (lsData) {
+			searchData = JSON.parse(lsData);
+		} else {
+			fetch(`/api/command`)
+				.then((res) => res.json())
+				.then((res) => (searchData = res))
+				.then(() => {
+					if (browser) localStorage.setItem("searchData", JSON.stringify(searchData));
+				});
+		}
 	}
 
-	$: if (data.clearCache) searchData = [];
+	$: if (data.clearCache) {
+		localStorage.removeItem("searchData");
+		searchData = [];
+	}
 
 	$: if (!cmdOpen) {
 		search = "";
