@@ -43,16 +43,16 @@
 	let defaultImage = "https://ddal.dekok.app/images/barovia-gate.webp";
 	$: image = $page.data.image || defaultImage;
 
-	const defaultSelected = "/characters";
-	let search = "";
-	let cmdOpen = false;
-	let selected = defaultSelected;
-
 	let sections = [
 		{ title: "Characters", url: "/characters" },
 		{ title: "DM Logs", url: "/dm-logs" },
 		{ title: "DMs", url: "/dms" }
 	];
+
+	const defaultSelected = sections[0].url;
+	let search = "";
+	let cmdOpen = false;
+	let selected = defaultSelected;
 
 	let searchData: SearchData = [];
 	onMount(() => {
