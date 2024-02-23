@@ -9,6 +9,7 @@
 	import type { Account } from "@prisma/client";
 	import { getContext, onMount } from "svelte";
 	import { twMerge } from "tailwind-merge";
+	import Icon from "./Icon.svelte";
 
 	export let open = false;
 	const app = getContext<CookieStore<App.Cookie>>("app");
@@ -124,12 +125,15 @@
 	{/if}
 	<div class="divider my-0" />
 	<ul class="menu menu-lg w-full">
-		<li class="md:hidden">
-			<a href="https://github.com/sillvva/ddal-next13" target="_blank" rel="noreferrer noopener">Github</a>
-		</li>
 		<li>
-			<a href="http://paypal.me/Sillvva" target="_blank" rel="noreferrer noopener">Contribute</a>
+			<a href="https://github.com/sillvva/ddal-next13" target="_blank" rel="noreferrer noopener">
+				<Icon src="github" class="w-6" />
+				Github
+			</a>
 		</li>
+		<!-- <li>
+			<a href="http://paypal.me/Sillvva" target="_blank" rel="noreferrer noopener">Contribute</a>
+		</li> -->
 	</ul>
 </div>
 <div

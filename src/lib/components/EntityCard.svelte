@@ -3,7 +3,6 @@
 </script>
 
 <script lang="ts" generics="T extends TRec">
-	import { createEventDispatcher } from "svelte";
 	import { writable } from "svelte/store";
 	import { formFieldProxy, type FormPathLeaves, type SuperForm } from "sveltekit-superforms";
 	import Control from "./Control.svelte";
@@ -11,6 +10,24 @@
 	import Icon from "./Icon.svelte";
 	import Input from "./Input.svelte";
 	import MdTextInput from "./MDTextInput.svelte";
+
+	type $$Props = {
+		entity: "magic_items" | "story_awards";
+		superform: SuperForm<T, any>;
+		ondelete: () => void;
+	} & (
+		| {
+				type: "add";
+				nameField: FormPathLeaves<T>;
+				descField: FormPathLeaves<T>;
+		  }
+		| {
+				type: "drop";
+				lostField: FormPathLeaves<T>;
+				arrValue: string[];
+				data: { id: string; name: string; description: string | null }[];
+		  }
+	);
 
 	export let type: "add" | "drop";
 	export let entity: "magic_items" | "story_awards";
@@ -20,12 +37,9 @@
 	export let lostField: FormPathLeaves<T> | undefined = undefined;
 	export let arrValue: string[] = [];
 	export let data: { id: string; name: string; description: string | null }[] = [];
+	export let ondelete: () => void;
 
 	const { value: lostValue } = lostField ? formFieldProxy(superform, lostField) : { value: writable("") };
-
-	const dispatch = createEventDispatcher<{
-		delete: void;
-	}>();
 </script>
 
 {#if type === "add" && nameField && descField}
@@ -40,7 +54,7 @@
 				<Control class="flex-1">
 					<Input type="text" {superform} field={nameField} required>Name</Input>
 				</Control>
-				<button type="button" class="no-script-hide btn btn-error mt-9" on:click={() => dispatch("delete")}>
+				<button type="button" class="no-script-hide btn btn-error mt-9" on:click={() => ondelete()}>
 					<Icon src="trash-can" class="w-6" />
 				</button>
 			</div>
@@ -69,7 +83,7 @@
 						</select>
 					</GenericInput>
 				</Control>
-				<button type="button" class="no-script-hide btn btn-error mt-9" on:click={() => dispatch("delete")}>
+				<button type="button" class="no-script-hide btn btn-error mt-9" on:click={() => ondelete()}>
 					<Icon src="trash-can" class="w-6" />
 				</button>
 			</div>

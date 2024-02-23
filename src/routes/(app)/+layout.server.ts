@@ -11,7 +11,10 @@ export const load = async (event) => {
 		});
 	}
 
+	const userAgent = event.request.headers.get("user-agent");
+
 	return {
-		accounts
+		accounts,
+		userAgent
 	};
 };

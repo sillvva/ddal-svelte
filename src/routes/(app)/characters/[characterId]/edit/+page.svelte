@@ -10,7 +10,7 @@
 
 	export let data;
 
-	const superform = superForm(data.form, {
+	$: superform = superForm(data.form, {
 		dataType: "json",
 		validators: valibotClient(newCharacterSchema),
 		taintedMessage: "You have unsaved changes. Are you sure you want to leave?"
@@ -21,7 +21,7 @@
 
 <SuperForm action="?/saveCharacter" {superform} showMessage>
 	<Control class="col-span-12 sm:col-span-6">
-		<Input type="text" {superform} field="name" required>Character Name</Input>
+		<Input type="text" {superform} field="name">Character Name</Input>
 	</Control>
 	<Control class="col-span-12 sm:col-span-6">
 		<Input type="text" {superform} field="campaign">Campaign</Input>

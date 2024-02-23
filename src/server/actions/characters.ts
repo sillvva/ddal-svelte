@@ -39,7 +39,8 @@ export async function saveCharacter(
 			["character", result.id, "logs"],
 			["character", result.id, "no-logs"],
 			["dms", userId],
-			characterId == "new" && ["characters", userId]
+			characterId == "new" && ["characters", userId],
+			["search-logs", userId]
 		]);
 
 		return { id: result.id, character: result };

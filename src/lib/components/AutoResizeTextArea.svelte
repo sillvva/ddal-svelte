@@ -3,15 +3,10 @@
 </script>
 
 <script lang="ts" generics="T extends TRec">
-	import type { FormPathLeaves, FormPathType } from "sveltekit-superforms";
-
-	import { createEventDispatcher, tick } from "svelte";
+	import { tick } from "svelte";
 	import autosize from "svelte-autosize";
 	import type { HTMLTextareaAttributes } from "svelte/elements";
-
-	const dispatch = createEventDispatcher<{
-		input: HTMLTextAreaElement;
-	}>();
+	import type { FormPathLeaves, FormPathType } from "sveltekit-superforms";
 
 	interface $$Props extends HTMLTextareaAttributes {
 		content: string | FormPathType<T, FormPathLeaves<T>> | null;
@@ -40,7 +35,6 @@
 	style:--maxRows={maxRows && `${maxRows}lh`}
 	spellcheck="true"
 	use:autosize
-	on:input={() => dispatch("input", el)}
 />
 
 <style>

@@ -8,6 +8,7 @@ import {
 	date,
 	fallback,
 	forward,
+	integer,
 	literal,
 	merge,
 	minLength,
@@ -25,8 +26,7 @@ import {
 	url,
 	value,
 	type Input,
-	type Output,
-	type Pipe
+	type Output
 } from "valibot";
 
 export const envSchemaPrivate = (env: Record<string, string>) =>
@@ -53,52 +53,52 @@ export type DungeonMasterSchema = Output<typeof dungeonMasterSchema>;
 export type DungeonMasterSchemaIn = Input<typeof dungeonMasterSchema>;
 export const dungeonMasterSchema = object(
 	{
-		id: optional(string(), ""),
-		name: optional(string(), "Me"),
+		id: string(),
+		name: string([minLength(1)]),
 		DCI: nullable(union([string([regex(/[0-9]{0,10}/, "Invalid DCI Format")]), null_()]), null),
 		uid: nullable(union([string(), null_()]), ""),
-		owner: string([minLength(1, "Owner Required")])
+		owner: string([minLength(1, "DM is not assigned to a user")])
 	},
 	[
 		forward(
-			custom((input) => !(!!input.DCI?.trim() && !input.name.trim()), "DM Name Required if DCI is set"),
+			custom((input) => !input.DCI?.trim() || !!input.name.trim(), "DM Name required if DCI is set"),
 			["name"]
 		)
 	]
 );
 
-const itemSchema = (type: "Item" | "Story Award") =>
-	object({
-		id: optional(string(), ""),
-		name: optional(string([minLength(1, `${type} Name Required`)]), ""),
-		description: optional(string(), "")
-	});
-
-const notNaN: Pipe<number> = [custom((input) => !isNaN(input))];
+const itemSchema = object({
+	id: optional(string(), ""),
+	name: string([minLength(1)]),
+	description: optional(string(), "")
+});
 
 export type LogSchema = Output<typeof logSchema>;
 export type LogSchemaIn = Input<typeof logSchema>;
 export const logSchema = object({
 	id: nullish(string(), ""),
-	name: optional(string([minLength(1, "Log Name Required")]), ""),
-	date: date("Invalid Date"),
+	name: string([minLength(1)]),
+	date: date(),
 	characterId: optional(string(), ""),
 	characterName: optional(string(), ""),
 	type: optional(union([literal("game"), literal("nongame")]), "game"),
-	experience: optional(number("Experience must be a number", notNaN), 0),
-	acp: optional(number([minValue(0, "ACP must be a non-negative number"), ...notNaN]), 0),
-	tcp: optional(number("TCP must be a number", notNaN), 0),
-	level: optional(number([minValue(0, "Level must be a non-negative number"), ...notNaN]), 0),
-	gold: optional(number("Gold must be a number", notNaN), 0),
-	dtd: optional(number("Downtime days must be a number", notNaN), 0),
-	description: nullish(union([string(), null_()]), ""),
-	dm: dungeonMasterSchema,
+	experience: number([integer(), minValue(0)]),
+	acp: number([integer(), minValue(0)]),
+	tcp: number([integer()]),
+	level: number([integer(), minValue(0)]),
+	gold: number(),
+	dtd: number([integer()]),
+	description: optional(string(), ""),
+	dm: object({
+		...dungeonMasterSchema.entries,
+		name: optional(string(), "")
+	}),
 	is_dm_log: optional(boolean(), false),
-	applied_date: nullable(union([date("Invalid Date"), null_()]), null),
-	magic_items_gained: optional(array(itemSchema("Item")), []),
-	magic_items_lost: optional(array(string([minLength(1, "Invalid Item ID")])), []),
-	story_awards_gained: optional(array(itemSchema("Story Award")), []),
-	story_awards_lost: optional(array(string([minLength(1, "Invalid Story Award ID")])), [])
+	applied_date: nullable(union([date(), null_()]), null),
+	magic_items_gained: optional(array(itemSchema), []),
+	magic_items_lost: optional(array(string([minLength(1)])), []),
+	story_awards_gained: optional(array(itemSchema), []),
+	story_awards_lost: optional(array(string([minLength(1)])), [])
 });
 
 export const characterLogSchema = (character: CharacterData) =>
@@ -162,11 +162,11 @@ export const dMLogSchema = (characters: (CharacterData | { id: string; name: str
 		)
 	]);
 
-const optionalURL = fallback(string([url("Invalid URL")]), "");
+const optionalURL = optional(fallback(string([url()]), ""), "");
 
 export type NewCharacterSchema = Output<typeof newCharacterSchema>;
 export const newCharacterSchema = object({
-	name: optional(string([minLength(1, "Character Name Required")]), ""),
+	name: string([minLength(1)]),
 	campaign: optional(string(), ""),
 	race: optional(string(), ""),
 	class: optional(string(), ""),

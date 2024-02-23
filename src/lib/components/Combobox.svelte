@@ -5,7 +5,6 @@
 <script lang="ts" generics="T extends TRec">
 	import { dev } from "$app/environment";
 	import { Combobox } from "bits-ui";
-	import { createEventDispatcher } from "svelte";
 	import SuperDebug, { formFieldProxy, stringProxy, type FormPathLeaves, type SuperForm } from "sveltekit-superforms";
 	import { twMerge } from "tailwind-merge";
 	import Icon from "./Icon.svelte";
@@ -20,22 +19,24 @@
 	export let showOnEmpty = false;
 	export let clearable = false;
 	export let disabled = false;
-	export let required = false;
+	export let required: true | undefined = undefined;
+	export let link = "";
+	export let description = "";
+	export let placeholder = "";
+	export let oninput = (el?: HTMLInputElement, value?: string) => {};
+	export let onselect = (sel: { selected?: (typeof values)[number]; input: string }) => {};
+	export let onclear = () => {};
 
 	let debug = false;
 	let open = false;
 	let changed = false;
 
-	let inputValue = "";
+	const { constraints } = formFieldProxy(superform, field);
+	const idValue = stringProxy(superform, idField, { empty: "undefined" });
+	const value = stringProxy(superform, field, { empty: "undefined" });
 	const { errors } = formFieldProxy(superform, errorField);
-	const idValue = stringProxy(superform, idField, { empty: "null" });
-	const value = stringProxy(superform, field, { empty: "null" });
 
-	const dispatch = createEventDispatcher<{
-		input: void;
-		select: { selected: (typeof values)[number] | undefined; input: string } | undefined;
-		clear: void;
-	}>();
+	if ($constraints?.required) required = true;
 
 	$: withLabel = values.map(({ value, label, itemLabel }) => ({
 		value,
@@ -51,36 +52,46 @@
 	$: filtered =
 		!$value?.trim() || !allowCustom || prefiltered.length === 1
 			? prefiltered
-			: [{ value: $value, label: $value, itemLabel: `Add "${$value}"` }, ...prefiltered];
+			: [{ value: "", label: $value, itemLabel: `Add "${$value}"` }, ...prefiltered];
 	$: selectedItem = $idValue
 		? values.find((v) => v.value === $idValue)
 		: $value.trim() && allowCustom
 			? { value: "", label: $value, itemLabel: `Add "${$value}"` }
 			: undefined;
-	$: if ($idValue) inputValue = selectedItem?.label || "";
-	$: if (!$idValue) inputValue = "";
+
+	function clear() {
+		$idValue = "";
+		$value = "";
+		onclear();
+		open = false;
+	}
 </script>
 
 <Combobox.Root
 	items={filtered}
-	bind:inputValue
+	bind:inputValue={$value}
 	bind:open
 	let:ids
 	{disabled}
 	{required}
 	onSelectedChange={(sel) => {
-		dispatch("select", { selected: sel, input: inputValue });
+		$idValue = sel?.value || "";
+		$value = sel?.label || "";
+		onselect({ selected: sel, input: $value });
 	}}
+	preventScroll={false}
 	onOpenChange={() => {
 		setTimeout(() => {
 			if (!open) {
 				if (changed) {
-					dispatch("select", { selected: selectedItem, input: inputValue });
-					if (!allowCustom && !selectedItem) inputValue = "";
+					if (!allowCustom && !selectedItem) clear();
 					changed = false;
 				}
 			}
 		}, 50);
+	}}
+	onOutsideClick={() => {
+		open = false;
 	}}
 >
 	<label for={ids.trigger} class="label">
@@ -97,30 +108,27 @@
 				<Combobox.Input asChild let:builder>
 					<input
 						class="input join-item input-bordered w-full focus:border-primary"
-						on:input={() => {
+						on:input={(e) => {
+							let cValue = e.currentTarget.value;
+							if (selectedItem && selectedItem.label !== cValue) selectedItem = undefined;
+							if (!cValue) clear();
+							$value = cValue;
+							oninput(e.currentTarget, cValue);
 							changed = true;
-							dispatch("input");
-							if (selectedItem && selectedItem.label !== inputValue) {
-								selectedItem = undefined;
-							}
-							if (!inputValue) {
-								dispatch("clear");
-								selectedItem = undefined;
-							}
-							setTimeout(() => {
-								$value = inputValue;
-							});
 						}}
 						on:blur={() => {
-							if (!filtered.length) dispatch("select", { selected: undefined, input: inputValue });
+							if (!allowCustom && !selectedItem && !filtered.length) clear();
+							if (!$value) open = false;
 						}}
 						aria-invalid={($errors || []).length ? "true" : undefined}
 						use:builder.action
 						{...builder}
+						{required}
+						{placeholder}
 					/>
 				</Combobox.Input>
 			</label>
-			{#if (showOnEmpty || inputValue?.trim()) && filtered.length}
+			{#if (showOnEmpty || $value?.trim()) && filtered.length}
 				<Combobox.Content asChild let:builder>
 					<ul class="menu dropdown-content z-10 w-full rounded-lg bg-base-200 p-2 shadow" use:builder.action {...builder}>
 						{#each filtered.slice(0, 8) as item}
@@ -147,20 +155,15 @@
 				</Combobox.Content>
 			{/if}
 		</div>
-		{#if inputValue && selectedItem && clearable}
-			<button
-				class="btn join-item input-bordered"
-				type="button"
-				on:click|preventDefault={() => {
-					dispatch("clear");
-					selectedItem = undefined;
-					inputValue = "";
-					$idValue = "";
-					$value = "";
-				}}
-			>
+		{#if $value && clearable}
+			<button class="btn join-item input-bordered" type="button" on:click|preventDefault={() => clear()}>
 				<Icon src="x" class="w-6" color="red" />
 			</button>
+		{/if}
+		{#if link}
+			<a href={link} class="btn join-item input-bordered" role="button" target="_blank">
+				<Icon src="pencil" class="w-6" />
+			</a>
 		{/if}
 		{#if dev}
 			<button type="button" class="btn join-item input-bordered" on:click|preventDefault={() => (debug = !debug)}>
@@ -169,9 +172,13 @@
 		{/if}
 	</div>
 	{#if name}<Combobox.HiddenInput {name} />{/if}
-	{#if $errors}
-		<label for={ids.trigger} class="label">
-			<span class="label-text-alt text-error">{$errors}</span>
+	{#if $errors?.length || description}
+		<label for={field} class="label">
+			{#if $errors?.length}
+				<span class="label-text-alt text-error">{$errors[0]}</span>
+			{:else}
+				<span class="label-text-alt text-neutral-500">{description}</span>
+			{/if}
 		</label>
 	{/if}
 </Combobox.Root>

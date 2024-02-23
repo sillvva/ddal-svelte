@@ -2,7 +2,6 @@
 	import { applyAction, enhance } from "$app/forms";
 	import BreadCrumbs from "$lib/components/BreadCrumbs.svelte";
 	import Control from "$lib/components/Control.svelte";
-	import Icon from "$lib/components/Icon.svelte";
 	import Input from "$lib/components/Input.svelte";
 	import Submit from "$lib/components/Submit.svelte";
 	import SuperForm from "$lib/components/SuperForm.svelte";
@@ -14,7 +13,7 @@
 
 	export let data;
 
-	const superform = superForm(data.form, {
+	$: superform = superForm(data.form, {
 		dataType: "json",
 		validators: valibotClient(dungeonMasterSchema),
 		taintedMessage: "You have unsaved changes. Are you sure you want to leave?"
@@ -26,7 +25,7 @@
 
 	<SuperForm action="?/saveDM" {superform} showMessage>
 		<Control class="col-span-12 sm:col-span-6">
-			<Input type="text" {superform} field="name" required disabled={data.form.data.uid === data.user.id ? true : undefined}>
+			<Input type="text" {superform} field="name" disabled={data.form.data.uid === data.user.id ? true : undefined}>
 				DM Name
 			</Input>
 		</Control>
@@ -66,10 +65,9 @@
 					<table class="table w-full">
 						<thead>
 							<tr class="bg-base-300">
-								<th class="">Date</th>
-								<th class="hidden sm:table-cell">Adventure</th>
-								<th class="hidden sm:table-cell">Character</th>
-								<th class="print:hidden" />
+								<th class="hidden sm:table-cell">Date</th>
+								<th class="">Adventure</th>
+								<th class="">Character</th>
 							</tr>
 						</thead>
 						<tbody>
@@ -77,27 +75,26 @@
 								<tr>
 									<td>
 										<div class="flex flex-col gap-1">
-											<span class="sm:hidden">{log.name}</span>
-											<span>{log.date.toLocaleString()}</span>
-											<span class="sm:hidden">
-												<a href={`/characters/${log.character?.id}`} class="text-secondary">
-													{log.character?.name}
-												</a>
-											</span>
+											<a href={`/characters/${log.character?.id}/log/${log.id}`} class="text-secondary sm:hidden">
+												{log.name}
+											</a>
+											<span>{new Date(log.date).toLocaleString()}</span>
 										</div>
 									</td>
-									<td class="hidden sm:table-cell">{log.name}</td>
 									<td class="hidden sm:table-cell">
-										<a href={`/characters/${log.character?.id}`} class="text-secondary">
-											{log.character?.name}
+										<a
+											href={log.is_dm_log ? `/dm-logs/${log.id}` : `/characters/${log.character?.id}/log/${log.id}`}
+											class="text-secondary"
+										>
+											{log.name}
 										</a>
 									</td>
-									<td class="w-8 align-top print:hidden">
-										<div class="flex flex-row justify-center gap-2">
-											<a href={`/characters/${log.character?.id}/log/${log.id}`} class="btn btn-primary sm:btn-sm">
-												<Icon src="pencil" class="w-4" />
+									<td>
+										{#if log.character?.name}
+											<a href={`/characters/${log.character?.id}`} class="text-secondary">
+												{log.character?.name}
 											</a>
-										</div>
+										{/if}
 									</td>
 								</tr>
 							{/each}

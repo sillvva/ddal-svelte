@@ -3,7 +3,6 @@
 </script>
 
 <script lang="ts" generics="T extends TRec">
-	import { createEventDispatcher } from "svelte";
 	import type { HTMLInputAttributes } from "svelte/elements";
 	import { formFieldProxy, type FormPathLeaves, type SuperForm } from "sveltekit-superforms";
 
@@ -12,11 +11,14 @@
 		superform: SuperForm<T>;
 		field: FormPathLeaves<T>;
 		type: InputType;
+		oninput?: (value: typeof $value) => void;
 	}
 
 	export let superform: SuperForm<T>;
 	export let field: FormPathLeaves<T>;
 	export let type: InputType = "text";
+	export let description = "";
+	export let oninput = (value: typeof $value) => {};
 
 	const { value, errors, constraints } = formFieldProxy(superform, field);
 
@@ -27,12 +29,6 @@
 		...$constraints,
 		...$$restProps
 	} satisfies HTMLInputAttributes;
-
-	const dispatch = createEventDispatcher<{
-		input: typeof $value;
-	}>();
-
-	const inputHandler = () => dispatch("input", $value);
 </script>
 
 <label for={field} class="label">
@@ -44,12 +40,16 @@
 	</span>
 </label>
 {#if type === "text"}
-	<input type="text" bind:value={$value} on:input={inputHandler} {...commonProps} />
+	<input type="text" bind:value={$value} on:input={() => oninput($value)} {...commonProps} />
 {:else if type === "number"}
-	<input type="number" bind:value={$value} on:input={inputHandler} {...commonProps} />
+	<input type="number" bind:value={$value} on:input={() => oninput($value)} {...commonProps} />
 {/if}
-{#if $errors?.length}
+{#if $errors?.length || description}
 	<label for={field} class="label">
-		<span class="label-text-alt text-error">{$errors}</span>
+		{#if $errors?.length}
+			<span class="label-text-alt text-error">{$errors[0]}</span>
+		{:else}
+			<span class="label-text-alt text-neutral-500">{description}</span>
+		{/if}
 	</label>
 {/if}

@@ -38,6 +38,8 @@
 			if (el.hasAttribute("disabled")) (el as HTMLElement).dataset.disabled = "true";
 		});
 		mounted = true;
+
+		superform.reset();
 	});
 
 	$: if (refForm && mounted) {

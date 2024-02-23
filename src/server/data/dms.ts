@@ -43,9 +43,9 @@ export async function getUserDMsWithLogs(user: LocalsSession["user"]) {
 	if (!dms.find((dm) => dm.uid === user.id)) {
 		dms.push({
 			id: "",
-			uid: user.id,
 			name: user.name || "Me",
 			DCI: null,
+			uid: user.id,
 			owner: user.id,
 			logs: []
 		});

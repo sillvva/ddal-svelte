@@ -77,3 +77,38 @@ export async function getDMLogs(userId = "", userName = "") {
 export async function getDMLogsCache(userId = "", userName = "") {
 	return await cache(() => getDMLogs(userId, userName), ["dm-logs", userId], 86400);
 }
+
+export async function getUserSearchLogs(userId: string) {
+	return prisma.log.findMany({
+		where: {
+			character: {
+				userId
+			}
+		},
+		select: {
+			id: true,
+			name: true,
+			date: true,
+			is_dm_log: true,
+			dm: {
+				select: {
+					name: true
+				}
+			},
+			character: {
+				select: {
+					id: true,
+					name: true,
+					image_url: true
+				}
+			}
+		},
+		orderBy: {
+			date: "desc"
+		}
+	});
+}
+
+export async function getUserSearchLogsCache(userId: string) {
+	return await cache(() => getUserSearchLogs(userId), ["search-logs", userId]);
+}

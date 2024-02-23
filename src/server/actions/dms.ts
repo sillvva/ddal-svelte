@@ -16,6 +16,8 @@ export async function saveDM(
 		const dm = (await getUserDMsWithLogsCache(user)).find((dm) => dm.id === dmId);
 		if (!dm) throw new SaveError(401, "You do not have permission to edit this DM");
 
+		if (data.name === "" && data.uid) data.name = user.name || "Me";
+
 		const result = await prisma.dungeonMaster.update({
 			where: { id: dmId },
 			data: {
@@ -27,6 +29,8 @@ export async function saveDM(
 
 		const characterIds = [...new Set(dm.logs.filter((l) => l.characterId).map((l) => l.characterId))];
 		revalidateKeys([["dms", user.id, "logs"], ...characterIds.map((id) => ["character", id as string, "logs"] as CacheKey)]);
+		revalidateKeys([["dms", user.id]]);
+		revalidateKeys([["search-logs", user.id]]);
 
 		return { id: result.id, dm: result };
 	} catch (err) {

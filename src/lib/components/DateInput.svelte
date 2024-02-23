@@ -19,6 +19,7 @@
 	export let empty: "null" | "undefined" = "null";
 	export let minField: FormPathLeaves<T> | undefined = undefined;
 	export let maxField: FormPathLeaves<T> | undefined = undefined;
+	export let description = "";
 
 	const proxyDate = dateProxy(superform, field, { format: "datetime-local", empty });
 	const proxyMinDate = minField ? dateProxy(superform, minField, { format: "datetime-local" }) : undefined;
@@ -30,7 +31,7 @@
 <label for={field} class="label">
 	<span class="label-text">
 		<slot />
-		{#if $$props.required}
+		{#if $constraints?.required || $$props.required}
 			<span class="text-error">*</span>
 		{/if}
 	</span>
@@ -46,8 +47,12 @@
 	{...$constraints}
 	{...$$restProps}
 />
-{#if $errors?.length}
+{#if $errors?.length || description}
 	<label for={field} class="label">
-		<span class="label-text-alt text-error">{$errors}</span>
+		{#if $errors?.length}
+			<span class="label-text-alt text-error">{$errors[0]}</span>
+		{:else}
+			<span class="label-text-alt text-neutral-500">{description}</span>
+		{/if}
 	</label>
 {/if}

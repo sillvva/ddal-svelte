@@ -18,13 +18,13 @@
 	export let data;
 	export let form;
 
-	const logs = data.logs;
+	$: logs = data.logs;
 	const app = getContext<CookieStore<App.Cookie>>("app");
 
 	let search = $page.url.searchParams.get("s") || "";
 	let deletingLog: string[] = [];
 
-	const indexed = logs
+	$: indexed = logs
 		? logs.map((log) => ({
 				logId: log.id,
 				logName: log.name,
@@ -50,7 +50,10 @@
 		}
 	});
 
-	$: dmLogSearch.addAll(indexed);
+	$: {
+		dmLogSearch.removeAll();
+		dmLogSearch.addAll(indexed);
+	}
 	$: msResults = dmLogSearch.search(search);
 	$: results =
 		indexed.length && search.length > 1

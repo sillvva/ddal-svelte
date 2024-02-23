@@ -11,7 +11,7 @@
 
 	export let data;
 
-	let dms = data.dms;
+	$: dms = data.dms;
 	let deletingDM: string[] = [];
 	let search = $page.url.searchParams.get("s") || "";
 

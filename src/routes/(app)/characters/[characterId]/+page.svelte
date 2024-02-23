@@ -24,8 +24,8 @@
 	const app = getContext<CookieStore<App.Cookie>>("app");
 	const transition = getContext<TransitionAction>("transition");
 
-	const character = data.character;
-	const myCharacter = character.userId === data.session?.user?.id;
+	$: character = data.character;
+	$: myCharacter = character.userId === data.session?.user?.id;
 
 	let deletingLog: string[] = [];
 	let search = $page.url.searchParams.get("s") || "";
@@ -42,7 +42,7 @@
 	});
 
 	let level = 1;
-	const logs = character
+	$: logs = character
 		? character.logs.map((log) => {
 				const level_gained = character.log_levels.find((gl) => gl.id === log.id);
 				if (level_gained) level += level_gained.levels;
@@ -56,7 +56,7 @@
 			})
 		: [];
 
-	const indexed = logs.map((log) => ({
+	$: indexed = logs.map((log) => ({
 		logId: log.id,
 		logName: log.name,
 		magicItems: [...log.magic_items_gained.map((item) => item.name), ...log.magic_items_lost.map((item) => item.name)].join(
@@ -67,7 +67,10 @@
 		)
 	}));
 
-	if (indexed.length) logSearch.addAll(indexed);
+	$: {
+		logSearch.removeAll();
+		logSearch.addAll(indexed);
+	}
 
 	$: msResults = logSearch.search(search);
 	$: results =
@@ -277,10 +280,8 @@
 							class="mask mask-squircle mx-auto h-52 w-full bg-primary"
 							use:transition={slugify("image-" + character.id)}
 							on:click={(e) => {
-								// if (!data.mobile) {
 								e.preventDefault();
 								triggerImageModal();
-								// }
 							}}
 						>
 							<img src={character.image_url} class="size-full object-cover object-top transition-all" alt={character.name} />
