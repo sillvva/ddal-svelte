@@ -24,8 +24,8 @@
 	const app = getContext<CookieStore<App.Cookie>>("app");
 	const transition = getContext<TransitionAction>("transition");
 
-	const character = data.character;
-	const myCharacter = character.userId === data.session?.user?.id;
+	$: character = data.character;
+	$: myCharacter = character.userId === data.session?.user?.id;
 
 	let deletingLog: string[] = [];
 	let search = $page.url.searchParams.get("s") || "";

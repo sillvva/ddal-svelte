@@ -18,7 +18,7 @@
 	export let data;
 	export let form;
 
-	const logs = data.logs;
+	$: logs = data.logs;
 	const app = getContext<CookieStore<App.Cookie>>("app");
 
 	let search = $page.url.searchParams.get("s") || "";

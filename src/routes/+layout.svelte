@@ -8,7 +8,7 @@
 
 	export let data;
 
-	const app = setContext("app", cookieStore("app", data.app));
+	$: app = setContext("app", cookieStore("app", data.app));
 
 	const { transition } = setupViewTransition();
 	setContext("transition", transition);

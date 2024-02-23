@@ -16,7 +16,7 @@
 
 	export let data;
 
-	let characters = data.characters;
+	$: characters = data.characters;
 	let search = $page.url.searchParams.get("s") || "";
 	let loaded = false;
 
