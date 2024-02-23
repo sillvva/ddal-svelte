@@ -11,6 +11,7 @@ async function getData(user: NonNullable<LocalsSession["user"]>) {
 			(character) =>
 				({
 					...character,
+					log_levels: [],
 					type: "character",
 					url: `/characters/${character.id}`
 				}) as const
