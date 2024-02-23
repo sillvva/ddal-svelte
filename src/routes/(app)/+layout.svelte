@@ -43,15 +43,16 @@
 	let defaultImage = "https://ddal.dekok.app/images/barovia-gate.webp";
 	$: image = $page.data.image || defaultImage;
 
-	let search = "";
-	let cmdOpen = false;
-	let selected = "";
-
 	let sections = [
 		{ title: "Characters", url: "/characters" },
 		{ title: "DM Logs", url: "/dm-logs" },
 		{ title: "DMs", url: "/dms" }
 	];
+
+	const defaultSelected = sections[0].url;
+	let search = "";
+	let cmdOpen = false;
+	let selected = defaultSelected;
 
 	let searchData: SearchData = [];
 	onMount(() => {
@@ -64,7 +65,7 @@
 
 	$: if (!cmdOpen) {
 		search = "";
-		selected = "";
+		selected = defaultSelected;
 	}
 
 	$: results = searchData
@@ -77,10 +78,16 @@
 		.filter((section) => section.items.length);
 
 	$: if (search) {
+		const selectedResult = results
+			.find((section) => section.items.some((item) => item.url === selected))
+			?.items.find((item) => item.url === selected)?.url;
 		const firstResult = results[0]?.items[0]?.url;
-		if (!selected && firstResult) {
+		if (!selectedResult && firstResult) {
 			selected = firstResult;
 		}
+	}
+	$: if (!search) {
+		selected = defaultSelected;
 	}
 </script>
 
@@ -158,7 +165,7 @@
 			<label class="input input-bordered hidden items-center gap-2 sm:flex">
 				<input type="text" class="max-w-20 grow" placeholder="Search" on:focus={() => (cmdOpen = true)} />
 				<kbd class="kbd kbd-sm">
-					{#if data.userAgent?.includes("Mac OS")}
+					{#if data.isMac}
 						⌘
 					{:else}
 						CTRL
@@ -288,13 +295,7 @@
 	aria-describedby="modal-content"
 	use:hotkey={[
 		[
-			"meta+k",
-			() => {
-				cmdOpen = true;
-			}
-		],
-		[
-			"ctrl+k",
+			data.isMac ? "meta+k" : "ctrl+k",
 			() => {
 				cmdOpen = true;
 			}
