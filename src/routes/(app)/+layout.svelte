@@ -159,7 +159,7 @@
 				<a href="/dms" class="hidden items-center p-2 md:flex">DMs</a>
 			{/if}
 			<div class={twMerge("flex-1", (data.mobile || !$app.settings.background) && "hidden sm:block")}>&nbsp;</div>
-			<button on:focus={() => (cmdOpen = true)} class="inline sm:hidden">
+			<button on:click={() => (cmdOpen = true)} class="inline sm:hidden">
 				<Icon src="magnify" class="w-6" />
 			</button>
 			<label class="input input-bordered hidden items-center gap-2 sm:flex">
@@ -309,7 +309,7 @@
 	]}
 >
 	{#if cmdOpen}
-		<div class="modal-box relative cursor-default bg-base-300 p-3 drop-shadow-lg sm:p-6">
+		<div class="modal-box relative cursor-default bg-base-300 px-4 py-5 drop-shadow-lg sm:p-6">
 			<div class="modal-content">
 				<Command.Dialog
 					label="Command Menu"
