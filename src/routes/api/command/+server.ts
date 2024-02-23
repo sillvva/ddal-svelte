@@ -46,12 +46,12 @@ async function getData(user: NonNullable<LocalsSession["user"]>) {
 			items: characters
 		},
 		{
-			title: "DMs",
-			items: dms
-		},
-		{
 			title: "Logs",
 			items: logs
+		},
+		{
+			title: "DMs",
+			items: dms
 		}
 	];
 }
