@@ -302,7 +302,7 @@
 	]}
 >
 	{#if cmdOpen}
-		<div class="modal-box relative cursor-default bg-base-300 drop-shadow-lg">
+		<div class="modal-box relative cursor-default bg-base-300 p-3 drop-shadow-lg sm:p-6">
 			<div class="modal-content">
 				<Command.Dialog
 					label="Command Menu"
@@ -363,7 +363,7 @@
 											<li {...attrs} data-selected={selected === item.url ? "true" : undefined}>
 												<a href={item.url} on:click={() => (cmdOpen = false)} class="flex gap-2">
 													{#if item.type === "character"}
-														<img src={item.image_url} alt={item.name} class="mask mask-squircle h-12 w-12" />
+														<img src={item.image_url} alt={item.name} class="mask mask-squircle h-12 min-w-12 max-w-12" />
 														<div class="flex flex-col">
 															<span>{item.name}</span>
 															<div class="flex gap-2 opacity-70">
