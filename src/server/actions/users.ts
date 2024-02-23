@@ -10,7 +10,8 @@ export async function clearUserCache(userId: string) {
 		["dms", userId, "logs"],
 		["characters", userId],
 		...characters.map((c) => ["character", c.id, "logs"] as CacheKey),
-		["dm-logs", userId]
+		["dm-logs", userId],
+		["search-data", userId]
 	]);
 }
 

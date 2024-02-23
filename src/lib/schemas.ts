@@ -88,7 +88,7 @@ export const logSchema = object({
 	level: number([integer(), minValue(0)]),
 	gold: number(),
 	dtd: number([integer()]),
-	description: optional(string(), ""),
+	description: optional(union([string(), null_()]), ""),
 	dm: object({
 		...dungeonMasterSchema.entries,
 		name: optional(string(), "")

@@ -40,7 +40,7 @@ export async function saveCharacter(
 			["character", result.id, "no-logs"],
 			["dms", userId],
 			characterId == "new" && ["characters", userId],
-			["search-logs", userId]
+			["search-data", userId]
 		]);
 
 		return { id: result.id, character: result };
@@ -93,7 +93,8 @@ export async function deleteCharacter(characterId: string, userId?: string) {
 			["character", result.id, "logs"],
 			["character", result.id, "no-logs"],
 			["characters", userId],
-			["dms", userId]
+			["dms", userId],
+			["search-data", userId]
 		]);
 
 		return { id: result.id, error: null };

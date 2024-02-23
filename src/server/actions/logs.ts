@@ -267,7 +267,7 @@ export async function saveLog(input: LogSchema, user?: CustomSession["user"]): S
 			log.is_dm_log && log.dm?.uid && ["dm-logs", log.dm.uid],
 			log.characterId && ["character", log.characterId, "logs"],
 			user.id && ["dms", user.id, "logs"],
-			user.id && ["search-logs", user.id]
+			user.id && ["search-data", user.id]
 		]);
 
 		return { id: log.id, log };
@@ -330,7 +330,8 @@ export async function deleteLog(logId: string, userId?: string) {
 
 		revalidateKeys([
 			log?.is_dm_log && log.dm?.uid && ["dm-logs", log.dm.uid],
-			log?.characterId && ["character", log.characterId, "logs"]
+			log?.characterId && ["character", log.characterId, "logs"],
+			["search-data", userId]
 		]);
 
 		return { id: log?.id || null, error: null };

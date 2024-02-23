@@ -56,6 +56,8 @@ export const actions = {
 		const result = await saveCharacter(characterId, session.user.id, form.data);
 		if ("id" in result) redirect(302, `/characters/${result.id}`);
 
+		event.cookies.set("clearCache", "true", { path: "/" });
+
 		return message(
 			form,
 			{

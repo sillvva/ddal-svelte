@@ -26,6 +26,7 @@ export const actions = {
 	clearCaches: async (event) => {
 		const session = event.locals.session;
 		if (!session?.user) redirect(302, "/");
+		event.cookies.set("clearCache", "true", { path: "/" });
 		return await clearUserCache(session.user.id);
 	},
 	unlinkProvider: async (event) => {
