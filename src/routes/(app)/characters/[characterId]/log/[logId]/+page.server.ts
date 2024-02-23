@@ -87,6 +87,8 @@ export const actions = {
 		const result = await saveLog(form.data, session.user);
 		if ("id" in result) redirect(302, `/characters/${character.id}`);
 
+		event.cookies.set("clearCache", "true", { path: "/" });
+
 		return message(
 			form,
 			{

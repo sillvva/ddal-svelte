@@ -52,6 +52,8 @@ export const actions = {
 		const result = await saveDM(event.params.dmId, session.user, form.data);
 		if ("id" in result) return message(form, { type: "success", text: "Dungeon Master saved successfully" });
 
+		event.cookies.set("clearCache", "true", { path: "/" });
+
 		return message(
 			form,
 			{
@@ -73,6 +75,8 @@ export const actions = {
 
 		const result = await deleteDM(event.params.dmId, session.user);
 		if ("id" in result) redirect(302, `/dms`);
+
+		event.cookies.set("clearCache", "true", { path: "/" });
 
 		return fail(result.status, { message: result.error });
 	}

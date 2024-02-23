@@ -16,7 +16,7 @@
 	import { signOut } from "@auth/sveltekit/client";
 	import { hotkey } from "@svelteuidev/composables";
 	import { Command } from "cmdk-sv";
-	import { getContext, onMount } from "svelte";
+	import { getContext } from "svelte";
 	import { fade } from "svelte/transition";
 	import { twMerge } from "tailwind-merge";
 	import type { SearchData } from "../api/command/+server.js";
@@ -55,13 +55,13 @@
 	let selected = defaultSelected;
 
 	let searchData: SearchData = [];
-	onMount(() => {
-		if (!searchData.length) {
-			fetch(`/api/command`)
-				.then((res) => res.json())
-				.then((res) => (searchData = res));
-		}
-	});
+	$: if (!searchData.length) {
+		fetch(`/api/command`)
+			.then((res) => res.json())
+			.then((res) => (searchData = res));
+	}
+
+	$: if (data.clearCache) searchData = [];
 
 	$: if (!cmdOpen) {
 		search = "";
