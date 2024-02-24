@@ -11,8 +11,8 @@
 
 	export let superform: SuperForm<T, any>;
 	export let valueField: FormPathLeaves<T, string>;
-	export let labelField: FormPathLeaves<T, string> = valueField;
-	export let errorField: FormPathLeaves<T, string> = valueField;
+	export let labelField = valueField;
+	export let errorField = valueField;
 	export let name = "";
 	export let values: Array<{ value: string; label?: string; itemLabel?: string }> = [];
 	export let allowCustom = false;
