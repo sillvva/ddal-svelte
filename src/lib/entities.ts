@@ -1,7 +1,8 @@
 import { sorter } from "$lib/util";
-import type { getCharacter } from "$src/server/data/characters";
+import type { CharacterData, getCharacter } from "$src/server/data/characters";
 import type { LogData } from "$src/server/data/logs";
-import type { DungeonMaster, Log, MagicItem, StoryAward } from "@prisma/client";
+import type { Character, DungeonMaster, Log, MagicItem, StoryAward } from "@prisma/client";
+import type { LogSchema } from "./schemas";
 
 export const getMagicItems = (
 	character: Exclude<Awaited<ReturnType<typeof getCharacter>>, null>,
@@ -198,9 +199,9 @@ export function defaultDM(userId: string): DungeonMaster {
 	return { id: "", name: "", DCI: null, uid: "", owner: userId };
 }
 
-export function defaultLog(userId: string, characterId = ""): LogData {
+export function defaultLogData(userId: string, characterId = ""): LogData {
 	return {
-		characterId: characterId,
+		characterId,
 		id: "",
 		name: "",
 		description: "",
@@ -221,5 +222,36 @@ export function defaultLog(userId: string, characterId = ""): LogData {
 		magic_items_lost: [],
 		story_awards_gained: [],
 		story_awards_lost: []
+	};
+}
+
+export function logDataToSchema(userId: string, log: LogData, character?: Character): LogSchema {
+	return {
+		...log,
+		characterId: character?.id || "",
+		characterName: character?.name || "",
+		dm: defaultDM(userId),
+		magic_items_gained: log.magic_items_gained.map((item) => ({
+			id: item.id,
+			name: item.name,
+			description: item.description || ""
+		})),
+		magic_items_lost: log.magic_items_lost.map((item) => item.id),
+		story_awards_gained: log.story_awards_gained.map((award) => ({
+			id: award.id,
+			name: award.name,
+			description: award.description || ""
+		})),
+		story_awards_lost: log.story_awards_lost.map((award) => award.id)
+	};
+}
+
+export function strippedCharacterData(character: CharacterData, logId?: string) {
+	return {
+		...character,
+		logs: character.logs.filter((log) => log.id !== logId),
+		log_levels: [],
+		magicItems: [],
+		storyAwards: []
 	};
 }

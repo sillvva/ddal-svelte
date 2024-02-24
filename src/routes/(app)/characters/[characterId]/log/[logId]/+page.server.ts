@@ -1,8 +1,9 @@
-import { defaultLog, getMagicItems, getStoryAwards } from "$lib/entities.js";
+import { defaultLogData, getMagicItems, getStoryAwards, logDataToSchema } from "$lib/entities.js";
 import { characterLogSchema } from "$lib/schemas";
 import { sorter } from "$lib/util.js";
 import { saveLog } from "$src/server/actions/logs.js";
 import { signInRedirect } from "$src/server/auth.js";
+import { serverSetCookie } from "$src/server/cookie.js";
 import { getCharacterCache } from "$src/server/data/characters";
 import { getUserDMsCache } from "$src/server/data/dms";
 import { getLog } from "$src/server/data/logs";
@@ -18,35 +19,18 @@ export const load = async (event) => {
 	const session = event.locals.session;
 	if (!session?.user) signInRedirect(event.url);
 
-	let log = defaultLog(session.user.id, character.id);
-	if (event.params.logId !== "new")
+	let log = defaultLogData(session.user.id, character.id);
+	if (event.params.logId !== "new") {
 		log = await getLog(event.params.logId, session.user.id, character.id).then((log) => {
 			if (!log.id) error(404, "Log not found");
 			return log;
 		});
+	}
 
 	if (log.is_dm_log) redirect(302, `/dm-logs/${log.id}`);
 
-	const dms = await getUserDMsCache(session.user);
-
-	const form = await superValidate(valibot(characterLogSchema(character)), {
-		defaults: {
-			...log,
-			characterId: character.id,
-			characterName: character.name,
-			magic_items_gained: log.magic_items_gained.map((item) => ({
-				id: item.id,
-				name: item.name,
-				description: item.description || ""
-			})),
-			magic_items_lost: log.magic_items_lost.map((item) => item.id),
-			story_awards_gained: log.story_awards_gained.map((award) => ({
-				id: award.id,
-				name: award.name,
-				description: award.description || ""
-			})),
-			story_awards_lost: log.story_awards_lost.map((award) => award.id)
-		}
+	const form = await superValidate(logDataToSchema(session.user.id, log, character), valibot(characterLogSchema(character)), {
+		errors: event.params.logId !== "new"
 	});
 
 	const magicItems = getMagicItems(character, { excludeDropped: true, lastLogId: log.id }).sort((a, b) => sorter(a.name, b.name));
@@ -54,12 +38,14 @@ export const load = async (event) => {
 		sorter(a.name, b.name)
 	);
 
+	const dms = await getUserDMsCache(session.user);
+
 	return {
 		...event.params,
-		title: event.params.logId === "new" ? `New Log - ${character.name}` : `Edit ${log.name}`,
+		title: event.params.logId === "new" ? `New Log - ${character.name}` : `Edit ${form.data.name}`,
 		breadcrumbs: parent.breadcrumbs.concat({
-			name: event.params.logId === "new" ? `New Log` : log.name,
-			href: `/characters/${character.id}/log/${log.id}`
+			name: event.params.logId === "new" ? `New Log` : form.data.name,
+			href: `/characters/${character.id}/log/${form.data.id}`
 		}),
 		user: session.user,
 		totalLevel: character.total_level,
@@ -75,7 +61,7 @@ export const actions = {
 		const session = await event.locals.session;
 		if (!session?.user) redirect(302, "/");
 
-		const character = await getCharacterCache(event.params.characterId || "", false);
+		const character = await getCharacterCache(event.params.characterId || "", true);
 		if (!character) redirect(302, "/characters");
 
 		const log = await getLog(event.params.logId, session.user.id, character.id);
@@ -84,10 +70,10 @@ export const actions = {
 		const form = await superValidate(event, valibot(characterLogSchema(character)));
 		if (!form.valid) return fail(400, { form });
 
+		serverSetCookie(event.cookies, "clearCache", "true");
+
 		const result = await saveLog(form.data, session.user);
 		if ("id" in result) redirect(302, `/characters/${character.id}`);
-
-		event.cookies.set("clearCache", "true", { path: "/" });
 
 		return message(
 			form,

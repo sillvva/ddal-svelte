@@ -12,7 +12,7 @@
 	import Icon from "$lib/components/Icon.svelte";
 	import Markdown from "$lib/components/Markdown.svelte";
 	import Settings from "$lib/components/Settings.svelte";
-	import type { CookieStore } from "$src/server/cookie.js";
+	import { type CookieStore } from "$src/server/cookie.js";
 	import { signOut } from "@auth/sveltekit/client";
 	import { hotkey } from "@svelteuidev/composables";
 	import { Command } from "cmdk-sv";
@@ -60,22 +60,9 @@
 
 	let searchData: SearchData = [];
 	$: if (!searchData.length && browser) {
-		const lsData = localStorage.getItem("searchData");
-		if (lsData) {
-			searchData = JSON.parse(lsData);
-		} else {
-			fetch(`/api/command`)
-				.then((res) => res.json())
-				.then((res) => (searchData = res))
-				.then(() => {
-					localStorage.setItem("searchData", JSON.stringify(searchData));
-				});
-		}
-	}
-
-	$: if (data.clearCache && browser) {
-		localStorage.removeItem("searchData");
-		searchData = [];
+		fetch(`/api/command`)
+			.then((res) => res.json())
+			.then((res) => (searchData = res));
 	}
 
 	$: if (!cmdOpen) {
@@ -96,7 +83,10 @@
 						}
 						return item.name.toLowerCase().includes(search.toLowerCase());
 					})
-					.sort((a, b) => a.name.localeCompare(b.name))
+					.sort((a, b) => {
+						if (a.type === "log" && b.type === "log") return new Date(b.date).getTime() - new Date(a.date).getTime();
+						return a.name.localeCompare(b.name);
+					})
 			};
 		})
 		.filter((section) => section.items.length);

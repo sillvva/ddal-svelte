@@ -9,7 +9,7 @@
 	import MdTextInput from "$lib/components/MDTextInput.svelte";
 	import Submit from "$lib/components/Submit.svelte";
 	import SuperForm from "$lib/components/SuperForm.svelte";
-	import { dMLogSchema } from "$lib/schemas";
+	import { logSchema } from "$lib/schemas";
 	import { superForm } from "sveltekit-superforms";
 	import { valibotClient } from "sveltekit-superforms/adapters";
 
@@ -17,7 +17,7 @@
 
 	$: superform = superForm(data.form, {
 		dataType: "json",
-		validators: valibotClient(dMLogSchema(data.characters)),
+		validators: valibotClient(logSchema),
 		taintedMessage: "You have unsaved changes. Are you sure you want to leave?"
 	});
 

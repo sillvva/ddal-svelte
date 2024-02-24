@@ -22,7 +22,6 @@ export const actions = {
 		if (!session?.user) redirect(302, "/");
 		const data = await event.request.formData();
 		const logId = (data.get("logId") || "") as string;
-		event.cookies.set("clearCache", "true", { path: "/" });
 		return await deleteLog(logId, session.user.id);
 	}
 };

@@ -1,6 +1,8 @@
+import { defaultLogData, logDataToSchema } from "$lib/entities.js";
 import { dMLogSchema } from "$lib/schemas";
 import { saveLog } from "$src/server/actions/logs";
 import { signInRedirect } from "$src/server/auth";
+import { serverSetCookie } from "$src/server/cookie.js";
 import { getCharacterCaches, getCharactersCache } from "$src/server/data/characters";
 import { getDMLog, getLog } from "$src/server/data/logs";
 import { error, fail, redirect } from "@sveltejs/kit";
@@ -14,51 +16,35 @@ export const load = async (event) => {
 	if (!session?.user?.name) signInRedirect(event.url);
 	const user = session.user;
 
-	const log = await getDMLog(event.params.logId, user.id);
-	if (event.params.logId !== "new" && !log.id) error(404, "Log not found");
-	if (!log.is_dm_log) redirect(302, `/characters/${log.characterId}/log/${log.id}`);
-
-	log.dm = log.dm?.name ? log.dm : { name: session.user.name || "", id: "", DCI: null, uid: user.id, owner: user.id };
-
 	const characters = await getCharactersCache(user.id)
 		.then(async (characters) => await getCharacterCaches(characters.map((c) => c.id)))
 		.then((characters) =>
 			characters.map((c) => ({
 				...c,
-				logs: c.logs.filter((l) => l.id !== log.id),
+				logs: c.logs.filter((l) => l.id !== event.params.logId),
 				magic_items: [],
 				story_awards: [],
 				log_levels: []
 			}))
 		);
-	const character = characters.find((c) => c.id === log.characterId);
 
-	const form = await superValidate(valibot(dMLogSchema(characters)), {
-		defaults: {
-			...log,
-			characterId: character?.id || "",
-			characterName: character?.name || "",
-			magic_items_gained: log.magic_items_gained.map((item) => ({
-				id: item.id,
-				name: item.name,
-				description: item.description || ""
-			})),
-			magic_items_lost: log.magic_items_lost.map((item) => item.id),
-			story_awards_gained: log.story_awards_gained.map((award) => ({
-				id: award.id,
-				name: award.name,
-				description: award.description || ""
-			})),
-			story_awards_lost: log.story_awards_lost.map((award) => award.id),
-			is_dm_log: true
-		}
+	let log = defaultLogData(user.id);
+	if (event.params.logId !== "new") {
+		log = await getDMLog(event.params.logId, user.id);
+		if (event.params.logId !== "new" && !log.id) error(404, "Log not found");
+		if (!log.is_dm_log) redirect(302, `/characters/${log.characterId}/log/${log.id}`);
+	}
+
+	const character = characters.find((c) => c.id === log.characterId);
+	const form = await superValidate(logDataToSchema(session.user.id, log, character), valibot(dMLogSchema(characters)), {
+		errors: event.params.logId !== "new"
 	});
 
 	return {
 		...event.params,
-		title: event.params.logId === "new" ? "New DM Log" : `Edit ${log.name}`,
+		title: event.params.logId === "new" ? "New DM Log" : `Edit ${form.data.name}`,
 		breadcrumbs: parent.breadcrumbs.concat({
-			name: event.params.logId === "new" ? "New DM Log" : `${log.name}`,
+			name: event.params.logId === "new" ? "New DM Log" : `${form.data.name}`,
 			href: `/dm-logs/${event.params.logId}`
 		}),
 		characters: characters.map((c) => ({ id: c.id, name: c.name })),
@@ -81,10 +67,10 @@ export const actions = {
 		const form = await superValidate(event, valibot(dMLogSchema(characters)));
 		if (!form.valid) return fail(400, { form });
 
+		serverSetCookie(event.cookies, "clearCache", "true");
+
 		const result = await saveLog(form.data, session.user);
 		if ("id" in result) redirect(302, `/dm-logs/`);
-
-		event.cookies.set("clearCache", "true", { path: "/" });
 
 		return message(
 			form,

@@ -2,7 +2,7 @@ import { BLANK_CHARACTER } from "$lib/constants.js";
 import { newCharacterSchema } from "$lib/schemas";
 import { saveCharacter } from "$src/server/actions/characters.js";
 import { signInRedirect } from "$src/server/auth";
-import { error, fail, redirect } from "@sveltejs/kit";
+import { fail, redirect } from "@sveltejs/kit";
 import { message, superValidate } from "sveltekit-superforms";
 import { valibot } from "sveltekit-superforms/adapters";
 
@@ -14,7 +14,6 @@ export const load = async (event) => {
 
 	let title = "New Character";
 	if (event.params.characterId !== "new") {
-		if (!parent.character) error(404, "Character not found");
 		title = "Edit";
 		parent.breadcrumbs = parent.breadcrumbs.concat({
 			name: title,
@@ -22,8 +21,8 @@ export const load = async (event) => {
 		});
 	}
 
-	const form = await superValidate(valibot(newCharacterSchema), {
-		defaults: parent.character
+	const form = await superValidate(
+		parent.character
 			? {
 					name: parent.character.name,
 					campaign: parent.character.campaign || "",
@@ -32,8 +31,12 @@ export const load = async (event) => {
 					character_sheet_url: parent.character.character_sheet_url || "",
 					image_url: parent.character.image_url.replace(BLANK_CHARACTER, "")
 				}
-			: undefined
-	});
+			: undefined,
+		valibot(newCharacterSchema),
+		{
+			errors: false
+		}
+	);
 
 	return {
 		title,
@@ -55,8 +58,6 @@ export const actions = {
 		const characterId = event.params.characterId;
 		const result = await saveCharacter(characterId, session.user.id, form.data);
 		if ("id" in result) redirect(302, `/characters/${result.id}`);
-
-		event.cookies.set("clearCache", "true", { path: "/" });
 
 		return message(
 			form,

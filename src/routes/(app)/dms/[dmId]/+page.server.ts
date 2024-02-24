@@ -16,15 +16,19 @@ export const load = async (event) => {
 	const dm = dms.find((dm) => dm.id == event.params.dmId);
 	if (!dm) error(404, "DM not found");
 
-	const form = await superValidate(valibot(dungeonMasterSchema), {
-		defaults: {
+	const form = await superValidate(
+		{
 			id: dm.id,
 			name: dm.name,
 			DCI: dm.DCI || null,
 			uid: dm.uid,
 			owner: dm.owner
+		},
+		valibot(dungeonMasterSchema),
+		{
+			errors: false
 		}
-	});
+	);
 
 	return {
 		...event.params,
@@ -52,8 +56,6 @@ export const actions = {
 		const result = await saveDM(event.params.dmId, session.user, form.data);
 		if ("id" in result) return message(form, { type: "success", text: "Dungeon Master saved successfully" });
 
-		event.cookies.set("clearCache", "true", { path: "/" });
-
 		return message(
 			form,
 			{
@@ -75,8 +77,6 @@ export const actions = {
 
 		const result = await deleteDM(event.params.dmId, session.user);
 		if ("id" in result) redirect(302, `/dms`);
-
-		event.cookies.set("clearCache", "true", { path: "/" });
 
 		return fail(result.status, { message: result.error });
 	}
