@@ -230,7 +230,7 @@ export function logDataToSchema(userId: string, log: LogData, character?: Charac
 		...log,
 		characterId: character?.id || "",
 		characterName: character?.name || "",
-		dm: defaultDM(userId),
+		dm: log.dm.id ? log.dm : defaultDM(userId),
 		magic_items_gained: log.magic_items_gained.map((item) => ({
 			id: item.id,
 			name: item.name,
