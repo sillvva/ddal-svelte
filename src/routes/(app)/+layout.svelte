@@ -89,7 +89,7 @@
 				...section,
 				items: section.items
 					.filter((item) => {
-						if (item.type === "character") {
+						if (item.type === "character" && search.length >= 2) {
 							if (item.magic_items.some((magicItem) => magicItem.name.toLowerCase().includes(search.toLowerCase()))) return true;
 							if (item.story_awards.some((storyAward) => storyAward.name.toLowerCase().includes(search.toLowerCase())))
 								return true;
