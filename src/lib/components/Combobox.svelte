@@ -10,9 +10,9 @@
 	import Icon from "./Icon.svelte";
 
 	export let superform: SuperForm<T, any>;
-	export let idField: FormPathLeaves<T>;
-	export let field: FormPathLeaves<T> = idField;
-	export let errorField: FormPathLeaves<T> = field;
+	export let idField: FormPathLeaves<T, string>;
+	export let field: FormPathLeaves<T, string> = idField;
+	export let errorField: FormPathLeaves<T, string> = field;
 	export let name = "";
 	export let values: Array<{ value: string; label?: string; itemLabel?: string }> = [];
 	export let allowCustom = false;
@@ -32,7 +32,9 @@
 	let changed = false;
 
 	const { constraints } = formFieldProxy(superform, field);
+	// @ts-expect-error - This is a valid check
 	const idValue = stringProxy(superform, idField, { empty: "undefined" });
+	// @ts-expect-error - This is a valid check
 	const value = stringProxy(superform, field, { empty: "undefined" });
 	const { errors } = formFieldProxy(superform, errorField);
 
