@@ -42,7 +42,6 @@
 				{superform}
 				valueField="characterId"
 				labelField="characterName"
-				errorField="characterId"
 				values={data.characters.map((char) => ({ value: char.id, label: char.name }))}
 				required={!!$form.applied_date || undefined}
 				onselect={() => {
