@@ -40,8 +40,8 @@
 		<Control class="col-span-12 sm:col-span-6 lg:col-span-3">
 			<Combobox
 				{superform}
-				idField="characterId"
 				field="characterName"
+				idField="characterId"
 				errorField="characterId"
 				values={data.characters.map((char) => ({ value: char.id, label: char.name }))}
 				required={!!$form.applied_date || undefined}

@@ -10,8 +10,8 @@
 	import Icon from "./Icon.svelte";
 
 	export let superform: SuperForm<T, any>;
+	export let field: FormPathLeaves<T, string>;
 	export let idField: FormPathLeaves<T, string>;
-	export let field: FormPathLeaves<T, string> = idField;
 	export let errorField: FormPathLeaves<T, string> = field;
 	export let name = "";
 	export let values: Array<{ value: string; label?: string; itemLabel?: string }> = [];
