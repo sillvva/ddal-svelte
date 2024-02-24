@@ -21,7 +21,7 @@
 	export let basic = false;
 	export let showMessage = false;
 
-	const { form, errors, allErrors, capture, restore, submitting, enhance, formId, message } = superform;
+	const { form, errors, allErrors, capture, restore, submitting, enhance, formId, message, tainted } = superform;
 	const method = $$props.method || "post";
 
 	let refForm: HTMLFormElement;

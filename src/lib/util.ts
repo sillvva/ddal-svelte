@@ -11,7 +11,6 @@ export function handleSKitError(err: unknown) {
 		"body" in err &&
 		typeof err.body == "string"
 	) {
-		//@ts-expect-error Cannot use type narrowing on number range
 		error(err.status, err.body);
 	}
 }

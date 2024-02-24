@@ -50,8 +50,8 @@
 			<Control class="col-span-12 sm:col-span-6">
 				<Combobox
 					{superform}
-					idField="dm.id"
-					field="dm.name"
+					valueField="dm.id"
+					labelField="dm.name"
 					values={data.dms.map((dm) => ({
 						value: dm.id,
 						label: dm.name,

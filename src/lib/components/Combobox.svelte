@@ -10,9 +10,9 @@
 	import Icon from "./Icon.svelte";
 
 	export let superform: SuperForm<T, any>;
-	export let idField: FormPathLeaves<T>;
-	export let field: FormPathLeaves<T> = idField;
-	export let errorField: FormPathLeaves<T> = field;
+	export let valueField: FormPathLeaves<T, string>;
+	export let labelField = valueField;
+	export let errorField = valueField;
 	export let name = "";
 	export let values: Array<{ value: string; label?: string; itemLabel?: string }> = [];
 	export let allowCustom = false;
@@ -31,9 +31,11 @@
 	let open = false;
 	let changed = false;
 
-	const { constraints } = formFieldProxy(superform, field);
-	const idValue = stringProxy(superform, idField, { empty: "undefined" });
-	const value = stringProxy(superform, field, { empty: "undefined" });
+	const { constraints } = formFieldProxy(superform, labelField);
+	// @ts-expect-error - This is a valid check
+	const value = stringProxy(superform, valueField, { empty: "undefined" });
+	// @ts-expect-error - This is a valid check
+	const label = stringProxy(superform, labelField, { empty: "undefined" });
 	const { errors } = formFieldProxy(superform, errorField);
 
 	if ($constraints?.required) required = true;
@@ -47,21 +49,21 @@
 		v.itemLabel
 			.toLowerCase()
 			.replace(/\s+/g, "")
-			.includes(($value || "").toLowerCase().replace(/\s+/g, ""))
+			.includes(($label || "").toLowerCase().replace(/\s+/g, ""))
 	);
 	$: filtered =
-		!$value?.trim() || !allowCustom || prefiltered.length === 1
+		!$label?.trim() || !allowCustom || prefiltered.length === 1
 			? prefiltered
-			: [{ value: "", label: $value, itemLabel: `Add "${$value}"` }, ...prefiltered];
-	$: selectedItem = $idValue
-		? values.find((v) => v.value === $idValue)
-		: $value.trim() && allowCustom
-			? { value: "", label: $value, itemLabel: `Add "${$value}"` }
+			: [{ value: "", label: $label, itemLabel: `Add "${$label}"` }, ...prefiltered];
+	$: selectedItem = $value
+		? values.find((v) => v.value === $value)
+		: $label.trim() && allowCustom
+			? { value: "", label: $label, itemLabel: `Add "${$label}"` }
 			: undefined;
 
 	function clear() {
-		$idValue = "";
 		$value = "";
+		$label = "";
 		onclear();
 		open = false;
 	}
@@ -69,15 +71,15 @@
 
 <Combobox.Root
 	items={filtered}
-	bind:inputValue={$value}
+	bind:inputValue={$label}
 	bind:open
 	let:ids
 	{disabled}
 	{required}
 	onSelectedChange={(sel) => {
-		$idValue = sel?.value || "";
-		$value = sel?.label || "";
-		onselect({ selected: sel, input: $value });
+		$value = sel?.value || "";
+		$label = sel?.label || "";
+		onselect({ selected: sel, input: $label });
 	}}
 	preventScroll={false}
 	onOpenChange={() => {
@@ -112,13 +114,13 @@
 							let cValue = e.currentTarget.value;
 							if (selectedItem && selectedItem.label !== cValue) selectedItem = undefined;
 							if (!cValue) clear();
-							$value = cValue;
+							$label = cValue;
 							oninput(e.currentTarget, cValue);
 							changed = true;
 						}}
 						on:blur={() => {
 							if (!allowCustom && !selectedItem && !filtered.length) clear();
-							if (!$value) open = false;
+							if (!$label) open = false;
 						}}
 						aria-invalid={($errors || []).length ? "true" : undefined}
 						use:builder.action
@@ -128,7 +130,7 @@
 					/>
 				</Combobox.Input>
 			</label>
-			{#if (showOnEmpty || $value?.trim()) && filtered.length}
+			{#if (showOnEmpty || $label?.trim()) && filtered.length}
 				<Combobox.Content asChild let:builder>
 					<ul class="menu dropdown-content z-10 w-full rounded-lg bg-base-200 p-2 shadow" use:builder.action {...builder}>
 						{#each filtered.slice(0, 8) as item}
@@ -155,7 +157,7 @@
 				</Combobox.Content>
 			{/if}
 		</div>
-		{#if $value && clearable}
+		{#if $label && clearable}
 			<button class="btn join-item input-bordered" type="button" on:click|preventDefault={() => clear()}>
 				<Icon src="x" class="w-6" color="red" />
 			</button>
@@ -173,7 +175,7 @@
 	</div>
 	{#if name}<Combobox.HiddenInput {name} />{/if}
 	{#if $errors?.length || description}
-		<label for={field} class="label">
+		<label for={labelField} class="label">
 			{#if $errors?.length}
 				<span class="label-text-alt text-error">{$errors[0]}</span>
 			{:else}

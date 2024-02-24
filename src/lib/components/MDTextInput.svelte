@@ -9,7 +9,7 @@
 	import Markdown from "./Markdown.svelte";
 
 	export let superform: SuperForm<T>;
-	export let field: FormPathLeaves<T>;
+	export let field: FormPathLeaves<T, string>;
 	export let preview = false;
 	export let minRows: number = 3;
 	export let maxRows: number = 50;

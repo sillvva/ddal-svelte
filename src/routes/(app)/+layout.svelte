@@ -12,7 +12,7 @@
 	import Icon from "$lib/components/Icon.svelte";
 	import Markdown from "$lib/components/Markdown.svelte";
 	import Settings from "$lib/components/Settings.svelte";
-	import type { CookieStore } from "$src/server/cookie.js";
+	import { type CookieStore } from "$src/server/cookie.js";
 	import { signOut } from "@auth/sveltekit/client";
 	import { hotkey } from "@svelteuidev/composables";
 	import { Command } from "cmdk-sv";
@@ -49,6 +49,10 @@
 		{ title: "DMs", url: "/dms" }
 	];
 
+	/**
+	 * Command Palette
+	 */
+
 	const defaultSelected = sections[0].url;
 	let search = "";
 	let cmdOpen = false;
@@ -56,22 +60,9 @@
 
 	let searchData: SearchData = [];
 	$: if (!searchData.length && browser) {
-		const lsData = localStorage.getItem("searchData");
-		if (lsData) {
-			searchData = JSON.parse(lsData);
-		} else {
-			fetch(`/api/command`)
-				.then((res) => res.json())
-				.then((res) => (searchData = res))
-				.then(() => {
-					localStorage.setItem("searchData", JSON.stringify(searchData));
-				});
-		}
-	}
-
-	$: if (data.clearCache && browser) {
-		localStorage.removeItem("searchData");
-		searchData = [];
+		fetch(`/api/command`)
+			.then((res) => res.json())
+			.then((res) => (searchData = res));
 	}
 
 	$: if (!cmdOpen) {
@@ -85,14 +76,17 @@
 				...section,
 				items: section.items
 					.filter((item) => {
-						if (item.type === "character") {
+						if (item.type === "character" && search.length >= 2) {
 							if (item.magic_items.some((magicItem) => magicItem.name.toLowerCase().includes(search.toLowerCase()))) return true;
 							if (item.story_awards.some((storyAward) => storyAward.name.toLowerCase().includes(search.toLowerCase())))
 								return true;
 						}
 						return item.name.toLowerCase().includes(search.toLowerCase());
 					})
-					.sort((a, b) => a.name.localeCompare(b.name))
+					.sort((a, b) => {
+						if (a.type === "log" && b.type === "log") return new Date(b.date).getTime() - new Date(a.date).getTime();
+						return a.name.localeCompare(b.name);
+					})
 			};
 		})
 		.filter((section) => section.items.length);
@@ -328,137 +322,131 @@
 		]
 	]}
 >
-	{#if cmdOpen}
-		<div class="modal-box relative cursor-default bg-base-300 px-4 py-5 drop-shadow-lg sm:p-6">
-			<div class="modal-content">
-				<Command.Dialog
-					label="Command Menu"
-					portal={null}
-					bind:open={cmdOpen}
-					bind:value={selected}
-					class="flex flex-col gap-4"
-					loop
-				>
-					<label class="input input-bordered flex items-center gap-2">
-						<input
-							class="grow"
-							type="search"
-							bind:value={search}
-							placeholder="Search"
-							on:keydown={(e) => {
-								if (e.key === "Enter") {
-									const selectedItem = document.querySelector("li[data-selected]")?.getAttribute("data-value");
-									const firstResult = results[0]?.items[0]?.url;
-									const url = selectedItem || selected || firstResult;
-									if (url) {
-										goto(url);
-										cmdOpen = false;
-									}
+	<div class="modal-box relative cursor-default bg-base-300 px-4 py-5 drop-shadow-lg sm:p-6">
+		<div class="modal-content">
+			<Command.Dialog
+				label="Command Menu"
+				portal={null}
+				bind:open={cmdOpen}
+				bind:value={selected}
+				class="flex flex-col gap-4"
+				loop
+			>
+				<label class="input input-bordered flex items-center gap-2">
+					<input
+						class="grow"
+						type="search"
+						bind:value={search}
+						placeholder="Search"
+						on:keydown={(e) => {
+							if (e.key === "Enter") {
+								const selectedItem = document.querySelector("li[data-selected]")?.getAttribute("data-value");
+								const firstResult = results[0]?.items[0]?.url;
+								const url = selectedItem || selected || firstResult;
+								if (url) {
+									goto(url);
+									cmdOpen = false;
 								}
-							}}
-						/>
-						<Icon src="magnify" class="w-6" />
-					</label>
-					<Command.List class="flex max-h-96 flex-col gap-2 overflow-y-scroll">
-						<Command.Empty class="p-4 text-center font-bold">No results found.</Command.Empty>
+							}
+						}}
+					/>
+					<Icon src="magnify" class="w-6" />
+				</label>
+				<Command.List class="flex max-h-96 flex-col gap-2 overflow-y-scroll">
+					<Command.Empty class="p-4 text-center font-bold">No results found.</Command.Empty>
 
-						{#if !search.trim()}
-							<Command.Group asChild let:group>
-								<ul class="menu p-0" {...group.attrs}>
-									<li class="menu-title">Sections</li>
-									{#each sections as item}
-										<Command.Item asChild let:attrs value={item.url}>
-											<li {...attrs}>
-												<a href={item.url} on:click={() => (cmdOpen = false)}>
-													{item.title}
-												</a>
-											</li>
-										</Command.Item>
-									{/each}
-								</ul>
-							</Command.Group>
+					{#if !search.trim()}
+						<Command.Group asChild let:group>
+							<ul class="menu p-0" {...group.attrs}>
+								<li class="menu-title">Sections</li>
+								{#each sections as item}
+									<Command.Item asChild let:attrs value={item.url}>
+										<li {...attrs}>
+											<a href={item.url} on:click={() => (cmdOpen = false)}>
+												{item.title}
+											</a>
+										</li>
+									</Command.Item>
+								{/each}
+							</ul>
+						</Command.Group>
+					{/if}
+					{#each results as section, i}
+						{#if i > 0 || !search.trim()}
+							<div class="divider" />
 						{/if}
-						{#each results as section, i}
-							{#if i > 0 || !search.trim()}
-								<div class="divider" />
-							{/if}
-							<Command.Group asChild let:group>
-								<ul class="menu p-0" {...group.attrs}>
-									<li class="menu-title">{section.title}</li>
-									{#each section.items.slice(0, search ? 8 : 5) as item}
-										<Command.Item asChild let:attrs value={item.url}>
-											<li {...attrs} data-selected={selected === item.url ? "true" : undefined}>
-												<a href={item.url} on:click={() => (cmdOpen = false)} class="flex gap-4">
-													{#if item.type === "character"}
-														<span class="mask mask-squircle h-12 min-w-12 max-w-12 bg-primary">
-															<img
-																src={item.image_url}
-																class="size-full object-cover object-top transition-all"
-																alt={item.name}
-															/>
+						<Command.Group asChild let:group>
+							<ul class="menu p-0" {...group.attrs}>
+								<li class="menu-title">{section.title}</li>
+								{#each section.items.slice(0, search ? 8 : 5) as item}
+									<Command.Item asChild let:attrs value={item.url}>
+										<li {...attrs} data-selected={selected === item.url ? "true" : undefined}>
+											<a href={item.url} on:click={() => (cmdOpen = false)} class="flex gap-4">
+												{#if item.type === "character"}
+													<span class="mask mask-squircle h-12 min-w-12 max-w-12 bg-primary">
+														<img src={item.image_url} class="size-full object-cover object-top transition-all" alt={item.name} />
+													</span>
+													<div class="flex flex-col">
+														<span>{item.name}</span>
+														<span class="text-xs opacity-70">
+															Level {item.total_level}
+															{item.race}
+															{item.class}
 														</span>
-														<div class="flex flex-col">
-															<span>{item.name}</span>
-															<span class="text-xs opacity-70">
-																Level {item.total_level}
-																{item.race}
-																{item.class}
+														{#if search.length >= 2 && item.magic_items.some((magicItem) => magicItem.name
+																	.toLowerCase()
+																	.includes(search.toLowerCase()))}
+															<span class="flex gap-1 text-xs">
+																<span class="whitespace-nowrap font-bold">Magic Items:</span>
+																<span class="flex-1 opacity-70">
+																	{[...new Set(item.magic_items.map((item) => item.name))]
+																		.filter((item) => item.toLowerCase().includes(search.toLowerCase()))
+																		.join(", ")}
+																</span>
 															</span>
-															{#if search.length >= 2 && item.magic_items.some((magicItem) => magicItem.name
-																		.toLowerCase()
-																		.includes(search.toLowerCase()))}
-																<span class="flex gap-1 text-xs">
-																	<span class="whitespace-nowrap font-bold">Magic Items:</span>
-																	<span class="flex-1 opacity-70">
-																		{[...new Set(item.magic_items.map((item) => item.name))]
-																			.filter((item) => item.toLowerCase().includes(search.toLowerCase()))
-																			.join(", ")}
-																	</span>
+														{/if}
+														{#if search.length >= 2 && item.story_awards.some((storyAward) => storyAward.name
+																	.toLowerCase()
+																	.includes(search.toLowerCase()))}
+															<span class="flex gap-2 text-xs">
+																<span class="whitespace-nowrap font-bold">Story Awards:</span>
+																<span class="flex-1 opacity-70">
+																	{[...new Set(item.story_awards.map((item) => item.name))]
+																		.filter((item) => item.toLowerCase().includes(search.toLowerCase()))
+																		.join(", ")}
 																</span>
-															{/if}
-															{#if search.length >= 2 && item.story_awards.some((storyAward) => storyAward.name
-																		.toLowerCase()
-																		.includes(search.toLowerCase()))}
-																<span class="flex gap-2 text-xs">
-																	<span class="whitespace-nowrap font-bold">Story Awards:</span>
-																	<span class="flex-1 opacity-70">
-																		{[...new Set(item.story_awards.map((item) => item.name))]
-																			.filter((item) => item.toLowerCase().includes(search.toLowerCase()))
-																			.join(", ")}
-																	</span>
-																</span>
+															</span>
+														{/if}
+													</div>
+												{:else if item.type === "log"}
+													<div class="flex flex-col">
+														<span>{item.name}</span>
+														<div class="flex gap-2 opacity-70">
+															<span class="text-xs">{new Date(item.date).toLocaleDateString()}</span>
+															<div class="divider divider-horizontal mx-0 w-0" />
+															{#if item.character}
+																<span class="text-xs">{item.character.name}</span>
+															{:else}
+																<span class="text-xs italic">Unassigned</span>
 															{/if}
 														</div>
-													{:else if item.type === "log"}
-														<div class="flex flex-col">
-															<span>{item.name}</span>
-															<div class="flex gap-2 opacity-70">
-																<span class="text-xs">{new Date(item.date).toLocaleDateString()}</span>
-																<div class="divider divider-horizontal mx-0 w-0" />
-																{#if item.character}
-																	<span class="text-xs">{item.character.name}</span>
-																{:else}
-																	<span class="text-xs italic">Unassigned</span>
-																{/if}
-															</div>
-														</div>
-													{:else}
-														{item.name}
-													{/if}
-												</a>
-											</li>
-										</Command.Item>
-									{/each}
-								</ul>
-							</Command.Group>
-						{/each}
-					</Command.List>
-				</Command.Dialog>
-			</div>
+													</div>
+												{:else}
+													{item.name}
+												{/if}
+											</a>
+										</li>
+									</Command.Item>
+								{/each}
+							</ul>
+						</Command.Group>
+					{/each}
+				</Command.List>
+			</Command.Dialog>
 		</div>
+	</div>
 
-		<button class="modal-backdrop" on:click={() => (cmdOpen = false)}>✕</button>
-	{/if}
+	<button class="modal-backdrop" on:click={() => (cmdOpen = false)}>✕</button>
 </dialog>
 
 <style>

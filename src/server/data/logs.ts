@@ -1,4 +1,4 @@
-import { defaultDM, defaultLog } from "$lib/entities";
+import { defaultDM, defaultLogData } from "$lib/entities";
 import { prisma } from "$src/server/db";
 import type { DungeonMaster, Log, MagicItem, StoryAward } from "@prisma/client";
 import { cache } from "../cache";
@@ -21,7 +21,7 @@ export async function getLog(logId: string, userId: string, characterId = ""): P
 				story_awards_gained: true,
 				story_awards_lost: true
 			}
-		})) || defaultLog(userId, characterId);
+		})) || defaultLogData(userId, characterId);
 	return { ...log, dm: log.dm || defaultDM(userId) };
 }
 
@@ -36,7 +36,7 @@ export async function getDMLog(logId: string, userId: string): Promise<LogData> 
 				story_awards_gained: true,
 				story_awards_lost: true
 			}
-		})) || defaultLog(userId);
+		})) || defaultLogData(userId);
 	return { ...log, dm: log.dm || defaultDM(userId) };
 }
 
@@ -78,7 +78,7 @@ export async function getDMLogsCache(userId = "", userName = "") {
 	return await cache(() => getDMLogs(userId, userName), ["dm-logs", userId], 86400);
 }
 
-export async function getUserSearchLogs(userId: string) {
+export async function getUserLogs(userId: string) {
 	return prisma.log.findMany({
 		where: {
 			character: {
@@ -107,8 +107,4 @@ export async function getUserSearchLogs(userId: string) {
 			date: "desc"
 		}
 	});
-}
-
-export async function getUserSearchLogsCache(userId: string) {
-	return await cache(() => getUserSearchLogs(userId), ["search-data", userId]);
 }

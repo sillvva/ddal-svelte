@@ -30,6 +30,15 @@ export async function saveLog(input: LogSchema, user?: CustomSession["user"]): S
 					field: "applied_date"
 				});
 
+			if (isMe) {
+				const dm = await tx.dungeonMaster.findFirst({
+					where: {
+						uid: user.id
+					}
+				});
+				if (dm) input.dm = dm;
+			}
+
 			if (input.characterId) {
 				const character = await tx.character.findFirst({
 					include: {

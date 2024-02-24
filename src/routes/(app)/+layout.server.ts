@@ -14,7 +14,6 @@ export const load = async (event) => {
 	const userAgent = event.request.headers.get("user-agent");
 	const isMac = userAgent?.includes("Mac OS");
 	const clearCache = event.cookies.get("clearCache");
-	event.cookies.delete("clearCache", { path: "/" });
 
 	return {
 		accounts,

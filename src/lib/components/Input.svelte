@@ -2,21 +2,20 @@
 	type TRec = Record<string, unknown>;
 </script>
 
-<script lang="ts" generics="T extends TRec">
+<script lang="ts" generics="T extends TRec, TType extends 'text' | 'number'">
 	import type { HTMLInputAttributes } from "svelte/elements";
 	import { formFieldProxy, type FormPathLeaves, type SuperForm } from "sveltekit-superforms";
 
-	type InputType = "text" | "number";
 	interface $$Props extends HTMLInputAttributes {
 		superform: SuperForm<T>;
-		field: FormPathLeaves<T>;
-		type: InputType;
+		field: FormPathLeaves<T, TType extends 'text' ? string : TType extends 'number' ? number : never>;
+		type: TType;
 		oninput?: (value: typeof $value) => void;
 	}
 
 	export let superform: SuperForm<T>;
 	export let field: FormPathLeaves<T>;
-	export let type: InputType = "text";
+	export let type: TType;
 	export let description = "";
 	export let oninput = (value: typeof $value) => {};
 

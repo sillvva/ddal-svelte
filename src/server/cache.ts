@@ -1,7 +1,36 @@
 import { REDIS_URL } from "$env/static/private";
 import { Redis } from "ioredis";
 
-const redis = new Redis(REDIS_URL);
+let redis: Redis;
+let status = "";
+function connect() {
+	if (["ready", "connect", "connecting", "reconnecting"].includes(status)) return;
+	status = "connecting";
+	try {
+		redis = new Redis(REDIS_URL, {
+			retryStrategy: function (times) {
+				status = redis.status || "";
+				const delay = Math.min(times * 2000, 10000);
+				if (times >= 10) return;
+				return delay;
+			}
+		});
+	} catch (e) {
+		console.error("Redis connection failed:", e);
+	}
+}
+
+connect();
+
+async function readyCheck<T>(callback: () => Promise<T>) {
+	status = redis?.status || "";
+	if (!redis || !["ready"].includes(status)) {
+		console.log("Redis status:", status);
+		connect();
+		return await callback();
+	}
+	return;
+}
 
 /**
  * A cache key as an array of strings with at least one element.
@@ -17,29 +46,27 @@ export type CacheKey = [string, ...string[]];
  * @returns The cached result of the callback function.
  */
 export async function cache<TReturnType>(callback: () => Promise<TReturnType>, key: CacheKey, expires = 3 * 86400) {
-	try {
-		const rkey = key.join("|");
-		const currentTime = Date.now();
+	const check = await readyCheck(async () => await callback());
+	if (check) return check;
 
-		// Get the cache from Redis
-		const cache = JSON.parse((await redis.get(rkey)) || "null") as { data: TReturnType; timestamp: number } | null;
+	const rkey = key.join("|");
+	const currentTime = Date.now();
 
-		if (cache) {
-			// Update the timestamp and reset the cache expiration
-			cache.timestamp = currentTime;
-			redis.setex(rkey, expires, JSON.stringify(cache));
+	// Get the cache from Redis
+	const cache = JSON.parse((await redis.get(rkey)) || "null") as { data: TReturnType; timestamp: number } | null;
 
-			return cache.data;
-		}
+	if (cache) {
+		// Update the timestamp and reset the cache expiration
+		cache.timestamp = currentTime;
+		redis.setex(rkey, expires, JSON.stringify(cache));
 
-		// Call the callback function and cache the result
-		const result = await callback();
-		redis.setex(rkey, expires, JSON.stringify({ data: result, timestamp: currentTime }));
-		return result;
-	} catch (e) {
-		console.error(e);
-		return await callback();
+		return cache.data;
 	}
+
+	// Call the callback function and cache the result
+	const result = await callback();
+	redis.setex(rkey, expires, JSON.stringify({ data: result, timestamp: currentTime }));
+	return result;
 }
 
 /**
@@ -55,6 +82,9 @@ export async function mcache<TReturnType extends object>(
 	keys: CacheKey[],
 	expires = 3 * 86400
 ) {
+	const check = await readyCheck(() => callback(keys, []).then((t) => t.map((t) => t.value)));
+	if (check) return check;
+
 	const joinedKeys = keys.map((t) => t.join("|"));
 
 	// Get the caches from Redis
@@ -112,7 +142,8 @@ export async function mcache<TReturnType extends object>(
  * @param [keys] The cache keys as an array of arrays of strings. Empty strings, false, null, and undefined are ignored.
  */
 export function revalidateKeys(keys: Array<CacheKey | "" | false | null | undefined>) {
+	if (!redis || !["ready"].includes(redis.status)) return connect();
+
 	const cacheKeys = keys.filter((t) => Array.isArray(t) && t.length).map((t) => (t as string[]).join("|"));
-	// console.log(cacheKeys);
 	if (cacheKeys.length) redis.del(...cacheKeys);
 }
