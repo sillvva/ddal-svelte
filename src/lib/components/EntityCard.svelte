@@ -18,12 +18,12 @@
 	} & (
 		| {
 				type: "add";
-				nameField: FormPathLeaves<T>;
-				descField: FormPathLeaves<T>;
+				nameField: FormPathLeaves<T, string>;
+				descField: FormPathLeaves<T, string>;
 		  }
 		| {
 				type: "drop";
-				lostField: FormPathLeaves<T>;
+				lostField: FormPathLeaves<T, string>;
 				arrValue: string[];
 				data: { id: string; name: string; description: string | null }[];
 		  }
@@ -32,9 +32,9 @@
 	export let type: "add" | "drop";
 	export let entity: "magic_items" | "story_awards";
 	export let superform: SuperForm<T, any>;
-	export let nameField: FormPathLeaves<T> | undefined = undefined;
-	export let descField: FormPathLeaves<T> | undefined = undefined;
-	export let lostField: FormPathLeaves<T> | undefined = undefined;
+	export let nameField: FormPathLeaves<T, string> | undefined = undefined;
+	export let descField: FormPathLeaves<T, string> | undefined = undefined;
+	export let lostField: FormPathLeaves<T, string> | undefined = undefined;
 	export let arrValue: string[] = [];
 	export let data: { id: string; name: string; description: string | null }[] = [];
 	export let ondelete: () => void;
