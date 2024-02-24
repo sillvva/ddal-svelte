@@ -15,7 +15,6 @@ import {
 	minValue,
 	null_,
 	nullable,
-	nullish,
 	number,
 	object,
 	optional,
@@ -76,7 +75,7 @@ const itemSchema = object({
 export type LogSchema = Output<typeof logSchema>;
 export type LogSchemaIn = Input<typeof logSchema>;
 export const logSchema = object({
-	id: nullish(string(), ""),
+	id: optional(string(), ""),
 	name: string([minLength(1)]),
 	date: date(),
 	characterId: optional(string(), ""),
@@ -94,7 +93,7 @@ export const logSchema = object({
 		name: optional(string(), "")
 	}),
 	is_dm_log: optional(boolean(), false),
-	applied_date: nullable(union([date(), null_()]), null),
+	applied_date: nullable(date()),
 	magic_items_gained: optional(array(itemSchema), []),
 	magic_items_lost: optional(array(string([minLength(1)])), []),
 	story_awards_gained: optional(array(itemSchema), []),
