@@ -71,7 +71,22 @@
 		selected = defaultSelected;
 	}
 
-	$: results = searchData
+	$: results = [
+		{
+			title: "Sections",
+			items: sections
+				.filter(() => !search.trim())
+				.map(
+					(section) =>
+						({
+							type: "section",
+							name: section.title,
+							url: section.url
+						}) as const
+				)
+		},
+		...searchData
+	]
 		?.map((section) => {
 			return {
 				...section,
@@ -335,12 +350,12 @@
 						}}
 						on:keydown={(e) => {
 							if (e.key === "Enter") {
-								const selectedItem = document.querySelector("li[data-selected]")?.getAttribute("data-value");
-								const firstResult = results[0]?.items[0]?.url;
-								const url = selectedItem || selected || firstResult;
-								if (url) {
-									goto(url);
+								if (selected) {
+									goto(selected);
 									cmdOpen = false;
+								} else {
+									selected = results[0]?.items[0]?.url;
+									resultsPane.scrollTop = 0;
 								}
 							}
 						}}
@@ -350,28 +365,8 @@
 				<Command.List class="flex max-h-96 flex-col gap-2 overflow-y-scroll" bind:el={resultsPane}>
 					<Command.Empty class="p-4 text-center font-bold">No results found.</Command.Empty>
 
-					{#if !search.trim()}
-						<Command.Group asChild let:group>
-							<ul class="menu p-0" {...group.attrs}>
-								<li class="menu-title">Sections</li>
-								{#each sections as item}
-									<Command.Item asChild let:attrs value={item.url}>
-										<li
-											{...attrs}
-											data-selected={selected === item.url ? "true" : undefined}
-											class:selected={selected === item.url}
-										>
-											<a href={item.url} on:click={() => (cmdOpen = false)} class="[.selected>&]:bg-neutral-500/40">
-												{item.title}
-											</a>
-										</li>
-									</Command.Item>
-								{/each}
-							</ul>
-						</Command.Group>
-					{/if}
 					{#each results as section, i}
-						{#if i > 0 || !search.trim()}
+						{#if i > 0}
 							<div class="divider" />
 						{/if}
 						<Command.Group asChild let:group>
