@@ -68,7 +68,7 @@
 				open = false;
 				return async ({ update }) => {
 					await update();
-					$pageLoader = false;
+					window.location.reload();
 				};
 			}}
 		>
