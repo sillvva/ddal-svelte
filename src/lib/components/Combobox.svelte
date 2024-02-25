@@ -32,9 +32,7 @@
 	let changed = false;
 
 	const { constraints } = formFieldProxy(superform, labelField);
-	// @ts-expect-error - This is a valid check
 	const value = stringProxy(superform, valueField, { empty: "undefined" });
-	// @ts-expect-error - This is a valid check
 	const label = stringProxy(superform, labelField, { empty: "undefined" });
 	const { errors } = formFieldProxy(superform, errorField);
 

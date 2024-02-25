@@ -110,8 +110,8 @@ devDependencies:
     specifier: ^2.1.1
     version: 2.1.1(@sveltejs/kit@2.5.1)(svelte@4.2.12)
   sveltekit-superforms:
-    specifier: 2.6.1
-    version: 2.6.1(@sveltejs/kit@2.5.1)(@types/json-schema@7.0.15)(esbuild-runner@2.2.2)(esbuild@0.20.1)(svelte@4.2.12)
+    specifier: 2.6.2
+    version: 2.6.2(@sveltejs/kit@2.5.1)(@types/json-schema@7.0.15)(esbuild-runner@2.2.2)(esbuild@0.20.1)(svelte@4.2.12)
   sveltekit-view-transition:
     specifier: ^0.5.3
     version: 0.5.3(@sveltejs/kit@2.5.1)(svelte@4.2.12)
@@ -3312,8 +3312,8 @@ packages:
       svelte: 4.2.12
     dev: true
 
-  /sveltekit-superforms@2.6.1(@sveltejs/kit@2.5.1)(@types/json-schema@7.0.15)(esbuild-runner@2.2.2)(esbuild@0.20.1)(svelte@4.2.12):
-    resolution: {integrity: sha512-ZJkW4Q+wDUYu+iX6XxLA9A1Sa2M5SqCGkum/Tz5xG5yAVFUumrrcxDetLApgiEAXzTme8v+Uh/eAwiYWFP4Buw==}
+  /sveltekit-superforms@2.6.2(@sveltejs/kit@2.5.1)(@types/json-schema@7.0.15)(esbuild-runner@2.2.2)(esbuild@0.20.1)(svelte@4.2.12):
+    resolution: {integrity: sha512-a2dlCO5v+AiDJjEmVlUfEec4Spx/2VC5lp6yEh97sKsIQsNY63lwL8Uh9PmgzOGerDchUwlB008nAZJJf9PDng==}
     requiresBuild: true
     peerDependencies:
       '@sveltejs/kit': 1.x || 2.x

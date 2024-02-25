@@ -57,6 +57,7 @@
 	let search = "";
 	let cmdOpen = false;
 	let selected = defaultSelected;
+	let resultsPane: HTMLElement;
 
 	let searchData: SearchData = [];
 	$: if (!searchData.length && browser) {
@@ -70,7 +71,22 @@
 		selected = defaultSelected;
 	}
 
-	$: results = searchData
+	$: results = [
+		{
+			title: "Sections",
+			items: sections
+				.filter(() => !search.trim())
+				.map(
+					(section) =>
+						({
+							type: "section",
+							name: section.title,
+							url: section.url
+						}) as const
+				)
+		},
+		...searchData
+	]
 		?.map((section) => {
 			return {
 				...section,
@@ -87,22 +103,10 @@
 						if (a.type === "log" && b.type === "log") return new Date(b.date).getTime() - new Date(a.date).getTime();
 						return a.name.localeCompare(b.name);
 					})
+					.slice(0, search ? 1000 : 5)
 			};
 		})
 		.filter((section) => section.items.length);
-
-	$: if (search) {
-		const selectedResult = results
-			.find((section) => section.items.some((item) => item.url === selected))
-			?.items.find((item) => item.url === selected)?.url;
-		const firstResult = results[0]?.items[0]?.url;
-		if (!selectedResult && firstResult) {
-			selected = firstResult;
-		}
-	}
-	$: if (!search) {
-		selected = defaultSelected;
-	}
 </script>
 
 <svelte:head>
@@ -338,50 +342,44 @@
 						type="search"
 						bind:value={search}
 						placeholder="Search"
+						on:input={() => {
+							const firstResult = results[0]?.items[0]?.url;
+							if (search) selected = firstResult;
+							else selected = defaultSelected;
+							resultsPane.scrollTop = 0;
+						}}
 						on:keydown={(e) => {
 							if (e.key === "Enter") {
-								const selectedItem = document.querySelector("li[data-selected]")?.getAttribute("data-value");
-								const firstResult = results[0]?.items[0]?.url;
-								const url = selectedItem || selected || firstResult;
-								if (url) {
-									goto(url);
+								if (selected) {
+									goto(selected);
 									cmdOpen = false;
+								} else {
+									selected = results[0]?.items[0]?.url;
+									resultsPane.scrollTop = 0;
 								}
 							}
 						}}
 					/>
 					<Icon src="magnify" class="w-6" />
 				</label>
-				<Command.List class="flex max-h-96 flex-col gap-2 overflow-y-scroll">
+				<Command.List class="flex max-h-96 flex-col gap-2 overflow-y-scroll" bind:el={resultsPane}>
 					<Command.Empty class="p-4 text-center font-bold">No results found.</Command.Empty>
 
-					{#if !search.trim()}
-						<Command.Group asChild let:group>
-							<ul class="menu p-0" {...group.attrs}>
-								<li class="menu-title">Sections</li>
-								{#each sections as item}
-									<Command.Item asChild let:attrs value={item.url}>
-										<li {...attrs}>
-											<a href={item.url} on:click={() => (cmdOpen = false)}>
-												{item.title}
-											</a>
-										</li>
-									</Command.Item>
-								{/each}
-							</ul>
-						</Command.Group>
-					{/if}
 					{#each results as section, i}
-						{#if i > 0 || !search.trim()}
+						{#if i > 0}
 							<div class="divider" />
 						{/if}
 						<Command.Group asChild let:group>
 							<ul class="menu p-0" {...group.attrs}>
 								<li class="menu-title">{section.title}</li>
-								{#each section.items.slice(0, search ? 8 : 5) as item}
+								{#each section.items as item}
 									<Command.Item asChild let:attrs value={item.url}>
-										<li {...attrs} data-selected={selected === item.url ? "true" : undefined}>
-											<a href={item.url} on:click={() => (cmdOpen = false)} class="flex gap-4">
+										<li
+											{...attrs}
+											data-selected={selected === item.url ? "true" : undefined}
+											class:selected={selected === item.url}
+										>
+											<a href={item.url} on:click={() => (cmdOpen = false)} class="flex gap-4 [.selected>&]:bg-neutral-500/40">
 												{#if item.type === "character"}
 													<span class="mask mask-squircle h-12 min-w-12 max-w-12 bg-primary">
 														<img src={item.image_url} class="size-full object-cover object-top transition-all" alt={item.name} />
@@ -448,10 +446,3 @@
 
 	<button class="modal-backdrop" on:click={() => (cmdOpen = false)}>✕</button>
 </dialog>
-
-<style>
-	.menu li[data-selected] a {
-		--tw-bg-opacity: 0.5;
-		background-color: rgb(115 115 115 / var(--tw-bg-opacity));
-	}
-</style>

@@ -3,7 +3,6 @@
 	import BreadCrumbs from "$lib/components/BreadCrumbs.svelte";
 	import Combobox from "$lib/components/Combobox.svelte";
 	import Control from "$lib/components/Control.svelte";
-	import DateInput from "$lib/components/DateInput.svelte";
 	import GenericInput from "$lib/components/GenericInput.svelte";
 	import Input from "$lib/components/Input.svelte";
 	import MdTextInput from "$lib/components/MDTextInput.svelte";
@@ -44,7 +43,7 @@
 			<Input type="text" {superform} field="name">Title</Input>
 		</Control>
 		<Control class="col-span-12 sm:col-span-4">
-			<DateInput {superform} field="date">Date</DateInput>
+			<Input type="date" {superform} field="date">Date</Input>
 		</Control>
 		{#if $form.type === "game"}
 			<Control class="col-span-12 sm:col-span-6">

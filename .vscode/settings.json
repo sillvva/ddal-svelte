@@ -1,8 +1,4 @@
 {
 	"editor.formatOnSave": true,
-	"editor.formatOnPaste": true,
-	"explorer.sortOrder": "filesFirst",
-	"[typescript]": {
-		"editor.wordWrap": "on"
-	}
+	"editor.formatOnPaste": true
 }
