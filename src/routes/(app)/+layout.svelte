@@ -361,8 +361,12 @@
 								<li class="menu-title">Sections</li>
 								{#each sections as item}
 									<Command.Item asChild let:attrs value={item.url}>
-										<li {...attrs}>
-											<a href={item.url} on:click={() => (cmdOpen = false)}>
+										<li
+											{...attrs}
+											data-selected={selected === item.url ? "true" : undefined}
+											class:selected={selected === item.url}
+										>
+											<a href={item.url} on:click={() => (cmdOpen = false)} class="[.selected>&]:bg-neutral-500/40">
 												{item.title}
 											</a>
 										</li>
@@ -380,8 +384,12 @@
 								<li class="menu-title">{section.title}</li>
 								{#each section.items.slice(0, search ? 8 : 5) as item}
 									<Command.Item asChild let:attrs value={item.url}>
-										<li {...attrs} data-selected={selected === item.url ? "true" : undefined}>
-											<a href={item.url} on:click={() => (cmdOpen = false)} class="flex gap-4">
+										<li
+											{...attrs}
+											data-selected={selected === item.url ? "true" : undefined}
+											class:selected={selected === item.url}
+										>
+											<a href={item.url} on:click={() => (cmdOpen = false)} class="flex gap-4 [.selected>&]:bg-neutral-500/40">
 												{#if item.type === "character"}
 													<span class="mask mask-squircle h-12 min-w-12 max-w-12 bg-primary">
 														<img src={item.image_url} class="size-full object-cover object-top transition-all" alt={item.name} />
@@ -448,10 +456,3 @@
 
 	<button class="modal-backdrop" on:click={() => (cmdOpen = false)}>✕</button>
 </dialog>
-
-<style>
-	.menu li[data-selected] a {
-		--tw-bg-opacity: 0.5;
-		background-color: rgb(115 115 115 / var(--tw-bg-opacity));
-	}
-</style>
