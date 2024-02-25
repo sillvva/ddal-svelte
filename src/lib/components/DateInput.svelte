@@ -8,17 +8,17 @@
 
 	interface $$Props extends HTMLInputAttributes {
 		superform: SuperForm<T, any>;
-		field: FormPathLeaves<T>;
+		field: FormPathLeaves<T, Date>;
 		empty?: "null" | "undefined";
-		minField?: FormPathLeaves<T>;
-		maxField?: FormPathLeaves<T>;
+		minField?: FormPathLeaves<T, Date>;
+		maxField?: FormPathLeaves<T, Date>;
 	}
 
 	export let superform: SuperForm<T, any>;
-	export let field: FormPathLeaves<T>;
+	export let field: FormPathLeaves<T, Date>;
 	export let empty: "null" | "undefined" = "null";
-	export let minField: FormPathLeaves<T> | undefined = undefined;
-	export let maxField: FormPathLeaves<T> | undefined = undefined;
+	export let minField: FormPathLeaves<T, Date> | undefined = undefined;
+	export let maxField: FormPathLeaves<T, Date> | undefined = undefined;
 	export let description = "";
 
 	const proxyDate = dateProxy(superform, field, { format: "datetime-local", empty });
