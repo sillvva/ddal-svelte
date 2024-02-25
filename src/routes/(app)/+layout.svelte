@@ -61,7 +61,7 @@
 	let resultsPane: HTMLElement;
 
 	let searchData: SearchData = [];
-	$: if (!searchData.length && browser) {
+	$: if (!searchData.length && browser && cmdOpen) {
 		fetch(`/api/command`)
 			.then((res) => res.json())
 			.then((res) => (searchData = res));
@@ -454,6 +454,10 @@
 							</ul>
 						</Command.Group>
 					{/each}
+
+					{#if !searchData.length}
+						<div class="p-4 text-center font-bold">Loading data...</div>
+					{/if}
 				</Command.List>
 			</Command.Dialog>
 		</div>
