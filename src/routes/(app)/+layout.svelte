@@ -57,6 +57,7 @@
 	let search = "";
 	let cmdOpen = false;
 	let selected = defaultSelected;
+	let resultsPane: HTMLElement;
 
 	let searchData: SearchData = [];
 	$: if (!searchData.length && browser) {
@@ -87,22 +88,10 @@
 						if (a.type === "log" && b.type === "log") return new Date(b.date).getTime() - new Date(a.date).getTime();
 						return a.name.localeCompare(b.name);
 					})
+					.slice(0, search ? 1000 : 5)
 			};
 		})
 		.filter((section) => section.items.length);
-
-	$: if (search) {
-		const selectedResult = results
-			.find((section) => section.items.some((item) => item.url === selected))
-			?.items.find((item) => item.url === selected)?.url;
-		const firstResult = results[0]?.items[0]?.url;
-		if (!selectedResult && firstResult) {
-			selected = firstResult;
-		}
-	}
-	$: if (!search) {
-		selected = defaultSelected;
-	}
 </script>
 
 <svelte:head>
@@ -338,6 +327,12 @@
 						type="search"
 						bind:value={search}
 						placeholder="Search"
+						on:input={() => {
+							const firstResult = results[0]?.items[0]?.url;
+							if (search) selected = firstResult;
+							else selected = defaultSelected;
+							resultsPane.scrollTop = 0;
+						}}
 						on:keydown={(e) => {
 							if (e.key === "Enter") {
 								const selectedItem = document.querySelector("li[data-selected]")?.getAttribute("data-value");
@@ -352,7 +347,7 @@
 					/>
 					<Icon src="magnify" class="w-6" />
 				</label>
-				<Command.List class="flex max-h-96 flex-col gap-2 overflow-y-scroll">
+				<Command.List class="flex max-h-96 flex-col gap-2 overflow-y-scroll" bind:el={resultsPane}>
 					<Command.Empty class="p-4 text-center font-bold">No results found.</Command.Empty>
 
 					{#if !search.trim()}
@@ -382,7 +377,7 @@
 						<Command.Group asChild let:group>
 							<ul class="menu p-0" {...group.attrs}>
 								<li class="menu-title">{section.title}</li>
-								{#each section.items.slice(0, search ? 8 : 5) as item}
+								{#each section.items as item}
 									<Command.Item asChild let:attrs value={item.url}>
 										<li
 											{...attrs}
