@@ -1,6 +1,7 @@
 import type { CharacterData } from "$src/server/data/characters";
 import type { NumericRange } from "@sveltejs/kit";
-import type { FormPathLeaves } from "sveltekit-superforms";
+import { superForm, type FormOptions, type FormPathLeaves, type SuperValidated } from "sveltekit-superforms";
+import { valibotClient } from "sveltekit-superforms/adapters";
 import {
 	array,
 	boolean,
@@ -24,6 +25,7 @@ import {
 	union,
 	url,
 	value,
+	type BaseSchema,
 	type Input,
 	type Output
 } from "valibot";
@@ -47,6 +49,19 @@ export const envSchemaPrivate = (env: Record<string, string>) =>
 export const envSchemaPublic = object({
 	PUBLIC_URL: string([url()])
 });
+
+export function valibotForm<S extends BaseSchema, Out extends Output<S>, In extends Input<S>>(
+	form: SuperValidated<Out, App.Superforms.Message, In>,
+	schema: S,
+	options?: FormOptions<Out, App.Superforms.Message, In>
+) {
+	return superForm(form, {
+		dataType: "json",
+		validators: valibotClient(schema),
+		taintedMessage: "You have unsaved changes. Are you sure you want to leave?",
+		...options
+	});
+}
 
 export type DungeonMasterSchema = Output<typeof dungeonMasterSchema>;
 export type DungeonMasterSchemaIn = Input<typeof dungeonMasterSchema>;

@@ -8,18 +8,11 @@
 	import MdTextInput from "$lib/components/MDTextInput.svelte";
 	import Submit from "$lib/components/Submit.svelte";
 	import SuperForm from "$lib/components/SuperForm.svelte";
-	import { logSchema } from "$lib/schemas";
-	import { superForm } from "sveltekit-superforms";
-	import { valibotClient } from "sveltekit-superforms/adapters";
+	import { logSchema, valibotForm } from "$lib/schemas";
 
 	export let data;
 
-	$: superform = superForm(data.form, {
-		dataType: "json",
-		validators: valibotClient(logSchema),
-		taintedMessage: "You have unsaved changes. Are you sure you want to leave?"
-	});
-
+	$: superform = valibotForm(data.form, logSchema);
 	$: form = superform.form;
 
 	let season: 1 | 8 | 9 = 9;

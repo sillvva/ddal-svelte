@@ -5,18 +5,13 @@
 	import Input from "$lib/components/Input.svelte";
 	import Submit from "$lib/components/Submit.svelte";
 	import SuperForm from "$lib/components/SuperForm.svelte";
-	import { dungeonMasterSchema } from "$lib/schemas";
+	import { dungeonMasterSchema, valibotForm } from "$lib/schemas";
 	import { sorter } from "$lib/util";
-	import { superForm } from "sveltekit-superforms";
-	import { valibotClient } from "sveltekit-superforms/adapters";
 	import { pageLoader } from "../../+layout.svelte";
 
 	export let data;
 
-	$: superform = superForm(data.form, {
-		dataType: "json",
-		validators: valibotClient(dungeonMasterSchema),
-		taintedMessage: "You have unsaved changes. Are you sure you want to leave?",
+	$: superform = valibotForm(data.form, dungeonMasterSchema, {
 		resetForm: false
 	});
 </script>
@@ -24,7 +19,7 @@
 <div class="flex flex-col gap-4">
 	<BreadCrumbs />
 
-	<SuperForm action="?/saveDM" {superform} showMessage>
+	<SuperForm action="?/saveDM" {superform}>
 		<Control class="col-span-12 sm:col-span-6">
 			<Input type="text" {superform} field="name" disabled={data.form.data.uid === data.user.id ? true : undefined}>
 				DM Name
