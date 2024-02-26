@@ -76,7 +76,7 @@
 				return async ({ update }) => {
 					await update();
 					toggleDrawer(false);
-					$pageLoader = false;
+					window.location.reload();
 				};
 			}}
 		>

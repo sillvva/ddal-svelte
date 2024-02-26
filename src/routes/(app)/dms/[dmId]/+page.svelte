@@ -7,7 +7,7 @@
 	import SuperForm from "$lib/components/SuperForm.svelte";
 	import { dungeonMasterSchema, valibotForm } from "$lib/schemas";
 	import { sorter } from "$lib/util";
-	import { pageLoader } from "../../+layout.svelte";
+	import { pageLoader, searchData } from "../../+layout.svelte";
 
 	export let data;
 
@@ -48,6 +48,8 @@
 								if ("data" in result && result.data?.message) {
 									alert(result.data.message);
 									$pageLoader = false;
+								} else {
+									$searchData = [];
 								}
 							};
 						}}

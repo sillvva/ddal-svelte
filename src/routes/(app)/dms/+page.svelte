@@ -8,6 +8,7 @@
 	import { sorter, stopWords } from "$lib/util";
 	import MiniSearch from "minisearch";
 	import { twMerge } from "tailwind-merge";
+	import { searchData } from "../+layout.svelte";
 
 	export let data;
 
@@ -115,6 +116,8 @@
 															if ($page.form?.message) {
 																alert($page.form.message);
 																deletingDM = deletingDM.filter((id) => id !== dm.id);
+															} else {
+																$searchData = [];
 															}
 														};
 													}}

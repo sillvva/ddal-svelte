@@ -1,3 +1,4 @@
+import { searchData } from "$src/routes/(app)/+layout.svelte";
 import type { CharacterData } from "$src/server/data/characters";
 import type { NumericRange } from "@sveltejs/kit";
 import { superForm, type FormOptions, type FormPathLeaves, type SuperValidated } from "sveltekit-superforms";
@@ -59,7 +60,11 @@ export function valibotForm<S extends BaseSchema, Out extends Output<S>, In exte
 		dataType: "json",
 		validators: valibotClient(schema),
 		taintedMessage: "You have unsaved changes. Are you sure you want to leave?",
-		...options
+		...options,
+		onResult({ result, ...rest }) {
+			if (["success", "redirect"].includes(result.type)) searchData.set([]);
+			if (options && options.onResult) options.onResult({ result, ...rest });
+		}
 	});
 }
 

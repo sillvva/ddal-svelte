@@ -14,6 +14,7 @@
 	import MiniSearch from "minisearch";
 	import { getContext } from "svelte";
 	import { twMerge } from "tailwind-merge";
+	import { searchData } from "../+layout.svelte";
 
 	export let data;
 	export let form;
@@ -313,6 +314,8 @@
 													if (form?.error) {
 														deletingLog = deletingLog.filter((id) => id !== log.id);
 														alert(form.error);
+													} else {
+														$searchData = [];
 													}
 												};
 											}}

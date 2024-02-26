@@ -1,6 +1,7 @@
 <script lang="ts" context="module">
 	import { writable } from "svelte/store";
 	export const pageLoader = writable(false);
+	export let searchData = writable<SearchData>([]);
 </script>
 
 <script lang="ts">
@@ -60,8 +61,7 @@
 	let selected = defaultSelected;
 	let resultsPane: HTMLElement;
 
-	let searchData: SearchData = [];
-	$: if (!searchData.length && browser && cmdOpen) {
+	$: if (!$searchData.length && browser && cmdOpen) {
 		fetch(`/api/command`)
 			.then((res) => res.json())
 			.then((res) => (searchData = res));
@@ -90,7 +90,7 @@
 						}) as const
 				)
 		},
-		...searchData
+		...$searchData
 	]
 		?.map((section) => {
 			return {
@@ -372,7 +372,7 @@
 				<Command.List class="flex max-h-96 flex-col gap-2 overflow-y-scroll" bind:el={resultsPane}>
 					<Command.Empty class="p-4 text-center font-bold">No results found.</Command.Empty>
 
-					{#if !searchData.length}
+					{#if !$searchData.length}
 						<div class="p-4 text-center font-bold">Loading data...</div>
 					{:else}
 						{#each results as section, i}
