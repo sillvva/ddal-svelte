@@ -22,19 +22,6 @@ async function getData(user: NonNullable<LocalsSession["user"]>) {
 			)
 		},
 		{
-			title: "Logs",
-			items: await getUserLogs(user.id).then((logs) =>
-				logs.map(
-					(log) =>
-						({
-							...log,
-							type: "log",
-							url: log.is_dm_log ? `/dm-logs/${log.id}` : `/characters/${log.character?.id}/log/${log.id}`
-						}) as const
-				)
-			)
-		},
-		{
 			title: "DMs",
 			items: await getUserDMs(user).then((dms) =>
 				dms.map(
@@ -43,6 +30,19 @@ async function getData(user: NonNullable<LocalsSession["user"]>) {
 							...dm,
 							type: "dm",
 							url: `/dms/${dm.id}`
+						}) as const
+				)
+			)
+		},
+		{
+			title: "Logs",
+			items: await getUserLogs(user.id).then((logs) =>
+				logs.map(
+					(log) =>
+						({
+							...log,
+							type: "log",
+							url: log.is_dm_log ? `/dm-logs/${log.id}` : `/characters/${log.character?.id}/log/${log.id}`
 						}) as const
 				)
 			)

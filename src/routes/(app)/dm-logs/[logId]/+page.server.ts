@@ -2,7 +2,6 @@ import { defaultLogData, logDataToSchema } from "$lib/entities.js";
 import { dMLogSchema } from "$lib/schemas";
 import { saveLog } from "$src/server/actions/logs";
 import { signInRedirect } from "$src/server/auth";
-import { serverSetCookie } from "$src/server/cookie.js";
 import { getCharacterCaches, getCharactersCache } from "$src/server/data/characters";
 import { getDMLog, getLog } from "$src/server/data/logs";
 import { error, fail, redirect } from "@sveltejs/kit";
@@ -66,8 +65,6 @@ export const actions = {
 
 		const form = await superValidate(event, valibot(dMLogSchema(characters)));
 		if (!form.valid) return fail(400, { form });
-
-		serverSetCookie(event.cookies, "clearCache", "true");
 
 		const result = await saveLog(form.data, session.user);
 		if ("id" in result) redirect(302, `/dm-logs/`);

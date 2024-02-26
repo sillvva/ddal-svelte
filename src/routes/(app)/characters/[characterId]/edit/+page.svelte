@@ -4,17 +4,11 @@
 	import Input from "$lib/components/Input.svelte";
 	import Submit from "$lib/components/Submit.svelte";
 	import SuperForm from "$lib/components/SuperForm.svelte";
-	import { newCharacterSchema } from "$lib/schemas";
-	import { superForm } from "sveltekit-superforms";
-	import { valibotClient } from "sveltekit-superforms/adapters";
+	import { newCharacterSchema, valibotForm } from "$lib/schemas";
 
 	export let data;
 
-	$: superform = superForm(data.form, {
-		dataType: "json",
-		validators: valibotClient(newCharacterSchema),
-		taintedMessage: "You have unsaved changes. Are you sure you want to leave?"
-	});
+	$: superform = valibotForm(data.form, newCharacterSchema);
 </script>
 
 <BreadCrumbs />

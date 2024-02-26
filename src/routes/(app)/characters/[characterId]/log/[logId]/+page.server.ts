@@ -3,7 +3,6 @@ import { characterLogSchema } from "$lib/schemas";
 import { sorter } from "$lib/util.js";
 import { saveLog } from "$src/server/actions/logs.js";
 import { signInRedirect } from "$src/server/auth.js";
-import { serverSetCookie } from "$src/server/cookie.js";
 import { getCharacterCache } from "$src/server/data/characters";
 import { getUserDMsCache } from "$src/server/data/dms";
 import { getLog } from "$src/server/data/logs";
@@ -67,8 +66,6 @@ export const actions = {
 
 		const form = await superValidate(event, valibot(characterLogSchema(character)));
 		if (!form.valid) return fail(400, { form });
-
-		serverSetCookie(event.cookies, "clearCache", "true");
 
 		const result = await saveLog(form.data, session.user);
 		if ("id" in result) redirect(302, `/characters/${character.id}`);

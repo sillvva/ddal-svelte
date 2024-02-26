@@ -11,7 +11,7 @@
 	import SearchResults from "$lib/components/SearchResults.svelte";
 	import type { TransitionAction } from "$lib/util";
 	import { createTransition, slugify, sorter, stopWords } from "$lib/util";
-	import { pageLoader } from "$src/routes/(app)/+layout.svelte";
+	import { pageLoader, searchData } from "$src/routes/(app)/+layout.svelte";
 	import type { CookieStore } from "$src/server/cookie.js";
 	import { download, hotkey } from "@svelteuidev/composables";
 	import MiniSearch from "minisearch";
@@ -145,6 +145,7 @@
 									$pageLoader = true;
 									return ({ update, result }) => {
 										update();
+										$searchData = [];
 										if (result.type !== "redirect") $pageLoader = false;
 									};
 								}}
@@ -192,6 +193,7 @@
 									$pageLoader = true;
 									return ({ update, result }) => {
 										update();
+										$searchData = [];
 										if (result.type !== "redirect") $pageLoader = false;
 									};
 								}}
@@ -560,6 +562,8 @@
 												if (form?.error) {
 													deletingLog = deletingLog.filter((id) => id !== log.id);
 													alert(form.error);
+												} else {
+													$searchData = [];
 												}
 											};
 										}}
