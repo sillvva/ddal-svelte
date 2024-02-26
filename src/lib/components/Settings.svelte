@@ -3,7 +3,7 @@
 	import { enhance } from "$app/forms";
 	import { page } from "$app/stores";
 	import { PROVIDERS } from "$lib/constants";
-	import { pageLoader } from "$src/routes/(app)/+layout.svelte";
+	import { pageLoader, searchData } from "$src/routes/(app)/+layout.svelte";
 	import type { CookieStore } from "$src/server/cookie";
 	import { signIn } from "@auth/sveltekit/client";
 	import type { Account } from "@prisma/client";
@@ -68,7 +68,8 @@
 				open = false;
 				return async ({ update }) => {
 					await update();
-					window.location.reload();
+					$searchData = [];
+					$pageLoader = false;
 				};
 			}}
 		>

@@ -1,7 +1,7 @@
 <script lang="ts">
 	import { enhance } from "$app/forms";
 	import { page } from "$app/stores";
-	import { pageLoader } from "$src/routes/(app)/+layout.svelte";
+	import { pageLoader, searchData } from "$src/routes/(app)/+layout.svelte";
 	import { twMerge } from "tailwind-merge";
 	import Icon from "./Icon.svelte";
 
@@ -76,7 +76,8 @@
 				return async ({ update }) => {
 					await update();
 					toggleDrawer(false);
-					window.location.reload();
+					$searchData = [];
+					$pageLoader = false;
 				};
 			}}
 		>
