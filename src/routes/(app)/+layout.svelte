@@ -64,7 +64,7 @@
 	$: if (!$searchData.length && browser && cmdOpen) {
 		fetch(`/api/command`)
 			.then((res) => res.json())
-			.then((res) => (searchData = res));
+			.then((res) => ($searchData = res));
 	}
 
 	$: if (!cmdOpen) {
@@ -370,11 +370,11 @@
 					<Icon src="magnify" class="w-6" />
 				</label>
 				<Command.List class="flex max-h-96 flex-col gap-2 overflow-y-scroll" bind:el={resultsPane}>
-					<Command.Empty class="p-4 text-center font-bold">No results found.</Command.Empty>
-
 					{#if !$searchData.length}
 						<div class="p-4 text-center font-bold">Loading data...</div>
 					{:else}
+						<Command.Empty class="p-4 text-center font-bold">No results found.</Command.Empty>
+
 						{#each results as section, i}
 							{#if i > 0}
 								<div class="divider" />
