@@ -1,7 +1,7 @@
 <script lang="ts" context="module">
 	import { writable } from "svelte/store";
 	export const pageLoader = writable(false);
-	export let searchData = writable<SearchData>([]);
+	export const searchData = writable<SearchData>([]);
 </script>
 
 <script lang="ts">
@@ -45,15 +45,15 @@
 	let defaultImage = "https://ddal.dekok.app/images/barovia-gate.webp";
 	$: image = $page.data.image || defaultImage;
 
+	/**
+	 * Command Palette
+	 */
+
 	let sections = [
 		{ title: "Characters", url: "/characters" },
 		{ title: "DM Logs", url: "/dm-logs" },
 		{ title: "DMs", url: "/dms" }
 	];
-
-	/**
-	 * Command Palette
-	 */
 
 	const defaultSelected = sections[0].url;
 	let search = "";

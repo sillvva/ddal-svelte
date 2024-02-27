@@ -89,7 +89,7 @@
 	<div class="divider my-0" />
 	<ul class="menu menu-lg w-full">
 		<li>
-			<a href="https://github.com/sillvva/ddal-next13" target="_blank" rel="noreferrer noopener" class="items-center md:hidden">
+			<a href="https://github.com/sillvva/ddal-svelte" target="_blank" rel="noreferrer noopener" class="items-center md:hidden">
 				Github
 			</a>
 		</li>

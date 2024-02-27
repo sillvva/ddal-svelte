@@ -127,7 +127,7 @@
 	<div class="divider my-0" />
 	<ul class="menu menu-lg w-full">
 		<li>
-			<a href="https://github.com/sillvva/ddal-next13" target="_blank" rel="noreferrer noopener">
+			<a href="https://github.com/sillvva/ddal-svelte" target="_blank" rel="noreferrer noopener">
 				<Icon src="github" class="w-6" />
 				Github
 			</a>
