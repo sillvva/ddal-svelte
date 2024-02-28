@@ -63,7 +63,7 @@ export function valibotForm<S extends BaseSchema, Out extends Output<S>, In exte
 		...options,
 		onResult({ result, ...rest }) {
 			if (["success", "redirect"].includes(result.type)) searchData.set([]);
-			if (options && options.onResult) options.onResult({ result, ...rest });
+			options?.onResult?.({ result, ...rest });
 		}
 	});
 }
