@@ -156,12 +156,12 @@
 	<header
 		class={twMerge(
 			"relative top-0 z-20 w-full border-b-[1px] border-slate-500/50 transition-all",
-			(data.mobile || !$app.settings.background) && "sticky top-0 border-base-300 bg-base-100",
-			!data.mobile && $app.settings.background && y >= 2 * 16 && y < 4 * 16 && "-top-16",
-			!data.mobile && $app.settings.background && y >= 4 * 16 && "sticky border-slate-500/50"
+			!$app.settings.background && "sticky top-0 border-base-300 bg-base-100",
+			$app.settings.background && y >= 2 * 16 && y < 4 * 16 && "-top-16",
+			$app.settings.background && y >= 4 * 16 && "sticky border-slate-500/50"
 		)}
 	>
-		{#if $app.settings.background && !data.mobile}
+		{#if $app.settings.background}
 			<div class={twMerge("absolute inset-0 transition-all", y >= 4 * 16 && "backdrop-blur-lg")} />
 		{/if}
 		<nav class="container relative z-10 mx-auto flex max-w-5xl gap-2 p-4">
@@ -172,7 +172,7 @@
 				href={data.session?.user ? "/characters" : "/"}
 				class={twMerge(
 					"mr-8 flex flex-col text-center font-draconis",
-					(data.mobile || !$app.settings.background) && "mr-2 flex-1 sm:flex-none md:mr-8"
+					!$app.settings.background && "mr-2 flex-1 sm:flex-none md:mr-8"
 				)}
 			>
 				<h1 class="text-base leading-4 text-black dark:text-white">Adventurers League</h1>
@@ -183,7 +183,7 @@
 				<a href="/dm-logs" class="hidden items-center p-2 md:flex">DM Logs</a>
 				<a href="/dms" class="hidden items-center p-2 md:flex">DMs</a>
 			{/if}
-			<div class={twMerge("flex-1", (data.mobile || !$app.settings.background) && "hidden sm:block")}>&nbsp;</div>
+			<div class={twMerge("flex-1", !$app.settings.background && "hidden sm:block")}>&nbsp;</div>
 			<button on:click={() => (cmdOpen = true)} class="inline sm:hidden">
 				<Icon src="magnify" class="w-6" />
 			</button>
@@ -205,7 +205,7 @@
 							<div
 								class={twMerge(
 									"relative w-11 overflow-hidden rounded-full ring ring-primary ring-offset-2 ring-offset-base-100",
-									(data.mobile || !$app.settings.background) && "w-9 lg:w-11"
+									!$app.settings.background && "w-9 lg:w-11"
 								)}
 							>
 								<img

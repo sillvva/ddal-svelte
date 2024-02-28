@@ -9,15 +9,16 @@ if (building) {
 }
 
 export const load = async (event) => {
+	const session = event.locals.session;
 	const mobile = !!event.request.headers
 		.get("user-agent")
 		?.match(
 			/Mobile|iP(hone|od|ad)|Android|BlackBerry|IEMobile|Kindle|NetFront|Silk-Accelerated|(hpw|web)OS|Fennec|Minimo|Opera M(obi|ini)|Blazer|Dolfin|Dolphin|Skyfire|Zune/
 		);
 
-	const appCookie = serverGetCookie<App.Cookie>(event.cookies, "app", {
+	const app = serverGetCookie<App.Cookie>(event.cookies, "app", {
 		settings: {
-			background: !mobile,
+			background: true,
 			theme: "system",
 			mode: "dark"
 		},
@@ -33,10 +34,12 @@ export const load = async (event) => {
 		}
 	});
 
+	if (mobile) app.settings.background = false;
+
 	return {
-		session: event.locals.session,
 		breadcrumbs: [] as Array<{ name: string; href?: string }>,
-		app: appCookie,
-		mobile
+		session,
+		mobile,
+		app
 	};
 };
