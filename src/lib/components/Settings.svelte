@@ -28,6 +28,10 @@
 	});
 
 	$: if (browser) {
+		if ($page.data.mobile && $app.settings.background) {
+			$app.settings.background = false;
+		}
+
 		if ($app.settings.theme === "system") {
 			const mql = window.matchMedia("(prefers-color-scheme: dark)");
 			$app.settings.mode = mql.matches ? "dark" : "light";

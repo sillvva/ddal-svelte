@@ -6,16 +6,14 @@
 	import type { HTMLInputAttributes } from "svelte/elements";
 	import { dateProxy, formFieldProxy, numberProxy, type FormPathLeaves, type SuperForm } from "sveltekit-superforms";
 
+	type LeafType = TType extends "text" ? string : TType extends "number" ? number : TType extends "date" ? Date : never;
 	interface $$Props extends HTMLInputAttributes {
 		superform: SuperForm<T, any>;
-		field: FormPathLeaves<
-			T,
-			TType extends "text" ? string : TType extends "number" ? number : TType extends "date" ? Date : never
-		>;
+		field: FormPathLeaves<T, LeafType>;
 		type: TType;
 		empty?: TType extends "date" ? "null" | "undefined" : never;
-		minField?: FormPathLeaves<T, TType extends "number" ? number : TType extends "date" ? Date : never>;
-		maxField?: FormPathLeaves<T, TType extends "number" ? number : TType extends "date" ? Date : never>;
+		minField?: FormPathLeaves<T, LeafType>;
+		maxField?: FormPathLeaves<T, LeafType>;
 		description?: string;
 		oninput?: TType extends "string" | "number" ? (value: typeof $value) => void : never;
 		onchange?: (value: typeof $value) => void;
