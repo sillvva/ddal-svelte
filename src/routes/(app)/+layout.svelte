@@ -61,6 +61,7 @@
 	let selected = defaultSelected;
 	let resultsPane: HTMLElement;
 
+	$: words = [...new Set(search.toLowerCase().split(" "))].filter(Boolean);
 	$: if (!$searchData.length && browser && cmdOpen) {
 		fetch(`/api/command`)
 			.then((res) => res.json())
@@ -72,8 +73,9 @@
 		selected = defaultSelected;
 	}
 
-	function hasMatch(item: string, substring = search) {
-		return item.toLowerCase().includes(substring.toLowerCase());
+	function hasMatch(item: string) {
+		const matches = words.filter((word) => item.toLowerCase().includes(word.toLowerCase()));
+		return matches.length ? matches : null;
 	}
 
 	$: results = [
@@ -97,14 +99,18 @@
 				...section,
 				items: section.items
 					.filter((item) => {
-						if (item.type === "character" && search.length >= 2) {
-							if (item.magic_items.some((magicItem) => hasMatch(magicItem.name))) return true;
-							if (item.story_awards.some((storyAward) => hasMatch(storyAward.name))) return true;
+						let matches: typeof words = hasMatch(item.name) || [];
+						if (search.length >= 2) {
+							if (item.type === "character") {
+								item.magic_items.forEach((magicItem) => (matches = matches.concat(hasMatch(magicItem.name) || [])));
+								item.story_awards.forEach((storyAward) => (matches = matches.concat(hasMatch(storyAward.name) || [])));
+							}
+							if (item.type === "log") {
+								if (item.dm) matches = matches.concat(hasMatch(item.dm.name) || []);
+							}
 						}
-						if (item.type === "log" && search.length >= 2) {
-							if (item.dm && hasMatch(item.dm.name)) return true;
-						}
-						return hasMatch(item.name);
+						const deduped = [...new Set(matches)];
+						return deduped.length === words.length;
 					})
 					.sort((a, b) => {
 						if (a.type === "log" && b.type === "log") return new Date(b.date).getTime() - new Date(a.date).getTime();
