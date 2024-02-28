@@ -15,15 +15,11 @@
 </script>
 
 <ska:html
-	data-theme={data.mobile || !$app.settings.background
-		? $app.settings.mode === "dark"
-			? "black"
-			: "light"
-		: $app.settings.theme}
+	data-theme={!$app.settings.background ? ($app.settings.mode === "dark" ? "black" : "light") : $app.settings.theme}
 	class={$app.settings.mode}
 />
 
-{#if !data.mobile && $app.settings.background}
+{#if $app.settings.background}
 	<img
 		src="/images/barovia-gate.webp"
 		alt="Background"
@@ -34,7 +30,7 @@
 <div
 	class={twMerge(
 		"no-script-hide min-h-dvh text-base-content",
-		(data.mobile || !$app.settings.background) && "bg-base-100",
+		!$app.settings.background && "bg-base-100",
 		$app.settings.mode === "dark" && $app.settings.background && "bg-[oklch(0.232607_0.013807_253.101)]"
 	)}
 >

@@ -61,9 +61,9 @@ export function valibotForm<S extends BaseSchema, Out extends Output<S>, In exte
 		validators: valibotClient(schema),
 		taintedMessage: "You have unsaved changes. Are you sure you want to leave?",
 		...options,
-		onResult({ result, ...rest }) {
-			if (["success", "redirect"].includes(result.type)) searchData.set([]);
-			if (options && options.onResult) options.onResult({ result, ...rest });
+		onResult(event) {
+			if (["success", "redirect"].includes(event.result.type)) searchData.set([]);
+			options?.onResult?.(event);
 		}
 	});
 }

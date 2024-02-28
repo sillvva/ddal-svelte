@@ -59,7 +59,7 @@ model VerificationToken {
 }
 
 model Character {
-    id                  String   @id @unique @default(cuid())
+    id                  String   @id @default(cuid())
     name                String
     race                String?
     class               String?
@@ -75,7 +75,7 @@ model Character {
 }
 
 model Log {
-    id                  String         @id @unique @default(cuid())
+    id                  String         @id @default(cuid())
     date                DateTime
     name                String
     description         String?        @db.Text
@@ -108,7 +108,7 @@ enum LogType {
 }
 
 model DungeonMaster {
-    id    String  @id @unique @default(cuid())
+    id    String  @id @default(cuid())
     name  String
     DCI   String?
     uid   String?
@@ -120,7 +120,7 @@ model DungeonMaster {
 }
 
 model MagicItem {
-    id           String  @id @unique @default(cuid())
+    id           String  @id @default(cuid())
     name         String
     description  String? @db.Text
     logGained    Log?    @relation("magic_items_gained", fields: [logGainedId], references: [id])
@@ -133,7 +133,7 @@ model MagicItem {
 }
 
 model StoryAward {
-    id           String   @id @unique @default(cuid())
+    id           String   @id @default(cuid())
     name         String
     description  String?  @db.Text
     logGained    Log?     @relation("story_awards_gained", fields: [logGainedId], references: [id])

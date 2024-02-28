@@ -61,6 +61,7 @@
 	let selected = defaultSelected;
 	let resultsPane: HTMLElement;
 
+	$: words = [...new Set(search.toLowerCase().split(" "))].filter(Boolean);
 	$: if (!$searchData.length && browser && cmdOpen) {
 		fetch(`/api/command`)
 			.then((res) => res.json())
@@ -72,8 +73,9 @@
 		selected = defaultSelected;
 	}
 
-	function hasMatch(item: string, substring = search) {
-		return item.toLowerCase().includes(substring.toLowerCase());
+	function hasMatch(item: string) {
+		const matches = words.filter((word) => item.toLowerCase().includes(word.toLowerCase()));
+		return matches.length ? matches : null;
 	}
 
 	$: results = [
@@ -97,14 +99,18 @@
 				...section,
 				items: section.items
 					.filter((item) => {
-						if (item.type === "character" && search.length >= 2) {
-							if (item.magic_items.some((magicItem) => hasMatch(magicItem.name))) return true;
-							if (item.story_awards.some((storyAward) => hasMatch(storyAward.name))) return true;
+						let matches: typeof words = hasMatch(item.name) || [];
+						if (search.length >= 2) {
+							if (item.type === "character") {
+								item.magic_items.forEach((magicItem) => (matches = matches.concat(hasMatch(magicItem.name) || [])));
+								item.story_awards.forEach((storyAward) => (matches = matches.concat(hasMatch(storyAward.name) || [])));
+							}
+							if (item.type === "log") {
+								if (item.dm) matches = matches.concat(hasMatch(item.dm.name) || []);
+							}
 						}
-						if (item.type === "log" && search.length >= 2) {
-							if (item.dm && hasMatch(item.dm.name)) return true;
-						}
-						return hasMatch(item.name);
+						const deduped = [...new Set(matches)];
+						return deduped.length === words.length;
 					})
 					.sort((a, b) => {
 						if (a.type === "log" && b.type === "log") return new Date(b.date).getTime() - new Date(a.date).getTime();
@@ -156,12 +162,12 @@
 	<header
 		class={twMerge(
 			"relative top-0 z-20 w-full border-b-[1px] border-slate-500/50 transition-all",
-			(data.mobile || !$app.settings.background) && "sticky top-0 border-base-300 bg-base-100",
-			!data.mobile && $app.settings.background && y >= 2 * 16 && y < 4 * 16 && "-top-16",
-			!data.mobile && $app.settings.background && y >= 4 * 16 && "sticky border-slate-500/50"
+			!$app.settings.background && "sticky top-0 border-base-300 bg-base-100",
+			$app.settings.background && y >= 2 * 16 && y < 4 * 16 && "-top-16",
+			$app.settings.background && y >= 4 * 16 && "sticky border-slate-500/50"
 		)}
 	>
-		{#if $app.settings.background && !data.mobile}
+		{#if $app.settings.background}
 			<div class={twMerge("absolute inset-0 transition-all", y >= 4 * 16 && "backdrop-blur-lg")} />
 		{/if}
 		<nav class="container relative z-10 mx-auto flex max-w-5xl gap-2 p-4">
@@ -172,7 +178,7 @@
 				href={data.session?.user ? "/characters" : "/"}
 				class={twMerge(
 					"mr-8 flex flex-col text-center font-draconis",
-					(data.mobile || !$app.settings.background) && "mr-2 flex-1 sm:flex-none md:mr-8"
+					!$app.settings.background && "mr-2 flex-1 sm:flex-none md:mr-8"
 				)}
 			>
 				<h1 class="text-base leading-4 text-black dark:text-white">Adventurers League</h1>
@@ -183,7 +189,7 @@
 				<a href="/dm-logs" class="hidden items-center p-2 md:flex">DM Logs</a>
 				<a href="/dms" class="hidden items-center p-2 md:flex">DMs</a>
 			{/if}
-			<div class={twMerge("flex-1", (data.mobile || !$app.settings.background) && "hidden sm:block")}>&nbsp;</div>
+			<div class={twMerge("flex-1", !$app.settings.background && "hidden sm:block")}>&nbsp;</div>
 			<button on:click={() => (cmdOpen = true)} class="inline sm:hidden">
 				<Icon src="magnify" class="w-6" />
 			</button>
@@ -205,7 +211,7 @@
 							<div
 								class={twMerge(
 									"relative w-11 overflow-hidden rounded-full ring ring-primary ring-offset-2 ring-offset-base-100",
-									(data.mobile || !$app.settings.background) && "w-9 lg:w-11"
+									!$app.settings.background && "w-9 lg:w-11"
 								)}
 							>
 								<img
