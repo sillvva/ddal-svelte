@@ -9,9 +9,15 @@ if (building) {
 }
 
 export const load = async (event) => {
+	const mobile = !!event.request.headers
+		.get("user-agent")
+		?.match(
+			/Mobile|iP(hone|od|ad)|Android|BlackBerry|IEMobile|Kindle|NetFront|Silk-Accelerated|(hpw|web)OS|Fennec|Minimo|Opera M(obi|ini)|Blazer|Dolfin|Dolphin|Skyfire|Zune/
+		);
+
 	const appCookie = serverGetCookie<App.Cookie>(event.cookies, "app", {
 		settings: {
-			background: true,
+			background: !mobile,
 			theme: "system",
 			mode: "dark"
 		},
@@ -31,10 +37,6 @@ export const load = async (event) => {
 		session: event.locals.session,
 		breadcrumbs: [] as Array<{ name: string; href?: string }>,
 		app: appCookie,
-		mobile: !!event.request.headers
-			.get("user-agent")
-			?.match(
-				/Mobile|iP(hone|od|ad)|Android|BlackBerry|IEMobile|Kindle|NetFront|Silk-Accelerated|(hpw|web)OS|Fennec|Minimo|Opera M(obi|ini)|Blazer|Dolfin|Dolphin|Skyfire|Zune/
-			)
+		mobile
 	};
 };
