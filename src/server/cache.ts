@@ -1,4 +1,5 @@
-import { REDIS_URL } from "$env/static/private";
+import { building } from "$app/environment";
+import { privateEnv } from "$lib/env/private";
 import { Redis } from "ioredis";
 
 let redis: Redis;
@@ -7,7 +8,7 @@ function connect() {
 	if (["ready", "connect", "connecting", "reconnecting"].includes(status)) return;
 	status = "connecting";
 	try {
-		redis = new Redis(REDIS_URL, {
+		redis = new Redis(privateEnv.REDIS_URL, {
 			retryStrategy: function (times) {
 				status = redis.status || "";
 				const delay = Math.min(times * 2000, 10000);
@@ -20,7 +21,7 @@ function connect() {
 	}
 }
 
-connect();
+if (!building) connect();
 
 async function readyCheck<T>(callback: () => Promise<T>) {
 	status = redis?.status || "";

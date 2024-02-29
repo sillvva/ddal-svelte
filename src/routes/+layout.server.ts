@@ -1,11 +1,11 @@
 import { building } from "$app/environment";
+import { env } from "$lib/env/check.js";
 import { serverGetCookie } from "$src/server/cookie.js";
-import { checkEnv } from "$src/server/env.js";
 
-if (building) {
-	checkEnv().then((env) => {
-		if (env) console.log("✅ Environment variables are valid");
-	});
+let checked = false;
+if (!checked && building && env) {
+	console.log("✅ Environment variables are valid");
+	checked = true;
 }
 
 export const load = async (event) => {

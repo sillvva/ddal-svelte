@@ -2,6 +2,8 @@ import { prisma } from "$src/server/db.js";
 import type { Account } from "@prisma/client";
 
 export const load = async (event) => {
+	const { mobile } = await event.parent();
+
 	let accounts: Account[] = [];
 	if (event.locals.session?.user) {
 		accounts = await prisma.account.findMany({
@@ -16,6 +18,7 @@ export const load = async (event) => {
 
 	return {
 		accounts,
-		isMac
+		isMac,
+		mobile
 	};
 };
