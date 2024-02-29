@@ -3,6 +3,7 @@
 	import { page } from "$app/stores";
 	import Icon from "$lib/components/Icon.svelte";
 	import { PROVIDERS } from "$lib/constants.js";
+	import { publicEnv } from "$lib/env/public.js";
 	import type { CookieStore } from "$src/server/cookie.js";
 	import { signIn } from "@auth/sveltekit/client";
 	import { getContext } from "svelte";
@@ -36,6 +37,7 @@
 	<meta property="og:image" content={image} />
 	<meta property="og:type" content="website" />
 	<meta property="og:locale" content="en_US" />
+	<meta property="og:url" content={publicEnv.PUBLIC_URL} />
 	<meta name="twitter:card" content="summary_large_image" />
 	<meta name="twitter:creator" content="@sillvvasensei" />
 	<meta name="twitter:creator:id" content="1006748654391169029" />
@@ -43,6 +45,7 @@
 	<meta name="twitter:site" content="Adventurers League Log Sheet" />
 	<meta name="twitter:description" content={description} />
 	<meta name="twitter:image" content={image} />
+	<link rel="canonical" href={publicEnv.PUBLIC_URL} />
 </svelte:head>
 
 <main class="container relative mx-auto flex min-h-dvh flex-col items-center justify-center gap-8 p-4">
