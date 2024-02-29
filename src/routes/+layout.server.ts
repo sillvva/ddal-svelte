@@ -1,4 +1,12 @@
+import { building } from "$app/environment";
+import { env } from "$lib/env/check.js";
 import { serverGetCookie } from "$src/server/cookie.js";
+
+let checked = false;
+if (!checked && building && env) {
+	console.log("✅ Environment variables are valid");
+	checked = true;
+}
 
 export const load = async (event) => {
 	const session = event.locals.session;

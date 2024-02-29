@@ -1,4 +1,3 @@
-import { building } from "$app/environment";
 import { ValiError } from "valibot";
 import { checkPrivateEnv } from "./private";
 import { checkPublicEnv } from "./public";
@@ -27,9 +26,3 @@ export const checkEnv = () => {
 };
 
 export const env = checkEnv();
-
-let checked = false;
-if (building && !checked) {
-	console.log("✅ Environment variables are valid");
-	checked = true;
-}

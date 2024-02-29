@@ -1,4 +1,4 @@
-import { env } from "$lib/env/check";
+import { privateEnv } from "$lib/env/private";
 import { prisma } from "$src/server/db";
 import type { Provider } from "@auth/core/providers";
 import Discord from "@auth/core/providers/discord";
@@ -24,8 +24,8 @@ const providers: OAuthProvider[] = [
 	{
 		id: "google",
 		tokenUrl: "https://oauth2.googleapis.com/token",
-		clientId: env.GOOGLE_CLIENT_ID,
-		clientSecret: env.GOOGLE_CLIENT_SECRET,
+		clientId: privateEnv.GOOGLE_CLIENT_ID,
+		clientSecret: privateEnv.GOOGLE_CLIENT_SECRET,
 		// accountId: function (profile) {
 		// 	return profile.sub;
 		// },
@@ -40,8 +40,8 @@ const providers: OAuthProvider[] = [
 	{
 		id: "discord",
 		tokenUrl: "https://discord.com/api/v10/oauth2/token",
-		clientId: env.DISCORD_CLIENT_ID,
-		clientSecret: env.DISCORD_CLIENT_SECRET,
+		clientId: privateEnv.DISCORD_CLIENT_ID,
+		clientSecret: privateEnv.DISCORD_CLIENT_SECRET,
 		// accountId: function (profile) {
 		// 	return profile.id;
 		// },
@@ -81,7 +81,7 @@ const auth = SvelteKitAuth(async (event) => {
 				const currentSession = await event.locals.auth();
 				const currentUserId = currentSession?.user?.id;
 
-				if (env.DISABLE_SIGNUPS && !existingAccount && !currentUserId) return false;
+				if (privateEnv.DISABLE_SIGNUPS && !existingAccount && !currentUserId) return false;
 
 				// If there is a user logged in already that we recognize,
 				// and we have an account that is being signed in with
@@ -157,7 +157,7 @@ const auth = SvelteKitAuth(async (event) => {
 				return session satisfies LocalsSession;
 			}
 		},
-		secret: env.AUTH_SECRET,
+		secret: privateEnv.AUTH_SECRET,
 		adapter: PrismaAdapter(prisma),
 		providers: providers.map((p) => p.oauth()),
 		trustHost: true,

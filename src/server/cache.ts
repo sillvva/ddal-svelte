@@ -1,3 +1,4 @@
+import { building } from "$app/environment";
 import { privateEnv } from "$lib/env/private";
 import { Redis } from "ioredis";
 
@@ -20,7 +21,7 @@ function connect() {
 	}
 }
 
-connect();
+if (!building) connect();
 
 async function readyCheck<T>(callback: () => Promise<T>) {
 	status = redis?.status || "";
