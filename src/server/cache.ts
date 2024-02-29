@@ -1,4 +1,4 @@
-import { env } from "$lib/env/check";
+import { privateEnv } from "$lib/env/private";
 import { Redis } from "ioredis";
 
 let redis: Redis;
@@ -7,7 +7,7 @@ function connect() {
 	if (["ready", "connect", "connecting", "reconnecting"].includes(status)) return;
 	status = "connecting";
 	try {
-		redis = new Redis(env.REDIS_URL, {
+		redis = new Redis(privateEnv.REDIS_URL, {
 			retryStrategy: function (times) {
 				status = redis.status || "";
 				const delay = Math.min(times * 2000, 10000);
