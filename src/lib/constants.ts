@@ -1,7 +1,7 @@
-import { PUBLIC_URL } from "$env/static/public";
 import type { Account } from "@prisma/client";
+import { publicEnv } from "./env/public";
 
-export const BLANK_CHARACTER = `${PUBLIC_URL}/images/blank-character.webp` as const;
+export const BLANK_CHARACTER = `${publicEnv.PUBLIC_URL}/images/blank-character.webp` as const;
 
 type Provider = {
 	name: string;
