@@ -195,7 +195,7 @@
 					<Icon src="magnify" class="w-6" />
 				</button>
 			{:else}
-				<label class="input input-bordered items-center gap-2">
+				<label class="input input-bordered flex items-center gap-2">
 					<input type="text" class="max-w-20 grow" placeholder="Search" on:focus={() => (cmdOpen = true)} />
 					<kbd class="kbd kbd-sm">
 						{#if data.isMac}
