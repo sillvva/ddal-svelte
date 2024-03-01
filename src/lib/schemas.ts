@@ -3,31 +3,8 @@ import type { CharacterData } from "$src/server/data/characters";
 import type { NumericRange } from "@sveltejs/kit";
 import { superForm, type FormOptions, type FormPathLeaves, type SuperValidated } from "sveltekit-superforms";
 import { valibotClient } from "sveltekit-superforms/adapters";
-import {
-	array,
-	boolean,
-	custom,
-	date,
-	fallback,
-	forward,
-	integer,
-	literal,
-	merge,
-	minLength,
-	minValue,
-	null_,
-	nullable,
-	number,
-	object,
-	optional,
-	regex,
-	string,
-	union,
-	url,
-	type BaseSchema,
-	type Input,
-	type Output
-} from "valibot";
+// prettier-ignore
+import { array, boolean, custom, date, fallback, forward, integer, literal, merge, minLength, minValue, null_, nullable, number, object, optional, regex, string, union, url, type BaseSchema, type Input, type Output } from "valibot";
 
 export function valibotForm<S extends BaseSchema, Out extends Output<S>, In extends Input<S>>(
 	form: SuperValidated<Out, App.Superforms.Message, In>,
