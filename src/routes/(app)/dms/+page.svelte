@@ -5,7 +5,8 @@
 	import Icon from "$lib/components/Icon.svelte";
 	import Search from "$lib/components/Search.svelte";
 	import SearchResults from "$lib/components/SearchResults.svelte";
-	import { sorter, stopWords } from "$lib/util";
+	import { stopWords } from "$lib/util";
+	import { sorter } from "@sillvva/utils";
 	import MiniSearch from "minisearch";
 	import { twMerge } from "tailwind-merge";
 	import { searchData } from "../+layout.svelte";

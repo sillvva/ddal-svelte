@@ -1,7 +1,7 @@
 <script lang="ts">
 	import { pushState } from "$app/navigation";
-	import { sorter } from "$lib/util";
 	import type { MagicItem, StoryAward } from "@prisma/client";
+	import { sorter } from "@sillvva/utils";
 	import { twMerge } from "tailwind-merge";
 	import Icon from "./Icon.svelte";
 	import SearchResults from "./SearchResults.svelte";

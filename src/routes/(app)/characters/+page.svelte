@@ -7,14 +7,16 @@
 	import Search from "$lib/components/Search.svelte";
 	import SearchResults from "$lib/components/SearchResults.svelte";
 	import type { TransitionAction } from "$lib/util";
-	import { createTransition, slugify, sorter, stopWords } from "$lib/util";
+	import { createTransition, slugify, stopWords } from "$lib/util";
 	import type { CookieStore } from "$src/server/cookie.js";
+	import { sorter } from "@sillvva/utils";
 	import { download, hotkey } from "@svelteuidev/composables";
 	import MiniSearch from "minisearch";
 	import { getContext, onMount } from "svelte";
 	import { twMerge } from "tailwind-merge";
 
 	export let data;
+	console.log(sorter);
 
 	$: characters = data.characters;
 	let search = $page.url.searchParams.get("s") || "";

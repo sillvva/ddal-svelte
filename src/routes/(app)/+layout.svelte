@@ -13,9 +13,9 @@
 	import Icon from "$lib/components/Icon.svelte";
 	import Markdown from "$lib/components/Markdown.svelte";
 	import Settings from "$lib/components/Settings.svelte";
-	import { sorter } from "$lib/util.js";
 	import { type CookieStore } from "$src/server/cookie.js";
 	import { signOut } from "@auth/sveltekit/client";
+	import { sorter } from "@sillvva/utils";
 	import { hotkey } from "@svelteuidev/composables";
 	import { Command } from "cmdk-sv";
 	import { getContext } from "svelte";
