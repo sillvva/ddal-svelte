@@ -41,7 +41,7 @@
 		: [];
 
 	const dmLogSearch = new MiniSearch({
-		fields: ["logName", "characterName", "magicItems", "storyAwards"],
+		fields: ["logName", "characterName", "magicItems", "storyAwards", "logId"],
 		idField: "logId",
 		processTerm: (term) => (stopWords.has(term) ? null : term.toLowerCase()),
 		tokenize: (term) => term.split(/[^A-Z0-9\.']/gi),

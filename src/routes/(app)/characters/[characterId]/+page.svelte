@@ -15,7 +15,7 @@
 	import type { CookieStore } from "$src/server/cookie.js";
 	import { download, hotkey } from "@svelteuidev/composables";
 	import MiniSearch from "minisearch";
-	import { getContext } from "svelte";
+	import { getContext, onMount } from "svelte";
 	import { twMerge } from "tailwind-merge";
 
 	export let data;
@@ -31,7 +31,7 @@
 	let search = $page.url.searchParams.get("s") || "";
 
 	const logSearch = new MiniSearch({
-		fields: ["logName", "magicItems", "storyAwards"],
+		fields: ["logName", "magicItems", "storyAwards", "logId"],
 		idField: "logId",
 		processTerm: (term) => (stopWords.has(term) ? null : term.toLowerCase()),
 		tokenize: (term) => term.split(/[^A-Z0-9\.']/gi),
@@ -108,6 +108,11 @@
 			});
 		}
 	}
+
+	let searchBar: HTMLDivElement;
+	onMount(() => {
+		if (search) scrollTo({ top: searchBar.offsetTop - 16, behavior: "smooth" });
+	});
 </script>
 
 <div
@@ -331,7 +336,7 @@
 	</div>
 </section>
 
-<div class="mt-4 flex flex-wrap gap-2">
+<div class="mt-4 flex flex-wrap gap-2" bind:this={searchBar}>
 	<div class="flex w-full gap-2 sm:max-w-md print:hidden">
 		{#if myCharacter}
 			<a
