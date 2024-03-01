@@ -48,6 +48,7 @@
 		"@auth/sveltekit": "^0.13.0",
 		"@prisma/client": "^5.10.2",
 		"@svelteuidev/composables": "^0.15.4",
+		"@vercel/speed-insights": "^1.0.10",
 		"bits-ui": "^0.18.2",
 		"cmdk-sv": "^0.0.13",
 		"devalue": "^4.3.2",

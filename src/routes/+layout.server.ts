@@ -1,6 +1,9 @@
 import { building } from "$app/environment";
 import { env } from "$lib/env/check.js";
 import { serverGetCookie } from "$src/server/cookie.js";
+import { injectSpeedInsights } from "@vercel/speed-insights/sveltekit";
+
+injectSpeedInsights();
 
 let checked = false;
 if (!checked && building && env) {
