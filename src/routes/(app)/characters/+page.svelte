@@ -7,9 +7,9 @@
 	import Search from "$lib/components/Search.svelte";
 	import SearchResults from "$lib/components/SearchResults.svelte";
 	import type { TransitionAction } from "$lib/util";
-	import { createTransition, slugify, stopWords } from "$lib/util";
+	import { createTransition, stopWords } from "$lib/util";
 	import type { CookieStore } from "$src/server/cookie.js";
-	import { sorter } from "@sillvva/utils";
+	import { slugify, sorter } from "@sillvva/utils";
 	import { download, hotkey } from "@svelteuidev/composables";
 	import MiniSearch from "minisearch";
 	import { getContext, onMount } from "svelte";

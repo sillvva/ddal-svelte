@@ -30,23 +30,6 @@ export const parseError = (e: unknown) => {
 	return "Unknown error";
 };
 
-/**
- * Converts a given text into a slug.
- * @param text - The text to be slugified.
- * @returns The slugified version of the text.
- */
-export const slugify = (text: string) => {
-	return text
-		.toString()
-		.normalize("NFD") // split an accented letter in the base letter and the acent
-		.replace(/[\u0300-\u036f]/g, "") // remove all previously split accents
-		.toLowerCase()
-		.trim()
-		.replace(/\s+/g, "-")
-		.replace(/[^\w-]+/g, "")
-		.replace(/--+/g, "-");
-};
-
 export const tooltipClasses = (text?: string | null, align = "center") => {
 	if (!text) return "";
 	return twMerge(

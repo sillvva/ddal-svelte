@@ -1,6 +1,7 @@
 <script lang="ts">
-	import { slugify } from "$lib/util";
+	import { slugify } from "@sillvva/utils";
 	import { twMerge } from "tailwind-merge";
+
 	export let depth: number;
 	export let raw: any = "";
 	export let text: string = "";
