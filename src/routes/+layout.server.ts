@@ -1,15 +1,17 @@
-import { building } from "$app/environment";
+import { building, dev } from "$app/environment";
 import { env } from "$lib/env/check.js";
 import { serverGetCookie } from "$src/server/cookie.js";
+import { inject } from "@vercel/analytics";
 import { injectSpeedInsights } from "@vercel/speed-insights/sveltekit";
-
-injectSpeedInsights();
 
 let checked = false;
 if (!checked && building && env) {
 	console.log("✅ Environment variables are valid");
 	checked = true;
 }
+
+inject({ mode: dev ? "development" : "production" });
+injectSpeedInsights();
 
 export const load = async (event) => {
 	const session = event.locals.session;
