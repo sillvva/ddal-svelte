@@ -30,6 +30,11 @@ export const parseError = (e: unknown) => {
 	return "Unknown error";
 };
 
+/**
+ * Converts a given text into a slug.
+ * @param text - The text to be slugified.
+ * @returns The slugified version of the text.
+ */
 export const slugify = (text: string) => {
 	return text
 		.toString()
@@ -53,13 +58,34 @@ export const tooltipClasses = (text?: string | null, align = "center") => {
 	);
 };
 
+const collator = new Intl.Collator("en", { numeric: true, sensitivity: "base" });
+/**
+ * Sorts two values of type string, number, or Date.
+ *
+ * @param a - The first value to compare.
+ * @param b - The second value to compare.
+ * @returns A negative number if `a` is less than `b`, a positive number if `a` is greater than `b`, or 0 if they are equal.
+ *
+ * @example
+ * ```javascript
+ * const fruits = ["apple", "Banana", "Orange", "banana"];
+ * fruits.sort(sorter);
+ * console.log(fruits);
+ * // Output: ["apple", "banana", "Banana", "Orange"]
+ * ```
+ */
 export const sorter = (a: string | number | Date, b: string | number | Date) => {
-	if (typeof a === "string" && typeof b === "string") return a.localeCompare(b);
+	if (typeof a === "string" && typeof b === "string") return collator.compare(a, b);
 	if (typeof a === "number" && typeof b === "number") return a - b;
 	if (a instanceof Date && b instanceof Date) return a.getTime() - b.getTime();
-	return 0;
+	return collator.compare(a.toString(), b.toString());
 };
 
+/**
+ * Creates a transition for the view.
+ * @param {ViewTransitionCallback} action - The callback function to be executed during the transition.
+ * @returns {ViewTransition | undefined} - Returns the result of the transition action or void if the transition is not supported.
+ */
 export const createTransition = (action: ViewTransitionCallback) => {
 	if (!document.startViewTransition) {
 		action();
