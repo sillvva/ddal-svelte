@@ -42,9 +42,9 @@ export const tooltipClasses = (text?: string | null, align = "center") => {
 };
 
 /**
- * Creates a transition for the view.
+ * Creates a view transition.
  * @param {ViewTransitionCallback} action - The callback function to be executed during the transition.
- * @returns {ViewTransition | undefined} - Returns the result of the transition action or void if the transition is not supported.
+ * @returns {ViewTransition | undefined} - Returns the result of the view transition
  */
 export const createTransition = (action: ViewTransitionCallback) => {
 	if (!document.startViewTransition) {

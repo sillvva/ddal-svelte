@@ -48,5 +48,14 @@
 			"sizes": "512x512",
 			"type": "image/png"
 		}
+	],
+	"screenshots": [
+		{
+			"src": "images/desktop.jpg",
+			"sizes": "640x400",
+			"type": "image/jpeg",
+			"form_factor": "wide",
+			"label": "Home Screen"
+		}
 	]
 }
