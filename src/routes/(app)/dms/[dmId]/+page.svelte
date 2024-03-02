@@ -6,7 +6,7 @@
 	import Submit from "$lib/components/Submit.svelte";
 	import SuperForm from "$lib/components/SuperForm.svelte";
 	import { dungeonMasterSchema, valibotForm } from "$lib/schemas";
-	import { sorter } from "$lib/util";
+	import { sorter } from "@sillvva/utils";
 	import { pageLoader, searchData } from "../../+layout.svelte";
 
 	export let data;

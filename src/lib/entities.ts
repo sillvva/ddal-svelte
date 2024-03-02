@@ -1,7 +1,7 @@
-import { sorter } from "$lib/util";
 import type { CharacterData, getCharacter } from "$src/server/data/characters";
 import type { LogData } from "$src/server/data/logs";
 import type { Character, DungeonMaster, Log, MagicItem, StoryAward } from "@prisma/client";
+import { sorter } from "@sillvva/utils";
 import type { LogSchema } from "./schemas";
 
 export const getMagicItems = (

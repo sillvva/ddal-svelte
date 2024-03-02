@@ -8,8 +8,9 @@
 	import Items from "$lib/components/Items.svelte";
 	import Search from "$lib/components/Search.svelte";
 	import SearchResults from "$lib/components/SearchResults.svelte";
-	import { sorter, stopWords } from "$lib/util";
+	import { stopWords } from "$lib/util";
 	import type { CookieStore } from "$src/server/cookie.js";
+	import { sorter } from "@sillvva/utils";
 	import { download, hotkey } from "@svelteuidev/composables";
 	import MiniSearch from "minisearch";
 	import { getContext } from "svelte";
@@ -41,7 +42,7 @@
 		: [];
 
 	const dmLogSearch = new MiniSearch({
-		fields: ["logName", "characterName", "magicItems", "storyAwards"],
+		fields: ["logName", "characterName", "magicItems", "storyAwards", "logId"],
 		idField: "logId",
 		processTerm: (term) => (stopWords.has(term) ? null : term.toLowerCase()),
 		tokenize: (term) => term.split(/[^A-Z0-9\.']/gi),

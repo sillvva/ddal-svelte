@@ -42,7 +42,7 @@ async function getData(user: NonNullable<LocalsSession["user"]>) {
 						({
 							...log,
 							type: "log",
-							url: log.is_dm_log ? `/dm-logs/${log.id}` : `/characters/${log.character?.id}/log/${log.id}`
+							url: log.is_dm_log ? `/dm-logs?s=${log.id}` : `/characters/${log.character?.id}?s=${log.id}`
 						}) as const
 				)
 			)

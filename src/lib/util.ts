@@ -30,18 +30,6 @@ export const parseError = (e: unknown) => {
 	return "Unknown error";
 };
 
-export const slugify = (text: string) => {
-	return text
-		.toString()
-		.normalize("NFD") // split an accented letter in the base letter and the acent
-		.replace(/[\u0300-\u036f]/g, "") // remove all previously split accents
-		.toLowerCase()
-		.trim()
-		.replace(/\s+/g, "-")
-		.replace(/[^\w-]+/g, "")
-		.replace(/--+/g, "-");
-};
-
 export const tooltipClasses = (text?: string | null, align = "center") => {
 	if (!text) return "";
 	return twMerge(
@@ -53,13 +41,11 @@ export const tooltipClasses = (text?: string | null, align = "center") => {
 	);
 };
 
-export const sorter = (a: string | number | Date, b: string | number | Date) => {
-	if (typeof a === "string" && typeof b === "string") return a.localeCompare(b);
-	if (typeof a === "number" && typeof b === "number") return a - b;
-	if (a instanceof Date && b instanceof Date) return a.getTime() - b.getTime();
-	return 0;
-};
-
+/**
+ * Creates a view transition.
+ * @param {ViewTransitionCallback} action - The callback function to be executed during the transition.
+ * @returns {ViewTransition | undefined} - Returns the result of the view transition
+ */
 export const createTransition = (action: ViewTransitionCallback) => {
 	if (!document.startViewTransition) {
 		action();
