@@ -59,7 +59,7 @@
 		},
 		{
 			"src": "images/mobile.jpg",
-			"sizes": "300x640",
+			"sizes": "320x700",
 			"type": "image/jpeg",
 			"form_factor": "narrow",
 			"label": "Character Screen"
