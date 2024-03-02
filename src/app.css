@@ -107,7 +107,7 @@
 		}
 	}
 	.grid-table {
-		diplay: grid;
+		display: grid;
 		width: theme(width.full);
 		text-align: left;
 		font-size: theme(fontSize.sm);
