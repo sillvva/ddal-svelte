@@ -9,8 +9,6 @@ export function successToast(message?: string) {
 	toast.success("Success", {
 		description: message,
 		classes: {
-			toast: "!bg-emerald-950 !border-emerald-400",
-			title: "!text-emerald-400",
 			description: "!text-white"
 		}
 	});
@@ -20,8 +18,6 @@ export function errorToast(message?: string) {
 	toast.error("Error", {
 		description: message,
 		classes: {
-			toast: "!bg-red-950 !border-red-500",
-			title: "!text-red-500",
 			description: "!text-white"
 		},
 		duration: 30000

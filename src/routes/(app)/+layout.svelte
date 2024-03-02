@@ -280,7 +280,7 @@
 	{/if}
 </div>
 
-<Toaster richColors closeButton />
+<Toaster richColors closeButton theme={$app.settings.theme} />
 
 <dialog
 	class={twMerge("modal !bg-base-200/50")}
