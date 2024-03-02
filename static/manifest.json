@@ -56,6 +56,13 @@
 			"type": "image/jpeg",
 			"form_factor": "wide",
 			"label": "Home Screen"
+		},
+		{
+			"src": "images/mobile.jpg",
+			"sizes": "300x640",
+			"type": "image/jpeg",
+			"form_factor": "narrow",
+			"label": "Character Screen"
 		}
 	]
 }
