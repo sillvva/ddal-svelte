@@ -16,7 +16,6 @@
 	import { twMerge } from "tailwind-merge";
 
 	export let data;
-	console.log(sorter);
 
 	$: characters = data.characters;
 	let search = $page.url.searchParams.get("s") || "";
