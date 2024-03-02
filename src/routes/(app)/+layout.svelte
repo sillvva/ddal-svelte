@@ -19,6 +19,7 @@
 	import { hotkey } from "@svelteuidev/composables";
 	import { Command } from "cmdk-sv";
 	import { getContext } from "svelte";
+	import { Toaster } from "svelte-sonner";
 	import { fade } from "svelte/transition";
 	import { twMerge } from "tailwind-merge";
 	import type { SearchData } from "../api/command/+server.js";
@@ -278,6 +279,8 @@
 		</footer>
 	{/if}
 </div>
+
+<Toaster richColors closeButton />
 
 <dialog
 	class={twMerge("modal !bg-base-200/50")}

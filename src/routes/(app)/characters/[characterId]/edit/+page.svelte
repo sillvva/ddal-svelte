@@ -4,7 +4,8 @@
 	import Input from "$lib/components/Input.svelte";
 	import Submit from "$lib/components/Submit.svelte";
 	import SuperForm from "$lib/components/SuperForm.svelte";
-	import { newCharacterSchema, valibotForm } from "$lib/schemas";
+	import { valibotForm } from "$lib/factories.js";
+	import { newCharacterSchema } from "$lib/schemas";
 
 	export let data;
 

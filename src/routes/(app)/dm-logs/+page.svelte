@@ -8,6 +8,7 @@
 	import Items from "$lib/components/Items.svelte";
 	import Search from "$lib/components/Search.svelte";
 	import SearchResults from "$lib/components/SearchResults.svelte";
+	import { errorToast, successToast } from "$lib/factories";
 	import { stopWords } from "$lib/util";
 	import type { CookieStore } from "$src/server/cookie.js";
 	import { sorter } from "@sillvva/utils";
@@ -313,9 +314,10 @@
 													await applyAction(result);
 													if (form?.error) {
 														deletingLog = deletingLog.filter((id) => id !== log.id);
-														alert(form.error);
+														errorToast(form.error);
 													} else {
 														$searchData = [];
+														successToast("Log deleted");
 													}
 												};
 											}}

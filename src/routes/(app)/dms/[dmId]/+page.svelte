@@ -5,11 +5,13 @@
 	import Input from "$lib/components/Input.svelte";
 	import Submit from "$lib/components/Submit.svelte";
 	import SuperForm from "$lib/components/SuperForm.svelte";
-	import { dungeonMasterSchema, valibotForm } from "$lib/schemas";
+	import { errorToast, successToast, valibotForm } from "$lib/factories";
+	import { dungeonMasterSchema } from "$lib/schemas";
 	import { sorter } from "@sillvva/utils";
 	import { pageLoader, searchData } from "../../+layout.svelte";
 
 	export let data;
+	export let form;
 
 	$: superform = valibotForm(data.form, dungeonMasterSchema, {
 		resetForm: false
@@ -45,10 +47,11 @@
 							$pageLoader = true;
 							return async ({ result }) => {
 								await applyAction(result);
-								if ("data" in result && result.data?.message) {
-									alert(result.data.message);
+								if (form?.error) {
+									errorToast(form.error);
 									$pageLoader = false;
 								} else {
+									successToast(`${data.name} deleted`);
 									$searchData = [];
 								}
 							};

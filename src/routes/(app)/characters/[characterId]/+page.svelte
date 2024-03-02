@@ -9,6 +9,7 @@
 	import Markdown from "$lib/components/Markdown.svelte";
 	import Search from "$lib/components/Search.svelte";
 	import SearchResults from "$lib/components/SearchResults.svelte";
+	import { errorToast, successToast } from "$lib/factories.js";
 	import type { TransitionAction } from "$lib/util";
 	import { createTransition, stopWords } from "$lib/util";
 	import { pageLoader, searchData } from "$src/routes/(app)/+layout.svelte";
@@ -199,8 +200,13 @@
 									$pageLoader = true;
 									return ({ update, result }) => {
 										update();
-										$searchData = [];
-										if (result.type !== "redirect") $pageLoader = false;
+										if (result.type === "redirect") {
+											successToast("Character deleted");
+											$searchData = [];
+										} else {
+											errorToast(form?.error || "Character not deleted");
+											$pageLoader = false;
+										}
 									};
 								}}
 								class="btn-error"
@@ -564,9 +570,10 @@
 												await applyAction(result);
 												if (form?.error) {
 													deletingLog = deletingLog.filter((id) => id !== log.id);
-													alert(form.error);
+													errorToast(form.error);
 												} else {
 													$searchData = [];
+													successToast("Log deleted");
 												}
 											};
 										}}
