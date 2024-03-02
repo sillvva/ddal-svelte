@@ -9,7 +9,8 @@
 	import Submit from "$lib/components/Submit.svelte";
 	import SuperForm from "$lib/components/SuperForm.svelte";
 	import { defaultDM } from "$lib/entities";
-	import { logSchema, valibotForm } from "$lib/schemas";
+	import { valibotForm } from "$lib/factories.js";
+	import { logSchema } from "$lib/schemas";
 
 	export let data;
 

@@ -5,6 +5,7 @@
 	import Icon from "$lib/components/Icon.svelte";
 	import Search from "$lib/components/Search.svelte";
 	import SearchResults from "$lib/components/SearchResults.svelte";
+	import { errorToast, successToast } from "$lib/factories";
 	import { stopWords } from "$lib/util";
 	import { sorter } from "@sillvva/utils";
 	import MiniSearch from "minisearch";
@@ -12,6 +13,7 @@
 	import { searchData } from "../+layout.svelte";
 
 	export let data;
+	export let form;
 
 	$: dms = data.dms;
 	let deletingDM: string[] = [];
@@ -106,7 +108,7 @@
 											{#if dm.logs.length == 0}
 												<form
 													method="POST"
-													action={`/dms/${dm.id}?/deleteDM`}
+													action={`?/deleteDM`}
 													use:enhance={({ cancel }) => {
 														if (!confirm(`Are you sure you want to delete ${dm.name}? This action cannot be reversed.`))
 															return cancel();
@@ -114,10 +116,11 @@
 														deletingDM = [...deletingDM, dm.id];
 														return async ({ result }) => {
 															await applyAction(result);
-															if ($page.form?.message) {
-																alert($page.form.message);
+															if (form?.error) {
+																errorToast(form.error);
 																deletingDM = deletingDM.filter((id) => id !== dm.id);
 															} else {
+																successToast(`${dm.name} deleted`);
 																$searchData = [];
 															}
 														};

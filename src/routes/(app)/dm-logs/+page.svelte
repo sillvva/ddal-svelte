@@ -8,6 +8,7 @@
 	import Items from "$lib/components/Items.svelte";
 	import Search from "$lib/components/Search.svelte";
 	import SearchResults from "$lib/components/SearchResults.svelte";
+	import { errorToast, successToast } from "$lib/factories";
 	import { stopWords } from "$lib/util";
 	import type { CookieStore } from "$src/server/cookie.js";
 	import { sorter } from "@sillvva/utils";
@@ -160,20 +161,19 @@
 					{:else}
 						{#each results as log}
 							<tr class={twMerge(deletingLog.includes(log.id) && "hidden")}>
-								<th
+								<td
 									class={twMerge(
 										"!static align-top",
 										(log.description?.trim() || log.story_awards_gained.length > 0 || log.story_awards_lost.length > 0) &&
 											"print:border-b-0"
 									)}
 								>
-									<p
-										class="whitespace-pre-wrap font-semibold text-black dark:text-white"
-										role="presentation"
+									<button
+										class="whitespace-pre-wrap text-left font-semibold text-black dark:text-white"
 										on:click={() => triggerModal(log)}
 									>
 										<SearchResults text={log.name} {search} />
-									</p>
+									</button>
 									<p class="text-netural-content whitespace-nowrap text-xs font-normal">{new Date(log.date).toLocaleString()}</p>
 									{#if log.character}
 										<p class="text-sm font-normal">
@@ -226,7 +226,7 @@
 											<Items title="Magic Items" items={log.magic_items_gained} {search} sort />
 										</div>
 									</div>
-								</th>
+								</td>
 								<td
 									class={twMerge(
 										"hidden align-top sm:table-cell print:table-cell",
@@ -314,9 +314,10 @@
 													await applyAction(result);
 													if (form?.error) {
 														deletingLog = deletingLog.filter((id) => id !== log.id);
-														alert(form.error);
+														errorToast(form.error);
 													} else {
 														$searchData = [];
+														successToast("Log deleted");
 													}
 												};
 											}}
