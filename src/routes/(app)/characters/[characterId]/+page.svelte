@@ -407,15 +407,12 @@
 									"border-b-0"
 							)}
 						>
-							<div
-								class="whitespace-pre-wrap font-semibold text-black dark:text-white"
+							<button
+								class="whitespace-pre-wrap text-left font-semibold text-black dark:text-white"
 								on:click={() => triggerModal(log)}
-								on:keypress={() => null}
-								role="button"
-								tabindex="0"
 							>
 								<SearchResults text={log.name} {search} />
-							</div>
+							</button>
 							<p class="text-netural-content mb-2 whitespace-nowrap text-sm font-normal">
 								{new Date(log.show_date).toLocaleString()}
 							</p>
