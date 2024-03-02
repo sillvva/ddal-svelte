@@ -28,12 +28,8 @@ export function errorToast(message?: string) {
 	});
 }
 
-interface CustomFormOptions<
-	S extends BaseSchema,
-	Out extends Record<string, unknown> = Output<S>,
-	Leaves = FormPathLeaves<Out, string>
-> {
-	nameField?: Leaves;
+interface CustomFormOptions<S extends BaseSchema> {
+	nameField?: FormPathLeaves<Output<S>, string>;
 }
 
 export function valibotForm<S extends BaseSchema, Out extends Output<S>, In extends Input<S>>(
