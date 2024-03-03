@@ -18,8 +18,8 @@ dependencies:
     specifier: ^5.10.2
     version: 5.10.2(prisma@5.10.2)
   '@sillvva/utils':
-    specifier: npm:@jsr/sillvva__utils@^0.2.1
-    version: /@jsr/sillvva__utils@0.2.1
+    specifier: npm:@jsr/sillvva__utils@^0.2.2
+    version: /@jsr/sillvva__utils@0.2.2
   '@svelteuidev/composables':
     specifier: ^0.15.4
     version: 0.15.4(svelte@4.2.12)
@@ -795,8 +795,8 @@ packages:
       '@jridgewell/sourcemap-codec': 1.4.15
     dev: true
 
-  /@jsr/sillvva__utils@0.2.1:
-    resolution: {integrity: sha512-V0OAUTgzjZEUn439Sc4uJn++R6vm5oJkEky3VaOnvrc+AH9sKBZmdrm5KpO++b2wFZxaUyCA343mOw2JHJ1T4g==, tarball: https://npm.jsr.io/~/5/@jsr/sillvva__utils/0.2.1.tgz}
+  /@jsr/sillvva__utils@0.2.2:
+    resolution: {integrity: sha512-BNHD9e5DpEE8jTCXDBbXUuvZdZvgw7QwsBHasFqUfCVAbG8a8OFF34C/ZllGFDVu2olMnwyTnpP2CSBrlNxr9w==, tarball: https://npm.jsr.io/~/5/@jsr/sillvva__utils/0.2.2.tgz}
     dev: false
 
   /@mapbox/node-pre-gyp@1.0.11:
