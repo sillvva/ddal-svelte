@@ -48,7 +48,7 @@
 		"@auth/prisma-adapter": "^1.5.0",
 		"@auth/sveltekit": "^0.14.0",
 		"@prisma/client": "^5.10.2",
-		"@sillvva/utils": "npm:@jsr/sillvva__utils@^0.2.5",
+		"@sillvva/utils": "npm:@jsr/sillvva__utils@^0.2.6",
 		"@svelteuidev/composables": "^0.15.4",
 		"@vercel/analytics": "^1.2.2",
 		"@vercel/speed-insights": "^1.0.10",
