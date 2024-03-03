@@ -6,20 +6,20 @@ settings:
 
 dependencies:
   '@auth/core':
-    specifier: ^0.27.0
-    version: 0.27.0
+    specifier: ^0.28.0
+    version: 0.28.0
   '@auth/prisma-adapter':
-    specifier: ^1.4.0
-    version: 1.4.0(@prisma/client@5.10.2)
+    specifier: ^1.5.0
+    version: 1.5.0(@prisma/client@5.10.2)
   '@auth/sveltekit':
-    specifier: ^0.13.0
-    version: 0.13.0(@sveltejs/kit@2.5.2)(svelte@4.2.12)
+    specifier: ^0.14.0
+    version: 0.14.0(@sveltejs/kit@2.5.2)(svelte@4.2.12)
   '@prisma/client':
     specifier: ^5.10.2
     version: 5.10.2(prisma@5.10.2)
   '@sillvva/utils':
-    specifier: npm:@jsr/sillvva__utils@^0.2.0
-    version: /@jsr/sillvva__utils@0.2.0
+    specifier: npm:@jsr/sillvva__utils@^0.2.1
+    version: /@jsr/sillvva__utils@0.2.1
   '@svelteuidev/composables':
     specifier: ^0.15.4
     version: 0.15.4(svelte@4.2.12)
@@ -165,8 +165,8 @@ packages:
       '@jridgewell/gen-mapping': 0.3.4
       '@jridgewell/trace-mapping': 0.3.23
 
-  /@auth/core@0.27.0:
-    resolution: {integrity: sha512-3bydnRJIM/Al6mkYmb53MsC+6G8ojw3lLPzwgVnX4dCo6N2lrib6Wq6r0vxZIhuHGjLObqqtUfpeaEj5aeTHFg==}
+  /@auth/core@0.28.0:
+    resolution: {integrity: sha512-/fh/tb/L4NMSYcyPoo4Imn8vN6MskcVfgESF8/ndgtI4fhD/7u7i5fTVzWgNRZ4ebIEGHNDbWFRxaTu1NtQgvA==}
     peerDependencies:
       '@simplewebauthn/browser': ^9.0.1
       '@simplewebauthn/server': ^9.0.2
@@ -188,12 +188,12 @@ packages:
       preact-render-to-string: 5.2.3(preact@10.11.3)
     dev: false
 
-  /@auth/prisma-adapter@1.4.0(@prisma/client@5.10.2):
-    resolution: {integrity: sha512-k5D6ajX8MZv9107WWaIpzcNmsB8+sumyc7y46lnAMbLdgBoUcwAYtxGLbwEFSvzgjDcxjWqzlB5AIAED4vioDA==}
+  /@auth/prisma-adapter@1.5.0(@prisma/client@5.10.2):
+    resolution: {integrity: sha512-TNDY7z5VhC3E5xetb4qhTmSmjvyEurafaTM6dlYlhTGj+7K3xTki7fJ0oJwgkFsQ2fT1weJJJSBmjtH8Nqsnuw==}
     peerDependencies:
       '@prisma/client': '>=2.26.0 || >=3 || >=4 || >=5'
     dependencies:
-      '@auth/core': 0.27.0
+      '@auth/core': 0.28.0
       '@prisma/client': 5.10.2(prisma@5.10.2)
     transitivePeerDependencies:
       - '@simplewebauthn/browser'
@@ -201,13 +201,13 @@ packages:
       - nodemailer
     dev: false
 
-  /@auth/sveltekit@0.13.0(@sveltejs/kit@2.5.2)(svelte@4.2.12):
-    resolution: {integrity: sha512-o0WZWsgscWuaSqWeEom3qy8Xw9jrCdpKiH6Tte7yB17iSll2WcVPpT2DAPUqLw3E7DtRpE8JGloWMsAlw11N0A==}
+  /@auth/sveltekit@0.14.0(@sveltejs/kit@2.5.2)(svelte@4.2.12):
+    resolution: {integrity: sha512-I4ec4hcL4BTHgebJ1KvjX/8VclLuJAkcJdPwH0BOGt20qlu+wipI7EQjJy6EG2s4p0cAEWaIGGKFhMZIUfb+1Q==}
     peerDependencies:
       '@sveltejs/kit': ^1.0.0 || ^2.0.0
       svelte: ^3.54.0 || ^4.0.0 || ^5
     dependencies:
-      '@auth/core': 0.27.0
+      '@auth/core': 0.28.0
       '@sveltejs/kit': 2.5.2(@sveltejs/vite-plugin-svelte@3.0.2)(svelte@4.2.12)(vite@5.1.4)
       set-cookie-parser: 2.6.0
       svelte: 4.2.12
@@ -795,8 +795,8 @@ packages:
       '@jridgewell/sourcemap-codec': 1.4.15
     dev: true
 
-  /@jsr/sillvva__utils@0.2.0:
-    resolution: {integrity: sha512-ViyNlCOXEvZOBjMnPFBe3dSw+sa5cpjjVy0rgJpPA4c+99N2kd+qY73RTvbRQO1RWXC5Do4W7VCyN/+SB2VZew==, tarball: https://npm.jsr.io/~/5/@jsr/sillvva__utils/0.2.0.tgz}
+  /@jsr/sillvva__utils@0.2.1:
+    resolution: {integrity: sha512-V0OAUTgzjZEUn439Sc4uJn++R6vm5oJkEky3VaOnvrc+AH9sKBZmdrm5KpO++b2wFZxaUyCA343mOw2JHJ1T4g==, tarball: https://npm.jsr.io/~/5/@jsr/sillvva__utils/0.2.1.tgz}
     dev: false
 
   /@mapbox/node-pre-gyp@1.0.11:
