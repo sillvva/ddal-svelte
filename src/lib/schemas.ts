@@ -4,6 +4,23 @@ import { type FormPathLeaves } from "sveltekit-superforms";
 // prettier-ignore
 import { array, boolean, custom, date, fallback, forward, integer, literal, merge, minLength, minValue, null_, nullable, number, object, optional, regex, string, union, url, type Input, type Output } from "valibot";
 
+export const envPrivateSchema = object({
+	DATABASE_URL: string([url()]),
+	REDIS_URL: string([url(), regex(/^rediss?:\/\//, "Must be a valid Redis URL")]),
+	AUTH_SECRET: string([minLength(10, "Must be a string of at least 10 characters")]),
+	AUTH_URL: string([url()]),
+	GOOGLE_CLIENT_ID: string([minLength(1, "Required")]),
+	GOOGLE_CLIENT_SECRET: string([minLength(1, "Required")]),
+	DISCORD_CLIENT_ID: string([minLength(1, "Required")]),
+	DISCORD_CLIENT_SECRET: string([minLength(1, "Required")]),
+	CRON_CHARACTER_ID: string([minLength(1, "Required")]),
+	DISABLE_SIGNUPS: optional(boolean(), false)
+});
+
+export const envPublicSchema = object({
+	PUBLIC_URL: string([url()])
+});
+
 export type DungeonMasterSchema = Output<typeof dungeonMasterSchema>;
 export type DungeonMasterSchemaIn = Input<typeof dungeonMasterSchema>;
 export const dungeonMasterSchema = object(

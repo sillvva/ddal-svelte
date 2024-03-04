@@ -1,13 +1,9 @@
 import { ValiError } from "valibot";
 import { checkPrivateEnv } from "./private";
-import { checkPublicEnv } from "./public";
 
 export const checkEnv = () => {
 	try {
-		return {
-			...checkPrivateEnv(),
-			...checkPublicEnv()
-		};
+		return checkPrivateEnv();
 	} catch (err) {
 		let message = String(err);
 		if (err instanceof Error) message = err.message;
