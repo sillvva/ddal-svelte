@@ -62,7 +62,6 @@
 	let cmdOpen = false;
 	let selected = defaultSelected;
 	let resultsPane: HTMLElement;
-	let resultsEl: HTMLDivElement;
 
 	$: words = [...new Set(search.toLowerCase().split(" "))].filter(Boolean);
 	$: if (!$searchData.length && browser && cmdOpen) {
@@ -391,8 +390,9 @@
 						<div class="p-4 text-center font-bold">Loading data...</div>
 					{:else}
 						<Command.Empty class="p-4 text-center font-bold">No results found.</Command.Empty>
-						<ScrollArea.Root class={twMerge("relative w-full", resultCounts > 0 ? "h-96" : "h-0")}>
-							<ScrollArea.Viewport class="h-full w-full" bind:el={resultsEl}>
+
+						<ScrollArea.Root class={twMerge("relative", resultCounts > 0 ? "h-96" : "h-0")}>
+							<ScrollArea.Viewport class="h-full">
 								<ScrollArea.Content>
 									{#each results as section, i}
 										{#if i > 0}
@@ -488,7 +488,7 @@
 							</ScrollArea.Viewport>
 							<ScrollArea.Scrollbar
 								orientation="vertical"
-								class="flex h-full w-2.5 touch-none select-none border-l border-l-transparent bg-base-200/50 p-px"
+								class="flex h-full w-2.5 touch-none select-none rounded-full bg-base-200/50 p-px"
 							>
 								<ScrollArea.Thumb class="relative flex-1 rounded-full bg-black/20 dark:bg-white/20" />
 							</ScrollArea.Scrollbar>
