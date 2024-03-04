@@ -10,7 +10,6 @@
 	import { navigating, page } from "$app/stores";
 	import Drawer from "$lib/components/Drawer.svelte";
 	import Dropdown from "$lib/components/Dropdown.svelte";
-	import Icon from "$lib/components/Icon.svelte";
 	import Markdown from "$lib/components/Markdown.svelte";
 	import Settings from "$lib/components/Settings.svelte";
 	import { type CookieStore } from "$src/server/cookie.js";
@@ -197,7 +196,7 @@
 			<div class={twMerge("flex-1", !$app.settings.background && "hidden sm:block")}>&nbsp;</div>
 			{#if data.mobile}
 				<button on:click={() => (cmdOpen = true)} class="inline">
-					<Icon src="magnify" class="w-6" />
+					<span class="icon-[mdi--magnify] size-6" />
 				</button>
 			{:else}
 				<label class="input input-bordered flex items-center gap-2">
@@ -383,7 +382,7 @@
 							}
 						}}
 					/>
-					<Icon src="magnify" class="w-6" />
+					<span class="icon-[mdi--magnify] size-6" />
 				</label>
 				<Command.List class="flex flex-col gap-2" bind:el={resultsPane}>
 					{#if !$searchData.length}

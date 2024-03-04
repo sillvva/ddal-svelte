@@ -1,5 +1,6 @@
 // eslint-disable-next-line @typescript-eslint/no-var-requires
-const themes = require("daisyui/src/theming/themes");
+import { addDynamicIconSelectors } from "@iconify/tailwind";
+import themes from "daisyui/src/theming/themes";
 
 /** @type {import('tailwindcss').Config} */
 export default {
@@ -21,7 +22,7 @@ export default {
 			"2xl": "1440px"
 		}
 	},
-	plugins: [require("daisyui")],
+	plugins: [require("daisyui"), addDynamicIconSelectors()],
 	daisyui: {
 		// darkTheme: "black",
 		themes: [

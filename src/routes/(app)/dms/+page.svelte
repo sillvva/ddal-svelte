@@ -2,7 +2,6 @@
 	import { applyAction, enhance } from "$app/forms";
 	import { page } from "$app/stores";
 	import BreadCrumbs from "$lib/components/BreadCrumbs.svelte";
-	import Icon from "$lib/components/Icon.svelte";
 	import Search from "$lib/components/Search.svelte";
 	import SearchResults from "$lib/components/SearchResults.svelte";
 	import { errorToast, successToast } from "$lib/factories";
@@ -128,12 +127,12 @@
 												>
 													<input type="hidden" name="dmId" value={dm.id} />
 													<button type="submit" class="btn btn-error sm:btn-sm" aria-label="Delete DM">
-														<Icon src="trash-can" class="w-4" />
+														<span class="icon-[mdi--trash-can] size-4" />
 													</button>
 												</form>
 											{/if}
 											<a href="/dms/{dm.id}" class="btn btn-primary sm:btn-sm" aria-label="Edit DM">
-												<Icon src="pencil" class="w-4" />
+												<span class="icon-[mdi--pencil] size-4" />
 											</a>
 										</div>
 									</td>

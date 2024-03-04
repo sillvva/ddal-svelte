@@ -3,7 +3,6 @@
 	import { page } from "$app/stores";
 	import { pageLoader, searchData } from "$src/routes/(app)/+layout.svelte";
 	import { twMerge } from "tailwind-merge";
-	import Icon from "./Icon.svelte";
 
 	let drawer = false;
 	let backdrop = false;
@@ -25,7 +24,7 @@
 	aria-expanded={drawer}
 	aria-controls="drawer"
 >
-	<Icon src="menu" class="w-6" />
+	<span class="icon-[mdi--menu] size-6" />
 </button>
 <noscript>
 	<span class="flex w-[52px] py-3 pr-4"> </span>

@@ -4,7 +4,6 @@
 	import { page } from "$app/stores";
 	import BreadCrumbs from "$lib/components/BreadCrumbs.svelte";
 	import Dropdown from "$lib/components/Dropdown.svelte";
-	import Icon from "$lib/components/Icon.svelte";
 	import Items from "$lib/components/Items.svelte";
 	import Search from "$lib/components/Search.svelte";
 	import SearchResults from "$lib/components/SearchResults.svelte";
@@ -100,7 +99,7 @@
 		<BreadCrumbs />
 		<Dropdown class="dropdown-end">
 			<summary tabindex="0" class="btn btn-sm">
-				<Icon src="dots-horizontal" class="w-6" />
+				<span class="icon-[mdi--dots-horizontal] size-6" />
 			</summary>
 			<ul class="menu dropdown-content w-52 rounded-box bg-base-200 p-2 shadow">
 				<li>
@@ -112,7 +111,7 @@
 
 	{#if form?.error}
 		<div class="alert alert-error mb-4 shadow-lg">
-			<Icon src="alert-circle" class="w-6" />
+			<span class="icon-[mdi--alert-circle] size-6" />
 			{form.error}
 		</div>
 	{/if}
@@ -122,14 +121,19 @@
 			<a href="/dm-logs/new" class="btn btn-primary btn-sm hidden sm:inline-flex" aria-label="New Log">New Log</a>
 			<Search bind:value={search} placeholder="Search by name, race, class, items, etc." />
 			<a href="/dm-logs/new" class="btn btn-primary inline-flex sm:hidden" aria-label="New Log">
-				<Icon src="plus" class="inline w-6" />
+				<span class="icon-[mdi--plus] inline size-6" />
 			</a>
 		</div>
 		<button
 			class="no-script-hide btn btn-primary sm:btn-sm"
 			on:click={() => ($app.dmLogs.sort = $app.dmLogs.sort === "asc" ? "desc" : "asc")}
 		>
-			<Icon src="sort-calendar-{$app.dmLogs.sort}ending" class="w-6" />
+			<span
+				class={twMerge(
+					"size-6",
+					$app.dmLogs.sort === "asc" ? "icon-[mdi--sort-calendar-ascending]" : "icon-[mdi--sort-calendar-descending]"
+				)}
+			/>
 		</button>
 	</div>
 
@@ -303,7 +307,7 @@
 								<td class="w-8 align-top print:hidden">
 									<div class="flex flex-col gap-2">
 										<a href="/dm-logs/{log.id}" class="btn btn-primary sm:btn-sm" aria-label="Edit Log">
-											<Icon src="pencil" class="w-4" />
+											<span class="icon-[mdi--pencil] size-4" />
 										</a>
 										<form
 											method="POST"
@@ -331,7 +335,7 @@
 												}}
 												aria-label="Delete Log"
 											>
-												<Icon src="trash-can" class="w-4" />
+												<span class="icon-[mdi--trash-can] size-4" />
 											</button>
 										</form>
 									</div>

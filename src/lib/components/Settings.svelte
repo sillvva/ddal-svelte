@@ -9,7 +9,6 @@
 	import type { Account } from "@prisma/client";
 	import { getContext, onMount } from "svelte";
 	import { twMerge } from "tailwind-merge";
-	import Icon from "./Icon.svelte";
 
 	export let open = false;
 	const app = getContext<CookieStore<App.Cookie>>("app");
@@ -128,7 +127,7 @@
 	<ul class="menu menu-lg w-full">
 		<li>
 			<a href="https://github.com/sillvva/ddal-svelte" target="_blank" rel="noreferrer noopener">
-				<Icon src="github" class="w-6" />
+				<span class="icon-[mdi--github] size-6" />
 				Github
 			</a>
 		</li>

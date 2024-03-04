@@ -7,7 +7,6 @@
 	import { Combobox } from "bits-ui";
 	import SuperDebug, { formFieldProxy, stringProxy, type FormPathLeaves, type SuperForm } from "sveltekit-superforms";
 	import { twMerge } from "tailwind-merge";
-	import Icon from "./Icon.svelte";
 
 	export let superform: SuperForm<T, any>;
 	export let valueField: FormPathLeaves<T, string>;
@@ -157,17 +156,17 @@
 		</div>
 		{#if $label && clearable}
 			<button class="btn join-item input-bordered" type="button" on:click|preventDefault={() => clear()}>
-				<Icon src="x" class="w-6" color="red" />
+				<span class="icon-[mdi--close] size-6 bg-red-500" />
 			</button>
 		{/if}
 		{#if link}
 			<a href={link} class="btn join-item input-bordered" role="button" target="_blank">
-				<Icon src="pencil" class="w-6" />
+				<span class="icon-[mdi--pencil] size-6" />
 			</a>
 		{/if}
 		{#if dev}
 			<button type="button" class="btn join-item input-bordered" on:click|preventDefault={() => (debug = !debug)}>
-				<Icon src="info" class="w-6" />
+				<span class="icon-[mdi--information-outline] size-6" />
 			</button>
 		{/if}
 	</div>
