@@ -194,23 +194,20 @@
 				<a href="/dms" class="hidden items-center p-2 md:flex">DMs</a>
 			{/if}
 			<div class={twMerge("flex-1", !$app.settings.background && "hidden sm:block")}>&nbsp;</div>
-			{#if data.mobile}
-				<button on:click={() => (cmdOpen = true)} class="inline">
-					<span class="iconify mdi-[magnify] size-6" />
-				</button>
-			{:else}
-				<label class="input input-bordered flex items-center gap-2">
-					<input type="text" class="max-w-20 grow" placeholder="Search" on:focus={() => (cmdOpen = true)} />
-					<kbd class="kbd kbd-sm">
-						{#if data.isMac}
-							⌘
-						{:else}
-							CTRL
-						{/if}
-					</kbd>
-					<kbd class="kbd kbd-sm">K</kbd>
-				</label>
-			{/if}
+			<button on:click={() => (cmdOpen = true)} class="hover-hover:md:hidden inline">
+				<span class="iconify mdi-[magnify] size-6" />
+			</button>
+			<label class="hover-none:md:hidden input input-bordered hidden cursor-text items-center gap-2 md:flex">
+				<input type="text" class="max-w-20 grow" placeholder="Search" on:focus={() => (cmdOpen = true)} />
+				<kbd class="kbd kbd-sm">
+					{#if data.isMac}
+						⌘
+					{:else}
+						CTRL
+					{/if}
+				</kbd>
+				<kbd class="kbd kbd-sm">K</kbd>
+			</label>
 			{#if data.session?.user}
 				<Dropdown class="dropdown-end">
 					<summary tabindex="0" class="flex h-full cursor-pointer items-center pl-4">
