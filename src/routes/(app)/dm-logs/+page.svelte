@@ -99,7 +99,7 @@
 		<BreadCrumbs />
 		<Dropdown class="dropdown-end">
 			<summary tabindex="0" class="btn btn-sm">
-				<span class="iconify mdi-[dots-horizontal] size-6" />
+				<span class="iconify mdi-dots-horizontal size-6" />
 			</summary>
 			<ul class="menu dropdown-content w-52 rounded-box bg-base-200 p-2 shadow">
 				<li>
@@ -111,7 +111,7 @@
 
 	{#if form?.error}
 		<div class="alert alert-error mb-4 shadow-lg">
-			<span class="iconify mdi-[alert-circle] size-6" />
+			<span class="iconify mdi-alert-circle size-6" />
 			{form.error}
 		</div>
 	{/if}
@@ -121,7 +121,7 @@
 			<a href="/dm-logs/new" class="btn btn-primary btn-sm hidden sm:inline-flex" aria-label="New Log">New Log</a>
 			<Search bind:value={search} placeholder="Search by name, race, class, items, etc." />
 			<a href="/dm-logs/new" class="btn btn-primary inline-flex sm:hidden" aria-label="New Log">
-				<span class="iconify mdi-[plus] inline size-6" />
+				<span class="iconify mdi-plus inline size-6" />
 			</a>
 		</div>
 		<button
@@ -131,7 +131,7 @@
 			<span
 				class={twMerge(
 					"iconify size-6",
-					$app.dmLogs.sort === "asc" ? "mdi-[sort-calendar-ascending]" : "mdi-[sort-calendar-descending]"
+					$app.dmLogs.sort === "asc" ? "mdi-sort-calendar-ascending" : "mdi-sort-calendar-descending"
 				)}
 			/>
 		</button>
@@ -307,7 +307,7 @@
 								<td class="w-8 align-top print:hidden">
 									<div class="flex flex-col gap-2">
 										<a href="/dm-logs/{log.id}" class="btn btn-primary sm:btn-sm" aria-label="Edit Log">
-											<span class="iconify mdi-[pencil] size-4" />
+											<span class="iconify mdi-pencil size-4" />
 										</a>
 										<form
 											method="POST"
@@ -335,7 +335,7 @@
 												}}
 												aria-label="Delete Log"
 											>
-												<span class="iconify mdi-[trash-can] size-4" />
+												<span class="iconify mdi-trash-can size-4" />
 											</button>
 										</form>
 									</div>

@@ -195,7 +195,7 @@
 			{/if}
 			<div class={twMerge("flex-1", !$app.settings.background && "hidden sm:block")}>&nbsp;</div>
 			<button on:click={() => (cmdOpen = true)} class="hover-hover:md:hidden inline">
-				<span class="iconify mdi-[magnify] size-6" />
+				<span class="iconify mdi-magnify size-6" />
 			</button>
 			<label class="hover-hover:md:flex input input-bordered hidden cursor-text items-center gap-2">
 				<input type="text" class="max-w-20 grow" placeholder="Search" on:focus={() => (cmdOpen = true)} />
@@ -379,7 +379,7 @@
 							}
 						}}
 					/>
-					<span class="iconify mdi-[magnify] size-6" />
+					<span class="iconify mdi-magnify size-6" />
 				</label>
 				<Command.List class="flex flex-col gap-2" bind:el={resultsPane}>
 					{#if !$searchData.length}

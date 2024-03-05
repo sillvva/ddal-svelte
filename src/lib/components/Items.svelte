@@ -82,7 +82,7 @@
 					<span
 						class={twMerge(
 							"iconify ml-2 inline w-4 justify-self-end md:hidden print:hidden",
-							collapsed ? "mdi-[chevron-down]" : "mdi-[chevron-up]"
+							collapsed ? "mdi-chevron-down" : "mdi-chevron-up"
 						)}
 					/>
 				{/if}
