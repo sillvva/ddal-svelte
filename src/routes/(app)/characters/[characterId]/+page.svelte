@@ -135,7 +135,7 @@
 				<a href={`/characters/${character.id}/edit`} class="btn btn-primary btn-sm">Edit</a>
 				<Dropdown class="dropdown-end">
 					<summary tabindex="0" class="btn btn-sm bg-base-100">
-						<span class="icon-[mdi--dots-horizontal] size-6" />
+						<span class="iconify mdi-[dots-horizontal] size-6" />
 					</summary>
 					<ul class="menu dropdown-content z-20 w-52 rounded-box bg-base-200 p-2 shadow">
 						<li>
@@ -170,7 +170,7 @@
 			</div>
 			<Dropdown class="dropdown-end sm:hidden">
 				<summary tabindex="0" class="btn">
-					<span class="icon-[mdi--dots-horizontal] size-6" />
+					<span class="iconify mdi-[dots-horizontal] size-6" />
 				</summary>
 				<ul class="menu dropdown-content z-20 w-52 rounded-box bg-base-200 p-2 shadow">
 					{#if character.image_url}
@@ -227,7 +227,7 @@
 
 {#if form?.error}
 	<div class="alert alert-error mb-4 shadow-lg">
-		<span class="icon-[mdi--alert-circle] size-6" />
+		<span class="iconify mdi-[alert-circle] size-6" />
 		{form.error}
 	</div>
 {/if}
@@ -358,7 +358,7 @@
 		{/if}
 		{#if myCharacter}
 			<a href={`/characters/${character.id}/log/new`} class="btn btn-primary sm:btn-sm sm:hidden sm:px-3" aria-label="New Log">
-				<span class="icon-[mdi--plus] size-6" />
+				<span class="iconify mdi-[plus] size-6" />
 			</a>
 			<button
 				class={twMerge("no-script-hide btn sm:hidden", $app.log.descriptions && "btn-primary")}
@@ -368,9 +368,9 @@
 				tabindex="0"
 			>
 				{#if $app.log.descriptions}
-					<span class="icon-[mdi--eye] size-6" />
+					<span class="iconify mdi-[eye] size-6" />
 				{:else}
-					<span class="icon-[mdi--eye-off] size-6" />
+					<span class="iconify mdi-[eye-off] size-6" />
 				{/if}
 			</button>
 		{/if}
@@ -385,9 +385,9 @@
 			tabindex="0"
 		>
 			{#if $app.log.descriptions}
-				<span class="icon-[mdi--eye] size-6" />
+				<span class="iconify mdi-[eye] size-6" />
 			{:else}
-				<span class="icon-[mdi--eye-off] size-6" />
+				<span class="iconify mdi-[eye-off] size-6" />
 			{/if}
 			<span class="hidden sm:inline-flex">Notes</span>
 		</button>
@@ -566,7 +566,7 @@
 										class="btn btn-primary sm:btn-sm"
 										aria-label="Edit Log"
 									>
-										<span class="icon-[mdi--pencil] size-6 sm:w-4" />
+										<span class="iconify mdi-[pencil] size-6 sm:w-4" />
 									</a>
 									<form
 										method="POST"
@@ -594,7 +594,7 @@
 											}}
 											aria-label="Delete Log"
 										>
-											<span class="icon-[mdi--trash-can] size-6 sm:w-4" />
+											<span class="iconify mdi-[trash-can] size-6 sm:w-4" />
 										</button>
 									</form>
 								</div>

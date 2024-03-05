@@ -127,12 +127,12 @@
 												>
 													<input type="hidden" name="dmId" value={dm.id} />
 													<button type="submit" class="btn btn-error sm:btn-sm" aria-label="Delete DM">
-														<span class="icon-[mdi--trash-can] size-4" />
+														<span class="iconify mdi-[trash-can] size-4" />
 													</button>
 												</form>
 											{/if}
 											<a href="/dms/{dm.id}" class="btn btn-primary sm:btn-sm" aria-label="Edit DM">
-												<span class="icon-[mdi--pencil] size-4" />
+												<span class="iconify mdi-[pencil] size-4" />
 											</a>
 										</div>
 									</td>

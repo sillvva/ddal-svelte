@@ -196,7 +196,7 @@
 			<div class={twMerge("flex-1", !$app.settings.background && "hidden sm:block")}>&nbsp;</div>
 			{#if data.mobile}
 				<button on:click={() => (cmdOpen = true)} class="inline">
-					<span class="icon-[mdi--magnify] size-6" />
+					<span class="iconify mdi-[magnify] size-6" />
 				</button>
 			{:else}
 				<label class="input input-bordered flex items-center gap-2">
@@ -382,7 +382,7 @@
 							}
 						}}
 					/>
-					<span class="icon-[mdi--magnify] size-6" />
+					<span class="iconify mdi-[magnify] size-6" />
 				</label>
 				<Command.List class="flex flex-col gap-2" bind:el={resultsPane}>
 					{#if !$searchData.length}

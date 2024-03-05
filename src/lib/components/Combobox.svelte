@@ -156,17 +156,17 @@
 		</div>
 		{#if $label && clearable}
 			<button class="btn join-item input-bordered" type="button" on:click|preventDefault={() => clear()}>
-				<span class="icon-[mdi--close] size-6 bg-red-500" />
+				<span class="iconify mdi-[close] size-6 bg-red-500" />
 			</button>
 		{/if}
 		{#if link}
 			<a href={link} class="btn join-item input-bordered" role="button" target="_blank">
-				<span class="icon-[mdi--pencil] size-6" />
+				<span class="iconify mdi-[pencil] size-6" />
 			</a>
 		{/if}
 		{#if dev}
 			<button type="button" class="btn join-item input-bordered" on:click|preventDefault={() => (debug = !debug)}>
-				<span class="icon-[mdi--information-outline] size-6" />
+				<span class="iconify mdi-[information-outline] size-6" />
 			</button>
 		{/if}
 	</div>
