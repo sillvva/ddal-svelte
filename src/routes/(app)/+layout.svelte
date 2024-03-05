@@ -197,7 +197,7 @@
 			<button on:click={() => (cmdOpen = true)} class="hover-hover:md:hidden inline">
 				<span class="iconify mdi-[magnify] size-6" />
 			</button>
-			<label class="hover-none:md:hidden input input-bordered hidden cursor-text items-center gap-2 md:flex">
+			<label class="hover-hover:md:flex input input-bordered hidden cursor-text items-center gap-2">
 				<input type="text" class="max-w-20 grow" placeholder="Search" on:focus={() => (cmdOpen = true)} />
 				<kbd class="kbd kbd-sm">
 					{#if data.isMac}
