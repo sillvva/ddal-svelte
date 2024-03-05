@@ -307,7 +307,7 @@
 								<td class="w-8 align-top print:hidden">
 									<div class="flex flex-col gap-2">
 										<a href="/dm-logs/{log.id}" class="btn btn-primary sm:btn-sm" aria-label="Edit Log">
-											<span class="iconify mdi-pencil size-4" />
+											<span class="iconify mdi-pencil" />
 										</a>
 										<form
 											method="POST"
@@ -335,7 +335,7 @@
 												}}
 												aria-label="Delete Log"
 											>
-												<span class="iconify mdi-trash-can size-4" />
+												<span class="iconify mdi-trash-can" />
 											</button>
 										</form>
 									</div>

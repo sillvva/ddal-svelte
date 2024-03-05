@@ -566,7 +566,7 @@
 										class="btn btn-primary sm:btn-sm"
 										aria-label="Edit Log"
 									>
-										<span class="iconify mdi-pencil size-6 sm:w-4" />
+										<span class="iconify mdi-pencil size-6 sm:size-4" />
 									</a>
 									<form
 										method="POST"
@@ -594,7 +594,7 @@
 											}}
 											aria-label="Delete Log"
 										>
-											<span class="iconify mdi-trash-can size-6 sm:w-4" />
+											<span class="iconify mdi-trash-can size-6 sm:size-4" />
 										</button>
 									</form>
 								</div>

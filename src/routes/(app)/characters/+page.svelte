@@ -166,7 +166,7 @@
 						on:keypress
 						aria-label="List View"
 					>
-						<span class="iconify mdi-format-list-text size-4" />
+						<span class="iconify mdi-format-list-text" />
 					</button>
 					<button
 						class={twMerge("btn join-item sm:btn-sm", $app.characters.display == "grid" ? "btn-primary" : "hover:btn-primary")}
@@ -174,7 +174,7 @@
 						on:keypress
 						aria-label="Grid View"
 					>
-						<span class="iconify mdi-view-grid size-4" />
+						<span class="iconify mdi-view-grid" />
 					</button>
 				</div>
 			</div>

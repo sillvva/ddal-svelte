@@ -49,7 +49,8 @@ export default {
 			addComponents({
 				".iconify": {
 					display: "inline-block",
-					size: theme("size.4"),
+					width: theme("width.4"),
+					height: theme("height.4"),
 					backgroundColor: theme("colors.current"),
 					maskImage: "var(--svg)",
 					maskRepeat: "no-repeat",
