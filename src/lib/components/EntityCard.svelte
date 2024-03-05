@@ -7,7 +7,6 @@
 	import { formFieldProxy, type FormPathLeaves, type SuperForm } from "sveltekit-superforms";
 	import Control from "./Control.svelte";
 	import GenericInput from "./GenericInput.svelte";
-	import Icon from "./Icon.svelte";
 	import Input from "./Input.svelte";
 	import MdTextInput from "./MDTextInput.svelte";
 
@@ -55,7 +54,7 @@
 					<Input type="text" {superform} field={nameField} required>Name</Input>
 				</Control>
 				<button type="button" class="no-script-hide btn btn-error mt-9" on:click={() => ondelete()}>
-					<Icon src="trash-can" class="w-6" />
+					<span class="iconify mdi-trash-can size-6" />
 				</button>
 			</div>
 			<Control>
@@ -84,7 +83,7 @@
 					</GenericInput>
 				</Control>
 				<button type="button" class="no-script-hide btn btn-error mt-9" on:click={() => ondelete()}>
-					<Icon src="trash-can" class="w-6" />
+					<span class="iconify mdi-trash-can size-6" />
 				</button>
 			</div>
 			<div class="text-sm">

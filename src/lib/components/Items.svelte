@@ -3,7 +3,6 @@
 	import type { MagicItem, StoryAward } from "@prisma/client";
 	import { sorter } from "@sillvva/utils";
 	import { twMerge } from "tailwind-merge";
-	import Icon from "./Icon.svelte";
 	import SearchResults from "./SearchResults.svelte";
 
 	export let title: string = "";
@@ -80,7 +79,12 @@
 					{title}
 				</span>
 				{#if collapsible}
-					<Icon src="chevron-{collapsed ? 'down' : 'up'}" class="ml-2 inline w-4 justify-self-end md:hidden print:hidden" />
+					<span
+						class={twMerge(
+							"iconify ml-2 inline justify-self-end md:hidden print:hidden",
+							collapsed ? "mdi-chevron-down" : "mdi-chevron-up"
+						)}
+					/>
 				{/if}
 			</h4>
 		</div>

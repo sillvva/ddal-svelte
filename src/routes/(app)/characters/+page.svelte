@@ -3,7 +3,6 @@
 	import { page } from "$app/stores";
 	import BreadCrumbs from "$lib/components/BreadCrumbs.svelte";
 	import Dropdown from "$lib/components/Dropdown.svelte";
-	import Icon from "$lib/components/Icon.svelte";
 	import Search from "$lib/components/Search.svelte";
 	import SearchResults from "$lib/components/SearchResults.svelte";
 	import type { TransitionAction } from "$lib/util";
@@ -100,7 +99,7 @@
 
 		<Dropdown class="dropdown-end">
 			<summary tabindex="0" class="btn btn-sm bg-base-100">
-				<Icon src="dots-horizontal" class="w-6" />
+				<span class="iconify mdi-dots-horizontal size-6" />
 			</summary>
 			<ul class="menu dropdown-content w-52 rounded-box bg-base-200 p-2 shadow">
 				<li>
@@ -125,7 +124,7 @@
 				<a href="/characters/new/edit" class="btn btn-primary btn-sm hidden sm:inline-flex">New Character</a>
 				<Search bind:value={search} placeholder="Search by name, race, class, items, etc." />
 				<a href="/characters/new/edit" class="btn btn-primary inline-flex sm:hidden" aria-label="New Character">
-					<Icon src="plus" class="inline w-6" />
+					<span class="iconify mdi-plus inline size-6" />
 				</a>
 				<button
 					class={twMerge("no-script-hide btn inline-flex xs:hidden", $app.characters.magicItems && "btn-primary")}
@@ -135,7 +134,11 @@
 					aria-label="Toggle Magic Items"
 					tabindex="0"
 				>
-					<Icon src={$app.characters.magicItems ? "show" : "hide"} class="w-6" />
+					{#if $app.characters.magicItems}
+						<span class="iconify mdi-eye size-6" />
+					{:else}
+						<span class="iconify mdi-eye-off size-6" />
+					{/if}
 				</button>
 			</div>
 			<div class="ml-auto flex gap-2 sm:ml-0">
@@ -148,7 +151,11 @@
 						aria-label="Toggle Magic Items"
 						tabindex="0"
 					>
-						<Icon src={$app.characters.magicItems ? "show" : "hide"} class="w-6" />
+						{#if $app.characters.magicItems}
+							<span class="iconify mdi-eye size-6" />
+						{:else}
+							<span class="iconify mdi-eye-off size-6" />
+						{/if}
 						<span class="hidden xs:inline-flex sm:hidden md:inline-flex">Magic Items</span>
 					</button>
 				{/if}
@@ -159,7 +166,7 @@
 						on:keypress
 						aria-label="List View"
 					>
-						<Icon src="format-list-text" class="w-4" />
+						<span class="iconify mdi-format-list-text" />
 					</button>
 					<button
 						class={twMerge("btn join-item sm:btn-sm", $app.characters.display == "grid" ? "btn-primary" : "hover:btn-primary")}
@@ -167,7 +174,7 @@
 						on:keypress
 						aria-label="Grid View"
 					>
-						<Icon src="view-grid" class="w-4" />
+						<span class="iconify mdi-view-grid" />
 					</button>
 				</div>
 			</div>
@@ -208,7 +215,7 @@
 													/>
 												{/key}
 											{:else}
-												<Icon src="account" class="w-12" />
+												<span class="iconify mdi-account size-12" />
 											{/if}
 										</div>
 									</div>

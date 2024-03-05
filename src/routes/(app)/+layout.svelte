@@ -10,7 +10,6 @@
 	import { navigating, page } from "$app/stores";
 	import Drawer from "$lib/components/Drawer.svelte";
 	import Dropdown from "$lib/components/Dropdown.svelte";
-	import Icon from "$lib/components/Icon.svelte";
 	import Markdown from "$lib/components/Markdown.svelte";
 	import Settings from "$lib/components/Settings.svelte";
 	import { type CookieStore } from "$src/server/cookie.js";
@@ -62,7 +61,6 @@
 	let cmdOpen = false;
 	let selected = defaultSelected;
 	let resultsPane: HTMLElement;
-	let resultsEl: HTMLDivElement;
 
 	$: words = [...new Set(search.toLowerCase().split(" "))].filter(Boolean);
 	$: if (!$searchData.length && browser && cmdOpen) {
@@ -196,23 +194,20 @@
 				<a href="/dms" class="hidden items-center p-2 md:flex">DMs</a>
 			{/if}
 			<div class={twMerge("flex-1", !$app.settings.background && "hidden sm:block")}>&nbsp;</div>
-			{#if data.mobile}
-				<button on:click={() => (cmdOpen = true)} class="inline">
-					<Icon src="magnify" class="w-6" />
-				</button>
-			{:else}
-				<label class="input input-bordered flex items-center gap-2">
-					<input type="text" class="max-w-20 grow" placeholder="Search" on:focus={() => (cmdOpen = true)} />
-					<kbd class="kbd kbd-sm">
-						{#if data.isMac}
-							⌘
-						{:else}
-							CTRL
-						{/if}
-					</kbd>
-					<kbd class="kbd kbd-sm">K</kbd>
-				</label>
-			{/if}
+			<button on:click={() => (cmdOpen = true)} class="hover-hover:md:hidden inline">
+				<span class="iconify mdi-magnify size-6" />
+			</button>
+			<label class="hover-hover:md:flex input input-bordered hidden cursor-text items-center gap-2">
+				<input type="text" class="max-w-20 grow" placeholder="Search" on:focus={() => (cmdOpen = true)} />
+				<kbd class="kbd kbd-sm">
+					{#if data.isMac}
+						⌘
+					{:else}
+						CTRL
+					{/if}
+				</kbd>
+				<kbd class="kbd kbd-sm">K</kbd>
+			</label>
 			{#if data.session?.user}
 				<Dropdown class="dropdown-end">
 					<summary tabindex="0" class="flex h-full cursor-pointer items-center pl-4">
@@ -384,15 +379,16 @@
 							}
 						}}
 					/>
-					<Icon src="magnify" class="w-6" />
+					<span class="iconify mdi-magnify size-6" />
 				</label>
 				<Command.List class="flex flex-col gap-2" bind:el={resultsPane}>
 					{#if !$searchData.length}
 						<div class="p-4 text-center font-bold">Loading data...</div>
 					{:else}
 						<Command.Empty class="p-4 text-center font-bold">No results found.</Command.Empty>
-						<ScrollArea.Root class={twMerge("relative w-full", resultCounts > 0 ? "h-96" : "h-0")}>
-							<ScrollArea.Viewport class="h-full w-full" bind:el={resultsEl}>
+
+						<ScrollArea.Root class={twMerge("relative", resultCounts > 0 ? "h-96" : "h-0")}>
+							<ScrollArea.Viewport class="h-full">
 								<ScrollArea.Content>
 									{#each results as section, i}
 										{#if i > 0}
@@ -488,7 +484,7 @@
 							</ScrollArea.Viewport>
 							<ScrollArea.Scrollbar
 								orientation="vertical"
-								class="flex h-full w-2.5 touch-none select-none border-l border-l-transparent bg-base-200/50 p-px"
+								class="flex h-full w-2.5 touch-none select-none rounded-full bg-base-200/50 p-px"
 							>
 								<ScrollArea.Thumb class="relative flex-1 rounded-full bg-black/20 dark:bg-white/20" />
 							</ScrollArea.Scrollbar>

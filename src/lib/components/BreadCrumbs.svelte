@@ -1,7 +1,6 @@
 <script lang="ts">
 	import { page } from "$app/stores";
 	import BackButton from "./BackButton.svelte";
-	import Icon from "./Icon.svelte";
 
 	let breadcrumbs = ($page.data.breadcrumbs as Array<{ name: string; href?: string }>).map((bc, i) => ({
 		name: bc.name,
@@ -21,7 +20,7 @@
 <div class="breadcrumbs mb-4 hidden flex-1 text-sm sm:flex">
 	<ul>
 		<li>
-			<Icon src="home" class="w-4" />
+			<span class="iconify mdi-home" />
 		</li>
 		{#each breadcrumbs as bc}
 			{#if bc.href}
