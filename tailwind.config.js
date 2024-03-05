@@ -1,5 +1,3 @@
-// eslint-disable-next-line @typescript-eslint/no-var-requires
-import { addDynamicIconSelectors } from "@iconify/tailwind";
 import themes from "daisyui/src/theming/themes";
 import postcss from "postcss";
 import plugin from "tailwindcss/plugin";
@@ -26,7 +24,6 @@ export default {
 	},
 	plugins: [
 		require("daisyui"),
-		addDynamicIconSelectors(),
 		plugin(function ({ addVariant, e }) {
 			addVariant("hover-hover", ({ container, separator }) => {
 				const hover = postcss.atRule({ name: "media", params: "(hover: hover)" });

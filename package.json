@@ -13,7 +13,6 @@
 	},
 	"devDependencies": {
 		"@iconify-json/mdi": "^1.1.64",
-		"@iconify/tailwind": "^0.1.4",
 		"@sveltejs/adapter-vercel": "^5.1.0",
 		"@sveltejs/kit": "2.5.2",
 		"@sveltejs/vite-plugin-svelte": "^3.0.2",
