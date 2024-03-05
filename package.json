@@ -19,6 +19,7 @@
 		"@sveltejs/vite-plugin-svelte": "^3.0.2",
 		"@sveltekit-addons/document": "^1.0.1",
 		"@types/js-cookie": "^3.0.6",
+		"@types/node": "^20.11.24",
 		"@typescript-eslint/eslint-plugin": "^7.1.0",
 		"@typescript-eslint/parser": "^7.1.0",
 		"autoprefixer": "^10.4.18",
