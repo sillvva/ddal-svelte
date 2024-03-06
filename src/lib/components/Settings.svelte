@@ -5,7 +5,7 @@
 	import { PROVIDERS } from "$lib/constants";
 	import { pageLoader, searchData } from "$src/routes/(app)/+layout.svelte";
 	import type { CookieStore } from "$src/server/cookie";
-	import { signIn } from "@auth/sveltekit/client";
+	import { signIn, signOut } from "@auth/sveltekit/client";
 	import type { Account } from "@prisma/client";
 	import { getContext, onMount } from "svelte";
 	import { twMerge } from "tailwind-merge";
@@ -61,7 +61,7 @@
 		<div class="flex flex-1 flex-col gap-2">
 			<strong>{$page.data.session?.user?.name}</strong>
 			<span>
-				<button class="btn btn-sm">Logout</button>
+				<button class="btn btn-sm" on:click={() => signOut({ callbackUrl: "/" })}>Logout</button>
 			</span>
 		</div>
 	</div>
