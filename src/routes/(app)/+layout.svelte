@@ -93,7 +93,7 @@
 		},
 		...$searchData
 	]
-		?.map((section) => {
+		.map((section) => {
 			return {
 				...section,
 				items: section.items
@@ -192,10 +192,10 @@
 				<a href="/dms" class="hidden items-center p-2 md:flex">DMs</a>
 			{/if}
 			<div class={twMerge("flex-1", !$app.settings.background && "hidden sm:block")}>&nbsp;</div>
-			<button on:click={() => (cmdOpen = true)} class="hover-hover:md:hidden inline">
-				<span class="iconify mdi-magnify size-6" />
+			<button on:click={() => (cmdOpen = true)} class="inline hover-hover:md:hidden">
+				<span class="iconify size-6 mdi-magnify" />
 			</button>
-			<label class="hover-hover:md:flex input input-bordered hidden cursor-text items-center gap-2">
+			<label class="input input-bordered hidden cursor-text items-center gap-2 hover-hover:md:flex">
 				<input type="text" class="max-w-20 grow" placeholder="Search" on:focus={() => (cmdOpen = true)} />
 				<kbd class="kbd kbd-sm">
 					{#if data.isMac}
@@ -364,7 +364,7 @@
 							}
 						}}
 					/>
-					<span class="iconify mdi-magnify size-6" />
+					<span class="iconify size-6 mdi-magnify" />
 				</label>
 				<Command.List class="flex flex-col gap-2" bind:el={resultsPane}>
 					{#if !$searchData.length}
