@@ -57,7 +57,10 @@ export async function getCharactersWithLogs(userId: string, includeLogs = true) 
 			}
 		},
 		where: {
-			userId
+			userId,
+			id: {
+				not: ""
+			}
 		}
 	});
 
@@ -115,7 +118,12 @@ export async function getCharacterCaches(characterIds: string[]) {
 export type CharactersData = Awaited<ReturnType<typeof getCharacters>>;
 export async function getCharacters(userId: string) {
 	return await prisma.character.findMany({
-		where: { userId: userId },
+		where: {
+			userId: userId,
+			id: {
+				not: ""
+			}
+		},
 		include: {
 			user: true
 		},

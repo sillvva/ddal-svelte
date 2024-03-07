@@ -9,3 +9,8 @@ node_modules
 vite.config.js.timestamp-*
 vite.config.ts.timestamp-*
 *.rdb
+*.sql
+*.db
+*.db-journal
+*.toml
+metadata

@@ -154,15 +154,16 @@ export async function saveLog(input: LogSchema, user?: CustomSession["user"]): S
 				}
 			});
 
-			await tx.magicItem.createMany({
-				data: input.magic_items_gained
-					.filter((item) => !item.id)
-					.map((item) => ({
+			const items = input.magic_items_gained.filter((item) => !item.id);
+			for (const item of items) {
+				await tx.magicItem.create({
+					data: {
 						name: item.name,
 						description: item.description,
 						logGainedId: log.id
-					}))
-			});
+					}
+				});
+			}
 
 			for (const item of itemsToUpdate) {
 				await tx.magicItem.update({
@@ -210,15 +211,16 @@ export async function saveLog(input: LogSchema, user?: CustomSession["user"]): S
 				}
 			});
 
-			await tx.storyAward.createMany({
-				data: input.story_awards_gained
-					.filter((item) => !item.id)
-					.map((item) => ({
+			const storyAwards = input.story_awards_gained.filter((item) => !item.id);
+			for (const item of storyAwards) {
+				await tx.storyAward.create({
+					data: {
 						name: item.name,
 						description: item.description,
 						logGainedId: log.id
-					}))
-			});
+					}
+				});
+			}
 
 			for (const item of storyAwardsToUpdate) {
 				await tx.storyAward.update({

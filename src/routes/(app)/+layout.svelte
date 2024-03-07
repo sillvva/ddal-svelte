@@ -9,11 +9,9 @@
 	import { afterNavigate, goto } from "$app/navigation";
 	import { navigating, page } from "$app/stores";
 	import Drawer from "$lib/components/Drawer.svelte";
-	import Dropdown from "$lib/components/Dropdown.svelte";
 	import Markdown from "$lib/components/Markdown.svelte";
 	import Settings from "$lib/components/Settings.svelte";
 	import { type CookieStore } from "$src/server/cookie.js";
-	import { signOut } from "@auth/sveltekit/client";
 	import { sorter } from "@sillvva/utils";
 	import { hotkey } from "@svelteuidev/composables";
 	import { ScrollArea } from "bits-ui";
@@ -209,37 +207,24 @@
 				<kbd class="kbd kbd-sm">K</kbd>
 			</label>
 			{#if data.session?.user}
-				<Dropdown class="dropdown-end">
-					<summary tabindex="0" class="flex h-full cursor-pointer items-center pl-4">
-						<div class="avatar">
-							<div
-								class={twMerge(
-									"relative w-11 overflow-hidden rounded-full ring ring-primary ring-offset-2 ring-offset-base-100",
-									!$app.settings.background && "w-9 lg:w-11"
-								)}
-							>
-								<img
-									src={data.session?.user?.image || ""}
-									alt={data.session?.user?.name}
-									width={48}
-									height={48}
-									class="rounded-full object-cover object-center"
-								/>
-							</div>
+				<summary tabindex="0" class="flex h-full cursor-pointer items-center pl-4" on:click={() => (settingsOpen = true)}>
+					<div class="avatar">
+						<div
+							class={twMerge(
+								"relative w-11 overflow-hidden rounded-full ring ring-primary ring-offset-2 ring-offset-base-100",
+								!$app.settings.background && "w-9 lg:w-11"
+							)}
+						>
+							<img
+								src={data.session?.user?.image || ""}
+								alt={data.session?.user?.name}
+								width={48}
+								height={48}
+								class="rounded-full object-cover object-center"
+							/>
 						</div>
-					</summary>
-					<ul class="menu dropdown-content w-52 rounded-box bg-base-200 p-2 shadow">
-						<li class="sm:hidden">
-							<span>{data.session?.user?.name}</span>
-						</li>
-						<li class="no-script-hide">
-							<button on:click={() => (settingsOpen = true)} aria-controls="settings">Settings</button>
-						</li>
-						<li>
-							<a href="#top" on:click={() => signOut({ callbackUrl: "/" })}>Logout</a>
-						</li>
-					</ul>
-				</Dropdown>
+					</div>
+				</summary>
 			{:else}
 				<a
 					href={`/?redirect=${encodeURIComponent(`${$page.url.pathname}${$page.url.search}`)}`}

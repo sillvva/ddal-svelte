@@ -33,6 +33,11 @@ export async function getUserDMsWithLogs(user: LocalsSession["user"]) {
 							id: true,
 							name: true,
 							userId: true
+						},
+						where: {
+							id: {
+								not: ""
+							}
 						}
 					}
 				}

@@ -135,9 +135,9 @@
 					tabindex="0"
 				>
 					{#if $app.characters.magicItems}
-						<span class="iconify mdi-eye size-6" />
+						<span class="iconify mdi-shield-sword size-6" />
 					{:else}
-						<span class="iconify mdi-eye-off size-6" />
+						<span class="iconify mdi-shield-sword-outline size-6" />
 					{/if}
 				</button>
 			</div>
@@ -152,9 +152,11 @@
 						tabindex="0"
 					>
 						{#if $app.characters.magicItems}
-							<span class="iconify mdi-eye size-6" />
+							<span class="iconify mdi-eye hidden size-6 xs:inline-block sm:hidden md:inline-block" />
+							<span class="iconify mdi-shield-sword inline-block size-6 xs:hidden sm:inline-block md:hidden" />
 						{:else}
-							<span class="iconify mdi-eye-off size-6" />
+							<span class="iconify mdi-eye-off hidden size-6 xs:inline-block sm:hidden md:inline-block" />
+							<span class="iconify mdi-shield-sword-outline inline-block size-6 xs:hidden sm:inline-block md:hidden" />
 						{/if}
 						<span class="hidden xs:inline-flex sm:hidden md:inline-flex">Magic Items</span>
 					</button>

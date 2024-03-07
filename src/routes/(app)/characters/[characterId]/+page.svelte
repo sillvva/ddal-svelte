@@ -368,9 +368,9 @@
 				tabindex="0"
 			>
 				{#if $app.log.descriptions}
-					<span class="iconify mdi-eye size-6" />
+					<span class="iconify mdi-note-text size-6" />
 				{:else}
-					<span class="iconify mdi-eye-off size-6" />
+					<span class="iconify mdi-note-text-outline size-6" />
 				{/if}
 			</button>
 		{/if}

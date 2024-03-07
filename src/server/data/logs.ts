@@ -65,6 +65,11 @@ export async function getDMLogs(userId = "", userName = "") {
 			character: {
 				include: {
 					user: true
+				},
+				where: {
+					id: {
+						not: ""
+					}
 				}
 			}
 		},

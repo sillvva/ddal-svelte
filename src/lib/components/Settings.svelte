@@ -5,7 +5,7 @@
 	import { PROVIDERS } from "$lib/constants";
 	import { pageLoader, searchData } from "$src/routes/(app)/+layout.svelte";
 	import type { CookieStore } from "$src/server/cookie";
-	import { signIn } from "@auth/sveltekit/client";
+	import { signIn, signOut } from "@auth/sveltekit/client";
 	import type { Account } from "@prisma/client";
 	import { getContext, onMount } from "svelte";
 	import { twMerge } from "tailwind-merge";
@@ -40,6 +40,32 @@
 	id="settings"
 	class={twMerge("fixed -right-72 bottom-0 top-0 z-50 w-72 bg-base-100 px-4 py-4 transition-all", open && "right-0")}
 >
+	<div class="flex gap-4 p-4">
+		<div class="py-2">
+			<div class="avatar">
+				<div
+					class={twMerge(
+						"relative w-[3.25rem] overflow-hidden rounded-full ring ring-primary ring-offset-2 ring-offset-base-100"
+					)}
+				>
+					<img
+						src={$page.data.session?.user?.image || ""}
+						alt={$page.data.session?.user?.name}
+						width={48}
+						height={48}
+						class="rounded-full object-cover object-center"
+					/>
+				</div>
+			</div>
+		</div>
+		<div class="flex flex-1 flex-col gap-2">
+			<strong>{$page.data.session?.user?.name}</strong>
+			<span>
+				<button class="btn btn-sm" on:click={() => signOut({ callbackUrl: "/" })}>Logout</button>
+			</span>
+		</div>
+	</div>
+	<div class="divider my-0" />
 	<ul class="menu menu-lg w-full">
 		<li>
 			<label class="flex flex-row items-center gap-2 hover:bg-transparent">
@@ -85,7 +111,7 @@
 			</li>
 			{#each authProviders as provider}
 				<li>
-					<div class="flex justify-between">
+					<label class="flex justify-between">
 						<span>{provider.name}</span>
 						<span>
 							{#if provider.account}
@@ -118,7 +144,7 @@
 								>
 							{/if}
 						</span>
-					</div>
+					</label>
 				</li>
 			{/each}
 		</ul>
