@@ -1,11 +1,13 @@
 import { building } from "$app/environment";
 import { privateEnv } from "$lib/env/private";
 import { Ratelimit } from "@upstash/ratelimit";
+import { Redis as UpstashRedis } from "@upstash/redis";
 import { Redis } from "ioredis";
 
 const ephemeralCache = new Map();
 
 let redis: Redis;
+let upstash: UpstashRedis;
 let ratelimit: Ratelimit;
 let status = "";
 function connect() {
@@ -21,25 +23,26 @@ function connect() {
 			}
 		});
 
-		const adpaterRedis = {
-			sadd: <TData>(key: string, ...members: TData[]) => redis.sadd(key, ...members.map((m) => String(m))),
-			eval: async <TArgs extends unknown[], TData = unknown>(script: string, keys: string[], args: TArgs) =>
-				redis.eval(script, keys.length, ...keys, ...(args ?? []).map((a) => String(a))) as Promise<TData>
-		};
+		if (!upstash) {
+			upstash = new UpstashRedis({
+				url: privateEnv.UPSTASH_REDIS_REST_URL,
+				token: privateEnv.UPSTASH_REDIS_REST_TOKEN
+			});
 
-		ratelimit = new Ratelimit({
-			redis: adpaterRedis,
-			limiter: Ratelimit.slidingWindow(10, "10 s"),
-			analytics: true,
-			timeout: 1000, // 1 second,
-			ephemeralCache,
-			/**
-			 * Optional prefix for the keys used in redis. This is useful if you want to share a redis
-			 * instance with other applications and want to avoid key collisions. The default prefix is
-			 * "@upstash/ratelimit"
-			 */
-			prefix: "@upstash|ratelimit"
-		});
+			ratelimit = new Ratelimit({
+				redis: upstash,
+				limiter: Ratelimit.slidingWindow(10, "10 s"),
+				analytics: true,
+				timeout: 1000, // 1 second,
+				ephemeralCache,
+				/**
+				 * Optional prefix for the keys used in redis. This is useful if you want to share a redis
+				 * instance with other applications and want to avoid key collisions. The default prefix is
+				 * "@upstash/ratelimit"
+				 */
+				prefix: "@upstash|ratelimit"
+			});
+		}
 	} catch (e) {
 		console.error("Redis connection failed:", e);
 	}
