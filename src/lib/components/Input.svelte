@@ -14,6 +14,7 @@
 		empty?: TType extends "date" ? "null" | "undefined" : never;
 		minField?: FormPathLeaves<T, LeafType>;
 		maxField?: FormPathLeaves<T, LeafType>;
+		readonly?: boolean;
 		description?: string;
 		oninput?: TType extends "string" | "number" ? (value: typeof $value) => void : never;
 		onchange?: (value: typeof $value) => void;
@@ -25,6 +26,7 @@
 	export let empty: "null" | "undefined" = "null";
 	export let minField: FormPathLeaves<T> | undefined = undefined;
 	export let maxField: FormPathLeaves<T> | undefined = undefined;
+	export let readonly: boolean | undefined = undefined;
 	export let description = "";
 	export let oninput = (value: typeof $value) => {};
 	export let onchange = (value: typeof $value) => {};
@@ -42,6 +44,10 @@
 			? numberProxy(superform, maxField)
 			: dateProxy(superform, maxField, { format: "datetime-local" })
 		: undefined;
+
+	function disabled(node: HTMLInputElement) {
+		if (readonly) node.setAttribute("disabled", "");
+	}
 
 	$: commonProps = {
 		id: field,
@@ -61,7 +67,14 @@
 	</span>
 </label>
 {#if type === "text"}
-	<input type="text" bind:value={$value} on:input={() => oninput($value)} on:change={() => onchange($value)} {...commonProps} />
+	<input
+		type="text"
+		bind:value={$value}
+		on:input={() => oninput($value)}
+		on:change={() => onchange($value)}
+		{...commonProps}
+		use:disabled
+	/>
 {:else if type === "number"}
 	<input
 		type="number"
@@ -71,6 +84,7 @@
 		min={$proxyMin}
 		max={$proxyMax}
 		{...commonProps}
+		use:disabled
 	/>
 {:else if type === "date"}
 	<input
@@ -80,6 +94,7 @@
 		min={$proxyMin}
 		max={$proxyMax}
 		{...commonProps}
+		use:disabled
 	/>
 {/if}
 {#if $errors?.length || description}

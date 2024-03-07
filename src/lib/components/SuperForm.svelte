@@ -18,7 +18,8 @@
 
 	export let superform: SuperForm<T, any>;
 	export let basic = false;
-	export let showMessage = !superform.options.resetForm;
+	export let showMessage = false;
+	$: showMessage = !superform.options.resetForm;
 
 	const { form, errors, allErrors, capture, restore, submitting, enhance, formId, message } = superform;
 	const method = $$props.method || "post";
@@ -34,7 +35,7 @@
 			const disabled = el.hasAttribute("disabled");
 			submitting.subscribe((submitting) => {
 				if (submitting) el.setAttribute("disabled", "disabled");
-				else if (!disabled) el.removeAttribute("disabled");
+				else if (!disabled && showMessage && $message) el.removeAttribute("disabled");
 			});
 		});
 
