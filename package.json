@@ -49,6 +49,8 @@
 		"@auth/core": "^0.28.0",
 		"@auth/prisma-adapter": "^1.5.0",
 		"@auth/sveltekit": "^0.14.0",
+		"@libsql/client": "^0.5.3",
+		"@prisma/adapter-libsql": "^5.10.2",
 		"@prisma/client": "^5.10.2",
 		"@sillvva/utils": "npm:@jsr/sillvva__utils@^0.2.6",
 		"@svelteuidev/composables": "^0.15.4",
