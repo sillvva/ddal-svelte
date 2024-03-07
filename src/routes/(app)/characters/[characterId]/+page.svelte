@@ -16,7 +16,7 @@
 	import { slugify, sorter } from "@sillvva/utils";
 	import { download, hotkey } from "@svelteuidev/composables";
 	import MiniSearch from "minisearch";
-	import { getContext, onMount } from "svelte";
+	import { getContext } from "svelte";
 	import { twMerge } from "tailwind-merge";
 
 	export let data;
@@ -110,10 +110,9 @@
 		}
 	}
 
-	let searchBar: HTMLDivElement;
-	onMount(() => {
+	function scrollToSearch(searchBar: HTMLDivElement) {
 		if (search) scrollTo({ top: searchBar.offsetTop - 16, behavior: "smooth" });
-	});
+	}
 </script>
 
 <div
@@ -342,7 +341,7 @@
 	</div>
 </section>
 
-<div class="mt-4 flex flex-wrap gap-2" bind:this={searchBar}>
+<div class="mt-4 flex flex-wrap gap-2" use:scrollToSearch>
 	<div class="flex w-full gap-2 sm:max-w-md print:hidden">
 		{#if myCharacter}
 			<a
