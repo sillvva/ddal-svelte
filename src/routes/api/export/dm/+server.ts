@@ -7,7 +7,7 @@ export async function GET({ locals }) {
 	const session = locals.session;
 	if (!session?.user) return json({ error: "Unauthorized" }, { status: 401 });
 
-	const { success } = await rateLimiter("export", session.user.id);
+	const { success } = await rateLimiter("fetch", "export", session.user.id);
 	if (!success) return json({ error: "Too many requests" }, { status: 429 });
 
 	try {

@@ -1,11 +1,16 @@
 import { deleteDM } from "$src/server/actions/dms.js";
 import { signInRedirect } from "$src/server/auth";
+import { rateLimiter } from "$src/server/cache.js";
 import { getUserDMsWithLogsCache } from "$src/server/data/dms";
 import { fail, redirect } from "@sveltejs/kit";
+import { error } from "console";
 
 export const load = async (event) => {
 	const session = event.locals.session;
 	if (!session?.user?.id || !session?.user?.name) signInRedirect(event.url);
+
+	const { success } = await rateLimiter("fetch", "dms", session.user.id);
+	if (!success) error(429, "Too Many Requests");
 
 	const dms = await getUserDMsWithLogsCache(session.user);
 
