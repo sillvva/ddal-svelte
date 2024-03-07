@@ -1,5 +1,5 @@
 import { BLANK_CHARACTER } from "$lib/constants";
-import { getLogsSummary } from "$lib/entities";
+import { getLogsSummary, parseLog } from "$lib/entities";
 import { cache, mcache, type CacheKey } from "$src/server/cache";
 import { prisma } from "$src/server/db";
 
@@ -67,8 +67,8 @@ export async function getCharactersWithLogs(userId: string, includeLogs = true) 
 	return characters.map((c) => ({
 		...c,
 		image_url: c.image_url || BLANK_CHARACTER,
-		...getLogsSummary(c.logs),
-		logs: includeLogs ? c.logs : []
+		...getLogsSummary(c.logs.map(parseLog)),
+		logs: includeLogs ? c.logs.map(parseLog) : []
 	}));
 }
 

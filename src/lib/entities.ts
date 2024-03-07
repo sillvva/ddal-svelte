@@ -191,7 +191,7 @@ export const getLogsSummary = (
 		story_awards,
 		log_levels: levels.log_levels,
 		tier: Math.floor((total_level + 1) / 6) + 1,
-		logs: logs.map((log) => ({ ...log, saving: false }))
+		logs: logs.map((log) => ({ ...parseLog(log), saving: false || "" }))
 	};
 };
 
@@ -225,12 +225,28 @@ export function defaultLogData(userId: string, characterId = ""): LogData {
 	};
 }
 
+export function parseLog(log: LogData) {
+	return {
+		...log,
+		description: log.description?.replace(/(\\r)?\\n/g, "\n").replace(/\n{1}/, "\n\n") || "",
+		magic_items_gained: log.magic_items_gained.map((item) => ({
+			...item,
+			description: item.description?.replace(/(\\r)?\\n/g, "\n").replace(/\n{1}/, "\n\n") || ""
+		})),
+		story_awards_gained: log.story_awards_gained.map((award) => ({
+			...award,
+			description: award.description?.replace(/(\\r)?\\n/g, "\n").replace(/\n{1}/, "\n\n") || ""
+		}))
+	};
+}
+
 export function logDataToSchema(userId: string, log: LogData, character?: Character): LogSchema {
 	return {
 		...log,
 		characterId: character?.id || "",
 		characterName: character?.name || "",
-		dm: log.dm.id ? log.dm : defaultDM(userId),
+		dm: log.dm?.id ? log.dm : defaultDM(userId),
+		type: log.type as "game" | "nongame",
 		magic_items_gained: log.magic_items_gained.map((item) => ({
 			id: item.id,
 			name: item.name,
