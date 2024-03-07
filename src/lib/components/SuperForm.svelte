@@ -7,7 +7,6 @@
 
 	import { dev } from "$app/environment";
 	import { stringify } from "devalue";
-	import { onMount } from "svelte";
 	import type { HTMLFormAttributes } from "svelte/elements";
 	import SuperDebug, { type SuperForm } from "sveltekit-superforms";
 
@@ -24,10 +23,7 @@
 	const { form, errors, allErrors, capture, restore, submitting, enhance, formId, message } = superform;
 	const method = $$props.method || "post";
 
-	let refForm: HTMLFormElement;
-	let mounted = false;
-
-	onMount(() => {
+	function formstate(refForm: HTMLFormElement) {
 		refForm.querySelectorAll("input, select, textarea, button").forEach((el) => {
 			const name = el.getAttribute("name");
 			if (name) {
@@ -35,28 +31,21 @@
 				if (label) el.setAttribute("id", name);
 			}
 
-			if (el.hasAttribute("disabled")) (el as HTMLElement).dataset.disabled = "true";
+			const disabled = el.hasAttribute("disabled");
+			submitting.subscribe((submitting) => {
+				if (submitting) el.setAttribute("disabled", "disabled");
+				else if (!disabled) el.removeAttribute("disabled");
+			});
 		});
-		mounted = true;
+
+		refForm.querySelectorAll(`[type="submit"]`).forEach((el) => {
+			allErrors.subscribe((errors) => {
+				if (errors.length) el.setAttribute("disabled", "disabled");
+				else el.removeAttribute("disabled");
+			});
+		});
 
 		superform.reset();
-	});
-
-	$: if (refForm && mounted) {
-		refForm.querySelectorAll("input, select, textarea, button").forEach((el) => {
-			if ($submitting) {
-				el.setAttribute("disabled", "disabled");
-			} else if (!(el as HTMLElement).dataset.disabled) {
-				el.removeAttribute("disabled");
-			}
-		});
-	}
-
-	$: if (refForm && mounted) {
-		refForm.querySelectorAll(`[type="submit"]`).forEach((el) => {
-			if ($allErrors.length) el.setAttribute("disabled", "disabled");
-			else el.removeAttribute("disabled");
-		});
 	}
 
 	export const snapshot = {
@@ -70,7 +59,7 @@
 {/if}
 
 {#if basic}
-	<form bind:this={refForm} {method} {...$$restProps}>
+	<form {method} {...$$restProps} use:formstate>
 		<input type="hidden" name="__superform_id" value={$formId} />
 		<input type="hidden" name="__superform_json" value={stringify($form)} />
 		<div class="grid grid-cols-12 gap-4">
@@ -78,7 +67,7 @@
 		</div>
 	</form>
 {:else}
-	<form bind:this={refForm} {method} {...$$restProps} use:enhance>
+	<form {method} {...$$restProps} use:enhance use:formstate>
 		<div class="grid grid-cols-12 gap-4">
 			<slot />
 		</div>
