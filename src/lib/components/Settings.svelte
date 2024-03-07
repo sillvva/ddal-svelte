@@ -7,7 +7,7 @@
 	import type { CookieStore } from "$src/server/cookie";
 	import { signIn, signOut } from "@auth/sveltekit/client";
 	import type { Account } from "@prisma/client";
-	import { getContext, onMount } from "svelte";
+	import { getContext } from "svelte";
 	import { twMerge } from "tailwind-merge";
 
 	export let open = false;
@@ -19,12 +19,12 @@
 		account: accounts.find((a) => a.provider === p.id)
 	}));
 
-	onMount(() => {
+	function watchMedia(node: HTMLElement) {
 		const mql = window.matchMedia("(prefers-color-scheme: dark)");
 		mql.addEventListener("change", (ev) => {
 			if ($app.settings.theme == "system") $app.settings.mode = ev.matches ? "dark" : "light";
 		});
-	});
+	}
 
 	$: if (browser) {
 		if ($app.settings.theme === "system") {
@@ -39,6 +39,7 @@
 <div
 	id="settings"
 	class={twMerge("fixed -right-72 bottom-0 top-0 z-50 w-72 bg-base-100 px-4 py-4 transition-all", open && "right-0")}
+	use:watchMedia
 >
 	<div class="flex gap-4 p-4">
 		<div class="py-2">

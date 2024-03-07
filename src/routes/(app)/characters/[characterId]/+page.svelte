@@ -16,7 +16,7 @@
 	import { slugify, sorter } from "@sillvva/utils";
 	import { download, hotkey } from "@svelteuidev/composables";
 	import MiniSearch from "minisearch";
-	import { getContext, onMount } from "svelte";
+	import { getContext } from "svelte";
 	import { twMerge } from "tailwind-merge";
 
 	export let data;
@@ -110,10 +110,9 @@
 		}
 	}
 
-	let searchBar: HTMLDivElement;
-	onMount(() => {
+	function scrollToSearch(searchBar: HTMLDivElement) {
 		if (search) scrollTo({ top: searchBar.offsetTop - 16, behavior: "smooth" });
-	});
+	}
 </script>
 
 <div
@@ -133,17 +132,17 @@
 		{#if myCharacter}
 			<div class="hidden gap-4 sm:flex print:hidden">
 				<a href={`/characters/${character.id}/edit`} class="btn btn-primary btn-sm">Edit</a>
-				<Dropdown class="dropdown-end">
+				<Dropdown class="dropdown-end" let:close>
 					<summary tabindex="0" class="btn btn-sm bg-base-100">
 						<span class="iconify mdi-dots-horizontal size-6" />
 					</summary>
 					<ul class="menu dropdown-content z-20 w-52 rounded-box bg-base-200 p-2 shadow">
-						<li>
+						<li use:close>
 							<button use:download={{ blob: new Blob([JSON.stringify(character)]), filename: `${slugify(character.name)}.json` }}>
 								Export
 							</button>
 						</li>
-						<li>
+						<li use:close>
 							<form
 								method="POST"
 								action="?/deleteCharacter"
@@ -168,13 +167,13 @@
 					</ul>
 				</Dropdown>
 			</div>
-			<Dropdown class="dropdown-end sm:hidden">
+			<Dropdown class="dropdown-end sm:hidden" let:close>
 				<summary tabindex="0" class="btn">
 					<span class="iconify mdi-dots-horizontal size-6" />
 				</summary>
 				<ul class="menu dropdown-content z-20 w-52 rounded-box bg-base-200 p-2 shadow">
 					{#if character.image_url}
-						<li class="xs:hidden">
+						<li class="xs:hidden" use:close>
 							<a
 								href={character.image_url}
 								target="_blank"
@@ -188,10 +187,10 @@
 						</li>
 					{/if}
 					{#if myCharacter}
-						<li>
+						<li use:close>
 							<a href={`/characters/${character.id}/edit`}>Edit</a>
 						</li>
-						<li>
+						<li use:close>
 							<form
 								method="POST"
 								action="?/deleteCharacter"
@@ -342,7 +341,7 @@
 	</div>
 </section>
 
-<div class="mt-4 flex flex-wrap gap-2" bind:this={searchBar}>
+<div class="mt-4 flex flex-wrap gap-2" use:scrollToSearch>
 	<div class="flex w-full gap-2 sm:max-w-md print:hidden">
 		{#if myCharacter}
 			<a

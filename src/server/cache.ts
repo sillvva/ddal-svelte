@@ -1,8 +1,14 @@
 import { building } from "$app/environment";
 import { privateEnv } from "$lib/env/private";
+import { Ratelimit } from "@upstash/ratelimit";
+import { Redis as UpstashRedis } from "@upstash/redis";
 import { Redis } from "ioredis";
 
+const ephemeralCache = new Map();
+
 let redis: Redis;
+let upstash: UpstashRedis;
+let ratelimit: Ratelimit;
 let status = "";
 function connect() {
 	if (["ready", "connect", "connecting", "reconnecting"].includes(status)) return;
@@ -16,9 +22,41 @@ function connect() {
 				return delay;
 			}
 		});
+
+		if (!upstash) {
+			upstash = new UpstashRedis({
+				url: privateEnv.UPSTASH_REDIS_REST_URL,
+				token: privateEnv.UPSTASH_REDIS_REST_TOKEN
+			});
+
+			ratelimit = new Ratelimit({
+				redis: upstash,
+				limiter: Ratelimit.slidingWindow(10, "10 s"),
+				analytics: true,
+				timeout: 1000, // 1 second,
+				ephemeralCache,
+				/**
+				 * Optional prefix for the keys used in redis. This is useful if you want to share a redis
+				 * instance with other applications and want to avoid key collisions. The default prefix is
+				 * "@upstash/ratelimit"
+				 */
+				prefix: "@upstash|ratelimit"
+			});
+		}
 	} catch (e) {
 		console.error("Redis connection failed:", e);
 	}
+}
+
+export async function rateLimiter(...identifiers: string[]) {
+	if (!ratelimit) {
+		return {
+			success: true,
+			reset: 0
+		};
+	}
+	const { success, reset } = await ratelimit.limit(identifiers.join("|"));
+	return { success, reset };
 }
 
 if (!building) connect();
