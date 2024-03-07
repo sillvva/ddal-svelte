@@ -228,14 +228,14 @@ export function defaultLogData(userId: string, characterId = ""): LogData {
 export function parseLog(log: LogData) {
 	return {
 		...log,
-		description: log.description?.replace(/(\\r)?\\n/g, "\n").replace(/\n{1}/, "\n\n") || "",
+		description: log.description?.replace(/(\\r)?\\n/g, "\n") || "",
 		magic_items_gained: log.magic_items_gained.map((item) => ({
 			...item,
-			description: item.description?.replace(/(\\r)?\\n/g, "\n").replace(/\n{1}/, "\n\n") || ""
+			description: item.description?.replace(/(\\r)?\\n/g, "\n") || ""
 		})),
 		story_awards_gained: log.story_awards_gained.map((award) => ({
 			...award,
-			description: award.description?.replace(/(\\r)?\\n/g, "\n").replace(/\n{1}/, "\n\n") || ""
+			description: award.description?.replace(/(\\r)?\\n/g, "\n") || ""
 		}))
 	};
 }
