@@ -1,74 +1,28 @@
-import { building } from "$app/environment";
-import { privateEnv } from "$lib/env/private";
 import { Ratelimit } from "@upstash/ratelimit";
-import { Redis as UpstashRedis } from "@upstash/redis";
-import { Redis } from "ioredis";
+import { Redis } from "@upstash/redis";
 
 const ephemeralCache = new Map();
 
-let redis: Redis;
-let upstash: UpstashRedis;
-let ratelimit: Ratelimit;
-let status = "";
-function connect() {
-	if (["ready", "connect", "connecting", "reconnecting"].includes(status) || building) return;
-	status = "connecting";
-	try {
-		redis = new Redis(privateEnv.REDIS_URL, {
-			retryStrategy: function (times) {
-				status = redis.status || "";
-				const delay = Math.min(times * 2000, 10000);
-				if (times >= 10) return;
-				return delay;
-			}
-		});
-
-		if (!upstash) {
-			upstash = new UpstashRedis({
-				url: privateEnv.UPSTASH_REDIS_REST_URL,
-				token: privateEnv.UPSTASH_REDIS_REST_TOKEN
-			});
-
-			ratelimit = new Ratelimit({
-				redis: upstash,
-				limiter: Ratelimit.slidingWindow(10, "10 s"),
-				analytics: true,
-				timeout: 1000, // 1 second,
-				ephemeralCache,
-				/**
-				 * Optional prefix for the keys used in redis. This is useful if you want to share a redis
-				 * instance with other applications and want to avoid key collisions. The default prefix is
-				 * "@upstash/ratelimit"
-				 */
-				prefix: "@upstash|ratelimit"
-			});
-		}
-	} catch (e) {
-		console.error("Redis connection failed:", e);
-	}
-}
+// let redis: Redis;
+const redis = Redis.fromEnv();
+const ratelimit = new Ratelimit({
+	redis,
+	limiter: Ratelimit.slidingWindow(10, "10 s"),
+	analytics: true,
+	timeout: 1000, // 1 second,
+	ephemeralCache,
+	/**
+	 * Optional prefix for the keys used in redis. This is useful if you want to share a redis
+	 * instance with other applications and want to avoid key collisions. The default prefix is
+	 * "@upstash/ratelimit"
+	 */
+	prefix: "@upstash|dratelimit"
+});
 
 export async function rateLimiter(...identifiers: string[]) {
-	if (!ratelimit) {
-		return {
-			success: true,
-			reset: 0
-		};
-	}
+	if (!ratelimit) return { success: true, reset: 0 };
 	const { success, reset } = await ratelimit.limit(identifiers.join("|"));
 	return { success, reset };
-}
-
-if (!building) connect();
-
-async function readyCheck<T>(callback: () => Promise<T>) {
-	status = redis?.status || "";
-	if (!redis || !["ready"].includes(status)) {
-		console.log("Redis status:", status);
-		connect();
-		return await callback();
-	}
-	return;
 }
 
 /**
@@ -85,14 +39,12 @@ export type CacheKey = [string, ...string[]];
  * @returns The cached result of the callback function.
  */
 export async function cache<TReturnType>(callback: () => Promise<TReturnType>, key: CacheKey, expires = 3 * 86400) {
-	const check = await readyCheck(async () => await callback());
-	if (check) return check;
-
 	const rkey = key.join("|");
 	const currentTime = Date.now();
 
 	// Get the cache from Redis
-	const cache = JSON.parse((await redis.get(rkey)) || "null") as { data: TReturnType; timestamp: number } | null;
+	type CachedType = { data: TReturnType; timestamp: number };
+	const cache = await redis.get<CachedType>(rkey);
 
 	if (cache) {
 		// Update the timestamp and reset the cache expiration
@@ -121,30 +73,25 @@ export async function mcache<TReturnType extends object>(
 	keys: CacheKey[],
 	expires = 3 * 86400
 ) {
-	const check = await readyCheck(() => callback(keys, []).then((t) => t.map((t) => t.value)));
-	if (check) return check;
-
 	const joinedKeys = keys.map((t) => t.join("|"));
 
 	// Get the caches from Redis
-	const caches = await redis.mget(joinedKeys);
-	const hits = caches.filter(Boolean) as string[];
+	type CachedType = { data: TReturnType; timestamp: number };
+	const caches = await redis.mget<CachedType[]>(joinedKeys);
+	const hits = caches.filter(Boolean);
 
 	if (hits.length < keys.length) {
 		// Call the mass callback function
 		const results = await callback(
 			keys,
-			hits.map((t) => {
-				const cache: { data: TReturnType; timestamp: number } = JSON.parse(t);
-				return cache.data;
-			})
+			hits.map((item) => item.data)
 		);
 
 		// Update the results in the caches array
 		for (const result of results) {
 			const k = result.key.join("|");
 			const index = joinedKeys.indexOf(k);
-			if (index >= 0) caches[index] = JSON.stringify({ data: result.value, timestamp: Date.now() });
+			if (index >= 0) caches[index] = { data: result.value, timestamp: Date.now() };
 		}
 	}
 
@@ -152,14 +99,12 @@ export async function mcache<TReturnType extends object>(
 	const results: TReturnType[] = [];
 	for (let i = 0; i < caches.length; i++) {
 		const currentTime = Date.now();
-		const value = caches[i];
-		if (value) {
+		const cache = caches[i];
+		if (cache) {
 			try {
-				const cache: { data: TReturnType; timestamp: number } = JSON.parse(value);
-
 				// Update the timestamp and reset the cache expiration
 				cache.timestamp = currentTime;
-				multi.setex(joinedKeys[i], expires, JSON.stringify(cache));
+				multi.setex(joinedKeys[i], expires, cache);
 
 				// Add the cached result to the results array
 				results.push(cache.data);
@@ -181,8 +126,6 @@ export async function mcache<TReturnType extends object>(
  * @param [keys] The cache keys as an array of arrays of strings. Empty strings, false, null, and undefined are ignored.
  */
 export function revalidateKeys(keys: Array<CacheKey | "" | false | null | undefined>) {
-	if (!redis || !["ready"].includes(redis.status)) return connect();
-
 	const cacheKeys = keys.filter((t) => Array.isArray(t) && t.length).map((t) => (t as string[]).join("|"));
 	if (cacheKeys.length) redis.del(...cacheKeys);
 }
