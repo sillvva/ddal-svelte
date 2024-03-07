@@ -11,7 +11,7 @@ let upstash: UpstashRedis;
 let ratelimit: Ratelimit;
 let status = "";
 function connect() {
-	if (["ready", "connect", "connecting", "reconnecting"].includes(status)) return;
+	if (["ready", "connect", "connecting", "reconnecting"].includes(status) || building) return;
 	status = "connecting";
 	try {
 		redis = new Redis(privateEnv.REDIS_URL, {
