@@ -1,6 +1,5 @@
 <script lang="ts">
 	import { clickoutside } from "@svelteuidev/composables";
-	import { onMount } from "svelte";
 	import { twMerge } from "tailwind-merge";
 
 	let open = false;
@@ -8,20 +7,11 @@
 	let className = "";
 	export { className as class };
 
-	let details: HTMLDetailsElement;
-
-	onMount(() => {
-		if (details) {
-			const listItems = details.querySelectorAll("ul li");
-			if (listItems.length) {
-				listItems.forEach((item) => {
-					item.addEventListener("click", () => {
-						open = false;
-					});
-				});
-			}
-		}
-	});
+	function close(node: HTMLLIElement) {
+		node.addEventListener("click", () => {
+			open = false;
+		});
+	}
 </script>
 
 <details
@@ -32,8 +22,7 @@
 		}
 	}}
 	class={twMerge("dropdown", className)}
-	bind:this={details}
 	bind:open
 >
-	<slot />
+	<slot {close} />
 </details>

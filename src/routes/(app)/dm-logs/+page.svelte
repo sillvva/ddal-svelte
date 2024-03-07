@@ -97,12 +97,12 @@
 <div class="flex flex-col gap-4">
 	<div class="hidden gap-4 sm:flex print:hidden">
 		<BreadCrumbs />
-		<Dropdown class="dropdown-end">
+		<Dropdown class="dropdown-end" let:close>
 			<summary tabindex="0" class="btn btn-sm">
 				<span class="iconify mdi-dots-horizontal size-6" />
 			</summary>
 			<ul class="menu dropdown-content w-52 rounded-box bg-base-200 p-2 shadow">
-				<li>
+				<li use:close>
 					<button use:download={{ blob: new Blob([JSON.stringify(logs)]), filename: "dm-logs.json" }}>Export</button>
 				</li>
 			</ul>
