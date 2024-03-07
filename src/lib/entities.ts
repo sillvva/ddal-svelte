@@ -225,17 +225,26 @@ export function defaultLogData(userId: string, characterId = ""): LogData {
 	};
 }
 
+function fixDescription(description?: string | null) {
+	return (
+		description
+			?.replace(/(\\r)?\\n/g, "\n")
+			.replace(/\\t/g, "	")
+			.replace(/\\\\/g, "/") || ""
+	);
+}
+
 export function parseLog(log: LogData) {
 	return {
 		...log,
-		description: log.description?.replace(/(\\r)?\\n/g, "\n") || "",
+		description: fixDescription(log.description),
 		magic_items_gained: log.magic_items_gained.map((item) => ({
 			...item,
-			description: item.description?.replace(/(\\r)?\\n/g, "\n") || ""
+			description: fixDescription(item.description)
 		})),
 		story_awards_gained: log.story_awards_gained.map((award) => ({
 			...award,
-			description: award.description?.replace(/(\\r)?\\n/g, "\n") || ""
+			description: fixDescription(award.description)
 		}))
 	};
 }
