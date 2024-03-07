@@ -1,7 +1,7 @@
 import { getLevels } from "$lib/entities";
 import { handleSKitError, parseError } from "$lib/util";
 import { error } from "@sveltejs/kit";
-import { revalidateKeys } from "../cache";
+import { rateLimiter, revalidateKeys } from "../cache";
 import { prisma } from "../db";
 
 import { SaveError, type LogSchema, type SaveResult } from "$lib/schemas";
@@ -11,7 +11,10 @@ export type SaveLogResult = ReturnType<typeof saveLog>;
 export async function saveLog(input: LogSchema, user?: CustomSession["user"]): SaveResult<{ id: string; log: Log }, LogSchema> {
 	try {
 		let dm: DungeonMaster | null = null;
-		if (!user?.name) throw new SaveError(401, "Not authenticated");
+		if (!user?.name || !user?.id) throw new SaveError(401, "Not authenticated");
+
+		const { success } = await rateLimiter("save-log", user.id);
+		if (!success) throw new SaveError(429, "Too many requests");
 
 		if (input.is_dm_log) input.dm.name = user.name || "Me";
 		if (["Me", ""].includes(input.dm.name.trim())) input.dm.name = user.name || "Me";
@@ -293,6 +296,10 @@ export type DeleteLogResult = ReturnType<typeof deleteLog>;
 export async function deleteLog(logId: string, userId?: string) {
 	try {
 		if (!userId) error(401, "Not authenticated");
+
+		const { success } = await rateLimiter("delete-log", userId);
+		if (!success) throw new SaveError(429, "Too many requests");
+
 		const log = await prisma.$transaction(async (tx) => {
 			const log = await tx.log.findUnique({
 				where: {

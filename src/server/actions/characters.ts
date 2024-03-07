@@ -2,7 +2,7 @@ import { SaveError, type NewCharacterSchema, type SaveResult } from "$lib/schema
 import { handleSKitError } from "$lib/util";
 import type { Character } from "@prisma/client";
 import { error } from "@sveltejs/kit";
-import { revalidateKeys } from "../cache";
+import { rateLimiter, revalidateKeys } from "../cache";
 import { getCharacterCache } from "../data/characters";
 import { prisma } from "../db";
 
@@ -15,6 +15,10 @@ export async function saveCharacter(
 	try {
 		if (!characterId) throw new SaveError(400, "No character ID provided");
 		if (!userId) throw new SaveError(401, "Not authenticated");
+
+		const { success } = await rateLimiter("save-character", userId);
+		if (!success) throw new SaveError(429, "Too many requests");
+
 		let result: Character;
 		if (characterId == "new") {
 			result = await prisma.character.create({
@@ -55,12 +59,18 @@ export type DeleteCharacterResult = ReturnType<typeof deleteCharacter>;
 export async function deleteCharacter(characterId: string, userId?: string) {
 	try {
 		if (!userId) error(401, "Not authenticated");
+
+		const { success } = await rateLimiter("delete-character", userId);
+		if (!success) error(429, "Too many requests");
+
 		const character = await prisma.character.findUnique({
 			where: { id: characterId },
 			include: { logs: { include: { character: true } } }
 		});
+
 		if (!character) error(404, "Character not found");
 		if (character.userId !== userId) error(401, "Not authorized");
+
 		const logIds = character.logs.map((log) => log.id);
 		const result = await prisma.$transaction(async (tx) => {
 			await tx.magicItem.deleteMany({
