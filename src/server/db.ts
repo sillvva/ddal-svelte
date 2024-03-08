@@ -1,7 +1,7 @@
 // src/server/db/client.ts
 import { createClient } from "@libsql/client";
 import { PrismaLibSQL } from "@prisma/adapter-libsql";
-import { PrismaClient } from "@prisma/client";
+import { PrismaClient } from "@prisma/client/edge";
 
 // Setup
 const connectionString = `${process.env.TURSO_DATABASE_URL}`;
