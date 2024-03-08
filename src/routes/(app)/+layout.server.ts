@@ -1,8 +1,5 @@
 import { prisma } from "$src/server/db.js";
 import type { Account } from "@prisma/client";
-import type { Config } from "@sveltejs/adapter-vercel";
-
-export const config: Config = { runtime: "edge" };
 
 export const load = async (event) => {
 	const { mobile } = await event.parent();
