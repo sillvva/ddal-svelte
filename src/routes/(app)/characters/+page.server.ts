@@ -1,11 +1,15 @@
 import { clearUserCache, unlinkProvider, type ProviderId } from "$src/server/actions/users.js";
 import { signInRedirect } from "$src/server/auth";
+import { rateLimiter } from "$src/server/cache.js";
 import { getCharacterCaches, getCharactersCache, type CharacterData } from "$src/server/data/characters";
-import { redirect } from "@sveltejs/kit";
+import { error, redirect } from "@sveltejs/kit";
 
 export const load = async (event) => {
 	const session = event.locals.session;
 	if (!session?.user) signInRedirect(event.url);
+
+	const { success } = await rateLimiter("fetch", "characters", session.user.id);
+	if (!success) error(429, "Too Many Requests");
 
 	const characters = await getCharactersCache(session.user.id).then(async (characters) => {
 		const charData: CharacterData[] = [];

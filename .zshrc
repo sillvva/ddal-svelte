@@ -1,0 +1,1 @@
+alias cpnpm="corepack pnpm"

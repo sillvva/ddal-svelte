@@ -13,7 +13,7 @@ export async function saveLog(input: LogSchema, user?: CustomSession["user"]): S
 		let dm: DungeonMaster | null = null;
 		if (!user?.name || !user?.id) throw new SaveError(401, "Not authenticated");
 
-		const { success } = await rateLimiter("save-log", user.id);
+		const { success } = await rateLimiter(input.id ? "insert" : "update", "save-log", user.id);
 		if (!success) throw new SaveError(429, "Too many requests");
 
 		if (input.is_dm_log) input.dm.name = user.name || "Me";
@@ -297,7 +297,7 @@ export async function deleteLog(logId: string, userId?: string) {
 	try {
 		if (!userId) error(401, "Not authenticated");
 
-		const { success } = await rateLimiter("delete-log", userId);
+		const { success } = await rateLimiter("insert", "delete-log", userId);
 		if (!success) throw new SaveError(429, "Too many requests");
 
 		const log = await prisma.$transaction(async (tx) => {

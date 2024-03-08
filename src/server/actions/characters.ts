@@ -16,7 +16,7 @@ export async function saveCharacter(
 		if (!characterId) throw new SaveError(400, "No character ID provided");
 		if (!userId) throw new SaveError(401, "Not authenticated");
 
-		const { success } = await rateLimiter("save-character", userId);
+		const { success } = await rateLimiter(characterId === "new" ? "insert" : "update", "save-character", userId);
 		if (!success) throw new SaveError(429, "Too many requests");
 
 		let result: Character;
@@ -60,7 +60,7 @@ export async function deleteCharacter(characterId: string, userId?: string) {
 	try {
 		if (!userId) error(401, "Not authenticated");
 
-		const { success } = await rateLimiter("delete-character", userId);
+		const { success } = await rateLimiter("insert", "delete-character", userId);
 		if (!success) error(429, "Too many requests");
 
 		const character = await prisma.character.findUnique({

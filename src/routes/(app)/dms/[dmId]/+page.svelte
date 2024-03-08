@@ -13,9 +13,7 @@
 	export let data;
 	export let form;
 
-	$: superform = valibotForm(data.form, dungeonMasterSchema, {
-		resetForm: false
-	});
+	$: superform = valibotForm(data.form, dungeonMasterSchema);
 </script>
 
 <div class="flex flex-col gap-4">
@@ -23,7 +21,7 @@
 
 	<SuperForm action="?/saveDM" {superform}>
 		<Control class="col-span-12 sm:col-span-6">
-			<Input type="text" {superform} field="name" disabled={data.form.data.uid === data.user.id ? true : undefined}>
+			<Input type="text" {superform} field="name" readonly={data.form.data.uid === data.user.id ? true : undefined}>
 				DM Name
 			</Input>
 		</Control>

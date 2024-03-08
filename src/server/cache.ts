@@ -2,26 +2,21 @@ import { Ratelimit } from "@upstash/ratelimit";
 import { Redis } from "@upstash/redis";
 
 const ephemeralCache = new Map();
-
-// let redis: Redis;
 const redis = Redis.fromEnv();
-const ratelimit = new Ratelimit({
-	redis,
-	limiter: Ratelimit.slidingWindow(10, "10 s"),
-	analytics: true,
-	timeout: 1000, // 1 second,
-	ephemeralCache,
-	/**
-	 * Optional prefix for the keys used in redis. This is useful if you want to share a redis
-	 * instance with other applications and want to avoid key collisions. The default prefix is
-	 * "@upstash/ratelimit"
-	 */
-	prefix: "@upstash|dratelimit"
-});
+const limits = {
+	fetch: createLimiter(600, "1 h"),
+	update: createLimiter(360, "1 h"),
+	insert: createLimiter(180, "1 h"),
+	cache: createLimiter(18, "1 h")
+} as const;
 
-export async function rateLimiter(...identifiers: string[]) {
-	if (!ratelimit) return { success: true, reset: 0 };
-	const { success, reset } = await ratelimit.limit(identifiers.join("|"));
+function createLimiter(limit: number, duration: `${number} ${"s" | "m" | "h"}`) {
+	const limiter = Ratelimit.slidingWindow(limit, duration);
+	return new Ratelimit({ redis, limiter, analytics: true, ephemeralCache });
+}
+
+export async function rateLimiter(type: keyof typeof limits, ...identifiers: string[]) {
+	const { success, reset } = await limits[type].limit(identifiers.join("|"));
 	return { success, reset };
 }
 
