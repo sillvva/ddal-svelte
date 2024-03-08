@@ -63,10 +63,12 @@ export const logSchema = object({
 	gold: number(),
 	dtd: number([integer()]),
 	description: optional(union([string(), null_()]), ""),
-	dm: object({
-		...dungeonMasterSchema.entries,
-		name: optional(string(), "")
-	}),
+	dm: merge([
+		dungeonMasterSchema,
+		object({
+			name: optional(string(), "")
+		})
+	]),
 	is_dm_log: optional(boolean(), false),
 	applied_date: nullable(date()),
 	magic_items_gained: optional(array(itemSchema), []),
