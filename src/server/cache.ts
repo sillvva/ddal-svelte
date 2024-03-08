@@ -1,6 +1,7 @@
 import { Ratelimit } from "@upstash/ratelimit";
 import { Redis } from "@upstash/redis";
 
+const ephemeralCache = new Map();
 const redis = Redis.fromEnv();
 const limits = {
 	fetch: createLimiter(600, "1 h"),
@@ -9,7 +10,6 @@ const limits = {
 	cache: createLimiter(18, "1 h")
 } as const;
 
-const ephemeralCache = new Map();
 function createLimiter(limit: number, duration: `${number} ${"s" | "m" | "h"}`) {
 	const limiter = Ratelimit.slidingWindow(limit, duration);
 	return new Ratelimit({ redis, limiter, analytics: true, ephemeralCache });
