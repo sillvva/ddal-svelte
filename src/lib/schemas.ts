@@ -7,7 +7,6 @@ import { array, boolean, custom, date, fallback, forward, integer, literal, merg
 export const envPrivateSchema = object({
 	TURSO_DATABASE_URL: string([url()]),
 	TURSO_AUTH_TOKEN: string([minLength(1)]),
-	REDIS_URL: string([url(), regex(/^rediss?:\/\//, "Must be a valid Redis URL")]),
 	UPSTASH_REDIS_REST_URL: string([url()]),
 	UPSTASH_REDIS_REST_TOKEN: string([minLength(1)]),
 	AUTH_SECRET: string([minLength(10, "Must be a string of at least 10 characters")]),
