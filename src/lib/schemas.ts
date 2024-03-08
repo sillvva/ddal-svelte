@@ -25,21 +25,13 @@ export const envPublicSchema = object({
 
 export type DungeonMasterSchema = Output<typeof dungeonMasterSchema>;
 export type DungeonMasterSchemaIn = Input<typeof dungeonMasterSchema>;
-export const dungeonMasterSchema = object(
-	{
-		id: string(),
-		name: string([minLength(1)]),
-		DCI: nullable(union([string([regex(/[0-9]{0,10}/, "Invalid DCI Format")]), null_()]), null),
-		uid: nullable(union([string(), null_()]), ""),
-		owner: string([minLength(1, "DM is not assigned to a user")])
-	},
-	[
-		forward(
-			custom((input) => !input.DCI?.trim() || !!input.name.trim(), "DM Name required if DCI is set"),
-			["name"]
-		)
-	]
-);
+export const dungeonMasterSchema = object({
+	id: string(),
+	name: string([minLength(1)]),
+	DCI: nullable(union([string([regex(/[0-9]{0,10}/, "Invalid DCI Format")]), null_()]), null),
+	uid: nullable(union([string(), null_()]), ""),
+	owner: string([minLength(1, "DM is not assigned to a user")])
+});
 
 const itemSchema = object({
 	id: optional(string(), ""),
