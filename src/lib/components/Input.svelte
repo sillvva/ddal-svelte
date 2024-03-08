@@ -2,11 +2,17 @@
 	type TRec = Record<string, unknown>;
 </script>
 
-<script lang="ts" generics="T extends TRec, TType extends 'text' | 'number' | 'date'">
+<script lang="ts" generics="T extends TRec, TType extends 'text' | 'url' | 'number' | 'date'">
 	import type { HTMLInputAttributes } from "svelte/elements";
 	import { dateProxy, formFieldProxy, numberProxy, type FormPathLeaves, type SuperForm } from "sveltekit-superforms";
 
-	type LeafType = TType extends "text" ? string : TType extends "number" ? number : TType extends "date" ? Date : never;
+	type LeafType = TType extends "text" | "url"
+		? string
+		: TType extends "number"
+			? number
+			: TType extends "date"
+				? Date
+				: undefined;
 	interface $$Props extends HTMLInputAttributes {
 		superform: SuperForm<T, any>;
 		field: FormPathLeaves<T, LeafType>;
@@ -16,7 +22,7 @@
 		maxField?: FormPathLeaves<T, LeafType>;
 		readonly?: boolean;
 		description?: string;
-		oninput?: TType extends "string" | "number" ? (value: typeof $value) => void : never;
+		oninput?: TType extends "string" | "url" | "number" ? (value: typeof $value) => void : never;
 		onchange?: (value: typeof $value) => void;
 	}
 
@@ -69,6 +75,15 @@
 {#if type === "text"}
 	<input
 		type="text"
+		bind:value={$value}
+		on:input={() => oninput($value)}
+		on:change={() => onchange($value)}
+		{...commonProps}
+		use:disabled
+	/>
+{:else if type === "url"}
+	<input
+		type="url"
 		bind:value={$value}
 		on:input={() => oninput($value)}
 		on:change={() => onchange($value)}
