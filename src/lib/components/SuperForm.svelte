@@ -3,6 +3,9 @@
 </script>
 
 <script lang="ts" generics="T extends FormObj">
+	import type { Unsubscriber } from "svelte/store";
+
+	import { onMount } from "svelte";
 	import FormMessage from "./FormMessage.svelte";
 
 	import { dev } from "$app/environment";
@@ -21,10 +24,12 @@
 	export let showMessage = false;
 	$: showMessage = !superform.options.resetForm;
 
-	const { form, errors, allErrors, capture, restore, submitting, enhance, formId, message } = superform;
+	const { form, errors, allErrors, capture, restore, submitting, enhance, formId, message, tainted } = superform;
 	const method = $$props.method || "post";
 
 	function formstate(refForm: HTMLFormElement) {
+		const unsubscribers: Unsubscriber[] = [];
+
 		refForm.querySelectorAll("input, select, textarea, button").forEach((el) => {
 			const name = el.getAttribute("name");
 			if (name) {
@@ -33,21 +38,33 @@
 			}
 
 			const disabled = el.hasAttribute("disabled");
-			submitting.subscribe((submitting) => {
-				if (submitting) el.setAttribute("disabled", "disabled");
-				else if (!disabled && showMessage && $message) el.removeAttribute("disabled");
-			});
+			unsubscribers.push(
+				submitting.subscribe((submitting) => {
+					if (submitting) el.setAttribute("disabled", "disabled");
+					else if (!disabled && showMessage && $message) el.removeAttribute("disabled");
+				})
+			);
 		});
 
 		refForm.querySelectorAll(`[type="submit"]`).forEach((el) => {
-			allErrors.subscribe((errors) => {
-				if (errors.length) el.setAttribute("disabled", "disabled");
-				else el.removeAttribute("disabled");
-			});
+			unsubscribers.push(
+				allErrors.subscribe((errors) => {
+					if (errors.length) el.setAttribute("disabled", "disabled");
+					else el.removeAttribute("disabled");
+				})
+			);
 		});
 
-		superform.reset();
+		return {
+			destroy() {
+				unsubscribers.forEach((unsub) => unsub());
+			}
+		};
 	}
+
+	onMount(() => {
+		superform.reset();
+	});
 
 	export const snapshot = {
 		capture,
