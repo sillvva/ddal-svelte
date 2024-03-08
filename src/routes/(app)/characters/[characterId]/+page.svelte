@@ -134,7 +134,7 @@
 				<a href={`/characters/${character.id}/edit`} class="btn btn-primary btn-sm">Edit</a>
 				<Dropdown class="dropdown-end" let:close>
 					<summary tabindex="0" class="btn btn-sm bg-base-100">
-						<span class="iconify mdi-dots-horizontal size-6" />
+						<span class="iconify size-6 mdi-dots-horizontal" />
 					</summary>
 					<ul class="menu dropdown-content z-20 w-52 rounded-box bg-base-200 p-2 shadow">
 						<li use:close>
@@ -142,7 +142,7 @@
 								Export
 							</button>
 						</li>
-						<li use:close>
+						<li>
 							<form
 								method="POST"
 								action="?/deleteCharacter"
@@ -154,14 +154,16 @@
 										if (result.type !== "redirect") $pageLoader = false;
 									};
 								}}
-								class="menu-item-error"
+								class="menu-item-error rounded-lg"
 							>
 								<button
 									on:click|preventDefault={(e) => {
 										if (confirm(`Are you sure you want to delete ${character.name}? This action cannot be reversed.`))
 											e.currentTarget.form?.requestSubmit();
-									}}>Delete Character</button
+									}}
 								>
+									Delete Character
+								</button>
 							</form>
 						</li>
 					</ul>
@@ -169,7 +171,7 @@
 			</div>
 			<Dropdown class="dropdown-end sm:hidden" let:close>
 				<summary tabindex="0" class="btn">
-					<span class="iconify mdi-dots-horizontal size-6" />
+					<span class="iconify size-6 mdi-dots-horizontal" />
 				</summary>
 				<ul class="menu dropdown-content z-20 w-52 rounded-box bg-base-200 p-2 shadow">
 					{#if character.image_url}
@@ -226,7 +228,7 @@
 
 {#if form?.error}
 	<div class="alert alert-error mb-4 shadow-lg">
-		<span class="iconify mdi-alert-circle size-6" />
+		<span class="iconify size-6 mdi-alert-circle" />
 		{form.error}
 	</div>
 {/if}
@@ -357,7 +359,7 @@
 		{/if}
 		{#if myCharacter}
 			<a href={`/characters/${character.id}/log/new`} class="btn btn-primary sm:btn-sm sm:hidden sm:px-3" aria-label="New Log">
-				<span class="iconify mdi-plus size-6" />
+				<span class="iconify size-6 mdi-plus" />
 			</a>
 			<button
 				class={twMerge("no-script-hide btn sm:hidden", $app.log.descriptions && "btn-primary")}
@@ -367,9 +369,9 @@
 				tabindex="0"
 			>
 				{#if $app.log.descriptions}
-					<span class="iconify mdi-note-text size-6" />
+					<span class="iconify size-6 mdi-note-text" />
 				{:else}
-					<span class="iconify mdi-note-text-outline size-6" />
+					<span class="iconify size-6 mdi-note-text-outline" />
 				{/if}
 			</button>
 		{/if}
@@ -384,9 +386,9 @@
 			tabindex="0"
 		>
 			{#if $app.log.descriptions}
-				<span class="iconify mdi-eye size-6" />
+				<span class="iconify size-6 mdi-eye" />
 			{:else}
-				<span class="iconify mdi-eye-off size-6" />
+				<span class="iconify size-6 mdi-eye-off" />
 			{/if}
 			<span class="hidden sm:inline-flex">Notes</span>
 		</button>
@@ -565,7 +567,7 @@
 										class="btn btn-primary sm:btn-sm"
 										aria-label="Edit Log"
 									>
-										<span class="iconify mdi-pencil size-6 sm:size-4" />
+										<span class="iconify size-6 mdi-pencil sm:size-4" />
 									</a>
 									<form
 										method="POST"
@@ -593,7 +595,7 @@
 											}}
 											aria-label="Delete Log"
 										>
-											<span class="iconify mdi-trash-can size-6 sm:size-4" />
+											<span class="iconify size-6 mdi-trash-can sm:size-4" />
 										</button>
 									</form>
 								</div>
