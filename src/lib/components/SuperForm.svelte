@@ -19,7 +19,7 @@
 	export let showMessage = false;
 	$: showMessage = !superform.options.resetForm;
 
-	const { form, errors, allErrors, capture, restore, submitting, enhance, formId, message, tainted } = superform;
+	const { form, errors, allErrors, capture, restore, submitting, enhance, message } = superform;
 	const method = $$props.method || "post";
 
 	function formstate(refForm: HTMLFormElement) {
