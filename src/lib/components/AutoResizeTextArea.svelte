@@ -3,33 +3,23 @@
 </script>
 
 <script lang="ts" generics="T extends TRec">
-	import { tick } from "svelte";
 	import autosize from "svelte-autosize";
 	import type { HTMLTextareaAttributes } from "svelte/elements";
 	import type { FormPathLeaves, FormPathType } from "sveltekit-superforms";
 
 	interface $$Props extends HTMLTextareaAttributes {
-		content: string | FormPathType<T, FormPathLeaves<T>> | null;
+		content: FormPathType<T, FormPathLeaves<T, string>>;
 		minRows?: number;
 		maxRows?: number;
 	}
 
-	export let content: string | FormPathType<T, FormPathLeaves<T>> | null;
+	export let content: FormPathType<T, FormPathLeaves<T, string>>;
 	export let minRows: number = 3;
 	export let maxRows: number = 50;
-
-	let el: HTMLTextAreaElement;
-
-	$: if (content) {
-		tick().then(() => {
-			autosize.update(el);
-		});
-	}
 </script>
 
 <textarea
 	{...$$restProps}
-	bind:this={el}
 	bind:value={content}
 	style:--minRows={minRows && `${minRows}lh`}
 	style:--maxRows={maxRows && `${maxRows}lh`}
