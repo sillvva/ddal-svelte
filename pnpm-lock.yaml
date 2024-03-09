@@ -23,9 +23,6 @@ dependencies:
   '@prisma/client':
     specifier: ^5.10.2
     version: 5.10.2(prisma@5.10.2)
-  '@prisma/extension-accelerate':
-    specifier: ^1.0.0
-    version: 1.0.0(@prisma/client@5.10.2)
   '@sillvva/utils':
     specifier: npm:@jsr/sillvva__utils@^0.2.6
     version: /@jsr/sillvva__utils@0.2.6
@@ -1041,15 +1038,6 @@ packages:
       '@prisma/engines-version': 5.10.0-34.5a9203d0590c951969e85a7d07215503f4672eb9
       '@prisma/fetch-engine': 5.10.2
       '@prisma/get-platform': 5.10.2
-
-  /@prisma/extension-accelerate@1.0.0(@prisma/client@5.10.2):
-    resolution: {integrity: sha512-5oSpPtKCMfTl/sSXaS/7vBsPqfm+eEVB6/5KPBJITFatDoFcmjx/PIC/T93mHLiHI98xKwosPN59NGXjDDhcFA==}
-    engines: {node: '>=16'}
-    peerDependencies:
-      '@prisma/client': '>=4.16.1'
-    dependencies:
-      '@prisma/client': 5.10.2(prisma@5.10.2)
-    dev: false
 
   /@prisma/fetch-engine@5.10.2:
     resolution: {integrity: sha512-dSmXcqSt6DpTmMaLQ9K8ZKzVAMH3qwGCmYEZr/uVnzVhxRJ1EbT/w2MMwIdBNq1zT69Rvh0h75WMIi0mrIw7Hg==}
