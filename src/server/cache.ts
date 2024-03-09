@@ -1,8 +1,12 @@
+import { privateEnv } from "$lib/env/private";
 import { Ratelimit } from "@upstash/ratelimit";
 import { Redis } from "@upstash/redis";
 
 const ephemeralCache = new Map();
-const redis = Redis.fromEnv();
+const redis = new Redis({
+	url: privateEnv.UPSTASH_REDIS_REST_URL,
+	token: privateEnv.UPSTASH_REDIS_REST_TOKEN
+});
 const limits = {
 	fetch: createLimiter(600, "1 h"),
 	update: createLimiter(360, "1 h"),

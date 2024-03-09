@@ -5,8 +5,9 @@ import { type FormPathLeaves } from "sveltekit-superforms";
 import { array, boolean, custom, date, fallback, forward, integer, literal, merge, minLength, minValue, null_, nullable, number, object, optional, regex, string, union, url, type Input, type Output } from "valibot";
 
 export const envPrivateSchema = object({
-	TURSO_DATABASE_URL: string([url()]),
-	TURSO_AUTH_TOKEN: string([minLength(1)]),
+	DATABASE_URL: string([url()]),
+	// TURSO_DATABASE_URL: string([url()]),
+	// TURSO_AUTH_TOKEN: string([minLength(1)]),
 	UPSTASH_REDIS_REST_URL: string([url()]),
 	UPSTASH_REDIS_REST_TOKEN: string([minLength(1)]),
 	AUTH_SECRET: string([minLength(10, "Must be a string of at least 10 characters")]),

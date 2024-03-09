@@ -1,11 +1,12 @@
 generator client {
-  provider        = "prisma-client-js"
-  previewFeatures = ["driverAdapters", "relationJoins"]
+    provider        = "prisma-client-js"
+    previewFeatures = ["relationJoins"]
 }
 
 datasource db {
-  provider = "sqlite"
-  url      = "file:./dev.db"
+    provider             = "mysql"
+    relationMode         = "prisma"
+    url                  = env("DATABASE_URL")
 }
 
 model Account {
@@ -14,12 +15,12 @@ model Account {
     type              String
     provider          String
     providerAccountId String
-    refresh_token     String?
-    access_token      String?
+    refresh_token     String? @db.Text
+    access_token      String? @db.Text
     expires_at        Int?
     token_type        String?
     scope             String?
-    id_token          String?
+    id_token          String? @db.Text
     session_state     String?
     user              User    @relation(fields: [userId], references: [id], onDelete: Cascade)
 
@@ -65,7 +66,7 @@ model Character {
     campaign            String?
     image_url           String?
     character_sheet_url String?
-    user                User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+    user                User     @relation(fields: [userId], references: [id])
     userId              String
     logs                Log[]
     created_at          DateTime @default(now())
@@ -77,12 +78,12 @@ model Log {
     id                  String         @id @default(cuid())
     date                DateTime
     name                String
-    description         String?       
-    type                String         @default("game")
-    dm                  DungeonMaster? @relation(fields: [dungeonMasterId], references: [id], onDelete: Cascade)
-    dungeonMasterId     String?
+    description         String?        @db.Text
+    type                LogType        @default(game)
+    dm                  DungeonMaster? @relation(fields: [dungeonMasterId], references: [id])
     is_dm_log           Boolean        @default(false)
     applied_date        DateTime?      
+    dungeonMasterId     String?
     experience          Int
     acp                 Int
     tcp                 Int
@@ -93,12 +94,17 @@ model Log {
     magic_items_lost    MagicItem[]    @relation("magic_items_lost")
     story_awards_gained StoryAward[]   @relation("story_awards_gained")
     story_awards_lost   StoryAward[]   @relation("story_awards_lost")
-    character           Character?     @relation(fields: [characterId], references: [id], onDelete: SetDefault)
-    characterId         String?        @default("")
+    character           Character?     @relation(fields: [characterId], references: [id])
+    characterId         String?
     created_at          DateTime       @default(now())
 
     @@index([dungeonMasterId])
     @@index([characterId])
+}
+
+enum LogType {
+    game
+    nongame
 }
 
 model DungeonMaster {
@@ -108,7 +114,7 @@ model DungeonMaster {
     uid   String?
     owner String
     logs  Log[]
-    user  User?   @relation(fields: [owner], references: [id], onDelete: Cascade)
+    user  User?   @relation(fields: [owner], references: [id])
 
     @@index([owner])
 }
@@ -116,10 +122,10 @@ model DungeonMaster {
 model MagicItem {
     id           String  @id @default(cuid())
     name         String
-    description  String?
-    logGained    Log?    @relation("magic_items_gained", fields: [logGainedId], references: [id], onDelete: Cascade)
+    description  String? @db.Text
+    logGained    Log?    @relation("magic_items_gained", fields: [logGainedId], references: [id])
     logGainedId  String?
-    logLost      Log?    @relation("magic_items_lost", fields: [logLostId], references: [id], onDelete: Cascade)
+    logLost      Log?    @relation("magic_items_lost", fields: [logLostId], references: [id])
     logLostId    String?
 
     @@index([logGainedId])
@@ -129,10 +135,10 @@ model MagicItem {
 model StoryAward {
     id           String   @id @default(cuid())
     name         String
-    description  String? 
-    logGained    Log?     @relation("story_awards_gained", fields: [logGainedId], references: [id], onDelete: Cascade)
+    description  String?  @db.Text
+    logGained    Log?     @relation("story_awards_gained", fields: [logGainedId], references: [id])
     logGainedId  String?
-    logLost      Log?     @relation("story_awards_lost", fields: [logLostId], references: [id], onDelete: Cascade)
+    logLost      Log?     @relation("story_awards_lost", fields: [logLostId], references: [id])
     logLostId    String?
 
     @@index([logGainedId])
