@@ -65,14 +65,10 @@
 	.menu-item-error {
 		background-color: theme(colors.error);
 		color: theme(colors.white);
-		&:hover {
-			color: theme(colors.white);
-		}
 		.dark & {
-			border-color: theme(colors.red.800);
-			background-color: theme(colors.base-100);
+			background-color: theme(colors.red.800);
 			&:hover {
-				background-color: theme(colors.red.800);
+				background-color: theme(colors.red.900);
 			}
 		}
 	}

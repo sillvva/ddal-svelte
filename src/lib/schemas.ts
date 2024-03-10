@@ -7,7 +7,6 @@ import { array, boolean, custom, date, fallback, forward, integer, literal, merg
 export const envPrivateSchema = object({
 	TURSO_DATABASE_URL: string([url()]),
 	TURSO_AUTH_TOKEN: string([minLength(1)]),
-	REDIS_URL: string([url(), regex(/^rediss?:\/\//, "Must be a valid Redis URL")]),
 	UPSTASH_REDIS_REST_URL: string([url()]),
 	UPSTASH_REDIS_REST_TOKEN: string([minLength(1)]),
 	AUTH_SECRET: string([minLength(10, "Must be a string of at least 10 characters")]),
@@ -26,21 +25,13 @@ export const envPublicSchema = object({
 
 export type DungeonMasterSchema = Output<typeof dungeonMasterSchema>;
 export type DungeonMasterSchemaIn = Input<typeof dungeonMasterSchema>;
-export const dungeonMasterSchema = object(
-	{
-		id: string(),
-		name: string([minLength(1)]),
-		DCI: nullable(union([string([regex(/[0-9]{0,10}/, "Invalid DCI Format")]), null_()]), null),
-		uid: nullable(union([string(), null_()]), ""),
-		owner: string([minLength(1, "DM is not assigned to a user")])
-	},
-	[
-		forward(
-			custom((input) => !input.DCI?.trim() || !!input.name.trim(), "DM Name required if DCI is set"),
-			["name"]
-		)
-	]
-);
+export const dungeonMasterSchema = object({
+	id: string(),
+	name: string([minLength(1)]),
+	DCI: nullable(union([string([regex(/[0-9]{0,10}/, "Invalid DCI Format")]), null_()]), null),
+	uid: nullable(union([string(), null_()]), ""),
+	owner: string([minLength(1, "DM is not assigned to a user")])
+});
 
 const itemSchema = object({
 	id: optional(string(), ""),
@@ -64,10 +55,12 @@ export const logSchema = object({
 	gold: number(),
 	dtd: number([integer()]),
 	description: optional(union([string(), null_()]), ""),
-	dm: object({
-		...dungeonMasterSchema.entries,
-		name: optional(string(), "")
-	}),
+	dm: merge([
+		dungeonMasterSchema,
+		object({
+			name: optional(string(), "")
+		})
+	]),
 	is_dm_log: optional(boolean(), false),
 	applied_date: nullable(date()),
 	magic_items_gained: optional(array(itemSchema), []),

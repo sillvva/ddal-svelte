@@ -9,7 +9,6 @@ datasource db {
 }
 
 model Account {
-    id                String  @id @default(cuid())
     userId            String
     type              String
     provider          String
@@ -23,16 +22,15 @@ model Account {
     session_state     String?
     user              User    @relation(fields: [userId], references: [id], onDelete: Cascade)
 
-    @@unique([provider, providerAccountId])
+    @@id([provider, providerAccountId])
     @@index([userId])
 }
 
 model Session {
-    id           String   @id @default(cuid())
-    sessionToken String   @unique
+    sessionToken String   @id
+    user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
     userId       String
     expires      DateTime
-    user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
 
     @@index([userId])
 }
@@ -119,7 +117,7 @@ model MagicItem {
     description  String?
     logGained    Log?    @relation("magic_items_gained", fields: [logGainedId], references: [id], onDelete: Cascade)
     logGainedId  String?
-    logLost      Log?    @relation("magic_items_lost", fields: [logLostId], references: [id], onDelete: Cascade)
+    logLost      Log?    @relation("magic_items_lost", fields: [logLostId], references: [id])
     logLostId    String?
 
     @@index([logGainedId])
@@ -132,7 +130,7 @@ model StoryAward {
     description  String? 
     logGained    Log?     @relation("story_awards_gained", fields: [logGainedId], references: [id], onDelete: Cascade)
     logGainedId  String?
-    logLost      Log?     @relation("story_awards_lost", fields: [logLostId], references: [id], onDelete: Cascade)
+    logLost      Log?     @relation("story_awards_lost", fields: [logLostId], references: [id])
     logLostId    String?
 
     @@index([logGainedId])

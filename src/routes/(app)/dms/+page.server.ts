@@ -2,8 +2,7 @@ import { deleteDM } from "$src/server/actions/dms.js";
 import { signInRedirect } from "$src/server/auth";
 import { rateLimiter } from "$src/server/cache.js";
 import { getUserDMsWithLogsCache } from "$src/server/data/dms";
-import { fail, redirect } from "@sveltejs/kit";
-import { error } from "console";
+import { error, fail, redirect } from "@sveltejs/kit";
 
 export const load = async (event) => {
 	const session = event.locals.session;

@@ -20,7 +20,7 @@
 	import { Toaster } from "svelte-sonner";
 	import { fade } from "svelte/transition";
 	import { twMerge } from "tailwind-merge";
-	import type { SearchData } from "../api/command/+server.js";
+	import type { SearchData } from "../(api)/command/+server.js";
 
 	export let data;
 	const app = getContext<CookieStore<App.Cookie>>("app");
@@ -62,7 +62,7 @@
 
 	$: words = [...new Set(search.toLowerCase().split(" "))].filter(Boolean);
 	$: if (!$searchData.length && browser && cmdOpen) {
-		fetch(`/api/command`)
+		fetch(`/command`)
 			.then((res) => res.json())
 			.then((res) => ($searchData = res));
 	}

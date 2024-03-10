@@ -10,6 +10,8 @@ const sw = self as unknown as ServiceWorkerGlobalScope;
 // Create a unique cache name for this deployment
 const CACHE = `cache-${version}`;
 
+const EXCLUDE = ["/auth"];
+
 const ASSETS = [
 	...build, // the app itself
 	...files // everything in `static`
@@ -43,6 +45,11 @@ sw.addEventListener("fetch", (event) => {
 	async function respond() {
 		const url = new URL(event.request.url);
 		const cache = await caches.open(CACHE);
+
+		// don't cache requests to excluded paths
+		if (EXCLUDE.some((path) => url.pathname.startsWith(path))) {
+			return fetch(event.request);
+		}
 
 		// `build`/`files` can always be served from the cache
 		if (ASSETS.includes(url.pathname)) {
