@@ -28,9 +28,9 @@ model Account {
 
 model Session {
     sessionToken String   @id
+    user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
     userId       String
     expires      DateTime
-    user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
 
     @@index([userId])
 }
@@ -109,7 +109,7 @@ model MagicItem {
     description  String?
     logGained    Log?    @relation("magic_items_gained", fields: [logGainedId], references: [id], onDelete: Cascade)
     logGainedId  String?
-    logLost      Log?    @relation("magic_items_lost", fields: [logLostId], references: [id], onDelete: Cascade)
+    logLost      Log?    @relation("magic_items_lost", fields: [logLostId], references: [id])
     logLostId    String?
 
     @@index([logGainedId])
@@ -122,7 +122,7 @@ model StoryAward {
     description  String? 
     logGained    Log?     @relation("story_awards_gained", fields: [logGainedId], references: [id], onDelete: Cascade)
     logGainedId  String?
-    logLost      Log?     @relation("story_awards_lost", fields: [logLostId], references: [id], onDelete: Cascade)
+    logLost      Log?     @relation("story_awards_lost", fields: [logLostId], references: [id])
     logLostId    String?
 
     @@index([logGainedId])
