@@ -3,10 +3,9 @@ import { defineConfig } from "drizzle-kit";
 export default defineConfig({
 	schema: "./src/db/schema.ts",
 	out: "./drizzle",
-	driver: "turso",
+	driver: "mysql2",
 	dbCredentials: {
-		url: process.env.TURSO_DATABASE_URL || "",
-		authToken: process.env.TURSO_AUTH_TOKEN || ""
+		uri: process.env.DATABASE_URL || ""
 	},
 	verbose: true,
 	strict: true

@@ -2,11 +2,10 @@ import type { CharacterData } from "$src/server/data/characters";
 import type { NumericRange } from "@sveltejs/kit";
 import { type FormPathLeaves } from "sveltekit-superforms";
 // prettier-ignore
-import { array, boolean, custom, date, fallback, forward, integer, literal, merge, minLength, minValue, null_, nullable, number, object, optional, regex, string, transform, union, url, type Input, type Output } from "valibot";
+import { array, boolean, custom, date, fallback, forward, integer, literal, merge, minLength, minValue, null_, nullable, number, object, optional, regex, string, union, url, type Input, type Output } from "valibot";
 
 export const envPrivateSchema = object({
-	TURSO_DATABASE_URL: string([url()]),
-	TURSO_AUTH_TOKEN: string([minLength(1)]),
+	DATABASE_URL: string([url()]),
 	UPSTASH_REDIS_REST_URL: string([url()]),
 	UPSTASH_REDIS_REST_TOKEN: string([minLength(1)]),
 	AUTH_SECRET: string([minLength(10, "Must be a string of at least 10 characters")]),
@@ -44,7 +43,7 @@ export type LogSchemaIn = Input<typeof logSchema>;
 export const logSchema = object({
 	id: optional(string(), ""),
 	name: string([minLength(1)]),
-	date: transform(union([optional(date(), new Date()), string()]), (input) => new Date(input)),
+	date: date(),
 	characterId: optional(string(), ""),
 	characterName: optional(string(), ""),
 	type: optional(union([literal("game"), literal("nongame")]), "game"),
@@ -62,9 +61,7 @@ export const logSchema = object({
 		})
 	]),
 	is_dm_log: optional(boolean(), false),
-	applied_date: nullable(
-		transform(union([optional(date(), new Date()), string(), null_()]), (input) => (input ? new Date(input) : null))
-	),
+	applied_date: nullable(date()),
 	magic_items_gained: optional(array(itemSchema), []),
 	magic_items_lost: optional(array(string([minLength(1)])), []),
 	story_awards_gained: optional(array(itemSchema), []),

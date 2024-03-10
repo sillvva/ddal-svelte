@@ -3,7 +3,6 @@ import type { CharacterData, getCharacter } from "$src/server/data/characters";
 import type { LogData } from "$src/server/data/logs";
 import { sorter } from "@sillvva/utils";
 import type { LogSchema } from "./schemas";
-import { formatDate } from "./util";
 
 export const getMagicItems = (
 	character: Exclude<Awaited<ReturnType<typeof getCharacter>>, null>,
@@ -192,7 +191,7 @@ export const getLogsSummary = (
 		story_awards,
 		log_levels: levels.log_levels,
 		tier: Math.floor((total_level + 1) / 6) + 1,
-		logs: logs.map((log) => ({ ...parseLog(log), saving: false || "" }))
+		logs: logs.map((log) => ({ ...parseLog(log) }))
 	};
 };
 
@@ -206,7 +205,7 @@ export function defaultLogData(userId: string, characterId = ""): LogData {
 		id: "",
 		name: "",
 		description: "",
-		date: formatDate(new Date()),
+		date: new Date(),
 		type: "game",
 		created_at: new Date(),
 		experience: 0,

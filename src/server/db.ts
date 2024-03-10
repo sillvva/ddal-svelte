@@ -1,14 +1,9 @@
-// src/server/db/client.ts
 import { privateEnv } from "$lib/env/private";
 import * as schema from "$src/db/schema";
-import { createClient } from "@libsql/client";
-import { drizzle } from "drizzle-orm/libsql";
+import { drizzle } from "drizzle-orm/mysql2";
+import mysql from "mysql2/promise";
 
-// Init prisma client
-const libsql = createClient({
-	url: privateEnv.TURSO_DATABASE_URL,
-	authToken: privateEnv.TURSO_AUTH_TOKEN
-});
+const connection = await mysql.createConnection(privateEnv.DATABASE_URL);
 
-export const db = drizzle(libsql, { schema });
+export const db = drizzle(connection, { schema, mode: "default" });
 export const q = db.query;

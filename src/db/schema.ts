@@ -1,17 +1,17 @@
 import type { ProviderType } from "@auth/core/providers";
 import { createId } from "@paralleldrive/cuid2";
 import { relations, sql } from "drizzle-orm";
-import { index, integer, primaryKey, real, sqliteTable, text } from "drizzle-orm/sqlite-core";
+import { boolean, datetime, double, index, int, mysqlTable, primaryKey, text, varchar } from "drizzle-orm/mysql-core";
 
 export type User = typeof users.$inferSelect;
-export const users = sqliteTable("User", {
-	id: text("id", { length: 256 })
+export const users = mysqlTable("user", {
+	id: varchar("id", { length: 256 })
 		.primaryKey()
 		.$defaultFn(() => createId()),
-	name: text("name", { length: 256 }),
-	email: text("email", { length: 256 }),
-	emailVerified: text("emailVerified").$type<Date>(),
-	image: text("image", { length: 256 })
+	name: varchar("name", { length: 256 }),
+	email: varchar("email", { length: 256 }),
+	emailVerified: datetime("emailVerified", { mode: "date" }),
+	image: varchar("image", { length: 256 })
 });
 export const userRelations = relations(users, ({ many }) => ({
 	accounts: many(accounts),
@@ -22,22 +22,22 @@ export const userRelations = relations(users, ({ many }) => ({
 
 export type Account = typeof accounts.$inferSelect;
 export type NewAccount = typeof accounts.$inferInsert;
-export const accounts = sqliteTable(
-	"Account",
+export const accounts = mysqlTable(
+	"account",
 	{
-		userId: text("userId", { length: 256 })
+		userId: varchar("userId", { length: 256 })
 			.notNull()
 			.references(() => users.id, { onDelete: "cascade" }),
-		type: text("type", { length: 256 }).$type<ProviderType>().notNull(),
-		provider: text("provider", { length: 256 }).notNull(),
-		providerAccountId: text("providerAccountId", { length: 256 }).notNull(),
-		refresh_token: text("refresh_token", { length: 256 }),
-		access_token: text("access_token", { length: 256 }),
-		expires_at: integer("expires_at"),
-		token_type: text("token_type", { length: 256 }),
-		scope: text("scope", { length: 256 }),
-		id_token: text("id_token", { length: 256 }),
-		session_state: text("session_state", { length: 256 })
+		type: varchar("type", { length: 256 }).$type<ProviderType>().notNull(),
+		provider: varchar("provider", { length: 256 }).notNull(),
+		providerAccountId: varchar("providerAccountId", { length: 256 }).notNull(),
+		refresh_token: varchar("refresh_token", { length: 256 }),
+		access_token: varchar("access_token", { length: 256 }),
+		expires_at: int("expires_at"),
+		token_type: varchar("token_type", { length: 256 }),
+		scope: varchar("scope", { length: 256 }),
+		id_token: varchar("id_token", { length: 256 }),
+		session_state: varchar("session_state", { length: 256 })
 	},
 	(account) => {
 		return {
@@ -52,14 +52,14 @@ export const accountRelations = relations(accounts, ({ one }) => ({
 	user: one(users, { fields: [accounts.userId], references: [users.id] })
 }));
 
-export const sessions = sqliteTable(
-	"Session",
+export const sessions = mysqlTable(
+	"session",
 	{
-		sessionToken: text("sessionToken", { length: 256 }).primaryKey(),
-		userId: text("userId", { length: 256 })
+		sessionToken: varchar("sessionToken", { length: 256 }).primaryKey(),
+		userId: varchar("userId", { length: 256 })
 			.notNull()
 			.references(() => users.id, { onDelete: "cascade" }),
-		expires: integer("expires", { mode: "timestamp_ms" }).notNull()
+		expires: int("expires").notNull()
 	},
 	(t) => {
 		return {
@@ -73,25 +73,24 @@ export const sessionRelations = relations(sessions, ({ one }) => ({
 
 export type Character = typeof characters.$inferSelect;
 export type NewCharacter = typeof characters.$inferInsert;
-export const characters = sqliteTable(
-	"Character",
+export const characters = mysqlTable(
+	"character",
 	{
-		id: text("id", { length: 256 })
+		id: varchar("id", { length: 256 })
 			.primaryKey()
 			.$defaultFn(() => createId()),
-		name: text("name", { length: 256 }).notNull(),
-		race: text("race", { length: 256 }),
-		class: text("class", { length: 256 }),
-		campaign: text("campaign", { length: 256 }),
-		image_url: text("image_url", { length: 256 }),
-		character_sheet_url: text("character_sheet_url", { length: 256 }),
-		userId: text("userId", { length: 256 })
+		name: varchar("name", { length: 256 }).notNull(),
+		race: varchar("race", { length: 256 }),
+		class: varchar("class", { length: 256 }),
+		campaign: varchar("campaign", { length: 256 }),
+		image_url: varchar("image_url", { length: 256 }),
+		character_sheet_url: varchar("character_sheet_url", { length: 256 }),
+		userId: varchar("userId", { length: 256 })
 			.notNull()
 			.references(() => users.id, { onDelete: "cascade" }),
-		created_at: text("created_at")
+		created_at: datetime("created_at", { mode: "date" })
 			.notNull()
 			.default(sql`CURRENT_TIMESTAMP`)
-			.$type<Date>()
 	},
 	(t) => {
 		return {
@@ -106,34 +105,33 @@ export const characterRelations = relations(characters, ({ one, many }) => ({
 
 export type Log = typeof logs.$inferSelect;
 export type NewLog = typeof logs.$inferInsert;
-export const logs = sqliteTable(
-	"Log",
+export const logs = mysqlTable(
+	"log",
 	{
-		id: text("id", { length: 256 })
+		id: varchar("id", { length: 256 })
 			.primaryKey()
 			.$defaultFn(() => createId()),
-		date: text("date").notNull(),
-		name: text("name", { length: 256 }).notNull(),
-		description: text("description", { length: 256 }).notNull().default(""),
-		type: text("type", { length: 256, enum: ["game", "nongame"] })
+		date: datetime("date", { mode: "date" }).notNull(),
+		name: varchar("name", { length: 256 }).notNull(),
+		description: text("description").notNull().default(""),
+		type: varchar("type", { length: 7, enum: ["game", "nongame"] })
 			.notNull()
 			.default("game"),
-		dungeonMasterId: text("dungeonMasterId", { length: 256 }).references(() => dungeonMasters.id),
-		is_dm_log: integer("is_dm_log", { mode: "boolean" }).notNull().default(false),
-		applied_date: text("applied_date"),
-		experience: integer("experience").notNull(),
-		acp: integer("acp").notNull(),
-		tcp: integer("tcp").notNull(),
-		level: integer("level").notNull(),
-		gold: real("gold").notNull(),
-		dtd: integer("dtd").notNull().default(0),
-		characterId: text("characterId", { length: 256 })
+		dungeonMasterId: varchar("dungeonMasterId", { length: 256 }).references(() => dungeonMasters.id),
+		is_dm_log: boolean("is_dm_log").notNull().default(false),
+		applied_date: datetime("applied_date", { mode: "date" }),
+		experience: int("experience").notNull(),
+		acp: int("acp").notNull(),
+		tcp: int("tcp").notNull(),
+		level: int("level").notNull(),
+		gold: double("gold", { precision: 8, scale: 2 }).notNull(),
+		dtd: int("dtd").notNull().default(0),
+		characterId: varchar("characterId", { length: 256 })
 			.default("")
 			.references(() => characters.id, { onDelete: "cascade" }),
-		created_at: text("created_at")
+		created_at: datetime("created_at", { mode: "date" })
 			.notNull()
 			.default(sql`CURRENT_TIMESTAMP`)
-			.$type<Date>()
 	},
 	(t) => {
 		return {
@@ -153,16 +151,16 @@ export const logRelations = relations(logs, ({ one, many }) => ({
 
 export type DungeonMaster = typeof dungeonMasters.$inferSelect;
 export type NewDungeonMaster = typeof dungeonMasters.$inferInsert;
-export const dungeonMasters = sqliteTable(
-	"DungeonMaster",
+export const dungeonMasters = mysqlTable(
+	"dungeonmaster",
 	{
-		id: text("id", { length: 256 })
+		id: varchar("id", { length: 256 })
 			.primaryKey()
 			.$defaultFn(() => createId()),
-		name: text("name", { length: 256 }).notNull(),
-		DCI: text("DCI", { length: 256 }),
-		uid: text("uid", { length: 256 }),
-		owner: text("owner", { length: 256 })
+		name: varchar("name", { length: 256 }).notNull(),
+		DCI: varchar("DCI", { length: 256 }),
+		uid: varchar("uid", { length: 256 }),
+		owner: varchar("owner", { length: 256 })
 			.notNull()
 			.references(() => users.id, { onDelete: "cascade" })
 	},
@@ -180,16 +178,16 @@ export const dungeonMasterRelations = relations(dungeonMasters, ({ one, many }) 
 
 export type MagicItem = typeof magicItems.$inferSelect;
 export type NewMagicItem = typeof magicItems.$inferInsert;
-export const magicItems = sqliteTable(
-	"MagicItem",
+export const magicItems = mysqlTable(
+	"magicitem",
 	{
-		id: text("id", { length: 256 })
+		id: varchar("id", { length: 256 })
 			.primaryKey()
 			.$defaultFn(() => createId()),
-		name: text("name", { length: 256 }).notNull(),
-		description: text("description", { length: 256 }),
-		logGainedId: text("logGainedId", { length: 256 }).references(() => logs.id, { onDelete: "cascade" }),
-		logLostId: text("logLostId", { length: 256 }).references(() => logs.id)
+		name: varchar("name", { length: 256 }).notNull(),
+		description: varchar("description", { length: 256 }),
+		logGainedId: varchar("logGainedId", { length: 256 }).references(() => logs.id, { onDelete: "cascade" }),
+		logLostId: varchar("logLostId", { length: 256 }).references(() => logs.id)
 	},
 	(t) => {
 		return {
@@ -205,16 +203,16 @@ export const magicItemRelations = relations(magicItems, ({ one }) => ({
 
 export type StoryAward = typeof storyAwards.$inferSelect;
 export type NewStoryAward = typeof storyAwards.$inferInsert;
-export const storyAwards = sqliteTable(
-	"StoryAward",
+export const storyAwards = mysqlTable(
+	"storyaward",
 	{
-		id: text("id", { length: 256 })
+		id: varchar("id", { length: 256 })
 			.primaryKey()
 			.$defaultFn(() => createId()),
-		name: text("name", { length: 256 }).notNull(),
-		description: text("description", { length: 256 }),
-		logGainedId: text("logGainedId", { length: 256 }).references(() => logs.id, { onDelete: "cascade" }),
-		logLostId: text("logLostId", { length: 256 }).references(() => logs.id)
+		name: varchar("name", { length: 256 }).notNull(),
+		description: varchar("description", { length: 256 }),
+		logGainedId: varchar("logGainedId", { length: 256 }).references(() => logs.id, { onDelete: "cascade" }),
+		logLostId: varchar("logLostId", { length: 256 }).references(() => logs.id)
 	},
 	(t) => {
 		return {
