@@ -1,4 +1,4 @@
-import { searchData } from "$src/routes/(app)/+layout.svelte";
+import { searchData } from "$lib/stores";
 import { toast } from "svelte-sonner";
 import { get } from "svelte/store";
 import { superForm, type FormOptions, type FormPathLeaves, type SuperValidated } from "sveltekit-superforms";

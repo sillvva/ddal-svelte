@@ -3,8 +3,8 @@
 	import { enhance } from "$app/forms";
 	import { page } from "$app/stores";
 	import { PROVIDERS } from "$lib/constants";
+	import { pageLoader, searchData } from "$lib/stores";
 	import type { Account } from "$src/db/schema";
-	import { pageLoader, searchData } from "$src/routes/(app)/+layout.svelte";
 	import type { CookieStore } from "$src/server/cookie";
 	import { signIn, signOut } from "@auth/sveltekit/client";
 	import { getContext } from "svelte";

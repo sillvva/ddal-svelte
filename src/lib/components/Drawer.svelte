@@ -1,7 +1,7 @@
 <script lang="ts">
 	import { enhance } from "$app/forms";
 	import { page } from "$app/stores";
-	import { pageLoader, searchData } from "$src/routes/(app)/+layout.svelte";
+	import { pageLoader, searchData } from "$lib/stores";
 	import { twMerge } from "tailwind-merge";
 
 	let drawer = false;
@@ -24,7 +24,7 @@
 	aria-expanded={drawer}
 	aria-controls="drawer"
 >
-	<span class="iconify mdi-menu size-6" />
+	<span class="iconify size-6 mdi-menu" />
 </button>
 <noscript>
 	<span class="flex w-[52px] py-3 pr-4"> </span>

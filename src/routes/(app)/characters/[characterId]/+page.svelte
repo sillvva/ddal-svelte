@@ -9,9 +9,9 @@
 	import Search from "$lib/components/Search.svelte";
 	import SearchResults from "$lib/components/SearchResults.svelte";
 	import { errorToast, successToast } from "$lib/factories.js";
+	import { pageLoader, searchData } from "$lib/stores";
 	import type { TransitionAction } from "$lib/util";
 	import { createTransition, stopWords } from "$lib/util";
-	import { pageLoader, searchData } from "$src/routes/(app)/+layout.svelte";
 	import type { CookieStore } from "$src/server/cookie.js";
 	import { slugify, sorter } from "@sillvva/utils";
 	import { download, hotkey } from "@svelteuidev/composables";
