@@ -9,7 +9,6 @@ datasource db {
 }
 
 model Account {
-    id                String  @id @default(cuid())
     userId            String
     type              String
     provider          String
@@ -23,13 +22,12 @@ model Account {
     session_state     String?
     user              User    @relation(fields: [userId], references: [id], onDelete: Cascade)
 
-    @@unique([provider, providerAccountId])
+    @@id([provider, providerAccountId])
     @@index([userId])
 }
 
 model Session {
-    id           String   @id @default(cuid())
-    sessionToken String   @unique
+    sessionToken String   @id
     userId       String
     expires      DateTime
     user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
@@ -47,14 +45,6 @@ model User {
     sessions      Session[]
     characters    Character[]
     dms           DungeonMaster[]
-}
-
-model VerificationToken {
-    identifier String
-    token      String   @unique
-    expires    DateTime
-
-    @@unique([identifier, token])
 }
 
 model Character {

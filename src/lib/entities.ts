@@ -1,8 +1,9 @@
+import type { Character, DungeonMaster, Log, MagicItem, StoryAward } from "$src/db/schema";
 import type { CharacterData, getCharacter } from "$src/server/data/characters";
 import type { LogData } from "$src/server/data/logs";
-import type { Character, DungeonMaster, Log, MagicItem, StoryAward } from "@prisma/client";
 import { sorter } from "@sillvva/utils";
 import type { LogSchema } from "./schemas";
+import { formatDate } from "./util";
 
 export const getMagicItems = (
 	character: Exclude<Awaited<ReturnType<typeof getCharacter>>, null>,
@@ -20,7 +21,7 @@ export const getMagicItems = (
 		.forEach((log) => {
 			if (lastLog) return;
 			if (lastLogId && log.id === lastLogId) lastLog = true;
-			if (lastLogDate && log.date >= new Date(lastLogDate)) lastLog = true;
+			if (lastLogDate && new Date(log.date) >= new Date(lastLogDate)) lastLog = true;
 			if (!lastLog)
 				log.magic_items_gained.forEach((item) => {
 					magicItems.push(item);
@@ -52,7 +53,7 @@ export const getStoryAwards = (
 		.forEach((log) => {
 			if (lastLog) return;
 			if (lastLogId && log.id === lastLogId) lastLog = true;
-			if (lastLogDate && log.date >= new Date(lastLogDate)) lastLog = true;
+			if (lastLogDate && new Date(log.date) >= new Date(lastLogDate)) lastLog = true;
 			if (!lastLog)
 				log.story_awards_gained.forEach((item) => {
 					storyAwards.push(item);
@@ -205,7 +206,7 @@ export function defaultLogData(userId: string, characterId = ""): LogData {
 		id: "",
 		name: "",
 		description: "",
-		date: new Date(),
+		date: formatDate(new Date()),
 		type: "game",
 		created_at: new Date(),
 		experience: 0,
@@ -256,6 +257,8 @@ export function logDataToSchema(userId: string, log: LogData, character?: Charac
 		characterName: character?.name || "",
 		dm: log.dm?.id ? log.dm : defaultDM(userId),
 		type: log.type as "game" | "nongame",
+		date: new Date(log.date),
+		applied_date: log.applied_date ? new Date(log.applied_date) : null,
 		magic_items_gained: log.magic_items_gained.map((item) => ({
 			id: item.id,
 			name: item.name,

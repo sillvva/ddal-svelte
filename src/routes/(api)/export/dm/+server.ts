@@ -11,7 +11,7 @@ export async function GET({ locals }) {
 	if (!success) return json({ error: "Too many requests" }, { status: 429 });
 
 	try {
-		const dmLogs = await getDMLogsCache(session.user.id, session.user.name || "");
+		const dmLogs = await getDMLogsCache(session.user.id);
 
 		return json(dmLogs);
 	} catch (err) {

@@ -1,4 +1,4 @@
-import type { Account } from "@prisma/client";
+import type { Account } from "$src/db/schema";
 import { publicEnv } from "./env/public";
 
 export const BLANK_CHARACTER = `${publicEnv.PUBLIC_URL}/images/blank-character.webp` as const;

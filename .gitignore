@@ -13,3 +13,4 @@ replica.db*
 *.sql
 *.toml
 metadata
+drizzle

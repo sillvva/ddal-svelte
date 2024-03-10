@@ -7,7 +7,7 @@ export const load = async (event) => {
 	const session = event.locals.session;
 	if (!session?.user?.name) signInRedirect(event.url);
 
-	const logs = await getDMLogsCache(session.user.id, session.user.name);
+	const logs = await getDMLogsCache(session.user.id);
 
 	return {
 		title: `${session.user.name}'s DM Logs`,

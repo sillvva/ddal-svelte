@@ -1,20 +1,14 @@
 // src/server/db/client.ts
+import { privateEnv } from "$lib/env/private";
+import * as schema from "$src/db/schema";
 import { createClient } from "@libsql/client";
-import { PrismaLibSQL } from "@prisma/adapter-libsql";
-import { PrismaClient } from "@prisma/client";
-
-// Setup
-const connectionString = `${process.env.TURSO_DATABASE_URL}`;
-const authToken = `${process.env.TURSO_AUTH_TOKEN}`;
+import { drizzle } from "drizzle-orm/libsql";
 
 // Init prisma client
 const libsql = createClient({
-	url: connectionString,
-	authToken
+	url: privateEnv.TURSO_DATABASE_URL,
+	authToken: privateEnv.TURSO_AUTH_TOKEN
 });
-const adapter = new PrismaLibSQL(libsql);
 
-export const prisma = new PrismaClient({
-	// log: dev ? ["query"] : [],
-	adapter
-});
+export const db = drizzle(libsql, { schema });
+export const q = db.query;
