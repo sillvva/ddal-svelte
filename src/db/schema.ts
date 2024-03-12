@@ -178,7 +178,9 @@ export const logs = pgTable(
 		level: smallint("level")
 			.notNull()
 			.$default(() => 0),
-		gold: real("gold").notNull(),
+		gold: real("gold")
+			.notNull()
+			.$default(() => 0),
 		dtd: smallint("dtd")
 			.notNull()
 			.$default(() => 0),
