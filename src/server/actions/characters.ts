@@ -2,6 +2,7 @@ import { SaveError, type NewCharacterSchema, type SaveResult } from "$lib/schema
 import { handleSKitError } from "$lib/util";
 import { characters, logs, type Character } from "$src/db/schema";
 import { error } from "@sveltejs/kit";
+import cuid from "cuid";
 import { and, eq, inArray } from "drizzle-orm";
 import { rateLimiter, revalidateKeys } from "../cache";
 import { getCharacterCache } from "../data/characters";
@@ -25,8 +26,10 @@ export async function saveCharacter(
 				return await db
 					.insert(characters)
 					.values({
+						id: cuid(),
 						...data,
-						userId
+						userId,
+						created_at: new Date()
 					})
 					.returning()
 					.then((r) => r[0]);
@@ -68,7 +71,7 @@ export async function deleteCharacter(characterId: string, userId?: string) {
 		if (!success) error(429, "Too many requests");
 
 		const character = await q.characters.findFirst({
-			with: { logs: { with: { character: true } } },
+			with: { logs: true },
 			where: (character, { eq }) => eq(character.id, characterId)
 		});
 

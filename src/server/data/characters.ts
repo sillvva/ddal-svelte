@@ -52,8 +52,9 @@ export async function getCharactersWithLogs(userId: string, includeLogs = true) 
 				orderBy: (logs, { asc }) => asc(logs.date)
 			}
 		},
-		where: (characters, { eq, ne, and }) => and(eq(characters.userId, userId), ne(characters.id, ""))
+		where: (characters, { eq, ne, and }) => and(eq(characters.userId, userId), ne(characters.name, "Placeholder"))
 	});
+	console.log(characters.map((c) => c.name));
 
 	return characters.map((c) => ({
 		...c,
@@ -110,7 +111,7 @@ export async function getCharacters(userId: string) {
 		with: {
 			user: true
 		},
-		where: (characters, { eq, ne, and }) => and(eq(characters.userId, userId), ne(characters.id, "")),
+		where: (characters, { eq, ne, and }) => and(eq(characters.userId, userId), ne(characters.name, "Placeholder")),
 		orderBy: (characters, { asc }) => asc(characters.name)
 	});
 }

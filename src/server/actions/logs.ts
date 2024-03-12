@@ -1,9 +1,10 @@
 import { getLevels } from "$lib/entities";
 import { SaveError, type LogSchema, type SaveResult } from "$lib/schemas";
-import { formatDate, handleSKitError, parseError } from "$lib/util";
+import { handleSKitError, parseError } from "$lib/util";
 import type { DungeonMaster } from "$src/db/schema";
 import { dungeonMasters, logs, magicItems, storyAwards, type Log } from "$src/db/schema";
 import { error } from "@sveltejs/kit";
+import cuid from "cuid";
 import { and, eq, inArray, notInArray } from "drizzle-orm";
 import { rateLimiter, revalidateKeys } from "../cache";
 import { db } from "../db";
@@ -90,6 +91,7 @@ export async function saveLog(input: LogSchema, user?: CustomSession["user"]): S
 						return await tx
 							.insert(dungeonMasters)
 							.values({
+								id: cuid(),
 								name: input.dm.name.trim(),
 								DCI: input.dm.DCI,
 								uid: input.is_dm_log || isMe ? user.id : null,
@@ -119,41 +121,36 @@ export async function saveLog(input: LogSchema, user?: CustomSession["user"]): S
 
 			if (!dm?.id) throw new SaveError(500, "Could not save Dungeon Master");
 
-			const data: Omit<Log, "id" | "created_at" | "is_dm_log" | "date" | "applied_date"> = {
+			const data: Omit<Log, "id" | "created_at"> = {
 				name: input.name,
+				date: input.date,
 				description: input.description || "",
 				type: input.type,
+				is_dm_log: input.is_dm_log,
 				dungeonMasterId: dm.id,
-				characterId: input.characterId,
 				acp: input.acp,
 				tcp: input.tcp,
 				experience: input.experience,
 				level: input.level,
 				gold: input.gold,
-				dtd: input.dtd
+				dtd: input.dtd,
+				characterId: input.characterId,
+				applied_date
 			};
 
 			const log = input.id
 				? await tx
 						.update(logs)
-						.set({
-							...data,
-							date: formatDate(input.date),
-							applied_date: applied_date ? formatDate(applied_date) : null,
-							id: input.id === "" ? undefined : input.id,
-							is_dm_log: input.is_dm_log
-						})
+						.set(data)
 						.where(eq(logs.id, input.id))
 						.returning()
 						.then((r) => r[0])
 				: await tx
 						.insert(logs)
 						.values({
+							id: cuid(),
 							...data,
-							date: formatDate(input.date),
-							applied_date: applied_date ? formatDate(applied_date) : null,
-							id: input.id === "" ? undefined : input.id,
-							is_dm_log: input.is_dm_log
+							created_at: new Date()
 						})
 						.returning()
 						.then((r) => r[0]);
@@ -175,6 +172,7 @@ export async function saveLog(input: LogSchema, user?: CustomSession["user"]): S
 			if (items.length) {
 				await tx.insert(magicItems).values(
 					items.map((item) => ({
+						id: cuid(),
 						name: item.name,
 						description: item.description,
 						logGainedId: log.id
@@ -216,6 +214,7 @@ export async function saveLog(input: LogSchema, user?: CustomSession["user"]): S
 			if (story_awards.length) {
 				await tx.insert(storyAwards).values(
 					story_awards.map((item) => ({
+						id: cuid(),
 						name: item.name,
 						description: item.description,
 						logGainedId: log.id

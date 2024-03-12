@@ -26,8 +26,7 @@ export type ProviderId = (typeof PROVIDERS)[number]["id"];
 export async function unlinkProvider(userId: string, provider: ProviderId) {
 	try {
 		const result = await db.delete(accounts).where(and(eq(accounts.userId, userId), eq(accounts.provider, provider)));
-
-		return result.rowsAffected === 1;
+		return result.count > 0;
 	} catch (e) {
 		throw new Error("Could not unlink account");
 	}

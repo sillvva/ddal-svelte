@@ -94,11 +94,11 @@ const auth = SvelteKitAuth(async (event) => {
 						providerAccountId: account.providerAccountId,
 						userId: currentUserId,
 						type: account.type,
-						access_token: account.access_token,
-						expires_at: account.expires_in ? Math.floor(Date.now() / 1000 + account.expires_in) : undefined,
+						access_token: account.access_token ?? "",
+						expires_at: Math.floor(Date.now() / 1000 + (account.expires_in ?? 3600)),
 						refresh_token: account.refresh_token,
-						token_type: account.token_type,
-						scope: account.scope,
+						token_type: `${account.token_type}`,
+						scope: account.scope ?? "",
 						id_token: account.id_token
 					});
 

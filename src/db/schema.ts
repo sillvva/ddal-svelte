@@ -1,227 +1,255 @@
-import type { ProviderType } from "@auth/core/providers";
-import { createId } from "@paralleldrive/cuid2";
-import { relations, sql } from "drizzle-orm";
-import { boolean, datetime, double, index, int, mysqlTable, primaryKey, text, varchar } from "drizzle-orm/mysql-core";
+import { relations } from "drizzle-orm";
+import { boolean, index, integer, pgTable, primaryKey, real, smallint, text, timestamp, varchar } from "drizzle-orm/pg-core";
 
 export type User = typeof users.$inferSelect;
-export const users = mysqlTable("user", {
-	id: varchar("id", { length: 256 })
-		.primaryKey()
-		.$defaultFn(() => createId()),
-	name: varchar("name", { length: 256 }),
-	email: varchar("email", { length: 256 }),
-	emailVerified: datetime("emailVerified", { mode: "date" }),
-	image: varchar("image", { length: 256 })
+export type NewUser = typeof users.$inferInsert;
+export const users = pgTable("user", {
+	id: varchar("id").primaryKey().notNull(),
+	name: varchar("name").notNull(),
+	email: varchar("email"),
+	emailVerified: timestamp("emailVerified", { mode: "date" }),
+	image: text("image")
 });
+
 export const userRelations = relations(users, ({ many }) => ({
 	accounts: many(accounts),
 	sessions: many(sessions),
 	characters: many(characters),
-	dms: many(dungeonMasters)
+	dungeonMasters: many(dungeonMasters)
 }));
 
 export type Account = typeof accounts.$inferSelect;
 export type NewAccount = typeof accounts.$inferInsert;
-export const accounts = mysqlTable(
+export const accounts = pgTable(
 	"account",
 	{
-		userId: varchar("userId", { length: 256 })
+		providerAccountId: varchar("providerAccountId").notNull(),
+		provider: varchar("provider").notNull(),
+		type: varchar("type").notNull(),
+		userId: varchar("userId")
 			.notNull()
-			.references(() => users.id, { onDelete: "cascade" }),
-		type: varchar("type", { length: 256 }).$type<ProviderType>().notNull(),
-		provider: varchar("provider", { length: 256 }).notNull(),
-		providerAccountId: varchar("providerAccountId", { length: 256 }).notNull(),
-		refresh_token: varchar("refresh_token", { length: 256 }),
-		access_token: varchar("access_token", { length: 256 }),
-		expires_at: int("expires_at"),
-		token_type: varchar("token_type", { length: 256 }),
-		scope: varchar("scope", { length: 256 }),
-		id_token: varchar("id_token", { length: 256 }),
-		session_state: varchar("session_state", { length: 256 })
+			.references(() => users.id, { onUpdate: "cascade", onDelete: "cascade" }),
+		refresh_token: varchar("refresh_token"),
+		access_token: varchar("access_token").notNull(),
+		expires_at: integer("expires_at").notNull(),
+		token_type: varchar("token_type").notNull(),
+		scope: varchar("scope").notNull(),
+		id_token: varchar("id_token"),
+		session_state: varchar("session_state")
 	},
-	(account) => {
+	(table) => {
 		return {
-			compoundKey: primaryKey({
-				columns: [account.provider, account.providerAccountId]
-			}),
-			userId_index: index("Account_userId_idx").on(account.userId)
+			userIdIdx: index("Account_userId_idx").on(table.userId),
+			accountPkey: primaryKey({ columns: [table.provider, table.providerAccountId], name: "Account_pkey" })
 		};
 	}
 );
+
 export const accountRelations = relations(accounts, ({ one }) => ({
-	user: one(users, { fields: [accounts.userId], references: [users.id] })
+	user: one(users, {
+		fields: [accounts.userId],
+		references: [users.id]
+	})
 }));
 
-export const sessions = mysqlTable(
+export type Session = typeof sessions.$inferSelect;
+export type NewSession = typeof sessions.$inferInsert;
+export const sessions = pgTable(
 	"session",
 	{
-		sessionToken: varchar("sessionToken", { length: 256 }).primaryKey(),
-		userId: varchar("userId", { length: 256 })
+		sessionToken: varchar("sessionToken").primaryKey().notNull(),
+		userId: varchar("userId")
 			.notNull()
-			.references(() => users.id, { onDelete: "cascade" }),
-		expires: int("expires").notNull()
+			.references(() => users.id, { onUpdate: "cascade", onDelete: "cascade" }),
+		expires: timestamp("expires", { mode: "date" }).notNull()
 	},
-	(t) => {
+	(table) => {
 		return {
-			userId_index: index("Session_userId_idx").on(t.userId)
+			userIdIdx: index("Session_userId_idx").on(table.userId)
 		};
 	}
 );
+
 export const sessionRelations = relations(sessions, ({ one }) => ({
-	user: one(users, { fields: [sessions.userId], references: [users.id] })
+	user: one(users, {
+		fields: [sessions.userId],
+		references: [users.id]
+	})
 }));
 
 export type Character = typeof characters.$inferSelect;
 export type NewCharacter = typeof characters.$inferInsert;
-export const characters = mysqlTable(
+export const characters = pgTable(
 	"character",
 	{
-		id: varchar("id", { length: 256 })
-			.primaryKey()
-			.$defaultFn(() => createId()),
-		name: varchar("name", { length: 256 }).notNull(),
-		race: varchar("race", { length: 256 }),
-		class: varchar("class", { length: 256 }),
-		campaign: varchar("campaign", { length: 256 }),
-		image_url: varchar("image_url", { length: 256 }),
-		character_sheet_url: varchar("character_sheet_url", { length: 256 }),
-		userId: varchar("userId", { length: 256 })
+		id: varchar("id").primaryKey().notNull(),
+		name: varchar("name").notNull(),
+		race: varchar("race"),
+		class: varchar("class"),
+		campaign: varchar("campaign"),
+		image_url: varchar("image_url"),
+		character_sheet_url: varchar("character_sheet_url"),
+		userId: varchar("userId")
 			.notNull()
-			.references(() => users.id, { onDelete: "cascade" }),
-		created_at: datetime("created_at", { mode: "date" })
-			.notNull()
-			.default(sql`CURRENT_TIMESTAMP`)
+			.references(() => users.id, { onUpdate: "cascade", onDelete: "cascade" }),
+		created_at: timestamp("created_at", { mode: "date" }).notNull()
 	},
-	(t) => {
+	(table) => {
 		return {
-			userId_index: index("Character_userId_idx").on(t.userId)
+			userIdIdx: index("Character_userId_idx").on(table.userId)
 		};
 	}
 );
+
 export const characterRelations = relations(characters, ({ one, many }) => ({
-	user: one(users, { fields: [characters.userId], references: [users.id] }),
+	user: one(users, {
+		fields: [characters.userId],
+		references: [users.id]
+	}),
+	logs: many(logs)
+}));
+
+export type DungeonMaster = typeof dungeonMasters.$inferSelect;
+export type NewDungeonMaster = typeof dungeonMasters.$inferInsert;
+export const dungeonMasters = pgTable(
+	"dungeonmaster",
+	{
+		id: varchar("id").primaryKey().notNull(),
+		name: varchar("name").notNull(),
+		DCI: varchar("DCI"),
+		uid: varchar("uid"),
+		owner: varchar("owner")
+			.notNull()
+			.references(() => users.id, { onUpdate: "cascade", onDelete: "cascade" })
+	},
+	(table) => {
+		return {
+			uidIdx: index("DungeonMaster_uid_idx").on(table.uid),
+			ownerIdx: index("DungeonMaster_owner_idx").on(table.owner)
+		};
+	}
+);
+
+export const dungeonMasterRelations = relations(dungeonMasters, ({ one, many }) => ({
+	user: one(users, {
+		fields: [dungeonMasters.owner],
+		references: [users.id]
+	}),
 	logs: many(logs)
 }));
 
 export type Log = typeof logs.$inferSelect;
 export type NewLog = typeof logs.$inferInsert;
-export const logs = mysqlTable(
+export const logs = pgTable(
 	"log",
 	{
-		id: varchar("id", { length: 256 })
-			.primaryKey()
-			.$defaultFn(() => createId()),
-		date: datetime("date", { mode: "date" }).notNull(),
-		name: varchar("name", { length: 256 }).notNull(),
-		description: text("description").notNull().default(""),
-		type: varchar("type", { length: 7, enum: ["game", "nongame"] })
-			.notNull()
-			.default("game"),
-		dungeonMasterId: varchar("dungeonMasterId", { length: 256 }).references(() => dungeonMasters.id),
-		is_dm_log: boolean("is_dm_log").notNull().default(false),
-		applied_date: datetime("applied_date", { mode: "date" }),
-		experience: int("experience").notNull(),
-		acp: int("acp").notNull(),
-		tcp: int("tcp").notNull(),
-		level: int("level").notNull(),
-		gold: double("gold", { precision: 8, scale: 2 }).notNull(),
-		dtd: int("dtd").notNull().default(0),
-		characterId: varchar("characterId", { length: 256 })
-			.default("")
-			.references(() => characters.id, { onDelete: "cascade" }),
-		created_at: datetime("created_at", { mode: "date" })
-			.notNull()
-			.default(sql`CURRENT_TIMESTAMP`)
+		id: varchar("id").primaryKey().notNull(),
+		date: timestamp("date", { mode: "date" }).defaultNow().notNull(),
+		name: varchar("name").notNull(),
+		description: varchar("description"),
+		type: varchar("type").notNull(),
+		dungeonMasterId: varchar("dungeonMasterId").references(() => dungeonMasters.id, {
+			onUpdate: "cascade",
+			onDelete: "set null"
+		}),
+		is_dm_log: boolean("is_dm_log").notNull(),
+		experience: integer("experience").default(0).notNull(),
+		acp: smallint("acp").default(0).notNull(),
+		tcp: smallint("tcp").default(0).notNull(),
+		level: smallint("level").default(0).notNull(),
+		gold: real("gold").notNull(),
+		dtd: smallint("dtd").default(0).notNull(),
+		applied_date: timestamp("applied_date", { mode: "date" }),
+		characterId: varchar("characterId").references(() => characters.id, { onUpdate: "cascade", onDelete: "cascade" }),
+		created_at: timestamp("created_at", { mode: "date" }).notNull()
 	},
-	(t) => {
+	(table) => {
 		return {
-			dungeonMasterId_index: index("Log_dungeonMasterId_idx").on(t.dungeonMasterId),
-			characterId_index: index("Log_characterId_idx").on(t.characterId)
+			characterIdIdx: index("Log_characterId_idx").on(table.characterId),
+			dungeonMasterIdIdx: index("Log_dungeonMasterId_idx").on(table.dungeonMasterId)
 		};
 	}
 );
-export const logRelations = relations(logs, ({ one, many }) => ({
-	dm: one(dungeonMasters, { fields: [logs.dungeonMasterId], references: [dungeonMasters.id] }),
-	magic_items_gained: many(magicItems, { relationName: "magicItemsGained" }),
-	magic_items_lost: many(magicItems, { relationName: "magicItemsLost" }),
-	story_awards_gained: many(storyAwards, { relationName: "storyAwardsGained" }),
-	story_awards_lost: many(storyAwards, { relationName: "storyAwardsLost" }),
-	character: one(characters, { fields: [logs.characterId], references: [characters.id] })
-}));
 
-export type DungeonMaster = typeof dungeonMasters.$inferSelect;
-export type NewDungeonMaster = typeof dungeonMasters.$inferInsert;
-export const dungeonMasters = mysqlTable(
-	"dungeonmaster",
-	{
-		id: varchar("id", { length: 256 })
-			.primaryKey()
-			.$defaultFn(() => createId()),
-		name: varchar("name", { length: 256 }).notNull(),
-		DCI: varchar("DCI", { length: 256 }),
-		uid: varchar("uid", { length: 256 }),
-		owner: varchar("owner", { length: 256 })
-			.notNull()
-			.references(() => users.id, { onDelete: "cascade" })
-	},
-	(t) => {
-		return {
-			uid_index: index("DungeonMaster_uid_idx").on(t.uid),
-			owner_index: index("DungeonMaster_owner_idx").on(t.owner)
-		};
-	}
-);
-export const dungeonMasterRelations = relations(dungeonMasters, ({ one, many }) => ({
-	logs: many(logs),
-	user: one(users, { fields: [dungeonMasters.owner], references: [users.id] })
+export const logRelations = relations(logs, ({ one, many }) => ({
+	character: one(characters, {
+		fields: [logs.characterId],
+		references: [characters.id]
+	}),
+	dm: one(dungeonMasters, {
+		fields: [logs.dungeonMasterId],
+		references: [dungeonMasters.id]
+	}),
+	magic_items_gained: many(magicItems, { relationName: "magic_items_gained" }),
+	magic_items_lost: many(magicItems, { relationName: "magic_items_lost" }),
+	story_awards_gained: many(storyAwards, { relationName: "story_awards_gained" }),
+	story_awards_lost: many(storyAwards, { relationName: "story_awards_lost" })
 }));
 
 export type MagicItem = typeof magicItems.$inferSelect;
 export type NewMagicItem = typeof magicItems.$inferInsert;
-export const magicItems = mysqlTable(
+export const magicItems = pgTable(
 	"magicitem",
 	{
-		id: varchar("id", { length: 256 })
-			.primaryKey()
-			.$defaultFn(() => createId()),
-		name: varchar("name", { length: 256 }).notNull(),
-		description: varchar("description", { length: 256 }),
-		logGainedId: varchar("logGainedId", { length: 256 }).references(() => logs.id, { onDelete: "cascade" }),
-		logLostId: varchar("logLostId", { length: 256 }).references(() => logs.id)
+		id: varchar("id").primaryKey().notNull(),
+		name: varchar("name").notNull(),
+		description: text("description"),
+		logGainedId: varchar("logGainedId")
+			.notNull()
+			.references(() => logs.id, { onUpdate: "cascade", onDelete: "cascade" }),
+		logLostId: varchar("logLostId").references(() => logs.id, { onDelete: "set null", onUpdate: "cascade" })
 	},
-	(t) => {
+	(table) => {
 		return {
-			logGainedId_index: index("MagicItem_logGainedId_idx").on(t.logGainedId),
-			logLostId_index: index("MagicItem_logLostId_idx").on(t.logLostId)
+			logGainedIdIdx: index("MagicItem_logGainedId_idx").on(table.logGainedId),
+			logLostIdIdx: index("MagicItem_logLostId_idx").on(table.logLostId)
 		};
 	}
 );
+
 export const magicItemRelations = relations(magicItems, ({ one }) => ({
-	logGained: one(logs, { fields: [magicItems.logGainedId], references: [logs.id], relationName: "magicItemsGained" }),
-	logLost: one(logs, { fields: [magicItems.logLostId], references: [logs.id], relationName: "magicItemsLost" })
+	logGained: one(logs, {
+		fields: [magicItems.logGainedId],
+		references: [logs.id],
+		relationName: "magic_items_gained"
+	}),
+	logLost: one(logs, {
+		fields: [magicItems.logLostId],
+		references: [logs.id],
+		relationName: "magic_items_lost"
+	})
 }));
 
 export type StoryAward = typeof storyAwards.$inferSelect;
 export type NewStoryAward = typeof storyAwards.$inferInsert;
-export const storyAwards = mysqlTable(
+export const storyAwards = pgTable(
 	"storyaward",
 	{
-		id: varchar("id", { length: 256 })
-			.primaryKey()
-			.$defaultFn(() => createId()),
-		name: varchar("name", { length: 256 }).notNull(),
-		description: varchar("description", { length: 256 }),
-		logGainedId: varchar("logGainedId", { length: 256 }).references(() => logs.id, { onDelete: "cascade" }),
-		logLostId: varchar("logLostId", { length: 256 }).references(() => logs.id)
+		id: varchar("id").primaryKey().notNull(),
+		name: varchar("name").notNull(),
+		description: text("description"),
+		logGainedId: varchar("logGainedId")
+			.notNull()
+			.references(() => logs.id, { onUpdate: "cascade", onDelete: "cascade" }),
+		logLostId: varchar("logLostId").references(() => logs.id, { onDelete: "set null", onUpdate: "cascade" })
 	},
-	(t) => {
+	(table) => {
 		return {
-			logGainedId_index: index("StoryAward_logGainedId_idx").on(t.logGainedId),
-			logLostId_index: index("StoryAward_logLostId_idx").on(t.logLostId)
+			logGainedIdIdx: index("StoryAward_logGainedId_idx").on(table.logGainedId),
+			logLostIdIdx: index("StoryAward_logLostId_idx").on(table.logLostId)
 		};
 	}
 );
+
 export const storyAwardRelations = relations(storyAwards, ({ one }) => ({
-	logGained: one(logs, { fields: [storyAwards.logGainedId], references: [logs.id], relationName: "storyAwardsGained" }),
-	logLost: one(logs, { fields: [storyAwards.logLostId], references: [logs.id], relationName: "storyAwardsLost" })
+	logGained: one(logs, {
+		fields: [storyAwards.logGainedId],
+		references: [logs.id],
+		relationName: "story_awards_gained"
+	}),
+	logLost: one(logs, {
+		fields: [storyAwards.logLostId],
+		references: [logs.id],
+		relationName: "story_awards_lost"
+	})
 }));

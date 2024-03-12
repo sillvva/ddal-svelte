@@ -21,8 +21,8 @@ dependencies:
     specifier: ^0.5.3
     version: 0.5.3
   '@paralleldrive/cuid2':
-    specifier: ^2.2.2
-    version: 2.2.2
+    specifier: github:paralleldrive/cuid2
+    version: github.com/paralleldrive/cuid2/53e246b0919c8123e492e6b6bbab41fe66f4b462
   '@prisma/adapter-libsql':
     specifier: ^5.10.2
     version: 5.10.2(@libsql/client@0.5.3)
@@ -53,9 +53,12 @@ dependencies:
   cmdk-sv:
     specifier: ^0.0.15
     version: 0.0.15(svelte@4.2.12)
+  cuid:
+    specifier: ^3.0.0
+    version: 3.0.0
   drizzle-orm:
     specifier: ^0.30.1
-    version: 0.30.1(@libsql/client@0.5.3)(mysql2@3.9.2)
+    version: 0.30.1(@libsql/client@0.5.3)(mysql2@3.9.2)(postgres@3.4.3)
   ioredis:
     specifier: ^5.3.2
     version: 5.3.2
@@ -68,6 +71,9 @@ dependencies:
   mysql2:
     specifier: ^3.9.2
     version: 3.9.2
+  postgres:
+    specifier: ^3.4.3
+    version: 3.4.3
   svelte-autosize:
     specifier: ^1.1.0
     version: 1.1.0
@@ -1226,12 +1232,6 @@ packages:
     resolution: {integrity: sha512-dhPeilub1NuIG0X5Kvhh9lH4iW3ZsHlnzwgwbOlgwQ2wG1IqFzsgHqmKPk3WzsdWAeaxKJxgM0+W433RmN45GA==}
     dev: false
 
-  /@paralleldrive/cuid2@2.2.2:
-    resolution: {integrity: sha512-ZOBkgDwEdoYVlSeRbYYXs0S9MejQofiVYoTbKzy/6GQa39/q5tQU2IX46+shYnUkpEl3wc+J6wRlar7r2EK2xA==}
-    dependencies:
-      '@noble/hashes': 1.3.3
-    dev: false
-
   /@pkgjs/parseargs@0.11.0:
     resolution: {integrity: sha512-+1VkjdD0QBLPodGrJUeqarH8VAIvQODIbwh9XpP5Syisf7YoQgsJKPNFoqqLQlu+VQ/tVSshMR6loPMn8U+dPg==}
     engines: {node: '>=14'}
@@ -2275,6 +2275,11 @@ packages:
     hasBin: true
     dev: true
 
+  /cuid@3.0.0:
+    resolution: {integrity: sha512-WZYYkHdIDnaxdeP8Misq3Lah5vFjJwGuItJuV+tvMafosMzw0nF297T7mrm8IOWiPJkV6gc7sa8pzx27+w25Zg==}
+    deprecated: Cuid and other k-sortable and non-cryptographic ids (Ulid, ObjectId, KSUID, all UUIDs) are all insecure. Use @paralleldrive/cuid2 instead.
+    dev: false
+
   /culori@3.3.0:
     resolution: {integrity: sha512-pHJg+jbuFsCjz9iclQBqyL3B2HLCBF71BwVNujUYEvCeQMvV97R59MNK3R2+jgJ3a1fcZgI9B3vYgz8lzr/BFQ==}
     engines: {node: ^12.20.0 || ^14.13.1 || >=16.0.0}
@@ -2444,7 +2449,7 @@ packages:
       - supports-color
     dev: true
 
-  /drizzle-orm@0.30.1(@libsql/client@0.5.3)(mysql2@3.9.2):
+  /drizzle-orm@0.30.1(@libsql/client@0.5.3)(mysql2@3.9.2)(postgres@3.4.3):
     resolution: {integrity: sha512-5P6CXl4XyWtDDiYOX/jYOJp1HTUmBlXRAwaq+muUOgaSykMEy5sJesCxceMT0oCGvxeWkKfSXo5owLnfKwCIdw==}
     peerDependencies:
       '@aws-sdk/client-rds-data': '>=3'
@@ -2520,6 +2525,7 @@ packages:
     dependencies:
       '@libsql/client': 0.5.3
       mysql2: 3.9.2
+      postgres: 3.4.3
     dev: false
 
   /eastasianwidth@0.2.0:
@@ -4005,6 +4011,11 @@ packages:
       picocolors: 1.0.0
       source-map-js: 1.0.2
 
+  /postgres@3.4.3:
+    resolution: {integrity: sha512-iHJn4+M9vbTdHSdDzNkC0crHq+1CUdFhx+YqCE+SqWxPjm+Zu63jq7yZborOBF64c8pc58O5uMudyL1FQcHacA==}
+    engines: {node: '>=12'}
+    dev: false
+
   /preact-render-to-string@5.2.3(preact@10.11.3):
     resolution: {integrity: sha512-aPDxUn5o3GhWdtJtW0svRC2SS/l8D9MAgo2+AWml+BhDImb27ALf04Q2d+AHqUUOc6RdSXFIBVa2gxzgMKgtZA==}
     peerDependencies:
@@ -5008,3 +5019,11 @@ packages:
     resolution: {integrity: sha512-iC+8Io04lddc+mVqQ9AZ7OQ2MrUKGN+oIQyq1vemgt46jwCwLfhq7/pwnBnNXXXZb8VTVLKwp9EDkx+ryxIWmg==}
     requiresBuild: true
     dev: true
+
+  github.com/paralleldrive/cuid2/53e246b0919c8123e492e6b6bbab41fe66f4b462:
+    resolution: {tarball: https://codeload.github.com/paralleldrive/cuid2/tar.gz/53e246b0919c8123e492e6b6bbab41fe66f4b462}
+    name: '@paralleldrive/cuid2'
+    version: 2.2.2
+    dependencies:
+      '@noble/hashes': 1.3.3
+    dev: false
