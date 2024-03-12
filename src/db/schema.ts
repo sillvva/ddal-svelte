@@ -1,6 +1,18 @@
 import { createId } from "@paralleldrive/cuid2";
 import { relations } from "drizzle-orm";
-import { boolean, index, integer, pgTable, primaryKey, real, smallint, text, timestamp, varchar } from "drizzle-orm/pg-core";
+import {
+	boolean,
+	index,
+	integer,
+	pgEnum,
+	pgTable,
+	primaryKey,
+	real,
+	smallint,
+	text,
+	timestamp,
+	varchar
+} from "drizzle-orm/pg-core";
 
 export type User = typeof users.$inferSelect;
 export type NewUser = typeof users.$inferInsert;
@@ -153,6 +165,8 @@ export const dungeonMasterRelations = relations(dungeonMasters, ({ one, many }) 
 	logs: many(logs)
 }));
 
+export const logType = pgEnum("logType", ["game", "nongame"]);
+
 export type Log = typeof logs.$inferSelect;
 export type NewLog = typeof logs.$inferInsert;
 export const logs = pgTable(
@@ -167,7 +181,7 @@ export const logs = pgTable(
 			.$default(() => new Date()),
 		name: varchar("name").notNull(),
 		description: varchar("description"),
-		type: varchar("type").notNull(),
+		type: logType("type").notNull(),
 		dungeonMasterId: varchar("dungeonMasterId").references(() => dungeonMasters.id, {
 			onUpdate: "cascade",
 			onDelete: "set null"
