@@ -1,4 +1,5 @@
 import { SaveError, type DungeonMasterSchema, type SaveResult } from "$lib/schemas";
+import { handleSaveError } from "$lib/util";
 import { dungeonMasters, type DungeonMaster } from "$src/db/schema";
 import { db } from "$src/server/db";
 import { eq } from "drizzle-orm";
@@ -76,8 +77,6 @@ export async function deleteDM(dmId: string, user?: LocalsSession["user"]): Save
 
 		return result;
 	} catch (err) {
-		if (err instanceof SaveError) return err;
-		if (err instanceof Error) return { status: 500, error: err.message };
-		return { status: 500, error: "An unknown error has occurred." };
+		return handleSaveError(err);
 	}
 }

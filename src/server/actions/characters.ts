@@ -1,5 +1,5 @@
 import { SaveError, type NewCharacterSchema, type SaveResult } from "$lib/schemas";
-import { handleSKitError } from "$lib/util";
+import { handleSKitError, handleSaveError } from "$lib/util";
 import { characters, logs, type Character } from "$src/db/schema";
 import { error } from "@sveltejs/kit";
 import { and, eq, inArray } from "drizzle-orm";
@@ -53,9 +53,7 @@ export async function saveCharacter(
 
 		return { id: result.id, character: result };
 	} catch (err) {
-		if (err instanceof SaveError) return err;
-		if (err instanceof Error) return { status: 500, error: err.message };
-		throw new SaveError(500, "An unknown error has occurred.");
+		return handleSaveError(err);
 	}
 }
 

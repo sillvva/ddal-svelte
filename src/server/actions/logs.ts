@@ -1,10 +1,9 @@
 import { getLevels } from "$lib/entities";
 import { SaveError, type LogSchema, type SaveResult } from "$lib/schemas";
-import { handleSKitError, parseError } from "$lib/util";
+import { handleSKitError, handleSaveError, parseError } from "$lib/util";
 import type { DungeonMaster } from "$src/db/schema";
 import { dungeonMasters, logs, magicItems, storyAwards, type Log } from "$src/db/schema";
 import { error } from "@sveltejs/kit";
-import cuid from "cuid";
 import { and, eq, inArray, notInArray } from "drizzle-orm";
 import { rateLimiter, revalidateKeys } from "../cache";
 import { db } from "../db";
@@ -91,7 +90,6 @@ export async function saveLog(input: LogSchema, user?: CustomSession["user"]): S
 						return await tx
 							.insert(dungeonMasters)
 							.values({
-								id: cuid(),
 								name: input.dm.name.trim(),
 								DCI: input.dm.DCI,
 								uid: input.is_dm_log || isMe ? user.id : null,
@@ -148,7 +146,6 @@ export async function saveLog(input: LogSchema, user?: CustomSession["user"]): S
 				: await tx
 						.insert(logs)
 						.values({
-							id: cuid(),
 							...data,
 							created_at: new Date()
 						})
@@ -172,7 +169,6 @@ export async function saveLog(input: LogSchema, user?: CustomSession["user"]): S
 			if (items.length) {
 				await tx.insert(magicItems).values(
 					items.map((item) => ({
-						id: cuid(),
 						name: item.name,
 						description: item.description,
 						logGainedId: log.id
@@ -214,7 +210,6 @@ export async function saveLog(input: LogSchema, user?: CustomSession["user"]): S
 			if (story_awards.length) {
 				await tx.insert(storyAwards).values(
 					story_awards.map((item) => ({
-						id: cuid(),
 						name: item.name,
 						description: item.description,
 						logGainedId: log.id
@@ -266,10 +261,7 @@ export async function saveLog(input: LogSchema, user?: CustomSession["user"]): S
 
 		return { id: log.id, log };
 	} catch (err) {
-		console.error(err);
-		if (err instanceof SaveError) return err;
-		if (err instanceof Error) return { status: 500, error: err.message };
-		return { status: 500, error: "An unknown error has occurred." };
+		return handleSaveError(err);
 	}
 }
 

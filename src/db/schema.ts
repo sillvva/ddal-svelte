@@ -1,4 +1,4 @@
-import cuid from "cuid";
+import { createId } from "@paralleldrive/cuid2";
 import { relations } from "drizzle-orm";
 import { boolean, index, integer, pgTable, primaryKey, real, smallint, text, timestamp, varchar } from "drizzle-orm/pg-core";
 
@@ -8,7 +8,7 @@ export const users = pgTable("user", {
 	id: varchar("id")
 		.primaryKey()
 		.notNull()
-		.$default(() => cuid()),
+		.$default(() => createId()),
 	name: varchar("name").notNull(),
 	email: varchar("email"),
 	emailVerified: timestamp("emailVerified", { mode: "date" }),
@@ -89,7 +89,7 @@ export const characters = pgTable(
 		id: varchar("id")
 			.primaryKey()
 			.notNull()
-			.$default(() => cuid()),
+			.$default(() => createId()),
 		name: varchar("name").notNull(),
 		race: varchar("race"),
 		class: varchar("class"),
@@ -99,7 +99,9 @@ export const characters = pgTable(
 		userId: varchar("userId")
 			.notNull()
 			.references(() => users.id, { onUpdate: "cascade", onDelete: "cascade" }),
-		created_at: timestamp("created_at", { mode: "date" }).notNull().defaultNow()
+		created_at: timestamp("created_at", { mode: "date" })
+			.notNull()
+			.$default(() => new Date())
 	},
 	(table) => {
 		return {
@@ -124,7 +126,7 @@ export const dungeonMasters = pgTable(
 		id: varchar("id")
 			.primaryKey()
 			.notNull()
-			.$default(() => cuid()),
+			.$default(() => createId()),
 		name: varchar("name").notNull(),
 		DCI: varchar("DCI"),
 		uid: varchar("uid"),
@@ -156,8 +158,10 @@ export const logs = pgTable(
 		id: varchar("id")
 			.primaryKey()
 			.notNull()
-			.$default(() => cuid()),
-		date: timestamp("date", { mode: "date" }).defaultNow().notNull(),
+			.$default(() => createId()),
+		date: timestamp("date", { mode: "date" })
+			.$default(() => new Date())
+			.notNull(),
 		name: varchar("name").notNull(),
 		description: varchar("description"),
 		type: varchar("type").notNull(),
@@ -186,7 +190,9 @@ export const logs = pgTable(
 			.$default(() => 0),
 		applied_date: timestamp("applied_date", { mode: "date" }),
 		characterId: varchar("characterId").references(() => characters.id, { onUpdate: "cascade", onDelete: "cascade" }),
-		created_at: timestamp("created_at", { mode: "date" }).notNull().defaultNow()
+		created_at: timestamp("created_at", { mode: "date" })
+			.notNull()
+			.$default(() => new Date())
 	},
 	(table) => {
 		return {
@@ -219,7 +225,7 @@ export const magicItems = pgTable(
 		id: varchar("id")
 			.primaryKey()
 			.notNull()
-			.$default(() => cuid()),
+			.$default(() => createId()),
 		name: varchar("name").notNull(),
 		description: text("description"),
 		logGainedId: varchar("logGainedId")
@@ -256,7 +262,7 @@ export const storyAwards = pgTable(
 		id: varchar("id")
 			.primaryKey()
 			.notNull()
-			.$default(() => cuid()),
+			.$default(() => createId()),
 		name: varchar("name").notNull(),
 		description: text("description"),
 		logGainedId: varchar("logGainedId")
