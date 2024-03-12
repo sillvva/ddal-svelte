@@ -1,12 +1,12 @@
 <script lang="ts">
 	import { pushState } from "$app/navigation";
-	import type { MagicItem, StoryAward } from "$src/db/schema";
+	import type { SelectMagicItem, SelectStoryAward } from "$src/db/schema";
 	import { sorter } from "@sillvva/utils";
 	import { twMerge } from "tailwind-merge";
 	import SearchResults from "./SearchResults.svelte";
 
 	export let title: string = "";
-	export let items: Array<MagicItem | StoryAward>;
+	export let items: Array<SelectMagicItem | SelectStoryAward>;
 	export let formatting: boolean = false;
 	export let search: string | null = "";
 	export let collapsible: boolean = false;

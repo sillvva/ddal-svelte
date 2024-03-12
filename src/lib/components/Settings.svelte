@@ -4,7 +4,7 @@
 	import { page } from "$app/stores";
 	import { PROVIDERS } from "$lib/constants";
 	import { pageLoader, searchData } from "$lib/stores";
-	import type { Account } from "$src/db/schema";
+	import type { SelectAccount } from "$src/db/schema";
 	import type { CookieStore } from "$src/server/cookie";
 	import { signIn, signOut } from "@auth/sveltekit/client";
 	import { getContext } from "svelte";
@@ -13,7 +13,7 @@
 	export let open = false;
 	const app = getContext<CookieStore<App.Cookie>>("app");
 
-	$: accounts = $page.data.accounts as Account[];
+	$: accounts = $page.data.accounts as SelectAccount[];
 	$: authProviders = PROVIDERS.map((p) => ({
 		...p,
 		account: accounts.find((a) => a.provider === p.id)

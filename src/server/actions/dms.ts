@@ -1,6 +1,6 @@
 import { SaveError, type DungeonMasterSchema, type SaveResult } from "$lib/schemas";
 import { handleSaveError } from "$lib/util";
-import { dungeonMasters, type DungeonMaster } from "$src/db/schema";
+import { dungeonMasters, type SelectDungeonMaster } from "$src/db/schema";
 import { db } from "$src/server/db";
 import { eq } from "drizzle-orm";
 import { rateLimiter, revalidateKeys, type CacheKey } from "../cache";
@@ -11,7 +11,7 @@ export async function saveDM(
 	dmId: string,
 	user: LocalsSession["user"],
 	data: DungeonMasterSchema
-): SaveResult<{ id: string; dm: DungeonMaster }, DungeonMasterSchema> {
+): SaveResult<{ id: string; dm: SelectDungeonMaster }, DungeonMasterSchema> {
 	try {
 		if (!user) throw new SaveError(401, "You must be logged in to save a DM");
 
