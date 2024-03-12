@@ -1,10 +1,14 @@
+import cuid from "cuid";
 import { relations } from "drizzle-orm";
 import { boolean, index, integer, pgTable, primaryKey, real, smallint, text, timestamp, varchar } from "drizzle-orm/pg-core";
 
 export type User = typeof users.$inferSelect;
 export type NewUser = typeof users.$inferInsert;
 export const users = pgTable("user", {
-	id: varchar("id").primaryKey().notNull(),
+	id: varchar("id")
+		.primaryKey()
+		.notNull()
+		.$default(() => cuid()),
 	name: varchar("name").notNull(),
 	email: varchar("email"),
 	emailVerified: timestamp("emailVerified", { mode: "date" }),
@@ -82,7 +86,10 @@ export type NewCharacter = typeof characters.$inferInsert;
 export const characters = pgTable(
 	"character",
 	{
-		id: varchar("id").primaryKey().notNull(),
+		id: varchar("id")
+			.primaryKey()
+			.notNull()
+			.$default(() => cuid()),
 		name: varchar("name").notNull(),
 		race: varchar("race"),
 		class: varchar("class"),
@@ -92,7 +99,7 @@ export const characters = pgTable(
 		userId: varchar("userId")
 			.notNull()
 			.references(() => users.id, { onUpdate: "cascade", onDelete: "cascade" }),
-		created_at: timestamp("created_at", { mode: "date" }).notNull()
+		created_at: timestamp("created_at", { mode: "date" }).notNull().defaultNow()
 	},
 	(table) => {
 		return {
@@ -114,7 +121,10 @@ export type NewDungeonMaster = typeof dungeonMasters.$inferInsert;
 export const dungeonMasters = pgTable(
 	"dungeonmaster",
 	{
-		id: varchar("id").primaryKey().notNull(),
+		id: varchar("id")
+			.primaryKey()
+			.notNull()
+			.$default(() => cuid()),
 		name: varchar("name").notNull(),
 		DCI: varchar("DCI"),
 		uid: varchar("uid"),
@@ -143,7 +153,10 @@ export type NewLog = typeof logs.$inferInsert;
 export const logs = pgTable(
 	"log",
 	{
-		id: varchar("id").primaryKey().notNull(),
+		id: varchar("id")
+			.primaryKey()
+			.notNull()
+			.$default(() => cuid()),
 		date: timestamp("date", { mode: "date" }).defaultNow().notNull(),
 		name: varchar("name").notNull(),
 		description: varchar("description"),
@@ -153,15 +166,25 @@ export const logs = pgTable(
 			onDelete: "set null"
 		}),
 		is_dm_log: boolean("is_dm_log").notNull(),
-		experience: integer("experience").default(0).notNull(),
-		acp: smallint("acp").default(0).notNull(),
-		tcp: smallint("tcp").default(0).notNull(),
-		level: smallint("level").default(0).notNull(),
+		experience: integer("experience")
+			.notNull()
+			.$default(() => 0),
+		acp: smallint("acp")
+			.notNull()
+			.$default(() => 0),
+		tcp: smallint("tcp")
+			.notNull()
+			.$default(() => 0),
+		level: smallint("level")
+			.notNull()
+			.$default(() => 0),
 		gold: real("gold").notNull(),
-		dtd: smallint("dtd").default(0).notNull(),
+		dtd: smallint("dtd")
+			.notNull()
+			.$default(() => 0),
 		applied_date: timestamp("applied_date", { mode: "date" }),
 		characterId: varchar("characterId").references(() => characters.id, { onUpdate: "cascade", onDelete: "cascade" }),
-		created_at: timestamp("created_at", { mode: "date" }).notNull()
+		created_at: timestamp("created_at", { mode: "date" }).notNull().defaultNow()
 	},
 	(table) => {
 		return {
@@ -191,7 +214,10 @@ export type NewMagicItem = typeof magicItems.$inferInsert;
 export const magicItems = pgTable(
 	"magicitem",
 	{
-		id: varchar("id").primaryKey().notNull(),
+		id: varchar("id")
+			.primaryKey()
+			.notNull()
+			.$default(() => cuid()),
 		name: varchar("name").notNull(),
 		description: text("description"),
 		logGainedId: varchar("logGainedId")
@@ -225,7 +251,10 @@ export type NewStoryAward = typeof storyAwards.$inferInsert;
 export const storyAwards = pgTable(
 	"storyaward",
 	{
-		id: varchar("id").primaryKey().notNull(),
+		id: varchar("id")
+			.primaryKey()
+			.notNull()
+			.$default(() => cuid()),
 		name: varchar("name").notNull(),
 		description: text("description"),
 		logGainedId: varchar("logGainedId")
