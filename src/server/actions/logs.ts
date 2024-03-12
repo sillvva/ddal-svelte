@@ -1,7 +1,6 @@
 import { getLevels } from "$lib/entities";
 import { SaveError, type LogSchema, type SaveResult } from "$lib/schemas";
 import { handleSKitError, handleSaveError, parseError } from "$lib/util";
-import type { DungeonMaster } from "$src/db/schema";
 import { dungeonMasters, logs, magicItems, storyAwards, type Log } from "$src/db/schema";
 import { error } from "@sveltejs/kit";
 import { and, eq, inArray, notInArray } from "drizzle-orm";
@@ -17,10 +16,6 @@ export async function saveLog(input: LogSchema, user?: CustomSession["user"]): S
 		const { success } = await rateLimiter(input.id ? "insert" : "update", "save-log", user.id);
 		if (!success) throw new SaveError(429, "Too many requests");
 
-		if (input.is_dm_log) input.dm.name = user.name || "Me";
-		if (["Me", ""].includes(input.dm.name.trim())) input.dm.name = user.name || "Me";
-		const isMe = input.dm.name.trim() === user.name?.trim() || input.dm.name === "Me" || input.dm.name === "";
-
 		const log = await db.transaction(async (tx) => {
 			const applied_date: Date | null = input.is_dm_log
 				? input.characterId && input.applied_date !== null
@@ -31,13 +26,6 @@ export async function saveLog(input: LogSchema, user?: CustomSession["user"]): S
 				throw new SaveError<LogSchema>(400, "Applied date is required", {
 					field: "applied_date"
 				});
-
-			if (isMe) {
-				const dm = await tx.query.dungeonMasters.findFirst({
-					where: (dms, { eq }) => eq(dungeonMasters.uid, userId)
-				});
-				if (dm) input.dm = dm;
-			}
 
 			if (input.characterId) {
 				const character = await tx.query.characters.findFirst({
@@ -65,40 +53,50 @@ export async function saveLog(input: LogSchema, user?: CustomSession["user"]): S
 					});
 			}
 
-			let dm: DungeonMaster | null = null;
-			if (input.dm?.name.trim()) {
-				if (!input.dm.id) {
-					const search = await tx.query.dungeonMasters.findFirst({
-						where: (dms, { eq, or, and }) =>
-							and(
-								eq(dungeonMasters.owner, userId),
-								input.is_dm_log || isMe
-									? eq(dungeonMasters.uid, userId)
-									: input.dm.DCI
-										? or(eq(dungeonMasters.name, input.dm.name.trim()), eq(dungeonMasters.DCI, input.dm.DCI))
-										: eq(dungeonMasters.name, input.dm.name.trim())
-							)
+			const dm = await (async () => {
+				if (input.is_dm_log) input.dm.name = user.name || "Me";
+				if (["Me", ""].includes(input.dm.name.trim())) input.dm.name = user.name || "Me";
+				const isMe = input.dm.name.trim() === user.name?.trim() || input.dm.name === "Me" || input.dm.name === "";
+
+				if (isMe) {
+					const dm = await tx.query.dungeonMasters.findFirst({
+						where: (dms, { eq }) => eq(dms.uid, userId)
 					});
-					if (search) {
-						input.dm.id = search.id;
-						if (!input.dm.owner) input.dm.owner = search.owner || userId;
-					}
+					if (dm) input.dm = dm;
 				}
 
-				dm = await (async () => {
+				if (input.dm?.name.trim()) {
 					if (!input.dm.id) {
-						return await tx
-							.insert(dungeonMasters)
-							.values({
-								name: input.dm.name.trim(),
-								DCI: input.dm.DCI,
-								uid: input.is_dm_log || isMe ? user.id : null,
-								owner: userId
-							})
-							.returning()
-							.then((r) => r[0]);
-					} else {
-						try {
+						const search = await tx.query.dungeonMasters.findFirst({
+							where: (dms, { eq, or, and }) =>
+								and(
+									eq(dms.owner, userId),
+									input.is_dm_log || isMe
+										? eq(dms.uid, userId)
+										: input.dm.DCI
+											? or(eq(dms.name, input.dm.name.trim()), eq(dms.DCI, input.dm.DCI))
+											: eq(dms.name, input.dm.name.trim())
+								)
+						});
+						if (search) {
+							input.dm.id = search.id;
+							if (!input.dm.owner) input.dm.owner = userId;
+						}
+					}
+
+					try {
+						if (!input.dm.id) {
+							return await tx
+								.insert(dungeonMasters)
+								.values({
+									name: input.dm.name.trim(),
+									DCI: input.dm.DCI,
+									uid: input.is_dm_log || isMe ? user.id : null,
+									owner: userId
+								})
+								.returning()
+								.then((r) => r[0]);
+						} else {
 							return await tx
 								.update(dungeonMasters)
 								.set({
@@ -110,12 +108,12 @@ export async function saveLog(input: LogSchema, user?: CustomSession["user"]): S
 								.where(eq(dungeonMasters.id, input.dm.id))
 								.returning()
 								.then((r) => r[0]);
-						} catch (err) {
-							error(500, parseError(err));
 						}
+					} catch (err) {
+						throw new SaveError(500, parseError(err));
 					}
-				})();
-			}
+				}
+			})();
 
 			if (!dm?.id) throw new SaveError(500, "Could not save Dungeon Master");
 

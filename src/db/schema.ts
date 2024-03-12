@@ -160,8 +160,8 @@ export const logs = pgTable(
 			.notNull()
 			.$default(() => createId()),
 		date: timestamp("date", { mode: "date" })
-			.$default(() => new Date())
-			.notNull(),
+			.notNull()
+			.$default(() => new Date()),
 		name: varchar("name").notNull(),
 		description: varchar("description"),
 		type: varchar("type").notNull(),
