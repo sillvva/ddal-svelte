@@ -65,7 +65,6 @@ export async function getCharactersWithLogs(userId: string, includeLogs = true) 
 		},
 		where: (characters, { eq, ne, and }) => and(eq(characters.userId, userId), ne(characters.name, "Placeholder"))
 	});
-	console.log(characters.map((c) => c.name));
 
 	return characters.map((c) => ({
 		...c,
