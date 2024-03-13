@@ -101,7 +101,7 @@ export const sessionRelations = relations(sessions, ({ one }) => ({
 
 export type Character = typeof characters.$inferSelect;
 export type InsertCharacter = typeof characters.$inferInsert;
-export type UpdateCharacter = Partial<Character>;
+export type UpdateCharacter = Partial<Omit<Character, "id">>;
 export const characters = pgTable(
 	"character",
 	{
@@ -139,7 +139,7 @@ export const characterRelations = relations(characters, ({ one, many }) => ({
 
 export type DungeonMaster = typeof dungeonMasters.$inferSelect;
 export type InsertDungeonMaster = typeof dungeonMasters.$inferInsert;
-export type UpdateDungeonMaster = Partial<DungeonMaster>;
+export type UpdateDungeonMaster = Partial<Omit<DungeonMaster, "id">>;
 export const dungeonMasters = pgTable(
 	"dungeonmaster",
 	{
@@ -174,7 +174,7 @@ export const logType = pgEnum("logType", ["game", "nongame"]);
 
 export type Log = typeof logs.$inferSelect;
 export type InsertLog = typeof logs.$inferInsert;
-export type UpdateLog = Partial<Log>;
+export type UpdateLog = Partial<Omit<Log, "id">>;
 export const logs = pgTable(
 	"log",
 	{
@@ -242,7 +242,7 @@ export const logRelations = relations(logs, ({ one, many }) => ({
 
 export type MagicItem = typeof magicItems.$inferSelect;
 export type InsertMagicItem = typeof magicItems.$inferInsert;
-export type UpdateMagicItem = Partial<MagicItem>;
+export type UpdateMagicItem = Partial<Omit<MagicItem, "id">>;
 export const magicItems = pgTable(
 	"magicitem",
 	{
@@ -280,7 +280,7 @@ export const magicItemRelations = relations(magicItems, ({ one }) => ({
 
 export type StoryAward = typeof storyAwards.$inferSelect;
 export type InsertStoryAward = typeof storyAwards.$inferInsert;
-export type UpdateStoryAward = Partial<StoryAward>;
+export type UpdateStoryAward = Partial<Omit<StoryAward, "id">>;
 export const storyAwards = pgTable(
 	"storyaward",
 	{
