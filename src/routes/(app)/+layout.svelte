@@ -1,9 +1,3 @@
-<script lang="ts" context="module">
-	import { writable } from "svelte/store";
-	export const pageLoader = writable(false);
-	export const searchData = writable<SearchData>([]);
-</script>
-
 <script lang="ts">
 	import { browser } from "$app/environment";
 	import { afterNavigate, goto } from "$app/navigation";
@@ -11,7 +5,8 @@
 	import Drawer from "$lib/components/Drawer.svelte";
 	import Markdown from "$lib/components/Markdown.svelte";
 	import Settings from "$lib/components/Settings.svelte";
-	import { type CookieStore } from "$src/server/cookie.js";
+	import { pageLoader, searchData } from "$lib/stores";
+	import { type CookieStore } from "$server/cookie.js";
 	import { sorter } from "@sillvva/utils";
 	import { hotkey } from "@svelteuidev/composables";
 	import { ScrollArea } from "bits-ui";
@@ -20,7 +15,6 @@
 	import { Toaster } from "svelte-sonner";
 	import { fade } from "svelte/transition";
 	import { twMerge } from "tailwind-merge";
-	import type { SearchData } from "../(api)/command/+server.js";
 
 	export let data;
 	const app = getContext<CookieStore<App.Cookie>>("app");

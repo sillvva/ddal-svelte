@@ -1,28 +1,22 @@
 import { getLevels } from "$lib/entities";
-import { handleSKitError, parseError } from "$lib/util";
-import { error } from "@sveltejs/kit";
-import { rateLimiter, revalidateKeys } from "../cache";
-import { prisma } from "../db";
-
 import { SaveError, type LogSchema, type SaveResult } from "$lib/schemas";
-import type { DungeonMaster, Log } from "@prisma/client";
+import { handleSKitError, handleSaveError, parseError } from "$lib/util";
+import { rateLimiter, revalidateKeys } from "$server/cache";
+import { db } from "$server/db";
+import { dungeonMasters, logs, magicItems, storyAwards, type Log } from "$server/db/schema";
+import { error } from "@sveltejs/kit";
+import { and, eq, inArray, notInArray } from "drizzle-orm";
 
 export type SaveLogResult = ReturnType<typeof saveLog>;
 export async function saveLog(input: LogSchema, user?: CustomSession["user"]): SaveResult<{ id: string; log: Log }, LogSchema> {
 	try {
-		let dm: DungeonMaster | null = null;
 		if (!user?.name || !user?.id) throw new SaveError(401, "Not authenticated");
+		const userId = user.id;
 
 		const { success } = await rateLimiter(input.id ? "insert" : "update", "save-log", user.id);
 		if (!success) throw new SaveError(429, "Too many requests");
 
-		if (input.is_dm_log) input.dm.name = user.name || "Me";
-		if (["Me", ""].includes(input.dm.name.trim())) input.dm.name = user.name || "Me";
-		const isMe = input.dm.name.trim() === user.name?.trim() || input.dm.name === "Me" || input.dm.name === "";
-
-		const log = await prisma.$transaction(async (tx) => {
-			if (!user?.id) throw new SaveError(401, "Not authenticated");
-
+		const log = await db.transaction(async (tx) => {
 			const applied_date: Date | null = input.is_dm_log
 				? input.characterId && input.applied_date !== null
 					? new Date(input.applied_date)
@@ -33,21 +27,12 @@ export async function saveLog(input: LogSchema, user?: CustomSession["user"]): S
 					field: "applied_date"
 				});
 
-			if (isMe) {
-				const dm = await tx.dungeonMaster.findFirst({
-					where: {
-						uid: user.id
-					}
-				});
-				if (dm) input.dm = dm;
-			}
-
 			if (input.characterId) {
-				const character = await tx.character.findFirst({
-					include: {
+				const character = await tx.query.characters.findFirst({
+					with: {
 						logs: true
 					},
-					where: { id: input.characterId }
+					where: (characters, { eq }) => eq(characters.id, input.characterId)
 				});
 
 				if (!character)
@@ -68,208 +53,184 @@ export async function saveLog(input: LogSchema, user?: CustomSession["user"]): S
 					});
 			}
 
-			if (input.dm?.name.trim()) {
-				if (!input.dm.id) {
-					const search = await tx.dungeonMaster.findFirst({
-						where: {
-							owner: user.id,
-							OR:
-								input.is_dm_log || isMe
-									? [{ uid: user.id }]
-									: input.dm.DCI
-										? [{ name: input.dm.name.trim() }, { DCI: input.dm.DCI }]
-										: [{ name: input.dm.name.trim() }]
-						}
+			const dm = await (async () => {
+				if (input.is_dm_log) input.dm.name = user.name || "Me";
+				if (["Me", ""].includes(input.dm.name.trim())) input.dm.name = user.name || "Me";
+				const isMe = input.dm.name.trim() === user.name?.trim() || input.dm.name === "Me" || input.dm.name === "";
+
+				if (isMe) {
+					const dm = await tx.query.dungeonMasters.findFirst({
+						where: (dms, { eq }) => eq(dms.uid, userId)
 					});
-					if (search) {
-						input.dm.id = search.id;
-						if (!input.dm.owner) input.dm.owner = search.owner || user.id;
-					}
+					if (dm) input.dm = dm;
 				}
 
-				if (!input.dm.id) {
-					dm = await tx.dungeonMaster.create({
-						data: {
-							name: input.dm.name.trim(),
-							DCI: input.dm.DCI,
-							uid: input.is_dm_log || isMe ? user.id : null,
-							owner: user.id
-						}
-					});
-				} else {
-					try {
-						dm = await tx.dungeonMaster.update({
-							where: {
-								id: input.dm.id
-							},
-							data: {
-								name: input.dm.name.trim(),
-								DCI: input.dm.DCI,
-								uid: input.is_dm_log || isMe ? user.id : null,
-								owner: user.id
-							}
+				if (input.dm?.name.trim()) {
+					if (!input.dm.id) {
+						const search = await tx.query.dungeonMasters.findFirst({
+							where: (dms, { eq, or, and }) =>
+								and(
+									eq(dms.owner, userId),
+									input.is_dm_log || isMe
+										? eq(dms.uid, userId)
+										: input.dm.DCI
+											? or(eq(dms.name, input.dm.name.trim()), eq(dms.DCI, input.dm.DCI))
+											: eq(dms.name, input.dm.name.trim())
+								)
 						});
+						if (search) {
+							input.dm.id = search.id;
+							if (!input.dm.owner) input.dm.owner = userId;
+						}
+					}
+
+					try {
+						if (!input.dm.id) {
+							return await tx
+								.insert(dungeonMasters)
+								.values({
+									name: input.dm.name.trim(),
+									DCI: input.dm.DCI,
+									uid: input.is_dm_log || isMe ? user.id : null,
+									owner: userId
+								})
+								.returning()
+								.then((r) => r[0]);
+						} else {
+							return await tx
+								.update(dungeonMasters)
+								.set({
+									name: input.dm.name.trim(),
+									DCI: input.dm.DCI,
+									uid: input.is_dm_log || isMe ? user.id : null,
+									owner: user.id
+								})
+								.where(eq(dungeonMasters.id, input.dm.id))
+								.returning()
+								.then((r) => r[0]);
+						}
 					} catch (err) {
-						error(500, parseError(err));
+						throw new SaveError(500, parseError(err));
 					}
 				}
-			}
+			})();
 
 			if (!dm?.id) throw new SaveError(500, "Could not save Dungeon Master");
 
-			const data: Omit<Log, "id" | "created_at" | "is_dm_log"> = {
+			const data: Omit<Log, "id" | "created_at"> = {
 				name: input.name,
-				date: new Date(input.date),
-				description: input.description,
+				date: input.date,
+				description: input.description || "",
 				type: input.type,
+				is_dm_log: input.is_dm_log,
 				dungeonMasterId: dm.id,
-				applied_date: applied_date,
-				characterId: input.characterId,
 				acp: input.acp,
 				tcp: input.tcp,
 				experience: input.experience,
 				level: input.level,
 				gold: input.gold,
-				dtd: input.dtd
+				dtd: input.dtd,
+				characterId: input.characterId,
+				applied_date
 			};
 
-			const log: Log = await tx.log.upsert({
-				where: {
-					id: input.id
-				},
-				update: data,
-				create: {
-					...data,
-					is_dm_log: input.is_dm_log
-				}
-			});
+			const log = input.id
+				? await tx
+						.update(logs)
+						.set(data)
+						.where(eq(logs.id, input.id))
+						.returning()
+						.then((r) => r[0])
+				: await tx
+						.insert(logs)
+						.values({
+							...data,
+							created_at: new Date()
+						})
+						.returning()
+						.then((r) => r[0]);
 
 			if (!log.id) throw new SaveError(500, "Could not save log");
 
 			const itemsToUpdate = input.magic_items_gained.filter((item) => item.id);
-
-			await tx.magicItem.deleteMany({
-				where: {
-					logGainedId: log.id,
-					id: {
-						notIn: itemsToUpdate.map((item) => item.id)
-					}
-				}
-			});
-
-			const items = input.magic_items_gained.filter((item) => !item.id);
-			for (const item of items) {
-				await tx.magicItem.create({
-					data: {
-						name: item.name,
-						description: item.description,
-						logGainedId: log.id
-					}
-				});
-			}
-
 			for (const item of itemsToUpdate) {
-				await tx.magicItem.update({
-					where: {
-						id: item.id
-					},
-					data: {
+				await tx
+					.update(magicItems)
+					.set({
 						name: item.name,
 						description: item.description
-					}
-				});
+					})
+					.where(eq(magicItems.id, item.id));
 			}
 
-			await tx.magicItem.updateMany({
-				where: {
-					logLostId: log.id,
-					id: {
-						notIn: input.magic_items_lost
-					}
-				},
-				data: {
-					logLostId: null
-				}
-			});
+			const itemsToDelete = itemsToUpdate.map((item) => item.id);
+			if (itemsToDelete.length) {
+				await tx.delete(magicItems).where(notInArray(magicItems.id, itemsToDelete));
+			}
 
-			await tx.magicItem.updateMany({
-				where: {
-					id: {
-						in: input.magic_items_lost
-					}
-				},
-				data: {
-					logLostId: log.id
-				}
-			});
-
-			const storyAwardsToUpdate = input.story_awards_gained.filter((item) => item.id);
-
-			await tx.storyAward.deleteMany({
-				where: {
-					logGainedId: log.id,
-					id: {
-						notIn: storyAwardsToUpdate.map((item) => item.id)
-					}
-				}
-			});
-
-			const storyAwards = input.story_awards_gained.filter((item) => !item.id);
-			for (const item of storyAwards) {
-				await tx.storyAward.create({
-					data: {
+			const itemsToCreate = input.magic_items_gained.filter((item) => !item.id);
+			if (itemsToCreate.length) {
+				await tx.insert(magicItems).values(
+					itemsToCreate.map((item) => ({
 						name: item.name,
 						description: item.description,
 						logGainedId: log.id
-					}
-				});
+					}))
+				);
 			}
 
+			await tx
+				.update(magicItems)
+				.set({ logLostId: null })
+				.where(and(eq(magicItems.logLostId, log.id)));
+			if (input.magic_items_lost.length) {
+				await tx.update(magicItems).set({ logLostId: log.id }).where(inArray(magicItems.id, input.magic_items_lost));
+			}
+
+			const storyAwardsToUpdate = input.magic_items_gained.filter((item) => item.id);
 			for (const item of storyAwardsToUpdate) {
-				await tx.storyAward.update({
-					where: {
-						id: item.id
-					},
-					data: {
+				await tx
+					.update(storyAwards)
+					.set({
 						name: item.name,
 						description: item.description
-					}
-				});
+					})
+					.where(eq(storyAwards.id, item.id));
 			}
-			await tx.storyAward.updateMany({
-				where: {
-					logLostId: log.id,
-					id: {
-						notIn: input.story_awards_lost
-					}
-				},
-				data: {
-					logLostId: null
-				}
-			});
 
-			await tx.storyAward.updateMany({
-				where: {
-					id: {
-						in: input.story_awards_lost
-					}
-				},
-				data: {
-					logLostId: log.id
-				}
-			});
+			const storyAwardsToDelete = storyAwardsToUpdate.map((item) => item.id);
+			if (storyAwardsToDelete.length) {
+				await tx.delete(storyAwards).where(notInArray(storyAwards.id, storyAwardsToDelete));
+			}
 
-			const updated = await tx.log.findFirst({
-				where: {
-					id: log.id
-				},
-				include: {
+			const storyAwardsToCreate = input.magic_items_gained.filter((item) => !item.id);
+			if (storyAwardsToCreate.length) {
+				await tx.insert(storyAwards).values(
+					storyAwardsToCreate.map((item) => ({
+						name: item.name,
+						description: item.description,
+						logGainedId: log.id
+					}))
+				);
+			}
+
+			await tx
+				.update(storyAwards)
+				.set({ logLostId: null })
+				.where(and(eq(storyAwards.logLostId, log.id)));
+			if (input.story_awards_lost.length) {
+				await tx.update(storyAwards).set({ logLostId: log.id }).where(inArray(storyAwards.id, input.story_awards_lost));
+			}
+
+			const updated = await tx.query.logs.findFirst({
+				with: {
 					dm: true,
 					magic_items_gained: true,
 					magic_items_lost: true,
 					story_awards_gained: true,
 					story_awards_lost: true
-				}
+				},
+				where: (logs, { eq }) => eq(logs.id, log.id)
 			});
 
 			return updated;
@@ -286,9 +247,7 @@ export async function saveLog(input: LogSchema, user?: CustomSession["user"]): S
 
 		return { id: log.id, log };
 	} catch (err) {
-		if (err instanceof SaveError) return err;
-		if (err instanceof Error) return { status: 500, error: err.message };
-		return { status: 500, error: "An unknown error has occurred." };
+		return handleSaveError(err);
 	}
 }
 
@@ -300,49 +259,20 @@ export async function deleteLog(logId: string, userId?: string) {
 		const { success } = await rateLimiter("insert", "delete-log", userId);
 		if (!success) throw new SaveError(429, "Too many requests");
 
-		const log = await prisma.$transaction(async (tx) => {
-			const log = await tx.log.findUnique({
-				where: {
-					id: logId
-				},
-				include: {
+		const log = await db.transaction(async (tx) => {
+			const log = await tx.query.logs.findFirst({
+				with: {
 					dm: true,
 					character: true
-				}
-			});
-			if (log && log.character?.userId !== userId && log.dm?.uid !== userId) error(401, "Not authorized");
-			await tx.magicItem.updateMany({
-				where: {
-					logLostId: logId
 				},
-				data: {
-					logLostId: null
-				}
+				where: (logs, { eq }) => eq(logs.id, logId)
 			});
-			await tx.magicItem.deleteMany({
-				where: {
-					logGainedId: logId
-				}
-			});
-			await tx.storyAward.updateMany({
-				where: {
-					logLostId: logId
-				},
-				data: {
-					logLostId: null
-				}
-			});
-			await tx.storyAward.deleteMany({
-				where: {
-					logGainedId: logId
-				}
-			});
-			if (log)
-				await tx.log.delete({
-					where: {
-						id: logId
-					}
-				});
+			if (log) {
+				if (log.character?.userId !== userId && log.dm?.uid !== userId) error(401, "Not authorized");
+				await tx.update(magicItems).set({ logLostId: null }).where(eq(magicItems.logLostId, logId));
+				await tx.update(storyAwards).set({ logLostId: null }).where(eq(storyAwards.logLostId, logId));
+				await tx.delete(logs).where(eq(logs.id, logId));
+			}
 			return log;
 		});
 

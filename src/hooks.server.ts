@@ -1,15 +1,16 @@
 import { privateEnv } from "$lib/env/private";
-import { prisma } from "$src/server/db";
+import { db, q } from "$server/db";
+import { accounts, type Account } from "$server/db/schema";
 import type { Provider } from "@auth/core/providers";
 import Discord from "@auth/core/providers/discord";
 import Google from "@auth/core/providers/google";
 import type { TokenSet } from "@auth/core/types";
-import { PrismaAdapter } from "@auth/prisma-adapter";
+import { DrizzleAdapter } from "@auth/drizzle-adapter";
 import { SvelteKitAuth, type SvelteKitAuthConfig } from "@auth/sveltekit";
-import type { Account } from "@prisma/client";
 import { redirect, type Handle } from "@sveltejs/kit";
 import { sequence } from "@sveltejs/kit/hooks";
 import { handle as documentHandle } from "@sveltekit-addons/document/hooks";
+import { and, eq } from "drizzle-orm";
 import { authErrRedirect } from "./server/auth";
 
 interface OAuthProvider {
@@ -71,11 +72,9 @@ const auth = SvelteKitAuth(async (event) => {
 				// if (!providerAccountId) authErrRedirect("MissingProfileData", "Account ID not found in profile", redirectUrl);
 
 				// account.providerAccountId = providerAccountId;
-				const existingAccount = await prisma.account.findFirst({
-					where: {
-						provider: account.provider,
-						providerAccountId: account.providerAccountId
-					}
+				const existingAccount = await q.accounts.findFirst({
+					where: (accounts, { and, eq }) =>
+						and(eq(accounts.provider, account.provider), eq(accounts.providerAccountId, account.providerAccountId))
 				});
 
 				const currentSession = await event.locals.auth();
@@ -90,19 +89,17 @@ const auth = SvelteKitAuth(async (event) => {
 					if (existingAccount) authErrRedirect("AccountLinkError", "Account already linked to a user", redirectUrl);
 
 					// Do the account linking
-					await prisma.account.create({
-						data: {
-							provider: account.provider,
-							providerAccountId: account.providerAccountId,
-							userId: currentUserId,
-							type: account.type,
-							access_token: account.access_token,
-							expires_at: account.expires_in ? Math.floor(Date.now() / 1000 + account.expires_in) : undefined,
-							refresh_token: account.refresh_token,
-							token_type: account.token_type,
-							scope: account.scope,
-							id_token: account.id_token
-						}
+					await db.insert(accounts).values({
+						provider: account.provider,
+						providerAccountId: account.providerAccountId,
+						userId: currentUserId,
+						type: account.type,
+						access_token: account.access_token ?? "",
+						expires_at: Math.floor(Date.now() / 1000 + (account.expires_in ?? 3600)),
+						refresh_token: account.refresh_token,
+						token_type: `${account.token_type}`,
+						scope: account.scope ?? "",
+						id_token: account.id_token
 					});
 
 					redirect(302, "/characters");
@@ -113,8 +110,9 @@ const auth = SvelteKitAuth(async (event) => {
 					});
 
 					if (account.refresh_token && account.expires_in) {
-						await prisma.account.update({
-							data: {
+						await db
+							.update(accounts)
+							.set({
 								providerAccountId: account.providerAccountId,
 								type: account.type,
 								access_token: account.access_token,
@@ -123,14 +121,8 @@ const auth = SvelteKitAuth(async (event) => {
 								token_type: account.token_type,
 								scope: account.scope,
 								id_token: account.id_token
-							},
-							where: {
-								provider_providerAccountId: {
-									provider: existingAccount.provider,
-									providerAccountId: existingAccount.providerAccountId
-								}
-							}
-						});
+							})
+							.where(and(eq(accounts.provider, account.provider), eq(accounts.providerAccountId, account.providerAccountId)));
 					}
 				}
 
@@ -140,25 +132,27 @@ const auth = SvelteKitAuth(async (event) => {
 				if (session.expires >= new Date()) return session satisfies LocalsSession;
 
 				const currentProvider = event.cookies.get("authjs.provider");
-				const account = await prisma.account.findFirst({
-					where: { userId: user.id, provider: currentProvider }
-				});
-
-				if (account && account.userId === user.id) {
-					event.cookies.set("authjs.provider", account.provider, {
-						path: "/",
-						expires: new Date(new Date().getTime() + 30 * 86400 * 1000)
+				if (currentProvider) {
+					const account = await q.accounts.findFirst({
+						where: (accounts, { and, eq }) => and(eq(accounts.userId, user.id), eq(accounts.provider, currentProvider))
 					});
 
-					const result = await refreshToken(account);
-					if (result instanceof Error) console.error(`RefreshAccessTokenError: ${result.message}`);
+					if (account && account.userId === user.id) {
+						event.cookies.set("authjs.provider", account.provider, {
+							path: "/",
+							expires: new Date(new Date().getTime() + 30 * 86400 * 1000)
+						});
+
+						const result = await refreshToken(account);
+						if (result instanceof Error) console.error(`RefreshAccessTokenError: ${result.message}`);
+					}
 				}
 
 				return session satisfies LocalsSession;
 			}
 		},
 		secret: privateEnv.AUTH_SECRET,
-		adapter: PrismaAdapter(prisma),
+		adapter: DrizzleAdapter(db),
 		providers: providers.map((p) => p.oauth()),
 		trustHost: true,
 		pages: {
@@ -214,22 +208,19 @@ async function refreshToken(account: Account) {
 			if (tokens) {
 				if (!tokens.expires_in) throw new Error("No expires_in in token response");
 
-				return await prisma.account.update({
-					data: {
+				return await db
+					.update(accounts)
+					.set({
 						access_token: tokens.access_token,
 						expires_at: Math.floor(Date.now() / 1000 + tokens.expires_in),
 						refresh_token: tokens.refresh_token ?? account.refresh_token,
 						token_type: account.token_type,
 						scope: account.scope,
 						id_token: account.id_token
-					},
-					where: {
-						provider_providerAccountId: {
-							provider: account.provider,
-							providerAccountId: account.providerAccountId
-						}
-					}
-				});
+					})
+					.where(and(eq(accounts.provider, account.provider), eq(accounts.providerAccountId, account.providerAccountId)))
+					.returning()
+					.then((r) => r[0]);
 			}
 		}
 

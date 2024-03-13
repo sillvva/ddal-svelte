@@ -44,12 +44,13 @@ sw.addEventListener("fetch", (event) => {
 
 	async function respond() {
 		const url = new URL(event.request.url);
-		const cache = await caches.open(CACHE);
 
 		// don't cache requests to excluded paths
 		if (EXCLUDE.some((path) => url.pathname.startsWith(path))) {
-			return fetch(event.request);
+			return await fetch(event.request);
 		}
+
+		const cache = await caches.open(CACHE);
 
 		// `build`/`files` can always be served from the cache
 		if (ASSETS.includes(url.pathname)) {

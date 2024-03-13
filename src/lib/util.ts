@@ -1,6 +1,8 @@
+import { dev } from "$app/environment";
 import { error } from "@sveltejs/kit";
 import type { setupViewTransition } from "sveltekit-view-transition";
 import { twMerge } from "tailwind-merge";
+import { SaveError } from "./schemas";
 
 export function handleSKitError(err: unknown) {
 	if (
@@ -11,8 +13,16 @@ export function handleSKitError(err: unknown) {
 		"body" in err &&
 		typeof err.body == "string"
 	) {
+		if (dev) console.error(err);
 		error(err.status, err.body);
 	}
+}
+
+export function handleSaveError<TErr extends SaveError<Record<string, unknown>>>(err: TErr | Error | unknown) {
+	if (dev) console.error(err);
+	if (err instanceof SaveError) return err;
+	if (err instanceof Error) return { status: 500 as TErr["status"], error: err.message };
+	throw new SaveError(500, "An unknown error has occurred.");
 }
 
 export type Prettify<T> = {
@@ -39,6 +49,18 @@ export const tooltipClasses = (text?: string | null, align = "center") => {
 		align == "right" && "before:right-0 before:translate-x-0",
 		text.trim() && "tooltip"
 	);
+};
+
+export const formatDate = (date: Date | string | number) => {
+	const d = new Date(date);
+	const year = d.getFullYear();
+	const month = String(d.getMonth() + 1).padStart(2, "0");
+	const day = String(d.getDate()).padStart(2, "0");
+	const hours = String(d.getHours()).padStart(2, "0");
+	const minutes = String(d.getMinutes()).padStart(2, "0");
+	const seconds = String(d.getSeconds()).padStart(2, "0");
+	const milliseconds = String(d.getMilliseconds()).padStart(3, "0");
+	return `${year}-${month}-${day} ${hours}:${minutes}:${seconds}.${milliseconds}`;
 };
 
 /**

@@ -1,7 +1,7 @@
-import { deleteDM } from "$src/server/actions/dms.js";
-import { signInRedirect } from "$src/server/auth";
-import { rateLimiter } from "$src/server/cache.js";
-import { getUserDMsWithLogsCache } from "$src/server/data/dms";
+import { deleteDM } from "$server/actions/dms.js";
+import { signInRedirect } from "$server/auth";
+import { rateLimiter } from "$server/cache.js";
+import { getUserDMsWithLogsCache } from "$server/data/dms";
 import { error, fail, redirect } from "@sveltejs/kit";
 
 export const load = async (event) => {

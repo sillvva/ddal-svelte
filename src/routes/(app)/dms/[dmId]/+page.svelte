@@ -7,8 +7,8 @@
 	import SuperForm from "$lib/components/SuperForm.svelte";
 	import { errorToast, successToast, valibotForm } from "$lib/factories";
 	import { dungeonMasterSchema } from "$lib/schemas";
+	import { pageLoader, searchData } from "$lib/stores";
 	import { sorter } from "@sillvva/utils";
-	import { pageLoader, searchData } from "../../+layout.svelte";
 
 	export let data;
 	export let form;

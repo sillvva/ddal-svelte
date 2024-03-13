@@ -1,10 +1,11 @@
 import { SaveError, type NewCharacterSchema, type SaveResult } from "$lib/schemas";
-import { handleSKitError } from "$lib/util";
-import type { Character } from "@prisma/client";
+import { handleSKitError, handleSaveError } from "$lib/util";
+import { rateLimiter, revalidateKeys } from "$server/cache";
+import { getCharacterCache } from "$server/data/characters";
+import { db, q } from "$server/db";
+import { characters, logs, type Character } from "$server/db/schema";
 import { error } from "@sveltejs/kit";
-import { rateLimiter, revalidateKeys } from "../cache";
-import { getCharacterCache } from "../data/characters";
-import { prisma } from "../db";
+import { and, eq, inArray } from "drizzle-orm";
 
 export type SaveCharacterResult = ReturnType<typeof saveCharacter>;
 export async function saveCharacter(
@@ -19,25 +20,28 @@ export async function saveCharacter(
 		const { success } = await rateLimiter(characterId === "new" ? "insert" : "update", "save-character", userId);
 		if (!success) throw new SaveError(429, "Too many requests");
 
-		let result: Character;
-		if (characterId == "new") {
-			result = await prisma.character.create({
-				data: {
-					...data,
-					userId: userId
-				}
-			});
-		} else {
-			const character = await getCharacterCache(characterId, false);
-			if (!character) throw new SaveError(404, "Character not found");
-			if (character.userId !== userId) throw new SaveError(401, "Not authorized");
-			result = await prisma.character.update({
-				where: { id: characterId },
-				data: {
-					...data
-				}
-			});
-		}
+		const result = await (async () => {
+			if (characterId == "new") {
+				return await db
+					.insert(characters)
+					.values({
+						...data,
+						userId
+					})
+					.returning()
+					.then((r) => r[0]);
+			} else {
+				const character = await getCharacterCache(characterId, false);
+				if (!character) throw new SaveError(404, "Character not found");
+				if (character.userId !== userId) throw new SaveError(401, "Not authorized");
+				return await db
+					.update(characters)
+					.set(data)
+					.where(eq(characters.id, characterId))
+					.returning()
+					.then((r) => r[0]);
+			}
+		})();
 
 		revalidateKeys([
 			["character", result.id, "logs"],
@@ -49,9 +53,7 @@ export async function saveCharacter(
 
 		return { id: result.id, character: result };
 	} catch (err) {
-		if (err instanceof SaveError) return err;
-		if (err instanceof Error) return { status: 500, error: err.message };
-		throw new SaveError(500, "An unknown error has occurred.");
+		return handleSaveError(err);
 	}
 }
 
@@ -63,40 +65,27 @@ export async function deleteCharacter(characterId: string, userId?: string) {
 		const { success } = await rateLimiter("insert", "delete-character", userId);
 		if (!success) error(429, "Too many requests");
 
-		const character = await prisma.character.findUnique({
-			where: { id: characterId },
-			include: { logs: { include: { character: true } } }
+		const character = await q.characters.findFirst({
+			with: { logs: true },
+			where: (character, { eq }) => eq(character.id, characterId)
 		});
 
 		if (!character) error(404, "Character not found");
 		if (character.userId !== userId) error(401, "Not authorized");
 
 		const logIds = character.logs.map((log) => log.id);
-		const result = await prisma.$transaction(async (tx) => {
-			await tx.magicItem.deleteMany({
-				where: {
-					logGainedId: {
-						in: logIds
-					}
-				}
-			});
-			await tx.storyAward.deleteMany({
-				where: {
-					logGainedId: {
-						in: logIds
-					}
-				}
-			});
-			await tx.log.deleteMany({
-				where: {
-					id: {
-						in: logIds
-					}
-				}
-			});
-			return await tx.character.delete({
-				where: { id: characterId }
-			});
+		const result = await db.transaction(async (tx) => {
+			if (logIds.length) {
+				await tx
+					.update(logs)
+					.set({ characterId: "" })
+					.where(and(inArray(logs.id, logIds), eq(logs.is_dm_log, true)));
+			}
+			return await tx
+				.delete(characters)
+				.where(eq(characters.id, characterId))
+				.returning({ id: characters.id })
+				.then((r) => r[0]);
 		});
 
 		revalidateKeys([
@@ -104,6 +93,7 @@ export async function deleteCharacter(characterId: string, userId?: string) {
 			["character", result.id, "no-logs"],
 			["characters", userId],
 			["dms", userId],
+			["dm-logs", userId],
 			["search-data", userId]
 		]);
 

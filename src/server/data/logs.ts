@@ -1,10 +1,11 @@
-import { defaultDM, defaultLogData, parseLog } from "$lib/entities";
-import { prisma } from "$src/server/db";
-import type { DungeonMaster, Log, MagicItem, StoryAward } from "@prisma/client";
-import { cache } from "../cache";
+import { defaultDM, defaultLogData, parseLogEnums } from "$lib/entities";
+import { cache } from "$server/cache";
+import { q } from "$server/db";
+import type { DungeonMaster, Log, MagicItem, StoryAward } from "$server/db/schema";
 
 export type LogData = Log & {
 	dm: DungeonMaster | null;
+	type: "game" | "nongame";
 	magic_items_gained: MagicItem[];
 	magic_items_lost: MagicItem[];
 	story_awards_gained: StoryAward[];
@@ -12,111 +13,112 @@ export type LogData = Log & {
 };
 export async function getLog(logId: string, userId: string, characterId = ""): Promise<LogData> {
 	const log =
-		(await prisma.log.findFirst({
-			where: { id: logId },
-			include: {
+		(await q.logs.findFirst({
+			with: {
 				dm: true,
 				magic_items_gained: true,
 				magic_items_lost: true,
 				story_awards_gained: true,
 				story_awards_lost: true
-			}
+			},
+			where: (logs, { eq }) => eq(logs.id, logId)
 		})) || defaultLogData(userId, characterId);
-	return { ...(parseLog(log) || ""), dm: log.dm || defaultDM(userId) };
+	return { ...parseLogEnums(log), dm: log.dm || defaultDM(userId) };
 }
 
 export async function getDMLog(logId: string, userId: string): Promise<LogData> {
 	const log =
-		(await prisma.log.findFirst({
-			where: { id: logId, is_dm_log: true },
-			include: {
+		(await q.logs.findFirst({
+			with: {
 				dm: true,
 				magic_items_gained: true,
 				magic_items_lost: true,
 				story_awards_gained: true,
 				story_awards_lost: true
-			}
+			},
+			where: (logs, { eq, and }) => and(eq(logs.id, logId), eq(logs.is_dm_log, true))
 		})) || defaultLogData(userId);
-	return { ...(parseLog(log) || ""), dm: log.dm || defaultDM(userId) };
+	return { ...parseLogEnums(log), dm: log.dm || defaultDM(userId) };
 }
 
 export type DMLogsData = Awaited<ReturnType<typeof getDMLogs>>;
-export async function getDMLogs(userId = "", userName = "") {
-	return prisma.log
+export async function getDMLogs(userId: string) {
+	const dms = await q.dungeonMasters.findMany({
+		columns: {
+			id: true
+		},
+		where: (dms, { eq }) => eq(dms.uid, userId)
+	});
+
+	if (!dms.length) return [];
+
+	return q.logs
 		.findMany({
-			where: {
-				is_dm_log: true,
-				dm: {
-					OR: [
-						{
-							uid: userId
-						},
-						{
-							name: userName
-						}
-					]
-				}
-			},
-			include: {
+			with: {
 				dm: true,
 				magic_items_gained: true,
 				magic_items_lost: true,
 				story_awards_gained: true,
 				story_awards_lost: true,
 				character: {
-					include: {
+					with: {
 						user: true
-					},
-					where: {
-						id: {
-							not: ""
-						}
 					}
 				}
 			},
-			orderBy: {
-				date: "asc"
-			}
+			where: (logs, { eq, and, inArray }) =>
+				and(
+					eq(logs.is_dm_log, true),
+					inArray(
+						logs.dungeonMasterId,
+						dms.map((dm) => dm.id)
+					)
+				),
+			orderBy: (logs, { asc }) => asc(logs.date)
 		})
 		.then((logs) => {
-			return logs.map((log) => ({
-				...log,
-				...parseLog(log)
-			}));
+			return logs.map(parseLogEnums);
 		});
 }
 
-export async function getDMLogsCache(userId = "", userName = "") {
-	return await cache(() => getDMLogs(userId, userName), ["dm-logs", userId], 86400);
+export async function getDMLogsCache(userId: string) {
+	return await cache(() => getDMLogs(userId), ["dm-logs", userId], 86400);
 }
 
 export async function getUserLogs(userId: string) {
-	return prisma.log.findMany({
-		where: {
-			character: {
-				userId
-			}
+	const characters = await q.characters.findMany({
+		columns: {
+			id: true
 		},
-		select: {
+		where: (characters, { eq }) => eq(characters.userId, userId)
+	});
+
+	return q.logs.findMany({
+		columns: {
 			id: true,
 			name: true,
 			date: true,
-			is_dm_log: true,
+			is_dm_log: true
+		},
+		with: {
 			dm: {
-				select: {
+				columns: {
 					name: true
 				}
 			},
 			character: {
-				select: {
+				columns: {
 					id: true,
 					name: true,
 					image_url: true
 				}
 			}
 		},
-		orderBy: {
-			date: "desc"
-		}
+		where: (logs, { inArray }) =>
+			inArray(
+				logs.characterId,
+				characters.map((character) => character.id)
+			),
+		orderBy: (logs, { desc }) => desc(logs.date)
 	});
 }

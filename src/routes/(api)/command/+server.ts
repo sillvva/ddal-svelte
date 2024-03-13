@@ -1,7 +1,7 @@
-import { cache } from "$src/server/cache.js";
-import { getCharactersWithLogs } from "$src/server/data/characters.js";
-import { getUserDMs } from "$src/server/data/dms.js";
-import { getUserLogs } from "$src/server/data/logs.js";
+import { cache } from "$server/cache.js";
+import { getCharactersWithLogs } from "$server/data/characters.js";
+import { getUserDMs } from "$server/data/dms.js";
+import { getUserLogs } from "$server/data/logs.js";
 import { json } from "@sveltejs/kit";
 
 export type SearchData = Awaited<ReturnType<typeof getData>>;

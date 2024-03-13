@@ -1,5 +1,5 @@
-import { deleteCharacter } from "$src/server/actions/characters";
-import { deleteLog } from "$src/server/actions/logs";
+import { deleteCharacter } from "$server/actions/characters";
+import { deleteLog } from "$server/actions/logs";
 import { error, redirect } from "@sveltejs/kit";
 
 export const load = async (event) => {

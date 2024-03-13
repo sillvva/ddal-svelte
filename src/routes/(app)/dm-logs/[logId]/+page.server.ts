@@ -1,9 +1,9 @@
 import { defaultLogData, logDataToSchema } from "$lib/entities.js";
 import { dMLogSchema } from "$lib/schemas";
-import { saveLog } from "$src/server/actions/logs";
-import { signInRedirect } from "$src/server/auth";
-import { getCharacterCaches, getCharactersCache } from "$src/server/data/characters";
-import { getDMLog, getLog } from "$src/server/data/logs";
+import { saveLog } from "$server/actions/logs";
+import { signInRedirect } from "$server/auth";
+import { getCharacterCaches, getCharactersCache } from "$server/data/characters";
+import { getDMLog, getLog } from "$server/data/logs";
 import { error, fail, redirect } from "@sveltejs/kit";
 import { message, superValidate } from "sveltekit-superforms";
 import { valibot } from "sveltekit-superforms/adapters";

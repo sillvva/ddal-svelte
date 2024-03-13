@@ -1,6 +1,6 @@
 import { building } from "$app/environment";
 import { env } from "$lib/env/check.js";
-import { serverGetCookie } from "$src/server/cookie.js";
+import { serverGetCookie } from "$server/cookie.js";
 
 let checked = false;
 if (!checked && building && env) {

@@ -1,8 +1,10 @@
 import { SaveError, type DungeonMasterSchema, type SaveResult } from "$lib/schemas";
-import { prisma } from "$src/server/db";
-import type { DungeonMaster } from "@prisma/client";
-import { rateLimiter, revalidateKeys, type CacheKey } from "../cache";
-import { getUserDMsWithLogsCache } from "../data/dms";
+import { handleSaveError } from "$lib/util";
+import { rateLimiter, revalidateKeys, type CacheKey } from "$server/cache";
+import { getUserDMsWithLogsCache } from "$server/data/dms";
+import { db } from "$server/db";
+import { dungeonMasters, type DungeonMaster } from "$server/db/schema";
+import { eq } from "drizzle-orm";
 
 export type SaveDMResult = ReturnType<typeof saveDM>;
 export async function saveDM(
@@ -21,14 +23,16 @@ export async function saveDM(
 
 		if (data.name === "" && data.uid) data.name = user.name || "Me";
 
-		const result = await prisma.dungeonMaster.update({
-			where: { id: dmId },
-			data: {
+		const result = await db
+			.update(dungeonMasters)
+			.set({
 				...data,
 				DCI: data.DCI || null,
 				uid: data.uid || null
-			}
-		});
+			})
+			.where(eq(dungeonMasters.id, dmId))
+			.returning()
+			.then((r) => r[0]);
 
 		const characterIds = [...new Set(dm.logs.filter((l) => l.characterId).map((l) => l.characterId))];
 		revalidateKeys([
@@ -60,19 +64,19 @@ export async function deleteDM(dmId: string, user?: LocalsSession["user"]): Save
 		const dm = dms.find((dm) => dm.logs.length);
 		if (dm) throw new SaveError(401, "You cannot delete a DM that has logs");
 
-		const result = await prisma.dungeonMaster.delete({
-			where: { id: dmId }
-		});
+		const result = await db
+			.delete(dungeonMasters)
+			.where(eq(dungeonMasters.id, dmId))
+			.returning({ id: dungeonMasters.id })
+			.then((r) => r[0]);
 
 		revalidateKeys([
 			["dms", user.id, "logs"],
 			["search-data", user.id]
 		]);
 
-		return { id: result.id };
+		return result;
 	} catch (err) {
-		if (err instanceof SaveError) return err;
-		if (err instanceof Error) return { status: 500, error: err.message };
-		return { status: 500, error: "An unknown error has occurred." };
+		return handleSaveError(err);
 	}
 }
