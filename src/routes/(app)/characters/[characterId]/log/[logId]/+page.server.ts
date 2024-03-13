@@ -58,7 +58,7 @@ export const actions = {
 		const session = await event.locals.session;
 		if (!session?.user) redirect(302, "/");
 
-		const character = await getCharacterCache(event.params.characterId || "", true);
+		const character = await getCharacterCache(event.params.characterId || "");
 		if (!character) redirect(302, "/characters");
 
 		const log = await getLog(event.params.logId, session.user.id, character.id);
