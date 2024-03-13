@@ -152,21 +152,13 @@ export async function saveLog(input: LogSchema, user?: CustomSession["user"]): S
 
 			if (!log.id) throw new SaveError(500, "Could not save log");
 
+			const itemsToCreate = input.magic_items_gained.filter((item) => !item.id);
 			const itemsToUpdate = input.magic_items_gained.filter((item) => item.id);
+			const itemsToDelete = itemsToUpdate.map((item) => item.id);
 
-			if (itemsToUpdate.length) {
-				await tx.delete(magicItems).where(
-					notInArray(
-						magicItems.id,
-						itemsToUpdate.map((item) => item.id)
-					)
-				);
-			}
-
-			const items = input.magic_items_gained.filter((item) => !item.id);
-			if (items.length) {
+			if (itemsToCreate.length) {
 				await tx.insert(magicItems).values(
-					items.map((item) => ({
+					itemsToCreate.map((item) => ({
 						name: item.name,
 						description: item.description,
 						logGainedId: log.id
@@ -184,30 +176,25 @@ export async function saveLog(input: LogSchema, user?: CustomSession["user"]): S
 					.where(eq(magicItems.id, item.id));
 			}
 
-			if (input.magic_items_lost.length) {
-				await tx
-					.update(magicItems)
-					.set({ logLostId: null })
-					.where(and(eq(magicItems.logLostId, log.id), notInArray(magicItems.id, input.magic_items_lost)));
+			if (itemsToDelete.length) {
+				await tx.delete(magicItems).where(notInArray(magicItems.id, itemsToDelete));
+			}
 
+			await tx
+				.update(magicItems)
+				.set({ logLostId: null })
+				.where(and(eq(magicItems.logLostId, log.id)));
+			if (input.magic_items_lost.length) {
 				await tx.update(magicItems).set({ logLostId: log.id }).where(inArray(magicItems.id, input.magic_items_lost));
 			}
 
-			const storyAwardsToUpdate = input.story_awards_gained.filter((item) => item.id);
+			const storyAwardsToCreate = input.magic_items_gained.filter((item) => !item.id);
+			const storyAwardsToUpdate = input.magic_items_gained.filter((item) => item.id);
+			const storyAwardsToDelete = storyAwardsToUpdate.map((item) => item.id);
 
-			if (storyAwardsToUpdate.length) {
-				await tx.delete(storyAwards).where(
-					notInArray(
-						storyAwards.id,
-						storyAwardsToUpdate.map((item) => item.id)
-					)
-				);
-			}
-
-			const story_awards = input.story_awards_gained.filter((item) => !item.id);
-			if (story_awards.length) {
+			if (storyAwardsToCreate.length) {
 				await tx.insert(storyAwards).values(
-					story_awards.map((item) => ({
+					storyAwardsToCreate.map((item) => ({
 						name: item.name,
 						description: item.description,
 						logGainedId: log.id
@@ -225,13 +212,16 @@ export async function saveLog(input: LogSchema, user?: CustomSession["user"]): S
 					.where(eq(storyAwards.id, item.id));
 			}
 
-			if (input.story_awards_lost.length) {
-				await tx
-					.update(storyAwards)
-					.set({ logLostId: null })
-					.where(and(eq(storyAwards.logLostId, log.id), notInArray(storyAwards.id, input.magic_items_lost)));
+			if (storyAwardsToDelete.length) {
+				await tx.delete(storyAwards).where(notInArray(storyAwards.id, storyAwardsToDelete));
+			}
 
-				await tx.update(storyAwards).set({ logLostId: log.id }).where(inArray(storyAwards.id, input.magic_items_lost));
+			await tx
+				.update(storyAwards)
+				.set({ logLostId: null })
+				.where(and(eq(storyAwards.logLostId, log.id)));
+			if (input.story_awards_lost.length) {
+				await tx.update(storyAwards).set({ logLostId: log.id }).where(inArray(storyAwards.id, input.story_awards_lost));
 			}
 
 			const updated = await tx.query.logs.findFirst({
