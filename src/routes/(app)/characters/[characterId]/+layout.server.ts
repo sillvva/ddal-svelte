@@ -1,4 +1,4 @@
-import { getCharacterCache } from "$src/server/data/characters";
+import { getCharacterCache } from "$server/data/characters";
 
 export const load = async (event) => {
 	const parent = await event.parent();

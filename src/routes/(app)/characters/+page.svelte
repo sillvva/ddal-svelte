@@ -7,7 +7,7 @@
 	import SearchResults from "$lib/components/SearchResults.svelte";
 	import type { TransitionAction } from "$lib/util";
 	import { createTransition, stopWords } from "$lib/util";
-	import type { CookieStore } from "$src/server/cookie.js";
+	import type { CookieStore } from "$server/cookie.js";
 	import { slugify, sorter } from "@sillvva/utils";
 	import { download, hotkey } from "@svelteuidev/composables";
 	import MiniSearch from "minisearch";
@@ -99,7 +99,7 @@
 
 		<Dropdown class="dropdown-end" let:close>
 			<summary tabindex="0" class="btn btn-sm bg-base-100">
-				<span class="iconify mdi-dots-horizontal size-6" />
+				<span class="iconify size-6 mdi-dots-horizontal" />
 			</summary>
 			<ul class="menu dropdown-content w-52 rounded-box bg-base-200 p-2 shadow">
 				<li use:close>
@@ -124,7 +124,7 @@
 				<a href="/characters/new/edit" class="btn btn-primary btn-sm hidden sm:inline-flex">New Character</a>
 				<Search bind:value={search} placeholder="Search by name, race, class, items, etc." />
 				<a href="/characters/new/edit" class="btn btn-primary inline-flex sm:hidden" aria-label="New Character">
-					<span class="iconify mdi-plus inline size-6" />
+					<span class="iconify inline size-6 mdi-plus" />
 				</a>
 				<button
 					class={twMerge("no-script-hide btn inline-flex xs:hidden", $app.characters.magicItems && "btn-primary")}
@@ -135,9 +135,9 @@
 					tabindex="0"
 				>
 					{#if $app.characters.magicItems}
-						<span class="iconify mdi-shield-sword size-6" />
+						<span class="iconify size-6 mdi-shield-sword" />
 					{:else}
-						<span class="iconify mdi-shield-sword-outline size-6" />
+						<span class="iconify size-6 mdi-shield-sword-outline" />
 					{/if}
 				</button>
 			</div>
@@ -152,11 +152,11 @@
 						tabindex="0"
 					>
 						{#if $app.characters.magicItems}
-							<span class="iconify mdi-eye hidden size-6 xs:inline-block sm:hidden md:inline-block" />
-							<span class="iconify mdi-shield-sword inline-block size-6 xs:hidden sm:inline-block md:hidden" />
+							<span class="iconify hidden size-6 mdi-eye xs:inline-block sm:hidden md:inline-block" />
+							<span class="iconify inline-block size-6 mdi-shield-sword xs:hidden sm:inline-block md:hidden" />
 						{:else}
-							<span class="iconify mdi-eye-off hidden size-6 xs:inline-block sm:hidden md:inline-block" />
-							<span class="iconify mdi-shield-sword-outline inline-block size-6 xs:hidden sm:inline-block md:hidden" />
+							<span class="iconify hidden size-6 mdi-eye-off xs:inline-block sm:hidden md:inline-block" />
+							<span class="iconify inline-block size-6 mdi-shield-sword-outline xs:hidden sm:inline-block md:hidden" />
 						{/if}
 						<span class="hidden xs:inline-flex sm:hidden md:inline-flex">Magic Items</span>
 					</button>
@@ -217,7 +217,7 @@
 													/>
 												{/key}
 											{:else}
-												<span class="iconify mdi-account size-12" />
+												<span class="iconify size-12 mdi-account" />
 											{/if}
 										</div>
 									</div>

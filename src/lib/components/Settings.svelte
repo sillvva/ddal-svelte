@@ -3,10 +3,10 @@
 	import { enhance } from "$app/forms";
 	import { page } from "$app/stores";
 	import { PROVIDERS } from "$lib/constants";
-	import { pageLoader, searchData } from "$src/routes/(app)/+layout.svelte";
-	import type { CookieStore } from "$src/server/cookie";
+	import { pageLoader, searchData } from "$lib/stores";
+	import type { CookieStore } from "$server/cookie";
+	import type { Account } from "$server/db/schema";
 	import { signIn, signOut } from "@auth/sveltekit/client";
-	import type { Account } from "@prisma/client";
 	import { getContext } from "svelte";
 	import { twMerge } from "tailwind-merge";
 
@@ -154,7 +154,7 @@
 	<ul class="menu menu-lg w-full">
 		<li>
 			<a href="https://github.com/sillvva/ddal-svelte" target="_blank" rel="noreferrer noopener">
-				<span class="iconify mdi-github size-6" />
+				<span class="iconify size-6 mdi-github" />
 				Github
 			</a>
 		</li>

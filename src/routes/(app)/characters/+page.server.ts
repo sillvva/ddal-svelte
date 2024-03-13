@@ -1,7 +1,7 @@
-import { clearUserCache, unlinkProvider, type ProviderId } from "$src/server/actions/users.js";
-import { signInRedirect } from "$src/server/auth";
-import { rateLimiter } from "$src/server/cache.js";
-import { getCharacterCaches, getCharactersCache, type CharacterData } from "$src/server/data/characters";
+import { clearUserCache, unlinkProvider, type ProviderId } from "$server/actions/users.js";
+import { signInRedirect } from "$server/auth";
+import { rateLimiter } from "$server/cache.js";
+import { getCharacterCaches, getCharactersCache, type CharacterData } from "$server/data/characters";
 import { error, redirect } from "@sveltejs/kit";
 
 export const load = async (event) => {

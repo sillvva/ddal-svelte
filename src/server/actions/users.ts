@@ -1,8 +1,10 @@
 import type { PROVIDERS } from "$lib/constants";
+import { rateLimiter, revalidateKeys, type CacheKey } from "$server/cache";
+import { getCharactersCache } from "$server/data/characters";
+import { db } from "$server/db";
+import { accounts } from "$server/db/schema";
 import { error } from "@sveltejs/kit";
-import { rateLimiter, revalidateKeys, type CacheKey } from "../cache";
-import { getCharactersCache } from "../data/characters";
-import { prisma } from "../db";
+import { and, eq } from "drizzle-orm";
 
 export async function clearUserCache(userId: string) {
 	const { success } = await rateLimiter("cache", "cache-clear", userId);
@@ -14,6 +16,7 @@ export async function clearUserCache(userId: string) {
 		["dms", userId, "logs"],
 		["characters", userId],
 		...characters.map((c) => ["character", c.id, "logs"] as CacheKey),
+		...characters.map((c) => ["character", c.id, "no-logs"] as CacheKey),
 		["dm-logs", userId],
 		["search-data", userId]
 	]);
@@ -22,11 +25,8 @@ export async function clearUserCache(userId: string) {
 export type ProviderId = (typeof PROVIDERS)[number]["id"];
 export async function unlinkProvider(userId: string, provider: ProviderId) {
 	try {
-		await prisma.account.deleteMany({
-			where: { userId, provider }
-		});
-
-		return true;
+		const result = await db.delete(accounts).where(and(eq(accounts.userId, userId), eq(accounts.provider, provider)));
+		return result.count > 0;
 	} catch (e) {
 		throw new Error("Could not unlink account");
 	}

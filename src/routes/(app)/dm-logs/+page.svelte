@@ -8,14 +8,14 @@
 	import Search from "$lib/components/Search.svelte";
 	import SearchResults from "$lib/components/SearchResults.svelte";
 	import { errorToast, successToast } from "$lib/factories";
+	import { searchData } from "$lib/stores";
 	import { stopWords } from "$lib/util";
-	import type { CookieStore } from "$src/server/cookie.js";
+	import type { CookieStore } from "$server/cookie.js";
 	import { sorter } from "@sillvva/utils";
 	import { download, hotkey } from "@svelteuidev/composables";
 	import MiniSearch from "minisearch";
 	import { getContext } from "svelte";
 	import { twMerge } from "tailwind-merge";
-	import { searchData } from "../+layout.svelte";
 
 	export let data;
 	export let form;
@@ -99,7 +99,7 @@
 		<BreadCrumbs />
 		<Dropdown class="dropdown-end" let:close>
 			<summary tabindex="0" class="btn btn-sm">
-				<span class="iconify mdi-dots-horizontal size-6" />
+				<span class="iconify size-6 mdi-dots-horizontal" />
 			</summary>
 			<ul class="menu dropdown-content w-52 rounded-box bg-base-200 p-2 shadow">
 				<li use:close>
@@ -111,7 +111,7 @@
 
 	{#if form?.error}
 		<div class="alert alert-error mb-4 shadow-lg">
-			<span class="iconify mdi-alert-circle size-6" />
+			<span class="iconify size-6 mdi-alert-circle" />
 			{form.error}
 		</div>
 	{/if}
@@ -121,7 +121,7 @@
 			<a href="/dm-logs/new" class="btn btn-primary btn-sm hidden sm:inline-flex" aria-label="New Log">New Log</a>
 			<Search bind:value={search} placeholder="Search by name, race, class, items, etc." />
 			<a href="/dm-logs/new" class="btn btn-primary inline-flex sm:hidden" aria-label="New Log">
-				<span class="iconify mdi-plus inline size-6" />
+				<span class="iconify inline size-6 mdi-plus" />
 			</a>
 		</div>
 		<button

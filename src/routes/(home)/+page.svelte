@@ -3,7 +3,7 @@
 	import { page } from "$app/stores";
 	import { PROVIDERS } from "$lib/constants.js";
 	import { publicEnv } from "$lib/env/public.js";
-	import type { CookieStore } from "$src/server/cookie.js";
+	import type { CookieStore } from "$server/cookie.js";
 	import { signIn } from "@auth/sveltekit/client";
 	import { getContext } from "svelte";
 	import { twMerge } from "tailwind-merge";
@@ -56,7 +56,7 @@
 	{#if code}
 		<div class="flex justify-center">
 			<div class="alert alert-error w-80 shadow-lg">
-				<span class="iconify mdi-alert-circle size-6" />
+				<span class="iconify size-6 mdi-alert-circle" />
 				<div>
 					<h3 class="font-bold">Error: {code}</h3>
 					{#if message !== null}<div class="text-xs">{message || "Something went wrong"}</div>{/if}

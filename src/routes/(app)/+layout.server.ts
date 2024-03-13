@@ -1,15 +1,14 @@
-import { prisma } from "$src/server/db.js";
-import type { Account } from "@prisma/client";
+import { q } from "$server/db/index.js";
+import type { Account } from "$server/db/schema";
 
 export const load = async (event) => {
 	const { mobile } = await event.parent();
 
 	let accounts: Account[] = [];
 	if (event.locals.session?.user) {
-		accounts = await prisma.account.findMany({
-			where: {
-				userId: event.locals.session.user.id
-			}
+		const userId = event.locals.session.user.id;
+		accounts = await q.accounts.findMany({
+			where: (accounts, { eq }) => eq(accounts.userId, userId)
 		});
 	}
 

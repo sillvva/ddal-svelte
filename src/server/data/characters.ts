@@ -1,34 +1,32 @@
 import { BLANK_CHARACTER } from "$lib/constants";
-import { getLogsSummary, parseLog } from "$lib/entities";
-import { cache, mcache, type CacheKey } from "$src/server/cache";
-import { prisma } from "$src/server/db";
+import { getLogsSummary } from "$lib/entities";
+import { cache, mcache, type CacheKey } from "$server/cache";
+import { q } from "$server/db";
 
 export type CharacterData = Exclude<Awaited<ReturnType<typeof getCharacter>>, null>;
 export async function getCharacter(characterId: string, includeLogs = true) {
 	if (characterId === "new") return null;
 
-	const character = await prisma.character.findFirst({
-		include: {
+	const character = await q.characters.findFirst({
+		with: {
 			user: true
 		},
-		where: { id: characterId }
+		where: (characters, { eq }) => eq(characters.id, characterId)
 	});
 
 	if (!character) return null;
 
 	const logs = includeLogs
-		? await prisma.log.findMany({
-				where: { characterId: character.id },
-				include: {
+		? await q.logs.findMany({
+				with: {
 					dm: true,
 					magic_items_gained: true,
 					magic_items_lost: true,
 					story_awards_gained: true,
 					story_awards_lost: true
 				},
-				orderBy: {
-					date: "asc"
-				}
+				where: (logs, { eq }) => eq(logs.characterId, characterId),
+				orderBy: (logs, { asc }) => asc(logs.date)
 			})
 		: [];
 
@@ -40,35 +38,28 @@ export async function getCharacter(characterId: string, includeLogs = true) {
 }
 
 export async function getCharactersWithLogs(userId: string, includeLogs = true) {
-	const characters = await prisma.character.findMany({
-		include: {
+	const characters = await q.characters.findMany({
+		with: {
 			user: true,
 			logs: {
-				include: {
+				with: {
 					dm: true,
 					magic_items_gained: true,
 					magic_items_lost: true,
 					story_awards_gained: true,
 					story_awards_lost: true
 				},
-				orderBy: {
-					date: "asc"
-				}
+				orderBy: (logs, { asc }) => asc(logs.date)
 			}
 		},
-		where: {
-			userId,
-			id: {
-				not: ""
-			}
-		}
+		where: (characters, { eq, ne, and }) => and(eq(characters.userId, userId), ne(characters.name, "Placeholder"))
 	});
+	console.log(characters.map((c) => c.name));
 
 	return characters.map((c) => ({
 		...c,
 		image_url: c.image_url || BLANK_CHARACTER,
-		...getLogsSummary(c.logs.map(parseLog)),
-		logs: includeLogs ? c.logs.map(parseLog) : []
+		...getLogsSummary(c.logs, includeLogs)
 	}));
 }
 
@@ -84,27 +75,25 @@ export async function getCharacterCaches(characterIds: string[]) {
 		const missingKeys = keys.filter((k) => !hits.find((h) => h.id === k[1]));
 		const characterIds = missingKeys.map((k) => k[1]);
 
-		const characters = await prisma.character.findMany({
-			where: { id: { in: characterIds } },
-			include: {
-				user: true,
-				logs: {
-					include: {
-						dm: true,
-						magic_items_gained: true,
-						magic_items_lost: true,
-						story_awards_gained: true,
-						story_awards_lost: true
+		const characters = characterIds.length
+			? await q.characters.findMany({
+					with: {
+						user: true,
+						logs: {
+							with: {
+								dm: true,
+								magic_items_gained: true,
+								magic_items_lost: true,
+								story_awards_gained: true,
+								story_awards_lost: true
+							},
+							orderBy: (logs, { asc }) => asc(logs.date)
+						}
 					},
-					orderBy: {
-						date: "asc"
-					}
-				}
-			},
-			orderBy: {
-				name: "asc"
-			}
-		});
+					where: (characters, { inArray }) => inArray(characters.id, characterIds),
+					orderBy: (characters, { asc }) => asc(characters.name)
+				})
+			: [];
 
 		return characters
 			.map((c) => ({
@@ -117,19 +106,12 @@ export async function getCharacterCaches(characterIds: string[]) {
 
 export type CharactersData = Awaited<ReturnType<typeof getCharacters>>;
 export async function getCharacters(userId: string) {
-	return await prisma.character.findMany({
-		where: {
-			userId: userId,
-			id: {
-				not: ""
-			}
-		},
-		include: {
+	return await q.characters.findMany({
+		with: {
 			user: true
 		},
-		orderBy: {
-			name: "asc"
-		}
+		where: (characters, { eq, ne, and }) => and(eq(characters.userId, userId), ne(characters.name, "Placeholder")),
+		orderBy: (characters, { asc }) => asc(characters.name)
 	});
 }
 

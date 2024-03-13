@@ -1,6 +1,6 @@
-import type { CharacterData, getCharacter } from "$src/server/data/characters";
-import type { LogData } from "$src/server/data/logs";
-import type { Character, DungeonMaster, Log, MagicItem, StoryAward } from "@prisma/client";
+import type { CharacterData, getCharacter } from "$server/data/characters";
+import type { LogData } from "$server/data/logs";
+import type { Character, DungeonMaster, Log, MagicItem, StoryAward } from "$server/db/schema";
 import { sorter } from "@sillvva/utils";
 import type { LogSchema } from "./schemas";
 
@@ -20,7 +20,7 @@ export const getMagicItems = (
 		.forEach((log) => {
 			if (lastLog) return;
 			if (lastLogId && log.id === lastLogId) lastLog = true;
-			if (lastLogDate && log.date >= new Date(lastLogDate)) lastLog = true;
+			if (lastLogDate && new Date(log.date) >= new Date(lastLogDate)) lastLog = true;
 			if (!lastLog)
 				log.magic_items_gained.forEach((item) => {
 					magicItems.push(item);
@@ -52,7 +52,7 @@ export const getStoryAwards = (
 		.forEach((log) => {
 			if (lastLog) return;
 			if (lastLogId && log.id === lastLogId) lastLog = true;
-			if (lastLogDate && log.date >= new Date(lastLogDate)) lastLog = true;
+			if (lastLogDate && new Date(log.date) >= new Date(lastLogDate)) lastLog = true;
 			if (!lastLog)
 				log.story_awards_gained.forEach((item) => {
 					storyAwards.push(item);
@@ -155,7 +155,8 @@ export const getLogsSummary = (
 			story_awards_gained: StoryAward[];
 			story_awards_lost: StoryAward[];
 		}
-	>
+	>,
+	includeLogs = true
 ) => {
 	logs = logs.sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime());
 
@@ -191,7 +192,7 @@ export const getLogsSummary = (
 		story_awards,
 		log_levels: levels.log_levels,
 		tier: Math.floor((total_level + 1) / 6) + 1,
-		logs: logs.map((log) => ({ ...parseLog(log), saving: false || "" }))
+		logs: includeLogs ? logs.map(parseLogEnums) : []
 	};
 };
 
@@ -225,27 +226,10 @@ export function defaultLogData(userId: string, characterId = ""): LogData {
 	};
 }
 
-function fixDescription(description?: string | null) {
-	return (
-		description
-			?.replace(/(\\r)?\\n/g, "\n")
-			.replace(/\\t/g, "	")
-			.replace(/\\\\/g, "/") || ""
-	);
-}
-
-export function parseLog(log: LogData) {
+export function parseLogEnums(log: Omit<LogData, "type"> & { type: string }) {
 	return {
 		...log,
-		description: fixDescription(log.description),
-		magic_items_gained: log.magic_items_gained.map((item) => ({
-			...item,
-			description: fixDescription(item.description)
-		})),
-		story_awards_gained: log.story_awards_gained.map((award) => ({
-			...award,
-			description: fixDescription(award.description)
-		}))
+		type: log.type === "nongame" ? ("nongame" as const) : ("game" as const)
 	};
 }
 
@@ -256,6 +240,8 @@ export function logDataToSchema(userId: string, log: LogData, character?: Charac
 		characterName: character?.name || "",
 		dm: log.dm?.id ? log.dm : defaultDM(userId),
 		type: log.type as "game" | "nongame",
+		date: new Date(log.date),
+		applied_date: log.applied_date ? new Date(log.applied_date) : null,
 		magic_items_gained: log.magic_items_gained.map((item) => ({
 			id: item.id,
 			name: item.name,

@@ -9,10 +9,10 @@
 	import Search from "$lib/components/Search.svelte";
 	import SearchResults from "$lib/components/SearchResults.svelte";
 	import { errorToast, successToast } from "$lib/factories.js";
+	import { pageLoader, searchData } from "$lib/stores";
 	import type { TransitionAction } from "$lib/util";
 	import { createTransition, stopWords } from "$lib/util";
-	import { pageLoader, searchData } from "$src/routes/(app)/+layout.svelte";
-	import type { CookieStore } from "$src/server/cookie.js";
+	import type { CookieStore } from "$server/cookie.js";
 	import { slugify, sorter } from "@sillvva/utils";
 	import { download, hotkey } from "@svelteuidev/composables";
 	import MiniSearch from "minisearch";
@@ -416,7 +416,6 @@
 							class={twMerge(
 								"!static pb-0 align-top sm:pb-3 print:p-2",
 								(!$app.log.descriptions || !log.description) && "pb-3",
-								log.saving && "bg-neutral-focus",
 								(log.description?.trim() || log.story_awards_gained.length > 0 || log.story_awards_lost.length > 0) &&
 									"border-b-0"
 							)}
@@ -479,7 +478,6 @@
 						<td
 							class={twMerge(
 								"hidden align-top sm:table-cell print:table-cell print:p-2",
-								log.saving && "bg-neutral-focus",
 								(log.description?.trim() || log.story_awards_gained.length > 0 || log.story_awards_lost.length > 0) &&
 									"border-b-0"
 							)}
@@ -509,7 +507,6 @@
 						<td
 							class={twMerge(
 								"hidden align-top sm:table-cell print:table-cell print:p-2",
-								log.saving && "bg-neutral-focus",
 								(log.description?.trim() || log.story_awards_gained.length > 0 || log.story_awards_lost.length > 0) &&
 									"border-b-0"
 							)}
@@ -538,7 +535,6 @@
 						<td
 							class={twMerge(
 								"hidden align-top md:table-cell print:!hidden",
-								log.saving && "bg-neutral-focus",
 								(log.description?.trim() || log.story_awards_gained.length > 0 || log.story_awards_lost.length > 0) &&
 									"border-b-0"
 							)}
@@ -556,7 +552,6 @@
 							<td
 								class={twMerge(
 									"w-8 align-top print:hidden",
-									log.saving && "bg-neutral-focus",
 									(log.description?.trim() || log.story_awards_gained.length > 0 || log.story_awards_lost.length > 0) &&
 										"border-b-0"
 								)}
@@ -604,13 +599,7 @@
 					</tr>
 					{#if log.description?.trim() || log.story_awards_gained.length > 0 || log.story_awards_lost.length > 0}
 						<tr class={twMerge(!$app.log.descriptions && "hidden print:table-row")} use:transition={slugify(`notes-${log.id}`)}>
-							<td
-								colSpan={100}
-								class={twMerge(
-									"max-w-[calc(100vw_-_50px)] pt-0 text-sm print:p-2 print:text-xs",
-									log.saving && "bg-neutral-focus"
-								)}
-							>
+							<td colSpan={100} class="max-w-[calc(100vw_-_50px)] pt-0 text-sm print:p-2 print:text-xs">
 								{#if log.description?.trim()}
 									<h4 class="text-base font-semibold">Notes:</h4>
 									<Markdown content={log.description} />

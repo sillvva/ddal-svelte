@@ -1,6 +1,6 @@
 import { parseError } from "$lib/util";
-import { rateLimiter } from "$src/server/cache.js";
-import { getCharacterCache, getCharactersCache } from "$src/server/data/characters";
+import { rateLimiter } from "$server/cache.js";
+import { getCharacterCache, getCharactersCache } from "$server/data/characters";
 import { json } from "@sveltejs/kit";
 
 export async function GET({ params, locals }) {

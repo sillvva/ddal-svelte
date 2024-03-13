@@ -1,6 +1,6 @@
 <script lang="ts">
 	import { dev } from "$app/environment";
-	import { cookieStore } from "$src/server/cookie";
+	import { cookieStore } from "$server/cookie";
 	import { setContext } from "svelte";
 	import { setupViewTransition } from "sveltekit-view-transition";
 	import { twMerge } from "tailwind-merge";
