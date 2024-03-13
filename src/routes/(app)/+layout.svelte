@@ -6,7 +6,7 @@
 	import Markdown from "$lib/components/Markdown.svelte";
 	import Settings from "$lib/components/Settings.svelte";
 	import { pageLoader, searchData } from "$lib/stores";
-	import { type CookieStore } from "$src/server/cookie.js";
+	import { type CookieStore } from "$server/cookie.js";
 	import { sorter } from "@sillvva/utils";
 	import { hotkey } from "@svelteuidev/composables";
 	import { ScrollArea } from "bits-ui";

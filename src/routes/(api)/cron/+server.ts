@@ -1,4 +1,4 @@
-import { q } from "$src/server/db";
+import { q } from "$server/db";
 import { json } from "@sveltejs/kit";
 
 export async function GET() {

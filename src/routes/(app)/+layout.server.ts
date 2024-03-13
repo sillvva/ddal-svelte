@@ -1,10 +1,10 @@
-import type { SelectAccount } from "$src/db/schema";
-import { q } from "$src/server/db.js";
+import { q } from "$server/db/index.js";
+import type { Account } from "$server/db/schema";
 
 export const load = async (event) => {
 	const { mobile } = await event.parent();
 
-	let accounts: SelectAccount[] = [];
+	let accounts: Account[] = [];
 	if (event.locals.session?.user) {
 		const userId = event.locals.session.user.id;
 		accounts = await q.accounts.findMany({

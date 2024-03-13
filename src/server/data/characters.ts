@@ -1,7 +1,7 @@
 import { BLANK_CHARACTER } from "$lib/constants";
 import { getLogsSummary } from "$lib/entities";
-import { cache, mcache, type CacheKey } from "$src/server/cache";
-import { q } from "$src/server/db";
+import { cache, mcache, type CacheKey } from "$server/cache";
+import { q } from "$server/db";
 
 export type CharacterData = Exclude<Awaited<ReturnType<typeof getCharacter>>, null>;
 export async function getCharacter(characterId: string, includeLogs = true) {

@@ -1,4 +1,4 @@
-import type { CharacterData } from "$src/server/data/characters";
+import type { CharacterData } from "$server/data/characters";
 import type { NumericRange } from "@sveltejs/kit";
 import { type FormPathLeaves } from "sveltekit-superforms";
 // prettier-ignore

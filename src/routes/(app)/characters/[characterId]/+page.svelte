@@ -12,7 +12,7 @@
 	import { pageLoader, searchData } from "$lib/stores";
 	import type { TransitionAction } from "$lib/util";
 	import { createTransition, stopWords } from "$lib/util";
-	import type { CookieStore } from "$src/server/cookie.js";
+	import type { CookieStore } from "$server/cookie.js";
 	import { slugify, sorter } from "@sillvva/utils";
 	import { download, hotkey } from "@svelteuidev/composables";
 	import MiniSearch from "minisearch";

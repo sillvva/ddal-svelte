@@ -1,6 +1,6 @@
 import { parseError } from "$lib/util";
-import { rateLimiter } from "$src/server/cache.js";
-import { getDMLogsCache } from "$src/server/data/logs";
+import { rateLimiter } from "$server/cache.js";
+import { getDMLogsCache } from "$server/data/logs";
 import { json } from "@sveltejs/kit";
 
 export async function GET({ locals }) {

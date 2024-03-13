@@ -1,11 +1,11 @@
 <script lang="ts">
-	import type { SelectMagicItem, SelectStoryAward } from "$src/db/schema";
+	import type { MagicItem, StoryAward } from "$server/db/schema";
 	import type { SuperForm } from "sveltekit-superforms";
 	import type { LogSchema } from "../schemas";
 	import EntityCard from "./EntityCard.svelte";
 	export let superform: SuperForm<LogSchema, any>;
-	export let magicItems: SelectMagicItem[] = [];
-	export let storyAwards: SelectStoryAward[] = [];
+	export let magicItems: MagicItem[] = [];
+	export let storyAwards: StoryAward[] = [];
 
 	const { form } = superform;
 </script>

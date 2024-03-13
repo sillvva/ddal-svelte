@@ -4,8 +4,8 @@
 	import { page } from "$app/stores";
 	import { PROVIDERS } from "$lib/constants";
 	import { pageLoader, searchData } from "$lib/stores";
-	import type { SelectAccount } from "$src/db/schema";
-	import type { CookieStore } from "$src/server/cookie";
+	import type { CookieStore } from "$server/cookie";
+	import type { Account } from "$server/db/schema";
 	import { signIn, signOut } from "@auth/sveltekit/client";
 	import { getContext } from "svelte";
 	import { twMerge } from "tailwind-merge";
@@ -13,7 +13,7 @@
 	export let open = false;
 	const app = getContext<CookieStore<App.Cookie>>("app");
 
-	$: accounts = $page.data.accounts as SelectAccount[];
+	$: accounts = $page.data.accounts as Account[];
 	$: authProviders = PROVIDERS.map((p) => ({
 		...p,
 		account: accounts.find((a) => a.provider === p.id)

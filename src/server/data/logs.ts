@@ -1,15 +1,15 @@
 import { defaultDM, defaultLogData, parseLogEnums } from "$lib/entities";
-import type { SelectDungeonMaster, SelectLog, SelectMagicItem, SelectStoryAward } from "$src/db/schema";
-import { q } from "$src/server/db";
-import { cache } from "../cache";
+import { cache } from "$server/cache";
+import { q } from "$server/db";
+import type { DungeonMaster, Log, MagicItem, StoryAward } from "$server/db/schema";
 
-export type LogData = SelectLog & {
-	dm: SelectDungeonMaster | null;
+export type LogData = Log & {
+	dm: DungeonMaster | null;
 	type: "game" | "nongame";
-	magic_items_gained: SelectMagicItem[];
-	magic_items_lost: SelectMagicItem[];
-	story_awards_gained: SelectStoryAward[];
-	story_awards_lost: SelectStoryAward[];
+	magic_items_gained: MagicItem[];
+	magic_items_lost: MagicItem[];
+	story_awards_gained: StoryAward[];
+	story_awards_lost: StoryAward[];
 };
 export async function getLog(logId: string, userId: string, characterId = ""): Promise<LogData> {
 	const log =

@@ -1,6 +1,6 @@
 import { privateEnv } from "$lib/env/private";
-import { accounts, type SelectAccount } from "$src/db/schema";
-import { db, q } from "$src/server/db";
+import { db, q } from "$server/db";
+import { accounts, type Account } from "$server/db/schema";
 import type { Provider } from "@auth/core/providers";
 import Discord from "@auth/core/providers/discord";
 import Google from "@auth/core/providers/google";
@@ -180,7 +180,7 @@ const session: Handle = async ({ event, resolve }) => {
 
 export const handle = sequence(auth.handle, session, documentHandle);
 
-async function refreshToken(account: SelectAccount) {
+async function refreshToken(account: Account) {
 	try {
 		const provider = providers.find((p) => p.id === account.provider);
 		if (!provider) throw new Error(`Provider '${account.provider}' not found`);

@@ -1,4 +1,4 @@
-import type { SelectAccount } from "$src/db/schema";
+import type { Account } from "$server/db/schema";
 import { publicEnv } from "./env/public";
 
 export const BLANK_CHARACTER = `${publicEnv.PUBLIC_URL}/images/blank-character.webp` as const;
@@ -7,7 +7,7 @@ type Provider = {
 	name: string;
 	id: string;
 	logo?: string;
-	account?: SelectAccount;
+	account?: Account;
 };
 export const PROVIDERS = [
 	{

@@ -1,5 +1,5 @@
-import { q } from "$src/server/db";
-import { cache } from "../cache";
+import { cache } from "$server/cache";
+import { q } from "$server/db";
 
 export type UserDMsWithLogs = Awaited<ReturnType<typeof getUserDMsWithLogs>>;
 export async function getUserDMsWithLogs(user: LocalsSession["user"]) {

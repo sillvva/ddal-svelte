@@ -1,6 +1,6 @@
-import type { SelectCharacter, SelectDungeonMaster, SelectLog, SelectMagicItem, SelectStoryAward } from "$src/db/schema";
-import type { CharacterData, getCharacter } from "$src/server/data/characters";
-import type { LogData } from "$src/server/data/logs";
+import type { CharacterData, getCharacter } from "$server/data/characters";
+import type { LogData } from "$server/data/logs";
+import type { Character, DungeonMaster, Log, MagicItem, StoryAward } from "$server/db/schema";
 import { sorter } from "@sillvva/utils";
 import type { LogSchema } from "./schemas";
 
@@ -13,7 +13,7 @@ export const getMagicItems = (
 	}
 ) => {
 	const { lastLogId = "", lastLogDate = "", excludeDropped = false } = options || {};
-	const magicItems: SelectMagicItem[] = [];
+	const magicItems: MagicItem[] = [];
 	let lastLog = false;
 	character.logs
 		.sort((a, b) => sorter(a.date, b.date))
@@ -45,7 +45,7 @@ export const getStoryAwards = (
 	}
 ) => {
 	const { lastLogId = "", lastLogDate = "", excludeDropped = false } = options || {};
-	const storyAwards: SelectStoryAward[] = [];
+	const storyAwards: StoryAward[] = [];
 	let lastLog = false;
 	character.logs
 		.sort((a, b) => sorter(a.date, b.date))
@@ -69,7 +69,7 @@ export const getStoryAwards = (
 };
 
 export function getLevels(
-	logs: SelectLog[],
+	logs: Log[],
 	base: { level?: number; experience?: number; acp?: number } = { level: 0, experience: 0, acp: 0 }
 ) {
 	if (!logs) logs = [];
@@ -148,12 +148,12 @@ export function getLevels(
 
 export const getLogsSummary = (
 	logs: Array<
-		SelectLog & {
-			dm: SelectDungeonMaster | null;
-			magic_items_gained: SelectMagicItem[];
-			magic_items_lost: SelectMagicItem[];
-			story_awards_gained: SelectStoryAward[];
-			story_awards_lost: SelectStoryAward[];
+		Log & {
+			dm: DungeonMaster | null;
+			magic_items_gained: MagicItem[];
+			magic_items_lost: MagicItem[];
+			story_awards_gained: StoryAward[];
+			story_awards_lost: StoryAward[];
 		}
 	>,
 	includeLogs = true
@@ -173,7 +173,7 @@ export const getLogsSummary = (
 			})
 		);
 		return acc;
-	}, [] as SelectMagicItem[]);
+	}, [] as MagicItem[]);
 	const story_awards = logs.reduce((acc, log) => {
 		acc.push(
 			...log.story_awards_gained.filter((storyAward) => {
@@ -181,7 +181,7 @@ export const getLogsSummary = (
 			})
 		);
 		return acc;
-	}, [] as SelectStoryAward[]);
+	}, [] as StoryAward[]);
 
 	return {
 		total_level,
@@ -196,7 +196,7 @@ export const getLogsSummary = (
 	};
 };
 
-export function defaultDM(userId: string): SelectDungeonMaster {
+export function defaultDM(userId: string): DungeonMaster {
 	return { id: "", name: "", DCI: null, uid: "", owner: userId };
 }
 
@@ -233,7 +233,7 @@ export function parseLogEnums(log: Omit<LogData, "type"> & { type: string }) {
 	};
 }
 
-export function logDataToSchema(userId: string, log: LogData, character?: SelectCharacter): LogSchema {
+export function logDataToSchema(userId: string, log: LogData, character?: Character): LogSchema {
 	return {
 		...log,
 		characterId: character?.id || "",

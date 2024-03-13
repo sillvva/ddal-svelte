@@ -1,17 +1,14 @@
 import { getLevels } from "$lib/entities";
 import { SaveError, type LogSchema, type SaveResult } from "$lib/schemas";
 import { handleSKitError, handleSaveError, parseError } from "$lib/util";
-import { dungeonMasters, logs, magicItems, storyAwards, type SelectLog } from "$src/db/schema";
+import { rateLimiter, revalidateKeys } from "$server/cache";
+import { db } from "$server/db";
+import { dungeonMasters, logs, magicItems, storyAwards, type Log } from "$server/db/schema";
 import { error } from "@sveltejs/kit";
 import { and, eq, inArray, notInArray } from "drizzle-orm";
-import { rateLimiter, revalidateKeys } from "../cache";
-import { db } from "../db";
 
 export type SaveLogResult = ReturnType<typeof saveLog>;
-export async function saveLog(
-	input: LogSchema,
-	user?: CustomSession["user"]
-): SaveResult<{ id: string; log: SelectLog }, LogSchema> {
+export async function saveLog(input: LogSchema, user?: CustomSession["user"]): SaveResult<{ id: string; log: Log }, LogSchema> {
 	try {
 		if (!user?.name || !user?.id) throw new SaveError(401, "Not authenticated");
 		const userId = user.id;
@@ -120,7 +117,7 @@ export async function saveLog(
 
 			if (!dm?.id) throw new SaveError(500, "Could not save Dungeon Master");
 
-			const data: Omit<SelectLog, "id" | "created_at"> = {
+			const data: Omit<Log, "id" | "created_at"> = {
 				name: input.name,
 				date: input.date,
 				description: input.description || "",

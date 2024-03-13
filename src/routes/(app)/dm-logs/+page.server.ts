@@ -1,6 +1,6 @@
-import { deleteLog } from "$src/server/actions/logs";
-import { signInRedirect } from "$src/server/auth";
-import { getDMLogsCache } from "$src/server/data/logs";
+import { deleteLog } from "$server/actions/logs";
+import { signInRedirect } from "$server/auth";
+import { getDMLogsCache } from "$server/data/logs";
 import { redirect } from "@sveltejs/kit";
 
 export const load = async (event) => {

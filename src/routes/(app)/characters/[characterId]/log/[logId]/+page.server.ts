@@ -1,10 +1,10 @@
 import { defaultLogData, getMagicItems, getStoryAwards, logDataToSchema } from "$lib/entities.js";
 import { characterLogSchema } from "$lib/schemas";
-import { saveLog } from "$src/server/actions/logs.js";
-import { signInRedirect } from "$src/server/auth.js";
-import { getCharacterCache } from "$src/server/data/characters";
-import { getUserDMsCache } from "$src/server/data/dms";
-import { getLog } from "$src/server/data/logs";
+import { saveLog } from "$server/actions/logs.js";
+import { signInRedirect } from "$server/auth.js";
+import { getCharacterCache } from "$server/data/characters";
+import { getUserDMsCache } from "$server/data/dms";
+import { getLog } from "$server/data/logs";
 import { sorter } from "@sillvva/utils";
 import { error, fail, redirect } from "@sveltejs/kit";
 import { message, superValidate } from "sveltekit-superforms";

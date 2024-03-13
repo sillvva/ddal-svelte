@@ -1,7 +1,7 @@
 import { dungeonMasterSchema } from "$lib/schemas";
-import { deleteDM, saveDM } from "$src/server/actions/dms";
-import { signInRedirect } from "$src/server/auth.js";
-import { getUserDMsWithLogsCache } from "$src/server/data/dms";
+import { deleteDM, saveDM } from "$server/actions/dms";
+import { signInRedirect } from "$server/auth.js";
+import { getUserDMsWithLogsCache } from "$server/data/dms";
 import { error, fail, redirect } from "@sveltejs/kit";
 import { message, superValidate } from "sveltekit-superforms";
 import { valibot } from "sveltekit-superforms/adapters";

@@ -1,10 +1,10 @@
 import type { PROVIDERS } from "$lib/constants";
-import { accounts } from "$src/db/schema";
+import { rateLimiter, revalidateKeys, type CacheKey } from "$server/cache";
+import { getCharactersCache } from "$server/data/characters";
+import { db } from "$server/db";
+import { accounts } from "$server/db/schema";
 import { error } from "@sveltejs/kit";
 import { and, eq } from "drizzle-orm";
-import { rateLimiter, revalidateKeys, type CacheKey } from "../cache";
-import { getCharactersCache } from "../data/characters";
-import { db } from "../db";
 
 export async function clearUserCache(userId: string) {
 	const { success } = await rateLimiter("cache", "cache-clear", userId);

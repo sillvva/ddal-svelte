@@ -1,18 +1,18 @@
 import { SaveError, type NewCharacterSchema, type SaveResult } from "$lib/schemas";
 import { handleSKitError, handleSaveError } from "$lib/util";
-import { characters, logs, type SelectCharacter } from "$src/db/schema";
+import { rateLimiter, revalidateKeys } from "$server/cache";
+import { getCharacterCache } from "$server/data/characters";
+import { db, q } from "$server/db";
+import { characters, logs, type Character } from "$server/db/schema";
 import { error } from "@sveltejs/kit";
 import { and, eq, inArray } from "drizzle-orm";
-import { rateLimiter, revalidateKeys } from "../cache";
-import { getCharacterCache } from "../data/characters";
-import { db, q } from "../db";
 
 export type SaveCharacterResult = ReturnType<typeof saveCharacter>;
 export async function saveCharacter(
 	characterId: string,
 	userId: string,
 	data: NewCharacterSchema
-): SaveResult<{ id: string; character: SelectCharacter }, NewCharacterSchema> {
+): SaveResult<{ id: string; character: Character }, NewCharacterSchema> {
 	try {
 		if (!characterId) throw new SaveError(400, "No character ID provided");
 		if (!userId) throw new SaveError(401, "Not authenticated");
