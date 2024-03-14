@@ -1,4 +1,7 @@
 {
 	"editor.formatOnSave": true,
-	"editor.formatOnPaste": true
+	"editor.formatOnPaste": true,
+	"explorer.fileNesting.patterns": {
+		"svelte.config.js": "*.config.ts, .zshrc"
+	}
 }
