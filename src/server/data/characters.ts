@@ -35,7 +35,7 @@ export async function getCharacter(characterId: string, includeLogs = true) {
 					},
 					where: (characters, { eq }) => eq(characters.id, characterId)
 				})
-				.then((c) => (c && { ...c, logs: [] }) || undefined);
+				.then((c) => c && { ...c, logs: [] });
 		}
 	})();
 
