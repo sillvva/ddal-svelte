@@ -20,7 +20,7 @@ export async function saveCharacter(
 		const { success } = await rateLimiter(characterId === "new" ? "insert" : "update", "save-character", userId);
 		if (!success) throw new SaveError(429, "Too many requests");
 
-		const result = await (async () => {
+		const [result] = await (async () => {
 			if (characterId == "new") {
 				return await db
 					.insert(characters)
@@ -28,18 +28,12 @@ export async function saveCharacter(
 						...data,
 						userId
 					})
-					.returning()
-					.then((r) => r[0]);
+					.returning();
 			} else {
 				const character = await getCharacterCache(characterId, false);
 				if (!character) throw new SaveError(404, "Character not found");
 				if (character.userId !== userId) throw new SaveError(401, "Not authorized");
-				return await db
-					.update(characters)
-					.set(data)
-					.where(eq(characters.id, characterId))
-					.returning()
-					.then((r) => r[0]);
+				return await db.update(characters).set(data).where(eq(characters.id, characterId)).returning();
 			}
 		})();
 
@@ -74,18 +68,14 @@ export async function deleteCharacter(characterId: string, userId?: string) {
 		if (character.userId !== userId) error(401, "Not authorized");
 
 		const logIds = character.logs.map((log) => log.id);
-		const result = await db.transaction(async (tx) => {
+		const [result] = await db.transaction(async (tx) => {
 			if (logIds.length) {
 				await tx
 					.update(logs)
 					.set({ characterId: "" })
 					.where(and(inArray(logs.id, logIds), eq(logs.is_dm_log, true)));
 			}
-			return await tx
-				.delete(characters)
-				.where(eq(characters.id, characterId))
-				.returning({ id: characters.id })
-				.then((r) => r[0]);
+			return await tx.delete(characters).where(eq(characters.id, characterId)).returning({ id: characters.id });
 		});
 
 		revalidateKeys([
