@@ -31,6 +31,8 @@ export type Prettify<T> = {
 
 export type TransitionAction = ReturnType<typeof setupViewTransition>["transition"];
 
+export const stopWords = new Set(["and", "or", "to", "in", "a", "the", "of"]);
+
 export const parseError = (e: unknown) => {
 	if (e instanceof Error) return e.message;
 	if (typeof e === "string") return e;
