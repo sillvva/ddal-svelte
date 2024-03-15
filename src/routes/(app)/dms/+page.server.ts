@@ -8,7 +8,7 @@ export const load = async (event) => {
 	const session = event.locals.session;
 	if (!session?.user?.id || !session?.user?.name) signInRedirect(event.url);
 
-	const { success } = await rateLimiter("fetch", "dms", session.user.id);
+	const { success } = await rateLimiter("fetch", session.user.id);
 	if (!success) error(429, "Too Many Requests");
 
 	const dms = await getUserDMsWithLogsCache(session.user);

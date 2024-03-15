@@ -3,7 +3,7 @@ import * as schema from "$server/db/schema";
 import { drizzle } from "drizzle-orm/postgres-js";
 import postgres from "postgres";
 
-const client = postgres(privateEnv.DATABASE_URL, { prepare: false });
+export const connection = postgres(privateEnv.DATABASE_URL, { prepare: false });
 
-export const db = drizzle(client, { schema });
+export const db = drizzle(connection, { schema });
 export const q = db.query;

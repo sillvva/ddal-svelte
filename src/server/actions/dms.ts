@@ -15,7 +15,7 @@ export async function saveDM(
 	try {
 		if (!user) throw new SaveError(401, "You must be logged in to save a DM");
 
-		const { success } = await rateLimiter("insert", "save-dm", user.id);
+		const { success } = await rateLimiter("insert", user.id);
 		if (!success) throw new SaveError(429, "Too many requests");
 
 		const dm = (await getUserDMsWithLogsCache(user)).find((dm) => dm.id === dmId);
@@ -23,7 +23,7 @@ export async function saveDM(
 
 		if (data.name === "" && data.uid) data.name = user.name || "Me";
 
-		const result = await db
+		const [result] = await db
 			.update(dungeonMasters)
 			.set({
 				...data,
@@ -31,8 +31,7 @@ export async function saveDM(
 				uid: data.uid || null
 			})
 			.where(eq(dungeonMasters.id, dmId))
-			.returning()
-			.then((r) => r[0]);
+			.returning();
 
 		const characterIds = [...new Set(dm.logs.filter((l) => l.characterId).map((l) => l.characterId))];
 		revalidateKeys([
@@ -55,7 +54,7 @@ export async function deleteDM(dmId: string, user?: LocalsSession["user"]): Save
 	try {
 		if (!user) throw new SaveError(401, "You must be logged in to delete a DM");
 
-		const { success } = await rateLimiter("insert", "delete-dm", user.id);
+		const { success } = await rateLimiter("insert", user.id);
 		if (!success) throw new SaveError(429, "Too many requests");
 
 		const dms = (await getUserDMsWithLogsCache(user)).filter((dm) => dm.id === dmId);
@@ -64,11 +63,7 @@ export async function deleteDM(dmId: string, user?: LocalsSession["user"]): Save
 		const dm = dms.find((dm) => dm.logs.length);
 		if (dm) throw new SaveError(401, "You cannot delete a DM that has logs");
 
-		const result = await db
-			.delete(dungeonMasters)
-			.where(eq(dungeonMasters.id, dmId))
-			.returning({ id: dungeonMasters.id })
-			.then((r) => r[0]);
+		const [result] = await db.delete(dungeonMasters).where(eq(dungeonMasters.id, dmId)).returning({ id: dungeonMasters.id });
 
 		revalidateKeys([
 			["dms", user.id, "logs"],

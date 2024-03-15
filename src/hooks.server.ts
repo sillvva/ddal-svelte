@@ -143,7 +143,7 @@ const auth = SvelteKitAuth(async (event) => {
 							expires: new Date(new Date().getTime() + 30 * 86400 * 1000)
 						});
 
-						const result = await refreshToken(account);
+						const [result] = await refreshToken(account);
 						if (result instanceof Error) console.error(`RefreshAccessTokenError: ${result.message}`);
 					}
 				}
@@ -219,17 +219,16 @@ async function refreshToken(account: Account) {
 						id_token: account.id_token
 					})
 					.where(and(eq(accounts.provider, account.provider), eq(accounts.providerAccountId, account.providerAccountId)))
-					.returning()
-					.then((r) => r[0]);
+					.returning();
 			}
 		}
 
-		return null;
+		return [];
 	} catch (err) {
-		if (err instanceof Error) return err;
+		if (err instanceof Error) return [err];
 		else {
 			console.error(err);
-			return new Error("Unknown error. See logs for details");
+			return [new Error("Unknown error. See logs for details")];
 		}
 	}
 }

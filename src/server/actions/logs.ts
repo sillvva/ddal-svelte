@@ -1,6 +1,6 @@
 import { getLevels } from "$lib/entities";
 import { SaveError, type LogSchema, type SaveResult } from "$lib/schemas";
-import { handleSKitError, handleSaveError, parseError } from "$lib/util";
+import { handleSKitError, handleSaveError } from "$lib/util";
 import { rateLimiter, revalidateKeys } from "$server/cache";
 import { db } from "$server/db";
 import { dungeonMasters, logs, magicItems, storyAwards, type Log } from "$server/db/schema";
@@ -13,7 +13,7 @@ export async function saveLog(input: LogSchema, user?: CustomSession["user"]): S
 		if (!user?.name || !user?.id) throw new SaveError(401, "Not authenticated");
 		const userId = user.id;
 
-		const { success } = await rateLimiter(input.id ? "insert" : "update", "save-log", user.id);
+		const { success } = await rateLimiter(input.id ? "insert" : "update", user.id);
 		if (!success) throw new SaveError(429, "Too many requests");
 
 		const log = await db.transaction(async (tx) => {
@@ -53,7 +53,7 @@ export async function saveLog(input: LogSchema, user?: CustomSession["user"]): S
 					});
 			}
 
-			const dm = await (async () => {
+			const [dm] = await (async () => {
 				if (input.is_dm_log) input.dm.name = user.name || "Me";
 				if (["Me", ""].includes(input.dm.name.trim())) input.dm.name = user.name || "Me";
 				const isMe = input.dm.name.trim() === user.name?.trim() || input.dm.name === "Me" || input.dm.name === "";
@@ -94,8 +94,7 @@ export async function saveLog(input: LogSchema, user?: CustomSession["user"]): S
 									uid: input.is_dm_log || isMe ? user.id : null,
 									owner: userId
 								})
-								.returning()
-								.then((r) => r[0]);
+								.returning();
 						} else {
 							return await tx
 								.update(dungeonMasters)
@@ -106,13 +105,14 @@ export async function saveLog(input: LogSchema, user?: CustomSession["user"]): S
 									owner: user.id
 								})
 								.where(eq(dungeonMasters.id, input.dm.id))
-								.returning()
-								.then((r) => r[0]);
+								.returning();
 						}
 					} catch (err) {
-						throw new SaveError(500, parseError(err));
+						console.error(err);
 					}
 				}
+
+				return [null];
 			})();
 
 			if (!dm?.id) throw new SaveError(500, "Could not save Dungeon Master");
@@ -134,21 +134,9 @@ export async function saveLog(input: LogSchema, user?: CustomSession["user"]): S
 				applied_date
 			};
 
-			const log = input.id
-				? await tx
-						.update(logs)
-						.set(data)
-						.where(eq(logs.id, input.id))
-						.returning()
-						.then((r) => r[0])
-				: await tx
-						.insert(logs)
-						.values({
-							...data,
-							created_at: new Date()
-						})
-						.returning()
-						.then((r) => r[0]);
+			const [log] = input.id
+				? await tx.update(logs).set(data).where(eq(logs.id, input.id)).returning()
+				: await tx.insert(logs).values(data).returning();
 
 			if (!log.id) throw new SaveError(500, "Could not save log");
 
@@ -256,7 +244,7 @@ export async function deleteLog(logId: string, userId?: string) {
 	try {
 		if (!userId) error(401, "Not authenticated");
 
-		const { success } = await rateLimiter("insert", "delete-log", userId);
+		const { success } = await rateLimiter("insert", userId);
 		if (!success) throw new SaveError(429, "Too many requests");
 
 		const log = await db.transaction(async (tx) => {

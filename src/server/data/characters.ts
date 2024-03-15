@@ -2,38 +2,49 @@ import { BLANK_CHARACTER } from "$lib/constants";
 import { getLogsSummary } from "$lib/entities";
 import { cache, mcache, type CacheKey } from "$server/cache";
 import { q } from "$server/db";
+import type { Character, User } from "$server/db/schema";
+import type { LogData } from "./logs";
 
 export type CharacterData = Exclude<Awaited<ReturnType<typeof getCharacter>>, null>;
 export async function getCharacter(characterId: string, includeLogs = true) {
 	if (characterId === "new") return null;
 
-	const character = await q.characters.findFirst({
-		with: {
-			user: true
-		},
-		where: (characters, { eq }) => eq(characters.id, characterId)
-	});
+	const character: (Character & { user: User; logs: LogData[] }) | undefined = await (async () => {
+		if (includeLogs) {
+			return await q.characters.findFirst({
+				with: {
+					user: true,
+					logs: {
+						with: {
+							dm: true,
+							magic_items_gained: true,
+							magic_items_lost: true,
+							story_awards_gained: true,
+							story_awards_lost: true
+						},
+						orderBy: (logs, { asc }) => asc(logs.date)
+					}
+				},
+				where: (characters, { eq }) => eq(characters.id, characterId)
+			});
+		} else {
+			return await q.characters
+				.findFirst({
+					with: {
+						user: true
+					},
+					where: (characters, { eq }) => eq(characters.id, characterId)
+				})
+				.then((c) => c && { ...c, logs: [] });
+		}
+	})();
 
 	if (!character) return null;
-
-	const logs = includeLogs
-		? await q.logs.findMany({
-				with: {
-					dm: true,
-					magic_items_gained: true,
-					magic_items_lost: true,
-					story_awards_gained: true,
-					story_awards_lost: true
-				},
-				where: (logs, { eq }) => eq(logs.characterId, characterId),
-				orderBy: (logs, { asc }) => asc(logs.date)
-			})
-		: [];
 
 	return {
 		...character,
 		image_url: character.image_url || BLANK_CHARACTER,
-		...getLogsSummary(logs)
+		...getLogsSummary(character.logs)
 	};
 }
 
@@ -54,7 +65,6 @@ export async function getCharactersWithLogs(userId: string, includeLogs = true) 
 		},
 		where: (characters, { eq, ne, and }) => and(eq(characters.userId, userId), ne(characters.name, "Placeholder"))
 	});
-	console.log(characters.map((c) => c.name));
 
 	return characters.map((c) => ({
 		...c,
