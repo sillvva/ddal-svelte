@@ -52,13 +52,13 @@
 			const key = `${name}_${desc}`;
 
 			const existingIndex = itemsMap.get(key);
-			if (existingIndex && existingIndex >= 0) {
-				const existingQty = itemQty(acc[existingIndex]);
-				acc[existingIndex].name = fixName(name, existingQty + qty);
-			} else {
+			if (existingIndex && existingIndex >= 0 && acc[existingIndex]) {
+				const existingQty = itemQty(acc[existingIndex]!);
+				acc[existingIndex]!.name = fixName(name, existingQty + qty);
+			} else if (arr[index]) {
 				acc.push({
-					...arr[index],
-					name: fixName(arr[index].name, qty)
+					...arr[index]!,
+					name: fixName(arr[index]!.name, qty)
 				});
 				itemsMap.set(key, acc.length - 1);
 			}

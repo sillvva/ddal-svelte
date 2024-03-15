@@ -46,12 +46,12 @@
 		{ title: "Characters", url: "/characters" },
 		{ title: "DM Logs", url: "/dm-logs" },
 		{ title: "DMs", url: "/dms" }
-	];
+	] as const;
 
-	const defaultSelected = sections[0].url;
+	const defaultSelected: string = sections[0].url;
 	let search = "";
 	let cmdOpen = false;
-	let selected = defaultSelected;
+	let selected: string = defaultSelected;
 	let resultsPane: HTMLElement;
 
 	$: words = [...new Set(search.toLowerCase().split(" "))].filter(Boolean);
@@ -342,7 +342,7 @@
 						placeholder="Search"
 						on:input={() => {
 							const firstResult = results[0]?.items[0]?.url;
-							if (search) selected = firstResult;
+							if (search && firstResult) selected = firstResult;
 							else selected = defaultSelected;
 							resultsPane.scrollTop = 0;
 						}}
@@ -352,7 +352,9 @@
 									goto(selected);
 									cmdOpen = false;
 								} else {
-									selected = results[0]?.items[0]?.url;
+									const firstResult = results[0]?.items[0]?.url;
+									if (search && firstResult) selected = firstResult;
+									else selected = defaultSelected;
 									resultsPane.scrollTop = 0;
 								}
 							}

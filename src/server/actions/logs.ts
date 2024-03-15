@@ -138,7 +138,7 @@ export async function saveLog(input: LogSchema, user?: CustomSession["user"]): S
 				? await tx.update(logs).set(data).where(eq(logs.id, input.id)).returning()
 				: await tx.insert(logs).values(data).returning();
 
-			if (!log.id) throw new SaveError(500, "Could not save log");
+			if (!log?.id) throw new SaveError(500, "Could not save log");
 
 			const itemsToUpdate = input.magic_items_gained.filter((item) => item.id);
 			for (const item of itemsToUpdate) {

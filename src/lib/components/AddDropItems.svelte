@@ -22,11 +22,10 @@
 		<button
 			type="button"
 			class="btn min-w-fit flex-1 sm:btn-sm sm:flex-none"
-			on:click={() =>
-				($form.magic_items_lost = [
-					...$form.magic_items_lost,
-					magicItems.filter((item) => !$form.magic_items_lost.includes(item.id))[0].id
-				])}
+			on:click={() => {
+				const items = magicItems.filter((item) => !$form.magic_items_lost.includes(item.id));
+				if (items[0]) $form.magic_items_lost = [...$form.magic_items_lost, items[0].id];
+			}}
 		>
 			Drop Magic Item
 		</button>
@@ -43,11 +42,10 @@
 			<button
 				type="button"
 				class="btn min-w-fit flex-1 sm:btn-sm sm:flex-none"
-				on:click={() =>
-					($form.story_awards_lost = [
-						...$form.story_awards_lost,
-						storyAwards.filter((item) => !$form.story_awards_lost.includes(item.id))[0].id || ""
-					])}
+				on:click={() => {
+					const items = storyAwards.filter((item) => !$form.story_awards_lost.includes(item.id));
+					if (items[0]) $form.story_awards_lost = [...$form.story_awards_lost, items[0].id];
+				}}
 			>
 				Drop Story Award
 			</button>

@@ -317,7 +317,7 @@
 					>
 						{#each results.filter((c) => c.tier == tier) as character}
 							{@const miMatches = msResults.find(
-								(result) => result.id == character.id && result.terms.find((term) => result.match[term].includes("magicItems"))
+								(result) => result.id == character.id && result.terms.find((term) => result.match[term]?.includes("magicItems"))
 							)}
 							<a
 								href={`/characters/${character.id}`}
