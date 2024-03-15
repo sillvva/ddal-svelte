@@ -17,7 +17,7 @@ export async function saveCharacter(
 		if (!characterId) throw new SaveError(400, "No character ID provided");
 		if (!userId) throw new SaveError(401, "Not authenticated");
 
-		const { success } = await rateLimiter(characterId === "new" ? "insert" : "update", "save-character", userId);
+		const { success } = await rateLimiter(characterId === "new" ? "insert" : "update", userId);
 		if (!success) throw new SaveError(429, "Too many requests");
 
 		const [result] = await (async () => {
@@ -56,7 +56,7 @@ export async function deleteCharacter(characterId: string, userId?: string) {
 	try {
 		if (!userId) error(401, "Not authenticated");
 
-		const { success } = await rateLimiter("insert", "delete-character", userId);
+		const { success } = await rateLimiter("insert", userId);
 		if (!success) error(429, "Too many requests");
 
 		const character = await q.characters.findFirst({

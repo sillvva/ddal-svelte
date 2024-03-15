@@ -8,7 +8,7 @@ export const load = async (event) => {
 	const session = event.locals.session;
 	if (!session?.user) signInRedirect(event.url);
 
-	const { success } = await rateLimiter("fetch", "characters", session.user.id);
+	const { success } = await rateLimiter("fetch", session.user.id);
 	if (!success) error(429, "Too Many Requests");
 
 	const characters = await getCharactersCache(session.user.id).then(async (characters) => {

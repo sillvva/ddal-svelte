@@ -13,7 +13,7 @@ export async function saveLog(input: LogSchema, user?: CustomSession["user"]): S
 		if (!user?.name || !user?.id) throw new SaveError(401, "Not authenticated");
 		const userId = user.id;
 
-		const { success } = await rateLimiter(input.id ? "insert" : "update", "save-log", user.id);
+		const { success } = await rateLimiter(input.id ? "insert" : "update", user.id);
 		if (!success) throw new SaveError(429, "Too many requests");
 
 		const log = await db.transaction(async (tx) => {
@@ -244,7 +244,7 @@ export async function deleteLog(logId: string, userId?: string) {
 	try {
 		if (!userId) error(401, "Not authenticated");
 
-		const { success } = await rateLimiter("insert", "delete-log", userId);
+		const { success } = await rateLimiter("insert", userId);
 		if (!success) throw new SaveError(429, "Too many requests");
 
 		const log = await db.transaction(async (tx) => {

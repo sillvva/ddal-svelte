@@ -1,11 +1,16 @@
 import { deleteLog } from "$server/actions/logs";
 import { signInRedirect } from "$server/auth";
+import { rateLimiter } from "$server/cache.js";
 import { getDMLogsCache } from "$server/data/logs";
 import { redirect } from "@sveltejs/kit";
+import { error } from "console";
 
 export const load = async (event) => {
 	const session = event.locals.session;
 	if (!session?.user?.name) signInRedirect(event.url);
+
+	const { success } = await rateLimiter("fetch", session.user.id);
+	if (!success) error(429, "Too Many Requests");
 
 	const logs = await getDMLogsCache(session.user.id);
 
