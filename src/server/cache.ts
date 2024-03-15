@@ -2,7 +2,6 @@ import { privateEnv } from "$lib/env/private";
 import { Ratelimit } from "@upstash/ratelimit";
 import { Redis } from "@upstash/redis";
 
-const ephemeralCache = new Map();
 const redis = new Redis({
 	url: privateEnv.UPSTASH_REDIS_REST_URL,
 	token: privateEnv.UPSTASH_REDIS_REST_TOKEN
@@ -16,7 +15,7 @@ const limits = {
 
 function createLimiter(limit: number, duration: `${number} ${"s" | "m" | "h"}`) {
 	const limiter = Ratelimit.slidingWindow(limit, duration);
-	return new Ratelimit({ redis, limiter, analytics: true, ephemeralCache, prefix: "@upstash|ratelimit" });
+	return new Ratelimit({ redis, limiter, prefix: "@upstash|ratelimit" });
 }
 
 export async function rateLimiter(type: keyof typeof limits, ...identifiers: string[]) {
