@@ -18,11 +18,11 @@ export function handleSKitError(err: unknown) {
 	}
 }
 
-export function handleSaveError<TErr extends SaveError<Record<string, unknown>>>(err: TErr | Error | unknown) {
+export function handleSaveError<TObj extends Record<string, unknown>, TErr = SaveError<TObj>>(err: TErr | Error | unknown) {
 	if (dev) console.error(err);
 	if (err instanceof SaveError) return err;
-	if (err instanceof Error) return { status: 500 as TErr["status"], error: err.message };
-	throw new SaveError(500, "An unknown error has occurred.");
+	if (err instanceof Error) return new SaveError<TObj>(500, err.message);
+	throw new SaveError<TObj>(500, "An unknown error has occurred.");
 }
 
 export type Prettify<T> = {
@@ -30,8 +30,6 @@ export type Prettify<T> = {
 } & unknown;
 
 export type TransitionAction = ReturnType<typeof setupViewTransition>["transition"];
-
-export const stopWords = new Set(["and", "or", "to", "in", "a", "the", "of"]);
 
 export const parseError = (e: unknown) => {
 	if (e instanceof Error) return e.message;
