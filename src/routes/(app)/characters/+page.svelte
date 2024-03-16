@@ -73,7 +73,7 @@
 							score: score,
 							match: Object.values(match)
 								.map((value) => value[0])
-								.filter(Boolean)
+								.filter((v): v is string => Boolean(v))
 						};
 					})
 					.sort((a, b) => sorter(a.total_level, b.total_level) || sorter(a.name, b.name))

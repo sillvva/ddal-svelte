@@ -54,7 +54,7 @@
 							score: score,
 							match: Object.values(match)
 								.map((value) => value[0])
-								.filter(Boolean)
+								.filter((v): v is string => Boolean(v))
 						};
 					})
 					.sort((a, b) => sorter(b.uid || "", a.uid || "") || sorter(a.name, b.name))
