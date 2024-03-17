@@ -55,7 +55,8 @@ export const accounts = pgTable(
 		token_type: varchar("token_type").notNull(),
 		scope: varchar("scope").notNull(),
 		id_token: varchar("id_token"),
-		session_state: varchar("session_state")
+		session_state: varchar("session_state"),
+		last_login: timestamp("last_login", { mode: "date" })
 	},
 	(table) => {
 		return {
