@@ -81,7 +81,9 @@ export default {
 				black: {
 					...themes["black"],
 					primary: "#6419e6",
-					secondary: "#c881ff"
+					secondary: "#c881ff",
+					error: "#b91c1c",
+					"error-content": "white"
 				}
 			},
 			{

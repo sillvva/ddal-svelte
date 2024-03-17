@@ -58,7 +58,7 @@ const providers: OAuthProvider[] = [
 const auth = SvelteKitAuth(async (event) => {
 	return {
 		callbacks: {
-			async signIn({ account }) {
+			async signIn({ account, user }) {
 				const redirectTo = event.url.searchParams.get("redirect") || undefined;
 				const redirectUrl = redirectTo ? new URL(redirectTo, event.url.origin) : undefined;
 
@@ -124,6 +124,15 @@ const auth = SvelteKitAuth(async (event) => {
 							})
 							.where(and(eq(accounts.provider, account.provider), eq(accounts.providerAccountId, account.providerAccountId)));
 					}
+				} else {
+					const email = user.email;
+					const matchingUser = email ? await q.users.findFirst({ where: (users, { eq }) => eq(users.email, email) }) : undefined;
+					const providers = matchingUser
+						? await q.accounts
+								.findMany({ where: (accounts, { eq }) => eq(accounts.userId, matchingUser.id) })
+								.then((a) => a.map((a) => a.provider))
+						: undefined;
+					if (providers) redirect(302, `/?code=ExistingAccount&providers=${providers.join(",")}`);
 				}
 
 				return true;
