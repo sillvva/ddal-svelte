@@ -79,5 +79,5 @@ export const createTransition = (action: ViewTransitionCallback) => {
 export function joinStringList(list: string[], separator = ", ", lastSeparator = "and ") {
 	if (list.length < 2) return list.join("");
 	const last = list.pop();
-	return list.join(", ") + (list.length > 1 ? separator : "") + (list.length >= 1 ? lastSeparator : "") + last;
+	return `${list.join(separator)}${list.length > 1 ? separator : " "}${lastSeparator}${last}`;
 }
