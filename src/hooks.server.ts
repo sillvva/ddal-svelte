@@ -132,7 +132,7 @@ const auth = SvelteKitAuth(async (event) => {
 								.findMany({ where: (accounts, { eq }) => eq(accounts.userId, matchingUser.id) })
 								.then((a) => a.map((a) => a.provider))
 						: undefined;
-					if (providers) redirect(302, `/?code=ExistingAccount&providers=${providers.join(",")}`);
+					if (providers?.length) redirect(302, `/?code=ExistingAccount&providers=${providers.join(",")}`);
 				}
 
 				return true;
