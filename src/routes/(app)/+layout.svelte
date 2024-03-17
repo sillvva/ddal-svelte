@@ -67,7 +67,7 @@
 	}
 
 	function hasMatch(item: string) {
-		const matches = words.filter((word) => item.toLowerCase().includes(word.toLowerCase()));
+		const matches = words.filter((word) => item.toLowerCase().includes(word));
 		return matches.length ? matches : null;
 	}
 
