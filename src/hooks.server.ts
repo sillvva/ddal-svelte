@@ -207,7 +207,7 @@ async function refreshToken(account: Account) {
 				method: "POST"
 			});
 
-			const tokens: TokenSet = await response.json();
+			const tokens = (await response.json()) as TokenSet;
 
 			if (!response.ok) {
 				console.error("Error refreshing access token:", tokens);
