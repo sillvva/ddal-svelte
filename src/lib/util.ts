@@ -75,3 +75,9 @@ export const createTransition = (action: ViewTransitionCallback) => {
 	}
 	return document.startViewTransition(action);
 };
+
+export function joinStringList(list: string[], separator = ", ", lastSeparator = "and ") {
+	if (list.length < 2) return list.join("");
+	const last = list.pop();
+	return list.join(", ") + (list.length > 1 ? separator : "") + (list.length >= 1 ? lastSeparator : "") + last;
+}

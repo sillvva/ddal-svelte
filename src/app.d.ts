@@ -3,6 +3,7 @@
 
 import type { Prettify } from "$lib/util";
 import type { DefaultSession } from "@auth/core/types";
+import "@total-typescript/ts-reset";
 
 declare global {
 	namespace App {

@@ -3,6 +3,7 @@
 	import { page } from "$app/stores";
 	import { PROVIDERS } from "$lib/constants.js";
 	import { publicEnv } from "$lib/env/public.js";
+	import { joinStringList } from "$lib/util.js";
 	import type { CookieStore } from "$server/cookie.js";
 	import { signIn } from "@auth/sveltekit/client";
 	import { getContext } from "svelte";
@@ -29,12 +30,10 @@
 		const providers = $page.url.searchParams
 			.get("providers")
 			?.split(",")
-			.map((id) => String(PROVIDERS.find((p) => p.id === id)?.name))
-			.filter((p): p is string => Boolean(p));
+			.map((id) => PROVIDERS.find((p) => p.id === id)?.name)
+			.filter(Boolean);
 		if (providers?.length) {
-			const lastProvider = providers.pop();
-			const joinedProviders =
-				providers.join(", ") + (providers.length > 1 ? "," : "") + (providers.length >= 1 ? " and " : "") + lastProvider;
+			const joinedProviders = joinStringList(providers);
 			message =
 				`You already have an account with ${joinedProviders}. ` +
 				`Sign in with ${providers.length > 1 ? "one of those providers" : "that provider"} first, ` +
