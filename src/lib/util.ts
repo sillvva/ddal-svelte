@@ -81,3 +81,7 @@ export function joinStringList(list: string[], separator = ", ", lastSeparator =
 	const last = list.pop();
 	return `${list.join(separator)}${list.length > 1 ? separator : " "}${lastSeparator}${last}`;
 }
+
+export function isDefined<T>(value?: T): value is T {
+	return value !== undefined;
+}

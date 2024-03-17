@@ -6,7 +6,7 @@
 	import Search from "$lib/components/Search.svelte";
 	import SearchResults from "$lib/components/SearchResults.svelte";
 	import type { TransitionAction } from "$lib/util";
-	import { createTransition, stopWords } from "$lib/util";
+	import { createTransition, isDefined, stopWords } from "$lib/util";
 	import type { CookieStore } from "$server/cookie.js";
 	import { slugify, sorter } from "@sillvva/utils";
 	import { download, hotkey } from "@svelteuidev/composables";
@@ -73,7 +73,7 @@
 							score: score,
 							match: Object.values(match)
 								.map((value) => value[0])
-								.filter(Boolean)
+								.filter(isDefined)
 						};
 					})
 					.sort((a, b) => sorter(a.total_level, b.total_level) || sorter(a.name, b.name))
