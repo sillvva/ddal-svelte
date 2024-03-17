@@ -3,7 +3,6 @@
 	import { page } from "$app/stores";
 	import { PROVIDERS } from "$lib/constants.js";
 	import { publicEnv } from "$lib/env/public.js";
-	import { joinStringList } from "$lib/util.js";
 	import type { CookieStore } from "$server/cookie.js";
 	import { signIn } from "@auth/sveltekit/client";
 	import { getContext } from "svelte";
@@ -24,22 +23,7 @@
 
 	let code = $page.url.searchParams.get("code");
 	if (code === "undefined") code = "UnknownError";
-	let message = $page.url.searchParams.get("message");
-
-	if (code === "ExistingAccount") {
-		const providers = $page.url.searchParams
-			.get("providers")
-			?.split(",")
-			.map((id) => PROVIDERS.find((p) => p.id === id)?.name)
-			.filter(Boolean);
-		if (providers?.length) {
-			const joinedProviders = joinStringList(providers);
-			message =
-				`You already have an account with ${joinedProviders}. ` +
-				`Sign in with ${providers.length > 1 ? "one of those providers" : "that provider"} first, ` +
-				`then link additional providers in the settings menu.`;
-		}
-	}
+	const message = $page.url.searchParams.get("message");
 </script>
 
 <svelte:head>

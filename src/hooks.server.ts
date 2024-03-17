@@ -1,4 +1,6 @@
+import { PROVIDERS } from "$lib/constants";
 import { privateEnv } from "$lib/env/private";
+import { joinStringList } from "$lib/util";
 import { db, q } from "$server/db";
 import { accounts, type Account } from "$server/db/schema";
 import type { Provider } from "@auth/core/providers";
@@ -62,14 +64,14 @@ const auth = SvelteKitAuth(async (event) => {
 				const redirectTo = event.url.searchParams.get("redirect") || undefined;
 				const redirectUrl = redirectTo ? new URL(redirectTo, event.url.origin) : undefined;
 
-				if (!account) authErrRedirect("MissingAccountData", "Account not found", redirectUrl);
-				// if (!profile) authErrRedirect("MissingAccountData", "Profile not found", redirectUrl);
+				if (!account) authErrRedirect("Missing Account Data", "Account not found", redirectUrl);
+				// if (!profile) authErrRedirect("Missing Account Data", "Profile not found", redirectUrl);
 
 				// const provider = providers.find((p) => p.id === account.provider);
-				// if (!provider) authErrRedirect("InvalidProvider", `Provider '${account.provider}' not found`, redirectUrl);
+				// if (!provider) authErrRedirect("Invalid Provider", `Provider '${account.provider}' not supported`, redirectUrl);
 
 				// const providerAccountId = provider.accountId(profile);
-				// if (!providerAccountId) authErrRedirect("MissingProfileData", "Account ID not found in profile", redirectUrl);
+				// if (!providerAccountId) authErrRedirect("Missing Profile Data", "Account ID not found in profile", redirectUrl);
 
 				// account.providerAccountId = providerAccountId;
 				const existingAccount = await q.accounts.findFirst({
@@ -82,9 +84,11 @@ const auth = SvelteKitAuth(async (event) => {
 
 				if (privateEnv.DISABLE_SIGNUPS && !existingAccount && !currentUserId) return false;
 
-				// If there is a user logged in already that we recognize,
-				// and we have an account that is being signed in with
 				if (currentUserId) {
+					// If there is a user logged in already that we recognize,
+					// and we have an account that is being signed in with
+					// then we should link the account to the user
+
 					// Only link accounts that have not yet been linked
 					if (existingAccount) authErrRedirect("AccountLinkError", "Account already linked to a user", redirectUrl);
 
@@ -104,6 +108,9 @@ const auth = SvelteKitAuth(async (event) => {
 
 					redirect(302, "/characters");
 				} else if (existingAccount) {
+					// If there is no user logged in, but we recognize the account
+					// then we should log the user in and update the refresh token
+
 					event.cookies.set("authjs.provider", account.provider, {
 						path: "/",
 						expires: new Date(new Date().getTime() + 30 * 86400 * 1000)
@@ -125,14 +132,22 @@ const auth = SvelteKitAuth(async (event) => {
 							.where(and(eq(accounts.provider, account.provider), eq(accounts.providerAccountId, account.providerAccountId)));
 					}
 				} else {
+					// If there is no user logged in and we don't recognize the account, then we should
+					// check if the account's email is already registered and prevent the sign in
+
 					const email = user.email;
 					const matchingUser = email ? await q.users.findFirst({ where: (users, { eq }) => eq(users.email, email) }) : undefined;
-					const providers = matchingUser
+					const matchingProviders = matchingUser
 						? await q.accounts
 								.findMany({ where: (accounts, { eq }) => eq(accounts.userId, matchingUser.id) })
 								.then((a) => a.map((a) => a.provider))
 						: undefined;
-					if (providers?.length) redirect(302, `/?code=ExistingAccount&providers=${providers.join(",")}`);
+					if (matchingProviders?.length) {
+						const names = matchingProviders.map((id) => PROVIDERS.find((p) => p.id === id)?.name).filter(Boolean);
+						const joinedProviders = joinStringList(names);
+						const message = `You already have an account with ${joinedProviders}. Sign in, then link additional providers in the settings menu.`;
+						authErrRedirect("Existing Account", message, redirectUrl);
+					}
 				}
 
 				return true;
