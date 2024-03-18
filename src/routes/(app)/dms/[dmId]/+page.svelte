@@ -21,9 +21,7 @@
 
 	<SuperForm action="?/saveDM" {superform}>
 		<Control class="col-span-12 sm:col-span-6">
-			<Input type="text" {superform} field="name" readonly={data.form.data.uid === data.user.id ? true : undefined}>
-				DM Name
-			</Input>
+			<Input type="text" {superform} field="name">DM Name</Input>
 		</Control>
 		<Control class="col-span-12 sm:col-span-6">
 			<Input type="text" {superform} field="DCI">DCI</Input>

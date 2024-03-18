@@ -3,7 +3,7 @@ import { SaveError, type LogSchema, type SaveResult } from "$lib/schemas";
 import { handleSKitError, handleSaveError } from "$lib/util";
 import { rateLimiter, revalidateKeys } from "$server/cache";
 import { db } from "$server/db";
-import { dungeonMasters, logs, magicItems, storyAwards, type Log } from "$server/db/schema";
+import { dungeonMasters, logs, magicItems, storyAwards, type InsertDungeonMaster, type Log } from "$server/db/schema";
 import { error } from "@sveltejs/kit";
 import { and, eq, inArray, notInArray } from "drizzle-orm";
 
@@ -54,9 +54,10 @@ export async function saveLog(input: LogSchema, user?: CustomSession["user"]): S
 			}
 
 			const [dm] = await (async () => {
-				if (input.is_dm_log) input.dm.name = user.name || "Me";
-				if (["Me", ""].includes(input.dm.name.trim())) input.dm.name = user.name || "Me";
-				const isMe = input.dm.name.trim() === user.name?.trim() || input.dm.name === "Me" || input.dm.name === "";
+				let isMe = false;
+				if (input.is_dm_log) isMe = true;
+				if (input.dm.uid === userId) isMe = true;
+				if (["Me", "", user.name?.trim()].includes(input.dm.name.trim())) isMe = true;
 
 				if (isMe) {
 					const dm = await tx.query.dungeonMasters.findFirst({
@@ -71,41 +72,32 @@ export async function saveLog(input: LogSchema, user?: CustomSession["user"]): S
 							where: (dms, { eq, or, and }) =>
 								and(
 									eq(dms.owner, userId),
-									input.is_dm_log || isMe
-										? eq(dms.uid, userId)
-										: input.dm.DCI
-											? or(eq(dms.name, input.dm.name.trim()), eq(dms.DCI, input.dm.DCI))
-											: eq(dms.name, input.dm.name.trim())
+									input.dm.DCI
+										? or(eq(dms.name, input.dm.name.trim()), eq(dms.DCI, input.dm.DCI))
+										: eq(dms.name, input.dm.name.trim())
 								)
 						});
 						if (search) {
 							input.dm.id = search.id;
+							if (search.uid === userId) {
+								input.dm.uid = userId;
+								isMe = true;
+							}
 							if (!input.dm.owner) input.dm.owner = userId;
 						}
 					}
 
 					try {
-						if (!input.dm.id) {
-							return await tx
-								.insert(dungeonMasters)
-								.values({
-									name: input.dm.name.trim(),
-									DCI: input.dm.DCI,
-									uid: input.is_dm_log || isMe ? user.id : null,
-									owner: userId
-								})
-								.returning();
+						const dm: InsertDungeonMaster = {
+							name: input.dm.name.trim(),
+							DCI: input.dm.DCI,
+							uid: input.is_dm_log || isMe ? userId : null,
+							owner: userId
+						};
+						if (input.dm.id) {
+							return await tx.update(dungeonMasters).set(dm).where(eq(dungeonMasters.id, input.dm.id)).returning();
 						} else {
-							return await tx
-								.update(dungeonMasters)
-								.set({
-									name: input.dm.name.trim(),
-									DCI: input.dm.DCI,
-									uid: input.is_dm_log || isMe ? user.id : null,
-									owner: user.id
-								})
-								.where(eq(dungeonMasters.id, input.dm.id))
-								.returning();
+							return await tx.insert(dungeonMasters).values(dm).returning();
 						}
 					} catch (err) {
 						console.error(err);
