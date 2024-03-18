@@ -1,6 +1,5 @@
 import { defaultLogData, getMagicItems, getStoryAwards, logDataToSchema } from "$lib/entities.js";
 import { characterLogSchema } from "$lib/schemas";
-import { saveError } from "$lib/util.js";
 import { saveLog } from "$server/actions/logs.js";
 import { signInRedirect } from "$server/auth.js";
 import { getCharacterCache } from "$server/data/characters";
@@ -69,8 +68,8 @@ export const actions = {
 		if (!form.valid) return fail(400, { form });
 
 		const result = await saveLog(form.data, session.user);
-		if ("id" in result) redirect(302, `/characters/${character.id}`);
+		if ("error" in result) return result.toForm(form);
 
-		return saveError(form, result);
+		redirect(302, `/characters/${character.id}`);
 	}
 };

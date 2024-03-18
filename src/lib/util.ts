@@ -58,36 +58,33 @@ export function isDefined<T>(value?: T): value is T {
 
 export type SaveResult<T extends object | null, S extends Record<string, unknown>> = Promise<T | SaveError<S>>;
 
-export class SaveError<T extends Record<string, unknown>> {
+export class SaveError<TOut extends Record<string, unknown>, TIn extends Record<string, unknown> = TOut> {
 	constructor(
 		public status: NumericRange<400, 599>,
 		public error: string,
-		public options?: { field?: FormPathLeaves<T> }
+		public options?: { field?: FormPathLeaves<TOut> }
 	) {}
+
+	toForm(form: SuperValidated<TOut, App.Superforms.Message, TIn>) {
+		return this.options?.field
+			? /* eslint-disable-next-line  @typescript-eslint/no-explicit-any */
+				setError(form, this.options.field as any, this.error, {
+					status: this.status
+				})
+			: message(
+					form,
+					{
+						type: "error",
+						text: this.error
+					},
+					{
+						status: this.status
+					}
+				);
+	}
 }
 
-export function saveError<TForm extends Record<string, unknown>, TIn extends Record<string, unknown> = TForm>(
-	form: SuperValidated<TForm, App.Superforms.Message, TIn>,
-	result: SaveError<TForm>
-) {
-	return result.options?.field
-		? /* eslint-disable-next-line  @typescript-eslint/no-explicit-any */
-			setError(form, result.options.field as any, result.error, {
-				status: result.status
-			})
-		: message(
-				form,
-				{
-					type: "error",
-					text: result.error
-				},
-				{
-					status: result.status
-				}
-			);
-}
-
-export function handleSaveError<TObj extends Record<string, unknown>, TErr = SaveError<TObj>>(err: TErr | Error | unknown) {
+export function handleSaveError<TObj extends Record<string, unknown>>(err: SaveError<TObj> | Error | unknown) {
 	if (dev) console.error(err);
 	if (err instanceof SaveError) return err;
 	if (err instanceof Error) return new SaveError<TObj>(500, err.message);

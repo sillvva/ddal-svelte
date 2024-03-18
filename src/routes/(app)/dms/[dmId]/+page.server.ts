@@ -1,5 +1,4 @@
 import { dungeonMasterSchema } from "$lib/schemas";
-import { saveError } from "$lib/util.js";
 import { deleteDM, saveDM } from "$server/actions/dms";
 import { signInRedirect } from "$server/auth.js";
 import { getUserDMsWithLogsCache } from "$server/data/dms";
@@ -55,9 +54,9 @@ export const actions = {
 		if (!form.valid) return fail(400, { form });
 
 		const result = await saveDM(event.params.dmId, session.user, form.data);
-		if ("id" in result) return redirect(302, `/dms`);
+		if ("error" in result) return result.toForm(form);
 
-		return saveError(form, result);
+		redirect(302, `/dms`);
 	},
 	deleteDM: async (event) => {
 		const session = await event.locals.session;

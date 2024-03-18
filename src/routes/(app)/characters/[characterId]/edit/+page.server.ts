@@ -1,6 +1,5 @@
 import { BLANK_CHARACTER } from "$lib/constants.js";
 import { newCharacterSchema } from "$lib/schemas";
-import { saveError } from "$lib/util.js";
 import { saveCharacter } from "$server/actions/characters.js";
 import { signInRedirect } from "$server/auth";
 import { fail, redirect } from "@sveltejs/kit";
@@ -58,8 +57,8 @@ export const actions = {
 
 		const characterId = event.params.characterId;
 		const result = await saveCharacter(characterId, session.user.id, form.data);
-		if ("id" in result) redirect(302, `/characters/${result.id}`);
+		if ("error" in result) return result.toForm(form);
 
-		return saveError(form, result);
+		redirect(302, `/characters/${result.id}`);
 	}
 };

@@ -1,6 +1,5 @@
 import { defaultLogData, logDataToSchema } from "$lib/entities.js";
 import { dMLogSchema } from "$lib/schemas";
-import { saveError } from "$lib/util.js";
 import { saveLog } from "$server/actions/logs";
 import { signInRedirect } from "$server/auth";
 import { getCharacterCaches, getCharactersCache } from "$server/data/characters";
@@ -68,8 +67,8 @@ export const actions = {
 		if (!form.valid) return fail(400, { form });
 
 		const result = await saveLog(form.data, session.user);
-		if ("id" in result) redirect(302, `/dm-logs/`);
+		if ("error" in result) return result.toForm(form);
 
-		return saveError(form, result);
+		redirect(302, `/dm-logs/`);
 	}
 };
