@@ -82,7 +82,7 @@ export async function saveLog(input: LogSchema, user?: CustomSession["user"]): S
 
 				if (!input.dm.name) {
 					if (isMe) input.dm.name = user.name || "Me";
-					else throw new SaveError<LogSchema>(400, "Dungeon Master name is required", { field: "dm.name" });
+					else throw new SaveError<LogSchema>(400, "Dungeon Master name is required", { field: "dm.id" });
 				}
 
 				try {
