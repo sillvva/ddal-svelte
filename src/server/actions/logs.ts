@@ -59,12 +59,7 @@ export async function saveLog(input: LogSchema, user?: CustomSession["user"]): S
 				if (input.dm.uid === userId) isMe = true;
 				if (["Me", "", user.name?.trim()].includes(input.dm.name.trim())) isMe = true;
 
-				if (isMe) {
-					const dm = await tx.query.dungeonMasters.findFirst({
-						where: (dms, { eq }) => eq(dms.uid, userId)
-					});
-					if (dm) input.dm = dm;
-				}
+				if (isMe && !input.dm.name) input.dm.name = user.name || "Me";
 
 				if (input.dm?.name.trim()) {
 					if (!input.dm.id) {
@@ -72,9 +67,11 @@ export async function saveLog(input: LogSchema, user?: CustomSession["user"]): S
 							where: (dms, { eq, or, and }) =>
 								and(
 									eq(dms.owner, userId),
-									input.dm.DCI
-										? or(eq(dms.name, input.dm.name.trim()), eq(dms.DCI, input.dm.DCI))
-										: eq(dms.name, input.dm.name.trim())
+									isMe
+										? eq(dms.uid, userId)
+										: input.dm.DCI
+											? or(eq(dms.name, input.dm.name.trim()), eq(dms.DCI, input.dm.DCI))
+											: eq(dms.name, input.dm.name.trim())
 								)
 						});
 						if (search) {
