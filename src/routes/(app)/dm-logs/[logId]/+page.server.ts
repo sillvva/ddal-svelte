@@ -1,12 +1,12 @@
 import { defaultLogData, logDataToSchema } from "$lib/entities.js";
 import { dMLogSchema } from "$lib/schemas";
-import { fieldError } from "$lib/util.js";
+import { saveError } from "$lib/util.js";
 import { saveLog } from "$server/actions/logs";
 import { signInRedirect } from "$server/auth";
 import { getCharacterCaches, getCharactersCache } from "$server/data/characters";
 import { getDMLog, getLog } from "$server/data/logs";
 import { error, fail, redirect } from "@sveltejs/kit";
-import { message, superValidate } from "sveltekit-superforms";
+import { superValidate } from "sveltekit-superforms";
 import { valibot } from "sveltekit-superforms/adapters";
 
 export const load = async (event) => {
@@ -70,18 +70,6 @@ export const actions = {
 		const result = await saveLog(form.data, session.user);
 		if ("id" in result) redirect(302, `/dm-logs/`);
 
-		return (
-			fieldError(form, result) ||
-			message(
-				form,
-				{
-					type: "error",
-					text: result.error
-				},
-				{
-					status: result.status
-				}
-			)
-		);
+		return saveError(form, result);
 	}
 };

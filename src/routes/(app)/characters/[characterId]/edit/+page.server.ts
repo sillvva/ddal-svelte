@@ -1,9 +1,10 @@
 import { BLANK_CHARACTER } from "$lib/constants.js";
 import { newCharacterSchema } from "$lib/schemas";
+import { saveError } from "$lib/util.js";
 import { saveCharacter } from "$server/actions/characters.js";
 import { signInRedirect } from "$server/auth";
 import { fail, redirect } from "@sveltejs/kit";
-import { message, superValidate } from "sveltekit-superforms";
+import { superValidate } from "sveltekit-superforms";
 import { valibot } from "sveltekit-superforms/adapters";
 
 export const load = async (event) => {
@@ -59,15 +60,6 @@ export const actions = {
 		const result = await saveCharacter(characterId, session.user.id, form.data);
 		if ("id" in result) redirect(302, `/characters/${result.id}`);
 
-		return message(
-			form,
-			{
-				type: "error",
-				text: result.error
-			},
-			{
-				status: result.status
-			}
-		);
+		return saveError(form, result);
 	}
 };

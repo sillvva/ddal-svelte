@@ -1,6 +1,6 @@
 import { dev } from "$app/environment";
 import { error } from "@sveltejs/kit";
-import { setError, type SuperValidated } from "sveltekit-superforms";
+import { message, setError, type SuperValidated } from "sveltekit-superforms";
 import type { setupViewTransition } from "sveltekit-view-transition";
 import { twMerge } from "tailwind-merge";
 import { SaveError } from "./schemas";
@@ -87,13 +87,23 @@ export function isDefined<T>(value?: T): value is T {
 	return value !== undefined;
 }
 
-export function fieldError<TForm extends Record<string, unknown>, TSaveErr extends Record<string, unknown>>(
+export function saveError<TForm extends Record<string, unknown>, TSaveErr extends Record<string, unknown>>(
 	form: SuperValidated<TForm>,
-	error: SaveError<TSaveErr>
+	result: SaveError<TSaveErr>
 ) {
-	if (!error.options?.field) return;
-	/* eslint-disable-next-line  @typescript-eslint/no-explicit-any */
-	return setError(form, error.options.field as any, error.error, {
-		status: error.status
-	});
+	return result.options?.field
+		? /* eslint-disable-next-line  @typescript-eslint/no-explicit-any */
+			setError(form, result.options.field as any, result.error, {
+				status: result.status
+			})
+		: message(
+				form,
+				{
+					type: "error",
+					text: result.error
+				},
+				{
+					status: result.status
+				}
+			);
 }

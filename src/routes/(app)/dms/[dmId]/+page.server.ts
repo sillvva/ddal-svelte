@@ -1,9 +1,10 @@
 import { dungeonMasterSchema } from "$lib/schemas";
+import { saveError } from "$lib/util.js";
 import { deleteDM, saveDM } from "$server/actions/dms";
 import { signInRedirect } from "$server/auth.js";
 import { getUserDMsWithLogsCache } from "$server/data/dms";
 import { error, fail, redirect } from "@sveltejs/kit";
-import { message, superValidate } from "sveltekit-superforms";
+import { superValidate } from "sveltekit-superforms";
 import { valibot } from "sveltekit-superforms/adapters";
 
 export const load = async (event) => {
@@ -56,14 +57,7 @@ export const actions = {
 		const result = await saveDM(event.params.dmId, session.user, form.data);
 		if ("id" in result) return redirect(302, `/dms`);
 
-		return message(
-			form,
-			{
-				type: "error",
-				text: result.error
-			},
-			{ status: result.status }
-		);
+		return saveError(form, result);
 	},
 	deleteDM: async (event) => {
 		const session = await event.locals.session;
