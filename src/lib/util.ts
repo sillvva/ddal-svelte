@@ -66,9 +66,9 @@ export class SaveError<T extends Record<string, unknown>> {
 	) {}
 }
 
-export function saveError<TForm extends Record<string, unknown>, TSaveErr extends Record<string, unknown>>(
-	form: SuperValidated<TForm>,
-	result: SaveError<TSaveErr>
+export function saveError<TForm extends Record<string, unknown>, TIn extends Record<string, unknown> = TForm>(
+	form: SuperValidated<TForm, App.Superforms.Message, TIn>,
+	result: SaveError<TForm>
 ) {
 	return result.options?.field
 		? /* eslint-disable-next-line  @typescript-eslint/no-explicit-any */
