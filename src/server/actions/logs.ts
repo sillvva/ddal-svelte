@@ -59,8 +59,6 @@ export async function saveLog(input: LogSchema, user?: CustomSession["user"]): S
 				if (input.dm.uid === userId) isMe = true;
 				if (["Me", "", user.name?.trim()].includes(input.dm.name.trim())) isMe = true;
 
-				if (isMe && !input.dm.name) input.dm.name = user.name || "Me";
-
 				if (input.dm?.name.trim()) {
 					if (!input.dm.id) {
 						const search = await tx.query.dungeonMasters.findFirst({
@@ -82,6 +80,11 @@ export async function saveLog(input: LogSchema, user?: CustomSession["user"]): S
 							}
 							if (!input.dm.owner) input.dm.owner = userId;
 						}
+					}
+
+					if (!input.dm.name) {
+						if (isMe) input.dm.name = user.name || "Me";
+						else throw new SaveError<LogSchema>(400, "Dungeon Master name is required", { field: "dm.name" });
 					}
 
 					try {
