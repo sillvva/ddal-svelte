@@ -8,10 +8,11 @@
 	import Markdown from "$lib/components/Markdown.svelte";
 	import Search from "$lib/components/Search.svelte";
 	import SearchResults from "$lib/components/SearchResults.svelte";
+	import { stopWords } from "$lib/constants.js";
 	import { errorToast, successToast } from "$lib/factories.js";
 	import { pageLoader, searchData } from "$lib/stores";
 	import type { TransitionAction } from "$lib/util";
-	import { createTransition, stopWords } from "$lib/util";
+	import { createTransition } from "$lib/util";
 	import type { CookieStore } from "$server/cookie.js";
 	import { slugify, sorter } from "@sillvva/utils";
 	import { download, hotkey } from "@svelteuidev/composables";

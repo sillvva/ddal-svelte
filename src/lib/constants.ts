@@ -21,3 +21,5 @@ export const PROVIDERS = [
 		logo: "/images/discord.svg"
 	}
 ] as const satisfies Provider[];
+
+export const stopWords = new Set(["and", "or", "to", "in", "a", "the", "of"]);

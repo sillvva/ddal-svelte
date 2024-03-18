@@ -1,45 +1,14 @@
 import { dev } from "$app/environment";
-import { error } from "@sveltejs/kit";
-import { message, setError, type SuperValidated } from "sveltekit-superforms";
+import { error, type NumericRange } from "@sveltejs/kit";
+import { message, setError, type FormPathLeaves, type SuperValidated } from "sveltekit-superforms";
 import type { setupViewTransition } from "sveltekit-view-transition";
 import { twMerge } from "tailwind-merge";
-import { SaveError } from "./schemas";
-
-export function handleSKitError(err: unknown) {
-	if (
-		err &&
-		typeof err == "object" &&
-		"status" in err &&
-		typeof err.status == "number" &&
-		"body" in err &&
-		typeof err.body == "string"
-	) {
-		if (dev) console.error(err);
-		error(err.status, err.body);
-	}
-}
-
-export function handleSaveError<TObj extends Record<string, unknown>, TErr = SaveError<TObj>>(err: TErr | Error | unknown) {
-	if (dev) console.error(err);
-	if (err instanceof SaveError) return err;
-	if (err instanceof Error) return new SaveError<TObj>(500, err.message);
-	throw new SaveError<TObj>(500, "An unknown error has occurred.");
-}
 
 export type Prettify<T> = {
 	[K in keyof T]: T[K];
 } & unknown;
 
 export type TransitionAction = ReturnType<typeof setupViewTransition>["transition"];
-
-export const stopWords = new Set(["and", "or", "to", "in", "a", "the", "of"]);
-
-export const parseError = (e: unknown) => {
-	if (e instanceof Error) return e.message;
-	if (typeof e === "string") return e;
-	if (typeof e === "object") return JSON.stringify(e);
-	return "Unknown error";
-};
 
 export const tooltipClasses = (text?: string | null, align = "center") => {
 	if (!text) return "";
@@ -87,6 +56,16 @@ export function isDefined<T>(value?: T): value is T {
 	return value !== undefined;
 }
 
+export type SaveResult<T extends object | null, S extends Record<string, unknown>> = Promise<T | SaveError<S>>;
+
+export class SaveError<T extends Record<string, unknown>> {
+	constructor(
+		public status: NumericRange<400, 599>,
+		public error: string,
+		public options?: { field?: FormPathLeaves<T> }
+	) {}
+}
+
 export function saveError<TForm extends Record<string, unknown>, TSaveErr extends Record<string, unknown>>(
 	form: SuperValidated<TForm>,
 	result: SaveError<TSaveErr>
@@ -107,3 +86,31 @@ export function saveError<TForm extends Record<string, unknown>, TSaveErr extend
 				}
 			);
 }
+
+export function handleSaveError<TObj extends Record<string, unknown>, TErr = SaveError<TObj>>(err: TErr | Error | unknown) {
+	if (dev) console.error(err);
+	if (err instanceof SaveError) return err;
+	if (err instanceof Error) return new SaveError<TObj>(500, err.message);
+	return new SaveError<TObj>(500, "An unknown error has occurred.");
+}
+
+export function handleSKitError(err: unknown) {
+	if (
+		err &&
+		typeof err == "object" &&
+		"status" in err &&
+		typeof err.status == "number" &&
+		"body" in err &&
+		typeof err.body == "string"
+	) {
+		if (dev) console.error(err);
+		error(err.status, err.body);
+	}
+}
+
+export const parseError = (e: unknown) => {
+	if (e instanceof Error) return e.message;
+	if (typeof e === "string") return e;
+	if (typeof e === "object") return JSON.stringify(e);
+	return "Unknown error";
+};
