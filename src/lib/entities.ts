@@ -1,6 +1,6 @@
 import type { CharacterData, getCharacter } from "$server/data/characters";
 import type { LogData } from "$server/data/logs";
-import type { Character, DungeonMaster, Log, MagicItem, StoryAward } from "$server/db/schema";
+import type { Character, DungeonMaster, Log, MagicItem, StoryAward, User } from "$server/db/schema";
 import { sorter } from "@sillvva/utils";
 import type { LogSchema } from "./schemas";
 
@@ -226,7 +226,9 @@ export function defaultLogData(userId: string, characterId = ""): LogData {
 	};
 }
 
-export function parseLogEnums(log: Omit<LogData, "type"> & { type: string }) {
+export function parseLogEnums(
+	log: Omit<LogData & { character?: (Character & { user?: User }) | null }, "type"> & { type: string }
+) {
 	return {
 		...log,
 		type: log.type === "nongame" ? ("nongame" as const) : ("game" as const)

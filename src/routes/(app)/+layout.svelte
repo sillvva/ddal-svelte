@@ -15,6 +15,7 @@
 	import { Toaster } from "svelte-sonner";
 	import { fade } from "svelte/transition";
 	import { twMerge } from "tailwind-merge";
+	import type { SearchData } from "../(api)/command/+server.js";
 
 	export let data;
 	const app = getContext<CookieStore<App.Cookie>>("app");
@@ -42,22 +43,22 @@
 	 * Command Palette
 	 */
 
-	let sections = [
+	const sections = [
 		{ title: "Characters", url: "/characters" },
 		{ title: "DM Logs", url: "/dm-logs" },
 		{ title: "DMs", url: "/dms" }
-	];
+	] as const;
 
-	const defaultSelected = sections[0].url;
+	const defaultSelected: string = sections[0].url;
 	let search = "";
 	let cmdOpen = false;
-	let selected = defaultSelected;
+	let selected: string = defaultSelected;
 	let resultsPane: HTMLElement;
 
 	$: words = [...new Set(search.toLowerCase().split(" "))].filter(Boolean);
 	$: if (!$searchData.length && browser && cmdOpen) {
 		fetch(`/command`)
-			.then((res) => res.json())
+			.then((res) => res.json() as Promise<SearchData>)
 			.then((res) => ($searchData = res));
 	}
 
@@ -67,31 +68,31 @@
 	}
 
 	function hasMatch(item: string) {
-		const matches = words.filter((word) => item.toLowerCase().includes(word.toLowerCase()));
+		const matches = words.filter((word) => item.toLowerCase().includes(word));
 		return matches.length ? matches : null;
 	}
 
 	$: results = [
 		{
 			title: "Sections",
-			items: sections
-				.filter(() => !search.trim())
-				.map(
-					(section) =>
-						({
-							type: "section",
-							name: section.title,
-							url: section.url
-						}) as const
-				)
+			items: sections.map(
+				(section) =>
+					({
+						type: "section",
+						name: section.title,
+						url: section.url
+					}) as const
+			)
 		},
 		...$searchData
 	]
 		.map((section) => {
+			const items = [...section.items];
 			return {
 				...section,
-				items: section.items
+				items: items
 					.filter((item) => {
+						if (item.type === "section" && search.length) return false;
 						let matches: typeof words = hasMatch(item.name) || [];
 						if (search.length >= 2) {
 							if (item.type === "character") {
@@ -342,7 +343,7 @@
 						placeholder="Search"
 						on:input={() => {
 							const firstResult = results[0]?.items[0]?.url;
-							if (search) selected = firstResult;
+							if (search && firstResult) selected = firstResult;
 							else selected = defaultSelected;
 							resultsPane.scrollTop = 0;
 						}}
@@ -352,7 +353,9 @@
 									goto(selected);
 									cmdOpen = false;
 								} else {
-									selected = results[0]?.items[0]?.url;
+									const firstResult = results[0]?.items[0]?.url;
+									if (search && firstResult) selected = firstResult;
+									else selected = defaultSelected;
 									resultsPane.scrollTop = 0;
 								}
 							}

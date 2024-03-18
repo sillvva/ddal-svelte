@@ -55,11 +55,11 @@
 	</h1>
 	{#if code}
 		<div class="flex justify-center">
-			<div class="alert alert-error w-80 shadow-lg">
-				<span class="iconify size-6 mdi-alert-circle" />
+			<div class="alert alert-error min-w-60 max-w-[24rem] text-error-content shadow-lg">
+				<span class="iconify hidden size-6 mdi-alert-circle sm:inline-block" />
 				<div>
 					<h3 class="font-bold">Error: {code}</h3>
-					{#if message !== null}<div class="text-xs">{message || "Something went wrong"}</div>{/if}
+					{#if message !== null}<div class="text-sm">{message || "Something went wrong"}</div>{/if}
 				</div>
 			</div>
 		</div>
@@ -82,20 +82,6 @@
 			</button>
 		{/each}
 	</div>
-	{#if PROVIDERS.length > 1}
-		<div class="flex gap-4">
-			<a
-				href="/"
-				class="tooltip tooltip-bottom tooltip-open mb-32 text-white before:text-warning-content"
-				data-tip={"To link multiple auth providers to the same account, first sign in to your main account. " +
-					"Then link additional auth providers in the settings menu. " +
-					"If you sign in with a second provider here before linking, it will create a separate account. " +
-					"If this happens, the accounts cannot be linked."}
-			>
-				Tip: Linking Accounts
-			</a>
-		</div>
-	{/if}
 </main>
 
 <style>

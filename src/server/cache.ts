@@ -102,7 +102,9 @@ export async function mcache<TReturnType extends object>(
 			try {
 				// Update the timestamp and reset the cache expiration
 				cache.timestamp = currentTime;
-				multi.setex(joinedKeys[i], expires, cache);
+
+				if (joinedKeys[i] === undefined) continue;
+				multi.setex(joinedKeys[i]!, expires, cache);
 
 				// Add the cached result to the results array
 				results.push(cache.data);

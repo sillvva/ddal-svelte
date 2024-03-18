@@ -14,8 +14,10 @@ import {
 	varchar
 } from "drizzle-orm/pg-core";
 
+type InsertOmit = "id" | "created_at";
+
 export type User = typeof users.$inferSelect;
-export type InsertUser = typeof users.$inferInsert;
+export type InsertUser = Omit<typeof users.$inferInsert, InsertOmit>;
 export type UpdateUser = Partial<User>;
 export const users = pgTable("user", {
 	id: varchar("id")
@@ -36,8 +38,8 @@ export const userRelations = relations(users, ({ many }) => ({
 }));
 
 export type Account = typeof accounts.$inferSelect;
-export type InsertAccount = typeof accounts.$inferInsert;
-export type UpdateAccount = Partial<Account>;
+export type InsertAccount = Omit<typeof accounts.$inferInsert, InsertOmit>;
+export type UpdateAccount = Partial<InsertAccount>;
 export const accounts = pgTable(
 	"account",
 	{
@@ -53,7 +55,8 @@ export const accounts = pgTable(
 		token_type: varchar("token_type").notNull(),
 		scope: varchar("scope").notNull(),
 		id_token: varchar("id_token"),
-		session_state: varchar("session_state")
+		session_state: varchar("session_state"),
+		last_login: timestamp("last_login", { mode: "date" })
 	},
 	(table) => {
 		return {
@@ -71,8 +74,8 @@ export const accountRelations = relations(accounts, ({ one }) => ({
 }));
 
 export type Session = typeof sessions.$inferSelect;
-export type InsertSession = typeof sessions.$inferInsert;
-export type UpdateSession = Partial<Session>;
+export type InsertSession = Omit<typeof sessions.$inferInsert, InsertOmit>;
+export type UpdateSession = Partial<InsertSession>;
 export const sessions = pgTable(
 	"session",
 	{
@@ -100,8 +103,8 @@ export const sessionRelations = relations(sessions, ({ one }) => ({
 }));
 
 export type Character = typeof characters.$inferSelect;
-export type InsertCharacter = typeof characters.$inferInsert;
-export type UpdateCharacter = Partial<Omit<Character, "id">>;
+export type InsertCharacter = Omit<typeof characters.$inferInsert, InsertOmit>;
+export type UpdateCharacter = Partial<InsertCharacter>;
 export const characters = pgTable(
 	"character",
 	{
@@ -138,8 +141,8 @@ export const characterRelations = relations(characters, ({ one, many }) => ({
 }));
 
 export type DungeonMaster = typeof dungeonMasters.$inferSelect;
-export type InsertDungeonMaster = typeof dungeonMasters.$inferInsert;
-export type UpdateDungeonMaster = Partial<Omit<DungeonMaster, "id">>;
+export type InsertDungeonMaster = Omit<typeof dungeonMasters.$inferInsert, InsertOmit>;
+export type UpdateDungeonMaster = Partial<InsertDungeonMaster>;
 export const dungeonMasters = pgTable(
 	"dungeonmaster",
 	{
@@ -173,8 +176,8 @@ export const dungeonMasterRelations = relations(dungeonMasters, ({ one, many }) 
 export const logType = pgEnum("logType", ["game", "nongame"]);
 
 export type Log = typeof logs.$inferSelect;
-export type InsertLog = typeof logs.$inferInsert;
-export type UpdateLog = Partial<Omit<Log, "id">>;
+export type InsertLog = Omit<typeof logs.$inferInsert, InsertOmit>;
+export type UpdateLog = Partial<InsertLog>;
 export const logs = pgTable(
 	"log",
 	{
@@ -241,8 +244,8 @@ export const logRelations = relations(logs, ({ one, many }) => ({
 }));
 
 export type MagicItem = typeof magicItems.$inferSelect;
-export type InsertMagicItem = typeof magicItems.$inferInsert;
-export type UpdateMagicItem = Partial<Omit<MagicItem, "id">>;
+export type InsertMagicItem = Omit<typeof magicItems.$inferInsert, InsertOmit>;
+export type UpdateMagicItem = Partial<InsertMagicItem>;
 export const magicItems = pgTable(
 	"magicitem",
 	{
@@ -279,8 +282,8 @@ export const magicItemRelations = relations(magicItems, ({ one }) => ({
 }));
 
 export type StoryAward = typeof storyAwards.$inferSelect;
-export type InsertStoryAward = typeof storyAwards.$inferInsert;
-export type UpdateStoryAward = Partial<Omit<StoryAward, "id">>;
+export type InsertStoryAward = Omit<typeof storyAwards.$inferInsert, InsertOmit>;
+export type UpdateStoryAward = Partial<InsertStoryAward>;
 export const storyAwards = pgTable(
 	"storyaward",
 	{

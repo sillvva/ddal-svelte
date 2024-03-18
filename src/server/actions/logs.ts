@@ -3,7 +3,7 @@ import { SaveError, type LogSchema, type SaveResult } from "$lib/schemas";
 import { handleSKitError, handleSaveError } from "$lib/util";
 import { rateLimiter, revalidateKeys } from "$server/cache";
 import { db } from "$server/db";
-import { dungeonMasters, logs, magicItems, storyAwards, type Log } from "$server/db/schema";
+import { dungeonMasters, logs, magicItems, storyAwards, type InsertDungeonMaster, type Log } from "$server/db/schema";
 import { error } from "@sveltejs/kit";
 import { and, eq, inArray, notInArray } from "drizzle-orm";
 
@@ -54,65 +54,53 @@ export async function saveLog(input: LogSchema, user?: CustomSession["user"]): S
 			}
 
 			const [dm] = await (async () => {
-				if (input.is_dm_log) input.dm.name = user.name || "Me";
-				if (["Me", ""].includes(input.dm.name.trim())) input.dm.name = user.name || "Me";
-				const isMe = input.dm.name.trim() === user.name?.trim() || input.dm.name === "Me" || input.dm.name === "";
+				let isMe = false;
+				if (input.is_dm_log) isMe = true;
+				if (input.dm.uid === userId) isMe = true;
+				if (["Me", "", user.name?.trim()].includes(input.dm.name.trim())) isMe = true;
 
-				if (isMe) {
-					const dm = await tx.query.dungeonMasters.findFirst({
-						where: (dms, { eq }) => eq(dms.uid, userId)
+				if (!input.dm.id) {
+					const search = await tx.query.dungeonMasters.findFirst({
+						where: (dms, { eq, or, and }) =>
+							and(
+								eq(dms.owner, userId),
+								isMe
+									? eq(dms.uid, userId)
+									: input.dm.DCI
+										? or(eq(dms.name, input.dm.name.trim()), eq(dms.DCI, input.dm.DCI))
+										: eq(dms.name, input.dm.name.trim())
+							)
 					});
-					if (dm) input.dm = dm;
-				}
-
-				if (input.dm?.name.trim()) {
-					if (!input.dm.id) {
-						const search = await tx.query.dungeonMasters.findFirst({
-							where: (dms, { eq, or, and }) =>
-								and(
-									eq(dms.owner, userId),
-									input.is_dm_log || isMe
-										? eq(dms.uid, userId)
-										: input.dm.DCI
-											? or(eq(dms.name, input.dm.name.trim()), eq(dms.DCI, input.dm.DCI))
-											: eq(dms.name, input.dm.name.trim())
-								)
-						});
-						if (search) {
-							input.dm.id = search.id;
-							if (!input.dm.owner) input.dm.owner = userId;
-						}
-					}
-
-					try {
-						if (!input.dm.id) {
-							return await tx
-								.insert(dungeonMasters)
-								.values({
-									name: input.dm.name.trim(),
-									DCI: input.dm.DCI,
-									uid: input.is_dm_log || isMe ? user.id : null,
-									owner: userId
-								})
-								.returning();
-						} else {
-							return await tx
-								.update(dungeonMasters)
-								.set({
-									name: input.dm.name.trim(),
-									DCI: input.dm.DCI,
-									uid: input.is_dm_log || isMe ? user.id : null,
-									owner: user.id
-								})
-								.where(eq(dungeonMasters.id, input.dm.id))
-								.returning();
-						}
-					} catch (err) {
-						console.error(err);
+					if (search) {
+						input.dm.id = search.id;
+						if (!input.dm.name) input.dm.name = search.name;
+						if (!input.dm.DCI) input.dm.DCI = search.DCI;
+						if (!input.dm.owner) input.dm.owner = userId;
+						if (search.uid === userId) isMe = true;
 					}
 				}
 
-				return [null];
+				if (!input.dm.name) {
+					if (isMe) input.dm.name = user.name || "Me";
+					else throw new SaveError<LogSchema>(400, "Dungeon Master name is required", { field: "dm.id" });
+				}
+
+				try {
+					const dm: InsertDungeonMaster = {
+						name: input.dm.name.trim(),
+						DCI: input.dm.DCI,
+						uid: input.is_dm_log || isMe ? userId : null,
+						owner: userId
+					};
+					if (input.dm.id) {
+						return await tx.update(dungeonMasters).set(dm).where(eq(dungeonMasters.id, input.dm.id)).returning();
+					} else {
+						return await tx.insert(dungeonMasters).values(dm).returning();
+					}
+				} catch (err) {
+					console.error(err);
+					throw err;
+				}
 			})();
 
 			if (!dm?.id) throw new SaveError(500, "Could not save Dungeon Master");
@@ -138,7 +126,7 @@ export async function saveLog(input: LogSchema, user?: CustomSession["user"]): S
 				? await tx.update(logs).set(data).where(eq(logs.id, input.id)).returning()
 				: await tx.insert(logs).values(data).returning();
 
-			if (!log.id) throw new SaveError(500, "Could not save log");
+			if (!log?.id) throw new SaveError(500, "Could not save log");
 
 			const itemsToUpdate = input.magic_items_gained.filter((item) => item.id);
 			for (const item of itemsToUpdate) {

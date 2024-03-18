@@ -83,6 +83,8 @@ CREATE TABLE IF NOT EXISTS "public"."dungeonmaster" (
 
 ALTER TABLE "public"."dungeonmaster" OWNER TO "postgres";
 
+CREATE TYPE "public"."logType" AS enum ('game', 'nongame');
+
 CREATE TABLE IF NOT EXISTS "public"."log" (
     "id" character varying NOT NULL,
     "date" timestamp without time zone DEFAULT "now"() NOT NULL,
@@ -101,6 +103,8 @@ CREATE TABLE IF NOT EXISTS "public"."log" (
     "characterId" character varying,
     "created_at" timestamp without time zone NOT NULL
 );
+
+ALTER TABLE "public"."log" ALTER COLUMN "type" SET DATA TYPE "logType" USING "type"::"logType";
 
 ALTER TABLE "public"."log" OWNER TO "postgres";
 

@@ -1,10 +1,12 @@
+import { PROVIDERS } from "$lib/constants";
 import { privateEnv } from "$lib/env/private";
+import { isDefined, joinStringList } from "$lib/util";
 import { db, q } from "$server/db";
-import { accounts, type Account } from "$server/db/schema";
+import { accounts, users, type Account } from "$server/db/schema";
 import type { Provider } from "@auth/core/providers";
 import Discord from "@auth/core/providers/discord";
 import Google from "@auth/core/providers/google";
-import type { TokenSet } from "@auth/core/types";
+import type { Profile, TokenSet } from "@auth/core/types";
 import { DrizzleAdapter } from "@auth/drizzle-adapter";
 import { SvelteKitAuth, type SvelteKitAuthConfig } from "@auth/sveltekit";
 import { redirect, type Handle } from "@sveltejs/kit";
@@ -18,7 +20,11 @@ interface OAuthProvider {
 	tokenUrl: string;
 	clientId: string;
 	clientSecret: string;
-	// accountId: (profile: Profile) => Profile["id"] | Profile["sub"];
+	profile: (profile: Profile) => {
+		id: string;
+		name: string;
+		image: string;
+	} | null;
 	oauth: () => Provider;
 }
 const providers: OAuthProvider[] = [
@@ -27,9 +33,14 @@ const providers: OAuthProvider[] = [
 		tokenUrl: "https://oauth2.googleapis.com/token",
 		clientId: privateEnv.GOOGLE_CLIENT_ID,
 		clientSecret: privateEnv.GOOGLE_CLIENT_SECRET,
-		// accountId: function (profile) {
-		// 	return profile.sub;
-		// },
+		profile: function (profile) {
+			if (!profile.sub) return null;
+			return {
+				id: profile.sub,
+				name: profile.name as string,
+				image: profile.picture as string
+			};
+		},
 		oauth: function () {
 			return Google({
 				clientId: this.clientId,
@@ -43,9 +54,14 @@ const providers: OAuthProvider[] = [
 		tokenUrl: "https://discord.com/api/v10/oauth2/token",
 		clientId: privateEnv.DISCORD_CLIENT_ID,
 		clientSecret: privateEnv.DISCORD_CLIENT_SECRET,
-		// accountId: function (profile) {
-		// 	return profile.id;
-		// },
+		profile: function (profile) {
+			if (!profile.id) return null;
+			return {
+				id: profile.id,
+				name: profile.global_name as string,
+				image: profile.image_url as string
+			};
+		},
 		oauth: function () {
 			return Discord({
 				clientId: this.clientId,
@@ -58,20 +74,19 @@ const providers: OAuthProvider[] = [
 const auth = SvelteKitAuth(async (event) => {
 	return {
 		callbacks: {
-			async signIn({ account }) {
+			async signIn({ account, user, profile }) {
 				const redirectTo = event.url.searchParams.get("redirect") || undefined;
 				const redirectUrl = redirectTo ? new URL(redirectTo, event.url.origin) : undefined;
 
-				if (!account) authErrRedirect("MissingAccountData", "Account not found", redirectUrl);
-				// if (!profile) authErrRedirect("MissingAccountData", "Profile not found", redirectUrl);
+				if (!account) authErrRedirect("Missing Account Data", "Account not found", redirectUrl);
+				if (!profile) authErrRedirect("Missing Account Data", "Profile not found", redirectUrl);
 
-				// const provider = providers.find((p) => p.id === account.provider);
-				// if (!provider) authErrRedirect("InvalidProvider", `Provider '${account.provider}' not found`, redirectUrl);
+				const provider = providers.find((p) => p.id === account.provider);
+				if (!provider) authErrRedirect("Invalid Provider", `Provider '${account.provider}' not supported`, redirectUrl);
 
-				// const providerAccountId = provider.accountId(profile);
-				// if (!providerAccountId) authErrRedirect("MissingProfileData", "Account ID not found in profile", redirectUrl);
+				const accountProfile = provider.profile(profile);
+				if (!accountProfile) authErrRedirect("Profile Error", "Profile not found", redirectUrl);
 
-				// account.providerAccountId = providerAccountId;
 				const existingAccount = await q.accounts.findFirst({
 					where: (accounts, { and, eq }) =>
 						and(eq(accounts.provider, account.provider), eq(accounts.providerAccountId, account.providerAccountId))
@@ -82,9 +97,11 @@ const auth = SvelteKitAuth(async (event) => {
 
 				if (privateEnv.DISABLE_SIGNUPS && !existingAccount && !currentUserId) return false;
 
-				// If there is a user logged in already that we recognize,
-				// and we have an account that is being signed in with
 				if (currentUserId) {
+					// If there is a user logged in already that we recognize,
+					// and we have an account that is being signed in with
+					// then we should link the account to the user
+
 					// Only link accounts that have not yet been linked
 					if (existingAccount) authErrRedirect("AccountLinkError", "Account already linked to a user", redirectUrl);
 
@@ -99,15 +116,14 @@ const auth = SvelteKitAuth(async (event) => {
 						refresh_token: account.refresh_token,
 						token_type: `${account.token_type}`,
 						scope: account.scope ?? "",
-						id_token: account.id_token
+						id_token: account.id_token,
+						last_login: new Date()
 					});
 
 					redirect(302, "/characters");
 				} else if (existingAccount) {
-					event.cookies.set("authjs.provider", account.provider, {
-						path: "/",
-						expires: new Date(new Date().getTime() + 30 * 86400 * 1000)
-					});
+					// If there is no user logged in, but we recognize the account
+					// then we should log the user in and update the refresh token
 
 					if (account.refresh_token && account.expires_in) {
 						await db
@@ -120,29 +136,45 @@ const auth = SvelteKitAuth(async (event) => {
 								refresh_token: account.refresh_token,
 								token_type: account.token_type,
 								scope: account.scope,
-								id_token: account.id_token
+								id_token: account.id_token,
+								last_login: new Date()
 							})
 							.where(and(eq(accounts.provider, account.provider), eq(accounts.providerAccountId, account.providerAccountId)));
 					}
+				} else {
+					// If there is no user logged in and we don't recognize the account, then we should
+					// check if the account's email is already registered and prevent the sign in
+
+					const email = user.email;
+					const matchingUser = email ? await q.users.findFirst({ where: (users, { eq }) => eq(users.email, email) }) : undefined;
+					const matchingProviders = matchingUser
+						? await q.accounts
+								.findMany({ where: (accounts, { eq }) => eq(accounts.userId, matchingUser.id) })
+								.then((a) => a.map((a) => a.provider))
+						: undefined;
+					if (matchingProviders?.length) {
+						const names = matchingProviders.map((id) => PROVIDERS.find((p) => p.id === id)?.name).filter(isDefined);
+						const joinedProviders = joinStringList(names);
+						const message = `You already have an account with ${joinedProviders}. Sign in, then link additional providers in the settings menu.`;
+						authErrRedirect("Existing Account", message, redirectUrl);
+					}
 				}
+
+				if (user.id)
+					await db.update(users).set({ name: accountProfile.name, image: accountProfile.image }).where(eq(users.id, user.id));
 
 				return true;
 			},
 			async session({ session, user }) {
 				if (session.expires >= new Date()) return session satisfies LocalsSession;
 
-				const currentProvider = event.cookies.get("authjs.provider");
-				if (currentProvider) {
-					const account = await q.accounts.findFirst({
-						where: (accounts, { and, eq }) => and(eq(accounts.userId, user.id), eq(accounts.provider, currentProvider))
-					});
+				const account = await q.accounts.findFirst({
+					where: (accounts, { and, eq, isNotNull }) => and(eq(accounts.userId, user.id), isNotNull(accounts.last_login)),
+					orderBy: (account, { desc }) => desc(account.last_login)
+				});
 
-					if (account && account.userId === user.id) {
-						event.cookies.set("authjs.provider", account.provider, {
-							path: "/",
-							expires: new Date(new Date().getTime() + 30 * 86400 * 1000)
-						});
-
+				if (account) {
+					if (account.userId === user.id) {
 						const [result] = await refreshToken(account);
 						if (result instanceof Error) console.error(`RefreshAccessTokenError: ${result.message}`);
 					}
@@ -198,7 +230,7 @@ async function refreshToken(account: Account) {
 				method: "POST"
 			});
 
-			const tokens: TokenSet = await response.json();
+			const tokens = (await response.json()) as TokenSet;
 
 			if (!response.ok) {
 				console.error("Error refreshing access token:", tokens);

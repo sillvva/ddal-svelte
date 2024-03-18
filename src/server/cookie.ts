@@ -20,6 +20,7 @@ export function setCookie(name: string, value: string | number | boolean | objec
 	const parts = name.split(":");
 	if (parts[1]) {
 		const [prefix, suffix] = parts;
+		if (prefix === undefined || suffix === undefined) throw new Error("Invalid cookie name");
 		const val = Cookie.get(prefix) || "%7B%7D";
 		const existing = JSON.parse(val.startsWith("%") ? decodeURIComponent(val) : val) as Record<string, unknown>;
 		existing[suffix] = value;
@@ -138,6 +139,7 @@ export function serverSetCookie(
 	const parts = name.split(":");
 	if (parts[1]) {
 		const [prefix, suffix] = parts;
+		if (prefix === undefined || suffix === undefined) throw new Error("Invalid cookie name");
 		const existing = JSON.parse(cookies.get(prefix) || "{}") as Record<string, unknown>;
 		existing[suffix] = value;
 		cookies.set(prefix, JSON.stringify(existing), {

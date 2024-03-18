@@ -8,6 +8,9 @@
 	export let storyAwards: StoryAward[] = [];
 
 	const { form } = superform;
+
+	$: remainingItems = magicItems.filter((item) => !$form.magic_items_lost.includes(item.id));
+	$: remainingAwards = storyAwards.filter((item) => !$form.story_awards_lost.includes(item.id));
 </script>
 
 <div class="no-script-hide col-span-12 flex flex-wrap gap-4">
@@ -18,15 +21,13 @@
 	>
 		Add Magic Item
 	</button>
-	{#if magicItems.filter((item) => !$form.magic_items_lost.includes(item.id)).length > 0}
+	{#if remainingItems.length > 0}
 		<button
 			type="button"
 			class="btn min-w-fit flex-1 sm:btn-sm sm:flex-none"
-			on:click={() =>
-				($form.magic_items_lost = [
-					...$form.magic_items_lost,
-					magicItems.filter((item) => !$form.magic_items_lost.includes(item.id))[0].id
-				])}
+			on:click={() => {
+				if (remainingItems[0]) $form.magic_items_lost = [...$form.magic_items_lost, remainingItems[0].id];
+			}}
 		>
 			Drop Magic Item
 		</button>
@@ -39,15 +40,13 @@
 		>
 			Add Story Award
 		</button>
-		{#if storyAwards.filter((item) => !$form.story_awards_lost.includes(item.id)).length > 0}
+		{#if remainingAwards.length > 0}
 			<button
 				type="button"
 				class="btn min-w-fit flex-1 sm:btn-sm sm:flex-none"
-				on:click={() =>
-					($form.story_awards_lost = [
-						...$form.story_awards_lost,
-						storyAwards.filter((item) => !$form.story_awards_lost.includes(item.id))[0].id || ""
-					])}
+				on:click={() => {
+					if (remainingAwards[0]) $form.story_awards_lost = [...$form.story_awards_lost, remainingAwards[0].id];
+				}}
 			>
 				Drop Story Award
 			</button>

@@ -33,6 +33,8 @@ export async function saveDM(
 			.where(eq(dungeonMasters.id, dmId))
 			.returning();
 
+		if (!result) throw new SaveError(500, "Failed to save DM");
+
 		const characterIds = [...new Set(dm.logs.filter((l) => l.characterId).map((l) => l.characterId))];
 		revalidateKeys([
 			["dms", user.id, "logs"],
@@ -64,6 +66,7 @@ export async function deleteDM(dmId: string, user?: LocalsSession["user"]): Save
 		if (dm) throw new SaveError(401, "You cannot delete a DM that has logs");
 
 		const [result] = await db.delete(dungeonMasters).where(eq(dungeonMasters.id, dmId)).returning({ id: dungeonMasters.id });
+		if (!result) throw new SaveError(500, "Failed to delete DM");
 
 		revalidateKeys([
 			["dms", user.id, "logs"],

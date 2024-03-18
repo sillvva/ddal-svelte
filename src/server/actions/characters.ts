@@ -37,6 +37,8 @@ export async function saveCharacter(
 			}
 		})();
 
+		if (!result) throw new SaveError(500, "Failed to save character");
+
 		revalidateKeys([
 			["character", result.id, "logs"],
 			["character", result.id, "no-logs"],
@@ -77,6 +79,8 @@ export async function deleteCharacter(characterId: string, userId?: string) {
 			}
 			return await tx.delete(characters).where(eq(characters.id, characterId)).returning({ id: characters.id });
 		});
+
+		if (!result) error(500, "Failed to delete character");
 
 		revalidateKeys([
 			["character", result.id, "logs"],
