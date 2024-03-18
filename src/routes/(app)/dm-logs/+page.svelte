@@ -10,6 +10,7 @@
 	import { stopWords } from "$lib/constants";
 	import { errorToast, successToast } from "$lib/factories";
 	import { searchData } from "$lib/stores";
+	import { SaveError } from "$lib/util.js";
 	import type { CookieStore } from "$server/cookie.js";
 	import { sorter } from "@sillvva/utils";
 	import { download, hotkey } from "@svelteuidev/composables";
@@ -316,7 +317,7 @@
 												deletingLog = [...deletingLog, log.id];
 												return async ({ result }) => {
 													await applyAction(result);
-													if (form?.error) {
+													if (form instanceof SaveError) {
 														deletingLog = deletingLog.filter((id) => id !== log.id);
 														errorToast(form.error);
 													} else {
