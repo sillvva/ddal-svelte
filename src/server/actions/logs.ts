@@ -59,52 +59,48 @@ export async function saveLog(input: LogSchema, user?: CustomSession["user"]): S
 				if (input.dm.uid === userId) isMe = true;
 				if (["Me", "", user.name?.trim()].includes(input.dm.name.trim())) isMe = true;
 
-				if (input.dm?.name.trim()) {
-					if (!input.dm.id) {
-						const search = await tx.query.dungeonMasters.findFirst({
-							where: (dms, { eq, or, and }) =>
-								and(
-									eq(dms.owner, userId),
-									isMe
-										? eq(dms.uid, userId)
-										: input.dm.DCI
-											? or(eq(dms.name, input.dm.name.trim()), eq(dms.DCI, input.dm.DCI))
-											: eq(dms.name, input.dm.name.trim())
-								)
-						});
-						if (search) {
-							input.dm.id = search.id;
-							if (search.uid === userId) {
-								input.dm.uid = userId;
-								isMe = true;
-							}
-							if (!input.dm.owner) input.dm.owner = userId;
-						}
-					}
-
-					if (!input.dm.name) {
-						if (isMe) input.dm.name = user.name || "Me";
-						else throw new SaveError<LogSchema>(400, "Dungeon Master name is required", { field: "dm.name" });
-					}
-
-					try {
-						const dm: InsertDungeonMaster = {
-							name: input.dm.name.trim(),
-							DCI: input.dm.DCI,
-							uid: input.is_dm_log || isMe ? userId : null,
-							owner: userId
-						};
-						if (input.dm.id) {
-							return await tx.update(dungeonMasters).set(dm).where(eq(dungeonMasters.id, input.dm.id)).returning();
-						} else {
-							return await tx.insert(dungeonMasters).values(dm).returning();
-						}
-					} catch (err) {
-						console.error(err);
+				if (!input.dm.id) {
+					const search = await tx.query.dungeonMasters.findFirst({
+						where: (dms, { eq, or, and }) =>
+							and(
+								eq(dms.owner, userId),
+								isMe
+									? eq(dms.uid, userId)
+									: input.dm.DCI
+										? or(eq(dms.name, input.dm.name.trim()), eq(dms.DCI, input.dm.DCI))
+										: eq(dms.name, input.dm.name.trim())
+							)
+					});
+					if (search) {
+						input.dm.id = search.id;
+						if (!input.dm.name) input.dm.name = search.name;
+						if (!input.dm.DCI) input.dm.DCI = search.DCI;
+						if (!input.dm.owner) input.dm.owner = userId;
+						if (search.uid === userId) isMe = true;
 					}
 				}
 
-				return [null];
+				if (!input.dm.name) {
+					if (isMe) input.dm.name = user.name || "Me";
+					else throw new SaveError<LogSchema>(400, "Dungeon Master name is required", { field: "dm.name" });
+				}
+
+				try {
+					const dm: InsertDungeonMaster = {
+						name: input.dm.name.trim(),
+						DCI: input.dm.DCI,
+						uid: input.is_dm_log || isMe ? userId : null,
+						owner: userId
+					};
+					if (input.dm.id) {
+						return await tx.update(dungeonMasters).set(dm).where(eq(dungeonMasters.id, input.dm.id)).returning();
+					} else {
+						return await tx.insert(dungeonMasters).values(dm).returning();
+					}
+				} catch (err) {
+					console.error(err);
+					throw err;
+				}
 			})();
 
 			if (!dm?.id) throw new SaveError(500, "Could not save Dungeon Master");
