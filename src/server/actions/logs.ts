@@ -2,6 +2,7 @@ import { getLevels } from "$lib/entities";
 import { type LogSchema } from "$lib/schemas";
 import { SaveError, handleSaveError, type SaveResult } from "$lib/util";
 import { rateLimiter, revalidateKeys } from "$server/cache";
+import type { LogData } from "$server/data/logs";
 import { db } from "$server/db";
 import { dungeonMasters, logs, magicItems, storyAwards, type InsertDungeonMaster, type Log } from "$server/db/schema";
 import { error, type NumericRange } from "@sveltejs/kit";
@@ -19,7 +20,7 @@ class LogError<T extends LogSchema> extends SaveError<T> {
 }
 
 export type SaveLogResult = ReturnType<typeof saveLog>;
-export async function saveLog(input: LogSchema, user?: CustomSession["user"]): SaveResult<{ id: string; log: Log }, LogSchema> {
+export async function saveLog(input: LogSchema, user?: CustomSession["user"]): SaveResult<LogData, LogSchema> {
 	try {
 		if (!user?.name || !user?.id) throw new LogError(401, "Not authenticated");
 		const userId = user.id;
@@ -220,14 +221,14 @@ export async function saveLog(input: LogSchema, user?: CustomSession["user"]): S
 			user.id && ["search-data", user.id]
 		]);
 
-		return { id: log.id, log };
+		return log;
 	} catch (err) {
 		return handleSaveError(err);
 	}
 }
 
 export type DeleteLogResult = ReturnType<typeof deleteLog>;
-export async function deleteLog(logId: string, userId?: string): SaveResult<{ id?: string }, LogSchema> {
+export async function deleteLog(logId: string, userId?: string): SaveResult<{ id: string }, LogSchema> {
 	try {
 		if (!userId) error(401, "Not authenticated");
 
@@ -254,8 +255,8 @@ export async function deleteLog(logId: string, userId?: string): SaveResult<{ id
 		if (!log) throw new LogError(404, "Log not found");
 
 		revalidateKeys([
-			log?.is_dm_log && log.dm?.uid && ["dm-logs", log.dm.uid],
-			log?.characterId && ["character", log.characterId, "logs"],
+			log.is_dm_log && log.dm?.uid && ["dm-logs", log.dm.uid],
+			log.characterId && ["character", log.characterId, "logs"],
 			["search-data", userId]
 		]);
 
