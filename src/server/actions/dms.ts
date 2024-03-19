@@ -4,19 +4,7 @@ import { rateLimiter, revalidateKeys, type CacheKey } from "$server/cache";
 import { getUserDMsWithLogsCache } from "$server/data/dms";
 import { db } from "$server/db";
 import { dungeonMasters, type DungeonMaster } from "$server/db/schema";
-import type { NumericRange } from "@sveltejs/kit";
 import { eq } from "drizzle-orm";
-import type { FormPathLeaves } from "sveltekit-superforms";
-
-class DmError<T extends DungeonMasterSchema> extends SaveError<T> {
-	constructor(
-		public status: NumericRange<400, 599>,
-		public message: string,
-		public field?: FormPathLeaves<T>
-	) {
-		super(status, message, { field });
-	}
-}
 
 export type SaveDMResult = ReturnType<typeof saveDM>;
 export async function saveDM(
@@ -25,13 +13,13 @@ export async function saveDM(
 	data: DungeonMasterSchema
 ): SaveResult<{ id: string; dm: DungeonMaster }, DungeonMasterSchema> {
 	try {
-		if (!user) throw new DmError(401, "You must be logged in to save a DM");
+		if (!user) throw new SaveError(401, "You must be logged in to save a DM");
 
 		const { success } = await rateLimiter("insert", user.id);
-		if (!success) throw new DmError(429, "Too many requests");
+		if (!success) throw new SaveError(429, "Too many requests");
 
 		const dm = (await getUserDMsWithLogsCache(user)).find((dm) => dm.id === dmId);
-		if (!dm) throw new DmError(401, "You do not have permission to edit this DM");
+		if (!dm) throw new SaveError(401, "You do not have permission to edit this DM");
 
 		if (data.name === "" && data.uid) data.name = user.name || "Me";
 
@@ -45,7 +33,7 @@ export async function saveDM(
 			.where(eq(dungeonMasters.id, dmId))
 			.returning();
 
-		if (!result) throw new DmError(500, "Failed to save DM");
+		if (!result) throw new SaveError(500, "Failed to save DM");
 
 		const characterIds = [...new Set(dm.logs.filter((l) => l.characterId).map((l) => l.characterId))];
 		revalidateKeys([
@@ -64,19 +52,19 @@ export async function saveDM(
 export type DeleteDMResult = ReturnType<typeof deleteDM>;
 export async function deleteDM(dmId: string, user?: LocalsSession["user"]): SaveResult<{ id: string }, DungeonMasterSchema> {
 	try {
-		if (!user) throw new DmError(401, "You must be logged in to delete a DM");
+		if (!user) throw new SaveError(401, "You must be logged in to delete a DM");
 
 		const { success } = await rateLimiter("insert", user.id);
-		if (!success) throw new DmError(429, "Too many requests");
+		if (!success) throw new SaveError(429, "Too many requests");
 
 		const dms = (await getUserDMsWithLogsCache(user)).filter((dm) => dm.id === dmId);
-		if (!dms.length) throw new DmError(401, "You do not have permission to delete this DM");
+		if (!dms.length) throw new SaveError(401, "You do not have permission to delete this DM");
 
 		const dm = dms.find((dm) => dm.logs.length);
-		if (dm) throw new DmError(401, "You cannot delete a DM that has logs");
+		if (dm) throw new SaveError(401, "You cannot delete a DM that has logs");
 
 		const [result] = await db.delete(dungeonMasters).where(eq(dungeonMasters.id, dmId)).returning({ id: dungeonMasters.id });
-		if (!result) throw new DmError(500, "Failed to delete DM");
+		if (!result) throw new SaveError(500, "Failed to delete DM");
 
 		revalidateKeys([
 			["dms", user.id, "logs"],
