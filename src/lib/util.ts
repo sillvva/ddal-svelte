@@ -1,6 +1,6 @@
 import { dev } from "$app/environment";
 import { error, type NumericRange } from "@sveltejs/kit";
-import { message, setError, type FormPathLeaves, type SuperValidated } from "sveltekit-superforms";
+import { message, setError, type FormPathLeavesWithErrors, type SuperValidated } from "sveltekit-superforms";
 import type { setupViewTransition } from "sveltekit-view-transition";
 import { twMerge } from "tailwind-merge";
 
@@ -60,16 +60,19 @@ export type SaveResult<T extends object | null, S extends Record<string, unknown
 
 export class SaveError<TOut extends Record<string, unknown>, TIn extends Record<string, unknown> = TOut> {
 	constructor(
-		public status: NumericRange<400, 599>,
 		public error: string,
-		public options?: { field?: FormPathLeaves<TOut> }
-	) {}
+		public options: {
+			field?: FormPathLeavesWithErrors<TOut>;
+			status?: NumericRange<400, 599>;
+		} = { status: 500 }
+	) {
+		if (!options.status) this.options.status = 500;
+	}
 
 	toForm(form: SuperValidated<TOut, App.Superforms.Message, TIn>) {
 		return this.options?.field
-			? /* eslint-disable-next-line  @typescript-eslint/no-explicit-any */
-				setError(form, this.options.field as any, this.error, {
-					status: this.status
+			? setError(form, this.options.field, this.error, {
+					status: this.options.status
 				})
 			: message(
 					form,
@@ -78,7 +81,7 @@ export class SaveError<TOut extends Record<string, unknown>, TIn extends Record<
 						text: this.error
 					},
 					{
-						status: this.status
+						status: this.options.status
 					}
 				);
 	}
@@ -87,8 +90,8 @@ export class SaveError<TOut extends Record<string, unknown>, TIn extends Record<
 export function handleSaveError<TObj extends Record<string, unknown>>(err: SaveError<TObj> | Error | unknown) {
 	if (dev) console.error(err);
 	if (err instanceof SaveError) return err;
-	if (err instanceof Error) return new SaveError<TObj>(500, err.message);
-	return new SaveError<TObj>(500, "An unknown error has occurred.");
+	if (err instanceof Error) return new SaveError<TObj>(err.message);
+	return new SaveError<TObj>("An unknown error has occurred.");
 }
 
 export function handleSKitError(err: unknown) {
