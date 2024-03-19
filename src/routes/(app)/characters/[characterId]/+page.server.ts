@@ -12,7 +12,7 @@ export const load = async (event) => {
 	return {
 		title: character.name,
 		description: `Level ${character.total_level} ${character.race} ${character.class}`.replace(/ {2,}/g, " ").trim(),
-		image: character.image_url,
+		image: character.imageUrl,
 		character
 	};
 };

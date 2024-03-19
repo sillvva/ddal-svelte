@@ -81,7 +81,7 @@
 									</td>
 									<td class="hidden sm:table-cell">
 										<a
-											href={log.is_dm_log ? `/dm-logs/${log.id}` : `/characters/${log.character?.id}/log/${log.id}`}
+											href={log.isDmLog ? `/dm-logs/${log.id}` : `/characters/${log.character?.id}/log/${log.id}`}
 											class="text-secondary"
 										>
 											{log.name}

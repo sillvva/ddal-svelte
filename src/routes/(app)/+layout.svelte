@@ -394,7 +394,7 @@
 																{#if item.type === "character"}
 																	<span class="mask mask-squircle h-12 min-w-12 max-w-12 bg-primary">
 																		<img
-																			src={item.image_url}
+																			src={item.imageUrl}
 																			class="size-full object-cover object-top transition-all"
 																			alt={item.name}
 																		/>

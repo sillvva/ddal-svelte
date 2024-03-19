@@ -28,10 +28,10 @@
 		<Input type="text" {superform} field="class">Class</Input>
 	</Control>
 	<Control class="col-span-12">
-		<Input type="url" {superform} field="character_sheet_url">Character Sheet URL</Input>
+		<Input type="url" {superform} field="characterSheetUrl">Character Sheet URL</Input>
 	</Control>
 	<Control class="col-span-12">
-		<Input type="url" {superform} field="image_url" placeholder={data.BLANK_CHARACTER}>Image URL</Input>
+		<Input type="url" {superform} field="imageUrl" placeholder={data.BLANK_CHARACTER}>Image URL</Input>
 	</Control>
 	<Submit {superform}>Save Character</Submit>
 </SuperForm>

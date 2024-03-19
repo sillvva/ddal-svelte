@@ -18,10 +18,10 @@ export async function getCharacter(characterId: string, includeLogs = true) {
 					logs: {
 						with: {
 							dm: true,
-							magic_items_gained: true,
-							magic_items_lost: true,
-							story_awards_gained: true,
-							story_awards_lost: true
+							magicItemsGained: true,
+							magicItemsLost: true,
+							storyAwardsGained: true,
+							storyAwardsLost: true
 						},
 						orderBy: (logs, { asc }) => asc(logs.date)
 					}
@@ -44,7 +44,7 @@ export async function getCharacter(characterId: string, includeLogs = true) {
 
 	return {
 		...character,
-		image_url: character.image_url || BLANK_CHARACTER,
+		imageUrl: character.imageUrl || BLANK_CHARACTER,
 		...getLogsSummary(character.logs)
 	};
 }
@@ -56,10 +56,10 @@ export async function getCharactersWithLogs(userId: string, includeLogs = true) 
 			logs: {
 				with: {
 					dm: true,
-					magic_items_gained: true,
-					magic_items_lost: true,
-					story_awards_gained: true,
-					story_awards_lost: true
+					magicItemsGained: true,
+					magicItemsLost: true,
+					storyAwardsGained: true,
+					storyAwardsLost: true
 				},
 				orderBy: (logs, { asc }) => asc(logs.date)
 			}
@@ -69,7 +69,7 @@ export async function getCharactersWithLogs(userId: string, includeLogs = true) 
 
 	return characters.map((c) => ({
 		...c,
-		image_url: c.image_url || BLANK_CHARACTER,
+		imageUrl: c.imageUrl || BLANK_CHARACTER,
 		...getLogsSummary(c.logs, includeLogs)
 	}));
 }
@@ -93,10 +93,10 @@ export async function getCharacterCaches(characterIds: string[]) {
 						logs: {
 							with: {
 								dm: true,
-								magic_items_gained: true,
-								magic_items_lost: true,
-								story_awards_gained: true,
-								story_awards_lost: true
+								magicItemsGained: true,
+								magicItemsLost: true,
+								storyAwardsGained: true,
+								storyAwardsLost: true
 							},
 							orderBy: (logs, { asc }) => asc(logs.date)
 						}
@@ -109,7 +109,7 @@ export async function getCharacterCaches(characterIds: string[]) {
 		return characters
 			.map((c) => ({
 				key: keys.find((k) => k[1] === c.id)!,
-				value: { ...c, image_url: c.image_url || BLANK_CHARACTER, ...getLogsSummary(c.logs) }
+				value: { ...c, imageUrl: c.imageUrl || BLANK_CHARACTER, ...getLogsSummary(c.logs) }
 			}))
 			.filter((c) => c.key);
 	}, keys);

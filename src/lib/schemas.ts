@@ -58,17 +58,17 @@ export const logSchema = object({
 			name: optional(string(), "")
 		})
 	]),
-	is_dm_log: optional(boolean(), false),
-	applied_date: nullable(date()),
-	magic_items_gained: optional(array(itemSchema), []),
-	magic_items_lost: optional(array(string([minLength(1)])), []),
-	story_awards_gained: optional(array(itemSchema), []),
-	story_awards_lost: optional(array(string([minLength(1)])), [])
+	isDmLog: optional(boolean(), false),
+	appliedDate: nullable(date()),
+	magicItemsGained: optional(array(itemSchema), []),
+	magicItemsLost: optional(array(string([minLength(1)])), []),
+	storyAwardsGained: optional(array(itemSchema), []),
+	storyAwardsLost: optional(array(string([minLength(1)])), [])
 });
 
 export const characterLogSchema = (character: CharacterData) =>
 	object(logSchema.entries, [
-		custom((input) => !input.is_dm_log, "Only character logs can be saved here."),
+		custom((input) => !input.isDmLog, "Only character logs can be saved here."),
 		forward(
 			custom((input) => {
 				const logACP = character.logs.find((log) => log.id === input.id)?.acp || 0;
@@ -87,25 +87,25 @@ export const characterLogSchema = (character: CharacterData) =>
 
 export const dMLogSchema = (characters: (CharacterData | { id: string; name: string })[]) =>
 	object(logSchema.entries, [
-		custom((input) => input.is_dm_log, "Only DM logs can be saved here."),
+		custom((input) => input.isDmLog, "Only DM logs can be saved here."),
 		forward(
 			custom((input) => !input.characterId || !!characters.find((c) => c.id === input.characterId), "Character not found"),
 			["characterId"]
 		),
 		forward(
-			custom((input) => !!input.characterId || !input.applied_date, "Character must be selected if applied date is set"),
+			custom((input) => !!input.characterId || !input.appliedDate, "Character must be selected if applied date is set"),
 			["characterId"]
 		),
 		forward(
-			custom((input) => !!input.applied_date || !input.characterId, "Date must be set if applied to a character"),
-			["applied_date"]
+			custom((input) => !!input.appliedDate || !input.characterId, "Date must be set if applied to a character"),
+			["appliedDate"]
 		),
 		forward(
 			custom(
-				(input) => !input.applied_date || (input.applied_date.getTime() - input.date.getTime()) / 1000 > -60,
+				(input) => !input.appliedDate || (input.appliedDate.getTime() - input.date.getTime()) / 1000 > -60,
 				"Applied date must be after log date"
 			),
-			["applied_date"]
+			["appliedDate"]
 		),
 		forward(
 			custom((input) => {
@@ -135,8 +135,8 @@ export const newCharacterSchema = object({
 	campaign: optional(string(), ""),
 	race: optional(string(), ""),
 	class: optional(string(), ""),
-	character_sheet_url: optionalURL,
-	image_url: optionalURL
+	characterSheetUrl: optionalURL,
+	imageUrl: optionalURL
 });
 
 export type EditCharacterSchema = Output<typeof editCharacterSchema>;

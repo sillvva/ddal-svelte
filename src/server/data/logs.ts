@@ -6,20 +6,20 @@ import type { DungeonMaster, Log, MagicItem, StoryAward } from "$server/db/schem
 export type LogData = Log & {
 	dm: DungeonMaster | null;
 	type: "game" | "nongame";
-	magic_items_gained: MagicItem[];
-	magic_items_lost: MagicItem[];
-	story_awards_gained: StoryAward[];
-	story_awards_lost: StoryAward[];
+	magicItemsGained: MagicItem[];
+	magicItemsLost: MagicItem[];
+	storyAwardsGained: StoryAward[];
+	storyAwardsLost: StoryAward[];
 };
 export async function getLog(logId: string, userId: string, characterId = ""): Promise<LogData> {
 	const log =
 		(await q.logs.findFirst({
 			with: {
 				dm: true,
-				magic_items_gained: true,
-				magic_items_lost: true,
-				story_awards_gained: true,
-				story_awards_lost: true
+				magicItemsGained: true,
+				magicItemsLost: true,
+				storyAwardsGained: true,
+				storyAwardsLost: true
 			},
 			where: (logs, { eq }) => eq(logs.id, logId)
 		})) || defaultLogData(userId, characterId);
@@ -31,12 +31,12 @@ export async function getDMLog(logId: string, userId: string): Promise<LogData> 
 		(await q.logs.findFirst({
 			with: {
 				dm: true,
-				magic_items_gained: true,
-				magic_items_lost: true,
-				story_awards_gained: true,
-				story_awards_lost: true
+				magicItemsGained: true,
+				magicItemsLost: true,
+				storyAwardsGained: true,
+				storyAwardsLost: true
 			},
-			where: (logs, { eq, and }) => and(eq(logs.id, logId), eq(logs.is_dm_log, true))
+			where: (logs, { eq, and }) => and(eq(logs.id, logId), eq(logs.isDmLog, true))
 		})) || defaultLogData(userId);
 	return { ...parseLogEnums(log), dm: log.dm || defaultDM(userId) };
 }
@@ -56,10 +56,10 @@ export async function getDMLogs(userId: string) {
 		.findMany({
 			with: {
 				dm: true,
-				magic_items_gained: true,
-				magic_items_lost: true,
-				story_awards_gained: true,
-				story_awards_lost: true,
+				magicItemsGained: true,
+				magicItemsLost: true,
+				storyAwardsGained: true,
+				storyAwardsLost: true,
 				character: {
 					with: {
 						user: true
@@ -68,7 +68,7 @@ export async function getDMLogs(userId: string) {
 			},
 			where: (logs, { eq, and, inArray }) =>
 				and(
-					eq(logs.is_dm_log, true),
+					eq(logs.isDmLog, true),
 					inArray(
 						logs.dungeonMasterId,
 						dms.map((dm) => dm.id)
@@ -98,7 +98,7 @@ export async function getUserLogs(userId: string) {
 			id: true,
 			name: true,
 			date: true,
-			is_dm_log: true
+			isDmLog: true
 		},
 		with: {
 			dm: {
@@ -110,7 +110,7 @@ export async function getUserLogs(userId: string) {
 				columns: {
 					id: true,
 					name: true,
-					image_url: true
+					imageUrl: true
 				}
 			}
 		},

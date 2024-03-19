@@ -49,12 +49,12 @@ export const accounts = pgTable(
 		userId: varchar("userId")
 			.notNull()
 			.references(() => users.id, { onUpdate: "cascade", onDelete: "cascade" }),
-		refresh_token: varchar("refresh_token"),
-		access_token: varchar("access_token").notNull(),
-		expires_at: integer("expires_at").notNull(),
-		token_type: varchar("token_type").notNull(),
+		refreshToken: varchar("refresh_token"),
+		accessToken: varchar("access_token").notNull(),
+		expiresAt: integer("expires_at").notNull(),
+		tokenType: varchar("token_type").notNull(),
 		scope: varchar("scope").notNull(),
-		id_token: varchar("id_token"),
+		idToken: varchar("id_token"),
 		session_state: varchar("session_state"),
 		last_login: timestamp("last_login", { mode: "date" })
 	},
@@ -84,7 +84,7 @@ export const sessions = pgTable(
 			.notNull()
 			.references(() => users.id, { onUpdate: "cascade", onDelete: "cascade" }),
 		expires: timestamp("expires", { mode: "date" }).notNull(),
-		created_at: timestamp("created_at", { mode: "date", withTimezone: true })
+		createdAt: timestamp("created_at", { mode: "date", withTimezone: true })
 			.notNull()
 			.$default(() => new Date())
 	},
@@ -116,12 +116,12 @@ export const characters = pgTable(
 		race: varchar("race"),
 		class: varchar("class"),
 		campaign: varchar("campaign"),
-		image_url: varchar("image_url"),
-		character_sheet_url: varchar("character_sheet_url"),
+		imageUrl: varchar("image_url"),
+		characterSheetUrl: varchar("character_sheet_url"),
 		userId: varchar("userId")
 			.notNull()
 			.references(() => users.id, { onUpdate: "cascade", onDelete: "cascade" }),
-		created_at: timestamp("created_at", { mode: "date" })
+		createdAt: timestamp("created_at", { mode: "date" })
 			.notNull()
 			.$default(() => new Date())
 	},
@@ -195,7 +195,7 @@ export const logs = pgTable(
 			onUpdate: "cascade",
 			onDelete: "set null"
 		}),
-		is_dm_log: boolean("is_dm_log").notNull(),
+		isDmLog: boolean("is_dm_log").notNull(),
 		experience: integer("experience")
 			.notNull()
 			.$default(() => 0),
@@ -214,9 +214,9 @@ export const logs = pgTable(
 		dtd: smallint("dtd")
 			.notNull()
 			.$default(() => 0),
-		applied_date: timestamp("applied_date", { mode: "date" }),
+		appliedDate: timestamp("applied_date", { mode: "date" }),
 		characterId: varchar("characterId").references(() => characters.id, { onUpdate: "cascade", onDelete: "cascade" }),
-		created_at: timestamp("created_at", { mode: "date" })
+		createdAt: timestamp("created_at", { mode: "date" })
 			.notNull()
 			.$default(() => new Date())
 	},
@@ -237,10 +237,10 @@ export const logRelations = relations(logs, ({ one, many }) => ({
 		fields: [logs.dungeonMasterId],
 		references: [dungeonMasters.id]
 	}),
-	magic_items_gained: many(magicItems, { relationName: "magic_items_gained" }),
-	magic_items_lost: many(magicItems, { relationName: "magic_items_lost" }),
-	story_awards_gained: many(storyAwards, { relationName: "story_awards_gained" }),
-	story_awards_lost: many(storyAwards, { relationName: "story_awards_lost" })
+	magicItemsGained: many(magicItems, { relationName: "magicItemsGained" }),
+	magicItemsLost: many(magicItems, { relationName: "magicItemsLost" }),
+	storyAwardsGained: many(storyAwards, { relationName: "storyAwardsGained" }),
+	storyAwardsLost: many(storyAwards, { relationName: "storyAwardsLost" })
 }));
 
 export type MagicItem = typeof magicItems.$inferSelect;
@@ -272,12 +272,12 @@ export const magicItemRelations = relations(magicItems, ({ one }) => ({
 	logGained: one(logs, {
 		fields: [magicItems.logGainedId],
 		references: [logs.id],
-		relationName: "magic_items_gained"
+		relationName: "magicItemsGained"
 	}),
 	logLost: one(logs, {
 		fields: [magicItems.logLostId],
 		references: [logs.id],
-		relationName: "magic_items_lost"
+		relationName: "magicItemsLost"
 	})
 }));
 
@@ -310,11 +310,11 @@ export const storyAwardRelations = relations(storyAwards, ({ one }) => ({
 	logGained: one(logs, {
 		fields: [storyAwards.logGainedId],
 		references: [logs.id],
-		relationName: "story_awards_gained"
+		relationName: "storyAwardsGained"
 	}),
 	logLost: one(logs, {
 		fields: [storyAwards.logLostId],
 		references: [logs.id],
-		relationName: "story_awards_lost"
+		relationName: "storyAwardsLost"
 	})
 }));

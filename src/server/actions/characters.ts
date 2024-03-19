@@ -75,7 +75,7 @@ export async function deleteCharacter(characterId: string, userId?: string) {
 				await tx
 					.update(logs)
 					.set({ characterId: "" })
-					.where(and(inArray(logs.id, logIds), eq(logs.is_dm_log, true)));
+					.where(and(inArray(logs.id, logIds), eq(logs.isDmLog, true)));
 			}
 			return await tx.delete(characters).where(eq(characters.id, characterId)).returning({ id: characters.id });
 		});

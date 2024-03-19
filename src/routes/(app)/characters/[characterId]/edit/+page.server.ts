@@ -28,8 +28,8 @@ export const load = async (event) => {
 					campaign: parent.character.campaign || "",
 					race: parent.character.race || "",
 					class: parent.character.class || "",
-					character_sheet_url: parent.character.character_sheet_url || "",
-					image_url: parent.character.image_url.replace(BLANK_CHARACTER, "")
+					characterSheetUrl: parent.character.characterSheetUrl || "",
+					imageUrl: parent.character.imageUrl.replace(BLANK_CHARACTER, "")
 				}
 			: undefined,
 		valibot(newCharacterSchema),

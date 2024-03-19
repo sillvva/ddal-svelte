@@ -22,10 +22,10 @@ export const getMagicItems = (
 			if (lastLogId && log.id === lastLogId) lastLog = true;
 			if (lastLogDate && new Date(log.date) >= new Date(lastLogDate)) lastLog = true;
 			if (!lastLog)
-				log.magic_items_gained.forEach((item) => {
+				log.magicItemsGained.forEach((item) => {
 					magicItems.push(item);
 				});
-			log.magic_items_lost.forEach((item) => {
+			log.magicItemsLost.forEach((item) => {
 				if (excludeDropped && !lastLog)
 					magicItems.splice(
 						magicItems.findIndex((i) => i.id === item.id),
@@ -54,10 +54,10 @@ export const getStoryAwards = (
 			if (lastLogId && log.id === lastLogId) lastLog = true;
 			if (lastLogDate && new Date(log.date) >= new Date(lastLogDate)) lastLog = true;
 			if (!lastLog)
-				log.story_awards_gained.forEach((item) => {
+				log.storyAwardsGained.forEach((item) => {
 					storyAwards.push(item);
 				});
-			log.story_awards_lost.forEach((item) => {
+			log.storyAwardsLost.forEach((item) => {
 				if (excludeDropped && !lastLog)
 					storyAwards.splice(
 						storyAwards.findIndex((i) => i.id === item.id),
@@ -150,10 +150,10 @@ export const getLogsSummary = (
 	logs: Array<
 		Log & {
 			dm: DungeonMaster | null;
-			magic_items_gained: MagicItem[];
-			magic_items_lost: MagicItem[];
-			story_awards_gained: StoryAward[];
-			story_awards_lost: StoryAward[];
+			magicItemsGained: MagicItem[];
+			magicItemsLost: MagicItem[];
+			storyAwardsGained: StoryAward[];
+			storyAwardsLost: StoryAward[];
 		}
 	>,
 	includeLogs = true
@@ -168,7 +168,7 @@ export const getLogsSummary = (
 	const total_dtd = logs.reduce((acc, log) => acc + log.dtd, 0);
 	const magic_items = logs.reduce((acc, log) => {
 		acc.push(
-			...log.magic_items_gained.filter((magicItem) => {
+			...log.magicItemsGained.filter((magicItem) => {
 				return !magicItem.logLostId;
 			})
 		);
@@ -176,7 +176,7 @@ export const getLogsSummary = (
 	}, [] as MagicItem[]);
 	const story_awards = logs.reduce((acc, log) => {
 		acc.push(
-			...log.story_awards_gained.filter((storyAward) => {
+			...log.storyAwardsGained.filter((storyAward) => {
 				return !storyAward.logLostId;
 			})
 		);
@@ -208,7 +208,7 @@ export function defaultLogData(userId: string, characterId = ""): LogData {
 		description: "",
 		date: new Date(),
 		type: "game",
-		created_at: new Date(),
+		createdAt: new Date(),
 		experience: 0,
 		acp: 0,
 		tcp: 0,
@@ -217,12 +217,12 @@ export function defaultLogData(userId: string, characterId = ""): LogData {
 		dtd: 0,
 		dungeonMasterId: "",
 		dm: defaultDM(userId),
-		applied_date: null,
-		is_dm_log: !characterId,
-		magic_items_gained: [],
-		magic_items_lost: [],
-		story_awards_gained: [],
-		story_awards_lost: []
+		appliedDate: null,
+		isDmLog: !characterId,
+		magicItemsGained: [],
+		magicItemsLost: [],
+		storyAwardsGained: [],
+		storyAwardsLost: []
 	};
 }
 
@@ -243,19 +243,19 @@ export function logDataToSchema(userId: string, log: LogData, character?: Charac
 		dm: log.dm?.id ? log.dm : defaultDM(userId),
 		type: log.type as "game" | "nongame",
 		date: new Date(log.date),
-		applied_date: log.applied_date ? new Date(log.applied_date) : null,
-		magic_items_gained: log.magic_items_gained.map((item) => ({
+		appliedDate: log.appliedDate ? new Date(log.appliedDate) : null,
+		magicItemsGained: log.magicItemsGained.map((item) => ({
 			id: item.id,
 			name: item.name,
 			description: item.description || ""
 		})),
-		magic_items_lost: log.magic_items_lost.map((item) => item.id),
-		story_awards_gained: log.story_awards_gained.map((award) => ({
+		magicItemsLost: log.magicItemsLost.map((item) => item.id),
+		storyAwardsGained: log.storyAwardsGained.map((award) => ({
 			id: award.id,
 			name: award.name,
 			description: award.description || ""
 		})),
-		story_awards_lost: log.story_awards_lost.map((award) => award.id)
+		storyAwardsLost: log.storyAwardsLost.map((award) => award.id)
 	};
 }
 
