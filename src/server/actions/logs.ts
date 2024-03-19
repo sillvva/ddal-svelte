@@ -102,7 +102,7 @@ export async function saveLog(input: LogSchema, user?: CustomSession["user"]): S
 				}
 			})();
 
-			if (!dm?.id) throw new LogError(500, "Could not save Dungeon Master");
+			if (!dm?.id) throw new LogError(500, "Could not save Dungeon Master", "dm.id");
 
 			const data: Omit<Log, "id" | "created_at"> = {
 				name: input.name,
