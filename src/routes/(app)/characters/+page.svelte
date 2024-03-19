@@ -5,8 +5,9 @@
 	import Dropdown from "$lib/components/Dropdown.svelte";
 	import Search from "$lib/components/Search.svelte";
 	import SearchResults from "$lib/components/SearchResults.svelte";
+	import { stopWords } from "$lib/constants.js";
 	import type { TransitionAction } from "$lib/util";
-	import { createTransition, isDefined, stopWords } from "$lib/util";
+	import { createTransition, isDefined } from "$lib/util";
 	import type { CookieStore } from "$server/cookie.js";
 	import { slugify, sorter } from "@sillvva/utils";
 	import { download, hotkey } from "@svelteuidev/composables";

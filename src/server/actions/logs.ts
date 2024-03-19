@@ -1,20 +1,34 @@
 import { getLevels } from "$lib/entities";
-import { SaveError, type LogSchema, type SaveResult } from "$lib/schemas";
-import { handleSKitError, handleSaveError } from "$lib/util";
+import { type LogSchema } from "$lib/schemas";
+import { SaveError, handleSaveError, type SaveResult } from "$lib/util";
 import { rateLimiter, revalidateKeys } from "$server/cache";
+import type { LogData } from "$server/data/logs";
 import { db } from "$server/db";
 import { dungeonMasters, logs, magicItems, storyAwards, type InsertDungeonMaster, type Log } from "$server/db/schema";
-import { error } from "@sveltejs/kit";
+import { error, type NumericRange } from "@sveltejs/kit";
 import { and, eq, inArray, notInArray } from "drizzle-orm";
+import type { FormPathLeavesWithErrors } from "sveltekit-superforms";
+
+class LogError<T extends LogSchema> extends SaveError<T> {
+	constructor(
+		public message: string,
+		public options: {
+			status?: NumericRange<400, 599>;
+			field?: FormPathLeavesWithErrors<T>;
+		} = { status: 500 }
+	) {
+		super(message, options);
+	}
+}
 
 export type SaveLogResult = ReturnType<typeof saveLog>;
-export async function saveLog(input: LogSchema, user?: CustomSession["user"]): SaveResult<{ id: string; log: Log }, LogSchema> {
+export async function saveLog(input: LogSchema, user?: CustomSession["user"]): SaveResult<LogData, LogSchema> {
 	try {
-		if (!user?.name || !user?.id) throw new SaveError(401, "Not authenticated");
+		if (!user?.name || !user?.id) throw new LogError("Not authenticated", { status: 401 });
 		const userId = user.id;
 
 		const { success } = await rateLimiter(input.id ? "insert" : "update", user.id);
-		if (!success) throw new SaveError(429, "Too many requests");
+		if (!success) throw new LogError("Too many requests", { status: 429 });
 
 		const log = await db.transaction(async (tx) => {
 			const applied_date: Date | null = input.is_dm_log
@@ -23,9 +37,7 @@ export async function saveLog(input: LogSchema, user?: CustomSession["user"]): S
 					: null
 				: new Date(input.date);
 			if (input.characterId && applied_date === null)
-				throw new SaveError<LogSchema>(400, "Applied date is required", {
-					field: "applied_date"
-				});
+				throw new LogError("Applied date is required", { status: 400, field: "applied_date" });
 
 			if (input.characterId) {
 				const character = await tx.query.characters.findFirst({
@@ -36,21 +48,18 @@ export async function saveLog(input: LogSchema, user?: CustomSession["user"]): S
 				});
 
 				if (!character)
-					throw new SaveError<LogSchema>(404, "Character not found", {
+					throw new LogError("Character not found", {
+						status: 404,
 						field: input.is_dm_log ? "characterId" : undefined
 					});
 
 				const currentLevel = getLevels(character.logs).total;
 				const logACP = character.logs.find((log) => log.id === input.id)?.acp || 0;
 				if (currentLevel == 20 && input.acp - logACP > 0)
-					throw new SaveError<LogSchema>(400, "Cannot increase level above 20", {
-						field: "acp"
-					});
+					throw new LogError("Cannot increase level above 20", { status: 400, field: "acp" });
 				const logLevel = character.logs.find((log) => log.id === input.id)?.level || 0;
 				if (currentLevel + input.level - logLevel > 20)
-					throw new SaveError<LogSchema>(400, "Cannot increase level above 20", {
-						field: "level"
-					});
+					throw new LogError("Cannot increase level above 20", { status: 400, field: "level" });
 			}
 
 			const [dm] = await (async () => {
@@ -82,7 +91,7 @@ export async function saveLog(input: LogSchema, user?: CustomSession["user"]): S
 
 				if (!input.dm.name) {
 					if (isMe) input.dm.name = user.name || "Me";
-					else throw new SaveError<LogSchema>(400, "Dungeon Master name is required", { field: "dm.id" });
+					else throw new LogError("Dungeon Master name is required", { status: 400, field: "dm.id" });
 				}
 
 				try {
@@ -103,7 +112,7 @@ export async function saveLog(input: LogSchema, user?: CustomSession["user"]): S
 				}
 			})();
 
-			if (!dm?.id) throw new SaveError(500, "Could not save Dungeon Master");
+			if (!dm?.id) throw new LogError("Could not save Dungeon Master", { field: "dm.id" });
 
 			const data: Omit<Log, "id" | "created_at"> = {
 				name: input.name,
@@ -126,7 +135,7 @@ export async function saveLog(input: LogSchema, user?: CustomSession["user"]): S
 				? await tx.update(logs).set(data).where(eq(logs.id, input.id)).returning()
 				: await tx.insert(logs).values(data).returning();
 
-			if (!log?.id) throw new SaveError(500, "Could not save log");
+			if (!log?.id) throw new LogError("Could not save log");
 
 			const itemsToUpdate = input.magic_items_gained.filter((item) => item.id);
 			for (const item of itemsToUpdate) {
@@ -212,7 +221,7 @@ export async function saveLog(input: LogSchema, user?: CustomSession["user"]): S
 			return updated;
 		});
 
-		if (!log) throw new SaveError(500, "Could not save log");
+		if (!log) throw new LogError("Could not save log");
 
 		revalidateKeys([
 			log.is_dm_log && log.dm?.uid && ["dm-logs", log.dm.uid],
@@ -221,19 +230,19 @@ export async function saveLog(input: LogSchema, user?: CustomSession["user"]): S
 			user.id && ["search-data", user.id]
 		]);
 
-		return { id: log.id, log };
+		return log;
 	} catch (err) {
 		return handleSaveError(err);
 	}
 }
 
 export type DeleteLogResult = ReturnType<typeof deleteLog>;
-export async function deleteLog(logId: string, userId?: string) {
+export async function deleteLog(logId: string, userId?: string): SaveResult<{ id: string }, LogSchema> {
 	try {
-		if (!userId) error(401, "Not authenticated");
+		if (!userId) throw new LogError("Not authenticated", { status: 401 });
 
 		const { success } = await rateLimiter("insert", userId);
-		if (!success) throw new SaveError(429, "Too many requests");
+		if (!success) throw new LogError("Too many requests", { status: 429 });
 
 		const log = await db.transaction(async (tx) => {
 			const log = await tx.query.logs.findFirst({
@@ -252,16 +261,16 @@ export async function deleteLog(logId: string, userId?: string) {
 			return log;
 		});
 
+		if (!log) throw new LogError("Log not found", { status: 404 });
+
 		revalidateKeys([
-			log?.is_dm_log && log.dm?.uid && ["dm-logs", log.dm.uid],
-			log?.characterId && ["character", log.characterId, "logs"],
+			log.is_dm_log && log.dm?.uid && ["dm-logs", log.dm.uid],
+			log.characterId && ["character", log.characterId, "logs"],
 			["search-data", userId]
 		]);
 
-		return { id: log?.id || null, error: null };
+		return { id: log.id };
 	} catch (err) {
-		handleSKitError(err);
-		if (err instanceof Error) return { id: null, dm: null, error: err.message };
-		return { id: null, dm: null, error: "An unknown error has occurred." };
+		return handleSaveError(err);
 	}
 }

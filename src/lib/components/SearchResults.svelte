@@ -1,5 +1,5 @@
 <script lang="ts">
-	import { stopWords } from "$lib/util";
+	import { stopWords } from "$lib/constants";
 
 	export let text: string | string[] | null = "";
 	export let search: string | null = "";

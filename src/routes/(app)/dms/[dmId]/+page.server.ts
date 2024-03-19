@@ -3,7 +3,7 @@ import { deleteDM, saveDM } from "$server/actions/dms";
 import { signInRedirect } from "$server/auth.js";
 import { getUserDMsWithLogsCache } from "$server/data/dms";
 import { error, fail, redirect } from "@sveltejs/kit";
-import { message, superValidate } from "sveltekit-superforms";
+import { superValidate } from "sveltekit-superforms";
 import { valibot } from "sveltekit-superforms/adapters";
 
 export const load = async (event) => {
@@ -54,16 +54,9 @@ export const actions = {
 		if (!form.valid) return fail(400, { form });
 
 		const result = await saveDM(event.params.dmId, session.user, form.data);
-		if ("id" in result) return redirect(302, `/dms`);
+		if ("error" in result) return result.toForm(form);
 
-		return message(
-			form,
-			{
-				type: "error",
-				text: result.error
-			},
-			{ status: result.status }
-		);
+		redirect(302, `/dms`);
 	},
 	deleteDM: async (event) => {
 		const session = await event.locals.session;
@@ -76,8 +69,8 @@ export const actions = {
 		if (dm.logs.length) return fail(400, { error: "Cannot delete a DM with logs" });
 
 		const result = await deleteDM(event.params.dmId, session.user);
-		if ("id" in result) redirect(302, `/dms`);
+		if ("error" in result) return result;
 
-		return fail(result.status, { error: result.error });
+		redirect(302, `/dms`);
 	}
 };

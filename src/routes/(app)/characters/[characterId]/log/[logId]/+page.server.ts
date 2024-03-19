@@ -1,6 +1,5 @@
 import { defaultLogData, getMagicItems, getStoryAwards, logDataToSchema } from "$lib/entities.js";
 import { characterLogSchema } from "$lib/schemas";
-import { fieldError } from "$lib/util.js";
 import { saveLog } from "$server/actions/logs.js";
 import { signInRedirect } from "$server/auth.js";
 import { getCharacterCache } from "$server/data/characters";
@@ -8,7 +7,7 @@ import { getUserDMsCache } from "$server/data/dms";
 import { getLog } from "$server/data/logs";
 import { sorter } from "@sillvva/utils";
 import { error, fail, redirect } from "@sveltejs/kit";
-import { message, superValidate } from "sveltekit-superforms";
+import { superValidate } from "sveltekit-superforms";
 import { valibot } from "sveltekit-superforms/adapters";
 
 export const load = async (event) => {
@@ -69,20 +68,8 @@ export const actions = {
 		if (!form.valid) return fail(400, { form });
 
 		const result = await saveLog(form.data, session.user);
-		if ("id" in result) redirect(302, `/characters/${character.id}`);
+		if ("error" in result) return result.toForm(form);
 
-		return (
-			fieldError(form, result) ||
-			message(
-				form,
-				{
-					type: "error",
-					text: result.error
-				},
-				{
-					status: result.status
-				}
-			)
-		);
+		redirect(302, `/characters/${character.id}`);
 	}
 };

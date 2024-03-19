@@ -1,5 +1,5 @@
-import { SaveError, type NewCharacterSchema, type SaveResult } from "$lib/schemas";
-import { handleSKitError, handleSaveError } from "$lib/util";
+import { type NewCharacterSchema } from "$lib/schemas";
+import { SaveError, handleSKitError, handleSaveError, type SaveResult } from "$lib/util";
 import { rateLimiter, revalidateKeys } from "$server/cache";
 import { getCharacterCache } from "$server/data/characters";
 import { db, q } from "$server/db";
@@ -14,11 +14,11 @@ export async function saveCharacter(
 	data: NewCharacterSchema
 ): SaveResult<{ id: string; character: Character }, NewCharacterSchema> {
 	try {
-		if (!characterId) throw new SaveError(400, "No character ID provided");
-		if (!userId) throw new SaveError(401, "Not authenticated");
+		if (!characterId) throw new SaveError("No character ID provided", { status: 400 });
+		if (!userId) throw new SaveError("Not authenticated", { status: 401 });
 
 		const { success } = await rateLimiter(characterId === "new" ? "insert" : "update", userId);
-		if (!success) throw new SaveError(429, "Too many requests");
+		if (!success) throw new SaveError("Too many requests", { status: 429 });
 
 		const [result] = await (async () => {
 			if (characterId == "new") {
@@ -31,13 +31,13 @@ export async function saveCharacter(
 					.returning();
 			} else {
 				const character = await getCharacterCache(characterId, false);
-				if (!character) throw new SaveError(404, "Character not found");
-				if (character.userId !== userId) throw new SaveError(401, "Not authorized");
+				if (!character) throw new SaveError("Character not found", { status: 404 });
+				if (character.userId !== userId) throw new SaveError("Not authorized", { status: 401 });
 				return await db.update(characters).set(data).where(eq(characters.id, characterId)).returning();
 			}
 		})();
 
-		if (!result) throw new SaveError(500, "Failed to save character");
+		if (!result) throw new SaveError("Failed to save character");
 
 		revalidateKeys([
 			["character", result.id, "logs"],

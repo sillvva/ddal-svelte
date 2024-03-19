@@ -1,6 +1,4 @@
 import type { CharacterData } from "$server/data/characters";
-import type { NumericRange } from "@sveltejs/kit";
-import { type FormPathLeaves } from "sveltekit-superforms";
 // prettier-ignore
 import { array, boolean, custom, date, fallback, forward, integer, literal, merge, minLength, minValue, null_, nullable, number, object, optional, regex, string, union, url, type Input, type Output } from "valibot";
 
@@ -143,13 +141,3 @@ export const newCharacterSchema = object({
 
 export type EditCharacterSchema = Output<typeof editCharacterSchema>;
 export const editCharacterSchema = merge([object({ id: string() }), newCharacterSchema]);
-
-export type SaveResult<T extends object | null, S extends Record<string, unknown>> = Promise<T | SaveError<S>>;
-
-export class SaveError<T extends Record<string, unknown>> {
-	constructor(
-		public status: NumericRange<400, 599>,
-		public error: string,
-		public options?: { field?: FormPathLeaves<T> }
-	) {}
-}
