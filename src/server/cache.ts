@@ -2,6 +2,8 @@ import { privateEnv } from "$lib/env/private";
 import { Ratelimit } from "@upstash/ratelimit";
 import { Redis } from "@upstash/redis";
 
+const delimiter = ":";
+
 const redis = new Redis({
 	url: privateEnv.UPSTASH_REDIS_REST_URL,
 	token: privateEnv.UPSTASH_REDIS_REST_TOKEN
@@ -15,11 +17,11 @@ const limits = {
 
 function createLimiter(limit: number, duration: `${number} ${"s" | "m" | "h"}`) {
 	const limiter = Ratelimit.slidingWindow(limit, duration);
-	return new Ratelimit({ redis, limiter, prefix: "@upstash|ratelimit" });
+	return new Ratelimit({ redis, limiter, prefix: `@upstash${delimiter}ratelimit` });
 }
 
 export async function rateLimiter(type: keyof typeof limits, ...identifiers: string[]) {
-	const { success, reset } = await limits[type].limit(identifiers.join("|"));
+	const { success, reset } = await limits[type].limit(identifiers.join(delimiter));
 	return { success, reset };
 }
 
@@ -37,7 +39,7 @@ export type CacheKey = [string, ...string[]];
  * @returns The cached result of the callback function.
  */
 export async function cache<TReturnType>(callback: () => Promise<TReturnType>, key: CacheKey, expires = 3 * 86400) {
-	const rkey = key.join("|");
+	const rkey = key.join(delimiter);
 	const currentTime = Date.now();
 
 	// Get the cache from Redis
@@ -71,7 +73,7 @@ export async function mcache<TReturnType extends object>(
 	keys: CacheKey[],
 	expires = 3 * 86400
 ) {
-	const joinedKeys = keys.map((t) => t.join("|"));
+	const joinedKeys = keys.map((t) => t.join(delimiter));
 
 	// Get the caches from Redis
 	type CachedType = { data: TReturnType; timestamp: number };
@@ -87,7 +89,7 @@ export async function mcache<TReturnType extends object>(
 
 		// Update the results in the caches array
 		for (const result of results) {
-			const k = result.key.join("|");
+			const k = result.key.join(delimiter);
 			const index = joinedKeys.indexOf(k);
 			if (index >= 0) caches[index] = { data: result.value, timestamp: Date.now() };
 		}
@@ -126,6 +128,6 @@ export async function mcache<TReturnType extends object>(
  * @param [keys] The cache keys as an array of arrays of strings. Empty strings, false, null, and undefined are ignored.
  */
 export function revalidateKeys(keys: Array<CacheKey | "" | false | null | undefined>) {
-	const cacheKeys = keys.filter((t) => Array.isArray(t) && t.length).map((t) => (t as string[]).join("|"));
+	const cacheKeys = keys.filter((t) => Array.isArray(t) && t.length).map((t) => (t as string[]).join(delimiter));
 	if (cacheKeys.length) redis.del(...cacheKeys);
 }
