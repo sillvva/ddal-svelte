@@ -117,7 +117,7 @@ const auth = SvelteKitAuth(async (event) => {
 						tokenType: `${account.token_type}`,
 						scope: account.scope ?? "",
 						idToken: account.id_token,
-						last_login: new Date()
+						lastLogin: new Date()
 					});
 
 					redirect(302, "/characters");
@@ -137,7 +137,7 @@ const auth = SvelteKitAuth(async (event) => {
 								tokenType: account.token_type,
 								scope: account.scope,
 								idToken: account.id_token,
-								last_login: new Date()
+								lastLogin: new Date()
 							})
 							.where(and(eq(accounts.provider, account.provider), eq(accounts.providerAccountId, account.providerAccountId)));
 					}
@@ -169,8 +169,8 @@ const auth = SvelteKitAuth(async (event) => {
 				if (session.expires >= new Date()) return session satisfies LocalsSession;
 
 				const account = await q.accounts.findFirst({
-					where: (accounts, { and, eq, isNotNull }) => and(eq(accounts.userId, user.id), isNotNull(accounts.last_login)),
-					orderBy: (account, { desc }) => desc(account.last_login)
+					where: (accounts, { and, eq, isNotNull }) => and(eq(accounts.userId, user.id), isNotNull(accounts.lastLogin)),
+					orderBy: (account, { desc }) => desc(account.lastLogin)
 				});
 
 				if (account) {

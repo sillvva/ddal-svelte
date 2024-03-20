@@ -14,7 +14,7 @@ import {
 	varchar
 } from "drizzle-orm/pg-core";
 
-type InsertOmit = "id" | "created_at";
+type InsertOmit = "id" | "createdAt";
 
 export type User = typeof users.$inferSelect;
 export type InsertUser = Omit<typeof users.$inferInsert, InsertOmit>;
@@ -55,8 +55,8 @@ export const accounts = pgTable(
 		tokenType: varchar("token_type").notNull(),
 		scope: varchar("scope").notNull(),
 		idToken: varchar("id_token"),
-		session_state: varchar("session_state"),
-		last_login: timestamp("last_login", { mode: "date" })
+		sessionState: varchar("session_state"),
+		lastLogin: timestamp("last_login", { mode: "date" })
 	},
 	(table) => {
 		return {
