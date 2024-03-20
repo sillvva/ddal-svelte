@@ -7,7 +7,7 @@
 	import { stopWords } from "$lib/constants.js";
 	import { errorToast, successToast } from "$lib/factories";
 	import { searchData } from "$lib/stores";
-	import { SaveError, isDefined } from "$lib/util";
+	import { SaveError } from "$lib/util";
 	import { sorter } from "@sillvva/utils";
 	import MiniSearch from "minisearch";
 	import { twMerge } from "tailwind-merge";
@@ -55,7 +55,7 @@
 							score: score,
 							match: Object.values(match)
 								.map((value) => value[0])
-								.filter(isDefined)
+								.filter(Boolean)
 						};
 					})
 					.sort((a, b) => sorter(b.uid || "", a.uid || "") || sorter(a.name, b.name))
