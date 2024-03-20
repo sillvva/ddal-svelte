@@ -5,21 +5,10 @@ import { rateLimiter, revalidateKeys } from "$server/cache";
 import type { LogData } from "$server/data/logs";
 import { db } from "$server/db";
 import { dungeonMasters, logs, magicItems, storyAwards, type InsertDungeonMaster, type Log } from "$server/db/schema";
-import { error, type NumericRange } from "@sveltejs/kit";
+import { error } from "@sveltejs/kit";
 import { and, eq, inArray, notInArray } from "drizzle-orm";
-import type { FormPathLeavesWithErrors } from "sveltekit-superforms";
 
-class LogError<T extends LogSchema> extends SaveError<T> {
-	constructor(
-		public message: string,
-		public options: {
-			status?: NumericRange<400, 599>;
-			field?: FormPathLeavesWithErrors<T>;
-		} = { status: 500 }
-	) {
-		super(message, options);
-	}
-}
+class LogError extends SaveError<LogSchema> {}
 
 export type SaveLogResult = ReturnType<typeof saveLog>;
 export async function saveLog(input: LogSchema, user?: CustomSession["user"]): SaveResult<LogData, LogSchema> {
