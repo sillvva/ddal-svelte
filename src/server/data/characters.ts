@@ -1,5 +1,6 @@
 import { BLANK_CHARACTER } from "$lib/constants";
 import { getLogsSummary } from "$lib/entities";
+import { isDefined } from "$lib/util";
 import { cache, mcache, type CacheKey } from "$server/cache";
 import { q } from "$server/db";
 
@@ -81,7 +82,7 @@ export async function getCharacterCaches(characterIds: string[]) {
 	const keys: CacheKey[] = characterIds.map((id) => ["character", id, "logs"]);
 	return await mcache<CharacterData>(async (keys, hits) => {
 		const missingKeys = keys.filter((k) => !hits.find((h) => h.id === k[1]));
-		const characterIds = missingKeys.map((k) => k[1]).filter(Boolean);
+		const characterIds = missingKeys.map((k) => k[1]).filter(isDefined);
 
 		const characters = characterIds.length
 			? await q.characters.findMany({
