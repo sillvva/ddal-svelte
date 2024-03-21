@@ -87,10 +87,9 @@
 		...$searchData
 	]
 		.map((section) => {
-			const items = [...section.items];
 			return {
 				...section,
-				items: items
+				items: section.items
 					.filter((item) => {
 						if (item.type === "section" && search.length) return false;
 						let matches: typeof words = hasMatch(item.name) || [];
