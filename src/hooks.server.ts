@@ -95,7 +95,8 @@ const auth = SvelteKitAuth(async (event) => {
 				const currentSession = await event.locals.auth();
 				const currentUserId = currentSession?.user?.id;
 
-				if (privateEnv.DISABLE_SIGNUPS && !existingAccount && !currentUserId) return false;
+				if (privateEnv.DISABLE_SIGNUPS && !existingAccount && !currentUserId)
+					authErrRedirect("Signups Disabled", "Signups are disabled", redirectUrl);
 
 				if (currentUserId) {
 					// If there is a user logged in already that we recognize,
