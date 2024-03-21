@@ -29,7 +29,7 @@
 	});
 
 	const minisearch = new MiniSearch({
-		fields: ["characterName", "campaign", "race", "class", "magicItems", "tier", "level"],
+		fields: ["characterName", "campaign", "race", "class", "tier", "level", "magicItems"],
 		idField: "characterId",
 		processTerm: (term) => (stopWords.has(term) ? null : term.toLowerCase()),
 		tokenize: (term) => term.split(/[^A-Z0-9\.']/gi),
@@ -48,12 +48,7 @@
 				class: character.class || "",
 				tier: `T${character.tier}`,
 				level: `L${character.total_level}`,
-				magicItems: character.logs
-					.reduce((acc, log) => {
-						acc.push(...log.magicItemsGained.filter((magicItem) => !magicItem.logLostId).map((magicItem) => magicItem.name));
-						return acc;
-					}, [] as string[])
-					.join(", ")
+				magicItems: character.magic_items.map((item) => item.name).join(", ")
 			}))
 		: [];
 
