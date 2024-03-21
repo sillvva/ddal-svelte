@@ -2,14 +2,12 @@ import { BLANK_CHARACTER } from "$lib/constants";
 import { getLogsSummary } from "$lib/entities";
 import { cache, mcache, type CacheKey } from "$server/cache";
 import { q } from "$server/db";
-import type { Character, User } from "$server/db/schema";
-import type { LogData } from "./logs";
 
 export type CharacterData = Exclude<Awaited<ReturnType<typeof getCharacter>>, null>;
 export async function getCharacter(characterId: string, includeLogs = true) {
 	if (characterId === "new") return null;
 
-	const character: (Character & { user: User; logs: LogData[] }) | undefined = await (async () => {
+	const character = await (async () => {
 		if (includeLogs) {
 			return await q.characters.findFirst({
 				with: {
@@ -48,6 +46,12 @@ export async function getCharacter(characterId: string, includeLogs = true) {
 	};
 }
 
+export async function getCharacterCache(characterId: string, includeLogs = true) {
+	return characterId !== "new"
+		? await cache(() => getCharacter(characterId, includeLogs), ["character", characterId, includeLogs ? "logs" : "no-logs"])
+		: null;
+}
+
 export async function getCharactersWithLogs(userId: string, includeLogs = true) {
 	const characters = await q.characters.findMany({
 		with: {
@@ -71,12 +75,6 @@ export async function getCharactersWithLogs(userId: string, includeLogs = true) 
 		imageUrl: c.imageUrl || BLANK_CHARACTER,
 		...getLogsSummary(c.logs, includeLogs)
 	}));
-}
-
-export async function getCharacterCache(characterId: string, includeLogs = true) {
-	return characterId !== "new"
-		? await cache(() => getCharacter(characterId, includeLogs), ["character", characterId, includeLogs ? "logs" : "no-logs"])
-		: null;
 }
 
 export async function getCharacterCaches(characterIds: string[]) {
