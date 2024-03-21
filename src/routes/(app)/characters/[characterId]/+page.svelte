@@ -52,7 +52,7 @@
 					...log,
 					level_gained: level_gained?.levels || 0,
 					total_level: level,
-					show_date: log.is_dm_log && log.applied_date ? log.applied_date : log.date,
+					show_date: log.isDmLog && log.appliedDate ? log.appliedDate : log.date,
 					score: 0
 				};
 			})
@@ -61,12 +61,8 @@
 	$: indexed = logs.map((log) => ({
 		logId: log.id,
 		logName: log.name,
-		magicItems: [...log.magic_items_gained.map((item) => item.name), ...log.magic_items_lost.map((item) => item.name)].join(
-			" | "
-		),
-		storyAwards: [...log.story_awards_gained.map((item) => item.name), ...log.story_awards_lost.map((item) => item.name)].join(
-			" | "
-		)
+		magicItems: [...log.magicItemsGained.map((item) => item.name), ...log.magicItemsLost.map((item) => item.name)].join(" | "),
+		storyAwards: [...log.storyAwardsGained.map((item) => item.name), ...log.storyAwardsLost.map((item) => item.name)].join(" | ")
 	}));
 
 	$: {
@@ -100,12 +96,12 @@
 	}
 
 	function triggerImageModal() {
-		if (character.image_url) {
+		if (character.imageUrl) {
 			pushState("", {
 				modal: {
 					type: "image",
 					name: character.name,
-					imageUrl: character.image_url
+					imageUrl: character.imageUrl
 				}
 			});
 		}
@@ -175,10 +171,10 @@
 					<span class="iconify size-6 mdi-dots-horizontal" />
 				</summary>
 				<ul class="menu dropdown-content z-20 w-52 rounded-box bg-base-200 p-2 shadow">
-					{#if character.image_url}
+					{#if character.imageUrl}
 						<li class="xs:hidden" use:close>
 							<a
-								href={character.image_url}
+								href={character.imageUrl}
 								target="_blank"
 								on:click={(e) => {
 									// if (!data.mobile) {
@@ -237,10 +233,10 @@
 <section class="flex">
 	<div class="flex flex-1 flex-col gap-6">
 		<div class="flex">
-			{#if character.image_url}
+			{#if character.imageUrl}
 				<div class="relative mr-4 hidden w-20 flex-col items-end justify-center xs:flex md:hidden print:hidden">
 					<a
-						href={character.image_url}
+						href={character.imageUrl}
 						target="_blank"
 						rel="noreferrer noopener"
 						class="mask mask-squircle mx-auto h-20 bg-primary"
@@ -252,7 +248,7 @@
 							// }
 						}}
 					>
-						<img src={character.image_url} class="size-full object-cover object-top transition-all" alt={character.name} />
+						<img src={character.imageUrl} class="size-full object-cover object-top transition-all" alt={character.name} />
 					</a>
 				</div>
 			{/if}
@@ -268,11 +264,11 @@
 				</p>
 				<p class="flex-1 text-xs">
 					{character.campaign}
-					{#if character.character_sheet_url}
+					{#if character.characterSheetUrl}
 						<span class="print:hidden">
 							-
 							<a
-								href={character.character_sheet_url}
+								href={character.characterSheetUrl}
 								target="_blank"
 								rel="noreferrer noopner"
 								class="font-semibold text-secondary dark:drop-shadow-sm"
@@ -286,10 +282,10 @@
 		</div>
 		<div class="flex flex-1 flex-wrap gap-4 xs:flex-nowrap sm:gap-4 md:gap-6 print:flex-nowrap">
 			<div class="flex basis-full flex-col gap-2 xs:basis-[40%] sm:basis-1/3 sm:gap-4 md:basis-52 print:basis-1/3">
-				{#if character.image_url}
+				{#if character.imageUrl}
 					<div class="relative hidden flex-col items-end justify-center md:flex print:hidden">
 						<a
-							href={character.image_url}
+							href={character.imageUrl}
 							target="_blank"
 							rel="noreferrer noopener"
 							class="mask mask-squircle mx-auto h-52 w-full bg-primary"
@@ -299,7 +295,7 @@
 								triggerImageModal();
 							}}
 						>
-							<img src={character.image_url} class="size-full object-cover object-top transition-all" alt={character.name} />
+							<img src={character.imageUrl} class="size-full object-cover object-top transition-all" alt={character.name} />
 						</a>
 					</div>
 				{/if}
@@ -417,8 +413,7 @@
 							class={twMerge(
 								"!static pb-0 align-top sm:pb-3 print:p-2",
 								(!$app.log.descriptions || !log.description) && "pb-3",
-								(log.description?.trim() || log.story_awards_gained.length > 0 || log.story_awards_lost.length > 0) &&
-									"border-b-0"
+								(log.description?.trim() || log.storyAwardsGained.length > 0 || log.storyAwardsLost.length > 0) && "border-b-0"
 							)}
 						>
 							<button
@@ -479,8 +474,7 @@
 						<td
 							class={twMerge(
 								"hidden align-top sm:table-cell print:table-cell print:p-2",
-								(log.description?.trim() || log.story_awards_gained.length > 0 || log.story_awards_lost.length > 0) &&
-									"border-b-0"
+								(log.description?.trim() || log.storyAwardsGained.length > 0 || log.storyAwardsLost.length > 0) && "border-b-0"
 							)}
 						>
 							{#if log.experience > 0}
@@ -508,8 +502,7 @@
 						<td
 							class={twMerge(
 								"hidden align-top sm:table-cell print:table-cell print:p-2",
-								(log.description?.trim() || log.story_awards_gained.length > 0 || log.story_awards_lost.length > 0) &&
-									"border-b-0"
+								(log.description?.trim() || log.storyAwardsGained.length > 0 || log.storyAwardsLost.length > 0) && "border-b-0"
 							)}
 						>
 							{#if log.tcp !== 0}
@@ -524,11 +517,11 @@
 									{log.gold.toLocaleString("en-US")}
 								</p>
 							{/if}
-							{#if log.magic_items_gained.length > 0 || log.magic_items_lost.length > 0}
+							{#if log.magicItemsGained.length > 0 || log.magicItemsLost.length > 0}
 								<div>
-									<Items title="Magic Items:" items={log.magic_items_gained} {search} sort />
+									<Items title="Magic Items:" items={log.magicItemsGained} {search} sort />
 									<div class="whitespace-pre-wrap text-sm line-through">
-										<SearchResults text={log.magic_items_lost.map((mi) => mi.name).join(" | ")} {search} />
+										<SearchResults text={log.magicItemsLost.map((mi) => mi.name).join(" | ")} {search} />
 									</div>
 								</div>
 							{/if}
@@ -536,15 +529,14 @@
 						<td
 							class={twMerge(
 								"hidden align-top md:table-cell print:!hidden",
-								(log.description?.trim() || log.story_awards_gained.length > 0 || log.story_awards_lost.length > 0) &&
-									"border-b-0"
+								(log.description?.trim() || log.storyAwardsGained.length > 0 || log.storyAwardsLost.length > 0) && "border-b-0"
 							)}
 						>
-							{#if log.story_awards_gained.length > 0 || log.story_awards_lost.length > 0}
+							{#if log.storyAwardsGained.length > 0 || log.storyAwardsLost.length > 0}
 								<div>
-									<Items items={log.story_awards_gained} {search} />
+									<Items items={log.storyAwardsGained} {search} />
 									<div class="whitespace-pre-wrap text-sm line-through">
-										<SearchResults text={log.story_awards_lost.map((mi) => mi.name).join(" | ")} {search} />
+										<SearchResults text={log.storyAwardsLost.map((mi) => mi.name).join(" | ")} {search} />
 									</div>
 								</div>
 							{/if}
@@ -553,13 +545,12 @@
 							<td
 								class={twMerge(
 									"w-8 align-top print:hidden",
-									(log.description?.trim() || log.story_awards_gained.length > 0 || log.story_awards_lost.length > 0) &&
-										"border-b-0"
+									(log.description?.trim() || log.storyAwardsGained.length > 0 || log.storyAwardsLost.length > 0) && "border-b-0"
 								)}
 							>
 								<div class="flex flex-col justify-center gap-2">
 									<a
-										href={log.is_dm_log ? `/dm-logs/${log.id}` : `/characters/${log.characterId}/log/${log.id}`}
+										href={log.isDmLog ? `/dm-logs/${log.id}` : `/characters/${log.characterId}/log/${log.id}`}
 										class="btn btn-primary sm:btn-sm"
 										aria-label="Edit Log"
 									>
@@ -598,25 +589,25 @@
 							</td>
 						{/if}
 					</tr>
-					{#if log.description?.trim() || log.story_awards_gained.length > 0 || log.story_awards_lost.length > 0}
+					{#if log.description?.trim() || log.storyAwardsGained.length > 0 || log.storyAwardsLost.length > 0}
 						<tr class={twMerge(!$app.log.descriptions && "hidden print:table-row")} use:transition={slugify(`notes-${log.id}`)}>
 							<td colSpan={100} class="max-w-[calc(100vw_-_50px)] pt-0 text-sm print:p-2 print:text-xs">
 								{#if log.description?.trim()}
 									<h4 class="text-base font-semibold">Notes:</h4>
 									<Markdown content={log.description} />
 								{/if}
-								{#if log.magic_items_gained.length > 0 || log.magic_items_lost.length > 0}
+								{#if log.magicItemsGained.length > 0 || log.magicItemsLost.length > 0}
 									<div class="mt-2 sm:hidden print:hidden">
-										<Items title="Magic Items:" items={log.magic_items_gained} {search} sort />
-										{#if log.magic_items_lost.length}
+										<Items title="Magic Items:" items={log.magicItemsGained} {search} sort />
+										{#if log.magicItemsLost.length}
 											<p class="mt-2 whitespace-pre-wrap text-sm line-through">
-												<SearchResults text={log.magic_items_lost.map((mi) => mi.name).join(" | ")} {search} />
+												<SearchResults text={log.magicItemsLost.map((mi) => mi.name).join(" | ")} {search} />
 											</p>
 										{/if}
 									</div>
 								{/if}
-								{#if log.story_awards_gained.length > 0 || log.story_awards_lost.length > 0}
-									{#each log.story_awards_gained as mi}
+								{#if log.storyAwardsGained.length > 0 || log.storyAwardsLost.length > 0}
+									{#each log.storyAwardsGained as mi}
 										<div class="mt-2 whitespace-pre-wrap text-sm">
 											<span class="pr-2 font-semibold print:block">
 												{mi.name}{mi.description ? ":" : ""}
@@ -626,9 +617,9 @@
 											{/if}
 										</div>
 									{/each}
-									{#if log.story_awards_lost.length}
+									{#if log.storyAwardsLost.length}
 										<p class="whitespace-pre-wrap text-sm line-through">
-											{log.story_awards_lost.map((mi) => mi.name).join(" | ")}
+											{log.storyAwardsLost.map((mi) => mi.name).join(" | ")}
 										</p>
 									{/if}
 								{/if}

@@ -1,6 +1,6 @@
 import { PROVIDERS } from "$lib/constants";
 import { privateEnv } from "$lib/env/private";
-import { isDefined, joinStringList } from "$lib/util";
+import { joinStringList } from "$lib/util";
 import { db, q } from "$server/db";
 import { accounts, users, type Account } from "$server/db/schema";
 import type { Provider } from "@auth/core/providers";
@@ -111,13 +111,13 @@ const auth = SvelteKitAuth(async (event) => {
 						providerAccountId: account.providerAccountId,
 						userId: currentUserId,
 						type: account.type,
-						access_token: account.access_token ?? "",
-						expires_at: Math.floor(Date.now() / 1000 + (account.expires_in ?? 3600)),
-						refresh_token: account.refresh_token,
-						token_type: `${account.token_type}`,
+						accessToken: account.access_token ?? "",
+						expiresAt: Math.floor(Date.now() / 1000 + (account.expires_in ?? 3600)),
+						refreshToken: account.refresh_token,
+						tokenType: `${account.token_type}`,
 						scope: account.scope ?? "",
-						id_token: account.id_token,
-						last_login: new Date()
+						idToken: account.id_token,
+						lastLogin: new Date()
 					});
 
 					redirect(302, "/characters");
@@ -131,13 +131,13 @@ const auth = SvelteKitAuth(async (event) => {
 							.set({
 								providerAccountId: account.providerAccountId,
 								type: account.type,
-								access_token: account.access_token,
-								expires_at: Math.floor(Date.now() / 1000 + account.expires_in),
-								refresh_token: account.refresh_token,
-								token_type: account.token_type,
+								accessToken: account.access_token,
+								expiresAt: Math.floor(Date.now() / 1000 + account.expires_in),
+								refreshToken: account.refresh_token,
+								tokenType: account.token_type,
 								scope: account.scope,
-								id_token: account.id_token,
-								last_login: new Date()
+								idToken: account.id_token,
+								lastLogin: new Date()
 							})
 							.where(and(eq(accounts.provider, account.provider), eq(accounts.providerAccountId, account.providerAccountId)));
 					}
@@ -153,7 +153,7 @@ const auth = SvelteKitAuth(async (event) => {
 								.then((a) => a.map((a) => a.provider))
 						: undefined;
 					if (matchingProviders?.length) {
-						const names = matchingProviders.map((id) => PROVIDERS.find((p) => p.id === id)?.name).filter(isDefined);
+						const names = matchingProviders.map((id) => PROVIDERS.find((p) => p.id === id)?.name).filter(Boolean);
 						const joinedProviders = joinStringList(names);
 						const message = `You already have an account with ${joinedProviders}. Sign in, then link additional providers in the settings menu.`;
 						authErrRedirect("Existing Account", message, redirectUrl);
@@ -169,8 +169,8 @@ const auth = SvelteKitAuth(async (event) => {
 				if (session.expires >= new Date()) return session satisfies LocalsSession;
 
 				const account = await q.accounts.findFirst({
-					where: (accounts, { and, eq, isNotNull }) => and(eq(accounts.userId, user.id), isNotNull(accounts.last_login)),
-					orderBy: (account, { desc }) => desc(account.last_login)
+					where: (accounts, { and, eq, isNotNull }) => and(eq(accounts.userId, user.id), isNotNull(accounts.lastLogin)),
+					orderBy: (account, { desc }) => desc(account.lastLogin)
 				});
 
 				if (account) {
@@ -216,39 +216,39 @@ async function refreshToken(account: Account) {
 	try {
 		const provider = providers.find((p) => p.id === account.provider);
 		if (!provider) throw new Error(`Provider '${account.provider}' not found`);
-		if (!account.refresh_token) throw new Error("No refresh token");
+		if (!account.refreshToken) throw new Error("No refresh token");
 
-		if (!account.expires_at || account.expires_at * 1000 < Date.now()) {
+		if (!account.expiresAt || account.expiresAt * 1000 < Date.now()) {
 			const response = await fetch(provider.tokenUrl, {
 				headers: { "Content-Type": "application/x-www-form-urlencoded" },
 				body: new URLSearchParams({
 					client_id: provider.clientId,
 					client_secret: provider.clientSecret,
 					grant_type: "refresh_token",
-					refresh_token: account.refresh_token
+					refreshToken: account.refreshToken
 				}),
 				method: "POST"
 			});
 
-			const tokens = (await response.json()) as TokenSet;
+			const token = (await response.json()) as TokenSet;
 
 			if (!response.ok) {
-				console.error("Error refreshing access token:", tokens);
+				console.error("Error refreshing access token:", token);
 				throw new Error("See logs for details");
 			}
 
-			if (tokens) {
-				if (!tokens.expires_in) throw new Error("No expires_in in token response");
+			if (token) {
+				if (!token.expires_in) throw new Error("No expires_in in token response");
 
 				return await db
 					.update(accounts)
 					.set({
-						access_token: tokens.access_token,
-						expires_at: Math.floor(Date.now() / 1000 + tokens.expires_in),
-						refresh_token: tokens.refresh_token ?? account.refresh_token,
-						token_type: account.token_type,
-						scope: account.scope,
-						id_token: account.id_token
+						accessToken: token.access_token,
+						expiresAt: Math.floor(Date.now() / 1000 + token.expires_in),
+						refreshToken: token.refresh_token ?? account.refreshToken,
+						tokenType: token.token_type ?? account.tokenType,
+						scope: token.scope ?? account.scope,
+						idToken: token.id_token ?? account.idToken
 					})
 					.where(and(eq(accounts.provider, account.provider), eq(accounts.providerAccountId, account.providerAccountId)))
 					.returning();

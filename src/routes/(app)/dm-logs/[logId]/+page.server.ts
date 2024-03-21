@@ -31,7 +31,7 @@ export const load = async (event) => {
 	if (event.params.logId !== "new") {
 		log = await getDMLog(event.params.logId, user.id);
 		if (!log.id) error(404, "Log not found");
-		if (!log.is_dm_log) redirect(302, `/characters/${log.characterId}/log/${log.id}`);
+		if (!log.isDmLog) redirect(302, `/characters/${log.characterId}/log/${log.id}`);
 	}
 
 	const character = characters.find((c) => c.id === log.characterId);

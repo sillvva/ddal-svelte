@@ -7,7 +7,7 @@
 	import SearchResults from "$lib/components/SearchResults.svelte";
 	import { stopWords } from "$lib/constants.js";
 	import type { TransitionAction } from "$lib/util";
-	import { createTransition, isDefined } from "$lib/util";
+	import { createTransition } from "$lib/util";
 	import type { CookieStore } from "$server/cookie.js";
 	import { slugify, sorter } from "@sillvva/utils";
 	import { download, hotkey } from "@svelteuidev/composables";
@@ -50,7 +50,7 @@
 				level: `L${character.total_level}`,
 				magicItems: character.logs
 					.reduce((acc, log) => {
-						acc.push(...log.magic_items_gained.filter((magicItem) => !magicItem.logLostId).map((magicItem) => magicItem.name));
+						acc.push(...log.magicItemsGained.filter((magicItem) => !magicItem.logLostId).map((magicItem) => magicItem.name));
 						return acc;
 					}, [] as string[])
 					.join(", ")
@@ -74,7 +74,7 @@
 							score: score,
 							match: Object.values(match)
 								.map((value) => value[0])
-								.filter(isDefined)
+								.filter(Boolean)
 						};
 					})
 					.sort((a, b) => sorter(a.total_level, b.total_level) || sorter(a.name, b.name))
@@ -206,10 +206,10 @@
 								<div class="hidden pr-0 transition-colors sm:block sm:pr-2">
 									<div class="avatar">
 										<div class="mask mask-squircle size-12 bg-primary" use:transition={slugify("image-" + character.id)}>
-											{#if character.image_url}
-												{#key character.image_url}
+											{#if character.imageUrl}
+												{#key character.imageUrl}
 													<img
-														src={character.image_url}
+														src={character.imageUrl}
 														width={48}
 														height={48}
 														class="size-full object-cover object-top"
@@ -326,13 +326,8 @@
 								use:transition={slugify("image-" + character.id)}
 							>
 								<figure class="relative aspect-square overflow-hidden">
-									{#key character.image_url}
-										<img
-											src={character.image_url}
-											alt={character.name}
-											class="size-full object-cover object-top"
-											loading="lazy"
-										/>
+									{#key character.imageUrl}
+										<img src={character.imageUrl} alt={character.name} class="size-full object-cover object-top" loading="lazy" />
 									{/key}
 									{#if search.length >= 1 && indexed.length && miMatches}
 										<div class="absolute inset-0 flex items-center bg-black/50 p-2 text-center text-xs text-white">

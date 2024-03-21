@@ -52,10 +52,6 @@ export function joinStringList(list: string[], separator = ", ", lastSeparator =
 	return `${list.join(separator)}${list.length > 1 ? separator : " "}${lastSeparator}${last}`;
 }
 
-export function isDefined<T>(value?: T): value is T {
-	return value !== undefined;
-}
-
 export type SaveResult<T extends object | null, S extends Record<string, unknown>> = Promise<T | SaveError<S>>;
 
 export class SaveError<TOut extends Record<string, unknown>, TIn extends Record<string, unknown> = TOut> {

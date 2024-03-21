@@ -24,7 +24,7 @@ export const load = async (event) => {
 		if (!log.id) error(404, "Log not found");
 	}
 
-	if (log.is_dm_log) redirect(302, `/dm-logs/${log.id}`);
+	if (log.isDmLog) redirect(302, `/dm-logs/${log.id}`);
 
 	const form = await superValidate(logDataToSchema(session.user.id, log, character), valibot(characterLogSchema(character)), {
 		errors: event.params.logId !== "new"

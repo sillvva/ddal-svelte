@@ -9,15 +9,15 @@
 
 	const { form } = superform;
 
-	$: remainingItems = magicItems.filter((item) => !$form.magic_items_lost.includes(item.id));
-	$: remainingAwards = storyAwards.filter((item) => !$form.story_awards_lost.includes(item.id));
+	$: remainingItems = magicItems.filter((item) => !$form.magicItemsLost.includes(item.id));
+	$: remainingAwards = storyAwards.filter((item) => !$form.storyAwardsLost.includes(item.id));
 </script>
 
 <div class="no-script-hide col-span-12 flex flex-wrap gap-4">
 	<button
 		type="button"
 		class="btn btn-primary min-w-fit flex-1 sm:btn-sm sm:flex-none"
-		on:click={() => ($form.magic_items_gained = [...$form.magic_items_gained, { id: "", name: "", description: "" }])}
+		on:click={() => ($form.magicItemsGained = [...$form.magicItemsGained, { id: "", name: "", description: "" }])}
 	>
 		Add Magic Item
 	</button>
@@ -26,7 +26,7 @@
 			type="button"
 			class="btn min-w-fit flex-1 sm:btn-sm sm:flex-none"
 			on:click={() => {
-				if (remainingItems[0]) $form.magic_items_lost = [...$form.magic_items_lost, remainingItems[0].id];
+				if (remainingItems[0]) $form.magicItemsLost = [...$form.magicItemsLost, remainingItems[0].id];
 			}}
 		>
 			Drop Magic Item
@@ -36,7 +36,7 @@
 		<button
 			type="button"
 			class="btn btn-primary min-w-fit flex-1 sm:btn-sm sm:flex-none"
-			on:click={() => ($form.story_awards_gained = [...$form.story_awards_gained, { id: "", name: "", description: "" }])}
+			on:click={() => ($form.storyAwardsGained = [...$form.storyAwardsGained, { id: "", name: "", description: "" }])}
 		>
 			Add Story Award
 		</button>
@@ -45,7 +45,7 @@
 				type="button"
 				class="btn min-w-fit flex-1 sm:btn-sm sm:flex-none"
 				on:click={() => {
-					if (remainingAwards[0]) $form.story_awards_lost = [...$form.story_awards_lost, remainingAwards[0].id];
+					if (remainingAwards[0]) $form.storyAwardsLost = [...$form.storyAwardsLost, remainingAwards[0].id];
 				}}
 			>
 				Drop Story Award
@@ -54,46 +54,46 @@
 	{/if}
 </div>
 <div class="col-span-12 grid grid-cols-12 gap-4 dark:text-white">
-	{#each $form.magic_items_gained as _, index}
+	{#each $form.magicItemsGained as _, index}
 		<EntityCard
 			{superform}
 			type="add"
 			entity="magic_items"
-			nameField={`magic_items_gained[${index}].name`}
-			descField={`magic_items_gained[${index}].description`}
-			ondelete={() => ($form.magic_items_gained = $form.magic_items_gained.filter((_, i) => i !== index))}
+			nameField={`magicItemsGained[${index}].name`}
+			descField={`magicItemsGained[${index}].description`}
+			ondelete={() => ($form.magicItemsGained = $form.magicItemsGained.filter((_, i) => i !== index))}
 		/>
 	{/each}
-	{#each $form.magic_items_lost as _, index}
+	{#each $form.magicItemsLost as _, index}
 		<EntityCard
 			{superform}
 			type="drop"
 			entity="magic_items"
-			lostField={`magic_items_lost[${index}]`}
+			lostField={`magicItemsLost[${index}]`}
 			data={magicItems}
-			arrValue={$form.magic_items_lost}
-			ondelete={() => ($form.magic_items_lost = $form.magic_items_lost.filter((_, i) => i !== index))}
+			arrValue={$form.magicItemsLost}
+			ondelete={() => ($form.magicItemsLost = $form.magicItemsLost.filter((_, i) => i !== index))}
 		/>
 	{/each}
-	{#each $form.story_awards_gained as _, index}
+	{#each $form.storyAwardsGained as _, index}
 		<EntityCard
 			{superform}
 			type="add"
 			entity="story_awards"
-			nameField={`story_awards_gained[${index}].name`}
-			descField={`story_awards_gained[${index}].description`}
-			ondelete={() => ($form.story_awards_gained = $form.story_awards_gained.filter((_, i) => i !== index))}
+			nameField={`storyAwardsGained[${index}].name`}
+			descField={`storyAwardsGained[${index}].description`}
+			ondelete={() => ($form.storyAwardsGained = $form.storyAwardsGained.filter((_, i) => i !== index))}
 		/>
 	{/each}
-	{#each $form.story_awards_lost as _, index}
+	{#each $form.storyAwardsLost as _, index}
 		<EntityCard
 			{superform}
 			type="drop"
 			entity="story_awards"
-			lostField={`story_awards_lost[${index}]`}
+			lostField={`storyAwardsLost[${index}]`}
 			data={storyAwards}
-			arrValue={$form.story_awards_lost}
-			ondelete={() => ($form.story_awards_lost = $form.story_awards_lost.filter((_, i) => i !== index))}
+			arrValue={$form.storyAwardsLost}
+			ondelete={() => ($form.storyAwardsLost = $form.storyAwardsLost.filter((_, i) => i !== index))}
 		/>
 	{/each}
 </div>

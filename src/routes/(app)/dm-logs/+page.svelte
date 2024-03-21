@@ -32,13 +32,8 @@
 				logId: log.id,
 				logName: log.name,
 				characterName: log.character?.name || "",
-				magicItems: [...log.magic_items_gained.map((item) => item.name), ...log.magic_items_lost.map((item) => item.name)].join(
-					", "
-				),
-				storyAwards: [
-					...log.story_awards_gained.map((item) => item.name),
-					...log.story_awards_lost.map((item) => item.name)
-				].join(", ")
+				magicItems: [...log.magicItemsGained.map((i) => i.name), ...log.magicItemsLost.map((i) => i.name)].join(", "),
+				storyAwards: [...log.storyAwardsGained.map((i) => i.name), ...log.storyAwardsLost.map((i) => i.name)].join(", ")
 			}))
 		: [];
 
@@ -68,7 +63,7 @@
 					}))
 					.sort((a, b) => ($app.dmLogs.sort === "asc" ? sorter(a.date, b.date) : sorter(b.date, a.date)))
 			: logs.sort((a, b) => ($app.dmLogs.sort === "asc" ? sorter(a.date, b.date) : sorter(b.date, a.date)));
-	$: hasStoryAwards = results.find((log) => log.story_awards_gained.length);
+	$: hasStoryAwards = results.find((log) => log.storyAwardsGained.length);
 
 	function triggerModal(log: (typeof results)[number]) {
 		if (log.description) {
@@ -169,7 +164,7 @@
 								<td
 									class={twMerge(
 										"!static align-top",
-										(log.description?.trim() || log.story_awards_gained.length > 0 || log.story_awards_lost.length > 0) &&
+										(log.description?.trim() || log.storyAwardsGained.length > 0 || log.storyAwardsLost.length > 0) &&
 											"print:border-b-0"
 									)}
 								>
@@ -228,14 +223,14 @@
 											</p>
 										{/if}
 										<div>
-											<Items title="Magic Items" items={log.magic_items_gained} {search} sort />
+											<Items title="Magic Items" items={log.magicItemsGained} {search} sort />
 										</div>
 									</div>
 								</td>
 								<td
 									class={twMerge(
 										"hidden align-top sm:table-cell print:table-cell",
-										(log.description?.trim() || log.story_awards_gained.length > 0 || log.story_awards_lost.length > 0) &&
+										(log.description?.trim() || log.storyAwardsGained.length > 0 || log.storyAwardsLost.length > 0) &&
 											"print:border-b-0"
 									)}
 								>
@@ -269,7 +264,7 @@
 								<td
 									class={twMerge(
 										"hidden align-top sm:table-cell print:table-cell",
-										(log.description?.trim() || log.story_awards_gained.length > 0 || log.story_awards_lost.length > 0) &&
+										(log.description?.trim() || log.storyAwardsGained.length > 0 || log.storyAwardsLost.length > 0) &&
 											"print:border-b-0"
 									)}
 								>
@@ -285,9 +280,9 @@
 											{log.gold.toLocaleString("en-US")}
 										</p>
 									{/if}
-									{#if log.magic_items_gained.length > 0}
+									{#if log.magicItemsGained.length > 0}
 										<div>
-											<Items title="Magic Items" items={log.magic_items_gained} {search} sort />
+											<Items title="Magic Items" items={log.magicItemsGained} {search} sort />
 										</div>
 									{/if}
 								</td>
@@ -295,12 +290,12 @@
 									<td
 										class={twMerge(
 											"hidden align-top md:table-cell print:!hidden",
-											(log.description?.trim() || log.story_awards_gained.length > 0) && "print:border-b-0"
+											(log.description?.trim() || log.storyAwardsGained.length > 0) && "print:border-b-0"
 										)}
 									>
-										{#if log.story_awards_gained.length > 0}
+										{#if log.storyAwardsGained.length > 0}
 											<div>
-												<Items items={log.story_awards_gained} {search} />
+												<Items items={log.storyAwardsGained} {search} />
 											</div>
 										{/if}
 									</td>
@@ -342,16 +337,16 @@
 									</div>
 								</td>
 							</tr>
-							{#if log.description?.trim() || log.story_awards_gained.length > 0 || log.story_awards_lost.length > 0}
+							{#if log.description?.trim() || log.storyAwardsGained.length > 0 || log.storyAwardsLost.length > 0}
 								<tr class={twMerge("hidden print:table-row", deletingLog.includes(log.id) && "hidden")}>
 									<td colSpan={3} class="pt-0">
 										<p class="text-sm">
 											<span class="font-semibold">Notes:</span>
 											{log.description}
 										</p>
-										{#if log.story_awards_gained.length > 0}
+										{#if log.storyAwardsGained.length > 0}
 											<div>
-												{#each log.story_awards_lost as mi}
+												{#each log.storyAwardsLost as mi}
 													<p class="text-sm">
 														<span class="font-semibold">
 															{mi.name}

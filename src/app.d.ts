@@ -3,7 +3,11 @@
 
 import type { Prettify } from "$lib/util";
 import type { DefaultSession } from "@auth/core/types";
-import "@total-typescript/ts-reset";
+import "@total-typescript/ts-reset/fetch";
+import "@total-typescript/ts-reset/json-parse";
+
+type Falsy = false | 0 | "" | null | undefined;
+type NonFalsy<T> = Exclude<T, Falsy>;
 
 declare global {
 	namespace App {
@@ -99,5 +103,17 @@ declare global {
 
 	interface Document {
 		startViewTransition: (callback: ViewTransitionCallback) => ViewTransition;
+	}
+
+	interface Array<T> {
+		// eslint-disable-next-line @typescript-eslint/no-explicit-any
+		filter(predicate: (item: T, index: number, array: T[]) => boolean, thisArg?: any): NonFalsy<T>[];
+		// filter(predicate: BooleanConstructor, thisArg?: any): TSReset.NonFalsy<T>[];
+	}
+
+	interface ReadonlyArray<T> {
+		// eslint-disable-next-line @typescript-eslint/no-explicit-any
+		filter(predicate: (item: T, index: number, array: T[]) => boolean, thisArg?: any): NonFalsy<T>[];
+		// filter(predicate: BooleanConstructor, thisArg?: any): TSReset.NonFalsy<T>[];
 	}
 }

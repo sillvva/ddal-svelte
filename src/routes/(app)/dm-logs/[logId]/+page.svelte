@@ -36,20 +36,20 @@
 				valueField="characterId"
 				labelField="characterName"
 				values={data.characters.map((char) => ({ value: char.id, label: char.name }))}
-				required={!!$form.applied_date || undefined}
+				required={!!$form.appliedDate || undefined}
 				onselect={() => {
-					$form.applied_date = $form.applied_date || new Date();
+					$form.appliedDate = $form.appliedDate || new Date();
 				}}
 				clearable
 				onclear={() => {
-					$form.applied_date = null;
+					$form.appliedDate = null;
 				}}
 			>
 				Assigned Character
 			</Combobox>
 		</Control>
 		<Control class="col-span-12 sm:col-span-6 lg:col-span-3">
-			<Input type="date" {superform} field="applied_date" empty="null" minField="date" required={!!$form.characterId}>
+			<Input type="date" {superform} field="appliedDate" empty="null" minField="date" required={!!$form.characterId}>
 				Assigned Date
 			</Input>
 		</Control>

@@ -5,21 +5,10 @@ import { rateLimiter, revalidateKeys } from "$server/cache";
 import type { LogData } from "$server/data/logs";
 import { db } from "$server/db";
 import { dungeonMasters, logs, magicItems, storyAwards, type InsertDungeonMaster, type Log } from "$server/db/schema";
-import { error, type NumericRange } from "@sveltejs/kit";
+import { error } from "@sveltejs/kit";
 import { and, eq, inArray, notInArray } from "drizzle-orm";
-import type { FormPathLeavesWithErrors } from "sveltekit-superforms";
 
-class LogError<T extends LogSchema> extends SaveError<T> {
-	constructor(
-		public message: string,
-		public options: {
-			status?: NumericRange<400, 599>;
-			field?: FormPathLeavesWithErrors<T>;
-		} = { status: 500 }
-	) {
-		super(message, options);
-	}
-}
+class LogError extends SaveError<LogSchema> {}
 
 export type SaveLogResult = ReturnType<typeof saveLog>;
 export async function saveLog(input: LogSchema, user?: CustomSession["user"]): SaveResult<LogData, LogSchema> {
@@ -31,13 +20,13 @@ export async function saveLog(input: LogSchema, user?: CustomSession["user"]): S
 		if (!success) throw new LogError("Too many requests", { status: 429 });
 
 		const log = await db.transaction(async (tx) => {
-			const applied_date: Date | null = input.is_dm_log
-				? input.characterId && input.applied_date !== null
-					? new Date(input.applied_date)
+			const appliedDate: Date | null = input.isDmLog
+				? input.characterId && input.appliedDate !== null
+					? new Date(input.appliedDate)
 					: null
 				: new Date(input.date);
-			if (input.characterId && applied_date === null)
-				throw new LogError("Applied date is required", { status: 400, field: "applied_date" });
+			if (input.characterId && appliedDate === null)
+				throw new LogError("Applied date is required", { status: 400, field: "appliedDate" });
 
 			if (input.characterId) {
 				const character = await tx.query.characters.findFirst({
@@ -50,7 +39,7 @@ export async function saveLog(input: LogSchema, user?: CustomSession["user"]): S
 				if (!character)
 					throw new LogError("Character not found", {
 						status: 404,
-						field: input.is_dm_log ? "characterId" : undefined
+						field: input.isDmLog ? "characterId" : undefined
 					});
 
 				const currentLevel = getLevels(character.logs).total;
@@ -64,7 +53,7 @@ export async function saveLog(input: LogSchema, user?: CustomSession["user"]): S
 
 			const [dm] = await (async () => {
 				let isMe = false;
-				if (input.is_dm_log) isMe = true;
+				if (input.isDmLog) isMe = true;
 				if (input.dm.uid === userId) isMe = true;
 				if (["Me", "", user.name?.trim()].includes(input.dm.name.trim())) isMe = true;
 
@@ -98,7 +87,7 @@ export async function saveLog(input: LogSchema, user?: CustomSession["user"]): S
 					const dm: InsertDungeonMaster = {
 						name: input.dm.name.trim(),
 						DCI: input.dm.DCI,
-						uid: input.is_dm_log || isMe ? userId : null,
+						uid: input.isDmLog || isMe ? userId : null,
 						owner: userId
 					};
 					if (input.dm.id) {
@@ -114,12 +103,12 @@ export async function saveLog(input: LogSchema, user?: CustomSession["user"]): S
 
 			if (!dm?.id) throw new LogError("Could not save Dungeon Master", { field: "dm.id" });
 
-			const data: Omit<Log, "id" | "created_at"> = {
+			const data: Omit<Log, "id" | "createdAt"> = {
 				name: input.name,
 				date: input.date,
 				description: input.description || "",
 				type: input.type,
-				is_dm_log: input.is_dm_log,
+				isDmLog: input.isDmLog,
 				dungeonMasterId: dm.id,
 				acp: input.acp,
 				tcp: input.tcp,
@@ -128,7 +117,7 @@ export async function saveLog(input: LogSchema, user?: CustomSession["user"]): S
 				gold: input.gold,
 				dtd: input.dtd,
 				characterId: input.characterId,
-				applied_date
+				appliedDate
 			};
 
 			const [log] = input.id
@@ -137,7 +126,7 @@ export async function saveLog(input: LogSchema, user?: CustomSession["user"]): S
 
 			if (!log?.id) throw new LogError("Could not save log");
 
-			const itemsToUpdate = input.magic_items_gained.filter((item) => item.id);
+			const itemsToUpdate = input.magicItemsGained.filter((item) => item.id);
 			for (const item of itemsToUpdate) {
 				await tx
 					.update(magicItems)
@@ -153,7 +142,7 @@ export async function saveLog(input: LogSchema, user?: CustomSession["user"]): S
 				await tx.delete(magicItems).where(notInArray(magicItems.id, itemsToDelete));
 			}
 
-			const itemsToCreate = input.magic_items_gained.filter((item) => !item.id);
+			const itemsToCreate = input.magicItemsGained.filter((item) => !item.id);
 			if (itemsToCreate.length) {
 				await tx.insert(magicItems).values(
 					itemsToCreate.map((item) => ({
@@ -168,11 +157,11 @@ export async function saveLog(input: LogSchema, user?: CustomSession["user"]): S
 				.update(magicItems)
 				.set({ logLostId: null })
 				.where(and(eq(magicItems.logLostId, log.id)));
-			if (input.magic_items_lost.length) {
-				await tx.update(magicItems).set({ logLostId: log.id }).where(inArray(magicItems.id, input.magic_items_lost));
+			if (input.magicItemsLost.length) {
+				await tx.update(magicItems).set({ logLostId: log.id }).where(inArray(magicItems.id, input.magicItemsLost));
 			}
 
-			const storyAwardsToUpdate = input.magic_items_gained.filter((item) => item.id);
+			const storyAwardsToUpdate = input.magicItemsGained.filter((item) => item.id);
 			for (const item of storyAwardsToUpdate) {
 				await tx
 					.update(storyAwards)
@@ -188,7 +177,7 @@ export async function saveLog(input: LogSchema, user?: CustomSession["user"]): S
 				await tx.delete(storyAwards).where(notInArray(storyAwards.id, storyAwardsToDelete));
 			}
 
-			const storyAwardsToCreate = input.magic_items_gained.filter((item) => !item.id);
+			const storyAwardsToCreate = input.magicItemsGained.filter((item) => !item.id);
 			if (storyAwardsToCreate.length) {
 				await tx.insert(storyAwards).values(
 					storyAwardsToCreate.map((item) => ({
@@ -203,17 +192,17 @@ export async function saveLog(input: LogSchema, user?: CustomSession["user"]): S
 				.update(storyAwards)
 				.set({ logLostId: null })
 				.where(and(eq(storyAwards.logLostId, log.id)));
-			if (input.story_awards_lost.length) {
-				await tx.update(storyAwards).set({ logLostId: log.id }).where(inArray(storyAwards.id, input.story_awards_lost));
+			if (input.storyAwardsLost.length) {
+				await tx.update(storyAwards).set({ logLostId: log.id }).where(inArray(storyAwards.id, input.storyAwardsLost));
 			}
 
 			const updated = await tx.query.logs.findFirst({
 				with: {
 					dm: true,
-					magic_items_gained: true,
-					magic_items_lost: true,
-					story_awards_gained: true,
-					story_awards_lost: true
+					magicItemsGained: true,
+					magicItemsLost: true,
+					storyAwardsGained: true,
+					storyAwardsLost: true
 				},
 				where: (logs, { eq }) => eq(logs.id, log.id)
 			});
@@ -224,7 +213,7 @@ export async function saveLog(input: LogSchema, user?: CustomSession["user"]): S
 		if (!log) throw new LogError("Could not save log");
 
 		revalidateKeys([
-			log.is_dm_log && log.dm?.uid && ["dm-logs", log.dm.uid],
+			log.isDmLog && log.dm?.uid && ["dm-logs", log.dm.uid],
 			log.characterId && ["character", log.characterId, "logs"],
 			user.id && ["dms", user.id, "logs"],
 			user.id && ["search-data", user.id]
@@ -264,7 +253,7 @@ export async function deleteLog(logId: string, userId?: string): SaveResult<{ id
 		if (!log) throw new LogError("Log not found", { status: 404 });
 
 		revalidateKeys([
-			log.is_dm_log && log.dm?.uid && ["dm-logs", log.dm.uid],
+			log.isDmLog && log.dm?.uid && ["dm-logs", log.dm.uid],
 			log.characterId && ["character", log.characterId, "logs"],
 			["search-data", userId]
 		]);

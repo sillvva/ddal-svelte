@@ -87,10 +87,9 @@
 		...$searchData
 	]
 		.map((section) => {
-			const items = [...section.items];
 			return {
 				...section,
-				items: items
+				items: section.items
 					.filter((item) => {
 						if (item.type === "section" && search.length) return false;
 						let matches: typeof words = hasMatch(item.name) || [];
@@ -394,7 +393,7 @@
 																{#if item.type === "character"}
 																	<span class="mask mask-squircle h-12 min-w-12 max-w-12 bg-primary">
 																		<img
-																			src={item.image_url}
+																			src={item.imageUrl}
 																			class="size-full object-cover object-top transition-all"
 																			alt={item.name}
 																		/>

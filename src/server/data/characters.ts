@@ -1,16 +1,13 @@
 import { BLANK_CHARACTER } from "$lib/constants";
 import { getLogsSummary } from "$lib/entities";
-import { isDefined } from "$lib/util";
 import { cache, mcache, type CacheKey } from "$server/cache";
 import { q } from "$server/db";
-import type { Character, User } from "$server/db/schema";
-import type { LogData } from "./logs";
 
 export type CharacterData = Exclude<Awaited<ReturnType<typeof getCharacter>>, null>;
 export async function getCharacter(characterId: string, includeLogs = true) {
 	if (characterId === "new") return null;
 
-	const character: (Character & { user: User; logs: LogData[] }) | undefined = await (async () => {
+	const character = await (async () => {
 		if (includeLogs) {
 			return await q.characters.findFirst({
 				with: {
@@ -18,10 +15,10 @@ export async function getCharacter(characterId: string, includeLogs = true) {
 					logs: {
 						with: {
 							dm: true,
-							magic_items_gained: true,
-							magic_items_lost: true,
-							story_awards_gained: true,
-							story_awards_lost: true
+							magicItemsGained: true,
+							magicItemsLost: true,
+							storyAwardsGained: true,
+							storyAwardsLost: true
 						},
 						orderBy: (logs, { asc }) => asc(logs.date)
 					}
@@ -44,9 +41,15 @@ export async function getCharacter(characterId: string, includeLogs = true) {
 
 	return {
 		...character,
-		image_url: character.image_url || BLANK_CHARACTER,
+		imageUrl: character.imageUrl || BLANK_CHARACTER,
 		...getLogsSummary(character.logs)
 	};
+}
+
+export async function getCharacterCache(characterId: string, includeLogs = true) {
+	return characterId !== "new"
+		? await cache(() => getCharacter(characterId, includeLogs), ["character", characterId, includeLogs ? "logs" : "no-logs"])
+		: null;
 }
 
 export async function getCharactersWithLogs(userId: string, includeLogs = true) {
@@ -56,10 +59,10 @@ export async function getCharactersWithLogs(userId: string, includeLogs = true) 
 			logs: {
 				with: {
 					dm: true,
-					magic_items_gained: true,
-					magic_items_lost: true,
-					story_awards_gained: true,
-					story_awards_lost: true
+					magicItemsGained: true,
+					magicItemsLost: true,
+					storyAwardsGained: true,
+					storyAwardsLost: true
 				},
 				orderBy: (logs, { asc }) => asc(logs.date)
 			}
@@ -69,22 +72,16 @@ export async function getCharactersWithLogs(userId: string, includeLogs = true) 
 
 	return characters.map((c) => ({
 		...c,
-		image_url: c.image_url || BLANK_CHARACTER,
+		imageUrl: c.imageUrl || BLANK_CHARACTER,
 		...getLogsSummary(c.logs, includeLogs)
 	}));
-}
-
-export async function getCharacterCache(characterId: string, includeLogs = true) {
-	return characterId !== "new"
-		? await cache(() => getCharacter(characterId, includeLogs), ["character", characterId, includeLogs ? "logs" : "no-logs"])
-		: null;
 }
 
 export async function getCharacterCaches(characterIds: string[]) {
 	const keys: CacheKey[] = characterIds.map((id) => ["character", id, "logs"]);
 	return await mcache<CharacterData>(async (keys, hits) => {
 		const missingKeys = keys.filter((k) => !hits.find((h) => h.id === k[1]));
-		const characterIds = missingKeys.map((k) => k[1]).filter(isDefined);
+		const characterIds = missingKeys.map((k) => k[1]).filter(Boolean);
 
 		const characters = characterIds.length
 			? await q.characters.findMany({
@@ -93,10 +90,10 @@ export async function getCharacterCaches(characterIds: string[]) {
 						logs: {
 							with: {
 								dm: true,
-								magic_items_gained: true,
-								magic_items_lost: true,
-								story_awards_gained: true,
-								story_awards_lost: true
+								magicItemsGained: true,
+								magicItemsLost: true,
+								storyAwardsGained: true,
+								storyAwardsLost: true
 							},
 							orderBy: (logs, { asc }) => asc(logs.date)
 						}
@@ -109,7 +106,7 @@ export async function getCharacterCaches(characterIds: string[]) {
 		return characters
 			.map((c) => ({
 				key: keys.find((k) => k[1] === c.id)!,
-				value: { ...c, image_url: c.image_url || BLANK_CHARACTER, ...getLogsSummary(c.logs) }
+				value: { ...c, imageUrl: c.imageUrl || BLANK_CHARACTER, ...getLogsSummary(c.logs) }
 			}))
 			.filter((c) => c.key);
 	}, keys);

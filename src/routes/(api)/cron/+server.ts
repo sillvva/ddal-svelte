@@ -4,7 +4,7 @@ import { json } from "@sveltejs/kit";
 export async function GET() {
 	return json(
 		await q.characters.findFirst({
-			orderBy: (characters, { asc }) => asc(characters.created_at)
+			orderBy: (characters, { asc }) => asc(characters.createdAt)
 		})
 	);
 }
