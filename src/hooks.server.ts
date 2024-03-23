@@ -1,6 +1,6 @@
 import { PROVIDERS } from "$lib/constants";
 import { privateEnv } from "$lib/env/private";
-import { joinStringList } from "$lib/util";
+import { isDefined, joinStringList } from "$lib/util";
 import { db, q } from "$server/db";
 import { accounts, users, type Account } from "$server/db/schema";
 import type { Provider } from "@auth/core/providers";
@@ -95,7 +95,8 @@ const auth = SvelteKitAuth(async (event) => {
 				const currentSession = await event.locals.auth();
 				const currentUserId = currentSession?.user?.id;
 
-				if (privateEnv.DISABLE_SIGNUPS && !existingAccount && !currentUserId) return false;
+				if (privateEnv.DISABLE_SIGNUPS && !existingAccount && !currentUserId)
+					authErrRedirect("Signups Disabled", "Signups are disabled", redirectUrl);
 
 				if (currentUserId) {
 					// If there is a user logged in already that we recognize,
@@ -153,7 +154,7 @@ const auth = SvelteKitAuth(async (event) => {
 								.then((a) => a.map((a) => a.provider))
 						: undefined;
 					if (matchingProviders?.length) {
-						const names = matchingProviders.map((id) => PROVIDERS.find((p) => p.id === id)?.name).filter(Boolean);
+						const names = matchingProviders.map((id) => PROVIDERS.find((p) => p.id === id)?.name).filter(isDefined);
 						const joinedProviders = joinStringList(names);
 						const message = `You already have an account with ${joinedProviders}. Sign in, then link additional providers in the settings menu.`;
 						authErrRedirect("Existing Account", message, redirectUrl);

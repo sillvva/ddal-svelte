@@ -8,7 +8,6 @@
 	import { errorToast, successToast, valibotForm } from "$lib/factories";
 	import { dungeonMasterSchema } from "$lib/schemas";
 	import { pageLoader, searchData } from "$lib/stores";
-	import { SaveError } from "$lib/util.js";
 	import { sorter } from "@sillvva/utils";
 
 	export let data;
@@ -44,7 +43,7 @@
 							$pageLoader = true;
 							return async ({ result }) => {
 								await applyAction(result);
-								if (form instanceof SaveError) {
+								if (form?.error) {
 									errorToast(form.error);
 									$pageLoader = false;
 								} else {
