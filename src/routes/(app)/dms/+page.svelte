@@ -116,7 +116,7 @@
 														deletingDM = [...deletingDM, dm.id];
 														return async ({ result }) => {
 															await applyAction(result);
-															if (form && "error" in form) {
+															if (form?.error) {
 																errorToast(form.error);
 																deletingDM = deletingDM.filter((id) => id !== dm.id);
 															} else {
