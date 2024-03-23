@@ -59,20 +59,22 @@ export function isDefined<T>(value?: T): value is T {
 export type SaveResult<T extends object | null, S extends Record<string, unknown>> = Promise<T | SaveError<S>>;
 
 export class SaveError<TOut extends Record<string, unknown>, TIn extends Record<string, unknown> = TOut> {
+	public status: NumericRange<400, 599> = 500;
+
 	constructor(
 		public error: string,
-		public options: {
-			field?: FormPathLeavesWithErrors<TOut>;
-			status?: NumericRange<400, 599>;
-		} = { status: 500 }
+		protected options?: Partial<{
+			field: FormPathLeavesWithErrors<TOut>;
+			status: NumericRange<400, 599>;
+		}>
 	) {
-		if (!options.status) this.options.status = 500;
+		if (options?.status) this.status = options.status;
 	}
 
 	toForm(form: SuperValidated<TOut, App.Superforms.Message, TIn>) {
 		return this.options?.field
 			? setError(form, this.options.field, this.error, {
-					status: this.options.status
+					status: this.status
 				})
 			: message(
 					form,
@@ -81,7 +83,7 @@ export class SaveError<TOut extends Record<string, unknown>, TIn extends Record<
 						text: this.error
 					},
 					{
-						status: this.options.status
+						status: this.status
 					}
 				);
 	}
