@@ -1,6 +1,6 @@
 import { getLevels } from "$lib/entities";
 import { type LogSchema } from "$lib/schemas";
-import { SaveError, handleSaveError, type SaveResult } from "$lib/util";
+import { SaveError, type SaveResult } from "$lib/util";
 import { rateLimiter, revalidateKeys } from "$server/cache";
 import type { LogData } from "$server/data/logs";
 import { db } from "$server/db";
@@ -221,7 +221,7 @@ export async function saveLog(input: LogSchema, user?: CustomSession["user"]): S
 
 		return log;
 	} catch (err) {
-		return handleSaveError(err);
+		return LogError.from(err);
 	}
 }
 
@@ -260,6 +260,6 @@ export async function deleteLog(logId: string, userId?: string): SaveResult<{ id
 
 		return { id: log.id };
 	} catch (err) {
-		return handleSaveError(err);
+		return LogError.from(err);
 	}
 }
