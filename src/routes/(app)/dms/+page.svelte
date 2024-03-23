@@ -7,7 +7,7 @@
 	import { stopWords } from "$lib/constants.js";
 	import { errorToast, successToast } from "$lib/factories";
 	import { searchData } from "$lib/stores";
-	import { SaveError, isDefined } from "$lib/util";
+	import { isDefined } from "$lib/util";
 	import { sorter } from "@sillvva/utils";
 	import MiniSearch from "minisearch";
 	import { twMerge } from "tailwind-merge";
@@ -116,7 +116,7 @@
 														deletingDM = [...deletingDM, dm.id];
 														return async ({ result }) => {
 															await applyAction(result);
-															if (form instanceof SaveError) {
+															if (form && "error" in form) {
 																errorToast(form.error);
 																deletingDM = deletingDM.filter((id) => id !== dm.id);
 															} else {
