@@ -36,8 +36,8 @@ export const actions = {
 		if (dm.logs.length) return fail(400, { error: "Cannot delete a DM with logs" });
 
 		const result = await deleteDM(dmId, session.user);
-		if ("id" in result) redirect(302, `/dms`);
+		if ("error" in result) return fail(result.options.status || 500, { error: result.error });
 
-		return fail(result.status, { error: result.error });
+		redirect(302, `/dms`);
 	}
 };
