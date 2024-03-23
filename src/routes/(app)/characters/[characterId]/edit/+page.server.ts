@@ -2,8 +2,8 @@ import { BLANK_CHARACTER } from "$lib/constants.js";
 import { newCharacterSchema } from "$lib/schemas";
 import { saveCharacter } from "$server/actions/characters.js";
 import { signInRedirect } from "$server/auth";
-import { fail, redirect } from "@sveltejs/kit";
-import { superValidate } from "sveltekit-superforms";
+import { redirect } from "@sveltejs/kit";
+import { fail, superValidate } from "sveltekit-superforms";
 import { valibot } from "sveltekit-superforms/adapters";
 
 export const load = async (event) => {
