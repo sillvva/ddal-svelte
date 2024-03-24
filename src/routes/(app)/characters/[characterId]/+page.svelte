@@ -234,7 +234,7 @@
 	<div class="flex flex-1 flex-col gap-6">
 		<div class="flex">
 			{#if character.imageUrl}
-				<div class="relative mr-4 hidden w-20 flex-col items-end justify-center xs:flex md:hidden print:hidden">
+				<div class="relative mr-4 hidden w-20 flex-col items-end justify-center xs:max-md:flex print:hidden">
 					<a
 						href={character.imageUrl}
 						target="_blank"
@@ -345,7 +345,7 @@
 		{#if myCharacter}
 			<a
 				href={`/characters/${character.id}/log/new`}
-				class="btn btn-primary hidden sm:btn-sm sm:inline-flex sm:px-3"
+				class="btn btn-primary sm:btn-sm max-sm:hidden sm:px-3"
 				aria-label="New Log"
 			>
 				New Log
@@ -374,9 +374,9 @@
 		{/if}
 	</div>
 	{#if logs.length}
-		<div class="hidden flex-1 sm:block" />
+		<div class="flex-1 max-sm:hidden" />
 		<button
-			class={twMerge("no-script-hide btn hidden sm:btn-sm sm:inline-flex", $app.log.descriptions && "btn-primary")}
+			class={twMerge("no-script-hide btn sm:btn-sm max-sm:hidden", $app.log.descriptions && "btn-primary")}
 			on:click={() => createTransition(() => ($app.log.descriptions = !$app.log.descriptions))}
 			on:keypress
 			aria-label="Toggle Notes"
@@ -387,7 +387,7 @@
 			{:else}
 				<span class="iconify size-6 mdi-eye-off" />
 			{/if}
-			<span class="hidden sm:inline-flex">Notes</span>
+			<span class="max-sm:hidden">Notes</span>
 		</button>
 	{/if}
 </div>

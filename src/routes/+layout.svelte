@@ -50,11 +50,11 @@
 	<div class="fixed bottom-0 right-0 z-50">
 		<div class="*:bg-lime-700 *:p-1 *:text-xs *:font-bold *:text-white">
 			<div class="xs:hidden">xxs</div>
-			<div class="hidden xs:block sm:hidden">xs</div>
-			<div class="hidden sm:block md:hidden">sm</div>
-			<div class="hidden md:block lg:hidden">md</div>
-			<div class="hidden lg:block xl:hidden">lg</div>
-			<div class="hidden xl:block 2xl:hidden">xl</div>
+			<div class="hidden xs:max-sm:block">xs</div>
+			<div class="hidden sm:max-md:block">sm</div>
+			<div class="hidden md:max-lg:block">md</div>
+			<div class="hidden lg:max-xl:block">lg</div>
+			<div class="hidden xl:max-2xl:block">xl</div>
 			<div class="hidden 2xl:block">2xl</div>
 		</div>
 	</div>
