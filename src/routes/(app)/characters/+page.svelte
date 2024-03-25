@@ -117,9 +117,9 @@
 	{:else}
 		<div class="flex flex-wrap justify-between gap-2">
 			<div class="flex w-full gap-2 sm:max-w-md md:max-w-md">
-				<a href="/characters/new/edit" class="btn btn-primary btn-sm hidden sm:inline-flex">New Character</a>
+				<a href="/characters/new/edit" class="btn btn-primary btn-sm max-sm:hidden">New Character</a>
 				<Search bind:value={search} placeholder="Search by name, race, class, items, etc." />
-				<a href="/characters/new/edit" class="btn btn-primary inline-flex sm:hidden" aria-label="New Character">
+				<a href="/characters/new/edit" class="btn btn-primary sm:hidden" aria-label="New Character">
 					<span class="iconify inline size-6 mdi-plus" />
 				</a>
 				<button
@@ -140,7 +140,7 @@
 			<div class="ml-auto flex gap-2 sm:ml-0">
 				{#if $app.characters.display != "grid"}
 					<button
-						class={twMerge("btn hidden sm:btn-sm xs:inline-flex", $app.characters.magicItems && "btn-primary")}
+						class={twMerge("btn sm:btn-sm max-xs:hidden", $app.characters.magicItems && "btn-primary")}
 						on:click={() => createTransition(() => ($app.characters.magicItems = !$app.characters.magicItems))}
 						on:keypress={() => null}
 						on:keypress
@@ -148,16 +148,16 @@
 						tabindex="0"
 					>
 						{#if $app.characters.magicItems}
-							<span class="iconify hidden size-6 mdi-eye xs:inline-block sm:hidden md:inline-block" />
-							<span class="iconify inline-block size-6 mdi-shield-sword xs:hidden sm:inline-block md:hidden" />
+							<span class="iconify size-6 mdi-eye max-xs:hidden sm:max-md:hidden" />
+							<span class="iconify size-6 mdi-shield-sword xs:max-sm:hidden md:hidden" />
 						{:else}
-							<span class="iconify hidden size-6 mdi-eye-off xs:inline-block sm:hidden md:inline-block" />
-							<span class="iconify inline-block size-6 mdi-shield-sword-outline xs:hidden sm:inline-block md:hidden" />
+							<span class="iconify size-6 mdi-eye-off max-xs:hidden sm:max-md:hidden" />
+							<span class="iconify size-6 mdi-shield-sword-outline xs:max-sm:hidden md:hidden" />
 						{/if}
-						<span class="hidden xs:inline-flex sm:hidden md:inline-flex">Magic Items</span>
+						<span class="max-xs:hidden sm:max-md:hidden">Magic Items</span>
 					</button>
 				{/if}
-				<div class="no-script-hide join hidden xs:flex">
+				<div class="no-script-hide join max-xs:hidden">
 					<button
 						class={twMerge("btn join-item sm:btn-sm", $app.characters.display == "list" ? "btn-primary" : "hover:btn-primary")}
 						on:click={() => createTransition(() => ($app.characters.display = "list"))}
@@ -188,7 +188,7 @@
 				>
 					<header class="!hidden text-base-content/70 sm:!contents">
 						{#if !data.mobile}
-							<div class="hidden sm:block" />
+							<div class="max-sm:hidden" />
 						{/if}
 						<div>Name</div>
 						<div>Campaign</div>
@@ -198,7 +198,7 @@
 					{#each results as character}
 						<a href={`/characters/${character.id}`} class="img-grow">
 							{#if !data.mobile}
-								<div class="hidden pr-0 transition-colors sm:block sm:pr-2">
+								<div class="pr-0 transition-colors max-sm:hidden sm:pr-2">
 									<div class="avatar">
 										<div class="mask mask-squircle size-12 bg-primary" use:transition={slugify("image-" + character.id)}>
 											{#if character.imageUrl}
@@ -298,7 +298,7 @@
 						class={twMerge(
 							"pb-2 font-vecna text-3xl font-bold dark:text-white",
 							$app.characters.display == "list" && "hidden",
-							$app.characters.display == "grid" && "hidden xs:block",
+							$app.characters.display == "grid" && "max-xs:hidden",
 							tier > 1 && "pt-6"
 						)}
 					>
@@ -306,9 +306,8 @@
 					</h1>
 					<div
 						class={twMerge(
-							"w-full",
-							$app.characters.display == "list" && "hidden",
-							$app.characters.display == "grid" && "hidden grid-cols-2 gap-4 xs:grid sm:grid-cols-3 md:grid-cols-4"
+							"hidden w-full",
+							$app.characters.display == "grid" && "grid-cols-2 gap-4 xs:grid sm:grid-cols-3 md:grid-cols-4"
 						)}
 					>
 						{#each results.filter((c) => c.tier == tier) as character}

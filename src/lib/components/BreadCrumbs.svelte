@@ -17,7 +17,7 @@
 	<BackButton href={back.href}>{back.name}</BackButton>
 {/if}
 
-<div class="breadcrumbs mb-4 hidden flex-1 text-sm sm:flex">
+<div class="breadcrumbs mb-4 flex-1 text-sm max-sm:hidden">
 	<ul>
 		<li>
 			<span class="iconify mdi-home" />

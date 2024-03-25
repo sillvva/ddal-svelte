@@ -79,7 +79,7 @@
 			</label>
 		</li>
 		{#if !$page.data.mobile}
-			<li class="hidden rounded-lg lg:flex">
+			<li class="rounded-lg max-lg:hidden">
 				<label class="flex flex-row items-center">
 					<span class="flex-1 text-left">Background</span>
 					<input type="checkbox" class="toggle" bind:checked={$app.settings.background} />

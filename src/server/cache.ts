@@ -10,8 +10,8 @@ const redis = new Redis({
 });
 const limits = {
 	fetch: createLimiter(600, "1 h"),
-	update: createLimiter(360, "1 h"),
-	insert: createLimiter(180, "1 h"),
+	update: createLimiter(180, "1 h"),
+	insert: createLimiter(60, "1 h"),
 	cache: createLimiter(18, "1 h")
 } as const;
 

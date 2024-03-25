@@ -71,6 +71,15 @@ export class SaveError<TOut extends Record<string, unknown>, TIn extends Record<
 		if (options?.status) this.status = options.status;
 	}
 
+	static from<TOut extends Record<string, unknown>, TIn extends Record<string, unknown> = TOut>(
+		err: SaveError<TOut, TIn> | Error | unknown
+	) {
+		if (dev) console.error(err);
+		if (err instanceof SaveError) return err;
+		if (err instanceof Error) return new SaveError<TOut, TIn>(err.message);
+		return new SaveError<TOut, TIn>("An unknown error has occurred.");
+	}
+
 	toForm(form: SuperValidated<TOut, App.Superforms.Message, TIn>) {
 		return this.options?.field
 			? setError(form, this.options.field, this.error, {
@@ -87,13 +96,6 @@ export class SaveError<TOut extends Record<string, unknown>, TIn extends Record<
 					}
 				);
 	}
-}
-
-export function handleSaveError<TObj extends Record<string, unknown>>(err: SaveError<TObj> | Error | unknown) {
-	if (dev) console.error(err);
-	if (err instanceof SaveError) return err;
-	if (err instanceof Error) return new SaveError<TObj>(err.message);
-	return new SaveError<TObj>("An unknown error has occurred.");
 }
 
 export function handleSKitError(err: unknown) {

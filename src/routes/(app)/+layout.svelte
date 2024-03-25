@@ -185,7 +185,7 @@
 				<a href="/dm-logs" class="hidden items-center p-2 md:flex">DM Logs</a>
 				<a href="/dms" class="hidden items-center p-2 md:flex">DMs</a>
 			{/if}
-			<div class={twMerge("flex-1", !$app.settings.background && "hidden sm:block")}>&nbsp;</div>
+			<div class={twMerge("flex-1", !$app.settings.background && "max-sm:hidden")}>&nbsp;</div>
 			<button on:click={() => (cmdOpen = true)} class="inline hover-hover:md:hidden">
 				<span class="iconify size-6 mdi-magnify" />
 			</button>

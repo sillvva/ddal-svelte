@@ -56,7 +56,7 @@
 	{#if code}
 		<div class="flex justify-center">
 			<div class="alert alert-error min-w-60 max-w-[24rem] text-error-content shadow-lg">
-				<span class="iconify hidden size-6 mdi-alert-circle sm:inline-block" />
+				<span class="iconify size-6 mdi-alert-circle max-sm:hidden" />
 				<div>
 					<h3 class="font-bold">Error: {code}</h3>
 					{#if message !== null}<div class="text-sm">{message || "Something went wrong"}</div>{/if}

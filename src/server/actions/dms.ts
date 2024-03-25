@@ -1,5 +1,5 @@
 import { type DungeonMasterSchema } from "$lib/schemas";
-import { SaveError, handleSaveError, type SaveResult } from "$lib/util";
+import { SaveError, type SaveResult } from "$lib/util";
 import { rateLimiter, revalidateKeys, type CacheKey } from "$server/cache";
 import { getUserDMsWithLogsCache } from "$server/data/dms";
 import { db } from "$server/db";
@@ -45,7 +45,7 @@ export async function saveDM(
 
 		return { id: result.id, dm: result };
 	} catch (err) {
-		return handleSaveError(err);
+		return SaveError.from(err);
 	}
 }
 
@@ -73,6 +73,6 @@ export async function deleteDM(dmId: string, user?: LocalsSession["user"]): Save
 
 		return result;
 	} catch (err) {
-		return handleSaveError(err);
+		return SaveError.from(err);
 	}
 }
