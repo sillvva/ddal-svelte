@@ -15,7 +15,9 @@
 </script>
 
 <ska:html
-	data-theme={!$app.settings.background ? ($app.settings.mode === "dark" ? "black" : "light") : $app.settings.theme}
+	data-theme={!$app.settings.background && $app.settings.theme === "system" && $app.settings.mode === "dark"
+		? "black"
+		: $app.settings.theme}
 	class={$app.settings.mode}
 />
 

@@ -1,6 +1,7 @@
 // See https://kit.svelte.dev/docs/types#app
 // for information about these interfaces
 
+import type { ThemeGroups, Themes } from "$lib/constants";
 import type { Prettify } from "$lib/util";
 import type { DefaultSession } from "@auth/core/types";
 import "@total-typescript/ts-reset/fetch";
@@ -39,8 +40,8 @@ declare global {
 		interface Cookie {
 			settings: {
 				background: boolean;
-				theme: "system" | "dark" | "light";
-				mode: "dark" | "light";
+				theme: Themes;
+				mode: ThemeGroups;
 			};
 			characters: {
 				magicItems: boolean;

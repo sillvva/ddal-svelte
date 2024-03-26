@@ -1,5 +1,4 @@
 <script lang="ts">
-	import { browser } from "$app/environment";
 	import { enhance } from "$app/forms";
 	import { page } from "$app/stores";
 	import { PROVIDERS } from "$lib/constants";
@@ -9,6 +8,7 @@
 	import { signIn, signOut } from "@auth/sveltekit/client";
 	import { getContext } from "svelte";
 	import { twMerge } from "tailwind-merge";
+	import ThemeSwitcher from "./ThemeSwitcher.svelte";
 
 	export let open = false;
 	const app = getContext<CookieStore<App.Cookie>>("app");
@@ -18,28 +18,11 @@
 		...p,
 		account: accounts.find((a) => a.provider === p.id)
 	}));
-
-	function watchMedia(node: HTMLElement) {
-		const mql = window.matchMedia("(prefers-color-scheme: dark)");
-		mql.addEventListener("change", (ev) => {
-			if ($app.settings.theme == "system") $app.settings.mode = ev.matches ? "dark" : "light";
-		});
-	}
-
-	$: if (browser) {
-		if ($app.settings.theme === "system") {
-			const mql = window.matchMedia("(prefers-color-scheme: dark)");
-			$app.settings.mode = mql.matches ? "dark" : "light";
-		} else {
-			$app.settings.mode = $app.settings.theme;
-		}
-	}
 </script>
 
 <div
 	id="settings"
 	class={twMerge("fixed -right-72 bottom-0 top-0 z-50 w-72 bg-base-100 px-4 py-4 transition-all", open && "right-0")}
-	use:watchMedia
 >
 	<div class="flex gap-4 p-4">
 		<div class="py-2">
@@ -69,14 +52,10 @@
 	<div class="divider my-0" />
 	<ul class="menu menu-lg w-full">
 		<li>
-			<label class="flex flex-row items-center gap-2 hover:bg-transparent">
+			<div class="flex flex-row items-center gap-2 hover:bg-transparent">
 				<span class="flex-1">Theme</span>
-				<select class="select select-bordered select-sm" bind:value={$app.settings.theme}>
-					<option value="system">System</option>
-					<option value="light">Light</option>
-					<option value="dark">Dark</option>
-				</select>
-			</label>
+				<ThemeSwitcher />
+			</div>
 		</li>
 		{#if !$page.data.mobile}
 			<li class="rounded-lg max-lg:hidden">

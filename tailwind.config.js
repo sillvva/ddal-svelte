@@ -6,7 +6,7 @@ import plugin from "tailwindcss/plugin";
 /** @type {import('tailwindcss').Config} */
 export default {
 	content: ["./src/**/*.{html,js,svelte,ts}"],
-	darkMode: ["class"],
+	darkMode: ["selector"],
 	theme: {
 		extend: {
 			fontFamily: {
@@ -93,7 +93,13 @@ export default {
 					secondary: "#c881ff",
 					"base-content": "#c4ccca"
 				}
-			}
+			},
+			"business",
+			"halloween",
+			"night",
+			"corporate",
+			"retro",
+			"valentine"
 		]
 	}
 };
