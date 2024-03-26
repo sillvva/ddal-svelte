@@ -39,7 +39,6 @@ declare global {
 
 		interface Cookie {
 			settings: {
-				background: boolean;
 				theme: Themes;
 				mode: ThemeGroups;
 			};

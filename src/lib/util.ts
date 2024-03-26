@@ -2,24 +2,12 @@ import { dev } from "$app/environment";
 import { error, type NumericRange } from "@sveltejs/kit";
 import { message, setError, type FormPathLeavesWithErrors, type SuperValidated } from "sveltekit-superforms";
 import type { setupViewTransition } from "sveltekit-view-transition";
-import { twMerge } from "tailwind-merge";
 
 export type Prettify<T> = {
 	[K in keyof T]: T[K];
 } & unknown;
 
 export type TransitionAction = ReturnType<typeof setupViewTransition>["transition"];
-
-export const tooltipClasses = (text?: string | null, align = "center") => {
-	if (!text) return "";
-	return twMerge(
-		"before:hidden before:lg:block before:max-h-[50vh] before:overflow-hidden before:text-ellipsis",
-		"before:z-20 before:whitespace-normal before:![content:attr(data-tip)]",
-		align == "left" && "before:left-0 before:translate-x-0",
-		align == "right" && "before:right-0 before:translate-x-0",
-		text.trim() && "tooltip"
-	);
-};
 
 export const formatDate = (date: Date | string | number) => {
 	const d = new Date(date);

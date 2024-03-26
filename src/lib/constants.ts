@@ -29,68 +29,52 @@ export const stopWords = new Set(["and", "or", "to", "in", "a", "the", "of"]);
 type Theme = {
 	name: string;
 	value: string;
-	background: boolean | "only";
 	group?: "dark" | "light";
 };
 
 export const themes = [
 	{
 		name: "System",
-		value: "system",
-		background: true
+		value: "system"
 	},
 	{
 		name: "Light",
 		value: "light",
-		background: true,
 		group: "light"
 	},
 	{
 		name: "Corporate",
 		value: "corporate",
-		background: false,
 		group: "light"
 	},
 	{
 		name: "Retro",
 		value: "retro",
-		background: false,
 		group: "light"
 	},
 	{
 		name: "Valentine",
 		value: "valentine",
-		background: false,
 		group: "light"
-	},
-	{
-		name: "Dark",
-		value: "dark",
-		background: "only",
-		group: "dark"
 	},
 	{
 		name: "Black",
 		value: "black",
-		background: false,
 		group: "dark"
 	},
 	{
 		name: "Business",
 		value: "business",
-		background: false,
 		group: "dark"
 	},
 	{
 		name: "Halloween",
 		value: "halloween",
-		background: false,
 		group: "dark"
 	},
 	{
 		name: "Night",
 		value: "night",
-		background: false,
 		group: "dark"
 	}
 ] as const satisfies Theme[];

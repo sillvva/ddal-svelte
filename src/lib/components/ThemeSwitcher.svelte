@@ -20,10 +20,6 @@
 		}
 	}
 
-	$: if (themes.find((t) => t.value === $app.settings.theme)?.background === ($app.settings.background ? false : "only")) {
-		$app.settings.theme = "system";
-	}
-
 	$: {
 		const selected = themes.find((t) => t.value === $app.settings.theme);
 		if (selected && "group" in selected) {
@@ -34,20 +30,10 @@
 
 <select class="select select-bordered select-sm max-w-28" bind:value={$app.settings.theme} use:watchMedia>
 	<option value="system">System</option>
-	{#if $app.settings.background}
-		{#each themes.filter((t) => "group" in t && t.background) as theme}
-			{#if theme.background}
-				<option value={theme.value}>{theme.name}</option>
-			{/if}
+	{#each themeGroups as group}
+		<hr />
+		{#each themes.filter((t) => "group" in t && t.group === group) as theme}
+			<option value={theme.value}>{theme.name}</option>
 		{/each}
-	{:else}
-		{#each themeGroups as group}
-			<hr />
-			{#each themes.filter((t) => "group" in t && t.group === group) as theme}
-				{#if theme.background !== "only"}
-					<option value={theme.value}>{theme.name}</option>
-				{/if}
-			{/each}
-		{/each}
-	{/if}
+	{/each}
 </select>
