@@ -1,7 +1,5 @@
 import type { Account } from "$server/db/schema";
-import { sorter } from "@sillvva/utils";
 import { publicEnv } from "./env/public";
-import { isDefined } from "./util";
 
 export const BLANK_CHARACTER = `${publicEnv.PUBLIC_URL}/images/blank-character.webp` as const;
 
@@ -79,9 +77,6 @@ export const themes = [
 	}
 ] as const satisfies Theme[];
 
+export const themeGroups = ["dark", "light"] as const;
 export type Themes = (typeof themes)[number]["value"];
-
-export const themeGroups = [
-	...new Set(themes.map((theme) => ("group" in theme ? theme.group : undefined)).filter(isDefined))
-].sort(sorter);
-export type ThemeGroups = NonNullable<Theme["group"]>;
+export type ThemeGroups = (typeof themeGroups)[number];
