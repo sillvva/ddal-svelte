@@ -1,5 +1,6 @@
 <script lang="ts">
 	import { dev } from "$app/environment";
+	import { page } from "$app/stores";
 	import { cookieStore } from "$server/cookie";
 	import { setContext } from "svelte";
 	import { setupViewTransition } from "sveltekit-view-transition";
@@ -15,11 +16,11 @@
 </script>
 
 <ska:html
-	data-theme={!data.session?.user
-		? $app.settings.mode
-		: $app.settings.theme === "system" && $app.settings.mode === "dark"
+	data-theme={$page.route.id?.startsWith("/(app)")
+		? $app.settings.theme === "system" && $app.settings.mode === "dark"
 			? "black"
-			: $app.settings.theme}
+			: $app.settings.theme
+		: $app.settings.mode}
 	class={$app.settings.mode}
 />
 
