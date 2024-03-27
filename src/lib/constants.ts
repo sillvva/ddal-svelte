@@ -23,3 +23,60 @@ export const PROVIDERS = [
 ] as const satisfies Provider[];
 
 export const stopWords = new Set(["and", "or", "to", "in", "a", "the", "of"]);
+
+type Theme = {
+	name: string;
+	value: string;
+	group?: "dark" | "light";
+};
+
+export const themes = [
+	{
+		name: "System",
+		value: "system"
+	},
+	{
+		name: "Light",
+		value: "light",
+		group: "light"
+	},
+	{
+		name: "Corporate",
+		value: "corporate",
+		group: "light"
+	},
+	{
+		name: "Retro",
+		value: "retro",
+		group: "light"
+	},
+	{
+		name: "Valentine",
+		value: "valentine",
+		group: "light"
+	},
+	{
+		name: "Black",
+		value: "black",
+		group: "dark"
+	},
+	{
+		name: "Business",
+		value: "business",
+		group: "dark"
+	},
+	{
+		name: "Halloween",
+		value: "halloween",
+		group: "dark"
+	},
+	{
+		name: "Night",
+		value: "night",
+		group: "dark"
+	}
+] as const satisfies Theme[];
+
+export const themeGroups = ["dark", "light"] as const;
+export type Themes = (typeof themes)[number]["value"];
+export type ThemeGroups = (typeof themeGroups)[number];

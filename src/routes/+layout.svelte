@@ -1,5 +1,6 @@
 <script lang="ts">
 	import { dev } from "$app/environment";
+	import { page } from "$app/stores";
 	import { cookieStore } from "$server/cookie";
 	import { setContext } from "svelte";
 	import { setupViewTransition } from "sveltekit-view-transition";
@@ -15,25 +16,15 @@
 </script>
 
 <ska:html
-	data-theme={!$app.settings.background ? ($app.settings.mode === "dark" ? "black" : "light") : $app.settings.theme}
+	data-theme={$page.route.id?.startsWith("/(app)")
+		? $app.settings.theme === "system" && $app.settings.mode === "dark"
+			? "black"
+			: $app.settings.theme
+		: $app.settings.mode}
 	class={$app.settings.mode}
 />
 
-{#if $app.settings.background}
-	<img
-		src="/images/barovia-gate.webp"
-		alt="Background"
-		class="no-script-hide !fixed z-0 min-h-dvh min-w-full object-cover object-center opacity-25 dark:opacity-20 print:hidden"
-	/>
-{/if}
-
-<div
-	class={twMerge(
-		"no-script-hide min-h-dvh text-base-content",
-		!$app.settings.background && "bg-base-100",
-		$app.settings.mode === "dark" && $app.settings.background && "bg-[oklch(0.232607_0.013807_253.101)]"
-	)}
->
+<div class={twMerge("no-script-hide min-h-dvh bg-base-100 text-base-content")}>
 	<slot />
 </div>
 

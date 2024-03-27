@@ -6,7 +6,6 @@
 	import type { CookieStore } from "$server/cookie.js";
 	import { signIn } from "@auth/sveltekit/client";
 	import { getContext } from "svelte";
-	import { twMerge } from "tailwind-merge";
 
 	export let data;
 
@@ -67,10 +66,7 @@
 	<div class="flex flex-col gap-4">
 		{#each PROVIDERS as provider}
 			<button
-				class={twMerge(
-					"flex h-16 items-center gap-4 rounded-lg px-8 py-4 text-base-content transition-colors hover:bg-base-300",
-					$app.settings.background ? "bg-base-200/50" : "bg-base-200"
-				)}
+				class="flex h-16 items-center gap-4 rounded-lg bg-base-200 px-8 py-4 text-base-content transition-colors hover:bg-base-300"
 				on:click={() =>
 					signIn(provider.id, {
 						callbackUrl: `${$page.url.origin}${data.redirectTo || "/characters"}`
@@ -83,9 +79,3 @@
 		{/each}
 	</div>
 </main>
-
-<style>
-	.tooltip {
-		--tooltip-color: oklch(var(--wa) / 0.6);
-	}
-</style>

@@ -93,7 +93,13 @@ export default {
 					secondary: "#c881ff",
 					"base-content": "#c4ccca"
 				}
-			}
+			},
+			"business",
+			"halloween",
+			"night",
+			"corporate",
+			"retro",
+			"valentine"
 		]
 	}
 };

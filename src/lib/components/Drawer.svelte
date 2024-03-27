@@ -99,7 +99,7 @@
 </div>
 <div
 	class={twMerge(
-		"fixed inset-0 bg-black/50 transition-all",
+		"fixed inset-0 bg-base-300/75 transition-all",
 		backdrop ? "block" : "hidden",
 		drawer ? "z-40 opacity-100" : "-z-10 opacity-0"
 	)}

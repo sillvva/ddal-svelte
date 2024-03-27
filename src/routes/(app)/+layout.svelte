@@ -158,24 +158,16 @@
 	<header
 		class={twMerge(
 			"relative top-0 z-20 w-full border-b-[1px] border-slate-500/50 transition-all",
-			!$app.settings.background && "sticky top-0 border-base-300 bg-base-100",
-			$app.settings.background && y >= 2 * 16 && y < 4 * 16 && "-top-16",
-			$app.settings.background && y >= 4 * 16 && "sticky border-slate-500/50"
+			"sticky top-0 border-base-300 bg-base-100"
 		)}
 	>
-		{#if $app.settings.background}
-			<div class={twMerge("absolute inset-0 transition-all", y >= 4 * 16 && "backdrop-blur-lg")} />
-		{/if}
 		<nav class="container relative z-10 mx-auto flex max-w-5xl gap-2 p-4">
 			<Drawer />
 			<Settings bind:open={settingsOpen} />
 			<div class="ml-4 inline w-6 sm:hidden">&nbsp;</div>
 			<a
 				href={data.session?.user ? "/characters" : "/"}
-				class={twMerge(
-					"mr-8 flex flex-col text-center font-draconis",
-					!$app.settings.background && "mr-2 flex-1 sm:flex-none md:mr-8"
-				)}
+				class="mr-2 flex flex-1 flex-col text-center font-draconis sm:flex-none md:mr-8"
 			>
 				<h1 class="text-base leading-4 text-black dark:text-white">Adventurers League</h1>
 				<h2 class="text-3xl leading-7">Log Sheet</h2>
@@ -185,7 +177,7 @@
 				<a href="/dm-logs" class="hidden items-center p-2 md:flex">DM Logs</a>
 				<a href="/dms" class="hidden items-center p-2 md:flex">DMs</a>
 			{/if}
-			<div class={twMerge("flex-1", !$app.settings.background && "max-sm:hidden")}>&nbsp;</div>
+			<div class="flex-1 max-sm:hidden">&nbsp;</div>
 			<button on:click={() => (cmdOpen = true)} class="inline hover-hover:md:hidden">
 				<span class="iconify size-6 mdi-magnify" />
 			</button>
@@ -203,12 +195,7 @@
 			{#if data.session?.user}
 				<summary tabindex="0" class="flex h-full cursor-pointer items-center pl-4" on:click={() => (settingsOpen = true)}>
 					<div class="avatar">
-						<div
-							class={twMerge(
-								"relative w-11 overflow-hidden rounded-full ring ring-primary ring-offset-2 ring-offset-base-100",
-								!$app.settings.background && "w-9 lg:w-11"
-							)}
-						>
+						<div class="relative w-9 overflow-hidden rounded-full ring ring-primary ring-offset-2 ring-offset-base-100 lg:w-11">
 							<img
 								src={data.session?.user?.image || ""}
 								alt={data.session?.user?.name}
@@ -230,37 +217,26 @@
 		</nav>
 	</header>
 	<div class="container relative z-10 mx-auto max-w-5xl flex-1 p-4"><slot /></div>
-	{#if $app.settings.background}
-		<footer class="z-16 footer footer-center relative bg-base-300/50 p-4 text-base-content print:hidden">
-			<div>
-				<p>
-					All
-					<a
-						href="https://www.dndbeyond.com/sources/cos/the-lands-of-barovia#BGatesofBarovia"
-						target="_blank"
-						rel="noreferrer noopener"
-						class="text-secondary"
-					>
-						images
-					</a>
-					and the name
-					<a href="https://dnd.wizards.com/adventurers-league" target="_blank" rel="noreferrer noopener" class="text-secondary">
-						Adventurers League
-					</a>
-					are property of Hasbro and
-					<a href="https://dnd.wizards.com/" target="_blank" rel="noreferrer noopener" class="text-secondary">
-						Wizards of the Coast
-					</a>. This website is affiliated with neither.
-				</p>
-			</div>
-		</footer>
-	{/if}
+	<footer class="z-16 footer footer-center relative bg-base-300/50 p-4 text-base-content print:hidden">
+		<div>
+			<p>
+				The name
+				<a href="https://dnd.wizards.com/adventurers-league" target="_blank" rel="noreferrer noopener" class="text-secondary">
+					Adventurers League
+				</a>
+				are property of Hasbro and
+				<a href="https://dnd.wizards.com/" target="_blank" rel="noreferrer noopener" class="text-secondary">
+					Wizards of the Coast
+				</a>. This website is affiliated with neither.
+			</p>
+		</div>
+	</footer>
 </div>
 
-<Toaster richColors closeButton theme={$app.settings.theme} />
+<Toaster richColors closeButton theme={$app.settings.mode} />
 
 <dialog
-	class={twMerge("modal !bg-base-200/50")}
+	class={twMerge("modal !bg-base-300/75")}
 	open={!!$page.state.modal || undefined}
 	aria-labelledby="modal-title"
 	aria-describedby="modal-content"
@@ -275,7 +251,7 @@
 >
 	{#if $page.state.modal}
 		{#if $page.state.modal.type === "text"}
-			<div class="modal-box relative cursor-default bg-base-300 drop-shadow-lg">
+			<div class="modal-box relative cursor-default bg-base-100 drop-shadow-lg">
 				<button class="btn btn-circle btn-ghost btn-sm absolute right-2 top-2" on:click={() => history.back()}>✕</button>
 				<h3 id="modal-title" class="cursor-text text-lg font-bold text-black dark:text-white">{$page.state.modal.name}</h3>
 				{#if $page.state.modal.date}
@@ -305,7 +281,7 @@
 </dialog>
 
 <dialog
-	class={twMerge("modal !bg-base-200/50")}
+	class={twMerge("modal !bg-base-300/75")}
 	open={!!cmdOpen || undefined}
 	aria-labelledby="modal-title"
 	aria-describedby="modal-content"
@@ -324,7 +300,7 @@
 		]
 	]}
 >
-	<div class="modal-box relative cursor-default bg-base-300 px-4 py-5 drop-shadow-lg sm:p-6">
+	<div class="modal-box relative cursor-default bg-base-100 px-4 py-5 drop-shadow-lg sm:p-6">
 		<div class="modal-content">
 			<Command.Dialog
 				label="Command Menu"
