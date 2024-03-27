@@ -236,7 +236,7 @@
 <Toaster richColors closeButton theme={$app.settings.mode} />
 
 <dialog
-	class={twMerge("modal !bg-base-200/50")}
+	class={twMerge("modal !bg-base-300/75")}
 	open={!!$page.state.modal || undefined}
 	aria-labelledby="modal-title"
 	aria-describedby="modal-content"
@@ -251,7 +251,7 @@
 >
 	{#if $page.state.modal}
 		{#if $page.state.modal.type === "text"}
-			<div class="modal-box relative cursor-default bg-base-300 drop-shadow-lg">
+			<div class="modal-box relative cursor-default bg-base-100 drop-shadow-lg">
 				<button class="btn btn-circle btn-ghost btn-sm absolute right-2 top-2" on:click={() => history.back()}>✕</button>
 				<h3 id="modal-title" class="cursor-text text-lg font-bold text-black dark:text-white">{$page.state.modal.name}</h3>
 				{#if $page.state.modal.date}
@@ -281,7 +281,7 @@
 </dialog>
 
 <dialog
-	class={twMerge("modal !bg-base-200/50")}
+	class={twMerge("modal !bg-base-300/75")}
 	open={!!cmdOpen || undefined}
 	aria-labelledby="modal-title"
 	aria-describedby="modal-content"
@@ -300,7 +300,7 @@
 		]
 	]}
 >
-	<div class="modal-box relative cursor-default bg-base-300 px-4 py-5 drop-shadow-lg sm:p-6">
+	<div class="modal-box relative cursor-default bg-base-100 px-4 py-5 drop-shadow-lg sm:p-6">
 		<div class="modal-content">
 			<Command.Dialog
 				label="Command Menu"
