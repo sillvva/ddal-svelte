@@ -14,16 +14,14 @@
 	}
 
 	$: if (browser) {
-		if ($app.settings.theme === "system") {
-			const mql = window.matchMedia("(prefers-color-scheme: dark)");
-			$app.settings.mode = mql.matches ? "dark" : "light";
-		}
-	}
-
-	$: {
 		const selected = themes.find((t) => t.value === $app.settings.theme);
-		if (selected && "group" in selected) {
-			$app.settings.mode = selected.group;
+		if (selected) {
+			if (selected.value === "system") {
+				const mql = window.matchMedia("(prefers-color-scheme: dark)");
+				$app.settings.mode = mql.matches ? "dark" : "light";
+			} else {
+				$app.settings.mode = selected.group;
+			}
 		}
 	}
 </script>
