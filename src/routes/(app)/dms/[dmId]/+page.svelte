@@ -11,7 +11,6 @@
 	import { sorter } from "@sillvva/utils";
 
 	export let data;
-	export let form;
 
 	$: superform = valibotForm(data.form, dungeonMasterSchema);
 </script>

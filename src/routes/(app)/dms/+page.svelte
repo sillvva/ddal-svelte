@@ -11,7 +11,6 @@
 	import { twMerge } from "tailwind-merge";
 
 	export let data;
-	export let form;
 
 	$: dms = data.dms;
 	let deletingDM: string[] = [];
