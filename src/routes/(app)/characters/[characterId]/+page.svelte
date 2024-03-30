@@ -1,5 +1,5 @@
 <script lang="ts">
-	import { applyAction, enhance } from "$app/forms";
+	import { enhance } from "$app/forms";
 	import { goto, pushState } from "$app/navigation";
 	import { page } from "$app/stores";
 	import BreadCrumbs from "$lib/components/BreadCrumbs.svelte";
@@ -8,11 +8,12 @@
 	import Markdown from "$lib/components/Markdown.svelte";
 	import Search from "$lib/components/Search.svelte";
 	import SearchResults from "$lib/components/SearchResults.svelte";
+	import DeleteLog from "$lib/components/forms/DeleteLog.svelte";
 	import { stopWords } from "$lib/constants.js";
 	import { errorToast, successToast } from "$lib/factories.js";
 	import { pageLoader, searchData } from "$lib/stores";
 	import type { TransitionAction } from "$lib/util";
-	import { SaveError, createTransition } from "$lib/util";
+	import { createTransition } from "$lib/util";
 	import type { CookieStore } from "$server/cookie.js";
 	import { slugify, sorter } from "@sillvva/utils";
 	import { download, hotkey } from "@svelteuidev/composables";
@@ -556,35 +557,7 @@
 									>
 										<span class="iconify size-6 mdi-pencil sm:size-4" />
 									</a>
-									<form
-										method="POST"
-										action="?/deleteLog"
-										use:enhance={() => {
-											deletingLog = [...deletingLog, log.id];
-											return async ({ result }) => {
-												await applyAction(result);
-												if (form instanceof SaveError) {
-													deletingLog = deletingLog.filter((id) => id !== log.id);
-													errorToast(form.error);
-												} else {
-													$searchData = [];
-													successToast("Log deleted");
-												}
-											};
-										}}
-									>
-										<input type="hidden" name="logId" value={log.id} />
-										<button
-											class="btn btn-error sm:btn-sm"
-											on:click|preventDefault={(e) => {
-												if (confirm(`Are you sure you want to delete ${log.name}? This action cannot be reversed.`))
-													e.currentTarget.form?.requestSubmit();
-											}}
-											aria-label="Delete Log"
-										>
-											<span class="iconify size-6 mdi-trash-can sm:size-4" />
-										</button>
-									</form>
+									<DeleteLog {log} bind:deletingLog />
 								</div>
 							</td>
 						{/if}
