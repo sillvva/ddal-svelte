@@ -1,5 +1,4 @@
 <script lang="ts">
-	import { enhance } from "$app/forms";
 	import { goto, pushState } from "$app/navigation";
 	import { page } from "$app/stores";
 	import BreadCrumbs from "$lib/components/BreadCrumbs.svelte";
@@ -8,10 +7,9 @@
 	import Markdown from "$lib/components/Markdown.svelte";
 	import Search from "$lib/components/Search.svelte";
 	import SearchResults from "$lib/components/SearchResults.svelte";
+	import DeleteCharacter from "$lib/components/forms/DeleteCharacter.svelte";
 	import DeleteLog from "$lib/components/forms/DeleteLog.svelte";
 	import { stopWords } from "$lib/constants.js";
-	import { errorToast, successToast } from "$lib/factories.js";
-	import { pageLoader, searchData } from "$lib/stores";
 	import type { TransitionAction } from "$lib/util";
 	import { createTransition } from "$lib/util";
 	import type { CookieStore } from "$server/cookie.js";
@@ -22,7 +20,6 @@
 	import { twMerge } from "tailwind-merge";
 
 	export let data;
-	export let form;
 
 	const app = getContext<CookieStore<App.Cookie>>("app");
 	const transition = getContext<TransitionAction>("transition");
@@ -141,28 +138,7 @@
 							</button>
 						</li>
 						<li>
-							<form
-								method="POST"
-								action="?/deleteCharacter"
-								use:enhance={() => {
-									$pageLoader = true;
-									return ({ update, result }) => {
-										update();
-										$searchData = [];
-										if (result.type !== "redirect") $pageLoader = false;
-									};
-								}}
-								class="menu-item-error rounded-lg"
-							>
-								<button
-									on:click|preventDefault={(e) => {
-										if (confirm(`Are you sure you want to delete ${character.name}? This action cannot be reversed.`))
-											e.currentTarget.form?.requestSubmit();
-									}}
-								>
-									Delete Character
-								</button>
-							</form>
+							<DeleteCharacter {character} label="Delete Character" />
 						</li>
 					</ul>
 				</Dropdown>
@@ -191,43 +167,12 @@
 							<a href={`/characters/${character.id}/edit`}>Edit</a>
 						</li>
 						<li use:close>
-							<form
-								method="POST"
-								action="?/deleteCharacter"
-								use:enhance={() => {
-									$pageLoader = true;
-									return ({ update, result }) => {
-										update();
-										if (result.type === "redirect") {
-											successToast("Character deleted");
-											$searchData = [];
-										} else {
-											errorToast(form?.error || "Character not deleted");
-											$pageLoader = false;
-										}
-									};
-								}}
-								class="btn-error"
-							>
-								<button
-									on:click|preventDefault={(e) => {
-										if (confirm(`Are you sure you want to delete ${character.name}? This action cannot be reversed.`))
-											e.currentTarget.form?.requestSubmit();
-									}}>Delete Character</button
-								>
-							</form>
+							<DeleteCharacter {character} label="Delete Character" />
 						</li>
 					{/if}
 				</ul>
 			</Dropdown>
 		{/if}
-	</div>
-{/if}
-
-{#if form?.error}
-	<div class="alert alert-error mb-4 shadow-lg">
-		<span class="iconify size-6 mdi-alert-circle" />
-		{form.error}
 	</div>
 {/if}
 

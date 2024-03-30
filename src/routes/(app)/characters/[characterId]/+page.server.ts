@@ -1,4 +1,4 @@
-import { logSchema } from "$lib/schemas.js";
+import { editCharacterSchema, logSchema } from "$lib/schemas.js";
 import { deleteCharacter } from "$server/actions/characters";
 import { deleteLog } from "$server/actions/logs";
 import { error, redirect } from "@sveltejs/kit";
@@ -25,13 +25,17 @@ export const actions = {
 	deleteCharacter: async (event) => {
 		const session = await event.locals.session;
 		if (!session?.user) redirect(302, "/");
-		const characterId = event.params.characterId;
-		const result = await deleteCharacter(characterId, session.user.id);
-		if (result) {
-			if (result.id) redirect(302, "/characters");
-			if (result.error) error(400, result.error);
+
+		const form = await superValidate(event, valibot(pick(editCharacterSchema, ["id"])));
+		if (!form.valid) return fail(400, { form });
+
+		const result = await deleteCharacter(form.data.id, session.user.id);
+		if ("error" in result) {
+			setError(form, "id", result.error);
+			return fail(result.status, { form });
 		}
-		return result;
+
+		return { form };
 	},
 	deleteLog: async (event) => {
 		const session = await event.locals.session;
