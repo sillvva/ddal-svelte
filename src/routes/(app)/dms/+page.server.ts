@@ -1,8 +1,12 @@
+import { dungeonMasterSchema } from "$lib/schemas.js";
 import { deleteDM } from "$server/actions/dms.js";
 import { signInRedirect } from "$server/auth";
 import { rateLimiter } from "$server/cache.js";
 import { getUserDMsWithLogsCache } from "$server/data/dms";
 import { error, fail, redirect } from "@sveltejs/kit";
+import { setError, superValidate } from "sveltekit-superforms";
+import { valibot } from "sveltekit-superforms/adapters";
+import { pick } from "valibot";
 
 export const load = async (event) => {
 	const session = event.locals.session;
@@ -25,19 +29,23 @@ export const actions = {
 		const session = await event.locals.session;
 		if (!session?.user) redirect(302, "/");
 
-		const data = await event.request.formData();
-		const dmId = data.get("dmId");
-		if (!dmId || typeof dmId !== "string") return fail(400, { error: "DM ID required" });
+		const form = await superValidate(event, valibot(pick(dungeonMasterSchema, ["id"])));
+		if (!form.valid) return fail(400, { form });
 
-		const dms = await getUserDMsWithLogsCache(session.user);
-		const dm = dms.find((dm) => dm.id == dmId);
+		const [dm] = await getUserDMsWithLogsCache(session.user, form.data.id);
 		if (!dm) redirect(302, "/dms");
 
-		if (dm.logs.length) return fail(400, { error: "Cannot delete a DM with logs" });
+		if (dm.logs.length) {
+			setError(form, "id", "Cannot delete a DM with logs");
+			return fail(400, { form });
+		}
 
-		const result = await deleteDM(dmId, session.user);
-		if ("error" in result) return fail(result.status, { error: result.error });
+		const result = await deleteDM(dm.id, session.user);
+		if ("error" in result) {
+			setError(form, "id", result.error);
+			return fail(result.status, { form });
+		}
 
-		redirect(302, `/dms`);
+		return { form };
 	}
 };
