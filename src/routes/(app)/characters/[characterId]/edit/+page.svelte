@@ -1,9 +1,9 @@
 <script lang="ts">
 	import BreadCrumbs from "$lib/components/BreadCrumbs.svelte";
-	import Control from "$lib/components/Control.svelte";
-	import Input from "$lib/components/Input.svelte";
-	import Submit from "$lib/components/Submit.svelte";
-	import SuperForm from "$lib/components/SuperForm.svelte";
+	import Control from "$lib/components/forms/Control.svelte";
+	import Input from "$lib/components/forms/Input.svelte";
+	import Submit from "$lib/components/forms/Submit.svelte";
+	import SuperForm from "$lib/components/forms/SuperForm.svelte";
 	import { valibotForm } from "$lib/factories.js";
 	import { newCharacterSchema } from "$lib/schemas";
 

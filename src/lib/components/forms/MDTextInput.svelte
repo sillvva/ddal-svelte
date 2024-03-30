@@ -5,8 +5,8 @@
 <script lang="ts" generics="T extends TRec">
 	import { formFieldProxy, type FormPathLeaves, type SuperForm } from "sveltekit-superforms";
 	import { twMerge } from "tailwind-merge";
+	import Markdown from "../Markdown.svelte";
 	import AutoResizeTextArea from "./AutoResizeTextArea.svelte";
-	import Markdown from "./Markdown.svelte";
 
 	export let superform: SuperForm<T>;
 	export let field: FormPathLeaves<T, string>;
