@@ -68,7 +68,10 @@ export class SaveError<TOut extends Record<string, unknown>, TIn extends Record<
 	) {
 		if (dev) console.error(err);
 		if (err instanceof SaveError) return err;
-		if (err instanceof Error) return new SaveError<TOut, TIn>(err.message);
+		if (typeof err === "string") return new SaveError<TOut, TIn>(err);
+		if (err && typeof err === "object" && "message" in err && typeof err.message === "string") {
+			return new SaveError<TOut, TIn>(err.message);
+		}
 		return new SaveError<TOut, TIn>("An unknown error has occurred.");
 	}
 
