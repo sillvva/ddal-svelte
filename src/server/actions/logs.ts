@@ -250,8 +250,6 @@ export async function deleteLog(logId: string, userId?: string): SaveResult<{ id
 			return log;
 		});
 
-		if (!log) throw new LogError("Log not found", { status: 404 });
-
 		revalidateKeys([
 			log.isDmLog && log.dm?.uid && ["dm-logs", log.dm.uid],
 			log.characterId && ["character", log.characterId, "logs"],
