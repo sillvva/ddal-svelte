@@ -1,5 +1,4 @@
 <script lang="ts">
-	import { applyAction, enhance } from "$app/forms";
 	import { goto, pushState } from "$app/navigation";
 	import { page } from "$app/stores";
 	import BreadCrumbs from "$lib/components/BreadCrumbs.svelte";
@@ -7,10 +6,8 @@
 	import Items from "$lib/components/Items.svelte";
 	import Search from "$lib/components/Search.svelte";
 	import SearchResults from "$lib/components/SearchResults.svelte";
+	import DeleteLog from "$lib/components/forms/DeleteLog.svelte";
 	import { stopWords } from "$lib/constants";
-	import { errorToast, successToast } from "$lib/factories";
-	import { searchData } from "$lib/stores";
-	import { SaveError } from "$lib/util.js";
 	import type { CookieStore } from "$server/cookie.js";
 	import { sorter } from "@sillvva/utils";
 	import { download, hotkey } from "@svelteuidev/composables";
@@ -19,7 +16,6 @@
 	import { twMerge } from "tailwind-merge";
 
 	export let data;
-	export let form;
 
 	$: logs = data.logs;
 	const app = getContext<CookieStore<App.Cookie>>("app");
@@ -104,13 +100,6 @@
 			</ul>
 		</Dropdown>
 	</div>
-
-	{#if form?.error}
-		<div class="alert alert-error mb-4 shadow-lg">
-			<span class="iconify size-6 mdi-alert-circle" />
-			{form.error}
-		</div>
-	{/if}
 
 	<div class="flex gap-2 sm:justify-between">
 		<div class="flex w-full gap-2 sm:w-96">
@@ -305,35 +294,7 @@
 										<a href="/dm-logs/{log.id}" class="btn btn-primary sm:btn-sm" aria-label="Edit Log">
 											<span class="iconify mdi-pencil" />
 										</a>
-										<form
-											method="POST"
-											action="?/deleteLog"
-											use:enhance={() => {
-												deletingLog = [...deletingLog, log.id];
-												return async ({ result }) => {
-													await applyAction(result);
-													if (form instanceof SaveError) {
-														deletingLog = deletingLog.filter((id) => id !== log.id);
-														errorToast(form.error);
-													} else {
-														$searchData = [];
-														successToast("Log deleted");
-													}
-												};
-											}}
-										>
-											<input type="hidden" name="logId" value={log.id} />
-											<button
-												class="btn btn-error sm:btn-sm"
-												on:click|preventDefault={(e) => {
-													if (confirm(`Are you sure you want to delete ${log.name}? This action cannot be reversed.`))
-														e.currentTarget.form?.requestSubmit();
-												}}
-												aria-label="Delete Log"
-											>
-												<span class="iconify mdi-trash-can" />
-											</button>
-										</form>
+										<DeleteLog {log} bind:deletingLog />
 									</div>
 								</td>
 							</tr>

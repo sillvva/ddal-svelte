@@ -5,7 +5,7 @@ import { superForm, type FormOptions, type FormPathLeaves, type SuperValidated }
 import { valibotClient } from "sveltekit-superforms/adapters";
 import type { BaseSchema, Input, Output } from "valibot";
 
-export function successToast(message?: string) {
+export function successToast(message: string) {
 	toast.success("Success", {
 		description: message,
 		classes: {
@@ -14,7 +14,7 @@ export function successToast(message?: string) {
 	});
 }
 
-export function errorToast(message?: string) {
+export function errorToast(message: string) {
 	toast.error("Error", {
 		description: message,
 		classes: {

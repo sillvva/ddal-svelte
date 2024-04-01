@@ -1,5 +1,5 @@
 import { dungeonMasterSchema } from "$lib/schemas";
-import { deleteDM, saveDM } from "$server/actions/dms";
+import { saveDM } from "$server/actions/dms";
 import { signInRedirect } from "$server/auth.js";
 import { getUserDMsWithLogsCache } from "$server/data/dms";
 import { error, redirect } from "@sveltejs/kit";
@@ -12,8 +12,7 @@ export const load = async (event) => {
 	const session = event.locals.session;
 	if (!session?.user?.name) signInRedirect(event.url);
 
-	const dms = await getUserDMsWithLogsCache(session.user);
-	const dm = dms.find((dm) => dm.id == event.params.dmId);
+	const [dm] = await getUserDMsWithLogsCache(session.user, event.params.dmId);
 	if (!dm) error(404, "DM not found");
 
 	const form = await superValidate(
@@ -37,8 +36,7 @@ export const load = async (event) => {
 			name: dm.name,
 			href: `/dms/${dm.id}`
 		}),
-		name: dm.name,
-		logs: dm.logs,
+		dm,
 		user: session.user,
 		form
 	};
@@ -55,21 +53,6 @@ export const actions = {
 
 		const result = await saveDM(event.params.dmId, session.user, form.data);
 		if ("error" in result) return result.toForm(form);
-
-		redirect(302, `/dms`);
-	},
-	deleteDM: async (event) => {
-		const session = await event.locals.session;
-		if (!session?.user) redirect(302, "/");
-
-		const dms = await getUserDMsWithLogsCache(session.user);
-		const dm = dms.find((dm) => dm.id == event.params.dmId);
-		if (!dm) redirect(302, "/dms");
-
-		if (dm.logs.length) return fail(400, { error: "Cannot delete a DM with logs" });
-
-		const result = await deleteDM(event.params.dmId, session.user);
-		if ("error" in result) return fail(result.status, { error: result.error });
 
 		redirect(302, `/dms`);
 	}

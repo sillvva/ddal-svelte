@@ -96,7 +96,7 @@ export const cookieStore = function <T extends string | number | boolean | objec
  */
 export function serverGetCookie<T extends string | number | boolean | object>(cookies: Cookies, name: string, defaultCookie: T) {
 	const val = cookies.get(name) === "undefined" ? undefined : cookies.get(name);
-	const cookie = JSON.parse(val || JSON.stringify(defaultCookie)) as typeof defaultCookie;
+	const cookie = val ? (JSON.parse(val) as T) : defaultCookie;
 	if (typeof cookie !== typeof defaultCookie) throw new Error(`Cookie "${name}" is not of type ${typeof defaultCookie}`);
 	if (typeof cookie === "object" && typeof defaultCookie === "object")
 		return {

@@ -27,9 +27,10 @@ export const stopWords = new Set(["and", "or", "to", "in", "a", "the", "of"]);
 type Theme = {
 	name: string;
 	value: string;
-	group?: "dark" | "light";
+	group?: (typeof themeGroups)[number];
 };
 
+export const themeGroups = ["dark", "light"] as const;
 export const themes = [
 	{
 		name: "System",
@@ -77,6 +78,5 @@ export const themes = [
 	}
 ] as const satisfies Theme[];
 
-export const themeGroups = ["dark", "light"] as const;
 export type Themes = (typeof themes)[number]["value"];
 export type ThemeGroups = (typeof themeGroups)[number];

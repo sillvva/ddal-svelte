@@ -1,17 +1,16 @@
 <script lang="ts">
-	import { applyAction, enhance } from "$app/forms";
+	import { goto } from "$app/navigation";
 	import BreadCrumbs from "$lib/components/BreadCrumbs.svelte";
-	import Control from "$lib/components/Control.svelte";
-	import Input from "$lib/components/Input.svelte";
-	import Submit from "$lib/components/Submit.svelte";
-	import SuperForm from "$lib/components/SuperForm.svelte";
-	import { errorToast, successToast, valibotForm } from "$lib/factories";
+	import Control from "$lib/components/forms/Control.svelte";
+	import DeleteDm from "$lib/components/forms/DeleteDM.svelte";
+	import Input from "$lib/components/forms/Input.svelte";
+	import Submit from "$lib/components/forms/Submit.svelte";
+	import SuperForm from "$lib/components/forms/SuperForm.svelte";
+	import { valibotForm } from "$lib/factories";
 	import { dungeonMasterSchema } from "$lib/schemas";
-	import { pageLoader, searchData } from "$lib/stores";
 	import { sorter } from "@sillvva/utils";
 
 	export let data;
-	export let form;
 
 	$: superform = valibotForm(data.form, dungeonMasterSchema);
 </script>
@@ -33,31 +32,9 @@
 		<section>
 			<h2 class="mb-2 text-2xl">Logs</h2>
 			<div class="w-full overflow-x-auto rounded-lg bg-base-100">
-				{#if data.logs.length == 0}
-					<form
-						method="POST"
-						action={`?/deleteDM`}
-						class="flex flex-col items-center gap-4 py-20"
-						use:enhance={({ cancel }) => {
-							if (!confirm(`Are you sure you want to delete ${data.name}? This action cannot be reversed.`)) return cancel();
-							$pageLoader = true;
-							return async ({ result }) => {
-								await applyAction(result);
-								if (form?.error) {
-									errorToast(form.error);
-									$pageLoader = false;
-								} else {
-									successToast(`${data.name} deleted`);
-									$searchData = [];
-								}
-							};
-						}}
-					>
-						<p>This DM has no logs.</p>
-						<button type="submit" class="btn btn-error btn-sm hover:font-bold hover:text-white" aria-label="Delete DM">
-							Delete DM
-						</button>
-					</form>
+				{#if data.dm.logs.length == 0}
+					<p>This DM has no logs.</p>
+					<DeleteDm dm={data.dm} label="Delete DM" on:deleted={() => goto("/dms")} />
 				{:else}
 					<table class="table w-full">
 						<thead>
@@ -68,7 +45,7 @@
 							</tr>
 						</thead>
 						<tbody>
-							{#each data.logs.sort((a, b) => sorter(a.date, b.date)) as log}
+							{#each data.dm.logs.sort((a, b) => sorter(a.date, b.date)) as log}
 								<tr>
 									<td>
 										<div class="flex flex-col gap-1">

@@ -2,7 +2,7 @@ import { cache } from "$server/cache";
 import { q } from "$server/db";
 
 export type UserDMsWithLogs = Awaited<ReturnType<typeof getUserDMsWithLogs>>;
-export async function getUserDMsWithLogs(user: LocalsSession["user"]) {
+export async function getUserDMsWithLogs(user: LocalsSession["user"], id?: string) {
 	if (!user || !user.id) return [];
 
 	const dms = await q.dungeonMasters
@@ -20,7 +20,10 @@ export async function getUserDMsWithLogs(user: LocalsSession["user"]) {
 					}
 				}
 			},
-			where: (dms, { or, eq }) => or(eq(dms.owner, user.id), eq(dms.uid, user.id))
+			where: (dms, { or, eq, and }) =>
+				id
+					? and(or(eq(dms.owner, user.id), eq(dms.uid, user.id)), eq(dms.id, id))
+					: or(eq(dms.owner, user.id), eq(dms.uid, user.id))
 		})
 		.then((dms) =>
 			dms.map((dm) => ({
@@ -29,7 +32,7 @@ export async function getUserDMsWithLogs(user: LocalsSession["user"]) {
 			}))
 		);
 
-	if (!dms.find((dm) => dm.uid === user.id)) {
+	if (!id && !dms.find((dm) => dm.uid === user.id)) {
 		dms.push({
 			id: "",
 			name: user.name || "Me",
@@ -49,9 +52,9 @@ export async function getUserDMsWithLogs(user: LocalsSession["user"]) {
 		.sort((a, b) => (b.uid || "").localeCompare(a.uid || "") || a.name.localeCompare(b.name));
 }
 
-export async function getUserDMsWithLogsCache(user: LocalsSession["user"]) {
+export async function getUserDMsWithLogsCache(user: LocalsSession["user"], id?: string) {
 	if (!user || !user.id) return [];
-	return cache(() => getUserDMsWithLogs(user), ["dms", user.id, "logs"], 3 * 3600);
+	return cache(() => getUserDMsWithLogs(user, id), ["dms", id ?? user.id, "logs"], 3 * 3600);
 }
 
 export type UserDMs = Awaited<ReturnType<typeof getUserDMs>>;

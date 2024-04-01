@@ -1,13 +1,13 @@
 <script lang="ts">
-	import AddDropItems from "$lib/components/AddDropItems.svelte";
 	import BreadCrumbs from "$lib/components/BreadCrumbs.svelte";
-	import Combobox from "$lib/components/Combobox.svelte";
-	import Control from "$lib/components/Control.svelte";
-	import GenericInput from "$lib/components/GenericInput.svelte";
-	import Input from "$lib/components/Input.svelte";
-	import MdTextInput from "$lib/components/MDTextInput.svelte";
-	import Submit from "$lib/components/Submit.svelte";
-	import SuperForm from "$lib/components/SuperForm.svelte";
+	import AddDropItems from "$lib/components/forms/AddDropItems.svelte";
+	import Combobox from "$lib/components/forms/Combobox.svelte";
+	import Control from "$lib/components/forms/Control.svelte";
+	import GenericInput from "$lib/components/forms/GenericInput.svelte";
+	import Input from "$lib/components/forms/Input.svelte";
+	import MdTextInput from "$lib/components/forms/MDTextInput.svelte";
+	import Submit from "$lib/components/forms/Submit.svelte";
+	import SuperForm from "$lib/components/forms/SuperForm.svelte";
 	import { defaultDM } from "$lib/entities";
 	import { valibotForm } from "$lib/factories.js";
 	import { logSchema } from "$lib/schemas";

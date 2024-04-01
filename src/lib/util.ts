@@ -1,5 +1,5 @@
 import { dev } from "$app/environment";
-import { error, type NumericRange } from "@sveltejs/kit";
+import { type NumericRange } from "@sveltejs/kit";
 import { message, setError, type FormPathLeavesWithErrors, type SuperValidated } from "sveltekit-superforms";
 import type { setupViewTransition } from "sveltekit-view-transition";
 
@@ -68,7 +68,10 @@ export class SaveError<TOut extends Record<string, unknown>, TIn extends Record<
 	) {
 		if (dev) console.error(err);
 		if (err instanceof SaveError) return err;
-		if (err instanceof Error) return new SaveError<TOut, TIn>(err.message);
+		if (typeof err === "string") return new SaveError<TOut, TIn>(err);
+		if (err && typeof err === "object" && "message" in err && typeof err.message === "string") {
+			return new SaveError<TOut, TIn>(err.message);
+		}
 		return new SaveError<TOut, TIn>("An unknown error has occurred.");
 	}
 
@@ -87,20 +90,6 @@ export class SaveError<TOut extends Record<string, unknown>, TIn extends Record<
 						status: this.status
 					}
 				);
-	}
-}
-
-export function handleSKitError(err: unknown) {
-	if (
-		err &&
-		typeof err == "object" &&
-		"status" in err &&
-		typeof err.status == "number" &&
-		"body" in err &&
-		typeof err.body == "string"
-	) {
-		if (dev) console.error(err);
-		error(err.status, err.body);
 	}
 }
 

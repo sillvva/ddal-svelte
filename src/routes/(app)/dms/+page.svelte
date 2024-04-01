@@ -1,19 +1,16 @@
 <script lang="ts">
-	import { applyAction, enhance } from "$app/forms";
 	import { page } from "$app/stores";
 	import BreadCrumbs from "$lib/components/BreadCrumbs.svelte";
 	import Search from "$lib/components/Search.svelte";
 	import SearchResults from "$lib/components/SearchResults.svelte";
+	import DeleteDm from "$lib/components/forms/DeleteDM.svelte";
 	import { stopWords } from "$lib/constants.js";
-	import { errorToast, successToast } from "$lib/factories";
-	import { searchData } from "$lib/stores";
 	import { isDefined } from "$lib/util";
 	import { sorter } from "@sillvva/utils";
 	import MiniSearch from "minisearch";
 	import { twMerge } from "tailwind-merge";
 
 	export let data;
-	export let form;
 
 	$: dms = data.dms;
 	let deletingDM: string[] = [];
@@ -106,31 +103,7 @@
 									<td class="w-16 print:hidden">
 										<div class="flex flex-row justify-end gap-2">
 											{#if dm.logs.length == 0}
-												<form
-													method="POST"
-													action={`?/deleteDM`}
-													use:enhance={({ cancel }) => {
-														if (!confirm(`Are you sure you want to delete ${dm.name}? This action cannot be reversed.`))
-															return cancel();
-
-														deletingDM = [...deletingDM, dm.id];
-														return async ({ result }) => {
-															await applyAction(result);
-															if (form?.error) {
-																errorToast(form.error);
-																deletingDM = deletingDM.filter((id) => id !== dm.id);
-															} else {
-																successToast(`${dm.name} deleted`);
-																$searchData = [];
-															}
-														};
-													}}
-												>
-													<input type="hidden" name="dmId" value={dm.id} />
-													<button type="submit" class="btn btn-error sm:btn-sm" aria-label="Delete DM">
-														<span class="iconify mdi-trash-can" />
-													</button>
-												</form>
+												<DeleteDm {dm} bind:deletingDM />
 											{/if}
 											<a href="/dms/{dm.id}" class="btn btn-primary sm:btn-sm" aria-label="Edit DM">
 												<span class="iconify mdi-pencil" />
