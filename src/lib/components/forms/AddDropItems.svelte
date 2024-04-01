@@ -1,7 +1,7 @@
 <script lang="ts">
+	import type { LogSchema } from "$lib/schemas";
 	import type { MagicItem, StoryAward } from "$server/db/schema";
 	import type { SuperForm } from "sveltekit-superforms";
-	import type { LogSchema } from "../../schemas";
 	import EntityCard from "./EntityCard.svelte";
 	export let superform: SuperForm<LogSchema, any>;
 	export let magicItems: MagicItem[] = [];
