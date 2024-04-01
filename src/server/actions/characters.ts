@@ -4,7 +4,7 @@ import { rateLimiter, revalidateKeys } from "$server/cache";
 import { getCharacterCache } from "$server/data/characters";
 import { db, q } from "$server/db";
 import { characters, logs, type Character } from "$server/db/schema";
-import { and, eq, inArray } from "drizzle-orm";
+import { and, eq } from "drizzle-orm";
 
 export type SaveCharacterResult = ReturnType<typeof saveCharacter>;
 export async function saveCharacter(
@@ -68,14 +68,11 @@ export async function deleteCharacter(characterId: string, userId?: string): Sav
 		if (!character) throw new SaveError("Character not found", { status: 404 });
 		if (character.userId !== userId) throw new SaveError("Not authorized", { status: 401 });
 
-		const logIds = character.logs.map((log) => log.id);
 		const [result] = await db.transaction(async (tx) => {
-			if (logIds.length) {
-				await tx
-					.update(logs)
-					.set({ characterId: "" })
-					.where(and(inArray(logs.id, logIds), eq(logs.isDmLog, true)));
-			}
+			await tx
+				.update(logs)
+				.set({ characterId: null, appliedDate: null })
+				.where(and(eq(logs.characterId, characterId), eq(logs.isDmLog, true)));
 			return await tx.delete(characters).where(eq(characters.id, characterId)).returning({ id: characters.id });
 		});
 

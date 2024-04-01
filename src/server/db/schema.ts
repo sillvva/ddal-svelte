@@ -258,7 +258,7 @@ export const magicItems = pgTable(
 		logGainedId: varchar("logGainedId")
 			.notNull()
 			.references(() => logs.id, { onUpdate: "cascade", onDelete: "cascade" }),
-		logLostId: varchar("logLostId").references(() => logs.id, { onDelete: "set null", onUpdate: "cascade" })
+		logLostId: varchar("logLostId").references(() => logs.id, { onUpdate: "cascade", onDelete: "set null" })
 	},
 	(table) => {
 		return {
@@ -296,7 +296,7 @@ export const storyAwards = pgTable(
 		logGainedId: varchar("logGainedId")
 			.notNull()
 			.references(() => logs.id, { onUpdate: "cascade", onDelete: "cascade" }),
-		logLostId: varchar("logLostId").references(() => logs.id, { onDelete: "set null", onUpdate: "cascade" })
+		logLostId: varchar("logLostId").references(() => logs.id, { onUpdate: "cascade", onDelete: "set null" })
 	},
 	(table) => {
 		return {

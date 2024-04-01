@@ -5,7 +5,6 @@ import { rateLimiter, revalidateKeys } from "$server/cache";
 import type { LogData } from "$server/data/logs";
 import { db } from "$server/db";
 import { dungeonMasters, logs, magicItems, storyAwards, type InsertDungeonMaster, type Log } from "$server/db/schema";
-import { error } from "@sveltejs/kit";
 import { and, eq, inArray, notInArray } from "drizzle-orm";
 
 class LogError extends SaveError<LogSchema> {}
@@ -241,12 +240,13 @@ export async function deleteLog(logId: string, userId?: string): SaveResult<{ id
 				},
 				where: (logs, { eq }) => eq(logs.id, logId)
 			});
-			if (log) {
-				if (log.character?.userId !== userId && log.dm?.uid !== userId) error(401, "Not authorized");
-				await tx.update(magicItems).set({ logLostId: null }).where(eq(magicItems.logLostId, logId));
-				await tx.update(storyAwards).set({ logLostId: null }).where(eq(storyAwards.logLostId, logId));
-				await tx.delete(logs).where(eq(logs.id, logId));
-			}
+
+			if (!log) throw new LogError("Log not found", { status: 404 });
+			if (log.character && log.character.userId !== userId) throw new LogError("Not authorized", { status: 401 });
+			if (log.dm && log.dm.uid !== userId) throw new LogError("Not authorized", { status: 401 });
+
+			await tx.delete(logs).where(eq(logs.id, logId));
+
 			return log;
 		});
 
