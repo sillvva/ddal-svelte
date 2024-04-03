@@ -122,7 +122,7 @@
 />
 
 {#if data.session?.user}
-	<div class="group flex gap-4">
+	<div class="signal/back flex gap-4">
 		<BreadCrumbs />
 		{#if myCharacter}
 			<div class="hidden gap-4 sm:flex print:hidden">

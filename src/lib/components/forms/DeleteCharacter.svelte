@@ -34,6 +34,6 @@
 	);
 </script>
 
-<button type="submit" class="menu-item-error" aria-label="Delete Character" on:click={submit}>
+<button type="button" class="menu-item-error" aria-label="Delete Character" on:click={submit}>
 	{label}
 </button>

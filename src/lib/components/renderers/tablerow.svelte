@@ -1,7 +1,1 @@
-<tr><slot /></tr>
-
-<style global>
-	:global(thead) tr {
-		@apply bg-base-300;
-	}
-</style>
+<tr class="signal/thead:bg-base-300 signal/tbody:bg-base-300/50"><slot /></tr>
