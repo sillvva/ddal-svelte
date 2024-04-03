@@ -40,8 +40,8 @@ export function joinStringList(list: string[], separator = ", ", lastSeparator =
 	return `${list.join(separator)}${list.length > 1 ? separator : " "}${lastSeparator}${last}`;
 }
 
-export function isDefined<T>(value?: T): value is T {
-	return value !== undefined;
+export function isDefined<T>(value?: T | null): value is T {
+	return value !== undefined && value !== null;
 }
 
 export function capitalize(string: string) {

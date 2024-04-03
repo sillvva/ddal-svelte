@@ -1,7 +1,8 @@
+import { isDefined } from "$lib/util.js";
 import { clearUserCache, unlinkProvider, type ProviderId } from "$server/actions/users.js";
 import { signInRedirect } from "$server/auth";
 import { rateLimiter } from "$server/cache.js";
-import { getCharacterCaches, getCharactersCache, type CharacterData } from "$server/data/characters";
+import { getCharacterCaches, getCharactersCache } from "$server/data/characters";
 import { error, redirect } from "@sveltejs/kit";
 
 export const load = async (event) => {
@@ -11,14 +12,9 @@ export const load = async (event) => {
 	const { success } = await rateLimiter("fetch", session.user.id);
 	if (!success) error(429, "Too Many Requests");
 
-	const characters = await getCharactersCache(session.user.id).then(async (characters) => {
-		const charData: CharacterData[] = [];
-		const caches = await getCharacterCaches(characters.map((c) => c.id));
-		for (const data of caches) {
-			if (data) charData.push(data);
-		}
-		return charData;
-	});
+	const characters = await getCharactersCache(session.user.id).then(
+		async (characters) => await getCharacterCaches(characters.map((c) => c.id)).then((caches) => caches.filter(isDefined))
+	);
 
 	return {
 		title: `${session.user.name}'s Characters`,
