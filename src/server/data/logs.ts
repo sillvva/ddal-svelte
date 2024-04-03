@@ -3,6 +3,14 @@ import { cache } from "$server/cache";
 import { q } from "$server/db";
 import type { DungeonMaster, Log, MagicItem, StoryAward } from "$server/db/schema";
 
+export const logIncludes = {
+	dm: true,
+	magicItemsGained: true,
+	magicItemsLost: true,
+	storyAwardsGained: true,
+	storyAwardsLost: true
+} as const;
+
 export type LogData = Log & {
 	dm: DungeonMaster | null;
 	type: "game" | "nongame";
@@ -14,13 +22,7 @@ export type LogData = Log & {
 export async function getLog(logId: string, userId: string, characterId = ""): Promise<LogData> {
 	const log =
 		(await q.logs.findFirst({
-			with: {
-				dm: true,
-				magicItemsGained: true,
-				magicItemsLost: true,
-				storyAwardsGained: true,
-				storyAwardsLost: true
-			},
+			with: logIncludes,
 			where: (logs, { eq }) => eq(logs.id, logId)
 		})) || defaultLogData(userId, characterId);
 	return { ...parseLogEnums(log), dm: log.dm || defaultDM(userId) };
@@ -29,13 +31,7 @@ export async function getLog(logId: string, userId: string, characterId = ""): P
 export async function getDMLog(logId: string, userId: string): Promise<LogData> {
 	const log =
 		(await q.logs.findFirst({
-			with: {
-				dm: true,
-				magicItemsGained: true,
-				magicItemsLost: true,
-				storyAwardsGained: true,
-				storyAwardsLost: true
-			},
+			with: logIncludes,
 			where: (logs, { eq, and }) => and(eq(logs.id, logId), eq(logs.isDmLog, true))
 		})) || defaultLogData(userId);
 	return { ...parseLogEnums(log), dm: log.dm || defaultDM(userId) };
@@ -55,11 +51,7 @@ export async function getDMLogs(userId: string) {
 	return q.logs
 		.findMany({
 			with: {
-				dm: true,
-				magicItemsGained: true,
-				magicItemsLost: true,
-				storyAwardsGained: true,
-				storyAwardsLost: true,
+				...logIncludes,
 				character: {
 					with: {
 						user: true

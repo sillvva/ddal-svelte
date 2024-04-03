@@ -3,6 +3,7 @@ import { getLogsSummary } from "$lib/entities";
 import { isDefined } from "$lib/util";
 import { cache, mcache, type CacheKey } from "$server/cache";
 import { q } from "$server/db";
+import { logIncludes } from "./logs";
 
 export type CharacterData = Exclude<Awaited<ReturnType<typeof getCharacter>>, null>;
 export async function getCharacter(characterId: string, includeLogs = true) {
@@ -14,13 +15,7 @@ export async function getCharacter(characterId: string, includeLogs = true) {
 				with: {
 					user: true,
 					logs: {
-						with: {
-							dm: true,
-							magicItemsGained: true,
-							magicItemsLost: true,
-							storyAwardsGained: true,
-							storyAwardsLost: true
-						},
+						with: logIncludes,
 						orderBy: (logs, { asc }) => asc(logs.date)
 					}
 				},
@@ -58,13 +53,7 @@ export async function getCharactersWithLogs(userId: string, includeLogs = true) 
 		with: {
 			user: true,
 			logs: {
-				with: {
-					dm: true,
-					magicItemsGained: true,
-					magicItemsLost: true,
-					storyAwardsGained: true,
-					storyAwardsLost: true
-				},
+				with: logIncludes,
 				orderBy: (logs, { asc }) => asc(logs.date)
 			}
 		},
@@ -89,13 +78,7 @@ export async function getCharacterCaches(characterIds: string[]) {
 					with: {
 						user: true,
 						logs: {
-							with: {
-								dm: true,
-								magicItemsGained: true,
-								magicItemsLost: true,
-								storyAwardsGained: true,
-								storyAwardsLost: true
-							},
+							with: logIncludes,
 							orderBy: (logs, { asc }) => asc(logs.date)
 						}
 					},
@@ -104,12 +87,10 @@ export async function getCharacterCaches(characterIds: string[]) {
 				})
 			: [];
 
-		return characters
-			.map((c) => ({
-				key: keys.find((k) => k[1] === c.id)!,
-				value: { ...c, imageUrl: c.imageUrl || BLANK_CHARACTER, ...getLogsSummary(c.logs) }
-			}))
-			.filter((c) => c.key);
+		return characters.map((c) => ({
+			key: missingKeys.find((k) => k[1] === c.id)!,
+			value: { ...c, imageUrl: c.imageUrl || BLANK_CHARACTER, ...getLogsSummary(c.logs) }
+		}));
 	}, keys);
 }
 

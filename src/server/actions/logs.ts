@@ -2,7 +2,7 @@ import { getLevels } from "$lib/entities";
 import { type LogSchema } from "$lib/schemas";
 import { SaveError, type SaveResult } from "$lib/util";
 import { rateLimiter, revalidateKeys } from "$server/cache";
-import type { LogData } from "$server/data/logs";
+import { logIncludes, type LogData } from "$server/data/logs";
 import { db } from "$server/db";
 import { dungeonMasters, logs, magicItems, storyAwards, type InsertDungeonMaster, type Log } from "$server/db/schema";
 import { and, eq, inArray, notInArray } from "drizzle-orm";
@@ -196,13 +196,7 @@ export async function saveLog(input: LogSchema, user?: CustomSession["user"]): S
 			}
 
 			const updated = await tx.query.logs.findFirst({
-				with: {
-					dm: true,
-					magicItemsGained: true,
-					magicItemsLost: true,
-					storyAwardsGained: true,
-					storyAwardsLost: true
-				},
+				with: logIncludes,
 				where: (logs, { eq }) => eq(logs.id, log.id)
 			});
 

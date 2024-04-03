@@ -1,7 +1,6 @@
 import { type NewCharacterSchema } from "$lib/schemas";
 import { SaveError, type SaveResult } from "$lib/util";
 import { rateLimiter, revalidateKeys } from "$server/cache";
-import { getCharacterCache } from "$server/data/characters";
 import { db, q } from "$server/db";
 import { characters, logs, type Character } from "$server/db/schema";
 import { and, eq } from "drizzle-orm";
@@ -19,29 +18,27 @@ export async function saveCharacter(
 		const { success } = await rateLimiter(characterId === "new" ? "insert" : "update", userId);
 		if (!success) throw new SaveError("Too many requests", { status: 429 });
 
-		const [result] = await (async () => {
-			if (characterId == "new") {
-				return await db
-					.insert(characters)
-					.values({
-						...data,
-						userId
-					})
-					.returning();
-			} else {
-				const character = await getCharacterCache(characterId, false);
-				if (!character) throw new SaveError("Character not found", { status: 404 });
-				if (character.userId !== userId) throw new SaveError("Not authorized", { status: 401 });
-				return await db.update(characters).set(data).where(eq(characters.id, characterId)).returning();
-			}
-		})();
+		const [result] =
+			characterId === "new"
+				? await db
+						.insert(characters)
+						.values({
+							...data,
+							userId
+						})
+						.returning()
+				: await db
+						.update(characters)
+						.set(data)
+						.where(and(eq(characters.id, characterId), eq(characters.userId, userId)))
+						.returning();
 
 		if (!result) throw new SaveError("Failed to save character");
 
 		revalidateKeys([
-			["character", result.id, "logs"],
-			["character", result.id, "no-logs"],
-			["dms", userId],
+			characterId != "new" && ["character", characterId, "logs"],
+			characterId != "new" && ["character", characterId, "no-logs"],
+			characterId != "new" && ["dms", userId],
 			characterId == "new" && ["characters", userId],
 			["search-data", userId]
 		]);
