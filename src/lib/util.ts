@@ -56,7 +56,7 @@ export class SaveError<TOut extends Record<string, unknown>, TIn extends Record<
 	constructor(
 		public error: string,
 		protected options?: Partial<{
-			field: FormPathLeavesWithErrors<TOut>;
+			field: "" | ExtractLength<FormPathLeavesWithErrors<TOut>>;
 			status: NumericRange<400, 599>;
 		}>
 	) {
@@ -76,8 +76,8 @@ export class SaveError<TOut extends Record<string, unknown>, TIn extends Record<
 	}
 
 	toForm(form: SuperValidated<TOut, App.Superforms.Message, TIn>) {
-		return this.options?.field
-			? setError(form, this.options.field, this.error, {
+		return isDefined(this.options?.field)
+			? setError(form, this.options.field as FormPathLeavesWithErrors<TOut>, this.error, {
 					status: this.status
 				})
 			: message(
@@ -99,3 +99,5 @@ export const parseError = (e: unknown) => {
 	if (typeof e === "object") return JSON.stringify(e);
 	return "Unknown error";
 };
+
+export type ExtractLength<K> = K extends `${infer N}.length` ? N : K;

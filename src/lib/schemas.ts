@@ -1,6 +1,6 @@
 import type { CharacterData } from "$server/data/characters";
 // prettier-ignore
-import { array, boolean, custom, date, fallback, forward, integer, literal, merge, minLength, minValue, null_, nullable, number, object, optional, regex, string, union, url, type Input, type Output } from "valibot";
+import { array, boolean, brand, custom, date, fallback, forward, integer, literal, merge, minLength, minValue, null_, nullable, number, object, optional, regex, string, union, url, type Input, type Output } from "valibot";
 
 export const envPrivateSchema = object({
 	DATABASE_URL: string([url()]),
@@ -20,29 +20,56 @@ export const envPublicSchema = object({
 	PUBLIC_URL: string([url()])
 });
 
+const optionalURL = optional(fallback(string([url()]), ""), "");
+
+export type NewCharacterSchema = Output<typeof newCharacterSchema>;
+export const newCharacterSchema = object({
+	name: string([minLength(1)]),
+	campaign: optional(string(), ""),
+	race: optional(string(), ""),
+	class: optional(string(), ""),
+	characterSheetUrl: optionalURL,
+	imageUrl: optionalURL
+});
+
+export type CharacterId = Output<typeof characterIdSchema>;
+export const characterIdSchema = brand(string(), "CharacterId");
+
+export type EditCharacterSchema = Output<typeof editCharacterSchema>;
+export const editCharacterSchema = merge([object({ id: characterIdSchema }), newCharacterSchema]);
+
+export type DungeonMasterId = Output<typeof dungeonMasterIdSchema>;
+export const dungeonMasterIdSchema = brand(string(), "DungeonMasterId");
+
 export type DungeonMasterSchema = Output<typeof dungeonMasterSchema>;
 export type DungeonMasterSchemaIn = Input<typeof dungeonMasterSchema>;
 export const dungeonMasterSchema = object({
-	id: string(),
+	id: dungeonMasterIdSchema,
 	name: string([minLength(1)]),
 	DCI: nullable(union([string([regex(/[0-9]{0,10}/, "Invalid DCI Format")]), null_()]), null),
 	uid: nullable(union([string(), null_()]), ""),
 	owner: string([minLength(1, "DM is not assigned to a user")])
 });
 
+export type ItemId = Output<typeof itemIdSchema>;
+export const itemIdSchema = brand(string([minLength(1)]), "ItemID");
+
 const itemSchema = object({
-	id: optional(string(), ""),
+	id: optional(itemIdSchema, ""),
 	name: string([minLength(1)]),
 	description: optional(string(), "")
 });
 
+export type LogId = Output<typeof logIdSchema>;
+export const logIdSchema = brand(string(), "LogId");
+
 export type LogSchema = Output<typeof logSchema>;
 export type LogSchemaIn = Input<typeof logSchema>;
 export const logSchema = object({
-	id: optional(string(), ""),
+	id: optional(logIdSchema, ""),
 	name: string([minLength(1)]),
 	date: date(),
-	characterId: optional(string(), ""),
+	characterId: optional(characterIdSchema, ""),
 	characterName: optional(string(), ""),
 	type: optional(union([literal("game"), literal("nongame")]), "game"),
 	experience: number([integer(), minValue(0)]),
@@ -61,9 +88,9 @@ export const logSchema = object({
 	isDmLog: optional(boolean(), false),
 	appliedDate: nullable(date()),
 	magicItemsGained: optional(array(itemSchema), []),
-	magicItemsLost: optional(array(string([minLength(1)])), []),
+	magicItemsLost: optional(array(itemIdSchema), []),
 	storyAwardsGained: optional(array(itemSchema), []),
-	storyAwardsLost: optional(array(string([minLength(1)])), [])
+	storyAwardsLost: optional(array(itemIdSchema), [])
 });
 
 export const characterLogSchema = (character: CharacterData) =>
@@ -126,18 +153,3 @@ export const dMLogSchema = (characters: (CharacterData | { id: string; name: str
 			["level"]
 		)
 	]);
-
-const optionalURL = optional(fallback(string([url()]), ""), "");
-
-export type NewCharacterSchema = Output<typeof newCharacterSchema>;
-export const newCharacterSchema = object({
-	name: string([minLength(1)]),
-	campaign: optional(string(), ""),
-	race: optional(string(), ""),
-	class: optional(string(), ""),
-	characterSheetUrl: optionalURL,
-	imageUrl: optionalURL
-});
-
-export type EditCharacterSchema = Output<typeof editCharacterSchema>;
-export const editCharacterSchema = merge([object({ id: string() }), newCharacterSchema]);

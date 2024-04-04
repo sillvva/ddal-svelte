@@ -35,7 +35,7 @@ export const actions = {
 
 		const result = await deleteLog(form.data.id, session.user.id);
 		if ("error" in result) {
-			setError(form, "id", result.error);
+			setError(form, "", result.error);
 			return fail(result.status, { form });
 		}
 

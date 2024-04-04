@@ -1,4 +1,4 @@
-import { type NewCharacterSchema } from "$lib/schemas";
+import { type CharacterId, type NewCharacterSchema } from "$lib/schemas";
 import { SaveError, type SaveResult } from "$lib/util";
 import { rateLimiter, revalidateKeys } from "$server/cache";
 import { db, q } from "$server/db";
@@ -7,10 +7,10 @@ import { and, eq } from "drizzle-orm";
 
 export type SaveCharacterResult = ReturnType<typeof saveCharacter>;
 export async function saveCharacter(
-	characterId: string,
+	characterId: CharacterId,
 	userId: string,
 	data: NewCharacterSchema
-): SaveResult<{ id: string; character: Character }, NewCharacterSchema> {
+): SaveResult<Character, NewCharacterSchema> {
 	try {
 		if (!characterId) throw new SaveError("No character ID provided", { status: 400 });
 		if (!userId) throw new SaveError("Not authenticated", { status: 401 });
@@ -43,14 +43,17 @@ export async function saveCharacter(
 			["search-data", userId]
 		]);
 
-		return { id: result.id, character: result };
+		return result;
 	} catch (err) {
 		return SaveError.from(err);
 	}
 }
 
 export type DeleteCharacterResult = ReturnType<typeof deleteCharacter>;
-export async function deleteCharacter(characterId: string, userId?: string): SaveResult<{ id: string }, NewCharacterSchema> {
+export async function deleteCharacter(
+	characterId: CharacterId,
+	userId?: string
+): SaveResult<{ id: CharacterId }, NewCharacterSchema> {
 	try {
 		if (!userId) throw new SaveError("Not authenticated", { status: 401 });
 

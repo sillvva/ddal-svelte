@@ -1,5 +1,5 @@
 <script lang="ts">
-	import type { LogSchema } from "$lib/schemas";
+	import type { ItemId, LogSchema } from "$lib/schemas";
 	import type { MagicItem, StoryAward } from "$server/db/schema";
 	import type { SuperForm } from "sveltekit-superforms";
 	import EntityCard from "./EntityCard.svelte";
@@ -8,6 +8,7 @@
 	export let storyAwards: StoryAward[] = [];
 
 	const { form } = superform;
+	const newItem = { id: "" as ItemId, name: "", description: "" };
 
 	$: remainingItems = magicItems.filter((item) => !$form.magicItemsLost.includes(item.id));
 	$: remainingAwards = storyAwards.filter((item) => !$form.storyAwardsLost.includes(item.id));
@@ -17,7 +18,7 @@
 	<button
 		type="button"
 		class="btn btn-primary min-w-fit flex-1 sm:btn-sm sm:flex-none"
-		on:click={() => ($form.magicItemsGained = [...$form.magicItemsGained, { id: "", name: "", description: "" }])}
+		on:click={() => ($form.magicItemsGained = [...$form.magicItemsGained, newItem])}
 	>
 		Add Magic Item
 	</button>
@@ -36,7 +37,7 @@
 		<button
 			type="button"
 			class="btn btn-primary min-w-fit flex-1 sm:btn-sm sm:flex-none"
-			on:click={() => ($form.storyAwardsGained = [...$form.storyAwardsGained, { id: "", name: "", description: "" }])}
+			on:click={() => ($form.storyAwardsGained = [...$form.storyAwardsGained, newItem])}
 		>
 			Add Story Award
 		</button>

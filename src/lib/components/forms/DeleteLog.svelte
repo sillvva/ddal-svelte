@@ -23,7 +23,7 @@
 				deletingLog = [...deletingLog, log.id];
 			},
 			onUpdated({ form }) {
-				const [error] = form.errors.id || [];
+				const [error] = form.errors._errors || [];
 				if (error) {
 					errorToast(error);
 					deletingLog = deletingLog.filter((id) => id !== log.id);

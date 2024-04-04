@@ -3,13 +3,15 @@
 </script>
 
 <script lang="ts" generics="T extends TRec">
+	import type { ExtractLength } from "$lib/util";
+
 	import { dev } from "$app/environment";
 	import { Combobox } from "bits-ui";
 	import SuperDebug, { formFieldProxy, stringProxy, type FormPathLeaves, type SuperForm } from "sveltekit-superforms";
 	import { twMerge } from "tailwind-merge";
 
 	export let superform: SuperForm<T, any>;
-	export let valueField: FormPathLeaves<T, string>;
+	export let valueField: ExtractLength<FormPathLeaves<T>>;
 	export let labelField = valueField;
 	export let errorField = valueField;
 	export let name = "";
@@ -30,10 +32,10 @@
 	let open = false;
 	let changed = false;
 
-	const { constraints } = formFieldProxy(superform, labelField);
-	const value = stringProxy(superform, valueField, { empty: "undefined" });
-	const label = stringProxy(superform, labelField, { empty: "undefined" });
-	const { errors } = formFieldProxy(superform, errorField);
+	const { constraints } = formFieldProxy(superform, labelField as any);
+	const value = stringProxy(superform, valueField as any, { empty: "undefined" });
+	const label = stringProxy(superform, labelField as any, { empty: "undefined" });
+	const { errors } = formFieldProxy(superform, errorField as any);
 
 	if ($constraints?.required) required = true;
 
@@ -156,17 +158,17 @@
 		</div>
 		{#if $label && clearable}
 			<button class="btn join-item input-bordered" type="button" on:click|preventDefault={() => clear()}>
-				<span class="iconify mdi-close size-6 bg-red-500" />
+				<span class="iconify size-6 bg-red-500 mdi-close" />
 			</button>
 		{/if}
 		{#if link}
 			<a href={link} class="btn join-item input-bordered" role="button" target="_blank">
-				<span class="iconify mdi-pencil size-6" />
+				<span class="iconify size-6 mdi-pencil" />
 			</a>
 		{/if}
 		{#if dev}
 			<button type="button" class="btn join-item input-bordered" on:click|preventDefault={() => (debug = !debug)}>
-				<span class="iconify mdi-information-outline size-6" />
+				<span class="iconify size-6 mdi-information-outline" />
 			</button>
 		{/if}
 	</div>

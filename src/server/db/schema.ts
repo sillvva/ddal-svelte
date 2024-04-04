@@ -1,3 +1,4 @@
+import { type CharacterId, type DungeonMasterId, type ItemId, type LogId } from "$lib/schemas";
 import { createId } from "@paralleldrive/cuid2";
 import { relations } from "drizzle-orm";
 import {
@@ -111,7 +112,8 @@ export const characters = pgTable(
 		id: varchar("id")
 			.primaryKey()
 			.notNull()
-			.$default(() => createId()),
+			.$default(() => createId())
+			.$type<CharacterId>(),
 		name: varchar("name").notNull(),
 		race: varchar("race"),
 		class: varchar("class"),
@@ -149,7 +151,8 @@ export const dungeonMasters = pgTable(
 		id: varchar("id")
 			.primaryKey()
 			.notNull()
-			.$default(() => createId()),
+			.$default(() => createId())
+			.$type<DungeonMasterId>(),
 		name: varchar("name").notNull(),
 		DCI: varchar("DCI"),
 		uid: varchar("uid"),
@@ -184,7 +187,8 @@ export const logs = pgTable(
 		id: varchar("id")
 			.primaryKey()
 			.notNull()
-			.$default(() => createId()),
+			.$default(() => createId())
+			.$type<LogId>(),
 		date: timestamp("date", { mode: "date" })
 			.notNull()
 			.$default(() => new Date()),
@@ -252,7 +256,8 @@ export const magicItems = pgTable(
 		id: varchar("id")
 			.primaryKey()
 			.notNull()
-			.$default(() => createId()),
+			.$default(() => createId())
+			.$type<ItemId>(),
 		name: varchar("name").notNull(),
 		description: text("description"),
 		logGainedId: varchar("logGainedId")
@@ -290,7 +295,8 @@ export const storyAwards = pgTable(
 		id: varchar("id")
 			.primaryKey()
 			.notNull()
-			.$default(() => createId()),
+			.$default(() => createId())
+			.$type<ItemId>(),
 		name: varchar("name").notNull(),
 		description: text("description"),
 		logGainedId: varchar("logGainedId")

@@ -3,7 +3,7 @@ import { toast } from "svelte-sonner";
 import { get } from "svelte/store";
 import { superForm, type FormOptions, type FormPathLeaves, type SuperValidated } from "sveltekit-superforms";
 import { valibotClient } from "sveltekit-superforms/adapters";
-import type { BaseSchema, Input, Output } from "valibot";
+import type { BaseSchema, Brand, BrandName, Input, Output } from "valibot";
 
 export function successToast(message: string) {
 	toast.success("Success", {
@@ -56,3 +56,5 @@ export function valibotForm<S extends BaseSchema, Out extends Output<S>, In exte
 	});
 	return superform;
 }
+
+export type Branded<T, B extends BrandName> = T & Brand<B>;

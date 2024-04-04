@@ -1,5 +1,5 @@
 import { getLevels } from "$lib/entities";
-import { type LogSchema } from "$lib/schemas";
+import { type LogId, type LogSchema } from "$lib/schemas";
 import { SaveError, type SaveResult } from "$lib/util";
 import { rateLimiter, revalidateKeys } from "$server/cache";
 import { logIncludes, type LogData } from "$server/data/logs";
@@ -79,7 +79,11 @@ export async function saveLog(input: LogSchema, user?: CustomSession["user"]): S
 
 				if (!input.dm.name) {
 					if (isMe) input.dm.name = user.name || "Me";
-					else throw new LogError("Dungeon Master name is required", { status: 400, field: "dm.id" });
+					else
+						throw new LogError("Dungeon Master name is required", {
+							status: 400,
+							field: "dm.id"
+						});
 				}
 
 				try {
@@ -100,7 +104,10 @@ export async function saveLog(input: LogSchema, user?: CustomSession["user"]): S
 				}
 			})();
 
-			if (!dm?.id) throw new LogError("Could not save Dungeon Master", { field: "dm.id" });
+			if (!dm?.id)
+				throw new LogError("Could not save Dungeon Master", {
+					field: "dm.id"
+				});
 
 			const data: Omit<Log, "id" | "createdAt"> = {
 				name: input.name,
@@ -219,7 +226,7 @@ export async function saveLog(input: LogSchema, user?: CustomSession["user"]): S
 }
 
 export type DeleteLogResult = ReturnType<typeof deleteLog>;
-export async function deleteLog(logId: string, userId?: string): SaveResult<{ id: string }, LogSchema> {
+export async function deleteLog(logId: LogId, userId?: string): SaveResult<{ id: LogId }, LogSchema> {
 	try {
 		if (!userId) throw new LogError("Not authenticated", { status: 401 });
 

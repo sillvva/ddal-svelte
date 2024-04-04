@@ -23,7 +23,7 @@
 				deletingDM = [...deletingDM, dm.id];
 			},
 			onUpdated({ form }) {
-				const [error] = form.errors.id || [];
+				const [error] = form.errors._errors || [];
 				if (error) {
 					errorToast(error);
 					deletingDM = deletingDM.filter((id) => id !== dm.id);

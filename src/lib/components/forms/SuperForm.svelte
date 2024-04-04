@@ -8,7 +8,7 @@
 	import type { HTMLFormAttributes } from "svelte/elements";
 	import type { Unsubscriber } from "svelte/store";
 	import SuperDebug, { type SuperForm } from "sveltekit-superforms";
-	import FormMessage from "../FormMessage.svelte";
+	import FormMessage from "./FormMessage.svelte";
 
 	type $$Props = HTMLFormAttributes & {
 		superform: SuperForm<T, any>;
@@ -69,6 +69,13 @@
 
 {#if showMessage}
 	<FormMessage {message} />
+{/if}
+
+{#if $errors._errors?.[0]}
+	<div class="alert alert-error mb-4 shadow-lg">
+		<span class="iconify size-6 mdi-alert-circle" />
+		{$errors._errors[0]}
+	</div>
 {/if}
 
 <form {method} {...$$restProps} use:enhance use:formstate>

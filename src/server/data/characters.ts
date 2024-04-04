@@ -1,12 +1,13 @@
 import { BLANK_CHARACTER } from "$lib/constants";
 import { getLogsSummary } from "$lib/entities";
+import type { CharacterId } from "$lib/schemas";
 import { isDefined } from "$lib/util";
 import { cache, mcache, type CacheKey } from "$server/cache";
 import { q } from "$server/db";
 import { logIncludes } from "./logs";
 
 export type CharacterData = Exclude<Awaited<ReturnType<typeof getCharacter>>, null>;
-export async function getCharacter(characterId: string, includeLogs = true) {
+export async function getCharacter(characterId: CharacterId, includeLogs = true) {
 	if (characterId === "new") return null;
 
 	const character = await (async () => {
@@ -42,7 +43,7 @@ export async function getCharacter(characterId: string, includeLogs = true) {
 	};
 }
 
-export async function getCharacterCache(characterId: string, includeLogs = true) {
+export async function getCharacterCache(characterId: CharacterId, includeLogs = true) {
 	return characterId !== "new"
 		? await cache(() => getCharacter(characterId, includeLogs), ["character", characterId, includeLogs ? "logs" : "no-logs"])
 		: null;
@@ -67,11 +68,11 @@ export async function getCharactersWithLogs(userId: string, includeLogs = true) 
 	}));
 }
 
-export async function getCharacterCaches(characterIds: string[]) {
+export async function getCharacterCaches(characterIds: CharacterId[]) {
 	const keys: CacheKey[] = characterIds.map((id) => ["character", id, "logs"]);
 	return await mcache<CharacterData>(async (keys, hits) => {
 		const missingKeys = keys.filter((k) => !hits.find((h) => h.id === k[1]));
-		const characterIds = missingKeys.map((k) => k[1]).filter(isDefined);
+		const characterIds = missingKeys.map((k) => k[1]).filter(isDefined) as CharacterId[];
 
 		const characters = characterIds.length
 			? await q.characters.findMany({
