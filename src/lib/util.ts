@@ -7,6 +7,12 @@ export type Prettify<T> = {
 	[K in keyof T]: T[K];
 } & unknown;
 
+declare const __brand: unique symbol;
+type BrandKey = keyof Brand<unknown> extends symbol ? never : keyof Brand<unknown>;
+type Brand<B> = { [__brand]: B };
+export type Branded<T, B> = T & Brand<B>;
+export type ExtractBrand<K> = K extends `${infer N}.${"length" | BrandKey}` ? N : K;
+
 export type TransitionAction = ReturnType<typeof setupViewTransition>["transition"];
 
 export const formatDate = (date: Date | string | number) => {
@@ -56,7 +62,7 @@ export class SaveError<TOut extends Record<string, unknown>, TIn extends Record<
 	constructor(
 		public error: string,
 		protected options?: Partial<{
-			field: "" | ExtractLength<FormPathLeavesWithErrors<TOut>>;
+			field: "" | ExtractBrand<FormPathLeavesWithErrors<TOut>>;
 			status: NumericRange<400, 599>;
 		}>
 	) {
@@ -99,5 +105,3 @@ export const parseError = (e: unknown) => {
 	if (typeof e === "object") return JSON.stringify(e);
 	return "Unknown error";
 };
-
-export type ExtractLength<K> = K extends `${infer N}.length` ? N : K;

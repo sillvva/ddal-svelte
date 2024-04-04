@@ -3,7 +3,7 @@
 </script>
 
 <script lang="ts" generics="T extends TRec">
-	import type { ExtractLength } from "$lib/util";
+	import type { ExtractBrand } from "$lib/util";
 
 	import { dev } from "$app/environment";
 	import { Combobox } from "bits-ui";
@@ -11,7 +11,7 @@
 	import { twMerge } from "tailwind-merge";
 
 	export let superform: SuperForm<T, any>;
-	export let valueField: ExtractLength<FormPathLeaves<T>>;
+	export let valueField: ExtractBrand<FormPathLeaves<T>>;
 	export let labelField = valueField;
 	export let errorField = valueField;
 	export let name = "";
