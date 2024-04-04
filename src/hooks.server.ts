@@ -153,8 +153,8 @@ const auth = SvelteKitAuth(async (event) => {
 						? await q.accounts
 								.findMany({ where: (accounts, { eq }) => eq(accounts.userId, matchingUser.id) })
 								.then((a) => a.map((a) => a.provider))
-						: undefined;
-					if (matchingProviders?.length) {
+						: [];
+					if (matchingProviders.length) {
 						const names = matchingProviders.map((id) => PROVIDERS.find((p) => p.id === id)?.name).filter(isDefined);
 						const joinedProviders = joinStringList(names);
 						const message = `You already have an account with ${joinedProviders}. Sign in, then link additional providers in the settings menu.`;
