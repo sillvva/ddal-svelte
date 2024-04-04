@@ -3,6 +3,10 @@ import { type NumericRange } from "@sveltejs/kit";
 import { message, setError, type FormPathLeavesWithErrors, type SuperValidated } from "sveltekit-superforms";
 import type { setupViewTransition } from "sveltekit-view-transition";
 
+/**
+ * Types
+ */
+
 export type Prettify<T> = {
 	[K in keyof T]: T[K];
 } & unknown;
@@ -15,17 +19,9 @@ export type ExtractBrand<K> = K extends `${infer N}.${"length" | BrandKey}` ? N 
 
 export type TransitionAction = ReturnType<typeof setupViewTransition>["transition"];
 
-export const formatDate = (date: Date | string | number) => {
-	const d = new Date(date);
-	const year = d.getFullYear();
-	const month = String(d.getMonth() + 1).padStart(2, "0");
-	const day = String(d.getDate()).padStart(2, "0");
-	const hours = String(d.getHours()).padStart(2, "0");
-	const minutes = String(d.getMinutes()).padStart(2, "0");
-	const seconds = String(d.getSeconds()).padStart(2, "0");
-	const milliseconds = String(d.getMilliseconds()).padStart(3, "0");
-	return `${year}-${month}-${day} ${hours}:${minutes}:${seconds}.${milliseconds}`;
-};
+/**
+ * Functions
+ */
 
 /**
  * Creates a view transition.
@@ -48,10 +44,6 @@ export function joinStringList(list: string[], separator = ", ", lastSeparator =
 
 export function isDefined<T>(value?: T | null): value is T {
 	return value !== undefined && value !== null;
-}
-
-export function capitalize(string: string) {
-	return string.charAt(0).toUpperCase() + string.slice(1);
 }
 
 export type SaveResult<T extends object | null, S extends Record<string, unknown>> = Promise<T | SaveError<S>>;
