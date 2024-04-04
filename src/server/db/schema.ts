@@ -200,10 +200,12 @@ export const logs = pgTable(
 		name: varchar("name").notNull(),
 		description: varchar("description"),
 		type: logType("type").notNull(),
-		dungeonMasterId: varchar("dungeonMasterId").references(() => dungeonMasters.id, {
-			onUpdate: "cascade",
-			onDelete: "set null"
-		}),
+		dungeonMasterId: varchar("dungeonMasterId")
+			.$type<DungeonMasterId>()
+			.references(() => dungeonMasters.id, {
+				onUpdate: "cascade",
+				onDelete: "set null"
+			}),
 		isDmLog: boolean("is_dm_log").notNull(),
 		experience: integer("experience")
 			.notNull()
@@ -224,7 +226,9 @@ export const logs = pgTable(
 			.notNull()
 			.$default(() => 0),
 		appliedDate: timestamp("applied_date", { mode: "date" }),
-		characterId: varchar("characterId").references(() => characters.id, { onUpdate: "cascade", onDelete: "cascade" }),
+		characterId: varchar("characterId")
+			.$type<CharacterId>()
+			.references(() => characters.id, { onUpdate: "cascade", onDelete: "cascade" }),
 		createdAt: timestamp("created_at", { mode: "date" })
 			.notNull()
 			.$default(() => new Date())

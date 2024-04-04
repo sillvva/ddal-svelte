@@ -16,21 +16,21 @@ export const load = async (event) => {
 	if (!session?.user?.name) signInRedirect(event.url);
 	const user = session.user;
 
+	const idResult = safeParse(logIdSchema, event.params.logId || "");
+	if (!idResult.success) redirect(302, `/dm-logs`);
+	const logId = idResult.output;
+
 	const characters = await getCharactersCache(user.id)
 		.then(async (characters) => await getCharacterCaches(characters.map((c) => c.id)))
 		.then((characters) =>
 			characters.map((c) => ({
 				...c,
-				logs: c.logs.filter((l) => l.id !== event.params.logId),
+				logs: c.logs.filter((l) => l.id !== logId),
 				magic_items: [],
 				story_awards: [],
 				log_levels: []
 			}))
 		);
-
-	const idResult = safeParse(logIdSchema, event.params.logId || "");
-	if (!idResult.success) redirect(302, `/dm-logs`);
-	const logId = idResult.output;
 
 	let log = defaultLogData(user.id);
 	if (event.params.logId !== "new") {
@@ -49,7 +49,7 @@ export const load = async (event) => {
 		title: event.params.logId === "new" ? "New DM Log" : `Edit ${form.data.name}`,
 		breadcrumbs: parent.breadcrumbs.concat({
 			name: event.params.logId === "new" ? "New DM Log" : `${form.data.name}`,
-			href: `/dm-logs/${event.params.logId}`
+			href: `/dm-logs/${logId}`
 		}),
 		characters: characters.map((c) => ({ id: c.id, name: c.name })),
 		form

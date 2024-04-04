@@ -5,7 +5,7 @@ import { getUserDMsWithLogsCache } from "$server/data/dms";
 import { error, redirect } from "@sveltejs/kit";
 import { fail, superValidate } from "sveltekit-superforms";
 import { valibot } from "sveltekit-superforms/adapters";
-import { parse } from "valibot";
+import { safeParse } from "valibot";
 
 export const load = async (event) => {
 	const parent = await event.parent();
@@ -13,7 +13,10 @@ export const load = async (event) => {
 	const session = event.locals.session;
 	if (!session?.user?.name) signInRedirect(event.url);
 
-	const dmId = parse(dungeonMasterIdSchema, event.params.dmId);
+	const idResult = safeParse(dungeonMasterIdSchema, event.params.dmId || "");
+	if (!idResult.success) redirect(302, `/dms`);
+	const dmId = idResult.output;
+
 	const [dm] = await getUserDMsWithLogsCache(session.user, dmId);
 	if (!dm) error(404, "DM not found");
 
@@ -48,12 +51,14 @@ export const actions = {
 	saveDM: async (event) => {
 		const session = await event.locals.session;
 		if (!session?.user) redirect(302, "/");
-		if (!event.params.dmId) redirect(302, "/dms");
+
+		const idResult = safeParse(dungeonMasterIdSchema, event.params.dmId || "");
+		if (!idResult.success) redirect(302, `/dms`);
+		const dmId = idResult.output;
 
 		const form = await superValidate(event, valibot(dungeonMasterSchema));
 		if (!form.valid) return fail(400, { form });
 
-		const dmId = parse(dungeonMasterIdSchema, event.params.dmId);
 		const result = await saveDM(dmId, session.user, form.data);
 		if ("error" in result) return result.toForm(form);
 
