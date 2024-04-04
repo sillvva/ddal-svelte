@@ -6,6 +6,10 @@ import type { Branded } from "./util";
 const brand = <T extends string, TInput = unknown>(schema: BaseSchema<TInput>, name: T) =>
 	transform(schema, (input) => input as Branded<TInput, typeof name>);
 
+function brandedId<T extends string>(name: T) {
+	return brand(string([minLength(1)]), name);
+}
+
 export const envPrivateSchema = object({
 	DATABASE_URL: string([url()]),
 	UPSTASH_REDIS_REST_URL: string([url()]),
@@ -25,7 +29,7 @@ export const envPublicSchema = object({
 });
 
 export type UserId = Output<typeof userIdSchema>;
-export const userIdSchema = brand(string([minLength(1)]), "UserId");
+export const userIdSchema = brandedId("UserId");
 
 const optionalURL = optional(fallback(string([url()]), ""), "");
 
@@ -40,13 +44,13 @@ export const newCharacterSchema = object({
 });
 
 export type CharacterId = Output<typeof characterIdSchema>;
-export const characterIdSchema = brand(string(), "CharacterId");
+export const characterIdSchema = brandedId("CharacterId");
 
 export type EditCharacterSchema = Output<typeof editCharacterSchema>;
 export const editCharacterSchema = merge([object({ id: characterIdSchema }), newCharacterSchema]);
 
 export type DungeonMasterId = Output<typeof dungeonMasterIdSchema>;
-export const dungeonMasterIdSchema = brand(string(), "DungeonMasterId");
+export const dungeonMasterIdSchema = brandedId("DungeonMasterId");
 
 export type DungeonMasterSchema = Output<typeof dungeonMasterSchema>;
 export type DungeonMasterSchemaIn = Input<typeof dungeonMasterSchema>;
@@ -59,7 +63,7 @@ export const dungeonMasterSchema = object({
 });
 
 export type ItemId = Output<typeof itemIdSchema>;
-export const itemIdSchema = brand(string([minLength(1)]), "ItemID");
+export const itemIdSchema = brandedId("ItemID");
 
 const itemSchema = object({
 	id: optional(itemIdSchema, ""),
@@ -68,7 +72,7 @@ const itemSchema = object({
 });
 
 export type LogId = Output<typeof logIdSchema>;
-export const logIdSchema = brand(string(), "LogId");
+export const logIdSchema = brandedId("LogId");
 
 export type LogSchema = Output<typeof logSchema>;
 export type LogSchemaIn = Input<typeof logSchema>;
