@@ -2,12 +2,12 @@ import type { CharacterData, getCharacter } from "$server/data/characters";
 import type { LogData } from "$server/data/logs";
 import type { Character, DungeonMaster, Log, MagicItem, StoryAward, User } from "$server/db/schema";
 import { sorter } from "@sillvva/utils";
-import type { LogSchema } from "./schemas";
+import type { CharacterId, DungeonMasterId, LogId, LogSchema, UserId } from "./schemas";
 
 export const getMagicItems = (
 	character: Exclude<Awaited<ReturnType<typeof getCharacter>>, null>,
 	options?: {
-		lastLogId?: string;
+		lastLogId?: LogId;
 		lastLogDate?: string;
 		excludeDropped?: boolean;
 	}
@@ -39,7 +39,7 @@ export const getMagicItems = (
 export const getStoryAwards = (
 	character: Exclude<Awaited<ReturnType<typeof getCharacter>>, null>,
 	options?: {
-		lastLogId?: string;
+		lastLogId?: LogId;
 		lastLogDate?: string;
 		excludeDropped?: boolean;
 	}
@@ -196,14 +196,14 @@ export const getLogsSummary = (
 	};
 };
 
-export function defaultDM(userId: string): DungeonMaster {
-	return { id: "", name: "", DCI: null, uid: "", owner: userId };
+export function defaultDM(userId: UserId): DungeonMaster {
+	return { id: "" as DungeonMasterId, name: "", DCI: null, uid: "" as UserId, owner: userId };
 }
 
-export function defaultLogData(userId: string, characterId = ""): LogData {
+export function defaultLogData(userId: UserId, characterId = "" as CharacterId): LogData {
 	return {
 		characterId,
-		id: "",
+		id: "" as LogId,
 		name: "",
 		description: "",
 		date: new Date(),
@@ -215,7 +215,7 @@ export function defaultLogData(userId: string, characterId = ""): LogData {
 		level: 0,
 		gold: 0,
 		dtd: 0,
-		dungeonMasterId: "",
+		dungeonMasterId: "" as DungeonMasterId,
 		dm: defaultDM(userId),
 		appliedDate: null,
 		isDmLog: !characterId,
@@ -235,10 +235,10 @@ export function parseLogEnums(
 	};
 }
 
-export function logDataToSchema(userId: string, log: LogData, character?: Character): LogSchema {
+export function logDataToSchema(userId: UserId, log: LogData, character?: Character): LogSchema {
 	return {
 		...log,
-		characterId: character?.id || "",
+		characterId: character?.id || ("" as CharacterId),
 		characterName: character?.name || "",
 		dm: log.dm?.id ? log.dm : defaultDM(userId),
 		type: log.type as "game" | "nongame",
@@ -259,7 +259,7 @@ export function logDataToSchema(userId: string, log: LogData, character?: Charac
 	};
 }
 
-export function strippedCharacterData(character: CharacterData, logId?: string) {
+export function strippedCharacterData(character: CharacterData, logId?: LogId) {
 	return {
 		...character,
 		logs: character.logs.filter((log) => log.id !== logId),

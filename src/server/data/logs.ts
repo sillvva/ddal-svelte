@@ -1,5 +1,5 @@
 import { defaultDM, defaultLogData, parseLogEnums } from "$lib/entities";
-import type { LogId, UserId } from "$lib/schemas";
+import type { CharacterId, LogId, UserId } from "$lib/schemas";
 import { cache } from "$server/cache";
 import { q } from "$server/db";
 import type { DungeonMaster, Log, MagicItem, StoryAward } from "$server/db/schema";
@@ -20,7 +20,7 @@ export type LogData = Log & {
 	storyAwardsGained: StoryAward[];
 	storyAwardsLost: StoryAward[];
 };
-export async function getLog(logId: LogId, userId: string, characterId = ""): Promise<LogData> {
+export async function getLog(logId: LogId, userId: UserId, characterId = "" as CharacterId): Promise<LogData> {
 	const log =
 		(await q.logs.findFirst({
 			with: logIncludes,
@@ -29,7 +29,7 @@ export async function getLog(logId: LogId, userId: string, characterId = ""): Pr
 	return { ...parseLogEnums(log), dm: log.dm || defaultDM(userId) };
 }
 
-export async function getDMLog(logId: LogId, userId: string): Promise<LogData> {
+export async function getDMLog(logId: LogId, userId: UserId): Promise<LogData> {
 	const log =
 		(await q.logs.findFirst({
 			with: logIncludes,
