@@ -1,4 +1,4 @@
-import { type CharacterId, type NewCharacterSchema } from "$lib/schemas";
+import { type CharacterId, type NewCharacterSchema, type UserId } from "$lib/schemas";
 import { SaveError, type SaveResult } from "$lib/util";
 import { rateLimiter, revalidateKeys } from "$server/cache";
 import { db, q } from "$server/db";
@@ -8,7 +8,7 @@ import { and, eq } from "drizzle-orm";
 export type SaveCharacterResult = ReturnType<typeof saveCharacter>;
 export async function saveCharacter(
 	characterId: CharacterId,
-	userId: string,
+	userId: UserId,
 	data: NewCharacterSchema
 ): SaveResult<Character, NewCharacterSchema> {
 	try {

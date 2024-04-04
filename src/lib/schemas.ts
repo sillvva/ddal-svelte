@@ -24,6 +24,9 @@ export const envPublicSchema = object({
 	PUBLIC_URL: string([url()])
 });
 
+export type UserId = Output<typeof userIdSchema>;
+export const userIdSchema = brand(string([minLength(1)]), "UserId");
+
 const optionalURL = optional(fallback(string([url()]), ""), "");
 
 export type NewCharacterSchema = Output<typeof newCharacterSchema>;
@@ -51,8 +54,8 @@ export const dungeonMasterSchema = object({
 	id: dungeonMasterIdSchema,
 	name: string([minLength(1)]),
 	DCI: nullable(union([string([regex(/[0-9]{0,10}/, "Invalid DCI Format")]), null_()]), null),
-	uid: nullable(union([string(), null_()]), ""),
-	owner: string([minLength(1, "DM is not assigned to a user")])
+	uid: nullable(union([userIdSchema, null_()]), ""),
+	owner: userIdSchema
 });
 
 export type ItemId = Output<typeof itemIdSchema>;

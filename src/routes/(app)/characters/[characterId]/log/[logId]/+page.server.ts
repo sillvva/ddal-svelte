@@ -9,7 +9,7 @@ import { sorter } from "@sillvva/utils";
 import { error, redirect } from "@sveltejs/kit";
 import { fail, superValidate } from "sveltekit-superforms";
 import { valibot } from "sveltekit-superforms/adapters";
-import { parse } from "valibot";
+import { parse, safeParse } from "valibot";
 
 export const load = async (event) => {
 	const parent = await event.parent();
@@ -19,8 +19,12 @@ export const load = async (event) => {
 	const session = event.locals.session;
 	if (!session?.user) signInRedirect(event.url);
 
+	const idResult = safeParse(logIdSchema, event.params.logId || "");
+	if (!idResult.success) redirect(302, `/character/${character.id}`);
+	const logId = idResult.output;
+
 	let log = defaultLogData(session.user.id, character.id);
-	const logId = parse(logIdSchema, event.params.logId);
+
 	if (event.params.logId !== "new") {
 		log = await getLog(logId, session.user.id, character.id);
 		if (!log.id) error(404, "Log not found");
@@ -64,7 +68,10 @@ export const actions = {
 		const character = await getCharacterCache(characterId);
 		if (!character) redirect(302, "/characters");
 
-		const logId = parse(logIdSchema, event.params.logId);
+		const idResult = safeParse(logIdSchema, event.params.logId || "");
+		if (!idResult.success) redirect(302, `/character/${character.id}`);
+		const logId = idResult.output;
+
 		const log = await getLog(logId, session.user.id, character.id);
 		if (event.params.logId !== "new" && !log.id) redirect(302, `/characters/${character.id}`);
 

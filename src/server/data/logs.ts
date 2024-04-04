@@ -1,5 +1,5 @@
 import { defaultDM, defaultLogData, parseLogEnums } from "$lib/entities";
-import type { LogId } from "$lib/schemas";
+import type { LogId, UserId } from "$lib/schemas";
 import { cache } from "$server/cache";
 import { q } from "$server/db";
 import type { DungeonMaster, Log, MagicItem, StoryAward } from "$server/db/schema";
@@ -39,7 +39,7 @@ export async function getDMLog(logId: LogId, userId: string): Promise<LogData> {
 }
 
 export type DMLogsData = Awaited<ReturnType<typeof getDMLogs>>;
-export async function getDMLogs(userId: string) {
+export async function getDMLogs(userId: UserId) {
 	const dms = await q.dungeonMasters.findMany({
 		columns: {
 			id: true
@@ -74,11 +74,11 @@ export async function getDMLogs(userId: string) {
 		});
 }
 
-export async function getDMLogsCache(userId: string) {
+export async function getDMLogsCache(userId: UserId) {
 	return await cache(() => getDMLogs(userId), ["dm-logs", userId], 86400);
 }
 
-export async function getUserLogs(userId: string) {
+export async function getUserLogs(userId: UserId) {
 	const characters = await q.characters.findMany({
 		columns: {
 			id: true

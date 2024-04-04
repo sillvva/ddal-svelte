@@ -1,5 +1,6 @@
 import { PROVIDERS } from "$lib/constants";
 import { privateEnv } from "$lib/env/private";
+import type { UserId } from "$lib/schemas";
 import { isDefined, joinStringList } from "$lib/util";
 import { db, q } from "$server/db";
 import { accounts, users, type Account } from "$server/db/schema";
@@ -162,15 +163,22 @@ const auth = SvelteKitAuth(async (event) => {
 				}
 
 				if (user.id)
-					await db.update(users).set({ name: accountProfile.name, image: accountProfile.image }).where(eq(users.id, user.id));
+					await db
+						.update(users)
+						.set({ name: accountProfile.name, image: accountProfile.image })
+						.where(eq(users.id, user.id as UserId));
 
 				return true;
 			},
 			async session({ session, user }) {
-				if (session.expires >= new Date()) return session satisfies LocalsSession;
+				if (session.expires >= new Date())
+					return {
+						...session,
+						user: { ...session.user, id: session.user.id as UserId }
+					} satisfies LocalsSession;
 
 				const account = await q.accounts.findFirst({
-					where: (accounts, { and, eq, isNotNull }) => and(eq(accounts.userId, user.id), isNotNull(accounts.lastLogin)),
+					where: (accounts, { and, eq, isNotNull }) => and(eq(accounts.userId, user.id as UserId), isNotNull(accounts.lastLogin)),
 					orderBy: (account, { desc }) => desc(account.lastLogin)
 				});
 
@@ -181,7 +189,10 @@ const auth = SvelteKitAuth(async (event) => {
 					}
 				}
 
-				return session satisfies LocalsSession;
+				return {
+					...session,
+					user: { ...session.user, id: session.user.id as UserId }
+				} satisfies LocalsSession;
 			}
 		},
 		secret: privateEnv.AUTH_SECRET,

@@ -1,6 +1,6 @@
 import { BLANK_CHARACTER } from "$lib/constants";
 import { getLogsSummary } from "$lib/entities";
-import type { CharacterId } from "$lib/schemas";
+import type { CharacterId, UserId } from "$lib/schemas";
 import { isDefined } from "$lib/util";
 import { cache, mcache, type CacheKey } from "$server/cache";
 import { q } from "$server/db";
@@ -49,7 +49,7 @@ export async function getCharacterCache(characterId: CharacterId, includeLogs = 
 		: null;
 }
 
-export async function getCharactersWithLogs(userId: string, includeLogs = true) {
+export async function getCharactersWithLogs(userId: UserId, includeLogs = true) {
 	const characters = await q.characters.findMany({
 		with: {
 			user: true,
@@ -96,7 +96,7 @@ export async function getCharacterCaches(characterIds: CharacterId[]) {
 }
 
 export type CharactersData = Awaited<ReturnType<typeof getCharacters>>;
-export async function getCharacters(userId: string) {
+export async function getCharacters(userId: UserId) {
 	return await q.characters.findMany({
 		with: {
 			user: true
@@ -106,6 +106,6 @@ export async function getCharacters(userId: string) {
 	});
 }
 
-export async function getCharactersCache(userId: string) {
+export async function getCharactersCache(userId: UserId) {
 	return await cache(() => getCharacters(userId), ["characters", userId]);
 }

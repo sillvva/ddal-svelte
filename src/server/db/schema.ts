@@ -1,4 +1,4 @@
-import { type CharacterId, type DungeonMasterId, type ItemId, type LogId } from "$lib/schemas";
+import { type CharacterId, type DungeonMasterId, type ItemId, type LogId, type UserId } from "$lib/schemas";
 import { createId } from "@paralleldrive/cuid2";
 import { relations } from "drizzle-orm";
 import {
@@ -24,7 +24,8 @@ export const users = pgTable("user", {
 	id: varchar("id")
 		.primaryKey()
 		.notNull()
-		.$default(() => createId()),
+		.$default(() => createId())
+		.$type<UserId>(),
 	name: varchar("name").notNull(),
 	email: varchar("email"),
 	emailVerified: timestamp("emailVerified", { mode: "date" }),
@@ -49,7 +50,8 @@ export const accounts = pgTable(
 		type: varchar("type").notNull(),
 		userId: varchar("userId")
 			.notNull()
-			.references(() => users.id, { onUpdate: "cascade", onDelete: "cascade" }),
+			.references(() => users.id, { onUpdate: "cascade", onDelete: "cascade" })
+			.$type<UserId>(),
 		refreshToken: varchar("refresh_token"),
 		accessToken: varchar("access_token").notNull(),
 		expiresAt: integer("expires_at").notNull(),
@@ -83,6 +85,7 @@ export const sessions = pgTable(
 		sessionToken: varchar("sessionToken").primaryKey().notNull(),
 		userId: varchar("userId")
 			.notNull()
+			.$type<UserId>()
 			.references(() => users.id, { onUpdate: "cascade", onDelete: "cascade" }),
 		expires: timestamp("expires", { mode: "date" }).notNull(),
 		createdAt: timestamp("created_at", { mode: "date", withTimezone: true })
@@ -122,6 +125,7 @@ export const characters = pgTable(
 		characterSheetUrl: varchar("character_sheet_url"),
 		userId: varchar("userId")
 			.notNull()
+			.$type<UserId>()
 			.references(() => users.id, { onUpdate: "cascade", onDelete: "cascade" }),
 		createdAt: timestamp("created_at", { mode: "date" })
 			.notNull()
@@ -155,9 +159,10 @@ export const dungeonMasters = pgTable(
 			.$type<DungeonMasterId>(),
 		name: varchar("name").notNull(),
 		DCI: varchar("DCI"),
-		uid: varchar("uid"),
+		uid: varchar("uid").$type<UserId>(),
 		owner: varchar("owner")
 			.notNull()
+			.$type<UserId>()
 			.references(() => users.id, { onUpdate: "cascade", onDelete: "cascade" })
 	},
 	(table) => {
