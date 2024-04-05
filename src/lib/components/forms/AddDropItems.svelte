@@ -18,7 +18,7 @@
 	<button
 		type="button"
 		class="btn btn-primary min-w-fit flex-1 sm:btn-sm sm:flex-none"
-		on:click={() => ($form.magicItemsGained = [...$form.magicItemsGained, newItem])}
+		on:click={() => ($form.magicItemsGained = $form.magicItemsGained.concat(newItem))}
 	>
 		Add Magic Item
 	</button>
@@ -27,7 +27,7 @@
 			type="button"
 			class="btn min-w-fit flex-1 sm:btn-sm sm:flex-none"
 			on:click={() => {
-				if (remainingItems[0]) $form.magicItemsLost = [...$form.magicItemsLost, remainingItems[0].id];
+				if (remainingItems[0]) $form.magicItemsLost = $form.magicItemsLost.concat(remainingItems[0].id);
 			}}
 		>
 			Drop Magic Item
@@ -37,7 +37,7 @@
 		<button
 			type="button"
 			class="btn btn-primary min-w-fit flex-1 sm:btn-sm sm:flex-none"
-			on:click={() => ($form.storyAwardsGained = [...$form.storyAwardsGained, newItem])}
+			on:click={() => ($form.storyAwardsGained = $form.storyAwardsGained.concat(newItem))}
 		>
 			Add Story Award
 		</button>
@@ -46,7 +46,7 @@
 				type="button"
 				class="btn min-w-fit flex-1 sm:btn-sm sm:flex-none"
 				on:click={() => {
-					if (remainingAwards[0]) $form.storyAwardsLost = [...$form.storyAwardsLost, remainingAwards[0].id];
+					if (remainingAwards[0]) $form.storyAwardsLost = $form.storyAwardsLost.concat(remainingAwards[0].id);
 				}}
 			>
 				Drop Story Award

@@ -59,8 +59,14 @@
 	$: indexed = logs.map((log) => ({
 		logId: log.id,
 		logName: log.name,
-		magicItems: [...log.magicItemsGained.map((item) => item.name), ...log.magicItemsLost.map((item) => item.name)].join(" | "),
-		storyAwards: [...log.storyAwardsGained.map((item) => item.name), ...log.storyAwardsLost.map((item) => item.name)].join(" | ")
+		magicItems: log.magicItemsGained
+			.map((item) => item.name)
+			.concat(log.magicItemsLost.map((item) => item.name))
+			.join(" | "),
+		storyAwards: log.storyAwardsGained
+			.map((item) => item.name)
+			.concat(log.storyAwardsLost.map((item) => item.name))
+			.join(" | ")
 	}));
 
 	$: {
@@ -122,7 +128,7 @@
 />
 
 {#if data.session?.user}
-	<div class="signal/back flex gap-4">
+	<div class="flex gap-4 signal/back">
 		<BreadCrumbs />
 		{#if myCharacter}
 			<div class="hidden gap-4 sm:flex print:hidden">

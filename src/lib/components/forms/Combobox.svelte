@@ -50,15 +50,9 @@
 			.replace(/\s+/g, "")
 			.includes(($label || "").toLowerCase().replace(/\s+/g, ""))
 	);
-	$: filtered =
-		!$label?.trim() || !allowCustom || prefiltered.length === 1
-			? prefiltered
-			: [{ value: "", label: $label, itemLabel: `Add "${$label}"` }, ...prefiltered];
-	$: selectedItem = $value
-		? values.find((v) => v.value === $value)
-		: $label.trim() && allowCustom
-			? { value: "", label: $label, itemLabel: `Add "${$label}"` }
-			: undefined;
+	$: firstItem = { value: "", label: $label, itemLabel: `Add "${$label}"` };
+	$: filtered = !$label?.trim() || !allowCustom || prefiltered.length === 1 ? prefiltered : [firstItem].concat(prefiltered);
+	$: selectedItem = $value ? values.find((v) => v.value === $value) : $label.trim() && allowCustom ? firstItem : undefined;
 
 	function clear() {
 		$value = "";

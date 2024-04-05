@@ -13,14 +13,17 @@ export async function clearUserCache(userId: UserId) {
 
 	const characters = await getCharactersCache(userId);
 
-	revalidateKeys([
-		["dms", userId, "logs"],
-		["characters", userId],
-		...characters.map((c) => ["character", c.id, "logs"] as CacheKey),
-		...characters.map((c) => ["character", c.id, "no-logs"] as CacheKey),
-		["dm-logs", userId],
-		["search-data", userId]
-	]);
+	revalidateKeys(
+		characters
+			.map((c) => ["character", c.id, "logs"] as CacheKey)
+			.concat(characters.map((c) => ["character", c.id, "no-logs"] as CacheKey))
+			.concat([
+				["dms", userId, "logs"],
+				["characters", userId],
+				["dm-logs", userId],
+				["search-data", userId]
+			])
+	);
 }
 
 export type ProviderId = (typeof PROVIDERS)[number]["id"];

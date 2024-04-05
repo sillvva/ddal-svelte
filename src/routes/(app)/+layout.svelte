@@ -55,7 +55,7 @@
 	let selected: string = defaultSelected;
 	let resultsPane: HTMLElement;
 
-	$: words = [...new Set(search.toLowerCase().split(" "))].filter(Boolean);
+	$: words = Array.from(new Set(search.toLowerCase().split(" "))).filter(Boolean);
 	$: if (!$searchData.length && browser && cmdOpen) {
 		fetch(`/command`)
 			.then((res) => res.json() as Promise<SearchData>)
@@ -102,7 +102,7 @@
 								if (item.dm) matches = matches.concat(hasMatch(item.dm.name) || []);
 							}
 						}
-						const deduped = [...new Set(matches)];
+						const deduped = Array.from(new Set(matches));
 						return deduped.length === words.length;
 					})
 					.sort((a, b) => {
@@ -386,7 +386,7 @@
 																				<div class="flex gap-1 text-xs">
 																					<span class="whitespace-nowrap font-bold">Magic Items:</span>
 																					<span class="flex-1 opacity-70">
-																						{[...new Set(item.magic_items.map((item) => item.name))]
+																						{Array.from(new Set(item.magic_items.map((item) => item.name)))
 																							.filter((item) => hasMatch(item))
 																							.sort((a, b) => sorter(a, b))
 																							.join(", ")}
@@ -397,7 +397,7 @@
 																				<div class="flex gap-2 text-xs">
 																					<span class="whitespace-nowrap font-bold">Story Awards:</span>
 																					<span class="flex-1 opacity-70">
-																						{[...new Set(item.story_awards.map((item) => item.name))]
+																						{Array.from(new Set(item.story_awards.map((item) => item.name)))
 																							.filter((item) => hasMatch(item))
 																							.sort((a, b) => sorter(a, b))
 																							.join(", ")}

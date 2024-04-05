@@ -36,13 +36,16 @@ export async function saveDM(
 
 		if (!result) throw new SaveError("Failed to save DM");
 
-		const characterIds = [...new Set(dm.logs.filter((l) => l.characterId).map((l) => l.characterId))];
-		revalidateKeys([
-			["dms", user.id, "logs"],
-			...characterIds.map((id) => ["character", id as string, "logs"] as CacheKey),
-			["dms", user.id],
-			["search-data", user.id]
-		]);
+		const characterIds = Array.from(new Set(dm.logs.filter((l) => l.characterId).map((l) => l.characterId)));
+		revalidateKeys(
+			characterIds
+				.map((id) => ["character", id as string, "logs"] as CacheKey)
+				.concat([
+					["dms", user.id, "logs"],
+					["dms", user.id],
+					["search-data", user.id]
+				])
+		);
 
 		return result;
 	} catch (err) {

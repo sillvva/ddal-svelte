@@ -15,7 +15,7 @@
 
 	function getSearchTerms(search: string) {
 		return (search.length > 1 ? search : "")
-			.replace(new RegExp(` ?\\b(${[...stopWords].join("|")})\\b ?`, "gi"), " ")
+			.replace(new RegExp(` ?\\b(${Array.from(stopWords).join("|")})\\b ?`, "gi"), " ")
 			.replace(/([^ a-z0-9])/gi, "\\$1")
 			.trim()
 			.split(" ")

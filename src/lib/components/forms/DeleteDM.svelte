@@ -20,7 +20,7 @@
 			onSubmit({ cancel, formData }) {
 				if (!confirm(`Are you sure you want to delete ${dm.name}? This action cannot be reversed.`)) return cancel();
 				formData.set("id", dm.id);
-				deletingDM = [...deletingDM, dm.id];
+				deletingDM = deletingDM.concat(dm.id);
 			},
 			onUpdated({ form }) {
 				const [error] = form.errors._errors || [];

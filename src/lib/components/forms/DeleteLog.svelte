@@ -20,7 +20,7 @@
 			onSubmit({ cancel, formData }) {
 				if (!confirm(`Are you sure you want to delete ${log.name}? This action cannot be reversed.`)) return cancel();
 				formData.set("id", log.id);
-				deletingLog = [...deletingLog, log.id];
+				deletingLog = deletingLog.concat(log.id);
 			},
 			onUpdated({ form }) {
 				const [error] = form.errors._errors || [];
