@@ -5,7 +5,7 @@ import { rateLimiter, revalidateKeys } from "$server/cache";
 import { logIncludes, type LogData } from "$server/data/logs";
 import { db } from "$server/db";
 import { dungeonMasters, logs, magicItems, storyAwards, type InsertDungeonMaster, type Log } from "$server/db/schema";
-import { and, eq, inArray, notInArray } from "drizzle-orm";
+import { eq, inArray, notInArray } from "drizzle-orm";
 
 class LogError extends SaveError<LogSchema> {}
 
@@ -134,13 +134,7 @@ export async function saveLog(input: LogSchema, user?: CustomSession["user"]): S
 
 			const itemsToUpdate = input.magicItemsGained.filter((item) => item.id);
 			for (const item of itemsToUpdate) {
-				await tx
-					.update(magicItems)
-					.set({
-						name: item.name,
-						description: item.description
-					})
-					.where(eq(magicItems.id, item.id));
+				await tx.update(magicItems).set(item).where(eq(magicItems.id, item.id));
 			}
 
 			const itemsToDelete = itemsToUpdate.map((item) => item.id);
@@ -159,23 +153,14 @@ export async function saveLog(input: LogSchema, user?: CustomSession["user"]): S
 				);
 			}
 
-			await tx
-				.update(magicItems)
-				.set({ logLostId: null })
-				.where(and(eq(magicItems.logLostId, log.id)));
+			await tx.update(magicItems).set({ logLostId: null }).where(eq(magicItems.logLostId, log.id));
 			if (input.magicItemsLost.length) {
 				await tx.update(magicItems).set({ logLostId: log.id }).where(inArray(magicItems.id, input.magicItemsLost));
 			}
 
 			const storyAwardsToUpdate = input.magicItemsGained.filter((item) => item.id);
 			for (const item of storyAwardsToUpdate) {
-				await tx
-					.update(storyAwards)
-					.set({
-						name: item.name,
-						description: item.description
-					})
-					.where(eq(storyAwards.id, item.id));
+				await tx.update(storyAwards).set(item).where(eq(storyAwards.id, item.id));
 			}
 
 			const storyAwardsToDelete = storyAwardsToUpdate.map((item) => item.id);
@@ -194,10 +179,7 @@ export async function saveLog(input: LogSchema, user?: CustomSession["user"]): S
 				);
 			}
 
-			await tx
-				.update(storyAwards)
-				.set({ logLostId: null })
-				.where(and(eq(storyAwards.logLostId, log.id)));
+			await tx.update(storyAwards).set({ logLostId: null }).where(eq(storyAwards.logLostId, log.id));
 			if (input.storyAwardsLost.length) {
 				await tx.update(storyAwards).set({ logLostId: log.id }).where(inArray(storyAwards.id, input.storyAwardsLost));
 			}
