@@ -73,13 +73,12 @@
 			items: section.items
 				.filter((item) => {
 					if (item.type === "section" && words.length) return false;
-					let matches: typeof words = hasMatch(item.name) || [];
+					let matches = hasMatch(item.name) || [];
 					if (words.join(" ").length >= 2) {
 						if (item.type === "character") {
 							item.magic_items.forEach((magicItem) => (matches = matches.concat(hasMatch(magicItem.name) || [])));
 							item.story_awards.forEach((storyAward) => (matches = matches.concat(hasMatch(storyAward.name) || [])));
-						}
-						if (item.type === "log") {
+						} else if (item.type === "log") {
 							if (item.dm) matches = matches.concat(hasMatch(item.dm.name) || []);
 						}
 					}
