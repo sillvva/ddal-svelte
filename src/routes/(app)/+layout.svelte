@@ -82,8 +82,8 @@
 							if (item.dm) matches = matches.concat(hasMatch(item.dm.name) || []);
 						}
 					}
-					const deduped = Array.from(new Set(matches));
-					return deduped.length === words.length;
+					const deduped = new Set(matches);
+					return deduped.size === words.length;
 				})
 				.sort((a, b) => {
 					if (a.type === "log" && b.type === "log") return new Date(b.date).getTime() - new Date(a.date).getTime();
