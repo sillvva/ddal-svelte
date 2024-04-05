@@ -129,6 +129,6 @@ export async function mcache<TReturnType extends object>(
  * @param [keys] The cache keys as an array of arrays of strings. Empty strings, false, null, and undefined are ignored.
  */
 export function revalidateKeys(keys: Array<CacheKey | Falsy>) {
-	const cacheKeys = keys.filter((t) => Array.isArray(t) && t.length).map((t) => (t as string[]).join(delimiter));
+	const cacheKeys = keys.filter((t): t is CacheKey => Array.isArray(t) && !!t.length).map((t) => t.join(delimiter));
 	if (cacheKeys.length) redis.del(...cacheKeys);
 }
