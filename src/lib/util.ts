@@ -19,6 +19,8 @@ export type ExtractBrand<K> = K extends `${infer N}.${"length" | BrandKey}` ? N 
 
 export type TransitionAction = ReturnType<typeof setupViewTransition>["transition"];
 
+export type Falsy = false | 0 | "" | null | undefined;
+
 /**
  * Functions
  */

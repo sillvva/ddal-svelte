@@ -1,4 +1,5 @@
 import { privateEnv } from "$lib/env/private";
+import type { Falsy } from "$lib/util";
 import { Ratelimit } from "@upstash/ratelimit";
 import { Redis } from "@upstash/redis";
 
@@ -127,7 +128,7 @@ export async function mcache<TReturnType extends object>(
  * Invalidates Redis caches based on an array of keys.
  * @param [keys] The cache keys as an array of arrays of strings. Empty strings, false, null, and undefined are ignored.
  */
-export function revalidateKeys(keys: Array<CacheKey | "" | false | null | undefined>) {
+export function revalidateKeys(keys: Array<CacheKey | Falsy>) {
 	const cacheKeys = keys.filter((t) => Array.isArray(t) && t.length).map((t) => (t as string[]).join(delimiter));
 	if (cacheKeys.length) redis.del(...cacheKeys);
 }
