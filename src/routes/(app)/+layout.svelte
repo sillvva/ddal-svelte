@@ -5,6 +5,7 @@
 	import Drawer from "$lib/components/Drawer.svelte";
 	import Markdown from "$lib/components/Markdown.svelte";
 	import Settings from "$lib/components/Settings.svelte";
+	import { searchSections } from "$lib/constants.js";
 	import { pageLoader, searchData } from "$lib/stores";
 	import { type CookieStore } from "$server/cookie.js";
 	import { sorter } from "@sillvva/utils";
@@ -43,13 +44,7 @@
 	 * Command Palette
 	 */
 
-	const sections = [
-		{ title: "Characters", url: "/characters" },
-		{ title: "DM Logs", url: "/dm-logs" },
-		{ title: "DMs", url: "/dms" }
-	] as const;
-
-	const defaultSelected: string = sections[0].url;
+	const defaultSelected: string = searchSections[0].url;
 	let search = "";
 	let cmdOpen = false;
 	let selected: string = defaultSelected;
@@ -72,46 +67,31 @@
 		return matches.length ? matches : null;
 	}
 
-	$: results = [
-		{
-			title: "Sections",
-			items: sections.map(
-				(section) =>
-					({
-						type: "section",
-						name: section.title,
-						url: section.url
-					}) as const
-			)
-		},
-		...$searchData
-	]
-		.map((section) => {
-			return {
-				...section,
-				items: section.items
-					.filter((item) => {
-						if (item.type === "section" && search.length) return false;
-						let matches: typeof words = hasMatch(item.name) || [];
-						if (search.length >= 2) {
-							if (item.type === "character") {
-								item.magic_items.forEach((magicItem) => (matches = matches.concat(hasMatch(magicItem.name) || [])));
-								item.story_awards.forEach((storyAward) => (matches = matches.concat(hasMatch(storyAward.name) || [])));
-							}
-							if (item.type === "log") {
-								if (item.dm) matches = matches.concat(hasMatch(item.dm.name) || []);
-							}
+	$: results = $searchData
+		.map((section) => ({
+			title: section.title,
+			items: section.items
+				.filter((item) => {
+					if (item.type === "section" && words.length) return false;
+					let matches: typeof words = hasMatch(item.name) || [];
+					if (words.join(" ").length >= 2) {
+						if (item.type === "character") {
+							item.magic_items.forEach((magicItem) => (matches = matches.concat(hasMatch(magicItem.name) || [])));
+							item.story_awards.forEach((storyAward) => (matches = matches.concat(hasMatch(storyAward.name) || [])));
 						}
-						const deduped = Array.from(new Set(matches));
-						return deduped.length === words.length;
-					})
-					.sort((a, b) => {
-						if (a.type === "log" && b.type === "log") return new Date(b.date).getTime() - new Date(a.date).getTime();
-						return a.name.localeCompare(b.name);
-					})
-					.slice(0, search ? 1000 : 5)
-			};
-		})
+						if (item.type === "log") {
+							if (item.dm) matches = matches.concat(hasMatch(item.dm.name) || []);
+						}
+					}
+					const deduped = Array.from(new Set(matches));
+					return deduped.length === words.length;
+				})
+				.sort((a, b) => {
+					if (a.type === "log" && b.type === "log") return new Date(b.date).getTime() - new Date(a.date).getTime();
+					return a.name.localeCompare(b.name);
+				})
+				.slice(0, words.length ? 1000 : 5)
+		}))
 		.filter((section) => section.items.length);
 	$: resultCounts = results.map((section) => section.items.length).filter((c) => c > 0).length;
 </script>

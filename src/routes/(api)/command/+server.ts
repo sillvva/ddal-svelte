@@ -1,10 +1,25 @@
+import { searchSections } from "$lib/constants.js";
 import { cache } from "$server/cache.js";
 import { getCharactersWithLogs } from "$server/data/characters.js";
 import { getUserDMs } from "$server/data/dms.js";
 import { getUserLogs } from "$server/data/logs.js";
 import { json } from "@sveltejs/kit";
 
-export type SearchData = Awaited<ReturnType<typeof getData>>;
+type SectionData = typeof sectionData;
+const sectionData = {
+	title: "Sections",
+	items: searchSections.map(
+		(section) =>
+			({
+				type: "section",
+				name: section.title,
+				url: section.url
+			}) as const
+	)
+};
+
+type GetData = Awaited<ReturnType<typeof getData>>;
+export type SearchData = Array<SectionData | GetData[number]>;
 async function getData(user: NonNullable<LocalsSession["user"]>) {
 	return [
 		{
@@ -58,5 +73,5 @@ export async function GET({ locals }) {
 	const session = locals.session;
 	if (!session?.user?.id) return json({ error: "Unauthorized" }, { status: 401 });
 
-	return json(await getDataCache(session.user));
+	return json(([sectionData] as SearchData).concat(await getDataCache(session.user)));
 }
