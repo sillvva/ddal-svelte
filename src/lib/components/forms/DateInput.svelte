@@ -3,6 +3,8 @@
 </script>
 
 <script lang="ts" generics="T extends TRec">
+	import { twMerge } from "tailwind-merge";
+
 	import { parseDateTime } from "@internationalized/date";
 	import { DatePicker } from "bits-ui";
 	import type { HTMLInputAttributes } from "svelte/elements";
@@ -76,19 +78,20 @@
 	</DatePicker.Label>
 	<DatePicker.Input
 		let:segments
-		class="input input-bordered inline-flex w-full px-2 py-[7px] signal/date-xs:text-xs signal/date-xs:lg:py-2"
+		class="input input-bordered inline-flex w-full select-none items-center gap-1 px-3 signal/date-xs:text-xs"
 	>
 		{#each segments as { part, value }}
-			<div class="inline-block select-none">
-				<DatePicker.Segment
-					{part}
-					class="rounded-md p-1 focus-visible:outline-primary aria-[valuetext=Empty]:text-base-content/70 aria-[valuenow=PM]:signal aria-[valuenow=PM]:before:[content:attr(aria-valuenow)] data-[segment=literal]:px-0"
-				>
-					<span class="signal:hidden">{value}</span>
-				</DatePicker.Segment>
-			</div>
+			<DatePicker.Segment
+				{part}
+				class={twMerge(
+					"rounded-md focus-visible:outline-primary aria-[valuetext=Empty]:text-base-content/70",
+					part === "dayPeriod" && "aria-[valuenow=PM]:signal aria-[valuenow=PM]:before:[content:attr(aria-valuenow)]"
+				)}
+			>
+				<span class="signal:hidden">{value}</span>
+			</DatePicker.Segment>
 		{/each}
-		<DatePicker.Trigger class="ml-auto inline-flex size-8 items-center justify-center">
+		<DatePicker.Trigger class="ml-auto inline-flex items-center justify-center">
 			<span class="iconify size-6 mdi-calendar" />
 		</DatePicker.Trigger>
 	</DatePicker.Input>
