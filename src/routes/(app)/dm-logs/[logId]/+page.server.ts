@@ -1,5 +1,5 @@
 import { defaultLogData, logDataToSchema } from "$lib/entities.js";
-import { dMLogSchema } from "$lib/schemas";
+import { dMLogSchema, logIdSchema } from "$lib/schemas";
 import { saveLog } from "$server/actions/logs";
 import { signInRedirect } from "$server/auth";
 import { getCharacterCaches, getCharactersCache } from "$server/data/characters";
@@ -7,6 +7,7 @@ import { getDMLog, getLog } from "$server/data/logs";
 import { error, redirect } from "@sveltejs/kit";
 import { fail, superValidate } from "sveltekit-superforms";
 import { valibot } from "sveltekit-superforms/adapters";
+import { safeParse } from "valibot";
 
 export const load = async (event) => {
 	const parent = await event.parent();
@@ -15,12 +16,16 @@ export const load = async (event) => {
 	if (!session?.user?.name) signInRedirect(event.url);
 	const user = session.user;
 
+	const idResult = safeParse(logIdSchema, event.params.logId || "");
+	if (!idResult.success) redirect(302, `/dm-logs`);
+	const logId = idResult.output;
+
 	const characters = await getCharactersCache(user.id)
 		.then(async (characters) => await getCharacterCaches(characters.map((c) => c.id)))
 		.then((characters) =>
 			characters.map((c) => ({
 				...c,
-				logs: c.logs.filter((l) => l.id !== event.params.logId),
+				logs: c.logs.filter((l) => l.id !== logId),
 				magic_items: [],
 				story_awards: [],
 				log_levels: []
@@ -29,7 +34,7 @@ export const load = async (event) => {
 
 	let log = defaultLogData(user.id);
 	if (event.params.logId !== "new") {
-		log = await getDMLog(event.params.logId, user.id);
+		log = await getDMLog(logId, user.id);
 		if (!log.id) error(404, "Log not found");
 		if (!log.isDmLog) redirect(302, `/characters/${log.characterId}/log/${log.id}`);
 	}
@@ -44,7 +49,7 @@ export const load = async (event) => {
 		title: event.params.logId === "new" ? "New DM Log" : `Edit ${form.data.name}`,
 		breadcrumbs: parent.breadcrumbs.concat({
 			name: event.params.logId === "new" ? "New DM Log" : `${form.data.name}`,
-			href: `/dm-logs/${event.params.logId}`
+			href: `/dm-logs/${logId}`
 		}),
 		characters: characters.map((c) => ({ id: c.id, name: c.name })),
 		form
@@ -56,7 +61,11 @@ export const actions = {
 		const session = event.locals.session;
 		if (!session?.user) redirect(302, "/");
 
-		const log = await getLog(event.params.logId || "", session.user.id);
+		const idResult = safeParse(logIdSchema, event.params.logId || "");
+		if (!idResult.success) redirect(302, `/dm-logs`);
+		const logId = idResult.output;
+
+		const log = await getLog(logId, session.user.id);
 		if (event.params.logId !== "new" && !log.id) redirect(302, `/dm-logs`);
 
 		const characters = await getCharactersCache(session.user.id).then(

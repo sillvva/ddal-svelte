@@ -3,23 +3,27 @@ import { type NumericRange } from "@sveltejs/kit";
 import { message, setError, type FormPathLeavesWithErrors, type SuperValidated } from "sveltekit-superforms";
 import type { setupViewTransition } from "sveltekit-view-transition";
 
+/**
+ * Types
+ */
+
 export type Prettify<T> = {
 	[K in keyof T]: T[K];
 } & unknown;
 
+declare const __brand: unique symbol;
+type BrandKey = keyof Brand<unknown> extends symbol ? never : keyof Brand<unknown>;
+type Brand<B> = { [__brand]: B };
+export type Branded<T, B> = T & Brand<B>;
+export type ExtractBrand<K> = K extends `${infer N}.${"length" | BrandKey}` ? N : K;
+
 export type TransitionAction = ReturnType<typeof setupViewTransition>["transition"];
 
-export const formatDate = (date: Date | string | number) => {
-	const d = new Date(date);
-	const year = d.getFullYear();
-	const month = String(d.getMonth() + 1).padStart(2, "0");
-	const day = String(d.getDate()).padStart(2, "0");
-	const hours = String(d.getHours()).padStart(2, "0");
-	const minutes = String(d.getMinutes()).padStart(2, "0");
-	const seconds = String(d.getSeconds()).padStart(2, "0");
-	const milliseconds = String(d.getMilliseconds()).padStart(3, "0");
-	return `${year}-${month}-${day} ${hours}:${minutes}:${seconds}.${milliseconds}`;
-};
+export type Falsy = false | 0 | "" | null | undefined;
+
+/**
+ * Functions
+ */
 
 /**
  * Creates a view transition.
@@ -40,12 +44,8 @@ export function joinStringList(list: string[], separator = ", ", lastSeparator =
 	return `${list.join(separator)}${list.length > 1 ? separator : " "}${lastSeparator}${last}`;
 }
 
-export function isDefined<T>(value?: T): value is T {
-	return value !== undefined;
-}
-
-export function capitalize(string: string) {
-	return string.charAt(0).toUpperCase() + string.slice(1);
+export function isDefined<T>(value?: T | null): value is T {
+	return value !== undefined && value !== null;
 }
 
 export type SaveResult<T extends object | null, S extends Record<string, unknown>> = Promise<T | SaveError<S>>;
@@ -56,7 +56,7 @@ export class SaveError<TOut extends Record<string, unknown>, TIn extends Record<
 	constructor(
 		public error: string,
 		protected options?: Partial<{
-			field: FormPathLeavesWithErrors<TOut>;
+			field: "" | ExtractBrand<FormPathLeavesWithErrors<TOut>>;
 			status: NumericRange<400, 599>;
 		}>
 	) {
@@ -76,8 +76,8 @@ export class SaveError<TOut extends Record<string, unknown>, TIn extends Record<
 	}
 
 	toForm(form: SuperValidated<TOut, App.Superforms.Message, TIn>) {
-		return this.options?.field
-			? setError(form, this.options.field, this.error, {
+		return isDefined(this.options?.field)
+			? setError(form, this.options.field as FormPathLeavesWithErrors<TOut>, this.error, {
 					status: this.status
 				})
 			: message(

@@ -28,8 +28,14 @@
 				logId: log.id,
 				logName: log.name,
 				characterName: log.character?.name || "",
-				magicItems: [...log.magicItemsGained.map((i) => i.name), ...log.magicItemsLost.map((i) => i.name)].join(", "),
-				storyAwards: [...log.storyAwardsGained.map((i) => i.name), ...log.storyAwardsLost.map((i) => i.name)].join(", ")
+				magicItems: log.magicItemsGained
+					.map((i) => i.name)
+					.concat(log.magicItemsLost.map((i) => i.name))
+					.join(", "),
+				storyAwards: log.storyAwardsGained
+					.map((i) => i.name)
+					.concat(log.storyAwardsLost.map((i) => i.name))
+					.join(", ")
 			}))
 		: [];
 

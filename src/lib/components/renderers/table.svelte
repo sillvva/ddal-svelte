@@ -1,1 +1,1 @@
-<table class="table w-full rounded-lg overflow-hidden"><slot /></table>
+<table class="table mb-4 w-full overflow-hidden rounded-lg"><slot /></table>

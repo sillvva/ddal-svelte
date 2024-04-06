@@ -12,7 +12,7 @@
 
 <div class="flex min-h-full flex-col items-center justify-center">
 	<div class="alert alert-error shadow-lg">
-		<span class="iconify mdi-alert-circle size-6" />
+		<span class="iconify size-6 mdi-alert-circle" />
 		<div>
 			<h3 class="font-bold">Error {$page.status}!</h3>
 			<div class="text-xs">{$page.error?.message || "Something went wrong"}</div>
@@ -20,6 +20,15 @@
 		<a href={previousPage} class="btn btn-sm">Go back</a>
 	</div>
 	<!-- {#if $page.status !== 404} -->
-	<pre class="mt-6 w-full overflow-x-auto bg-base-100 p-4 text-xs">{JSON.stringify($page, null, 2)}</pre>
+	<pre class="mt-6 w-full overflow-x-auto bg-base-100 p-4 text-xs">{JSON.stringify(
+			{
+				...$page,
+				data: undefined,
+				user: $page.data.session?.user,
+				mobile: $page.data.mobile
+			},
+			null,
+			2
+		)}</pre>
 	<!-- {/if} -->
 </div>

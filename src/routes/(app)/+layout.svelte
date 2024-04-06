@@ -5,6 +5,7 @@
 	import Drawer from "$lib/components/Drawer.svelte";
 	import Markdown from "$lib/components/Markdown.svelte";
 	import Settings from "$lib/components/Settings.svelte";
+	import { searchSections } from "$lib/constants.js";
 	import { pageLoader, searchData } from "$lib/stores";
 	import { type CookieStore } from "$server/cookie.js";
 	import { sorter } from "@sillvva/utils";
@@ -43,19 +44,13 @@
 	 * Command Palette
 	 */
 
-	const sections = [
-		{ title: "Characters", url: "/characters" },
-		{ title: "DM Logs", url: "/dm-logs" },
-		{ title: "DMs", url: "/dms" }
-	] as const;
-
-	const defaultSelected: string = sections[0].url;
+	const defaultSelected: string = searchSections[0].url;
 	let search = "";
 	let cmdOpen = false;
 	let selected: string = defaultSelected;
 	let resultsPane: HTMLElement;
 
-	$: words = [...new Set(search.toLowerCase().split(" "))].filter(Boolean);
+	$: words = Array.from(new Set(search.toLowerCase().split(" "))).filter(Boolean);
 	$: if (!$searchData.length && browser && cmdOpen) {
 		fetch(`/command`)
 			.then((res) => res.json() as Promise<SearchData>)
@@ -72,46 +67,30 @@
 		return matches.length ? matches : null;
 	}
 
-	$: results = [
-		{
-			title: "Sections",
-			items: sections.map(
-				(section) =>
-					({
-						type: "section",
-						name: section.title,
-						url: section.url
-					}) as const
-			)
-		},
-		...$searchData
-	]
-		.map((section) => {
-			return {
-				...section,
-				items: section.items
-					.filter((item) => {
-						if (item.type === "section" && search.length) return false;
-						let matches: typeof words = hasMatch(item.name) || [];
-						if (search.length >= 2) {
-							if (item.type === "character") {
-								item.magic_items.forEach((magicItem) => (matches = matches.concat(hasMatch(magicItem.name) || [])));
-								item.story_awards.forEach((storyAward) => (matches = matches.concat(hasMatch(storyAward.name) || [])));
-							}
-							if (item.type === "log") {
-								if (item.dm) matches = matches.concat(hasMatch(item.dm.name) || []);
-							}
+	$: results = $searchData
+		.map((section) => ({
+			title: section.title,
+			items: section.items
+				.filter((item) => {
+					if (item.type === "section" && words.length) return false;
+					let matches = hasMatch(item.name) || [];
+					if (words.join(" ").length >= 2) {
+						if (item.type === "character") {
+							item.magic_items.forEach((magicItem) => (matches = matches.concat(hasMatch(magicItem.name) || [])));
+							item.story_awards.forEach((storyAward) => (matches = matches.concat(hasMatch(storyAward.name) || [])));
+						} else if (item.type === "log") {
+							if (item.dm) matches = matches.concat(hasMatch(item.dm.name) || []);
 						}
-						const deduped = [...new Set(matches)];
-						return deduped.length === words.length;
-					})
-					.sort((a, b) => {
-						if (a.type === "log" && b.type === "log") return new Date(b.date).getTime() - new Date(a.date).getTime();
-						return a.name.localeCompare(b.name);
-					})
-					.slice(0, search ? 1000 : 5)
-			};
-		})
+					}
+					const deduped = new Set(matches);
+					return deduped.size === words.length;
+				})
+				.sort((a, b) => {
+					if (a.type === "log" && b.type === "log") return new Date(b.date).getTime() - new Date(a.date).getTime();
+					return a.name.localeCompare(b.name);
+				})
+				.slice(0, words.length ? 1000 : 5)
+		}))
 		.filter((section) => section.items.length);
 	$: resultCounts = results.map((section) => section.items.length).filter((c) => c > 0).length;
 </script>
@@ -164,56 +143,58 @@
 		<nav class="container relative z-10 mx-auto flex max-w-5xl gap-2 p-4">
 			<Drawer />
 			<Settings bind:open={settingsOpen} />
-			<div class="ml-4 inline w-6 sm:hidden">&nbsp;</div>
+			<div class="inline max-w-10 shrink-0 flex-grow-[1] sm:hidden">&nbsp;</div>
 			<a
 				href={data.session?.user ? "/characters" : "/"}
-				class="mr-2 flex flex-1 flex-col text-center font-draconis sm:flex-none md:mr-8"
+				class="flex min-w-fit flex-1 flex-col text-center font-draconis sm:flex-none"
 			>
 				<h1 class="text-base leading-4 text-black dark:text-white">Adventurers League</h1>
 				<h2 class="text-3xl leading-7">Log Sheet</h2>
 			</a>
 			{#if data.session?.user}
-				<a href="/characters" class="hidden items-center p-2 md:flex">Character Logs</a>
+				<a href="/characters" class="ml-8 hidden items-center p-2 md:flex">Character Logs</a>
 				<a href="/dm-logs" class="hidden items-center p-2 md:flex">DM Logs</a>
 				<a href="/dms" class="hidden items-center p-2 md:flex">DMs</a>
 			{/if}
 			<div class="flex-1 max-sm:hidden">&nbsp;</div>
-			<button on:click={() => (cmdOpen = true)} class="inline hover-hover:md:hidden">
-				<span class="iconify size-6 mdi-magnify" />
-			</button>
-			<label class="input input-bordered hidden cursor-text items-center gap-2 hover-hover:md:flex">
-				<input type="text" class="max-w-20 grow" placeholder="Search" on:focus={() => (cmdOpen = true)} />
-				<kbd class="kbd kbd-sm">
-					{#if data.isMac}
-						⌘
-					{:else}
-						CTRL
-					{/if}
-				</kbd>
-				<kbd class="kbd kbd-sm">K</kbd>
-			</label>
-			{#if data.session?.user}
-				<summary tabindex="0" class="flex h-full cursor-pointer items-center pl-4" on:click={() => (settingsOpen = true)}>
-					<div class="avatar">
-						<div class="relative w-9 overflow-hidden rounded-full ring ring-primary ring-offset-2 ring-offset-base-100 lg:w-11">
-							<img
-								src={data.session?.user?.image || ""}
-								alt={data.session?.user?.name}
-								width={48}
-								height={48}
-								class="rounded-full object-cover object-center"
-							/>
+			<div class="flex gap-4">
+				<button on:click={() => (cmdOpen = true)} class="inline-flex w-10 items-center justify-center hover-hover:md:hidden">
+					<span class="iconify size-6 mdi-magnify" />
+				</button>
+				<label class="input input-bordered hidden min-w-fit cursor-text items-center gap-2 hover-hover:md:flex">
+					<input type="text" class="max-w-20 grow" placeholder="Search" on:focus={() => (cmdOpen = true)} />
+					<kbd class="kbd kbd-sm">
+						{#if data.isMac}
+							⌘
+						{:else}
+							CTRL
+						{/if}
+					</kbd>
+					<kbd class="kbd kbd-sm">K</kbd>
+				</label>
+				{#if data.session?.user}
+					<summary tabindex="0" class="flex h-full min-w-fit cursor-pointer items-center" on:click={() => (settingsOpen = true)}>
+						<div class="avatar">
+							<div class="relative w-9 overflow-hidden rounded-full ring ring-primary ring-offset-2 ring-offset-base-100 lg:w-11">
+								<img
+									src={data.session?.user?.image || ""}
+									alt={data.session?.user?.name}
+									width={48}
+									height={48}
+									class="rounded-full object-cover object-center"
+								/>
+							</div>
 						</div>
-					</div>
-				</summary>
-			{:else}
-				<a
-					href={`/?redirect=${encodeURIComponent(`${$page.url.pathname}${$page.url.search}`)}`}
-					class="flex h-12 items-center gap-2 rounded-lg bg-base-200/50 p-2 text-base-content transition-colors hover:bg-base-300"
-				>
-					<span class="flex h-full flex-1 items-center justify-center font-semibold">Sign In</span>
-				</a>
-			{/if}
+					</summary>
+				{:else}
+					<a
+						href={`/?redirect=${encodeURIComponent(`${$page.url.pathname}${$page.url.search}`)}`}
+						class="flex h-12 items-center gap-2 rounded-lg bg-base-200/50 p-2 text-base-content transition-colors hover:bg-base-300"
+					>
+						<span class="flex h-full flex-1 items-center justify-center font-semibold">Sign In</span>
+					</a>
+				{/if}
+			</div>
 		</nav>
 	</header>
 	<div class="container relative z-10 mx-auto max-w-5xl flex-1 p-4"><slot /></div>
@@ -386,7 +367,7 @@
 																				<div class="flex gap-1 text-xs">
 																					<span class="whitespace-nowrap font-bold">Magic Items:</span>
 																					<span class="flex-1 opacity-70">
-																						{[...new Set(item.magic_items.map((item) => item.name))]
+																						{Array.from(new Set(item.magic_items.map((item) => item.name)))
 																							.filter((item) => hasMatch(item))
 																							.sort((a, b) => sorter(a, b))
 																							.join(", ")}
@@ -397,7 +378,7 @@
 																				<div class="flex gap-2 text-xs">
 																					<span class="whitespace-nowrap font-bold">Story Awards:</span>
 																					<span class="flex-1 opacity-70">
-																						{[...new Set(item.story_awards.map((item) => item.name))]
+																						{Array.from(new Set(item.story_awards.map((item) => item.name)))
 																							.filter((item) => hasMatch(item))
 																							.sort((a, b) => sorter(a, b))
 																							.join(", ")}

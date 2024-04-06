@@ -1,3 +1,4 @@
+import { type CharacterId, type DungeonMasterId, type ItemId, type LogId, type UserId } from "$lib/schemas";
 import { createId } from "@paralleldrive/cuid2";
 import { relations } from "drizzle-orm";
 import {
@@ -23,7 +24,8 @@ export const users = pgTable("user", {
 	id: varchar("id")
 		.primaryKey()
 		.notNull()
-		.$default(() => createId()),
+		.$default(() => createId())
+		.$type<UserId>(),
 	name: varchar("name").notNull(),
 	email: varchar("email"),
 	emailVerified: timestamp("emailVerified", { mode: "date" }),
@@ -48,7 +50,8 @@ export const accounts = pgTable(
 		type: varchar("type").notNull(),
 		userId: varchar("userId")
 			.notNull()
-			.references(() => users.id, { onUpdate: "cascade", onDelete: "cascade" }),
+			.references(() => users.id, { onUpdate: "cascade", onDelete: "cascade" })
+			.$type<UserId>(),
 		refreshToken: varchar("refresh_token"),
 		accessToken: varchar("access_token").notNull(),
 		expiresAt: integer("expires_at").notNull(),
@@ -82,6 +85,7 @@ export const sessions = pgTable(
 		sessionToken: varchar("sessionToken").primaryKey().notNull(),
 		userId: varchar("userId")
 			.notNull()
+			.$type<UserId>()
 			.references(() => users.id, { onUpdate: "cascade", onDelete: "cascade" }),
 		expires: timestamp("expires", { mode: "date" }).notNull(),
 		createdAt: timestamp("created_at", { mode: "date", withTimezone: true })
@@ -111,7 +115,8 @@ export const characters = pgTable(
 		id: varchar("id")
 			.primaryKey()
 			.notNull()
-			.$default(() => createId()),
+			.$default(() => createId())
+			.$type<CharacterId>(),
 		name: varchar("name").notNull(),
 		race: varchar("race"),
 		class: varchar("class"),
@@ -120,6 +125,7 @@ export const characters = pgTable(
 		characterSheetUrl: varchar("character_sheet_url"),
 		userId: varchar("userId")
 			.notNull()
+			.$type<UserId>()
 			.references(() => users.id, { onUpdate: "cascade", onDelete: "cascade" }),
 		createdAt: timestamp("created_at", { mode: "date" })
 			.notNull()
@@ -149,12 +155,14 @@ export const dungeonMasters = pgTable(
 		id: varchar("id")
 			.primaryKey()
 			.notNull()
-			.$default(() => createId()),
+			.$default(() => createId())
+			.$type<DungeonMasterId>(),
 		name: varchar("name").notNull(),
 		DCI: varchar("DCI"),
-		uid: varchar("uid"),
+		uid: varchar("uid").$type<UserId>(),
 		owner: varchar("owner")
 			.notNull()
+			.$type<UserId>()
 			.references(() => users.id, { onUpdate: "cascade", onDelete: "cascade" })
 	},
 	(table) => {
@@ -184,17 +192,20 @@ export const logs = pgTable(
 		id: varchar("id")
 			.primaryKey()
 			.notNull()
-			.$default(() => createId()),
+			.$default(() => createId())
+			.$type<LogId>(),
 		date: timestamp("date", { mode: "date" })
 			.notNull()
 			.$default(() => new Date()),
 		name: varchar("name").notNull(),
 		description: varchar("description"),
 		type: logType("type").notNull(),
-		dungeonMasterId: varchar("dungeonMasterId").references(() => dungeonMasters.id, {
-			onUpdate: "cascade",
-			onDelete: "set null"
-		}),
+		dungeonMasterId: varchar("dungeonMasterId")
+			.$type<DungeonMasterId>()
+			.references(() => dungeonMasters.id, {
+				onUpdate: "cascade",
+				onDelete: "set null"
+			}),
 		isDmLog: boolean("is_dm_log").notNull(),
 		experience: integer("experience")
 			.notNull()
@@ -215,7 +226,9 @@ export const logs = pgTable(
 			.notNull()
 			.$default(() => 0),
 		appliedDate: timestamp("applied_date", { mode: "date" }),
-		characterId: varchar("characterId").references(() => characters.id, { onUpdate: "cascade", onDelete: "cascade" }),
+		characterId: varchar("characterId")
+			.$type<CharacterId>()
+			.references(() => characters.id, { onUpdate: "cascade", onDelete: "cascade" }),
 		createdAt: timestamp("created_at", { mode: "date" })
 			.notNull()
 			.$default(() => new Date())
@@ -252,13 +265,17 @@ export const magicItems = pgTable(
 		id: varchar("id")
 			.primaryKey()
 			.notNull()
-			.$default(() => createId()),
+			.$default(() => createId())
+			.$type<ItemId>(),
 		name: varchar("name").notNull(),
 		description: text("description"),
 		logGainedId: varchar("logGainedId")
 			.notNull()
+			.$type<LogId>()
 			.references(() => logs.id, { onUpdate: "cascade", onDelete: "cascade" }),
-		logLostId: varchar("logLostId").references(() => logs.id, { onUpdate: "cascade", onDelete: "set null" })
+		logLostId: varchar("logLostId")
+			.$type<LogId>()
+			.references(() => logs.id, { onUpdate: "cascade", onDelete: "set null" })
 	},
 	(table) => {
 		return {
@@ -290,13 +307,17 @@ export const storyAwards = pgTable(
 		id: varchar("id")
 			.primaryKey()
 			.notNull()
-			.$default(() => createId()),
+			.$default(() => createId())
+			.$type<ItemId>(),
 		name: varchar("name").notNull(),
 		description: text("description"),
 		logGainedId: varchar("logGainedId")
 			.notNull()
+			.$type<LogId>()
 			.references(() => logs.id, { onUpdate: "cascade", onDelete: "cascade" }),
-		logLostId: varchar("logLostId").references(() => logs.id, { onUpdate: "cascade", onDelete: "set null" })
+		logLostId: varchar("logLostId")
+			.$type<LogId>()
+			.references(() => logs.id, { onUpdate: "cascade", onDelete: "set null" })
 	},
 	(table) => {
 		return {

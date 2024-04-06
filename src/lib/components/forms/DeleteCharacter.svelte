@@ -21,7 +21,7 @@
 				formData.set("id", character.id);
 			},
 			onUpdated({ form }) {
-				const [error] = form.errors.id || [];
+				const [error] = form.errors._errors || [];
 				if (error) {
 					errorToast(error);
 				} else {
@@ -34,6 +34,6 @@
 	);
 </script>
 
-<button type="submit" class="menu-item-error" aria-label="Delete Character" on:click={submit}>
+<button type="button" class="menu-item-error" aria-label="Delete Character" on:click={submit}>
 	{label}
 </button>

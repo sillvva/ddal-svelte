@@ -43,24 +43,22 @@
 		return val;
 	};
 
-	$: if (items) itemsMap.clear();
 	$: consolidatedItems = structuredClone(items).reduce(
-		(acc, item, index, arr) => {
+		(acc, item, index) => {
+			if (index === 0) itemsMap.clear();
 			const name = fixName(clearQty(item.name));
 			const qty = itemQty(item);
 			const desc = item.description?.trim();
 			const key = `${name}_${desc}`;
 
 			const existingIndex = itemsMap.get(key);
-			if (existingIndex && existingIndex >= 0 && acc[existingIndex]) {
+			if (existingIndex !== undefined && acc[existingIndex]) {
 				const existingQty = itemQty(acc[existingIndex]!);
 				acc[existingIndex]!.name = fixName(name, existingQty + qty);
-			} else if (arr[index]) {
-				acc.push({
-					...arr[index]!,
-					name: fixName(arr[index]!.name, qty)
-				});
-				itemsMap.set(key, acc.length - 1);
+			} else {
+				item.name = fixName(item.name, qty);
+				itemsMap.set(key, acc.length);
+				acc.push(item);
 			}
 
 			return acc;

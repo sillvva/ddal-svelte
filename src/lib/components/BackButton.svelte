@@ -2,7 +2,7 @@
 	export let href = "";
 </script>
 
-<a {href} class="mb-4 flex h-12 flex-1 items-center gap-4 text-secondary group-[.flex]:mb-0 sm:hidden">
-	<span class="iconify mdi-chevron-left size-6" />
+<a {href} class="signal/back:mb-0 mb-4 flex h-12 flex-1 items-center gap-4 text-secondary sm:hidden">
+	<span class="iconify size-6 mdi-chevron-left" />
 	<span>Back to <slot /></span>
 </a>

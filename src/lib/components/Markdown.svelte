@@ -9,7 +9,9 @@
 	import listitem from "$lib/components/renderers/listitem.svelte";
 	import paragraph from "$lib/components/renderers/paragraph.svelte";
 	import table from "$lib/components/renderers/table.svelte";
+	import tablebody from "$lib/components/renderers/tablebody.svelte";
 	import tablecell from "$lib/components/renderers/tablecell.svelte";
+	import tablehead from "$lib/components/renderers/tablehead.svelte";
 	import tablerow from "$lib/components/renderers/tablerow.svelte";
 	import type { HTMLAttributes } from "svelte/elements";
 
@@ -32,6 +34,8 @@
 			list,
 			listitem,
 			table,
+			tablehead,
+			tablebody,
 			tablerow,
 			tablecell
 		}}

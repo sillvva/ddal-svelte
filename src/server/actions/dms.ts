@@ -1,4 +1,4 @@
-import { type DungeonMasterSchema } from "$lib/schemas";
+import { type DungeonMasterId, type DungeonMasterSchema } from "$lib/schemas";
 import { SaveError, type SaveResult } from "$lib/util";
 import { rateLimiter, revalidateKeys, type CacheKey } from "$server/cache";
 import { getUserDMsWithLogsCache } from "$server/data/dms";
@@ -8,10 +8,10 @@ import { eq } from "drizzle-orm";
 
 export type SaveDMResult = ReturnType<typeof saveDM>;
 export async function saveDM(
-	dmId: string,
+	dmId: DungeonMasterId,
 	user: LocalsSession["user"],
 	data: DungeonMasterSchema
-): SaveResult<{ id: string; dm: DungeonMaster }, DungeonMasterSchema> {
+): SaveResult<DungeonMaster, DungeonMasterSchema> {
 	try {
 		if (!user) throw new SaveError("You must be logged in to save a DM", { status: 401 });
 
@@ -27,6 +27,7 @@ export async function saveDM(
 			.update(dungeonMasters)
 			.set({
 				...data,
+				id: undefined,
 				DCI: data.DCI || null,
 				uid: data.uid || null
 			})
@@ -35,22 +36,28 @@ export async function saveDM(
 
 		if (!result) throw new SaveError("Failed to save DM");
 
-		const characterIds = [...new Set(dm.logs.filter((l) => l.characterId).map((l) => l.characterId))];
-		revalidateKeys([
-			["dms", user.id, "logs"],
-			...characterIds.map((id) => ["character", id as string, "logs"] as CacheKey),
-			["dms", user.id],
-			["search-data", user.id]
-		]);
+		const characterIds = Array.from(new Set(dm.logs.filter((l) => l.characterId).map((l) => l.characterId)));
+		revalidateKeys(
+			characterIds
+				.map((id) => ["character", id as string, "logs"] as CacheKey)
+				.concat([
+					["dms", user.id, "logs"],
+					["dms", user.id],
+					["search-data", user.id]
+				])
+		);
 
-		return { id: result.id, dm: result };
+		return result;
 	} catch (err) {
 		return SaveError.from(err);
 	}
 }
 
 export type DeleteDMResult = ReturnType<typeof deleteDM>;
-export async function deleteDM(dmId: string, user?: LocalsSession["user"]): SaveResult<{ id: string }, DungeonMasterSchema> {
+export async function deleteDM(
+	dmId: DungeonMasterId,
+	user?: LocalsSession["user"]
+): SaveResult<{ id: DungeonMasterId }, DungeonMasterSchema> {
 	try {
 		if (!user) throw new SaveError("You must be logged in to delete a DM", { status: 401 });
 

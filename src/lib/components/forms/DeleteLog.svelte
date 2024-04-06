@@ -20,10 +20,10 @@
 			onSubmit({ cancel, formData }) {
 				if (!confirm(`Are you sure you want to delete ${log.name}? This action cannot be reversed.`)) return cancel();
 				formData.set("id", log.id);
-				deletingLog = [...deletingLog, log.id];
+				deletingLog = deletingLog.concat(log.id);
 			},
 			onUpdated({ form }) {
-				const [error] = form.errors.id || [];
+				const [error] = form.errors._errors || [];
 				if (error) {
 					errorToast(error);
 					deletingLog = deletingLog.filter((id) => id !== log.id);
@@ -37,7 +37,7 @@
 	);
 </script>
 
-<button type="submit" class="btn btn-error sm:btn-sm" aria-label="Delete Log" on:click={submit}>
+<button type="button" class="btn btn-error sm:btn-sm" aria-label="Delete Log" on:click={submit}>
 	<span class="iconify size-6 mdi-trash-can sm:size-4" />
 	{label}
 </button>

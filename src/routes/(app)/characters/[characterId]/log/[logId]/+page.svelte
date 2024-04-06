@@ -3,6 +3,7 @@
 	import AddDropItems from "$lib/components/forms/AddDropItems.svelte";
 	import Combobox from "$lib/components/forms/Combobox.svelte";
 	import Control from "$lib/components/forms/Control.svelte";
+	import DateInput from "$lib/components/forms/DateInput.svelte";
 	import GenericInput from "$lib/components/forms/GenericInput.svelte";
 	import Input from "$lib/components/forms/Input.svelte";
 	import MdTextInput from "$lib/components/forms/MDTextInput.svelte";
@@ -37,7 +38,7 @@
 			<Input type="text" {superform} field="name">Title</Input>
 		</Control>
 		<Control class="col-span-12 sm:col-span-4">
-			<Input type="date" {superform} field="date">Date</Input>
+			<DateInput {superform} field="date">Date</DateInput>
 		</Control>
 		{#if $form.type === "game"}
 			<Control class="col-span-12 sm:col-span-6">
@@ -114,7 +115,8 @@
 		<Control class="col-span-12 w-full">
 			<MdTextInput {superform} field="description" maxRows={20} preview>Notes</MdTextInput>
 		</Control>
-		<AddDropItems {superform} magicItems={data.magicItems} storyAwards={data.storyAwards} />
-		<Submit {superform}>Save Log</Submit>
+		<AddDropItems {superform} magicItems={data.magicItems} storyAwards={data.storyAwards}>
+			<Submit {superform}>Save Log</Submit>
+		</AddDropItems>
 	</SuperForm>
 {/key}

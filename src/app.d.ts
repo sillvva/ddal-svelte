@@ -2,6 +2,7 @@
 // for information about these interfaces
 
 import type { ThemeGroups, Themes } from "$lib/constants";
+import type { UserId } from "$lib/schemas";
 import type { Prettify } from "$lib/util";
 import type { DefaultSession } from "@auth/core/types";
 import "@total-typescript/ts-reset/fetch";
@@ -58,7 +59,7 @@ declare global {
 	interface CustomSession {
 		user?: Prettify<
 			{
-				id?: string;
+				id?: UserId;
 			} & DefaultSession["user"]
 		>;
 		error?: string;
@@ -67,7 +68,7 @@ declare global {
 	interface LocalsSession {
 		user?: Prettify<
 			{
-				id: string;
+				id: UserId;
 			} & DefaultSession["user"]
 		>;
 		error?: string;

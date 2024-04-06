@@ -1,11 +1,11 @@
 import { getLevels } from "$lib/entities";
-import { type LogSchema } from "$lib/schemas";
+import { type LogId, type LogSchema } from "$lib/schemas";
 import { SaveError, type SaveResult } from "$lib/util";
 import { rateLimiter, revalidateKeys } from "$server/cache";
-import type { LogData } from "$server/data/logs";
+import { logIncludes, type LogData } from "$server/data/logs";
 import { db } from "$server/db";
 import { dungeonMasters, logs, magicItems, storyAwards, type InsertDungeonMaster, type Log } from "$server/db/schema";
-import { and, eq, inArray, notInArray } from "drizzle-orm";
+import { eq, inArray, notInArray } from "drizzle-orm";
 
 class LogError extends SaveError<LogSchema> {}
 
@@ -79,7 +79,11 @@ export async function saveLog(input: LogSchema, user?: CustomSession["user"]): S
 
 				if (!input.dm.name) {
 					if (isMe) input.dm.name = user.name || "Me";
-					else throw new LogError("Dungeon Master name is required", { status: 400, field: "dm.id" });
+					else
+						throw new LogError("Dungeon Master name is required", {
+							status: 400,
+							field: "dm.id"
+						});
 				}
 
 				try {
@@ -100,7 +104,10 @@ export async function saveLog(input: LogSchema, user?: CustomSession["user"]): S
 				}
 			})();
 
-			if (!dm?.id) throw new LogError("Could not save Dungeon Master", { field: "dm.id" });
+			if (!dm?.id)
+				throw new LogError("Could not save Dungeon Master", {
+					field: "dm.id"
+				});
 
 			const data: Omit<Log, "id" | "createdAt"> = {
 				name: input.name,
@@ -127,13 +134,7 @@ export async function saveLog(input: LogSchema, user?: CustomSession["user"]): S
 
 			const itemsToUpdate = input.magicItemsGained.filter((item) => item.id);
 			for (const item of itemsToUpdate) {
-				await tx
-					.update(magicItems)
-					.set({
-						name: item.name,
-						description: item.description
-					})
-					.where(eq(magicItems.id, item.id));
+				await tx.update(magicItems).set(item).where(eq(magicItems.id, item.id));
 			}
 
 			const itemsToDelete = itemsToUpdate.map((item) => item.id);
@@ -152,23 +153,14 @@ export async function saveLog(input: LogSchema, user?: CustomSession["user"]): S
 				);
 			}
 
-			await tx
-				.update(magicItems)
-				.set({ logLostId: null })
-				.where(and(eq(magicItems.logLostId, log.id)));
+			await tx.update(magicItems).set({ logLostId: null }).where(eq(magicItems.logLostId, log.id));
 			if (input.magicItemsLost.length) {
 				await tx.update(magicItems).set({ logLostId: log.id }).where(inArray(magicItems.id, input.magicItemsLost));
 			}
 
 			const storyAwardsToUpdate = input.magicItemsGained.filter((item) => item.id);
 			for (const item of storyAwardsToUpdate) {
-				await tx
-					.update(storyAwards)
-					.set({
-						name: item.name,
-						description: item.description
-					})
-					.where(eq(storyAwards.id, item.id));
+				await tx.update(storyAwards).set(item).where(eq(storyAwards.id, item.id));
 			}
 
 			const storyAwardsToDelete = storyAwardsToUpdate.map((item) => item.id);
@@ -187,22 +179,13 @@ export async function saveLog(input: LogSchema, user?: CustomSession["user"]): S
 				);
 			}
 
-			await tx
-				.update(storyAwards)
-				.set({ logLostId: null })
-				.where(and(eq(storyAwards.logLostId, log.id)));
+			await tx.update(storyAwards).set({ logLostId: null }).where(eq(storyAwards.logLostId, log.id));
 			if (input.storyAwardsLost.length) {
 				await tx.update(storyAwards).set({ logLostId: log.id }).where(inArray(storyAwards.id, input.storyAwardsLost));
 			}
 
 			const updated = await tx.query.logs.findFirst({
-				with: {
-					dm: true,
-					magicItemsGained: true,
-					magicItemsLost: true,
-					storyAwardsGained: true,
-					storyAwardsLost: true
-				},
+				with: logIncludes,
 				where: (logs, { eq }) => eq(logs.id, log.id)
 			});
 
@@ -225,7 +208,7 @@ export async function saveLog(input: LogSchema, user?: CustomSession["user"]): S
 }
 
 export type DeleteLogResult = ReturnType<typeof deleteLog>;
-export async function deleteLog(logId: string, userId?: string): SaveResult<{ id: string }, LogSchema> {
+export async function deleteLog(logId: LogId, userId?: string): SaveResult<{ id: LogId }, LogSchema> {
 	try {
 		if (!userId) throw new LogError("Not authenticated", { status: 401 });
 

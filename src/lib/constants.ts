@@ -1,6 +1,12 @@
 import type { Account } from "$server/db/schema";
 import { publicEnv } from "./env/public";
 
+export const searchSections = [
+	{ title: "Characters", url: "/characters" },
+	{ title: "DM Logs", url: "/dm-logs" },
+	{ title: "DMs", url: "/dms" }
+] as const;
+
 export const BLANK_CHARACTER = `${publicEnv.PUBLIC_URL}/images/blank-character.webp` as const;
 
 type Provider = {

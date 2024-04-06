@@ -1,7 +1,16 @@
-import { defaultDM, defaultLogData, parseLogEnums } from "$lib/entities";
+import { defaultDM, defaultLogData, parseLog } from "$lib/entities";
+import type { CharacterId, LogId, UserId } from "$lib/schemas";
 import { cache } from "$server/cache";
 import { q } from "$server/db";
 import type { DungeonMaster, Log, MagicItem, StoryAward } from "$server/db/schema";
+
+export const logIncludes = {
+	dm: true,
+	magicItemsGained: true,
+	magicItemsLost: true,
+	storyAwardsGained: true,
+	storyAwardsLost: true
+} as const;
 
 export type LogData = Log & {
 	dm: DungeonMaster | null;
@@ -11,38 +20,26 @@ export type LogData = Log & {
 	storyAwardsGained: StoryAward[];
 	storyAwardsLost: StoryAward[];
 };
-export async function getLog(logId: string, userId: string, characterId = ""): Promise<LogData> {
+export async function getLog(logId: LogId, userId: UserId, characterId = "" as CharacterId): Promise<LogData> {
 	const log =
 		(await q.logs.findFirst({
-			with: {
-				dm: true,
-				magicItemsGained: true,
-				magicItemsLost: true,
-				storyAwardsGained: true,
-				storyAwardsLost: true
-			},
+			with: logIncludes,
 			where: (logs, { eq }) => eq(logs.id, logId)
 		})) || defaultLogData(userId, characterId);
-	return { ...parseLogEnums(log), dm: log.dm || defaultDM(userId) };
+	return { ...parseLog(log), dm: log.dm || defaultDM(userId) };
 }
 
-export async function getDMLog(logId: string, userId: string): Promise<LogData> {
+export async function getDMLog(logId: LogId, userId: UserId): Promise<LogData> {
 	const log =
 		(await q.logs.findFirst({
-			with: {
-				dm: true,
-				magicItemsGained: true,
-				magicItemsLost: true,
-				storyAwardsGained: true,
-				storyAwardsLost: true
-			},
+			with: logIncludes,
 			where: (logs, { eq, and }) => and(eq(logs.id, logId), eq(logs.isDmLog, true))
 		})) || defaultLogData(userId);
-	return { ...parseLogEnums(log), dm: log.dm || defaultDM(userId) };
+	return { ...parseLog(log), dm: log.dm || defaultDM(userId) };
 }
 
 export type DMLogsData = Awaited<ReturnType<typeof getDMLogs>>;
-export async function getDMLogs(userId: string) {
+export async function getDMLogs(userId: UserId) {
 	const dms = await q.dungeonMasters.findMany({
 		columns: {
 			id: true
@@ -55,11 +52,7 @@ export async function getDMLogs(userId: string) {
 	return q.logs
 		.findMany({
 			with: {
-				dm: true,
-				magicItemsGained: true,
-				magicItemsLost: true,
-				storyAwardsGained: true,
-				storyAwardsLost: true,
+				...logIncludes,
 				character: {
 					with: {
 						user: true
@@ -77,15 +70,15 @@ export async function getDMLogs(userId: string) {
 			orderBy: (logs, { asc }) => asc(logs.date)
 		})
 		.then((logs) => {
-			return logs.map(parseLogEnums);
+			return logs.map(parseLog);
 		});
 }
 
-export async function getDMLogsCache(userId: string) {
+export async function getDMLogsCache(userId: UserId) {
 	return await cache(() => getDMLogs(userId), ["dm-logs", userId], 86400);
 }
 
-export async function getUserLogs(userId: string) {
+export async function getUserLogs(userId: UserId) {
 	const characters = await q.characters.findMany({
 		columns: {
 			id: true
