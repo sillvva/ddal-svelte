@@ -2,18 +2,32 @@
 	type TRec = Record<string, unknown>;
 </script>
 
-<script lang="ts" generics="T extends TRec">
-	import { twMerge } from "tailwind-merge";
-
+<script lang="ts" generics="TForm extends TRec, TMin extends Date | undefined, TMax extends Date | undefined">
 	import { parseDateTime } from "@internationalized/date";
 	import { DatePicker } from "bits-ui";
 	import { dateProxy, formFieldProxy, type FormPathLeaves, type SuperForm } from "sveltekit-superforms";
+	import { twMerge } from "tailwind-merge";
 
-	export let superform: SuperForm<T, any>;
-	export let field: FormPathLeaves<T, Date>;
-	export let empty: "null" | "undefined" = "null";
+	interface $$Props {
+		superform: SuperForm<TForm, any>;
+		field: FormPathLeaves<TForm, Date>;
+		minDate?: TMin;
+		minDateField?: TMin extends Date ? never : FormPathLeaves<TForm, Date>;
+		maxDate?: TMax;
+		maxDateField?: TMax extends Date ? never : FormPathLeaves<TForm, Date>;
+		empty?: "null" | "undefined";
+		readonly?: boolean;
+		required?: boolean;
+		description?: string;
+	}
+
+	export let superform: SuperForm<TForm, any>;
+	export let field: FormPathLeaves<TForm, Date>;
 	export let minDate: Date | undefined = undefined;
+	export let minDateField: FormPathLeaves<TForm, Date> | undefined = undefined;
 	export let maxDate: Date | undefined = undefined;
+	export let maxDateField: FormPathLeaves<TForm, Date> | undefined = undefined;
+	export let empty: "null" | "undefined" = "null";
 	export let readonly: boolean | undefined = undefined;
 	export let required: boolean | undefined = undefined;
 	export let description = "";
@@ -30,10 +44,12 @@
 
 	const { errors, constraints } = formFieldProxy(superform, field);
 	$: proxyDate = dateProxy(superform, field, { format: "datetime-local", empty });
+	$: proxyMin = minDateField && dateProxy(superform, minDateField, { format: "datetime-local" });
+	$: proxyMax = maxDateField && dateProxy(superform, maxDateField, { format: "datetime-local" });
 
 	$: value = $proxyDate ? parseDateTime($proxyDate) : undefined;
-	$: minValue = minDate && parseDateTime(dateToISOButLocal(minDate));
-	$: maxValue = maxDate && parseDateTime(dateToISOButLocal(maxDate));
+	$: minValue = minDate ? parseDateTime(dateToISOButLocal(minDate)) : proxyMin && $proxyMin && parseDateTime($proxyMin);
+	$: maxValue = maxDate ? parseDateTime(dateToISOButLocal(maxDate)) : proxyMax && $proxyMax && parseDateTime($proxyMax);
 
 	$: {
 		if (value && minValue && value.compare(minValue) < 0) value = minValue;
