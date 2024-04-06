@@ -51,10 +51,8 @@
 	$: minValue = minDate ? parseDateTime(dateToISOButLocal(minDate)) : proxyMin && $proxyMin && parseDateTime($proxyMin);
 	$: maxValue = maxDate ? parseDateTime(dateToISOButLocal(maxDate)) : proxyMax && $proxyMax && parseDateTime($proxyMax);
 
-	$: {
-		if (value && minValue && value.compare(minValue) < 0) value = minValue;
-		else if (value && maxValue && value.compare(maxValue) > 0) value = maxValue;
-	}
+	$: if (value && minValue && value.compare(minValue) < 0) value = minValue;
+	$: if (value && maxValue && value.compare(maxValue) > 0) value = maxValue;
 </script>
 
 <DatePicker.Root
@@ -66,7 +64,7 @@
 	disabled={readonly}
 	onValueChange={(date) => {
 		if (date && minValue && date.compare(minValue) < 0) date = minValue;
-		else if (date && maxValue && date.compare(maxValue) > 0) date = maxValue;
+		if (date && maxValue && date.compare(maxValue) > 0) date = maxValue;
 		proxyDate.set(date?.toString() ?? "");
 	}}
 >
