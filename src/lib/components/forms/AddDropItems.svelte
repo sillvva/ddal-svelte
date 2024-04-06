@@ -2,7 +2,6 @@
 	import type { ItemId, LogSchema } from "$lib/schemas";
 	import type { MagicItem, StoryAward } from "$server/db/schema";
 	import type { SuperForm } from "sveltekit-superforms";
-	import { twMerge } from "tailwind-merge";
 	import EntityCard from "./EntityCard.svelte";
 	export let superform: SuperForm<LogSchema, any>;
 	export let magicItems: MagicItem[] = [];
@@ -18,13 +17,13 @@
 <div class="col-span-12 flex flex-col justify-between gap-8 md:flex-row md:pb-4 md:max-lg:gap-4">
 	<slot />
 	<div class="flex flex-1 flex-col gap-4 sm:flex-row md:max-w-fit">
-		<div class="join flex flex-1">
-			<button type="button" class="btn join-item min-w-fit flex-1 cursor-default !border-base-200 !bg-base-200"
+		<div class="join flex min-w-fit flex-1">
+			<button type="button" class="btn join-item min-w-fit flex-[2_2_0%] cursor-default !border-base-200 !bg-base-200 max-md:px-0"
 				>Magic Items</button
 			>
 			<button
 				type="button"
-				class={twMerge("btn join-item min-w-fit")}
+				class="btn join-item min-w-fit max-md:flex-1 max-md:px-0"
 				on:click={() => ($form.magicItemsGained = $form.magicItemsGained.concat(newItem))}
 			>
 				<span class="iconify mdi-plus" />
@@ -32,7 +31,7 @@
 			{#if remainingItems.length > 0}
 				<button
 					type="button"
-					class={twMerge("btn join-item min-w-fit")}
+					class="btn join-item min-w-fit max-md:flex-1 max-md:px-0"
 					on:click={() => {
 						if (remainingItems[0]) $form.magicItemsLost = $form.magicItemsLost.concat(remainingItems[0].id);
 					}}
@@ -42,13 +41,15 @@
 			{/if}
 		</div>
 		{#if $form.type === "game"}
-			<div class="join flex flex-1">
-				<button type="button" class="btn join-item min-w-fit flex-1 cursor-default !border-base-200 !bg-base-200"
+			<div class="join flex min-w-fit flex-1">
+				<button
+					type="button"
+					class="btn join-item min-w-fit flex-[2_2_0%] cursor-default !border-base-200 !bg-base-200 max-md:px-0"
 					>Story Awards</button
 				>
 				<button
 					type="button"
-					class={twMerge("btn join-item min-w-fit")}
+					class="btn join-item min-w-fit max-md:flex-1 max-md:px-0"
 					on:click={() => ($form.storyAwardsGained = $form.storyAwardsGained.concat(newItem))}
 				>
 					<span class="iconify mdi-plus" />
@@ -56,7 +57,7 @@
 				{#if remainingAwards.length > 0}
 					<button
 						type="button"
-						class={twMerge("btn join-item min-w-fit")}
+						class="btn join-item min-w-fit max-md:flex-1 max-md:px-0"
 						on:click={() => {
 							if (remainingAwards[0]) $form.storyAwardsLost = $form.storyAwardsLost.concat(remainingAwards[0].id);
 						}}
