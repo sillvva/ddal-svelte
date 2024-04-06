@@ -50,6 +50,7 @@
 		"@auth/core": "^0.28.0",
 		"@auth/drizzle-adapter": "^0.8.0",
 		"@auth/sveltekit": "^0.14.0",
+		"@internationalized/date": "^3.5.2",
 		"@paralleldrive/cuid2": "^2.2.2",
 		"@sillvva/utils": "npm:@jsr/sillvva__utils@^0.2.6",
 		"@svelteuidev/composables": "^0.15.4",

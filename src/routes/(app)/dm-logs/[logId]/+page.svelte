@@ -3,6 +3,7 @@
 	import AddDropItems from "$lib/components/forms/AddDropItems.svelte";
 	import Combobox from "$lib/components/forms/Combobox.svelte";
 	import Control from "$lib/components/forms/Control.svelte";
+	import DateInput from "$lib/components/forms/DateInput.svelte";
 	import GenericInput from "$lib/components/forms/GenericInput.svelte";
 	import Input from "$lib/components/forms/Input.svelte";
 	import MdTextInput from "$lib/components/forms/MDTextInput.svelte";
@@ -28,7 +29,7 @@
 			<Input type="text" {superform} field="name">Title</Input>
 		</Control>
 		<Control class="col-span-12 sm:col-span-6 lg:col-span-3">
-			<Input type="date" {superform} field="date">Date</Input>
+			<DateInput {superform} field="date">Date</DateInput>
 		</Control>
 		<Control class="col-span-12 sm:col-span-6 lg:col-span-3">
 			<Combobox
@@ -49,9 +50,7 @@
 			</Combobox>
 		</Control>
 		<Control class="col-span-12 sm:col-span-6 lg:col-span-3">
-			<Input type="date" {superform} field="appliedDate" empty="null" minField="date" required={!!$form.characterId}>
-				Assigned Date
-			</Input>
+			<DateInput {superform} field="appliedDate" empty="null" minDate={$form.date} required={!!$form.characterId}>Date</DateInput>
 		</Control>
 		<Control class="col-span-12 sm:col-span-4">
 			<GenericInput labelFor="season" label="Season">
