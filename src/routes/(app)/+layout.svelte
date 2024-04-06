@@ -152,7 +152,7 @@
 				<h2 class="text-3xl leading-7">Log Sheet</h2>
 			</a>
 			{#if data.session?.user}
-				<a href="/characters" class="hidden items-center p-2 md:flex">Character Logs</a>
+				<a href="/characters" class="ml-8 hidden items-center p-2 md:flex">Character Logs</a>
 				<a href="/dm-logs" class="hidden items-center p-2 md:flex">DM Logs</a>
 				<a href="/dms" class="hidden items-center p-2 md:flex">DMs</a>
 			{/if}
