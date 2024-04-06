@@ -115,7 +115,8 @@
 		<Control class="col-span-12 w-full">
 			<MdTextInput {superform} field="description" maxRows={20} preview>Notes</MdTextInput>
 		</Control>
-		<AddDropItems {superform} magicItems={data.magicItems} storyAwards={data.storyAwards} />
-		<Submit {superform}>Save Log</Submit>
+		<AddDropItems {superform} magicItems={data.magicItems} storyAwards={data.storyAwards}>
+			<Submit {superform}>Save Log</Submit>
+		</AddDropItems>
 	</SuperForm>
 {/key}

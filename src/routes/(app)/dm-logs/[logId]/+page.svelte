@@ -88,7 +88,8 @@
 		<Control class="col-span-12">
 			<MdTextInput {superform} field="description" maxRows={20} preview>Notes</MdTextInput>
 		</Control>
-		<AddDropItems {superform} />
-		<Submit {superform}>Save Log</Submit>
+		<AddDropItems {superform}>
+			<Submit {superform}>Save Log</Submit>
+		</AddDropItems>
 	</SuperForm>
 {/key}

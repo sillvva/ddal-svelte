@@ -2,6 +2,7 @@
 	import type { ItemId, LogSchema } from "$lib/schemas";
 	import type { MagicItem, StoryAward } from "$server/db/schema";
 	import type { SuperForm } from "sveltekit-superforms";
+	import { twMerge } from "tailwind-merge";
 	import EntityCard from "./EntityCard.svelte";
 	export let superform: SuperForm<LogSchema, any>;
 	export let magicItems: MagicItem[] = [];
@@ -14,45 +15,58 @@
 	$: remainingAwards = storyAwards.filter((item) => !$form.storyAwardsLost.includes(item.id));
 </script>
 
-<div class="no-script-hide col-span-12 flex flex-wrap gap-4">
-	<button
-		type="button"
-		class="btn btn-primary min-w-fit flex-1 sm:btn-sm sm:flex-none"
-		on:click={() => ($form.magicItemsGained = $form.magicItemsGained.concat(newItem))}
-	>
-		Add Magic Item
-	</button>
-	{#if remainingItems.length > 0}
-		<button
-			type="button"
-			class="btn min-w-fit flex-1 sm:btn-sm sm:flex-none"
-			on:click={() => {
-				if (remainingItems[0]) $form.magicItemsLost = $form.magicItemsLost.concat(remainingItems[0].id);
-			}}
-		>
-			Drop Magic Item
-		</button>
-	{/if}
-	{#if $form.type === "game"}
-		<button
-			type="button"
-			class="btn btn-primary min-w-fit flex-1 sm:btn-sm sm:flex-none"
-			on:click={() => ($form.storyAwardsGained = $form.storyAwardsGained.concat(newItem))}
-		>
-			Add Story Award
-		</button>
-		{#if remainingAwards.length > 0}
+<div class="col-span-12 flex flex-col justify-between gap-8 md:flex-row md:pb-4 md:max-lg:gap-4">
+	<slot />
+	<div class="flex flex-1 flex-col gap-4 sm:flex-row md:max-w-fit">
+		<div class="join flex flex-1">
+			<button type="button" class="btn join-item min-w-fit flex-1 cursor-default !border-base-200 !bg-base-200"
+				>Magic Items</button
+			>
 			<button
 				type="button"
-				class="btn min-w-fit flex-1 sm:btn-sm sm:flex-none"
-				on:click={() => {
-					if (remainingAwards[0]) $form.storyAwardsLost = $form.storyAwardsLost.concat(remainingAwards[0].id);
-				}}
+				class={twMerge("btn join-item min-w-fit")}
+				on:click={() => ($form.magicItemsGained = $form.magicItemsGained.concat(newItem))}
 			>
-				Drop Story Award
+				<span class="iconify mdi-plus" />
 			</button>
+			{#if remainingItems.length > 0}
+				<button
+					type="button"
+					class={twMerge("btn join-item min-w-fit")}
+					on:click={() => {
+						if (remainingItems[0]) $form.magicItemsLost = $form.magicItemsLost.concat(remainingItems[0].id);
+					}}
+				>
+					<span class="iconify mdi-minus" />
+				</button>
+			{/if}
+		</div>
+		{#if $form.type === "game"}
+			<div class="join flex flex-1">
+				<button type="button" class="btn join-item min-w-fit flex-1 cursor-default !border-base-200 !bg-base-200"
+					>Story Awards</button
+				>
+				<button
+					type="button"
+					class={twMerge("btn join-item min-w-fit")}
+					on:click={() => ($form.storyAwardsGained = $form.storyAwardsGained.concat(newItem))}
+				>
+					<span class="iconify mdi-plus" />
+				</button>
+				{#if remainingAwards.length > 0}
+					<button
+						type="button"
+						class={twMerge("btn join-item min-w-fit")}
+						on:click={() => {
+							if (remainingAwards[0]) $form.storyAwardsLost = $form.storyAwardsLost.concat(remainingAwards[0].id);
+						}}
+					>
+						<span class="iconify mdi-minus" />
+					</button>
+				{/if}
+			</div>
 		{/if}
-	{/if}
+	</div>
 </div>
 <div class="col-span-12 grid grid-cols-12 gap-4 dark:text-white">
 	{#each $form.magicItemsGained as _, index}
