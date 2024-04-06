@@ -8,7 +8,6 @@
 	import { parseDateTime } from "@internationalized/date";
 	import { DatePicker } from "bits-ui";
 	import type { HTMLInputAttributes } from "svelte/elements";
-	import { writable } from "svelte/store";
 	import { dateProxy, formFieldProxy, type FormPathLeaves, type SuperForm } from "sveltekit-superforms";
 
 	interface $$Props extends HTMLInputAttributes {
@@ -28,7 +27,7 @@
 	export let minDate: Date | undefined = undefined;
 	export let maxDate: Date | undefined = undefined;
 	export let readonly: boolean | undefined = undefined;
-	export let required = false;
+	export let required: boolean | undefined = undefined;
 	export let description = "";
 
 	function dateToISOButLocal(date?: Date) {
@@ -42,14 +41,11 @@
 	}
 
 	const { errors, constraints } = formFieldProxy(superform, field);
-
 	$: proxyDate = dateProxy(superform, field, { format: "datetime-local", empty });
-	$: value = $proxyDate ? parseDateTime($proxyDate) : undefined;
 
-	$: proxyMin = writable(dateToISOButLocal(minDate));
-	$: proxyMax = writable(dateToISOButLocal(maxDate));
-	$: minValue = proxyMin && $proxyMin ? parseDateTime($proxyMin) : undefined;
-	$: maxValue = proxyMax && $proxyMax ? parseDateTime($proxyMax) : undefined;
+	$: value = $proxyDate ? parseDateTime($proxyDate) : undefined;
+	$: minValue = minDate && parseDateTime(dateToISOButLocal(minDate));
+	$: maxValue = maxDate && parseDateTime(dateToISOButLocal(maxDate));
 
 	$: if (value && minValue && value.toString() < minValue.toString()) value = minValue;
 	$: if (value && maxValue && value.toString() > maxValue.toString()) value = maxValue;
@@ -122,7 +118,14 @@
 											<DatePicker.Day
 												{date}
 												month={month.value}
-												class="rounded-9px group relative inline-flex size-10 items-center justify-center whitespace-nowrap border border-transparent bg-transparent p-0 text-sm font-normal transition-all hover:border-base-content/50 data-[disabled]:pointer-events-none data-[outside-month]:pointer-events-none data-[selected]:bg-base-300 data-[selected]:font-medium data-[disabled]:text-base-content/30 data-[unavailable]:text-base-content/30 data-[unavailable]:line-through"
+												class={twMerge(
+													"rounded-9px group relative inline-flex size-10 items-center justify-center whitespace-nowrap",
+													"border border-transparent bg-transparent p-0 text-sm font-normal transition-all",
+													"hover:border-base-content/50 data-[outside-month]:pointer-events-none",
+													"data-[disabled]:pointer-events-none data-[disabled]:text-base-content/30",
+													"data-[selected]:bg-base-300 data-[selected]:font-medium",
+													"data-[unavailable]:text-base-content/30 data-[unavailable]:line-through"
+												)}
 											>
 												<div
 													class="absolute top-[5px] hidden size-1 rounded-full transition-all group-data-[today]:block group-data-[selected]:bg-base-content/50"
