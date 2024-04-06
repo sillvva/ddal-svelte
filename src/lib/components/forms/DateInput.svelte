@@ -74,12 +74,15 @@
 			{/if}
 		</span>
 	</DatePicker.Label>
-	<DatePicker.Input let:segments class="input input-bordered inline-flex w-full px-2 py-[7px]">
+	<DatePicker.Input
+		let:segments
+		class="input input-bordered inline-flex w-full px-2 py-[7px] signal/date-xs:text-xs signal/date-xs:lg:py-2"
+	>
 		{#each segments as { part, value }}
 			<div class="inline-block select-none">
 				<DatePicker.Segment
 					{part}
-					class="rounded-md p-1 focus-visible:outline-primary aria-[valuetext=Empty]:text-base-content/70 aria-[valuenow=PM]:signal aria-[valuenow=PM]:before:[content:attr(aria-valuenow)] data-[segment=literal]:px-0 lg:py-2 lg:text-xs"
+					class="rounded-md p-1 focus-visible:outline-primary aria-[valuetext=Empty]:text-base-content/70 aria-[valuenow=PM]:signal aria-[valuenow=PM]:before:[content:attr(aria-valuenow)] data-[segment=literal]:px-0"
 				>
 					<span class="signal:hidden">{value}</span>
 				</DatePicker.Segment>

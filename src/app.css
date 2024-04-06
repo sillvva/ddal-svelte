@@ -134,6 +134,9 @@
 		align-items: center;
 		background-color: theme(colors.base-200);
 	}
+	.select {
+		font-size: theme(fontSize.base);
+	}
 	.input[aria-invalid] {
 		@apply input-error;
 	}
