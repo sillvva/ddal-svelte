@@ -192,7 +192,7 @@ export const getLogsSummary = (
 		story_awards,
 		log_levels: levels.log_levels,
 		tier: Math.floor((total_level + 1) / 6) + 1,
-		logs: includeLogs ? logs.map(parseLogEnums) : []
+		logs: includeLogs ? logs.map(parseLog) : []
 	};
 };
 
@@ -226,12 +226,11 @@ export function defaultLogData(userId: UserId, characterId = "" as CharacterId):
 	};
 }
 
-export function parseLogEnums(
-	log: Omit<LogData & { character?: (Character & { user?: User }) | null }, "type"> & { type: string }
-) {
+export function parseLog(log: Omit<LogData & { character?: (Character & { user?: User }) | null }, "type"> & { type: string }) {
 	return {
 		...log,
-		type: log.type === "nongame" ? ("nongame" as const) : ("game" as const)
+		type: log.type === "nongame" ? ("nongame" as const) : ("game" as const),
+		character: log.character?.name === "Placeholder" ? null : log.character
 	};
 }
 

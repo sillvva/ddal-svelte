@@ -1,4 +1,4 @@
-import { defaultDM, defaultLogData, parseLogEnums } from "$lib/entities";
+import { defaultDM, defaultLogData, parseLog } from "$lib/entities";
 import type { CharacterId, LogId, UserId } from "$lib/schemas";
 import { cache } from "$server/cache";
 import { q } from "$server/db";
@@ -26,7 +26,7 @@ export async function getLog(logId: LogId, userId: UserId, characterId = "" as C
 			with: logIncludes,
 			where: (logs, { eq }) => eq(logs.id, logId)
 		})) || defaultLogData(userId, characterId);
-	return { ...parseLogEnums(log), dm: log.dm || defaultDM(userId) };
+	return { ...parseLog(log), dm: log.dm || defaultDM(userId) };
 }
 
 export async function getDMLog(logId: LogId, userId: UserId): Promise<LogData> {
@@ -35,7 +35,7 @@ export async function getDMLog(logId: LogId, userId: UserId): Promise<LogData> {
 			with: logIncludes,
 			where: (logs, { eq, and }) => and(eq(logs.id, logId), eq(logs.isDmLog, true))
 		})) || defaultLogData(userId);
-	return { ...parseLogEnums(log), dm: log.dm || defaultDM(userId) };
+	return { ...parseLog(log), dm: log.dm || defaultDM(userId) };
 }
 
 export type DMLogsData = Awaited<ReturnType<typeof getDMLogs>>;
@@ -70,7 +70,7 @@ export async function getDMLogs(userId: UserId) {
 			orderBy: (logs, { asc }) => asc(logs.date)
 		})
 		.then((logs) => {
-			return logs.map(parseLogEnums);
+			return logs.map(parseLog);
 		});
 }
 
