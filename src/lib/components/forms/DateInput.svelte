@@ -7,19 +7,7 @@
 
 	import { parseDateTime } from "@internationalized/date";
 	import { DatePicker } from "bits-ui";
-	import type { HTMLInputAttributes } from "svelte/elements";
 	import { dateProxy, formFieldProxy, type FormPathLeaves, type SuperForm } from "sveltekit-superforms";
-
-	interface $$Props extends HTMLInputAttributes {
-		superform: SuperForm<T, any>;
-		field: FormPathLeaves<T, Date>;
-		empty?: "null" | "undefined";
-		minDate?: Date;
-		maxDate?: Date;
-		readonly?: boolean;
-		required?: boolean;
-		description?: string;
-	}
 
 	export let superform: SuperForm<T, any>;
 	export let field: FormPathLeaves<T, Date>;
