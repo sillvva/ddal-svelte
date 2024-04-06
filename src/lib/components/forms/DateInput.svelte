@@ -4,11 +4,11 @@
 
 <script lang="ts" generics="TForm extends TRec, TMin extends Date | undefined, TMax extends Date | undefined">
 	import { parseDateTime } from "@internationalized/date";
-	import { DatePicker } from "bits-ui";
+	import { DatePicker, type DatePickerProps } from "bits-ui";
 	import { dateProxy, formFieldProxy, type FormPathLeaves, type SuperForm } from "sveltekit-superforms";
 	import { twMerge } from "tailwind-merge";
 
-	interface $$Props {
+	interface $$Props extends DatePickerProps {
 		superform: SuperForm<TForm, any>;
 		field: FormPathLeaves<TForm, Date>;
 		minDate?: TMin;
@@ -16,7 +16,6 @@
 		maxDate?: TMax;
 		maxDateField?: TMax extends Date ? never : FormPathLeaves<TForm, Date>;
 		empty?: "null" | "undefined";
-		readonly?: boolean;
 		required?: boolean;
 		description?: string;
 	}
@@ -28,7 +27,6 @@
 	export let maxDate: Date | undefined = undefined;
 	export let maxDateField: FormPathLeaves<TForm, Date> | undefined = undefined;
 	export let empty: "null" | "undefined" = "null";
-	export let readonly: boolean | undefined = undefined;
 	export let required: boolean | undefined = undefined;
 	export let description = "";
 
@@ -60,7 +58,7 @@
 	minValue={minValue?.subtract({ days: 1 })}
 	{maxValue}
 	portal={null}
-	disabled={readonly}
+	{...$$restProps}
 	onValueChange={(date) => {
 		if (date && minValue && date.compare(minValue) < 0) date = minValue;
 		if (date && maxValue && date.compare(maxValue) > 0) date = maxValue;
@@ -83,7 +81,7 @@
 			<DatePicker.Segment
 				{part}
 				class={twMerge(
-					"rounded-md focus-visible:outline-primary aria-[valuetext=Empty]:text-base-content/70",
+					"rounded-sm py-1 outline-offset-4 focus-visible:outline-primary aria-[valuetext=Empty]:text-base-content/70",
 					part === "dayPeriod" && "aria-[valuenow=PM]:signal aria-[valuenow=PM]:before:[content:attr(aria-valuenow)]"
 				)}
 			>
