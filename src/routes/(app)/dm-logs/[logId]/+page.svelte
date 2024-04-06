@@ -50,7 +50,7 @@
 			</Combobox>
 		</Control>
 		<Control class="col-span-12 sm:col-span-6 lg:col-span-3 lg:signal/date-xs">
-			<DateInput {superform} field="appliedDate" empty="null" minDate={$form.date} required={!!$form.characterId}>Date</DateInput>
+			<DateInput {superform} field="appliedDate" empty="null" minDateField="date" required={!!$form.characterId}>Date</DateInput>
 		</Control>
 		<Control class="col-span-12 sm:col-span-4">
 			<GenericInput labelFor="season" label="Season">

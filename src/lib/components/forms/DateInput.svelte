@@ -2,33 +2,34 @@
 	type TRec = Record<string, unknown>;
 </script>
 
-<script lang="ts" generics="T extends TRec">
-	import { twMerge } from "tailwind-merge";
-
+<script lang="ts" generics="TForm extends TRec, TMin extends Date | undefined, TMax extends Date | undefined">
 	import { parseDateTime } from "@internationalized/date";
 	import { DatePicker } from "bits-ui";
-	import type { HTMLInputAttributes } from "svelte/elements";
-	import { writable } from "svelte/store";
 	import { dateProxy, formFieldProxy, type FormPathLeaves, type SuperForm } from "sveltekit-superforms";
+	import { twMerge } from "tailwind-merge";
 
-	interface $$Props extends HTMLInputAttributes {
-		superform: SuperForm<T, any>;
-		field: FormPathLeaves<T, Date>;
+	interface $$Props {
+		superform: SuperForm<TForm, any>;
+		field: FormPathLeaves<TForm, Date>;
+		minDate?: TMin;
+		minDateField?: TMin extends Date ? never : FormPathLeaves<TForm, Date>;
+		maxDate?: TMax;
+		maxDateField?: TMax extends Date ? never : FormPathLeaves<TForm, Date>;
 		empty?: "null" | "undefined";
-		minDate?: Date;
-		maxDate?: Date;
 		readonly?: boolean;
 		required?: boolean;
 		description?: string;
 	}
 
-	export let superform: SuperForm<T, any>;
-	export let field: FormPathLeaves<T, Date>;
-	export let empty: "null" | "undefined" = "null";
+	export let superform: SuperForm<TForm, any>;
+	export let field: FormPathLeaves<TForm, Date>;
 	export let minDate: Date | undefined = undefined;
+	export let minDateField: FormPathLeaves<TForm, Date> | undefined = undefined;
 	export let maxDate: Date | undefined = undefined;
+	export let maxDateField: FormPathLeaves<TForm, Date> | undefined = undefined;
+	export let empty: "null" | "undefined" = "null";
 	export let readonly: boolean | undefined = undefined;
-	export let required = false;
+	export let required: boolean | undefined = undefined;
 	export let description = "";
 
 	function dateToISOButLocal(date?: Date) {
@@ -37,22 +38,20 @@
 		const msLocal = date.getTime() - offsetMs;
 		const dateLocal = new Date(msLocal);
 		const iso = dateLocal.toISOString();
-		const isoLocal = iso.slice(0, 19);
-		return isoLocal;
+		return iso.slice(0, 19);
 	}
 
 	const { errors, constraints } = formFieldProxy(superform, field);
-
 	$: proxyDate = dateProxy(superform, field, { format: "datetime-local", empty });
+	$: proxyMin = minDateField && dateProxy(superform, minDateField, { format: "datetime-local" });
+	$: proxyMax = maxDateField && dateProxy(superform, maxDateField, { format: "datetime-local" });
+
 	$: value = $proxyDate ? parseDateTime($proxyDate) : undefined;
+	$: minValue = minDate ? parseDateTime(dateToISOButLocal(minDate)) : proxyMin && $proxyMin && parseDateTime($proxyMin);
+	$: maxValue = maxDate ? parseDateTime(dateToISOButLocal(maxDate)) : proxyMax && $proxyMax && parseDateTime($proxyMax);
 
-	$: proxyMin = writable(dateToISOButLocal(minDate));
-	$: proxyMax = writable(dateToISOButLocal(maxDate));
-	$: minValue = proxyMin && $proxyMin ? parseDateTime($proxyMin) : undefined;
-	$: maxValue = proxyMax && $proxyMax ? parseDateTime($proxyMax) : undefined;
-
-	$: if (value && minValue && value.toString() < minValue.toString()) value = minValue;
-	$: if (value && maxValue && value.toString() > maxValue.toString()) value = maxValue;
+	$: if (value && minValue && value.compare(minValue) < 0) value = minValue;
+	$: if (value && maxValue && value.compare(maxValue) > 0) value = maxValue;
 </script>
 
 <DatePicker.Root
@@ -63,8 +62,8 @@
 	portal={null}
 	disabled={readonly}
 	onValueChange={(date) => {
-		if (date && minValue && date.toString() < minValue.toString()) date = minValue;
-		if (date && maxValue && date.toString() > maxValue.toString()) date = maxValue;
+		if (date && minValue && date.compare(minValue) < 0) date = minValue;
+		if (date && maxValue && date.compare(maxValue) > 0) date = maxValue;
 		proxyDate.set(date?.toString() ?? "");
 	}}
 >
@@ -122,7 +121,14 @@
 											<DatePicker.Day
 												{date}
 												month={month.value}
-												class="rounded-9px group relative inline-flex size-10 items-center justify-center whitespace-nowrap border border-transparent bg-transparent p-0 text-sm font-normal transition-all hover:border-base-content/50 data-[disabled]:pointer-events-none data-[outside-month]:pointer-events-none data-[selected]:bg-base-300 data-[selected]:font-medium data-[disabled]:text-base-content/30 data-[unavailable]:text-base-content/30 data-[unavailable]:line-through"
+												class={twMerge(
+													"rounded-9px group relative inline-flex size-10 items-center justify-center whitespace-nowrap",
+													"border border-transparent bg-transparent p-0 text-sm font-normal transition-all",
+													"hover:border-base-content/50 data-[outside-month]:pointer-events-none",
+													"data-[disabled]:pointer-events-none data-[disabled]:text-base-content/30",
+													"data-[selected]:bg-base-300 data-[selected]:font-medium",
+													"data-[unavailable]:text-base-content/30 data-[unavailable]:line-through"
+												)}
 											>
 												<div
 													class="absolute top-[5px] hidden size-1 rounded-full transition-all group-data-[today]:block group-data-[selected]:bg-base-content/50"

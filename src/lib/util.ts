@@ -48,6 +48,10 @@ export function isDefined<T>(value?: T | null): value is T {
 	return value !== undefined && value !== null;
 }
 
+/**
+ * Classes
+ */
+
 export type SaveResult<T extends object | null, S extends Record<string, unknown>> = Promise<T | SaveError<S>>;
 
 export class SaveError<TOut extends Record<string, unknown>, TIn extends Record<string, unknown> = TOut> {
@@ -63,6 +67,18 @@ export class SaveError<TOut extends Record<string, unknown>, TIn extends Record<
 		if (options?.status) this.status = options.status;
 	}
 
+	/**
+	 * Creates a `SaveError` instance from the provided error object or message.
+	 * - If the error object is already an instance of `SaveError`, it is returned as is.
+	 * - If the error is a string, a new `SaveError` instance is created with the string as the error message.
+	 * - If the error is an object with a `message` property of type string, a new `SaveError` instance is created with the `message` as the error message.
+	 * - If none of the above conditions are met, a new `SaveError` instance with a default error message is created.
+	 *
+	 * @typeparam TOut - The type of the output data.
+	 * @typeparam TIn - The type of the input data.
+	 * @param err - The error object or message.
+	 * @returns A `SaveError` instance.
+	 */
 	static from<TOut extends Record<string, unknown>, TIn extends Record<string, unknown> = TOut>(
 		err: SaveError<TOut, TIn> | Error | unknown
 	) {
@@ -75,6 +91,11 @@ export class SaveError<TOut extends Record<string, unknown>, TIn extends Record<
 		return new SaveError<TOut, TIn>("An unknown error has occurred.");
 	}
 
+	/**
+	 * Adds the error message to the form.
+	 * @param form - The validated form to convert.
+	 * @returns The form with error messages.
+	 */
 	toForm(form: SuperValidated<TOut, App.Superforms.Message, TIn>) {
 		return isDefined(this.options?.field)
 			? setError(form, this.options.field as FormPathLeavesWithErrors<TOut>, this.error, {
