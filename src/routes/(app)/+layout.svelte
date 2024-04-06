@@ -143,10 +143,10 @@
 		<nav class="container relative z-10 mx-auto flex max-w-5xl gap-2 p-4">
 			<Drawer />
 			<Settings bind:open={settingsOpen} />
-			<div class="ml-4 inline w-6 sm:hidden">&nbsp;</div>
+			<div class="inline max-w-10 shrink-0 flex-grow-[1] sm:hidden">&nbsp;</div>
 			<a
 				href={data.session?.user ? "/characters" : "/"}
-				class="mr-2 flex flex-1 flex-col text-center font-draconis sm:flex-none md:mr-8"
+				class="flex min-w-fit flex-1 flex-col text-center font-draconis sm:flex-none"
 			>
 				<h1 class="text-base leading-4 text-black dark:text-white">Adventurers League</h1>
 				<h2 class="text-3xl leading-7">Log Sheet</h2>
@@ -157,42 +157,44 @@
 				<a href="/dms" class="hidden items-center p-2 md:flex">DMs</a>
 			{/if}
 			<div class="flex-1 max-sm:hidden">&nbsp;</div>
-			<button on:click={() => (cmdOpen = true)} class="inline hover-hover:md:hidden">
-				<span class="iconify size-6 mdi-magnify" />
-			</button>
-			<label class="input input-bordered hidden cursor-text items-center gap-2 hover-hover:md:flex">
-				<input type="text" class="max-w-20 grow" placeholder="Search" on:focus={() => (cmdOpen = true)} />
-				<kbd class="kbd kbd-sm">
-					{#if data.isMac}
-						⌘
-					{:else}
-						CTRL
-					{/if}
-				</kbd>
-				<kbd class="kbd kbd-sm">K</kbd>
-			</label>
-			{#if data.session?.user}
-				<summary tabindex="0" class="flex h-full cursor-pointer items-center pl-4" on:click={() => (settingsOpen = true)}>
-					<div class="avatar">
-						<div class="relative w-9 overflow-hidden rounded-full ring ring-primary ring-offset-2 ring-offset-base-100 lg:w-11">
-							<img
-								src={data.session?.user?.image || ""}
-								alt={data.session?.user?.name}
-								width={48}
-								height={48}
-								class="rounded-full object-cover object-center"
-							/>
+			<div class="flex gap-4">
+				<button on:click={() => (cmdOpen = true)} class="inline-flex w-10 items-center justify-center hover-hover:md:hidden">
+					<span class="iconify size-6 mdi-magnify" />
+				</button>
+				<label class="input input-bordered hidden min-w-fit cursor-text items-center gap-2 hover-hover:md:flex">
+					<input type="text" class="max-w-20 grow" placeholder="Search" on:focus={() => (cmdOpen = true)} />
+					<kbd class="kbd kbd-sm">
+						{#if data.isMac}
+							⌘
+						{:else}
+							CTRL
+						{/if}
+					</kbd>
+					<kbd class="kbd kbd-sm">K</kbd>
+				</label>
+				{#if data.session?.user}
+					<summary tabindex="0" class="flex h-full min-w-fit cursor-pointer items-center" on:click={() => (settingsOpen = true)}>
+						<div class="avatar">
+							<div class="relative w-9 overflow-hidden rounded-full ring ring-primary ring-offset-2 ring-offset-base-100 lg:w-11">
+								<img
+									src={data.session?.user?.image || ""}
+									alt={data.session?.user?.name}
+									width={48}
+									height={48}
+									class="rounded-full object-cover object-center"
+								/>
+							</div>
 						</div>
-					</div>
-				</summary>
-			{:else}
-				<a
-					href={`/?redirect=${encodeURIComponent(`${$page.url.pathname}${$page.url.search}`)}`}
-					class="flex h-12 items-center gap-2 rounded-lg bg-base-200/50 p-2 text-base-content transition-colors hover:bg-base-300"
-				>
-					<span class="flex h-full flex-1 items-center justify-center font-semibold">Sign In</span>
-				</a>
-			{/if}
+					</summary>
+				{:else}
+					<a
+						href={`/?redirect=${encodeURIComponent(`${$page.url.pathname}${$page.url.search}`)}`}
+						class="flex h-12 items-center gap-2 rounded-lg bg-base-200/50 p-2 text-base-content transition-colors hover:bg-base-300"
+					>
+						<span class="flex h-full flex-1 items-center justify-center font-semibold">Sign In</span>
+					</a>
+				{/if}
+			</div>
 		</nav>
 	</header>
 	<div class="container relative z-10 mx-auto max-w-5xl flex-1 p-4"><slot /></div>
