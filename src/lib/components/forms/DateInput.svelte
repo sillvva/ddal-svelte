@@ -38,8 +38,7 @@
 		const msLocal = date.getTime() - offsetMs;
 		const dateLocal = new Date(msLocal);
 		const iso = dateLocal.toISOString();
-		const isoLocal = iso.slice(0, 19);
-		return isoLocal;
+		return iso.slice(0, 19);
 	}
 
 	const { errors, constraints } = formFieldProxy(superform, field);
