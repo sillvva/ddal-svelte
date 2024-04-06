@@ -7,20 +7,22 @@ const brand = <T extends string, TInput = unknown>(schema: BaseSchema<TInput>, n
 	transform(schema, (input) => input as Branded<TInput, typeof name>);
 
 function brandedId<T extends string>(name: T) {
-	return brand(string([minLength(1)]), name);
+	return brand(string([required]), name);
 }
+
+const required = minLength<string, 1>(1, "Required");
 
 export const envPrivateSchema = object({
 	DATABASE_URL: string([url()]),
 	UPSTASH_REDIS_REST_URL: string([url()]),
-	UPSTASH_REDIS_REST_TOKEN: string([minLength(1)]),
+	UPSTASH_REDIS_REST_TOKEN: string([required]),
 	AUTH_SECRET: string([minLength(10, "Must be a string of at least 10 characters")]),
 	AUTH_URL: string([url()]),
-	GOOGLE_CLIENT_ID: string([minLength(1, "Required")]),
-	GOOGLE_CLIENT_SECRET: string([minLength(1, "Required")]),
-	DISCORD_CLIENT_ID: string([minLength(1, "Required")]),
-	DISCORD_CLIENT_SECRET: string([minLength(1, "Required")]),
-	CRON_CHARACTER_ID: string([minLength(1, "Required")]),
+	GOOGLE_CLIENT_ID: string([required]),
+	GOOGLE_CLIENT_SECRET: string([required]),
+	DISCORD_CLIENT_ID: string([required]),
+	DISCORD_CLIENT_SECRET: string([required]),
+	CRON_CHARACTER_ID: string([required]),
 	DISABLE_SIGNUPS: optional(boolean(), false)
 });
 
@@ -35,7 +37,7 @@ const optionalURL = optional(fallback(string([url()]), ""), "");
 
 export type NewCharacterSchema = Output<typeof newCharacterSchema>;
 export const newCharacterSchema = object({
-	name: string([minLength(1)]),
+	name: string([required]),
 	campaign: optional(string(), ""),
 	race: optional(string(), ""),
 	class: optional(string(), ""),
@@ -56,7 +58,7 @@ export type DungeonMasterSchema = Output<typeof dungeonMasterSchema>;
 export type DungeonMasterSchemaIn = Input<typeof dungeonMasterSchema>;
 export const dungeonMasterSchema = object({
 	id: dungeonMasterIdSchema,
-	name: string([minLength(1)]),
+	name: string([required]),
 	DCI: nullable(union([string([regex(/[0-9]{0,10}/, "Invalid DCI Format")]), null_()]), null),
 	uid: nullable(union([userIdSchema, null_()]), ""),
 	owner: userIdSchema
@@ -67,7 +69,7 @@ export const itemIdSchema = brandedId("ItemID");
 
 const itemSchema = object({
 	id: optional(itemIdSchema, ""),
-	name: string([minLength(1)]),
+	name: string([required]),
 	description: optional(string(), "")
 });
 
@@ -78,7 +80,7 @@ export type LogSchema = Output<typeof logSchema>;
 export type LogSchemaIn = Input<typeof logSchema>;
 export const logSchema = object({
 	id: optional(logIdSchema, ""),
-	name: string([minLength(1)]),
+	name: string([required]),
 	date: date(),
 	characterId: optional(characterIdSchema, ""),
 	characterName: optional(string(), ""),
