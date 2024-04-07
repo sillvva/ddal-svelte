@@ -1,7 +1,9 @@
+import { characterIdSchema } from "$lib/schemas.js";
 import { parseError } from "$lib/util";
 import { rateLimiter } from "$server/cache.js";
 import { getCharacterCache, getCharactersCache } from "$server/data/characters";
 import { json } from "@sveltejs/kit";
+import { parse } from "valibot";
 
 export async function GET({ params, locals }) {
 	const session = locals.session;
@@ -19,7 +21,8 @@ export async function GET({ params, locals }) {
 		} else {
 			if (typeof characterId !== "string") return json({ error: "Invalid character ID" }, { status: 400 });
 
-			const character = await getCharacterCache(characterId);
+			const id = parse(characterIdSchema, characterId);
+			const character = await getCharacterCache(id);
 
 			if (!character) return json({ error: "Character not found" }, { status: 404 });
 			if (character.userId !== session.user.id) return json({ error: "Unauthorized" }, { status: 401 });
