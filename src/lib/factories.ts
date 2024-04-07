@@ -1,12 +1,14 @@
 import { searchData } from "$lib/stores";
 import { parseDateTime, type DateValue } from "@internationalized/date";
 import { toast } from "svelte-sonner";
-import { get, writable, type Writable } from "svelte/store";
+import { derived, get, type Readable, type Writable } from "svelte/store";
 import {
 	dateProxy,
+	fieldProxy,
 	superForm,
 	type FormOptions,
 	type FormPathLeaves,
+	type FormPathType,
 	type SuperForm,
 	type SuperValidated
 } from "sveltekit-superforms";
@@ -69,36 +71,67 @@ type ArgumentsType<T> = T extends (...args: infer U) => unknown ? U : never;
 type IntDateProxyOptions = Omit<NonNullable<ArgumentsType<typeof dateProxy>[2]>, "format">;
 
 export function intDateProxy<T extends Record<string, unknown>, Path extends FormPathLeaves<T, Date>>(
-	form: Writable<T> | SuperForm<T>,
+	form: SuperForm<T>,
 	path: Path,
 	options?: IntDateProxyOptions
-) {
-	const proxy = dateProxy(form, path, {
-		format: "datetime-local", // expects ISO, so this format is required
-		...options
-	});
-	const init = get(proxy);
-	const store = writable<DateValue | undefined>(init ? parseDateTime(init) : undefined);
-	let updatingStore = false;
-	let updatingProxy = false;
-
-	proxy.subscribe((v) => {
-		if (updatingStore) {
-			updatingStore = false;
-			return;
+): Writable<DateValue | undefined> {
+	function toValue(value?: DateValue) {
+		if (!value && options?.empty !== undefined) {
+			return options.empty === "null" ? null : undefined;
 		}
-		updatingProxy = true;
-		store.set(v ? parseDateTime(v) : undefined);
-	});
 
-	store.subscribe((v) => {
-		if (updatingProxy) {
-			updatingProxy = false;
-			return;
+		return value && new Date(value.toString());
+	}
+
+	function dateToDV(date: Date) {
+		return parseDateTime(
+			date
+				.toLocaleDateString("sv", {
+					year: "numeric",
+					month: "2-digit",
+					day: "2-digit",
+					hour: "2-digit",
+					minute: "2-digit"
+				})
+				.replace(" ", "T")
+		);
+	}
+
+	const realProxy = fieldProxy(form, path, { taint: options?.taint });
+
+	let updatedValue: DateValue | undefined = undefined;
+	let initialized = false;
+
+	const proxy: Readable<DateValue | undefined> = derived(realProxy, (value: unknown) => {
+		if (!initialized) {
+			initialized = true;
 		}
-		updatingStore = true;
-		proxy.set(v?.toString() || "");
+
+		// Prevent proxy updating itself
+		if (updatedValue !== undefined) {
+			const current = updatedValue;
+			updatedValue = undefined;
+			return current;
+		}
+
+		if (value instanceof Date) return dateToDV(value);
+
+		return undefined;
 	});
 
-	return store;
+	return {
+		subscribe: proxy.subscribe,
+		set(val: DateValue | undefined) {
+			updatedValue = val;
+			const newValue = toValue(updatedValue) as FormPathType<T, Path>;
+			realProxy.set(newValue);
+		},
+		update(updater) {
+			realProxy.update((f) => {
+				updatedValue = updater(dateToDV(f as Date));
+				const newValue = toValue(updatedValue) as FormPathType<T, Path>;
+				return newValue;
+			});
+		}
+	};
 }
