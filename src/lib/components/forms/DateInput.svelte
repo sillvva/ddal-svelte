@@ -3,7 +3,7 @@
 </script>
 
 <script lang="ts" generics="TForm extends TRec, TMin extends Date | undefined, TMax extends Date | undefined">
-	import { parseDateTime } from "@internationalized/date";
+	import { parseDateTime, type DateValue } from "@internationalized/date";
 	import { DatePicker, type DatePickerProps } from "bits-ui";
 	import { dateProxy, formFieldProxy, type FormPathLeaves, type SuperForm } from "sveltekit-superforms";
 	import { twMerge } from "tailwind-merge";
@@ -50,7 +50,7 @@
 
 	$: rest = $$restProps as DatePickerProps;
 
-	$: value = rest?.value || ($proxyDate ? parseDateTime($proxyDate) : undefined);
+	$: value = $proxyDate && (parseDateTime($proxyDate) as DateValue);
 	$: minDateValue = minDate && parseDateTime(dateToLocalISO(minDate));
 	$: maxDateValue = maxDate && parseDateTime(dateToLocalISO(maxDate));
 	$: minProxyValue = proxyMin && $proxyMin && parseDateTime($proxyMin);
