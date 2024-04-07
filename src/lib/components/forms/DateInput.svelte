@@ -33,16 +33,18 @@
 
 	$: rest = $$restProps as DatePickerProps;
 
-	function dateToLocalISO(date: Date) {
-		return date
-			.toLocaleDateString("sv", {
-				year: "numeric",
-				month: "2-digit",
-				day: "2-digit",
-				hour: "2-digit",
-				minute: "2-digit"
-			})
-			.replace(" ", "T");
+	function dateToDV(date: Date) {
+		return parseDateTime(
+			date
+				.toLocaleDateString("sv", {
+					year: "numeric",
+					month: "numeric",
+					day: "numeric",
+					hour: "numeric",
+					minute: "numeric"
+				})
+				.replace(" ", "T")
+		);
 	}
 
 	const { errors, constraints } = formFieldProxy(superform, field);
@@ -51,8 +53,8 @@
 	$: proxyMin = minDateField && intDateProxy(superform, minDateField);
 	$: proxyMax = maxDateField && intDateProxy(superform, maxDateField);
 
-	$: minDateValue = minDate && parseDateTime(dateToLocalISO(minDate));
-	$: maxDateValue = maxDate && parseDateTime(dateToLocalISO(maxDate));
+	$: minDateValue = minDate && dateToDV(minDate);
+	$: maxDateValue = maxDate && dateToDV(maxDate);
 	$: minProxyValue = proxyMin && $proxyMin;
 	$: maxProxyValue = proxyMax && $proxyMax;
 	$: minValue = rest?.minValue || minDateValue || minProxyValue;
