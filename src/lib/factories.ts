@@ -71,7 +71,7 @@ type ArgumentsType<T> = T extends (...args: infer U) => unknown ? U : never;
 type IntDateProxyOptions = Omit<NonNullable<ArgumentsType<typeof dateProxy>[2]>, "format">;
 
 export function intDateProxy<T extends Record<string, unknown>, Path extends FormPathLeaves<T, Date>>(
-	form: SuperForm<T>,
+	form: Writable<T> | SuperForm<T>,
 	path: Path,
 	options?: IntDateProxyOptions
 ): Writable<DateValue | undefined> {
