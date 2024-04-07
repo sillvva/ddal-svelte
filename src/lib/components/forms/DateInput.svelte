@@ -30,13 +30,16 @@
 	export let required: boolean | undefined = undefined;
 	export let description = "";
 
-	function dateToISOButLocal(date?: Date) {
-		if (!date) return "";
-		const offsetMs = date.getTimezoneOffset() * 60 * 1000;
-		const msLocal = date.getTime() - offsetMs;
-		const dateLocal = new Date(msLocal);
-		const iso = dateLocal.toISOString();
-		return iso.slice(0, 19);
+	function dateToLocalISO(date: Date) {
+		return date
+			.toLocaleDateString("sv", {
+				year: "numeric",
+				month: "2-digit",
+				day: "2-digit",
+				hour: "2-digit",
+				minute: "2-digit"
+			})
+			.replace(" ", "T");
 	}
 
 	const { errors, constraints } = formFieldProxy(superform, field);
@@ -45,8 +48,8 @@
 	$: proxyMax = maxDateField && dateProxy(superform, maxDateField, { format: "datetime-local" });
 
 	$: value = $proxyDate ? parseDateTime($proxyDate) : undefined;
-	$: minValue = minDate ? parseDateTime(dateToISOButLocal(minDate)) : proxyMin && $proxyMin && parseDateTime($proxyMin);
-	$: maxValue = maxDate ? parseDateTime(dateToISOButLocal(maxDate)) : proxyMax && $proxyMax && parseDateTime($proxyMax);
+	$: minValue = minDate ? parseDateTime(dateToLocalISO(minDate)) : proxyMin && $proxyMin && parseDateTime($proxyMin);
+	$: maxValue = maxDate ? parseDateTime(dateToLocalISO(maxDate)) : proxyMax && $proxyMax && parseDateTime($proxyMax);
 
 	$: if (value && minValue && value.compare(minValue) < 0) value = minValue;
 	$: if (value && maxValue && value.compare(maxValue) > 0) value = maxValue;
@@ -55,8 +58,8 @@
 <DatePicker.Root
 	granularity="minute"
 	bind:value
-	minValue={minValue?.subtract({ days: 1 })}
-	{maxValue}
+	minValue={minValue?.set({ hour: 0, minute: 0, second: 0 })}
+	maxValue={maxValue?.set({ hour: 23, minute: 59, second: 59 })}
 	portal={null}
 	{...$$restProps}
 	onValueChange={(date) => {
