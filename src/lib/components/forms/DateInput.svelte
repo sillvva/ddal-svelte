@@ -30,6 +30,8 @@
 	export let required: boolean | undefined = undefined;
 	export let description = "";
 
+	$: rest = $$restProps as DatePickerProps;
+
 	function dateToLocalISO(date: Date) {
 		return date
 			.toLocaleDateString("sv", {
@@ -47,8 +49,6 @@
 	$: proxyDate = dateProxy(superform, field, { format: "datetime-local", empty });
 	$: proxyMin = minDateField && dateProxy(superform, minDateField, { format: "datetime-local" });
 	$: proxyMax = maxDateField && dateProxy(superform, maxDateField, { format: "datetime-local" });
-
-	$: rest = $$restProps as DatePickerProps;
 
 	$: value = $proxyDate && (parseDateTime($proxyDate) as DateValue);
 	$: minDateValue = minDate && parseDateTime(dateToLocalISO(minDate));
