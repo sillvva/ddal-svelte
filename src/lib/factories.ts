@@ -1,9 +1,17 @@
 import { searchData } from "$lib/stores";
+import { parseDateTime, type DateValue } from "@internationalized/date";
 import { toast } from "svelte-sonner";
-import { get } from "svelte/store";
-import { superForm, type FormOptions, type FormPathLeaves, type SuperValidated } from "sveltekit-superforms";
+import { get, writable, type Writable } from "svelte/store";
+import {
+	dateProxy,
+	superForm,
+	type FormOptions,
+	type FormPathLeaves,
+	type SuperForm,
+	type SuperValidated
+} from "sveltekit-superforms";
 import { valibotClient } from "sveltekit-superforms/adapters";
-import type { BaseSchema, Brand, BrandName, Input, Output } from "valibot";
+import type { BaseSchema, Input, Output } from "valibot";
 
 export function successToast(message: string) {
 	toast.success("Success", {
@@ -57,4 +65,40 @@ export function valibotForm<S extends BaseSchema, Out extends Output<S>, In exte
 	return superform;
 }
 
-export type Branded<T, B extends BrandName> = T & Brand<B>;
+type ArgumentsType<T> = T extends (...args: infer U) => unknown ? U : never;
+type IntDateProxyOptions = Omit<NonNullable<ArgumentsType<typeof dateProxy>[2]>, "format">;
+
+export function intDateProxy<T extends Record<string, unknown>, Path extends FormPathLeaves<T, Date>>(
+	form: Writable<T> | SuperForm<T>,
+	path: Path,
+	options?: IntDateProxyOptions
+) {
+	const proxy = dateProxy(form, path, {
+		format: "datetime-local", // expects ISO, so this format is required
+		...options
+	});
+	const init = get(proxy);
+	const store = writable<DateValue | undefined>(init ? parseDateTime(init) : undefined);
+	let updatingStore = false;
+	let updatingProxy = false;
+
+	proxy.subscribe((v) => {
+		if (updatingStore) {
+			updatingStore = false;
+			return;
+		}
+		updatingProxy = true;
+		store.set(v ? parseDateTime(v) : undefined);
+	});
+
+	store.subscribe((v) => {
+		if (updatingProxy) {
+			updatingProxy = false;
+			return;
+		}
+		updatingStore = true;
+		proxy.set(v?.toString() || "");
+	});
+
+	return store;
+}
