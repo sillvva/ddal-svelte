@@ -43,13 +43,20 @@
 	}
 
 	const { errors, constraints } = formFieldProxy(superform, field);
+
 	$: proxyDate = dateProxy(superform, field, { format: "datetime-local", empty });
 	$: proxyMin = minDateField && dateProxy(superform, minDateField, { format: "datetime-local" });
 	$: proxyMax = maxDateField && dateProxy(superform, maxDateField, { format: "datetime-local" });
 
-	$: value = $proxyDate ? parseDateTime($proxyDate) : undefined;
-	$: minValue = minDate ? parseDateTime(dateToLocalISO(minDate)) : proxyMin && $proxyMin && parseDateTime($proxyMin);
-	$: maxValue = maxDate ? parseDateTime(dateToLocalISO(maxDate)) : proxyMax && $proxyMax && parseDateTime($proxyMax);
+	$: rest = $$restProps as DatePickerProps;
+
+	$: value = rest?.value || ($proxyDate ? parseDateTime($proxyDate) : undefined);
+	$: minDateValue = minDate && parseDateTime(dateToLocalISO(minDate));
+	$: maxDateValue = maxDate && parseDateTime(dateToLocalISO(maxDate));
+	$: minProxyValue = proxyMin && $proxyMin && parseDateTime($proxyMin);
+	$: maxProxyValue = proxyMax && $proxyMax && parseDateTime($proxyMax);
+	$: minValue = rest?.minValue || minDateValue || minProxyValue;
+	$: maxValue = rest?.maxValue || maxDateValue || maxProxyValue;
 
 	$: if (value && minValue && value.compare(minValue) < 0) value = minValue;
 	$: if (value && maxValue && value.compare(maxValue) > 0) value = maxValue;
@@ -57,15 +64,16 @@
 
 <DatePicker.Root
 	granularity="minute"
+	portal={null}
+	{...rest}
 	bind:value
 	minValue={minValue?.set({ hour: 0, minute: 0, second: 0 })}
 	maxValue={maxValue?.set({ hour: 23, minute: 59, second: 59 })}
-	portal={null}
-	{...$$restProps}
 	onValueChange={(date) => {
 		if (date && minValue && date.compare(minValue) < 0) date = minValue;
 		if (date && maxValue && date.compare(maxValue) > 0) date = maxValue;
 		proxyDate.set(date?.toString() ?? "");
+		rest.onValueChange?.(date);
 	}}
 >
 	<DatePicker.Label class="label">
