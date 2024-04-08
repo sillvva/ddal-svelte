@@ -28,7 +28,7 @@
 		<Control class="col-span-12 sm:col-span-6 lg:col-span-3">
 			<Input type="text" {superform} field="name">Title</Input>
 		</Control>
-		<Control class="col-span-12 sm:col-span-6 lg:col-span-3 lg:signal/date-xs">
+		<Control class="col-span-12 sm:col-span-6 lg:col-span-3 lg:[&_[data-segment]]:text-xs">
 			<DateInput {superform} field="date">Date</DateInput>
 		</Control>
 		<Control class="col-span-12 sm:col-span-6 lg:col-span-3">
@@ -49,7 +49,7 @@
 				Assigned Character
 			</Combobox>
 		</Control>
-		<Control class="col-span-12 sm:col-span-6 lg:col-span-3 lg:signal/date-xs">
+		<Control class="col-span-12 sm:col-span-6 lg:col-span-3 lg:[&_[data-segment]]:text-xs">
 			<DateInput {superform} field="appliedDate" empty="null" minDateField="date" required={!!$form.characterId}>Date</DateInput>
 		</Control>
 		<Control class="col-span-12 sm:col-span-4">
