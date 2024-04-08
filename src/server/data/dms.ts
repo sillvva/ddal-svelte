@@ -50,7 +50,7 @@ export async function getUserDMsWithLogs(user: LocalsSession["user"], id?: Dunge
 	return dms
 		.map((dm) => ({
 			...dm,
-			uid: dm.uid || null,
+			uid: dm.uid,
 			owner: user.id
 		}))
 		.sort((a, b) => (b.uid || "").localeCompare(a.uid || "") || a.name.localeCompare(b.name));
@@ -82,7 +82,7 @@ export async function getUserDMs(user: LocalsSession["user"]) {
 	return dms
 		.map((dm) => ({
 			...dm,
-			uid: dm.uid || null,
+			uid: dm.uid,
 			owner: user.id
 		}))
 		.sort((a, b) => (b.uid || "").localeCompare(a.uid || "") || a.name.localeCompare(b.name));
