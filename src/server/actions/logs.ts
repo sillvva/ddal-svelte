@@ -14,6 +14,7 @@ export async function saveLog(input: LogSchema, user?: CustomSession["user"]): S
 	try {
 		if (!user?.name || !user?.id) throw new LogError("Not authenticated", { status: 401 });
 		const userId = user.id;
+		const characterId = input.characterId;
 
 		const { success } = await rateLimiter(input.id ? "insert" : "update", user.id);
 		if (!success) throw new LogError("Too many requests", { status: 429 });
@@ -27,12 +28,12 @@ export async function saveLog(input: LogSchema, user?: CustomSession["user"]): S
 			if (input.characterId && appliedDate === null)
 				throw new LogError("Applied date is required", { status: 400, field: "appliedDate" });
 
-			if (input.characterId) {
+			if (characterId) {
 				const character = await tx.query.characters.findFirst({
 					with: {
 						logs: true
 					},
-					where: (characters, { eq }) => eq(characters.id, input.characterId)
+					where: (characters, { eq }) => eq(characters.id, characterId)
 				});
 
 				if (!character)
@@ -122,7 +123,7 @@ export async function saveLog(input: LogSchema, user?: CustomSession["user"]): S
 				level: input.level,
 				gold: input.gold,
 				dtd: input.dtd,
-				characterId: input.characterId,
+				characterId,
 				appliedDate
 			};
 
