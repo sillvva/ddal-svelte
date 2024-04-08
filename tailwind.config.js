@@ -3,10 +3,6 @@ import themes from "daisyui/src/theming/themes";
 import postcss from "postcss";
 import plugin from "tailwindcss/plugin";
 
-const getStyleVarName = (modifier) => `--tw-signal${modifier ? `_${modifier}` : ""}`;
-// using empty values here so the compiler plays nice and generates the styles without values
-const EMPTY_VALUES = { values: { DEFAULT: "" } };
-
 /** @type {import('tailwindcss').Config} */
 export default {
 	content: ["./src/**/*.{html,js,svelte,ts}"],
@@ -69,29 +65,6 @@ export default {
 					}
 				});
 			}
-		}),
-		plugin(({ matchUtilities, matchVariant }) => {
-			matchUtilities(
-				{
-					signal: (_, { modifier }) => {
-						return {
-							[getStyleVarName(modifier)]: "true"
-						};
-					}
-				},
-				{
-					...EMPTY_VALUES,
-					modifiers: "any"
-				}
-			);
-
-			matchVariant(
-				"signal",
-				(_, { modifier }) => {
-					return `@container style(${getStyleVarName(modifier)}: true)`;
-				},
-				EMPTY_VALUES
-			);
 		})
 	],
 	daisyui: {

@@ -80,19 +80,16 @@
 			{/if}
 		</span>
 	</DatePicker.Label>
-	<DatePicker.Input
-		let:segments
-		class="input input-bordered inline-flex w-full select-none items-center gap-1 px-3 signal/date-xs:text-xs"
-	>
+	<DatePicker.Input let:segments class="input input-bordered inline-flex w-full select-none items-center gap-1 px-3">
 		{#each segments as { part, value }}
 			<DatePicker.Segment
 				{part}
 				class={twMerge(
 					"rounded-sm py-1 outline-offset-4 focus-visible:outline-primary aria-[valuetext=Empty]:text-base-content/70",
-					part === "dayPeriod" && "aria-[valuenow=PM]:signal aria-[valuenow=PM]:before:[content:attr(aria-valuenow)]"
+					part === "dayPeriod" && `aria-[valuenow=PM]:before:[content:attr(aria-valuenow)]`
 				)}
 			>
-				<span class="signal:hidden">{value}</span>
+				<span class="[[aria-valuenow=PM]_&]:hidden">{value}</span>
 			</DatePicker.Segment>
 		{/each}
 		<DatePicker.Trigger class="ml-auto inline-flex items-center justify-center">

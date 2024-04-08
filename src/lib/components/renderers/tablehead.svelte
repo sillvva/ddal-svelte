@@ -1,1 +1,1 @@
-<thead class="signal/thead"><slot /></thead>
+<thead class="[&>tr]:bg-base-300"><slot /></thead>

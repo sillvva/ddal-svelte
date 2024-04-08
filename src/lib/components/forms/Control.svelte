@@ -10,6 +10,6 @@
 	export { className as class };
 </script>
 
-<div class={twMerge("form-control", className)}>
+<div class={twMerge("form-control", className)} {...$$restProps}>
 	<slot />
 </div>
