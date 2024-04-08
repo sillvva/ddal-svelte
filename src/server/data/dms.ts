@@ -1,37 +1,40 @@
 import type { DungeonMasterId } from "$lib/schemas";
 import { cache } from "$server/cache";
-import { q } from "$server/db";
+import { db, q } from "$server/db";
+import { characters, logs } from "$server/db/schema";
 
 export type UserDMsWithLogs = Awaited<ReturnType<typeof getUserDMsWithLogs>>;
 export async function getUserDMsWithLogs(user: LocalsSession["user"], id?: DungeonMasterId) {
 	if (!user || !user.id) return [];
 
-	const dms = await q.dungeonMasters
-		.findMany({
-			with: {
-				logs: {
-					with: {
-						character: {
-							columns: {
-								id: true,
-								name: true,
-								userId: true
-							}
+	const dms = await q.dungeonMasters.findMany({
+		with: {
+			logs: {
+				with: {
+					character: {
+						columns: {
+							id: true,
+							name: true,
+							userId: true
 						}
 					}
 				}
-			},
-			where: (dms, { or, eq, and }) =>
+			}
+		},
+		where: (dms, { or, eq, and, exists }) =>
+			and(
 				id
 					? and(or(eq(dms.owner, user.id), eq(dms.uid, user.id)), eq(dms.id, id))
-					: or(eq(dms.owner, user.id), eq(dms.uid, user.id))
-		})
-		.then((dms) =>
-			dms.map((dm) => ({
-				...dm,
-				logs: dm.logs.filter((log) => !!log.character?.id)
-			}))
-		);
+					: or(eq(dms.owner, user.id), eq(dms.uid, user.id)),
+				exists(
+					db
+						.select({ id: logs.id })
+						.from(logs)
+						.innerJoin(characters, eq(logs.characterId, characters.id))
+						.where(and(eq(logs.dungeonMasterId, dms.id)))
+				)
+			)
+	});
 
 	if (!id && !dms.find((dm) => dm.uid === user.id)) {
 		dms.push({
