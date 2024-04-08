@@ -82,7 +82,7 @@ export const logSchema = object({
 	id: optional(logIdSchema, ""),
 	name: string([required]),
 	date: date(),
-	characterId: optional(characterIdSchema, ""),
+	characterId: optional(union([characterIdSchema, null_()]), null),
 	characterName: optional(string(), ""),
 	type: optional(union([literal("game"), literal("nongame")]), "game"),
 	experience: number([integer(), minValue(0)]),
