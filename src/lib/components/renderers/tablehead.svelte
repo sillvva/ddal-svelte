@@ -1,1 +1,1 @@
-<thead class="[&>tr]:bg-base-300"><slot /></thead>
+<thead class="bg-base-300"><slot /></thead>

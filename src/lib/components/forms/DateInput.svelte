@@ -19,7 +19,7 @@
 		empty?: "null" | "undefined";
 		required?: boolean;
 		description?: string;
-		inputClass?: string;
+		class?: string;
 	}
 
 	export let superform: SuperForm<TForm, any>;
@@ -31,7 +31,9 @@
 	export let empty: "null" | "undefined" = "null";
 	export let required: boolean | undefined = undefined;
 	export let description = "";
-	export let inputClass = "";
+
+	let inputClass = "";
+	export { inputClass as class };
 
 	$: rest = $$restProps as DatePickerProps;
 
@@ -128,14 +130,14 @@
 											<DatePicker.Day
 												{date}
 												month={month.value}
-												class={twMerge(
+												class={[
 													"rounded-9px group relative inline-flex size-10 items-center justify-center whitespace-nowrap",
 													"border border-transparent bg-transparent p-0 text-sm font-normal transition-all",
 													"hover:border-base-content/50 data-[outside-month]:pointer-events-none",
 													"data-[disabled]:pointer-events-none data-[disabled]:text-base-content/30",
 													"data-[selected]:bg-base-300 data-[selected]:font-medium",
 													"data-[unavailable]:text-base-content/30 data-[unavailable]:line-through"
-												)}
+												].join(" ")}
 											>
 												<div
 													class="absolute top-[5px] hidden size-1 rounded-full transition-all group-data-[today]:block group-data-[selected]:bg-base-content/50"
