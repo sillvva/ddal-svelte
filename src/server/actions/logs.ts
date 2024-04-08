@@ -159,7 +159,7 @@ export async function saveLog(input: LogSchema, user?: CustomSession["user"]): S
 				await tx.update(magicItems).set({ logLostId: log.id }).where(inArray(magicItems.id, input.magicItemsLost));
 			}
 
-			const storyAwardsToUpdate = input.magicItemsGained.filter((item) => item.id);
+			const storyAwardsToUpdate = input.storyAwardsGained.filter((item) => item.id);
 			for (const item of storyAwardsToUpdate) {
 				await tx.update(storyAwards).set(item).where(eq(storyAwards.id, item.id));
 			}
@@ -171,7 +171,7 @@ export async function saveLog(input: LogSchema, user?: CustomSession["user"]): S
 					.where(and(eq(storyAwards.logGainedId, log.id), notInArray(storyAwards.id, storyAwardsToDelete)));
 			}
 
-			const storyAwardsToCreate = input.magicItemsGained.filter((item) => !item.id);
+			const storyAwardsToCreate = input.storyAwardsGained.filter((item) => !item.id);
 			if (storyAwardsToCreate.length) {
 				await tx.insert(storyAwards).values(
 					storyAwardsToCreate.map((item) => ({
