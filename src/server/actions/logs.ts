@@ -159,22 +159,20 @@ export async function saveLog(input: LogSchema, user?: CustomSession["user"]): S
 				await tx.update(magicItems).set({ logLostId: log.id }).where(inArray(magicItems.id, input.magicItemsLost));
 			}
 
-			const storyAwardsToUpdate = input.storyAwardsGained.filter((item) => item.id);
-			for (const item of storyAwardsToUpdate) {
+			const awardsToUpdate = input.storyAwardsGained.filter((item) => item.id);
+			for (const item of awardsToUpdate) {
 				await tx.update(storyAwards).set(item).where(eq(storyAwards.id, item.id));
 			}
 
-			const storyAwardsToDelete = storyAwardsToUpdate.map((item) => item.id);
-			if (storyAwardsToDelete.length) {
-				await tx
-					.delete(storyAwards)
-					.where(and(eq(storyAwards.logGainedId, log.id), notInArray(storyAwards.id, storyAwardsToDelete)));
+			const awardsToDelete = awardsToUpdate.map((item) => item.id);
+			if (awardsToDelete.length) {
+				await tx.delete(storyAwards).where(and(eq(storyAwards.logGainedId, log.id), notInArray(storyAwards.id, awardsToDelete)));
 			}
 
-			const storyAwardsToCreate = input.storyAwardsGained.filter((item) => !item.id);
-			if (storyAwardsToCreate.length) {
+			const awardsToCreate = input.storyAwardsGained.filter((item) => !item.id);
+			if (awardsToCreate.length) {
 				await tx.insert(storyAwards).values(
-					storyAwardsToCreate.map((item) => ({
+					awardsToCreate.map((item) => ({
 						name: item.name,
 						description: item.description,
 						logGainedId: log.id
