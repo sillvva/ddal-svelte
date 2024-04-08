@@ -60,7 +60,7 @@ export const dungeonMasterSchema = object({
 	id: dungeonMasterIdSchema,
 	name: string([required]),
 	DCI: nullable(union([string([regex(/[0-9]{0,10}/, "Invalid DCI Format")]), null_()]), null),
-	uid: nullable(union([userIdSchema, null_()]), ""),
+	uid: nullable(union([userIdSchema, null_()]), null),
 	owner: userIdSchema
 });
 

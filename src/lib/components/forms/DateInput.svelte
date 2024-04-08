@@ -3,9 +3,10 @@
 </script>
 
 <script lang="ts" generics="TForm extends TRec, TMin extends Date | undefined, TMax extends Date | undefined">
-	import { parseDateTime, type DateValue } from "@internationalized/date";
+	import { intDateProxy } from "$lib/factories";
+	import { parseDateTime } from "@internationalized/date";
 	import { DatePicker, type DatePickerProps } from "bits-ui";
-	import { dateProxy, formFieldProxy, type FormPathLeaves, type SuperForm } from "sveltekit-superforms";
+	import { formFieldProxy, type FormPathLeaves, type SuperForm } from "sveltekit-superforms";
 	import { twMerge } from "tailwind-merge";
 
 	interface $$Props extends DatePickerProps {
@@ -32,49 +33,44 @@
 
 	$: rest = $$restProps as DatePickerProps;
 
-	function dateToLocalISO(date: Date) {
-		return date
-			.toLocaleDateString("sv", {
-				year: "numeric",
-				month: "2-digit",
-				day: "2-digit",
-				hour: "2-digit",
-				minute: "2-digit"
-			})
-			.replace(" ", "T");
+	function dateToDV(date: Date) {
+		return parseDateTime(
+			date
+				.toLocaleDateString("sv", {
+					year: "numeric",
+					month: "2-digit",
+					day: "2-digit",
+					hour: "2-digit",
+					minute: "2-digit"
+				})
+				.replace(" ", "T")
+		);
 	}
 
 	const { errors, constraints } = formFieldProxy(superform, field);
 
-	$: proxyDate = dateProxy(superform, field, { format: "datetime-local", empty });
-	$: proxyMin = minDateField && dateProxy(superform, minDateField, { format: "datetime-local" });
-	$: proxyMax = maxDateField && dateProxy(superform, maxDateField, { format: "datetime-local" });
+	$: proxyValue = intDateProxy(superform, field, { empty });
+	$: proxyMin = minDateField && intDateProxy(superform, minDateField);
+	$: proxyMax = maxDateField && intDateProxy(superform, maxDateField);
 
-	$: value = $proxyDate && (parseDateTime($proxyDate) as DateValue);
-	$: minDateValue = minDate && parseDateTime(dateToLocalISO(minDate));
-	$: maxDateValue = maxDate && parseDateTime(dateToLocalISO(maxDate));
-	$: minProxyValue = proxyMin && $proxyMin && parseDateTime($proxyMin);
-	$: maxProxyValue = proxyMax && $proxyMax && parseDateTime($proxyMax);
+	$: minDateValue = minDate && dateToDV(minDate);
+	$: maxDateValue = maxDate && dateToDV(maxDate);
+	$: minProxyValue = proxyMin && $proxyMin;
+	$: maxProxyValue = proxyMax && $proxyMax;
 	$: minValue = rest?.minValue || minDateValue || minProxyValue;
 	$: maxValue = rest?.maxValue || maxDateValue || maxProxyValue;
 
-	$: if (value && minValue && value.compare(minValue) < 0) value = minValue;
-	$: if (value && maxValue && value.compare(maxValue) > 0) value = maxValue;
+	$: if ($proxyValue && minValue && $proxyValue.compare(minValue) < 0) $proxyValue = minValue;
+	$: if ($proxyValue && maxValue && $proxyValue.compare(maxValue) > 0) $proxyValue = maxValue;
 </script>
 
 <DatePicker.Root
 	granularity="minute"
 	portal={null}
 	{...rest}
-	bind:value
+	bind:value={$proxyValue}
 	minValue={minValue?.set({ hour: 0, minute: 0, second: 0 })}
 	maxValue={maxValue?.set({ hour: 23, minute: 59, second: 59 })}
-	onValueChange={(date) => {
-		if (date && minValue && date.compare(minValue) < 0) date = minValue;
-		if (date && maxValue && date.compare(maxValue) > 0) date = maxValue;
-		proxyDate.set(date?.toString() ?? "");
-		rest.onValueChange?.(date);
-	}}
 >
 	<DatePicker.Label class="label">
 		<span class="label-text">
