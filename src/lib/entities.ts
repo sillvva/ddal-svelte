@@ -200,9 +200,8 @@ export function defaultDM(userId: UserId): DungeonMaster {
 	return { id: "" as DungeonMasterId, name: "", DCI: null, uid: "" as UserId, owner: userId };
 }
 
-export function defaultLogData(userId: UserId, characterId = "" as CharacterId): LogData {
+export function defaultLogData(userId: UserId, characterId = null as CharacterId | null): LogData {
 	return {
-		characterId,
 		id: "" as LogId,
 		name: "",
 		description: "",
@@ -217,6 +216,7 @@ export function defaultLogData(userId: UserId, characterId = "" as CharacterId):
 		dtd: 0,
 		dungeonMasterId: "" as DungeonMasterId,
 		dm: defaultDM(userId),
+		characterId,
 		appliedDate: null,
 		isDmLog: !characterId,
 		magicItemsGained: [],
@@ -237,7 +237,7 @@ export function parseLog(log: Omit<LogData & { character?: (Character & { user?:
 export function logDataToSchema(userId: UserId, log: LogData, character?: Character): LogSchema {
 	return {
 		...log,
-		characterId: character?.id || ("" as CharacterId),
+		characterId: character?.id || null,
 		characterName: character?.name || "",
 		dm: log.dm?.id ? log.dm : defaultDM(userId),
 		type: log.type as "game" | "nongame",

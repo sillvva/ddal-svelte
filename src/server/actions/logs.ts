@@ -5,7 +5,7 @@ import { rateLimiter, revalidateKeys } from "$server/cache";
 import { logIncludes, type LogData } from "$server/data/logs";
 import { db } from "$server/db";
 import { dungeonMasters, logs, magicItems, storyAwards, type InsertDungeonMaster, type Log } from "$server/db/schema";
-import { eq, inArray, notInArray } from "drizzle-orm";
+import { and, eq, inArray, notInArray } from "drizzle-orm";
 
 class LogError extends SaveError<LogSchema> {}
 
@@ -139,7 +139,7 @@ export async function saveLog(input: LogSchema, user?: CustomSession["user"]): S
 
 			const itemsToDelete = itemsToUpdate.map((item) => item.id);
 			if (itemsToDelete.length) {
-				await tx.delete(magicItems).where(notInArray(magicItems.id, itemsToDelete));
+				await tx.delete(magicItems).where(and(eq(magicItems.logGainedId, log.id), notInArray(magicItems.id, itemsToDelete)));
 			}
 
 			const itemsToCreate = input.magicItemsGained.filter((item) => !item.id);
@@ -165,7 +165,9 @@ export async function saveLog(input: LogSchema, user?: CustomSession["user"]): S
 
 			const storyAwardsToDelete = storyAwardsToUpdate.map((item) => item.id);
 			if (storyAwardsToDelete.length) {
-				await tx.delete(storyAwards).where(notInArray(storyAwards.id, storyAwardsToDelete));
+				await tx
+					.delete(storyAwards)
+					.where(and(eq(storyAwards.logGainedId, log.id), notInArray(storyAwards.id, storyAwardsToDelete)));
 			}
 
 			const storyAwardsToCreate = input.magicItemsGained.filter((item) => !item.id);

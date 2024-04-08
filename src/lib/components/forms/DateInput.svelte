@@ -19,6 +19,7 @@
 		empty?: "null" | "undefined";
 		required?: boolean;
 		description?: string;
+		inputClass?: string;
 	}
 
 	export let superform: SuperForm<TForm, any>;
@@ -30,6 +31,7 @@
 	export let empty: "null" | "undefined" = "null";
 	export let required: boolean | undefined = undefined;
 	export let description = "";
+	export let inputClass = "";
 
 	$: rest = $$restProps as DatePickerProps;
 
@@ -80,7 +82,10 @@
 			{/if}
 		</span>
 	</DatePicker.Label>
-	<DatePicker.Input let:segments class="input input-bordered inline-flex w-full select-none items-center gap-1 px-3">
+	<DatePicker.Input
+		let:segments
+		class={twMerge("input input-bordered inline-flex w-full select-none items-center gap-1 px-3", inputClass)}
+	>
 		{#each segments as { part, value }}
 			<DatePicker.Segment
 				{part}
