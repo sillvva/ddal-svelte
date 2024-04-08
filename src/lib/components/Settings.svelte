@@ -46,7 +46,7 @@
 		</div>
 	</div>
 	<div class="divider my-0" />
-	<ul class="menu menu-lg w-full">
+	<ul class="menu menu-lg w-full px-0">
 		<li>
 			<div class="flex items-center gap-2 hover:bg-transparent">
 				<span class="flex-1">Theme</span>
@@ -73,7 +73,7 @@
 	</ul>
 	{#if authProviders.length > 0}
 		<div class="divider my-0" />
-		<ul class="menu menu-lg w-full">
+		<ul class="menu menu-lg w-full px-0 [&_li>*]:px-2">
 			<li class="menu-title">
 				<span class="font-bold">Linked Accounts</span>
 			</li>
@@ -118,7 +118,7 @@
 		</ul>
 	{/if}
 	<div class="divider my-0" />
-	<ul class="menu menu-lg w-full">
+	<ul class="menu menu-lg w-full px-0">
 		<li>
 			<a href="https://github.com/sillvva/ddal-svelte" target="_blank" rel="noreferrer noopener">
 				<span class="iconify size-6 mdi-github" />
@@ -142,15 +142,27 @@
 />
 
 <style>
-	.menu-lg li {
+	.menu-lg li:not(.menu-title) {
 		height: 3.5rem;
 	}
 	.menu-lg li * {
 		line-height: 2rem;
 	}
 
-	.menu li,
-	.menu li > * {
+	.menu-title {
+		padding-block: 0;
+	}
+
+	.menu li {
 		padding-inline: 0;
+	}
+
+	:where(.menu li > *) {
+		padding-inline: 1rem;
+	}
+
+	:where(.menu li > :not(button, a):hover) {
+		background-color: transparent;
+		cursor: default;
 	}
 </style>

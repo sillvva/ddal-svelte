@@ -91,7 +91,7 @@
 				{part}
 				class={twMerge(
 					"rounded-sm py-1 outline-offset-4 focus-visible:outline-primary aria-[valuetext=Empty]:text-base-content/70",
-					part === "dayPeriod" && `aria-[valuenow=PM]:before:[content:attr(aria-valuenow)]`
+					part === "dayPeriod" && "aria-[valuenow=PM]:before:[content:attr(aria-valuenow)]"
 				)}
 			>
 				<span class="[[aria-valuenow=PM]_&]:hidden">{value}</span>
