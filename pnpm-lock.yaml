@@ -21,8 +21,8 @@ dependencies:
     specifier: ^2.2.2
     version: 2.2.2
   '@sillvva/utils':
-    specifier: npm:@jsr/sillvva__utils@^0.2.6
-    version: /@jsr/sillvva__utils@0.2.6
+    specifier: npm:@jsr/sillvva__utils@^0.2.7
+    version: /@jsr/sillvva__utils@0.2.7
   '@svelteuidev/composables':
     specifier: ^0.15.4
     version: 0.15.4(svelte@4.2.12)
@@ -1013,8 +1013,8 @@ packages:
       '@jridgewell/resolve-uri': 3.1.2
       '@jridgewell/sourcemap-codec': 1.4.15
 
-  /@jsr/sillvva__utils@0.2.6:
-    resolution: {integrity: sha512-T4bQ5wuoDUk4tCEdnJ6T0o23b+/HObuMQ2EjMLUkFQ1UW6TPpupw5V096893gILBlRyS0oYTuhmn/GUugQMQ6g==, tarball: https://npm.jsr.io/~/5/@jsr/sillvva__utils/0.2.6.tgz}
+  /@jsr/sillvva__utils@0.2.7:
+    resolution: {integrity: sha512-0y+3AI+XKdPKTtEgMBbdfSUjsdpVfR8y21AEclqvpXvB9SFB4mGUXLEmyo57Py0sct/UH1auIJ21kwwAI5UpXA==, tarball: https://npm.jsr.io/~/7/@jsr/sillvva__utils/0.2.7.tgz}
     dev: false
 
   /@mapbox/node-pre-gyp@1.0.11:

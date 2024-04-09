@@ -2,6 +2,7 @@ import type { DungeonMasterId } from "$lib/schemas";
 import { cache } from "$server/cache";
 import { db, q } from "$server/db";
 import { characters, logs } from "$server/db/schema";
+import { sorter } from "@sillvva/utils";
 
 export type UserDMsWithLogs = Awaited<ReturnType<typeof getUserDMsWithLogs>>;
 export async function getUserDMsWithLogs(user: LocalsSession["user"], id?: DungeonMasterId) {
@@ -47,13 +48,7 @@ export async function getUserDMsWithLogs(user: LocalsSession["user"], id?: Dunge
 		});
 	}
 
-	return dms
-		.map((dm) => ({
-			...dm,
-			uid: dm.uid,
-			owner: user.id
-		}))
-		.sort((a, b) => (b.uid || "").localeCompare(a.uid || "") || a.name.localeCompare(b.name));
+	return dms.sort((a, b) => sorter(a.uid, b.uid) || sorter(a.name, b.name));
 }
 
 export async function getUserDMsWithLogsCache(user: LocalsSession["user"], id?: DungeonMasterId) {
@@ -72,20 +67,14 @@ export async function getUserDMs(user: LocalsSession["user"]) {
 	if (!dms.find((dm) => dm.uid === user.id)) {
 		dms.push({
 			id: "" as DungeonMasterId,
-			uid: user.id,
 			name: user.name || "Me",
 			DCI: null,
+			uid: user.id,
 			owner: user.id
 		});
 	}
 
-	return dms
-		.map((dm) => ({
-			...dm,
-			uid: dm.uid,
-			owner: user.id
-		}))
-		.sort((a, b) => (b.uid || "").localeCompare(a.uid || "") || a.name.localeCompare(b.name));
+	return dms.sort((a, b) => sorter(a.uid, b.uid) || sorter(a.name, b.name));
 }
 
 export async function getUserDMsCache(user: LocalsSession["user"]) {

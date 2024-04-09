@@ -6,7 +6,6 @@
 	import DeleteDm from "$lib/components/forms/DeleteDM.svelte";
 	import { stopWords } from "$lib/constants.js";
 	import { isDefined } from "$lib/util";
-	import { sorter } from "@sillvva/utils";
 	import MiniSearch from "minisearch";
 	import { twMerge } from "tailwind-merge";
 
@@ -55,10 +54,7 @@
 								.filter(isDefined)
 						};
 					})
-					.sort((a, b) => sorter(b.uid || "", a.uid || "") || sorter(a.name, b.name))
-			: dms
-					.sort((a, b) => sorter(b.uid || "", a.uid || "") || sorter(a.name, b.name))
-					.map((dm) => ({ ...dm, score: 0, match: [] }));
+			: dms;
 </script>
 
 <div class="flex flex-col gap-4">

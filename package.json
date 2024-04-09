@@ -52,7 +52,7 @@
 		"@auth/sveltekit": "^0.15.0",
 		"@internationalized/date": "^3.5.2",
 		"@paralleldrive/cuid2": "^2.2.2",
-		"@sillvva/utils": "npm:@jsr/sillvva__utils@^0.2.6",
+		"@sillvva/utils": "npm:@jsr/sillvva__utils@^0.2.7",
 		"@svelteuidev/composables": "^0.15.4",
 		"@upstash/ratelimit": "^1.0.3",
 		"@upstash/redis": "^1.29.0",
