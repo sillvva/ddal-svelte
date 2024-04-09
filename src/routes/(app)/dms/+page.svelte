@@ -5,7 +5,6 @@
 	import SearchResults from "$lib/components/SearchResults.svelte";
 	import DeleteDm from "$lib/components/forms/DeleteDM.svelte";
 	import { stopWords } from "$lib/constants.js";
-	import { isDefined } from "$lib/util";
 	import MiniSearch from "minisearch";
 	import { twMerge } from "tailwind-merge";
 
@@ -40,21 +39,7 @@
 	}
 	$: msResults = minisearch.search(search);
 	$: resultsMap = new Map(msResults.map((result) => [result.id, result]));
-	$: results =
-		indexed.length && search.length > 1
-			? dms
-					.filter((dm) => resultsMap.has(dm.id))
-					.map((dm) => {
-						const { score = dm.name, match = {} } = resultsMap.get(dm.id) || {};
-						return {
-							...dm,
-							score: score,
-							match: Object.values(match)
-								.map((value) => value[0])
-								.filter(isDefined)
-						};
-					})
-			: dms;
+	$: results = indexed.length && search.length > 1 ? dms.filter((dm) => resultsMap.has(dm.id)) : dms;
 </script>
 
 <div class="flex flex-col gap-4">
