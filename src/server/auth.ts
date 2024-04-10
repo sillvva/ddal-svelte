@@ -30,6 +30,6 @@ export function authErrRedirect(code: number | string, message: string, redirect
 	);
 }
 
-export function assertUser(user: User | AdapterUser): asserts user is AdapterUser & { id: UserId; name: string } {
+export function assertUser<T extends User | AdapterUser>(user: T): asserts user is T & { id: UserId; name: string } {
 	if (!user?.id || !user.name) throw new Error("Not authenticated");
 }
