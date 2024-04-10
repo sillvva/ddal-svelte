@@ -60,7 +60,7 @@
 					clearable
 					onclear={() => ($form.dm = defaultDM(data.user.id))}
 					link={$form.dm.id ? `/dms/${$form.dm.id}` : ""}
-					placeholder={data.dms.find((dm) => dm.uid === data.user.id)?.name || data.user.name || "Me"}
+					placeholder={data.dms.find((dm) => dm.uid === data.user.id)?.name || data.user.name}
 				>
 					DM Name
 				</Combobox>

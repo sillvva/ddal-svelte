@@ -14,7 +14,7 @@ import { redirect, type Handle } from "@sveltejs/kit";
 import { sequence } from "@sveltejs/kit/hooks";
 import { handle as documentHandle } from "@sveltekit-addons/document/hooks";
 import { and, eq } from "drizzle-orm";
-import { authErrRedirect } from "./server/auth";
+import { assertUser, authErrRedirect } from "./server/auth";
 
 interface OAuthProvider {
 	id: string;
@@ -76,6 +76,8 @@ const auth = SvelteKitAuth(async (event) => {
 	return {
 		callbacks: {
 			async signIn({ account, user, profile }) {
+				assertUser(user);
+
 				const redirectTo = event.url.searchParams.get("redirect") || undefined;
 				const redirectUrl = redirectTo ? new URL(redirectTo, event.url.origin) : undefined;
 
@@ -171,11 +173,9 @@ const auth = SvelteKitAuth(async (event) => {
 				return true;
 			},
 			async session({ session, user }) {
-				if (session.expires >= new Date())
-					return {
-						...session,
-						user: { ...session.user, id: session.user.id as UserId }
-					} satisfies LocalsSession;
+				assertUser(user);
+
+				if (session.expires >= new Date()) return { ...session, user } satisfies LocalsSession;
 
 				const account = await q.accounts.findFirst({
 					where: (accounts, { and, eq, isNotNull }) => and(eq(accounts.userId, user.id as UserId), isNotNull(accounts.lastLogin)),
@@ -189,10 +189,7 @@ const auth = SvelteKitAuth(async (event) => {
 					}
 				}
 
-				return {
-					...session,
-					user: { ...session.user, id: session.user.id as UserId }
-				} satisfies LocalsSession;
+				return { ...session, user } satisfies LocalsSession;
 			}
 		},
 		secret: privateEnv.AUTH_SECRET,

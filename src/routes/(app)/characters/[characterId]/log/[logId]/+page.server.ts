@@ -61,8 +61,8 @@ export const load = async (event) => {
 
 export const actions = {
 	saveLog: async (event) => {
-		const session = await event.locals.session;
-		if (!session?.user) redirect(302, "/");
+		const session = event.locals.session;
+		if (!session?.user) signInRedirect(event.url);
 
 		const characterId = parse(characterIdSchema, event.params.characterId);
 		const character = await getCharacterCache(characterId);

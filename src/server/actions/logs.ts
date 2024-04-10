@@ -1,5 +1,5 @@
 import { getLevels } from "$lib/entities";
-import { type LogId, type LogSchema } from "$lib/schemas";
+import { type LogId, type LogSchema, type UserId } from "$lib/schemas";
 import { SaveError, type SaveResult } from "$lib/util";
 import { rateLimiter, revalidateKeys } from "$server/cache";
 import { logIncludes, type LogData } from "$server/data/logs";
@@ -10,9 +10,8 @@ import { and, eq, inArray, notInArray } from "drizzle-orm";
 class LogError extends SaveError<LogSchema> {}
 
 export type SaveLogResult = ReturnType<typeof saveLog>;
-export async function saveLog(input: LogSchema, user?: CustomSession["user"]): SaveResult<LogData, LogSchema> {
+export async function saveLog(input: LogSchema, user: LocalsUser): SaveResult<LogData, LogSchema> {
 	try {
-		if (!user?.name || !user?.id) throw new LogError("Not authenticated", { status: 401 });
 		const userId = user.id;
 		const characterId = input.characterId;
 
@@ -55,7 +54,7 @@ export async function saveLog(input: LogSchema, user?: CustomSession["user"]): S
 				let isMe = false;
 				if (input.isDmLog) isMe = true;
 				if (input.dm.uid === userId) isMe = true;
-				if (["Me", "", user.name?.trim()].includes(input.dm.name.trim())) isMe = true;
+				if (["", user.name.toLowerCase()].includes(input.dm.name.toLowerCase().trim())) isMe = true;
 
 				if (!input.dm.id) {
 					const search = await tx.query.dungeonMasters.findFirst({
@@ -79,7 +78,7 @@ export async function saveLog(input: LogSchema, user?: CustomSession["user"]): S
 				}
 
 				if (!input.dm.name) {
-					if (isMe) input.dm.name = user.name || "Me";
+					if (isMe) input.dm.name = user.name;
 					else
 						throw new LogError("Dungeon Master name is required", {
 							status: 400,
@@ -207,7 +206,7 @@ export async function saveLog(input: LogSchema, user?: CustomSession["user"]): S
 }
 
 export type DeleteLogResult = ReturnType<typeof deleteLog>;
-export async function deleteLog(logId: LogId, userId?: string): SaveResult<{ id: LogId }, LogSchema> {
+export async function deleteLog(logId: LogId, userId?: UserId): SaveResult<{ id: LogId }, LogSchema> {
 	try {
 		if (!userId) throw new LogError("Not authenticated", { status: 401 });
 

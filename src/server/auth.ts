@@ -1,3 +1,6 @@
+import type { UserId } from "$lib/schemas";
+import type { AdapterUser } from "@auth/core/adapters";
+import type { User } from "@auth/sveltekit";
 import { redirect } from "@sveltejs/kit";
 
 /**
@@ -25,4 +28,8 @@ export function authErrRedirect(code: number | string, message: string, redirect
 		`/?code=${code}&message=${message}` +
 			(redirectTo ? `&redirect=${encodeURIComponent(`${redirectTo.pathname}${redirectTo.search}`)}` : "")
 	);
+}
+
+export function assertUser(user: User | AdapterUser): asserts user is AdapterUser & { id: UserId; name: string } {
+	if (!user?.id || !user.name) throw new Error("Not authenticated");
 }

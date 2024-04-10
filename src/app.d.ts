@@ -56,21 +56,16 @@ declare global {
 		}
 	}
 
-	interface CustomSession {
-		user?: Prettify<
-			{
-				id?: UserId;
-			} & DefaultSession["user"]
-		>;
-		error?: string;
-	}
+	type LocalsUser = Prettify<
+		DefaultSession["user"] & {
+			id: UserId;
+			name: string;
+			emailVerified: Date | null;
+		}
+	>;
 
 	interface LocalsSession {
-		user?: Prettify<
-			{
-				id: UserId;
-			} & DefaultSession["user"]
-		>;
+		user?: LocalsUser;
 		error?: string;
 	}
 

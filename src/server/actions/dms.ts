@@ -9,19 +9,17 @@ import { eq } from "drizzle-orm";
 export type SaveDMResult = ReturnType<typeof saveDM>;
 export async function saveDM(
 	dmId: DungeonMasterId,
-	user: LocalsSession["user"],
+	user: LocalsUser,
 	data: DungeonMasterSchema
 ): SaveResult<DungeonMaster, DungeonMasterSchema> {
 	try {
-		if (!user) throw new SaveError("You must be logged in to save a DM", { status: 401 });
-
 		const { success } = await rateLimiter("insert", user.id);
 		if (!success) throw new SaveError("Too many requests", { status: 429 });
 
 		const dm = (await getUserDMsWithLogsCache(user)).find((dm) => dm.id === dmId);
 		if (!dm) throw new SaveError("You do not have permission to edit this DM", { status: 401 });
 
-		if (data.name === "" && data.uid) data.name = user.name || "Me";
+		if (data.name === "" && data.uid) data.name = user.name;
 
 		const [result] = await db
 			.update(dungeonMasters)
@@ -39,7 +37,7 @@ export async function saveDM(
 		const characterIds = Array.from(new Set(dm.logs.filter((l) => l.characterId).map((l) => l.characterId)));
 		revalidateKeys(
 			characterIds
-				.map((id) => ["character", id as string, "logs"] as CacheKey)
+				.map((id) => ["character", id, "logs"] as CacheKey)
 				.concat([
 					["dms", user.id, "logs"],
 					["dms", user.id],
@@ -56,11 +54,9 @@ export async function saveDM(
 export type DeleteDMResult = ReturnType<typeof deleteDM>;
 export async function deleteDM(
 	dmId: DungeonMasterId,
-	user?: LocalsSession["user"]
+	user: LocalsUser
 ): SaveResult<{ id: DungeonMasterId }, DungeonMasterSchema> {
 	try {
-		if (!user) throw new SaveError("You must be logged in to delete a DM", { status: 401 });
-
 		const { success } = await rateLimiter("insert", user.id);
 		if (!success) throw new SaveError("Too many requests", { status: 429 });
 

@@ -40,7 +40,7 @@ export async function getUserDMsWithLogs(user: LocalsSession["user"], id?: Dunge
 	if (!id && !dms.find((dm) => dm.uid === user.id)) {
 		dms.push({
 			id: "" as DungeonMasterId,
-			name: user.name || "Me",
+			name: user.name,
 			DCI: null,
 			uid: user.id,
 			owner: user.id,
@@ -67,7 +67,7 @@ export async function getUserDMs(user: LocalsSession["user"]) {
 	if (!dms.find((dm) => dm.uid === user.id)) {
 		dms.push({
 			id: "" as DungeonMasterId,
-			name: user.name || "Me",
+			name: user.name,
 			DCI: null,
 			uid: user.id,
 			owner: user.id
