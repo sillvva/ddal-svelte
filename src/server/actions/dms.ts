@@ -9,7 +9,7 @@ import { eq } from "drizzle-orm";
 export type SaveDMResult = ReturnType<typeof saveDM>;
 export async function saveDM(
 	dmId: DungeonMasterId,
-	user: LocalsUser,
+	user: LocalsSession["user"],
 	data: DungeonMasterSchema
 ): SaveResult<DungeonMaster, DungeonMasterSchema> {
 	try {
@@ -54,7 +54,7 @@ export async function saveDM(
 export type DeleteDMResult = ReturnType<typeof deleteDM>;
 export async function deleteDM(
 	dmId: DungeonMasterId,
-	user: LocalsUser
+	user: LocalsSession["user"]
 ): SaveResult<{ id: DungeonMasterId }, DungeonMasterSchema> {
 	try {
 		const { success } = await rateLimiter("insert", user.id);

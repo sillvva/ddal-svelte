@@ -10,7 +10,7 @@ import { and, eq, inArray, notInArray } from "drizzle-orm";
 class LogError extends SaveError<LogSchema> {}
 
 export type SaveLogResult = ReturnType<typeof saveLog>;
-export async function saveLog(input: LogSchema, user: LocalsUser): SaveResult<LogData, LogSchema> {
+export async function saveLog(input: LogSchema, user: LocalsSession["user"]): SaveResult<LogData, LogSchema> {
 	try {
 		const userId = user.id;
 		const characterId = input.characterId;
@@ -206,10 +206,8 @@ export async function saveLog(input: LogSchema, user: LocalsUser): SaveResult<Lo
 }
 
 export type DeleteLogResult = ReturnType<typeof deleteLog>;
-export async function deleteLog(logId: LogId, userId?: UserId): SaveResult<{ id: LogId }, LogSchema> {
+export async function deleteLog(logId: LogId, userId: UserId): SaveResult<{ id: LogId }, LogSchema> {
 	try {
-		if (!userId) throw new LogError("Not authenticated", { status: 401 });
-
 		const { success } = await rateLimiter("insert", userId);
 		if (!success) throw new LogError("Too many requests", { status: 429 });
 

@@ -3,17 +3,33 @@
 
 import type { ThemeGroups, Themes } from "$lib/constants";
 import type { UserId } from "$lib/schemas";
-import type { Prettify } from "$lib/util";
-import type { DefaultSession } from "@auth/core/types";
+import "@auth/sveltekit";
+import type { Session } from "@auth/sveltekit";
 import "@total-typescript/ts-reset/fetch";
 import "@total-typescript/ts-reset/json-parse";
+
+declare module "@auth/sveltekit" {
+	interface User {
+		id: UserId;
+		name: string;
+	}
+
+	interface AdapterUser {
+		id: UserId;
+		name: string;
+	}
+
+	interface Session {
+		user: AdapterUser & User;
+	}
+}
 
 declare global {
 	namespace App {
 		// interface Error {}
 		interface Locals {
-			session: LocalsSession | null;
-			auth(): Promise<LocalsSession | null>;
+			session: Session | null;
+			auth(): Promise<Session | null>;
 		}
 		// interface PageData {}
 		// interface Platform {}
@@ -56,18 +72,7 @@ declare global {
 		}
 	}
 
-	type LocalsUser = Prettify<
-		DefaultSession["user"] & {
-			id: UserId;
-			name: string;
-			emailVerified: Date | null;
-		}
-	>;
-
-	interface LocalsSession {
-		user?: LocalsUser;
-		error?: string;
-	}
+	type LocalsSession = Session;
 
 	interface ViewTransition {
 		/**
