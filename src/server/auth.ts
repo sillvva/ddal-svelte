@@ -14,11 +14,11 @@ export function signInRedirect(url: URL): never {
 }
 
 /**
- * Redirects to /auth/err with a code and message query parameter
+ * Redirects to / with a code and message query parameter
  * @param code - The error code
  * @param message - The error message
  * @param redirectTo - The URL to redirect to after signing in
- * @throws {Redirect} Redirects to /auth/err
+ * @throws {Redirect} Redirects to /
  * @return {never}
  */
 export function authErrRedirect(code: number | string, message: string, redirectTo?: URL): never {
