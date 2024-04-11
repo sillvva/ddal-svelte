@@ -3,7 +3,7 @@ import { clearUserCache, unlinkProvider, type ProviderId } from "$server/actions
 import { assertUser } from "$server/auth";
 import { rateLimiter } from "$server/cache.js";
 import { getCharacterCaches, getCharactersCache } from "$server/data/characters";
-import { error, redirect } from "@sveltejs/kit";
+import { error } from "@sveltejs/kit";
 
 export const load = async (event) => {
 	const session = event.locals.session;
@@ -40,7 +40,7 @@ export const actions = {
 			await unlinkProvider(session.user.id, provider);
 
 			const newSession = await event.locals.auth();
-			if (!newSession?.user) redirect(302, "/");
+			assertUser(newSession?.user, event.url);
 
 			return { success: true };
 		} catch (e) {
