@@ -72,13 +72,13 @@ const providers: OAuthProvider[] = [
 ];
 
 const auth = SvelteKitAuth(async (event) => {
+	const redirectTo = event.url.searchParams.get("redirect") || undefined;
+	const redirectUrl = redirectTo ? new URL(redirectTo, event.url.origin) : undefined;
+
 	return {
 		callbacks: {
 			async signIn({ account, user, profile }) {
-				assertUser(user);
-
-				const redirectTo = event.url.searchParams.get("redirect") || undefined;
-				const redirectUrl = redirectTo ? new URL(redirectTo, event.url.origin) : undefined;
+				assertUser(user, redirectUrl);
 
 				if (!account) authErrRedirect("Missing Account Data", "Account not found", redirectUrl);
 				if (!profile) authErrRedirect("Missing Account Data", "Profile not found", redirectUrl);
@@ -169,7 +169,7 @@ const auth = SvelteKitAuth(async (event) => {
 				return true;
 			},
 			async session({ session, user }) {
-				assertUser(user);
+				assertUser(user, redirectUrl);
 
 				if (session.expires >= new Date()) return session satisfies LocalsSession;
 

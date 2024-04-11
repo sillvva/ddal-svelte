@@ -1,6 +1,7 @@
 import type { UserId } from "$lib/schemas";
 import type { AdapterUser } from "@auth/core/adapters";
-import type { User } from "@auth/sveltekit";
+import { AuthError } from "@auth/core/errors";
+import { type User } from "@auth/sveltekit";
 import { redirect } from "@sveltejs/kit";
 
 /**
@@ -29,6 +30,16 @@ export function authErrRedirect(code: number | string, message: string, redirect
 	);
 }
 
-export function assertUser<T extends User | AdapterUser>(user: T): asserts user is T & { id: UserId; name: string } {
-	if (!user?.id || !user.name) throw new Error("Not authenticated");
+export function assertUser<T extends User | AdapterUser>(
+	user: T,
+	redirectTo?: URL
+): asserts user is T & { id: UserId; name: string } {
+	try {
+		if (!user?.id || !user.name) throw new AuthError("Missing user id or name");
+	} catch (error) {
+		if (error instanceof AuthError) {
+			authErrRedirect(error.type || "Auth Error", error.message, redirectTo);
+		}
+		throw error;
+	}
 }
