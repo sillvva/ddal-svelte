@@ -142,7 +142,9 @@ export async function saveLog(input: LogSchema, user: LocalsSession["user"]): Sa
 					.insert(magicItems)
 					.values(
 						input.magicItemsGained.map((item) => ({
-							...item,
+							id: item.id || undefined,
+							name: item.name,
+							description: item.description,
 							logGainedId: log.id
 						}))
 					)
@@ -167,7 +169,9 @@ export async function saveLog(input: LogSchema, user: LocalsSession["user"]): Sa
 					.insert(storyAwards)
 					.values(
 						input.storyAwardsGained.map((item) => ({
-							...item,
+							id: item.id || undefined,
+							name: item.name,
+							description: item.description,
 							logGainedId: log.id
 						}))
 					)
