@@ -34,7 +34,7 @@ export async function saveCharacter(
 
 		if (!result) throw new SaveError("Failed to save character");
 
-		revalidateKeys([
+		await revalidateKeys([
 			characterId != "new" && ["character", characterId, "logs"],
 			characterId != "new" && ["character", characterId, "no-logs"],
 			characterId != "new" && ["dms", userId],
@@ -75,7 +75,7 @@ export async function deleteCharacter(
 
 		if (!result) throw new SaveError("Failed to delete character");
 
-		revalidateKeys([
+		await revalidateKeys([
 			["character", result.id, "logs"],
 			["character", result.id, "no-logs"],
 			["characters", userId],

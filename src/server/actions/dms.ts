@@ -35,7 +35,7 @@ export async function saveDM(
 		if (!result) throw new SaveError("Failed to save DM");
 
 		const characterIds = Array.from(new Set(dm.logs.filter((l) => l.characterId).map((l) => l.characterId)));
-		revalidateKeys(
+		await revalidateKeys(
 			characterIds
 				.map((id) => ["character", id, "logs"] as CacheKey)
 				.concat([
@@ -69,7 +69,7 @@ export async function deleteDM(
 		const [result] = await db.delete(dungeonMasters).where(eq(dungeonMasters.id, dmId)).returning({ id: dungeonMasters.id });
 		if (!result) throw new SaveError("Failed to delete DM");
 
-		revalidateKeys([
+		await revalidateKeys([
 			["dms", user.id, "logs"],
 			["search-data", user.id]
 		]);

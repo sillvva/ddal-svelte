@@ -204,9 +204,11 @@ export async function saveLog(input: LogSchema, user: LocalsSession["user"]): Sa
 
 		if (!log) throw new LogError("Could not save log");
 
-		revalidateKeys([
+		await revalidateKeys([
 			log.isDmLog && log.dm?.uid && ["dm-logs", log.dm.uid],
+			log.characterId && ["character", log.characterId, "no-logs"],
 			log.characterId && ["character", log.characterId, "logs"],
+			log.characterId && ["character", log.characterId],
 			user.id && ["dms", user.id, "logs"],
 			user.id && ["search-data", user.id]
 		]);
@@ -241,7 +243,7 @@ export async function deleteLog(logId: LogId, userId: UserId): SaveResult<{ id: 
 			return log;
 		});
 
-		revalidateKeys([
+		await revalidateKeys([
 			log.isDmLog && log.dm?.uid && ["dm-logs", log.dm.uid],
 			log.characterId && ["character", log.characterId, "logs"],
 			["search-data", userId]
