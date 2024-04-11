@@ -1,13 +1,13 @@
 import { isDefined } from "$lib/util.js";
 import { clearUserCache, unlinkProvider, type ProviderId } from "$server/actions/users.js";
-import { signInRedirect } from "$server/auth";
+import { assertUser } from "$server/auth";
 import { rateLimiter } from "$server/cache.js";
 import { getCharacterCaches, getCharactersCache } from "$server/data/characters";
 import { error, redirect } from "@sveltejs/kit";
 
 export const load = async (event) => {
 	const session = event.locals.session;
-	if (!session?.user) signInRedirect(event.url);
+	assertUser(session?.user, event.url);
 
 	const { success } = await rateLimiter("fetch", session.user.id);
 	if (!success) error(429, "Too Many Requests");
@@ -25,12 +25,12 @@ export const load = async (event) => {
 export const actions = {
 	clearCaches: async (event) => {
 		const session = event.locals.session;
-		if (!session?.user) redirect(302, "/");
+		assertUser(session?.user, event.url);
 		return await clearUserCache(session.user.id);
 	},
 	unlinkProvider: async (event) => {
 		const session = event.locals.session;
-		if (!session?.user) redirect(302, "/");
+		assertUser(session?.user, event.url);
 
 		try {
 			const formData = await event.request.formData();

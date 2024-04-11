@@ -1,6 +1,7 @@
 import { editCharacterSchema, logSchema } from "$lib/schemas.js";
 import { deleteCharacter } from "$server/actions/characters";
 import { deleteLog } from "$server/actions/logs";
+import { assertUser } from "$server/auth.js";
 import { error, redirect } from "@sveltejs/kit";
 import { fail, setError, superValidate } from "sveltekit-superforms";
 import { valibot } from "sveltekit-superforms/adapters";
@@ -24,7 +25,7 @@ export const load = async (event) => {
 export const actions = {
 	deleteCharacter: async (event) => {
 		const session = await event.locals.session;
-		if (!session?.user) redirect(302, "/");
+		assertUser(session?.user, event.url);
 
 		const form = await superValidate(event, valibot(pick(editCharacterSchema, ["id"])));
 		if (!form.valid) return fail(400, { form });
@@ -39,7 +40,7 @@ export const actions = {
 	},
 	deleteLog: async (event) => {
 		const session = await event.locals.session;
-		if (!session?.user) redirect(302, "/");
+		assertUser(session?.user, event.url);
 
 		const form = await superValidate(event, valibot(pick(logSchema, ["id"])));
 		if (!form.valid) return fail(400, { form });

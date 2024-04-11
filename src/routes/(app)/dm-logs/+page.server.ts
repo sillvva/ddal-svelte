@@ -1,9 +1,8 @@
 import { logSchema } from "$lib/schemas.js";
 import { deleteLog } from "$server/actions/logs";
-import { signInRedirect } from "$server/auth";
+import { assertUser } from "$server/auth.js";
 import { rateLimiter } from "$server/cache.js";
 import { getDMLogsCache } from "$server/data/logs";
-import { redirect } from "@sveltejs/kit";
 import { error } from "console";
 import { fail, setError, superValidate } from "sveltekit-superforms";
 import { valibot } from "sveltekit-superforms/adapters";
@@ -11,7 +10,7 @@ import { pick } from "valibot";
 
 export const load = async (event) => {
 	const session = event.locals.session;
-	if (!session?.user?.name) signInRedirect(event.url);
+	assertUser(session?.user, event.url);
 
 	const { success } = await rateLimiter("fetch", session.user.id);
 	if (!success) error(429, "Too Many Requests");
@@ -28,7 +27,7 @@ export const load = async (event) => {
 export const actions = {
 	deleteLog: async (event) => {
 		const session = await event.locals.session;
-		if (!session?.user) redirect(302, "/");
+		assertUser(session?.user, event.url);
 
 		const form = await superValidate(event, valibot(pick(logSchema, ["id"])));
 		if (!form.valid) return fail(400, { form });
