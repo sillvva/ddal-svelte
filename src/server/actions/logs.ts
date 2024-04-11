@@ -133,9 +133,13 @@ export async function saveLog(input: LogSchema, user: LocalsSession["user"]): Sa
 			if (!log?.id) throw new LogError("Could not save log");
 
 			const itemIds = input.magicItemsGained.map((item) => item.id).filter(Boolean);
-			if (itemIds.length) {
-				await tx.delete(magicItems).where(and(eq(magicItems.logGainedId, log.id), notInArray(magicItems.id, itemIds)));
-			}
+			await tx
+				.delete(magicItems)
+				.where(
+					itemIds.length
+						? and(eq(magicItems.logGainedId, log.id), notInArray(magicItems.id, itemIds))
+						: eq(magicItems.logGainedId, log.id)
+				);
 
 			if (input.magicItemsGained.length) {
 				await tx
@@ -160,9 +164,13 @@ export async function saveLog(input: LogSchema, user: LocalsSession["user"]): Sa
 			}
 
 			const awardIds = input.storyAwardsGained.map((item) => item.id).filter(Boolean);
-			if (awardIds.length) {
-				await tx.delete(storyAwards).where(and(eq(storyAwards.logGainedId, log.id), notInArray(storyAwards.id, awardIds)));
-			}
+			await tx
+				.delete(storyAwards)
+				.where(
+					awardIds.length
+						? and(eq(storyAwards.logGainedId, log.id), notInArray(storyAwards.id, awardIds))
+						: eq(storyAwards.logGainedId, log.id)
+				);
 
 			if (input.storyAwardsGained.length) {
 				await tx
