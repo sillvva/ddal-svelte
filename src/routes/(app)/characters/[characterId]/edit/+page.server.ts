@@ -1,17 +1,17 @@
 import { BLANK_CHARACTER } from "$lib/constants.js";
 import { characterIdSchema, newCharacterSchema } from "$lib/schemas";
 import { saveCharacter } from "$server/actions/characters.js";
-import { signInRedirect } from "$server/auth";
+import { assertUser } from "$server/auth";
 import { redirect } from "@sveltejs/kit";
 import { fail, superValidate } from "sveltekit-superforms";
 import { valibot } from "sveltekit-superforms/adapters";
 import { parse } from "valibot";
 
 export const load = async (event) => {
-	const parent = await event.parent();
-
 	const session = event.locals.session;
-	if (!session?.user) signInRedirect(event.url);
+	assertUser(session?.user, event.url);
+
+	const parent = await event.parent();
 
 	let title = "New Character";
 	if (event.params.characterId !== "new") {
@@ -51,7 +51,7 @@ export const load = async (event) => {
 export const actions = {
 	saveCharacter: async (event) => {
 		const session = await event.locals.session;
-		if (!session?.user) redirect(302, "/");
+		assertUser(session?.user, event.url);
 
 		const form = await superValidate(event, valibot(newCharacterSchema));
 		if (!form.valid) return fail(400, { form });

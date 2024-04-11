@@ -59,7 +59,7 @@ export const accounts = pgTable(
 		scope: varchar("scope").notNull(),
 		idToken: varchar("id_token"),
 		sessionState: varchar("session_state"),
-		lastLogin: timestamp("last_login", { mode: "date" })
+		lastLogin: timestamp("last_login", { mode: "date", withTimezone: true })
 	},
 	(table) => {
 		return {

@@ -1,7 +1,7 @@
 import { defaultLogData, getMagicItems, getStoryAwards, logDataToSchema } from "$lib/entities.js";
 import { characterIdSchema, characterLogSchema, logIdSchema } from "$lib/schemas";
 import { saveLog } from "$server/actions/logs.js";
-import { signInRedirect } from "$server/auth.js";
+import { assertUser } from "$server/auth.js";
 import { getCharacterCache } from "$server/data/characters";
 import { getUserDMsCache } from "$server/data/dms";
 import { getLog } from "$server/data/logs";
@@ -12,12 +12,12 @@ import { valibot } from "sveltekit-superforms/adapters";
 import { parse, safeParse } from "valibot";
 
 export const load = async (event) => {
+	const session = event.locals.session;
+	assertUser(session?.user, event.url);
+
 	const parent = await event.parent();
 	const character = parent.character;
 	if (!character) error(404, "Character not found");
-
-	const session = event.locals.session;
-	if (!session?.user) signInRedirect(event.url);
 
 	const idResult = safeParse(logIdSchema, event.params.logId || "");
 	if (!idResult.success) redirect(302, `/character/${character.id}`);
@@ -61,8 +61,8 @@ export const load = async (event) => {
 
 export const actions = {
 	saveLog: async (event) => {
-		const session = await event.locals.session;
-		if (!session?.user) redirect(302, "/");
+		const session = event.locals.session;
+		assertUser(session?.user, event.url);
 
 		const characterId = parse(characterIdSchema, event.params.characterId);
 		const character = await getCharacterCache(characterId);

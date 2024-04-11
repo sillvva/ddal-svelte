@@ -1,18 +1,17 @@
 import { getLevels } from "$lib/entities";
-import { type LogId, type LogSchema } from "$lib/schemas";
+import { type LogId, type LogSchema, type UserId } from "$lib/schemas";
 import { SaveError, type SaveResult } from "$lib/util";
 import { rateLimiter, revalidateKeys } from "$server/cache";
 import { logIncludes, type LogData } from "$server/data/logs";
-import { db } from "$server/db";
+import { buildConflictUpdateColumns, db } from "$server/db";
 import { dungeonMasters, logs, magicItems, storyAwards, type InsertDungeonMaster, type Log } from "$server/db/schema";
 import { and, eq, inArray, notInArray } from "drizzle-orm";
 
 class LogError extends SaveError<LogSchema> {}
 
 export type SaveLogResult = ReturnType<typeof saveLog>;
-export async function saveLog(input: LogSchema, user?: CustomSession["user"]): SaveResult<LogData, LogSchema> {
+export async function saveLog(input: LogSchema, user: LocalsSession["user"]): SaveResult<LogData, LogSchema> {
 	try {
-		if (!user?.name || !user?.id) throw new LogError("Not authenticated", { status: 401 });
 		const userId = user.id;
 		const characterId = input.characterId;
 
@@ -55,7 +54,7 @@ export async function saveLog(input: LogSchema, user?: CustomSession["user"]): S
 				let isMe = false;
 				if (input.isDmLog) isMe = true;
 				if (input.dm.uid === userId) isMe = true;
-				if (["Me", "", user.name?.trim()].includes(input.dm.name.trim())) isMe = true;
+				if (["", user.name.toLowerCase()].includes(input.dm.name.toLowerCase().trim())) isMe = true;
 
 				if (!input.dm.id) {
 					const search = await tx.query.dungeonMasters.findFirst({
@@ -79,7 +78,7 @@ export async function saveLog(input: LogSchema, user?: CustomSession["user"]): S
 				}
 
 				if (!input.dm.name) {
-					if (isMe) input.dm.name = user.name || "Me";
+					if (isMe) input.dm.name = user.name;
 					else
 						throw new LogError("Dungeon Master name is required", {
 							status: 400,
@@ -133,25 +132,30 @@ export async function saveLog(input: LogSchema, user?: CustomSession["user"]): S
 
 			if (!log?.id) throw new LogError("Could not save log");
 
-			const itemsToUpdate = input.magicItemsGained.filter((item) => item.id);
-			for (const item of itemsToUpdate) {
-				await tx.update(magicItems).set(item).where(eq(magicItems.id, item.id));
-			}
-
-			const itemsToDelete = itemsToUpdate.map((item) => item.id);
-			if (itemsToDelete.length) {
-				await tx.delete(magicItems).where(and(eq(magicItems.logGainedId, log.id), notInArray(magicItems.id, itemsToDelete)));
-			}
-
-			const itemsToCreate = input.magicItemsGained.filter((item) => !item.id);
-			if (itemsToCreate.length) {
-				await tx.insert(magicItems).values(
-					itemsToCreate.map((item) => ({
-						name: item.name,
-						description: item.description,
-						logGainedId: log.id
-					}))
+			const itemIds = input.magicItemsGained.map((item) => item.id).filter(Boolean);
+			await tx
+				.delete(magicItems)
+				.where(
+					itemIds.length
+						? and(eq(magicItems.logGainedId, log.id), notInArray(magicItems.id, itemIds))
+						: eq(magicItems.logGainedId, log.id)
 				);
+
+			if (input.magicItemsGained.length) {
+				await tx
+					.insert(magicItems)
+					.values(
+						input.magicItemsGained.map((item) => ({
+							id: item.id || undefined,
+							name: item.name,
+							description: item.description,
+							logGainedId: log.id
+						}))
+					)
+					.onConflictDoUpdate({
+						target: magicItems.id,
+						set: buildConflictUpdateColumns(magicItems, ["name", "description"])
+					});
 			}
 
 			await tx.update(magicItems).set({ logLostId: null }).where(eq(magicItems.logLostId, log.id));
@@ -159,27 +163,30 @@ export async function saveLog(input: LogSchema, user?: CustomSession["user"]): S
 				await tx.update(magicItems).set({ logLostId: log.id }).where(inArray(magicItems.id, input.magicItemsLost));
 			}
 
-			const storyAwardsToUpdate = input.storyAwardsGained.filter((item) => item.id);
-			for (const item of storyAwardsToUpdate) {
-				await tx.update(storyAwards).set(item).where(eq(storyAwards.id, item.id));
-			}
-
-			const storyAwardsToDelete = storyAwardsToUpdate.map((item) => item.id);
-			if (storyAwardsToDelete.length) {
-				await tx
-					.delete(storyAwards)
-					.where(and(eq(storyAwards.logGainedId, log.id), notInArray(storyAwards.id, storyAwardsToDelete)));
-			}
-
-			const storyAwardsToCreate = input.storyAwardsGained.filter((item) => !item.id);
-			if (storyAwardsToCreate.length) {
-				await tx.insert(storyAwards).values(
-					storyAwardsToCreate.map((item) => ({
-						name: item.name,
-						description: item.description,
-						logGainedId: log.id
-					}))
+			const awardIds = input.storyAwardsGained.map((item) => item.id).filter(Boolean);
+			await tx
+				.delete(storyAwards)
+				.where(
+					awardIds.length
+						? and(eq(storyAwards.logGainedId, log.id), notInArray(storyAwards.id, awardIds))
+						: eq(storyAwards.logGainedId, log.id)
 				);
+
+			if (input.storyAwardsGained.length) {
+				await tx
+					.insert(storyAwards)
+					.values(
+						input.storyAwardsGained.map((item) => ({
+							id: item.id || undefined,
+							name: item.name,
+							description: item.description,
+							logGainedId: log.id
+						}))
+					)
+					.onConflictDoUpdate({
+						target: storyAwards.id,
+						set: buildConflictUpdateColumns(storyAwards, ["name", "description"])
+					});
 			}
 
 			await tx.update(storyAwards).set({ logLostId: null }).where(eq(storyAwards.logLostId, log.id));
@@ -197,9 +204,11 @@ export async function saveLog(input: LogSchema, user?: CustomSession["user"]): S
 
 		if (!log) throw new LogError("Could not save log");
 
-		revalidateKeys([
+		await revalidateKeys([
 			log.isDmLog && log.dm?.uid && ["dm-logs", log.dm.uid],
+			log.characterId && ["character", log.characterId, "no-logs"],
 			log.characterId && ["character", log.characterId, "logs"],
+			log.characterId && ["character", log.characterId],
 			user.id && ["dms", user.id, "logs"],
 			user.id && ["search-data", user.id]
 		]);
@@ -211,10 +220,8 @@ export async function saveLog(input: LogSchema, user?: CustomSession["user"]): S
 }
 
 export type DeleteLogResult = ReturnType<typeof deleteLog>;
-export async function deleteLog(logId: LogId, userId?: string): SaveResult<{ id: LogId }, LogSchema> {
+export async function deleteLog(logId: LogId, userId: UserId): SaveResult<{ id: LogId }, LogSchema> {
 	try {
-		if (!userId) throw new LogError("Not authenticated", { status: 401 });
-
 		const { success } = await rateLimiter("insert", userId);
 		if (!success) throw new LogError("Too many requests", { status: 429 });
 
@@ -236,7 +243,7 @@ export async function deleteLog(logId: LogId, userId?: string): SaveResult<{ id:
 			return log;
 		});
 
-		revalidateKeys([
+		await revalidateKeys([
 			log.isDmLog && log.dm?.uid && ["dm-logs", log.dm.uid],
 			log.characterId && ["character", log.characterId, "logs"],
 			["search-data", userId]

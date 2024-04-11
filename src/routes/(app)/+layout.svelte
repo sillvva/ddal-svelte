@@ -134,12 +134,7 @@
 {/if}
 
 <div class="relative flex min-h-screen flex-col">
-	<header
-		class={twMerge(
-			"relative top-0 z-20 w-full border-b-[1px] border-slate-500/50 transition-all",
-			"sticky top-0 border-base-300 bg-base-100"
-		)}
-	>
+	<header class="sticky top-0 z-20 w-full border-b border-base-300 bg-base-100 transition-all">
 		<nav class="container relative z-10 mx-auto flex max-w-5xl gap-2 p-4">
 			<Drawer />
 			<Settings bind:open={settingsOpen} />
@@ -198,7 +193,7 @@
 		</nav>
 	</header>
 	<div class="container relative z-10 mx-auto max-w-5xl flex-1 p-4"><slot /></div>
-	<footer class="z-16 footer footer-center relative bg-base-300/50 p-4 text-base-content print:hidden">
+	<footer class="z-16 footer footer-center relative border-t border-base-300 p-4 text-base-content print:hidden">
 		<div>
 			<p>
 				The name

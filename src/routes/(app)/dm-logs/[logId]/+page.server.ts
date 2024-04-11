@@ -1,7 +1,7 @@
 import { defaultLogData, logDataToSchema } from "$lib/entities.js";
 import { dMLogSchema, logIdSchema } from "$lib/schemas";
 import { saveLog } from "$server/actions/logs";
-import { signInRedirect } from "$server/auth";
+import { assertUser } from "$server/auth";
 import { getCharacterCaches, getCharactersCache } from "$server/data/characters";
 import { getDMLog, getLog } from "$server/data/logs";
 import { error, redirect } from "@sveltejs/kit";
@@ -10,11 +10,11 @@ import { valibot } from "sveltekit-superforms/adapters";
 import { safeParse } from "valibot";
 
 export const load = async (event) => {
-	const parent = await event.parent();
-
 	const session = event.locals.session;
-	if (!session?.user?.name) signInRedirect(event.url);
+	assertUser(session?.user, event.url);
 	const user = session.user;
+
+	const parent = await event.parent();
 
 	const idResult = safeParse(logIdSchema, event.params.logId || "");
 	if (!idResult.success) redirect(302, `/dm-logs`);
@@ -59,7 +59,7 @@ export const load = async (event) => {
 export const actions = {
 	saveLog: async (event) => {
 		const session = event.locals.session;
-		if (!session?.user) redirect(302, "/");
+		assertUser(session?.user, event.url);
 
 		const idResult = safeParse(logIdSchema, event.params.logId || "");
 		if (!idResult.success) redirect(302, `/dm-logs`);

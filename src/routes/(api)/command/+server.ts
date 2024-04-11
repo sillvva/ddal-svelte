@@ -20,7 +20,7 @@ const sectionData = {
 
 type GetData = Awaited<ReturnType<typeof getData>>;
 export type SearchData = Array<SectionData | GetData[number]>;
-async function getData(user: NonNullable<LocalsSession["user"]>) {
+async function getData(user: LocalsSession["user"]) {
 	return [
 		{
 			title: "Characters",
@@ -65,7 +65,7 @@ async function getData(user: NonNullable<LocalsSession["user"]>) {
 	];
 }
 
-async function getDataCache(user: NonNullable<LocalsSession["user"]>) {
+async function getDataCache(user: LocalsSession["user"]) {
 	return await cache(() => getData(user), ["search-data", user.id], 86400 * 7);
 }
 

@@ -1,6 +1,5 @@
 import { PROVIDERS } from "$lib/constants";
 import { privateEnv } from "$lib/env/private";
-import type { UserId } from "$lib/schemas";
 import { isDefined, joinStringList } from "$lib/util";
 import { db, q } from "$server/db";
 import { accounts, users, type Account } from "$server/db/schema";
@@ -14,7 +13,7 @@ import { redirect, type Handle } from "@sveltejs/kit";
 import { sequence } from "@sveltejs/kit/hooks";
 import { handle as documentHandle } from "@sveltekit-addons/document/hooks";
 import { and, eq } from "drizzle-orm";
-import { authErrRedirect } from "./server/auth";
+import { assertUser, authErrRedirect } from "./server/auth";
 
 interface OAuthProvider {
 	id: string;
@@ -73,11 +72,13 @@ const providers: OAuthProvider[] = [
 ];
 
 const auth = SvelteKitAuth(async (event) => {
+	const redirectTo = event.url.searchParams.get("redirect") || undefined;
+	const redirectUrl = redirectTo ? new URL(redirectTo, event.url.origin) : undefined;
+
 	return {
 		callbacks: {
 			async signIn({ account, user, profile }) {
-				const redirectTo = event.url.searchParams.get("redirect") || undefined;
-				const redirectUrl = redirectTo ? new URL(redirectTo, event.url.origin) : undefined;
+				assertUser(user, redirectUrl);
 
 				if (!account) authErrRedirect("Missing Account Data", "Account not found", redirectUrl);
 				if (!profile) authErrRedirect("Missing Account Data", "Profile not found", redirectUrl);
@@ -163,22 +164,17 @@ const auth = SvelteKitAuth(async (event) => {
 				}
 
 				if (user.id)
-					await db
-						.update(users)
-						.set({ name: accountProfile.name, image: accountProfile.image })
-						.where(eq(users.id, user.id as UserId));
+					await db.update(users).set({ name: accountProfile.name, image: accountProfile.image }).where(eq(users.id, user.id));
 
 				return true;
 			},
 			async session({ session, user }) {
-				if (session.expires >= new Date())
-					return {
-						...session,
-						user: { ...session.user, id: session.user.id as UserId }
-					} satisfies LocalsSession;
+				assertUser(user, redirectUrl);
+
+				if (session.expires >= new Date()) return session satisfies LocalsSession;
 
 				const account = await q.accounts.findFirst({
-					where: (accounts, { and, eq, isNotNull }) => and(eq(accounts.userId, user.id as UserId), isNotNull(accounts.lastLogin)),
+					where: (accounts, { and, eq, isNotNull }) => and(eq(accounts.userId, user.id), isNotNull(accounts.lastLogin)),
 					orderBy: (account, { desc }) => desc(account.lastLogin)
 				});
 
@@ -189,10 +185,7 @@ const auth = SvelteKitAuth(async (event) => {
 					}
 				}
 
-				return {
-					...session,
-					user: { ...session.user, id: session.user.id as UserId }
-				} satisfies LocalsSession;
+				return session satisfies LocalsSession;
 			}
 		},
 		secret: privateEnv.AUTH_SECRET,

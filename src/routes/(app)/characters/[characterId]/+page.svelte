@@ -128,7 +128,7 @@
 />
 
 {#if data.session?.user}
-	<div class="flex gap-4 [&_.back-btn]:mb-0">
+	<div class="flex gap-4">
 		<BreadCrumbs />
 		{#if myCharacter}
 			<div class="hidden gap-4 sm:flex print:hidden">

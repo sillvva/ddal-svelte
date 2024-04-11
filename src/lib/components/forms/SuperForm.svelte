@@ -10,17 +10,20 @@
 	import SuperDebug, { type SuperForm } from "sveltekit-superforms";
 	import FormMessage from "./FormMessage.svelte";
 
-	type $$Props = HTMLFormAttributes & {
+	interface $$Props extends HTMLFormAttributes {
 		superform: SuperForm<T, any>;
 		showMessage?: boolean;
-	};
+	}
+
+	$: rest = $$restProps as HTMLFormAttributes | undefined;
 
 	export let superform: SuperForm<T, any>;
 	export let showMessage = false;
+
 	$: showMessage = !superform.options.resetForm;
 
-	const { form, errors, allErrors, capture, restore, submitting, enhance, message } = superform;
-	const method = $$props.method || "post";
+	const { form, enhance, submitting, errors, allErrors, message, capture, restore } = superform;
+	const method = rest?.method || "post";
 
 	function formstate(refForm: HTMLFormElement) {
 		const unsubscribers: Unsubscriber[] = [];
@@ -78,7 +81,7 @@
 	</div>
 {/if}
 
-<form {method} {...$$restProps} use:enhance use:formstate>
+<form {method} {...rest} use:enhance use:formstate>
 	<div class="grid grid-cols-12 gap-4">
 		<slot />
 	</div>

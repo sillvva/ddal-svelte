@@ -1,3 +1,4 @@
+import { dev } from "$app/environment";
 import { privateEnv } from "$lib/env/private";
 import type { Falsy } from "$lib/util";
 import { Ratelimit } from "@upstash/ratelimit";
@@ -22,6 +23,7 @@ function createLimiter(limit: number, duration: `${number} ${"s" | "m" | "h"}`) 
 }
 
 export async function rateLimiter(type: keyof typeof limits, ...identifiers: string[]) {
+	if (dev) return { success: true, reset: 0 };
 	const { success, reset } = await limits[type].limit(identifiers.join(delimiter));
 	return { success, reset };
 }
@@ -128,7 +130,7 @@ export async function mcache<TReturnType extends object>(
  * Invalidates Redis caches based on an array of keys.
  * @param [keys] The cache keys as an array of arrays of strings. Empty strings, false, null, and undefined are ignored.
  */
-export function revalidateKeys(keys: Array<CacheKey | Falsy>) {
+export async function revalidateKeys(keys: Array<CacheKey | Falsy>) {
 	const cacheKeys = keys.filter((t): t is CacheKey => Array.isArray(t) && !!t.length).map((t) => t.join(delimiter));
-	if (cacheKeys.length) redis.del(...cacheKeys);
+	if (cacheKeys.length) await redis.del(...cacheKeys);
 }

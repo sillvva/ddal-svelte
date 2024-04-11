@@ -4,7 +4,7 @@ export const load = async (event) => {
 	const session = event.locals.session;
 
 	const redirectTo = event.url.searchParams.get("redirect");
-	if (session?.user) redirect(302, redirectTo || "/characters");
+	if (session?.user?.id) redirect(302, redirectTo || "/characters");
 
 	return {
 		redirectTo

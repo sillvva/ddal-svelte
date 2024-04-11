@@ -1,6 +1,6 @@
 import { dungeonMasterIdSchema, dungeonMasterSchema } from "$lib/schemas";
 import { saveDM } from "$server/actions/dms";
-import { signInRedirect } from "$server/auth.js";
+import { assertUser } from "$server/auth.js";
 import { getUserDMsWithLogsCache } from "$server/data/dms";
 import { error, redirect } from "@sveltejs/kit";
 import { fail, superValidate } from "sveltekit-superforms";
@@ -8,10 +8,10 @@ import { valibot } from "sveltekit-superforms/adapters";
 import { safeParse } from "valibot";
 
 export const load = async (event) => {
-	const parent = await event.parent();
-
 	const session = event.locals.session;
-	if (!session?.user?.name) signInRedirect(event.url);
+	assertUser(session?.user, event.url);
+
+	const parent = await event.parent();
 
 	const idResult = safeParse(dungeonMasterIdSchema, event.params.dmId || "");
 	if (!idResult.success) redirect(302, `/dms`);
@@ -50,7 +50,7 @@ export const load = async (event) => {
 export const actions = {
 	saveDM: async (event) => {
 		const session = await event.locals.session;
-		if (!session?.user) redirect(302, "/");
+		assertUser(session?.user, event.url);
 
 		const idResult = safeParse(dungeonMasterIdSchema, event.params.dmId || "");
 		if (!idResult.success) redirect(302, `/dms`);

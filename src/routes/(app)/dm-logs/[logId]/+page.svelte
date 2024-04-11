@@ -29,7 +29,7 @@
 			<Input type="text" {superform} field="name">Title</Input>
 		</Control>
 		<Control class="col-span-12 sm:col-span-6 lg:col-span-3">
-			<DateInput {superform} field="date" inputClass="lg:text-xs">Date</DateInput>
+			<DateInput {superform} field="date" class="lg:text-xs">Date</DateInput>
 		</Control>
 		<Control class="col-span-12 sm:col-span-6 lg:col-span-3">
 			<Combobox
@@ -56,7 +56,7 @@
 				empty="null"
 				minDateField="date"
 				required={!!$form.characterId}
-				inputClass="lg:text-xs"
+				class="lg:text-xs"
 			>
 				Date
 			</DateInput>

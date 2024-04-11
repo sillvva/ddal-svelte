@@ -13,7 +13,7 @@ export async function clearUserCache(userId: UserId) {
 
 	const characters = await getCharactersCache(userId);
 
-	revalidateKeys(
+	await revalidateKeys(
 		characters
 			.map((c) => ["character", c.id, "logs"] as CacheKey)
 			.concat(characters.map((c) => ["character", c.id, "no-logs"] as CacheKey))

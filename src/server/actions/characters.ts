@@ -13,7 +13,6 @@ export async function saveCharacter(
 ): SaveResult<Character, NewCharacterSchema> {
 	try {
 		if (!characterId) throw new SaveError("No character ID provided", { status: 400 });
-		if (!userId) throw new SaveError("Not authenticated", { status: 401 });
 
 		const { success } = await rateLimiter(characterId === "new" ? "insert" : "update", userId);
 		if (!success) throw new SaveError("Too many requests", { status: 429 });
@@ -35,7 +34,7 @@ export async function saveCharacter(
 
 		if (!result) throw new SaveError("Failed to save character");
 
-		revalidateKeys([
+		await revalidateKeys([
 			characterId != "new" && ["character", characterId, "logs"],
 			characterId != "new" && ["character", characterId, "no-logs"],
 			characterId != "new" && ["dms", userId],
@@ -52,11 +51,9 @@ export async function saveCharacter(
 export type DeleteCharacterResult = ReturnType<typeof deleteCharacter>;
 export async function deleteCharacter(
 	characterId: CharacterId,
-	userId?: string
+	userId: UserId
 ): SaveResult<{ id: CharacterId }, NewCharacterSchema> {
 	try {
-		if (!userId) throw new SaveError("Not authenticated", { status: 401 });
-
 		const { success } = await rateLimiter("insert", userId);
 		if (!success) throw new SaveError("Too many requests", { status: 429 });
 
@@ -78,7 +75,7 @@ export async function deleteCharacter(
 
 		if (!result) throw new SaveError("Failed to delete character");
 
-		revalidateKeys([
+		await revalidateKeys([
 			["character", result.id, "logs"],
 			["character", result.id, "no-logs"],
 			["characters", userId],
