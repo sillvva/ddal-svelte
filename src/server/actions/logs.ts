@@ -25,7 +25,7 @@ export async function saveLog(input: LogSchema, user: LocalsSession["user"]): Sa
 					: null
 				: new Date(input.date);
 			if (input.characterId && appliedDate === null)
-				throw new LogError("Applied date is required", { status: 400, field: "appliedDate" });
+				throw new LogError("Applied date is required if character is selected", { status: 400, field: "appliedDate" });
 
 			if (characterId) {
 				const character = await tx.query.characters.findFirst({
