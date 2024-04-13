@@ -1,13 +1,16 @@
 import type { DungeonMasterId } from "$lib/schemas";
 import { cache } from "$server/cache";
-import { db, q } from "$server/db";
-import { characters, logs } from "$server/db/schema";
+import { q } from "$server/db";
+import { dungeonMasters } from "$server/db/schema";
 import { sorter } from "@sillvva/utils";
+import { eq, or } from "drizzle-orm";
 
 export type UserDMsWithLogs = Awaited<ReturnType<typeof getUserDMsWithLogs>>;
 export async function getUserDMsWithLogs(user: LocalsSession["user"], id?: DungeonMasterId) {
 	if (!user || !user.id) return [];
+	const userId = user.id;
 
+	const cond = or(eq(dungeonMasters.owner, userId), eq(dungeonMasters.uid, userId));
 	const dms = await q.dungeonMasters.findMany({
 		with: {
 			logs: {
@@ -22,28 +25,16 @@ export async function getUserDMsWithLogs(user: LocalsSession["user"], id?: Dunge
 				}
 			}
 		},
-		where: (dms, { or, eq, and, exists }) =>
-			and(
-				id
-					? and(or(eq(dms.owner, user.id), eq(dms.uid, user.id)), eq(dms.id, id))
-					: or(eq(dms.owner, user.id), eq(dms.uid, user.id)),
-				exists(
-					db
-						.select({ id: logs.id })
-						.from(logs)
-						.innerJoin(characters, eq(logs.characterId, characters.id))
-						.where(and(eq(logs.dungeonMasterId, dms.id)))
-				)
-			)
+		where: (dms, { eq, and }) => (id ? and(cond, eq(dms.id, id)) : cond)
 	});
 
-	if (!id && !dms.find((dm) => dm.uid === user.id)) {
+	if (!id && !dms.find((dm) => dm.uid === userId)) {
 		dms.push({
 			id: "" as DungeonMasterId,
 			name: user.name,
 			DCI: null,
-			uid: user.id,
-			owner: user.id,
+			uid: userId,
+			owner: userId,
 			logs: []
 		});
 	}
