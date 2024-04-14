@@ -1,8 +1,9 @@
 import { defaultDM, defaultLogData, parseLog } from "$lib/entities";
 import type { CharacterId, LogId, UserId } from "$lib/schemas";
 import { cache } from "$server/cache";
-import { q } from "$server/db";
-import type { DungeonMaster, Log, MagicItem, StoryAward } from "$server/db/schema";
+import { db, q } from "$server/db";
+import { characters, dungeonMasters, type DungeonMaster, type Log, type MagicItem, type StoryAward } from "$server/db/schema";
+import { eq, sql } from "drizzle-orm";
 
 export const logIncludes = {
 	dm: true,
@@ -40,14 +41,7 @@ export async function getDMLog(logId: LogId, userId: UserId): Promise<LogData> {
 
 export type DMLogsData = Awaited<ReturnType<typeof getDMLogs>>;
 export async function getDMLogs(userId: UserId) {
-	const dms = await q.dungeonMasters.findMany({
-		columns: {
-			id: true
-		},
-		where: (dms, { eq }) => eq(dms.uid, userId)
-	});
-
-	if (!dms.length) return [];
+	const dms = db.select({ id: dungeonMasters.id }).from(dungeonMasters).where(eq(dungeonMasters.uid, userId));
 
 	return q.logs
 		.findMany({
@@ -59,14 +53,7 @@ export async function getDMLogs(userId: UserId) {
 					}
 				}
 			},
-			where: (logs, { eq, and, inArray }) =>
-				and(
-					eq(logs.isDmLog, true),
-					inArray(
-						logs.dungeonMasterId,
-						dms.map((dm) => dm.id)
-					)
-				),
+			where: (logs, { eq, and, inArray }) => and(eq(logs.isDmLog, true), inArray(logs.dungeonMasterId, sql`${dms}`)),
 			orderBy: (logs, { asc }) => asc(logs.date)
 		})
 		.then((logs) => {
@@ -79,12 +66,7 @@ export async function getDMLogsCache(userId: UserId) {
 }
 
 export async function getUserLogs(userId: UserId) {
-	const characters = await q.characters.findMany({
-		columns: {
-			id: true
-		},
-		where: (characters, { eq }) => eq(characters.userId, userId)
-	});
+	const characterIds = db.select({ id: characters.id }).from(characters).where(eq(characters.userId, userId));
 
 	return q.logs.findMany({
 		columns: {
@@ -107,11 +89,7 @@ export async function getUserLogs(userId: UserId) {
 				}
 			}
 		},
-		where: (logs, { inArray }) =>
-			inArray(
-				logs.characterId,
-				characters.map((character) => character.id)
-			),
+		where: (logs, { inArray }) => inArray(logs.characterId, sql`${characterIds}`),
 		orderBy: (logs, { desc }) => desc(logs.date)
 	});
 }

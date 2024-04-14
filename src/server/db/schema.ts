@@ -204,7 +204,7 @@ export const logs = pgTable(
 			.$type<DungeonMasterId>()
 			.references(() => dungeonMasters.id, {
 				onUpdate: "cascade",
-				onDelete: "set null"
+				onDelete: "restrict"
 			}),
 		isDmLog: boolean("is_dm_log").notNull(),
 		experience: integer("experience")
