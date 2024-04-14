@@ -1,7 +1,7 @@
 import { privateEnv } from "$lib/env/private";
 import * as schema from "$server/db/schema";
 import { getTableColumns, sql, SQL } from "drizzle-orm";
-import type { PgTable } from "drizzle-orm/pg-core";
+import { type PgTable } from "drizzle-orm/pg-core";
 import { drizzle } from "drizzle-orm/postgres-js";
 import postgres from "postgres";
 
@@ -14,11 +14,12 @@ export const buildConflictUpdateColumns = <T extends PgTable, Q extends keyof T[
 	const cls = getTableColumns(table);
 	return columns.reduce(
 		(acc, column) => {
-			if (!cls[column]) return acc;
-			const colName = cls[column].name;
-			acc[column] = sql.raw(`excluded.${colName}`);
+			const col = cls[column];
+			if (!col) return acc;
+			const colName = col.name;
+			acc[column] = sql.raw(`excluded.${colName}`) as SQL<(typeof col)["_"]["data"]>;
 			return acc;
 		},
-		{} as Record<Q, SQL>
+		{} as Record<Q, SQL<(typeof cls)[Q]["_"]["data"]>>
 	);
 };
