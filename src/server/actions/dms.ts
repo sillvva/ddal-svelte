@@ -1,9 +1,9 @@
 import { type DungeonMasterId, type DungeonMasterSchema } from "$lib/schemas";
 import { SaveError, type SaveResult } from "$lib/util";
-import { rateLimiter, revalidateKeys, type CacheKey } from "$server/cache";
 import { getUserDMsWithLogsCache } from "$server/data/dms";
 import { db } from "$server/db";
 import { dungeonMasters, type DungeonMaster } from "$server/db/schema";
+import { rateLimiter, revalidateKeys, type CacheKey } from "$server/kv/cache";
 import { eq } from "drizzle-orm";
 
 export type SaveDMResult = ReturnType<typeof saveDM>;
@@ -13,7 +13,7 @@ export async function saveDM(
 	data: DungeonMasterSchema
 ): SaveResult<DungeonMaster, DungeonMasterSchema> {
 	try {
-		const { success } = await rateLimiter("insert", user.id);
+		const success = await rateLimiter("insert", user.id);
 		if (!success) throw new SaveError("Too many requests", { status: 429 });
 
 		const dm = (await getUserDMsWithLogsCache(user)).find((dm) => dm.id === dmId);
@@ -57,7 +57,7 @@ export async function deleteDM(
 	user: LocalsSession["user"]
 ): SaveResult<{ id: DungeonMasterId }, DungeonMasterSchema> {
 	try {
-		const { success } = await rateLimiter("insert", user.id);
+		const success = await rateLimiter("delete", user.id);
 		if (!success) throw new SaveError("Too many requests", { status: 429 });
 
 		const dms = (await getUserDMsWithLogsCache(user)).filter((dm) => dm.id === dmId);

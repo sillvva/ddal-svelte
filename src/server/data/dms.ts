@@ -1,7 +1,7 @@
 import type { DungeonMasterId } from "$lib/schemas";
-import { cache } from "$server/cache";
 import { q } from "$server/db";
 import { dungeonMasters } from "$server/db/schema";
+import { cache } from "$server/kv/cache";
 import { sorter } from "@sillvva/utils";
 import { eq, or } from "drizzle-orm";
 

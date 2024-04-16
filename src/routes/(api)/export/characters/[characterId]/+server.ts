@@ -1,6 +1,5 @@
 import { characterIdSchema } from "$lib/schemas.js";
 import { parseError } from "$lib/util";
-import { rateLimiter } from "$server/cache.js";
 import { getCharacterCache, getCharactersCache } from "$server/data/characters";
 import { json } from "@sveltejs/kit";
 import { parse } from "valibot";
@@ -8,9 +7,6 @@ import { parse } from "valibot";
 export async function GET({ params, locals }) {
 	const session = locals.session;
 	if (!session?.user?.id) return json({ error: "Unauthorized" }, { status: 401 });
-
-	const { success } = await rateLimiter("fetch", session.user.id);
-	if (!success) return json({ error: "Too many requests" }, { status: 429 });
 
 	const { characterId } = params;
 

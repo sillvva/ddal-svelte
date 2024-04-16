@@ -1,16 +1,12 @@
 import type { PROVIDERS } from "$lib/constants";
 import type { UserId } from "$lib/schemas";
-import { rateLimiter, revalidateKeys, type CacheKey } from "$server/cache";
 import { getCharactersCache } from "$server/data/characters";
 import { db } from "$server/db";
 import { accounts } from "$server/db/schema";
-import { error } from "@sveltejs/kit";
+import { revalidateKeys, type CacheKey } from "$server/kv/cache";
 import { and, eq } from "drizzle-orm";
 
 export async function clearUserCache(userId: UserId) {
-	const { success } = await rateLimiter("cache", "cache-clear", userId);
-	if (!success) error(429, "Too many requests");
-
 	const characters = await getCharactersCache(userId);
 
 	await revalidateKeys(

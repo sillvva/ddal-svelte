@@ -12,3 +12,4 @@ replica.db*
 *.rdb
 metadata
 drizzle
+*.db

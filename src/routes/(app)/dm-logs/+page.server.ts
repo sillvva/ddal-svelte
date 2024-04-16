@@ -1,9 +1,7 @@
 import { logSchema } from "$lib/schemas.js";
 import { deleteLog } from "$server/actions/logs";
 import { assertUser } from "$server/auth.js";
-import { rateLimiter } from "$server/cache.js";
 import { getDMLogsCache } from "$server/data/logs";
-import { error } from "console";
 import { fail, setError, superValidate } from "sveltekit-superforms";
 import { valibot } from "sveltekit-superforms/adapters";
 import { pick } from "valibot";
@@ -11,9 +9,6 @@ import { pick } from "valibot";
 export const load = async (event) => {
 	const session = event.locals.session;
 	assertUser(session?.user, event.url);
-
-	const { success } = await rateLimiter("fetch", session.user.id);
-	if (!success) error(429, "Too Many Requests");
 
 	const logs = await getDMLogsCache(session.user.id);
 
