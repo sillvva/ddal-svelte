@@ -15,7 +15,7 @@ export async function saveLog(input: LogSchema, user: LocalsSession["user"]): Sa
 		const userId = user.id;
 		const characterId = input.characterId;
 
-		const { success } = await rateLimiter(input.id ? "insert" : "update", user.id);
+		const { success } = await rateLimiter("crud", user.id);
 		if (!success) throw new LogError("Too many requests", { status: 429 });
 
 		const log = await db.transaction(async (tx) => {
@@ -222,7 +222,7 @@ export async function saveLog(input: LogSchema, user: LocalsSession["user"]): Sa
 export type DeleteLogResult = ReturnType<typeof deleteLog>;
 export async function deleteLog(logId: LogId, userId: UserId): SaveResult<{ id: LogId }, LogSchema> {
 	try {
-		const { success } = await rateLimiter("insert", userId);
+		const { success } = await rateLimiter("crud", userId);
 		if (!success) throw new LogError("Too many requests", { status: 429 });
 
 		const log = await db.transaction(async (tx) => {

@@ -73,7 +73,7 @@ export async function GET({ locals }) {
 	const session = locals.session;
 	if (!session?.user.id) return json({ error: "Unauthorized" }, { status: 401 });
 
-	const { success } = await rateLimiter("fetch", session.user.id);
+	const { success } = await rateLimiter("search", session.user.id);
 	if (!success) return json({ error: "Too many requests" }, { status: 429 });
 
 	return json(([sectionData] as SearchData).concat(await getDataCache(session.user)));
