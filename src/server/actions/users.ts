@@ -3,7 +3,7 @@ import type { UserId } from "$lib/schemas";
 import { getCharactersCache } from "$server/data/characters";
 import { db } from "$server/db";
 import { accounts } from "$server/db/schema";
-import { rateLimiter, revalidateKeys, type CacheKey } from "$server/kv/cache";
+import { rateLimiter, revalidateLike } from "$server/kv/cache";
 import { error } from "@sveltejs/kit";
 import { and, eq } from "drizzle-orm";
 
@@ -13,17 +13,7 @@ export async function clearUserCache(userId: UserId) {
 
 	const characters = await getCharactersCache(userId);
 
-	await revalidateKeys(
-		characters
-			.map((c) => ["character", c.id, "logs"] as CacheKey)
-			.concat(characters.map((c) => ["character", c.id, "no-logs"] as CacheKey))
-			.concat([
-				["dms", userId, "logs"],
-				["characters", userId],
-				["dm-logs", userId],
-				["search-data", userId]
-			])
-	);
+	await revalidateLike(characters.map((c) => c.id as string).concat([userId]));
 }
 
 export type ProviderId = (typeof PROVIDERS)[number]["id"];
