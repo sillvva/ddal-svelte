@@ -66,7 +66,7 @@ async function getData(user: LocalsSession["user"]) {
 }
 
 async function getDataCache(user: LocalsSession["user"]) {
-	return await cache(() => getData(user), ["search-data", user.id], 86400 * 7);
+	return await cache(() => getData(user), ["search-data", user.id]);
 }
 
 export async function GET({ locals }) {

@@ -1,6 +1,6 @@
 import { dev } from "$app/environment";
 import { isDefined, type Falsy } from "$lib/util";
-import { and, eq, gte, inArray, lt } from "drizzle-orm";
+import { and, eq, inArray, lt } from "drizzle-orm";
 import { buildConflictUpdateColumns, kv } from ".";
 import { cacheTable } from "./schema";
 
@@ -73,7 +73,7 @@ export async function mcache<TReturnType extends object>(
 	let caches = await kv
 		.select()
 		.from(cacheTable)
-		.where(and(inArray(cacheTable.key, joinedKeys), gte(cacheTable.ttl, new Date())));
+		.where(and(inArray(cacheTable.key, joinedKeys)));
 	const hits = caches.map((hit) => ({
 		...hit,
 		value: JSON.parse(hit.value) as TReturnType,
@@ -123,16 +123,35 @@ export async function revalidateKeys(keys: Array<CacheKey | Falsy>) {
 }
 
 const limits = {
-	update: { limit: 180, durationS: 60 },
-	insert: { limit: 60, durationS: 60 },
-	delete: { limit: 60, durationS: 60 }
-} as const;
+	update: 180,
+	insert: 60,
+	delete: 60,
+	cache: 30
+};
 
 export async function rateLimiter(type: keyof typeof limits, ...identifiers: string[]) {
-	if (dev) return { success: true };
+	if (dev) return true;
 
 	const limit = limits[type];
-	const counter = await cache(async () => 0, ["rate-limit", ...identifiers], limit.durationS);
+	const key = ["limit", ...identifiers, type].join(delimiter);
+	const ttl = new Date(Date.now() + 3600 * 1000);
 
-	return counter < limit.limit;
+	const [cache] = await kv
+		.select()
+		.from(cacheTable)
+		.where(and(eq(cacheTable.key, key)))
+		.limit(1);
+
+	const counter = cache ? (JSON.parse(cache.value) as number) : 0;
+	if (counter >= limit) return false;
+
+	await kv
+		.insert(cacheTable)
+		.values({ key, value: JSON.stringify(counter + 1), ttl })
+		.onConflictDoUpdate({
+			target: cacheTable.key,
+			set: buildConflictUpdateColumns(cacheTable, ["value"])
+		});
+
+	return true;
 }
