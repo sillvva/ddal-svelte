@@ -13,7 +13,7 @@ function brandedId<T extends string>(name: T, pipe: Pipe<string> = []) {
 const required = minLength<string, 1>(1, "Required");
 
 export const envPrivateSchema = object({
-	DATABASE_URL: string([url()]),
+	POSTGRES_URL: string([url()]),
 	UPSTASH_REDIS_REST_URL: string([url()]),
 	UPSTASH_REDIS_REST_TOKEN: string([required]),
 	AUTH_SECRET: string([minLength(10, "Must be a string of at least 10 characters")]),

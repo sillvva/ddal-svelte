@@ -1,13 +1,10 @@
-import { privateEnv } from "$lib/env/private";
 import * as schema from "$server/db/schema";
+import { sql as vsql } from "@vercel/postgres";
 import { getTableColumns, sql, SQL } from "drizzle-orm";
 import { type PgTable } from "drizzle-orm/pg-core";
-import { drizzle } from "drizzle-orm/postgres-js";
-import postgres from "postgres";
+import { drizzle } from "drizzle-orm/vercel-postgres";
 
-export const connection = postgres(privateEnv.DATABASE_URL, { prepare: false });
-
-export const db = drizzle(connection, { schema });
+export const db = drizzle(vsql, { schema });
 export const q = db.query;
 
 export const buildConflictUpdateColumns = <T extends PgTable, Q extends keyof T["_"]["columns"]>(table: T, columns: Q[]) => {
