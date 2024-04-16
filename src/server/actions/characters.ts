@@ -1,8 +1,8 @@
 import { type CharacterId, type NewCharacterSchema, type UserId } from "$lib/schemas";
 import { SaveError, type SaveResult } from "$lib/util";
+import { rateLimiter, revalidateKeys } from "$server/cache";
 import { db, q } from "$server/db";
 import { characters, logs, type Character } from "$server/db/schema";
-import { rateLimiter, revalidateKeys } from "$server/kv/cache";
 import { and, eq } from "drizzle-orm";
 
 export type SaveCharacterResult = ReturnType<typeof saveCharacter>;
@@ -14,7 +14,7 @@ export async function saveCharacter(
 	try {
 		if (!characterId) throw new SaveError("No character ID provided", { status: 400 });
 
-		const success = await rateLimiter(characterId === "new" ? "insert" : "update", userId);
+		const { success } = await rateLimiter(characterId === "new" ? "insert" : "update", userId);
 		if (!success) throw new SaveError("Too many requests", { status: 429 });
 
 		const [result] =
@@ -54,7 +54,7 @@ export async function deleteCharacter(
 	userId: UserId
 ): SaveResult<{ id: CharacterId }, NewCharacterSchema> {
 	try {
-		const success = await rateLimiter("delete", userId);
+		const { success } = await rateLimiter("insert", userId);
 		if (!success) throw new SaveError("Too many requests", { status: 429 });
 
 		const character = await q.characters.findFirst({

@@ -1,8 +1,8 @@
 import { defaultDM, defaultLogData, parseLog } from "$lib/entities";
 import type { CharacterId, LogId, UserId } from "$lib/schemas";
+import { cache } from "$server/cache";
 import { db, q } from "$server/db";
 import { characters, dungeonMasters, type DungeonMaster, type Log, type MagicItem, type StoryAward } from "$server/db/schema";
-import { cache } from "$server/kv/cache";
 import { eq, sql } from "drizzle-orm";
 
 export const logIncludes = {

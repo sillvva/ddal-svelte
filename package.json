@@ -4,14 +4,12 @@
 	"private": true,
 	"scripts": {
 		"dev": "supabase db start && vite dev",
-		"build": "pnpm kv:push && vite build",
+		"build": "vite build",
 		"preview": "vite preview",
 		"check": "svelte-kit sync && svelte-check --tsconfig ./tsconfig.json",
 		"check:watch": "svelte-kit sync && svelte-check --tsconfig ./tsconfig.json --watch",
 		"lint": "prettier --plugin-search-dir . --check . && eslint .",
-		"format": "prettier --plugin-search-dir . --write .",
-		"kv:migrate": "drizzle-kit generate:sqlite --config=kv.config.ts",
-		"kv:push": "drizzle-kit push:sqlite --config=kv.config.ts"
+		"format": "prettier --plugin-search-dir . --write ."
 	},
 	"devDependencies": {
 		"@iconify-json/mdi": "^1.1.66",
@@ -20,7 +18,6 @@
 		"@sveltejs/vite-plugin-svelte": "^3.0.2",
 		"@sveltekit-addons/document": "^1.0.1",
 		"@total-typescript/ts-reset": "^0.5.1",
-		"@types/better-sqlite3": "^7.6.9",
 		"@types/js-cookie": "^3.0.6",
 		"@types/node": "^20.12.7",
 		"@typescript-eslint/eslint-plugin": "^7.6.0",
@@ -61,7 +58,6 @@
 		"@upstash/redis": "^1.29.0",
 		"@vercel/analytics": "^1.2.2",
 		"@vercel/speed-insights": "^1.0.10",
-		"better-sqlite3": "^9.5.0",
 		"bits-ui": "^0.21.2",
 		"cmdk-sv": "^0.0.17",
 		"drizzle-orm": "^0.30.7",

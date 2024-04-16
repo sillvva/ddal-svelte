@@ -2,8 +2,8 @@ import { BLANK_CHARACTER } from "$lib/constants";
 import { getLogsSummary } from "$lib/entities";
 import type { CharacterId, UserId } from "$lib/schemas";
 import { isDefined } from "$lib/util";
+import { cache, mcache, type CacheKey } from "$server/cache";
 import { q } from "$server/db";
-import { cache, mcache, type CacheKey } from "$server/kv/cache";
 import { logIncludes } from "./logs";
 
 export type CharacterData = Exclude<Awaited<ReturnType<typeof getCharacter>>, null>;

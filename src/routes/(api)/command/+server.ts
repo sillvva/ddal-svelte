@@ -1,8 +1,8 @@
 import { searchSections } from "$lib/constants.js";
+import { cache, rateLimiter } from "$server/cache.js";
 import { getCharactersWithLogs } from "$server/data/characters.js";
 import { getUserDMs } from "$server/data/dms.js";
 import { getUserLogs } from "$server/data/logs.js";
-import { cache } from "$server/kv/cache";
 import { json } from "@sveltejs/kit";
 
 type SectionData = typeof sectionData;
@@ -72,6 +72,9 @@ async function getDataCache(user: LocalsSession["user"]) {
 export async function GET({ locals }) {
 	const session = locals.session;
 	if (!session?.user.id) return json({ error: "Unauthorized" }, { status: 401 });
+
+	const { success } = await rateLimiter("fetch", session.user.id);
+	if (!success) return json({ error: "Too many requests" }, { status: 429 });
 
 	return json(([sectionData] as SearchData).concat(await getDataCache(session.user)));
 }

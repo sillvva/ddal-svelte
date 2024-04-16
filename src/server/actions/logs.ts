@@ -1,10 +1,10 @@
 import { getLevels } from "$lib/entities";
 import { type LogId, type LogSchema, type UserId } from "$lib/schemas";
 import { SaveError, type SaveResult } from "$lib/util";
+import { rateLimiter, revalidateKeys } from "$server/cache";
 import { logIncludes, type LogData } from "$server/data/logs";
 import { buildConflictUpdateColumns, db } from "$server/db";
 import { dungeonMasters, logs, magicItems, storyAwards, type InsertDungeonMaster, type Log } from "$server/db/schema";
-import { rateLimiter, revalidateKeys } from "$server/kv/cache";
 import { and, eq, inArray, notInArray } from "drizzle-orm";
 
 class LogError extends SaveError<LogSchema> {}
@@ -15,7 +15,7 @@ export async function saveLog(input: LogSchema, user: LocalsSession["user"]): Sa
 		const userId = user.id;
 		const characterId = input.characterId;
 
-		const success = await rateLimiter(input.id ? "insert" : "update", user.id);
+		const { success } = await rateLimiter(input.id ? "insert" : "update", user.id);
 		if (!success) throw new LogError("Too many requests", { status: 429 });
 
 		const log = await db.transaction(async (tx) => {
@@ -222,7 +222,7 @@ export async function saveLog(input: LogSchema, user: LocalsSession["user"]): Sa
 export type DeleteLogResult = ReturnType<typeof deleteLog>;
 export async function deleteLog(logId: LogId, userId: UserId): SaveResult<{ id: LogId }, LogSchema> {
 	try {
-		const success = await rateLimiter("delete", userId);
+		const { success } = await rateLimiter("insert", userId);
 		if (!success) throw new LogError("Too many requests", { status: 429 });
 
 		const log = await db.transaction(async (tx) => {
