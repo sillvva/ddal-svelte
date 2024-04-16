@@ -2,7 +2,7 @@ import { type CharacterId, type NewCharacterSchema, type UserId } from "$lib/sch
 import { SaveError, type SaveResult } from "$lib/util";
 import { db, q } from "$server/db";
 import { characters, logs, type Character } from "$server/db/schema";
-import { rateLimiter, revalidateLike } from "$server/kv/cache";
+import { rateLimiter, revalidateKeys } from "$server/kv/cache";
 import { and, eq } from "drizzle-orm";
 
 export type SaveCharacterResult = ReturnType<typeof saveCharacter>;
@@ -34,8 +34,9 @@ export async function saveCharacter(
 
 		if (!result) throw new SaveError("Failed to save character");
 
-		await revalidateLike([
-			characterId != "new" && ["character", characterId],
+		await revalidateKeys([
+			characterId != "new" && ["character", characterId, "logs"],
+			characterId != "new" && ["character", characterId, "no-logs"],
 			characterId != "new" && ["dms", userId],
 			characterId == "new" && ["characters", userId],
 			["search-data", userId]
@@ -74,7 +75,14 @@ export async function deleteCharacter(
 
 		if (!result) throw new SaveError("Failed to delete character");
 
-		await revalidateLike([["character", result.id], [userId]]);
+		await revalidateKeys([
+			["character", result.id, "logs"],
+			["character", result.id, "no-logs"],
+			["characters", userId],
+			["dms", userId],
+			["dm-logs", userId],
+			["search-data", userId]
+		]);
 
 		return result;
 	} catch (err) {

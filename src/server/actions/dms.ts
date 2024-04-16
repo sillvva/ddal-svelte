@@ -3,7 +3,7 @@ import { SaveError, type SaveResult } from "$lib/util";
 import { getUserDMsWithLogsCache } from "$server/data/dms";
 import { db } from "$server/db";
 import { dungeonMasters, type DungeonMaster } from "$server/db/schema";
-import { rateLimiter, revalidateLike, type CacheKey } from "$server/kv/cache";
+import { rateLimiter, revalidateKeys, type CacheKey } from "$server/kv/cache";
 import { eq } from "drizzle-orm";
 
 export type SaveDMResult = ReturnType<typeof saveDM>;
@@ -35,10 +35,11 @@ export async function saveDM(
 		if (!result) throw new SaveError("Failed to save DM");
 
 		const characterIds = Array.from(new Set(dm.logs.filter((l) => l.characterId).map((l) => l.characterId)));
-		await revalidateLike(
+		await revalidateKeys(
 			characterIds
 				.map((id) => ["character", id, "logs"] as CacheKey)
 				.concat([
+					["dms", user.id, "logs"],
 					["dms", user.id],
 					["search-data", user.id]
 				])
@@ -68,8 +69,8 @@ export async function deleteDM(
 		const [result] = await db.delete(dungeonMasters).where(eq(dungeonMasters.id, dmId)).returning({ id: dungeonMasters.id });
 		if (!result) throw new SaveError("Failed to delete DM");
 
-		await revalidateLike([
-			["dms", user.id],
+		await revalidateKeys([
+			["dms", user.id, "logs"],
 			["search-data", user.id]
 		]);
 

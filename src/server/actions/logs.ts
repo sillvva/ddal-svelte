@@ -4,7 +4,7 @@ import { SaveError, type SaveResult } from "$lib/util";
 import { logIncludes, type LogData } from "$server/data/logs";
 import { buildConflictUpdateColumns, db } from "$server/db";
 import { dungeonMasters, logs, magicItems, storyAwards, type InsertDungeonMaster, type Log } from "$server/db/schema";
-import { rateLimiter, revalidateKeys, revalidateLike } from "$server/kv/cache";
+import { rateLimiter, revalidateKeys } from "$server/kv/cache";
 import { and, eq, inArray, notInArray } from "drizzle-orm";
 
 class LogError extends SaveError<LogSchema> {}
@@ -204,8 +204,10 @@ export async function saveLog(input: LogSchema, user: LocalsSession["user"]): Sa
 
 		if (!log) throw new LogError("Could not save log");
 
-		await revalidateLike([
+		await revalidateKeys([
 			log.isDmLog && log.dm?.uid && ["dm-logs", log.dm.uid],
+			log.characterId && ["character", log.characterId, "no-logs"],
+			log.characterId && ["character", log.characterId, "logs"],
 			log.characterId && ["character", log.characterId],
 			user.id && ["dms", user.id, "logs"],
 			user.id && ["search-data", user.id]
