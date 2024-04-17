@@ -3,6 +3,8 @@
 </script>
 
 <script lang="ts" generics="T extends TRec, TType extends 'text' | 'url' | 'number' | 'date'">
+	import type { ExtractBrand } from "$lib/util";
+
 	import type { HTMLInputAttributes } from "svelte/elements";
 	import { dateProxy, formFieldProxy, numberProxy, type FormPathLeaves, type SuperForm } from "sveltekit-superforms";
 
@@ -15,11 +17,11 @@
 				: undefined;
 	interface $$Props extends HTMLInputAttributes {
 		superform: SuperForm<T, any>;
-		field: FormPathLeaves<T, LeafType>;
+		field: FormPathLeaves<T, LeafType> | ExtractBrand<FormPathLeaves<T>>;
 		type: TType;
 		empty?: TType extends "date" ? "null" | "undefined" : never;
-		minField?: FormPathLeaves<T, LeafType>;
-		maxField?: FormPathLeaves<T, LeafType>;
+		minField?: FormPathLeaves<T, LeafType> | ExtractBrand<FormPathLeaves<T>>;
+		maxField?: FormPathLeaves<T, LeafType> | ExtractBrand<FormPathLeaves<T>>;
 		readonly?: boolean;
 		description?: string;
 		oninput?: TType extends "string" | "url" | "number" ? (value: typeof $value) => void : never;
@@ -27,28 +29,28 @@
 	}
 
 	export let superform: SuperForm<T, any>;
-	export let field: FormPathLeaves<T>;
+	export let field: FormPathLeaves<T> | ExtractBrand<FormPathLeaves<T>>;
 	export let type: TType;
 	export let empty: "null" | "undefined" = "null";
-	export let minField: FormPathLeaves<T> | undefined = undefined;
-	export let maxField: FormPathLeaves<T> | undefined = undefined;
+	export let minField: FormPathLeaves<T> | ExtractBrand<FormPathLeaves<T>> | undefined = undefined;
+	export let maxField: FormPathLeaves<T> | ExtractBrand<FormPathLeaves<T>> | undefined = undefined;
 	export let readonly: boolean | undefined = undefined;
 	export let description = "";
 	export let oninput = (value: typeof $value) => {};
 	export let onchange = (value: typeof $value) => {};
 
-	const { value, errors, constraints } = formFieldProxy(superform, field);
+	const { value, errors, constraints } = formFieldProxy(superform, field as any);
 
-	const proxyDate = type === "date" ? dateProxy(superform, field, { format: "datetime-local", empty }) : undefined;
+	const proxyDate = type === "date" ? dateProxy(superform, field as any, { format: "datetime-local", empty }) : undefined;
 	const proxyMin = minField
 		? type === "number"
-			? numberProxy(superform, minField)
-			: dateProxy(superform, minField, { format: "datetime-local" })
+			? numberProxy(superform, minField as any)
+			: dateProxy(superform, minField as any, { format: "datetime-local" })
 		: undefined;
 	const proxyMax = maxField
 		? type === "number"
-			? numberProxy(superform, maxField)
-			: dateProxy(superform, maxField, { format: "datetime-local" })
+			? numberProxy(superform, maxField as any)
+			: dateProxy(superform, maxField as any, { format: "datetime-local" })
 		: undefined;
 
 	function disabled(node: HTMLInputElement) {

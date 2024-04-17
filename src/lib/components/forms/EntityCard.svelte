@@ -3,6 +3,8 @@
 </script>
 
 <script lang="ts" generics="T extends TRec">
+	import type { ExtractBrand } from "$lib/util";
+
 	import { writable } from "svelte/store";
 	import { formFieldProxy, type FormPathLeaves, type SuperForm } from "sveltekit-superforms";
 	import Control from "./Control.svelte";
@@ -22,7 +24,7 @@
 		  }
 		| {
 				type: "drop";
-				lostField: FormPathLeaves<T, string>;
+				lostField: ExtractBrand<FormPathLeaves<T>>;
 				arrValue: string[];
 				data: { id: string; name: string; description: string | null }[];
 		  }
@@ -33,12 +35,12 @@
 	export let superform: SuperForm<T, any>;
 	export let nameField: FormPathLeaves<T, string> | undefined = undefined;
 	export let descField: FormPathLeaves<T, string> | undefined = undefined;
-	export let lostField: FormPathLeaves<T, string> | undefined = undefined;
+	export let lostField: ExtractBrand<FormPathLeaves<T>> | undefined = undefined;
 	export let arrValue: string[] = [];
 	export let data: { id: string; name: string; description: string | null }[] = [];
 	export let ondelete: () => void;
 
-	const { value: lostValue } = lostField ? formFieldProxy(superform, lostField) : { value: writable("") };
+	const { value: lostValue } = lostField ? formFieldProxy(superform, lostField as any) : { value: writable("") };
 </script>
 
 {#if type === "add" && nameField && descField}
