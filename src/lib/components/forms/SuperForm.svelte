@@ -17,7 +17,7 @@
 
 	$: rest = $$restProps as HTMLFormAttributes | undefined;
 
-	export let superform: SuperForm<T, any>;
+	export let superform: SuperForm<T, App.Superforms.Message>;
 	export let showMessage = false;
 
 	$: showMessage = !superform.options.resetForm;

@@ -3,10 +3,9 @@
 </script>
 
 <script lang="ts" generics="T extends TRec">
-	import type { ExtractBrand } from "$lib/util";
-
+	import type { BrandedFormPathLeaves, NonBrandedFormPathLeaves } from "$lib/util";
 	import { writable } from "svelte/store";
-	import { formFieldProxy, type FormPathLeaves, type SuperForm } from "sveltekit-superforms";
+	import { formFieldProxy, type SuperForm } from "sveltekit-superforms";
 	import Control from "./Control.svelte";
 	import GenericInput from "./GenericInput.svelte";
 	import Input from "./Input.svelte";
@@ -19,12 +18,12 @@
 	} & (
 		| {
 				type: "add";
-				nameField: FormPathLeaves<T, string>;
-				descField: FormPathLeaves<T, string>;
+				nameField: NonBrandedFormPathLeaves<T, string>;
+				descField: NonBrandedFormPathLeaves<T, string>;
 		  }
 		| {
 				type: "drop";
-				lostField: ExtractBrand<FormPathLeaves<T>>;
+				lostField: BrandedFormPathLeaves<T>;
 				arrValue: string[];
 				data: { id: string; name: string; description: string | null }[];
 		  }
@@ -33,9 +32,9 @@
 	export let type: "add" | "drop";
 	export let entity: "magic_items" | "story_awards";
 	export let superform: SuperForm<T, any>;
-	export let nameField: FormPathLeaves<T, string> | undefined = undefined;
-	export let descField: FormPathLeaves<T, string> | undefined = undefined;
-	export let lostField: ExtractBrand<FormPathLeaves<T>> | undefined = undefined;
+	export let nameField: NonBrandedFormPathLeaves<T, string> | undefined = undefined;
+	export let descField: NonBrandedFormPathLeaves<T, string> | undefined = undefined;
+	export let lostField: BrandedFormPathLeaves<T> | undefined = undefined;
 	export let arrValue: string[] = [];
 	export let data: { id: string; name: string; description: string | null }[] = [];
 	export let ondelete: () => void;

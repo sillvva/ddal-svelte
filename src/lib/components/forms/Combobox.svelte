@@ -3,15 +3,14 @@
 </script>
 
 <script lang="ts" generics="T extends TRec">
-	import type { ExtractBrand } from "$lib/util";
-
 	import { dev } from "$app/environment";
+	import type { IncludeBrandedFormPathLeaves } from "$lib/util";
 	import { Combobox } from "bits-ui";
-	import SuperDebug, { formFieldProxy, stringProxy, type FormPathLeaves, type SuperForm } from "sveltekit-superforms";
+	import SuperDebug, { formFieldProxy, stringProxy, type SuperForm } from "sveltekit-superforms";
 	import { twMerge } from "tailwind-merge";
 
 	export let superform: SuperForm<T, any>;
-	export let valueField: ExtractBrand<FormPathLeaves<T>>;
+	export let valueField: IncludeBrandedFormPathLeaves<T>;
 	export let labelField = valueField;
 	export let errorField = valueField;
 	export let name = "";

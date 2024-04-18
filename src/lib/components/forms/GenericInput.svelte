@@ -3,23 +3,13 @@
 </script>
 
 <script lang="ts" generics="T extends TRec">
-	import type { ExtractBrand } from "$lib/util";
-
+	import type { IncludeBrandedFormPathLeaves } from "$lib/util";
 	import type { HTMLInputAttributes } from "svelte/elements";
 	import { readable } from "svelte/store";
-	import { formFieldProxy, type FormPathLeaves, type SuperForm } from "sveltekit-superforms";
-
-	interface $$Props {
-		superform?: SuperForm<T>;
-		field?: FormPathLeaves<T> | ExtractBrand<FormPathLeaves<T>>;
-		required?: HTMLInputAttributes["required"];
-		label: string;
-		labelFor?: string;
-		fieldErrors?: string[];
-	}
+	import { formFieldProxy, type SuperForm } from "sveltekit-superforms";
 
 	export let superform: SuperForm<T> | undefined = undefined;
-	export let field: FormPathLeaves<T> | ExtractBrand<FormPathLeaves<T>> | undefined = undefined;
+	export let field: IncludeBrandedFormPathLeaves<T> | undefined = undefined;
 	export let required: HTMLInputAttributes["required"] = false;
 	export let label: string;
 	export let labelFor = "";

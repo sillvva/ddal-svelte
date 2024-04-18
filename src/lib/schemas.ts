@@ -1,11 +1,8 @@
 import type { CharacterData } from "$server/data/characters";
 // prettier-ignore
-import { array, boolean, custom, date, fallback, forward, integer, literal, merge, minLength, minValue, null_, nullable, number, object, optional, regex, string, transform, union, url, type BaseSchema, type Input, type Output, type Pipe } from "valibot";
-import type { Branded } from "./util";
+import { array, boolean, brand, custom, date, fallback, forward, integer, literal, merge, minLength, minValue, null_, nullable, number, object, optional, regex, string, union, url, type Input, type Output, type Pipe } from "valibot";
 
-const brand = <T extends string, TInput = unknown>(schema: BaseSchema<TInput>, name: T) =>
-	transform(schema, (input) => input as Branded<TInput, typeof name>);
-
+export type BrandedType = Output<ReturnType<typeof brandedId>>;
 function brandedId<T extends string>(name: T, pipe: Pipe<string> = []) {
 	return brand(string(pipe), name);
 }
