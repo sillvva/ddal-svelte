@@ -52,8 +52,8 @@ export const accounts = pgTable(
 			.notNull()
 			.references(() => users.id, { onUpdate: "cascade", onDelete: "cascade" })
 			.$type<UserId>(),
-		refreshToken: varchar("refresh_token"),
-		accessToken: varchar("access_token").notNull(),
+		refreshToken: text("refresh_token"),
+		accessToken: text("access_token").notNull(),
 		expiresAt: integer("expires_at").notNull(),
 		tokenType: varchar("token_type").notNull(),
 		scope: varchar("scope").notNull(),
@@ -82,7 +82,7 @@ export type UpdateSession = Partial<InsertSession>;
 export const sessions = pgTable(
 	"session",
 	{
-		sessionToken: varchar("sessionToken").primaryKey().notNull(),
+		sessionToken: text("sessionToken").primaryKey().notNull(),
 		userId: varchar("userId")
 			.notNull()
 			.$type<UserId>()
@@ -198,7 +198,7 @@ export const logs = pgTable(
 			.notNull()
 			.$default(() => new Date()),
 		name: varchar("name").notNull(),
-		description: varchar("description"),
+		description: text("description"),
 		type: logType("type").notNull(),
 		dungeonMasterId: varchar("dungeonMasterId")
 			.$type<DungeonMasterId>()
