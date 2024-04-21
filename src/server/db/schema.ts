@@ -17,19 +17,14 @@ import {
 	timestamp
 } from "drizzle-orm/pg-core";
 
+type ReqCols<Table extends PgTable, Columns extends Table["_"]["columns"] = Table["_"]["columns"]> = {
+	[K in keyof Columns as Columns[K]["_"]["hasDefault"] extends false ? K : never]: Columns[K]["_"];
+};
 type InferInsert<Table extends PgTable> = Prettify<
 	{
-		[K in keyof Table["_"]["columns"] as Table["_"]["columns"][K]["_"]["hasDefault"] extends true
-			? never
-			: Table["_"]["columns"][K]["_"]["notNull"] extends false
-				? never
-				: K]: Table["_"]["columns"][K]["_"]["data"];
+		[K in keyof ReqCols<Table> as ReqCols<Table>[K]["notNull"] extends true ? K : never]: ReqCols<Table>[K]["data"];
 	} & {
-		[K in keyof Table["_"]["columns"] as Table["_"]["columns"][K]["_"]["hasDefault"] extends true
-			? never
-			: Table["_"]["columns"][K]["_"]["notNull"] extends true
-				? never
-				: K]?: Table["_"]["columns"][K]["_"]["data"] | null;
+		[K in keyof ReqCols<Table> as ReqCols<Table>[K]["notNull"] extends false ? K : never]?: ReqCols<Table>[K]["data"] | null;
 	}
 >;
 
