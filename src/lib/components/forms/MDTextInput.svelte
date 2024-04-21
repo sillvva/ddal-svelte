@@ -3,6 +3,8 @@
 </script>
 
 <script lang="ts" generics="T extends TRec">
+	import { maxTextLength } from "$lib/schemas";
+
 	import type { NonBrandedFormPathLeaves } from "$lib/util";
 	import { formFieldProxy, type SuperForm } from "sveltekit-superforms";
 	import { twMerge } from "tailwind-merge";
@@ -45,8 +47,15 @@
 	<div class="rounded-b-lg border-[1px] border-base-content bg-base-100 p-4 [--tw-border-opacity:0.2]">
 		<Markdown content={`${$value}`} />
 	</div>
+{:else}
+	<label for={field} class="label">
+		{#if $errors?.length}
+			<span class="label-text-alt text-error">{$errors}</span>
+		{:else}
+			<span class="label-text-alt">Markdown Allowed</span>
+		{/if}
+		{#if !($errors || "").length}
+			<span class="label-text-alt">{`${$value}`.length.toLocaleString()} / {maxTextLength.toLocaleString()}</span>
+		{/if}
+	</label>
 {/if}
-<label for={field} class="label">
-	<span class="label-text-alt text-error">{$errors || ""}</span>
-	<span class="label-text-alt">Markdown Allowed</span>
-</label>

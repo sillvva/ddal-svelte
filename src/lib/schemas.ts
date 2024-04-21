@@ -1,6 +1,6 @@
 import type { CharacterData } from "$server/data/characters";
 // prettier-ignore
-import { array, boolean, brand, custom, date, fallback, forward, integer, literal, merge, minLength, minValue, null_, nullable, number, object, optional, regex, string, union, url, type Input, type Output, type Pipe } from "valibot";
+import { array, boolean, brand, custom, date, fallback, forward, integer, literal, maxLength, merge, minLength, minValue, null_, nullable, number, object, optional, regex, string, union, url, type Input, type Output, type Pipe } from "valibot";
 
 export type BrandedType = Output<ReturnType<typeof brandedId>>;
 function brandedId<T extends string>(name: T, pipe: Pipe<string> = []) {
@@ -8,6 +8,9 @@ function brandedId<T extends string>(name: T, pipe: Pipe<string> = []) {
 }
 
 const required = minLength<string, 1>(1, "Required");
+export const maxTextLength = 5000;
+const maxTextSize = maxLength<string, typeof maxTextLength>(maxTextLength, "Must be less than 5000 characters");
+const maxStringSize = maxLength<string, 255>(255);
 
 export const envPrivateSchema = object({
 	DATABASE_URL: string([url()]),
@@ -30,14 +33,14 @@ export const envPublicSchema = object({
 export type UserId = Output<typeof userIdSchema>;
 export const userIdSchema = brandedId("UserId");
 
-const optionalURL = optional(fallback(string([url()]), ""), "");
+const optionalURL = optional(fallback(string([url(), maxStringSize]), ""), "");
 
 export type NewCharacterSchema = Output<typeof newCharacterSchema>;
 export const newCharacterSchema = object({
 	name: string([required]),
-	campaign: optional(string(), ""),
-	race: optional(string(), ""),
-	class: optional(string(), ""),
+	campaign: optional(string([maxStringSize]), ""),
+	race: optional(string([maxStringSize]), ""),
+	class: optional(string([maxStringSize]), ""),
 	characterSheetUrl: optionalURL,
 	imageUrl: optionalURL
 });
@@ -55,7 +58,7 @@ export type DungeonMasterSchema = Output<typeof dungeonMasterSchema>;
 export type DungeonMasterSchemaIn = Input<typeof dungeonMasterSchema>;
 export const dungeonMasterSchema = object({
 	id: dungeonMasterIdSchema,
-	name: string([required]),
+	name: string([required, maxStringSize]),
 	DCI: nullable(union([string([regex(/[0-9]{0,10}/, "Invalid DCI Format")]), null_()]), null),
 	uid: nullable(union([userIdSchema, null_()]), null),
 	owner: userIdSchema
@@ -67,7 +70,7 @@ export const itemIdSchema = brandedId("ItemID");
 const itemSchema = object({
 	id: optional(itemIdSchema, ""),
 	name: string([required]),
-	description: optional(string(), "")
+	description: optional(string([maxTextSize]), "")
 });
 
 export type LogId = Output<typeof logIdSchema>;
@@ -77,7 +80,7 @@ export type LogSchema = Output<typeof logSchema>;
 export type LogSchemaIn = Input<typeof logSchema>;
 export const logSchema = object({
 	id: optional(logIdSchema, ""),
-	name: string([required]),
+	name: string([required, maxStringSize]),
 	date: date(),
 	characterId: optional(union([characterIdSchema, null_()]), null),
 	characterName: optional(string(), ""),
@@ -88,7 +91,7 @@ export const logSchema = object({
 	level: number([integer(), minValue(0)]),
 	gold: number(),
 	dtd: number([integer()]),
-	description: optional(union([string(), null_()]), ""),
+	description: optional(union([string([maxTextSize]), null_()]), ""),
 	dm: merge([
 		dungeonMasterSchema,
 		object({
