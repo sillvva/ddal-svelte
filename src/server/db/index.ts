@@ -1,6 +1,13 @@
 import { privateEnv } from "$lib/env/private";
 import * as schema from "$server/db/schema";
-import { getTableColumns, sql, SQL } from "drizzle-orm";
+import {
+	getTableColumns,
+	sql,
+	SQL,
+	type BuildQueryResult,
+	type DBQueryConfig,
+	type ExtractTablesWithRelations
+} from "drizzle-orm";
 import { type PgTable } from "drizzle-orm/pg-core";
 import { drizzle } from "drizzle-orm/postgres-js";
 import postgres from "postgres";
@@ -23,3 +30,10 @@ export const buildConflictUpdateColumns = <T extends PgTable, Q extends keyof T[
 		{} as Record<Q, SQL<(typeof cls)[Q]["_"]["data"]>>
 	);
 };
+
+type TSchema = ExtractTablesWithRelations<typeof schema>;
+export type QueryConfig<TableName extends keyof TSchema> = DBQueryConfig<"one" | "many", boolean, TSchema, TSchema[TableName]>;
+export type InferQueryModel<
+	TableName extends keyof TSchema,
+	QBConfig extends QueryConfig<TableName> | {} = {}
+> = BuildQueryResult<TSchema, TSchema[TableName], QBConfig>;

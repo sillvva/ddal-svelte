@@ -1,9 +1,8 @@
 import { dungeonMasterSchema } from "$lib/schemas.js";
 import { deleteDM } from "$server/actions/dms.js";
 import { assertUser } from "$server/auth";
-import { rateLimiter } from "$server/cache.js";
 import { getUserDMsWithLogsCache } from "$server/data/dms";
-import { error, fail, redirect } from "@sveltejs/kit";
+import { fail, redirect } from "@sveltejs/kit";
 import { setError, superValidate } from "sveltekit-superforms";
 import { valibot } from "sveltekit-superforms/adapters";
 import { pick } from "valibot";
@@ -11,9 +10,6 @@ import { pick } from "valibot";
 export const load = async (event) => {
 	const session = event.locals.session;
 	assertUser(session?.user, event.url);
-
-	const { success } = await rateLimiter("fetch", session.user.id);
-	if (!success) error(429, "Too Many Requests");
 
 	const dms = await getUserDMsWithLogsCache(session.user);
 

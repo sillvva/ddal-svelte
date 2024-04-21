@@ -13,7 +13,7 @@ export async function saveDM(
 	data: DungeonMasterSchema
 ): SaveResult<DungeonMaster, DungeonMasterSchema> {
 	try {
-		const { success } = await rateLimiter("insert", user.id);
+		const { success } = await rateLimiter("crud", user.id);
 		if (!success) throw new SaveError("Too many requests", { status: 429 });
 
 		const dm = (await getUserDMsWithLogsCache(user)).find((dm) => dm.id === dmId);
@@ -57,7 +57,7 @@ export async function deleteDM(
 	user: LocalsSession["user"]
 ): SaveResult<{ id: DungeonMasterId }, DungeonMasterSchema> {
 	try {
-		const { success } = await rateLimiter("insert", user.id);
+		const { success } = await rateLimiter("crud", user.id);
 		if (!success) throw new SaveError("Too many requests", { status: 429 });
 
 		const dms = (await getUserDMsWithLogsCache(user)).filter((dm) => dm.id === dmId);

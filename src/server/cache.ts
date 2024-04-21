@@ -11,15 +11,16 @@ const redis = new Redis({
 	token: privateEnv.UPSTASH_REDIS_REST_TOKEN
 });
 const limits = {
-	fetch: createLimiter(600, "1 h"),
-	update: createLimiter(180, "1 h"),
-	insert: createLimiter(60, "1 h"),
-	cache: createLimiter(18, "1 h")
+	fetch: createLimiter("fetch", 300, "1 h"),
+	crud: createLimiter("crud", 120, "1 h"),
+	search: createLimiter("search", 60, "1 h"),
+	export: createLimiter("export", 30, "1 h"),
+	cache: createLimiter("cache", 18, "1 h")
 } as const;
 
-function createLimiter(limit: number, duration: `${number} ${"s" | "m" | "h"}`) {
-	const limiter = Ratelimit.slidingWindow(limit, duration);
-	return new Ratelimit({ redis, limiter, prefix: `@upstash${delimiter}ratelimit` });
+function createLimiter(name: string, limit: number, duration: `${number} ${"s" | "m" | "h"}`) {
+	const limiter = Ratelimit.fixedWindow(limit, duration);
+	return new Ratelimit({ redis, limiter, prefix: `limit${delimiter}${name}` });
 }
 
 export async function rateLimiter(type: keyof typeof limits, ...identifiers: string[]) {

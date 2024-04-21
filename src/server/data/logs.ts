@@ -1,8 +1,8 @@
 import { defaultDM, defaultLogData, parseLog } from "$lib/entities";
 import type { CharacterId, LogId, UserId } from "$lib/schemas";
 import { cache } from "$server/cache";
-import { db, q } from "$server/db";
-import { characters, dungeonMasters, type DungeonMaster, type Log, type MagicItem, type StoryAward } from "$server/db/schema";
+import { db, q, type InferQueryModel, type QueryConfig } from "$server/db";
+import { characters, dungeonMasters } from "$server/db/schema";
 import { eq, sql } from "drizzle-orm";
 
 export const logIncludes = {
@@ -11,16 +11,10 @@ export const logIncludes = {
 	magicItemsLost: true,
 	storyAwardsGained: true,
 	storyAwardsLost: true
-} as const;
+} as const satisfies QueryConfig<"logs">["with"];
 
-export type LogData = Log & {
-	dm: DungeonMaster | null;
-	type: "game" | "nongame";
-	magicItemsGained: MagicItem[];
-	magicItemsLost: MagicItem[];
-	storyAwardsGained: StoryAward[];
-	storyAwardsLost: StoryAward[];
-};
+export type LogData = InferQueryModel<"logs", { with: typeof logIncludes }>;
+
 export async function getLog(logId: LogId, userId: UserId, characterId = "" as CharacterId): Promise<LogData> {
 	const log =
 		(await q.logs.findFirst({

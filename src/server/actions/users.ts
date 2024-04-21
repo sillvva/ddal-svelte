@@ -8,7 +8,7 @@ import { error } from "@sveltejs/kit";
 import { and, eq } from "drizzle-orm";
 
 export async function clearUserCache(userId: UserId) {
-	const { success } = await rateLimiter("cache", "cache-clear", userId);
+	const { success } = await rateLimiter("cache", userId);
 	if (!success) error(429, "Too many requests");
 
 	const characters = await getCharactersCache(userId);

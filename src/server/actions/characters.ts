@@ -14,7 +14,7 @@ export async function saveCharacter(
 	try {
 		if (!characterId) throw new SaveError("No character ID provided", { status: 400 });
 
-		const { success } = await rateLimiter(characterId === "new" ? "insert" : "update", userId);
+		const { success } = await rateLimiter("crud", userId);
 		if (!success) throw new SaveError("Too many requests", { status: 429 });
 
 		const [result] =
@@ -54,7 +54,7 @@ export async function deleteCharacter(
 	userId: UserId
 ): SaveResult<{ id: CharacterId }, NewCharacterSchema> {
 	try {
-		const { success } = await rateLimiter("insert", userId);
+		const { success } = await rateLimiter("crud", userId);
 		if (!success) throw new SaveError("Too many requests", { status: 429 });
 
 		const character = await q.characters.findFirst({
