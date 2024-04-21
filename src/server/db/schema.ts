@@ -2,19 +2,7 @@ import { type CharacterId, type DungeonMasterId, type ItemId, type LogId, type U
 import type { ProviderType } from "@auth/core/providers";
 import { createId } from "@paralleldrive/cuid2";
 import { relations } from "drizzle-orm";
-import {
-	boolean,
-	index,
-	integer,
-	pgEnum,
-	pgTable,
-	primaryKey,
-	real,
-	smallint,
-	text,
-	timestamp,
-	varchar
-} from "drizzle-orm/pg-core";
+import { boolean, index, integer, pgEnum, pgTable, primaryKey, real, smallint, text, timestamp } from "drizzle-orm/pg-core";
 
 type InsertOmit = "id" | "createdAt";
 
@@ -125,18 +113,18 @@ export type UpdateCharacter = Partial<InsertCharacter>;
 export const characters = pgTable(
 	"character",
 	{
-		id: varchar("id")
+		id: text("id")
 			.primaryKey()
 			.notNull()
 			.$default(() => createId())
 			.$type<CharacterId>(),
-		name: varchar("name").notNull(),
-		race: varchar("race"),
-		class: varchar("class"),
-		campaign: varchar("campaign"),
-		imageUrl: varchar("image_url"),
-		characterSheetUrl: varchar("character_sheet_url"),
-		userId: varchar("userId")
+		name: text("name").notNull(),
+		race: text("race"),
+		class: text("class"),
+		campaign: text("campaign"),
+		imageUrl: text("image_url"),
+		characterSheetUrl: text("character_sheet_url"),
+		userId: text("userId")
 			.notNull()
 			.$type<UserId>()
 			.references(() => users.id, { onUpdate: "cascade", onDelete: "cascade" }),
@@ -165,15 +153,15 @@ export type UpdateDungeonMaster = Partial<InsertDungeonMaster>;
 export const dungeonMasters = pgTable(
 	"dungeonmaster",
 	{
-		id: varchar("id")
+		id: text("id")
 			.primaryKey()
 			.notNull()
 			.$default(() => createId())
 			.$type<DungeonMasterId>(),
-		name: varchar("name").notNull(),
-		DCI: varchar("DCI"),
-		uid: varchar("uid").$type<UserId>(),
-		owner: varchar("owner")
+		name: text("name").notNull(),
+		DCI: text("DCI"),
+		uid: text("uid").$type<UserId>(),
+		owner: text("owner")
 			.notNull()
 			.$type<UserId>()
 			.references(() => users.id, { onUpdate: "cascade", onDelete: "cascade" })
@@ -202,7 +190,7 @@ export type UpdateLog = Partial<InsertLog>;
 export const logs = pgTable(
 	"log",
 	{
-		id: varchar("id")
+		id: text("id")
 			.primaryKey()
 			.notNull()
 			.$default(() => createId())
@@ -210,10 +198,10 @@ export const logs = pgTable(
 		date: timestamp("date", { mode: "date" })
 			.notNull()
 			.$default(() => new Date()),
-		name: varchar("name").notNull(),
+		name: text("name").notNull(),
 		description: text("description"),
 		type: logType("type").notNull(),
-		dungeonMasterId: varchar("dungeonMasterId")
+		dungeonMasterId: text("dungeonMasterId")
 			.$type<DungeonMasterId>()
 			.references(() => dungeonMasters.id, {
 				onUpdate: "cascade",
@@ -239,7 +227,7 @@ export const logs = pgTable(
 			.notNull()
 			.$default(() => 0),
 		appliedDate: timestamp("applied_date", { mode: "date" }),
-		characterId: varchar("characterId")
+		characterId: text("characterId")
 			.$type<CharacterId>()
 			.references(() => characters.id, { onUpdate: "cascade", onDelete: "cascade" }),
 		createdAt: timestamp("created_at", { mode: "date" })
@@ -275,18 +263,18 @@ export type UpdateMagicItem = Partial<InsertMagicItem>;
 export const magicItems = pgTable(
 	"magicitem",
 	{
-		id: varchar("id")
+		id: text("id")
 			.primaryKey()
 			.notNull()
 			.$default(() => createId())
 			.$type<ItemId>(),
-		name: varchar("name").notNull(),
+		name: text("name").notNull(),
 		description: text("description"),
-		logGainedId: varchar("logGainedId")
+		logGainedId: text("logGainedId")
 			.notNull()
 			.$type<LogId>()
 			.references(() => logs.id, { onUpdate: "cascade", onDelete: "cascade" }),
-		logLostId: varchar("logLostId")
+		logLostId: text("logLostId")
 			.$type<LogId>()
 			.references(() => logs.id, { onUpdate: "cascade", onDelete: "set null" })
 	},
@@ -317,18 +305,18 @@ export type UpdateStoryAward = Partial<InsertStoryAward>;
 export const storyAwards = pgTable(
 	"storyaward",
 	{
-		id: varchar("id")
+		id: text("id")
 			.primaryKey()
 			.notNull()
 			.$default(() => createId())
 			.$type<ItemId>(),
-		name: varchar("name").notNull(),
+		name: text("name").notNull(),
 		description: text("description"),
-		logGainedId: varchar("logGainedId")
+		logGainedId: text("logGainedId")
 			.notNull()
 			.$type<LogId>()
 			.references(() => logs.id, { onUpdate: "cascade", onDelete: "cascade" }),
-		logLostId: varchar("logLostId")
+		logLostId: text("logLostId")
 			.$type<LogId>()
 			.references(() => logs.id, { onUpdate: "cascade", onDelete: "set null" })
 	},
