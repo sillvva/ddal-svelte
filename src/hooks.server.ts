@@ -74,7 +74,6 @@ const providers: OAuthProvider[] = [
 const auth = SvelteKitAuth(async (event) => {
 	const redirectTo = event.url.searchParams.get("redirect") || undefined;
 	const redirectUrl = redirectTo ? new URL(redirectTo, event.url.origin) : undefined;
-	const currentSession = await event.locals.auth();
 
 	return {
 		callbacks: {
@@ -95,7 +94,9 @@ const auth = SvelteKitAuth(async (event) => {
 						and(eq(accounts.provider, account.provider), eq(accounts.providerAccountId, account.providerAccountId))
 				});
 
+				const currentSession = await event.locals.auth();
 				const currentUserId = currentSession?.user?.id;
+
 				if (privateEnv.DISABLE_SIGNUPS && !existingAccount && !currentUserId)
 					authErrRedirect("Signups Disabled", "Signups are disabled", redirectUrl);
 
