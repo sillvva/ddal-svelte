@@ -12,13 +12,8 @@ export const logIncludes = {
 	storyAwardsGained: true,
 	storyAwardsLost: true
 } as const satisfies QueryConfig<"logs">["with"];
+export type LogData = InferQueryModel<"logs", { with: typeof logIncludes }>;
 
-export type LogData = InferQueryModel<
-	"logs",
-	{
-		with: typeof logIncludes;
-	}
->;
 export async function getLog(logId: LogId, userId: UserId, characterId = "" as CharacterId): Promise<LogData> {
 	const log =
 		(await q.logs.findFirst({
