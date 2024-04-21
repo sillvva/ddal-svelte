@@ -1,4 +1,4 @@
-create or replace type "public"."logType" as enum ('game', 'nongame');
+create type "public"."logType" as enum ('game', 'nongame');
 
 alter table "public"."log" drop constraint "public_Log_characterId_fkey";
 

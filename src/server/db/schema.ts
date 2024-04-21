@@ -1,4 +1,5 @@
 import { type CharacterId, type DungeonMasterId, type ItemId, type LogId, type UserId } from "$lib/schemas";
+import type { ProviderType } from "@auth/core/providers";
 import { createId } from "@paralleldrive/cuid2";
 import { relations } from "drizzle-orm";
 import {
@@ -21,13 +22,13 @@ export type User = typeof users.$inferSelect;
 export type InsertUser = Omit<typeof users.$inferInsert, InsertOmit>;
 export type UpdateUser = Partial<User>;
 export const users = pgTable("user", {
-	id: varchar("id")
+	id: text("id")
 		.primaryKey()
 		.notNull()
 		.$default(() => createId())
 		.$type<UserId>(),
-	name: varchar("name").notNull(),
-	email: varchar("email"),
+	name: text("name"),
+	email: text("email").notNull().unique(),
 	emailVerified: timestamp("emailVerified", { mode: "date" }),
 	image: text("image")
 });
@@ -45,20 +46,20 @@ export type UpdateAccount = Partial<InsertAccount>;
 export const accounts = pgTable(
 	"account",
 	{
-		providerAccountId: varchar("providerAccountId").notNull(),
-		provider: varchar("provider").notNull(),
-		type: varchar("type").notNull(),
-		userId: varchar("userId")
+		providerAccountId: text("providerAccountId").notNull(),
+		provider: text("provider").notNull(),
+		type: text("type").$type<ProviderType>().notNull(),
+		userId: text("userId")
 			.notNull()
 			.references(() => users.id, { onUpdate: "cascade", onDelete: "cascade" })
 			.$type<UserId>(),
-		refreshToken: text("refresh_token"),
-		accessToken: text("access_token").notNull(),
-		expiresAt: integer("expires_at").notNull(),
-		tokenType: varchar("token_type").notNull(),
-		scope: varchar("scope").notNull(),
-		idToken: varchar("id_token"),
-		sessionState: varchar("session_state"),
+		refresh_token: text("refresh_token"),
+		access_token: text("access_token"),
+		expires_at: integer("expires_at"),
+		token_type: text("token_type"),
+		scope: text("scope"),
+		id_token: text("id_token"),
+		session_state: text("session_state"),
 		lastLogin: timestamp("last_login", { mode: "date", withTimezone: true })
 	},
 	(table) => {
@@ -83,7 +84,7 @@ export const sessions = pgTable(
 	"session",
 	{
 		sessionToken: text("sessionToken").primaryKey().notNull(),
-		userId: varchar("userId")
+		userId: text("userId")
 			.notNull()
 			.$type<UserId>()
 			.references(() => users.id, { onUpdate: "cascade", onDelete: "cascade" }),
@@ -105,6 +106,18 @@ export const sessionRelations = relations(sessions, ({ one }) => ({
 		references: [users.id]
 	})
 }));
+
+export const verificationTokens = pgTable(
+	"verificationToken",
+	{
+		identifier: text("identifier").notNull(),
+		token: text("token").notNull(),
+		expires: timestamp("expires", { mode: "date" }).notNull()
+	},
+	(vt) => ({
+		compoundKey: primaryKey({ columns: [vt.identifier, vt.token] })
+	})
+);
 
 export type Character = typeof characters.$inferSelect;
 export type InsertCharacter = Omit<typeof characters.$inferInsert, InsertOmit>;

@@ -74,6 +74,7 @@ const providers: OAuthProvider[] = [
 const auth = SvelteKitAuth(async (event) => {
 	const redirectTo = event.url.searchParams.get("redirect") || undefined;
 	const redirectUrl = redirectTo ? new URL(redirectTo, event.url.origin) : undefined;
+	const currentSession = await event.locals.auth();
 
 	return {
 		callbacks: {
@@ -94,9 +95,7 @@ const auth = SvelteKitAuth(async (event) => {
 						and(eq(accounts.provider, account.provider), eq(accounts.providerAccountId, account.providerAccountId))
 				});
 
-				const currentSession = await event.locals.auth();
 				const currentUserId = currentSession?.user?.id;
-
 				if (privateEnv.DISABLE_SIGNUPS && !existingAccount && !currentUserId)
 					authErrRedirect("Signups Disabled", "Signups are disabled", redirectUrl);
 
@@ -114,12 +113,12 @@ const auth = SvelteKitAuth(async (event) => {
 						providerAccountId: account.providerAccountId,
 						userId: currentUserId,
 						type: account.type,
-						accessToken: account.access_token ?? "",
-						expiresAt: Math.floor(Date.now() / 1000 + (account.expires_in ?? 3600)),
-						refreshToken: account.refresh_token,
-						tokenType: `${account.token_type}`,
+						access_token: account.access_token ?? "",
+						refresh_token: account.refresh_token,
+						expires_at: Math.floor(Date.now() / 1000 + (account.expires_in ?? 3600)),
+						token_type: `${account.token_type}`,
 						scope: account.scope ?? "",
-						idToken: account.id_token,
+						id_token: account.id_token,
 						lastLogin: new Date()
 					});
 
@@ -133,13 +132,12 @@ const auth = SvelteKitAuth(async (event) => {
 							.update(accounts)
 							.set({
 								providerAccountId: account.providerAccountId,
-								type: account.type,
-								accessToken: account.access_token,
-								expiresAt: Math.floor(Date.now() / 1000 + account.expires_in),
-								refreshToken: account.refresh_token,
-								tokenType: account.token_type,
+								access_token: account.access_token,
+								expires_at: Math.floor(Date.now() / 1000 + account.expires_in),
+								refresh_token: account.refresh_token,
+								token_type: account.token_type,
 								scope: account.scope,
-								idToken: account.id_token,
+								id_token: account.id_token,
 								lastLogin: new Date()
 							})
 							.where(and(eq(accounts.provider, account.provider), eq(accounts.providerAccountId, account.providerAccountId)));
@@ -221,16 +219,16 @@ async function refreshToken(account: Account) {
 	try {
 		const provider = providers.find((p) => p.id === account.provider);
 		if (!provider) throw new Error(`Provider '${account.provider}' not found`);
-		if (!account.refreshToken) throw new Error("No refresh token");
+		if (!account.refresh_token) throw new Error("No refresh token");
 
-		if (!account.expiresAt || account.expiresAt * 1000 < Date.now()) {
+		if (!account.expires_at || account.expires_at * 1000 < Date.now()) {
 			const response = await fetch(provider.tokenUrl, {
 				headers: { "Content-Type": "application/x-www-form-urlencoded" },
 				body: new URLSearchParams({
 					client_id: provider.clientId,
 					client_secret: provider.clientSecret,
 					grant_type: "refresh_token",
-					refreshToken: account.refreshToken
+					refresh_token: account.refresh_token
 				}),
 				method: "POST"
 			});
@@ -248,12 +246,12 @@ async function refreshToken(account: Account) {
 				return await db
 					.update(accounts)
 					.set({
-						accessToken: token.access_token,
-						expiresAt: Math.floor(Date.now() / 1000 + token.expires_in),
-						refreshToken: token.refresh_token ?? account.refreshToken,
-						tokenType: token.token_type ?? account.tokenType,
+						access_token: token.access_token,
+						expires_at: Math.floor(Date.now() / 1000 + token.expires_in),
+						refresh_token: token.refresh_token ?? account.refresh_token,
+						token_type: token.token_type ?? account.token_type,
 						scope: token.scope ?? account.scope,
-						idToken: token.id_token ?? account.idToken
+						id_token: token.id_token ?? account.id_token
 					})
 					.where(and(eq(accounts.provider, account.provider), eq(accounts.providerAccountId, account.providerAccountId)))
 					.returning();
