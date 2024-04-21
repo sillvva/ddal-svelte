@@ -5,7 +5,7 @@
 	import { pageLoader, searchData } from "$lib/stores";
 	import type { CookieStore } from "$server/cookie";
 	import type { Account } from "$server/db/schema";
-	import { signIn, signOut } from "@auth/sveltekit/client";
+	import { signIn } from "@auth/sveltekit/client";
 	import { getContext } from "svelte";
 	import { twMerge } from "tailwind-merge";
 	import ThemeSwitcher from "./ThemeSwitcher.svelte";
@@ -18,32 +18,47 @@
 		...p,
 		account: accounts.find((a) => a.provider === p.id)
 	}));
+
+	$: initials =
+		$page.data.session?.user.name
+			.split(" ")
+			.map((n) => n[0])
+			.join("")
+			.slice(0, 2) || "";
 </script>
 
 <div
 	id="settings"
-	class={twMerge("fixed -right-72 bottom-0 top-0 z-50 w-72 bg-base-100 px-4 py-4 transition-all", open && "right-0")}
+	class={twMerge("fixed -right-80 bottom-0 top-0 z-50 w-80 bg-base-100 px-4 py-4 transition-all", open && "right-0")}
 >
-	<div class="flex gap-4 p-4">
-		<div class="py-2">
-			<div class="avatar">
-				<div class="relative w-[3.25rem] overflow-hidden rounded-full ring ring-primary ring-offset-2 ring-offset-base-100">
-					<img
-						src={$page.data.session?.user?.image || ""}
-						alt={$page.data.session?.user?.name}
-						width={48}
-						height={48}
-						class="rounded-full object-cover object-center"
-					/>
+	<div class="flex items-center gap-4 py-4 pl-2">
+		<div
+			class="avatar flex h-9 w-9 items-center justify-center rounded-full ring ring-primary ring-offset-2 ring-offset-base-100"
+		>
+			{#if $page.data.session?.user?.image}
+				<img
+					src={$page.data.session.user.image}
+					alt={$page.data.session.user.name}
+					width={48}
+					height={48}
+					class="rounded-full object-cover object-center"
+				/>
+			{:else if initials}
+				<span class="text-xl font-bold uppercase text-primary">{initials}</span>
+			{/if}
+		</div>
+		<div class="flex-1">
+			<div class="overflow-hidden text-clip whitespace-nowrap font-medium">{$page.data.session?.user?.name}</div>
+			{#if $page.data.session?.user?.email}
+				<div class="overflow-hidden text-clip text-xs font-medium text-gray-500 dark:text-gray-400">
+					{$page.data.session.user.email}
 				</div>
-			</div>
+			{/if}
 		</div>
-		<div class="flex flex-1 flex-col gap-2">
-			<strong>{$page.data.session?.user?.name}</strong>
-			<span>
-				<button class="btn btn-sm" on:click={() => signOut({ callbackUrl: "/" })}>Logout</button>
-			</span>
-		</div>
+		<button class="btn p-3">
+			<i class="iconify h-5 w-5 mdi-logout" />
+			<span class="sr-only">Sign out</span>
+		</button>
 	</div>
 	<div class="divider my-0" />
 	<ul class="menu menu-lg w-full px-0">

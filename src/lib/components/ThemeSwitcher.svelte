@@ -26,7 +26,7 @@
 	}
 </script>
 
-<select class="select select-bordered select-sm" bind:value={$app.settings.theme} use:watchMedia>
+<select class="select select-bordered select-sm leading-4" bind:value={$app.settings.theme} use:watchMedia>
 	<option value="system">System</option>
 	{#each themeGroups as group}
 		<hr />
