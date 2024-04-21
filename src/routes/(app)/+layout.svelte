@@ -197,13 +197,13 @@
 		<div>
 			<p>
 				The name
-				<a href="https://dnd.wizards.com/adventurers-league" target="_blank" rel="noreferrer noopener" class="text-secondary">
-					Adventurers League
-				</a>
-				are property of Hasbro and
-				<a href="https://dnd.wizards.com/" target="_blank" rel="noreferrer noopener" class="text-secondary">
-					Wizards of the Coast
-				</a>. This website is affiliated with neither.
+				<a href="https://dnd.wizards.com/adventurers-league" target="_blank" rel="noreferrer noopener" class="text-secondary"
+					>Adventurers League</a
+				>
+				is property of Hasbro and
+				<a href="https://dnd.wizards.com/" target="_blank" rel="noreferrer noopener" class="text-secondary"
+					>Wizards of the Coast</a
+				>. This website is affiliated with neither.
 			</p>
 		</div>
 	</footer>
