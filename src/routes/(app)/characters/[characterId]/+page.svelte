@@ -311,7 +311,7 @@
 				<span class="iconify size-6 mdi-plus" />
 			</a>
 			<button
-				class={twMerge("no-script-hide btn sm:hidden", $app.log.descriptions && "btn-primary")}
+				class={twMerge("btn sm:hidden", $app.log.descriptions && "btn-primary")}
 				on:click={() => createTransition(() => ($app.log.descriptions = !$app.log.descriptions))}
 				on:keypress
 				aria-label="Toggle Notes"
@@ -328,7 +328,7 @@
 	{#if logs.length}
 		<div class="flex-1 max-sm:hidden" />
 		<button
-			class={twMerge("no-script-hide btn sm:btn-sm max-sm:hidden", $app.log.descriptions && "btn-primary")}
+			class={twMerge("btn sm:btn-sm max-sm:hidden", $app.log.descriptions && "btn-primary")}
 			on:click={() => createTransition(() => ($app.log.descriptions = !$app.log.descriptions))}
 			on:keypress
 			aria-label="Toggle Notes"

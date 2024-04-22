@@ -19,7 +19,7 @@
 </script>
 
 <button
-	class="no-script-hide flex min-w-fit py-3 pr-4 md:hidden print:hidden"
+	class="flex min-w-fit py-3 pr-4 md:hidden print:hidden"
 	on:click={() => toggleDrawer(true)}
 	aria-expanded={drawer}
 	aria-controls="drawer"

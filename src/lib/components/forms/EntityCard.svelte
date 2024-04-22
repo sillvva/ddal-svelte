@@ -54,7 +54,7 @@
 				<Control class="flex-1">
 					<Input type="text" {superform} field={nameField} required>Name</Input>
 				</Control>
-				<button type="button" class="no-script-hide btn btn-error mt-9" on:click={() => ondelete()}>
+				<button type="button" class="btn btn-error mt-9" on:click={() => ondelete()}>
 					<span class="iconify size-6 mdi-trash-can" />
 				</button>
 			</div>
@@ -83,7 +83,7 @@
 						</select>
 					</GenericInput>
 				</Control>
-				<button type="button" class="no-script-hide btn btn-error mt-9" on:click={() => ondelete()}>
+				<button type="button" class="btn btn-error mt-9" on:click={() => ondelete()}>
 					<span class="iconify size-6 mdi-trash-can" />
 				</button>
 			</div>

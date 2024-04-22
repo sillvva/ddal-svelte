@@ -115,10 +115,7 @@
 				<span class="iconify inline size-6 mdi-plus" />
 			</a>
 		</div>
-		<button
-			class="no-script-hide btn btn-primary sm:btn-sm"
-			on:click={() => ($app.dmLogs.sort = $app.dmLogs.sort === "asc" ? "desc" : "asc")}
-		>
+		<button class="btn btn-primary sm:btn-sm" on:click={() => ($app.dmLogs.sort = $app.dmLogs.sort === "asc" ? "desc" : "asc")}>
 			<span
 				class={twMerge(
 					"iconify size-6",

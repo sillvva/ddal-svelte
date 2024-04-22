@@ -12,5 +12,5 @@
 </script>
 
 <search class="min-w-0 flex-1">
-	<input type="text" bind:value={$s} class="no-script-hide input input-bordered w-full flex-1 sm:input-sm" {...$$restProps} />
+	<input type="text" bind:value={$s} class="input input-bordered w-full flex-1 sm:input-sm" {...$$restProps} />
 </search>

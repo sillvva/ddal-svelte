@@ -123,7 +123,7 @@
 					<span class="iconify inline size-6 mdi-plus" />
 				</a>
 				<button
-					class={twMerge("no-script-hide btn inline-flex xs:hidden", $app.characters.magicItems && "btn-primary")}
+					class={twMerge("btn inline-flex xs:hidden", $app.characters.magicItems && "btn-primary")}
 					on:click={() => ($app.characters.magicItems = !$app.characters.magicItems)}
 					on:keypress={() => null}
 					on:keypress
@@ -157,7 +157,7 @@
 						<span class="max-xs:hidden sm:max-md:hidden">Magic Items</span>
 					</button>
 				{/if}
-				<div class="no-script-hide join max-xs:hidden">
+				<div class="join max-xs:hidden">
 					<button
 						class={twMerge("btn join-item sm:btn-sm", $app.characters.display == "list" ? "btn-primary" : "hover:btn-primary")}
 						on:click={() => createTransition(() => ($app.characters.display = "list"))}

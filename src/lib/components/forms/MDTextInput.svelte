@@ -26,12 +26,7 @@
 	<span class="label-text">Notes</span>
 </label>
 {#if preview}
-	<div
-		class={twMerge(
-			"no-script-hide tabs-boxed tabs",
-			"rounded-b-none border-[1px] border-b-0 border-base-content [--tw-border-opacity:0.2]"
-		)}
-	>
+	<div class="tabs-boxed tabs rounded-b-none border-[1px] border-b-0 border-base-content [--tw-border-opacity:0.2]">
 		<button type="button" class="tab" class:tab-active={!prev} on:click={() => (prev = false)}>Edit</button>
 		<button type="button" class="tab" class:tab-active={prev} on:click={() => (prev = true)}>Preview</button>
 	</div>
