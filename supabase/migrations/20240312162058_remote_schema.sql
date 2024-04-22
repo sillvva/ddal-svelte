@@ -201,10 +201,10 @@ ALTER TABLE ONLY "public"."dungeonmaster"
     ADD CONSTRAINT "public_DungeonMaster_owner_fkey" FOREIGN KEY ("owner") REFERENCES "public"."user"("id") ON UPDATE CASCADE ON DELETE CASCADE;
 
 ALTER TABLE ONLY "public"."log"
-    ADD CONSTRAINT "public_Log_characterId_fkey" FOREIGN KEY ("characterId") REFERENCES "public"."character"("id") ON DELETE CASCADE;
+    ADD CONSTRAINT "public_log_characterId_fkey" FOREIGN KEY ("characterId") REFERENCES "public"."character"("id") ON DELETE CASCADE;
 
 ALTER TABLE ONLY "public"."log"
-    ADD CONSTRAINT "public_Log_dungeonMasterId_fkey" FOREIGN KEY ("dungeonMasterId") REFERENCES "public"."dungeonmaster"("id") ON UPDATE CASCADE ON DELETE SET NULL;
+    ADD CONSTRAINT "public_log_dungeonMasterId_fkey" FOREIGN KEY ("dungeonMasterId") REFERENCES "public"."dungeonmaster"("id") ON UPDATE CASCADE ON DELETE SET NULL;
 
 ALTER TABLE ONLY "public"."magicitem"
     ADD CONSTRAINT "public_MagicItem_logGainedId_fkey" FOREIGN KEY ("logGainedId") REFERENCES "public"."log"("id") ON UPDATE CASCADE ON DELETE CASCADE;
