@@ -6,7 +6,8 @@ import {
 	SQL,
 	type BuildQueryResult,
 	type DBQueryConfig,
-	type ExtractTablesWithRelations
+	type ExtractTablesWithRelations,
+	type GetColumnData
 } from "drizzle-orm";
 import { type PgTable } from "drizzle-orm/pg-core";
 import { drizzle } from "drizzle-orm/postgres-js";
@@ -27,7 +28,7 @@ export const buildConflictUpdateColumns = <T extends PgTable, Q extends keyof T[
 			acc[column] = sql.raw(`excluded.${colName}`) as SQL<(typeof col)["_"]["data"]>;
 			return acc;
 		},
-		{} as Record<Q, SQL<(typeof cls)[Q]["_"]["data"]>>
+		{} as Record<Q, SQL<GetColumnData<(typeof cls)[Q]>>>
 	);
 };
 

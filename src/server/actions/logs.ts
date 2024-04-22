@@ -140,6 +140,7 @@ export async function saveLog(input: LogSchema, user: LocalsSession["user"]): Sa
 						? and(eq(magicItems.logGainedId, log.id), notInArray(magicItems.id, itemIds))
 						: eq(magicItems.logGainedId, log.id)
 				);
+			const x = buildConflictUpdateColumns(magicItems, ["name", "description"]);
 
 			if (input.magicItemsGained.length) {
 				await tx
