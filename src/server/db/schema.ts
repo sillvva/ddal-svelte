@@ -2,12 +2,11 @@ import { type CharacterId, type DungeonMasterId, type ItemId, type LogId, type U
 import type { Prettify } from "$lib/util";
 import type { ProviderType } from "@auth/core/providers";
 import { createId } from "@paralleldrive/cuid2";
-import { relations } from "drizzle-orm";
+import { relations, type AnyColumn, type ColumnBaseConfig, type ColumnDataType } from "drizzle-orm";
 import {
 	boolean,
 	index,
 	integer,
-	PgColumn,
 	pgEnum,
 	PgTable,
 	pgTable,
@@ -18,19 +17,25 @@ import {
 	timestamp
 } from "drizzle-orm/pg-core";
 
-type ReqCols<Table extends PgTable, Columns extends Record<string, PgColumn> = Table["_"]["columns"]> = {
-	[K in keyof Columns as Columns[K]["_"]["hasDefault"] extends false ? K : never]: Columns[K]["_"];
+type ColumnConfigs<Table extends PgTable, Filter extends Partial<ColumnBaseConfig<ColumnDataType, string>> = {}> = {
+	[K in keyof Table["_"]["columns"] as Table["_"]["columns"][K] extends AnyColumn<Filter>
+		? K
+		: never]: Table["_"]["columns"][K]["_"];
 };
-type InferInsert<Table extends PgTable> = Prettify<
+type RequiredColumns<Table extends PgTable> = ColumnConfigs<Table, { notNull: true; hasDefault: false }>;
+type OptionalColumns<Table extends PgTable, Defaults extends boolean = true> = Defaults extends true
+	? ColumnConfigs<Table, { notNull: false } | { hasDefault: true }>
+	: ColumnConfigs<Table, { notNull: false; hasDefault: false }>;
+type InferInsertModel<Table extends PgTable, Defaults extends boolean = false> = Prettify<
 	{
-		[K in keyof ReqCols<Table> as ReqCols<Table>[K]["notNull"] extends true ? K : never]: ReqCols<Table>[K]["data"];
+		[K in keyof RequiredColumns<Table>]: RequiredColumns<Table>[K]["data"];
 	} & {
-		[K in keyof ReqCols<Table> as ReqCols<Table>[K]["notNull"] extends false ? K : never]?: ReqCols<Table>[K]["data"] | null;
+		[K in keyof OptionalColumns<Table, Defaults>]?: OptionalColumns<Table, Defaults>[K]["data"] | null;
 	}
 >;
 
 export type User = typeof users.$inferSelect;
-export type InsertUser = InferInsert<typeof users>;
+export type InsertUser = InferInsertModel<typeof users>;
 export type UpdateUser = Partial<User>;
 export const users = pgTable("user", {
 	id: text("id")
@@ -52,7 +57,7 @@ export const userRelations = relations(users, ({ many }) => ({
 }));
 
 export type Account = typeof accounts.$inferSelect;
-export type InsertAccount = InferInsert<typeof accounts>;
+export type InsertAccount = InferInsertModel<typeof accounts>;
 export type UpdateAccount = Partial<Account>;
 export const accounts = pgTable(
 	"account",
@@ -89,7 +94,7 @@ export const accountRelations = relations(accounts, ({ one }) => ({
 }));
 
 export type Session = typeof sessions.$inferSelect;
-export type InsertSession = InferInsert<typeof sessions>;
+export type InsertSession = InferInsertModel<typeof sessions>;
 export type UpdateSession = Partial<Session>;
 export const sessions = pgTable(
 	"session",
@@ -131,7 +136,7 @@ export const verificationTokens = pgTable(
 );
 
 export type Character = typeof characters.$inferSelect;
-export type InsertCharacter = InferInsert<typeof characters>;
+export type InsertCharacter = InferInsertModel<typeof characters>;
 export type UpdateCharacter = Partial<Character>;
 export const characters = pgTable(
 	"character",
@@ -171,7 +176,7 @@ export const characterRelations = relations(characters, ({ one, many }) => ({
 }));
 
 export type DungeonMaster = typeof dungeonMasters.$inferSelect;
-export type InsertDungeonMaster = InferInsert<typeof dungeonMasters>;
+export type InsertDungeonMaster = InferInsertModel<typeof dungeonMasters>;
 export type UpdateDungeonMaster = Partial<DungeonMaster>;
 export const dungeonMasters = pgTable(
 	"dungeonmaster",
@@ -208,7 +213,7 @@ export const dungeonMasterRelations = relations(dungeonMasters, ({ one, many }) 
 export const logType = pgEnum("logType", ["game", "nongame"]);
 
 export type Log = typeof logs.$inferSelect;
-export type InsertLog = InferInsert<typeof logs>;
+export type InsertLog = InferInsertModel<typeof logs>;
 export type UpdateLog = Partial<Log>;
 export const logs = pgTable(
 	"log",
@@ -281,7 +286,7 @@ export const logRelations = relations(logs, ({ one, many }) => ({
 }));
 
 export type MagicItem = typeof magicItems.$inferSelect;
-export type InsertMagicItem = InferInsert<typeof magicItems>;
+export type InsertMagicItem = InferInsertModel<typeof magicItems>;
 export type UpdateMagicItem = Partial<MagicItem>;
 export const magicItems = pgTable(
 	"magicitem",
@@ -323,7 +328,7 @@ export const magicItemRelations = relations(magicItems, ({ one }) => ({
 }));
 
 export type StoryAward = typeof storyAwards.$inferSelect;
-export type InsertStoryAward = InferInsert<typeof storyAwards>;
+export type InsertStoryAward = InferInsertModel<typeof storyAwards>;
 export type UpdateStoryAward = Partial<StoryAward>;
 export const storyAwards = pgTable(
 	"storyaward",
