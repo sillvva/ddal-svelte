@@ -7,6 +7,7 @@ import {
 	boolean,
 	index,
 	integer,
+	PgColumn,
 	pgEnum,
 	PgTable,
 	pgTable,
@@ -17,7 +18,7 @@ import {
 	timestamp
 } from "drizzle-orm/pg-core";
 
-type ReqCols<Table extends PgTable, Columns extends Table["_"]["columns"] = Table["_"]["columns"]> = {
+type ReqCols<Table extends PgTable, Columns extends Record<string, PgColumn> = Table["_"]["columns"]> = {
 	[K in keyof Columns as Columns[K]["_"]["hasDefault"] extends false ? K : never]: Columns[K]["_"];
 };
 type InferInsert<Table extends PgTable> = Prettify<
