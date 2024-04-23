@@ -17,10 +17,12 @@ type ColumnConfigs<Table extends AnyTable<{}>, Filter extends Partial<ColumnBase
 		Table["_"]["columns"][K]
 	>;
 };
+
 type RequiredColumns<Table extends AnyTable<{}>> = ColumnConfigs<Table, { notNull: true; hasDefault: false }>;
 type OptionalColumns<Table extends AnyTable<{}>, Defaults extends boolean = true> = Defaults extends true
 	? Partial<ColumnConfigs<Table, { notNull: false } | { hasDefault: true }>>
 	: Partial<ColumnConfigs<Table, { notNull: false; hasDefault: false }>>;
+
 type InferInsertModel<Table extends AnyTable<{}>, Defaults extends boolean = false> = Prettify<
 	RequiredColumns<Table> & OptionalColumns<Table, Defaults>
 >;
