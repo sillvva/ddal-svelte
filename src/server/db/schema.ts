@@ -1,4 +1,4 @@
-import { type CharacterId, type DungeonMasterId, type ItemId, type LogId, type UserId } from "$lib/schemas";
+import { type CharacterId, type DungeonMasterId, type ItemId, type LogId, type ProfileId, type UserId } from "$lib/schemas";
 import type { Prettify } from "$lib/util";
 import type { ProviderType } from "@auth/core/providers";
 import { createId } from "@paralleldrive/cuid2";
@@ -10,7 +10,19 @@ import {
 	type ColumnDataType,
 	type GetColumnData
 } from "drizzle-orm";
-import { boolean, index, integer, pgEnum, pgTable, primaryKey, real, smallint, text, timestamp } from "drizzle-orm/pg-core";
+import {
+	boolean,
+	foreignKey,
+	index,
+	integer,
+	pgEnum,
+	pgTable,
+	primaryKey,
+	real,
+	smallint,
+	text,
+	timestamp
+} from "drizzle-orm/pg-core";
 
 type ColumnConfigs<Table extends AnyTable<{}>, Filter extends Partial<ColumnBaseConfig<ColumnDataType, string>> = {}> = {
 	[K in keyof Table["_"]["columns"] as Table["_"]["columns"][K] extends AnyColumn<Filter> ? K : never]: GetColumnData<
@@ -36,8 +48,8 @@ export const users = pgTable("user", {
 		.notNull()
 		.$default(() => createId())
 		.$type<UserId>(),
-	name: text("name"),
-	email: text("email").notNull().unique(),
+	name: text("name").notNull(),
+	email: text("email").notNull(),
 	emailVerified: timestamp("emailVerified", { mode: "date" }),
 	image: text("image")
 });
@@ -83,6 +95,39 @@ export const accountRelations = relations(accounts, ({ one }) => ({
 	user: one(users, {
 		fields: [accounts.userId],
 		references: [users.id]
+	}),
+	profile: one(profiles)
+}));
+
+export type Profile = typeof profiles.$inferSelect;
+export type InsertProfile = InferInsertModel<typeof profiles>;
+export type UpdateProfile = Partial<Profile>;
+export const profiles = pgTable(
+	"profile",
+	{
+		id: text("id")
+			.primaryKey()
+			.notNull()
+			.$default(() => createId())
+			.$type<ProfileId>(),
+		providerAccountId: text("providerAccountId").notNull(),
+		provider: text("provider").notNull(),
+		name: text("name").notNull(),
+		image: text("image")
+	},
+	(table) => ({
+		accountFkey: foreignKey({
+			columns: [table.provider, table.providerAccountId],
+			foreignColumns: [accounts.provider, accounts.providerAccountId],
+			name: "public_profile_provider_providerAccountId_fkey"
+		})
+	})
+);
+
+export const profileRelations = relations(profiles, ({ one }) => ({
+	account: one(accounts, {
+		fields: [profiles.provider, profiles.providerAccountId],
+		references: [accounts.provider, accounts.providerAccountId]
 	})
 }));
 

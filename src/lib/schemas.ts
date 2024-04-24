@@ -33,6 +33,9 @@ export const envPublicSchema = object({
 export type UserId = Output<typeof userIdSchema>;
 export const userIdSchema = brandedId("UserId");
 
+export type ProfileId = Output<typeof profileIdSchema>;
+export const profileIdSchema = brandedId("ProfileId");
+
 const optionalURL = optional(fallback(string([url(), maxStringSize]), ""), "");
 
 export type NewCharacterSchema = Output<typeof newCharacterSchema>;
