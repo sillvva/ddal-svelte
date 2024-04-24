@@ -15,8 +15,8 @@
 	}
 
 	export let content: FormPathType<T, NonBrandedFormPathLeaves<T, string>>;
-	export let minRows: number = 3;
-	export let maxRows: number = 50;
+	export let minRows: number | undefined = undefined;
+	export let maxRows: number | undefined = undefined;
 </script>
 
 <textarea
@@ -31,7 +31,7 @@
 <style>
 	textarea {
 		resize: none;
-		min-height: calc(var(--minRows) + 1rem + 2px);
-		max-height: calc(var(--maxRows) + 1rem + 2px);
+		min-height: calc(var(--minRows, 3lh) + 1rem + 2px);
+		max-height: calc(var(--maxRows, 50lh) + 1rem + 2px);
 	}
 </style>

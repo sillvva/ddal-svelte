@@ -14,8 +14,8 @@
 	export let superform: SuperForm<T>;
 	export let field: NonBrandedFormPathLeaves<T, string>;
 	export let preview = false;
-	export let minRows: number = 3;
-	export let maxRows: number = 50;
+	export let minRows: number | undefined = undefined;
+	export let maxRows: number | undefined = undefined;
 
 	let prev = false;
 
