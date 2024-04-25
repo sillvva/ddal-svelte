@@ -21,7 +21,8 @@ import {
 	real,
 	smallint,
 	text,
-	timestamp
+	timestamp,
+	uniqueIndex
 } from "drizzle-orm/pg-core";
 
 type ColumnConfigs<Table extends AnyTable<{}>, Filter extends Partial<ColumnBaseConfig<ColumnDataType, string>> = {}> = {
@@ -120,7 +121,11 @@ export const profiles = pgTable(
 			columns: [table.provider, table.providerAccountId],
 			foreignColumns: [accounts.provider, accounts.providerAccountId],
 			name: "public_profile_provider_providerAccountId_fkey"
-		})
+		}),
+		profile_provider_providerAccountId_idx: uniqueIndex("Profile_provider_providerAccountId_idx").on(
+			table.provider,
+			table.providerAccountId
+		)
 	})
 );
 
@@ -160,18 +165,6 @@ export const sessionRelations = relations(sessions, ({ one }) => ({
 		references: [users.id]
 	})
 }));
-
-export const verificationTokens = pgTable(
-	"verificationtoken",
-	{
-		identifier: text("identifier").notNull(),
-		token: text("token").notNull(),
-		expires: timestamp("expires", { mode: "date" }).notNull()
-	},
-	(vt) => ({
-		compoundKey: primaryKey({ columns: [vt.identifier, vt.token] })
-	})
-);
 
 export type Character = typeof characters.$inferSelect;
 export type InsertCharacter = InferInsertModel<typeof characters>;

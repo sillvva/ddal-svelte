@@ -2,7 +2,7 @@ import { PROVIDERS } from "$lib/constants";
 import { privateEnv } from "$lib/env/private";
 import { isDefined, joinStringList } from "$lib/util";
 import { buildConflictUpdateColumns, db, q } from "$server/db";
-import { accounts, profiles, sessions, users, verificationTokens, type Account } from "$server/db/schema";
+import { accounts, profiles, sessions, users, type Account } from "$server/db/schema";
 import type { Provider } from "@auth/core/providers";
 import Discord from "@auth/core/providers/discord";
 import Google from "@auth/core/providers/google";
@@ -223,7 +223,7 @@ const auth = SvelteKitAuth(async (event) => {
 			usersTable: users,
 			accountsTable: accounts,
 			sessionsTable: sessions,
-			verificationTokensTable: verificationTokens
+			verificationTokensTable: undefined as any
 		}),
 		providers: providers.map((p) => p.oauth()),
 		trustHost: true,
