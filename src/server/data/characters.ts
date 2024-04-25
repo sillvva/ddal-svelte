@@ -2,6 +2,7 @@ import { BLANK_CHARACTER } from "$lib/constants";
 import { getLogsSummary } from "$lib/entities";
 import type { CharacterId, UserId } from "$lib/schemas";
 import { isDefined } from "$lib/util";
+import { userIncludes } from "$server/actions/users";
 import { cache, mcache, type CacheKey } from "$server/cache";
 import { q } from "$server/db";
 import { logIncludes } from "./logs";
@@ -14,7 +15,7 @@ export async function getCharacter(characterId: CharacterId, includeLogs = true)
 		if (includeLogs) {
 			return await q.characters.findFirst({
 				with: {
-					user: true,
+					user: userIncludes,
 					logs: {
 						with: logIncludes,
 						orderBy: (logs, { asc }) => asc(logs.date)
@@ -26,7 +27,7 @@ export async function getCharacter(characterId: CharacterId, includeLogs = true)
 			return await q.characters
 				.findFirst({
 					with: {
-						user: true
+						user: userIncludes
 					},
 					where: (characters, { eq }) => eq(characters.id, characterId)
 				})
@@ -52,7 +53,7 @@ export async function getCharacterCache(characterId: CharacterId, includeLogs = 
 export async function getCharactersWithLogs(userId: UserId, includeLogs = true) {
 	const characters = await q.characters.findMany({
 		with: {
-			user: true,
+			user: userIncludes,
 			logs: {
 				with: logIncludes,
 				orderBy: (logs, { asc }) => asc(logs.date)
@@ -77,7 +78,7 @@ export async function getCharacterCaches(characterIds: CharacterId[]) {
 		const characters = characterIds.length
 			? await q.characters.findMany({
 					with: {
-						user: true,
+						user: userIncludes,
 						logs: {
 							with: logIncludes,
 							orderBy: (logs, { asc }) => asc(logs.date)
@@ -99,7 +100,7 @@ export type CharactersData = Awaited<ReturnType<typeof getCharacters>>;
 export async function getCharacters(userId: UserId) {
 	return await q.characters.findMany({
 		with: {
-			user: true
+			user: userIncludes
 		},
 		where: (characters, { eq, ne, and }) => and(eq(characters.userId, userId), ne(characters.name, "Placeholder")),
 		orderBy: (characters, { asc }) => asc(characters.name)

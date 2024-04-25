@@ -226,7 +226,9 @@ export function defaultLogData(userId: UserId, characterId = null as CharacterId
 	};
 }
 
-export function parseLog(log: Omit<LogData & { character?: (Character & { user?: User }) | null }, "type"> & { type: string }) {
+export function parseLog(
+	log: Omit<LogData & { character?: (Character & { user?: Pick<User, "id" | "name"> }) | null }, "type"> & { type: string }
+) {
 	return {
 		...log,
 		type: log.type === "nongame" ? ("nongame" as const) : ("game" as const),
