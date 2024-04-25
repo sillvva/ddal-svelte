@@ -162,7 +162,7 @@ export const sessionRelations = relations(sessions, ({ one }) => ({
 }));
 
 export const verificationTokens = pgTable(
-	"verificationToken",
+	"verificationtoken",
 	{
 		identifier: text("identifier").notNull(),
 		token: text("token").notNull(),
