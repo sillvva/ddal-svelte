@@ -5,7 +5,7 @@
 	import { pageLoader, searchData } from "$lib/stores";
 	import type { CookieStore } from "$server/cookie";
 	import type { Account } from "$server/db/schema";
-	import { signIn } from "@auth/sveltekit/client";
+	import { signIn, signOut } from "@auth/sveltekit/client";
 	import { getContext } from "svelte";
 	import { twMerge } from "tailwind-merge";
 	import ThemeSwitcher from "./ThemeSwitcher.svelte";
@@ -55,7 +55,7 @@
 				</div>
 			{/if}
 		</div>
-		<button class="btn p-3">
+		<button class="btn p-3" on:click={() => signOut({ callbackUrl: "/" })}>
 			<i class="iconify h-5 w-5 mdi-logout" />
 			<span class="sr-only">Sign out</span>
 		</button>
