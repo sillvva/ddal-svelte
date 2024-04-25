@@ -1,8 +1,8 @@
 import { PROVIDERS } from "$lib/constants";
 import { privateEnv } from "$lib/env/private";
 import { isDefined, joinStringList } from "$lib/util";
-import { buildConflictUpdateColumns, db, q } from "$server/db";
-import { accounts, profiles, sessions, users, type Account } from "$server/db/schema";
+import { db, q } from "$server/db";
+import { accounts, sessions, users, type Account } from "$server/db/schema";
 import type { Provider } from "@auth/core/providers";
 import Discord from "@auth/core/providers/discord";
 import Google from "@auth/core/providers/google";
@@ -162,54 +162,24 @@ const auth = SvelteKitAuth(async (event) => {
 					}
 				}
 
-				await db
-					.insert(profiles)
-					.values({
-						provider: account.provider,
-						providerAccountId: account.providerAccountId,
-						name: accountProfile.name,
-						image: accountProfile.image
-					})
-					.onConflictDoUpdate({
-						target: [profiles.provider, profiles.providerAccountId],
-						set: buildConflictUpdateColumns(profiles, ["name", "image"])
-					});
+				if (user.name !== accountProfile.name || user.image !== accountProfile.image) {
+					await db.update(users).set({ name: accountProfile.name, image: accountProfile.image }).where(eq(users.id, user.id));
+				}
 
 				return true;
 			},
 			async session({ session, user }) {
 				assertUser(user, redirectUrl);
 
+				if (session.expires >= new Date()) return session satisfies LocalsSession;
+
 				const account = await q.accounts.findFirst({
-					with: {
-						profile: true
-					},
 					where: (accounts, { and, eq, isNotNull }) => and(eq(accounts.userId, user.id), isNotNull(accounts.lastLogin)),
 					orderBy: (account, { desc }) => desc(account.lastLogin)
 				});
 
 				if (account) {
-					if (!account.profile) {
-						const [profile] = await db
-							.insert(profiles)
-							.values({
-								provider: account.provider,
-								providerAccountId: account.providerAccountId,
-								name: user.name,
-								image: user.image
-							})
-							.onConflictDoNothing({
-								target: [profiles.provider, profiles.providerAccountId]
-							})
-							.returning();
-						if (profile) account.profile = profile;
-					}
-					if (account.profile) {
-						session.user.name = account.profile.name;
-						session.user.image = account.profile.image;
-					}
-
-					if (account.userId === user.id && session.expires < new Date()) {
+					if (account.userId === user.id) {
 						const [result] = await refreshToken(account);
 						if (result instanceof Error) console.error(`RefreshAccessTokenError: ${result.message}`);
 					}
