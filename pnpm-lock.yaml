@@ -9,11 +9,11 @@ dependencies:
     specifier: ^0.30.0
     version: 0.30.0
   '@auth/drizzle-adapter':
-    specifier: ^0.9.0
-    version: 0.9.0
+    specifier: ^1.0.1
+    version: 1.0.1
   '@auth/sveltekit':
-    specifier: ^1.0.0
-    version: 1.0.0(@sveltejs/kit@2.5.7)(svelte@4.2.15)
+    specifier: ^1.0.1
+    version: 1.0.1(@sveltejs/kit@2.5.7)(svelte@4.2.15)
   '@internationalized/date':
     specifier: ^3.5.2
     version: 3.5.2
@@ -183,29 +183,6 @@ packages:
       '@jridgewell/gen-mapping': 0.3.5
       '@jridgewell/trace-mapping': 0.3.25
 
-  /@auth/core@0.29.0:
-    resolution: {integrity: sha512-MdfEjU6WRjUnPG1+XeBWrTIlAsLZU6V0imCIqVDDDPxLI6UZWldXVqAA2EsDazGofV78jqiCLHaN85mJITDqdg==}
-    peerDependencies:
-      '@simplewebauthn/browser': ^9.0.1
-      '@simplewebauthn/server': ^9.0.2
-      nodemailer: ^6.8.0
-    peerDependenciesMeta:
-      '@simplewebauthn/browser':
-        optional: true
-      '@simplewebauthn/server':
-        optional: true
-      nodemailer:
-        optional: true
-    dependencies:
-      '@panva/hkdf': 1.1.1
-      '@types/cookie': 0.6.0
-      cookie: 0.6.0
-      jose: 5.2.4
-      oauth4webapi: 2.10.4
-      preact: 10.11.3
-      preact-render-to-string: 5.2.3(preact@10.11.3)
-    dev: false
-
   /@auth/core@0.30.0:
     resolution: {integrity: sha512-8AE4m/nk+4EIiVCJwxZAsJeAQuzpEC8M8768mmKVn60CGDdupKQkVhxbRlm5Qh7eNRCoFFME+0DvtaX2aXrYaA==}
     peerDependencies:
@@ -229,18 +206,18 @@ packages:
       preact-render-to-string: 5.2.3(preact@10.11.3)
     dev: false
 
-  /@auth/drizzle-adapter@0.9.0:
-    resolution: {integrity: sha512-6ec+ecH+R24xzXto9mvk31CM4vrrcieLrHo0r7Hv3ItEY93aBB4Z78AHPmA1HqYT6zEmDWfezo7fOv/6Ydgh6Q==}
+  /@auth/drizzle-adapter@1.0.1:
+    resolution: {integrity: sha512-E4np2F48p930q+YeQ5ipZPv/L+9gmQcB7g6NQQyux2wtanRNOXNW4TG8wMjSRfTzccNq161YZ8Fm5le/5snkGQ==}
     dependencies:
-      '@auth/core': 0.29.0
+      '@auth/core': 0.30.0
     transitivePeerDependencies:
       - '@simplewebauthn/browser'
       - '@simplewebauthn/server'
       - nodemailer
     dev: false
 
-  /@auth/sveltekit@1.0.0(@sveltejs/kit@2.5.7)(svelte@4.2.15):
-    resolution: {integrity: sha512-q14RQMEBSnyrkygC8HWQmqhGbHftlxXz1YwRIneKTMOB573wuRoW35q27Qjp7JZn1CiHDc+sgxyAOAkQvPkyvg==}
+  /@auth/sveltekit@1.0.1(@sveltejs/kit@2.5.7)(svelte@4.2.15):
+    resolution: {integrity: sha512-PNV/r20o1fRNs72CjwMgiw4Ti12BYm/GVpuMbTzNxHE+eZLWuw4MZY05LtMvy9VmN8LWlEKxTmAQKj7nUmYJNA==}
     peerDependencies:
       '@sveltejs/kit': ^1.0.0 || ^2.0.0
       svelte: ^3.54.0 || ^4.0.0 || ^5
@@ -1286,8 +1263,8 @@ packages:
     dev: true
     optional: true
 
-  /@sinclair/typebox@0.32.22:
-    resolution: {integrity: sha512-4uH8BLhNbptL2UkfS/a63tQ6uZGGZ4DT6zFq7ZkE+KQi7/56ZYkkWniAqz4bUr4cZGfoR83zRvSh39ZpH8DKDw==}
+  /@sinclair/typebox@0.32.24:
+    resolution: {integrity: sha512-2NhY+gf/fHvqYlWUAjuCI4+/esEVDicSIPLMFC98bZrqQ+YYpBc9YPOsAEosQNhu6AhVomlwn+yDe0UPzUYFTw==}
     requiresBuild: true
     dev: true
     optional: true
@@ -4291,7 +4268,7 @@ packages:
       ts-deepmerge: 7.0.0
     optionalDependencies:
       '@gcornut/valibot-json-schema': 0.0.27(@types/json-schema@7.0.15)(esbuild-runner@2.2.2)(esbuild@0.20.2)(valibot@0.30.0)
-      '@sinclair/typebox': 0.32.22
+      '@sinclair/typebox': 0.32.24
       '@sodaru/yup-to-json-schema': 2.0.1
       '@vinejs/vine': 1.8.0
       arktype: 1.0.29-alpha
