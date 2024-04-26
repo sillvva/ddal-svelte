@@ -3,6 +3,10 @@ import type { AdapterUser } from "@auth/core/adapters";
 import { AuthError, type User } from "@auth/sveltekit";
 import { redirect } from "@sveltejs/kit";
 
+function urlRedirect(url: URL) {
+	return `redirect=${encodeURIComponent(`${url.pathname}${url.search}`)}`;
+}
+
 /**
  * Redirects to / with a redirect query parameter
  * @param url - The URL to redirect to after signing in
@@ -10,7 +14,7 @@ import { redirect } from "@sveltejs/kit";
  * @return {never}
  */
 export function signInRedirect(url: URL): never {
-	redirect(302, `/?redirect=${encodeURIComponent(`${url.pathname}${url.search}`)}`);
+	redirect(302, `/?${urlRedirect(url)}`);
 }
 
 type ErrorType = typeof AuthError.prototype.type;
@@ -44,9 +48,7 @@ export function authErrRedirect(
 	if (options instanceof URL) options = { redirectTo: options };
 	const redirectUrl = options.redirectTo && new URL(options.redirectTo);
 	return (
-		`/?error=${code}` +
-		(options.detail ? `&detail=${options.detail}` : "") +
-		(redirectUrl ? `&redirect=${encodeURIComponent(`${redirectUrl.pathname}${redirectUrl.search}`)}` : "")
+		`/?error=${code}` + (options.detail ? `&detail=${options.detail}` : "") + (redirectUrl ? `&${urlRedirect(redirectUrl)}` : "")
 	);
 }
 
@@ -56,12 +58,11 @@ export function assertUser<T extends User | AdapterUser>(
 ): asserts user is Prettify<T & LocalsSession["user"]> {
 	try {
 		if (!user) throw "NotAuthenticated";
-		if (!user.id || !user.name) throw "MissingUserData";
+		if (!user.id || !user.name || !user.email) throw "MissingUserData";
 	} catch (error) {
 		const err = error as ErrorCodes;
 		if (redirectUrl) {
-			if (err === "NotAuthenticated")
-				redirect(302, `/?redirect=${encodeURIComponent(`${redirectUrl.pathname}${redirectUrl.search}`)}`);
+			if (err === "NotAuthenticated") redirect(302, `/?${urlRedirect(redirectUrl)}`);
 			redirect(302, authErrRedirect(err, redirectUrl));
 		} else throw error;
 	}
