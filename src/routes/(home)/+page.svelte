@@ -3,6 +3,7 @@
 	import { page } from "$app/stores";
 	import { PROVIDERS } from "$lib/constants.js";
 	import { publicEnv } from "$lib/env/public.js";
+	import type { ErrorCodes } from "$server/auth.js";
 	import type { CookieStore } from "$server/cookie.js";
 	import { signIn } from "@auth/sveltekit/client";
 	import { getContext } from "svelte";
@@ -20,9 +21,22 @@
 	const description = "A tool for tracking your Adventurers League characters and magic items.";
 	const image = "https://ddal.dekok.app/images/barovia-gate.webp";
 
-	let code = $page.url.searchParams.get("code") || $page.url.searchParams.get("error");
+	function authErrors(code: ErrorCodes, detail?: string | null) {
+		switch (code) {
+			case "InvalidProvider":
+				return detail && `Provider '${detail}' not supported`;
+			case "ExistingAccount":
+				return (
+					detail && `You already have an account with ${detail}. Sign in, then link additional providers in the settings menu.`
+				);
+			default:
+				return null;
+		}
+	}
+
+	let code = ($page.url.searchParams.get("code") || $page.url.searchParams.get("error")) as ErrorCodes | null | "undefined";
 	if (code === "undefined") code = "UnknownError";
-	const message = $page.url.searchParams.get("message");
+	const message = $page.url.searchParams.get("message") || (code && authErrors(code, $page.url.searchParams.get("detail")));
 </script>
 
 <svelte:head>

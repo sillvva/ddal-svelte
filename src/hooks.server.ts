@@ -8,7 +8,7 @@ import Discord from "@auth/core/providers/discord";
 import Google from "@auth/core/providers/google";
 import type { Profile, TokenSet } from "@auth/core/types";
 import { DrizzleAdapter } from "@auth/drizzle-adapter";
-import { SvelteKitAuth, type SvelteKitAuthConfig } from "@auth/sveltekit";
+import { AuthError, SvelteKitAuth, type SvelteKitAuthConfig } from "@auth/sveltekit";
 import { type Handle } from "@sveltejs/kit";
 import { sequence } from "@sveltejs/kit/hooks";
 import { handle as documentHandle } from "@sveltekit-addons/document/hooks";
@@ -78,16 +78,25 @@ const auth = SvelteKitAuth(async (event) => {
 	return {
 		callbacks: {
 			async signIn({ account, user, profile }) {
-				assertUser(user, redirectUrl);
+				try {
+					assertUser(user);
+				} catch (error) {
+					const { type } = error as AuthError;
+					return authErrRedirect(type, redirectUrl);
+				}
 
-				if (!account) return authErrRedirect("Missing Account Data", "Account not found", redirectUrl);
-				if (!profile) return authErrRedirect("Missing Account Data", "Profile not found", redirectUrl);
+				if (!account) return authErrRedirect("MissingAccountData", redirectUrl);
+				if (!profile) return authErrRedirect("MissingProfileData", redirectUrl);
 
 				const provider = providers.find((p) => p.id === account.provider);
-				if (!provider) return authErrRedirect("Invalid Provider", `Provider '${account.provider}' not supported`, redirectUrl);
+				if (!provider)
+					return authErrRedirect("InvalidProvider", {
+						detail: account.provider,
+						redirectTo: redirectUrl
+					});
 
 				const accountProfile = provider.profile(profile);
-				if (!accountProfile) return authErrRedirect("Profile Error", "Profile not found", redirectUrl);
+				if (!accountProfile) return authErrRedirect("ProfileNotFound", redirectUrl);
 
 				const currentSession = await event.locals.auth();
 				const currentUserId = currentSession?.user?.id;
@@ -99,7 +108,7 @@ const auth = SvelteKitAuth(async (event) => {
 				});
 
 				if (privateEnv.DISABLE_SIGNUPS && !existingAccount && !currentUserId)
-					return authErrRedirect("Signups Disabled", "Signups are disabled", redirectUrl);
+					return authErrRedirect("SignupsDisabled", redirectUrl);
 
 				if (existingAccount) {
 					// If there is no user logged in, but we recognize the account
@@ -137,8 +146,11 @@ const auth = SvelteKitAuth(async (event) => {
 					if (matchingProviders.length) {
 						const names = matchingProviders.map((id) => PROVIDERS.find((p) => p.id === id)?.name).filter(isDefined);
 						const joinedProviders = joinStringList(names);
-						const message = `You already have an account with ${joinedProviders}. Sign in, then link additional providers in the settings menu.`;
-						return authErrRedirect("Existing Account", message, redirectUrl);
+
+						return authErrRedirect("ExistingAccount", {
+							detail: joinedProviders,
+							redirectTo: redirectUrl
+						});
 					}
 				}
 
@@ -148,18 +160,18 @@ const auth = SvelteKitAuth(async (event) => {
 
 				return true;
 			},
-			async session({ session, user }) {
-				assertUser(user, redirectUrl);
+			async session({ session }) {
+				assertUser(session.user, redirectUrl);
 
 				if (session.expires >= new Date()) return session satisfies LocalsSession;
 
 				const account = await q.accounts.findFirst({
-					where: (accounts, { and, eq, isNotNull }) => and(eq(accounts.userId, user.id), isNotNull(accounts.lastLogin)),
+					where: (accounts, { and, eq, isNotNull }) => and(eq(accounts.userId, session.user.id), isNotNull(accounts.lastLogin)),
 					orderBy: (account, { desc }) => desc(account.lastLogin)
 				});
 
 				if (account) {
-					if (account.userId === user.id) {
+					if (account.userId === session.user.id) {
 						const [result] = await refreshToken(account);
 						if (result instanceof Error) console.error(`RefreshAccessTokenError: ${result.message}`);
 					}

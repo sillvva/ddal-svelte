@@ -1,4 +1,4 @@
-import type { UserId } from "$lib/schemas";
+import type { Prettify } from "$lib/util";
 import type { AdapterUser } from "@auth/core/adapters";
 import { AuthError, type User } from "@auth/sveltekit";
 import { redirect } from "@sveltejs/kit";
@@ -13,6 +13,20 @@ export function signInRedirect(url: URL): never {
 	redirect(302, `/?redirect=${encodeURIComponent(`${url.pathname}${url.search}`)}`);
 }
 
+type ErrorType = typeof AuthError.prototype.type;
+
+export type ErrorCodes =
+	| "NotAuthenticated"
+	| "MssingUserData"
+	| "MissingAccountData"
+	| "MissingProfileData"
+	| "InvalidProvider"
+	| "ProfileNotFound"
+	| "SignupsDisabled"
+	| "ExistingAccount"
+	| "UnknownError"
+	| ErrorType;
+
 /**
  * Redirects to / with a code and message query parameter
  * @param code - The error code
@@ -21,25 +35,34 @@ export function signInRedirect(url: URL): never {
  * @throws {Redirect} Redirects to /
  * @return {string} The redirect URL
  */
-export function authErrRedirect(code: number | string, message: string, redirectTo?: URL) {
+export function authErrRedirect(
+	code: ErrorCodes,
+	options?: URL | string | Partial<{ detail: string; redirectTo: string | URL }>
+) {
+	if (!options) options = {};
+	if (typeof options === "string") options = { detail: options };
+	if (options instanceof URL) options = { redirectTo: options };
+	const redirectUrl = options.redirectTo && new URL(options.redirectTo);
 	return (
-		`/?code=${code}&message=${message}` +
-		(redirectTo ? `&redirect=${encodeURIComponent(`${redirectTo.pathname}${redirectTo.search}`)}` : "")
+		`/?code=${code}` +
+		(options.detail ? `&detail=${options.detail}` : "") +
+		(redirectUrl ? `&redirect=${encodeURIComponent(`${redirectUrl.pathname}${redirectUrl.search}`)}` : "")
 	);
 }
 
 export function assertUser<T extends User | AdapterUser>(
 	user: T | undefined,
-	redirectTo?: URL
-): asserts user is T & { id: UserId; name: string } {
+	redirectUrl?: URL
+): asserts user is Prettify<T & LocalsSession["user"]> {
 	try {
-		if (!user) throw new Error("Not authenticated");
-		if (!user.id || !user.name) throw new AuthError("Missing user id or name");
+		if (!user) throw "Not Authenticated";
+		if (!user.id || !user.name) throw "Mssing User Data";
 	} catch (error) {
-		if (error instanceof AuthError) {
-			authErrRedirect(error.type || "Auth Error", error.message.split(" Read")[0]!, redirectTo);
-		} else {
-			signInRedirect(redirectTo || new URL("/"));
-		}
+		const err = error as ErrorCodes;
+		if (redirectUrl) {
+			if (err === "NotAuthenticated")
+				redirect(302, `/?redirect=${encodeURIComponent(`${redirectUrl.pathname}${redirectUrl.search}`)}`);
+			redirect(302, authErrRedirect(err, redirectUrl));
+		} else throw new AuthError("Not Authenticated");
 	}
 }
