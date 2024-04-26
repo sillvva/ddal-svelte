@@ -66,17 +66,6 @@
 		<br />
 		Log Sheet
 	</h1>
-	{#if code}
-		<div class="flex justify-center">
-			<div class="alert alert-error min-w-60 max-w-[24rem] shadow-lg">
-				<span class="iconify size-6 mdi-alert-circle max-sm:hidden" />
-				<div>
-					<h3 class="font-bold">Error: {code}</h3>
-					{#if message !== null}<p class="max-sm:text-sm">{message || "Something went wrong"}</p>{/if}
-				</div>
-			</div>
-		</div>
-	{/if}
 	<div class="flex flex-col gap-4">
 		{#each PROVIDERS as provider}
 			<button
@@ -92,4 +81,16 @@
 			</button>
 		{/each}
 	</div>
+	{#if code}
+		<div class="flex justify-center">
+			<div class="alert alert-error min-w-60 max-w-[28rem] shadow-lg">
+				<span class="iconify size-6 mdi-alert-circle max-sm:hidden" />
+				<div>
+					<h3 class="font-bold">Error</h3>
+					{#if message !== null}<p class="mb-2 text-balance max-sm:text-sm">{message || "Something went wrong"}</p>{/if}
+					<p class="font-mono text-xs">Code: {code}</p>
+				</div>
+			</div>
+		</div>
+	{/if}
 </main>
