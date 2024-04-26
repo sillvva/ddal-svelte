@@ -20,7 +20,7 @@
 	const description = "A tool for tracking your Adventurers League characters and magic items.";
 	const image = "https://ddal.dekok.app/images/barovia-gate.webp";
 
-	let code = $page.url.searchParams.get("code");
+	let code = $page.url.searchParams.get("code") || $page.url.searchParams.get("error");
 	if (code === "undefined") code = "UnknownError";
 	const message = $page.url.searchParams.get("message");
 </script>
@@ -54,11 +54,11 @@
 	</h1>
 	{#if code}
 		<div class="flex justify-center">
-			<div class="alert alert-error min-w-60 max-w-[24rem] text-error-content shadow-lg">
+			<div class="alert alert-error min-w-60 max-w-[24rem] shadow-lg">
 				<span class="iconify size-6 mdi-alert-circle max-sm:hidden" />
 				<div>
 					<h3 class="font-bold">Error: {code}</h3>
-					{#if message !== null}<div class="text-sm">{message || "Something went wrong"}</div>{/if}
+					{#if message !== null}<p class="max-sm:text-sm">{message || "Something went wrong"}</p>{/if}
 				</div>
 			</div>
 		</div>

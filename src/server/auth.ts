@@ -19,13 +19,12 @@ export function signInRedirect(url: URL): never {
  * @param message - The error message
  * @param redirectTo - The URL to redirect to after signing in
  * @throws {Redirect} Redirects to /
- * @return {never}
+ * @return {string} The redirect URL
  */
-export function authErrRedirect(code: number | string, message: string, redirectTo?: URL): never {
-	redirect(
-		302,
+export function authErrRedirect(code: number | string, message: string, redirectTo?: URL) {
+	return (
 		`/?code=${code}&message=${message}` +
-			(redirectTo ? `&redirect=${encodeURIComponent(`${redirectTo.pathname}${redirectTo.search}`)}` : "")
+		(redirectTo ? `&redirect=${encodeURIComponent(`${redirectTo.pathname}${redirectTo.search}`)}` : "")
 	);
 }
 

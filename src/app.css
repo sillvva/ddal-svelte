@@ -5,6 +5,10 @@
 @media (prefers-color-scheme: dark) {
 	:root {
 		color-scheme: dark;
+		--in: 82.5% 0.151 231.6; /* info */
+		--su: 75% 0.15 160; /* success */
+		--wa: 85% 0.159 83.87; /* warning */
+		--er: 82.5% 0.221 22.18; /* error */
 	}
 }
 
