@@ -72,8 +72,8 @@ const providers: OAuthProvider[] = [
 ];
 
 const auth = SvelteKitAuth(async (event) => {
-	const redirectTo = event.url.searchParams.get("redirect") || undefined;
-	const redirectUrl = redirectTo ? new URL(redirectTo, event.url.origin) : new URL("/characters", event.url.origin);
+	const redirectTo = event.url.searchParams.get("redirect") || "/characters";
+	const redirectUrl = new URL(redirectTo, event.url.origin);
 
 	return {
 		callbacks: {
