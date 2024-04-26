@@ -8,12 +8,12 @@ import Discord from "@auth/core/providers/discord";
 import Google from "@auth/core/providers/google";
 import type { Profile, TokenSet } from "@auth/core/types";
 import { DrizzleAdapter } from "@auth/drizzle-adapter";
-import { AuthError, SvelteKitAuth, type SvelteKitAuthConfig } from "@auth/sveltekit";
+import { SvelteKitAuth, type SvelteKitAuthConfig } from "@auth/sveltekit";
 import { type Handle } from "@sveltejs/kit";
 import { sequence } from "@sveltejs/kit/hooks";
 import { handle as documentHandle } from "@sveltekit-addons/document/hooks";
 import { and, eq } from "drizzle-orm";
-import { assertUser, authErrRedirect } from "./server/auth";
+import { assertUser, authErrRedirect, type ErrorCodes } from "./server/auth";
 
 interface OAuthProvider {
 	id: string;
@@ -81,7 +81,7 @@ const auth = SvelteKitAuth(async (event) => {
 				try {
 					assertUser(user);
 				} catch (error) {
-					const { type } = error as AuthError;
+					const type = error as ErrorCodes;
 					return authErrRedirect(type, redirectUrl);
 				}
 

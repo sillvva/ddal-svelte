@@ -3,14 +3,9 @@
 	import { page } from "$app/stores";
 	import { PROVIDERS } from "$lib/constants.js";
 	import { publicEnv } from "$lib/env/public.js";
-	import type { ErrorCodes } from "$server/auth.js";
-	import type { CookieStore } from "$server/cookie.js";
 	import { signIn } from "@auth/sveltekit/client";
-	import { getContext } from "svelte";
 
 	export let data;
-
-	const app = getContext<CookieStore<App.Cookie>>("app");
 
 	$: if (browser) {
 		const hasCookie = document.cookie.includes("session-token");
@@ -20,23 +15,6 @@
 	const title = "Adventurers League Log Sheet";
 	const description = "A tool for tracking your Adventurers League characters and magic items.";
 	const image = "https://ddal.dekok.app/images/barovia-gate.webp";
-
-	function authErrors(code: ErrorCodes, detail?: string | null) {
-		switch (code) {
-			case "InvalidProvider":
-				return detail && `Provider '${detail}' not supported`;
-			case "ExistingAccount":
-				return (
-					detail && `You already have an account with ${detail}. Sign in, then link additional providers in the settings menu.`
-				);
-			default:
-				return null;
-		}
-	}
-
-	let code = ($page.url.searchParams.get("code") || $page.url.searchParams.get("error")) as ErrorCodes | null | "undefined";
-	if (code === "undefined") code = "UnknownError";
-	const message = $page.url.searchParams.get("message") || (code && authErrors(code, $page.url.searchParams.get("detail")));
 </script>
 
 <svelte:head>
@@ -72,7 +50,7 @@
 				class="flex h-16 items-center gap-4 rounded-lg bg-base-200 px-8 py-4 text-base-content transition-colors hover:bg-base-300"
 				on:click={() =>
 					signIn(provider.id, {
-						callbackUrl: `${$page.url.origin}${data.redirectTo || "/characters"}`
+						callbackUrl: data.redirectTo || "/characters"
 					})}
 				aria-label="Sign in with {provider.name}"
 			>
@@ -81,14 +59,14 @@
 			</button>
 		{/each}
 	</div>
-	{#if code}
+	{#if data.code}
 		<div class="flex justify-center">
 			<div class="alert alert-error min-w-60 max-w-[28rem] shadow-lg">
 				<span class="iconify size-6 mdi-alert-circle max-sm:hidden" />
 				<div>
 					<h3 class="font-bold">Error</h3>
-					{#if message !== null}<p class="mb-2 text-balance max-sm:text-sm">{message || "Something went wrong"}</p>{/if}
-					<p class="font-mono text-xs">Code: {code}</p>
+					{#if data.message}<p class="mb-2 text-balance max-sm:text-sm">{data.message}</p>{/if}
+					<p class="font-mono text-xs">Code: {data.code}</p>
 				</div>
 			</div>
 		</div>

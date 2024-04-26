@@ -17,7 +17,7 @@ type ErrorType = typeof AuthError.prototype.type;
 
 export type ErrorCodes =
 	| "NotAuthenticated"
-	| "MssingUserData"
+	| "MissingUserData"
 	| "MissingAccountData"
 	| "MissingProfileData"
 	| "InvalidProvider"
@@ -44,7 +44,7 @@ export function authErrRedirect(
 	if (options instanceof URL) options = { redirectTo: options };
 	const redirectUrl = options.redirectTo && new URL(options.redirectTo);
 	return (
-		`/?code=${code}` +
+		`/?error=${code}` +
 		(options.detail ? `&detail=${options.detail}` : "") +
 		(redirectUrl ? `&redirect=${encodeURIComponent(`${redirectUrl.pathname}${redirectUrl.search}`)}` : "")
 	);
@@ -55,14 +55,28 @@ export function assertUser<T extends User | AdapterUser>(
 	redirectUrl?: URL
 ): asserts user is Prettify<T & LocalsSession["user"]> {
 	try {
-		if (!user) throw "Not Authenticated";
-		if (!user.id || !user.name) throw "Mssing User Data";
+		if (!user) throw "NotAuthenticated";
+		if (!user.id || !user.name) throw "MissingUserData";
 	} catch (error) {
 		const err = error as ErrorCodes;
 		if (redirectUrl) {
 			if (err === "NotAuthenticated")
 				redirect(302, `/?redirect=${encodeURIComponent(`${redirectUrl.pathname}${redirectUrl.search}`)}`);
 			redirect(302, authErrRedirect(err, redirectUrl));
-		} else throw new AuthError("Not Authenticated");
+		} else throw error;
+	}
+}
+
+export function authErrors(code: ErrorCodes, detail?: string | null) {
+	if (!detail) detail = null;
+	switch (code) {
+		case "InvalidProvider":
+			return detail && `${detail} is not supported`;
+		case "ExistingAccount":
+			return (
+				detail && `You already have an account with ${detail}. Sign in, then link additional providers in the settings menu.`
+			);
+		default:
+			return null;
 	}
 }
