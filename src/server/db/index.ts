@@ -34,7 +34,8 @@ export const buildConflictUpdateColumns = <T extends PgTable, Q extends keyof T[
 
 type TSchema = ExtractTablesWithRelations<typeof schema>;
 export type QueryConfig<TableName extends keyof TSchema> = DBQueryConfig<"one" | "many", boolean, TSchema, TSchema[TableName]>;
-export type InferQueryModel<
-	TableName extends keyof TSchema,
-	QBConfig extends QueryConfig<TableName> | {} = {}
-> = BuildQueryResult<TSchema, TSchema[TableName], QBConfig>;
+export type InferQueryModel<TableName extends keyof TSchema, QBConfig extends QueryConfig<TableName> = {}> = BuildQueryResult<
+	TSchema,
+	TSchema[TableName],
+	QBConfig
+>;
