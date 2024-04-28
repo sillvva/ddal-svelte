@@ -56,14 +56,31 @@ export default {
 				}
 			});
 
-			const mdiIcons = Object.entries(mdi.icons);
-			for (const [name, icon] of mdiIcons) {
-				const path = encodeURIComponent(icon.body.replace(` fill="currentColor"`, "")).replace(/%20/g, " ").replace(/%22/g, "'");
-				addUtilities({
-					[`.mdi-${name}`]: {
-						"--svg": `url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E${path}%3C/svg%3E")`
-					}
-				});
+			addComponents({
+				".iconify-color": {
+					display: "inline-block",
+					width: theme("width.4"),
+					height: theme("height.4"),
+					backgroundImage: "var(--svg)",
+					backgroundRepeat: "no-repeat",
+					backgroundSize: "100% 100%"
+				}
+			});
+
+			const iconSets = {
+				mdi: mdi.icons
+			};
+			for (const [set, icons] of Object.entries(iconSets)) {
+				for (const [name, icon] of Object.entries(icons)) {
+					const path = encodeURIComponent(icon.body).replace(/%20/g, " ").replace(/%22/g, "'");
+					const width = icon.width || 24;
+					const height = icon.height || 24;
+					addUtilities({
+						[`.${set}-${name}`]: {
+							"--svg": `url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 ${width} ${height}'%3E${path}%3C/svg%3E")`
+						}
+					});
+				}
 			}
 		})
 	],
