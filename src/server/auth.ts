@@ -17,7 +17,7 @@ export function signInRedirect(url: URL): never {
 	redirect(302, `/?${urlRedirect(url)}`);
 }
 
-type ErrorType = typeof AuthError.prototype.type;
+type ErrorType = InstanceType<typeof AuthError>["type"];
 
 export type ErrorCodes =
 	| "NotAuthenticated"
