@@ -1,31 +1,8 @@
 import { type CharacterId, type DungeonMasterId, type ItemId, type LogId, type UserId } from "$lib/schemas";
-import type { Prettify } from "$lib/util";
 import type { ProviderType } from "@auth/core/providers";
 import { createId } from "@paralleldrive/cuid2";
-import {
-	relations,
-	type AnyColumn,
-	type AnyTable,
-	type ColumnBaseConfig,
-	type ColumnDataType,
-	type GetColumnData
-} from "drizzle-orm";
+import { relations, type InferInsertModel } from "drizzle-orm";
 import { boolean, index, integer, pgEnum, pgTable, primaryKey, real, smallint, text, timestamp } from "drizzle-orm/pg-core";
-
-type ColumnConfigs<Table extends AnyTable<{}>, Filter extends Partial<ColumnBaseConfig<ColumnDataType, string>> = {}> = {
-	[K in keyof Table["_"]["columns"] as Table["_"]["columns"][K] extends AnyColumn<Filter> ? K : never]: GetColumnData<
-		Table["_"]["columns"][K]
-	>;
-};
-
-type RequiredColumns<Table extends AnyTable<{}>> = ColumnConfigs<Table, { notNull: true; hasDefault: false }>;
-type OptionalColumns<Table extends AnyTable<{}>, Defaults extends boolean = true> = Defaults extends true
-	? Partial<ColumnConfigs<Table, { notNull: false } | { hasDefault: true }>>
-	: Partial<ColumnConfigs<Table, { notNull: false; hasDefault: false }>>;
-
-type InferInsertModel<Table extends AnyTable<{}>, Defaults extends boolean = false> = Prettify<
-	RequiredColumns<Table> & OptionalColumns<Table, Defaults>
->;
 
 export type User = typeof users.$inferSelect;
 export type InsertUser = InferInsertModel<typeof users>;
