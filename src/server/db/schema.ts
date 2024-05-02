@@ -10,7 +10,6 @@ export type UpdateUser = Partial<User>;
 export const users = pgTable("user", {
 	id: text("id")
 		.primaryKey()
-		.notNull()
 		.$default(() => createId())
 		.$type<UserId>(),
 	name: text("name").notNull(),
@@ -101,7 +100,6 @@ export const characters = pgTable(
 	{
 		id: text("id")
 			.primaryKey()
-			.notNull()
 			.$default(() => createId())
 			.$type<CharacterId>(),
 		name: text("name").notNull(),
@@ -141,7 +139,6 @@ export const dungeonMasters = pgTable(
 	{
 		id: text("id")
 			.primaryKey()
-			.notNull()
 			.$default(() => createId())
 			.$type<DungeonMasterId>(),
 		name: text("name").notNull(),
@@ -178,7 +175,6 @@ export const logs = pgTable(
 	{
 		id: text("id")
 			.primaryKey()
-			.notNull()
 			.$default(() => createId())
 			.$type<LogId>(),
 		date: timestamp("date", { mode: "date" })
@@ -251,7 +247,6 @@ export const magicItems = pgTable(
 	{
 		id: text("id")
 			.primaryKey()
-			.notNull()
 			.$default(() => createId())
 			.$type<ItemId>(),
 		name: text("name").notNull(),
@@ -293,7 +288,6 @@ export const storyAwards = pgTable(
 	{
 		id: text("id")
 			.primaryKey()
-			.notNull()
 			.$default(() => createId())
 			.$type<ItemId>(),
 		name: text("name").notNull(),
