@@ -28,7 +28,7 @@ export const buildConflictUpdateColumns = <T extends PgTable, Q extends keyof T[
 			acc[column] = sql.raw(`excluded.${colName}`) as SQL<(typeof col)["_"]["data"]>;
 			return acc;
 		},
-		{} as Record<Q, SQL<GetColumnData<(typeof cls)[Q]>>>
+		{} as Record<Q, SQL<GetColumnData<T["_"]["columns"][Q]>>>
 	);
 };
 
