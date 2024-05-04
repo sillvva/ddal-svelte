@@ -7,47 +7,34 @@ import { cache, mcache, type CacheKey } from "$server/cache";
 import { q } from "$server/db";
 import { logIncludes } from "./logs";
 
-export type CharacterData = Exclude<Awaited<ReturnType<typeof getCharacter>>, null>;
+export type CharacterData = NonNullable<Awaited<ReturnType<typeof getCharacter>>>;
 export async function getCharacter(characterId: CharacterId, includeLogs = true) {
-	if (characterId === "new") return null;
+	if (characterId === "new") return undefined;
 
-	const character = await (async () => {
-		if (includeLogs) {
-			return await q.characters.findFirst({
-				with: {
-					user: userIncludes,
-					logs: {
-						with: logIncludes,
-						orderBy: (logs, { asc }) => asc(logs.date)
-					}
-				},
-				where: (characters, { eq }) => eq(characters.id, characterId)
-			});
-		} else {
-			return await q.characters
-				.findFirst({
-					with: {
-						user: userIncludes
-					},
-					where: (characters, { eq }) => eq(characters.id, characterId)
-				})
-				.then((c) => c && { ...c, logs: [] });
+	const character = await q.characters.findFirst({
+		with: {
+			user: userIncludes,
+			logs: {
+				with: logIncludes,
+				orderBy: (logs, { asc }) => asc(logs.date)
+			}
+		},
+		where: (characters, { eq }) => eq(characters.id, characterId)
+	});
+
+	return (
+		character && {
+			...character,
+			imageUrl: character.imageUrl || BLANK_CHARACTER,
+			...getLogsSummary(character.logs, includeLogs)
 		}
-	})();
-
-	if (!character) return null;
-
-	return {
-		...character,
-		imageUrl: character.imageUrl || BLANK_CHARACTER,
-		...getLogsSummary(character.logs)
-	};
+	);
 }
 
 export async function getCharacterCache(characterId: CharacterId, includeLogs = true) {
 	return characterId !== "new"
 		? await cache(() => getCharacter(characterId, includeLogs), ["character", characterId, includeLogs ? "logs" : "no-logs"])
-		: null;
+		: undefined;
 }
 
 export async function getCharactersWithLogs(userId: UserId, includeLogs = true) {
