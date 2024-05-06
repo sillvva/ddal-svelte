@@ -98,7 +98,7 @@
 			{#each authProviders as provider}
 				<li>
 					<label class="flex gap-2">
-						<img src={provider.logo} alt={provider.name} class="h-6 w-6" />
+						<span class={twMerge("iconify-color h-6 w-6", provider.iconify)}></span>
 						<span>{provider.name}</span>
 						<span class="flex-1"></span>
 						<span>

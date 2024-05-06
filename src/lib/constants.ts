@@ -12,19 +12,19 @@ export const BLANK_CHARACTER = `${publicEnv.PUBLIC_URL}/images/blank-character.w
 type Provider = {
 	name: string;
 	id: string;
-	logo?: string;
+	iconify?: string;
 	account?: Account;
 };
 export const PROVIDERS = [
 	{
 		name: "Google",
 		id: "google",
-		logo: "/images/google.svg"
+		iconify: "logos-google-icon"
 	},
 	{
 		name: "Discord",
 		id: "discord",
-		logo: "/images/discord.svg"
+		iconify: "logos-discord-icon"
 	}
 ] as const satisfies Provider[];
 

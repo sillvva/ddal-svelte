@@ -4,6 +4,7 @@
 	import { PROVIDERS } from "$lib/constants.js";
 	import { publicEnv } from "$lib/env/public.js";
 	import { signIn } from "@auth/sveltekit/client";
+	import { twMerge } from "tailwind-merge";
 
 	export let data;
 
@@ -54,7 +55,7 @@
 					})}
 				aria-label="Sign in with {provider.name}"
 			>
-				<img src={provider.logo} width="32" height="32" alt={provider.name} />
+				<span class={twMerge("iconify-color h-8 w-8", provider.iconify)}></span>
 				<span class="flex h-full flex-1 items-center justify-center text-xl font-semibold">Sign In with {provider.name}</span>
 			</button>
 		{/each}
