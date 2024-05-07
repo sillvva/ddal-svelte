@@ -94,7 +94,7 @@
 		<BreadCrumbs />
 
 		<Dropdown class="dropdown-end" let:close>
-			<summary tabindex="0" class="btn btn-sm bg-base-100">
+			<summary tabindex="0" class="btn btn-sm">
 				<span class="iconify size-6 mdi-dots-horizontal" />
 			</summary>
 			<ul class="menu dropdown-content w-52 rounded-box bg-base-200 p-2 shadow">

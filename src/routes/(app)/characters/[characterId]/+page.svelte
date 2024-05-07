@@ -134,7 +134,7 @@
 			<div class="hidden gap-4 sm:flex print:hidden">
 				<a href={`/characters/${character.id}/edit`} class="btn btn-primary btn-sm">Edit</a>
 				<Dropdown class="dropdown-end" let:close>
-					<summary tabindex="0" class="btn btn-sm bg-base-100">
+					<summary tabindex="0" class="btn btn-sm">
 						<span class="iconify size-6 mdi-dots-horizontal" />
 					</summary>
 					<ul class="menu dropdown-content z-20 w-52 rounded-box bg-base-200 p-2 shadow">
