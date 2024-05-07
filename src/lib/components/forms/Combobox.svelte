@@ -4,13 +4,12 @@
 
 <script lang="ts" generics="T extends TRec">
 	import { dev } from "$app/environment";
-	import type { IncludeBrandedFormPathLeaves } from "$lib/util";
 	import { Combobox } from "bits-ui";
-	import SuperDebug, { formFieldProxy, stringProxy, type SuperForm } from "sveltekit-superforms";
+	import SuperDebug, { formFieldProxy, stringProxy, type FormPathLeaves, type SuperForm } from "sveltekit-superforms";
 	import { twMerge } from "tailwind-merge";
 
 	export let superform: SuperForm<T, any>;
-	export let valueField: IncludeBrandedFormPathLeaves<T>;
+	export let valueField: FormPathLeaves<T>;
 	export let labelField = valueField;
 	export let errorField = valueField;
 	export let name = "";
@@ -31,10 +30,10 @@
 	let open = false;
 	let changed = false;
 
-	const { constraints } = formFieldProxy(superform, labelField as any);
-	const value = stringProxy(superform, valueField as any, { empty: "undefined" });
-	const label = stringProxy(superform, labelField as any, { empty: "undefined" });
-	const { errors } = formFieldProxy(superform, errorField as any);
+	const { constraints } = formFieldProxy(superform, labelField);
+	const value = stringProxy(superform, valueField, { empty: "undefined" });
+	const label = stringProxy(superform, labelField, { empty: "undefined" });
+	const { errors } = formFieldProxy(superform, errorField);
 
 	if ($constraints?.required) required = true;
 

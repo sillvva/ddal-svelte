@@ -3,9 +3,10 @@
 </script>
 
 <script lang="ts" generics="T extends TRec">
-	import type { BrandedFormPathLeaves, NonBrandedFormPathLeaves } from "$lib/util";
+	import type { BrandedType } from "$lib/schemas";
+
 	import { writable } from "svelte/store";
-	import { formFieldProxy, type SuperForm } from "sveltekit-superforms";
+	import { formFieldProxy, type FormPathLeaves, type SuperForm } from "sveltekit-superforms";
 	import Control from "./Control.svelte";
 	import GenericInput from "./GenericInput.svelte";
 	import Input from "./Input.svelte";
@@ -18,12 +19,12 @@
 	} & (
 		| {
 				type: "add";
-				nameField: NonBrandedFormPathLeaves<T, string>;
-				descField: NonBrandedFormPathLeaves<T, string>;
+				nameField: FormPathLeaves<T, string>;
+				descField: FormPathLeaves<T, string>;
 		  }
 		| {
 				type: "drop";
-				lostField: BrandedFormPathLeaves<T>;
+				lostField: FormPathLeaves<T, BrandedType>;
 				arrValue: string[];
 				data: { id: string; name: string; description: string | null }[];
 		  }
@@ -32,14 +33,14 @@
 	export let type: "add" | "drop";
 	export let entity: "magic_items" | "story_awards";
 	export let superform: SuperForm<T, any>;
-	export let nameField: NonBrandedFormPathLeaves<T, string> | undefined = undefined;
-	export let descField: NonBrandedFormPathLeaves<T, string> | undefined = undefined;
-	export let lostField: BrandedFormPathLeaves<T> | undefined = undefined;
+	export let nameField: FormPathLeaves<T, string> | undefined = undefined;
+	export let descField: FormPathLeaves<T, string> | undefined = undefined;
+	export let lostField: FormPathLeaves<T, BrandedType> | undefined = undefined;
 	export let arrValue: string[] = [];
 	export let data: { id: string; name: string; description: string | null }[] = [];
 	export let ondelete: () => void;
 
-	const { value: lostValue } = lostField ? formFieldProxy(superform, lostField as any) : { value: writable("") };
+	const { value: lostValue } = lostField ? formFieldProxy(superform, lostField) : { value: writable("") };
 </script>
 
 {#if type === "add" && nameField && descField}

@@ -3,7 +3,6 @@
 </script>
 
 <script lang="ts" generics="T extends TRec, TType extends 'text' | 'url' | 'number' | 'date'">
-	import type { IncludeBrandedFormPathLeaves } from "$lib/util";
 	import type { HTMLInputAttributes } from "svelte/elements";
 	import { dateProxy, formFieldProxy, numberProxy, type FormPathLeaves, type SuperForm } from "sveltekit-superforms";
 
@@ -16,7 +15,7 @@
 				: undefined;
 	interface $$Props extends HTMLInputAttributes {
 		superform: SuperForm<T, any>;
-		field: IncludeBrandedFormPathLeaves<T>;
+		field: FormPathLeaves<T>;
 		type: TType;
 		empty?: TType extends "date" ? "null" | "undefined" : never;
 		minField?: TType extends "number" | "date" ? FormPathLeaves<T, LeafType> : never;
@@ -28,7 +27,7 @@
 	}
 
 	export let superform: SuperForm<T, any>;
-	export let field: IncludeBrandedFormPathLeaves<T>;
+	export let field: FormPathLeaves<T>;
 	export let type: TType;
 	export let empty: "null" | "undefined" = "null";
 	export let minField: FormPathLeaves<T> | undefined = undefined;
@@ -38,18 +37,18 @@
 	export let oninput = (value: typeof $value) => {};
 	export let onchange = (value: typeof $value) => {};
 
-	const { value, errors, constraints } = formFieldProxy(superform, field as any);
+	const { value, errors, constraints } = formFieldProxy(superform, field);
 
-	const proxyDate = type === "date" ? dateProxy(superform, field as any, { format: "datetime-local", empty }) : undefined;
+	const proxyDate = type === "date" ? dateProxy(superform, field, { format: "datetime-local", empty }) : undefined;
 	const proxyMin = minField
 		? type === "number"
-			? numberProxy(superform, minField as any)
-			: dateProxy(superform, minField as any, { format: "datetime-local" })
+			? numberProxy(superform, minField)
+			: dateProxy(superform, minField, { format: "datetime-local" })
 		: undefined;
 	const proxyMax = maxField
 		? type === "number"
-			? numberProxy(superform, maxField as any)
-			: dateProxy(superform, maxField as any, { format: "datetime-local" })
+			? numberProxy(superform, maxField)
+			: dateProxy(superform, maxField, { format: "datetime-local" })
 		: undefined;
 
 	function disabled(node: HTMLInputElement) {

@@ -4,22 +4,20 @@
 
 <script lang="ts" generics="T extends TRec">
 	import { maxTextLength } from "$lib/schemas";
-
-	import type { NonBrandedFormPathLeaves } from "$lib/util";
-	import { formFieldProxy, type SuperForm } from "sveltekit-superforms";
+	import { formFieldProxy, type FormPathLeaves, type SuperForm } from "sveltekit-superforms";
 	import { twMerge } from "tailwind-merge";
 	import Markdown from "../Markdown.svelte";
 	import AutoResizeTextArea from "./AutoResizeTextArea.svelte";
 
 	export let superform: SuperForm<T>;
-	export let field: NonBrandedFormPathLeaves<T, string>;
+	export let field: FormPathLeaves<T, string>;
 	export let preview = false;
 	export let minRows: number | undefined = undefined;
 	export let maxRows: number | undefined = undefined;
 
 	let prev = false;
 
-	const { value, errors } = formFieldProxy(superform, field as any);
+	const { value, errors } = formFieldProxy(superform, field);
 </script>
 
 <label for={field} class="label">
