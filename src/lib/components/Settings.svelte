@@ -30,7 +30,7 @@
 <div
 	id="settings"
 	class={twMerge(
-		"fixed -right-80 bottom-0 top-0 z-50 flex w-80 flex-col bg-base-100 px-4 py-4 transition-all",
+		"fixed -right-80 bottom-0 top-0 z-50 flex w-80 flex-col overflow-y-auto bg-base-100 px-4 py-4 transition-all",
 		open && "right-0"
 	)}
 >
@@ -161,7 +161,7 @@
 	<div class="flex-1"></div>
 
 	{#if $page.data.session}
-		<div class="overflow-hidden text-ellipsis text-xs text-gray-500 dark:text-gray-400">
+		<div class="px-4 text-xs text-gray-500 dark:text-gray-400">
 			User ID: {$page.data.session.user.id}
 		</div>
 	{/if}
