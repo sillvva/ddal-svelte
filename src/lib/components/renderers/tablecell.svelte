@@ -3,16 +3,7 @@
 </script>
 
 {#if header}
-	<th><slot /></th>
+	<th class="align-bottom"><slot /></th>
 {:else}
-	<td><slot /></td>
+	<td class="align-top"><slot /></td>
 {/if}
-
-<style>
-	th {
-		vertical-align: bottom;
-	}
-	td {
-		vertical-align: top;
-	}
-</style>

@@ -3,13 +3,10 @@
 	import { page } from "$app/stores";
 	import { PROVIDERS } from "$lib/constants.js";
 	import { publicEnv } from "$lib/env/public.js";
-	import type { CookieStore } from "$server/cookie.js";
 	import { signIn } from "@auth/sveltekit/client";
-	import { getContext } from "svelte";
+	import { twMerge } from "tailwind-merge";
 
 	export let data;
-
-	const app = getContext<CookieStore<App.Cookie>>("app");
 
 	$: if (browser) {
 		const hasCookie = document.cookie.includes("session-token");
@@ -19,10 +16,6 @@
 	const title = "Adventurers League Log Sheet";
 	const description = "A tool for tracking your Adventurers League characters and magic items.";
 	const image = "https://ddal.dekok.app/images/barovia-gate.webp";
-
-	let code = $page.url.searchParams.get("code");
-	if (code === "undefined") code = "UnknownError";
-	const message = $page.url.searchParams.get("message");
 </script>
 
 <svelte:head>
@@ -52,30 +45,31 @@
 		<br />
 		Log Sheet
 	</h1>
-	{#if code}
-		<div class="flex justify-center">
-			<div class="alert alert-error min-w-60 max-w-[24rem] text-error-content shadow-lg">
-				<span class="iconify size-6 mdi-alert-circle max-sm:hidden" />
-				<div>
-					<h3 class="font-bold">Error: {code}</h3>
-					{#if message !== null}<div class="text-sm">{message || "Something went wrong"}</div>{/if}
-				</div>
-			</div>
-		</div>
-	{/if}
 	<div class="flex flex-col gap-4">
 		{#each PROVIDERS as provider}
 			<button
 				class="flex h-16 items-center gap-4 rounded-lg bg-base-200 px-8 py-4 text-base-content transition-colors hover:bg-base-300"
 				on:click={() =>
 					signIn(provider.id, {
-						callbackUrl: `${$page.url.origin}${data.redirectTo || "/characters"}`
+						callbackUrl: data.redirectTo || "/characters"
 					})}
 				aria-label="Sign in with {provider.name}"
 			>
-				<img src={provider.logo} width="32" height="32" alt={provider.name} />
+				<span class={twMerge("iconify-color h-8 w-8", provider.iconify)}></span>
 				<span class="flex h-full flex-1 items-center justify-center text-xl font-semibold">Sign In with {provider.name}</span>
 			</button>
 		{/each}
 	</div>
+	{#if data.code}
+		<div class="flex justify-center">
+			<div class="alert alert-error min-w-60 max-w-[28rem] shadow-lg">
+				<span class="iconify size-6 mdi-alert-circle max-sm:hidden" />
+				<div>
+					<h3 class="font-bold">Error</h3>
+					{#if data.message}<p class="mb-2 text-balance max-sm:text-sm">{data.message}</p>{/if}
+					<p class="font-mono text-xs">Code: {data.code}</p>
+				</div>
+			</div>
+		</div>
+	{/if}
 </main>

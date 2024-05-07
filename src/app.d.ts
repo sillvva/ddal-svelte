@@ -12,11 +12,13 @@ declare module "@auth/sveltekit" {
 	interface User {
 		id: UserId;
 		name: string;
+		email: string;
 	}
 
 	interface AdapterUser {
 		id: UserId;
 		name: string;
+		email: string;
 	}
 
 	interface Session {

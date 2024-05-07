@@ -2,18 +2,18 @@ import { PROVIDERS } from "$lib/constants";
 import { privateEnv } from "$lib/env/private";
 import { isDefined, joinStringList } from "$lib/util";
 import { db, q } from "$server/db";
-import { accounts, users, type Account } from "$server/db/schema";
+import { accounts, sessions, users, type Account } from "$server/db/schema";
 import type { Provider } from "@auth/core/providers";
 import Discord from "@auth/core/providers/discord";
 import Google from "@auth/core/providers/google";
 import type { Profile, TokenSet } from "@auth/core/types";
 import { DrizzleAdapter } from "@auth/drizzle-adapter";
 import { SvelteKitAuth, type SvelteKitAuthConfig } from "@auth/sveltekit";
-import { redirect, type Handle } from "@sveltejs/kit";
+import { type Handle } from "@sveltejs/kit";
 import { sequence } from "@sveltejs/kit/hooks";
 import { handle as documentHandle } from "@sveltekit-addons/document/hooks";
 import { and, eq } from "drizzle-orm";
-import { assertUser, authErrRedirect } from "./server/auth";
+import { assertUser, authErrRedirect, type ErrorCodes } from "./server/auth";
 
 interface OAuthProvider {
 	id: string;
@@ -72,59 +72,45 @@ const providers: OAuthProvider[] = [
 ];
 
 const auth = SvelteKitAuth(async (event) => {
-	const redirectTo = event.url.searchParams.get("redirect") || undefined;
-	const redirectUrl = redirectTo ? new URL(redirectTo, event.url.origin) : undefined;
+	const redirectTo = event.url.searchParams.get("redirect") || "/characters";
+	const redirectUrl = new URL(redirectTo, event.url.origin);
 
 	return {
 		callbacks: {
 			async signIn({ account, user, profile }) {
-				assertUser(user, redirectUrl);
+				try {
+					assertUser(user);
+				} catch (error) {
+					const type = error as ErrorCodes;
+					return authErrRedirect(type, redirectUrl);
+				}
 
-				if (!account) authErrRedirect("Missing Account Data", "Account not found", redirectUrl);
-				if (!profile) authErrRedirect("Missing Account Data", "Profile not found", redirectUrl);
+				if (!account) return authErrRedirect("MissingAccountData", redirectUrl);
+				if (!profile) return authErrRedirect("MissingProfileData", redirectUrl);
 
 				const provider = providers.find((p) => p.id === account.provider);
-				if (!provider) authErrRedirect("Invalid Provider", `Provider '${account.provider}' not supported`, redirectUrl);
+				if (!provider)
+					return authErrRedirect("InvalidProvider", {
+						detail: account.provider,
+						redirectTo: redirectUrl
+					});
 
 				const accountProfile = provider.profile(profile);
-				if (!accountProfile) authErrRedirect("Profile Error", "Profile not found", redirectUrl);
+				if (!accountProfile) return authErrRedirect("ProfileNotFound", redirectUrl);
+
+				const currentSession = await event.locals.auth();
+				const currentUserId = currentSession?.user?.id;
+				if (currentUserId) return true;
 
 				const existingAccount = await q.accounts.findFirst({
 					where: (accounts, { and, eq }) =>
 						and(eq(accounts.provider, account.provider), eq(accounts.providerAccountId, account.providerAccountId))
 				});
 
-				const currentSession = await event.locals.auth();
-				const currentUserId = currentSession?.user?.id;
-
 				if (privateEnv.DISABLE_SIGNUPS && !existingAccount && !currentUserId)
-					authErrRedirect("Signups Disabled", "Signups are disabled", redirectUrl);
+					return authErrRedirect("SignupsDisabled", redirectUrl);
 
-				if (currentUserId) {
-					// If there is a user logged in already that we recognize,
-					// and we have an account that is being signed in with
-					// then we should link the account to the user
-
-					// Only link accounts that have not yet been linked
-					if (existingAccount) authErrRedirect("AccountLinkError", "Account already linked to a user", redirectUrl);
-
-					// Do the account linking
-					await db.insert(accounts).values({
-						provider: account.provider,
-						providerAccountId: account.providerAccountId,
-						userId: currentUserId,
-						type: account.type,
-						access_token: account.access_token ?? "",
-						refresh_token: account.refresh_token,
-						expires_at: Math.floor(Date.now() / 1000 + (account.expires_in ?? 3600)),
-						token_type: `${account.token_type}`,
-						scope: account.scope ?? "",
-						id_token: account.id_token,
-						lastLogin: new Date()
-					});
-
-					redirect(302, "/characters");
-				} else if (existingAccount) {
+				if (existingAccount) {
 					// If there is no user logged in, but we recognize the account
 					// then we should log the user in and update the refresh token
 
@@ -132,13 +118,9 @@ const auth = SvelteKitAuth(async (event) => {
 						await db
 							.update(accounts)
 							.set({
-								providerAccountId: account.providerAccountId,
-								access_token: account.access_token,
+								...account,
+								userId: existingAccount.userId,
 								expires_at: Math.floor(Date.now() / 1000 + account.expires_in),
-								refresh_token: account.refresh_token,
-								token_type: account.token_type,
-								scope: account.scope,
-								id_token: account.id_token,
 								lastLogin: new Date()
 							})
 							.where(and(eq(accounts.provider, account.provider), eq(accounts.providerAccountId, account.providerAccountId)));
@@ -148,37 +130,48 @@ const auth = SvelteKitAuth(async (event) => {
 					// check if the account's email is already registered and prevent the sign in
 
 					const email = user.email;
-					const matchingUser = email ? await q.users.findFirst({ where: (users, { eq }) => eq(users.email, email) }) : undefined;
-					const matchingProviders = matchingUser
+					const matchingProviders = email
 						? await q.accounts
-								.findMany({ where: (accounts, { eq }) => eq(accounts.userId, matchingUser.id) })
+								.findMany({
+									where: (accounts, { and, exists }) =>
+										exists(
+											db
+												.select({ id: users.id })
+												.from(users)
+												.where(and(eq(users.email, email), eq(users.id, accounts.userId)))
+										)
+								})
 								.then((a) => a.map((a) => a.provider))
 						: [];
 					if (matchingProviders.length) {
 						const names = matchingProviders.map((id) => PROVIDERS.find((p) => p.id === id)?.name).filter(isDefined);
 						const joinedProviders = joinStringList(names);
-						const message = `You already have an account with ${joinedProviders}. Sign in, then link additional providers in the settings menu.`;
-						authErrRedirect("Existing Account", message, redirectUrl);
+
+						return authErrRedirect("ExistingAccount", {
+							detail: joinedProviders,
+							redirectTo: redirectUrl
+						});
 					}
 				}
 
-				if (user.id)
+				if (user.name !== accountProfile.name || user.image !== accountProfile.image) {
 					await db.update(users).set({ name: accountProfile.name, image: accountProfile.image }).where(eq(users.id, user.id));
+				}
 
 				return true;
 			},
-			async session({ session, user }) {
-				assertUser(user, redirectUrl);
+			async session({ session }) {
+				assertUser(session.user, redirectUrl);
 
 				if (session.expires >= new Date()) return session satisfies LocalsSession;
 
 				const account = await q.accounts.findFirst({
-					where: (accounts, { and, eq, isNotNull }) => and(eq(accounts.userId, user.id), isNotNull(accounts.lastLogin)),
+					where: (accounts, { and, eq, isNotNull }) => and(eq(accounts.userId, session.user.id), isNotNull(accounts.lastLogin)),
 					orderBy: (account, { desc }) => desc(account.lastLogin)
 				});
 
 				if (account) {
-					if (account.userId === user.id) {
+					if (account.userId === session.user.id) {
 						const [result] = await refreshToken(account);
 						if (result instanceof Error) console.error(`RefreshAccessTokenError: ${result.message}`);
 					}
@@ -188,7 +181,12 @@ const auth = SvelteKitAuth(async (event) => {
 			}
 		},
 		secret: privateEnv.AUTH_SECRET,
-		adapter: DrizzleAdapter(db),
+		adapter: DrizzleAdapter(db, {
+			usersTable: users,
+			accountsTable: accounts,
+			sessionsTable: sessions,
+			verificationTokensTable: undefined as any
+		}),
 		providers: providers.map((p) => p.oauth()),
 		trustHost: true,
 		pages: {

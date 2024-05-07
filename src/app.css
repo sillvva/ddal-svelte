@@ -5,6 +5,10 @@
 @media (prefers-color-scheme: dark) {
 	:root {
 		color-scheme: dark;
+		--in: 82.5% 0.151 231.6; /* info */
+		--su: 75% 0.15 160; /* success */
+		--wa: 85% 0.159 83.87; /* warning */
+		--er: 82.5% 0.221 22.18; /* error */
 	}
 }
 
@@ -52,11 +56,6 @@
 }
 
 @layer utilities {
-	.btn {
-		border-color: theme(colors.base-300);
-		background-color: theme(colors.base-300);
-		color: theme(colors.base-content);
-	}
 	.btn-primary {
 		background-color: theme(colors.primary);
 		color: theme(colors.white);
@@ -64,11 +63,14 @@
 	.btn-error,
 	.menu-item-error {
 		background-color: theme(colors.error);
+		border-color: theme(colors.error);
 		color: theme(colors.white);
 		.dark & {
 			background-color: theme(colors.red.800);
+			border-color: theme(colors.red.700);
 			&:hover {
 				background-color: theme(colors.red.900);
+				border-color: theme(colors.red.600);
 			}
 		}
 	}
@@ -92,6 +94,17 @@
 }
 
 @layer components {
+	.btn {
+		.join &.input-bordered {
+			border-inline-width: 0;
+			&:last-child {
+				border-right-width: 1px;
+			}
+			&:hover:not(.btn-primary, .btn-error) {
+				border-color: theme(colors.base-300);
+			}
+		}
+	}
 	.img-grow:hover img {
 		transition-property: theme(transitionProperty.transform);
 		transition-timing: theme(transitionTimingFunction.in-out);

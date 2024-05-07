@@ -286,9 +286,9 @@
 				class="flex flex-col gap-4"
 				loop
 			>
-				<label class="input input-bordered flex items-center gap-2">
+				<label class="member-focus:border-primary input input-bordered flex items-center gap-2">
 					<input
-						class="grow"
+						class="member grow"
 						type="search"
 						bind:value={search}
 						placeholder="Search"

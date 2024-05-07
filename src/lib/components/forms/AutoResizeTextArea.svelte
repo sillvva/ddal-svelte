@@ -3,20 +3,19 @@
 </script>
 
 <script lang="ts" generics="T extends TRec">
-	import type { NonBrandedFormPathLeaves } from "$lib/util";
 	import autosize from "svelte-autosize";
 	import type { HTMLTextareaAttributes } from "svelte/elements";
-	import type { FormPathType } from "sveltekit-superforms";
+	import type { FormPathLeaves, FormPathType } from "sveltekit-superforms";
 
 	interface $$Props extends HTMLTextareaAttributes {
-		content: FormPathType<T, NonBrandedFormPathLeaves<T, string>>;
+		content: FormPathType<T, FormPathLeaves<T, string>>;
 		minRows?: number;
 		maxRows?: number;
 	}
 
-	export let content: FormPathType<T, NonBrandedFormPathLeaves<T, string>>;
-	export let minRows: number = 3;
-	export let maxRows: number = 50;
+	export let content: FormPathType<T, FormPathLeaves<T, string>>;
+	export let minRows: number | undefined = undefined;
+	export let maxRows: number | undefined = undefined;
 </script>
 
 <textarea
@@ -31,7 +30,7 @@
 <style>
 	textarea {
 		resize: none;
-		min-height: calc(var(--minRows) + 1rem + 2px);
-		max-height: calc(var(--maxRows) + 1rem + 2px);
+		min-height: calc(var(--minRows, 3lh) + 1rem + 2px);
+		max-height: calc(var(--maxRows, 50lh) + 1rem + 2px);
 	}
 </style>

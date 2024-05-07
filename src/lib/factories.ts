@@ -14,7 +14,6 @@ import {
 } from "sveltekit-superforms";
 import { valibotClient } from "sveltekit-superforms/adapters";
 import type { BaseSchema, Input, Output } from "valibot";
-import type { NonBrandedFormPathLeaves } from "./util";
 
 export function successToast(message: string) {
 	toast.success("Success", {
@@ -36,7 +35,7 @@ export function errorToast(message: string) {
 }
 
 interface CustomFormOptions<S extends BaseSchema> {
-	nameField?: NonBrandedFormPathLeaves<Output<S>, string>;
+	nameField?: FormPathLeaves<Output<S>, string>;
 }
 
 export function valibotForm<S extends BaseSchema, Out extends Output<S>, In extends Input<S>>(

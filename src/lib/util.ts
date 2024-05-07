@@ -1,15 +1,7 @@
 import { dev } from "$app/environment";
 import { type NumericRange } from "@sveltejs/kit";
-import {
-	message,
-	setError,
-	type FormPathLeaves,
-	type FormPathLeavesWithErrors,
-	type FormPathType,
-	type SuperValidated
-} from "sveltekit-superforms";
+import { message, setError, type FormPathLeavesWithErrors, type SuperValidated } from "sveltekit-superforms";
 import type { setupViewTransition } from "sveltekit-view-transition";
-import type { BrandedType } from "./schemas";
 
 /**
  * Types
@@ -22,33 +14,6 @@ export type Prettify<T> = {
 export type TransitionAction = ReturnType<typeof setupViewTransition>["transition"];
 
 export type Falsy = false | 0 | "" | null | undefined;
-
-export type BrandedFormPathLeaves<
-	TObj extends Record<string, unknown>,
-	TType = any,
-	TKey = FormPathLeaves<TObj>
-> = TKey extends `${infer K}.length`
-	? NonNullable<FormPathType<TObj, K>> extends BrandedType
-		? NonNullable<FormPathType<TObj, K>> extends TType
-			? K
-			: never
-		: never
-	: never;
-
-export type NonBrandedFormPathLeaves<
-	TObj extends Record<string, unknown>,
-	TType = any,
-	TKey = FormPathLeaves<TObj, TType>
-> = TKey extends `${infer K}.length` ? (NonNullable<FormPathType<TObj, K>> extends BrandedType ? never : TKey) : TKey;
-
-export type IncludeBrandedFormPathLeaves<TObj extends Record<string, unknown>, TType = any> =
-	| NonBrandedFormPathLeaves<TObj, TType>
-	| BrandedFormPathLeaves<TObj, TType>;
-
-export type IncludeBrandedFormPathLeavesWithErrors<
-	TObj extends Record<string, unknown>,
-	TKey = FormPathLeavesWithErrors<TObj>
-> = TKey extends `${infer K}.length` ? (NonNullable<FormPathType<TObj, K>> extends BrandedType ? K : never) : TKey;
 
 /**
  * Functions
@@ -89,7 +54,7 @@ export class SaveError<TOut extends Record<string, unknown>, TIn extends Record<
 	constructor(
 		public error: string,
 		protected options?: Partial<{
-			field: "" | IncludeBrandedFormPathLeavesWithErrors<TOut>;
+			field: "" | FormPathLeavesWithErrors<TOut>;
 			status: NumericRange<400, 599>;
 		}>
 	) {
@@ -127,7 +92,7 @@ export class SaveError<TOut extends Record<string, unknown>, TIn extends Record<
 	 */
 	toForm(form: SuperValidated<TOut, App.Superforms.Message, TIn>) {
 		return isDefined(this.options?.field)
-			? setError(form, this.options.field as FormPathLeavesWithErrors<TOut>, this.error, {
+			? setError(form, this.options.field, this.error, {
 					status: this.status
 				})
 			: message(

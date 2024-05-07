@@ -1,8 +1,8 @@
 create type "public"."logType" as enum ('game', 'nongame');
 
-alter table "public"."log" drop constraint "public_Log_characterId_fkey";
+alter table "public"."log" drop constraint "public_log_characterId_fkey";
 
-alter table "public"."log" drop constraint "public_Log_dungeonMasterId_fkey";
+alter table "public"."log" drop constraint "public_log_dungeonMasterId_fkey";
 
 alter table "public"."account" alter column "access_token" set data type text using "access_token"::text;
 

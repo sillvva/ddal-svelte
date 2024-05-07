@@ -3,14 +3,12 @@ import { cache } from "$server/cache";
 import { q } from "$server/db";
 import { dungeonMasters } from "$server/db/schema";
 import { sorter } from "@sillvva/utils";
-import { eq, or } from "drizzle-orm";
 
 export type UserDMsWithLogs = Awaited<ReturnType<typeof getUserDMsWithLogs>>;
 export async function getUserDMsWithLogs(user: LocalsSession["user"], id?: DungeonMasterId) {
 	if (!user || !user.id) return [];
 	const userId = user.id;
 
-	const cond = or(eq(dungeonMasters.owner, userId), eq(dungeonMasters.uid, userId));
 	const dms = await q.dungeonMasters.findMany({
 		with: {
 			logs: {
@@ -25,7 +23,8 @@ export async function getUserDMsWithLogs(user: LocalsSession["user"], id?: Dunge
 				}
 			}
 		},
-		where: (dms, { eq, and }) => (id ? and(cond, eq(dms.id, id)) : cond)
+		where: (dms, { eq, and, or }) =>
+			and(or(eq(dungeonMasters.owner, userId), eq(dungeonMasters.uid, userId)), id ? eq(dms.id, id) : undefined)
 	});
 
 	if (!id && !dms.find((dm) => dm.uid === userId)) {

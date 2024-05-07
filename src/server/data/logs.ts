@@ -1,5 +1,6 @@
 import { defaultDM, defaultLogData, parseLog } from "$lib/entities";
 import type { CharacterId, LogId, UserId } from "$lib/schemas";
+import { userIncludes } from "$server/actions/users";
 import { cache } from "$server/cache";
 import { db, q, type InferQueryModel, type QueryConfig } from "$server/db";
 import { characters, dungeonMasters } from "$server/db/schema";
@@ -43,7 +44,7 @@ export async function getDMLogs(userId: UserId) {
 				...logIncludes,
 				character: {
 					with: {
-						user: true
+						user: userIncludes
 					}
 				}
 			},

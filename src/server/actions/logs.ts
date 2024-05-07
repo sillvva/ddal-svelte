@@ -51,10 +51,8 @@ export async function saveLog(input: LogSchema, user: LocalsSession["user"]): Sa
 			}
 
 			const [dm] = await (async () => {
-				let isMe = false;
-				if (input.isDmLog) isMe = true;
-				if (input.dm.uid === userId) isMe = true;
-				if (["", user.name.toLowerCase()].includes(input.dm.name.toLowerCase().trim())) isMe = true;
+				let isMe =
+					input.isDmLog || input.dm.uid === userId || ["", user.name.toLowerCase()].includes(input.dm.name.toLowerCase().trim());
 
 				if (!input.dm.id) {
 					const search = await tx.query.dungeonMasters.findFirst({
@@ -63,9 +61,7 @@ export async function saveLog(input: LogSchema, user: LocalsSession["user"]): Sa
 								eq(dms.owner, userId),
 								isMe
 									? eq(dms.uid, userId)
-									: input.dm.DCI
-										? or(eq(dms.name, input.dm.name.trim()), eq(dms.DCI, input.dm.DCI))
-										: eq(dms.name, input.dm.name.trim())
+									: or(eq(dms.name, input.dm.name.trim()), input.dm.DCI ? eq(dms.DCI, input.dm.DCI) : undefined)
 							)
 					});
 					if (search) {

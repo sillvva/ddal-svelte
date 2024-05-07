@@ -134,7 +134,7 @@
 			<div class="hidden gap-4 sm:flex print:hidden">
 				<a href={`/characters/${character.id}/edit`} class="btn btn-primary btn-sm">Edit</a>
 				<Dropdown class="dropdown-end" let:close>
-					<summary tabindex="0" class="btn btn-sm bg-base-100">
+					<summary tabindex="0" class="btn btn-sm">
 						<span class="iconify size-6 mdi-dots-horizontal" />
 					</summary>
 					<ul class="menu dropdown-content z-20 w-52 rounded-box bg-base-200 p-2 shadow">
@@ -311,7 +311,7 @@
 				<span class="iconify size-6 mdi-plus" />
 			</a>
 			<button
-				class={twMerge("no-script-hide btn sm:hidden", $app.log.descriptions && "btn-primary")}
+				class={twMerge("btn sm:hidden", $app.log.descriptions && "btn-primary")}
 				on:click={() => createTransition(() => ($app.log.descriptions = !$app.log.descriptions))}
 				on:keypress
 				aria-label="Toggle Notes"
@@ -328,7 +328,7 @@
 	{#if logs.length}
 		<div class="flex-1 max-sm:hidden" />
 		<button
-			class={twMerge("no-script-hide btn sm:btn-sm max-sm:hidden", $app.log.descriptions && "btn-primary")}
+			class={twMerge("btn sm:btn-sm max-sm:hidden", $app.log.descriptions && "btn-primary")}
 			on:click={() => createTransition(() => ($app.log.descriptions = !$app.log.descriptions))}
 			on:keypress
 			aria-label="Toggle Notes"

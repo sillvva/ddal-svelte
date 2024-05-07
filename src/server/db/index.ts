@@ -6,7 +6,8 @@ import {
 	SQL,
 	type BuildQueryResult,
 	type DBQueryConfig,
-	type ExtractTablesWithRelations
+	type ExtractTablesWithRelations,
+	type GetColumnData
 } from "drizzle-orm";
 import { type PgTable } from "drizzle-orm/pg-core";
 import { drizzle } from "drizzle-orm/postgres-js";
@@ -27,13 +28,14 @@ export const buildConflictUpdateColumns = <T extends PgTable, Q extends keyof T[
 			acc[column] = sql.raw(`excluded.${colName}`) as SQL<(typeof col)["_"]["data"]>;
 			return acc;
 		},
-		{} as Record<Q, SQL<(typeof cls)[Q]["_"]["data"]>>
+		{} as Record<Q, SQL<GetColumnData<T["_"]["columns"][Q]>>>
 	);
 };
 
 type TSchema = ExtractTablesWithRelations<typeof schema>;
 export type QueryConfig<TableName extends keyof TSchema> = DBQueryConfig<"one" | "many", boolean, TSchema, TSchema[TableName]>;
-export type InferQueryModel<
-	TableName extends keyof TSchema,
-	QBConfig extends QueryConfig<TableName> | {} = {}
-> = BuildQueryResult<TSchema, TSchema[TableName], QBConfig>;
+export type InferQueryModel<TableName extends keyof TSchema, QBConfig extends QueryConfig<TableName> = {}> = BuildQueryResult<
+	TSchema,
+	TSchema[TableName],
+	QBConfig
+>;

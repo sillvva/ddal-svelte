@@ -2,10 +2,17 @@ import type { PROVIDERS } from "$lib/constants";
 import type { UserId } from "$lib/schemas";
 import { rateLimiter, revalidateKeys, type CacheKey } from "$server/cache";
 import { getCharactersCache } from "$server/data/characters";
-import { db } from "$server/db";
+import { db, type QueryConfig } from "$server/db";
 import { accounts } from "$server/db/schema";
 import { error } from "@sveltejs/kit";
 import { and, eq } from "drizzle-orm";
+
+export const userIncludes = {
+	columns: {
+		id: true,
+		name: true
+	}
+} as const satisfies QueryConfig<"users">;
 
 export async function clearUserCache(userId: UserId) {
 	const { success } = await rateLimiter("cache", userId);

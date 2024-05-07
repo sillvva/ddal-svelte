@@ -1,11 +1,11 @@
-import type { CharacterData, getCharacter } from "$server/data/characters";
+import type { CharacterData } from "$server/data/characters";
 import type { LogData } from "$server/data/logs";
 import type { Character, DungeonMaster, Log, MagicItem, StoryAward, User } from "$server/db/schema";
 import { sorter } from "@sillvva/utils";
 import type { CharacterId, DungeonMasterId, LogId, LogSchema, UserId } from "./schemas";
 
 export const getMagicItems = (
-	character: Exclude<Awaited<ReturnType<typeof getCharacter>>, null>,
+	character: CharacterData,
 	options?: {
 		lastLogId?: LogId;
 		lastLogDate?: string;
@@ -37,7 +37,7 @@ export const getMagicItems = (
 };
 
 export const getStoryAwards = (
-	character: Exclude<Awaited<ReturnType<typeof getCharacter>>, null>,
+	character: CharacterData,
 	options?: {
 		lastLogId?: LogId;
 		lastLogDate?: string;
@@ -226,7 +226,9 @@ export function defaultLogData(userId: UserId, characterId = null as CharacterId
 	};
 }
 
-export function parseLog(log: Omit<LogData & { character?: (Character & { user?: User }) | null }, "type"> & { type: string }) {
+export function parseLog(
+	log: Omit<LogData & { character?: (Character & { user?: Pick<User, "id" | "name"> }) | null }, "type"> & { type: string }
+) {
 	return {
 		...log,
 		type: log.type === "nongame" ? ("nongame" as const) : ("game" as const),
