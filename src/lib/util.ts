@@ -15,6 +15,8 @@ export type TransitionAction = ReturnType<typeof setupViewTransition>["transitio
 
 export type Falsy = false | 0 | "" | null | undefined;
 
+export type DictOrArray = Record<PropertyKey, unknown> | Array<unknown>;
+
 /**
  * Functions
  */
@@ -46,7 +48,7 @@ export function isDefined<T>(value?: T | null): value is T {
  * Classes
  */
 
-export type SaveResult<T extends object | null, S extends Record<string, unknown>> = Promise<T | SaveError<S>>;
+export type SaveResult<T extends DictOrArray | null, S extends Record<string, unknown>> = Promise<T | SaveError<S>>;
 
 export class SaveError<TOut extends Record<string, unknown>, TIn extends Record<string, unknown> = TOut> {
 	public status: NumericRange<400, 599> = 500;
