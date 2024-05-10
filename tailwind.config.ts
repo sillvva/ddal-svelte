@@ -4,6 +4,7 @@ import { getIconData } from "@iconify/utils";
 import themes from "daisyui/src/theming/themes";
 import type { Config } from "tailwindcss";
 import plugin from "tailwindcss/plugin";
+import { CSSRuleObject } from "tailwindcss/types/config";
 
 type IconifyJSON = { icons: Record<string, { body: string; width?: number; height?: number }>; prefix: string };
 const twIconifyPlugin = (iconSets: Record<string, IconifyJSON>) => {
@@ -31,19 +32,22 @@ const twIconifyPlugin = (iconSets: Record<string, IconifyJSON>) => {
 			}
 		});
 
+		const utilities: CSSRuleObject[] = [];
 		for (const [set, dataset] of Object.entries(iconSets)) {
 			for (let [name, icon] of Object.entries(dataset.icons)) {
 				if ((icon.height && !icon.width) || (icon.width && !icon.height)) icon = getIconData(dataset, name) || icon;
 				const path = encodeURIComponent(icon.body);
 				const width = icon.width || 24;
 				const height = icon.height || 24;
-				addUtilities({
+				utilities.push({
 					[`.${set}-${name}`]: {
 						"--svg": `url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 ${width} ${height}'%3E${path}%3C/svg%3E")`
 					}
 				});
 			}
 		}
+
+		addUtilities(utilities);
 	});
 };
 
