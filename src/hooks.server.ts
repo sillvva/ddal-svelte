@@ -243,12 +243,13 @@ async function refreshToken(account: Account) {
 			}
 
 			if (token) {
-				if (!token.expires_in) throw new Error("No expires_in in token response");
+				if (!token.expires_in && !token.expires_at) throw new Error("No expiration in token response");
 
 				return await db
 					.update(accounts)
 					.set({
 						access_token: token.access_token,
+						expires_at: token.expires_at ?? (token.expires_in && Math.floor(Date.now() / 1000 + token.expires_in)),
 						refresh_token: token.refresh_token ?? account.refresh_token,
 						token_type: token.token_type ?? account.token_type,
 						scope: token.scope ?? account.scope,
