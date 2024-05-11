@@ -187,8 +187,7 @@ const auth = SvelteKitAuth(async (event) => {
 		adapter: DrizzleAdapter(db, {
 			usersTable: users,
 			accountsTable: accounts,
-			sessionsTable: sessions,
-			verificationTokensTable: undefined as any
+			sessionsTable: sessions
 		}),
 		providers: providers.map((p) => p.oauth()),
 		trustHost: true,
