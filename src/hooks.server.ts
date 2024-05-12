@@ -114,17 +114,20 @@ const auth = SvelteKitAuth(async (event) => {
 					// If there is no user logged in, but we recognize the account
 					// then we should log the user in and update the refresh token
 
-					if (account.refresh_token && account.expires_in) {
-						await db
-							.update(accounts)
-							.set({
-								...account,
-								userId: existingAccount.userId,
-								expires_at: Math.floor(Date.now() / 1000 + account.expires_in),
-								lastLogin: new Date()
-							})
-							.where(and(eq(accounts.provider, account.provider), eq(accounts.providerAccountId, account.providerAccountId)));
-					}
+					const { expires_at, access_token, refresh_token, token_type, scope, id_token } = account;
+
+					await db
+						.update(accounts)
+						.set({
+							expires_at,
+							access_token,
+							refresh_token,
+							token_type,
+							scope,
+							id_token,
+							lastLogin: new Date()
+						})
+						.where(and(eq(accounts.provider, account.provider), eq(accounts.providerAccountId, account.providerAccountId)));
 				} else {
 					// If there is no user logged in and we don't recognize the account, then we should
 					// check if the account's email is already registered and prevent the sign in
@@ -184,8 +187,7 @@ const auth = SvelteKitAuth(async (event) => {
 		adapter: DrizzleAdapter(db, {
 			usersTable: users,
 			accountsTable: accounts,
-			sessionsTable: sessions,
-			verificationTokensTable: undefined as any
+			sessionsTable: sessions
 		}),
 		providers: providers.map((p) => p.oauth()),
 		trustHost: true,
@@ -240,13 +242,13 @@ async function refreshToken(account: Account) {
 			}
 
 			if (token) {
-				if (!token.expires_in) throw new Error("No expires_in in token response");
+				if (!token.expires_in && !token.expires_at) throw new Error("No expiration in token response");
 
 				return await db
 					.update(accounts)
 					.set({
 						access_token: token.access_token,
-						expires_at: Math.floor(Date.now() / 1000 + token.expires_in),
+						expires_at: token.expires_at ?? (token.expires_in && Math.floor(Date.now() / 1000 + token.expires_in)),
 						refresh_token: token.refresh_token ?? account.refresh_token,
 						token_type: token.token_type ?? account.token_type,
 						scope: token.scope ?? account.scope,
