@@ -7,8 +7,8 @@
 
 {#if $message}
 	<div class={twMerge("alert mb-4 shadow-lg", $message.type === "error" ? "alert-error" : "alert-success")}>
-		{#if $message.type === "success"}<span class="mdi--check-circle iconify size-6" />{/if}
-		{#if $message.type === "error"}<span class="mdi--alert-circle iconify size-6" />{/if}
+		{#if $message.type === "success"}<span class="iconify size-6 mdi--check-circle" />{/if}
+		{#if $message.type === "error"}<span class="iconify size-6 mdi--alert-circle" />{/if}
 		{$message.text}
 	</div>
 {/if}

@@ -20,7 +20,7 @@
 <div class="breadcrumbs mb-4 flex-1 text-sm max-sm:hidden">
 	<ul>
 		<li>
-			<span class="mdi--home iconify" />
+			<span class="iconify mdi--home" />
 		</li>
 		{#each breadcrumbs as bc}
 			{#if bc.href}

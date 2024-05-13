@@ -24,7 +24,7 @@
 	aria-expanded={drawer}
 	aria-controls="drawer"
 >
-	<span class="mdi--menu iconify size-6" />
+	<span class="iconify size-6 mdi--menu" />
 </button>
 <noscript>
 	<span class="flex w-[52px] py-3 pr-4"> </span>

@@ -100,16 +100,16 @@
 			</DatePicker.Segment>
 		{/each}
 		<DatePicker.Trigger class="ml-auto inline-flex items-center justify-center">
-			<span class="mdi--calendar iconify size-6" />
+			<span class="iconify size-6 mdi--calendar" />
 		</DatePicker.Trigger>
 	</DatePicker.Input>
 	<DatePicker.Content class="z-[10000] mt-2">
 		<DatePicker.Calendar let:months let:weekdays class="shadow-popover rounded-lg border border-base-300 bg-base-200 p-[22px]">
 			<DatePicker.Header class="flex items-center justify-between">
-				<DatePicker.PrevButton class="mdi--chevron-left iconify inline-flex size-10 items-center justify-center transition-all" />
+				<DatePicker.PrevButton class="iconify inline-flex size-10 items-center justify-center transition-all mdi--chevron-left" />
 				<DatePicker.Heading class="text-lg" />
 				<DatePicker.NextButton
-					class="mdi--chevron-right iconify inline-flex size-10 items-center justify-center transition-all"
+					class="iconify inline-flex size-10 items-center justify-center transition-all mdi--chevron-right"
 				/>
 			</DatePicker.Header>
 			<div class="flex flex-col space-y-4 pt-4 sm:flex-row sm:space-x-4 sm:space-y-0">
