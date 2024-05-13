@@ -1,55 +1,7 @@
-import { icons as logos } from "@iconify-json/logos";
-import { icons as mdi } from "@iconify-json/mdi";
-import { getIconData } from "@iconify/utils";
+import { addIconSelectors } from "@iconify/tailwind";
 import themes from "daisyui/src/theming/themes";
 import type { Config } from "tailwindcss";
 import plugin from "tailwindcss/plugin";
-import { CSSRuleObject } from "tailwindcss/types/config";
-
-type IconifyJSON = { icons: Record<string, { body: string; width?: number; height?: number }>; prefix: string };
-const twIconifyPlugin = (iconSets: Record<string, IconifyJSON>) => {
-	return plugin(function ({ addComponents, addUtilities, theme }) {
-		addComponents({
-			".iconify": {
-				display: "inline-block",
-				width: theme("width.4"),
-				height: theme("height.4"),
-				backgroundColor: theme("colors.current"),
-				maskImage: "var(--svg)",
-				maskRepeat: "no-repeat",
-				maskSize: "100% 100%"
-			}
-		});
-
-		addComponents({
-			".iconify-color": {
-				display: "inline-block",
-				width: theme("width.4"),
-				height: theme("height.4"),
-				backgroundImage: "var(--svg)",
-				backgroundRepeat: "no-repeat",
-				backgroundSize: "100% 100%"
-			}
-		});
-
-		const utilities: CSSRuleObject[] = [];
-		for (const [set, dataset] of Object.entries(iconSets)) {
-			for (let [name, icon] of Object.entries(dataset.icons)) {
-				if ((icon.height && !icon.width) || (icon.width && !icon.height)) icon = getIconData(dataset, name) || icon;
-				const path = encodeURIComponent(icon.body);
-				const width = icon.width || 24;
-				const height = icon.height || 24;
-				utilities.push({
-					[`.${set}--${name}`]: {
-						"--svg": `url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 ${width} ${height}'%3E${path}%3C/svg%3E")`
-					}
-				});
-			}
-		}
-
-		addUtilities(utilities);
-	});
-};
 
 const buildMemberSelector = (modifier) => `.member${modifier ? `\\/${modifier}` : ""}`;
 
@@ -78,7 +30,7 @@ export default {
 			addVariant("hover-hover", "@media (hover: hover)");
 			addVariant("hover-none", "@media (hover: none)");
 		}),
-		twIconifyPlugin({ mdi, logos }),
+		addIconSelectors(["mdi", "logos"]),
 		plugin(({ matchVariant }) => {
 			const values = {
 				// Default
