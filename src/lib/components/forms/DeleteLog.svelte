@@ -38,6 +38,6 @@
 </script>
 
 <button type="button" class="btn btn-error sm:btn-sm" aria-label="Delete Log" on:click={submit}>
-	<span class="iconify size-6 mdi-trash-can sm:size-4" />
+	<span class="mdi--trash-can iconify size-6 sm:size-4" />
 	{label}
 </button>

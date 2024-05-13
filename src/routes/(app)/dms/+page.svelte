@@ -87,7 +87,7 @@
 												<DeleteDm {dm} bind:deletingDM />
 											{/if}
 											<a href="/dms/{dm.id}" class="btn btn-primary sm:btn-sm" aria-label="Edit DM">
-												<span class="iconify mdi-pencil" />
+												<span class="mdi--pencil iconify" />
 											</a>
 										</div>
 									</td>

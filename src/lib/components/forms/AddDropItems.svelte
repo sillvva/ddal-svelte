@@ -26,7 +26,7 @@
 				class="btn join-item min-w-fit max-md:flex-1 max-md:px-0"
 				on:click={() => ($form.magicItemsGained = $form.magicItemsGained.concat(newItem))}
 			>
-				<span class="iconify mdi-plus" />
+				<span class="mdi--plus iconify" />
 			</button>
 			{#if remainingItems.length > 0}
 				<button
@@ -36,7 +36,7 @@
 						if (remainingItems[0]) $form.magicItemsLost = $form.magicItemsLost.concat(remainingItems[0].id);
 					}}
 				>
-					<span class="iconify mdi-minus" />
+					<span class="mdi--minus iconify" />
 				</button>
 			{/if}
 		</div>
@@ -52,7 +52,7 @@
 					class="btn join-item min-w-fit max-md:flex-1 max-md:px-0"
 					on:click={() => ($form.storyAwardsGained = $form.storyAwardsGained.concat(newItem))}
 				>
-					<span class="iconify mdi-plus" />
+					<span class="mdi--plus iconify" />
 				</button>
 				{#if remainingAwards.length > 0}
 					<button
@@ -62,7 +62,7 @@
 							if (remainingAwards[0]) $form.storyAwardsLost = $form.storyAwardsLost.concat(remainingAwards[0].id);
 						}}
 					>
-						<span class="iconify mdi-minus" />
+						<span class="mdi--minus iconify" />
 					</button>
 				{/if}
 			</div>

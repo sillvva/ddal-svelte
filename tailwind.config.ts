@@ -40,7 +40,7 @@ const twIconifyPlugin = (iconSets: Record<string, IconifyJSON>) => {
 				const width = icon.width || 24;
 				const height = icon.height || 24;
 				utilities.push({
-					[`.${set}-${name}`]: {
+					[`.${set}--${name}`]: {
 						"--svg": `url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 ${width} ${height}'%3E${path}%3C/svg%3E")`
 					}
 				});

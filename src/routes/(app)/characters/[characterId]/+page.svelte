@@ -135,7 +135,7 @@
 				<a href={`/characters/${character.id}/edit`} class="btn btn-primary btn-sm">Edit</a>
 				<Dropdown class="dropdown-end" let:close>
 					<summary tabindex="0" class="btn btn-sm">
-						<span class="iconify size-6 mdi-dots-horizontal" />
+						<span class="mdi--dots-horizontal iconify size-6" />
 					</summary>
 					<ul class="menu dropdown-content z-20 w-52 rounded-box bg-base-200 p-2 shadow">
 						<li use:close>
@@ -151,7 +151,7 @@
 			</div>
 			<Dropdown class="dropdown-end sm:hidden" let:close>
 				<summary tabindex="0" class="btn">
-					<span class="iconify size-6 mdi-dots-horizontal" />
+					<span class="mdi--dots-horizontal iconify size-6" />
 				</summary>
 				<ul class="menu dropdown-content z-20 w-52 rounded-box bg-base-200 p-2 shadow">
 					{#if character.imageUrl}
@@ -308,7 +308,7 @@
 		{/if}
 		{#if myCharacter}
 			<a href={`/characters/${character.id}/log/new`} class="btn btn-primary sm:btn-sm sm:hidden sm:px-3" aria-label="New Log">
-				<span class="iconify size-6 mdi-plus" />
+				<span class="mdi--plus iconify size-6" />
 			</a>
 			<button
 				class={twMerge("btn sm:hidden", $app.log.descriptions && "btn-primary")}
@@ -318,9 +318,9 @@
 				tabindex="0"
 			>
 				{#if $app.log.descriptions}
-					<span class="iconify size-6 mdi-note-text" />
+					<span class="mdi--note-text iconify size-6" />
 				{:else}
-					<span class="iconify size-6 mdi-note-text-outline" />
+					<span class="mdi--note-text-outline iconify size-6" />
 				{/if}
 			</button>
 		{/if}
@@ -335,9 +335,9 @@
 			tabindex="0"
 		>
 			{#if $app.log.descriptions}
-				<span class="iconify size-6 mdi-eye" />
+				<span class="mdi--eye iconify size-6" />
 			{:else}
-				<span class="iconify size-6 mdi-eye-off" />
+				<span class="mdi--eye-off iconify size-6" />
 			{/if}
 			<span class="max-sm:hidden">Notes</span>
 		</button>
@@ -506,7 +506,7 @@
 										class="btn btn-primary sm:btn-sm"
 										aria-label="Edit Log"
 									>
-										<span class="iconify size-6 mdi-pencil sm:size-4" />
+										<span class="mdi--pencil iconify size-6 sm:size-4" />
 									</a>
 									<DeleteLog {log} bind:deletingLog />
 								</div>

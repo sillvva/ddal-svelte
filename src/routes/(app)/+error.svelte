@@ -12,7 +12,7 @@
 
 <div class="flex min-h-full flex-col items-center justify-center">
 	<div class="alert alert-error shadow-lg">
-		<span class="iconify size-6 mdi-alert-circle" />
+		<span class="mdi--alert-circle iconify size-6" />
 		<div>
 			<h3 class="font-bold">Error {$page.status}!</h3>
 			<div class="text-xs">{$page.error?.message || "Something went wrong"}</div>

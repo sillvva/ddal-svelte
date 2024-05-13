@@ -56,7 +56,7 @@
 					<Input type="text" {superform} field={nameField} required>Name</Input>
 				</Control>
 				<button type="button" class="btn btn-error mt-9" on:click={() => ondelete()}>
-					<span class="iconify size-6 mdi-trash-can" />
+					<span class="mdi--trash-can iconify size-6" />
 				</button>
 			</div>
 			<Control>
@@ -85,7 +85,7 @@
 					</GenericInput>
 				</Control>
 				<button type="button" class="btn btn-error mt-9" on:click={() => ondelete()}>
-					<span class="iconify size-6 mdi-trash-can" />
+					<span class="mdi--trash-can iconify size-6" />
 				</button>
 			</div>
 			<div class="text-sm">

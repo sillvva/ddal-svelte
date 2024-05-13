@@ -58,7 +58,7 @@
 				</div>
 			</div>
 			<button class="btn p-3" on:click={() => signOut({ callbackUrl: "/" })}>
-				<i class="iconify h-5 w-5 mdi-logout" />
+				<i class="mdi--logout iconify h-5 w-5" />
 				<span class="sr-only">Sign out</span>
 			</button>
 		</div>
@@ -141,19 +141,19 @@
 	<ul class="menu menu-lg w-full px-0">
 		<li>
 			<a href="https://github.com/sillvva/ddal-svelte/issues" target="_blank" rel="noreferrer noopener">
-				<span class="iconify size-6 mdi-bug" />
+				<span class="mdi--bug iconify size-6" />
 				Report a bug
 			</a>
 		</li>
 		<li>
 			<a href="https://matt.dekok.dev" target="_blank" rel="noreferrer noopener">
-				<span class="iconify size-6 mdi-information-outline" />
+				<span class="mdi--information-outline iconify size-6" />
 				About the developer
 			</a>
 		</li>
 		<li>
 			<a href="http://paypal.me/Sillvva" target="_blank" rel="noreferrer noopener">
-				<span class="iconify size-6 mdi-gift" />
+				<span class="mdi--gift iconify size-6" />
 				Contribute
 			</a>
 		</li>
