@@ -18,7 +18,7 @@ export const connection = postgres(privateEnv.DATABASE_URL, { prepare: false });
 export const db = drizzle(connection, { schema });
 export const q = db.query;
 
-export const buildConflictUpdateColumns = <T extends PgTable, Q extends keyof T["_"]["columns"]>(table: T, columns: Q[]) => {
+export function buildConflictUpdateColumns<T extends PgTable, Q extends keyof T["_"]["columns"]>(table: T, columns: Q[]) {
 	const cls = getTableColumns(table);
 	return columns.reduce(
 		(acc, column) => {
@@ -30,7 +30,7 @@ export const buildConflictUpdateColumns = <T extends PgTable, Q extends keyof T[
 		},
 		{} as Record<Q, SQL<GetColumnData<T["_"]["columns"][Q]>>>
 	);
-};
+}
 
 type TSchema = ExtractTablesWithRelations<typeof schema>;
 export type QueryConfig<TableName extends keyof TSchema> = DBQueryConfig<"one" | "many", boolean, TSchema, TSchema[TableName]>;
