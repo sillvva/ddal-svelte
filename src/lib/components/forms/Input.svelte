@@ -15,7 +15,7 @@
 				: undefined;
 	interface $$Props extends HTMLInputAttributes {
 		superform: SuperForm<T, any>;
-		field: FormPathLeaves<T>;
+		field: FormPathLeaves<T, LeafType>;
 		type: TType;
 		empty?: TType extends "date" ? "null" | "undefined" : never;
 		minField?: TType extends "number" | "date" ? FormPathLeaves<T, LeafType> : never;
@@ -27,7 +27,7 @@
 	}
 
 	export let superform: SuperForm<T, any>;
-	export let field: FormPathLeaves<T>;
+	export let field: FormPathLeaves<T, LeafType>;
 	export let type: TType;
 	export let empty: "null" | "undefined" = "null";
 	export let minField: FormPathLeaves<T> | undefined = undefined;
