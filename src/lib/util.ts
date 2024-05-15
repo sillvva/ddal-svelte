@@ -23,16 +23,14 @@ export type DictOrArray = Record<PropertyKey, unknown> | Array<unknown>;
 
 /**
  * Creates a view transition.
- * @param {ViewTransitionCallback} action - The callback function to be executed during the transition.
- * @returns {ViewTransition | undefined} - Returns the result of the view transition
  */
-export const createTransition = (action: ViewTransitionCallback) => {
+export function createTransition(action: ViewTransitionCallback) {
 	if (!document.startViewTransition) {
 		action();
 		return;
 	}
 	return document.startViewTransition(action);
-};
+}
 
 export function joinStringList(list: string[], separator = ", ", lastSeparator = "and ") {
 	if (list.length < 2) return list.join("");
@@ -110,9 +108,9 @@ export class SaveError<TOut extends Record<string, unknown>, TIn extends Record<
 	}
 }
 
-export const parseError = (e: unknown) => {
+export function parseError(e: unknown) {
 	if (e instanceof Error) return e.message;
 	if (typeof e === "string") return e;
 	if (typeof e === "object") return JSON.stringify(e);
 	return "Unknown error";
-};
+}

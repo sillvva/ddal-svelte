@@ -47,7 +47,7 @@ export type CookieStore<T extends string | number | boolean | object> = Writable
  * @param initial The initial value of the cookie
  * @returns The cookie store
  */
-export const cookieStore = function <T extends string | number | boolean | object>(name: string, initial: T) {
+export function cookieStore<T extends string | number | boolean | object>(name: string, initial: T) {
 	const cookie = writable(initial);
 
 	cookie.subscribe((value) => {
@@ -58,7 +58,7 @@ export const cookieStore = function <T extends string | number | boolean | objec
 		...cookie,
 		initial
 	};
-};
+}
 
 /**
  * Get a cookie from the server.

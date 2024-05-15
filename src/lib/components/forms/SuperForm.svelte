@@ -76,7 +76,7 @@
 
 {#if $errors._errors?.[0]}
 	<div class="alert alert-error mb-4 shadow-lg">
-		<span class="iconify size-6 mdi-alert-circle" />
+		<span class="iconify size-6 mdi--alert-circle" />
 		{$errors._errors[0]}
 	</div>
 {/if}

@@ -97,7 +97,7 @@
 		<BreadCrumbs />
 		<Dropdown class="dropdown-end" let:close>
 			<summary tabindex="0" class="btn btn-sm">
-				<span class="iconify size-6 mdi-dots-horizontal" />
+				<span class="iconify size-6 mdi--dots-horizontal" />
 			</summary>
 			<ul class="menu dropdown-content w-52 rounded-box bg-base-200 p-2 shadow">
 				<li use:close>
@@ -112,14 +112,14 @@
 			<a href="/dm-logs/new" class="btn btn-primary btn-sm max-sm:hidden" aria-label="New Log">New Log</a>
 			<Search bind:value={search} placeholder="Search by name, race, class, items, etc." />
 			<a href="/dm-logs/new" class="btn btn-primary inline-flex sm:hidden" aria-label="New Log">
-				<span class="iconify inline size-6 mdi-plus" />
+				<span class="iconify inline size-6 mdi--plus" />
 			</a>
 		</div>
 		<button class="btn btn-primary sm:btn-sm" on:click={() => ($app.dmLogs.sort = $app.dmLogs.sort === "asc" ? "desc" : "asc")}>
 			<span
 				class={twMerge(
 					"iconify size-6",
-					$app.dmLogs.sort === "asc" ? "mdi-sort-calendar-ascending" : "mdi-sort-calendar-descending"
+					$app.dmLogs.sort === "asc" ? "mdi--sort-calendar-ascending" : "mdi--sort-calendar-descending"
 				)}
 			/>
 		</button>
@@ -295,7 +295,7 @@
 								<td class="w-8 align-top print:hidden">
 									<div class="flex flex-col gap-2">
 										<a href="/dm-logs/{log.id}" class="btn btn-primary sm:btn-sm" aria-label="Edit Log">
-											<span class="iconify mdi-pencil" />
+											<span class="iconify mdi--pencil" />
 										</a>
 										<DeleteLog {log} bind:deletingLog />
 									</div>

@@ -154,7 +154,7 @@
 			<div class="flex-1 max-sm:hidden">&nbsp;</div>
 			<div class="flex gap-4">
 				<button on:click={() => (cmdOpen = true)} class="inline-flex w-10 items-center justify-center hover-hover:md:hidden">
-					<span class="iconify size-6 mdi-magnify" />
+					<span class="iconify size-6 mdi--magnify" />
 				</button>
 				<label class="input input-bordered hidden min-w-fit cursor-text items-center gap-2 hover-hover:md:flex">
 					<input type="text" class="max-w-20 grow" placeholder="Search" on:focus={() => (cmdOpen = true)} />
@@ -286,7 +286,7 @@
 				class="flex flex-col gap-4"
 				loop
 			>
-				<label class="member-focus:border-primary input input-bordered flex items-center gap-2">
+				<label class="input input-bordered flex items-center gap-2 member-focus:border-primary">
 					<input
 						class="member grow"
 						type="search"
@@ -312,7 +312,7 @@
 							}
 						}}
 					/>
-					<span class="iconify size-6 mdi-magnify" />
+					<span class="iconify size-6 mdi--magnify" />
 				</label>
 				<Command.List class="flex flex-col gap-2" bind:el={resultsPane}>
 					{#if !$searchData.length}

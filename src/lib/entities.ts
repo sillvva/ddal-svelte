@@ -4,14 +4,14 @@ import type { Character, DungeonMaster, Log, MagicItem, StoryAward, User } from 
 import { sorter } from "@sillvva/utils";
 import type { CharacterId, DungeonMasterId, LogId, LogSchema, UserId } from "./schemas";
 
-export const getMagicItems = (
+export function getMagicItems(
 	character: CharacterData,
 	options?: {
 		lastLogId?: LogId;
 		lastLogDate?: string;
 		excludeDropped?: boolean;
 	}
-) => {
+) {
 	const { lastLogId = "", lastLogDate = "", excludeDropped = false } = options || {};
 	const magicItems: MagicItem[] = [];
 	let lastLog = false;
@@ -34,16 +34,16 @@ export const getMagicItems = (
 			});
 		});
 	return magicItems;
-};
+}
 
-export const getStoryAwards = (
+export function getStoryAwards(
 	character: CharacterData,
 	options?: {
 		lastLogId?: LogId;
 		lastLogDate?: string;
 		excludeDropped?: boolean;
 	}
-) => {
+) {
 	const { lastLogId = "", lastLogDate = "", excludeDropped = false } = options || {};
 	const storyAwards: StoryAward[] = [];
 	let lastLog = false;
@@ -66,7 +66,7 @@ export const getStoryAwards = (
 			});
 		});
 	return storyAwards;
-};
+}
 
 export function getLevels(
 	logs: Log[],
@@ -146,7 +146,7 @@ export function getLevels(
 	};
 }
 
-export const getLogsSummary = (
+export function getLogsSummary(
 	logs: Array<
 		Log & {
 			dm: DungeonMaster | null;
@@ -157,7 +157,7 @@ export const getLogsSummary = (
 		}
 	>,
 	includeLogs = true
-) => {
+) {
 	logs = logs.sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime());
 
 	const levels = getLevels(logs);
@@ -194,7 +194,7 @@ export const getLogsSummary = (
 		tier: Math.floor((total_level + 1) / 6) + 1,
 		logs: includeLogs ? logs.map(parseLog) : []
 	};
-};
+}
 
 export function defaultDM(userId: UserId): DungeonMaster {
 	return { id: "" as DungeonMasterId, name: "", DCI: null, uid: "" as UserId, owner: userId };

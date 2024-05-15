@@ -38,6 +38,6 @@
 </script>
 
 <button type="button" class="btn btn-error sm:btn-sm" aria-label="Delete DM" on:click={submit}>
-	<span class="iconify mdi-trash-can" />
+	<span class="iconify mdi--trash-can" />
 	{label}
 </button>

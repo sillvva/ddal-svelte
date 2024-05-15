@@ -63,7 +63,7 @@
 	{#if data.code}
 		<div class="flex justify-center">
 			<div class="alert alert-error min-w-60 max-w-[28rem] shadow-lg">
-				<span class="iconify size-6 mdi-alert-circle max-sm:hidden" />
+				<span class="iconify size-6 mdi--alert-circle max-sm:hidden" />
 				<div>
 					<h3 class="font-bold">Error</h3>
 					{#if data.message}<p class="mb-2 text-balance max-sm:text-sm">{data.message}</p>{/if}

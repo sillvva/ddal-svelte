@@ -19,12 +19,12 @@ export const PROVIDERS = [
 	{
 		name: "Google",
 		id: "google",
-		iconify: "logos-google-icon"
+		iconify: "logos--google-icon"
 	},
 	{
 		name: "Discord",
 		id: "discord",
-		iconify: "logos-discord-icon"
+		iconify: "logos--discord-icon"
 	}
 ] as const satisfies Provider[];
 

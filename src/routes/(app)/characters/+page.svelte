@@ -95,7 +95,7 @@
 
 		<Dropdown class="dropdown-end" let:close>
 			<summary tabindex="0" class="btn btn-sm">
-				<span class="iconify size-6 mdi-dots-horizontal" />
+				<span class="iconify size-6 mdi--dots-horizontal" />
 			</summary>
 			<ul class="menu dropdown-content w-52 rounded-box bg-base-200 p-2 shadow">
 				<li use:close>
@@ -120,7 +120,7 @@
 				<a href="/characters/new/edit" class="btn btn-primary btn-sm max-sm:hidden">New Character</a>
 				<Search bind:value={search} placeholder="Search by name, race, class, items, etc." />
 				<a href="/characters/new/edit" class="btn btn-primary sm:hidden" aria-label="New Character">
-					<span class="iconify inline size-6 mdi-plus" />
+					<span class="iconify inline size-6 mdi--plus" />
 				</a>
 				<button
 					class={twMerge("btn inline-flex xs:hidden", $app.characters.magicItems && "btn-primary")}
@@ -131,9 +131,9 @@
 					tabindex="0"
 				>
 					{#if $app.characters.magicItems}
-						<span class="iconify size-6 mdi-shield-sword" />
+						<span class="iconify size-6 mdi--shield-sword" />
 					{:else}
-						<span class="iconify size-6 mdi-shield-sword-outline" />
+						<span class="iconify size-6 mdi--shield-sword-outline" />
 					{/if}
 				</button>
 			</div>
@@ -148,11 +148,11 @@
 						tabindex="0"
 					>
 						{#if $app.characters.magicItems}
-							<span class="iconify size-6 mdi-eye max-xs:hidden sm:max-md:hidden" />
-							<span class="iconify size-6 mdi-shield-sword xs:max-sm:hidden md:hidden" />
+							<span class="iconify size-6 mdi--eye max-xs:hidden sm:max-md:hidden" />
+							<span class="iconify size-6 mdi--shield-sword xs:max-sm:hidden md:hidden" />
 						{:else}
-							<span class="iconify size-6 mdi-eye-off max-xs:hidden sm:max-md:hidden" />
-							<span class="iconify size-6 mdi-shield-sword-outline xs:max-sm:hidden md:hidden" />
+							<span class="iconify size-6 mdi--eye-off max-xs:hidden sm:max-md:hidden" />
+							<span class="iconify size-6 mdi--shield-sword-outline xs:max-sm:hidden md:hidden" />
 						{/if}
 						<span class="max-xs:hidden sm:max-md:hidden">Magic Items</span>
 					</button>
@@ -164,7 +164,7 @@
 						on:keypress
 						aria-label="List View"
 					>
-						<span class="iconify mdi-format-list-text" />
+						<span class="iconify mdi--format-list-text" />
 					</button>
 					<button
 						class={twMerge("btn join-item sm:btn-sm", $app.characters.display == "grid" ? "btn-primary" : "hover:btn-primary")}
@@ -172,7 +172,7 @@
 						on:keypress
 						aria-label="Grid View"
 					>
-						<span class="iconify mdi-view-grid" />
+						<span class="iconify mdi--view-grid" />
 					</button>
 				</div>
 			</div>
@@ -213,7 +213,7 @@
 													/>
 												{/key}
 											{:else}
-												<span class="iconify size-12 mdi-account" />
+												<span class="iconify size-12 mdi--account" />
 											{/if}
 										</div>
 									</div>
