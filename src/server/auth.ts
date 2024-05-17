@@ -1,5 +1,4 @@
 import type { Prettify } from "$lib/util";
-import type { AdapterUser } from "@auth/core/adapters";
 import { AuthError, type User } from "@auth/sveltekit";
 import { redirect } from "@sveltejs/kit";
 
@@ -52,20 +51,12 @@ export function authErrRedirect(
 	);
 }
 
-export function assertUser<T extends User | AdapterUser>(
+export function assertUser<T extends User>(
 	user: T | undefined,
-	redirectUrl?: URL
+	redirectUrl: URL
 ): asserts user is Prettify<T & LocalsSession["user"]> {
-	try {
-		if (!user) throw "NotAuthenticated";
-		if (!user.id || !user.name || !user.email) throw "MissingUserData";
-	} catch (error) {
-		const err = error as ErrorCodes;
-		if (redirectUrl) {
-			if (err === "NotAuthenticated") redirect(302, `/?${urlRedirect(redirectUrl)}`);
-			redirect(302, authErrRedirect(err, redirectUrl));
-		} else throw error;
-	}
+	if (!user) redirect(302, `/?${urlRedirect(redirectUrl)}`);
+	if (!user.id || !user.name || !user.email) redirect(302, authErrRedirect("MissingUserData", redirectUrl));
 }
 
 export function authErrors(code: ErrorCodes, detail?: string | null) {

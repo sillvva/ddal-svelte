@@ -1,4 +1,5 @@
 import { privateEnv } from "$lib/env/private";
+import type { UserId } from "$lib/schemas";
 import { db, q } from "$server/db";
 import { accounts, sessions, users, type Account } from "$server/db/schema";
 import type { Provider } from "@auth/core/providers";
@@ -11,7 +12,7 @@ import { type Handle } from "@sveltejs/kit";
 import { sequence } from "@sveltejs/kit/hooks";
 import { handle as documentHandle } from "@sveltekit-addons/document/hooks";
 import { and, eq } from "drizzle-orm";
-import { assertUser, authErrRedirect, type ErrorCodes } from "./server/auth";
+import { assertUser, authErrRedirect } from "./server/auth";
 
 interface OAuthProvider {
 	id: string;
@@ -76,13 +77,7 @@ const auth = SvelteKitAuth(async (event) => {
 	return {
 		callbacks: {
 			async signIn({ account, user, profile }) {
-				try {
-					assertUser(user);
-				} catch (error) {
-					const type = error as ErrorCodes;
-					return authErrRedirect(type, redirectUrl);
-				}
-
+				if (!user) return authErrRedirect("NotAuthenticated", redirectUrl);
 				if (!account) return authErrRedirect("MissingAccountData", redirectUrl);
 				if (!profile) return authErrRedirect("MissingProfileData", redirectUrl);
 
@@ -129,7 +124,10 @@ const auth = SvelteKitAuth(async (event) => {
 				}
 
 				if (user.name !== accountProfile.name || user.image !== accountProfile.image) {
-					await db.update(users).set({ name: accountProfile.name, image: accountProfile.image }).where(eq(users.id, user.id));
+					await db
+						.update(users)
+						.set({ name: accountProfile.name, image: accountProfile.image })
+						.where(eq(users.id, user.id as UserId));
 				}
 
 				return true;
