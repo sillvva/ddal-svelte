@@ -1,6 +1,4 @@
-import { PROVIDERS } from "$lib/constants";
 import { privateEnv } from "$lib/env/private";
-import { isDefined, joinStringList } from "$lib/util";
 import { db, q } from "$server/db";
 import { accounts, sessions, users, type Account } from "$server/db/schema";
 import type { Provider } from "@auth/core/providers";
@@ -128,33 +126,6 @@ const auth = SvelteKitAuth(async (event) => {
 							lastLogin: new Date()
 						})
 						.where(and(eq(accounts.provider, account.provider), eq(accounts.providerAccountId, account.providerAccountId)));
-				} else {
-					// If there is no user logged in and we don't recognize the account, then we should
-					// check if the account's email is already registered and prevent the sign in
-
-					const email = user.email;
-					const matchingProviders = email
-						? await q.accounts
-								.findMany({
-									where: (accounts, { and, exists }) =>
-										exists(
-											db
-												.select({ id: users.id })
-												.from(users)
-												.where(and(eq(users.email, email), eq(users.id, accounts.userId)))
-										)
-								})
-								.then((a) => a.map((a) => a.provider))
-						: [];
-					if (matchingProviders.length) {
-						const names = matchingProviders.map((id) => PROVIDERS.find((p) => p.id === id)?.name).filter(isDefined);
-						const joinedProviders = joinStringList(names);
-
-						return authErrRedirect("ExistingAccount", {
-							detail: joinedProviders,
-							redirectTo: redirectUrl
-						});
-					}
 				}
 
 				if (user.name !== accountProfile.name || user.image !== accountProfile.image) {

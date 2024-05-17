@@ -32,12 +32,6 @@ export function createTransition(action: ViewTransitionCallback) {
 	return document.startViewTransition(action);
 }
 
-export function joinStringList(list: string[], separator = ", ", lastSeparator = "and ") {
-	if (list.length < 2) return list.join("");
-	const last = list.pop();
-	return `${list.join(separator)}${list.length > 1 ? separator : " "}${lastSeparator}${last}`;
-}
-
 export function isDefined<T>(value?: T | null): value is T {
 	return value !== undefined && value !== null;
 }

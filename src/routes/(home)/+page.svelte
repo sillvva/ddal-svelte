@@ -66,7 +66,7 @@
 				<span class="iconify size-6 mdi--alert-circle max-sm:hidden" />
 				<div>
 					<h3 class="font-bold">Error</h3>
-					{#if data.message}<p class="mb-2 text-balance max-sm:text-sm">{data.message}</p>{/if}
+					{#if data.message}<p class="mb-2 max-sm:text-sm">{data.message}</p>{/if}
 					<p class="font-mono text-xs">Code: {data.code}</p>
 				</div>
 			</div>

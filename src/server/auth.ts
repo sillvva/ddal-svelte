@@ -73,10 +73,10 @@ export function authErrors(code: ErrorCodes, detail?: string | null) {
 	switch (code) {
 		case "InvalidProvider":
 			return detail && `${detail} is not supported`;
+		case "OAuthAccountNotLinked":
+			return `You have not linked this provider to your account. Sign in and link additional providers in the settings menu.`;
 		case "ExistingAccount":
-			return (
-				detail && `You already have an account with ${detail}. Sign in, then link additional providers in the settings menu.`
-			);
+			return detail && `You already have an account with ${detail}. Sign in and link additional providers in the settings menu.`;
 		default:
 			return null;
 	}
