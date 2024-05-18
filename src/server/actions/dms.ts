@@ -19,7 +19,7 @@ export async function saveDM(
 		const dm = (await getUserDMsWithLogsCache(user)).find((dm) => dm.id === dmId);
 		if (!dm) throw new SaveError("You do not have permission to edit this DM", { status: 401 });
 
-		if (data.name === "" && data.uid) data.name = user.name;
+		if (data.name.trim() === "" && data.uid) data.name = user.name;
 
 		const [result] = await db
 			.update(dungeonMasters)
@@ -40,7 +40,9 @@ export async function saveDM(
 				.map((id) => ["character", id, "logs"] as CacheKey)
 				.concat([
 					["dms", user.id, "logs"],
+					["dms", dmId, "logs"],
 					["dms", user.id],
+					["dms", dmId],
 					["search-data", user.id]
 				])
 		);
