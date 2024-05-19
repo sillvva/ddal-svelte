@@ -2,6 +2,7 @@ import type { PROVIDERS } from "$lib/constants";
 import type { UserId } from "$lib/schemas";
 import { rateLimiter, revalidateKeys, type CacheKey } from "$server/cache";
 import { getCharactersCache } from "$server/data/characters";
+import { getUserDMs } from "$server/data/dms";
 import { db, type QueryConfig } from "$server/db";
 import { accounts } from "$server/db/schema";
 import { error } from "@sveltejs/kit";
@@ -14,21 +15,27 @@ export const userIncludes = {
 	}
 } as const satisfies QueryConfig<"users">;
 
-export async function clearUserCache(userId: UserId) {
-	const { success } = await rateLimiter("cache", userId);
-	if (!success) error(429, "Too many requests");
+export async function clearUserCache(user: LocalsSession["user"], limited = false) {
+	if (limited) {
+		const { success } = await rateLimiter("cache", user.id);
+		if (!success) error(429, "Too many requests");
+	}
 
-	const characters = await getCharactersCache(userId);
+	const characters = await getCharactersCache(user.id);
+	const dsm = await getUserDMs(user);
 
 	await revalidateKeys(
 		characters
 			.map((c) => ["character", c.id, "logs"] as CacheKey)
 			.concat(characters.map((c) => ["character", c.id, "no-logs"] as CacheKey))
+			.concat(dsm.map((dm) => ["dms", dm.id, "logs"] as CacheKey))
+			.concat(dsm.map((dm) => ["dms", dm.id] as CacheKey))
 			.concat([
-				["dms", userId, "logs"],
-				["characters", userId],
-				["dm-logs", userId],
-				["search-data", userId]
+				["dms", user.id],
+				["dms", user.id, "logs"],
+				["characters", user.id],
+				["dm-logs", user.id],
+				["search-data", user.id]
 			])
 	);
 }

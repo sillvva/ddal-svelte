@@ -21,7 +21,7 @@ export const actions = {
 	clearCaches: async (event) => {
 		const session = event.locals.session;
 		assertUser(session?.user, event.url);
-		return await clearUserCache(session.user.id);
+		return await clearUserCache(session.user, true);
 	},
 	unlinkProvider: async (event) => {
 		const session = event.locals.session;

@@ -1,6 +1,6 @@
 import { dev } from "$app/environment";
 import { privateEnv } from "$lib/env/private";
-import type { DictOrArray, Falsy } from "$lib/util";
+import { sleep, type DictOrArray, type Falsy } from "$lib/util";
 import { Ratelimit } from "@upstash/ratelimit";
 import { Redis } from "@upstash/redis";
 
@@ -134,4 +134,5 @@ export async function mcache<TReturnType extends DictOrArray>(
 export async function revalidateKeys(keys: Array<CacheKey | Falsy>) {
 	const cacheKeys = keys.filter((t): t is CacheKey => Array.isArray(t) && !!t.length).map((t) => t.join(delimiter));
 	if (cacheKeys.length) await redis.del(...cacheKeys);
+	await sleep(500);
 }

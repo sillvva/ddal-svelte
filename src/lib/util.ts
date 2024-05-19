@@ -36,6 +36,10 @@ export function isDefined<T>(value?: T | null): value is T {
 	return value !== undefined && value !== null;
 }
 
+export function sleep(ms: number) {
+	return new Promise((resolve) => setTimeout(resolve, ms));
+}
+
 /**
  * Classes
  */
