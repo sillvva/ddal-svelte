@@ -1,16 +1,22 @@
 <script lang="ts">
 	import { browser } from "$app/environment";
-	import { page } from "$app/stores";
 	import { PROVIDERS } from "$lib/constants.js";
 	import { publicEnv } from "$lib/env/public.js";
+	import type { CookieStore } from "$server/cookie.js";
 	import { signIn } from "@auth/sveltekit/client";
+	import { signIn as passkey } from "@auth/sveltekit/webauthn";
+	import { getContext } from "svelte";
 	import { twMerge } from "tailwind-merge";
 
 	export let data;
+	const app = getContext<CookieStore<App.Cookie>>("app");
 
-	$: if (browser) {
-		const hasCookie = document.cookie.includes("session-token");
-		if (!$page.data.session?.user && hasCookie) location.reload();
+	$: autoWebAuthn = $app.settings.authenticators && $app.settings.autoWebAuthn;
+	$: if (browser && autoWebAuthn) {
+		passkey("webauthn", {
+			callbackUrl: data.redirectTo || "/characters",
+			action: "authenticate"
+		});
 	}
 
 	const title = "Adventurers League Log Sheet";
@@ -59,6 +65,24 @@
 				<span class="flex h-full flex-1 items-center justify-center text-xl font-semibold">Sign In with {provider.name}</span>
 			</button>
 		{/each}
+		{#if !autoWebAuthn}
+			<hr class="border-base-content" />
+			<button
+				class="flex h-16 items-center gap-4 rounded-lg bg-base-200 px-8 py-4 text-base-content transition-colors hover:bg-base-300"
+				on:click={() =>
+					passkey("webauthn", {
+						callbackUrl: data.redirectTo || "/characters",
+						action: "authenticate"
+					})}
+				aria-label="Sign in with Passkey"
+			>
+				<span class="iconify h-8 w-8 material-symbols--passkey"></span>
+				<span class="flex h-full flex-1 items-center justify-center text-xl font-semibold">Sign In with Passkey</span>
+			</button>
+			<span class="max-w-72 text-balance text-center text-xs text-base-content">
+				You must have an account and add a Passkey in settings before you can sign in with this.
+			</span>
+		{/if}
 	</div>
 	{#if data.code}
 		<div class="flex justify-center">

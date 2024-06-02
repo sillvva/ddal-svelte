@@ -30,7 +30,7 @@
 
 	$: if (browser) {
 		const hasCookie = document.cookie.includes("session-token");
-		if (!$page.data.session?.user && hasCookie) location.reload();
+		if (!data.session?.user && hasCookie) location.reload();
 	}
 
 	let defaultTitle = "Adventurers League Log Sheet";
@@ -228,7 +228,9 @@
 	{#if $page.state.modal}
 		{#if $page.state.modal.type === "text"}
 			<div class="modal-box relative cursor-default bg-base-100 drop-shadow-lg">
-				<button class="btn btn-circle btn-ghost btn-sm absolute right-2 top-2" on:click={() => history.back()}>✕</button>
+				<button class="btn btn-circle btn-ghost btn-sm absolute right-2 top-2" on:click={() => history.back()}>
+					<span class="iconify mdi--close"></span>
+				</button>
 				<h3 id="modal-title" class="cursor-text text-lg font-bold text-black dark:text-white">{$page.state.modal.name}</h3>
 				{#if $page.state.modal.date}
 					<p class="text-xs">{$page.state.modal.date.toLocaleString()}</p>

@@ -30,6 +30,19 @@ export type ErrorCodes =
 	| "UnknownError"
 	| ErrorType;
 
+export class CustomAuthError extends AuthError {
+	constructor(
+		public code: ErrorCodes,
+		public detail?: string
+	) {
+		super();
+	}
+
+	redirect(url: URL) {
+		return authErrRedirect(this.code, { detail: this.detail, redirectTo: url });
+	}
+}
+
 /**
  * Redirects to / with a code and message query parameter
  * @param code - The error code
@@ -63,11 +76,15 @@ export function authErrors(code: ErrorCodes, detail?: string | null) {
 	if (!detail) detail = null;
 	switch (code) {
 		case "InvalidProvider":
-			return detail && `${detail} is not supported`;
-		case "OAuthAccountNotLinked":
-			return `You have not linked this provider to your account. Sign in and link additional providers in the settings menu.`;
+			return detail && `${detail} provider is not supported.`;
 		case "ExistingAccount":
 			return detail && `You already have an account with ${detail}. Sign in and link additional providers in the settings menu.`;
+		case "OAuthAccountNotLinked":
+			return `The email address is associated with an existing account, but you have not linked this provider to it. Sign in and link additional providers in the settings menu.`;
+		case "AccountNotLinked":
+			return `The account is already associated with another user.`;
+		case "WebAuthnVerificationError":
+			return "WebAuthn authentication response could not be verified.";
 		default:
 			return null;
 	}

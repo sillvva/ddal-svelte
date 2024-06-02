@@ -1,5 +1,6 @@
+import type { ProviderId } from "$lib/constants.js";
 import { isDefined } from "$lib/util.js";
-import { clearUserCache, unlinkProvider, type ProviderId } from "$server/actions/users.js";
+import { clearUserCache, unlinkProvider } from "$server/actions/users.js";
 import { assertUser } from "$server/auth";
 import { getCharacterCaches, getCharactersCache } from "$server/data/characters";
 
@@ -33,6 +34,10 @@ export const actions = {
 			if (!provider) throw new Error("No provider specified");
 
 			await unlinkProvider(session.user.id, provider);
+
+			if (event.cookies.get("provider") === provider) {
+				event.cookies.delete("provider", { path: "/" });
+			}
 
 			const newSession = await event.locals.auth();
 			assertUser(newSession?.user, event.url);

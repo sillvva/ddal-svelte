@@ -31,7 +31,6 @@ declare global {
 		// interface Error {}
 		interface Locals {
 			session: Session | null;
-			auth(): Promise<Session | null>;
 		}
 		// interface PageData {}
 		// interface Platform {}
@@ -60,6 +59,8 @@ declare global {
 			settings: {
 				theme: Themes;
 				mode: ThemeGroups;
+				autoWebAuthn: boolean;
+				authenticators: number;
 			};
 			characters: {
 				magicItems: boolean;

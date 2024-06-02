@@ -19,7 +19,9 @@ export const load = async (event) => {
 	const app = serverGetCookie<App.Cookie>(event.cookies, "app", {
 		settings: {
 			theme: "system",
-			mode: "dark"
+			mode: "dark",
+			autoWebAuthn: false,
+			authenticators: 0
 		},
 		characters: {
 			magicItems: false,

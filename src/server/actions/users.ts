@@ -1,10 +1,11 @@
-import type { PROVIDERS } from "$lib/constants";
+import type { ProviderId } from "$lib/constants";
 import type { UserId } from "$lib/schemas";
+import type { Prettify } from "$lib/util";
 import { rateLimiter, revalidateKeys, type CacheKey } from "$server/cache";
 import { getCharactersCache } from "$server/data/characters";
 import { getUserDMs } from "$server/data/dms";
 import { db, type QueryConfig } from "$server/db";
-import { accounts } from "$server/db/schema";
+import { accounts, type UpdateAccount } from "$server/db/schema";
 import { error } from "@sveltejs/kit";
 import { and, eq } from "drizzle-orm";
 
@@ -40,12 +41,28 @@ export async function clearUserCache(user: LocalsSession["user"], limited = fals
 	);
 }
 
-export type ProviderId = (typeof PROVIDERS)[number]["id"];
 export async function unlinkProvider(userId: UserId, provider: ProviderId) {
 	try {
 		const result = await db.delete(accounts).where(and(eq(accounts.userId, userId), eq(accounts.provider, provider)));
 		return result.count > 0;
 	} catch (e) {
 		throw new Error("Could not unlink account");
+	}
+}
+
+type AccountData = Prettify<
+	Omit<UpdateAccount, "provider" | "providerAccountId"> & { provider: ProviderId | "webauthn"; providerAccountId: string }
+>;
+export async function updateAccount(account: AccountData) {
+	try {
+		const { userId, provider, providerAccountId, ...rest } = account;
+		return await db
+			.update(accounts)
+			.set(rest)
+			.where(and(eq(accounts.provider, provider), eq(accounts.providerAccountId, providerAccountId)))
+			.returning()
+			.then((res) => res[0]);
+	} catch (e) {
+		throw new Error("Could not update account");
 	}
 }
