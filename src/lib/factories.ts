@@ -13,7 +13,7 @@ import {
 	type SuperValidated
 } from "sveltekit-superforms";
 import { valibotClient } from "sveltekit-superforms/adapters";
-import type { BaseSchema, Input, Output } from "valibot";
+import * as v from "valibot";
 
 export function successToast(message: string) {
 	toast.success("Success", {
@@ -34,11 +34,11 @@ export function errorToast(message: string) {
 	});
 }
 
-interface CustomFormOptions<S extends BaseSchema> {
-	nameField?: FormPathLeaves<Output<S>, string>;
+interface CustomFormOptions<S extends v.ObjectSchema<any, any>> {
+	nameField?: FormPathLeaves<v.InferOutput<S>, string>;
 }
 
-export function valibotForm<S extends BaseSchema, Out extends Output<S>, In extends Input<S>>(
+export function valibotForm<S extends v.ObjectSchema<any, any>, Out extends v.InferOutput<S>, In extends v.InferInput<S>>(
 	form: SuperValidated<Out, App.Superforms.Message, In>,
 	schema: S,
 	options?: FormOptions<Out, App.Superforms.Message, In> & CustomFormOptions<S>
