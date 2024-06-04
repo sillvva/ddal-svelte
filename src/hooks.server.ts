@@ -2,8 +2,7 @@ import { privateEnv } from "$lib/env/private";
 import type { UserId } from "$lib/schemas";
 import { updateAccount } from "$server/actions/users";
 import { db, q } from "$server/db";
-import { accounts, authenticators, sessions, users, type Account, type InsertAuthenticator } from "$server/db/schema";
-import type { AdapterAccount } from "@auth/core/adapters";
+import { accounts, authenticators, sessions, users, type Account } from "$server/db/schema";
 import type { Provider } from "@auth/core/providers";
 import Discord from "@auth/core/providers/discord";
 import Google from "@auth/core/providers/google";
@@ -14,7 +13,7 @@ import { SvelteKitAuth, type SvelteKitAuthConfig } from "@auth/sveltekit";
 import { type Handle } from "@sveltejs/kit";
 import { sequence } from "@sveltejs/kit/hooks";
 import { handle as documentHandle } from "@sveltekit-addons/document/hooks";
-import { and, eq, ne } from "drizzle-orm";
+import { eq, ne } from "drizzle-orm";
 import { assertUser, CustomAuthError } from "./server/auth";
 
 interface OAuthProvider {
@@ -163,57 +162,12 @@ const auth = SvelteKitAuth(async (event) => {
 			}
 		},
 		secret: privateEnv.AUTH_SECRET,
-		adapter: {
-			...DrizzleAdapter(db, {
-				usersTable: users,
-				accountsTable: accounts,
-				sessionsTable: sessions
-			}),
-			async getAccount(providerAccountId: string, provider: string) {
-				return db
-					.select()
-					.from(accounts)
-					.where(and(eq(accounts.provider, provider), eq(accounts.providerAccountId, providerAccountId)))
-					.then((res) => res[0] ?? null) as Promise<AdapterAccount | null>;
-			},
-			async createAuthenticator(data: InsertAuthenticator) {
-				const authenticator = await db
-					.insert(authenticators)
-					.values(data)
-					.returning()
-					.then((res) => res[0]);
-
-				if (!authenticator) throw new Error("Authenticator not created.");
-
-				return authenticator;
-			},
-			async getAuthenticator(credentialID: string) {
-				return await db
-					.select()
-					.from(authenticators)
-					.where(eq(authenticators.credentialID, credentialID))
-					.then((res) => res[0] ?? null);
-			},
-			async listAuthenticatorsByUserId(userId: UserId) {
-				return await db
-					.select()
-					.from(authenticators)
-					.where(eq(authenticators.userId, userId))
-					.then((res) => res);
-			},
-			async updateAuthenticatorCounter(credentialID: string, newCounter: number) {
-				const authenticator = await db
-					.update(authenticators)
-					.set({ counter: newCounter })
-					.where(eq(authenticators.credentialID, credentialID))
-					.returning()
-					.then((res) => res[0]);
-
-				if (!authenticator) throw new Error("Authenticator not found.");
-
-				return authenticator;
-			}
-		},
+		adapter: DrizzleAdapter(db, {
+			usersTable: users,
+			accountsTable: accounts,
+			sessionsTable: sessions,
+			authenticatorsTable: authenticators
+		}),
 		experimental: {
 			enableWebAuthn: true
 		},
