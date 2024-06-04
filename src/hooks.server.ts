@@ -84,6 +84,7 @@ const auth = SvelteKitAuth(async (event) => {
 					if (!account) throw new CustomAuthError("MissingAccountData");
 					if (!profile) throw new CustomAuthError("MissingProfileData");
 
+					if (account.provider === "webauthn") return true;
 					const provider = providers.find((p) => p.id === account.provider);
 					if (!provider) throw new CustomAuthError("InvalidProvider", account.provider);
 
