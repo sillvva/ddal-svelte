@@ -100,7 +100,7 @@ const auth = SvelteKitAuth(async (event) => {
 							and(eq(accounts.provider, account.provider), eq(accounts.providerAccountId, account.providerAccountId))
 					});
 
-					if (privateEnv.DISABLE_SIGNUPS && !existingAccount && !currentUserId) throw new CustomAuthError("SignupsDisabled");
+					if (privateEnv.DISABLE_SIGNUPS && !existingAccount) throw new CustomAuthError("SignupsDisabled");
 
 					event.cookies.set("provider", account.provider, {
 						path: "/",

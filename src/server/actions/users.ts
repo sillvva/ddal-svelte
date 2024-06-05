@@ -51,7 +51,7 @@ export async function unlinkProvider(userId: UserId, provider: ProviderId) {
 }
 
 type AccountData = Prettify<
-	Omit<UpdateAccount, "provider" | "providerAccountId"> & { provider: ProviderId | "webauthn"; providerAccountId: string }
+	Omit<UpdateAccount, "provider" | "providerAccountId"> & { provider: ProviderId; providerAccountId: string }
 >;
 export async function updateAccount(account: AccountData) {
 	try {
