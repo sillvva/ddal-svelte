@@ -133,7 +133,7 @@
 	</div>
 {/if}
 
-<div class="relative flex min-h-screen flex-col">
+<div class="relative flex min-h-screen flex-col isolate">
 	<header class="sticky top-0 z-20 w-full border-b border-base-300 bg-base-100 transition-all">
 		<nav class="container relative z-10 mx-auto flex max-w-5xl gap-2 p-4">
 			<Drawer />
