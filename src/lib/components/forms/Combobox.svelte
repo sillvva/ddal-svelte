@@ -1,12 +1,10 @@
-<script lang="ts" context="module">
-	type TRec = Record<string, unknown>;
-</script>
-
-<script lang="ts" generics="T extends TRec">
+<script lang="ts">
 	import { dev } from "$app/environment";
 	import { Combobox } from "bits-ui";
 	import SuperDebug, { formFieldProxy, stringProxy, type FormPathLeaves, type SuperForm } from "sveltekit-superforms";
 	import { twMerge } from "tailwind-merge";
+
+	type T = $$Generic<Record<string, unknown>>;
 
 	export let superform: SuperForm<T, any>;
 	export let valueField: FormPathLeaves<T>;

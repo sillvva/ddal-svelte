@@ -1,9 +1,7 @@
-<script lang="ts" context="module">
-	type TRec = Record<string, unknown>;
-</script>
-
-<script lang="ts" generics="T extends TRec">
+<script lang="ts">
 	import { type SuperForm } from "sveltekit-superforms";
+
+	type T = $$Generic<Record<string, unknown>>;
 
 	export let superform: SuperForm<T, any>;
 

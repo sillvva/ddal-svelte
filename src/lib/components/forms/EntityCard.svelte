@@ -1,16 +1,13 @@
-<script lang="ts" context="module">
-	type TRec = Record<string, unknown>;
-</script>
-
-<script lang="ts" generics="T extends TRec">
+<script lang="ts">
 	import type { BrandedType } from "$lib/schemas";
-
 	import { writable } from "svelte/store";
 	import { formFieldProxy, type FormPathLeaves, type SuperForm } from "sveltekit-superforms";
 	import Control from "./Control.svelte";
 	import GenericInput from "./GenericInput.svelte";
 	import Input from "./Input.svelte";
 	import MdTextInput from "./MDTextInput.svelte";
+
+	type T = $$Generic<Record<string, unknown>>;
 
 	type $$Props = {
 		entity: "magic_items" | "story_awards";

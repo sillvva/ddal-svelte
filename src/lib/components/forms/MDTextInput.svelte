@@ -1,13 +1,11 @@
-<script lang="ts" context="module">
-	type TRec = Record<string, unknown>;
-</script>
-
-<script lang="ts" generics="T extends TRec">
+<script lang="ts">
 	import { maxTextLength } from "$lib/schemas";
 	import { formFieldProxy, type FormPathLeaves, type SuperForm } from "sveltekit-superforms";
 	import { twMerge } from "tailwind-merge";
 	import Markdown from "../Markdown.svelte";
 	import AutoResizeTextArea from "./AutoResizeTextArea.svelte";
+
+	type T = $$Generic<Record<string, unknown>>;
 
 	export let superform: SuperForm<T>;
 	export let field: FormPathLeaves<T, string>;

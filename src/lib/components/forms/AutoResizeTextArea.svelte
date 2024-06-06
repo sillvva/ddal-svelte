@@ -1,11 +1,9 @@
-<script lang="ts" context="module">
-	type TRec = Record<string, unknown>;
-</script>
-
-<script lang="ts" generics="T extends TRec">
+<script lang="ts">
 	import autosize from "svelte-autosize";
 	import type { HTMLTextareaAttributes } from "svelte/elements";
 	import type { FormPathLeaves, FormPathType } from "sveltekit-superforms";
+
+	type T = $$Generic<Record<string, unknown>>;
 
 	interface $$Props extends HTMLTextareaAttributes {
 		content: FormPathType<T, FormPathLeaves<T, string>>;

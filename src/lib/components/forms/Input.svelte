@@ -1,10 +1,9 @@
-<script lang="ts" context="module">
-	type TRec = Record<string, unknown>;
-</script>
-
-<script lang="ts" generics="T extends TRec, TType extends 'text' | 'url' | 'number' | 'date'">
+<script lang="ts">
 	import type { HTMLInputAttributes } from "svelte/elements";
 	import { dateProxy, formFieldProxy, numberProxy, type FormPathLeaves, type SuperForm } from "sveltekit-superforms";
+
+	type T = $$Generic<Record<string, unknown>>;
+	type TType = $$Generic<"text" | "url" | "number" | "date">;
 
 	type LeafType = TType extends "text" | "url"
 		? string
