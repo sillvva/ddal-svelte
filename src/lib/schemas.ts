@@ -124,11 +124,11 @@ export const characterLogSchema = (character: CharacterData) =>
 		)
 	]);
 
-export const dMLogSchema = (characters: (CharacterData | { id: string; name: string })[]) =>
+export const dMLogSchema = (character?: CharacterData) =>
 	v.object(logSchema.entries, [
 		v.custom((input) => input.isDmLog, "Only DM logs can be saved here."),
 		v.forward(
-			v.custom((input) => !input.characterId || !!characters.find((c) => c.id === input.characterId), "Character not found"),
+			v.custom((input) => !input.characterId || !!character, "Character not found"),
 			["characterId"]
 		),
 		v.forward(
@@ -148,8 +148,7 @@ export const dMLogSchema = (characters: (CharacterData | { id: string; name: str
 		),
 		v.forward(
 			v.custom((input) => {
-				const character = characters.find((c) => c.id === input.characterId);
-				if (!character || !("logs" in character)) return true;
+				if (!character) return true;
 				const logACP = character.logs.find((log) => log.id === input.id)?.acp || 0;
 				return character.total_level < 20 || input.acp - logACP === 0;
 			}, "Cannot increase level above 20"),
@@ -157,8 +156,7 @@ export const dMLogSchema = (characters: (CharacterData | { id: string; name: str
 		),
 		v.forward(
 			v.custom((input) => {
-				const character = characters.find((c) => c.id === input.characterId);
-				if (!character || !("logs" in character)) return true;
+				if (!character) return true;
 				const logLevel = character.logs.find((log) => log.id === input.id)?.level || 0;
 				return character.total_level + input.level - logLevel <= 20;
 			}, "Cannot increase level above 20"),
