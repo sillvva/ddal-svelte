@@ -7,11 +7,7 @@ function brandedId<T extends string>(name: T) {
 }
 
 const required = v.minLength<string, 1, string>(1, "Required");
-export const maxTextLength = 5000;
-const maxTextSize = v.maxLength<string, typeof maxTextLength, string>(
-	maxTextLength,
-	`Must be less than ${maxTextLength} characters`
-);
+const maxTextSize = v.maxLength<string, 5000, string>(5000, `Must be less than 5000 characters`);
 const maxStringSize = v.maxLength<string, 255, string>(255, "Must be less than 255 characters");
 
 const urlSchema = v.pipe(v.string(), v.url(), maxStringSize);
