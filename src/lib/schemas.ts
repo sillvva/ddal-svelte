@@ -12,18 +12,20 @@ const maxStringSize = v.maxLength<string, 255, string>(255, "Must be less than 2
 
 const urlSchema = v.pipe(v.string(), v.url(), maxStringSize);
 const optionalURL = v.optional(v.fallback(urlSchema, ""), "");
+const optionalString = v.optional(v.string(), "");
+const requiredString = v.pipe(v.string(), required);
 
 export const envPrivateSchema = v.object({
 	DATABASE_URL: urlSchema,
-	UPSTASH_REDIS_REST_URL: urlSchema,
-	UPSTASH_REDIS_REST_TOKEN: v.pipe(v.string(), required),
 	AUTH_SECRET: v.pipe(v.string(), v.minLength(10, "Must be a string of at least 10 characters")),
 	AUTH_URL: urlSchema,
-	GOOGLE_CLIENT_ID: v.pipe(v.string(), required),
-	GOOGLE_CLIENT_SECRET: v.pipe(v.string(), required),
-	DISCORD_CLIENT_ID: v.pipe(v.string(), required),
-	DISCORD_CLIENT_SECRET: v.pipe(v.string(), required),
-	CRON_CHARACTER_ID: v.pipe(v.string(), required),
+	GOOGLE_CLIENT_ID: requiredString,
+	GOOGLE_CLIENT_SECRET: requiredString,
+	DISCORD_CLIENT_ID: requiredString,
+	DISCORD_CLIENT_SECRET: requiredString,
+	UPSTASH_REDIS_REST_URL: optionalURL,
+	UPSTASH_REDIS_REST_TOKEN: optionalString,
+	CRON_CHARACTER_ID: optionalString,
 	DISABLE_SIGNUPS: v.optional(v.boolean(), false)
 });
 
@@ -36,7 +38,7 @@ export const userIdSchema = brandedId("UserId");
 
 export type NewCharacterSchema = v.InferOutput<typeof newCharacterSchema>;
 export const newCharacterSchema = v.object({
-	name: v.pipe(v.string(), required),
+	name: requiredString,
 	campaign: v.optional(v.pipe(v.string(), maxStringSize), ""),
 	race: v.optional(v.pipe(v.string(), maxStringSize), ""),
 	class: v.optional(v.pipe(v.string(), maxStringSize), ""),
@@ -68,7 +70,7 @@ export const itemIdSchema = brandedId("ItemID");
 
 const itemSchema = v.object({
 	id: v.optional(itemIdSchema, ""),
-	name: v.pipe(v.string(), required),
+	name: requiredString,
 	description: v.optional(v.pipe(v.string(), maxTextSize), "")
 });
 
