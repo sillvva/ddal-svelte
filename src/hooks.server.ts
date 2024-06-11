@@ -109,7 +109,11 @@ const auth = SvelteKitAuth(async (event) => {
 					});
 
 					const { userId, ...rest } = account;
-					if (existingAccount) await updateAccount(rest);
+					if (existingAccount)
+						await updateAccount({
+							...rest,
+							lastLogin: new Date()
+						});
 
 					if (user.name !== accountProfile.name || user.image !== accountProfile.image) {
 						await db
