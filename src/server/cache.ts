@@ -29,7 +29,7 @@ function createLimiter(name: string, limit: number, duration: `${number} ${"s" |
 
 export async function rateLimiter(type: keyof typeof limits, ...identifiers: string[]) {
 	if (dev || !redis) return { success: true, reset: 0 };
-	return await limits[type]?.limit(identifiers.join(delimiter));
+	return (await limits[type]?.limit(identifiers.join(delimiter))) ?? { success: true, reset: 0 };
 }
 
 /**
