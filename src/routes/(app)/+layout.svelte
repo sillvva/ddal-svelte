@@ -76,6 +76,11 @@
 					let matches = hasMatch(item.name) || [];
 					if (words.join(" ").length >= 2) {
 						if (item.type === "character") {
+							matches = matches.concat(hasMatch(item.race || "") || []);
+							matches = matches.concat(hasMatch(item.class || "") || []);
+							matches = matches.concat(hasMatch(item.campaign || "") || []);
+							matches = matches.concat(hasMatch(`L${item.total_level}`) || []);
+							matches = matches.concat(hasMatch(`T${item.tier}`) || []);
 							item.magic_items.forEach((magicItem) => (matches = matches.concat(hasMatch(magicItem.name) || [])));
 							item.story_awards.forEach((storyAward) => (matches = matches.concat(hasMatch(storyAward.name) || [])));
 						} else if (item.type === "log") {
@@ -133,7 +138,7 @@
 	</div>
 {/if}
 
-<div class="relative flex min-h-screen flex-col isolate">
+<div class="relative isolate flex min-h-screen flex-col">
 	<header class="sticky top-0 z-20 w-full border-b border-base-300 bg-base-100 transition-all">
 		<nav class="container relative z-10 mx-auto flex max-w-5xl gap-2 p-4">
 			<Drawer />
