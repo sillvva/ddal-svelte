@@ -8,7 +8,6 @@
 	type TForm = $$Generic<Record<string, unknown>>;
 	type TMin = $$Generic<Date | undefined>;
 	type TMax = $$Generic<Date | undefined>;
-
 	interface $$Props extends DatePickerProps {
 		superform: SuperForm<TForm, any>;
 		field: FormPathLeaves<TForm, Date>;

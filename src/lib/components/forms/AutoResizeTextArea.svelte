@@ -4,7 +4,6 @@
 	import type { FormPathLeaves, FormPathType } from "sveltekit-superforms";
 
 	type T = $$Generic<Record<string, unknown>>;
-
 	interface $$Props extends HTMLTextareaAttributes {
 		content: FormPathType<T, FormPathLeaves<T, string>>;
 		minRows?: number;

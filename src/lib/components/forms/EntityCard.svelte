@@ -8,7 +8,6 @@
 	import MdTextInput from "./MDTextInput.svelte";
 
 	type T = $$Generic<Record<string, unknown>>;
-
 	type $$Props = {
 		entity: "magic_items" | "story_awards";
 		superform: SuperForm<T, any>;

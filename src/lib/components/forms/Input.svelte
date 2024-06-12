@@ -4,7 +4,6 @@
 
 	type T = $$Generic<Record<string, unknown>>;
 	type TType = $$Generic<"text" | "url" | "number" | "date">;
-
 	type LeafType = TType extends "text" | "url"
 		? string
 		: TType extends "number"
