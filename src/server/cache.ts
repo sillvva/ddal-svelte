@@ -53,7 +53,7 @@ export async function cache<TReturnType>(callback: () => Promise<TReturnType>, k
 
 	// Get the cache from Redis
 	type CachedType = { data: TReturnType; timestamp: number };
-	const cache = await redis.get<CachedType>(rkey);
+	const cache = await redis.get<CachedType | null>(rkey);
 
 	if (cache) {
 		// Update the timestamp and reset the cache expiration
@@ -88,8 +88,8 @@ export async function mcache<TReturnType extends DictOrArray>(
 
 	// Get the caches from Redis
 	type CachedType = { data: TReturnType; timestamp: number };
-	const caches = await redis.mget<CachedType[]>(joinedKeys);
-	const hits = caches.filter(Boolean);
+	const caches = await redis.mget<(CachedType | null)[]>(joinedKeys);
+	const hits = caches.filter((c) => c !== null);
 
 	if (hits.length < keys.length) {
 		// Call the mass callback function
@@ -140,7 +140,7 @@ export async function mcache<TReturnType extends DictOrArray>(
  */
 export async function revalidateKeys(keys: Array<CacheKey | Falsy>) {
 	if (!redis) return;
-	const cacheKeys = keys.filter((t): t is CacheKey => Array.isArray(t) && !!t.length).map((t) => t.join(delimiter));
+	const cacheKeys = keys.filter((t) => Array.isArray(t)).map((t) => t.join(delimiter));
 	if (cacheKeys.length) await redis.del(...cacheKeys);
 	await sleep(500);
 }
