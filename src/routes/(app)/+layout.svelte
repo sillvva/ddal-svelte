@@ -50,7 +50,8 @@
 	let selected: string = defaultSelected;
 	let resultsPane: HTMLElement;
 
-	$: words = Array.from(new Set(search.toLowerCase().split(" ").filter(Boolean)));
+	$: words = Array.from(new Set(search.toLowerCase().split(" "))).filter(Boolean);
+	$: query = words.join(" ");
 	$: if (!$searchData.length && browser && cmdOpen) {
 		fetch(`/command`)
 			.then((res) => res.json() as Promise<SearchData>)
@@ -62,8 +63,9 @@
 		selected = defaultSelected;
 	}
 
-	function getMatches(item: string) {
-		return words.filter((word) => item.toLowerCase().includes(word));
+	function hasMatch(item: string) {
+		const matches = words.filter((word) => item.toLowerCase().includes(word));
+		return matches.length ? matches : null;
 	}
 
 	$: results = $searchData
@@ -72,21 +74,24 @@
 			items: section.items
 				.filter((item) => {
 					if (item.type === "section" && words.length) return false;
-					let matches = new Set(getMatches(item.name));
-					if (words.join(" ").length >= 2) {
+					let matcher = new Set([item.name]);
+					if (query.length >= 2) {
 						if (item.type === "character") {
-							const values = [item.race, item.class, item.campaign, `L${item.total_level}`, `T${item.tier}`]
-								.concat(item.magic_items.map((item) => item.name))
-								.concat(item.story_awards.map((item) => item.name));
-							getMatches(values.join(" ")).forEach(matches.add);
-						} else if (item.type === "log") {
-							if (item.dm) getMatches(item.dm.name).forEach(matches.add);
+							matcher.add(`${item.race} ${item.class} ${item.class} ${item.campaign} L${item.total_level} T${item.tier}`);
+							item.magic_items.forEach((magicItem) => matcher.add(magicItem.name));
+							item.story_awards.forEach((storyAward) => matcher.add(storyAward.name));
+						}
+						if (item.type === "log") {
+							if (item.dm) matcher.add(item.dm.name);
 						}
 					}
+					const matches = new Set(hasMatch(Array.from(matcher).join(" ")));
 					return matches.size === words.length;
 				})
 				.sort((a, b) => {
 					if (a.type === "log" && b.type === "log") return new Date(b.date).getTime() - new Date(a.date).getTime();
+					if (hasMatch(a.name) && !hasMatch(b.name)) return -1;
+					if (!hasMatch(a.name) && hasMatch(b.name)) return 1;
 					return a.name.localeCompare(b.name);
 				})
 				.slice(0, words.length ? 1000 : 5)
@@ -360,23 +365,23 @@
 																			{item.class}
 																		</div>
 																		{#if search.length >= 2}
-																			{#if item.magic_items.some((magicItem) => getMatches(magicItem.name).length)}
+																			{#if item.magic_items.some((magicItem) => hasMatch(magicItem.name))}
 																				<div class="flex gap-1 text-xs">
 																					<span class="whitespace-nowrap font-bold">Magic Items:</span>
 																					<span class="flex-1 opacity-70">
 																						{Array.from(new Set(item.magic_items.map((item) => item.name)))
-																							.filter((item) => getMatches(item).length)
+																							.filter((item) => hasMatch(item))
 																							.sort((a, b) => sorter(a, b))
 																							.join(", ")}
 																					</span>
 																				</div>
 																			{/if}
-																			{#if item.story_awards.some((storyAward) => getMatches(storyAward.name).length)}
+																			{#if item.story_awards.some((storyAward) => hasMatch(storyAward.name))}
 																				<div class="flex gap-2 text-xs">
 																					<span class="whitespace-nowrap font-bold">Story Awards:</span>
 																					<span class="flex-1 opacity-70">
 																						{Array.from(new Set(item.story_awards.map((item) => item.name)))
-																							.filter((item) => getMatches(item).length)
+																							.filter((item) => hasMatch(item))
 																							.sort((a, b) => sorter(a, b))
 																							.join(", ")}
 																					</span>
@@ -397,7 +402,7 @@
 																			{/if}
 																		</div>
 																		{#if search.length >= 2}
-																			{#if item.dm && getMatches(item.dm.name)}
+																			{#if item.dm && hasMatch(item.dm.name)}
 																				<div class="flex gap-1 text-xs">
 																					<span class="whitespace-nowrap font-bold">DM:</span>
 																					<span class="flex-1 opacity-70">{item.dm.name}</span>
