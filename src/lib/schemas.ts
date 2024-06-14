@@ -16,8 +16,7 @@ const optionalString = v.optional(v.string(), "");
 const requiredString = v.pipe(v.string(), required);
 
 export type EnvPrivate = v.InferInput<typeof envPrivateSchema>;
-export const envPrivateSchema = v.intersect([
-	v.object({
+export const envPrivateSchema = v.object({
 		DATABASE_URL: urlSchema,
 		AUTH_SECRET: v.pipe(v.string(), v.minLength(10, "Must be a string of at least 10 characters")),
 		AUTH_URL: urlSchema,
@@ -29,9 +28,7 @@ export const envPrivateSchema = v.intersect([
 		UPSTASH_REDIS_REST_TOKEN: optionalString,
 		CRON_CHARACTER_ID: optionalString,
 		DISABLE_SIGNUPS: v.optional(v.boolean(), false)
-	}),
-	v.record(v.string(), v.unknown())
-]);
+	});
 
 export type EnvPublic = v.InferInput<typeof envPublicSchema>;
 export const envPublicSchema = v.object({
