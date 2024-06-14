@@ -1,19 +1,20 @@
-import { PROVIDERS } from "$lib/constants";
 import { privateEnv } from "$lib/env/private";
-import { isDefined, joinStringList } from "$lib/util";
+import type { UserId } from "$lib/schemas";
+import { updateAccount } from "$server/actions/users";
 import { db, q } from "$server/db";
-import { accounts, sessions, users, type Account } from "$server/db/schema";
+import { accounts, authenticators, sessions, users, type Account } from "$server/db/schema";
 import type { Provider } from "@auth/core/providers";
 import Discord from "@auth/core/providers/discord";
 import Google from "@auth/core/providers/google";
+import WebAuthn from "@auth/core/providers/webauthn";
 import type { Profile, TokenSet } from "@auth/core/types";
 import { DrizzleAdapter } from "@auth/drizzle-adapter";
 import { SvelteKitAuth, type SvelteKitAuthConfig } from "@auth/sveltekit";
 import { type Handle } from "@sveltejs/kit";
 import { sequence } from "@sveltejs/kit/hooks";
 import { handle as documentHandle } from "@sveltekit-addons/document/hooks";
-import { and, eq } from "drizzle-orm";
-import { assertUser, authErrRedirect, type ErrorCodes } from "./server/auth";
+import { eq, ne } from "drizzle-orm";
+import { assertUser, CustomAuthError } from "./server/auth";
 
 interface OAuthProvider {
 	id: string;
@@ -79,105 +80,87 @@ const auth = SvelteKitAuth(async (event) => {
 		callbacks: {
 			async signIn({ account, user, profile }) {
 				try {
-					assertUser(user);
-				} catch (error) {
-					const type = error as ErrorCodes;
-					return authErrRedirect(type, redirectUrl);
-				}
+					if (!user) throw new CustomAuthError("NotAuthenticated");
+					if (!account) throw new CustomAuthError("MissingAccountData");
+					if (!profile) throw new CustomAuthError("MissingProfileData");
 
-				if (!account) return authErrRedirect("MissingAccountData", redirectUrl);
-				if (!profile) return authErrRedirect("MissingProfileData", redirectUrl);
+					if (account.provider === "webauthn") return true;
+					const provider = providers.find((p) => p.id === account.provider);
+					if (!provider) throw new CustomAuthError("InvalidProvider", account.provider);
 
-				const provider = providers.find((p) => p.id === account.provider);
-				if (!provider)
-					return authErrRedirect("InvalidProvider", {
-						detail: account.provider,
-						redirectTo: redirectUrl
+					const accountProfile = provider.profile(profile);
+					if (!accountProfile) throw new CustomAuthError("ProfileNotFound");
+
+					const currentSession = await event.locals.auth();
+					const currentUserId = currentSession?.user?.id;
+					if (currentUserId) return true;
+
+					const existingAccount = await q.accounts.findFirst({
+						where: (accounts, { and, eq }) =>
+							and(eq(accounts.provider, account.provider), eq(accounts.providerAccountId, account.providerAccountId))
 					});
 
-				const accountProfile = provider.profile(profile);
-				if (!accountProfile) return authErrRedirect("ProfileNotFound", redirectUrl);
+					if (privateEnv.DISABLE_SIGNUPS && !existingAccount) throw new CustomAuthError("SignupsDisabled");
 
-				const currentSession = await event.locals.auth();
-				const currentUserId = currentSession?.user?.id;
-				if (currentUserId) return true;
+					event.cookies.set("provider", account.provider, {
+						path: "/",
+						expires: new Date(Date.now() + 365 * 86400 * 1000),
+						httpOnly: true
+					});
 
-				const existingAccount = await q.accounts.findFirst({
-					where: (accounts, { and, eq }) =>
-						and(eq(accounts.provider, account.provider), eq(accounts.providerAccountId, account.providerAccountId))
-				});
-
-				if (privateEnv.DISABLE_SIGNUPS && !existingAccount && !currentUserId)
-					return authErrRedirect("SignupsDisabled", redirectUrl);
-
-				if (existingAccount) {
-					// If there is no user logged in, but we recognize the account
-					// then we should log the user in and update the refresh token
-
-					const { expires_at, access_token, refresh_token, token_type, scope, id_token } = account;
-
-					await db
-						.update(accounts)
-						.set({
-							expires_at,
-							access_token,
-							refresh_token,
-							token_type,
-							scope,
-							id_token,
+					const { userId, ...rest } = account;
+					if (existingAccount)
+						await updateAccount({
+							...rest,
 							lastLogin: new Date()
-						})
-						.where(and(eq(accounts.provider, account.provider), eq(accounts.providerAccountId, account.providerAccountId)));
-				} else {
-					// If there is no user logged in and we don't recognize the account, then we should
-					// check if the account's email is already registered and prevent the sign in
-
-					const email = user.email;
-					const matchingProviders = email
-						? await q.accounts
-								.findMany({
-									where: (accounts, { and, exists }) =>
-										exists(
-											db
-												.select({ id: users.id })
-												.from(users)
-												.where(and(eq(users.email, email), eq(users.id, accounts.userId)))
-										)
-								})
-								.then((a) => a.map((a) => a.provider))
-						: [];
-					if (matchingProviders.length) {
-						const names = matchingProviders.map((id) => PROVIDERS.find((p) => p.id === id)?.name).filter(isDefined);
-						const joinedProviders = joinStringList(names);
-
-						return authErrRedirect("ExistingAccount", {
-							detail: joinedProviders,
-							redirectTo: redirectUrl
 						});
+
+					if (user.name !== accountProfile.name || user.image !== accountProfile.image) {
+						await db
+							.update(users)
+							.set({ name: accountProfile.name, image: accountProfile.image })
+							.where(eq(users.id, user.id as UserId));
 					}
-				}
 
-				if (user.name !== accountProfile.name || user.image !== accountProfile.image) {
-					await db.update(users).set({ name: accountProfile.name, image: accountProfile.image }).where(eq(users.id, user.id));
+					return true;
+				} catch (err) {
+					if (err instanceof CustomAuthError) {
+						event.cookies.delete("provider", { path: "/" });
+						return err.redirect(redirectUrl);
+					} else throw err;
 				}
-
-				return true;
 			},
 			async session({ session }) {
 				assertUser(session.user, redirectUrl);
 
-				if (session.expires >= new Date()) return session satisfies LocalsSession;
+				const provider = event.cookies.get("provider");
+				if (provider && session.expires.getTime() - Date.now() >= 15 * 86400 * 1000) return session satisfies LocalsSession;
 
 				const account = await q.accounts.findFirst({
-					where: (accounts, { and, eq, isNotNull }) => and(eq(accounts.userId, session.user.id), isNotNull(accounts.lastLogin)),
+					where: (accounts, { and, eq, isNotNull }) =>
+						and(
+							eq(accounts.userId, session.user.id),
+							isNotNull(accounts.lastLogin),
+							provider ? eq(accounts.provider, provider) : ne(accounts.provider, "webauthn")
+						),
 					orderBy: (account, { desc }) => desc(account.lastLogin)
 				});
 
 				if (account) {
-					if (account.userId === session.user.id) {
-						const [result] = await refreshToken(account);
+					event.cookies.set("provider", account.provider, {
+						path: "/",
+						expires: new Date(Date.now() + 365 * 86400 * 1000),
+						httpOnly: true
+					});
+
+					// Refresh OAuth access token
+					if (providers.some((p) => p.id === account.provider)) {
+						const result = await refreshToken(account);
 						if (result instanceof Error) console.error(`RefreshAccessTokenError: ${result.message}`);
 					}
+
+					const newDate = new Date(Date.now() + 30 * 86400 * 1000);
+					await db.update(sessions).set({ expires: newDate }).where(eq(sessions.sessionToken, session.sessionToken));
 				}
 
 				return session satisfies LocalsSession;
@@ -187,9 +170,13 @@ const auth = SvelteKitAuth(async (event) => {
 		adapter: DrizzleAdapter(db, {
 			usersTable: users,
 			accountsTable: accounts,
-			sessionsTable: sessions
+			sessionsTable: sessions,
+			authenticatorsTable: authenticators
 		}),
-		providers: providers.map((p) => p.oauth()),
+		experimental: {
+			enableWebAuthn: true
+		},
+		providers: providers.map((p) => p.oauth()).concat(WebAuthn),
 		trustHost: true,
 		pages: {
 			signIn: "/",
@@ -243,28 +230,16 @@ async function refreshToken(account: Account) {
 
 			if (token) {
 				if (!token.expires_in && !token.expires_at) throw new Error("No expiration in token response");
-
-				return await db
-					.update(accounts)
-					.set({
-						access_token: token.access_token,
-						expires_at: token.expires_at ?? (token.expires_in && Math.floor(Date.now() / 1000 + token.expires_in)),
-						refresh_token: token.refresh_token ?? account.refresh_token,
-						token_type: token.token_type ?? account.token_type,
-						scope: token.scope ?? account.scope,
-						id_token: token.id_token ?? account.id_token
-					})
-					.where(and(eq(accounts.provider, account.provider), eq(accounts.providerAccountId, account.providerAccountId)))
-					.returning();
+				return await updateAccount(account);
 			}
 		}
 
-		return [];
+		return;
 	} catch (err) {
-		if (err instanceof Error) return [err];
+		if (err instanceof Error) return err;
 		else {
 			console.error(err);
-			return [new Error("Unknown error. See logs for details")];
+			return new Error("Unknown error. See logs for details");
 		}
 	}
 }

@@ -1,8 +1,4 @@
-<script lang="ts" context="module">
-	type FormObj = Record<string, unknown>;
-</script>
-
-<script lang="ts" generics="T extends FormObj">
+<script lang="ts">
 	import { dev } from "$app/environment";
 	import { onMount } from "svelte";
 	import type { HTMLFormAttributes } from "svelte/elements";
@@ -10,6 +6,7 @@
 	import SuperDebug, { type SuperForm } from "sveltekit-superforms";
 	import FormMessage from "./FormMessage.svelte";
 
+	type T = $$Generic<Record<string, unknown>>;
 	interface $$Props extends HTMLFormAttributes {
 		superform: SuperForm<T, any>;
 		showMessage?: boolean;

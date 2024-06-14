@@ -1,5 +1,4 @@
 import type { Prettify } from "$lib/util";
-import type { AdapterUser } from "@auth/core/adapters";
 import { AuthError, type User } from "@auth/sveltekit";
 import { redirect } from "@sveltejs/kit";
 
@@ -31,6 +30,19 @@ export type ErrorCodes =
 	| "UnknownError"
 	| ErrorType;
 
+export class CustomAuthError extends AuthError {
+	constructor(
+		public code: ErrorCodes,
+		public detail?: string
+	) {
+		super();
+	}
+
+	redirect(url: URL) {
+		return authErrRedirect(this.code, { detail: this.detail, redirectTo: url });
+	}
+}
+
 /**
  * Redirects to / with a code and message query parameter
  * @param code - The error code
@@ -52,31 +64,27 @@ export function authErrRedirect(
 	);
 }
 
-export function assertUser<T extends User | AdapterUser>(
+export function assertUser<T extends User>(
 	user: T | undefined,
-	redirectUrl?: URL
+	redirectUrl: URL
 ): asserts user is Prettify<T & LocalsSession["user"]> {
-	try {
-		if (!user) throw "NotAuthenticated";
-		if (!user.id || !user.name || !user.email) throw "MissingUserData";
-	} catch (error) {
-		const err = error as ErrorCodes;
-		if (redirectUrl) {
-			if (err === "NotAuthenticated") redirect(302, `/?${urlRedirect(redirectUrl)}`);
-			redirect(302, authErrRedirect(err, redirectUrl));
-		} else throw error;
-	}
+	if (!user) redirect(302, `/?${urlRedirect(redirectUrl)}`);
+	if (!user.id || !user.name || !user.email) redirect(302, authErrRedirect("MissingUserData", redirectUrl));
 }
 
 export function authErrors(code: ErrorCodes, detail?: string | null) {
 	if (!detail) detail = null;
 	switch (code) {
 		case "InvalidProvider":
-			return detail && `${detail} is not supported`;
+			return detail && `${detail} provider is not supported.`;
 		case "ExistingAccount":
-			return (
-				detail && `You already have an account with ${detail}. Sign in, then link additional providers in the settings menu.`
-			);
+			return detail && `You already have an account with ${detail}. Sign in and link additional providers in the settings menu.`;
+		case "OAuthAccountNotLinked":
+			return `The email address is associated with an existing account, but you have not linked this provider to it. Sign in and link additional providers in the settings menu.`;
+		case "AccountNotLinked":
+			return `The account is already associated with another user.`;
+		case "WebAuthnVerificationError":
+			return "WebAuthn authentication response could not be verified.";
 		default:
 			return null;
 	}

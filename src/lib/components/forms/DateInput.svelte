@@ -1,14 +1,13 @@
-<script lang="ts" context="module">
-	type TRec = Record<string, unknown>;
-</script>
-
-<script lang="ts" generics="TForm extends TRec, TMin extends Date | undefined, TMax extends Date | undefined">
+<script lang="ts">
 	import { intDateProxy } from "$lib/factories";
 	import { parseDateTime } from "@internationalized/date";
 	import { DatePicker, type DatePickerProps } from "bits-ui";
 	import { formFieldProxy, type FormPathLeaves, type SuperForm } from "sveltekit-superforms";
 	import { twMerge } from "tailwind-merge";
 
+	type TForm = $$Generic<Record<string, unknown>>;
+	type TMin = $$Generic<Date | undefined>;
+	type TMax = $$Generic<Date | undefined>;
 	interface $$Props extends DatePickerProps {
 		superform: SuperForm<TForm, any>;
 		field: FormPathLeaves<TForm, Date>;

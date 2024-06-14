@@ -2,16 +2,15 @@
 	import { enhance } from "$app/forms";
 	import { page } from "$app/stores";
 	import { PROVIDERS } from "$lib/constants";
+	import { successToast } from "$lib/factories";
 	import { pageLoader, searchData } from "$lib/stores";
-	import type { CookieStore } from "$server/cookie";
 	import type { Account } from "$server/db/schema";
 	import { signIn, signOut } from "@auth/sveltekit/client";
-	import { getContext } from "svelte";
 	import { twMerge } from "tailwind-merge";
+	import Passkeys from "./Passkeys.svelte";
 	import ThemeSwitcher from "./ThemeSwitcher.svelte";
 
 	export let open = false;
-	const app = getContext<CookieStore<App.Cookie>>("app");
 
 	$: accounts = $page.data.accounts as Account[];
 	$: authProviders = PROVIDERS.map((p) => ({
@@ -27,7 +26,7 @@
 			.slice(0, 2) || "";
 </script>
 
-<div
+<aside
 	id="settings"
 	class={twMerge(
 		"fixed -right-80 bottom-0 top-0 z-50 flex w-80 flex-col overflow-y-auto bg-base-100 px-4 py-4 transition-all",
@@ -88,54 +87,51 @@
 			</li>
 		</form>
 	</ul>
-	{#if authProviders.length > 0}
-		<div class="divider my-0" />
-		<ul class="menu menu-lg w-full px-0 [&_li>*]:px-2">
-			<li class="menu-title">
-				<span class="font-bold">Linked Accounts</span>
-			</li>
-			{#each authProviders as provider}
-				<li>
-					<label class="flex gap-2">
-						<span class={twMerge("iconify-color h-6 w-6", provider.iconify)}></span>
-						<span>{provider.name}</span>
-						<span class="flex-1"></span>
-						<span>
-							{#if provider.account}
-								{#if accounts.length > 1}
-									<form
-										method="POST"
-										action="/characters?/unlinkProvider"
-										use:enhance={() => {
-											$pageLoader = true;
-											open = false;
-											return async ({ update }) => {
-												await update();
-												$pageLoader = false;
-											};
-										}}
-									>
-										<input type="hidden" name="provider" value={provider.id} />
-										<button class="btn btn-error btn-sm">Unlink</button>
-									</form>
-								{:else}
-									Linked
-								{/if}
-							{:else}
-								<button
-									class="btn btn-primary btn-sm"
-									on:click={() =>
-										signIn(provider.id, {
-											callbackUrl: `${$page.url.origin}${$page.url.pathname}${$page.url.search}`
-										})}>Link</button
+	<div class="divider my-0" />
+	<ul class="menu menu-lg w-full px-0 [&_li>*]:px-2">
+		<li class="menu-title">
+			<span class="font-bold">Linked Accounts</span>
+		</li>
+		{#each authProviders as provider}
+			<li>
+				<label class="flex gap-2 hover:bg-transparent">
+					<span class={twMerge("iconify-color size-6", provider.iconify)}></span>
+					<span class="flex-1">{provider.name}</span>
+					<span class="flex items-center">
+						{#if provider.account}
+							{#if accounts.length > 1}
+								<form
+									method="POST"
+									action="/characters?/unlinkProvider"
+									use:enhance={({ cancel }) => {
+										if (!confirm(`Are you sure you want to unlink ${provider.name}?`)) return cancel();
+
+										$pageLoader = true;
+										open = false;
+										return async ({ update }) => {
+											await update();
+											$pageLoader = false;
+											successToast(`${provider.name} unlinked`);
+										};
+									}}
 								>
+									<input type="hidden" name="provider" value={provider.id} />
+									<button class="btn btn-error btn-sm">Unlink</button>
+								</form>
+							{:else}
+								<span class="iconify size-6 text-green-500 mdi--check" />
 							{/if}
-						</span>
-					</label>
-				</li>
-			{/each}
-		</ul>
-	{/if}
+						{:else}
+							<button class="btn btn-primary btn-sm" on:click={() => signIn(provider.id, { callbackUrl: $page.url.href })}>
+								Link
+							</button>
+						{/if}
+					</span>
+				</label>
+			</li>
+		{/each}
+	</ul>
+	<Passkeys />
 	<div class="divider my-0" />
 	<ul class="menu menu-lg w-full px-0">
 		<li>
@@ -164,7 +160,7 @@
 			User ID: {$page.data.session.user.id}
 		</div>
 	{/if}
-</div>
+</aside>
 <div
 	class={twMerge(
 		"fixed inset-0 bg-base-300/50 transition-all",
@@ -176,28 +172,33 @@
 	role="none"
 />
 
-<style>
-	.menu-lg li:not(.menu-title) {
-		height: 3.5rem;
-	}
-	.menu-lg li * {
-		line-height: 2rem;
-	}
+<style lang="scss">
+	aside {
+		:global(.menu-lg li *) {
+			line-height: 1.5rem;
+		}
 
-	.menu-title {
-		padding-block: 0;
-	}
+		:global(.menu-title) {
+			padding-block: 0;
+		}
 
-	.menu li {
-		padding-inline: 0;
-	}
+		:global(.menu li) {
+			padding-inline: 0;
+		}
 
-	:where(.menu li > *) {
-		padding-inline: 1rem;
-	}
+		:global(:where(.menu li > *)) {
+			padding-inline: 1rem;
+		}
 
-	:where(.menu li > :not(button, a):hover) {
-		background-color: transparent;
-		cursor: default;
+		:global(:where(.menu li button)) {
+			padding-inline: 1rem;
+			justify-content: start;
+			font-weight: normal;
+		}
+
+		:global(:where(.menu li > :not(button, a):hover)) {
+			background-color: transparent !important;
+			cursor: default;
+		}
 	}
 </style>

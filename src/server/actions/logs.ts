@@ -3,7 +3,7 @@ import { type LogId, type LogSchema, type UserId } from "$lib/schemas";
 import { SaveError, type SaveResult } from "$lib/util";
 import { rateLimiter, revalidateKeys } from "$server/cache";
 import { logIncludes, type LogData } from "$server/data/logs";
-import { buildConflictUpdateColumns, db } from "$server/db";
+import { buildConflictUpdateColumns, db, type Transaction } from "$server/db";
 import { dungeonMasters, logs, magicItems, storyAwards, type InsertDungeonMaster, type Log } from "$server/db/schema";
 import { and, eq, inArray, notInArray } from "drizzle-orm";
 
@@ -128,67 +128,8 @@ export async function saveLog(input: LogSchema, user: LocalsSession["user"]): Sa
 
 			if (!log?.id) throw new LogError("Could not save log");
 
-			const itemIds = input.magicItemsGained.map((item) => item.id).filter(Boolean);
-			await tx
-				.delete(magicItems)
-				.where(
-					itemIds.length
-						? and(eq(magicItems.logGainedId, log.id), notInArray(magicItems.id, itemIds))
-						: eq(magicItems.logGainedId, log.id)
-				);
-
-			if (input.magicItemsGained.length) {
-				await tx
-					.insert(magicItems)
-					.values(
-						input.magicItemsGained.map((item) => ({
-							id: item.id || undefined,
-							name: item.name,
-							description: item.description,
-							logGainedId: log.id
-						}))
-					)
-					.onConflictDoUpdate({
-						target: magicItems.id,
-						set: buildConflictUpdateColumns(magicItems, ["name", "description"])
-					});
-			}
-
-			await tx.update(magicItems).set({ logLostId: null }).where(eq(magicItems.logLostId, log.id));
-			if (input.magicItemsLost.length) {
-				await tx.update(magicItems).set({ logLostId: log.id }).where(inArray(magicItems.id, input.magicItemsLost));
-			}
-
-			const awardIds = input.storyAwardsGained.map((item) => item.id).filter(Boolean);
-			await tx
-				.delete(storyAwards)
-				.where(
-					awardIds.length
-						? and(eq(storyAwards.logGainedId, log.id), notInArray(storyAwards.id, awardIds))
-						: eq(storyAwards.logGainedId, log.id)
-				);
-
-			if (input.storyAwardsGained.length) {
-				await tx
-					.insert(storyAwards)
-					.values(
-						input.storyAwardsGained.map((item) => ({
-							id: item.id || undefined,
-							name: item.name,
-							description: item.description,
-							logGainedId: log.id
-						}))
-					)
-					.onConflictDoUpdate({
-						target: storyAwards.id,
-						set: buildConflictUpdateColumns(storyAwards, ["name", "description"])
-					});
-			}
-
-			await tx.update(storyAwards).set({ logLostId: null }).where(eq(storyAwards.logLostId, log.id));
-			if (input.storyAwardsLost.length) {
-				await tx.update(storyAwards).set({ logLostId: log.id }).where(inArray(storyAwards.id, input.storyAwardsLost));
-			}
+			await itemsCRUD({ tx, logId: log.id, table: magicItems, gained: input.magicItemsGained, lost: input.magicItemsLost });
+			await itemsCRUD({ tx, logId: log.id, table: storyAwards, gained: input.storyAwardsGained, lost: input.storyAwardsLost });
 
 			const updated = await tx.query.logs.findFirst({
 				with: logIncludes,
@@ -212,6 +153,53 @@ export async function saveLog(input: LogSchema, user: LocalsSession["user"]): Sa
 		return log;
 	} catch (err) {
 		return LogError.from(err);
+	}
+}
+
+async function itemsCRUD(
+	params: {
+		tx: Transaction;
+		logId: LogId;
+	} & (
+		| {
+				table: typeof magicItems;
+				gained: LogSchema["magicItemsGained"];
+				lost: LogSchema["magicItemsLost"];
+		  }
+		| {
+				table: typeof storyAwards;
+				gained: LogSchema["storyAwardsGained"];
+				lost: LogSchema["storyAwardsLost"];
+		  }
+	)
+) {
+	const { tx, logId, table, gained, lost } = params;
+
+	const itemIds = gained.map((item) => item.id).filter(Boolean);
+	await tx
+		.delete(table)
+		.where(itemIds.length ? and(eq(table.logGainedId, logId), notInArray(table.id, itemIds)) : eq(table.logGainedId, logId));
+
+	if (gained.length) {
+		await tx
+			.insert(table)
+			.values(
+				gained.map((item) => ({
+					id: item.id || undefined,
+					name: item.name,
+					description: item.description,
+					logGainedId: logId
+				}))
+			)
+			.onConflictDoUpdate({
+				target: table.id,
+				set: buildConflictUpdateColumns(table, ["name", "description"])
+			});
+	}
+
+	await tx.update(table).set({ logLostId: null }).where(eq(table.logLostId, logId));
+	if (lost.length) {
+		await tx.update(table).set({ logLostId: logId }).where(inArray(table.id, lost));
 	}
 }
 

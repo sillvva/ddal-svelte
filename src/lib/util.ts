@@ -1,4 +1,5 @@
 import { dev } from "$app/environment";
+import type { AuthClient } from "$server/db/schema";
 import { type NumericRange } from "@sveltejs/kit";
 import { message, setError, type FormPathLeavesWithErrors, type SuperValidated } from "sveltekit-superforms";
 import type { setupViewTransition } from "sveltekit-view-transition";
@@ -21,9 +22,6 @@ export type DictOrArray = Record<PropertyKey, unknown> | Array<unknown>;
  * Functions
  */
 
-/**
- * Creates a view transition.
- */
 export function createTransition(action: ViewTransitionCallback) {
 	if (!document.startViewTransition) {
 		action();
@@ -32,14 +30,16 @@ export function createTransition(action: ViewTransitionCallback) {
 	return document.startViewTransition(action);
 }
 
-export function joinStringList(list: string[], separator = ", ", lastSeparator = "and ") {
-	if (list.length < 2) return list.join("");
-	const last = list.pop();
-	return `${list.join(separator)}${list.length > 1 ? separator : " "}${lastSeparator}${last}`;
-}
-
 export function isDefined<T>(value?: T | null): value is T {
 	return value !== undefined && value !== null;
+}
+
+export function sleep(ms: number) {
+	return new Promise((resolve) => setTimeout(resolve, ms));
+}
+
+export function authName(authenticator: AuthClient) {
+	return authenticator.name || authenticator.credentialID.replace(/[^a-z0-9]/gi, "").slice(-8);
 }
 
 /**

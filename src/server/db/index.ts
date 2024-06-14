@@ -18,6 +18,8 @@ export const connection = postgres(privateEnv.DATABASE_URL, { prepare: false });
 export const db = drizzle(connection, { schema });
 export const q = db.query;
 
+export type Transaction = Parameters<Parameters<typeof db.transaction>[0]>[0];
+
 export function buildConflictUpdateColumns<T extends PgTable, Q extends keyof T["_"]["columns"]>(table: T, columns: Q[]) {
 	const cls = getTableColumns(table);
 	return columns.reduce(

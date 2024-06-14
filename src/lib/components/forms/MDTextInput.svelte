@@ -1,13 +1,10 @@
-<script lang="ts" context="module">
-	type TRec = Record<string, unknown>;
-</script>
-
-<script lang="ts" generics="T extends TRec">
-	import { maxTextLength } from "$lib/schemas";
+<script lang="ts">
 	import { formFieldProxy, type FormPathLeaves, type SuperForm } from "sveltekit-superforms";
 	import { twMerge } from "tailwind-merge";
 	import Markdown from "../Markdown.svelte";
 	import AutoResizeTextArea from "./AutoResizeTextArea.svelte";
+
+	type T = $$Generic<Record<string, unknown>>;
 
 	export let superform: SuperForm<T>;
 	export let field: FormPathLeaves<T, string>;
@@ -17,7 +14,7 @@
 
 	let prev = false;
 
-	const { value, errors } = formFieldProxy(superform, field);
+	const { value, errors, constraints } = formFieldProxy(superform, field);
 </script>
 
 <label for={field} class="label">
@@ -35,6 +32,7 @@
 	class={twMerge("textarea textarea-bordered w-full focus:border-primary", preview && "rounded-t-none", prev && "hidden")}
 	{minRows}
 	{maxRows}
+	{...$constraints}
 />
 {#if preview && prev}
 	<div class="rounded-b-lg border-[1px] border-base-content bg-base-100 p-4 [--tw-border-opacity:0.2]">
@@ -47,8 +45,8 @@
 		{:else}
 			<span class="label-text-alt">Markdown Allowed</span>
 		{/if}
-		{#if !($errors || "").length}
-			<span class="label-text-alt">{`${$value}`.length.toLocaleString()} / {maxTextLength.toLocaleString()}</span>
+		{#if !($errors || []).length && $constraints?.maxlength}
+			<span class="label-text-alt">{`${$value}`.length.toLocaleString()} / {$constraints?.maxlength.toLocaleString()}</span>
 		{/if}
 	</label>
 {/if}

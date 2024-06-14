@@ -30,7 +30,7 @@ export default {
 			addVariant("hover-hover", "@media (hover: hover)");
 			addVariant("hover-none", "@media (hover: none)");
 		}),
-		addIconSelectors(["mdi", "logos"]),
+		addIconSelectors(["mdi", "material-symbols", "logos"]),
 		plugin(({ matchVariant }) => {
 			const values = {
 				// Default

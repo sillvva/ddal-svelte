@@ -30,7 +30,7 @@
 
 	$: if (browser) {
 		const hasCookie = document.cookie.includes("session-token");
-		if (!$page.data.session?.user && hasCookie) location.reload();
+		if (!data.session?.user && hasCookie) location.reload();
 	}
 
 	let defaultTitle = "Adventurers League Log Sheet";
@@ -51,6 +51,7 @@
 	let resultsPane: HTMLElement;
 
 	$: words = Array.from(new Set(search.toLowerCase().split(" "))).filter(Boolean);
+	$: query = words.join(" ");
 	$: if (!$searchData.length && browser && cmdOpen) {
 		fetch(`/command`)
 			.then((res) => res.json() as Promise<SearchData>)
@@ -73,20 +74,24 @@
 			items: section.items
 				.filter((item) => {
 					if (item.type === "section" && words.length) return false;
-					let matches = hasMatch(item.name) || [];
-					if (words.join(" ").length >= 2) {
+					let matcher = new Set([item.name]);
+					if (query.length >= 2) {
 						if (item.type === "character") {
-							item.magic_items.forEach((magicItem) => (matches = matches.concat(hasMatch(magicItem.name) || [])));
-							item.story_awards.forEach((storyAward) => (matches = matches.concat(hasMatch(storyAward.name) || [])));
-						} else if (item.type === "log") {
-							if (item.dm) matches = matches.concat(hasMatch(item.dm.name) || []);
+							matcher.add(`${item.race} ${item.class} ${item.class} ${item.campaign} L${item.total_level} T${item.tier}`);
+							item.magic_items.forEach((magicItem) => matcher.add(magicItem.name));
+							item.story_awards.forEach((storyAward) => matcher.add(storyAward.name));
+						}
+						if (item.type === "log") {
+							if (item.dm) matcher.add(item.dm.name);
 						}
 					}
-					const deduped = new Set(matches);
-					return deduped.size === words.length;
+					const matches = new Set(hasMatch(Array.from(matcher).join(" ")));
+					return matches.size === words.length;
 				})
 				.sort((a, b) => {
 					if (a.type === "log" && b.type === "log") return new Date(b.date).getTime() - new Date(a.date).getTime();
+					if (hasMatch(a.name) && !hasMatch(b.name)) return -1;
+					if (!hasMatch(a.name) && hasMatch(b.name)) return 1;
 					return a.name.localeCompare(b.name);
 				})
 				.slice(0, words.length ? 1000 : 5)
@@ -133,7 +138,7 @@
 	</div>
 {/if}
 
-<div class="relative flex min-h-screen flex-col">
+<div class="relative isolate flex min-h-screen flex-col">
 	<header class="sticky top-0 z-20 w-full border-b border-base-300 bg-base-100 transition-all">
 		<nav class="container relative z-10 mx-auto flex max-w-5xl gap-2 p-4">
 			<Drawer />
@@ -228,7 +233,9 @@
 	{#if $page.state.modal}
 		{#if $page.state.modal.type === "text"}
 			<div class="modal-box relative cursor-default bg-base-100 drop-shadow-lg">
-				<button class="btn btn-circle btn-ghost btn-sm absolute right-2 top-2" on:click={() => history.back()}>✕</button>
+				<button class="btn btn-circle btn-ghost btn-sm absolute right-2 top-2" on:click={() => history.back()}>
+					<span class="iconify mdi--close"></span>
+				</button>
 				<h3 id="modal-title" class="cursor-text text-lg font-bold text-black dark:text-white">{$page.state.modal.name}</h3>
 				{#if $page.state.modal.date}
 					<p class="text-xs">{$page.state.modal.date.toLocaleString()}</p>

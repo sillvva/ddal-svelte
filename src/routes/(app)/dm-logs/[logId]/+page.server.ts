@@ -40,7 +40,7 @@ export const load = async (event) => {
 	}
 
 	const character = characters.find((c) => c.id === log.characterId);
-	const form = await superValidate(logDataToSchema(session.user.id, log, character), valibot(dMLogSchema(characters)), {
+	const form = await superValidate(logDataToSchema(session.user.id, log, character), valibot(dMLogSchema(character)), {
 		errors: event.params.logId !== "new"
 	});
 
@@ -72,7 +72,8 @@ export const actions = {
 			async (characters) => await getCharacterCaches(characters.map((c) => c.id))
 		);
 
-		const form = await superValidate(event, valibot(dMLogSchema(characters)));
+		const character = characters.find((c) => c.id === log.characterId);
+		const form = await superValidate(event, valibot(dMLogSchema(character)));
 		if (!form.valid) return fail(400, { form });
 
 		const result = await saveLog(form.data, session.user);

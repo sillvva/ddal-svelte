@@ -1,8 +1,22 @@
+import { type ProviderId } from "$lib/constants";
 import { type CharacterId, type DungeonMasterId, type ItemId, type LogId, type UserId } from "$lib/schemas";
 import type { ProviderType } from "@auth/core/providers";
 import { createId } from "@paralleldrive/cuid2";
 import { relations, type InferInsertModel } from "drizzle-orm";
-import { boolean, index, integer, pgEnum, pgTable, primaryKey, real, smallint, text, timestamp } from "drizzle-orm/pg-core";
+import {
+	boolean,
+	foreignKey,
+	index,
+	integer,
+	pgEnum,
+	pgTable,
+	primaryKey,
+	real,
+	smallint,
+	text,
+	timestamp,
+	unique
+} from "drizzle-orm/pg-core";
 
 export type User = typeof users.$inferSelect;
 export type InsertUser = InferInsertModel<typeof users>;
@@ -18,11 +32,12 @@ export const users = pgTable("user", {
 	image: text("image")
 });
 
-export const userRelations = relations(users, ({ many }) => ({
+export const userRelations = relations(users, ({ many, one }) => ({
 	accounts: many(accounts),
 	sessions: many(sessions),
 	characters: many(characters),
-	dungeonMasters: many(dungeonMasters)
+	dungeonMasters: many(dungeonMasters),
+	authenticators: many(authenticators)
 }));
 
 export type Account = typeof accounts.$inferSelect;
@@ -32,7 +47,7 @@ export const accounts = pgTable(
 	"account",
 	{
 		providerAccountId: text("providerAccountId").notNull(),
-		provider: text("provider").notNull(),
+		provider: text("provider").notNull().$type<ProviderId>(),
 		type: text("type").$type<ProviderType>().notNull(),
 		userId: text("userId")
 			.notNull()
@@ -50,7 +65,8 @@ export const accounts = pgTable(
 	(table) => {
 		return {
 			userIdIdx: index("Account_userId_idx").on(table.userId),
-			accountPkey: primaryKey({ columns: [table.provider, table.providerAccountId], name: "Account_pkey" })
+			accountPkey: primaryKey({ columns: [table.provider, table.providerAccountId], name: "Account_pkey" }),
+			webAuthnIdx: unique("account_userId_providerAccountId_key").on(table.userId, table.providerAccountId)
 		};
 	}
 );
@@ -59,7 +75,8 @@ export const accountRelations = relations(accounts, ({ one }) => ({
 	user: one(users, {
 		fields: [accounts.userId],
 		references: [users.id]
-	})
+	}),
+	authenticator: one(authenticators)
 }));
 
 export type Session = typeof sessions.$inferSelect;
@@ -89,6 +106,52 @@ export const sessionRelations = relations(sessions, ({ one }) => ({
 	user: one(users, {
 		fields: [sessions.userId],
 		references: [users.id]
+	})
+}));
+
+export type Authenticator = typeof authenticators.$inferSelect;
+export type AuthClient = Pick<Authenticator, "credentialID" | "name">;
+export type InsertAuthenticator = InferInsertModel<typeof authenticators>;
+export type UpdateAuthenticator = Partial<Authenticator>;
+export const authenticators = pgTable(
+	"authenticator",
+	{
+		credentialID: text("credentialID").notNull().unique(),
+		userId: text("userId")
+			.notNull()
+			.$type<UserId>()
+			.references(() => users.id, { onDelete: "cascade", onUpdate: "cascade" }),
+		providerAccountId: text("providerAccountId").notNull(),
+		name: text("name")
+			.notNull()
+			.$defaultFn(() => ""),
+		credentialPublicKey: text("credentialPublicKey").notNull(),
+		counter: integer("counter").notNull(),
+		credentialDeviceType: text("credentialDeviceType").notNull(),
+		credentialBackedUp: boolean("credentialBackedUp").notNull(),
+		transports: text("transports")
+	},
+	(table) => ({
+		compositePK: primaryKey({
+			columns: [table.userId, table.credentialID]
+		}),
+		accountFK: foreignKey({
+			columns: [table.userId, table.providerAccountId],
+			foreignColumns: [accounts.userId, accounts.providerAccountId],
+			name: "public_authenticator_userId_providerAccountId_fkey"
+		}),
+		uniqueName: unique("authenticator_userId_name_key").on(table.userId, table.name)
+	})
+);
+
+export const authenticatorRelations = relations(authenticators, ({ one }) => ({
+	user: one(users, {
+		fields: [authenticators.userId],
+		references: [users.id]
+	}),
+	account: one(accounts, {
+		fields: [authenticators.userId, authenticators.providerAccountId],
+		references: [accounts.userId, accounts.providerAccountId]
 	})
 }));
 

@@ -1,15 +1,18 @@
 import { dev } from "$app/environment";
 import { privateEnv } from "$lib/env/private";
-import type { DictOrArray, Falsy } from "$lib/util";
+import { sleep, type DictOrArray, type Falsy } from "$lib/util";
 import { Ratelimit } from "@upstash/ratelimit";
 import { Redis } from "@upstash/redis";
 
 const delimiter = ":";
 
-const redis = new Redis({
-	url: privateEnv.UPSTASH_REDIS_REST_URL,
-	token: privateEnv.UPSTASH_REDIS_REST_TOKEN
-});
+const redis =
+	privateEnv.UPSTASH_REDIS_REST_URL && privateEnv.UPSTASH_REDIS_REST_TOKEN
+		? new Redis({
+				url: privateEnv.UPSTASH_REDIS_REST_URL,
+				token: privateEnv.UPSTASH_REDIS_REST_TOKEN
+			})
+		: undefined;
 const limits = {
 	fetch: createLimiter("fetch", 300, "1 h"),
 	crud: createLimiter("crud", 120, "1 h"),
@@ -19,14 +22,14 @@ const limits = {
 } as const;
 
 function createLimiter(name: string, limit: number, duration: `${number} ${"s" | "m" | "h"}`) {
+	if (!redis) return;
 	const limiter = Ratelimit.fixedWindow(limit, duration);
 	return new Ratelimit({ redis, limiter, prefix: `limit${delimiter}${name}` });
 }
 
 export async function rateLimiter(type: keyof typeof limits, ...identifiers: string[]) {
-	if (dev) return { success: true, reset: 0 };
-	const { success, reset } = await limits[type].limit(identifiers.join(delimiter));
-	return { success, reset };
+	if (dev || !redis) return { success: true, reset: 0 };
+	return (await limits[type]?.limit(identifiers.join(delimiter))) ?? { success: true, reset: 0 };
 }
 
 /**
@@ -43,12 +46,14 @@ export type CacheKey = [string, ...string[]];
  * @returns The cached result of the callback function.
  */
 export async function cache<TReturnType>(callback: () => Promise<TReturnType>, key: CacheKey, expires = 3 * 86400) {
+	if (!redis) return await callback();
+
 	const rkey = key.join(delimiter);
 	const currentTime = Date.now();
 
 	// Get the cache from Redis
 	type CachedType = { data: TReturnType; timestamp: number };
-	const cache = await redis.get<CachedType>(rkey);
+	const cache = await redis.get<CachedType | null>(rkey);
 
 	if (cache) {
 		// Update the timestamp and reset the cache expiration
@@ -77,12 +82,14 @@ export async function mcache<TReturnType extends DictOrArray>(
 	keys: CacheKey[],
 	expires = 3 * 86400
 ) {
+	if (!redis) return await callback(keys, []).then((t) => t.map((item) => item.value));
+
 	const joinedKeys = keys.map((t) => t.join(delimiter));
 
 	// Get the caches from Redis
 	type CachedType = { data: TReturnType; timestamp: number };
-	const caches = await redis.mget<CachedType[]>(joinedKeys);
-	const hits = caches.filter(Boolean);
+	const caches = await redis.mget<(CachedType | null)[]>(joinedKeys);
+	const hits = caches.filter((c) => c !== null);
 
 	if (hits.length < keys.length) {
 		// Call the mass callback function
@@ -132,6 +139,8 @@ export async function mcache<TReturnType extends DictOrArray>(
  * @param [keys] The cache keys as an array of arrays of strings. Empty strings, false, null, and undefined are ignored.
  */
 export async function revalidateKeys(keys: Array<CacheKey | Falsy>) {
-	const cacheKeys = keys.filter((t): t is CacheKey => Array.isArray(t) && !!t.length).map((t) => t.join(delimiter));
+	if (!redis) return;
+	const cacheKeys = keys.filter((t) => Array.isArray(t)).map((t) => t.join(delimiter));
 	if (cacheKeys.length) await redis.del(...cacheKeys);
+	await sleep(500);
 }

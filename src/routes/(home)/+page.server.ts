@@ -12,7 +12,7 @@ export const load = async (event) => {
 
 	return {
 		redirectTo,
-		code: code && code?.replace(/([a-z])([A-Z])/g, "$1 $2"),
+		code: code,
 		message: code && authErrors(code, event.url.searchParams.get("detail"))
 	};
 };
