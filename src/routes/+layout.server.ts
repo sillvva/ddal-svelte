@@ -4,7 +4,9 @@ import { serverGetCookie } from "$server/cookie.js";
 
 let checked = false;
 if (!checked && building && env) {
-	console.log("✅ Environment variables are valid");
+	console.log("\n✅ Environment variables are valid");
+	console.table(env);
+	console.log("\n");
 	checked = true;
 }
 
