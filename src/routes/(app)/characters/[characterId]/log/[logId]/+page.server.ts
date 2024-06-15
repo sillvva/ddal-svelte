@@ -2,8 +2,8 @@ import { defaultLogData, getMagicItems, getStoryAwards, logDataToSchema } from "
 import { characterIdSchema, characterLogSchema, logIdSchema } from "$lib/schemas";
 import { saveLog } from "$server/actions/logs.js";
 import { assertUser } from "$server/auth.js";
-import { getCharacterCache } from "$server/data/characters";
-import { getUserDMsCache } from "$server/data/dms";
+import { getCharacter } from "$server/data/characters";
+import { getUserDMs } from "$server/data/dms";
 import { getLog } from "$server/data/logs";
 import { sorter } from "@sillvva/utils";
 import { error, redirect } from "@sveltejs/kit";
@@ -41,7 +41,7 @@ export const load = async (event) => {
 		sorter(a.name, b.name)
 	);
 
-	const dms = await getUserDMsCache(session.user);
+	const dms = await getUserDMs(session.user);
 
 	return {
 		...event.params,
@@ -65,7 +65,7 @@ export const actions = {
 		assertUser(session?.user, event.url);
 
 		const characterId = parse(characterIdSchema, event.params.characterId);
-		const character = await getCharacterCache(characterId);
+		const character = await getCharacter(characterId);
 		if (!character) redirect(302, "/characters");
 
 		const idResult = safeParse(logIdSchema, event.params.logId || "");

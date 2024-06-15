@@ -3,7 +3,7 @@
 	import { page } from "$app/stores";
 	import { PROVIDERS } from "$lib/constants";
 	import { successToast } from "$lib/factories";
-	import { pageLoader, searchData } from "$lib/stores";
+	import { pageLoader } from "$lib/stores";
 	import type { Account } from "$server/db/schema";
 	import { signIn, signOut } from "@auth/sveltekit/client";
 	import { twMerge } from "tailwind-merge";
@@ -69,23 +69,6 @@
 				<ThemeSwitcher />
 			</div>
 		</li>
-		<form
-			method="POST"
-			action="/characters?/clearCaches"
-			use:enhance={() => {
-				$pageLoader = true;
-				open = false;
-				return async ({ update }) => {
-					await update();
-					$searchData = [];
-					$pageLoader = false;
-				};
-			}}
-		>
-			<li class="rounded-lg">
-				<button class="size-full">Clear Cache</button>
-			</li>
-		</form>
 	</ul>
 	<div class="divider my-0" />
 	<ul class="menu menu-lg w-full px-0 [&_li>*]:px-2">

@@ -2,7 +2,7 @@ import { defaultLogData, logDataToSchema } from "$lib/entities.js";
 import { dMLogSchema, logIdSchema } from "$lib/schemas";
 import { saveLog } from "$server/actions/logs";
 import { assertUser } from "$server/auth";
-import { getCharacterCaches, getCharactersCache } from "$server/data/characters";
+import { getCharactersWithLogs } from "$server/data/characters";
 import { getDMLog, getLog } from "$server/data/logs";
 import { error, redirect } from "@sveltejs/kit";
 import { fail, superValidate } from "sveltekit-superforms";
@@ -20,17 +20,15 @@ export const load = async (event) => {
 	if (!idResult.success) redirect(302, `/dm-logs`);
 	const logId = idResult.output;
 
-	const characters = await getCharactersCache(user.id)
-		.then(async (characters) => await getCharacterCaches(characters.map((c) => c.id)))
-		.then((characters) =>
-			characters.map((c) => ({
-				...c,
-				logs: c.logs.filter((l) => l.id !== logId),
-				magic_items: [],
-				story_awards: [],
-				log_levels: []
-			}))
-		);
+	const characters = await getCharactersWithLogs(user.id).then((characters) =>
+		characters.map((c) => ({
+			...c,
+			logs: c.logs.filter((l) => l.id !== logId),
+			magic_items: [],
+			story_awards: [],
+			log_levels: []
+		}))
+	);
 
 	let log = defaultLogData(user.id);
 	if (event.params.logId !== "new") {
@@ -68,10 +66,7 @@ export const actions = {
 		const log = await getLog(logId, session.user.id);
 		if (event.params.logId !== "new" && !log.id) redirect(302, `/dm-logs`);
 
-		const characters = await getCharactersCache(session.user.id).then(
-			async (characters) => await getCharacterCaches(characters.map((c) => c.id))
-		);
-
+		const characters = await getCharactersWithLogs(session.user.id);
 		const character = characters.find((c) => c.id === log.characterId);
 		const form = await superValidate(event, valibot(dMLogSchema(character)));
 		if (!form.valid) return fail(400, { form });
