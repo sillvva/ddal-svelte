@@ -102,7 +102,7 @@
 				<span class="flex-1 overflow-hidden text-ellipsis whitespace-nowrap">{authenticator.name}</span>
 			</button>
 			<button
-				class="btn btn-ghost text-red-500 hover:btn-error hover:text-base-content"
+				class="btn btn-ghost text-error hover:btn-error hover:text-base-content"
 				on:click|stopPropagation={() => deleteWebAuthn(authenticator.credentialID)}
 			>
 				<span class="iconify size-6 mdi--delete" />
