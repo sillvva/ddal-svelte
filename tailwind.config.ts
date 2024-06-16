@@ -131,12 +131,39 @@ export default {
 					"base-content": "#c4ccca"
 				}
 			},
-			"business",
-			"halloween",
+			{
+				business: {
+					...themes["business"],
+					secondary: "oklch(71.7036% 0.099057 220.473931)",
+				}
+			},
+			{
+				halloween: {
+					...themes["halloween"],
+					secondary: "#c881ff",
+					error: "#d04000",
+					"error-content": "white"
+				}
+			},
 			"night",
-			"corporate",
-			"retro",
-			"valentine"
+			{
+				corporate: {
+					...themes["corporate"],
+					secondary: "oklch(50.39% 0.228 220.1)",
+				}
+			},
+			{
+				retro: {
+					...themes["retro"],
+					secondary: "oklch(50.8664% 0.104092 60.664655)",
+				}
+			},
+			{
+				valentine: {
+					...themes["valentine"],
+					secondary: "#6419e6",
+				}
+			}
 		]
 	}
 } satisfies Config;
