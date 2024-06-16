@@ -1,7 +1,6 @@
 import { defaultDM, defaultLogData, parseLog } from "$lib/entities";
 import type { CharacterId, LogId, UserId } from "$lib/schemas";
 import { userIncludes } from "$server/actions/users";
-import { cache } from "$server/cache";
 import { db, q, type InferQueryModel, type QueryConfig } from "$server/db";
 import { characters, dungeonMasters } from "$server/db/schema";
 import { eq, sql } from "drizzle-orm";
@@ -54,10 +53,6 @@ export async function getDMLogs(userId: UserId) {
 		.then((logs) => {
 			return logs.map(parseLog);
 		});
-}
-
-export async function getDMLogsCache(userId: UserId) {
-	return await cache(() => getDMLogs(userId), ["dm-logs", userId], 86400);
 }
 
 export async function getUserLogs(userId: UserId) {

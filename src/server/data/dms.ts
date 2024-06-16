@@ -1,5 +1,4 @@
 import type { DungeonMasterId } from "$lib/schemas";
-import { cache } from "$server/cache";
 import { q } from "$server/db";
 import { dungeonMasters } from "$server/db/schema";
 import { sorter } from "@sillvva/utils";
@@ -41,11 +40,6 @@ export async function getUserDMsWithLogs(user: LocalsSession["user"], id?: Dunge
 	return dms.sort((a, b) => sorter(a.uid, b.uid) || sorter(a.name, b.name));
 }
 
-export async function getUserDMsWithLogsCache(user: LocalsSession["user"], id?: DungeonMasterId) {
-	if (!user || !user.id) return [];
-	return cache(() => getUserDMsWithLogs(user, id), ["dms", id ?? user.id, "logs"], 3 * 3600);
-}
-
 export type UserDMs = Awaited<ReturnType<typeof getUserDMs>>;
 export async function getUserDMs(user: LocalsSession["user"]) {
 	if (!user || !user.id) return [];
@@ -65,9 +59,4 @@ export async function getUserDMs(user: LocalsSession["user"]) {
 	}
 
 	return dms.sort((a, b) => sorter(a.uid, b.uid) || sorter(a.name, b.name));
-}
-
-export async function getUserDMsCache(user: LocalsSession["user"]) {
-	if (!user || !user.id) return [];
-	return cache(() => getUserDMs(user), ["dms", user.id], 3 * 3600);
 }

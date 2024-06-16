@@ -1,16 +1,13 @@
 import type { ProviderId } from "$lib/constants.js";
-import { isDefined } from "$lib/util.js";
-import { clearUserCache, unlinkProvider } from "$server/actions/users.js";
+import { unlinkProvider } from "$server/actions/users.js";
 import { assertUser } from "$server/auth";
-import { getCharacterCaches, getCharactersCache } from "$server/data/characters";
+import { getCharactersWithLogs } from "$server/data/characters";
 
 export const load = async (event) => {
 	const session = event.locals.session;
 	assertUser(session?.user, event.url);
 
-	const characters = await getCharactersCache(session.user.id).then(
-		async (characters) => await getCharacterCaches(characters.map((c) => c.id)).then((caches) => caches.filter(isDefined))
-	);
+	const characters = await getCharactersWithLogs(session.user.id);
 
 	return {
 		title: `${session.user.name}'s Characters`,
@@ -19,11 +16,6 @@ export const load = async (event) => {
 };
 
 export const actions = {
-	clearCaches: async (event) => {
-		const session = event.locals.session;
-		assertUser(session?.user, event.url);
-		return await clearUserCache(session.user, true);
-	},
 	unlinkProvider: async (event) => {
 		const session = event.locals.session;
 		assertUser(session?.user, event.url);

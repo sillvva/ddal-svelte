@@ -1,5 +1,4 @@
 import { searchSections } from "$lib/constants.js";
-import { cache, rateLimiter } from "$server/cache.js";
 import { getCharactersWithLogs } from "$server/data/characters.js";
 import { getUserDMs } from "$server/data/dms.js";
 import { getUserLogs } from "$server/data/logs.js";
@@ -65,16 +64,9 @@ async function getData(user: LocalsSession["user"]) {
 	];
 }
 
-async function getDataCache(user: LocalsSession["user"]) {
-	return await cache(() => getData(user), ["search-data", user.id], 86400 * 7);
-}
-
 export async function GET({ locals }) {
 	const session = locals.session;
 	if (!session?.user.id) return json({ error: "Unauthorized" }, { status: 401 });
 
-	const { success } = await rateLimiter("search", session.user.id);
-	if (!success) return json({ error: "Too many requests" }, { status: 429 });
-
-	return json(([sectionData] as SearchData).concat(await getDataCache(session.user)));
+	return json(([sectionData] as SearchData).concat(await getData(session.user)));
 }

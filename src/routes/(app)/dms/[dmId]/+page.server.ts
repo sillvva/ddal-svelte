@@ -1,7 +1,7 @@
 import { dungeonMasterIdSchema, dungeonMasterSchema } from "$lib/schemas";
 import { saveDM } from "$server/actions/dms";
 import { assertUser } from "$server/auth.js";
-import { getUserDMsWithLogsCache } from "$server/data/dms";
+import { getUserDMsWithLogs } from "$server/data/dms";
 import { error, redirect } from "@sveltejs/kit";
 import { fail, superValidate } from "sveltekit-superforms";
 import { valibot } from "sveltekit-superforms/adapters";
@@ -17,7 +17,7 @@ export const load = async (event) => {
 	if (!idResult.success) redirect(302, `/dms`);
 	const dmId = idResult.output;
 
-	const [dm] = await getUserDMsWithLogsCache(session.user, dmId);
+	const [dm] = await getUserDMsWithLogs(session.user, dmId);
 	if (!dm) error(404, "DM not found");
 
 	const form = await superValidate(

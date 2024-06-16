@@ -1,7 +1,6 @@
 import { getLevels } from "$lib/entities";
 import { type LogId, type LogSchema, type UserId } from "$lib/schemas";
 import { SaveError, type SaveResult } from "$lib/util";
-import { rateLimiter, revalidateKeys } from "$server/cache";
 import { logIncludes, type LogData } from "$server/data/logs";
 import { buildConflictUpdateColumns, db, type Transaction } from "$server/db";
 import { dungeonMasters, logs, magicItems, storyAwards, type InsertDungeonMaster, type Log } from "$server/db/schema";
@@ -14,9 +13,6 @@ export async function saveLog(input: LogSchema, user: LocalsSession["user"]): Sa
 	try {
 		const userId = user.id;
 		const characterId = input.characterId;
-
-		const { success } = await rateLimiter("crud", user.id);
-		if (!success) throw new LogError("Too many requests", { status: 429 });
 
 		const log = await db.transaction(async (tx) => {
 			const appliedDate: Date | null = input.isDmLog
@@ -141,15 +137,6 @@ export async function saveLog(input: LogSchema, user: LocalsSession["user"]): Sa
 
 		if (!log) throw new LogError("Could not save log");
 
-		await revalidateKeys([
-			log.isDmLog && log.dm?.uid && ["dm-logs", log.dm.uid],
-			log.characterId && ["character", log.characterId, "no-logs"],
-			log.characterId && ["character", log.characterId, "logs"],
-			log.characterId && ["character", log.characterId],
-			user.id && ["dms", user.id, "logs"],
-			user.id && ["search-data", user.id]
-		]);
-
 		return log;
 	} catch (err) {
 		return LogError.from(err);
@@ -206,9 +193,6 @@ async function itemsCRUD(
 export type DeleteLogResult = ReturnType<typeof deleteLog>;
 export async function deleteLog(logId: LogId, userId: UserId): SaveResult<{ id: LogId }, LogSchema> {
 	try {
-		const { success } = await rateLimiter("crud", userId);
-		if (!success) throw new LogError("Too many requests", { status: 429 });
-
 		const log = await db.transaction(async (tx) => {
 			const log = await tx.query.logs.findFirst({
 				with: {
@@ -226,12 +210,6 @@ export async function deleteLog(logId: LogId, userId: UserId): SaveResult<{ id: 
 
 			return log;
 		});
-
-		await revalidateKeys([
-			log.isDmLog && log.dm?.uid && ["dm-logs", log.dm.uid],
-			log.characterId && ["character", log.characterId, "logs"],
-			["search-data", userId]
-		]);
 
 		return { id: log.id };
 	} catch (err) {

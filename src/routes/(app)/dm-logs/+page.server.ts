@@ -1,7 +1,7 @@
 import { logSchema } from "$lib/schemas.js";
 import { deleteLog } from "$server/actions/logs";
 import { assertUser } from "$server/auth.js";
-import { getDMLogsCache } from "$server/data/logs";
+import { getDMLogs } from "$server/data/logs";
 import { fail, setError, superValidate } from "sveltekit-superforms";
 import { valibot } from "sveltekit-superforms/adapters";
 import { pick } from "valibot";
@@ -10,7 +10,7 @@ export const load = async (event) => {
 	const session = event.locals.session;
 	assertUser(session?.user, event.url);
 
-	const logs = await getDMLogsCache(session.user.id);
+	const logs = await getDMLogs(session.user.id);
 
 	return {
 		title: `${session.user.name}'s DM Logs`,

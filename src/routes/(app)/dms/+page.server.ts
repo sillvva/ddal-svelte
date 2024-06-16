@@ -1,7 +1,7 @@
 import { dungeonMasterSchema } from "$lib/schemas.js";
 import { deleteDM } from "$server/actions/dms.js";
 import { assertUser } from "$server/auth";
-import { getUserDMsWithLogsCache } from "$server/data/dms";
+import { getUserDMsWithLogs } from "$server/data/dms";
 import { fail, redirect } from "@sveltejs/kit";
 import { setError, superValidate } from "sveltekit-superforms";
 import { valibot } from "sveltekit-superforms/adapters";
@@ -11,7 +11,7 @@ export const load = async (event) => {
 	const session = event.locals.session;
 	assertUser(session?.user, event.url);
 
-	const dms = await getUserDMsWithLogsCache(session.user);
+	const dms = await getUserDMsWithLogs(session.user);
 
 	return {
 		title: `${session.user.name}'s DMs`,
@@ -28,7 +28,7 @@ export const actions = {
 		const form = await superValidate(event, valibot(pick(dungeonMasterSchema, ["id"])));
 		if (!form.valid) return fail(400, { form });
 
-		const [dm] = await getUserDMsWithLogsCache(session.user, form.data.id);
+		const [dm] = await getUserDMsWithLogs(session.user, form.data.id);
 		if (!dm) redirect(302, "/dms");
 
 		if (dm.logs.length) {
