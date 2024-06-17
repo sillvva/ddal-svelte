@@ -3,7 +3,7 @@
 	import { readable } from "svelte/store";
 	import { formFieldProxy, type FormPathLeaves, type SuperForm } from "sveltekit-superforms";
 
-	type T = $$Generic<Record<string, unknown>>;
+	type T = $$Generic<Record<PropertyKey, unknown>>;
 
 	export let superform: SuperForm<T> | undefined = undefined;
 	export let field: FormPathLeaves<T> | undefined = undefined;

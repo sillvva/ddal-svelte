@@ -4,7 +4,7 @@
 	import SuperDebug, { formFieldProxy, stringProxy, type FormPathLeaves, type SuperForm } from "sveltekit-superforms";
 	import { twMerge } from "tailwind-merge";
 
-	type T = $$Generic<Record<string, unknown>>;
+	type T = $$Generic<Record<PropertyKey, unknown>>;
 
 	export let superform: SuperForm<T, any>;
 	export let valueField: FormPathLeaves<T>;

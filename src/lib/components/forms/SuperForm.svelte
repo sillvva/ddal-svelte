@@ -6,7 +6,7 @@
 	import SuperDebug, { type SuperForm } from "sveltekit-superforms";
 	import FormMessage from "./FormMessage.svelte";
 
-	type T = $$Generic<Record<string, unknown>>;
+	type T = $$Generic<Record<PropertyKey, unknown>>;
 	interface $$Props extends HTMLFormAttributes {
 		superform: SuperForm<T, any>;
 		showMessage?: boolean;

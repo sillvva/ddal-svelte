@@ -4,7 +4,7 @@
 	import Markdown from "../Markdown.svelte";
 	import AutoResizeTextArea from "./AutoResizeTextArea.svelte";
 
-	type T = $$Generic<Record<string, unknown>>;
+	type T = $$Generic<Record<PropertyKey, unknown>>;
 
 	export let superform: SuperForm<T>;
 	export let field: FormPathLeaves<T, string>;

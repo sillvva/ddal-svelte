@@ -3,7 +3,7 @@
 	import type { HTMLTextareaAttributes } from "svelte/elements";
 	import type { FormPathLeaves, FormPathType } from "sveltekit-superforms";
 
-	type T = $$Generic<Record<string, unknown>>;
+	type T = $$Generic<Record<PropertyKey, unknown>>;
 	interface $$Props extends HTMLTextareaAttributes {
 		content: FormPathType<T, FormPathLeaves<T, string>>;
 		minRows?: number;

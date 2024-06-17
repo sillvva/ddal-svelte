@@ -1,7 +1,7 @@
 <script lang="ts">
 	import { type SuperForm } from "sveltekit-superforms";
 
-	type T = $$Generic<Record<string, unknown>>;
+	type T = $$Generic<Record<PropertyKey, unknown>>;
 
 	export let superform: SuperForm<T, any>;
 

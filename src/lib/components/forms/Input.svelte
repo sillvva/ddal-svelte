@@ -2,7 +2,7 @@
 	import type { HTMLInputAttributes } from "svelte/elements";
 	import { dateProxy, formFieldProxy, numberProxy, type FormPathLeaves, type SuperForm } from "sveltekit-superforms";
 
-	type T = $$Generic<Record<string, unknown>>;
+	type T = $$Generic<Record<PropertyKey, unknown>>;
 	type TType = $$Generic<"text" | "url" | "number" | "date">;
 	type LeafType = TType extends "text" | "url"
 		? string
