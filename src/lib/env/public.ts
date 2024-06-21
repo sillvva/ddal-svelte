@@ -1,6 +1,7 @@
 import * as env from "$env/static/public";
 import { envPublicSchema } from "$lib/schemas";
 import { parse } from "valibot";
+import { checkEnv } from "./check";
 
 export function checkPublicEnv() {
 	if (!env) throw new Error("No environment variables found");
@@ -8,4 +9,4 @@ export function checkPublicEnv() {
 	return parse(envPublicSchema, env);
 }
 
-export const publicEnv = checkPublicEnv();
+export const publicEnv = checkEnv(checkPublicEnv);
