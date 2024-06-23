@@ -43,25 +43,23 @@ export function valibotForm<S extends v.ObjectSchema<any, any>, Out extends v.In
 	schema: S,
 	options?: FormOptions<Out, App.Superforms.Message, In> & CustomFormOptions<S>
 ) {
+	const { nameField = "name", ...rest } = options || {};
 	const superform = superForm(form, {
 		dataType: "json",
 		validators: valibotClient(schema),
 		taintedMessage: "You have unsaved changes. Are you sure you want to leave?",
-		...options,
+		...rest,
 		onResult(event) {
 			if (["success", "redirect"].includes(event.result.type)) {
-				const nameField = options?.nameField || "name";
-				if (nameField) {
-					const data = get(superform.form);
-					successToast(`${data[nameField]} saved`);
-				}
+				const data = get(superform.form);
+				successToast(`${data[nameField]} saved`);
 				searchData.set([]);
 			}
-			options?.onResult?.(event);
+			rest.onResult?.(event);
 		},
 		onError(event) {
 			errorToast(event.result.error.message);
-			if (options?.onError instanceof Function) options?.onError(event);
+			if (rest.onError instanceof Function) rest.onError?.(event);
 		}
 	});
 	return superform;
