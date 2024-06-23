@@ -350,9 +350,9 @@
 			<thead>
 				<tr class="bg-base-300 text-base-content/70">
 					<td class="print:p-2">Log Entry</td>
-					<td class="hidden sm:table-cell print:table-cell print:p-2">Advancement</td>
-					<td class="hidden sm:table-cell print:table-cell print:p-2">Treasure</td>
-					<td class="hidden md:table-cell print:!hidden">Story Awards</td>
+					<td class="max-sm:hidden print:table-cell print:p-2">Advancement</td>
+					<td class="max-sm:hidden print:table-cell print:p-2">Treasure</td>
+					<td class={twMerge("max-lg:hidden print:!hidden", results.some(l => !!l.storyAwardsGained.length) && "min-w-48")}>Story Awards</td>
 					{#if myCharacter}
 						<td class="print:hidden" />
 					{/if}
@@ -368,12 +368,13 @@
 								(log.description?.trim() || log.storyAwardsGained.length > 0 || log.storyAwardsLost.length > 0) && "border-b-0"
 							)}
 						>
-							<button
-								class="whitespace-pre-wrap text-left font-semibold text-black dark:text-white"
-								on:click={() => triggerModal(log)}
-							>
-								<SearchResults text={log.name} {search} />
-							</button>
+						<a
+										href={log.isDmLog ? `/dm-logs/${log.id}` : `/characters/${log.characterId}/log/${log.id}`}
+										class="whitespace-pre-wrap text-left font-semibold text-secondary"
+										aria-label="Edit Log"
+									>
+									<SearchResults text={log.name} {search} />
+								</a>
 							<p class="text-netural-content mb-2 whitespace-nowrap text-sm font-normal">
 								{new Date(log.show_date).toLocaleString()}
 							</p>
@@ -425,7 +426,7 @@
 						</td>
 						<td
 							class={twMerge(
-								"hidden align-top sm:table-cell print:table-cell print:p-2",
+								"max-sm:hidden align-top print:table-cell print:p-2",
 								(log.description?.trim() || log.storyAwardsGained.length > 0 || log.storyAwardsLost.length > 0) && "border-b-0"
 							)}
 						>
@@ -453,7 +454,7 @@
 						</td>
 						<td
 							class={twMerge(
-								"hidden align-top sm:table-cell print:table-cell print:p-2",
+								"max-sm:hidden align-top print:table-cell print:p-2",
 								(log.description?.trim() || log.storyAwardsGained.length > 0 || log.storyAwardsLost.length > 0) && "border-b-0"
 							)}
 						>
@@ -480,7 +481,7 @@
 						</td>
 						<td
 							class={twMerge(
-								"hidden align-top md:table-cell print:!hidden",
+								"max-lg:hidden align-top print:!hidden",
 								(log.description?.trim() || log.storyAwardsGained.length > 0 || log.storyAwardsLost.length > 0) && "border-b-0"
 							)}
 						>
@@ -501,13 +502,6 @@
 								)}
 							>
 								<div class="flex flex-col justify-center gap-2">
-									<a
-										href={log.isDmLog ? `/dm-logs/${log.id}` : `/characters/${log.characterId}/log/${log.id}`}
-										class="btn btn-primary sm:btn-sm"
-										aria-label="Edit Log"
-									>
-										<span class="iconify size-6 mdi--pencil sm:size-4" />
-									</a>
 									<DeleteLog {log} bind:deletingLog />
 								</div>
 							</td>

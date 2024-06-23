@@ -71,7 +71,11 @@
 							{#each results as dm}
 								<tr class={twMerge(deletingDM.includes(dm.id) && "hidden")}>
 									<td>
+										<a href="/dms/{dm.id}"
+										class="whitespace-pre-wrap text-left font-semibold text-secondary"
+										aria-label="Edit DM">
 										<SearchResults text={dm.name} {search} />
+									</a>
 										<div class="block xs:hidden">
 											{#if dm.DCI}
 												<p class="text-xs text-gray-500">DCI: <SearchResults text={dm.DCI} {search} /></p>
@@ -86,9 +90,6 @@
 											{#if dm.logs.length == 0}
 												<DeleteDm {dm} bind:deletingDM />
 											{/if}
-											<a href="/dms/{dm.id}" class="btn btn-primary sm:btn-sm" aria-label="Edit DM">
-												<span class="iconify mdi--pencil" />
-											</a>
 										</div>
 									</td>
 								</tr>

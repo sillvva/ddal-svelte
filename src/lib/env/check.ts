@@ -1,25 +1,22 @@
-import type { envPrivateSchema } from "$lib/schemas";
-import { getDotPath, ValiError } from "valibot";
-import { checkPrivateEnv } from "./private";
+import type { EnvPrivate, envPrivateSchema, EnvPublic } from "$lib/schemas";
+import { getDotPath, ValiError, type Prettify } from "valibot";
 
-export const checkEnv = () => {
+export function checkEnv<TChecker extends () => EnvPrivate | EnvPublic | Prettify<EnvPrivate & EnvPublic>>(checker: TChecker) {
 	try {
-		return checkPrivateEnv();
+		return checker() as ReturnType<TChecker>;
 	} catch (err) {
 		let message = String(err);
-		if (err instanceof Error) message = err.message;
-		else if (err instanceof ValiError) {
+		if (err instanceof ValiError) {
 			message = (err as ValiError<typeof envPrivateSchema>).issues
 				.map((issue) => {
 					const path = getDotPath(issue);
-					if (path) return `${path}: ${issue.message}: ${issue.input}`;
-					return `${issue.message}: ${issue.input}`;
+					if (path) return `${path}\n${issue.message}\nValue: ${issue.input}`;
+					return `${issue.message}\nValue: ${issue.input}`;
 				})
-				.join("\n");
+				.join("\n\n");
 		}
-		console.error("❌ Invalid environment variables:");
+		else if (err instanceof Error) message = err.message;
+		message = `❌ Invalid environment variables:\n\n${message}\n`;
 		throw new Error(message);
 	}
 };
-
-export const env = checkEnv();

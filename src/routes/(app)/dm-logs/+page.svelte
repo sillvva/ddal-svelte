@@ -131,11 +131,11 @@
 				<thead>
 					<tr class="bg-base-300 text-base-content/70">
 						<th class="table-cell sm:hidden print:hidden">Game</th>
-						<th class="hidden sm:table-cell print:table-cell">Title</th>
-						<th class="hidden sm:table-cell print:table-cell">Advancement</th>
-						<th class="hidden sm:table-cell print:table-cell">Treasure</th>
+						<th class="max-sm:hidden print:table-cell">Title</th>
+						<th class="max-sm:hidden print:table-cell">Advancement</th>
+						<th class="max-sm:hidden print:table-cell">Treasure</th>
 						{#if hasStoryAwards}
-							<th class="hidden sm:table-cell print:table-cell">Story Awards</th>
+							<th class="max-lg:hidden print:table-cell min-w-48">Story Awards</th>
 						{/if}
 						<th class="print:hidden" />
 					</tr>
@@ -160,12 +160,13 @@
 											"print:border-b-0"
 									)}
 								>
-									<button
-										class="whitespace-pre-wrap text-left font-semibold text-black dark:text-white"
-										on:click={() => triggerModal(log)}
+									<a
+										href={log.isDmLog ? `/dm-logs/${log.id}` : `/characters/${log.characterId}/log/${log.id}`}
+										class="whitespace-pre-wrap text-left font-semibold text-secondary"
+										aria-label="Edit Log"
 									>
 										<SearchResults text={log.name} {search} />
-									</button>
+									</a>
 									<p class="text-netural-content whitespace-nowrap text-xs font-normal">{new Date(log.date).toLocaleString()}</p>
 									{#if log.character}
 										<p class="text-sm font-normal">
@@ -294,9 +295,6 @@
 								{/if}
 								<td class="w-8 align-top print:hidden">
 									<div class="flex flex-col gap-2">
-										<a href="/dm-logs/{log.id}" class="btn btn-primary sm:btn-sm" aria-label="Edit Log">
-											<span class="iconify mdi--pencil" />
-										</a>
 										<DeleteLog {log} bind:deletingLog />
 									</div>
 								</td>

@@ -5,7 +5,7 @@
 	import { formFieldProxy, type FormPathLeaves, type SuperForm } from "sveltekit-superforms";
 	import { twMerge } from "tailwind-merge";
 
-	type TForm = $$Generic<Record<string, unknown>>;
+	type TForm = $$Generic<Record<PropertyKey, unknown>>;
 	type TMin = $$Generic<Date | undefined>;
 	type TMax = $$Generic<Date | undefined>;
 	interface $$Props extends DatePickerProps {

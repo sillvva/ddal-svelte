@@ -2,16 +2,6 @@
 @tailwind components;
 @tailwind utilities;
 
-@media (prefers-color-scheme: dark) {
-	:root {
-		color-scheme: dark;
-		--in: 82.5% 0.151 231.6; /* info */
-		--su: 75% 0.15 160; /* success */
-		--wa: 85% 0.159 83.87; /* warning */
-		--er: 82.5% 0.221 22.18; /* error */
-	}
-}
-
 @font-face {
 	font-family: "Draconis";
 	src: url("/fonts/Draconis.ttf") format("truetype");
@@ -59,20 +49,6 @@
 	.btn-primary {
 		background-color: theme(colors.primary);
 		color: theme(colors.white);
-	}
-	.btn-error,
-	.menu-item-error {
-		background-color: theme(colors.error);
-		border-color: theme(colors.error);
-		color: theme(colors.white);
-		.dark & {
-			background-color: theme(colors.red.800);
-			border-color: theme(colors.red.700);
-			&:hover {
-				background-color: theme(colors.red.900);
-				border-color: theme(colors.red.600);
-			}
-		}
 	}
 	.grid-characters {
 		grid-template-columns: auto 1fr auto auto auto;

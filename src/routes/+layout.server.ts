@@ -1,11 +1,11 @@
 import { building } from "$app/environment";
-import { env } from "$lib/env/check.js";
+import { privateEnv } from "$lib/env/private.js";
 import { serverGetCookie } from "$server/cookie.js";
 
 let checked = false;
-if (!checked && building && env) {
+if (!checked && building && privateEnv) {
 	console.log("\n✅ Environment variables are valid");
-	console.table(env);
+	console.table(privateEnv);
 	console.log("\n");
 	checked = true;
 }
