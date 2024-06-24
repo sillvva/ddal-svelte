@@ -18,19 +18,17 @@ export type EnvPrivate = v.InferInput<typeof envPrivateSchema>;
 export const envPrivateSchema = v.object({
 	DATABASE_URL: urlSchema,
 	AUTH_SECRET: v.pipe(v.string(), v.minLength(10, "Must be a string of at least 10 characters")),
-	AUTH_URL: urlSchema,
 	GOOGLE_CLIENT_ID: requiredString,
 	GOOGLE_CLIENT_SECRET: requiredString,
 	DISCORD_CLIENT_ID: requiredString,
 	DISCORD_CLIENT_SECRET: requiredString,
 	DISABLE_SIGNUPS: v.optional(v.boolean(), false),
-	TEST_URL: optionalURL,
 });
 
 export type EnvPublic = v.InferInput<typeof envPublicSchema>;
 export const envPublicSchema = v.object({
 	PUBLIC_URL: urlSchema,
-	PUBLIC_TEST_URL: optionalURL
+	PUBLIC_TEST_URL: v.optional(v.string(), "")
 });
 
 export type UserId = v.InferOutput<typeof userIdSchema>;

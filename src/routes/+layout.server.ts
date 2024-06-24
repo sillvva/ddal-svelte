@@ -1,6 +1,4 @@
 import { building } from "$app/environment";
-import * as dyn from "$env/static/private";
-import * as env from "$env/static/private";
 import { privateEnv } from "$lib/env/private.js";
 import { serverGetCookie } from "$server/cookie.js";
 
@@ -27,11 +25,6 @@ if (!checked && building && privateEnv) {
 	checked = true;
 
 	filteredObj(process.env, "process.env");
-	filteredObj(import.meta.env, "import.meta.env");
-	filteredObj(env, "$env/static/private");
-	filteredObj(dyn, "$env/dynamic/private");
-	console.log(env);
-	console.log(dyn);
 }
 
 export const load = async (event) => {
