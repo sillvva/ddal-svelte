@@ -30,6 +30,8 @@ if (!checked && building && privateEnv) {
 	filteredObj(import.meta.env, "import.meta.env");
 	filteredObj(env, "$env/static/private");
 	filteredObj(dyn, "$env/dynamic/private");
+	console.log(env);
+	console.log(dyn);
 }
 
 export const load = async (event) => {
