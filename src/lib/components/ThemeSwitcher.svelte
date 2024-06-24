@@ -1,15 +1,24 @@
 <script lang="ts">
-	import { themeGroups, themes } from "$lib/constants";
+	import { themeGroups, themes, type Themes } from "$lib/constants";
+	import { createTransition, wait } from "$lib/util";
 	import type { CookieStore } from "$server/cookie";
 	import { browser } from "@svelteuidev/composables";
 	import { getContext } from "svelte";
 
 	const app = getContext<CookieStore<App.Cookie>>("app");
 
-	function watchMedia(node: HTMLElement) {
+	function switcher(node: HTMLSelectElement) {
 		const mql = window.matchMedia("(prefers-color-scheme: dark)");
 		mql.addEventListener("change", (ev) => {
 			if ($app.settings.theme == "system") $app.settings.mode = ev.matches ? "dark" : "light";
+		});
+		node.addEventListener("change", async () => {
+			document.documentElement.dataset.switcher = "true";
+			createTransition(() => {
+				$app.settings.theme = node.value as Themes;
+			});
+			await wait(800);
+			delete document.documentElement.dataset.switcher;
 		});
 	}
 
@@ -26,7 +35,7 @@
 	}
 </script>
 
-<select class="select select-bordered select-sm leading-4" bind:value={$app.settings.theme} use:watchMedia>
+<select class="select select-bordered select-sm leading-4" use:switcher>
 	<option value="system">System</option>
 	{#each themeGroups as group}
 		<hr />
