@@ -23,12 +23,16 @@ export const envPrivateSchema = v.object({
 	GOOGLE_CLIENT_SECRET: requiredString,
 	DISCORD_CLIENT_ID: requiredString,
 	DISCORD_CLIENT_SECRET: requiredString,
-	DISABLE_SIGNUPS: v.optional(v.boolean(), false)
+	DISABLE_SIGNUPS: v.optional(v.boolean(), false),
+	COOLIFY_URL: optionalURL,
+	COOLIFY_FQDN: v.optional(v.string(), "")
 });
 
 export type EnvPublic = v.InferInput<typeof envPublicSchema>;
 export const envPublicSchema = v.object({
-	PUBLIC_URL: urlSchema
+	PUBLIC_URL: urlSchema,
+	PUBLIC_COOLIFY_URL: optionalURL,
+	PUBLIC_COOLIFY_FQDN: v.optional(v.string(), "")
 });
 
 export type UserId = v.InferOutput<typeof userIdSchema>;
