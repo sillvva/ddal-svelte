@@ -2,7 +2,7 @@ import { type ProviderId } from "$lib/constants";
 import { type CharacterId, type DungeonMasterId, type ItemId, type LogId, type UserId } from "$lib/schemas";
 import type { ProviderType } from "@auth/core/providers";
 import { createId } from "@paralleldrive/cuid2";
-import { relations, type InferInsertModel } from "drizzle-orm";
+import { isNotNull, relations, type InferInsertModel } from "drizzle-orm";
 import {
 	boolean,
 	foreignKey,
@@ -215,7 +215,7 @@ export const dungeonMasters = pgTable(
 	},
 	(table) => {
 		return {
-			uidIdx: index("DungeonMaster_uid_idx").on(table.uid),
+			uidIdx: index("DungeonMaster_uid_partial_idx").on(table.uid).where(isNotNull(table.uid)),
 			ownerIdx: index("DungeonMaster_owner_idx").on(table.owner)
 		};
 	}
@@ -282,7 +282,7 @@ export const logs = pgTable(
 	},
 	(table) => {
 		return {
-			characterIdIdx: index("Log_characterId_idx").on(table.characterId),
+			characterIdIdx: index("Log_characterId_partial_idx").on(table.characterId).where(isNotNull(table.characterId)),
 			dungeonMasterIdIdx: index("Log_dungeonMasterId_idx").on(table.dungeonMasterId)
 		};
 	}
