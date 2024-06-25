@@ -22,12 +22,12 @@ export type DictOrArray = Record<PropertyKey, unknown> | Array<unknown>;
  * Functions
  */
 
-export function createTransition(action: ViewTransitionCallback) {
+export async function createTransition(action: ViewTransitionCallback) {
 	if (!document.startViewTransition) {
-		action();
+		await action();
 		return;
 	}
-	return document.startViewTransition(action);
+	return document.startViewTransition(async () => await action());
 }
 
 export function isDefined<T>(value?: T | null): value is T {
@@ -40,6 +40,10 @@ export function sleep(ms: number) {
 
 export function authName(authenticator: AuthClient) {
 	return authenticator.name || authenticator.credentialID.replace(/[^a-z0-9]/gi, "").slice(-8);
+}
+
+export function wait(ms: number) {
+	return new Promise((resolve) => setTimeout(resolve, ms));
 }
 
 /**
