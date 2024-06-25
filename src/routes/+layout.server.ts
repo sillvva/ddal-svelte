@@ -2,29 +2,12 @@ import { building } from "$app/environment";
 import { privateEnv } from "$lib/env/private.js";
 import { serverGetCookie } from "$server/cookie.js";
 
-const filteredObj = (obj: Record<PropertyKey, unknown> | NodeJS.ProcessEnv, name: string, contains = "TEST_") => {
-	const filtered = Object.entries(obj)
-  .filter(([key]) => key.includes(contains))
-  .reduce((obj, [key, val]) => {
-    return {
-      ...obj,
-      [key]: val
-    };
-  }, {});
-
-	console.log(`\nCoolify check: ${name}\n`);
-	console.table(Object.keys(filtered).length ? filtered : { "(none)": "(none)" });
-	console.log("\n");
-};
-
 let checked = false;
 if (!checked && building && privateEnv) {
 	console.log("\n✅ Environment variables are valid");
 	console.table(privateEnv);
 	console.log("\n");
 	checked = true;
-
-	filteredObj(process.env, "process.env");
 }
 
 export const load = async (event) => {
