@@ -15,7 +15,8 @@ import {
 	smallint,
 	text,
 	timestamp,
-	unique
+	unique,
+	uniqueIndex
 } from "drizzle-orm/pg-core";
 
 export type User = typeof users.$inferSelect;
@@ -66,7 +67,7 @@ export const accounts = pgTable(
 		return {
 			userIdIdx: index("Account_userId_idx").on(table.userId),
 			accountPkey: primaryKey({ columns: [table.provider, table.providerAccountId], name: "Account_pkey" }),
-			webAuthnIdx: unique("account_userId_providerAccountId_key").on(table.userId, table.providerAccountId)
+			webAuthnIdx: uniqueIndex("account_userId_providerAccountId_key").on(table.userId, table.providerAccountId)
 		};
 	}
 );
