@@ -22,15 +22,15 @@
 		"@sveltekit-addons/document": "^1.0.1",
 		"@total-typescript/ts-reset": "^0.5.1",
 		"@types/js-cookie": "^3.0.6",
-		"@types/node": "^20.14.7",
-		"@typescript-eslint/eslint-plugin": "^7.13.1",
-		"@typescript-eslint/parser": "^7.13.1",
+		"@types/node": "^20.14.8",
+		"@typescript-eslint/eslint-plugin": "^7.14.1",
+		"@typescript-eslint/parser": "^7.14.1",
 		"autoprefixer": "^10.4.19",
-		"daisyui": "^4.12.2",
+		"daisyui": "^4.12.8",
 		"drizzle-kit": "^0.22.7",
 		"eslint": "^9.5.0",
 		"eslint-config-prettier": "^9.1.0",
-		"eslint-plugin-svelte": "^2.40.0",
+		"eslint-plugin-svelte": "^2.41.0",
 		"postcss": "^8.4.38",
 		"postcss-import": "^16.1.0",
 		"prettier": "^3.3.2",
@@ -38,7 +38,7 @@
 		"prettier-plugin-tailwindcss": "^0.6.5",
 		"sass": "^1.77.6",
 		"svelte": "^4.2.18",
-		"svelte-check": "^3.8.1",
+		"svelte-check": "^3.8.2",
 		"svelte-markdown": "^0.4.1",
 		"sveltekit-search-params": "^2.1.2",
 		"sveltekit-superforms": "2.15.1",
@@ -68,11 +68,16 @@
 		"postgres": "^3.4.4",
 		"svelte-autosize": "^1.1.0",
 		"svelte-sonner": "^0.3.24",
-		"valibot": "0.32.0"
+		"valibot": "0.34.0"
 	},
 	"engines": {
 		"node": ">=20.0",
 		"pnpm": ">=9.3"
+	},
+	"pnpm": {
+		"overrides": {
+			"valibot": "^0.34.0"
+		}
 	},
 	"packageManager": "pnpm@9.3.0"
 }
