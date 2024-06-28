@@ -6,6 +6,10 @@ function brandedId<T extends string>(name: T) {
 	return v.pipe(v.string(), v.brand(name));
 }
 
+function optOrNull<T extends v.GenericSchema>(schema: T) {
+	return v.optional(v.union([schema, v.null_()]), null);
+}
+
 const required = v.minLength<string, 1, string>(1, "Required");
 const maxTextSize = v.maxLength<string, 5000, string>(5000, `Must be less than 5000 characters`);
 const maxStringSize = v.maxLength<string, 255, string>(255, "Must be less than 255 characters");
@@ -58,8 +62,8 @@ export type DungeonMasterSchemaIn = v.InferInput<typeof dungeonMasterSchema>;
 export const dungeonMasterSchema = v.object({
 	id: dungeonMasterIdSchema,
 	name: v.pipe(v.string(), required, maxStringSize),
-	DCI: v.nullable(v.union([v.pipe(v.string(), v.regex(/[0-9]{0,10}/, "Invalid DCI Format")), v.null_()]), null),
-	uid: v.nullable(v.union([userIdSchema, v.null_()]), null),
+	DCI: optOrNull(v.pipe(v.string(), v.regex(/[0-9]{0,10}/, "Invalid DCI Format"))),
+	uid: optOrNull(userIdSchema),
 	owner: userIdSchema
 });
 
@@ -75,22 +79,24 @@ const itemSchema = v.object({
 export type LogId = v.InferOutput<typeof logIdSchema>;
 export const logIdSchema = brandedId("LogId");
 
+const int = v.pipe(v.number(), v.integer());
+
 export type LogSchema = v.InferOutput<typeof logSchema>;
 export type LogSchemaIn = v.InferInput<typeof logSchema>;
 export const logSchema = v.object({
 	id: v.optional(logIdSchema, ""),
 	name: v.pipe(v.string(), required, maxStringSize),
 	date: v.date(),
-	characterId: v.optional(v.union([characterIdSchema, v.null_()]), null),
+	characterId: optOrNull(characterIdSchema),
 	characterName: v.optional(v.string(), ""),
 	type: v.optional(v.union([v.literal("game"), v.literal("nongame")]), "game"),
-	experience: v.pipe(v.number(), v.integer(), v.minValue(0)),
-	acp: v.pipe(v.number(), v.integer(), v.minValue(0)),
-	tcp: v.pipe(v.number(), v.integer()),
-	level: v.pipe(v.number(), v.integer(), v.minValue(0)),
+	experience: v.pipe(int, v.minValue(0)),
+	acp: v.pipe(int, v.minValue(0)),
+	tcp: int,
+	level: v.pipe(int, v.minValue(0)),
 	gold: v.number(),
-	dtd: v.pipe(v.number(), v.integer()),
-	description: v.optional(v.union([v.pipe(v.string(), maxTextSize), v.null_()]), ""),
+	dtd: int,
+	description: optOrNull(v.pipe(v.string(), maxTextSize)),
 	dm: v.object({
 		...dungeonMasterSchema.entries,
 		name: v.optional(v.string(), "")
