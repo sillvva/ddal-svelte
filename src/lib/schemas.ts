@@ -96,7 +96,7 @@ export const logSchema = v.object({
 	level: v.pipe(int, v.minValue(0)),
 	gold: v.number(),
 	dtd: int,
-	description: optOrNull(v.pipe(v.string(), maxTextSize)),
+	description: v.optional(v.pipe(v.string(), maxTextSize), ""),
 	dm: v.object({
 		...dungeonMasterSchema.entries,
 		name: v.optional(v.string(), "")
