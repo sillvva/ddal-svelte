@@ -245,7 +245,9 @@ export const logs = pgTable(
 			.notNull()
 			.$default(() => new Date()),
 		name: text("name").notNull(),
-		description: text("description").notNull().$default(() =>""),
+		description: text("description")
+			.notNull()
+			.$default(() => ""),
 		type: logType("type").notNull(),
 		dungeonMasterId: text("dungeonMasterId")
 			.$type<DungeonMasterId>()
