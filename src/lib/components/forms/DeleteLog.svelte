@@ -37,7 +37,7 @@
 	);
 </script>
 
-<button type="button" class="btn btn-error sm:btn-sm" aria-label="Delete Log" on:click={submit}>
-	<span class="iconify size-6 mdi--trash-can sm:size-4" />
+<button type="button" class="btn btn-error btn-sm" aria-label="Delete Log" on:click={submit}>
+	<span class="iconify size-4 mdi--trash-can" />
 	{label}
 </button>
