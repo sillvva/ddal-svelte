@@ -64,6 +64,11 @@ export const themes = [
 		group: "light"
 	},
 	{
+		name: "Dark",
+		value: "dark",
+		group: "dark"
+	},
+	{
 		name: "Black",
 		value: "black",
 		group: "dark"
