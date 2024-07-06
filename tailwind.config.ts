@@ -124,17 +124,12 @@ export default {
 				}
 			},
 			{
-				dark: {
-					...themes["dark"],
-					primary: "#6419e6",
-					secondary: "#c881ff",
-					"base-content": "#c4ccca"
-				}
+				dark: themes["dark"]
 			},
 			{
 				business: {
 					...themes["business"],
-					secondary: "oklch(71.7036% 0.099057 220.473931)",
+					secondary: "oklch(71.7036% 0.099057 220.473931)"
 				}
 			},
 			{
@@ -149,19 +144,19 @@ export default {
 			{
 				corporate: {
 					...themes["corporate"],
-					secondary: "oklch(50.39% 0.228 220.1)",
+					secondary: "oklch(50.39% 0.228 220.1)"
 				}
 			},
 			{
 				retro: {
 					...themes["retro"],
-					secondary: "oklch(50.8664% 0.104092 60.664655)",
+					secondary: "oklch(50.8664% 0.104092 60.664655)"
 				}
 			},
 			{
 				valentine: {
 					...themes["valentine"],
-					secondary: "#6419e6",
+					secondary: "#6419e6"
 				}
 			}
 		]
