@@ -11,8 +11,8 @@ function optNullable<T extends v.GenericSchema>(schema: T) {
 }
 
 const requiredString = v.pipe(v.string(), v.regex(/(\p{L}|\p{N})+/u, "Required"));
-const maxTextSize = v.pipe(v.string(), v.maxLength(5000, `Must be less than 5000 characters`));
-const maxStringSize = v.pipe(v.string(), v.maxLength(255, "Must be less than 255 characters"));
+const maxTextSize = v.pipe(v.string(), v.maxLength(5000));
+const maxStringSize = v.pipe(v.string(), v.maxLength(255));
 const integer = v.pipe(v.number(), v.integer());
 
 const urlSchema = v.pipe(v.string(), v.url(), maxStringSize);

@@ -45,7 +45,7 @@
 		{:else}
 			<span class="label-text-alt">Markdown Allowed</span>
 		{/if}
-		{#if !($errors || []).length && $constraints?.maxlength}
+		{#if !$errors?.length && $constraints?.maxlength}
 			<span class="label-text-alt">{`${$value}`.length.toLocaleString()} / {$constraints?.maxlength.toLocaleString()}</span>
 		{/if}
 	</label>
