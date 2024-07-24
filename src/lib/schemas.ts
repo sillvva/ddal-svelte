@@ -21,7 +21,7 @@ const optionalURL = v.optional(v.fallback(urlSchema, ""), "");
 export type EnvPrivate = v.InferInput<typeof envPrivateSchema>;
 export const envPrivateSchema = v.object({
 	DATABASE_URL: urlSchema,
-	AUTH_SECRET: v.pipe(v.string(), v.minLength(10, "Must be a string of at least 10 characters")),
+	AUTH_SECRET: v.pipe(v.string(), v.minLength(10)),
 	GOOGLE_CLIENT_ID: requiredString,
 	GOOGLE_CLIENT_SECRET: requiredString,
 	DISCORD_CLIENT_ID: requiredString,
@@ -62,7 +62,7 @@ export type DungeonMasterSchemaIn = v.InferInput<typeof dungeonMasterSchema>;
 export const dungeonMasterSchema = v.object({
 	id: dungeonMasterIdSchema,
 	name: v.pipe(requiredString, maxStringSize),
-	DCI: optNullable(v.pipe(v.string(), v.regex(/[0-9]{0,10}/, "Invalid DCI Format"))),
+	DCI: optNullable(v.pipe(v.string(), v.regex(/\d{0,10}/, "Invalid DCI Format"))),
 	uid: optNullable(userIdSchema),
 	owner: userIdSchema
 });
