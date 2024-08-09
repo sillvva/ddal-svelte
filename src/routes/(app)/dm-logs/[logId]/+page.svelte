@@ -10,11 +10,11 @@
 	import Submit from "$lib/components/forms/Submit.svelte";
 	import SuperForm from "$lib/components/forms/SuperForm.svelte";
 	import { valibotForm } from "$lib/factories.js";
-	import { logSchema } from "$lib/schemas";
+	import { dMLogSchema } from "$lib/schemas";
 
 	export let data;
 
-	$: superform = valibotForm(data.form, logSchema);
+	$: superform = valibotForm(data.form, dMLogSchema());
 	$: form = superform.form;
 
 	let season: 1 | 8 | 9 = 9;

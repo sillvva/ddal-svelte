@@ -109,7 +109,7 @@ export const logSchema = v.object({
 
 export const characterLogSchema = (character: CharacterData) =>
 	v.pipe(
-		v.object(logSchema.entries),
+		logSchema,
 		v.check((input) => !input.isDmLog, "Only character logs can be saved here."),
 		v.forward(
 			v.check((input) => {
@@ -129,7 +129,7 @@ export const characterLogSchema = (character: CharacterData) =>
 
 export const dMLogSchema = (character?: CharacterData) =>
 	v.pipe(
-		v.object(logSchema.entries),
+		logSchema,
 		v.check((input) => input.isDmLog, "Only DM logs can be saved here."),
 		v.forward(
 			v.check((input) => !input.characterId || !!character, "Character not found"),
