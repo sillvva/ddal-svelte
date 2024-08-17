@@ -50,7 +50,7 @@ export function wait(ms: number) {
  * Classes
  */
 
-export type SaveResult<T extends DictOrArray | null, S extends Record<string, unknown>> = Promise<T | SaveError<S>>;
+export type SaveResult<T extends DictOrArray | null, S extends SaveError<any>> = Promise<T | S>;
 
 export class SaveError<TOut extends Record<string, unknown>, TIn extends Record<string, unknown> = TOut> {
 	public status: NumericRange<400, 599> = 500;

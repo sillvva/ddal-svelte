@@ -9,7 +9,7 @@ import { and, eq, inArray, notInArray } from "drizzle-orm";
 class LogError extends SaveError<LogSchema> {}
 
 export type SaveLogResult = ReturnType<typeof saveLog>;
-export async function saveLog(input: LogSchema, user: LocalsSession["user"]): SaveResult<LogData, LogSchema> {
+export async function saveLog(input: LogSchema, user: LocalsSession["user"]): SaveResult<LogData, LogError> {
 	try {
 		const userId = user.id;
 		const characterId = input.characterId;
@@ -191,7 +191,7 @@ async function itemsCRUD(
 }
 
 export type DeleteLogResult = ReturnType<typeof deleteLog>;
-export async function deleteLog(logId: LogId, userId: UserId): SaveResult<{ id: LogId }, LogSchema> {
+export async function deleteLog(logId: LogId, userId: UserId): SaveResult<{ id: LogId }, LogError> {
 	try {
 		const log = await db.transaction(async (tx) => {
 			const log = await tx.query.logs.findFirst({
