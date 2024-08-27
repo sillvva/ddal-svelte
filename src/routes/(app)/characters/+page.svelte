@@ -6,9 +6,9 @@
 	import Search from "$lib/components/Search.svelte";
 	import SearchResults from "$lib/components/SearchResults.svelte";
 	import { stopWords } from "$lib/constants.js";
+	import { getApp } from "$lib/stores.js";
 	import type { TransitionAction } from "$lib/util";
 	import { createTransition, isDefined } from "$lib/util";
-	import type { CookieStore } from "$server/cookie.js";
 	import { slugify, sorter } from "@sillvva/utils";
 	import { download, hotkey } from "@svelteuidev/composables";
 	import MiniSearch from "minisearch";
@@ -21,7 +21,7 @@
 	let search = $page.url.searchParams.get("s") || "";
 	let loaded = false;
 
-	const app = getContext<CookieStore<App.Cookie>>("app");
+	const app = getApp();
 	const transition = getContext<TransitionAction>("transition");
 
 	onMount(() => {

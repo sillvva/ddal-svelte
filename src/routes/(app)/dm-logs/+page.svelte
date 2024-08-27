@@ -8,17 +8,16 @@
 	import SearchResults from "$lib/components/SearchResults.svelte";
 	import DeleteLog from "$lib/components/forms/DeleteLog.svelte";
 	import { stopWords } from "$lib/constants";
-	import type { CookieStore } from "$server/cookie.js";
+	import { getApp } from "$lib/stores.js";
 	import { sorter } from "@sillvva/utils";
 	import { download, hotkey } from "@svelteuidev/composables";
 	import MiniSearch from "minisearch";
-	import { getContext } from "svelte";
 	import { twMerge } from "tailwind-merge";
 
 	export let data;
 
 	$: logs = data.logs;
-	const app = getContext<CookieStore<App.Cookie>>("app");
+	const app = getApp();
 
 	let search = $page.url.searchParams.get("s") || "";
 	let deletingLog: string[] = [];
@@ -135,7 +134,7 @@
 						<th class="max-sm:hidden print:table-cell">Advancement</th>
 						<th class="max-sm:hidden print:table-cell">Treasure</th>
 						{#if hasStoryAwards}
-							<th class="max-lg:hidden print:table-cell min-w-48">Story Awards</th>
+							<th class="min-w-48 max-lg:hidden print:table-cell">Story Awards</th>
 						{/if}
 						<th class="print:hidden" />
 					</tr>

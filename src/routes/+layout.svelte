@@ -1,6 +1,7 @@
 <script lang="ts">
 	import { dev } from "$app/environment";
 	import { page } from "$app/stores";
+	import { setApp } from "$lib/stores";
 	import { cookieStore } from "$server/cookie";
 	import { setContext } from "svelte";
 	import { setupViewTransition } from "sveltekit-view-transition";
@@ -9,7 +10,7 @@
 
 	export let data;
 
-	$: app = setContext("app", cookieStore("app", data.app));
+	$: app = setApp(cookieStore("app", data.app));
 
 	const { transition } = setupViewTransition();
 	setContext("transition", transition);

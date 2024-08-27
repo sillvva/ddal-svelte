@@ -67,6 +67,7 @@
 		"minisearch": "^7.1.0",
 		"postgres": "^3.4.4",
 		"svelte-autosize": "^1.1.0",
+		"svelte-contextify": "^1.0.4",
 		"svelte-sonner": "^0.3.27",
 		"valibot": "^0.37.0"
 	},

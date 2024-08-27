@@ -6,16 +6,14 @@
 	import Drawer from "$lib/components/Drawer.svelte";
 	import Markdown from "$lib/components/Markdown.svelte";
 	import Settings from "$lib/components/Settings.svelte";
-	import { pageLoader } from "$lib/stores";
-	import { type CookieStore } from "$server/cookie.js";
+	import { getApp, pageLoader } from "$lib/stores";
 	import { hotkey } from "@svelteuidev/composables";
-	import { getContext } from "svelte";
 	import { Toaster } from "svelte-sonner";
 	import { fade } from "svelte/transition";
 	import { twMerge } from "tailwind-merge";
 
 	export let data;
-	const app = getContext<CookieStore<App.Cookie>>("app");
+	const app = getApp();
 
 	let settingsOpen = false;
 	let y = 0;

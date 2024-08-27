@@ -2,16 +2,16 @@
 	import { invalidateAll } from "$app/navigation";
 	import { page } from "$app/stores";
 	import { errorToast, successToast } from "$lib/factories";
-	import type { CookieStore } from "$server/cookie";
+	import { getApp } from "$lib/stores";
 	import type { AuthClient } from "$server/db/schema";
 	import type { DeleteWebAuthnResponse, RenameWebAuthnResponse } from "$src/routes/(api)/webAuthn/+server";
 	import { signIn } from "@auth/sveltekit/webauthn";
 	import { hotkey } from "@svelteuidev/composables";
-	import { getContext, tick } from "svelte";
+	import { tick } from "svelte";
 	import { scale } from "svelte/transition";
 	import Control from "./forms/Control.svelte";
 
-	const app = getContext<CookieStore<App.Cookie>>("app");
+	const app = getApp();
 
 	$: authenticators = $page.data.authenticators as AuthClient[];
 	$: $app.settings.authenticators = authenticators.length;

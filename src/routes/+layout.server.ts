@@ -1,5 +1,6 @@
 import { building } from "$app/environment";
 import { privateEnv } from "$lib/env/private.js";
+import { appDefaults } from "$lib/stores.js";
 import { serverGetCookie } from "$server/cookie.js";
 
 let checked = false;
@@ -18,24 +19,7 @@ export const load = async (event) => {
 			/Mobile|iP(hone|od|ad)|Android|BlackBerry|IEMobile|Kindle|NetFront|Silk-Accelerated|(hpw|web)OS|Fennec|Minimo|Opera M(obi|ini)|Blazer|Dolfin|Dolphin|Skyfire|Zune/
 		);
 
-	const app = serverGetCookie<App.Cookie>(event.cookies, "app", {
-		settings: {
-			theme: "system",
-			mode: "dark",
-			autoWebAuthn: false,
-			authenticators: 0
-		},
-		characters: {
-			magicItems: false,
-			display: "list"
-		},
-		log: {
-			descriptions: false
-		},
-		dmLogs: {
-			sort: "asc"
-		}
-	});
+	const app = serverGetCookie(event.cookies, "app", appDefaults);
 
 	return {
 		breadcrumbs: [] as Array<{ name: string; href?: string }>,

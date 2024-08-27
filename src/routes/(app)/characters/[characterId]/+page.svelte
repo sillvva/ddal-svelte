@@ -10,9 +10,9 @@
 	import DeleteCharacter from "$lib/components/forms/DeleteCharacter.svelte";
 	import DeleteLog from "$lib/components/forms/DeleteLog.svelte";
 	import { stopWords } from "$lib/constants.js";
+	import { getApp } from "$lib/stores.js";
 	import type { TransitionAction } from "$lib/util";
 	import { createTransition } from "$lib/util";
-	import type { CookieStore } from "$server/cookie.js";
 	import { slugify, sorter } from "@sillvva/utils";
 	import { download, hotkey } from "@svelteuidev/composables";
 	import MiniSearch from "minisearch";
@@ -21,7 +21,7 @@
 
 	export let data;
 
-	const app = getContext<CookieStore<App.Cookie>>("app");
+	const app = getApp();
 	const transition = getContext<TransitionAction>("transition");
 
 	$: character = data.character;
@@ -352,7 +352,9 @@
 					<td class="print:p-2">Log Entry</td>
 					<td class="max-sm:hidden print:table-cell print:p-2">Advancement</td>
 					<td class="max-sm:hidden print:table-cell print:p-2">Treasure</td>
-					<td class={twMerge("max-lg:hidden print:!hidden", results.some(l => !!l.storyAwardsGained.length) && "min-w-48")}>Story Awards</td>
+					<td class={twMerge("max-lg:hidden print:!hidden", results.some((l) => !!l.storyAwardsGained.length) && "min-w-48")}
+						>Story Awards</td
+					>
 					{#if myCharacter}
 						<td class="print:hidden" />
 					{/if}
@@ -368,13 +370,13 @@
 								(log.description?.trim() || log.storyAwardsGained.length > 0 || log.storyAwardsLost.length > 0) && "border-b-0"
 							)}
 						>
-						<a
-										href={log.isDmLog ? `/dm-logs/${log.id}` : `/characters/${log.characterId}/log/${log.id}`}
-										class="whitespace-pre-wrap text-left font-semibold text-secondary"
-										aria-label="Edit Log"
-									>
-									<SearchResults text={log.name} {search} />
-								</a>
+							<a
+								href={log.isDmLog ? `/dm-logs/${log.id}` : `/characters/${log.characterId}/log/${log.id}`}
+								class="whitespace-pre-wrap text-left font-semibold text-secondary"
+								aria-label="Edit Log"
+							>
+								<SearchResults text={log.name} {search} />
+							</a>
 							<p class="text-netural-content mb-2 whitespace-nowrap text-sm font-normal">
 								{new Date(log.show_date).toLocaleString()}
 							</p>
@@ -426,7 +428,7 @@
 						</td>
 						<td
 							class={twMerge(
-								"max-sm:hidden align-top print:table-cell print:p-2",
+								"align-top max-sm:hidden print:table-cell print:p-2",
 								(log.description?.trim() || log.storyAwardsGained.length > 0 || log.storyAwardsLost.length > 0) && "border-b-0"
 							)}
 						>
@@ -454,7 +456,7 @@
 						</td>
 						<td
 							class={twMerge(
-								"max-sm:hidden align-top print:table-cell print:p-2",
+								"align-top max-sm:hidden print:table-cell print:p-2",
 								(log.description?.trim() || log.storyAwardsGained.length > 0 || log.storyAwardsLost.length > 0) && "border-b-0"
 							)}
 						>
@@ -481,7 +483,7 @@
 						</td>
 						<td
 							class={twMerge(
-								"max-lg:hidden align-top print:!hidden",
+								"align-top max-lg:hidden print:!hidden",
 								(log.description?.trim() || log.storyAwardsGained.length > 0 || log.storyAwardsLost.length > 0) && "border-b-0"
 							)}
 						>

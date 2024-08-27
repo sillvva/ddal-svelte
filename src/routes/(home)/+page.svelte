@@ -2,14 +2,13 @@
 	import { browser } from "$app/environment";
 	import { PROVIDERS } from "$lib/constants.js";
 	import { publicEnv } from "$lib/env/public.js";
-	import type { CookieStore } from "$server/cookie.js";
+	import { getApp } from "$lib/stores.js";
 	import { signIn } from "@auth/sveltekit/client";
 	import { signIn as passkey } from "@auth/sveltekit/webauthn";
-	import { getContext } from "svelte";
 	import { twMerge } from "tailwind-merge";
 
 	export let data;
-	const app = getContext<CookieStore<App.Cookie>>("app");
+	const app = getApp();
 
 	$: autoWebAuthn = $app.settings.authenticators && $app.settings.autoWebAuthn;
 	$: if (browser && autoWebAuthn) {

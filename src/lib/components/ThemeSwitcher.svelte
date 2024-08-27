@@ -1,11 +1,10 @@
 <script lang="ts">
 	import { themeGroups, themes, type Themes } from "$lib/constants";
+	import { getApp } from "$lib/stores";
 	import { createTransition, wait } from "$lib/util";
-	import type { CookieStore } from "$server/cookie";
 	import { browser } from "@svelteuidev/composables";
-	import { getContext } from "svelte";
 
-	const app = getContext<CookieStore<App.Cookie>>("app");
+	const app = getApp();
 
 	function switcher(node: HTMLSelectElement) {
 		const mql = window.matchMedia("(prefers-color-scheme: dark)");
