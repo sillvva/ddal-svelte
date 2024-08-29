@@ -5,7 +5,7 @@ import { writable } from "svelte/store";
 export const pageLoader = writable(false);
 export const searchData = writable<SearchData>([]);
 
-const appDefaults: App.Cookie = {
+export const appDefaults: App.Cookie = {
 	settings: {
 		theme: "system",
 		mode: "dark",
@@ -24,8 +24,6 @@ const appDefaults: App.Cookie = {
 	}
 };
 
-const { get: getApp, set: setApp } = createContext({
+export const { get: getApp, set: setApp } = createContext({
 	defaultValue: writable(appDefaults)
 });
-
-export { appDefaults, getApp, setApp };
