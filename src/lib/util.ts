@@ -81,12 +81,13 @@ export class SaveError<TOut extends Record<string, unknown>, TIn extends Record<
 		err: SaveError<TOut, TIn> | Error | unknown
 	) {
 		if (dev) console.error(err);
+		if (!err) return new SaveError<TOut, TIn>("Undefined error");
 		if (err instanceof SaveError) return err;
 		if (typeof err === "string") return new SaveError<TOut, TIn>(err);
-		if (err && typeof err === "object" && "message" in err && typeof err.message === "string") {
+		if (typeof err === "object" && "message" in err && typeof err.message === "string") {
 			return new SaveError<TOut, TIn>(err.message);
 		}
-		return new SaveError<TOut, TIn>("An unknown error has occurred.");
+		return new SaveError<TOut, TIn>("Unknown error");
 	}
 
 	/**
@@ -113,6 +114,7 @@ export class SaveError<TOut extends Record<string, unknown>, TIn extends Record<
 }
 
 export function parseError(e: unknown) {
+	if (!e) return "Undefined error";
 	if (e instanceof Error) return e.message;
 	if (typeof e === "string") return e;
 	if (typeof e === "object") return JSON.stringify(e);

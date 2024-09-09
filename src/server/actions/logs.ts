@@ -122,7 +122,7 @@ export async function saveLog(input: LogSchema, user: LocalsSession["user"]): Sa
 				? await tx.update(logs).set(data).where(eq(logs.id, input.id)).returning()
 				: await tx.insert(logs).values(data).returning();
 
-			if (!log?.id) throw new LogError("Could not save log");
+			if (!log?.id) throw new LogError("Database error. Could not save log");
 
 			await itemsCRUD({ tx, logId: log.id, table: magicItems, gained: input.magicItemsGained, lost: input.magicItemsLost });
 			await itemsCRUD({ tx, logId: log.id, table: storyAwards, gained: input.storyAwardsGained, lost: input.storyAwardsLost });
@@ -135,7 +135,7 @@ export async function saveLog(input: LogSchema, user: LocalsSession["user"]): Sa
 			return updated;
 		});
 
-		if (!log) throw new LogError("Could not save log");
+		if (!log) throw new LogError("Database transaction error. Could not save log");
 
 		return log;
 	} catch (err) {
