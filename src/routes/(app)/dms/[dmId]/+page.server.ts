@@ -1,4 +1,5 @@
 import { dungeonMasterIdSchema, dungeonMasterSchema } from "$lib/schemas";
+import { SaveError } from "$lib/util.js";
 import { saveDM } from "$server/actions/dms";
 import { assertUser } from "$server/auth.js";
 import { getUserDMsWithLogs } from "$server/data/dms";
@@ -60,7 +61,7 @@ export const actions = {
 		if (!form.valid) return fail(400, { form });
 
 		const result = await saveDM(dmId, session.user, form.data);
-		if ("error" in result) return result.toForm(form);
+		if (result instanceof SaveError) return result.toForm(form);
 
 		redirect(302, `/dms`);
 	}

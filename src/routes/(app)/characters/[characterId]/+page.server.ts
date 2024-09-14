@@ -1,4 +1,5 @@
 import { editCharacterSchema, logSchema } from "$lib/schemas.js";
+import { SaveError } from "$lib/util.js";
 import { deleteCharacter } from "$server/actions/characters";
 import { deleteLog } from "$server/actions/logs";
 import { assertUser } from "$server/auth.js";
@@ -31,7 +32,7 @@ export const actions = {
 		if (!form.valid) return fail(400, { form });
 
 		const result = await deleteCharacter(form.data.id, session.user.id);
-		if ("error" in result) {
+		if (result instanceof SaveError) {
 			setError(form, "", result.error);
 			return fail(result.status, { form });
 		}
@@ -46,7 +47,7 @@ export const actions = {
 		if (!form.valid) return fail(400, { form });
 
 		const result = await deleteLog(form.data.id, session.user.id);
-		if ("error" in result) {
+		if (result instanceof SaveError) {
 			setError(form, "", result.error);
 			return fail(result.status, { form });
 		}

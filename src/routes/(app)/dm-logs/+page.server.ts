@@ -1,4 +1,5 @@
 import { logSchema } from "$lib/schemas.js";
+import { SaveError } from "$lib/util.js";
 import { deleteLog } from "$server/actions/logs";
 import { assertUser } from "$server/auth.js";
 import { getDMLogs } from "$server/data/logs";
@@ -28,7 +29,7 @@ export const actions = {
 		if (!form.valid) return fail(400, { form });
 
 		const result = await deleteLog(form.data.id, session.user.id);
-		if ("error" in result) {
+		if (result instanceof SaveError) {
 			setError(form, "", result.error);
 			return fail(result.status, { form });
 		}

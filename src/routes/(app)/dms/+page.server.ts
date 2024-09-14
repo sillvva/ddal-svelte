@@ -1,4 +1,5 @@
 import { dungeonMasterSchema } from "$lib/schemas.js";
+import { SaveError } from "$lib/util.js";
 import { deleteDM } from "$server/actions/dms.js";
 import { assertUser } from "$server/auth";
 import { getUserDMsWithLogs } from "$server/data/dms";
@@ -37,7 +38,7 @@ export const actions = {
 		}
 
 		const result = await deleteDM(dm.id, session.user);
-		if ("error" in result) {
+		if (result instanceof SaveError) {
 			setError(form, "", result.error);
 			return fail(result.status, { form });
 		}
