@@ -75,12 +75,9 @@
 		{#each segments as { part, value }}
 			<DatePicker.Segment
 				{part}
-				class={twMerge(
-					"rounded-sm py-1 outline-offset-4 focus-visible:outline-primary aria-[valuetext=Empty]:text-base-content/70",
-					part === "dayPeriod" && "aria-[valuenow=PM]:before:[content:attr(aria-valuenow)]"
-				)}
+				class="rounded-sm py-1 outline-offset-4 focus-visible:outline-primary aria-[valuetext=Empty]:text-base-content/70"
 			>
-				<span class="[[aria-valuenow=PM]_&]:hidden">{value}</span>
+				{value}
 			</DatePicker.Segment>
 		{/each}
 		<DatePicker.Trigger class="ml-auto inline-flex items-center justify-center">
