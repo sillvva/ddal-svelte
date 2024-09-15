@@ -261,7 +261,7 @@
 				</div>
 				<div class="flex">
 					<h4 class="font-semibold dark:text-white">Gold</h4>
-					<div class="flex-1 text-right">{character.total_gold.toLocaleString("en-US")}</div>
+					<div class="flex-1 text-right">{character.total_gold.toLocaleString()}</div>
 				</div>
 				{#if character.total_tcp}
 					<div class="flex">
@@ -378,7 +378,7 @@
 								<SearchResults text={log.name} {search} />
 							</a>
 							<p class="text-netural-content mb-2 whitespace-nowrap text-sm font-normal">
-								{new Date(log.show_date).toLocaleString()}
+								{new Date(log.show_date).toLocaleString([], { dateStyle: "medium", timeStyle: "short" })}
 							</p>
 							{#if log.dm && log.type === "game" && log.dm.uid !== character.userId}
 								<p class="text-sm font-normal">
@@ -421,7 +421,7 @@
 								{#if log.gold !== 0}
 									<p>
 										<span class="font-semibold dark:text-white">Gold:</span>
-										{log.gold.toLocaleString("en-US")}
+										{log.gold.toLocaleString()}
 									</p>
 								{/if}
 							</div>
@@ -469,7 +469,7 @@
 							{#if log.gold !== 0}
 								<p>
 									<span class="font-semibold dark:text-white">Gold:</span>
-									{log.gold.toLocaleString("en-US")}
+									{log.gold.toLocaleString()}
 								</p>
 							{/if}
 							{#if log.magicItemsGained.length > 0 || log.magicItemsLost.length > 0}

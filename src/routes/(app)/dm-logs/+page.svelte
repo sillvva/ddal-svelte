@@ -166,7 +166,9 @@
 									>
 										<SearchResults text={log.name} {search} />
 									</a>
-									<p class="text-netural-content whitespace-nowrap text-xs font-normal">{new Date(log.date).toLocaleString()}</p>
+									<p class="text-netural-content whitespace-nowrap text-xs font-normal">
+										{new Date(log.date).toLocaleString([], { dateStyle: "medium", timeStyle: "short" })}
+									</p>
 									{#if log.character}
 										<p class="text-sm font-normal">
 											<span class="font-semibold">Character:</span>
@@ -211,7 +213,7 @@
 										{#if log.gold !== 0}
 											<p>
 												<span class="font-semibold">Gold:</span>
-												{log.gold.toLocaleString("en-US")}
+												{log.gold.toLocaleString()}
 											</p>
 										{/if}
 										<div>
@@ -269,7 +271,7 @@
 									{#if log.gold !== 0}
 										<p>
 											<span class="font-semibold">Gold:</span>
-											{log.gold.toLocaleString("en-US")}
+											{log.gold.toLocaleString()}
 										</p>
 									{/if}
 									{#if log.magicItemsGained.length > 0}
