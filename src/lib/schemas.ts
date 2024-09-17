@@ -10,18 +10,19 @@ function optNullable<T extends v.GenericSchema>(schema: T) {
 	return v.optional(v.nullable(schema), null);
 }
 
-const requiredString = v.pipe(v.string(), v.regex(/(\p{L}|\p{N})+/u, "Required"));
-const maxTextSize = v.pipe(v.string(), v.maxLength(5000));
-const maxStringSize = v.pipe(v.string(), v.maxLength(255));
+const string = v.pipe(v.string(), v.trim());
+const requiredString = v.pipe(string, v.regex(/(\p{L}|\p{N})+/u, "Required"));
+const maxTextSize = v.pipe(string, v.maxLength(5000));
+const maxStringSize = v.pipe(string, v.maxLength(255));
 const integer = v.pipe(v.number(), v.integer());
 
-const urlSchema = v.pipe(v.string(), v.url(), maxStringSize);
+const urlSchema = v.pipe(string, v.url(), maxStringSize);
 const optionalURL = v.optional(v.fallback(urlSchema, ""), "");
 
 export type EnvPrivate = v.InferInput<typeof envPrivateSchema>;
 export const envPrivateSchema = v.object({
 	DATABASE_URL: urlSchema,
-	AUTH_SECRET: v.pipe(v.string(), v.minLength(10)),
+	AUTH_SECRET: v.pipe(string, v.minLength(10)),
 	GOOGLE_CLIENT_ID: requiredString,
 	GOOGLE_CLIENT_SECRET: requiredString,
 	DISCORD_CLIENT_ID: requiredString,
@@ -32,7 +33,7 @@ export const envPrivateSchema = v.object({
 export type EnvPublic = v.InferInput<typeof envPublicSchema>;
 export const envPublicSchema = v.object({
 	PUBLIC_URL: urlSchema,
-	PUBLIC_TEST_URL: v.optional(v.string(), "")
+	PUBLIC_TEST_URL: v.optional(string, "")
 });
 
 export type UserId = v.InferOutput<typeof userIdSchema>;
@@ -62,7 +63,7 @@ export type DungeonMasterSchemaIn = v.InferInput<typeof dungeonMasterSchema>;
 export const dungeonMasterSchema = v.object({
 	id: dungeonMasterIdSchema,
 	name: v.pipe(requiredString, maxStringSize),
-	DCI: optNullable(v.pipe(v.string(), v.regex(/\d{0,10}/, "Invalid DCI Format"))),
+	DCI: optNullable(v.pipe(string, v.regex(/\d{0,10}/, "Invalid DCI Format"))),
 	uid: optNullable(userIdSchema),
 	owner: userIdSchema
 });
@@ -86,7 +87,7 @@ export const logSchema = v.object({
 	name: v.pipe(requiredString, maxStringSize),
 	date: v.date(),
 	characterId: optNullable(characterIdSchema),
-	characterName: v.optional(v.string(), ""),
+	characterName: v.optional(string, ""),
 	type: v.optional(v.picklist(["game", "nongame"]), "game"),
 	experience: v.pipe(integer, v.minValue(0)),
 	acp: v.pipe(integer, v.minValue(0)),
@@ -97,7 +98,7 @@ export const logSchema = v.object({
 	description: v.optional(maxTextSize, ""),
 	dm: v.object({
 		...dungeonMasterSchema.entries,
-		name: v.optional(v.string(), "")
+		name: v.optional(string, "")
 	}),
 	isDmLog: v.optional(v.boolean(), false),
 	appliedDate: v.nullable(v.date()),
