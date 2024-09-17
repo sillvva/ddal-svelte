@@ -1,5 +1,6 @@
 import type { EnvPrivate, envPrivateSchema, EnvPublic } from "$lib/schemas";
-import { getDotPath, ValiError, type Prettify } from "valibot";
+import type { Prettify } from "$lib/util";
+import { getDotPath, ValiError } from "valibot";
 
 export function checkEnv<TChecker extends () => EnvPrivate | EnvPublic | Prettify<EnvPrivate & EnvPublic>>(checker: TChecker) {
 	try {
@@ -14,9 +15,8 @@ export function checkEnv<TChecker extends () => EnvPrivate | EnvPublic | Prettif
 					return `${issue.message}\nValue: ${issue.input}`;
 				})
 				.join("\n\n");
-		}
-		else if (err instanceof Error) message = err.message;
+		} else if (err instanceof Error) message = err.message;
 		message = `❌ Invalid environment variables:\n\n${message}\n`;
 		throw new Error(message);
 	}
-};
+}

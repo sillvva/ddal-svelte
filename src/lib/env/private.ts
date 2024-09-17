@@ -1,6 +1,7 @@
 import * as env from "$env/static/private";
 import { envPrivateSchema, type EnvPrivate, type EnvPublic } from "$lib/schemas";
-import { parse, type Prettify } from "valibot";
+import type { Prettify } from "$lib/util";
+import { parse } from "valibot";
 import { checkEnv } from "./check";
 import { checkPublicEnv } from "./public";
 
