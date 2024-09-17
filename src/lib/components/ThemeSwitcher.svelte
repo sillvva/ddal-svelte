@@ -7,18 +7,36 @@
 	const app = getApp();
 
 	function switcher(node: HTMLSelectElement) {
+		const controller = new AbortController();
+		const signal = controller.signal;
+
 		const mql = window.matchMedia("(prefers-color-scheme: dark)");
-		mql.addEventListener("change", (ev) => {
-			if ($app.settings.theme == "system") $app.settings.mode = ev.matches ? "dark" : "light";
-		});
-		node.addEventListener("change", async () => {
-			document.documentElement.dataset.switcher = "true";
-			createTransition(() => {
-				$app.settings.theme = node.value as Themes;
-			});
-			await wait(800);
-			delete document.documentElement.dataset.switcher;
-		});
+		mql.addEventListener(
+			"change",
+			(ev) => {
+				if ($app.settings.theme == "system") $app.settings.mode = ev.matches ? "dark" : "light";
+			},
+			{ signal }
+		);
+
+		node.addEventListener(
+			"change",
+			async () => {
+				document.documentElement.dataset.switcher = "true";
+				createTransition(() => {
+					$app.settings.theme = node.value as Themes;
+				});
+				await wait(800);
+				delete document.documentElement.dataset.switcher;
+			},
+			{ signal }
+		);
+
+		return {
+			destroy() {
+				controller.abort();
+			}
+		};
 	}
 
 	$: if (browser) {
