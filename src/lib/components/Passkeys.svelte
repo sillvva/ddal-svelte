@@ -2,16 +2,16 @@
 	import { invalidateAll } from "$app/navigation";
 	import { page } from "$app/stores";
 	import { errorToast, successToast } from "$lib/factories";
-	import type { CookieStore } from "$server/cookie";
+	import { getApp } from "$lib/stores";
 	import type { AuthClient } from "$server/db/schema";
 	import type { DeleteWebAuthnResponse, RenameWebAuthnResponse } from "$src/routes/(api)/webAuthn/+server";
 	import { signIn } from "@auth/sveltekit/webauthn";
 	import { hotkey } from "@svelteuidev/composables";
-	import { getContext, tick } from "svelte";
+	import { tick } from "svelte";
 	import { scale } from "svelte/transition";
 	import Control from "./forms/Control.svelte";
 
-	const app = getContext<CookieStore<App.Cookie>>("app");
+	const app = getApp();
 
 	$: authenticators = $page.data.authenticators as AuthClient[];
 	$: $app.settings.authenticators = authenticators.length;
@@ -95,14 +95,14 @@
 	{#each authenticators as authenticator}
 		<li class="flex-row gap-2">
 			<button
-				class="btn btn-ghost flex flex-1 gap-2 text-left hover:bg-base-200"
+				class="group btn btn-ghost flex flex-1 gap-2 text-left hover:bg-base-200"
 				on:click={() => initRename(authenticator.credentialID, authenticator.name)}
 			>
-				<span class="iconify size-6 material-symbols--passkey"></span>
+				<span class="iconify size-6 material-symbols--passkey group-hover:mdi--pencil"></span>
 				<span class="flex-1 overflow-hidden text-ellipsis whitespace-nowrap">{authenticator.name}</span>
 			</button>
 			<button
-				class="btn btn-ghost text-error hover:btn-error hover:text-base-content"
+				class="btn btn-ghost text-error hover:bg-error hover:text-base-content"
 				on:click|stopPropagation={() => deleteWebAuthn(authenticator.credentialID)}
 			>
 				<span class="iconify size-6 mdi--delete" />
@@ -163,19 +163,18 @@
 			<button class="btn btn-circle btn-ghost btn-sm absolute right-2 top-2" on:click={() => renameWebAuthn(true)}>
 				<span class="iconify mdi--close"></span>
 			</button>
-			<h3 id="modal-title" class="cursor-text text-lg font-bold text-black dark:text-white">Rename Passkey</h3>
+			<h3 id="modal-title" class="mb-4 cursor-text text-lg font-bold text-black dark:text-white">Rename Passkey</h3>
 			<form on:submit|preventDefault={() => renameWebAuthn()}>
 				<Control>
-					<label for="passkeyName" class="label">
-						<span class="label-text">Passkey Name</span>
-					</label>
 					<input
 						type="text"
 						id="passkeyName"
+						placeholder="Passkey Name"
 						bind:value={renameName}
 						bind:this={renameRef}
 						class="input input-bordered w-full focus:border-primary"
 						maxlength="20"
+						required
 					/>
 					{#if renameError}
 						<label for="passkeyName" class="label">

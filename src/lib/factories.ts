@@ -68,6 +68,20 @@ export function valibotForm<S extends v.ObjectSchema<any, any>, Out extends v.In
 type ArgumentsType<T> = T extends (...args: infer U) => unknown ? U : never;
 type IntDateProxyOptions = Omit<NonNullable<ArgumentsType<typeof dateProxy>[2]>, "format">;
 
+export function dateToDV(date: Date) {
+	return parseDateTime(
+		date
+			.toLocaleDateString("sv", {
+				year: "numeric",
+				month: "2-digit",
+				day: "2-digit",
+				hour: "2-digit",
+				minute: "2-digit"
+			})
+			.replace(" ", "T")
+	);
+}
+
 export function intDateProxy<T extends Record<string, unknown>, Path extends FormPathLeaves<T, Date>>(
 	form: Writable<T> | SuperForm<T>,
 	path: Path,
@@ -79,20 +93,6 @@ export function intDateProxy<T extends Record<string, unknown>, Path extends For
 		}
 
 		return value && new Date(value.toString());
-	}
-
-	function dateToDV(date: Date) {
-		return parseDateTime(
-			date
-				.toLocaleDateString("sv", {
-					year: "numeric",
-					month: "2-digit",
-					day: "2-digit",
-					hour: "2-digit",
-					minute: "2-digit"
-				})
-				.replace(" ", "T")
-		);
 	}
 
 	const realProxy = fieldProxy(form, path, { taint: options?.taint });

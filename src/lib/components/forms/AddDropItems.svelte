@@ -21,6 +21,7 @@
 		<div class="join flex min-w-fit flex-1">
 			<button
 				type="button"
+				tabindex="-1"
 				class="btn join-item min-w-fit flex-[2] basis-0 cursor-default !border-base-200 !bg-base-300 max-md:px-0"
 				>Magic Items</button
 			>
@@ -47,6 +48,7 @@
 			<div class="join flex min-w-fit flex-1">
 				<button
 					type="button"
+					tabindex="-1"
 					class="btn join-item min-w-fit flex-[2] basis-0 cursor-default !border-base-200 !bg-base-300 max-md:px-0"
 					>Story Awards</button
 				>

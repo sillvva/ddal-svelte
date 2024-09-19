@@ -9,7 +9,7 @@ import { and, eq, inArray, notInArray } from "drizzle-orm";
 class LogError extends SaveError<LogSchema> {}
 
 export type SaveLogResult = ReturnType<typeof saveLog>;
-export async function saveLog(input: LogSchema, user: LocalsSession["user"]): SaveResult<LogData, LogSchema> {
+export async function saveLog(input: LogSchema, user: LocalsSession["user"]): SaveResult<LogData, LogError> {
 	try {
 		const userId = user.id;
 		const characterId = input.characterId;
@@ -122,7 +122,7 @@ export async function saveLog(input: LogSchema, user: LocalsSession["user"]): Sa
 				? await tx.update(logs).set(data).where(eq(logs.id, input.id)).returning()
 				: await tx.insert(logs).values(data).returning();
 
-			if (!log?.id) throw new LogError("Could not save log");
+			if (!log?.id) throw new LogError("Database error. Could not save log");
 
 			await itemsCRUD({ tx, logId: log.id, table: magicItems, gained: input.magicItemsGained, lost: input.magicItemsLost });
 			await itemsCRUD({ tx, logId: log.id, table: storyAwards, gained: input.storyAwardsGained, lost: input.storyAwardsLost });
@@ -135,7 +135,7 @@ export async function saveLog(input: LogSchema, user: LocalsSession["user"]): Sa
 			return updated;
 		});
 
-		if (!log) throw new LogError("Could not save log");
+		if (!log) throw new LogError("Database transaction error. Could not save log");
 
 		return log;
 	} catch (err) {
@@ -191,7 +191,7 @@ async function itemsCRUD(
 }
 
 export type DeleteLogResult = ReturnType<typeof deleteLog>;
-export async function deleteLog(logId: LogId, userId: UserId): SaveResult<{ id: LogId }, LogSchema> {
+export async function deleteLog(logId: LogId, userId: UserId): SaveResult<{ id: LogId }, LogError> {
 	try {
 		const log = await db.transaction(async (tx) => {
 			const log = await tx.query.logs.findFirst({

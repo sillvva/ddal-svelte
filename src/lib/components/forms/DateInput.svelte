@@ -1,6 +1,5 @@
 <script lang="ts">
-	import { intDateProxy } from "$lib/factories";
-	import { parseDateTime } from "@internationalized/date";
+	import { dateToDV, intDateProxy } from "$lib/factories";
 	import { DatePicker, type DatePickerProps } from "bits-ui";
 	import { formFieldProxy, type FormPathLeaves, type SuperForm } from "sveltekit-superforms";
 	import { twMerge } from "tailwind-merge";
@@ -35,20 +34,6 @@
 	export { inputClass as class };
 
 	$: rest = $$restProps as DatePickerProps;
-
-	function dateToDV(date: Date) {
-		return parseDateTime(
-			date
-				.toLocaleDateString("sv", {
-					year: "numeric",
-					month: "2-digit",
-					day: "2-digit",
-					hour: "2-digit",
-					minute: "2-digit"
-				})
-				.replace(" ", "T")
-		);
-	}
 
 	const { errors, constraints } = formFieldProxy(superform, field);
 
@@ -90,12 +75,9 @@
 		{#each segments as { part, value }}
 			<DatePicker.Segment
 				{part}
-				class={twMerge(
-					"rounded-sm py-1 outline-offset-4 focus-visible:outline-primary aria-[valuetext=Empty]:text-base-content/70",
-					part === "dayPeriod" && "aria-[valuenow=PM]:before:[content:attr(aria-valuenow)]"
-				)}
+				class="rounded-sm py-1 outline-offset-4 focus-visible:outline-primary aria-[valuetext=Empty]:text-base-content/70"
 			>
-				<span class="[[aria-valuenow=PM]_&]:hidden">{value}</span>
+				{value}
 			</DatePicker.Segment>
 		{/each}
 		<DatePicker.Trigger class="ml-auto inline-flex items-center justify-center">

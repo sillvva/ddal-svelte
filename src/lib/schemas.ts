@@ -6,22 +6,23 @@ function brandedId<T extends string>(name: T) {
 	return v.pipe(v.string(), v.brand(name));
 }
 
-function optOrNull<T extends v.GenericSchema>(schema: T) {
-	return v.optional(v.union([schema, v.null_()]), null);
+function optNullable<T extends v.GenericSchema>(schema: T) {
+	return v.optional(v.nullable(schema), null);
 }
 
-const required = v.minLength<string, 1, string>(1, "Required");
-const maxTextSize = v.maxLength<string, 5000, string>(5000, `Must be less than 5000 characters`);
-const maxStringSize = v.maxLength<string, 255, string>(255, "Must be less than 255 characters");
+const string = v.pipe(v.string(), v.trim());
+const requiredString = v.pipe(string, v.regex(/(\p{L}|\p{N})+/u, "Required"));
+const maxTextSize = v.pipe(string, v.maxLength(5000));
+const maxStringSize = v.pipe(string, v.maxLength(255));
+const integer = v.pipe(v.number(), v.integer());
 
-const urlSchema = v.pipe(v.string(), v.url(), maxStringSize);
+const urlSchema = v.pipe(string, v.url(), maxStringSize);
 const optionalURL = v.optional(v.fallback(urlSchema, ""), "");
-const requiredString = v.pipe(v.string(), required);
 
 export type EnvPrivate = v.InferInput<typeof envPrivateSchema>;
 export const envPrivateSchema = v.object({
 	DATABASE_URL: urlSchema,
-	AUTH_SECRET: v.pipe(v.string(), v.minLength(10, "Must be a string of at least 10 characters")),
+	AUTH_SECRET: v.pipe(string, v.minLength(10)),
 	GOOGLE_CLIENT_ID: requiredString,
 	GOOGLE_CLIENT_SECRET: requiredString,
 	DISCORD_CLIENT_ID: requiredString,
@@ -32,7 +33,7 @@ export const envPrivateSchema = v.object({
 export type EnvPublic = v.InferInput<typeof envPublicSchema>;
 export const envPublicSchema = v.object({
 	PUBLIC_URL: urlSchema,
-	PUBLIC_TEST_URL: v.optional(v.string(), "")
+	PUBLIC_TEST_URL: v.optional(string, "")
 });
 
 export type UserId = v.InferOutput<typeof userIdSchema>;
@@ -41,9 +42,9 @@ export const userIdSchema = brandedId("UserId");
 export type NewCharacterSchema = v.InferOutput<typeof newCharacterSchema>;
 export const newCharacterSchema = v.object({
 	name: requiredString,
-	campaign: v.optional(v.pipe(v.string(), maxStringSize), ""),
-	race: v.optional(v.pipe(v.string(), maxStringSize), ""),
-	class: v.optional(v.pipe(v.string(), maxStringSize), ""),
+	campaign: v.optional(maxStringSize, ""),
+	race: v.optional(maxStringSize, ""),
+	class: v.optional(maxStringSize, ""),
 	characterSheetUrl: optionalURL,
 	imageUrl: optionalURL
 });
@@ -61,9 +62,9 @@ export type DungeonMasterSchema = v.InferOutput<typeof dungeonMasterSchema>;
 export type DungeonMasterSchemaIn = v.InferInput<typeof dungeonMasterSchema>;
 export const dungeonMasterSchema = v.object({
 	id: dungeonMasterIdSchema,
-	name: v.pipe(v.string(), required, maxStringSize),
-	DCI: optOrNull(v.pipe(v.string(), v.regex(/[0-9]{0,10}/, "Invalid DCI Format"))),
-	uid: optOrNull(userIdSchema),
+	name: v.pipe(requiredString, maxStringSize),
+	DCI: optNullable(v.pipe(string, v.regex(/\d{0,10}/, "Invalid DCI Format"))),
+	uid: optNullable(userIdSchema),
 	owner: userIdSchema
 });
 
@@ -73,33 +74,31 @@ export const itemIdSchema = brandedId("ItemID");
 const itemSchema = v.object({
 	id: v.optional(itemIdSchema, ""),
 	name: requiredString,
-	description: v.optional(v.pipe(v.string(), maxTextSize), "")
+	description: v.optional(maxTextSize, "")
 });
 
 export type LogId = v.InferOutput<typeof logIdSchema>;
 export const logIdSchema = brandedId("LogId");
 
-const int = v.pipe(v.number(), v.integer());
-
 export type LogSchema = v.InferOutput<typeof logSchema>;
 export type LogSchemaIn = v.InferInput<typeof logSchema>;
 export const logSchema = v.object({
 	id: v.optional(logIdSchema, ""),
-	name: v.pipe(v.string(), required, maxStringSize),
+	name: v.pipe(requiredString, maxStringSize),
 	date: v.date(),
-	characterId: optOrNull(characterIdSchema),
-	characterName: v.optional(v.string(), ""),
-	type: v.optional(v.union([v.literal("game"), v.literal("nongame")]), "game"),
-	experience: v.pipe(int, v.minValue(0)),
-	acp: v.pipe(int, v.minValue(0)),
-	tcp: int,
-	level: v.pipe(int, v.minValue(0)),
+	characterId: optNullable(characterIdSchema),
+	characterName: v.optional(string, ""),
+	type: v.optional(v.picklist(["game", "nongame"]), "game"),
+	experience: v.pipe(integer, v.minValue(0)),
+	acp: v.pipe(integer, v.minValue(0)),
+	tcp: integer,
+	level: v.pipe(integer, v.minValue(0)),
 	gold: v.number(),
-	dtd: int,
-	description: v.optional(v.pipe(v.string(), maxTextSize), ""),
+	dtd: integer,
+	description: v.optional(maxTextSize, ""),
 	dm: v.object({
 		...dungeonMasterSchema.entries,
-		name: v.optional(v.string(), "")
+		name: v.optional(string, "")
 	}),
 	isDmLog: v.optional(v.boolean(), false),
 	appliedDate: v.nullable(v.date()),
@@ -111,7 +110,7 @@ export const logSchema = v.object({
 
 export const characterLogSchema = (character: CharacterData) =>
 	v.pipe(
-		v.object(logSchema.entries),
+		logSchema,
 		v.check((input) => !input.isDmLog, "Only character logs can be saved here."),
 		v.forward(
 			v.check((input) => {
@@ -131,7 +130,7 @@ export const characterLogSchema = (character: CharacterData) =>
 
 export const dMLogSchema = (character?: CharacterData) =>
 	v.pipe(
-		v.object(logSchema.entries),
+		logSchema,
 		v.check((input) => input.isDmLog, "Only DM logs can be saved here."),
 		v.forward(
 			v.check((input) => !input.characterId || !!character, "Character not found"),

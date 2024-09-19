@@ -52,7 +52,7 @@
 											<a href={`/characters/${log.character?.id}/log/${log.id}`} class="text-secondary sm:hidden">
 												{log.name}
 											</a>
-											<span>{new Date(log.date).toLocaleString()}</span>
+											<span>{new Date(log.date).toLocaleString([], { dateStyle: "medium", timeStyle: "short" })}</span>
 										</div>
 									</td>
 									<td class="hidden sm:table-cell">
