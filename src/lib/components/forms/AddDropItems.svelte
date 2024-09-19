@@ -4,7 +4,7 @@
 	import type { SuperForm } from "sveltekit-superforms";
 	import { twMerge } from "tailwind-merge";
 	import EntityCard from "./EntityCard.svelte";
-	export let superform: SuperForm<LogSchema, any>;
+	export let superform: SuperForm<LogSchema>;
 	export let magicItems: MagicItem[] = [];
 	export let storyAwards: StoryAward[] = [];
 

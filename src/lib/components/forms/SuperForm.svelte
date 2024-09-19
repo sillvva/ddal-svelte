@@ -8,7 +8,7 @@
 
 	type T = $$Generic<Record<PropertyKey, unknown>>;
 	interface $$Props extends HTMLFormAttributes {
-		superform: SuperForm<T, any>;
+		superform: SuperForm<T>;
 		showMessage?: boolean;
 	}
 

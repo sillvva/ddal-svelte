@@ -6,7 +6,7 @@
 
 	type T = $$Generic<Record<PropertyKey, unknown>>;
 
-	export let superform: SuperForm<T, any>;
+	export let superform: SuperForm<T>;
 	export let valueField: FormPathLeaves<T>;
 	export let labelField: FormPathLeaves<T, string>;
 	export let errorField = valueField;
