@@ -12,7 +12,7 @@
 				? Date
 				: undefined;
 	interface $$Props extends HTMLInputAttributes {
-		superform: SuperForm<T, any>;
+		superform: SuperForm<T>;
 		field: FormPathLeaves<T, LeafType>;
 		type: TType;
 		empty?: TType extends "date" ? "null" | "undefined" : never;
@@ -24,7 +24,7 @@
 		onchange?: (value: typeof $value) => void;
 	}
 
-	export let superform: SuperForm<T, any>;
+	export let superform: SuperForm<T>;
 	export let field: FormPathLeaves<T, LeafType>;
 	export let type: TType;
 	export let empty: "null" | "undefined" = "null";

@@ -1,5 +1,5 @@
 <script lang="ts">
-	import type { BrandedType } from "$lib/schemas";
+	import type { ItemId, LogSchema } from "$lib/schemas";
 	import { writable } from "svelte/store";
 	import { formFieldProxy, type FormPathLeaves, type SuperForm } from "sveltekit-superforms";
 	import Control from "./Control.svelte";
@@ -7,20 +7,19 @@
 	import Input from "./Input.svelte";
 	import MdTextInput from "./MDTextInput.svelte";
 
-	type T = $$Generic<Record<PropertyKey, unknown>>;
 	type $$Props = {
 		entity: "magic_items" | "story_awards";
-		superform: SuperForm<T, any>;
+		superform: SuperForm<LogSchema>;
 		ondelete: () => void;
 	} & (
 		| {
 				type: "add";
-				nameField: FormPathLeaves<T, string>;
-				descField: FormPathLeaves<T, string>;
+				nameField: FormPathLeaves<LogSchema, string> & `${"magicItemsGained" | "storyAwardsGained"}[${number}].name`;
+				descField: FormPathLeaves<LogSchema, string> & `${"magicItemsGained" | "storyAwardsGained"}[${number}].description`;
 		  }
 		| {
 				type: "drop";
-				lostField: FormPathLeaves<T, BrandedType>;
+				lostField: FormPathLeaves<LogSchema, ItemId>;
 				arrValue: string[];
 				data: { id: string; name: string; description: string | null }[];
 		  }
@@ -28,10 +27,10 @@
 
 	export let type: "add" | "drop";
 	export let entity: "magic_items" | "story_awards";
-	export let superform: SuperForm<T, any>;
-	export let nameField: FormPathLeaves<T, string> | undefined = undefined;
-	export let descField: FormPathLeaves<T, string> | undefined = undefined;
-	export let lostField: FormPathLeaves<T, BrandedType> | undefined = undefined;
+	export let superform: SuperForm<LogSchema>;
+	export let nameField: FormPathLeaves<LogSchema, string> | undefined = undefined;
+	export let descField: FormPathLeaves<LogSchema, string> | undefined = undefined;
+	export let lostField: FormPathLeaves<LogSchema, ItemId> | undefined = undefined;
 	export let arrValue: string[] = [];
 	export let data: { id: string; name: string; description: string | null }[] = [];
 	export let ondelete: () => void;

@@ -3,7 +3,7 @@
 
 	type T = $$Generic<Record<PropertyKey, unknown>>;
 
-	export let superform: SuperForm<T, any>;
+	export let superform: SuperForm<T>;
 
 	const { submitting } = superform;
 </script>

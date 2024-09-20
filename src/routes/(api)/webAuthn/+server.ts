@@ -7,7 +7,7 @@ import { and, eq } from "drizzle-orm";
 export type RenameWebAuthnResponse = { success: true; name: string } | { success: false; error: string; throw?: boolean };
 export async function POST({ request, locals }) {
 	const session = locals.session;
-	if (!session?.user?.id) return json({ error: "Unauthorized" }, { status: 401 });
+	if (!session?.user?.id) return json({ success: false, error: "Unauthorized" }, { status: 401 });
 
 	let { name, id } = (await request.json()) as { name: string; id?: string };
 
@@ -21,7 +21,7 @@ export async function POST({ request, locals }) {
 		if (!name.trim()) name = authName(auth);
 
 		const existing = passkeys.find((a) => a.name === name);
-		if ((!auth.name && existing) || (id && existing && existing.credentialID !== id)) throw new Error("Name already exists");
+		if (existing && (!auth.name || (id && existing.credentialID !== id))) throw new Error("Name already exists");
 
 		await db
 			.update(authenticators)
@@ -42,7 +42,7 @@ export type DeleteWebAuthnResponse = { success: true } | { success: false; error
 export async function DELETE({ request, locals }) {
 	try {
 		const session = locals.session;
-		if (!session?.user?.id) return json({ error: "Unauthorized" }, { status: 401 });
+		if (!session?.user?.id) return json({ success: false, error: "Unauthorized" }, { status: 401 });
 
 		const { id } = (await request.json()) as { id: string };
 		const auth = await q.authenticators.findFirst({
