@@ -11,7 +11,7 @@ function optNullable<T extends v.GenericSchema>(schema: T) {
 }
 
 const string = v.pipe(v.string(), v.trim());
-const requiredString = v.pipe(string, v.regex(/(\p{L}|\p{N})+/u, "Required"));
+const requiredString = v.pipe(string, v.regex(/^.*(\p{L}|\p{N})+.*$/u, "Required"));
 const maxTextSize = v.pipe(string, v.maxLength(5000));
 const maxStringSize = v.pipe(string, v.maxLength(255));
 const integer = v.pipe(v.number(), v.integer());
