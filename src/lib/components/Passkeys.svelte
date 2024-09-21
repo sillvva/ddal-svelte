@@ -3,7 +3,6 @@
 	import { page } from "$app/stores";
 	import { errorToast, successToast } from "$lib/factories";
 	import { getApp } from "$lib/stores";
-	import type { AuthClient } from "$server/db/schema";
 	import type { DeleteWebAuthnResponse, RenameWebAuthnResponse } from "$src/routes/(api)/webAuthn/+server";
 	import { signIn } from "@auth/sveltekit/webauthn";
 	import { hotkey } from "@svelteuidev/composables";
@@ -13,7 +12,7 @@
 
 	const app = getApp();
 
-	$: authenticators = $page.data.authenticators as AuthClient[];
+	$: authenticators = $page.data.user?.authenticators || [];
 	$: $app.settings.authenticators = authenticators.length;
 
 	let renaming = false;
