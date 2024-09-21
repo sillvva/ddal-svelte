@@ -23,8 +23,9 @@
 				type="button"
 				tabindex="-1"
 				class="btn join-item min-w-fit flex-[2] basis-0 cursor-default !border-base-200 !bg-base-300 max-md:px-0"
-				>Magic Items</button
 			>
+				Magic Items ({$form.magicItemsGained.length} / {$form.magicItemsLost.length})
+			</button>
 			<button
 				type="button"
 				class={twMerge("btn join-item min-w-fit max-md:flex-1 max-md:px-0", remainingItems.length == 0 && "max-md:flex-[2]")}
@@ -50,8 +51,9 @@
 					type="button"
 					tabindex="-1"
 					class="btn join-item min-w-fit flex-[2] basis-0 cursor-default !border-base-200 !bg-base-300 max-md:px-0"
-					>Story Awards</button
 				>
+					Story Awards ({$form.storyAwardsGained.length} / {$form.storyAwardsLost.length})
+				</button>
 				<button
 					type="button"
 					class={twMerge("btn join-item min-w-fit max-md:flex-1 max-md:px-0", remainingAwards.length == 0 && "max-md:flex-[2]")}
