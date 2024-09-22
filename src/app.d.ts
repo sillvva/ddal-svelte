@@ -36,6 +36,9 @@ declare global {
 		}
 		interface PageData {
 			user: Prettify<User & { accounts: Account[]; authenticators: AuthClient[] }> | undefined;
+			breadcrumbs: Array<{ name: string; href?: string }>;
+			mobile: boolean;
+			isMac: boolean;
 		}
 		// interface Platform {}
 		interface PageState {

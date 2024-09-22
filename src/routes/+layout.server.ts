@@ -17,14 +17,14 @@ export const load = async (event) => {
 	const session = event.locals.session;
 
 	const userAgent = event.request.headers.get("user-agent");
-	const isMac = userAgent?.includes("Mac OS");
+	const isMac = !!userAgent?.includes("Mac OS");
 	const mobile = !!userAgent?.match(
 		/Mobile|iP(hone|od|ad)|Android|BlackBerry|IEMobile|Kindle|NetFront|Silk-Accelerated|(hpw|web)OS|Fennec|Minimo|Opera M(obi|ini)|Blazer|Dolfin|Dolphin|Skyfire|Zune/
 	);
 
 	const app = serverGetCookie(event.cookies, "app", appDefaults);
 
-	let user: App.PageData["user"] | undefined;
+	let user: App.PageData["user"];
 	if (session?.user) {
 		const userId = session.user.id;
 		user = await q.users.findFirst({
@@ -43,7 +43,7 @@ export const load = async (event) => {
 	}
 
 	return {
-		breadcrumbs: [] as Array<{ name: string; href?: string }>,
+		breadcrumbs: [] as App.PageData["breadcrumbs"],
 		session,
 		user,
 		mobile,
