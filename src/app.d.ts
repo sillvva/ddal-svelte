@@ -24,7 +24,7 @@ declare module "@auth/sveltekit" {
 	}
 
 	interface Session {
-		user: AdapterUser & User;
+		user: Prettify<AdapterUser & User>;
 	}
 }
 
