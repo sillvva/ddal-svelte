@@ -43,7 +43,6 @@ export const load = async (event) => {
 			href: `/dms/${dm.id}`
 		}),
 		dm,
-		user: session.user,
 		form
 	};
 };

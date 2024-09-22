@@ -22,9 +22,15 @@
 			<button
 				type="button"
 				tabindex="-1"
-				class="btn join-item min-w-fit flex-[2] basis-0 cursor-default !border-base-200 !bg-base-300 max-md:px-0"
+				class="btn join-item min-w-fit flex-[2] basis-0 cursor-default !border-base-200 !bg-base-300"
 			>
-				Magic Items ({$form.magicItemsGained.length} / {$form.magicItemsLost.length})
+				Magic Items
+				{#if $form.magicItemsGained.length > 0}
+					<span class="badge badge-success badge-outline rounded max-xs:px-1">{$form.magicItemsGained.length}</span>
+				{/if}
+				{#if $form.magicItemsLost.length > 0}
+					<span class="badge badge-error badge-outline rounded max-xs:px-1">{$form.magicItemsLost.length}</span>
+				{/if}
 			</button>
 			<button
 				type="button"
@@ -50,9 +56,15 @@
 				<button
 					type="button"
 					tabindex="-1"
-					class="btn join-item min-w-fit flex-[2] basis-0 cursor-default !border-base-200 !bg-base-300 max-md:px-0"
+					class="btn join-item min-w-fit flex-[2] basis-0 cursor-default !border-base-200 !bg-base-300"
 				>
-					Story Awards ({$form.storyAwardsGained.length} / {$form.storyAwardsLost.length})
+					Story Awards
+					{#if $form.storyAwardsGained.length > 0}
+						<span class="badge badge-success badge-outline rounded max-xs:px-1">{$form.storyAwardsGained.length}</span>
+					{/if}
+					{#if $form.storyAwardsLost.length > 0}
+						<span class="badge badge-error badge-outline rounded max-xs:px-1">{$form.storyAwardsLost.length}</span>
+					{/if}
 				</button>
 				<button
 					type="button"
