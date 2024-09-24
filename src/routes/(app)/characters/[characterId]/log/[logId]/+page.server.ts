@@ -51,7 +51,6 @@ export const load = async (event) => {
 			name: event.params.logId === "new" ? `New Log` : form.data.name,
 			href: `/characters/${character.id}/log/${form.data.id}`
 		}),
-		user: session.user,
 		totalLevel: character.total_level,
 		magicItems,
 		storyAwards,

@@ -3,6 +3,8 @@
 
 import type { ThemeGroups, Themes } from "$lib/constants";
 import type { UserId } from "$lib/schemas";
+import type { Prettify } from "$lib/util";
+import type { Account, AuthClient, User } from "$server/db/schema";
 import "@auth/sveltekit";
 import type { Session } from "@auth/sveltekit";
 import "@total-typescript/ts-reset/fetch";
@@ -22,7 +24,7 @@ declare module "@auth/sveltekit" {
 	}
 
 	interface Session {
-		user: AdapterUser & User;
+		user: Prettify<AdapterUser & User>;
 	}
 }
 
@@ -32,7 +34,12 @@ declare global {
 		interface Locals {
 			session: Session | null;
 		}
-		// interface PageData {}
+		interface PageData {
+			user: Prettify<User & { accounts: Account[]; authenticators: AuthClient[] }> | undefined;
+			breadcrumbs: Array<{ name: string; href?: string }>;
+			mobile: boolean;
+			isMac: boolean;
+		}
 		// interface Platform {}
 		interface PageState {
 			modal?:

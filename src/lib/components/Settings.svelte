@@ -4,7 +4,6 @@
 	import { PROVIDERS } from "$lib/constants";
 	import { successToast } from "$lib/factories";
 	import { pageLoader } from "$lib/stores";
-	import type { Account } from "$server/db/schema";
 	import { signIn, signOut } from "@auth/sveltekit/client";
 	import { twMerge } from "tailwind-merge";
 	import Passkeys from "./Passkeys.svelte";
@@ -12,10 +11,10 @@
 
 	export let open = false;
 
-	$: accounts = $page.data.accounts as Account[];
+	$: user = $page.data.user;
 	$: authProviders = PROVIDERS.map((p) => ({
 		...p,
-		account: accounts.find((a) => a.provider === p.id)
+		account: user?.accounts.find((a) => a.provider === p.id)
 	}));
 
 	$: initials =
@@ -33,114 +32,106 @@
 		open && "right-0"
 	)}
 >
-	{#if $page.data.session}
+	{#if user}
 		<div class="flex items-center gap-4 py-4 pl-2">
 			<div
 				class="avatar flex h-9 w-9 items-center justify-center rounded-full ring ring-primary ring-offset-2 ring-offset-base-100"
 			>
-				{#if $page.data.session.user.image}
-					<img
-						src={$page.data.session.user.image}
-						alt={$page.data.session.user.name}
-						width={48}
-						height={48}
-						class="rounded-full object-cover object-center"
-					/>
+				{#if user.image}
+					<img src={user.image} alt={user.name} width={48} height={48} class="rounded-full object-cover object-center" />
 				{:else if initials}
 					<span class="text-xl font-bold uppercase text-primary">{initials}</span>
 				{/if}
 			</div>
 			<div class="flex-1">
-				<div class="overflow-hidden text-ellipsis whitespace-nowrap font-medium">{$page.data.session.user.name}</div>
+				<div class="overflow-hidden text-ellipsis whitespace-nowrap font-medium">{user.name}</div>
 				<div class="overflow-hidden text-ellipsis text-xs font-medium text-gray-500 dark:text-gray-400">
-					{$page.data.session.user.email}
+					{user.email}
 				</div>
 			</div>
 			<button class="btn p-3" on:click={() => signOut({ callbackUrl: "/" })} aria-label="Sign out">
 				<i class="iconify h-5 w-5 mdi--logout" />
 			</button>
 		</div>
-	{/if}
-	<div class="divider my-0" />
-	<ul class="menu menu-lg w-full px-0">
-		<li>
-			<div class="flex items-center gap-2 hover:bg-transparent">
-				<span class="flex-1">Theme</span>
-				<ThemeSwitcher />
-			</div>
-		</li>
-	</ul>
-	<div class="divider my-0" />
-	<ul class="menu menu-lg w-full px-0 [&_li>*]:px-2">
-		<li class="menu-title">
-			<span class="font-bold">Linked Accounts</span>
-		</li>
-		{#each authProviders as provider}
+		<div class="divider my-0" />
+		<ul class="menu menu-lg w-full px-0">
 			<li>
-				<label class="flex gap-2 hover:bg-transparent">
-					<span class={twMerge("iconify-color size-6", provider.iconify)}></span>
-					<span class="flex-1">{provider.name}</span>
-					<span class="flex items-center">
-						{#if provider.account}
-							{#if accounts.length > 1}
-								<form
-									method="POST"
-									action="/characters?/unlinkProvider"
-									use:enhance={({ cancel }) => {
-										if (!confirm(`Are you sure you want to unlink ${provider.name}?`)) return cancel();
-
-										$pageLoader = true;
-										open = false;
-										return async ({ update }) => {
-											await update();
-											$pageLoader = false;
-											successToast(`${provider.name} unlinked`);
-										};
-									}}
-								>
-									<input type="hidden" name="provider" value={provider.id} />
-									<button class="btn btn-error btn-sm">Unlink</button>
-								</form>
-							{:else}
-								<span class="iconify size-6 text-green-500 mdi--check" />
-							{/if}
-						{:else}
-							<button class="btn btn-primary btn-sm" on:click={() => signIn(provider.id, { callbackUrl: $page.url.href })}>
-								Link
-							</button>
-						{/if}
-					</span>
-				</label>
+				<div class="flex items-center gap-2 hover:bg-transparent">
+					<span class="flex-1">Theme</span>
+					<ThemeSwitcher />
+				</div>
 			</li>
-		{/each}
-	</ul>
-	<Passkeys />
-	<div class="divider my-0" />
-	<ul class="menu menu-lg w-full px-0">
-		<li>
-			<a href="https://github.com/sillvva/ddal-svelte/issues" target="_blank" rel="noreferrer noopener">
-				<span class="iconify size-6 mdi--bug" />
-				Report a bug
-			</a>
-		</li>
-		<li>
-			<a href="https://matt.dekok.dev" target="_blank" rel="noreferrer noopener">
-				<span class="iconify size-6 mdi--information-outline" />
-				About the developer
-			</a>
-		</li>
-		<li>
-			<a href="http://paypal.me/Sillvva" target="_blank" rel="noreferrer noopener">
-				<span class="iconify size-6 mdi--gift" />
-				Contribute
-			</a>
-		</li>
-	</ul>
-	<div class="flex-1"></div>
+		</ul>
+		<div class="divider my-0" />
+		<ul class="menu menu-lg w-full px-0 [&_li>*]:px-2">
+			<li class="menu-title">
+				<span class="font-bold">Linked Accounts</span>
+			</li>
+			{#each authProviders as provider}
+				<li>
+					<label class="flex gap-2 hover:bg-transparent">
+						<span class={twMerge("iconify-color size-6", provider.iconify)}></span>
+						<span class="flex-1">{provider.name}</span>
+						<span class="flex items-center">
+							{#if provider.account}
+								{#if user.accounts.length > 1}
+									<form
+										method="POST"
+										action="/characters?/unlinkProvider"
+										use:enhance={({ cancel }) => {
+											if (!confirm(`Are you sure you want to unlink ${provider.name}?`)) return cancel();
 
-	{#if $page.data.session}
+											$pageLoader = true;
+											open = false;
+											return async ({ update }) => {
+												await update();
+												$pageLoader = false;
+												successToast(`${provider.name} unlinked`);
+											};
+										}}
+									>
+										<input type="hidden" name="provider" value={provider.id} />
+										<button class="btn btn-error btn-sm">Unlink</button>
+									</form>
+								{:else}
+									<span class="iconify size-6 text-green-500 mdi--check" />
+								{/if}
+							{:else}
+								<button class="btn btn-primary btn-sm" on:click={() => signIn(provider.id, { callbackUrl: $page.url.href })}>
+									Link
+								</button>
+							{/if}
+						</span>
+					</label>
+				</li>
+			{/each}
+		</ul>
+		<Passkeys />
+		<div class="divider my-0" />
+		<ul class="menu menu-lg w-full px-0">
+			<li>
+				<a href="https://github.com/sillvva/ddal-svelte/issues" target="_blank" rel="noreferrer noopener">
+					<span class="iconify size-6 mdi--bug" />
+					Report a bug
+				</a>
+			</li>
+			<li>
+				<a href="https://matt.dekok.dev" target="_blank" rel="noreferrer noopener">
+					<span class="iconify size-6 mdi--information-outline" />
+					About the developer
+				</a>
+			</li>
+			<li>
+				<a href="http://paypal.me/Sillvva" target="_blank" rel="noreferrer noopener">
+					<span class="iconify size-6 mdi--gift" />
+					Contribute
+				</a>
+			</li>
+		</ul>
+		<div class="flex-1"></div>
+
 		<div class="px-4 text-xs text-gray-500 dark:text-gray-400">
-			User ID: {$page.data.session.user.id}
+			User ID: {user.id}
 		</div>
 	{/if}
 </aside>

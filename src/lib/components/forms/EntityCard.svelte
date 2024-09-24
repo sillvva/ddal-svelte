@@ -1,7 +1,7 @@
 <script lang="ts">
 	import type { ItemId, LogSchema } from "$lib/schemas";
 	import { writable } from "svelte/store";
-	import { formFieldProxy, type FormPathLeaves, type SuperForm } from "sveltekit-superforms";
+	import { formFieldProxy, type SuperForm } from "sveltekit-superforms";
 	import Control from "./Control.svelte";
 	import GenericInput from "./GenericInput.svelte";
 	import Input from "./Input.svelte";
@@ -10,32 +10,59 @@
 	type $$Props = {
 		entity: "magic_items" | "story_awards";
 		superform: SuperForm<LogSchema>;
-		ondelete: () => void;
+		index: number;
 	} & (
 		| {
 				type: "add";
-				nameField: FormPathLeaves<LogSchema, string> & `${"magicItemsGained" | "storyAwardsGained"}[${number}].name`;
-				descField: FormPathLeaves<LogSchema, string> & `${"magicItemsGained" | "storyAwardsGained"}[${number}].description`;
 		  }
 		| {
 				type: "drop";
-				lostField: FormPathLeaves<LogSchema, ItemId>;
-				arrValue: string[];
-				data: { id: string; name: string; description: string | null }[];
+				data: { id: ItemId; name: string; description: string | null }[];
 		  }
 	);
 
 	export let type: "add" | "drop";
 	export let entity: "magic_items" | "story_awards";
 	export let superform: SuperForm<LogSchema>;
-	export let nameField: FormPathLeaves<LogSchema, string> | undefined = undefined;
-	export let descField: FormPathLeaves<LogSchema, string> | undefined = undefined;
-	export let lostField: FormPathLeaves<LogSchema, ItemId> | undefined = undefined;
-	export let arrValue: string[] = [];
-	export let data: { id: string; name: string; description: string | null }[] = [];
-	export let ondelete: () => void;
+	export let index: number;
+
+	export let data: { id: ItemId; name: string; description: string | null }[] = [];
+
+	const { form } = superform;
+
+	const nameField =
+		type === "add"
+			? entity === "magic_items"
+				? (`magicItemsGained[${index}].name` as const)
+				: (`storyAwardsGained[${index}].name` as const)
+			: undefined;
+	const descField =
+		type === "add"
+			? entity === "magic_items"
+				? (`magicItemsGained[${index}].description` as const)
+				: (`storyAwardsGained[${index}].description` as const)
+			: undefined;
+	const lostField =
+		type === "drop"
+			? entity === "magic_items"
+				? (`magicItemsLost[${index}]` as const)
+				: (`storyAwardsLost[${index}]` as const)
+			: undefined;
 
 	const { value: lostValue } = lostField ? formFieldProxy(superform, lostField) : { value: writable("") };
+
+	$: arrValue = type === "drop" ? (entity === "magic_items" ? $form.magicItemsLost : $form.storyAwardsLost) : [];
+
+	const ondelete = () => {
+		if (type === "add") {
+			if (entity === "magic_items") $form.magicItemsGained = $form.magicItemsGained.filter((_, i) => i !== index);
+			else $form.storyAwardsGained = $form.storyAwardsGained.filter((_, i) => i !== index);
+		}
+		if (type === "drop") {
+			if (entity === "magic_items") $form.magicItemsLost = $form.magicItemsLost.filter((_, i) => i !== index);
+			else $form.storyAwardsLost = $form.storyAwardsLost.filter((_, i) => i !== index);
+		}
+	};
 </script>
 
 {#if type === "add" && nameField && descField}
