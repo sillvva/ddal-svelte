@@ -49,10 +49,6 @@
 			: dateProxy(superform, maxField, { format: "datetime-local" })
 		: undefined;
 
-	function disabled(node: HTMLInputElement) {
-		if (readonly) node.setAttribute("disabled", "");
-	}
-
 	$: commonProps = {
 		id: field,
 		class: "input input-bordered w-full focus:border-primary",
@@ -73,41 +69,41 @@
 {#if type === "text"}
 	<input
 		type="text"
+		{...commonProps}
+		disabled={readonly}
 		bind:value={$value}
 		on:input={() => oninput($value)}
 		on:change={() => onchange($value)}
-		{...commonProps}
-		use:disabled
 	/>
 {:else if type === "url"}
 	<input
 		type="url"
+		{...commonProps}
+		disabled={readonly}
 		bind:value={$value}
 		on:input={() => oninput($value)}
 		on:change={() => onchange($value)}
-		{...commonProps}
-		use:disabled
 	/>
 {:else if type === "number"}
 	<input
 		type="number"
+		{...commonProps}
+		min={$proxyMin}
+		max={$proxyMax}
+		disabled={readonly}
 		bind:value={$value}
 		on:input={() => oninput($value)}
 		on:change={() => onchange($value)}
-		min={$proxyMin}
-		max={$proxyMax}
-		{...commonProps}
-		use:disabled
 	/>
 {:else if type === "date"}
 	<input
 		type="datetime-local"
-		bind:value={$proxyDate}
-		on:change={() => onchange($value)}
+		{...commonProps}
 		min={$proxyMin}
 		max={$proxyMax}
-		{...commonProps}
-		use:disabled
+		disabled={readonly}
+		bind:value={$proxyDate}
+		on:change={() => onchange($value)}
 	/>
 {/if}
 {#if $errors?.length || description}
