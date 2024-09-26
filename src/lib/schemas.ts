@@ -16,7 +16,7 @@ const maxTextSize = v.pipe(string, v.maxLength(5000));
 const maxStringSize = v.pipe(string, v.maxLength(255));
 const integer = v.pipe(v.number(), v.integer());
 
-const urlSchema = v.pipe(string, v.url(), maxStringSize);
+const urlSchema = v.pipe(string, v.url(), v.maxLength(2000));
 const optionalURL = v.optional(v.fallback(urlSchema, ""), "");
 
 export type EnvPrivate = v.InferInput<typeof envPrivateSchema>;
