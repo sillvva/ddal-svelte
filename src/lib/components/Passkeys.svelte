@@ -13,7 +13,7 @@
 	const app = getApp();
 
 	$: authenticators = $page.data.user?.authenticators || [];
-	$: $app.settings.authenticators = authenticators.length;
+	$: if (authenticators.length == 0) $app.settings.autoWebAuthn = false;
 
 	let renaming = false;
 	let defaultName = "";

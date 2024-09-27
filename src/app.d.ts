@@ -67,7 +67,6 @@ declare global {
 				theme: Themes;
 				mode: ThemeGroups;
 				autoWebAuthn: boolean;
-				authenticators: number;
 			};
 			characters: {
 				magicItems: boolean;

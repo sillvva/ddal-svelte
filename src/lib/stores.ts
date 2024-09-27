@@ -9,8 +9,7 @@ export const appDefaults: App.Cookie = {
 	settings: {
 		theme: "system",
 		mode: "dark",
-		autoWebAuthn: false,
-		authenticators: 0
+		autoWebAuthn: false
 	},
 	characters: {
 		magicItems: false,
