@@ -34,10 +34,6 @@ export function isDefined<T>(value?: T | null): value is T {
 	return value !== undefined && value !== null;
 }
 
-export function sleep(ms: number) {
-	return new Promise((resolve) => setTimeout(resolve, ms));
-}
-
 export function authName(authenticator: AuthClient) {
 	return authenticator.name || authenticator.credentialID.replace(/[^a-z0-9]/gi, "").slice(-8);
 }
