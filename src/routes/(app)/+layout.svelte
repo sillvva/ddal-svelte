@@ -94,6 +94,9 @@
 			<div class="flex-1 max-sm:hidden">&nbsp;</div>
 			<div class="flex gap-4">
 				<CommandTray isMac={data.isMac} />
+				<div class="hidden items-center print:flex">
+					{data.user?.name}
+				</div>
 				{#if data.session?.user}
 					<summary tabindex="0" class="flex h-full min-w-fit cursor-pointer items-center" on:click={() => (settingsOpen = true)}>
 						<div class="avatar">
