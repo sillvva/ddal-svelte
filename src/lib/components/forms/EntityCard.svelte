@@ -82,7 +82,7 @@
 				</button>
 			</div>
 			<Control>
-				<MdTextInput {superform} field={descField} maxRows={8} preview>Description</MdTextInput>
+				<MdTextInput {superform} field={descField} name={`add_${entity}_${index}`} maxRows={8} preview>Description</MdTextInput>
 			</Control>
 		</div>
 	</div>

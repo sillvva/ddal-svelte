@@ -10,8 +10,7 @@
 	export let data;
 	const app = getApp();
 
-	$: autoWebAuthn = $app.settings.authenticators && $app.settings.autoWebAuthn;
-	$: if (browser && autoWebAuthn) {
+	$: if (browser && $app.settings.autoWebAuthn) {
 		passkey("webauthn", {
 			callbackUrl: data.redirectTo || "/characters",
 			action: "authenticate"

@@ -52,6 +52,7 @@ export const load = async (event) => {
 			href: `/characters/${character.id}/log/${form.data.id}`
 		}),
 		totalLevel: character.total_level,
+		user: { ...session.user, ...parent.user },
 		magicItems,
 		storyAwards,
 		dms,

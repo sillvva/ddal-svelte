@@ -232,8 +232,8 @@
 				</p>
 			</div>
 		</div>
-		<div class="flex flex-1 flex-wrap gap-4 xs:flex-nowrap sm:gap-4 md:gap-6 print:flex-nowrap">
-			<div class="flex basis-full flex-col gap-2 xs:basis-[40%] sm:basis-1/3 sm:gap-4 md:basis-52 print:basis-1/3">
+		<div class="flex flex-1 flex-wrap gap-4 xs:flex-nowrap sm:gap-4 md:gap-6 print:flex-nowrap print:gap-2">
+			<div class="flex basis-full flex-col gap-2 xs:basis-[40%] sm:basis-1/3 sm:gap-4 md:basis-52 print:basis-1/3 print:gap-2">
 				{#if character.imageUrl}
 					<div class="relative hidden flex-col items-end justify-center md:flex print:hidden">
 						<a
@@ -292,7 +292,7 @@
 	</div>
 </section>
 
-<div class="mt-4 flex flex-wrap gap-2" use:scrollToSearch>
+<div class="mt-4 flex flex-wrap gap-2 print:hidden" use:scrollToSearch>
 	<div class="flex w-full gap-2 sm:max-w-md print:hidden">
 		{#if myCharacter}
 			<a

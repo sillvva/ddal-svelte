@@ -95,7 +95,7 @@
 			<Input type="number" {superform} field="dtd">Downtime</Input>
 		</Control>
 		<Control class="col-span-12">
-			<MdTextInput {superform} field="description" maxRows={20} preview>Notes</MdTextInput>
+			<MdTextInput {superform} field="description" name="notes" maxRows={20} preview>Notes</MdTextInput>
 		</Control>
 		<AddDropItems {superform}>
 			<Submit {superform}>Save Log</Submit>
