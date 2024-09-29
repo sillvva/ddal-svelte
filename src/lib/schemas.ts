@@ -128,12 +128,16 @@ export const characterLogSchema = (character: CharacterData) =>
 		)
 	);
 
-export const dMLogSchema = (character?: CharacterData) =>
+export const dMLogSchema = (characters?: CharacterData[]) =>
 	v.pipe(
 		logSchema,
 		v.check((input) => input.isDmLog, "Only DM logs can be saved here."),
 		v.forward(
-			v.check((input) => !input.characterId || !!character, "Character not found"),
+			v.check((input) => {
+				if (!characters) return true;
+				const characterIds = characters.map((c) => c.id);
+				return !input.characterId || characterIds.includes(input.characterId);
+			}, "Character not found"),
 			["characterId"]
 		),
 		v.forward(
@@ -153,6 +157,7 @@ export const dMLogSchema = (character?: CharacterData) =>
 		),
 		v.forward(
 			v.check((input) => {
+				const character = characters?.find((c) => c.id === input.characterId);
 				if (!character) return true;
 				const logACP = character.logs.find((log) => log.id === input.id)?.acp || 0;
 				return character.total_level < 20 || input.acp - logACP === 0;
@@ -161,6 +166,7 @@ export const dMLogSchema = (character?: CharacterData) =>
 		),
 		v.forward(
 			v.check((input) => {
+				const character = characters?.find((c) => c.id === input.characterId);
 				if (!character) return true;
 				const logLevel = character.logs.find((log) => log.id === input.id)?.level || 0;
 				return character.total_level + input.level - logLevel <= 20;
