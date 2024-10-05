@@ -61,7 +61,7 @@ export const dungeonMasterIdSchema = brandedId("DungeonMasterId");
 export type DungeonMasterSchema = v.InferOutput<typeof dungeonMasterSchema>;
 export type DungeonMasterSchemaIn = v.InferInput<typeof dungeonMasterSchema>;
 export const dungeonMasterSchema = v.object({
-	id: dungeonMasterIdSchema,
+	id: v.optional(dungeonMasterIdSchema, ""),
 	name: v.pipe(requiredString, maxStringSize),
 	DCI: optNullable(v.pipe(string, v.regex(/\d{0,10}/, "Invalid DCI Format"))),
 	uid: optNullable(userIdSchema),
@@ -128,13 +128,12 @@ export const characterLogSchema = (character: CharacterData) =>
 		)
 	);
 
-export const dMLogSchema = (characters?: CharacterData[]) =>
+export const dMLogSchema = (characters: CharacterData[] = []) =>
 	v.pipe(
 		logSchema,
 		v.check((input) => input.isDmLog, "Only DM logs can be saved here."),
 		v.forward(
 			v.check((input) => {
-				if (!characters) return true;
 				const characterIds = characters.map((c) => c.id);
 				return !input.characterId || characterIds.includes(input.characterId);
 			}, "Character not found"),
@@ -157,7 +156,7 @@ export const dMLogSchema = (characters?: CharacterData[]) =>
 		),
 		v.forward(
 			v.check((input) => {
-				const character = characters?.find((c) => c.id === input.characterId);
+				const character = characters.find((c) => c.id === input.characterId);
 				if (!character) return true;
 				const logACP = character.logs.find((log) => log.id === input.id)?.acp || 0;
 				return character.total_level < 20 || input.acp - logACP === 0;
@@ -166,7 +165,7 @@ export const dMLogSchema = (characters?: CharacterData[]) =>
 		),
 		v.forward(
 			v.check((input) => {
-				const character = characters?.find((c) => c.id === input.characterId);
+				const character = characters.find((c) => c.id === input.characterId);
 				if (!character) return true;
 				const logLevel = character.logs.find((log) => log.id === input.id)?.level || 0;
 				return character.total_level + input.level - logLevel <= 20;
