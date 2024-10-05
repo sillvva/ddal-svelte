@@ -61,7 +61,7 @@ export const dungeonMasterIdSchema = brandedId("DungeonMasterId");
 export type DungeonMasterSchema = v.InferOutput<typeof dungeonMasterSchema>;
 export type DungeonMasterSchemaIn = v.InferInput<typeof dungeonMasterSchema>;
 export const dungeonMasterSchema = v.object({
-	id: dungeonMasterIdSchema,
+	id: v.optional(dungeonMasterIdSchema, ""),
 	name: v.pipe(requiredString, maxStringSize),
 	DCI: optNullable(v.pipe(string, v.regex(/\d{0,10}/, "Invalid DCI Format"))),
 	uid: optNullable(userIdSchema),
