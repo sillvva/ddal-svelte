@@ -23,14 +23,14 @@ export type User = typeof users.$inferSelect;
 export type InsertUser = InferInsertModel<typeof users>;
 export type UpdateUser = Partial<User>;
 export const users = pgTable("user", {
-	id: text("id")
+	id: text()
 		.primaryKey()
 		.$default(() => createId())
 		.$type<UserId>(),
-	name: text("name").notNull(),
-	email: text("email").notNull(),
-	emailVerified: timestamp("emailVerified", { mode: "date" }),
-	image: text("image")
+	name: text().notNull(),
+	email: text().notNull(),
+	emailVerified: timestamp({ mode: "date" }),
+	image: text()
 });
 
 export const userRelations = relations(users, ({ many, one }) => ({
@@ -47,20 +47,20 @@ export type UpdateAccount = Partial<Account>;
 export const accounts = pgTable(
 	"account",
 	{
-		providerAccountId: text("providerAccountId").notNull(),
-		provider: text("provider").notNull().$type<ProviderId>(),
-		type: text("type").$type<ProviderType>().notNull(),
-		userId: text("userId")
+		providerAccountId: text().notNull(),
+		provider: text().notNull().$type<ProviderId>(),
+		type: text().$type<ProviderType>().notNull(),
+		userId: text()
 			.notNull()
 			.references(() => users.id, { onUpdate: "cascade", onDelete: "cascade" })
 			.$type<UserId>(),
-		refresh_token: text("refresh_token"),
-		access_token: text("access_token"),
-		expires_at: integer("expires_at"),
-		token_type: text("token_type"),
-		scope: text("scope"),
-		id_token: text("id_token"),
-		session_state: text("session_state"),
+		refresh_token: text(),
+		access_token: text(),
+		expires_at: integer(),
+		token_type: text(),
+		scope: text(),
+		id_token: text(),
+		session_state: text(),
 		lastLogin: timestamp("last_login", { mode: "date", withTimezone: true })
 	},
 	(table) => {
@@ -86,12 +86,12 @@ export type UpdateSession = Partial<Session>;
 export const sessions = pgTable(
 	"session",
 	{
-		sessionToken: text("sessionToken").primaryKey().notNull(),
-		userId: text("userId")
+		sessionToken: text().primaryKey().notNull(),
+		userId: text()
 			.notNull()
 			.$type<UserId>()
 			.references(() => users.id, { onUpdate: "cascade", onDelete: "cascade" }),
-		expires: timestamp("expires", { mode: "date" }).notNull(),
+		expires: timestamp({ mode: "date" }).notNull(),
 		createdAt: timestamp("created_at", { mode: "date", withTimezone: true })
 			.notNull()
 			.$default(() => new Date())
@@ -117,20 +117,20 @@ export type UpdateAuthenticator = Partial<Authenticator>;
 export const authenticators = pgTable(
 	"authenticator",
 	{
-		credentialID: text("credentialID").notNull().unique(),
-		userId: text("userId")
+		credentialID: text().notNull().unique(),
+		userId: text()
 			.notNull()
 			.$type<UserId>()
 			.references(() => users.id, { onDelete: "cascade", onUpdate: "cascade" }),
-		providerAccountId: text("providerAccountId").notNull(),
-		name: text("name")
+		providerAccountId: text().notNull(),
+		name: text()
 			.notNull()
 			.$defaultFn(() => ""),
-		credentialPublicKey: text("credentialPublicKey").notNull(),
-		counter: integer("counter").notNull(),
-		credentialDeviceType: text("credentialDeviceType").notNull(),
-		credentialBackedUp: boolean("credentialBackedUp").notNull(),
-		transports: text("transports")
+		credentialPublicKey: text().notNull(),
+		counter: integer().notNull(),
+		credentialDeviceType: text().notNull(),
+		credentialBackedUp: boolean().notNull(),
+		transports: text()
 	},
 	(table) => ({
 		compositePK: primaryKey({
@@ -162,17 +162,17 @@ export type UpdateCharacter = Partial<Character>;
 export const characters = pgTable(
 	"character",
 	{
-		id: text("id")
+		id: text()
 			.primaryKey()
 			.$default(() => createId())
 			.$type<CharacterId>(),
-		name: text("name").notNull(),
-		race: text("race"),
-		class: text("class"),
-		campaign: text("campaign"),
+		name: text().notNull(),
+		race: text(),
+		class: text(),
+		campaign: text(),
 		imageUrl: text("image_url"),
 		characterSheetUrl: text("character_sheet_url"),
-		userId: text("userId")
+		userId: text()
 			.notNull()
 			.$type<UserId>()
 			.references(() => users.id, { onUpdate: "cascade", onDelete: "cascade" }),
@@ -201,14 +201,14 @@ export type UpdateDungeonMaster = Partial<DungeonMaster>;
 export const dungeonMasters = pgTable(
 	"dungeonmaster",
 	{
-		id: text("id")
+		id: text()
 			.primaryKey()
 			.$default(() => createId())
 			.$type<DungeonMasterId>(),
-		name: text("name").notNull(),
-		DCI: text("DCI"),
-		uid: text("uid").$type<UserId>(),
-		owner: text("owner")
+		name: text().notNull(),
+		DCI: text(),
+		uid: text().$type<UserId>(),
+		owner: text()
 			.notNull()
 			.$type<UserId>()
 			.references(() => users.id, { onUpdate: "cascade", onDelete: "cascade" })
@@ -237,19 +237,19 @@ export type UpdateLog = Partial<Log>;
 export const logs = pgTable(
 	"log",
 	{
-		id: text("id")
+		id: text()
 			.primaryKey()
 			.$default(() => createId())
 			.$type<LogId>(),
-		date: timestamp("date", { mode: "date" })
+		date: timestamp({ mode: "date" })
 			.notNull()
 			.$default(() => new Date()),
-		name: text("name").notNull(),
-		description: text("description")
+		name: text().notNull(),
+		description: text()
 			.notNull()
 			.$default(() => ""),
-		type: logType("type").notNull(),
-		dungeonMasterId: text("dungeonMasterId")
+		type: logType().notNull(),
+		dungeonMasterId: text()
 			.$type<DungeonMasterId>()
 			.references(() => dungeonMasters.id, {
 				onUpdate: "cascade",
@@ -259,23 +259,23 @@ export const logs = pgTable(
 		experience: integer("experience")
 			.notNull()
 			.$default(() => 0),
-		acp: smallint("acp")
+		acp: smallint()
 			.notNull()
 			.$default(() => 0),
-		tcp: smallint("tcp")
+		tcp: smallint()
 			.notNull()
 			.$default(() => 0),
-		level: smallint("level")
+		level: smallint()
 			.notNull()
 			.$default(() => 0),
-		gold: real("gold")
+		gold: real()
 			.notNull()
 			.$default(() => 0),
-		dtd: smallint("dtd")
+		dtd: smallint()
 			.notNull()
 			.$default(() => 0),
 		appliedDate: timestamp("applied_date", { mode: "date" }),
-		characterId: text("characterId")
+		characterId: text()
 			.$type<CharacterId>()
 			.references(() => characters.id, { onUpdate: "cascade", onDelete: "cascade" }),
 		createdAt: timestamp("created_at", { mode: "date" })
@@ -311,17 +311,17 @@ export type UpdateMagicItem = Partial<MagicItem>;
 export const magicItems = pgTable(
 	"magicitem",
 	{
-		id: text("id")
+		id: text()
 			.primaryKey()
 			.$default(() => createId())
 			.$type<ItemId>(),
-		name: text("name").notNull(),
-		description: text("description"),
-		logGainedId: text("logGainedId")
+		name: text().notNull(),
+		description: text(),
+		logGainedId: text()
 			.notNull()
 			.$type<LogId>()
 			.references(() => logs.id, { onUpdate: "cascade", onDelete: "cascade" }),
-		logLostId: text("logLostId")
+		logLostId: text()
 			.$type<LogId>()
 			.references(() => logs.id, { onUpdate: "cascade", onDelete: "set null" })
 	},
@@ -352,17 +352,17 @@ export type UpdateStoryAward = Partial<StoryAward>;
 export const storyAwards = pgTable(
 	"storyaward",
 	{
-		id: text("id")
+		id: text()
 			.primaryKey()
 			.$default(() => createId())
 			.$type<ItemId>(),
-		name: text("name").notNull(),
-		description: text("description"),
-		logGainedId: text("logGainedId")
+		name: text().notNull(),
+		description: text(),
+		logGainedId: text()
 			.notNull()
 			.$type<LogId>()
 			.references(() => logs.id, { onUpdate: "cascade", onDelete: "cascade" }),
-		logLostId: text("logLostId")
+		logLostId: text()
 			.$type<LogId>()
 			.references(() => logs.id, { onUpdate: "cascade", onDelete: "set null" })
 	},
