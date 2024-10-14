@@ -135,7 +135,7 @@ export const dMLogSchema = (characters: CharacterData[] = []) =>
 		v.forward(
 			v.check((input) => {
 				const characterIds = characters.map((c) => c.id);
-				return !input.characterId || characterIds.includes(input.characterId);
+				return !input.characterId || !characterIds.length || characterIds.includes(input.characterId);
 			}, "Character not found"),
 			["characterId"]
 		),
