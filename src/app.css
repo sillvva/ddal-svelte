@@ -48,6 +48,7 @@
 		view-transition-name: none !important;
 	}
 	[data-switcher]::view-transition-group(root) {
+		will-change: clip-path;
 		animation-duration: 0.7s;
 		animation-timing-function: linear(
 			0 0%,
@@ -74,6 +75,7 @@
 	}
 	[data-switcher]::view-transition-new(root) {
 		animation-name: reveal-dark;
+		will-change: clip-path;
 	}
 	@keyframes reveal-dark {
 		from {
