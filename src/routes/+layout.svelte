@@ -16,16 +16,14 @@
 	setContext("transition", transition);
 </script>
 
-<ska:html
+<div
+	class={twMerge("no-script-hide min-h-dvh bg-base-100 text-base-content", $app.settings.mode)}
 	data-theme={$page.route.id?.startsWith("/(app)")
 		? $app.settings.theme === "system" && $app.settings.mode === "dark"
 			? "black"
 			: $app.settings.theme
 		: $app.settings.mode}
-	class={$app.settings.mode}
-/>
-
-<div class={twMerge("no-script-hide min-h-dvh bg-base-100 text-base-content")}>
+>
 	<slot />
 </div>
 

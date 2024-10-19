@@ -12,7 +12,6 @@ import { DrizzleAdapter } from "@auth/drizzle-adapter";
 import { SvelteKitAuth, type SvelteKitAuthConfig } from "@auth/sveltekit";
 import { type Handle } from "@sveltejs/kit";
 import { sequence } from "@sveltejs/kit/hooks";
-import { handle as documentHandle } from "@sveltekit-addons/document/hooks";
 import { eq, ne } from "drizzle-orm";
 import { assertUser, CustomAuthError } from "./server/auth";
 
@@ -201,7 +200,7 @@ const session: Handle = async ({ event, resolve }) => {
 	return response;
 };
 
-export const handle = sequence(auth.handle, session, documentHandle);
+export const handle = sequence(auth.handle, session);
 
 async function refreshToken(account: Account) {
 	try {
