@@ -14,7 +14,7 @@
 		class="btn btn-primary w-full disabled:bg-primary disabled:bg-opacity-50 disabled:text-opacity-50 md:w-auto"
 	>
 		{#if $submitting}
-			<span class="loading" />
+			<span class="loading"></span>
 		{/if}
 		<slot />
 	</button>

@@ -147,18 +147,18 @@
 			{/if}
 		</div>
 		{#if $label && clearable}
-			<button class="btn join-item input-bordered" type="button" on:click|preventDefault={() => clear()}>
-				<span class="iconify size-6 bg-red-500 mdi--close" />
+			<button class="btn join-item input-bordered" type="button" on:click|preventDefault={() => clear()} aria-label="Clear">
+				<span class="iconify size-6 bg-red-500 mdi--close"></span>
 			</button>
 		{/if}
 		{#if link}
-			<a href={link} class="btn join-item input-bordered" role="button" target="_blank">
-				<span class="iconify size-6 mdi--pencil" />
+			<a href={link} class="btn join-item input-bordered" role="button" target="_blank" aria-label="Edit">
+				<span class="iconify size-6 mdi--pencil"></span>
 			</a>
 		{/if}
 		{#if dev}
-			<button type="button" class="btn join-item input-bordered" on:click|preventDefault={() => (debug = !debug)}>
-				<span class="iconify size-6 mdi--information-outline" />
+			<button type="button" class="btn join-item input-bordered" on:click|preventDefault={() => (debug = !debug)} aria-label="Debug">
+				<span class="iconify size-6 mdi--information-outline"></span>
 			</button>
 		{/if}
 	</div>

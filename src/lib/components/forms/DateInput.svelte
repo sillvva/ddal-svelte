@@ -81,7 +81,7 @@
 			</DatePicker.Segment>
 		{/each}
 		<DatePicker.Trigger class="ml-auto inline-flex items-center justify-center">
-			<span class="iconify size-6 mdi--calendar" />
+			<span class="iconify size-6 mdi--calendar"></span>
 		</DatePicker.Trigger>
 	</DatePicker.Input>
 	<DatePicker.Content class="z-[10000] mt-2">
@@ -124,7 +124,7 @@
 											>
 												<div
 													class="absolute top-[5px] hidden size-1 rounded-full transition-all group-data-[today]:block group-data-[selected]:bg-base-content/50"
-												/>
+												></div>
 												{date.day}
 											</DatePicker.Day>
 										</DatePicker.Cell>

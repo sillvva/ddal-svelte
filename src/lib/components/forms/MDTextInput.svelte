@@ -45,7 +45,7 @@
 	use:autosize
 	{...$constraints}
 	maxlength={($constraints?.maxlength ?? 0) + lengthDiff}
-/>
+></textarea>
 {#if preview && state === "preview"}
 	<div class="rounded-b-lg border-[1px] border-base-content bg-base-100 p-4 [--tw-border-opacity:0.2]">
 		<Markdown content={`${$value}`} />

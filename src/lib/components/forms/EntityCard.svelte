@@ -25,7 +25,6 @@
 	export let entity: "magic_items" | "story_awards";
 	export let superform: SuperForm<LogSchema>;
 	export let index: number;
-
 	export let data: { id: ItemId; name: string; description: string | null }[] = [];
 
 	const { form } = superform;
@@ -48,6 +47,7 @@
 				? (`magicItemsLost[${index}]` as const)
 				: (`storyAwardsLost[${index}]` as const)
 			: undefined;
+	const title = entity === "magic_items" ? "Magic Item" : "Story Award";
 
 	const { value: lostValue } = lostField ? formFieldProxy(superform, lostField) : { value: writable("") };
 
@@ -68,17 +68,13 @@
 {#if type === "add" && nameField && descField}
 	<div class="card col-span-12 bg-base-300/70 shadow-xl sm:col-span-6">
 		<div class="card-body flex flex-col gap-4">
-			{#if entity === "magic_items"}
-				<h4 class="text-2xl">Add Magic Item</h4>
-			{:else if entity === "story_awards"}
-				<h4 class="text-2xl">Add Story Award</h4>
-			{/if}
+			<h4>Add {title}</h4>
 			<div class="flex gap-4">
 				<Control class="flex-1">
 					<Input type="text" {superform} field={nameField} required>Name</Input>
 				</Control>
-				<button type="button" class="btn btn-error mt-9" on:click={() => ondelete()}>
-					<span class="iconify size-6 mdi--trash-can" />
+				<button type="button" class="btn btn-error mt-9" on:click={() => ondelete()} aria-label="Delete Entry">
+					<span class="iconify size-6 mdi--trash-can"></span>
 				</button>
 			</div>
 			<Control>
@@ -89,11 +85,7 @@
 {:else if type === "drop"}
 	<div class="card col-span-12 bg-base-300/70 shadow-xl sm:col-span-6">
 		<div class="card-body flex flex-col gap-4">
-			{#if entity === "magic_items"}
-				<h4 class="text-2xl">Drop Magic Item</h4>
-			{:else if entity === "story_awards"}
-				<h4 class="text-2xl">Drop Story Award</h4>
-			{/if}
+			<h4>Drop {title}</h4>
 			<div class="flex gap-4">
 				<Control class="flex-1">
 					<GenericInput {superform} field={lostField} label="Select an Item">
@@ -106,8 +98,8 @@
 						</select>
 					</GenericInput>
 				</Control>
-				<button type="button" class="btn btn-error mt-9" on:click={() => ondelete()}>
-					<span class="iconify size-6 mdi--trash-can" />
+				<button type="button" class="btn btn-error mt-9" on:click={() => ondelete()} aria-label="Delete Entry">
+					<span class="iconify size-6 mdi--trash-can"></span>
 				</button>
 			</div>
 			<div class="text-sm">

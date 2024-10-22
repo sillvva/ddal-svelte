@@ -7,12 +7,13 @@
 	import FormMessage from "./FormMessage.svelte";
 
 	type T = $$Generic<Record<PropertyKey, unknown>>;
-	interface $$Props extends HTMLFormAttributes {
+	type FormAttributes = Omit<HTMLFormAttributes, "hidden">;
+	interface $$Props extends FormAttributes {
 		superform: SuperForm<T>;
 		showMessage?: boolean;
 	}
 
-	$: rest = $$restProps as HTMLFormAttributes | undefined;
+	$: rest = $$restProps as FormAttributes | undefined;
 
 	export let superform: SuperForm<T, App.Superforms.Message>;
 	export let showMessage = false;
@@ -73,7 +74,7 @@
 
 {#if $errors._errors?.[0]}
 	<div class="alert alert-error mb-4 shadow-lg">
-		<span class="iconify size-6 mdi--alert-circle" />
+		<span class="iconify size-6 mdi--alert-circle"></span>
 		{$errors._errors[0]}
 	</div>
 {/if}

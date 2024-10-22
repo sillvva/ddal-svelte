@@ -125,7 +125,7 @@
 			}
 		]
 	]}
-/>
+></div>
 
 {#if data.session?.user}
 	<div class="flex gap-4">
@@ -135,7 +135,7 @@
 				<a href={`/characters/${character.id}/edit`} class="btn btn-primary btn-sm">Edit</a>
 				<Dropdown class="dropdown-end" let:close>
 					<summary tabindex="0" class="btn btn-sm">
-						<span class="iconify size-6 mdi--dots-horizontal" />
+						<span class="iconify size-6 mdi--dots-horizontal"></span>
 					</summary>
 					<ul class="menu dropdown-content z-20 w-52 rounded-box bg-base-200 p-2 shadow">
 						<li use:close>
@@ -151,7 +151,7 @@
 			</div>
 			<Dropdown class="dropdown-end sm:hidden" let:close>
 				<summary tabindex="0" class="btn">
-					<span class="iconify size-6 mdi--dots-horizontal" />
+					<span class="iconify size-6 mdi--dots-horizontal"></span>
 				</summary>
 				<ul class="menu dropdown-content z-20 w-52 rounded-box bg-base-200 p-2 shadow">
 					{#if character.imageUrl}
@@ -279,7 +279,7 @@
 					"divider hidden xs:divider-horizontal xs:mx-0 xs:flex print:flex",
 					"before:bg-black/50 after:bg-black/50 dark:before:bg-white/50 dark:after:bg-white/50"
 				)}
-			/>
+			></div>
 			<div class="flex basis-full flex-col xs:basis-[60%] sm:basis-2/3 lg:basis-2/3 print:basis-2/3">
 				{#if character}
 					<div class="flex flex-col gap-4">
@@ -308,7 +308,7 @@
 		{/if}
 		{#if myCharacter}
 			<a href={`/characters/${character.id}/log/new`} class="btn btn-primary sm:btn-sm sm:hidden sm:px-3" aria-label="New Log">
-				<span class="iconify size-6 mdi--plus" />
+				<span class="iconify size-6 mdi--plus"></span>
 			</a>
 			<button
 				class={twMerge("btn sm:hidden", $app.log.descriptions && "btn-primary")}
@@ -318,15 +318,15 @@
 				tabindex="0"
 			>
 				{#if $app.log.descriptions}
-					<span class="iconify size-6 mdi--note-text" />
+					<span class="iconify size-6 mdi--note-text"></span>
 				{:else}
-					<span class="iconify size-6 mdi--note-text-outline" />
+					<span class="iconify size-6 mdi--note-text-outline"></span>
 				{/if}
 			</button>
 		{/if}
 	</div>
 	{#if logs.length}
-		<div class="flex-1 max-sm:hidden" />
+		<div class="flex-1 max-sm:hidden"></div>
 		<button
 			class={twMerge("btn sm:btn-sm max-sm:hidden", $app.log.descriptions && "btn-primary")}
 			on:click={() => createTransition(() => ($app.log.descriptions = !$app.log.descriptions))}
@@ -335,9 +335,9 @@
 			tabindex="0"
 		>
 			{#if $app.log.descriptions}
-				<span class="iconify size-6 mdi--eye" />
+				<span class="iconify size-6 mdi--eye"></span>
 			{:else}
-				<span class="iconify size-6 mdi--eye-off" />
+				<span class="iconify size-6 mdi--eye-off"></span>
 			{/if}
 			<span class="max-sm:hidden">Notes</span>
 		</button>
@@ -356,7 +356,7 @@
 						>Story Awards</td
 					>
 					{#if myCharacter}
-						<td class="print:hidden" />
+						<td class="print:hidden"></td>
 					{/if}
 				</tr>
 			</thead>
@@ -375,7 +375,7 @@
 								class="whitespace-pre-wrap text-left font-semibold text-secondary"
 								aria-label="Edit Log"
 							>
-								<SearchResults text={log.name} {search} />
+								<SearchResults text={log.name} {search}></SearchResults>
 							</a>
 							<p class="text-netural-content mb-2 whitespace-nowrap text-sm font-normal">
 								{new Date(log.show_date).toLocaleString([], { dateStyle: "medium", timeStyle: "short" })}
