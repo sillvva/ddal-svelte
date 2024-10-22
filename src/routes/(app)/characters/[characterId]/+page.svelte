@@ -21,8 +21,8 @@
 	import { twMerge } from "tailwind-merge";
 
 	type Props = {
-		data: typeof $page.data & { character: CharacterData }
-	}
+		data: typeof $page.data & { character: CharacterData };
+	};
 
 	let { data }: Props = $props();
 
@@ -46,41 +46,48 @@
 	});
 
 	let level = 1;
-	const logs = $derived(data.character
-		? data.character.logs.map((log) => {
-				const level_gained = data.character.log_levels.find((gl) => gl.id === log.id);
-				if (level_gained) level += level_gained.levels;
-				return {
-					...log,
-					level_gained: level_gained?.levels || 0,
-					total_level: level,
-					show_date: log.isDmLog && log.appliedDate ? log.appliedDate : log.date,
-					score: 0
-				};
-			})
-		: []);
+	const logs = $derived(
+		data.character
+			? data.character.logs.map((log) => {
+					const level_gained = data.character.log_levels.find((gl) => gl.id === log.id);
+					if (level_gained) level += level_gained.levels;
+					return {
+						...log,
+						level_gained: level_gained?.levels || 0,
+						total_level: level,
+						show_date: log.isDmLog && log.appliedDate ? log.appliedDate : log.date,
+						score: 0
+					};
+				})
+			: []
+	);
 
-	const indexed = $derived(logs.map((log) => ({
-		logId: log.id,
-		logName: log.name,
-		magicItems: log.magicItemsGained
-			.map((item) => item.name)
-			.concat(log.magicItemsLost.map((item) => item.name))
-			.join(" | "),
-		storyAwards: log.storyAwardsGained
-			.map((item) => item.name)
-			.concat(log.storyAwardsLost.map((item) => item.name))
-			.join(" | ")
-	})));
+	const indexed = $derived(
+		logs.map((log) => ({
+			logId: log.id,
+			logName: log.name,
+			magicItems: log.magicItemsGained
+				.map((item) => item.name)
+				.concat(log.magicItemsLost.map((item) => item.name))
+				.join(" | "),
+			storyAwards: log.storyAwardsGained
+				.map((item) => item.name)
+				.concat(log.storyAwardsLost.map((item) => item.name))
+				.join(" | ")
+		}))
+	);
 
 	$effect(() => {
 		logSearch.removeAll();
 		logSearch.addAll(indexed);
 	});
 
-	const msResults = $derived(logSearch.search(search));
-	const results =
-		$derived(indexed.length && search.length > 1
+	const msResults = $derived.by(() => {
+		if (!logSearch.termCount) logSearch.addAll(indexed);
+		return logSearch.search(search);
+	});
+	const results = $derived(
+		indexed.length && search.length > 1
 			? logs
 					.filter((log) => msResults.find((result) => result.id === log.id))
 					.map((log) => ({
@@ -88,7 +95,8 @@
 						score: msResults.find((result) => result.id === log.id)?.score || 0 - log.date.getTime()
 					}))
 					.sort((a, b) => sorter(a.show_date, b.show_date))
-			: logs.sort((a, b) => sorter(a.show_date, b.show_date)));
+			: logs.sort((a, b) => sorter(a.show_date, b.show_date))
+	);
 
 	function triggerModal(log: (typeof results)[number]) {
 		if (log.description && !$app.log.descriptions) {
@@ -139,51 +147,56 @@
 				<a href={`/characters/${data.character.id}/edit`} class="btn btn-primary btn-sm">Edit</a>
 				<Dropdown class="dropdown-end">
 					{#snippet children({ close })}
-					<summary tabindex="0" class="btn btn-sm">
-						<span class="iconify size-6 mdi--dots-horizontal"></span>
-					</summary>
-					<ul class="menu dropdown-content z-20 w-52 rounded-box bg-base-200 p-2 shadow">
-						<li use:close>
-							<button use:download={{ blob: new Blob([JSON.stringify(data.character)]), filename: `${slugify(data.character.name)}.json` }}>
-								Export
-							</button>
-						</li>
-						<li>
-							<DeleteCharacter character={data.character} label="Delete Character" />
-						</li>
-					</ul>
+						<summary tabindex="0" class="btn btn-sm">
+							<span class="iconify size-6 mdi--dots-horizontal"></span>
+						</summary>
+						<ul class="menu dropdown-content z-20 w-52 rounded-box bg-base-200 p-2 shadow">
+							<li use:close>
+								<button
+									use:download={{
+										blob: new Blob([JSON.stringify(data.character)]),
+										filename: `${slugify(data.character.name)}.json`
+									}}
+								>
+									Export
+								</button>
+							</li>
+							<li>
+								<DeleteCharacter character={data.character} label="Delete Character" />
+							</li>
+						</ul>
 					{/snippet}
 				</Dropdown>
 			</div>
 			<Dropdown class="dropdown-end sm:hidden">
 				{#snippet children({ close })}
-				<summary tabindex="0" class="btn">
-					<span class="iconify size-6 mdi--dots-horizontal"></span>
-				</summary>
-				<ul class="menu dropdown-content z-20 w-52 rounded-box bg-base-200 p-2 shadow">
-					{#if data.character.imageUrl}
-						<li class="xs:hidden" use:close>
-							<a
-								href={data.character.imageUrl}
-								target="_blank"
-								onclick={(e) => {
-									// if (!data.mobile) {
-									e.preventDefault();
-									triggerImageModal();
-									// }
-								}}>View Image</a
-							>
-						</li>
-					{/if}
-					{#if myCharacter}
-						<li use:close>
-							<a href={`/characters/${data.character.id}/edit`}>Edit</a>
-						</li>
-						<li use:close>
-							<DeleteCharacter character={data.character} label="Delete Character" />
-						</li>
-					{/if}
-				</ul>
+					<summary tabindex="0" class="btn">
+						<span class="iconify size-6 mdi--dots-horizontal"></span>
+					</summary>
+					<ul class="menu dropdown-content z-20 w-52 rounded-box bg-base-200 p-2 shadow">
+						{#if data.character.imageUrl}
+							<li class="xs:hidden" use:close>
+								<a
+									href={data.character.imageUrl}
+									target="_blank"
+									onclick={(e) => {
+										// if (!data.mobile) {
+										e.preventDefault();
+										triggerImageModal();
+										// }
+									}}>View Image</a
+								>
+							</li>
+						{/if}
+						{#if myCharacter}
+							<li use:close>
+								<a href={`/characters/${data.character.id}/edit`}>Edit</a>
+							</li>
+							<li use:close>
+								<DeleteCharacter character={data.character} label="Delete Character" />
+							</li>
+						{/if}
+					</ul>
 				{/snippet}
 			</Dropdown>
 		{/if}
@@ -208,7 +221,11 @@
 							// }
 						}}
 					>
-						<img src={data.character.imageUrl} class="size-full object-cover object-top transition-all" alt={data.character.name} />
+						<img
+							src={data.character.imageUrl}
+							class="size-full object-cover object-top transition-all"
+							alt={data.character.name}
+						/>
 					</a>
 				</div>
 			{/if}
@@ -255,7 +272,11 @@
 								triggerImageModal();
 							}}
 						>
-							<img src={data.character.imageUrl} class="size-full object-cover object-top transition-all" alt={data.character.name} />
+							<img
+								src={data.character.imageUrl}
+								class="size-full object-cover object-top transition-all"
+								alt={data.character.name}
+							/>
 						</a>
 					</div>
 				{/if}
@@ -315,7 +336,11 @@
 			<Search bind:value={search} placeholder="Search Logs" />
 		{/if}
 		{#if myCharacter}
-			<a href={`/characters/${data.character.id}/log/new`} class="btn btn-primary sm:btn-sm sm:hidden sm:px-3" aria-label="New Log">
+			<a
+				href={`/characters/${data.character.id}/log/new`}
+				class="btn btn-primary sm:btn-sm sm:hidden sm:px-3"
+				aria-label="New Log"
+			>
 				<span class="iconify size-6 mdi--plus"></span>
 			</a>
 			<button

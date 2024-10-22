@@ -12,15 +12,17 @@
 
 	const app = getApp();
 
-	$: authenticators = $page.data.user?.authenticators || [];
-	$: if (authenticators.length == 0) $app.settings.autoWebAuthn = false;
+	const authenticators = $derived($page.data.user?.authenticators || []);
+	$effect(() => {
+		if (authenticators.length == 0) $app.settings.autoWebAuthn = false;
+	});
 
-	let renaming = false;
-	let defaultName = "";
-	let renameId: string | undefined;
-	let renameName = "";
-	let renameError = "";
-	let renameRef: HTMLInputElement | undefined;
+	let renaming = $state(false);
+	let defaultName = $state("");
+	let renameId: string | undefined = $state();
+	let renameName = $state("");
+	let renameError = $state("");
+	let renameRef: HTMLInputElement | undefined = $state();
 
 	async function initRename(id?: string, currentName = "", error = "") {
 		if (!error) defaultName = currentName;
@@ -95,7 +97,7 @@
 		<li class="flex-row gap-2">
 			<button
 				class="group btn btn-ghost flex flex-1 gap-2 text-left hover:bg-base-200"
-				on:click={() => initRename(authenticator.credentialID, authenticator.name)}
+				onclick={() => initRename(authenticator.credentialID, authenticator.name)}
 				aria-label="Rename Passkey"
 			>
 				<span class="iconify size-6 material-symbols--passkey group-hover:mdi--pencil"></span>
@@ -103,7 +105,10 @@
 			</button>
 			<button
 				class="btn btn-ghost text-error hover:bg-error hover:text-base-content"
-				on:click|stopPropagation={() => deleteWebAuthn(authenticator.credentialID)}
+				onclick={(e) => {
+					e.stopPropagation();
+					deleteWebAuthn(authenticator.credentialID);
+				}}
 				aria-label="Delete Passkey"
 			>
 				<span class="iconify size-6 mdi--delete"></span>
@@ -113,7 +118,7 @@
 	<li>
 		<button
 			class="btn btn-ghost hover:bg-base-200"
-			on:click={() =>
+			onclick={() =>
 				signIn("webauthn", { action: "register", redirect: false })
 					.then((resp) => {
 						if (resp?.ok) initRename();
@@ -163,13 +168,18 @@
 		>
 			<button
 				class="btn btn-circle btn-ghost btn-sm absolute right-2 top-2"
-				on:click={() => renameWebAuthn(true)}
+				onclick={() => renameWebAuthn(true)}
 				aria-label="Close"
 			>
 				<span class="iconify mdi--close"></span>
 			</button>
 			<h3 id="modal-title" class="mb-4 cursor-text text-lg font-bold text-black dark:text-white">Rename Passkey</h3>
-			<form on:submit|preventDefault={() => renameWebAuthn()}>
+			<form
+				onsubmit={(e) => {
+					e.preventDefault();
+					renameWebAuthn();
+				}}
+			>
 				<Control>
 					<input
 						type="text"
@@ -193,6 +203,6 @@
 			</form>
 		</div>
 
-		<button class="modal-backdrop" on:click={() => renameWebAuthn(true)}>✕</button>
+		<button class="modal-backdrop" onclick={() => renameWebAuthn(true)}>✕</button>
 	{/if}
 </dialog>

@@ -5,14 +5,18 @@
 	import { twMerge } from "tailwind-merge";
 	import SearchResults from "./SearchResults.svelte";
 
-	export let title: string = "";
-	export let items: Array<MagicItem | StoryAward>;
-	export let formatting: boolean = false;
-	export let search: string | null = "";
-	export let collapsible: boolean = false;
-	export let sort = false;
+	type Props = {
+		title?: string;
+		items: Array<MagicItem | StoryAward>;
+		formatting?: boolean;
+		search?: string | null;
+		collapsible?: boolean;
+		sort?: boolean;
+	};
 
-	let collapsed = collapsible;
+	let { title = "", items, formatting = false, search = "", collapsible = false, sort = false }: Props = $props();
+
+	let collapsed = $state(collapsible);
 	const itemsMap = new Map<string, number>();
 
 	const sorterName = (name: string) =>
@@ -43,35 +47,39 @@
 		return val;
 	};
 
-	$: consolidatedItems = structuredClone(items).reduce(
-		(acc, item, index) => {
-			if (index === 0) itemsMap.clear();
-			const name = fixName(clearQty(item.name));
-			const qty = itemQty(item);
-			const desc = item.description?.trim();
-			const key = `${name}_${desc}`;
+	const consolidatedItems = $derived(
+		structuredClone(items).reduce(
+			(acc, item, index) => {
+				if (index === 0) itemsMap.clear();
+				const name = fixName(clearQty(item.name));
+				const qty = itemQty(item);
+				const desc = item.description?.trim();
+				const key = `${name}_${desc}`;
 
-			const existingIndex = itemsMap.get(key);
-			if (existingIndex !== undefined && acc[existingIndex]) {
-				const existingQty = itemQty(acc[existingIndex]!);
-				acc[existingIndex]!.name = fixName(name, existingQty + qty);
-			} else {
-				item.name = fixName(item.name, qty);
-				itemsMap.set(key, acc.length);
-				acc.push(item);
-			}
+				const existingIndex = itemsMap.get(key);
+				if (existingIndex !== undefined && acc[existingIndex]) {
+					const existingQty = itemQty(acc[existingIndex]!);
+					acc[existingIndex]!.name = fixName(name, existingQty + qty);
+				} else {
+					item.name = fixName(item.name, qty);
+					itemsMap.set(key, acc.length);
+					acc.push(item);
+				}
 
-			return acc;
-		},
-		[] as typeof items
+				return acc;
+			},
+			[] as typeof items
+		)
 	);
 
-	$: sortedItems = sort ? consolidatedItems.sort((a, b) => sorter(sorterName(a.name), sorterName(b.name))) : consolidatedItems;
+	const sortedItems = $derived(
+		sort ? consolidatedItems.sort((a, b) => sorter(sorterName(a.name), sorterName(b.name))) : consolidatedItems
+	);
 </script>
 
 <div class={twMerge("flex-1 flex-col", collapsible && !items.length ? "hidden md:flex" : "flex")}>
 	{#if title}
-		<div role="presentation" on:click={collapsible ? () => (collapsed = !collapsed) : () => {}} on:keypress={() => {}}>
+		<div role="presentation" onclick={collapsible ? () => (collapsed = !collapsed) : () => {}} onkeypress={() => {}}>
 			<h4 class="flex text-left font-semibold leading-8 dark:text-white [table_&]:leading-5">
 				<span class="flex-1">
 					{title}
@@ -82,7 +90,7 @@
 							"iconify ml-2 inline size-6 justify-self-end md:hidden print:hidden",
 							collapsed ? "mdi--chevron-down" : "mdi--chevron-up"
 						)}
-					/>
+					></span>
 				{/if}
 			</h4>
 		</div>
@@ -100,14 +108,14 @@
 					class="inline pl-2 pr-1 first:pl-0"
 					class:text-secondary={mi.description}
 					class:italic={formatting && isConsumable(mi.name)}
-					on:click={() => {
+					onclick={() => {
 						if (mi.description) {
 							pushState("", { modal: { type: "text", name: mi.name, description: mi.description } });
 						}
 					}}
-					on:keypress={() => null}
+					onkeypress={() => null}
 				>
-					<SearchResults text={mi.name} search={search || ""} />
+					<SearchResults text={mi.name} {search} />
 				</span>
 			{/each}
 		{:else}

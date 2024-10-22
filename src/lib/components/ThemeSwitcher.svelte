@@ -39,9 +39,9 @@
 		};
 	}
 
-	$: if (browser) {
-		const selected = themes.find((t) => t.value === $app.settings.theme);
-		if (selected) {
+	const selected = $derived(themes.find((t) => t.value === $app.settings.theme));
+	$effect(() => {
+		if (browser && selected) {
 			if (selected.value === "system") {
 				const mql = window.matchMedia("(prefers-color-scheme: dark)");
 				$app.settings.mode = mql.matches ? "dark" : "light";
@@ -49,7 +49,7 @@
 				$app.settings.mode = selected.group;
 			}
 		}
-	}
+	});
 </script>
 
 <select class="select select-bordered select-sm leading-4" use:switcher>

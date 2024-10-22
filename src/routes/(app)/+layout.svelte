@@ -8,31 +8,40 @@
 	import Settings from "$lib/components/Settings.svelte";
 	import { getApp, pageLoader } from "$lib/stores";
 	import { hotkey } from "@svelteuidev/composables";
+	import type { Snippet } from "svelte";
 	import { Toaster } from "svelte-sonner";
 	import { fade } from "svelte/transition";
 	import { twMerge } from "tailwind-merge";
 
-	export let data;
+	type Props = {
+		data: typeof $page.data & { character: CharacterData };
+		children: Snippet;
+	};
+
+	let { data, children }: Props = $props();
+
 	const app = getApp();
 
-	let settingsOpen = false;
-	let y = 0;
+	let settingsOpen = $state(false);
+	let y = $state(0);
 
 	afterNavigate(() => {
 		pageLoader.set(false);
 	});
 
-	$: if (browser) {
-		const hasCookie = document.cookie.includes("session-token");
-		if (!data.session?.user && hasCookie) location.reload();
-	}
+	$effect(() => {
+		if (browser) {
+			const hasCookie = document.cookie.includes("session-token");
+			if (!data.session?.user && hasCookie) location.reload();
+		}
+	});
 
 	let defaultTitle = "Adventurers League Log Sheet";
-	$: title = $page.data.title ? $page.data.title + " - " + defaultTitle : defaultTitle;
+	const title = $derived($page.data.title ? $page.data.title + " - " + defaultTitle : defaultTitle);
 	let defaultDescription = "A tool for tracking your Adventurers League characters and magic items.";
-	$: description = $page.data.description || defaultDescription;
+	const description = $derived($page.data.description || defaultDescription);
 	let defaultImage = "https://ddal.dekok.app/images/barovia-gate.webp";
-	$: image = $page.data.image || defaultImage;
+	const image = $derived($page.data.image || defaultImage);
 </script>
 
 <svelte:head>
@@ -63,13 +72,13 @@
 		class="fixed inset-0 z-40 flex items-center justify-center bg-black/50"
 		in:fade={{ duration: 100, delay: 400 }}
 		out:fade={{ duration: 200 }}
-	/>
+	></div>
 	<div
 		class="fixed inset-0 z-50 flex items-center justify-center"
 		in:fade={{ duration: 200, delay: 500 }}
 		out:fade={{ duration: 200 }}
 	>
-		<span class="loading loading-spinner w-16 text-secondary" />
+		<span class="loading loading-spinner w-16 text-secondary"></span>
 	</div>
 {/if}
 
@@ -98,7 +107,7 @@
 					{data.user?.name}
 				</div>
 				{#if data.session?.user}
-					<summary tabindex="0" class="flex h-full min-w-fit cursor-pointer items-center" on:click={() => (settingsOpen = true)}>
+					<summary tabindex="0" class="flex h-full min-w-fit cursor-pointer items-center" onclick={() => (settingsOpen = true)}>
 						<div class="avatar">
 							<div class="relative w-9 overflow-hidden rounded-full ring ring-primary ring-offset-2 ring-offset-base-100 lg:w-11">
 								<img
@@ -122,7 +131,7 @@
 			</div>
 		</nav>
 	</header>
-	<div class="container relative z-10 mx-auto max-w-5xl flex-1 p-4"><slot /></div>
+	<div class="container relative z-10 mx-auto max-w-5xl flex-1 p-4">{@render children()}</div>
 	<footer class="z-16 footer footer-center relative border-t border-base-300 p-4 text-base-content print:hidden">
 		<div>
 			<p>
@@ -158,7 +167,7 @@
 	{#if $page.state.modal}
 		{#if $page.state.modal.type === "text"}
 			<div class="modal-box relative cursor-default bg-base-100 drop-shadow-lg">
-				<button class="btn btn-circle btn-ghost btn-sm absolute right-2 top-2" on:click={() => history.back()}>
+				<button class="btn btn-circle btn-ghost btn-sm absolute right-2 top-2" onclick={() => history.back()} aria-label="Close">
 					<span class="iconify mdi--close"></span>
 				</button>
 				<h3 id="modal-title" class="cursor-text text-lg font-bold text-black dark:text-white">{$page.state.modal.name}</h3>
@@ -184,6 +193,6 @@
 			</div>
 		{/if}
 
-		<button class="modal-backdrop" on:click={() => history.back()}>✕</button>
+		<button class="modal-backdrop" onclick={() => history.back()} aria-label="Close">✕</button>
 	{/if}
 </dialog>

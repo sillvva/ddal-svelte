@@ -9,20 +9,27 @@
 	import Passkeys from "./Passkeys.svelte";
 	import ThemeSwitcher from "./ThemeSwitcher.svelte";
 
-	export let open = false;
+	type Props = {
+		open?: boolean;
+	};
 
-	$: user = $page.data.user;
-	$: authProviders = PROVIDERS.map((p) => ({
-		...p,
-		account: user?.accounts.find((a) => a.provider === p.id)
-	}));
+	let { open = $bindable(false) }: Props = $props();
 
-	$: initials =
+	const user = $derived($page.data.user);
+	const authProviders = $derived(
+		PROVIDERS.map((p) => ({
+			...p,
+			account: user?.accounts.find((a) => a.provider === p.id)
+		}))
+	);
+
+	const initials = $derived(
 		$page.data.session?.user.name
 			.split(" ")
 			.map((n) => n[0])
 			.join("")
-			.slice(0, 2) || "";
+			.slice(0, 2) || ""
+	);
 </script>
 
 <aside
@@ -49,7 +56,7 @@
 					{user.email}
 				</div>
 			</div>
-			<button class="btn p-3" on:click={() => signOut({ callbackUrl: "/" })} aria-label="Sign out">
+			<button class="btn p-3" onclick={() => signOut({ callbackUrl: "/" })} aria-label="Sign out">
 				<i class="iconify h-5 w-5 mdi--logout"></i>
 			</button>
 		</div>
@@ -97,7 +104,7 @@
 									<span class="iconify size-6 text-green-500 mdi--check"></span>
 								{/if}
 							{:else}
-								<button class="btn btn-primary btn-sm" on:click={() => signIn(provider.id, { callbackUrl: $page.url.href })}>
+								<button class="btn btn-primary btn-sm" onclick={() => signIn(provider.id, { callbackUrl: $page.url.href })}>
 									Link
 								</button>
 							{/if}
@@ -141,8 +148,8 @@
 		open ? "block" : "hidden",
 		open ? "z-40 opacity-100" : "-z-10 opacity-0"
 	)}
-	on:keydown={() => (open = false)}
-	on:click={() => (open = false)}
+	onkeydown={() => (open = false)}
+	onclick={() => (open = false)}
 	role="none"
 ></div>
 
