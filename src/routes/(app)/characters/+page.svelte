@@ -9,22 +9,26 @@
 	import { getApp } from "$lib/stores.js";
 	import type { TransitionAction } from "$lib/util";
 	import { createTransition, isDefined } from "$lib/util";
+	import type { CharacterData } from "$server/data/characters";
 	import { slugify, sorter } from "@sillvva/utils";
 	import { download, hotkey } from "@svelteuidev/composables";
 	import MiniSearch from "minisearch";
-	import { getContext, onMount } from "svelte";
+	import { getContext } from "svelte";
 	import { twMerge } from "tailwind-merge";
 
-	export let data;
+	type Props = {
+		data: typeof $page.data & { characters: CharacterData[] }
+	}
 
-	$: characters = data.characters;
-	let search = $page.url.searchParams.get("s") || "";
-	let loaded = false;
+	let { data }: Props = $props();
+
+	let search = $state($page.url.searchParams.get("s") || "");
+	let loaded = $state(false);
 
 	const app = getApp();
 	const transition = getContext<TransitionAction>("transition");
 
-	onMount(() => {
+	$effect(() => {
 		setTimeout(() => (loaded = true), 1000);
 	});
 
@@ -39,8 +43,8 @@
 		}
 	});
 
-	$: indexed = characters
-		? characters.map((character) => ({
+	const indexed = $derived(data.characters
+		? data.characters.map((character) => ({
 				characterId: character.id,
 				characterName: character.name,
 				campaign: character.campaign || "",
@@ -50,17 +54,18 @@
 				level: `L${character.total_level}`,
 				magicItems: character.magic_items.map((item) => item.name).join(", ")
 			}))
-		: [];
+		: []);
 
-	$: {
+	$effect(() => {
 		minisearch.removeAll();
 		minisearch.addAll(indexed);
-	}
-	$: msResults = minisearch.search(search);
-	$: resultsMap = new Map(msResults.map((result) => [result.id, result]));
-	$: results =
+	});
+
+	const msResults = $derived(minisearch.search(search));
+	const resultsMap = $derived(new Map(msResults.map((result) => [result.id, result])));
+	const results = $derived(
 		indexed.length && search.length > 1
-			? characters
+			? data.characters
 					.filter((character) => resultsMap.has(character.id))
 					.map((character) => {
 						const { score = character.name, match = {} } = resultsMap.get(character.id) || {};
@@ -73,9 +78,9 @@
 						};
 					})
 					.sort((a, b) => sorter(a.total_level, b.total_level) || sorter(a.name, b.name))
-			: characters
+			: data.characters
 					.sort((a, b) => sorter(a.total_level, b.total_level) || sorter(a.name, b.name))
-					.map((character) => ({ ...character, score: 0, match: [] }));
+					.map((character) => ({ ...character, score: 0, match: [] })));
 </script>
 
 <div
@@ -87,25 +92,27 @@
 			}
 		]
 	]}
-/>
+></div>
 
 <div class="flex flex-col gap-4">
 	<div class="hidden gap-4 sm:flex">
 		<BreadCrumbs />
 
-		<Dropdown class="dropdown-end" let:close>
+		<Dropdown class="dropdown-end">
+			{#snippet children({ close })}
 			<summary tabindex="0" class="btn btn-sm">
-				<span class="iconify size-6 mdi--dots-horizontal" />
+				<span class="iconify size-6 mdi--dots-horizontal"></span>
 			</summary>
 			<ul class="menu dropdown-content w-52 rounded-box bg-base-200 p-2 shadow">
 				<li use:close>
-					<button use:download={{ blob: new Blob([JSON.stringify(characters)]), filename: "characters.json" }}>Export</button>
+					<button use:download={{ blob: new Blob([JSON.stringify(data.characters)]), filename: "characters.json" }}>Export</button>
 				</li>
 			</ul>
+			{/snippet}
 		</Dropdown>
 	</div>
 
-	{#if !characters.length}
+	{#if !data.characters.length}
 		<section class="bg-base-200">
 			<div class="py-20 text-center">
 				<p class="mb-4">You have no log sheets.</p>
@@ -120,20 +127,19 @@
 				<a href="/characters/new/edit" class="btn btn-primary btn-sm max-sm:hidden">New Character</a>
 				<Search bind:value={search} placeholder="Search by name, race, class, items, etc." />
 				<a href="/characters/new/edit" class="btn btn-primary sm:hidden" aria-label="New Character">
-					<span class="iconify inline size-6 mdi--plus" />
+					<span class="iconify inline size-6 mdi--plus"></span>
 				</a>
 				<button
 					class={twMerge("btn inline-flex xs:hidden", $app.characters.magicItems && "btn-primary")}
-					on:click={() => ($app.characters.magicItems = !$app.characters.magicItems)}
-					on:keypress={() => null}
-					on:keypress
+					onclick={() => ($app.characters.magicItems = !$app.characters.magicItems)}
+					onkeypress={() => null}
 					aria-label="Toggle Magic Items"
 					tabindex="0"
 				>
 					{#if $app.characters.magicItems}
-						<span class="iconify size-6 mdi--shield-sword" />
+						<span class="iconify size-6 mdi--shield-sword"></span>
 					{:else}
-						<span class="iconify size-6 mdi--shield-sword-outline" />
+						<span class="iconify size-6 mdi--shield-sword-outline"></span>
 					{/if}
 				</button>
 			</div>
@@ -141,18 +147,17 @@
 				{#if $app.characters.display != "grid"}
 					<button
 						class={twMerge("btn sm:btn-sm max-xs:hidden", $app.characters.magicItems && "btn-primary")}
-						on:click={() => createTransition(() => ($app.characters.magicItems = !$app.characters.magicItems))}
-						on:keypress={() => null}
-						on:keypress
+						onclick={() => createTransition(() => ($app.characters.magicItems = !$app.characters.magicItems))}
+						onkeypress={() => null}
 						aria-label="Toggle Magic Items"
 						tabindex="0"
 					>
 						{#if $app.characters.magicItems}
-							<span class="iconify size-6 mdi--eye max-xs:hidden sm:max-md:hidden" />
-							<span class="iconify size-6 mdi--shield-sword xs:max-sm:hidden md:hidden" />
+							<span class="iconify size-6 mdi--eye max-xs:hidden sm:max-md:hidden"></span>
+							<span class="iconify size-6 mdi--shield-sword xs:max-sm:hidden md:hidden"></span>
 						{:else}
-							<span class="iconify size-6 mdi--eye-off max-xs:hidden sm:max-md:hidden" />
-							<span class="iconify size-6 mdi--shield-sword-outline xs:max-sm:hidden md:hidden" />
+							<span class="iconify size-6 mdi--eye-off max-xs:hidden sm:max-md:hidden"></span>
+							<span class="iconify size-6 mdi--shield-sword-outline xs:max-sm:hidden md:hidden"></span>
 						{/if}
 						<span class="max-xs:hidden sm:max-md:hidden">Magic Items</span>
 					</button>
@@ -160,19 +165,19 @@
 				<div class="join max-xs:hidden">
 					<button
 						class={twMerge("btn join-item sm:btn-sm", $app.characters.display == "list" ? "btn-primary" : "hover:btn-primary")}
-						on:click={() => createTransition(() => ($app.characters.display = "list"))}
-						on:keypress
+						onclick={() => createTransition(() => ($app.characters.display = "list"))}
+						onkeypress={() => null}
 						aria-label="List View"
 					>
-						<span class="iconify mdi--format-list-text" />
+						<span class="iconify mdi--format-list-text"></span>
 					</button>
 					<button
 						class={twMerge("btn join-item sm:btn-sm", $app.characters.display == "grid" ? "btn-primary" : "hover:btn-primary")}
-						on:click={() => createTransition(() => ($app.characters.display = "grid"))}
-						on:keypress
+						onclick={() => createTransition(() => ($app.characters.display = "grid"))}
+						onkeypress={() => null}
 						aria-label="Grid View"
 					>
-						<span class="iconify mdi--view-grid" />
+						<span class="iconify mdi--view-grid"></span>
 					</button>
 				</div>
 			</div>
@@ -188,7 +193,7 @@
 				>
 					<header class="!hidden text-base-content/70 sm:!contents">
 						{#if !data.mobile}
-							<div class="max-sm:hidden" />
+							<div class="max-sm:hidden"></div>
 						{/if}
 						<div>Name</div>
 						<div>Campaign</div>
@@ -213,7 +218,7 @@
 													/>
 												{/key}
 											{:else}
-												<span class="iconify size-12 mdi--account" />
+												<span class="iconify size-12 mdi--account"></span>
 											{/if}
 										</div>
 									</div>

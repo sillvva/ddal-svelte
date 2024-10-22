@@ -4,8 +4,8 @@
 	import { pageLoader, searchData } from "$lib/stores";
 	import { twMerge } from "tailwind-merge";
 
-	let drawer = false;
-	let backdrop = false;
+	let drawer = $state(false);
+	let backdrop = $state(false);
 
 	const toggleDrawer = (to: boolean) => {
 		if (!to) {
@@ -20,11 +20,12 @@
 
 <button
 	class="flex min-w-fit py-3 pr-4 md:hidden print:hidden"
-	on:click={() => toggleDrawer(true)}
+	onclick={() => toggleDrawer(true)}
 	aria-expanded={drawer}
 	aria-controls="drawer"
+	aria-label="Toggle Drawer"
 >
-	<span class="iconify size-6 mdi--menu" />
+	<span class="iconify size-6 mdi--menu"></span>
 </button>
 <noscript>
 	<span class="flex w-[52px] py-3 pr-4"> </span>
@@ -37,8 +38,8 @@
 		<li>
 			<a
 				href="/characters"
-				on:keydown={() => toggleDrawer(false)}
-				on:click={() => toggleDrawer(false)}
+				onkeydown={() => toggleDrawer(false)}
+				onclick={() => toggleDrawer(false)}
 				class={twMerge($page.url.pathname.startsWith("/characters") && "bg-primary text-white")}
 			>
 				Character Logs
@@ -47,8 +48,8 @@
 		<li>
 			<a
 				href="/dm-logs"
-				on:keydown={() => toggleDrawer(false)}
-				on:click={() => toggleDrawer(false)}
+				onkeydown={() => toggleDrawer(false)}
+				onclick={() => toggleDrawer(false)}
 				class={twMerge($page.url.pathname.startsWith("/dm-logs") && "bg-primary text-white")}
 			>
 				DM Logs
@@ -57,15 +58,15 @@
 		<li>
 			<a
 				href="/dms"
-				on:keydown={() => toggleDrawer(false)}
-				on:click={() => toggleDrawer(false)}
+				onkeydown={() => toggleDrawer(false)}
+				onclick={() => toggleDrawer(false)}
 				class={twMerge($page.url.pathname.startsWith("/dms") && "bg-primary text-white")}
 			>
 				DMs
 			</a>
 		</li>
 	</ul>
-	<div class="divider my-0" />
+	<div class="divider my-0"></div>
 	<ul class="menu menu-lg w-full">
 		<form
 			method="POST"
@@ -85,7 +86,7 @@
 			</li>
 		</form>
 	</ul>
-	<div class="divider my-0" />
+	<div class="divider my-0"></div>
 	<ul class="menu menu-lg w-full">
 		<li>
 			<a href="https://github.com/sillvva/ddal-svelte" target="_blank" rel="noreferrer noopener" class="items-center md:hidden">
@@ -103,7 +104,7 @@
 		backdrop ? "block" : "hidden",
 		drawer ? "z-40 opacity-100" : "-z-10 opacity-0"
 	)}
-	on:keydown={() => toggleDrawer(false)}
-	on:click={() => toggleDrawer(false)}
+	onkeydown={() => toggleDrawer(false)}
+	onclick={() => toggleDrawer(false)}
 	role="none"
-/>
+></div>

@@ -1,11 +1,16 @@
 <script lang="ts">
 	import { clickoutside } from "@svelteuidev/composables";
+	import type { Snippet } from "svelte";
 	import { twMerge } from "tailwind-merge";
 
-	let open = false;
+	type Props = {
+		class?: string;
+		children: Snippet<[{ close: (node: HTMLLIElement) => void }]>;
+	}
 
-	let className = "";
-	export { className as class };
+	let { class: className = "", children }: Props = $props();
+
+	let open = $state(false);
 
 	function close(node: HTMLLIElement) {
 		node.addEventListener("click", () => {
@@ -24,5 +29,5 @@
 	class={twMerge("dropdown", className)}
 	bind:open
 >
-	<slot {close} />
+	{@render children({ close })}
 </details>

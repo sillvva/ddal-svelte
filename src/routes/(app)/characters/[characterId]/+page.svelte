@@ -13,22 +13,26 @@
 	import { getApp } from "$lib/stores.js";
 	import type { TransitionAction } from "$lib/util";
 	import { createTransition } from "$lib/util";
+	import type { CharacterData } from "$server/data/characters";
 	import { slugify, sorter } from "@sillvva/utils";
 	import { download, hotkey } from "@svelteuidev/composables";
 	import MiniSearch from "minisearch";
 	import { getContext } from "svelte";
 	import { twMerge } from "tailwind-merge";
 
-	export let data;
+	type Props = {
+		data: typeof $page.data & { character: CharacterData }
+	}
+
+	let { data }: Props = $props();
 
 	const app = getApp();
 	const transition = getContext<TransitionAction>("transition");
 
-	$: character = data.character;
-	$: myCharacter = character.userId === data.session?.user?.id;
+	const myCharacter = $derived(data.character.userId === data.session?.user?.id);
 
-	let deletingLog: string[] = [];
-	let search = $page.url.searchParams.get("s") || "";
+	let deletingLog = $state<string[]>([]);
+	let search = $state($page.url.searchParams.get("s") || "");
 
 	const logSearch = new MiniSearch({
 		fields: ["logName", "magicItems", "storyAwards", "logId"],
@@ -42,9 +46,9 @@
 	});
 
 	let level = 1;
-	$: logs = character
-		? character.logs.map((log) => {
-				const level_gained = character.log_levels.find((gl) => gl.id === log.id);
+	const logs = $derived(data.character
+		? data.character.logs.map((log) => {
+				const level_gained = data.character.log_levels.find((gl) => gl.id === log.id);
 				if (level_gained) level += level_gained.levels;
 				return {
 					...log,
@@ -54,9 +58,9 @@
 					score: 0
 				};
 			})
-		: [];
+		: []);
 
-	$: indexed = logs.map((log) => ({
+	const indexed = $derived(logs.map((log) => ({
 		logId: log.id,
 		logName: log.name,
 		magicItems: log.magicItemsGained
@@ -67,16 +71,16 @@
 			.map((item) => item.name)
 			.concat(log.storyAwardsLost.map((item) => item.name))
 			.join(" | ")
-	}));
+	})));
 
-	$: {
+	$effect(() => {
 		logSearch.removeAll();
 		logSearch.addAll(indexed);
-	}
+	});
 
-	$: msResults = logSearch.search(search);
-	$: results =
-		indexed.length && search.length > 1
+	const msResults = $derived(logSearch.search(search));
+	const results =
+		$derived(indexed.length && search.length > 1
 			? logs
 					.filter((log) => msResults.find((result) => result.id === log.id))
 					.map((log) => ({
@@ -84,7 +88,7 @@
 						score: msResults.find((result) => result.id === log.id)?.score || 0 - log.date.getTime()
 					}))
 					.sort((a, b) => sorter(a.show_date, b.show_date))
-			: logs.sort((a, b) => sorter(a.show_date, b.show_date));
+			: logs.sort((a, b) => sorter(a.show_date, b.show_date)));
 
 	function triggerModal(log: (typeof results)[number]) {
 		if (log.description && !$app.log.descriptions) {
@@ -100,12 +104,12 @@
 	}
 
 	function triggerImageModal() {
-		if (character.imageUrl) {
+		if (data.character.imageUrl) {
 			pushState("", {
 				modal: {
 					type: "image",
-					name: character.name,
-					imageUrl: character.imageUrl
+					name: data.character.name,
+					imageUrl: data.character.imageUrl
 				}
 			});
 		}
@@ -121,7 +125,7 @@
 		[
 			"n",
 			() => {
-				goto(`/characters/${character.id}/log/new`);
+				goto(`/characters/${data.character.id}/log/new`);
 			}
 		]
 	]}
@@ -132,34 +136,37 @@
 		<BreadCrumbs />
 		{#if myCharacter}
 			<div class="hidden gap-4 sm:flex print:hidden">
-				<a href={`/characters/${character.id}/edit`} class="btn btn-primary btn-sm">Edit</a>
-				<Dropdown class="dropdown-end" let:close>
+				<a href={`/characters/${data.character.id}/edit`} class="btn btn-primary btn-sm">Edit</a>
+				<Dropdown class="dropdown-end">
+					{#snippet children({ close })}
 					<summary tabindex="0" class="btn btn-sm">
 						<span class="iconify size-6 mdi--dots-horizontal"></span>
 					</summary>
 					<ul class="menu dropdown-content z-20 w-52 rounded-box bg-base-200 p-2 shadow">
 						<li use:close>
-							<button use:download={{ blob: new Blob([JSON.stringify(character)]), filename: `${slugify(character.name)}.json` }}>
+							<button use:download={{ blob: new Blob([JSON.stringify(data.character)]), filename: `${slugify(data.character.name)}.json` }}>
 								Export
 							</button>
 						</li>
 						<li>
-							<DeleteCharacter {character} label="Delete Character" />
+							<DeleteCharacter character={data.character} label="Delete Character" />
 						</li>
 					</ul>
+					{/snippet}
 				</Dropdown>
 			</div>
-			<Dropdown class="dropdown-end sm:hidden" let:close>
+			<Dropdown class="dropdown-end sm:hidden">
+				{#snippet children({ close })}
 				<summary tabindex="0" class="btn">
 					<span class="iconify size-6 mdi--dots-horizontal"></span>
 				</summary>
 				<ul class="menu dropdown-content z-20 w-52 rounded-box bg-base-200 p-2 shadow">
-					{#if character.imageUrl}
+					{#if data.character.imageUrl}
 						<li class="xs:hidden" use:close>
 							<a
-								href={character.imageUrl}
+								href={data.character.imageUrl}
 								target="_blank"
-								on:click={(e) => {
+								onclick={(e) => {
 									// if (!data.mobile) {
 									e.preventDefault();
 									triggerImageModal();
@@ -170,13 +177,14 @@
 					{/if}
 					{#if myCharacter}
 						<li use:close>
-							<a href={`/characters/${character.id}/edit`}>Edit</a>
+							<a href={`/characters/${data.character.id}/edit`}>Edit</a>
 						</li>
 						<li use:close>
-							<DeleteCharacter {character} label="Delete Character" />
+							<DeleteCharacter character={data.character} label="Delete Character" />
 						</li>
 					{/if}
 				</ul>
+				{/snippet}
 			</Dropdown>
 		{/if}
 	</div>
@@ -185,42 +193,42 @@
 <section class="flex">
 	<div class="flex flex-1 flex-col gap-6">
 		<div class="flex">
-			{#if character.imageUrl}
+			{#if data.character.imageUrl}
 				<div class="relative mr-4 hidden w-20 flex-col items-end justify-center xs:max-md:flex print:hidden">
 					<a
-						href={character.imageUrl}
+						href={data.character.imageUrl}
 						target="_blank"
 						rel="noreferrer noopener"
 						class="mask mask-squircle mx-auto h-20 bg-primary"
-						use:transition={slugify("image-" + character.id)}
-						on:click={(e) => {
+						use:transition={slugify("image-" + data.character.id)}
+						onclick={(e) => {
 							// if (!data.mobile) {
 							e.preventDefault();
 							triggerImageModal();
 							// }
 						}}
 					>
-						<img src={character.imageUrl} class="size-full object-cover object-top transition-all" alt={character.name} />
+						<img src={data.character.imageUrl} class="size-full object-cover object-top transition-all" alt={data.character.name} />
 					</a>
 				</div>
 			{/if}
 			<div class="flex w-full flex-col">
 				<div class="mb-2 flex gap-4 xs:mb-0">
 					<h3 class="flex-1 py-2 font-vecna text-3xl font-bold text-black dark:text-white sm:py-0 sm:text-4xl">
-						{character.name}
+						{data.character.name}
 					</h3>
 				</div>
 				<p class="flex-1 text-xs font-semibold xs:text-sm">
-					{character.race}
-					{character.class}
+					{data.character.race}
+					{data.character.class}
 				</p>
 				<p class="flex-1 text-xs">
-					{character.campaign}
-					{#if character.characterSheetUrl}
+					{data.character.campaign}
+					{#if data.character.characterSheetUrl}
 						<span class="print:hidden">
 							-
 							<a
-								href={character.characterSheetUrl}
+								href={data.character.characterSheetUrl}
 								target="_blank"
 								rel="noreferrer noopner"
 								class="font-semibold text-secondary dark:drop-shadow-sm"
@@ -234,44 +242,44 @@
 		</div>
 		<div class="flex flex-1 flex-wrap gap-4 xs:flex-nowrap sm:gap-4 md:gap-6 print:flex-nowrap print:gap-2">
 			<div class="flex basis-full flex-col gap-2 xs:basis-[40%] sm:basis-1/3 sm:gap-4 md:basis-52 print:basis-1/3 print:gap-2">
-				{#if character.imageUrl}
+				{#if data.character.imageUrl}
 					<div class="relative hidden flex-col items-end justify-center md:flex print:hidden">
 						<a
-							href={character.imageUrl}
+							href={data.character.imageUrl}
 							target="_blank"
 							rel="noreferrer noopener"
 							class="mask mask-squircle mx-auto h-52 w-full bg-primary"
-							use:transition={slugify("image-" + character.id)}
-							on:click={(e) => {
+							use:transition={slugify("image-" + data.character.id)}
+							onclick={(e) => {
 								e.preventDefault();
 								triggerImageModal();
 							}}
 						>
-							<img src={character.imageUrl} class="size-full object-cover object-top transition-all" alt={character.name} />
+							<img src={data.character.imageUrl} class="size-full object-cover object-top transition-all" alt={data.character.name} />
 						</a>
 					</div>
 				{/if}
 				<div class="flex">
 					<h4 class="font-semibold dark:text-white">Level</h4>
-					<div class="flex-1 text-right">{character.total_level}</div>
+					<div class="flex-1 text-right">{data.character.total_level}</div>
 				</div>
 				<div class="flex">
 					<h4 class="font-semibold dark:text-white">Tier</h4>
-					<div class="flex-1 text-right">{character.tier}</div>
+					<div class="flex-1 text-right">{data.character.tier}</div>
 				</div>
 				<div class="flex">
 					<h4 class="font-semibold dark:text-white">Gold</h4>
-					<div class="flex-1 text-right">{character.total_gold.toLocaleString()}</div>
+					<div class="flex-1 text-right">{data.character.total_gold.toLocaleString()}</div>
 				</div>
-				{#if character.total_tcp}
+				{#if data.character.total_tcp}
 					<div class="flex">
 						<h4 class="font-semibold dark:text-white">TCP</h4>
-						<div class="flex-1 text-right">{character.total_tcp}</div>
+						<div class="flex-1 text-right">{data.character.total_tcp}</div>
 					</div>
 				{/if}
 				<div class="flex">
 					<h4 class="font-semibold dark:text-white">Downtime</h4>
-					<div class="flex-1 text-right">{character.total_dtd}</div>
+					<div class="flex-1 text-right">{data.character.total_dtd}</div>
 				</div>
 			</div>
 			<div
@@ -281,10 +289,10 @@
 				)}
 			></div>
 			<div class="flex basis-full flex-col xs:basis-[60%] sm:basis-2/3 lg:basis-2/3 print:basis-2/3">
-				{#if character}
+				{#if data.character}
 					<div class="flex flex-col gap-4">
-						<Items title="Story Awards" items={character.story_awards} collapsible sort />
-						<Items title="Magic Items" items={character.magic_items} collapsible formatting sort />
+						<Items title="Story Awards" items={data.character.story_awards} collapsible sort />
+						<Items title="Magic Items" items={data.character.magic_items} collapsible formatting sort />
 					</div>
 				{/if}
 			</div>
@@ -296,7 +304,7 @@
 	<div class="flex w-full gap-2 sm:max-w-md print:hidden">
 		{#if myCharacter}
 			<a
-				href={`/characters/${character.id}/log/new`}
+				href={`/characters/${data.character.id}/log/new`}
 				class="btn btn-primary sm:btn-sm max-sm:hidden sm:px-3"
 				aria-label="New Log"
 			>
@@ -307,13 +315,13 @@
 			<Search bind:value={search} placeholder="Search Logs" />
 		{/if}
 		{#if myCharacter}
-			<a href={`/characters/${character.id}/log/new`} class="btn btn-primary sm:btn-sm sm:hidden sm:px-3" aria-label="New Log">
+			<a href={`/characters/${data.character.id}/log/new`} class="btn btn-primary sm:btn-sm sm:hidden sm:px-3" aria-label="New Log">
 				<span class="iconify size-6 mdi--plus"></span>
 			</a>
 			<button
 				class={twMerge("btn sm:hidden", $app.log.descriptions && "btn-primary")}
-				on:click={() => createTransition(() => ($app.log.descriptions = !$app.log.descriptions))}
-				on:keypress
+				onclick={() => createTransition(() => ($app.log.descriptions = !$app.log.descriptions))}
+				onkeypress={() => null}
 				aria-label="Toggle Notes"
 				tabindex="0"
 			>
@@ -329,8 +337,8 @@
 		<div class="flex-1 max-sm:hidden"></div>
 		<button
 			class={twMerge("btn sm:btn-sm max-sm:hidden", $app.log.descriptions && "btn-primary")}
-			on:click={() => createTransition(() => ($app.log.descriptions = !$app.log.descriptions))}
-			on:keypress
+			onclick={() => createTransition(() => ($app.log.descriptions = !$app.log.descriptions))}
+			onkeypress={() => null}
 			aria-label="Toggle Notes"
 			tabindex="0"
 		>
@@ -380,7 +388,7 @@
 							<p class="text-netural-content mb-2 whitespace-nowrap text-sm font-normal">
 								{new Date(log.show_date).toLocaleString([], { dateStyle: "medium", timeStyle: "short" })}
 							</p>
-							{#if log.dm && log.type === "game" && log.dm.uid !== character.userId}
+							{#if log.dm && log.type === "game" && log.dm.uid !== data.character.userId}
 								<p class="text-sm font-normal">
 									<span class="font-semibold dark:text-white">DM:</span>
 									{#if myCharacter}

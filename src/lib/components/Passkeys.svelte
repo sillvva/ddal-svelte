@@ -96,6 +96,7 @@
 			<button
 				class="group btn btn-ghost flex flex-1 gap-2 text-left hover:bg-base-200"
 				on:click={() => initRename(authenticator.credentialID, authenticator.name)}
+				aria-label="Rename Passkey"
 			>
 				<span class="iconify size-6 material-symbols--passkey group-hover:mdi--pencil"></span>
 				<span class="flex-1 overflow-hidden text-ellipsis whitespace-nowrap">{authenticator.name}</span>
@@ -103,8 +104,9 @@
 			<button
 				class="btn btn-ghost text-error hover:bg-error hover:text-base-content"
 				on:click|stopPropagation={() => deleteWebAuthn(authenticator.credentialID)}
+				aria-label="Delete Passkey"
 			>
-				<span class="iconify size-6 mdi--delete" />
+				<span class="iconify size-6 mdi--delete"></span>
 			</button>
 		</li>
 	{/each}
@@ -159,7 +161,11 @@
 			class="modal-box relative cursor-default bg-base-100 drop-shadow-lg"
 			transition:scale={{ duration: 250, opacity: 0.75, start: 0.85 }}
 		>
-			<button class="btn btn-circle btn-ghost btn-sm absolute right-2 top-2" on:click={() => renameWebAuthn(true)}>
+			<button
+				class="btn btn-circle btn-ghost btn-sm absolute right-2 top-2"
+				on:click={() => renameWebAuthn(true)}
+				aria-label="Close"
+			>
 				<span class="iconify mdi--close"></span>
 			</button>
 			<h3 id="modal-title" class="mb-4 cursor-text text-lg font-bold text-black dark:text-white">Rename Passkey</h3>
