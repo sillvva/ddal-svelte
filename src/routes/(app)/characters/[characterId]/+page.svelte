@@ -10,24 +10,22 @@
 	import DeleteCharacter from "$lib/components/forms/DeleteCharacter.svelte";
 	import DeleteLog from "$lib/components/forms/DeleteLog.svelte";
 	import { stopWords } from "$lib/constants.js";
-	import { getApp } from "$lib/stores.js";
-	import type { TransitionAction } from "$lib/util";
+	import { getApp, getTransition } from "$lib/stores.js";
 	import { createTransition } from "$lib/util";
 	import type { CharacterData } from "$server/data/characters";
 	import { slugify, sorter } from "@sillvva/utils";
 	import { download, hotkey } from "@svelteuidev/composables";
 	import MiniSearch from "minisearch";
-	import { getContext } from "svelte";
 	import { twMerge } from "tailwind-merge";
 
-	type Props = {
+	interface Props {
 		data: typeof $page.data & { character: CharacterData };
-	};
+	}
 
 	let { data }: Props = $props();
 
 	const app = getApp();
-	const transition = getContext<TransitionAction>("transition");
+	const transition = getTransition();
 
 	const myCharacter = $derived(data.character.userId === data.session?.user?.id);
 

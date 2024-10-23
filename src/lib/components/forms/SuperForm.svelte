@@ -1,27 +1,23 @@
 <script lang="ts">
 	import { dev } from "$app/environment";
-	import { onMount } from "svelte";
+	import { type Snippet } from "svelte";
 	import type { HTMLFormAttributes } from "svelte/elements";
 	import type { Unsubscriber } from "svelte/store";
 	import SuperDebug, { type SuperForm } from "sveltekit-superforms";
 	import FormMessage from "./FormMessage.svelte";
 
-	type T = $$Generic<Record<PropertyKey, unknown>>;
 	type FormAttributes = Omit<HTMLFormAttributes, "hidden">;
-	interface $$Props extends FormAttributes {
-		superform: SuperForm<T>;
+	type T = $$Generic<Record<PropertyKey, unknown>>;
+	interface Props extends FormAttributes {
+		superform: SuperForm<T, App.Superforms.Message>;
 		showMessage?: boolean;
+		children: Snippet;
 	}
 
-	$: rest = $$restProps as FormAttributes | undefined;
-
-	export let superform: SuperForm<T, App.Superforms.Message>;
-	export let showMessage = false;
-
-	$: showMessage = !superform.options.resetForm;
+	let { superform, showMessage = $bindable(false), children, ...rest }: Props = $props();
 
 	const { form, enhance, submitting, errors, allErrors, message, capture, restore } = superform;
-	const method = rest?.method || "post";
+	const method = $derived(rest?.method || "post");
 
 	function formstate(refForm: HTMLFormElement) {
 		const unsubscribers: Unsubscriber[] = [];
@@ -58,8 +54,12 @@
 		};
 	}
 
-	onMount(() => {
+	$effect(() => {
 		superform.reset();
+	});
+
+	$effect(() => {
+		showMessage = !superform.options.resetForm;
 	});
 
 	export const snapshot = {
@@ -81,7 +81,7 @@
 
 <form {method} {...rest} use:enhance use:formstate>
 	<div class="grid grid-cols-12 gap-4">
-		<slot />
+		{@render children()}
 	</div>
 </form>
 

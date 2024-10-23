@@ -13,10 +13,10 @@
 	import { fade } from "svelte/transition";
 	import { twMerge } from "tailwind-merge";
 
-	type Props = {
-		data: typeof $page.data & { character: CharacterData };
+	interface Props {
+		data: typeof $page.data;
 		children: Snippet;
-	};
+	}
 
 	let { data, children }: Props = $props();
 

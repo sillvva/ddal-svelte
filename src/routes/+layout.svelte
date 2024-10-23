@@ -1,19 +1,21 @@
 <script lang="ts">
 	import { dev } from "$app/environment";
 	import { page } from "$app/stores";
-	import { setApp } from "$lib/stores";
+	import { setApp, setTransition } from "$lib/stores";
 	import { cookieStore } from "$server/cookie";
-	import { setContext } from "svelte";
-	import { setupViewTransition } from "sveltekit-view-transition";
+	import { type Snippet } from "svelte";
 	import { twMerge } from "tailwind-merge";
 	import "../app.css";
 
-	export let data;
+	interface Props {
+		data: typeof $page.data;
+		children: Snippet;
+	}
 
-	$: app = setApp(cookieStore("app", data.app));
+	let { data, children }: Props = $props();
 
-	const { transition } = setupViewTransition();
-	setContext("transition", transition);
+	const app = $derived(setApp(cookieStore("app", data.app)));
+	setTransition();
 </script>
 
 <div
@@ -24,7 +26,7 @@
 			: $app.settings.theme
 		: $app.settings.mode}
 >
-	<slot />
+	{@render children()}
 </div>
 
 <noscript>

@@ -1,10 +1,10 @@
 <script lang="ts">
 	import { clickoutside } from "@svelteuidev/composables";
 	import type { Snippet } from "svelte";
+	import type { HTMLAttributes } from "svelte/elements";
 	import { twMerge } from "tailwind-merge";
 
-	type Props = {
-		class?: string;
+	interface Props extends Omit<HTMLAttributes<HTMLDetailsElement>, "children"> {
 		children: Snippet<[{ close: (node: HTMLLIElement) => void }]>;
 	}
 

@@ -7,13 +7,14 @@
 	import Input from "./Input.svelte";
 	import MdTextInput from "./MDTextInput.svelte";
 
-	type $$Props = {
+	type Props = {
 		entity: "magic_items" | "story_awards";
 		superform: SuperForm<LogSchema>;
 		index: number;
 	} & (
 		| {
 				type: "add";
+				data: [];
 		  }
 		| {
 				type: "drop";
@@ -21,11 +22,7 @@
 		  }
 	);
 
-	export let type: "add" | "drop";
-	export let entity: "magic_items" | "story_awards";
-	export let superform: SuperForm<LogSchema>;
-	export let index: number;
-	export let data: { id: ItemId; name: string; description: string | null }[] = [];
+	let { entity, superform, index, type, data = [] }: Props = $props();
 
 	const { form } = superform;
 
@@ -51,7 +48,7 @@
 
 	const { value: lostValue } = lostField ? formFieldProxy(superform, lostField) : { value: writable("") };
 
-	$: arrValue = type === "drop" ? (entity === "magic_items" ? $form.magicItemsLost : $form.storyAwardsLost) : [];
+	const arrValue = $derived(type === "drop" ? (entity === "magic_items" ? $form.magicItemsLost : $form.storyAwardsLost) : []);
 
 	const ondelete = () => {
 		if (type === "add") {
@@ -73,7 +70,7 @@
 				<Control class="flex-1">
 					<Input type="text" {superform} field={nameField} required>Name</Input>
 				</Control>
-				<button type="button" class="btn btn-error mt-9" on:click={() => ondelete()} aria-label="Delete Entry">
+				<button type="button" class="btn btn-error mt-9" onclick={() => ondelete()} aria-label="Delete Entry">
 					<span class="iconify size-6 mdi--trash-can"></span>
 				</button>
 			</div>
@@ -98,7 +95,7 @@
 						</select>
 					</GenericInput>
 				</Control>
-				<button type="button" class="btn btn-error mt-9" on:click={() => ondelete()} aria-label="Delete Entry">
+				<button type="button" class="btn btn-error mt-9" onclick={() => ondelete()} aria-label="Delete Entry">
 					<span class="iconify size-6 mdi--trash-can"></span>
 				</button>
 			</div>

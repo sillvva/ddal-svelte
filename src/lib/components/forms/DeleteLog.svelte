@@ -2,16 +2,16 @@
 	import { errorToast, successToast } from "$lib/factories";
 	import { searchData } from "$lib/stores";
 	import type { LogData } from "$server/data/logs";
-	import { createEventDispatcher } from "svelte";
 	import { superForm } from "sveltekit-superforms";
 
-	export let log: LogData;
-	export let deletingLog: string[] = [];
-	export let label = "";
+	interface Props {
+		log: LogData;
+		deletingLog?: string[];
+		label?: string;
+		ondelete?: (event: { id: string }) => void;
+	}
 
-	const dispatch = createEventDispatcher<{
-		deleted: { id: string };
-	}>();
+	let { log, deletingLog = $bindable([]), label = "", ondelete }: Props = $props();
 
 	const { submit } = superForm(
 		{ id: log.id },
@@ -29,7 +29,7 @@
 					deletingLog = deletingLog.filter((id) => id !== log.id);
 				} else {
 					successToast(`${log.name} deleted`);
-					dispatch("deleted", { id: log.id });
+					ondelete?.({ id: log.id });
 					$searchData = [];
 				}
 			}
@@ -37,7 +37,7 @@
 	);
 </script>
 
-<button type="button" class="btn btn-error btn-sm" aria-label="Delete Log" on:click={submit}>
+<button type="button" class="btn btn-error btn-sm" aria-label="Delete Log" onclick={submit}>
 	<span class="iconify size-4 mdi--trash-can"></span>
 	{label}
 </button>

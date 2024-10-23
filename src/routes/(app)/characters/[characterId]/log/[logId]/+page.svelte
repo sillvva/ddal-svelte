@@ -1,4 +1,5 @@
 <script lang="ts">
+	import type { page } from "$app/stores";
 	import BreadCrumbs from "$lib/components/BreadCrumbs.svelte";
 	import AddDropItems from "$lib/components/forms/AddDropItems.svelte";
 	import Combobox from "$lib/components/forms/Combobox.svelte";
@@ -11,18 +12,30 @@
 	import SuperForm from "$lib/components/forms/SuperForm.svelte";
 	import { defaultDM } from "$lib/entities";
 	import { valibotForm } from "$lib/factories.js";
-	import { logSchema } from "$lib/schemas";
+	import { logSchema, type LogSchema } from "$lib/schemas";
+	import type { DungeonMaster, MagicItem, StoryAward } from "$server/db/schema";
+	import type { SuperValidated } from "sveltekit-superforms";
 
-	export let data;
+	interface Props {
+		data: typeof $page.data & {
+			user: NonNullable<App.PageData["user"]>;
+			form: SuperValidated<LogSchema>;
+			totalLevel: number;
+			dms: DungeonMaster[];
+			magicItems: MagicItem[];
+			storyAwards: StoryAward[];
+		};
+	}
 
-	$: superform = valibotForm(data.form, logSchema);
-	$: form = superform.form;
+	let { data }: Props = $props();
 
-	let season: 1 | 8 | 9 = 9;
-	$: season = $form.experience ? 1 : $form.acp ? 8 : 9;
+	const superform = $derived(valibotForm(data.form, logSchema));
+	const form = $derived(superform.form);
+
+	let season = $state($form.experience ? 1 : $form.acp ? 8 : 9);
 </script>
 
-{#key $form.id}
+{#key $form.id || "new"}
 	<BreadCrumbs />
 
 	<SuperForm action="?/saveLog" {superform} showMessage>

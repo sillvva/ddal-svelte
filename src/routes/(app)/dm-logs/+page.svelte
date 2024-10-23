@@ -15,9 +15,9 @@
 	import MiniSearch from "minisearch";
 	import { twMerge } from "tailwind-merge";
 
-	type Props = {
+	interface Props {
 		data: typeof $page.data & { logs: DMLogsData };
-	};
+	}
 
 	let { data }: Props = $props();
 

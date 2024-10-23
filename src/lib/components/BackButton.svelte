@@ -1,10 +1,10 @@
 <script lang="ts">
 	import type { Snippet } from "svelte";
 
-	type Props = {
+	interface Props {
 		href?: string;
-		children: Snippet
-	};
+		children: Snippet;
+	}
 
 	let { href = "", children }: Props = $props();
 </script>

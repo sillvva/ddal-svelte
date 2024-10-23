@@ -34,7 +34,7 @@
 			<div class="w-full overflow-x-auto rounded-lg bg-base-100">
 				{#if data.dm.logs.length == 0}
 					<p>This DM has no logs.</p>
-					<DeleteDm dm={data.dm} label="Delete DM" on:deleted={() => goto("/dms")} />
+					<DeleteDm dm={data.dm} label="Delete DM" ondelete={() => goto("/dms")} />
 				{:else}
 					<table class="table w-full">
 						<thead>

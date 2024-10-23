@@ -5,19 +5,18 @@
 	import { twMerge } from "tailwind-merge";
 	import SearchResults from "./SearchResults.svelte";
 
-	type Props = {
+	interface Props {
 		title?: string;
 		items: Array<MagicItem | StoryAward>;
 		formatting?: boolean;
 		search?: string | null;
 		collapsible?: boolean;
 		sort?: boolean;
-	};
+	}
 
 	let { title = "", items, formatting = false, search = "", collapsible = false, sort = false }: Props = $props();
 
 	let collapsed = $state(collapsible);
-	const itemsMap = new Map<string, number>();
 
 	const sorterName = (name: string) =>
 		sort
@@ -47,8 +46,9 @@
 		return val;
 	};
 
-	const consolidatedItems = $derived(
-		structuredClone(items).reduce(
+	const consolidatedItems = $derived.by(() => {
+		const itemsMap = new Map<string, number>();
+		return items.reduce(
 			(acc, item, index) => {
 				if (index === 0) itemsMap.clear();
 				const name = fixName(clearQty(item.name));
@@ -69,8 +69,8 @@
 				return acc;
 			},
 			[] as typeof items
-		)
-	);
+		);
+	});
 
 	const sortedItems = $derived(
 		sort ? consolidatedItems.sort((a, b) => sorter(sorterName(a.name), sorterName(b.name))) : consolidatedItems

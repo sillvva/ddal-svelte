@@ -1,9 +1,14 @@
 <script lang="ts">
+	import type { Snippet } from "svelte";
 	import { type SuperForm } from "sveltekit-superforms";
 
 	type T = $$Generic<Record<PropertyKey, unknown>>;
+	interface Props {
+		superform: SuperForm<T>;
+		children: Snippet;
+	}
 
-	export let superform: SuperForm<T>;
+	let { superform, children }: Props = $props();
 
 	const { submitting } = superform;
 </script>
@@ -12,10 +17,11 @@
 	<button
 		type="submit"
 		class="btn btn-primary w-full disabled:bg-primary disabled:bg-opacity-50 disabled:text-opacity-50 md:w-auto"
+		aria-label="Submit"
 	>
 		{#if $submitting}
 			<span class="loading"></span>
 		{/if}
-		<slot />
+		{@render children()}
 	</button>
 </div>

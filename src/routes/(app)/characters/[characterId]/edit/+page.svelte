@@ -1,15 +1,23 @@
 <script lang="ts">
+	import type { page } from "$app/stores";
 	import BreadCrumbs from "$lib/components/BreadCrumbs.svelte";
 	import Control from "$lib/components/forms/Control.svelte";
 	import Input from "$lib/components/forms/Input.svelte";
 	import Submit from "$lib/components/forms/Submit.svelte";
 	import SuperForm from "$lib/components/forms/SuperForm.svelte";
 	import { valibotForm } from "$lib/factories.js";
-	import { newCharacterSchema } from "$lib/schemas";
+	import { newCharacterSchema, type NewCharacterSchema } from "$lib/schemas";
+	import type { SuperValidated } from "sveltekit-superforms";
 
-	export let data;
+	interface Props {
+		data: typeof $page.data & {
+			form: SuperValidated<NewCharacterSchema>;
+		};
+	}
 
-	$: superform = valibotForm(data.form, newCharacterSchema);
+	let { data }: Props = $props();
+
+	const superform = $derived(valibotForm(data.form, newCharacterSchema));
 </script>
 
 <BreadCrumbs />

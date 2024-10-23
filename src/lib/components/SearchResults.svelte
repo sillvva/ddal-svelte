@@ -1,12 +1,12 @@
 <script lang="ts">
 	import { stopWords } from "$lib/constants";
 
-	type Props = {
+	interface Props {
 		text?: string | string[] | null;
 		search?: string | null;
 		filtered?: boolean;
 		separator?: string;
-	};
+	}
 
 	let { text = "", search = "", filtered = false, separator = " | " }: Props = $props();
 

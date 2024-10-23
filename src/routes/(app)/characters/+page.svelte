@@ -6,18 +6,16 @@
 	import Search from "$lib/components/Search.svelte";
 	import SearchResults from "$lib/components/SearchResults.svelte";
 	import { stopWords } from "$lib/constants.js";
-	import { getApp } from "$lib/stores.js";
-	import type { TransitionAction } from "$lib/util";
+	import { getApp, getTransition } from "$lib/stores.js";
 	import { createTransition, isDefined } from "$lib/util";
 	import type { CharacterData } from "$server/data/characters";
 	import { slugify, sorter } from "@sillvva/utils";
 	import { download, hotkey } from "@svelteuidev/composables";
 	import MiniSearch from "minisearch";
-	import { getContext } from "svelte";
 	import { twMerge } from "tailwind-merge";
 
-	type Props = {
-		data: typeof $page.data & { characters: CharacterData[] }
+	interface Props {
+		data: typeof $page.data & { characters: CharacterData[] };
 	}
 
 	let { data }: Props = $props();
@@ -26,7 +24,7 @@
 	let loaded = $state(false);
 
 	const app = getApp();
-	const transition = getContext<TransitionAction>("transition");
+	const transition = getTransition();
 
 	$effect(() => {
 		setTimeout(() => (loaded = true), 1000);
@@ -43,18 +41,20 @@
 		}
 	});
 
-	const indexed = $derived(data.characters
-		? data.characters.map((character) => ({
-				characterId: character.id,
-				characterName: character.name,
-				campaign: character.campaign || "",
-				race: character.race || "",
-				class: character.class || "",
-				tier: `T${character.tier}`,
-				level: `L${character.total_level}`,
-				magicItems: character.magic_items.map((item) => item.name).join(", ")
-			}))
-		: []);
+	const indexed = $derived(
+		data.characters
+			? data.characters.map((character) => ({
+					characterId: character.id,
+					characterName: character.name,
+					campaign: character.campaign || "",
+					race: character.race || "",
+					class: character.class || "",
+					tier: `T${character.tier}`,
+					level: `L${character.total_level}`,
+					magicItems: character.magic_items.map((item) => item.name).join(", ")
+				}))
+			: []
+	);
 
 	$effect(() => {
 		minisearch.removeAll();
@@ -80,7 +80,8 @@
 					.sort((a, b) => sorter(a.total_level, b.total_level) || sorter(a.name, b.name))
 			: data.characters
 					.sort((a, b) => sorter(a.total_level, b.total_level) || sorter(a.name, b.name))
-					.map((character) => ({ ...character, score: 0, match: [] })));
+					.map((character) => ({ ...character, score: 0, match: [] }))
+	);
 </script>
 
 <div
@@ -100,14 +101,16 @@
 
 		<Dropdown class="dropdown-end">
 			{#snippet children({ close })}
-			<summary tabindex="0" class="btn btn-sm">
-				<span class="iconify size-6 mdi--dots-horizontal"></span>
-			</summary>
-			<ul class="menu dropdown-content w-52 rounded-box bg-base-200 p-2 shadow">
-				<li use:close>
-					<button use:download={{ blob: new Blob([JSON.stringify(data.characters)]), filename: "characters.json" }}>Export</button>
-				</li>
-			</ul>
+				<summary tabindex="0" class="btn btn-sm">
+					<span class="iconify size-6 mdi--dots-horizontal"></span>
+				</summary>
+				<ul class="menu dropdown-content w-52 rounded-box bg-base-200 p-2 shadow">
+					<li use:close>
+						<button use:download={{ blob: new Blob([JSON.stringify(data.characters)]), filename: "characters.json" }}
+							>Export</button
+						>
+					</li>
+				</ul>
 			{/snippet}
 		</Dropdown>
 	</div>

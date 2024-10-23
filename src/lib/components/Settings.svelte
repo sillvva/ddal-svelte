@@ -9,9 +9,9 @@
 	import Passkeys from "./Passkeys.svelte";
 	import ThemeSwitcher from "./ThemeSwitcher.svelte";
 
-	type Props = {
+	interface Props {
 		open?: boolean;
-	};
+	}
 
 	let { open = $bindable(false) }: Props = $props();
 

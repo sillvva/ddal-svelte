@@ -2,7 +2,11 @@
 	import type { Writable } from "svelte/store";
 	import { twMerge } from "tailwind-merge";
 
-	export let message: Writable<App.Superforms.Message | undefined>;
+	interface Props {
+		message: Writable<App.Superforms.Message | undefined>;
+	}
+
+	let { message }: Props = $props();
 </script>
 
 {#if $message}
