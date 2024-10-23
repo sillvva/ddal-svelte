@@ -1,9 +1,11 @@
 <script lang="ts">
+	import { browser } from "$app/environment";
 	import { enhance } from "$app/forms";
 	import { page } from "$app/stores";
 	import { PROVIDERS } from "$lib/constants";
-	import { successToast } from "$lib/factories";
-	import { pageLoader } from "$lib/stores";
+	import { successToast } from "$lib/factories.svelte";
+	import { global } from "$lib/stores.svelte";
+	import { setCookie } from "$server/cookie";
 	import { signIn, signOut } from "@auth/sveltekit/client";
 	import { twMerge } from "tailwind-merge";
 	import Passkeys from "./Passkeys.svelte";
@@ -30,6 +32,10 @@
 			.join("")
 			.slice(0, 2) || ""
 	);
+
+	$effect(() => {
+		if (browser) setCookie("app", global.app);
+	});
 </script>
 
 <aside
@@ -88,11 +94,11 @@
 										use:enhance={({ cancel }) => {
 											if (!confirm(`Are you sure you want to unlink ${provider.name}?`)) return cancel();
 
-											$pageLoader = true;
+											global.pageLoader = true;
 											open = false;
 											return async ({ update }) => {
 												await update();
-												$pageLoader = false;
+												global.pageLoader = false;
 												successToast(`${provider.name} unlinked`);
 											};
 										}}

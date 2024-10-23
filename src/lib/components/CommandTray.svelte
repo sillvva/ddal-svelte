@@ -2,7 +2,7 @@
 	import { browser } from "$app/environment";
 	import { goto } from "$app/navigation";
 	import { searchSections } from "$lib/constants.js";
-	import { searchData } from "$lib/stores";
+	import { global } from "$lib/stores.svelte";
 	import type { SearchData } from "$src/routes/(api)/command/+server";
 	import { sorter } from "@sillvva/utils";
 	import { hotkey } from "@svelteuidev/composables";
@@ -10,73 +10,80 @@
 	import { Command } from "cmdk-sv";
 	import { twMerge } from "tailwind-merge";
 
-	export let isMac = false;
+	let { isMac = false } = $props();
 
 	const defaultSelected: string = searchSections[0].url;
-	let search = "";
-	let cmdOpen = false;
-	let selected: string = defaultSelected;
-	let resultsPane: HTMLElement;
 
-	$: words = Array.from(new Set(search.toLowerCase().split(" "))).filter(Boolean);
-	$: query = words.join(" ");
-	$: if (!$searchData.length && browser && cmdOpen) {
-		fetch(`/command`)
-			.then((res) => res.json() as Promise<SearchData>)
-			.then((res) => ($searchData = res));
-	}
+	let search = $state("");
+	let cmdOpen = $state(false);
+	let selected: string = $state(defaultSelected);
+	let resultsPane: HTMLElement | undefined = $state();
 
-	$: if (!cmdOpen) {
-		search = "";
-		selected = defaultSelected;
-	}
+	const words = $derived(Array.from(new Set(search.toLowerCase().split(" "))).filter(Boolean));
+	const query = $derived(words.join(" "));
+
+	$effect(() => {
+		if (!global.searchData.length && browser && cmdOpen) {
+			fetch(`/command`)
+				.then((res) => res.json() as Promise<SearchData>)
+				.then((res) => (global.searchData = res));
+		}
+	});
 
 	function hasMatch(item: string) {
 		const matches = words.filter((word) => item.toLowerCase().includes(word));
 		return matches.length ? matches : null;
 	}
 
-	$: results = $searchData
-		.map((section) => ({
-			title: section.title,
-			items: section.items
-				.filter((item) => {
-					if (item.type === "section" && words.length) return false;
-					let matcher = new Set([item.name]);
-					if (query.length >= 2) {
-						if (item.type === "character") {
-							matcher.add(`${item.race} ${item.class} ${item.class} ${item.campaign} L${item.total_level} T${item.tier}`);
-							item.magic_items.forEach((magicItem) => matcher.add(magicItem.name));
-							item.story_awards.forEach((storyAward) => matcher.add(storyAward.name));
+	function close() {
+		cmdOpen = false;
+		search = "";
+		selected = defaultSelected;
+	}
+
+	const results = $derived(
+		global.searchData
+			.map((section) => ({
+				title: section.title,
+				items: section.items
+					.filter((item) => {
+						if (item.type === "section" && words.length) return false;
+						let matcher = new Set([item.name]);
+						if (query.length >= 2) {
+							if (item.type === "character") {
+								matcher.add(`${item.race} ${item.class} ${item.class} ${item.campaign} L${item.total_level} T${item.tier}`);
+								item.magic_items.forEach((magicItem) => matcher.add(magicItem.name));
+								item.story_awards.forEach((storyAward) => matcher.add(storyAward.name));
+							}
+							if (item.type === "log") {
+								if (item.dm) matcher.add(item.dm.name);
+							}
 						}
-						if (item.type === "log") {
-							if (item.dm) matcher.add(item.dm.name);
-						}
-					}
-					const matches = new Set(hasMatch(Array.from(matcher).join(" ")));
-					return matches.size === words.length;
-				})
-				.sort((a, b) => {
-					if (a.type === "log" && b.type === "log") return new Date(b.date).getTime() - new Date(a.date).getTime();
-					if (hasMatch(a.name) && !hasMatch(b.name)) return -1;
-					if (!hasMatch(a.name) && hasMatch(b.name)) return 1;
-					return a.name.localeCompare(b.name);
-				})
-				.slice(0, words.length ? 1000 : 5)
-		}))
-		.filter((section) => section.items.length);
-	$: resultCounts = results.map((section) => section.items.length).filter((c) => c > 0).length;
+						const matches = new Set(hasMatch(Array.from(matcher).join(" ")));
+						return matches.size === words.length;
+					})
+					.sort((a, b) => {
+						if (a.type === "log" && b.type === "log") return new Date(b.date).getTime() - new Date(a.date).getTime();
+						if (hasMatch(a.name) && !hasMatch(b.name)) return -1;
+						if (!hasMatch(a.name) && hasMatch(b.name)) return 1;
+						return a.name.localeCompare(b.name);
+					})
+					.slice(0, words.length ? 1000 : 5)
+			}))
+			.filter((section) => section.items.length)
+	);
+	const resultCounts = $derived(results.map((section) => section.items.length).filter((c) => c > 0).length);
 </script>
 
 <button
-	on:click={() => (cmdOpen = true)}
+	onclick={() => (cmdOpen = true)}
 	class="inline-flex w-10 items-center justify-center hover-hover:md:hidden"
 	aria-label="Open Command Tray"
 >
 	<span class="iconify size-6 mdi--magnify"></span>
 </button>
 <label class="input input-bordered hidden min-w-fit cursor-text items-center gap-2 hover-hover:md:flex">
-	<input type="text" class="max-w-20 grow" placeholder="Search" on:focus={() => (cmdOpen = true)} />
+	<input type="text" class="max-w-20 grow" placeholder="Search" onfocus={() => (cmdOpen = true)} />
 	<kbd class="kbd kbd-sm">
 		{#if isMac}
 			⌘
@@ -102,7 +109,7 @@
 		[
 			"Escape",
 			() => {
-				cmdOpen = false;
+				close();
 			}
 		]
 	]}
@@ -123,22 +130,22 @@
 						type="search"
 						bind:value={search}
 						placeholder="Search"
-						on:input={() => {
+						oninput={() => {
 							const firstResult = results[0]?.items[0]?.url;
 							if (search && firstResult) selected = firstResult;
 							else selected = defaultSelected;
-							resultsPane.scrollTop = 0;
+							if (resultsPane) resultsPane.scrollTop = 0;
 						}}
-						on:keydown={(e) => {
+						onkeydown={(e) => {
 							if (e.key === "Enter") {
 								if (selected) {
 									goto(selected);
-									cmdOpen = false;
+									close();
 								} else {
 									const firstResult = results[0]?.items[0]?.url;
 									if (search && firstResult) selected = firstResult;
 									else selected = defaultSelected;
-									resultsPane.scrollTop = 0;
+									if (resultsPane) resultsPane.scrollTop = 0;
 								}
 							}
 						}}
@@ -146,7 +153,7 @@
 					<span class="iconify size-6 mdi--magnify"></span>
 				</label>
 				<Command.List class="flex flex-col gap-2" bind:el={resultsPane}>
-					{#if !$searchData.length}
+					{#if !global.searchData.length}
 						<div class="p-4 text-center font-bold">Loading data...</div>
 					{:else}
 						<Command.Empty class="p-4 text-center font-bold">No results found.</Command.Empty>
@@ -168,11 +175,7 @@
 															data-selected={selected === item.url ? "true" : undefined}
 															class:selected={selected === item.url}
 														>
-															<a
-																href={item.url}
-																on:click={() => (cmdOpen = false)}
-																class="flex gap-4 [.selected>&]:bg-neutral-500/40"
-															>
+															<a href={item.url} onclick={() => close()} class="flex gap-4 [.selected>&]:bg-neutral-500/40">
 																{#if item.type === "character"}
 																	<span class="mask mask-squircle h-12 min-w-12 max-w-12 bg-primary">
 																		<img
@@ -260,5 +263,5 @@
 		</div>
 	</div>
 
-	<button class="modal-backdrop" on:click={() => (cmdOpen = false)}>✕</button>
+	<button class="modal-backdrop" onclick={() => close()}>✕</button>
 </dialog>

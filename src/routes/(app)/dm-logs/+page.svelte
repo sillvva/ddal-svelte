@@ -8,7 +8,7 @@
 	import SearchResults from "$lib/components/SearchResults.svelte";
 	import DeleteLog from "$lib/components/forms/DeleteLog.svelte";
 	import { stopWords } from "$lib/constants";
-	import { getApp } from "$lib/stores.js";
+	import { global } from "$lib/stores.svelte.js";
 	import { sorter } from "@sillvva/utils";
 	import { download, hotkey } from "@svelteuidev/composables";
 	import MiniSearch from "minisearch";
@@ -17,7 +17,6 @@
 	let { data } = $props();
 
 	const logs = $derived(data.logs);
-	const app = getApp();
 
 	let search = $state($page.url.searchParams.get("s") || "");
 	let deletingLog = $state<string[]>([]);
@@ -64,8 +63,8 @@
 						...log,
 						score: msResults.find((result) => result.id === log.id)?.score || 0 - log.date.getTime()
 					}))
-					.sort((a, b) => ($app.dmLogs.sort === "asc" ? sorter(a.date, b.date) : sorter(b.date, a.date)))
-			: logs.sort((a, b) => ($app.dmLogs.sort === "asc" ? sorter(a.date, b.date) : sorter(b.date, a.date)))
+					.sort((a, b) => (global.app.dmLogs.sort === "asc" ? sorter(a.date, b.date) : sorter(b.date, a.date)))
+			: logs.sort((a, b) => (global.app.dmLogs.sort === "asc" ? sorter(a.date, b.date) : sorter(b.date, a.date)))
 	);
 	const hasStoryAwards = $derived(results.find((log) => log.storyAwardsGained.length));
 
@@ -121,13 +120,13 @@
 		</div>
 		<button
 			class="btn btn-primary sm:btn-sm"
-			onclick={() => ($app.dmLogs.sort = $app.dmLogs.sort === "asc" ? "desc" : "asc")}
+			onclick={() => (global.app.dmLogs.sort = global.app.dmLogs.sort === "asc" ? "desc" : "asc")}
 			aria-label="Sort"
 		>
 			<span
 				class={twMerge(
 					"iconify size-6",
-					$app.dmLogs.sort === "asc" ? "mdi--sort-calendar-ascending" : "mdi--sort-calendar-descending"
+					global.app.dmLogs.sort === "asc" ? "mdi--sort-calendar-ascending" : "mdi--sort-calendar-descending"
 				)}
 			></span>
 		</button>

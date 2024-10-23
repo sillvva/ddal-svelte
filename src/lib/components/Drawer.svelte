@@ -1,7 +1,7 @@
 <script lang="ts">
 	import { enhance } from "$app/forms";
 	import { page } from "$app/stores";
-	import { pageLoader, searchData } from "$lib/stores";
+	import { global } from "$lib/stores.svelte";
 	import { twMerge } from "tailwind-merge";
 
 	let drawer = $state(false);
@@ -72,12 +72,12 @@
 			method="POST"
 			action="/characters?/clearCaches"
 			use:enhance={() => {
-				$pageLoader = true;
+				global.pageLoader = true;
 				return async ({ update }) => {
 					await update();
 					toggleDrawer(false);
-					$searchData = [];
-					$pageLoader = false;
+					global.searchData = [];
+					global.pageLoader = false;
 				};
 			}}
 		>

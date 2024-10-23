@@ -6,7 +6,7 @@
 	import Search from "$lib/components/Search.svelte";
 	import SearchResults from "$lib/components/SearchResults.svelte";
 	import { stopWords } from "$lib/constants.js";
-	import { getApp, getTransition } from "$lib/stores.js";
+	import { getTransition, global } from "$lib/stores.svelte.js";
 	import { createTransition, isDefined } from "$lib/util";
 	import { slugify, sorter } from "@sillvva/utils";
 	import { download, hotkey } from "@svelteuidev/composables";
@@ -18,7 +18,6 @@
 	let search = $state($page.url.searchParams.get("s") || "");
 	let loaded = $state(false);
 
-	const app = getApp();
 	const transition = getTransition();
 
 	$effect(() => {
@@ -131,13 +130,13 @@
 					<span class="iconify inline size-6 mdi--plus"></span>
 				</a>
 				<button
-					class={twMerge("btn inline-flex xs:hidden", $app.characters.magicItems && "btn-primary")}
-					onclick={() => ($app.characters.magicItems = !$app.characters.magicItems)}
+					class={twMerge("btn inline-flex xs:hidden", global.app.characters.magicItems && "btn-primary")}
+					onclick={() => (global.app.characters.magicItems = !global.app.characters.magicItems)}
 					onkeypress={() => null}
 					aria-label="Toggle Magic Items"
 					tabindex="0"
 				>
-					{#if $app.characters.magicItems}
+					{#if global.app.characters.magicItems}
 						<span class="iconify size-6 mdi--shield-sword"></span>
 					{:else}
 						<span class="iconify size-6 mdi--shield-sword-outline"></span>
@@ -145,15 +144,15 @@
 				</button>
 			</div>
 			<div class="ml-auto flex gap-2 sm:ml-0">
-				{#if $app.characters.display != "grid"}
+				{#if global.app.characters.display != "grid"}
 					<button
-						class={twMerge("btn sm:btn-sm max-xs:hidden", $app.characters.magicItems && "btn-primary")}
-						onclick={() => createTransition(() => ($app.characters.magicItems = !$app.characters.magicItems))}
+						class={twMerge("btn sm:btn-sm max-xs:hidden", global.app.characters.magicItems && "btn-primary")}
+						onclick={() => createTransition(() => (global.app.characters.magicItems = !global.app.characters.magicItems))}
 						onkeypress={() => null}
 						aria-label="Toggle Magic Items"
 						tabindex="0"
 					>
-						{#if $app.characters.magicItems}
+						{#if global.app.characters.magicItems}
 							<span class="iconify size-6 mdi--eye max-xs:hidden sm:max-md:hidden"></span>
 							<span class="iconify size-6 mdi--shield-sword xs:max-sm:hidden md:hidden"></span>
 						{:else}
@@ -165,16 +164,22 @@
 				{/if}
 				<div class="join max-xs:hidden">
 					<button
-						class={twMerge("btn join-item sm:btn-sm", $app.characters.display == "list" ? "btn-primary" : "hover:btn-primary")}
-						onclick={() => createTransition(() => ($app.characters.display = "list"))}
+						class={twMerge(
+							"btn join-item sm:btn-sm",
+							global.app.characters.display == "list" ? "btn-primary" : "hover:btn-primary"
+						)}
+						onclick={() => createTransition(() => (global.app.characters.display = "list"))}
 						onkeypress={() => null}
 						aria-label="List View"
 					>
 						<span class="iconify mdi--format-list-text"></span>
 					</button>
 					<button
-						class={twMerge("btn join-item sm:btn-sm", $app.characters.display == "grid" ? "btn-primary" : "hover:btn-primary")}
-						onclick={() => createTransition(() => ($app.characters.display = "grid"))}
+						class={twMerge(
+							"btn join-item sm:btn-sm",
+							global.app.characters.display == "grid" ? "btn-primary" : "hover:btn-primary"
+						)}
+						onclick={() => createTransition(() => (global.app.characters.display = "grid"))}
 						onkeypress={() => null}
 						aria-label="Grid View"
 					>
@@ -185,7 +190,7 @@
 		</div>
 
 		<div>
-			<div class={twMerge("w-full overflow-x-auto rounded-lg", $app.characters.display == "grid" && "block xs:hidden")}>
+			<div class={twMerge("w-full overflow-x-auto rounded-lg", global.app.characters.display == "grid" && "block xs:hidden")}>
 				<div
 					class={twMerge(
 						"grid-table bg-base-200",
@@ -260,7 +265,7 @@
 										<SearchResults text={character.campaign} {search} />
 									</p>
 								</div>
-								{#if (character.match.includes("magicItems") || $app.characters.magicItems) && character.magic_items.length}
+								{#if (character.match.includes("magicItems") || global.app.characters.magicItems) && character.magic_items.length}
 									<div class="mb-2">
 										<p class="font-semibold">Magic Items:</p>
 										<SearchResults text={character.magic_items.map((item) => item.name)} {search} />
@@ -303,8 +308,8 @@
 					<h1
 						class={twMerge(
 							"pb-2 font-vecna text-3xl font-bold dark:text-white",
-							$app.characters.display == "list" && "hidden",
-							$app.characters.display == "grid" && "max-xs:hidden",
+							global.app.characters.display == "list" && "hidden",
+							global.app.characters.display == "grid" && "max-xs:hidden",
 							tier > 1 && "pt-6"
 						)}
 					>
@@ -313,7 +318,7 @@
 					<div
 						class={twMerge(
 							"hidden w-full",
-							$app.characters.display == "grid" && "grid-cols-2 gap-4 xs:grid sm:grid-cols-3 md:grid-cols-4"
+							global.app.characters.display == "grid" && "grid-cols-2 gap-4 xs:grid sm:grid-cols-3 md:grid-cols-4"
 						)}
 					>
 						{#each results.filter((c) => c.tier == tier) as character}

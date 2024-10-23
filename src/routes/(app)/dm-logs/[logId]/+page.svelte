@@ -9,7 +9,7 @@
 	import MdTextInput from "$lib/components/forms/MDTextInput.svelte";
 	import Submit from "$lib/components/forms/Submit.svelte";
 	import SuperForm from "$lib/components/forms/SuperForm.svelte";
-	import { valibotForm } from "$lib/factories.js";
+	import { valibotForm } from "$lib/factories.svelte.js";
 	import { dMLogSchema } from "$lib/schemas";
 
 	let { data } = $props();

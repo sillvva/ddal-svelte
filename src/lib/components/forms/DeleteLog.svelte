@@ -1,6 +1,6 @@
 <script lang="ts">
-	import { errorToast, successToast } from "$lib/factories";
-	import { searchData } from "$lib/stores";
+	import { errorToast, successToast } from "$lib/factories.svelte";
+	import { global } from "$lib/stores.svelte";
 	import type { LogData } from "$server/data/logs";
 	import { superForm } from "sveltekit-superforms";
 
@@ -30,7 +30,7 @@
 				} else {
 					successToast(`${log.name} deleted`);
 					ondelete?.({ id: log.id });
-					$searchData = [];
+					global.searchData = [];
 				}
 			}
 		}

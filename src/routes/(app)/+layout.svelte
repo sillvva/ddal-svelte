@@ -6,7 +6,7 @@
 	import Drawer from "$lib/components/Drawer.svelte";
 	import Markdown from "$lib/components/Markdown.svelte";
 	import Settings from "$lib/components/Settings.svelte";
-	import { getApp, pageLoader } from "$lib/stores";
+	import { global } from "$lib/stores.svelte.js";
 	import { hotkey } from "@svelteuidev/composables";
 	import { Toaster } from "svelte-sonner";
 	import { fade } from "svelte/transition";
@@ -14,13 +14,11 @@
 
 	let { data, children } = $props();
 
-	const app = getApp();
-
 	let settingsOpen = $state(false);
 	let y = $state(0);
 
-	afterNavigate(() => {
-		pageLoader.set(false);
+	afterNavigate((nav) => {
+		global.pageLoader = false;
 	});
 
 	$effect(() => {
@@ -61,7 +59,7 @@
 
 <svelte:window bind:scrollY={y} />
 
-{#if $pageLoader || $navigating}
+{#if global.pageLoader || $navigating}
 	<div
 		class="fixed inset-0 z-40 flex items-center justify-center bg-black/50"
 		in:fade={{ duration: 100, delay: 400 }}
@@ -125,7 +123,9 @@
 			</div>
 		</nav>
 	</header>
-	<div class="container relative z-10 mx-auto max-w-5xl flex-1 p-4">{@render children()}</div>
+	<div class="container relative z-10 mx-auto max-w-5xl flex-1 p-4">
+		{@render children()}
+	</div>
 	<footer class="z-16 footer footer-center relative border-t border-base-300 p-4 text-base-content print:hidden">
 		<div>
 			<p>
@@ -142,7 +142,7 @@
 	</footer>
 </div>
 
-<Toaster richColors closeButton theme={$app.settings.mode} />
+<Toaster richColors closeButton theme={global.app.settings.mode} />
 
 <dialog
 	class={twMerge("modal !bg-base-300/75")}

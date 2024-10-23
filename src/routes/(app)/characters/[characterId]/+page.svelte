@@ -10,7 +10,7 @@
 	import DeleteCharacter from "$lib/components/forms/DeleteCharacter.svelte";
 	import DeleteLog from "$lib/components/forms/DeleteLog.svelte";
 	import { stopWords } from "$lib/constants.js";
-	import { getApp, getTransition } from "$lib/stores.js";
+	import { getTransition, global } from "$lib/stores.svelte.js";
 	import { createTransition } from "$lib/util";
 	import { slugify, sorter } from "@sillvva/utils";
 	import { download, hotkey } from "@svelteuidev/composables";
@@ -19,7 +19,6 @@
 
 	let { data } = $props();
 
-	const app = getApp();
 	const transition = getTransition();
 
 	const myCharacter = $derived(data.character.userId === data.session?.user?.id);
@@ -92,7 +91,7 @@
 	);
 
 	function triggerModal(log: (typeof results)[number]) {
-		if (log.description && !$app.log.descriptions) {
+		if (log.description && !global.app.log.descriptions) {
 			pushState("", {
 				modal: {
 					type: "text",
@@ -337,13 +336,13 @@
 				<span class="iconify size-6 mdi--plus"></span>
 			</a>
 			<button
-				class={twMerge("btn sm:hidden", $app.log.descriptions && "btn-primary")}
-				onclick={() => createTransition(() => ($app.log.descriptions = !$app.log.descriptions))}
+				class={twMerge("btn sm:hidden", global.app.log.descriptions && "btn-primary")}
+				onclick={() => createTransition(() => (global.app.log.descriptions = !global.app.log.descriptions))}
 				onkeypress={() => null}
 				aria-label="Toggle Notes"
 				tabindex="0"
 			>
-				{#if $app.log.descriptions}
+				{#if global.app.log.descriptions}
 					<span class="iconify size-6 mdi--note-text"></span>
 				{:else}
 					<span class="iconify size-6 mdi--note-text-outline"></span>
@@ -354,13 +353,13 @@
 	{#if logs.length}
 		<div class="flex-1 max-sm:hidden"></div>
 		<button
-			class={twMerge("btn sm:btn-sm max-sm:hidden", $app.log.descriptions && "btn-primary")}
-			onclick={() => createTransition(() => ($app.log.descriptions = !$app.log.descriptions))}
+			class={twMerge("btn sm:btn-sm max-sm:hidden", global.app.log.descriptions && "btn-primary")}
+			onclick={() => createTransition(() => (global.app.log.descriptions = !global.app.log.descriptions))}
 			onkeypress={() => null}
 			aria-label="Toggle Notes"
 			tabindex="0"
 		>
-			{#if $app.log.descriptions}
+			{#if global.app.log.descriptions}
 				<span class="iconify size-6 mdi--eye"></span>
 			{:else}
 				<span class="iconify size-6 mdi--eye-off"></span>
@@ -392,7 +391,7 @@
 						<td
 							class={twMerge(
 								"!static pb-0 align-top sm:pb-3 print:p-2",
-								(!$app.log.descriptions || !log.description) && "pb-3",
+								(!global.app.log.descriptions || !log.description) && "pb-3",
 								(log.description?.trim() || log.storyAwardsGained.length > 0 || log.storyAwardsLost.length > 0) && "border-b-0"
 							)}
 						>
@@ -536,7 +535,10 @@
 						{/if}
 					</tr>
 					{#if log.description?.trim() || log.storyAwardsGained.length > 0 || log.storyAwardsLost.length > 0}
-						<tr class={twMerge(!$app.log.descriptions && "hidden print:table-row")} use:transition={slugify(`notes-${log.id}`)}>
+						<tr
+							class={twMerge(!global.app.log.descriptions && "hidden print:table-row")}
+							use:transition={slugify(`notes-${log.id}`)}
+						>
 							<td colSpan={100} class="max-w-[calc(100vw_-_50px)] pt-0 text-sm print:p-2 print:text-xs">
 								{#if log.description?.trim()}
 									<h4 class="text-base font-semibold">Notes:</h4>

@@ -1,10 +1,7 @@
+import { browser } from "$app/environment";
 import type { SearchData } from "$src/routes/(api)/command/+server";
 import { createContext } from "svelte-contextify";
-import { writable } from "svelte/store";
 import { setupViewTransition } from "sveltekit-view-transition";
-
-export const pageLoader = writable(false);
-export const searchData = writable<SearchData>([]);
 
 export const appDefaults: App.Cookie = {
 	settings: {
@@ -24,8 +21,14 @@ export const appDefaults: App.Cookie = {
 	}
 };
 
-export const { get: getApp, set: setApp } = createContext({
-	defaultValue: writable(appDefaults)
+export const global = $state<{
+	pageLoader: boolean;
+	searchData: SearchData;
+	app: App.Cookie;
+}>({
+	pageLoader: false,
+	searchData: [],
+	app: appDefaults
 });
 
 export const { get: transitionGetter, set: transitionSetter } = createContext({
@@ -36,6 +39,6 @@ export const { get: transitionGetter, set: transitionSetter } = createContext({
 });
 export const setTransition = () => {
 	const { transition } = setupViewTransition();
-	transitionSetter(() => transition);
+	if (browser) transitionSetter(() => transition);
 };
 export const getTransition = () => transitionGetter()();

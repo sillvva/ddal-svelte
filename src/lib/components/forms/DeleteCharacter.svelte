@@ -1,6 +1,6 @@
 <script lang="ts">
-	import { errorToast, successToast } from "$lib/factories";
-	import { searchData } from "$lib/stores";
+	import { errorToast, successToast } from "$lib/factories.svelte";
+	import { global } from "$lib/stores.svelte";
 	import type { Character } from "$server/db/schema";
 	import { superForm } from "sveltekit-superforms";
 
@@ -27,7 +27,7 @@
 				} else {
 					successToast(`${character.name} deleted`);
 					ondelete?.({ id: character.id });
-					$searchData = [];
+					global.searchData = [];
 				}
 			}
 		}

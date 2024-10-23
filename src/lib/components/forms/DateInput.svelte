@@ -1,13 +1,14 @@
 <script lang="ts">
-	import { dateToDV, intDateProxy } from "$lib/factories";
+	import { dateToDV, intDateProxy } from "$lib/factories.svelte";
 	import { DatePicker, type DatePickerProps } from "bits-ui";
+	import type { Snippet } from "svelte";
 	import { formFieldProxy, type FormPathLeaves, type SuperForm } from "sveltekit-superforms";
 	import { twMerge } from "tailwind-merge";
 
 	type TForm = $$Generic<Record<PropertyKey, unknown>>;
 	type TMin = $$Generic<Date | undefined>;
 	type TMax = $$Generic<Date | undefined>;
-	interface $$Props extends DatePickerProps {
+	interface Props extends DatePickerProps {
 		superform: SuperForm<TForm, any>;
 		field: FormPathLeaves<TForm, Date>;
 		minDate?: TMin;
@@ -18,38 +19,43 @@
 		required?: boolean;
 		description?: string;
 		class?: string;
+		children?: Snippet;
 	}
 
-	export let superform: SuperForm<TForm, any>;
-	export let field: FormPathLeaves<TForm, Date>;
-	export let minDate: Date | undefined = undefined;
-	export let minDateField: FormPathLeaves<TForm, Date> | undefined = undefined;
-	export let maxDate: Date | undefined = undefined;
-	export let maxDateField: FormPathLeaves<TForm, Date> | undefined = undefined;
-	export let empty: "null" | "undefined" = "null";
-	export let required: boolean | undefined = undefined;
-	export let description = "";
-
-	let inputClass = "";
-	export { inputClass as class };
-
-	$: rest = $$restProps as DatePickerProps;
+	let {
+		superform,
+		field,
+		minDate,
+		minDateField,
+		maxDate,
+		maxDateField,
+		empty = "null",
+		required,
+		description,
+		class: inputClass = "",
+		children,
+		...rest
+	}: Props = $props();
 
 	const { errors, constraints } = formFieldProxy(superform, field);
 
-	$: proxyValue = intDateProxy(superform, field, { empty });
-	$: proxyMin = minDateField && intDateProxy(superform, minDateField);
-	$: proxyMax = maxDateField && intDateProxy(superform, maxDateField);
+	const proxyValue = $derived(intDateProxy(superform, field, { empty }));
+	const proxyMin = $derived(minDateField && intDateProxy(superform, minDateField));
+	const proxyMax = $derived(maxDateField && intDateProxy(superform, maxDateField));
 
-	$: minDateValue = minDate && dateToDV(minDate);
-	$: maxDateValue = maxDate && dateToDV(maxDate);
-	$: minProxyValue = proxyMin && $proxyMin;
-	$: maxProxyValue = proxyMax && $proxyMax;
-	$: minValue = rest?.minValue || minDateValue || minProxyValue;
-	$: maxValue = rest?.maxValue || maxDateValue || maxProxyValue;
+	const minDateValue = $derived(minDate && dateToDV(minDate));
+	const maxDateValue = $derived(maxDate && dateToDV(maxDate));
+	const minProxyValue = $derived(proxyMin && $proxyMin);
+	const maxProxyValue = $derived(proxyMax && $proxyMax);
+	const minValue = $derived(rest?.minValue || minDateValue || minProxyValue);
+	const maxValue = $derived(rest?.maxValue || maxDateValue || maxProxyValue);
 
-	$: if ($proxyValue && minValue && $proxyValue.compare(minValue) < 0) $proxyValue = minValue;
-	$: if ($proxyValue && maxValue && $proxyValue.compare(maxValue) > 0) $proxyValue = maxValue;
+	$effect(() => {
+		if ($proxyValue && minValue && $proxyValue.compare(minValue) < 0) $proxyValue = minValue;
+	});
+	$effect(() => {
+		if ($proxyValue && maxValue && $proxyValue.compare(maxValue) > 0) $proxyValue = maxValue;
+	});
 </script>
 
 <DatePicker.Root
@@ -62,7 +68,7 @@
 >
 	<DatePicker.Label class="label">
 		<span class="label-text">
-			<slot />
+			{@render children?.()}
 			{#if $constraints?.required || required}
 				<span class="text-error">*</span>
 			{/if}

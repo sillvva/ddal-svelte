@@ -1,24 +1,23 @@
 <script lang="ts">
 	import { dev } from "$app/environment";
 	import { page } from "$app/stores";
-	import { setApp, setTransition } from "$lib/stores";
-	import { cookieStore } from "$server/cookie";
+	import { global, setTransition } from "$lib/stores.svelte";
 	import { twMerge } from "tailwind-merge";
 	import "../app.css";
 
 	let { data, children } = $props();
 
-	const app = $derived(setApp(cookieStore("app", data.app)));
+	global.app = data.app;
 	setTransition();
 </script>
 
 <div
-	class={twMerge("no-script-hide min-h-dvh bg-base-100 text-base-content", $app.settings.mode)}
+	class={twMerge("no-script-hide min-h-dvh bg-base-100 text-base-content", global.app.settings.mode)}
 	data-theme={$page.route.id?.startsWith("/(app)")
-		? $app.settings.theme === "system" && $app.settings.mode === "dark"
+		? global.app.settings.theme === "system" && global.app.settings.mode === "dark"
 			? "black"
-			: $app.settings.theme
-		: $app.settings.mode}
+			: global.app.settings.theme
+		: global.app.settings.mode}
 >
 	{@render children()}
 </div>

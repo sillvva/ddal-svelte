@@ -1,8 +1,8 @@
 <script lang="ts">
 	import { invalidateAll } from "$app/navigation";
 	import { page } from "$app/stores";
-	import { errorToast, successToast } from "$lib/factories";
-	import { getApp } from "$lib/stores";
+	import { errorToast, successToast } from "$lib/factories.svelte";
+	import { global } from "$lib/stores.svelte";
 	import type { DeleteWebAuthnResponse, RenameWebAuthnResponse } from "$src/routes/(api)/webAuthn/+server";
 	import { signIn } from "@auth/sveltekit/webauthn";
 	import { hotkey } from "@svelteuidev/composables";
@@ -10,11 +10,9 @@
 	import { scale } from "svelte/transition";
 	import Control from "./forms/Control.svelte";
 
-	const app = getApp();
-
 	const authenticators = $derived($page.data.user?.authenticators || []);
 	$effect(() => {
-		if (authenticators.length == 0) $app.settings.autoWebAuthn = false;
+		if (authenticators.length == 0) global.app.settings.autoWebAuthn = false;
 	});
 
 	let renaming = $state(false);
@@ -135,7 +133,7 @@
 			<label class="flex gap-2 hover:bg-transparent">
 				<span class="iconify size-6 mdi--auto-fix"></span>
 				<span class="flex-1 text-base">Auto Passkey Login</span>
-				<input type="checkbox" class="toggle" bind:checked={$app.settings.autoWebAuthn} />
+				<input type="checkbox" class="toggle" bind:checked={global.app.settings.autoWebAuthn} />
 			</label>
 		</li>
 		<li class="flex-row gap-2">

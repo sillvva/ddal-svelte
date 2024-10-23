@@ -10,7 +10,7 @@
 	import Submit from "$lib/components/forms/Submit.svelte";
 	import SuperForm from "$lib/components/forms/SuperForm.svelte";
 	import { defaultDM } from "$lib/entities";
-	import { valibotForm } from "$lib/factories.js";
+	import { valibotForm } from "$lib/factories.svelte.js";
 	import { logSchema } from "$lib/schemas";
 
 	let { data } = $props();
