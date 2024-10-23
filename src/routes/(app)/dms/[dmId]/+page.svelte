@@ -10,9 +10,9 @@
 	import { dungeonMasterSchema } from "$lib/schemas";
 	import { sorter } from "@sillvva/utils";
 
-	export let data;
+	let { data } = $props();
 
-	$: superform = valibotForm(data.form, dungeonMasterSchema);
+	const superform = $derived(valibotForm(data.form, dungeonMasterSchema));
 </script>
 
 <div class="flex flex-col gap-4">

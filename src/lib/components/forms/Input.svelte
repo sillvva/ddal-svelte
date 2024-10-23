@@ -30,7 +30,7 @@
 		description?: string;
 		oninput?: (value: FormPathType<T, FormPathLeaves<T, LeafType>>) => void;
 		onchange?: (value: FormPathType<T, FormPathLeaves<T, LeafType>>) => void;
-		children: Snippet;
+		children?: Snippet;
 	}
 
 	let {
@@ -73,7 +73,7 @@
 
 <label for={field} class="label">
 	<span class="label-text">
-		{@render children()}
+		{@render children?.()}
 		{#if commonProps.required}
 			<span class="text-error">*</span>
 		{/if}

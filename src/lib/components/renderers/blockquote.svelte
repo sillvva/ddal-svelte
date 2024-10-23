@@ -1,4 +1,8 @@
 <script lang="ts">
+	import type { Snippet } from "svelte";
+
+	let { children }: { children?: Snippet } = $props();
+
 	function bq(el: HTMLDetailsElement) {
 		const iHTML = el.innerHTML.trim();
 		const matches = iHTML.match(/\<(h\d)/);
@@ -10,4 +14,4 @@
 	}
 </script>
 
-<details use:bq><slot /></details>
+<details use:bq>{@render children?.()}</details>

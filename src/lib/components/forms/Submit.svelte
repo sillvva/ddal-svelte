@@ -5,7 +5,7 @@
 	type T = $$Generic<Record<PropertyKey, unknown>>;
 	interface Props {
 		superform: SuperForm<T>;
-		children: Snippet;
+		children?: Snippet;
 	}
 
 	let { superform, children }: Props = $props();
@@ -22,6 +22,6 @@
 		{#if $submitting}
 			<span class="loading"></span>
 		{/if}
-		{@render children()}
+		{@render children?.()}
 	</button>
 </div>

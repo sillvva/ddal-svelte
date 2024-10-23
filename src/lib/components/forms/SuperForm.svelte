@@ -11,7 +11,7 @@
 	interface Props extends FormAttributes {
 		superform: SuperForm<T, App.Superforms.Message>;
 		showMessage?: boolean;
-		children: Snippet;
+		children?: Snippet;
 	}
 
 	let { superform, showMessage = $bindable(false), children, ...rest }: Props = $props();
@@ -81,7 +81,7 @@
 
 <form {method} {...rest} use:enhance use:formstate>
 	<div class="grid grid-cols-12 gap-4">
-		{@render children()}
+		{@render children?.()}
 	</div>
 </form>
 

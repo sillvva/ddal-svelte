@@ -8,9 +8,9 @@
 
 	interface Props {
 		superform: SuperForm<LogSchema, App.Superforms.Message>;
-		magicItems: MagicItem[];
-		storyAwards: StoryAward[];
-		children: Snippet;
+		magicItems?: MagicItem[];
+		storyAwards?: StoryAward[];
+		children?: Snippet;
 	}
 
 	let { superform, magicItems = [], storyAwards = [], children }: Props = $props();
@@ -23,7 +23,7 @@
 </script>
 
 <div class="col-span-12 flex flex-col justify-between gap-8 md:flex-row md:pb-4 md:max-lg:gap-4">
-	{@render children()}
+	{@render children?.()}
 	<div class="flex flex-1 flex-col gap-4 sm:flex-row md:max-w-fit">
 		<div class="join flex min-w-fit flex-1">
 			<button

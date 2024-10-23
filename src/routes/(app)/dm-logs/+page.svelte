@@ -9,17 +9,12 @@
 	import DeleteLog from "$lib/components/forms/DeleteLog.svelte";
 	import { stopWords } from "$lib/constants";
 	import { getApp } from "$lib/stores.js";
-	import type { DMLogsData } from "$server/data/logs";
 	import { sorter } from "@sillvva/utils";
 	import { download, hotkey } from "@svelteuidev/composables";
 	import MiniSearch from "minisearch";
 	import { twMerge } from "tailwind-merge";
 
-	interface Props {
-		data: typeof $page.data & { logs: DMLogsData };
-	}
-
-	let { data }: Props = $props();
+	let { data } = $props();
 
 	const logs = $derived(data.logs);
 	const app = getApp();

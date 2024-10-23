@@ -5,7 +5,7 @@
 	import { twMerge } from "tailwind-merge";
 
 	interface Props extends Omit<HTMLAttributes<HTMLDetailsElement>, "children"> {
-		children: Snippet<[{ close: (node: HTMLLIElement) => void }]>;
+		children?: Snippet<[{ close: (node: HTMLLIElement) => void }]>;
 	}
 
 	let { class: className = "", children }: Props = $props();
@@ -29,5 +29,5 @@
 	class={twMerge("dropdown", className)}
 	bind:open
 >
-	{@render children({ close })}
+	{@render children?.({ close })}
 </details>

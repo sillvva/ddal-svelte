@@ -12,13 +12,12 @@
 	import { valibotForm } from "$lib/factories.js";
 	import { dMLogSchema } from "$lib/schemas";
 
-	export let data;
+	let { data } = $props();
 
-	$: superform = valibotForm(data.form, dMLogSchema());
-	$: form = superform.form;
+	let superform = $derived(valibotForm(data.form, dMLogSchema()));
+	let form = $derived(superform.form);
 
-	let season: 1 | 8 | 9 = 9;
-	$: season = $form.experience ? 1 : $form.acp ? 8 : 9;
+	let season = $state($form.experience ? 1 : $form.acp ? 8 : 9);
 </script>
 
 {#key $form.id}

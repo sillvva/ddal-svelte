@@ -1,10 +1,15 @@
 <script lang="ts">
-	export let ordered: boolean;
-	export let start: number;
+	interface Props {
+		ordered: boolean;
+		start: number;
+		children?: import("svelte").Snippet;
+	}
+
+	let { ordered, start, children }: Props = $props();
 </script>
 
 {#if ordered}
-	<ol class="list-outside ml-4" {start}><slot /></ol>
+	<ol class="ml-4 list-outside" {start}>{@render children?.()}</ol>
 {:else}
-	<ul class="list-outside ml-4"><slot /></ul>
+	<ul class="ml-4 list-outside">{@render children?.()}</ul>
 {/if}

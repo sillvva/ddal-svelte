@@ -8,17 +8,12 @@
 	import { stopWords } from "$lib/constants.js";
 	import { getApp, getTransition } from "$lib/stores.js";
 	import { createTransition, isDefined } from "$lib/util";
-	import type { CharacterData } from "$server/data/characters";
 	import { slugify, sorter } from "@sillvva/utils";
 	import { download, hotkey } from "@svelteuidev/composables";
 	import MiniSearch from "minisearch";
 	import { twMerge } from "tailwind-merge";
 
-	interface Props {
-		data: typeof $page.data & { characters: CharacterData[] };
-	}
-
-	let { data }: Props = $props();
+	let { data } = $props();
 
 	let search = $state($page.url.searchParams.get("s") || "");
 	let loaded = $state(false);
@@ -61,7 +56,10 @@
 		minisearch.addAll(indexed);
 	});
 
-	const msResults = $derived(minisearch.search(search));
+	const msResults = $derived.by(() => {
+		if (!minisearch.termCount) minisearch.addAll(indexed);
+		return minisearch.search(search);
+	});
 	const resultsMap = $derived(new Map(msResults.map((result) => [result.id, result])));
 	const results = $derived(
 		indexed.length && search.length > 1

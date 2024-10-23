@@ -3,16 +3,10 @@
 	import { page } from "$app/stores";
 	import { setApp, setTransition } from "$lib/stores";
 	import { cookieStore } from "$server/cookie";
-	import { type Snippet } from "svelte";
 	import { twMerge } from "tailwind-merge";
 	import "../app.css";
 
-	interface Props {
-		data: typeof $page.data;
-		children: Snippet;
-	}
-
-	let { data, children }: Props = $props();
+	let { data, children } = $props();
 
 	const app = $derived(setApp(cookieStore("app", data.app)));
 	setTransition();

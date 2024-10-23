@@ -1,5 +1,4 @@
 <script lang="ts">
-	import type { page } from "$app/stores";
 	import BreadCrumbs from "$lib/components/BreadCrumbs.svelte";
 	import AddDropItems from "$lib/components/forms/AddDropItems.svelte";
 	import Combobox from "$lib/components/forms/Combobox.svelte";
@@ -12,22 +11,9 @@
 	import SuperForm from "$lib/components/forms/SuperForm.svelte";
 	import { defaultDM } from "$lib/entities";
 	import { valibotForm } from "$lib/factories.js";
-	import { logSchema, type LogSchema } from "$lib/schemas";
-	import type { DungeonMaster, MagicItem, StoryAward } from "$server/db/schema";
-	import type { SuperValidated } from "sveltekit-superforms";
+	import { logSchema } from "$lib/schemas";
 
-	interface Props {
-		data: typeof $page.data & {
-			user: NonNullable<App.PageData["user"]>;
-			form: SuperValidated<LogSchema>;
-			totalLevel: number;
-			dms: DungeonMaster[];
-			magicItems: MagicItem[];
-			storyAwards: StoryAward[];
-		};
-	}
-
-	let { data }: Props = $props();
+	let { data } = $props();
 
 	const superform = $derived(valibotForm(data.form, logSchema));
 	const form = $derived(superform.form);

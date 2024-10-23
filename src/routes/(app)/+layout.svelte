@@ -8,17 +8,11 @@
 	import Settings from "$lib/components/Settings.svelte";
 	import { getApp, pageLoader } from "$lib/stores";
 	import { hotkey } from "@svelteuidev/composables";
-	import type { Snippet } from "svelte";
 	import { Toaster } from "svelte-sonner";
 	import { fade } from "svelte/transition";
 	import { twMerge } from "tailwind-merge";
 
-	interface Props {
-		data: typeof $page.data;
-		children: Snippet;
-	}
-
-	let { data, children }: Props = $props();
+	let { data, children } = $props();
 
 	const app = getApp();
 

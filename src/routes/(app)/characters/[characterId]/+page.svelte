@@ -12,17 +12,12 @@
 	import { stopWords } from "$lib/constants.js";
 	import { getApp, getTransition } from "$lib/stores.js";
 	import { createTransition } from "$lib/util";
-	import type { CharacterData } from "$server/data/characters";
 	import { slugify, sorter } from "@sillvva/utils";
 	import { download, hotkey } from "@svelteuidev/composables";
 	import MiniSearch from "minisearch";
 	import { twMerge } from "tailwind-merge";
 
-	interface Props {
-		data: typeof $page.data & { character: CharacterData };
-	}
-
-	let { data }: Props = $props();
+	let { data } = $props();
 
 	const app = getApp();
 	const transition = getTransition();
