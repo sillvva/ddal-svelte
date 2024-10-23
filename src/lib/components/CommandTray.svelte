@@ -68,8 +68,12 @@
 	$: resultCounts = results.map((section) => section.items.length).filter((c) => c > 0).length;
 </script>
 
-<button on:click={() => (cmdOpen = true)} class="inline-flex w-10 items-center justify-center hover-hover:md:hidden">
-	<span class="iconify size-6 mdi--magnify" />
+<button
+	on:click={() => (cmdOpen = true)}
+	class="inline-flex w-10 items-center justify-center hover-hover:md:hidden"
+	aria-label="Open Command Tray"
+>
+	<span class="iconify size-6 mdi--magnify"></span>
 </button>
 <label class="input input-bordered hidden min-w-fit cursor-text items-center gap-2 hover-hover:md:flex">
 	<input type="text" class="max-w-20 grow" placeholder="Search" on:focus={() => (cmdOpen = true)} />
@@ -139,7 +143,7 @@
 							}
 						}}
 					/>
-					<span class="iconify size-6 mdi--magnify" />
+					<span class="iconify size-6 mdi--magnify"></span>
 				</label>
 				<Command.List class="flex flex-col gap-2" bind:el={resultsPane}>
 					{#if !$searchData.length}
@@ -152,7 +156,7 @@
 								<ScrollArea.Content>
 									{#each results as section, i}
 										{#if i > 0}
-											<div class="divider" />
+											<div class="divider"></div>
 										{/if}
 										<Command.Group asChild let:group>
 											<ul class="menu p-0" {...group.attrs}>
@@ -214,7 +218,7 @@
 																		<div>{item.name}</div>
 																		<div class="flex gap-2 opacity-70">
 																			<span class="text-xs">{new Date(item.date).toLocaleDateString()}</span>
-																			<div class="divider divider-horizontal mx-0 w-0" />
+																			<div class="divider divider-horizontal mx-0 w-0"></div>
 																			{#if item.character}
 																				<span class="text-xs">{item.character.name}</span>
 																			{:else}
