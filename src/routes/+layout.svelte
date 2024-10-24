@@ -1,8 +1,6 @@
 <script lang="ts">
 	import { dev } from "$app/environment";
-	import { page } from "$app/stores";
 	import { global, setTransition } from "$lib/stores.svelte";
-	import { twMerge } from "tailwind-merge";
 	import "../app.css";
 
 	let { data, children } = $props();
@@ -11,14 +9,7 @@
 	setTransition();
 </script>
 
-<div
-	class={twMerge("no-script-hide min-h-dvh bg-base-100 text-base-content", global.app.settings.mode)}
-	data-theme={$page.route.id?.startsWith("/(app)")
-		? global.app.settings.theme === "system" && global.app.settings.mode === "dark"
-			? "black"
-			: global.app.settings.theme
-		: global.app.settings.mode}
->
+<div class="no-script-hide min-h-dvh bg-base-100 text-base-content">
 	{@render children()}
 </div>
 

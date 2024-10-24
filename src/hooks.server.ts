@@ -1,6 +1,8 @@
 import { privateEnv } from "$lib/env/private";
 import type { UserId } from "$lib/schemas";
+import { appDefaults } from "$lib/stores.svelte";
 import { updateAccount } from "$server/actions/users";
+import { serverGetCookie } from "$server/cookie";
 import { db, q } from "$server/db";
 import { accounts, authenticators, sessions, users, type Account } from "$server/db/schema";
 import type { Provider } from "@auth/core/providers";
@@ -200,7 +202,23 @@ const session: Handle = async ({ event, resolve }) => {
 	return response;
 };
 
-export const handle = sequence(auth.handle, session);
+const preloadTheme: Handle = async ({ event, resolve }) => {
+	const app = serverGetCookie(event.cookies, "app", appDefaults);
+	const mode = app.settings.mode;
+	const theme = event.route.id?.startsWith("/(app)")
+		? app.settings.theme === "system" && app.settings.mode === "dark"
+			? "black"
+			: app.settings.theme
+		: app.settings.mode;
+
+	return await resolve(event, {
+		transformPageChunk: ({ html }) => {
+			return html.replace(/%theme%/g, `class="${mode}" data-theme="${theme}"`);
+		}
+	});
+};
+
+export const handle = sequence(auth.handle, session, preloadTheme);
 
 async function refreshToken(account: Account) {
 	try {

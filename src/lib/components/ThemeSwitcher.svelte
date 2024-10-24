@@ -37,6 +37,17 @@
 		};
 	}
 
+	$effect(() => {
+		const mode = global.app.settings.mode;
+		const theme = global.app.settings.theme;
+		const current = theme === "system" && mode === "dark" ? "black" : theme;
+		const opposite = mode === "dark" ? "light" : "dark";
+		if (browser) {
+			document.documentElement.classList.replace(opposite, mode);
+			document.documentElement.dataset.theme = current;
+		}
+	});
+
 	const selected = $derived(themes.find((t) => t.value === global.app.settings.theme));
 	$effect(() => {
 		if (browser && selected) {
