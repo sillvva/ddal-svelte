@@ -1,5 +1,4 @@
 <script lang="ts">
-	import { browser } from "$app/environment";
 	import { goto } from "$app/navigation";
 	import { searchSections } from "$lib/constants.js";
 	import { global } from "$lib/stores.svelte";
@@ -23,7 +22,7 @@
 	const query = $derived(words.join(" "));
 
 	$effect(() => {
-		if (!global.searchData.length && browser && cmdOpen) {
+		if (!global.searchData.length && cmdOpen) {
 			fetch(`/command`)
 				.then((res) => res.json() as Promise<SearchData>)
 				.then((res) => (global.searchData = res));

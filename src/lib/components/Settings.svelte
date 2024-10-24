@@ -1,5 +1,4 @@
 <script lang="ts">
-	import { browser } from "$app/environment";
 	import { enhance } from "$app/forms";
 	import { page } from "$app/stores";
 	import { PROVIDERS } from "$lib/constants";
@@ -34,7 +33,7 @@
 	);
 
 	$effect(() => {
-		if (browser) setCookie("app", global.app);
+		setCookie("app", global.app);
 	});
 </script>
 

@@ -1,5 +1,4 @@
 <script lang="ts">
-	import { browser } from "$app/environment";
 	import { PROVIDERS } from "$lib/constants.js";
 	import { publicEnv } from "$lib/env/public.js";
 	import { global } from "$lib/stores.svelte.js";
@@ -10,7 +9,7 @@
 	let { data } = $props();
 
 	$effect(() => {
-		if (browser && global.app.settings.autoWebAuthn) {
+		if (global.app.settings.autoWebAuthn) {
 			passkey("webauthn", {
 				callbackUrl: data.redirectTo || "/characters",
 				action: "authenticate"

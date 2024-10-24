@@ -1,5 +1,4 @@
 <script lang="ts">
-	import { browser } from "$app/environment";
 	import { afterNavigate } from "$app/navigation";
 	import { navigating, page } from "$app/stores";
 	import CommandTray from "$lib/components/CommandTray.svelte";
@@ -22,10 +21,8 @@
 	});
 
 	$effect(() => {
-		if (browser) {
-			const hasCookie = document.cookie.includes("session-token");
-			if (!data.session?.user && hasCookie) location.reload();
-		}
+		const hasCookie = document.cookie.includes("session-token");
+		if (!data.session?.user && hasCookie) location.reload();
 	});
 
 	let defaultTitle = "Adventurers League Log Sheet";
