@@ -15,15 +15,9 @@
 
 	let { data } = $props();
 
-	let search = $state($page.url.searchParams.get("s") || "");
-	let loaded = $state(false);
-
 	const transition = getTransition();
 
-	$effect(() => {
-		setTimeout(() => (loaded = true), 1000);
-	});
-
+	let search = $state($page.url.searchParams.get("s") || "");
 	const minisearch = new MiniSearch({
 		fields: ["characterName", "campaign", "race", "class", "tier", "level", "magicItems"],
 		idField: "characterId",
@@ -232,22 +226,12 @@
 							{/if}
 							<div>
 								<div class="whitespace-pre-wrap text-base font-bold text-black dark:text-white sm:text-xl">
-									<span
-										use:transition={{
-											name: slugify("name-" + character.id),
-											shouldApply: loaded
-										}}
-									>
+									<span use:transition={slugify("name-" + character.id)}>
 										<SearchResults text={character.name} {search} />
 									</span>
 								</div>
 								<div class="whitespace-pre-wrap text-xs sm:text-sm">
-									<p
-										use:transition={{
-											name: slugify("details-" + character.id),
-											shouldApply: loaded
-										}}
-									>
+									<p use:transition={slugify("details-" + character.id)}>
 										<span class="inline pr-1 sm:hidden">Level {character.total_level}</span><SearchResults
 											text={character.race}
 											{search}
@@ -256,12 +240,7 @@
 									</p>
 								</div>
 								<div class="mb-2 block text-xs sm:hidden">
-									<p
-										use:transition={{
-											name: slugify("campaign-" + character.id),
-											shouldApply: loaded
-										}}
-									>
+									<p use:transition={slugify("campaign-" + character.id)}>
 										<SearchResults text={character.campaign} {search} />
 									</p>
 								</div>
@@ -273,30 +252,15 @@
 								{/if}
 							</div>
 							<div class="hidden transition-colors sm:flex">
-								<span
-									use:transition={{
-										name: slugify("campaign-" + character.id),
-										shouldApply: loaded
-									}}
-								>
+								<span use:transition={slugify("campaign-" + character.id)}>
 									<SearchResults text={character.campaign} {search} />
 								</span>
 							</div>
 							<div class="hidden justify-center transition-colors sm:flex">
-								<span
-									use:transition={{
-										name: slugify("tier-" + character.id),
-										shouldApply: loaded
-									}}>{character.tier}</span
-								>
+								<span use:transition={slugify("tier-" + character.id)}></span>
 							</div>
 							<div class="hidden justify-center transition-colors sm:flex">
-								<span
-									use:transition={{
-										name: slugify("level-" + character.id),
-										shouldApply: loaded
-									}}>{character.total_level}</span
-								>
+								<span use:transition={slugify("level-" + character.id)}></span>
 							</div>
 						</a>
 					{/each}
