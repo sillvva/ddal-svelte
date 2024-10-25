@@ -1,7 +1,5 @@
 <script lang="ts">
-	import { enhance } from "$app/forms";
 	import { page } from "$app/stores";
-	import { global } from "$lib/stores.svelte";
 	import { twMerge } from "tailwind-merge";
 
 	let drawer = $state(false);
@@ -65,26 +63,6 @@
 				DMs
 			</a>
 		</li>
-	</ul>
-	<div class="divider my-0"></div>
-	<ul class="menu menu-lg w-full">
-		<form
-			method="POST"
-			action="/characters?/clearCaches"
-			use:enhance={() => {
-				global.pageLoader = true;
-				return async ({ update }) => {
-					await update();
-					toggleDrawer(false);
-					global.searchData = [];
-					global.pageLoader = false;
-				};
-			}}
-		>
-			<li>
-				<button>Clear Cache</button>
-			</li>
-		</form>
 	</ul>
 	<div class="divider my-0"></div>
 	<ul class="menu menu-lg w-full">

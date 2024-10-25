@@ -16,7 +16,7 @@
 	let settingsOpen = $state(false);
 	let y = $state(0);
 
-	afterNavigate((nav) => {
+	afterNavigate(() => {
 		global.pageLoader = false;
 	});
 
