@@ -23,9 +23,8 @@
 			account: user?.accounts.find((a) => a.provider === p.id)
 		}))
 	);
-
 	const initials = $derived(
-		$page.data.session?.user.name
+		user?.name
 			.split(" ")
 			.map((n) => n[0])
 			.join("")
