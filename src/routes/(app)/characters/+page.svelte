@@ -257,10 +257,14 @@
 								</span>
 							</div>
 							<div class="hidden justify-center transition-colors sm:flex">
-								<span use:transition={slugify("tier-" + character.id)}></span>
+								<span use:transition={slugify("tier-" + character.id)}>
+									{character.tier}
+								</span>
 							</div>
 							<div class="hidden justify-center transition-colors sm:flex">
-								<span use:transition={slugify("level-" + character.id)}></span>
+								<span use:transition={slugify("level-" + character.id)}>
+									{character.total_level}
+								</span>
 							</div>
 						</a>
 					{/each}
