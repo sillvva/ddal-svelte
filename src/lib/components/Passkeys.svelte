@@ -12,7 +12,7 @@
 
 	const authenticators = $derived($page.data.user?.authenticators || []);
 	$effect(() => {
-		if (authenticators.length == 0) global.app.settings.autoWebAuthn = false;
+		global.app.settings.autoWebAuthn = authenticators.length > 0;
 	});
 
 	let renaming = $state(false);
@@ -128,21 +128,6 @@
 			<span>Add Passkey</span>
 		</button>
 	</li>
-	{#if authenticators.length}
-		<li class="pt-2">
-			<label class="flex gap-2 hover:bg-transparent">
-				<span class="iconify size-6 mdi--auto-fix"></span>
-				<span class="flex-1 text-base">Auto Passkey Login</span>
-				<input type="checkbox" class="toggle" bind:checked={global.app.settings.autoWebAuthn} />
-			</label>
-		</li>
-		<li class="flex-row gap-2">
-			<div class="flex gap-2 pt-0 hover:bg-transparent">
-				<span class="inline-block size-6"></span>
-				<span class="flex-1 text-sm text-gray-500">Enable this to automatically be prompted to login with a passkey</span>
-			</div>
-		</li>
-	{/if}
 </ul>
 
 <dialog
