@@ -4,12 +4,12 @@
 	import Input from "$lib/components/forms/Input.svelte";
 	import Submit from "$lib/components/forms/Submit.svelte";
 	import SuperForm from "$lib/components/forms/SuperForm.svelte";
-	import { valibotForm } from "$lib/factories.js";
+	import { valibotForm } from "$lib/factories.svelte.js";
 	import { newCharacterSchema } from "$lib/schemas";
 
-	export let data;
+	let { data } = $props();
 
-	$: superform = valibotForm(data.form, newCharacterSchema);
+	const superform = $derived(valibotForm(data.form, newCharacterSchema));
 </script>
 
 <BreadCrumbs />

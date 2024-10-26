@@ -1,23 +1,29 @@
 <script lang="ts">
 	import type { ItemId, LogSchema } from "$lib/schemas";
 	import type { MagicItem, StoryAward } from "$server/db/schema";
+	import type { Snippet } from "svelte";
 	import type { SuperForm } from "sveltekit-superforms";
 	import { twMerge } from "tailwind-merge";
 	import EntityCard from "./EntityCard.svelte";
 
-	export let superform: SuperForm<LogSchema>;
-	export let magicItems: MagicItem[] = [];
-	export let storyAwards: StoryAward[] = [];
+	interface Props {
+		superform: SuperForm<LogSchema, App.Superforms.Message>;
+		magicItems?: MagicItem[];
+		storyAwards?: StoryAward[];
+		children?: Snippet;
+	}
+
+	let { superform, magicItems = [], storyAwards = [], children }: Props = $props();
 
 	const { form } = superform;
 	const newItem = { id: "" as ItemId, name: "", description: "" };
 
-	$: remainingItems = magicItems.filter((item) => !$form.magicItemsLost.includes(item.id));
-	$: remainingAwards = storyAwards.filter((item) => !$form.storyAwardsLost.includes(item.id));
+	const remainingItems = $derived(magicItems.filter((item) => !$form.magicItemsLost.includes(item.id)));
+	const remainingAwards = $derived(storyAwards.filter((item) => !$form.storyAwardsLost.includes(item.id)));
 </script>
 
 <div class="col-span-12 flex flex-col justify-between gap-8 md:flex-row md:pb-4 md:max-lg:gap-4">
-	<slot />
+	{@render children?.()}
 	<div class="flex flex-1 flex-col gap-4 sm:flex-row md:max-w-fit">
 		<div class="join flex min-w-fit flex-1">
 			<button
@@ -36,19 +42,21 @@
 			<button
 				type="button"
 				class={twMerge("btn join-item min-w-fit max-md:flex-1 max-md:px-0", remainingItems.length == 0 && "max-md:flex-[2]")}
-				on:click={() => ($form.magicItemsGained = $form.magicItemsGained.concat(newItem))}
+				onclick={() => ($form.magicItemsGained = $form.magicItemsGained.concat(newItem))}
+				aria-label="Add Magic Item"
 			>
-				<span class="iconify mdi--plus max-md:size-6" />
+				<span class="iconify mdi--plus max-md:size-6"></span>
 			</button>
 			{#if remainingItems.length > 0}
 				<button
 					type="button"
 					class="btn join-item min-w-fit max-md:flex-1 max-md:px-0"
-					on:click={() => {
+					onclick={() => {
 						if (remainingItems[0]) $form.magicItemsLost = $form.magicItemsLost.concat(remainingItems[0].id);
 					}}
+					aria-label="Remove Magic Item"
 				>
-					<span class="iconify mdi--minus max-md:size-6" />
+					<span class="iconify mdi--minus max-md:size-6"></span>
 				</button>
 			{/if}
 		</div>
@@ -70,19 +78,21 @@
 				<button
 					type="button"
 					class={twMerge("btn join-item min-w-fit max-md:flex-1 max-md:px-0", remainingAwards.length == 0 && "max-md:flex-[2]")}
-					on:click={() => ($form.storyAwardsGained = $form.storyAwardsGained.concat(newItem))}
+					onclick={() => ($form.storyAwardsGained = $form.storyAwardsGained.concat(newItem))}
+					aria-label="Add Story Award"
 				>
-					<span class="iconify mdi--plus max-md:size-6" />
+					<span class="iconify mdi--plus max-md:size-6"></span>
 				</button>
 				{#if remainingAwards.length > 0}
 					<button
 						type="button"
 						class="btn join-item min-w-fit max-md:flex-1 max-md:px-0"
-						on:click={() => {
+						onclick={() => {
 							if (remainingAwards[0]) $form.storyAwardsLost = $form.storyAwardsLost.concat(remainingAwards[0].id);
 						}}
+						aria-label="Remove Story Award"
 					>
-						<span class="iconify mdi--minus max-md:size-6" />
+						<span class="iconify mdi--minus max-md:size-6"></span>
 					</button>
 				{/if}
 			</div>
@@ -91,13 +101,13 @@
 </div>
 <div class="col-span-12 grid grid-cols-12 gap-4 dark:text-white">
 	{#each $form.magicItemsGained as _, index}
-		<EntityCard {superform} type="add" entity="magic_items" {index} />
+		<EntityCard {superform} type="add" entity="magic_items" {index} data={[]} />
 	{/each}
 	{#each $form.magicItemsLost as _, index}
 		<EntityCard {superform} type="drop" entity="magic_items" {index} data={magicItems} />
 	{/each}
 	{#each $form.storyAwardsGained as _, index}
-		<EntityCard {superform} type="add" entity="story_awards" {index} />
+		<EntityCard {superform} type="add" entity="story_awards" {index} data={[]} />
 	{/each}
 	{#each $form.storyAwardsLost as _, index}
 		<EntityCard {superform} type="drop" entity="story_awards" {index} data={storyAwards} />

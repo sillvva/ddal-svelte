@@ -15,14 +15,14 @@
 	import tablerow from "$lib/components/renderers/tablerow.svelte";
 	import type { HTMLAttributes } from "svelte/elements";
 
-	export let content: string = "";
+	type Props = HTMLAttributes<HTMLDivElement> & {
+		content?: string;
+	};
 
-	interface $$Props extends HTMLAttributes<HTMLDivElement> {
-		content: string;
-	}
+	let { content = "", ...rest }: Props = $props();
 </script>
 
-<div {...$$restProps}>
+<div {...rest}>
 	<SvelteMarkdown
 		source={content}
 		renderers={{

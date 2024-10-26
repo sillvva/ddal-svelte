@@ -1,16 +1,21 @@
 <script lang="ts">
+	import type { Snippet } from "svelte";
 	import type { HTMLInputAttributes } from "svelte/elements";
 	import { readable } from "svelte/store";
 	import { formFieldProxy, type FormPathLeaves, type SuperForm } from "sveltekit-superforms";
 
 	type T = $$Generic<Record<PropertyKey, unknown>>;
+	interface Props {
+		superform?: SuperForm<T>;
+		field?: FormPathLeaves<T>;
+		required?: HTMLInputAttributes["required"];
+		label: string;
+		labelFor?: string;
+		fieldErrors?: string[];
+		children?: Snippet;
+	}
 
-	export let superform: SuperForm<T> | undefined = undefined;
-	export let field: FormPathLeaves<T> | undefined = undefined;
-	export let required: HTMLInputAttributes["required"] = false;
-	export let label: string;
-	export let labelFor = "";
-	export let fieldErrors: string[] = [];
+	let { superform, field, required = false, label, labelFor = "", fieldErrors = [], children }: Props = $props();
 
 	const { errors } = superform && field ? formFieldProxy(superform, field) : { errors: readable(fieldErrors) };
 </script>
@@ -23,7 +28,7 @@
 		{/if}
 	</span>
 </label>
-<slot />
+{@render children?.()}
 {#if $errors?.length}
 	<label for={labelFor || field} class="label">
 		<span class="label-text-alt text-error">{$errors}</span>

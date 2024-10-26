@@ -8,35 +8,36 @@
 	import SearchResults from "$lib/components/SearchResults.svelte";
 	import DeleteLog from "$lib/components/forms/DeleteLog.svelte";
 	import { stopWords } from "$lib/constants";
-	import { getApp } from "$lib/stores.js";
+	import { global } from "$lib/stores.svelte.js";
 	import { sorter } from "@sillvva/utils";
 	import { download, hotkey } from "@svelteuidev/composables";
 	import MiniSearch from "minisearch";
 	import { twMerge } from "tailwind-merge";
 
-	export let data;
+	let { data } = $props();
 
-	$: logs = data.logs;
-	const app = getApp();
+	const logs = $derived(data.logs);
 
-	let search = $page.url.searchParams.get("s") || "";
-	let deletingLog: string[] = [];
+	let search = $state($page.url.searchParams.get("s") || "");
+	let deletingLog = $state<string[]>([]);
 
-	$: indexed = logs
-		? logs.map((log) => ({
-				logId: log.id,
-				logName: log.name,
-				characterName: log.character?.name || "",
-				magicItems: log.magicItemsGained
-					.map((i) => i.name)
-					.concat(log.magicItemsLost.map((i) => i.name))
-					.join(", "),
-				storyAwards: log.storyAwardsGained
-					.map((i) => i.name)
-					.concat(log.storyAwardsLost.map((i) => i.name))
-					.join(", ")
-			}))
-		: [];
+	const indexed = $derived(
+		logs
+			? logs.map((log) => ({
+					logId: log.id,
+					logName: log.name,
+					characterName: log.character?.name || "",
+					magicItems: log.magicItemsGained
+						.map((i) => i.name)
+						.concat(log.magicItemsLost.map((i) => i.name))
+						.join(", "),
+					storyAwards: log.storyAwardsGained
+						.map((i) => i.name)
+						.concat(log.storyAwardsLost.map((i) => i.name))
+						.join(", ")
+				}))
+			: []
+	);
 
 	const dmLogSearch = new MiniSearch({
 		fields: ["logName", "characterName", "magicItems", "storyAwards", "logId"],
@@ -49,12 +50,12 @@
 		}
 	});
 
-	$: {
+	$effect(() => {
 		dmLogSearch.removeAll();
 		dmLogSearch.addAll(indexed);
-	}
-	$: msResults = dmLogSearch.search(search);
-	$: results =
+	});
+	const msResults = $derived(dmLogSearch.search(search));
+	const results = $derived(
 		indexed.length && search.length > 1
 			? logs
 					.filter((log) => msResults.find((result) => result.id === log.id))
@@ -62,9 +63,10 @@
 						...log,
 						score: msResults.find((result) => result.id === log.id)?.score || 0 - log.date.getTime()
 					}))
-					.sort((a, b) => ($app.dmLogs.sort === "asc" ? sorter(a.date, b.date) : sorter(b.date, a.date)))
-			: logs.sort((a, b) => ($app.dmLogs.sort === "asc" ? sorter(a.date, b.date) : sorter(b.date, a.date)));
-	$: hasStoryAwards = results.find((log) => log.storyAwardsGained.length);
+					.sort((a, b) => (global.app.dmLogs.sort === "asc" ? sorter(a.date, b.date) : sorter(b.date, a.date)))
+			: logs.sort((a, b) => (global.app.dmLogs.sort === "asc" ? sorter(a.date, b.date) : sorter(b.date, a.date)))
+	);
+	const hasStoryAwards = $derived(results.find((log) => log.storyAwardsGained.length));
 
 	function triggerModal(log: (typeof results)[number]) {
 		if (log.description) {
@@ -89,20 +91,22 @@
 			}
 		]
 	]}
-/>
+></div>
 
 <div class="flex flex-col gap-4">
 	<div class="hidden gap-4 sm:flex print:hidden">
 		<BreadCrumbs />
-		<Dropdown class="dropdown-end" let:close>
-			<summary tabindex="0" class="btn btn-sm">
-				<span class="iconify size-6 mdi--dots-horizontal" />
-			</summary>
-			<ul class="menu dropdown-content w-52 rounded-box bg-base-200 p-2 shadow">
-				<li use:close>
-					<button use:download={{ blob: new Blob([JSON.stringify(logs)]), filename: "dm-logs.json" }}>Export</button>
-				</li>
-			</ul>
+		<Dropdown class="dropdown-end">
+			{#snippet children({ close })}
+				<summary tabindex="0" class="btn btn-sm">
+					<span class="iconify size-6 mdi--dots-horizontal"></span>
+				</summary>
+				<ul class="menu dropdown-content w-52 rounded-box bg-base-200 p-2 shadow">
+					<li use:close>
+						<button use:download={{ blob: new Blob([JSON.stringify(logs)]), filename: "dm-logs.json" }}>Export</button>
+					</li>
+				</ul>
+			{/snippet}
 		</Dropdown>
 	</div>
 
@@ -111,16 +115,20 @@
 			<a href="/dm-logs/new" class="btn btn-primary btn-sm max-sm:hidden" aria-label="New Log">New Log</a>
 			<Search bind:value={search} placeholder="Search by name, race, class, items, etc." />
 			<a href="/dm-logs/new" class="btn btn-primary inline-flex sm:hidden" aria-label="New Log">
-				<span class="iconify inline size-6 mdi--plus" />
+				<span class="iconify inline size-6 mdi--plus"></span>
 			</a>
 		</div>
-		<button class="btn btn-primary sm:btn-sm" on:click={() => ($app.dmLogs.sort = $app.dmLogs.sort === "asc" ? "desc" : "asc")}>
+		<button
+			class="btn btn-primary sm:btn-sm"
+			onclick={() => (global.app.dmLogs.sort = global.app.dmLogs.sort === "asc" ? "desc" : "asc")}
+			aria-label="Sort"
+		>
 			<span
 				class={twMerge(
 					"iconify size-6",
-					$app.dmLogs.sort === "asc" ? "mdi--sort-calendar-ascending" : "mdi--sort-calendar-descending"
+					global.app.dmLogs.sort === "asc" ? "mdi--sort-calendar-ascending" : "mdi--sort-calendar-descending"
 				)}
-			/>
+			></span>
 		</button>
 	</div>
 
@@ -136,7 +144,7 @@
 						{#if hasStoryAwards}
 							<th class="min-w-48 max-lg:hidden print:table-cell">Story Awards</th>
 						{/if}
-						<th class="print:hidden" />
+						<th class="print:hidden"></th>
 					</tr>
 				</thead>
 				<tbody>

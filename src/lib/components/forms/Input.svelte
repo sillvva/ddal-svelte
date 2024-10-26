@@ -1,6 +1,14 @@
 <script lang="ts">
+	import type { Snippet } from "svelte";
 	import type { HTMLInputAttributes } from "svelte/elements";
-	import { dateProxy, formFieldProxy, numberProxy, type FormPathLeaves, type SuperForm } from "sveltekit-superforms";
+	import {
+		dateProxy,
+		formFieldProxy,
+		numberProxy,
+		type FormPathLeaves,
+		type FormPathType,
+		type SuperForm
+	} from "sveltekit-superforms";
 
 	type T = $$Generic<Record<PropertyKey, unknown>>;
 	type TType = $$Generic<"text" | "url" | "number" | "date">;
@@ -11,29 +19,34 @@
 			: TType extends "date"
 				? Date
 				: undefined;
-	interface $$Props extends HTMLInputAttributes {
+	interface Props extends Omit<HTMLInputAttributes, "onchange" | "oninput"> {
 		superform: SuperForm<T>;
 		field: FormPathLeaves<T, LeafType>;
 		type: TType;
-		empty?: TType extends "date" ? "null" | "undefined" : never;
+		empty?: TType extends "date" ? "null" | "undefined" : undefined;
 		minField?: TType extends "number" | "date" ? FormPathLeaves<T, LeafType> : never;
 		maxField?: TType extends "number" | "date" ? FormPathLeaves<T, LeafType> : never;
 		readonly?: boolean;
 		description?: string;
-		oninput?: TType extends "string" | "url" | "number" ? (value: typeof $value) => void : never;
-		onchange?: (value: typeof $value) => void;
+		oninput?: (value: FormPathType<T, FormPathLeaves<T, LeafType>>) => void;
+		onchange?: (value: FormPathType<T, FormPathLeaves<T, LeafType>>) => void;
+		children?: Snippet;
 	}
 
-	export let superform: SuperForm<T>;
-	export let field: FormPathLeaves<T, LeafType>;
-	export let type: TType;
-	export let empty: "null" | "undefined" = "null";
-	export let minField: FormPathLeaves<T> | undefined = undefined;
-	export let maxField: FormPathLeaves<T> | undefined = undefined;
-	export let readonly: boolean | undefined = undefined;
-	export let description = "";
-	export let oninput = (value: typeof $value) => {};
-	export let onchange = (value: typeof $value) => {};
+	let {
+		superform,
+		field,
+		type,
+		empty = "null",
+		minField,
+		maxField,
+		readonly,
+		description = "",
+		oninput,
+		onchange,
+		children,
+		...rest
+	}: Props = $props();
 
 	const { value, errors, constraints } = formFieldProxy(superform, field);
 
@@ -49,18 +62,18 @@
 			: dateProxy(superform, maxField, { format: "datetime-local" })
 		: undefined;
 
-	$: commonProps = {
+	const commonProps = $derived({
 		id: field,
 		class: "input input-bordered w-full focus:border-primary",
 		"aria-invalid": $errors ? "true" : undefined,
 		...$constraints,
-		...$$restProps
-	} satisfies HTMLInputAttributes;
+		...rest
+	}) satisfies HTMLInputAttributes;
 </script>
 
 <label for={field} class="label">
 	<span class="label-text">
-		<slot />
+		{@render children?.()}
 		{#if commonProps.required}
 			<span class="text-error">*</span>
 		{/if}
@@ -72,8 +85,8 @@
 		{...commonProps}
 		disabled={readonly}
 		bind:value={$value}
-		on:input={() => oninput($value)}
-		on:change={() => onchange($value)}
+		oninput={() => oninput?.($value)}
+		onchange={() => onchange?.($value)}
 	/>
 {:else if type === "url"}
 	<input
@@ -81,8 +94,8 @@
 		{...commonProps}
 		disabled={readonly}
 		bind:value={$value}
-		on:input={() => oninput($value)}
-		on:change={() => onchange($value)}
+		oninput={() => oninput?.($value)}
+		onchange={() => onchange?.($value)}
 	/>
 {:else if type === "number"}
 	<input
@@ -92,8 +105,8 @@
 		max={$proxyMax}
 		disabled={readonly}
 		bind:value={$value}
-		on:input={() => oninput($value)}
-		on:change={() => onchange($value)}
+		oninput={() => oninput?.($value)}
+		onchange={() => onchange?.($value)}
 	/>
 {:else if type === "date"}
 	<input
@@ -103,7 +116,7 @@
 		max={$proxyMax}
 		disabled={readonly}
 		bind:value={$proxyDate}
-		on:change={() => onchange($value)}
+		onchange={() => onchange?.($value)}
 	/>
 {/if}
 {#if $errors?.length || description}

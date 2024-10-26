@@ -1,1 +1,11 @@
-<table class="table mb-4 w-full overflow-hidden rounded-lg"><slot /></table>
+<script>
+	/**
+	 * @typedef {Object} Props
+	 * @property {import('svelte').Snippet} [children]
+	 */
+
+	/** @type {Props} */
+	let { children } = $props();
+</script>
+
+<table class="table mb-4 w-full overflow-hidden rounded-lg">{@render children?.()}</table>

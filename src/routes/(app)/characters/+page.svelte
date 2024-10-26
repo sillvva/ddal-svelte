@@ -6,28 +6,18 @@
 	import Search from "$lib/components/Search.svelte";
 	import SearchResults from "$lib/components/SearchResults.svelte";
 	import { stopWords } from "$lib/constants.js";
-	import { getApp } from "$lib/stores.js";
-	import type { TransitionAction } from "$lib/util";
+	import { getTransition, global } from "$lib/stores.svelte.js";
 	import { createTransition, isDefined } from "$lib/util";
 	import { slugify, sorter } from "@sillvva/utils";
 	import { download, hotkey } from "@svelteuidev/composables";
 	import MiniSearch from "minisearch";
-	import { getContext, onMount } from "svelte";
 	import { twMerge } from "tailwind-merge";
 
-	export let data;
+	let { data } = $props();
 
-	$: characters = data.characters;
-	let search = $page.url.searchParams.get("s") || "";
-	let loaded = false;
+	const transition = getTransition();
 
-	const app = getApp();
-	const transition = getContext<TransitionAction>("transition");
-
-	onMount(() => {
-		setTimeout(() => (loaded = true), 1000);
-	});
-
+	let search = $state($page.url.searchParams.get("s") || "");
 	const minisearch = new MiniSearch({
 		fields: ["characterName", "campaign", "race", "class", "tier", "level", "magicItems"],
 		idField: "characterId",
@@ -39,28 +29,34 @@
 		}
 	});
 
-	$: indexed = characters
-		? characters.map((character) => ({
-				characterId: character.id,
-				characterName: character.name,
-				campaign: character.campaign || "",
-				race: character.race || "",
-				class: character.class || "",
-				tier: `T${character.tier}`,
-				level: `L${character.total_level}`,
-				magicItems: character.magic_items.map((item) => item.name).join(", ")
-			}))
-		: [];
+	const indexed = $derived(
+		data.characters
+			? data.characters.map((character) => ({
+					characterId: character.id,
+					characterName: character.name,
+					campaign: character.campaign || "",
+					race: character.race || "",
+					class: character.class || "",
+					tier: `T${character.tier}`,
+					level: `L${character.total_level}`,
+					magicItems: character.magic_items.map((item) => item.name).join(", ")
+				}))
+			: []
+	);
 
-	$: {
+	$effect(() => {
 		minisearch.removeAll();
 		minisearch.addAll(indexed);
-	}
-	$: msResults = minisearch.search(search);
-	$: resultsMap = new Map(msResults.map((result) => [result.id, result]));
-	$: results =
+	});
+
+	const msResults = $derived.by(() => {
+		if (!minisearch.termCount) minisearch.addAll(indexed);
+		return minisearch.search(search);
+	});
+	const resultsMap = $derived(new Map(msResults.map((result) => [result.id, result])));
+	const results = $derived(
 		indexed.length && search.length > 1
-			? characters
+			? data.characters
 					.filter((character) => resultsMap.has(character.id))
 					.map((character) => {
 						const { score = character.name, match = {} } = resultsMap.get(character.id) || {};
@@ -73,9 +69,10 @@
 						};
 					})
 					.sort((a, b) => sorter(a.total_level, b.total_level) || sorter(a.name, b.name))
-			: characters
+			: data.characters
 					.sort((a, b) => sorter(a.total_level, b.total_level) || sorter(a.name, b.name))
-					.map((character) => ({ ...character, score: 0, match: [] }));
+					.map((character) => ({ ...character, score: 0, match: [] }))
+	);
 </script>
 
 <div
@@ -87,25 +84,29 @@
 			}
 		]
 	]}
-/>
+></div>
 
 <div class="flex flex-col gap-4">
 	<div class="hidden gap-4 sm:flex">
 		<BreadCrumbs />
 
-		<Dropdown class="dropdown-end" let:close>
-			<summary tabindex="0" class="btn btn-sm">
-				<span class="iconify size-6 mdi--dots-horizontal" />
-			</summary>
-			<ul class="menu dropdown-content w-52 rounded-box bg-base-200 p-2 shadow">
-				<li use:close>
-					<button use:download={{ blob: new Blob([JSON.stringify(characters)]), filename: "characters.json" }}>Export</button>
-				</li>
-			</ul>
+		<Dropdown class="dropdown-end">
+			{#snippet children({ close })}
+				<summary tabindex="0" class="btn btn-sm">
+					<span class="iconify size-6 mdi--dots-horizontal"></span>
+				</summary>
+				<ul class="menu dropdown-content w-52 rounded-box bg-base-200 p-2 shadow">
+					<li use:close>
+						<button use:download={{ blob: new Blob([JSON.stringify(data.characters)]), filename: "characters.json" }}
+							>Export</button
+						>
+					</li>
+				</ul>
+			{/snippet}
 		</Dropdown>
 	</div>
 
-	{#if !characters.length}
+	{#if !data.characters.length}
 		<section class="bg-base-200">
 			<div class="py-20 text-center">
 				<p class="mb-4">You have no log sheets.</p>
@@ -120,66 +121,70 @@
 				<a href="/characters/new/edit" class="btn btn-primary btn-sm max-sm:hidden">New Character</a>
 				<Search bind:value={search} placeholder="Search by name, race, class, items, etc." />
 				<a href="/characters/new/edit" class="btn btn-primary sm:hidden" aria-label="New Character">
-					<span class="iconify inline size-6 mdi--plus" />
+					<span class="iconify inline size-6 mdi--plus"></span>
 				</a>
 				<button
-					class={twMerge("btn inline-flex xs:hidden", $app.characters.magicItems && "btn-primary")}
-					on:click={() => ($app.characters.magicItems = !$app.characters.magicItems)}
-					on:keypress={() => null}
-					on:keypress
+					class={twMerge("btn inline-flex xs:hidden", global.app.characters.magicItems && "btn-primary")}
+					onclick={() => (global.app.characters.magicItems = !global.app.characters.magicItems)}
+					onkeypress={() => null}
 					aria-label="Toggle Magic Items"
 					tabindex="0"
 				>
-					{#if $app.characters.magicItems}
-						<span class="iconify size-6 mdi--shield-sword" />
+					{#if global.app.characters.magicItems}
+						<span class="iconify size-6 mdi--shield-sword"></span>
 					{:else}
-						<span class="iconify size-6 mdi--shield-sword-outline" />
+						<span class="iconify size-6 mdi--shield-sword-outline"></span>
 					{/if}
 				</button>
 			</div>
 			<div class="ml-auto flex gap-2 sm:ml-0">
-				{#if $app.characters.display != "grid"}
+				{#if global.app.characters.display != "grid"}
 					<button
-						class={twMerge("btn sm:btn-sm max-xs:hidden", $app.characters.magicItems && "btn-primary")}
-						on:click={() => createTransition(() => ($app.characters.magicItems = !$app.characters.magicItems))}
-						on:keypress={() => null}
-						on:keypress
+						class={twMerge("btn sm:btn-sm max-xs:hidden", global.app.characters.magicItems && "btn-primary")}
+						onclick={() => createTransition(() => (global.app.characters.magicItems = !global.app.characters.magicItems))}
+						onkeypress={() => null}
 						aria-label="Toggle Magic Items"
 						tabindex="0"
 					>
-						{#if $app.characters.magicItems}
-							<span class="iconify size-6 mdi--eye max-xs:hidden sm:max-md:hidden" />
-							<span class="iconify size-6 mdi--shield-sword xs:max-sm:hidden md:hidden" />
+						{#if global.app.characters.magicItems}
+							<span class="iconify size-6 mdi--eye max-xs:hidden sm:max-md:hidden"></span>
+							<span class="iconify size-6 mdi--shield-sword xs:max-sm:hidden md:hidden"></span>
 						{:else}
-							<span class="iconify size-6 mdi--eye-off max-xs:hidden sm:max-md:hidden" />
-							<span class="iconify size-6 mdi--shield-sword-outline xs:max-sm:hidden md:hidden" />
+							<span class="iconify size-6 mdi--eye-off max-xs:hidden sm:max-md:hidden"></span>
+							<span class="iconify size-6 mdi--shield-sword-outline xs:max-sm:hidden md:hidden"></span>
 						{/if}
 						<span class="max-xs:hidden sm:max-md:hidden">Magic Items</span>
 					</button>
 				{/if}
 				<div class="join max-xs:hidden">
 					<button
-						class={twMerge("btn join-item sm:btn-sm", $app.characters.display == "list" ? "btn-primary" : "hover:btn-primary")}
-						on:click={() => createTransition(() => ($app.characters.display = "list"))}
-						on:keypress
+						class={twMerge(
+							"btn join-item sm:btn-sm",
+							global.app.characters.display == "list" ? "btn-primary" : "hover:btn-primary"
+						)}
+						onclick={() => createTransition(() => (global.app.characters.display = "list"))}
+						onkeypress={() => null}
 						aria-label="List View"
 					>
-						<span class="iconify mdi--format-list-text" />
+						<span class="iconify mdi--format-list-text"></span>
 					</button>
 					<button
-						class={twMerge("btn join-item sm:btn-sm", $app.characters.display == "grid" ? "btn-primary" : "hover:btn-primary")}
-						on:click={() => createTransition(() => ($app.characters.display = "grid"))}
-						on:keypress
+						class={twMerge(
+							"btn join-item sm:btn-sm",
+							global.app.characters.display == "grid" ? "btn-primary" : "hover:btn-primary"
+						)}
+						onclick={() => createTransition(() => (global.app.characters.display = "grid"))}
+						onkeypress={() => null}
 						aria-label="Grid View"
 					>
-						<span class="iconify mdi--view-grid" />
+						<span class="iconify mdi--view-grid"></span>
 					</button>
 				</div>
 			</div>
 		</div>
 
 		<div>
-			<div class={twMerge("w-full overflow-x-auto rounded-lg", $app.characters.display == "grid" && "block xs:hidden")}>
+			<div class={twMerge("w-full overflow-x-auto rounded-lg", global.app.characters.display == "grid" && "block xs:hidden")}>
 				<div
 					class={twMerge(
 						"grid-table bg-base-200",
@@ -188,7 +193,7 @@
 				>
 					<header class="!hidden text-base-content/70 sm:!contents">
 						{#if !data.mobile}
-							<div class="max-sm:hidden" />
+							<div class="max-sm:hidden"></div>
 						{/if}
 						<div>Name</div>
 						<div>Campaign</div>
@@ -213,7 +218,7 @@
 													/>
 												{/key}
 											{:else}
-												<span class="iconify size-12 mdi--account" />
+												<span class="iconify size-12 mdi--account"></span>
 											{/if}
 										</div>
 									</div>
@@ -221,22 +226,12 @@
 							{/if}
 							<div>
 								<div class="whitespace-pre-wrap text-base font-bold text-black dark:text-white sm:text-xl">
-									<span
-										use:transition={{
-											name: slugify("name-" + character.id),
-											shouldApply: loaded
-										}}
-									>
+									<span use:transition={slugify("name-" + character.id)}>
 										<SearchResults text={character.name} {search} />
 									</span>
 								</div>
 								<div class="whitespace-pre-wrap text-xs sm:text-sm">
-									<p
-										use:transition={{
-											name: slugify("details-" + character.id),
-											shouldApply: loaded
-										}}
-									>
+									<p use:transition={slugify("details-" + character.id)}>
 										<span class="inline pr-1 sm:hidden">Level {character.total_level}</span><SearchResults
 											text={character.race}
 											{search}
@@ -245,16 +240,11 @@
 									</p>
 								</div>
 								<div class="mb-2 block text-xs sm:hidden">
-									<p
-										use:transition={{
-											name: slugify("campaign-" + character.id),
-											shouldApply: loaded
-										}}
-									>
+									<p use:transition={slugify("campaign-" + character.id)}>
 										<SearchResults text={character.campaign} {search} />
 									</p>
 								</div>
-								{#if (character.match.includes("magicItems") || $app.characters.magicItems) && character.magic_items.length}
+								{#if (character.match.includes("magicItems") || global.app.characters.magicItems) && character.magic_items.length}
 									<div class="mb-2">
 										<p class="font-semibold">Magic Items:</p>
 										<SearchResults text={character.magic_items.map((item) => item.name)} {search} />
@@ -262,30 +252,15 @@
 								{/if}
 							</div>
 							<div class="hidden transition-colors sm:flex">
-								<span
-									use:transition={{
-										name: slugify("campaign-" + character.id),
-										shouldApply: loaded
-									}}
-								>
+								<span use:transition={slugify("campaign-" + character.id)}>
 									<SearchResults text={character.campaign} {search} />
 								</span>
 							</div>
 							<div class="hidden justify-center transition-colors sm:flex">
-								<span
-									use:transition={{
-										name: slugify("tier-" + character.id),
-										shouldApply: loaded
-									}}>{character.tier}</span
-								>
+								<span use:transition={slugify("tier-" + character.id)}></span>
 							</div>
 							<div class="hidden justify-center transition-colors sm:flex">
-								<span
-									use:transition={{
-										name: slugify("level-" + character.id),
-										shouldApply: loaded
-									}}>{character.total_level}</span
-								>
+								<span use:transition={slugify("level-" + character.id)}></span>
 							</div>
 						</a>
 					{/each}
@@ -297,8 +272,8 @@
 					<h1
 						class={twMerge(
 							"pb-2 font-vecna text-3xl font-bold dark:text-white",
-							$app.characters.display == "list" && "hidden",
-							$app.characters.display == "grid" && "max-xs:hidden",
+							global.app.characters.display == "list" && "hidden",
+							global.app.characters.display == "grid" && "max-xs:hidden",
 							tier > 1 && "pt-6"
 						)}
 					>
@@ -307,7 +282,7 @@
 					<div
 						class={twMerge(
 							"hidden w-full",
-							$app.characters.display == "grid" && "grid-cols-2 gap-4 xs:grid sm:grid-cols-3 md:grid-cols-4"
+							global.app.characters.display == "grid" && "grid-cols-2 gap-4 xs:grid sm:grid-cols-3 md:grid-cols-4"
 						)}
 					>
 						{#each results.filter((c) => c.tier == tier) as character}

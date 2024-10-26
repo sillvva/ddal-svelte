@@ -1,38 +1,36 @@
 <script lang="ts">
-	import { browser } from "$app/environment";
 	import { afterNavigate } from "$app/navigation";
 	import { navigating, page } from "$app/stores";
 	import CommandTray from "$lib/components/CommandTray.svelte";
 	import Drawer from "$lib/components/Drawer.svelte";
 	import Markdown from "$lib/components/Markdown.svelte";
 	import Settings from "$lib/components/Settings.svelte";
-	import { getApp, pageLoader } from "$lib/stores";
+	import { global } from "$lib/stores.svelte.js";
 	import { hotkey } from "@svelteuidev/composables";
 	import { Toaster } from "svelte-sonner";
 	import { fade } from "svelte/transition";
 	import { twMerge } from "tailwind-merge";
 
-	export let data;
-	const app = getApp();
+	let { data, children } = $props();
 
-	let settingsOpen = false;
-	let y = 0;
+	let settingsOpen = $state(false);
+	let y = $state(0);
 
 	afterNavigate(() => {
-		pageLoader.set(false);
+		global.pageLoader = false;
 	});
 
-	$: if (browser) {
+	$effect(() => {
 		const hasCookie = document.cookie.includes("session-token");
 		if (!data.session?.user && hasCookie) location.reload();
-	}
+	});
 
 	let defaultTitle = "Adventurers League Log Sheet";
-	$: title = $page.data.title ? $page.data.title + " - " + defaultTitle : defaultTitle;
+	const title = $derived($page.data.title ? $page.data.title + " - " + defaultTitle : defaultTitle);
 	let defaultDescription = "A tool for tracking your Adventurers League characters and magic items.";
-	$: description = $page.data.description || defaultDescription;
+	const description = $derived($page.data.description || defaultDescription);
 	let defaultImage = "https://ddal.dekok.app/images/barovia-gate.webp";
-	$: image = $page.data.image || defaultImage;
+	const image = $derived($page.data.image || defaultImage);
 </script>
 
 <svelte:head>
@@ -58,18 +56,18 @@
 
 <svelte:window bind:scrollY={y} />
 
-{#if $pageLoader || $navigating}
+{#if global.pageLoader || $navigating}
 	<div
 		class="fixed inset-0 z-40 flex items-center justify-center bg-black/50"
 		in:fade={{ duration: 100, delay: 400 }}
 		out:fade={{ duration: 200 }}
-	/>
+	></div>
 	<div
 		class="fixed inset-0 z-50 flex items-center justify-center"
 		in:fade={{ duration: 200, delay: 500 }}
 		out:fade={{ duration: 200 }}
 	>
-		<span class="loading loading-spinner w-16 text-secondary" />
+		<span class="loading loading-spinner w-16 text-secondary"></span>
 	</div>
 {/if}
 
@@ -98,7 +96,7 @@
 					{data.user?.name}
 				</div>
 				{#if data.session?.user}
-					<summary tabindex="0" class="flex h-full min-w-fit cursor-pointer items-center" on:click={() => (settingsOpen = true)}>
+					<summary tabindex="0" class="flex h-full min-w-fit cursor-pointer items-center" onclick={() => (settingsOpen = true)}>
 						<div class="avatar">
 							<div class="relative w-9 overflow-hidden rounded-full ring ring-primary ring-offset-2 ring-offset-base-100 lg:w-11">
 								<img
@@ -122,7 +120,9 @@
 			</div>
 		</nav>
 	</header>
-	<div class="container relative z-10 mx-auto max-w-5xl flex-1 p-4"><slot /></div>
+	<div class="container relative z-10 mx-auto max-w-5xl flex-1 p-4">
+		{@render children()}
+	</div>
 	<footer class="z-16 footer footer-center relative border-t border-base-300 p-4 text-base-content print:hidden">
 		<div>
 			<p>
@@ -139,7 +139,7 @@
 	</footer>
 </div>
 
-<Toaster richColors closeButton theme={$app.settings.mode} />
+<Toaster richColors closeButton theme={global.app.settings.mode} />
 
 <dialog
 	class={twMerge("modal !bg-base-300/75")}
@@ -158,7 +158,7 @@
 	{#if $page.state.modal}
 		{#if $page.state.modal.type === "text"}
 			<div class="modal-box relative cursor-default bg-base-100 drop-shadow-lg">
-				<button class="btn btn-circle btn-ghost btn-sm absolute right-2 top-2" on:click={() => history.back()}>
+				<button class="btn btn-circle btn-ghost btn-sm absolute right-2 top-2" onclick={() => history.back()} aria-label="Close">
 					<span class="iconify mdi--close"></span>
 				</button>
 				<h3 id="modal-title" class="cursor-text text-lg font-bold text-black dark:text-white">{$page.state.modal.name}</h3>
@@ -184,6 +184,6 @@
 			</div>
 		{/if}
 
-		<button class="modal-backdrop" on:click={() => history.back()}>✕</button>
+		<button class="modal-backdrop" onclick={() => history.back()} aria-label="Close">✕</button>
 	{/if}
 </dialog>

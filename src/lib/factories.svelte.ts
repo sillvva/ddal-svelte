@@ -1,4 +1,4 @@
-import { searchData } from "$lib/stores";
+import { global } from "$lib/stores.svelte";
 import { parseDateTime, type DateValue } from "@internationalized/date";
 import { toast } from "svelte-sonner";
 import { derived, get, type Readable, type Writable } from "svelte/store";
@@ -53,7 +53,7 @@ export function valibotForm<S extends v.ObjectSchema<any, any>, Out extends v.In
 			if (["success", "redirect"].includes(event.result.type)) {
 				const data = get(superform.form);
 				successToast(`${data[nameField]} saved`);
-				searchData.set([]);
+				global.searchData = [];
 			}
 			rest.onResult?.(event);
 		},

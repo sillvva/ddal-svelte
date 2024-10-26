@@ -1,8 +1,8 @@
 <script lang="ts">
 	import { invalidateAll } from "$app/navigation";
 	import { page } from "$app/stores";
-	import { errorToast, successToast } from "$lib/factories";
-	import { getApp } from "$lib/stores";
+	import { errorToast, successToast } from "$lib/factories.svelte";
+	import { global } from "$lib/stores.svelte";
 	import type { DeleteWebAuthnResponse, RenameWebAuthnResponse } from "$src/routes/(api)/webAuthn/+server";
 	import { signIn } from "@auth/sveltekit/webauthn";
 	import { hotkey } from "@svelteuidev/composables";
@@ -10,17 +10,17 @@
 	import { scale } from "svelte/transition";
 	import Control from "./forms/Control.svelte";
 
-	const app = getApp();
+	const authenticators = $derived($page.data.user?.authenticators || []);
+	$effect(() => {
+		if (authenticators.length == 0) global.app.settings.autoWebAuthn = false;
+	});
 
-	$: authenticators = $page.data.user?.authenticators || [];
-	$: if (authenticators.length == 0) $app.settings.autoWebAuthn = false;
-
-	let renaming = false;
-	let defaultName = "";
-	let renameId: string | undefined;
-	let renameName = "";
-	let renameError = "";
-	let renameRef: HTMLInputElement | undefined;
+	let renaming = $state(false);
+	let defaultName = $state("");
+	let renameId: string | undefined = $state();
+	let renameName = $state("");
+	let renameError = $state("");
+	let renameRef: HTMLInputElement | undefined = $state();
 
 	async function initRename(id?: string, currentName = "", error = "") {
 		if (!error) defaultName = currentName;
@@ -95,23 +95,28 @@
 		<li class="flex-row gap-2">
 			<button
 				class="group btn btn-ghost flex flex-1 gap-2 text-left hover:bg-base-200"
-				on:click={() => initRename(authenticator.credentialID, authenticator.name)}
+				onclick={() => initRename(authenticator.credentialID, authenticator.name)}
+				aria-label="Rename Passkey"
 			>
 				<span class="iconify size-6 material-symbols--passkey group-hover:mdi--pencil"></span>
 				<span class="flex-1 overflow-hidden text-ellipsis whitespace-nowrap">{authenticator.name}</span>
 			</button>
 			<button
 				class="btn btn-ghost text-error hover:bg-error hover:text-base-content"
-				on:click|stopPropagation={() => deleteWebAuthn(authenticator.credentialID)}
+				onclick={(e) => {
+					e.stopPropagation();
+					deleteWebAuthn(authenticator.credentialID);
+				}}
+				aria-label="Delete Passkey"
 			>
-				<span class="iconify size-6 mdi--delete" />
+				<span class="iconify size-6 mdi--delete"></span>
 			</button>
 		</li>
 	{/each}
 	<li>
 		<button
 			class="btn btn-ghost hover:bg-base-200"
-			on:click={() =>
+			onclick={() =>
 				signIn("webauthn", { action: "register", redirect: false })
 					.then((resp) => {
 						if (resp?.ok) initRename();
@@ -128,7 +133,7 @@
 			<label class="flex gap-2 hover:bg-transparent">
 				<span class="iconify size-6 mdi--auto-fix"></span>
 				<span class="flex-1 text-base">Auto Passkey Login</span>
-				<input type="checkbox" class="toggle" bind:checked={$app.settings.autoWebAuthn} />
+				<input type="checkbox" class="toggle" bind:checked={global.app.settings.autoWebAuthn} />
 			</label>
 		</li>
 		<li class="flex-row gap-2">
@@ -159,11 +164,20 @@
 			class="modal-box relative cursor-default bg-base-100 drop-shadow-lg"
 			transition:scale={{ duration: 250, opacity: 0.75, start: 0.85 }}
 		>
-			<button class="btn btn-circle btn-ghost btn-sm absolute right-2 top-2" on:click={() => renameWebAuthn(true)}>
+			<button
+				class="btn btn-circle btn-ghost btn-sm absolute right-2 top-2"
+				onclick={() => renameWebAuthn(true)}
+				aria-label="Close"
+			>
 				<span class="iconify mdi--close"></span>
 			</button>
 			<h3 id="modal-title" class="mb-4 cursor-text text-lg font-bold text-black dark:text-white">Rename Passkey</h3>
-			<form on:submit|preventDefault={() => renameWebAuthn()}>
+			<form
+				onsubmit={(e) => {
+					e.preventDefault();
+					renameWebAuthn();
+				}}
+			>
 				<Control>
 					<input
 						type="text"
@@ -187,6 +201,6 @@
 			</form>
 		</div>
 
-		<button class="modal-backdrop" on:click={() => renameWebAuthn(true)}>✕</button>
+		<button class="modal-backdrop" onclick={() => renameWebAuthn(true)}>✕</button>
 	{/if}
 </dialog>

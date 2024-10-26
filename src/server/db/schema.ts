@@ -1,36 +1,23 @@
-import { type ProviderId } from "$lib/constants";
-import { type CharacterId, type DungeonMasterId, type ItemId, type LogId, type UserId } from "$lib/schemas";
+import type { ProviderId } from "$lib/constants";
+import type { CharacterId, DungeonMasterId, ItemId, LogId, UserId } from "$lib/schemas";
 import type { ProviderType } from "@auth/core/providers";
 import { createId } from "@paralleldrive/cuid2";
 import { isNotNull, relations, type InferInsertModel } from "drizzle-orm";
-import {
-	boolean,
-	foreignKey,
-	index,
-	integer,
-	pgEnum,
-	pgTable,
-	primaryKey,
-	real,
-	smallint,
-	text,
-	timestamp,
-	unique,
-	uniqueIndex
-} from "drizzle-orm/pg-core";
+import * as pg from "drizzle-orm/pg-core";
 
 export type User = typeof users.$inferSelect;
 export type InsertUser = InferInsertModel<typeof users>;
 export type UpdateUser = Partial<User>;
-export const users = pgTable("user", {
-	id: text()
+export const users = pg.pgTable("user", {
+	id: pg
+		.text()
 		.primaryKey()
 		.$default(() => createId())
 		.$type<UserId>(),
-	name: text().notNull(),
-	email: text().notNull(),
-	emailVerified: timestamp({ mode: "date" }),
-	image: text()
+	name: pg.text().notNull(),
+	email: pg.text().notNull(),
+	emailVerified: pg.timestamp({ mode: "date" }),
+	image: pg.text()
 });
 
 export const userRelations = relations(users, ({ many, one }) => ({
@@ -44,30 +31,31 @@ export const userRelations = relations(users, ({ many, one }) => ({
 export type Account = typeof accounts.$inferSelect;
 export type InsertAccount = InferInsertModel<typeof accounts>;
 export type UpdateAccount = Partial<Account>;
-export const accounts = pgTable(
+export const accounts = pg.pgTable(
 	"account",
 	{
-		providerAccountId: text().notNull(),
-		provider: text().notNull().$type<ProviderId>(),
-		type: text().$type<ProviderType>().notNull(),
-		userId: text()
+		providerAccountId: pg.text().notNull(),
+		provider: pg.text().notNull().$type<ProviderId>(),
+		type: pg.text().$type<ProviderType>().notNull(),
+		userId: pg
+			.text()
 			.notNull()
 			.references(() => users.id, { onUpdate: "cascade", onDelete: "cascade" })
 			.$type<UserId>(),
-		refresh_token: text(),
-		access_token: text(),
-		expires_at: integer(),
-		token_type: text(),
-		scope: text(),
-		id_token: text(),
-		session_state: text(),
-		lastLogin: timestamp("last_login", { mode: "date", withTimezone: true })
+		refresh_token: pg.text(),
+		access_token: pg.text(),
+		expires_at: pg.integer(),
+		token_type: pg.text(),
+		scope: pg.text(),
+		id_token: pg.text(),
+		session_state: pg.text(),
+		lastLogin: pg.timestamp("last_login", { mode: "date", withTimezone: true })
 	},
 	(table) => {
 		return {
-			userIdIdx: index("Account_userId_idx").on(table.userId),
-			accountPkey: primaryKey({ columns: [table.provider, table.providerAccountId], name: "Account_pkey" }),
-			webAuthnIdx: uniqueIndex("account_userId_providerAccountId_key").on(table.userId, table.providerAccountId)
+			userIdIdx: pg.index("Account_userId_idx").on(table.userId),
+			accountPkey: pg.primaryKey({ columns: [table.provider, table.providerAccountId], name: "Account_pkey" }),
+			webAuthnIdx: pg.uniqueIndex("account_userId_providerAccountId_key").on(table.userId, table.providerAccountId)
 		};
 	}
 );
@@ -83,22 +71,24 @@ export const accountRelations = relations(accounts, ({ one }) => ({
 export type Session = typeof sessions.$inferSelect;
 export type InsertSession = InferInsertModel<typeof sessions>;
 export type UpdateSession = Partial<Session>;
-export const sessions = pgTable(
+export const sessions = pg.pgTable(
 	"session",
 	{
-		sessionToken: text().primaryKey().notNull(),
-		userId: text()
+		sessionToken: pg.text().primaryKey().notNull(),
+		userId: pg
+			.text()
 			.notNull()
 			.$type<UserId>()
 			.references(() => users.id, { onUpdate: "cascade", onDelete: "cascade" }),
-		expires: timestamp({ mode: "date" }).notNull(),
-		createdAt: timestamp("created_at", { mode: "date", withTimezone: true })
+		expires: pg.timestamp({ mode: "date" }).notNull(),
+		createdAt: pg
+			.timestamp("created_at", { mode: "date", withTimezone: true })
 			.notNull()
 			.$default(() => new Date())
 	},
 	(table) => {
 		return {
-			userIdIdx: index("Session_userId_idx").on(table.userId)
+			userIdIdx: pg.index("Session_userId_idx").on(table.userId)
 		};
 	}
 );
@@ -114,34 +104,36 @@ export type Authenticator = typeof authenticators.$inferSelect;
 export type AuthClient = Pick<Authenticator, "credentialID" | "name">;
 export type InsertAuthenticator = InferInsertModel<typeof authenticators>;
 export type UpdateAuthenticator = Partial<Authenticator>;
-export const authenticators = pgTable(
+export const authenticators = pg.pgTable(
 	"authenticator",
 	{
-		credentialID: text().notNull().unique(),
-		userId: text()
+		credentialID: pg.text().notNull().unique(),
+		userId: pg
+			.text()
 			.notNull()
 			.$type<UserId>()
 			.references(() => users.id, { onDelete: "cascade", onUpdate: "cascade" }),
-		providerAccountId: text().notNull(),
-		name: text()
+		providerAccountId: pg.text().notNull(),
+		name: pg
+			.text()
 			.notNull()
 			.$defaultFn(() => ""),
-		credentialPublicKey: text().notNull(),
-		counter: integer().notNull(),
-		credentialDeviceType: text().notNull(),
-		credentialBackedUp: boolean().notNull(),
-		transports: text()
+		credentialPublicKey: pg.text().notNull(),
+		counter: pg.integer().notNull(),
+		credentialDeviceType: pg.text().notNull(),
+		credentialBackedUp: pg.boolean().notNull(),
+		transports: pg.text()
 	},
 	(table) => ({
-		compositePK: primaryKey({
+		compositePK: pg.primaryKey({
 			columns: [table.userId, table.credentialID]
 		}),
-		accountFK: foreignKey({
+		accountFK: pg.foreignKey({
 			columns: [table.userId, table.providerAccountId],
 			foreignColumns: [accounts.userId, accounts.providerAccountId],
 			name: "public_authenticator_userId_providerAccountId_fkey"
 		}),
-		uniqueName: unique("authenticator_userId_name_key").on(table.userId, table.name)
+		uniqueName: pg.unique("authenticator_userId_name_key").on(table.userId, table.name)
 	})
 );
 
@@ -159,30 +151,33 @@ export const authenticatorRelations = relations(authenticators, ({ one }) => ({
 export type Character = typeof characters.$inferSelect;
 export type InsertCharacter = InferInsertModel<typeof characters>;
 export type UpdateCharacter = Partial<Character>;
-export const characters = pgTable(
+export const characters = pg.pgTable(
 	"character",
 	{
-		id: text()
+		id: pg
+			.text()
 			.primaryKey()
 			.$default(() => createId())
 			.$type<CharacterId>(),
-		name: text().notNull(),
-		race: text(),
-		class: text(),
-		campaign: text(),
-		imageUrl: text("image_url"),
-		characterSheetUrl: text("character_sheet_url"),
-		userId: text()
+		name: pg.text().notNull(),
+		race: pg.text(),
+		class: pg.text(),
+		campaign: pg.text(),
+		imageUrl: pg.text("image_url"),
+		characterSheetUrl: pg.text("character_sheet_url"),
+		userId: pg
+			.text()
 			.notNull()
 			.$type<UserId>()
 			.references(() => users.id, { onUpdate: "cascade", onDelete: "cascade" }),
-		createdAt: timestamp("created_at", { mode: "date" })
+		createdAt: pg
+			.timestamp("created_at", { mode: "date" })
 			.notNull()
 			.$default(() => new Date())
 	},
 	(table) => {
 		return {
-			userIdIdx: index("Character_userId_idx").on(table.userId)
+			userIdIdx: pg.index("Character_userId_idx").on(table.userId)
 		};
 	}
 );
@@ -198,25 +193,27 @@ export const characterRelations = relations(characters, ({ one, many }) => ({
 export type DungeonMaster = typeof dungeonMasters.$inferSelect;
 export type InsertDungeonMaster = InferInsertModel<typeof dungeonMasters>;
 export type UpdateDungeonMaster = Partial<DungeonMaster>;
-export const dungeonMasters = pgTable(
+export const dungeonMasters = pg.pgTable(
 	"dungeonmaster",
 	{
-		id: text()
+		id: pg
+			.text()
 			.primaryKey()
 			.$default(() => createId())
 			.$type<DungeonMasterId>(),
-		name: text().notNull(),
-		DCI: text(),
-		uid: text().$type<UserId>(),
-		owner: text()
+		name: pg.text().notNull(),
+		DCI: pg.text(),
+		uid: pg.text().$type<UserId>(),
+		owner: pg
+			.text()
 			.notNull()
 			.$type<UserId>()
 			.references(() => users.id, { onUpdate: "cascade", onDelete: "cascade" })
 	},
 	(table) => {
 		return {
-			uidIdx: index("DungeonMaster_uid_partial_idx").on(table.uid).where(isNotNull(table.uid)),
-			ownerIdx: index("DungeonMaster_owner_idx").on(table.owner)
+			uidIdx: pg.index("DungeonMaster_uid_partial_idx").on(table.uid).where(isNotNull(table.uid)),
+			ownerIdx: pg.index("DungeonMaster_owner_idx").on(table.owner)
 		};
 	}
 );
@@ -229,63 +226,75 @@ export const dungeonMasterRelations = relations(dungeonMasters, ({ one, many }) 
 	logs: many(logs)
 }));
 
-export const logType = pgEnum("logType", ["game", "nongame"]);
+export const logType = pg.pgEnum("logType", ["game", "nongame"]);
 
 export type Log = typeof logs.$inferSelect;
 export type InsertLog = InferInsertModel<typeof logs>;
 export type UpdateLog = Partial<Log>;
-export const logs = pgTable(
+export const logs = pg.pgTable(
 	"log",
 	{
-		id: text()
+		id: pg
+			.text()
 			.primaryKey()
 			.$default(() => createId())
 			.$type<LogId>(),
-		date: timestamp({ mode: "date" })
+		date: pg
+			.timestamp({ mode: "date" })
 			.notNull()
 			.$default(() => new Date()),
-		name: text().notNull(),
-		description: text()
+		name: pg.text().notNull(),
+		description: pg
+			.text()
 			.notNull()
 			.$default(() => ""),
 		type: logType().notNull(),
-		dungeonMasterId: text()
+		dungeonMasterId: pg
+			.text()
 			.$type<DungeonMasterId>()
 			.references(() => dungeonMasters.id, {
 				onUpdate: "cascade",
 				onDelete: "restrict"
 			}),
-		isDmLog: boolean("is_dm_log").notNull(),
-		experience: integer("experience")
+		isDmLog: pg.boolean("is_dm_log").notNull(),
+		experience: pg
+			.integer("experience")
 			.notNull()
 			.$default(() => 0),
-		acp: smallint()
+		acp: pg
+			.smallint()
 			.notNull()
 			.$default(() => 0),
-		tcp: smallint()
+		tcp: pg
+			.smallint()
 			.notNull()
 			.$default(() => 0),
-		level: smallint()
+		level: pg
+			.smallint()
 			.notNull()
 			.$default(() => 0),
-		gold: real()
+		gold: pg
+			.real()
 			.notNull()
 			.$default(() => 0),
-		dtd: smallint()
+		dtd: pg
+			.smallint()
 			.notNull()
 			.$default(() => 0),
-		appliedDate: timestamp("applied_date", { mode: "date" }),
-		characterId: text()
+		appliedDate: pg.timestamp("applied_date", { mode: "date" }),
+		characterId: pg
+			.text()
 			.$type<CharacterId>()
 			.references(() => characters.id, { onUpdate: "cascade", onDelete: "cascade" }),
-		createdAt: timestamp("created_at", { mode: "date" })
+		createdAt: pg
+			.timestamp("created_at", { mode: "date" })
 			.notNull()
 			.$default(() => new Date())
 	},
 	(table) => {
 		return {
-			characterIdIdx: index("Log_characterId_partial_idx").on(table.characterId).where(isNotNull(table.characterId)),
-			dungeonMasterIdIdx: index("Log_dungeonMasterId_idx").on(table.dungeonMasterId)
+			characterIdIdx: pg.index("Log_characterId_partial_idx").on(table.characterId).where(isNotNull(table.characterId)),
+			dungeonMasterIdIdx: pg.index("Log_dungeonMasterId_idx").on(table.dungeonMasterId)
 		};
 	}
 );
@@ -308,27 +317,30 @@ export const logRelations = relations(logs, ({ one, many }) => ({
 export type MagicItem = typeof magicItems.$inferSelect;
 export type InsertMagicItem = InferInsertModel<typeof magicItems>;
 export type UpdateMagicItem = Partial<MagicItem>;
-export const magicItems = pgTable(
+export const magicItems = pg.pgTable(
 	"magicitem",
 	{
-		id: text()
+		id: pg
+			.text()
 			.primaryKey()
 			.$default(() => createId())
 			.$type<ItemId>(),
-		name: text().notNull(),
-		description: text(),
-		logGainedId: text()
+		name: pg.text().notNull(),
+		description: pg.text(),
+		logGainedId: pg
+			.text()
 			.notNull()
 			.$type<LogId>()
 			.references(() => logs.id, { onUpdate: "cascade", onDelete: "cascade" }),
-		logLostId: text()
+		logLostId: pg
+			.text()
 			.$type<LogId>()
 			.references(() => logs.id, { onUpdate: "cascade", onDelete: "set null" })
 	},
 	(table) => {
 		return {
-			logGainedIdIdx: index("MagicItem_logGainedId_idx").on(table.logGainedId),
-			logLostIdIdx: index("MagicItem_logLostId_idx").on(table.logLostId)
+			logGainedIdIdx: pg.index("MagicItem_logGainedId_idx").on(table.logGainedId),
+			logLostIdIdx: pg.index("MagicItem_logLostId_idx").on(table.logLostId)
 		};
 	}
 );
@@ -349,27 +361,30 @@ export const magicItemRelations = relations(magicItems, ({ one }) => ({
 export type StoryAward = typeof storyAwards.$inferSelect;
 export type InsertStoryAward = InferInsertModel<typeof storyAwards>;
 export type UpdateStoryAward = Partial<StoryAward>;
-export const storyAwards = pgTable(
+export const storyAwards = pg.pgTable(
 	"storyaward",
 	{
-		id: text()
+		id: pg
+			.text()
 			.primaryKey()
 			.$default(() => createId())
 			.$type<ItemId>(),
-		name: text().notNull(),
-		description: text(),
-		logGainedId: text()
+		name: pg.text().notNull(),
+		description: pg.text(),
+		logGainedId: pg
+			.text()
 			.notNull()
 			.$type<LogId>()
 			.references(() => logs.id, { onUpdate: "cascade", onDelete: "cascade" }),
-		logLostId: text()
+		logLostId: pg
+			.text()
 			.$type<LogId>()
 			.references(() => logs.id, { onUpdate: "cascade", onDelete: "set null" })
 	},
 	(table) => {
 		return {
-			logGainedIdIdx: index("StoryAward_logGainedId_idx").on(table.logGainedId),
-			logLostIdIdx: index("StoryAward_logLostId_idx").on(table.logLostId)
+			logGainedIdIdx: pg.index("StoryAward_logGainedId_idx").on(table.logGainedId),
+			logLostIdIdx: pg.index("StoryAward_logLostId_idx").on(table.logLostId)
 		};
 	}
 );

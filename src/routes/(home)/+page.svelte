@@ -1,21 +1,21 @@
 <script lang="ts">
-	import { browser } from "$app/environment";
 	import { PROVIDERS } from "$lib/constants.js";
 	import { publicEnv } from "$lib/env/public.js";
-	import { getApp } from "$lib/stores.js";
+	import { global } from "$lib/stores.svelte.js";
 	import { signIn } from "@auth/sveltekit/client";
 	import { signIn as passkey } from "@auth/sveltekit/webauthn";
 	import { twMerge } from "tailwind-merge";
 
-	export let data;
-	const app = getApp();
+	let { data } = $props();
 
-	$: if (browser && $app.settings.autoWebAuthn) {
-		passkey("webauthn", {
-			callbackUrl: data.redirectTo || "/characters",
-			action: "authenticate"
-		});
-	}
+	$effect(() => {
+		if (global.app.settings.autoWebAuthn) {
+			passkey("webauthn", {
+				callbackUrl: data.redirectTo || "/characters",
+				action: "authenticate"
+			});
+		}
+	});
 
 	const title = "Adventurers League Log Sheet";
 	const description = "A tool for tracking your Adventurers League characters and magic items.";
@@ -53,7 +53,7 @@
 		{#each PROVIDERS as provider}
 			<button
 				class="flex h-16 items-center gap-4 rounded-lg bg-base-200 px-8 py-4 text-base-content transition-colors hover:bg-base-300"
-				on:click={() =>
+				onclick={() =>
 					signIn(provider.id, {
 						callbackUrl: data.redirectTo || "/characters"
 					})}
@@ -66,7 +66,7 @@
 		<hr class="border-base-content" />
 		<button
 			class="flex h-16 items-center gap-4 rounded-lg bg-base-200 px-8 py-4 text-base-content transition-colors hover:bg-base-300"
-			on:click={() =>
+			onclick={() =>
 				passkey("webauthn", {
 					callbackUrl: data.redirectTo || "/characters",
 					action: "authenticate"
@@ -83,7 +83,7 @@
 	{#if data.code}
 		<div class="flex justify-center">
 			<div class="alert alert-error min-w-60 max-w-[28rem] shadow-lg">
-				<span class="iconify size-6 mdi--alert-circle max-sm:hidden" />
+				<span class="iconify size-6 mdi--alert-circle max-sm:hidden"></span>
 				<div>
 					<h3 class="font-bold">Error</h3>
 					{#if data.message}<p class="mb-2 max-sm:text-sm">{data.message}</p>{/if}

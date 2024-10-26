@@ -1,21 +1,25 @@
 <script lang="ts">
-	export let href = "";
-	export let title: string | undefined;
-	export let text: string | string[] = "";
+	interface Props {
+		href?: string;
+		title?: string;
+		text?: string | string[];
+	}
 
-	$: text = typeof text === "string" ? text.split(":") : text;
-	let alt = text[0];
-	let aspect = text.includes("no-aspect") ? "" : "aspect-video";
+	let { href = "", title, text = "" }: Props = $props();
+
+	const dText = $derived(typeof text === "string" ? text.split(":") : text);
+	const alt = $derived(dText[0]);
+	const aspect = $derived(dText.includes("no-aspect") ? "" : "aspect-video");
 </script>
 
-<figure class="flex flex-col mb-6 mt-6">
+<figure class="mb-6 mt-6 flex flex-col">
 	<a
 		{href}
 		target="_blank"
 		rel="noreferrer noopener"
-		class="relative flex justify-center w-full max-w-[800px] mb-2 mx-auto {aspect}"
+		class="relative mx-auto mb-2 flex w-full max-w-[800px] justify-center {aspect}"
 	>
 		<img src={href} {title} {alt} class="object-cover md:object-contain" />
 	</a>
-	<figcaption class="block text-white/70 text-sm text-center">Click to open full screen</figcaption>
+	<figcaption class="block text-center text-sm text-white/70">Click to open full screen</figcaption>
 </figure>

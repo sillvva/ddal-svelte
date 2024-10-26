@@ -1,32 +1,16 @@
 <script lang="ts">
 	import { dev } from "$app/environment";
-	import { page } from "$app/stores";
-	import { setApp } from "$lib/stores";
-	import { cookieStore } from "$server/cookie";
-	import { setContext } from "svelte";
-	import { setupViewTransition } from "sveltekit-view-transition";
-	import { twMerge } from "tailwind-merge";
+	import { global, setTransition } from "$lib/stores.svelte";
 	import "../app.css";
 
-	export let data;
+	let { data, children } = $props();
 
-	$: app = setApp(cookieStore("app", data.app));
-
-	const { transition } = setupViewTransition();
-	setContext("transition", transition);
+	global.app = data.app;
+	setTransition();
 </script>
 
-<ska:html
-	data-theme={$page.route.id?.startsWith("/(app)")
-		? $app.settings.theme === "system" && $app.settings.mode === "dark"
-			? "black"
-			: $app.settings.theme
-		: $app.settings.mode}
-	class={$app.settings.mode}
-/>
-
-<div class={twMerge("no-script-hide min-h-dvh bg-base-100 text-base-content")}>
-	<slot />
+<div class="no-script-hide min-h-dvh bg-base-100 text-base-content">
+	{@render children()}
 </div>
 
 <noscript>

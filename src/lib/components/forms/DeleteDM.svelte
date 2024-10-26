@@ -1,17 +1,17 @@
 <script lang="ts">
-	import { errorToast, successToast } from "$lib/factories";
-	import { searchData } from "$lib/stores";
+	import { errorToast, successToast } from "$lib/factories.svelte";
+	import { global } from "$lib/stores.svelte";
 	import type { UserDMsWithLogs } from "$server/data/dms";
-	import { createEventDispatcher } from "svelte";
 	import { superForm } from "sveltekit-superforms";
 
-	export let dm: UserDMsWithLogs[number];
-	export let deletingDM: string[] = [];
-	export let label = "";
+	interface Props {
+		dm: UserDMsWithLogs[number];
+		deletingDM?: string[];
+		label?: string;
+		ondelete?: (event: { id: string }) => void;
+	}
 
-	const dispatch = createEventDispatcher<{
-		deleted: { id: string };
-	}>();
+	let { dm, deletingDM = $bindable([]), label = "", ondelete }: Props = $props();
 
 	const { submit } = superForm(
 		{ id: dm.id },
@@ -29,15 +29,15 @@
 					deletingDM = deletingDM.filter((id) => id !== dm.id);
 				} else {
 					successToast(`${dm.name} deleted`);
-					dispatch("deleted", { id: dm.id });
-					$searchData = [];
+					ondelete?.({ id: dm.id });
+					global.searchData = [];
 				}
 			}
 		}
 	);
 </script>
 
-<button type="button" class="btn btn-error sm:btn-sm" aria-label="Delete DM" on:click={submit}>
-	<span class="iconify mdi--trash-can" />
+<button type="button" class="btn btn-error sm:btn-sm" aria-label="Delete DM" onclick={submit}>
+	<span class="iconify mdi--trash-can"></span>
 	{label}
 </button>

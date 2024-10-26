@@ -1,24 +1,36 @@
 <script lang="ts">
 	import autosize from "svelte-autosize";
+	import type { HTMLTextareaAttributes } from "svelte/elements";
 	import { formFieldProxy, type FormPathLeaves, type SuperForm } from "sveltekit-superforms";
 	import { twMerge } from "tailwind-merge";
 	import Markdown from "../Markdown.svelte";
 
 	type T = $$Generic<Record<PropertyKey, unknown>>;
+	interface Props extends HTMLTextareaAttributes {
+		superform: SuperForm<T>;
+		field: FormPathLeaves<T, string>;
+		preview?: boolean;
+		name?: string;
+		minRows?: number;
+		maxRows?: number;
+	}
 
-	export let superform: SuperForm<T>;
-	export let field: FormPathLeaves<T, string>;
-	export let preview = false;
-	export let name = `mdtab${Math.round(Math.random() * 100000)}`;
-	export let minRows: number | undefined = undefined;
-	export let maxRows: number | undefined = undefined;
+	let {
+		superform,
+		field,
+		preview = false,
+		name = `mdtab${Math.round(Math.random() * 100000)}`,
+		minRows,
+		maxRows,
+		...rest
+	}: Props = $props();
 
-	let state = "edit";
+	let state = $state("edit");
 
 	const { value, errors, constraints } = formFieldProxy(superform, field);
 
-	$: graphemeCount = typeof $value === "string" ? [...new Intl.Segmenter().segment($value)].length : 0;
-	$: lengthDiff = $value.length - graphemeCount;
+	const graphemeCount = $derived(typeof $value === "string" ? [...new Intl.Segmenter().segment($value)].length : 0);
+	const lengthDiff = $derived($value.length - graphemeCount);
 </script>
 
 <label for={field} class="label">
@@ -31,7 +43,7 @@
 	</div>
 {/if}
 <textarea
-	{...$$restProps}
+	{...rest}
 	id={field}
 	bind:value={$value}
 	class={twMerge(
@@ -45,7 +57,7 @@
 	use:autosize
 	{...$constraints}
 	maxlength={($constraints?.maxlength ?? 0) + lengthDiff}
-/>
+></textarea>
 {#if preview && state === "preview"}
 	<div class="rounded-b-lg border-[1px] border-base-content bg-base-100 p-4 [--tw-border-opacity:0.2]">
 		<Markdown content={`${$value}`} />

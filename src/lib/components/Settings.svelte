@@ -2,27 +2,38 @@
 	import { enhance } from "$app/forms";
 	import { page } from "$app/stores";
 	import { PROVIDERS } from "$lib/constants";
-	import { successToast } from "$lib/factories";
-	import { pageLoader } from "$lib/stores";
+	import { successToast } from "$lib/factories.svelte";
+	import { global } from "$lib/stores.svelte";
+	import { setCookie } from "$server/cookie";
 	import { signIn, signOut } from "@auth/sveltekit/client";
 	import { twMerge } from "tailwind-merge";
 	import Passkeys from "./Passkeys.svelte";
 	import ThemeSwitcher from "./ThemeSwitcher.svelte";
 
-	export let open = false;
+	interface Props {
+		open?: boolean;
+	}
 
-	$: user = $page.data.user;
-	$: authProviders = PROVIDERS.map((p) => ({
-		...p,
-		account: user?.accounts.find((a) => a.provider === p.id)
-	}));
+	let { open = $bindable(false) }: Props = $props();
 
-	$: initials =
-		$page.data.session?.user.name
+	const user = $derived($page.data.user);
+	const authProviders = $derived(
+		PROVIDERS.map((p) => ({
+			...p,
+			account: user?.accounts.find((a) => a.provider === p.id)
+		}))
+	);
+	const initials = $derived(
+		user?.name
 			.split(" ")
 			.map((n) => n[0])
 			.join("")
-			.slice(0, 2) || "";
+			.slice(0, 2) || ""
+	);
+
+	$effect(() => {
+		setCookie("app", global.app);
+	});
 </script>
 
 <aside
@@ -49,11 +60,11 @@
 					{user.email}
 				</div>
 			</div>
-			<button class="btn p-3" on:click={() => signOut({ callbackUrl: "/" })} aria-label="Sign out">
-				<i class="iconify h-5 w-5 mdi--logout" />
+			<button class="btn p-3" onclick={() => signOut({ callbackUrl: "/" })} aria-label="Sign out">
+				<i class="iconify h-5 w-5 mdi--logout"></i>
 			</button>
 		</div>
-		<div class="divider my-0" />
+		<div class="divider my-0"></div>
 		<ul class="menu menu-lg w-full px-0">
 			<li>
 				<div class="flex items-center gap-2 hover:bg-transparent">
@@ -62,7 +73,7 @@
 				</div>
 			</li>
 		</ul>
-		<div class="divider my-0" />
+		<div class="divider my-0"></div>
 		<ul class="menu menu-lg w-full px-0 [&_li>*]:px-2">
 			<li class="menu-title">
 				<span class="font-bold">Linked Accounts</span>
@@ -81,11 +92,11 @@
 										use:enhance={({ cancel }) => {
 											if (!confirm(`Are you sure you want to unlink ${provider.name}?`)) return cancel();
 
-											$pageLoader = true;
+											global.pageLoader = true;
 											open = false;
 											return async ({ update }) => {
 												await update();
-												$pageLoader = false;
+												global.pageLoader = false;
 												successToast(`${provider.name} unlinked`);
 											};
 										}}
@@ -94,10 +105,10 @@
 										<button class="btn btn-error btn-sm">Unlink</button>
 									</form>
 								{:else}
-									<span class="iconify size-6 text-green-500 mdi--check" />
+									<span class="iconify size-6 text-green-500 mdi--check"></span>
 								{/if}
 							{:else}
-								<button class="btn btn-primary btn-sm" on:click={() => signIn(provider.id, { callbackUrl: $page.url.href })}>
+								<button class="btn btn-primary btn-sm" onclick={() => signIn(provider.id, { callbackUrl: $page.url.href })}>
 									Link
 								</button>
 							{/if}
@@ -107,23 +118,23 @@
 			{/each}
 		</ul>
 		<Passkeys />
-		<div class="divider my-0" />
+		<div class="divider my-0"></div>
 		<ul class="menu menu-lg w-full px-0">
 			<li>
 				<a href="https://github.com/sillvva/ddal-svelte/issues" target="_blank" rel="noreferrer noopener">
-					<span class="iconify size-6 mdi--bug" />
+					<span class="iconify size-6 mdi--bug"></span>
 					Report a bug
 				</a>
 			</li>
 			<li>
 				<a href="https://matt.dekok.dev" target="_blank" rel="noreferrer noopener">
-					<span class="iconify size-6 mdi--information-outline" />
+					<span class="iconify size-6 mdi--information-outline"></span>
 					About the developer
 				</a>
 			</li>
 			<li>
 				<a href="http://paypal.me/Sillvva" target="_blank" rel="noreferrer noopener">
-					<span class="iconify size-6 mdi--gift" />
+					<span class="iconify size-6 mdi--gift"></span>
 					Contribute
 				</a>
 			</li>
@@ -141,10 +152,10 @@
 		open ? "block" : "hidden",
 		open ? "z-40 opacity-100" : "-z-10 opacity-0"
 	)}
-	on:keydown={() => (open = false)}
-	on:click={() => (open = false)}
+	onkeydown={() => (open = false)}
+	onclick={() => (open = false)}
 	role="none"
-/>
+></div>
 
 <style lang="scss">
 	aside {

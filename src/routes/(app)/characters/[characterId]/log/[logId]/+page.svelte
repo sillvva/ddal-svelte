@@ -10,19 +10,18 @@
 	import Submit from "$lib/components/forms/Submit.svelte";
 	import SuperForm from "$lib/components/forms/SuperForm.svelte";
 	import { defaultDM } from "$lib/entities";
-	import { valibotForm } from "$lib/factories.js";
+	import { valibotForm } from "$lib/factories.svelte.js";
 	import { logSchema } from "$lib/schemas";
 
-	export let data;
+	let { data } = $props();
 
-	$: superform = valibotForm(data.form, logSchema);
-	$: form = superform.form;
+	const superform = $derived(valibotForm(data.form, logSchema));
+	const form = $derived(superform.form);
 
-	let season: 1 | 8 | 9 = 9;
-	$: season = $form.experience ? 1 : $form.acp ? 8 : 9;
+	let season = $state($form.experience ? 1 : $form.acp ? 8 : 9);
 </script>
 
-{#key $form.id}
+{#key $form.id || "new"}
 	<BreadCrumbs />
 
 	<SuperForm action="?/saveLog" {superform} showMessage>

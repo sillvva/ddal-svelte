@@ -8,11 +8,11 @@
 	import MiniSearch from "minisearch";
 	import { twMerge } from "tailwind-merge";
 
-	export let data;
+	let { data } = $props();
 
-	$: dms = data.dms;
-	let deletingDM: string[] = [];
-	let search = $page.url.searchParams.get("s") || "";
+	const dms = $derived(data.dms);
+	let deletingDM = $state<string[]>([]);
+	let search = $state($page.url.searchParams.get("s") || "");
 
 	const minisearch = new MiniSearch({
 		fields: ["name", "DCI"],
@@ -25,21 +25,26 @@
 		}
 	});
 
-	$: indexed = dms
-		? dms.map((dm) => ({
-				id: dm.id,
-				name: dm.name,
-				DCI: dm.DCI
-			}))
-		: [];
+	const indexed = $derived(
+		dms
+			? dms.map((dm) => ({
+					id: dm.id,
+					name: dm.name,
+					DCI: dm.DCI
+				}))
+			: []
+	);
 
-	$: {
+	$effect(() => {
 		minisearch.removeAll();
 		minisearch.addAll(indexed);
-	}
-	$: msResults = minisearch.search(search);
-	$: resultsMap = new Map(msResults.map((result) => [result.id, result]));
-	$: results = indexed.length && search.length > 1 ? dms.filter((dm) => resultsMap.has(dm.id)) : dms;
+	});
+	const msResults = $derived.by(() => {
+		if (!minisearch.termCount) minisearch.addAll(indexed);
+		return minisearch.search(search);
+	});
+	const resultsMap = $derived(new Map(msResults.map((result) => [result.id, result])));
+	const results = $derived(indexed.length && search.length > 1 ? dms.filter((dm) => resultsMap.has(dm.id)) : dms);
 </script>
 
 <div class="flex flex-col gap-4">
@@ -57,7 +62,7 @@
 							<th class="">DM</th>
 							<th class="hidden xs:table-cell">DCI</th>
 							<th class="hidden xs:table-cell">Logs</th>
-							<th class="print:hidden" />
+							<th class="print:hidden"></th>
 						</tr>
 					</thead>
 					<tbody>
@@ -71,11 +76,13 @@
 							{#each results as dm}
 								<tr class={twMerge(deletingDM.includes(dm.id) && "hidden")}>
 									<td>
-										<a href="/dms/{dm.id}"
-										class="whitespace-pre-wrap text-left font-semibold text-secondary"
-										aria-label="Edit DM">
-										<SearchResults text={dm.name} {search} />
-									</a>
+										<a
+											href="/dms/{dm.id}"
+											class="whitespace-pre-wrap text-left font-semibold text-secondary"
+											aria-label="Edit DM"
+										>
+											<SearchResults text={dm.name} {search} />
+										</a>
 										<div class="block xs:hidden">
 											{#if dm.DCI}
 												<p class="text-xs text-gray-500">DCI: <SearchResults text={dm.DCI} {search} /></p>

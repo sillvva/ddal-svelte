@@ -1,32 +1,56 @@
 <script lang="ts">
 	import { dev } from "$app/environment";
 	import { Combobox } from "bits-ui";
+	import type { Snippet } from "svelte";
 	import SuperDebug, { formFieldProxy, stringProxy, type FormPathLeaves, type SuperForm } from "sveltekit-superforms";
 	import { twMerge } from "tailwind-merge";
 
 	type T = $$Generic<Record<PropertyKey, unknown>>;
+	interface Props {
+		superform: SuperForm<T>;
+		valueField: FormPathLeaves<T>;
+		labelField: FormPathLeaves<T, string>;
+		errorField?: FormPathLeaves<T, string>;
+		name?: string;
+		values?: Array<{ value: string; label?: string; itemLabel?: string }>;
+		allowCustom?: boolean;
+		showOnEmpty?: boolean;
+		clearable?: boolean;
+		disabled?: boolean;
+		required?: boolean;
+		link?: string;
+		description?: string;
+		placeholder?: string;
+		oninput?: (el?: HTMLInputElement, value?: string) => void;
+		onselect?: (sel: { selected?: (typeof values)[number]; input: string }) => void;
+		onclear?: () => void;
+		children?: Snippet;
+	}
 
-	export let superform: SuperForm<T>;
-	export let valueField: FormPathLeaves<T>;
-	export let labelField: FormPathLeaves<T, string>;
-	export let errorField = valueField;
-	export let name = "";
-	export let values: Array<{ value: string; label?: string; itemLabel?: string }> = [];
-	export let allowCustom = false;
-	export let showOnEmpty = false;
-	export let clearable = false;
-	export let disabled = false;
-	export let required: true | undefined = undefined;
-	export let link = "";
-	export let description = "";
-	export let placeholder = "";
-	export let oninput = (el?: HTMLInputElement, value?: string) => {};
-	export let onselect = (sel: { selected?: (typeof values)[number]; input: string }) => {};
-	export let onclear = () => {};
+	let {
+		superform,
+		valueField,
+		labelField,
+		errorField = valueField,
+		name = "",
+		values = [],
+		allowCustom = false,
+		showOnEmpty = false,
+		clearable = false,
+		disabled = false,
+		required = undefined,
+		link = "",
+		description = "",
+		placeholder = "",
+		oninput = (el?: HTMLInputElement, value?: string) => {},
+		onselect = (sel: { selected?: (typeof values)[number]; input: string }) => {},
+		onclear = () => {},
+		children
+	}: Props = $props();
 
-	let debug = false;
-	let open = false;
-	let changed = false;
+	let debug = $state(false);
+	let open = $state(false);
+	let changed = $state(false);
 
 	const { constraints } = formFieldProxy(superform, labelField);
 	const value = stringProxy(superform, valueField, { empty: "undefined" });
@@ -35,20 +59,28 @@
 
 	if ($constraints?.required) required = true;
 
-	$: withLabel = values.map(({ value, label, itemLabel }) => ({
-		value,
-		label: label || value,
-		itemLabel: itemLabel || label || value
-	}));
-	$: prefiltered = withLabel.filter((v) =>
-		v.itemLabel
-			.toLowerCase()
-			.replace(/\s+/g, "")
-			.includes(($label || "").toLowerCase().replace(/\s+/g, ""))
+	const withLabel = $state(
+		values.map(({ value, label, itemLabel }) => ({
+			value,
+			label: label || value,
+			itemLabel: itemLabel || label || value
+		}))
 	);
-	$: firstItem = { value: "", label: $label, itemLabel: `Add "${$label}"` };
-	$: filtered = !$label?.trim() || !allowCustom || prefiltered.length === 1 ? prefiltered : [firstItem].concat(prefiltered);
-	$: selectedItem = $value ? values.find((v) => v.value === $value) : $label.trim() && allowCustom ? firstItem : undefined;
+	const prefiltered = $state(
+		withLabel.filter((v) =>
+			v.itemLabel
+				.toLowerCase()
+				.replace(/\s+/g, "")
+				.includes(($label || "").toLowerCase().replace(/\s+/g, ""))
+		)
+	);
+	const firstItem = $state({ value: "", label: $label, itemLabel: `Add "${$label}"` });
+	const filtered = $state(
+		!$label?.trim() || !allowCustom || prefiltered.length === 1 ? prefiltered : [firstItem].concat(prefiltered)
+	);
+	let selectedItem = $state(
+		$value ? values.find((v) => v.value === $value) : $label.trim() && allowCustom ? firstItem : undefined
+	);
 
 	function clear() {
 		$value = "";
@@ -87,7 +119,7 @@
 >
 	<label for={ids.trigger} class="label">
 		<span class="label-text">
-			<slot />
+			{@render children?.()}
 			{#if required}
 				<span class="text-error">*</span>
 			{/if}
@@ -99,7 +131,7 @@
 				<Combobox.Input asChild let:builder>
 					<input
 						class="input join-item input-bordered w-full focus:border-primary"
-						on:input={(e) => {
+						oninput={(e) => {
 							let cValue = e.currentTarget.value;
 							if (selectedItem && selectedItem.label !== cValue) selectedItem = undefined;
 							if (!cValue) clear();
@@ -107,7 +139,7 @@
 							oninput(e.currentTarget, cValue);
 							changed = true;
 						}}
-						on:blur={() => {
+						onblur={() => {
 							if (!allowCustom && !selectedItem && !filtered.length) clear();
 							if (!$label) open = false;
 						}}
@@ -147,18 +179,34 @@
 			{/if}
 		</div>
 		{#if $label && clearable}
-			<button class="btn join-item input-bordered" type="button" on:click|preventDefault={() => clear()}>
-				<span class="iconify size-6 bg-red-500 mdi--close" />
+			<button
+				class="btn join-item input-bordered"
+				type="button"
+				onclick={(ev) => {
+					ev.preventDefault();
+					clear();
+				}}
+				aria-label="Clear"
+			>
+				<span class="iconify size-6 bg-red-500 mdi--close"></span>
 			</button>
 		{/if}
 		{#if link}
-			<a href={link} class="btn join-item input-bordered" role="button" target="_blank">
-				<span class="iconify size-6 mdi--pencil" />
+			<a href={link} class="btn join-item input-bordered" role="button" target="_blank" aria-label="Edit">
+				<span class="iconify size-6 mdi--pencil"></span>
 			</a>
 		{/if}
 		{#if dev}
-			<button type="button" class="btn join-item input-bordered" on:click|preventDefault={() => (debug = !debug)}>
-				<span class="iconify size-6 mdi--information-outline" />
+			<button
+				type="button"
+				class="btn join-item input-bordered"
+				onclick={(ev) => {
+					ev.preventDefault();
+					debug = !debug;
+				}}
+				aria-label="Debug"
+			>
+				<span class="iconify size-6 mdi--information-outline"></span>
 			</button>
 		{/if}
 	</div>

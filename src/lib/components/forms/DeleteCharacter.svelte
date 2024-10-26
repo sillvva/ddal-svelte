@@ -1,16 +1,16 @@
 <script lang="ts">
-	import { errorToast, successToast } from "$lib/factories";
-	import { searchData } from "$lib/stores";
+	import { errorToast, successToast } from "$lib/factories.svelte";
+	import { global } from "$lib/stores.svelte";
 	import type { Character } from "$server/db/schema";
-	import { createEventDispatcher } from "svelte";
 	import { superForm } from "sveltekit-superforms";
 
-	export let character: Character;
-	export let label = "";
+	interface Props {
+		character: Character;
+		label?: string;
+		ondelete?: (event: { id: string }) => void;
+	}
 
-	const dispatch = createEventDispatcher<{
-		deleted: { id: string };
-	}>();
+	let { character, label = "", ondelete }: Props = $props();
 
 	const { submit } = superForm(
 		{ id: character.id },
@@ -26,14 +26,14 @@
 					errorToast(error);
 				} else {
 					successToast(`${character.name} deleted`);
-					dispatch("deleted", { id: character.id });
-					$searchData = [];
+					ondelete?.({ id: character.id });
+					global.searchData = [];
 				}
 			}
 		}
 	);
 </script>
 
-<button type="button" class="menu-item-error" aria-label="Delete Character" on:click={submit}>
+<button type="button" class="menu-item-error" aria-label="Delete Character" onclick={submit}>
 	{label}
 </button>

@@ -1,17 +1,21 @@
 <script lang="ts">
 	import { stopWords } from "$lib/constants";
 
-	export let text: string | string[] | null = "";
-	export let search: string | null = "";
-	export let filtered = false;
-	export let separator = " | ";
+	interface Props {
+		text?: string | string[] | null;
+		search?: string | null;
+		filtered?: boolean;
+		separator?: string;
+	}
 
-	$: terms = getSearchTerms(search || "");
-	$: regexes = getRegexesFromTerms(terms);
-	$: regex = getJoinedRegexFromTerms(terms);
-	$: items = getTextItems(text, filtered, regexes);
-	$: match = getMatchedItems(items, regex);
-	$: parts = getPartionedItems(items, match, regex);
+	let { text = "", search = "", filtered = false, separator = " | " }: Props = $props();
+
+	const terms = $derived(getSearchTerms(search || ""));
+	const regexes = $derived(getRegexesFromTerms(terms));
+	const regex = $derived(getJoinedRegexFromTerms(terms));
+	const items = $derived(getTextItems(text, filtered, regexes));
+	const match = $derived(getMatchedItems(items, regex));
+	const parts = $derived(getPartionedItems(items, match, regex));
 
 	function getSearchTerms(search: string) {
 		return (search.length > 1 ? search : "")
