@@ -1,6 +1,5 @@
 import type { DungeonMasterId } from "$lib/schemas";
 import { q } from "$server/db";
-import { dungeonMasters } from "$server/db/schema";
 import { sorter } from "@sillvva/utils";
 
 export type UserDMsWithLogs = Awaited<ReturnType<typeof getUserDMsWithLogs>>;
@@ -22,8 +21,7 @@ export async function getUserDMsWithLogs(user: LocalsSession["user"], id?: Dunge
 				}
 			}
 		},
-		where: (dms, { eq, and, or }) =>
-			and(or(eq(dungeonMasters.owner, userId), eq(dungeonMasters.uid, userId)), id ? eq(dms.id, id) : undefined)
+		where: (dms, { eq, and, or, ne }) => and(or(eq(dms.owner, userId), eq(dms.uid, userId)), id ? eq(dms.id, id) : undefined)
 	});
 
 	if (!id && !dms.find((dm) => dm.uid === userId)) {

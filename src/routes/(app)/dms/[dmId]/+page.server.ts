@@ -43,7 +43,8 @@ export const load = async (event) => {
 			href: `/dms/${dm.id}`
 		}),
 		dm,
-		form
+		form,
+		user: parent.user
 	};
 };
 

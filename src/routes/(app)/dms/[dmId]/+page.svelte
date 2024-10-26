@@ -39,23 +39,29 @@
 					<table class="table w-full">
 						<thead>
 							<tr class="bg-base-300">
-								<th class="hidden sm:table-cell">Date</th>
-								<th class="">Adventure</th>
-								<th class="">Character</th>
+								<th class="max-lg:hidden">Date</th>
+								<th class="max-xs:px-2">Adventure</th>
+								<th class="max-xs:px-2">Character</th>
+								{#if data.dm.uid === data.user?.id}
+									<th class="max-md:hidden">Type</th>
+								{/if}
 							</tr>
 						</thead>
 						<tbody>
 							{#each data.dm.logs.sort((a, b) => sorter(a.date, b.date)) as log}
 								<tr>
-									<td>
+									<td class="max-xs:px-2">
 										<div class="flex flex-col gap-1">
-											<a href={`/characters/${log.character?.id}/log/${log.id}`} class="text-secondary sm:hidden">
+											<a href={`/characters/${log.character?.id}/log/${log.id}`} class="text-secondary lg:hidden">
 												{log.name}
 											</a>
-											<span>{new Date(log.date).toLocaleString([], { dateStyle: "medium", timeStyle: "short" })}</span>
+											<div class="min-w-max">
+												{new Date(log.date).toLocaleString([], { dateStyle: "medium", timeStyle: "short" })}
+											</div>
+											<div class="min-w-max md:hidden">{log.isDmLog ? "DM Log" : "Log"} ({log.type})</div>
 										</div>
 									</td>
-									<td class="hidden sm:table-cell">
+									<td class="max-lg:hidden">
 										<a
 											href={log.isDmLog ? `/dm-logs/${log.id}` : `/characters/${log.character?.id}/log/${log.id}`}
 											class="text-secondary"
@@ -63,13 +69,18 @@
 											{log.name}
 										</a>
 									</td>
-									<td>
+									<td class="max-xs:px-2">
 										{#if log.character?.name}
 											<a href={`/characters/${log.character?.id}`} class="text-secondary">
 												{log.character?.name}
 											</a>
 										{/if}
 									</td>
+									{#if data.dm.uid === data.user?.id}
+										<td class="max-md:hidden">
+											<div class="min-w-max">{log.isDmLog ? "DM Log" : "Log"} ({log.type})</div>
+										</td>
+									{/if}
 								</tr>
 							{/each}
 						</tbody>
