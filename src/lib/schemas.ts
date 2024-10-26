@@ -16,7 +16,7 @@ const maxTextSize = v.pipe(string, v.maxLength(5000));
 const maxStringSize = v.pipe(string, v.maxLength(255));
 const integer = v.pipe(v.number(), v.integer());
 
-const urlSchema = v.pipe(string, v.url(), v.maxLength(2000));
+const urlSchema = v.pipe(string, v.url(), v.maxLength(1000));
 const optionalURL = v.optional(v.fallback(urlSchema, ""), "");
 
 export type EnvPrivate = v.InferInput<typeof envPrivateSchema>;
@@ -41,7 +41,7 @@ export const userIdSchema = brandedId("UserId");
 
 export type NewCharacterSchema = v.InferOutput<typeof newCharacterSchema>;
 export const newCharacterSchema = v.object({
-	name: requiredString,
+	name: v.pipe(requiredString, maxStringSize),
 	campaign: v.optional(maxStringSize, ""),
 	race: v.optional(maxStringSize, ""),
 	class: v.optional(maxStringSize, ""),
