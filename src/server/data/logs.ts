@@ -63,7 +63,8 @@ export async function getUserLogs(userId: UserId) {
 			id: true,
 			name: true,
 			date: true,
-			isDmLog: true
+			isDmLog: true,
+			gold: true
 		},
 		with: {
 			dm: {
@@ -76,6 +77,16 @@ export async function getUserLogs(userId: UserId) {
 					id: true,
 					name: true,
 					imageUrl: true
+				}
+			},
+			magicItemsGained: {
+				columns: {
+					name: true
+				}
+			},
+			storyAwardsGained: {
+				columns: {
+					name: true
 				}
 			}
 		},

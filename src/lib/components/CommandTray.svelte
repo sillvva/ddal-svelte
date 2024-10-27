@@ -56,6 +56,8 @@
 							}
 							if (item.type === "log") {
 								if (item.dm) matcher.add(item.dm.name);
+								item.magicItemsGained.forEach((magicItem) => matcher.add(magicItem.name));
+								item.storyAwardsGained.forEach((storyAward) => matcher.add(storyAward.name));
 							}
 						}
 						const matches = new Set(hasMatch(Array.from(matcher).join(" ")));
@@ -218,20 +220,50 @@
 																{:else if item.type === "log"}
 																	<div class="flex flex-col">
 																		<div>{item.name}</div>
-																		<div class="flex gap-2 opacity-70">
+																		<div class="flex gap-2 divide-x divide-base-content/50 opacity-70">
 																			<span class="text-xs">{new Date(item.date).toLocaleDateString()}</span>
-																			<div class="divider divider-horizontal mx-0 w-0"></div>
 																			{#if item.character}
-																				<span class="text-xs">{item.character.name}</span>
+																				<span class="pl-2 text-xs">{item.character.name}</span>
 																			{:else}
-																				<span class="text-xs italic">Unassigned</span>
+																				<span class="pl-2 text-xs italic">Unassigned</span>
 																			{/if}
+																			<span class="pl-2 text-xs">{item.gold.toLocaleString()} gp</span>
 																		</div>
 																		{#if search.length >= 2}
 																			{#if item.dm && hasMatch(item.dm.name)}
 																				<div class="flex gap-1 text-xs">
 																					<span class="whitespace-nowrap font-bold">DM:</span>
 																					<span class="flex-1 opacity-70">{item.dm.name}</span>
+																				</div>
+																			{/if}
+																			{#if item.magicItemsGained.length}
+																				<div class="flex gap-1 text-xs">
+																					<span class="whitespace-nowrap font-bold">Magic Items:</span>
+																					<span class="flex-1 opacity-70">
+																						{Array.from(new Set(item.magicItemsGained.map((it) => it.name)))
+																							.filter(
+																								(it) =>
+																									!item.magicItemsGained.some((magicItem) => hasMatch(magicItem.name)) ||
+																									hasMatch(it)
+																							)
+																							.sort((a, b) => sorter(a, b))
+																							.join(", ")}
+																					</span>
+																				</div>
+																			{/if}
+																			{#if item.storyAwardsGained.length}
+																				<div class="flex gap-2 text-xs">
+																					<span class="whitespace-nowrap font-bold">Story Awards:</span>
+																					<span class="flex-1 opacity-70">
+																						{Array.from(new Set(item.storyAwardsGained.map((it) => it.name)))
+																							.filter(
+																								(it) =>
+																									!item.storyAwardsGained.some((storyAward) => hasMatch(storyAward.name)) ||
+																									hasMatch(it)
+																							)
+																							.sort((a, b) => sorter(a, b))
+																							.join(", ")}
+																					</span>
 																				</div>
 																			{/if}
 																		{/if}
