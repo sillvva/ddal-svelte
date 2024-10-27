@@ -3,7 +3,12 @@
 	import { page } from "$app/stores";
 	import { errorToast, successToast } from "$lib/factories.svelte";
 	import { global } from "$lib/stores.svelte";
-	import type { DeleteWebAuthnResponse, RenameWebAuthnResponse } from "$src/routes/(api)/webAuthn/+server";
+	import type {
+		DeleteWebAuthnInput,
+		DeleteWebAuthnResponse,
+		RenameWebAuthnInput,
+		RenameWebAuthnResponse
+	} from "$src/routes/(api)/webAuthn/+server";
 	import { signIn } from "@auth/sveltekit/webauthn";
 	import { hotkey } from "@svelteuidev/composables";
 	import { tick } from "svelte";
@@ -44,7 +49,7 @@
 		const name = isDefault ? "" : renameName;
 		const response = await fetch("/webAuthn", {
 			method: "POST",
-			body: JSON.stringify({ name, id })
+			body: JSON.stringify({ name, id } satisfies RenameWebAuthnInput)
 		});
 
 		const value = (await response.json()) as RenameWebAuthnResponse;
@@ -72,7 +77,7 @@
 		if (confirm(`Are you sure you want to delete "${auth.name}"?`)) {
 			const response = await fetch("/webAuthn", {
 				method: "DELETE",
-				body: JSON.stringify({ id })
+				body: JSON.stringify({ id } satisfies DeleteWebAuthnInput)
 			});
 
 			const value = (await response.json()) as DeleteWebAuthnResponse;
