@@ -74,7 +74,7 @@
 		"node": ">=20.0",
 		"pnpm": ">=9.3"
 	},
-	"packageManager": "pnpm@9.3.0",
+	"packageManager": "pnpm@9.12.2",
 	"overrides": {
 		"svelte-markdown": {
 			"svelte": "^5.0.0"
