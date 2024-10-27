@@ -3,7 +3,12 @@
 	import { page } from "$app/stores";
 	import { errorToast, successToast } from "$lib/factories.svelte";
 	import { global } from "$lib/stores.svelte";
-	import type { DeleteWebAuthnResponse, RenameWebAuthnResponse } from "$src/routes/(api)/webAuthn/+server";
+	import type {
+		DeleteWebAuthnInput,
+		DeleteWebAuthnResponse,
+		RenameWebAuthnInput,
+		RenameWebAuthnResponse
+	} from "$src/routes/(api)/webAuthn/+server";
 	import { signIn } from "@auth/sveltekit/webauthn";
 	import { hotkey } from "@svelteuidev/composables";
 	import { tick } from "svelte";
@@ -12,7 +17,7 @@
 
 	const authenticators = $derived($page.data.user?.authenticators || []);
 	$effect(() => {
-		if (authenticators.length == 0) global.app.settings.autoWebAuthn = false;
+		global.app.settings.autoWebAuthn = authenticators.length > 0;
 	});
 
 	let renaming = $state(false);
@@ -44,7 +49,7 @@
 		const name = isDefault ? "" : renameName;
 		const response = await fetch("/webAuthn", {
 			method: "POST",
-			body: JSON.stringify({ name, id })
+			body: JSON.stringify({ name, id } satisfies RenameWebAuthnInput)
 		});
 
 		const value = (await response.json()) as RenameWebAuthnResponse;
@@ -72,7 +77,7 @@
 		if (confirm(`Are you sure you want to delete "${auth.name}"?`)) {
 			const response = await fetch("/webAuthn", {
 				method: "DELETE",
-				body: JSON.stringify({ id })
+				body: JSON.stringify({ id } satisfies DeleteWebAuthnInput)
 			});
 
 			const value = (await response.json()) as DeleteWebAuthnResponse;
@@ -128,21 +133,6 @@
 			<span>Add Passkey</span>
 		</button>
 	</li>
-	{#if authenticators.length}
-		<li class="pt-2">
-			<label class="flex gap-2 hover:bg-transparent">
-				<span class="iconify size-6 mdi--auto-fix"></span>
-				<span class="flex-1 text-base">Auto Passkey Login</span>
-				<input type="checkbox" class="toggle" bind:checked={global.app.settings.autoWebAuthn} />
-			</label>
-		</li>
-		<li class="flex-row gap-2">
-			<div class="flex gap-2 pt-0 hover:bg-transparent">
-				<span class="inline-block size-6"></span>
-				<span class="flex-1 text-sm text-gray-500">Enable this to automatically be prompted to login with a passkey</span>
-			</div>
-		</li>
-	{/if}
 </ul>
 
 <dialog
