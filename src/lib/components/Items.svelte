@@ -105,7 +105,7 @@
 			{#each sortedItems as mi}
 				<span
 					role={mi.description ? "button" : "presentation"}
-					class="inline pl-2 pr-1 first:pl-0"
+					class="inline pl-2 pr-2 first:pl-0"
 					class:text-secondary={mi.description}
 					class:italic={formatting && isConsumable(mi.name)}
 					onclick={() => {
