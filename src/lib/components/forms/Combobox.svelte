@@ -59,14 +59,14 @@
 
 	if ($constraints?.required) required = true;
 
-	const withLabel = $state(
+	const withLabel = $derived(
 		values.map(({ value, label, itemLabel }) => ({
 			value,
 			label: label || value,
 			itemLabel: itemLabel || label || value
 		}))
 	);
-	const prefiltered = $state(
+	const prefiltered = $derived(
 		withLabel.filter((v) =>
 			v.itemLabel
 				.toLowerCase()
@@ -74,17 +74,30 @@
 				.includes(($label || "").toLowerCase().replace(/\s+/g, ""))
 		)
 	);
-	const firstItem = $state({ value: "", label: $label, itemLabel: `Add "${$label}"` });
-	const filtered = $state(
+	const firstItem = $derived({ value: "", label: $label, itemLabel: `Add "${$label}"` });
+	const filtered = $derived(
 		!$label?.trim() || !allowCustom || prefiltered.length === 1 ? prefiltered : [firstItem].concat(prefiltered)
 	);
-	let selectedItem = $state(
-		$value ? values.find((v) => v.value === $value) : $label.trim() && allowCustom ? firstItem : undefined
+
+	let selectedItem = $state<
+		| {
+				value: string;
+				label?: string;
+				itemLabel?: string;
+		  }
+		| undefined
+	>(
+		$value
+			? values.find((v) => v.value === $value)
+			: $label.trim() && allowCustom
+				? { value: "", label: $label, itemLabel: `Add "${$label}"` }
+				: undefined
 	);
 
 	function clear() {
 		$value = "";
 		$label = "";
+		selectedItem = undefined;
 		onclear();
 		open = false;
 	}
@@ -100,6 +113,7 @@
 	onSelectedChange={(sel) => {
 		$value = sel?.value || "";
 		$label = sel?.label || "";
+		selectedItem = { value: sel?.value || "", label: sel?.label || sel?.value || "", itemLabel: sel?.label || sel?.value || "" };
 		onselect({ selected: sel, input: $label });
 	}}
 	preventScroll={false}
