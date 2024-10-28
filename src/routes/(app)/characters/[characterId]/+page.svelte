@@ -90,19 +90,6 @@
 			: logs.sort((a, b) => sorter(a.show_date, b.show_date))
 	);
 
-	function triggerModal(log: (typeof results)[number]) {
-		if (log.description && !global.app.log.descriptions) {
-			pushState("", {
-				modal: {
-					type: "text",
-					name: log.name,
-					description: log.description,
-					date: log.date
-				}
-			});
-		}
-	}
-
 	function triggerImageModal() {
 		if (data.character.imageUrl) {
 			pushState("", {
@@ -172,10 +159,8 @@
 									href={data.character.imageUrl}
 									target="_blank"
 									onclick={(e) => {
-										// if (!data.mobile) {
 										e.preventDefault();
 										triggerImageModal();
-										// }
 									}}>View Image</a
 								>
 							</li>
@@ -207,10 +192,8 @@
 						class="mask mask-squircle mx-auto h-20 bg-primary"
 						use:transition={slugify("image-" + data.character.id)}
 						onclick={(e) => {
-							// if (!data.mobile) {
 							e.preventDefault();
 							triggerImageModal();
-							// }
 						}}
 					>
 						<img

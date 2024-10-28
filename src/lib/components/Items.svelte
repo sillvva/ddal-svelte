@@ -48,7 +48,7 @@
 
 	const consolidatedItems = $derived.by(() => {
 		const itemsMap = new Map<string, number>();
-		return items.reduce(
+		return $state.snapshot(items).reduce(
 			(acc, item, index) => {
 				if (index === 0) itemsMap.clear();
 				const name = fixName(clearQty(item.name));
