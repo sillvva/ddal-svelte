@@ -6,13 +6,18 @@
 	import { twMerge } from "tailwind-merge";
 
 	type T = $$Generic<Record<PropertyKey, unknown>>;
+	type Item = {
+		value: string;
+		label?: string;
+		itemLabel?: string;
+	};
 	interface Props {
 		superform: SuperForm<T>;
 		valueField: FormPathLeaves<T>;
 		labelField: FormPathLeaves<T, string>;
 		errorField?: FormPathLeaves<T, string>;
 		name?: string;
-		values?: Array<{ value: string; label?: string; itemLabel?: string }>;
+		values?: Array<Item>;
 		allowCustom?: boolean;
 		showOnEmpty?: boolean;
 		clearable?: boolean;
@@ -74,19 +79,12 @@
 				.includes(($label || "").toLowerCase().replace(/\s+/g, ""))
 		)
 	);
-	const firstItem = $derived({ value: "", label: $label, itemLabel: `Add "${$label}"` });
+	const firstItem = $derived<Item>({ value: "", label: $label, itemLabel: `Add "${$label}"` });
 	const filtered = $derived(
 		!$label?.trim() || !allowCustom || prefiltered.length === 1 ? prefiltered : [firstItem].concat(prefiltered)
 	);
 
-	let selectedItem = $state<
-		| {
-				value: string;
-				label?: string;
-				itemLabel?: string;
-		  }
-		| undefined
-	>(
+	let selectedItem = $state<Item | undefined>(
 		$value
 			? values.find((v) => v.value === $value)
 			: $label.trim() && allowCustom
@@ -112,8 +110,8 @@
 	{required}
 	onSelectedChange={(sel) => {
 		$value = sel?.value || "";
-		$label = sel?.label || "";
-		selectedItem = { value: sel?.value || "", label: sel?.label || sel?.value || "", itemLabel: sel?.label || sel?.value || "" };
+		$label = sel?.label || sel?.value || "";
+		selectedItem = { value: $value, label: $label, itemLabel: $label };
 		onselect({ selected: sel, input: $label });
 	}}
 	preventScroll={false}
