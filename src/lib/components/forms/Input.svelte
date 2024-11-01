@@ -1,5 +1,4 @@
 <script lang="ts">
-	import type { Snippet } from "svelte";
 	import type { HTMLInputAttributes } from "svelte/elements";
 	import {
 		dateProxy,
@@ -22,6 +21,7 @@
 	interface Props extends Omit<HTMLInputAttributes, "onchange" | "oninput"> {
 		superform: SuperForm<T>;
 		field: FormPathLeaves<T, LeafType>;
+		label: string;
 		type: TType;
 		empty?: TType extends "date" ? "null" | "undefined" : undefined;
 		minField?: TType extends "number" | "date" ? FormPathLeaves<T, LeafType> : never;
@@ -30,21 +30,20 @@
 		description?: string;
 		oninput?: (value: FormPathType<T, FormPathLeaves<T, LeafType>>) => void;
 		onchange?: (value: FormPathType<T, FormPathLeaves<T, LeafType>>) => void;
-		children?: Snippet;
 	}
 
 	let {
 		superform,
 		field,
+		label,
 		type,
 		empty = "null",
 		minField,
 		maxField,
 		readonly,
-		description = "",
+		description,
 		oninput,
 		onchange,
-		children,
 		...rest
 	}: Props = $props();
 
@@ -73,7 +72,7 @@
 
 <label for={field} class="label">
 	<span class="label-text">
-		{@render children?.()}
+		{label}
 		{#if commonProps.required}
 			<span class="text-error">*</span>
 		{/if}
@@ -83,6 +82,7 @@
 	<input
 		type="text"
 		{...commonProps}
+		id={field}
 		disabled={readonly}
 		bind:value={$value}
 		oninput={() => oninput?.($value)}
@@ -92,6 +92,7 @@
 	<input
 		type="url"
 		{...commonProps}
+		id={field}
 		disabled={readonly}
 		bind:value={$value}
 		oninput={() => oninput?.($value)}
@@ -101,6 +102,7 @@
 	<input
 		type="number"
 		{...commonProps}
+		id={field}
 		min={$proxyMin}
 		max={$proxyMax}
 		disabled={readonly}
@@ -112,6 +114,7 @@
 	<input
 		type="datetime-local"
 		{...commonProps}
+		id={field}
 		min={$proxyMin}
 		max={$proxyMax}
 		disabled={readonly}

@@ -34,17 +34,18 @@
 			</GenericInput>
 		</Control>
 		<Control class="col-span-12 sm:col-span-4">
-			<Input type="text" {superform} field="name">Title</Input>
+			<Input type="text" {superform} field="name" label="Title" />
 		</Control>
 		<Control class="col-span-12 sm:col-span-4">
-			<DateInput {superform} field="date">Date</DateInput>
+			<DateInput {superform} field="date" label="Date" />
 		</Control>
 		{#if $form.type === "game"}
 			<Control class="col-span-12 sm:col-span-6">
 				<Combobox
 					{superform}
+					label="DM Name"
 					valueField="dm.id"
-					labelField="dm.name"
+					inputField="dm.name"
 					values={data.dms.map((dm) => ({
 						value: dm.id,
 						label: dm.name,
@@ -60,9 +61,7 @@
 					onclear={() => ($form.dm = defaultDM(data.user.id))}
 					link={$form.dm.id ? `/dms/${$form.dm.id}` : ""}
 					placeholder={data.dms.find((dm) => dm.uid === data.user.id)?.name || data.user.name}
-				>
-					DM Name
-				</Combobox>
+				></Combobox>
 			</Control>
 			<Control class="col-span-12 sm:col-span-6">
 				<Input
@@ -71,9 +70,8 @@
 					field="dm.DCI"
 					disabled={!$form.dm.name}
 					placeholder={$form.dm.name ? undefined : data.dms.find((dm) => dm.uid === data.user.id)?.DCI}
-				>
-					DM DCI
-				</Input>
+					label="DM DCI"
+				/>
 			</Control>
 			<Control class="col-span-12 sm:col-span-4">
 				<GenericInput labelFor="season" label="Season">
@@ -86,33 +84,33 @@
 			</Control>
 			{#if season === 1}
 				<Control class="col-span-12 sm:col-span-4">
-					<Input type="number" {superform} field="experience">Experience</Input>
+					<Input type="number" {superform} field="experience" label="Experience" />
 				</Control>
 			{/if}
 			{#if season === 8}
 				<Control class="col-span-6 sm:col-span-2">
-					<Input type="number" {superform} field="acp">ACP</Input>
+					<Input type="number" {superform} field="acp" label="ACP" />
 				</Control>
 			{/if}
 			{#if season === 9}
 				<Control class="col-span-12 sm:col-span-4">
-					<Input type="number" {superform} field="level" max={Math.max($form.level, 20 - data.totalLevel)}>Level</Input>
+					<Input type="number" {superform} field="level" label="Level" max={Math.max($form.level, 20 - data.totalLevel)} />
 				</Control>
 			{/if}
 		{/if}
 		{#if season === 8 || $form.type === "nongame"}
 			<Control class={$form.type === "game" ? "col-span-6 sm:col-span-2" : "col-span-4"}>
-				<Input type="number" {superform} field="tcp">TCP</Input>
+				<Input type="number" {superform} field="tcp" label="TCP" />
 			</Control>
 		{/if}
 		<Control class={$form.type === "game" ? "col-span-6 sm:col-span-2" : "col-span-4"}>
-			<Input type="number" {superform} field="gold">Gold</Input>
+			<Input type="number" {superform} field="gold" label="Gold" />
 		</Control>
 		<Control class={$form.type === "game" ? "col-span-6 sm:col-span-2" : "col-span-4"}>
-			<Input type="number" {superform} field="dtd">Downtime</Input>
+			<Input type="number" {superform} field="dtd" label="Downtime" />
 		</Control>
 		<Control class="col-span-12 w-full">
-			<MdTextInput {superform} field="description" name="notes" maxRows={20} preview>Notes</MdTextInput>
+			<MdTextInput {superform} field="description" name="notes" maxRows={20} preview></MdTextInput>
 		</Control>
 		<AddDropItems {superform} magicItems={data.magicItems} storyAwards={data.storyAwards}>
 			<Submit {superform}>Save Log</Submit>
