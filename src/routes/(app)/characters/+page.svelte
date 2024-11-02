@@ -201,7 +201,7 @@
 						<div class="text-center">Level</div>
 					</header>
 					{#each results as character}
-						<a href={`/characters/${character.id}`} class="img-grow">
+						<a href={`/characters/${character.id}`} class="img-grow" aria-label={character.name}>
 							{#if !data.mobile}
 								<div class="pr-0 transition-colors max-sm:hidden sm:pr-2">
 									<div class="avatar">
@@ -230,19 +230,15 @@
 										<SearchResults text={character.name} {search} />
 									</span>
 								</div>
-								<div class="whitespace-pre-wrap text-xs sm:text-sm">
-									<p use:transition={slugify("details-" + character.id)}>
-										<span class="inline pr-1 sm:hidden">Level {character.total_level}</span><SearchResults
-											text={character.race}
-											{search}
-										/>
-										<SearchResults text={character.class} {search} />
-									</p>
+								<div class="whitespace-pre-wrap text-xs sm:text-sm" use:transition={slugify("details-" + character.id)}>
+									<span class="inline pr-1 sm:hidden">Level {character.total_level}</span><SearchResults
+										text={character.race}
+										{search}
+									/>
+									<SearchResults text={character.class} {search} />
 								</div>
-								<div class="mb-2 block text-xs sm:hidden">
-									<p use:transition={slugify("campaign-" + character.id)}>
-										<SearchResults text={character.campaign} {search} />
-									</p>
+								<div class="mb-2 block text-xs sm:hidden" use:transition={slugify("campaign-" + character.id)}>
+									<SearchResults text={character.campaign} {search} />
 								</div>
 								{#if (character.match.includes("magicItems") || global.app.characters.magicItems) && character.magic_items.length}
 									<div class="mb-2">

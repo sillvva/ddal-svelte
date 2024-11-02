@@ -80,6 +80,7 @@
 			<a
 				href={data.session?.user ? "/characters" : "/"}
 				class="flex min-w-fit flex-1 flex-col text-center font-draconis sm:flex-none"
+				aria-label="Home"
 			>
 				<h1 class="text-base leading-4 text-black dark:text-white">Adventurers League</h1>
 				<h2 class="text-3xl leading-7">Log Sheet</h2>

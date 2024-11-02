@@ -84,7 +84,7 @@
 	<span class="iconify size-6 mdi--magnify"></span>
 </button>
 <label class="input input-bordered hidden min-w-fit cursor-text items-center gap-2 hover-hover:md:flex">
-	<input type="text" class="max-w-20 grow" placeholder="Search" onfocus={() => (cmdOpen = true)} />
+	<input type="text" class="max-w-20 grow" placeholder="Search" aria-label="Search" onfocus={() => (cmdOpen = true)} />
 	<kbd class="kbd kbd-sm">
 		{#if isMac}
 			⌘
