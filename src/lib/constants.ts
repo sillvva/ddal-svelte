@@ -1,6 +1,24 @@
 import type { Account } from "$server/db/schema";
 import { publicEnv } from "./env/public";
 
+export const appDefaults: App.Cookie = {
+	settings: {
+		theme: "system",
+		mode: "dark",
+		autoWebAuthn: false
+	},
+	characters: {
+		magicItems: false,
+		display: "list"
+	},
+	log: {
+		descriptions: false
+	},
+	dmLogs: {
+		sort: "asc"
+	}
+};
+
 export const searchSections = [
 	{ title: "Characters", url: "/characters" },
 	{ title: "DM Logs", url: "/dm-logs" },

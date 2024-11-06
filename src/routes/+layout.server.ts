@@ -1,7 +1,6 @@
 import { building } from "$app/environment";
-import { PROVIDERS } from "$lib/constants.js";
+import { PROVIDERS, appDefaults } from "$lib/constants.js";
 import { privateEnv } from "$lib/env/private.js";
-import { appDefaults } from "$lib/stores.svelte.js";
 import { serverGetCookie } from "$server/cookie.js";
 import { q } from "$server/db/index.js";
 

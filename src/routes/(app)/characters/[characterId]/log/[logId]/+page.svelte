@@ -61,7 +61,7 @@
 					onclear={() => ($form.dm = defaultDM(data.user.id))}
 					link={$form.dm.id ? `/dms/${$form.dm.id}` : ""}
 					placeholder={data.dms.find((dm) => dm.uid === data.user.id)?.name || data.user.name}
-				></Combobox>
+				/>
 			</Control>
 			<Control class="col-span-12 sm:col-span-6">
 				<Input
@@ -110,7 +110,7 @@
 			<Input type="number" {superform} field="dtd" label="Downtime" />
 		</Control>
 		<Control class="col-span-12 w-full">
-			<MdTextInput {superform} field="description" name="notes" maxRows={20} preview></MdTextInput>
+			<MdTextInput {superform} field="description" name="notes" maxRows={20} preview />
 		</Control>
 		<AddDropItems {superform} magicItems={data.magicItems} storyAwards={data.storyAwards}>
 			<Submit {superform}>Save Log</Submit>

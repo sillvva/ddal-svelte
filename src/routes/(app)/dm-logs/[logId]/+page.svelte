@@ -45,7 +45,7 @@
 				onclear={() => {
 					$form.appliedDate = null;
 				}}
-			></Combobox>
+			/>
 		</Control>
 		<Control class="col-span-12 sm:col-span-6 lg:col-span-3">
 			<DateInput
@@ -92,7 +92,7 @@
 			<Input type="number" {superform} field="dtd" label="Downtime" />
 		</Control>
 		<Control class="col-span-12">
-			<MdTextInput {superform} field="description" name="notes" maxRows={20} preview></MdTextInput>
+			<MdTextInput {superform} field="description" name="notes" maxRows={20} preview />
 		</Control>
 		<AddDropItems {superform}>
 			<Submit {superform}>Save Log</Submit>
