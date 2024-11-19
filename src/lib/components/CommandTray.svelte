@@ -12,13 +12,19 @@
 	let { isMac = false } = $props();
 
 	const defaultSelected: string = searchSections[0].url;
+	const ignoreWords = ["a", "an", "the", "of"];
 
 	let search = $state("");
 	let cmdOpen = $state(false);
 	let selected: string = $state(defaultSelected);
 	let resultsPane: HTMLElement | undefined = $state();
 
-	const words = $derived(Array.from(new Set(search.toLowerCase().split(" "))).filter(Boolean));
+	const words = $derived(
+		search
+			.toLowerCase()
+			.split(" ")
+			.filter((word) => word.length > 1 && !ignoreWords.includes(word))
+	);
 	const query = $derived(words.join(" "));
 
 	$effect(() => {
@@ -197,7 +203,8 @@
 																				<div class="flex gap-1 text-xs">
 																					<span class="whitespace-nowrap font-bold">Magic Items:</span>
 																					<span class="flex-1 opacity-70">
-																						{Array.from(new Set(item.magic_items.map((item) => item.name)))
+																						{item.magic_items
+																							.map((item) => item.name)
 																							.filter((item) => hasMatch(item))
 																							.sort((a, b) => sorter(a, b))
 																							.join(", ")}
@@ -208,7 +215,8 @@
 																				<div class="flex gap-2 text-xs">
 																					<span class="whitespace-nowrap font-bold">Story Awards:</span>
 																					<span class="flex-1 opacity-70">
-																						{Array.from(new Set(item.story_awards.map((item) => item.name)))
+																						{item.story_awards
+																							.map((item) => item.name)
 																							.filter((item) => hasMatch(item))
 																							.sort((a, b) => sorter(a, b))
 																							.join(", ")}
