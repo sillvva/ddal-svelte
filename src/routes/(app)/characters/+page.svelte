@@ -5,7 +5,7 @@
 	import Dropdown from "$lib/components/Dropdown.svelte";
 	import Search from "$lib/components/Search.svelte";
 	import SearchResults from "$lib/components/SearchResults.svelte";
-	import { stopWords } from "$lib/constants.js";
+	import { excludedSearchWords } from "$lib/constants.js";
 	import { getTransition, global } from "$lib/stores.svelte.js";
 	import { createTransition, isDefined } from "$lib/util";
 	import { slugify, sorter } from "@sillvva/utils";
@@ -21,7 +21,7 @@
 	const minisearch = new MiniSearch({
 		fields: ["characterName", "campaign", "race", "class", "tier", "level", "magicItems"],
 		idField: "characterId",
-		processTerm: (term) => (stopWords.has(term) ? null : term.toLowerCase()),
+		processTerm: (term) => (excludedSearchWords.has(term) ? null : term.toLowerCase()),
 		tokenize: (term) => term.split(/[^A-Z0-9\.']/gi),
 		searchOptions: {
 			prefix: true,

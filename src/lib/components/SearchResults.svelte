@@ -1,5 +1,5 @@
 <script lang="ts">
-	import { stopWords } from "$lib/constants";
+	import { excludedSearchWords } from "$lib/constants";
 
 	interface Props {
 		text?: string | string[] | null;
@@ -12,7 +12,7 @@
 
 	const terms = $derived(
 		(search && search.length > 1 ? search : "")
-			.replace(new RegExp(` ?\\b(${Array.from(stopWords).join("|")})\\b ?`, "gi"), " ")
+			.replace(new RegExp(` ?\\b(${Array.from(excludedSearchWords).join("|")})\\b ?`, "gi"), " ")
 			.replace(/([^ a-z0-9])/gi, "\\$1")
 			.trim()
 			.split(" ")

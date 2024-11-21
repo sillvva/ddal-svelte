@@ -9,7 +9,7 @@
 	import SearchResults from "$lib/components/SearchResults.svelte";
 	import DeleteCharacter from "$lib/components/forms/DeleteCharacter.svelte";
 	import DeleteLog from "$lib/components/forms/DeleteLog.svelte";
-	import { stopWords } from "$lib/constants.js";
+	import { excludedSearchWords } from "$lib/constants.js";
 	import { getTransition, global } from "$lib/stores.svelte.js";
 	import { createTransition } from "$lib/util";
 	import { slugify, sorter } from "@sillvva/utils";
@@ -29,7 +29,7 @@
 	const logSearch = new MiniSearch({
 		fields: ["logName", "magicItems", "storyAwards", "logId"],
 		idField: "logId",
-		processTerm: (term) => (stopWords.has(term) ? null : term.toLowerCase()),
+		processTerm: (term) => (excludedSearchWords.has(term) ? null : term.toLowerCase()),
 		tokenize: (term) => term.split(/[^A-Z0-9\.']/gi),
 		searchOptions: {
 			prefix: true,

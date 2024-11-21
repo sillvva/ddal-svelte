@@ -47,7 +47,7 @@ export const PROVIDERS = [
 	}
 ] as const satisfies Provider[];
 
-export const stopWords = new Set(["and", "or", "to", "in", "a", "the", "of"]);
+export const excludedSearchWords = new Set(["and", "or", "to", "in", "a", "an", "the", "of"]);
 
 type Theme = {
 	name: string;

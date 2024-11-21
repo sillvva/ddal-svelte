@@ -1,6 +1,6 @@
 <script lang="ts">
 	import { goto } from "$app/navigation";
-	import { searchSections } from "$lib/constants.js";
+	import { excludedSearchWords, searchSections } from "$lib/constants.js";
 	import { global } from "$lib/stores.svelte";
 	import type { SearchData } from "$src/routes/(api)/command/+server";
 	import { sorter } from "@sillvva/utils";
@@ -12,7 +12,6 @@
 	let { isMac = false } = $props();
 
 	const defaultSelected: string = searchSections[0].url;
-	const ignoreWords = ["a", "an", "the", "of"];
 
 	let search = $state("");
 	let cmdOpen = $state(false);
@@ -23,7 +22,7 @@
 		search
 			.toLowerCase()
 			.split(" ")
-			.filter((word) => word.length > 1 && !ignoreWords.includes(word))
+			.filter((word) => word.length > 1 && !excludedSearchWords.has(word))
 	);
 	const query = $derived(words.join(" "));
 

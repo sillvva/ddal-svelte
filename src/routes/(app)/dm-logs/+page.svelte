@@ -7,7 +7,7 @@
 	import Search from "$lib/components/Search.svelte";
 	import SearchResults from "$lib/components/SearchResults.svelte";
 	import DeleteLog from "$lib/components/forms/DeleteLog.svelte";
-	import { stopWords } from "$lib/constants";
+	import { excludedSearchWords } from "$lib/constants";
 	import { global } from "$lib/stores.svelte.js";
 	import { sorter } from "@sillvva/utils";
 	import { download, hotkey } from "@svelteuidev/composables";
@@ -42,7 +42,7 @@
 	const dmLogSearch = new MiniSearch({
 		fields: ["logName", "characterName", "magicItems", "storyAwards", "logId"],
 		idField: "logId",
-		processTerm: (term) => (stopWords.has(term) ? null : term.toLowerCase()),
+		processTerm: (term) => (excludedSearchWords.has(term) ? null : term.toLowerCase()),
 		tokenize: (term) => term.split(/[^A-Z0-9\.']/gi),
 		searchOptions: {
 			prefix: true,
