@@ -378,13 +378,19 @@
 								(log.description?.trim() || log.storyAwardsGained.length > 0 || log.storyAwardsLost.length > 0) && "border-b-0"
 							)}
 						>
-							<a
-								href={log.isDmLog ? `/dm-logs/${log.id}` : `/characters/${log.characterId}/log/${log.id}`}
-								class="whitespace-pre-wrap text-left font-semibold text-secondary"
-								aria-label="Edit Log"
-							>
-								<SearchResults text={log.name} {search}></SearchResults>
-							</a>
+							{#if myCharacter}
+								<a
+									href={log.isDmLog ? `/dm-logs/${log.id}` : `/characters/${log.characterId}/log/${log.id}`}
+									class="whitespace-pre-wrap text-left font-semibold text-secondary"
+									aria-label="Edit Log"
+								>
+									<SearchResults text={log.name} {search}></SearchResults>
+								</a>
+							{:else}
+								<span class="whitespace-pre-wrap text-left font-semibold">
+									<SearchResults text={log.name} {search}></SearchResults>
+								</span>
+							{/if}
 							<p class="text-netural-content mb-2 whitespace-nowrap text-sm font-normal">
 								{new Date(log.show_date).toLocaleString([], { dateStyle: "medium", timeStyle: "short" })}
 							</p>
