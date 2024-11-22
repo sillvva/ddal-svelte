@@ -27,11 +27,16 @@
 	const query = $derived(words.join(" "));
 
 	$effect(() => {
+		const controller = new AbortController();
 		if (!global.searchData.length && cmdOpen) {
-			fetch(`/command`)
+			fetch(`/command`, { signal: controller.signal })
 				.then((res) => res.json() as Promise<SearchData>)
 				.then((res) => (global.searchData = res));
 		}
+
+		return () => {
+			controller.abort();
+		};
 	});
 
 	function hasMatch(item: string) {
