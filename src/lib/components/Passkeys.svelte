@@ -20,7 +20,7 @@
 		global.app.settings.autoWebAuthn = authenticators.length > 0;
 	});
 
-	let renaming = $state(false);
+	let renaming = $state<boolean | "saving">(false);
 	let defaultName = $state("");
 	let renameId: string | undefined = $state();
 	let renameName = $state("");
@@ -40,10 +40,12 @@
 	}
 
 	async function renameWebAuthn(isDefault = false) {
+		if (renaming === "saving") return;
 		if (isDefault && defaultName) {
 			renaming = false;
 			return;
 		}
+		renaming = "saving";
 
 		const id = renameId;
 		const name = isDefault ? "" : renameName;
@@ -137,14 +139,14 @@
 
 <dialog
 	class="modal !bg-base-300/75"
-	open={renaming}
+	open={!!renaming}
 	aria-labelledby="modal-title"
 	aria-describedby="modal-content"
 	use:hotkey={[
 		[
 			"Escape",
 			() => {
-				if (renaming) renameWebAuthn(true);
+				if (renaming === true) renameWebAuthn(true);
 			}
 		]
 	]}
@@ -158,6 +160,7 @@
 				class="btn btn-circle btn-ghost btn-sm absolute right-2 top-2"
 				onclick={() => renameWebAuthn(true)}
 				aria-label="Close"
+				disabled={renaming === "saving"}
 			>
 				<span class="iconify mdi--close"></span>
 			</button>
@@ -165,6 +168,7 @@
 			<form
 				onsubmit={(e) => {
 					e.preventDefault();
+					if (renaming === "saving") return;
 					renameWebAuthn();
 				}}
 			>
@@ -186,7 +190,14 @@
 					{/if}
 				</Control>
 				<div class="modal-action">
-					<button class="btn btn-primary">Save</button>
+					<button class="btn btn-primary" disabled={renaming === "saving"}>
+						{#if renaming === "saving"}
+							<span class="loading"></span>
+							Saving...
+						{:else}
+							Save
+						{/if}
+					</button>
 				</div>
 			</form>
 		</div>
