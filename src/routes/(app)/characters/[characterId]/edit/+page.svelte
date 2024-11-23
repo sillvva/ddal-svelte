@@ -16,22 +16,22 @@
 
 <SuperForm action="?/saveCharacter" {superform} showMessage>
 	<Control class="col-span-12 sm:col-span-6">
-		<Input type="text" {superform} field="name">Character Name</Input>
+		<Input type="text" {superform} field="name" label="Character Name" />
 	</Control>
 	<Control class="col-span-12 sm:col-span-6">
-		<Input type="text" {superform} field="campaign">Campaign</Input>
+		<Input type="text" {superform} field="campaign" label="Campaign" />
 	</Control>
 	<Control class="col-span-12 sm:col-span-6">
-		<Input type="text" {superform} field="race">Species</Input>
+		<Input type="text" {superform} field="race" label="Species" />
 	</Control>
 	<Control class="col-span-12 sm:col-span-6">
-		<Input type="text" {superform} field="class">Class</Input>
+		<Input type="text" {superform} field="class" label="Class" />
 	</Control>
 	<Control class="col-span-12">
-		<Input type="url" {superform} field="characterSheetUrl">Character Sheet URL</Input>
+		<Input type="url" {superform} field="characterSheetUrl" label="Character Sheet URL" />
 	</Control>
 	<Control class="col-span-12">
-		<Input type="url" {superform} field="imageUrl" placeholder={data.BLANK_CHARACTER}>Image URL</Input>
+		<Input type="url" {superform} field="imageUrl" label="Image URL" placeholder={data.BLANK_CHARACTER} />
 	</Control>
 	<Submit {superform}>Save Character</Submit>
 </SuperForm>

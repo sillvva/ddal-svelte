@@ -1,7 +1,6 @@
 <script lang="ts">
 	import { dateToDV, intDateProxy } from "$lib/factories.svelte";
 	import { DatePicker, type DatePickerProps } from "bits-ui";
-	import type { Snippet } from "svelte";
 	import { formFieldProxy, type FormPathLeaves, type SuperForm } from "sveltekit-superforms";
 	import { twMerge } from "tailwind-merge";
 
@@ -11,6 +10,7 @@
 	interface Props extends DatePickerProps {
 		superform: SuperForm<TForm, any>;
 		field: FormPathLeaves<TForm, Date>;
+		label: string;
 		minDate?: TMin;
 		minDateField?: TMin extends Date ? never : FormPathLeaves<TForm, Date>;
 		maxDate?: TMax;
@@ -19,12 +19,12 @@
 		required?: boolean;
 		description?: string;
 		class?: string;
-		children?: Snippet;
 	}
 
 	let {
 		superform,
 		field,
+		label,
 		minDate,
 		minDateField,
 		maxDate,
@@ -33,7 +33,6 @@
 		required,
 		description,
 		class: inputClass = "",
-		children,
 		...rest
 	}: Props = $props();
 
@@ -68,7 +67,7 @@
 >
 	<DatePicker.Label class="label">
 		<span class="label-text">
-			{@render children?.()}
+			{label}
 			{#if $constraints?.required || required}
 				<span class="text-error">*</span>
 			{/if}

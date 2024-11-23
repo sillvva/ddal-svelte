@@ -1,5 +1,5 @@
 <script lang="ts">
-	import { stopWords } from "$lib/constants";
+	import { excludedSearchWords } from "$lib/constants";
 
 	interface Props {
 		text?: string | string[] | null;
@@ -10,41 +10,27 @@
 
 	let { text = "", search = "", filtered = false, separator = " | " }: Props = $props();
 
-	const terms = $derived(getSearchTerms(search || ""));
-	const regexes = $derived(getRegexesFromTerms(terms));
-	const regex = $derived(getJoinedRegexFromTerms(terms));
-	const items = $derived(getTextItems(text, filtered, regexes));
-	const match = $derived(getMatchedItems(items, regex));
-	const parts = $derived(getPartionedItems(items, match, regex));
-
-	function getSearchTerms(search: string) {
-		return (search.length > 1 ? search : "")
-			.replace(new RegExp(` ?\\b(${Array.from(stopWords).join("|")})\\b ?`, "gi"), " ")
+	const terms = $derived(
+		(search && search.length > 1 ? search : "")
+			.replace(new RegExp(` ?\\b(${Array.from(excludedSearchWords).join("|")})\\b ?`, "gi"), " ")
 			.replace(/([^ a-z0-9])/gi, "\\$1")
 			.trim()
 			.split(" ")
-			.filter((i) => !!i);
-	}
+			.filter((i) => !!i)
+	);
 
-	function getRegexesFromTerms(terms: string[]) {
-		return terms.map((term) => new RegExp(term, "gi"));
-	}
+	const regexes = $derived(terms.map((term) => new RegExp(term, "gi")));
+	const regex = $derived(terms.length ? new RegExp(terms.join("|"), "gi") : null);
 
-	function getJoinedRegexFromTerms(terms: string[]) {
-		return terms.length ? new RegExp(terms.join("|"), "gi") : null;
-	}
-
-	function getTextItems(text: string | string[] | null, filtered: boolean, regexes: Array<RegExp>) {
-		return (Array.isArray(text) ? text : text?.split(separator) || [])
+	const items = $derived(
+		(Array.isArray(text) ? text : text?.split(separator) || [])
 			.filter((item) => !filtered || regexes.every((regex) => item.match(regex)))
-			.join(separator);
-	}
+			.join(separator)
+	);
 
-	function getMatchedItems(items: string, regex: RegExp | null) {
-		return regex && items.match(regex);
-	}
+	const match = $derived(regex && items.match(regex));
 
-	function getPartionedItems(items: string, match: RegExpMatchArray | null, regex: RegExp | null) {
+	const parts = $derived.by(() => {
 		if (!match) return [];
 
 		const splittedItems = regex ? items.split(regex) : [];
@@ -54,7 +40,7 @@
 		}
 
 		return splittedItems;
-	}
+	});
 </script>
 
 {#if parts.length && regex}

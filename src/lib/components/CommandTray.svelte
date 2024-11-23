@@ -1,6 +1,6 @@
 <script lang="ts">
 	import { goto } from "$app/navigation";
-	import { searchSections } from "$lib/constants.js";
+	import { excludedSearchWords, searchSections } from "$lib/constants.js";
 	import { global } from "$lib/stores.svelte";
 	import type { SearchData } from "$src/routes/(api)/command/+server";
 	import { sorter } from "@sillvva/utils";
@@ -18,15 +18,25 @@
 	let selected: string = $state(defaultSelected);
 	let resultsPane: HTMLElement | undefined = $state();
 
-	const words = $derived(Array.from(new Set(search.toLowerCase().split(" "))).filter(Boolean));
+	const words = $derived(
+		search
+			.toLowerCase()
+			.split(" ")
+			.filter((word) => word.length > 1 && !excludedSearchWords.has(word))
+	);
 	const query = $derived(words.join(" "));
 
 	$effect(() => {
+		const controller = new AbortController();
 		if (!global.searchData.length && cmdOpen) {
-			fetch(`/command`)
+			fetch(`/command`, { signal: controller.signal })
 				.then((res) => res.json() as Promise<SearchData>)
 				.then((res) => (global.searchData = res));
 		}
+
+		return () => {
+			controller.abort();
+		};
 	});
 
 	function hasMatch(item: string) {
@@ -41,37 +51,35 @@
 	}
 
 	const results = $derived(
-		global.searchData
-			.map((section) => ({
-				title: section.title,
-				items: section.items
-					.filter((item) => {
-						if (item.type === "section" && words.length) return false;
-						let matcher = new Set([item.name]);
-						if (query.length >= 2) {
-							if (item.type === "character") {
-								matcher.add(`${item.race} ${item.class} ${item.class} ${item.campaign} L${item.total_level} T${item.tier}`);
-								item.magic_items.forEach((magicItem) => matcher.add(magicItem.name));
-								item.story_awards.forEach((storyAward) => matcher.add(storyAward.name));
-							}
-							if (item.type === "log") {
-								if (item.dm) matcher.add(item.dm.name);
-								item.magicItemsGained.forEach((magicItem) => matcher.add(magicItem.name));
-								item.storyAwardsGained.forEach((storyAward) => matcher.add(storyAward.name));
-							}
+		global.searchData.flatMap((section) => {
+			const filteredItems = section.items
+				.filter((item) => {
+					if (item.type === "section" && words.length) return false;
+					const matcher = [item.name];
+					if (query.length >= 2) {
+						if (item.type === "character") {
+							matcher.push(`${item.race} ${item.class} ${item.campaign} L${item.total_level} T${item.tier}`);
+							matcher.push(...item.magic_items.map((mi) => mi.name), ...item.story_awards.map((sa) => sa.name));
+						} else if (item.type === "log") {
+							if (item.dm) matcher.push(item.dm.name);
+							matcher.push(...item.magicItemsGained.map((mi) => mi.name), ...item.storyAwardsGained.map((sa) => sa.name));
 						}
-						const matches = new Set(hasMatch(Array.from(matcher).join(" ")));
-						return matches.size === words.length;
-					})
-					.sort((a, b) => {
-						if (a.type === "log" && b.type === "log") return new Date(b.date).getTime() - new Date(a.date).getTime();
-						if (hasMatch(a.name) && !hasMatch(b.name)) return -1;
-						if (!hasMatch(a.name) && hasMatch(b.name)) return 1;
-						return a.name.localeCompare(b.name);
-					})
-					.slice(0, words.length ? 1000 : 5)
-			}))
-			.filter((section) => section.items.length)
+					}
+					const matches = words.length ? hasMatch(matcher.join(" ")) : [];
+					return matches?.length === words.length;
+				})
+				.sort((a, b) => {
+					if (a.type === "log" && b.type === "log") return new Date(b.date).getTime() - new Date(a.date).getTime();
+					const aMatch = hasMatch(a.name);
+					const bMatch = hasMatch(b.name);
+					if (aMatch && !bMatch) return -1;
+					if (!aMatch && bMatch) return 1;
+					return a.name.localeCompare(b.name);
+				})
+				.slice(0, words.length ? 1000 : 5);
+
+			return filteredItems.length ? [{ title: section.title, items: filteredItems }] : [];
+		})
 	);
 	const resultCounts = $derived(results.map((section) => section.items.length).filter((c) => c > 0).length);
 </script>
@@ -84,7 +92,7 @@
 	<span class="iconify size-6 mdi--magnify"></span>
 </button>
 <label class="input input-bordered hidden min-w-fit cursor-text items-center gap-2 hover-hover:md:flex">
-	<input type="text" class="max-w-20 grow" placeholder="Search" onfocus={() => (cmdOpen = true)} />
+	<input type="text" class="max-w-20 grow" placeholder="Search" aria-label="Search" onfocus={() => (cmdOpen = true)} />
 	<kbd class="kbd kbd-sm">
 		{#if isMac}
 			⌘
@@ -197,7 +205,8 @@
 																				<div class="flex gap-1 text-xs">
 																					<span class="whitespace-nowrap font-bold">Magic Items:</span>
 																					<span class="flex-1 opacity-70">
-																						{Array.from(new Set(item.magic_items.map((item) => item.name)))
+																						{item.magic_items
+																							.map((item) => item.name)
 																							.filter((item) => hasMatch(item))
 																							.sort((a, b) => sorter(a, b))
 																							.join(", ")}
@@ -208,7 +217,8 @@
 																				<div class="flex gap-2 text-xs">
 																					<span class="whitespace-nowrap font-bold">Story Awards:</span>
 																					<span class="flex-1 opacity-70">
-																						{Array.from(new Set(item.story_awards.map((item) => item.name)))
+																						{item.story_awards
+																							.map((item) => item.name)
 																							.filter((item) => hasMatch(item))
 																							.sort((a, b) => sorter(a, b))
 																							.join(", ")}
@@ -240,7 +250,8 @@
 																				<div class="flex gap-1 text-xs">
 																					<span class="whitespace-nowrap font-bold">Magic Items:</span>
 																					<span class="flex-1 opacity-70">
-																						{Array.from(new Set(item.magicItemsGained.map((it) => it.name)))
+																						{item.magicItemsGained
+																							.map((it) => it.name)
 																							.filter(
 																								(it) =>
 																									!item.magicItemsGained.some((magicItem) => hasMatch(magicItem.name)) ||
@@ -255,7 +266,8 @@
 																				<div class="flex gap-2 text-xs">
 																					<span class="whitespace-nowrap font-bold">Story Awards:</span>
 																					<span class="flex-1 opacity-70">
-																						{Array.from(new Set(item.storyAwardsGained.map((it) => it.name)))
+																						{item.storyAwardsGained
+																							.map((it) => it.name)
 																							.filter(
 																								(it) =>
 																									!item.storyAwardsGained.some((storyAward) => hasMatch(storyAward.name)) ||

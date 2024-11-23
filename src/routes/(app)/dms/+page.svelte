@@ -4,7 +4,7 @@
 	import Search from "$lib/components/Search.svelte";
 	import SearchResults from "$lib/components/SearchResults.svelte";
 	import DeleteDm from "$lib/components/forms/DeleteDM.svelte";
-	import { stopWords } from "$lib/constants.js";
+	import { excludedSearchWords } from "$lib/constants.js";
 	import MiniSearch from "minisearch";
 	import { twMerge } from "tailwind-merge";
 
@@ -17,7 +17,7 @@
 	const minisearch = new MiniSearch({
 		fields: ["name", "DCI"],
 		idField: "id",
-		processTerm: (term) => (stopWords.has(term) ? null : term.toLowerCase()),
+		processTerm: (term) => (excludedSearchWords.has(term) ? null : term.toLowerCase()),
 		tokenize: (term) => term.split(/[^A-Z0-9\.']/gi),
 		searchOptions: {
 			prefix: true,

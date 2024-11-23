@@ -25,16 +25,17 @@
 
 	<SuperForm action="?/saveLog" {superform} showMessage>
 		<Control class="col-span-12 sm:col-span-6 lg:col-span-3">
-			<Input type="text" {superform} field="name">Title</Input>
+			<Input type="text" {superform} field="name" label="Title" />
 		</Control>
 		<Control class="col-span-12 sm:col-span-6 lg:col-span-3">
-			<DateInput {superform} field="date" class="lg:text-xs">Date</DateInput>
+			<DateInput {superform} field="date" label="Date" class="lg:text-xs" />
 		</Control>
 		<Control class="col-span-12 sm:col-span-6 lg:col-span-3">
 			<Combobox
 				{superform}
+				label="Assigned Character"
 				valueField="characterId"
-				labelField="characterName"
+				inputField="characterName"
 				values={data.characters.map((char) => ({ value: char.id, label: char.name }))}
 				required={!!$form.appliedDate || undefined}
 				onselect={() => {
@@ -44,21 +45,18 @@
 				onclear={() => {
 					$form.appliedDate = null;
 				}}
-			>
-				Assigned Character
-			</Combobox>
+			/>
 		</Control>
 		<Control class="col-span-12 sm:col-span-6 lg:col-span-3">
 			<DateInput
 				{superform}
 				field="appliedDate"
+				label="Date"
 				empty="null"
 				minDateField="date"
 				required={!!$form.characterId}
 				class="lg:text-xs"
-			>
-				Date
-			</DateInput>
+			/>
 		</Control>
 		<Control class="col-span-12 sm:col-span-4">
 			<GenericInput labelFor="season" label="Season">
@@ -71,30 +69,30 @@
 		</Control>
 		{#if season === 1}
 			<Control class="col-span-12 sm:col-span-4">
-				<Input type="number" {superform} field="experience">Experience</Input>
+				<Input type="number" {superform} field="experience" label="Experience" />
 			</Control>
 		{/if}
 		{#if season === 9}
 			<Control class="col-span-12 sm:col-span-4">
-				<Input type="number" {superform} field="level">Level</Input>
+				<Input type="number" {superform} field="level" label="Level" />
 			</Control>
 		{/if}
 		{#if season === 8}
 			<Control class="col-span-6 sm:col-span-2">
-				<Input type="number" {superform} field="acp">ACP</Input>
+				<Input type="number" {superform} field="acp" label="ACP" />
 			</Control>
 			<Control class="col-span-6 sm:col-span-2">
-				<Input type="number" {superform} field="tcp">TCP</Input>
+				<Input type="number" {superform} field="tcp" label="TCP" />
 			</Control>
 		{/if}
 		<Control class="col-span-6 sm:col-span-2">
-			<Input type="number" {superform} field="gold">Gold</Input>
+			<Input type="number" {superform} field="gold" label="Gold" />
 		</Control>
 		<Control class="col-span-6 sm:col-span-2">
-			<Input type="number" {superform} field="dtd">Downtime</Input>
+			<Input type="number" {superform} field="dtd" label="Downtime" />
 		</Control>
 		<Control class="col-span-12">
-			<MdTextInput {superform} field="description" name="notes" maxRows={20} preview>Notes</MdTextInput>
+			<MdTextInput {superform} field="description" name="notes" maxRows={20} preview />
 		</Control>
 		<AddDropItems {superform}>
 			<Submit {superform}>Save Log</Submit>

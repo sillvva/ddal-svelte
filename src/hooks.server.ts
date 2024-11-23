@@ -1,6 +1,6 @@
+import { appDefaults } from "$lib/constants";
 import { privateEnv } from "$lib/env/private";
 import type { UserId } from "$lib/schemas";
-import { appDefaults } from "$lib/stores.svelte";
 import { updateAccount } from "$server/actions/users";
 import { serverGetCookie } from "$server/cookie";
 import { db, q } from "$server/db";

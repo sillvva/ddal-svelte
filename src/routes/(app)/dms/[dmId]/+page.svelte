@@ -20,10 +20,10 @@
 
 	<SuperForm action="?/saveDM" {superform}>
 		<Control class="col-span-12 sm:col-span-6">
-			<Input type="text" {superform} field="name">DM Name</Input>
+			<Input type="text" {superform} field="name" label="DM Name" />
 		</Control>
 		<Control class="col-span-12 sm:col-span-6">
-			<Input type="text" {superform} field="DCI">DCI</Input>
+			<Input type="text" {superform} field="DCI" label="DCI" />
 		</Control>
 		<Submit {superform}>Save DM</Submit>
 	</SuperForm>

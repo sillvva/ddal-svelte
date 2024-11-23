@@ -4,7 +4,7 @@
 	let { children }: { children?: Snippet } = $props();
 
 	function bq(el: HTMLDetailsElement) {
-		const iHTML = el.innerHTML.trim();
+		const iHTML = el.innerHTML.replace(/<![-\[\]!]+>/g, "").trim();
 		const matches = iHTML.match(/\<(h\d)/);
 		const match = (matches && matches[1]) || null;
 		if (match && iHTML.startsWith("<" + match)) {

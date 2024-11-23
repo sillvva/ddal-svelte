@@ -2,7 +2,6 @@
 	import { dev } from "$app/environment";
 	import { type Snippet } from "svelte";
 	import type { HTMLFormAttributes } from "svelte/elements";
-	import type { Unsubscriber } from "svelte/store";
 	import SuperDebug, { type SuperForm } from "sveltekit-superforms";
 	import FormMessage from "./FormMessage.svelte";
 
@@ -16,43 +15,8 @@
 
 	let { superform, showMessage = $bindable(false), children, ...rest }: Props = $props();
 
-	const { form, enhance, submitting, errors, allErrors, message, capture, restore } = superform;
+	const { form, enhance, submitting, errors, message, capture, restore } = superform;
 	const method = $derived(rest?.method || "post");
-
-	function formstate(refForm: HTMLFormElement) {
-		const unsubscribers: Unsubscriber[] = [];
-
-		refForm.querySelectorAll("input, select, textarea, button").forEach((el) => {
-			const name = el.getAttribute("name");
-			if (name) {
-				const label = refForm.querySelector(`label[for="${name}"]`);
-				if (label) el.setAttribute("id", name);
-			}
-
-			const disabled = el.hasAttribute("disabled");
-			unsubscribers.push(
-				submitting.subscribe((submitting) => {
-					if (submitting) el.setAttribute("disabled", "disabled");
-					else if (!disabled && showMessage && $message) el.removeAttribute("disabled");
-				})
-			);
-		});
-
-		refForm.querySelectorAll(`[type="submit"]`).forEach((el) => {
-			unsubscribers.push(
-				allErrors.subscribe((errors) => {
-					if (errors.length) el.setAttribute("disabled", "disabled");
-					else el.removeAttribute("disabled");
-				})
-			);
-		});
-
-		return {
-			destroy() {
-				unsubscribers.forEach((unsub) => unsub());
-			}
-		};
-	}
 
 	$effect(() => {
 		superform.reset();
@@ -79,10 +43,10 @@
 	</div>
 {/if}
 
-<form {method} {...rest} use:enhance use:formstate>
-	<div class="grid grid-cols-12 gap-4">
+<form {method} {...rest} use:enhance>
+	<fieldset class="grid grid-cols-12 gap-4" disabled={$submitting}>
 		{@render children?.()}
-	</div>
+	</fieldset>
 </form>
 
 {#if dev}

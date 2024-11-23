@@ -9,7 +9,7 @@
 	import SearchResults from "$lib/components/SearchResults.svelte";
 	import DeleteCharacter from "$lib/components/forms/DeleteCharacter.svelte";
 	import DeleteLog from "$lib/components/forms/DeleteLog.svelte";
-	import { stopWords } from "$lib/constants.js";
+	import { excludedSearchWords } from "$lib/constants.js";
 	import { getTransition, global } from "$lib/stores.svelte.js";
 	import { createTransition } from "$lib/util";
 	import { slugify, sorter } from "@sillvva/utils";
@@ -29,7 +29,7 @@
 	const logSearch = new MiniSearch({
 		fields: ["logName", "magicItems", "storyAwards", "logId"],
 		idField: "logId",
-		processTerm: (term) => (stopWords.has(term) ? null : term.toLowerCase()),
+		processTerm: (term) => (excludedSearchWords.has(term) ? null : term.toLowerCase()),
 		tokenize: (term) => term.split(/[^A-Z0-9\.']/gi),
 		searchOptions: {
 			prefix: true,
@@ -378,13 +378,19 @@
 								(log.description?.trim() || log.storyAwardsGained.length > 0 || log.storyAwardsLost.length > 0) && "border-b-0"
 							)}
 						>
-							<a
-								href={log.isDmLog ? `/dm-logs/${log.id}` : `/characters/${log.characterId}/log/${log.id}`}
-								class="whitespace-pre-wrap text-left font-semibold text-secondary"
-								aria-label="Edit Log"
-							>
-								<SearchResults text={log.name} {search}></SearchResults>
-							</a>
+							{#if myCharacter}
+								<a
+									href={log.isDmLog ? `/dm-logs/${log.id}` : `/characters/${log.characterId}/log/${log.id}`}
+									class="whitespace-pre-wrap text-left font-semibold text-secondary"
+									aria-label="Edit Log"
+								>
+									<SearchResults text={log.name} {search}></SearchResults>
+								</a>
+							{:else}
+								<span class="whitespace-pre-wrap text-left font-semibold">
+									<SearchResults text={log.name} {search}></SearchResults>
+								</span>
+							{/if}
 							<p class="text-netural-content mb-2 whitespace-nowrap text-sm font-normal">
 								{new Date(log.show_date).toLocaleString([], { dateStyle: "medium", timeStyle: "short" })}
 							</p>

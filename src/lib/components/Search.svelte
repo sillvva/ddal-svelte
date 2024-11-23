@@ -1,18 +1,21 @@
 <script lang="ts">
 	import type { HTMLInputAttributes } from "svelte/elements";
-	import { queryParam, ssp } from "sveltekit-search-params";
+	import { queryParam } from "sveltekit-search-params";
+	import { twMerge } from "tailwind-merge";
+
+	const s = queryParam("s");
 
 	type Props = HTMLInputAttributes;
-
-	let { value = $bindable(""), ...rest }: Props = $props();
-
-	const s = queryParam("s", ssp.string());
-	$effect(() => {
-		value = $s || "";
-		if ($s === "") $s = null;
-	});
+	let { value = $bindable($s || ""), class: className, type = "text", ...rest }: Props = $props();
 </script>
 
 <search class="min-w-0 flex-1">
-	<input type="text" bind:value={$s} class="input input-bordered w-full flex-1 sm:input-sm" {...rest} />
+	<input
+		{type}
+		bind:value
+		oninput={(e) => ($s = e.currentTarget.value || null)}
+		class={twMerge("input input-bordered w-full flex-1 sm:input-sm", className)}
+		aria-label={rest.placeholder || "Search"}
+		{...rest}
+	/>
 </search>

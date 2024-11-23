@@ -1,37 +1,42 @@
 <script lang="ts">
 	import { dev } from "$app/environment";
 	import { Combobox } from "bits-ui";
-	import type { Snippet } from "svelte";
 	import SuperDebug, { formFieldProxy, stringProxy, type FormPathLeaves, type SuperForm } from "sveltekit-superforms";
 	import { twMerge } from "tailwind-merge";
 
 	type T = $$Generic<Record<PropertyKey, unknown>>;
+	type Item = {
+		value: string;
+		label?: string;
+		itemLabel?: string;
+	};
 	interface Props {
 		superform: SuperForm<T>;
 		valueField: FormPathLeaves<T>;
-		labelField: FormPathLeaves<T, string>;
+		inputField: FormPathLeaves<T, string>;
 		errorField?: FormPathLeaves<T, string>;
+		label: string;
 		name?: string;
-		values?: Array<{ value: string; label?: string; itemLabel?: string }>;
+		values?: Array<Item>;
 		allowCustom?: boolean;
 		showOnEmpty?: boolean;
 		clearable?: boolean;
 		disabled?: boolean;
 		required?: boolean;
 		link?: string;
-		description?: string;
 		placeholder?: string;
+		description?: string;
 		oninput?: (el?: HTMLInputElement, value?: string) => void;
 		onselect?: (sel: { selected?: (typeof values)[number]; input: string }) => void;
 		onclear?: () => void;
-		children?: Snippet;
 	}
 
 	let {
 		superform,
 		valueField,
-		labelField,
+		inputField,
 		errorField = valueField,
+		label,
 		name = "",
 		values = [],
 		allowCustom = false,
@@ -40,21 +45,20 @@
 		disabled = false,
 		required = undefined,
 		link = "",
-		description = "",
 		placeholder = "",
 		oninput = (el?: HTMLInputElement, value?: string) => {},
 		onselect = (sel: { selected?: (typeof values)[number]; input: string }) => {},
 		onclear = () => {},
-		children
+		description
 	}: Props = $props();
 
 	let debug = $state(false);
 	let open = $state(false);
 	let changed = $state(false);
 
-	const { constraints } = formFieldProxy(superform, labelField);
+	const { constraints } = formFieldProxy(superform, inputField);
 	const value = stringProxy(superform, valueField, { empty: "undefined" });
-	const label = stringProxy(superform, labelField, { empty: "undefined" });
+	const input = stringProxy(superform, inputField, { empty: "undefined" });
 	const { errors } = formFieldProxy(superform, errorField);
 
 	if ($constraints?.required) required = true;
@@ -71,32 +75,25 @@
 			v.itemLabel
 				.toLowerCase()
 				.replace(/\s+/g, "")
-				.includes(($label || "").toLowerCase().replace(/\s+/g, ""))
+				.includes(($input || "").toLowerCase().replace(/\s+/g, ""))
 		)
 	);
-	const firstItem = $derived({ value: "", label: $label, itemLabel: `Add "${$label}"` });
+	const firstItem = $derived<Item>({ value: "", label: $input, itemLabel: `Add "${$input}"` });
 	const filtered = $derived(
-		!$label?.trim() || !allowCustom || prefiltered.length === 1 ? prefiltered : [firstItem].concat(prefiltered)
+		!$input?.trim() || !allowCustom || prefiltered.length === 1 ? prefiltered : [firstItem].concat(prefiltered)
 	);
 
-	let selectedItem = $state<
-		| {
-				value: string;
-				label?: string;
-				itemLabel?: string;
-		  }
-		| undefined
-	>(
+	let selectedItem = $state<Item | undefined>(
 		$value
 			? values.find((v) => v.value === $value)
-			: $label.trim() && allowCustom
-				? { value: "", label: $label, itemLabel: `Add "${$label}"` }
+			: $input.trim() && allowCustom
+				? { value: "", label: $input, itemLabel: `Add "${$input}"` }
 				: undefined
 	);
 
 	function clear() {
 		$value = "";
-		$label = "";
+		$input = "";
 		selectedItem = undefined;
 		onclear();
 		open = false;
@@ -105,16 +102,16 @@
 
 <Combobox.Root
 	items={filtered}
-	bind:inputValue={$label}
+	bind:inputValue={$input}
 	bind:open
 	let:ids
 	{disabled}
 	{required}
 	onSelectedChange={(sel) => {
 		$value = sel?.value || "";
-		$label = sel?.label || "";
-		selectedItem = { value: sel?.value || "", label: sel?.label || sel?.value || "", itemLabel: sel?.label || sel?.value || "" };
-		onselect({ selected: sel, input: $label });
+		$input = sel?.label || sel?.value || "";
+		selectedItem = { value: $value, label: $input, itemLabel: $input };
+		onselect({ selected: sel, input: $input });
 	}}
 	preventScroll={false}
 	onOpenChange={() => {
@@ -133,7 +130,7 @@
 >
 	<label for={ids.trigger} class="label">
 		<span class="label-text">
-			{@render children?.()}
+			{label}
 			{#if required}
 				<span class="text-error">*</span>
 			{/if}
@@ -149,13 +146,13 @@
 							let cValue = e.currentTarget.value;
 							if (selectedItem && selectedItem.label !== cValue) selectedItem = undefined;
 							if (!cValue) clear();
-							$label = cValue;
+							$input = cValue;
 							oninput(e.currentTarget, cValue);
 							changed = true;
 						}}
 						onblur={() => {
 							if (!allowCustom && !selectedItem && !filtered.length) clear();
-							if (!$label) open = false;
+							if (!$input) open = false;
 						}}
 						aria-invalid={($errors || []).length ? "true" : undefined}
 						use:builder.action
@@ -165,7 +162,7 @@
 					/>
 				</Combobox.Input>
 			</label>
-			{#if (showOnEmpty || $label?.trim()) && filtered.length}
+			{#if (showOnEmpty || $input?.trim()) && filtered.length}
 				<Combobox.Content asChild let:builder>
 					<ul class="menu dropdown-content z-10 w-full rounded-lg bg-base-200 p-2 shadow" use:builder.action {...builder}>
 						{#each filtered.slice(0, 8) as item}
@@ -192,7 +189,7 @@
 				</Combobox.Content>
 			{/if}
 		</div>
-		{#if $label && clearable}
+		{#if $input && clearable}
 			<button
 				class="btn join-item input-bordered"
 				type="button"
@@ -226,7 +223,7 @@
 	</div>
 	{#if name}<Combobox.HiddenInput {name} />{/if}
 	{#if $errors?.length || description}
-		<label for={labelField} class="label">
+		<label for={inputField} class="label">
 			{#if $errors?.length}
 				<span class="label-text-alt text-error">{$errors[0]}</span>
 			{:else}

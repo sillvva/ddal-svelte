@@ -68,18 +68,18 @@
 			<h4>Add {title}</h4>
 			<div class="flex gap-4">
 				<Control class="flex-1">
-					<Input type="text" {superform} field={nameField} required>Name</Input>
+					<Input type="text" {superform} field={nameField} label="Name" required />
 				</Control>
 				<button type="button" class="btn btn-error mt-9" onclick={() => ondelete()} aria-label="Delete Entry">
 					<span class="iconify size-6 mdi--trash-can"></span>
 				</button>
 			</div>
 			<Control>
-				<MdTextInput {superform} field={descField} name={`add_${entity}_${index}`} maxRows={8} preview>Description</MdTextInput>
+				<MdTextInput {superform} field={descField} name={`add_${entity}_${index}`} maxRows={8} preview />
 			</Control>
 		</div>
 	</div>
-{:else if type === "drop"}
+{:else if type === "drop" && lostField}
 	<div class="card col-span-12 bg-base-300/70 shadow-xl sm:col-span-6">
 		<div class="card-body flex flex-col gap-4">
 			<h4>Drop {title}</h4>

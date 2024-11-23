@@ -2,32 +2,11 @@ import { browser } from "$app/environment";
 import type { SearchData } from "$src/routes/(api)/command/+server";
 import { createContext } from "svelte-contextify";
 import { setupViewTransition } from "sveltekit-view-transition";
+import { appDefaults } from "./constants";
 
-export const appDefaults: App.Cookie = {
-	settings: {
-		theme: "system",
-		mode: "dark",
-		autoWebAuthn: false
-	},
-	characters: {
-		magicItems: false,
-		display: "list"
-	},
-	log: {
-		descriptions: false
-	},
-	dmLogs: {
-		sort: "asc"
-	}
-};
-
-export const global = $state<{
-	pageLoader: boolean;
-	searchData: SearchData;
-	app: App.Cookie;
-}>({
+export const global = $state({
 	pageLoader: false,
-	searchData: [],
+	searchData: [] as SearchData,
 	app: appDefaults
 });
 

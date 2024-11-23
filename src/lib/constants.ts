@@ -1,6 +1,24 @@
 import type { Account } from "$server/db/schema";
 import { publicEnv } from "./env/public";
 
+export const appDefaults: App.Cookie = {
+	settings: {
+		theme: "system",
+		mode: "dark",
+		autoWebAuthn: false
+	},
+	characters: {
+		magicItems: false,
+		display: "list"
+	},
+	log: {
+		descriptions: false
+	},
+	dmLogs: {
+		sort: "asc"
+	}
+};
+
 export const searchSections = [
 	{ title: "Characters", url: "/characters" },
 	{ title: "DM Logs", url: "/dm-logs" },
@@ -29,7 +47,7 @@ export const PROVIDERS = [
 	}
 ] as const satisfies Provider[];
 
-export const stopWords = new Set(["and", "or", "to", "in", "a", "the", "of"]);
+export const excludedSearchWords = new Set(["and", "or", "to", "in", "a", "an", "the", "of"]);
 
 type Theme = {
 	name: string;
