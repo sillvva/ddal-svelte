@@ -14,7 +14,6 @@
 	let { data, children } = $props();
 
 	let settingsOpen = $state(false);
-	let y = $state(0);
 
 	afterNavigate(() => {
 		global.pageLoader = false;
@@ -53,8 +52,6 @@
 	<meta name="twitter:image" content={image?.trim() || defaultImage} />
 	<link rel="canonical" href={$page.url.toString()} />
 </svelte:head>
-
-<svelte:window bind:scrollY={y} />
 
 {#if global.pageLoader || $navigating}
 	<div
