@@ -1,6 +1,6 @@
 <script lang="ts">
 	import { goto } from "$app/navigation";
-	import { page } from "$app/stores";
+	import { page } from "$app/state";
 	import BreadCrumbs from "$lib/components/BreadCrumbs.svelte";
 	import Dropdown from "$lib/components/Dropdown.svelte";
 	import Search from "$lib/components/Search.svelte";
@@ -17,7 +17,7 @@
 
 	const transition = getTransition();
 
-	let search = $state($page.url.searchParams.get("s") || "");
+	let search = $state(page.url.searchParams.get("s") || "");
 	const minisearch = new MiniSearch({
 		fields: ["characterName", "campaign", "race", "class", "tier", "level", "magicItems"],
 		idField: "characterId",

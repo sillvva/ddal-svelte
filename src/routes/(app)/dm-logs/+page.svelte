@@ -1,6 +1,6 @@
 <script lang="ts">
 	import { goto, pushState } from "$app/navigation";
-	import { page } from "$app/stores";
+	import { page } from "$app/state";
 	import BreadCrumbs from "$lib/components/BreadCrumbs.svelte";
 	import Dropdown from "$lib/components/Dropdown.svelte";
 	import Items from "$lib/components/Items.svelte";
@@ -18,7 +18,7 @@
 
 	const logs = $derived(data.logs);
 
-	let search = $state($page.url.searchParams.get("s") || "");
+	let search = $state(page.url.searchParams.get("s") || "");
 	let deletingLog = $state<string[]>([]);
 
 	const indexed = $derived(

@@ -1,5 +1,5 @@
 <script lang="ts">
-	import { page } from "$app/stores";
+	import { page } from "$app/state";
 	import BreadCrumbs from "$lib/components/BreadCrumbs.svelte";
 	import Search from "$lib/components/Search.svelte";
 	import SearchResults from "$lib/components/SearchResults.svelte";
@@ -12,7 +12,7 @@
 
 	const dms = $derived(data.dms);
 	let deletingDM = $state<string[]>([]);
-	let search = $state($page.url.searchParams.get("s") || "");
+	let search = $state(page.url.searchParams.get("s") || "");
 
 	const minisearch = new MiniSearch({
 		fields: ["name", "DCI"],

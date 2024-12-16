@@ -1,6 +1,6 @@
 <script lang="ts">
 	import { enhance } from "$app/forms";
-	import { page } from "$app/stores";
+	import { page } from "$app/state";
 	import { PROVIDERS } from "$lib/constants";
 	import { successToast } from "$lib/factories.svelte";
 	import { global } from "$lib/stores.svelte";
@@ -16,7 +16,7 @@
 
 	let { open = $bindable(false) }: Props = $props();
 
-	const user = $derived($page.data.user);
+	const user = $derived(page.data.user);
 	const authProviders = $derived(
 		PROVIDERS.map((p) => ({
 			...p,
@@ -108,7 +108,7 @@
 									<span class="iconify size-6 text-green-500 mdi--check"></span>
 								{/if}
 							{:else}
-								<button class="btn btn-primary btn-sm" onclick={() => signIn(provider.id, { callbackUrl: $page.url.href })}>
+								<button class="btn btn-primary btn-sm" onclick={() => signIn(provider.id, { callbackUrl: page.url.href })}>
 									Link
 								</button>
 							{/if}

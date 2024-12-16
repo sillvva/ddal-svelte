@@ -1,6 +1,6 @@
 <script lang="ts">
 	import { goto, pushState } from "$app/navigation";
-	import { page } from "$app/stores";
+	import { page } from "$app/state";
 	import BreadCrumbs from "$lib/components/BreadCrumbs.svelte";
 	import Dropdown from "$lib/components/Dropdown.svelte";
 	import Items from "$lib/components/Items.svelte";
@@ -24,7 +24,7 @@
 	const myCharacter = $derived(data.character.userId === data.session?.user?.id);
 
 	let deletingLog = $state<string[]>([]);
-	let search = $state($page.url.searchParams.get("s") || "");
+	let search = $state(page.url.searchParams.get("s") || "");
 
 	const logSearch = new MiniSearch({
 		fields: ["logName", "magicItems", "storyAwards", "logId"],

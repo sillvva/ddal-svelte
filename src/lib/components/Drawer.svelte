@@ -1,5 +1,5 @@
 <script lang="ts">
-	import { page } from "$app/stores";
+	import { page } from "$app/state";
 	import { twMerge } from "tailwind-merge";
 
 	let drawer = $state(false);
@@ -38,7 +38,7 @@
 				href="/characters"
 				onkeydown={() => toggleDrawer(false)}
 				onclick={() => toggleDrawer(false)}
-				class={twMerge($page.url.pathname.startsWith("/characters") && "bg-primary text-white")}
+				class={twMerge(page.url.pathname.startsWith("/characters") && "bg-primary text-white")}
 			>
 				Character Logs
 			</a>
@@ -48,7 +48,7 @@
 				href="/dm-logs"
 				onkeydown={() => toggleDrawer(false)}
 				onclick={() => toggleDrawer(false)}
-				class={twMerge($page.url.pathname.startsWith("/dm-logs") && "bg-primary text-white")}
+				class={twMerge(page.url.pathname.startsWith("/dm-logs") && "bg-primary text-white")}
 			>
 				DM Logs
 			</a>
@@ -58,7 +58,7 @@
 				href="/dms"
 				onkeydown={() => toggleDrawer(false)}
 				onclick={() => toggleDrawer(false)}
-				class={twMerge($page.url.pathname.startsWith("/dms") && "bg-primary text-white")}
+				class={twMerge(page.url.pathname.startsWith("/dms") && "bg-primary text-white")}
 			>
 				DMs
 			</a>
