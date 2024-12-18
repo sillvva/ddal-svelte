@@ -6,7 +6,6 @@
 	import DeleteDm from "$lib/components/forms/DeleteDM.svelte";
 	import { excludedSearchWords } from "$lib/constants.js";
 	import MiniSearch from "minisearch";
-	import { twMerge } from "tailwind-merge";
 
 	let { data } = $props();
 
@@ -74,7 +73,7 @@
 							</tr>
 						{:else}
 							{#each results as dm}
-								<tr class={twMerge(deletingDM.includes(dm.id) && "hidden")}>
+								<tr class="data-[deleting=true]:hidden" data-deleting={deletingDM.includes(dm.id)}>
 									<td>
 										<a
 											href="/dms/{dm.id}"

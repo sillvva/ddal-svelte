@@ -2,7 +2,6 @@
 	import { pushState } from "$app/navigation";
 	import type { MagicItem, StoryAward } from "$server/db/schema";
 	import { sorter } from "@sillvva/utils";
-	import { twMerge } from "tailwind-merge";
 	import SearchResults from "./SearchResults.svelte";
 
 	interface Props {
@@ -77,7 +76,10 @@
 	);
 </script>
 
-<div class={twMerge("flex-1 flex-col", collapsible && !items.length ? "hidden md:flex" : "flex")}>
+<div
+	class="flex flex-1 flex-col data-[col-no-items=true]:hidden data-[col-no-items=true]:md:flex"
+	data-col-no-items={collapsible && !items.length}
+>
 	{#if title}
 		<div role="presentation" onclick={collapsible ? () => (collapsed = !collapsed) : () => {}} onkeypress={() => {}}>
 			<h4 class="flex text-left font-semibold leading-8 dark:text-white [table_&]:leading-5">
@@ -86,20 +88,16 @@
 				</span>
 				{#if collapsible}
 					<span
-						class={twMerge(
-							"iconify ml-2 inline size-6 justify-self-end md:hidden print:hidden",
-							collapsed ? "mdi--chevron-down" : "mdi--chevron-up"
-						)}
+						class="iconify ml-2 inline size-6 justify-self-end mdi--chevron-up data-[collapsed=true]:mdi--chevron-down md:hidden print:hidden"
+						data-collapsed={collapsed}
 					></span>
 				{/if}
 			</h4>
 		</div>
 	{/if}
 	<p
-		class={twMerge(
-			"divide-x divide-black/50 text-sm leading-6 dark:divide-white/50 print:text-xs [table_&]:leading-5",
-			collapsed ? "hidden md:inline print:inline" : ""
-		)}
+		class="divide-x divide-black/50 text-sm leading-6 data-[collapsed=true]:hidden dark:divide-white/50 data-[collapsed=true]:md:inline print:text-xs data-[collapsed=true]:print:inline [table_&]:leading-5"
+		data-collapsed={collapsed}
 	>
 		{#if items.length}
 			{#each sortedItems as mi}

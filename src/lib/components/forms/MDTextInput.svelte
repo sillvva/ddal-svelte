@@ -2,7 +2,6 @@
 	import autosize from "svelte-autosize";
 	import type { HTMLTextareaAttributes } from "svelte/elements";
 	import { formFieldProxy, type FormPathLeaves, type SuperForm } from "sveltekit-superforms";
-	import { twMerge } from "tailwind-merge";
 	import Markdown from "../Markdown.svelte";
 
 	type T = $$Generic<Record<PropertyKey, unknown>>;
@@ -46,11 +45,9 @@
 	{...rest}
 	id={field}
 	bind:value={$value}
-	class={twMerge(
-		"textarea textarea-bordered w-full focus:border-primary",
-		preview && "rounded-t-none",
-		state === "preview" && "hidden"
-	)}
+	class="textarea textarea-bordered w-full focus:border-primary data-[state=preview]:hidden data-[preview=true]:rounded-b-none"
+	data-preview={preview}
+	data-state={state}
 	style:--minRows={minRows && `${minRows}lh`}
 	style:--maxRows={maxRows && `${maxRows}lh`}
 	spellcheck="true"

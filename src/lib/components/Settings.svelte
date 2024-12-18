@@ -38,10 +38,8 @@
 
 <aside
 	id="settings"
-	class={twMerge(
-		"fixed -right-80 bottom-0 top-0 z-50 flex w-80 flex-col overflow-y-auto bg-base-100 px-4 py-4 transition-all",
-		open && "right-0"
-	)}
+	class="fixed -right-80 bottom-0 top-0 z-50 flex w-80 flex-col overflow-y-auto bg-base-100 px-4 py-4 transition-all data-[open=true]:right-0"
+	data-open={open}
 >
 	{#if user}
 		<div class="flex items-center gap-4 py-4 pl-2">
@@ -81,7 +79,7 @@
 			{#each authProviders as provider}
 				<li>
 					<label class="flex gap-2 hover:bg-transparent">
-						<span class={twMerge("iconify-color size-6", provider.iconify)}></span>
+						<span class={twMerge("size=6 iconify-color", provider.iconify)}></span>
 						<span class="flex-1">{provider.name}</span>
 						<span class="flex items-center">
 							{#if provider.account}
@@ -147,14 +145,11 @@
 	{/if}
 </aside>
 <div
-	class={twMerge(
-		"fixed inset-0 bg-base-300/50 transition-all",
-		open ? "block" : "hidden",
-		open ? "z-40 opacity-100" : "-z-10 opacity-0"
-	)}
+	class="fixed inset-0 -z-10 hidden bg-base-300/50 opacity-0 transition-all data-[open=true]:z-40 data-[open=true]:block data-[open=true]:opacity-100"
 	onkeydown={() => (open = false)}
 	onclick={() => (open = false)}
 	role="none"
+	data-open={open}
 ></div>
 
 <style lang="scss">

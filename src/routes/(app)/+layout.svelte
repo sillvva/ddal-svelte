@@ -9,7 +9,6 @@
 	import { hotkey } from "@svelteuidev/composables";
 	import { Toaster } from "svelte-sonner";
 	import { fade } from "svelte/transition";
-	import { twMerge } from "tailwind-merge";
 
 	let { data, children } = $props();
 
@@ -69,7 +68,10 @@
 {/if}
 
 <div class="relative isolate flex min-h-screen flex-col">
-	<header class="sticky top-0 z-20 w-full border-b border-base-300 bg-base-100 transition-all">
+	<header
+		class="sticky top-0 z-20 w-full border-b border-base-300 bg-base-100 transition-all"
+		style:view-transition-name="header"
+	>
 		<nav class="container relative z-10 mx-auto flex max-w-5xl gap-2 p-4">
 			<Drawer />
 			<Settings bind:open={settingsOpen} />
@@ -140,7 +142,7 @@
 <Toaster richColors closeButton theme={global.app.settings.mode} />
 
 <dialog
-	class={twMerge("modal !bg-base-300/75")}
+	class="modal !bg-base-300/75"
 	open={!!page.state.modal || undefined}
 	aria-labelledby="modal-title"
 	aria-describedby="modal-content"

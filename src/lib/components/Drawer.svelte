@@ -1,6 +1,5 @@
 <script lang="ts">
 	import { page } from "$app/state";
-	import { twMerge } from "tailwind-merge";
 
 	let drawer = $state(false);
 	let backdrop = $state(false);
@@ -30,7 +29,8 @@
 </noscript>
 <div
 	id="drawer"
-	class={twMerge("fixed -left-72 bottom-0 top-0 z-50 w-72 bg-base-100 px-4 py-4 transition-all", drawer && "left-0")}
+	class="fixed -left-72 bottom-0 top-0 z-50 w-72 bg-base-100 px-4 py-4 transition-all data-[open=true]:left-0"
+	data-open={drawer}
 >
 	<ul class="menu menu-lg w-full">
 		<li>
@@ -38,7 +38,8 @@
 				href="/characters"
 				onkeydown={() => toggleDrawer(false)}
 				onclick={() => toggleDrawer(false)}
-				class={twMerge(page.url.pathname.startsWith("/characters") && "bg-primary text-white")}
+				data-active={page.url.pathname.startsWith("/characters")}
+				class="data-[active=true]:bg-primary data-[active=true]:text-white"
 			>
 				Character Logs
 			</a>
@@ -48,7 +49,8 @@
 				href="/dm-logs"
 				onkeydown={() => toggleDrawer(false)}
 				onclick={() => toggleDrawer(false)}
-				class={twMerge(page.url.pathname.startsWith("/dm-logs") && "bg-primary text-white")}
+				data-active={page.url.pathname.startsWith("/dm-logs")}
+				class="data-[active=true]:bg-primary data-[active=true]:text-white"
 			>
 				DM Logs
 			</a>
@@ -58,7 +60,8 @@
 				href="/dms"
 				onkeydown={() => toggleDrawer(false)}
 				onclick={() => toggleDrawer(false)}
-				class={twMerge(page.url.pathname.startsWith("/dms") && "bg-primary text-white")}
+				data-active={page.url.pathname.startsWith("/dms")}
+				class="data-[active=true]:bg-primary data-[active=true]:text-white"
 			>
 				DMs
 			</a>
@@ -77,12 +80,10 @@
 	</ul>
 </div>
 <div
-	class={twMerge(
-		"fixed inset-0 bg-base-300/75 transition-all",
-		backdrop ? "block" : "hidden",
-		drawer ? "z-40 opacity-100" : "-z-10 opacity-0"
-	)}
 	onkeydown={() => toggleDrawer(false)}
 	onclick={() => toggleDrawer(false)}
 	role="none"
+	data-backdrop={backdrop}
+	data-open={drawer}
+	class="fixed inset-0 -z-10 hidden bg-base-300/50 opacity-0 transition-all data-[open=true]:z-40 data-[open=true]:block data-[open=true]:opacity-100"
 ></div>

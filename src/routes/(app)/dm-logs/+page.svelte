@@ -1,5 +1,5 @@
 <script lang="ts">
-	import { goto, pushState } from "$app/navigation";
+	import { goto } from "$app/navigation";
 	import { page } from "$app/state";
 	import BreadCrumbs from "$lib/components/BreadCrumbs.svelte";
 	import Dropdown from "$lib/components/Dropdown.svelte";
@@ -12,7 +12,6 @@
 	import { sorter } from "@sillvva/utils";
 	import { download, hotkey } from "@svelteuidev/composables";
 	import MiniSearch from "minisearch";
-	import { twMerge } from "tailwind-merge";
 
 	let { data } = $props();
 
@@ -67,19 +66,6 @@
 			: logs.sort((a, b) => (global.app.dmLogs.sort === "asc" ? sorter(a.date, b.date) : sorter(b.date, a.date)))
 	);
 	const hasStoryAwards = $derived(results.find((log) => log.storyAwardsGained.length));
-
-	function triggerModal(log: (typeof results)[number]) {
-		if (log.description) {
-			pushState("", {
-				modal: {
-					type: "text",
-					name: log.name,
-					description: log.description,
-					date: log.date
-				}
-			});
-		}
-	}
 </script>
 
 <div
@@ -124,10 +110,8 @@
 			aria-label="Sort"
 		>
 			<span
-				class={twMerge(
-					"iconify size-6",
-					global.app.dmLogs.sort === "asc" ? "mdi--sort-calendar-ascending" : "mdi--sort-calendar-descending"
-				)}
+				class="iconify size-6 data-[sort=asc]:mdi--sort-calendar-ascending data-[sort=desc]:mdi--sort-calendar-descending"
+				data-sort={global.app.dmLogs.sort}
 			></span>
 		</button>
 	</div>
@@ -159,14 +143,11 @@
 						</tr>
 					{:else}
 						{#each results as log}
-							<tr class={twMerge(deletingLog.includes(log.id) && "hidden")}>
-								<td
-									class={twMerge(
-										"!static align-top",
-										(log.description?.trim() || log.storyAwardsGained.length > 0 || log.storyAwardsLost.length > 0) &&
-											"print:border-b-0"
-									)}
-								>
+							<tr
+								class="data-[deleting=true]:hidden [&>td]:border-b-0 [&>td]:border-t [&>td]:border-t-base-300"
+								data-deleting={deletingLog.includes(log.id)}
+							>
+								<td class="!static align-top">
 									<a
 										href={log.isDmLog ? `/dm-logs/${log.id}` : `/characters/${log.characterId}/log/${log.id}`}
 										class="whitespace-pre-wrap text-left font-semibold text-secondary"
@@ -229,13 +210,7 @@
 										</div>
 									</div>
 								</td>
-								<td
-									class={twMerge(
-										"hidden align-top sm:table-cell print:table-cell",
-										(log.description?.trim() || log.storyAwardsGained.length > 0 || log.storyAwardsLost.length > 0) &&
-											"print:border-b-0"
-									)}
-								>
+								<td class="hidden align-top sm:table-cell print:table-cell">
 									{#if log.type === "game"}
 										{#if log.experience > 0}
 											<p>
@@ -263,13 +238,7 @@
 										{/if}
 									{/if}
 								</td>
-								<td
-									class={twMerge(
-										"hidden align-top sm:table-cell print:table-cell",
-										(log.description?.trim() || log.storyAwardsGained.length > 0 || log.storyAwardsLost.length > 0) &&
-											"print:border-b-0"
-									)}
-								>
+								<td class="hidden align-top sm:table-cell print:table-cell">
 									{#if log.tcp !== 0}
 										<p>
 											<span class="font-semibold">TCP:</span>
@@ -289,12 +258,7 @@
 									{/if}
 								</td>
 								{#if hasStoryAwards}
-									<td
-										class={twMerge(
-											"hidden align-top md:table-cell print:!hidden",
-											(log.description?.trim() || log.storyAwardsGained.length > 0) && "print:border-b-0"
-										)}
-									>
+									<td class="hidden align-top md:table-cell print:!hidden">
 										{#if log.storyAwardsGained.length > 0}
 											<div>
 												<Items items={log.storyAwardsGained} {search} />
@@ -309,7 +273,7 @@
 								</td>
 							</tr>
 							{#if log.description?.trim() || log.storyAwardsGained.length > 0 || log.storyAwardsLost.length > 0}
-								<tr class={twMerge("hidden print:table-row", deletingLog.includes(log.id) && "hidden")}>
+								<tr class="hidden data-[deleting=true]:hidden print:table-row" data-deleting={deletingLog.includes(log.id)}>
 									<td colSpan={3} class="pt-0">
 										<p class="text-sm">
 											<span class="font-semibold">Notes:</span>

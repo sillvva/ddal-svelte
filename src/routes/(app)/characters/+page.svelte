@@ -11,7 +11,6 @@
 	import { slugify, sorter } from "@sillvva/utils";
 	import { download, hotkey } from "@svelteuidev/composables";
 	import MiniSearch from "minisearch";
-	import { twMerge } from "tailwind-merge";
 
 	let { data } = $props();
 
@@ -124,7 +123,8 @@
 					<span class="iconify inline size-6 mdi--plus"></span>
 				</a>
 				<button
-					class={twMerge("btn inline-flex xs:hidden", global.app.characters.magicItems && "btn-primary")}
+					class="btn inline-flex data-[enabled=true]:btn-primary xs:hidden"
+					data-enabled={global.app.characters.magicItems}
 					onclick={() => (global.app.characters.magicItems = !global.app.characters.magicItems)}
 					onkeypress={() => null}
 					aria-label="Toggle Magic Items"
@@ -140,7 +140,8 @@
 			<div class="ml-auto flex gap-2 sm:ml-0">
 				{#if global.app.characters.display != "grid"}
 					<button
-						class={twMerge("btn sm:btn-sm max-xs:hidden", global.app.characters.magicItems && "btn-primary")}
+						class="btn data-[enabled=true]:btn-primary sm:btn-sm max-xs:hidden"
+						data-enabled={global.app.characters.magicItems}
 						onclick={() => createTransition(() => (global.app.characters.magicItems = !global.app.characters.magicItems))}
 						onkeypress={() => null}
 						aria-label="Toggle Magic Items"
@@ -158,10 +159,8 @@
 				{/if}
 				<div class="join max-xs:hidden">
 					<button
-						class={twMerge(
-							"btn join-item sm:btn-sm",
-							global.app.characters.display == "list" ? "btn-primary" : "hover:btn-primary"
-						)}
+						class="btn join-item data-[display=list]:btn-primary data-[display=grid]:hover:btn-primary sm:btn-sm"
+						data-display={global.app.characters.display}
 						onclick={() => createTransition(() => (global.app.characters.display = "list"))}
 						onkeypress={() => null}
 						aria-label="List View"
@@ -169,10 +168,8 @@
 						<span class="iconify mdi--format-list-text"></span>
 					</button>
 					<button
-						class={twMerge(
-							"btn join-item sm:btn-sm",
-							global.app.characters.display == "grid" ? "btn-primary" : "hover:btn-primary"
-						)}
+						class="btn join-item data-[display=grid]:btn-primary data-[display=list]:hover:btn-primary sm:btn-sm"
+						data-display={global.app.characters.display}
 						onclick={() => createTransition(() => (global.app.characters.display = "grid"))}
 						onkeypress={() => null}
 						aria-label="Grid View"
@@ -184,12 +181,13 @@
 		</div>
 
 		<div>
-			<div class={twMerge("w-full overflow-x-auto rounded-lg", global.app.characters.display == "grid" && "block xs:hidden")}>
+			<div
+				class="w-full overflow-x-auto rounded-lg data-[display=grid]:block data-[display=grid]:xs:hidden"
+				data-display={global.app.characters.display}
+			>
 				<div
-					class={twMerge(
-						"grid-table bg-base-200",
-						data.mobile ? "grid-characters-mobile sm:grid-characters-mobile-sm" : "grid-characters-mobile sm:grid-characters"
-					)}
+					class="grid-table grid-characters-mobile sm:grid-characters data-[mobile=true]:grid-characters-mobile data-[mobile=true]:sm:grid-characters-mobile-sm bg-base-200"
+					data-mobile={data.mobile}
 				>
 					<header class="!hidden text-base-content/70 sm:!contents">
 						{#if !data.mobile}
@@ -270,20 +268,15 @@
 			{#each [1, 2, 3, 4] as tier}
 				{#if results.filter((c) => c.tier == tier).length}
 					<h1
-						class={twMerge(
-							"pb-2 font-vecna text-3xl font-bold dark:text-white",
-							global.app.characters.display == "list" && "hidden",
-							global.app.characters.display == "grid" && "max-xs:hidden",
-							tier > 1 && "pt-6"
-						)}
+						class="pb-2 font-vecna text-3xl font-bold data-[display=list]:hidden data-[tier-1=false]:pt-6 dark:text-white data-[display=grid]:max-xs:hidden"
+						data-display={global.app.characters.display}
+						data-tier-1={tier == 1}
 					>
 						Tier {tier}
 					</h1>
 					<div
-						class={twMerge(
-							"hidden w-full",
-							global.app.characters.display == "grid" && "grid-cols-2 gap-4 xs:grid sm:grid-cols-3 md:grid-cols-4"
-						)}
+						class="hidden w-full data-[display=grid]:grid-cols-2 data-[display=grid]:gap-4 data-[display=grid]:xs:grid data-[display=grid]:sm:grid-cols-3 data-[display=grid]:md:grid-cols-4"
+						data-display={global.app.characters.display}
 					>
 						{#each results.filter((c) => c.tier == tier) as character}
 							{@const miMatches = msResults.find(
