@@ -186,7 +186,7 @@
 				data-display={global.app.characters.display}
 			>
 				<div
-					class="grid-table grid-characters-mobile sm:grid-characters data-[mobile=true]:grid-characters-mobile data-[mobile=true]:sm:grid-characters-mobile-sm bg-base-200"
+					class="grid-table grid-characters-mobile sm:grid-characters data-[mobile=true]:sm:grid-characters-mobile-sm bg-base-200"
 					data-mobile={data.mobile}
 				>
 					<header class="!hidden text-base-content/70 sm:!contents">
@@ -268,9 +268,9 @@
 			{#each [1, 2, 3, 4] as tier}
 				{#if results.filter((c) => c.tier == tier).length}
 					<h1
-						class="pb-2 font-vecna text-3xl font-bold data-[display=list]:hidden data-[tier-1=false]:pt-6 dark:text-white data-[display=grid]:max-xs:hidden"
+						class="pb-2 font-vecna text-3xl font-bold pt-6 data-[display=list]:hidden data-[tier=1]:pt-0 dark:text-white data-[display=grid]:max-xs:hidden"
 						data-display={global.app.characters.display}
-						data-tier-1={tier == 1}
+						data-tier={tier}
 					>
 						Tier {tier}
 					</h1>

@@ -85,5 +85,5 @@
 	role="none"
 	data-backdrop={backdrop}
 	data-open={drawer}
-	class="fixed inset-0 -z-10 hidden bg-base-300/50 opacity-0 transition-all data-[open=true]:z-40 data-[open=true]:block data-[open=true]:opacity-100"
+	class="fixed inset-0 -z-10 hidden bg-base-300/50 opacity-0 transition-all data-[open=true]:z-40 data-[backdrop=true]:block data-[open=true]:opacity-100"
 ></div>
