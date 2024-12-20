@@ -89,7 +89,7 @@ export const logSchema = v.object({
 	characterId: optNullable(characterIdSchema),
 	characterName: v.optional(string, ""),
 	type: v.optional(v.picklist(["game", "nongame"]), "game"),
-	experience: v.pipe(integer, v.minValue(0)),
+	experience: v.nullable(v.pipe(integer, v.minValue(0)), 0),
 	acp: v.nullable(v.pipe(integer, v.minValue(0)), 0),
 	tcp: v.nullable(integer, 0),
 	level: v.nullable(v.pipe(integer, v.minValue(0)), 0),
