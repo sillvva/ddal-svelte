@@ -127,9 +127,7 @@
 		transition-property: theme(transitionProperty.transform);
 		transition-timing: theme(transitionTimingFunction.in-out);
 		transition-duration: theme(transitionDuration.150);
-	}
-	@media (prefers-reduced-motion: no-preference) {
-		.img-grow:hover img {
+		@media (prefers-reduced-motion: no-preference) {
 			scale: theme(scale.125);
 		}
 	}
@@ -138,32 +136,32 @@
 		width: theme(width.full);
 		text-align: left;
 		font-size: theme(fontSize.sm);
-	}
-	.grid-table :where(header, section, a):not(:first-child, :last-child) > * {
-		border-bottom: 1px theme(colors.base-200);
-	}
-	.grid-table header {
-		display: contents;
-		white-space: nowrap;
-		font-size: theme(fontSize.xs);
-		font-weight: theme(fontWeight.bold);
-		color: theme(colors.base-content/60);
-		opacity: theme(opacity.60);
-	}
-	.grid-table :where(section, a) {
-		display: contents;
-	}
-	.grid-table :where(header, section, a) > * {
-		padding-inline: theme(spacing.4);
-		padding-block: theme(spacing.3);
-		vertical-align: middle;
-	}
-	.grid-table header > * {
-		background-color: theme(colors.base-300);
-	}
-	.grid-table :where(section, a) > * {
-		align-items: center;
-		background-color: theme(colors.base-200);
+		:where(header, section, a):not(:first-child, :last-child) > * {
+			border-bottom: 1px theme(colors.base-200);
+		}
+		header {
+			display: contents;
+			white-space: nowrap;
+			font-size: theme(fontSize.xs);
+			font-weight: theme(fontWeight.bold);
+			color: theme(colors.base-content/60);
+			opacity: theme(opacity.60);
+			& > * {
+				background-color: theme(colors.base-300);
+			}
+		}
+		:where(section, a) {
+			display: contents;
+			& > * {
+				align-items: center;
+				background-color: theme(colors.base-200);
+			}
+		}
+		:where(header, section, a) > * {
+			padding-inline: theme(spacing.4);
+			padding-block: theme(spacing.3);
+			vertical-align: middle;
+		}
 	}
 	.select {
 		font-size: theme(fontSize.base);

@@ -38,7 +38,7 @@
 
 <aside
 	id="settings"
-	class="fixed -right-80 bottom-0 top-0 z-50 flex w-80 flex-col overflow-y-auto bg-base-100 px-4 py-4 transition-all data-[open=true]:right-0"
+	class="fixed inset-y-0 -right-80 z-50 flex w-80 flex-col overflow-y-auto bg-base-100 px-4 py-4 transition-all data-[open=true]:right-0"
 	data-open={open}
 >
 	{#if user}
@@ -152,7 +152,7 @@
 	data-open={open}
 ></div>
 
-<style lang="scss">
+<style>
 	aside {
 		:global(.menu-lg li *) {
 			line-height: 1.5rem;
@@ -166,17 +166,17 @@
 			padding-inline: 0;
 		}
 
-		:global(:where(.menu li > *)) {
+		:global(.menu li > *) {
 			padding-inline: 1rem;
 		}
 
-		:global(:where(.menu li button)) {
+		:global(.menu li button) {
 			padding-inline: 1rem;
 			justify-content: start;
 			font-weight: normal;
 		}
 
-		:global(:where(.menu li > :not(button, a):hover)) {
+		:global(.menu li > :not(button, a):hover) {
 			background-color: transparent !important;
 			cursor: default;
 		}

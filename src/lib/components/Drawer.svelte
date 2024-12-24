@@ -29,7 +29,7 @@
 </noscript>
 <div
 	id="drawer"
-	class="fixed -left-72 bottom-0 top-0 z-50 w-72 bg-base-100 px-4 py-4 transition-all data-[open=true]:left-0"
+	class="fixed -left-80 inset-y-0 z-50 w-80 bg-base-100 px-4 py-4 transition-all data-[open=true]:left-0"
 	data-open={drawer}
 >
 	<ul class="menu menu-lg w-full">
