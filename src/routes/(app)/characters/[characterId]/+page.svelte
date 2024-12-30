@@ -368,7 +368,8 @@
 			</thead>
 			<tbody>
 				{#each results as log, i}
-					{@const hasDescription = log.description?.trim() || log.storyAwardsGained.length > 0 || log.storyAwardsLost.length > 0}
+					{@const hasDescription =
+						!!log.description?.trim() || log.storyAwardsGained.length > 0 || log.storyAwardsLost.length > 0}
 					<tr
 						class="data-[deleting=true]:hidden print:text-sm [&>td]:border-b-0 [&>td]:border-t [&>td]:border-t-base-300"
 						data-deleting={deletingLog.includes(log.id)}
