@@ -1,6 +1,6 @@
 <script lang="ts">
 	import { goto, pushState } from "$app/navigation";
-	import { page } from "$app/stores";
+	import { page } from "$app/state";
 	import BreadCrumbs from "$lib/components/BreadCrumbs.svelte";
 	import Dropdown from "$lib/components/Dropdown.svelte";
 	import Items from "$lib/components/Items.svelte";
@@ -15,7 +15,6 @@
 	import { slugify, sorter } from "@sillvva/utils";
 	import { download, hotkey } from "@svelteuidev/composables";
 	import MiniSearch from "minisearch";
-	import { twMerge } from "tailwind-merge";
 
 	let { data } = $props();
 
@@ -24,7 +23,7 @@
 	const myCharacter = $derived(data.character.userId === data.session?.user?.id);
 
 	let deletingLog = $state<string[]>([]);
-	let search = $state($page.url.searchParams.get("s") || "");
+	let search = $state(page.url.searchParams.get("s") || "");
 
 	const logSearch = new MiniSearch({
 		fields: ["logName", "magicItems", "storyAwards", "logId"],
@@ -279,10 +278,10 @@
 				</div>
 			</div>
 			<div
-				class={twMerge(
+				class={[
 					"divider hidden xs:divider-horizontal xs:mx-0 xs:flex print:flex",
 					"before:bg-black/50 after:bg-black/50 dark:before:bg-white/50 dark:after:bg-white/50"
-				)}
+				].join(" ")}
 			></div>
 			<div class="flex basis-full flex-col xs:basis-[60%] sm:basis-2/3 lg:basis-2/3 print:basis-2/3">
 				{#if data.character}
@@ -319,7 +318,8 @@
 				<span class="iconify size-6 mdi--plus"></span>
 			</a>
 			<button
-				class={twMerge("btn sm:hidden", global.app.log.descriptions && "btn-primary")}
+				class="btn data-[desc=true]:btn-primary sm:hidden"
+				data-desc={global.app.log.descriptions}
 				onclick={() => createTransition(() => (global.app.log.descriptions = !global.app.log.descriptions))}
 				onkeypress={() => null}
 				aria-label="Toggle Notes"
@@ -336,7 +336,8 @@
 	{#if logs.length}
 		<div class="flex-1 max-sm:hidden"></div>
 		<button
-			class={twMerge("btn sm:btn-sm max-sm:hidden", global.app.log.descriptions && "btn-primary")}
+			class="btn data-[desc=true]:btn-primary sm:btn-sm max-sm:hidden"
+			data-desc={global.app.log.descriptions}
 			onclick={() => createTransition(() => (global.app.log.descriptions = !global.app.log.descriptions))}
 			onkeypress={() => null}
 			aria-label="Toggle Notes"
@@ -360,9 +361,6 @@
 					<td class="print:p-2">Log Entry</td>
 					<td class="max-sm:hidden print:table-cell print:p-2">Advancement</td>
 					<td class="max-sm:hidden print:table-cell print:p-2">Treasure</td>
-					<td class={twMerge("max-lg:hidden print:!hidden", results.some((l) => !!l.storyAwardsGained.length) && "min-w-48")}
-						>Story Awards</td
-					>
 					{#if myCharacter}
 						<td class="print:hidden"></td>
 					{/if}
@@ -370,13 +368,14 @@
 			</thead>
 			<tbody>
 				{#each results as log, i}
-					<tr class={twMerge("border-b-0 border-t-2 border-t-base-200 print:text-sm", deletingLog.includes(log.id) && "hidden")}>
+					{@const hasDescription = log.description?.trim() || log.storyAwardsGained.length > 0 || log.storyAwardsLost.length > 0}
+					<tr
+						class="data-[deleting=true]:hidden print:text-sm [&>td]:border-b-0 [&>td]:border-t [&>td]:border-t-base-300"
+						data-deleting={deletingLog.includes(log.id)}
+					>
 						<td
-							class={twMerge(
-								"!static pb-0 align-top sm:pb-3 print:p-2",
-								(!global.app.log.descriptions || !log.description) && "pb-3",
-								(log.description?.trim() || log.storyAwardsGained.length > 0 || log.storyAwardsLost.length > 0) && "border-b-0"
-							)}
+							class="!static pb-0 align-top data-[desc=true]:pb-3 sm:pb-3 print:p-2"
+							data-desc={hasDescription && global.app.log.descriptions}
 						>
 							{#if myCharacter}
 								<a
@@ -440,12 +439,7 @@
 								{/if}
 							</div>
 						</td>
-						<td
-							class={twMerge(
-								"align-top max-sm:hidden print:table-cell print:p-2",
-								(log.description?.trim() || log.storyAwardsGained.length > 0 || log.storyAwardsLost.length > 0) && "border-b-0"
-							)}
-						>
+						<td class="align-top max-sm:hidden print:table-cell print:p-2">
 							{#if log.experience > 0}
 								<p>
 									<span class="font-semibold dark:text-white">Experience:</span>&nbsp;{log.experience}
@@ -468,12 +462,7 @@
 								</p>
 							{/if}
 						</td>
-						<td
-							class={twMerge(
-								"align-top max-sm:hidden print:table-cell print:p-2",
-								(log.description?.trim() || log.storyAwardsGained.length > 0 || log.storyAwardsLost.length > 0) && "border-b-0"
-							)}
-						>
+						<td class="align-top max-sm:hidden print:table-cell print:p-2">
 							{#if log.tcp !== 0}
 								<p>
 									<span class="font-semibold dark:text-white">TCP:</span>
@@ -495,74 +484,54 @@
 								</div>
 							{/if}
 						</td>
-						<td
-							class={twMerge(
-								"align-top max-lg:hidden print:!hidden",
-								(log.description?.trim() || log.storyAwardsGained.length > 0 || log.storyAwardsLost.length > 0) && "border-b-0"
-							)}
-						>
-							{#if log.storyAwardsGained.length > 0 || log.storyAwardsLost.length > 0}
-								<div>
-									<Items items={log.storyAwardsGained} {search} />
-									<div class="whitespace-pre-wrap text-sm line-through">
-										<SearchResults text={log.storyAwardsLost.map((mi) => mi.name).join(" | ")} {search} />
-									</div>
-								</div>
-							{/if}
-						</td>
 						{#if myCharacter}
-							<td
-								class={twMerge(
-									"w-8 align-top print:hidden",
-									(log.description?.trim() || log.storyAwardsGained.length > 0 || log.storyAwardsLost.length > 0) && "border-b-0"
-								)}
-							>
+							<td class="w-8 align-top print:hidden">
 								<div class="flex flex-col justify-center gap-2">
 									<DeleteLog {log} bind:deletingLog />
 								</div>
 							</td>
 						{/if}
 					</tr>
-					{#if log.description?.trim() || log.storyAwardsGained.length > 0 || log.storyAwardsLost.length > 0}
-						<tr
-							class={twMerge(!global.app.log.descriptions && "hidden print:table-row")}
-							use:transition={slugify(`notes-${log.id}`)}
-						>
-							<td colSpan={100} class="max-w-[calc(100vw_-_50px)] pt-0 text-sm print:p-2 print:text-xs">
-								{#if log.description?.trim()}
-									<h4 class="text-base font-semibold">Notes:</h4>
-									<Markdown content={log.description} />
-								{/if}
-								{#if log.magicItemsGained.length > 0 || log.magicItemsLost.length > 0}
-									<div class="mt-2 sm:hidden print:hidden">
-										<Items title="Magic Items:" items={log.magicItemsGained} {search} sort />
-										{#if log.magicItemsLost.length}
-											<p class="mt-2 whitespace-pre-wrap text-sm line-through">
-												<SearchResults text={log.magicItemsLost.map((mi) => mi.name).join(" | ")} {search} />
-											</p>
-										{/if}
-									</div>
-								{/if}
-								{#if log.storyAwardsGained.length > 0 || log.storyAwardsLost.length > 0}
-									{#each log.storyAwardsGained as mi}
-										<div class="mt-2 whitespace-pre-wrap text-sm">
-											<span class="pr-2 font-semibold print:block">
-												{mi.name}{mi.description ? ":" : ""}
-											</span>
-											{#if mi.description}
-												<Markdown content={mi.description || ""} />
-											{/if}
-										</div>
-									{/each}
-									{#if log.storyAwardsLost.length}
-										<p class="whitespace-pre-wrap text-sm line-through">
-											{log.storyAwardsLost.map((mi) => mi.name).join(" | ")}
+					<tr
+						class="hidden data-[desc=true]:table-row data-[mi=true]:max-sm:table-row"
+						data-desc={global.app.log.descriptions && hasDescription}
+						data-mi={log.magicItemsGained.length > 0 || log.magicItemsLost.length > 0}
+						use:transition={slugify(`notes-${log.id}`)}
+					>
+						<td colSpan={100} class="max-w-[calc(100vw_-_50px)] pt-0 text-sm print:p-2 print:text-xs">
+							{#if log.description?.trim()}
+								<h4 class="text-base font-semibold">Notes:</h4>
+								<Markdown content={log.description} />
+							{/if}
+							{#if log.magicItemsGained.length > 0 || log.magicItemsLost.length > 0}
+								<div class="mt-2 sm:hidden print:hidden">
+									<Items title="Magic Items:" items={log.magicItemsGained} {search} sort />
+									{#if log.magicItemsLost.length}
+										<p class="mt-2 whitespace-pre-wrap text-sm line-through">
+											<SearchResults text={log.magicItemsLost.map((mi) => mi.name).join(" | ")} {search} />
 										</p>
 									{/if}
+								</div>
+							{/if}
+							{#if log.storyAwardsGained.length > 0 || log.storyAwardsLost.length > 0}
+								{#each log.storyAwardsGained as mi}
+									<div class="mt-2 whitespace-pre-wrap text-sm">
+										<span class="pr-2 font-semibold dark:text-white print:block">
+											{mi.name}{mi.description ? ":" : ""}
+										</span>
+										{#if mi.description}
+											<Markdown content={mi.description || ""} />
+										{/if}
+									</div>
+								{/each}
+								{#if log.storyAwardsLost.length}
+									<p class="whitespace-pre-wrap text-sm line-through">
+										{log.storyAwardsLost.map((mi) => mi.name).join(" | ")}
+									</p>
 								{/if}
-							</td>
-						</tr>
-					{/if}
+							{/if}
+						</td>
+					</tr>
 				{/each}
 			</tbody>
 		</table>

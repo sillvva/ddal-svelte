@@ -3,7 +3,6 @@
 	import type { MagicItem, StoryAward } from "$server/db/schema";
 	import type { Snippet } from "svelte";
 	import type { SuperForm } from "sveltekit-superforms";
-	import { twMerge } from "tailwind-merge";
 	import EntityCard from "./EntityCard.svelte";
 
 	interface Props {
@@ -41,7 +40,8 @@
 			</button>
 			<button
 				type="button"
-				class={twMerge("btn join-item min-w-fit max-md:flex-1 max-md:px-0", remainingItems.length == 0 && "max-md:flex-[2]")}
+				class="btn join-item min-w-fit max-md:flex-1 max-md:px-0 data-[remaining=0]:max-md:flex-[2]"
+				data-remaining={remainingItems.length}
 				onclick={() => ($form.magicItemsGained = $form.magicItemsGained.concat(newItem))}
 				aria-label="Add Magic Item"
 			>
@@ -77,7 +77,8 @@
 				</button>
 				<button
 					type="button"
-					class={twMerge("btn join-item min-w-fit max-md:flex-1 max-md:px-0", remainingAwards.length == 0 && "max-md:flex-[2]")}
+					class="btn join-item min-w-fit max-md:flex-1 max-md:px-0 data-[remaining=0]:max-md:flex-[2]"
+					data-remaining={remainingItems.length}
 					onclick={() => ($form.storyAwardsGained = $form.storyAwardsGained.concat(newItem))}
 					aria-label="Add Story Award"
 				>

@@ -39,6 +39,9 @@ declare global {
 			breadcrumbs: Array<{ name: string; href?: string }>;
 			mobile: boolean;
 			isMac: boolean;
+			title?: string;
+			description?: string;
+			image?: string;
 		}
 		// interface Platform {}
 		interface PageState {

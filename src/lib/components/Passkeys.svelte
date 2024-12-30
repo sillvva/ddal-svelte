@@ -1,6 +1,6 @@
 <script lang="ts">
 	import { invalidateAll } from "$app/navigation";
-	import { page } from "$app/stores";
+	import { page } from "$app/state";
 	import { errorToast, successToast } from "$lib/factories.svelte";
 	import { global } from "$lib/stores.svelte";
 	import type {
@@ -15,7 +15,7 @@
 	import { scale } from "svelte/transition";
 	import Control from "./forms/Control.svelte";
 
-	const authenticators = $derived($page.data.user?.authenticators || []);
+	const authenticators = $derived(page.data.user?.authenticators || []);
 	$effect(() => {
 		global.app.settings.autoWebAuthn = authenticators.length > 0;
 	});

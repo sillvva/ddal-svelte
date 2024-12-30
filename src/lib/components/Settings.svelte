@@ -1,6 +1,6 @@
 <script lang="ts">
 	import { enhance } from "$app/forms";
-	import { page } from "$app/stores";
+	import { page } from "$app/state";
 	import { PROVIDERS } from "$lib/constants";
 	import { successToast } from "$lib/factories.svelte";
 	import { global } from "$lib/stores.svelte";
@@ -16,7 +16,7 @@
 
 	let { open = $bindable(false) }: Props = $props();
 
-	const user = $derived($page.data.user);
+	const user = $derived(page.data.user);
 	const authProviders = $derived(
 		PROVIDERS.map((p) => ({
 			...p,
@@ -38,10 +38,8 @@
 
 <aside
 	id="settings"
-	class={twMerge(
-		"fixed -right-80 bottom-0 top-0 z-50 flex w-80 flex-col overflow-y-auto bg-base-100 px-4 py-4 transition-all",
-		open && "right-0"
-	)}
+	class="fixed inset-y-0 -right-80 z-50 flex w-80 flex-col overflow-y-auto bg-base-100 px-4 py-4 transition-all data-[open=true]:right-0"
+	data-open={open}
 >
 	{#if user}
 		<div class="flex items-center gap-4 py-4 pl-2">
@@ -81,7 +79,7 @@
 			{#each authProviders as provider}
 				<li>
 					<label class="flex gap-2 hover:bg-transparent">
-						<span class={twMerge("iconify-color size-6", provider.iconify)}></span>
+						<span class={twMerge("size=6 iconify-color", provider.iconify)}></span>
 						<span class="flex-1">{provider.name}</span>
 						<span class="flex items-center">
 							{#if provider.account}
@@ -108,7 +106,7 @@
 									<span class="iconify size-6 text-green-500 mdi--check"></span>
 								{/if}
 							{:else}
-								<button class="btn btn-primary btn-sm" onclick={() => signIn(provider.id, { callbackUrl: $page.url.href })}>
+								<button class="btn btn-primary btn-sm" onclick={() => signIn(provider.id, { callbackUrl: page.url.href })}>
 									Link
 								</button>
 							{/if}
@@ -147,17 +145,14 @@
 	{/if}
 </aside>
 <div
-	class={twMerge(
-		"fixed inset-0 bg-base-300/50 transition-all",
-		open ? "block" : "hidden",
-		open ? "z-40 opacity-100" : "-z-10 opacity-0"
-	)}
+	class="fixed inset-0 -z-10 hidden bg-base-300/50 opacity-0 transition-all data-[open=true]:z-40 data-[open=true]:block data-[open=true]:opacity-100"
 	onkeydown={() => (open = false)}
 	onclick={() => (open = false)}
 	role="none"
+	data-open={open}
 ></div>
 
-<style lang="scss">
+<style>
 	aside {
 		:global(.menu-lg li *) {
 			line-height: 1.5rem;
@@ -171,17 +166,17 @@
 			padding-inline: 0;
 		}
 
-		:global(:where(.menu li > *)) {
+		:global(.menu li > *) {
 			padding-inline: 1rem;
 		}
 
-		:global(:where(.menu li button)) {
+		:global(.menu li button) {
 			padding-inline: 1rem;
 			justify-content: start;
 			font-weight: normal;
 		}
 
-		:global(:where(.menu li > :not(button, a):hover)) {
+		:global(.menu li > :not(button, a):hover) {
 			background-color: transparent !important;
 			cursor: default;
 		}

@@ -1,11 +1,11 @@
 <script lang="ts">
-	import { page } from "$app/stores";
+	import { page } from "$app/state";
 	import BackButton from "./BackButton.svelte";
 
 	const breadcrumbs = $derived(
-		$page.data.breadcrumbs.map((bc, i) => ({
+		page.data.breadcrumbs.map((bc, i) => ({
 			name: bc.name,
-			href: !bc.href || i === $page.data.breadcrumbs.length - 1 ? null : bc.href
+			href: !bc.href || i === page.data.breadcrumbs.length - 1 ? null : bc.href
 		}))
 	);
 

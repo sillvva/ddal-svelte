@@ -1,18 +1,17 @@
 <script lang="ts">
-	import { page } from "$app/stores";
+	import { page } from "$app/state";
 	import BreadCrumbs from "$lib/components/BreadCrumbs.svelte";
 	import Search from "$lib/components/Search.svelte";
 	import SearchResults from "$lib/components/SearchResults.svelte";
 	import DeleteDm from "$lib/components/forms/DeleteDM.svelte";
 	import { excludedSearchWords } from "$lib/constants.js";
 	import MiniSearch from "minisearch";
-	import { twMerge } from "tailwind-merge";
 
 	let { data } = $props();
 
 	const dms = $derived(data.dms);
 	let deletingDM = $state<string[]>([]);
-	let search = $state($page.url.searchParams.get("s") || "");
+	let search = $state(page.url.searchParams.get("s") || "");
 
 	const minisearch = new MiniSearch({
 		fields: ["name", "DCI"],
@@ -74,7 +73,7 @@
 							</tr>
 						{:else}
 							{#each results as dm}
-								<tr class={twMerge(deletingDM.includes(dm.id) && "hidden")}>
+								<tr class="data-[deleting=true]:hidden" data-deleting={deletingDM.includes(dm.id)}>
 									<td>
 										<a
 											href="/dms/{dm.id}"

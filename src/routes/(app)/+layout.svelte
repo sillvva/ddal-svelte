@@ -1,6 +1,6 @@
 <script lang="ts">
 	import { afterNavigate } from "$app/navigation";
-	import { navigating, page } from "$app/stores";
+	import { navigating, page } from "$app/state";
 	import CommandTray from "$lib/components/CommandTray.svelte";
 	import Drawer from "$lib/components/Drawer.svelte";
 	import Markdown from "$lib/components/Markdown.svelte";
@@ -9,12 +9,10 @@
 	import { hotkey } from "@svelteuidev/composables";
 	import { Toaster } from "svelte-sonner";
 	import { fade } from "svelte/transition";
-	import { twMerge } from "tailwind-merge";
 
 	let { data, children } = $props();
 
 	let settingsOpen = $state(false);
-	let y = $state(0);
 
 	afterNavigate(() => {
 		global.pageLoader = false;
@@ -26,37 +24,35 @@
 	});
 
 	let defaultTitle = "Adventurers League Log Sheet";
-	const title = $derived($page.data.title ? $page.data.title + " - " + defaultTitle : defaultTitle);
+	const title = $derived(page.data.title ? page.data.title + " - " + defaultTitle : defaultTitle);
 	let defaultDescription = "A tool for tracking your Adventurers League characters and magic items.";
-	const description = $derived($page.data.description || defaultDescription);
+	const description = $derived(page.data.description || defaultDescription);
 	let defaultImage = "https://ddal.dekok.app/images/barovia-gate.webp";
-	const image = $derived($page.data.image || defaultImage);
+	const image = $derived(page.data.image || defaultImage);
 </script>
 
 <svelte:head>
-	<title>{title.trim() || defaultTitle}</title>
-	<meta name="title" content={title.trim() || defaultTitle} />
-	<meta name="description" content={description.trim() || defaultDescription} />
-	<meta property="og:title" content={title.trim() || defaultTitle} />
+	<title>{title.trim()}</title>
+	<meta name="title" content={title.trim()} />
+	<meta name="description" content={description.trim()} />
+	<meta property="og:title" content={title.trim()} />
 	<meta property="og:site_name" content="Adventurers League Log Sheet" />
-	<meta property="og:description" content={description.trim() || defaultDescription} />
-	<meta property="og:image" content={image?.trim() || defaultImage} />
+	<meta property="og:description" content={description.trim()} />
+	<meta property="og:image" content={image.trim()} />
 	<meta property="og:type" content="website" />
 	<meta property="og:locale" content="en_US" />
-	<meta property="og:url" content={$page.url.toString()} />
+	<meta property="og:url" content={page.url.toString()} />
 	<meta name="twitter:card" content="summary_large_image" />
 	<meta name="twitter:creator" content="@sillvvasensei" />
 	<meta name="twitter:creator:id" content="1006748654391169029" />
-	<meta name="twitter:title" content={title.trim() || defaultTitle} />
+	<meta name="twitter:title" content={title.trim()} />
 	<meta name="twitter:site" content="Adventurers League Log Sheet" />
-	<meta name="twitter:description" content={description.trim() || defaultDescription} />
-	<meta name="twitter:image" content={image?.trim() || defaultImage} />
-	<link rel="canonical" href={$page.url.toString()} />
+	<meta name="twitter:description" content={description.trim()} />
+	<meta name="twitter:image" content={image.trim()} />
+	<link rel="canonical" href={page.url.toString()} />
 </svelte:head>
 
-<svelte:window bind:scrollY={y} />
-
-{#if global.pageLoader || $navigating}
+{#if global.pageLoader || navigating.type}
 	<div
 		class="fixed inset-0 z-40 flex items-center justify-center bg-black/50"
 		in:fade={{ duration: 100, delay: 400 }}
@@ -72,7 +68,10 @@
 {/if}
 
 <div class="relative isolate flex min-h-screen flex-col">
-	<header class="sticky top-0 z-20 w-full border-b border-base-300 bg-base-100 transition-all">
+	<header
+		class="sticky top-0 z-20 w-full border-b border-base-300 bg-base-100 transition-all"
+		style:view-transition-name="header"
+	>
 		<nav class="container relative z-10 mx-auto flex max-w-5xl gap-2 p-4">
 			<Drawer />
 			<Settings bind:open={settingsOpen} />
@@ -112,7 +111,7 @@
 					</summary>
 				{:else}
 					<a
-						href={`/?redirect=${encodeURIComponent(`${$page.url.pathname}${$page.url.search}`)}`}
+						href={`/?redirect=${encodeURIComponent(`${page.url.pathname}${page.url.search}`)}`}
 						class="flex h-12 items-center gap-2 rounded-lg bg-base-200/50 p-2 text-base-content transition-colors hover:bg-base-300"
 					>
 						<span class="flex h-full flex-1 items-center justify-center font-semibold">Sign In</span>
@@ -143,42 +142,42 @@
 <Toaster richColors closeButton theme={global.app.settings.mode} />
 
 <dialog
-	class={twMerge("modal !bg-base-300/75")}
-	open={!!$page.state.modal || undefined}
+	class="modal !bg-base-300/75"
+	open={!!page.state.modal || undefined}
 	aria-labelledby="modal-title"
 	aria-describedby="modal-content"
 	use:hotkey={[
 		[
 			"Escape",
 			() => {
-				if ($page.state.modal) history.back();
+				if (page.state.modal) history.back();
 			}
 		]
 	]}
 >
-	{#if $page.state.modal}
-		{#if $page.state.modal.type === "text"}
+	{#if page.state.modal}
+		{#if page.state.modal.type === "text"}
 			<div class="modal-box relative cursor-default bg-base-100 drop-shadow-lg">
 				<button class="btn btn-circle btn-ghost btn-sm absolute right-2 top-2" onclick={() => history.back()} aria-label="Close">
 					<span class="iconify mdi--close"></span>
 				</button>
-				<h3 id="modal-title" class="cursor-text text-lg font-bold text-black dark:text-white">{$page.state.modal.name}</h3>
-				{#if $page.state.modal.date}
-					<p class="text-xs">{$page.state.modal.date.toLocaleString()}</p>
+				<h3 id="modal-title" class="cursor-text text-lg font-bold text-black dark:text-white">{page.state.modal.name}</h3>
+				{#if page.state.modal.date}
+					<p class="text-xs">{page.state.modal.date.toLocaleString()}</p>
 				{/if}
 				<Markdown
 					id="modal-content"
-					content={$page.state.modal.description}
+					content={page.state.modal.description}
 					class="sm:text-md cursor-text whitespace-pre-wrap pt-4 text-sm"
 				/>
 			</div>
 		{/if}
 
-		{#if $page.state.modal.type === "image"}
+		{#if page.state.modal.type === "image"}
 			<div class="glass modal-box">
 				<img
-					src={$page.state.modal.imageUrl}
-					alt={$page.state.modal.name}
+					src={page.state.modal.imageUrl}
+					alt={page.state.modal.name}
 					class="relative max-h-dvh w-full max-w-screen-xs"
 					id="modal-content"
 				/>

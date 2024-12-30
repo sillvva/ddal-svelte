@@ -51,13 +51,11 @@ export const accounts = pg.pgTable(
 		session_state: pg.text(),
 		lastLogin: pg.timestamp("last_login", { mode: "date", withTimezone: true })
 	},
-	(table) => {
-		return {
-			userIdIdx: pg.index("Account_userId_idx").on(table.userId),
-			accountPkey: pg.primaryKey({ columns: [table.provider, table.providerAccountId], name: "Account_pkey" }),
-			webAuthnIdx: pg.uniqueIndex("account_userId_providerAccountId_key").on(table.userId, table.providerAccountId)
-		};
-	}
+	(table) => [
+		pg.primaryKey({ columns: [table.provider, table.providerAccountId], name: "Account_pkey" }),
+		pg.uniqueIndex("account_userId_providerAccountId_key").on(table.userId, table.providerAccountId),
+		pg.index("Account_userId_idx").on(table.userId)
+	]
 );
 
 export const accountRelations = relations(accounts, ({ one }) => ({
@@ -86,11 +84,7 @@ export const sessions = pg.pgTable(
 			.notNull()
 			.$default(() => new Date())
 	},
-	(table) => {
-		return {
-			userIdIdx: pg.index("Session_userId_idx").on(table.userId)
-		};
-	}
+	(table) => [pg.index("Session_userId_idx").on(table.userId)]
 );
 
 export const sessionRelations = relations(sessions, ({ one }) => ({
@@ -124,17 +118,18 @@ export const authenticators = pg.pgTable(
 		credentialBackedUp: pg.boolean().notNull(),
 		transports: pg.text()
 	},
-	(table) => ({
-		compositePK: pg.primaryKey({
-			columns: [table.userId, table.credentialID]
+	(table) => [
+		pg.primaryKey({
+			columns: [table.userId, table.credentialID],
+			name: "authenticator_pkey"
 		}),
-		accountFK: pg.foreignKey({
+		pg.foreignKey({
 			columns: [table.userId, table.providerAccountId],
 			foreignColumns: [accounts.userId, accounts.providerAccountId],
 			name: "public_authenticator_userId_providerAccountId_fkey"
 		}),
-		uniqueName: pg.unique("authenticator_userId_name_key").on(table.userId, table.name)
-	})
+		pg.unique("authenticator_userId_name_key").on(table.userId, table.name)
+	]
 );
 
 export const authenticatorRelations = relations(authenticators, ({ one }) => ({
@@ -175,11 +170,7 @@ export const characters = pg.pgTable(
 			.notNull()
 			.$default(() => new Date())
 	},
-	(table) => {
-		return {
-			userIdIdx: pg.index("Character_userId_idx").on(table.userId)
-		};
-	}
+	(table) => [pg.index("Character_userId_idx").on(table.userId)]
 );
 
 export const characterRelations = relations(characters, ({ one, many }) => ({
@@ -210,12 +201,10 @@ export const dungeonMasters = pg.pgTable(
 			.$type<UserId>()
 			.references(() => users.id, { onUpdate: "cascade", onDelete: "cascade" })
 	},
-	(table) => {
-		return {
-			uidIdx: pg.index("DungeonMaster_uid_partial_idx").on(table.uid).where(isNotNull(table.uid)),
-			ownerIdx: pg.index("DungeonMaster_owner_idx").on(table.owner)
-		};
-	}
+	(table) => [
+		pg.index("DungeonMaster_uid_partial_idx").on(table.uid).where(isNotNull(table.uid)),
+		pg.index("DungeonMaster_owner_idx").on(table.owner)
+	]
 );
 
 export const dungeonMasterRelations = relations(dungeonMasters, ({ one, many }) => ({
@@ -291,12 +280,10 @@ export const logs = pg.pgTable(
 			.notNull()
 			.$default(() => new Date())
 	},
-	(table) => {
-		return {
-			characterIdIdx: pg.index("Log_characterId_partial_idx").on(table.characterId).where(isNotNull(table.characterId)),
-			dungeonMasterIdIdx: pg.index("Log_dungeonMasterId_idx").on(table.dungeonMasterId)
-		};
-	}
+	(table) => [
+		pg.index("Log_characterId_partial_idx").on(table.characterId).where(isNotNull(table.characterId)),
+		pg.index("Log_dungeonMasterId_idx").on(table.dungeonMasterId)
+	]
 );
 
 export const logRelations = relations(logs, ({ one, many }) => ({
@@ -337,12 +324,10 @@ export const magicItems = pg.pgTable(
 			.$type<LogId>()
 			.references(() => logs.id, { onUpdate: "cascade", onDelete: "set null" })
 	},
-	(table) => {
-		return {
-			logGainedIdIdx: pg.index("MagicItem_logGainedId_idx").on(table.logGainedId),
-			logLostIdIdx: pg.index("MagicItem_logLostId_idx").on(table.logLostId)
-		};
-	}
+	(table) => [
+		pg.index("MagicItem_logGainedId_idx").on(table.logGainedId),
+		pg.index("MagicItem_logLostId_idx").on(table.logLostId)
+	]
 );
 
 export const magicItemRelations = relations(magicItems, ({ one }) => ({
@@ -381,12 +366,10 @@ export const storyAwards = pg.pgTable(
 			.$type<LogId>()
 			.references(() => logs.id, { onUpdate: "cascade", onDelete: "set null" })
 	},
-	(table) => {
-		return {
-			logGainedIdIdx: pg.index("StoryAward_logGainedId_idx").on(table.logGainedId),
-			logLostIdIdx: pg.index("StoryAward_logLostId_idx").on(table.logLostId)
-		};
-	}
+	(table) => [
+		pg.index("StoryAward_logGainedId_idx").on(table.logGainedId),
+		pg.index("StoryAward_logLostId_idx").on(table.logLostId)
+	]
 );
 
 export const storyAwardRelations = relations(storyAwards, ({ one }) => ({

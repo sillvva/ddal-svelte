@@ -2,7 +2,6 @@
 	import { dev } from "$app/environment";
 	import { Combobox } from "bits-ui";
 	import SuperDebug, { formFieldProxy, stringProxy, type FormPathLeaves, type SuperForm } from "sveltekit-superforms";
-	import { twMerge } from "tailwind-merge";
 
 	type T = $$Generic<Record<PropertyKey, unknown>>;
 	type Item = {
@@ -168,11 +167,11 @@
 						{#each filtered.slice(0, 8) as item}
 							<Combobox.Item asChild value={item.value} label={item.label} let:builder>
 								<li
-									class={twMerge(
+									class={[
 										"hover:bg-primary/50",
 										"data-[highlighted]:bg-primary data-[highlighted]:text-primary-content",
 										"data-[selected]:bg-primary data-[selected]:font-bold data-[selected]:text-primary-content"
-									)}
+									].join(" ")}
 									use:builder.action
 									{...builder}
 									role="option"

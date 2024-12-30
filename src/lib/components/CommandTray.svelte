@@ -7,7 +7,6 @@
 	import { hotkey } from "@svelteuidev/composables";
 	import { ScrollArea } from "bits-ui";
 	import { Command } from "cmdk-sv";
-	import { twMerge } from "tailwind-merge";
 
 	let { isMac = false } = $props();
 
@@ -104,7 +103,7 @@
 </label>
 
 <dialog
-	class={twMerge("modal !bg-base-300/75")}
+	class="modal !bg-base-300/75"
 	open={!!cmdOpen || undefined}
 	aria-labelledby="modal-title"
 	aria-describedby="modal-content"
@@ -167,7 +166,7 @@
 					{:else}
 						<Command.Empty class="p-4 text-center font-bold">No results found.</Command.Empty>
 
-						<ScrollArea.Root class={twMerge("relative", resultCounts > 0 ? "h-96" : "h-0")}>
+						<ScrollArea.Root class="relative h-0 data-[results=true]:h-96" data-results={resultCounts > 0}>
 							<ScrollArea.Viewport class="h-full">
 								<ScrollArea.Content>
 									{#each results as section, i}
