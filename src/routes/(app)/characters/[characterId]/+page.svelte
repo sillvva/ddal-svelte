@@ -89,8 +89,6 @@
 			: logs.sort((a, b) => sorter(a.show_date, b.show_date))
 	);
 
-	const hasStoryAwards = $derived(results.some((l) => !!l.storyAwardsGained.length || !!l.storyAwardsLost.length));
-
 	function triggerImageModal() {
 		if (data.character.imageUrl) {
 			pushState("", {
@@ -363,9 +361,6 @@
 					<td class="print:p-2">Log Entry</td>
 					<td class="max-sm:hidden print:table-cell print:p-2">Advancement</td>
 					<td class="max-sm:hidden print:table-cell print:p-2">Treasure</td>
-					{#if hasStoryAwards}
-						<td class="min-w-48 max-lg:hidden print:!hidden">Story Awards</td>
-					{/if}
 					{#if myCharacter}
 						<td class="print:hidden"></td>
 					{/if}
@@ -489,18 +484,6 @@
 								</div>
 							{/if}
 						</td>
-						{#if hasStoryAwards}
-							<td class="align-top max-lg:hidden print:!hidden">
-								{#if log.storyAwardsGained.length > 0 || log.storyAwardsLost.length > 0}
-									<div>
-										<Items items={log.storyAwardsGained} {search} />
-										<div class="whitespace-pre-wrap text-sm line-through">
-											<SearchResults text={log.storyAwardsLost.map((mi) => mi.name).join(" | ")} {search} />
-										</div>
-									</div>
-								{/if}
-							</td>
-						{/if}
 						{#if myCharacter}
 							<td class="w-8 align-top print:hidden">
 								<div class="flex flex-col justify-center gap-2">
@@ -509,47 +492,46 @@
 							</td>
 						{/if}
 					</tr>
-					{#if hasDescription}
-						<tr
-							class="data-[desc=false]:hidden data-[desc=false]:print:table-row"
-							data-desc={global.app.log.descriptions}
-							use:transition={slugify(`notes-${log.id}`)}
-						>
-							<td colSpan={100} class="max-w-[calc(100vw_-_50px)] pt-0 text-sm print:p-2 print:text-xs">
-								{#if log.description?.trim()}
-									<h4 class="text-base font-semibold">Notes:</h4>
-									<Markdown content={log.description} />
-								{/if}
-								{#if log.magicItemsGained.length > 0 || log.magicItemsLost.length > 0}
-									<div class="mt-2 sm:hidden print:hidden">
-										<Items title="Magic Items:" items={log.magicItemsGained} {search} sort />
-										{#if log.magicItemsLost.length}
-											<p class="mt-2 whitespace-pre-wrap text-sm line-through">
-												<SearchResults text={log.magicItemsLost.map((mi) => mi.name).join(" | ")} {search} />
-											</p>
-										{/if}
-									</div>
-								{/if}
-								{#if log.storyAwardsGained.length > 0 || log.storyAwardsLost.length > 0}
-									{#each log.storyAwardsGained as mi}
-										<div class="mt-2 whitespace-pre-wrap text-sm">
-											<span class="pr-2 font-semibold print:block">
-												{mi.name}{mi.description ? ":" : ""}
-											</span>
-											{#if mi.description}
-												<Markdown content={mi.description || ""} />
-											{/if}
-										</div>
-									{/each}
-									{#if log.storyAwardsLost.length}
-										<p class="whitespace-pre-wrap text-sm line-through">
-											{log.storyAwardsLost.map((mi) => mi.name).join(" | ")}
+					<tr
+						class="hidden data-[desc=true]:table-row data-[mi=true]:max-sm:table-row"
+						data-desc={global.app.log.descriptions && hasDescription}
+						data-mi={log.magicItemsGained.length > 0 || log.magicItemsLost.length > 0}
+						use:transition={slugify(`notes-${log.id}`)}
+					>
+						<td colSpan={100} class="max-w-[calc(100vw_-_50px)] pt-0 text-sm print:p-2 print:text-xs">
+							{#if log.description?.trim()}
+								<h4 class="text-base font-semibold">Notes:</h4>
+								<Markdown content={log.description} />
+							{/if}
+							{#if log.magicItemsGained.length > 0 || log.magicItemsLost.length > 0}
+								<div class="mt-2 sm:hidden print:hidden">
+									<Items title="Magic Items:" items={log.magicItemsGained} {search} sort />
+									{#if log.magicItemsLost.length}
+										<p class="mt-2 whitespace-pre-wrap text-sm line-through">
+											<SearchResults text={log.magicItemsLost.map((mi) => mi.name).join(" | ")} {search} />
 										</p>
 									{/if}
+								</div>
+							{/if}
+							{#if log.storyAwardsGained.length > 0 || log.storyAwardsLost.length > 0}
+								{#each log.storyAwardsGained as mi}
+									<div class="mt-2 whitespace-pre-wrap text-sm">
+										<span class="pr-2 font-semibold dark:text-white print:block">
+											{mi.name}{mi.description ? ":" : ""}
+										</span>
+										{#if mi.description}
+											<Markdown content={mi.description || ""} />
+										{/if}
+									</div>
+								{/each}
+								{#if log.storyAwardsLost.length}
+									<p class="whitespace-pre-wrap text-sm line-through">
+										{log.storyAwardsLost.map((mi) => mi.name).join(" | ")}
+									</p>
 								{/if}
-							</td>
-						</tr>
-					{/if}
+							{/if}
+						</td>
+					</tr>
 				{/each}
 			</tbody>
 		</table>
