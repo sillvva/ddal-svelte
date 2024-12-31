@@ -15,7 +15,8 @@ export const appDefaults: App.Cookie = {
 		descriptions: false
 	},
 	dmLogs: {
-		sort: "asc"
+		sort: "asc",
+		descriptions: false
 	}
 };
 

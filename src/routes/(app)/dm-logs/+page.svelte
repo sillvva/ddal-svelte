@@ -109,8 +109,8 @@
 		<div class="flex gap-2">
 			<button
 				class="btn data-[desc=true]:btn-primary sm:btn-sm"
-				data-desc={global.app.log.descriptions}
-				onclick={() => createTransition(() => (global.app.log.descriptions = !global.app.log.descriptions))}
+				data-desc={global.app.dmLogs.descriptions}
+				onclick={() => createTransition(() => (global.app.dmLogs.descriptions = !global.app.dmLogs.descriptions))}
 				onkeypress={() => null}
 				aria-label="Toggle Notes"
 				tabindex="0"
@@ -286,7 +286,7 @@
 							<tr
 								class="hidden data-[desc=true]:table-row data-[deleting=true]:!hidden data-[mi=true]:max-sm:table-row"
 								data-deleting={deletingLog.includes(log.id)}
-								data-desc={global.app.log.descriptions && hasDescription}
+								data-desc={global.app.dmLogs.descriptions && hasDescription}
 								data-mi={log.magicItemsGained.length > 0 || log.magicItemsLost.length > 0}
 							>
 								<td colSpan={3} class="pt-0">

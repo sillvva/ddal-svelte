@@ -80,6 +80,7 @@ declare global {
 			};
 			dmLogs: {
 				sort: "asc" | "desc";
+				descriptions: boolean;
 			};
 		}
 	}
