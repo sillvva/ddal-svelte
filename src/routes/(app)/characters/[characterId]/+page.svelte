@@ -404,6 +404,7 @@
 									{/if}
 								</p>
 							{/if}
+							<!-- Mobile Details -->
 							<div class="table-cell font-normal sm:hidden print:hidden">
 								{#if log.type === "game"}
 									{#if log.experience > 0}
@@ -440,6 +441,7 @@
 								{/if}
 							</div>
 						</td>
+						<!-- Advancement -->
 						<td class="align-top max-sm:hidden print:table-cell print:p-2">
 							{#if log.experience > 0}
 								<p>
@@ -463,6 +465,7 @@
 								</p>
 							{/if}
 						</td>
+						<!-- Treasure -->
 						<td class="align-top max-sm:hidden print:table-cell print:p-2">
 							{#if log.tcp !== 0}
 								<p>
@@ -485,6 +488,7 @@
 								</div>
 							{/if}
 						</td>
+						<!-- Delete -->
 						{#if myCharacter}
 							<td class="w-8 align-top print:hidden">
 								<div class="flex flex-col justify-center gap-2">
@@ -493,6 +497,7 @@
 							</td>
 						{/if}
 					</tr>
+					<!-- Notes -->
 					<tr
 						class="hidden data-[desc=true]:table-row data-[mi=true]:max-sm:table-row"
 						data-desc={global.app.log.descriptions && hasDescription}
