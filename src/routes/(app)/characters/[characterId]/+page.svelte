@@ -189,7 +189,7 @@
 						target="_blank"
 						rel="noreferrer noopener"
 						class="mask mask-squircle mx-auto h-20 bg-primary"
-						use:transition={slugify("image-" + data.character.id)}
+						use:transition={"image-" + data.character.id}
 						onclick={(e) => {
 							e.preventDefault();
 							triggerImageModal();
@@ -240,7 +240,7 @@
 							target="_blank"
 							rel="noreferrer noopener"
 							class="mask mask-squircle mx-auto h-52 w-full bg-primary"
-							use:transition={slugify("image-" + data.character.id)}
+							use:transition={"image-" + data.character.id}
 							onclick={(e) => {
 								e.preventDefault();
 								triggerImageModal();
@@ -503,7 +503,7 @@
 						data-deleting={deletingLog.includes(log.id)}
 						data-desc={global.app.log.descriptions && hasDescription}
 						data-mi={log.magicItemsGained.length > 0 || log.magicItemsLost.length > 0}
-						use:transition={slugify(`notes-${log.id}`)}
+						use:transition={`notes-${log.id}`}
 					>
 						<td colSpan={100} class="max-w-[calc(100vw_-_50px)] pt-0 text-sm print:p-2 print:text-xs">
 							{#if log.description?.trim()}
