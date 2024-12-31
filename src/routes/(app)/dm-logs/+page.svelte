@@ -4,11 +4,13 @@
 	import BreadCrumbs from "$lib/components/BreadCrumbs.svelte";
 	import Dropdown from "$lib/components/Dropdown.svelte";
 	import Items from "$lib/components/Items.svelte";
+	import Markdown from "$lib/components/Markdown.svelte";
 	import Search from "$lib/components/Search.svelte";
 	import SearchResults from "$lib/components/SearchResults.svelte";
 	import DeleteLog from "$lib/components/forms/DeleteLog.svelte";
 	import { excludedSearchWords } from "$lib/constants";
 	import { global } from "$lib/stores.svelte.js";
+	import { createTransition } from "$lib/util.js";
 	import { sorter } from "@sillvva/utils";
 	import { download, hotkey } from "@svelteuidev/composables";
 	import MiniSearch from "minisearch";
@@ -97,23 +99,40 @@
 	</div>
 
 	<div class="flex gap-2 sm:justify-between">
-		<div class="flex w-full gap-2 sm:w-96">
+		<div class="flex gap-2 sm:w-96">
 			<a href="/dm-logs/new" class="btn btn-primary btn-sm max-sm:hidden" aria-label="New Log">New Log</a>
 			<Search bind:value={search} placeholder="Search by name, race, class, items, etc." />
 			<a href="/dm-logs/new" class="btn btn-primary inline-flex sm:hidden" aria-label="New Log">
 				<span class="iconify inline size-6 mdi--plus"></span>
 			</a>
 		</div>
-		<button
-			class="btn btn-primary sm:btn-sm"
-			onclick={() => (global.app.dmLogs.sort = global.app.dmLogs.sort === "asc" ? "desc" : "asc")}
-			aria-label="Sort"
-		>
-			<span
-				class="iconify size-6 data-[sort=asc]:mdi--sort-calendar-ascending data-[sort=desc]:mdi--sort-calendar-descending"
-				data-sort={global.app.dmLogs.sort}
-			></span>
-		</button>
+		<div class="flex gap-2">
+			<button
+				class="btn data-[desc=true]:btn-primary sm:btn-sm"
+				data-desc={global.app.log.descriptions}
+				onclick={() => createTransition(() => (global.app.log.descriptions = !global.app.log.descriptions))}
+				onkeypress={() => null}
+				aria-label="Toggle Notes"
+				tabindex="0"
+			>
+				{#if global.app.log.descriptions}
+					<span class="iconify size-6 mdi--eye"></span>
+				{:else}
+					<span class="iconify size-6 mdi--eye-off"></span>
+				{/if}
+				<span class="max-sm:hidden">Notes</span>
+			</button>
+			<button
+				class="btn btn-primary sm:btn-sm"
+				onclick={() => (global.app.dmLogs.sort = global.app.dmLogs.sort === "asc" ? "desc" : "asc")}
+				aria-label="Sort"
+			>
+				<span
+					class="iconify size-6 data-[sort=asc]:mdi--sort-calendar-ascending data-[sort=desc]:mdi--sort-calendar-descending"
+					data-sort={global.app.dmLogs.sort}
+				></span>
+			</button>
+		</div>
 	</div>
 
 	<section>
@@ -125,9 +144,6 @@
 						<th class="max-sm:hidden print:table-cell">Title</th>
 						<th class="max-sm:hidden print:table-cell">Advancement</th>
 						<th class="max-sm:hidden print:table-cell">Treasure</th>
-						{#if hasStoryAwards}
-							<th class="min-w-48 max-lg:hidden print:table-cell">Story Awards</th>
-						{/if}
 						<th class="print:hidden"></th>
 					</tr>
 				</thead>
@@ -143,6 +159,8 @@
 						</tr>
 					{:else}
 						{#each results as log}
+							{@const hasDescription =
+								!!log.description?.trim() || log.storyAwardsGained.length > 0 || log.storyAwardsLost.length > 0}
 							<tr
 								class="data-[deleting=true]:hidden [&>td]:border-b-0 [&>td]:border-t [&>td]:border-t-base-300"
 								data-deleting={deletingLog.includes(log.id)}
@@ -166,6 +184,7 @@
 											</a>
 										</p>
 									{/if}
+									<!-- Mobile Details -->
 									<div class="table-cell font-normal sm:hidden print:hidden">
 										{#if log.type === "game"}
 											{#if log.experience > 0}
@@ -205,11 +224,9 @@
 												{log.gold.toLocaleString()}
 											</p>
 										{/if}
-										<div>
-											<Items title="Magic Items" items={log.magicItemsGained} {search} sort />
-										</div>
 									</div>
 								</td>
+								<!-- Advancement -->
 								<td class="hidden align-top sm:table-cell print:table-cell">
 									{#if log.type === "game"}
 										{#if log.experience > 0}
@@ -238,6 +255,7 @@
 										{/if}
 									{/if}
 								</td>
+								<!-- Treasure -->
 								<td class="hidden align-top sm:table-cell print:table-cell">
 									{#if log.tcp !== 0}
 										<p>
@@ -257,44 +275,54 @@
 										</div>
 									{/if}
 								</td>
-								{#if hasStoryAwards}
-									<td class="hidden align-top md:table-cell print:!hidden">
-										{#if log.storyAwardsGained.length > 0}
-											<div>
-												<Items items={log.storyAwardsGained} {search} />
-											</div>
-										{/if}
-									</td>
-								{/if}
+								<!-- Delete -->
 								<td class="w-8 align-top print:hidden">
 									<div class="flex flex-col gap-2">
 										<DeleteLog {log} bind:deletingLog />
 									</div>
 								</td>
 							</tr>
-							{#if log.description?.trim() || log.storyAwardsGained.length > 0 || log.storyAwardsLost.length > 0}
-								<tr class="hidden data-[deleting=true]:hidden print:table-row" data-deleting={deletingLog.includes(log.id)}>
-									<td colSpan={3} class="pt-0">
-										<p class="text-sm">
-											<span class="font-semibold">Notes:</span>
-											{log.description}
-										</p>
-										{#if log.storyAwardsGained.length > 0}
-											<div>
-												{#each log.storyAwardsLost as mi}
-													<p class="text-sm">
-														<span class="font-semibold">
-															{mi.name}
-															{mi.description ? ":" : ""}
-														</span>
-														{mi.description}
-													</p>
-												{/each}
+							<!-- Notes -->
+							<tr
+								class="hidden data-[desc=true]:table-row data-[deleting=true]:!hidden data-[mi=true]:max-sm:table-row"
+								data-deleting={deletingLog.includes(log.id)}
+								data-desc={global.app.log.descriptions && hasDescription}
+								data-mi={log.magicItemsGained.length > 0 || log.magicItemsLost.length > 0}
+							>
+								<td colSpan={3} class="pt-0">
+									{#if log.description?.trim()}
+										<h4 class="text-base font-semibold">Notes:</h4>
+										<Markdown content={log.description} />
+									{/if}
+									{#if log.magicItemsGained.length > 0 || log.magicItemsLost.length > 0}
+										<div class="mt-2 sm:hidden print:hidden">
+											<Items title="Magic Items:" items={log.magicItemsGained} {search} sort />
+											{#if log.magicItemsLost.length}
+												<p class="mt-2 whitespace-pre-wrap text-sm line-through">
+													<SearchResults text={log.magicItemsLost.map((mi) => mi.name).join(" | ")} {search} />
+												</p>
+											{/if}
+										</div>
+									{/if}
+									{#if log.storyAwardsGained.length > 0 || log.storyAwardsLost.length > 0}
+										{#each log.storyAwardsGained as mi}
+											<div class="mt-2 whitespace-pre-wrap text-sm">
+												<span class="pr-2 font-semibold dark:text-white print:block">
+													{mi.name}{mi.description ? ":" : ""}
+												</span>
+												{#if mi.description}
+													<Markdown content={mi.description || ""} />
+												{/if}
 											</div>
+										{/each}
+										{#if log.storyAwardsLost.length}
+											<p class="whitespace-pre-wrap text-sm line-through">
+												{log.storyAwardsLost.map((mi) => mi.name).join(" | ")}
+											</p>
 										{/if}
-									</td>
-								</tr>
-							{/if}
+									{/if}
+								</td>
+							</tr>
 						{/each}
 					{/if}
 				</tbody>
