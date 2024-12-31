@@ -499,7 +499,8 @@
 					</tr>
 					<!-- Notes -->
 					<tr
-						class="hidden data-[desc=true]:table-row data-[mi=true]:max-sm:table-row"
+						class="hidden data-[desc=true]:table-row data-[deleting=true]:!hidden data-[mi=true]:max-sm:table-row"
+						data-deleting={deletingLog.includes(log.id)}
 						data-desc={global.app.log.descriptions && hasDescription}
 						data-mi={log.magicItemsGained.length > 0 || log.magicItemsLost.length > 0}
 						use:transition={slugify(`notes-${log.id}`)}
