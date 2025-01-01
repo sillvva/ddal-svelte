@@ -4,7 +4,6 @@
 	import { PROVIDERS } from "$lib/constants";
 	import { successToast } from "$lib/factories.svelte";
 	import { global } from "$lib/stores.svelte";
-	import { setCookie } from "$server/cookie";
 	import { signIn, signOut } from "@auth/sveltekit/client";
 	import { twMerge } from "tailwind-merge";
 	import Passkeys from "./Passkeys.svelte";
@@ -30,10 +29,6 @@
 			.join("")
 			.slice(0, 2) || ""
 	);
-
-	$effect(() => {
-		setCookie("app", global.app);
-	});
 </script>
 
 <aside
