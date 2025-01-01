@@ -22,7 +22,8 @@ export type DictOrArray = Record<PropertyKey, unknown> | Array<unknown>;
  * Functions
  */
 
-export async function createTransition(action: ViewTransitionCallback) {
+export async function createTransition(action: ViewTransitionCallback, after?: () => void | Promise<void>, afterDelay = 0) {
+	if (after) wait(afterDelay).then(after);
 	if (!document.startViewTransition) {
 		await action();
 		return;
