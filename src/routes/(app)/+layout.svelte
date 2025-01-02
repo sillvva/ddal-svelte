@@ -91,7 +91,7 @@
 			<div class="flex-1 max-sm:hidden">&nbsp;</div>
 			<div class="flex gap-4">
 				{#if data.session?.user}
-					<CommandTray isMac={data.isMac} />
+					<CommandTray />
 					<div class="hidden items-center print:flex">
 						{data.user?.name}
 					</div>
