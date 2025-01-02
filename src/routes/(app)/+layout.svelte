@@ -74,7 +74,6 @@
 	>
 		<nav class="container relative z-10 mx-auto flex max-w-5xl gap-2 p-4">
 			<Drawer />
-			<Settings bind:open={settingsOpen} />
 			<div class="inline max-w-10 shrink-0 flex-grow-[1] sm:hidden">&nbsp;</div>
 			<a
 				href={data.session?.user ? "/characters" : "/"}
@@ -91,24 +90,12 @@
 			{/if}
 			<div class="flex-1 max-sm:hidden">&nbsp;</div>
 			<div class="flex gap-4">
-				<CommandTray isMac={data.isMac} />
-				<div class="hidden items-center print:flex">
-					{data.user?.name}
-				</div>
 				{#if data.session?.user}
-					<summary tabindex="0" class="flex h-full min-w-fit cursor-pointer items-center" onclick={() => (settingsOpen = true)}>
-						<div class="avatar">
-							<div class="relative w-9 overflow-hidden rounded-full ring ring-primary ring-offset-2 ring-offset-base-100 lg:w-11">
-								<img
-									src={data.session?.user?.image || ""}
-									alt={data.session?.user?.name}
-									width={48}
-									height={48}
-									class="rounded-full object-cover object-center"
-								/>
-							</div>
-						</div>
-					</summary>
+					<CommandTray isMac={data.isMac} />
+					<div class="hidden items-center print:flex">
+						{data.user?.name}
+					</div>
+					<Settings />
 				{:else}
 					<a
 						href={`/?redirect=${encodeURIComponent(`${page.url.pathname}${page.url.search}`)}`}

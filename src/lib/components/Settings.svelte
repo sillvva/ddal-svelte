@@ -9,11 +9,7 @@
 	import Passkeys from "./Passkeys.svelte";
 	import ThemeSwitcher from "./ThemeSwitcher.svelte";
 
-	interface Props {
-		open?: boolean;
-	}
-
-	let { open = $bindable(false) }: Props = $props();
+	let open = $state(false);
 
 	const user = $derived(page.data.user);
 	const authProviders = $derived(
@@ -30,6 +26,22 @@
 			.slice(0, 2) || ""
 	);
 </script>
+
+<div class="avatar flex h-full min-w-fit items-center">
+	<button
+		class="relative w-9 cursor-pointer overflow-hidden rounded-full ring ring-primary ring-offset-2 ring-offset-base-100 lg:w-11"
+		tabindex="0"
+		onclick={() => (open = true)}
+	>
+		<img
+			src={page.data.session?.user?.image || ""}
+			alt={page.data.session?.user?.name}
+			width={48}
+			height={48}
+			class="rounded-full object-cover object-center"
+		/>
+	</button>
+</div>
 
 <aside
 	id="settings"
