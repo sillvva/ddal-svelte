@@ -382,7 +382,6 @@
 								<a
 									href={log.isDmLog ? `/dm-logs/${log.id}` : `/characters/${log.characterId}/log/${log.id}`}
 									class="whitespace-pre-wrap text-left font-semibold text-secondary"
-									aria-label="Edit Log"
 								>
 									<SearchResults text={log.name} {search}></SearchResults>
 								</a>
