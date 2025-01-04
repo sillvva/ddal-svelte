@@ -111,3 +111,5 @@ export const themes = [
 
 export type Themes = (typeof themes)[number]["value"];
 export type ThemeGroups = (typeof themeGroups)[number];
+
+export const PlaceholderName = "Placeholder";

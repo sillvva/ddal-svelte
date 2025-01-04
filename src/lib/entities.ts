@@ -2,7 +2,9 @@ import type { CharacterData } from "$server/data/characters";
 import type { LogData } from "$server/data/logs";
 import type { Character, DungeonMaster, Log, MagicItem, StoryAward, User } from "$server/db/schema";
 import { sorter } from "@sillvva/utils";
+import { PlaceholderName } from "./constants";
 import type { CharacterId, DungeonMasterId, LogId, LogSchema, UserId } from "./schemas";
+import type { Prettify } from "./util";
 
 export function getMagicItems(
 	character: CharacterData,
@@ -197,12 +199,14 @@ export function defaultLogData(userId: UserId, characterId = null as CharacterId
 }
 
 export function parseLog(
-	log: Omit<LogData & { character?: (Character & { user?: Pick<User, "id" | "name"> }) | null }, "type"> & { type: string }
+	log: Omit<LogData & { character?: Prettify<Character & { user?: Pick<User, "id" | "name"> }> | null }, "type"> & {
+		type: string;
+	}
 ) {
 	return {
 		...log,
 		type: log.type === "nongame" ? ("nongame" as const) : ("game" as const),
-		character: log.character?.name === "Placeholder" ? null : log.character
+		character: log.character && log.character.name !== PlaceholderName ? log.character : undefined
 	};
 }
 
