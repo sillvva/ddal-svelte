@@ -28,13 +28,12 @@
 	const isConsumable = (name: string) =>
 		name.trim().match(/^(\d+x? )?((Potion|Scroll|Spell Scroll|Charm|Elixir)s? of)|Alchemist('?s)? Fire|Antitoxin/);
 	const itemQty = (item: { name: string }) => parseInt(item.name.match(/^(\d+)x? /)?.[1] || "1");
-	const clearQty = (name: string) => name.replace(/^\d+x? ?/, "");
 	const fixName = (name: string, qty = 1) => {
 		let val = name
 			.trim()
+			.replace(/^\d+x? ?/, "")
 			.replace(/^(Potion|Scroll|Spell Scroll)s/, "$1")
-			.replace("Spell Scroll", "Scroll")
-			.replace(/^(\d+)x? /, "");
+			.replace("Spell Scroll", "Scroll");
 
 		if (qty > 1) {
 			if (isConsumable(name)) val = val.replace(/^(Potion|Scroll|Spell Scroll)( .+)$/, "$1s$2");
@@ -50,7 +49,7 @@
 		return $state.snapshot(items).reduce(
 			(acc, item, index) => {
 				if (index === 0) itemsMap.clear();
-				const name = fixName(clearQty(item.name));
+				const name = fixName(item.name);
 				const qty = itemQty(item);
 				const desc = item.description?.trim();
 				const key = `${name}_${desc}`;
