@@ -61,7 +61,7 @@
 						const { score = character.name, match = {} } = resultsMap.get(character.id) || {};
 						return {
 							...character,
-							score: score,
+							score,
 							match: Object.values(match)
 								.map((value) => value[0])
 								.filter(isDefined)

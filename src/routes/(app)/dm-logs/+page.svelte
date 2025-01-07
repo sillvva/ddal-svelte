@@ -10,7 +10,7 @@
 	import DeleteLog from "$lib/components/forms/DeleteLog.svelte";
 	import { excludedSearchWords } from "$lib/constants";
 	import { global } from "$lib/stores.svelte.js";
-	import { createTransition } from "$lib/util.js";
+	import { createTransition, isDefined } from "$lib/util.js";
 	import { sorter } from "@sillvva/utils";
 	import { download, hotkey } from "@svelteuidev/composables";
 	import MiniSearch from "minisearch";
@@ -40,7 +40,7 @@
 			: []
 	);
 
-	const dmLogSearch = new MiniSearch({
+	const minisearch = new MiniSearch({
 		fields: ["logName", "characterName", "magicItems", "storyAwards", "logId"],
 		idField: "logId",
 		processTerm: (term) => (excludedSearchWords.has(term) ? null : term.toLowerCase()),
@@ -52,22 +52,32 @@
 	});
 
 	$effect(() => {
-		dmLogSearch.removeAll();
-		dmLogSearch.addAll(indexed);
+		minisearch.removeAll();
+		minisearch.addAll(indexed);
 	});
-	const msResults = $derived(dmLogSearch.search(search));
+
+	const msResults = $derived.by(() => {
+		if (!minisearch.termCount) minisearch.addAll(indexed);
+		return minisearch.search(search);
+	});
+	const resultsMap = $derived(new Map(msResults.map((result) => [result.id, result])));
 	const results = $derived(
 		indexed.length && search.length > 1
 			? logs
-					.filter((log) => msResults.find((result) => result.id === log.id))
-					.map((log) => ({
-						...log,
-						score: msResults.find((result) => result.id === log.id)?.score || 0 - log.date.getTime()
-					}))
+					.filter((log) => resultsMap.has(log.id))
+					.map((log) => {
+						const { score = 0 - log.date.getTime(), match = {} } = resultsMap.get(log.id) || {};
+						return {
+							...log,
+							score,
+							match: Object.values(match)
+								.map((value) => value[0])
+								.filter(isDefined)
+						};
+					})
 					.sort((a, b) => (global.app.dmLogs.sort === "asc" ? sorter(a.date, b.date) : sorter(b.date, a.date)))
 			: logs.sort((a, b) => (global.app.dmLogs.sort === "asc" ? sorter(a.date, b.date) : sorter(b.date, a.date)))
 	);
-	const hasStoryAwards = $derived(results.find((log) => log.storyAwardsGained.length));
 </script>
 
 <div
