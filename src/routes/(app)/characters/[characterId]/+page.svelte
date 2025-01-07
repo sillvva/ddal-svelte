@@ -25,14 +25,15 @@
 	let deletingLog = $state<string[]>([]);
 	let search = $state(page.url.searchParams.get("s") || "");
 
-	const logSearch = new MiniSearch({
+	const minisearch = new MiniSearch({
 		fields: ["logName", "magicItems", "storyAwards", "logId"],
 		idField: "logId",
 		processTerm: (term) => (excludedSearchWords.has(term) ? null : term.toLowerCase()),
 		tokenize: (term) => term.split(/[^A-Z0-9\.']/gi),
 		searchOptions: {
 			prefix: true,
-			combineWith: "AND"
+			combineWith: "AND",
+			boost: { logName: 2 }
 		}
 	});
 
@@ -69,22 +70,26 @@
 	);
 
 	$effect(() => {
-		logSearch.removeAll();
-		logSearch.addAll(indexed);
+		minisearch.removeAll();
+		minisearch.addAll(indexed);
 	});
 
 	const msResults = $derived.by(() => {
-		if (!logSearch.termCount) logSearch.addAll(indexed);
-		return logSearch.search(search);
+		if (!minisearch.termCount) minisearch.addAll(indexed);
+		return minisearch.search(search);
 	});
+	const resultsMap = $derived(new Map(msResults.map((result) => [result.id, result])));
 	const results = $derived(
 		indexed.length && search.length > 1
 			? logs
 					.filter((log) => msResults.find((result) => result.id === log.id))
-					.map((log) => ({
-						...log,
-						score: msResults.find((result) => result.id === log.id)?.score || 0 - log.date.getTime()
-					}))
+					.map((log) => {
+						const { score = 0 - log.date.getTime() } = resultsMap.get(log.id) || {};
+						return {
+							...log,
+							score: Math.round(score * 100) / 100
+						};
+					})
 					.sort((a, b) => sorter(a.show_date, b.show_date))
 			: logs.sort((a, b) => sorter(a.show_date, b.show_date))
 	);

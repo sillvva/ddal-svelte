@@ -24,7 +24,8 @@
 		tokenize: (term) => term.split(/[^A-Z0-9\.']/gi),
 		searchOptions: {
 			prefix: true,
-			combineWith: "AND"
+			combineWith: "AND",
+			boost: { characterName: 2 }
 		}
 	});
 
@@ -58,16 +59,16 @@
 			? data.characters
 					.filter((character) => resultsMap.has(character.id))
 					.map((character) => {
-						const { score = character.name, match = {} } = resultsMap.get(character.id) || {};
+						const { score = 0, match = {} } = resultsMap.get(character.id) || {};
 						return {
 							...character,
-							score,
+							score: Math.round(score * 100) / 100,
 							match: Object.values(match)
 								.map((value) => value[0])
 								.filter(isDefined)
 						};
 					})
-					.sort((a, b) => sorter(a.total_level, b.total_level) || sorter(a.name, b.name))
+					.sort((a, b) => sorter(b.score, a.score) || sorter(a.total_level, b.total_level) || sorter(a.name, b.name))
 			: data.characters
 					.sort((a, b) => sorter(a.total_level, b.total_level) || sorter(a.name, b.name))
 					.map((character) => ({ ...character, score: 0, match: [] }))
@@ -242,6 +243,11 @@
 									<div class="mb-2">
 										<p class="font-semibold">Magic Items:</p>
 										<SearchResults text={character.magic_items.map((item) => item.name)} {search} />
+									</div>
+								{/if}
+								{#if search.length > 1}
+									<div class="mb-2">
+										Search Score: {character.score}
 									</div>
 								{/if}
 							</div>
