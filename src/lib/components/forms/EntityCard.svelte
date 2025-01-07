@@ -1,5 +1,5 @@
 <script lang="ts">
-	import type { ItemId, LogSchema } from "$lib/schemas";
+	import type { ItemSchema, LogSchema } from "$lib/schemas";
 	import { writable } from "svelte/store";
 	import { formFieldProxy, type SuperForm } from "sveltekit-superforms";
 	import Control from "./Control.svelte";
@@ -14,11 +14,11 @@
 	} & (
 		| {
 				type: "add";
-				data: [];
+				data?: [];
 		  }
 		| {
 				type: "drop";
-				data: { id: ItemId; name: string; description: string | null }[];
+				data: ItemSchema[];
 		  }
 	);
 

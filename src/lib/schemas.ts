@@ -71,10 +71,11 @@ export const dungeonMasterSchema = v.object({
 export type ItemId = v.InferOutput<typeof itemIdSchema>;
 export const itemIdSchema = brandedId("ItemID");
 
+export type ItemSchema = v.InferOutput<typeof itemSchema>;
 const itemSchema = v.object({
 	id: v.optional(itemIdSchema, ""),
 	name: requiredString,
-	description: v.optional(maxTextSize, "")
+	description: optNullable(maxTextSize)
 });
 
 export type LogId = v.InferOutput<typeof logIdSchema>;
