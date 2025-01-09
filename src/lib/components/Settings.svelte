@@ -27,6 +27,9 @@
 	);
 </script>
 
+<div class="hidden items-center print:flex">
+	{page.data.user?.name}
+</div>
 <div class="avatar flex h-full min-w-fit items-center">
 	<button
 		class="relative w-9 cursor-pointer overflow-hidden rounded-full ring ring-primary ring-offset-2 ring-offset-base-100 lg:w-11"

@@ -12,8 +12,6 @@
 
 	let { data, children } = $props();
 
-	let settingsOpen = $state(false);
-
 	afterNavigate(() => {
 		global.pageLoader = false;
 	});
@@ -92,9 +90,6 @@
 			<div class="flex gap-4">
 				{#if data.session?.user}
 					<CommandTray />
-					<div class="hidden items-center print:flex">
-						{data.user?.name}
-					</div>
 					<Settings />
 				{:else}
 					<a
