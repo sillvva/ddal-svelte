@@ -4,35 +4,34 @@
 	import { createTransition } from "$lib/util";
 	import { MediaQuery } from "svelte/reactivity";
 
-	let value = $state(global.app.settings.theme);
-	$effect(() => {
-		document.documentElement.dataset.switcher = value;
-		createTransition(
-			() => {
-				global.app.settings.theme = value;
-			},
-			() => {
-				delete document.documentElement.dataset.switcher;
-			},
-			800
-		);
-	});
-
-	$effect(() => {
-		const selected = themes.find((t) => t.value === value);
+	let theme = $state(global.app.settings.theme);
+	const mq = new MediaQuery("(prefers-color-scheme: dark)");
+	const mode = $derived.by(() => {
+		const selected = themes.find((t) => t.value === theme);
 		if (selected) {
 			if (selected.value === "system") {
-				const mql = window.matchMedia("(prefers-color-scheme: dark)");
-				global.app.settings.mode = mql.matches ? "dark" : "light";
+				return mq.current ? "dark" : "light";
 			} else {
-				global.app.settings.mode = selected.group;
+				return selected.group;
 			}
 		}
+		return global.app.settings.mode;
 	});
 
-	const mq = new MediaQuery("(prefers-color-scheme: dark)");
-	$effect.pre(() => {
-		if (global.app.settings.theme == "system") global.app.settings.mode = mq.current ? "dark" : "light";
+	$effect(() => {
+		if (theme !== global.app.settings.theme || mode !== global.app.settings.mode) {
+			document.documentElement.dataset.switcher = theme;
+			createTransition(
+				() => {
+					global.app.settings.theme = theme;
+					global.app.settings.mode = mode;
+				},
+				() => {
+					delete document.documentElement.dataset.switcher;
+				},
+				800
+			);
+		}
 	});
 
 	$effect.pre(() => {
@@ -45,7 +44,7 @@
 	});
 </script>
 
-<select class="select select-bordered select-sm leading-4" bind:value>
+<select class="select select-bordered select-sm leading-4" bind:value={theme}>
 	<option value="system" selected={global.app.settings.theme === "system"}>System</option>
 	{#each themeGroups as group}
 		<hr />
