@@ -25,6 +25,10 @@
 				() => {
 					global.app.settings.theme = theme;
 					global.app.settings.mode = mode;
+					const current = theme === "system" && mode === "dark" ? "black" : theme;
+					const opposite = mode === "dark" ? "light" : "dark";
+					document.documentElement.classList.replace(opposite, mode);
+					document.documentElement.dataset.theme = current;
 				},
 				() => {
 					delete document.documentElement.dataset.switcher;
@@ -32,15 +36,6 @@
 				800
 			);
 		}
-	});
-
-	$effect.pre(() => {
-		const mode = global.app.settings.mode;
-		const theme = global.app.settings.theme;
-		const current = theme === "system" && mode === "dark" ? "black" : theme;
-		const opposite = mode === "dark" ? "light" : "dark";
-		document.documentElement.classList.replace(opposite, mode);
-		document.documentElement.dataset.theme = current;
 	});
 </script>
 
