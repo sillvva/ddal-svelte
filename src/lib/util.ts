@@ -23,12 +23,9 @@ export type DictOrArray = Record<PropertyKey, unknown> | Array<unknown>;
  */
 
 export async function createTransition(action: ViewTransitionCallback, after?: () => void | Promise<void>, afterDelay = 0) {
+	if (!document.startViewTransition) action();
+	else document.startViewTransition(action);
 	if (after) wait(afterDelay).then(after);
-	if (!document.startViewTransition) {
-		await action();
-		return;
-	}
-	return document.startViewTransition(async () => await action());
 }
 
 export function isDefined<T>(value?: T | null): value is T {
