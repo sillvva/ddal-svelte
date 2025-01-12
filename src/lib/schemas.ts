@@ -16,7 +16,7 @@ const maxTextSize = v.pipe(string, v.maxLength(5000));
 const maxStringSize = v.pipe(string, v.maxLength(255));
 const integer = v.pipe(v.number(), v.integer());
 
-const urlSchema = v.pipe(string, v.url(), v.maxLength(1000));
+const urlSchema = v.pipe(string, v.url(), v.maxLength(500));
 const optionalURL = v.optional(v.fallback(urlSchema, ""), "");
 
 export type EnvPrivate = v.InferInput<typeof envPrivateSchema>;
@@ -71,10 +71,11 @@ export const dungeonMasterSchema = v.object({
 export type ItemId = v.InferOutput<typeof itemIdSchema>;
 export const itemIdSchema = brandedId("ItemID");
 
+export type ItemSchema = v.InferOutput<typeof itemSchema>;
 const itemSchema = v.object({
 	id: v.optional(itemIdSchema, ""),
 	name: requiredString,
-	description: v.optional(maxTextSize, "")
+	description: optNullable(maxTextSize)
 });
 
 export type LogId = v.InferOutput<typeof logIdSchema>;

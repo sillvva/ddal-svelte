@@ -8,7 +8,7 @@
 	import { excludedSearchWords } from "$lib/constants.js";
 	import { getTransition, global } from "$lib/stores.svelte.js";
 	import { createTransition, isDefined } from "$lib/util";
-	import { slugify, sorter } from "@sillvva/utils";
+	import { sorter } from "@sillvva/utils";
 	import { download, hotkey } from "@svelteuidev/composables";
 	import MiniSearch from "minisearch";
 
@@ -24,7 +24,8 @@
 		tokenize: (term) => term.split(/[^A-Z0-9\.']/gi),
 		searchOptions: {
 			prefix: true,
-			combineWith: "AND"
+			combineWith: "AND",
+			boost: { characterName: 2 }
 		}
 	});
 
@@ -58,16 +59,16 @@
 			? data.characters
 					.filter((character) => resultsMap.has(character.id))
 					.map((character) => {
-						const { score = character.name, match = {} } = resultsMap.get(character.id) || {};
+						const { score = 0, match = {} } = resultsMap.get(character.id) || {};
 						return {
 							...character,
-							score: score,
+							score: Math.round(score * 100) / 100,
 							match: Object.values(match)
 								.map((value) => value[0])
 								.filter(isDefined)
 						};
 					})
-					.sort((a, b) => sorter(a.total_level, b.total_level) || sorter(a.name, b.name))
+					.sort((a, b) => sorter(b.score, a.score) || sorter(a.total_level, b.total_level) || sorter(a.name, b.name))
 			: data.characters
 					.sort((a, b) => sorter(a.total_level, b.total_level) || sorter(a.name, b.name))
 					.map((character) => ({ ...character, score: 0, match: [] }))
@@ -203,7 +204,7 @@
 							{#if !data.mobile}
 								<div class="pr-0 transition-colors max-sm:hidden sm:pr-2">
 									<div class="avatar">
-										<div class="mask mask-squircle size-12 bg-primary" use:transition={slugify("image-" + character.id)}>
+										<div class="mask mask-squircle size-12 bg-primary" use:transition={"image-" + character.id}>
 											{#if character.imageUrl}
 												{#key character.imageUrl}
 													<img
@@ -224,18 +225,18 @@
 							{/if}
 							<div>
 								<div class="whitespace-pre-wrap text-base font-bold text-black dark:text-white sm:text-xl">
-									<span use:transition={slugify("name-" + character.id)}>
+									<span use:transition={"name-" + character.id}>
 										<SearchResults text={character.name} {search} />
 									</span>
 								</div>
-								<div class="whitespace-pre-wrap text-xs sm:text-sm" use:transition={slugify("details-" + character.id)}>
+								<div class="whitespace-pre-wrap text-xs sm:text-sm" use:transition={"details-" + character.id}>
 									<span class="inline pr-1 sm:hidden">Level {character.total_level}</span><SearchResults
 										text={character.race}
 										{search}
 									/>
 									<SearchResults text={character.class} {search} />
 								</div>
-								<div class="mb-2 block text-xs sm:hidden" use:transition={slugify("campaign-" + character.id)}>
+								<div class="mb-2 block text-xs sm:hidden" use:transition={"campaign-" + character.id}>
 									<SearchResults text={character.campaign} {search} />
 								</div>
 								{#if (character.match.includes("magicItems") || global.app.characters.magicItems) && character.magic_items.length}
@@ -244,19 +245,24 @@
 										<SearchResults text={character.magic_items.map((item) => item.name)} {search} />
 									</div>
 								{/if}
+								{#if search.length > 1}
+									<div class="mb-2">
+										Search Score: {character.score}
+									</div>
+								{/if}
 							</div>
 							<div class="hidden transition-colors sm:flex">
-								<span use:transition={slugify("campaign-" + character.id)}>
+								<span use:transition={"campaign-" + character.id}>
 									<SearchResults text={character.campaign} {search} />
 								</span>
 							</div>
 							<div class="hidden justify-center transition-colors sm:flex">
-								<span use:transition={slugify("tier-" + character.id)}>
+								<span use:transition={"tier-" + character.id}>
 									{character.tier}
 								</span>
 							</div>
 							<div class="hidden justify-center transition-colors sm:flex">
-								<span use:transition={slugify("level-" + character.id)}>
+								<span use:transition={"level-" + character.id}>
 									{character.total_level}
 								</span>
 							</div>
@@ -268,7 +274,7 @@
 			{#each [1, 2, 3, 4] as tier}
 				{#if results.filter((c) => c.tier == tier).length}
 					<h1
-						class="pb-2 font-vecna text-3xl font-bold pt-6 data-[display=list]:hidden data-[tier=1]:pt-0 dark:text-white data-[display=grid]:max-xs:hidden"
+						class="pb-2 pt-6 font-vecna text-3xl font-bold data-[display=list]:hidden data-[tier=1]:pt-0 dark:text-white data-[display=grid]:max-xs:hidden"
 						data-display={global.app.characters.display}
 						data-tier={tier}
 					>
@@ -285,7 +291,7 @@
 							<a
 								href={`/characters/${character.id}`}
 								class="card card-compact bg-base-200 shadow-xl transition-transform duration-200 motion-safe:hover:scale-105"
-								use:transition={slugify("image-" + character.id)}
+								use:transition={"image-" + character.id}
 							>
 								<figure class="relative aspect-square overflow-hidden">
 									{#key character.imageUrl}

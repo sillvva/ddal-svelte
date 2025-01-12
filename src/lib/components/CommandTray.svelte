@@ -1,5 +1,6 @@
 <script lang="ts">
 	import { goto } from "$app/navigation";
+	import { page } from "$app/state";
 	import { excludedSearchWords, searchSections } from "$lib/constants.js";
 	import { global } from "$lib/stores.svelte";
 	import type { SearchData } from "$src/routes/(api)/command/+server";
@@ -7,8 +8,6 @@
 	import { hotkey } from "@svelteuidev/composables";
 	import { ScrollArea } from "bits-ui";
 	import { Command } from "cmdk-sv";
-
-	let { isMac = false } = $props();
 
 	const defaultSelected: string = searchSections[0].url;
 
@@ -93,7 +92,7 @@
 <label class="input input-bordered hidden min-w-fit cursor-text items-center gap-2 hover-hover:md:flex">
 	<input type="text" class="max-w-20 grow" placeholder="Search" aria-label="Search" onfocus={() => (cmdOpen = true)} />
 	<kbd class="kbd kbd-sm">
-		{#if isMac}
+		{#if page.data.isMac}
 			⌘
 		{:else}
 			CTRL
@@ -109,7 +108,7 @@
 	aria-describedby="modal-content"
 	use:hotkey={[
 		[
-			isMac ? "meta+k" : "ctrl+k",
+			page.data.isMac ? "meta+k" : "ctrl+k",
 			() => {
 				cmdOpen = true;
 			}

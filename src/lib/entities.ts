@@ -2,9 +2,11 @@ import type { CharacterData } from "$server/data/characters";
 import type { LogData } from "$server/data/logs";
 import type { Character, DungeonMaster, Log, MagicItem, StoryAward, User } from "$server/db/schema";
 import { sorter } from "@sillvva/utils";
+import { PlaceholderName } from "./constants";
 import type { CharacterId, DungeonMasterId, LogId, LogSchema, UserId } from "./schemas";
+import type { Prettify } from "./util";
 
-export function getMagicItems(
+export function getItemEntities(
 	character: CharacterData,
 	options?: {
 		lastLogId?: LogId;
@@ -14,37 +16,6 @@ export function getMagicItems(
 ) {
 	const { lastLogId = "", lastLogDate = "", excludeDropped = false } = options || {};
 	const magicItems: MagicItem[] = [];
-	let lastLog = false;
-	character.logs
-		.sort((a, b) => sorter(a.date, b.date))
-		.forEach((log) => {
-			if (lastLog) return;
-			if (lastLogId && log.id === lastLogId) lastLog = true;
-			if (lastLogDate && new Date(log.date) >= new Date(lastLogDate)) lastLog = true;
-			if (!lastLog)
-				log.magicItemsGained.forEach((item) => {
-					magicItems.push(item);
-				});
-			log.magicItemsLost.forEach((item) => {
-				if (excludeDropped && !lastLog)
-					magicItems.splice(
-						magicItems.findIndex((i) => i.id === item.id),
-						1
-					);
-			});
-		});
-	return magicItems;
-}
-
-export function getStoryAwards(
-	character: CharacterData,
-	options?: {
-		lastLogId?: LogId;
-		lastLogDate?: string;
-		excludeDropped?: boolean;
-	}
-) {
-	const { lastLogId = "", lastLogDate = "", excludeDropped = false } = options || {};
 	const storyAwards: StoryAward[] = [];
 	let lastLog = false;
 	character.logs
@@ -53,19 +24,30 @@ export function getStoryAwards(
 			if (lastLog) return;
 			if (lastLogId && log.id === lastLogId) lastLog = true;
 			if (lastLogDate && new Date(log.date) >= new Date(lastLogDate)) lastLog = true;
-			if (!lastLog)
+			if (!lastLog) {
+				log.magicItemsGained.forEach((item) => {
+					magicItems.push(item);
+				});
 				log.storyAwardsGained.forEach((item) => {
 					storyAwards.push(item);
 				});
-			log.storyAwardsLost.forEach((item) => {
-				if (excludeDropped && !lastLog)
-					storyAwards.splice(
-						storyAwards.findIndex((i) => i.id === item.id),
-						1
-					);
-			});
+				if (excludeDropped) {
+					log.magicItemsLost.forEach((item) => {
+						magicItems.splice(
+							magicItems.findIndex((i) => i.id === item.id),
+							1
+						);
+					});
+					log.storyAwardsLost.forEach((item) => {
+						storyAwards.splice(
+							storyAwards.findIndex((i) => i.id === item.id),
+							1
+						);
+					});
+				}
+			}
 		});
-	return storyAwards;
+	return { magicItems, storyAwards };
 }
 
 export function getLevels(
@@ -197,12 +179,14 @@ export function defaultLogData(userId: UserId, characterId = null as CharacterId
 }
 
 export function parseLog(
-	log: Omit<LogData & { character?: (Character & { user?: Pick<User, "id" | "name"> }) | null }, "type"> & { type: string }
+	log: Omit<LogData & { character?: Prettify<Character & { user?: Pick<User, "id" | "name"> }> | null }, "type"> & {
+		type: string;
+	}
 ) {
 	return {
 		...log,
 		type: log.type === "nongame" ? ("nongame" as const) : ("game" as const),
-		character: log.character?.name === "Placeholder" ? null : log.character
+		character: log.character && log.character.name !== PlaceholderName ? log.character : undefined
 	};
 }
 

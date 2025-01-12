@@ -2,11 +2,11 @@
 	import type { Snippet } from "svelte";
 
 	interface Props {
-		href?: string;
+		href: string;
 		children?: Snippet;
 	}
 
-	let { href = "", children }: Props = $props();
+	let { href, children }: Props = $props();
 </script>
 
 <a {href} class="mb-4 flex h-12 flex-1 items-center gap-4 text-secondary sm:hidden print:hidden" role="button" aria-label="Back">

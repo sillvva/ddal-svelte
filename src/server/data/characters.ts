@@ -1,4 +1,4 @@
-import { BLANK_CHARACTER } from "$lib/constants";
+import { BLANK_CHARACTER, PlaceholderName } from "$lib/constants";
 import { getLogsSummary } from "$lib/entities";
 import type { CharacterId, UserId } from "$lib/schemas";
 import { userIncludes } from "$server/actions/users";
@@ -38,7 +38,7 @@ export async function getCharactersWithLogs(userId: UserId, includeLogs = true) 
 				orderBy: (logs, { asc }) => asc(logs.date)
 			}
 		},
-		where: (characters, { eq, ne, and }) => and(eq(characters.userId, userId), ne(characters.name, "Placeholder"))
+		where: (characters, { eq, ne, and }) => and(eq(characters.userId, userId), ne(characters.name, PlaceholderName))
 	});
 
 	return characters.map((c) => ({
@@ -54,7 +54,7 @@ export async function getCharacters(userId: UserId) {
 		with: {
 			user: userIncludes
 		},
-		where: (characters, { eq, ne, and }) => and(eq(characters.userId, userId), ne(characters.name, "Placeholder")),
+		where: (characters, { eq, ne, and }) => and(eq(characters.userId, userId), ne(characters.name, PlaceholderName)),
 		orderBy: (characters, { asc }) => asc(characters.name)
 	});
 }

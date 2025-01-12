@@ -44,7 +44,6 @@ export function valibotForm<S extends v.ObjectSchema<any, any>, Out extends v.In
 	options?: FormOptions<Out, App.Superforms.Message, In> & CustomFormOptions<S>
 ) {
 	const { nameField = "name", ...rest } = options || {};
-	// @ts-expect-error Type instantiation is excessively deep and possibly infinite.
 	const superform = superForm(form, {
 		dataType: "json",
 		validators: valibotClient(schema),

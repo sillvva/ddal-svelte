@@ -4,8 +4,9 @@
 	import type { HTMLAttributes } from "svelte/elements";
 	import { twMerge } from "tailwind-merge";
 
-	interface Props extends Omit<HTMLAttributes<HTMLDetailsElement>, "children"> {
+	interface Props extends Omit<HTMLAttributes<HTMLDetailsElement>, "children" | "class"> {
 		children?: Snippet<[{ close: (node: HTMLLIElement) => void }]>;
+		class?: string | null;
 	}
 
 	let { class: className = "", children }: Props = $props();

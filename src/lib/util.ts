@@ -22,12 +22,10 @@ export type DictOrArray = Record<PropertyKey, unknown> | Array<unknown>;
  * Functions
  */
 
-export async function createTransition(action: ViewTransitionCallback) {
-	if (!document.startViewTransition) {
-		await action();
-		return;
-	}
-	return document.startViewTransition(async () => await action());
+export async function createTransition(action: ViewTransitionCallback, after?: () => void | Promise<void>, afterDelay = 0) {
+	if (!document.startViewTransition) action();
+	else document.startViewTransition(action);
+	if (after) wait(afterDelay).then(after);
 }
 
 export function isDefined<T>(value?: T | null): value is T {

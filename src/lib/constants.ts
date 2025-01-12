@@ -15,7 +15,8 @@ export const appDefaults: App.Cookie = {
 		descriptions: false
 	},
 	dmLogs: {
-		sort: "asc"
+		sort: "asc",
+		descriptions: false
 	}
 };
 
@@ -110,3 +111,5 @@ export const themes = [
 
 export type Themes = (typeof themes)[number]["value"];
 export type ThemeGroups = (typeof themeGroups)[number];
+
+export const PlaceholderName = "Placeholder";

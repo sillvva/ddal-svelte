@@ -25,14 +25,15 @@
 	let deletingLog = $state<string[]>([]);
 	let search = $state(page.url.searchParams.get("s") || "");
 
-	const logSearch = new MiniSearch({
+	const minisearch = new MiniSearch({
 		fields: ["logName", "magicItems", "storyAwards", "logId"],
 		idField: "logId",
 		processTerm: (term) => (excludedSearchWords.has(term) ? null : term.toLowerCase()),
 		tokenize: (term) => term.split(/[^A-Z0-9\.']/gi),
 		searchOptions: {
 			prefix: true,
-			combineWith: "AND"
+			combineWith: "AND",
+			boost: { logName: 2 }
 		}
 	});
 
@@ -69,22 +70,26 @@
 	);
 
 	$effect(() => {
-		logSearch.removeAll();
-		logSearch.addAll(indexed);
+		minisearch.removeAll();
+		minisearch.addAll(indexed);
 	});
 
 	const msResults = $derived.by(() => {
-		if (!logSearch.termCount) logSearch.addAll(indexed);
-		return logSearch.search(search);
+		if (!minisearch.termCount) minisearch.addAll(indexed);
+		return minisearch.search(search);
 	});
+	const resultsMap = $derived(new Map(msResults.map((result) => [result.id, result])));
 	const results = $derived(
 		indexed.length && search.length > 1
 			? logs
 					.filter((log) => msResults.find((result) => result.id === log.id))
-					.map((log) => ({
-						...log,
-						score: msResults.find((result) => result.id === log.id)?.score || 0 - log.date.getTime()
-					}))
+					.map((log) => {
+						const { score = 0 - log.date.getTime() } = resultsMap.get(log.id) || {};
+						return {
+							...log,
+							score: Math.round(score * 100) / 100
+						};
+					})
 					.sort((a, b) => sorter(a.show_date, b.show_date))
 			: logs.sort((a, b) => sorter(a.show_date, b.show_date))
 	);
@@ -189,7 +194,7 @@
 						target="_blank"
 						rel="noreferrer noopener"
 						class="mask mask-squircle mx-auto h-20 bg-primary"
-						use:transition={slugify("image-" + data.character.id)}
+						use:transition={"image-" + data.character.id}
 						onclick={(e) => {
 							e.preventDefault();
 							triggerImageModal();
@@ -240,7 +245,7 @@
 							target="_blank"
 							rel="noreferrer noopener"
 							class="mask mask-squircle mx-auto h-52 w-full bg-primary"
-							use:transition={slugify("image-" + data.character.id)}
+							use:transition={"image-" + data.character.id}
 							onclick={(e) => {
 								e.preventDefault();
 								triggerImageModal();
@@ -382,7 +387,6 @@
 								<a
 									href={log.isDmLog ? `/dm-logs/${log.id}` : `/characters/${log.characterId}/log/${log.id}`}
 									class="whitespace-pre-wrap text-left font-semibold text-secondary"
-									aria-label="Edit Log"
 								>
 									<SearchResults text={log.name} {search}></SearchResults>
 								</a>
@@ -404,6 +408,7 @@
 									{/if}
 								</p>
 							{/if}
+							<!-- Mobile Details -->
 							<div class="table-cell font-normal sm:hidden print:hidden">
 								{#if log.type === "game"}
 									{#if log.experience > 0}
@@ -440,6 +445,7 @@
 								{/if}
 							</div>
 						</td>
+						<!-- Advancement -->
 						<td class="align-top max-sm:hidden print:table-cell print:p-2">
 							{#if log.experience > 0}
 								<p>
@@ -463,6 +469,7 @@
 								</p>
 							{/if}
 						</td>
+						<!-- Treasure -->
 						<td class="align-top max-sm:hidden print:table-cell print:p-2">
 							{#if log.tcp !== 0}
 								<p>
@@ -485,6 +492,7 @@
 								</div>
 							{/if}
 						</td>
+						<!-- Delete -->
 						{#if myCharacter}
 							<td class="w-8 align-top print:hidden">
 								<div class="flex flex-col justify-center gap-2">
@@ -493,11 +501,13 @@
 							</td>
 						{/if}
 					</tr>
+					<!-- Notes -->
 					<tr
-						class="hidden data-[desc=true]:table-row data-[mi=true]:max-sm:table-row"
+						class="hidden data-[desc=true]:table-row data-[deleting=true]:!hidden data-[mi=true]:max-sm:table-row"
+						data-deleting={deletingLog.includes(log.id)}
 						data-desc={global.app.log.descriptions && hasDescription}
 						data-mi={log.magicItemsGained.length > 0 || log.magicItemsLost.length > 0}
-						use:transition={slugify(`notes-${log.id}`)}
+						use:transition={`notes-${log.id}`}
 					>
 						<td colSpan={100} class="max-w-[calc(100vw_-_50px)] pt-0 text-sm print:p-2 print:text-xs">
 							{#if log.description?.trim()}

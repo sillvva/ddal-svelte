@@ -4,17 +4,12 @@
 	import { PROVIDERS } from "$lib/constants";
 	import { successToast } from "$lib/factories.svelte";
 	import { global } from "$lib/stores.svelte";
-	import { setCookie } from "$server/cookie";
 	import { signIn, signOut } from "@auth/sveltekit/client";
 	import { twMerge } from "tailwind-merge";
 	import Passkeys from "./Passkeys.svelte";
 	import ThemeSwitcher from "./ThemeSwitcher.svelte";
 
-	interface Props {
-		open?: boolean;
-	}
-
-	let { open = $bindable(false) }: Props = $props();
+	let open = $state(false);
 
 	const user = $derived(page.data.user);
 	const authProviders = $derived(
@@ -30,11 +25,26 @@
 			.join("")
 			.slice(0, 2) || ""
 	);
-
-	$effect(() => {
-		setCookie("app", global.app);
-	});
 </script>
+
+<div class="hidden items-center print:flex">
+	{page.data.user?.name}
+</div>
+<div class="avatar flex h-full min-w-fit items-center">
+	<button
+		class="relative w-9 cursor-pointer overflow-hidden rounded-full ring ring-primary ring-offset-2 ring-offset-base-100 lg:w-11"
+		tabindex="0"
+		onclick={() => (open = true)}
+	>
+		<img
+			src={page.data.session?.user?.image || ""}
+			alt={page.data.session?.user?.name}
+			width={48}
+			height={48}
+			class="rounded-full object-cover object-center"
+		/>
+	</button>
+</div>
 
 <aside
 	id="settings"

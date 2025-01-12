@@ -5,7 +5,7 @@
 
 	const s = queryParam("s");
 
-	type Props = HTMLInputAttributes;
+	type Props = Omit<HTMLInputAttributes, "class"> & { class?: string | null };
 	let { value = $bindable($s || ""), class: className, type = "text", ...rest }: Props = $props();
 </script>
 
