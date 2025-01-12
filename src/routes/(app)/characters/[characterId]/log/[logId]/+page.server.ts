@@ -1,4 +1,4 @@
-import { defaultLogData, getMagicItems, getStoryAwards, logDataToSchema } from "$lib/entities.js";
+import { defaultLogData, getItemEntities, logDataToSchema } from "$lib/entities.js";
 import { characterIdSchema, characterLogSchema, logIdSchema } from "$lib/schemas";
 import { SaveError } from "$lib/util.js";
 import { saveLog } from "$server/actions/logs.js";
@@ -37,11 +37,9 @@ export const load = async (event) => {
 		errors: event.params.logId !== "new"
 	});
 
-	const magicItems = getMagicItems(character, { excludeDropped: true, lastLogId: log.id }).sort((a, b) => sorter(a.name, b.name));
-	const storyAwards = getStoryAwards(character, { excludeDropped: true, lastLogId: log.id }).sort((a, b) =>
-		sorter(a.name, b.name)
-	);
-
+	const itemEntities = getItemEntities(character, { excludeDropped: true, lastLogId: log.id });
+	const magicItems = itemEntities.magicItems.sort((a, b) => sorter(a.name, b.name));
+	const storyAwards = itemEntities.storyAwards.sort((a, b) => sorter(a.name, b.name));
 	const dms = await getUserDMs(session.user);
 
 	return {
