@@ -73,6 +73,9 @@
 	const sortedItems = $derived(
 		sort ? consolidatedItems.sort((a, b) => sorter(sorterName(a.name), sorterName(b.name))) : consolidatedItems
 	);
+
+	const nonConsumables = $derived(sortedItems.filter((item) => !isConsumable(item.name)));
+	const consumables = $derived(sortedItems.filter((item) => isConsumable(item.name)));
 </script>
 
 <div
@@ -99,12 +102,27 @@
 		data-collapsed={collapsed}
 	>
 		{#if items.length}
-			{#each sortedItems as mi}
+			{#each nonConsumables as mi}
 				<span
 					role={mi.description ? "button" : "presentation"}
 					class="inline pl-2 pr-2 first:pl-0"
 					class:text-secondary={mi.description}
-					class:italic={formatting && isConsumable(mi.name)}
+					onclick={() => {
+						if (mi.description) {
+							pushState("", { modal: { type: "text", name: mi.name, description: mi.description } });
+						}
+					}}
+					onkeypress={() => null}
+				>
+					<SearchResults text={mi.name} {search} />
+				</span>
+			{/each}
+			{#each consumables as mi}
+				<span
+					role={mi.description ? "button" : "presentation"}
+					class="inline pl-2 pr-2 italic first:pl-0"
+					class:text-secondary={mi.description}
+					class:italic={formatting}
 					onclick={() => {
 						if (mi.description) {
 							pushState("", { modal: { type: "text", name: mi.name, description: mi.description } });
