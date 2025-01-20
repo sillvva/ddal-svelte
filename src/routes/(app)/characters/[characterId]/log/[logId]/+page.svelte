@@ -12,6 +12,7 @@
 	import { defaultDM } from "$lib/entities";
 	import { valibotForm } from "$lib/factories.svelte.js";
 	import { logSchema } from "$lib/schemas";
+	import { twMerge } from "tailwind-merge";
 
 	let { data } = $props();
 
@@ -25,54 +26,58 @@
 	<BreadCrumbs />
 
 	<SuperForm action="?/saveLog" {superform} showMessage>
-		<Control class="col-span-12 sm:col-span-4">
-			<GenericInput {superform} field="type" label="Log Type">
-				<select id="type" bind:value={$form.type} class="select select-bordered w-full">
-					<option value="game">Game</option>
-					<option value="nongame">Non-Game (Purchase, Trade, etc)</option>
-				</select>
-			</GenericInput>
-		</Control>
-		<Control class="col-span-12 sm:col-span-4">
+		{#if !data.firstLog}
+			<Control class="col-span-12 sm:col-span-4">
+				<GenericInput {superform} field="type" label="Log Type">
+					<select id="type" bind:value={$form.type} class="select select-bordered w-full">
+						<option value="game">Game</option>
+						<option value="nongame">Non-Game (Purchase, Trade, etc)</option>
+					</select>
+				</GenericInput>
+			</Control>
+		{/if}
+		<Control class={twMerge("col-span-12", !data.firstLog ? "sm:col-span-4" : "sm:col-span-6")}>
 			<Input type="text" {superform} field="name" label="Title" />
 		</Control>
-		<Control class="col-span-12 sm:col-span-4">
+		<Control class={twMerge("col-span-12", !data.firstLog ? "sm:col-span-4" : "sm:col-span-6")}>
 			<DateInput {superform} field="date" label="Date" />
 		</Control>
 		{#if $form.type === "game"}
-			<Control class="col-span-12 sm:col-span-6">
-				<Combobox
-					{superform}
-					label="DM Name"
-					valueField="dm.id"
-					inputField="dm.name"
-					values={data.dms.map((dm) => ({
-						value: dm.id,
-						label: dm.name,
-						itemLabel: dm.name + (dm.uid === data.user.id ? ` (Me)` : "") + (dm.DCI ? ` (${dm.DCI})` : "")
-					})) || []}
-					allowCustom
-					onselect={({ selected }) => {
-						const id = selected?.value;
-						const name = selected?.label;
-						$form.dm = data.dms.find((dm) => dm.id === id) || (name ? { ...$form.dm, name } : defaultDM(data.user.id));
-					}}
-					clearable
-					onclear={() => ($form.dm = defaultDM(data.user.id))}
-					link={$form.dm.id ? `/dms/${$form.dm.id}` : ""}
-					placeholder={data.dms.find((dm) => dm.uid === data.user.id)?.name || data.user.name}
-				/>
-			</Control>
-			<Control class="col-span-12 sm:col-span-6">
-				<Input
-					type="text"
-					{superform}
-					field="dm.DCI"
-					disabled={!$form.dm.name}
-					placeholder={$form.dm.name ? undefined : data.dms.find((dm) => dm.uid === data.user.id)?.DCI}
-					label="DM DCI"
-				/>
-			</Control>
+			{#if !data.firstLog}
+				<Control class="col-span-12 sm:col-span-6">
+					<Combobox
+						{superform}
+						label="DM Name"
+						valueField="dm.id"
+						inputField="dm.name"
+						values={data.dms.map((dm) => ({
+							value: dm.id,
+							label: dm.name,
+							itemLabel: dm.name + (dm.uid === data.user.id ? ` (Me)` : "") + (dm.DCI ? ` (${dm.DCI})` : "")
+						})) || []}
+						allowCustom
+						onselect={({ selected }) => {
+							const id = selected?.value;
+							const name = selected?.label;
+							$form.dm = data.dms.find((dm) => dm.id === id) || (name ? { ...$form.dm, name } : defaultDM(data.user.id));
+						}}
+						clearable
+						onclear={() => ($form.dm = defaultDM(data.user.id))}
+						link={$form.dm.id ? `/dms/${$form.dm.id}` : ""}
+						placeholder={data.dms.find((dm) => dm.uid === data.user.id)?.name || data.user.name}
+					/>
+				</Control>
+				<Control class="col-span-12 sm:col-span-6">
+					<Input
+						type="text"
+						{superform}
+						field="dm.DCI"
+						disabled={!$form.dm.name}
+						placeholder={$form.dm.name ? undefined : data.dms.find((dm) => dm.uid === data.user.id)?.DCI}
+						label="DM DCI"
+					/>
+				</Control>
+			{/if}
 			<Control class="col-span-12 sm:col-span-4">
 				<GenericInput labelFor="season" label="Season">
 					<select id="season" bind:value={season} class="select select-bordered w-full">

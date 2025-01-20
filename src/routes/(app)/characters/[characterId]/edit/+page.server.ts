@@ -72,10 +72,13 @@ export const actions = {
 				},
 				session.user
 			);
+
 			if (logResult instanceof SaveError) {
 				setError(form, "", logResult.error);
 				return fail(logResult.status, { form });
 			}
+
+			redirect(302, `/characters/${result.id}/log/${logResult.id}?firstLog=true`);
 		}
 
 		redirect(302, `/characters/${result.id}`);
