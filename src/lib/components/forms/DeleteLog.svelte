@@ -1,4 +1,5 @@
 <script lang="ts">
+	import { goto } from "$app/navigation";
 	import { errorToast, successToast } from "$lib/factories.svelte";
 	import { global } from "$lib/stores.svelte";
 	import type { LogData } from "$server/data/logs";
@@ -31,6 +32,14 @@
 					successToast(`${log.name} deleted`);
 					ondelete?.({ id: log.id });
 					global.searchData = [];
+				}
+			},
+			onResult({ result }) {
+				if (result.type === "redirect") {
+					successToast(`${log.name} deleted`);
+					ondelete?.({ id: log.id });
+					global.searchData = [];
+					goto(result.location);
 				}
 			}
 		}
