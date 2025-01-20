@@ -12,7 +12,7 @@
 </script>
 
 <div class="flex min-h-full flex-col items-center justify-center">
-	<div class="alert alert-error shadow-lg">
+	<div class="alert alert-error mb-4 shadow-lg">
 		<span class="iconify size-6 mdi--alert-circle"></span>
 		<div>
 			<h3 class="font-bold">Error {page.status}!</h3>
