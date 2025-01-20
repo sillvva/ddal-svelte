@@ -1,15 +1,17 @@
 <script lang="ts">
 	import BreadCrumbs from "$lib/components/BreadCrumbs.svelte";
+	import Checkbox from "$lib/components/forms/Checkbox.svelte";
 	import Control from "$lib/components/forms/Control.svelte";
+	import FieldSubset from "$lib/components/forms/FieldSubset.svelte";
 	import Input from "$lib/components/forms/Input.svelte";
 	import Submit from "$lib/components/forms/Submit.svelte";
 	import SuperForm from "$lib/components/forms/SuperForm.svelte";
 	import { valibotForm } from "$lib/factories.svelte.js";
-	import { newCharacterSchema } from "$lib/schemas";
+	import { createCharacterSchema } from "$lib/schemas";
 
 	let { data } = $props();
 
-	const superform = $derived(valibotForm(data.form, newCharacterSchema));
+	const superform = $derived(valibotForm(data.form, createCharacterSchema));
 </script>
 
 <BreadCrumbs />
@@ -33,5 +35,12 @@
 	<Control class="col-span-12">
 		<Input type="url" {superform} field="imageUrl" label="Image URL" placeholder={data.BLANK_CHARACTER} />
 	</Control>
+	{#if !data.character?.id}
+		<FieldSubset class="col-span-12 sm:col-span-4">
+			<Control class="col-span-12">
+				<Checkbox {superform} field="firstLog" label="Create Starting Log" />
+			</Control>
+		</FieldSubset>
+	{/if}
 	<Submit {superform}>Save Character</Submit>
 </SuperForm>

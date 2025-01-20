@@ -178,6 +178,31 @@ export function defaultLogData(userId: UserId, characterId = null as CharacterId
 	};
 }
 
+export function defaultLogSchema(userId: UserId, character: Character): LogSchema {
+	return {
+		id: "" as LogId,
+		name: "",
+		description: "",
+		date: new Date(),
+		type: "game",
+		experience: 0,
+		acp: 0,
+		tcp: 0,
+		level: 0,
+		gold: 0,
+		dtd: 0,
+		dm: defaultDM(userId),
+		characterId: character.id,
+		characterName: character.name,
+		appliedDate: null,
+		isDmLog: !character.id,
+		magicItemsGained: [],
+		magicItemsLost: [],
+		storyAwardsGained: [],
+		storyAwardsLost: []
+	};
+}
+
 export function parseLog(
 	log: Omit<LogData & { character?: Prettify<Character & { user?: Pick<User, "id" | "name"> }> | null }, "type"> & {
 		type: string;

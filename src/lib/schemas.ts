@@ -49,6 +49,12 @@ export const newCharacterSchema = v.object({
 	imageUrl: optionalURL
 });
 
+export type CreateCharacterSchema = v.InferOutput<typeof createCharacterSchema>;
+export const createCharacterSchema = v.object({
+	...newCharacterSchema.entries,
+	firstLog: v.optional(v.boolean(), false)
+});
+
 export type CharacterId = v.InferOutput<typeof characterIdSchema>;
 export const characterIdSchema = brandedId("CharacterId");
 
