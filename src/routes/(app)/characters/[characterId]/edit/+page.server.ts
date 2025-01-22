@@ -1,6 +1,6 @@
 import { BLANK_CHARACTER } from "$lib/constants.js";
 import { defaultLogSchema } from "$lib/entities.js";
-import { characterIdSchema, createCharacterSchema } from "$lib/schemas";
+import { characterIdSchema, editCharacterSchema } from "$lib/schemas";
 import { SaveError } from "$lib/util.js";
 import { saveCharacter } from "$server/actions/characters.js";
 import { saveLog } from "$server/actions/logs.js";
@@ -36,7 +36,7 @@ export const load = async (event) => {
 					imageUrl: parent.character.imageUrl.replace(BLANK_CHARACTER, "")
 				}
 			: undefined,
-		valibot(createCharacterSchema),
+		valibot(editCharacterSchema),
 		{
 			errors: false
 		}
@@ -56,7 +56,7 @@ export const actions = {
 		const session = await event.locals.session;
 		assertUser(session?.user, event.url);
 
-		const form = await superValidate(event, valibot(createCharacterSchema));
+		const form = await superValidate(event, valibot(editCharacterSchema));
 		if (!form.valid) return fail(400, { form });
 		const { firstLog, ...data } = form.data;
 

@@ -49,17 +49,15 @@ export const newCharacterSchema = v.object({
 	imageUrl: optionalURL
 });
 
-export type CreateCharacterSchema = v.InferOutput<typeof createCharacterSchema>;
-export const createCharacterSchema = v.object({
-	...newCharacterSchema.entries,
-	firstLog: v.optional(v.boolean(), false)
-});
-
 export type CharacterId = v.InferOutput<typeof characterIdSchema>;
 export const characterIdSchema = brandedId("CharacterId");
 
 export type EditCharacterSchema = v.InferOutput<typeof editCharacterSchema>;
-export const editCharacterSchema = v.object({ id: characterIdSchema, ...newCharacterSchema.entries });
+export const editCharacterSchema = v.object({
+	id: characterIdSchema,
+	...newCharacterSchema.entries,
+	firstLog: v.optional(v.boolean(), false)
+});
 
 export type DungeonMasterId = v.InferOutput<typeof dungeonMasterIdSchema>;
 export const dungeonMasterIdSchema = brandedId("DungeonMasterId");
