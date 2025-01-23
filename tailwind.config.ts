@@ -1,5 +1,4 @@
 import { addIconSelectors } from "@iconify/tailwind";
-import themes from "daisyui/src/theming/themes";
 import type { Config } from "tailwindcss";
 import plugin from "tailwindcss/plugin";
 
@@ -7,29 +6,8 @@ const buildMemberSelector = (modifier) => `.member${modifier ? `\\/${modifier}` 
 
 export default {
 	content: ["./src/**/*.{html,js,svelte,ts}"],
-	darkMode: ["class"],
-	theme: {
-		extend: {
-			fontFamily: {
-				draconis: ["Draconis"],
-				vecna: ["Vecna"]
-			}
-		},
-		screens: {
-			xs: "500px",
-			sm: "640px",
-			md: "768px",
-			lg: "1024px",
-			xl: "1280px",
-			"2xl": "1440px"
-		}
-	},
 	plugins: [
-		require("daisyui"),
-		plugin(function ({ addVariant }) {
-			addVariant("hover-hover", "@media (hover: hover)");
-			addVariant("hover-none", "@media (hover: none)");
-		}),
+		// require("daisyui"),
 		addIconSelectors(["mdi", "material-symbols", "logos"]),
 		plugin(({ matchVariant }) => {
 			const values = {
@@ -103,62 +81,5 @@ export default {
 				}
 			);
 		})
-	],
-	daisyui: {
-		themes: [
-			{
-				light: {
-					...themes["light"],
-					primary: "#1b5be4",
-					secondary: "#2F63FF",
-					accent: "#6b6b6b"
-				}
-			},
-			{
-				black: {
-					...themes["black"],
-					primary: "#6419e6",
-					secondary: "#c881ff",
-					error: "#b91c1c",
-					"error-content": "white"
-				}
-			},
-			{
-				dark: themes["dark"]
-			},
-			{
-				business: {
-					...themes["business"],
-					secondary: "oklch(71.7036% 0.099057 220.473931)"
-				}
-			},
-			{
-				halloween: {
-					...themes["halloween"],
-					secondary: "#c881ff",
-					error: "#d04000",
-					"error-content": "white"
-				}
-			},
-			"night",
-			{
-				corporate: {
-					...themes["corporate"],
-					secondary: "oklch(50.39% 0.228 220.1)"
-				}
-			},
-			{
-				retro: {
-					...themes["retro"],
-					secondary: "oklch(50.8664% 0.104092 60.664655)"
-				}
-			},
-			{
-				valentine: {
-					...themes["valentine"],
-					secondary: "#6419e6"
-				}
-			}
-		]
-	}
+	]
 } satisfies Config;

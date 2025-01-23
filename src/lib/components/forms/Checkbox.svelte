@@ -15,8 +15,8 @@
 	const { value } = formFieldProxy(superform, field) satisfies FormFieldProxy<boolean>;
 </script>
 
-<label class="label cursor-pointer rounded-lg border border-base-300 p-4">
-	<span class="label-text">
+<label class="label border-base-content/20 flex cursor-pointer rounded-lg border p-4 text-sm">
+	<span class="text-base-content flex-1">
 		{label}
 		{#if required}
 			<span class="text-error">*</span>

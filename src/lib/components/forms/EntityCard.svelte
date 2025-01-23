@@ -63,15 +63,15 @@
 </script>
 
 {#if type === "add" && nameField && descField}
-	<div class="card col-span-12 bg-base-300/70 shadow-xl sm:col-span-6">
-		<div class="card-body flex flex-col gap-4">
-			<h4>Add {title}</h4>
+	<div class="card bg-base-300/70 col-span-12 shadow-xl sm:col-span-6">
+		<div class="card-body flex flex-col">
+			<h4 class="text-xl">Add {title}</h4>
 			<div class="flex gap-4">
 				<Control class="flex-1">
 					<Input type="text" {superform} field={nameField} label="Name" required />
 				</Control>
-				<button type="button" class="btn btn-error mt-9" onclick={() => ondelete()} aria-label="Delete Entry">
-					<span class="iconify size-6 mdi--trash-can"></span>
+				<button type="button" class="btn btn-error mt-10" onclick={() => ondelete()} aria-label="Delete Entry">
+					<span class="iconify mdi--trash-can size-6"></span>
 				</button>
 			</div>
 			<Control>
@@ -80,9 +80,9 @@
 		</div>
 	</div>
 {:else if type === "drop" && lostField}
-	<div class="card col-span-12 bg-base-300/70 shadow-xl sm:col-span-6">
-		<div class="card-body flex flex-col gap-4">
-			<h4>Drop {title}</h4>
+	<div class="card bg-base-300/70 col-span-12 shadow-xl sm:col-span-6">
+		<div class="card-body flex flex-col">
+			<h4 class="text-xl">Drop {title}</h4>
 			<div class="flex gap-4">
 				<Control class="flex-1">
 					<GenericInput {superform} field={lostField} label="Select an Item">
@@ -96,7 +96,7 @@
 					</GenericInput>
 				</Control>
 				<button type="button" class="btn btn-error mt-9" onclick={() => ondelete()} aria-label="Delete Entry">
-					<span class="iconify size-6 mdi--trash-can"></span>
+					<span class="iconify mdi--trash-can size-6"></span>
 				</button>
 			</div>
 			<div class="text-sm">

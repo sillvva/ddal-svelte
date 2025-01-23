@@ -63,16 +63,16 @@
 
 	const commonProps = $derived({
 		id: field,
-		class: "input input-bordered w-full focus:border-primary",
+		class: "input w-full focus:border-primary",
 		"aria-invalid": $errors ? "true" : undefined,
 		...$constraints,
 		...rest
 	}) satisfies HTMLInputAttributes;
 </script>
 
-<label for={field} class="label">
-	<span class="label-text">
-		{label}
+<label for={field} class="fieldset-legend">
+	<span
+		>{label}
 		{#if commonProps.required}
 			<span class="text-error">*</span>
 		{/if}
@@ -123,11 +123,11 @@
 	/>
 {/if}
 {#if $errors?.length || description}
-	<label for={field} class="label">
+	<label for={field} class="fieldset-label">
 		{#if $errors?.length}
-			<span class="label-text-alt text-error">{$errors[0]}</span>
+			<span class="text-error">{$errors[0]}</span>
 		{:else}
-			<span class="label-text-alt text-neutral-500">{description}</span>
+			<span class="text-neutral-500">{description}</span>
 		{/if}
 	</label>
 {/if}

@@ -11,6 +11,6 @@
 	let { class: className = "", children, ...rest }: Props = $props();
 </script>
 
-<div class={twMerge("form-control", className)} {...rest}>
+<div class={twMerge("fieldset", className)} {...rest}>
 	{@render children?.()}
 </div>

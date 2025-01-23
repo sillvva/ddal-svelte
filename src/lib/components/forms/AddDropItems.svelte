@@ -28,19 +28,19 @@
 			<button
 				type="button"
 				tabindex="-1"
-				class="btn join-item min-w-fit flex-[2] basis-0 cursor-default !border-base-200 !bg-base-300"
+				class="btn join-item min-w-fit flex-2 basis-0 cursor-default border-base-200! bg-base-300!"
 			>
 				Magic Items
 				{#if $form.magicItemsGained.length > 0}
-					<span class="badge badge-success badge-outline rounded max-xs:px-1">{$form.magicItemsGained.length}</span>
+					<span class="badge badge-success badge-outline rounded-sm max-xs:px-1">{$form.magicItemsGained.length}</span>
 				{/if}
 				{#if $form.magicItemsLost.length > 0}
-					<span class="badge badge-error badge-outline rounded max-xs:px-1">{$form.magicItemsLost.length}</span>
+					<span class="badge badge-error badge-outline rounded-sm max-xs:px-1">{$form.magicItemsLost.length}</span>
 				{/if}
 			</button>
 			<button
 				type="button"
-				class="btn join-item min-w-fit max-md:flex-1 max-md:px-0 data-[remaining=0]:max-md:flex-[2]"
+				class="btn join-item min-w-fit max-md:flex-1 max-md:px-0 max-md:data-[remaining=0]:flex-2"
 				data-remaining={remainingItems.length}
 				onclick={() => ($form.magicItemsGained = $form.magicItemsGained.concat(newItem))}
 				aria-label="Add Magic Item"
@@ -65,19 +65,19 @@
 				<button
 					type="button"
 					tabindex="-1"
-					class="btn join-item min-w-fit flex-[2] basis-0 cursor-default !border-base-200 !bg-base-300"
+					class="btn join-item min-w-fit flex-2 basis-0 cursor-default border-base-200! bg-base-300!"
 				>
 					Story Awards
 					{#if $form.storyAwardsGained.length > 0}
-						<span class="badge badge-success badge-outline rounded max-xs:px-1">{$form.storyAwardsGained.length}</span>
+						<span class="badge badge-success badge-outline rounded-sm max-xs:px-1">{$form.storyAwardsGained.length}</span>
 					{/if}
 					{#if $form.storyAwardsLost.length > 0}
-						<span class="badge badge-error badge-outline rounded max-xs:px-1">{$form.storyAwardsLost.length}</span>
+						<span class="badge badge-error badge-outline rounded-sm max-xs:px-1">{$form.storyAwardsLost.length}</span>
 					{/if}
 				</button>
 				<button
 					type="button"
-					class="btn join-item min-w-fit max-md:flex-1 max-md:px-0 data-[remaining=0]:max-md:flex-[2]"
+					class="btn join-item min-w-fit max-md:flex-1 max-md:px-0 max-md:data-[remaining=0]:flex-2"
 					data-remaining={remainingItems.length}
 					onclick={() => ($form.storyAwardsGained = $form.storyAwardsGained.concat(newItem))}
 					aria-label="Add Story Award"

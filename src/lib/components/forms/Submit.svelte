@@ -16,7 +16,7 @@
 <div class="col-span-12 text-center">
 	<button
 		type="submit"
-		class="btn btn-primary w-full disabled:bg-primary disabled:bg-opacity-50 disabled:text-opacity-50 md:w-auto"
+		class="btn btn-primary disabled:bg-primary disabled:bg-opacity-50 disabled:text-opacity-50 w-full sm:w-auto"
 		aria-label="Submit"
 	>
 		{#if $submitting}

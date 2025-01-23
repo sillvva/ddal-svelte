@@ -34,11 +34,13 @@
 	<Control class="col-span-12">
 		<Input type="url" {superform} field="imageUrl" label="Image URL" placeholder={data.BLANK_CHARACTER} />
 	</Control>
-	<Control class="col-span-12 -mb-4">
-		<span class="label">
-			<span class="label-text">Options</span>
-		</span>
-	</Control>
+	{#if !data.character?.id}
+		<Control class="col-span-12 -mb-4">
+			<span class="fieldset-legend">
+				<span>Options</span>
+			</span>
+		</Control>
+	{/if}
 	{#if !data.character?.id}
 		<Control class="col-span-12 sm:col-span-6">
 			<Checkbox {superform} field="firstLog" label="Create Starting Log" />

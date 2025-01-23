@@ -32,15 +32,13 @@
 </div>
 <div class="avatar flex h-full min-w-fit items-center">
 	<button
-		class="relative w-9 cursor-pointer overflow-hidden rounded-full ring ring-primary ring-offset-2 ring-offset-base-100 lg:w-11"
+		class="ring-primary ring-offset-base-100 relative h-9 w-9 cursor-pointer overflow-hidden rounded-full ring-3 ring-offset-2 lg:h-11 lg:w-11"
 		tabindex="0"
 		onclick={() => (open = true)}
 	>
 		<img
 			src={page.data.session?.user?.image || ""}
 			alt={page.data.session?.user?.name}
-			width={48}
-			height={48}
 			class="rounded-full object-cover object-center"
 		/>
 	</button>
@@ -48,28 +46,28 @@
 
 <aside
 	id="settings"
-	class="fixed inset-y-0 -right-80 z-50 flex w-80 flex-col overflow-y-auto bg-base-100 px-4 py-4 transition-all data-[open=true]:right-0"
+	class="bg-base-100 fixed inset-y-0 -right-80 z-50 flex w-80 flex-col overflow-y-auto px-4 py-4 transition-all data-[open=true]:right-0"
 	data-open={open}
 >
 	{#if user}
 		<div class="flex items-center gap-4 py-4 pl-2">
 			<div
-				class="avatar flex h-9 w-9 items-center justify-center rounded-full ring ring-primary ring-offset-2 ring-offset-base-100"
+				class="avatar ring-primary ring-offset-base-100 flex h-9 w-9 items-center justify-center overflow-hidden rounded-full ring-3 ring-offset-2"
 			>
 				{#if user.image}
-					<img src={user.image} alt={user.name} width={48} height={48} class="rounded-full object-cover object-center" />
+					<img src={user.image} alt={user.name} class="rounded-full object-cover object-center" />
 				{:else if initials}
-					<span class="text-xl font-bold uppercase text-primary">{initials}</span>
+					<span class="text-primary text-xl font-bold uppercase">{initials}</span>
 				{/if}
 			</div>
 			<div class="flex-1">
-				<div class="overflow-hidden text-ellipsis whitespace-nowrap font-medium">{user.name}</div>
-				<div class="overflow-hidden text-ellipsis text-xs font-medium text-gray-500 dark:text-gray-400">
+				<div class="overflow-hidden font-medium text-ellipsis whitespace-nowrap">{user.name}</div>
+				<div class="overflow-hidden text-xs font-medium text-ellipsis text-gray-500 dark:text-gray-400">
 					{user.email}
 				</div>
 			</div>
 			<button class="btn p-3" onclick={() => signOut({ callbackUrl: "/" })} aria-label="Sign out">
-				<i class="iconify h-5 w-5 mdi--logout"></i>
+				<i class="iconify mdi--logout h-5 w-5"></i>
 			</button>
 		</div>
 		<div class="divider my-0"></div>
@@ -113,7 +111,7 @@
 										<button class="btn btn-error btn-sm">Unlink</button>
 									</form>
 								{:else}
-									<span class="iconify size-6 text-green-500 mdi--check"></span>
+									<span class="iconify mdi--check size-6 text-green-500"></span>
 								{/if}
 							{:else}
 								<button class="btn btn-primary btn-sm" onclick={() => signIn(provider.id, { callbackUrl: page.url.href })}>
@@ -130,19 +128,19 @@
 		<ul class="menu menu-lg w-full px-0">
 			<li>
 				<a href="https://github.com/sillvva/ddal-svelte/issues" target="_blank" rel="noreferrer noopener">
-					<span class="iconify size-6 mdi--bug"></span>
+					<span class="iconify mdi--bug size-6"></span>
 					Report a bug
 				</a>
 			</li>
 			<li>
 				<a href="https://matt.dekok.dev" target="_blank" rel="noreferrer noopener">
-					<span class="iconify size-6 mdi--information-outline"></span>
+					<span class="iconify mdi--information-outline size-6"></span>
 					About the developer
 				</a>
 			</li>
 			<li>
 				<a href="http://paypal.me/Sillvva" target="_blank" rel="noreferrer noopener">
-					<span class="iconify size-6 mdi--gift"></span>
+					<span class="iconify mdi--gift size-6"></span>
 					Contribute
 				</a>
 			</li>
@@ -155,7 +153,7 @@
 	{/if}
 </aside>
 <div
-	class="fixed inset-0 -z-10 hidden bg-base-300/50 opacity-0 transition-all data-[open=true]:z-40 data-[open=true]:block data-[open=true]:opacity-100"
+	class="bg-base-300/50 fixed inset-0 -z-10 hidden opacity-0 transition-all data-[open=true]:z-40 data-[open=true]:block data-[open=true]:opacity-100"
 	onkeydown={() => (open = false)}
 	onclick={() => (open = false)}
 	role="none"

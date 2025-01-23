@@ -48,6 +48,12 @@
 		selected = defaultSelected;
 	}
 
+	function focus(node: HTMLInputElement) {
+		setTimeout(() => {
+			node.focus();
+		}, 100);
+	}
+
 	const results = $derived(
 		global.searchData.flatMap((section) => {
 			const filteredItems = section.items
@@ -83,26 +89,28 @@
 </script>
 
 <button
+	class="hover-hover:md:input hover-hover:md:gap-4 hover-hover:md:cursor-text"
+	aria-label="Search"
 	onclick={() => (cmdOpen = true)}
-	class="inline-flex w-10 items-center justify-center hover-hover:md:hidden"
-	aria-label="Open Command Tray"
 >
-	<span class="iconify size-6 mdi--magnify"></span>
+	<span class="hover-hover:md:text-base-content/60 flex items-center gap-1">
+		<span class="iconify mdi--magnify hover-hover:md:size-4 hover-none:w-10 size-6 max-md:w-10"></span>
+		<span class="hover-hover:max-md:hidden hover-none:hidden">Search</span>
+	</span>
+	<span class="hover-hover:max-md:hidden hover-none:hidden">
+		<kbd class="kbd kbd-sm">
+			{#if page.data.isMac}
+				⌘
+			{:else}
+				CTRL
+			{/if}
+		</kbd>
+		<kbd class="kbd kbd-sm">K</kbd>
+	</span>
 </button>
-<label class="input input-bordered hidden min-w-fit cursor-text items-center gap-2 hover-hover:md:flex">
-	<input type="text" class="max-w-20 grow" placeholder="Search" aria-label="Search" onfocus={() => (cmdOpen = true)} />
-	<kbd class="kbd kbd-sm">
-		{#if page.data.isMac}
-			⌘
-		{:else}
-			CTRL
-		{/if}
-	</kbd>
-	<kbd class="kbd kbd-sm">K</kbd>
-</label>
 
 <dialog
-	class="modal !bg-base-300/75"
+	class="modal bg-base-300/75!"
 	open={!!cmdOpen || undefined}
 	aria-labelledby="modal-title"
 	aria-describedby="modal-content"
@@ -121,7 +129,7 @@
 		]
 	]}
 >
-	<div class="modal-box relative cursor-default bg-base-100 px-4 py-5 drop-shadow-lg sm:p-6">
+	<div class="modal-box bg-base-100 relative cursor-default px-4 py-5 drop-shadow-lg sm:p-6">
 		<div class="modal-content">
 			<Command.Dialog
 				label="Command Menu"
@@ -131,11 +139,11 @@
 				class="flex flex-col gap-4"
 				loop
 			>
-				<label class="input input-bordered flex items-center gap-2 member-focus:border-primary">
+				<label class="input focus-within:border-primary flex w-full items-center gap-2">
 					<input
-						class="member grow"
 						type="search"
 						bind:value={search}
+						use:focus
 						placeholder="Search"
 						oninput={() => {
 							const firstResult = results[0]?.items[0]?.url;
@@ -157,7 +165,7 @@
 							}
 						}}
 					/>
-					<span class="iconify size-6 mdi--magnify"></span>
+					<span class="iconify mdi--magnify size-6"></span>
 				</label>
 				<Command.List class="flex flex-col gap-2" bind:el={resultsPane}>
 					{#if !global.searchData.length}
@@ -173,7 +181,7 @@
 											<div class="divider"></div>
 										{/if}
 										<Command.Group asChild let:group>
-											<ul class="menu p-0" {...group.attrs}>
+											<ul class="menu w-full p-0" {...group.attrs}>
 												<li class="menu-title">{section.title}</li>
 												{#each section.items as item}
 													<Command.Item asChild let:attrs value={item.url}>
@@ -184,7 +192,7 @@
 														>
 															<a href={item.url} onclick={() => close()} class="flex gap-4 [.selected>&]:bg-neutral-500/40">
 																{#if item.type === "character"}
-																	<span class="mask mask-squircle h-12 min-w-12 max-w-12 bg-primary">
+																	<span class="mask mask-squircle bg-primary h-12 max-w-12 min-w-12">
 																		<img
 																			src={item.imageUrl}
 																			class="size-full object-cover object-top transition-all"
@@ -201,7 +209,7 @@
 																		{#if search.length >= 2}
 																			{#if item.magic_items.some((magicItem) => hasMatch(magicItem.name))}
 																				<div class="flex gap-1 text-xs">
-																					<span class="whitespace-nowrap font-bold">Magic Items:</span>
+																					<span class="font-bold whitespace-nowrap">Magic Items:</span>
 																					<span class="flex-1 opacity-70">
 																						{item.magic_items
 																							.map((item) => item.name)
@@ -213,7 +221,7 @@
 																			{/if}
 																			{#if item.story_awards.some((storyAward) => hasMatch(storyAward.name))}
 																				<div class="flex gap-2 text-xs">
-																					<span class="whitespace-nowrap font-bold">Story Awards:</span>
+																					<span class="font-bold whitespace-nowrap">Story Awards:</span>
 																					<span class="flex-1 opacity-70">
 																						{item.story_awards
 																							.map((item) => item.name)
@@ -228,7 +236,7 @@
 																{:else if item.type === "log"}
 																	<div class="flex flex-col">
 																		<div>{item.name}</div>
-																		<div class="flex gap-2 divide-x divide-base-content/50 opacity-70">
+																		<div class="divide-base-content/50 flex gap-2 divide-x opacity-70">
 																			<span class="text-xs">{new Date(item.date).toLocaleDateString()}</span>
 																			{#if item.character}
 																				<span class="pl-2 text-xs">{item.character.name}</span>
@@ -240,13 +248,13 @@
 																		{#if search.length >= 2}
 																			{#if item.dm && hasMatch(item.dm.name)}
 																				<div class="flex gap-1 text-xs">
-																					<span class="whitespace-nowrap font-bold">DM:</span>
+																					<span class="font-bold whitespace-nowrap">DM:</span>
 																					<span class="flex-1 opacity-70">{item.dm.name}</span>
 																				</div>
 																			{/if}
 																			{#if item.magicItemsGained.length}
 																				<div class="flex gap-1 text-xs">
-																					<span class="whitespace-nowrap font-bold">Magic Items:</span>
+																					<span class="font-bold whitespace-nowrap">Magic Items:</span>
 																					<span class="flex-1 opacity-70">
 																						{item.magicItemsGained
 																							.map((it) => it.name)
@@ -262,7 +270,7 @@
 																			{/if}
 																			{#if item.storyAwardsGained.length}
 																				<div class="flex gap-2 text-xs">
-																					<span class="whitespace-nowrap font-bold">Story Awards:</span>
+																					<span class="font-bold whitespace-nowrap">Story Awards:</span>
 																					<span class="flex-1 opacity-70">
 																						{item.storyAwardsGained
 																							.map((it) => it.name)
@@ -292,7 +300,7 @@
 							</ScrollArea.Viewport>
 							<ScrollArea.Scrollbar
 								orientation="vertical"
-								class="flex h-full w-2.5 touch-none select-none rounded-full bg-base-200/50 p-px"
+								class="bg-base-200/50 flex h-full w-2.5 touch-none rounded-full p-px select-none"
 							>
 								<ScrollArea.Thumb class="relative flex-1 rounded-full bg-black/20 dark:bg-white/20" />
 							</ScrollArea.Scrollbar>

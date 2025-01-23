@@ -79,12 +79,12 @@
 </script>
 
 <div
-	class="flex flex-1 flex-col data-[col-no-items=true]:hidden data-[col-no-items=true]:md:flex"
+	class="flex flex-1 flex-col data-[col-no-items=true]:hidden md:data-[col-no-items=true]:flex"
 	data-col-no-items={collapsible && !items.length}
 >
 	{#if title}
 		<div role="presentation" onclick={collapsible ? () => (collapsed = !collapsed) : () => {}} onkeypress={() => {}}>
-			<h4 class="flex text-left font-semibold leading-8 dark:text-white [table_&]:leading-5">
+			<h4 class="flex text-left font-semibold leading-8 dark:text-white in-[table]:leading-5">
 				<span class="flex-1">
 					{title}
 				</span>
@@ -98,7 +98,7 @@
 		</div>
 	{/if}
 	<p
-		class="divide-x divide-black/50 text-sm leading-6 data-[collapsed=true]:hidden dark:divide-white/50 data-[collapsed=true]:md:inline print:text-xs data-[collapsed=true]:print:inline [table_&]:leading-5"
+		class="divide-x divide-black/50 text-sm leading-6 data-[collapsed=true]:hidden dark:divide-white/50 md:data-[collapsed=true]:inline print:text-xs print:data-[collapsed=true]:inline in-[table]:leading-5"
 		data-collapsed={collapsed}
 	>
 		{#if items.length}

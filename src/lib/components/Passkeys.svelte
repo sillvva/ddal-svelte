@@ -95,17 +95,17 @@
 </script>
 
 <ul class="menu menu-lg w-full px-0">
-	<li class="menu-title [&>*]:px-2">
+	<li class="menu-title *:px-2">
 		<span class="font-bold">Passkeys</span>
 	</li>
 	{#each authenticators as authenticator}
 		<li class="flex-row gap-2">
 			<button
-				class="group btn btn-ghost flex flex-1 gap-2 text-left hover:bg-base-200"
+				class="group btn btn-ghost hover:bg-base-200 flex flex-1 gap-2 text-left"
 				onclick={() => initRename(authenticator.credentialID, authenticator.name)}
 				aria-label="Rename Passkey"
 			>
-				<span class="iconify size-6 material-symbols--passkey group-hover:mdi--pencil"></span>
+				<span class="iconify material-symbols--passkey group-hover:mdi--pencil size-6"></span>
 				<span class="flex-1 overflow-hidden text-ellipsis whitespace-nowrap">{authenticator.name}</span>
 			</button>
 			<button
@@ -116,7 +116,7 @@
 				}}
 				aria-label="Delete Passkey"
 			>
-				<span class="iconify size-6 mdi--delete"></span>
+				<span class="iconify mdi--delete size-6"></span>
 			</button>
 		</li>
 	{/each}
@@ -131,14 +131,14 @@
 					})
 					.catch(console.error)}
 		>
-			<span class="iconify size-6 mdi--plus"></span>
+			<span class="iconify mdi--plus size-6"></span>
 			<span>Add Passkey</span>
 		</button>
 	</li>
 </ul>
 
 <dialog
-	class="modal !bg-base-300/75"
+	class="modal bg-base-300/75!"
 	open={!!renaming}
 	aria-labelledby="modal-title"
 	aria-describedby="modal-content"
@@ -153,11 +153,11 @@
 >
 	{#if renaming}
 		<div
-			class="modal-box relative cursor-default bg-base-100 drop-shadow-lg"
+			class="modal-box bg-base-100 relative cursor-default drop-shadow-lg"
 			transition:scale={{ duration: 250, opacity: 0.75, start: 0.85 }}
 		>
 			<button
-				class="btn btn-circle btn-ghost btn-sm absolute right-2 top-2"
+				class="btn btn-circle btn-ghost btn-sm absolute top-2 right-2"
 				onclick={() => renameWebAuthn(true)}
 				aria-label="Close"
 				disabled={renaming === "saving"}
@@ -179,7 +179,7 @@
 						placeholder="Passkey Name"
 						bind:value={renameName}
 						bind:this={renameRef}
-						class="input input-bordered w-full focus:border-primary"
+						class="input focus:border-primary w-full"
 						maxlength="20"
 						required
 					/>

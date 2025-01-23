@@ -130,10 +130,7 @@
 				<a href={`/characters/${data.character.id}/edit`} class="btn btn-primary btn-sm">Edit</a>
 				<Dropdown class="dropdown-end">
 					{#snippet children({ close })}
-						<summary tabindex="0" class="btn btn-sm">
-							<span class="iconify size-6 mdi--dots-horizontal"></span>
-						</summary>
-						<ul class="menu dropdown-content z-20 w-52 rounded-box bg-base-200 p-2 shadow">
+						<ul class="menu dropdown-content rounded-box bg-base-300 z-20 w-52 shadow-sm">
 							<li use:close>
 								<button
 									use:download={{
@@ -153,10 +150,7 @@
 			</div>
 			<Dropdown class="dropdown-end sm:hidden">
 				{#snippet children({ close })}
-					<summary tabindex="0" class="btn">
-						<span class="iconify size-6 mdi--dots-horizontal"></span>
-					</summary>
-					<ul class="menu dropdown-content z-20 w-52 rounded-box bg-base-200 p-2 shadow">
+					<ul class="menu dropdown-content rounded-box bg-base-300 z-20 w-52 p-2 shadow-sm">
 						{#if data.character.imageUrl}
 							<li class="xs:hidden" use:close>
 								<a
@@ -188,12 +182,12 @@
 	<div class="flex flex-1 flex-col gap-6">
 		<div class="flex">
 			{#if data.character.imageUrl}
-				<div class="relative mr-4 hidden w-20 flex-col items-end justify-center xs:max-md:flex print:hidden">
+				<div class="xs:max-md:flex relative mr-4 hidden w-20 flex-col items-end justify-center print:hidden">
 					<a
 						href={data.character.imageUrl}
 						target="_blank"
 						rel="noreferrer noopener"
-						class="mask mask-squircle mx-auto h-20 bg-primary"
+						class="mask mask-squircle bg-primary mx-auto h-20"
 						use:transition={"image-" + data.character.id}
 						onclick={(e) => {
 							e.preventDefault();
@@ -209,12 +203,12 @@
 				</div>
 			{/if}
 			<div class="flex w-full flex-col">
-				<div class="mb-2 flex gap-4 xs:mb-0">
-					<h3 class="flex-1 py-2 font-vecna text-3xl font-bold text-black dark:text-white sm:py-0 sm:text-4xl">
+				<div class="xs:mb-0 mb-2 flex gap-4">
+					<h3 class="font-vecna flex-1 py-2 text-3xl font-bold text-black sm:py-0 sm:text-4xl dark:text-white">
 						{data.character.name}
 					</h3>
 				</div>
-				<p class="flex-1 text-xs font-semibold xs:text-sm">
+				<p class="xs:text-sm flex-1 text-xs font-semibold">
 					{data.character.race}
 					{data.character.class}
 				</p>
@@ -227,7 +221,7 @@
 								href={data.character.characterSheetUrl}
 								target="_blank"
 								rel="noreferrer noopner"
-								class="font-semibold text-secondary dark:drop-shadow-sm"
+								class="text-secondary font-semibold dark:drop-shadow-xs"
 							>
 								Character Sheet
 							</a>
@@ -236,15 +230,15 @@
 				</p>
 			</div>
 		</div>
-		<div class="flex flex-1 flex-wrap gap-4 xs:flex-nowrap sm:gap-4 md:gap-6 print:flex-nowrap print:gap-2">
-			<div class="flex basis-full flex-col gap-2 xs:basis-[40%] sm:basis-1/3 sm:gap-4 md:basis-52 print:basis-1/3 print:gap-2">
+		<div class="xs:flex-nowrap flex flex-1 flex-wrap gap-4 sm:gap-4 md:gap-6 print:flex-nowrap print:gap-2">
+			<div class="xs:basis-[40%] flex basis-full flex-col gap-2 sm:basis-1/3 sm:gap-4 md:basis-52 print:basis-1/3 print:gap-2">
 				{#if data.character.imageUrl}
 					<div class="relative hidden flex-col items-end justify-center md:flex print:hidden">
 						<a
 							href={data.character.imageUrl}
 							target="_blank"
 							rel="noreferrer noopener"
-							class="mask mask-squircle mx-auto h-52 w-full bg-primary"
+							class="mask mask-squircle bg-primary mx-auto h-52 w-full"
 							use:transition={"image-" + data.character.id}
 							onclick={(e) => {
 								e.preventDefault();
@@ -284,11 +278,11 @@
 			</div>
 			<div
 				class={[
-					"divider hidden xs:divider-horizontal xs:mx-0 xs:flex print:flex",
+					"divider xs:divider-horizontal xs:mx-0 xs:flex hidden print:flex",
 					"before:bg-black/50 after:bg-black/50 dark:before:bg-white/50 dark:after:bg-white/50"
 				].join(" ")}
 			></div>
-			<div class="flex basis-full flex-col xs:basis-[60%] sm:basis-2/3 lg:basis-2/3 print:basis-2/3">
+			<div class="xs:basis-[60%] flex basis-full flex-col sm:basis-2/3 lg:basis-2/3 print:basis-2/3">
 				{#if data.character}
 					<div class="flex flex-col gap-4">
 						<Items title="Story Awards" items={data.character.story_awards} collapsible sort />
@@ -320,7 +314,7 @@
 				class="btn btn-primary sm:btn-sm sm:hidden sm:px-3"
 				aria-label="New Log"
 			>
-				<span class="iconify size-6 mdi--plus"></span>
+				<span class="iconify mdi--plus size-6"></span>
 			</a>
 			<button
 				class="btn data-[desc=true]:btn-primary sm:hidden"
@@ -331,9 +325,9 @@
 				tabindex="0"
 			>
 				{#if global.app.log.descriptions}
-					<span class="iconify size-6 mdi--note-text"></span>
+					<span class="iconify mdi--note-text size-6"></span>
 				{:else}
-					<span class="iconify size-6 mdi--note-text-outline"></span>
+					<span class="iconify mdi--note-text-outline size-6"></span>
 				{/if}
 			</button>
 		{/if}
@@ -349,9 +343,9 @@
 			tabindex="0"
 		>
 			{#if global.app.log.descriptions}
-				<span class="iconify size-6 mdi--eye"></span>
+				<span class="iconify mdi--eye size-6"></span>
 			{:else}
-				<span class="iconify size-6 mdi--eye-off"></span>
+				<span class="iconify mdi--eye-off size-6"></span>
 			{/if}
 			<span class="max-sm:hidden">Notes</span>
 		</button>
@@ -359,7 +353,7 @@
 </div>
 
 <section class="mt-4">
-	<div class="w-full overflow-x-auto rounded-lg bg-base-200">
+	<div class="bg-base-200 w-full overflow-x-auto rounded-lg">
 		<table class="table w-full leading-5">
 			<thead>
 				<tr class="bg-base-300 text-base-content/70">
@@ -376,26 +370,26 @@
 					{@const hasDescription =
 						!!log.description?.trim() || log.storyAwardsGained.length > 0 || log.storyAwardsLost.length > 0}
 					<tr
-						class="data-[deleting=true]:hidden print:text-sm [&>td]:border-b-0 [&>td]:border-t [&>td]:border-t-base-300"
+						class="[&>td]:border-t-base-300 data-[deleting=true]:hidden print:text-sm [&>td]:border-t [&>td]:border-b-0"
 						data-deleting={deletingLog.includes(log.id)}
 					>
 						<td
-							class="!static pb-0 align-top data-[desc=true]:pb-3 sm:pb-3 print:p-2"
+							class="static! pb-0 align-top data-[desc=true]:pb-3 sm:pb-3 print:p-2"
 							data-desc={hasDescription && global.app.log.descriptions}
 						>
 							{#if myCharacter}
 								<a
 									href={log.isDmLog ? `/dm-logs/${log.id}` : `/characters/${log.characterId}/log/${log.id}`}
-									class="whitespace-pre-wrap text-left font-semibold text-secondary"
+									class="text-secondary text-left font-semibold whitespace-pre-wrap"
 								>
 									<SearchResults text={log.name} {search}></SearchResults>
 								</a>
 							{:else}
-								<span class="whitespace-pre-wrap text-left font-semibold">
+								<span class="text-left font-semibold whitespace-pre-wrap">
 									<SearchResults text={log.name} {search}></SearchResults>
 								</span>
 							{/if}
-							<p class="text-netural-content mb-2 whitespace-nowrap text-sm font-normal">
+							<p class="text-netural-content mb-2 text-sm font-normal whitespace-nowrap">
 								{new Date(log.show_date).toLocaleString([], { dateStyle: "medium", timeStyle: "short" })}
 							</p>
 							{#if log.dm && log.type === "game" && log.dm.uid !== data.character.userId}
@@ -486,7 +480,7 @@
 							{#if log.magicItemsGained.length > 0 || log.magicItemsLost.length > 0}
 								<div>
 									<Items title="Magic Items:" items={log.magicItemsGained} {search} sort />
-									<div class="whitespace-pre-wrap text-sm line-through">
+									<div class="text-sm whitespace-pre-wrap line-through">
 										<SearchResults text={log.magicItemsLost.map((mi) => mi.name).join(" | ")} {search} />
 									</div>
 								</div>
@@ -503,7 +497,7 @@
 					</tr>
 					<!-- Notes -->
 					<tr
-						class="hidden data-[desc=true]:table-row data-[deleting=true]:!hidden data-[mi=true]:max-sm:table-row"
+						class="hidden data-[deleting=true]:hidden! data-[desc=true]:table-row max-sm:data-[mi=true]:table-row"
 						data-deleting={deletingLog.includes(log.id)}
 						data-desc={global.app.log.descriptions && hasDescription}
 						data-mi={log.magicItemsGained.length > 0 || log.magicItemsLost.length > 0}
@@ -518,7 +512,7 @@
 								<div class="mt-2 sm:hidden print:hidden">
 									<Items title="Magic Items:" items={log.magicItemsGained} {search} sort />
 									{#if log.magicItemsLost.length}
-										<p class="mt-2 whitespace-pre-wrap text-sm line-through">
+										<p class="mt-2 text-sm whitespace-pre-wrap line-through">
 											<SearchResults text={log.magicItemsLost.map((mi) => mi.name).join(" | ")} {search} />
 										</p>
 									{/if}
@@ -526,7 +520,7 @@
 							{/if}
 							{#if log.storyAwardsGained.length > 0 || log.storyAwardsLost.length > 0}
 								{#each log.storyAwardsGained as mi}
-									<div class="mt-2 whitespace-pre-wrap text-sm">
+									<div class="mt-2 text-sm whitespace-pre-wrap">
 										<span class="pr-2 font-semibold dark:text-white print:block">
 											{mi.name}{mi.description ? ":" : ""}
 										</span>
@@ -536,7 +530,7 @@
 									</div>
 								{/each}
 								{#if log.storyAwardsLost.length}
-									<p class="whitespace-pre-wrap text-sm line-through">
+									<p class="text-sm whitespace-pre-wrap line-through">
 										{log.storyAwardsLost.map((mi) => mi.name).join(" | ")}
 									</p>
 								{/if}

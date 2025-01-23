@@ -61,21 +61,21 @@
 		in:fade={{ duration: 200, delay: 500 }}
 		out:fade={{ duration: 200 }}
 	>
-		<span class="loading loading-spinner w-16 text-secondary"></span>
+		<span class="loading loading-spinner text-secondary w-16"></span>
 	</div>
 {/if}
 
 <div class="relative isolate flex min-h-screen flex-col">
 	<header
-		class="sticky top-0 z-20 w-full border-b border-base-300 bg-base-100 transition-all"
+		class="border-base-300 bg-base-100 sticky top-0 z-20 w-full border-b transition-all"
 		style:view-transition-name="header"
 	>
-		<nav class="container relative z-10 mx-auto flex max-w-5xl gap-2 p-4">
+		<nav class="relative z-10 container mx-auto flex max-w-5xl gap-2 p-4">
 			<Drawer />
-			<div class="inline max-w-10 shrink-0 flex-grow-[1] sm:hidden">&nbsp;</div>
+			<div class="inline max-w-10 shrink-0 flex-grow-1 sm:hidden">&nbsp;</div>
 			<a
 				href={data.session?.user ? "/characters" : "/"}
-				class="flex min-w-fit flex-1 flex-col text-center font-draconis sm:flex-none"
+				class="font-draconis flex min-w-fit flex-1 flex-col text-center sm:flex-none"
 				aria-label="Home"
 			>
 				<h1 class="text-base leading-4 text-black dark:text-white">Adventurers League</h1>
@@ -87,14 +87,14 @@
 				<a href="/dms" class="hidden items-center p-2 md:flex">DMs</a>
 			{/if}
 			<div class="flex-1 max-sm:hidden">&nbsp;</div>
-			<div class="flex gap-4">
+			<div class="flex items-center gap-4">
 				{#if data.session?.user}
 					<CommandTray />
 					<Settings />
 				{:else}
 					<a
 						href={`/?redirect=${encodeURIComponent(`${page.url.pathname}${page.url.search}`)}`}
-						class="flex h-12 items-center gap-2 rounded-lg bg-base-200/50 p-2 text-base-content transition-colors hover:bg-base-300"
+						class="bg-base-200/50 text-base-content hover:bg-base-300 flex h-12 items-center gap-2 rounded-lg p-2 transition-colors"
 					>
 						<span class="flex h-full flex-1 items-center justify-center font-semibold">Sign In</span>
 					</a>
@@ -102,10 +102,10 @@
 			</div>
 		</nav>
 	</header>
-	<div class="container relative z-10 mx-auto max-w-5xl flex-1 p-4">
+	<div class="relative z-10 container mx-auto max-w-5xl flex-1 p-4">
 		{@render children()}
 	</div>
-	<footer class="z-16 footer footer-center relative border-t border-base-300 p-4 text-base-content print:hidden">
+	<footer class="footer footer-center border-base-300 text-base-content relative z-16 border-t p-4 print:hidden">
 		<div>
 			<p>
 				The name
@@ -124,7 +124,7 @@
 <Toaster richColors closeButton theme={global.app.settings.mode} />
 
 <dialog
-	class="modal !bg-base-300/75"
+	class="modal bg-base-300/75!"
 	open={!!page.state.modal || undefined}
 	aria-labelledby="modal-title"
 	aria-describedby="modal-content"
@@ -139,8 +139,8 @@
 >
 	{#if page.state.modal}
 		{#if page.state.modal.type === "text"}
-			<div class="modal-box relative cursor-default bg-base-100 drop-shadow-lg">
-				<button class="btn btn-circle btn-ghost btn-sm absolute right-2 top-2" onclick={() => history.back()} aria-label="Close">
+			<div class="modal-box bg-base-100 relative cursor-default drop-shadow-lg">
+				<button class="btn btn-circle btn-ghost btn-sm absolute top-2 right-2" onclick={() => history.back()} aria-label="Close">
 					<span class="iconify mdi--close"></span>
 				</button>
 				<h3 id="modal-title" class="cursor-text text-lg font-bold text-black dark:text-white">{page.state.modal.name}</h3>
@@ -150,7 +150,7 @@
 				<Markdown
 					id="modal-content"
 					content={page.state.modal.description}
-					class="sm:text-md cursor-text whitespace-pre-wrap pt-4 text-sm"
+					class="sm:text-md cursor-text pt-4 text-sm whitespace-pre-wrap"
 				/>
 			</div>
 		{/if}
@@ -160,7 +160,7 @@
 				<img
 					src={page.state.modal.imageUrl}
 					alt={page.state.modal.name}
-					class="relative max-h-dvh w-full max-w-screen-xs"
+					class="relative max-h-dvh w-full max-w-(--breakpoint-xs)"
 					id="modal-content"
 				/>
 			</div>

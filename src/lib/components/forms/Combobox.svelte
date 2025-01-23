@@ -127,8 +127,8 @@
 		open = false;
 	}}
 >
-	<label for={ids.trigger} class="label">
-		<span class="label-text">
+	<label for={ids.trigger} class="fieldset-legend">
+		<span>
 			{label}
 			{#if required}
 				<span class="text-error">*</span>
@@ -140,7 +140,7 @@
 			<label>
 				<Combobox.Input asChild let:builder>
 					<input
-						class="input join-item input-bordered w-full focus:border-primary"
+						class="input join-item focus:border-primary w-full"
 						oninput={(e) => {
 							let cValue = e.currentTarget.value;
 							if (selectedItem && selectedItem.label !== cValue) selectedItem = undefined;
@@ -163,14 +163,14 @@
 			</label>
 			{#if (showOnEmpty || $input?.trim()) && filtered.length}
 				<Combobox.Content asChild let:builder>
-					<ul class="menu dropdown-content z-10 w-full rounded-lg bg-base-200 p-2 shadow" use:builder.action {...builder}>
+					<ul class="menu dropdown-content bg-base-200 z-10 w-full rounded-lg p-2 shadow-sm" use:builder.action {...builder}>
 						{#each filtered.slice(0, 8) as item}
 							<Combobox.Item asChild value={item.value} label={item.label} let:builder>
 								<li
 									class={[
 										"hover:bg-primary/50",
-										"data-[highlighted]:bg-primary data-[highlighted]:text-primary-content",
-										"data-[selected]:bg-primary data-[selected]:font-bold data-[selected]:text-primary-content"
+										"data-highlighted:bg-primary data-highlighted:text-primary-content",
+										"data-selected:bg-primary data-selected:text-primary-content data-selected:font-bold"
 									].join(" ")}
 									use:builder.action
 									{...builder}
@@ -190,7 +190,7 @@
 		</div>
 		{#if $input && clearable}
 			<button
-				class="btn join-item input-bordered"
+				class="btn join-item border-base-content/20 border"
 				type="button"
 				onclick={(ev) => {
 					ev.preventDefault();
@@ -198,35 +198,35 @@
 				}}
 				aria-label="Clear"
 			>
-				<span class="iconify size-6 bg-red-500 mdi--close"></span>
+				<span class="iconify mdi--close size-6 bg-red-500"></span>
 			</button>
 		{/if}
 		{#if link}
-			<a href={link} class="btn join-item input-bordered" role="button" target="_blank" aria-label="Edit">
-				<span class="iconify size-6 mdi--pencil"></span>
+			<a href={link} class="btn join-item border-base-content/20 border" role="button" target="_blank" aria-label="Edit">
+				<span class="iconify mdi--pencil size-6"></span>
 			</a>
 		{/if}
 		{#if dev}
 			<button
 				type="button"
-				class="btn join-item input-bordered"
+				class="btn join-item border-base-content/20 border"
 				onclick={(ev) => {
 					ev.preventDefault();
 					debug = !debug;
 				}}
 				aria-label="Debug"
 			>
-				<span class="iconify size-6 mdi--information-outline"></span>
+				<span class="iconify mdi--information-outline size-6"></span>
 			</button>
 		{/if}
 	</div>
 	{#if name}<Combobox.HiddenInput {name} />{/if}
 	{#if $errors?.length || description}
-		<label for={inputField} class="label">
+		<label for={inputField} class="fieldset-label">
 			{#if $errors?.length}
-				<span class="label-text-alt text-error">{$errors[0]}</span>
+				<span class="text-error">{$errors[0]}</span>
 			{:else}
-				<span class="label-text-alt text-neutral-500">{description}</span>
+				<span class="text-neutral-500">{description}</span>
 			{/if}
 		</label>
 	{/if}

@@ -43,6 +43,6 @@
 	);
 </script>
 
-<button type="button" class="menu-item-error" aria-label="Delete Character" onclick={submit}>
+<button type="button" class="hover:bg-error" aria-label="Delete Character" onclick={submit}>
 	{label}
 </button>
