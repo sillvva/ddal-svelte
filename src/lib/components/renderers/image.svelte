@@ -12,7 +12,7 @@
 	const aspect = $derived(dText.includes("no-aspect") ? "" : "aspect-video");
 </script>
 
-<figure class="mb-6 mt-6 flex flex-col">
+<figure class="mt-6 mb-6 flex flex-col">
 	<a
 		{href}
 		target="_blank"

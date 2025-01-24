@@ -28,14 +28,14 @@
 			<button
 				type="button"
 				tabindex="-1"
-				class="btn join-item min-w-fit flex-2 basis-0 cursor-default border-base-200! bg-base-300!"
+				class="btn join-item border-base-200! bg-base-300! min-w-fit flex-2 basis-0 cursor-default"
 			>
 				Magic Items
 				{#if $form.magicItemsGained.length > 0}
-					<span class="badge badge-success badge-outline rounded-sm max-xs:px-1">{$form.magicItemsGained.length}</span>
+					<span class="badge badge-success badge-outline max-xs:px-1 rounded-sm">{$form.magicItemsGained.length}</span>
 				{/if}
 				{#if $form.magicItemsLost.length > 0}
-					<span class="badge badge-error badge-outline rounded-sm max-xs:px-1">{$form.magicItemsLost.length}</span>
+					<span class="badge badge-error badge-outline max-xs:px-1 rounded-sm">{$form.magicItemsLost.length}</span>
 				{/if}
 			</button>
 			<button
@@ -65,14 +65,14 @@
 				<button
 					type="button"
 					tabindex="-1"
-					class="btn join-item min-w-fit flex-2 basis-0 cursor-default border-base-200! bg-base-300!"
+					class="btn join-item border-base-200! bg-base-300! min-w-fit flex-2 basis-0 cursor-default"
 				>
 					Story Awards
 					{#if $form.storyAwardsGained.length > 0}
-						<span class="badge badge-success badge-outline rounded-sm max-xs:px-1">{$form.storyAwardsGained.length}</span>
+						<span class="badge badge-success badge-outline max-xs:px-1 rounded-sm">{$form.storyAwardsGained.length}</span>
 					{/if}
 					{#if $form.storyAwardsLost.length > 0}
-						<span class="badge badge-error badge-outline rounded-sm max-xs:px-1">{$form.storyAwardsLost.length}</span>
+						<span class="badge badge-error badge-outline max-xs:px-1 rounded-sm">{$form.storyAwardsLost.length}</span>
 					{/if}
 				</button>
 				<button

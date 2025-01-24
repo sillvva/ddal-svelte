@@ -54,13 +54,13 @@
 			<Search bind:value={search} placeholder="Search" />
 		</section>
 		<section>
-			<div class="w-full overflow-x-auto rounded-lg bg-base-200">
+			<div class="bg-base-200 w-full overflow-x-auto rounded-lg">
 				<table class="table w-full">
 					<thead>
 						<tr class="bg-base-300 text-base-content/70">
 							<th class="">DM</th>
-							<th class="hidden xs:table-cell">DCI</th>
-							<th class="hidden xs:table-cell">Logs</th>
+							<th class="xs:table-cell hidden">DCI</th>
+							<th class="xs:table-cell hidden">Logs</th>
 							<th class="print:hidden"></th>
 						</tr>
 					</thead>
@@ -77,20 +77,20 @@
 									<td>
 										<a
 											href="/dms/{dm.id}"
-											class="whitespace-pre-wrap text-left font-semibold text-secondary"
+											class="text-secondary text-left font-semibold whitespace-pre-wrap"
 											aria-label="Edit DM"
 										>
 											<SearchResults text={dm.name} {search} />
 										</a>
-										<div class="block xs:hidden">
+										<div class="xs:hidden block">
 											{#if dm.DCI}
 												<p class="text-xs text-gray-500">DCI: <SearchResults text={dm.DCI} {search} /></p>
 											{/if}
 											<p class="text-xs text-gray-500">{dm.logs.length} logs</p>
 										</div>
 									</td>
-									<td class="hidden xs:table-cell"><SearchResults text={dm.DCI || ""} {search} /></td>
-									<td class="hidden xs:table-cell">{dm.logs.length}</td>
+									<td class="xs:table-cell hidden"><SearchResults text={dm.DCI || ""} {search} /></td>
+									<td class="xs:table-cell hidden">{dm.logs.length}</td>
 									<td class="w-16 print:hidden">
 										<div class="flex flex-row justify-end gap-2">
 											{#if dm.logs.length == 0}

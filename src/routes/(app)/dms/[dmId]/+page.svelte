@@ -31,7 +31,7 @@
 	<div class="mt-4 flex flex-col gap-4 sm:mt-8">
 		<section>
 			<h2 class="mb-2 text-2xl">Logs</h2>
-			<div class="w-full overflow-x-auto rounded-lg bg-base-100">
+			<div class="bg-base-100 w-full overflow-x-auto rounded-lg">
 				{#if data.dm.logs.length == 0}
 					<p>This DM has no logs.</p>
 					<DeleteDm dm={data.dm} label="Delete DM" ondelete={() => goto("/dms")} />
