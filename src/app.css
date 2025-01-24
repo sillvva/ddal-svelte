@@ -112,28 +112,13 @@
 		box-sizing: border-box;
 		min-width: 0;
 	}
-	*,
-	::after,
-	::before,
-	::backdrop,
-	::file-selector-button {
-		border-color: var(--color-gray-200, currentColor);
-	}
 	body {
 		overflow-x: hidden;
 		overflow-y: scroll;
 		min-height: 100vh;
 	}
-	thead {
-		display: table-row-group;
-	}
-	@keyframes reveal-dark {
-		from {
-			clip-path: polygon(50% -71%, -50% 71%, -50% 71%, 50% -71%);
-		}
-		to {
-			clip-path: polygon(50% -71%, -50% 71%, 50% 171%, 171% 50%);
-		}
+	.super-debug {
+		width: 100%;
 	}
 }
 
@@ -301,5 +286,13 @@
 	&::view-transition-new(root) {
 		animation-name: reveal-dark;
 		will-change: clip-path;
+	}
+	@keyframes reveal-dark {
+		from {
+			clip-path: polygon(50% -71%, -50% 71%, -50% 71%, 50% -71%);
+		}
+		to {
+			clip-path: polygon(50% -71%, -50% 71%, 50% 171%, 171% 50%);
+		}
 	}
 }

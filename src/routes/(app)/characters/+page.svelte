@@ -183,10 +183,7 @@
 				class="xs:data-[display=grid]:hidden w-full overflow-x-auto rounded-lg data-[display=grid]:block"
 				data-display={global.app.characters.display}
 			>
-				<div
-					class="grid-table grid-characters-mobile sm:grid-characters data-[mobile=true]:sm:grid-characters-mobile-sm bg-base-200"
-					data-mobile={data.mobile}
-				>
+				<div class="grid-table grid-characters-mobile sm:grid-characters hover-none:sm:grid-characters-mobile-sm bg-base-200">
 					<header class="text-base-content/70 hidden! sm:contents!">
 						{#if !data.mobile}
 							<div class="max-sm:hidden"></div>
