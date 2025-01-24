@@ -14,7 +14,7 @@
 		{type}
 		bind:value
 		oninput={(e) => ($s = e.currentTarget.value || null)}
-		class={twMerge("input sm:input-sm w-full flex-1", className)}
+		class={twMerge("input sm:input-sm focus:border-primary w-full flex-1", className)}
 		aria-label={rest.placeholder || "Search"}
 		{...rest}
 	/>

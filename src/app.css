@@ -15,7 +15,7 @@
 	--font-draconis: "Draconis";
 	--font-vecna: "Vecna";
 
-	--color-input-focus: oklch(from var(--color-base-content) l c h / 0.2);
+	--color-input-focus: color-mix(in oklch, var(--color-base-content) 30%, transparent);
 }
 
 @plugin "daisyui";
@@ -190,7 +190,7 @@
 			border-right-width: 1px;
 		}
 		&:hover:not(.btn-primary, .btn-error) {
-			border-color: oklch(from var(--color-base-content) l c h / 0.4);
+			border-color: color-mix(in oklch, var(--color-base-content) 40%, transparent);
 		}
 	}
 }
