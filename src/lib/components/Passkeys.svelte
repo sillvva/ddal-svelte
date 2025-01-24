@@ -164,7 +164,7 @@
 			>
 				<span class="iconify mdi--close"></span>
 			</button>
-			<h3 id="modal-title" class="mb-4 cursor-text text-lg font-bold text-black dark:text-white">Rename Passkey</h3>
+			<h3 id="modal-title" class="text-base-content mb-4 cursor-text text-lg font-bold">Rename Passkey</h3>
 			<form
 				onsubmit={(e) => {
 					e.preventDefault();

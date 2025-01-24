@@ -75,7 +75,8 @@
 	prefersdark: false;
 	color-scheme: dark;
 
-	--color-secondary: oklch(72.67% 0.1872 308.45);
+	--color-secondary: oklch(58.8664% 0.104092 60.664655);
+	--color-secondary-content: oklch(100% 0 0);
 	--color-error: oklch(57.56% 0.1894 37.76);
 	--color-error-content: oklch(100% 0 0);
 }
@@ -86,7 +87,8 @@
 	prefersdark: false;
 	color-scheme: light;
 
-	--color-secondary: oklch(50.8664% 0.104092 60.664655);
+	--color-secondary: oklch(64.38% 0.2633 287.85);
+	--color-secondary-content: oklch(100% 0 0);
 }
 
 @plugin "daisyui/theme" {
@@ -158,19 +160,6 @@
 		font-weight: bold;
 		font-style: normal;
 		font-display: swap;
-	}
-}
-
-@utility btn-primary {
-	background-color: var(--color-primary);
-	color: var(--color-white);
-}
-
-@utility text-black {
-	@media print {
-		& dark:text-white {
-			color: var(--color-gray-700);
-		}
 	}
 }
 

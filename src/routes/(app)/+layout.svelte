@@ -78,7 +78,7 @@
 				class="font-draconis flex min-w-fit flex-1 flex-col text-center sm:flex-none"
 				aria-label="Home"
 			>
-				<h1 class="text-base leading-4 text-black dark:text-white">Adventurers League</h1>
+				<h1 class="text-base-content text-base leading-4">Adventurers League</h1>
 				<h2 class="text-3xl leading-7">Log Sheet</h2>
 			</a>
 			{#if data.session?.user}
@@ -143,7 +143,7 @@
 				<button class="btn btn-circle btn-ghost btn-sm absolute top-2 right-2" onclick={() => history.back()} aria-label="Close">
 					<span class="iconify mdi--close"></span>
 				</button>
-				<h3 id="modal-title" class="cursor-text text-lg font-bold text-black dark:text-white">{page.state.modal.name}</h3>
+				<h3 id="modal-title" class="text-base-content cursor-text text-lg font-bold">{page.state.modal.name}</h3>
 				{#if page.state.modal.date}
 					<p class="text-xs">{page.state.modal.date.toLocaleString()}</p>
 				{/if}
