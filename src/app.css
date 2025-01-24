@@ -2,8 +2,17 @@
 @config '../tailwind.config.ts';
 
 @variant dark (&:where(.dark, .dark *));
-@variant hover-hover (@media (hover: hover));
-@variant hover-none (@media (hover: none));
+
+@custom-variant hover-hover {
+	@media (hover: hover) {
+		@slot;
+	}
+}
+@custom-variant hover-none {
+	@media (hover: none) {
+		@slot;
+	}
+}
 
 @theme {
 	--breakpoint-xs: 500px;
@@ -157,18 +166,6 @@
 	color: var(--color-white);
 }
 
-@utility grid-characters {
-	grid-template-columns: auto 1fr auto auto auto;
-}
-
-@utility grid-characters-mobile {
-	grid-template-columns: 1fr;
-}
-
-@utility grid-characters-mobile-sm {
-	grid-template-columns: 1fr auto auto auto;
-}
-
 @utility text-black {
 	@media print {
 		& dark:text-white {
@@ -235,6 +232,18 @@
 	&[aria-invalid] {
 		@apply select-error;
 	}
+}
+
+@utility grid-characters {
+	grid-template-columns: auto 1fr auto auto auto;
+}
+
+@utility grid-characters-mobile {
+	grid-template-columns: 1fr;
+}
+
+@utility grid-characters-mobile-sm {
+	grid-template-columns: 1fr auto auto auto;
 }
 
 @utility grid-table {
