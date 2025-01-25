@@ -40,13 +40,6 @@
 	<meta property="og:type" content="website" />
 	<meta property="og:locale" content="en_US" />
 	<meta property="og:url" content={page.url.toString()} />
-	<meta name="twitter:card" content="summary_large_image" />
-	<meta name="twitter:creator" content="@sillvvasensei" />
-	<meta name="twitter:creator:id" content="1006748654391169029" />
-	<meta name="twitter:title" content={title.trim()} />
-	<meta name="twitter:site" content="Adventurers League Log Sheet" />
-	<meta name="twitter:description" content={description.trim()} />
-	<meta name="twitter:image" content={image.trim()} />
 	<link rel="canonical" href={page.url.toString()} />
 </svelte:head>
 
