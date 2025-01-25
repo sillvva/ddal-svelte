@@ -94,9 +94,9 @@
 			{#snippet children({ close })}
 				<ul class="menu dropdown-content rounded-box bg-base-300 w-52 shadow-sm">
 					<li use:close>
-						<button use:download={{ blob: new Blob([JSON.stringify(data.characters)]), filename: "characters.json" }}
-							>Export</button
-						>
+						<button use:download={{ blob: new Blob([JSON.stringify(data.characters)]), filename: "characters.json" }}>
+							Export
+						</button>
 					</li>
 				</ul>
 			{/snippet}
