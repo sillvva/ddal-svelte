@@ -53,10 +53,12 @@
 		{#each PROVIDERS as provider}
 			<button
 				class="bg-base-200 text-base-content hover:bg-base-300 flex h-16 items-center gap-4 rounded-lg px-8 py-4 transition-colors"
-				onclick={() =>
+				onclick={() => {
+					console.log("Signing in with", provider.name);
 					signIn(provider.id, {
 						callbackUrl: data.redirectTo || "/characters"
-					})}
+					});
+				}}
 				aria-label="Sign in with {provider.name}"
 			>
 				<span class={twMerge("iconify-color h-8 w-8", provider.iconify)}></span>
@@ -66,11 +68,13 @@
 		<hr class="border-base-content" />
 		<button
 			class="bg-base-200 text-base-content hover:bg-base-300 flex h-16 items-center gap-4 rounded-lg px-8 py-4 transition-colors"
-			onclick={() =>
+			onclick={() => {
+				console.log("Signing in with Passkey");
 				passkey("webauthn", {
 					callbackUrl: data.redirectTo || "/characters",
 					action: "authenticate"
-				})}
+				});
+			}}
 			aria-label="Sign in with Passkey"
 		>
 			<span class="iconify material-symbols--passkey h-8 w-8"></span>
