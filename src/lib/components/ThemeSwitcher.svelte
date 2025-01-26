@@ -20,7 +20,7 @@
 
 	$effect(() => {
 		if (theme !== global.app.settings.theme || mode !== global.app.settings.mode) {
-			document.documentElement.dataset.switcher = theme;
+			document.documentElement.classList.add("theme-switcher");
 			createTransition(
 				() => {
 					global.app.settings.theme = theme;
@@ -31,7 +31,7 @@
 					document.documentElement.dataset.theme = current;
 				},
 				() => {
-					delete document.documentElement.dataset.switcher;
+					document.documentElement.classList.remove("theme-switcher");
 				},
 				800
 			);
@@ -39,7 +39,7 @@
 	});
 </script>
 
-<select class="select select-bordered select-sm leading-4" bind:value={theme}>
+<select class="select select-bordered select-sm flex-1 leading-4" bind:value={theme}>
 	<option value="system" selected={global.app.settings.theme === "system"}>System</option>
 	{#each themeGroups as group}
 		<hr />

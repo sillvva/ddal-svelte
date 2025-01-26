@@ -96,10 +96,7 @@
 		<BreadCrumbs />
 		<Dropdown class="dropdown-end">
 			{#snippet children({ close })}
-				<summary tabindex="0" class="btn btn-sm">
-					<span class="iconify size-6 mdi--dots-horizontal"></span>
-				</summary>
-				<ul class="menu dropdown-content w-52 rounded-box bg-base-200 p-2 shadow">
+				<ul class="menu dropdown-content rounded-box bg-base-300 w-52 shadow-sm">
 					<li use:close>
 						<button use:download={{ blob: new Blob([JSON.stringify(logs)]), filename: "dm-logs.json" }}>Export</button>
 					</li>
@@ -113,7 +110,7 @@
 			<a href="/dm-logs/new" class="btn btn-primary btn-sm max-sm:hidden" aria-label="New Log">New Log</a>
 			<Search bind:value={search} placeholder="Search by name, race, class, items, etc." />
 			<a href="/dm-logs/new" class="btn btn-primary inline-flex sm:hidden" aria-label="New Log">
-				<span class="iconify inline size-6 mdi--plus"></span>
+				<span class="iconify mdi--plus inline size-6"></span>
 			</a>
 		</div>
 		<div class="flex gap-2">
@@ -126,9 +123,9 @@
 				tabindex="0"
 			>
 				{#if global.app.log.descriptions}
-					<span class="iconify size-6 mdi--eye"></span>
+					<span class="iconify mdi--eye size-6"></span>
 				{:else}
-					<span class="iconify size-6 mdi--eye-off"></span>
+					<span class="iconify mdi--eye-off size-6"></span>
 				{/if}
 				<span class="max-sm:hidden">Notes</span>
 			</button>
@@ -138,7 +135,7 @@
 				aria-label="Sort"
 			>
 				<span
-					class="iconify size-6 data-[sort=asc]:mdi--sort-calendar-ascending data-[sort=desc]:mdi--sort-calendar-descending"
+					class="iconify data-[sort=asc]:mdi--sort-calendar-ascending data-[sort=desc]:mdi--sort-calendar-descending size-6"
 					data-sort={global.app.dmLogs.sort}
 				></span>
 			</button>
@@ -146,7 +143,7 @@
 	</div>
 
 	<section>
-		<div class="w-full overflow-x-auto rounded-lg bg-base-200">
+		<div class="bg-base-200 w-full overflow-x-auto rounded-lg">
 			<table class="table w-full">
 				<thead>
 					<tr class="bg-base-300 text-base-content/70">
@@ -172,18 +169,18 @@
 							{@const hasDescription =
 								!!log.description?.trim() || log.storyAwardsGained.length > 0 || log.storyAwardsLost.length > 0}
 							<tr
-								class="data-[deleting=true]:hidden [&>td]:border-b-0 [&>td]:border-t [&>td]:border-t-base-300"
+								class="[&>td]:border-t-base-300 data-[deleting=true]:hidden [&>td]:border-t [&>td]:border-b-0"
 								data-deleting={deletingLog.includes(log.id)}
 							>
-								<td class="!static align-top">
+								<td class="static! align-top">
 									<a
 										href={log.isDmLog ? `/dm-logs/${log.id}` : `/characters/${log.characterId}/log/${log.id}`}
-										class="whitespace-pre-wrap text-left font-semibold text-secondary"
+										class="text-secondary text-left font-semibold whitespace-pre-wrap"
 										aria-label="Edit Log"
 									>
 										<SearchResults text={log.name} {search} />
 									</a>
-									<p class="text-netural-content whitespace-nowrap text-xs font-normal">
+									<p class="text-netural-content text-xs font-normal whitespace-nowrap">
 										{new Date(log.date).toLocaleString([], { dateStyle: "medium", timeStyle: "short" })}
 									</p>
 									{#if log.character}
@@ -294,7 +291,7 @@
 							</tr>
 							<!-- Notes -->
 							<tr
-								class="hidden data-[desc=true]:table-row data-[deleting=true]:!hidden data-[mi=true]:max-sm:table-row"
+								class="hidden data-[deleting=true]:hidden! data-[desc=true]:table-row max-sm:data-[mi=true]:table-row"
 								data-deleting={deletingLog.includes(log.id)}
 								data-desc={global.app.dmLogs.descriptions && hasDescription}
 								data-mi={log.magicItemsGained.length > 0 || log.magicItemsLost.length > 0}
@@ -308,7 +305,7 @@
 										<div class="mt-2 sm:hidden print:hidden">
 											<Items title="Magic Items:" items={log.magicItemsGained} {search} sort />
 											{#if log.magicItemsLost.length}
-												<p class="mt-2 whitespace-pre-wrap text-sm line-through">
+												<p class="mt-2 text-sm whitespace-pre-wrap line-through">
 													<SearchResults text={log.magicItemsLost.map((mi) => mi.name).join(" | ")} {search} />
 												</p>
 											{/if}
@@ -316,7 +313,7 @@
 									{/if}
 									{#if log.storyAwardsGained.length > 0 || log.storyAwardsLost.length > 0}
 										{#each log.storyAwardsGained as mi}
-											<div class="mt-2 whitespace-pre-wrap text-sm">
+											<div class="mt-2 text-sm whitespace-pre-wrap">
 												<span class="pr-2 font-semibold dark:text-white print:block">
 													{mi.name}{mi.description ? ":" : ""}
 												</span>
@@ -326,7 +323,7 @@
 											</div>
 										{/each}
 										{#if log.storyAwardsLost.length}
-											<p class="whitespace-pre-wrap text-sm line-through">
+											<p class="text-sm whitespace-pre-wrap line-through">
 												{log.storyAwardsLost.map((mi) => mi.name).join(" | ")}
 											</p>
 										{/if}

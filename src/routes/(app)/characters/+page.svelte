@@ -92,14 +92,11 @@
 
 		<Dropdown class="dropdown-end">
 			{#snippet children({ close })}
-				<summary tabindex="0" class="btn btn-sm">
-					<span class="iconify size-6 mdi--dots-horizontal"></span>
-				</summary>
-				<ul class="menu dropdown-content w-52 rounded-box bg-base-200 p-2 shadow">
+				<ul class="menu dropdown-content rounded-box bg-base-300 w-52 shadow-sm">
 					<li use:close>
-						<button use:download={{ blob: new Blob([JSON.stringify(data.characters)]), filename: "characters.json" }}
-							>Export</button
-						>
+						<button use:download={{ blob: new Blob([JSON.stringify(data.characters)]), filename: "characters.json" }}>
+							Export
+						</button>
 					</li>
 				</ul>
 			{/snippet}
@@ -121,10 +118,10 @@
 				<a href="/characters/new/edit" class="btn btn-primary btn-sm max-sm:hidden">New Character</a>
 				<Search bind:value={search} placeholder="Search by name, race, class, items, etc." />
 				<a href="/characters/new/edit" class="btn btn-primary sm:hidden" aria-label="New Character">
-					<span class="iconify inline size-6 mdi--plus"></span>
+					<span class="iconify mdi--plus inline size-6"></span>
 				</a>
 				<button
-					class="btn inline-flex data-[enabled=true]:btn-primary xs:hidden"
+					class="btn data-[enabled=true]:btn-primary xs:hidden inline-flex"
 					data-enabled={global.app.characters.magicItems}
 					onclick={() => (global.app.characters.magicItems = !global.app.characters.magicItems)}
 					onkeypress={() => null}
@@ -132,9 +129,9 @@
 					tabindex="0"
 				>
 					{#if global.app.characters.magicItems}
-						<span class="iconify size-6 mdi--shield-sword"></span>
+						<span class="iconify mdi--shield-sword size-6"></span>
 					{:else}
-						<span class="iconify size-6 mdi--shield-sword-outline"></span>
+						<span class="iconify mdi--shield-sword-outline size-6"></span>
 					{/if}
 				</button>
 			</div>
@@ -149,11 +146,11 @@
 						tabindex="0"
 					>
 						{#if global.app.characters.magicItems}
-							<span class="iconify size-6 mdi--eye max-xs:hidden sm:max-md:hidden"></span>
-							<span class="iconify size-6 mdi--shield-sword xs:max-sm:hidden md:hidden"></span>
+							<span class="iconify mdi--eye max-xs:hidden size-6 sm:max-md:hidden"></span>
+							<span class="iconify mdi--shield-sword xs:max-sm:hidden size-6 md:hidden"></span>
 						{:else}
-							<span class="iconify size-6 mdi--eye-off max-xs:hidden sm:max-md:hidden"></span>
-							<span class="iconify size-6 mdi--shield-sword-outline xs:max-sm:hidden md:hidden"></span>
+							<span class="iconify mdi--eye-off max-xs:hidden size-6 sm:max-md:hidden"></span>
+							<span class="iconify mdi--shield-sword-outline xs:max-sm:hidden size-6 md:hidden"></span>
 						{/if}
 						<span class="max-xs:hidden sm:max-md:hidden">Magic Items</span>
 					</button>
@@ -183,14 +180,11 @@
 
 		<div>
 			<div
-				class="w-full overflow-x-auto rounded-lg data-[display=grid]:block data-[display=grid]:xs:hidden"
+				class="xs:data-[display=grid]:hidden w-full overflow-x-auto rounded-lg data-[display=grid]:block"
 				data-display={global.app.characters.display}
 			>
-				<div
-					class="grid-table grid-characters-mobile sm:grid-characters data-[mobile=true]:sm:grid-characters-mobile-sm bg-base-200"
-					data-mobile={data.mobile}
-				>
-					<header class="!hidden text-base-content/70 sm:!contents">
+				<div class="grid-table grid-characters-mobile sm:grid-characters hover-none:sm:grid-characters-mobile-sm bg-base-200">
+					<header class="text-base-content/70 hidden! sm:contents!">
 						{#if !data.mobile}
 							<div class="max-sm:hidden"></div>
 						{/if}
@@ -204,7 +198,7 @@
 							{#if !data.mobile}
 								<div class="pr-0 transition-colors max-sm:hidden sm:pr-2">
 									<div class="avatar">
-										<div class="mask mask-squircle size-12 bg-primary" use:transition={"image-" + character.id}>
+										<div class="mask mask-squircle bg-primary size-12" use:transition={"image-" + character.id}>
 											{#if character.imageUrl}
 												{#key character.imageUrl}
 													<img
@@ -217,19 +211,19 @@
 													/>
 												{/key}
 											{:else}
-												<span class="iconify size-12 mdi--account"></span>
+												<span class="iconify mdi--account size-12"></span>
 											{/if}
 										</div>
 									</div>
 								</div>
 							{/if}
 							<div>
-								<div class="whitespace-pre-wrap text-base font-bold text-black dark:text-white sm:text-xl">
+								<div class="text-base font-bold whitespace-pre-wrap text-black sm:text-xl dark:text-white">
 									<span use:transition={"name-" + character.id}>
 										<SearchResults text={character.name} {search} />
 									</span>
 								</div>
-								<div class="whitespace-pre-wrap text-xs sm:text-sm" use:transition={"details-" + character.id}>
+								<div class="text-xs whitespace-pre-wrap sm:text-sm" use:transition={"details-" + character.id}>
 									<span class="inline pr-1 sm:hidden">Level {character.total_level}</span><SearchResults
 										text={character.race}
 										{search}
@@ -274,14 +268,14 @@
 			{#each [1, 2, 3, 4] as tier}
 				{#if results.filter((c) => c.tier == tier).length}
 					<h1
-						class="pb-2 pt-6 font-vecna text-3xl font-bold data-[display=list]:hidden data-[tier=1]:pt-0 dark:text-white data-[display=grid]:max-xs:hidden"
+						class="font-vecna max-xs:data-[display=grid]:hidden pt-6 pb-2 text-3xl font-bold data-[display=list]:hidden data-[tier=1]:pt-0 dark:text-white"
 						data-display={global.app.characters.display}
 						data-tier={tier}
 					>
 						Tier {tier}
 					</h1>
 					<div
-						class="hidden w-full data-[display=grid]:grid-cols-2 data-[display=grid]:gap-4 data-[display=grid]:xs:grid data-[display=grid]:sm:grid-cols-3 data-[display=grid]:md:grid-cols-4"
+						class="xs:data-[display=grid]:grid hidden w-full data-[display=grid]:grid-cols-2 data-[display=grid]:gap-4 sm:data-[display=grid]:grid-cols-3 md:data-[display=grid]:grid-cols-4"
 						data-display={global.app.characters.display}
 					>
 						{#each results.filter((c) => c.tier == tier) as character}
@@ -305,14 +299,14 @@
 										</div>
 									{/if}
 								</figure>
-								<div class="card-body text-center">
+								<div class="card-body p-4 text-center">
 									<div class="flex flex-col gap-1">
 										<h2
-											class="card-title block overflow-hidden text-ellipsis whitespace-nowrap text-balance text-sm dark:text-white"
+											class="card-title block overflow-hidden text-sm text-balance text-ellipsis whitespace-nowrap dark:text-white"
 										>
 											<SearchResults text={character.name} {search} />
 										</h2>
-										<p class="text-balance text-xs"><SearchResults text={`${character.race} ${character.class}`} {search} /></p>
+										<p class="text-xs text-balance"><SearchResults text={`${character.race} ${character.class}`} {search} /></p>
 										<p class="text-xs">Level {character.total_level} | Tier {character.tier}</p>
 									</div>
 								</div>

@@ -19,7 +19,7 @@ export function successToast(message: string) {
 	toast.success("Success", {
 		description: message,
 		classes: {
-			description: "!text-white"
+			description: "text-white!"
 		}
 	});
 }
@@ -28,7 +28,7 @@ export function errorToast(message: string) {
 	toast.error("Error", {
 		description: message,
 		classes: {
-			description: "!text-white"
+			description: "text-white!"
 		},
 		duration: 30000
 	});

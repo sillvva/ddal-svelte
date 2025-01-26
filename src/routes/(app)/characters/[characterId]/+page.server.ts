@@ -1,4 +1,4 @@
-import { editCharacterSchema, logSchema } from "$lib/schemas.js";
+import { characterIdSchema, logIdSchema } from "$lib/schemas.js";
 import { SaveError } from "$lib/util.js";
 import { deleteCharacter } from "$server/actions/characters";
 import { deleteLog } from "$server/actions/logs";
@@ -6,7 +6,7 @@ import { assertUser } from "$server/auth.js";
 import { error, redirect } from "@sveltejs/kit";
 import { fail, setError, superValidate } from "sveltekit-superforms";
 import { valibot } from "sveltekit-superforms/adapters";
-import { pick } from "valibot";
+import { object } from "valibot";
 
 export const load = async (event) => {
 	if (event.params.characterId === "new") redirect(301, "/characters/new/edit");
@@ -28,7 +28,7 @@ export const actions = {
 		const session = await event.locals.session;
 		assertUser(session?.user, event.url);
 
-		const form = await superValidate(event, valibot(pick(editCharacterSchema, ["id"])));
+		const form = await superValidate(event, valibot(object({ id: characterIdSchema })));
 		if (!form.valid) return fail(400, { form });
 
 		const result = await deleteCharacter(form.data.id, session.user.id);
@@ -43,7 +43,7 @@ export const actions = {
 		const session = await event.locals.session;
 		assertUser(session?.user, event.url);
 
-		const form = await superValidate(event, valibot(pick(logSchema, ["id"])));
+		const form = await superValidate(event, valibot(object({ id: logIdSchema })));
 		if (!form.valid) return fail(400, { form });
 
 		const result = await deleteLog(form.data.id, session.user.id);

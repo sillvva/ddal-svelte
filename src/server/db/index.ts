@@ -3,11 +3,11 @@ import * as schema from "$server/db/schema";
 import {
 	getTableColumns,
 	sql,
-	SQL,
 	type BuildQueryResult,
 	type DBQueryConfig,
 	type ExtractTablesWithRelations,
-	type GetColumnData
+	type GetColumnData,
+	type SQL
 } from "drizzle-orm";
 import { type PgTable } from "drizzle-orm/pg-core";
 import { drizzle } from "drizzle-orm/postgres-js";

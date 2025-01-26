@@ -30,5 +30,10 @@
 	class={twMerge("dropdown", className)}
 	bind:open
 >
+	<summary class="list-none">
+		<button tabindex="0" class="btn btn-sm" aria-label="Menu" onclick={() => (open = !open)}>
+			<span class="iconify mdi--dots-horizontal size-6"></span>
+		</button>
+	</summary>
 	{@render children?.({ close })}
 </details>

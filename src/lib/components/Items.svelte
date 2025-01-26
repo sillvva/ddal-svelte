@@ -79,18 +79,18 @@
 </script>
 
 <div
-	class="flex flex-1 flex-col data-[col-no-items=true]:hidden data-[col-no-items=true]:md:flex"
+	class="flex flex-1 flex-col data-[col-no-items=true]:hidden md:data-[col-no-items=true]:flex"
 	data-col-no-items={collapsible && !items.length}
 >
 	{#if title}
 		<div role="presentation" onclick={collapsible ? () => (collapsed = !collapsed) : () => {}} onkeypress={() => {}}>
-			<h4 class="flex text-left font-semibold leading-8 dark:text-white [table_&]:leading-5">
+			<h4 class="flex text-left leading-8 font-semibold in-[table]:leading-5 dark:text-white">
 				<span class="flex-1">
 					{title}
 				</span>
 				{#if collapsible}
 					<span
-						class="iconify ml-2 inline size-6 justify-self-end mdi--chevron-up data-[collapsed=true]:mdi--chevron-down md:hidden print:hidden"
+						class="iconify mdi--chevron-up data-[collapsed=true]:mdi--chevron-down ml-2 inline size-6 justify-self-end md:hidden print:hidden"
 						data-collapsed={collapsed}
 					></span>
 				{/if}
@@ -98,14 +98,14 @@
 		</div>
 	{/if}
 	<p
-		class="divide-x divide-black/50 text-sm leading-6 data-[collapsed=true]:hidden dark:divide-white/50 data-[collapsed=true]:md:inline print:text-xs data-[collapsed=true]:print:inline [table_&]:leading-5"
+		class="divide-x divide-black/50 text-sm leading-6 in-[table]:leading-5 data-[collapsed=true]:hidden md:data-[collapsed=true]:inline dark:divide-white/50 print:text-xs print:data-[collapsed=true]:inline"
 		data-collapsed={collapsed}
 	>
 		{#if items.length}
 			{#each nonConsumables as mi}
 				<span
 					role={mi.description ? "button" : "presentation"}
-					class="inline pl-2 pr-2 first:pl-0"
+					class="inline pr-2 pl-2 first:pl-0"
 					class:text-secondary={mi.description}
 					onclick={() => {
 						if (mi.description) {
@@ -120,7 +120,7 @@
 			{#each consumables as mi}
 				<span
 					role={mi.description ? "button" : "presentation"}
-					class="inline pl-2 pr-2 italic first:pl-0"
+					class="inline pr-2 pl-2 italic first:pl-0"
 					class:text-secondary={mi.description}
 					class:italic={formatting}
 					onclick={() => {

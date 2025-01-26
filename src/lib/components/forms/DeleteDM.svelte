@@ -1,4 +1,5 @@
 <script lang="ts">
+	import { goto } from "$app/navigation";
 	import { errorToast, successToast } from "$lib/factories.svelte";
 	import { global } from "$lib/stores.svelte";
 	import type { UserDMsWithLogs } from "$server/data/dms";
@@ -31,6 +32,14 @@
 					successToast(`${dm.name} deleted`);
 					ondelete?.({ id: dm.id });
 					global.searchData = [];
+				}
+			},
+			onResult({ result }) {
+				if (result.type === "redirect") {
+					successToast(`${dm.name} deleted`);
+					ondelete?.({ id: dm.id });
+					global.searchData = [];
+					goto(result.location);
 				}
 			}
 		}

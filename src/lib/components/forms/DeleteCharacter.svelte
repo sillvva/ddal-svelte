@@ -1,4 +1,5 @@
 <script lang="ts">
+	import { goto } from "$app/navigation";
 	import { errorToast, successToast } from "$lib/factories.svelte";
 	import { global } from "$lib/stores.svelte";
 	import type { Character } from "$server/db/schema";
@@ -29,11 +30,19 @@
 					ondelete?.({ id: character.id });
 					global.searchData = [];
 				}
+			},
+			onResult({ result }) {
+				if (result.type === "redirect") {
+					successToast(`${character.name} deleted`);
+					ondelete?.({ id: character.id });
+					global.searchData = [];
+					goto(result.location);
+				}
 			}
 		}
 	);
 </script>
 
-<button type="button" class="menu-item-error" aria-label="Delete Character" onclick={submit}>
+<button type="button" class="hover:bg-error" aria-label="Delete Character" onclick={submit}>
 	{label}
 </button>

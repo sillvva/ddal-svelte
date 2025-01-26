@@ -4,7 +4,7 @@ import { SaveError, type SaveResult } from "$lib/util";
 import { logIncludes, type LogData } from "$server/data/logs";
 import { buildConflictUpdateColumns, db, type Transaction } from "$server/db";
 import { dungeonMasters, logs, magicItems, storyAwards, type InsertDungeonMaster, type Log } from "$server/db/schema";
-import { and, eq, inArray, notInArray } from "drizzle-orm";
+import { and, eq, inArray, isNull, notInArray } from "drizzle-orm";
 
 class LogError extends SaveError<LogSchema> {}
 
@@ -184,9 +184,15 @@ async function itemsCRUD(
 			});
 	}
 
-	await tx.update(table).set({ logLostId: null }).where(eq(table.logLostId, logId));
+	await tx
+		.update(table)
+		.set({ logLostId: null })
+		.where(and(eq(table.logLostId, logId), notInArray(table.id, lost)));
 	if (lost.length) {
-		await tx.update(table).set({ logLostId: logId }).where(inArray(table.id, lost));
+		await tx
+			.update(table)
+			.set({ logLostId: logId })
+			.where(and(isNull(table.logLostId), inArray(table.id, lost)));
 	}
 }
 

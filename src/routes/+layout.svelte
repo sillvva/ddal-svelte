@@ -14,7 +14,7 @@
 	setTransition();
 </script>
 
-<div class="no-script-hide min-h-dvh bg-base-100 text-base-content">
+<div class="no-script-hide bg-base-100 text-base-content min-h-dvh">
 	{@render children()}
 </div>
 
@@ -28,10 +28,10 @@
 </noscript>
 
 {#if dev}
-	<div class="fixed bottom-0 right-0 z-50">
+	<div class="fixed right-0 bottom-0 z-50">
 		<div class="*:bg-lime-700 *:p-1 *:text-xs *:font-bold *:text-white">
 			<div class="xs:hidden">xxs</div>
-			<div class="hidden xs:max-sm:block">xs</div>
+			<div class="xs:max-sm:block hidden">xs</div>
 			<div class="hidden sm:max-md:block">sm</div>
 			<div class="hidden md:max-lg:block">md</div>
 			<div class="hidden lg:max-xl:block">lg</div>

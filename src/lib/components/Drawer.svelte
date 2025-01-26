@@ -22,14 +22,14 @@
 	aria-controls="drawer"
 	aria-label="Toggle Drawer"
 >
-	<span class="iconify size-6 mdi--menu"></span>
+	<span class="iconify mdi--menu size-6"></span>
 </button>
 <noscript>
 	<span class="flex w-[52px] py-3 pr-4"> </span>
 </noscript>
 <div
 	id="drawer"
-	class="fixed -left-80 inset-y-0 z-50 w-80 bg-base-100 px-4 py-4 transition-all data-[open=true]:left-0"
+	class="bg-base-100 fixed inset-y-0 -left-80 z-50 w-80 px-4 py-4 transition-all data-[open=true]:left-0"
 	data-open={drawer}
 >
 	<ul class="menu menu-lg w-full">
@@ -39,7 +39,7 @@
 				onkeydown={() => toggleDrawer(false)}
 				onclick={() => toggleDrawer(false)}
 				data-active={page.url.pathname.startsWith("/characters")}
-				class="data-[active=true]:bg-primary data-[active=true]:text-white"
+				class="data-[active=true]:bg-primary data-[active=true]:text-primary-content"
 			>
 				Character Logs
 			</a>
@@ -50,7 +50,7 @@
 				onkeydown={() => toggleDrawer(false)}
 				onclick={() => toggleDrawer(false)}
 				data-active={page.url.pathname.startsWith("/dm-logs")}
-				class="data-[active=true]:bg-primary data-[active=true]:text-white"
+				class="data-[active=true]:bg-primary data-[active=true]:text-primary-content"
 			>
 				DM Logs
 			</a>
@@ -61,7 +61,7 @@
 				onkeydown={() => toggleDrawer(false)}
 				onclick={() => toggleDrawer(false)}
 				data-active={page.url.pathname.startsWith("/dms")}
-				class="data-[active=true]:bg-primary data-[active=true]:text-white"
+				class="data-[active=true]:bg-primary data-[active=true]:text-primary-content"
 			>
 				DMs
 			</a>
@@ -85,5 +85,5 @@
 	role="none"
 	data-backdrop={backdrop}
 	data-open={drawer}
-	class="fixed inset-0 -z-10 hidden bg-base-300/50 opacity-0 transition-all data-[open=true]:z-40 data-[backdrop=true]:block data-[open=true]:opacity-100"
+	class="bg-base-300/50 fixed inset-0 -z-10 hidden opacity-0 transition-all data-[backdrop=true]:block data-[open=true]:z-40 data-[open=true]:opacity-100"
 ></div>

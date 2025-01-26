@@ -43,8 +43,8 @@
 	<link rel="canonical" href={publicEnv.PUBLIC_URL} />
 </svelte:head>
 
-<main class="container relative mx-auto flex min-h-dvh flex-col items-center justify-center gap-8 p-4">
-	<h1 class="text-center font-draconis text-4xl text-base-content dark:text-white lg:text-6xl">
+<main class="relative container mx-auto flex min-h-dvh flex-col items-center justify-center gap-8 p-4">
+	<h1 class="font-draconis text-base-content text-center text-4xl lg:text-6xl dark:text-white">
 		Adventurers League
 		<br />
 		Log Sheet
@@ -52,11 +52,15 @@
 	<div class="flex flex-col gap-4">
 		{#each PROVIDERS as provider}
 			<button
-				class="flex h-16 items-center gap-4 rounded-lg bg-base-200 px-8 py-4 text-base-content transition-colors hover:bg-base-300"
-				onclick={() =>
+				class="bg-base-200 text-base-content hover:bg-base-300 flex h-16 items-center gap-4 rounded-lg px-8 py-4 transition-colors"
+				onclick={() => {
+					console.log("Signing in with", provider.name);
 					signIn(provider.id, {
 						callbackUrl: data.redirectTo || "/characters"
-					})}
+					})
+						.then(console.log)
+						.catch(console.error);
+				}}
 				aria-label="Sign in with {provider.name}"
 			>
 				<span class={twMerge("iconify-color h-8 w-8", provider.iconify)}></span>
@@ -65,25 +69,29 @@
 		{/each}
 		<hr class="border-base-content" />
 		<button
-			class="flex h-16 items-center gap-4 rounded-lg bg-base-200 px-8 py-4 text-base-content transition-colors hover:bg-base-300"
-			onclick={() =>
+			class="bg-base-200 text-base-content hover:bg-base-300 flex h-16 items-center gap-4 rounded-lg px-8 py-4 transition-colors"
+			onclick={() => {
+				console.log("Signing in with Passkey");
 				passkey("webauthn", {
 					callbackUrl: data.redirectTo || "/characters",
 					action: "authenticate"
-				})}
+				})
+					.then(console.log)
+					.catch(console.error);
+			}}
 			aria-label="Sign in with Passkey"
 		>
-			<span class="iconify h-8 w-8 material-symbols--passkey"></span>
+			<span class="iconify material-symbols--passkey h-8 w-8"></span>
 			<span class="flex h-full flex-1 items-center justify-center text-xl font-semibold">Sign In with Passkey</span>
 		</button>
-		<span class="max-w-72 text-balance text-center text-xs text-base-content">
+		<span class="text-base-content max-w-72 text-center text-xs text-balance">
 			You must have an account and add a Passkey in settings before you can sign in with this.
 		</span>
 	</div>
 	{#if data.code}
 		<div class="flex justify-center">
-			<div class="alert alert-error min-w-60 max-w-[28rem] shadow-lg">
-				<span class="iconify size-6 mdi--alert-circle max-sm:hidden"></span>
+			<div class="alert alert-error max-w-[28rem] min-w-60 shadow-lg">
+				<span class="iconify mdi--alert-circle size-6 max-sm:hidden"></span>
 				<div>
 					<h3 class="font-bold">Error</h3>
 					{#if data.message}<p class="mb-2 max-sm:text-sm">{data.message}</p>{/if}

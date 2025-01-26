@@ -46,7 +46,7 @@
 {#if parts.length && regex}
 	{#each parts as part}
 		{#if regex.test(part)}
-			<span class="bg-secondary px-1 text-black">{part}</span>
+			<span class="bg-secondary text-secondary-content px-1">{part}</span>
 		{:else}
 			{part}
 		{/if}

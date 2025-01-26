@@ -1,4 +1,5 @@
 <script lang="ts">
+	import { goto } from "$app/navigation";
 	import { errorToast, successToast } from "$lib/factories.svelte";
 	import { global } from "$lib/stores.svelte";
 	import type { LogData } from "$server/data/logs";
@@ -32,12 +33,20 @@
 					ondelete?.({ id: log.id });
 					global.searchData = [];
 				}
+			},
+			onResult({ result }) {
+				if (result.type === "redirect") {
+					successToast(`${log.name} deleted`);
+					ondelete?.({ id: log.id });
+					global.searchData = [];
+					goto(result.location);
+				}
 			}
 		}
 	);
 </script>
 
 <button type="button" class="btn btn-error btn-sm" aria-label="Delete Log" onclick={submit}>
-	<span class="iconify size-4 mdi--trash-can"></span>
+	<span class="iconify mdi--trash-can size-4"></span>
 	{label}
 </button>

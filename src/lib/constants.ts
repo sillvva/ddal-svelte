@@ -68,11 +68,6 @@ export const themes = [
 		group: "light"
 	},
 	{
-		name: "Corporate",
-		value: "corporate",
-		group: "light"
-	},
-	{
 		name: "Retro",
 		value: "retro",
 		group: "light"
@@ -83,6 +78,11 @@ export const themes = [
 		group: "light"
 	},
 	{
+		name: "Garden",
+		value: "garden",
+		group: "light"
+	},
+	{
 		name: "Dark",
 		value: "dark",
 		group: "dark"
@@ -90,11 +90,6 @@ export const themes = [
 	{
 		name: "Black",
 		value: "black",
-		group: "dark"
-	},
-	{
-		name: "Business",
-		value: "business",
 		group: "dark"
 	},
 	{

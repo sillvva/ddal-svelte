@@ -20,8 +20,8 @@
 	const { errors } = superform && field ? formFieldProxy(superform, field) : { errors: readable(fieldErrors) };
 </script>
 
-<label for={labelFor || field} class="label">
-	<span class="label-text">
+<label for={labelFor || field} class="fieldset-legend">
+	<span>
 		{label}
 		{#if required}
 			<span class="text-error">*</span>
@@ -30,7 +30,7 @@
 </label>
 {@render children?.()}
 {#if $errors?.length}
-	<label for={labelFor || field} class="label">
-		<span class="label-text-alt text-error">{$errors}</span>
+	<label for={labelFor || field} class="fieldset-label">
+		<span class="text-error">{$errors}</span>
 	</label>
 {/if}

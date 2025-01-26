@@ -32,42 +32,47 @@
 	const lengthDiff = $derived($value.length - graphemeCount);
 </script>
 
-<label for={field} class="label">
-	<span class="label-text">Notes</span>
+<label for={field} class="fieldset-legend">
+	<span>Notes</span>
 </label>
-{#if preview}
-	<div class="tabs-boxed tabs rounded-b-none border-[1px] border-b-0 border-base-content [--tw-border-opacity:0.2]">
-		<input type="radio" {name} role="tab" class="tab !rounded-md" aria-label="Edit" bind:group={state} value="edit" />
-		<input type="radio" {name} role="tab" class="tab !rounded-md" aria-label="Preview" bind:group={state} value="preview" />
-	</div>
-{/if}
-<textarea
-	{...rest}
-	id={field}
-	bind:value={$value}
-	class="textarea textarea-bordered w-full focus:border-primary data-[state=preview]:hidden data-[preview=true]:rounded-b-none"
-	data-preview={preview}
-	data-state={state}
-	style:--minRows={minRows && `${minRows}lh`}
-	style:--maxRows={maxRows && `${maxRows}lh`}
-	spellcheck="true"
-	use:autosize
-	{...$constraints}
-	maxlength={($constraints?.maxlength ?? 0) + lengthDiff}
-></textarea>
-{#if preview && state === "preview"}
-	<div class="rounded-b-lg border-[1px] border-base-content bg-base-100 p-4 [--tw-border-opacity:0.2]">
-		<Markdown content={`${$value}`} />
-	</div>
-{:else}
-	<label for={field} class="label">
+<div>
+	{#if preview}
+		<div
+			class="tabs-boxed tabs bg-base-200 border-base-content/20 rounded-t-lg rounded-b-none border-[1px] border-b-0 [--tw-border-opacity:0.2]"
+		>
+			<input type="radio" {name} role="tab" class="tab rounded-md!" aria-label="Edit" bind:group={state} value="edit" />
+			<input type="radio" {name} role="tab" class="tab rounded-md!" aria-label="Preview" bind:group={state} value="preview" />
+		</div>
+	{/if}
+	<textarea
+		{...rest}
+		id={field}
+		bind:value={$value}
+		class="textarea textarea-bordered focus:border-primary w-full rounded-b-lg data-[preview=true]:rounded-t-none data-[state=preview]:hidden"
+		data-preview={preview}
+		data-state={state}
+		style:--minRows={minRows && `${minRows}lh`}
+		style:--maxRows={maxRows && `${maxRows}lh`}
+		spellcheck="true"
+		use:autosize
+		{...$constraints}
+		maxlength={($constraints?.maxlength ?? 0) + lengthDiff}
+	></textarea>
+	{#if preview && state === "preview"}
+		<div class="border-base-content/20 bg-base-100 rounded-b-lg border-[1px] p-4 [--tw-border-opacity:0.2]">
+			<Markdown content={`${$value}`} />
+		</div>
+	{/if}
+</div>
+{#if !preview || state !== "preview"}
+	<label for={field} class="fieldset-label">
 		{#if $errors?.length}
-			<span class="label-text-alt text-error">{$errors}</span>
+			<span class="text-error">{$errors}</span>
 		{:else}
-			<span class="label-text-alt">Markdown Allowed</span>
+			<span>Markdown Allowed</span>
 		{/if}
 		{#if !$errors?.length && $constraints?.maxlength}
-			<span class="label-text-alt">{graphemeCount.toLocaleString()} / {$constraints?.maxlength.toLocaleString()}</span>
+			<span>{graphemeCount.toLocaleString()} / {$constraints?.maxlength.toLocaleString()}</span>
 		{/if}
 	</label>
 {/if}

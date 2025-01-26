@@ -54,7 +54,8 @@ export const load = async (event) => {
 		magicItems,
 		storyAwards,
 		dms,
-		form
+		form,
+		firstLog: event.url.searchParams.get("firstLog") === "true"
 	};
 };
 

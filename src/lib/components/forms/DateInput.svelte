@@ -65,46 +65,43 @@
 	minValue={minValue?.set({ hour: 0, minute: 0, second: 0 })}
 	maxValue={maxValue?.set({ hour: 23, minute: 59, second: 59 })}
 >
-	<DatePicker.Label class="label">
-		<span class="label-text">
+	<DatePicker.Label class="fieldset-legend">
+		<span>
 			{label}
 			{#if $constraints?.required || required}
 				<span class="text-error">*</span>
 			{/if}
 		</span>
 	</DatePicker.Label>
-	<DatePicker.Input
-		let:segments
-		class={twMerge("input input-bordered inline-flex w-full select-none items-center gap-1 px-3", inputClass)}
-	>
+	<DatePicker.Input let:segments class={twMerge("input inline-flex w-full items-center gap-1 px-3 select-none", inputClass)}>
 		{#each segments as { part, value }}
 			<DatePicker.Segment
 				{part}
-				class="rounded-sm py-1 outline-offset-4 focus-visible:outline-primary aria-[valuetext=Empty]:text-base-content/70"
+				class="focus-visible:outline-primary aria-[valuetext=Empty]:text-base-content/70 rounded-xs py-1 outline-offset-4"
 			>
 				{value}
 			</DatePicker.Segment>
 		{/each}
 		<DatePicker.Trigger class="ml-auto inline-flex items-center justify-center">
-			<span class="iconify size-6 mdi--calendar"></span>
+			<span class="iconify mdi--calendar size-6"></span>
 		</DatePicker.Trigger>
 	</DatePicker.Input>
-	<DatePicker.Content class="z-[10000] mt-2">
-		<DatePicker.Calendar let:months let:weekdays class="shadow-popover rounded-lg border border-base-300 bg-base-200 p-[22px]">
+	<DatePicker.Content class="z-10000 mt-2">
+		<DatePicker.Calendar let:months let:weekdays class="shadow-popover border-base-300 bg-base-200 rounded-lg border p-[22px]">
 			<DatePicker.Header class="flex items-center justify-between">
-				<DatePicker.PrevButton class="iconify inline-flex size-10 items-center justify-center transition-all mdi--chevron-left" />
+				<DatePicker.PrevButton class="iconify mdi--chevron-left inline-flex size-10 items-center justify-center transition-all" />
 				<DatePicker.Heading class="text-lg" />
 				<DatePicker.NextButton
-					class="iconify inline-flex size-10 items-center justify-center transition-all mdi--chevron-right"
+					class="iconify mdi--chevron-right inline-flex size-10 items-center justify-center transition-all"
 				/>
 			</DatePicker.Header>
-			<div class="flex flex-col space-y-4 pt-4 sm:flex-row sm:space-x-4 sm:space-y-0">
+			<div class="flex flex-col space-y-4 pt-4 sm:flex-row sm:space-y-0 sm:space-x-4">
 				{#each months as month}
-					<DatePicker.Grid class="w-full border-collapse select-none space-y-1">
+					<DatePicker.Grid class="w-full border-collapse space-y-1 select-none">
 						<DatePicker.GridHead>
 							<DatePicker.GridRow class="mb-1 flex w-full justify-between">
 								{#each weekdays as day}
-									<DatePicker.HeadCell class="w-10 rounded-md text-xs !font-normal text-base-content/50">
+									<DatePicker.HeadCell class="text-base-content/50 w-10 rounded-md text-xs font-normal!">
 										<div>{day.slice(0, 2)}</div>
 									</DatePicker.HeadCell>
 								{/each}
@@ -114,21 +111,21 @@
 							{#each month.weeks as weekDates}
 								<DatePicker.GridRow class="flex w-full">
 									{#each weekDates as date}
-										<DatePicker.Cell {date} class="relative size-10 !p-0 text-center text-sm">
+										<DatePicker.Cell {date} class="relative size-10 p-0! text-center text-sm">
 											<DatePicker.Day
 												{date}
 												month={month.value}
 												class={[
 													"rounded-9px group relative inline-flex size-10 items-center justify-center whitespace-nowrap",
 													"border border-transparent bg-transparent p-0 text-sm font-normal transition-all",
-													"hover:border-base-content/50 data-[outside-month]:pointer-events-none",
-													"data-[disabled]:pointer-events-none data-[disabled]:text-base-content/30",
-													"data-[selected]:bg-base-300 data-[selected]:font-medium",
-													"data-[unavailable]:text-base-content/30 data-[unavailable]:line-through"
+													"hover:border-base-content/50 data-outside-month:pointer-events-none",
+													"data-disabled:text-base-content/30 data-disabled:pointer-events-none",
+													"data-selected:bg-base-300 data-selected:font-medium",
+													"data-unavailable:text-base-content/30 data-unavailable:line-through"
 												].join(" ")}
 											>
 												<div
-													class="absolute top-[5px] hidden size-1 rounded-full transition-all group-data-[today]:block group-data-[selected]:bg-base-content/50"
+													class="group-data-selected:bg-base-content/50 absolute top-[5px] hidden size-1 rounded-full transition-all group-data-today:block"
 												></div>
 												{date.day}
 											</DatePicker.Day>
@@ -144,11 +141,11 @@
 	</DatePicker.Content>
 </DatePicker.Root>
 {#if $errors?.length || description}
-	<label for={field} class="label">
+	<label for={field} class="fieldset-label">
 		{#if $errors?.length}
-			<span class="label-text-alt text-error">{$errors[0]}</span>
+			<span class="text-error">{$errors[0]}</span>
 		{:else}
-			<span class="label-text-alt text-neutral-500">{description}</span>
+			<span class="text-neutral-500">{description}</span>
 		{/if}
 	</label>
 {/if}
