@@ -57,7 +57,9 @@
 					console.log("Signing in with", provider.name);
 					signIn(provider.id, {
 						callbackUrl: data.redirectTo || "/characters"
-					});
+					})
+						.then(console.log)
+						.catch(console.error);
 				}}
 				aria-label="Sign in with {provider.name}"
 			>
@@ -73,7 +75,9 @@
 				passkey("webauthn", {
 					callbackUrl: data.redirectTo || "/characters",
 					action: "authenticate"
-				});
+				})
+					.then(console.log)
+					.catch(console.error);
 			}}
 			aria-label="Sign in with Passkey"
 		>
