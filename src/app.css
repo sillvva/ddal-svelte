@@ -117,12 +117,12 @@
 		overflow-y: scroll;
 		min-height: 100vh;
 	}
-	.super-debug {
-		width: 100%;
-	}
 }
 
 @layer utilities {
+	/**
+	 * Fonts
+	 */
 	@font-face {
 		font-family: "Draconis";
 		src: url("/fonts/Draconis.ttf") format("truetype");
@@ -145,6 +145,18 @@
 		font-weight: bold;
 		font-style: normal;
 		font-display: swap;
+	}
+
+	/**
+	 * Animations
+	 */
+	@keyframes reveal-dark {
+		from {
+			clip-path: polygon(50% -71%, -50% 71%, -50% 71%, 50% -71%);
+		}
+		to {
+			clip-path: polygon(50% -71%, -50% 71%, 50% 171%, 171% 50%);
+		}
 	}
 }
 
@@ -206,6 +218,10 @@
 	&[aria-invalid] {
 		@apply select-error;
 	}
+}
+
+@utility super-debug {
+	width: 100%;
 }
 
 @utility grid-characters {
@@ -286,13 +302,5 @@
 	&::view-transition-new(root) {
 		animation-name: reveal-dark;
 		will-change: clip-path;
-	}
-	@keyframes reveal-dark {
-		from {
-			clip-path: polygon(50% -71%, -50% 71%, -50% 71%, 50% -71%);
-		}
-		to {
-			clip-path: polygon(50% -71%, -50% 71%, 50% 171%, 171% 50%);
-		}
 	}
 }
