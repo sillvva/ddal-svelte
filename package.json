@@ -38,7 +38,7 @@
 		"svelte": "^5.19.2",
 		"svelte-check": "^4.1.4",
 		"svelte-markdown": "^0.4.1",
-		"sveltekit-search-params": "^3.0.0",
+		"sveltekit-search-params": "4.0.0-next.0",
 		"sveltekit-superforms": "2.23.1",
 		"sveltekit-view-transition": "^0.5.3",
 		"tailwind-merge": "^2.6.0",
