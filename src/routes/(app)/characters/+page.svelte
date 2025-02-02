@@ -178,91 +178,101 @@
 			</div>
 		</div>
 
-		<div>
+		<div class="max-sm:-mt-4">
 			<div
 				class="xs:data-[display=grid]:hidden w-full overflow-x-auto rounded-lg data-[display=grid]:block"
 				data-display={global.app.characters.display}
 			>
-				<div class="grid-table grid-characters-mobile sm:grid-characters hover-none:sm:grid-characters-mobile-sm bg-base-200">
-					<header class="text-base-content/70 hidden! sm:contents!">
-						{#if !data.mobile}
-							<div class="max-sm:hidden"></div>
-						{/if}
-						<div>Name</div>
-						<div>Campaign</div>
-						<div class="text-center">Tier</div>
-						<div class="text-center">Level</div>
-					</header>
-					{#each results as character}
-						<a href={`/characters/${character.id}`} class="img-grow" aria-label={character.name}>
+				<table class="linked-table table w-full leading-5 max-sm:border-separate max-sm:border-spacing-y-2">
+					<thead class="max-sm:hidden">
+						<tr class="bg-base-300 text-base-content/70">
 							{#if !data.mobile}
-								<div class="pr-0 transition-colors max-sm:hidden sm:pr-2">
-									<div class="avatar">
-										<div class="mask mask-squircle bg-primary size-12" use:transition={"image-" + character.id}>
-											{#if character.imageUrl}
-												{#key character.imageUrl}
-													<img
-														src={character.imageUrl}
-														width={48}
-														height={48}
-														class="size-full object-cover object-top"
-														alt={character.name}
-														loading="lazy"
-													/>
-												{/key}
-											{:else}
-												<span class="iconify mdi--account size-12"></span>
-											{/if}
-										</div>
-									</div>
-								</div>
+								<td></td>
 							{/if}
-							<div>
-								<div class="text-base font-bold whitespace-pre-wrap text-black sm:text-xl dark:text-white">
-									<span use:transition={"name-" + character.id}>
-										<SearchResults text={character.name} {search} />
+							<td>Name</td>
+							<td>Campaign</td>
+							<td class="text-center">Tier</td>
+							<td class="text-center">Level</td>
+						</tr>
+					</thead>
+					<tbody>
+						{#each results as character}
+							<tr class="group/row">
+								{#if !data.mobile}
+									<td class="pr-0 transition-colors max-sm:hidden sm:pr-2">
+										<div class="avatar">
+											<div class="mask mask-squircle bg-primary size-12" use:transition={"image-" + character.id}>
+												{#if character.imageUrl}
+													{#key character.imageUrl}
+														<img
+															src={character.imageUrl}
+															width={48}
+															height={48}
+															class="size-full object-cover object-top duration-150 ease-in-out group-hover/row:scale-125 motion-safe:transition-transform"
+															alt={character.name}
+															loading="lazy"
+														/>
+													{/key}
+												{:else}
+													<span class="iconify mdi--account size-12"></span>
+												{/if}
+											</div>
+										</div>
+									</td>
+								{/if}
+								<td>
+									<div class="text-base font-bold whitespace-pre-wrap text-black sm:text-xl dark:text-white">
+										<span use:transition={"name-" + character.id}>
+											<a
+												href={`/characters/${character.id}`}
+												aria-label={character.name}
+												class="row-link before:border-base-content/20 before:rounded-xl before:max-sm:border"
+											>
+												<SearchResults text={character.name} {search} />
+											</a>
+										</span>
+									</div>
+									<div class="text-xs whitespace-pre-wrap sm:text-sm" use:transition={"details-" + character.id}>
+										<span class="inline pr-1 sm:hidden">Level {character.total_level}</span><SearchResults
+											text={character.race}
+											{search}
+										/>
+										<SearchResults text={character.class} {search} />
+									</div>
+									<div class="mb-2 block text-xs sm:hidden" use:transition={"campaign-" + character.id}>
+										<SearchResults text={character.campaign} {search} />
+									</div>
+									{#if (character.match.includes("magicItems") || global.app.characters.magicItems) && character.magic_items.length}
+										<div class="mb-2">
+											<p class="font-semibold">Magic Items:</p>
+											<SearchResults text={character.magic_items.map((item) => item.name)} {search} />
+										</div>
+									{/if}
+									{#if search.length > 1}
+										<div class="mb-2">
+											Search Score: {character.score}
+										</div>
+									{/if}
+								</td>
+								<td class="hidden transition-colors sm:table-cell">
+									<span use:transition={"campaign-" + character.id}>
+										<SearchResults text={character.campaign} {search} />
 									</span>
-								</div>
-								<div class="text-xs whitespace-pre-wrap sm:text-sm" use:transition={"details-" + character.id}>
-									<span class="inline pr-1 sm:hidden">Level {character.total_level}</span><SearchResults
-										text={character.race}
-										{search}
-									/>
-									<SearchResults text={character.class} {search} />
-								</div>
-								<div class="mb-2 block text-xs sm:hidden" use:transition={"campaign-" + character.id}>
-									<SearchResults text={character.campaign} {search} />
-								</div>
-								{#if (character.match.includes("magicItems") || global.app.characters.magicItems) && character.magic_items.length}
-									<div class="mb-2">
-										<p class="font-semibold">Magic Items:</p>
-										<SearchResults text={character.magic_items.map((item) => item.name)} {search} />
-									</div>
-								{/if}
-								{#if search.length > 1}
-									<div class="mb-2">
-										Search Score: {character.score}
-									</div>
-								{/if}
-							</div>
-							<div class="hidden transition-colors sm:flex">
-								<span use:transition={"campaign-" + character.id}>
-									<SearchResults text={character.campaign} {search} />
-								</span>
-							</div>
-							<div class="hidden justify-center transition-colors sm:flex">
-								<span use:transition={"tier-" + character.id}>
-									{character.tier}
-								</span>
-							</div>
-							<div class="hidden justify-center transition-colors sm:flex">
-								<span use:transition={"level-" + character.id}>
-									{character.total_level}
-								</span>
-							</div>
-						</a>
-					{/each}
-				</div>
+								</td>
+								<td class="hidden text-center transition-colors sm:table-cell">
+									<span use:transition={"tier-" + character.id}>
+										{character.tier}
+									</span>
+								</td>
+								<td class="hidden text-center transition-colors sm:table-cell">
+									<span use:transition={"level-" + character.id}>
+										{character.total_level}
+									</span>
+								</td>
+							</tr>
+						{/each}
+					</tbody>
+				</table>
 			</div>
 
 			{#each [1, 2, 3, 4] as tier}
