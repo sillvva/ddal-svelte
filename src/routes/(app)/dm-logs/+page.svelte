@@ -17,14 +17,12 @@
 
 	let { data } = $props();
 
-	const logs = $derived(data.logs);
-
 	let search = $state(page.url.searchParams.get("s") || "");
 	let deletingLog = $state<string[]>([]);
 
 	const indexed = $derived(
-		logs
-			? logs.map((log) => ({
+		data.logs
+			? data.logs.map((log) => ({
 					logId: log.id,
 					logName: log.name,
 					characterName: log.character?.name || "",
@@ -63,7 +61,7 @@
 	const resultsMap = $derived(new Map(msResults.map((result) => [result.id, result])));
 	const results = $derived(
 		indexed.length && search.length > 1
-			? logs
+			? data.logs
 					.filter((log) => resultsMap.has(log.id))
 					.map((log) => {
 						const { score = 0 - log.date.getTime(), match = {} } = resultsMap.get(log.id) || {};
@@ -75,8 +73,10 @@
 								.filter(isDefined)
 						};
 					})
-					.sort((a, b) => (global.app.dmLogs.sort === "asc" ? sorter(a.date, b.date) : sorter(b.date, a.date)))
-			: logs.sort((a, b) => (global.app.dmLogs.sort === "asc" ? sorter(a.date, b.date) : sorter(b.date, a.date)))
+			: data.logs
+	);
+	const sortedResults = $derived(
+		results.toSorted((a, b) => (global.app.dmLogs.sort === "asc" ? sorter(a.date, b.date) : sorter(b.date, a.date)))
 	);
 </script>
 
@@ -98,7 +98,7 @@
 			{#snippet children({ close })}
 				<ul class="menu dropdown-content rounded-box bg-base-300 w-52 shadow-sm">
 					<li use:close>
-						<button use:download={{ blob: new Blob([JSON.stringify(logs)]), filename: "dm-logs.json" }}>Export</button>
+						<button use:download={{ blob: new Blob([JSON.stringify(data.logs)]), filename: "dm-logs.json" }}>Export</button>
 					</li>
 				</ul>
 			{/snippet}
@@ -155,7 +155,7 @@
 					</tr>
 				</thead>
 				<tbody>
-					{#if logs.length == 0}
+					{#if data.logs.length == 0}
 						<tr>
 							<td colSpan={5} class="py-20 text-center">
 								<p class="mb-4">You have no DM logs.</p>
@@ -165,7 +165,7 @@
 							</td>
 						</tr>
 					{:else}
-						{#each results as log}
+						{#each sortedResults as log}
 							{@const hasDescription =
 								!!log.description?.trim() || log.storyAwardsGained.length > 0 || log.storyAwardsLost.length > 0}
 							<tr

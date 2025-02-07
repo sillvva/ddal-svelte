@@ -38,8 +38,8 @@ export const load = async (event) => {
 	});
 
 	const itemEntities = getItemEntities(character, { excludeDropped: true, lastLogId: log.id });
-	const magicItems = itemEntities.magicItems.sort((a, b) => sorter(a.name, b.name));
-	const storyAwards = itemEntities.storyAwards.sort((a, b) => sorter(a.name, b.name));
+	const magicItems = itemEntities.magicItems.toSorted((a, b) => sorter(a.name, b.name));
+	const storyAwards = itemEntities.storyAwards.toSorted((a, b) => sorter(a.name, b.name));
 	const dms = await getUserDMs(session.user);
 
 	return {

@@ -71,7 +71,7 @@
 	});
 
 	const sortedItems = $derived(
-		sort ? consolidatedItems.sort((a, b) => sorter(sorterName(a.name), sorterName(b.name))) : consolidatedItems
+		sort ? consolidatedItems.toSorted((a, b) => sorter(sorterName(a.name), sorterName(b.name))) : consolidatedItems
 	);
 
 	const nonConsumables = $derived(sortedItems.filter((item) => !isConsumable(item.name)));

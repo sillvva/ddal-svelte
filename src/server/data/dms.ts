@@ -35,7 +35,7 @@ export async function getUserDMsWithLogs(user: LocalsSession["user"], id?: Dunge
 		});
 	}
 
-	return dms.sort((a, b) => sorter(a.uid, b.uid) || sorter(a.name, b.name));
+	return dms.toSorted((a, b) => sorter(a.uid, b.uid) || sorter(a.name, b.name));
 }
 
 export type UserDMs = Awaited<ReturnType<typeof getUserDMs>>;
@@ -56,5 +56,5 @@ export async function getUserDMs(user: LocalsSession["user"]) {
 		});
 	}
 
-	return dms.sort((a, b) => sorter(a.uid, b.uid) || sorter(a.name, b.name));
+	return dms.toSorted((a, b) => sorter(a.uid, b.uid) || sorter(a.name, b.name));
 }

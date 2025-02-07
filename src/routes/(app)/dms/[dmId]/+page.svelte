@@ -13,6 +13,8 @@
 	let { data } = $props();
 
 	const superform = $derived(valibotForm(data.form, dungeonMasterSchema));
+
+	const sortedLogs = $derived(data.dm.logs.toSorted((a, b) => sorter(a.date, b.date)));
 </script>
 
 <div class="flex flex-col gap-4">
@@ -48,7 +50,7 @@
 							</tr>
 						</thead>
 						<tbody>
-							{#each data.dm.logs.sort((a, b) => sorter(a.date, b.date)) as log}
+							{#each sortedLogs as log}
 								<tr>
 									<td class="max-xs:px-2">
 										<div class="flex flex-col gap-1">

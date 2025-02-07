@@ -68,10 +68,10 @@
 								.filter(isDefined)
 						};
 					})
-					.sort((a, b) => sorter(b.score, a.score) || sorter(a.total_level, b.total_level) || sorter(a.name, b.name))
-			: data.characters
-					.sort((a, b) => sorter(a.total_level, b.total_level) || sorter(a.name, b.name))
-					.map((character) => ({ ...character, score: 0, match: [] }))
+			: data.characters.map((character) => ({ ...character, score: 0, match: [] }))
+	);
+	const sortedResults = $derived(
+		results.toSorted((a, b) => sorter(b.score, a.score) || sorter(a.total_level, b.total_level) || sorter(a.name, b.name))
 	);
 </script>
 
@@ -196,7 +196,7 @@
 						</tr>
 					</thead>
 					<tbody>
-						{#each results as character}
+						{#each sortedResults as character}
 							<tr class="group/row">
 								{#if !data.mobile}
 									<td class="pr-0 transition-colors max-sm:hidden sm:pr-2">
@@ -276,7 +276,7 @@
 			</div>
 
 			{#each [1, 2, 3, 4] as tier}
-				{#if results.filter((c) => c.tier == tier).length}
+				{#if sortedResults.filter((c) => c.tier == tier).length}
 					<h1
 						class="font-vecna max-xs:data-[display=grid]:hidden pt-6 pb-2 text-3xl font-bold data-[display=list]:hidden data-[tier=1]:pt-0 dark:text-white"
 						data-display={global.app.characters.display}
@@ -288,7 +288,7 @@
 						class="xs:data-[display=grid]:grid hidden w-full data-[display=grid]:grid-cols-2 data-[display=grid]:gap-4 sm:data-[display=grid]:grid-cols-3 md:data-[display=grid]:grid-cols-4"
 						data-display={global.app.characters.display}
 					>
-						{#each results.filter((c) => c.tier == tier) as character}
+						{#each sortedResults.filter((c) => c.tier == tier) as character}
 							{@const miMatches = msResults.find(
 								(result) => result.id == character.id && result.terms.find((term) => result.match[term]?.includes("magicItems"))
 							)}
