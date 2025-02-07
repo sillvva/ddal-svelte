@@ -19,7 +19,7 @@ export function getItemEntities(
 	const storyAwards: StoryAward[] = [];
 	let lastLog = false;
 	character.logs
-		.sort((a, b) => sorter(a.date, b.date))
+		.toSorted((a, b) => sorter(a.date, b.date))
 		.forEach((log) => {
 			if (lastLog) return;
 			if (lastLogId && log.id === lastLogId) lastLog = true;
@@ -110,7 +110,7 @@ export function getLogsSummary(
 	>,
 	includeLogs = true
 ) {
-	logs = logs.sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime());
+	logs = logs.toSorted((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime());
 
 	const levels = getLevels(logs);
 

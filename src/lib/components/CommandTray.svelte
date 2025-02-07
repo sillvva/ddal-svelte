@@ -72,7 +72,7 @@
 					const matches = words.length ? hasMatch(matcher.join(" ")) : [];
 					return matches?.length === words.length;
 				})
-				.sort((a, b) => {
+				.toSorted((a, b) => {
 					if (a.type === "log" && b.type === "log") return new Date(b.date).getTime() - new Date(a.date).getTime();
 					const aMatch = hasMatch(a.name);
 					const bMatch = hasMatch(b.name);
@@ -214,7 +214,7 @@
 																						{item.magic_items
 																							.map((item) => item.name)
 																							.filter((item) => hasMatch(item))
-																							.sort((a, b) => sorter(a, b))
+																							.toSorted((a, b) => sorter(a, b))
 																							.join(", ")}
 																					</span>
 																				</div>
@@ -226,7 +226,7 @@
 																						{item.story_awards
 																							.map((item) => item.name)
 																							.filter((item) => hasMatch(item))
-																							.sort((a, b) => sorter(a, b))
+																							.toSorted((a, b) => sorter(a, b))
 																							.join(", ")}
 																					</span>
 																				</div>
@@ -263,7 +263,7 @@
 																									!item.magicItemsGained.some((magicItem) => hasMatch(magicItem.name)) ||
 																									hasMatch(it)
 																							)
-																							.sort((a, b) => sorter(a, b))
+																							.toSorted((a, b) => sorter(a, b))
 																							.join(", ")}
 																					</span>
 																				</div>
@@ -279,7 +279,7 @@
 																									!item.storyAwardsGained.some((storyAward) => hasMatch(storyAward.name)) ||
 																									hasMatch(it)
 																							)
-																							.sort((a, b) => sorter(a, b))
+																							.toSorted((a, b) => sorter(a, b))
 																							.join(", ")}
 																					</span>
 																				</div>

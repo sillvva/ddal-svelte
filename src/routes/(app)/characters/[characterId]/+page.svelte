@@ -90,9 +90,9 @@
 							score: Math.round(score * 100) / 100
 						};
 					})
-					.sort((a, b) => sorter(a.show_date, b.show_date))
-			: logs.sort((a, b) => sorter(a.show_date, b.show_date))
+			: logs
 	);
+	const sortedResults = $derived(results.toSorted((a, b) => sorter(a.show_date, b.show_date)));
 
 	function triggerImageModal() {
 		if (data.character.imageUrl) {
@@ -366,7 +366,7 @@
 				</tr>
 			</thead>
 			<tbody>
-				{#each results as log, i}
+				{#each sortedResults as log, i}
 					{@const hasDescription =
 						!!log.description?.trim() || log.storyAwardsGained.length > 0 || log.storyAwardsLost.length > 0}
 					<tr
