@@ -54,7 +54,7 @@
 		"@auth/sveltekit": "^1.7.4",
 		"@internationalized/date": "^3.7.0",
 		"@paralleldrive/cuid2": "^2.2.2",
-		"@sillvva/utils": "npm:@jsr/sillvva__utils@^0.3.0",
+		"@sillvva/utils": "npm:@jsr/sillvva__utils@^0.3.2",
 		"@simplewebauthn/browser": "9.0.1",
 		"@simplewebauthn/server": "9.0.3",
 		"@svelteuidev/composables": "^0.15.7",
