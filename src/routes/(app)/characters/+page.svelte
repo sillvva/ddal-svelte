@@ -115,7 +115,9 @@
 	{:else}
 		<div class="flex flex-wrap justify-between gap-2">
 			<div class="flex w-full gap-2 sm:max-w-md md:max-w-md">
-				<a href="/characters/new/edit" class="btn btn-primary btn-sm max-sm:hidden">New Character</a>
+				<a href="/characters/new/edit" class="btn btn-primary btn-sm max-sm:hidden">
+					New Character <kbd class="kbd kbd-sm max-sm:hover-none:hidden">N</kbd>
+				</a>
 				<Search bind:value={search} placeholder="Search by name, race, class, items, etc." />
 				<a href="/characters/new/edit" class="btn btn-primary sm:hidden" aria-label="New Character">
 					<span class="iconify mdi--plus inline size-6"></span>

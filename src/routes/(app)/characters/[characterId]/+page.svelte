@@ -302,7 +302,7 @@
 				class="btn btn-primary sm:btn-sm max-sm:hidden sm:px-3"
 				aria-label="New Log"
 			>
-				New Log
+				New Log <kbd class="kbd kbd-sm max-sm:hover-none:hidden">N</kbd>
 			</a>
 		{/if}
 		{#if logs.length}
