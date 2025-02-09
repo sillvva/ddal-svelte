@@ -75,17 +75,6 @@
 	);
 </script>
 
-<div
-	use:hotkey={[
-		[
-			"n",
-			() => {
-				goto(`/characters/new`);
-			}
-		]
-	]}
-></div>
-
 <div class="flex flex-col gap-4">
 	<div class="hidden gap-4 sm:flex">
 		<BreadCrumbs />
@@ -115,7 +104,18 @@
 	{:else}
 		<div class="flex flex-wrap justify-between gap-2">
 			<div class="flex w-full gap-2 sm:max-w-md md:max-w-md">
-				<a href="/characters/new/edit" class="btn btn-primary btn-sm max-sm:hidden">
+				<a
+					href="/characters/new"
+					class="btn btn-primary btn-sm max-sm:hidden"
+					use:hotkey={[
+						[
+							"n",
+							() => {
+								goto(`/characters/new`);
+							}
+						]
+					]}
+				>
 					New Character <kbd class="kbd kbd-sm max-sm:hover-none:hidden">N</kbd>
 				</a>
 				<Search bind:value={search} placeholder="Search by name, race, class, items, etc." />

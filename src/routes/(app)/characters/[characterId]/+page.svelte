@@ -111,17 +111,6 @@
 	}
 </script>
 
-<div
-	use:hotkey={[
-		[
-			"n",
-			() => {
-				goto(`/characters/${data.character.id}/log/new`);
-			}
-		]
-	]}
-></div>
-
 {#if data.session?.user}
 	<div class="flex gap-4">
 		<BreadCrumbs />
@@ -301,6 +290,14 @@
 				href={`/characters/${data.character.id}/log/new`}
 				class="btn btn-primary sm:btn-sm max-sm:hidden sm:px-3"
 				aria-label="New Log"
+				use:hotkey={[
+					[
+						"n",
+						() => {
+							goto(`/characters/${data.character.id}/log/new`);
+						}
+					]
+				]}
 			>
 				New Log <kbd class="kbd kbd-sm max-sm:hover-none:hidden">N</kbd>
 			</a>
