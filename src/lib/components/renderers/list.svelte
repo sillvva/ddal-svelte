@@ -9,7 +9,7 @@
 </script>
 
 {#if ordered}
-	<ol class="ml-4 list-outside" {start}>{@render children?.()}</ol>
+	<ol class="mb-2 ml-4 list-outside [&>li]:list-decimal" {start}>{@render children?.()}</ol>
 {:else}
-	<ul class="ml-4 list-outside">{@render children?.()}</ul>
+	<ul class="mb-2 ml-4 list-outside [&>li]:list-disc">{@render children?.()}</ul>
 {/if}
