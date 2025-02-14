@@ -59,7 +59,6 @@
 		"@simplewebauthn/server": "9.0.3",
 		"@svelteuidev/composables": "^0.15.7",
 		"bits-ui": "^1.1.0",
-		"cmdk-sv": "^0.0.18",
 		"drizzle-orm": "^0.39.3",
 		"js-cookie": "^3.0.5",
 		"minisearch": "^7.1.0",
