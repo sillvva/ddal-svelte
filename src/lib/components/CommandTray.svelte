@@ -6,15 +6,14 @@
 	import type { SearchData } from "$src/routes/(api)/command/+server";
 	import { sorter } from "@sillvva/utils";
 	import { hotkey } from "@svelteuidev/composables";
-	import { ScrollArea } from "bits-ui";
-	import { Command } from "cmdk-sv";
+	import { Command } from "bits-ui";
 
 	const defaultSelected: string = searchSections[0].url;
 
 	let search = $state("");
 	let cmdOpen = $state(false);
 	let selected: string = $state(defaultSelected);
-	let resultsPane: HTMLElement | undefined = $state();
+	let viewport = $state<HTMLDivElement | null>(null);
 
 	const words = $derived(
 		search
@@ -129,186 +128,177 @@
 		]
 	]}
 >
-	<div class="modal-box bg-base-100 relative cursor-default px-4 py-5 drop-shadow-lg sm:p-6">
+	<div class="modal-box bg-base-100 relative cursor-default overflow-y-hidden px-4 py-5 drop-shadow-lg sm:p-6">
 		<div class="modal-content">
-			<Command.Dialog
-				label="Command Menu"
-				portal={null}
-				bind:open={cmdOpen}
-				bind:value={selected}
-				class="flex flex-col gap-4"
-				loop
-			>
-				<label class="input focus-within:border-primary flex w-full items-center gap-2">
-					<input
-						type="search"
-						bind:value={search}
-						use:focus
-						placeholder="Search"
-						oninput={() => {
-							const firstResult = results[0]?.items[0]?.url;
-							if (search && firstResult) selected = firstResult;
-							else selected = defaultSelected;
-							if (resultsPane) resultsPane.scrollTop = 0;
-						}}
-						onkeydown={(e) => {
-							if (e.key === "Enter") {
-								if (selected) {
-									goto(selected);
-									close();
-								} else {
+			<Command.Root label="Command Menu" bind:value={selected} class="flex flex-col gap-4" loop>
+				<Command.Input>
+					{#snippet child()}
+						<label class="input focus-within:border-primary flex w-full items-center gap-2">
+							<input
+								type="search"
+								bind:value={search}
+								use:focus
+								placeholder="Search"
+								oninput={() => {
 									const firstResult = results[0]?.items[0]?.url;
 									if (search && firstResult) selected = firstResult;
 									else selected = defaultSelected;
-									if (resultsPane) resultsPane.scrollTop = 0;
-								}
-							}
-						}}
-					/>
-					<span class="iconify mdi--magnify size-6"></span>
-				</label>
-				<Command.List class="flex flex-col gap-2" bind:el={resultsPane}>
+									if (viewport) viewport.scrollTop = 0;
+								}}
+								onkeydown={(e) => {
+									if (e.key === "Enter") {
+										if (selected) {
+											goto(selected);
+											close();
+										} else {
+											const firstResult = results[0]?.items[0]?.url;
+											if (search && firstResult) selected = firstResult;
+											else selected = defaultSelected;
+											if (viewport) viewport.scrollTop = 0;
+										}
+									}
+								}}
+							/>
+							<span class="iconify mdi--magnify size-6"></span>
+						</label>
+					{/snippet}
+				</Command.Input>
+				<Command.List class="flex flex-col gap-2">
 					{#if !global.searchData.length}
 						<div class="p-4 text-center font-bold">Loading data...</div>
 					{:else}
-						<Command.Empty class="p-4 text-center font-bold">No results found.</Command.Empty>
-
-						<ScrollArea.Root class="relative h-0 data-[results=true]:h-96" data-results={resultCounts > 0}>
-							<ScrollArea.Viewport class="h-full">
-								<ScrollArea.Content>
-									{#each results as section, i}
-										{#if i > 0}
-											<div class="divider"></div>
-										{/if}
-										<Command.Group asChild let:group>
-											<ul class="menu w-full p-0" {...group.attrs}>
+						<div class="relative h-0 data-[results=true]:h-96" data-results={resultCounts > 0}>
+							<Command.Empty class="p-4 text-center font-bold">No results found.</Command.Empty>
+							<Command.Viewport class="h-full overflow-y-auto" bind:ref={viewport}>
+								{#each results as section, i}
+									{#if i > 0}
+										<div class="divider"></div>
+									{/if}
+									<Command.Group>
+										{#snippet child({ props })}
+											<ul class="menu w-full p-0" {...props}>
 												<li class="menu-title">{section.title}</li>
 												{#each section.items as item}
-													<Command.Item asChild let:attrs value={item.url}>
-														<li
-															{...attrs}
-															data-selected={selected === item.url ? "true" : undefined}
-															class:selected={selected === item.url}
-														>
-															<a href={item.url} onclick={() => close()} class="flex gap-4 [.selected>&]:bg-neutral-500/40">
-																{#if item.type === "character"}
-																	<span class="mask mask-squircle bg-primary h-12 max-w-12 min-w-12">
-																		<img
-																			src={item.imageUrl}
-																			class="size-full object-cover object-top transition-all"
-																			alt={item.name}
-																		/>
-																	</span>
-																	<div class="flex flex-col">
-																		<div>{item.name}</div>
-																		<div class="text-xs opacity-70">
-																			Level {item.total_level}
-																			{item.race}
-																			{item.class}
+													<Command.Item value={item.url}>
+														{#snippet child({ props })}
+															<li
+																{...props}
+																data-selected={selected === item.url ? "true" : undefined}
+																class:selected={selected === item.url}
+															>
+																<a href={item.url} onclick={() => close()} class="flex gap-4 [.selected>&]:bg-neutral-500/40">
+																	{#if item.type === "character"}
+																		<span class="mask mask-squircle bg-primary h-12 max-w-12 min-w-12">
+																			<img
+																				src={item.imageUrl}
+																				class="size-full object-cover object-top transition-all"
+																				alt={item.name}
+																			/>
+																		</span>
+																		<div class="flex flex-col">
+																			<div>{item.name}</div>
+																			<div class="text-xs opacity-70">
+																				Level {item.total_level}
+																				{item.race}
+																				{item.class}
+																			</div>
+																			{#if search.length >= 2}
+																				{#if item.magic_items.some((magicItem) => hasMatch(magicItem.name))}
+																					<div class="flex gap-1 text-xs">
+																						<span class="font-bold whitespace-nowrap">Magic Items:</span>
+																						<span class="flex-1 opacity-70">
+																							{item.magic_items
+																								.map((item) => item.name)
+																								.filter((item) => hasMatch(item))
+																								.toSorted((a, b) => sorter(a, b))
+																								.join(", ")}
+																						</span>
+																					</div>
+																				{/if}
+																				{#if item.story_awards.some((storyAward) => hasMatch(storyAward.name))}
+																					<div class="flex gap-2 text-xs">
+																						<span class="font-bold whitespace-nowrap">Story Awards:</span>
+																						<span class="flex-1 opacity-70">
+																							{item.story_awards
+																								.map((item) => item.name)
+																								.filter((item) => hasMatch(item))
+																								.toSorted((a, b) => sorter(a, b))
+																								.join(", ")}
+																						</span>
+																					</div>
+																				{/if}
+																			{/if}
 																		</div>
-																		{#if search.length >= 2}
-																			{#if item.magic_items.some((magicItem) => hasMatch(magicItem.name))}
-																				<div class="flex gap-1 text-xs">
-																					<span class="font-bold whitespace-nowrap">Magic Items:</span>
-																					<span class="flex-1 opacity-70">
-																						{item.magic_items
-																							.map((item) => item.name)
-																							.filter((item) => hasMatch(item))
-																							.toSorted((a, b) => sorter(a, b))
-																							.join(", ")}
-																					</span>
-																				</div>
+																	{:else if item.type === "log"}
+																		<div class="flex flex-col">
+																			<div>{item.name}</div>
+																			<div class="divide-base-content/50 flex gap-2 divide-x opacity-70">
+																				<span class="text-xs">{new Date(item.date).toLocaleDateString()}</span>
+																				{#if item.character}
+																					<span class="pl-2 text-xs">{item.character.name}</span>
+																				{:else}
+																					<span class="pl-2 text-xs italic">Unassigned</span>
+																				{/if}
+																				<span class="pl-2 text-xs">{item.gold.toLocaleString()} gp</span>
+																			</div>
+																			{#if search.length >= 2}
+																				{#if item.dm && hasMatch(item.dm.name)}
+																					<div class="flex gap-1 text-xs">
+																						<span class="font-bold whitespace-nowrap">DM:</span>
+																						<span class="flex-1 opacity-70">{item.dm.name}</span>
+																					</div>
+																				{/if}
+																				{#if item.magicItemsGained.length}
+																					<div class="flex gap-1 text-xs">
+																						<span class="font-bold whitespace-nowrap">Magic Items:</span>
+																						<span class="flex-1 opacity-70">
+																							{item.magicItemsGained
+																								.map((it) => it.name)
+																								.filter(
+																									(it) =>
+																										!item.magicItemsGained.some((magicItem) => hasMatch(magicItem.name)) ||
+																										hasMatch(it)
+																								)
+																								.toSorted((a, b) => sorter(a, b))
+																								.join(", ")}
+																						</span>
+																					</div>
+																				{/if}
+																				{#if item.storyAwardsGained.length}
+																					<div class="flex gap-2 text-xs">
+																						<span class="font-bold whitespace-nowrap">Story Awards:</span>
+																						<span class="flex-1 opacity-70">
+																							{item.storyAwardsGained
+																								.map((it) => it.name)
+																								.filter(
+																									(it) =>
+																										!item.storyAwardsGained.some((storyAward) => hasMatch(storyAward.name)) ||
+																										hasMatch(it)
+																								)
+																								.toSorted((a, b) => sorter(a, b))
+																								.join(", ")}
+																						</span>
+																					</div>
+																				{/if}
 																			{/if}
-																			{#if item.story_awards.some((storyAward) => hasMatch(storyAward.name))}
-																				<div class="flex gap-2 text-xs">
-																					<span class="font-bold whitespace-nowrap">Story Awards:</span>
-																					<span class="flex-1 opacity-70">
-																						{item.story_awards
-																							.map((item) => item.name)
-																							.filter((item) => hasMatch(item))
-																							.toSorted((a, b) => sorter(a, b))
-																							.join(", ")}
-																					</span>
-																				</div>
-																			{/if}
-																		{/if}
-																	</div>
-																{:else if item.type === "log"}
-																	<div class="flex flex-col">
-																		<div>{item.name}</div>
-																		<div class="divide-base-content/50 flex gap-2 divide-x opacity-70">
-																			<span class="text-xs">{new Date(item.date).toLocaleDateString()}</span>
-																			{#if item.character}
-																				<span class="pl-2 text-xs">{item.character.name}</span>
-																			{:else}
-																				<span class="pl-2 text-xs italic">Unassigned</span>
-																			{/if}
-																			<span class="pl-2 text-xs">{item.gold.toLocaleString()} gp</span>
 																		</div>
-																		{#if search.length >= 2}
-																			{#if item.dm && hasMatch(item.dm.name)}
-																				<div class="flex gap-1 text-xs">
-																					<span class="font-bold whitespace-nowrap">DM:</span>
-																					<span class="flex-1 opacity-70">{item.dm.name}</span>
-																				</div>
-																			{/if}
-																			{#if item.magicItemsGained.length}
-																				<div class="flex gap-1 text-xs">
-																					<span class="font-bold whitespace-nowrap">Magic Items:</span>
-																					<span class="flex-1 opacity-70">
-																						{item.magicItemsGained
-																							.map((it) => it.name)
-																							.filter(
-																								(it) =>
-																									!item.magicItemsGained.some((magicItem) => hasMatch(magicItem.name)) ||
-																									hasMatch(it)
-																							)
-																							.toSorted((a, b) => sorter(a, b))
-																							.join(", ")}
-																					</span>
-																				</div>
-																			{/if}
-																			{#if item.storyAwardsGained.length}
-																				<div class="flex gap-2 text-xs">
-																					<span class="font-bold whitespace-nowrap">Story Awards:</span>
-																					<span class="flex-1 opacity-70">
-																						{item.storyAwardsGained
-																							.map((it) => it.name)
-																							.filter(
-																								(it) =>
-																									!item.storyAwardsGained.some((storyAward) => hasMatch(storyAward.name)) ||
-																									hasMatch(it)
-																							)
-																							.toSorted((a, b) => sorter(a, b))
-																							.join(", ")}
-																					</span>
-																				</div>
-																			{/if}
-																		{/if}
-																	</div>
-																{:else}
-																	{item.name}
-																{/if}
-															</a>
-														</li>
+																	{:else}
+																		{item.name}
+																	{/if}
+																</a>
+															</li>
+														{/snippet}
 													</Command.Item>
 												{/each}
 											</ul>
-										</Command.Group>
-									{/each}
-								</ScrollArea.Content>
-							</ScrollArea.Viewport>
-							<ScrollArea.Scrollbar
-								orientation="vertical"
-								class="bg-base-200/50 flex h-full w-2.5 touch-none rounded-full p-px select-none"
-							>
-								<ScrollArea.Thumb class="relative flex-1 rounded-full bg-black/20 dark:bg-white/20" />
-							</ScrollArea.Scrollbar>
-							<ScrollArea.Corner />
-						</ScrollArea.Root>
+										{/snippet}
+									</Command.Group>
+								{/each}
+							</Command.Viewport>
+						</div>
 					{/if}
 				</Command.List>
-			</Command.Dialog>
+			</Command.Root>
 		</div>
 	</div>
 
