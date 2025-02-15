@@ -1,7 +1,7 @@
 <script lang="ts">
 	import autosize from "svelte-autosize";
 	import type { HTMLTextareaAttributes } from "svelte/elements";
-	import { formFieldProxy, type FormPathLeaves, type SuperForm } from "sveltekit-superforms";
+	import { formFieldProxy, type FormFieldProxy, type FormPathLeaves, type SuperForm } from "sveltekit-superforms";
 	import Markdown from "../Markdown.svelte";
 
 	type T = $$Generic<Record<PropertyKey, unknown>>;
@@ -26,7 +26,7 @@
 
 	let state = $state("edit");
 
-	const { value, errors, constraints } = formFieldProxy(superform, field);
+	const { value, errors, constraints } = formFieldProxy(superform, field) satisfies FormFieldProxy<string>;
 
 	const graphemeCount = $derived(typeof $value === "string" ? [...new Intl.Segmenter().segment($value)].length : 0);
 	const lengthDiff = $derived($value.length - graphemeCount);
@@ -60,7 +60,7 @@
 	></textarea>
 	{#if preview && state === "preview"}
 		<div class="border-base-content/20 bg-base-100 rounded-b-lg border-[1px] p-4 [--tw-border-opacity:0.2]">
-			<Markdown content={`${$value}`} />
+			<Markdown content={$value} />
 		</div>
 	{/if}
 </div>
