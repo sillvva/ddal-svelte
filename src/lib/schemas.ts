@@ -27,7 +27,8 @@ export const envPrivateSchema = v.object({
 	GOOGLE_CLIENT_SECRET: requiredString,
 	DISCORD_CLIENT_ID: requiredString,
 	DISCORD_CLIENT_SECRET: requiredString,
-	DISABLE_SIGNUPS: v.optional(v.boolean(), false)
+	DISABLE_SIGNUPS: v.optional(v.boolean(), false),
+	COOLIFY_FQDN: v.optional(urlSchema, "")
 });
 
 export type EnvPublic = v.InferInput<typeof envPublicSchema>;
