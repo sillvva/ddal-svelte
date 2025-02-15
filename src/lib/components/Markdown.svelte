@@ -7,7 +7,7 @@
 	import h2 from "$lib/components/renderers/html/h2.svelte";
 	import h3 from "$lib/components/renderers/html/h3.svelte";
 	import h4 from "$lib/components/renderers/html/h4.svelte";
-	import img from "$lib/components/renderers/html/img.svelte";
+	import NotAllowed from "$lib/components/renderers/html/notallowed.svelte";
 	import ol from "$lib/components/renderers/html/ol.svelte";
 	import ul from "$lib/components/renderers/html/ul.svelte";
 	import image from "$lib/components/renderers/image.svelte";
@@ -46,15 +46,18 @@
 			tablerow,
 			tablecell,
 			html: {
-				iframe: null,
-				audio: null,
-				video: null,
-				embed: null,
-				canvas: null,
-				source: null,
-				track: null,
-				ol,
-				ul,
+				iframe: NotAllowed,
+				audio: NotAllowed,
+				video: NotAllowed,
+				embed: NotAllowed,
+				canvas: NotAllowed,
+				source: NotAllowed,
+				track: NotAllowed,
+				dialog: NotAllowed,
+				input: NotAllowed,
+				button: NotAllowed,
+				select: NotAllowed,
+				textarea: NotAllowed,
 				table,
 				thead: tablehead,
 				tbody: tablebody,
@@ -62,11 +65,12 @@
 				td: tablecell,
 				p: paragraph,
 				a: link,
+				ol,
+				ul,
 				h1,
 				h2,
 				h3,
-				h4,
-				img
+				h4
 			}
 		}}
 	/>
