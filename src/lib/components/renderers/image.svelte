@@ -6,6 +6,7 @@
 	}
 
 	let { href = "", title, text = "" }: Props = $props();
+	const id = $props.id();
 
 	const dText = $derived(typeof text === "string" ? text.split(":") : text);
 	const alt = $derived(dText[0]);
@@ -18,8 +19,9 @@
 		target="_blank"
 		rel="noreferrer noopener"
 		class="relative mx-auto mb-2 flex w-full max-w-[800px] justify-center {aspect}"
+		aria-labelledby={id}
 	>
-		<img src={href} {title} {alt} class="object-cover md:object-contain" />
+		<img src={href} {title} {alt} {id} class="object-cover md:object-contain" />
 	</a>
 	<figcaption class="block text-center text-sm text-white/70">Click to open full screen</figcaption>
 </figure>

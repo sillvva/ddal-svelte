@@ -1,30 +1,7 @@
 @import "tailwindcss";
-@config '../tailwind.config.ts';
 
-@variant dark (&:where(.dark, .dark *));
-
-@custom-variant hover-hover {
-	@media (hover: hover) {
-		@slot;
-	}
-}
-@custom-variant hover-none {
-	@media (hover: none) {
-		@slot;
-	}
-}
-
-@theme {
-	--breakpoint-xs: 500px;
-	--breakpoint-sm: 640px;
-	--breakpoint-md: 768px;
-	--breakpoint-lg: 1024px;
-	--breakpoint-xl: 1280px;
-	--breakpoint-2xl: 1440px;
-	--font-draconis: "Draconis";
-	--font-vecna: "Vecna";
-
-	--color-input-focus: color-mix(in oklch, var(--color-base-content) 30%, transparent);
+@plugin "@iconify/tailwind4" {
+	prefixes: logos, material-symbols, mdi;
 }
 
 @plugin "daisyui";
@@ -105,6 +82,32 @@
 	default: false;
 	prefersdark: false;
 	color-scheme: light;
+}
+
+@variant dark (&:where(.dark, .dark *));
+
+@custom-variant hover-hover {
+	@media (hover: hover) {
+		@slot;
+	}
+}
+@custom-variant hover-none {
+	@media (hover: none) {
+		@slot;
+	}
+}
+
+@theme {
+	--breakpoint-xs: 500px;
+	--breakpoint-sm: 640px;
+	--breakpoint-md: 768px;
+	--breakpoint-lg: 1024px;
+	--breakpoint-xl: 1280px;
+	--breakpoint-2xl: 1440px;
+	--font-draconis: "Draconis";
+	--font-vecna: "Vecna";
+
+	--color-input-focus: color-mix(in oklch, var(--color-base-content) 30%, transparent);
 }
 
 @layer base {

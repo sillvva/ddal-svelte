@@ -8,4 +8,4 @@
 	let { children } = $props();
 </script>
 
-<li class="list-disc">{@render children?.()}</li>
+<li>{@render children?.()}</li>

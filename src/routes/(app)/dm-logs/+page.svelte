@@ -80,17 +80,6 @@
 	);
 </script>
 
-<div
-	use:hotkey={[
-		[
-			"n",
-			() => {
-				goto(`/dm-logs/new`);
-			}
-		]
-	]}
-></div>
-
 <div class="flex flex-col gap-4">
 	<div class="hidden gap-4 sm:flex print:hidden">
 		<BreadCrumbs />
@@ -107,7 +96,21 @@
 
 	<div class="flex gap-2 sm:justify-between">
 		<div class="flex gap-2 sm:w-96">
-			<a href="/dm-logs/new" class="btn btn-primary btn-sm max-sm:hidden" aria-label="New Log">New Log</a>
+			<a
+				href="/dm-logs/new"
+				class="btn btn-primary btn-sm max-sm:hidden"
+				aria-label="New Log"
+				use:hotkey={[
+					[
+						"n",
+						() => {
+							goto(`/dm-logs/new`);
+						}
+					]
+				]}
+			>
+				New Log <kbd class="kbd kbd-sm max-sm:hover-none:hidden">N</kbd>
+			</a>
 			<Search bind:value={search} placeholder="Search by name, race, class, items, etc." />
 			<a href="/dm-logs/new" class="btn btn-primary inline-flex sm:hidden" aria-label="New Log">
 				<span class="iconify mdi--plus inline size-6"></span>

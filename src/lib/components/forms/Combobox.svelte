@@ -6,7 +6,7 @@
 	type T = $$Generic<Record<PropertyKey, unknown>>;
 	type Item = {
 		value: string;
-		label?: string;
+		label: string;
 		itemLabel?: string;
 	};
 	interface Props {
@@ -101,18 +101,20 @@
 
 <Combobox.Root
 	items={filtered}
-	bind:inputValue={$input}
+	type="single"
+	bind:value={$value}
 	bind:open
-	let:ids
+	{name}
 	{disabled}
 	{required}
-	onSelectedChange={(sel) => {
-		$value = sel?.value || "";
-		$input = sel?.label || sel?.value || "";
+	onValueChange={(sel) => {
+		const item = filtered.find((item) => item.value === sel);
+		$value = item?.value || "";
+		$input = item?.label || item?.value || "";
 		selectedItem = { value: $value, label: $input, itemLabel: $input };
-		onselect({ selected: sel, input: $input });
+		onselect({ selected: item, input: $input });
+		open = false;
 	}}
-	preventScroll={false}
 	onOpenChange={() => {
 		setTimeout(() => {
 			if (!open) {
@@ -123,11 +125,8 @@
 			}
 		}, 50);
 	}}
-	onOutsideClick={() => {
-		open = false;
-	}}
 >
-	<label for={ids.trigger} class="fieldset-legend">
+	<label for={inputField} class="fieldset-legend">
 		<span>
 			{label}
 			{#if required}
@@ -138,53 +137,59 @@
 	<div class="join">
 		<div class="dropdown w-full">
 			<label>
-				<Combobox.Input asChild let:builder>
-					<input
-						class="input join-item focus:border-primary w-full"
-						oninput={(e) => {
-							let cValue = e.currentTarget.value;
-							if (selectedItem && selectedItem.label !== cValue) selectedItem = undefined;
-							if (!cValue) clear();
-							$input = cValue;
-							oninput(e.currentTarget, cValue);
-							changed = true;
-						}}
-						onblur={() => {
-							if (!allowCustom && !selectedItem && !filtered.length) clear();
-							if (!$input) open = false;
-						}}
-						aria-invalid={($errors || []).length ? "true" : undefined}
-						use:builder.action
-						{...builder}
-						{required}
-						{placeholder}
-					/>
+				<Combobox.Input>
+					{#snippet child({ props })}
+						<input
+							class="input join-item focus:border-primary w-full"
+							{...props}
+							bind:value={$input}
+							id={inputField}
+							oninput={(e) => {
+								let cValue = e.currentTarget.value;
+								if (selectedItem && selectedItem.label !== cValue) selectedItem = undefined;
+								if (!cValue) clear();
+								$input = cValue;
+								oninput(e.currentTarget, cValue);
+								changed = true;
+							}}
+							onblur={() => {
+								if (!allowCustom && !selectedItem && !filtered.length) clear();
+								if (!$input) open = false;
+							}}
+							aria-invalid={($errors || []).length ? "true" : undefined}
+							{required}
+							{placeholder}
+						/>
+					{/snippet}
 				</Combobox.Input>
 			</label>
 			{#if (showOnEmpty || $input?.trim()) && filtered.length}
-				<Combobox.Content asChild let:builder>
-					<ul class="menu dropdown-content bg-base-200 z-10 w-full rounded-lg p-2 shadow-sm" use:builder.action {...builder}>
-						{#each filtered.slice(0, 8) as item}
-							<Combobox.Item asChild value={item.value} label={item.label} let:builder>
-								<li
-									class={[
-										"hover:bg-primary/50",
-										"data-highlighted:bg-primary data-highlighted:text-primary-content",
-										"data-selected:bg-primary data-selected:text-primary-content data-selected:font-bold"
-									].join(" ")}
-									use:builder.action
-									{...builder}
-									role="option"
-									data-selected={selectedItem?.value === item.value ? "true" : undefined}
-									aria-selected={selectedItem?.value === item.value}
-								>
-									<span class="rounded-none px-4 py-2">
-										{item.itemLabel}
-									</span>
-								</li>
-							</Combobox.Item>
-						{/each}
-					</ul>
+				<Combobox.Content>
+					{#snippet child({ props })}
+						<ul class="menu dropdown-content bg-base-200 z-10 w-full rounded-lg p-2 shadow-sm" {...props}>
+							{#each filtered.slice(0, 8) as item}
+								<Combobox.Item value={item.value} label={item.label}>
+									{#snippet child({ props })}
+										<li
+											class={[
+												"hover:bg-primary/50",
+												"data-highlighted:bg-primary data-highlighted:text-primary-content",
+												"data-selected:bg-primary data-selected:text-primary-content data-selected:font-bold"
+											].join(" ")}
+											{...props}
+											role="option"
+											data-selected={selectedItem?.value === item.value ? "true" : undefined}
+											aria-selected={selectedItem?.value === item.value}
+										>
+											<span class="rounded-none px-4 py-2">
+												{item.itemLabel}
+											</span>
+										</li>
+									{/snippet}
+								</Combobox.Item>
+							{/each}
+						</ul>
+					{/snippet}
 				</Combobox.Content>
 			{/if}
 		</div>
@@ -220,7 +225,6 @@
 			</button>
 		{/if}
 	</div>
-	{#if name}<Combobox.HiddenInput {name} />{/if}
 	{#if $errors?.length || description}
 		<label for={inputField} class="fieldset-label">
 			{#if $errors?.length}

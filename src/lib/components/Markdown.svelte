@@ -1,8 +1,15 @@
 <script lang="ts">
-	import SvelteMarkdown from "svelte-markdown";
+	import SvelteMarkdown from "@humanspeak/svelte-markdown";
 	// Renderers
 	import blockquote from "$lib/components/renderers/blockquote.svelte";
 	import heading from "$lib/components/renderers/heading.svelte";
+	import h1 from "$lib/components/renderers/html/h1.svelte";
+	import h2 from "$lib/components/renderers/html/h2.svelte";
+	import h3 from "$lib/components/renderers/html/h3.svelte";
+	import h4 from "$lib/components/renderers/html/h4.svelte";
+	import NotAllowed from "$lib/components/renderers/html/notallowed.svelte";
+	import ol from "$lib/components/renderers/html/ol.svelte";
+	import ul from "$lib/components/renderers/html/ul.svelte";
 	import image from "$lib/components/renderers/image.svelte";
 	import link from "$lib/components/renderers/link.svelte";
 	import list from "$lib/components/renderers/list.svelte";
@@ -37,7 +44,34 @@
 			tablehead,
 			tablebody,
 			tablerow,
-			tablecell
+			tablecell,
+			html: {
+				iframe: NotAllowed,
+				audio: NotAllowed,
+				video: NotAllowed,
+				embed: NotAllowed,
+				canvas: NotAllowed,
+				source: NotAllowed,
+				track: NotAllowed,
+				dialog: NotAllowed,
+				input: NotAllowed,
+				button: NotAllowed,
+				select: NotAllowed,
+				textarea: NotAllowed,
+				table,
+				thead: tablehead,
+				tbody: tablebody,
+				tr: tablerow,
+				td: tablecell,
+				p: paragraph,
+				a: link,
+				ol,
+				ul,
+				h1,
+				h2,
+				h3,
+				h4
+			}
 		}}
 	/>
 </div>
