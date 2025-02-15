@@ -37,25 +37,8 @@
 		}
 	});
 
-	let level = 1;
-	const logs = $derived(
-		data.character
-			? data.character.logs.map((log) => {
-					const level_gained = data.character.log_levels.find((gl) => gl.id === log.id);
-					if (level_gained) level += level_gained.levels;
-					return {
-						...log,
-						level_gained: level_gained?.levels || 0,
-						total_level: level,
-						show_date: log.isDmLog && log.appliedDate ? log.appliedDate : log.date,
-						score: 0
-					};
-				})
-			: []
-	);
-
 	const indexed = $derived(
-		logs.map((log) => ({
+		data.character.logs.map((log) => ({
 			logId: log.id,
 			logName: log.name,
 			magicItems: log.magicItemsGained
@@ -78,19 +61,10 @@
 		if (!minisearch.termCount) minisearch.addAll(indexed);
 		return minisearch.search(search);
 	});
-	const resultsMap = $derived(new Map(msResults.map((result) => [result.id, result])));
 	const results = $derived(
 		indexed.length && search.length > 1
-			? logs
-					.filter((log) => msResults.find((result) => result.id === log.id))
-					.map((log) => {
-						const { score = 0 - log.date.getTime() } = resultsMap.get(log.id) || {};
-						return {
-							...log,
-							score: Math.round(score * 100) / 100
-						};
-					})
-			: logs
+			? data.character.logs.filter((log) => msResults.find((result) => result.id === log.id))
+			: data.character.logs
 	);
 	const sortedResults = $derived(results.toSorted((a, b) => sorter(a.show_date, b.show_date)));
 
@@ -302,7 +276,7 @@
 				New Log <kbd class="kbd kbd-sm max-sm:hover-none:hidden">N</kbd>
 			</a>
 		{/if}
-		{#if logs.length}
+		{#if data.character.logs.length}
 			<Search bind:value={search} placeholder="Search Logs" />
 		{/if}
 		{#if myCharacter}
@@ -329,7 +303,7 @@
 			</button>
 		{/if}
 	</div>
-	{#if logs.length}
+	{#if data.character.logs.length}
 		<div class="flex-1 max-sm:hidden"></div>
 		<button
 			class="btn data-[desc=true]:btn-primary sm:btn-sm max-sm:hidden"

@@ -110,10 +110,9 @@ export function getLogsSummary(
 	>,
 	includeLogs = true
 ) {
-	logs = logs.toSorted((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime());
+	logs = logs.toSorted((a, b) => sorter(a.date, b.date));
 
 	const levels = getLevels(logs);
-
 	const total_level = levels.total;
 	const total_gold = logs.reduce((acc, log) => acc + log.gold, 0);
 	const total_tcp = logs.reduce((acc, log) => acc + log.tcp, 0);
@@ -135,6 +134,8 @@ export function getLogsSummary(
 		return acc;
 	}, [] as StoryAward[]);
 
+	let level = 1;
+
 	return {
 		total_level,
 		total_gold,
@@ -144,7 +145,17 @@ export function getLogsSummary(
 		story_awards,
 		log_levels: levels.log_levels,
 		tier: Math.floor((total_level + 1) / 6) + 1,
-		logs: includeLogs ? logs.map(parseLog) : []
+		logs: includeLogs
+			? logs.map(parseLog).map((log) => {
+					const level_gained = levels.log_levels.find((gl) => gl.id === log.id);
+					if (level_gained) level += level_gained.levels;
+					return {
+						...log,
+						level_gained: level_gained?.levels || 0,
+						total_level: level
+					};
+				})
+			: []
 	};
 }
 
@@ -211,7 +222,8 @@ export function parseLog(
 	return {
 		...log,
 		type: log.type === "nongame" ? ("nongame" as const) : ("game" as const),
-		character: log.character && log.character.name !== PlaceholderName ? log.character : undefined
+		character: log.character && log.character.name !== PlaceholderName ? log.character : undefined,
+		show_date: log.isDmLog && log.appliedDate ? log.appliedDate : log.date
 	};
 }
 
