@@ -29,6 +29,8 @@
 			fetch(`/command`, { signal: controller.signal })
 				.then((res) => res.json() as Promise<SearchData>)
 				.then((res) => (global.searchData = res));
+		} else {
+			controller.abort();
 		}
 
 		return () => {
