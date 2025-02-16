@@ -47,12 +47,11 @@
 	const consolidatedItems = $derived.by(() => {
 		const itemsMap = new Map<string, number>();
 		return $state.snapshot(items).reduce(
-			(acc, item, index) => {
-				if (index === 0) itemsMap.clear();
+			(acc, item) => {
 				const name = fixName(item.name);
 				const qty = itemQty(item);
 				const desc = item.description?.trim();
-				const key = `${name}_${desc}`;
+				const key = `${name || ""}_${desc || ""}`;
 
 				const existingIndex = itemsMap.get(key);
 				if (existingIndex !== undefined && acc[existingIndex]) {
