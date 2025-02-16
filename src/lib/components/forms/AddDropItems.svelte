@@ -1,6 +1,7 @@
 <script lang="ts">
 	import type { ItemId, LogSchema } from "$lib/schemas";
 	import type { MagicItem, StoryAward } from "$server/db/schema";
+	import { sorter } from "@sillvva/utils";
 	import type { Snippet } from "svelte";
 	import type { SuperForm } from "sveltekit-superforms";
 	import EntityCard from "./EntityCard.svelte";
@@ -17,7 +18,10 @@
 	const { form } = superform;
 	const newItem = { id: "" as ItemId, name: "", description: "" };
 
-	const remainingItems = $derived(magicItems.filter((item) => !$form.magicItemsLost.includes(item.id)));
+	const sortedItems = $derived(
+		magicItems.toSorted((a, b) => sorter(a.name.replace(/^\d+x? ?/, ""), b.name.replace(/^\d+x? ?/, "")))
+	);
+	const remainingItems = $derived(sortedItems.filter((item) => !$form.magicItemsLost.includes(item.id)));
 	const remainingAwards = $derived(storyAwards.filter((item) => !$form.storyAwardsLost.includes(item.id)));
 </script>
 
@@ -105,7 +109,7 @@
 		<EntityCard {superform} type="add" entity="magic_items" {index} />
 	{/each}
 	{#each $form.magicItemsLost as _, index}
-		<EntityCard {superform} type="drop" entity="magic_items" {index} data={magicItems} />
+		<EntityCard {superform} type="drop" entity="magic_items" {index} data={sortedItems} />
 	{/each}
 	{#each $form.storyAwardsGained as _, index}
 		<EntityCard {superform} type="add" entity="story_awards" {index} />
