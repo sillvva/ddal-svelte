@@ -74,12 +74,11 @@
 					return matches?.length === words.length;
 				})
 				.toSorted((a, b) => {
-					if (a.type === "log" && b.type === "log") return new Date(b.date).getTime() - new Date(a.date).getTime();
-					const aMatch = hasMatch(a.name);
-					const bMatch = hasMatch(b.name);
-					if (aMatch && !bMatch) return -1;
-					if (!aMatch && bMatch) return 1;
-					return a.name.localeCompare(b.name);
+					if (a.type === "log" && b.type === "log") return sorter(b.date, a.date);
+					const aMatch = hasMatch(a.name),
+						bMatch = hasMatch(b.name);
+					if (aMatch !== bMatch) return aMatch ? -1 : 1;
+					return sorter(a.name, b.name);
 				})
 				.slice(0, words.length ? 1000 : 5);
 
