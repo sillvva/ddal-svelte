@@ -146,11 +146,11 @@ export function getLogsSummary(
 		log_levels: levels.log_levels,
 		tier: Math.floor((total_level + 1) / 6) + 1,
 		logs: includeLogs
-			? logs.map(parseLog).map((log) => {
+			? logs.map((log) => {
 					const level_gained = levels.log_levels.find((gl) => gl.id === log.id);
 					if (level_gained) level += level_gained.levels;
 					return {
-						...log,
+						...parseLog(log),
 						level_gained: level_gained?.levels || 0,
 						total_level: level
 					};
