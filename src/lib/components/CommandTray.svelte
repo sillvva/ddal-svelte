@@ -15,6 +15,7 @@
 	let search = $state("");
 	let cmdOpen = $state(false);
 	let selected: string = $state(defaultSelected);
+	let command = $state<Command.Root | null>(null);
 	let viewport = $state<HTMLDivElement | null>(null);
 	let input = $state<HTMLInputElement | null>(null);
 
@@ -54,13 +55,12 @@
 	}
 
 	function close() {
-		cmdOpen = false;
 		search = "";
-		selected = defaultSelected;
+		cmdOpen = false;
 	}
 
-	function select() {
-		goto(selected);
+	function select(value: string) {
+		goto(value);
 		close();
 	}
 
@@ -98,6 +98,12 @@
 		})
 	);
 	const resultCounts = $derived(results.map((section) => section.items.length).filter((c) => c > 0).length);
+
+	$effect(() => {
+		if (results && resultCounts > 0) {
+			command?.updateSelectedToIndex(0);
+		}
+	});
 </script>
 
 <svelte:document
@@ -117,7 +123,7 @@
 	]}
 />
 
-<Dialog.Root bind:open={cmdOpen}>
+<Dialog.Root bind:open={cmdOpen} onOpenChange={() => (search = "")}>
 	<Dialog.Trigger
 		class="hover-hover:md:input hover-hover:md:gap-4 hover-hover:md:cursor-text"
 		aria-label="Search"
@@ -155,7 +161,7 @@
 						CTRL+K
 					{/if} to open the search bar.
 				</Dialog.Description>
-				<Command.Root label="Command Menu" bind:value={selected} class="flex flex-col gap-4" loop>
+				<Command.Root label="Command Menu" bind:this={command} bind:value={selected} class="flex flex-col gap-4" loop>
 					<Command.Input bind:ref={input}>
 						{#snippet child({ props })}
 							<label class="input focus-within:border-primary flex w-full items-center gap-2">
@@ -179,7 +185,7 @@
 						{#if !global.searchData.length}
 							<div class="p-4 text-center font-bold">Loading data...</div>
 						{:else}
-							<div class="relative h-0 data-[results=true]:h-96" data-results={resultCounts > 0}>
+							<div class="relative h-auto data-[results=true]:h-96" data-results={resultCounts > 0}>
 								<Command.Empty class="p-4 text-center font-bold">No results found.</Command.Empty>
 								<Command.Viewport class="h-full overflow-y-auto" bind:ref={viewport}>
 									{#each results as section, i}
@@ -196,7 +202,7 @@
 														{#each section.items as item}
 															<Command.Item
 																value={item.url}
-																onSelect={() => select()}
+																onSelect={() => select(item.url)}
 																class="flex gap-4 rounded-lg data-[selected]:bg-neutral-500/40"
 															>
 																{#snippet child({ props })}
