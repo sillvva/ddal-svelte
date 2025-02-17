@@ -110,14 +110,14 @@ export function getLogsSummary(
 	>,
 	includeLogs = true
 ) {
-	logs = logs.toSorted((a, b) => sorter(a.date, b.date));
+	const sortedLogs = logs.map(parseLog).toSorted((a, b) => sorter(a.show_date, b.show_date));
 
-	const levels = getLevels(logs);
+	const levels = getLevels(sortedLogs);
 	const total_level = levels.total;
-	const total_gold = logs.reduce((acc, log) => acc + log.gold, 0);
-	const total_tcp = logs.reduce((acc, log) => acc + log.tcp, 0);
-	const total_dtd = logs.reduce((acc, log) => acc + log.dtd, 0);
-	const magic_items = logs.reduce((acc, log) => {
+	const total_gold = sortedLogs.reduce((acc, log) => acc + log.gold, 0);
+	const total_tcp = sortedLogs.reduce((acc, log) => acc + log.tcp, 0);
+	const total_dtd = sortedLogs.reduce((acc, log) => acc + log.dtd, 0);
+	const magic_items = sortedLogs.reduce((acc, log) => {
 		acc.push(
 			...log.magicItemsGained.filter((magicItem) => {
 				return !magicItem.logLostId;
@@ -125,7 +125,7 @@ export function getLogsSummary(
 		);
 		return acc;
 	}, [] as MagicItem[]);
-	const story_awards = logs.reduce((acc, log) => {
+	const story_awards = sortedLogs.reduce((acc, log) => {
 		acc.push(
 			...log.storyAwardsGained.filter((storyAward) => {
 				return !storyAward.logLostId;
@@ -143,14 +143,15 @@ export function getLogsSummary(
 		total_dtd,
 		magic_items,
 		story_awards,
+		last_log: sortedLogs.at(-1)?.show_date,
 		log_levels: levels.log_levels,
 		tier: Math.floor((total_level + 1) / 6) + 1,
 		logs: includeLogs
-			? logs.map((log) => {
+			? sortedLogs.map((log) => {
 					const level_gained = levels.log_levels.find((gl) => gl.id === log.id);
 					if (level_gained) level += level_gained.levels;
 					return {
-						...parseLog(log),
+						...log,
 						level_gained: level_gained?.levels || 0,
 						total_level: level
 					};
