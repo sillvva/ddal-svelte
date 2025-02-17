@@ -30,6 +30,7 @@ export const load = async (event) => {
 	const form = await superValidate(
 		parent.character
 			? {
+					id: event.params.characterId !== "new" ? parent.character.id : "",
 					name: parent.character.name,
 					campaign: parent.character.campaign || "",
 					race: parent.character.race || "",
