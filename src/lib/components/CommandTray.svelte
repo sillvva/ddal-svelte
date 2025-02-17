@@ -6,8 +6,9 @@
 	import type { SearchData } from "$src/routes/(api)/command/+server";
 	import { sorter } from "@sillvva/utils";
 	import { hotkey } from "@svelteuidev/composables";
-	import { Command, Dialog } from "bits-ui";
+	import { Command, Dialog, Separator } from "bits-ui";
 	import { twMerge } from "tailwind-merge";
+	import Items from "./Items.svelte";
 
 	const defaultSelected: string = searchSections[0].url;
 
@@ -154,7 +155,7 @@
 						CTRL+K
 					{/if} to open the search bar.
 				</Dialog.Description>
-				<Command.Root label="Command Menu" bind:value={selected} class="modal-content flex flex-col gap-4" loop>
+				<Command.Root label="Command Menu" bind:value={selected} class="flex flex-col gap-4" loop>
 					<Command.Input bind:ref={input}>
 						{#snippet child({ props })}
 							<label class="input focus-within:border-primary flex w-full items-center gap-2">
@@ -186,7 +187,7 @@
 											<Command.Separator class="divider mt-2 mb-0" />
 										{/if}
 										<Command.Group>
-											<Command.GroupHeading class="menu-title px-5">
+											<Command.GroupHeading class="menu-title text-base-content/60 px-5">
 												{section.title}
 											</Command.GroupHeading>
 											<Command.GroupItems class="menu flex w-full flex-col py-0">
@@ -211,33 +212,35 @@
 																				</span>
 																				<div class="flex flex-col">
 																					<div>{item.name}</div>
-																					<div class="text-xs opacity-70">
+																					<div class="text-base-content/70 text-xs">
 																						Level {item.total_level}
 																						{item.race}
 																						{item.class}
 																					</div>
 																					{#if search.length >= 2}
 																						{#if item.magic_items.some((magicItem) => hasMatch(magicItem.name))}
-																							<div class="flex gap-1 text-xs">
-																								<span class="font-bold whitespace-nowrap">Magic Items:</span>
-																								<span class="flex-1 opacity-70">
-																									{item.magic_items
-																										.map((item) => item.name)
-																										.filter((item) => hasMatch(item))
-																										.toSorted((a, b) => sorter(a, b))
-																										.join(", ")}
+																							<div class="flex flex-col text-xs">
+																								<span class="pt-1 font-bold whitespace-nowrap">Magic Items:</span>
+																								<span class="text-base-content/70 flex-1">
+																									<Items
+																										items={item.magic_items
+																											.filter((item) => hasMatch(item.name))
+																											.toSorted((a, b) => sorter(a.name, b.name))}
+																										textClass="text-xs leading-4"
+																									/>
 																								</span>
 																							</div>
 																						{/if}
 																						{#if item.story_awards.some((storyAward) => hasMatch(storyAward.name))}
-																							<div class="flex gap-2 text-xs">
-																								<span class="font-bold whitespace-nowrap">Story Awards:</span>
-																								<span class="flex-1 opacity-70">
-																									{item.story_awards
-																										.map((item) => item.name)
-																										.filter((item) => hasMatch(item))
-																										.toSorted((a, b) => sorter(a, b))
-																										.join(", ")}
+																							<div class="flex flex-col text-xs">
+																								<span class="pt-1 font-bold whitespace-nowrap">Story Awards:</span>
+																								<span class="text-base-content/70 flex-1">
+																									<Items
+																										items={item.story_awards
+																											.filter((item) => hasMatch(item.name))
+																											.toSorted((a, b) => sorter(a.name, b.name))}
+																										textClass="text-xs leading-4"
+																									/>
 																								</span>
 																							</div>
 																						{/if}
@@ -246,51 +249,47 @@
 																			{:else if item.type === "log"}
 																				<div class="flex flex-col">
 																					<div>{item.name}</div>
-																					<div class="divide-base-content/50 flex gap-2 divide-x opacity-70 *:pr-2">
+																					<div class="text-base-content/70 flex gap-2">
 																						<span class="text-xs">{new Date(item.date).toLocaleDateString()}</span>
+																						<Separator.Root orientation="vertical" class="border-base-content/50 border-l" />
 																						{#if item.character}
 																							<span class="text-xs">{item.character.name}</span>
 																						{:else}
 																							<span class="text-xs italic">Unassigned</span>
 																						{/if}
+																						<Separator.Root orientation="vertical" class="border-base-content/50 border-l" />
 																						<span class="text-xs">{item.gold.toLocaleString()} gp</span>
 																					</div>
 																					{#if search.length >= 2}
 																						{#if item.dm && hasMatch(item.dm.name)}
 																							<div class="flex gap-1 text-xs">
 																								<span class="font-bold whitespace-nowrap">DM:</span>
-																								<span class="flex-1 opacity-70">{item.dm.name}</span>
+																								<span class="text-base-content/70 flex-1">{item.dm.name}</span>
 																							</div>
 																						{/if}
-																						{#if item.magicItemsGained.length}
-																							<div class="flex gap-1 text-xs">
-																								<span class="font-bold whitespace-nowrap">Magic Items:</span>
-																								<span class="flex-1 opacity-70">
-																									{item.magicItemsGained
-																										.map((it) => it.name)
-																										.filter(
-																											(it) =>
-																												!item.magicItemsGained.some((magicItem) => hasMatch(magicItem.name)) ||
-																												hasMatch(it)
-																										)
-																										.toSorted((a, b) => sorter(a, b))
-																										.join(", ")}
+																						{#if item.magicItemsGained.some((it) => hasMatch(it.name))}
+																							<div class="flex flex-col text-xs">
+																								<span class="pt-1 font-bold whitespace-nowrap">Magic Items:</span>
+																								<span class="text-base-content/70 flex-1">
+																									<Items
+																										items={item.magicItemsGained
+																											.filter((it) => hasMatch(it.name))
+																											.toSorted((a, b) => sorter(a.name, b.name))}
+																										textClass="text-xs leading-4"
+																									/>
 																								</span>
 																							</div>
 																						{/if}
-																						{#if item.storyAwardsGained.length}
-																							<div class="flex gap-2 text-xs">
-																								<span class="font-bold whitespace-nowrap">Story Awards:</span>
-																								<span class="flex-1 opacity-70">
-																									{item.storyAwardsGained
-																										.map((it) => it.name)
-																										.filter(
-																											(it) =>
-																												!item.storyAwardsGained.some((storyAward) => hasMatch(storyAward.name)) ||
-																												hasMatch(it)
-																										)
-																										.toSorted((a, b) => sorter(a, b))
-																										.join(", ")}
+																						{#if item.storyAwardsGained.some((it) => hasMatch(it.name))}
+																							<div class="flex flex-col text-xs">
+																								<span class="pt-1 font-bold whitespace-nowrap">Story Awards:</span>
+																								<span class="text-base-content/70 flex-1">
+																									<Items
+																										items={item.storyAwardsGained
+																											.filter((it) => hasMatch(it.name))
+																											.toSorted((a, b) => sorter(a.name, b.name))}
+																										textClass="text-xs leading-4"
+																									/>
 																								</span>
 																							</div>
 																						{/if}
