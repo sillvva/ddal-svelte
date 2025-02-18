@@ -106,12 +106,10 @@
 	bind:open
 	{name}
 	{disabled}
-	{required}
 	onValueChange={(sel) => {
 		const item = filtered.find((item) => item.value === sel);
-		$value = item?.value || "";
 		$input = item?.label || item?.value || "";
-		selectedItem = { value: $value, label: $input, itemLabel: $input };
+		selectedItem = { value: item?.value || "", label: $input, itemLabel: $input };
 		onselect({ selected: item, input: $input });
 		open = false;
 	}}
@@ -139,12 +137,11 @@
 			<label>
 				<Combobox.Input
 					id={inputField}
-					defaultValue={$input}
 					oninput={(e) => {
 						let cValue = e.currentTarget.value;
-						if (selectedItem && selectedItem.label !== cValue) selectedItem = undefined;
-						if (!cValue) clear();
+						if (!cValue) return clear();
 						$input = cValue;
+						$value = "";
 						oninput(e.currentTarget, cValue);
 						changed = true;
 					}}
@@ -158,12 +155,12 @@
 					{placeholder}
 				>
 					{#snippet child({ props })}
-						<input {...props} />
+						<input {...props} bind:value={$input} />
 					{/snippet}
 				</Combobox.Input>
 			</label>
 			{#if (showOnEmpty || $input?.trim()) && filtered.length}
-				<Combobox.Content class="menu dropdown-content bg-base-200 z-10 w-full rounded-lg p-2 shadow-sm">
+				<Combobox.ContentStatic class="menu dropdown-content bg-base-200 z-10 w-full rounded-lg p-2 shadow-sm">
 					{#snippet child({ props })}
 						<ul {...props}>
 							{#each filtered.slice(0, 8) as item}
@@ -171,13 +168,11 @@
 									value={item.value}
 									label={item.label}
 									class={[
-										"hover:bg-primary/50 rounded-lg",
-										"data-highlighted:bg-primary data-highlighted:text-primary-content",
+										"hover:bg-base-content/25 rounded-lg",
+										"data-highlighted:bg-base-content/25",
 										"data-selected:bg-primary data-selected:text-primary-content data-selected:font-bold"
 									].join(" ")}
 									role="option"
-									data-selected={selectedItem?.value === item.value ? "true" : undefined}
-									aria-selected={selectedItem?.value === item.value}
 								>
 									{#snippet child({ props })}
 										<li {...props}>
@@ -190,7 +185,7 @@
 							{/each}
 						</ul>
 					{/snippet}
-				</Combobox.Content>
+				</Combobox.ContentStatic>
 			{/if}
 		</div>
 		{#if $input && clearable}

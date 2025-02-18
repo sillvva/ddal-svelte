@@ -11,7 +11,7 @@
 	import SuperForm from "$lib/components/forms/SuperForm.svelte";
 	import { defaultDM } from "$lib/entities";
 	import { valibotForm } from "$lib/factories.svelte.js";
-	import { logSchema } from "$lib/schemas";
+	import { type DungeonMasterId, logSchema } from "$lib/schemas";
 	import { twMerge } from "tailwind-merge";
 
 	let { data } = $props();
@@ -57,9 +57,9 @@
 						})) || []}
 						allowCustom
 						onselect={({ selected }) => {
-							const id = selected?.value;
+							const id = (selected?.value || "") as DungeonMasterId;
 							const name = selected?.label;
-							$form.dm = data.dms.find((dm) => dm.id === id) || (name ? { ...$form.dm, name } : defaultDM(data.user.id));
+							$form.dm = data.dms.find((dm) => dm.id === id) || (name ? { ...$form.dm, id, name } : defaultDM(data.user.id));
 						}}
 						clearable
 						onclear={() => ($form.dm = defaultDM(data.user.id))}
