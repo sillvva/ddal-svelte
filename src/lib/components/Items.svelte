@@ -2,18 +2,20 @@
 	import { pushState } from "$app/navigation";
 	import type { MagicItem, StoryAward } from "$server/db/schema";
 	import { sorter } from "@sillvva/utils";
+	import { twMerge } from "tailwind-merge";
 	import SearchResults from "./SearchResults.svelte";
 
 	interface Props {
 		title?: string;
-		items: Array<MagicItem | StoryAward>;
+		items: Array<MagicItem | StoryAward | { name: string; description?: string }>;
 		formatting?: boolean;
 		search?: string | null;
 		collapsible?: boolean;
 		sort?: boolean;
+		textClass?: string;
 	}
 
-	let { title = "", items, formatting = false, search = "", collapsible = false, sort = false }: Props = $props();
+	let { title = "", items, formatting = false, search = "", collapsible = false, sort = false, textClass = "" }: Props = $props();
 
 	let collapsed = $state(collapsible);
 
@@ -97,7 +99,10 @@
 		</div>
 	{/if}
 	<p
-		class="divide-x divide-black/50 text-sm leading-6 in-[table]:leading-5 data-[collapsed=true]:hidden md:data-[collapsed=true]:inline dark:divide-white/50 print:text-xs print:data-[collapsed=true]:inline"
+		class={twMerge(
+			"divide-x divide-black/50 text-sm leading-6 in-[table]:leading-5 data-[collapsed=true]:hidden md:data-[collapsed=true]:inline dark:divide-white/50 print:text-xs print:data-[collapsed=true]:inline",
+			textClass
+		)}
 		data-collapsed={collapsed}
 	>
 		{#if items.length}

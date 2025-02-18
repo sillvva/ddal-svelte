@@ -137,50 +137,50 @@
 	<div class="join">
 		<div class="dropdown w-full">
 			<label>
-				<Combobox.Input>
+				<Combobox.Input
+					id={inputField}
+					defaultValue={$input}
+					oninput={(e) => {
+						let cValue = e.currentTarget.value;
+						if (selectedItem && selectedItem.label !== cValue) selectedItem = undefined;
+						if (!cValue) clear();
+						$input = cValue;
+						oninput(e.currentTarget, cValue);
+						changed = true;
+					}}
+					onblur={() => {
+						if (!allowCustom && !selectedItem && !filtered.length) clear();
+						if (!$input) open = false;
+					}}
+					aria-invalid={($errors || []).length ? "true" : undefined}
+					class="input join-item focus:border-primary w-full"
+					{required}
+					{placeholder}
+				>
 					{#snippet child({ props })}
-						<input
-							class="input join-item focus:border-primary w-full"
-							{...props}
-							bind:value={$input}
-							id={inputField}
-							oninput={(e) => {
-								let cValue = e.currentTarget.value;
-								if (selectedItem && selectedItem.label !== cValue) selectedItem = undefined;
-								if (!cValue) clear();
-								$input = cValue;
-								oninput(e.currentTarget, cValue);
-								changed = true;
-							}}
-							onblur={() => {
-								if (!allowCustom && !selectedItem && !filtered.length) clear();
-								if (!$input) open = false;
-							}}
-							aria-invalid={($errors || []).length ? "true" : undefined}
-							{required}
-							{placeholder}
-						/>
+						<input {...props} />
 					{/snippet}
 				</Combobox.Input>
 			</label>
 			{#if (showOnEmpty || $input?.trim()) && filtered.length}
-				<Combobox.Content>
+				<Combobox.Content class="menu dropdown-content bg-base-200 z-10 w-full rounded-lg p-2 shadow-sm">
 					{#snippet child({ props })}
-						<ul class="menu dropdown-content bg-base-200 z-10 w-full rounded-lg p-2 shadow-sm" {...props}>
+						<ul {...props}>
 							{#each filtered.slice(0, 8) as item}
-								<Combobox.Item value={item.value} label={item.label}>
+								<Combobox.Item
+									value={item.value}
+									label={item.label}
+									class={[
+										"hover:bg-primary/50 rounded-lg",
+										"data-highlighted:bg-primary data-highlighted:text-primary-content",
+										"data-selected:bg-primary data-selected:text-primary-content data-selected:font-bold"
+									].join(" ")}
+									role="option"
+									data-selected={selectedItem?.value === item.value ? "true" : undefined}
+									aria-selected={selectedItem?.value === item.value}
+								>
 									{#snippet child({ props })}
-										<li
-											class={[
-												"hover:bg-primary/50",
-												"data-highlighted:bg-primary data-highlighted:text-primary-content",
-												"data-selected:bg-primary data-selected:text-primary-content data-selected:font-bold"
-											].join(" ")}
-											{...props}
-											role="option"
-											data-selected={selectedItem?.value === item.value ? "true" : undefined}
-											aria-selected={selectedItem?.value === item.value}
-										>
+										<li {...props}>
 											<span class="rounded-none px-4 py-2">
 												{item.itemLabel}
 											</span>
