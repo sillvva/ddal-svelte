@@ -7,7 +7,6 @@
 	import { sorter } from "@sillvva/utils";
 	import { hotkey } from "@svelteuidev/composables";
 	import { Command, Dialog, Separator } from "bits-ui";
-	import { twMerge } from "tailwind-merge";
 	import Items from "./Items.svelte";
 
 	const defaultSelected: string = searchSections[0].url;
@@ -145,12 +144,7 @@
 		</span>
 	</Dialog.Trigger>
 	<Dialog.Portal>
-		<Dialog.Overlay
-			class={twMerge(
-				"data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0 modal bg-base-300/75!",
-				cmdOpen && "modal-open"
-			)}
-		>
+		<Dialog.Overlay class="bg-base-300/75! modal modal-open">
 			<Dialog.Content class="modal-box bg-base-100 relative cursor-default overflow-y-hidden px-4 py-5 drop-shadow-lg sm:p-6">
 				<Dialog.Title class="sr-only">Command Search</Dialog.Title>
 				<Dialog.Description class="sr-only">
