@@ -143,7 +143,7 @@ export function getLogsSummary(
 		total_dtd,
 		magic_items,
 		story_awards,
-		last_log: sortedLogs.at(-1)?.show_date,
+		last_log: sortedLogs.at(-1)?.show_date || new Date(0),
 		log_levels: levels.log_levels,
 		tier: Math.floor((total_level + 1) / 6) + 1,
 		logs: includeLogs
