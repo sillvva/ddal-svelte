@@ -3,6 +3,7 @@
 	import { page } from "$app/state";
 	import { excludedSearchWords, searchSections } from "$lib/constants.js";
 	import { global } from "$lib/stores.svelte";
+	import { debounce } from "$lib/util";
 	import type { SearchData } from "$src/routes/(api)/command/+server";
 	import { sorter } from "@sillvva/utils";
 	import { hotkey } from "@svelteuidev/composables";
@@ -20,6 +21,7 @@
 
 	const words = $derived(
 		search
+			.trim()
 			.toLowerCase()
 			.split(" ")
 			.filter((word) => word.length > 1 && !excludedSearchWords.has(word))
@@ -67,29 +69,17 @@
 		global.searchData.flatMap((section) => {
 			const filteredItems = section.items
 				.filter((item) => {
-					if (item.type === "section" && words.length) return false;
+					if (query.length < 2) return true;
+					if (item.type === "section") return false;
 					const matcher = [item.name];
-					if (query.length >= 2) {
-						if (item.type === "character") {
-							matcher.push(`${item.race} ${item.class} ${item.campaign} L${item.total_level} T${item.tier}`);
-							matcher.push(...item.magic_items.map((mi) => mi.name), ...item.story_awards.map((sa) => sa.name));
-						} else if (item.type === "log") {
-							if (item.dm) matcher.push(item.dm.name);
-							matcher.push(...item.magicItemsGained.map((mi) => mi.name), ...item.storyAwardsGained.map((sa) => sa.name));
-						}
+					if (item.type === "character") {
+						matcher.push(`${item.race} ${item.class} ${item.campaign} L${item.total_level} T${item.tier}`);
+						matcher.push(...item.magic_items.map((mi) => mi.name), ...item.story_awards.map((sa) => sa.name));
+					} else if (item.type === "log") {
+						if (item.dm) matcher.push(item.dm.name);
+						matcher.push(...item.magicItemsGained.map((mi) => mi.name), ...item.storyAwardsGained.map((sa) => sa.name));
 					}
-					const matches = words.length ? hasMatch(matcher.join(" ")) : [];
-					return matches?.length === words.length;
-				})
-				.toSorted((a, b) => {
-					if (words.length) {
-						const aMatch = hasMatch(a.name),
-							bMatch = hasMatch(b.name);
-						if (aMatch !== bMatch) return aMatch ? -1 : 1;
-					}
-					if (a.type === "log" && b.type === "log") return sorter(b.date, a.date);
-					if (a.type === "character" && b.type === "character") return sorter(b.last_log, a.last_log);
-					return sorter(a.name, b.name);
+					return hasMatch(matcher.join(" "))?.length === words.length;
 				})
 				.slice(0, words.length ? 1000 : 5);
 
@@ -97,12 +87,6 @@
 		})
 	);
 	const resultCounts = $derived(results.map((section) => section.items.length).filter((c) => c > 0).length);
-
-	$effect(() => {
-		if (results && resultCounts > 0) {
-			command?.updateSelectedToIndex(0);
-		}
-	});
 </script>
 
 <svelte:document
@@ -162,14 +146,12 @@
 								<input
 									{...props}
 									type="search"
-									bind:value={search}
 									placeholder="Search"
-									oninput={() => {
-										const firstResult = results[0]?.items[0]?.url;
-										if (search && firstResult) selected = firstResult;
-										else selected = defaultSelected;
+									oninput={debounce((ev: Event) => {
+										search = (ev.target as HTMLInputElement).value;
+										command?.updateSelectedToIndex(0);
 										if (viewport) viewport.scrollTop = 0;
-									}}
+									}, 200)[0]}
 								/>
 								<span class="iconify mdi--magnify size-6"></span>
 							</label>
