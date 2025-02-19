@@ -148,9 +148,12 @@
 									type="search"
 									placeholder="Search"
 									oninput={debounce((ev: Event) => {
-										search = (ev.target as HTMLInputElement).value;
-										command?.updateSelectedToIndex(0);
-										if (viewport) viewport.scrollTop = 0;
+										const val = (ev.target as HTMLInputElement).value;
+										if (search !== val) {
+											search = val;
+											command?.updateSelectedToIndex(0);
+											if (viewport) viewport.scrollTop = 0;
+										}
 									}, 200)[0]}
 								/>
 								<span class="iconify mdi--magnify size-6"></span>
