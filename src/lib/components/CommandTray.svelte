@@ -3,6 +3,7 @@
 	import { page } from "$app/state";
 	import { excludedSearchWords, searchSections } from "$lib/constants.js";
 	import { global } from "$lib/stores.svelte";
+	import { debounce } from "$lib/util";
 	import type { SearchData } from "$src/routes/(api)/command/+server";
 	import { sorter } from "@sillvva/utils";
 	import { hotkey } from "@svelteuidev/composables";
@@ -17,9 +18,12 @@
 	let command = $state<Command.Root | null>(null);
 	let viewport = $state<HTMLDivElement | null>(null);
 	let input = $state<HTMLInputElement | null>(null);
+	let category = $state<string | null>(null);
+	let categories = $derived(global.searchData.map((section) => section.title).filter((c) => c !== "Sections"));
 
 	const words = $derived(
 		search
+			.trim()
 			.toLowerCase()
 			.split(" ")
 			.filter((word) => word.length > 1 && !excludedSearchWords.has(word))
@@ -65,44 +69,28 @@
 
 	const results = $derived(
 		global.searchData.flatMap((section) => {
+			if (category && section.title !== category) return [];
+
 			const filteredItems = section.items
 				.filter((item) => {
-					if (item.type === "section" && words.length) return false;
+					if (query.length < 2) return true;
+					if (item.type === "section") return false;
 					const matcher = [item.name];
-					if (query.length >= 2) {
-						if (item.type === "character") {
-							matcher.push(`${item.race} ${item.class} ${item.campaign} L${item.total_level} T${item.tier}`);
-							matcher.push(...item.magic_items.map((mi) => mi.name), ...item.story_awards.map((sa) => sa.name));
-						} else if (item.type === "log") {
-							if (item.dm) matcher.push(item.dm.name);
-							matcher.push(...item.magicItemsGained.map((mi) => mi.name), ...item.storyAwardsGained.map((sa) => sa.name));
-						}
+					if (item.type === "character") {
+						matcher.push(`${item.race} ${item.class} ${item.campaign} L${item.total_level} T${item.tier}`);
+						matcher.push(...item.magic_items.map((mi) => mi.name), ...item.story_awards.map((sa) => sa.name));
+					} else if (item.type === "log") {
+						if (item.dm) matcher.push(item.dm.name);
+						matcher.push(...item.magicItemsGained.map((mi) => mi.name), ...item.storyAwardsGained.map((sa) => sa.name));
 					}
-					const matches = words.length ? hasMatch(matcher.join(" ")) : [];
-					return matches?.length === words.length;
+					return hasMatch(matcher.join(" "))?.length === words.length;
 				})
-				.toSorted((a, b) => {
-					if (words.length) {
-						const aMatch = hasMatch(a.name),
-							bMatch = hasMatch(b.name);
-						if (aMatch !== bMatch) return aMatch ? -1 : 1;
-					}
-					if (a.type === "log" && b.type === "log") return sorter(b.date, a.date);
-					if (a.type === "character" && b.type === "character") return sorter(b.last_log, a.last_log);
-					return sorter(a.name, b.name);
-				})
-				.slice(0, words.length ? 1000 : 5);
+				.slice(0, words.length ? 1000 : category ? 10 : 5);
 
 			return filteredItems.length ? [{ title: section.title, items: filteredItems }] : [];
 		})
 	);
 	const resultCounts = $derived(results.map((section) => section.items.length).filter((c) => c > 0).length);
-
-	$effect(() => {
-		if (results && resultCounts > 0) {
-			command?.updateSelectedToIndex(0);
-		}
-	});
 </script>
 
 <svelte:document
@@ -158,21 +146,30 @@
 				<Command.Root label="Command Menu" bind:this={command} bind:value={selected} class="flex flex-col gap-4" loop>
 					<Command.Input bind:ref={input}>
 						{#snippet child({ props })}
-							<label class="input focus-within:border-primary flex w-full items-center gap-2">
-								<input
-									{...props}
-									type="search"
-									bind:value={search}
-									placeholder="Search"
-									oninput={() => {
-										const firstResult = results[0]?.items[0]?.url;
-										if (search && firstResult) selected = firstResult;
-										else selected = defaultSelected;
-										if (viewport) viewport.scrollTop = 0;
-									}}
-								/>
-								<span class="iconify mdi--magnify size-6"></span>
-							</label>
+							<div class="join">
+								<label class="input focus-within:border-primary join-item flex w-full flex-1 items-center gap-2">
+									<input
+										{...props}
+										type="search"
+										placeholder="Search"
+										oninput={debounce((ev: Event) => {
+											const val = (ev.target as HTMLInputElement).value;
+											if (search !== val) {
+												search = val;
+												command?.updateSelectedToIndex(0);
+												if (viewport) viewport.scrollTop = 0;
+											}
+										}, 200)[0]}
+									/>
+									<span class="iconify mdi--magnify size-6"></span>
+								</label>
+								<select bind:value={category} class="select join-item focus:border-primary w-auto">
+									<option value={null}>All Categories</option>
+									{#each categories as category}
+										<option value={category}>{category}</option>
+									{/each}
+								</select>
+							</div>
 						{/snippet}
 					</Command.Input>
 					<Command.List class="flex flex-col gap-2">

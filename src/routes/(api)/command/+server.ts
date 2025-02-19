@@ -2,6 +2,7 @@ import { searchSections } from "$lib/constants.js";
 import { getCharactersWithLogs } from "$server/data/characters.js";
 import { getUserDMs } from "$server/data/dms.js";
 import { getUserLogs } from "$server/data/logs.js";
+import { sorter } from "@sillvva/utils";
 import { json } from "@sveltejs/kit";
 
 type SectionData = typeof sectionData;
@@ -24,41 +25,48 @@ async function getData(user: LocalsSession["user"]) {
 		{
 			title: "Characters",
 			items: await getCharactersWithLogs(user.id, false).then((characters) =>
-				characters.map(
-					(character) =>
-						({
-							...character,
-							log_levels: [],
-							type: "character",
-							url: `/characters/${character.id}`
-						}) as const
-				)
+				characters
+					.map(
+						(character) =>
+							({
+								...character,
+								log_levels: [],
+								type: "character",
+								url: `/characters/${character.id}`
+							}) as const
+					)
+					.toSorted((a, b) => sorter(b.last_log, a.last_log))
 			)
 		},
 		{
 			title: "DMs",
 			items: await getUserDMs(user).then((dms) =>
-				dms.map(
-					(dm) =>
-						({
-							...dm,
-							type: "dm",
-							url: `/dms/${dm.id}`
-						}) as const
-				)
+				dms
+					.map(
+						(dm) =>
+							({
+								...dm,
+								type: "dm",
+								url: `/dms/${dm.id}`
+							}) as const
+					)
+					.toSorted((a, b) => sorter(a.name, b.name))
 			)
 		},
 		{
 			title: "Logs",
 			items: await getUserLogs(user.id).then((logs) =>
-				logs.map(
-					(log) =>
-						({
-							...log,
-							type: "log",
-							url: log.isDmLog ? `/dm-logs?s=${log.id}` : `/characters/${log.character?.id}?s=${log.id}`
-						}) as const
-				)
+				logs
+					.map(
+						(log) =>
+							({
+								...log,
+								type: "log",
+								show_date: log.isDmLog ? log.appliedDate || log.date : log.date,
+								url: log.isDmLog ? `/dm-logs?s=${log.id}` : `/characters/${log.character?.id}?s=${log.id}`
+							}) as const
+					)
+					.toSorted((a, b) => sorter(b.show_date, a.show_date))
 			)
 		}
 	];

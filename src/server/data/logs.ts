@@ -63,6 +63,7 @@ export async function getUserLogs(userId: UserId) {
 			id: true,
 			name: true,
 			date: true,
+			appliedDate: true,
 			isDmLog: true,
 			gold: true
 		},
