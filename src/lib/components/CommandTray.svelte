@@ -18,6 +18,8 @@
 	let command = $state<Command.Root | null>(null);
 	let viewport = $state<HTMLDivElement | null>(null);
 	let input = $state<HTMLInputElement | null>(null);
+	let category = $state<string | null>(null);
+	let categories = $derived(global.searchData.map((section) => section.title).filter((c) => c !== "Sections"));
 
 	const words = $derived(
 		search
@@ -67,6 +69,8 @@
 
 	const results = $derived(
 		global.searchData.flatMap((section) => {
+			if (category && section.title !== category) return [];
+
 			const filteredItems = section.items
 				.filter((item) => {
 					if (query.length < 2) return true;
@@ -81,7 +85,7 @@
 					}
 					return hasMatch(matcher.join(" "))?.length === words.length;
 				})
-				.slice(0, words.length ? 1000 : 5);
+				.slice(0, words.length ? 1000 : category ? 10 : 5);
 
 			return filteredItems.length ? [{ title: section.title, items: filteredItems }] : [];
 		})
@@ -142,22 +146,30 @@
 				<Command.Root label="Command Menu" bind:this={command} bind:value={selected} class="flex flex-col gap-4" loop>
 					<Command.Input bind:ref={input}>
 						{#snippet child({ props })}
-							<label class="input focus-within:border-primary flex w-full items-center gap-2">
-								<input
-									{...props}
-									type="search"
-									placeholder="Search"
-									oninput={debounce((ev: Event) => {
-										const val = (ev.target as HTMLInputElement).value;
-										if (search !== val) {
-											search = val;
-											command?.updateSelectedToIndex(0);
-											if (viewport) viewport.scrollTop = 0;
-										}
-									}, 200)[0]}
-								/>
-								<span class="iconify mdi--magnify size-6"></span>
-							</label>
+							<div class="join">
+								<label class="input focus-within:border-primary join-item flex w-full flex-1 items-center gap-2">
+									<input
+										{...props}
+										type="search"
+										placeholder="Search"
+										oninput={debounce((ev: Event) => {
+											const val = (ev.target as HTMLInputElement).value;
+											if (search !== val) {
+												search = val;
+												command?.updateSelectedToIndex(0);
+												if (viewport) viewport.scrollTop = 0;
+											}
+										}, 200)[0]}
+									/>
+									<span class="iconify mdi--magnify size-6"></span>
+								</label>
+								<select bind:value={category} class="select join-item focus:border-primary w-auto">
+									<option value={null}>All Categories</option>
+									{#each categories as category}
+										<option value={category}>{category}</option>
+									{/each}
+								</select>
+							</div>
 						{/snippet}
 					</Command.Input>
 					<Command.List class="flex flex-col gap-2">
