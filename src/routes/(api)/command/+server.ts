@@ -7,7 +7,7 @@ import { json } from "@sveltejs/kit";
 
 type SectionData = typeof sectionData;
 const sectionData = {
-	title: "Sections",
+	title: "Sections" as const,
 	items: searchSections.map(
 		(section) =>
 			({
@@ -23,7 +23,7 @@ export type SearchData = Array<SectionData | GetData[number]>;
 async function getData(user: LocalsSession["user"]) {
 	return [
 		{
-			title: "Characters",
+			title: "Characters" as const,
 			items: await getCharactersWithLogs(user.id, false).then((characters) =>
 				characters
 					.map(
@@ -39,7 +39,7 @@ async function getData(user: LocalsSession["user"]) {
 			)
 		},
 		{
-			title: "DMs",
+			title: "DMs" as const,
 			items: await getUserDMs(user).then((dms) =>
 				dms
 					.map(
@@ -54,7 +54,7 @@ async function getData(user: LocalsSession["user"]) {
 			)
 		},
 		{
-			title: "Logs",
+			title: "Logs" as const,
 			items: await getUserLogs(user.id).then((logs) =>
 				logs
 					.map(

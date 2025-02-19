@@ -18,7 +18,7 @@
 	let command = $state<Command.Root | null>(null);
 	let viewport = $state<HTMLDivElement | null>(null);
 	let input = $state<HTMLInputElement | null>(null);
-	let category = $state<string | null>(null);
+	let category = $state<SearchData[number]["title"] | null>(null);
 	let categories = $derived(global.searchData.map((section) => section.title).filter((c) => c !== "Sections"));
 
 	const words = $derived(
@@ -69,28 +69,40 @@
 
 	const results = $derived(
 		global.searchData.flatMap((section) => {
+			// Early return if category doesn't match
 			if (category && section.title !== category) return [];
 
+			// Skip filtering if query is too short
+			if (query.length < 2) {
+				const items = section.items.slice(0, category ? 10 : 5);
+				return items.length ? [{ title: section.title, items }] : [];
+			}
+
+			// Build search strings once per item
 			const filteredItems = section.items
 				.filter((item) => {
-					if (query.length < 2) return true;
 					if (item.type === "section") return false;
-					const matcher = [item.name];
+
+					let searchString = item.name;
 					if (item.type === "character") {
-						matcher.push(`${item.race} ${item.class} ${item.campaign} L${item.total_level} T${item.tier}`);
-						matcher.push(...item.magic_items.map((mi) => mi.name), ...item.story_awards.map((sa) => sa.name));
+						searchString += ` ${item.race} ${item.class} ${item.campaign} L${item.total_level} T${item.tier}`;
+						searchString += ` ${item.magic_items.map((mi) => mi.name).join(" ")}`;
+						searchString += ` ${item.story_awards.map((sa) => sa.name).join(" ")}`;
 					} else if (item.type === "log") {
-						if (item.dm) matcher.push(item.dm.name);
-						matcher.push(...item.magicItemsGained.map((mi) => mi.name), ...item.storyAwardsGained.map((sa) => sa.name));
+						if (item.character) searchString += ` ${item.character.name}`;
+						if (item.dm) searchString += ` ${item.dm.name}`;
+						searchString += ` ${item.magicItemsGained.map((mi) => mi.name).join(" ")}`;
+						searchString += ` ${item.storyAwardsGained.map((sa) => sa.name).join(" ")}`;
 					}
-					return hasMatch(matcher.join(" "))?.length === words.length;
+
+					return hasMatch(searchString)?.length === words.length;
 				})
-				.slice(0, words.length ? 1000 : category ? 10 : 5);
+				.slice(0, 50);
 
 			return filteredItems.length ? [{ title: section.title, items: filteredItems }] : [];
 		})
 	);
-	const resultCounts = $derived(results.map((section) => section.items.length).filter((c) => c > 0).length);
+	const resultsCount = $derived(results.reduce((sum, section) => sum + section.items.length, 0));
 </script>
 
 <svelte:document
@@ -148,6 +160,7 @@
 						{#snippet child({ props })}
 							<div class="join">
 								<label class="input focus-within:border-primary join-item flex w-full flex-1 items-center gap-2">
+									<span class="iconify mdi--magnify size-6"></span>
 									<input
 										{...props}
 										type="search"
@@ -161,7 +174,6 @@
 											}
 										}, 200)[0]}
 									/>
-									<span class="iconify mdi--magnify size-6"></span>
 								</label>
 								<select bind:value={category} class="select join-item focus:border-primary w-auto">
 									<option value={null}>All Categories</option>
@@ -176,7 +188,7 @@
 						{#if !global.searchData.length}
 							<div class="p-4 text-center font-bold">Loading data...</div>
 						{:else}
-							<div class="relative h-auto data-[results=true]:h-96" data-results={resultCounts > 0}>
+							<div class="relative h-auto data-[results=true]:h-96" data-results={resultsCount > 0}>
 								<Command.Empty class="p-4 text-center font-bold">No results found.</Command.Empty>
 								<Command.Viewport class="h-full overflow-y-auto" bind:ref={viewport}>
 									{#each results as section, i}
