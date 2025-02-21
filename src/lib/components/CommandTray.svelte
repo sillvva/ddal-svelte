@@ -158,13 +158,16 @@
 				<Command.Root label="Command Menu" bind:this={command} bind:value={selected} class="flex flex-col gap-4" loop>
 					<Command.Input bind:ref={input}>
 						{#snippet child({ props })}
-							<div class="join">
-								<label class="input focus-within:border-primary join-item flex w-full flex-1 items-center gap-2">
+							<div
+								class="join focus-within:border-primary border-input *:focus:border-primary rounded-lg border *:border-y-0 *:first:border-l-0 *:last:border-r-0"
+							>
+								<label class="input join-item flex w-full flex-1 items-center gap-2">
 									<span class="iconify mdi--magnify size-6"></span>
 									<input
 										{...props}
 										type="search"
 										placeholder="Search"
+										class="outline-0"
 										oninput={debounce((ev: Event) => {
 											const val = (ev.target as HTMLInputElement).value;
 											if (search !== val) {
@@ -175,7 +178,7 @@
 										}, 200)[0]}
 									/>
 								</label>
-								<select bind:value={category} class="select join-item focus:border-primary w-auto">
+								<select bind:value={category} class="select join-item w-auto">
 									<option value={null}>All Categories</option>
 									{#each categories as category}
 										<option value={category}>{category}</option>
