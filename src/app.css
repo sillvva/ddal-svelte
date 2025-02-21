@@ -107,6 +107,7 @@
 	--font-draconis: "Draconis";
 	--font-vecna: "Vecna";
 
+	--color-input: color-mix(in oklab, var(--color-base-content) 20%, transparent);
 	--color-input-focus: color-mix(in oklch, var(--color-base-content) 30%, transparent);
 }
 
