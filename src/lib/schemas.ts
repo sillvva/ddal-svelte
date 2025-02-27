@@ -6,10 +6,6 @@ function brandedId<T extends string>(name: T) {
 	return v.pipe(v.string(), v.brand(name));
 }
 
-function optNullable<T extends v.GenericSchema>(schema: T) {
-	return v.optional(v.nullable(schema), null);
-}
-
 const string = v.pipe(v.string(), v.trim());
 const requiredString = v.pipe(string, v.regex(/^.*(\p{L}|\p{N})+.*$/u, "Required"));
 const maxTextSize = v.pipe(string, v.maxLength(5000));
@@ -67,8 +63,8 @@ export type DungeonMasterSchemaIn = v.InferInput<typeof dungeonMasterSchema>;
 export const dungeonMasterSchema = v.object({
 	id: v.optional(dungeonMasterIdSchema, ""),
 	name: v.pipe(requiredString, maxStringSize),
-	DCI: optNullable(v.pipe(string, v.regex(/\d{0,10}/, "Invalid DCI Format"))),
-	uid: optNullable(userIdSchema),
+	DCI: v.nullish(v.pipe(string, v.regex(/\d{0,10}/, "Invalid DCI Format")), null),
+	uid: v.nullish(userIdSchema, null),
 	owner: userIdSchema
 });
 
@@ -79,7 +75,7 @@ export type ItemSchema = v.InferOutput<typeof itemSchema>;
 const itemSchema = v.object({
 	id: v.optional(itemIdSchema, ""),
 	name: requiredString,
-	description: optNullable(maxTextSize)
+	description: v.nullish(maxTextSize, null)
 });
 
 export type LogId = v.InferOutput<typeof logIdSchema>;
@@ -91,7 +87,7 @@ export const logSchema = v.object({
 	id: v.optional(logIdSchema, ""),
 	name: v.pipe(requiredString, maxStringSize),
 	date: v.date(),
-	characterId: optNullable(characterIdSchema),
+	characterId: v.nullish(characterIdSchema, null),
 	characterName: v.optional(string, ""),
 	type: v.optional(v.picklist(["game", "nongame"]), "game"),
 	experience: v.nullable(v.pipe(integer, v.minValue(0)), 0),
