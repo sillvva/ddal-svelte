@@ -20,7 +20,7 @@ export const users = pg.pgTable("user", {
 	image: pg.text()
 });
 
-export const userRelations = relations(users, ({ many, one }) => ({
+export const userRelations = relations(users, ({ many }) => ({
 	accounts: many(accounts),
 	sessions: many(sessions),
 	characters: many(characters),

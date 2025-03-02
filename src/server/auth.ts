@@ -72,8 +72,7 @@ export function assertUser<T extends User>(
 	if (!user.id || !user.name || !user.email) redirect(302, authErrRedirect("MissingUserData", redirectUrl));
 }
 
-export function authErrors(code: ErrorCodes, detail?: string | null) {
-	if (!detail) detail = null;
+export function authErrors(code: ErrorCodes, detail: string | null = null) {
 	switch (code) {
 		case "InvalidProvider":
 			return detail && `${detail} provider is not supported.`;
