@@ -11,7 +11,7 @@ export const logIncludes = {
 	magicItemsLost: true,
 	storyAwardsGained: true,
 	storyAwardsLost: true
-} as const satisfies QueryConfig<"logs">["with"];
+} satisfies QueryConfig<"logs">["with"];
 
 export type LogData = InferQueryModel<"logs", { with: typeof logIncludes }>;
 
