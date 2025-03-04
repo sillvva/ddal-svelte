@@ -325,7 +325,7 @@
 
 <section class="mt-4">
 	<div class="bg-base-200 w-full overflow-x-auto rounded-lg">
-		<table class="table w-full leading-5">
+		<table class="linked-table-groups table w-full leading-5">
 			<thead>
 				<tr class="bg-base-300 text-base-content/70">
 					<td class="print:p-2">Log Entry</td>
@@ -336,14 +336,10 @@
 					{/if}
 				</tr>
 			</thead>
-			<tbody>
-				{#each sortedResults as log, i}
-					{@const hasDescription =
-						!!log.description?.trim() || log.storyAwardsGained.length > 0 || log.storyAwardsLost.length > 0}
-					<tr
-						class="[&>td]:border-t-base-300 data-[deleting=true]:hidden print:text-sm [&>td]:border-t [&>td]:border-b-0"
-						data-deleting={deletingLog.includes(log.id)}
-					>
+			{#each sortedResults as log, i}
+				{@const hasDescription = !!log.description?.trim() || log.storyAwardsGained.length > 0 || log.storyAwardsLost.length > 0}
+				<tbody class="border-t border-neutral-500/20 first:border-0">
+					<tr class="data-[deleting=true]:hidden print:text-sm" data-deleting={deletingLog.includes(log.id)}>
 						<td
 							class="static! pb-0 align-top data-[desc=true]:pb-3 sm:pb-3 print:p-2"
 							data-desc={hasDescription && global.app.log.descriptions}
@@ -351,7 +347,7 @@
 							{#if myCharacter}
 								<a
 									href={log.isDmLog ? `/dm-logs/${log.id}` : `/characters/${log.characterId}/log/${log.id}`}
-									class="text-secondary text-left font-semibold whitespace-pre-wrap"
+									class="row-link text-left font-semibold whitespace-pre-wrap"
 								>
 									<SearchResults text={log.name} {search}></SearchResults>
 								</a>
@@ -468,7 +464,7 @@
 					</tr>
 					<!-- Notes -->
 					<tr
-						class="hidden data-[deleting=true]:hidden! data-[desc=true]:table-row max-sm:data-[mi=true]:table-row"
+						class="hidden border-0 data-[deleting=true]:hidden! data-[desc=true]:table-row max-sm:data-[mi=true]:table-row [&>td]:border-0"
 						data-deleting={deletingLog.includes(log.id)}
 						data-desc={global.app.log.descriptions && hasDescription}
 						data-mi={log.magicItemsGained.length > 0 || log.magicItemsLost.length > 0}
@@ -508,8 +504,8 @@
 							{/if}
 						</td>
 					</tr>
-				{/each}
-			</tbody>
+				</tbody>
+			{/each}
 		</table>
 	</div>
 </section>

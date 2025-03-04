@@ -121,6 +121,10 @@
 		overflow-y: scroll;
 		min-height: 100vh;
 	}
+	summary,
+	[role="button"] {
+		cursor: pointer;
+	}
 }
 
 @layer utilities {
@@ -233,15 +237,35 @@
 @utility linked-table {
 	tr {
 		position: relative;
+		isolation: isolate;
 		a.row-link::before {
 			content: "";
 			display: block;
 			position: absolute;
 			inset: 0;
-		}
-		.interactive {
-			position: relative;
 			z-index: 1;
+		}
+		:is(a, button, summary, [role="button"]):not(.row-link) {
+			position: relative;
+			z-index: 2;
+		}
+	}
+}
+
+@utility linked-table-groups {
+	tbody {
+		position: relative;
+		isolation: isolate;
+		a.row-link::before {
+			content: "";
+			display: block;
+			position: absolute;
+			inset: 0;
+			z-index: 1;
+		}
+		:is(a, button, summary, [role="button"]):not(.row-link) {
+			position: relative;
+			z-index: 2;
 		}
 	}
 }

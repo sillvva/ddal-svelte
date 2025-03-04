@@ -185,7 +185,7 @@
 				class="xs:data-[display=grid]:hidden w-full overflow-x-auto rounded-lg data-[display=grid]:block"
 				data-display={global.app.characters.display}
 			>
-				<table class="linked-table table w-full leading-5 max-sm:border-separate max-sm:border-spacing-y-2">
+				<table class="linked-table bg-base-200 table w-full leading-5 max-sm:border-separate max-sm:border-spacing-y-2">
 					<thead class="max-sm:hidden">
 						<tr class="bg-base-300 text-base-content/70">
 							{#if !data.mobile}
@@ -225,11 +225,7 @@
 								<td>
 									<div class="text-base font-bold whitespace-pre-wrap text-black sm:text-xl dark:text-white">
 										<span use:transition={"name-" + character.id}>
-											<a
-												href={`/characters/${character.id}`}
-												aria-label={character.name}
-												class="row-link before:border-base-content/20 before:rounded-xl before:max-sm:border"
-											>
+											<a href={`/characters/${character.id}`} aria-label={character.name} class="row-link">
 												<SearchResults text={character.name} {search} />
 											</a>
 										</span>
