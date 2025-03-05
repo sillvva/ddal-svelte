@@ -8,6 +8,7 @@ function brandedId<T extends string>(name: T) {
 
 const string = v.pipe(v.string(), v.trim());
 const requiredString = v.pipe(string, v.regex(/^.*(\p{L}|\p{N})+.*$/u, "Required"));
+const shortString = v.pipe(string, v.maxLength(50));
 const maxTextSize = v.pipe(string, v.maxLength(5000));
 const maxStringSize = v.pipe(string, v.maxLength(255));
 const integer = v.pipe(v.number(), v.integer());
@@ -37,10 +38,10 @@ export const userIdSchema = brandedId("UserId");
 
 export type NewCharacterSchema = v.InferOutput<typeof newCharacterSchema>;
 export const newCharacterSchema = v.object({
-	name: v.pipe(requiredString, maxStringSize),
-	campaign: v.optional(maxStringSize, ""),
-	race: v.optional(maxStringSize, ""),
-	class: v.optional(maxStringSize, ""),
+	name: v.pipe(requiredString, shortString),
+	campaign: v.optional(shortString, ""),
+	race: v.optional(shortString, ""),
+	class: v.optional(shortString, ""),
 	characterSheetUrl: optionalURL,
 	imageUrl: optionalURL
 });
@@ -62,7 +63,7 @@ export type DungeonMasterSchema = v.InferOutput<typeof dungeonMasterSchema>;
 export type DungeonMasterSchemaIn = v.InferInput<typeof dungeonMasterSchema>;
 export const dungeonMasterSchema = v.object({
 	id: v.optional(dungeonMasterIdSchema, ""),
-	name: v.pipe(requiredString, maxStringSize),
+	name: v.pipe(requiredString, shortString),
 	DCI: v.nullish(v.pipe(string, v.regex(/\d{0,10}/, "Invalid DCI Format")), null),
 	uid: v.nullish(userIdSchema, null),
 	owner: userIdSchema
@@ -88,7 +89,7 @@ export const logSchema = v.object({
 	name: v.pipe(requiredString, maxStringSize),
 	date: v.date(),
 	characterId: v.nullish(characterIdSchema, null),
-	characterName: v.optional(string, ""),
+	characterName: v.optional(shortString, ""),
 	type: v.optional(v.picklist(["game", "nongame"]), "game"),
 	experience: v.nullable(v.pipe(integer, v.minValue(0)), 0),
 	acp: v.nullable(v.pipe(integer, v.minValue(0)), 0),
@@ -99,7 +100,7 @@ export const logSchema = v.object({
 	description: v.optional(maxTextSize, ""),
 	dm: v.object({
 		...dungeonMasterSchema.entries,
-		name: v.optional(string, "")
+		name: v.optional(shortString, "")
 	}),
 	isDmLog: v.optional(v.boolean(), false),
 	appliedDate: v.nullable(v.date()),
