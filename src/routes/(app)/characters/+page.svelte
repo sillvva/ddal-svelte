@@ -45,8 +45,8 @@
 	);
 
 	$effect(() => {
-		minisearch.removeAll();
 		minisearch.addAll(indexed);
+		return () => minisearch.removeAll();
 	});
 
 	const msResults = $derived.by(() => {
