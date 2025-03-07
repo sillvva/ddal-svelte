@@ -156,12 +156,6 @@
 	}
 }
 
-@utility text-secondary {
-	@media print {
-		@apply drop-shadow-none;
-	}
-}
-
 @utility join {
 	--join-ss: var(--radius-field);
 	--join-se: var(--radius-field);
@@ -187,34 +181,21 @@
 	}
 }
 
-@utility input {
-	&:focus,
-	&:focus-within {
-		--input-color: var(--color-input-focus);
-	}
-	&[aria-invalid] {
-		@apply input-error;
-	}
-}
-
-@utility textarea {
-	&:focus,
-	&:focus-within {
-		--input-color: var(--color-input-focus);
-	}
-	&[aria-invalid] {
-		@apply textarea-error;
-	}
-}
-
-@utility select {
-	font-size: var(--text-base);
-	&:focus,
-	&:focus-within {
-		--input-color: var(--color-input-focus);
-	}
-	&[aria-invalid] {
-		@apply select-error;
+@layer utilities {
+	.input,
+	.textarea,
+	.select {
+		&:focus,
+		&:focus-within {
+			--input-color: var(--color-input-focus);
+		}
+		&[aria-invalid] {
+			&,
+			&:focus,
+			&:focus-within {
+				--input-color: var(--color-error) /* var(--color-error) */;
+			}
+		}
 	}
 }
 

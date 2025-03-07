@@ -184,7 +184,7 @@
 								href={data.character.characterSheetUrl}
 								target="_blank"
 								rel="noreferrer noopner"
-								class="text-secondary font-semibold dark:drop-shadow-xs"
+								class="text-secondary font-semibold dark:not-print:drop-shadow-xs"
 							>
 								Character Sheet
 							</a>
