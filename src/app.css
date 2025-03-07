@@ -86,17 +86,6 @@
 
 @variant dark (&:where(.dark, .dark *));
 
-@custom-variant hover-hover {
-	@media (hover: hover) {
-		@slot;
-	}
-}
-@custom-variant hover-none {
-	@media (hover: none) {
-		@slot;
-	}
-}
-
 @theme {
 	--breakpoint-xs: 500px;
 	--breakpoint-sm: 640px;
@@ -104,6 +93,7 @@
 	--breakpoint-lg: 1024px;
 	--breakpoint-xl: 1280px;
 	--breakpoint-2xl: 1440px;
+
 	--font-draconis: "Draconis";
 	--font-vecna: "Vecna";
 
@@ -125,9 +115,7 @@
 	[role="button"] {
 		cursor: pointer;
 	}
-}
 
-@layer utilities {
 	/**
 	 * Fonts
 	 */
@@ -303,5 +291,16 @@
 	&::view-transition-new(root) {
 		animation-name: reveal-dark;
 		will-change: clip-path;
+	}
+}
+
+@custom-variant hover-hover {
+	@media (hover: hover) {
+		@slot;
+	}
+}
+@custom-variant hover-none {
+	@media (hover: none) {
+		@slot;
 	}
 }
