@@ -180,7 +180,7 @@
 			&,
 			&:focus,
 			&:focus-within {
-				--input-color: var(--color-error) /* var(--color-error) */;
+				--input-color: var(--color-error);
 			}
 		}
 	}
