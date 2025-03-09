@@ -156,19 +156,6 @@
 	}
 }
 
-@utility join {
-	--join-ss: var(--radius-field);
-	--join-se: var(--radius-field);
-	--join-es: var(--radius-field);
-	--join-ee: var(--radius-field);
-	& :where(.join-item):not(:first-child):not(:last-child) {
-		--join-ss: 0;
-		--join-se: 0;
-		--join-es: 0;
-		--join-ee: 0;
-	}
-}
-
 @utility btn {
 	.join &:is(.input, .border) {
 		border-inline-width: 0;
