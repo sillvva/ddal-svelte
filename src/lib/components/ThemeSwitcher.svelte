@@ -1,8 +1,10 @@
 <script lang="ts">
 	import { themeGroups, themes } from "$lib/constants";
-	import { global } from "$lib/stores.svelte";
+	import { getGlobal } from "$lib/stores.svelte";
 	import { createTransition } from "$lib/util";
 	import { MediaQuery } from "svelte/reactivity";
+
+	const global = getGlobal();
 
 	let theme = $state(global.app.settings.theme);
 	const mq = new MediaQuery("(prefers-color-scheme: dark)");

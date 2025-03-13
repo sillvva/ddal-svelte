@@ -1,12 +1,14 @@
 <script lang="ts">
 	import { PROVIDERS } from "$lib/constants.js";
 	import { publicEnv } from "$lib/env/public.js";
-	import { global } from "$lib/stores.svelte.js";
+	import { getGlobal } from "$lib/stores.svelte.js";
 	import { signIn } from "@auth/sveltekit/client";
 	import { signIn as passkey } from "@auth/sveltekit/webauthn";
 	import { twMerge } from "tailwind-merge";
 
 	let { data } = $props();
+
+	const global = getGlobal();
 
 	$effect(() => {
 		if (global.app.settings.autoWebAuthn) {

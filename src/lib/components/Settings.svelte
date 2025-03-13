@@ -3,13 +3,15 @@
 	import { page } from "$app/state";
 	import { PROVIDERS } from "$lib/constants";
 	import { successToast } from "$lib/factories.svelte";
-	import { global } from "$lib/stores.svelte";
+	import { getGlobal } from "$lib/stores.svelte";
 	import { signIn, signOut } from "@auth/sveltekit/client";
 	import { twMerge } from "tailwind-merge";
 	import Passkeys from "./Passkeys.svelte";
 	import ThemeSwitcher from "./ThemeSwitcher.svelte";
 
 	let open = $state(false);
+
+	let global = getGlobal();
 
 	const user = $derived(page.data.user);
 	const authProviders = $derived(

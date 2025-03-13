@@ -2,7 +2,7 @@
 	import { invalidateAll } from "$app/navigation";
 	import { page } from "$app/state";
 	import { errorToast, successToast } from "$lib/factories.svelte";
-	import { global } from "$lib/stores.svelte";
+	import { getGlobal } from "$lib/stores.svelte";
 	import type {
 		DeleteWebAuthnInput,
 		DeleteWebAuthnResponse,
@@ -16,6 +16,7 @@
 	import Control from "./forms/Control.svelte";
 
 	const authenticators = $derived(page.data.user?.authenticators || []);
+	const global = getGlobal();
 	$effect(() => {
 		global.app.settings.autoWebAuthn = authenticators.length > 0;
 	});

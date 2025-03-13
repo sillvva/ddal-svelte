@@ -10,7 +10,7 @@
 	import DeleteCharacter from "$lib/components/forms/DeleteCharacter.svelte";
 	import DeleteLog from "$lib/components/forms/DeleteLog.svelte";
 	import { excludedSearchWords } from "$lib/constants.js";
-	import { getTransition, global } from "$lib/stores.svelte.js";
+	import { getGlobal, getTransition } from "$lib/stores.svelte.js";
 	import { createTransition } from "$lib/util";
 	import { slugify, sorter } from "@sillvva/utils";
 	import { download, hotkey } from "@svelteuidev/composables";
@@ -18,6 +18,7 @@
 
 	let { data } = $props();
 
+	const global = getGlobal();
 	const transition = getTransition();
 
 	const myCharacter = $derived(data.character.userId === data.session?.user?.id);

@@ -1,12 +1,12 @@
 <script lang="ts">
 	import { dev } from "$app/environment";
-	import { global, setTransition } from "$lib/stores.svelte";
+	import { createGlobal, setTransition } from "$lib/stores.svelte";
 	import { setCookie } from "$server/cookie";
 	import "../app.css";
 
 	let { data, children } = $props();
 
-	global.app = data.app;
+	const global = createGlobal(data.app);
 	$effect(() => {
 		setCookie("app", global.app);
 	});

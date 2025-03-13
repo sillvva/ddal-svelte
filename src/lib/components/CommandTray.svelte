@@ -2,7 +2,7 @@
 	import { goto } from "$app/navigation";
 	import { page } from "$app/state";
 	import { excludedSearchWords, searchSections } from "$lib/constants.js";
-	import { global } from "$lib/stores.svelte";
+	import { getGlobal } from "$lib/stores.svelte";
 	import { debounce } from "$lib/util";
 	import type { SearchData } from "$src/routes/(api)/command/+server";
 	import { sorter } from "@sillvva/utils";
@@ -11,6 +11,7 @@
 	import Items from "./Items.svelte";
 
 	const defaultSelected: string = searchSections[0].url;
+	let global = getGlobal();
 
 	let search = $state("");
 	let cmdOpen = $state(false);

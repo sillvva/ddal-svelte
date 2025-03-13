@@ -1,9 +1,11 @@
 <script lang="ts">
 	import { goto } from "$app/navigation";
 	import { errorToast, successToast } from "$lib/factories.svelte";
-	import { global } from "$lib/stores.svelte";
+	import { getGlobal } from "$lib/stores.svelte";
 	import type { UserDMsWithLogs } from "$server/data/dms";
 	import { superForm } from "sveltekit-superforms";
+
+	const global = getGlobal();
 
 	interface Props {
 		dm: UserDMsWithLogs[number];

@@ -6,7 +6,7 @@
 	import Search from "$lib/components/Search.svelte";
 	import SearchResults from "$lib/components/SearchResults.svelte";
 	import { excludedSearchWords } from "$lib/constants.js";
-	import { getTransition, global } from "$lib/stores.svelte.js";
+	import { getGlobal, getTransition } from "$lib/stores.svelte.js";
 	import { createTransition, isDefined } from "$lib/util";
 	import { sorter } from "@sillvva/utils";
 	import { download, hotkey } from "@svelteuidev/composables";
@@ -14,6 +14,7 @@
 
 	let { data } = $props();
 
+	const global = getGlobal();
 	const transition = getTransition();
 
 	let search = $state(page.url.searchParams.get("s") || "");

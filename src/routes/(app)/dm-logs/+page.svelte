@@ -9,13 +9,15 @@
 	import SearchResults from "$lib/components/SearchResults.svelte";
 	import DeleteLog from "$lib/components/forms/DeleteLog.svelte";
 	import { excludedSearchWords } from "$lib/constants";
-	import { global } from "$lib/stores.svelte.js";
+	import { getGlobal } from "$lib/stores.svelte.js";
 	import { createTransition, isDefined } from "$lib/util.js";
 	import { sorter } from "@sillvva/utils";
 	import { download, hotkey } from "@svelteuidev/composables";
 	import MiniSearch from "minisearch";
 
 	let { data } = $props();
+
+	const global = getGlobal();
 
 	let search = $state(page.url.searchParams.get("s") || "");
 	let deletingLog = $state<string[]>([]);
