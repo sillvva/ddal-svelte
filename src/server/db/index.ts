@@ -33,7 +33,6 @@ export function buildConflictUpdateColumns<T extends PgTable, Q extends keyof T[
 	);
 }
 
-// @ts-ignore - ExtractTablesWithRelations has incorrect type constraints
 type TRSchema = ExtractTablesWithRelations<typeof relations>;
 export type QueryConfig<TableName extends keyof TRSchema> = DBQueryConfig<
 	"one" | "many",
