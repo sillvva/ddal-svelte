@@ -1,10 +1,9 @@
 import type { CharacterData } from "$server/data/characters";
-import type { LogData } from "$server/data/logs";
-import type { Character, DungeonMaster, Log, MagicItem, StoryAward, User } from "$server/db/schema";
+import type { LogCharacterData, LogData } from "$server/data/logs";
+import type { Character, DungeonMaster, Log, MagicItem, StoryAward } from "$server/db/schema";
 import { sorter } from "@sillvva/utils";
 import { PlaceholderName } from "./constants";
 import type { CharacterId, DungeonMasterId, LogId, LogSchema, UserId } from "./schemas";
-import type { Prettify } from "./util";
 
 export function getItemEntities(
 	character: CharacterData,
@@ -98,18 +97,7 @@ export function getLevels(
 	};
 }
 
-export function getLogsSummary(
-	logs: Array<
-		Log & {
-			dm: DungeonMaster | null;
-			magicItemsGained: MagicItem[];
-			magicItemsLost: MagicItem[];
-			storyAwardsGained: StoryAward[];
-			storyAwardsLost: StoryAward[];
-		}
-	>,
-	includeLogs = true
-) {
+export function getLogsSummary(logs: LogData[], includeLogs = true) {
 	const sortedLogs = logs.map(parseLog).toSorted((a, b) => sorter(a.show_date, b.show_date));
 
 	const levels = getLevels(sortedLogs);
@@ -215,14 +203,9 @@ export function defaultLogSchema(userId: UserId, character: Character): LogSchem
 	};
 }
 
-export function parseLog(
-	log: Omit<LogData & { character?: Prettify<Character & { user?: Pick<User, "id" | "name"> }> | null }, "type"> & {
-		type: string;
-	}
-) {
+export function parseLog(log: LogData & { character?: LogCharacterData }) {
 	return {
 		...log,
-		type: log.type === "nongame" ? ("nongame" as const) : ("game" as const),
 		character: log.character && log.character.name !== PlaceholderName ? log.character : undefined,
 		show_date: log.isDmLog && log.appliedDate ? log.appliedDate : log.date
 	};

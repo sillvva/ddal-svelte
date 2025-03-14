@@ -14,10 +14,16 @@ export async function getCharacter(characterId: CharacterId, includeLogs = true)
 			user: userIncludes,
 			logs: {
 				with: logIncludes,
-				orderBy: (logs, { asc }) => asc(logs.date)
+				orderBy: {
+					date: "asc"
+				}
 			}
 		},
-		where: (characters, { eq }) => eq(characters.id, characterId)
+		where: {
+			id: {
+				eq: characterId
+			}
+		}
 	});
 
 	return (
@@ -35,10 +41,19 @@ export async function getCharactersWithLogs(userId: UserId, includeLogs = true) 
 			user: userIncludes,
 			logs: {
 				with: logIncludes,
-				orderBy: (logs, { asc }) => asc(logs.date)
+				orderBy: {
+					date: "asc"
+				}
 			}
 		},
-		where: (characters, { eq, ne, and }) => and(eq(characters.userId, userId), ne(characters.name, PlaceholderName))
+		where: {
+			userId: {
+				eq: userId
+			},
+			name: {
+				NOT: PlaceholderName
+			}
+		}
 	});
 
 	return characters.map((c) => ({
@@ -54,7 +69,16 @@ export async function getCharacters(userId: UserId) {
 		with: {
 			user: userIncludes
 		},
-		where: (characters, { eq, ne, and }) => and(eq(characters.userId, userId), ne(characters.name, PlaceholderName)),
-		orderBy: (characters, { asc }) => asc(characters.name)
+		where: {
+			userId: {
+				eq: userId
+			},
+			name: {
+				NOT: PlaceholderName
+			}
+		},
+		orderBy: {
+			name: "asc"
+		}
 	});
 }

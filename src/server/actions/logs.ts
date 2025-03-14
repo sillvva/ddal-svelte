@@ -28,7 +28,11 @@ export async function saveLog(input: LogSchema, user: LocalsSession["user"]): Sa
 					with: {
 						logs: true
 					},
-					where: (characters, { eq }) => eq(characters.id, characterId)
+					where: {
+						id: {
+							eq: characterId
+						}
+					}
 				});
 
 				if (!character)
@@ -52,13 +56,23 @@ export async function saveLog(input: LogSchema, user: LocalsSession["user"]): Sa
 
 				if (!input.dm.id) {
 					const search = await tx.query.dungeonMasters.findFirst({
-						where: (dms, { eq, or, and }) =>
-							and(
-								eq(dms.owner, userId),
-								isMe
-									? eq(dms.uid, userId)
-									: or(eq(dms.name, input.dm.name.trim()), input.dm.DCI ? eq(dms.DCI, input.dm.DCI) : undefined)
-							)
+						where: {
+							owner: {
+								eq: userId
+							},
+							...(isMe
+								? { uid: { eq: userId } }
+								: {
+										OR: [
+											{
+												name: {
+													eq: input.dm.name.trim()
+												},
+												DCI: input.dm.DCI ? { eq: input.dm.DCI } : undefined
+											}
+										]
+									})
+						}
 					});
 					if (search) {
 						input.dm.id = search.id;
@@ -129,7 +143,11 @@ export async function saveLog(input: LogSchema, user: LocalsSession["user"]): Sa
 
 			const updated = await tx.query.logs.findFirst({
 				with: logIncludes,
-				where: (logs, { eq }) => eq(logs.id, log.id)
+				where: {
+					id: {
+						eq: log.id
+					}
+				}
 			});
 
 			return updated;
@@ -205,7 +223,11 @@ export async function deleteLog(logId: LogId, userId: UserId): SaveResult<{ id: 
 					dm: true,
 					character: true
 				},
-				where: (logs, { eq }) => eq(logs.id, logId)
+				where: {
+					id: {
+						eq: logId
+					}
+				}
 			});
 
 			if (!log) throw new LogError("Log not found", { status: 404 });

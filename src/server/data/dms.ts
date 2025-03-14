@@ -21,7 +21,25 @@ export async function getUserDMsWithLogs(user: LocalsSession["user"], id?: Dunge
 				}
 			}
 		},
-		where: (dms, { eq, and, or, ne }) => and(or(eq(dms.owner, userId), eq(dms.uid, userId)), id ? eq(dms.id, id) : undefined)
+		where: {
+			id: id
+				? {
+						eq: id
+					}
+				: undefined,
+			OR: [
+				{
+					owner: {
+						eq: userId
+					}
+				},
+				{
+					uid: {
+						eq: userId
+					}
+				}
+			]
+		}
 	});
 
 	if (!id && !dms.find((dm) => dm.uid === userId)) {
@@ -43,7 +61,20 @@ export async function getUserDMs(user: LocalsSession["user"]) {
 	if (!user || !user.id) return [];
 
 	const dms = await q.dungeonMasters.findMany({
-		where: (dms, { or, eq }) => or(eq(dms.owner, user.id), eq(dms.uid, user.id))
+		where: {
+			OR: [
+				{
+					owner: {
+						eq: user.id
+					}
+				},
+				{
+					uid: {
+						eq: user.id
+					}
+				}
+			]
+		}
 	});
 
 	if (!dms.find((dm) => dm.uid === user.id)) {

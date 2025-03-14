@@ -1,5 +1,5 @@
 import { privateEnv } from "$lib/env/private";
-import * as schema from "$server/db/schema";
+import { relations } from "$server/db/relations";
 import {
 	getTableColumns,
 	sql,
@@ -14,7 +14,7 @@ import { drizzle } from "drizzle-orm/postgres-js";
 import postgres from "postgres";
 
 export const connection = postgres(privateEnv.DATABASE_URL, { prepare: false });
-export const db = drizzle(connection, { schema });
+export const db = drizzle(connection, { relations });
 export const q = db.query;
 
 export type Transaction = Parameters<Parameters<typeof db.transaction>[0]>[0];
@@ -33,10 +33,15 @@ export function buildConflictUpdateColumns<T extends PgTable, Q extends keyof T[
 	);
 }
 
-type TSchema = ExtractTablesWithRelations<typeof schema>;
-export type QueryConfig<TableName extends keyof TSchema> = DBQueryConfig<"one" | "many", boolean, TSchema, TSchema[TableName]>;
-export type InferQueryModel<TableName extends keyof TSchema, QBConfig extends QueryConfig<TableName> = {}> = BuildQueryResult<
-	TSchema,
-	TSchema[TableName],
+// @ts-ignore - ExtractTablesWithRelations has incorrect type constraints
+type TRSchema = ExtractTablesWithRelations<typeof relations>;
+export type QueryConfig<TableName extends keyof TRSchema> = DBQueryConfig<
+	"one" | "many",
+	(typeof relations)["tablesConfig"],
+	TRSchema[TableName]
+>;
+export type InferQueryModel<TableName extends keyof TRSchema, QBConfig extends QueryConfig<TableName> = {}> = BuildQueryResult<
+	TRSchema,
+	TRSchema[TableName],
 	QBConfig
 >;

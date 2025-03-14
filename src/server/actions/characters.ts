@@ -43,7 +43,11 @@ export async function deleteCharacter(characterId: CharacterId, userId: UserId):
 	try {
 		const character = await q.characters.findFirst({
 			with: { logs: true },
-			where: (character, { eq }) => eq(character.id, characterId)
+			where: {
+				id: {
+					eq: characterId
+				}
+			}
 		});
 
 		if (!character) throw new CharacterError("Character not found", { status: 404 });

@@ -2,7 +2,7 @@ import type { ProviderId } from "$lib/constants";
 import type { CharacterId, DungeonMasterId, ItemId, LogId, UserId } from "$lib/schemas";
 import type { ProviderType } from "@auth/core/providers";
 import { createId } from "@paralleldrive/cuid2";
-import { isNotNull, relations } from "drizzle-orm";
+import { isNotNull } from "drizzle-orm";
 import * as pg from "drizzle-orm/pg-core";
 
 export type User = typeof users.$inferSelect;
@@ -19,14 +19,6 @@ export const users = pg.pgTable("user", {
 	emailVerified: pg.timestamp({ mode: "date" }),
 	image: pg.text()
 });
-
-export const userRelations = relations(users, ({ many }) => ({
-	accounts: many(accounts),
-	sessions: many(sessions),
-	characters: many(characters),
-	dungeonMasters: many(dungeonMasters),
-	authenticators: many(authenticators)
-}));
 
 export type Account = typeof accounts.$inferSelect;
 export type InsertAccount = typeof accounts.$inferInsert;
@@ -58,14 +50,6 @@ export const accounts = pg.pgTable(
 	]
 );
 
-export const accountRelations = relations(accounts, ({ one }) => ({
-	user: one(users, {
-		fields: [accounts.userId],
-		references: [users.id]
-	}),
-	authenticator: one(authenticators)
-}));
-
 export type Session = typeof sessions.$inferSelect;
 export type InsertSession = typeof sessions.$inferInsert;
 export type UpdateSession = Partial<Session>;
@@ -86,13 +70,6 @@ export const sessions = pg.pgTable(
 	},
 	(table) => [pg.index("Session_userId_idx").on(table.userId)]
 );
-
-export const sessionRelations = relations(sessions, ({ one }) => ({
-	user: one(users, {
-		fields: [sessions.userId],
-		references: [users.id]
-	})
-}));
 
 export type Authenticator = typeof authenticators.$inferSelect;
 export type AuthClient = Pick<Authenticator, "credentialID" | "name">;
@@ -132,17 +109,6 @@ export const authenticators = pg.pgTable(
 	]
 );
 
-export const authenticatorRelations = relations(authenticators, ({ one }) => ({
-	user: one(users, {
-		fields: [authenticators.userId],
-		references: [users.id]
-	}),
-	account: one(accounts, {
-		fields: [authenticators.userId, authenticators.providerAccountId],
-		references: [accounts.userId, accounts.providerAccountId]
-	})
-}));
-
 export type Character = typeof characters.$inferSelect;
 export type InsertCharacter = typeof characters.$inferInsert;
 export type UpdateCharacter = Partial<Character>;
@@ -173,14 +139,6 @@ export const characters = pg.pgTable(
 	(table) => [pg.index("Character_userId_idx").on(table.userId)]
 );
 
-export const characterRelations = relations(characters, ({ one, many }) => ({
-	user: one(users, {
-		fields: [characters.userId],
-		references: [users.id]
-	}),
-	logs: many(logs)
-}));
-
 export type DungeonMaster = typeof dungeonMasters.$inferSelect;
 export type InsertDungeonMaster = typeof dungeonMasters.$inferInsert;
 export type UpdateDungeonMaster = Partial<DungeonMaster>;
@@ -206,14 +164,6 @@ export const dungeonMasters = pg.pgTable(
 		pg.index("DungeonMaster_owner_idx").on(table.owner)
 	]
 );
-
-export const dungeonMasterRelations = relations(dungeonMasters, ({ one, many }) => ({
-	user: one(users, {
-		fields: [dungeonMasters.owner],
-		references: [users.id]
-	}),
-	logs: many(logs)
-}));
 
 export const logType = pg.pgEnum("logType", ["game", "nongame"]);
 
@@ -286,21 +236,6 @@ export const logs = pg.pgTable(
 	]
 );
 
-export const logRelations = relations(logs, ({ one, many }) => ({
-	character: one(characters, {
-		fields: [logs.characterId],
-		references: [characters.id]
-	}),
-	dm: one(dungeonMasters, {
-		fields: [logs.dungeonMasterId],
-		references: [dungeonMasters.id]
-	}),
-	magicItemsGained: many(magicItems, { relationName: "magicItemsGained" }),
-	magicItemsLost: many(magicItems, { relationName: "magicItemsLost" }),
-	storyAwardsGained: many(storyAwards, { relationName: "storyAwardsGained" }),
-	storyAwardsLost: many(storyAwards, { relationName: "storyAwardsLost" })
-}));
-
 export type MagicItem = typeof magicItems.$inferSelect;
 export type InsertMagicItem = typeof magicItems.$inferInsert;
 export type UpdateMagicItem = Partial<MagicItem>;
@@ -330,19 +265,6 @@ export const magicItems = pg.pgTable(
 	]
 );
 
-export const magicItemRelations = relations(magicItems, ({ one }) => ({
-	logGained: one(logs, {
-		fields: [magicItems.logGainedId],
-		references: [logs.id],
-		relationName: "magicItemsGained"
-	}),
-	logLost: one(logs, {
-		fields: [magicItems.logLostId],
-		references: [logs.id],
-		relationName: "magicItemsLost"
-	})
-}));
-
 export type StoryAward = typeof storyAwards.$inferSelect;
 export type InsertStoryAward = typeof storyAwards.$inferInsert;
 export type UpdateStoryAward = Partial<StoryAward>;
@@ -371,16 +293,3 @@ export const storyAwards = pg.pgTable(
 		pg.index("StoryAward_logLostId_idx").on(table.logLostId)
 	]
 );
-
-export const storyAwardRelations = relations(storyAwards, ({ one }) => ({
-	logGained: one(logs, {
-		fields: [storyAwards.logGainedId],
-		references: [logs.id],
-		relationName: "storyAwardsGained"
-	}),
-	logLost: one(logs, {
-		fields: [storyAwards.logLostId],
-		references: [logs.id],
-		relationName: "storyAwardsLost"
-	})
-}));
