@@ -10,16 +10,12 @@ export const logIncludes = {
 	storyAwardsGained: true,
 	storyAwardsLost: true
 } as const satisfies QueryConfig<"logs">["with"];
+export const logCharacterIncludes = {
+	user: userIncludes
+} as const satisfies QueryConfig<"characters">["with"];
 
 export type LogData = InferQueryModel<"logs", { with: typeof logIncludes }>;
-export type LogCharacterData = InferQueryModel<
-	"characters",
-	{
-		with: {
-			user: typeof userIncludes;
-		};
-	}
-> | null;
+export type LogCharacterData = InferQueryModel<"characters", { with: typeof logCharacterIncludes }> | null;
 
 export async function getLog(logId: LogId, userId: UserId, characterId = "" as CharacterId): Promise<LogData> {
 	const log =
@@ -55,9 +51,7 @@ export async function getDMLogs(userId: UserId) {
 			with: {
 				...logIncludes,
 				character: {
-					with: {
-						user: userIncludes
-					}
+					with: logCharacterIncludes
 				}
 			},
 			where: {
