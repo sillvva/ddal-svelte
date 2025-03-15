@@ -340,7 +340,7 @@
 			{#each sortedResults as log, i}
 				{@const hasDescription = !!log.description?.trim() || log.storyAwardsGained.length > 0 || log.storyAwardsLost.length > 0}
 				<tbody class="border-t border-neutral-500/20 first:border-0">
-					<tr class="data-[deleting=true]:hidden print:text-sm" data-deleting={deletingLog.includes(log.id)}>
+					<tr class="border-0 data-[deleting=true]:hidden print:text-sm" data-deleting={deletingLog.includes(log.id)}>
 						<td
 							class="static! pb-0 align-top data-[desc=true]:pb-3 sm:pb-3 print:p-2"
 							data-desc={hasDescription && global.app.log.descriptions}
