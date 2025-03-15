@@ -1,8 +1,8 @@
-import type { CharacterData } from "$server/data/characters";
+import type { CharacterData, FullCharacterData } from "$server/data/characters";
 import type { FullLogData, LogData } from "$server/data/logs";
 import type { Character, DungeonMaster, Log, MagicItem, StoryAward } from "$server/db/schema";
 import { sorter } from "@sillvva/utils";
-import { PlaceholderName } from "./constants";
+import { BLANK_CHARACTER, PlaceholderName } from "./constants";
 import type { CharacterId, DungeonMasterId, LogId, LogSchema, UserId } from "./schemas";
 
 export function getItemEntities(
@@ -200,6 +200,14 @@ export function defaultLogSchema(userId: UserId, character: Character): LogSchem
 		magicItemsLost: [],
 		storyAwardsGained: [],
 		storyAwardsLost: []
+	};
+}
+
+export function parseCharacter(character: CharacterData, includeLogs = true): FullCharacterData {
+	return {
+		...character,
+		imageUrl: character.imageUrl || BLANK_CHARACTER,
+		...getLogsSummary(character.logs, includeLogs)
 	};
 }
 

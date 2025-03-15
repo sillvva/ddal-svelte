@@ -1,12 +1,29 @@
-import { BLANK_CHARACTER, PlaceholderName } from "$lib/constants";
-import { getLogsSummary } from "$lib/entities";
+import { PlaceholderName } from "$lib/constants";
+import { getLogsSummary, parseCharacter } from "$lib/entities";
 import type { CharacterId, UserId } from "$lib/schemas";
 import { userIncludes } from "$server/actions/users";
-import { q } from "$server/db";
+import { q, type InferQueryModel } from "$server/db";
+import type { Prettify } from "valibot";
 import { logIncludes } from "./logs";
 
-export type CharacterData = NonNullable<Awaited<ReturnType<typeof getCharacter>>>;
-export async function getCharacter(characterId: CharacterId, includeLogs = true) {
+type CharacterLogIncludes = InferQueryModel<"logs", { with: typeof logIncludes }>;
+export type CharacterData = Prettify<
+	InferQueryModel<
+		"characters",
+		{
+			with: {
+				user: typeof userIncludes;
+			};
+		}
+	> & {
+		logs: CharacterLogIncludes[];
+	}
+>;
+export type FullCharacterData = Prettify<
+	Omit<CharacterData, "imageUrl" | "logs"> & { imageUrl: string } & ReturnType<typeof getLogsSummary>
+>;
+
+export async function getCharacter(characterId: CharacterId, includeLogs = true): Promise<FullCharacterData | undefined> {
 	if (characterId === "new") return undefined;
 
 	const character = await q.characters.findFirst({
@@ -26,16 +43,10 @@ export async function getCharacter(characterId: CharacterId, includeLogs = true)
 		}
 	});
 
-	return (
-		character && {
-			...character,
-			imageUrl: character.imageUrl || BLANK_CHARACTER,
-			...getLogsSummary(character.logs, includeLogs)
-		}
-	);
+	return character && parseCharacter(character, includeLogs);
 }
 
-export async function getCharactersWithLogs(userId: UserId, includeLogs = true) {
+export async function getCharactersWithLogs(userId: UserId, includeLogs = true): Promise<FullCharacterData[]> {
 	const characters = await q.characters.findMany({
 		with: {
 			user: userIncludes,
@@ -56,29 +67,5 @@ export async function getCharactersWithLogs(userId: UserId, includeLogs = true) 
 		}
 	});
 
-	return characters.map((c) => ({
-		...c,
-		imageUrl: c.imageUrl || BLANK_CHARACTER,
-		...getLogsSummary(c.logs, includeLogs)
-	}));
-}
-
-export type CharactersData = Awaited<ReturnType<typeof getCharacters>>;
-export async function getCharacters(userId: UserId) {
-	return await q.characters.findMany({
-		with: {
-			user: userIncludes
-		},
-		where: {
-			userId: {
-				eq: userId
-			},
-			name: {
-				NOT: PlaceholderName
-			}
-		},
-		orderBy: {
-			name: "asc"
-		}
-	});
+	return characters.map((c) => parseCharacter(c, includeLogs));
 }
