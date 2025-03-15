@@ -1,5 +1,5 @@
 import type { CharacterData } from "$server/data/characters";
-import type { LogCharacterData, LogData } from "$server/data/logs";
+import type { FullLogData, LogData } from "$server/data/logs";
 import type { Character, DungeonMaster, Log, MagicItem, StoryAward } from "$server/db/schema";
 import { sorter } from "@sillvva/utils";
 import { PlaceholderName } from "./constants";
@@ -152,8 +152,8 @@ export function defaultDM(userId: UserId): DungeonMaster {
 	return { id: "" as DungeonMasterId, name: "", DCI: null, uid: "" as UserId, owner: userId };
 }
 
-export function defaultLogData(userId: UserId, characterId = null as CharacterId | null): LogData {
-	return {
+export function defaultLogData(userId: UserId, characterId = null as CharacterId | null) {
+	return parseLog({
 		id: "" as LogId,
 		name: "",
 		description: "",
@@ -175,7 +175,7 @@ export function defaultLogData(userId: UserId, characterId = null as CharacterId
 		magicItemsLost: [],
 		storyAwardsGained: [],
 		storyAwardsLost: []
-	};
+	});
 }
 
 export function defaultLogSchema(userId: UserId, character: Character): LogSchema {
@@ -191,10 +191,10 @@ export function defaultLogSchema(userId: UserId, character: Character): LogSchem
 		level: 0,
 		gold: 0,
 		dtd: 0,
-		dm: defaultDM(userId),
 		characterId: character.id,
 		characterName: character.name,
 		appliedDate: null,
+		dm: defaultDM(userId),
 		isDmLog: !character.id,
 		magicItemsGained: [],
 		magicItemsLost: [],
@@ -203,7 +203,7 @@ export function defaultLogSchema(userId: UserId, character: Character): LogSchem
 	};
 }
 
-export function parseLog(log: LogData & { character?: LogCharacterData }) {
+export function parseLog(log: LogData): FullLogData {
 	return {
 		...log,
 		character: log.character && log.character.name !== PlaceholderName ? log.character : undefined,
@@ -211,15 +211,13 @@ export function parseLog(log: LogData & { character?: LogCharacterData }) {
 	};
 }
 
-export function logDataToSchema(userId: UserId, log: LogData, character?: Character): LogSchema {
+export function logDataToSchema(userId: UserId, log: FullLogData): LogSchema {
 	return {
 		...log,
-		characterId: character?.id || null,
-		characterName: character?.name || "",
-		dm: log.dm?.id ? log.dm : defaultDM(userId),
-		type: log.type as "game" | "nongame",
 		date: new Date(log.date),
+		characterName: log.character?.name || "",
 		appliedDate: log.appliedDate ? new Date(log.appliedDate) : null,
+		dm: log.dm?.id ? log.dm : defaultDM(userId),
 		magicItemsGained: log.magicItemsGained.map((item) => ({
 			id: item.id,
 			name: item.name,

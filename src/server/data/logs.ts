@@ -1,5 +1,6 @@
-import { defaultDM, defaultLogData, parseLog } from "$lib/entities";
-import type { CharacterId, LogId, UserId } from "$lib/schemas";
+import { defaultDM, parseLog } from "$lib/entities";
+import type { LogId, UserId } from "$lib/schemas";
+import type { Prettify } from "$lib/util";
 import { userIncludes } from "$server/actions/users";
 import { q, type InferQueryModel, type QueryConfig } from "$server/db";
 
@@ -14,38 +15,47 @@ export const logCharacterIncludes = {
 	user: userIncludes
 } as const satisfies QueryConfig<"characters">["with"];
 
-export type LogData = InferQueryModel<"logs", { with: typeof logIncludes }>;
-export type LogCharacterData = InferQueryModel<"characters", { with: typeof logCharacterIncludes }> | null;
+export type LogCharacterData = InferQueryModel<"characters", { with: typeof logCharacterIncludes }>;
+export type LogData = InferQueryModel<"logs", { with: typeof logIncludes }> & { character?: LogCharacterData | null };
+export type FullLogData = Prettify<LogData & { character?: LogCharacterData; show_date: Date }>;
 
-export async function getLog(logId: LogId, userId: UserId, characterId = "" as CharacterId): Promise<LogData> {
-	const log =
-		(await q.logs.findFirst({
-			with: logIncludes,
-			where: {
-				id: {
-					eq: logId
-				}
+export async function getLog(logId: LogId, userId: UserId): Promise<FullLogData | undefined> {
+	if (logId === "new") return undefined;
+	const log = await q.logs.findFirst({
+		with: {
+			...logIncludes,
+			character: {
+				with: logCharacterIncludes
 			}
-		})) || defaultLogData(userId, characterId);
-	return { ...parseLog(log), dm: log.dm || defaultDM(userId) };
-}
-
-export async function getDMLog(logId: LogId, userId: UserId): Promise<LogData> {
-	const log =
-		(await q.logs.findFirst({
-			with: logIncludes,
-			where: {
-				id: {
-					eq: logId
+		},
+		where: {
+			id: {
+				eq: logId
+			},
+			OR: [
+				{
+					isDmLog: false,
+					character: {
+						userId: {
+							eq: userId
+						}
+					}
 				},
-				isDmLog: true
-			}
-		})) || defaultLogData(userId);
-	return { ...parseLog(log), dm: log.dm || defaultDM(userId) };
+				{
+					isDmLog: true,
+					dm: {
+						uid: {
+							eq: userId
+						}
+					}
+				}
+			]
+		}
+	});
+	return log && { ...parseLog(log), dm: log.dm || defaultDM(userId) };
 }
 
-export type DMLogsData = Awaited<ReturnType<typeof getDMLogs>>;
-export async function getDMLogs(userId: UserId) {
+export async function getDMLogs(userId: UserId): Promise<FullLogData[]> {
 	return q.logs
 		.findMany({
 			with: {
@@ -106,11 +116,22 @@ export async function getUserLogs(userId: UserId) {
 			}
 		},
 		where: {
-			character: {
-				userId: {
-					eq: userId
+			OR: [
+				{
+					character: {
+						userId: {
+							eq: userId
+						}
+					}
+				},
+				{
+					dm: {
+						uid: {
+							eq: userId
+						}
+					}
 				}
-			}
+			]
 		},
 		orderBy: {
 			date: "asc"

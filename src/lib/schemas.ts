@@ -90,6 +90,7 @@ export const logSchema = v.object({
 	date: v.date(),
 	characterId: v.nullish(characterIdSchema, null),
 	characterName: v.optional(shortString, ""),
+	appliedDate: v.nullable(v.date()),
 	type: v.optional(v.picklist(["game", "nongame"]), "game"),
 	experience: v.nullable(v.pipe(integer, v.minValue(0)), 0),
 	acp: v.nullable(v.pipe(integer, v.minValue(0)), 0),
@@ -103,7 +104,6 @@ export const logSchema = v.object({
 		name: v.optional(shortString, "")
 	}),
 	isDmLog: v.optional(v.boolean(), false),
-	appliedDate: v.nullable(v.date()),
 	magicItemsGained: v.optional(v.array(itemSchema), []),
 	magicItemsLost: v.optional(v.array(itemIdSchema), []),
 	storyAwardsGained: v.optional(v.array(itemSchema), []),

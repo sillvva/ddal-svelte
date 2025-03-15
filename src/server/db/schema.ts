@@ -190,6 +190,7 @@ export const logs = pg.pgTable(
 		type: logType().notNull(),
 		dungeonMasterId: pg
 			.text()
+			.notNull()
 			.$type<DungeonMasterId>()
 			.references(() => dungeonMasters.id, {
 				onUpdate: "cascade",
