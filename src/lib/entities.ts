@@ -3,7 +3,7 @@ import type { FullLogData, LogData } from "$server/data/logs";
 import type { Character, DungeonMaster, Log, MagicItem, StoryAward } from "$server/db/schema";
 import { sorter } from "@sillvva/utils";
 import { BLANK_CHARACTER, PlaceholderName } from "./constants";
-import type { CharacterId, DungeonMasterId, LogId, LogSchema, UserId } from "./schemas";
+import type { DungeonMasterId, LogId, LogSchema, UserId } from "./schemas";
 
 export function getItemEntities(
 	character: CharacterData,
@@ -152,7 +152,7 @@ export function defaultDM(userId: UserId): DungeonMaster {
 	return { id: "" as DungeonMasterId, name: "", DCI: null, uid: "" as UserId, owner: userId };
 }
 
-export function defaultLogData(userId: UserId, characterId = null as CharacterId | null) {
+export function defaultLogData(userId: UserId, character = null as CharacterData | null) {
 	return parseLog({
 		id: "" as LogId,
 		name: "",
@@ -167,10 +167,11 @@ export function defaultLogData(userId: UserId, characterId = null as CharacterId
 		gold: 0,
 		dtd: 0,
 		dungeonMasterId: "" as DungeonMasterId,
-		dm: defaultDM(userId),
-		characterId,
+		characterId: character?.id || null,
+		character,
 		appliedDate: null,
-		isDmLog: !characterId,
+		dm: defaultDM(userId),
+		isDmLog: !character,
 		magicItemsGained: [],
 		magicItemsLost: [],
 		storyAwardsGained: [],
@@ -214,7 +215,7 @@ export function parseCharacter(character: CharacterData, includeLogs = true): Fu
 export function parseLog(log: LogData): FullLogData {
 	return {
 		...log,
-		character: log.character && log.character.name !== PlaceholderName ? log.character : undefined,
+		character: log.character && log.character.name !== PlaceholderName ? log.character : null,
 		show_date: log.isDmLog && log.appliedDate ? log.appliedDate : log.date
 	};
 }

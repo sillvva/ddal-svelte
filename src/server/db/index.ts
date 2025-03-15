@@ -17,8 +17,6 @@ export const connection = postgres(privateEnv.DATABASE_URL, { prepare: false });
 export const db = drizzle(connection, { relations });
 export const q = db.query;
 
-export type Transaction = Parameters<Parameters<typeof db.transaction>[0]>[0];
-
 export function buildConflictUpdateColumns<T extends PgTable, Q extends keyof T["_"]["columns"]>(table: T, columns: Q[]) {
 	const cls = getTableColumns(table);
 	return columns.reduce(
@@ -32,6 +30,8 @@ export function buildConflictUpdateColumns<T extends PgTable, Q extends keyof T[
 		{} as Record<Q, SQL<GetColumnData<T["_"]["columns"][Q]>>>
 	);
 }
+
+export type Transaction = Parameters<Parameters<typeof db.transaction>[0]>[0];
 
 type TRSchema = ExtractTablesWithRelations<typeof relations>;
 export type QueryConfig<TableName extends keyof TRSchema> = DBQueryConfig<"one" | "many", TRSchema, TRSchema[TableName]>;
