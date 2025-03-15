@@ -1,4 +1,4 @@
-import type { CharacterData } from "$server/data/characters";
+import type { FullCharacterData } from "$server/data/characters";
 import * as v from "valibot";
 
 export type BrandedType = v.InferOutput<ReturnType<typeof brandedId>>;
@@ -110,7 +110,7 @@ export const logSchema = v.object({
 	storyAwardsLost: v.optional(v.array(itemIdSchema), [])
 });
 
-export const characterLogSchema = (character: CharacterData) =>
+export const characterLogSchema = (character: FullCharacterData) =>
 	v.pipe(
 		logSchema,
 		v.check((input) => !input.isDmLog, "Only character logs can be saved here."),
@@ -130,7 +130,7 @@ export const characterLogSchema = (character: CharacterData) =>
 		)
 	);
 
-export const dMLogSchema = (characters: CharacterData[] = []) =>
+export const dMLogSchema = (characters: FullCharacterData[] = []) =>
 	v.pipe(
 		logSchema,
 		v.check((input) => input.isDmLog, "Only DM logs can be saved here."),
