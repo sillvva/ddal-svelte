@@ -9,25 +9,21 @@ export const logIncludes = {
 	magicItemsGained: true,
 	magicItemsLost: true,
 	storyAwardsGained: true,
-	storyAwardsLost: true
+	storyAwardsLost: true,
+	character: {
+		with: {
+			user: userIncludes
+		}
+	}
 } as const satisfies QueryConfig<"logs">["with"];
-export const logCharacterIncludes = {
-	user: userIncludes
-} as const satisfies QueryConfig<"characters">["with"];
 
-export type LogCharacterData = InferQueryModel<"characters", { with: typeof logCharacterIncludes }>;
-export type LogData = InferQueryModel<"logs", { with: typeof logIncludes }> & { character?: LogCharacterData | null };
-export type FullLogData = Prettify<LogData & { character?: LogCharacterData; show_date: Date }>;
+export type LogData = InferQueryModel<"logs", { with: typeof logIncludes }>;
+export type FullLogData = Prettify<LogData & { show_date: Date }>;
 
 export async function getLog(logId: LogId, userId: UserId): Promise<FullLogData | undefined> {
 	if (logId === "new") return undefined;
 	const log = await q.logs.findFirst({
-		with: {
-			...logIncludes,
-			character: {
-				with: logCharacterIncludes
-			}
-		},
+		with: logIncludes,
 		where: {
 			id: {
 				eq: logId
@@ -58,12 +54,7 @@ export async function getLog(logId: LogId, userId: UserId): Promise<FullLogData 
 export async function getDMLogs(userId: UserId): Promise<FullLogData[]> {
 	return q.logs
 		.findMany({
-			with: {
-				...logIncludes,
-				character: {
-					with: logCharacterIncludes
-				}
-			},
+			with: logIncludes,
 			where: {
 				isDmLog: true,
 				dm: {
