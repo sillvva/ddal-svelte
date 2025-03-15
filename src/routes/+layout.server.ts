@@ -25,18 +25,21 @@ export const load = async (event) => {
 
 	let user: App.PageData["user"];
 	if (session?.user) {
-		const userId = session.user.id;
 		user = await q.users.findFirst({
-			where: (users, { eq }) => eq(users.id, userId),
 			with: {
 				accounts: {
-					where: (accounts, { inArray }) =>
-						inArray(
-							accounts.provider,
-							PROVIDERS.map((p) => p.id)
-						)
+					where: {
+						provider: {
+							in: PROVIDERS.map((p) => p.id)
+						}
+					}
 				},
 				authenticators: true
+			},
+			where: {
+				id: {
+					eq: session.user.id
+				}
 			}
 		});
 	}

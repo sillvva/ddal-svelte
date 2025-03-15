@@ -14,7 +14,11 @@ export async function POST({ request, locals }) {
 
 	try {
 		const passkeys = await q.authenticators.findMany({
-			where: (table, { eq, and }) => and(eq(table.userId, session.user.id))
+			where: {
+				userId: {
+					eq: session.user.id
+				}
+			}
 		});
 
 		const auth = passkeys.find((a) => (id ? a.credentialID === id : a.name === ""));
@@ -48,7 +52,14 @@ export async function DELETE({ request, locals }) {
 
 		const { id } = (await request.json()) as DeleteWebAuthnInput;
 		const auth = await q.authenticators.findFirst({
-			where: (table, { eq }) => eq(table.userId, session.user.id) && eq(table.credentialID, id)
+			where: {
+				userId: {
+					eq: session.user.id
+				},
+				credentialID: {
+					eq: id
+				}
+			}
 		});
 
 		if (!auth) throw new Error("No passkey found");
