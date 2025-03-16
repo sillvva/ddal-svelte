@@ -6,8 +6,12 @@ import { q, type InferQueryModel, type QueryConfig } from "$server/db";
 import type { Prettify } from "valibot";
 import { logIncludes } from "./logs";
 
-const characterIncludes = {
-	user: userIncludes,
+export const characterIncludes = {
+	user: userIncludes
+} as const satisfies QueryConfig<"characters">["with"];
+
+export const extendedCharacterIncludes = {
+	...characterIncludes,
 	logs: {
 		with: logIncludes,
 		orderBy: {
@@ -25,7 +29,7 @@ export async function getCharacter(characterId: CharacterId, includeLogs = true)
 	if (characterId === "new") return undefined;
 
 	const character = await q.characters.findFirst({
-		with: characterIncludes,
+		with: extendedCharacterIncludes,
 		where: {
 			id: {
 				eq: characterId
@@ -38,7 +42,7 @@ export async function getCharacter(characterId: CharacterId, includeLogs = true)
 
 export async function getCharactersWithLogs(userId: UserId, includeLogs = true): Promise<FullCharacterData[]> {
 	const characters = await q.characters.findMany({
-		with: characterIncludes,
+		with: extendedCharacterIncludes,
 		where: {
 			userId: {
 				eq: userId

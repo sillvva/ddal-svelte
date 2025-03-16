@@ -1,19 +1,21 @@
 import { defaultDM, parseLog } from "$lib/entities";
 import type { LogId, UserId } from "$lib/schemas";
 import type { Prettify } from "$lib/util";
-import { userIncludes } from "$server/actions/users";
 import { q, type InferQueryModel, type QueryConfig } from "$server/db";
+import { characterIncludes } from "./characters";
 
 export const logIncludes = {
 	dm: true,
 	magicItemsGained: true,
 	magicItemsLost: true,
 	storyAwardsGained: true,
-	storyAwardsLost: true,
+	storyAwardsLost: true
+} as const satisfies QueryConfig<"logs">["with"];
+
+export const extendedLogIncludes = {
+	...logIncludes,
 	character: {
-		with: {
-			user: userIncludes
-		}
+		with: characterIncludes
 	}
 } as const satisfies QueryConfig<"logs">["with"];
 
@@ -23,7 +25,7 @@ export type FullLogData = Prettify<LogData & { show_date: Date }>;
 export async function getLog(logId: LogId, userId: UserId): Promise<FullLogData | undefined> {
 	if (logId === "new") return undefined;
 	const log = await q.logs.findFirst({
-		with: logIncludes,
+		with: extendedLogIncludes,
 		where: {
 			id: {
 				eq: logId
@@ -54,7 +56,7 @@ export async function getLog(logId: LogId, userId: UserId): Promise<FullLogData 
 export async function getDMLogs(userId: UserId): Promise<FullLogData[]> {
 	return q.logs
 		.findMany({
-			with: logIncludes,
+			with: extendedLogIncludes,
 			where: {
 				isDmLog: true,
 				dm: {
