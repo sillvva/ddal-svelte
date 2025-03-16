@@ -56,9 +56,7 @@ export async function DELETE({ request, locals }) {
 				userId: {
 					eq: session.user.id
 				},
-				credentialID: {
-					eq: id
-				}
+				credentialID: id
 			}
 		});
 

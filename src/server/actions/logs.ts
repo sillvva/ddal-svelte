@@ -1,7 +1,7 @@
 import { getLevels } from "$lib/entities";
 import { type LogId, type LogSchema, type UserId } from "$lib/schemas";
 import { SaveError, type SaveResult } from "$lib/util";
-import { logCharacterIncludes, logIncludes, type LogData } from "$server/data/logs";
+import { extendedLogIncludes, type LogData } from "$server/data/logs";
 import { buildConflictUpdateColumns, db, type Transaction } from "$server/db";
 import { dungeonMasters, logs, magicItems, storyAwards, type InsertDungeonMaster, type Log } from "$server/db/schema";
 import { and, eq, inArray, isNull, notInArray } from "drizzle-orm";
@@ -57,18 +57,16 @@ export async function saveLog(input: LogSchema, user: LocalsSession["user"]): Sa
 				if (!input.dm.id) {
 					const search = await tx.query.dungeonMasters.findFirst({
 						where: {
-							owner: {
-								eq: userId
-							},
 							...(isMe
 								? { uid: { eq: userId } }
 								: {
+										owner: {
+											eq: userId
+										},
 										OR: [
 											{
-												name: {
-													eq: input.dm.name.trim()
-												},
-												DCI: input.dm.DCI ? { eq: input.dm.DCI } : undefined
+												name: input.dm.name.trim(),
+												DCI: input.dm.DCI || undefined
 											}
 										]
 									})
@@ -142,12 +140,7 @@ export async function saveLog(input: LogSchema, user: LocalsSession["user"]): Sa
 			await itemsCRUD({ tx, logId: log.id, table: storyAwards, gained: input.storyAwardsGained, lost: input.storyAwardsLost });
 
 			const updated = await tx.query.logs.findFirst({
-				with: {
-					...logIncludes,
-					character: {
-						with: logCharacterIncludes
-					}
-				},
+				with: extendedLogIncludes,
 				where: {
 					id: {
 						eq: log.id
