@@ -1,4 +1,5 @@
 <script lang="ts">
+	import { page } from "$app/state";
 	import BreadCrumbs from "$lib/components/BreadCrumbs.svelte";
 	import Checkbox from "$lib/components/forms/Checkbox.svelte";
 	import Control from "$lib/components/forms/Control.svelte";
@@ -32,7 +33,7 @@
 		<Input type="url" {superform} field="characterSheetUrl" label="Character Sheet URL" />
 	</Control>
 	<Control class="col-span-12">
-		<Input type="url" {superform} field="imageUrl" label="Image URL" placeholder={data.BLANK_CHARACTER} />
+		<Input type="url" {superform} field="imageUrl" label="Image URL" placeholder={`${page.url.origin}${data.BLANK_CHARACTER}`} />
 	</Control>
 	{#if !data.character?.id}
 		<Control class="col-span-12 -mb-4">

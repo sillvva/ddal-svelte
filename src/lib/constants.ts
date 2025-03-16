@@ -1,5 +1,4 @@
 import type { Account } from "$server/db/schema";
-import { publicEnv } from "./env/public";
 
 export const appDefaults: App.Cookie = {
 	settings: {
@@ -26,7 +25,7 @@ export const searchSections = [
 	{ title: "DMs", url: "/dms" }
 ] as const;
 
-export const BLANK_CHARACTER = `${publicEnv.PUBLIC_URL}/images/blank-character.webp` as const;
+export const BLANK_CHARACTER = `/images/blank-character.webp` as const;
 
 type Provider = {
 	name: string;

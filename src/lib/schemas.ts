@@ -29,7 +29,7 @@ export const envPrivateSchema = v.object({
 
 export type EnvPublic = v.InferInput<typeof envPublicSchema>;
 export const envPublicSchema = v.object({
-	PUBLIC_URL: urlSchema,
+	// PUBLIC_URL: urlSchema,
 	PUBLIC_TEST_URL: v.optional(string, "")
 });
 
