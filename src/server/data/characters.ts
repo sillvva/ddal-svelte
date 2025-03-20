@@ -1,9 +1,9 @@
 import { PlaceholderName } from "$lib/constants";
 import { getLogsSummary, parseCharacter } from "$lib/entities";
 import type { CharacterId, UserId } from "$lib/schemas";
+import type { Prettify } from "$lib/util";
 import { userIncludes } from "$server/actions/users";
 import { q, type InferQueryModel, type QueryConfig } from "$server/db";
-import type { Prettify } from "valibot";
 import { logIncludes } from "./logs";
 
 export const characterIncludes = {
@@ -21,8 +21,9 @@ export const extendedCharacterIncludes = {
 } as const satisfies QueryConfig<"characters">["with"];
 
 export type CharacterData = InferQueryModel<"characters", { with: typeof characterIncludes }>;
+export type ExtendedCharacterData = InferQueryModel<"characters", { with: typeof extendedCharacterIncludes }>;
 export type FullCharacterData = Prettify<
-	Omit<CharacterData, "imageUrl" | "logs"> & { imageUrl: string } & ReturnType<typeof getLogsSummary>
+	Omit<ExtendedCharacterData, "imageUrl" | "logs"> & { imageUrl: string } & ReturnType<typeof getLogsSummary>
 >;
 
 export async function getCharacter(characterId: CharacterId, includeLogs = true): Promise<FullCharacterData | undefined> {

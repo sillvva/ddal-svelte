@@ -20,7 +20,8 @@ export const extendedLogIncludes = {
 } as const satisfies QueryConfig<"logs">["with"];
 
 export type LogData = InferQueryModel<"logs", { with: typeof logIncludes }>;
-export type FullLogData = Prettify<LogData & { show_date: Date }>;
+export type ExtendedLogData = InferQueryModel<"logs", { with: typeof extendedLogIncludes }>;
+export type FullLogData = Prettify<ExtendedLogData & { show_date: Date }>;
 
 export async function getLog(logId: LogId, userId: UserId): Promise<FullLogData | undefined> {
 	if (logId === "new") return undefined;

@@ -1,12 +1,12 @@
-import type { CharacterData, FullCharacterData } from "$server/data/characters";
-import type { FullLogData, LogData } from "$server/data/logs";
+import type { CharacterData, ExtendedCharacterData, FullCharacterData } from "$server/data/characters";
+import type { ExtendedLogData, FullLogData, LogData } from "$server/data/logs";
 import type { Character, DungeonMaster, Log, MagicItem, StoryAward } from "$server/db/schema";
 import { sorter } from "@sillvva/utils";
 import { BLANK_CHARACTER, PlaceholderName } from "./constants";
 import type { DungeonMasterId, LogId, LogSchema, UserId } from "./schemas";
 
 export function getItemEntities(
-	character: CharacterData,
+	character: FullCharacterData,
 	options?: {
 		lastLogId?: LogId;
 		lastLogDate?: string;
@@ -204,7 +204,7 @@ export function defaultLogSchema(userId: UserId, character: Character): LogSchem
 	};
 }
 
-export function parseCharacter(character: CharacterData, includeLogs = true): FullCharacterData {
+export function parseCharacter(character: ExtendedCharacterData, includeLogs = true): FullCharacterData {
 	return {
 		...character,
 		imageUrl: character.imageUrl || BLANK_CHARACTER,
@@ -212,10 +212,10 @@ export function parseCharacter(character: CharacterData, includeLogs = true): Fu
 	};
 }
 
-export function parseLog(log: LogData): FullLogData {
+export function parseLog(log: LogData | ExtendedLogData): FullLogData {
 	return {
 		...log,
-		character: log.character && log.character.name !== PlaceholderName ? log.character : null,
+		character: "character" in log && log.character && log.character.name !== PlaceholderName ? log.character : null,
 		show_date: log.isDmLog && log.appliedDate ? log.appliedDate : log.date
 	};
 }
@@ -242,7 +242,7 @@ export function logDataToSchema(userId: UserId, log: FullLogData): LogSchema {
 	};
 }
 
-export function strippedCharacterData(character: CharacterData, logId?: LogId) {
+export function strippedCharacterData(character: ExtendedCharacterData, logId?: LogId) {
 	return {
 		...character,
 		logs: character.logs.filter((log) => log.id !== logId),
