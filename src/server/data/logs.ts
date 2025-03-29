@@ -1,4 +1,4 @@
-import { defaultDM, parseLog } from "$lib/entities";
+import { parseLog } from "$lib/entities";
 import type { LogId, UserId } from "$lib/schemas";
 import type { Prettify } from "$lib/util";
 import { q, type InferQueryModel, type QueryConfig } from "$server/db";
@@ -51,7 +51,7 @@ export async function getLog(logId: LogId, userId: UserId): Promise<FullLogData 
 			]
 		}
 	});
-	return log && { ...parseLog(log), dm: log.dm || defaultDM(userId) };
+	return log && parseLog(log);
 }
 
 export async function getDMLogs(userId: UserId): Promise<FullLogData[]> {

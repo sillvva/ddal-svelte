@@ -56,7 +56,8 @@ export const relations = defineRelations(schema, (r) => ({
 		}),
 		dm: r.one.dungeonMasters({
 			from: r.logs.dungeonMasterId,
-			to: r.dungeonMasters.id
+			to: r.dungeonMasters.id,
+			optional: false
 		}),
 		magicItemsGained: r.many.magicItems({
 			alias: "magicItemsGained"

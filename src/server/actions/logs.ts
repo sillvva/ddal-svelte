@@ -230,7 +230,7 @@ export async function deleteLog(logId: LogId, userId: UserId): SaveResult<{ id: 
 
 			if (!log) throw new LogError("Log not found", { status: 404 });
 			if (!log.isDmLog && log.character && log.character.userId !== userId) throw new LogError("Not authorized", { status: 401 });
-			if (log.isDmLog && log.dm && log.dm.uid !== userId) throw new LogError("Not authorized", { status: 401 });
+			if (log.isDmLog && log.dm.uid !== userId) throw new LogError("Not authorized", { status: 401 });
 
 			await tx.delete(logs).where(eq(logs.id, logId));
 

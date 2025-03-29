@@ -226,7 +226,7 @@ export function logDataToSchema(userId: UserId, log: FullLogData): LogSchema {
 		date: new Date(log.date),
 		characterName: log.character?.name || "",
 		appliedDate: log.appliedDate ? new Date(log.appliedDate) : null,
-		dm: log.dm?.id ? log.dm : defaultDM(userId),
+		dm: log.dm.id ? log.dm : defaultDM(userId),
 		magicItemsGained: log.magicItemsGained.map((item) => ({
 			id: item.id,
 			name: item.name,
