@@ -7,6 +7,7 @@ import {
 	type DBQueryConfig,
 	type ExtractTablesWithRelations,
 	type GetColumnData,
+	type RelationsFilter,
 	type SQL
 } from "drizzle-orm";
 import { type PgTable } from "drizzle-orm/pg-core";
@@ -40,3 +41,4 @@ export type InferQueryModel<TableName extends keyof TRSchema, QBConfig extends Q
 	TRSchema[TableName],
 	QBConfig
 >;
+export type Filter<TableName extends keyof TRSchema> = RelationsFilter<TRSchema[TableName], TRSchema>;

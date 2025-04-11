@@ -1,7 +1,7 @@
 import { parseLog } from "$lib/entities";
 import type { LogId, UserId } from "$lib/schemas";
 import type { Prettify } from "$lib/util";
-import { q, type InferQueryModel, type QueryConfig } from "$server/db";
+import { q, type Filter, type InferQueryModel, type QueryConfig } from "$server/db";
 import { characterIncludes } from "./characters";
 
 export const logIncludes = {
@@ -23,6 +23,28 @@ export type LogData = InferQueryModel<"logs", { with: typeof logIncludes }>;
 export type ExtendedLogData = InferQueryModel<"logs", { with: typeof extendedLogIncludes }>;
 export type FullLogData = Prettify<ExtendedLogData & { show_date: Date }>;
 
+const characterLogFilter = (userId: UserId) => {
+	return {
+		isDmLog: false,
+		character: {
+			userId: {
+				eq: userId
+			}
+		}
+	} as const satisfies Filter<"logs">;
+};
+
+const dmLogFilter = (userId: UserId) => {
+	return {
+		isDmLog: true,
+		dm: {
+			uid: {
+				eq: userId
+			}
+		}
+	} as const satisfies Filter<"logs">;
+};
+
 export async function getLog(logId: LogId, userId: UserId): Promise<FullLogData | undefined> {
 	if (logId === "new") return undefined;
 	const log = await q.logs.findFirst({
@@ -31,24 +53,7 @@ export async function getLog(logId: LogId, userId: UserId): Promise<FullLogData 
 			id: {
 				eq: logId
 			},
-			OR: [
-				{
-					isDmLog: false,
-					character: {
-						userId: {
-							eq: userId
-						}
-					}
-				},
-				{
-					isDmLog: true,
-					dm: {
-						uid: {
-							eq: userId
-						}
-					}
-				}
-			]
+			OR: [characterLogFilter(userId), dmLogFilter(userId)]
 		}
 	});
 	return log && parseLog(log);
@@ -58,14 +63,7 @@ export async function getDMLogs(userId: UserId): Promise<FullLogData[]> {
 	return q.logs
 		.findMany({
 			with: extendedLogIncludes,
-			where: {
-				isDmLog: true,
-				dm: {
-					uid: {
-						eq: userId
-					}
-				}
-			},
+			where: dmLogFilter(userId),
 			orderBy: {
 				date: "asc"
 			}
@@ -110,22 +108,7 @@ export async function getUserLogs(userId: UserId) {
 			}
 		},
 		where: {
-			OR: [
-				{
-					character: {
-						userId: {
-							eq: userId
-						}
-					}
-				},
-				{
-					dm: {
-						uid: {
-							eq: userId
-						}
-					}
-				}
-			]
+			OR: [characterLogFilter(userId), dmLogFilter(userId)]
 		},
 		orderBy: {
 			date: "asc"

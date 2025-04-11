@@ -1,6 +1,23 @@
-import type { DungeonMasterId } from "$lib/schemas";
-import { q } from "$server/db";
+import type { DungeonMasterId, UserId } from "$lib/schemas";
+import { q, type Filter } from "$server/db";
 import { sorter } from "@sillvva/utils";
+
+const userDMFilter = (userId: UserId) => {
+	return {
+		OR: [
+			{
+				owner: {
+					eq: userId
+				}
+			},
+			{
+				uid: {
+					eq: userId
+				}
+			}
+		]
+	} as const satisfies Filter<"dungeonMasters">;
+};
 
 export type UserDMsWithLogs = Awaited<ReturnType<typeof getUserDMsWithLogs>>;
 export async function getUserDMsWithLogs(user: LocalsSession["user"], id?: DungeonMasterId) {
@@ -27,18 +44,7 @@ export async function getUserDMsWithLogs(user: LocalsSession["user"], id?: Dunge
 						eq: id
 					}
 				: undefined,
-			OR: [
-				{
-					owner: {
-						eq: userId
-					}
-				},
-				{
-					uid: {
-						eq: userId
-					}
-				}
-			]
+			...userDMFilter(userId)
 		}
 	});
 
@@ -61,20 +67,7 @@ export async function getUserDMs(user: LocalsSession["user"]) {
 	if (!user || !user.id) return [];
 
 	const dms = await q.dungeonMasters.findMany({
-		where: {
-			OR: [
-				{
-					owner: {
-						eq: user.id
-					}
-				},
-				{
-					uid: {
-						eq: user.id
-					}
-				}
-			]
-		}
+		where: userDMFilter(user.id)
 	});
 
 	if (!dms.find((dm) => dm.uid === user.id)) {
