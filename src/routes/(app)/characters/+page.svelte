@@ -149,10 +149,10 @@
 						tabindex="0"
 					>
 						{#if global.app.characters.magicItems}
-							<span class="iconify mdi--eye max-xs:hidden size-6 sm:max-md:hidden"></span>
+							<span class="iconify mdi--eye max-xs:hidden size-5 sm:max-md:hidden"></span>
 							<span class="iconify mdi--shield-sword xs:max-sm:hidden size-6 md:hidden"></span>
 						{:else}
-							<span class="iconify mdi--eye-off max-xs:hidden size-6 sm:max-md:hidden"></span>
+							<span class="iconify mdi--eye-off max-xs:hidden size-5 sm:max-md:hidden"></span>
 							<span class="iconify mdi--shield-sword-outline xs:max-sm:hidden size-6 md:hidden"></span>
 						{/if}
 						<span class="max-xs:hidden sm:max-md:hidden">Magic Items</span>
