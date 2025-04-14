@@ -310,9 +310,7 @@
 								</figure>
 								<div class="card-body p-4 text-center">
 									<div class="flex flex-col gap-1">
-										<h2
-											class="card-title block overflow-hidden text-sm text-balance text-ellipsis whitespace-nowrap dark:text-white"
-										>
+										<h2 class="card-title ellipsis-nowrap block text-sm text-balance dark:text-white">
 											<SearchResults text={character.name} {search} />
 										</h2>
 										<p class="text-xs text-balance"><SearchResults text={`${character.race} ${character.class}`} {search} /></p>

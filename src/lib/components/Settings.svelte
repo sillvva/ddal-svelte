@@ -63,8 +63,8 @@
 				{/if}
 			</div>
 			<div class="flex-1">
-				<div class="overflow-hidden font-medium text-ellipsis whitespace-nowrap">{user.name}</div>
-				<div class="overflow-hidden text-xs font-medium text-ellipsis text-gray-500 dark:text-gray-400">
+				<div class="ellipsis-nowrap font-medium">{user.name}</div>
+				<div class="ellipsis-nowrap text-xs font-medium text-gray-500 dark:text-gray-400">
 					{user.email}
 				</div>
 			</div>

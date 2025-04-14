@@ -34,7 +34,7 @@
 					</a>
 				</li>
 			{:else}
-				<li class="overflow-hidden text-ellipsis whitespace-nowrap dark:drop-shadow-md">
+				<li class="ellipsis-nowrap dark:drop-shadow-md">
 					{bc.name}
 				</li>
 			{/if}

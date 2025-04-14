@@ -10,4 +10,4 @@
 	const { children, attributes }: Props = $props();
 </script>
 
-<h4 {...attributes} class={twMerge("text-md mb-2 overflow-hidden text-ellipsis", attributes?.class)}>{@render children?.()}</h4>
+<h4 {...attributes} class={twMerge("text-md ellipsis-nowrap mb-2", attributes?.class)}>{@render children?.()}</h4>
