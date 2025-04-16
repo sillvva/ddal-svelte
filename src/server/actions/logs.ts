@@ -58,12 +58,12 @@ export async function saveLog(input: LogSchema, user: LocalsSession["user"]): Sa
 				if (!input.dm.id) {
 					const search = await tx.query.dungeonMasters.findFirst({
 						where: {
+							userId: {
+								eq: userId
+							},
 							...(isUser
 								? { isUser }
 								: {
-										userId: {
-											eq: userId
-										},
 										OR: [
 											{
 												name: input.dm.name.trim(),
