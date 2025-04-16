@@ -96,7 +96,7 @@ export async function saveLog(input: LogSchema, user: LocalsSession["user"]): Sa
 						name: input.dm.name.trim(),
 						DCI: input.dm.DCI,
 						userId,
-						isUser: input.isDmLog || isUser
+						isUser
 					};
 					if (input.dm.id) {
 						return await tx.update(dungeonMasters).set(dm).where(eq(dungeonMasters.id, input.dm.id)).returning();
