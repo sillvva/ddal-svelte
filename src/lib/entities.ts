@@ -149,7 +149,7 @@ export function getLogsSummary(logs: LogData[], includeLogs = true) {
 }
 
 export function defaultDM(userId: UserId): DungeonMaster {
-	return { id: "" as DungeonMasterId, name: "", DCI: null, uid: "" as UserId, owner: userId };
+	return { id: "" as DungeonMasterId, name: "", DCI: null, userId: userId, isUser: true };
 }
 
 export function defaultLogData(userId: UserId, character = null as CharacterData | null) {

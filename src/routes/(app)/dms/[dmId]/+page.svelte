@@ -44,7 +44,7 @@
 								<th class="max-lg:hidden">Date</th>
 								<th class="max-xs:px-2">Adventure</th>
 								<th class="max-xs:px-2">Character</th>
-								{#if data.dm.uid === data.user?.id}
+								{#if data.dm.isUser}
 									<th class="max-md:hidden">Type</th>
 								{/if}
 							</tr>
@@ -78,7 +78,7 @@
 											</a>
 										{/if}
 									</td>
-									{#if data.dm.uid === data.user?.id}
+									{#if data.dm.isUser}
 										<td class="max-md:hidden">
 											<div class="min-w-max">{log.isDmLog ? "DM Log" : "Log"} ({log.type})</div>
 										</td>

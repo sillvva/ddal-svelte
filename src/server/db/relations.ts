@@ -44,7 +44,7 @@ export const relations = defineRelations(schema, (r) => ({
 	},
 	dungeonMasters: {
 		user: r.one.users({
-			from: r.dungeonMasters.owner,
+			from: r.dungeonMasters.userId,
 			to: r.users.id
 		}),
 		logs: r.many.logs()

@@ -152,17 +152,17 @@ export const dungeonMasters = pg.pgTable(
 			.$type<DungeonMasterId>(),
 		name: pg.text().notNull(),
 		DCI: pg.text(),
-		uid: pg.text().$type<UserId>(),
-		owner: pg
-			.text()
+		userId: pg
+			.text("user_id")
 			.notNull()
 			.$type<UserId>()
-			.references(() => users.id, { onUpdate: "cascade", onDelete: "cascade" })
+			.references(() => users.id, { onUpdate: "cascade", onDelete: "cascade" }),
+		isUser: pg
+			.boolean("is_user")
+			.notNull()
+			.$default(() => false)
 	},
-	(table) => [
-		pg.index("DungeonMaster_uid_partial_idx").on(table.uid).where(isNotNull(table.uid)),
-		pg.index("DungeonMaster_owner_idx").on(table.owner)
-	]
+	(table) => [pg.index("DungeonMaster_owner_idx").on(table.userId)]
 );
 
 export const logType = pg.pgEnum("logType", ["game", "nongame"]);

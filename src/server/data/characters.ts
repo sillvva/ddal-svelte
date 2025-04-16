@@ -2,23 +2,8 @@ import { PlaceholderName } from "$lib/constants";
 import { getLogsSummary, parseCharacter } from "$lib/entities";
 import type { CharacterId, UserId } from "$lib/schemas";
 import type { Prettify } from "$lib/util";
-import { userIncludes } from "$server/actions/users";
-import { q, type InferQueryModel, type QueryConfig } from "$server/db";
-import { logIncludes } from "./logs";
-
-export const characterIncludes = {
-	user: userIncludes
-} as const satisfies QueryConfig<"characters">["with"];
-
-export const extendedCharacterIncludes = {
-	...characterIncludes,
-	logs: {
-		with: logIncludes,
-		orderBy: {
-			date: "asc"
-		}
-	}
-} as const satisfies QueryConfig<"characters">["with"];
+import { q, type InferQueryModel } from "$server/db";
+import { characterIncludes, extendedCharacterIncludes } from "./includes";
 
 export type CharacterData = InferQueryModel<"characters", { with: typeof characterIncludes }>;
 export type ExtendedCharacterData = InferQueryModel<"characters", { with: typeof extendedCharacterIncludes }>;
@@ -53,6 +38,6 @@ export async function getCharactersWithLogs(userId: UserId, includeLogs = true):
 			}
 		}
 	});
-
+	console.log(characters);
 	return characters.map((c) => parseCharacter(c, includeLogs));
 }

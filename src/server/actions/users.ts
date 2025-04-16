@@ -1,16 +1,9 @@
 import type { ProviderId } from "$lib/constants";
 import type { UserId } from "$lib/schemas";
 import type { Prettify } from "$lib/util";
-import { db, type QueryConfig } from "$server/db";
+import { db } from "$server/db";
 import { accounts, type UpdateAccount } from "$server/db/schema";
 import { and, eq } from "drizzle-orm";
-
-export const userIncludes = {
-	columns: {
-		id: true,
-		name: true
-	}
-} as const satisfies QueryConfig<"users">;
 
 export async function unlinkProvider(userId: UserId, provider: ProviderId) {
 	try {

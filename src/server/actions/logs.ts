@@ -1,7 +1,8 @@
 import { getLevels } from "$lib/entities";
 import { type LogId, type LogSchema, type UserId } from "$lib/schemas";
 import { SaveError, type SaveResult } from "$lib/util";
-import { extendedLogIncludes, type LogData } from "$server/data/logs";
+import { extendedLogIncludes } from "$server/data/includes";
+import { type LogData } from "$server/data/logs";
 import { buildConflictUpdateColumns, db, type Transaction } from "$server/db";
 import { dungeonMasters, logs, magicItems, storyAwards, type InsertDungeonMaster, type Log } from "$server/db/schema";
 import { and, eq, inArray, isNull, notInArray } from "drizzle-orm";
@@ -51,16 +52,16 @@ export async function saveLog(input: LogSchema, user: LocalsSession["user"]): Sa
 			}
 
 			const [dm] = await (async () => {
-				let isMe =
-					input.isDmLog || input.dm.uid === userId || ["", user.name.toLowerCase()].includes(input.dm.name.toLowerCase().trim());
+				let isUser =
+					input.isDmLog || input.dm.isUser || ["", user.name.toLowerCase()].includes(input.dm.name.toLowerCase().trim());
 
 				if (!input.dm.id) {
 					const search = await tx.query.dungeonMasters.findFirst({
 						where: {
-							...(isMe
-								? { uid: { eq: userId } }
+							...(isUser
+								? { isUser }
 								: {
-										owner: {
+										userId: {
 											eq: userId
 										},
 										OR: [
@@ -76,13 +77,13 @@ export async function saveLog(input: LogSchema, user: LocalsSession["user"]): Sa
 						input.dm.id = search.id;
 						if (!input.dm.name) input.dm.name = search.name;
 						if (!input.dm.DCI) input.dm.DCI = search.DCI;
-						if (!input.dm.owner) input.dm.owner = userId;
-						if (search.uid === userId) isMe = true;
+						if (!input.dm.userId) input.dm.userId = userId;
+						if (search.isUser) isUser = true;
 					}
 				}
 
 				if (!input.dm.name) {
-					if (isMe) input.dm.name = user.name;
+					if (isUser) input.dm.name = user.name;
 					else
 						throw new LogError("Dungeon Master name is required", {
 							status: 400,
@@ -94,8 +95,8 @@ export async function saveLog(input: LogSchema, user: LocalsSession["user"]): Sa
 					const dm: InsertDungeonMaster = {
 						name: input.dm.name.trim(),
 						DCI: input.dm.DCI,
-						uid: input.isDmLog || isMe ? userId : null,
-						owner: userId
+						userId,
+						isUser: input.isDmLog || isUser
 					};
 					if (input.dm.id) {
 						return await tx.update(dungeonMasters).set(dm).where(eq(dungeonMasters.id, input.dm.id)).returning();
@@ -230,7 +231,7 @@ export async function deleteLog(logId: LogId, userId: UserId): SaveResult<{ id: 
 
 			if (!log) throw new LogError("Log not found", { status: 404 });
 			if (!log.isDmLog && log.character && log.character.userId !== userId) throw new LogError("Not authorized", { status: 401 });
-			if (log.isDmLog && log.dm.uid !== userId) throw new LogError("Not authorized", { status: 401 });
+			if (log.isDmLog && log.dm.isUser) throw new LogError("Not authorized", { status: 401 });
 
 			await tx.delete(logs).where(eq(logs.id, logId));
 

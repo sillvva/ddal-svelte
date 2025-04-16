@@ -65,8 +65,8 @@ export const dungeonMasterSchema = v.object({
 	id: v.optional(dungeonMasterIdSchema, ""),
 	name: v.pipe(requiredString, shortString),
 	DCI: v.nullish(v.pipe(string, v.regex(/\d{0,10}/, "Invalid DCI Format")), null),
-	uid: v.nullish(userIdSchema, null),
-	owner: userIdSchema
+	userId: userIdSchema,
+	isUser: v.boolean()
 });
 
 export type ItemId = v.InferOutput<typeof itemIdSchema>;

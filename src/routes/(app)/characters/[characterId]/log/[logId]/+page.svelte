@@ -53,7 +53,7 @@
 						values={data.dms.map((dm) => ({
 							value: dm.id,
 							label: dm.name,
-							itemLabel: dm.name + (dm.uid === data.user.id ? ` (Me)` : "") + (dm.DCI ? ` (${dm.DCI})` : "")
+							itemLabel: dm.name + (dm.isUser ? ` (Me)` : "") + (dm.DCI ? ` (${dm.DCI})` : "")
 						})) || []}
 						allowCustom
 						onselect={({ selected }) => {
@@ -64,7 +64,7 @@
 						clearable
 						onclear={() => ($form.dm = defaultDM(data.user.id))}
 						link={$form.dm.id ? `/dms/${$form.dm.id}` : ""}
-						placeholder={data.dms.find((dm) => dm.uid === data.user.id)?.name || data.user.name}
+						placeholder={data.dms.find((dm) => dm.isUser)?.name || data.user.name}
 					/>
 				</Control>
 				<Control class="col-span-12 sm:col-span-6">
@@ -73,7 +73,7 @@
 						{superform}
 						field="dm.DCI"
 						disabled={!$form.dm.name}
-						placeholder={$form.dm.name ? undefined : data.dms.find((dm) => dm.uid === data.user.id)?.DCI}
+						placeholder={$form.dm.name ? undefined : data.dms.find((dm) => dm.isUser)?.DCI}
 						label="DM DCI"
 					/>
 				</Control>

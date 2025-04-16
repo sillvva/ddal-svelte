@@ -1,23 +1,8 @@
 import { parseLog } from "$lib/entities";
 import type { LogId, UserId } from "$lib/schemas";
 import type { Prettify } from "$lib/util";
-import { q, type Filter, type InferQueryModel, type QueryConfig } from "$server/db";
-import { characterIncludes } from "./characters";
-
-export const logIncludes = {
-	dm: true,
-	magicItemsGained: true,
-	magicItemsLost: true,
-	storyAwardsGained: true,
-	storyAwardsLost: true
-} as const satisfies QueryConfig<"logs">["with"];
-
-export const extendedLogIncludes = {
-	...logIncludes,
-	character: {
-		with: characterIncludes
-	}
-} as const satisfies QueryConfig<"logs">["with"];
+import { q, type Filter, type InferQueryModel } from "$server/db";
+import { extendedLogIncludes, logIncludes } from "./includes";
 
 export type LogData = InferQueryModel<"logs", { with: typeof logIncludes }>;
 export type ExtendedLogData = InferQueryModel<"logs", { with: typeof extendedLogIncludes }>;
@@ -38,9 +23,10 @@ const dmLogFilter = (userId: UserId) => {
 	return {
 		isDmLog: true,
 		dm: {
-			uid: {
+			userId: {
 				eq: userId
-			}
+			},
+			isUser: true
 		}
 	} as const satisfies Filter<"logs">;
 };

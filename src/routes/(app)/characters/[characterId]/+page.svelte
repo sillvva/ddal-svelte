@@ -360,7 +360,7 @@
 							<p class="text-netural-content mb-2 text-sm font-normal whitespace-nowrap">
 								{new Date(log.show_date).toLocaleString([], { dateStyle: "medium", timeStyle: "short" })}
 							</p>
-							{#if log.type === "game" && log.dm.uid !== data.character.userId}
+							{#if log.type === "game" && log.dm.isUser}
 								<p class="text-sm font-normal">
 									<span class="font-semibold dark:text-white">DM:</span>
 									{#if myCharacter}
