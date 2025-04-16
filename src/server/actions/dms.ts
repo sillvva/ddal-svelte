@@ -22,8 +22,7 @@ export async function saveDM(
 		const [result] = await db
 			.update(dungeonMasters)
 			.set({
-				...data,
-				id: undefined,
+				name: data.name,
 				DCI: data.DCI || null
 			})
 			.where(eq(dungeonMasters.id, dmId))
