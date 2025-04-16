@@ -274,7 +274,7 @@
 																						<span class="text-xs">{item.gold.toLocaleString()} gp</span>
 																					</div>
 																					{#if search.length >= 2}
-																						{#if item.dm && hasMatch(item.dm.name)}
+																						{#if hasMatch(item.dm.name)}
 																							<div class="flex gap-1 text-xs">
 																								<span class="font-bold whitespace-nowrap">DM:</span>
 																								<span class="text-base-content/70 flex-1">{item.dm.name}</span>
