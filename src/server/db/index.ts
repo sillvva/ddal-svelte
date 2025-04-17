@@ -37,7 +37,7 @@ export type Transaction = Parameters<Parameters<typeof db.transaction>[0]>[0];
 type TRSchema = ExtractTablesWithRelations<typeof relations>;
 export type Filter<TableName extends keyof TRSchema> = RelationsFilter<TRSchema[TableName], TRSchema>;
 export type QueryConfig<TableName extends keyof TRSchema> = DBQueryConfig<"one" | "many", TRSchema, TRSchema[TableName]>;
-export type InferQueryModel<TableName extends keyof TRSchema, QBConfig extends QueryConfig<TableName> = {}> = BuildQueryResult<
+export type InferQueryResult<TableName extends keyof TRSchema, QBConfig extends QueryConfig<TableName> = {}> = BuildQueryResult<
 	TRSchema,
 	TRSchema[TableName],
 	QBConfig

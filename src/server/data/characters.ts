@@ -2,11 +2,11 @@ import { PlaceholderName } from "$lib/constants";
 import { getLogsSummary, parseCharacter } from "$lib/entities";
 import type { CharacterId, UserId } from "$lib/schemas";
 import type { Prettify } from "$lib/util";
-import { q, type InferQueryModel } from "$server/db";
+import { q, type InferQueryResult } from "$server/db";
 import { characterIncludes, extendedCharacterIncludes } from "./includes";
 
-export type CharacterData = InferQueryModel<"characters", { with: typeof characterIncludes }>;
-export type ExtendedCharacterData = InferQueryModel<"characters", { with: typeof extendedCharacterIncludes }>;
+export type CharacterData = InferQueryResult<"characters", { with: typeof characterIncludes }>;
+export type ExtendedCharacterData = InferQueryResult<"characters", { with: typeof extendedCharacterIncludes }>;
 export type FullCharacterData = Prettify<
 	Omit<ExtendedCharacterData, "imageUrl" | "logs"> & { imageUrl: string } & ReturnType<typeof getLogsSummary>
 >;

@@ -1,11 +1,11 @@
 import { parseLog } from "$lib/entities";
 import type { LogId, UserId } from "$lib/schemas";
 import type { Prettify } from "$lib/util";
-import { q, type Filter, type InferQueryModel } from "$server/db";
+import { q, type Filter, type InferQueryResult } from "$server/db";
 import { extendedLogIncludes, logIncludes } from "./includes";
 
-export type LogData = InferQueryModel<"logs", { with: typeof logIncludes }>;
-export type ExtendedLogData = InferQueryModel<"logs", { with: typeof extendedLogIncludes }>;
+export type LogData = InferQueryResult<"logs", { with: typeof logIncludes }>;
+export type ExtendedLogData = InferQueryResult<"logs", { with: typeof extendedLogIncludes }>;
 export type FullLogData = Prettify<ExtendedLogData & { show_date: Date }>;
 
 const characterLogFilter = (userId: UserId) => {
