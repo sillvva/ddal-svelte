@@ -38,6 +38,6 @@ export async function getCharactersWithLogs(userId: UserId, includeLogs = true):
 			}
 		}
 	});
-	console.log(characters);
+
 	return characters.map((c) => parseCharacter(c, includeLogs));
 }
