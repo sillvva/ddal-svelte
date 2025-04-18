@@ -162,7 +162,7 @@ export const dungeonMasters = pg.pgTable(
 			.notNull()
 			.$default(() => false)
 	},
-	(table) => [pg.index("DungeonMaster_owner_idx").on(table.userId)]
+	(table) => [pg.index("dungeonmaster_user_id_idx").on(table.userId)]
 );
 
 export const logType = pg.pgEnum("logType", ["game", "nongame"]);
