@@ -5,7 +5,10 @@
 	import type { HTMLInputAttributes } from "svelte/elements";
 	import { twMerge } from "tailwind-merge";
 
-	type Props = Omit<HTMLInputAttributes, "class"> & { class?: string | null };
+	interface Props extends HTMLInputAttributes {
+		class?: string | null;
+	}
+
 	let { value = $bindable(page.url.searchParams.get("s") || ""), class: className, type = "text", ...rest }: Props = $props();
 
 	$effect(() => {

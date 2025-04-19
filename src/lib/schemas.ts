@@ -33,6 +33,8 @@ export const envPublicSchema = v.object({
 	PUBLIC_TEST_URL: v.optional(string, "")
 });
 
+export interface Env extends EnvPrivate, EnvPublic {}
+
 export type UserId = v.InferOutput<typeof userIdSchema>;
 export const userIdSchema = brandedId("UserId");
 

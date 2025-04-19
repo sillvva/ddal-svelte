@@ -28,6 +28,11 @@ declare module "@auth/sveltekit" {
 	}
 }
 
+interface PageDataUser extends User {
+	accounts: Account[];
+	authenticators: AuthClient[];
+}
+
 declare global {
 	namespace App {
 		// interface Error {}
@@ -35,7 +40,7 @@ declare global {
 			session: Session | null;
 		}
 		interface PageData {
-			user: Prettify<User & { accounts: Account[]; authenticators: AuthClient[] }> | undefined;
+			user: PageDataUser | undefined;
 			breadcrumbs: Array<{ name: string; href?: string }>;
 			mobile: boolean;
 			isMac: boolean;

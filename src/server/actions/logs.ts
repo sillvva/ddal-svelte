@@ -160,23 +160,24 @@ export async function saveLog(input: LogSchema, user: LocalsSession["user"]): Sa
 	}
 }
 
-async function itemsCRUD(
-	params: {
-		tx: Transaction;
-		logId: LogId;
-	} & (
-		| {
-				table: typeof magicItems;
-				gained: LogSchema["magicItemsGained"];
-				lost: LogSchema["magicItemsLost"];
-		  }
-		| {
-				table: typeof storyAwards;
-				gained: LogSchema["storyAwardsGained"];
-				lost: LogSchema["storyAwardsLost"];
-		  }
-	)
-) {
+interface CRUDItemParams {
+	tx: Transaction;
+	logId: LogId;
+}
+
+interface CRUDMagicItemParams extends CRUDItemParams {
+	table: typeof magicItems;
+	gained: LogSchema["magicItemsGained"];
+	lost: LogSchema["magicItemsLost"];
+}
+
+interface CRUDStoryAwardParams extends CRUDItemParams {
+	table: typeof storyAwards;
+	gained: LogSchema["storyAwardsGained"];
+	lost: LogSchema["storyAwardsLost"];
+}
+
+async function itemsCRUD(params: CRUDMagicItemParams | CRUDStoryAwardParams) {
 	const { tx, logId, table, gained, lost } = params;
 
 	const itemIds = gained.map((item) => item.id).filter(Boolean);

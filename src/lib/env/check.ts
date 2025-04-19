@@ -1,8 +1,9 @@
 import type { EnvPrivate, envPrivateSchema, EnvPublic } from "$lib/schemas";
-import type { Prettify } from "$lib/util";
 import { getDotPath, ValiError } from "valibot";
 
-export function checkEnv<TChecker extends () => EnvPrivate | EnvPublic | Prettify<EnvPrivate & EnvPublic>>(checker: TChecker) {
+interface Env extends EnvPrivate, EnvPublic {}
+
+export function checkEnv<TChecker extends () => EnvPrivate | EnvPublic | Env>(checker: TChecker) {
 	try {
 		return checker() as ReturnType<TChecker>;
 	} catch (err) {

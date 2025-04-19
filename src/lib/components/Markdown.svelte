@@ -21,9 +21,9 @@
 	import tablerow from "$lib/components/renderers/tablerow.svelte";
 	import type { HTMLAttributes } from "svelte/elements";
 
-	type Props = HTMLAttributes<HTMLDivElement> & {
+	interface Props extends HTMLAttributes<HTMLDivElement> {
 		content?: string;
-	};
+	}
 
 	let { content = "", ...rest }: Props = $props();
 </script>
