@@ -18,14 +18,18 @@ export const connection = postgres(privateEnv.DATABASE_URL, { prepare: false });
 export const db = drizzle(connection, { relations });
 export const q = db.query;
 
-export function buildConflictUpdateColumns<T extends PgTable, Q extends keyof T["_"]["columns"]>(table: T, columns: Q[]) {
+export function buildConflictUpdateColumns<T extends PgTable, Q extends keyof T["_"]["columns"]>(
+	table: T,
+	columns: Q[],
+	omit = false
+) {
 	const cls = getTableColumns(table);
-	return columns.reduce(
+	return (Object.keys(cls) as Q[]).reduce(
 		(acc, column) => {
 			const col = cls[column];
 			if (!col) return acc;
-			const colName = col.name;
-			acc[column] = sql.raw(`excluded.${colName}`) as SQL<(typeof col)["_"]["data"]>;
+			if (columns.includes(column) === omit) return acc;
+			acc[column] = sql.raw(`excluded.${col.name}`) as SQL<(typeof col)["_"]["data"]>;
 			return acc;
 		},
 		{} as Record<Q, SQL<GetColumnData<T["_"]["columns"][Q]>>>

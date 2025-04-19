@@ -4,7 +4,7 @@ import { SaveError, type SaveResult } from "$lib/util";
 import { type LogData } from "$server/data/logs";
 import { buildConflictUpdateColumns, db, type Transaction } from "$server/db";
 import { extendedLogIncludes } from "$server/db/includes";
-import { dungeonMasters, logs, magicItems, storyAwards, type InsertDungeonMaster, type Log } from "$server/db/schema";
+import { dungeonMasters, logs, magicItems, storyAwards } from "$server/db/schema";
 import { and, eq, inArray, isNull, notInArray } from "drizzle-orm";
 
 class LogError extends SaveError<LogSchema> {}
@@ -92,17 +92,20 @@ export async function saveLog(input: LogSchema, user: LocalsSession["user"]): Sa
 				}
 
 				try {
-					const dm: InsertDungeonMaster = {
-						name: input.dm.name.trim(),
-						DCI: input.dm.DCI,
-						userId,
-						isUser
-					};
-					if (input.dm.id) {
-						return await tx.update(dungeonMasters).set(dm).where(eq(dungeonMasters.id, input.dm.id)).returning();
-					} else {
-						return await tx.insert(dungeonMasters).values(dm).returning();
-					}
+					return await tx
+						.insert(dungeonMasters)
+						.values({
+							id: input.dm.id || undefined,
+							name: input.dm.name.trim(),
+							DCI: input.dm.DCI,
+							userId,
+							isUser
+						})
+						.onConflictDoUpdate({
+							target: dungeonMasters.id,
+							set: buildConflictUpdateColumns(dungeonMasters, ["name", "DCI"])
+						})
+						.returning();
 				} catch (err) {
 					console.error(err);
 					throw err;
@@ -114,26 +117,30 @@ export async function saveLog(input: LogSchema, user: LocalsSession["user"]): Sa
 					field: "dm.id"
 				});
 
-			const data: Omit<Log, "id" | "createdAt"> = {
-				name: input.name,
-				date: input.date,
-				description: input.description || "",
-				type: input.type,
-				isDmLog: input.isDmLog,
-				dungeonMasterId: dm.id,
-				acp: input.acp,
-				tcp: input.tcp,
-				experience: input.experience,
-				level: input.level,
-				gold: input.gold,
-				dtd: input.dtd,
-				characterId,
-				appliedDate
-			};
-
-			const [log] = input.id
-				? await tx.update(logs).set(data).where(eq(logs.id, input.id)).returning()
-				: await tx.insert(logs).values(data).returning();
+			const [log] = await tx
+				.insert(logs)
+				.values({
+					id: input.id || undefined,
+					name: input.name,
+					date: input.date,
+					description: input.description || "",
+					type: input.type,
+					isDmLog: input.isDmLog,
+					dungeonMasterId: dm.id,
+					acp: input.acp,
+					tcp: input.tcp,
+					experience: input.experience,
+					level: input.level,
+					gold: input.gold,
+					dtd: input.dtd,
+					characterId,
+					appliedDate
+				})
+				.onConflictDoUpdate({
+					target: logs.id,
+					set: buildConflictUpdateColumns(logs, ["id", "createdAt", "isDmLog"], true)
+				})
+				.returning();
 
 			if (!log?.id) throw new LogError("Database error. Could not save log");
 
