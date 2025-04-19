@@ -8,10 +8,18 @@
 	import SuperForm from "$lib/components/forms/SuperForm.svelte";
 	import { valibotForm } from "$lib/factories.svelte.js";
 	import { editCharacterSchema } from "$lib/schemas";
+	import { getGlobal } from "$lib/stores.svelte.js";
 
 	let { data } = $props();
 
-	const superform = $derived(valibotForm(data.form, editCharacterSchema));
+	const global = getGlobal();
+	const superform = $derived(
+		valibotForm(data.form, editCharacterSchema, {
+			onResult() {
+				global.searchData = [];
+			}
+		})
+	);
 </script>
 
 <BreadCrumbs />

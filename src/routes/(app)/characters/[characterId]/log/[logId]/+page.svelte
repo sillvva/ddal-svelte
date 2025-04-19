@@ -12,11 +12,19 @@
 	import { defaultDM } from "$lib/entities";
 	import { valibotForm } from "$lib/factories.svelte.js";
 	import { type DungeonMasterId, logSchema } from "$lib/schemas";
+	import { getGlobal } from "$lib/stores.svelte.js";
 	import { twMerge } from "tailwind-merge";
 
 	let { data } = $props();
 
-	const superform = $derived(valibotForm(data.form, logSchema));
+	const global = getGlobal();
+	const superform = $derived(
+		valibotForm(data.form, logSchema, {
+			onResult() {
+				global.searchData = [];
+			}
+		})
+	);
 	const form = $derived(superform.form);
 
 	let season = $state($form.experience ? 1 : $form.acp ? 8 : 9);

@@ -52,8 +52,7 @@ class Global {
 
 const globalKey = Symbol();
 export function getGlobal() {
-	const value = getContext<Global>(globalKey);
-	return value;
+	return getContext<Global>(globalKey);
 }
 export function createGlobal(app: App.Cookie) {
 	const global = new Global(app);

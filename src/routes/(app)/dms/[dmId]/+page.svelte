@@ -8,11 +8,19 @@
 	import SuperForm from "$lib/components/forms/SuperForm.svelte";
 	import { valibotForm } from "$lib/factories.svelte.js";
 	import { dungeonMasterSchema } from "$lib/schemas";
+	import { getGlobal } from "$lib/stores.svelte.js";
 	import { sorter } from "@sillvva/utils";
 
 	let { data } = $props();
 
-	const superform = $derived(valibotForm(data.form, dungeonMasterSchema));
+	const global = getGlobal();
+	const superform = $derived(
+		valibotForm(data.form, dungeonMasterSchema, {
+			onResult() {
+				global.searchData = [];
+			}
+		})
+	);
 
 	const sortedLogs = $derived(data.dm.logs.toSorted((a, b) => sorter(a.date, b.date)));
 </script>
