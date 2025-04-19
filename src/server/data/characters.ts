@@ -3,7 +3,7 @@ import { getLogsSummary, parseCharacter } from "$lib/entities";
 import type { CharacterId, UserId } from "$lib/schemas";
 import type { Prettify } from "$lib/util";
 import { q, type InferQueryResult } from "$server/db";
-import { characterIncludes, extendedCharacterIncludes } from "./includes";
+import { characterIncludes, extendedCharacterIncludes } from "$server/db/includes";
 
 export type CharacterData = InferQueryResult<"characters", { with: typeof characterIncludes }>;
 export type ExtendedCharacterData = InferQueryResult<"characters", { with: typeof extendedCharacterIncludes }>;

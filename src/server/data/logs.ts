@@ -2,7 +2,7 @@ import { parseLog } from "$lib/entities";
 import type { LogId, UserId } from "$lib/schemas";
 import type { Prettify } from "$lib/util";
 import { q, type Filter, type InferQueryResult } from "$server/db";
-import { extendedLogIncludes, logIncludes } from "./includes";
+import { extendedLogIncludes, logIncludes } from "$server/db/includes";
 
 export type LogData = InferQueryResult<"logs", { with: typeof logIncludes }>;
 export type ExtendedLogData = InferQueryResult<"logs", { with: typeof extendedLogIncludes }>;
