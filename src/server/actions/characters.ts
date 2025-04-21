@@ -23,8 +23,9 @@ export async function saveCharacter(
 				userId
 			})
 			.onConflictDoUpdate({
-				target: [characters.id, characters.userId],
-				set: buildConflictUpdateColumns(characters, ["id", "userId", "createdAt"], true)
+				target: characters.id,
+				set: buildConflictUpdateColumns(characters, ["id", "userId", "createdAt"], true),
+				where: eq(characters.userId, userId)
 			})
 			.returning();
 
