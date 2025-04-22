@@ -107,7 +107,7 @@
 		min-width: 0;
 	}
 	body {
-		overflow-x: hidden;
+		overflow-x: clip;
 		overflow-y: scroll;
 		min-height: 100vh;
 	}
@@ -243,6 +243,12 @@
 		animation-name: reveal-dark;
 		will-change: clip-path;
 	}
+}
+
+@utility ellipsis-nowrap {
+	overflow: hidden;
+	text-overflow: ellipsis;
+	white-space: nowrap;
 }
 
 @custom-variant hover-hover {

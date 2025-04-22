@@ -315,9 +315,9 @@
 			tabindex="0"
 		>
 			{#if global.app.log.descriptions}
-				<span class="iconify mdi--eye size-6"></span>
+				<span class="iconify mdi--eye size-5"></span>
 			{:else}
-				<span class="iconify mdi--eye-off size-6"></span>
+				<span class="iconify mdi--eye-off size-5"></span>
 			{/if}
 			<span class="max-sm:hidden">Notes</span>
 		</button>
@@ -360,7 +360,7 @@
 							<p class="text-netural-content mb-2 text-sm font-normal whitespace-nowrap">
 								{new Date(log.show_date).toLocaleString([], { dateStyle: "medium", timeStyle: "short" })}
 							</p>
-							{#if log.dm && log.type === "game" && log.dm.uid !== data.character.userId}
+							{#if log.type === "game" && !log.dm.isUser}
 								<p class="text-sm font-normal">
 									<span class="font-semibold dark:text-white">DM:</span>
 									{#if myCharacter}

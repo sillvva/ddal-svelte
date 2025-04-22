@@ -1,60 +1,42 @@
-import { BLANK_CHARACTER, PlaceholderName } from "$lib/constants";
-import { getLogsSummary } from "$lib/entities";
+import { PlaceholderName } from "$lib/constants";
+import { getLogsSummary, parseCharacter } from "$lib/entities";
 import type { CharacterId, UserId } from "$lib/schemas";
-import { userIncludes } from "$server/actions/users";
-import { q } from "$server/db";
-import { logIncludes } from "./logs";
+import { q, type InferQueryResult } from "$server/db";
+import { characterIncludes, extendedCharacterIncludes } from "$server/db/includes";
 
-export type CharacterData = NonNullable<Awaited<ReturnType<typeof getCharacter>>>;
-export async function getCharacter(characterId: CharacterId, includeLogs = true) {
+export type CharacterData = InferQueryResult<"characters", { with: typeof characterIncludes }>;
+export type ExtendedCharacterData = InferQueryResult<"characters", { with: typeof extendedCharacterIncludes }>;
+export interface FullCharacterData extends CharacterData, ReturnType<typeof getLogsSummary> {
+	imageUrl: string;
+}
+
+export async function getCharacter(characterId: CharacterId, includeLogs = true): Promise<FullCharacterData | undefined> {
 	if (characterId === "new") return undefined;
 
 	const character = await q.characters.findFirst({
-		with: {
-			user: userIncludes,
-			logs: {
-				with: logIncludes,
-				orderBy: (logs, { asc }) => asc(logs.date)
+		with: extendedCharacterIncludes,
+		where: {
+			id: {
+				eq: characterId
 			}
-		},
-		where: (characters, { eq }) => eq(characters.id, characterId)
-	});
-
-	return (
-		character && {
-			...character,
-			imageUrl: character.imageUrl || BLANK_CHARACTER,
-			...getLogsSummary(character.logs, includeLogs)
 		}
-	);
+	});
+
+	return character && parseCharacter(character, includeLogs);
 }
 
-export async function getCharactersWithLogs(userId: UserId, includeLogs = true) {
+export async function getCharactersWithLogs(userId: UserId, includeLogs = true): Promise<FullCharacterData[]> {
 	const characters = await q.characters.findMany({
-		with: {
-			user: userIncludes,
-			logs: {
-				with: logIncludes,
-				orderBy: (logs, { asc }) => asc(logs.date)
+		with: extendedCharacterIncludes,
+		where: {
+			userId: {
+				eq: userId
+			},
+			name: {
+				NOT: PlaceholderName
 			}
-		},
-		where: (characters, { eq, ne, and }) => and(eq(characters.userId, userId), ne(characters.name, PlaceholderName))
+		}
 	});
 
-	return characters.map((c) => ({
-		...c,
-		imageUrl: c.imageUrl || BLANK_CHARACTER,
-		...getLogsSummary(c.logs, includeLogs)
-	}));
-}
-
-export type CharactersData = Awaited<ReturnType<typeof getCharacters>>;
-export async function getCharacters(userId: UserId) {
-	return await q.characters.findMany({
-		with: {
-			user: userIncludes
-		},
-		where: (characters, { eq, ne, and }) => and(eq(characters.userId, userId), ne(characters.name, PlaceholderName)),
-		orderBy: (characters, { asc }) => asc(characters.name)
-	});
+	return characters.map((c) => parseCharacter(c, includeLogs));
 }

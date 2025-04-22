@@ -17,15 +17,13 @@ export async function saveDM(
 		const dm = (await getUserDMsWithLogs(user)).find((dm) => dm.id === dmId);
 		if (!dm) throw new DMError("You do not have permission to edit this DM", { status: 401 });
 
-		if (data.name.trim() === "" && data.uid) data.name = user.name;
+		if (data.name.trim() === "" && data.isUser) data.name = user.name;
 
 		const [result] = await db
 			.update(dungeonMasters)
 			.set({
-				...data,
-				id: undefined,
-				DCI: data.DCI || null,
-				uid: data.uid || null
+				name: data.name,
+				DCI: data.DCI || null
 			})
 			.where(eq(dungeonMasters.id, dmId))
 			.returning();

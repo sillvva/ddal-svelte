@@ -214,7 +214,7 @@
 															>
 																{#snippet child({ props })}
 																	<li {...props}>
-																		<a href={item.url} class="gap-3">
+																		<a href={item.url} class="gap-3" onclick={(ev) => ev.preventDefault()}>
 																			{#if item.type === "character"}
 																				<span class="mask mask-squircle bg-primary h-12 max-w-12 min-w-12">
 																					<img
@@ -274,7 +274,7 @@
 																						<span class="text-xs">{item.gold.toLocaleString()} gp</span>
 																					</div>
 																					{#if search.length >= 2}
-																						{#if item.dm && hasMatch(item.dm.name)}
+																						{#if hasMatch(item.dm.name)}
 																							<div class="flex gap-1 text-xs">
 																								<span class="font-bold whitespace-nowrap">DM:</span>
 																								<span class="text-base-content/70 flex-1">{item.dm.name}</span>

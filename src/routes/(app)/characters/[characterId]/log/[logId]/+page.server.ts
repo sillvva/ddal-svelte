@@ -24,17 +24,14 @@ export const load = async (event) => {
 	if (!idResult.success) redirect(302, `/character/${character.id}`);
 	const logId = idResult.output;
 
-	let log = defaultLogData(session.user.id, character.id);
-
-	if (event.params.logId !== "new") {
-		log = await getLog(logId, session.user.id, character.id);
+	let log = (await getLog(logId, session.user.id)) || defaultLogData(session.user.id, character);
+	if (logId !== "new") {
 		if (!log.id) error(404, "Log not found");
+		if (log.isDmLog) redirect(302, `/dm-logs/${log.id}`);
 	}
 
-	if (log.isDmLog) redirect(302, `/dm-logs/${log.id}`);
-
-	const form = await superValidate(logDataToSchema(session.user.id, log, character), valibot(characterLogSchema(character)), {
-		errors: event.params.logId !== "new"
+	const form = await superValidate(logDataToSchema(session.user.id, log), valibot(characterLogSchema(character)), {
+		errors: logId !== "new"
 	});
 
 	const itemEntities = getItemEntities(character, { excludeDropped: true, lastLogId: log.id });
@@ -44,9 +41,9 @@ export const load = async (event) => {
 
 	return {
 		...event.params,
-		title: event.params.logId === "new" ? `New Log - ${character.name}` : `Edit ${form.data.name}`,
+		title: logId === "new" ? `New Log - ${character.name}` : `Edit ${form.data.name}`,
 		breadcrumbs: parent.breadcrumbs.concat({
-			name: event.params.logId === "new" ? `New Log` : form.data.name,
+			name: logId === "new" ? `New Log` : form.data.name,
 			href: `/characters/${character.id}/log/${form.data.id}`
 		}),
 		totalLevel: character.total_level,
@@ -72,8 +69,8 @@ export const actions = {
 		if (!idResult.success) redirect(302, `/character/${character.id}`);
 		const logId = idResult.output;
 
-		const log = await getLog(logId, session.user.id, character.id);
-		if (event.params.logId !== "new" && !log.id) redirect(302, `/characters/${character.id}`);
+		const log = await getLog(logId, session.user.id);
+		if (logId !== "new" && !log?.id) redirect(302, `/characters/${character.id}`);
 
 		const form = await superValidate(event, valibot(characterLogSchema(character)));
 		if (!form.valid) return fail(400, { form });

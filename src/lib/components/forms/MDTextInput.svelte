@@ -30,6 +30,13 @@
 
 	const graphemeCount = $derived(typeof $value === "string" ? [...new Intl.Segmenter().segment($value)].length : 0);
 	const lengthDiff = $derived($value.length - graphemeCount);
+
+	const markdownTip = "Both Markdown and HTML are allowed. However, some elements are not allowed.";
+	const graphemeTip = $derived(
+		lengthDiff
+			? `You have used ${graphemeCount} characters, but ${lengthDiff} are not visible. This is caused by the use of special characters like emojis.`
+			: undefined
+	);
 </script>
 
 <label for={field} class="fieldset-legend">
@@ -56,7 +63,6 @@
 		spellcheck="true"
 		use:autosize
 		{...$constraints}
-		maxlength={($constraints?.maxlength ?? 0) + lengthDiff}
 	></textarea>
 	{#if preview && state === "preview"}
 		<div class="border-base-content/20 bg-base-100 rounded-b-lg border-[1px] p-4 [--tw-border-opacity:0.2]">
@@ -69,10 +75,18 @@
 		{#if $errors?.length}
 			<span class="text-error">{$errors}</span>
 		{:else}
-			<span>Markdown Allowed</span>
+			<span class="tooltip tooltip-bottom" data-tip={markdownTip}>
+				Markdown Allowed
+				<span class="iconfify mdi--question-mark-circle"></span>
+			</span>
 		{/if}
 		{#if !$errors?.length && $constraints?.maxlength}
-			<span>{graphemeCount.toLocaleString()} / {$constraints?.maxlength.toLocaleString()}</span>
+			<span class="tooltip tooltip-bottom" data-tip={graphemeTip}>
+				{$value.length.toLocaleString()} / {$constraints?.maxlength.toLocaleString()}
+				{#if graphemeTip}
+					<span class="iconfify mdi--question-mark-circle"></span>
+				{/if}
+			</span>
 		{/if}
 	</label>
 {/if}

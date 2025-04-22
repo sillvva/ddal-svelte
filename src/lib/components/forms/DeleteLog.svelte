@@ -2,13 +2,13 @@
 	import { goto } from "$app/navigation";
 	import { errorToast, successToast } from "$lib/factories.svelte";
 	import { getGlobal } from "$lib/stores.svelte";
-	import type { LogData } from "$server/data/logs";
+	import type { FullLogData } from "$server/data/logs";
 	import { superForm } from "sveltekit-superforms";
 
 	const global = getGlobal();
 
 	interface Props {
-		log: LogData;
+		log: FullLogData;
 		deletingLog?: string[];
 		label?: string;
 		ondelete?: (event: { id: string }) => void;

@@ -107,7 +107,7 @@
 				aria-label="Rename Passkey"
 			>
 				<span class="iconify material-symbols--passkey group-hover:mdi--pencil size-6"></span>
-				<span class="flex-1 overflow-hidden text-ellipsis whitespace-nowrap">{authenticator.name}</span>
+				<span class="ellipsis-nowrap flex-1">{authenticator.name}</span>
 			</button>
 			<button
 				class="btn btn-ghost text-error hover:bg-error hover:text-base-content"

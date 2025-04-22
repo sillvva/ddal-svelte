@@ -149,10 +149,10 @@
 						tabindex="0"
 					>
 						{#if global.app.characters.magicItems}
-							<span class="iconify mdi--eye max-xs:hidden size-6 sm:max-md:hidden"></span>
+							<span class="iconify mdi--eye max-xs:hidden size-5 sm:max-md:hidden"></span>
 							<span class="iconify mdi--shield-sword xs:max-sm:hidden size-6 md:hidden"></span>
 						{:else}
-							<span class="iconify mdi--eye-off max-xs:hidden size-6 sm:max-md:hidden"></span>
+							<span class="iconify mdi--eye-off max-xs:hidden size-5 sm:max-md:hidden"></span>
 							<span class="iconify mdi--shield-sword-outline xs:max-sm:hidden size-6 md:hidden"></span>
 						{/if}
 						<span class="max-xs:hidden sm:max-md:hidden">Magic Items</span>
@@ -310,9 +310,7 @@
 								</figure>
 								<div class="card-body p-4 text-center">
 									<div class="flex flex-col gap-1">
-										<h2
-											class="card-title block overflow-hidden text-sm text-balance text-ellipsis whitespace-nowrap dark:text-white"
-										>
+										<h2 class="card-title ellipsis-nowrap block text-sm text-balance dark:text-white">
 											<SearchResults text={character.name} {search} />
 										</h2>
 										<p class="text-xs text-balance"><SearchResults text={`${character.race} ${character.class}`} {search} /></p>
