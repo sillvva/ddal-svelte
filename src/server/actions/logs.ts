@@ -55,7 +55,7 @@ export async function saveLog(input: LogSchema, user: LocalsSession["user"]): Sa
 				let isUser =
 					input.isDmLog || input.dm.isUser || ["", user.name.toLowerCase()].includes(input.dm.name.toLowerCase().trim());
 
-				if (!input.dm.id) {
+				if (!input.dm.id && (isUser || input.dm.name.trim() || input.dm.DCI)) {
 					const search = await tx.query.dungeonMasters.findFirst({
 						where: {
 							userId: {
@@ -64,12 +64,8 @@ export async function saveLog(input: LogSchema, user: LocalsSession["user"]): Sa
 							...(isUser
 								? { isUser }
 								: {
-										OR: [
-											{
-												name: input.dm.name.trim(),
-												DCI: input.dm.DCI || undefined
-											}
-										]
+										name: input.dm.name.trim() || undefined,
+										DCI: input.dm.DCI || undefined
 									})
 						}
 					});
@@ -82,7 +78,7 @@ export async function saveLog(input: LogSchema, user: LocalsSession["user"]): Sa
 					}
 				}
 
-				if (!input.dm.name) {
+				if (!input.dm.name.trim()) {
 					if (isUser) input.dm.name = user.name;
 					else
 						throw new LogError("Dungeon Master name is required", {
