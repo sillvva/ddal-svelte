@@ -166,7 +166,7 @@
 						onkeypress={() => null}
 						aria-label="List View"
 					>
-						<span class="iconify mdi--format-list-text"></span>
+						<span class="iconify mdi--format-list-text size-4"></span>
 					</button>
 					<button
 						class="btn join-item data-[display=grid]:btn-primary data-[display=list]:hover:btn-primary sm:btn-sm"
@@ -175,7 +175,7 @@
 						onkeypress={() => null}
 						aria-label="Grid View"
 					>
-						<span class="iconify mdi--view-grid"></span>
+						<span class="iconify mdi--view-grid size-4"></span>
 					</button>
 				</div>
 			</div>
