@@ -128,9 +128,9 @@
 				tabindex="0"
 			>
 				{#if global.app.log.descriptions}
-					<span class="iconify mdi--eye size-6"></span>
+					<span class="iconify mdi--eye size-5 max-md:size-6"></span>
 				{:else}
-					<span class="iconify mdi--eye-off size-6"></span>
+					<span class="iconify mdi--eye-off size-5 max-md:size-6"></span>
 				{/if}
 				<span class="max-sm:hidden">Notes</span>
 			</button>
@@ -140,7 +140,7 @@
 				aria-label="Sort"
 			>
 				<span
-					class="iconify data-[sort=asc]:mdi--sort-calendar-ascending data-[sort=desc]:mdi--sort-calendar-descending size-6"
+					class="iconify data-[sort=asc]:mdi--sort-calendar-ascending data-[sort=desc]:mdi--sort-calendar-descending size-5 max-md:size-6"
 					data-sort={global.app.dmLogs.sort}
 				></span>
 			</button>
