@@ -24,7 +24,7 @@
 <div class="breadcrumbs mb-4 flex-1 text-sm max-sm:hidden print:hidden">
 	<ul>
 		<li>
-			<span class="iconify mdi--home"></span>
+			<span class="iconify mdi--home size-4"></span>
 		</li>
 		{#each breadcrumbs as bc}
 			{#if bc.href}
@@ -34,7 +34,7 @@
 					</a>
 				</li>
 			{:else}
-				<li class="overflow-hidden text-ellipsis whitespace-nowrap dark:drop-shadow-md">
+				<li class="ellipsis-nowrap dark:drop-shadow-md">
 					{bc.name}
 				</li>
 			{/if}

@@ -1,9 +1,10 @@
 import { getLevels } from "$lib/entities";
 import { type LogId, type LogSchema, type UserId } from "$lib/schemas";
 import { SaveError, type SaveResult } from "$lib/util";
-import { logIncludes, type LogData } from "$server/data/logs";
+import { type LogData } from "$server/data/logs";
 import { buildConflictUpdateColumns, db, type Transaction } from "$server/db";
-import { dungeonMasters, logs, magicItems, storyAwards, type InsertDungeonMaster, type Log } from "$server/db/schema";
+import { extendedLogIncludes } from "$server/db/includes";
+import { dungeonMasters, logs, magicItems, storyAwards } from "$server/db/schema";
 import { and, eq, inArray, isNull, notInArray } from "drizzle-orm";
 
 class LogError extends SaveError<LogSchema> {}
@@ -28,7 +29,11 @@ export async function saveLog(input: LogSchema, user: LocalsSession["user"]): Sa
 					with: {
 						logs: true
 					},
-					where: (characters, { eq }) => eq(characters.id, characterId)
+					where: {
+						id: {
+							eq: characterId
+						}
+					}
 				});
 
 				if (!character)
@@ -47,30 +52,34 @@ export async function saveLog(input: LogSchema, user: LocalsSession["user"]): Sa
 			}
 
 			const [dm] = await (async () => {
-				let isMe =
-					input.isDmLog || input.dm.uid === userId || ["", user.name.toLowerCase()].includes(input.dm.name.toLowerCase().trim());
+				let isUser =
+					input.isDmLog || input.dm.isUser || ["", user.name.toLowerCase()].includes(input.dm.name.toLowerCase().trim());
 
-				if (!input.dm.id) {
+				if (!input.dm.id && (isUser || input.dm.name.trim() || input.dm.DCI)) {
 					const search = await tx.query.dungeonMasters.findFirst({
-						where: (dms, { eq, or, and }) =>
-							and(
-								eq(dms.owner, userId),
-								isMe
-									? eq(dms.uid, userId)
-									: or(eq(dms.name, input.dm.name.trim()), input.dm.DCI ? eq(dms.DCI, input.dm.DCI) : undefined)
-							)
+						where: {
+							userId: {
+								eq: userId
+							},
+							...(isUser
+								? { isUser }
+								: {
+										name: input.dm.name.trim() || undefined,
+										DCI: input.dm.DCI || undefined
+									})
+						}
 					});
 					if (search) {
 						input.dm.id = search.id;
 						if (!input.dm.name) input.dm.name = search.name;
 						if (!input.dm.DCI) input.dm.DCI = search.DCI;
-						if (!input.dm.owner) input.dm.owner = userId;
-						if (search.uid === userId) isMe = true;
+						if (!input.dm.userId) input.dm.userId = userId;
+						if (search.isUser) isUser = true;
 					}
 				}
 
-				if (!input.dm.name) {
-					if (isMe) input.dm.name = user.name;
+				if (!input.dm.name.trim()) {
+					if (isUser) input.dm.name = user.name;
 					else
 						throw new LogError("Dungeon Master name is required", {
 							status: 400,
@@ -79,17 +88,20 @@ export async function saveLog(input: LogSchema, user: LocalsSession["user"]): Sa
 				}
 
 				try {
-					const dm: InsertDungeonMaster = {
-						name: input.dm.name.trim(),
-						DCI: input.dm.DCI,
-						uid: input.isDmLog || isMe ? userId : null,
-						owner: userId
-					};
-					if (input.dm.id) {
-						return await tx.update(dungeonMasters).set(dm).where(eq(dungeonMasters.id, input.dm.id)).returning();
-					} else {
-						return await tx.insert(dungeonMasters).values(dm).returning();
-					}
+					return await tx
+						.insert(dungeonMasters)
+						.values({
+							id: input.dm.id || undefined,
+							name: input.dm.name.trim(),
+							DCI: input.dm.DCI,
+							userId,
+							isUser
+						})
+						.onConflictDoUpdate({
+							target: dungeonMasters.id,
+							set: buildConflictUpdateColumns(dungeonMasters, ["name", "DCI"])
+						})
+						.returning();
 				} catch (err) {
 					console.error(err);
 					throw err;
@@ -101,26 +113,30 @@ export async function saveLog(input: LogSchema, user: LocalsSession["user"]): Sa
 					field: "dm.id"
 				});
 
-			const data: Omit<Log, "id" | "createdAt"> = {
-				name: input.name,
-				date: input.date,
-				description: input.description || "",
-				type: input.type,
-				isDmLog: input.isDmLog,
-				dungeonMasterId: dm.id,
-				acp: input.acp,
-				tcp: input.tcp,
-				experience: input.experience,
-				level: input.level,
-				gold: input.gold,
-				dtd: input.dtd,
-				characterId,
-				appliedDate
-			};
-
-			const [log] = input.id
-				? await tx.update(logs).set(data).where(eq(logs.id, input.id)).returning()
-				: await tx.insert(logs).values(data).returning();
+			const [log] = await tx
+				.insert(logs)
+				.values({
+					id: input.id || undefined,
+					name: input.name,
+					date: input.date,
+					description: input.description || "",
+					type: input.type,
+					isDmLog: input.isDmLog,
+					dungeonMasterId: dm.id,
+					acp: input.acp,
+					tcp: input.tcp,
+					experience: input.experience,
+					level: input.level,
+					gold: input.gold,
+					dtd: input.dtd,
+					characterId,
+					appliedDate
+				})
+				.onConflictDoUpdate({
+					target: logs.id,
+					set: buildConflictUpdateColumns(logs, ["id", "createdAt", "isDmLog"], true)
+				})
+				.returning();
 
 			if (!log?.id) throw new LogError("Database error. Could not save log");
 
@@ -128,8 +144,12 @@ export async function saveLog(input: LogSchema, user: LocalsSession["user"]): Sa
 			await itemsCRUD({ tx, logId: log.id, table: storyAwards, gained: input.storyAwardsGained, lost: input.storyAwardsLost });
 
 			const updated = await tx.query.logs.findFirst({
-				with: logIncludes,
-				where: (logs, { eq }) => eq(logs.id, log.id)
+				with: extendedLogIncludes,
+				where: {
+					id: {
+						eq: log.id
+					}
+				}
 			});
 
 			return updated;
@@ -143,23 +163,24 @@ export async function saveLog(input: LogSchema, user: LocalsSession["user"]): Sa
 	}
 }
 
-async function itemsCRUD(
-	params: {
-		tx: Transaction;
-		logId: LogId;
-	} & (
-		| {
-				table: typeof magicItems;
-				gained: LogSchema["magicItemsGained"];
-				lost: LogSchema["magicItemsLost"];
-		  }
-		| {
-				table: typeof storyAwards;
-				gained: LogSchema["storyAwardsGained"];
-				lost: LogSchema["storyAwardsLost"];
-		  }
-	)
-) {
+interface CRUDItemParams {
+	tx: Transaction;
+	logId: LogId;
+}
+
+interface CRUDMagicItemParams extends CRUDItemParams {
+	table: typeof magicItems;
+	gained: LogSchema["magicItemsGained"];
+	lost: LogSchema["magicItemsLost"];
+}
+
+interface CRUDStoryAwardParams extends CRUDItemParams {
+	table: typeof storyAwards;
+	gained: LogSchema["storyAwardsGained"];
+	lost: LogSchema["storyAwardsLost"];
+}
+
+async function itemsCRUD(params: CRUDMagicItemParams | CRUDStoryAwardParams) {
 	const { tx, logId, table, gained, lost } = params;
 
 	const itemIds = gained.map((item) => item.id).filter(Boolean);
@@ -205,12 +226,16 @@ export async function deleteLog(logId: LogId, userId: UserId): SaveResult<{ id: 
 					dm: true,
 					character: true
 				},
-				where: (logs, { eq }) => eq(logs.id, logId)
+				where: {
+					id: {
+						eq: logId
+					}
+				}
 			});
 
 			if (!log) throw new LogError("Log not found", { status: 404 });
 			if (!log.isDmLog && log.character && log.character.userId !== userId) throw new LogError("Not authorized", { status: 401 });
-			if (log.isDmLog && log.dm && log.dm.uid !== userId) throw new LogError("Not authorized", { status: 401 });
+			if (log.isDmLog && log.dm.isUser) throw new LogError("Not authorized", { status: 401 });
 
 			await tx.delete(logs).where(eq(logs.id, logId));
 

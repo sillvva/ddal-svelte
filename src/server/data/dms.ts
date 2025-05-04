@@ -21,21 +21,30 @@ export async function getUserDMsWithLogs(user: LocalsSession["user"], id?: Dunge
 				}
 			}
 		},
-		where: (dms, { eq, and, or, ne }) => and(or(eq(dms.owner, userId), eq(dms.uid, userId)), id ? eq(dms.id, id) : undefined)
+		where: {
+			id: id
+				? {
+						eq: id
+					}
+				: undefined,
+			userId: {
+				eq: userId
+			}
+		}
 	});
 
-	if (!id && !dms.find((dm) => dm.uid === userId)) {
+	if (!id && !dms.find((dm) => dm.isUser)) {
 		dms.push({
 			id: "" as DungeonMasterId,
 			name: user.name,
 			DCI: null,
-			uid: userId,
-			owner: userId,
+			userId,
+			isUser: true,
 			logs: []
 		});
 	}
 
-	return dms.toSorted((a, b) => sorter(a.uid, b.uid) || sorter(a.name, b.name));
+	return dms.toSorted((a, b) => sorter(a.isUser, b.isUser) || sorter(a.name, b.name));
 }
 
 export type UserDMs = Awaited<ReturnType<typeof getUserDMs>>;
@@ -43,18 +52,22 @@ export async function getUserDMs(user: LocalsSession["user"]) {
 	if (!user || !user.id) return [];
 
 	const dms = await q.dungeonMasters.findMany({
-		where: (dms, { or, eq }) => or(eq(dms.owner, user.id), eq(dms.uid, user.id))
+		where: {
+			userId: {
+				eq: user.id
+			}
+		}
 	});
 
-	if (!dms.find((dm) => dm.uid === user.id)) {
+	if (!dms.find((dm) => dm.isUser)) {
 		dms.push({
 			id: "" as DungeonMasterId,
 			name: user.name,
 			DCI: null,
-			uid: user.id,
-			owner: user.id
+			userId: user.id,
+			isUser: true
 		});
 	}
 
-	return dms.toSorted((a, b) => sorter(a.uid, b.uid) || sorter(a.name, b.name));
+	return dms.toSorted((a, b) => sorter(a.isUser, b.isUser) || sorter(a.name, b.name));
 }

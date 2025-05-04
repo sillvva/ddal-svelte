@@ -35,8 +35,8 @@
 	);
 
 	$effect(() => {
-		minisearch.removeAll();
 		minisearch.addAll(indexed);
+		return () => minisearch.removeAll();
 	});
 	const msResults = $derived.by(() => {
 		if (!minisearch.termCount) minisearch.addAll(indexed);

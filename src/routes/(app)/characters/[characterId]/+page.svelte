@@ -10,7 +10,7 @@
 	import DeleteCharacter from "$lib/components/forms/DeleteCharacter.svelte";
 	import DeleteLog from "$lib/components/forms/DeleteLog.svelte";
 	import { excludedSearchWords } from "$lib/constants.js";
-	import { getTransition, global } from "$lib/stores.svelte.js";
+	import { getGlobal, getTransition } from "$lib/stores.svelte.js";
 	import { createTransition } from "$lib/util";
 	import { slugify, sorter } from "@sillvva/utils";
 	import { download, hotkey } from "@svelteuidev/composables";
@@ -18,6 +18,7 @@
 
 	let { data } = $props();
 
+	const global = getGlobal();
 	const transition = getTransition();
 
 	const myCharacter = $derived(data.character.userId === data.session?.user?.id);
@@ -53,8 +54,8 @@
 	);
 
 	$effect(() => {
-		minisearch.removeAll();
 		minisearch.addAll(indexed);
+		return () => minisearch.removeAll();
 	});
 
 	const msResults = $derived.by(() => {
@@ -184,7 +185,7 @@
 								href={data.character.characterSheetUrl}
 								target="_blank"
 								rel="noreferrer noopner"
-								class="text-secondary font-semibold dark:drop-shadow-xs"
+								class="text-secondary font-semibold dark:not-print:drop-shadow-xs"
 							>
 								Character Sheet
 							</a>
@@ -314,9 +315,9 @@
 			tabindex="0"
 		>
 			{#if global.app.log.descriptions}
-				<span class="iconify mdi--eye size-6"></span>
+				<span class="iconify mdi--eye size-5"></span>
 			{:else}
-				<span class="iconify mdi--eye-off size-6"></span>
+				<span class="iconify mdi--eye-off size-5"></span>
 			{/if}
 			<span class="max-sm:hidden">Notes</span>
 		</button>
@@ -325,7 +326,7 @@
 
 <section class="mt-4">
 	<div class="bg-base-200 w-full overflow-x-auto rounded-lg">
-		<table class="table w-full leading-5">
+		<table class="linked-table-groups table w-full leading-5">
 			<thead>
 				<tr class="bg-base-300 text-base-content/70">
 					<td class="print:p-2">Log Entry</td>
@@ -336,14 +337,10 @@
 					{/if}
 				</tr>
 			</thead>
-			<tbody>
-				{#each sortedResults as log, i}
-					{@const hasDescription =
-						!!log.description?.trim() || log.storyAwardsGained.length > 0 || log.storyAwardsLost.length > 0}
-					<tr
-						class="[&>td]:border-t-base-300 data-[deleting=true]:hidden print:text-sm [&>td]:border-t [&>td]:border-b-0"
-						data-deleting={deletingLog.includes(log.id)}
-					>
+			{#each sortedResults as log, i}
+				{@const hasDescription = !!log.description?.trim() || log.storyAwardsGained.length > 0 || log.storyAwardsLost.length > 0}
+				<tbody class="border-t border-neutral-500/20 first:border-0">
+					<tr class="border-0 data-[deleting=true]:hidden print:text-sm" data-deleting={deletingLog.includes(log.id)}>
 						<td
 							class="static! pb-0 align-top data-[desc=true]:pb-3 sm:pb-3 print:p-2"
 							data-desc={hasDescription && global.app.log.descriptions}
@@ -351,7 +348,7 @@
 							{#if myCharacter}
 								<a
 									href={log.isDmLog ? `/dm-logs/${log.id}` : `/characters/${log.characterId}/log/${log.id}`}
-									class="text-secondary text-left font-semibold whitespace-pre-wrap"
+									class="row-link text-left font-semibold whitespace-pre-wrap"
 								>
 									<SearchResults text={log.name} {search}></SearchResults>
 								</a>
@@ -363,7 +360,7 @@
 							<p class="text-netural-content mb-2 text-sm font-normal whitespace-nowrap">
 								{new Date(log.show_date).toLocaleString([], { dateStyle: "medium", timeStyle: "short" })}
 							</p>
-							{#if log.dm && log.type === "game" && log.dm.uid !== data.character.userId}
+							{#if log.type === "game" && !log.dm.isUser}
 								<p class="text-sm font-normal">
 									<span class="font-semibold dark:text-white">DM:</span>
 									{#if myCharacter}
@@ -468,7 +465,7 @@
 					</tr>
 					<!-- Notes -->
 					<tr
-						class="hidden data-[deleting=true]:hidden! data-[desc=true]:table-row max-sm:data-[mi=true]:table-row"
+						class="hidden border-0 data-[deleting=true]:hidden! data-[desc=true]:table-row max-sm:data-[mi=true]:table-row [&>td]:border-0"
 						data-deleting={deletingLog.includes(log.id)}
 						data-desc={global.app.log.descriptions && hasDescription}
 						data-mi={log.magicItemsGained.length > 0 || log.magicItemsLost.length > 0}
@@ -508,8 +505,8 @@
 							{/if}
 						</td>
 					</tr>
-				{/each}
-			</tbody>
+				</tbody>
+			{/each}
 		</table>
 	</div>
 </section>

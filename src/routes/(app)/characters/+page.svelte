@@ -6,7 +6,7 @@
 	import Search from "$lib/components/Search.svelte";
 	import SearchResults from "$lib/components/SearchResults.svelte";
 	import { excludedSearchWords } from "$lib/constants.js";
-	import { getTransition, global } from "$lib/stores.svelte.js";
+	import { getGlobal, getTransition } from "$lib/stores.svelte.js";
 	import { createTransition, isDefined } from "$lib/util";
 	import { sorter } from "@sillvva/utils";
 	import { download, hotkey } from "@svelteuidev/composables";
@@ -14,6 +14,7 @@
 
 	let { data } = $props();
 
+	const global = getGlobal();
 	const transition = getTransition();
 
 	let search = $state(page.url.searchParams.get("s") || "");
@@ -45,8 +46,8 @@
 	);
 
 	$effect(() => {
-		minisearch.removeAll();
 		minisearch.addAll(indexed);
+		return () => minisearch.removeAll();
 	});
 
 	const msResults = $derived.by(() => {
@@ -148,10 +149,10 @@
 						tabindex="0"
 					>
 						{#if global.app.characters.magicItems}
-							<span class="iconify mdi--eye max-xs:hidden size-6 sm:max-md:hidden"></span>
+							<span class="iconify mdi--eye max-xs:hidden size-5 sm:max-md:hidden"></span>
 							<span class="iconify mdi--shield-sword xs:max-sm:hidden size-6 md:hidden"></span>
 						{:else}
-							<span class="iconify mdi--eye-off max-xs:hidden size-6 sm:max-md:hidden"></span>
+							<span class="iconify mdi--eye-off max-xs:hidden size-5 sm:max-md:hidden"></span>
 							<span class="iconify mdi--shield-sword-outline xs:max-sm:hidden size-6 md:hidden"></span>
 						{/if}
 						<span class="max-xs:hidden sm:max-md:hidden">Magic Items</span>
@@ -165,7 +166,7 @@
 						onkeypress={() => null}
 						aria-label="List View"
 					>
-						<span class="iconify mdi--format-list-text"></span>
+						<span class="iconify mdi--format-list-text size-4"></span>
 					</button>
 					<button
 						class="btn join-item data-[display=grid]:btn-primary data-[display=list]:hover:btn-primary sm:btn-sm"
@@ -174,7 +175,7 @@
 						onkeypress={() => null}
 						aria-label="Grid View"
 					>
-						<span class="iconify mdi--view-grid"></span>
+						<span class="iconify mdi--view-grid size-4"></span>
 					</button>
 				</div>
 			</div>
@@ -185,7 +186,7 @@
 				class="xs:data-[display=grid]:hidden w-full overflow-x-auto rounded-lg data-[display=grid]:block"
 				data-display={global.app.characters.display}
 			>
-				<table class="linked-table table w-full leading-5 max-sm:border-separate max-sm:border-spacing-y-2">
+				<table class="linked-table bg-base-200 table w-full leading-5 max-sm:border-separate max-sm:border-spacing-y-2">
 					<thead class="max-sm:hidden">
 						<tr class="bg-base-300 text-base-content/70">
 							{#if !data.mobile}
@@ -225,11 +226,7 @@
 								<td>
 									<div class="text-base font-bold whitespace-pre-wrap text-black sm:text-xl dark:text-white">
 										<span use:transition={"name-" + character.id}>
-											<a
-												href={`/characters/${character.id}`}
-												aria-label={character.name}
-												class="row-link before:border-base-content/20 before:rounded-xl before:max-sm:border"
-											>
+											<a href={`/characters/${character.id}`} aria-label={character.name} class="row-link">
 												<SearchResults text={character.name} {search} />
 											</a>
 										</span>
@@ -313,9 +310,7 @@
 								</figure>
 								<div class="card-body p-4 text-center">
 									<div class="flex flex-col gap-1">
-										<h2
-											class="card-title block overflow-hidden text-sm text-balance text-ellipsis whitespace-nowrap dark:text-white"
-										>
+										<h2 class="card-title ellipsis-nowrap block text-sm text-balance dark:text-white">
 											<SearchResults text={character.name} {search} />
 										</h2>
 										<p class="text-xs text-balance"><SearchResults text={`${character.race} ${character.class}`} {search} /></p>

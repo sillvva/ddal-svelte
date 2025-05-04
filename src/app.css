@@ -86,17 +86,6 @@
 
 @variant dark (&:where(.dark, .dark *));
 
-@custom-variant hover-hover {
-	@media (hover: hover) {
-		@slot;
-	}
-}
-@custom-variant hover-none {
-	@media (hover: none) {
-		@slot;
-	}
-}
-
 @theme {
 	--breakpoint-xs: 500px;
 	--breakpoint-sm: 640px;
@@ -104,6 +93,7 @@
 	--breakpoint-lg: 1024px;
 	--breakpoint-xl: 1280px;
 	--breakpoint-2xl: 1440px;
+
 	--font-draconis: "Draconis";
 	--font-vecna: "Vecna";
 
@@ -117,13 +107,15 @@
 		min-width: 0;
 	}
 	body {
-		overflow-x: hidden;
+		overflow-x: clip;
 		overflow-y: scroll;
 		min-height: 100vh;
 	}
-}
+	summary,
+	[role="button"] {
+		cursor: pointer;
+	}
 
-@layer utilities {
 	/**
 	 * Fonts
 	 */
@@ -164,25 +156,6 @@
 	}
 }
 
-@utility text-secondary {
-	@media print {
-		@apply drop-shadow-none;
-	}
-}
-
-@utility join {
-	--join-ss: var(--radius-field);
-	--join-se: var(--radius-field);
-	--join-es: var(--radius-field);
-	--join-ee: var(--radius-field);
-	& :where(.join-item):not(:first-child):not(:last-child) {
-		--join-ss: 0;
-		--join-se: 0;
-		--join-es: 0;
-		--join-ee: 0;
-	}
-}
-
 @utility btn {
 	.join &:is(.input, .border) {
 		border-inline-width: 0;
@@ -195,55 +168,45 @@
 	}
 }
 
-@utility input {
-	&:focus,
-	&:focus-within {
-		--input-color: var(--color-input-focus);
-	}
-	&[aria-invalid] {
-		@apply input-error;
-	}
-}
-
-@utility textarea {
-	&:focus,
-	&:focus-within {
-		--input-color: var(--color-input-focus);
-	}
-	&[aria-invalid] {
-		@apply textarea-error;
+@layer utilities {
+	.input,
+	.textarea,
+	.select {
+		&:focus,
+		&:focus-within {
+			--input-color: var(--color-input-focus);
+		}
+		&[aria-invalid] {
+			&,
+			&:focus,
+			&:focus-within {
+				--input-color: var(--color-error);
+			}
+		}
 	}
 }
 
-@utility select {
-	font-size: var(--text-base);
-	&:focus,
-	&:focus-within {
-		--input-color: var(--color-input-focus);
-	}
-	&[aria-invalid] {
-		@apply select-error;
-	}
-}
-
-@utility super-debug {
-	width: 100%;
-}
-
-@utility linked-table {
-	tr {
+@layer utilities {
+	.linked-table tr,
+	.linked-table-groups tbody {
 		position: relative;
+		isolation: isolate;
 		a.row-link::before {
 			content: "";
 			display: block;
 			position: absolute;
 			inset: 0;
-		}
-		.interactive {
-			position: relative;
 			z-index: 1;
 		}
+		:is(a, button, summary, [role="button"]):not(.row-link) {
+			position: relative;
+			z-index: 2;
+		}
 	}
+}
+
+@utility super-debug {
+	width: 100%;
 }
 
 @utility theme-switcher {
@@ -279,5 +242,22 @@
 	&::view-transition-new(root) {
 		animation-name: reveal-dark;
 		will-change: clip-path;
+	}
+}
+
+@utility ellipsis-nowrap {
+	overflow: hidden;
+	text-overflow: ellipsis;
+	white-space: nowrap;
+}
+
+@custom-variant hover-hover {
+	@media (hover: hover) {
+		@slot;
+	}
+}
+@custom-variant hover-none {
+	@media (hover: none) {
+		@slot;
 	}
 }

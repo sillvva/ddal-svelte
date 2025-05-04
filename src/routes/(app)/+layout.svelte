@@ -5,12 +5,14 @@
 	import Drawer from "$lib/components/Drawer.svelte";
 	import Markdown from "$lib/components/Markdown.svelte";
 	import Settings from "$lib/components/Settings.svelte";
-	import { global } from "$lib/stores.svelte.js";
+	import { getGlobal } from "$lib/stores.svelte.js";
 	import { hotkey } from "@svelteuidev/composables";
 	import { Toaster } from "svelte-sonner";
 	import { fade } from "svelte/transition";
 
 	let { data, children } = $props();
+
+	const global = getGlobal();
 
 	afterNavigate(() => {
 		global.pageLoader = false;

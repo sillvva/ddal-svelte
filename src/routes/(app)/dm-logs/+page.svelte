@@ -9,13 +9,15 @@
 	import SearchResults from "$lib/components/SearchResults.svelte";
 	import DeleteLog from "$lib/components/forms/DeleteLog.svelte";
 	import { excludedSearchWords } from "$lib/constants";
-	import { global } from "$lib/stores.svelte.js";
+	import { getGlobal } from "$lib/stores.svelte.js";
 	import { createTransition, isDefined } from "$lib/util.js";
 	import { sorter } from "@sillvva/utils";
 	import { download, hotkey } from "@svelteuidev/composables";
 	import MiniSearch from "minisearch";
 
 	let { data } = $props();
+
+	const global = getGlobal();
 
 	let search = $state(page.url.searchParams.get("s") || "");
 	let deletingLog = $state<string[]>([]);
@@ -50,8 +52,8 @@
 	});
 
 	$effect(() => {
-		minisearch.removeAll();
 		minisearch.addAll(indexed);
+		return () => minisearch.removeAll();
 	});
 
 	const msResults = $derived.by(() => {
@@ -126,9 +128,9 @@
 				tabindex="0"
 			>
 				{#if global.app.log.descriptions}
-					<span class="iconify mdi--eye size-6"></span>
+					<span class="iconify mdi--eye size-5 max-md:size-6"></span>
 				{:else}
-					<span class="iconify mdi--eye-off size-6"></span>
+					<span class="iconify mdi--eye-off size-5 max-md:size-6"></span>
 				{/if}
 				<span class="max-sm:hidden">Notes</span>
 			</button>
@@ -138,7 +140,7 @@
 				aria-label="Sort"
 			>
 				<span
-					class="iconify data-[sort=asc]:mdi--sort-calendar-ascending data-[sort=desc]:mdi--sort-calendar-descending size-6"
+					class="iconify data-[sort=asc]:mdi--sort-calendar-ascending data-[sort=desc]:mdi--sort-calendar-descending size-5 max-md:size-6"
 					data-sort={global.app.dmLogs.sort}
 				></span>
 			</button>

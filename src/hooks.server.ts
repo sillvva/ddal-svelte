@@ -205,11 +205,7 @@ const session: Handle = async ({ event, resolve }) => {
 const preloadTheme: Handle = async ({ event, resolve }) => {
 	const app = serverGetCookie(event.cookies, "app", appDefaults);
 	const mode = app.settings.mode;
-	const theme = event.route.id?.startsWith("/(app)")
-		? app.settings.theme === "system" && app.settings.mode === "dark"
-			? "black"
-			: app.settings.theme
-		: app.settings.mode;
+	const theme = event.route.id?.startsWith("/(app)") ? app.settings.theme : app.settings.mode;
 
 	return await resolve(event, {
 		transformPageChunk: ({ html }) => {

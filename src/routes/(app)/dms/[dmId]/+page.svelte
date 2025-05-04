@@ -8,11 +8,19 @@
 	import SuperForm from "$lib/components/forms/SuperForm.svelte";
 	import { valibotForm } from "$lib/factories.svelte.js";
 	import { dungeonMasterSchema } from "$lib/schemas";
+	import { getGlobal } from "$lib/stores.svelte.js";
 	import { sorter } from "@sillvva/utils";
 
 	let { data } = $props();
 
-	const superform = $derived(valibotForm(data.form, dungeonMasterSchema));
+	const global = getGlobal();
+	const superform = $derived(
+		valibotForm(data.form, dungeonMasterSchema, {
+			onResult() {
+				global.searchData = [];
+			}
+		})
+	);
 
 	const sortedLogs = $derived(data.dm.logs.toSorted((a, b) => sorter(a.date, b.date)));
 </script>
@@ -44,7 +52,7 @@
 								<th class="max-lg:hidden">Date</th>
 								<th class="max-xs:px-2">Adventure</th>
 								<th class="max-xs:px-2">Character</th>
-								{#if data.dm.uid === data.user?.id}
+								{#if data.dm.isUser}
 									<th class="max-md:hidden">Type</th>
 								{/if}
 							</tr>
@@ -78,7 +86,7 @@
 											</a>
 										{/if}
 									</td>
-									{#if data.dm.uid === data.user?.id}
+									{#if data.dm.isUser}
 										<td class="max-md:hidden">
 											<div class="min-w-max">{log.isDmLog ? "DM Log" : "Log"} ({log.type})</div>
 										</td>

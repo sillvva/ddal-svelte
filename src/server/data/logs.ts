@@ -1,54 +1,59 @@
-import { defaultDM, defaultLogData, parseLog } from "$lib/entities";
-import type { CharacterId, LogId, UserId } from "$lib/schemas";
-import { userIncludes } from "$server/actions/users";
-import { db, q, type InferQueryModel, type QueryConfig } from "$server/db";
-import { characters, dungeonMasters } from "$server/db/schema";
-import { eq, sql } from "drizzle-orm";
+import { parseLog } from "$lib/entities";
+import type { LogId, UserId } from "$lib/schemas";
+import { q, type Filter, type InferQueryResult } from "$server/db";
+import { extendedLogIncludes, logIncludes } from "$server/db/includes";
 
-export const logIncludes = {
-	dm: true,
-	magicItemsGained: true,
-	magicItemsLost: true,
-	storyAwardsGained: true,
-	storyAwardsLost: true
-} as const satisfies QueryConfig<"logs">["with"];
-
-export type LogData = InferQueryModel<"logs", { with: typeof logIncludes }>;
-
-export async function getLog(logId: LogId, userId: UserId, characterId = "" as CharacterId): Promise<LogData> {
-	const log =
-		(await q.logs.findFirst({
-			with: logIncludes,
-			where: (logs, { eq }) => eq(logs.id, logId)
-		})) || defaultLogData(userId, characterId);
-	return { ...parseLog(log), dm: log.dm || defaultDM(userId) };
+export type LogData = InferQueryResult<"logs", { with: typeof logIncludes }>;
+export type ExtendedLogData = InferQueryResult<"logs", { with: typeof extendedLogIncludes }>;
+export interface FullLogData extends ExtendedLogData {
+	show_date: Date;
 }
 
-export async function getDMLog(logId: LogId, userId: UserId): Promise<LogData> {
-	const log =
-		(await q.logs.findFirst({
-			with: logIncludes,
-			where: (logs, { eq, and }) => and(eq(logs.id, logId), eq(logs.isDmLog, true))
-		})) || defaultLogData(userId);
-	return { ...parseLog(log), dm: log.dm || defaultDM(userId) };
+const characterLogFilter = (userId: UserId) => {
+	return {
+		isDmLog: false,
+		character: {
+			userId: {
+				eq: userId
+			}
+		}
+	} as const satisfies Filter<"logs">;
+};
+
+const dmLogFilter = (userId: UserId) => {
+	return {
+		isDmLog: true,
+		dm: {
+			userId: {
+				eq: userId
+			},
+			isUser: true
+		}
+	} as const satisfies Filter<"logs">;
+};
+
+export async function getLog(logId: LogId, userId: UserId): Promise<FullLogData | undefined> {
+	if (logId === "new") return undefined;
+	const log = await q.logs.findFirst({
+		with: extendedLogIncludes,
+		where: {
+			id: {
+				eq: logId
+			},
+			OR: [characterLogFilter(userId), dmLogFilter(userId)]
+		}
+	});
+	return log && parseLog(log);
 }
 
-export type DMLogsData = Awaited<ReturnType<typeof getDMLogs>>;
-export async function getDMLogs(userId: UserId) {
-	const dms = db.select({ id: dungeonMasters.id }).from(dungeonMasters).where(eq(dungeonMasters.uid, userId));
-
+export async function getDMLogs(userId: UserId): Promise<FullLogData[]> {
 	return q.logs
 		.findMany({
-			with: {
-				...logIncludes,
-				character: {
-					with: {
-						user: userIncludes
-					}
-				}
-			},
-			where: (logs, { eq, and, inArray }) => and(eq(logs.isDmLog, true), inArray(logs.dungeonMasterId, sql`${dms}`)),
-			orderBy: (logs, { asc }) => asc(logs.date)
+			with: extendedLogIncludes,
+			where: dmLogFilter(userId),
+			orderBy: {
+				date: "asc"
+			}
 		})
 		.then((logs) => {
 			return logs.map(parseLog);
@@ -56,8 +61,6 @@ export async function getDMLogs(userId: UserId) {
 }
 
 export async function getUserLogs(userId: UserId) {
-	const characterIds = db.select({ id: characters.id }).from(characters).where(eq(characters.userId, userId));
-
 	return q.logs.findMany({
 		columns: {
 			id: true,
@@ -91,7 +94,11 @@ export async function getUserLogs(userId: UserId) {
 				}
 			}
 		},
-		where: (logs, { inArray }) => inArray(logs.characterId, sql`${characterIds}`),
-		orderBy: (logs, { desc }) => desc(logs.date)
+		where: {
+			OR: [characterLogFilter(userId), dmLogFilter(userId)]
+		},
+		orderBy: {
+			date: "asc"
+		}
 	});
 }

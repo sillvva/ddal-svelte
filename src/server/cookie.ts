@@ -38,7 +38,9 @@ export function setCookie(name: string, value: string | number | boolean | objec
 	}
 }
 
-export type CookieStore<T extends string | number | boolean | object> = Writable<T> & { initial: T };
+export interface CookieStore<T extends string | number | boolean | object> extends Writable<T> {
+	initial: T;
+}
 
 /**
  * Create a cookie store that will automatically update the cookie whenever the store is updated.
@@ -47,7 +49,7 @@ export type CookieStore<T extends string | number | boolean | object> = Writable
  * @param initial The initial value of the cookie
  * @returns The cookie store
  */
-export function cookieStore<T extends string | number | boolean | object>(name: string, initial: T) {
+export function cookieStore<T extends string | number | boolean | object>(name: string, initial: T): CookieStore<T> {
 	const cookie = writable(initial);
 
 	cookie.subscribe((value) => {

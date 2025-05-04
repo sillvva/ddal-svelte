@@ -1,4 +1,5 @@
 <script lang="ts">
+	import { page } from "$app/state";
 	import BreadCrumbs from "$lib/components/BreadCrumbs.svelte";
 	import Checkbox from "$lib/components/forms/Checkbox.svelte";
 	import Control from "$lib/components/forms/Control.svelte";
@@ -7,10 +8,18 @@
 	import SuperForm from "$lib/components/forms/SuperForm.svelte";
 	import { valibotForm } from "$lib/factories.svelte.js";
 	import { editCharacterSchema } from "$lib/schemas";
+	import { getGlobal } from "$lib/stores.svelte.js";
 
 	let { data } = $props();
 
-	const superform = $derived(valibotForm(data.form, editCharacterSchema));
+	const global = getGlobal();
+	const superform = $derived(
+		valibotForm(data.form, editCharacterSchema, {
+			onResult() {
+				global.searchData = [];
+			}
+		})
+	);
 </script>
 
 <BreadCrumbs />
@@ -32,7 +41,7 @@
 		<Input type="url" {superform} field="characterSheetUrl" label="Character Sheet URL" />
 	</Control>
 	<Control class="col-span-12">
-		<Input type="url" {superform} field="imageUrl" label="Image URL" placeholder={data.BLANK_CHARACTER} />
+		<Input type="url" {superform} field="imageUrl" label="Image URL" placeholder={`${page.url.origin}${data.BLANK_CHARACTER}`} />
 	</Control>
 	{#if !data.character?.id}
 		<Control class="col-span-12 -mb-4">

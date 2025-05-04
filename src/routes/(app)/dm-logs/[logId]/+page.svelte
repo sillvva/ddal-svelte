@@ -11,10 +11,17 @@
 	import SuperForm from "$lib/components/forms/SuperForm.svelte";
 	import { valibotForm } from "$lib/factories.svelte.js";
 	import { dMLogSchema } from "$lib/schemas";
-
+	import { getGlobal } from "$lib/stores.svelte.js";
 	let { data } = $props();
 
-	let superform = $derived(valibotForm(data.form, dMLogSchema()));
+	const global = getGlobal();
+	let superform = $derived(
+		valibotForm(data.form, dMLogSchema(), {
+			onResult() {
+				global.searchData = [];
+			}
+		})
+	);
 	let form = $derived(superform.form);
 
 	let season = $state($form.experience ? 1 : $form.acp ? 8 : 9);

@@ -1,8 +1,10 @@
 <script lang="ts">
 	import { themeGroups, themes } from "$lib/constants";
-	import { global } from "$lib/stores.svelte";
+	import { getGlobal } from "$lib/stores.svelte";
 	import { createTransition } from "$lib/util";
 	import { MediaQuery } from "svelte/reactivity";
+
+	const global = getGlobal();
 
 	let theme = $state(global.app.settings.theme);
 	const mq = new MediaQuery("(prefers-color-scheme: dark)");
@@ -25,10 +27,9 @@
 				() => {
 					global.app.settings.theme = theme;
 					global.app.settings.mode = mode;
-					const current = theme === "system" && mode === "dark" ? "black" : theme;
 					const opposite = mode === "dark" ? "light" : "dark";
 					document.documentElement.classList.replace(opposite, mode);
-					document.documentElement.dataset.theme = current;
+					document.documentElement.dataset.theme = theme;
 				},
 				() => {
 					document.documentElement.classList.remove("theme-switcher");

@@ -7,22 +7,25 @@
 	import Input from "./Input.svelte";
 	import MdTextInput from "./MDTextInput.svelte";
 
-	type Props = {
+	interface BaseProps {
 		entity: "magic_items" | "story_awards";
 		superform: SuperForm<LogSchema>;
 		index: number;
-	} & (
-		| {
-				type: "add";
-				data?: [];
-		  }
-		| {
-				type: "drop";
-				data: ItemSchema[];
-		  }
-	);
+	}
 
-	let { entity, superform, index, type, data = [] }: Props = $props();
+	interface AddProps extends BaseProps {
+		type: "add";
+		items?: undefined;
+	}
+
+	interface DropProps extends BaseProps {
+		type: "drop";
+		items: ItemSchema[];
+	}
+
+	type Props = AddProps | DropProps;
+
+	let { entity, superform, index, type, items = [] }: Props = $props();
 
 	const { form } = superform;
 
@@ -87,7 +90,7 @@
 				<Control class="flex-1">
 					<GenericInput {superform} field={lostField} label="Select an Item">
 						<select bind:value={$lostValue} id={lostField} class="select select-bordered w-full">
-							{#each data.filter((item) => item.id === $lostValue || !arrValue.includes(item.id)) as item}
+							{#each items.filter((item) => item.id === $lostValue || !arrValue.includes(item.id)) as item}
 								<option value={item.id}>
 									{item.name}
 								</option>
@@ -100,7 +103,7 @@
 				</button>
 			</div>
 			<div class="text-sm">
-				{data.find((item) => $lostValue === item.id)?.description || ""}
+				{items.find((item) => $lostValue === item.id)?.description || ""}
 			</div>
 		</div>
 	</div>

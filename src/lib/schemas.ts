@@ -1,4 +1,4 @@
-import type { CharacterData } from "$server/data/characters";
+import type { FullCharacterData } from "$server/data/characters";
 import * as v from "valibot";
 
 export type BrandedType = v.InferOutput<ReturnType<typeof brandedId>>;
@@ -6,12 +6,9 @@ function brandedId<T extends string>(name: T) {
 	return v.pipe(v.string(), v.brand(name));
 }
 
-function optNullable<T extends v.GenericSchema>(schema: T) {
-	return v.optional(v.nullable(schema), null);
-}
-
 const string = v.pipe(v.string(), v.trim());
 const requiredString = v.pipe(string, v.regex(/^.*(\p{L}|\p{N})+.*$/u, "Required"));
+const shortString = v.pipe(string, v.maxLength(50));
 const maxTextSize = v.pipe(string, v.maxLength(5000));
 const maxStringSize = v.pipe(string, v.maxLength(255));
 const integer = v.pipe(v.number(), v.integer());
@@ -32,19 +29,21 @@ export const envPrivateSchema = v.object({
 
 export type EnvPublic = v.InferInput<typeof envPublicSchema>;
 export const envPublicSchema = v.object({
-	PUBLIC_URL: urlSchema,
+	// PUBLIC_URL: urlSchema,
 	PUBLIC_TEST_URL: v.optional(string, "")
 });
+
+export interface Env extends EnvPrivate, EnvPublic {}
 
 export type UserId = v.InferOutput<typeof userIdSchema>;
 export const userIdSchema = brandedId("UserId");
 
 export type NewCharacterSchema = v.InferOutput<typeof newCharacterSchema>;
 export const newCharacterSchema = v.object({
-	name: v.pipe(requiredString, maxStringSize),
-	campaign: v.optional(maxStringSize, ""),
-	race: v.optional(maxStringSize, ""),
-	class: v.optional(maxStringSize, ""),
+	name: v.pipe(requiredString, shortString),
+	campaign: v.optional(shortString, ""),
+	race: v.optional(shortString, ""),
+	class: v.optional(shortString, ""),
 	characterSheetUrl: optionalURL,
 	imageUrl: optionalURL
 });
@@ -66,10 +65,10 @@ export type DungeonMasterSchema = v.InferOutput<typeof dungeonMasterSchema>;
 export type DungeonMasterSchemaIn = v.InferInput<typeof dungeonMasterSchema>;
 export const dungeonMasterSchema = v.object({
 	id: v.optional(dungeonMasterIdSchema, ""),
-	name: v.pipe(requiredString, maxStringSize),
-	DCI: optNullable(v.pipe(string, v.regex(/\d{0,10}/, "Invalid DCI Format"))),
-	uid: optNullable(userIdSchema),
-	owner: userIdSchema
+	name: v.pipe(requiredString, shortString),
+	DCI: v.nullish(v.pipe(string, v.regex(/\d{0,10}/, "Invalid DCI Format")), null),
+	userId: userIdSchema,
+	isUser: v.boolean()
 });
 
 export type ItemId = v.InferOutput<typeof itemIdSchema>;
@@ -79,7 +78,7 @@ export type ItemSchema = v.InferOutput<typeof itemSchema>;
 const itemSchema = v.object({
 	id: v.optional(itemIdSchema, ""),
 	name: requiredString,
-	description: optNullable(maxTextSize)
+	description: v.nullish(maxTextSize, null)
 });
 
 export type LogId = v.InferOutput<typeof logIdSchema>;
@@ -91,8 +90,9 @@ export const logSchema = v.object({
 	id: v.optional(logIdSchema, ""),
 	name: v.pipe(requiredString, maxStringSize),
 	date: v.date(),
-	characterId: optNullable(characterIdSchema),
-	characterName: v.optional(string, ""),
+	characterId: v.nullish(characterIdSchema, null),
+	characterName: v.optional(shortString, ""),
+	appliedDate: v.nullable(v.date()),
 	type: v.optional(v.picklist(["game", "nongame"]), "game"),
 	experience: v.nullable(v.pipe(integer, v.minValue(0)), 0),
 	acp: v.nullable(v.pipe(integer, v.minValue(0)), 0),
@@ -103,17 +103,16 @@ export const logSchema = v.object({
 	description: v.optional(maxTextSize, ""),
 	dm: v.object({
 		...dungeonMasterSchema.entries,
-		name: v.optional(string, "")
+		name: v.optional(shortString, "")
 	}),
 	isDmLog: v.optional(v.boolean(), false),
-	appliedDate: v.nullable(v.date()),
 	magicItemsGained: v.optional(v.array(itemSchema), []),
 	magicItemsLost: v.optional(v.array(itemIdSchema), []),
 	storyAwardsGained: v.optional(v.array(itemSchema), []),
 	storyAwardsLost: v.optional(v.array(itemIdSchema), [])
 });
 
-export const characterLogSchema = (character: CharacterData) =>
+export const characterLogSchema = (character: FullCharacterData) =>
 	v.pipe(
 		logSchema,
 		v.check((input) => !input.isDmLog, "Only character logs can be saved here."),
@@ -133,7 +132,7 @@ export const characterLogSchema = (character: CharacterData) =>
 		)
 	);
 
-export const dMLogSchema = (characters: CharacterData[] = []) =>
+export const dMLogSchema = (characters: FullCharacterData[] = []) =>
 	v.pipe(
 		logSchema,
 		v.check((input) => input.isDmLog, "Only DM logs can be saved here."),

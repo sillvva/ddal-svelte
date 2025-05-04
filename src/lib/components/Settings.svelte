@@ -3,13 +3,15 @@
 	import { page } from "$app/state";
 	import { PROVIDERS } from "$lib/constants";
 	import { successToast } from "$lib/factories.svelte";
-	import { global } from "$lib/stores.svelte";
+	import { getGlobal } from "$lib/stores.svelte";
 	import { signIn, signOut } from "@auth/sveltekit/client";
 	import { twMerge } from "tailwind-merge";
 	import Passkeys from "./Passkeys.svelte";
 	import ThemeSwitcher from "./ThemeSwitcher.svelte";
 
 	let open = $state(false);
+
+	let global = getGlobal();
 
 	const user = $derived(page.data.user);
 	const authProviders = $derived(
@@ -61,8 +63,8 @@
 				{/if}
 			</div>
 			<div class="flex-1">
-				<div class="overflow-hidden font-medium text-ellipsis whitespace-nowrap">{user.name}</div>
-				<div class="overflow-hidden text-xs font-medium text-ellipsis text-gray-500 dark:text-gray-400">
+				<div class="ellipsis-nowrap font-medium">{user.name}</div>
+				<div class="ellipsis-nowrap text-xs font-medium text-gray-500 dark:text-gray-400">
 					{user.email}
 				</div>
 			</div>

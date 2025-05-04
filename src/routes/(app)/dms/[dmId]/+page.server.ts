@@ -26,8 +26,8 @@ export const load = async (event) => {
 			id: dm.id,
 			name: dm.name,
 			DCI: dm.DCI || null,
-			uid: dm.uid,
-			owner: dm.owner
+			userId: dm.userId,
+			isUser: dm.isUser
 		},
 		valibot(dungeonMasterSchema),
 		{

@@ -109,12 +109,12 @@
 		<EntityCard {superform} type="add" entity="magic_items" {index} />
 	{/each}
 	{#each $form.magicItemsLost as _, index}
-		<EntityCard {superform} type="drop" entity="magic_items" {index} data={sortedItems} />
+		<EntityCard {superform} type="drop" entity="magic_items" {index} items={sortedItems} />
 	{/each}
 	{#each $form.storyAwardsGained as _, index}
 		<EntityCard {superform} type="add" entity="story_awards" {index} />
 	{/each}
 	{#each $form.storyAwardsLost as _, index}
-		<EntityCard {superform} type="drop" entity="story_awards" {index} data={storyAwards} />
+		<EntityCard {superform} type="drop" entity="story_awards" {index} items={storyAwards} />
 	{/each}
 </div>
