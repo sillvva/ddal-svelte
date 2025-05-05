@@ -17,7 +17,10 @@ export async function saveDM(
 		const dm = (await getUserDMsWithLogs(user)).find((dm) => dm.id === dmId);
 		if (!dm) throw new DMError("You do not have permission to edit this DM", { status: 401 });
 
-		if (data.name.trim() === "" && data.isUser) data.name = user.name;
+		if (!data.name.trim()) {
+			if (dm.isUser) data.name = user.name;
+			else throw new DMError("Name is required", { status: 400, field: "name" });
+		}
 
 		const [result] = await db
 			.update(dungeonMasters)
