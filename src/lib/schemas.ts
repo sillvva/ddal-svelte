@@ -1,5 +1,6 @@
 import type { FullCharacterData } from "$server/data/characters";
 import * as v from "valibot";
+import type { Prettify } from "./util";
 
 export type BrandedType = v.InferOutput<ReturnType<typeof brandedId>>;
 function brandedId<T extends string>(name: T) {
@@ -30,10 +31,11 @@ export const envPrivateSchema = v.object({
 export type EnvPublic = v.InferInput<typeof envPublicSchema>;
 export const envPublicSchema = v.object({
 	// PUBLIC_URL: urlSchema,
-	PUBLIC_TEST_URL: v.optional(string, "")
+	// PUBLIC_TEST_URL: v.optional(string, "")
 });
 
-export interface Env extends EnvPrivate, EnvPublic {}
+interface CombinedEnv extends EnvPrivate, EnvPublic {}
+export type Env = Prettify<CombinedEnv>;
 
 export type UserId = v.InferOutput<typeof userIdSchema>;
 export const userIdSchema = brandedId("UserId");

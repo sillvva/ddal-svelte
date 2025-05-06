@@ -1,7 +1,5 @@
-import type { EnvPrivate, envPrivateSchema, EnvPublic } from "$lib/schemas";
+import type { Env, EnvPrivate, envPrivateSchema, EnvPublic } from "$lib/schemas";
 import { getDotPath, ValiError } from "valibot";
-
-interface Env extends EnvPrivate, EnvPublic {}
 
 export function checkEnv<TChecker extends () => EnvPrivate | EnvPublic | Env>(checker: TChecker) {
 	try {
