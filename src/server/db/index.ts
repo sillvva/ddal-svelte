@@ -10,8 +10,8 @@ import {
 	type RelationsFilter,
 	type SQL
 } from "drizzle-orm";
-import { type PgTable } from "drizzle-orm/pg-core";
-import { drizzle } from "drizzle-orm/postgres-js";
+import { PgTransaction, type PgTable } from "drizzle-orm/pg-core";
+import { drizzle, type PostgresJsQueryResultHKT } from "drizzle-orm/postgres-js";
 import postgres from "postgres";
 
 export const connection = postgres(privateEnv.DATABASE_URL, { prepare: false });
@@ -32,14 +32,14 @@ export function buildConflictUpdateColumns<
 		(acc, column) => {
 			const col = cls[column];
 			if (!col) return acc;
-			acc[column] = sql`excluded."${col.name}"`;
+			acc[column] = sql.raw(`excluded."${col.name}"`);
 			return acc;
 		},
 		{} as { [key in Keys]: SQL<GetColumnData<Table["_"]["columns"][key]>> }
 	);
 }
 
-export type Transaction = Parameters<Parameters<typeof db.transaction>[0]>[0];
+export type Transaction = PgTransaction<PostgresJsQueryResultHKT, Record<string, never>, typeof relations>;
 
 type TRSchema = ExtractTablesWithRelations<typeof relations>;
 export type Filter<TableName extends keyof TRSchema> = RelationsFilter<TRSchema[TableName], TRSchema>;

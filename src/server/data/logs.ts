@@ -17,7 +17,7 @@ const characterLogFilter = (userId: UserId) => {
 				eq: userId
 			}
 		}
-	} as const satisfies Filter<"logs">;
+	} satisfies Filter<"logs">;
 };
 
 const dmLogFilter = (userId: UserId) => {
@@ -29,7 +29,7 @@ const dmLogFilter = (userId: UserId) => {
 			},
 			isUser: true
 		}
-	} as const satisfies Filter<"logs">;
+	} satisfies Filter<"logs">;
 };
 
 export async function getLog(logId: LogId, userId: UserId): Promise<FullLogData | undefined> {
