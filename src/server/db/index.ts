@@ -32,7 +32,7 @@ export function buildConflictUpdateColumns<
 		(acc, column) => {
 			const col = cls[column];
 			if (!col) return acc;
-			acc[column] = sql`excluded."${col.name}"`;
+			acc[column] = sql.raw(`excluded."${col.name}"`);
 			return acc;
 		},
 		{} as { [key in Keys]: SQL<GetColumnData<Table["_"]["columns"][key]>> }
