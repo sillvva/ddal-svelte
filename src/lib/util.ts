@@ -1,7 +1,7 @@
 import { dev } from "$app/environment";
 import type { AuthClient } from "$server/db/schema";
 import { type NumericRange } from "@sveltejs/kit";
-import { message, setError, type FormPathLeavesWithErrors, type SuperValidated } from "sveltekit-superforms";
+import { setError, type FormPathLeavesWithErrors, type SuperValidated } from "sveltekit-superforms";
 import type { setupViewTransition } from "sveltekit-view-transition";
 
 /**
@@ -109,20 +109,9 @@ export class SaveError<TOut extends Record<string, unknown>, TIn extends Record<
 	 * @returns The form with error messages.
 	 */
 	toForm(form: SuperValidated<TOut, App.Superforms.Message, TIn>) {
-		return isDefined(this.options?.field)
-			? setError(form, this.options.field, this.error, {
-					status: this.status
-				})
-			: message(
-					form,
-					{
-						type: "error",
-						text: this.error
-					},
-					{
-						status: this.status
-					}
-				);
+		return setError(form, this.options?.field || "", this.error, {
+			status: this.status
+		});
 	}
 }
 

@@ -60,7 +60,7 @@ export async function saveLog(input: LogSchema, user: LocalsSession["user"]): Sa
 					else
 						throw new LogError("Dungeon Master name is required", {
 							status: 400,
-							field: "dm.id"
+							field: input.isDmLog || input.type === "nongame" ? "" : "dm.id"
 						});
 				}
 
@@ -108,7 +108,7 @@ export async function saveLog(input: LogSchema, user: LocalsSession["user"]): Sa
 
 			if (!dm?.id)
 				throw new LogError("Could not save Dungeon Master", {
-					field: "dm.id"
+					field: input.isDmLog || input.type === "nongame" ? "" : "dm.id"
 				});
 
 			const [log] = await tx
