@@ -137,6 +137,12 @@ export const characterLogSchema = (character: FullCharacterData) =>
 				return character.total_gold + input.gold >= 0;
 			}, "Cannot reduce total gold to less than 0"),
 			["gold"]
+		),
+		v.forward(
+			v.check((input) => {
+				return character.total_tcp + input.tcp >= 0;
+			}, "Cannot reduce total TCP to less than 0"),
+			["tcp"]
 		)
 	);
 
@@ -191,5 +197,13 @@ export const dMLogSchema = (characters: FullCharacterData[] = []) =>
 				return character.total_gold + input.gold >= 0;
 			}, "Cannot reduce character's total gold to less than 0"),
 			["gold"]
+		),
+		v.forward(
+			v.check((input) => {
+				const character = characters.find((c) => c.id === input.characterId);
+				if (!character) return true;
+				return character.total_tcp + input.tcp >= 0;
+			}, "Cannot reduce character's total TCP to less than 0"),
+			["tcp"]
 		)
 	);
