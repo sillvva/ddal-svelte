@@ -1,5 +1,6 @@
 import { privateEnv } from "$lib/env/private";
 import { relations } from "$server/db/relations";
+import * as schema from "$server/db/schema";
 import {
 	getTableColumns,
 	sql,
@@ -10,12 +11,12 @@ import {
 	type RelationsFilter,
 	type SQL
 } from "drizzle-orm";
-import { PgTransaction, type PgTable } from "drizzle-orm/pg-core";
-import { drizzle, type PostgresJsQueryResultHKT } from "drizzle-orm/postgres-js";
+import type { PgTable, PgTransaction } from "drizzle-orm/pg-core";
+import { drizzle, type PostgresJsDatabase, type PostgresJsQueryResultHKT } from "drizzle-orm/postgres-js";
 import postgres from "postgres";
 
 export const connection = postgres(privateEnv.DATABASE_URL, { prepare: false });
-export const db = drizzle(connection, { relations });
+export const db = drizzle(connection, { schema, relations });
 export const q = db.query;
 
 export function buildConflictUpdateColumns<
@@ -39,7 +40,8 @@ export function buildConflictUpdateColumns<
 	);
 }
 
-export type Transaction = PgTransaction<PostgresJsQueryResultHKT, Record<string, never>, typeof relations>;
+export type Database = PostgresJsDatabase<typeof schema, typeof relations>;
+export type Transaction = PgTransaction<PostgresJsQueryResultHKT, typeof schema, typeof relations>;
 
 type TRSchema = ExtractTablesWithRelations<typeof relations>;
 export type Filter<TableName extends keyof TRSchema> = RelationsFilter<TRSchema[TableName], TRSchema>;
