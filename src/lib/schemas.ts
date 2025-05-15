@@ -131,6 +131,20 @@ export const characterLogSchema = (character: FullCharacterData) =>
 				return character.total_level + input.level - logLevel <= 20;
 			}, "Character cannot level past 20"),
 			["level"]
+		),
+		v.forward(
+			v.check((input) => {
+				const logGold = character.logs.find((log) => log.id === input.id)?.gold || 0;
+				return character.total_gold + input.gold - logGold >= 0;
+			}, "Cannot reduce total gold to less than 0"),
+			["gold"]
+		),
+		v.forward(
+			v.check((input) => {
+				const logTCP = character.logs.find((log) => log.id === input.id)?.tcp || 0;
+				return character.total_tcp + input.tcp - logTCP >= 0;
+			}, "Cannot reduce total TCP to less than 0"),
+			["tcp"]
 		)
 	);
 
@@ -177,5 +191,23 @@ export const dMLogSchema = (characters: FullCharacterData[] = []) =>
 				return character.total_level + input.level - logLevel <= 20;
 			}, "Cannot increase level above 20"),
 			["level"]
+		),
+		v.forward(
+			v.check((input) => {
+				const character = characters.find((c) => c.id === input.characterId);
+				if (!character) return true;
+				const logGold = character.logs.find((log) => log.id === input.id)?.gold || 0;
+				return character.total_gold + input.gold - logGold >= 0;
+			}, "Cannot reduce character's total gold to less than 0"),
+			["gold"]
+		),
+		v.forward(
+			v.check((input) => {
+				const character = characters.find((c) => c.id === input.characterId);
+				if (!character) return true;
+				const logTCP = character.logs.find((log) => log.id === input.id)?.tcp || 0;
+				return character.total_tcp + input.tcp - logTCP >= 0;
+			}, "Cannot reduce character's total TCP to less than 0"),
+			["tcp"]
 		)
 	);
