@@ -8,4 +8,4 @@
 	let { children } = $props();
 </script>
 
-<p class="ellipsis-nowrap mb-2 last:mb-0">{@render children?.()}</p>
+<p class="mb-2 last:mb-0">{@render children?.()}</p>
