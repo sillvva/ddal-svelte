@@ -29,7 +29,7 @@
 		{@render children?.()}
 	</h3>
 {:else if depth === 4}
-	<h4 {id} class={twMerge("text-md ellipsis-nowrap mb-2", className)}>
+	<h4 {id} class={twMerge("text-md mb-2", className)}>
 		{@render children?.()}
 	</h4>
 {:else}
