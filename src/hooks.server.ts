@@ -14,7 +14,7 @@ import { DrizzleAdapter } from "@auth/drizzle-adapter";
 import { SvelteKitAuth, type SvelteKitAuthConfig } from "@auth/sveltekit";
 import { type Handle } from "@sveltejs/kit";
 import { sequence } from "@sveltejs/kit/hooks";
-import { eq, ne } from "drizzle-orm";
+import { eq } from "drizzle-orm";
 import { assertUser, CustomAuthError } from "./server/auth";
 
 interface OAuthProvider {
@@ -97,8 +97,14 @@ const auth = SvelteKitAuth(async (event) => {
 					if (currentUserId) return true;
 
 					const existingAccount = await q.accounts.findFirst({
-						where: (accounts, { and, eq }) =>
-							and(eq(accounts.provider, account.provider), eq(accounts.providerAccountId, account.providerAccountId))
+						where: {
+							provider: {
+								eq: account.provider
+							},
+							providerAccountId: {
+								eq: account.providerAccountId
+							}
+						}
 					});
 
 					if (privateEnv.DISABLE_SIGNUPS && !existingAccount) throw new CustomAuthError("SignupsDisabled");
@@ -138,13 +144,24 @@ const auth = SvelteKitAuth(async (event) => {
 				if (provider && session.expires.getTime() - Date.now() >= 15 * 86400 * 1000) return session satisfies LocalsSession;
 
 				const account = await q.accounts.findFirst({
-					where: (accounts, { and, eq, isNotNull }) =>
-						and(
-							eq(accounts.userId, session.user.id),
-							isNotNull(accounts.lastLogin),
-							provider ? eq(accounts.provider, provider) : ne(accounts.provider, "webauthn")
-						),
-					orderBy: (account, { desc }) => desc(account.lastLogin)
+					where: {
+						userId: {
+							eq: session.user.id
+						},
+						lastLogin: {
+							isNotNull: true
+						},
+						provider: provider
+							? {
+									eq: provider
+								}
+							: {
+									ne: "webauthn"
+								}
+					},
+					orderBy: {
+						lastLogin: "desc"
+					}
 				});
 
 				if (account) {
@@ -168,7 +185,7 @@ const auth = SvelteKitAuth(async (event) => {
 			}
 		},
 		secret: privateEnv.AUTH_SECRET,
-		adapter: DrizzleAdapter(db, {
+		adapter: DrizzleAdapter(db as any, {
 			usersTable: users,
 			accountsTable: accounts,
 			sessionsTable: sessions,
