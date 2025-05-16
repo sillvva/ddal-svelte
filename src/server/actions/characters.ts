@@ -18,8 +18,8 @@ export async function saveCharacter(
 		const [result] = await db
 			.insert(characters)
 			.values({
-				id: characterId === "new" ? undefined : characterId,
 				...data,
+				id: characterId === "new" ? undefined : characterId,
 				userId
 			})
 			.onConflictDoUpdate({
