@@ -6,7 +6,7 @@
 	import Markdown from "$lib/components/Markdown.svelte";
 	import Settings from "$lib/components/Settings.svelte";
 	import { getGlobal } from "$lib/stores.svelte.js";
-	import { hotkey } from "@svelteuidev/composables";
+	import { hotkey } from "$lib/util";
 	import { Toaster } from "svelte-sonner";
 	import { fade } from "svelte/transition";
 
@@ -123,14 +123,14 @@
 	open={!!page.state.modal || undefined}
 	aria-labelledby="modal-title"
 	aria-describedby="modal-content"
-	use:hotkey={[
+	{@attach hotkey([
 		[
 			"Escape",
 			() => {
 				if (page.state.modal) history.back();
 			}
 		]
-	]}
+	])}
 >
 	{#if page.state.modal}
 		{#if page.state.modal.type === "text"}

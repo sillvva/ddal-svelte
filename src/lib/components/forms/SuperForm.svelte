@@ -43,7 +43,7 @@
 	</div>
 {/if}
 
-<form {method} {...rest} use:enhance>
+<form {method} {...rest} {@attach enhance}>
 	<fieldset class="grid grid-cols-12 gap-4" disabled={$submitting}>
 		{@render children?.()}
 	</fieldset>

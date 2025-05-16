@@ -1,6 +1,6 @@
 <script lang="ts">
 	import type { Snippet } from "svelte";
-
+	
 	let { children }: { children?: Snippet } = $props();
 
 	function bq(el: HTMLDetailsElement) {
@@ -14,4 +14,4 @@
 	}
 </script>
 
-<details use:bq>{@render children?.()}</details>
+<details {@attach bq}>{@render children?.()}</details>

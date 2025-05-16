@@ -1,6 +1,9 @@
 import { dev } from "$app/environment";
+import { enhance as eh } from "$app/forms";
 import type { AuthClient } from "$server/db/schema";
-import { type NumericRange } from "@sveltejs/kit";
+import { type NumericRange, type SubmitFunction } from "@sveltejs/kit";
+import { clickoutside as co, download as dl, hotkey as hk, type HotkeyItem } from "@svelteuidev/composables";
+import type { Attachment } from "svelte/attachments";
 import { setError, type FormPathLeavesWithErrors, type SuperValidated } from "sveltekit-superforms";
 import type { setupViewTransition } from "sveltekit-view-transition";
 
@@ -121,4 +124,34 @@ export function parseError(e: unknown) {
 	if (typeof e === "string") return e;
 	if (typeof e === "object") return JSON.stringify(e);
 	return "Unknown error";
+}
+
+export function hotkey(hotkeys: HotkeyItem[]): Attachment<HTMLElement | Document> {
+	return (node: HTMLElement | Document) => {
+		if (node instanceof Document) node = node.body;
+		return hk(node, hotkeys).destroy;
+	};
+}
+
+export function download(filename: string, blob: Blob): Attachment<HTMLElement> {
+	return (node: HTMLElement) => {
+		return dl(node, {
+			blob,
+			filename
+		}).destroy;
+	};
+}
+
+export function clickoutside(params: { enabled: boolean; callback: (any: any) => unknown }): Attachment<HTMLElement> {
+	return (node: HTMLElement) => {
+		return co(node, params).destroy;
+	};
+}
+
+export function enhance<Success extends Record<string, unknown> | undefined, Failure extends Record<string, unknown> | undefined>(
+	submit?: SubmitFunction<Success, Failure>
+): Attachment<HTMLFormElement> {
+	return (node: HTMLFormElement) => {
+		return eh(node, submit).destroy;
+	};
 }

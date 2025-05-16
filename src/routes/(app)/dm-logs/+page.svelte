@@ -10,9 +10,8 @@
 	import DeleteLog from "$lib/components/forms/DeleteLog.svelte";
 	import { excludedSearchWords } from "$lib/constants";
 	import { getGlobal } from "$lib/stores.svelte.js";
-	import { createTransition, isDefined } from "$lib/util.js";
+	import { createTransition, download, hotkey, isDefined } from "$lib/util.js";
 	import { sorter } from "@sillvva/utils";
-	import { download, hotkey } from "@svelteuidev/composables";
 	import MiniSearch from "minisearch";
 
 	let { data } = $props();
@@ -88,8 +87,8 @@
 		<Dropdown class="dropdown-end">
 			{#snippet children({ close })}
 				<ul class="menu dropdown-content rounded-box bg-base-300 w-52 shadow-sm">
-					<li use:close>
-						<button use:download={{ blob: new Blob([JSON.stringify(data.logs)]), filename: "dm-logs.json" }}>Export</button>
+					<li {@attach download("dm-logs.json", new Blob([JSON.stringify(data.logs)]))}>
+						<button>Export</button>
 					</li>
 				</ul>
 			{/snippet}
@@ -102,14 +101,14 @@
 				href="/dm-logs/new"
 				class="btn btn-primary btn-sm max-sm:hidden"
 				aria-label="New Log"
-				use:hotkey={[
+				{@attach hotkey([
 					[
 						"n",
 						() => {
 							goto(`/dm-logs/new`);
 						}
 					]
-				]}
+				])}
 			>
 				New Log <kbd class="kbd kbd-sm max-sm:hover-none:hidden">N</kbd>
 			</a>
