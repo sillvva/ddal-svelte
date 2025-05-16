@@ -8,7 +8,8 @@ export const appDefaults: App.Cookie = {
 	},
 	characters: {
 		magicItems: false,
-		display: "list"
+		display: "list",
+		firstLog: false
 	},
 	log: {
 		descriptions: false

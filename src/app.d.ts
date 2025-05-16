@@ -79,6 +79,7 @@ declare global {
 			characters: {
 				magicItems: boolean;
 				display: "list" | "grid";
+				firstLog: boolean;
 			};
 			log: {
 				descriptions: boolean;
