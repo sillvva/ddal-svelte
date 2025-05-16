@@ -7,9 +7,8 @@
 	import SearchResults from "$lib/components/SearchResults.svelte";
 	import { excludedSearchWords } from "$lib/constants.js";
 	import { getGlobal, getTransition } from "$lib/stores.svelte.js";
-	import { createTransition, isDefined } from "$lib/util";
+	import { createTransition, download, hotkey, isDefined } from "$lib/util";
 	import { sorter } from "@sillvva/utils";
-	import { download, hotkey } from "@svelteuidev/composables";
 	import MiniSearch from "minisearch";
 
 	let { data } = $props();
@@ -83,10 +82,8 @@
 		<Dropdown class="dropdown-end">
 			{#snippet children({ close })}
 				<ul class="menu dropdown-content rounded-box bg-base-300 w-52 shadow-sm">
-					<li use:close>
-						<button use:download={{ blob: new Blob([JSON.stringify(data.characters)]), filename: "characters.json" }}>
-							Export
-						</button>
+					<li {@attach close}>
+						<button {@attach download("characters.json", new Blob([JSON.stringify(data.characters)]))}> Export </button>
 					</li>
 				</ul>
 			{/snippet}
@@ -108,14 +105,14 @@
 				<a
 					href="/characters/new"
 					class="btn btn-primary btn-sm max-sm:hidden"
-					use:hotkey={[
+					{@attach hotkey([
 						[
 							"n",
 							() => {
 								goto(`/characters/new`);
 							}
 						]
-					]}
+					])}
 				>
 					New Character <kbd class="kbd kbd-sm max-sm:hover-none:hidden">N</kbd>
 				</a>

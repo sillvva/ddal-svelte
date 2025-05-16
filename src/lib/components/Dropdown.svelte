@@ -1,11 +1,11 @@
 <script lang="ts">
-	import { clickoutside } from "@svelteuidev/composables";
+	import { clickoutside } from "$lib/util";
 	import type { Snippet } from "svelte";
 	import type { HTMLAttributes } from "svelte/elements";
 	import { twMerge } from "tailwind-merge";
 
 	interface Props extends Omit<HTMLAttributes<HTMLDetailsElement>, "children" | "class"> {
-		children?: Snippet<[{ close: (node: HTMLLIElement) => void }]>;
+		children?: Snippet<[{ close: (node: HTMLLIElement) => () => void }]>;
 		class?: string | null;
 	}
 
@@ -14,19 +14,21 @@
 	let open = $state(false);
 
 	function close(node: HTMLLIElement) {
+		const abortController = new AbortController();
 		node.addEventListener("click", () => {
 			open = false;
-		});
+		}, { signal: abortController.signal });
+		return () => abortController.abort();
 	}
 </script>
 
 <details
-	use:clickoutside={{
+	{@attach clickoutside({
 		enabled: open,
 		callback: () => {
 			open = false;
 		}
-	}}
+	})}
 	class={twMerge("dropdown", className)}
 	bind:open
 >

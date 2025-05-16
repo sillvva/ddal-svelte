@@ -3,6 +3,7 @@
 	import { page } from "$app/state";
 	import { errorToast, successToast } from "$lib/factories.svelte";
 	import { getGlobal } from "$lib/stores.svelte";
+	import { hotkey } from "$lib/util";
 	import type {
 		DeleteWebAuthnInput,
 		DeleteWebAuthnResponse,
@@ -10,7 +11,6 @@
 		RenameWebAuthnResponse
 	} from "$src/routes/(api)/webAuthn/+server";
 	import { signIn } from "@auth/sveltekit/webauthn";
-	import { hotkey } from "@svelteuidev/composables";
 	import { tick } from "svelte";
 	import { scale } from "svelte/transition";
 	import Control from "./forms/Control.svelte";
@@ -143,14 +143,14 @@
 	open={!!renaming}
 	aria-labelledby="modal-title"
 	aria-describedby="modal-content"
-	use:hotkey={[
+	{@attach hotkey([
 		[
 			"Escape",
 			() => {
 				if (renaming === true) renameWebAuthn(true);
 			}
 		]
-	]}
+	])}
 >
 	{#if renaming}
 		<div

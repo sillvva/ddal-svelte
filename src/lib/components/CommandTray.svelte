@@ -3,10 +3,9 @@
 	import { page } from "$app/state";
 	import { excludedSearchWords, searchSections } from "$lib/constants.js";
 	import { getGlobal } from "$lib/stores.svelte";
-	import { debounce } from "$lib/util";
+	import { debounce, hotkey } from "$lib/util";
 	import type { SearchData } from "$src/routes/(api)/command/+server";
 	import { sorter } from "@sillvva/utils";
-	import { hotkey } from "@svelteuidev/composables";
 	import { Command, Dialog, Separator } from "bits-ui";
 	import Items from "./Items.svelte";
 
@@ -107,7 +106,7 @@
 </script>
 
 <svelte:document
-	use:hotkey={[
+	{@attach hotkey([
 		[
 			page.data.isMac ? "meta+k" : "ctrl+k",
 			() => {
@@ -120,7 +119,7 @@
 				close();
 			}
 		]
-	]}
+	])}
 />
 
 <Dialog.Root bind:open={cmdOpen} onOpenChange={() => (search = "")}>

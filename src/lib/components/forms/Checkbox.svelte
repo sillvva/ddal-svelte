@@ -3,14 +3,14 @@
 	import { formFieldProxy, type FormFieldProxy, type FormPathLeaves, type SuperForm } from "sveltekit-superforms";
 
 	type T = $$Generic<Record<PropertyKey, unknown>>;
-	interface Props {
+	interface Props extends HTMLInputAttributes {
 		superform: SuperForm<T>;
 		field: FormPathLeaves<T, boolean>;
 		required?: HTMLInputAttributes["required"];
 		label: string;
 	}
 
-	let { superform, field, required = false, label }: Props = $props();
+	let { superform, field, required = false, label, type, checked, ...rest }: Props = $props();
 
 	const { value } = formFieldProxy(superform, field) satisfies FormFieldProxy<boolean>;
 </script>
@@ -22,5 +22,5 @@
 			<span class="text-error">*</span>
 		{/if}
 	</span>
-	<input type="checkbox" bind:checked={$value} {required} class="checkbox-primary checkbox" />
+	<input {...rest} type="checkbox" bind:checked={$value} {required} class="checkbox-primary checkbox" />
 </label>

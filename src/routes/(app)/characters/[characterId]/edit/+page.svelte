@@ -52,7 +52,15 @@
 	{/if}
 	{#if !data.character?.id}
 		<Control class="col-span-12 sm:col-span-6">
-			<Checkbox {superform} field="firstLog" label="Create Starting Log" />
+			<Checkbox
+				{superform}
+				field="firstLog"
+				label="Create Starting Log"
+				onchange={(ev) => {
+					const checked = (ev.target as HTMLInputElement).checked;
+					global.app.characters.firstLog = checked;
+				}}
+			/>
 		</Control>
 	{/if}
 	<Submit {superform}>Save Character</Submit>

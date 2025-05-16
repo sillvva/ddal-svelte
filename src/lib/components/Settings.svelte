@@ -1,9 +1,9 @@
 <script lang="ts">
-	import { enhance } from "$app/forms";
 	import { page } from "$app/state";
 	import { PROVIDERS } from "$lib/constants";
 	import { successToast } from "$lib/factories.svelte";
 	import { getGlobal } from "$lib/stores.svelte";
+	import { enhance } from "$lib/util";
 	import { signIn, signOut } from "@auth/sveltekit/client";
 	import { twMerge } from "tailwind-merge";
 	import Passkeys from "./Passkeys.svelte";
@@ -97,7 +97,7 @@
 									<form
 										method="POST"
 										action="/characters?/unlinkProvider"
-										use:enhance={({ cancel }) => {
+										{@attach enhance(({ cancel }) => {
 											if (!confirm(`Are you sure you want to unlink ${provider.name}?`)) return cancel();
 
 											global.pageLoader = true;
@@ -107,7 +107,7 @@
 												global.pageLoader = false;
 												successToast(`${provider.name} unlinked`);
 											};
-										}}
+										})}
 									>
 										<input type="hidden" name="provider" value={provider.id} />
 										<button class="btn btn-error btn-sm">Unlink</button>

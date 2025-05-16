@@ -61,7 +61,7 @@
 		style:--minRows={minRows && `${minRows}lh`}
 		style:--maxRows={maxRows && `${maxRows}lh`}
 		spellcheck="true"
-		use:autosize
+		{@attach autosize}
 		{...$constraints}
 	></textarea>
 	{#if preview && state === "preview"}

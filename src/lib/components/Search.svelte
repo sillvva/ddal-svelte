@@ -1,7 +1,7 @@
 <script lang="ts">
 	import { goto } from "$app/navigation";
 	import { page } from "$app/state";
-	import { hotkey } from "@svelteuidev/composables";
+	import { hotkey } from "$lib/util";
 	import type { HTMLInputAttributes } from "svelte/elements";
 	import { twMerge } from "tailwind-merge";
 
@@ -18,17 +18,18 @@
 	let ref: HTMLInputElement | undefined = undefined;
 </script>
 
-<search
-	class="min-w-0 flex-1"
-	use:hotkey={[
+<svelte:document
+	{@attach hotkey([
 		[
 			"/",
 			() => {
 				ref?.focus();
 			}
 		]
-	]}
->
+	])}
+/>
+
+<search class="min-w-0 flex-1">
 	<label class="input focus-within:border-primary sm:input-sm flex w-full items-center gap-2">
 		<input
 			{type}

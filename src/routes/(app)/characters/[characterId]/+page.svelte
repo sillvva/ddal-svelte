@@ -11,9 +11,8 @@
 	import DeleteLog from "$lib/components/forms/DeleteLog.svelte";
 	import { excludedSearchWords } from "$lib/constants.js";
 	import { getGlobal, getTransition } from "$lib/stores.svelte.js";
-	import { createTransition } from "$lib/util";
+	import { createTransition, download, hotkey } from "$lib/util";
 	import { slugify, sorter } from "@sillvva/utils";
-	import { download, hotkey } from "@svelteuidev/composables";
 	import MiniSearch from "minisearch";
 
 	let { data } = $props();
@@ -95,13 +94,8 @@
 				<Dropdown class="dropdown-end">
 					{#snippet children({ close })}
 						<ul class="menu dropdown-content rounded-box bg-base-300 z-20 w-52 shadow-sm">
-							<li use:close>
-								<button
-									use:download={{
-										blob: new Blob([JSON.stringify(data.character)]),
-										filename: `${slugify(data.character.name)}.json`
-									}}
-								>
+							<li {@attach close}>
+								<button {@attach download(`${slugify(data.character.name)}.json`, new Blob([JSON.stringify(data.character)]))}>
 									Export
 								</button>
 							</li>
@@ -116,7 +110,7 @@
 				{#snippet children({ close })}
 					<ul class="menu dropdown-content rounded-box bg-base-300 z-20 w-52 p-2 shadow-sm">
 						{#if data.character.imageUrl}
-							<li class="xs:hidden" use:close>
+							<li class="xs:hidden" {@attach close}>
 								<a
 									href={data.character.imageUrl}
 									target="_blank"
@@ -128,10 +122,10 @@
 							</li>
 						{/if}
 						{#if myCharacter}
-							<li use:close>
+							<li {@attach close}>
 								<a href={`/characters/${data.character.id}/edit`}>Edit</a>
 							</li>
-							<li use:close>
+							<li {@attach close}>
 								<DeleteCharacter character={data.character} label="Delete Character" />
 							</li>
 						{/if}
@@ -258,21 +252,21 @@
 	</div>
 </section>
 
-<div class="mt-4 flex flex-wrap gap-2 print:hidden" use:scrollToSearch>
+<div class="mt-4 flex flex-wrap gap-2 print:hidden" {@attach scrollToSearch}>
 	<div class="flex w-full gap-2 sm:max-w-md print:hidden">
 		{#if myCharacter}
 			<a
 				href={`/characters/${data.character.id}/log/new`}
 				class="btn btn-primary sm:btn-sm max-sm:hidden sm:px-3"
 				aria-label="New Log"
-				use:hotkey={[
+				{@attach hotkey([
 					[
 						"n",
 						() => {
 							goto(`/characters/${data.character.id}/log/new`);
 						}
 					]
-				]}
+				])}
 			>
 				New Log <kbd class="kbd kbd-sm max-sm:hover-none:hidden">N</kbd>
 			</a>
