@@ -122,28 +122,28 @@ export const characterLogSchema = (character: FullCharacterData) =>
 			v.check((input) => {
 				const logACP = character.logs.find((log) => log.id === input.id)?.acp || 0;
 				return character.total_level < 20 || input.acp - logACP === 0;
-			}, "Cannot increase level above 20"),
+			}, `Cannot increase level above 20. Current: ${character.total_level}`),
 			["acp"]
 		),
 		v.forward(
 			v.check((input) => {
 				const logLevel = character.logs.find((log) => log.id === input.id)?.level || 0;
 				return character.total_level + input.level - logLevel <= 20;
-			}, "Character cannot level past 20"),
+			}, `Cannot increase level above 20. Current: ${character.total_level}`),
 			["level"]
 		),
 		v.forward(
 			v.check((input) => {
 				const logGold = character.logs.find((log) => log.id === input.id)?.gold || 0;
 				return character.total_gold + input.gold - logGold >= 0;
-			}, "Cannot reduce total gold to less than 0"),
+			}, `Cannot reduce total gold to less than 0. Current: ${character.total_gold.toLocaleString()}`),
 			["gold"]
 		),
 		v.forward(
 			v.check((input) => {
 				const logTCP = character.logs.find((log) => log.id === input.id)?.tcp || 0;
 				return character.total_tcp + input.tcp - logTCP >= 0;
-			}, "Cannot reduce total TCP to less than 0"),
+			}, `Cannot reduce total TCP to less than 0. Current: ${character.total_tcp}`),
 			["tcp"]
 		)
 	);
