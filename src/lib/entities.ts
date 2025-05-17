@@ -241,13 +241,3 @@ export function logDataToSchema(userId: UserId, log: FullLogData): LogSchema {
 		storyAwardsLost: log.storyAwardsLost.map((award) => award.id)
 	};
 }
-
-export function strippedCharacterData(character: ExtendedCharacterData, logId?: LogId) {
-	return {
-		...character,
-		logs: character.logs.filter((log) => log.id !== logId),
-		log_levels: [],
-		magicItems: [],
-		storyAwards: []
-	};
-}
