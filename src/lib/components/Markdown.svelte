@@ -20,17 +20,23 @@
 	import tablehead from "$lib/components/renderers/tablehead.svelte";
 	import tablerow from "$lib/components/renderers/tablerow.svelte";
 	import type { HTMLAttributes } from "svelte/elements";
+	import details from "./renderers/html/details.svelte";
+	import summary from "./renderers/html/summary.svelte";
 
 	interface Props extends HTMLAttributes<HTMLDivElement> {
 		content?: string;
 	}
 
 	let { content = "", ...rest }: Props = $props();
+
+	function addNewlinesAroundTags(content: string) {
+		return content.replace(/<([a-zA-Z]+)([^>]*)(\/?>)|(<\/[a-zA-Z]+>)/g, "\n$&\n");
+	}
 </script>
 
 <div {...rest}>
 	<SvelteMarkdown
-		source={content}
+		source={addNewlinesAroundTags(content)}
 		renderers={{
 			blockquote,
 			heading,
@@ -69,7 +75,9 @@
 				h1,
 				h2,
 				h3,
-				h4
+				h4,
+				details,
+				summary
 			}
 		}}
 	/>
