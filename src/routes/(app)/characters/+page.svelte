@@ -91,7 +91,7 @@
 	</div>
 
 	{#if !data.characters.length}
-		<section class="bg-base-200">
+		<section class="bg-base-200 rounded-lg">
 			<div class="py-20 text-center">
 				<p class="mb-4">No characters found.</p>
 				<p>
