@@ -55,7 +55,7 @@ export function getLevels(
 ) {
 	if (!logs) logs = [];
 	let totalLevel = Math.max(1, base.level || 0);
-	const log_levels: Array<{ id: string; levels: number }> = [];
+	const logLevels: Array<{ id: string; levels: number }> = [];
 
 	const xpLevels = [
 		0, 300, 900, 2700, 6500, 14000, 23000, 34000, 48000, 64000, 85000, 100000, 120000, 140000, 165000, 195000, 225000, 265000,
@@ -86,26 +86,26 @@ export function getLevels(
 
 		const gainedLevels = Math.max(gainedXp, gainedAcp, log.level);
 		if (gainedLevels > 0) {
-			log_levels.push({ id: log.id, levels: gainedLevels });
+			logLevels.push({ id: log.id, levels: gainedLevels });
 			totalLevel += gainedLevels;
 		}
 	});
 
 	return {
 		total: Math.min(20, totalLevel),
-		log_levels
+		logLevels
 	};
 }
 
 export function getLogsSummary(logs: LogData[], includeLogs = true) {
-	const sortedLogs = logs.map(parseLog).toSorted((a, b) => sorter(a.show_date, b.show_date));
+	const sortedLogs = logs.map(parseLog).toSorted((a, b) => sorter(a.showDate, b.showDate));
 
 	const levels = getLevels(sortedLogs);
-	const total_level = levels.total;
-	const total_gold = sortedLogs.reduce((acc, log) => acc + log.gold, 0);
-	const total_tcp = sortedLogs.reduce((acc, log) => acc + log.tcp, 0);
-	const total_dtd = sortedLogs.reduce((acc, log) => acc + log.dtd, 0);
-	const magic_items = sortedLogs.reduce((acc, log) => {
+	const totalLevel = levels.total;
+	const totalGold = sortedLogs.reduce((acc, log) => acc + log.gold, 0);
+	const totalTcp = sortedLogs.reduce((acc, log) => acc + log.tcp, 0);
+	const totalDtd = sortedLogs.reduce((acc, log) => acc + log.dtd, 0);
+	const magicItems = sortedLogs.reduce((acc, log) => {
 		acc.push(
 			...log.magicItemsGained.filter((magicItem) => {
 				return !magicItem.logLostId;
@@ -113,7 +113,7 @@ export function getLogsSummary(logs: LogData[], includeLogs = true) {
 		);
 		return acc;
 	}, [] as MagicItem[]);
-	const story_awards = sortedLogs.reduce((acc, log) => {
+	const storyAwards = sortedLogs.reduce((acc, log) => {
 		acc.push(
 			...log.storyAwardsGained.filter((storyAward) => {
 				return !storyAward.logLostId;
@@ -125,23 +125,23 @@ export function getLogsSummary(logs: LogData[], includeLogs = true) {
 	let level = 1;
 
 	return {
-		total_level,
-		total_gold,
-		total_tcp,
-		total_dtd,
-		magic_items,
-		story_awards,
-		last_log: sortedLogs.at(-1)?.show_date || new Date(0),
-		log_levels: levels.log_levels,
-		tier: Math.floor((total_level + 1) / 6) + 1,
+		totalLevel,
+		totalGold,
+		totalTcp,
+		totalDtd,
+		magicItems,
+		storyAwards,
+		lastLog: sortedLogs.at(-1)?.showDate || new Date(0),
+		logLevels: levels.logLevels,
+		tier: Math.floor((totalLevel + 1) / 6) + 1,
 		logs: includeLogs
 			? sortedLogs.map((log) => {
-					const level_gained = levels.log_levels.find((gl) => gl.id === log.id);
-					if (level_gained) level += level_gained.levels;
+					const levelGained = levels.logLevels.find((gl) => gl.id === log.id);
+					if (levelGained) level += levelGained.levels;
 					return {
 						...log,
-						level_gained: level_gained?.levels || 0,
-						total_level: level
+						levelGained: levelGained?.levels || 0,
+						totalLevel: level
 					};
 				})
 			: []
@@ -216,7 +216,7 @@ export function parseLog(log: LogData | ExtendedLogData): FullLogData {
 	return {
 		...log,
 		character: "character" in log && log.character && log.character.name !== PlaceholderName ? log.character : null,
-		show_date: log.isDmLog && log.appliedDate ? log.appliedDate : log.date
+		showDate: log.isDmLog && log.appliedDate ? log.appliedDate : log.date
 	};
 }
 

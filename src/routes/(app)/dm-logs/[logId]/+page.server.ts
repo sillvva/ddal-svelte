@@ -25,9 +25,9 @@ export const load = async (event) => {
 		characters.map((c) => ({
 			...c,
 			logs: c.logs.filter((l) => l.id !== logId),
-			magic_items: [],
-			story_awards: [],
-			log_levels: []
+			magicItems: [],
+			storyAwards: [],
+			logLevels: []
 		}))
 	);
 

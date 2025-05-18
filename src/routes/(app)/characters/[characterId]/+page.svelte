@@ -66,7 +66,7 @@
 			? data.character.logs.filter((log) => msResults.find((result) => result.id === log.id))
 			: data.character.logs
 	);
-	const sortedResults = $derived(results.toSorted((a, b) => sorter(a.show_date, b.show_date)));
+	const sortedResults = $derived(results.toSorted((a, b) => sorter(a.showDate, b.showDate)));
 
 	function triggerImageModal() {
 		if (data.character.imageUrl) {
@@ -213,7 +213,7 @@
 				{/if}
 				<div class="flex">
 					<h4 class="font-semibold dark:text-white">Level</h4>
-					<div class="flex-1 text-right">{data.character.total_level}</div>
+					<div class="flex-1 text-right">{data.character.totalLevel}</div>
 				</div>
 				<div class="flex">
 					<h4 class="font-semibold dark:text-white">Tier</h4>
@@ -221,17 +221,17 @@
 				</div>
 				<div class="flex">
 					<h4 class="font-semibold dark:text-white">Gold</h4>
-					<div class="flex-1 text-right">{data.character.total_gold.toLocaleString()}</div>
+					<div class="flex-1 text-right">{data.character.totalGold.toLocaleString()}</div>
 				</div>
-				{#if data.character.total_tcp}
+				{#if data.character.totalTcp}
 					<div class="flex">
 						<h4 class="font-semibold dark:text-white">TCP</h4>
-						<div class="flex-1 text-right">{data.character.total_tcp}</div>
+						<div class="flex-1 text-right">{data.character.totalTcp}</div>
 					</div>
 				{/if}
 				<div class="flex">
 					<h4 class="font-semibold dark:text-white">Downtime</h4>
-					<div class="flex-1 text-right">{data.character.total_dtd}</div>
+					<div class="flex-1 text-right">{data.character.totalDtd}</div>
 				</div>
 			</div>
 			<div
@@ -243,8 +243,8 @@
 			<div class="xs:basis-[60%] flex basis-full flex-col sm:basis-2/3 lg:basis-2/3 print:basis-2/3">
 				{#if data.character}
 					<div class="flex flex-col gap-4">
-						<Items title="Story Awards" items={data.character.story_awards} collapsible sort />
-						<Items title="Magic Items" items={data.character.magic_items} collapsible formatting sort />
+						<Items title="Story Awards" items={data.character.storyAwards} collapsible sort />
+						<Items title="Magic Items" items={data.character.magicItems} collapsible formatting sort />
 					</div>
 				{/if}
 			</div>
@@ -363,7 +363,7 @@
 									</span>
 								{/if}
 								<p class="text-netural-content mb-2 text-sm font-normal whitespace-nowrap">
-									{new Date(log.show_date).toLocaleString([], { dateStyle: "medium", timeStyle: "short" })}
+									{new Date(log.showDate).toLocaleString([], { dateStyle: "medium", timeStyle: "short" })}
 								</p>
 								{#if log.type === "game" && !log.dm.isUser}
 									<p class="text-sm font-normal">
@@ -390,7 +390,7 @@
 											</p>
 										{/if}
 										<p>
-											<span class="font-semibold dark:text-white">Levels:</span>&nbsp;{log.level_gained}&nbsp;({log.total_level})
+											<span class="font-semibold dark:text-white">Levels:</span>&nbsp;{log.levelGained}&nbsp;({log.totalLevel})
 										</p>
 									{/if}
 									{#if log.dtd !== 0}
@@ -425,9 +425,9 @@
 										{log.acp}
 									</p>
 								{/if}
-								{#if log.level_gained > 0}
+								{#if log.levelGained > 0}
 									<p>
-										<span class="font-semibold dark:text-white">Levels:</span>&nbsp;{log.level_gained}&nbsp;({log.total_level})
+										<span class="font-semibold dark:text-white">Levels:</span>&nbsp;{log.levelGained}&nbsp;({log.totalLevel})
 									</p>
 								{/if}
 								{#if log.dtd !== 0}

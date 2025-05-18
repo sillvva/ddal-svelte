@@ -85,9 +85,9 @@
 
 					let searchString = item.name;
 					if (item.type === "character") {
-						searchString += ` ${item.race} ${item.class} ${item.campaign} L${item.total_level} T${item.tier}`;
-						searchString += ` ${item.magic_items.map((mi) => mi.name).join(" ")}`;
-						searchString += ` ${item.story_awards.map((sa) => sa.name).join(" ")}`;
+						searchString += ` ${item.race} ${item.class} ${item.campaign} L${item.totalLevel} T${item.tier}`;
+						searchString += ` ${item.magicItems.map((mi) => mi.name).join(" ")}`;
+						searchString += ` ${item.storyAwards.map((sa) => sa.name).join(" ")}`;
 					} else if (item.type === "log") {
 						if (item.character) searchString += ` ${item.character.name}`;
 						if (item.dm) searchString += ` ${item.dm.name}`;
@@ -225,17 +225,17 @@
 																				<div class="flex flex-col">
 																					<div>{item.name}</div>
 																					<div class="text-base-content/70 text-xs">
-																						Level {item.total_level}
+																						Level {item.totalLevel}
 																						{item.race}
 																						{item.class}
 																					</div>
 																					{#if search.length >= 2}
-																						{#if item.magic_items.some((magicItem) => hasMatch(magicItem.name))}
+																						{#if item.magicItems.some((magicItem) => hasMatch(magicItem.name))}
 																							<div class="flex flex-col text-xs">
 																								<span class="pt-1 font-bold whitespace-nowrap">Magic Items:</span>
 																								<span class="text-base-content/70 flex-1">
 																									<Items
-																										items={item.magic_items
+																										items={item.magicItems
 																											.filter((item) => hasMatch(item.name))
 																											.toSorted((a, b) => sorter(a.name, b.name))}
 																										textClass="text-xs leading-4"
@@ -243,12 +243,12 @@
 																								</span>
 																							</div>
 																						{/if}
-																						{#if item.story_awards.some((storyAward) => hasMatch(storyAward.name))}
+																						{#if item.storyAwards.some((storyAward) => hasMatch(storyAward.name))}
 																							<div class="flex flex-col text-xs">
 																								<span class="pt-1 font-bold whitespace-nowrap">Story Awards:</span>
 																								<span class="text-base-content/70 flex-1">
 																									<Items
-																										items={item.story_awards
+																										items={item.storyAwards
 																											.filter((item) => hasMatch(item.name))
 																											.toSorted((a, b) => sorter(a.name, b.name))}
 																										textClass="text-xs leading-4"
