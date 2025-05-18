@@ -31,7 +31,7 @@
 	const graphemeCount = $derived(typeof $value === "string" ? [...new Intl.Segmenter().segment($value)].length : 0);
 	const lengthDiff = $derived($value.length - graphemeCount);
 
-	const markdownTip = "Both Markdown and HTML are allowed. However, some elements are not allowed.";
+	const markdownTip = "Supports Markdown and HTML. Scripting, media, and form tags are not allowed for security reasons.";
 	const graphemeTip = $derived(
 		lengthDiff
 			? `You have used ${graphemeCount} characters, but ${lengthDiff} are not visible. This is caused by the use of special characters like emojis.`
@@ -76,7 +76,7 @@
 			<span class="text-error">{$errors}</span>
 		{:else}
 			<span class="tooltip tooltip-bottom" data-tip={markdownTip}>
-				Markdown Allowed
+				Markdown and HTML Supported
 				<span class="iconfify mdi--question-mark-circle"></span>
 			</span>
 		{/if}
