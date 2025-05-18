@@ -85,7 +85,7 @@
 			<span class="flex h-full flex-1 items-center justify-center text-xl font-semibold">Sign In with Passkey</span>
 		</button>
 		<span class="text-base-content max-w-72 text-center text-xs text-balance">
-			You must have an account and add a Passkey in settings before you can sign in with this.
+			You must have an account and then add a Passkey in settings before you can sign in with a Passkey.
 		</span>
 	</div>
 	{#if data.code}
