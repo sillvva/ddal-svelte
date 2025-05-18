@@ -34,7 +34,7 @@
 	const markdownTip = "Supports Markdown and HTML. Scripting, media, and form tags are not allowed for security reasons.";
 	const graphemeTip = $derived(
 		lengthDiff
-			? `You have used ${graphemeCount} characters, but ${lengthDiff} are not visible. This is caused by the use of special characters like emojis.`
+			? `You have used ${graphemeCount} characters, but ${lengthDiff} are counted differently due to special characters like emojis.`
 			: undefined
 	);
 </script>
