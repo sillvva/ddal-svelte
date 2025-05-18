@@ -93,9 +93,9 @@
 	{#if !data.characters.length}
 		<section class="bg-base-200">
 			<div class="py-20 text-center">
-				<p class="mb-4">You have no log sheets.</p>
+				<p class="mb-4">No characters found.</p>
 				<p>
-					<a href="/characters/new" class="btn btn-primary">Create one now</a>
+					<a href="/characters/new" class="btn btn-primary">Create your first character</a>
 				</p>
 			</div>
 		</section>
