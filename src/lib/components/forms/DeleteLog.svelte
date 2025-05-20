@@ -3,18 +3,19 @@
 	import { errorToast, successToast } from "$lib/factories.svelte";
 	import { getGlobal } from "$lib/stores.svelte";
 	import type { FullLogData } from "$server/data/logs";
+	import type { SvelteSet } from "svelte/reactivity";
 	import { superForm } from "sveltekit-superforms";
 
 	const global = getGlobal();
 
 	interface Props {
 		log: FullLogData;
-		deletingLog?: string[];
+		deletingLog?: SvelteSet<string>;
 		label?: string;
 		ondelete?: (event: { id: string }) => void;
 	}
 
-	let { log, deletingLog = $bindable([]), label = "", ondelete }: Props = $props();
+	let { log, deletingLog, label = "", ondelete }: Props = $props();
 
 	const { submit } = superForm(
 		{ id: log.id },
@@ -23,13 +24,13 @@
 			onSubmit({ cancel, formData }) {
 				if (!confirm(`Are you sure you want to delete ${log.name}? This action cannot be reversed.`)) return cancel();
 				formData.set("id", log.id);
-				deletingLog = deletingLog.concat(log.id);
+				deletingLog?.add(log.id);
 			},
 			onUpdated({ form }) {
 				const [error] = form.errors._errors || [];
 				if (error) {
 					errorToast(error);
-					deletingLog = deletingLog.filter((id) => id !== log.id);
+					deletingLog?.delete(log.id);
 				} else {
 					successToast(`${log.name} deleted`);
 					ondelete?.({ id: log.id });

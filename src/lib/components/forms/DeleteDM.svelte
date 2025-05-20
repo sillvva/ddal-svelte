@@ -3,18 +3,19 @@
 	import { errorToast, successToast } from "$lib/factories.svelte";
 	import { getGlobal } from "$lib/stores.svelte";
 	import type { UserDMsWithLogs } from "$server/data/dms";
+	import type { SvelteSet } from "svelte/reactivity";
 	import { superForm } from "sveltekit-superforms";
 
 	const global = getGlobal();
 
 	interface Props {
 		dm: UserDMsWithLogs[number];
-		deletingDM?: string[];
+		deletingDM?: SvelteSet<string>;
 		label?: string;
 		ondelete?: (event: { id: string }) => void;
 	}
 
-	let { dm, deletingDM = $bindable([]), label = "", ondelete }: Props = $props();
+	let { dm, deletingDM, label = "", ondelete }: Props = $props();
 
 	const { submit } = superForm(
 		{ id: dm.id },
@@ -23,13 +24,13 @@
 			onSubmit({ cancel, formData }) {
 				if (!confirm(`Are you sure you want to delete ${dm.name}? This action cannot be reversed.`)) return cancel();
 				formData.set("id", dm.id);
-				deletingDM = deletingDM.concat(dm.id);
+				deletingDM?.add(dm.id);
 			},
 			onUpdated({ form }) {
 				const [error] = form.errors._errors || [];
 				if (error) {
 					errorToast(error);
-					deletingDM = deletingDM.filter((id) => id !== dm.id);
+					deletingDM?.delete(dm.id);
 				} else {
 					successToast(`${dm.name} deleted`);
 					ondelete?.({ id: dm.id });

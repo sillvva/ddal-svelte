@@ -14,6 +14,7 @@
 	import { createTransition, download, hotkey } from "$lib/util";
 	import { slugify, sorter } from "@sillvva/utils";
 	import MiniSearch from "minisearch";
+	import { SvelteSet } from "svelte/reactivity";
 
 	let { data } = $props();
 
@@ -22,7 +23,7 @@
 
 	const myCharacter = $derived(data.character.userId === data.session?.user?.id);
 
-	let deletingLog = $state<string[]>([]);
+	let deletingLog = new SvelteSet<string>();
 	let search = $state(page.url.searchParams.get("s") || "");
 
 	const minisearch = new MiniSearch({
@@ -345,7 +346,7 @@
 					{@const hasDescription =
 						!!log.description?.trim() || log.storyAwardsGained.length > 0 || log.storyAwardsLost.length > 0}
 					<tbody class="border-t border-neutral-500/20 first:border-0">
-						<tr class="border-0 data-[deleting=true]:hidden print:text-sm" data-deleting={deletingLog.includes(log.id)}>
+						<tr class="border-0 data-[deleting=true]:hidden print:text-sm" data-deleting={deletingLog.has(log.id)}>
 							<td
 								class="static! pb-0 align-top data-[desc=true]:pb-3 sm:pb-3 print:p-2"
 								data-desc={hasDescription && global.app.log.descriptions}
@@ -463,7 +464,7 @@
 							{#if myCharacter}
 								<td class="w-8 align-top print:hidden">
 									<div class="flex flex-col justify-center gap-2">
-										<DeleteLog {log} bind:deletingLog />
+										<DeleteLog {log} {deletingLog} />
 									</div>
 								</td>
 							{/if}
@@ -471,7 +472,7 @@
 						<!-- Notes -->
 						<tr
 							class="hidden border-0 data-[deleting=true]:hidden! data-[desc=true]:table-row max-sm:data-[mi=true]:table-row [&>td]:border-0"
-							data-deleting={deletingLog.includes(log.id)}
+							data-deleting={deletingLog.has(log.id)}
 							data-desc={global.app.log.descriptions && hasDescription}
 							data-mi={log.magicItemsGained.length > 0 || log.magicItemsLost.length > 0}
 							use:transition={`notes-${log.id}`}

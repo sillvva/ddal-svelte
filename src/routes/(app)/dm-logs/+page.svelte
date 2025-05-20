@@ -13,13 +13,14 @@
 	import { createTransition, download, hotkey, isDefined } from "$lib/util.js";
 	import { sorter } from "@sillvva/utils";
 	import MiniSearch from "minisearch";
+	import { SvelteSet } from "svelte/reactivity";
 
 	let { data } = $props();
 
 	const global = getGlobal();
 
 	let search = $state(page.url.searchParams.get("s") || "");
-	let deletingLog = $state<string[]>([]);
+	let deletingLog = new SvelteSet<string>();
 
 	const indexed = $derived(
 		data.logs
@@ -174,7 +175,7 @@
 								!!log.description?.trim() || log.storyAwardsGained.length > 0 || log.storyAwardsLost.length > 0}
 							<tr
 								class="[&>td]:border-t-base-300 data-[deleting=true]:hidden [&>td]:border-t [&>td]:border-b-0"
-								data-deleting={deletingLog.includes(log.id)}
+								data-deleting={deletingLog.has(log.id)}
 							>
 								<td class="static! align-top">
 									<a
@@ -289,14 +290,14 @@
 								<!-- Delete -->
 								<td class="w-8 align-top print:hidden">
 									<div class="flex flex-col gap-2">
-										<DeleteLog {log} bind:deletingLog />
+										<DeleteLog {log} {deletingLog} />
 									</div>
 								</td>
 							</tr>
 							<!-- Notes -->
 							<tr
 								class="hidden data-[deleting=true]:hidden! data-[desc=true]:table-row max-sm:data-[mi=true]:table-row"
-								data-deleting={deletingLog.includes(log.id)}
+								data-deleting={deletingLog.has(log.id)}
 								data-desc={global.app.dmLogs.descriptions && hasDescription}
 								data-mi={log.magicItemsGained.length > 0 || log.magicItemsLost.length > 0}
 							>

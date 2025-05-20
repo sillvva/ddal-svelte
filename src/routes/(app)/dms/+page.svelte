@@ -6,11 +6,12 @@
 	import DeleteDm from "$lib/components/forms/DeleteDM.svelte";
 	import { excludedSearchWords } from "$lib/constants.js";
 	import MiniSearch from "minisearch";
+	import { SvelteSet } from "svelte/reactivity";
 
 	let { data } = $props();
 
 	const dms = $derived(data.dms);
-	let deletingDM = $state<string[]>([]);
+	let deletingDM = new SvelteSet<string>();
 	let search = $state(page.url.searchParams.get("s") || "");
 
 	const minisearch = new MiniSearch({
@@ -73,7 +74,7 @@
 							</tr>
 						{:else}
 							{#each results as dm}
-								<tr class="data-[deleting=true]:hidden" data-deleting={deletingDM.includes(dm.id)}>
+								<tr class="data-[deleting=true]:hidden" data-deleting={deletingDM.has(dm.id)}>
 									<td>
 										<a
 											href="/dms/{dm.id}"
@@ -94,7 +95,7 @@
 									<td class="w-16 print:hidden">
 										<div class="flex flex-row justify-end gap-2">
 											{#if dm.logs.length == 0}
-												<DeleteDm {dm} bind:deletingDM />
+												<DeleteDm {dm} {deletingDM} />
 											{/if}
 										</div>
 									</td>
