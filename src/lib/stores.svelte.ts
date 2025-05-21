@@ -24,8 +24,6 @@ class Global {
 
 	constructor(app: App.Cookie) {
 		this._app = app;
-		this._pageLoader = false;
-		this._searchData = [];
 	}
 
 	get app() {
