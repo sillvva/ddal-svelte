@@ -10,7 +10,7 @@
 	import DeleteCharacter from "$lib/components/forms/DeleteCharacter.svelte";
 	import DeleteLog from "$lib/components/forms/DeleteLog.svelte";
 	import { excludedSearchWords } from "$lib/constants.js";
-	import { getGlobal, getTransition } from "$lib/stores.svelte.js";
+	import { getGlobal, transition } from "$lib/stores.svelte.js";
 	import { createTransition, hotkey } from "$lib/util";
 	import { slugify, sorter } from "@sillvva/utils";
 	import { download } from "@svelteuidev/composables";
@@ -21,7 +21,6 @@
 	let { data } = $props();
 
 	const global = getGlobal();
-	const transition = getTransition();
 
 	const myCharacter = $derived(data.character.userId === data.session?.user?.id);
 
@@ -154,7 +153,7 @@
 						target="_blank"
 						rel="noreferrer noopener"
 						class="mask mask-squircle bg-primary mx-auto h-20"
-						use:transition={"image-" + data.character.id}
+						{@attach transition("image-" + data.character.id)}
 						onclick={(e) => {
 							e.preventDefault();
 							triggerImageModal();
@@ -205,7 +204,7 @@
 							target="_blank"
 							rel="noreferrer noopener"
 							class="mask mask-squircle bg-primary mx-auto h-52 w-full"
-							use:transition={"image-" + data.character.id}
+							{@attach transition("image-" + data.character.id)}
 							onclick={(e) => {
 								e.preventDefault();
 								triggerImageModal();
@@ -482,7 +481,7 @@
 							data-deleting={deletingLog.has(log.id)}
 							data-desc={global.app.log.descriptions && hasDescription}
 							data-mi={log.magicItemsGained.length > 0 || log.magicItemsLost.length > 0}
-							use:transition={`notes-${log.id}`}
+							{@attach transition(`notes-${log.id}`)}
 						>
 							<td colSpan={100} class="max-w-[calc(100vw_-_50px)] pt-0 text-sm print:p-2 print:text-xs">
 								{#if log.description?.trim()}

@@ -2,6 +2,7 @@ import { browser } from "$app/environment";
 import type { SearchData } from "$src/routes/(api)/command/+server";
 import { getContext, setContext } from "svelte";
 import { createContext } from "svelte-contextify";
+import { fromAction } from "svelte/attachments";
 import { setupViewTransition } from "sveltekit-view-transition";
 import { appDefaults } from "./constants";
 
@@ -15,7 +16,7 @@ export const setTransition = () => {
 	const { transition } = setupViewTransition();
 	if (browser) transitionSetter(() => transition);
 };
-export const getTransition = () => transitionGetter()();
+export const transition = (key: string) => fromAction(transitionGetter()(), () => key);
 
 class Global {
 	_app: App.Cookie = $state(appDefaults);
