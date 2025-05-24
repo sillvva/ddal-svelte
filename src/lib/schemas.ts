@@ -17,22 +17,28 @@ const integer = v.pipe(v.number(), v.integer());
 const urlSchema = v.pipe(string, v.url(), v.maxLength(500));
 const optionalURL = v.optional(v.fallback(urlSchema, ""), "");
 
-export type EnvPrivate = v.InferInput<typeof envPrivateSchema>;
-export const envPrivateSchema = v.object({
-	DATABASE_URL: urlSchema,
-	AUTH_SECRET: v.pipe(string, v.minLength(10)),
-	GOOGLE_CLIENT_ID: requiredString,
-	GOOGLE_CLIENT_SECRET: requiredString,
-	DISCORD_CLIENT_ID: requiredString,
-	DISCORD_CLIENT_SECRET: requiredString,
-	DISABLE_SIGNUPS: v.optional(v.boolean(), false)
-});
+export type EnvPrivate = v.InferOutput<typeof envPrivateSchema>;
+export const envPrivateSchema = v.pipe(
+	v.object({
+		DATABASE_URL: urlSchema,
+		AUTH_SECRET: v.pipe(string, v.minLength(10)),
+		GOOGLE_CLIENT_ID: requiredString,
+		GOOGLE_CLIENT_SECRET: requiredString,
+		DISCORD_CLIENT_ID: requiredString,
+		DISCORD_CLIENT_SECRET: requiredString,
+		DISABLE_SIGNUPS: v.optional(v.boolean(), false)
+	}),
+	v.readonly()
+);
 
-export type EnvPublic = v.InferInput<typeof envPublicSchema>;
-export const envPublicSchema = v.object({
-	// PUBLIC_URL: urlSchema,
-	// PUBLIC_TEST_URL: v.optional(string, "")
-});
+export type EnvPublic = v.InferOutput<typeof envPublicSchema>;
+export const envPublicSchema = v.pipe(
+	v.object({
+		// PUBLIC_URL: urlSchema,
+		// PUBLIC_TEST_URL: v.optional(string, "")
+	}),
+	v.readonly()
+);
 
 interface CombinedEnv extends EnvPrivate, EnvPublic {}
 export type Env = Prettify<CombinedEnv>;
