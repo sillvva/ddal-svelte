@@ -8,7 +8,7 @@
 	import MdTextInput from "./MDTextInput.svelte";
 
 	interface BaseProps {
-		entity: "magic_items" | "story_awards";
+		entity: "magicItems" | "storyAwards";
 		superform: SuperForm<LogSchema>;
 		index: number;
 	}
@@ -31,35 +31,35 @@
 
 	const nameField =
 		type === "add"
-			? entity === "magic_items"
+			? entity === "magicItems"
 				? (`magicItemsGained[${index}].name` as const)
 				: (`storyAwardsGained[${index}].name` as const)
 			: undefined;
 	const descField =
 		type === "add"
-			? entity === "magic_items"
+			? entity === "magicItems"
 				? (`magicItemsGained[${index}].description` as const)
 				: (`storyAwardsGained[${index}].description` as const)
 			: undefined;
 	const lostField =
 		type === "drop"
-			? entity === "magic_items"
+			? entity === "magicItems"
 				? (`magicItemsLost[${index}]` as const)
 				: (`storyAwardsLost[${index}]` as const)
 			: undefined;
-	const title = entity === "magic_items" ? "Magic Item" : "Story Award";
+	const title = entity === "magicItems" ? "Magic Item" : "Story Award";
 
 	const { value: lostValue } = lostField ? formFieldProxy(superform, lostField) : { value: writable("") };
 
-	const arrValue = $derived(type === "drop" ? (entity === "magic_items" ? $form.magicItemsLost : $form.storyAwardsLost) : []);
+	const arrValue = $derived(type === "drop" ? (entity === "magicItems" ? $form.magicItemsLost : $form.storyAwardsLost) : []);
 
 	const ondelete = () => {
 		if (type === "add") {
-			if (entity === "magic_items") $form.magicItemsGained = $form.magicItemsGained.filter((_, i) => i !== index);
+			if (entity === "magicItems") $form.magicItemsGained = $form.magicItemsGained.filter((_, i) => i !== index);
 			else $form.storyAwardsGained = $form.storyAwardsGained.filter((_, i) => i !== index);
 		}
 		if (type === "drop") {
-			if (entity === "magic_items") $form.magicItemsLost = $form.magicItemsLost.filter((_, i) => i !== index);
+			if (entity === "magicItems") $form.magicItemsLost = $form.magicItemsLost.filter((_, i) => i !== index);
 			else $form.storyAwardsLost = $form.storyAwardsLost.filter((_, i) => i !== index);
 		}
 	};

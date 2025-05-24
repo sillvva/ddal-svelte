@@ -38,8 +38,8 @@
 					race: character.race || "",
 					class: character.class || "",
 					tier: `T${character.tier}`,
-					level: `L${character.total_level}`,
-					magicItems: character.magic_items.map((item) => item.name).join(", ")
+					level: `L${character.totalLevel}`,
+					magicItems: character.magicItems.map((item) => item.name).join(", ")
 				}))
 			: []
 	);
@@ -71,7 +71,7 @@
 			: data.characters.map((character) => ({ ...character, score: 0, match: [] }))
 	);
 	const sortedResults = $derived(
-		results.toSorted((a, b) => sorter(b.score, a.score) || sorter(a.total_level, b.total_level) || sorter(a.name, b.name))
+		results.toSorted((a, b) => sorter(b.score, a.score) || sorter(a.totalLevel, b.totalLevel) || sorter(a.name, b.name))
 	);
 </script>
 
@@ -91,11 +91,11 @@
 	</div>
 
 	{#if !data.characters.length}
-		<section class="bg-base-200">
+		<section class="bg-base-200 rounded-lg">
 			<div class="py-20 text-center">
-				<p class="mb-4">You have no log sheets.</p>
+				<p class="mb-4">No characters found.</p>
 				<p>
-					<a href="/characters/new" class="btn btn-primary">Create one now</a>
+					<a href="/characters/new" class="btn btn-primary">Create your first character</a>
 				</p>
 			</div>
 		</section>
@@ -229,7 +229,7 @@
 										</span>
 									</div>
 									<div class="text-xs whitespace-pre-wrap sm:text-sm" use:transition={"details-" + character.id}>
-										<span class="inline pr-1 sm:hidden">Level {character.total_level}</span><SearchResults
+										<span class="inline pr-1 sm:hidden">Level {character.totalLevel}</span><SearchResults
 											text={character.race}
 											{search}
 										/>
@@ -238,10 +238,10 @@
 									<div class="mb-2 block text-xs sm:hidden" use:transition={"campaign-" + character.id}>
 										<SearchResults text={character.campaign} {search} />
 									</div>
-									{#if (character.match.includes("magicItems") || global.app.characters.magicItems) && character.magic_items.length}
+									{#if (character.match.includes("magicItems") || global.app.characters.magicItems) && character.magicItems.length}
 										<div class="mb-2">
 											<p class="font-semibold">Magic Items:</p>
-											<SearchResults text={character.magic_items.map((item) => item.name)} {search} />
+											<SearchResults text={character.magicItems.map((item) => item.name)} {search} />
 										</div>
 									{/if}
 									{#if search.length > 1}
@@ -262,7 +262,7 @@
 								</td>
 								<td class="hidden text-center transition-colors sm:table-cell">
 									<span use:transition={"level-" + character.id}>
-										{character.total_level}
+										{character.totalLevel}
 									</span>
 								</td>
 							</tr>
@@ -300,7 +300,7 @@
 									{#if search.length >= 1 && indexed.length && miMatches}
 										<div class="absolute inset-0 flex items-center bg-black/50 p-2 text-center text-xs text-white">
 											<div class="flex-1">
-												<SearchResults text={character.magic_items.map((item) => item.name)} {search} filtered />
+												<SearchResults text={character.magicItems.map((item) => item.name)} {search} filtered />
 											</div>
 										</div>
 									{/if}
@@ -311,7 +311,7 @@
 											<SearchResults text={character.name} {search} />
 										</h2>
 										<p class="text-xs text-balance"><SearchResults text={`${character.race} ${character.class}`} {search} /></p>
-										<p class="text-xs">Level {character.total_level} | Tier {character.tier}</p>
+										<p class="text-xs">Level {character.totalLevel} | Tier {character.tier}</p>
 									</div>
 								</div>
 							</a>

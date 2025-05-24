@@ -6,7 +6,7 @@ import { extendedLogIncludes, logIncludes } from "$server/db/includes";
 export type LogData = InferQueryResult<"logs", { with: typeof logIncludes }>;
 export type ExtendedLogData = InferQueryResult<"logs", { with: typeof extendedLogIncludes }>;
 export interface FullLogData extends ExtendedLogData {
-	show_date: Date;
+	showDate: Date;
 }
 
 const characterLogFilter = (userId: UserId) => {

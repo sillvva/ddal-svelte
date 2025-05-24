@@ -100,14 +100,13 @@
 	{/if}
 	<p
 		class={twMerge(
-			"divide-x divide-black/50 text-sm leading-6 in-[table]:leading-5 data-[collapsed=true]:hidden md:data-[collapsed=true]:inline dark:divide-white/50 print:text-xs print:data-[collapsed=true]:inline",
+			"divide-x divide-black/50 text-sm leading-6 text-wrap in-[table]:leading-5 data-[collapsed=true]:hidden md:data-[collapsed=true]:inline dark:divide-white/50 print:text-xs print:data-[collapsed=true]:inline",
 			textClass
 		)}
 		data-collapsed={collapsed}
 	>
 		{#if items.length}
-			{#each nonConsumables as mi}
-				<span
+			{#each nonConsumables as mi}<span
 					role={mi.description ? "button" : "presentation"}
 					class="inline pr-2 pl-2 first:pl-0"
 					class:text-secondary={mi.description}
@@ -119,10 +118,7 @@
 					onkeypress={() => null}
 				>
 					<SearchResults text={mi.name} {search} />
-				</span>
-			{/each}
-			{#each consumables as mi}
-				<span
+				</span>{/each}{#each consumables as mi}<span
 					role={mi.description ? "button" : "presentation"}
 					class="inline pr-2 pl-2 italic first:pl-0"
 					class:text-secondary={mi.description}
@@ -135,8 +131,7 @@
 					onkeypress={() => null}
 				>
 					<SearchResults text={mi.name} {search} />
-				</span>
-			{/each}
+				</span>{/each}
 		{:else}
 			None
 		{/if}

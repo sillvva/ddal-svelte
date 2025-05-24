@@ -30,12 +30,12 @@ async function getData(user: LocalsSession["user"]) {
 						(character) =>
 							({
 								...character,
-								log_levels: [],
+								logLevels: [],
 								type: "character",
 								url: `/characters/${character.id}`
 							}) as const
 					)
-					.toSorted((a, b) => sorter(b.last_log, a.last_log))
+					.toSorted((a, b) => sorter(b.lastLog, a.lastLog))
 			)
 		},
 		{
@@ -62,11 +62,11 @@ async function getData(user: LocalsSession["user"]) {
 							({
 								...log,
 								type: "log",
-								show_date: log.isDmLog ? log.appliedDate || log.date : log.date,
+								showDate: log.isDmLog ? log.appliedDate || log.date : log.date,
 								url: log.isDmLog ? `/dm-logs?s=${log.id}` : `/characters/${log.character?.id}?s=${log.id}`
 							}) as const
 					)
-					.toSorted((a, b) => sorter(b.show_date, a.show_date))
+					.toSorted((a, b) => sorter(b.showDate, a.showDate))
 			)
 		}
 	];

@@ -46,7 +46,7 @@ export const load = async (event) => {
 			name: logId === "new" ? `New Log` : form.data.name,
 			href: `/characters/${character.id}/log/${form.data.id}`
 		}),
-		totalLevel: character.total_level,
+		totalLevel: character.totalLevel,
 		user: { ...session.user, ...parent.user },
 		magicItems,
 		storyAwards,
