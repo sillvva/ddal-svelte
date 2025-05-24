@@ -10,9 +10,11 @@
 	import DeleteLog from "$lib/components/forms/DeleteLog.svelte";
 	import { excludedSearchWords } from "$lib/constants";
 	import { getGlobal } from "$lib/stores.svelte.js";
-	import { createTransition, download, hotkey, isDefined } from "$lib/util.js";
+	import { createTransition, hotkey, isDefined } from "$lib/util.js";
 	import { sorter } from "@sillvva/utils";
+	import { download } from "@svelteuidev/composables";
 	import MiniSearch from "minisearch";
+	import { fromAction } from "svelte/attachments";
 	import { SvelteSet } from "svelte/reactivity";
 
 	let { data } = $props();
@@ -88,7 +90,12 @@
 		<Dropdown class="dropdown-end">
 			{#snippet children({ close })}
 				<ul class="menu dropdown-content rounded-box bg-base-300 w-52 shadow-sm">
-					<li {@attach download("dm-logs.json", new Blob([JSON.stringify(data.logs)]))}>
+					<li
+						{@attach fromAction(download, () => ({
+							filename: "dm-logs.json",
+							blob: new Blob([JSON.stringify(data.logs)])
+						}))}
+					>
 						<button>Export</button>
 					</li>
 				</ul>

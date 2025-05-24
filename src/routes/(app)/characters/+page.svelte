@@ -7,9 +7,11 @@
 	import SearchResults from "$lib/components/SearchResults.svelte";
 	import { excludedSearchWords } from "$lib/constants.js";
 	import { getGlobal, getTransition } from "$lib/stores.svelte.js";
-	import { createTransition, download, hotkey, isDefined } from "$lib/util";
+	import { createTransition, hotkey, isDefined } from "$lib/util";
 	import { sorter } from "@sillvva/utils";
+	import { download } from "@svelteuidev/composables";
 	import MiniSearch from "minisearch";
+	import { fromAction } from "svelte/attachments";
 
 	let { data } = $props();
 
@@ -83,7 +85,14 @@
 			{#snippet children({ close })}
 				<ul class="menu dropdown-content rounded-box bg-base-300 w-52 shadow-sm">
 					<li {@attach close}>
-						<button {@attach download("characters.json", new Blob([JSON.stringify(data.characters)]))}> Export </button>
+						<button
+							{@attach fromAction(download, () => ({
+								filename: "characters.json",
+								blob: new Blob([JSON.stringify(data.characters)])
+							}))}
+						>
+							Export
+						</button>
 					</li>
 				</ul>
 			{/snippet}

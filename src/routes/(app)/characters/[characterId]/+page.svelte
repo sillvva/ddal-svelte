@@ -11,9 +11,11 @@
 	import DeleteLog from "$lib/components/forms/DeleteLog.svelte";
 	import { excludedSearchWords } from "$lib/constants.js";
 	import { getGlobal, getTransition } from "$lib/stores.svelte.js";
-	import { createTransition, download, hotkey } from "$lib/util";
+	import { createTransition, hotkey } from "$lib/util";
 	import { slugify, sorter } from "@sillvva/utils";
+	import { download } from "@svelteuidev/composables";
 	import MiniSearch from "minisearch";
+	import { fromAction } from "svelte/attachments";
 	import { SvelteSet } from "svelte/reactivity";
 
 	let { data } = $props();
@@ -96,7 +98,12 @@
 					{#snippet children({ close })}
 						<ul class="menu dropdown-content rounded-box bg-base-300 z-20 w-52 shadow-sm">
 							<li {@attach close}>
-								<button {@attach download(`${slugify(data.character.name)}.json`, new Blob([JSON.stringify(data.character)]))}>
+								<button
+									{@attach fromAction(download, () => ({
+										filename: `${slugify(data.character.name)}.json`,
+										blob: new Blob([JSON.stringify(data.character)])
+									}))}
+								>
 									Export
 								</button>
 							</li>

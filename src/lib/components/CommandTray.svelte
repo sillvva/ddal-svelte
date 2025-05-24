@@ -115,7 +115,6 @@
 			})
 	);
 	const resultsCount = $derived(results.reduce((sum, section) => sum + section.items.length, 0));
-	$inspect(results);
 </script>
 
 <svelte:document
