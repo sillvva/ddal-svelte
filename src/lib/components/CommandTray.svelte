@@ -7,6 +7,7 @@
 	import type { SearchData } from "$src/routes/(api)/command/+server";
 	import { sorter } from "@sillvva/utils";
 	import { Command, Dialog, Separator } from "bits-ui";
+	import { twMerge } from "tailwind-merge";
 	import Items from "./Items.svelte";
 
 	const defaultSelected: string = searchSections[0].url;
@@ -25,9 +26,11 @@
 		search
 			.trim()
 			.toLowerCase()
-			.split(" ")
-			.filter((word) => word.length > 1 && !excludedSearchWords.has(word))
+			.match(/(?:[^\s"]+|"[^"]*")+/g)
+			?.map((word) => word.replace(/^"|"$/g, ""))
+			.filter((word) => word.length > 1 && !excludedSearchWords.has(word)) || []
 	);
+	$inspect(words);
 	const query = $derived(words.join(" "));
 
 	$effect(() => {
@@ -68,41 +71,51 @@
 	}
 
 	const results = $derived(
-		global.searchData.flatMap((section) => {
-			// Early return if category doesn't match
-			if (category && section.title !== category) return [];
+		global.searchData
+			.flatMap((section) => {
+				// Early return if category doesn't match
+				// if (category && section.title !== category) return [];
 
-			// Skip filtering if query is too short
-			if (query.length < 2) {
-				const items = section.items.slice(0, category ? 10 : 5);
-				return items.length ? [{ title: section.title, items }] : [];
-			}
+				// Skip filtering if query is too short
+				if (query.length < 2) {
+					const items = section.items.slice(0, category ? 10 : 5);
+					return [{ title: section.title, items, count: items.length }];
+				}
 
-			// Build search strings once per item
-			const filteredItems = section.items
-				.filter((item) => {
-					if (item.type === "section") return false;
+				// Build search strings once per item
+				const filteredItems = section.items
+					.filter((item) => {
+						if (item.type === "section") return false;
 
-					let searchString = item.name;
-					if (item.type === "character") {
-						searchString += ` ${item.race} ${item.class} ${item.campaign} L${item.totalLevel} T${item.tier}`;
-						searchString += ` ${item.magicItems.map((mi) => mi.name).join(" ")}`;
-						searchString += ` ${item.storyAwards.map((sa) => sa.name).join(" ")}`;
-					} else if (item.type === "log") {
-						if (item.character) searchString += ` ${item.character.name}`;
-						if (item.dm) searchString += ` ${item.dm.name}`;
-						searchString += ` ${item.magicItemsGained.map((mi) => mi.name).join(" ")}`;
-						searchString += ` ${item.storyAwardsGained.map((sa) => sa.name).join(" ")}`;
-					}
+						let searchString = item.name;
+						if (item.type === "character") {
+							searchString += ` ${item.race} ${item.class} ${item.campaign} L${item.totalLevel} T${item.tier}`;
+							searchString += ` ${item.magicItems.map((mi) => mi.name).join(" ")}`;
+							searchString += ` ${item.storyAwards.map((sa) => sa.name).join(" ")}`;
+						} else if (item.type === "log") {
+							if (item.character) searchString += ` ${item.character.name}`;
+							if (item.dm) searchString += ` ${item.dm.name}`;
+							searchString += ` ${item.magicItemsGained.map((mi) => mi.name).join(" ")}`;
+							searchString += ` ${item.storyAwardsGained.map((sa) => sa.name).join(" ")}`;
+						}
 
-					return hasMatch(searchString)?.length === words.length;
-				})
-				.slice(0, 50);
+						return hasMatch(searchString)?.length === words.length;
+					})
+					.slice(0, 50);
 
-			return filteredItems.length ? [{ title: section.title, items: filteredItems }] : [];
-		})
+				return [{ title: section.title, items: filteredItems, count: filteredItems.length }];
+			})
+			.map((section, i, sections) => {
+				const previousSections = sections.slice(0, i);
+				const previousSectionsCount = previousSections.reduce((sum, s) => sum + s.count, 0);
+				return {
+					...section,
+					previousCount: previousSectionsCount
+				};
+			})
 	);
 	const resultsCount = $derived(results.reduce((sum, section) => sum + section.items.length, 0));
+	$inspect(results);
 </script>
 
 <svelte:document
@@ -194,11 +207,11 @@
 							<div class="relative h-auto data-[results=true]:h-96" data-results={resultsCount > 0}>
 								<Command.Empty class="p-4 text-center font-bold">No results found.</Command.Empty>
 								<Command.Viewport class="h-full overflow-y-auto" bind:ref={viewport}>
-									{#each results as section, i}
-										{#if i > 0}
+									{#each results as section}
+										{#if section.items.length && section.previousCount}
 											<Command.Separator class="divider mt-2 mb-0" />
 										{/if}
-										<Command.Group>
+										<Command.Group value={section.title} class={twMerge(!section.items.length && "hidden")}>
 											<Command.GroupHeading class="menu-title text-base-content/60 px-5">
 												{section.title}
 											</Command.GroupHeading>
