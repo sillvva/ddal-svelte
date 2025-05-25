@@ -111,7 +111,7 @@
 										})}
 									>
 										<input type="hidden" name="provider" value={provider.id} />
-										<button class="btn btn-error btn-sm">Unlink</button>
+										<button class="btn btn-error btn-sm font-semibold">Unlink</button>
 									</form>
 								{:else}
 									<span class="iconify mdi--check size-6 text-green-500"></span>
