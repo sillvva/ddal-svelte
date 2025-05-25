@@ -285,7 +285,7 @@
 						]
 					])}
 				>
-					New Log <kbd class="kbd kbd-sm max-sm:hover-none:hidden">N</kbd>
+					New Log <kbd class="kbd kbd-sm max-sm:hover-none:hidden text-base-content">N</kbd>
 				</a>
 			{/if}
 			{#if data.character.logs.length}

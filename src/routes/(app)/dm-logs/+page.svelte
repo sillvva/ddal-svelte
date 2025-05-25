@@ -118,7 +118,7 @@
 					]
 				])}
 			>
-				New Log <kbd class="kbd kbd-sm max-sm:hover-none:hidden">N</kbd>
+				New Log <kbd class="kbd kbd-sm max-sm:hover-none:hidden text-base-content">N</kbd>
 			</a>
 			<Search bind:value={search} placeholder="Search by name, race, class, items, etc." />
 			<a href="/dm-logs/new" class="btn btn-primary inline-flex sm:hidden" aria-label="New Log">
