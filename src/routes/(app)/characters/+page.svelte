@@ -124,7 +124,7 @@
 				>
 					New Character <kbd class="kbd kbd-sm max-sm:hover-none:hidden text-base-content">N</kbd>
 				</a>
-				<Search bind:value={search} placeholder="Search by name, race, class, items, etc." />
+				<Search bind:value={search} placeholder="Search by name, class, items, etc." />
 				<a href="/characters/new/edit" class="btn btn-primary sm:hidden" aria-label="New Character">
 					<span class="iconify mdi--plus inline size-6"></span>
 				</a>

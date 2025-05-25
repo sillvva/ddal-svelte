@@ -183,6 +183,15 @@
 				--input-color: var(--color-error);
 			}
 		}
+		&.input-sm,
+		&.textarea-sm,
+		&.select-sm,
+		&.sm\:input-sm,
+		&.sm\:textarea-sm,
+		&.sm\:select-sm {
+			--fontsize: 0.875rem;
+			font-size: var(--fontsize);
+		}
 	}
 }
 
