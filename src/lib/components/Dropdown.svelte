@@ -1,6 +1,7 @@
 <script lang="ts">
-	import { clickoutside } from "$lib/util";
+	import { clickoutside } from "@svelteuidev/composables";
 	import type { Snippet } from "svelte";
+	import { fromAction } from "svelte/attachments";
 	import type { HTMLAttributes } from "svelte/elements";
 	import { twMerge } from "tailwind-merge";
 
@@ -15,22 +16,26 @@
 
 	function close(node: HTMLLIElement) {
 		const abortController = new AbortController();
-		node.addEventListener("click", () => {
-			open = false;
-		}, { signal: abortController.signal });
+		node.addEventListener(
+			"click",
+			() => {
+				open = false;
+			},
+			{ signal: abortController.signal }
+		);
 		return () => abortController.abort();
 	}
 </script>
 
 <details
-	{@attach clickoutside({
+	bind:open
+	class={twMerge("dropdown", className)}
+	{@attach fromAction(clickoutside, () => ({
 		enabled: open,
 		callback: () => {
 			open = false;
 		}
-	})}
-	class={twMerge("dropdown", className)}
-	bind:open
+	}))}
 >
 	<summary class="list-none">
 		<button tabindex="0" class="btn btn-sm" aria-label="Menu" onclick={() => (open = !open)}>

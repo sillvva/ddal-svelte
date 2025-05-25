@@ -1,10 +1,11 @@
 <script lang="ts">
+	import { enhance } from "$app/forms";
 	import { page } from "$app/state";
 	import { PROVIDERS } from "$lib/constants";
 	import { successToast } from "$lib/factories.svelte";
 	import { getGlobal } from "$lib/stores.svelte";
-	import { enhance } from "$lib/util";
 	import { signIn, signOut } from "@auth/sveltekit/client";
+	import { fromAction } from "svelte/attachments";
 	import { twMerge } from "tailwind-merge";
 	import Passkeys from "./Passkeys.svelte";
 	import ThemeSwitcher from "./ThemeSwitcher.svelte";
@@ -97,7 +98,7 @@
 									<form
 										method="POST"
 										action="/characters?/unlinkProvider"
-										{@attach enhance(({ cancel }) => {
+										{@attach fromAction(enhance, () => ({ cancel }) => {
 											if (!confirm(`Are you sure you want to unlink ${provider.name}?`)) return cancel();
 
 											global.pageLoader = true;

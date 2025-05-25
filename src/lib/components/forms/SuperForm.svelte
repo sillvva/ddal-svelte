@@ -1,6 +1,7 @@
 <script lang="ts">
 	import { dev } from "$app/environment";
 	import { type Snippet } from "svelte";
+	import { fromAction } from "svelte/attachments";
 	import type { HTMLFormAttributes } from "svelte/elements";
 	import SuperDebug, { type SuperForm } from "sveltekit-superforms";
 	import FormMessage from "./FormMessage.svelte";
@@ -43,7 +44,7 @@
 	</div>
 {/if}
 
-<form {method} {...rest} {@attach enhance}>
+<form {method} {...rest} {@attach fromAction(enhance)}>
 	<fieldset class="grid grid-cols-12 gap-4" disabled={$submitting}>
 		{@render children?.()}
 	</fieldset>

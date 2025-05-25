@@ -6,15 +6,16 @@
 	import Search from "$lib/components/Search.svelte";
 	import SearchResults from "$lib/components/SearchResults.svelte";
 	import { excludedSearchWords } from "$lib/constants.js";
-	import { getGlobal, getTransition } from "$lib/stores.svelte.js";
-	import { createTransition, download, hotkey, isDefined } from "$lib/util";
+	import { getGlobal, transition } from "$lib/stores.svelte.js";
+	import { createTransition, hotkey, isDefined } from "$lib/util";
 	import { sorter } from "@sillvva/utils";
+	import { download } from "@svelteuidev/composables";
 	import MiniSearch from "minisearch";
+	import { fromAction } from "svelte/attachments";
 
 	let { data } = $props();
 
 	const global = getGlobal();
-	const transition = getTransition();
 
 	let search = $state(page.url.searchParams.get("s") || "");
 	const minisearch = new MiniSearch({
@@ -83,7 +84,14 @@
 			{#snippet children({ close })}
 				<ul class="menu dropdown-content rounded-box bg-base-300 w-52 shadow-sm">
 					<li {@attach close}>
-						<button {@attach download("characters.json", new Blob([JSON.stringify(data.characters)]))}> Export </button>
+						<button
+							{@attach fromAction(download, () => ({
+								filename: "characters.json",
+								blob: new Blob([JSON.stringify(data.characters)])
+							}))}
+						>
+							Export
+						</button>
 					</li>
 				</ul>
 			{/snippet}
@@ -114,9 +122,9 @@
 						]
 					])}
 				>
-					New Character <kbd class="kbd kbd-sm max-sm:hover-none:hidden">N</kbd>
+					New Character <kbd class="kbd kbd-sm max-sm:hover-none:hidden text-base-content">N</kbd>
 				</a>
-				<Search bind:value={search} placeholder="Search by name, race, class, items, etc." />
+				<Search bind:value={search} placeholder="Search by name, class, items, etc." />
 				<a href="/characters/new/edit" class="btn btn-primary sm:hidden" aria-label="New Character">
 					<span class="iconify mdi--plus inline size-6"></span>
 				</a>
@@ -199,9 +207,9 @@
 						{#each sortedResults as character}
 							<tr class="group/row">
 								{#if !data.mobile}
-									<td class="pr-0 transition-colors max-sm:hidden sm:pr-2">
+									<td class="pr-0 align-top transition-colors max-sm:hidden sm:pr-2">
 										<div class="avatar">
-											<div class="mask mask-squircle bg-primary size-12" use:transition={"image-" + character.id}>
+											<div class="mask mask-squircle bg-primary size-12" {@attach transition("image-" + character.id)}>
 												{#if character.imageUrl}
 													{#key character.imageUrl}
 														<img
@@ -222,20 +230,18 @@
 								{/if}
 								<td>
 									<div class="text-base font-bold whitespace-pre-wrap text-black sm:text-xl dark:text-white">
-										<span use:transition={"name-" + character.id}>
-											<a href={`/characters/${character.id}`} aria-label={character.name} class="row-link">
-												<SearchResults text={character.name} {search} />
-											</a>
-										</span>
+										<a href={`/characters/${character.id}`} aria-label={character.name} class="row-link">
+											<SearchResults text={character.name} {search} />
+										</a>
 									</div>
-									<div class="text-xs whitespace-pre-wrap sm:text-sm" use:transition={"details-" + character.id}>
+									<div class="text-xs whitespace-pre-wrap sm:text-sm">
 										<span class="inline pr-1 sm:hidden">Level {character.totalLevel}</span><SearchResults
 											text={character.race}
 											{search}
 										/>
 										<SearchResults text={character.class} {search} />
 									</div>
-									<div class="mb-2 block text-xs sm:hidden" use:transition={"campaign-" + character.id}>
+									<div class="mb-2 block text-xs sm:hidden">
 										<SearchResults text={character.campaign} {search} />
 									</div>
 									{#if (character.match.includes("magicItems") || global.app.characters.magicItems) && character.magicItems.length}
@@ -251,19 +257,13 @@
 									{/if}
 								</td>
 								<td class="hidden transition-colors sm:table-cell">
-									<span use:transition={"campaign-" + character.id}>
-										<SearchResults text={character.campaign} {search} />
-									</span>
+									<SearchResults text={character.campaign} {search} />
 								</td>
 								<td class="hidden text-center transition-colors sm:table-cell">
-									<span use:transition={"tier-" + character.id}>
-										{character.tier}
-									</span>
+									{character.tier}
 								</td>
 								<td class="hidden text-center transition-colors sm:table-cell">
-									<span use:transition={"level-" + character.id}>
-										{character.totalLevel}
-									</span>
+									{character.totalLevel}
 								</td>
 							</tr>
 						{/each}
@@ -291,7 +291,7 @@
 							<a
 								href={`/characters/${character.id}`}
 								class="card card-compact bg-base-200 shadow-xl transition-transform duration-200 motion-safe:hover:scale-105"
-								use:transition={"image-" + character.id}
+								{@attach transition("image-" + character.id)}
 							>
 								<figure class="relative aspect-square overflow-hidden">
 									{#key character.imageUrl}
