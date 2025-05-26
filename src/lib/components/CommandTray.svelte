@@ -30,7 +30,6 @@
 			?.map((word) => word.replace(/^"|"$/g, ""))
 			.filter((word) => word.length > 1 && !excludedSearchWords.has(word)) || []
 	);
-	$inspect(words);
 	const query = $derived(words.join(" "));
 
 	$effect(() => {
