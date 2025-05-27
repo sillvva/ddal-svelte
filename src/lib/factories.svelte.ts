@@ -324,54 +324,77 @@ export class SearchFactory<TData extends SearchData | FullCharacterData[] | Full
 		return { matches, score };
 	}
 
-	get results() {
+	private get globalResults() {
 		return this._tdata
 			.map((entry) => {
-				if ("items" in entry) {
-					if (this._category && entry.title !== this._category) return { title: entry.title, items: [], count: 0 };
+				if (!("items" in entry)) return undefined;
 
-					// Skip filtering if query is too short
-					if (this._query.length < 2) {
-						const items = entry.items.slice(0, this._category ? 10 : 5);
-						return {
-							title: entry.title,
-							items: items.map((item) => ({ ...item, score: 0 })),
-							count: items.length
-						};
-					}
+				if (this._category && entry.title !== this._category) return { title: entry.title, items: [], count: 0 };
 
-					const searches = this._globalSearches.find((searches) => searches.title === entry.title);
-					if (!searches) return { title: entry.title, items: [], count: 0 };
-
-					const filteredItems = entry.items
-						.map((item) => {
-							if (item.type === "section") return null;
-
-							let totalScore = 0;
-							const matches = new Set<string>();
-							const matchTypes = new Set<string>();
-
-							const itemSearches = searches.items.find((search) => search.id === item.id)?.searches;
-							if (!itemSearches) return null;
-
-							for (const [key, value] of itemSearches) {
-								const matchResult = this.hasMatch(value);
-								if (matchResult.matches.length) {
-									totalScore += matchResult.score;
-									matchResult.matches.forEach((match) => matches.add(match));
-									matchTypes.add(key);
-								}
-							}
-
-							if (matches.size !== this.terms.length) return null;
-							return { ...item, score: totalScore, match: Array.from(matchTypes) };
-						})
-						.filter((item) => item !== null)
-						.sort((a, b) => b.score - a.score)
-						.slice(0, 50);
-
-					return { title: entry.title, items: filteredItems, count: filteredItems.length };
+				// Skip filtering if query is too short
+				if (this._query.length < 2) {
+					const items = entry.items.slice(0, this._category ? 10 : 5);
+					return {
+						title: entry.title,
+						items: items.map((item) => ({ ...item, score: 0, match: [] })),
+						count: items.length
+					};
 				}
+
+				const searches = this._globalSearches.find((searches) => searches.title === entry.title);
+				if (!searches) return { title: entry.title, items: [], count: 0 };
+
+				const filteredItems = entry.items
+					.map((item) => {
+						if (item.type === "section") return null;
+
+						let totalScore = 0;
+						const matches = new Set<string>();
+						const matchTypes = new Set<string>();
+
+						const itemSearches = searches.items.find((search) => search.id === item.id)?.searches;
+						if (!itemSearches) return null;
+
+						for (const [key, value] of itemSearches) {
+							const matchResult = this.hasMatch(value);
+							if (matchResult.matches.length) {
+								totalScore += matchResult.score;
+								matchResult.matches.forEach((match) => matches.add(match));
+								matchTypes.add(key);
+							}
+						}
+
+						if (matches.size !== this.terms.length) return null;
+						return { ...item, score: totalScore, match: Array.from(matchTypes) };
+					})
+					.filter(isDefined);
+
+				return {
+					title: entry.title,
+					items: filteredItems.sort((a, b) => b.score - a.score).slice(0, 50),
+					count: filteredItems.length
+				};
+			})
+			.filter(isDefined)
+			.map((entry, i, entries) => {
+				const previousEntries = entries.slice(0, i);
+				const previousEntriesCount = previousEntries.reduce((sum, e) => {
+					return sum + e.count;
+				}, 0);
+
+				return {
+					...entry,
+					previousCount: previousEntriesCount
+				};
+			}) satisfies Array<
+			{ title: SearchData[number]["title"]; items: Array<SearchData[number]["items"][number] & SearchScore> } & SearchCounts
+		>;
+	}
+
+	private get entityResults() {
+		return this._tdata
+			.map((entry) => {
+				if ("items" in entry) return undefined;
 
 				let totalScore = 0;
 				const matches = new Set<string>();
@@ -393,26 +416,23 @@ export class SearchFactory<TData extends SearchData | FullCharacterData[] | Full
 
 				return {
 					...entry,
-					items: [],
-					count: 1,
-					previousCount: 0,
 					score: totalScore,
 					match: Array.from(matchTypes)
 				};
 			})
-			.filter(isDefined)
-			.map((entry, i, entries) => {
-				const previousEntries = entries.slice(0, i);
-				const previousEntriesCount = previousEntries.reduce((sum, e) => {
-					return sum + e.count;
-				}, 0);
+			.filter(isDefined) satisfies Array<TData[number] & SearchScore>;
+	}
 
-				return {
-					...entry,
-					previousCount: previousEntriesCount
-				};
-			}) as TData extends SearchData
-			? Array<TData[number] & { items: Array<SearchData[number]["items"][number] & SearchScore> } & SearchCounts>
-			: Array<TData[number] & SearchCounts & SearchScore>;
+	get results(): TData extends SearchData
+		? Array<
+				{ title: SearchData[number]["title"]; items: Array<SearchData[number]["items"][number] & SearchScore> } & SearchCounts
+			>
+		: Array<TData[number] & SearchScore> {
+		const firstEntry = this._tdata[0];
+		if (firstEntry && "items" in firstEntry) {
+			return this.globalResults as any;
+		} else {
+			return this.entityResults as any;
+		}
 	}
 }
