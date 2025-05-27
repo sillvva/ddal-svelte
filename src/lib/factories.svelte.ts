@@ -269,9 +269,10 @@ export class GlobalSearchFactory extends BaseSearchFactory<SearchData> {
 		this._category = category;
 	}
 
-	get results(): Array<
-		{ title: SearchData[number]["title"]; items: Array<SearchData[number]["items"][number] & SearchScore> } & SearchCounts
-	> {
+	get results(): ({
+		title: SearchData[number]["title"];
+		items: (SearchData[number]["items"][number] & SearchScore)[];
+	} & SearchCounts)[] {
 		return this._tdata
 			.map((entry) => {
 				if (this._category && entry.title !== this._category) return { title: entry.title, items: [], count: 0 };
@@ -403,7 +404,7 @@ export class EntitySearchFactory<
 		this._tdata = data;
 	}
 
-	get results(): Array<TData[number] & SearchScore> {
+	get results(): (TData[number] & SearchScore)[] {
 		return this._tdata
 			.map((entry) => {
 				let totalScore = 0;
