@@ -8,7 +8,7 @@
 	import Search from "$lib/components/Search.svelte";
 	import SearchResults from "$lib/components/SearchResults.svelte";
 	import DeleteLog from "$lib/components/forms/DeleteLog.svelte";
-	import { SearchFactory } from "$lib/factories.svelte.js";
+	import { EntitySearchFactory } from "$lib/factories.svelte.js";
 	import { getGlobal } from "$lib/stores.svelte.js";
 	import { createTransition, hotkey } from "$lib/util.js";
 	import { sorter } from "@sillvva/utils";
@@ -20,7 +20,7 @@
 
 	const global = getGlobal();
 
-	const search = $derived(new SearchFactory(data.logs));
+	const search = $derived(new EntitySearchFactory(data.logs));
 	const sortedResults = $derived(
 		search.results.toSorted((a, b) => (global.app.dmLogs.sort === "asc" ? sorter(a.date, b.date) : sorter(b.date, a.date)))
 	);

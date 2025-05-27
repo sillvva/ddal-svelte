@@ -9,7 +9,7 @@
 	import SearchResults from "$lib/components/SearchResults.svelte";
 	import DeleteCharacter from "$lib/components/forms/DeleteCharacter.svelte";
 	import DeleteLog from "$lib/components/forms/DeleteLog.svelte";
-	import { SearchFactory } from "$lib/factories.svelte.js";
+	import { EntitySearchFactory } from "$lib/factories.svelte.js";
 	import { getGlobal, transition } from "$lib/stores.svelte.js";
 	import { createTransition, hotkey } from "$lib/util";
 	import { slugify, sorter } from "@sillvva/utils";
@@ -25,7 +25,7 @@
 
 	let deletingLog = new SvelteSet<string>();
 
-	const search = $derived(new SearchFactory(data.character.logs));
+	const search = $derived(new EntitySearchFactory(data.character.logs));
 	const sortedResults = $derived(search.results.toSorted((a, b) => sorter(a.showDate, b.showDate)));
 
 	$effect(() => {

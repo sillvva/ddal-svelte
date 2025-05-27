@@ -5,7 +5,7 @@
 	import Dropdown from "$lib/components/Dropdown.svelte";
 	import Search from "$lib/components/Search.svelte";
 	import SearchResults from "$lib/components/SearchResults.svelte";
-	import { SearchFactory } from "$lib/factories.svelte.js";
+	import { EntitySearchFactory } from "$lib/factories.svelte.js";
 	import { getGlobal, transition } from "$lib/stores.svelte.js";
 	import { createTransition, hotkey } from "$lib/util";
 	import { sorter } from "@sillvva/utils";
@@ -16,7 +16,7 @@
 
 	const global = getGlobal();
 
-	const search = $derived(new SearchFactory(data.characters));
+	const search = $derived(new EntitySearchFactory(data.characters));
 	const sortedResults = $derived(
 		search.results.toSorted((a, b) => sorter(b.score, a.score) || sorter(a.totalLevel, b.totalLevel) || sorter(a.name, b.name))
 	);

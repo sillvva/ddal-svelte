@@ -3,13 +3,13 @@
 	import Search from "$lib/components/Search.svelte";
 	import SearchResults from "$lib/components/SearchResults.svelte";
 	import DeleteDm from "$lib/components/forms/DeleteDM.svelte";
-	import { SearchFactory } from "$lib/factories.svelte.js";
+	import { EntitySearchFactory } from "$lib/factories.svelte.js";
 	import { sorter } from "@sillvva/utils";
 	import { SvelteSet } from "svelte/reactivity";
 
 	let { data } = $props();
 
-	const search = $derived(new SearchFactory(data.dms));
+	const search = $derived(new EntitySearchFactory(data.dms));
 	const sortedResults = $derived(search.results.toSorted((a, b) => sorter(b.score, a.score) || sorter(a.name, b.name)));
 
 	let deletingDM = new SvelteSet<string>();

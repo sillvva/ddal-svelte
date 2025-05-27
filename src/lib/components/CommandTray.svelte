@@ -2,7 +2,7 @@
 	import { goto } from "$app/navigation";
 	import { page } from "$app/state";
 	import { searchSections } from "$lib/constants.js";
-	import { SearchFactory } from "$lib/factories.svelte";
+	import { GlobalSearchFactory } from "$lib/factories.svelte";
 	import { getGlobal } from "$lib/stores.svelte";
 	import { debounce, hotkey } from "$lib/util";
 	import type { SearchData } from "$src/routes/(api)/command/+server";
@@ -20,7 +20,7 @@
 	let input = $state<HTMLInputElement | null>(null);
 	let categories = $derived(global.searchData.map((section) => section.title).filter((c) => c !== "Sections"));
 
-	const search = $derived(new SearchFactory(global.searchData));
+	const search = $derived(new GlobalSearchFactory(global.searchData));
 
 	$effect(() => {
 		const controller = new AbortController();
