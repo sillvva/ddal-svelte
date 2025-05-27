@@ -18,7 +18,7 @@ import {
 import { valibotClient } from "sveltekit-superforms/adapters";
 import * as v from "valibot";
 import { excludedSearchWords } from "./constants";
-import { isDefined } from "./util";
+import { isDefined, occurrences } from "./util";
 
 export function successToast(message: string) {
 	toast.success("Success", {
@@ -289,19 +289,14 @@ export class SearchFactory<TData extends SearchData | FullCharacterData[] | Full
 	}
 
 	hasMatch(item: string) {
-		const matches = this._terms.filter((word) => item.toLowerCase().includes(word));
+		const itemLower = item.toLowerCase();
+		const matches = this._terms.filter((word) => itemLower.includes(word));
 		if (!matches.length) return { matches: [], score: 0 };
 
-		// Calculate a simple match score based on:
-		// - Number of matched terms
-		// - Position of matches (earlier = better)
-		// - Exact word matches vs partial matches
-		const itemLower = item.toLowerCase();
 		let score = 0;
-
 		for (const term of matches) {
 			// Count occurrences of the term in the item
-			score += 1;
+			score += occurrences(itemLower, term);
 			// Bonus for early position (max 0.5 bonus)
 			const index = itemLower.indexOf(term);
 			score += Math.max(0, 0.5 - (index / itemLower.length) * 0.5);
@@ -337,7 +332,6 @@ export class SearchFactory<TData extends SearchData | FullCharacterData[] | Full
 					const searches = this._globalSearches.find((searches) => searches.title === entry.title);
 					if (!searches) return { title: entry.title, items: [], count: 0 };
 
-					// Build search strings once per item
 					const filteredItems = entry.items
 						.map((item) => {
 							if (item.type === "section") return null;
