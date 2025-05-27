@@ -1,5 +1,5 @@
 <script lang="ts">
-	import { excludedSearchWords } from "$lib/constants";
+	import { createTerms } from "$lib/factories.svelte";
 
 	interface Props {
 		text?: string | string[] | null;
@@ -10,15 +10,7 @@
 
 	let { text = "", search = "", filtered = false, separator = " | " }: Props = $props();
 
-	const terms = $derived(
-		(search && search.length > 1 ? search : "")
-			.replace(new RegExp(` ?\\b(${Array.from(excludedSearchWords).join("|")})\\b ?`, "gi"), " ")
-			.replace(/([^ a-z0-9])/gi, "\\$1")
-			.trim()
-			.split(" ")
-			.filter((i) => !!i)
-	);
-
+	const terms = $derived(createTerms(search && search.length > 1 ? search : ""));
 	const regexes = $derived(terms.map((term) => new RegExp(term, "gi")));
 	const regex = $derived(terms.length ? new RegExp(terms.join("|"), "gi") : null);
 

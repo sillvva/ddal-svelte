@@ -8,6 +8,10 @@ export type ExtendedLogData = InferQueryResult<"logs", { with: typeof extendedLo
 export interface FullLogData extends ExtendedLogData {
 	showDate: Date;
 }
+export interface LogSummaryData extends FullLogData {
+	levelGained: number;
+	totalLevel: number;
+}
 
 const characterLogFilter = (userId: UserId) => {
 	return {

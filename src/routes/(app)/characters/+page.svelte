@@ -5,75 +5,25 @@
 	import Dropdown from "$lib/components/Dropdown.svelte";
 	import Search from "$lib/components/Search.svelte";
 	import SearchResults from "$lib/components/SearchResults.svelte";
-	import { excludedSearchWords } from "$lib/constants.js";
+	import { SearchFactory } from "$lib/factories.svelte.js";
 	import { getGlobal, transition } from "$lib/stores.svelte.js";
-	import { createTransition, hotkey, isDefined } from "$lib/util";
+	import { createTransition, hotkey } from "$lib/util";
 	import { sorter } from "@sillvva/utils";
 	import { download } from "@svelteuidev/composables";
-	import MiniSearch from "minisearch";
 	import { fromAction } from "svelte/attachments";
 
 	let { data } = $props();
 
 	const global = getGlobal();
 
-	let search = $state(page.url.searchParams.get("s") || "");
-	const minisearch = new MiniSearch({
-		fields: ["characterName", "campaign", "race", "class", "tier", "level", "magicItems"],
-		idField: "characterId",
-		processTerm: (term) => (excludedSearchWords.has(term) ? null : term.toLowerCase()),
-		tokenize: (term) => term.split(/[^A-Z0-9\.']/gi),
-		searchOptions: {
-			prefix: true,
-			combineWith: "AND",
-			boost: { characterName: 2 }
-		}
-	});
-
-	const indexed = $derived(
-		data.characters
-			? data.characters.map((character) => ({
-					characterId: character.id,
-					characterName: character.name,
-					campaign: character.campaign || "",
-					race: character.race || "",
-					class: character.class || "",
-					tier: `T${character.tier}`,
-					level: `L${character.totalLevel}`,
-					magicItems: character.magicItems.map((item) => item.name).join(", ")
-				}))
-			: []
+	const search = $derived(new SearchFactory(data.characters));
+	const sortedResults = $derived(
+		search.results.toSorted((a, b) => sorter(b.score, a.score) || sorter(a.totalLevel, b.totalLevel) || sorter(a.name, b.name))
 	);
 
 	$effect(() => {
-		minisearch.addAll(indexed);
-		return () => minisearch.removeAll();
+		search.query = page.url.searchParams.get("s") || "";
 	});
-
-	const msResults = $derived.by(() => {
-		if (!minisearch.termCount) minisearch.addAll(indexed);
-		return minisearch.search(search);
-	});
-	const resultsMap = $derived(new Map(msResults.map((result) => [result.id, result])));
-	const results = $derived(
-		indexed.length && search.length > 1
-			? data.characters
-					.filter((character) => resultsMap.has(character.id))
-					.map((character) => {
-						const { score = 0, match = {} } = resultsMap.get(character.id) || {};
-						return {
-							...character,
-							score: Math.round(score * 100) / 100,
-							match: Object.values(match)
-								.map((value) => value[0])
-								.filter(isDefined)
-						};
-					})
-			: data.characters.map((character) => ({ ...character, score: 0, match: [] }))
-	);
-	const sortedResults = $derived(
-		results.toSorted((a, b) => sorter(b.score, a.score) || sorter(a.totalLevel, b.totalLevel) || sorter(a.name, b.name))
-	);
 </script>
 
 <div class="flex flex-col gap-4">
@@ -124,7 +74,7 @@
 				>
 					New Character <kbd class="kbd kbd-sm max-sm:hover-none:hidden text-base-content">N</kbd>
 				</a>
-				<Search bind:value={search} placeholder="Search by name, class, items, etc." />
+				<Search bind:value={search.query} placeholder="Search by name, class, items, etc." />
 				<a href="/characters/new/edit" class="btn btn-primary sm:hidden" aria-label="New Character">
 					<span class="iconify mdi--plus inline size-6"></span>
 				</a>
@@ -231,33 +181,39 @@
 								<td>
 									<div class="text-base font-bold whitespace-pre-wrap text-black sm:text-xl dark:text-white">
 										<a href={`/characters/${character.id}`} aria-label={character.name} class="row-link">
-											<SearchResults text={character.name} {search} />
+											<SearchResults text={character.name} search={search.query} />
 										</a>
 									</div>
 									<div class="text-xs whitespace-pre-wrap sm:text-sm">
 										<span class="inline pr-1 sm:hidden">Level {character.totalLevel}</span><SearchResults
 											text={character.race}
-											{search}
+											search={search.query}
 										/>
-										<SearchResults text={character.class} {search} />
+										<SearchResults text={character.class} search={search.query} />
 									</div>
 									<div class="mb-2 block text-xs sm:hidden">
-										<SearchResults text={character.campaign} {search} />
+										<SearchResults text={character.campaign} search={search.query} />
 									</div>
 									{#if (character.match.includes("magicItems") || global.app.characters.magicItems) && character.magicItems.length}
 										<div class="mb-2">
 											<p class="font-semibold">Magic Items:</p>
-											<SearchResults text={character.magicItems.map((item) => item.name)} {search} />
+											<SearchResults text={character.magicItems.map((item) => item.name)} search={search.query} filtered />
 										</div>
 									{/if}
-									{#if search.length > 1}
+									{#if character.match.includes("storyAwards") && character.storyAwards.length}
+										<div class="mb-2">
+											<p class="font-semibold">Story Awards:</p>
+											<SearchResults text={character.storyAwards.map((award) => award.name)} search={search.query} filtered />
+										</div>
+									{/if}
+									{#if search.query.length > 1}
 										<div class="mb-2">
 											Search Score: {character.score}
 										</div>
 									{/if}
 								</td>
 								<td class="hidden transition-colors sm:table-cell">
-									<SearchResults text={character.campaign} {search} />
+									<SearchResults text={character.campaign} search={search.query} />
 								</td>
 								<td class="hidden text-center transition-colors sm:table-cell">
 									{character.tier}
@@ -285,9 +241,6 @@
 						data-display={global.app.characters.display}
 					>
 						{#each sortedResults.filter((c) => c.tier == tier) as character}
-							{@const miMatches = msResults.find(
-								(result) => result.id == character.id && result.terms.find((term) => result.match[term]?.includes("magicItems"))
-							)}
 							<a
 								href={`/characters/${character.id}`}
 								class="card card-compact bg-base-200 shadow-xl transition-transform duration-200 motion-safe:hover:scale-105"
@@ -297,10 +250,10 @@
 									{#key character.imageUrl}
 										<img src={character.imageUrl} alt={character.name} class="size-full object-cover object-top" loading="lazy" />
 									{/key}
-									{#if search.length >= 1 && indexed.length && miMatches}
+									{#if search.query.length >= 1 && character.match.includes("magicItems")}
 										<div class="absolute inset-0 flex items-center bg-black/50 p-2 text-center text-xs text-white">
 											<div class="flex-1">
-												<SearchResults text={character.magicItems.map((item) => item.name)} {search} filtered />
+												<SearchResults text={character.magicItems.map((item) => item.name)} search={search.query} filtered />
 											</div>
 										</div>
 									{/if}
@@ -308,9 +261,11 @@
 								<div class="card-body p-4 text-center">
 									<div class="flex flex-col gap-1">
 										<h2 class="card-title ellipsis-nowrap block text-sm text-balance dark:text-white">
-											<SearchResults text={character.name} {search} />
+											<SearchResults text={character.name} search={search.query} />
 										</h2>
-										<p class="text-xs text-balance"><SearchResults text={`${character.race} ${character.class}`} {search} /></p>
+										<p class="text-xs text-balance">
+											<SearchResults text={`${character.race} ${character.class}`} search={search.query} />
+										</p>
 										<p class="text-xs">Level {character.totalLevel} | Tier {character.tier}</p>
 									</div>
 								</div>

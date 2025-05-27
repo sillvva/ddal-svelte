@@ -8,12 +8,11 @@
 	import Search from "$lib/components/Search.svelte";
 	import SearchResults from "$lib/components/SearchResults.svelte";
 	import DeleteLog from "$lib/components/forms/DeleteLog.svelte";
-	import { excludedSearchWords } from "$lib/constants";
+	import { SearchFactory } from "$lib/factories.svelte.js";
 	import { getGlobal } from "$lib/stores.svelte.js";
-	import { createTransition, hotkey, isDefined } from "$lib/util.js";
+	import { createTransition, hotkey } from "$lib/util.js";
 	import { sorter } from "@sillvva/utils";
 	import { download } from "@svelteuidev/composables";
-	import MiniSearch from "minisearch";
 	import { fromAction } from "svelte/attachments";
 	import { SvelteSet } from "svelte/reactivity";
 
@@ -21,67 +20,16 @@
 
 	const global = getGlobal();
 
-	let search = $state(page.url.searchParams.get("s") || "");
-	let deletingLog = new SvelteSet<string>();
-
-	const indexed = $derived(
-		data.logs
-			? data.logs.map((log) => ({
-					logId: log.id,
-					logName: log.name,
-					characterName: log.character?.name || "",
-					magicItems: log.magicItemsGained
-						.map((i) => i.name)
-						.concat(log.magicItemsLost.map((i) => i.name))
-						.join(", "),
-					storyAwards: log.storyAwardsGained
-						.map((i) => i.name)
-						.concat(log.storyAwardsLost.map((i) => i.name))
-						.join(", ")
-				}))
-			: []
+	const search = $derived(new SearchFactory(data.logs));
+	const sortedResults = $derived(
+		search.results.toSorted((a, b) => (global.app.dmLogs.sort === "asc" ? sorter(a.date, b.date) : sorter(b.date, a.date)))
 	);
-
-	const minisearch = new MiniSearch({
-		fields: ["logName", "characterName", "magicItems", "storyAwards", "logId"],
-		idField: "logId",
-		processTerm: (term) => (excludedSearchWords.has(term) ? null : term.toLowerCase()),
-		tokenize: (term) => term.split(/[^A-Z0-9\.']/gi),
-		searchOptions: {
-			prefix: true,
-			combineWith: "AND"
-		}
-	});
 
 	$effect(() => {
-		minisearch.addAll(indexed);
-		return () => minisearch.removeAll();
+		search.query = page.url.searchParams.get("s") || "";
 	});
 
-	const msResults = $derived.by(() => {
-		if (!minisearch.termCount) minisearch.addAll(indexed);
-		return minisearch.search(search);
-	});
-	const resultsMap = $derived(new Map(msResults.map((result) => [result.id, result])));
-	const results = $derived(
-		indexed.length && search.length > 1
-			? data.logs
-					.filter((log) => resultsMap.has(log.id))
-					.map((log) => {
-						const { score = 0 - log.date.getTime(), match = {} } = resultsMap.get(log.id) || {};
-						return {
-							...log,
-							score,
-							match: Object.values(match)
-								.map((value) => value[0])
-								.filter(isDefined)
-						};
-					})
-			: data.logs
-	);
-	const sortedResults = $derived(
-		results.toSorted((a, b) => (global.app.dmLogs.sort === "asc" ? sorter(a.date, b.date) : sorter(b.date, a.date)))
-	);
+	let deletingLog = new SvelteSet<string>();
 </script>
 
 <div class="flex flex-col gap-4">
@@ -120,7 +68,7 @@
 			>
 				New Log <kbd class="kbd kbd-sm max-sm:hover-none:hidden text-base-content">N</kbd>
 			</a>
-			<Search bind:value={search} placeholder="Search by name, class, items, etc." />
+			<Search bind:value={search.query} placeholder="Search by name, class, items, etc." />
 			<a href="/dm-logs/new" class="btn btn-primary inline-flex sm:hidden" aria-label="New Log">
 				<span class="iconify mdi--plus inline size-6"></span>
 			</a>
@@ -190,7 +138,7 @@
 										class="text-secondary text-left font-semibold whitespace-pre-wrap"
 										aria-label="Edit Log"
 									>
-										<SearchResults text={log.name} {search} />
+										<SearchResults text={log.name} search={search.query} />
 									</a>
 									<p class="text-netural-content text-xs font-normal whitespace-nowrap">
 										{new Date(log.date).toLocaleString([], { dateStyle: "medium", timeStyle: "short" })}
@@ -199,7 +147,7 @@
 										<p class="text-sm font-normal">
 											<span class="font-semibold">Character:</span>
 											<a href="/characters/{log.character.id}" class="text-secondary">
-												<SearchResults text={log.character.name} {search} />
+												<SearchResults text={log.character.name} search={search.query} />
 											</a>
 										</p>
 									{/if}
@@ -290,7 +238,7 @@
 									{/if}
 									{#if log.magicItemsGained.length > 0}
 										<div>
-											<Items title="Magic Items" items={log.magicItemsGained} {search} sort />
+											<Items title="Magic Items" items={log.magicItemsGained} search={search.query} sort />
 										</div>
 									{/if}
 								</td>
@@ -315,10 +263,10 @@
 									{/if}
 									{#if log.magicItemsGained.length > 0 || log.magicItemsLost.length > 0}
 										<div class="mt-2 sm:hidden print:hidden">
-											<Items title="Magic Items:" items={log.magicItemsGained} {search} sort />
+											<Items title="Magic Items:" items={log.magicItemsGained} search={search.query} sort />
 											{#if log.magicItemsLost.length}
 												<p class="mt-2 text-sm whitespace-pre-wrap line-through">
-													<SearchResults text={log.magicItemsLost.map((mi) => mi.name).join(" | ")} {search} />
+													<SearchResults text={log.magicItemsLost.map((mi) => mi.name).join(" | ")} search={search.query} />
 												</p>
 											{/if}
 										</div>

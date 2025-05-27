@@ -1,3 +1,7 @@
+import type { FullCharacterData } from "$server/data/characters";
+import type { UserDMsWithLogs } from "$server/data/dms";
+import type { FullLogData, LogSummaryData } from "$server/data/logs";
+import type { SearchData } from "$src/routes/(api)/command/+server";
 import { parseDateTime, type DateValue } from "@internationalized/date";
 import { toast } from "svelte-sonner";
 import { derived, get, type Readable, type Writable } from "svelte/store";
@@ -13,6 +17,8 @@ import {
 } from "sveltekit-superforms";
 import { valibotClient } from "sveltekit-superforms/adapters";
 import * as v from "valibot";
+import { excludedSearchWords } from "./constants";
+import { isDefined } from "./util";
 
 export function successToast(message: string) {
 	toast.success("Success", {
@@ -130,4 +136,222 @@ export function intDateProxy<T extends Record<string, unknown>, Path extends For
 			});
 		}
 	};
+}
+
+type SearchCounts = {
+	count: number;
+	previousCount: number;
+};
+type SearchScore = {
+	score: number;
+	match: string[];
+};
+
+export function createTerms(query: string) {
+	return (
+		query
+			.trim()
+			.toLowerCase()
+			.match(/(?:[^\s"]+|"[^"]*")+/g)
+			?.map((word) => word.replace(/^"|"$/g, ""))
+			.filter((word) => word.length > 1 && !excludedSearchWords.has(word)) || []
+	);
+}
+export class SearchFactory<TData extends SearchData | FullCharacterData[] | FullLogData[] | LogSummaryData[] | UserDMsWithLogs> {
+	private _query = $state<string>("");
+	private _category = $state<TData extends SearchData ? SearchData[number]["title"] | null : null>(null);
+	private _terms = $derived(createTerms(this._query));
+
+	constructor(private data: TData) {}
+
+	get category() {
+		return this._category;
+	}
+
+	set category(category: TData extends SearchData ? SearchData[number]["title"] | null : null) {
+		this._category = category;
+	}
+
+	get query() {
+		return this._query;
+	}
+
+	set query(query: string) {
+		this._query = query;
+	}
+
+	get terms() {
+		return this._terms;
+	}
+
+	hasMatch(item: string) {
+		const matches = this._terms.filter((word) => item.toLowerCase().includes(word));
+		if (!matches.length) return { matches: [], score: 0 };
+
+		// Calculate a simple match score based on:
+		// - Number of matched terms
+		// - Position of matches (earlier = better)
+		// - Exact word matches vs partial matches
+		const itemLower = item.toLowerCase();
+		let score = 0;
+
+		for (const term of matches) {
+			// Count occurrences of the term in the item
+			score += (itemLower.match(new RegExp(term, "g")) || []).length;
+			// Bonus for early position (max 0.5 bonus)
+			const index = itemLower.indexOf(term);
+			score += Math.max(0, 0.5 - (index / itemLower.length) * 0.5);
+			// Bonus for exact word boundary matches
+			const wordBoundaryRegex = new RegExp(`\\b${term}\\b`, "i");
+			if (wordBoundaryRegex.test(item)) {
+				score += 0.3;
+			}
+		}
+
+		// Normalize score by number of terms searched
+		score = Math.round((score / this._terms.length) * 10) / 10;
+
+		return { matches, score };
+	}
+
+	get results() {
+		return this.data
+			.map((entry) => {
+				if ("items" in entry) {
+					if (this._category && entry.title !== this._category) return { title: entry.title, items: [], count: 0 };
+
+					// Skip filtering if query is too short
+					if (this._query.length < 2) {
+						const items = entry.items.slice(0, this._category ? 10 : 5);
+						return {
+							title: entry.title,
+							items: items.map((item) => ({ ...item, score: 0 })),
+							count: items.length
+						};
+					}
+
+					// Build search strings once per item
+					const filteredItems = entry.items
+						.map((item) => {
+							if (item.type === "section") return null;
+
+							let totalScore = 0;
+							const matches = new Set<string>();
+							const matchTypes = new Set<string>();
+
+							const searches = (() => {
+								if (item.type === "character") {
+									const searches = [
+										["name", item.name],
+										["race", item.race || ""],
+										["class", item.class || ""],
+										["campaign", item.campaign || ""],
+										["totalLevel", `L${item.totalLevel}`],
+										["tier", `T${item.tier}`],
+										["magicItems", item.magicItems.map((mi) => mi.name).join(" ")],
+										["storyAwards", item.storyAwards.map((sa) => sa.name).join(" ")]
+									] as const satisfies [keyof typeof item, string][];
+									return searches;
+								} else if (item.type === "log") {
+									const searches = [
+										["name", item.name],
+										["character", item.character?.name || ""],
+										["dm", item.dm?.name || ""],
+										["magicItemsGained", item.magicItemsGained.map((mi) => mi.name).join(" ")],
+										["storyAwardsGained", item.storyAwardsGained.map((sa) => sa.name).join(" ")]
+									] as const satisfies [keyof typeof item, string][];
+									return searches;
+								}
+								const searches = [["name", item.name]] as const satisfies [keyof typeof item, string][];
+								return searches;
+							})();
+
+							for (const [key, value] of searches) {
+								const matchResult = this.hasMatch(value);
+								if (matchResult.matches.length) {
+									totalScore += matchResult.score;
+									matchResult.matches.forEach((match) => matches.add(match));
+									matchTypes.add(key);
+								}
+							}
+
+							if (matches.size !== this.terms.length) return null;
+							return { ...item, score: totalScore, match: Array.from(matchTypes) };
+						})
+						.filter((item) => item !== null)
+						.sort((a, b) => b.score - a.score)
+						.slice(0, 50);
+
+					return { title: entry.title, items: filteredItems, count: filteredItems.length };
+				}
+
+				let totalScore = 0;
+				const matches = new Set<string>();
+				const matchTypes = new Set<string>();
+
+				const searches = (() => {
+					if ("class" in entry) {
+						return [
+							["name", entry.name],
+							["race", entry.race || ""],
+							["class", entry.class || ""],
+							["campaign", entry.campaign || ""],
+							["totalLevel", `L${entry.totalLevel}`],
+							["tier", `T${entry.tier}`],
+							["magicItems", entry.magicItems.map((mi) => mi.name).join(" ")],
+							["storyAwards", entry.storyAwards.map((sa) => sa.name).join(" ")]
+						] as const satisfies [keyof typeof entry, string][];
+					}
+
+					if ("DCI" in entry) {
+						return [
+							["name", entry.name],
+							["DCI", entry.DCI || ""]
+						] as const satisfies [keyof typeof entry, string][];
+					}
+
+					return [
+						["name", entry.name],
+						["character", entry.character?.name || ""],
+						["dm", entry.dm?.name || ""],
+						["magicItemsGained", entry.magicItemsGained.map((mi) => mi.name).join(" ")],
+						["storyAwardsGained", entry.storyAwardsGained.map((sa) => sa.name).join(" ")]
+					] as const satisfies [keyof typeof entry, string][];
+				})();
+
+				for (const [key, value] of searches) {
+					const matchResult = this.hasMatch(value);
+					if (matchResult.matches.length) {
+						totalScore += matchResult.score;
+						matchResult.matches.forEach((match) => matches.add(match));
+						matchTypes.add(key);
+					}
+				}
+
+				if (matches.size !== this.terms.length) return null;
+
+				return {
+					...entry,
+					items: [],
+					count: 1,
+					previousCount: 0,
+					score: totalScore,
+					match: Array.from(matchTypes)
+				};
+			})
+			.filter(isDefined)
+			.map((entry, i, entries) => {
+				const previousEntries = entries.slice(0, i);
+				const previousEntriesCount = previousEntries.reduce((sum, e) => {
+					return sum + e.count;
+				}, 0);
+
+				return {
+					...entry,
+					previousCount: previousEntriesCount
+				};
+			}) as TData extends SearchData
+			? Array<TData[number] & { items: Array<SearchData[number]["items"][number] & SearchScore> } & SearchCounts>
+			: Array<TData[number] & SearchCounts & SearchScore>;
+	}
 }
