@@ -201,7 +201,10 @@ export class SearchFactory<TData extends SearchData | FullCharacterData[] | Full
 								return { id: item.id, searches };
 							}
 							if (item.type === "dm") {
-								const searches: [keyof typeof item, string][] = [["name", item.name]];
+								const searches: [keyof typeof item, string][] = [
+									["name", item.name],
+									["DCI", item.DCI || ""]
+								];
 								return { id: item.id, searches };
 							}
 							return { id: "", searches: [] };
@@ -218,6 +221,7 @@ export class SearchFactory<TData extends SearchData | FullCharacterData[] | Full
 				return (() => {
 					if ("class" in entry) {
 						const searches: [keyof typeof entry, string][] = [
+							["id", entry.id],
 							["name", entry.name],
 							["race", entry.race || ""],
 							["class", entry.class || ""],
@@ -239,6 +243,7 @@ export class SearchFactory<TData extends SearchData | FullCharacterData[] | Full
 
 					if ("DCI" in entry) {
 						const searches: [keyof typeof entry, string][] = [
+							["id", entry.id],
 							["name", entry.name],
 							["DCI", entry.DCI || ""]
 						];
@@ -249,12 +254,17 @@ export class SearchFactory<TData extends SearchData | FullCharacterData[] | Full
 					}
 
 					const searches: [keyof typeof entry, string][] = [
+						["id", entry.id],
 						["name", entry.name],
 						["character", entry.character?.name || ""],
-						["dm", entry.dm?.name || ""],
-						["magicItemsGained", entry.magicItemsGained.map((mi) => mi.name).join(" ")],
-						["storyAwardsGained", entry.storyAwardsGained.map((sa) => sa.name).join(" ")]
+						["dm", entry.dm?.name || ""]
 					];
+					entry.magicItemsGained.forEach((mi) => {
+						searches.push(["magicItemsGained", mi.name]);
+					});
+					entry.storyAwardsGained.forEach((sa) => {
+						searches.push(["storyAwardsGained", sa.name]);
+					});
 					return {
 						id: entry.id,
 						searches
