@@ -60,7 +60,6 @@
 		"bits-ui": "^1.7.0",
 		"drizzle-orm": "1.0.0-beta.1-af4c434",
 		"js-cookie": "^3.0.5",
-		"minisearch": "^7.1.2",
 		"postgres": "^3.4.7",
 		"svelte-autosize": "^1.1.5",
 		"svelte-contextify": "^1.0.4",
