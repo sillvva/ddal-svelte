@@ -17,7 +17,6 @@ import {
 } from "sveltekit-superforms";
 import { valibotClient } from "sveltekit-superforms/adapters";
 import * as v from "valibot";
-import { excludedSearchWords } from "./constants";
 import { isDefined, occurrences } from "./util";
 
 export function successToast(message: string) {
@@ -148,6 +147,8 @@ type SearchScore = {
 };
 
 export function createTerms(query: string) {
+	const excludedSearchWords = new Set(["and", "or", "to", "in", "a", "an", "the", "of"]);
+
 	return (
 		query
 			.trim()
