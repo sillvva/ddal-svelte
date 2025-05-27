@@ -208,7 +208,7 @@
 									{/if}
 									{#if search.query.length > 1}
 										<div class="mb-2">
-											Search Score: {character.score}
+											Search Score: {Math.round(character.score * 100) / 100}
 										</div>
 									{/if}
 								</td>
