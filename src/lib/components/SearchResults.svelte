@@ -6,9 +6,10 @@
 		search?: string | null;
 		filtered?: boolean;
 		separator?: string;
+		matches?: number;
 	}
 
-	let { text = "", search = "", filtered = false, separator = " | " }: Props = $props();
+	let { text = "", search = "", filtered = false, separator = " | ", matches = 1 }: Props = $props();
 
 	const terms = $derived(createTerms(search && search.length > 1 ? search : ""));
 	const regexes = $derived(terms.map((term) => new RegExp(term, "gi")));
@@ -16,7 +17,10 @@
 
 	const items = $derived(
 		(Array.isArray(text) ? text : text?.split(separator) || [])
-			.filter((item) => !filtered || regexes.every((regex) => item.match(regex)))
+			.filter(
+				(item) =>
+					!filtered || (matches === 1 ? regexes.every((regex) => item.match(regex)) : regexes.some((regex) => item.match(regex)))
+			)
 			.join(separator)
 	);
 

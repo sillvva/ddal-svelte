@@ -197,13 +197,23 @@
 									{#if (character.match.includes("magicItems") || global.app.characters.magicItems) && character.magicItems.length}
 										<div class="mb-2">
 											<p class="font-semibold">Magic Items:</p>
-											<SearchResults text={character.magicItems.map((item) => item.name)} search={search.query} filtered />
+											<SearchResults
+												text={character.magicItems.map((item) => item.name)}
+												search={search.query}
+												filtered
+												matches={character.match.length}
+											/>
 										</div>
 									{/if}
 									{#if character.match.includes("storyAwards") && character.storyAwards.length}
 										<div class="mb-2">
 											<p class="font-semibold">Story Awards:</p>
-											<SearchResults text={character.storyAwards.map((award) => award.name)} search={search.query} filtered />
+											<SearchResults
+												text={character.storyAwards.map((award) => award.name)}
+												search={search.query}
+												filtered
+												matches={character.match.length}
+											/>
 										</div>
 									{/if}
 									{#if search.query.length > 1}
@@ -253,7 +263,12 @@
 									{#if search.query.length >= 1 && character.match.includes("magicItems")}
 										<div class="absolute inset-0 flex items-center bg-black/50 p-2 text-center text-xs text-white">
 											<div class="flex-1">
-												<SearchResults text={character.magicItems.map((item) => item.name)} search={search.query} filtered />
+												<SearchResults
+													text={character.magicItems.map((item) => item.name)}
+													search={search.query}
+													filtered
+													matches={character.match.length}
+												/>
 											</div>
 										</div>
 									{/if}

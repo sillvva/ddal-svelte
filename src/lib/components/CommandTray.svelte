@@ -144,7 +144,9 @@
 							<div class="p-4 text-center font-bold">Loading data...</div>
 						{:else}
 							<div class="relative h-auto data-[results=true]:h-96" data-results={resultsCount > 0}>
-								<Command.Empty class="p-4 text-center font-bold">No results found.</Command.Empty>
+								{#if resultsCount === 0}
+									<Command.Empty class="p-4 text-center font-bold">No results found.</Command.Empty>
+								{/if}
 								<Command.Viewport class="h-full overflow-y-auto" bind:ref={viewport}>
 									{#each search.results as section}
 										{#if section.items.length && section.previousCount}
@@ -187,7 +189,7 @@
 																						<div class="text-base-content/70 text-xs">
 																							Match Score: {Math.round(item.score * 100) / 100}
 																						</div>
-																						{#if item.magicItems.some((magicItem) => search.hasMatch(magicItem.name))}
+																						{#if item.match.includes("magicItems")}
 																							<div class="flex flex-col text-xs">
 																								<span class="pt-1 font-bold whitespace-nowrap">Magic Items:</span>
 																								<span class="text-base-content/70 flex-1 text-xs leading-4">
@@ -195,11 +197,12 @@
 																										text={item.magicItems.map((mi) => mi.name)}
 																										search={search.query}
 																										filtered
+																										matches={item.match.length}
 																									/>
 																								</span>
 																							</div>
 																						{/if}
-																						{#if item.storyAwards.some((storyAward) => search.hasMatch(storyAward.name))}
+																						{#if item.match.includes("storyAwards")}
 																							<div class="flex flex-col text-xs">
 																								<span class="pt-1 font-bold whitespace-nowrap">Story Awards:</span>
 																								<span class="text-base-content/70 flex-1 text-xs leading-4">
@@ -207,6 +210,7 @@
 																										text={item.storyAwards.map((sa) => sa.name)}
 																										search={search.query}
 																										filtered
+																										matches={item.match.length}
 																									/>
 																								</span>
 																							</div>
@@ -237,7 +241,7 @@
 																								Match Score: {Math.round(item.score * 100) / 100}
 																							</div>
 																						{/if}
-																						{#if search.hasMatch(item.dm.name)}
+																						{#if item.match.includes("dm")}
 																							<div class="flex gap-1 text-xs">
 																								<span class="font-bold whitespace-nowrap">DM:</span>
 																								<span class="text-base-content/70 flex-1">
@@ -245,7 +249,7 @@
 																								</span>
 																							</div>
 																						{/if}
-																						{#if item.magicItemsGained.some((it) => search.hasMatch(it.name))}
+																						{#if item.match.includes("magicItemsGained")}
 																							<div class="flex flex-col text-xs">
 																								<span class="pt-1 font-bold whitespace-nowrap">Magic Items:</span>
 																								<span class="text-base-content/70 flex-1">
@@ -253,11 +257,12 @@
 																										text={item.magicItemsGained.map((mi) => mi.name)}
 																										search={search.query}
 																										filtered
+																										matches={item.match.length}
 																									/>
 																								</span>
 																							</div>
 																						{/if}
-																						{#if item.storyAwardsGained.some((it) => search.hasMatch(it.name))}
+																						{#if item.match.includes("storyAwardsGained")}
 																							<div class="flex flex-col text-xs">
 																								<span class="pt-1 font-bold whitespace-nowrap">Story Awards:</span>
 																								<span class="text-base-content/70 flex-1">
@@ -265,6 +270,7 @@
 																										text={item.storyAwardsGained.map((sa) => sa.name)}
 																										search={search.query}
 																										filtered
+																										matches={item.match.length}
 																									/>
 																								</span>
 																							</div>
