@@ -163,7 +163,7 @@
 															<Command.Item
 																value={item.url}
 																onSelect={() => select(item.url)}
-																class="flex gap-4 rounded-lg data-[selected]:bg-neutral-500/40"
+																class="flex gap-4 rounded-lg data-[selected]:bg-neutral-500/25"
 															>
 																{#snippet child({ props })}
 																	<li {...props}>
