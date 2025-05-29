@@ -141,6 +141,19 @@ type SearchScore = {
 	score: number;
 };
 
+type ExpandedSearchData<TData extends SearchData[number]> = TData extends {
+	title: infer Title;
+	items: Array<infer Item>;
+}
+	? {
+			title: Title;
+			items: (Item &
+				SearchScore & {
+					match: (Title extends "Sections" ? never : keyof Item)[];
+				})[];
+		} & { count: number }
+	: never;
+
 export function createTerms(query: string) {
 	const excludedSearchWords = new Set(["and", "or", "to", "in", "a", "an", "the", "of"]);
 
@@ -164,10 +177,6 @@ abstract class BaseSearchFactory<TData> {
 
 	set query(query: string) {
 		this._query = query;
-	}
-
-	get terms() {
-		return this._terms;
 	}
 
 	protected hasMatch(item: string) {
@@ -197,19 +206,6 @@ abstract class BaseSearchFactory<TData> {
 
 	abstract get results(): any;
 }
-
-type ExpandedSearchData<TData extends SearchData[number]> = TData extends {
-	title: infer Title extends SearchData[number]["title"];
-	items: Array<infer Item>;
-}
-	? {
-			title: Title;
-			items: (Item &
-				SearchScore & {
-					match: (Title extends "Sections" ? never : keyof Item)[];
-				})[];
-		} & { count: number }
-	: never;
 
 export class GlobalSearchFactory extends BaseSearchFactory<SearchData> {
 	private _tdata = $state<SearchData>([] as unknown as SearchData);
@@ -320,7 +316,7 @@ export class GlobalSearchFactory extends BaseSearchFactory<SearchData> {
 							}
 						}
 
-						if (matches.size !== this.terms.length) return null;
+						if (matches.size !== this._terms.length) return null;
 						return { ...item, score: totalScore, match: Array.from(matchTypes) };
 					})
 					.filter(isDefined);
@@ -431,7 +427,7 @@ export class EntitySearchFactory<
 					}
 				}
 
-				if (matches.size !== this.terms.length) return null;
+				if (matches.size !== this._terms.length) return null;
 
 				return {
 					...entry,
