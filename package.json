@@ -43,7 +43,7 @@
 		"tailwindcss": "^4.1.7",
 		"tslib": "^2.8.1",
 		"typescript": "5.8.3",
-		"vite": "^6.3.5"
+		"vite": "npm:rolldown-vite@latest"
 	},
 	"type": "module",
 	"dependencies": {
@@ -74,6 +74,7 @@
 	"overrides": {
 		"svelte-markdown": {
 			"svelte": "^5.0.0"
-		}
+		},
+		"vite": "npm:rolldown-vite@latest"
 	}
 }
