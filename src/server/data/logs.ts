@@ -64,6 +64,7 @@ export async function getDMLogs(userId: UserId): Promise<FullLogData[]> {
 		});
 }
 
+export type UserLogData = Awaited<ReturnType<typeof getUserLogs>>[number];
 export async function getUserLogs(userId: UserId) {
 	return q.logs.findMany({
 		columns: {

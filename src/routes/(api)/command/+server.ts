@@ -30,7 +30,10 @@ async function getData(user: LocalsSession["user"]) {
 						(character) =>
 							({
 								...character,
-								logLevels: [],
+								logLevels: [] as {
+									id: string;
+									levels: number;
+								}[],
 								type: "character",
 								url: `/characters/${character.id}`
 							}) as const

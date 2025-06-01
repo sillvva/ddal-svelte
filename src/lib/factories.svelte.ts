@@ -1,6 +1,6 @@
 import type { FullCharacterData } from "$server/data/characters";
-import type { UserDMsWithLogs } from "$server/data/dms";
-import type { FullLogData, LogSummaryData } from "$server/data/logs";
+import type { UserDMs, UserDMsWithLogs } from "$server/data/dms";
+import type { FullLogData, LogSummaryData, UserLogData } from "$server/data/logs";
 import type { SearchData } from "$src/routes/(api)/command/+server";
 import { parseDateTime, type DateValue } from "@internationalized/date";
 import { toast } from "svelte-sonner";
@@ -205,6 +205,48 @@ abstract class BaseSearchFactory<TData> {
 	}
 
 	abstract get results(): any;
+
+	static getCharacterIndex(item: FullCharacterData) {
+		return {
+			id: item.id,
+			index: new Map([
+				["id", new Set([item.id])],
+				["name", new Set([item.name])],
+				["race", new Set([item.race || ""])],
+				["class", new Set([item.class || ""])],
+				["campaign", new Set([item.campaign || ""])],
+				["totalLevel", new Set([`L${item.totalLevel}`])],
+				["tier", new Set([`T${item.tier}`])],
+				["magicItems", new Set(item.magicItems.map((mi) => mi.name))],
+				["storyAwards", new Set(item.storyAwards.map((sa) => sa.name))]
+			] as const satisfies [keyof typeof item, Set<string>][])
+		};
+	}
+
+	static getLogIndex(item: FullLogData | LogSummaryData | UserLogData) {
+		return {
+			id: item.id,
+			index: new Map([
+				["id", new Set([item.id])],
+				["name", new Set([item.name])],
+				["character", new Set([item.character?.name || ""])],
+				["dm", new Set([item.dm?.name || ""])],
+				["magicItemsGained", new Set(item.magicItemsGained.map((mi) => mi.name))],
+				["storyAwardsGained", new Set(item.storyAwardsGained.map((sa) => sa.name))]
+			] as const satisfies [keyof typeof item, Set<string>][])
+		};
+	}
+
+	static getDMIndex(item: (UserDMsWithLogs | UserDMs)[number]) {
+		return {
+			id: item.id,
+			index: new Map([
+				["id", new Set([item.id])],
+				["name", new Set([item.name])],
+				["DCI", new Set([item.DCI || ""])]
+			] as const satisfies [keyof typeof item, Set<string>][])
+		};
+	}
 }
 
 export class GlobalSearchFactory extends BaseSearchFactory<SearchData> {
@@ -219,43 +261,15 @@ export class GlobalSearchFactory extends BaseSearchFactory<SearchData> {
 						entry.items
 							.map((item) => {
 								if (item.type === "character") {
-									return {
-										id: item.id,
-										searches: new Map([
-											["name", new Set([item.name])],
-											["race", new Set([item.race || ""])],
-											["class", new Set([item.class || ""])],
-											["campaign", new Set([item.campaign || ""])],
-											["totalLevel", new Set([`L${item.totalLevel}`])],
-											["tier", new Set([`T${item.tier}`])],
-											["magicItems", new Set(item.magicItems.map((mi) => mi.name))],
-											["storyAwards", new Set(item.storyAwards.map((sa) => sa.name))]
-										] as const satisfies [keyof typeof item, Set<string>][])
-									};
+									return BaseSearchFactory.getCharacterIndex(item);
+								} else if (item.type === "dm") {
+									return BaseSearchFactory.getDMIndex(item);
 								} else if (item.type === "log") {
-									return {
-										id: item.id,
-										searches: new Map([
-											["name", new Set([item.name])],
-											["character", new Set([item.character?.name || ""])],
-											["dm", new Set([item.dm?.name || ""])],
-											["magicItemsGained", new Set(item.magicItemsGained.map((mi) => mi.name))],
-											["storyAwardsGained", new Set(item.storyAwardsGained.map((sa) => sa.name))]
-										] as const satisfies [keyof typeof item, Set<string>][])
-									};
-								}
-								if (item.type === "dm") {
-									return {
-										id: item.id,
-										searches: new Map([
-											["name", new Set([item.name])],
-											["DCI", new Set([item.DCI || ""])]
-										] as const satisfies [keyof typeof item, Set<string>][])
-									};
+									return BaseSearchFactory.getLogIndex(item);
 								}
 							})
 							.filter(isDefined)
-							.map((item) => [item.id, item.searches])
+							.map((item) => [item.id, item.index])
 					)
 				];
 			})
@@ -290,22 +304,22 @@ export class GlobalSearchFactory extends BaseSearchFactory<SearchData> {
 					} as ExpandedSearchData<SearchData[number]>;
 				}
 
-				const searches = this._searchMap.get(entry.title);
-				if (!searches) return { title: entry.title, items: [], count: 0 };
+				const index = this._searchMap.get(entry.title);
+				if (!index) return { title: entry.title, items: [], count: 0 };
 
 				const filteredItems = entry.items
 					.map((item) => {
 						if (item.type === "section") return null;
 
-						const itemSearches = searches.get(item.id);
-						if (!itemSearches) return null;
+						const itemIndex = index.get(item.id);
+						if (!itemIndex) return null;
 
 						let totalScore = 0;
-						const keys = Array.from(itemSearches.keys());
+						const keys = Array.from(itemIndex.keys());
 						const matches = new Set<string>();
 						const matchTypes = new Set<(typeof keys)[number]>();
 
-						for (const [key, values] of itemSearches) {
+						for (const [key, values] of itemIndex) {
 							for (const value of values) {
 								const matchResult = this.hasMatch(value);
 								if (matchResult.matches.length) {
@@ -350,49 +364,14 @@ export class EntitySearchFactory<
 			this._tdata
 				.map((entry) => {
 					if ("class" in entry) {
-						const searches: Map<keyof typeof entry, Set<string>> = new Map([
-							["id", new Set([entry.id])],
-							["name", new Set([entry.name])],
-							["race", new Set([entry.race || ""])],
-							["class", new Set([entry.class || ""])],
-							["campaign", new Set([entry.campaign || ""])],
-							["totalLevel", new Set([`L${entry.totalLevel}`])],
-							["tier", new Set([`T${entry.tier}`])],
-							["magicItems", new Set(entry.magicItems.map((mi) => mi.name))],
-							["storyAwards", new Set(entry.storyAwards.map((sa) => sa.name))]
-						] as const satisfies [keyof typeof entry, Set<string>][]);
-						return {
-							id: entry.id,
-							searches
-						};
+						return BaseSearchFactory.getCharacterIndex(entry);
+					} else if ("isUser" in entry) {
+						return BaseSearchFactory.getDMIndex(entry);
+					} else {
+						return BaseSearchFactory.getLogIndex(entry);
 					}
-
-					if ("DCI" in entry) {
-						const searches: Map<keyof typeof entry, Set<string>> = new Map([
-							["id", new Set([entry.id])],
-							["name", new Set([entry.name])],
-							["DCI", new Set([entry.DCI || ""])]
-						] as const satisfies [keyof typeof entry, Set<string>][]);
-						return {
-							id: entry.id,
-							searches
-						};
-					}
-
-					const searches: Map<keyof typeof entry, Set<string>> = new Map([
-						["id", new Set([entry.id])],
-						["name", new Set([entry.name])],
-						["character", new Set([entry.character?.name || ""])],
-						["dm", new Set([entry.dm?.name || ""])],
-						["magicItemsGained", new Set(entry.magicItemsGained.map((mi) => mi.name))],
-						["storyAwardsGained", new Set(entry.storyAwardsGained.map((sa) => sa.name))]
-					] as const satisfies [keyof typeof entry, Set<string>][]);
-					return {
-						id: entry.id,
-						searches
-					};
 				})
-				.map((entry) => [entry.id, entry.searches])
+				.map((entry) => [entry.id, entry.index])
 		)
 	);
 
@@ -409,14 +388,14 @@ export class EntitySearchFactory<
 			.map((entry) => {
 				let totalScore = 0;
 
-				const searches = this._searchMap.get(entry.id);
-				if (!searches) return null;
+				const index = this._searchMap.get(entry.id);
+				if (!index) return null;
 
-				const keys = Array.from(searches.keys());
+				const keys = Array.from(index.keys());
 				const matches = new Set<string>();
 				const matchTypes = new Set<(typeof keys)[number]>();
 
-				for (const [key, values] of searches) {
+				for (const [key, values] of index) {
 					for (const value of values) {
 						const matchResult = this.hasMatch(value);
 						if (matchResult.matches.length) {
