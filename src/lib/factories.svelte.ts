@@ -292,6 +292,7 @@ export class GlobalSearchFactory extends BaseSearchFactory<SearchData> {
 	get results() {
 		return this._tdata
 			.map((entry) => {
+				// Skip if category is set and doesn't match
 				if (this._category && entry.title !== this._category) return { title: entry.title, items: [], count: 0 };
 
 				// Skip filtering if query is too short
@@ -305,6 +306,7 @@ export class GlobalSearchFactory extends BaseSearchFactory<SearchData> {
 				}
 
 				const index = this._searchMap.get(entry.title);
+				// Skip if no index found
 				if (!index) return { title: entry.title, items: [], count: 0 };
 
 				const filteredItems = entry.items

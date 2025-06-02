@@ -68,9 +68,9 @@
 	},
 	"engines": {
 		"node": ">=20.0",
-		"pnpm": ">=9.3"
+		"pnpm": ">=10.0"
 	},
-	"packageManager": "pnpm@9.12.2",
+	"packageManager": "pnpm@10.11.0",
 	"overrides": {
 		"svelte-markdown": {
 			"svelte": "^5.0.0"
