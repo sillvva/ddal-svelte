@@ -154,20 +154,31 @@ type ExpandedSearchData<TData extends SearchData[number]> = TData extends {
 		} & { count: number }
 	: never;
 
-export function createTerms(query: string) {
-	const excludedSearchWords = new Set(["and", "or", "to", "in", "a", "an", "the", "of"]);
+const SEARCH_CONFIG = {
+	POSITION_BONUS_MAX: 0.5,
+	WORD_BOUNDARY_BONUS: 0.3,
+	SCORE_PRECISION: 10,
+	MAX_RESULTS_PER_CATEGORY: 50,
+	MAX_RESULTS_WITHOUT_CATEGORY: 5,
+	MAX_RESULTS_WITH_CATEGORY: 10,
+	MIN_QUERY_LENGTH: 2
+} as const;
 
+const EXCLUDED_SEARCH_WORDS = new Set(["and", "or", "to", "in", "a", "an", "the", "of"]);
+
+export function createTerms(query: string) {
 	return (
 		query
 			.trim()
 			.toLowerCase()
 			.match(/(?:[^\s"]+|"[^"]*")+/g)
 			?.map((word) => word.replace(/^"|"$/g, ""))
-			.filter((word) => word.length > 1 && !excludedSearchWords.has(word)) || []
+			.filter((word) => word.length > 1 && !EXCLUDED_SEARCH_WORDS.has(word)) || []
 	);
 }
 
-abstract class BaseSearchFactory<TData> {
+abstract class BaseSearchFactory<TData extends Array<unknown>> {
+	protected _tdata = $state([] as unknown as TData);
 	protected _query = $state<string>("");
 	protected _terms = $derived(createTerms(this._query));
 
@@ -190,16 +201,16 @@ abstract class BaseSearchFactory<TData> {
 			score += occurrences(itemLower, term);
 			// Bonus for early position (max 0.5 bonus)
 			const index = itemLower.indexOf(term);
-			score += Math.max(0, 0.5 - (index / itemLower.length) * 0.5);
+			score += Math.max(0, SEARCH_CONFIG.POSITION_BONUS_MAX - (index / itemLower.length) * SEARCH_CONFIG.POSITION_BONUS_MAX);
 			// Bonus for exact word boundary matches
-			const wordBoundaryRegex = new RegExp(`\\b${term}\\b`, "i");
-			if (wordBoundaryRegex.test(item)) {
-				score += 0.3;
+			const escapedTerm = term.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+			if (new RegExp(`\\b${escapedTerm}\\b`, "i").test(item)) {
+				score += SEARCH_CONFIG.WORD_BOUNDARY_BONUS;
 			}
 		}
 
 		// Normalize score by number of terms searched
-		score = Math.round((score / this._terms.length) * 10) / 10;
+		score = Math.round((score / this._terms.length) * SEARCH_CONFIG.SCORE_PRECISION) / SEARCH_CONFIG.SCORE_PRECISION;
 
 		return { matches, score };
 	}
@@ -250,7 +261,6 @@ abstract class BaseSearchFactory<TData> {
 }
 
 export class GlobalSearchFactory extends BaseSearchFactory<SearchData> {
-	private _tdata = $state<SearchData>([] as unknown as SearchData);
 	private _category = $state<SearchData[number]["title"] | null>(null);
 	private _searchMap = $derived(
 		new Map(
@@ -296,8 +306,11 @@ export class GlobalSearchFactory extends BaseSearchFactory<SearchData> {
 				if (this._category && entry.title !== this._category) return { title: entry.title, items: [], count: 0 };
 
 				// Skip filtering if query is too short
-				if (this._query.length < 2) {
-					const items = entry.items.slice(0, this._category ? 10 : 5);
+				if (this._query.length < SEARCH_CONFIG.MIN_QUERY_LENGTH) {
+					const items = entry.items.slice(
+						0,
+						this._category ? SEARCH_CONFIG.MAX_RESULTS_WITH_CATEGORY : SEARCH_CONFIG.MAX_RESULTS_WITHOUT_CATEGORY
+					);
 					return {
 						title: entry.title,
 						items: items.map((item) => ({ ...item, score: 0, match: [] })),
@@ -339,7 +352,7 @@ export class GlobalSearchFactory extends BaseSearchFactory<SearchData> {
 
 				return {
 					title: entry.title,
-					items: filteredItems.sort((a, b) => b.score - a.score).slice(0, 50),
+					items: filteredItems.sort((a, b) => b.score - a.score).slice(0, SEARCH_CONFIG.MAX_RESULTS_PER_CATEGORY),
 					count: filteredItems.length
 				} as ExpandedSearchData<SearchData[number]>;
 			})
@@ -360,7 +373,6 @@ export class GlobalSearchFactory extends BaseSearchFactory<SearchData> {
 export class EntitySearchFactory<
 	TData extends FullCharacterData[] | FullLogData[] | LogSummaryData[] | UserDMsWithLogs
 > extends BaseSearchFactory<TData> {
-	private _tdata = $state<TData>([] as unknown as TData);
 	private _searchMap = $derived(
 		new Map(
 			this._tdata
