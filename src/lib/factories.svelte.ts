@@ -204,9 +204,7 @@ abstract class BaseSearchFactory<TData> {
 		return { matches, score };
 	}
 
-	abstract get results(): any;
-
-	static getCharacterIndex(item: FullCharacterData) {
+	protected getCharacterIndex(item: FullCharacterData) {
 		return {
 			id: item.id,
 			index: new Map([
@@ -223,7 +221,7 @@ abstract class BaseSearchFactory<TData> {
 		};
 	}
 
-	static getLogIndex(item: FullLogData | LogSummaryData | UserLogData) {
+	protected getLogIndex(item: FullLogData | LogSummaryData | UserLogData) {
 		return {
 			id: item.id,
 			index: new Map([
@@ -237,7 +235,7 @@ abstract class BaseSearchFactory<TData> {
 		};
 	}
 
-	static getDMIndex(item: (UserDMsWithLogs | UserDMs)[number]) {
+	protected getDMIndex(item: (UserDMsWithLogs | UserDMs)[number]) {
 		return {
 			id: item.id,
 			index: new Map([
@@ -247,6 +245,8 @@ abstract class BaseSearchFactory<TData> {
 			] as const satisfies [keyof typeof item, Set<string>][])
 		};
 	}
+
+	abstract get results(): any;
 }
 
 export class GlobalSearchFactory extends BaseSearchFactory<SearchData> {
@@ -261,11 +261,11 @@ export class GlobalSearchFactory extends BaseSearchFactory<SearchData> {
 						entry.items
 							.map((item) => {
 								if (item.type === "character") {
-									return BaseSearchFactory.getCharacterIndex(item);
+									return this.getCharacterIndex(item);
 								} else if (item.type === "dm") {
-									return BaseSearchFactory.getDMIndex(item);
+									return this.getDMIndex(item);
 								} else if (item.type === "log") {
-									return BaseSearchFactory.getLogIndex(item);
+									return this.getLogIndex(item);
 								}
 							})
 							.filter(isDefined)
@@ -366,11 +366,11 @@ export class EntitySearchFactory<
 			this._tdata
 				.map((entry) => {
 					if ("class" in entry) {
-						return BaseSearchFactory.getCharacterIndex(entry);
+						return this.getCharacterIndex(entry);
 					} else if ("isUser" in entry) {
-						return BaseSearchFactory.getDMIndex(entry);
+						return this.getDMIndex(entry);
 					} else {
-						return BaseSearchFactory.getLogIndex(entry);
+						return this.getLogIndex(entry);
 					}
 				})
 				.map((entry) => [entry.id, entry.index])
