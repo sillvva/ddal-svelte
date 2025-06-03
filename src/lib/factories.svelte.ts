@@ -332,7 +332,7 @@ export class GlobalSearchFactory extends BaseSearchFactory<SearchData> {
 	get results() {
 		return this._tdata
 			.map((entry) => {
-				type KeysType = typeof entry.title extends "Sections"
+				type TDataKeys = typeof entry.title extends "Sections"
 					? never
 					: typeof entry.title extends "Characters"
 						? CharacterIndexKeys
@@ -358,12 +358,12 @@ export class GlobalSearchFactory extends BaseSearchFactory<SearchData> {
 					.map((item) => {
 						if (item.type === "section") return null;
 
-						const itemIndex = index.get(item.id) as Map<KeysType, string[]>;
+						const itemIndex = index.get(item.id) as Map<TDataKeys, string[]>;
 						if (!itemIndex) return null;
 
 						let totalScore = 0;
 						const matches = new Set<string>();
-						const matchTypes = new Set<KeysType>();
+						const matchTypes = new Set<TDataKeys>();
 
 						for (const [key, values] of itemIndex) {
 							for (const value of values) {
