@@ -261,9 +261,11 @@ class BaseSearchFactory<TData extends Array<unknown>> {
 	}
 }
 
-type CharacterIndexKeys = MapKeys<ReturnType<BaseSearchFactory<any>["getCharacterIndex"]>["index"]>;
-type LogIndexKeys = MapKeys<ReturnType<BaseSearchFactory<any>["getLogIndex"]>["index"]>;
-type DMIndexKeys = MapKeys<ReturnType<BaseSearchFactory<any>["getDMIndex"]>["index"]>;
+type MapIndexKeys<T extends (...args: any) => any> = MapKeys<ReturnType<T>["index"]>;
+type CharacterIndexKeys = MapIndexKeys<BaseSearchFactory<any>["getCharacterIndex"]>;
+type LogIndexKeys = MapIndexKeys<BaseSearchFactory<any>["getLogIndex"]>;
+type DMIndexKeys = MapIndexKeys<BaseSearchFactory<any>["getDMIndex"]>;
+
 type ExpandedSearchData<TData extends SearchData[number]> = TData extends {
 	title: infer Title;
 	items: Array<infer Item>;
