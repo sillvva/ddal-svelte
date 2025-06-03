@@ -137,20 +137,14 @@ export function intDateProxy<T extends Record<string, unknown>, Path extends For
 	};
 }
 
-const SEARCH_CONFIG = {
-	POSITION_BONUS_MAX: 0.5,
-	WORD_BOUNDARY_BONUS: 0.3,
-	SCORE_PRECISION: 10,
-	MAX_RESULTS_PER_CATEGORY: 50,
-	MAX_RESULTS_WITHOUT_CATEGORY: 5,
-	MAX_RESULTS_WITH_CATEGORY: 10,
-	MIN_QUERY_LENGTH: 2,
-	DEBOUNCE_TIME: 300
-} as const;
-
-const EXCLUDED_SEARCH_WORDS = new Set(["and", "or", "to", "in", "a", "an", "the", "of"]);
-
 class BaseSearchFactory<TData extends Array<unknown>> {
+	private EXCLUDED_SEARCH_WORDS = new Set(["and", "or", "to", "in", "a", "an", "the", "of"]);
+	private POSITION_BONUS_MAX = 0.5;
+	private WORD_BOUNDARY_BONUS = 0.3;
+	private SCORE_PRECISION = 10;
+	private MIN_QUERY_LENGTH = 2;
+	private DEBOUNCE_TIME = 300;
+
 	protected _tdata = $state([] as unknown as TData);
 	protected _query = $state<string>("");
 	protected _terms = $state<string[]>([]);
@@ -162,7 +156,7 @@ class BaseSearchFactory<TData extends Array<unknown>> {
 
 		const [debouncedQuery, teardown] = debounce((query: string) => {
 			this._terms = this.createTerms(query);
-		}, SEARCH_CONFIG.DEBOUNCE_TIME);
+		}, this.DEBOUNCE_TIME);
 
 		$effect(() => {
 			debouncedQuery(this._query);
@@ -186,7 +180,7 @@ class BaseSearchFactory<TData extends Array<unknown>> {
 	}
 
 	private createTerms(query: string) {
-		if (query.length < SEARCH_CONFIG.MIN_QUERY_LENGTH) return [];
+		if (query.length < this.MIN_QUERY_LENGTH) return [];
 
 		return (
 			query
@@ -194,7 +188,7 @@ class BaseSearchFactory<TData extends Array<unknown>> {
 				.toLowerCase()
 				.match(/(?:[^\s"]+|"[^"]*")+/g)
 				?.map((word) => word.replace(/^"|"$/g, ""))
-				.filter((word) => word.length > 1 && !EXCLUDED_SEARCH_WORDS.has(word)) || []
+				.filter((word) => word.length > 1 && !this.EXCLUDED_SEARCH_WORDS.has(word)) || []
 		);
 	}
 
@@ -209,17 +203,17 @@ class BaseSearchFactory<TData extends Array<unknown>> {
 			score += oc;
 
 			const index = itemLower.indexOf(term);
-			score += Math.max(0, SEARCH_CONFIG.POSITION_BONUS_MAX - (index / itemLower.length) * SEARCH_CONFIG.POSITION_BONUS_MAX);
+			score += Math.max(0, this.POSITION_BONUS_MAX - (index / itemLower.length) * this.POSITION_BONUS_MAX);
 
 			const escapedTerm = term.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
 			if (new RegExp(`\\b${escapedTerm}\\b`, "i").test(item)) {
-				score += SEARCH_CONFIG.WORD_BOUNDARY_BONUS;
+				score += this.WORD_BOUNDARY_BONUS;
 			}
 
 			matches.add(term);
 		}
 
-		score = Math.round((score / this._terms.length) * SEARCH_CONFIG.SCORE_PRECISION) / SEARCH_CONFIG.SCORE_PRECISION;
+		score = Math.round((score / this._terms.length) * this.SCORE_PRECISION) / this.SCORE_PRECISION;
 
 		return { matches, score };
 	}
@@ -292,6 +286,10 @@ type ExpandedSearchData<TData extends SearchData[number]> = TData extends {
 	: never;
 
 export class GlobalSearchFactory extends BaseSearchFactory<SearchData> {
+	private MAX_RESULTS_PER_CATEGORY = 50;
+	private MAX_RESULTS_WITHOUT_CATEGORY = 5;
+	private MAX_RESULTS_WITH_CATEGORY = 10;
+
 	private _category = $state<SearchData[number]["title"] | null>(null);
 	private _searchMap = $derived(
 		new Map(
@@ -343,10 +341,7 @@ export class GlobalSearchFactory extends BaseSearchFactory<SearchData> {
 				if (this._category && entry.title !== this._category) return { title: entry.title, items: [], count: 0 };
 
 				if (!this._terms.length) {
-					const items = entry.items.slice(
-						0,
-						this._category ? SEARCH_CONFIG.MAX_RESULTS_WITH_CATEGORY : SEARCH_CONFIG.MAX_RESULTS_WITHOUT_CATEGORY
-					);
+					const items = entry.items.slice(0, this._category ? this.MAX_RESULTS_WITH_CATEGORY : this.MAX_RESULTS_WITHOUT_CATEGORY);
 					return {
 						title: entry.title,
 						items: items.map((item) => ({ ...item, score: 0, match: new Set() })),
@@ -386,7 +381,7 @@ export class GlobalSearchFactory extends BaseSearchFactory<SearchData> {
 
 				return {
 					title: entry.title,
-					items: filteredItems.sort((a, b) => b.score - a.score).slice(0, SEARCH_CONFIG.MAX_RESULTS_PER_CATEGORY),
+					items: filteredItems.sort((a, b) => b.score - a.score).slice(0, this.MAX_RESULTS_PER_CATEGORY),
 					count: filteredItems.length
 				} as ExpandedSearchData<SearchData[number]>;
 			})
