@@ -9,13 +9,13 @@
 		title?: string;
 		items: Array<MagicItem | StoryAward | { name: string; description?: string }>;
 		formatting?: boolean;
-		search?: string | null;
+		terms?: string[];
 		collapsible?: boolean;
 		sort?: boolean;
 		textClass?: string;
 	}
 
-	let { title = "", items, formatting = false, search = "", collapsible = false, sort = false, textClass = "" }: Props = $props();
+	let { title = "", items, formatting = false, terms = [], collapsible = false, sort = false, textClass = "" }: Props = $props();
 
 	let collapsed = $state(collapsible);
 
@@ -117,7 +117,7 @@
 					}}
 					onkeypress={() => null}
 				>
-					<SearchResults text={mi.name} {search} />
+					<SearchResults text={mi.name} {terms} />
 				</span>{/each}{#each consumables as mi}<span
 					role={mi.description ? "button" : "presentation"}
 					class="inline pr-2 pl-2 italic first:pl-0"
@@ -130,7 +130,7 @@
 					}}
 					onkeypress={() => null}
 				>
-					<SearchResults text={mi.name} {search} />
+					<SearchResults text={mi.name} {terms} />
 				</span>{/each}
 		{:else}
 			None
