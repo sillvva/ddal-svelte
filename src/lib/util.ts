@@ -10,6 +10,8 @@ import type { setupViewTransition } from "sveltekit-view-transition";
  * Types
  */
 
+export type MapKeys<T extends Map<any, any>> = T extends Map<infer K, any> ? K : never;
+
 export type Prettify<T> = {
 	[K in keyof T]: T[K];
 } & unknown;

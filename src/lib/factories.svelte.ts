@@ -17,7 +17,7 @@ import {
 } from "sveltekit-superforms";
 import { valibotClient } from "sveltekit-superforms/adapters";
 import * as v from "valibot";
-import { debounce, isDefined, occurrences } from "./util";
+import { debounce, isDefined, occurrences, type MapKeys } from "./util";
 
 export function successToast(message: string) {
 	toast.success("Success", {
@@ -137,11 +137,6 @@ export function intDateProxy<T extends Record<string, unknown>, Path extends For
 	};
 }
 
-type MapKeys<T extends Map<any, any>> = T extends Map<infer K, any> ? K : never;
-type SearchScore = {
-	score: number;
-};
-
 const SEARCH_CONFIG = {
 	POSITION_BONUS_MAX: 0.5,
 	WORD_BOUNDARY_BONUS: 0.3,
@@ -155,19 +150,6 @@ const SEARCH_CONFIG = {
 
 const EXCLUDED_SEARCH_WORDS = new Set(["and", "or", "to", "in", "a", "an", "the", "of"]);
 
-export function createTerms(query: string) {
-	if (query.length < SEARCH_CONFIG.MIN_QUERY_LENGTH) return [];
-
-	return (
-		query
-			.trim()
-			.toLowerCase()
-			.match(/(?:[^\s"]+|"[^"]*")+/g)
-			?.map((word) => word.replace(/^"|"$/g, ""))
-			.filter((word) => word.length > 1 && !EXCLUDED_SEARCH_WORDS.has(word)) || []
-	);
-}
-
 class BaseSearchFactory<TData extends Array<unknown>> {
 	protected _tdata = $state([] as unknown as TData);
 	protected _query = $state<string>("");
@@ -176,10 +158,10 @@ class BaseSearchFactory<TData extends Array<unknown>> {
 	constructor(data: TData, defaultQuery: string = "") {
 		this._tdata = data;
 		this._query = defaultQuery;
-		this._terms = createTerms(defaultQuery);
+		this._terms = this.createTerms(defaultQuery);
 
 		const [debouncedQuery, teardown] = debounce((query: string) => {
-			this._terms = createTerms(query);
+			this._terms = this.createTerms(query);
 		}, SEARCH_CONFIG.DEBOUNCE_TIME);
 
 		$effect(() => {
@@ -201,6 +183,19 @@ class BaseSearchFactory<TData extends Array<unknown>> {
 
 	get terms() {
 		return this._terms;
+	}
+
+	private createTerms(query: string) {
+		if (query.length < SEARCH_CONFIG.MIN_QUERY_LENGTH) return [];
+
+		return (
+			query
+				.trim()
+				.toLowerCase()
+				.match(/(?:[^\s"]+|"[^"]*")+/g)
+				?.map((word) => word.replace(/^"|"$/g, ""))
+				.filter((word) => word.length > 1 && !EXCLUDED_SEARCH_WORDS.has(word)) || []
+		);
 	}
 
 	protected hasMatch(item: string) {
@@ -281,18 +276,18 @@ type ExpandedSearchData<TData extends SearchData[number]> = TData extends {
 }
 	? {
 			title: Title;
-			items: (Item &
-				SearchScore & {
-					match: Set<
-						Title extends "Sections"
-							? never
-							: Title extends "Characters"
-								? CharacterIndexKeys
-								: Title extends "Logs"
-									? LogIndexKeys
-									: DMIndexKeys
-					>;
-				})[];
+			items: (Item & {
+				score: number;
+				match: Set<
+					Title extends "Sections"
+						? never
+						: Title extends "Characters"
+							? CharacterIndexKeys
+							: Title extends "Logs"
+								? LogIndexKeys
+								: DMIndexKeys
+				>;
+			})[];
 		} & { count: number }
 	: never;
 
