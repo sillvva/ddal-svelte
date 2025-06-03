@@ -139,11 +139,11 @@ export function intDateProxy<T extends Record<string, unknown>, Path extends For
 
 class BaseSearchFactory<TData extends Array<unknown>> {
 	private EXCLUDED_SEARCH_WORDS = new Set(["and", "or", "to", "in", "a", "an", "the", "of"]);
-	private POSITION_BONUS_MAX = 0.5;
-	private WORD_BOUNDARY_BONUS = 0.3;
-	private SCORE_PRECISION = 10;
-	private MIN_QUERY_LENGTH = 2;
-	private DEBOUNCE_TIME = 300;
+	private POSITION_BONUS_MAX = 0.5 as const;
+	private WORD_BOUNDARY_BONUS = 0.3 as const;
+	private SCORE_PRECISION = 10 as const;
+	private MIN_QUERY_LENGTH = 2 as const;
+	private DEBOUNCE_TIME = 300 as const;
 
 	protected _tdata = $state([] as unknown as TData);
 	protected _query = $state<string>("");
@@ -288,9 +288,9 @@ type ExpandedSearchData<TData extends SearchData[number]> = TData extends {
 	: never;
 
 export class GlobalSearchFactory extends BaseSearchFactory<SearchData> {
-	private MAX_RESULTS_PER_CATEGORY = 50;
-	private MAX_RESULTS_WITHOUT_CATEGORY = 5;
-	private MAX_RESULTS_WITH_CATEGORY = 10;
+	private MAX_RESULTS_PER_CATEGORY = 50 as const;
+	private MAX_RESULTS_WITHOUT_CATEGORY = 5 as const;
+	private MAX_RESULTS_WITH_CATEGORY = 10 as const;
 
 	private _category = $state<SearchData[number]["title"] | null>(null);
 	private _searchMap = $derived(
