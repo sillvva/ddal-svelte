@@ -137,22 +137,10 @@ export function intDateProxy<T extends Record<string, unknown>, Path extends For
 	};
 }
 
+type MapKeys<T extends Map<any, any>> = T extends Map<infer K, any> ? K : never;
 type SearchScore = {
 	score: number;
 };
-
-type ExpandedSearchData<TData extends SearchData[number]> = TData extends {
-	title: infer Title;
-	items: Array<infer Item>;
-}
-	? {
-			title: Title;
-			items: (Item &
-				SearchScore & {
-					match: (Title extends "Sections" ? never : keyof Item)[];
-				})[];
-		} & { count: number }
-	: never;
 
 const SEARCH_CONFIG = {
 	POSITION_BONUS_MAX: 0.5,
@@ -244,7 +232,7 @@ class BaseSearchFactory<TData extends Array<unknown>> {
 	protected getCharacterIndex(item: FullCharacterData) {
 		return {
 			id: item.id,
-			index: new Map<keyof typeof item, string[]>([
+			index: new Map([
 				["id", [item.id]],
 				["name", [item.name]],
 				["race", [item.race || ""]],
@@ -254,35 +242,59 @@ class BaseSearchFactory<TData extends Array<unknown>> {
 				["tier", [`T${item.tier}`]],
 				["magicItems", item.magicItems.map((mi) => mi.name)],
 				["storyAwards", item.storyAwards.map((sa) => sa.name)]
-			])
+			] as const satisfies [keyof typeof item, string[]][])
 		};
 	}
 
 	protected getLogIndex(item: FullLogData | LogSummaryData | UserLogData) {
 		return {
 			id: item.id,
-			index: new Map<keyof typeof item, string[]>([
+			index: new Map([
 				["id", [item.id]],
 				["name", [item.name]],
 				["character", [item.character?.name || ""]],
 				["dm", [item.dm?.name || ""]],
 				["magicItemsGained", item.magicItemsGained.map((mi) => mi.name)],
 				["storyAwardsGained", item.storyAwardsGained.map((sa) => sa.name)]
-			])
+			] as const satisfies [keyof typeof item, string[]][])
 		};
 	}
 
 	protected getDMIndex(item: (UserDMsWithLogs | UserDMs)[number]) {
 		return {
 			id: item.id,
-			index: new Map<keyof typeof item, string[]>([
+			index: new Map([
 				["id", [item.id]],
 				["name", [item.name]],
 				["DCI", [item.DCI || ""]]
-			])
+			] as const satisfies [keyof typeof item, string[]][])
 		};
 	}
 }
+
+type CharacterIndexKeys = MapKeys<ReturnType<BaseSearchFactory<any>["getCharacterIndex"]>["index"]>;
+type LogIndexKeys = MapKeys<ReturnType<BaseSearchFactory<any>["getLogIndex"]>["index"]>;
+type DMIndexKeys = MapKeys<ReturnType<BaseSearchFactory<any>["getDMIndex"]>["index"]>;
+type ExpandedSearchData<TData extends SearchData[number]> = TData extends {
+	title: infer Title;
+	items: Array<infer Item>;
+}
+	? {
+			title: Title;
+			items: (Item &
+				SearchScore & {
+					match: Set<
+						Title extends "Sections"
+							? never
+							: Title extends "Characters"
+								? CharacterIndexKeys
+								: Title extends "Logs"
+									? LogIndexKeys
+									: DMIndexKeys
+					>;
+				})[];
+		} & { count: number }
+	: never;
 
 export class GlobalSearchFactory extends BaseSearchFactory<SearchData> {
 	private _category = $state<SearchData[number]["title"] | null>(null);
@@ -325,6 +337,14 @@ export class GlobalSearchFactory extends BaseSearchFactory<SearchData> {
 	get results() {
 		return this._tdata
 			.map((entry) => {
+				type KeysType = typeof entry.title extends "Sections"
+					? never
+					: typeof entry.title extends "Characters"
+						? CharacterIndexKeys
+						: typeof entry.title extends "Logs"
+							? LogIndexKeys
+							: DMIndexKeys;
+
 				if (this._category && entry.title !== this._category) return { title: entry.title, items: [], count: 0 };
 
 				if (!this._terms.length) {
@@ -334,7 +354,7 @@ export class GlobalSearchFactory extends BaseSearchFactory<SearchData> {
 					);
 					return {
 						title: entry.title,
-						items: items.map((item) => ({ ...item, score: 0, match: [] })),
+						items: items.map((item) => ({ ...item, score: 0, match: new Set() })),
 						count: items.length
 					} as ExpandedSearchData<SearchData[number]>;
 				}
@@ -346,13 +366,12 @@ export class GlobalSearchFactory extends BaseSearchFactory<SearchData> {
 					.map((item) => {
 						if (item.type === "section") return null;
 
-						const itemIndex = index.get(item.id);
+						const itemIndex = index.get(item.id) as Map<KeysType, string[]>;
 						if (!itemIndex) return null;
 
 						let totalScore = 0;
-						const keys = Array.from(itemIndex.keys());
 						const matches = new Set<string>();
-						const matchTypes = new Set<(typeof keys)[number]>();
+						const matchTypes = new Set<KeysType>();
 
 						for (const [key, values] of itemIndex) {
 							for (const value of values) {
@@ -366,7 +385,7 @@ export class GlobalSearchFactory extends BaseSearchFactory<SearchData> {
 						}
 
 						if (matches.size !== this._terms.length) return null;
-						return { ...item, score: totalScore, match: Array.from(matchTypes) };
+						return { ...item, score: totalScore, match: matchTypes };
 					})
 					.filter(isDefined);
 
@@ -413,28 +432,30 @@ export class EntitySearchFactory<
 		super(data, defaultQuery);
 	}
 
-	get results(): (TData[number] &
-		SearchScore & {
-			match: (keyof TData[number])[];
-		})[] {
+	get results() {
+		type TDataKeys = TData extends FullCharacterData[]
+			? CharacterIndexKeys
+			: TData extends FullLogData[] | LogSummaryData[]
+				? LogIndexKeys
+				: DMIndexKeys;
+
 		return this._tdata
-			.map((entry) => {
+			.map((entry: TData[number]) => {
 				if (!this._terms.length) {
 					return {
 						...entry,
 						score: 0,
-						match: []
+						match: new Set<TDataKeys>()
 					};
 				}
 
 				let totalScore = 0;
 
-				const index = this._searchMap.get(entry.id);
+				const index = this._searchMap.get(entry.id) as Map<TDataKeys, string[]>;
 				if (!index) return null;
 
-				const keys = Array.from(index.keys());
 				const matches = new Set<string>();
-				const matchTypes = new Set<(typeof keys)[number]>();
+				const matchTypes = new Set<TDataKeys>();
 
 				for (const [key, values] of index) {
 					for (const value of values) {
@@ -452,7 +473,7 @@ export class EntitySearchFactory<
 				return {
 					...entry,
 					score: totalScore,
-					match: Array.from(matchTypes) as (keyof TData[number])[]
+					match: matchTypes
 				};
 			})
 			.filter(isDefined);

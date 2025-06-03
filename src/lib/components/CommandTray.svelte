@@ -189,7 +189,7 @@
 																						<div class="text-base-content/70 text-xs">
 																							Match Score: {Math.round(item.score * 100) / 100}
 																						</div>
-																						{#if item.match.includes("magicItems")}
+																						{#if item.match.has("magicItems")}
 																							<div class="flex flex-col text-xs">
 																								<span class="pt-1 font-bold whitespace-nowrap">Magic Items:</span>
 																								<span class="text-base-content/70 flex-1 text-xs leading-4">
@@ -197,12 +197,12 @@
 																										text={item.magicItems.map((mi) => mi.name)}
 																										terms={search.terms}
 																										filtered
-																										matches={item.match.length}
+																										matches={item.match.size}
 																									/>
 																								</span>
 																							</div>
 																						{/if}
-																						{#if item.match.includes("storyAwards")}
+																						{#if item.match.has("storyAwards")}
 																							<div class="flex flex-col text-xs">
 																								<span class="pt-1 font-bold whitespace-nowrap">Story Awards:</span>
 																								<span class="text-base-content/70 flex-1 text-xs leading-4">
@@ -210,7 +210,7 @@
 																										text={item.storyAwards.map((sa) => sa.name)}
 																										terms={search.terms}
 																										filtered
-																										matches={item.match.length}
+																										matches={item.match.size}
 																									/>
 																								</span>
 																							</div>
@@ -241,7 +241,7 @@
 																								Match Score: {Math.round(item.score * 100) / 100}
 																							</div>
 																						{/if}
-																						{#if item.match.includes("dm")}
+																						{#if item.match.has("dm")}
 																							<div class="flex gap-1 text-xs">
 																								<span class="font-bold whitespace-nowrap">DM:</span>
 																								<span class="text-base-content/70 flex-1">
@@ -249,7 +249,7 @@
 																								</span>
 																							</div>
 																						{/if}
-																						{#if item.match.includes("magicItemsGained")}
+																						{#if item.match.has("magicItemsGained")}
 																							<div class="flex flex-col text-xs">
 																								<span class="pt-1 font-bold whitespace-nowrap">Magic Items:</span>
 																								<span class="text-base-content/70 flex-1">
@@ -257,12 +257,12 @@
 																										text={item.magicItemsGained.map((mi) => mi.name)}
 																										terms={search.terms}
 																										filtered
-																										matches={item.match.length}
+																										matches={item.match.size}
 																									/>
 																								</span>
 																							</div>
 																						{/if}
-																						{#if item.match.includes("storyAwardsGained")}
+																						{#if item.match.has("storyAwardsGained")}
 																							<div class="flex flex-col text-xs">
 																								<span class="pt-1 font-bold whitespace-nowrap">Story Awards:</span>
 																								<span class="text-base-content/70 flex-1">
@@ -270,7 +270,7 @@
 																										text={item.storyAwardsGained.map((sa) => sa.name)}
 																										terms={search.terms}
 																										filtered
-																										matches={item.match.length}
+																										matches={item.match.size}
 																									/>
 																								</span>
 																							</div>

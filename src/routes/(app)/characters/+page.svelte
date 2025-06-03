@@ -191,25 +191,25 @@
 									<div class="mb-2 block text-xs sm:hidden">
 										<SearchResults text={character.campaign} terms={search.terms} />
 									</div>
-									{#if (character.match.includes("magicItems") || global.app.characters.magicItems) && character.magicItems.length}
+									{#if (character.match.has("magicItems") || global.app.characters.magicItems) && character.magicItems.length}
 										<div class="mb-2">
 											<p class="font-semibold">Magic Items:</p>
 											<SearchResults
 												text={character.magicItems.map((item) => item.name)}
 												terms={search.terms}
 												filtered
-												matches={character.match.length}
+												matches={character.match.size}
 											/>
 										</div>
 									{/if}
-									{#if character.match.includes("storyAwards") && character.storyAwards.length}
+									{#if character.match.has("storyAwards") && character.storyAwards.length}
 										<div class="mb-2">
 											<p class="font-semibold">Story Awards:</p>
 											<SearchResults
 												text={character.storyAwards.map((award) => award.name)}
 												terms={search.terms}
 												filtered
-												matches={character.match.length}
+												matches={character.match.size}
 											/>
 										</div>
 									{/if}
@@ -257,14 +257,14 @@
 									{#key character.imageUrl}
 										<img src={character.imageUrl} alt={character.name} class="size-full object-cover object-top" loading="lazy" />
 									{/key}
-									{#if search.query.length >= 1 && character.match.includes("magicItems")}
+									{#if search.query.length >= 1 && character.match.has("magicItems")}
 										<div class="absolute inset-0 flex items-center bg-black/50 p-2 text-center text-xs text-white">
 											<div class="flex-1">
 												<SearchResults
 													text={character.magicItems.map((item) => item.name)}
 													terms={search.terms}
 													filtered
-													matches={character.match.length}
+													matches={character.match.size}
 												/>
 											</div>
 										</div>
