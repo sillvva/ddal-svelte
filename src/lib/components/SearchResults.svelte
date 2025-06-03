@@ -1,17 +1,14 @@
 <script lang="ts">
-	import { createTerms } from "$lib/factories.svelte";
-
 	interface Props {
 		text?: string | string[] | null;
-		search?: string | null;
+		terms?: string[];
 		filtered?: boolean;
 		separator?: string;
 		matches?: number;
 	}
 
-	let { text = "", search = "", filtered = false, separator = " | ", matches = 1 }: Props = $props();
+	let { text = "", terms = [], filtered = false, separator = " | ", matches = 1 }: Props = $props();
 
-	const terms = $derived(createTerms(search && search.length > 1 ? search : ""));
 	const regexes = $derived(terms.map((term) => new RegExp(term, "gi")));
 	const regex = $derived(terms.length ? new RegExp(terms.join("|"), "gi") : null);
 

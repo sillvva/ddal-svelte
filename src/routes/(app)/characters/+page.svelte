@@ -16,14 +16,11 @@
 
 	const global = getGlobal();
 
-	const search = $derived(new EntitySearchFactory(data.characters));
+	const defaultQuery = page.url.searchParams.get("s") || "";
+	const search = $derived(new EntitySearchFactory(data.characters, defaultQuery));
 	const sortedResults = $derived(
 		search.results.toSorted((a, b) => sorter(b.score, a.score) || sorter(a.totalLevel, b.totalLevel) || sorter(a.name, b.name))
 	);
-
-	$effect(() => {
-		search.query = page.url.searchParams.get("s") || "";
-	});
 </script>
 
 <div class="flex flex-col gap-4">
@@ -181,25 +178,25 @@
 								<td>
 									<div class="text-base font-bold whitespace-pre-wrap text-black sm:text-xl dark:text-white">
 										<a href={`/characters/${character.id}`} aria-label={character.name} class="row-link">
-											<SearchResults text={character.name} search={search.query} />
+											<SearchResults text={character.name} terms={search.terms} />
 										</a>
 									</div>
 									<div class="text-xs whitespace-pre-wrap sm:text-sm">
 										<span class="inline pr-1 sm:hidden">Level {character.totalLevel}</span><SearchResults
 											text={character.race}
-											search={search.query}
+											terms={search.terms}
 										/>
-										<SearchResults text={character.class} search={search.query} />
+										<SearchResults text={character.class} terms={search.terms} />
 									</div>
 									<div class="mb-2 block text-xs sm:hidden">
-										<SearchResults text={character.campaign} search={search.query} />
+										<SearchResults text={character.campaign} terms={search.terms} />
 									</div>
 									{#if (character.match.includes("magicItems") || global.app.characters.magicItems) && character.magicItems.length}
 										<div class="mb-2">
 											<p class="font-semibold">Magic Items:</p>
 											<SearchResults
 												text={character.magicItems.map((item) => item.name)}
-												search={search.query}
+												terms={search.terms}
 												filtered
 												matches={character.match.length}
 											/>
@@ -210,20 +207,20 @@
 											<p class="font-semibold">Story Awards:</p>
 											<SearchResults
 												text={character.storyAwards.map((award) => award.name)}
-												search={search.query}
+												terms={search.terms}
 												filtered
 												matches={character.match.length}
 											/>
 										</div>
 									{/if}
-									{#if search.query.length > 1}
+									{#if search.terms.length > 0}
 										<div class="mb-2">
 											Search Score: {Math.round(character.score * 100) / 100}
 										</div>
 									{/if}
 								</td>
 								<td class="hidden transition-colors sm:table-cell">
-									<SearchResults text={character.campaign} search={search.query} />
+									<SearchResults text={character.campaign} terms={search.terms} />
 								</td>
 								<td class="hidden text-center transition-colors sm:table-cell">
 									{character.tier}
@@ -265,7 +262,7 @@
 											<div class="flex-1">
 												<SearchResults
 													text={character.magicItems.map((item) => item.name)}
-													search={search.query}
+													terms={search.terms}
 													filtered
 													matches={character.match.length}
 												/>
@@ -276,10 +273,10 @@
 								<div class="card-body p-4 text-center">
 									<div class="flex flex-col gap-1">
 										<h2 class="card-title ellipsis-nowrap block text-sm text-balance dark:text-white">
-											<SearchResults text={character.name} search={search.query} />
+											<SearchResults text={character.name} terms={search.terms} />
 										</h2>
 										<p class="text-xs text-balance">
-											<SearchResults text={`${character.race} ${character.class}`} search={search.query} />
+											<SearchResults text={`${character.race} ${character.class}`} terms={search.terms} />
 										</p>
 										<p class="text-xs">Level {character.totalLevel} | Tier {character.tier}</p>
 									</div>

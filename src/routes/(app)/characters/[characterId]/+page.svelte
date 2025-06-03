@@ -324,11 +324,11 @@
 										href={log.isDmLog ? `/dm-logs/${log.id}` : `/characters/${log.characterId}/log/${log.id}`}
 										class="row-link text-left font-semibold whitespace-pre-wrap"
 									>
-										<SearchResults text={log.name} search={search.query}></SearchResults>
+										<SearchResults text={log.name} terms={search.terms}></SearchResults>
 									</a>
 								{:else}
 									<span class="text-left font-semibold whitespace-pre-wrap">
-										<SearchResults text={log.name} search={search.query}></SearchResults>
+										<SearchResults text={log.name} terms={search.terms}></SearchResults>
 									</span>
 								{/if}
 								<p class="text-netural-content mb-2 text-sm font-normal whitespace-nowrap">
@@ -421,9 +421,9 @@
 								{/if}
 								{#if log.magicItemsGained.length > 0 || log.magicItemsLost.length > 0}
 									<div>
-										<Items title="Magic Items:" items={log.magicItemsGained} search={search.query} sort />
+										<Items title="Magic Items:" items={log.magicItemsGained} terms={search.terms} sort />
 										<div class="text-sm whitespace-pre-wrap line-through">
-											<SearchResults text={log.magicItemsLost.map((mi) => mi.name).join(" | ")} search={search.query} />
+											<SearchResults text={log.magicItemsLost.map((mi) => mi.name).join(" | ")} terms={search.terms} />
 										</div>
 									</div>
 								{/if}
@@ -452,10 +452,10 @@
 								{/if}
 								{#if log.magicItemsGained.length > 0 || log.magicItemsLost.length > 0}
 									<div class="mt-2 sm:hidden print:hidden">
-										<Items title="Magic Items:" items={log.magicItemsGained} search={search.query} sort />
+										<Items title="Magic Items:" items={log.magicItemsGained} terms={search.terms} sort />
 										{#if log.magicItemsLost.length}
 											<p class="mt-2 text-sm whitespace-pre-wrap line-through">
-												<SearchResults text={log.magicItemsLost.map((mi) => mi.name).join(" | ")} search={search.query} />
+												<SearchResults text={log.magicItemsLost.map((mi) => mi.name).join(" | ")} terms={search.terms} />
 											</p>
 										{/if}
 									</div>

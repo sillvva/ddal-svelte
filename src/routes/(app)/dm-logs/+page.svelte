@@ -138,7 +138,7 @@
 										class="text-secondary text-left font-semibold whitespace-pre-wrap"
 										aria-label="Edit Log"
 									>
-										<SearchResults text={log.name} search={search.query} />
+										<SearchResults text={log.name} terms={search.terms} />
 									</a>
 									<p class="text-netural-content text-xs font-normal whitespace-nowrap">
 										{new Date(log.date).toLocaleString([], { dateStyle: "medium", timeStyle: "short" })}
@@ -147,7 +147,7 @@
 										<p class="text-sm font-normal">
 											<span class="font-semibold">Character:</span>
 											<a href="/characters/{log.character.id}" class="text-secondary">
-												<SearchResults text={log.character.name} search={search.query} />
+												<SearchResults text={log.character.name} terms={search.terms} />
 											</a>
 										</p>
 									{/if}
@@ -238,7 +238,7 @@
 									{/if}
 									{#if log.magicItemsGained.length > 0}
 										<div>
-											<Items title="Magic Items" items={log.magicItemsGained} search={search.query} sort />
+											<Items title="Magic Items" items={log.magicItemsGained} terms={search.terms} sort />
 										</div>
 									{/if}
 								</td>
@@ -263,10 +263,10 @@
 									{/if}
 									{#if log.magicItemsGained.length > 0 || log.magicItemsLost.length > 0}
 										<div class="mt-2 sm:hidden print:hidden">
-											<Items title="Magic Items:" items={log.magicItemsGained} search={search.query} sort />
+											<Items title="Magic Items:" items={log.magicItemsGained} terms={search.terms} sort />
 											{#if log.magicItemsLost.length}
 												<p class="mt-2 text-sm whitespace-pre-wrap line-through">
-													<SearchResults text={log.magicItemsLost.map((mi) => mi.name).join(" | ")} search={search.query} />
+													<SearchResults text={log.magicItemsLost.map((mi) => mi.name).join(" | ")} terms={search.terms} />
 												</p>
 											{/if}
 										</div>

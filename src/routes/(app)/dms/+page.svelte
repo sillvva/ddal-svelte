@@ -49,16 +49,16 @@
 											class="text-secondary text-left font-semibold whitespace-pre-wrap"
 											aria-label="Edit DM"
 										>
-											<SearchResults text={dm.name} search={search.query} />
+											<SearchResults text={dm.name} terms={search.terms} />
 										</a>
 										<div class="xs:hidden block">
 											{#if dm.DCI}
-												<p class="text-xs text-gray-500">DCI: <SearchResults text={dm.DCI} search={search.query} /></p>
+												<p class="text-xs text-gray-500">DCI: <SearchResults text={dm.DCI} terms={search.terms} /></p>
 											{/if}
 											<p class="text-xs text-gray-500">{dm.logs.length} logs</p>
 										</div>
 									</td>
-									<td class="xs:table-cell hidden"><SearchResults text={dm.DCI || ""} search={search.query} /></td>
+									<td class="xs:table-cell hidden"><SearchResults text={dm.DCI || ""} terms={search.terms} /></td>
 									<td class="xs:table-cell hidden">{dm.logs.length}</td>
 									<td class="w-16 print:hidden">
 										<div class="flex flex-row justify-end gap-2">

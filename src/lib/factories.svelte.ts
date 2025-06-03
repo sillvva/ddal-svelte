@@ -17,7 +17,7 @@ import {
 } from "sveltekit-superforms";
 import { valibotClient } from "sveltekit-superforms/adapters";
 import * as v from "valibot";
-import { isDefined, occurrences } from "./util";
+import { debounce, isDefined, occurrences } from "./util";
 
 export function successToast(message: string) {
 	toast.success("Success", {
@@ -161,12 +161,15 @@ const SEARCH_CONFIG = {
 	MAX_RESULTS_PER_CATEGORY: 50,
 	MAX_RESULTS_WITHOUT_CATEGORY: 5,
 	MAX_RESULTS_WITH_CATEGORY: 10,
-	MIN_QUERY_LENGTH: 2
+	MIN_QUERY_LENGTH: 2,
+	DEBOUNCE_TIME: 300
 } as const;
 
 const EXCLUDED_SEARCH_WORDS = new Set(["and", "or", "to", "in", "a", "an", "the", "of"]);
 
 export function createTerms(query: string) {
+	if (query.length < SEARCH_CONFIG.MIN_QUERY_LENGTH) return [];
+
 	return (
 		query
 			.trim()
@@ -177,10 +180,28 @@ export function createTerms(query: string) {
 	);
 }
 
-abstract class BaseSearchFactory<TData extends Array<unknown>> {
+class BaseSearchFactory<TData extends Array<unknown>> {
 	protected _tdata = $state([] as unknown as TData);
 	protected _query = $state<string>("");
-	protected _terms = $derived(createTerms(this._query));
+	protected _terms = $state<string[]>([]);
+
+	constructor(data: TData, defaultQuery: string = "") {
+		this._tdata = data;
+		this._query = defaultQuery;
+		this._terms = createTerms(defaultQuery);
+
+		const [debouncedQuery, teardown] = debounce((query: string) => {
+			this._terms = createTerms(query);
+		}, SEARCH_CONFIG.DEBOUNCE_TIME);
+
+		$effect(() => {
+			debouncedQuery(this._query);
+
+			return () => {
+				teardown();
+			};
+		});
+	}
 
 	get query() {
 		return this._query;
@@ -190,26 +211,31 @@ abstract class BaseSearchFactory<TData extends Array<unknown>> {
 		this._query = query;
 	}
 
+	get terms() {
+		return this._terms;
+	}
+
 	protected hasMatch(item: string) {
 		const itemLower = item.toLowerCase();
-		const matches = this._terms.filter((word) => itemLower.includes(word));
-		if (!matches.length) return { matches: [], score: 0 };
+		const matches = new Set<string>();
 
 		let score = 0;
-		for (const term of matches) {
-			// Count occurrences of the term in the item
-			score += occurrences(itemLower, term);
-			// Bonus for early position (max 0.5 bonus)
+		for (const term of this._terms) {
+			const oc = occurrences(itemLower, term);
+			if (!oc) continue;
+			score += oc;
+
 			const index = itemLower.indexOf(term);
 			score += Math.max(0, SEARCH_CONFIG.POSITION_BONUS_MAX - (index / itemLower.length) * SEARCH_CONFIG.POSITION_BONUS_MAX);
-			// Bonus for exact word boundary matches
+
 			const escapedTerm = term.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
 			if (new RegExp(`\\b${escapedTerm}\\b`, "i").test(item)) {
 				score += SEARCH_CONFIG.WORD_BOUNDARY_BONUS;
 			}
+
+			matches.add(term);
 		}
 
-		// Normalize score by number of terms searched
 		score = Math.round((score / this._terms.length) * SEARCH_CONFIG.SCORE_PRECISION) / SEARCH_CONFIG.SCORE_PRECISION;
 
 		return { matches, score };
@@ -218,46 +244,44 @@ abstract class BaseSearchFactory<TData extends Array<unknown>> {
 	protected getCharacterIndex(item: FullCharacterData) {
 		return {
 			id: item.id,
-			index: new Map([
-				["id", new Set([item.id])],
-				["name", new Set([item.name])],
-				["race", new Set([item.race || ""])],
-				["class", new Set([item.class || ""])],
-				["campaign", new Set([item.campaign || ""])],
-				["totalLevel", new Set([`L${item.totalLevel}`])],
-				["tier", new Set([`T${item.tier}`])],
-				["magicItems", new Set(item.magicItems.map((mi) => mi.name))],
-				["storyAwards", new Set(item.storyAwards.map((sa) => sa.name))]
-			] as const satisfies [keyof typeof item, Set<string>][])
+			index: new Map<keyof typeof item, string[]>([
+				["id", [item.id]],
+				["name", [item.name]],
+				["race", [item.race || ""]],
+				["class", [item.class || ""]],
+				["campaign", [item.campaign || ""]],
+				["totalLevel", [`L${item.totalLevel}`]],
+				["tier", [`T${item.tier}`]],
+				["magicItems", item.magicItems.map((mi) => mi.name)],
+				["storyAwards", item.storyAwards.map((sa) => sa.name)]
+			])
 		};
 	}
 
 	protected getLogIndex(item: FullLogData | LogSummaryData | UserLogData) {
 		return {
 			id: item.id,
-			index: new Map([
-				["id", new Set([item.id])],
-				["name", new Set([item.name])],
-				["character", new Set([item.character?.name || ""])],
-				["dm", new Set([item.dm?.name || ""])],
-				["magicItemsGained", new Set(item.magicItemsGained.map((mi) => mi.name))],
-				["storyAwardsGained", new Set(item.storyAwardsGained.map((sa) => sa.name))]
-			] as const satisfies [keyof typeof item, Set<string>][])
+			index: new Map<keyof typeof item, string[]>([
+				["id", [item.id]],
+				["name", [item.name]],
+				["character", [item.character?.name || ""]],
+				["dm", [item.dm?.name || ""]],
+				["magicItemsGained", item.magicItemsGained.map((mi) => mi.name)],
+				["storyAwardsGained", item.storyAwardsGained.map((sa) => sa.name)]
+			])
 		};
 	}
 
 	protected getDMIndex(item: (UserDMsWithLogs | UserDMs)[number]) {
 		return {
 			id: item.id,
-			index: new Map([
-				["id", new Set([item.id])],
-				["name", new Set([item.name])],
-				["DCI", new Set([item.DCI || ""])]
-			] as const satisfies [keyof typeof item, Set<string>][])
+			index: new Map<keyof typeof item, string[]>([
+				["id", [item.id]],
+				["name", [item.name]],
+				["DCI", [item.DCI || ""]]
+			])
 		};
 	}
-
-	abstract get results(): any;
 }
 
 export class GlobalSearchFactory extends BaseSearchFactory<SearchData> {
@@ -286,9 +310,8 @@ export class GlobalSearchFactory extends BaseSearchFactory<SearchData> {
 		)
 	);
 
-	constructor(data: SearchData) {
-		super();
-		this._tdata = data;
+	constructor(data: SearchData, defaultQuery: string = "") {
+		super(data, defaultQuery);
 	}
 
 	get category() {
@@ -302,11 +325,9 @@ export class GlobalSearchFactory extends BaseSearchFactory<SearchData> {
 	get results() {
 		return this._tdata
 			.map((entry) => {
-				// Skip if category is set and doesn't match
 				if (this._category && entry.title !== this._category) return { title: entry.title, items: [], count: 0 };
 
-				// Skip filtering if query is too short
-				if (this._query.length < SEARCH_CONFIG.MIN_QUERY_LENGTH) {
+				if (!this._terms.length) {
 					const items = entry.items.slice(
 						0,
 						this._category ? SEARCH_CONFIG.MAX_RESULTS_WITH_CATEGORY : SEARCH_CONFIG.MAX_RESULTS_WITHOUT_CATEGORY
@@ -319,7 +340,6 @@ export class GlobalSearchFactory extends BaseSearchFactory<SearchData> {
 				}
 
 				const index = this._searchMap.get(entry.title);
-				// Skip if no index found
 				if (!index) return { title: entry.title, items: [], count: 0 };
 
 				const filteredItems = entry.items
@@ -337,7 +357,7 @@ export class GlobalSearchFactory extends BaseSearchFactory<SearchData> {
 						for (const [key, values] of itemIndex) {
 							for (const value of values) {
 								const matchResult = this.hasMatch(value);
-								if (matchResult.matches.length) {
+								if (matchResult.matches.size) {
 									totalScore += matchResult.score;
 									matchResult.matches.forEach((match) => matches.add(match));
 									matchTypes.add(key);
@@ -389,9 +409,8 @@ export class EntitySearchFactory<
 		)
 	);
 
-	constructor(data: TData) {
-		super();
-		this._tdata = data;
+	constructor(data: TData, defaultQuery: string = "") {
+		super(data, defaultQuery);
 	}
 
 	get results(): (TData[number] &
@@ -400,6 +419,14 @@ export class EntitySearchFactory<
 		})[] {
 		return this._tdata
 			.map((entry) => {
+				if (!this._terms.length) {
+					return {
+						...entry,
+						score: 0,
+						match: []
+					};
+				}
+
 				let totalScore = 0;
 
 				const index = this._searchMap.get(entry.id);
@@ -412,7 +439,7 @@ export class EntitySearchFactory<
 				for (const [key, values] of index) {
 					for (const value of values) {
 						const matchResult = this.hasMatch(value);
-						if (matchResult.matches.length) {
+						if (matchResult.matches.size) {
 							totalScore += matchResult.score;
 							matchResult.matches.forEach((match) => matches.add(match));
 							matchTypes.add(key);

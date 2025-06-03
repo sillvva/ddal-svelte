@@ -4,7 +4,7 @@
 	import { searchSections } from "$lib/constants.js";
 	import { GlobalSearchFactory } from "$lib/factories.svelte";
 	import { getGlobal } from "$lib/stores.svelte";
-	import { debounce, hotkey } from "$lib/util";
+	import { hotkey } from "$lib/util";
 	import type { SearchData } from "$src/routes/(api)/command/+server";
 	import { Command, Dialog, Separator } from "bits-ui";
 	import { twMerge } from "tailwind-merge";
@@ -120,14 +120,14 @@
 										type="search"
 										placeholder="Search"
 										class="outline-0"
-										oninput={debounce((ev: Event) => {
+										oninput={(ev: Event) => {
 											const val = (ev.target as HTMLInputElement).value;
 											if (search.query !== val) {
 												search.query = val;
 												command?.updateSelectedToIndex(0);
 												if (viewport) viewport.scrollTop = 0;
 											}
-										}, 200)[0]}
+										}}
 									/>
 								</label>
 								<select bind:value={search.category} class="select join-item w-auto">
@@ -178,12 +178,12 @@
 																				</span>
 																				<div class="flex flex-col">
 																					<div>
-																						<SearchResults text={item.name} search={search.query} />
+																						<SearchResults text={item.name} terms={search.terms} />
 																					</div>
 																					<div class="text-base-content/70 text-xs">
 																						Level {item.totalLevel}
-																						<SearchResults text={item.race} search={search.query} />
-																						<SearchResults text={item.class} search={search.query} />
+																						<SearchResults text={item.race} terms={search.terms} />
+																						<SearchResults text={item.class} terms={search.terms} />
 																					</div>
 																					{#if search.query.length >= 2}
 																						<div class="text-base-content/70 text-xs">
@@ -195,7 +195,7 @@
 																								<span class="text-base-content/70 flex-1 text-xs leading-4">
 																									<SearchResults
 																										text={item.magicItems.map((mi) => mi.name)}
-																										search={search.query}
+																										terms={search.terms}
 																										filtered
 																										matches={item.match.length}
 																									/>
@@ -208,7 +208,7 @@
 																								<span class="text-base-content/70 flex-1 text-xs leading-4">
 																									<SearchResults
 																										text={item.storyAwards.map((sa) => sa.name)}
-																										search={search.query}
+																										terms={search.terms}
 																										filtered
 																										matches={item.match.length}
 																									/>
@@ -220,14 +220,14 @@
 																			{:else if item.type === "log"}
 																				<div class="flex flex-col">
 																					<div>
-																						<SearchResults text={item.name} search={search.query} />
+																						<SearchResults text={item.name} terms={search.terms} />
 																					</div>
 																					<div class="text-base-content/70 flex gap-2">
 																						<span class="text-xs">{new Date(item.date).toLocaleDateString()}</span>
 																						<Separator.Root orientation="vertical" class="border-base-content/50 border-l" />
 																						{#if item.character}
 																							<span class="text-xs">
-																								<SearchResults text={item.character.name} search={search.query} />
+																								<SearchResults text={item.character.name} terms={search.terms} />
 																							</span>
 																						{:else}
 																							<span class="text-xs italic">Unassigned</span>
@@ -245,7 +245,7 @@
 																							<div class="flex gap-1 text-xs">
 																								<span class="font-bold whitespace-nowrap">DM:</span>
 																								<span class="text-base-content/70 flex-1">
-																									<SearchResults text={item.dm.name} search={search.query} />
+																									<SearchResults text={item.dm.name} terms={search.terms} />
 																								</span>
 																							</div>
 																						{/if}
@@ -255,7 +255,7 @@
 																								<span class="text-base-content/70 flex-1">
 																									<SearchResults
 																										text={item.magicItemsGained.map((mi) => mi.name)}
-																										search={search.query}
+																										terms={search.terms}
 																										filtered
 																										matches={item.match.length}
 																									/>
@@ -268,7 +268,7 @@
 																								<span class="text-base-content/70 flex-1">
 																									<SearchResults
 																										text={item.storyAwardsGained.map((sa) => sa.name)}
-																										search={search.query}
+																										terms={search.terms}
 																										filtered
 																										matches={item.match.length}
 																									/>
