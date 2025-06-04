@@ -181,7 +181,7 @@ class BaseSearchFactory<TData extends Array<unknown>> {
 	}
 
 	private createTerms(query: string) {
-		if (this._query.trim().length < this.MIN_QUERY_LENGTH) return [];
+		if (query.trim().length < this.MIN_QUERY_LENGTH) return [];
 
 		return (
 			query
