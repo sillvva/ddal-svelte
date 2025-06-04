@@ -159,7 +159,8 @@ class BaseSearchFactory<TData extends Array<unknown>> {
 		}, this.DEBOUNCE_TIME);
 
 		$effect(() => {
-			debouncedQuery(this._query);
+			if (this._query.trim().length < this.MIN_QUERY_LENGTH) this._terms = [];
+			else debouncedQuery(this._query);
 
 			return () => {
 				teardown();
@@ -180,7 +181,7 @@ class BaseSearchFactory<TData extends Array<unknown>> {
 	}
 
 	private createTerms(query: string) {
-		if (query.length < this.MIN_QUERY_LENGTH) return [];
+		if (this._query.trim().length < this.MIN_QUERY_LENGTH) return [];
 
 		return (
 			query
