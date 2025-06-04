@@ -44,10 +44,10 @@ export function wait(ms: number) {
 	return new Promise((resolve) => setTimeout(resolve, ms));
 }
 
-export function debounce<A = unknown, R = void>(fn: (args: A) => R, ms: number): [(args: A) => Promise<R>, () => void] {
+export function debounce<A = unknown, R = void>(fn: (args: A) => R, ms: number) {
 	let timer: NodeJS.Timeout;
 
-	const debouncedFunc = (args: A): Promise<R> =>
+	const call = (args: A): Promise<R> =>
 		new Promise((resolve) => {
 			if (timer) {
 				clearTimeout(timer);
@@ -58,9 +58,12 @@ export function debounce<A = unknown, R = void>(fn: (args: A) => R, ms: number):
 			}, ms);
 		});
 
-	const teardown = () => clearTimeout(timer);
+	const cancel = () => clearTimeout(timer);
 
-	return [debouncedFunc, teardown];
+	return {
+		call,
+		cancel
+	};
 }
 
 /**

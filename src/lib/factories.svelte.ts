@@ -149,23 +149,14 @@ class BaseSearchFactory<TData extends Array<unknown>> {
 	protected _query = $state<string>("");
 	protected _terms = $state<string[]>([]);
 
+	private _debouncedTerms = debounce((query: string) => {
+		this._terms = this.createTerms(query);
+	}, this.DEBOUNCE_TIME);
+
 	constructor(data: TData, defaultQuery: string = "") {
 		this._tdata = data;
 		this._query = defaultQuery;
 		this._terms = this.createTerms(defaultQuery);
-
-		const [debouncedQuery, teardown] = debounce((query: string) => {
-			this._terms = this.createTerms(query);
-		}, this.DEBOUNCE_TIME);
-
-		$effect(() => {
-			if (this._query.trim().length < this.MIN_QUERY_LENGTH) this._terms = [];
-			else debouncedQuery(this._query);
-
-			return () => {
-				teardown();
-			};
-		});
 	}
 
 	get query() {
@@ -174,6 +165,9 @@ class BaseSearchFactory<TData extends Array<unknown>> {
 
 	set query(query: string) {
 		this._query = query;
+
+		if (query.trim().length < this.MIN_QUERY_LENGTH) this._terms = [];
+		else this._debouncedTerms.call(query);
 	}
 
 	get terms() {
