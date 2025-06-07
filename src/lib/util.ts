@@ -1,6 +1,6 @@
 import { dev } from "$app/environment";
 import type { AuthClient } from "$server/db/schema";
-import type { DictOrArray } from "@sillvva/utils";
+import { wait, type DictOrArray } from "@sillvva/utils";
 import { type NumericRange } from "@sveltejs/kit";
 import { hotkey as hk, type HotkeyItem } from "@svelteuidev/composables";
 import type { Attachment } from "svelte/attachments";
@@ -23,38 +23,8 @@ export async function createTransition(action: ViewTransitionCallback, after?: (
 	if (after) wait(afterDelay).then(after);
 }
 
-export function isDefined<T>(value?: T | null): value is T {
-	return value !== undefined && value !== null;
-}
-
 export function authName(authenticator: AuthClient) {
 	return authenticator.name || authenticator.credentialID.replace(/[^a-z0-9]/gi, "").slice(-8);
-}
-
-export function wait(ms: number) {
-	return new Promise((resolve) => setTimeout(resolve, ms));
-}
-
-export function debounce<A = unknown, R = void>(fn: (args: A) => R, ms: number) {
-	let timer: NodeJS.Timeout;
-
-	const call = (args: A): Promise<R> =>
-		new Promise((resolve) => {
-			if (timer) {
-				clearTimeout(timer);
-			}
-
-			timer = setTimeout(() => {
-				resolve(fn(args));
-			}, ms);
-		});
-
-	const cancel = () => clearTimeout(timer);
-
-	return {
-		call,
-		cancel
-	};
 }
 
 /**

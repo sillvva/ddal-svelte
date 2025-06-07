@@ -53,7 +53,7 @@
 		"@humanspeak/svelte-markdown": "^0.8.6",
 		"@internationalized/date": "^3.8.2",
 		"@paralleldrive/cuid2": "^2.2.2",
-		"@sillvva/utils": "jsr:^0.4.0",
+		"@sillvva/utils": "jsr:^0.5.0",
 		"@simplewebauthn/browser": "9.0.1",
 		"@simplewebauthn/server": "9.0.3",
 		"@svelteuidev/composables": "^0.15.7",

@@ -27,8 +27,8 @@ importers:
         specifier: ^2.2.2
         version: 2.2.2
       '@sillvva/utils':
-        specifier: jsr:^0.4.0
-        version: '@jsr/sillvva__utils@0.4.0'
+        specifier: jsr:^0.5.0
+        version: '@jsr/sillvva__utils@0.5.0'
       '@simplewebauthn/browser':
         specifier: 9.0.1
         version: 9.0.1
@@ -783,8 +783,8 @@ packages:
   '@jridgewell/trace-mapping@0.3.25':
     resolution: {integrity: sha512-vNk6aEwybGtawWmy/PzwnGDOjCkLWSD2wqvjGGAgOAwCGWySYXfYoxt00IJkTF+8Lb57DwOb3Aa0o9CApepiYQ==}
 
-  '@jsr/sillvva__utils@0.4.0':
-    resolution: {integrity: sha512-FxV1ix1poTMhM5ambsmJCwwDjH8LJ5HJ465ULAjiDZ/FglQoagTheKgXvFlXKIfO4ATtZVOeWCie1HW4+S+n+A==, tarball: https://npm.jsr.io/~/11/@jsr/sillvva__utils/0.4.0.tgz}
+  '@jsr/sillvva__utils@0.5.0':
+    resolution: {integrity: sha512-b1Y7BoxEgKocDl1beY2rz+B8kEUFduMPrHQmWGN0mR06KnZ5iA6V3n+TucA1LGESDFNQy9lgepCjTi2RhybUog==, tarball: https://npm.jsr.io/~/11/@jsr/sillvva__utils/0.5.0.tgz}
 
   '@levischuck/tiny-cbor@0.2.11':
     resolution: {integrity: sha512-llBRm4dT4Z89aRsm6u2oEZ8tfwL/2l6BwpZ7JcyieouniDECM5AqNgr/y08zalEIvW3RSK4upYyybDcmjXqAow==}
@@ -2999,7 +2999,7 @@ snapshots:
       '@jridgewell/resolve-uri': 3.1.2
       '@jridgewell/sourcemap-codec': 1.5.0
 
-  '@jsr/sillvva__utils@0.4.0': {}
+  '@jsr/sillvva__utils@0.5.0': {}
 
   '@levischuck/tiny-cbor@0.2.11': {}
 
