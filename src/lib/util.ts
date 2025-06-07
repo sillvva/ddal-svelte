@@ -1,5 +1,6 @@
 import { dev } from "$app/environment";
 import type { AuthClient } from "$server/db/schema";
+import type { DictOrArray } from "@sillvva/utils";
 import { type NumericRange } from "@sveltejs/kit";
 import { hotkey as hk, type HotkeyItem } from "@svelteuidev/composables";
 import type { Attachment } from "svelte/attachments";
@@ -10,17 +11,7 @@ import type { setupViewTransition } from "sveltekit-view-transition";
  * Types
  */
 
-export type MapKeys<T extends Map<any, any>> = T extends Map<infer K, any> ? K : never;
-
-export type Prettify<T> = {
-	[K in keyof T]: T[K];
-} & unknown;
-
 export type TransitionAction = ReturnType<typeof setupViewTransition>["transition"];
-
-export type Falsy = false | 0 | "" | null | undefined;
-
-export type DictOrArray = Record<PropertyKey, unknown> | Array<unknown>;
 
 /**
  * Functions
@@ -135,28 +126,4 @@ export function hotkey(hotkeys: HotkeyItem[]): Attachment<HTMLElement | Document
 		if (node instanceof Document) node = node.body;
 		return hk(node, hotkeys).destroy;
 	};
-}
-
-/** Function that count occurrences of a substring in a string;
- * @param {String} string               The string
- * @param {String} subString            The sub string to search for
- * @param {Boolean} [allowOverlapping]  Optional. (Default:false)
- */
-export function occurrences(string: string, subString: string, allowOverlapping = false) {
-	string += "";
-	subString += "";
-	if (subString.length <= 0) return string.length + 1;
-
-	var n = 0,
-		pos = 0,
-		step = allowOverlapping ? 1 : subString.length;
-
-	while (true) {
-		pos = string.indexOf(subString, pos);
-		if (pos >= 0) {
-			++n;
-			pos += step;
-		} else break;
-	}
-	return n;
 }

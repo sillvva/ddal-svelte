@@ -1,5 +1,5 @@
-import type { Prettify } from "$lib/util";
 import { AuthError, type User } from "@auth/sveltekit";
+import type { Prettify } from "@sillvva/utils";
 import { redirect } from "@sveltejs/kit";
 
 function urlRedirect(url: URL) {

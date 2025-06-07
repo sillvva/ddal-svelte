@@ -3,10 +3,10 @@
 
 import type { ThemeGroups, Themes } from "$lib/constants";
 import type { UserId } from "$lib/schemas";
-import type { Prettify } from "$lib/util";
 import type { Account, AuthClient, User } from "$server/db/schema";
 import "@auth/sveltekit";
 import type { Session } from "@auth/sveltekit";
+import type { Prettify } from "@sillvva/utils";
 import "@total-typescript/ts-reset/fetch";
 import "@total-typescript/ts-reset/json-parse";
 
