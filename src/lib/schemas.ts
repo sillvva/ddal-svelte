@@ -1,6 +1,6 @@
 import type { FullCharacterData } from "$server/data/characters";
+import type { Prettify } from "@sillvva/utils";
 import * as v from "valibot";
-import type { Prettify } from "./util";
 
 export type BrandedType = v.InferOutput<ReturnType<typeof brandedId>>;
 function brandedId<T extends string>(name: T) {

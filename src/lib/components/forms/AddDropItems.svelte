@@ -25,22 +25,30 @@
 	const remainingAwards = $derived(storyAwards.filter((item) => !$form.storyAwardsLost.includes(item.id)));
 </script>
 
-<div class="col-span-12 flex flex-col justify-between gap-8 md:flex-row md:pb-4 md:max-lg:gap-4">
+<div
+	class="bg-base-100 col-span-12 flex flex-col justify-between gap-8 md:sticky md:top-19 md:z-10 md:flex-row md:py-4 md:max-lg:gap-4"
+>
 	{@render children?.()}
 	<div class="flex flex-1 flex-col gap-4 sm:flex-row md:max-w-fit">
 		<div class="join flex min-w-fit flex-1">
 			<button
 				type="button"
 				tabindex="-1"
-				class="btn join-item border-base-200! bg-base-300! min-w-fit flex-2 basis-0 cursor-default"
+				class="btn join-item border-base-200! bg-base-300! min-w-fit flex-2 basis-0 cursor-default justify-between gap-3"
 			>
-				Magic Items
-				{#if $form.magicItemsGained.length > 0}
-					<span class="badge badge-success badge-outline max-xs:px-1 rounded-sm">{$form.magicItemsGained.length}</span>
-				{/if}
-				{#if $form.magicItemsLost.length > 0}
-					<span class="badge badge-error badge-outline max-xs:px-1 rounded-sm">{$form.magicItemsLost.length}</span>
-				{/if}
+				<span>Magic Items</span>
+				<span class="flex flex-row gap-1">
+					{#if $form.magicItemsGained.length > 0}
+						<span class="badge badge-success badge-outline max-xs:px-1 rounded-sm">
+							{$form.magicItemsGained.length}
+						</span>
+					{/if}
+					{#if $form.magicItemsLost.length > 0}
+						<span class="badge badge-error badge-outline max-xs:px-1 rounded-sm">
+							{$form.magicItemsLost.length}
+						</span>
+					{/if}
+				</span>
 			</button>
 			<button
 				type="button"
@@ -69,15 +77,21 @@
 				<button
 					type="button"
 					tabindex="-1"
-					class="btn join-item border-base-200! bg-base-300! min-w-fit flex-2 basis-0 cursor-default"
+					class="btn join-item border-base-200! bg-base-300! min-w-fit flex-2 basis-0 cursor-default justify-between gap-3"
 				>
-					Story Awards
-					{#if $form.storyAwardsGained.length > 0}
-						<span class="badge badge-success badge-outline max-xs:px-1 rounded-sm">{$form.storyAwardsGained.length}</span>
-					{/if}
-					{#if $form.storyAwardsLost.length > 0}
-						<span class="badge badge-error badge-outline max-xs:px-1 rounded-sm">{$form.storyAwardsLost.length}</span>
-					{/if}
+					<span>Story Awards</span>
+					<span class="flex flex-row gap-1">
+						{#if $form.storyAwardsGained.length > 0}
+							<span class="badge badge-success badge-outline max-xs:px-1 rounded-sm">
+								{$form.storyAwardsGained.length}
+							</span>
+						{/if}
+						{#if $form.storyAwardsLost.length > 0}
+							<span class="badge badge-error badge-outline max-xs:px-1 rounded-sm">
+								{$form.storyAwardsLost.length}
+							</span>
+						{/if}
+					</span>
 				</button>
 				<button
 					type="button"

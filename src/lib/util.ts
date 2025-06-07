@@ -1,5 +1,6 @@
 import { dev } from "$app/environment";
 import type { AuthClient } from "$server/db/schema";
+import { wait, type DictOrArray } from "@sillvva/utils";
 import { type NumericRange } from "@sveltejs/kit";
 import { hotkey as hk, type HotkeyItem } from "@svelteuidev/composables";
 import type { Attachment } from "svelte/attachments";
@@ -10,15 +11,7 @@ import type { setupViewTransition } from "sveltekit-view-transition";
  * Types
  */
 
-export type Prettify<T> = {
-	[K in keyof T]: T[K];
-} & unknown;
-
 export type TransitionAction = ReturnType<typeof setupViewTransition>["transition"];
-
-export type Falsy = false | 0 | "" | null | undefined;
-
-export type DictOrArray = Record<PropertyKey, unknown> | Array<unknown>;
 
 /**
  * Functions
@@ -30,35 +23,8 @@ export async function createTransition(action: ViewTransitionCallback, after?: (
 	if (after) wait(afterDelay).then(after);
 }
 
-export function isDefined<T>(value?: T | null): value is T {
-	return value !== undefined && value !== null;
-}
-
 export function authName(authenticator: AuthClient) {
 	return authenticator.name || authenticator.credentialID.replace(/[^a-z0-9]/gi, "").slice(-8);
-}
-
-export function wait(ms: number) {
-	return new Promise((resolve) => setTimeout(resolve, ms));
-}
-
-export function debounce<A = unknown, R = void>(fn: (args: A) => R, ms: number): [(args: A) => Promise<R>, () => void] {
-	let timer: NodeJS.Timeout;
-
-	const debouncedFunc = (args: A): Promise<R> =>
-		new Promise((resolve) => {
-			if (timer) {
-				clearTimeout(timer);
-			}
-
-			timer = setTimeout(() => {
-				resolve(fn(args));
-			}, ms);
-		});
-
-	const teardown = () => clearTimeout(timer);
-
-	return [debouncedFunc, teardown];
 }
 
 /**

@@ -1,30 +1,23 @@
 <script lang="ts">
-	import { excludedSearchWords } from "$lib/constants";
-
 	interface Props {
 		text?: string | string[] | null;
-		search?: string | null;
+		terms?: string[];
 		filtered?: boolean;
 		separator?: string;
+		matches?: number;
 	}
 
-	let { text = "", search = "", filtered = false, separator = " | " }: Props = $props();
-
-	const terms = $derived(
-		(search && search.length > 1 ? search : "")
-			.replace(new RegExp(` ?\\b(${Array.from(excludedSearchWords).join("|")})\\b ?`, "gi"), " ")
-			.replace(/([^ a-z0-9])/gi, "\\$1")
-			.trim()
-			.split(" ")
-			.filter((i) => !!i)
-	);
+	let { text = "", terms = [], filtered = false, separator = " | ", matches = 1 }: Props = $props();
 
 	const regexes = $derived(terms.map((term) => new RegExp(term, "gi")));
 	const regex = $derived(terms.length ? new RegExp(terms.join("|"), "gi") : null);
 
 	const items = $derived(
 		(Array.isArray(text) ? text : text?.split(separator) || [])
-			.filter((item) => !filtered || regexes.every((regex) => item.match(regex)))
+			.filter(
+				(item) =>
+					!filtered || (matches === 1 ? regexes.every((regex) => item.match(regex)) : regexes.some((regex) => item.match(regex)))
+			)
 			.join(separator)
 	);
 
@@ -46,7 +39,7 @@
 {#if parts.length && regex}
 	{#each parts as part}
 		{#if regex.test(part)}
-			<span class="bg-secondary text-secondary-content px-1">{part}</span>
+			<span class="bg-primary text-primary-content px-1 font-semibold">{part}</span>
 		{:else}
 			{part}
 		{/if}

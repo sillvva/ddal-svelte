@@ -1,5 +1,5 @@
 import type { CharacterData, ExtendedCharacterData, FullCharacterData } from "$server/data/characters";
-import type { ExtendedLogData, FullLogData, LogData } from "$server/data/logs";
+import type { ExtendedLogData, FullLogData, LogData, LogSummaryData } from "$server/data/logs";
 import type { Character, DungeonMaster, Log, MagicItem, StoryAward } from "$server/db/schema";
 import { sorter } from "@sillvva/utils";
 import { BLANK_CHARACTER, PlaceholderName } from "./constants";
@@ -142,7 +142,7 @@ export function getLogsSummary(logs: LogData[], includeLogs = true) {
 						...log,
 						levelGained: levelGained?.levels || 0,
 						totalLevel: level
-					};
+					} satisfies LogSummaryData;
 				})
 			: []
 	};

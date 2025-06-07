@@ -71,20 +71,20 @@
 	{/if}
 </div>
 {#if !preview || state !== "preview"}
-	<label for={field} class="fieldset-label">
+	<label for={field} class="fieldset-label justify-between">
 		{#if $errors?.length}
 			<span class="text-error">{$errors}</span>
 		{:else}
-			<span class="tooltip tooltip-bottom" data-tip={markdownTip}>
+			<span class="tooltip tooltip-bottom flex items-center gap-1" data-tip={markdownTip}>
 				Markdown and HTML Supported
-				<span class="iconfify mdi--question-mark-circle"></span>
+				<span class="iconify mdi--question-mark-circle"></span>
 			</span>
 		{/if}
 		{#if !$errors?.length && $constraints?.maxlength}
-			<span class="tooltip tooltip-bottom" data-tip={graphemeTip}>
+			<span class="tooltip tooltip-bottom flex items-center gap-1" data-tip={graphemeTip}>
 				{$value.length.toLocaleString()} / {$constraints?.maxlength.toLocaleString()}
 				{#if graphemeTip}
-					<span class="iconfify mdi--question-mark-circle"></span>
+					<span class="iconify mdi--question-mark-circle"></span>
 				{/if}
 			</span>
 		{/if}

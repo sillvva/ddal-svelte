@@ -1,37 +1,26 @@
 <script lang="ts">
 	import { goto } from "$app/navigation";
 	import { page } from "$app/state";
-	import { excludedSearchWords, searchSections } from "$lib/constants.js";
+	import { searchSections } from "$lib/constants.js";
+	import { GlobalSearchFactory } from "$lib/factories.svelte";
 	import { getGlobal } from "$lib/stores.svelte";
-	import { debounce, hotkey } from "$lib/util";
+	import { hotkey } from "$lib/util";
 	import type { SearchData } from "$src/routes/(api)/command/+server";
-	import { sorter } from "@sillvva/utils";
 	import { Command, Dialog, Separator } from "bits-ui";
 	import { twMerge } from "tailwind-merge";
-	import Items from "./Items.svelte";
+	import SearchResults from "./SearchResults.svelte";
 
 	const defaultSelected: string = searchSections[0].url;
 	let global = getGlobal();
 
-	let search = $state("");
 	let cmdOpen = $state(false);
 	let selected: string = $state(defaultSelected);
 	let command = $state<Command.Root | null>(null);
 	let viewport = $state<HTMLDivElement | null>(null);
 	let input = $state<HTMLInputElement | null>(null);
-	let category = $state<SearchData[number]["title"] | null>(null);
 	let categories = $derived(global.searchData.map((section) => section.title).filter((c) => c !== "Sections"));
 
-	const words = $derived(
-		search
-			.trim()
-			.toLowerCase()
-			.match(/(?:[^\s"]+|"[^"]*")+/g)
-			?.map((word) => word.replace(/^"|"$/g, ""))
-			.filter((word) => word.length > 1 && !excludedSearchWords.has(word)) || []
-	);
-	$inspect(words);
-	const query = $derived(words.join(" "));
+	const search = $derived(new GlobalSearchFactory(global.searchData, cmdOpen ? "" : ""));
 
 	$effect(() => {
 		const controller = new AbortController();
@@ -48,20 +37,17 @@
 		};
 	});
 
-	function hasMatch(item: string) {
-		const matches = words.filter((word) => item.toLowerCase().includes(word));
-		return matches.length ? matches : null;
-	}
+	$effect(() => {
+		if (cmdOpen && input) setTimeout(() => input?.focus(), 100);
+	});
 
 	async function open() {
 		cmdOpen = true;
-		setTimeout(() => {
-			input?.focus();
-		}, 100);
+		input?.focus();
 	}
 
 	function close() {
-		search = "";
+		search.query = "";
 		cmdOpen = false;
 	}
 
@@ -70,51 +56,7 @@
 		close();
 	}
 
-	const results = $derived(
-		global.searchData
-			.flatMap((section) => {
-				// Early return if category doesn't match
-				// if (category && section.title !== category) return [];
-
-				// Skip filtering if query is too short
-				if (query.length < 2) {
-					const items = section.items.slice(0, category ? 10 : 5);
-					return [{ title: section.title, items, count: items.length }];
-				}
-
-				// Build search strings once per item
-				const filteredItems = section.items
-					.filter((item) => {
-						if (item.type === "section") return false;
-
-						let searchString = item.name;
-						if (item.type === "character") {
-							searchString += ` ${item.race} ${item.class} ${item.campaign} L${item.totalLevel} T${item.tier}`;
-							searchString += ` ${item.magicItems.map((mi) => mi.name).join(" ")}`;
-							searchString += ` ${item.storyAwards.map((sa) => sa.name).join(" ")}`;
-						} else if (item.type === "log") {
-							if (item.character) searchString += ` ${item.character.name}`;
-							if (item.dm) searchString += ` ${item.dm.name}`;
-							searchString += ` ${item.magicItemsGained.map((mi) => mi.name).join(" ")}`;
-							searchString += ` ${item.storyAwardsGained.map((sa) => sa.name).join(" ")}`;
-						}
-
-						return hasMatch(searchString)?.length === words.length;
-					})
-					.slice(0, 50);
-
-				return [{ title: section.title, items: filteredItems, count: filteredItems.length }];
-			})
-			.map((section, i, sections) => {
-				const previousSections = sections.slice(0, i);
-				const previousSectionsCount = previousSections.reduce((sum, s) => sum + s.count, 0);
-				return {
-					...section,
-					previousCount: previousSectionsCount
-				};
-			})
-	);
-	const resultsCount = $derived(results.reduce((sum, section) => sum + section.items.length, 0));
+	const resultsCount = $derived(search.results.reduce((sum, section) => sum + section.items.length, 0));
 </script>
 
 <svelte:document
@@ -134,7 +76,7 @@
 	])}
 />
 
-<Dialog.Root bind:open={cmdOpen} onOpenChange={() => (search = "")}>
+<Dialog.Root bind:open={cmdOpen} onOpenChange={() => (search.query = "")}>
 	<Dialog.Trigger
 		class="hover-hover:md:input hover-hover:md:gap-4 hover-hover:md:cursor-text"
 		aria-label="Search"
@@ -180,17 +122,17 @@
 										type="search"
 										placeholder="Search"
 										class="outline-0"
-										oninput={debounce((ev: Event) => {
+										oninput={(ev: Event) => {
 											const val = (ev.target as HTMLInputElement).value;
-											if (search !== val) {
-												search = val;
+											if (search.query !== val) {
+												search.query = val;
 												command?.updateSelectedToIndex(0);
 												if (viewport) viewport.scrollTop = 0;
 											}
-										}, 200)[0]}
+										}}
 									/>
 								</label>
-								<select bind:value={category} class="select join-item w-auto">
+								<select bind:value={search.category} class="select join-item w-auto">
 									<option value={null}>All Categories</option>
 									{#each categories as category}
 										<option value={category}>{category}</option>
@@ -200,140 +142,157 @@
 						{/snippet}
 					</Command.Input>
 					<Command.List class="flex flex-col gap-2">
-						{#if !global.searchData.length}
-							<div class="p-4 text-center font-bold">Loading data...</div>
+						{#if resultsCount}
+							<Command.Viewport class="h-96 overflow-y-auto" bind:ref={viewport}>
+								{#each search.results as section}
+									{#if section.items.length && section.previousCount}
+										<Command.Separator class="divider mt-2 mb-0" />
+									{/if}
+									<Command.Group value={section.title} class={twMerge(!section.items.length && "hidden")}>
+										<Command.GroupHeading class="menu-title text-base-content/60 px-5">
+											{section.title}
+										</Command.GroupHeading>
+										<Command.GroupItems class="menu flex w-full flex-col py-0">
+											{#snippet child({ props })}
+												<ul {...props}>
+													{#each section.items as item}
+														<Command.Item
+															value={item.url}
+															onSelect={() => select(item.url)}
+															class="flex gap-4 rounded-lg data-[selected]:bg-neutral-500/25"
+														>
+															{#snippet child({ props })}
+																<li {...props}>
+																	<a href={item.url} class="gap-3" onclick={(ev) => ev.preventDefault()}>
+																		{#if item.type === "character"}
+																			<span class="mask mask-squircle bg-primary h-12 max-w-12 min-w-12">
+																				<img
+																					src={item.imageUrl}
+																					class="size-full object-cover object-top transition-all"
+																					alt={item.name}
+																				/>
+																			</span>
+																			<div class="flex flex-col">
+																				<div>
+																					<SearchResults text={item.name} terms={search.terms} />
+																				</div>
+																				<div class="text-base-content/70 text-xs">
+																					Level {item.totalLevel}
+																					<SearchResults text={item.race} terms={search.terms} />
+																					<SearchResults text={item.class} terms={search.terms} />
+																				</div>
+																				{#if search.query.length >= 2}
+																					{#if item.score && search.terms.length}
+																						<div class="text-base-content/70 text-xs">
+																							Match Score: {Math.round(item.score * 100) / 100}
+																						</div>
+																					{/if}
+																					{#if item.match.has("magicItems")}
+																						<div class="flex flex-col text-xs">
+																							<span class="pt-1 font-bold whitespace-nowrap">Magic Items:</span>
+																							<span class="text-base-content/70 flex-1 text-xs leading-4">
+																								<SearchResults
+																									text={item.magicItems.map((mi) => mi.name)}
+																									terms={search.terms}
+																									filtered
+																									matches={item.match.size}
+																								/>
+																							</span>
+																						</div>
+																					{/if}
+																					{#if item.match.has("storyAwards")}
+																						<div class="flex flex-col text-xs">
+																							<span class="pt-1 font-bold whitespace-nowrap">Story Awards:</span>
+																							<span class="text-base-content/70 flex-1 text-xs leading-4">
+																								<SearchResults
+																									text={item.storyAwards.map((sa) => sa.name)}
+																									terms={search.terms}
+																									filtered
+																									matches={item.match.size}
+																								/>
+																							</span>
+																						</div>
+																					{/if}
+																				{/if}
+																			</div>
+																		{:else if item.type === "log"}
+																			<div class="flex flex-col">
+																				<div>
+																					<SearchResults text={item.name} terms={search.terms} />
+																				</div>
+																				<div class="text-base-content/70 flex gap-2">
+																					<span class="text-xs">{new Date(item.date).toLocaleDateString()}</span>
+																					<Separator.Root orientation="vertical" class="border-base-content/50 border-l" />
+																					{#if item.character}
+																						<span class="text-xs">
+																							<SearchResults text={item.character.name} terms={search.terms} />
+																						</span>
+																					{:else}
+																						<span class="text-xs italic">Unassigned</span>
+																					{/if}
+																					<Separator.Root orientation="vertical" class="border-base-content/50 border-l" />
+																					<span class="text-xs">{item.gold.toLocaleString()} gp</span>
+																				</div>
+																				{#if search.query.length >= 2}
+																					{#if item.score && search.terms.length}
+																						<div class="text-base-content/70 text-xs">
+																							Match Score: {Math.round(item.score * 100) / 100}
+																						</div>
+																					{/if}
+																					{#if item.match.has("dm")}
+																						<div class="flex gap-1 text-xs">
+																							<span class="font-bold whitespace-nowrap">DM:</span>
+																							<span class="text-base-content/70 flex-1">
+																								<SearchResults text={item.dm.name} terms={search.terms} />
+																							</span>
+																						</div>
+																					{/if}
+																					{#if item.match.has("magicItemsGained")}
+																						<div class="flex flex-col text-xs">
+																							<span class="pt-1 font-bold whitespace-nowrap">Magic Items:</span>
+																							<span class="text-base-content/70 flex-1">
+																								<SearchResults
+																									text={item.magicItemsGained.map((mi) => mi.name)}
+																									terms={search.terms}
+																									filtered
+																									matches={item.match.size}
+																								/>
+																							</span>
+																						</div>
+																					{/if}
+																					{#if item.match.has("storyAwardsGained")}
+																						<div class="flex flex-col text-xs">
+																							<span class="pt-1 font-bold whitespace-nowrap">Story Awards:</span>
+																							<span class="text-base-content/70 flex-1">
+																								<SearchResults
+																									text={item.storyAwardsGained.map((sa) => sa.name)}
+																									terms={search.terms}
+																									filtered
+																									matches={item.match.size}
+																								/>
+																							</span>
+																						</div>
+																					{/if}
+																				{/if}
+																			</div>
+																		{:else}
+																			{item.name}
+																		{/if}
+																	</a>
+																</li>
+															{/snippet}
+														</Command.Item>
+													{/each}
+												</ul>
+											{/snippet}
+										</Command.GroupItems>
+									</Command.Group>
+								{/each}
+							</Command.Viewport>
+						{:else if !global.searchData.length}
+							<Command.Empty class="p-4 text-center font-bold">Loading data...</Command.Empty>
 						{:else}
-							<div class="relative h-auto data-[results=true]:h-96" data-results={resultsCount > 0}>
-								<Command.Empty class="p-4 text-center font-bold">No results found.</Command.Empty>
-								<Command.Viewport class="h-full overflow-y-auto" bind:ref={viewport}>
-									{#each results as section}
-										{#if section.items.length && section.previousCount}
-											<Command.Separator class="divider mt-2 mb-0" />
-										{/if}
-										<Command.Group value={section.title} class={twMerge(!section.items.length && "hidden")}>
-											<Command.GroupHeading class="menu-title text-base-content/60 px-5">
-												{section.title}
-											</Command.GroupHeading>
-											<Command.GroupItems class="menu flex w-full flex-col py-0">
-												{#snippet child({ props })}
-													<ul {...props}>
-														{#each section.items as item}
-															<Command.Item
-																value={item.url}
-																onSelect={() => select(item.url)}
-																class="flex gap-4 rounded-lg data-[selected]:bg-neutral-500/40"
-															>
-																{#snippet child({ props })}
-																	<li {...props}>
-																		<a href={item.url} class="gap-3" onclick={(ev) => ev.preventDefault()}>
-																			{#if item.type === "character"}
-																				<span class="mask mask-squircle bg-primary h-12 max-w-12 min-w-12">
-																					<img
-																						src={item.imageUrl}
-																						class="size-full object-cover object-top transition-all"
-																						alt={item.name}
-																					/>
-																				</span>
-																				<div class="flex flex-col">
-																					<div>{item.name}</div>
-																					<div class="text-base-content/70 text-xs">
-																						Level {item.totalLevel}
-																						{item.race}
-																						{item.class}
-																					</div>
-																					{#if search.length >= 2}
-																						{#if item.magicItems.some((magicItem) => hasMatch(magicItem.name))}
-																							<div class="flex flex-col text-xs">
-																								<span class="pt-1 font-bold whitespace-nowrap">Magic Items:</span>
-																								<span class="text-base-content/70 flex-1">
-																									<Items
-																										items={item.magicItems
-																											.filter((item) => hasMatch(item.name))
-																											.toSorted((a, b) => sorter(a.name, b.name))}
-																										textClass="text-xs leading-4"
-																									/>
-																								</span>
-																							</div>
-																						{/if}
-																						{#if item.storyAwards.some((storyAward) => hasMatch(storyAward.name))}
-																							<div class="flex flex-col text-xs">
-																								<span class="pt-1 font-bold whitespace-nowrap">Story Awards:</span>
-																								<span class="text-base-content/70 flex-1">
-																									<Items
-																										items={item.storyAwards
-																											.filter((item) => hasMatch(item.name))
-																											.toSorted((a, b) => sorter(a.name, b.name))}
-																										textClass="text-xs leading-4"
-																									/>
-																								</span>
-																							</div>
-																						{/if}
-																					{/if}
-																				</div>
-																			{:else if item.type === "log"}
-																				<div class="flex flex-col">
-																					<div>{item.name}</div>
-																					<div class="text-base-content/70 flex gap-2">
-																						<span class="text-xs">{new Date(item.date).toLocaleDateString()}</span>
-																						<Separator.Root orientation="vertical" class="border-base-content/50 border-l" />
-																						{#if item.character}
-																							<span class="text-xs">{item.character.name}</span>
-																						{:else}
-																							<span class="text-xs italic">Unassigned</span>
-																						{/if}
-																						<Separator.Root orientation="vertical" class="border-base-content/50 border-l" />
-																						<span class="text-xs">{item.gold.toLocaleString()} gp</span>
-																					</div>
-																					{#if search.length >= 2}
-																						{#if hasMatch(item.dm.name)}
-																							<div class="flex gap-1 text-xs">
-																								<span class="font-bold whitespace-nowrap">DM:</span>
-																								<span class="text-base-content/70 flex-1">{item.dm.name}</span>
-																							</div>
-																						{/if}
-																						{#if item.magicItemsGained.some((it) => hasMatch(it.name))}
-																							<div class="flex flex-col text-xs">
-																								<span class="pt-1 font-bold whitespace-nowrap">Magic Items:</span>
-																								<span class="text-base-content/70 flex-1">
-																									<Items
-																										items={item.magicItemsGained
-																											.filter((it) => hasMatch(it.name))
-																											.toSorted((a, b) => sorter(a.name, b.name))}
-																										textClass="text-xs leading-4"
-																									/>
-																								</span>
-																							</div>
-																						{/if}
-																						{#if item.storyAwardsGained.some((it) => hasMatch(it.name))}
-																							<div class="flex flex-col text-xs">
-																								<span class="pt-1 font-bold whitespace-nowrap">Story Awards:</span>
-																								<span class="text-base-content/70 flex-1">
-																									<Items
-																										items={item.storyAwardsGained
-																											.filter((it) => hasMatch(it.name))
-																											.toSorted((a, b) => sorter(a.name, b.name))}
-																										textClass="text-xs leading-4"
-																									/>
-																								</span>
-																							</div>
-																						{/if}
-																					{/if}
-																				</div>
-																			{:else}
-																				{item.name}
-																			{/if}
-																		</a>
-																	</li>
-																{/snippet}
-															</Command.Item>
-														{/each}
-													</ul>
-												{/snippet}
-											</Command.GroupItems>
-										</Command.Group>
-									{/each}
-								</Command.Viewport>
-							</div>
+							<Command.Empty class="p-4 text-center font-bold">No results found.</Command.Empty>
 						{/if}
 					</Command.List>
 				</Command.Root>

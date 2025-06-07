@@ -9,12 +9,11 @@
 	import SearchResults from "$lib/components/SearchResults.svelte";
 	import DeleteCharacter from "$lib/components/forms/DeleteCharacter.svelte";
 	import DeleteLog from "$lib/components/forms/DeleteLog.svelte";
-	import { excludedSearchWords } from "$lib/constants.js";
+	import { EntitySearchFactory } from "$lib/factories.svelte.js";
 	import { getGlobal, transition } from "$lib/stores.svelte.js";
 	import { createTransition, hotkey } from "$lib/util";
 	import { slugify, sorter } from "@sillvva/utils";
 	import { download } from "@svelteuidev/composables";
-	import MiniSearch from "minisearch";
 	import { fromAction } from "svelte/attachments";
 	import { SvelteSet } from "svelte/reactivity";
 
@@ -25,50 +24,13 @@
 	const myCharacter = $derived(data.character.userId === data.session?.user?.id);
 
 	let deletingLog = new SvelteSet<string>();
-	let search = $state(page.url.searchParams.get("s") || "");
 
-	const minisearch = new MiniSearch({
-		fields: ["logName", "magicItems", "storyAwards", "logId"],
-		idField: "logId",
-		processTerm: (term) => (excludedSearchWords.has(term) ? null : term.toLowerCase()),
-		tokenize: (term) => term.split(/[^A-Z0-9\.']/gi),
-		searchOptions: {
-			prefix: true,
-			combineWith: "AND",
-			boost: { logName: 2 }
-		}
-	});
-
-	const indexed = $derived(
-		data.character.logs.map((log) => ({
-			logId: log.id,
-			logName: log.name,
-			magicItems: log.magicItemsGained
-				.map((item) => item.name)
-				.concat(log.magicItemsLost.map((item) => item.name))
-				.join(" | "),
-			storyAwards: log.storyAwardsGained
-				.map((item) => item.name)
-				.concat(log.storyAwardsLost.map((item) => item.name))
-				.join(" | ")
-		}))
-	);
+	const search = $derived(new EntitySearchFactory(data.character.logs));
+	const sortedResults = $derived(search.results.toSorted((a, b) => sorter(a.showDate, b.showDate)));
 
 	$effect(() => {
-		minisearch.addAll(indexed);
-		return () => minisearch.removeAll();
+		search.query = page.url.searchParams.get("s") || "";
 	});
-
-	const msResults = $derived.by(() => {
-		if (!minisearch.termCount) minisearch.addAll(indexed);
-		return minisearch.search(search);
-	});
-	const results = $derived(
-		indexed.length && search.length > 1
-			? data.character.logs.filter((log) => msResults.find((result) => result.id === log.id))
-			: data.character.logs
-	);
-	const sortedResults = $derived(results.toSorted((a, b) => sorter(a.showDate, b.showDate)));
 
 	function triggerImageModal() {
 		if (data.character.imageUrl) {
@@ -289,7 +251,7 @@
 				</a>
 			{/if}
 			{#if data.character.logs.length}
-				<Search bind:value={search} placeholder="Search Logs" />
+				<Search bind:value={search.query} placeholder="Search Logs" />
 			{/if}
 			{#if myCharacter}
 				<a
@@ -362,11 +324,11 @@
 										href={log.isDmLog ? `/dm-logs/${log.id}` : `/characters/${log.characterId}/log/${log.id}`}
 										class="row-link text-left font-semibold whitespace-pre-wrap"
 									>
-										<SearchResults text={log.name} {search}></SearchResults>
+										<SearchResults text={log.name} terms={search.terms}></SearchResults>
 									</a>
 								{:else}
 									<span class="text-left font-semibold whitespace-pre-wrap">
-										<SearchResults text={log.name} {search}></SearchResults>
+										<SearchResults text={log.name} terms={search.terms}></SearchResults>
 									</span>
 								{/if}
 								<p class="text-netural-content mb-2 text-sm font-normal whitespace-nowrap">
@@ -432,7 +394,7 @@
 										{log.acp}
 									</p>
 								{/if}
-								{#if log.levelGained > 0}
+								{#if (log.levelGained || 0) > 0}
 									<p>
 										<span class="font-semibold dark:text-white">Levels:</span>&nbsp;{log.levelGained}&nbsp;({log.totalLevel})
 									</p>
@@ -459,9 +421,9 @@
 								{/if}
 								{#if log.magicItemsGained.length > 0 || log.magicItemsLost.length > 0}
 									<div>
-										<Items title="Magic Items:" items={log.magicItemsGained} {search} sort />
+										<Items title="Magic Items:" items={log.magicItemsGained} terms={search.terms} sort />
 										<div class="text-sm whitespace-pre-wrap line-through">
-											<SearchResults text={log.magicItemsLost.map((mi) => mi.name).join(" | ")} {search} />
+											<SearchResults text={log.magicItemsLost.map((mi) => mi.name).join(" | ")} terms={search.terms} />
 										</div>
 									</div>
 								{/if}
@@ -490,10 +452,10 @@
 								{/if}
 								{#if log.magicItemsGained.length > 0 || log.magicItemsLost.length > 0}
 									<div class="mt-2 sm:hidden print:hidden">
-										<Items title="Magic Items:" items={log.magicItemsGained} {search} sort />
+										<Items title="Magic Items:" items={log.magicItemsGained} terms={search.terms} sort />
 										{#if log.magicItemsLost.length}
 											<p class="mt-2 text-sm whitespace-pre-wrap line-through">
-												<SearchResults text={log.magicItemsLost.map((mi) => mi.name).join(" | ")} {search} />
+												<SearchResults text={log.magicItemsLost.map((mi) => mi.name).join(" | ")} terms={search.terms} />
 											</p>
 										{/if}
 									</div>
