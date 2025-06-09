@@ -3,7 +3,7 @@ import type { UserDMs, UserDMsWithLogs } from "$server/data/dms";
 import type { FullLogData, LogSummaryData, UserLogData } from "$server/data/logs";
 import type { SearchData } from "$src/routes/(api)/command/+server";
 import { parseDateTime, type DateValue } from "@internationalized/date";
-import { debounce, isDefined, substrCount, type MapKeys } from "@sillvva/utils";
+import { debounce, isDefined, substrCount, type MapKeys, type Prettify } from "@sillvva/utils";
 import { toast } from "svelte-sonner";
 import { derived, get, type Readable, type Writable } from "svelte/store";
 import {
@@ -267,19 +267,22 @@ type ExpandedSearchData<TData extends SearchData[number]> = TData extends {
 }
 	? {
 			title: Title;
-			items: (Item & {
-				score: number;
-				match: Set<
-					Title extends "Sections"
-						? never
-						: Title extends "Characters"
-							? CharacterIndexKeys
-							: Title extends "Logs"
-								? LogIndexKeys
-								: DMIndexKeys
-				>;
-			})[];
-		} & { count: number }
+			items: Prettify<
+				Item & {
+					score: number;
+					match: Set<
+						Title extends "Sections"
+							? never
+							: Title extends "Characters"
+								? CharacterIndexKeys
+								: Title extends "Logs"
+									? LogIndexKeys
+									: DMIndexKeys
+					>;
+				}
+			>[];
+			count: number;
+		}
 	: never;
 
 export class GlobalSearchFactory extends BaseSearchFactory<SearchData> {
