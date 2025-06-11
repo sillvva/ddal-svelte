@@ -182,9 +182,7 @@ async function itemsCRUD(params: CRUDMagicItemParams | CRUDStoryAwardParams) {
 	const { tx, logId, table, gained, lost } = params;
 
 	const itemIds = gained.map((item) => item.id).filter(Boolean);
-	await tx
-		.delete(table)
-		.where(itemIds.length ? and(eq(table.logGainedId, logId), notInArray(table.id, itemIds)) : eq(table.logGainedId, logId));
+	await tx.delete(table).where(and(eq(table.logGainedId, logId), itemIds.length ? notInArray(table.id, itemIds) : undefined));
 
 	if (gained.length) {
 		await tx
