@@ -40,16 +40,16 @@
 		if (renameRef) renameRef.focus();
 	}
 
-	async function renameWebAuthn(isDefault = false) {
+	async function renameWebAuthn(useDefault = false) {
 		if (renaming === "saving") return;
-		if (isDefault && defaultName) {
+		if (useDefault && defaultName) {
 			renaming = false;
 			return;
 		}
 		renaming = "saving";
 
 		const id = renameId;
-		const name = isDefault ? "" : renameName;
+		const name = useDefault ? "" : renameName;
 		const response = await fetch("/webAuthn", {
 			method: "POST",
 			body: JSON.stringify({ name, id } satisfies RenameWebAuthnInput)
