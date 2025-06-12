@@ -17,8 +17,16 @@
 
 	const authenticators = $derived(page.data.user?.authenticators || []);
 	const global = getGlobal();
+
 	$effect(() => {
 		global.app.settings.autoWebAuthn = authenticators.length > 0;
+	});
+
+	$effect(() => {
+		const emptyPasskey = authenticators.find((a) => a.name === "");
+		if (emptyPasskey) {
+			initRename(emptyPasskey.credentialID, emptyPasskey.name);
+		}
 	});
 
 	let renaming = $state<boolean | "saving">(false);
@@ -107,7 +115,15 @@
 				aria-label="Rename Passkey"
 			>
 				<span class="iconify material-symbols--passkey group-hover:mdi--pencil size-6"></span>
-				<span class="ellipsis-nowrap flex-1">{authenticator.name}</span>
+				<span class="ellipsis-nowrap flex-1">
+					{#if authenticator.name}
+						{authenticator.name}
+					{:else if renameId === authenticator.credentialID}
+						Renaming...
+					{:else}
+						<span class="text-error">Unnamed</span>
+					{/if}
+				</span>
 			</button>
 			<button
 				class="btn btn-ghost text-error hover:bg-error hover:text-base-content"
@@ -127,7 +143,7 @@
 			onclick={() =>
 				signIn("webauthn", { action: "register", redirect: false })
 					.then((resp) => {
-						if (resp?.ok) initRename();
+						if (resp?.ok) invalidateAll();
 						else errorToast("Failed to register passkey");
 					})
 					.catch(console.error)}
