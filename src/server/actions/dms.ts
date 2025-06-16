@@ -1,7 +1,7 @@
 import { type DungeonMasterId, type DungeonMasterSchema } from "$lib/schemas";
 import { SaveError, type SaveResult } from "$lib/util";
-import { getUserDMsWithLogs } from "$server/data/dms";
-import { db } from "$server/db";
+import { getUserDMs, type UserDMsWithLogs } from "$server/data/dms";
+import { buildConflictUpdateColumns, db } from "$server/db";
 import { dungeonMasters, type DungeonMaster } from "$server/db/schema";
 import { eq } from "drizzle-orm";
 
@@ -14,8 +14,8 @@ export async function saveDM(
 	data: DungeonMasterSchema
 ): SaveResult<DungeonMaster, DMError> {
 	try {
-		const dm = (await getUserDMsWithLogs(user)).find((dm) => dm.id === dmId);
-		if (!dm) throw new DMError("You do not have permission to edit this DM", { status: 401 });
+		const [dm] = await getUserDMs(user, dmId);
+		if (!dm) throw new DMError("DM does not exist", { status: 404 });
 
 		if (!data.name.trim()) {
 			if (dm.isUser) data.name = user.name;
@@ -39,16 +39,32 @@ export async function saveDM(
 	}
 }
 
+export async function createUserDM(user: LocalsSession["user"]) {
+	const [result] = await db
+		.insert(dungeonMasters)
+		.values({
+			name: user.name,
+			DCI: null,
+			userId: user.id,
+			isUser: true
+		})
+		.onConflictDoUpdate({
+			target: [dungeonMasters.userId, dungeonMasters.isUser],
+			set: buildConflictUpdateColumns(dungeonMasters, ["name"])
+		})
+		.returning();
+
+	if (!result) throw new Error("Failed to create DM");
+
+	return result;
+}
+
 export type DeleteDMResult = ReturnType<typeof deleteDM>;
-export async function deleteDM(dmId: DungeonMasterId, user: LocalsSession["user"]): SaveResult<{ id: DungeonMasterId }, DMError> {
+export async function deleteDM(dm: UserDMsWithLogs[number]): SaveResult<{ id: DungeonMasterId }, DMError> {
 	try {
-		const dms = (await getUserDMsWithLogs(user)).filter((dm) => dm.id === dmId);
-		if (!dms.length) throw new DMError("You do not have permission to delete this DM", { status: 401 });
+		if (dm.logs.length) throw new DMError("You cannot delete a DM that has logs", { status: 400 });
 
-		const dm = dms.find((dm) => dm.logs.length);
-		if (dm) throw new DMError("You cannot delete a DM that has logs", { status: 400 });
-
-		const [result] = await db.delete(dungeonMasters).where(eq(dungeonMasters.id, dmId)).returning({ id: dungeonMasters.id });
+		const [result] = await db.delete(dungeonMasters).where(eq(dungeonMasters.id, dm.id)).returning({ id: dungeonMasters.id });
 		if (!result) throw new DMError("Failed to delete DM");
 
 		return result;

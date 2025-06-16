@@ -32,12 +32,7 @@ export const actions = {
 		const [dm] = await getUserDMsWithLogs(session.user, form.data.id);
 		if (!dm) redirect(302, "/dms");
 
-		if (dm.logs.length) {
-			setError(form, "", "Cannot delete a DM with logs");
-			return fail(400, { form });
-		}
-
-		const result = await deleteDM(dm.id, session.user);
+		const result = await deleteDM(dm);
 		if (result instanceof SaveError) {
 			setError(form, "", result.error);
 			return fail(result.status, { form });
