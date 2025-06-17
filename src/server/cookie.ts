@@ -35,9 +35,14 @@ export function setCookie<TSchema extends v.BaseSchema<any, any, any>>(
  * @returns The cookie value
  */
 export function serverGetCookie<TSchema extends v.BaseSchema<any, any, any>>(cookies: Cookies, name: string, schema: TSchema) {
-	const val = cookies.get(name) === "undefined" ? undefined : cookies.get(name);
-	const cookie = val ? JSON.parse(val) : serverSetCookie(cookies, name, schema, undefined);
-	return v.parse(schema, cookie);
+	try {
+		const val = cookies.get(name) === "undefined" ? undefined : cookies.get(name);
+		const cookie = val ? JSON.parse(val) : serverSetCookie(cookies, name, schema, undefined);
+		return v.parse(schema, cookie);
+	} catch (err) {
+		console.error(err);
+		return serverSetCookie(cookies, name, schema, undefined);
+	}
 }
 
 /**
