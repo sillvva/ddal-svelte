@@ -54,7 +54,7 @@ class Global {
 	}
 }
 
-const globalKey = Symbol();
+const globalKey = Symbol("global");
 export function getGlobal() {
 	return getContext<Global>(globalKey);
 }
