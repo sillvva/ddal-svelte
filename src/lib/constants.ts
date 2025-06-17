@@ -1,25 +1,5 @@
 import type { Account } from "$server/db/schema";
 
-export const appDefaults: App.Cookie = {
-	settings: {
-		theme: "system",
-		mode: "dark",
-		autoWebAuthn: false
-	},
-	characters: {
-		magicItems: false,
-		display: "list",
-		firstLog: false
-	},
-	log: {
-		descriptions: false
-	},
-	dmLogs: {
-		sort: "asc",
-		descriptions: false
-	}
-};
-
 export const searchSections = [
 	{ title: "Characters", url: "/characters" },
 	{ title: "DM Logs", url: "/dm-logs" },
@@ -48,12 +28,13 @@ export const PROVIDERS = [
 	}
 ] as const satisfies Provider[];
 
+export const PlaceholderName = "Placeholder";
+
 type Theme = {
 	name: string;
 	value: string;
 	group?: (typeof themeGroups)[number];
 };
-
 export const themeGroups = ["dark", "light"] as const;
 export const themes = [
 	{
@@ -104,5 +85,3 @@ export const themes = [
 
 export type Themes = (typeof themes)[number]["value"];
 export type ThemeGroups = (typeof themeGroups)[number];
-
-export const PlaceholderName = "Placeholder";

@@ -5,7 +5,7 @@ import { getContext, setContext } from "svelte";
 import { createContext } from "svelte-contextify";
 import { fromAction } from "svelte/attachments";
 import { setupViewTransition } from "sveltekit-view-transition";
-import { appDefaults } from "./constants";
+import { appCookieSchema, appDefaults, type AppCookie } from "./schemas";
 
 export const { get: transitionGetter, set: transitionSetter } = createContext({
 	defaultValue: () => {
@@ -20,22 +20,22 @@ export const setTransition = () => {
 export const transition = (key: string) => fromAction(transitionGetter()(), () => key);
 
 class Global {
-	_app: App.Cookie = $state(appDefaults);
+	_app: AppCookie = $state(appDefaults);
 	_pageLoader: boolean = $state(false);
 	_searchData: SearchData = $state([]);
 
-	constructor(app: App.Cookie) {
+	constructor(app: AppCookie) {
 		this._app = app;
 
 		$effect(() => {
-			setCookie("app", this._app);
+			setCookie("app", appCookieSchema, this._app);
 		});
 	}
 
 	get app() {
 		return this._app;
 	}
-	set app(value: App.Cookie) {
+	set app(value: AppCookie) {
 		this._app = value;
 	}
 
@@ -58,7 +58,7 @@ const globalKey = Symbol();
 export function getGlobal() {
 	return getContext<Global>(globalKey);
 }
-export function createGlobal(app: App.Cookie) {
+export function createGlobal(app: AppCookie) {
 	const global = new Global(app);
 	return setContext(globalKey, global);
 }

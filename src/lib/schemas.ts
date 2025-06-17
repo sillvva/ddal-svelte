@@ -1,6 +1,7 @@
 import type { FullCharacterData } from "$server/data/characters";
 import type { Prettify } from "@sillvva/utils";
 import * as v from "valibot";
+import { themeGroups, themes } from "./constants";
 
 export type BrandedType = v.InferOutput<ReturnType<typeof brandedId>>;
 function brandedId<T extends string>(name: T) {
@@ -217,3 +218,41 @@ export const dMLogSchema = (characters: FullCharacterData[] = []) =>
 			["tcp"]
 		)
 	);
+
+export type AppCookie = v.InferOutput<typeof appCookieSchema>;
+export const appCookieSchema = v.optional(
+	v.object({
+		settings: v.optional(
+			v.object({
+				theme: v.optional(v.picklist(themes.map((t) => t.value)), "system"),
+				mode: v.optional(v.picklist(themeGroups), "dark"),
+				autoWebAuthn: v.optional(v.boolean(), false)
+			}),
+			{}
+		),
+		characters: v.optional(
+			v.object({
+				magicItems: v.optional(v.boolean(), false),
+				display: v.optional(v.picklist(["list", "grid"]), "list"),
+				firstLog: v.optional(v.boolean(), false)
+			}),
+			{}
+		),
+		log: v.optional(
+			v.object({
+				descriptions: v.optional(v.boolean(), false)
+			}),
+			{}
+		),
+		dmLogs: v.optional(
+			v.object({
+				sort: v.optional(v.picklist(["asc", "desc"]), "asc"),
+				descriptions: v.optional(v.boolean(), false)
+			}),
+			{}
+		)
+	}),
+	{}
+);
+
+export const appDefaults = v.parse(appCookieSchema, {});

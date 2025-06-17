@@ -1,6 +1,7 @@
 import { browser } from "$app/environment";
 import type { Cookies } from "@sveltejs/kit";
 import Cookie from "js-cookie";
+import * as v from "valibot";
 
 /**
  * Set a cookie from the browser using `js-cookie`.
@@ -9,14 +10,16 @@ import Cookie from "js-cookie";
  * @param value Value of the cookie
  * @param expires Expiration time of the cookie in milliseconds
  */
-export function setCookie<T extends string | number | boolean | object>(
+export function setCookie<TSchema extends v.BaseSchema<any, any, any>>(
 	name: string,
-	value: T,
+	schema: TSchema,
+	value: v.InferInput<TSchema>,
 	expires = 1000 * 60 * 60 * 24 * 365
 ) {
 	if (!browser) return value;
 	if (typeof value === "undefined") throw new Error("Value is undefined");
-	Cookie.set(name, typeof value !== "string" ? JSON.stringify(value) : value, {
+	const parsed = v.parse(schema, value);
+	Cookie.set(name, typeof parsed !== "string" ? JSON.stringify(parsed) : parsed, {
 		path: "/",
 		expires: new Date(Date.now() + expires)
 	});
@@ -28,19 +31,13 @@ export function setCookie<T extends string | number | boolean | object>(
  *
  * @param cookies Cookies object from the server
  * @param name Name of the cookie
- * @param defaultCookie Default value of the cookie
+ * @param schema Default value of the cookie
  * @returns The cookie value
  */
-export function serverGetCookie<T extends string | number | boolean | object>(cookies: Cookies, name: string, defaultCookie: T) {
+export function serverGetCookie<TSchema extends v.BaseSchema<any, any, any>>(cookies: Cookies, name: string, schema: TSchema) {
 	const val = cookies.get(name) === "undefined" ? undefined : cookies.get(name);
-	const cookie = val ? (JSON.parse(val) as T) : serverSetCookie(cookies, name, defaultCookie);
-	if (typeof cookie !== typeof defaultCookie) throw new Error(`Cookie "${name}" is not of type ${typeof defaultCookie}`);
-	if (typeof cookie === "object" && typeof defaultCookie === "object")
-		return {
-			...defaultCookie,
-			...cookie
-		};
-	else return cookie;
+	const cookie = val ? JSON.parse(val) : serverSetCookie(cookies, name, schema, undefined);
+	return v.parse(schema, cookie);
 }
 
 /**
@@ -54,10 +51,11 @@ export function serverGetCookie<T extends string | number | boolean | object>(co
  * @param options.httpOnly Whether the cookie should be http-only. This prevents the cookie from being accessed from the browser.
  * @returns The cookie value
  */
-export function serverSetCookie<T extends string | number | boolean | object>(
+export function serverSetCookie<TSchema extends v.BaseSchema<any, any, any>>(
 	cookies: Cookies,
 	name: string,
-	value: T,
+	schema: TSchema,
+	value: v.InferInput<TSchema>,
 	options?: {
 		expires?: number;
 		httpOnly?: boolean;
@@ -68,11 +66,11 @@ export function serverSetCookie<T extends string | number | boolean | object>(
 		httpOnly: false,
 		...options
 	};
-	if (typeof value === "undefined") throw new Error("Value is undefined");
-	cookies.set(name, typeof value !== "string" ? JSON.stringify(value) : value, {
+	const parsed = v.parse(schema, value);
+	cookies.set(name, JSON.stringify(parsed), {
 		path: "/",
 		expires: new Date(Date.now() + opts.expires),
 		httpOnly: opts.httpOnly
 	});
-	return value;
+	return parsed;
 }

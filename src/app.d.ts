@@ -1,7 +1,6 @@
 // See https://kit.svelte.dev/docs/types#app
 // for information about these interfaces
 
-import type { ThemeGroups, Themes } from "$lib/constants";
 import type { UserId } from "$lib/schemas";
 import type { Account, AuthClient, User } from "$server/db/schema";
 import "@auth/sveltekit";
@@ -67,26 +66,6 @@ declare global {
 			type Message = {
 				type: "error" | "success";
 				text: string;
-			};
-		}
-
-		interface Cookie {
-			settings: {
-				theme: Themes;
-				mode: ThemeGroups;
-				autoWebAuthn: boolean;
-			};
-			characters: {
-				magicItems: boolean;
-				display: "list" | "grid";
-				firstLog: boolean;
-			};
-			log: {
-				descriptions: boolean;
-			};
-			dmLogs: {
-				sort: "asc" | "desc";
-				descriptions: boolean;
 			};
 		}
 	}
