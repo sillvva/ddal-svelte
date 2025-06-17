@@ -1,4 +1,5 @@
 import { browser } from "$app/environment";
+import { setCookie } from "$server/cookie";
 import type { SearchData } from "$src/routes/(api)/command/+server";
 import { getContext, setContext } from "svelte";
 import { createContext } from "svelte-contextify";
@@ -25,6 +26,10 @@ class Global {
 
 	constructor(app: App.Cookie) {
 		this._app = app;
+
+		$effect(() => {
+			setCookie("app", this._app);
+		});
 	}
 
 	get app() {
