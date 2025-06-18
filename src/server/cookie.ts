@@ -1,5 +1,5 @@
 import { browser } from "$app/environment";
-import type { Cookies } from "@sveltejs/kit";
+import { getRequestEvent } from "$app/server";
 import Cookie from "js-cookie";
 import * as v from "valibot";
 
@@ -18,11 +18,13 @@ export function setCookie<TSchema extends v.BaseSchema<any, any, any>>(
 ) {
 	if (!browser) return value;
 	if (typeof value === "undefined") throw new Error("Value is undefined");
+
 	const parsed = v.parse(schema, value);
 	Cookie.set(name, typeof parsed !== "string" ? JSON.stringify(parsed) : parsed, {
 		path: "/",
 		expires: new Date(Date.now() + expires)
 	});
+
 	return value;
 }
 
@@ -34,14 +36,18 @@ export function setCookie<TSchema extends v.BaseSchema<any, any, any>>(
  * @param schema Default value of the cookie
  * @returns The cookie value
  */
-export function serverGetCookie<TSchema extends v.BaseSchema<any, any, any>>(cookies: Cookies, name: string, schema: TSchema) {
+export function serverGetCookie<TSchema extends v.BaseSchema<any, any, any>>(name: string, schema: TSchema) {
 	try {
-		const val = cookies.get(name) === "undefined" ? undefined : cookies.get(name);
-		const cookie = val ? JSON.parse(val) : serverSetCookie(cookies, name, schema, undefined);
+		const event = getRequestEvent();
+		if (!event) throw new Error("No event");
+
+		const val = event.cookies.get(name);
+		const cookie = val && val !== "undefined" ? JSON.parse(val) : serverSetCookie(name, schema, undefined);
+
 		return v.parse(schema, cookie);
 	} catch (err) {
 		console.error(err);
-		return serverSetCookie(cookies, name, schema, undefined);
+		return serverSetCookie(name, schema, undefined);
 	}
 }
 
@@ -57,7 +63,6 @@ export function serverGetCookie<TSchema extends v.BaseSchema<any, any, any>>(coo
  * @returns The cookie value
  */
 export function serverSetCookie<TSchema extends v.BaseSchema<any, any, any>>(
-	cookies: Cookies,
 	name: string,
 	schema: TSchema,
 	value: v.InferInput<TSchema>,
@@ -71,11 +76,16 @@ export function serverSetCookie<TSchema extends v.BaseSchema<any, any, any>>(
 		httpOnly: false,
 		...options
 	};
+
+	const event = getRequestEvent();
+	if (!event) throw new Error("No event");
+
 	const parsed = v.parse(schema, value);
-	cookies.set(name, JSON.stringify(parsed), {
+	event.cookies.set(name, JSON.stringify(parsed), {
 		path: "/",
 		expires: new Date(Date.now() + opts.expires),
 		httpOnly: opts.httpOnly
 	});
+
 	return parsed;
 }

@@ -219,7 +219,7 @@ const session: Handle = async ({ event, resolve }) => {
 };
 
 const preloadTheme: Handle = async ({ event, resolve }) => {
-	const app = serverGetCookie(event.cookies, "app", appCookieSchema);
+	const app = serverGetCookie("app", appCookieSchema);
 	const mode = app.settings.mode;
 	const theme = event.route.id?.startsWith("/(app)") ? app.settings.theme : app.settings.mode;
 

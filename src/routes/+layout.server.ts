@@ -22,7 +22,7 @@ export const load = async (event) => {
 		/Mobile|iP(hone|od|ad)|Android|BlackBerry|IEMobile|Kindle|NetFront|Silk-Accelerated|(hpw|web)OS|Fennec|Minimo|Opera M(obi|ini)|Blazer|Dolfin|Dolphin|Skyfire|Zune/
 	);
 
-	const app = serverGetCookie(event.cookies, "app", appCookieSchema);
+	const app = serverGetCookie("app", appCookieSchema);
 
 	let user: App.PageData["user"];
 	if (session?.user) {
