@@ -4,6 +4,7 @@ import type { FullLogData, LogSummaryData, UserLogData } from "$server/data/logs
 import type { SearchData } from "$src/routes/(api)/command/+server";
 import { parseDateTime, type DateValue } from "@internationalized/date";
 import { debounce, isDefined, substrCount, type MapKeys, type Prettify } from "@sillvva/utils";
+import escape from "regexp.escape";
 import { toast } from "svelte-sonner";
 import { derived, get, type Readable, type Writable } from "svelte/store";
 import {
@@ -200,7 +201,7 @@ class BaseSearchFactory<TData extends Array<unknown>> {
 			const index = itemLower.indexOf(term);
 			score += Math.max(0, this.POSITION_BONUS_MAX - (index / itemLower.length) * this.POSITION_BONUS_MAX);
 
-			const escapedTerm = term.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+			const escapedTerm = escape(term);
 			if (new RegExp(`\\b${escapedTerm}\\b`, "i").test(item)) {
 				score += this.WORD_BOUNDARY_BONUS;
 			}
