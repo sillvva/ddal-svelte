@@ -412,7 +412,7 @@ export class GlobalSearchFactory extends BaseSearchFactory<SearchData> {
 
 				return {
 					title: entry.title,
-					items: filteredItems.sort((a, b) => b.score - a.score).slice(0, this.MAX_RESULTS_PER_CATEGORY),
+					items: filteredItems.toSorted((a, b) => b.score - a.score).slice(0, this.MAX_RESULTS_PER_CATEGORY),
 					count: filteredItems.length
 				} as ExpandedSearchData<SearchData[number]>;
 			})
