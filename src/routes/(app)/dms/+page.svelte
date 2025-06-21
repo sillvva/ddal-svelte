@@ -28,8 +28,8 @@
 					<thead>
 						<tr class="bg-base-300 text-base-content/70">
 							<th class="">DM</th>
-							<th class="xs:table-cell hidden">DCI</th>
-							<th class="xs:table-cell hidden">Logs</th>
+							<th class="max-xs:hidden">DCI</th>
+							<th class="max-xs:hidden">Logs</th>
 							<th class="print:hidden"></th>
 						</tr>
 					</thead>
@@ -51,15 +51,15 @@
 										>
 											<SearchResults text={dm.name} terms={search.terms} />
 										</a>
-										<div class="xs:hidden block">
+										<div class="max-xs:hidden">
 											{#if dm.DCI}
 												<p class="text-xs text-gray-500">DCI: <SearchResults text={dm.DCI} terms={search.terms} /></p>
 											{/if}
 											<p class="text-xs text-gray-500">{dm.logs.length} logs</p>
 										</div>
 									</td>
-									<td class="xs:table-cell hidden"><SearchResults text={dm.DCI || ""} terms={search.terms} /></td>
-									<td class="xs:table-cell hidden">{dm.logs.length}</td>
+									<td class="max-xs:hidden"><SearchResults text={dm.DCI || ""} terms={search.terms} /></td>
+									<td class="max-xs:hidden">{dm.logs.length}</td>
 									<td class="w-16 print:hidden">
 										<div class="flex flex-row justify-end gap-2">
 											{#if dm.logs.length == 0}

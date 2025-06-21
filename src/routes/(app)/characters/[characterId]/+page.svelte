@@ -53,33 +53,23 @@
 	<div class="flex gap-4">
 		<BreadCrumbs />
 		{#if myCharacter}
-			<div class="hidden gap-4 sm:flex print:hidden">
-				<a href={`/characters/${data.character.id}/edit`} class="btn btn-primary btn-sm">Edit</a>
+			<div class="flex gap-4 print:hidden">
+				<a href={`/characters/${data.character.id}/edit`} class="btn btn-primary btn-sm max-sm:hidden">Edit</a>
 				<Dropdown class="dropdown-end">
-					{#snippet children({ close })}
-						<ul class="menu dropdown-content rounded-box bg-base-300 z-20 w-52 shadow-sm">
-							<li {@attach close}>
-								<button
-									{@attach fromAction(download, () => ({
-										filename: `${slugify(data.character.name)}.json`,
-										blob: new Blob([JSON.stringify(data.character)])
-									}))}
-								>
-									Export
-								</button>
-							</li>
-							<li>
-								<DeleteCharacter character={data.character} label="Delete Character" />
-							</li>
-						</ul>
-					{/snippet}
-				</Dropdown>
-			</div>
-			<Dropdown class="dropdown-end sm:hidden">
-				{#snippet children({ close })}
-					<ul class="menu dropdown-content rounded-box bg-base-300 z-20 w-52 p-2 shadow-sm">
+					<ul role="menu" class="menu dropdown-content rounded-box bg-base-300 z-20 w-52 shadow-sm">
+						<li role="menuitem" class="sm:hidden">
+							<a href={`/characters/${data.character.id}/edit`}>Edit</a>
+						</li>
+						<li role="menuitem" class="max-sm:hidden">
+							<button
+								{@attach fromAction(download, () => ({
+									filename: `${slugify(data.character.name)}.json`,
+									blob: new Blob([JSON.stringify(data.character)])
+								}))}>Export</button
+							>
+						</li>
 						{#if data.character.imageUrl}
-							<li class="xs:hidden" {@attach close}>
+							<li role="menuitem" class="xs:hidden">
 								<a
 									href={data.character.imageUrl}
 									target="_blank"
@@ -90,17 +80,12 @@
 								>
 							</li>
 						{/if}
-						{#if myCharacter}
-							<li {@attach close}>
-								<a href={`/characters/${data.character.id}/edit`}>Edit</a>
-							</li>
-							<li {@attach close}>
-								<DeleteCharacter character={data.character} label="Delete Character" />
-							</li>
-						{/if}
+						<li role="menuitem">
+							<DeleteCharacter character={data.character} label="Delete Character" />
+						</li>
 					</ul>
-				{/snippet}
-			</Dropdown>
+				</Dropdown>
+			</div>
 		{/if}
 	</div>
 {/if}
@@ -160,7 +145,7 @@
 		<div class="xs:flex-nowrap flex flex-1 flex-wrap gap-4 sm:gap-4 md:gap-6 print:flex-nowrap print:gap-2">
 			<div class="xs:basis-[40%] flex basis-full flex-col gap-2 sm:basis-1/3 sm:gap-4 md:basis-52 print:basis-1/3 print:gap-2">
 				{#if data.character.imageUrl}
-					<div class="relative hidden flex-col items-end justify-center md:flex print:hidden">
+					<div class="relative flex flex-col items-end justify-center max-md:hidden print:hidden">
 						<a
 							href={data.character.imageUrl}
 							target="_blank"
@@ -205,7 +190,7 @@
 			</div>
 			<div
 				class={[
-					"divider xs:divider-horizontal xs:mx-0 xs:flex hidden print:flex",
+					"divider xs:divider-horizontal xs:mx-0 max-xs:hidden print:flex",
 					"before:bg-black/50 after:bg-black/50 dark:before:bg-white/50 dark:after:bg-white/50"
 				].join(" ")}
 			></div>
@@ -324,11 +309,11 @@
 										href={log.isDmLog ? `/dm-logs/${log.id}` : `/characters/${log.characterId}/log/${log.id}`}
 										class="row-link text-left font-semibold whitespace-pre-wrap"
 									>
-										<SearchResults text={log.name} terms={search.terms}></SearchResults>
+										<SearchResults text={log.name} terms={search.terms} />
 									</a>
 								{:else}
 									<span class="text-left font-semibold whitespace-pre-wrap">
-										<SearchResults text={log.name} terms={search.terms}></SearchResults>
+										<SearchResults text={log.name} terms={search.terms} />
 									</span>
 								{/if}
 								<p class="text-netural-content mb-2 text-sm font-normal whitespace-nowrap">

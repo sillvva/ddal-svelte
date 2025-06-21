@@ -6,7 +6,7 @@
 	import { twMerge } from "tailwind-merge";
 
 	interface Props extends Omit<HTMLAttributes<HTMLDetailsElement>, "children" | "class"> {
-		children?: Snippet<[{ close: (node: HTMLLIElement) => () => void }]>;
+		children?: Snippet;
 		class?: string | null;
 	}
 
@@ -14,15 +14,17 @@
 
 	let open = $state(false);
 
-	function close(node: HTMLLIElement) {
+	function menuClose(node: HTMLDetailsElement) {
 		const abortController = new AbortController();
-		node.addEventListener(
-			"click",
-			() => {
-				open = false;
-			},
-			{ signal: abortController.signal }
-		);
+		node.querySelectorAll("li").forEach((li) => {
+			li.addEventListener(
+				"click",
+				() => {
+					open = false;
+				},
+				{ signal: abortController.signal }
+			);
+		});
 		return () => abortController.abort();
 	}
 </script>
@@ -30,6 +32,7 @@
 <details
 	bind:open
 	class={twMerge("dropdown", className)}
+	{@attach menuClose}
 	{@attach fromAction(clickoutside, () => ({
 		enabled: open,
 		callback: () => {
@@ -42,5 +45,5 @@
 			<span class="iconify mdi--dots-horizontal size-6"></span>
 		</button>
 	</summary>
-	{@render children?.({ close })}
+	{@render children?.()}
 </details>

@@ -127,7 +127,7 @@
 													].join(" ")}
 												>
 													<div
-														class="group-data-selected:bg-base-content/50 absolute top-[5px] hidden size-1 rounded-full transition-all group-data-today:block"
+														class="group-data-selected:bg-base-content/50 absolute top-[5px] size-1 rounded-full transition-all not-group-data-today:hidden"
 													></div>
 													{date.day}
 												</DatePicker.Day>
