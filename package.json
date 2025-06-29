@@ -65,7 +65,7 @@
 		"regexp.escape": "^2.0.1",
 		"svelte-autosize": "^1.1.5",
 		"svelte-contextify": "^1.0.4",
-		"svelte-sonner": "^1.0.4",
+		"svelte-sonner": "^1.0.5",
 		"valibot": "1.1.0"
 	},
 	"engines": {
