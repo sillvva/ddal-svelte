@@ -28,20 +28,18 @@
 		<BreadCrumbs />
 
 		<Dropdown class="dropdown-end">
-			{#snippet children({ close })}
-				<ul class="menu dropdown-content rounded-box bg-base-300 w-52 shadow-sm">
-					<li {@attach close}>
-						<button
-							{@attach fromAction(download, () => ({
-								filename: "characters.json",
-								blob: new Blob([JSON.stringify(data.characters)])
-							}))}
-						>
-							Export
-						</button>
-					</li>
-				</ul>
-			{/snippet}
+			<ul role="menu" class="menu dropdown-content rounded-box bg-base-300 w-52 shadow-sm">
+				<li role="menuitem">
+					<button
+						{@attach fromAction(download, () => ({
+							filename: "characters.json",
+							blob: new Blob([JSON.stringify(data.characters)])
+						}))}
+					>
+						Export
+					</button>
+				</li>
+			</ul>
 		</Dropdown>
 	</div>
 
@@ -188,7 +186,7 @@
 										/>
 										<SearchResults text={character.class} terms={search.terms} />
 									</div>
-									<div class="mb-2 block text-xs sm:hidden">
+									<div class="mb-2 text-xs sm:hidden">
 										<SearchResults text={character.campaign} terms={search.terms} />
 									</div>
 									{#if (character.match.has("magicItems") || global.app.characters.magicItems) && character.magicItems.length}
@@ -219,13 +217,13 @@
 										</div>
 									{/if}
 								</td>
-								<td class="hidden transition-colors sm:table-cell">
+								<td class="transition-colors max-sm:hidden">
 									<SearchResults text={character.campaign} terms={search.terms} />
 								</td>
-								<td class="hidden text-center transition-colors sm:table-cell">
+								<td class="text-center transition-colors max-sm:hidden">
 									{character.tier}
 								</td>
-								<td class="hidden text-center transition-colors sm:table-cell">
+								<td class="text-center transition-colors max-sm:hidden">
 									{character.totalLevel}
 								</td>
 							</tr>

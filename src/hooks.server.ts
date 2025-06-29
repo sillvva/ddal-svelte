@@ -1,6 +1,5 @@
-import { appDefaults } from "$lib/constants";
 import { privateEnv } from "$lib/env/private";
-import type { UserId } from "$lib/schemas";
+import { appCookieSchema, type UserId } from "$lib/schemas";
 import { updateAccount } from "$server/actions/users";
 import { serverGetCookie } from "$server/cookie";
 import { db, q } from "$server/db";
@@ -220,7 +219,7 @@ const session: Handle = async ({ event, resolve }) => {
 };
 
 const preloadTheme: Handle = async ({ event, resolve }) => {
-	const app = serverGetCookie(event.cookies, "app", appDefaults);
+	const app = serverGetCookie("app", appCookieSchema);
 	const mode = app.settings.mode;
 	const theme = event.route.id?.startsWith("/(app)") ? app.settings.theme : app.settings.mode;
 

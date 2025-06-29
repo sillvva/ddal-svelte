@@ -3,7 +3,8 @@ import type { UserDMs, UserDMsWithLogs } from "$server/data/dms";
 import type { FullLogData, LogSummaryData, UserLogData } from "$server/data/logs";
 import type { SearchData } from "$src/routes/(api)/command/+server";
 import { parseDateTime, type DateValue } from "@internationalized/date";
-import { debounce, isDefined, substrCount, type MapKeys } from "@sillvva/utils";
+import { debounce, isDefined, substrCount, type MapKeys, type Prettify } from "@sillvva/utils";
+import escape from "regexp.escape";
 import { toast } from "svelte-sonner";
 import { derived, get, type Readable, type Writable } from "svelte/store";
 import {
@@ -137,26 +138,31 @@ export function intDateProxy<T extends Record<string, unknown>, Path extends For
 	};
 }
 
+type WordToken = { type: "word"; value: string };
+type PhraseToken = { type: "phrase"; value: string };
+type Token = WordToken | PhraseToken;
+
 class BaseSearchFactory<TData extends Array<unknown>> {
 	private EXCLUDED_SEARCH_WORDS = new Set(["and", "or", "to", "in", "a", "an", "the", "of"]);
+	private DEBOUNCE_TIME = 300 as const;
+	private MIN_QUERY_LENGTH = 2 as const;
+	private SCORE_PRECISION = 10 as const;
 	private POSITION_BONUS_MAX = 0.5 as const;
 	private WORD_BOUNDARY_BONUS = 0.3 as const;
-	private SCORE_PRECISION = 10 as const;
-	private MIN_QUERY_LENGTH = 2 as const;
-	private DEBOUNCE_TIME = 300 as const;
+	protected WHOLE_QUERY_MULTIPLIER = 2 as const;
 
 	protected _tdata = $state([] as unknown as TData);
 	protected _query = $state<string>("");
-	protected _terms = $state<string[]>([]);
+	protected _tokens = $state<Token[]>([]);
 
-	private _debouncedTerms = debounce((query: string) => {
-		this._terms = this.createTerms(query);
+	private _debouncedTokens = debounce((query: string) => {
+		this._tokens = this.tokenize(query);
 	}, this.DEBOUNCE_TIME);
 
 	constructor(data: TData, defaultQuery: string = "") {
 		this._tdata = data;
 		this._query = defaultQuery;
-		this._terms = this.createTerms(defaultQuery);
+		this._tokens = this.tokenize(defaultQuery);
 	}
 
 	get query() {
@@ -166,25 +172,40 @@ class BaseSearchFactory<TData extends Array<unknown>> {
 	set query(query: string) {
 		this._query = query;
 
-		if (query.trim().length < this.MIN_QUERY_LENGTH) this._terms = [];
-		else this._debouncedTerms.call(query);
+		if (query.trim().length < this.MIN_QUERY_LENGTH) this._tokens = [];
+		else this._debouncedTokens.call(query);
+	}
+
+	get tokens() {
+		return this._tokens;
 	}
 
 	get terms() {
-		return this._terms;
+		return this._tokens.map((t) => t.value);
 	}
 
-	private createTerms(query: string) {
+	private tokenCheck(tokenValue: string) {
+		return tokenValue.length > 1 && !this.EXCLUDED_SEARCH_WORDS.has(tokenValue);
+	}
+
+	private tokenize(query: string) {
 		if (query.trim().length < this.MIN_QUERY_LENGTH) return [];
 
-		return (
-			query
-				.trim()
-				.toLowerCase()
-				.match(/(?:[^\s"]+|"[^"]*")+/g)
-				?.map((word) => word.replace(/^"|"$/g, ""))
-				.filter((word) => word.length > 1 && !this.EXCLUDED_SEARCH_WORDS.has(word)) || []
-		);
+		const tokens: Token[] = [];
+		const regex = /"([^"]+)"|(\w+)/g;
+
+		let match: RegExpExecArray | null;
+		while ((match = regex.exec(query)) !== null) {
+			const [, phrase, word] = match;
+
+			if (word && this.tokenCheck(word)) {
+				tokens.push({ type: "word", value: word });
+			} else if (phrase && this.tokenCheck(phrase)) {
+				tokens.push({ type: "phrase", value: phrase });
+			}
+		}
+
+		return tokens;
 	}
 
 	protected hasMatch(item: string) {
@@ -192,23 +213,31 @@ class BaseSearchFactory<TData extends Array<unknown>> {
 		const matches = new Set<string>();
 
 		let score = 0;
-		for (const term of this._terms) {
-			const oc = substrCount(itemLower, term);
+		for (const token of this._tokens) {
+			let subtotal = 0;
+
+			const oc = substrCount(itemLower, token.value);
 			if (!oc) continue;
-			score += oc;
+			subtotal += oc;
 
-			const index = itemLower.indexOf(term);
-			score += Math.max(0, this.POSITION_BONUS_MAX - (index / itemLower.length) * this.POSITION_BONUS_MAX);
+			const index = itemLower.indexOf(token.value);
+			subtotal += Math.max(0, this.POSITION_BONUS_MAX - (index / itemLower.length) * this.POSITION_BONUS_MAX);
 
-			const escapedTerm = term.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+			const escapedTerm = escape(token.value);
 			if (new RegExp(`\\b${escapedTerm}\\b`, "i").test(item)) {
-				score += this.WORD_BOUNDARY_BONUS;
+				subtotal += this.WORD_BOUNDARY_BONUS;
 			}
 
-			matches.add(term);
+			if (token.type === "phrase") {
+				const phraseMultiplier = (token.value.split(/\s+/).length + 2) / 2;
+				subtotal *= phraseMultiplier;
+			}
+
+			score += subtotal;
+			matches.add(token.value);
 		}
 
-		score = Math.round((score / this._terms.length) * this.SCORE_PRECISION) / this.SCORE_PRECISION;
+		score = Math.round((score / this._tokens.length) * this.SCORE_PRECISION) / this.SCORE_PRECISION;
 
 		return { matches, score };
 	}
@@ -267,19 +296,22 @@ type ExpandedSearchData<TData extends SearchData[number]> = TData extends {
 }
 	? {
 			title: Title;
-			items: (Item & {
-				score: number;
-				match: Set<
-					Title extends "Sections"
-						? never
-						: Title extends "Characters"
-							? CharacterIndexKeys
-							: Title extends "Logs"
-								? LogIndexKeys
-								: DMIndexKeys
-				>;
-			})[];
-		} & { count: number }
+			items: Prettify<
+				Item & {
+					score: number;
+					match: Set<
+						Title extends "Sections"
+							? never
+							: Title extends "Characters"
+								? CharacterIndexKeys
+								: Title extends "Logs"
+									? LogIndexKeys
+									: DMIndexKeys
+					>;
+				}
+			>[];
+			count: number;
+		}
 	: never;
 
 export class GlobalSearchFactory extends BaseSearchFactory<SearchData> {
@@ -288,7 +320,7 @@ export class GlobalSearchFactory extends BaseSearchFactory<SearchData> {
 	private MAX_RESULTS_WITH_CATEGORY = 10 as const;
 
 	private _category = $state<SearchData[number]["title"] | null>(null);
-	private _searchMap = $derived(
+	private _indexMap = $derived(
 		new Map(
 			this._tdata.map((entry) => {
 				return [
@@ -337,7 +369,7 @@ export class GlobalSearchFactory extends BaseSearchFactory<SearchData> {
 
 				if (this._category && entry.title !== this._category) return { title: entry.title, items: [], count: 0 };
 
-				if (!this._terms.length) {
+				if (!this._tokens.length) {
 					const items = entry.items.slice(0, this._category ? this.MAX_RESULTS_WITH_CATEGORY : this.MAX_RESULTS_WITHOUT_CATEGORY);
 					return {
 						title: entry.title,
@@ -346,7 +378,7 @@ export class GlobalSearchFactory extends BaseSearchFactory<SearchData> {
 					} as ExpandedSearchData<SearchData[number]>;
 				}
 
-				const index = this._searchMap.get(entry.title);
+				const index = this._indexMap.get(entry.title);
 				if (!index) return { title: entry.title, items: [], count: 0 };
 
 				const filteredItems = entry.items
@@ -371,14 +403,16 @@ export class GlobalSearchFactory extends BaseSearchFactory<SearchData> {
 							}
 						}
 
-						if (matches.size !== this._terms.length) return null;
+						if (matches.size === 0) return null;
+						if (matches.size === this._tokens.length) totalScore *= this.WHOLE_QUERY_MULTIPLIER;
+
 						return { ...item, score: totalScore, match: matchTypes };
 					})
 					.filter(isDefined);
 
 				return {
 					title: entry.title,
-					items: filteredItems.sort((a, b) => b.score - a.score).slice(0, this.MAX_RESULTS_PER_CATEGORY),
+					items: filteredItems.toSorted((a, b) => b.score - a.score).slice(0, this.MAX_RESULTS_PER_CATEGORY),
 					count: filteredItems.length
 				} as ExpandedSearchData<SearchData[number]>;
 			})
@@ -399,7 +433,7 @@ export class GlobalSearchFactory extends BaseSearchFactory<SearchData> {
 export class EntitySearchFactory<
 	TData extends FullCharacterData[] | FullLogData[] | LogSummaryData[] | UserDMsWithLogs
 > extends BaseSearchFactory<TData> {
-	private _searchMap = $derived(
+	private _indexMap = $derived(
 		new Map(
 			this._tdata
 				.map((entry) => {
@@ -428,7 +462,7 @@ export class EntitySearchFactory<
 
 		return this._tdata
 			.map((entry: TData[number]) => {
-				if (!this._terms.length) {
+				if (!this._tokens.length) {
 					return {
 						...entry,
 						score: 0,
@@ -438,7 +472,7 @@ export class EntitySearchFactory<
 
 				let totalScore = 0;
 
-				const index = this._searchMap.get(entry.id) as Map<TDataKeys, string[]>;
+				const index = this._indexMap.get(entry.id) as Map<TDataKeys, string[]>;
 				if (!index) return null;
 
 				const matches = new Set<string>();
@@ -455,7 +489,8 @@ export class EntitySearchFactory<
 					}
 				}
 
-				if (matches.size !== this._terms.length) return null;
+				if (matches.size === 0) return null;
+				if (matches.size === this._tokens.length) totalScore *= this.WHOLE_QUERY_MULTIPLIER;
 
 				return {
 					...entry,

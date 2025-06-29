@@ -33,21 +33,21 @@
 </script>
 
 <div class="flex flex-col gap-4">
-	<div class="hidden gap-4 sm:flex print:hidden">
+	<div class="flex gap-4 max-sm:hidden print:hidden">
 		<BreadCrumbs />
 		<Dropdown class="dropdown-end">
-			{#snippet children({ close })}
-				<ul class="menu dropdown-content rounded-box bg-base-300 w-52 shadow-sm">
-					<li
+			<ul role="menu" class="menu dropdown-content rounded-box bg-base-300 w-52 shadow-sm">
+				<li role="menuitem">
+					<button
 						{@attach fromAction(download, () => ({
 							filename: "dm-logs.json",
 							blob: new Blob([JSON.stringify(data.logs)])
 						}))}
 					>
-						<button>Export</button>
-					</li>
-				</ul>
-			{/snippet}
+						Export
+					</button>
+				</li>
+			</ul>
 		</Dropdown>
 	</div>
 
@@ -194,7 +194,7 @@
 									</div>
 								</td>
 								<!-- Advancement -->
-								<td class="hidden align-top sm:table-cell print:table-cell">
+								<td class="align-top max-sm:hidden print:table-cell">
 									{#if log.type === "game"}
 										{#if log.experience > 0}
 											<p>
@@ -223,7 +223,7 @@
 									{/if}
 								</td>
 								<!-- Treasure -->
-								<td class="hidden align-top sm:table-cell print:table-cell">
+								<td class="align-top max-sm:hidden print:table-cell">
 									{#if log.tcp !== 0}
 										<p>
 											<span class="font-semibold">TCP:</span>

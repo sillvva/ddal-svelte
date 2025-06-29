@@ -50,7 +50,7 @@ export const load = async (event) => {
 
 export const actions = {
 	saveDM: async (event) => {
-		const session = await event.locals.session;
+		const session = event.locals.session;
 		assertUser(session?.user, event.url);
 
 		const idResult = safeParse(dungeonMasterIdSchema, event.params.dmId || "");

@@ -1,4 +1,5 @@
 import type { DungeonMasterId } from "$lib/schemas";
+import { createUserDM } from "$server/actions/dms";
 import { q } from "$server/db";
 import { sorter } from "@sillvva/utils";
 
@@ -34,12 +35,9 @@ export async function getUserDMsWithLogs(user: LocalsSession["user"], id?: Dunge
 	});
 
 	if (!id && !dms.find((dm) => dm.isUser)) {
-		dms.push({
-			id: "" as DungeonMasterId,
-			name: user.name,
-			DCI: null,
-			userId,
-			isUser: true,
+		const result = await createUserDM(user);
+		dms.unshift({
+			...result,
 			logs: []
 		});
 	}
@@ -48,25 +46,25 @@ export async function getUserDMsWithLogs(user: LocalsSession["user"], id?: Dunge
 }
 
 export type UserDMs = Awaited<ReturnType<typeof getUserDMs>>;
-export async function getUserDMs(user: LocalsSession["user"]) {
+export async function getUserDMs(user: LocalsSession["user"], id?: DungeonMasterId) {
 	if (!user || !user.id) return [];
 
 	const dms = await q.dungeonMasters.findMany({
 		where: {
+			id: id
+				? {
+						eq: id
+					}
+				: undefined,
 			userId: {
 				eq: user.id
 			}
 		}
 	});
 
-	if (!dms.find((dm) => dm.isUser)) {
-		dms.push({
-			id: "" as DungeonMasterId,
-			name: user.name,
-			DCI: null,
-			userId: user.id,
-			isUser: true
-		});
+	if (!id && !dms.find((dm) => dm.isUser)) {
+		const result = await createUserDM(user);
+		dms.unshift(result);
 	}
 
 	return dms.toSorted((a, b) => sorter(a.isUser, b.isUser) || sorter(a.name, b.name));

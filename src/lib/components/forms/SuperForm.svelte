@@ -3,7 +3,8 @@
 	import { type Snippet } from "svelte";
 	import { fromAction } from "svelte/attachments";
 	import type { HTMLFormAttributes } from "svelte/elements";
-	import SuperDebug, { type SuperForm } from "sveltekit-superforms";
+	import type { SuperForm } from "sveltekit-superforms";
+	import SuperDebug from "sveltekit-superforms/SuperDebug.svelte";
 	import FormMessage from "./FormMessage.svelte";
 
 	type FormAttributes = Omit<HTMLFormAttributes, "hidden">;

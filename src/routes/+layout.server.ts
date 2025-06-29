@@ -1,6 +1,7 @@
 import { building } from "$app/environment";
-import { PROVIDERS, appDefaults } from "$lib/constants.js";
+import { PROVIDERS } from "$lib/constants.js";
 import { privateEnv } from "$lib/env/private.js";
+import { appCookieSchema } from "$lib/schemas.js";
 import { serverGetCookie } from "$server/cookie.js";
 import { q } from "$server/db/index.js";
 
@@ -21,7 +22,7 @@ export const load = async (event) => {
 		/Mobile|iP(hone|od|ad)|Android|BlackBerry|IEMobile|Kindle|NetFront|Silk-Accelerated|(hpw|web)OS|Fennec|Minimo|Opera M(obi|ini)|Blazer|Dolfin|Dolphin|Skyfire|Zune/
 	);
 
-	const app = serverGetCookie(event.cookies, "app", appDefaults);
+	const app = serverGetCookie("app", appCookieSchema);
 
 	let user: App.PageData["user"];
 	if (session?.user) {

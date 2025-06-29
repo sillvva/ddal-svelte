@@ -156,7 +156,7 @@
 	{/if}
 </aside>
 <div
-	class="bg-base-300/50 fixed inset-0 -z-10 hidden opacity-0 transition-all data-[open=true]:z-40 data-[open=true]:block data-[open=true]:opacity-100"
+	class="bg-base-300/50 fixed inset-0 -z-10 opacity-0 transition-all data-[open=false]:hidden data-[open=true]:z-40 data-[open=true]:opacity-100"
 	onkeydown={() => (open = false)}
 	onclick={() => (open = false)}
 	role="none"

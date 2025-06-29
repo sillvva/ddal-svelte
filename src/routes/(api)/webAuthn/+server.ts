@@ -30,7 +30,7 @@ export async function POST({ request, locals }) {
 
 		await db
 			.update(authenticators)
-			.set({ name })
+			.set({ name: name.trim() })
 			.where(and(eq(authenticators.userId, auth.userId), eq(authenticators.providerAccountId, auth.providerAccountId)));
 
 		return json({ success: true, name } satisfies RenameWebAuthnResponse);

@@ -1,10 +1,12 @@
 import { browser } from "$app/environment";
 import type { SearchData } from "$src/routes/(api)/command/+server";
+import Cookie from "js-cookie";
 import { getContext, setContext } from "svelte";
 import { createContext } from "svelte-contextify";
 import { fromAction } from "svelte/attachments";
 import { setupViewTransition } from "sveltekit-view-transition";
-import { appDefaults } from "./constants";
+import * as v from "valibot";
+import { appCookieSchema, appDefaults, type AppCookie } from "./schemas";
 
 export const { get: transitionGetter, set: transitionSetter } = createContext({
 	defaultValue: () => {
@@ -18,19 +20,48 @@ export const setTransition = () => {
 };
 export const transition = (key: string) => fromAction(transitionGetter()(), () => key);
 
+/**
+ * Set a cookie from the browser using `js-cookie`.
+ *
+ * @param name Name of the cookie
+ * @param value Value of the cookie
+ * @param expires Expiration time of the cookie in milliseconds
+ */
+export function setCookie<TSchema extends v.BaseSchema<any, any, any>>(
+	name: string,
+	schema: TSchema,
+	value: v.InferInput<TSchema>,
+	expires = 1000 * 60 * 60 * 24 * 365
+) {
+	if (!browser) return value;
+	if (typeof value === "undefined") throw new Error("Value is undefined");
+
+	const parsed = v.parse(schema, value);
+	Cookie.set(name, typeof parsed !== "string" ? JSON.stringify(parsed) : parsed, {
+		path: "/",
+		expires: new Date(Date.now() + expires)
+	});
+
+	return value;
+}
+
 class Global {
-	_app: App.Cookie = $state(appDefaults);
+	_app: AppCookie = $state(appDefaults);
 	_pageLoader: boolean = $state(false);
 	_searchData: SearchData = $state([]);
 
-	constructor(app: App.Cookie) {
+	constructor(app: AppCookie) {
 		this._app = app;
+
+		$effect(() => {
+			setCookie("app", appCookieSchema, this._app);
+		});
 	}
 
 	get app() {
 		return this._app;
 	}
-	set app(value: App.Cookie) {
+	set app(value: AppCookie) {
 		this._app = value;
 	}
 
@@ -49,11 +80,11 @@ class Global {
 	}
 }
 
-const globalKey = Symbol();
+const globalKey = Symbol("global");
 export function getGlobal() {
 	return getContext<Global>(globalKey);
 }
-export function createGlobal(app: App.Cookie) {
+export function createGlobal(app: AppCookie) {
 	const global = new Global(app);
 	return setContext(globalKey, global);
 }
