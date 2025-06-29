@@ -69,7 +69,7 @@
 		"valibot": "1.1.0"
 	},
 	"engines": {
-		"node": ">=22.12",
+		"node": "22.12",
 		"pnpm": ">=10.0"
 	},
 	"packageManager": "pnpm@10.11.0",
