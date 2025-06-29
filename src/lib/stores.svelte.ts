@@ -1,10 +1,11 @@
 import { browser } from "$app/environment";
-import { setCookie } from "$server/cookie";
 import type { SearchData } from "$src/routes/(api)/command/+server";
+import Cookie from "js-cookie";
 import { getContext, setContext } from "svelte";
 import { createContext } from "svelte-contextify";
 import { fromAction } from "svelte/attachments";
 import { setupViewTransition } from "sveltekit-view-transition";
+import * as v from "valibot";
 import { appCookieSchema, appDefaults, type AppCookie } from "./schemas";
 
 export const { get: transitionGetter, set: transitionSetter } = createContext({
@@ -18,6 +19,31 @@ export const setTransition = () => {
 	if (browser) transitionSetter(() => transition);
 };
 export const transition = (key: string) => fromAction(transitionGetter()(), () => key);
+
+/**
+ * Set a cookie from the browser using `js-cookie`.
+ *
+ * @param name Name of the cookie
+ * @param value Value of the cookie
+ * @param expires Expiration time of the cookie in milliseconds
+ */
+export function setCookie<TSchema extends v.BaseSchema<any, any, any>>(
+	name: string,
+	schema: TSchema,
+	value: v.InferInput<TSchema>,
+	expires = 1000 * 60 * 60 * 24 * 365
+) {
+	if (!browser) return value;
+	if (typeof value === "undefined") throw new Error("Value is undefined");
+
+	const parsed = v.parse(schema, value);
+	Cookie.set(name, typeof parsed !== "string" ? JSON.stringify(parsed) : parsed, {
+		path: "/",
+		expires: new Date(Date.now() + expires)
+	});
+
+	return value;
+}
 
 class Global {
 	_app: AppCookie = $state(appDefaults);

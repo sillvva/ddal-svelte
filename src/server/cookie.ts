@@ -1,32 +1,5 @@
-import { browser } from "$app/environment";
 import { getRequestEvent } from "$app/server";
-import Cookie from "js-cookie";
 import * as v from "valibot";
-
-/**
- * Set a cookie from the browser using `js-cookie`.
- *
- * @param name Name of the cookie
- * @param value Value of the cookie
- * @param expires Expiration time of the cookie in milliseconds
- */
-export function setCookie<TSchema extends v.BaseSchema<any, any, any>>(
-	name: string,
-	schema: TSchema,
-	value: v.InferInput<TSchema>,
-	expires = 1000 * 60 * 60 * 24 * 365
-) {
-	if (!browser) return value;
-	if (typeof value === "undefined") throw new Error("Value is undefined");
-
-	const parsed = v.parse(schema, value);
-	Cookie.set(name, typeof parsed !== "string" ? JSON.stringify(parsed) : parsed, {
-		path: "/",
-		expires: new Date(Date.now() + expires)
-	});
-
-	return value;
-}
 
 /**
  * Get a cookie from the server.
