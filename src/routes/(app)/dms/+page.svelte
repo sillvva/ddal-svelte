@@ -10,7 +10,7 @@
 	let { data } = $props();
 
 	const search = $derived(new EntitySearchFactory(data.dms));
-	const sortedResults = $derived(search.results.toSorted((a, b) => sorter(b.score, a.score) || sorter(a.name, b.name)));
+	const sortedResults = $derived(search.results.toSorted((a, b) => sorter(a.isUser, b.isUser) || sorter(b.score, a.score) || sorter(a.name, b.name)));
 
 	let deletingDM = new SvelteSet<string>();
 </script>
@@ -51,7 +51,7 @@
 										>
 											<SearchResults text={dm.name} terms={search.terms} />
 										</a>
-										<div class="max-xs:hidden">
+										<div class="xs:hidden">
 											{#if dm.DCI}
 												<p class="text-xs text-gray-500">DCI: <SearchResults text={dm.DCI} terms={search.terms} /></p>
 											{/if}
