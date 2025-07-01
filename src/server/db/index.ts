@@ -43,7 +43,7 @@ export function buildConflictUpdateColumns<
 export type Database = PostgresJsDatabase<typeof schema, typeof relations>;
 export type Transaction = PgTransaction<PostgresJsQueryResultHKT, typeof schema, typeof relations>;
 
-type TRSchema = ExtractTablesWithRelations<typeof relations>;
+export type TRSchema = ExtractTablesWithRelations<typeof relations>;
 export type Filter<TableName extends keyof TRSchema> = RelationsFilter<TRSchema[TableName], TRSchema>;
 export type QueryConfig<TableName extends keyof TRSchema> = DBQueryConfig<"one" | "many", TRSchema, TRSchema[TableName]>;
 export type InferQueryResult<TableName extends keyof TRSchema, QBConfig extends QueryConfig<TableName> = {}> = BuildQueryResult<
