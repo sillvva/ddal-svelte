@@ -1,69 +1,77 @@
-import { type CharacterId, type NewCharacterSchema, type UserId } from "$lib/schemas";
-import { SaveError, type SaveResult } from "$lib/util";
-import { buildConflictUpdateColumns, db, q } from "$server/db";
-import { characters, logs, type Character } from "$server/db/schema";
-import { and, eq } from "drizzle-orm";
+import { type CharacterId, type EditCharacterSchema, type NewCharacterSchema, type UserId } from "$lib/schemas";
+import { buildConflictUpdateColumns } from "$server/db";
+import { DBService, FormError } from "$server/db/effect";
+import { characters, logs } from "$server/db/schema";
+import { and, eq, exists } from "drizzle-orm";
+import { Effect } from "effect";
 
-class CharacterError extends SaveError<NewCharacterSchema> {}
-
-export type SaveCharacterResult = ReturnType<typeof saveCharacter>;
-export async function saveCharacter(
-	characterId: CharacterId,
-	userId: UserId,
-	data: NewCharacterSchema
-): SaveResult<Character, CharacterError> {
-	try {
-		if (!characterId) throw new CharacterError("No character ID provided", { status: 400 });
-
-		const [result] = await db
-			.insert(characters)
-			.values({
-				...data,
-				id: characterId === "new" ? undefined : characterId,
-				userId
-			})
-			.onConflictDoUpdate({
-				target: characters.id,
-				set: buildConflictUpdateColumns(characters, ["id", "userId", "createdAt"], true),
-				where: eq(characters.userId, userId)
-			})
-			.returning();
-
-		if (!result) throw new CharacterError("Failed to save character");
-
-		return result;
-	} catch (err) {
-		return CharacterError.from(err);
-	}
+class SaveCharacterError extends FormError<EditCharacterSchema> {}
+function createCharacterError(err: unknown): SaveCharacterError {
+	return SaveCharacterError.from(err);
 }
 
-export type DeleteCharacterResult = ReturnType<typeof deleteCharacter>;
-export async function deleteCharacter(characterId: CharacterId, userId: UserId): SaveResult<{ id: CharacterId }, CharacterError> {
-	try {
-		const character = await q.characters.findFirst({
-			with: { logs: true },
-			where: {
-				id: {
-					eq: characterId
-				}
-			}
-		});
+export function saveCharacter(characterId: CharacterId, userId: UserId, data: NewCharacterSchema) {
+	return Effect.gen(function* () {
+		if (!characterId) yield* new SaveCharacterError("No character ID provided", { status: 400 });
 
-		if (!character) throw new CharacterError("Character not found", { status: 404 });
-		if (character.userId !== userId) throw new CharacterError("Not authorized", { status: 401 });
+		const Database = yield* DBService;
+		const db = yield* Database.db;
 
-		const [result] = await db.transaction(async (tx) => {
-			await tx
-				.update(logs)
-				.set({ characterId: null, appliedDate: null })
-				.where(and(eq(logs.characterId, characterId), eq(logs.isDmLog, true)));
-			return await tx.delete(characters).where(eq(characters.id, characterId)).returning({ id: characters.id });
-		});
+		return yield* Effect.tryPromise({
+			try: () =>
+				db
+					.insert(characters)
+					.values({
+						...data,
+						id: characterId === "new" ? undefined : characterId,
+						userId
+					})
+					.onConflictDoUpdate({
+						target: characters.id,
+						set: buildConflictUpdateColumns(characters, ["id", "userId", "createdAt"], true),
+						where: eq(characters.userId, userId)
+					})
+					.returning(),
+			catch: createCharacterError
+		}).pipe(
+			Effect.map((characters) => characters[0]),
+			Effect.flatMap((character) =>
+				character ? Effect.succeed(character) : Effect.fail(new SaveCharacterError("Failed to save character"))
+			)
+		);
+	});
+}
 
-		if (!result) throw new CharacterError("Failed to delete character");
+export function deleteCharacter(characterId: CharacterId, userId: UserId) {
+	return Effect.gen(function* () {
+		const Database = yield* DBService;
+		const db = yield* Database.db;
 
-		return result;
-	} catch (err) {
-		return CharacterError.from(err);
-	}
+		return yield* Effect.tryPromise({
+			try: () =>
+				db.transaction(async (tx) => {
+					await tx
+						.update(logs)
+						.set({ characterId: null, appliedDate: null })
+						.where(
+							and(
+								eq(logs.characterId, characterId),
+								eq(logs.isDmLog, true),
+								exists(
+									db
+										.select()
+										.from(characters)
+										.where(and(eq(characters.id, characterId), eq(characters.userId, userId)))
+								)
+							)
+						);
+					return await tx.delete(characters).where(eq(characters.id, characterId)).returning({ id: characters.id });
+				}),
+			catch: createCharacterError
+		}).pipe(
+			Effect.flatMap((result) =>
+				result ? Effect.succeed(result) : Effect.fail(new SaveCharacterError("Character not found", { status: 404 }))
+			)
+		);
+	});
 }

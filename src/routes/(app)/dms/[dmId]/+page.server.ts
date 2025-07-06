@@ -1,8 +1,8 @@
 import { dungeonMasterIdSchema, dungeonMasterSchema } from "$lib/schemas";
-import { SaveError } from "$lib/util.js";
 import { saveDM } from "$server/actions/dms";
 import { assertUser } from "$server/auth.js";
-import { getUserDMsWithLogs } from "$server/data/dms";
+import { getUserDMs } from "$server/data/dms";
+import { fetchWithFallback, save } from "$server/db/effect";
 import { error, redirect } from "@sveltejs/kit";
 import { fail, superValidate } from "sveltekit-superforms";
 import { valibot } from "sveltekit-superforms/adapters";
@@ -18,7 +18,7 @@ export const load = async (event) => {
 	if (!idResult.success) redirect(302, `/dms`);
 	const dmId = idResult.output;
 
-	const [dm] = await getUserDMsWithLogs(session.user, dmId);
+	const [dm] = await fetchWithFallback(getUserDMs(session.user, { id: dmId }), () => []);
 	if (!dm) error(404, "DM not found");
 
 	const form = await superValidate(
@@ -60,9 +60,9 @@ export const actions = {
 		const form = await superValidate(event, valibot(dungeonMasterSchema));
 		if (!form.valid) return fail(400, { form });
 
-		const result = await saveDM(dmId, session.user, form.data);
-		if (result instanceof SaveError) return result.toForm(form);
-
-		redirect(302, `/dms`);
+		return await save(saveDM(dmId, session.user, form.data), {
+			onError: (err) => err.toForm(form),
+			onSuccess: () => "/dms"
+		});
 	}
 };

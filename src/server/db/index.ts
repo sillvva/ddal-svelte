@@ -19,6 +19,18 @@ export const connection = postgres(privateEnv.DATABASE_URL, { prepare: false });
 export const db = drizzle(connection, { schema, relations });
 export const q = db.query;
 
+export type Database = PostgresJsDatabase<typeof schema, typeof relations>;
+export type Transaction = PgTransaction<PostgresJsQueryResultHKT, typeof schema, typeof relations>;
+
+export type TRSchema = ExtractTablesWithRelations<typeof relations>;
+export type Filter<TableName extends keyof TRSchema> = RelationsFilter<TRSchema[TableName], TRSchema>;
+export type QueryConfig<TableName extends keyof TRSchema> = DBQueryConfig<"one" | "many", TRSchema, TRSchema[TableName]>;
+export type InferQueryResult<TableName extends keyof TRSchema, QBConfig extends QueryConfig<TableName> = {}> = BuildQueryResult<
+	TRSchema,
+	TRSchema[TableName],
+	QBConfig
+>;
+
 export function buildConflictUpdateColumns<
 	Table extends PgTable,
 	Columns extends keyof Table["_"]["columns"],
@@ -39,15 +51,3 @@ export function buildConflictUpdateColumns<
 		{} as { [key in Keys]: SQL<GetColumnData<Table["_"]["columns"][key]>> }
 	);
 }
-
-export type Database = PostgresJsDatabase<typeof schema, typeof relations>;
-export type Transaction = PgTransaction<PostgresJsQueryResultHKT, typeof schema, typeof relations>;
-
-export type TRSchema = ExtractTablesWithRelations<typeof relations>;
-export type Filter<TableName extends keyof TRSchema> = RelationsFilter<TRSchema[TableName], TRSchema>;
-export type QueryConfig<TableName extends keyof TRSchema> = DBQueryConfig<"one" | "many", TRSchema, TRSchema[TableName]>;
-export type InferQueryResult<TableName extends keyof TRSchema, QBConfig extends QueryConfig<TableName> = {}> = BuildQueryResult<
-	TRSchema,
-	TRSchema[TableName],
-	QBConfig
->;

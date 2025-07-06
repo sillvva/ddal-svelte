@@ -1,8 +1,8 @@
 import { dungeonMasterSchema } from "$lib/schemas.js";
-import { SaveError } from "$lib/util.js";
 import { deleteDM } from "$server/actions/dms.js";
 import { assertUser } from "$server/auth";
-import { getUserDMsWithLogs } from "$server/data/dms";
+import { getUserDMs } from "$server/data/dms";
+import { fetchWithFallback, save } from "$server/db/effect";
 import { fail, redirect } from "@sveltejs/kit";
 import { setError, superValidate } from "sveltekit-superforms";
 import { valibot } from "sveltekit-superforms/adapters";
@@ -12,7 +12,7 @@ export const load = async (event) => {
 	const session = event.locals.session;
 	assertUser(session?.user, event.url);
 
-	const dms = await getUserDMsWithLogs(session.user);
+	const dms = await fetchWithFallback(getUserDMs(session.user, { includeLogs: true }), () => []);
 
 	return {
 		title: `${session.user.name}'s DMs`,
@@ -29,15 +29,15 @@ export const actions = {
 		const form = await superValidate(event, valibot(pick(dungeonMasterSchema, ["id"])));
 		if (!form.valid) return fail(400, { form });
 
-		const [dm] = await getUserDMsWithLogs(session.user, form.data.id);
+		const [dm] = await fetchWithFallback(getUserDMs(session.user, { id: form.data.id }), () => []);
 		if (!dm) redirect(302, "/dms");
 
-		const result = await deleteDM(dm);
-		if (result instanceof SaveError) {
-			setError(form, "", result.error);
-			return fail(result.status, { form });
-		}
-
-		return { form };
+		return await save(deleteDM(dm), {
+			onError: (err) => {
+				setError(form, "", err.message);
+				return fail(err.status, { form });
+			},
+			onSuccess: () => ({ form })
+		});
 	}
 };

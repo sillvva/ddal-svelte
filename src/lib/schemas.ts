@@ -167,11 +167,11 @@ export const dMLogSchema = (characters: FullCharacterData[] = []) =>
 			["characterId"]
 		),
 		v.forward(
-			v.check((input) => !!input.characterId || !input.appliedDate, "Character must be selected if applied date is set"),
+			v.check((input) => !!input.characterId || !input.appliedDate, "Character is required if applied date is set"),
 			["characterId"]
 		),
 		v.forward(
-			v.check((input) => !!input.appliedDate || !input.characterId, "Date must be set if applied to a character"),
+			v.check((input) => !!input.appliedDate || !input.characterId, "Applied date is required if character is selected"),
 			["appliedDate"]
 		),
 		v.forward(

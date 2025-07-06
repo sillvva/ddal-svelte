@@ -204,11 +204,11 @@ export function defaultLogSchema(userId: UserId, character: Character): LogSchem
 	};
 }
 
-export function parseCharacter(character: ExtendedCharacterData, includeLogs = true): FullCharacterData {
+export function parseCharacter(character: CharacterData | ExtendedCharacterData, includeLogs = true): FullCharacterData {
 	return {
 		...character,
 		imageUrl: character.imageUrl || BLANK_CHARACTER,
-		...getLogsSummary(character.logs, includeLogs)
+		...getLogsSummary("logs" in character ? character.logs : [], includeLogs)
 	};
 }
 

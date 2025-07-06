@@ -1,8 +1,8 @@
 import { characterIdSchema, logIdSchema } from "$lib/schemas.js";
-import { SaveError } from "$lib/util.js";
 import { deleteCharacter } from "$server/actions/characters";
 import { deleteLog } from "$server/actions/logs";
 import { assertUser } from "$server/auth.js";
+import { save } from "$server/db/effect";
 import { error, redirect } from "@sveltejs/kit";
 import { fail, setError, superValidate } from "sveltekit-superforms";
 import { valibot } from "sveltekit-superforms/adapters";
@@ -25,33 +25,33 @@ export const load = async (event) => {
 
 export const actions = {
 	deleteCharacter: async (event) => {
-		const session = await event.locals.session;
+		const session = event.locals.session;
 		assertUser(session?.user, event.url);
 
 		const form = await superValidate(event, valibot(object({ id: characterIdSchema })));
 		if (!form.valid) return fail(400, { form });
 
-		const result = await deleteCharacter(form.data.id, session.user.id);
-		if (result instanceof SaveError) {
-			setError(form, "", result.error);
-			return fail(result.status, { form });
-		}
-
-		redirect(302, "/characters");
+		return await save(deleteCharacter(form.data.id, session.user.id), {
+			onError: (err) => {
+				setError(form, "", err.message);
+				return fail(err.status, { form });
+			},
+			onSuccess: () => redirect(302, "/characters")
+		});
 	},
 	deleteLog: async (event) => {
-		const session = await event.locals.session;
+		const session = event.locals.session;
 		assertUser(session?.user, event.url);
 
 		const form = await superValidate(event, valibot(object({ id: logIdSchema })));
 		if (!form.valid) return fail(400, { form });
 
-		const result = await deleteLog(form.data.id, session.user.id);
-		if (result instanceof SaveError) {
-			setError(form, "", result.error);
-			return fail(result.status, { form });
-		}
-
-		return { form };
+		return await save(deleteLog(form.data.id, session.user.id), {
+			onError: (err) => {
+				setError(form, "", err.message);
+				return fail(err.status, { form });
+			},
+			onSuccess: () => ({ form })
+		});
 	}
 };
