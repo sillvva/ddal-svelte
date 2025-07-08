@@ -1,6 +1,7 @@
 <script lang="ts">
 	import { dev } from "$app/environment";
 	import { createGlobal, setTransition } from "$lib/stores.svelte";
+	import { Toaster } from "svelte-sonner";
 	import "../app.css";
 
 	let { data, children } = $props();
@@ -12,6 +13,8 @@
 <div class="bg-base-100 text-base-content min-h-dvh noscript:hidden">
 	{@render children()}
 </div>
+
+<Toaster richColors closeButton theme={data.app.settings.mode} />
 
 <div class="flex min-h-dvh items-center justify-center text-2xl not-noscript:hidden">
 	This site requires JavaScript to function properly.

@@ -1,14 +1,13 @@
 import type { ProviderId } from "$lib/constants";
 import type { CharacterId, DungeonMasterId, ItemId, LogId, UserId } from "$lib/schemas";
-import type { ProviderType } from "@auth/core/providers";
 import { createId } from "@paralleldrive/cuid2";
 import { isNotNull } from "drizzle-orm";
 import * as pg from "drizzle-orm/pg-core";
 
-export type User = typeof users.$inferSelect;
-export type InsertUser = typeof users.$inferInsert;
+export type User = typeof user.$inferSelect;
+export type InsertUser = typeof user.$inferInsert;
 export type UpdateUser = Partial<User>;
-export const users = pg.pgTable("user", {
+export const user = pg.pgTable("user", {
 	id: pg
 		.text()
 		.primaryKey()
@@ -16,98 +15,133 @@ export const users = pg.pgTable("user", {
 		.$type<UserId>(),
 	name: pg.text().notNull(),
 	email: pg.text().notNull(),
-	emailVerified: pg.timestamp({ mode: "date" }),
-	image: pg.text()
+	emailVerified: pg
+		.boolean()
+		.notNull()
+		.$default(() => false),
+	image: pg.text(),
+	createdAt: pg
+		.timestamp("created_at", { mode: "date", withTimezone: true })
+		.notNull()
+		.$default(() => new Date()),
+	updatedAt: pg
+		.timestamp("updated_at", { mode: "date", withTimezone: true })
+		.notNull()
+		.$default(() => new Date())
+		.$onUpdateFn(() => new Date())
 });
 
-export type Account = typeof accounts.$inferSelect;
-export type InsertAccount = typeof accounts.$inferInsert;
+export type Account = typeof account.$inferSelect;
+export type InsertAccount = typeof account.$inferInsert;
 export type UpdateAccount = Partial<Account>;
-export const accounts = pg.pgTable(
+export const account = pg.pgTable(
 	"account",
 	{
-		providerAccountId: pg.text().notNull(),
-		provider: pg.text().notNull().$type<ProviderId>(),
-		type: pg.text().$type<ProviderType>().notNull(),
+		id: pg
+			.text()
+			.primaryKey()
+			.$default(() => createId()),
+		accountId: pg.text("providerAccountId").notNull(),
+		providerId: pg.text("provider").notNull().$type<ProviderId>(),
 		userId: pg
 			.text()
 			.notNull()
-			.references(() => users.id, { onUpdate: "cascade", onDelete: "cascade" })
+			.references(() => user.id, { onUpdate: "cascade", onDelete: "cascade" })
 			.$type<UserId>(),
-		refresh_token: pg.text(),
-		access_token: pg.text(),
-		expires_at: pg.integer(),
-		token_type: pg.text(),
+		refreshToken: pg.text("refresh_token"),
+		accessToken: pg.text("access_token"),
+		accessTokenExpiresAt: pg.timestamp("expires_at", { mode: "date", withTimezone: true }),
 		scope: pg.text(),
-		id_token: pg.text(),
-		session_state: pg.text(),
-		lastLogin: pg.timestamp("last_login", { mode: "date", withTimezone: true })
+		idToken: pg.text("id_token"),
+		createdAt: pg
+			.timestamp("created_at", { mode: "date", withTimezone: true })
+			.notNull()
+			.$default(() => new Date()),
+		updatedAt: pg
+			.timestamp("updated_at", { mode: "date", withTimezone: true })
+			.notNull()
+			.$default(() => new Date())
+			.$onUpdateFn(() => new Date())
 	},
 	(table) => [
-		pg.primaryKey({ columns: [table.provider, table.providerAccountId], name: "Account_pkey" }),
-		pg.uniqueIndex("account_userId_providerAccountId_key").on(table.userId, table.providerAccountId),
+		pg.uniqueIndex("account_userId_providerAccountId_key").on(table.userId, table.accountId),
 		pg.index("Account_userId_idx").on(table.userId)
 	]
 );
 
-export type Session = typeof sessions.$inferSelect;
-export type InsertSession = typeof sessions.$inferInsert;
+export type Session = typeof session.$inferSelect;
+export type InsertSession = typeof session.$inferInsert;
 export type UpdateSession = Partial<Session>;
-export const sessions = pg.pgTable(
+export const session = pg.pgTable(
 	"session",
 	{
-		sessionToken: pg.text().primaryKey().notNull(),
+		id: pg
+			.text()
+			.primaryKey()
+			.$default(() => createId()),
+		token: pg.text("sessionToken").notNull(),
 		userId: pg
 			.text()
 			.notNull()
 			.$type<UserId>()
-			.references(() => users.id, { onUpdate: "cascade", onDelete: "cascade" }),
-		expires: pg.timestamp({ mode: "date" }).notNull(),
+			.references(() => user.id, { onUpdate: "cascade", onDelete: "cascade" }),
+		ipAddress: pg.text("ip_address"),
+		userAgent: pg.text("user_agent"),
+		expiresAt: pg.timestamp("expires", { mode: "date" }).notNull(),
 		createdAt: pg
 			.timestamp("created_at", { mode: "date", withTimezone: true })
 			.notNull()
+			.$default(() => new Date()),
+		updatedAt: pg
+			.timestamp("updated_at", { mode: "date", withTimezone: true })
+			.notNull()
 			.$default(() => new Date())
+			.$onUpdateFn(() => new Date())
 	},
 	(table) => [pg.index("Session_userId_idx").on(table.userId)]
 );
 
-export type Authenticator = typeof authenticators.$inferSelect;
-export type AuthClient = Pick<Authenticator, "credentialID" | "name">;
-export type InsertAuthenticator = typeof authenticators.$inferInsert;
-export type UpdateAuthenticator = Partial<Authenticator>;
-export const authenticators = pg.pgTable(
-	"authenticator",
-	{
-		credentialID: pg.text().notNull().unique(),
-		userId: pg
-			.text()
-			.notNull()
-			.$type<UserId>()
-			.references(() => users.id, { onDelete: "cascade", onUpdate: "cascade" }),
-		providerAccountId: pg.text().notNull(),
-		name: pg
-			.text()
-			.notNull()
-			.$defaultFn(() => ""),
-		credentialPublicKey: pg.text().notNull(),
-		counter: pg.integer().notNull(),
-		credentialDeviceType: pg.text().notNull(),
-		credentialBackedUp: pg.boolean().notNull(),
-		transports: pg.text()
-	},
-	(table) => [
-		pg.primaryKey({
-			columns: [table.userId, table.credentialID],
-			name: "authenticator_pkey"
-		}),
-		pg.foreignKey({
-			columns: [table.userId, table.providerAccountId],
-			foreignColumns: [accounts.userId, accounts.providerAccountId],
-			name: "public_authenticator_userId_providerAccountId_fkey"
-		}),
-		pg.unique("authenticator_userId_name_key").on(table.userId, table.name)
-	]
-);
+export const verification = pg.pgTable("verification", {
+	id: pg.text().primaryKey().notNull(),
+	identifier: pg.text().notNull(),
+	value: pg.text().notNull(),
+	expiresAt: pg.timestamp("expires_at", { mode: "date", withTimezone: true }).notNull(),
+	createdAt: pg
+		.timestamp("created_at", { mode: "date", withTimezone: true })
+		.notNull()
+		.$default(() => new Date()),
+	updatedAt: pg
+		.timestamp("updated_at", { mode: "date", withTimezone: true })
+		.notNull()
+		.$default(() => new Date())
+		.$onUpdateFn(() => new Date())
+});
+
+export type Passkey = typeof passkey.$inferSelect;
+export type InsertPasskey = typeof passkey.$inferInsert;
+export type UpdatePasskey = Partial<Passkey>;
+export const passkey = pg.pgTable("passkey", {
+	id: pg
+		.text()
+		.primaryKey()
+		.$default(() => createId()),
+	name: pg.text(),
+	publicKey: pg.text().notNull(),
+	userId: pg
+		.text()
+		.notNull()
+		.references(() => user.id, { onDelete: "cascade", onUpdate: "cascade" }),
+	credentialID: pg.text().notNull(),
+	counter: pg.bigint({ mode: "number" }).notNull().default(0),
+	deviceType: pg.text().notNull(),
+	backedUp: pg.boolean().notNull().default(false),
+	transports: pg.text().notNull(),
+	createdAt: pg
+		.timestamp({ mode: "date", withTimezone: true })
+		.notNull()
+		.$default(() => new Date()),
+	aaguid: pg.text()
+});
 
 export type Character = typeof characters.$inferSelect;
 export type InsertCharacter = typeof characters.$inferInsert;
@@ -130,7 +164,7 @@ export const characters = pg.pgTable(
 			.text()
 			.notNull()
 			.$type<UserId>()
-			.references(() => users.id, { onUpdate: "cascade", onDelete: "cascade" }),
+			.references(() => user.id, { onUpdate: "cascade", onDelete: "cascade" }),
 		createdAt: pg
 			.timestamp("created_at", { mode: "date" })
 			.notNull()
@@ -156,7 +190,7 @@ export const dungeonMasters = pg.pgTable(
 			.text("user_id")
 			.notNull()
 			.$type<UserId>()
-			.references(() => users.id, { onUpdate: "cascade", onDelete: "cascade" }),
+			.references(() => user.id, { onUpdate: "cascade", onDelete: "cascade" }),
 		isUser: pg
 			.boolean("is_user")
 			.notNull()

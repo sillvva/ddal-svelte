@@ -22,7 +22,7 @@ export type EnvPrivate = v.InferOutput<typeof envPrivateSchema>;
 export const envPrivateSchema = v.pipe(
 	v.object({
 		DATABASE_URL: urlSchema,
-		AUTH_SECRET: v.pipe(string, v.minLength(10)),
+		BETTER_AUTH_SECRET: v.pipe(string, v.minLength(10)),
 		GOOGLE_CLIENT_ID: requiredString,
 		GOOGLE_CLIENT_SECRET: requiredString,
 		DISCORD_CLIENT_ID: requiredString,
@@ -35,8 +35,7 @@ export const envPrivateSchema = v.pipe(
 export type EnvPublic = v.InferOutput<typeof envPublicSchema>;
 export const envPublicSchema = v.pipe(
 	v.object({
-		// PUBLIC_URL: urlSchema,
-		// PUBLIC_TEST_URL: v.optional(string, "")
+		PUBLIC_URL: urlSchema
 	}),
 	v.readonly()
 );

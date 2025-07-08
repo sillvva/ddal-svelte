@@ -1,9 +1,10 @@
 <script lang="ts">
+	import { goto } from "$app/navigation";
 	import { page } from "$app/state";
-	import { PROVIDERS } from "$lib/constants.js";
+	import { authClient } from "$lib/auth";
+	import { PROVIDERS } from "$lib/constants";
+	import { errorToast } from "$lib/factories.svelte.js";
 	import { getGlobal } from "$lib/stores.svelte.js";
-	import { signIn } from "@auth/sveltekit/client";
-	import { signIn as passkey } from "@auth/sveltekit/webauthn";
 	import { twMerge } from "tailwind-merge";
 
 	let { data } = $props();
@@ -11,10 +12,17 @@
 	const global = getGlobal();
 
 	$effect(() => {
+		if (!PublicKeyCredential.isConditionalMediationAvailable || !PublicKeyCredential.isConditionalMediationAvailable()) {
+			return;
+		}
+
 		if (global.app.settings.autoWebAuthn) {
-			passkey("webauthn", {
-				callbackUrl: data.redirectTo || "/characters",
-				action: "authenticate"
+			authClient.signIn.passkey({
+				fetchOptions: {
+					onSuccess: () => {
+						goto(data.redirectTo || "/characters");
+					}
+				}
 			});
 		}
 	});
@@ -55,11 +63,22 @@
 				class="bg-base-200 text-base-content hover:bg-base-300 flex h-16 items-center gap-4 rounded-lg px-8 py-4 transition-colors"
 				onclick={() => {
 					console.log("Signing in with", provider.name);
-					signIn(provider.id, {
-						callbackUrl: data.redirectTo || "/characters"
-					})
-						.then(console.log)
-						.catch(console.error);
+					authClient.signIn
+						.social({
+							provider: provider.id,
+							fetchOptions: {
+								onSuccess: () => {
+									goto(data.redirectTo || "/characters");
+								}
+							}
+						})
+						.then((result) => {
+							if (result.error?.code) {
+								console.error(result.error);
+								errorToast(authClient.$ERROR_CODES[result.error.code as keyof typeof authClient.$ERROR_CODES]);
+							} else console.log(result.data);
+							return result;
+						});
 				}}
 				aria-label="Sign in with {provider.name}"
 			>
@@ -72,12 +91,13 @@
 			class="bg-base-200 text-base-content hover:bg-base-300 flex h-16 items-center gap-4 rounded-lg px-8 py-4 transition-colors"
 			onclick={() => {
 				console.log("Signing in with Passkey");
-				passkey("webauthn", {
-					callbackUrl: data.redirectTo || "/characters",
-					action: "authenticate"
-				})
-					.then(console.log)
-					.catch(console.error);
+				authClient.signIn.passkey({
+					fetchOptions: {
+						onSuccess: () => {
+							goto(data.redirectTo || "/characters");
+						}
+					}
+				});
 			}}
 			aria-label="Sign in with Passkey"
 		>
@@ -88,16 +108,4 @@
 			You must have an account and then add a Passkey in settings before you can sign in with a Passkey.
 		</span>
 	</div>
-	{#if data.code}
-		<div class="flex justify-center">
-			<div class="alert alert-error max-w-[28rem] min-w-60 shadow-lg">
-				<span class="iconify mdi--alert-circle size-6 max-sm:hidden"></span>
-				<div>
-					<h3 class="font-bold">Error</h3>
-					{#if data.message}<p class="mb-2 max-sm:text-sm">{data.message}</p>{/if}
-					<p class="font-mono text-xs">Code: {data.code}</p>
-				</div>
-			</div>
-		</div>
-	{/if}
 </main>

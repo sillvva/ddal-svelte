@@ -2,7 +2,7 @@ import type { ProviderId } from "$lib/constants";
 import type { UserId } from "$lib/schemas";
 import { db } from "$server/db";
 import { DBService, FormError } from "$server/db/effect";
-import { accounts, type UpdateAccount, type User } from "$server/db/schema";
+import { account, type UpdateAccount, type User } from "$server/db/schema";
 import { and, eq } from "drizzle-orm";
 import { Effect } from "effect";
 
@@ -19,9 +19,9 @@ export function unlinkProvider(userId: UserId, provider: ProviderId) {
 		const result = yield* Effect.tryPromise({
 			try: () =>
 				db
-					.delete(accounts)
-					.where(and(eq(accounts.userId, userId), eq(accounts.provider, provider)))
-					.returning({ userId: accounts.userId, provider: accounts.provider }),
+					.delete(account)
+					.where(and(eq(account.userId, userId), eq(account.provider, provider)))
+					.returning({ userId: account.userId, provider: account.provider }),
 			catch: createUserError
 		});
 
@@ -38,9 +38,9 @@ export async function updateAccount(account: AccountData) {
 	try {
 		const { userId, provider, providerAccountId, ...rest } = account;
 		return await db
-			.update(accounts)
+			.update(account)
 			.set(rest)
-			.where(and(eq(accounts.provider, provider), eq(accounts.providerAccountId, providerAccountId)))
+			.where(and(eq(account.provider, provider), eq(account.providerAccountId, providerAccountId)))
 			.returning()
 			.then((res) => res[0]);
 	} catch (e) {

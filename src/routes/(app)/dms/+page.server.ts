@@ -23,7 +23,7 @@ export const load = async (event) => {
 
 export const actions = {
 	deleteDM: async (event) => {
-		const session = await event.locals.session;
+		const session = event.locals.session;
 		assertUser(session?.user, event.url);
 
 		const form = await superValidate(event, valibot(pick(dungeonMasterSchema, ["id"])));

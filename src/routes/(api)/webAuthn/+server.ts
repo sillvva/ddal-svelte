@@ -1,6 +1,6 @@
 import { authName } from "$lib/util.js";
 import { db, q } from "$server/db/index.js";
-import { accounts, authenticators } from "$server/db/schema.js";
+import { passkey } from "$server/db/schema.js";
 import { json } from "@sveltejs/kit";
 import { and, eq } from "drizzle-orm";
 
@@ -13,7 +13,7 @@ export async function POST({ request, locals }) {
 	let { name, id } = (await request.json()) as RenameWebAuthnInput;
 
 	try {
-		const passkeys = await q.authenticators.findMany({
+		const passkeys = await q.passkey.findMany({
 			where: {
 				userId: {
 					eq: session.user.id
@@ -29,9 +29,9 @@ export async function POST({ request, locals }) {
 		if (existing && (!auth.name || (id && existing.credentialID !== id))) throw new Error("Name already exists");
 
 		await db
-			.update(authenticators)
+			.update(passkey)
 			.set({ name: name.trim() })
-			.where(and(eq(authenticators.userId, auth.userId), eq(authenticators.providerAccountId, auth.providerAccountId)));
+			.where(and(eq(passkey.userId, auth.userId), eq(passkey.credentialID, auth.credentialID)));
 
 		return json({ success: true, name } satisfies RenameWebAuthnResponse);
 	} catch (e) {
@@ -51,7 +51,7 @@ export async function DELETE({ request, locals }) {
 		if (!session?.user?.id) return json({ success: false, error: "Unauthorized" }, { status: 401 });
 
 		const { id } = (await request.json()) as DeleteWebAuthnInput;
-		const auth = await q.authenticators.findFirst({
+		const auth = await q.passkey.findFirst({
 			where: {
 				userId: {
 					eq: session.user.id
@@ -62,9 +62,7 @@ export async function DELETE({ request, locals }) {
 
 		if (!auth) throw new Error("No passkey found");
 
-		await db
-			.delete(accounts)
-			.where(and(eq(accounts.userId, auth.userId), eq(accounts.providerAccountId, auth.providerAccountId)));
+		await db.delete(passkey).where(and(eq(passkey.userId, auth.userId), eq(passkey.credentialID, auth.credentialID)));
 
 		return json({ success: true } satisfies DeleteWebAuthnResponse);
 	} catch (e) {

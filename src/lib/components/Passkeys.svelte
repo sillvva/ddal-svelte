@@ -1,6 +1,7 @@
 <script lang="ts">
 	import { invalidateAll } from "$app/navigation";
 	import { page } from "$app/state";
+	import { authClient } from "$lib/auth";
 	import { errorToast, successToast } from "$lib/factories.svelte";
 	import { getGlobal } from "$lib/stores.svelte";
 	import { hotkey } from "$lib/util";
@@ -10,22 +11,21 @@
 		RenameWebAuthnInput,
 		RenameWebAuthnResponse
 	} from "$src/routes/(api)/webAuthn/+server";
-	import { signIn } from "@auth/sveltekit/webauthn";
 	import { tick } from "svelte";
 	import { scale } from "svelte/transition";
 	import Control from "./forms/Control.svelte";
 
-	const authenticators = $derived(page.data.user?.authenticators || []);
+	const passkeys = $derived(page.data.user?.passkeys || []);
 	const global = getGlobal();
 
 	$effect(() => {
-		global.app.settings.autoWebAuthn = authenticators.length > 0;
+		global.app.settings.autoWebAuthn = passkeys.length > 0;
 	});
 
 	$effect(() => {
-		const emptyPasskey = authenticators.find((a) => a.name === "");
+		const emptyPasskey = passkeys.find((a) => !a.name);
 		if (emptyPasskey) {
-			initRename(emptyPasskey.credentialID, emptyPasskey.name);
+			initRename(emptyPasskey.credentialID, emptyPasskey.name || "");
 		}
 	});
 
@@ -83,7 +83,7 @@
 	}
 
 	async function deleteWebAuthn(id: string) {
-		const auth = authenticators.find((a) => a.credentialID === id);
+		const auth = passkeys.find((a) => a.credentialID === id);
 		if (!auth) return;
 		if (confirm(`Are you sure you want to delete "${auth.name}"?`)) {
 			const response = await fetch("/webAuthn", {
@@ -107,18 +107,18 @@
 	<li class="menu-title *:px-2">
 		<span class="font-bold">Passkeys</span>
 	</li>
-	{#each authenticators as authenticator}
+	{#each passkeys as passkey}
 		<li class="flex-row gap-2">
 			<button
 				class="group btn btn-ghost hover:bg-base-200 flex flex-1 gap-2 text-left"
-				onclick={() => initRename(authenticator.credentialID, authenticator.name)}
+				onclick={() => initRename(passkey.credentialID, passkey.name || "")}
 				aria-label="Rename Passkey"
 			>
 				<span class="iconify material-symbols--passkey group-hover:mdi--pencil size-6"></span>
 				<span class="ellipsis-nowrap flex-1">
-					{#if authenticator.name}
-						{authenticator.name}
-					{:else if renameId === authenticator.credentialID}
+					{#if passkey.name}
+						{passkey.name}
+					{:else if renameId === passkey.credentialID}
 						Renaming...
 					{:else}
 						<span class="text-error">Unnamed</span>
@@ -129,7 +129,7 @@
 				class="btn btn-ghost text-error hover:bg-error hover:text-base-content"
 				onclick={(e) => {
 					e.stopPropagation();
-					deleteWebAuthn(authenticator.credentialID);
+					deleteWebAuthn(passkey.credentialID);
 				}}
 				aria-label="Delete Passkey"
 			>
@@ -141,12 +141,11 @@
 		<button
 			class="btn btn-ghost hover:bg-base-200"
 			onclick={() =>
-				signIn("webauthn", { action: "register", redirect: false })
-					.then((resp) => {
-						if (resp?.ok) invalidateAll();
-						else errorToast("Failed to register passkey");
-					})
-					.catch(console.error)}
+				authClient.passkey.addPasskey().then((result) => {
+					if (result?.error?.message) {
+						errorToast(result.error.message);
+					}
+				})}
 		>
 			<span class="iconify mdi--plus size-6"></span>
 			<span>Add Passkey</span>

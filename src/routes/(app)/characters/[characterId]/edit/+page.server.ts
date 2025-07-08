@@ -58,7 +58,7 @@ export const load = async (event) => {
 
 export const actions = {
 	saveCharacter: async (event) => {
-		const session = await event.locals.session;
+		const session = event.locals.session;
 		assertUser(session?.user, event.url);
 
 		const form = await superValidate(event, valibot(editCharacterSchema));

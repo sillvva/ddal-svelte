@@ -3,49 +3,41 @@ import * as schema from "./schema";
 
 export const relations = defineRelations(schema, (r) => ({
 	users: {
-		accounts: r.many.accounts(),
-		authenticators: r.many.authenticators(),
-		sessions: r.many.sessions(),
+		accounts: r.many.account(),
+		sessions: r.many.session(),
 		characters: r.many.characters(),
-		dungeonMasters: r.many.dungeonMasters()
+		dungeonMasters: r.many.dungeonMasters(),
+		passkeys: r.many.passkey()
 	},
 	accounts: {
-		user: r.one.users({
-			from: r.accounts.userId,
-			to: r.users.id
-		}),
-		authenticator: r.one.authenticators({
-			from: [r.accounts.userId, r.accounts.providerAccountId],
-			to: [r.authenticators.userId, r.authenticators.providerAccountId]
+		user: r.one.user({
+			from: r.account.userId,
+			to: r.user.id
 		})
 	},
-	authenticators: {
-		user: r.one.users({
-			from: r.authenticators.userId,
-			to: r.users.id
-		}),
-		account: r.one.accounts({
-			from: [r.authenticators.userId, r.authenticators.providerAccountId],
-			to: [r.accounts.userId, r.accounts.providerAccountId]
+	passkeys: {
+		user: r.one.user({
+			from: r.passkey.userId,
+			to: r.user.id
 		})
 	},
 	sessions: {
-		user: r.one.users({
-			from: r.sessions.userId,
-			to: r.users.id
+		user: r.one.user({
+			from: r.session.userId,
+			to: r.user.id
 		})
 	},
 	characters: {
-		user: r.one.users({
+		user: r.one.user({
 			from: r.characters.userId,
-			to: r.users.id
+			to: r.user.id
 		}),
 		logs: r.many.logs()
 	},
 	dungeonMasters: {
-		user: r.one.users({
+		user: r.one.user({
 			from: r.dungeonMasters.userId,
-			to: r.users.id
+			to: r.user.id
 		}),
 		logs: r.many.logs()
 	},

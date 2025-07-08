@@ -1,4 +1,4 @@
-import type { AuthClient } from "$server/db/schema";
+import type { Passkey } from "$server/db/schema";
 import { wait } from "@sillvva/utils";
 import { hotkey as hk, type HotkeyItem } from "@svelteuidev/composables";
 import type { Attachment } from "svelte/attachments";
@@ -20,13 +20,13 @@ export async function createTransition(action: ViewTransitionCallback, after?: (
 	if (after) wait(afterDelay).then(after);
 }
 
-export function authName(authenticator: AuthClient) {
-	return authenticator.name || authenticator.credentialID.replace(/[^a-z0-9]/gi, "").slice(-8);
-}
-
 export function hotkey(hotkeys: HotkeyItem[]): Attachment<HTMLElement | Document> {
 	return (node: HTMLElement | Document) => {
 		if (node instanceof Document) node = node.body;
 		return hk(node, hotkeys).destroy;
 	};
+}
+
+export function authName(passkey: Passkey) {
+	return passkey.name || passkey.credentialID.replace(/[^a-z0-9]/gi, "").slice(-8);
 }
