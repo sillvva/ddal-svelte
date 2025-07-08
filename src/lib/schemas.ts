@@ -35,8 +35,7 @@ export const envPrivateSchema = v.pipe(
 export type EnvPublic = v.InferOutput<typeof envPublicSchema>;
 export const envPublicSchema = v.pipe(
 	v.object({
-		// PUBLIC_URL: urlSchema,
-		// PUBLIC_TEST_URL: v.optional(string, "")
+		PUBLIC_URL: urlSchema
 	}),
 	v.readonly()
 );
@@ -167,11 +166,11 @@ export const dMLogSchema = (characters: FullCharacterData[] = []) =>
 			["characterId"]
 		),
 		v.forward(
-			v.check((input) => !!input.characterId || !input.appliedDate, "Character must be selected if applied date is set"),
+			v.check((input) => !!input.characterId || !input.appliedDate, "Character is required if applied date is set"),
 			["characterId"]
 		),
 		v.forward(
-			v.check((input) => !!input.appliedDate || !input.characterId, "Date must be set if applied to a character"),
+			v.check((input) => !!input.appliedDate || !input.characterId, "Applied date is required if character is selected"),
 			["appliedDate"]
 		),
 		v.forward(

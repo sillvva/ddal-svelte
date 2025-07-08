@@ -2,14 +2,14 @@
 	import { goto } from "$app/navigation";
 	import { errorToast, successToast } from "$lib/factories.svelte";
 	import { getGlobal } from "$lib/stores.svelte";
-	import type { UserDMsWithLogs } from "$server/data/dms";
+	import type { UserDMs } from "$server/data/dms";
 	import type { SvelteSet } from "svelte/reactivity";
 	import { superForm } from "sveltekit-superforms";
 
 	const global = getGlobal();
 
 	interface Props {
-		dm: UserDMsWithLogs[number];
+		dm: UserDMs[number];
 		deletingDM?: SvelteSet<string>;
 		label?: string;
 		ondelete?: (event: { id: string }) => void;

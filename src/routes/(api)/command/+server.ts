@@ -1,7 +1,8 @@
 import { searchSections } from "$lib/constants.js";
-import { getCharactersWithLogs } from "$server/data/characters.js";
+import { getUserCharacters } from "$server/data/characters.js";
 import { getUserDMs } from "$server/data/dms.js";
 import { getUserLogs } from "$server/data/logs.js";
+import { fetchWithFallback } from "$server/db/effect";
 import { sorter } from "@sillvva/utils";
 import { json } from "@sveltejs/kit";
 
@@ -24,7 +25,7 @@ async function getData(user: LocalsSession["user"]) {
 	return [
 		{
 			title: "Characters" as const,
-			items: await getCharactersWithLogs(user.id, false).then((characters) =>
+			items: await fetchWithFallback(getUserCharacters(user.id, false), () => []).then((characters) =>
 				characters
 					.map(
 						(character) =>
@@ -43,7 +44,7 @@ async function getData(user: LocalsSession["user"]) {
 		},
 		{
 			title: "DMs" as const,
-			items: await getUserDMs(user).then((dms) =>
+			items: await fetchWithFallback(getUserDMs(user, { includeLogs: true }), () => []).then((dms) =>
 				dms
 					.map(
 						(dm) =>
@@ -58,7 +59,7 @@ async function getData(user: LocalsSession["user"]) {
 		},
 		{
 			title: "Logs" as const,
-			items: await getUserLogs(user.id).then((logs) =>
+			items: await fetchWithFallback(getUserLogs(user.id), () => []).then((logs) =>
 				logs
 					.map(
 						(log) =>

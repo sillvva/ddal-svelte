@@ -1,10 +1,10 @@
 import { defaultLogData, logDataToSchema } from "$lib/entities.js";
 import { dMLogSchema, logIdSchema } from "$lib/schemas";
-import { SaveError } from "$lib/util.js";
 import { saveLog } from "$server/actions/logs";
 import { assertUser } from "$server/auth";
-import { getCharactersWithLogs } from "$server/data/characters";
+import { getUserCharacters } from "$server/data/characters";
 import { getLog } from "$server/data/logs";
+import { fetchWithFallback, save } from "$server/db/effect";
 import { error, redirect } from "@sveltejs/kit";
 import { fail, superValidate } from "sveltekit-superforms";
 import { valibot } from "sveltekit-superforms/adapters";
@@ -21,7 +21,7 @@ export const load = async (event) => {
 	if (!idResult.success) redirect(302, `/dm-logs`);
 	const logId = idResult.output;
 
-	const characters = await getCharactersWithLogs(user.id).then((characters) =>
+	const characters = await fetchWithFallback(getUserCharacters(user.id), () => []).then((characters) =>
 		characters.map((c) => ({
 			...c,
 			logs: c.logs.filter((l) => l.id !== logId),
@@ -31,7 +31,7 @@ export const load = async (event) => {
 		}))
 	);
 
-	let log = (await getLog(logId, user.id)) || defaultLogData(user.id);
+	let log = (await fetchWithFallback(getLog(logId, user.id), () => undefined)) || defaultLogData(user.id);
 	if (logId !== "new") {
 		if (!log.id) error(404, "Log not found");
 		if (!log.isDmLog) redirect(302, `/characters/${log.characterId}/log/${log.id}`);
@@ -62,16 +62,16 @@ export const actions = {
 		if (!idResult.success) redirect(302, `/dm-logs`);
 		const logId = idResult.output;
 
-		const log = await getLog(logId, session.user.id);
+		const log = await fetchWithFallback(getLog(logId, session.user.id), () => undefined);
 		if (logId !== "new" && !log?.id) redirect(302, `/dm-logs`);
 
-		const characters = await getCharactersWithLogs(session.user.id);
+		const characters = await fetchWithFallback(getUserCharacters(session.user.id), () => []);
 		const form = await superValidate(event, valibot(dMLogSchema(characters)));
 		if (!form.valid) return fail(400, { form });
 
-		const result = await saveLog(form.data, session.user);
-		if (result instanceof SaveError) return result.toForm(form);
-
-		redirect(302, `/dm-logs`);
+		return await save(saveLog(form.data, session.user), {
+			onError: (err) => err.toForm(form),
+			onSuccess: () => `/dm-logs`
+		});
 	}
 };

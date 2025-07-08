@@ -208,10 +208,13 @@
 
 {#if !sortedResults.length}
 	<section class="bg-base-200 mt-4 rounded-lg">
-		<div class="py-20 text-center">
-			<p class="mb-4">No logs found.</p>
+		<div class="flex flex-col gap-4 py-20 text-center">
+			<div>No logs found.</div>
 			<p>
-				<a href="/characters/{data.character.id}/log/new" class="btn btn-primary">Create your first log</a>
+				<a href="/characters/{data.character.id}/log/new" class="btn btn-primary">Create a Game Log</a>
+			</p>
+			<p>
+				<a href="/characters/{data.character.id}/log/new?firstLog=true" class="btn btn-primary">Create an Intro Log</a>
 			</p>
 		</div>
 	</section>

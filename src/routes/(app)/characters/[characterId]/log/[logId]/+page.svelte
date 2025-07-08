@@ -45,7 +45,13 @@
 			</Control>
 		{/if}
 		<Control class={twMerge("col-span-12", !data.firstLog ? "sm:col-span-4" : "sm:col-span-6")}>
-			<Input type="text" {superform} field="name" label="Title" />
+			<Input
+				type="text"
+				{superform}
+				field="name"
+				label="Title"
+				placeholder={data.firstLog ? "Introduction, Character Creation, etc." : ""}
+			/>
 		</Control>
 		<Control class={twMerge("col-span-12", !data.firstLog ? "sm:col-span-4" : "sm:col-span-6")}>
 			<DateInput {superform} field="date" label="Date" />

@@ -1,16 +1,32 @@
 import type { ProviderId } from "$lib/constants";
 import type { UserId } from "$lib/schemas";
 import { db } from "$server/db";
-import { accounts, type UpdateAccount } from "$server/db/schema";
+import { DBService, FormError } from "$server/db/effect";
+import { account, type UpdateAccount, type User } from "$server/db/schema";
 import { and, eq } from "drizzle-orm";
+import { Effect } from "effect";
 
-export async function unlinkProvider(userId: UserId, provider: ProviderId) {
-	try {
-		const result = await db.delete(accounts).where(and(eq(accounts.userId, userId), eq(accounts.provider, provider)));
-		return result.count > 0;
-	} catch (e) {
-		throw new Error("Could not unlink account");
-	}
+class UserError extends FormError<User> {}
+function createUserError(err: unknown): UserError {
+	return UserError.from(err);
+}
+
+export function unlinkProvider(userId: UserId, provider: ProviderId) {
+	return Effect.gen(function* () {
+		const Database = yield* DBService;
+		const db = yield* Database.db;
+
+		const result = yield* Effect.tryPromise({
+			try: () =>
+				db
+					.delete(account)
+					.where(and(eq(account.userId, userId), eq(account.provider, provider)))
+					.returning({ userId: account.userId, provider: account.provider }),
+			catch: createUserError
+		});
+
+		return result.length > 0;
+	});
 }
 
 interface AccountData extends UpdateAccount {
@@ -22,9 +38,9 @@ export async function updateAccount(account: AccountData) {
 	try {
 		const { userId, provider, providerAccountId, ...rest } = account;
 		return await db
-			.update(accounts)
+			.update(account)
 			.set(rest)
-			.where(and(eq(accounts.provider, provider), eq(accounts.providerAccountId, providerAccountId)))
+			.where(and(eq(account.provider, provider), eq(account.providerAccountId, providerAccountId)))
 			.returning()
 			.then((res) => res[0]);
 	} catch (e) {

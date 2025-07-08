@@ -7,7 +7,6 @@
 	import Settings from "$lib/components/Settings.svelte";
 	import { getGlobal } from "$lib/stores.svelte.js";
 	import { hotkey } from "$lib/util";
-	import { Toaster } from "svelte-sonner";
 	import { fade } from "svelte/transition";
 
 	let { data, children } = $props();
@@ -20,7 +19,7 @@
 
 	$effect(() => {
 		const hasCookie = document.cookie.includes("session-token");
-		if (!data.session?.user && hasCookie) location.reload();
+		if (!data.user && hasCookie) location.reload();
 	});
 
 	let defaultTitle = "Adventurers League Log Sheet";
@@ -69,21 +68,21 @@
 			<Drawer />
 			<div class="inline max-w-10 shrink-0 flex-grow-1 sm:hidden">&nbsp;</div>
 			<a
-				href={data.session?.user ? "/characters" : "/"}
+				href={data.user ? "/characters" : "/"}
 				class="font-draconis flex min-w-fit flex-1 flex-col text-center sm:flex-none"
 				aria-label="Home"
 			>
 				<h1 class="text-base-content text-base leading-4">Adventurers League</h1>
 				<h2 class="text-3xl leading-7">Log Sheet</h2>
 			</a>
-			{#if data.session?.user}
+			{#if data.user}
 				<a href="/characters" class="ml-8 flex items-center p-2 max-md:hidden">Character Logs</a>
 				<a href="/dm-logs" class="flex items-center p-2 max-md:hidden">DM Logs</a>
 				<a href="/dms" class="flex items-center p-2 max-md:hidden">DMs</a>
 			{/if}
 			<div class="flex-1 max-sm:hidden">&nbsp;</div>
 			<div class="flex items-center gap-4">
-				{#if data.session?.user}
+				{#if data.user}
 					<CommandTray />
 					<Settings />
 				{:else}
@@ -115,8 +114,6 @@
 		</div>
 	</footer>
 </div>
-
-<Toaster richColors closeButton theme={global.app.settings.mode} />
 
 <dialog
 	class="modal bg-base-300/75!"

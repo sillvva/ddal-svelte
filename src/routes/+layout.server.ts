@@ -1,9 +1,7 @@
 import { building } from "$app/environment";
-import { PROVIDERS } from "$lib/constants.js";
 import { privateEnv } from "$lib/env/private.js";
 import { appCookieSchema } from "$lib/schemas.js";
 import { serverGetCookie } from "$server/cookie.js";
-import { q } from "$server/db/index.js";
 
 let checked = false;
 if (!checked && building && privateEnv) {
@@ -24,31 +22,16 @@ export const load = async (event) => {
 
 	const app = serverGetCookie("app", appCookieSchema);
 
-	let user: App.PageData["user"];
-	if (session?.user) {
-		user = await q.users.findFirst({
-			with: {
-				accounts: {
-					where: {
-						provider: {
-							in: PROVIDERS.map((p) => p.id)
-						}
-					}
-				},
-				authenticators: true
-			},
-			where: {
-				id: {
-					eq: session.user.id
-				}
-			}
-		});
-	}
-
 	return {
 		breadcrumbs: [] as App.PageData["breadcrumbs"],
-		session,
-		user,
+		user: session?.user && {
+			...session.user,
+			session: {
+				userAgent: session.userAgent,
+				ipAddress: session.ipAddress,
+				createdAt: session.createdAt
+			}
+		},
 		mobile,
 		isMac,
 		app

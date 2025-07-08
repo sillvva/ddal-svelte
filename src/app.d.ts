@@ -2,44 +2,27 @@
 // for information about these interfaces
 
 import type { UserId } from "$lib/schemas";
-import type { Account, AuthClient, User } from "$server/db/schema";
+import type { Account, Passkey } from "$server/db/schema";
 import "@auth/sveltekit";
-import type { Session } from "@auth/sveltekit";
-import type { Prettify } from "@sillvva/utils";
 import "@total-typescript/ts-reset/fetch";
 import "@total-typescript/ts-reset/json-parse";
-
-declare module "@auth/sveltekit" {
-	interface User {
-		id: UserId;
-		name: string;
-		email: string;
-	}
-
-	interface AdapterUser {
-		id: UserId;
-		name: string;
-		email: string;
-	}
-
-	interface Session {
-		user: Prettify<AdapterUser & User>;
-	}
-}
-
-interface PageDataUser extends User {
-	accounts: Account[];
-	authenticators: AuthClient[];
-}
 
 declare global {
 	namespace App {
 		// interface Error {}
 		interface Locals {
-			session: Session | null;
+			session: LocalsSession | null;
 		}
 		interface PageData {
-			user: PageDataUser | undefined;
+			user:
+				| (User & {
+						session: {
+							userAgent?: string | null;
+							ipAddress?: string | null;
+							createdAt: Date;
+						};
+				  })
+				| undefined;
 			breadcrumbs: Array<{ name: string; href?: string }>;
 			mobile: boolean;
 			isMac: boolean;
@@ -70,7 +53,32 @@ declare global {
 		}
 	}
 
-	type LocalsSession = Session;
+	interface Session {
+		id: string;
+		token: string;
+		userId: string;
+		ipAddress?: string | null;
+		userAgent?: string | null;
+		expiresAt: Date;
+		createdAt: Date;
+		updatedAt: Date;
+	}
+
+	interface User {
+		id: UserId;
+		name: string;
+		email: string;
+		emailVerified: boolean;
+		image?: string | null;
+		createdAt: Date;
+		updatedAt: Date;
+		accounts: Account[];
+		passkeys: Passkey[];
+	}
+
+	type LocalsSession = Session & {
+		user: User;
+	};
 
 	interface ViewTransition {
 		/**
