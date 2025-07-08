@@ -1,5 +1,4 @@
 <script lang="ts">
-	import { goto } from "$app/navigation";
 	import { page } from "$app/state";
 	import { authClient } from "$lib/auth";
 	import { PROVIDERS } from "$lib/constants";
@@ -68,7 +67,7 @@
 						authClient.signOut({
 							fetchOptions: {
 								onSuccess: () => {
-									goto("/");
+									window.location.href = "/";
 								}
 							}
 						})}

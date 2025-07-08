@@ -1,5 +1,4 @@
 <script lang="ts">
-	import { goto } from "$app/navigation";
 	import { page } from "$app/state";
 	import { authClient } from "$lib/auth";
 	import { PROVIDERS } from "$lib/constants";
@@ -12,15 +11,11 @@
 	const global = getGlobal();
 
 	$effect(() => {
-		if (!PublicKeyCredential.isConditionalMediationAvailable || !PublicKeyCredential.isConditionalMediationAvailable()) {
-			return;
-		}
-
 		if (global.app.settings.autoWebAuthn) {
 			authClient.signIn.passkey({
 				fetchOptions: {
 					onSuccess: () => {
-						goto(data.redirectTo || "/characters");
+						window.location.href = data.redirectTo || "/characters";
 					}
 				}
 			});
@@ -66,17 +61,13 @@
 					authClient.signIn
 						.social({
 							provider: provider.id,
-							fetchOptions: {
-								onSuccess: () => {
-									goto(data.redirectTo || "/characters");
-								}
-							}
+							callbackURL: data.redirectTo || "/characters"
 						})
 						.then((result) => {
-							if (result.error?.code) {
+							if (result.error?.message) {
 								console.error(result.error);
-								errorToast(authClient.$ERROR_CODES[result.error.code as keyof typeof authClient.$ERROR_CODES]);
-							} else console.log(result.data);
+								errorToast(result.error.message);
+							}
 							return result;
 						});
 				}}
@@ -96,7 +87,7 @@
 				authClient.signIn.passkey({
 					fetchOptions: {
 						onSuccess: () => {
-							goto(data.redirectTo || "/characters");
+							window.location.href = data.redirectTo || "/characters";
 						}
 					}
 				});
