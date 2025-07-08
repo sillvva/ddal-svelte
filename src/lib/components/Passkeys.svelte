@@ -141,11 +141,19 @@
 		<button
 			class="btn btn-ghost hover:bg-base-200"
 			onclick={() =>
-				authClient.passkey.addPasskey().then((result) => {
-					if (result?.error?.message) {
-						errorToast(result.error.message);
-					}
-				})}
+				authClient.passkey
+					.addPasskey({
+						fetchOptions: {
+							onSuccess: () => {
+								invalidateAll();
+							}
+						}
+					})
+					.then((result) => {
+						if (result?.error?.message) {
+							errorToast(result.error.message);
+						}
+					})}
 		>
 			<span class="iconify mdi--plus size-6"></span>
 			<span>Add Passkey</span>
