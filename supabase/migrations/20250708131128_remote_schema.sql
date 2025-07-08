@@ -123,11 +123,13 @@ alter table "public"."user" add column "created_at" timestamp with time zone not
 
 alter table "public"."user" add column "updated_at" timestamp with time zone not null default now();
 
+ALTER TABLE "public"."user"
+ALTER COLUMN "emailVerified" SET DATA TYPE boolean
+USING "emailVerified" IS NOT NULL;
+
 alter table "public"."user" alter column "emailVerified" set default false;
 
 alter table "public"."user" alter column "emailVerified" set not null;
-
-alter table "public"."user" alter column "emailVerified" set data type boolean using "emailVerified"::boolean;
 
 CREATE UNIQUE INDEX account_pkey ON public.account USING btree (id);
 
