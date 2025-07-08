@@ -107,7 +107,9 @@ alter table "public"."account" add column "id" text not null default (gen_random
 
 alter table "public"."account" add column "updated_at" timestamp with time zone not null default now();
 
-alter table "public"."account" alter column "expires_at" set data type timestamp with time zone using "expires_at"::timestamp with time zone;
+ALTER TABLE "public"."account"
+ALTER COLUMN "expires_at" SET DATA TYPE timestamp with time zone
+USING to_timestamp("expires_at");
 
 alter table "public"."session" add column "id" text not null default (gen_random_uuid())::text;
 
