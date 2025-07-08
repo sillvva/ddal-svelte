@@ -57,10 +57,10 @@
 		<br />
 		Log Sheet
 	</h1>
-	<div class="flex flex-col gap-4">
+	<div class="max-xs:max-w-60 max-xs:gap-3 flex max-w-80 flex-col gap-4">
 		{#each PROVIDERS as provider}
 			<button
-				class="bg-base-200 text-base-content hover:bg-base-300 flex h-16 items-center gap-4 rounded-lg px-8 py-4 transition-colors"
+				class="bg-base-200 text-base-content hover:bg-base-300 max-xs:h-12 max-xs:px-4 flex h-16 items-center gap-4 rounded-lg px-8 py-4 transition-colors"
 				onclick={() => {
 					console.log("Signing in with", provider.name);
 					authClient.signIn
@@ -82,13 +82,15 @@
 				}}
 				aria-label="Sign in with {provider.name}"
 			>
-				<span class={twMerge("iconify-color h-8 w-8", provider.iconify)}></span>
-				<span class="flex h-full flex-1 items-center justify-center text-xl font-semibold">Sign In with {provider.name}</span>
+				<span class={twMerge("iconify-color max-xs:size-5 size-8", provider.iconify)}></span>
+				<span class="max-xs:text-base flex h-full flex-1 items-center justify-center text-xl font-semibold"
+					>Sign In with {provider.name}</span
+				>
 			</button>
 		{/each}
 		<hr class="border-base-content" />
 		<button
-			class="bg-base-200 text-base-content hover:bg-base-300 flex h-16 items-center gap-4 rounded-lg px-8 py-4 transition-colors"
+			class="bg-base-200 text-base-content hover:bg-base-300 max-xs:h-12 max-xs:px-4 flex h-16 items-center gap-4 rounded-lg px-8 py-4 transition-colors"
 			onclick={() => {
 				console.log("Signing in with Passkey");
 				authClient.signIn.passkey({
@@ -101,11 +103,22 @@
 			}}
 			aria-label="Sign in with Passkey"
 		>
-			<span class="iconify material-symbols--passkey h-8 w-8"></span>
-			<span class="flex h-full flex-1 items-center justify-center text-xl font-semibold">Sign In with Passkey</span>
+			<span class="iconify material-symbols--passkey max-xs:size-5 size-8"></span>
+			<span class="max-xs:text-base flex h-full flex-1 items-center justify-center text-xl font-semibold"
+				>Sign In with Passkey</span
+			>
 		</button>
-		<span class="text-base-content max-w-72 text-center text-xs text-balance">
+		<span class="text-base-content text-center text-xs text-pretty">
 			You must have an account and then add a Passkey in settings before you can sign in with a Passkey.
 		</span>
+		<div class="card bg-primary/50 shadow-sm">
+			<div class="card-body p-4">
+				<h3 class="text-xl">Important Notice</h3>
+				<p class="text-base-content text-xs text-pretty">
+					Authentication has been migrated to a new API. If you had a Passkey prior to July 8th, 2025, you will need to sign in
+					with another method and then add it again.
+				</p>
+			</div>
+		</div>
 	</div>
 </main>
