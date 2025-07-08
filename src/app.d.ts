@@ -1,8 +1,7 @@
 // See https://kit.svelte.dev/docs/types#app
 // for information about these interfaces
 
-import type { UserId } from "$lib/schemas";
-import type { Account, Passkey } from "$server/db/schema";
+import type { LocalsSession, LocalsUser } from "$lib/schemas";
 import "@auth/sveltekit";
 import "@total-typescript/ts-reset/fetch";
 import "@total-typescript/ts-reset/json-parse";
@@ -15,7 +14,7 @@ declare global {
 		}
 		interface PageData {
 			user:
-				| (User & {
+				| (LocalsUser & {
 						session: {
 							userAgent?: string | null;
 							ipAddress?: string | null;
@@ -52,33 +51,6 @@ declare global {
 			};
 		}
 	}
-
-	interface Session {
-		id: string;
-		token: string;
-		userId: string;
-		ipAddress?: string | null;
-		userAgent?: string | null;
-		expiresAt: Date;
-		createdAt: Date;
-		updatedAt: Date;
-	}
-
-	interface User {
-		id: UserId;
-		name: string;
-		email: string;
-		emailVerified: boolean;
-		image?: string | null;
-		createdAt: Date;
-		updatedAt: Date;
-		accounts: Account[];
-		passkeys: Passkey[];
-	}
-
-	type LocalsSession = Session & {
-		user: User;
-	};
 
 	interface ViewTransition {
 		/**

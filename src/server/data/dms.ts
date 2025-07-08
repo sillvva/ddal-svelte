@@ -1,4 +1,4 @@
-import type { DungeonMasterId, UserId } from "$lib/schemas";
+import type { DungeonMasterId, LocalsUser, UserId } from "$lib/schemas";
 import { createUserDM } from "$server/actions/dms";
 import { type InferQueryResult } from "$server/db";
 import { DBService, FetchError } from "$server/db/effect";
@@ -31,7 +31,7 @@ export type UserDMs = InferQueryResult<
 >[];
 
 export function getUserDMs(
-	user: LocalsSession["user"],
+	user: LocalsUser,
 	{ id, includeLogs = true }: { id?: DungeonMasterId; includeLogs?: boolean } = {}
 ): Effect.Effect<UserDMs, FetchDMError, DBService> {
 	return Effect.gen(function* () {
@@ -82,7 +82,7 @@ export function getUserDMs(
 	});
 }
 
-function addUserDM(user: LocalsSession["user"], dms: UserDMs) {
+function addUserDM(user: LocalsUser, dms: UserDMs) {
 	return Effect.gen(function* () {
 		const result = yield* createUserDM(user).pipe(Effect.catchAll(createDMError));
 		return dms.toSpliced(0, 0, {

@@ -1,7 +1,6 @@
-import { characterIdSchema, logIdSchema } from "$lib/schemas.js";
+import { assertUser, characterIdSchema, logIdSchema } from "$lib/schemas.js";
 import { deleteCharacter } from "$server/actions/characters";
 import { deleteLog } from "$server/actions/logs";
-import { assertUser } from "$server/auth.js";
 import { save } from "$server/db/effect";
 import { error, redirect } from "@sveltejs/kit";
 import { fail, setError, superValidate } from "sveltekit-superforms";

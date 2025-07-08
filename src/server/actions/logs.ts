@@ -1,4 +1,4 @@
-import { type LogId, type LogSchema, type UserId } from "$lib/schemas";
+import { type LocalsUser, type LogId, type LogSchema, type UserId } from "$lib/schemas";
 import { getFuzzyDM } from "$server/data/dms";
 import { getLog } from "$server/data/logs";
 import { buildConflictUpdateColumns } from "$server/db";
@@ -12,14 +12,14 @@ function createLogError(err: unknown): SaveLogError {
 	return SaveLogError.from(err);
 }
 
-export function saveLog(input: LogSchema, user: LocalsSession["user"]) {
+export function saveLog(input: LogSchema, user: LocalsUser) {
 	return Effect.tryPromise({
 		try: () => withTransaction(upsertLog(input, user)),
 		catch: createLogError
 	});
 }
 
-function upsertLog(input: LogSchema, user: LocalsSession["user"]) {
+function upsertLog(input: LogSchema, user: LocalsUser) {
 	return Effect.gen(function* () {
 		const Database = yield* DBService;
 		const db = yield* Database.db;
@@ -95,7 +95,7 @@ function upsertLog(input: LogSchema, user: LocalsSession["user"]) {
 	});
 }
 
-function validateDM(input: LogSchema, user: LocalsSession["user"]) {
+function validateDM(input: LogSchema, user: LocalsUser) {
 	return Effect.gen(function* () {
 		let isUser = input.isDmLog || input.dm.isUser || ["", user.name.toLowerCase()].includes(input.dm.name.toLowerCase().trim());
 		let dmId = input.dm.id;
@@ -134,7 +134,7 @@ function validateDM(input: LogSchema, user: LocalsSession["user"]) {
 	});
 }
 
-function upsertLogDM(input: LogSchema, user: LocalsSession["user"]) {
+function upsertLogDM(input: LogSchema, user: LocalsUser) {
 	return Effect.gen(function* () {
 		const Database = yield* DBService;
 		const db = yield* Database.db;

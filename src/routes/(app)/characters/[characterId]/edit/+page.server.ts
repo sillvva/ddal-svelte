@@ -1,9 +1,8 @@
 import { BLANK_CHARACTER } from "$lib/constants.js";
 import { defaultLogSchema } from "$lib/entities.js";
-import { characterIdSchema, editCharacterSchema } from "$lib/schemas";
+import { assertUser, characterIdSchema, editCharacterSchema } from "$lib/schemas";
 import { saveCharacter } from "$server/actions/characters.js";
 import { saveLog } from "$server/actions/logs.js";
-import { assertUser } from "$server/auth";
 import { save } from "$server/db/effect";
 import { error } from "@sveltejs/kit";
 import { fail, setError, superValidate } from "sveltekit-superforms";

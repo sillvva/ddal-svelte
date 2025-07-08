@@ -1,4 +1,4 @@
-import { type DungeonMasterId, type DungeonMasterSchema } from "$lib/schemas";
+import { type DungeonMasterId, type DungeonMasterSchema, type LocalsUser } from "$lib/schemas";
 import { getUserDMs, type UserDMs } from "$server/data/dms";
 import { buildConflictUpdateColumns } from "$server/db";
 import { DBService, FormError } from "$server/db/effect";
@@ -11,7 +11,7 @@ function createDMError(err: unknown): SaveDMError {
 	return SaveDMError.from(err);
 }
 
-export function saveDM(dmId: DungeonMasterId, user: LocalsSession["user"], data: DungeonMasterSchema) {
+export function saveDM(dmId: DungeonMasterId, user: LocalsUser, data: DungeonMasterSchema) {
 	return Effect.gen(function* () {
 		const Database = yield* DBService;
 		const db = yield* Database.db;
@@ -39,7 +39,7 @@ export function saveDM(dmId: DungeonMasterId, user: LocalsSession["user"], data:
 	});
 }
 
-export function createUserDM(user: LocalsSession["user"]) {
+export function createUserDM(user: LocalsUser) {
 	return Effect.gen(function* () {
 		const Database = yield* DBService;
 		const db = yield* Database.db;

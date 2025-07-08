@@ -1,5 +1,6 @@
 import type { FullCharacterData } from "$server/data/characters";
 import type { Prettify } from "@sillvva/utils";
+import { redirect } from "@sveltejs/kit";
 import * as v from "valibot";
 import { themeGroups, themes } from "./constants";
 
@@ -255,3 +256,67 @@ export const appCookieSchema = v.optional(
 );
 
 export const appDefaults = v.parse(appCookieSchema, {});
+
+export type LocalsAccount = v.InferOutput<typeof localsAccountSchema>;
+export const localsAccountSchema = v.object({
+	id: v.string(),
+	accountId: v.string(),
+	providerId: v.string(),
+	userId: userIdSchema,
+	refreshToken: v.nullable(v.string()),
+	accessToken: v.nullable(v.string()),
+	accessTokenExpiresAt: v.nullable(v.date()),
+	scope: v.nullable(v.string()),
+	idToken: v.nullable(v.string()),
+	createdAt: v.date(),
+	updatedAt: v.date()
+});
+
+export type LocalsPasskey = v.InferOutput<typeof localsPasskeySchema>;
+export const localsPasskeySchema = v.object({
+	id: v.string(),
+	name: v.nullable(v.string()),
+	publicKey: v.string(),
+	userId: userIdSchema,
+	credentialID: v.string(),
+	counter: v.number(),
+	deviceType: v.string(),
+	backedUp: v.boolean(),
+	transports: v.string(),
+	createdAt: v.date(),
+	aaguid: v.nullable(v.string())
+});
+
+export type LocalsUser = v.InferOutput<typeof localsUserSchema>;
+export const localsUserSchema = v.object({
+	id: userIdSchema,
+	name: requiredString,
+	email: requiredString,
+	emailVerified: v.boolean(),
+	image: v.nullish(urlSchema),
+	createdAt: v.date(),
+	updatedAt: v.date(),
+	accounts: v.array(localsAccountSchema),
+	passkeys: v.array(localsPasskeySchema)
+});
+
+export type LocalsSession = v.InferOutput<typeof localsSessionSchema>;
+export const localsSessionSchema = v.object({
+	id: v.string(),
+	token: v.string(),
+	userId: userIdSchema,
+	ipAddress: v.nullish(v.string()),
+	userAgent: v.nullish(v.string()),
+	expiresAt: v.date(),
+	createdAt: v.date(),
+	updatedAt: v.date(),
+	user: localsUserSchema
+});
+
+export function urlRedirect(url: URL) {
+	return `redirect=${encodeURIComponent(`${url.pathname}${url.search}`)}`;
+}
+
+export function assertUser<T extends LocalsUser>(user: T | undefined, redirectUrl: URL): asserts user is T {
+	if (!v.safeParse(localsUserSchema, user).success) redirect(302, `/?${urlRedirect(redirectUrl)}`);
+}

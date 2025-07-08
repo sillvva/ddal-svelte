@@ -1,6 +1,5 @@
-import { logSchema } from "$lib/schemas.js";
+import { assertUser, logSchema } from "$lib/schemas.js";
 import { deleteLog } from "$server/actions/logs";
-import { assertUser } from "$server/auth.js";
 import { getDMLogs } from "$server/data/logs";
 import { fetchWithFallback, save } from "$server/db/effect";
 import { fail, setError, superValidate } from "sveltekit-superforms";

@@ -130,6 +130,7 @@ export const passkey = pg.pgTable("passkey", {
 	userId: pg
 		.text()
 		.notNull()
+		.$type<UserId>()
 		.references(() => user.id, { onDelete: "cascade", onUpdate: "cascade" }),
 	credentialID: pg.text().notNull(),
 	counter: pg.bigint({ mode: "number" }).notNull().default(0),

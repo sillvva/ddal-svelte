@@ -1,4 +1,5 @@
 import { searchSections } from "$lib/constants.js";
+import type { LocalsUser } from "$lib/schemas.js";
 import { getUserCharacters } from "$server/data/characters.js";
 import { getUserDMs } from "$server/data/dms.js";
 import { getUserLogs } from "$server/data/logs.js";
@@ -21,7 +22,7 @@ const sectionData = {
 
 type GetData = Awaited<ReturnType<typeof getData>>;
 export type SearchData = Array<SectionData | GetData[number]>;
-async function getData(user: LocalsSession["user"]) {
+async function getData(user: LocalsUser) {
 	return [
 		{
 			title: "Characters" as const,

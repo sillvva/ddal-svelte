@@ -1,7 +1,6 @@
 import { defaultLogData, logDataToSchema } from "$lib/entities.js";
-import { dMLogSchema, logIdSchema } from "$lib/schemas";
+import { assertUser, dMLogSchema, logIdSchema } from "$lib/schemas";
 import { saveLog } from "$server/actions/logs";
-import { assertUser } from "$server/auth";
 import { getUserCharacters } from "$server/data/characters";
 import { getLog } from "$server/data/logs";
 import { fetchWithFallback, save } from "$server/db/effect";

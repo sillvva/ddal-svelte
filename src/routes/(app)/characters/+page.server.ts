@@ -1,4 +1,4 @@
-import { assertUser } from "$server/auth";
+import { assertUser } from "$lib/schemas.js";
 import { getUserCharacters } from "$server/data/characters";
 import { fetchWithFallback } from "$server/db/effect";
 
