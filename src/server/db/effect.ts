@@ -28,11 +28,11 @@ function hasMessage(obj: unknown): obj is { message: string } {
 	return typeof obj === "object" && obj !== null && "message" in obj && typeof (obj as any).message === "string";
 }
 
-function extractMessage(err: unknown, fallback = unknownError): string {
+function extractMessage(err: unknown): string {
 	if (!err) return "Undefined error";
 	if (typeof err === "string") return err;
 	if (hasMessage(err)) return err.message;
-	return fallback;
+	return "Unknown error";
 }
 
 export class FetchError extends Data.TaggedError("FetchError")<{
