@@ -1,6 +1,5 @@
-import { dungeonMasterSchema } from "$lib/schemas.js";
+import { assertUser, dungeonMasterSchema } from "$lib/schemas.js";
 import { deleteDM } from "$server/actions/dms.js";
-import { assertUser } from "$server/auth";
 import { getUserDMs } from "$server/data/dms";
 import { fetchWithFallback, save } from "$server/db/effect";
 import { fail, redirect } from "@sveltejs/kit";

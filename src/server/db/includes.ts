@@ -5,7 +5,7 @@ export const userIncludes = {
 		id: true,
 		name: true
 	}
-} as const satisfies QueryConfig<"users">;
+} as const satisfies QueryConfig<"user">;
 
 export const logIncludes = {
 	dm: true,

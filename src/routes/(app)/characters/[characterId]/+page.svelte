@@ -21,7 +21,7 @@
 
 	const global = getGlobal();
 
-	const myCharacter = $derived(data.character.userId === data.session?.user?.id);
+	const myCharacter = $derived(data.character.userId === data.user?.id);
 
 	let deletingLog = new SvelteSet<string>();
 
@@ -49,7 +49,7 @@
 	}
 </script>
 
-{#if data.session?.user}
+{#if data.user}
 	<div class="flex gap-4">
 		<BreadCrumbs />
 		{#if myCharacter}

@@ -1,4 +1,4 @@
-import { appCookieSchema, type UserId } from "$lib/schemas";
+import { appCookieSchema, type LocalsSession, type UserId } from "$lib/schemas";
 import { auth } from "$server/auth";
 import { serverGetCookie } from "$server/cookie";
 import { db } from "$server/db";
@@ -35,6 +35,7 @@ const session: Handle = async ({ event, resolve }) => {
 
 		localsSession = session && {
 			...session.session,
+			userId: session.session.userId as UserId,
 			user: {
 				...session.user,
 				id: session.user.id as UserId,

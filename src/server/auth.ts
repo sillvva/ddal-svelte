@@ -1,6 +1,4 @@
 import { privateEnv } from "$lib/env/private";
-import type { Prettify } from "@sillvva/utils";
-import { redirect } from "@sveltejs/kit";
 import { betterAuth } from "better-auth";
 import { drizzleAdapter } from "better-auth/adapters/drizzle";
 import { passkey } from "better-auth/plugins/passkey";
@@ -31,14 +29,3 @@ export const auth = betterAuth({
 		expiresIn: 60 * 60 * 24 * 30 // 30 days
 	}
 });
-
-function urlRedirect(url: URL) {
-	return `redirect=${encodeURIComponent(`${url.pathname}${url.search}`)}`;
-}
-
-export function assertUser<T extends User>(
-	user: T | undefined,
-	redirectUrl: URL
-): asserts user is Prettify<T & LocalsSession["user"]> {
-	if (!user || !user.id || !user.name || !user.email) redirect(302, `/?${urlRedirect(redirectUrl)}`);
-}

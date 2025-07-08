@@ -1,7 +1,6 @@
 import { defaultLogData, getItemEntities, logDataToSchema } from "$lib/entities.js";
-import { characterIdSchema, characterLogSchema, logIdSchema } from "$lib/schemas";
+import { assertUser, characterIdSchema, characterLogSchema, logIdSchema } from "$lib/schemas";
 import { saveLog } from "$server/actions/logs.js";
-import { assertUser } from "$server/auth.js";
 import { getCharacter } from "$server/data/characters";
 import { getUserDMs } from "$server/data/dms";
 import { getLog } from "$server/data/logs";
