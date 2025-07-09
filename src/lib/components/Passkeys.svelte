@@ -25,7 +25,7 @@
 	$effect(() => {
 		const emptyPasskey = passkeys.find((a) => !a.name);
 		if (emptyPasskey) {
-			initRename(emptyPasskey.credentialID, emptyPasskey.name || "");
+			initRename(emptyPasskey.id, emptyPasskey.name || "");
 		}
 	});
 
@@ -83,7 +83,7 @@
 	}
 
 	async function deleteWebAuthn(id: string) {
-		const auth = passkeys.find((a) => a.credentialID === id);
+		const auth = passkeys.find((a) => a.id === id);
 		if (!auth) return;
 		if (confirm(`Are you sure you want to delete "${auth.name}"?`)) {
 			const response = await fetch("/webAuthn", {
@@ -111,14 +111,14 @@
 		<li class="flex-row gap-2">
 			<button
 				class="group btn btn-ghost hover:bg-base-200 flex flex-1 gap-2 text-left"
-				onclick={() => initRename(passkey.credentialID, passkey.name || "")}
+				onclick={() => initRename(passkey.id, passkey.name || "")}
 				aria-label="Rename Passkey"
 			>
 				<span class="iconify material-symbols--passkey group-hover:mdi--pencil size-6"></span>
 				<span class="ellipsis-nowrap flex-1">
 					{#if passkey.name}
 						{passkey.name}
-					{:else if renameId === passkey.credentialID}
+					{:else if renameId === passkey.id}
 						Renaming...
 					{:else}
 						<span class="text-error">Unnamed</span>
@@ -129,7 +129,7 @@
 				class="btn btn-ghost text-error hover:bg-error hover:text-base-content"
 				onclick={(e) => {
 					e.stopPropagation();
-					deleteWebAuthn(passkey.credentialID);
+					deleteWebAuthn(passkey.id);
 				}}
 				aria-label="Delete Passkey"
 			>

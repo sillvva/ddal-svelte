@@ -297,7 +297,7 @@ export const localsUserSchema = v.object({
 	createdAt: v.date(),
 	updatedAt: v.date(),
 	accounts: v.array(localsAccountSchema),
-	passkeys: v.array(localsPasskeySchema)
+	passkeys: v.array(v.pick(localsPasskeySchema, ["id", "name", "createdAt"]))
 });
 
 export type LocalsSession = v.InferOutput<typeof localsSessionSchema>;

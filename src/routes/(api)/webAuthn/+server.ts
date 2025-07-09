@@ -21,17 +21,17 @@ export async function POST({ request, locals }) {
 			}
 		});
 
-		const auth = passkeys.find((a) => (id ? a.credentialID === id : a.name === ""));
+		const auth = passkeys.find((a) => (id ? a.id === id : a.name === ""));
 		if (!auth) return json({ success: false, error: "No passkey found", throw: true });
 		if (!name.trim()) name = authName(auth);
 
 		const existing = passkeys.find((a) => a.name === name);
-		if (existing && (!auth.name || (id && existing.credentialID !== id))) throw new Error("Name already exists");
+		if (existing && (!auth.name || (id && existing.id !== id))) throw new Error("Name already exists");
 
 		await db
 			.update(passkey)
 			.set({ name: name.trim() })
-			.where(and(eq(passkey.userId, auth.userId), eq(passkey.credentialID, auth.credentialID)));
+			.where(and(eq(passkey.id, auth.id)));
 
 		return json({ success: true, name } satisfies RenameWebAuthnResponse);
 	} catch (e) {
@@ -53,16 +53,16 @@ export async function DELETE({ request, locals }) {
 		const { id } = (await request.json()) as DeleteWebAuthnInput;
 		const auth = await q.passkey.findFirst({
 			where: {
+				id: id,
 				userId: {
 					eq: session.user.id
-				},
-				credentialID: id
+				}
 			}
 		});
 
 		if (!auth) throw new Error("No passkey found");
 
-		await db.delete(passkey).where(and(eq(passkey.userId, auth.userId), eq(passkey.credentialID, auth.credentialID)));
+		await db.delete(passkey).where(and(eq(passkey.id, auth.id)));
 
 		return json({ success: true } satisfies DeleteWebAuthnResponse);
 	} catch (e) {

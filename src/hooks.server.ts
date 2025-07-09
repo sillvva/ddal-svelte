@@ -61,6 +61,11 @@ const session: Handle = async ({ event, resolve }) => {
 	});
 
 	const passkeys = await db.query.passkey.findMany({
+		columns: {
+			id: true,
+			name: true,
+			createdAt: true
+		},
 		where: {
 			userId: {
 				eq: session?.user.id as UserId
