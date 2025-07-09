@@ -1,4 +1,5 @@
 import { privateEnv } from "$lib/env/private";
+import { createId } from "@paralleldrive/cuid2";
 import { betterAuth } from "better-auth";
 import { drizzleAdapter } from "better-auth/adapters/drizzle";
 import { passkey } from "better-auth/plugins/passkey";
@@ -27,5 +28,10 @@ export const auth = betterAuth({
 	},
 	session: {
 		expiresIn: 60 * 60 * 24 * 30 // 30 days
+	},
+	advanced: {
+		database: {
+			generateId: () => createId()
+		}
 	}
 });

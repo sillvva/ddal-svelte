@@ -102,7 +102,11 @@ export const session = pg.pgTable(
 );
 
 export const verification = pg.pgTable("verification", {
-	id: pg.text().primaryKey().notNull(),
+	id: pg
+		.text()
+		.primaryKey()
+		.notNull()
+		.$default(() => createId()),
 	identifier: pg.text().notNull(),
 	value: pg.text().notNull(),
 	expiresAt: pg.timestamp("expires_at", { mode: "date", withTimezone: true }).notNull(),
