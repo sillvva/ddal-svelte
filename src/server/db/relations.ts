@@ -2,26 +2,26 @@ import { defineRelations } from "drizzle-orm";
 import * as schema from "./schema";
 
 export const relations = defineRelations(schema, (r) => ({
-	users: {
+	user: {
 		accounts: r.many.account(),
 		sessions: r.many.session(),
 		characters: r.many.characters(),
 		dungeonMasters: r.many.dungeonMasters(),
 		passkeys: r.many.passkey()
 	},
-	accounts: {
+	account: {
 		user: r.one.user({
 			from: r.account.userId,
 			to: r.user.id
 		})
 	},
-	passkeys: {
+	passkey: {
 		user: r.one.user({
 			from: r.passkey.userId,
 			to: r.user.id
 		})
 	},
-	sessions: {
+	session: {
 		user: r.one.user({
 			from: r.session.userId,
 			to: r.user.id

@@ -14,7 +14,7 @@ type Provider = {
 	iconify?: string;
 	account?: Account;
 };
-export type ProviderId = (typeof PROVIDERS)[number]["id"] | "webauthn" | (string & {});
+export type ProviderId = (typeof PROVIDERS)[number]["id"];
 export const PROVIDERS = [
 	{
 		name: "Google",

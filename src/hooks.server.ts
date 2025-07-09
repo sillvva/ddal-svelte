@@ -1,3 +1,4 @@
+import { PROVIDERS } from "$lib/constants";
 import { privateEnv } from "$lib/env/private";
 import { appCookieSchema, type UserId } from "$lib/schemas";
 import { serverGetCookie } from "$server/cookie";
@@ -46,46 +47,66 @@ const authHandler: Handle = async ({ event, resolve }) => {
 };
 
 const session: Handle = async ({ event, resolve }) => {
+	if (!event.route.id) return await resolve(event);
+
 	const session = await auth.api
 		.getSession({
 			headers: event.request.headers
 		})
 		.catch(() => null);
 
-	const accounts = await db.query.account.findMany({
-		where: {
-			userId: {
-				eq: session?.user.id as UserId
-			}
-		}
-	});
+	if (!session) return await resolve(event);
 
-	const passkeys = await db.query.passkey.findMany({
+	const userId = session.user.id as UserId;
+
+	const user = await db.query.user.findFirst({
 		columns: {
-			id: true,
-			name: true,
-			createdAt: true
+			id: true
+		},
+		with: {
+			accounts: {
+				columns: {
+					id: true,
+					accountId: true,
+					providerId: true,
+					scope: true,
+					createdAt: true,
+					updatedAt: true
+				},
+				where: {
+					providerId: {
+						in: PROVIDERS.map((p) => p.id)
+					}
+				}
+			},
+			passkeys: {
+				columns: {
+					id: true,
+					name: true,
+					createdAt: true
+				}
+			}
 		},
 		where: {
-			userId: {
-				eq: session?.user.id as UserId
+			id: {
+				eq: userId
 			}
 		}
 	});
 
-	event.locals.session = session && {
-		...session.session,
-		userId: session.session.userId as UserId,
-		user: {
-			...session.user,
-			id: session.user.id as UserId,
-			accounts,
-			passkeys
-		}
-	};
+	event.locals.session =
+		session && user
+			? {
+					...session.session,
+					userId,
+					user: {
+						...session.user,
+						...user
+					}
+				}
+			: null;
 
-	const response = await resolve(event);
-	return response;
+	return await resolve(event);
 };
 
 const preloadTheme: Handle = async ({ event, resolve }) => {
