@@ -47,6 +47,7 @@ const authHandler: Handle = async ({ event, resolve }) => {
 };
 
 const session: Handle = async ({ event, resolve }) => {
+	event.locals.session = null;
 	if (!event.route.id) return await resolve(event);
 
 	const session = await auth.api
