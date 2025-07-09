@@ -22,7 +22,7 @@ export async function POST({ request, locals }) {
 		});
 
 		const auth = passkeys.find((a) => (id ? a.id === id : a.name === ""));
-		if (!auth) return json({ success: false, error: "No passkey found", throw: true });
+		if (!auth) return json({ success: false, error: "No passkey found", throw: true }, { status: 404 });
 		if (!name.trim()) name = authName(auth);
 
 		const existing = passkeys.find((a) => a.name === name);
@@ -35,10 +35,10 @@ export async function POST({ request, locals }) {
 
 		return json({ success: true, name } satisfies RenameWebAuthnResponse);
 	} catch (e) {
-		if (e instanceof Error) return json({ success: false, error: e.message } satisfies RenameWebAuthnResponse);
+		if (e instanceof Error) return json({ success: false, error: e.message } satisfies RenameWebAuthnResponse, { status: 500 });
 		else {
 			console.error(e);
-			return json({ success: false, error: "Unknown error" } satisfies RenameWebAuthnResponse);
+			return json({ success: false, error: "Unknown error" } satisfies RenameWebAuthnResponse, { status: 500 });
 		}
 	}
 }
@@ -60,16 +60,16 @@ export async function DELETE({ request, locals }) {
 			}
 		});
 
-		if (!auth) throw new Error("No passkey found");
+		if (!auth) return json({ success: false, error: "No passkey found" }, { status: 404 });
 
 		await db.delete(passkey).where(and(eq(passkey.id, auth.id)));
 
 		return json({ success: true } satisfies DeleteWebAuthnResponse);
 	} catch (e) {
-		if (e instanceof Error) return json({ success: false, error: e.message } satisfies DeleteWebAuthnResponse);
+		if (e instanceof Error) return json({ success: false, error: e.message } satisfies DeleteWebAuthnResponse, { status: 500 });
 		else {
 			console.error(e);
-			return json({ success: false, error: "Unknown error" } satisfies DeleteWebAuthnResponse);
+			return json({ success: false, error: "Unknown error" } satisfies DeleteWebAuthnResponse, { status: 500 });
 		}
 	}
 }
