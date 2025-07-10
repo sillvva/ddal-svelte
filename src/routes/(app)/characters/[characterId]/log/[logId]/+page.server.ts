@@ -12,8 +12,8 @@ import { valibot } from "sveltekit-superforms/adapters";
 import { parse, safeParse } from "valibot";
 
 export const load = async (event) => {
-	const session = event.locals.session;
-	assertUser(session?.user, event.url);
+	const user = event.locals.user;
+	assertUser(user, event.url);
 
 	const parent = await event.parent();
 	const character = parent.character;
@@ -23,21 +23,20 @@ export const load = async (event) => {
 	if (!idResult.success) redirect(302, `/character/${character.id}`);
 	const logId = idResult.output;
 
-	let log =
-		(await fetchWithFallback(getLog(logId, session.user.id), () => undefined)) || defaultLogData(session.user.id, character);
+	let log = (await fetchWithFallback(getLog(logId, user.id), () => undefined)) || defaultLogData(user.id, character);
 	if (logId !== "new") {
 		if (!log.id) error(404, "Log not found");
 		if (log.isDmLog) redirect(302, `/dm-logs/${log.id}`);
 	}
 
-	const form = await superValidate(logDataToSchema(session.user.id, log), valibot(characterLogSchema(character)), {
+	const form = await superValidate(logDataToSchema(user.id, log), valibot(characterLogSchema(character)), {
 		errors: logId !== "new"
 	});
 
 	const itemEntities = getItemEntities(character, { excludeDropped: true, lastLogId: log.id });
 	const magicItems = itemEntities.magicItems.toSorted((a, b) => sorter(a.name, b.name));
 	const storyAwards = itemEntities.storyAwards.toSorted((a, b) => sorter(a.name, b.name));
-	const dms = await fetchWithFallback(getUserDMs(session.user), () => []);
+	const dms = await fetchWithFallback(getUserDMs(user), () => []);
 
 	return {
 		...event.params,
@@ -47,7 +46,7 @@ export const load = async (event) => {
 			href: `/characters/${character.id}/log/${form.data.id}`
 		}),
 		totalLevel: character.totalLevel,
-		user: { ...session.user, ...parent.user },
+		user: { ...user, ...parent.user },
 		magicItems,
 		storyAwards,
 		dms,
@@ -58,8 +57,8 @@ export const load = async (event) => {
 
 export const actions = {
 	saveLog: async (event) => {
-		const session = event.locals.session;
-		assertUser(session?.user, event.url);
+		const user = event.locals.user;
+		assertUser(user, event.url);
 
 		const characterId = parse(characterIdSchema, event.params.characterId);
 		const character = await fetchWithFallback(getCharacter(characterId), () => undefined);
@@ -69,13 +68,13 @@ export const actions = {
 		if (!idResult.success) redirect(302, `/character/${character.id}`);
 		const logId = idResult.output;
 
-		const log = await fetchWithFallback(getLog(logId, session.user.id), () => undefined);
+		const log = await fetchWithFallback(getLog(logId, user.id), () => undefined);
 		if (logId !== "new" && !log?.id) redirect(302, `/characters/${character.id}`);
 
 		const form = await superValidate(event, valibot(characterLogSchema(character)));
 		if (!form.valid) return fail(400, { form });
 
-		return await save(saveLog(form.data, session.user), {
+		return await save(saveLog(form.data, user), {
 			onError: (err) => err.toForm(form),
 			onSuccess: () => `/characters/${character.id}`
 		});

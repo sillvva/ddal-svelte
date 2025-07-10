@@ -9,7 +9,7 @@
 
 	let open = $state(false);
 
-	const user = $derived(page.data.user);
+	const { user, session } = $derived(page.data);
 	const authProviders = $derived(
 		PROVIDERS.map((p) => ({
 			...p,
@@ -163,7 +163,7 @@
 					User ID: {user.id}
 				</div>
 				<div class="px-4 text-xs text-gray-500 dark:text-gray-400">
-					Logged in {user.session.createdAt.toLocaleString()}
+					Logged in {session.createdAt.toLocaleString()}
 				</div>
 			</div>
 		{/if}

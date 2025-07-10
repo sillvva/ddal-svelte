@@ -7,8 +7,8 @@ import { and, eq } from "drizzle-orm";
 export type RenameWebAuthnResponse = { success: true; name: string } | { success: false; error: string; throw?: boolean };
 export type RenameWebAuthnInput = { name: string; id?: string };
 export async function POST({ request, locals }) {
-	const session = locals.session;
-	if (!session?.user?.id) return json({ success: false, error: "Unauthorized" }, { status: 401 });
+	const user = locals.user;
+	if (!user?.id) return json({ success: false, error: "Unauthorized" }, { status: 401 });
 
 	let { name, id } = (await request.json()) as RenameWebAuthnInput;
 
@@ -16,7 +16,7 @@ export async function POST({ request, locals }) {
 		const passkeys = await q.passkey.findMany({
 			where: {
 				userId: {
-					eq: session.user.id
+					eq: user.id
 				}
 			}
 		});
@@ -47,15 +47,15 @@ export type DeleteWebAuthnResponse = { success: true } | { success: false; error
 export type DeleteWebAuthnInput = { id: string };
 export async function DELETE({ request, locals }) {
 	try {
-		const session = locals.session;
-		if (!session?.user?.id) return json({ success: false, error: "Unauthorized" }, { status: 401 });
+		const user = locals.user;
+		if (!user?.id) return json({ success: false, error: "Unauthorized" }, { status: 401 });
 
 		const { id } = (await request.json()) as DeleteWebAuthnInput;
 		const auth = await q.passkey.findFirst({
 			where: {
 				id: id,
 				userId: {
-					eq: session.user.id
+					eq: user.id
 				}
 			}
 		});

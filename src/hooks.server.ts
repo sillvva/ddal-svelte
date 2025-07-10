@@ -1,6 +1,6 @@
 import { PROVIDERS } from "$lib/constants";
 import { privateEnv } from "$lib/env/private";
-import { appCookieSchema, type UserId } from "$lib/schemas";
+import { appCookieSchema, localsSessionSchema, type UserId } from "$lib/schemas";
 import { serverGetCookie } from "$server/cookie";
 import { db } from "$server/db";
 import { createId } from "@paralleldrive/cuid2";
@@ -10,6 +10,7 @@ import { betterAuth } from "better-auth";
 import { drizzleAdapter } from "better-auth/adapters/drizzle";
 import { passkey } from "better-auth/plugins/passkey";
 import { svelteKitHandler } from "better-auth/svelte-kit";
+import { parse } from "valibot";
 
 export const auth = betterAuth({
 	appName: "Adventurers League Log Sheet",
@@ -47,23 +48,19 @@ const authHandler: Handle = async ({ event, resolve }) => {
 };
 
 const session: Handle = async ({ event, resolve }) => {
-	event.locals.session = null;
 	if (!event.route.id) return await resolve(event);
 
-	const session = await auth.api
+	const { session, user } = await auth.api
 		.getSession({
 			headers: event.request.headers
 		})
-		.catch(() => null);
+		.then((r) => r || { session: null, user: null })
+		.catch(() => ({ session: null, user: null }));
 
-	if (!session) return await resolve(event);
+	if (!user) return await resolve(event);
 
-	const userId = session.user.id as UserId;
-
-	const user = await db.query.user.findFirst({
-		columns: {
-			id: true
-		},
+	event.locals.session = parse(localsSessionSchema, session);
+	event.locals.user = await db.query.user.findFirst({
 		with: {
 			accounts: {
 				columns: {
@@ -90,22 +87,10 @@ const session: Handle = async ({ event, resolve }) => {
 		},
 		where: {
 			id: {
-				eq: userId
+				eq: user.id as UserId
 			}
 		}
 	});
-
-	event.locals.session =
-		session && user
-			? {
-					...session.session,
-					userId,
-					user: {
-						...session.user,
-						...user
-					}
-				}
-			: null;
 
 	return await resolve(event);
 };

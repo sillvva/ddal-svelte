@@ -303,14 +303,12 @@ export const localsUserSchema = v.object({
 export type LocalsSession = v.InferOutput<typeof localsSessionSchema>;
 export const localsSessionSchema = v.object({
 	id: v.string(),
-	token: v.string(),
 	userId: userIdSchema,
 	ipAddress: v.nullish(v.string()),
 	userAgent: v.nullish(v.string()),
 	expiresAt: v.date(),
 	createdAt: v.date(),
-	updatedAt: v.date(),
-	user: localsUserSchema
+	updatedAt: v.date()
 });
 
 export function urlRedirect(url: URL) {
