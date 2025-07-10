@@ -1,6 +1,4 @@
 buildImage = 'ghcr.io/railwayapp/nixpacks:latest'
 
 [phases.setup]
-  nixPkgs = ['nodejs_22','pnpm-9_x','openssl']
-  nixOverlays = ['https://github.com/railwayapp/nix-npm-overlay/archive/main.tar.gz']
   nixpkgsArchive = '5148520bfab61f99fd25fb9ff7bfbb50dad3c9db'
