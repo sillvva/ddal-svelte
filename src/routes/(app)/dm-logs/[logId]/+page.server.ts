@@ -1,6 +1,7 @@
 import { defaultLogData, logDataToSchema } from "$lib/entities.js";
-import { assertUser, dMLogSchema, logIdSchema } from "$lib/schemas";
+import { dMLogSchema, logIdSchema } from "$lib/schemas";
 import { saveLog } from "$server/actions/logs";
+import { assertUser } from "$server/auth";
 import { getUserCharacters } from "$server/data/characters";
 import { getLog } from "$server/data/logs";
 import { fetchWithFallback, save } from "$server/db/effect";
@@ -11,7 +12,7 @@ import { safeParse } from "valibot";
 
 export const load = async (event) => {
 	const user = event.locals.user;
-	assertUser(user, event.url);
+	assertUser(user);
 
 	const parent = await event.parent();
 
@@ -54,7 +55,7 @@ export const load = async (event) => {
 export const actions = {
 	saveLog: async (event) => {
 		const user = event.locals.user;
-		assertUser(user, event.url);
+		assertUser(user);
 
 		const idResult = safeParse(logIdSchema, event.params.logId || "");
 		if (!idResult.success) redirect(302, `/dm-logs`);

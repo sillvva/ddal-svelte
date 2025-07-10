@@ -1,6 +1,5 @@
 import type { FullCharacterData } from "$server/data/characters";
 import type { Prettify } from "@sillvva/utils";
-import { redirect } from "@sveltejs/kit";
 import * as v from "valibot";
 import { PROVIDERS, themeGroups, themes } from "./constants";
 
@@ -310,11 +309,3 @@ export const localsSessionSchema = v.object({
 	createdAt: v.date(),
 	updatedAt: v.date()
 });
-
-export function urlRedirect(url: URL) {
-	return `redirect=${encodeURIComponent(`${url.pathname}${url.search}`)}`;
-}
-
-export function assertUser<T extends LocalsUser>(user: T | undefined, redirectUrl: URL): asserts user is T {
-	if (!v.safeParse(localsUserSchema, user).success) redirect(302, `/?${urlRedirect(redirectUrl)}`);
-}

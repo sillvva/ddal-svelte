@@ -1,5 +1,6 @@
-import { assertUser, dungeonMasterIdSchema, dungeonMasterSchema } from "$lib/schemas";
+import { dungeonMasterIdSchema, dungeonMasterSchema } from "$lib/schemas";
 import { saveDM } from "$server/actions/dms";
+import { assertUser } from "$server/auth";
 import { getUserDMs } from "$server/data/dms";
 import { fetchWithFallback, save } from "$server/db/effect";
 import { error, redirect } from "@sveltejs/kit";
@@ -9,7 +10,7 @@ import { safeParse } from "valibot";
 
 export const load = async (event) => {
 	const user = event.locals.user;
-	assertUser(user, event.url);
+	assertUser(user);
 
 	const parent = await event.parent();
 
@@ -50,7 +51,7 @@ export const load = async (event) => {
 export const actions = {
 	saveDM: async (event) => {
 		const user = event.locals.user;
-		assertUser(user, event.url);
+		assertUser(user);
 
 		const idResult = safeParse(dungeonMasterIdSchema, event.params.dmId || "");
 		if (!idResult.success) redirect(302, `/dms`);

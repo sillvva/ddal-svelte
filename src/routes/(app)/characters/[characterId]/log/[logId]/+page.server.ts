@@ -1,6 +1,7 @@
 import { defaultLogData, getItemEntities, logDataToSchema } from "$lib/entities.js";
-import { assertUser, characterIdSchema, characterLogSchema, logIdSchema } from "$lib/schemas";
+import { characterIdSchema, characterLogSchema, logIdSchema } from "$lib/schemas";
 import { saveLog } from "$server/actions/logs.js";
+import { assertUser } from "$server/auth";
 import { getCharacter } from "$server/data/characters";
 import { getUserDMs } from "$server/data/dms";
 import { getLog } from "$server/data/logs";
@@ -13,7 +14,7 @@ import { parse, safeParse } from "valibot";
 
 export const load = async (event) => {
 	const user = event.locals.user;
-	assertUser(user, event.url);
+	assertUser(user);
 
 	const parent = await event.parent();
 	const character = parent.character;
@@ -58,7 +59,7 @@ export const load = async (event) => {
 export const actions = {
 	saveLog: async (event) => {
 		const user = event.locals.user;
-		assertUser(user, event.url);
+		assertUser(user);
 
 		const characterId = parse(characterIdSchema, event.params.characterId);
 		const character = await fetchWithFallback(getCharacter(characterId), () => undefined);

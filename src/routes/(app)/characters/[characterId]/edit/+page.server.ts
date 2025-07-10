@@ -1,8 +1,9 @@
 import { BLANK_CHARACTER } from "$lib/constants.js";
 import { defaultLogSchema } from "$lib/entities.js";
-import { assertUser, characterIdSchema, editCharacterSchema } from "$lib/schemas";
+import { characterIdSchema, editCharacterSchema } from "$lib/schemas";
 import { saveCharacter } from "$server/actions/characters.js";
 import { saveLog } from "$server/actions/logs.js";
+import { assertUser } from "$server/auth";
 import { save } from "$server/db/effect";
 import { error } from "@sveltejs/kit";
 import { fail, setError, superValidate } from "sveltekit-superforms";
@@ -11,7 +12,7 @@ import { parse } from "valibot";
 
 export const load = async (event) => {
 	const user = event.locals.user;
-	assertUser(user, event.url);
+	assertUser(user);
 
 	const parent = await event.parent();
 
@@ -58,7 +59,7 @@ export const load = async (event) => {
 export const actions = {
 	saveCharacter: async (event) => {
 		const user = event.locals.user;
-		assertUser(user, event.url);
+		assertUser(user);
 
 		const form = await superValidate(event, valibot(editCharacterSchema));
 		if (!form.valid) return fail(400, { form });

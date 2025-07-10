@@ -1,5 +1,6 @@
-import { assertUser, dungeonMasterSchema } from "$lib/schemas.js";
+import { dungeonMasterSchema } from "$lib/schemas.js";
 import { deleteDM } from "$server/actions/dms.js";
+import { assertUser } from "$server/auth";
 import { getUserDMs } from "$server/data/dms";
 import { fetchWithFallback, save } from "$server/db/effect";
 import { fail, redirect } from "@sveltejs/kit";
@@ -9,7 +10,7 @@ import { pick } from "valibot";
 
 export const load = async (event) => {
 	const user = event.locals.user;
-	assertUser(user, event.url);
+	assertUser(user);
 
 	const dms = await fetchWithFallback(getUserDMs(user, { includeLogs: true }), () => []);
 
@@ -23,7 +24,7 @@ export const load = async (event) => {
 export const actions = {
 	deleteDM: async (event) => {
 		const user = event.locals.user;
-		assertUser(user, event.url);
+		assertUser(user);
 
 		const form = await superValidate(event, valibot(pick(dungeonMasterSchema, ["id"])));
 		if (!form.valid) return fail(400, { form });
