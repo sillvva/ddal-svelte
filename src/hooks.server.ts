@@ -1,8 +1,10 @@
-import { PROVIDERS, type ProviderId } from "$lib/constants";
+import { type ProviderId } from "$lib/constants";
 import { privateEnv } from "$lib/env/private";
 import { appCookieSchema, localsSessionSchema, type UserId } from "$lib/schemas";
+import { getLocalsUser } from "$server/auth";
 import { serverGetCookie } from "$server/cookie";
 import { db } from "$server/db";
+import { fetchWithFallback } from "$server/db/effect";
 import { createId } from "@paralleldrive/cuid2";
 import { type Handle } from "@sveltejs/kit";
 import { sequence } from "@sveltejs/kit/hooks";
@@ -57,47 +59,10 @@ const authHandler: Handle = async ({ event, resolve }) => {
 const session: Handle = async ({ event, resolve }) => {
 	if (!event.route.id) return await resolve(event);
 
-	const { session, user } = await auth.api
-		.getSession({
-			headers: event.request.headers
-		})
-		.then((r) => r || { session: null, user: null })
-		.catch(() => ({ session: null, user: null }));
+	const { session, user } = (await auth.api.getSession({ headers: event.request.headers })) ?? {};
 
-	if (!user) return await resolve(event);
-
-	event.locals.session = parse(localsSessionSchema, session);
-	event.locals.user = await db.query.user.findFirst({
-		with: {
-			accounts: {
-				columns: {
-					id: true,
-					accountId: true,
-					providerId: true,
-					scope: true,
-					createdAt: true,
-					updatedAt: true
-				},
-				where: {
-					providerId: {
-						in: PROVIDERS.map((p) => p.id)
-					}
-				}
-			},
-			passkeys: {
-				columns: {
-					id: true,
-					name: true,
-					createdAt: true
-				}
-			}
-		},
-		where: {
-			id: {
-				eq: user.id as UserId
-			}
-		}
-	});
+	event.locals.session = session && parse(localsSessionSchema, session);
+	event.locals.user = user && (await fetchWithFallback(getLocalsUser(user.id as UserId), () => undefined));
 
 	return await resolve(event);
 };
