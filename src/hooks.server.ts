@@ -1,4 +1,4 @@
-import { PROVIDERS } from "$lib/constants";
+import { PROVIDERS, type ProviderId } from "$lib/constants";
 import { privateEnv } from "$lib/env/private";
 import { appCookieSchema, localsSessionSchema, type UserId } from "$lib/schemas";
 import { serverGetCookie } from "$server/cookie";
@@ -11,6 +11,13 @@ import { drizzleAdapter } from "better-auth/adapters/drizzle";
 import { passkey } from "better-auth/plugins/passkey";
 import { svelteKitHandler } from "better-auth/svelte-kit";
 import { parse } from "valibot";
+
+type SocialProviders = {
+	[key in ProviderId]: {
+		clientId: string;
+		clientSecret: string;
+	};
+};
 
 export const auth = betterAuth({
 	appName: "Adventurers League Log Sheet",
@@ -26,7 +33,7 @@ export const auth = betterAuth({
 			clientId: privateEnv.DISCORD_CLIENT_ID,
 			clientSecret: privateEnv.DISCORD_CLIENT_SECRET
 		}
-	},
+	} satisfies SocialProviders,
 	plugins: [passkey()],
 	account: {
 		accountLinking: {
