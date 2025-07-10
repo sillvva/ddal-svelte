@@ -26,9 +26,7 @@
 		data={{
 			...page,
 			data: {
-				session: {
-					user: page.data.session?.user
-				},
+				user: page.data.user,
 				mobile: page.data.mobile
 			},
 			hoverSupport: mobile.current

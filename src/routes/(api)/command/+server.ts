@@ -78,8 +78,8 @@ async function getData(user: LocalsUser) {
 }
 
 export async function GET({ locals }) {
-	const session = locals.session;
-	if (!session?.user.id) return json({ error: "Unauthorized" }, { status: 401 });
+	const user = locals.user;
+	if (!user?.id) return json({ error: "Unauthorized" }, { status: 401 });
 
-	return json(([sectionData] as SearchData).concat(await getData(session.user)));
+	return json(([sectionData] as SearchData).concat(await getData(user)));
 }

@@ -1,37 +1,65 @@
-import { privateEnv } from "$lib/env/private";
-import { createId } from "@paralleldrive/cuid2";
-import { betterAuth } from "better-auth";
-import { drizzleAdapter } from "better-auth/adapters/drizzle";
-import { passkey } from "better-auth/plugins/passkey";
-import { db } from "./db";
+import { dev } from "$app/environment";
+import { getRequestEvent } from "$app/server";
+import { PROVIDERS } from "$lib/constants";
+import { localsUserSchema, type LocalsUser, type UserId } from "$lib/schemas";
+import { redirect } from "@sveltejs/kit";
+import { Effect } from "effect";
+import * as v from "valibot";
+import { DBService, FetchError } from "./db/effect";
 
-export const auth = betterAuth({
-	appName: "Adventurers League Log Sheet",
-	database: drizzleAdapter(db, {
-		provider: "pg"
-	}),
-	socialProviders: {
-		google: {
-			clientId: privateEnv.GOOGLE_CLIENT_ID,
-			clientSecret: privateEnv.GOOGLE_CLIENT_SECRET
-		},
-		discord: {
-			clientId: privateEnv.DISCORD_CLIENT_ID,
-			clientSecret: privateEnv.DISCORD_CLIENT_SECRET
-		}
-	},
-	plugins: [passkey()],
-	account: {
-		accountLinking: {
-			enabled: true
-		}
-	},
-	session: {
-		expiresIn: 60 * 60 * 24 * 30 // 30 days
-	},
-	advanced: {
-		database: {
-			generateId: () => createId()
-		}
+export function assertUser(user: LocalsUser | undefined): asserts user is LocalsUser {
+	const url = getRequestEvent().url;
+	const result = v.safeParse(localsUserSchema, user);
+	if (!result.success) {
+		if (dev) console.error("assertUser", v.summarize(result.issues));
+		redirect(302, `/?redirect=${encodeURIComponent(`${url.pathname}${url.search}`)}`);
 	}
-});
+}
+
+class FetchUserError extends FetchError {}
+function createFetchUserError(err: unknown): FetchUserError {
+	return FetchUserError.from(err);
+}
+
+export function getLocalsUser(userId: UserId) {
+	return Effect.gen(function* () {
+		const Database = yield* DBService;
+		const db = yield* Database.db;
+
+		return yield* Effect.tryPromise({
+			try: () =>
+				db.query.user.findFirst({
+					with: {
+						accounts: {
+							columns: {
+								id: true,
+								accountId: true,
+								providerId: true,
+								scope: true,
+								createdAt: true,
+								updatedAt: true
+							},
+							where: {
+								providerId: {
+									in: PROVIDERS.map((p) => p.id)
+								}
+							}
+						},
+						passkeys: {
+							columns: {
+								id: true,
+								name: true,
+								createdAt: true
+							}
+						}
+					},
+					where: {
+						id: {
+							eq: userId
+						}
+					}
+				}),
+			catch: createFetchUserError
+		});
+	});
+}

@@ -1,15 +1,15 @@
-import { assertUser } from "$lib/schemas.js";
+import { assertUser } from "$server/auth";
 import { getUserCharacters } from "$server/data/characters";
 import { fetchWithFallback } from "$server/db/effect";
 
 export const load = async (event) => {
-	const session = event.locals.session;
-	assertUser(session?.user, event.url);
+	const user = event.locals.user;
+	assertUser(user);
 
-	const characters = await fetchWithFallback(getUserCharacters(session.user.id, true), () => []);
+	const characters = await fetchWithFallback(getUserCharacters(user.id, true), () => []);
 
 	return {
-		title: `${session.user.name}'s Characters`,
+		title: `${user.name}'s Characters`,
 		characters
 	};
 };

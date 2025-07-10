@@ -12,6 +12,7 @@ if (!checked && building && privateEnv) {
 }
 
 export const load = async (event) => {
+	const user = event.locals.user;
 	const session = event.locals.session;
 
 	const userAgent = event.request.headers.get("user-agent");
@@ -24,14 +25,8 @@ export const load = async (event) => {
 
 	return {
 		breadcrumbs: [] as App.PageData["breadcrumbs"],
-		user: session?.user && {
-			...session.user,
-			session: {
-				userAgent: session.userAgent,
-				ipAddress: session.ipAddress,
-				createdAt: session.createdAt
-			}
-		},
+		user,
+		session,
 		mobile,
 		isMac,
 		app

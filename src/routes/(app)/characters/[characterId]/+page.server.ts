@@ -1,6 +1,7 @@
-import { assertUser, characterIdSchema, logIdSchema } from "$lib/schemas.js";
+import { characterIdSchema, logIdSchema } from "$lib/schemas.js";
 import { deleteCharacter } from "$server/actions/characters";
 import { deleteLog } from "$server/actions/logs";
+import { assertUser } from "$server/auth";
 import { save } from "$server/db/effect";
 import { error, redirect } from "@sveltejs/kit";
 import { fail, setError, superValidate } from "sveltekit-superforms";
@@ -24,13 +25,13 @@ export const load = async (event) => {
 
 export const actions = {
 	deleteCharacter: async (event) => {
-		const session = event.locals.session;
-		assertUser(session?.user, event.url);
+		const user = event.locals.user;
+		assertUser(user);
 
 		const form = await superValidate(event, valibot(object({ id: characterIdSchema })));
 		if (!form.valid) return fail(400, { form });
 
-		return await save(deleteCharacter(form.data.id, session.user.id), {
+		return await save(deleteCharacter(form.data.id, user.id), {
 			onError: (err) => {
 				setError(form, "", err.message);
 				return fail(err.status, { form });
@@ -39,13 +40,13 @@ export const actions = {
 		});
 	},
 	deleteLog: async (event) => {
-		const session = event.locals.session;
-		assertUser(session?.user, event.url);
+		const user = event.locals.user;
+		assertUser(user);
 
 		const form = await superValidate(event, valibot(object({ id: logIdSchema })));
 		if (!form.valid) return fail(400, { form });
 
-		return await save(deleteLog(form.data.id, session.user.id), {
+		return await save(deleteLog(form.data.id, user.id), {
 			onError: (err) => {
 				setError(form, "", err.message);
 				return fail(err.status, { form });

@@ -1,8 +1,7 @@
 import type { FullCharacterData } from "$server/data/characters";
 import type { Prettify } from "@sillvva/utils";
-import { redirect } from "@sveltejs/kit";
 import * as v from "valibot";
-import { themeGroups, themes } from "./constants";
+import { PROVIDERS, themeGroups, themes } from "./constants";
 
 export type BrandedType = v.InferOutput<ReturnType<typeof brandedId>>;
 function brandedId<T extends string>(name: T) {
@@ -261,7 +260,7 @@ export type LocalsAccount = v.InferOutput<typeof localsAccountSchema>;
 export const localsAccountSchema = v.object({
 	id: v.string(),
 	accountId: v.string(),
-	providerId: v.string(),
+	providerId: v.picklist(PROVIDERS.map((p) => p.id)),
 	userId: userIdSchema,
 	refreshToken: v.nullable(v.string()),
 	accessToken: v.nullable(v.string()),
@@ -296,27 +295,17 @@ export const localsUserSchema = v.object({
 	image: v.nullish(urlSchema),
 	createdAt: v.date(),
 	updatedAt: v.date(),
-	accounts: v.array(localsAccountSchema),
-	passkeys: v.array(localsPasskeySchema)
+	accounts: v.array(v.pick(localsAccountSchema, ["id", "accountId", "providerId", "createdAt", "updatedAt"])),
+	passkeys: v.array(v.pick(localsPasskeySchema, ["id", "name", "createdAt"]))
 });
 
 export type LocalsSession = v.InferOutput<typeof localsSessionSchema>;
 export const localsSessionSchema = v.object({
 	id: v.string(),
-	token: v.string(),
 	userId: userIdSchema,
 	ipAddress: v.nullish(v.string()),
 	userAgent: v.nullish(v.string()),
 	expiresAt: v.date(),
 	createdAt: v.date(),
-	updatedAt: v.date(),
-	user: localsUserSchema
+	updatedAt: v.date()
 });
-
-export function urlRedirect(url: URL) {
-	return `redirect=${encodeURIComponent(`${url.pathname}${url.search}`)}`;
-}
-
-export function assertUser<T extends LocalsUser>(user: T | undefined, redirectUrl: URL): asserts user is T {
-	if (!v.safeParse(localsUserSchema, user).success) redirect(302, `/?${urlRedirect(redirectUrl)}`);
-}

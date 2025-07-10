@@ -1,6 +1,7 @@
 import { defaultLogData, logDataToSchema } from "$lib/entities.js";
-import { assertUser, dMLogSchema, logIdSchema } from "$lib/schemas";
+import { dMLogSchema, logIdSchema } from "$lib/schemas";
 import { saveLog } from "$server/actions/logs";
+import { assertUser } from "$server/auth";
 import { getUserCharacters } from "$server/data/characters";
 import { getLog } from "$server/data/logs";
 import { fetchWithFallback, save } from "$server/db/effect";
@@ -10,9 +11,8 @@ import { valibot } from "sveltekit-superforms/adapters";
 import { safeParse } from "valibot";
 
 export const load = async (event) => {
-	const session = event.locals.session;
-	assertUser(session?.user, event.url);
-	const user = session.user;
+	const user = event.locals.user;
+	assertUser(user);
 
 	const parent = await event.parent();
 
@@ -36,7 +36,7 @@ export const load = async (event) => {
 		if (!log.isDmLog) redirect(302, `/characters/${log.characterId}/log/${log.id}`);
 	}
 
-	const form = await superValidate(logDataToSchema(session.user.id, log), valibot(dMLogSchema(characters)), {
+	const form = await superValidate(logDataToSchema(user.id, log), valibot(dMLogSchema(characters)), {
 		errors: logId !== "new"
 	});
 
@@ -54,21 +54,21 @@ export const load = async (event) => {
 
 export const actions = {
 	saveLog: async (event) => {
-		const session = event.locals.session;
-		assertUser(session?.user, event.url);
+		const user = event.locals.user;
+		assertUser(user);
 
 		const idResult = safeParse(logIdSchema, event.params.logId || "");
 		if (!idResult.success) redirect(302, `/dm-logs`);
 		const logId = idResult.output;
 
-		const log = await fetchWithFallback(getLog(logId, session.user.id), () => undefined);
+		const log = await fetchWithFallback(getLog(logId, user.id), () => undefined);
 		if (logId !== "new" && !log?.id) redirect(302, `/dm-logs`);
 
-		const characters = await fetchWithFallback(getUserCharacters(session.user.id), () => []);
+		const characters = await fetchWithFallback(getUserCharacters(user.id), () => []);
 		const form = await superValidate(event, valibot(dMLogSchema(characters)));
 		if (!form.valid) return fail(400, { form });
 
-		return await save(saveLog(form.data, session.user), {
+		return await save(saveLog(form.data, user), {
 			onError: (err) => err.toForm(form),
 			onSuccess: () => `/dm-logs`
 		});

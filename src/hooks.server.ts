@@ -1,54 +1,70 @@
-import { appCookieSchema, type LocalsSession, type UserId } from "$lib/schemas";
-import { auth } from "$server/auth";
+import { type ProviderId } from "$lib/constants";
+import { privateEnv } from "$lib/env/private";
+import { appCookieSchema, localsSessionSchema, type UserId } from "$lib/schemas";
+import { getLocalsUser } from "$server/auth";
 import { serverGetCookie } from "$server/cookie";
 import { db } from "$server/db";
+import { fetchWithFallback } from "$server/db/effect";
+import { createId } from "@paralleldrive/cuid2";
 import { type Handle } from "@sveltejs/kit";
 import { sequence } from "@sveltejs/kit/hooks";
+import { betterAuth } from "better-auth";
+import { drizzleAdapter } from "better-auth/adapters/drizzle";
+import { passkey } from "better-auth/plugins/passkey";
 import { svelteKitHandler } from "better-auth/svelte-kit";
+import { parse } from "valibot";
+
+type SocialProviders = {
+	[key in ProviderId]: {
+		clientId: string;
+		clientSecret: string;
+	};
+};
+
+export const auth = betterAuth({
+	appName: "Adventurers League Log Sheet",
+	database: drizzleAdapter(db, {
+		provider: "pg"
+	}),
+	socialProviders: {
+		google: {
+			clientId: privateEnv.GOOGLE_CLIENT_ID,
+			clientSecret: privateEnv.GOOGLE_CLIENT_SECRET
+		},
+		discord: {
+			clientId: privateEnv.DISCORD_CLIENT_ID,
+			clientSecret: privateEnv.DISCORD_CLIENT_SECRET
+		}
+	} satisfies SocialProviders,
+	plugins: [passkey()],
+	account: {
+		accountLinking: {
+			enabled: true
+		}
+	},
+	session: {
+		expiresIn: 60 * 60 * 24 * 30 // 30 days
+	},
+	advanced: {
+		database: {
+			generateId: () => createId()
+		}
+	}
+});
 
 const authHandler: Handle = async ({ event, resolve }) => {
 	return svelteKitHandler({ event, resolve, auth });
 };
 
 const session: Handle = async ({ event, resolve }) => {
-	let localsSession: LocalsSession | null = null;
-	try {
-		const session = await auth.api.getSession({
-			headers: event.request.headers
-		});
+	if (!event.route.id) return await resolve(event);
 
-		const accounts = await db.query.account.findMany({
-			where: {
-				userId: {
-					eq: session?.user.id as UserId
-				}
-			}
-		});
+	const { session, user } = (await auth.api.getSession({ headers: event.request.headers })) ?? {};
 
-		const passkeys = await db.query.passkey.findMany({
-			where: {
-				userId: {
-					eq: session?.user.id as UserId
-				}
-			}
-		});
+	event.locals.session = session && parse(localsSessionSchema, session);
+	event.locals.user = user && (await fetchWithFallback(getLocalsUser(user.id as UserId), () => undefined));
 
-		localsSession = session && {
-			...session.session,
-			userId: session.session.userId as UserId,
-			user: {
-				...session.user,
-				id: session.user.id as UserId,
-				accounts,
-				passkeys
-			}
-		};
-	} catch (e) {}
-
-	event.locals.session = localsSession;
-
-	const response = await resolve(event);
-	return response;
+	return await resolve(event);
 };
 
 const preloadTheme: Handle = async ({ event, resolve }) => {

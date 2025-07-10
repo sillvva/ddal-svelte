@@ -10,18 +10,12 @@ declare global {
 	namespace App {
 		// interface Error {}
 		interface Locals {
-			session: LocalsSession | null;
+			session?: LocalsSession;
+			user?: LocalsUser;
 		}
 		interface PageData {
-			user:
-				| (LocalsUser & {
-						session: {
-							userAgent?: string | null;
-							ipAddress?: string | null;
-							createdAt: Date;
-						};
-				  })
-				| undefined;
+			user: LocalsUser;
+			session: LocalsSession;
 			breadcrumbs: Array<{ name: string; href?: string }>;
 			mobile: boolean;
 			isMac: boolean;

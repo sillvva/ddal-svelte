@@ -24,12 +24,16 @@ export type Transaction = PgTransaction<PostgresJsQueryResultHKT, typeof schema,
 
 export type TRSchema = ExtractTablesWithRelations<typeof relations>;
 export type Filter<TableName extends keyof TRSchema> = RelationsFilter<TRSchema[TableName], TRSchema>;
-export type QueryConfig<TableName extends keyof TRSchema> = DBQueryConfig<"one" | "many", TRSchema, TRSchema[TableName]>;
-export type InferQueryResult<TableName extends keyof TRSchema, QBConfig extends QueryConfig<TableName> = {}> = BuildQueryResult<
+export type QueryConfig<TableName extends keyof TRSchema, Type extends "one" | "many" = "one"> = DBQueryConfig<
+	Type,
 	TRSchema,
-	TRSchema[TableName],
-	QBConfig
+	TRSchema[TableName]
 >;
+export type InferQueryResult<
+	TableName extends keyof TRSchema,
+	QBConfig extends QueryConfig<TableName, Type> = {},
+	Type extends "one" | "many" = "one"
+> = BuildQueryResult<TRSchema, TRSchema[TableName], QBConfig>;
 
 export function buildConflictUpdateColumns<
 	Table extends PgTable,
