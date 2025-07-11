@@ -3,8 +3,8 @@ import { defaultLogSchema } from "$lib/entities.js";
 import { characterIdSchema, editCharacterSchema } from "$lib/schemas";
 import { assertUser } from "$server/auth";
 import { save } from "$server/effect";
-import { withSaveCharacter } from "$server/effect/characters";
-import { withSaveLog } from "$server/effect/logs.js";
+import { withCharacter } from "$server/effect/characters";
+import { withLog } from "$server/effect/logs.js";
 import { error } from "@sveltejs/kit";
 import { fail, setError, superValidate } from "sveltekit-superforms";
 import { valibot } from "sveltekit-superforms/adapters";
@@ -68,7 +68,7 @@ export const actions = {
 		const characterId = parse(characterIdSchema, event.params.characterId);
 
 		return await save(
-			withSaveCharacter((service) => service.saveCharacter(characterId, user.id, data)),
+			withCharacter((service) => service.saveCharacter(characterId, user.id, data)),
 			{
 				onError: (err) => err.toForm(form),
 				onSuccess: async (character) => {
@@ -77,7 +77,7 @@ export const actions = {
 						log.name = "Character Creation";
 
 						return await save(
-							withSaveLog((service) => service.saveLog(log, user)),
+							withLog((service) => service.saveLog(log, user)),
 							{
 								onError: (err) => {
 									setError(form, "", err.message);

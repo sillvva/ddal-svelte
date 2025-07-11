@@ -1,7 +1,7 @@
 import { logSchema } from "$lib/schemas.js";
 import { assertUser } from "$server/auth";
 import { runOrThrow, save } from "$server/effect";
-import { withFetchLog, withSaveLog } from "$server/effect/logs.js";
+import { withLog } from "$server/effect/logs.js";
 import { fail, setError, superValidate } from "sveltekit-superforms";
 import { valibot } from "sveltekit-superforms/adapters";
 import { pick } from "valibot";
@@ -10,7 +10,7 @@ export const load = async (event) => {
 	const user = event.locals.user;
 	assertUser(user);
 
-	const logs = await runOrThrow(withFetchLog((service) => service.getDMLogs(user.id)));
+	const logs = await runOrThrow(withLog((service) => service.getDMLogs(user.id)));
 
 	return {
 		title: `${user.name}'s DM Logs`,
@@ -28,7 +28,7 @@ export const actions = {
 		if (!form.valid) return fail(400, { form });
 
 		return await save(
-			withSaveLog((service) => service.deleteLog(form.data.id, user.id)),
+			withLog((service) => service.deleteLog(form.data.id, user.id)),
 			{
 				onError: (err) => {
 					setError(form, "", err.message);

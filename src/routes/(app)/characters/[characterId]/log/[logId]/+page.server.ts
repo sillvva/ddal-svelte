@@ -2,9 +2,9 @@ import { defaultLogData, getItemEntities, logDataToSchema } from "$lib/entities.
 import { characterIdSchema, characterLogSchema, logIdSchema } from "$lib/schemas";
 import { assertUser } from "$server/auth";
 import { runOrThrow, save, validateForm } from "$server/effect";
-import { withFetchCharacter } from "$server/effect/characters.js";
-import { withFetchDM } from "$server/effect/dms.js";
-import { withFetchLog, withSaveLog } from "$server/effect/logs.js";
+import { withCharacter } from "$server/effect/characters.js";
+import { withDM } from "$server/effect/dms.js";
+import { withLog } from "$server/effect/logs.js";
 import { sorter } from "@sillvva/utils";
 import { error, redirect } from "@sveltejs/kit";
 import { Effect } from "effect";
@@ -25,7 +25,7 @@ export const load = async (event) => {
 
 	return await runOrThrow(
 		Effect.gen(function* () {
-			const log = (yield* withFetchLog((service) => service.getLog(logId, user.id))) || defaultLogData(user.id, character);
+			const log = (yield* withLog((service) => service.getLog(logId, user.id))) || defaultLogData(user.id, character);
 
 			if (logId !== "new") {
 				if (!log.id) error(404, "Log not found");
@@ -37,7 +37,7 @@ export const load = async (event) => {
 			const itemEntities = getItemEntities(character, { excludeDropped: true, lastLogId: log.id });
 			const magicItems = itemEntities.magicItems.toSorted((a, b) => sorter(a.name, b.name));
 			const storyAwards = itemEntities.storyAwards.toSorted((a, b) => sorter(a.name, b.name));
-			const dms = yield* withFetchDM((service) => service.getUserDMs(user, { includeLogs: true }));
+			const dms = yield* withDM((service) => service.getUserDMs(user, { includeLogs: true }));
 
 			return {
 				...event.params,
@@ -66,21 +66,21 @@ export const actions = {
 		return await runOrThrow(
 			Effect.gen(function* () {
 				const characterId = parse(characterIdSchema, event.params.characterId);
-				const character = yield* withFetchCharacter((service) => service.getCharacter(characterId));
+				const character = yield* withCharacter((service) => service.getCharacter(characterId));
 				if (!character) redirect(302, "/characters");
 
 				const idResult = safeParse(logIdSchema, event.params.logId || "");
 				if (!idResult.success) redirect(302, `/character/${character.id}`);
 				const logId = idResult.output;
 
-				const log = yield* withFetchLog((service) => service.getLog(logId, user.id));
+				const log = yield* withLog((service) => service.getLog(logId, user.id));
 				if (logId !== "new" && !log?.id) redirect(302, `/characters/${character.id}`);
 
 				const form = yield* validateForm(event, characterLogSchema(character));
 				if (!form.valid) return fail(400, { form });
 
 				return save(
-					withSaveLog((service) => service.saveLog(form.data, user)),
+					withLog((service) => service.saveLog(form.data, user)),
 					{
 						onError: (err) => err.toForm(form),
 						onSuccess: () => `/characters/${character.id}`

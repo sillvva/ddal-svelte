@@ -1,13 +1,13 @@
 import { characterIdSchema } from "$lib/schemas.js";
 import { runOrThrow } from "$server/effect";
-import { withFetchCharacter } from "$server/effect/characters";
+import { withCharacter } from "$server/effect/characters";
 import { parse } from "valibot";
 
 export const load = async (event) => {
 	const parent = await event.parent();
 	const characterId = parse(characterIdSchema, event.params.characterId);
 
-	const character = await runOrThrow(withFetchCharacter((service) => service.getCharacter(characterId)));
+	const character = await runOrThrow(withCharacter((service) => service.getCharacter(characterId)));
 
 	return {
 		breadcrumbs: parent.breadcrumbs.concat({

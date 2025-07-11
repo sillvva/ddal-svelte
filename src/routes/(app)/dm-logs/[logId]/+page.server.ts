@@ -2,8 +2,8 @@ import { defaultLogData, logDataToSchema } from "$lib/entities.js";
 import { dMLogSchema, logIdSchema } from "$lib/schemas";
 import { assertUser } from "$server/auth";
 import { runOrThrow, save, validateForm } from "$server/effect";
-import { withFetchCharacter } from "$server/effect/characters.js";
-import { withFetchLog, withSaveLog } from "$server/effect/logs";
+import { withCharacter } from "$server/effect/characters.js";
+import { withLog } from "$server/effect/logs";
 import { error, redirect } from "@sveltejs/kit";
 import { Effect } from "effect";
 import { fail } from "sveltekit-superforms";
@@ -21,7 +21,7 @@ export const load = async (event) => {
 
 	return await runOrThrow(
 		Effect.gen(function* () {
-			const characters = yield* withFetchCharacter((service) => service.getUserCharacters(user.id, true)).pipe(
+			const characters = yield* withCharacter((service) => service.getUserCharacters(user.id, true)).pipe(
 				Effect.map((characters) =>
 					characters.map((c) => ({
 						...c,
@@ -33,7 +33,7 @@ export const load = async (event) => {
 				)
 			);
 
-			let log = (yield* withFetchLog((service) => service.getLog(logId, user.id))) || defaultLogData(user.id);
+			let log = (yield* withLog((service) => service.getLog(logId, user.id))) || defaultLogData(user.id);
 			if (logId !== "new") {
 				if (!log.id) error(404, "Log not found");
 				if (!log.isDmLog) redirect(302, `/characters/${log.characterId}/log/${log.id}`);
@@ -66,16 +66,16 @@ export const actions = {
 
 		return await runOrThrow(
 			Effect.gen(function* () {
-				const log = yield* withFetchLog((service) => service.getLog(logId, user.id));
+				const log = yield* withLog((service) => service.getLog(logId, user.id));
 				if (logId !== "new" && !log?.id) redirect(302, `/dm-logs`);
 
-				const characters = yield* withFetchCharacter((service) => service.getUserCharacters(user.id, true));
+				const characters = yield* withCharacter((service) => service.getUserCharacters(user.id, true));
 
 				const form = yield* validateForm(event, dMLogSchema(characters));
 				if (!form.valid) return fail(400, { form });
 
 				return save(
-					withSaveLog((service) => service.saveLog(form.data, user)),
+					withLog((service) => service.saveLog(form.data, user)),
 					{
 						onError: (err) => err.toForm(form),
 						onSuccess: () => `/dm-logs`

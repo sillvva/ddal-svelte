@@ -35,7 +35,7 @@ export type UserDMs = InferQueryResult<
 	}
 >[];
 
-interface FetchDMApiImpl {
+interface DMApiImpl {
 	readonly getUserDMs: (
 		user: LocalsUser,
 		{ id, includeLogs }: { id?: DungeonMasterId; includeLogs?: boolean }
@@ -45,14 +45,12 @@ interface FetchDMApiImpl {
 		isUser: boolean,
 		dm: DungeonMaster
 	) => Effect.Effect<DungeonMaster | undefined, FetchDMError>;
-}
-
-interface SaveDMApiImpl {
 	readonly saveDM: (
 		dmId: DungeonMasterId,
 		user: LocalsUser,
 		data: DungeonMasterSchema
 	) => Effect.Effect<DungeonMaster[], SaveDMError>;
+	readonly addUserDM: (user: LocalsUser, dm: UserDMs) => Effect.Effect<UserDMs, SaveDMError>;
 	readonly deleteDM: (dm: UserDMs[number]) => Effect.Effect<
 		{
 			id: DungeonMasterId;
@@ -61,45 +59,15 @@ interface SaveDMApiImpl {
 	>;
 }
 
-export class FetchDMApi extends Context.Tag("FetchDMApi")<FetchDMApi, FetchDMApiImpl>() {}
-export class SaveDMApi extends Context.Tag("SaveDMApi")<SaveDMApi, SaveDMApiImpl>() {}
+export class DMApi extends Context.Tag("DMApi")<DMApi, DMApiImpl>() {}
 
-function addUserDM(user: LocalsUser, dms: UserDMs, dbOrTx: Database | Transaction = db) {
-	return Effect.gen(function* () {
-		const result = yield* Effect.tryPromise({
-			try: () =>
-				dbOrTx
-					.insert(dungeonMasters)
-					.values({
-						name: user.name,
-						DCI: null,
-						userId: user.id,
-						isUser: true
-					})
-					.onConflictDoUpdate({
-						target: [dungeonMasters.userId, dungeonMasters.isUser],
-						set: buildConflictUpdateColumns(dungeonMasters, ["name"])
-					})
-					.returning(),
-			catch: createSaveError
-		}).pipe(
-			Effect.map((dms) => dms[0]),
-			Effect.flatMap((dm) => (dm ? Effect.succeed(dm) : Effect.fail(new SaveDMError("Failed to create DM"))))
-		);
-		return dms.toSpliced(0, 0, {
-			...result,
-			logs: [] as UserDMs[number]["logs"]
-		});
-	});
-}
-
-const FetchDMApiLive = Layer.effect(
-	FetchDMApi,
+const DMApiLive = Layer.effect(
+	DMApi,
 	Effect.gen(function* () {
 		const Database = yield* DBService;
 		const db = yield* Database.db;
 
-		return {
+		const impl: DMApiImpl = {
 			getUserDMs: (user, { id, includeLogs = true } = {}) =>
 				Effect.tryPromise({
 					try: async () => {
@@ -139,9 +107,10 @@ const FetchDMApiLive = Layer.effect(
 					Effect.map((dms) => dms.toSorted((a, b) => sorter(a.isUser, b.isUser) || sorter(a.name, b.name))),
 					// Add the user DM if there isn't one already, and not searching for a specific DM
 					Effect.flatMap((dms) =>
-						!id && !dms[0]?.isUser ? addUserDM(user, dms).pipe(Effect.catchAll(createFetchError)) : Effect.succeed(dms)
+						!id && !dms[0]?.isUser ? impl.addUserDM(user, dms).pipe(Effect.catchAll(createFetchError)) : Effect.succeed(dms)
 					)
 				),
+
 			getFuzzyDM: (userId, isUser, dm) =>
 				Effect.tryPromise({
 					try: () =>
@@ -159,22 +128,11 @@ const FetchDMApiLive = Layer.effect(
 							}
 						}),
 					catch: createFetchError
-				})
-		};
-	})
-);
+				}),
 
-const SaveDMApiLive = Layer.effect(
-	SaveDMApi,
-	Effect.gen(function* () {
-		const Database = yield* DBService;
-		const db = yield* Database.db;
-
-		return {
 			saveDM: (dmId, user, data) =>
 				Effect.gen(function* () {
-					const FetchDMService = yield* FetchDMApi;
-					const [dm] = yield* FetchDMService.getUserDMs(user, { id: dmId }).pipe(Effect.catchAll(createSaveError));
+					const [dm] = yield* impl.getUserDMs(user, { id: dmId }).pipe(Effect.catchAll(createSaveError));
 					if (!dm) return yield* new SaveDMError("DM does not exist", { status: 404 });
 
 					if (!data.name.trim()) {
@@ -193,8 +151,35 @@ const SaveDMApiLive = Layer.effect(
 								.where(eq(dungeonMasters.id, dmId))
 								.returning(),
 						catch: createSaveError
-					}).pipe(Effect.flatMap((c) => (c ? Effect.succeed(c) : Effect.fail(new SaveDMError("Failed to save DM")))));
-				}).pipe(Effect.provide(FetchDMLive())),
+					}).pipe(Effect.flatMap((dms) => (dms ? Effect.succeed(dms) : Effect.fail(new SaveDMError("Failed to save DM")))));
+				}),
+
+			addUserDM: (user, dms) =>
+				Effect.gen(function* () {
+					const result = yield* Effect.tryPromise({
+						try: () =>
+							db
+								.insert(dungeonMasters)
+								.values({
+									name: user.name,
+									DCI: null,
+									userId: user.id,
+									isUser: true
+								})
+								.onConflictDoUpdate({
+									target: [dungeonMasters.userId, dungeonMasters.isUser],
+									set: buildConflictUpdateColumns(dungeonMasters, ["name"])
+								})
+								.returning(),
+						catch: createSaveError
+					}).pipe(
+						Effect.map((dms) => dms[0]),
+						Effect.flatMap((dm) => (dm ? Effect.succeed(dm) : Effect.fail(new SaveDMError("Failed to create DM")))),
+						Effect.map((dm) => ({ ...dm, logs: [] as UserDMs[number]["logs"] }))
+					);
+					return dms.toSpliced(0, 0, result);
+				}),
+
 			deleteDM: (dm) =>
 				Effect.gen(function* () {
 					if (dm.logs.length) return yield* new SaveDMError("You cannot delete a DM that has logs", { status: 400 });
@@ -207,31 +192,19 @@ const SaveDMApiLive = Layer.effect(
 					);
 				})
 		};
+
+		return impl;
 	})
 );
 
-const DMApiLive = Layer.merge(FetchDMApiLive, SaveDMApiLive);
-
-export const FetchDMLive = (dbOrTx: Database | Transaction = db) => FetchDMApiLive.pipe(Layer.provide(withLiveDB(dbOrTx)));
-export const SaveDMLive = (dbOrTx: Database | Transaction = db) => SaveDMApiLive.pipe(Layer.provide(withLiveDB(dbOrTx)));
 export const DMLive = (dbOrTx: Database | Transaction = db) => DMApiLive.pipe(Layer.provide(withLiveDB(dbOrTx)));
 
-export function withFetchDM<R, E extends FetchDMError>(
-	impl: (service: FetchDMApiImpl) => Effect.Effect<R, E>,
+export function withDM<R, E extends FetchDMError | SaveDMError>(
+	impl: (service: DMApiImpl) => Effect.Effect<R, E>,
 	dbOrTx: Database | Transaction = db
 ) {
 	return Effect.gen(function* () {
-		const FetchDMService = yield* FetchDMApi;
-		return yield* impl(FetchDMService);
-	}).pipe(Effect.provide(DMLive(dbOrTx)));
-}
-
-export function withSaveDM<R, E extends SaveDMError>(
-	impl: (service: SaveDMApiImpl) => Effect.Effect<R, E>,
-	dbOrTx: Database | Transaction = db
-) {
-	return Effect.gen(function* () {
-		const SaveDMService = yield* SaveDMApi;
-		return yield* impl(SaveDMService);
+		const DMApiService = yield* DMApi;
+		return yield* impl(DMApiService);
 	}).pipe(Effect.provide(DMLive(dbOrTx)));
 }

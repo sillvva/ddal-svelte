@@ -4,7 +4,7 @@ import { appCookieSchema, localsSessionSchema, type UserId } from "$lib/schemas"
 import { serverGetCookie } from "$server/cookie";
 import { db } from "$server/db";
 import { runOrThrow } from "$server/effect";
-import { withFetchUser } from "$server/effect/user";
+import { withUser } from "$server/effect/user";
 import { createId } from "@paralleldrive/cuid2";
 import { type Handle } from "@sveltejs/kit";
 import { sequence } from "@sveltejs/kit/hooks";
@@ -62,7 +62,7 @@ const session: Handle = async ({ event, resolve }) => {
 	const { session, user } = (await auth.api.getSession({ headers: event.request.headers })) ?? {};
 
 	event.locals.session = session && parse(localsSessionSchema, session);
-	event.locals.user = user && (await runOrThrow(withFetchUser((service) => service.getLocalsUser(user.id as UserId))));
+	event.locals.user = user && (await runOrThrow(withUser((service) => service.getLocalsUser(user.id as UserId))));
 
 	return await resolve(event);
 };

@@ -24,15 +24,12 @@ export interface FullCharacterData extends CharacterData, ReturnType<typeof getL
 	imageUrl: string;
 }
 
-interface FetchCharacterApiImpl {
+interface CharacterApiImpl {
 	readonly getCharacter: (
 		characterId: CharacterId,
 		includeLogs?: boolean
 	) => Effect.Effect<FullCharacterData | undefined, FetchCharacterError>;
 	readonly getUserCharacters: (userId: UserId, includeLogs?: boolean) => Effect.Effect<FullCharacterData[], FetchCharacterError>;
-}
-
-interface SaveCharacterApiImpl {
 	readonly saveCharacter: (
 		characterId: CharacterId,
 		userId: UserId,
@@ -49,16 +46,15 @@ interface SaveCharacterApiImpl {
 	>;
 }
 
-export class FetchCharacterApi extends Context.Tag("FetchCharacterApi")<FetchCharacterApi, FetchCharacterApiImpl>() {}
-export class SaveCharacterApi extends Context.Tag("SaveCharacterApi")<SaveCharacterApi, SaveCharacterApiImpl>() {}
+export class CharacterApi extends Context.Tag("CharacterApi")<CharacterApi, CharacterApiImpl>() {}
 
-const FetchCharacterApiLive = Layer.effect(
-	FetchCharacterApi,
+const CharacterApiLive = Layer.effect(
+	CharacterApi,
 	Effect.gen(function* () {
 		const Database = yield* DBService;
 		const db = yield* Database.db;
 
-		return {
+		const impl: CharacterApiImpl = {
 			getCharacter: (characterId, includeLogs = true) =>
 				Effect.tryPromise({
 					try: () =>
@@ -68,6 +64,7 @@ const FetchCharacterApiLive = Layer.effect(
 						}),
 					catch: createFetchError
 				}).pipe(Effect.andThen((character) => character && parseCharacter({ logs: [], ...character }))),
+
 			getUserCharacters: (userId, includeLogs = true) =>
 				Effect.tryPromise({
 					try: () =>
@@ -76,18 +73,8 @@ const FetchCharacterApiLive = Layer.effect(
 							where: { userId: { eq: userId }, name: { NOT: PlaceholderName } }
 						}),
 					catch: createFetchError
-				}).pipe(Effect.map((characters) => characters.map((character) => parseCharacter({ logs: [], ...character }))))
-		};
-	})
-);
+				}).pipe(Effect.map((characters) => characters.map((character) => parseCharacter({ logs: [], ...character })))),
 
-const SaveCharacterApiLive = Layer.effect(
-	SaveCharacterApi,
-	Effect.gen(function* () {
-		const Database = yield* DBService;
-		const db = yield* Database.db;
-
-		return {
 			saveCharacter: (characterId, userId, data) =>
 				Effect.gen(function* () {
 					if (!characterId) yield* new SaveCharacterError("No character ID provided", { status: 400 });
@@ -115,6 +102,7 @@ const SaveCharacterApiLive = Layer.effect(
 						)
 					);
 				}),
+
 			deleteCharacter: (characterId, userId) =>
 				Effect.tryPromise({
 					try: () =>
@@ -143,29 +131,19 @@ const SaveCharacterApiLive = Layer.effect(
 					)
 				)
 		};
+
+		return impl;
 	})
 );
 
-const CharacterApiLive = Layer.merge(FetchCharacterApiLive, SaveCharacterApiLive);
-
 export const CharacterLive = (dbOrTx: Database | Transaction = db) => CharacterApiLive.pipe(Layer.provide(withLiveDB(dbOrTx)));
 
-export function withFetchCharacter<R, E extends FetchCharacterError>(
-	impl: (service: FetchCharacterApiImpl) => Effect.Effect<R, E>,
+export function withCharacter<R, E extends FetchCharacterError | SaveCharacterError>(
+	impl: (service: CharacterApiImpl) => Effect.Effect<R, E>,
 	dbOrTx: Database | Transaction = db
 ) {
 	return Effect.gen(function* () {
-		const FetchCharacterService = yield* FetchCharacterApi;
-		return yield* impl(FetchCharacterService);
-	}).pipe(Effect.provide(CharacterLive(dbOrTx)));
-}
-
-export function withSaveCharacter<R, E extends SaveCharacterError>(
-	impl: (service: SaveCharacterApiImpl) => Effect.Effect<R, E>,
-	dbOrTx: Database | Transaction = db
-) {
-	return Effect.gen(function* () {
-		const SaveCharacterService = yield* SaveCharacterApi;
-		return yield* impl(SaveCharacterService);
+		const CharacterService = yield* CharacterApi;
+		return yield* impl(CharacterService);
 	}).pipe(Effect.provide(CharacterLive(dbOrTx)));
 }

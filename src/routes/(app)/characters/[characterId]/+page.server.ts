@@ -1,8 +1,8 @@
 import { characterIdSchema, logIdSchema } from "$lib/schemas.js";
 import { assertUser } from "$server/auth";
 import { save } from "$server/effect";
-import { withSaveCharacter } from "$server/effect/characters";
-import { withSaveLog } from "$server/effect/logs.js";
+import { withCharacter } from "$server/effect/characters";
+import { withLog } from "$server/effect/logs.js";
 import { error, redirect } from "@sveltejs/kit";
 import { fail, setError, superValidate } from "sveltekit-superforms";
 import { valibot } from "sveltekit-superforms/adapters";
@@ -32,7 +32,7 @@ export const actions = {
 		if (!form.valid) return fail(400, { form });
 
 		return await save(
-			withSaveCharacter((service) => service.deleteCharacter(form.data.id, user.id)),
+			withCharacter((service) => service.deleteCharacter(form.data.id, user.id)),
 			{
 				onError: (err) => {
 					setError(form, "", err.message);
@@ -50,7 +50,7 @@ export const actions = {
 		if (!form.valid) return fail(400, { form });
 
 		return await save(
-			withSaveLog((service) => service.deleteLog(form.data.id, user.id)),
+			withLog((service) => service.deleteLog(form.data.id, user.id)),
 			{
 				onError: (err) => {
 					setError(form, "", err.message);

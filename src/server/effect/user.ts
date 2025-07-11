@@ -9,19 +9,19 @@ function createFetchError(err: unknown): FetchUserError {
 	return FetchUserError.from(err);
 }
 
-interface FetchUserApiImpl {
+interface UserApiImpl {
 	readonly getLocalsUser: (userId: UserId) => Effect.Effect<LocalsUser | undefined, FetchUserError>;
 }
 
-export class FetchUserApi extends Context.Tag("FetchUserApi")<FetchUserApi, FetchUserApiImpl>() {}
+export class UserApi extends Context.Tag("UserApi")<UserApi, UserApiImpl>() {}
 
-const FetchUserApiLive = Layer.effect(
-	FetchUserApi,
+const UserApiLive = Layer.effect(
+	UserApi,
 	Effect.gen(function* () {
 		const Database = yield* DBService;
 		const db = yield* Database.db;
 
-		return {
+		const impl: UserApiImpl = {
 			getLocalsUser: (userId) =>
 				Effect.tryPromise({
 					try: () =>
@@ -59,17 +59,19 @@ const FetchUserApiLive = Layer.effect(
 					catch: createFetchError
 				})
 		};
+
+		return impl;
 	})
 );
 
-export const FetchUserLive = (dbOrTx: Database | Transaction = db) => FetchUserApiLive.pipe(Layer.provide(withLiveDB(dbOrTx)));
+export const UserLive = (dbOrTx: Database | Transaction = db) => UserApiLive.pipe(Layer.provide(withLiveDB(dbOrTx)));
 
-export function withFetchUser<R, E extends FetchUserError>(
-	impl: (service: FetchUserApiImpl) => Effect.Effect<R, E>,
+export function withUser<R, E extends FetchUserError>(
+	impl: (service: UserApiImpl) => Effect.Effect<R, E>,
 	dbOrTx: Database | Transaction = db
 ) {
 	return Effect.gen(function* () {
-		const FetchUserService = yield* FetchUserApi;
-		return yield* impl(FetchUserService);
-	}).pipe(Effect.provide(FetchUserLive(dbOrTx)));
+		const UserService = yield* UserApi;
+		return yield* impl(UserService);
+	}).pipe(Effect.provide(UserLive(dbOrTx)));
 }

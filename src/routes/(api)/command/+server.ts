@@ -1,9 +1,9 @@
 import { searchSections } from "$lib/constants.js";
 import type { LocalsUser } from "$lib/schemas.js";
 import { runOrThrow } from "$server/effect";
-import { withFetchCharacter } from "$server/effect/characters";
-import { withFetchDM } from "$server/effect/dms";
-import { withFetchLog } from "$server/effect/logs";
+import { withCharacter } from "$server/effect/characters";
+import { withDM } from "$server/effect/dms";
+import { withLog } from "$server/effect/logs";
 import { sorter } from "@sillvva/utils";
 import { json } from "@sveltejs/kit";
 
@@ -26,7 +26,7 @@ async function getData(user: LocalsUser) {
 	return [
 		{
 			title: "Characters" as const,
-			items: await runOrThrow(withFetchCharacter((service) => service.getUserCharacters(user.id, false))).then((characters) =>
+			items: await runOrThrow(withCharacter((service) => service.getUserCharacters(user.id, false))).then((characters) =>
 				characters
 					.map(
 						(character) =>
@@ -45,7 +45,7 @@ async function getData(user: LocalsUser) {
 		},
 		{
 			title: "DMs" as const,
-			items: await runOrThrow(withFetchDM((service) => service.getUserDMs(user, { includeLogs: true }))).then((dms) =>
+			items: await runOrThrow(withDM((service) => service.getUserDMs(user, { includeLogs: true }))).then((dms) =>
 				dms
 					.map(
 						(dm) =>
@@ -60,7 +60,7 @@ async function getData(user: LocalsUser) {
 		},
 		{
 			title: "Logs" as const,
-			items: await runOrThrow(withFetchLog((service) => service.getUserLogs(user.id))).then((logs) =>
+			items: await runOrThrow(withLog((service) => service.getUserLogs(user.id))).then((logs) =>
 				logs
 					.map(
 						(log) =>
