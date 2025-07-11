@@ -25,3 +25,7 @@ export function hotkey(hotkeys: HotkeyItem[]): Attachment<HTMLElement | Document
 		return hk(node, hotkeys).destroy;
 	};
 }
+
+export function isError(err: unknown): err is Error {
+	return !!err && typeof err === "object" && "message" in err && typeof err.message === "string";
+}

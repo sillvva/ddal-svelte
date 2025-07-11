@@ -1,14 +1,14 @@
 import { defaultLogData, getItemEntities, logDataToSchema } from "$lib/entities.js";
 import { characterIdSchema, characterLogSchema, logIdSchema } from "$lib/schemas";
 import { assertUser } from "$server/auth";
-import { runOrThrow, save } from "$server/effect";
+import { runOrThrow, save, validateForm } from "$server/effect";
 import { withFetchCharacter } from "$server/effect/characters.js";
 import { withFetchDM } from "$server/effect/dms.js";
 import { withFetchLog, withSaveLog } from "$server/effect/logs.js";
 import { sorter } from "@sillvva/utils";
 import { error, redirect } from "@sveltejs/kit";
-import { fail, superValidate } from "sveltekit-superforms";
-import { valibot } from "sveltekit-superforms/adapters";
+import { Effect } from "effect";
+import { fail } from "sveltekit-superforms";
 import { parse, safeParse } from "valibot";
 
 export const load = async (event) => {
@@ -23,37 +23,39 @@ export const load = async (event) => {
 	if (!idResult.success) redirect(302, `/character/${character.id}`);
 	const logId = idResult.output;
 
-	const log = (await runOrThrow(withFetchLog((service) => service.getLog(logId, user.id)))) || defaultLogData(user.id, character);
+	return await runOrThrow(
+		Effect.gen(function* () {
+			const log = (yield* withFetchLog((service) => service.getLog(logId, user.id))) || defaultLogData(user.id, character);
 
-	if (logId !== "new") {
-		if (!log.id) error(404, "Log not found");
-		if (log.isDmLog) redirect(302, `/dm-logs/${log.id}`);
-	}
+			if (logId !== "new") {
+				if (!log.id) error(404, "Log not found");
+				if (log.isDmLog) redirect(302, `/dm-logs/${log.id}`);
+			}
 
-	const form = await superValidate(logDataToSchema(user.id, log), valibot(characterLogSchema(character)), {
-		errors: logId !== "new"
-	});
+			const form = yield* validateForm(logDataToSchema(user.id, log), characterLogSchema(character));
 
-	const itemEntities = getItemEntities(character, { excludeDropped: true, lastLogId: log.id });
-	const magicItems = itemEntities.magicItems.toSorted((a, b) => sorter(a.name, b.name));
-	const storyAwards = itemEntities.storyAwards.toSorted((a, b) => sorter(a.name, b.name));
-	const dms = await runOrThrow(withFetchDM((service) => service.getUserDMs(user, { includeLogs: true })));
+			const itemEntities = getItemEntities(character, { excludeDropped: true, lastLogId: log.id });
+			const magicItems = itemEntities.magicItems.toSorted((a, b) => sorter(a.name, b.name));
+			const storyAwards = itemEntities.storyAwards.toSorted((a, b) => sorter(a.name, b.name));
+			const dms = yield* withFetchDM((service) => service.getUserDMs(user, { includeLogs: true }));
 
-	return {
-		...event.params,
-		title: logId === "new" ? `New Log - ${character.name}` : `Edit ${form.data.name}`,
-		breadcrumbs: parent.breadcrumbs.concat({
-			name: logId === "new" ? `New Log` : form.data.name,
-			href: `/characters/${character.id}/log/${form.data.id}`
-		}),
-		totalLevel: character.totalLevel,
-		user: { ...user, ...parent.user },
-		magicItems,
-		storyAwards,
-		dms,
-		form,
-		firstLog: event.url.searchParams.get("firstLog") === "true"
-	};
+			return {
+				...event.params,
+				title: logId === "new" ? `New Log - ${character.name}` : `Edit ${form.data.name}`,
+				breadcrumbs: parent.breadcrumbs.concat({
+					name: logId === "new" ? `New Log` : form.data.name,
+					href: `/characters/${character.id}/log/${form.data.id}`
+				}),
+				totalLevel: character.totalLevel,
+				user: { ...user, ...parent.user },
+				magicItems,
+				storyAwards,
+				dms,
+				form,
+				firstLog: event.url.searchParams.get("firstLog") === "true"
+			};
+		})
+	);
 };
 
 export const actions = {
@@ -61,26 +63,30 @@ export const actions = {
 		const user = event.locals.user;
 		assertUser(user);
 
-		const characterId = parse(characterIdSchema, event.params.characterId);
-		const character = await runOrThrow(withFetchCharacter((service) => service.getCharacter(characterId)));
-		if (!character) redirect(302, "/characters");
+		return await runOrThrow(
+			Effect.gen(function* () {
+				const characterId = parse(characterIdSchema, event.params.characterId);
+				const character = yield* withFetchCharacter((service) => service.getCharacter(characterId));
+				if (!character) redirect(302, "/characters");
 
-		const idResult = safeParse(logIdSchema, event.params.logId || "");
-		if (!idResult.success) redirect(302, `/character/${character.id}`);
-		const logId = idResult.output;
+				const idResult = safeParse(logIdSchema, event.params.logId || "");
+				if (!idResult.success) redirect(302, `/character/${character.id}`);
+				const logId = idResult.output;
 
-		const log = await runOrThrow(withFetchLog((service) => service.getLog(logId, user.id)));
-		if (logId !== "new" && !log?.id) redirect(302, `/characters/${character.id}`);
+				const log = yield* withFetchLog((service) => service.getLog(logId, user.id));
+				if (logId !== "new" && !log?.id) redirect(302, `/characters/${character.id}`);
 
-		const form = await superValidate(event, valibot(characterLogSchema(character)));
-		if (!form.valid) return fail(400, { form });
+				const form = yield* validateForm(event, characterLogSchema(character));
+				if (!form.valid) return fail(400, { form });
 
-		return await save(
-			withSaveLog((service) => service.saveLog(form.data, user)),
-			{
-				onError: (err) => err.toForm(form),
-				onSuccess: () => `/characters/${character.id}`
-			}
+				return save(
+					withSaveLog((service) => service.saveLog(form.data, user)),
+					{
+						onError: (err) => err.toForm(form),
+						onSuccess: () => `/characters/${character.id}`
+					}
+				);
+			})
 		);
 	}
 };

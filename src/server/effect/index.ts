@@ -1,8 +1,28 @@
 import { dev } from "$app/environment";
-import { redirect, type ActionFailure, type NumericRange } from "@sveltejs/kit";
+import { isError } from "$lib/util";
+import { error, redirect, type ActionFailure, type NumericRange, type RequestEvent } from "@sveltejs/kit";
 import { Context, Data, Effect, Layer } from "effect";
-import { setError, type FormPathLeavesWithErrors, type SuperValidated } from "sveltekit-superforms";
+import { setError, superValidate, type FormPathLeavesWithErrors, type SuperValidated } from "sveltekit-superforms";
+import { valibot } from "sveltekit-superforms/adapters";
+import type { BaseSchema, InferInput } from "valibot";
 import { db, type Database, type Transaction } from "../db";
+
+function isSvelteKitRedirectOrError(err: unknown): boolean {
+	if (typeof err === "object" && err !== null) {
+		// SvelteKit redirect: { status: number, location: string }
+		if (
+			typeof (err as { status?: unknown }).status === "number" &&
+			typeof (err as { location?: unknown }).location === "string"
+		) {
+			return true;
+		}
+		// SvelteKit error: { status: number, body: unknown }
+		if (typeof (err as { status?: unknown }).status === "number" && "body" in err) {
+			return true;
+		}
+	}
+	return false;
+}
 
 interface DBImpl {
 	readonly db: Effect.Effect<Database | Transaction>;
@@ -14,8 +34,26 @@ export function withLiveDB(dbOrTx: Database | Transaction = db) {
 	return Layer.succeed(DBService, DBService.of({ db: Effect.succeed(dbOrTx) }));
 }
 
-export function runOrThrow<T, E extends FetchError | FormError<any, any> | Error>(program: Effect.Effect<T, E, never>) {
-	return Effect.runPromise(program.pipe(Effect.catchAll(Effect.die)));
+export async function runOrThrow<T>(program: Effect.Effect<T, unknown, never>) {
+	try {
+		return await Effect.runPromise(program);
+	} catch (err) {
+		if (isSvelteKitRedirectOrError(err)) {
+			throw err;
+		} else if (isError(err)) {
+			throw error(500, err.message);
+		} else {
+			if (dev) console.error(err);
+			throw Effect.die(err);
+		}
+	}
+}
+
+export function validateForm<Input extends RequestEvent | InferInput<Schema>, Schema extends BaseSchema<any, any, any>>(
+	input: Input,
+	schema: Schema
+) {
+	return Effect.promise(() => superValidate(input, valibot(schema)));
 }
 
 const unknownError = "Unknown error";
