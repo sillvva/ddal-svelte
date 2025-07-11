@@ -1,10 +1,10 @@
 import { BLANK_CHARACTER } from "$lib/constants.js";
 import { defaultLogSchema } from "$lib/entities.js";
 import { characterIdSchema, editCharacterSchema } from "$lib/schemas";
-import { saveCharacter } from "$server/actions/characters.js";
-import { saveLog } from "$server/actions/logs.js";
 import { assertUser } from "$server/auth";
-import { save } from "$server/db/effect";
+import { save } from "$server/effect";
+import { withSaveCharacter } from "$server/effect/character";
+import { withSaveLog } from "$server/effect/logs.js";
 import { error } from "@sveltejs/kit";
 import { fail, setError, superValidate } from "sveltekit-superforms";
 import { valibot } from "sveltekit-superforms/adapters";
@@ -67,24 +67,30 @@ export const actions = {
 
 		const characterId = parse(characterIdSchema, event.params.characterId);
 
-		return await save(saveCharacter(characterId, user.id, data), {
-			onError: (err) => err.toForm(form),
-			onSuccess: async (result) => {
-				if (firstLog && event.params.characterId === "new") {
-					const log = defaultLogSchema(user.id, result);
-					log.name = "Character Creation";
+		return await save(
+			withSaveCharacter((service) => service.saveCharacter(characterId, user.id, data)),
+			{
+				onError: (err) => err.toForm(form),
+				onSuccess: async (character) => {
+					if (firstLog && event.params.characterId === "new") {
+						const log = defaultLogSchema(user.id, character);
+						log.name = "Character Creation";
 
-					return await save(saveLog(log, user), {
-						onError: (err) => {
-							setError(form, "", err.message);
-							return fail(err.status, { form });
-						},
-						onSuccess: (logResult) => `/characters/${result.id}/log/${logResult.id}?firstLog=true`
-					});
+						return await save(
+							withSaveLog((service) => service.saveLog(log, user)),
+							{
+								onError: (err) => {
+									setError(form, "", err.message);
+									return fail(err.status, { form });
+								},
+								onSuccess: (logResult) => `/characters/${character.id}/log/${logResult.id}?firstLog=true`
+							}
+						);
+					}
+
+					return `/characters/${character.id}`;
 				}
-
-				return `/characters/${result.id}`;
 			}
-		});
+		);
 	}
 };

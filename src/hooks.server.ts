@@ -1,10 +1,10 @@
 import { type ProviderId } from "$lib/constants";
 import { privateEnv } from "$lib/env/private";
 import { appCookieSchema, localsSessionSchema, type UserId } from "$lib/schemas";
-import { getLocalsUser } from "$server/auth";
 import { serverGetCookie } from "$server/cookie";
 import { db } from "$server/db";
-import { fetchWithFallback } from "$server/db/effect";
+import { runOrThrow } from "$server/effect";
+import { withFetchUser } from "$server/effect/user";
 import { createId } from "@paralleldrive/cuid2";
 import { type Handle } from "@sveltejs/kit";
 import { sequence } from "@sveltejs/kit/hooks";
@@ -62,7 +62,7 @@ const session: Handle = async ({ event, resolve }) => {
 	const { session, user } = (await auth.api.getSession({ headers: event.request.headers })) ?? {};
 
 	event.locals.session = session && parse(localsSessionSchema, session);
-	event.locals.user = user && (await fetchWithFallback(getLocalsUser(user.id as UserId), () => undefined));
+	event.locals.user = user && (await runOrThrow(withFetchUser((service) => service.getLocalsUser(user.id as UserId))));
 
 	return await resolve(event);
 };

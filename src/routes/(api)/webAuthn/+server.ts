@@ -1,6 +1,6 @@
-import { authName } from "$lib/util.js";
-import { db, q } from "$server/db/index.js";
-import { passkey } from "$server/db/schema.js";
+import { authName } from "$lib/auth";
+import { db, q } from "$server/db/index";
+import { passkey } from "$server/db/schema";
 import { json } from "@sveltejs/kit";
 import { and, eq } from "drizzle-orm";
 

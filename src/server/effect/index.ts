@@ -1,25 +1,21 @@
 import { dev } from "$app/environment";
-import type { DictOrArray } from "@sillvva/utils";
 import { redirect, type ActionFailure, type NumericRange } from "@sveltejs/kit";
-import { Context, Data, Effect } from "effect";
+import { Context, Data, Effect, Layer } from "effect";
 import { setError, type FormPathLeavesWithErrors, type SuperValidated } from "sveltekit-superforms";
-import { db, type Database, type Transaction } from ".";
+import { db, type Database, type Transaction } from "../db";
 
-export class DBService extends Context.Tag("Database")<DBService, { readonly db: Effect.Effect<Database | Transaction> }>() {}
-
-export function withDB<T, E>(program: Effect.Effect<T, E, DBService>, dbOrTx: Database | Transaction = db) {
-	return Effect.provideService(program, DBService, {
-		db: Effect.succeed(dbOrTx)
-	});
+interface DBImpl {
+	readonly db: Effect.Effect<Database | Transaction>;
 }
 
-export function withTransaction<T, E extends FetchError | FormError<any, any> | Error>(
-	program: Effect.Effect<T, E, DBService>,
-	database: Database = db
-) {
-	return database.transaction(async (tx) => {
-		return Effect.runPromise(withDB(program, tx).pipe(Effect.catchAll(Effect.die)));
-	});
+export class DBService extends Context.Tag("Database")<DBService, DBImpl>() {}
+
+export function withLiveDB(dbOrTx: Database | Transaction = db) {
+	return Layer.succeed(DBService, DBService.of({ db: Effect.succeed(dbOrTx) }));
+}
+
+export function runOrThrow<T, E extends FetchError | FormError<any, any> | Error>(program: Effect.Effect<T, E, never>) {
+	return Effect.runPromise(program.pipe(Effect.catchAll(Effect.die)));
 }
 
 const unknownError = "Unknown error";
@@ -47,13 +43,6 @@ export class FetchError extends Data.TaggedError("FetchError")<{
 		if (err instanceof FetchError) return err;
 		return new FetchError(extractMessage(err));
 	}
-}
-
-export function fetchWithFallback<TOut extends DictOrArray | undefined, TError extends FetchError = FetchError>(
-	program: Effect.Effect<TOut, TError, DBService>,
-	fallback: (err: TError) => TOut
-) {
-	return Effect.runPromise(withDB(program).pipe(Effect.catchAll((err) => Effect.succeed(fallback(err)))));
 }
 
 export class FormError<
@@ -96,14 +85,14 @@ export async function save<
 	TError extends FormError<any, TIn> = FormError<any, TIn>,
 	TSuccess extends any = any
 >(
-	program: Effect.Effect<TIn, TError, DBService>,
+	program: Effect.Effect<TIn, TError>,
 	handlers: {
 		onError: (err: TError) => ActionFailure<{ form: SuperValidated<TOut, App.Superforms.Message, TIn> }>;
 		onSuccess: (data: TIn) => TSuccess;
 	}
 ) {
 	const result = await Effect.runPromise(
-		Effect.match(withDB(program), {
+		Effect.match(program, {
 			onSuccess: handlers.onSuccess,
 			onFailure: handlers.onError
 		})

@@ -1,12 +1,13 @@
 import { characterIdSchema } from "$lib/schemas.js";
-import { getCharacter } from "$server/data/characters";
-import { fetchWithFallback } from "$server/db/effect";
+import { runOrThrow } from "$server/effect";
+import { withFetchCharacter } from "$server/effect/character";
 import { parse } from "valibot";
 
 export const load = async (event) => {
 	const parent = await event.parent();
 	const characterId = parse(characterIdSchema, event.params.characterId);
-	const character = await fetchWithFallback(getCharacter(characterId), () => undefined);
+
+	const character = await runOrThrow(withFetchCharacter((service) => service.getCharacter(characterId)));
 
 	return {
 		breadcrumbs: parent.breadcrumbs.concat({

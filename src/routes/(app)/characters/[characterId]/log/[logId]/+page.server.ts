@@ -1,11 +1,10 @@
 import { defaultLogData, getItemEntities, logDataToSchema } from "$lib/entities.js";
 import { characterIdSchema, characterLogSchema, logIdSchema } from "$lib/schemas";
-import { saveLog } from "$server/actions/logs.js";
 import { assertUser } from "$server/auth";
-import { getCharacter } from "$server/data/characters";
-import { getUserDMs } from "$server/data/dms";
-import { getLog } from "$server/data/logs";
-import { fetchWithFallback, save } from "$server/db/effect";
+import { runOrThrow, save } from "$server/effect";
+import { withFetchCharacter } from "$server/effect/character.js";
+import { withFetchDM } from "$server/effect/dms.js";
+import { withFetchLog, withSaveLog } from "$server/effect/logs.js";
 import { sorter } from "@sillvva/utils";
 import { error, redirect } from "@sveltejs/kit";
 import { fail, superValidate } from "sveltekit-superforms";
@@ -24,7 +23,8 @@ export const load = async (event) => {
 	if (!idResult.success) redirect(302, `/character/${character.id}`);
 	const logId = idResult.output;
 
-	let log = (await fetchWithFallback(getLog(logId, user.id), () => undefined)) || defaultLogData(user.id, character);
+	const log = (await runOrThrow(withFetchLog((service) => service.getLog(logId, user.id)))) || defaultLogData(user.id, character);
+
 	if (logId !== "new") {
 		if (!log.id) error(404, "Log not found");
 		if (log.isDmLog) redirect(302, `/dm-logs/${log.id}`);
@@ -37,7 +37,7 @@ export const load = async (event) => {
 	const itemEntities = getItemEntities(character, { excludeDropped: true, lastLogId: log.id });
 	const magicItems = itemEntities.magicItems.toSorted((a, b) => sorter(a.name, b.name));
 	const storyAwards = itemEntities.storyAwards.toSorted((a, b) => sorter(a.name, b.name));
-	const dms = await fetchWithFallback(getUserDMs(user), () => []);
+	const dms = await runOrThrow(withFetchDM((service) => service.getUserDMs(user, { includeLogs: true })));
 
 	return {
 		...event.params,
@@ -62,22 +62,25 @@ export const actions = {
 		assertUser(user);
 
 		const characterId = parse(characterIdSchema, event.params.characterId);
-		const character = await fetchWithFallback(getCharacter(characterId), () => undefined);
+		const character = await runOrThrow(withFetchCharacter((service) => service.getCharacter(characterId)));
 		if (!character) redirect(302, "/characters");
 
 		const idResult = safeParse(logIdSchema, event.params.logId || "");
 		if (!idResult.success) redirect(302, `/character/${character.id}`);
 		const logId = idResult.output;
 
-		const log = await fetchWithFallback(getLog(logId, user.id), () => undefined);
+		const log = await runOrThrow(withFetchLog((service) => service.getLog(logId, user.id)));
 		if (logId !== "new" && !log?.id) redirect(302, `/characters/${character.id}`);
 
 		const form = await superValidate(event, valibot(characterLogSchema(character)));
 		if (!form.valid) return fail(400, { form });
 
-		return await save(saveLog(form.data, user), {
-			onError: (err) => err.toForm(form),
-			onSuccess: () => `/characters/${character.id}`
-		});
+		return await save(
+			withSaveLog((service) => service.saveLog(form.data, user)),
+			{
+				onError: (err) => err.toForm(form),
+				onSuccess: () => `/characters/${character.id}`
+			}
+		);
 	}
 };
