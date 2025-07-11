@@ -1,6 +1,6 @@
 import { characterIdSchema } from "$lib/schemas.js";
 import { runOrThrow } from "$server/effect";
-import { withFetchCharacter } from "$server/effect/character";
+import { withFetchCharacter } from "$server/effect/characters";
 import { parse } from "valibot";
 
 export const load = async (event) => {

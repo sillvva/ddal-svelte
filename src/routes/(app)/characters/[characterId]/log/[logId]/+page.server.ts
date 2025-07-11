@@ -2,7 +2,7 @@ import { defaultLogData, getItemEntities, logDataToSchema } from "$lib/entities.
 import { characterIdSchema, characterLogSchema, logIdSchema } from "$lib/schemas";
 import { assertUser } from "$server/auth";
 import { runOrThrow, save } from "$server/effect";
-import { withFetchCharacter } from "$server/effect/character.js";
+import { withFetchCharacter } from "$server/effect/characters.js";
 import { withFetchDM } from "$server/effect/dms.js";
 import { withFetchLog, withSaveLog } from "$server/effect/logs.js";
 import { sorter } from "@sillvva/utils";

@@ -1,6 +1,6 @@
-import type { FullCharacterData } from "$server/data/characters";
-import type { UserDMs } from "$server/data/dms";
-import type { FullLogData, LogSummaryData, UserLogData } from "$server/data/logs";
+import type { FullCharacterData } from "$server/effect/characters";
+import type { UserDMs } from "$server/effect/dms";
+import type { FullLogData, LogSummaryData, UserLogData } from "$server/effect/logs";
 import type { SearchData } from "$src/routes/(api)/command/+server";
 import { parseDateTime, type DateValue } from "@internationalized/date";
 import { debounce, isDefined, substrCount, type MapKeys, type Prettify } from "@sillvva/utils";
@@ -259,7 +259,7 @@ class BaseSearchFactory<TData extends Array<unknown>> {
 		};
 	}
 
-	protected getLogIndex(item: FullLogData | LogSummaryData | UserLogData[number]) {
+	protected getLogIndex(item: FullLogData | LogSummaryData | UserLogData) {
 		return {
 			id: item.id,
 			index: new Map([

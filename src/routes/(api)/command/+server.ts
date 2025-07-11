@@ -1,7 +1,7 @@
 import { searchSections } from "$lib/constants.js";
 import type { LocalsUser } from "$lib/schemas.js";
 import { runOrThrow } from "$server/effect";
-import { withFetchCharacter } from "$server/effect/character";
+import { withFetchCharacter } from "$server/effect/characters";
 import { withFetchDM } from "$server/effect/dms";
 import { withFetchLog } from "$server/effect/logs";
 import { sorter } from "@sillvva/utils";

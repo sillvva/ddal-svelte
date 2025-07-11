@@ -2,7 +2,7 @@ import { defaultLogData, logDataToSchema } from "$lib/entities.js";
 import { dMLogSchema, logIdSchema } from "$lib/schemas";
 import { assertUser } from "$server/auth";
 import { runOrThrow, save } from "$server/effect";
-import { withFetchCharacter } from "$server/effect/character.js";
+import { withFetchCharacter } from "$server/effect/characters.js";
 import { withFetchLog, withSaveLog } from "$server/effect/logs";
 import { error, redirect } from "@sveltejs/kit";
 import { Effect } from "effect";

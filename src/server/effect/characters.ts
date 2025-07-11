@@ -1,8 +1,7 @@
 import { PlaceholderName } from "$lib/constants";
-import { parseCharacter } from "$lib/entities";
+import { getLogsSummary, parseCharacter } from "$lib/entities";
 import type { CharacterId, EditCharacterSchema, NewCharacterSchema, UserId } from "$lib/schemas";
-import type { FullCharacterData } from "$server/data/characters";
-import { buildConflictUpdateColumns, db, type Database, type Transaction } from "$server/db";
+import { buildConflictUpdateColumns, db, type Database, type InferQueryResult, type Transaction } from "$server/db";
 import { characterIncludes, extendedCharacterIncludes } from "$server/db/includes";
 import { characters, logs, type Character } from "$server/db/schema";
 import { and, eq, exists } from "drizzle-orm";
@@ -17,6 +16,12 @@ function createFetchError(err: unknown): FetchCharacterError {
 class SaveCharacterError extends FormError<EditCharacterSchema> {}
 function createSaveError(err: unknown): SaveCharacterError {
 	return SaveCharacterError.from(err);
+}
+
+export type CharacterData = InferQueryResult<"characters", { with: typeof characterIncludes }>;
+export type ExtendedCharacterData = InferQueryResult<"characters", { with: typeof extendedCharacterIncludes }>;
+export interface FullCharacterData extends CharacterData, ReturnType<typeof getLogsSummary> {
+	imageUrl: string;
 }
 
 interface FetchCharacterApiImpl {

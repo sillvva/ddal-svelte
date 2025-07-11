@@ -1,6 +1,6 @@
 import { assertUser } from "$server/auth";
 import { runOrThrow } from "$server/effect";
-import { withFetchCharacter } from "$server/effect/character.js";
+import { withFetchCharacter } from "$server/effect/characters.js";
 
 export const load = async (event) => {
 	const user = event.locals.user;

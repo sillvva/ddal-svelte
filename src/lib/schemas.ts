@@ -1,4 +1,4 @@
-import type { FullCharacterData } from "$server/data/characters";
+import type { FullCharacterData } from "$server/effect/characters";
 import type { Prettify } from "@sillvva/utils";
 import * as v from "valibot";
 import { PROVIDERS, themeGroups, themes } from "./constants";
