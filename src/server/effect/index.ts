@@ -57,6 +57,35 @@ export function validateForm<Input extends RequestEvent | InferInput<Schema>, Sc
 	return Effect.promise(() => superValidate(input, valibot(schema)));
 }
 
+export async function save<
+	TOut extends Record<PropertyKey, any>,
+	TIn extends Record<PropertyKey, any> = TOut,
+	TError extends FormError<any, TIn> = FormError<any, TIn>,
+	TSuccess extends any = any
+>(
+	program: Effect.Effect<TIn, TError>,
+	handlers: {
+		onError: (err: TError) => ActionFailure<{ form: SuperValidated<TOut, App.Superforms.Message, TIn> }>;
+		onSuccess: (data: TIn) => TSuccess;
+	}
+) {
+	const result = await Effect.runPromise(
+		Effect.match(program, {
+			onSuccess: handlers.onSuccess,
+			onFailure: handlers.onError
+		})
+	);
+
+	if (typeof result === "string" && result.startsWith("/")) {
+		Effect.runFork(Logs.logInfo("Redirecting to", result));
+		redirect(302, result);
+	}
+
+	Effect.runFork(typeof result === "object" ? Logs.logDebugStructured(result) : Logs.logDebug("Result:", result));
+
+	return result;
+}
+
 const unknownError = "Unknown error";
 
 function hasMessage(obj: unknown): obj is { message: string } {
@@ -116,33 +145,4 @@ export class FormError<
 			status: this.status
 		});
 	}
-}
-
-export async function save<
-	TOut extends Record<PropertyKey, any>,
-	TIn extends Record<PropertyKey, any> = TOut,
-	TError extends FormError<any, TIn> = FormError<any, TIn>,
-	TSuccess extends any = any
->(
-	program: Effect.Effect<TIn, TError>,
-	handlers: {
-		onError: (err: TError) => ActionFailure<{ form: SuperValidated<TOut, App.Superforms.Message, TIn> }>;
-		onSuccess: (data: TIn) => TSuccess;
-	}
-) {
-	const result = await Effect.runPromise(
-		Effect.match(program, {
-			onSuccess: handlers.onSuccess,
-			onFailure: handlers.onError
-		})
-	);
-
-	if (typeof result === "string" && result.startsWith("/")) {
-		Effect.runFork(Logs.logInfo("Redirecting to", result));
-		redirect(302, result);
-	}
-
-	Effect.runFork(Logs.logDebug("Result:", result));
-
-	return result;
 }
