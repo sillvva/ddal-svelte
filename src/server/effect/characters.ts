@@ -6,7 +6,7 @@ import { characterIncludes, extendedCharacterIncludes } from "$server/db/include
 import { characters, logs, type Character } from "$server/db/schema";
 import { and, eq, exists } from "drizzle-orm";
 import { Context, Effect, Layer } from "effect";
-import { DBService, FetchError, FormError, withLiveDB } from ".";
+import { DBService, FetchError, FormError, log, withLiveDB } from ".";
 
 class FetchCharacterError extends FetchError {}
 function createFetchError(err: unknown): FetchCharacterError {
@@ -56,27 +56,34 @@ const CharacterApiLive = Layer.effect(
 
 		const impl: CharacterApiImpl = {
 			getCharacter: (characterId, includeLogs = true) =>
-				Effect.tryPromise({
-					try: () =>
-						db.query.characters.findFirst({
-							with: includeLogs ? extendedCharacterIncludes : characterIncludes,
-							where: { id: { eq: characterId } }
-						}),
-					catch: createFetchError
-				}).pipe(Effect.andThen((character) => character && parseCharacter({ logs: [], ...character }))),
+				Effect.gen(function* () {
+					yield* log("getCharacter", characterId, includeLogs);
+					return yield* Effect.tryPromise({
+						try: () =>
+							db.query.characters.findFirst({
+								with: includeLogs ? extendedCharacterIncludes : characterIncludes,
+								where: { id: { eq: characterId } }
+							}),
+						catch: createFetchError
+					}).pipe(Effect.andThen((character) => character && parseCharacter({ logs: [], ...character })));
+				}),
 
 			getUserCharacters: (userId, includeLogs = true) =>
-				Effect.tryPromise({
-					try: () =>
-						db.query.characters.findMany({
-							with: includeLogs ? extendedCharacterIncludes : characterIncludes,
-							where: { userId: { eq: userId }, name: { NOT: PlaceholderName } }
-						}),
-					catch: createFetchError
-				}).pipe(Effect.map((characters) => characters.map((character) => parseCharacter({ logs: [], ...character })))),
+				Effect.gen(function* () {
+					yield* log("getUserCharacters", userId, includeLogs);
+					return yield* Effect.tryPromise({
+						try: () =>
+							db.query.characters.findMany({
+								with: includeLogs ? extendedCharacterIncludes : characterIncludes,
+								where: { userId: { eq: userId }, name: { NOT: PlaceholderName } }
+							}),
+						catch: createFetchError
+					}).pipe(Effect.map((characters) => characters.map((character) => parseCharacter({ logs: [], ...character }))));
+				}),
 
 			saveCharacter: (characterId, userId, data) =>
 				Effect.gen(function* () {
+					yield* log("saveCharacter", characterId, userId);
 					if (!characterId) yield* new SaveCharacterError("No character ID provided", { status: 400 });
 
 					return yield* Effect.tryPromise({
@@ -104,32 +111,35 @@ const CharacterApiLive = Layer.effect(
 				}),
 
 			deleteCharacter: (characterId, userId) =>
-				Effect.tryPromise({
-					try: () =>
-						db.transaction(async (tx) => {
-							await tx
-								.update(logs)
-								.set({ characterId: null, appliedDate: null })
-								.where(
-									and(
-										eq(logs.characterId, characterId),
-										eq(logs.isDmLog, true),
-										exists(
-											db
-												.select()
-												.from(characters)
-												.where(and(eq(characters.id, characterId), eq(characters.userId, userId)))
+				Effect.gen(function* () {
+					yield* log("deleteCharacter", characterId, userId);
+					return yield* Effect.tryPromise({
+						try: () =>
+							db.transaction(async (tx) => {
+								await tx
+									.update(logs)
+									.set({ characterId: null, appliedDate: null })
+									.where(
+										and(
+											eq(logs.characterId, characterId),
+											eq(logs.isDmLog, true),
+											exists(
+												db
+													.select()
+													.from(characters)
+													.where(and(eq(characters.id, characterId), eq(characters.userId, userId)))
+											)
 										)
-									)
-								);
-							return await tx.delete(characters).where(eq(characters.id, characterId)).returning({ id: characters.id });
-						}),
-					catch: createSaveError
-				}).pipe(
-					Effect.flatMap((result) =>
-						result ? Effect.succeed(result) : Effect.fail(new SaveCharacterError("Character not found", { status: 404 }))
-					)
-				)
+									);
+								return await tx.delete(characters).where(eq(characters.id, characterId)).returning({ id: characters.id });
+							}),
+						catch: createSaveError
+					}).pipe(
+						Effect.flatMap((result) =>
+							result ? Effect.succeed(result) : Effect.fail(new SaveCharacterError("Character not found", { status: 404 }))
+						)
+					);
+				})
 		};
 
 		return impl;

@@ -5,7 +5,7 @@ import { extendedLogIncludes, logIncludes } from "$server/db/includes";
 import { dungeonMasters, logs, magicItems, storyAwards } from "$server/db/schema";
 import { and, eq, inArray, isNull, notInArray } from "drizzle-orm";
 import { Context, Effect, Layer } from "effect";
-import { DBService, FetchError, FormError, runOrThrow, withLiveDB } from ".";
+import { DBService, FetchError, FormError, log as logInfo, runOrThrow, withLiveDB } from ".";
 import { DMApi, DMLive } from "./dms";
 
 class FetchLogError extends FetchError {}
@@ -318,54 +318,64 @@ const LogApiLive = Layer.effect(
 
 		const impl: LogApiImpl = {
 			getLog: (logId, userId) =>
-				Effect.tryPromise({
-					try: () =>
-						db.query.logs.findFirst({
-							with: extendedLogIncludes,
-							where: {
-								id: {
-									eq: logId
-								},
-								OR: [characterLogFilter(userId), dmLogFilter(userId)]
-							}
-						}),
-					catch: createFetchError
-				}).pipe(Effect.andThen((log) => log && parseLog(log))),
+				Effect.gen(function* () {
+					yield* logInfo("getLog", logId, userId);
+					return yield* Effect.tryPromise({
+						try: () =>
+							db.query.logs.findFirst({
+								with: extendedLogIncludes,
+								where: {
+									id: {
+										eq: logId
+									},
+									OR: [characterLogFilter(userId), dmLogFilter(userId)]
+								}
+							}),
+						catch: createFetchError
+					}).pipe(Effect.andThen((log) => log && parseLog(log)));
+				}),
 
 			getDMLogs: (userId) =>
-				Effect.tryPromise({
-					try: () =>
-						db.query.logs
-							.findMany({
-								with: extendedLogIncludes,
-								where: dmLogFilter(userId),
-								orderBy: {
-									date: "asc"
-								}
-							})
-							.then((logs) => {
-								return logs.map(parseLog);
-							}),
-					catch: createFetchError
+				Effect.gen(function* () {
+					yield* logInfo("getDMLogs", userId);
+					return yield* Effect.tryPromise({
+						try: () =>
+							db.query.logs
+								.findMany({
+									with: extendedLogIncludes,
+									where: dmLogFilter(userId),
+									orderBy: {
+										date: "asc"
+									}
+								})
+								.then((logs) => {
+									return logs.map(parseLog);
+								}),
+						catch: createFetchError
+					});
 				}),
 
 			getUserLogs: (userId) =>
-				Effect.tryPromise({
-					try: () =>
-						db.query.logs.findMany({
-							...userLogsConfig,
-							where: {
-								OR: [characterLogFilter(userId), dmLogFilter(userId)]
-							},
-							orderBy: {
-								date: "asc"
-							}
-						}),
-					catch: createFetchError
+				Effect.gen(function* () {
+					yield* logInfo("getUserLogs", userId);
+					return yield* Effect.tryPromise({
+						try: () =>
+							db.query.logs.findMany({
+								...userLogsConfig,
+								where: {
+									OR: [characterLogFilter(userId), dmLogFilter(userId)]
+								},
+								orderBy: {
+									date: "asc"
+								}
+							}),
+						catch: createFetchError
+					});
 				}),
 
 			deleteLog: (logId, userId) =>
 				Effect.gen(function* () {
+					yield* logInfo("deleteLog", logId, userId);
 					const log = yield* impl.getLog(logId, userId).pipe(Effect.catchAll(createSaveError));
 
 					if (!log) return yield* new SaveLogError("Log not found", { status: 404 });
@@ -382,12 +392,15 @@ const LogApiLive = Layer.effect(
 				}),
 
 			saveLog: (log, user) =>
-				Effect.tryPromise({
-					try: () =>
-						db.transaction((tx) => {
-							return runOrThrow(upsertLog(log, user, tx).pipe(Effect.provide(LogLive(tx)), Effect.provide(DMLive(tx))));
-						}),
-					catch: createSaveError
+				Effect.gen(function* () {
+					yield* logInfo("saveLog", log.id, user.id);
+					return yield* Effect.tryPromise({
+						try: () =>
+							db.transaction((tx) => {
+								return runOrThrow(upsertLog(log, user, tx).pipe(Effect.provide(LogLive(tx)), Effect.provide(DMLive(tx))));
+							}),
+						catch: createSaveError
+					});
 				})
 		};
 

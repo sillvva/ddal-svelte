@@ -38,7 +38,7 @@ export const actions = {
 					setError(form, "", err.message);
 					return fail(err.status, { form });
 				},
-				onSuccess: () => redirect(302, "/characters")
+				onSuccess: () => "/characters"
 			}
 		);
 	},

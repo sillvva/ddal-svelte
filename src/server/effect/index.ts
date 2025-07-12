@@ -1,4 +1,5 @@
 import { dev } from "$app/environment";
+import { publicEnv } from "$lib/env/public";
 import { isError } from "$lib/util";
 import {
 	error,
@@ -9,11 +10,23 @@ import {
 	type NumericRange,
 	type RequestEvent
 } from "@sveltejs/kit";
-import { Context, Data, Effect, Layer } from "effect";
+import { Context, Data, Effect, Layer, Logger } from "effect";
 import { setError, superValidate, type FormPathLeavesWithErrors, type SuperValidated } from "sveltekit-superforms";
 import { valibot } from "sveltekit-superforms/adapters";
 import type { BaseSchema, InferInput } from "valibot";
 import { db, type Database, type Transaction } from "../db";
+
+export function log(...messages: unknown[]) {
+	return Effect.log(messages.join(" ")).pipe(Logger.withMinimumLogLevel(publicEnv.PUBLIC_LOG_LEVEL));
+}
+
+export function logDebug(...messages: unknown[]) {
+	return Effect.logDebug(messages.join(" ")).pipe(Logger.withMinimumLogLevel(publicEnv.PUBLIC_LOG_LEVEL));
+}
+
+export function logError(...messages: unknown[]) {
+	return Effect.logError(messages.join(" ")).pipe(Logger.withMinimumLogLevel(publicEnv.PUBLIC_LOG_LEVEL));
+}
 
 interface DBImpl {
 	readonly db: Effect.Effect<Database | Transaction>;
@@ -65,10 +78,10 @@ export class FetchError extends Data.TaggedError("FetchError")<{
 }> {
 	constructor(public message: string = unknownError) {
 		super({ message });
+		if (dev) Effect.runFork(logError(this));
 	}
 
 	static from(err: FetchError | Error | unknown): FetchError {
-		if (dev) console.error(err);
 		if (err instanceof FetchError) return err;
 		return new FetchError(extractMessage(err));
 	}
@@ -91,12 +104,12 @@ export class FormError<
 	) {
 		super({ message });
 		if (options.status) this.status = options.status;
+		if (dev) Effect.runFork(logError(this));
 	}
 
 	static from<TOut extends Record<PropertyKey, any>, TIn extends Record<PropertyKey, any> = TOut>(
 		err: FormError<TOut, TIn> | Error | unknown
 	): FormError<TOut, TIn> {
-		if (dev) console.error(err);
 		if (err instanceof FormError) return err;
 		return new FormError<TOut, TIn>(extractMessage(err));
 	}
@@ -127,7 +140,12 @@ export async function save<
 		})
 	);
 
-	if (typeof result === "string" && result.startsWith("/")) redirect(302, result);
+	if (typeof result === "string" && result.startsWith("/")) {
+		Effect.runFork(log("Redirecting to", result));
+		redirect(302, result);
+	}
+
+	Effect.runFork(logDebug("Result:", result));
 
 	return result;
 }

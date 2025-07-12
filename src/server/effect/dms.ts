@@ -4,7 +4,7 @@ import { dungeonMasters, type DungeonMaster } from "$server/db/schema";
 import { sorter } from "@sillvva/utils";
 import { eq } from "drizzle-orm";
 import { Context, Effect, Layer } from "effect";
-import { DBService, FetchError, FormError, withLiveDB } from ".";
+import { DBService, FetchError, FormError, log, withLiveDB } from ".";
 
 class FetchDMError extends FetchError {}
 function createFetchError(err: unknown): FetchDMError {
@@ -69,69 +69,76 @@ const DMApiLive = Layer.effect(
 
 		const impl: DMApiImpl = {
 			getUserDMs: (user, { id, includeLogs = true } = {}) =>
-				Effect.tryPromise({
-					try: async () => {
-						return db.query.dungeonMasters.findMany({
-							with: includeLogs
-								? {
-										logs: {
-											with: {
-												character: {
-													columns: {
-														id: true,
-														name: true,
-														userId: true
+				Effect.gen(function* () {
+					yield* log("getUserDMs", user.id, id, includeLogs);
+					return yield* Effect.tryPromise({
+						try: async () => {
+							return db.query.dungeonMasters.findMany({
+								with: includeLogs
+									? {
+											logs: {
+												with: {
+													character: {
+														columns: {
+															id: true,
+															name: true,
+															userId: true
+														}
 													}
 												}
 											}
 										}
-									}
-								: undefined,
-							where: {
-								id: id
-									? {
-											eq: id
-										}
 									: undefined,
-								userId: {
-									eq: user.id
+								where: {
+									id: id
+										? {
+												eq: id
+											}
+										: undefined,
+									userId: {
+										eq: user.id
+									}
 								}
-							}
-						});
-					},
-					catch: createFetchError
-				}).pipe(
-					// Add empty logs to each DM, if includeLogs is false
-					Effect.map((dms) => dms.map((d) => ({ logs: [] as UserDMs[number]["logs"], ...d }))),
-					// Sort the DMs by isUser and name
-					Effect.map((dms) => dms.toSorted((a, b) => sorter(a.isUser, b.isUser) || sorter(a.name, b.name))),
-					// Add the user DM if there isn't one already, and not searching for a specific DM
-					Effect.flatMap((dms) =>
-						!id && !dms[0]?.isUser ? impl.addUserDM(user, dms).pipe(Effect.catchAll(createFetchError)) : Effect.succeed(dms)
-					)
-				),
+							});
+						},
+						catch: createFetchError
+					}).pipe(
+						// Add empty logs to each DM, if includeLogs is false
+						Effect.map((dms) => dms.map((d) => ({ logs: [] as UserDMs[number]["logs"], ...d }))),
+						// Sort the DMs by isUser and name
+						Effect.map((dms) => dms.toSorted((a, b) => sorter(a.isUser, b.isUser) || sorter(a.name, b.name))),
+						// Add the user DM if there isn't one already, and not searching for a specific DM
+						Effect.flatMap((dms) =>
+							!id && !dms[0]?.isUser ? impl.addUserDM(user, dms).pipe(Effect.catchAll(createFetchError)) : Effect.succeed(dms)
+						)
+					);
+				}),
 
 			getFuzzyDM: (userId, isUser, dm) =>
-				Effect.tryPromise({
-					try: () =>
-						db.query.dungeonMasters.findFirst({
-							where: {
-								userId: {
-									eq: userId
-								},
-								...(isUser
-									? { isUser }
-									: {
-											name: dm.name.trim() || undefined,
-											DCI: dm.DCI || undefined
-										})
-							}
-						}),
-					catch: createFetchError
+				Effect.gen(function* () {
+					yield* log("getFuzzyDM", userId, isUser, dm.id);
+					return yield* Effect.tryPromise({
+						try: () =>
+							db.query.dungeonMasters.findFirst({
+								where: {
+									userId: {
+										eq: userId
+									},
+									...(isUser
+										? { isUser }
+										: {
+												name: dm.name.trim() || undefined,
+												DCI: dm.DCI || undefined
+											})
+								}
+							}),
+						catch: createFetchError
+					});
 				}),
 
 			saveDM: (dmId, user, data) =>
 				Effect.gen(function* () {
+					yield* log("saveDM", dmId, user.id, data.id);
 					const [dm] = yield* impl.getUserDMs(user, { id: dmId }).pipe(Effect.catchAll(createSaveError));
 					if (!dm) return yield* new SaveDMError("DM does not exist", { status: 404 });
 
@@ -156,6 +163,7 @@ const DMApiLive = Layer.effect(
 
 			addUserDM: (user, dms) =>
 				Effect.gen(function* () {
+					yield* log("addUserDM", user.id, dms.length);
 					const result = yield* Effect.tryPromise({
 						try: () =>
 							db
@@ -182,6 +190,7 @@ const DMApiLive = Layer.effect(
 
 			deleteDM: (dm) =>
 				Effect.gen(function* () {
+					yield* log("deleteDM", dm.id);
 					if (dm.logs.length) return yield* new SaveDMError("You cannot delete a DM that has logs", { status: 400 });
 
 					return yield* Effect.tryPromise({

@@ -1,5 +1,6 @@
 import type { FullCharacterData } from "$server/effect/characters";
 import type { Prettify } from "@sillvva/utils";
+import { LogLevel } from "effect";
 import * as v from "valibot";
 import { PROVIDERS, themeGroups, themes } from "./constants";
 
@@ -35,7 +36,11 @@ export const envPrivateSchema = v.pipe(
 export type EnvPublic = v.InferOutput<typeof envPublicSchema>;
 export const envPublicSchema = v.pipe(
 	v.object({
-		PUBLIC_URL: urlSchema
+		PUBLIC_URL: urlSchema,
+		PUBLIC_LOG_LEVEL: v.pipe(
+			v.optional(v.picklist(["none", "debug", "info"]), "none"),
+			v.transform((b) => (b === "debug" ? LogLevel.Debug : b === "info" ? LogLevel.Info : LogLevel.None))
+		)
 	}),
 	v.readonly()
 );
