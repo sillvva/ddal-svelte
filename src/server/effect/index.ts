@@ -1,5 +1,14 @@
 import { privateEnv } from "$lib/env/private";
-import { error, redirect, type ActionFailure, type NumericRange, type RequestEvent } from "@sveltejs/kit";
+import { isError } from "$lib/util";
+import {
+	error,
+	isHttpError,
+	isRedirect,
+	redirect,
+	type ActionFailure,
+	type NumericRange,
+	type RequestEvent
+} from "@sveltejs/kit";
 import { Cause, Context, Data, Effect, Exit, Layer, Logger } from "effect";
 import {
 	setError,
@@ -37,33 +46,40 @@ export async function runOrThrow<T>(program: Effect.Effect<T, FetchError | FormE
 	return Exit.match(result, {
 		onSuccess: (result) => result,
 		onFailure: (cause) => {
-			Effect.runFork(Logs.logErrorJson(cause));
-
-			throw error(
-				500,
-				Cause.match(cause, {
-					onEmpty: "(empty)",
-					onFail: (error) => `(error: ${error.message})`,
-					onDie: (defect) => {
-						// This will propagate redirects and http errors directly to SvelteKit
+			const message = Cause.match(cause, {
+				onEmpty: "(empty)",
+				onFail: (error) => `(error: ${error.message})`,
+				onDie: (defect) => {
+					// This will propagate redirects and http errors directly to SvelteKit
+					if (isRedirect(defect)) {
+						Effect.runFork(Logs.logInfo(`Redirecting to ${defect.location}`));
 						throw defect;
-					},
-					onInterrupt: (fiberId) => `(fiberId: ${fiberId})`,
-					onSequential: (left, right) => `(onSequential (left: ${left}) (right: ${right}))`,
-					onParallel: (left, right) => `(onParallel (left: ${left}) (right: ${right})`
-				})
-			);
+					} else if (isHttpError(defect)) {
+						Effect.runFork(Logs.logErrorJson(defect));
+						throw defect;
+					} else if (isError(defect)) {
+						return `(error: ${defect.message})`;
+					}
+
+					return `(defect: ${defect})`;
+				},
+				onInterrupt: (fiberId) => `(fiberId: ${fiberId})`,
+				onSequential: (left, right) => `(onSequential (left: ${left}) (right: ${right}))`,
+				onParallel: (left, right) => `(onParallel (left: ${left}) (right: ${right})`
+			});
+
+			Effect.runFork(Logs.logErrorJson(message));
+			throw error(500, message);
 		}
 	});
 }
 
 type SuperValidateData = RequestEvent | Request | FormData | URLSearchParams | URL | null | undefined;
 
-export function validateForm<Input extends SuperValidateData | InferInput<Schema>, Schema extends BaseSchema<any, any, any>>(
-	input: Input,
-	schema: Schema,
-	options?: SuperValidateOptions<InferOutput<Schema>>
-) {
+export function validateForm<
+	Input extends SuperValidateData | Partial<InferInput<Schema>>,
+	Schema extends BaseSchema<any, any, any>
+>(input: Input, schema: Schema, options?: SuperValidateOptions<InferOutput<Schema>>) {
 	return Effect.promise(() => superValidate(input, valibot(schema), options));
 }
 

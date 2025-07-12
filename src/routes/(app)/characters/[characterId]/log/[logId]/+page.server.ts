@@ -11,20 +11,20 @@ import { Effect } from "effect";
 import { fail } from "sveltekit-superforms";
 import { parse, safeParse } from "valibot";
 
-export const load = async (event) => {
-	const user = event.locals.user;
-	assertUser(user);
-
-	const parent = await event.parent();
-	const character = parent.character;
-	if (!character) error(404, "Character not found");
-
-	const idResult = safeParse(logIdSchema, event.params.logId || "");
-	if (!idResult.success) redirect(302, `/character/${character.id}`);
-	const logId = idResult.output;
-
-	return await runOrThrow(
+export const load = (event) =>
+	runOrThrow(
 		Effect.gen(function* () {
+			const user = event.locals.user;
+			assertUser(user);
+
+			const parent = yield* Effect.promise(() => event.parent());
+			const character = parent.character;
+			if (!character) error(404, "Character not found");
+
+			const idResult = safeParse(logIdSchema, event.params.logId || "");
+			if (!idResult.success) redirect(302, `/character/${character.id}`);
+			const logId = idResult.output;
+
 			const log = (yield* withLog((service) => service.getLog(logId, user.id))) || defaultLogData(user.id, character);
 
 			if (logId !== "new") {
@@ -56,15 +56,14 @@ export const load = async (event) => {
 			};
 		})
 	);
-};
 
 export const actions = {
-	saveLog: async (event) => {
-		const user = event.locals.user;
-		assertUser(user);
-
-		return await runOrThrow(
+	saveLog: (event) =>
+		runOrThrow(
 			Effect.gen(function* () {
+				const user = event.locals.user;
+				assertUser(user);
+
 				const characterId = parse(characterIdSchema, event.params.characterId);
 				const character = yield* withCharacter((service) => service.getCharacter(characterId));
 				if (!character) redirect(302, "/characters");
@@ -87,6 +86,5 @@ export const actions = {
 					}
 				);
 			})
-		);
-	}
+		)
 };

@@ -7,26 +7,29 @@ import { Effect } from "effect";
 import { setError } from "sveltekit-superforms";
 import { pick } from "valibot";
 
-export const load = async (event) => {
-	const user = event.locals.user;
-	assertUser(user);
+export const load = (event) =>
+	runOrThrow(
+		Effect.gen(function* () {
+			const user = event.locals.user;
+			assertUser(user);
 
-	const dms = await runOrThrow(withDM((service) => service.getUserDMs(user, { includeLogs: true })));
+			const dms = yield* withDM((service) => service.getUserDMs(user, { includeLogs: true }));
 
-	return {
-		title: `${user.name}'s DMs`,
-		...event.params,
-		dms
-	};
-};
+			return {
+				title: `${user.name}'s DMs`,
+				...event.params,
+				dms
+			};
+		})
+	);
 
 export const actions = {
-	deleteDM: async (event) => {
-		const user = event.locals.user;
-		assertUser(user);
-
-		return await runOrThrow(
+	deleteDM: (event) =>
+		runOrThrow(
 			Effect.gen(function* () {
+				const user = event.locals.user;
+				assertUser(user);
+
 				const form = yield* validateForm(event, pick(dungeonMasterSchema, ["id"]));
 				if (!form.valid) return fail(400, { form });
 
@@ -44,6 +47,5 @@ export const actions = {
 					}
 				);
 			})
-		);
-	}
+		)
 };

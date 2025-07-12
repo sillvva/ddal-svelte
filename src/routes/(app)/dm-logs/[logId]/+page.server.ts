@@ -9,14 +9,14 @@ import { Effect } from "effect";
 import { fail } from "sveltekit-superforms";
 import { safeParse } from "valibot";
 
-export const load = async (event) => {
-	const user = event.locals.user;
-	assertUser(user);
-
-	const parent = await event.parent();
-
-	return await runOrThrow(
+export const load = (event) =>
+	runOrThrow(
 		Effect.gen(function* () {
+			const user = event.locals.user;
+			assertUser(user);
+
+			const parent = yield* Effect.promise(() => event.parent());
+
 			const idResult = safeParse(logIdSchema, event.params.logId || "");
 			if (!idResult.success) redirect(302, `/dm-logs`);
 			const logId = idResult.output;
@@ -53,19 +53,18 @@ export const load = async (event) => {
 			};
 		})
 	);
-};
 
 export const actions = {
-	saveLog: async (event) => {
-		const user = event.locals.user;
-		assertUser(user);
-
-		const idResult = safeParse(logIdSchema, event.params.logId || "");
-		if (!idResult.success) redirect(302, `/dm-logs`);
-		const logId = idResult.output;
-
-		return await runOrThrow(
+	saveLog: (event) =>
+		runOrThrow(
 			Effect.gen(function* () {
+				const user = event.locals.user;
+				assertUser(user);
+
+				const idResult = safeParse(logIdSchema, event.params.logId || "");
+				if (!idResult.success) redirect(302, `/dm-logs`);
+				const logId = idResult.output;
+
 				const log = yield* withLog((service) => service.getLog(logId, user.id));
 				if (logId !== "new" && !log?.id) redirect(302, `/dm-logs`);
 
@@ -82,6 +81,5 @@ export const actions = {
 					}
 				);
 			})
-		);
-	}
+		)
 };
