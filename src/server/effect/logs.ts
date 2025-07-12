@@ -5,7 +5,7 @@ import { extendedLogIncludes, logIncludes } from "$server/db/includes";
 import { dungeonMasters, logs, magicItems, storyAwards } from "$server/db/schema";
 import { and, eq, inArray, isNull, notInArray } from "drizzle-orm";
 import { Context, Effect, Layer } from "effect";
-import { DBService, FetchError, FormError, Logs, runOrThrow, withLiveDB } from ".";
+import { DBService, FetchError, FormError, Logs, run, withLiveDB } from ".";
 import { DMApi, DMLive } from "./dms";
 
 class FetchLogError extends FetchError {}
@@ -398,7 +398,7 @@ const LogApiLive = Layer.effect(
 					return yield* Effect.tryPromise({
 						try: () =>
 							db.transaction((tx) => {
-								return runOrThrow(upsertLog(log, user, tx).pipe(Effect.provide(LogLive(tx)), Effect.provide(DMLive(tx))));
+								return run(upsertLog(log, user, tx).pipe(Effect.provide(LogLive(tx)), Effect.provide(DMLive(tx))));
 							}),
 						catch: createSaveError
 					});

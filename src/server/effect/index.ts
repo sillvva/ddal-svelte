@@ -10,6 +10,7 @@ import {
 	type RequestEvent
 } from "@sveltejs/kit";
 import { Cause, Context, Data, Effect, Exit, Layer, Logger } from "effect";
+import type { YieldWrap } from "effect/Utils";
 import {
 	setError,
 	superValidate,
@@ -21,6 +22,10 @@ import { valibot } from "sveltekit-superforms/adapters";
 import type { BaseSchema, InferInput, InferOutput } from "valibot";
 import { db, type Database, type Transaction } from "../db";
 
+// -------------------------------------------------------------------------------------------------
+// Logs
+// -------------------------------------------------------------------------------------------------
+
 const logLevel = Logger.withMinimumLogLevel(privateEnv.LOG_LEVEL);
 
 export const Logs = {
@@ -30,6 +35,10 @@ export const Logs = {
 	logDebug: (...messages: unknown[]) => Effect.logDebug(...messages).pipe(logLevel),
 	logDebugJson: (...messages: unknown[]) => Effect.logDebug(...messages).pipe(logLevel, Effect.provide(Logger.json))
 };
+
+// -------------------------------------------------------------------------------------------------
+// DB
+// -------------------------------------------------------------------------------------------------
 
 interface DBImpl {
 	readonly db: Effect.Effect<Database | Transaction>;
@@ -41,8 +50,30 @@ export function withLiveDB(dbOrTx: Database | Transaction = db) {
 	return Layer.succeed(DBService, DBService.of({ db: Effect.succeed(dbOrTx) }));
 }
 
-export async function runOrThrow<T>(program: Effect.Effect<T, FetchError | FormError<any, any> | never, never>) {
-	const result = await Effect.runPromiseExit(program);
+// -------------------------------------------------------------------------------------------------
+// Run
+// -------------------------------------------------------------------------------------------------
+
+// Overload signatures
+export async function run<T extends YieldWrap<Effect.Effect<A, B>>, A, B extends FetchError | FormError<any, any> | never, X, Y>(
+	program: () => Generator<T, X, Y>
+): Promise<X>;
+
+export async function run<A, B extends FetchError | FormError<any, any> | never>(program: Effect.Effect<A, B>): Promise<A>;
+
+// Implementation
+export async function run(program: any): Promise<any> {
+	const eff = Effect.gen(function* () {
+		if (typeof program === "function") {
+			// Generator function
+			return yield* program();
+		} else {
+			// Effect
+			return yield* program;
+		}
+	}) as Effect.Effect<any, FetchError | FormError<any, any> | never>;
+
+	const result = await Effect.runPromiseExit(eff);
 	return Exit.match(result, {
 		onSuccess: (result) => result,
 		onFailure: (cause) => {
@@ -74,6 +105,10 @@ export async function runOrThrow<T>(program: Effect.Effect<T, FetchError | FormE
 	});
 }
 
+// -------------------------------------------------------------------------------------------------
+// Superforms
+// -------------------------------------------------------------------------------------------------
+
 type SuperValidateData = RequestEvent | Request | FormData | URLSearchParams | URL | null | undefined;
 
 export function validateForm<
@@ -82,6 +117,10 @@ export function validateForm<
 >(input: Input, schema: Schema, options?: SuperValidateOptions<InferOutput<Schema>>) {
 	return Effect.promise(() => superValidate(input, valibot(schema), options));
 }
+
+// -------------------------------------------------------------------------------------------------
+// Save
+// -------------------------------------------------------------------------------------------------
 
 export async function save<
 	TOut extends Record<PropertyKey, any>,
@@ -111,6 +150,10 @@ export async function save<
 
 	return result;
 }
+
+// -------------------------------------------------------------------------------------------------
+// Errors
+// -------------------------------------------------------------------------------------------------
 
 const unknownError = "Unknown error";
 
