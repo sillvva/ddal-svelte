@@ -1,5 +1,4 @@
 import { privateEnv } from "$lib/env/private";
-import { isError } from "$lib/util";
 import { error, redirect, type ActionFailure, type NumericRange, type RequestEvent } from "@sveltejs/kit";
 import { Cause, Context, Data, Effect, Exit, Layer, Logger } from "effect";
 import {
@@ -33,31 +32,29 @@ export function withLiveDB(dbOrTx: Database | Transaction = db) {
 	return Layer.succeed(DBService, DBService.of({ db: Effect.succeed(dbOrTx) }));
 }
 
-export async function runOrThrow<T>(program: Effect.Effect<T, unknown, never>) {
-	try {
-		const result = await Effect.runPromiseExit(program);
-		return Exit.match(result, {
-			onSuccess: (result) => result,
-			onFailure: (cause) => {
-				Effect.runFork(Logs.logErrorJson(cause));
+export async function runOrThrow<T>(program: Effect.Effect<T, FetchError | FormError<any, any> | never, never>) {
+	const result = await Effect.runPromiseExit(program);
+	return Exit.match(result, {
+		onSuccess: (result) => result,
+		onFailure: (cause) => {
+			Effect.runFork(Logs.logErrorJson(cause));
 
-				throw Cause.match(cause, {
+			throw error(
+				500,
+				Cause.match(cause, {
 					onEmpty: "(empty)",
-					onFail: (error) => `(error: ${error})`,
+					onFail: (error) => `(error: ${error.message})`,
 					onDie: (defect) => {
-						// This will propagate redirects and http errors to SvelteKit
+						// This will propagate redirects and http errors directly to SvelteKit
 						throw defect;
 					},
 					onInterrupt: (fiberId) => `(fiberId: ${fiberId})`,
 					onSequential: (left, right) => `(onSequential (left: ${left}) (right: ${right}))`,
 					onParallel: (left, right) => `(onParallel (left: ${left}) (right: ${right})`
-				});
-			}
-		});
-	} catch (err) {
-		if (isError(err)) throw error(500, err.message);
-		throw err;
-	}
+				})
+			);
+		}
+	});
 }
 
 type SuperValidateData = RequestEvent | Request | FormData | URLSearchParams | URL | null | undefined;
