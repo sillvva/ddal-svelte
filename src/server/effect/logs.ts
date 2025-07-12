@@ -5,7 +5,7 @@ import { extendedLogIncludes, logIncludes } from "$server/db/includes";
 import { dungeonMasters, logs, magicItems, storyAwards } from "$server/db/schema";
 import { and, eq, inArray, isNull, notInArray } from "drizzle-orm";
 import { Context, Effect, Layer } from "effect";
-import { DBService, FetchError, FormError, log as logInfo, runOrThrow, withLiveDB } from ".";
+import { DBService, FetchError, FormError, Logs, runOrThrow, withLiveDB } from ".";
 import { DMApi, DMLive } from "./dms";
 
 class FetchLogError extends FetchError {}
@@ -319,7 +319,7 @@ const LogApiLive = Layer.effect(
 		const impl: LogApiImpl = {
 			getLog: (logId, userId) =>
 				Effect.gen(function* () {
-					yield* logInfo("getLog", logId, userId);
+					yield* Logs.logInfo("getLog", logId, userId);
 					return yield* Effect.tryPromise({
 						try: () =>
 							db.query.logs.findFirst({
@@ -337,7 +337,7 @@ const LogApiLive = Layer.effect(
 
 			getDMLogs: (userId) =>
 				Effect.gen(function* () {
-					yield* logInfo("getDMLogs", userId);
+					yield* Logs.logInfo("getDMLogs", userId);
 					return yield* Effect.tryPromise({
 						try: () =>
 							db.query.logs
@@ -357,7 +357,7 @@ const LogApiLive = Layer.effect(
 
 			getUserLogs: (userId) =>
 				Effect.gen(function* () {
-					yield* logInfo("getUserLogs", userId);
+					yield* Logs.logInfo("getUserLogs", userId);
 					return yield* Effect.tryPromise({
 						try: () =>
 							db.query.logs.findMany({
@@ -375,7 +375,7 @@ const LogApiLive = Layer.effect(
 
 			deleteLog: (logId, userId) =>
 				Effect.gen(function* () {
-					yield* logInfo("deleteLog", logId, userId);
+					yield* Logs.logInfo("deleteLog", logId, userId);
 					const log = yield* impl.getLog(logId, userId).pipe(Effect.catchAll(createSaveError));
 
 					if (!log) return yield* new SaveLogError("Log not found", { status: 404 });
@@ -393,7 +393,8 @@ const LogApiLive = Layer.effect(
 
 			saveLog: (log, user) =>
 				Effect.gen(function* () {
-					yield* logInfo("saveLog", log.id, user.id);
+					yield* Logs.logInfo("saveLog", log.id, user.id);
+					yield* Logs.logDebugStructured(log);
 					return yield* Effect.tryPromise({
 						try: () =>
 							db.transaction((tx) => {

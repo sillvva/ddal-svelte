@@ -28,7 +28,11 @@ export const envPrivateSchema = v.pipe(
 		GOOGLE_CLIENT_SECRET: requiredString,
 		DISCORD_CLIENT_ID: requiredString,
 		DISCORD_CLIENT_SECRET: requiredString,
-		DISABLE_SIGNUPS: v.optional(v.boolean(), false)
+		DISABLE_SIGNUPS: v.optional(v.boolean(), false),
+		LOG_LEVEL: v.pipe(
+			v.optional(v.picklist(["none", "debug", "info"]), "none"),
+			v.transform((b) => (b === "debug" ? LogLevel.Debug : b === "info" ? LogLevel.Info : LogLevel.None))
+		)
 	}),
 	v.readonly()
 );
@@ -36,11 +40,7 @@ export const envPrivateSchema = v.pipe(
 export type EnvPublic = v.InferOutput<typeof envPublicSchema>;
 export const envPublicSchema = v.pipe(
 	v.object({
-		PUBLIC_URL: urlSchema,
-		PUBLIC_LOG_LEVEL: v.pipe(
-			v.optional(v.picklist(["none", "debug", "info"]), "none"),
-			v.transform((b) => (b === "debug" ? LogLevel.Debug : b === "info" ? LogLevel.Info : LogLevel.None))
-		)
+		PUBLIC_URL: urlSchema
 	}),
 	v.readonly()
 );

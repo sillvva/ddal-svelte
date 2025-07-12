@@ -6,7 +6,7 @@ import { characterIncludes, extendedCharacterIncludes } from "$server/db/include
 import { characters, logs, type Character } from "$server/db/schema";
 import { and, eq, exists } from "drizzle-orm";
 import { Context, Effect, Layer } from "effect";
-import { DBService, FetchError, FormError, log, withLiveDB } from ".";
+import { DBService, FetchError, FormError, Logs, withLiveDB } from ".";
 
 class FetchCharacterError extends FetchError {}
 function createFetchError(err: unknown): FetchCharacterError {
@@ -57,7 +57,7 @@ const CharacterApiLive = Layer.effect(
 		const impl: CharacterApiImpl = {
 			getCharacter: (characterId, includeLogs = true) =>
 				Effect.gen(function* () {
-					yield* log("getCharacter", characterId, includeLogs);
+					yield* Logs.logInfo("getCharacter", characterId, includeLogs);
 					return yield* Effect.tryPromise({
 						try: () =>
 							db.query.characters.findFirst({
@@ -70,7 +70,7 @@ const CharacterApiLive = Layer.effect(
 
 			getUserCharacters: (userId, includeLogs = true) =>
 				Effect.gen(function* () {
-					yield* log("getUserCharacters", userId, includeLogs);
+					yield* Logs.logInfo("getUserCharacters", userId, includeLogs);
 					return yield* Effect.tryPromise({
 						try: () =>
 							db.query.characters.findMany({
@@ -83,7 +83,8 @@ const CharacterApiLive = Layer.effect(
 
 			saveCharacter: (characterId, userId, data) =>
 				Effect.gen(function* () {
-					yield* log("saveCharacter", characterId, userId);
+					yield* Logs.logInfo("saveCharacter", characterId, userId);
+					yield* Logs.logDebugStructured(data);
 					if (!characterId) yield* new SaveCharacterError("No character ID provided", { status: 400 });
 
 					return yield* Effect.tryPromise({
@@ -112,7 +113,7 @@ const CharacterApiLive = Layer.effect(
 
 			deleteCharacter: (characterId, userId) =>
 				Effect.gen(function* () {
-					yield* log("deleteCharacter", characterId, userId);
+					yield* Logs.logInfo("deleteCharacter", characterId, userId);
 					return yield* Effect.tryPromise({
 						try: () =>
 							db.transaction(async (tx) => {

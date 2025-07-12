@@ -3,7 +3,7 @@ import { privateEnv } from "$lib/env/private";
 import { appCookieSchema, localsSessionSchema, type UserId } from "$lib/schemas";
 import { serverGetCookie } from "$server/cookie";
 import { db } from "$server/db";
-import { logDebug, runOrThrow } from "$server/effect";
+import { Logs, runOrThrow } from "$server/effect";
 import { withUser } from "$server/effect/user";
 import { createId } from "@paralleldrive/cuid2";
 import { type Handle } from "@sveltejs/kit";
@@ -59,7 +59,7 @@ const authHandler: Handle = async ({ event, resolve }) => {
 
 const session: Handle = async ({ event, resolve }) => {
 	if (!event.route.id) return await resolve(event);
-	Effect.runFork(logDebug(event.route.id));
+	Effect.runFork(Logs.logDebug(event.route.id));
 
 	const { session, user } = (await auth.api.getSession({ headers: event.request.headers })) ?? {};
 

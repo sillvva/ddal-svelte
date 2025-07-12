@@ -1,5 +1,5 @@
 import { dev } from "$app/environment";
-import { publicEnv } from "$lib/env/public";
+import { privateEnv } from "$lib/env/private";
 import { isError } from "$lib/util";
 import {
 	error,
@@ -16,17 +16,14 @@ import { valibot } from "sveltekit-superforms/adapters";
 import type { BaseSchema, InferInput } from "valibot";
 import { db, type Database, type Transaction } from "../db";
 
-export function log(...messages: unknown[]) {
-	return Effect.log(messages.join(" ")).pipe(Logger.withMinimumLogLevel(publicEnv.PUBLIC_LOG_LEVEL));
-}
+const logLevel = Logger.withMinimumLogLevel(privateEnv.LOG_LEVEL);
 
-export function logDebug(...messages: unknown[]) {
-	return Effect.logDebug(messages.join(" ")).pipe(Logger.withMinimumLogLevel(publicEnv.PUBLIC_LOG_LEVEL));
-}
-
-export function logError(...messages: unknown[]) {
-	return Effect.logError(messages.join(" ")).pipe(Logger.withMinimumLogLevel(publicEnv.PUBLIC_LOG_LEVEL));
-}
+export const Logs = {
+	logInfo: (...messages: unknown[]) => Effect.logInfo(messages.join(" ")).pipe(logLevel),
+	logError: (...messages: unknown[]) => Effect.logError(messages.join(" ")).pipe(logLevel),
+	logDebug: (...messages: unknown[]) => Effect.logDebug(...messages).pipe(logLevel),
+	logDebugStructured: (...messages: unknown[]) => Effect.logDebug(...messages).pipe(logLevel, Effect.provide(Logger.structured))
+};
 
 interface DBImpl {
 	readonly db: Effect.Effect<Database | Transaction>;
@@ -78,7 +75,7 @@ export class FetchError extends Data.TaggedError("FetchError")<{
 }> {
 	constructor(public message: string = unknownError) {
 		super({ message });
-		if (dev) Effect.runFork(logError(this));
+		if (dev) Effect.runFork(Logs.logError(this));
 	}
 
 	static from(err: FetchError | Error | unknown): FetchError {
@@ -104,7 +101,7 @@ export class FormError<
 	) {
 		super({ message });
 		if (options.status) this.status = options.status;
-		if (dev) Effect.runFork(logError(this));
+		if (dev) Effect.runFork(Logs.logError(this));
 	}
 
 	static from<TOut extends Record<PropertyKey, any>, TIn extends Record<PropertyKey, any> = TOut>(
@@ -141,11 +138,11 @@ export async function save<
 	);
 
 	if (typeof result === "string" && result.startsWith("/")) {
-		Effect.runFork(log("Redirecting to", result));
+		Effect.runFork(Logs.logInfo("Redirecting to", result));
 		redirect(302, result);
 	}
 
-	Effect.runFork(logDebug("Result:", result));
+	Effect.runFork(Logs.logDebug("Result:", result));
 
 	return result;
 }
