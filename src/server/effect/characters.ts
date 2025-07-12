@@ -84,7 +84,7 @@ const CharacterApiLive = Layer.effect(
 			saveCharacter: (characterId, userId, data) =>
 				Effect.gen(function* () {
 					yield* Logs.logInfo("saveCharacter", characterId, userId);
-					yield* Logs.logDebugStructured(data);
+					yield* Logs.logDebugJson(data);
 					if (!characterId) yield* new SaveCharacterError("No character ID provided", { status: 400 });
 
 					return yield* Effect.tryPromise({

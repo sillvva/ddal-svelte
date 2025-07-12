@@ -1,19 +1,16 @@
-import { dev } from "$app/environment";
 import { privateEnv } from "$lib/env/private";
 import { isError } from "$lib/util";
+import { error, redirect, type ActionFailure, type NumericRange, type RequestEvent } from "@sveltejs/kit";
+import { Cause, Context, Data, Effect, Exit, Layer, Logger } from "effect";
 import {
-	error,
-	isHttpError,
-	isRedirect,
-	redirect,
-	type ActionFailure,
-	type NumericRange,
-	type RequestEvent
-} from "@sveltejs/kit";
-import { Context, Data, Effect, Layer, Logger } from "effect";
-import { setError, superValidate, type FormPathLeavesWithErrors, type SuperValidated } from "sveltekit-superforms";
+	setError,
+	superValidate,
+	type FormPathLeavesWithErrors,
+	type SuperValidated,
+	type SuperValidateOptions
+} from "sveltekit-superforms";
 import { valibot } from "sveltekit-superforms/adapters";
-import type { BaseSchema, InferInput } from "valibot";
+import type { BaseSchema, InferInput, InferOutput } from "valibot";
 import { db, type Database, type Transaction } from "../db";
 
 const logLevel = Logger.withMinimumLogLevel(privateEnv.LOG_LEVEL);
@@ -21,8 +18,9 @@ const logLevel = Logger.withMinimumLogLevel(privateEnv.LOG_LEVEL);
 export const Logs = {
 	logInfo: (...messages: unknown[]) => Effect.logInfo(messages.join(" ")).pipe(logLevel),
 	logError: (...messages: unknown[]) => Effect.logError(messages.join(" ")).pipe(logLevel),
+	logErrorJson: (...messages: unknown[]) => Effect.logError(...messages).pipe(logLevel, Effect.provide(Logger.json)),
 	logDebug: (...messages: unknown[]) => Effect.logDebug(...messages).pipe(logLevel),
-	logDebugStructured: (...messages: unknown[]) => Effect.logDebug(...messages).pipe(logLevel, Effect.provide(Logger.structured))
+	logDebugJson: (...messages: unknown[]) => Effect.logDebug(...messages).pipe(logLevel, Effect.provide(Logger.json))
 };
 
 interface DBImpl {
@@ -37,24 +35,39 @@ export function withLiveDB(dbOrTx: Database | Transaction = db) {
 
 export async function runOrThrow<T>(program: Effect.Effect<T, unknown, never>) {
 	try {
-		return await Effect.runPromise(program);
+		const result = await Effect.runPromiseExit(program);
+		return Exit.match(result, {
+			onSuccess: (result) => result,
+			onFailure: (cause) => {
+				Effect.runFork(Logs.logErrorJson(cause));
+
+				throw Cause.match(cause, {
+					onEmpty: "(empty)",
+					onFail: (error) => `(error: ${error})`,
+					onDie: (defect) => {
+						// This will propagate redirects and http errors to SvelteKit
+						throw defect;
+					},
+					onInterrupt: (fiberId) => `(fiberId: ${fiberId})`,
+					onSequential: (left, right) => `(onSequential (left: ${left}) (right: ${right}))`,
+					onParallel: (left, right) => `(onParallel (left: ${left}) (right: ${right})`
+				});
+			}
+		});
 	} catch (err) {
-		if (isRedirect(err) || isHttpError(err)) {
-			throw err;
-		} else if (isError(err)) {
-			throw error(500, err.message);
-		} else {
-			if (dev) console.error(err);
-			throw Effect.die(err);
-		}
+		if (isError(err)) throw error(500, err.message);
+		throw err;
 	}
 }
 
-export function validateForm<Input extends RequestEvent | InferInput<Schema>, Schema extends BaseSchema<any, any, any>>(
+type SuperValidateData = RequestEvent | Request | FormData | URLSearchParams | URL | null | undefined;
+
+export function validateForm<Input extends SuperValidateData | InferInput<Schema>, Schema extends BaseSchema<any, any, any>>(
 	input: Input,
-	schema: Schema
+	schema: Schema,
+	options?: SuperValidateOptions<InferOutput<Schema>>
 ) {
-	return Effect.promise(() => superValidate(input, valibot(schema)));
+	return Effect.promise(() => superValidate(input, valibot(schema), options));
 }
 
 export async function save<
@@ -81,7 +94,7 @@ export async function save<
 		redirect(302, result);
 	}
 
-	Effect.runFork(typeof result === "object" ? Logs.logDebugStructured(result) : Logs.logDebug("Result:", result));
+	Effect.runFork(typeof result === "object" ? Logs.logDebugJson(result) : Logs.logDebug("Result:", result));
 
 	return result;
 }
@@ -104,7 +117,6 @@ export class FetchError extends Data.TaggedError("FetchError")<{
 }> {
 	constructor(public message: string = unknownError) {
 		super({ message });
-		if (dev) Effect.runFork(Logs.logError(this));
 	}
 
 	static from(err: FetchError | Error | unknown): FetchError {
@@ -130,7 +142,6 @@ export class FormError<
 	) {
 		super({ message });
 		if (options.status) this.status = options.status;
-		if (dev) Effect.runFork(Logs.logError(this));
 	}
 
 	static from<TOut extends Record<PropertyKey, any>, TIn extends Record<PropertyKey, any> = TOut>(

@@ -15,12 +15,12 @@ export const load = async (event) => {
 
 	const parent = await event.parent();
 
-	const idResult = safeParse(logIdSchema, event.params.logId || "");
-	if (!idResult.success) redirect(302, `/dm-logs`);
-	const logId = idResult.output;
-
 	return await runOrThrow(
 		Effect.gen(function* () {
+			const idResult = safeParse(logIdSchema, event.params.logId || "");
+			if (!idResult.success) redirect(302, `/dm-logs`);
+			const logId = idResult.output;
+
 			const characters = yield* withCharacter((service) => service.getUserCharacters(user.id, true)).pipe(
 				Effect.map((characters) =>
 					characters.map((c) => ({
