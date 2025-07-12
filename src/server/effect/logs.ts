@@ -394,7 +394,7 @@ const LogApiLive = Layer.effect(
 			saveLog: (log, user) =>
 				Effect.gen(function* () {
 					yield* Logs.logInfo("saveLog", log.id, user.id);
-					yield* Logs.logDebugStructured(log);
+					yield* Logs.logDebugJson(log);
 					return yield* Effect.tryPromise({
 						try: () =>
 							db.transaction((tx) => {

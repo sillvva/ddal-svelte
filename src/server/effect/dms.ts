@@ -140,7 +140,7 @@ const DMApiLive = Layer.effect(
 			saveDM: (dmId, user, data) =>
 				Effect.gen(function* () {
 					yield* Logs.logInfo("saveDM", dmId, user.id, data.id);
-					yield* Logs.logDebugStructured(data);
+					yield* Logs.logDebugJson(data);
 
 					const [dm] = yield* impl.getUserDMs(user, { id: dmId }).pipe(Effect.catchAll(createSaveError));
 					if (!dm) return yield* new SaveDMError("DM does not exist", { status: 404 });

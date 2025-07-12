@@ -1,8 +1,10 @@
 import { authName } from "$lib/auth";
 import { db, q } from "$server/db/index";
 import { passkey } from "$server/db/schema";
+import { Logs } from "$server/effect";
 import { json } from "@sveltejs/kit";
 import { and, eq } from "drizzle-orm";
+import { Effect } from "effect";
 
 export type RenameWebAuthnResponse = { success: true; name: string } | { success: false; error: string; throw?: boolean };
 export type RenameWebAuthnInput = { name: string; id?: string };
@@ -37,7 +39,7 @@ export async function POST({ request, locals }) {
 	} catch (e) {
 		if (e instanceof Error) return json({ success: false, error: e.message } satisfies RenameWebAuthnResponse, { status: 500 });
 		else {
-			console.error(e);
+			Effect.runFork(Logs.logError(e));
 			return json({ success: false, error: "Unknown error" } satisfies RenameWebAuthnResponse, { status: 500 });
 		}
 	}
@@ -68,7 +70,7 @@ export async function DELETE({ request, locals }) {
 	} catch (e) {
 		if (e instanceof Error) return json({ success: false, error: e.message } satisfies DeleteWebAuthnResponse, { status: 500 });
 		else {
-			console.error(e);
+			Effect.runFork(Logs.logError(e));
 			return json({ success: false, error: "Unknown error" } satisfies DeleteWebAuthnResponse, { status: 500 });
 		}
 	}
