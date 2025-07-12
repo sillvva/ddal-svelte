@@ -1,5 +1,6 @@
-import type { FullCharacterData } from "$server/data/characters";
+import type { FullCharacterData } from "$server/effect/characters";
 import type { Prettify } from "@sillvva/utils";
+import { LogLevel } from "effect";
 import * as v from "valibot";
 import { PROVIDERS, themeGroups, themes } from "./constants";
 
@@ -27,7 +28,11 @@ export const envPrivateSchema = v.pipe(
 		GOOGLE_CLIENT_SECRET: requiredString,
 		DISCORD_CLIENT_ID: requiredString,
 		DISCORD_CLIENT_SECRET: requiredString,
-		DISABLE_SIGNUPS: v.optional(v.boolean(), false)
+		DISABLE_SIGNUPS: v.optional(v.boolean(), false),
+		LOG_LEVEL: v.pipe(
+			v.optional(v.picklist(["none", "debug", "info"]), "none"),
+			v.transform((b) => (b === "debug" ? LogLevel.Debug : b === "info" ? LogLevel.Info : LogLevel.None))
+		)
 	}),
 	v.readonly()
 );

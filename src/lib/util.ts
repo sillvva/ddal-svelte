@@ -1,4 +1,3 @@
-import type { Passkey } from "$server/db/schema";
 import { wait } from "@sillvva/utils";
 import { hotkey as hk, type HotkeyItem } from "@svelteuidev/composables";
 import type { Attachment } from "svelte/attachments";
@@ -27,6 +26,6 @@ export function hotkey(hotkeys: HotkeyItem[]): Attachment<HTMLElement | Document
 	};
 }
 
-export function authName(passkey: Passkey) {
-	return passkey.name || passkey.id.replace(/[^a-z0-9]/gi, "").slice(-8);
+export function isError(err: unknown): err is Error {
+	return !!err && typeof err === "object" && "message" in err && typeof err.message === "string";
 }

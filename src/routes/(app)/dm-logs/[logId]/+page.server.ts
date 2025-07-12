@@ -1,13 +1,12 @@
 import { defaultLogData, logDataToSchema } from "$lib/entities.js";
 import { dMLogSchema, logIdSchema } from "$lib/schemas";
-import { saveLog } from "$server/actions/logs";
 import { assertUser } from "$server/auth";
-import { getUserCharacters } from "$server/data/characters";
-import { getLog } from "$server/data/logs";
-import { fetchWithFallback, save } from "$server/db/effect";
+import { runOrThrow, save, validateForm } from "$server/effect";
+import { withCharacter } from "$server/effect/characters.js";
+import { withLog } from "$server/effect/logs";
 import { error, redirect } from "@sveltejs/kit";
-import { fail, superValidate } from "sveltekit-superforms";
-import { valibot } from "sveltekit-superforms/adapters";
+import { Effect } from "effect";
+import { fail } from "sveltekit-superforms";
 import { safeParse } from "valibot";
 
 export const load = async (event) => {
@@ -20,36 +19,40 @@ export const load = async (event) => {
 	if (!idResult.success) redirect(302, `/dm-logs`);
 	const logId = idResult.output;
 
-	const characters = await fetchWithFallback(getUserCharacters(user.id), () => []).then((characters) =>
-		characters.map((c) => ({
-			...c,
-			logs: c.logs.filter((l) => l.id !== logId),
-			magicItems: [],
-			storyAwards: [],
-			logLevels: []
-		}))
+	return await runOrThrow(
+		Effect.gen(function* () {
+			const characters = yield* withCharacter((service) => service.getUserCharacters(user.id, true)).pipe(
+				Effect.map((characters) =>
+					characters.map((c) => ({
+						...c,
+						logs: c.logs.filter((l) => l.id !== logId),
+						magicItems: [],
+						storyAwards: [],
+						logLevels: []
+					}))
+				)
+			);
+
+			let log = (yield* withLog((service) => service.getLog(logId, user.id))) || defaultLogData(user.id);
+			if (logId !== "new") {
+				if (!log.id) error(404, "Log not found");
+				if (!log.isDmLog) redirect(302, `/characters/${log.characterId}/log/${log.id}`);
+			}
+
+			const form = yield* validateForm(logDataToSchema(user.id, log), dMLogSchema(characters));
+
+			return {
+				...event.params,
+				title: logId === "new" ? "New DM Log" : `Edit ${form.data.name}`,
+				breadcrumbs: parent.breadcrumbs.concat({
+					name: logId === "new" ? "New DM Log" : `${form.data.name}`,
+					href: `/dm-logs/${logId}`
+				}),
+				characters: characters.map((c) => ({ id: c.id, name: c.name })),
+				form
+			};
+		})
 	);
-
-	let log = (await fetchWithFallback(getLog(logId, user.id), () => undefined)) || defaultLogData(user.id);
-	if (logId !== "new") {
-		if (!log.id) error(404, "Log not found");
-		if (!log.isDmLog) redirect(302, `/characters/${log.characterId}/log/${log.id}`);
-	}
-
-	const form = await superValidate(logDataToSchema(user.id, log), valibot(dMLogSchema(characters)), {
-		errors: logId !== "new"
-	});
-
-	return {
-		...event.params,
-		title: logId === "new" ? "New DM Log" : `Edit ${form.data.name}`,
-		breadcrumbs: parent.breadcrumbs.concat({
-			name: logId === "new" ? "New DM Log" : `${form.data.name}`,
-			href: `/dm-logs/${logId}`
-		}),
-		characters: characters.map((c) => ({ id: c.id, name: c.name })),
-		form
-	};
 };
 
 export const actions = {
@@ -61,16 +64,24 @@ export const actions = {
 		if (!idResult.success) redirect(302, `/dm-logs`);
 		const logId = idResult.output;
 
-		const log = await fetchWithFallback(getLog(logId, user.id), () => undefined);
-		if (logId !== "new" && !log?.id) redirect(302, `/dm-logs`);
+		return await runOrThrow(
+			Effect.gen(function* () {
+				const log = yield* withLog((service) => service.getLog(logId, user.id));
+				if (logId !== "new" && !log?.id) redirect(302, `/dm-logs`);
 
-		const characters = await fetchWithFallback(getUserCharacters(user.id), () => []);
-		const form = await superValidate(event, valibot(dMLogSchema(characters)));
-		if (!form.valid) return fail(400, { form });
+				const characters = yield* withCharacter((service) => service.getUserCharacters(user.id, true));
 
-		return await save(saveLog(form.data, user), {
-			onError: (err) => err.toForm(form),
-			onSuccess: () => `/dm-logs`
-		});
+				const form = yield* validateForm(event, dMLogSchema(characters));
+				if (!form.valid) return fail(400, { form });
+
+				return save(
+					withLog((service) => service.saveLog(form.data, user)),
+					{
+						onError: (err) => err.toForm(form),
+						onSuccess: () => `/dm-logs`
+					}
+				);
+			})
+		);
 	}
 };
