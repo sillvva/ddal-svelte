@@ -100,11 +100,13 @@ export async function run(program: any): Promise<any> {
 		onFailure: (cause) => {
 			let message = Cause.pretty(cause);
 			let status: NumericRange<400, 599> = 500;
+			let failCause: unknown;
 
 			if (Cause.isFailType(cause)) {
 				const error = cause.error;
 				if (error instanceof FormError || error instanceof FetchError) {
 					status = error.status;
+					failCause = error.cause;
 				}
 			}
 
@@ -122,7 +124,7 @@ export async function run(program: any): Promise<any> {
 				}
 			}
 
-			Effect.runFork(Log.error([message], { status }));
+			Effect.runFork(Log.error([message], { status, cause: failCause }));
 
 			if (!dev) message = message.replace(/\n\s+at .+/, "");
 			throw error(status, message);
