@@ -41,20 +41,12 @@ function annotateError(extra: object = {}) {
 }
 
 export const Log = {
-	info: (messages: string[], extra?: object) =>
-		Effect.logInfo(messages.join(" ")).pipe(logLevel, annotateError(extra), Effect.provide(Logger.json)),
-	error: (messages: string[], extra?: object) =>
-		Effect.logError(messages.join(" ")).pipe(
-			logLevel,
-			annotateError(extra),
-			Effect.provide(dev ? Logger.structured : Logger.json)
-		),
-	debug: (messages: string[], extra?: object) =>
-		Effect.logDebug(messages.join(" ")).pipe(
-			logLevel,
-			annotateError(extra),
-			Effect.provide(dev ? Logger.structured : Logger.json)
-		)
+	info: (message: string, extra?: object) =>
+		Effect.logInfo(message).pipe(logLevel, annotateError(extra), Effect.provide(Logger.json)),
+	error: (message: string, extra?: object) =>
+		Effect.logError(message).pipe(logLevel, annotateError(extra), Effect.provide(dev ? Logger.structured : Logger.json)),
+	debug: (message: string, extra?: object) =>
+		Effect.logDebug(message).pipe(logLevel, annotateError(extra), Effect.provide(dev ? Logger.structured : Logger.json))
 };
 
 // -------------------------------------------------------------------------------------------------
@@ -114,17 +106,17 @@ export async function run(program: any): Promise<any> {
 				const defect = cause.defect;
 				// This will propagate redirects and http errors directly to SvelteKit
 				if (isRedirect(defect)) {
-					Effect.runFork(Log.debug(["Redirect"], defect));
+					Effect.runFork(Log.debug("Redirect", defect));
 					throw defect;
 				} else if (isHttpError(defect)) {
-					Effect.runFork(Log.error(["HttpError"], defect));
+					Effect.runFork(Log.error("HttpError", defect));
 					throw defect;
 				} else if (isError(defect)) {
 					message = `Error: ${defect.message}`;
 				}
 			}
 
-			Effect.runFork(Log.error([message], { status, cause: failCause }));
+			Effect.runFork(Log.error(message, { status, cause: failCause }));
 
 			if (!dev) message = message.replace(/\n\s+at .+/, "");
 			throw error(status, message);
@@ -169,14 +161,14 @@ export async function save<
 	);
 
 	if (typeof result === "string" && result.startsWith("/")) {
-		Effect.runFork(Log.debug(["Redirect"], { status: 302, location: result }));
+		Effect.runFork(Log.debug("Redirect", { status: 302, location: result }));
 		redirect(302, result);
 	}
 
 	if (typeof result === "object" && result !== null && "status" in result) {
-		Effect.runFork(Log.error(["ActionFailure"], result));
+		Effect.runFork(Log.error("ActionFailure", result));
 	} else {
-		Effect.runFork(Log.info(["Result"], { result }));
+		Effect.runFork(Log.info("Result", { result }));
 	}
 
 	return result;

@@ -39,7 +39,7 @@ export async function POST({ request, locals }) {
 	} catch (e) {
 		if (e instanceof Error) return json({ success: false, error: e.message } satisfies RenameWebAuthnResponse, { status: 500 });
 		else {
-			Effect.runFork(Log.error(["Unknown error"], { error: e }));
+			Effect.runFork(Log.error("Unknown error", { error: e }));
 			return json({ success: false, error: "Unknown error" } satisfies RenameWebAuthnResponse, { status: 500 });
 		}
 	}
@@ -71,7 +71,7 @@ export async function DELETE({ request, locals }) {
 		if (error instanceof Error)
 			return json({ success: false, error: error.message } satisfies DeleteWebAuthnResponse, { status: 500 });
 		else {
-			Effect.runFork(Log.error(["Unknown error"], { error }));
+			Effect.runFork(Log.error("Unknown error", { error }));
 			return json({ success: false, error: "Unknown error" } satisfies DeleteWebAuthnResponse, { status: 500 });
 		}
 	}

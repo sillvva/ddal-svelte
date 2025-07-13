@@ -9,7 +9,7 @@ export function assertUser(user: LocalsUser | undefined): asserts user is Locals
 	const url = getRequestEvent().url;
 	const result = v.safeParse(localsUserSchema, user);
 	if (!result.success) {
-		Effect.runFork(Log.debug(["assertUser"], { issues: v.summarize(result.issues) }));
+		Effect.runFork(Log.debug("assertUser", { issues: v.summarize(result.issues) }));
 		redirect(302, `/?redirect=${encodeURIComponent(`${url.pathname}${url.search}`)}`);
 	}
 }

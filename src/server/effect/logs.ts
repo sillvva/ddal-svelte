@@ -317,7 +317,8 @@ const LogApiLive = Layer.effect(
 		const impl: LogApiImpl = {
 			getLog: (logId, userId) =>
 				Effect.gen(function* () {
-					yield* Log.info(["getLog"], { logId, userId });
+					yield* Log.info("LogApiLive.getLog", { logId, userId });
+
 					return yield* Effect.tryPromise({
 						try: () =>
 							db.query.logs.findFirst({
@@ -335,7 +336,8 @@ const LogApiLive = Layer.effect(
 
 			getDMLogs: (userId) =>
 				Effect.gen(function* () {
-					yield* Log.info(["getDMLogs"], { userId });
+					yield* Log.info("LogApiLive.getDMLogs", { userId });
+
 					return yield* Effect.tryPromise({
 						try: () =>
 							db.query.logs
@@ -355,7 +357,8 @@ const LogApiLive = Layer.effect(
 
 			getUserLogs: (userId) =>
 				Effect.gen(function* () {
-					yield* Log.info(["getUserLogs"], { userId });
+					yield* Log.info("LogApiLive.getUserLogs", { userId });
+
 					return yield* Effect.tryPromise({
 						try: () =>
 							db.query.logs.findMany({
@@ -373,8 +376,9 @@ const LogApiLive = Layer.effect(
 
 			saveLog: (log, user) =>
 				Effect.gen(function* () {
-					yield* Log.info(["saveLog"], { logId: log.id, userId: user.id });
-					yield* Log.debug(["log"], log);
+					yield* Log.info("LogApiLive.saveLog", { logId: log.id, userId: user.id });
+					yield* Log.debug("LogApiLive.saveLog", log);
+
 					return yield* Effect.tryPromise({
 						try: () =>
 							db.transaction((tx) => {
@@ -386,7 +390,8 @@ const LogApiLive = Layer.effect(
 
 			deleteLog: (logId, userId) =>
 				Effect.gen(function* () {
-					yield* Log.info(["deleteLog"], { logId, userId });
+					yield* Log.info("LogApiLive.deleteLog", { logId, userId });
+
 					const log = yield* impl.getLog(logId, userId).pipe(Effect.catchAll(createSaveError));
 
 					if (!log) return yield* new SaveLogError("Log not found", { status: 404 });

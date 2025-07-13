@@ -21,7 +21,7 @@ export function serverGetCookie<TSchema extends v.BaseSchema<any, any, any>>(nam
 
 		return v.parse(schema, cookie);
 	} catch (error) {
-		Effect.runFork(Log.error(["Error getting cookie"], { error }));
+		Effect.runFork(Log.error("Error getting cookie", { error }));
 		return serverSetCookie(name, schema, undefined);
 	}
 }

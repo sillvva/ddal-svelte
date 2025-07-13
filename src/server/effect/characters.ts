@@ -38,12 +38,7 @@ interface CharacterApiImpl {
 	readonly deleteCharacter: (
 		characterId: CharacterId,
 		userId: UserId
-	) => Effect.Effect<
-		{
-			id: CharacterId;
-		}[],
-		SaveCharacterError
-	>;
+	) => Effect.Effect<{ id: CharacterId }[], SaveCharacterError>;
 }
 
 export class CharacterApi extends Context.Tag("CharacterApi")<CharacterApi, CharacterApiImpl>() {}
@@ -57,7 +52,8 @@ const CharacterApiLive = Layer.effect(
 		const impl: CharacterApiImpl = {
 			getCharacter: (characterId, includeLogs = true) =>
 				Effect.gen(function* () {
-					yield* Log.info(["getCharacter"], { characterId, includeLogs });
+					yield* Log.info("CharacterApiLive.getCharacter", { characterId, includeLogs });
+
 					return yield* Effect.tryPromise({
 						try: () =>
 							db.query.characters.findFirst({
@@ -70,7 +66,8 @@ const CharacterApiLive = Layer.effect(
 
 			getUserCharacters: (userId, includeLogs = true) =>
 				Effect.gen(function* () {
-					yield* Log.info(["getUserCharacters"], { userId, includeLogs });
+					yield* Log.info("CharacterApiLive.getUserCharacters", { userId, includeLogs });
+
 					return yield* Effect.tryPromise({
 						try: () =>
 							db.query.characters.findMany({
@@ -83,8 +80,9 @@ const CharacterApiLive = Layer.effect(
 
 			saveCharacter: (characterId, userId, data) =>
 				Effect.gen(function* () {
-					yield* Log.info(["saveCharacter"], { characterId, userId });
-					yield* Log.debug(["data"], data);
+					yield* Log.info("CharacterApiLive.saveCharacter", { characterId, userId });
+					yield* Log.debug("CharacterApiLive.saveCharacter", data);
+
 					if (!characterId) yield* new SaveCharacterError("No character ID provided", { status: 400 });
 
 					return yield* Effect.tryPromise({
@@ -113,7 +111,8 @@ const CharacterApiLive = Layer.effect(
 
 			deleteCharacter: (characterId, userId) =>
 				Effect.gen(function* () {
-					yield* Log.info(["deleteCharacter"], { characterId, userId });
+					yield* Log.info("CharacterApiLive.deleteCharacter", { characterId, userId });
+
 					return yield* Effect.tryPromise({
 						try: () =>
 							db.transaction(async (tx) => {
