@@ -373,6 +373,19 @@ const LogApiLive = Layer.effect(
 					});
 				}),
 
+			saveLog: (log, user) =>
+				Effect.gen(function* () {
+					yield* Logs.logInfo("saveLog", log.id, user.id);
+					yield* Logs.logDebugJson(log);
+					return yield* Effect.tryPromise({
+						try: () =>
+							db.transaction((tx) => {
+								return run(upsertLog(log, user, tx).pipe(Effect.provide(LogLive(tx)), Effect.provide(DMLive(tx))));
+							}),
+						catch: createSaveError
+					});
+				}),
+
 			deleteLog: (logId, userId) =>
 				Effect.gen(function* () {
 					yield* Logs.logInfo("deleteLog", logId, userId);
@@ -389,19 +402,6 @@ const LogApiLive = Layer.effect(
 					}).pipe(
 						Effect.flatMap((logs) => (logs.length ? Effect.succeed(logs) : Effect.fail(new SaveLogError("Could not delete log"))))
 					);
-				}),
-
-			saveLog: (log, user) =>
-				Effect.gen(function* () {
-					yield* Logs.logInfo("saveLog", log.id, user.id);
-					yield* Logs.logDebugJson(log);
-					return yield* Effect.tryPromise({
-						try: () =>
-							db.transaction((tx) => {
-								return run(upsertLog(log, user, tx).pipe(Effect.provide(LogLive(tx)), Effect.provide(DMLive(tx))));
-							}),
-						catch: createSaveError
-					});
 				})
 		};
 

@@ -1,3 +1,4 @@
+import { dev } from "$app/environment";
 import { privateEnv } from "$lib/env/private";
 import { isError } from "$lib/util";
 import {
@@ -93,6 +94,8 @@ export async function run(program: any): Promise<any> {
 				}
 			}
 
+			if (!dev) message = message.replace(/\n\s+at .+/, "");
+
 			Effect.runFork(Logs.logErrorJson(cause));
 			throw error(500, message);
 		}
@@ -165,13 +168,16 @@ function extractMessage(err: unknown): string {
 export class FetchError extends Data.TaggedError("FetchError")<{
 	message: string;
 }> {
-	constructor(public message: string = unknownError) {
+	constructor(
+		public message: string = unknownError,
+		public cause?: unknown
+	) {
 		super({ message });
 	}
 
 	static from(err: FetchError | Error | unknown): FetchError {
 		if (err instanceof FetchError) return err;
-		return new FetchError(extractMessage(err));
+		return new FetchError(extractMessage(err), err);
 	}
 }
 
@@ -181,29 +187,30 @@ export class FormError<
 > extends Data.TaggedError("FormError")<{
 	message: string;
 }> {
-	public status: NumericRange<400, 599> = 500;
+	public cause?: unknown;
 
 	constructor(
 		public message: string = unknownError,
 		protected options: Partial<{
 			field: "" | FormPathLeavesWithErrors<TOut>;
 			status: NumericRange<400, 599>;
+			cause: unknown;
 		}> = {}
 	) {
 		super({ message });
-		if (options.status) this.status = options.status;
+		this.cause = options.cause;
 	}
 
 	static from<TOut extends Record<PropertyKey, any>, TIn extends Record<PropertyKey, any> = TOut>(
 		err: FormError<TOut, TIn> | Error | unknown
 	): FormError<TOut, TIn> {
 		if (err instanceof FormError) return err;
-		return new FormError<TOut, TIn>(extractMessage(err));
+		return new FormError<TOut, TIn>(extractMessage(err), { cause: err });
 	}
 
 	toForm(form: SuperValidated<TOut, App.Superforms.Message, TIn>) {
 		return setError(form, this.options?.field || "", this.message, {
-			status: this.status
+			status: this.options?.status || 500
 		});
 	}
 }
