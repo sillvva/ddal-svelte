@@ -63,7 +63,7 @@ export async function run<A, B extends FetchError | FormError<any, any> | never>
 
 // Implementation
 export async function run(program: any): Promise<any> {
-	const eff = Effect.gen(function* () {
+	const effect = Effect.gen(function* () {
 		if (typeof program === "function") {
 			// Generator function
 			return yield* program();
@@ -73,33 +73,27 @@ export async function run(program: any): Promise<any> {
 		}
 	}) as Effect.Effect<any, FetchError | FormError<any, any> | never>;
 
-	const result = await Effect.runPromiseExit(eff);
+	const result = await Effect.runPromiseExit(effect);
 	return Exit.match(result, {
 		onSuccess: (result) => result,
 		onFailure: (cause) => {
-			const message = Cause.match(cause, {
-				onEmpty: "(empty)",
-				onFail: (error) => `(error: ${error.message})`,
-				onDie: (defect) => {
-					// This will propagate redirects and http errors directly to SvelteKit
-					if (isRedirect(defect)) {
-						Effect.runFork(Logs.logInfo(`Redirecting to ${defect.location}`));
-						throw defect;
-					} else if (isHttpError(defect)) {
-						Effect.runFork(Logs.logErrorJson(defect));
-						throw defect;
-					} else if (isError(defect)) {
-						return `(error: ${defect.message})`;
-					}
+			let message = Cause.pretty(cause);
 
-					return `(defect: ${defect})`;
-				},
-				onInterrupt: (fiberId) => `(fiberId: ${fiberId})`,
-				onSequential: (left, right) => `(onSequential (left: ${left}) (right: ${right}))`,
-				onParallel: (left, right) => `(onParallel (left: ${left}) (right: ${right})`
-			});
+			if (Cause.isDieType(cause)) {
+				const defect = cause.defect;
+				// This will propagate redirects and http errors directly to SvelteKit
+				if (isRedirect(defect)) {
+					Effect.runFork(Logs.logInfo(`Redirecting to ${defect.location}`));
+					throw defect;
+				} else if (isHttpError(defect)) {
+					Effect.runFork(Logs.logErrorJson(defect));
+					throw defect;
+				} else if (isError(defect)) {
+					message = `Error: ${defect.message}`;
+				}
+			}
 
-			Effect.runFork(Logs.logErrorJson(message));
+			Effect.runFork(Logs.logErrorJson(cause));
 			throw error(500, message);
 		}
 	});
