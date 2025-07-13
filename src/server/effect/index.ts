@@ -178,26 +178,13 @@ export async function save<
 // Errors
 // -------------------------------------------------------------------------------------------------
 
-const unknownError = "Unknown error";
-
-function hasMessage(obj: unknown): obj is { message: string } {
-	return typeof obj === "object" && obj !== null && "message" in obj && typeof (obj as any).message === "string";
-}
-
-function extractMessage(err: unknown): string {
-	if (!err) return "Undefined error";
-	if (typeof err === "string") return err;
-	if (hasMessage(err)) return err.message;
-	return "Unknown error";
-}
-
 export class FetchError extends Data.TaggedError("FetchError")<{
 	message: string;
 	status: NumericRange<400, 599>;
 	cause?: unknown;
 }> {
 	constructor(
-		public message: string = unknownError,
+		public message: string,
 		public status: NumericRange<400, 599> = 500,
 		public cause?: unknown
 	) {
@@ -207,7 +194,7 @@ export class FetchError extends Data.TaggedError("FetchError")<{
 	static from(err: FetchError | Error | unknown): FetchError {
 		if (err instanceof FetchError) return err;
 		if (err instanceof FormError) return new FetchError(err.message, err.status, err.cause);
-		return new FetchError(extractMessage(err), 500, err);
+		return new FetchError(Cause.pretty(Cause.fail(err)), 500, err);
 	}
 }
 
@@ -223,7 +210,7 @@ export class FormError<
 	status: NumericRange<400, 599> = 500;
 
 	constructor(
-		public message = unknownError,
+		public message: string,
 		protected options: Partial<{
 			field: "" | FormPathLeavesWithErrors<TOut>;
 			status: NumericRange<400, 599>;
@@ -240,7 +227,7 @@ export class FormError<
 	): FormError<TOut, TIn> {
 		if (err instanceof FormError) return err;
 		if (err instanceof FetchError) return new FormError<TOut, TIn>(err.message, { cause: err.cause, status: err.status });
-		return new FormError<TOut, TIn>(extractMessage(err), { cause: err, status: 500 });
+		return new FormError<TOut, TIn>(Cause.pretty(Cause.fail(err)), { cause: err, status: 500 });
 	}
 
 	toForm(form: SuperValidated<TOut, App.Superforms.Message, TIn>) {
