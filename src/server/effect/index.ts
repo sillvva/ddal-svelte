@@ -59,7 +59,7 @@ interface DBImpl {
 
 export class DBService extends Context.Tag("Database")<DBService, DBImpl>() {}
 
-export function withLiveDB(dbOrTx: Database | Transaction = db) {
+export function DBLive(dbOrTx: Database | Transaction = db) {
 	return Layer.succeed(DBService, DBService.of({ db: Effect.succeed(dbOrTx) }));
 }
 

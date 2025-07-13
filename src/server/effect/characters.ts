@@ -6,7 +6,7 @@ import { characterIncludes, extendedCharacterIncludes } from "$server/db/include
 import { characters, logs, type Character } from "$server/db/schema";
 import { and, eq, exists } from "drizzle-orm";
 import { Context, Effect, Layer } from "effect";
-import { DBService, FetchError, FormError, Log, withLiveDB } from ".";
+import { DBLive, DBService, FetchError, FormError, Log } from ".";
 
 export class FetchCharacterError extends FetchError {}
 function createFetchError(err: unknown): FetchCharacterError {
@@ -146,7 +146,7 @@ const CharacterApiLive = Layer.effect(
 	})
 );
 
-export const CharacterLive = (dbOrTx: Database | Transaction = db) => CharacterApiLive.pipe(Layer.provide(withLiveDB(dbOrTx)));
+export const CharacterLive = (dbOrTx: Database | Transaction = db) => CharacterApiLive.pipe(Layer.provide(DBLive(dbOrTx)));
 
 export function withCharacter<R, E extends FetchCharacterError | SaveCharacterError>(
 	impl: (service: CharacterApiImpl) => Effect.Effect<R, E>,

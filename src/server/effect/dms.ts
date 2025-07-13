@@ -4,7 +4,7 @@ import { dungeonMasters, type DungeonMaster } from "$server/db/schema";
 import { sorter } from "@sillvva/utils";
 import { eq } from "drizzle-orm";
 import { Context, Effect, Layer } from "effect";
-import { DBService, FetchError, FormError, Log, withLiveDB } from ".";
+import { DBLive, DBService, FetchError, FormError, Log } from ".";
 
 export class FetchDMError extends FetchError {}
 function createFetchError(err: unknown): FetchDMError {
@@ -218,7 +218,7 @@ const DMApiLive = Layer.effect(
 	})
 );
 
-export const DMLive = (dbOrTx: Database | Transaction = db) => DMApiLive.pipe(Layer.provide(withLiveDB(dbOrTx)));
+export const DMLive = (dbOrTx: Database | Transaction = db) => DMApiLive.pipe(Layer.provide(DBLive(dbOrTx)));
 
 export function withDM<R, E extends FetchDMError | SaveDMError>(
 	impl: (service: DMApiImpl) => Effect.Effect<R, E>,

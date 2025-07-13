@@ -5,7 +5,7 @@ import { extendedLogIncludes, logIncludes } from "$server/db/includes";
 import { dungeonMasters, logs, magicItems, storyAwards } from "$server/db/schema";
 import { and, eq, inArray, isNull, notInArray } from "drizzle-orm";
 import { Context, Effect, Layer } from "effect";
-import { DBService, FetchError, FormError, Log, run, withLiveDB } from ".";
+import { DBLive, DBService, FetchError, FormError, Log, run } from ".";
 import { DMApi, DMLive } from "./dms";
 
 export class FetchLogError extends FetchError {}
@@ -147,13 +147,16 @@ function validateLogDM(log: LogSchema, user: LocalsUser) {
 	});
 }
 
-function upsertLogDM(log: LogSchema, user: LocalsUser, tx: Transaction) {
+function upsertLogDM(log: LogSchema, user: LocalsUser) {
 	return Effect.gen(function* () {
+		const Database = yield* DBService;
+		const db = yield* Database.db;
+
 		const validated = yield* validateLogDM(log, user);
 
 		return yield* Effect.tryPromise({
 			try: () =>
-				tx
+				db
 					.insert(dungeonMasters)
 					.values(validated)
 					.onConflictDoUpdate({
@@ -169,11 +172,13 @@ function upsertLogDM(log: LogSchema, user: LocalsUser, tx: Transaction) {
 	});
 }
 
-function upsertLog(log: LogSchema, user: LocalsUser, tx: Transaction) {
+function upsertLog(log: LogSchema, user: LocalsUser) {
 	return Effect.gen(function* () {
 		const LogService = yield* LogApi;
+		const Database = yield* DBService;
+		const db = yield* Database.db;
 
-		const dm = yield* upsertLogDM(log, user, tx);
+		const dm = yield* upsertLogDM(log, user);
 
 		const appliedDate: Date | null = log.isDmLog
 			? log.characterId && log.appliedDate !== null
@@ -183,7 +188,7 @@ function upsertLog(log: LogSchema, user: LocalsUser, tx: Transaction) {
 
 		const [result] = yield* Effect.tryPromise({
 			try: () =>
-				tx
+				db
 					.insert(logs)
 					.values({
 						id: log.id || undefined,
@@ -227,7 +232,7 @@ function upsertLog(log: LogSchema, user: LocalsUser, tx: Transaction) {
 					lost: log.storyAwardsLost
 				}
 			],
-			(params) => itemsCRUD(params, tx)
+			(params) => itemsCRUD(params)
 		);
 
 		return yield* LogService.getLog(result.id, user.id).pipe(
@@ -255,21 +260,24 @@ interface CRUDStoryAwardParams extends CRUDItemParams {
 	lost: LogSchema["storyAwardsLost"];
 }
 
-function itemsCRUD(params: CRUDMagicItemParams | CRUDStoryAwardParams, tx: Transaction) {
+function itemsCRUD(params: CRUDMagicItemParams | CRUDStoryAwardParams) {
 	return Effect.gen(function* () {
+		const Database = yield* DBService;
+		const db = yield* Database.db;
+
 		const { logId, table, gained, lost } = params;
 
 		const itemIds = gained.map((item) => item.id).filter(Boolean);
 		yield* Effect.tryPromise({
 			try: () =>
-				tx.delete(table).where(and(eq(table.logGainedId, logId), itemIds.length ? notInArray(table.id, itemIds) : undefined)),
+				db.delete(table).where(and(eq(table.logGainedId, logId), itemIds.length ? notInArray(table.id, itemIds) : undefined)),
 			catch: createSaveError
 		});
 
 		if (gained.length) {
 			yield* Effect.tryPromise({
 				try: () =>
-					tx
+					db
 						.insert(table)
 						.values(
 							gained.map((item) => ({
@@ -289,7 +297,7 @@ function itemsCRUD(params: CRUDMagicItemParams | CRUDStoryAwardParams, tx: Trans
 
 		yield* Effect.tryPromise({
 			try: () =>
-				tx
+				db
 					.update(table)
 					.set({ logLostId: null })
 					.where(and(eq(table.logLostId, logId), notInArray(table.id, lost))),
@@ -298,7 +306,7 @@ function itemsCRUD(params: CRUDMagicItemParams | CRUDStoryAwardParams, tx: Trans
 		if (lost.length) {
 			yield* Effect.tryPromise({
 				try: () =>
-					tx
+					db
 						.update(table)
 						.set({ logLostId: logId })
 						.where(and(isNull(table.logLostId), inArray(table.id, lost))),
@@ -382,7 +390,9 @@ const LogApiLive = Layer.effect(
 					return yield* Effect.tryPromise({
 						try: () =>
 							db.transaction((tx) => {
-								return run(upsertLog(log, user, tx).pipe(Effect.provide(LogLive(tx)), Effect.provide(DMLive(tx))));
+								return run(
+									upsertLog(log, user).pipe(Effect.provide(DBLive(tx)), Effect.provide(LogLive(tx)), Effect.provide(DMLive(tx)))
+								);
 							}),
 						catch: createSaveError
 					});
@@ -414,7 +424,7 @@ const LogApiLive = Layer.effect(
 	})
 );
 
-export const LogLive = (dbOrTx: Database | Transaction = db) => LogApiLive.pipe(Layer.provide(withLiveDB(dbOrTx)));
+export const LogLive = (dbOrTx: Database | Transaction = db) => LogApiLive.pipe(Layer.provide(DBLive(dbOrTx)));
 
 export function withLog<R, E extends FetchLogError | SaveLogError>(
 	impl: (service: LogApiImpl) => Effect.Effect<R, E>,

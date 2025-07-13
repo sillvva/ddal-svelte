@@ -2,7 +2,7 @@ import { PROVIDERS } from "$lib/constants";
 import type { LocalsUser, UserId } from "$lib/schemas";
 import { db, type Database, type Transaction } from "$server/db";
 import { Context, Effect, Layer } from "effect";
-import { DBService, FetchError, withLiveDB } from ".";
+import { DBLive, DBService, FetchError } from ".";
 
 class FetchUserError extends FetchError {}
 function createFetchError(err: unknown): FetchUserError {
@@ -64,7 +64,7 @@ const UserApiLive = Layer.effect(
 	})
 );
 
-export const UserLive = (dbOrTx: Database | Transaction = db) => UserApiLive.pipe(Layer.provide(withLiveDB(dbOrTx)));
+export const UserLive = (dbOrTx: Database | Transaction = db) => UserApiLive.pipe(Layer.provide(DBLive(dbOrTx)));
 
 export function withUser<R, E extends FetchUserError>(
 	impl: (service: UserApiImpl) => Effect.Effect<R, E>,
