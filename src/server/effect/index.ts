@@ -112,7 +112,7 @@ export async function run(program: any): Promise<any> {
 				const defect = cause.defect;
 				// This will propagate redirects and http errors directly to SvelteKit
 				if (isRedirect(defect)) {
-					Effect.runFork(Log.info(["Redirect"], defect));
+					Effect.runFork(Log.debug(["Redirect"], defect));
 					throw defect;
 				} else if (isHttpError(defect)) {
 					Effect.runFork(Log.error(["HttpError"], defect));
@@ -167,11 +167,15 @@ export async function save<
 	);
 
 	if (typeof result === "string" && result.startsWith("/")) {
-		Effect.runFork(Log.info(["Redirect"], { status: 302, location: result }));
+		Effect.runFork(Log.debug(["Redirect"], { status: 302, location: result }));
 		redirect(302, result);
 	}
 
-	Effect.runFork(Log.debug(["Result"], { result }));
+	if (typeof result === "object" && result !== null && "status" in result) {
+		Effect.runFork(Log.error(["ActionFailure"], result));
+	} else {
+		Effect.runFork(Log.info(["Result"], { result }));
+	}
 
 	return result;
 }
