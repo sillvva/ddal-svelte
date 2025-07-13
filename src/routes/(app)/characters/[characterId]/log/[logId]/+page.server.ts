@@ -2,11 +2,11 @@ import { defaultLogData, getItemEntities, logDataToSchema } from "$lib/entities.
 import { characterIdSchema, characterLogSchema, logIdSchema } from "$lib/schemas";
 import { assertUser } from "$server/auth";
 import { run, save, validateForm } from "$server/effect";
-import { withCharacter } from "$server/effect/characters.js";
+import { FetchCharacterError, withCharacter } from "$server/effect/characters.js";
 import { withDM } from "$server/effect/dms.js";
-import { withLog } from "$server/effect/logs.js";
+import { FetchLogError, withLog } from "$server/effect/logs.js";
 import { sorter } from "@sillvva/utils";
-import { error, redirect } from "@sveltejs/kit";
+import { redirect } from "@sveltejs/kit";
 import { Effect } from "effect";
 import { fail } from "sveltekit-superforms";
 import { parse, safeParse } from "valibot";
@@ -18,7 +18,7 @@ export const load = (event) =>
 
 		const parent = yield* Effect.promise(() => event.parent());
 		const character = parent.character;
-		if (!character) error(404, "Character not found");
+		if (!character) return yield* new FetchCharacterError("Character not found", 404);
 
 		const idResult = safeParse(logIdSchema, event.params.logId || "");
 		if (!idResult.success) redirect(302, `/character/${character.id}`);
@@ -27,7 +27,7 @@ export const load = (event) =>
 		const log = (yield* withLog((service) => service.getLog(logId, user.id))) || defaultLogData(user.id, character);
 
 		if (logId !== "new") {
-			if (!log.id) error(404, "Log not found");
+			if (!log.id) return yield* new FetchLogError("Log not found", 404);
 			if (log.isDmLog) redirect(302, `/dm-logs/${log.id}`);
 		}
 

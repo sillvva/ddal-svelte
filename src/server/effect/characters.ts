@@ -8,12 +8,12 @@ import { and, eq, exists } from "drizzle-orm";
 import { Context, Effect, Layer } from "effect";
 import { DBService, FetchError, FormError, Logs, withLiveDB } from ".";
 
-class FetchCharacterError extends FetchError {}
+export class FetchCharacterError extends FetchError {}
 function createFetchError(err: unknown): FetchCharacterError {
 	return FetchCharacterError.from(err);
 }
 
-class SaveCharacterError extends FormError<EditCharacterSchema> {}
+export class SaveCharacterError extends FormError<EditCharacterSchema> {}
 function createSaveError(err: unknown): SaveCharacterError {
 	return SaveCharacterError.from(err);
 }
@@ -57,7 +57,7 @@ const CharacterApiLive = Layer.effect(
 		const impl: CharacterApiImpl = {
 			getCharacter: (characterId, includeLogs = true) =>
 				Effect.gen(function* () {
-					yield* Logs.logInfo("getCharacter", characterId, includeLogs);
+					yield* Logs.logInfo(["getCharacter"], { characterId, includeLogs });
 					return yield* Effect.tryPromise({
 						try: () =>
 							db.query.characters.findFirst({
@@ -70,7 +70,7 @@ const CharacterApiLive = Layer.effect(
 
 			getUserCharacters: (userId, includeLogs = true) =>
 				Effect.gen(function* () {
-					yield* Logs.logInfo("getUserCharacters", userId, includeLogs);
+					yield* Logs.logInfo(["getUserCharacters"], { userId, includeLogs });
 					return yield* Effect.tryPromise({
 						try: () =>
 							db.query.characters.findMany({
@@ -83,8 +83,8 @@ const CharacterApiLive = Layer.effect(
 
 			saveCharacter: (characterId, userId, data) =>
 				Effect.gen(function* () {
-					yield* Logs.logInfo("saveCharacter", characterId, userId);
-					yield* Logs.logDebugJson(data);
+					yield* Logs.logInfo(["saveCharacter"], { characterId, userId, data });
+					yield* Logs.logDebugJson([data]);
 					if (!characterId) yield* new SaveCharacterError("No character ID provided", { status: 400 });
 
 					return yield* Effect.tryPromise({
@@ -113,7 +113,7 @@ const CharacterApiLive = Layer.effect(
 
 			deleteCharacter: (characterId, userId) =>
 				Effect.gen(function* () {
-					yield* Logs.logInfo("deleteCharacter", characterId, userId);
+					yield* Logs.logInfo(["deleteCharacter"], { characterId, userId });
 					return yield* Effect.tryPromise({
 						try: () =>
 							db.transaction(async (tx) => {
@@ -137,7 +137,7 @@ const CharacterApiLive = Layer.effect(
 						catch: createSaveError
 					}).pipe(
 						Effect.flatMap((result) =>
-							result ? Effect.succeed(result) : Effect.fail(new SaveCharacterError("Character not found", { status: 404 }))
+							result.length ? Effect.succeed(result) : Effect.fail(new SaveCharacterError("Character not found", { status: 404 }))
 						)
 					);
 				})

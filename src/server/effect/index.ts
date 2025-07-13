@@ -1,4 +1,5 @@
 import { dev } from "$app/environment";
+import { getRequestEvent } from "$app/server";
 import { privateEnv } from "$lib/env/private";
 import { isError } from "$lib/util";
 import {
@@ -29,12 +30,27 @@ import { db, type Database, type Transaction } from "../db";
 
 const logLevel = Logger.withMinimumLogLevel(privateEnv.LOG_LEVEL);
 
+function annotateError(extra: Record<string, unknown> = {}) {
+	const event = getRequestEvent();
+	return Effect.annotateLogs({
+		userId: event.locals.user?.id,
+		routeId: event.route.id,
+		params: event.params,
+		extra
+	});
+}
+
 export const Logs = {
-	logInfo: (...messages: unknown[]) => Effect.logInfo(messages.join(" ")).pipe(logLevel),
-	logError: (...messages: unknown[]) => Effect.logError(messages.join(" ")).pipe(logLevel),
-	logErrorJson: (...messages: unknown[]) => Effect.logError(...messages).pipe(logLevel, Effect.provide(Logger.json)),
-	logDebug: (...messages: unknown[]) => Effect.logDebug(...messages).pipe(logLevel),
-	logDebugJson: (...messages: unknown[]) => Effect.logDebug(...messages).pipe(logLevel, Effect.provide(Logger.json))
+	logInfo: (messages: unknown[], extra: Record<string, unknown> = {}) =>
+		Effect.logInfo(messages.join(" ")).pipe(logLevel, annotateError(extra)),
+	logError: (messages: unknown[], extra: Record<string, unknown> = {}) =>
+		Effect.logError(messages.join(" ")).pipe(logLevel, annotateError(extra)),
+	logErrorJson: (messages: unknown[], extra: Record<string, unknown> = {}) =>
+		Effect.logError(...messages).pipe(logLevel, annotateError(extra), Effect.provide(dev ? Logger.structured : Logger.json)),
+	logDebug: (messages: unknown[], extra: Record<string, unknown> = {}) =>
+		Effect.logDebug(...messages).pipe(logLevel, annotateError(extra)),
+	logDebugJson: (messages: unknown[], extra: Record<string, unknown> = {}) =>
+		Effect.logDebug(...messages).pipe(logLevel, annotateError(extra), Effect.provide(dev ? Logger.structured : Logger.json))
 };
 
 // -------------------------------------------------------------------------------------------------
@@ -79,15 +95,23 @@ export async function run(program: any): Promise<any> {
 		onSuccess: (result) => result,
 		onFailure: (cause) => {
 			let message = Cause.pretty(cause);
+			let status: NumericRange<400, 599> = 500;
+
+			if (Cause.isFailType(cause)) {
+				const error = cause.error;
+				if (error instanceof FormError || error instanceof FetchError) {
+					status = error.status;
+				}
+			}
 
 			if (Cause.isDieType(cause)) {
 				const defect = cause.defect;
 				// This will propagate redirects and http errors directly to SvelteKit
 				if (isRedirect(defect)) {
-					Effect.runFork(Logs.logInfo(`Redirecting to ${defect.location}`));
+					Effect.runFork(Logs.logInfo([`Redirecting to ${defect.location}`]));
 					throw defect;
 				} else if (isHttpError(defect)) {
-					Effect.runFork(Logs.logErrorJson(defect));
+					Effect.runFork(Logs.logErrorJson([defect], { status: defect.status }));
 					throw defect;
 				} else if (isError(defect)) {
 					message = `Error: ${defect.message}`;
@@ -96,8 +120,8 @@ export async function run(program: any): Promise<any> {
 
 			if (!dev) message = message.replace(/\n\s+at .+/, "");
 
-			Effect.runFork(Logs.logErrorJson(cause));
-			throw error(500, message);
+			Effect.runFork(Logs.logErrorJson([cause], { status }));
+			throw error(status, message);
 		}
 	});
 }
@@ -139,11 +163,11 @@ export async function save<
 	);
 
 	if (typeof result === "string" && result.startsWith("/")) {
-		Effect.runFork(Logs.logInfo("Redirecting to", result));
+		Effect.runFork(Logs.logInfo(["Redirecting to", result]));
 		redirect(302, result);
 	}
 
-	Effect.runFork(typeof result === "object" ? Logs.logDebugJson(result) : Logs.logDebug("Result:", result));
+	Effect.runFork(typeof result === "object" ? Logs.logDebugJson([result]) : Logs.logDebug(["Result:", result]));
 
 	return result;
 }
@@ -167,17 +191,21 @@ function extractMessage(err: unknown): string {
 
 export class FetchError extends Data.TaggedError("FetchError")<{
 	message: string;
+	status: NumericRange<400, 599>;
+	cause?: unknown;
 }> {
 	constructor(
 		public message: string = unknownError,
+		public status: NumericRange<400, 599> = 500,
 		public cause?: unknown
 	) {
-		super({ message });
+		super({ message, status, cause });
 	}
 
 	static from(err: FetchError | Error | unknown): FetchError {
 		if (err instanceof FetchError) return err;
-		return new FetchError(extractMessage(err), err);
+		if (err instanceof FormError) return new FetchError(err.message, err.status, err.cause);
+		return new FetchError(extractMessage(err), 500, err);
 	}
 }
 
@@ -186,18 +214,22 @@ export class FormError<
 	TIn extends Record<PropertyKey, any> = TOut
 > extends Data.TaggedError("FormError")<{
 	message: string;
+	status: NumericRange<400, 599>;
+	cause?: unknown;
 }> {
-	public cause?: unknown;
+	cause?: unknown;
+	status: NumericRange<400, 599> = 500;
 
 	constructor(
-		public message: string = unknownError,
+		public message = unknownError,
 		protected options: Partial<{
 			field: "" | FormPathLeavesWithErrors<TOut>;
 			status: NumericRange<400, 599>;
 			cause: unknown;
 		}> = {}
 	) {
-		super({ message });
+		const status = options.status || 500;
+		super({ message, status });
 		this.cause = options.cause;
 	}
 
@@ -205,12 +237,13 @@ export class FormError<
 		err: FormError<TOut, TIn> | Error | unknown
 	): FormError<TOut, TIn> {
 		if (err instanceof FormError) return err;
-		return new FormError<TOut, TIn>(extractMessage(err), { cause: err });
+		if (err instanceof FetchError) return new FormError<TOut, TIn>(err.message, { cause: err.cause, status: err.status });
+		return new FormError<TOut, TIn>(extractMessage(err), { cause: err, status: 500 });
 	}
 
 	toForm(form: SuperValidated<TOut, App.Superforms.Message, TIn>) {
 		return setError(form, this.options?.field || "", this.message, {
-			status: this.options?.status || 500
+			status: this.status
 		});
 	}
 }

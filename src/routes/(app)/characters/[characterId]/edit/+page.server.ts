@@ -3,9 +3,8 @@ import { defaultLogSchema } from "$lib/entities.js";
 import { characterIdSchema, editCharacterSchema } from "$lib/schemas";
 import { assertUser } from "$server/auth";
 import { run, save, validateForm } from "$server/effect";
-import { withCharacter } from "$server/effect/characters";
+import { FetchCharacterError, withCharacter } from "$server/effect/characters";
 import { withLog } from "$server/effect/logs.js";
-import { error } from "@sveltejs/kit";
 import { Effect } from "effect";
 import { fail, setError } from "sveltekit-superforms";
 import { parse } from "valibot";
@@ -25,7 +24,7 @@ export const load = (event) =>
 				href: `/characters/${event.params.characterId}`
 			});
 
-			if (!parent.character) error(404, "Character not found");
+			if (!parent.character) return yield* new FetchCharacterError("Character not found", 404);
 		}
 
 		const form = yield* validateForm(

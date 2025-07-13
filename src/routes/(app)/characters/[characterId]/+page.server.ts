@@ -1,9 +1,9 @@
 import { characterIdSchema, logIdSchema } from "$lib/schemas.js";
 import { assertUser } from "$server/auth";
 import { run, save, validateForm } from "$server/effect";
-import { withCharacter } from "$server/effect/characters";
+import { FetchCharacterError, withCharacter } from "$server/effect/characters";
 import { withLog } from "$server/effect/logs.js";
-import { error, redirect } from "@sveltejs/kit";
+import { redirect } from "@sveltejs/kit";
 import { Effect } from "effect";
 import { fail, setError } from "sveltekit-superforms";
 import { object } from "valibot";
@@ -14,7 +14,7 @@ export const load = (event) =>
 
 		const parent = yield* Effect.promise(() => event.parent());
 		const character = parent.character;
-		if (!character) error(404, "Character not found");
+		if (!character) return yield* new FetchCharacterError("Character not found", 404);
 
 		return {
 			title: character.name,
