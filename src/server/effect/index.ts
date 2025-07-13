@@ -30,7 +30,7 @@ import { db, type Database, type Transaction } from "../db";
 
 const logLevel = Logger.withMinimumLogLevel(privateEnv.LOG_LEVEL);
 
-function annotateError(extra: Record<string, unknown> = {}) {
+function annotateError(extra: object = {}) {
 	const event = getRequestEvent();
 	return Effect.annotateLogs({
 		userId: event.locals.user?.id,
@@ -40,17 +40,21 @@ function annotateError(extra: Record<string, unknown> = {}) {
 	});
 }
 
-export const Logs = {
-	logInfo: (messages: unknown[], extra: Record<string, unknown> = {}) =>
-		Effect.logInfo(messages.join(" ")).pipe(logLevel, annotateError(extra)),
-	logError: (messages: unknown[], extra: Record<string, unknown> = {}) =>
-		Effect.logError(messages.join(" ")).pipe(logLevel, annotateError(extra)),
-	logErrorJson: (messages: unknown[], extra: Record<string, unknown> = {}) =>
-		Effect.logError(...messages).pipe(logLevel, annotateError(extra), Effect.provide(dev ? Logger.structured : Logger.json)),
-	logDebug: (messages: unknown[], extra: Record<string, unknown> = {}) =>
-		Effect.logDebug(...messages).pipe(logLevel, annotateError(extra)),
-	logDebugJson: (messages: unknown[], extra: Record<string, unknown> = {}) =>
-		Effect.logDebug(...messages).pipe(logLevel, annotateError(extra), Effect.provide(dev ? Logger.structured : Logger.json))
+export const Log = {
+	info: (messages: string[], extra?: object) =>
+		Effect.logInfo(messages.join(" ")).pipe(logLevel, annotateError(extra), Effect.provide(Logger.json)),
+	error: (messages: string[], extra?: object) =>
+		Effect.logError(messages.join(" ")).pipe(
+			logLevel,
+			annotateError(extra),
+			Effect.provide(dev ? Logger.structured : Logger.json)
+		),
+	debug: (messages: string[], extra?: object) =>
+		Effect.logDebug(messages.join(" ")).pipe(
+			logLevel,
+			annotateError(extra),
+			Effect.provide(dev ? Logger.structured : Logger.json)
+		)
 };
 
 // -------------------------------------------------------------------------------------------------
@@ -108,19 +112,19 @@ export async function run(program: any): Promise<any> {
 				const defect = cause.defect;
 				// This will propagate redirects and http errors directly to SvelteKit
 				if (isRedirect(defect)) {
-					Effect.runFork(Logs.logInfo([`Redirecting to ${defect.location}`]));
+					Effect.runFork(Log.info(["Redirect"], defect));
 					throw defect;
 				} else if (isHttpError(defect)) {
-					Effect.runFork(Logs.logErrorJson([defect], { status: defect.status }));
+					Effect.runFork(Log.error(["HttpError"], defect));
 					throw defect;
 				} else if (isError(defect)) {
 					message = `Error: ${defect.message}`;
 				}
 			}
 
-			if (!dev) message = message.replace(/\n\s+at .+/, "");
+			Effect.runFork(Log.error([message], { status }));
 
-			Effect.runFork(Logs.logErrorJson([cause], { status }));
+			if (!dev) message = message.replace(/\n\s+at .+/, "");
 			throw error(status, message);
 		}
 	});
@@ -163,11 +167,11 @@ export async function save<
 	);
 
 	if (typeof result === "string" && result.startsWith("/")) {
-		Effect.runFork(Logs.logInfo(["Redirecting to", result]));
+		Effect.runFork(Log.info(["Redirect"], { status: 302, location: result }));
 		redirect(302, result);
 	}
 
-	Effect.runFork(typeof result === "object" ? Logs.logDebugJson([result]) : Logs.logDebug(["Result:", result]));
+	Effect.runFork(Log.debug(["Result"], { result }));
 
 	return result;
 }

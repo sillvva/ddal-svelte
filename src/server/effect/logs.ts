@@ -5,7 +5,7 @@ import { extendedLogIncludes, logIncludes } from "$server/db/includes";
 import { dungeonMasters, logs, magicItems, storyAwards } from "$server/db/schema";
 import { and, eq, inArray, isNull, notInArray } from "drizzle-orm";
 import { Context, Effect, Layer } from "effect";
-import { DBService, FetchError, FormError, Logs, run, withLiveDB } from ".";
+import { DBService, FetchError, FormError, Log, run, withLiveDB } from ".";
 import { DMApi, DMLive } from "./dms";
 
 export class FetchLogError extends FetchError {}
@@ -317,7 +317,7 @@ const LogApiLive = Layer.effect(
 		const impl: LogApiImpl = {
 			getLog: (logId, userId) =>
 				Effect.gen(function* () {
-					yield* Logs.logInfo(["getLog"], { logId, userId });
+					yield* Log.info(["getLog"], { logId, userId });
 					return yield* Effect.tryPromise({
 						try: () =>
 							db.query.logs.findFirst({
@@ -335,7 +335,7 @@ const LogApiLive = Layer.effect(
 
 			getDMLogs: (userId) =>
 				Effect.gen(function* () {
-					yield* Logs.logInfo(["getDMLogs"], { userId });
+					yield* Log.info(["getDMLogs"], { userId });
 					return yield* Effect.tryPromise({
 						try: () =>
 							db.query.logs
@@ -355,7 +355,7 @@ const LogApiLive = Layer.effect(
 
 			getUserLogs: (userId) =>
 				Effect.gen(function* () {
-					yield* Logs.logInfo(["getUserLogs"], { userId });
+					yield* Log.info(["getUserLogs"], { userId });
 					return yield* Effect.tryPromise({
 						try: () =>
 							db.query.logs.findMany({
@@ -373,8 +373,8 @@ const LogApiLive = Layer.effect(
 
 			saveLog: (log, user) =>
 				Effect.gen(function* () {
-					yield* Logs.logInfo(["saveLog"], { logId: log.id, userId: user.id, log });
-					yield* Logs.logDebugJson([log]);
+					yield* Log.info(["saveLog"], { logId: log.id, userId: user.id });
+					yield* Log.debug(["log"], log);
 					return yield* Effect.tryPromise({
 						try: () =>
 							db.transaction((tx) => {
@@ -386,7 +386,7 @@ const LogApiLive = Layer.effect(
 
 			deleteLog: (logId, userId) =>
 				Effect.gen(function* () {
-					yield* Logs.logInfo(["deleteLog"], { logId, userId });
+					yield* Log.info(["deleteLog"], { logId, userId });
 					const log = yield* impl.getLog(logId, userId).pipe(Effect.catchAll(createSaveError));
 
 					if (!log) return yield* new SaveLogError("Log not found", { status: 404 });

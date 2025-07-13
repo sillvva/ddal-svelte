@@ -4,7 +4,7 @@ import { dungeonMasters, type DungeonMaster } from "$server/db/schema";
 import { sorter } from "@sillvva/utils";
 import { eq } from "drizzle-orm";
 import { Context, Effect, Layer } from "effect";
-import { DBService, FetchError, FormError, Logs, withLiveDB } from ".";
+import { DBService, FetchError, FormError, Log, withLiveDB } from ".";
 
 export class FetchDMError extends FetchError {}
 function createFetchError(err: unknown): FetchDMError {
@@ -70,7 +70,7 @@ const DMApiLive = Layer.effect(
 		const impl: DMApiImpl = {
 			getUserDMs: (user, { id, includeLogs = true } = {}) =>
 				Effect.gen(function* () {
-					yield* Logs.logInfo(["getUserDMs"], { userId: user.id, id, includeLogs });
+					yield* Log.info(["getUserDMs"], { userId: user.id, id, includeLogs });
 					return yield* Effect.tryPromise({
 						try: async () => {
 							return db.query.dungeonMasters.findMany({
@@ -116,7 +116,7 @@ const DMApiLive = Layer.effect(
 
 			getFuzzyDM: (userId, isUser, dm) =>
 				Effect.gen(function* () {
-					yield* Logs.logInfo(["getFuzzyDM"], { userId, isUser, dmId: dm.id });
+					yield* Log.info(["getFuzzyDM"], { userId, isUser, dmId: dm.id });
 
 					return yield* Effect.tryPromise({
 						try: () =>
@@ -139,8 +139,8 @@ const DMApiLive = Layer.effect(
 
 			saveDM: (dmId, user, data) =>
 				Effect.gen(function* () {
-					yield* Logs.logInfo(["saveDM"], { dmId, userId: user.id, data });
-					yield* Logs.logDebugJson([data]);
+					yield* Log.info(["saveDM"], { dmId, userId: user.id });
+					yield* Log.debug(["data"], data);
 
 					const [dm] = yield* impl.getUserDMs(user, { id: dmId }).pipe(Effect.catchAll(createSaveError));
 					if (!dm) return yield* new SaveDMError("DM does not exist", { status: 404 });
@@ -166,7 +166,7 @@ const DMApiLive = Layer.effect(
 
 			addUserDM: (user, dms) =>
 				Effect.gen(function* () {
-					yield* Logs.logInfo(["addUserDM"], { userId: user.id, dmsLength: dms.length });
+					yield* Log.info(["addUserDM"], { userId: user.id, dmsLength: dms.length });
 
 					const result = yield* Effect.tryPromise({
 						try: () =>
@@ -194,7 +194,7 @@ const DMApiLive = Layer.effect(
 
 			deleteDM: (dm) =>
 				Effect.gen(function* () {
-					yield* Logs.logInfo(["deleteDM"], { dmId: dm.id });
+					yield* Log.info(["deleteDM"], { dmId: dm.id });
 
 					if (dm.logs.length) return yield* new SaveDMError("You cannot delete a DM that has logs", { status: 400 });
 

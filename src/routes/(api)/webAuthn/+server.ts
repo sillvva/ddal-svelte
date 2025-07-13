@@ -1,7 +1,7 @@
 import { authName } from "$lib/auth";
 import { db, q } from "$server/db/index";
 import { passkey } from "$server/db/schema";
-import { Logs } from "$server/effect";
+import { Log } from "$server/effect";
 import { json } from "@sveltejs/kit";
 import { and, eq } from "drizzle-orm";
 import { Effect } from "effect";
@@ -39,7 +39,7 @@ export async function POST({ request, locals }) {
 	} catch (e) {
 		if (e instanceof Error) return json({ success: false, error: e.message } satisfies RenameWebAuthnResponse, { status: 500 });
 		else {
-			Effect.runFork(Logs.logError(e));
+			Effect.runFork(Log.error(["Unknown error"], { error: e }));
 			return json({ success: false, error: "Unknown error" } satisfies RenameWebAuthnResponse, { status: 500 });
 		}
 	}
@@ -67,10 +67,11 @@ export async function DELETE({ request, locals }) {
 		await db.delete(passkey).where(and(eq(passkey.id, auth.id)));
 
 		return json({ success: true } satisfies DeleteWebAuthnResponse);
-	} catch (e) {
-		if (e instanceof Error) return json({ success: false, error: e.message } satisfies DeleteWebAuthnResponse, { status: 500 });
+	} catch (error) {
+		if (error instanceof Error)
+			return json({ success: false, error: error.message } satisfies DeleteWebAuthnResponse, { status: 500 });
 		else {
-			Effect.runFork(Logs.logError(e));
+			Effect.runFork(Log.error(["Unknown error"], { error }));
 			return json({ success: false, error: "Unknown error" } satisfies DeleteWebAuthnResponse, { status: 500 });
 		}
 	}

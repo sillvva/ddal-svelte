@@ -3,7 +3,7 @@ import { privateEnv } from "$lib/env/private";
 import { appCookieSchema, localsSessionSchema, type UserId } from "$lib/schemas";
 import { serverGetCookie } from "$server/cookie";
 import { db } from "$server/db";
-import { Logs, run } from "$server/effect";
+import { run } from "$server/effect";
 import { withUser } from "$server/effect/user";
 import { createId } from "@paralleldrive/cuid2";
 import { type Handle } from "@sveltejs/kit";
@@ -12,7 +12,6 @@ import { betterAuth } from "better-auth";
 import { drizzleAdapter } from "better-auth/adapters/drizzle";
 import { passkey } from "better-auth/plugins/passkey";
 import { svelteKitHandler } from "better-auth/svelte-kit";
-import { Effect } from "effect";
 import { parse } from "valibot";
 
 type SocialProviders = {
@@ -59,7 +58,6 @@ const authHandler: Handle = async ({ event, resolve }) => {
 
 const session: Handle = async ({ event, resolve }) => {
 	if (!event.route.id) return await resolve(event);
-	Effect.runFork(Logs.logDebug(event.route.id));
 
 	const { session, user } = (await auth.api.getSession({ headers: event.request.headers })) ?? {};
 

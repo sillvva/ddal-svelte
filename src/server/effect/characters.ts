@@ -6,7 +6,7 @@ import { characterIncludes, extendedCharacterIncludes } from "$server/db/include
 import { characters, logs, type Character } from "$server/db/schema";
 import { and, eq, exists } from "drizzle-orm";
 import { Context, Effect, Layer } from "effect";
-import { DBService, FetchError, FormError, Logs, withLiveDB } from ".";
+import { DBService, FetchError, FormError, Log, withLiveDB } from ".";
 
 export class FetchCharacterError extends FetchError {}
 function createFetchError(err: unknown): FetchCharacterError {
@@ -57,7 +57,7 @@ const CharacterApiLive = Layer.effect(
 		const impl: CharacterApiImpl = {
 			getCharacter: (characterId, includeLogs = true) =>
 				Effect.gen(function* () {
-					yield* Logs.logInfo(["getCharacter"], { characterId, includeLogs });
+					yield* Log.info(["getCharacter"], { characterId, includeLogs });
 					return yield* Effect.tryPromise({
 						try: () =>
 							db.query.characters.findFirst({
@@ -70,7 +70,7 @@ const CharacterApiLive = Layer.effect(
 
 			getUserCharacters: (userId, includeLogs = true) =>
 				Effect.gen(function* () {
-					yield* Logs.logInfo(["getUserCharacters"], { userId, includeLogs });
+					yield* Log.info(["getUserCharacters"], { userId, includeLogs });
 					return yield* Effect.tryPromise({
 						try: () =>
 							db.query.characters.findMany({
@@ -83,8 +83,8 @@ const CharacterApiLive = Layer.effect(
 
 			saveCharacter: (characterId, userId, data) =>
 				Effect.gen(function* () {
-					yield* Logs.logInfo(["saveCharacter"], { characterId, userId, data });
-					yield* Logs.logDebugJson([data]);
+					yield* Log.info(["saveCharacter"], { characterId, userId });
+					yield* Log.debug(["data"], data);
 					if (!characterId) yield* new SaveCharacterError("No character ID provided", { status: 400 });
 
 					return yield* Effect.tryPromise({
@@ -113,7 +113,7 @@ const CharacterApiLive = Layer.effect(
 
 			deleteCharacter: (characterId, userId) =>
 				Effect.gen(function* () {
-					yield* Logs.logInfo(["deleteCharacter"], { characterId, userId });
+					yield* Log.info(["deleteCharacter"], { characterId, userId });
 					return yield* Effect.tryPromise({
 						try: () =>
 							db.transaction(async (tx) => {
