@@ -30,6 +30,9 @@
 		{/if}
 		<a href={previousPage} class="btn btn-sm">Go back</a>
 	</div>
+	{#if !display}
+		<img src="/images/nat1.webp" alt="Error" class="size-80" />
+	{/if}
 	<SuperDebug
 		{display}
 		data={{
