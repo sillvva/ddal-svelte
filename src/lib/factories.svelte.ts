@@ -4,6 +4,7 @@ import type { FullLogData, LogSummaryData, UserLogData } from "$server/effect/lo
 import type { SearchData } from "$src/routes/(api)/command/+server";
 import { parseDateTime, type DateValue } from "@internationalized/date";
 import { debounce, isDefined, substrCount, type MapKeys, type Prettify } from "@sillvva/utils";
+import { Duration } from "effect";
 import escape from "regexp.escape";
 import { toast } from "svelte-sonner";
 import { derived, get, type Readable, type Writable } from "svelte/store";
@@ -35,7 +36,7 @@ export function errorToast(message: string) {
 		classes: {
 			description: "text-white!"
 		},
-		duration: 30000
+		duration: Duration.toMillis("30 seconds")
 	});
 }
 
@@ -73,6 +74,8 @@ type ArgumentsType<T> = T extends (...args: infer U) => unknown ? U : never;
 type IntDateProxyOptions = Omit<NonNullable<ArgumentsType<typeof dateProxy>[2]>, "format">;
 
 export function dateToDV(date: Date) {
+	date.setSeconds(0);
+	date.setMilliseconds(0);
 	return parseDateTime(
 		date
 			.toLocaleDateString("sv", {
@@ -96,7 +99,11 @@ export function intDateProxy<T extends Record<string, unknown>, Path extends For
 			return options.empty === "null" ? null : undefined;
 		}
 
-		return value && new Date(value.toString());
+		const date = value && new Date(value.toString());
+		if (date) date.setSeconds(0);
+		if (date) date.setMilliseconds(0);
+
+		return date;
 	}
 
 	const realProxy = fieldProxy(form, path, { taint: options?.taint });

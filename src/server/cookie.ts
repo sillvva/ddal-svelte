@@ -1,5 +1,5 @@
 import { getRequestEvent } from "$app/server";
-import { Effect } from "effect";
+import { Duration, Effect } from "effect";
 import * as v from "valibot";
 import { Log } from "./effect";
 
@@ -47,7 +47,7 @@ export function serverSetCookie<TSchema extends v.BaseSchema<any, any, any>>(
 	}
 ) {
 	const opts = {
-		expires: 1000 * 60 * 60 * 24 * 365,
+		expires: Duration.toMillis("365 days"),
 		httpOnly: false,
 		...options
 	};

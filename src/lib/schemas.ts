@@ -182,7 +182,7 @@ export const dMLogSchema = (characters: FullCharacterData[] = []) =>
 		),
 		v.forward(
 			v.check(
-				(input) => !input.appliedDate || (input.appliedDate.getTime() - input.date.getTime()) / 1000 > -60,
+				(input) => !input.appliedDate || input.appliedDate.getTime() >= input.date.getTime(),
 				"Applied date must be after log date"
 			),
 			["appliedDate"]

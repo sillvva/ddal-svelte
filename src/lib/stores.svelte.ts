@@ -1,5 +1,6 @@
 import { browser } from "$app/environment";
 import type { SearchData } from "$src/routes/(api)/command/+server";
+import { Duration } from "effect";
 import Cookie from "js-cookie";
 import { getContext, setContext } from "svelte";
 import { createContext } from "svelte-contextify";
@@ -31,7 +32,7 @@ export function setCookie<TSchema extends v.BaseSchema<any, any, any>>(
 	name: string,
 	schema: TSchema,
 	value: v.InferInput<TSchema>,
-	expires = 1000 * 60 * 60 * 24 * 365
+	expires = Duration.toMillis("365 days")
 ) {
 	if (!browser) return value;
 	if (typeof value === "undefined") throw new Error("Value is undefined");
