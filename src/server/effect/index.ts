@@ -11,6 +11,7 @@ import {
 	type RequestEvent
 } from "@sveltejs/kit";
 import { Cause, Context, Data, DateTime, Effect, Exit, Layer, Logger } from "effect";
+import { isFunction } from "effect/Predicate";
 import type { YieldWrap } from "effect/Utils";
 import {
 	setError,
@@ -67,24 +68,28 @@ export function DBLive(dbOrTx: Database | Transaction = db) {
 // Run
 // -------------------------------------------------------------------------------------------------
 
+type ErrorTypes = FetchError | FormError<any, any> | never;
+
 // Overload signatures
-export async function run<T extends YieldWrap<Effect.Effect<A, B>>, A, B extends FetchError | FormError<any, any> | never, X, Y>(
+export async function run<A, B extends ErrorTypes, T extends YieldWrap<Effect.Effect<A, B>>, X, Y>(
 	program: () => Generator<T, X, Y>
 ): Promise<X>;
 
-export async function run<A, B extends FetchError | FormError<any, any> | never>(program: Effect.Effect<A, B>): Promise<A>;
+export async function run<A, B extends ErrorTypes>(program: Effect.Effect<A, B>): Promise<A>;
 
 // Implementation
-export async function run(program: any): Promise<any> {
+export async function run<A, B extends ErrorTypes, T extends YieldWrap<Effect.Effect<A, B>>, X, Y>(
+	program: Effect.Effect<A, B> | (() => Generator<T, X, Y>)
+): Promise<A | X> {
 	const effect = Effect.gen(function* () {
-		if (typeof program === "function") {
+		if (isFunction(program)) {
 			// Generator function
 			return yield* program();
 		} else {
 			// Effect
 			return yield* program;
 		}
-	}) as Effect.Effect<any, FetchError | FormError<any, any> | never>;
+	});
 
 	const result = await Effect.runPromiseExit(effect);
 	return Exit.match(result, {
