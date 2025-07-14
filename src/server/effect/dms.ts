@@ -4,6 +4,7 @@ import { dungeonMasters, type DungeonMaster } from "$server/db/schema";
 import { sorter } from "@sillvva/utils";
 import { eq } from "drizzle-orm";
 import { Context, Effect, Layer } from "effect";
+import { isTupleOf } from "effect/Predicate";
 import { DBLive, DBService, FetchError, FormError, Log } from ".";
 
 export class FetchDMError extends FetchError {}
@@ -54,12 +55,7 @@ interface DMApiImpl {
 			data: DungeonMasterSchema
 		) => Effect.Effect<DungeonMaster[], SaveDMError>;
 		readonly addUserDM: (user: LocalsUser, dm: UserDMs) => Effect.Effect<UserDMs, SaveDMError>;
-		readonly delete: (dm: UserDMs[number]) => Effect.Effect<
-			{
-				id: DungeonMasterId;
-			}[],
-			SaveDMError
-		>;
+		readonly delete: (dm: UserDMs[number]) => Effect.Effect<{ id: DungeonMasterId }, SaveDMError>;
 	};
 }
 
@@ -198,9 +194,11 @@ const DMApiLive = Layer.effect(
 									.returning(),
 							catch: createSaveError
 						}).pipe(
-							Effect.map((dms) => dms[0]),
-							Effect.flatMap((dm) => (dm ? Effect.succeed(dm) : Effect.fail(new SaveDMError("Failed to create DM")))),
-							Effect.map((dm) => ({ ...dm, logs: [] as UserDMs[number]["logs"] }))
+							Effect.flatMap((dms) =>
+								isTupleOf(dms, 1)
+									? Effect.succeed({ ...dms[0], logs: [] as UserDMs[number]["logs"] })
+									: Effect.fail(new SaveDMError("Failed to create DM"))
+							)
 						);
 
 						return dms.toSpliced(0, 0, result);
@@ -217,7 +215,7 @@ const DMApiLive = Layer.effect(
 							catch: createSaveError
 						}).pipe(
 							Effect.flatMap((result) =>
-								result.length ? Effect.succeed(result) : Effect.fail(new SaveDMError("DM not found", { status: 404 }))
+								isTupleOf(result, 1) ? Effect.succeed(result[0]) : Effect.fail(new SaveDMError("DM not found", { status: 404 }))
 							)
 						);
 					})

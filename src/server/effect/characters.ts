@@ -6,6 +6,7 @@ import { characterIncludes, extendedCharacterIncludes } from "$server/db/include
 import { characters, logs, type Character } from "$server/db/schema";
 import { and, eq, exists } from "drizzle-orm";
 import { Context, Effect, Layer } from "effect";
+import { isTupleOf } from "effect/Predicate";
 import { DBLive, DBService, FetchError, FormError, Log } from ".";
 
 export class FetchCharacterError extends FetchError {}
@@ -38,7 +39,7 @@ interface CharacterApiImpl {
 			userId: UserId,
 			data: NewCharacterSchema
 		) => Effect.Effect<Character, SaveCharacterError>;
-		readonly delete: (characterId: CharacterId, userId: UserId) => Effect.Effect<{ id: CharacterId }[], SaveCharacterError>;
+		readonly delete: (characterId: CharacterId, userId: UserId) => Effect.Effect<{ id: CharacterId }, SaveCharacterError>;
 	};
 }
 
@@ -106,9 +107,10 @@ const CharacterApiLive = Layer.effect(
 									.returning(),
 							catch: createSaveError
 						}).pipe(
-							Effect.map((characters) => characters[0]),
-							Effect.flatMap((character) =>
-								character ? Effect.succeed(character) : Effect.fail(new SaveCharacterError("Failed to save character"))
+							Effect.flatMap((characters) =>
+								isTupleOf(characters, 1)
+									? Effect.succeed(characters[0])
+									: Effect.fail(new SaveCharacterError("Failed to save character"))
 							)
 						);
 					}),
@@ -140,8 +142,8 @@ const CharacterApiLive = Layer.effect(
 							catch: createSaveError
 						}).pipe(
 							Effect.flatMap((result) =>
-								result.length
-									? Effect.succeed(result)
+								isTupleOf(result, 1)
+									? Effect.succeed(result[0])
 									: Effect.fail(new SaveCharacterError("Character not found", { status: 404 }))
 							)
 						);

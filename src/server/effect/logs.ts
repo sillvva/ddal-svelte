@@ -5,6 +5,7 @@ import { extendedLogIncludes, logIncludes } from "$server/db/includes";
 import { dungeonMasters, logs, magicItems, storyAwards } from "$server/db/schema";
 import { and, eq, inArray, isNull, notInArray } from "drizzle-orm";
 import { Context, Effect, Layer } from "effect";
+import { isTupleOf } from "effect/Predicate";
 import { DBLive, DBService, FetchError, FormError, Log, run } from ".";
 import { DMApi, DMLive } from "./dms";
 
@@ -96,15 +97,7 @@ interface LogApiImpl {
 	};
 	readonly set: {
 		readonly save: (log: LogSchema, user: LocalsUser) => Effect.Effect<FullLogData, SaveLogError>;
-		readonly delete: (
-			logId: LogId,
-			userId: UserId
-		) => Effect.Effect<
-			{
-				id: LogId;
-			}[],
-			SaveLogError
-		>;
+		readonly delete: (logId: LogId, userId: UserId) => Effect.Effect<{ id: LogId }, SaveLogError>;
 	};
 }
 
@@ -170,8 +163,9 @@ function upsertLogDM(log: LogSchema, user: LocalsUser) {
 					.returning(),
 			catch: createSaveError
 		}).pipe(
-			Effect.map((dms) => dms[0]),
-			Effect.flatMap((dm) => (dm ? Effect.succeed(dm) : Effect.fail(new SaveLogError("Could not save Dungeon Master"))))
+			Effect.flatMap((dms) =>
+				isTupleOf(dms, 1) ? Effect.succeed(dms[0]) : Effect.fail(new SaveLogError("Could not save Dungeon Master"))
+			)
 		);
 	});
 }
@@ -421,7 +415,7 @@ const LogApiLive = Layer.effect(
 							catch: createSaveError
 						}).pipe(
 							Effect.flatMap((logs) =>
-								logs.length ? Effect.succeed(logs) : Effect.fail(new SaveLogError("Log not found", { status: 404 }))
+								isTupleOf(logs, 1) ? Effect.succeed(logs[0]) : Effect.fail(new SaveLogError("Log not found", { status: 404 }))
 							)
 						);
 					})
