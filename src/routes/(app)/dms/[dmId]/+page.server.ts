@@ -18,7 +18,7 @@ export const load = (event) =>
 		if (!idResult.success) redirect(302, `/dms`);
 		const dmId = idResult.output;
 
-		const [dm] = yield* withDM((service) => service.getUserDMs(user, { id: dmId }));
+		const [dm] = yield* withDM((service) => service.get.userDMs(user, { id: dmId }));
 		if (!dm) return yield* new FetchDMError("DM not found", 404);
 
 		const form = yield* validateForm(
@@ -62,7 +62,7 @@ export const actions = {
 			if (!form.valid) return fail(400, { form });
 
 			return save(
-				withDM((service) => service.saveDM(dmId, user, form.data)),
+				withDM((service) => service.set.save(dmId, user, form.data)),
 				{
 					onError: (err) => err.toForm(form),
 					onSuccess: () => "/dms"

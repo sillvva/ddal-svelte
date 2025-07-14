@@ -10,7 +10,7 @@ import {
 	type NumericRange,
 	type RequestEvent
 } from "@sveltejs/kit";
-import { Cause, Context, Data, Effect, Exit, Layer, Logger } from "effect";
+import { Cause, Context, Data, DateTime, Effect, Exit, Layer, Logger } from "effect";
 import type { YieldWrap } from "effect/Utils";
 import {
 	setError,
@@ -32,6 +32,7 @@ const logLevel = Logger.withMinimumLogLevel(privateEnv.LOG_LEVEL);
 function annotateError(extra: object = {}) {
 	const event = getRequestEvent();
 	return Effect.annotateLogs({
+		currentTime: DateTime.formatIso(Effect.runSync(DateTime.now)),
 		userId: event.locals.user?.id,
 		routeId: event.route.id,
 		params: event.params,
@@ -40,12 +41,12 @@ function annotateError(extra: object = {}) {
 }
 
 export const Log = {
-	info: (message: string, extra?: object) =>
-		Effect.logInfo(message).pipe(logLevel, annotateError(extra), Effect.provide(Logger.json)),
-	error: (message: string, extra?: object) =>
-		Effect.logError(message).pipe(logLevel, annotateError(extra), Effect.provide(dev ? Logger.structured : Logger.json)),
-	debug: (message: string, extra?: object) =>
-		Effect.logDebug(message).pipe(logLevel, annotateError(extra), Effect.provide(dev ? Logger.structured : Logger.json))
+	info: (message: string, extra?: object, logger?: Layer.Layer<never>) =>
+		Effect.logInfo(message).pipe(logLevel, annotateError(extra), Effect.provide(logger || Logger.json)),
+	error: (message: string, extra?: object, logger?: Layer.Layer<never>) =>
+		Effect.logError(message).pipe(logLevel, annotateError(extra), Effect.provide(logger || (dev ? Logger.pretty : Logger.json))),
+	debug: (message: string, extra?: object, logger?: Layer.Layer<never>) =>
+		Effect.logDebug(message).pipe(logLevel, annotateError(extra), Effect.provide(logger || (dev ? Logger.pretty : Logger.json)))
 };
 
 // -------------------------------------------------------------------------------------------------

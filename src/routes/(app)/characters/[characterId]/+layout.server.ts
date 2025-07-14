@@ -9,7 +9,7 @@ export const load = (event) =>
 		const parent = yield* Effect.promise(() => event.parent());
 		const characterId = parse(characterIdSchema, event.params.characterId);
 
-		const character = yield* withCharacter((service) => service.getCharacter(characterId));
+		const character = yield* withCharacter((service) => service.get.character(characterId));
 
 		return {
 			breadcrumbs: parent.breadcrumbs.concat({

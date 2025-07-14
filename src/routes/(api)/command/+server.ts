@@ -26,7 +26,7 @@ async function getData(user: LocalsUser) {
 	return [
 		{
 			title: "Characters" as const,
-			items: await run(withCharacter((service) => service.getUserCharacters(user.id, false))).then((characters) =>
+			items: await run(withCharacter((service) => service.get.userCharacters(user.id, false))).then((characters) =>
 				characters
 					.map(
 						(character) =>
@@ -45,7 +45,7 @@ async function getData(user: LocalsUser) {
 		},
 		{
 			title: "DMs" as const,
-			items: await run(withDM((service) => service.getUserDMs(user, { includeLogs: true }))).then((dms) =>
+			items: await run(withDM((service) => service.get.userDMs(user, { includeLogs: true }))).then((dms) =>
 				dms
 					.map(
 						(dm) =>
@@ -60,7 +60,7 @@ async function getData(user: LocalsUser) {
 		},
 		{
 			title: "Logs" as const,
-			items: await run(withLog((service) => service.getUserLogs(user.id))).then((logs) =>
+			items: await run(withLog((service) => service.get.userLogs(user.id))).then((logs) =>
 				logs
 					.map(
 						(log) =>

@@ -7,7 +7,7 @@ export const load = (event) =>
 		const user = event.locals.user;
 		assertUser(user);
 
-		const characters = yield* withCharacter((service) => service.getUserCharacters(user.id, true));
+		const characters = yield* withCharacter((service) => service.get.userCharacters(user.id, true));
 
 		return {
 			title: `${user.name}'s Characters`,

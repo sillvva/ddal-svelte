@@ -69,7 +69,7 @@ export const actions = {
 			const characterId = parse(characterIdSchema, event.params.characterId);
 
 			return save(
-				withCharacter((service) => service.saveCharacter(characterId, user.id, data)),
+				withCharacter((service) => service.set.save(characterId, user.id, data)),
 				{
 					onError: (err) => err.toForm(form),
 					onSuccess: async (character) => {
@@ -78,7 +78,7 @@ export const actions = {
 							log.name = "Character Creation";
 
 							return await save(
-								withLog((service) => service.saveLog(log, user)),
+								withLog((service) => service.set.save(log, user)),
 								{
 									onError: (err) => {
 										setError(form, "", err.message);

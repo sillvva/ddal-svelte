@@ -11,7 +11,7 @@ export const load = (event) =>
 		const user = event.locals.user;
 		assertUser(user);
 
-		const dms = yield* withDM((service) => service.getUserDMs(user, { includeLogs: true }));
+		const dms = yield* withDM((service) => service.get.userDMs(user, { includeLogs: true }));
 
 		return {
 			title: `${user.name}'s DMs`,
@@ -29,11 +29,11 @@ export const actions = {
 			const form = yield* validateForm(event, pick(dungeonMasterSchema, ["id"]));
 			if (!form.valid) return fail(400, { form });
 
-			const [dm] = yield* withDM((service) => service.getUserDMs(user, { id: form.data.id }));
+			const [dm] = yield* withDM((service) => service.get.userDMs(user, { id: form.data.id }));
 			if (!dm) redirect(302, "/dms");
 
 			return save(
-				withDM((service) => service.deleteDM(dm)),
+				withDM((service) => service.set.delete(dm)),
 				{
 					onError: (err) => {
 						setError(form, "", err.message);

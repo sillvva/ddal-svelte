@@ -10,7 +10,7 @@ export const load = (event) =>
 		const user = event.locals.user;
 		assertUser(user);
 
-		const logs = yield* withLog((service) => service.getDMLogs(user.id));
+		const logs = yield* withLog((service) => service.get.dmLogs(user.id));
 
 		return {
 			title: `${user.name}'s DM Logs`,
@@ -29,7 +29,7 @@ export const actions = {
 			if (!form.valid) return fail(400, { form });
 
 			return save(
-				withLog((service) => service.deleteLog(form.data.id, user.id)),
+				withLog((service) => service.set.delete(form.data.id, user.id)),
 				{
 					onError: (err) => {
 						setError(form, "", err.message);

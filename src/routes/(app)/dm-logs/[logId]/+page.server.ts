@@ -20,7 +20,7 @@ export const load = (event) =>
 		if (!idResult.success) redirect(302, `/dm-logs`);
 		const logId = idResult.output;
 
-		const characters = yield* withCharacter((service) => service.getUserCharacters(user.id, true)).pipe(
+		const characters = yield* withCharacter((service) => service.get.userCharacters(user.id, true)).pipe(
 			Effect.map((characters) =>
 				characters.map((c) => ({
 					...c,
@@ -32,7 +32,7 @@ export const load = (event) =>
 			)
 		);
 
-		let log = (yield* withLog((service) => service.getLog(logId, user.id))) || defaultLogData(user.id);
+		let log = (yield* withLog((service) => service.get.log(logId, user.id))) || defaultLogData(user.id);
 		if (logId !== "new") {
 			if (!log.id) return yield* new FetchLogError("Log not found", 404);
 			if (!log.isDmLog) redirect(302, `/characters/${log.characterId}/log/${log.id}`);
@@ -62,16 +62,16 @@ export const actions = {
 			if (!idResult.success) redirect(302, `/dm-logs`);
 			const logId = idResult.output;
 
-			const log = yield* withLog((service) => service.getLog(logId, user.id));
+			const log = yield* withLog((service) => service.get.log(logId, user.id));
 			if (logId !== "new" && !log?.id) redirect(302, `/dm-logs`);
 
-			const characters = yield* withCharacter((service) => service.getUserCharacters(user.id, true));
+			const characters = yield* withCharacter((service) => service.get.userCharacters(user.id, true));
 
 			const form = yield* validateForm(event, dMLogSchema(characters));
 			if (!form.valid) return fail(400, { form });
 
 			return save(
-				withLog((service) => service.saveLog(form.data, user)),
+				withLog((service) => service.set.save(form.data, user)),
 				{
 					onError: (err) => err.toForm(form),
 					onSuccess: () => `/dm-logs`

@@ -24,7 +24,7 @@ export const load = (event) =>
 		if (!idResult.success) redirect(302, `/character/${character.id}`);
 		const logId = idResult.output;
 
-		const log = (yield* withLog((service) => service.getLog(logId, user.id))) || defaultLogData(user.id, character);
+		const log = (yield* withLog((service) => service.get.log(logId, user.id))) || defaultLogData(user.id, character);
 
 		if (logId !== "new") {
 			if (!log.id) return yield* new FetchLogError("Log not found", 404);
@@ -36,7 +36,7 @@ export const load = (event) =>
 		const itemEntities = getItemEntities(character, { excludeDropped: true, lastLogId: log.id });
 		const magicItems = itemEntities.magicItems.toSorted((a, b) => sorter(a.name, b.name));
 		const storyAwards = itemEntities.storyAwards.toSorted((a, b) => sorter(a.name, b.name));
-		const dms = yield* withDM((service) => service.getUserDMs(user, { includeLogs: true }));
+		const dms = yield* withDM((service) => service.get.userDMs(user, { includeLogs: true }));
 
 		return {
 			...event.params,
@@ -62,21 +62,21 @@ export const actions = {
 			assertUser(user);
 
 			const characterId = parse(characterIdSchema, event.params.characterId);
-			const character = yield* withCharacter((service) => service.getCharacter(characterId));
+			const character = yield* withCharacter((service) => service.get.character(characterId));
 			if (!character) redirect(302, "/characters");
 
 			const idResult = safeParse(logIdSchema, event.params.logId || "");
 			if (!idResult.success) redirect(302, `/character/${character.id}`);
 			const logId = idResult.output;
 
-			const log = yield* withLog((service) => service.getLog(logId, user.id));
+			const log = yield* withLog((service) => service.get.log(logId, user.id));
 			if (logId !== "new" && !log?.id) redirect(302, `/characters/${character.id}`);
 
 			const form = yield* validateForm(event, characterLogSchema(character));
 			if (!form.valid) return fail(400, { form });
 
 			return save(
-				withLog((service) => service.saveLog(form.data, user)),
+				withLog((service) => service.set.save(form.data, user)),
 				{
 					onError: (err) => err.toForm(form),
 					onSuccess: () => `/characters/${character.id}`
