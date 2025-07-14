@@ -1,7 +1,6 @@
 import { dev } from "$app/environment";
 import { getRequestEvent } from "$app/server";
 import { privateEnv } from "$lib/env/private";
-import { isError } from "$lib/util";
 import {
 	error,
 	isHttpError,
@@ -111,8 +110,6 @@ export async function run(program: any): Promise<any> {
 				} else if (isHttpError(defect)) {
 					Effect.runFork(Log.error("HttpError", defect));
 					throw defect;
-				} else if (isError(defect)) {
-					message = `Error: ${defect.message}`;
 				}
 			}
 
