@@ -55,13 +55,13 @@ export const Log = {
 // -------------------------------------------------------------------------------------------------
 
 interface DBImpl {
-	readonly db: Effect.Effect<Database | Transaction>;
+	readonly db: Database | Transaction;
 }
 
 export class DBService extends Context.Tag("Database")<DBService, DBImpl>() {}
 
 export function DBLive(dbOrTx: Database | Transaction = db) {
-	return Layer.succeed(DBService, DBService.of({ db: Effect.succeed(dbOrTx) }));
+	return Layer.succeed(DBService, DBService.of({ db: dbOrTx }));
 }
 
 // -------------------------------------------------------------------------------------------------

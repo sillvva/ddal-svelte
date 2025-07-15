@@ -146,8 +146,7 @@ function validateLogDM(log: LogSchema, user: LocalsUser) {
 
 function upsertLogDM(log: LogSchema, user: LocalsUser) {
 	return Effect.gen(function* () {
-		const Database = yield* DBService;
-		const db = yield* Database.db;
+		const { db } = yield* DBService;
 
 		const validated = yield* validateLogDM(log, user);
 
@@ -173,8 +172,7 @@ function upsertLogDM(log: LogSchema, user: LocalsUser) {
 function upsertLog(log: LogSchema, user: LocalsUser) {
 	return Effect.gen(function* () {
 		const LogService = yield* LogApi;
-		const Database = yield* DBService;
-		const db = yield* Database.db;
+		const { db } = yield* DBService;
 
 		const dm = yield* upsertLogDM(log, user);
 
@@ -260,8 +258,7 @@ interface CRUDStoryAwardParams extends CRUDItemParams {
 
 function itemsCRUD(params: CRUDMagicItemParams | CRUDStoryAwardParams) {
 	return Effect.gen(function* () {
-		const Database = yield* DBService;
-		const db = yield* Database.db;
+		const { db } = yield* DBService;
 
 		const { logId, table, gained, lost } = params;
 
@@ -317,8 +314,7 @@ function itemsCRUD(params: CRUDMagicItemParams | CRUDStoryAwardParams) {
 const LogApiLive = Layer.effect(
 	LogApi,
 	Effect.gen(function* () {
-		const Database = yield* DBService;
-		const db = yield* Database.db;
+		const { db } = yield* DBService;
 
 		const impl: LogApiImpl = {
 			get: {
@@ -435,6 +431,7 @@ export function withLog<R, E extends FetchLogError | SaveLogError>(
 	return Effect.gen(function* () {
 		const LogService = yield* LogApi;
 		const result = yield* impl(LogService);
+
 		const call = impl.toString();
 		if (call.includes("service.set")) {
 			yield* Log.debug("LogApi.withLog", {
@@ -442,6 +439,7 @@ export function withLog<R, E extends FetchLogError | SaveLogError>(
 				result: Array.isArray(result) ? (result.length > 5 ? result.slice(0, 5) : result) : result
 			});
 		}
+
 		return result;
 	}).pipe(Effect.provide(LogLive(dbOrTx)));
 }

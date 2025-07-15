@@ -18,8 +18,7 @@ export class UserApi extends Context.Tag("UserApi")<UserApi, UserApiImpl>() {}
 const UserApiLive = Layer.effect(
 	UserApi,
 	Effect.gen(function* () {
-		const Database = yield* DBService;
-		const db = yield* Database.db;
+		const { db } = yield* DBService;
 
 		const impl: UserApiImpl = {
 			getLocalsUser: (userId) =>

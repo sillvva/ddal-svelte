@@ -64,8 +64,7 @@ export class DMApi extends Context.Tag("DMApi")<DMApi, DMApiImpl>() {}
 const DMApiLive = Layer.effect(
 	DMApi,
 	Effect.gen(function* () {
-		const Database = yield* DBService;
-		const db = yield* Database.db;
+		const { db } = yield* DBService;
 
 		const impl: DMApiImpl = {
 			get: {
@@ -239,6 +238,7 @@ export function withDM<R, E extends FetchDMError | SaveDMError>(
 	return Effect.gen(function* () {
 		const DMApiService = yield* DMApi;
 		const result = yield* impl(DMApiService);
+
 		const call = impl.toString();
 		if (call.includes("service.set")) {
 			yield* Log.debug("DMApi.withDM", {
@@ -246,6 +246,7 @@ export function withDM<R, E extends FetchDMError | SaveDMError>(
 				result: Array.isArray(result) ? (result.length > 5 ? result.slice(0, 5) : result) : result
 			});
 		}
+
 		return result;
 	}).pipe(Effect.provide(DMLive(dbOrTx)));
 }

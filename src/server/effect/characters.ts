@@ -48,8 +48,7 @@ export class CharacterApi extends Context.Tag("CharacterApi")<CharacterApi, Char
 const CharacterApiLive = Layer.effect(
 	CharacterApi,
 	Effect.gen(function* () {
-		const Database = yield* DBService;
-		const db = yield* Database.db;
+		const { db } = yield* DBService;
 
 		const impl: CharacterApiImpl = {
 			get: {
@@ -164,6 +163,7 @@ export function withCharacter<R, E extends FetchCharacterError | SaveCharacterEr
 	return Effect.gen(function* () {
 		const CharacterService = yield* CharacterApi;
 		const result = yield* impl(CharacterService);
+
 		const call = impl.toString();
 		if (call.includes("service.set")) {
 			yield* Log.debug("CharacterApi.withCharacter", {
@@ -171,6 +171,7 @@ export function withCharacter<R, E extends FetchCharacterError | SaveCharacterEr
 				result: Array.isArray(result) ? (result.length > 5 ? result.slice(0, 5) : result) : result
 			});
 		}
+
 		return result;
 	}).pipe(Effect.provide(CharacterLive(dbOrTx)));
 }
