@@ -1,8 +1,8 @@
 import { PROVIDERS } from "$lib/constants";
 import type { LocalsUser, UserId } from "$lib/schemas";
 import { db, type Database, type Transaction } from "$server/db";
-import { Context, Effect, Layer } from "effect";
-import { DBLive, DBService, FetchError } from ".";
+import { Effect, Layer } from "effect";
+import { DBService, FetchError } from ".";
 
 class FetchUserError extends FetchError {}
 function createFetchError(err: unknown): FetchUserError {
@@ -13,11 +13,8 @@ interface UserApiImpl {
 	readonly getLocalsUser: (userId: UserId) => Effect.Effect<LocalsUser | undefined, FetchUserError>;
 }
 
-export class UserApi extends Context.Tag("UserApi")<UserApi, UserApiImpl>() {}
-
-const UserApiLive = Layer.effect(
-	UserApi,
-	Effect.gen(function* () {
+export class UserService extends Effect.Service<UserService>()("UserService", {
+	scoped: Effect.gen(function* () {
 		const { db } = yield* DBService;
 
 		const impl: UserApiImpl = {
@@ -61,16 +58,17 @@ const UserApiLive = Layer.effect(
 
 		return impl;
 	})
-);
+}) {}
 
-export const UserLive = (dbOrTx: Database | Transaction = db) => UserApiLive.pipe(Layer.provide(DBLive(dbOrTx)));
+export const UserLive = (dbOrTx: Database | Transaction = db) =>
+	UserService.Default.pipe(Layer.provide(DBService.Default(dbOrTx)));
 
 export function withUser<R, E extends FetchUserError>(
 	impl: (service: UserApiImpl) => Effect.Effect<R, E>,
 	dbOrTx: Database | Transaction = db
 ) {
 	return Effect.gen(function* () {
-		const UserService = yield* UserApi;
-		return yield* impl(UserService);
+		const userApi = yield* UserService;
+		return yield* impl(userApi);
 	}).pipe(Effect.provide(UserLive(dbOrTx)));
 }

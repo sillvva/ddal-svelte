@@ -1,13 +1,13 @@
 import { PlaceholderName } from "$lib/constants";
 import { getLogsSummary, parseCharacter } from "$lib/entities";
 import type { CharacterId, EditCharacterSchema, NewCharacterSchema, UserId } from "$lib/schemas";
-import { buildConflictUpdateColumns, db, type Database, type InferQueryResult, type Transaction } from "$server/db";
+import { buildConflictUpdateColumns, type Database, type InferQueryResult, type Transaction } from "$server/db";
 import { characterIncludes, extendedCharacterIncludes } from "$server/db/includes";
 import { characters, logs, type Character } from "$server/db/schema";
 import { and, eq, exists } from "drizzle-orm";
-import { Context, Effect, Layer } from "effect";
+import { Effect, Layer } from "effect";
 import { isTupleOf } from "effect/Predicate";
-import { DBLive, DBService, FetchError, FormError, Log } from ".";
+import { DBService, debugSet, FetchError, FormError, Log } from ".";
 
 export class FetchCharacterError extends FetchError {}
 function createFetchError(err: unknown): FetchCharacterError {
@@ -26,6 +26,7 @@ export interface FullCharacterData extends CharacterData, ReturnType<typeof getL
 }
 
 interface CharacterApiImpl {
+	readonly db: Database | Transaction;
 	readonly get: {
 		readonly character: (
 			characterId: CharacterId,
@@ -43,14 +44,12 @@ interface CharacterApiImpl {
 	};
 }
 
-export class CharacterApi extends Context.Tag("CharacterApi")<CharacterApi, CharacterApiImpl>() {}
-
-const CharacterApiLive = Layer.effect(
-	CharacterApi,
-	Effect.gen(function* () {
+export class CharacterService extends Effect.Service<CharacterService>()("CharacterService", {
+	scoped: Effect.gen(function* () {
 		const { db } = yield* DBService;
 
 		const impl: CharacterApiImpl = {
+			db,
 			get: {
 				character: (characterId, includeLogs = true) =>
 					Effect.gen(function* () {
@@ -151,27 +150,22 @@ const CharacterApiLive = Layer.effect(
 		};
 
 		return impl;
-	})
-);
+	}),
+	dependencies: [DBService.Default()]
+}) {}
 
-export const CharacterLive = (dbOrTx: Database | Transaction = db) => CharacterApiLive.pipe(Layer.provide(DBLive(dbOrTx)));
+export const CharacterTx = (tx: Transaction) =>
+	CharacterService.DefaultWithoutDependencies.pipe(Layer.provide(DBService.Default(tx)));
 
 export function withCharacter<R, E extends FetchCharacterError | SaveCharacterError>(
-	impl: (service: CharacterApiImpl) => Effect.Effect<R, E>,
-	dbOrTx: Database | Transaction = db
+	impl: (service: CharacterApiImpl) => Effect.Effect<R, E>
 ) {
 	return Effect.gen(function* () {
-		const CharacterService = yield* CharacterApi;
-		const result = yield* impl(CharacterService);
+		const CharacterApi = yield* CharacterService;
+		const result = yield* impl(CharacterApi);
 
-		const call = impl.toString();
-		if (call.includes("service.set")) {
-			yield* Log.debug("CharacterApi.withCharacter", {
-				call: impl.toString(),
-				result: Array.isArray(result) ? (result.length > 5 ? result.slice(0, 5) : result) : result
-			});
-		}
+		yield* debugSet("CharacterService", impl, result);
 
 		return result;
-	}).pipe(Effect.provide(CharacterLive(dbOrTx)));
+	}).pipe(Effect.provide(CharacterService.Default));
 }

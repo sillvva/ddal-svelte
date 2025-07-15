@@ -1,11 +1,11 @@
 import type { DungeonMasterId, DungeonMasterSchema, LocalsUser, UserId } from "$lib/schemas";
-import { buildConflictUpdateColumns, db, type Database, type InferQueryResult, type Transaction } from "$server/db";
+import { buildConflictUpdateColumns, type Database, type InferQueryResult, type Transaction } from "$server/db";
 import { dungeonMasters, type DungeonMaster } from "$server/db/schema";
 import { sorter } from "@sillvva/utils";
 import { eq } from "drizzle-orm";
-import { Context, Effect, Layer } from "effect";
+import { Effect, Layer } from "effect";
 import { isTupleOf } from "effect/Predicate";
-import { DBLive, DBService, FetchError, FormError, Log } from ".";
+import { DBService, debugSet, FetchError, FormError, Log } from ".";
 
 export class FetchDMError extends FetchError {}
 function createFetchError(err: unknown): FetchDMError {
@@ -37,6 +37,7 @@ export type UserDMs = InferQueryResult<
 >[];
 
 interface DMApiImpl {
+	readonly db: Database | Transaction;
 	readonly get: {
 		readonly userDMs: (
 			user: LocalsUser,
@@ -59,14 +60,12 @@ interface DMApiImpl {
 	};
 }
 
-export class DMApi extends Context.Tag("DMApi")<DMApi, DMApiImpl>() {}
-
-const DMApiLive = Layer.effect(
-	DMApi,
-	Effect.gen(function* () {
+export class DMService extends Effect.Service<DMService>()("DMSService", {
+	scoped: Effect.gen(function* () {
 		const { db } = yield* DBService;
 
 		const impl: DMApiImpl = {
+			db,
 			get: {
 				userDMs: (user, { id, includeLogs = true } = {}) =>
 					Effect.gen(function* () {
@@ -226,27 +225,19 @@ const DMApiLive = Layer.effect(
 		};
 
 		return impl;
-	})
-);
+	}),
+	dependencies: [DBService.Default()]
+}) {}
 
-export const DMLive = (dbOrTx: Database | Transaction = db) => DMApiLive.pipe(Layer.provide(DBLive(dbOrTx)));
+export const DMTx = (tx: Transaction) => DMService.DefaultWithoutDependencies.pipe(Layer.provide(DBService.Default(tx)));
 
-export function withDM<R, E extends FetchDMError | SaveDMError>(
-	impl: (service: DMApiImpl) => Effect.Effect<R, E>,
-	dbOrTx: Database | Transaction = db
-) {
+export function withDM<R, E extends FetchDMError | SaveDMError>(impl: (service: DMApiImpl) => Effect.Effect<R, E>) {
 	return Effect.gen(function* () {
-		const DMApiService = yield* DMApi;
-		const result = yield* impl(DMApiService);
+		const dmApi = yield* DMService;
+		const result = yield* impl(dmApi);
 
-		const call = impl.toString();
-		if (call.includes("service.set")) {
-			yield* Log.debug("DMApi.withDM", {
-				call: impl.toString(),
-				result: Array.isArray(result) ? (result.length > 5 ? result.slice(0, 5) : result) : result
-			});
-		}
+		yield* debugSet("DMService", impl, result);
 
 		return result;
-	}).pipe(Effect.provide(DMLive(dbOrTx)));
+	}).pipe(Effect.provide(DMService.Default));
 }

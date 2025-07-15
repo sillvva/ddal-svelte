@@ -1,13 +1,13 @@
 import { parseLog } from "$lib/entities";
 import type { LocalsUser, LogId, LogSchema, UserId } from "$lib/schemas";
-import { buildConflictUpdateColumns, db, type Database, type Filter, type InferQueryResult, type Transaction } from "$server/db";
+import { buildConflictUpdateColumns, type Database, type Filter, type InferQueryResult, type Transaction } from "$server/db";
 import { extendedLogIncludes, logIncludes } from "$server/db/includes";
 import { dungeonMasters, logs, magicItems, storyAwards } from "$server/db/schema";
 import { and, eq, inArray, isNull, notInArray } from "drizzle-orm";
-import { Context, Effect, Layer } from "effect";
+import { Effect, Layer } from "effect";
 import { isTupleOf } from "effect/Predicate";
-import { DBLive, DBService, FetchError, FormError, Log, run } from ".";
-import { DMApi, DMLive } from "./dms";
+import { DBService, debugSet, FetchError, FormError, Log, run } from ".";
+import { DMService, DMTx } from "./dms";
 
 export class FetchLogError extends FetchError {}
 function createFetchError(err: unknown): FetchLogError {
@@ -90,6 +90,7 @@ const userLogsConfig = {
 export type UserLogData = InferQueryResult<"logs", typeof userLogsConfig>;
 
 interface LogApiImpl {
+	readonly db: Database | Transaction;
 	readonly get: {
 		readonly log: (logId: LogId, userId: UserId) => Effect.Effect<FullLogData | undefined, FetchLogError>;
 		readonly dmLogs: (userId: UserId) => Effect.Effect<FullLogData[], FetchLogError>;
@@ -101,11 +102,9 @@ interface LogApiImpl {
 	};
 }
 
-export class LogApi extends Context.Tag("LogApi")<LogApi, LogApiImpl>() {}
-
 function validateLogDM(log: LogSchema, user: LocalsUser) {
 	return Effect.gen(function* () {
-		const DMApiService = yield* DMApi;
+		const dmApi = yield* DMService;
 
 		let isUser = log.isDmLog || log.dm.isUser || ["", user.name.toLowerCase()].includes(log.dm.name.toLowerCase().trim());
 		let dmId = log.dm.id;
@@ -124,7 +123,7 @@ function validateLogDM(log: LogSchema, user: LocalsUser) {
 		}
 
 		if (!dmId && (isUser || dmName || log.dm.DCI)) {
-			const search = yield* DMApiService.get.fuzzyDM(user.id, isUser, log.dm).pipe(Effect.catchAll(createSaveError));
+			const search = yield* dmApi.get.fuzzyDM(user.id, isUser, log.dm).pipe(Effect.catchAll(createSaveError));
 			if (search) {
 				if (search.name === dmName && search.DCI === log.dm.DCI) {
 					return { id: search.id, name: search.name, DCI: search.DCI, userId: user.id, isUser: search.isUser };
@@ -146,7 +145,7 @@ function validateLogDM(log: LogSchema, user: LocalsUser) {
 
 function upsertLogDM(log: LogSchema, user: LocalsUser) {
 	return Effect.gen(function* () {
-		const { db } = yield* DBService;
+		const { db } = yield* LogService;
 
 		const validated = yield* validateLogDM(log, user);
 
@@ -171,8 +170,7 @@ function upsertLogDM(log: LogSchema, user: LocalsUser) {
 
 function upsertLog(log: LogSchema, user: LocalsUser) {
 	return Effect.gen(function* () {
-		const LogService = yield* LogApi;
-		const { db } = yield* DBService;
+		const logApi = yield* LogService;
 
 		const dm = yield* upsertLogDM(log, user);
 
@@ -184,7 +182,7 @@ function upsertLog(log: LogSchema, user: LocalsUser) {
 
 		const [result] = yield* Effect.tryPromise({
 			try: () =>
-				db
+				logApi.db
 					.insert(logs)
 					.values({
 						id: log.id || undefined,
@@ -231,7 +229,7 @@ function upsertLog(log: LogSchema, user: LocalsUser) {
 			(params) => itemsCRUD(params)
 		);
 
-		return yield* LogService.get.log(result.id, user.id).pipe(
+		return yield* logApi.get.log(result.id, user.id).pipe(
 			Effect.flatMap((result) =>
 				result ? Effect.succeed(result) : Effect.fail(new SaveLogError(log.id ? "Could not save log" : "Could not create log"))
 			),
@@ -258,7 +256,7 @@ interface CRUDStoryAwardParams extends CRUDItemParams {
 
 function itemsCRUD(params: CRUDMagicItemParams | CRUDStoryAwardParams) {
 	return Effect.gen(function* () {
-		const { db } = yield* DBService;
+		const { db } = yield* LogService;
 
 		const { logId, table, gained, lost } = params;
 
@@ -311,12 +309,12 @@ function itemsCRUD(params: CRUDMagicItemParams | CRUDStoryAwardParams) {
 	});
 }
 
-const LogApiLive = Layer.effect(
-	LogApi,
-	Effect.gen(function* () {
+export class LogService extends Effect.Service<LogService>()("LogService", {
+	scoped: Effect.gen(function* () {
 		const { db } = yield* DBService;
 
 		const impl: LogApiImpl = {
+			db,
 			get: {
 				log: (logId, userId) =>
 					Effect.gen(function* () {
@@ -387,9 +385,7 @@ const LogApiLive = Layer.effect(
 						return yield* Effect.tryPromise({
 							try: () =>
 								db.transaction((tx) => {
-									return run(
-										upsertLog(log, user).pipe(Effect.provide(DBLive(tx)), Effect.provide(LogLive(tx)), Effect.provide(DMLive(tx)))
-									);
+									return run(upsertLog(log, user).pipe(Effect.provide(LogTx(tx)), Effect.provide(DMTx(tx))));
 								}),
 							catch: createSaveError
 						});
@@ -419,27 +415,19 @@ const LogApiLive = Layer.effect(
 		};
 
 		return impl;
-	})
-);
+	}),
+	dependencies: [DBService.Default()]
+}) {}
 
-export const LogLive = (dbOrTx: Database | Transaction = db) => LogApiLive.pipe(Layer.provide(DBLive(dbOrTx)));
+export const LogTx = (tx: Transaction) => LogService.DefaultWithoutDependencies.pipe(Layer.provide(DBService.Default(tx)));
 
-export function withLog<R, E extends FetchLogError | SaveLogError>(
-	impl: (service: LogApiImpl) => Effect.Effect<R, E>,
-	dbOrTx: Database | Transaction = db
-) {
+export function withLog<R, E extends FetchLogError | SaveLogError>(impl: (service: LogApiImpl) => Effect.Effect<R, E>) {
 	return Effect.gen(function* () {
-		const LogService = yield* LogApi;
-		const result = yield* impl(LogService);
+		const logApi = yield* LogService;
+		const result = yield* impl(logApi);
 
-		const call = impl.toString();
-		if (call.includes("service.set")) {
-			yield* Log.debug("LogApi.withLog", {
-				call: impl.toString(),
-				result: Array.isArray(result) ? (result.length > 5 ? result.slice(0, 5) : result) : result
-			});
-		}
+		yield* debugSet("LogService", impl, result);
 
 		return result;
-	}).pipe(Effect.provide(LogLive(dbOrTx)));
+	}).pipe(Effect.provide(LogService.Default));
 }
