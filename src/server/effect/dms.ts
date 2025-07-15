@@ -53,7 +53,7 @@ interface DMApiImpl {
 			dmId: DungeonMasterId,
 			user: LocalsUser,
 			data: DungeonMasterSchema
-		) => Effect.Effect<DungeonMaster[], SaveDMError>;
+		) => Effect.Effect<DungeonMaster, SaveDMError>;
 		readonly addUserDM: (user: LocalsUser, dm: UserDMs) => Effect.Effect<UserDMs, SaveDMError>;
 		readonly delete: (dm: UserDMs[number]) => Effect.Effect<{ id: DungeonMasterId }, SaveDMError>;
 	};
@@ -170,7 +170,11 @@ const DMApiLive = Layer.effect(
 									.where(eq(dungeonMasters.id, dmId))
 									.returning(),
 							catch: createSaveError
-						}).pipe(Effect.flatMap((dms) => (dms ? Effect.succeed(dms) : Effect.fail(new SaveDMError("Failed to save DM")))));
+						}).pipe(
+							Effect.flatMap((dms) =>
+								isTupleOf(dms, 1) ? Effect.succeed(dms[0]) : Effect.fail(new SaveDMError("Failed to save DM"))
+							)
+						);
 					}),
 
 				addUserDM: (user, dms) =>
