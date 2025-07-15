@@ -6,7 +6,7 @@ import { parse } from "valibot";
 
 export const load = (event) =>
 	run(function* () {
-		const parent = yield* Effect.promise(() => event.parent());
+		const parent = yield* Effect.promise(event.parent);
 		const characterId = parse(characterIdSchema, event.params.characterId);
 
 		const character = yield* withCharacter((service) => service.get.character(characterId));

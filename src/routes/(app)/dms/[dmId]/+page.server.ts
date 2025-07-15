@@ -12,7 +12,7 @@ export const load = (event) =>
 		const user = event.locals.user;
 		assertUser(user);
 
-		const parent = yield* Effect.promise(() => event.parent());
+		const parent = yield* Effect.promise(event.parent);
 
 		const idResult = safeParse(dungeonMasterIdSchema, event.params.dmId || "");
 		if (!idResult.success) redirect(302, `/dms`);

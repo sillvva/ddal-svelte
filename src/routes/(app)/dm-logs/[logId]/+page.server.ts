@@ -14,7 +14,7 @@ export const load = (event) =>
 		const user = event.locals.user;
 		assertUser(user);
 
-		const parent = yield* Effect.promise(() => event.parent());
+		const parent = yield* Effect.promise(event.parent);
 
 		const idResult = safeParse(logIdSchema, event.params.logId || "");
 		if (!idResult.success) redirect(302, `/dm-logs`);

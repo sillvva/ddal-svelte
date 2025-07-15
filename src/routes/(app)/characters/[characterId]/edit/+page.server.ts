@@ -14,7 +14,7 @@ export const load = (event) =>
 		const user = event.locals.user;
 		assertUser(user);
 
-		const parent = yield* Effect.promise(() => event.parent());
+		const parent = yield* Effect.promise(event.parent);
 
 		let title = "New Character";
 		if (event.params.characterId !== "new") {
