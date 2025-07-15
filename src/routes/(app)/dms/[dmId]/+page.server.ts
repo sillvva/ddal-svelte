@@ -1,70 +1,67 @@
 import { dungeonMasterIdSchema, dungeonMasterSchema } from "$lib/schemas";
 import { assertUser } from "$server/auth";
-import { runOrThrow, save } from "$server/effect";
-import { withDM } from "$server/effect/dms";
-import { error, redirect } from "@sveltejs/kit";
-import { fail, superValidate } from "sveltekit-superforms";
-import { valibot } from "sveltekit-superforms/adapters";
+import { run, save, validateForm } from "$server/effect";
+import { FetchDMError, withDM } from "$server/effect/dms";
+import { redirect } from "@sveltejs/kit";
+import { Effect } from "effect";
+import { fail } from "sveltekit-superforms";
 import { safeParse } from "valibot";
 
-export const load = async (event) => {
-	const user = event.locals.user;
-	assertUser(user);
-
-	const parent = await event.parent();
-
-	const idResult = safeParse(dungeonMasterIdSchema, event.params.dmId || "");
-	if (!idResult.success) redirect(302, `/dms`);
-	const dmId = idResult.output;
-
-	const [dm] = await runOrThrow(withDM((service) => service.getUserDMs(user, { id: dmId })));
-	if (!dm) error(404, "DM not found");
-
-	const form = await superValidate(
-		{
-			id: dm.id,
-			name: dm.name,
-			DCI: dm.DCI || null,
-			userId: dm.userId,
-			isUser: dm.isUser
-		},
-		valibot(dungeonMasterSchema),
-		{
-			errors: false
-		}
-	);
-
-	return {
-		...event.params,
-		title: `Edit ${dm.name}`,
-		breadcrumbs: parent.breadcrumbs.concat({
-			name: dm.name,
-			href: `/dms/${dm.id}`
-		}),
-		dm,
-		form,
-		user: parent.user
-	};
-};
-
-export const actions = {
-	saveDM: async (event) => {
+export const load = (event) =>
+	run(function* () {
 		const user = event.locals.user;
 		assertUser(user);
+
+		const parent = yield* Effect.promise(event.parent);
 
 		const idResult = safeParse(dungeonMasterIdSchema, event.params.dmId || "");
 		if (!idResult.success) redirect(302, `/dms`);
 		const dmId = idResult.output;
 
-		const form = await superValidate(event, valibot(dungeonMasterSchema));
-		if (!form.valid) return fail(400, { form });
+		const [dm] = yield* withDM((service) => service.get.userDMs(user, { id: dmId }));
+		if (!dm) return yield* new FetchDMError("DM not found", 404);
 
-		return await save(
-			withDM((service) => service.saveDM(dmId, user, form.data)),
+		const form = yield* validateForm(
 			{
-				onError: (err) => err.toForm(form),
-				onSuccess: () => "/dms"
+				id: dm.id,
+				name: dm.name,
+				DCI: dm.DCI || null,
+				userId: dm.userId,
+				isUser: dm.isUser
+			},
+			dungeonMasterSchema,
+			{
+				errors: false
 			}
 		);
-	}
+
+		return {
+			...event.params,
+			dm,
+			form,
+			user: parent.user
+		};
+	});
+
+export const actions = {
+	saveDM: (event) =>
+		run(function* () {
+			const user = event.locals.user;
+			assertUser(user);
+
+			const idResult = safeParse(dungeonMasterIdSchema, event.params.dmId || "");
+			if (!idResult.success) redirect(302, `/dms`);
+			const dmId = idResult.output;
+
+			const form = yield* validateForm(event, dungeonMasterSchema);
+			if (!form.valid) return fail(400, { form });
+
+			return save(
+				withDM((service) => service.set.save(dmId, user, form.data)),
+				{
+					onError: (err) => err.toForm(form),
+					onSuccess: () => "/dms"
+				}
+			);
+		})
 };

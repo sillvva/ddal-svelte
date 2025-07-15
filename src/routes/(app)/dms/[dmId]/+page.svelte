@@ -1,3 +1,10 @@
+<script module>
+	import type { PageData } from "./$types.js";
+	export function getPageTitle(data: PageData) {
+		return `Edit ${data.form.data.name}`;
+	}
+</script>
+
 <script lang="ts">
 	import { goto } from "$app/navigation";
 	import BreadCrumbs from "$lib/components/BreadCrumbs.svelte";

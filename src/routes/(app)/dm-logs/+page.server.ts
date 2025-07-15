@@ -1,41 +1,41 @@
 import { logSchema } from "$lib/schemas.js";
 import { assertUser } from "$server/auth";
-import { runOrThrow, save } from "$server/effect";
+import { run, save, validateForm } from "$server/effect";
 import { withLog } from "$server/effect/logs.js";
-import { fail, setError, superValidate } from "sveltekit-superforms";
-import { valibot } from "sveltekit-superforms/adapters";
+import { fail, setError } from "sveltekit-superforms";
 import { pick } from "valibot";
 
-export const load = async (event) => {
-	const user = event.locals.user;
-	assertUser(user);
-
-	const logs = await runOrThrow(withLog((service) => service.getDMLogs(user.id)));
-
-	return {
-		title: `${user.name}'s DM Logs`,
-		logs,
-		...event.params
-	};
-};
-
-export const actions = {
-	deleteLog: async (event) => {
+export const load = (event) =>
+	run(function* () {
 		const user = event.locals.user;
 		assertUser(user);
 
-		const form = await superValidate(event, valibot(pick(logSchema, ["id"])));
-		if (!form.valid) return fail(400, { form });
+		const logs = yield* withLog((service) => service.get.dmLogs(user.id));
 
-		return await save(
-			withLog((service) => service.deleteLog(form.data.id, user.id)),
-			{
-				onError: (err) => {
-					setError(form, "", err.message);
-					return fail(err.status, { form });
-				},
-				onSuccess: () => ({ form })
-			}
-		);
-	}
+		return {
+			logs,
+			...event.params
+		};
+	});
+
+export const actions = {
+	deleteLog: (event) =>
+		run(function* () {
+			const user = event.locals.user;
+			assertUser(user);
+
+			const form = yield* validateForm(event, pick(logSchema, ["id"]));
+			if (!form.valid) return fail(400, { form });
+
+			return save(
+				withLog((service) => service.set.delete(form.data.id, user.id)),
+				{
+					onError: (err) => {
+						setError(form, "", err.message);
+						return fail(err.status, { form });
+					},
+					onSuccess: () => ({ form })
+				}
+			);
+		})
 };

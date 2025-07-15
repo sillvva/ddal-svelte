@@ -1,6 +1,6 @@
 import { searchSections } from "$lib/constants.js";
 import type { LocalsUser } from "$lib/schemas.js";
-import { runOrThrow } from "$server/effect";
+import { run } from "$server/effect";
 import { withCharacter } from "$server/effect/characters";
 import { withDM } from "$server/effect/dms";
 import { withLog } from "$server/effect/logs";
@@ -26,7 +26,7 @@ async function getData(user: LocalsUser) {
 	return [
 		{
 			title: "Characters" as const,
-			items: await runOrThrow(withCharacter((service) => service.getUserCharacters(user.id, false))).then((characters) =>
+			items: await run(withCharacter((service) => service.get.userCharacters(user.id, false))).then((characters) =>
 				characters
 					.map(
 						(character) =>
@@ -45,7 +45,7 @@ async function getData(user: LocalsUser) {
 		},
 		{
 			title: "DMs" as const,
-			items: await runOrThrow(withDM((service) => service.getUserDMs(user, { includeLogs: true }))).then((dms) =>
+			items: await run(withDM((service) => service.get.userDMs(user, { includeLogs: true }))).then((dms) =>
 				dms
 					.map(
 						(dm) =>
@@ -60,7 +60,7 @@ async function getData(user: LocalsUser) {
 		},
 		{
 			title: "Logs" as const,
-			items: await runOrThrow(withLog((service) => service.getUserLogs(user.id))).then((logs) =>
+			items: await run(withLog((service) => service.get.userLogs(user.id))).then((logs) =>
 				logs
 					.map(
 						(log) =>

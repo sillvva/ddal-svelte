@@ -30,8 +30,10 @@ export const envPrivateSchema = v.pipe(
 		DISCORD_CLIENT_SECRET: requiredString,
 		DISABLE_SIGNUPS: v.optional(v.boolean(), false),
 		LOG_LEVEL: v.pipe(
-			v.optional(v.picklist(["none", "debug", "info"]), "none"),
-			v.transform((b) => (b === "debug" ? LogLevel.Debug : b === "info" ? LogLevel.Info : LogLevel.None))
+			v.optional(v.picklist(["none", "debug", "info", "error"]), "error"),
+			v.transform((b) =>
+				b === "debug" ? LogLevel.Debug : b === "info" ? LogLevel.Info : b === "error" ? LogLevel.Error : LogLevel.None
+			)
 		)
 	}),
 	v.readonly()
@@ -180,7 +182,7 @@ export const dMLogSchema = (characters: FullCharacterData[] = []) =>
 		),
 		v.forward(
 			v.check(
-				(input) => !input.appliedDate || (input.appliedDate.getTime() - input.date.getTime()) / 1000 > -60,
+				(input) => !input.appliedDate || input.appliedDate.getTime() >= input.date.getTime(),
 				"Applied date must be after log date"
 			),
 			["appliedDate"]

@@ -1,6 +1,6 @@
 import { dev } from "$app/environment";
+import { getRequestEvent } from "$app/server";
 import { privateEnv } from "$lib/env/private";
-import { isError } from "$lib/util";
 import {
 	error,
 	isHttpError,
@@ -10,52 +10,139 @@ import {
 	type NumericRange,
 	type RequestEvent
 } from "@sveltejs/kit";
-import { Context, Data, Effect, Layer, Logger } from "effect";
-import { setError, superValidate, type FormPathLeavesWithErrors, type SuperValidated } from "sveltekit-superforms";
+import { Cause, Context, Data, DateTime, Effect, Exit, Layer, Logger } from "effect";
+import { isFunction } from "effect/Predicate";
+import type { YieldWrap } from "effect/Utils";
+import {
+	setError,
+	superValidate,
+	type FormPathLeavesWithErrors,
+	type SuperValidated,
+	type SuperValidateOptions
+} from "sveltekit-superforms";
 import { valibot } from "sveltekit-superforms/adapters";
-import type { BaseSchema, InferInput } from "valibot";
+import type { BaseSchema, InferInput, InferOutput } from "valibot";
 import { db, type Database, type Transaction } from "../db";
+
+// -------------------------------------------------------------------------------------------------
+// Logs
+// -------------------------------------------------------------------------------------------------
 
 const logLevel = Logger.withMinimumLogLevel(privateEnv.LOG_LEVEL);
 
-export const Logs = {
-	logInfo: (...messages: unknown[]) => Effect.logInfo(messages.join(" ")).pipe(logLevel),
-	logError: (...messages: unknown[]) => Effect.logError(messages.join(" ")).pipe(logLevel),
-	logDebug: (...messages: unknown[]) => Effect.logDebug(...messages).pipe(logLevel),
-	logDebugStructured: (...messages: unknown[]) => Effect.logDebug(...messages).pipe(logLevel, Effect.provide(Logger.structured))
+function annotateError(extra: object = {}) {
+	const event = getRequestEvent();
+	return Effect.annotateLogs({
+		currentTime: DateTime.formatIso(Effect.runSync(DateTime.now)),
+		userId: event.locals.user?.id,
+		routeId: event.route.id,
+		params: event.params,
+		extra
+	});
+}
+
+export const Log = {
+	info: (message: string, extra?: object, logger?: Layer.Layer<never>) =>
+		Effect.logInfo(message).pipe(logLevel, annotateError(extra), Effect.provide(logger || Logger.json)),
+	error: (message: string, extra?: object, logger?: Layer.Layer<never>) =>
+		Effect.logError(message).pipe(logLevel, annotateError(extra), Effect.provide(logger || (dev ? Logger.pretty : Logger.json))),
+	debug: (message: string, extra?: object, logger?: Layer.Layer<never>) =>
+		Effect.logDebug(message).pipe(logLevel, annotateError(extra), Effect.provide(logger || (dev ? Logger.pretty : Logger.json)))
 };
 
+// -------------------------------------------------------------------------------------------------
+// DB
+// -------------------------------------------------------------------------------------------------
+
 interface DBImpl {
-	readonly db: Effect.Effect<Database | Transaction>;
+	readonly db: Database | Transaction;
 }
 
 export class DBService extends Context.Tag("Database")<DBService, DBImpl>() {}
 
-export function withLiveDB(dbOrTx: Database | Transaction = db) {
-	return Layer.succeed(DBService, DBService.of({ db: Effect.succeed(dbOrTx) }));
+export function DBLive(dbOrTx: Database | Transaction = db) {
+	return Layer.succeed(DBService, DBService.of({ db: dbOrTx }));
 }
 
-export async function runOrThrow<T>(program: Effect.Effect<T, unknown, never>) {
-	try {
-		return await Effect.runPromise(program);
-	} catch (err) {
-		if (isRedirect(err) || isHttpError(err)) {
-			throw err;
-		} else if (isError(err)) {
-			throw error(500, err.message);
+// -------------------------------------------------------------------------------------------------
+// Run
+// -------------------------------------------------------------------------------------------------
+
+type ErrorTypes = FetchError | FormError<any, any> | never;
+
+// Overload signatures
+export async function run<A, B extends ErrorTypes, T extends YieldWrap<Effect.Effect<A, B>>, X, Y>(
+	program: () => Generator<T, X, Y>
+): Promise<X>;
+
+export async function run<A, B extends ErrorTypes>(program: Effect.Effect<A, B>): Promise<A>;
+
+// Implementation
+export async function run<A, B extends ErrorTypes, T extends YieldWrap<Effect.Effect<A, B>>, X, Y>(
+	program: Effect.Effect<A, B> | (() => Generator<T, X, Y>)
+): Promise<A | X> {
+	const effect = Effect.gen(function* () {
+		if (isFunction(program)) {
+			// Generator function
+			return yield* program();
 		} else {
-			if (dev) console.error(err);
-			throw Effect.die(err);
+			// Effect
+			return yield* program;
 		}
-	}
+	});
+
+	const result = await Effect.runPromiseExit(effect);
+	return Exit.match(result, {
+		onSuccess: (result) => result,
+		onFailure: (cause) => {
+			let message = Cause.pretty(cause);
+			let status: NumericRange<400, 599> = 500;
+			let failCause: unknown;
+
+			if (Cause.isFailType(cause)) {
+				const error = cause.error;
+				if (error instanceof FormError || error instanceof FetchError) {
+					status = error.status;
+					failCause = error.cause;
+				}
+			}
+
+			if (Cause.isDieType(cause)) {
+				const defect = cause.defect;
+				// This will propagate redirects and http errors directly to SvelteKit
+				if (isRedirect(defect)) {
+					Effect.runFork(Log.debug("Redirect", defect));
+					throw defect;
+				} else if (isHttpError(defect)) {
+					Effect.runFork(Log.error("HttpError", defect));
+					throw defect;
+				}
+			}
+
+			Effect.runFork(Log.error(message, { status, cause: failCause }));
+
+			if (!dev) message = message.replace(/\n\s+at .+/, "");
+			throw error(status, message);
+		}
+	});
 }
 
-export function validateForm<Input extends RequestEvent | InferInput<Schema>, Schema extends BaseSchema<any, any, any>>(
-	input: Input,
-	schema: Schema
-) {
-	return Effect.promise(() => superValidate(input, valibot(schema)));
+// -------------------------------------------------------------------------------------------------
+// Superforms
+// -------------------------------------------------------------------------------------------------
+
+type SuperValidateData = RequestEvent | Request | FormData | URLSearchParams | URL | null | undefined;
+
+export function validateForm<
+	Input extends SuperValidateData | Partial<InferInput<Schema>>,
+	Schema extends BaseSchema<any, any, any>
+>(input: Input, schema: Schema, options?: SuperValidateOptions<InferOutput<Schema>>) {
+	return Effect.promise(() => superValidate(input, valibot(schema), options));
 }
+
+// -------------------------------------------------------------------------------------------------
+// Save
+// -------------------------------------------------------------------------------------------------
 
 export async function save<
 	TOut extends Record<PropertyKey, any>,
@@ -77,39 +164,40 @@ export async function save<
 	);
 
 	if (typeof result === "string" && result.startsWith("/")) {
-		Effect.runFork(Logs.logInfo("Redirecting to", result));
+		Effect.runFork(Log.debug("Redirect", { status: 302, location: result }));
 		redirect(302, result);
 	}
 
-	Effect.runFork(typeof result === "object" ? Logs.logDebugStructured(result) : Logs.logDebug("Result:", result));
+	if (typeof result === "object" && result !== null && "status" in result) {
+		Effect.runFork(Log.error("ActionFailure", result));
+	} else {
+		Effect.runFork(Log.info("Result", { result }));
+	}
 
 	return result;
 }
 
-const unknownError = "Unknown error";
-
-function hasMessage(obj: unknown): obj is { message: string } {
-	return typeof obj === "object" && obj !== null && "message" in obj && typeof (obj as any).message === "string";
-}
-
-function extractMessage(err: unknown): string {
-	if (!err) return "Undefined error";
-	if (typeof err === "string") return err;
-	if (hasMessage(err)) return err.message;
-	return "Unknown error";
-}
+// -------------------------------------------------------------------------------------------------
+// Errors
+// -------------------------------------------------------------------------------------------------
 
 export class FetchError extends Data.TaggedError("FetchError")<{
 	message: string;
+	status: NumericRange<400, 599>;
+	cause?: unknown;
 }> {
-	constructor(public message: string = unknownError) {
-		super({ message });
-		if (dev) Effect.runFork(Logs.logError(this));
+	constructor(
+		public message: string,
+		public status: NumericRange<400, 599> = 500,
+		public cause?: unknown
+	) {
+		super({ message, status, cause });
 	}
 
 	static from(err: FetchError | Error | unknown): FetchError {
 		if (err instanceof FetchError) return err;
-		return new FetchError(extractMessage(err));
+		if (err instanceof FormError) return new FetchError(err.message, err.status, err.cause);
+		return new FetchError(Cause.pretty(Cause.fail(err)), 500, err);
 	}
 }
 
@@ -118,26 +206,31 @@ export class FormError<
 	TIn extends Record<PropertyKey, any> = TOut
 > extends Data.TaggedError("FormError")<{
 	message: string;
+	status: NumericRange<400, 599>;
+	cause?: unknown;
 }> {
-	public status: NumericRange<400, 599> = 500;
+	cause?: unknown;
+	status: NumericRange<400, 599> = 500;
 
 	constructor(
-		public message: string = unknownError,
+		public message: string,
 		protected options: Partial<{
 			field: "" | FormPathLeavesWithErrors<TOut>;
 			status: NumericRange<400, 599>;
+			cause: unknown;
 		}> = {}
 	) {
-		super({ message });
-		if (options.status) this.status = options.status;
-		if (dev) Effect.runFork(Logs.logError(this));
+		const status = options.status || 500;
+		super({ message, status });
+		this.cause = options.cause;
 	}
 
 	static from<TOut extends Record<PropertyKey, any>, TIn extends Record<PropertyKey, any> = TOut>(
 		err: FormError<TOut, TIn> | Error | unknown
 	): FormError<TOut, TIn> {
 		if (err instanceof FormError) return err;
-		return new FormError<TOut, TIn>(extractMessage(err));
+		if (err instanceof FetchError) return new FormError<TOut, TIn>(err.message, { cause: err.cause, status: err.status });
+		return new FormError<TOut, TIn>(Cause.pretty(Cause.fail(err)), { cause: err, status: 500 });
 	}
 
 	toForm(form: SuperValidated<TOut, App.Superforms.Message, TIn>) {

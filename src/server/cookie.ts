@@ -1,5 +1,7 @@
 import { getRequestEvent } from "$app/server";
+import { Duration, Effect } from "effect";
 import * as v from "valibot";
+import { Log } from "./effect";
 
 /**
  * Get a cookie from the server.
@@ -18,8 +20,8 @@ export function serverGetCookie<TSchema extends v.BaseSchema<any, any, any>>(nam
 		const cookie = val && val !== "undefined" ? JSON.parse(val) : serverSetCookie(name, schema, undefined);
 
 		return v.parse(schema, cookie);
-	} catch (err) {
-		console.error(err);
+	} catch (error) {
+		Effect.runFork(Log.error("Error getting cookie", { error }));
 		return serverSetCookie(name, schema, undefined);
 	}
 }
@@ -45,7 +47,7 @@ export function serverSetCookie<TSchema extends v.BaseSchema<any, any, any>>(
 	}
 ) {
 	const opts = {
-		expires: 1000 * 60 * 60 * 24 * 365,
+		expires: Duration.toMillis("365 days"),
 		httpOnly: false,
 		...options
 	};

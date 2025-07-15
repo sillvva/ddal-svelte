@@ -1,3 +1,13 @@
+<script module>
+	import type { PageData } from "./$types.js";
+	export const pageTitle = "DM Logs";
+	export function getHeadData(data: PageData) {
+		return {
+			title: `${data.user?.name}'s DM Logs`
+		};
+	}
+</script>
+
 <script lang="ts">
 	import { goto } from "$app/navigation";
 	import { page } from "$app/state";
@@ -104,7 +114,7 @@
 
 	<section>
 		<div class="bg-base-200 w-full overflow-x-auto rounded-lg">
-			<table class="table w-full">
+			<table class="linked-table-groups table w-full">
 				<thead>
 					<tr class="bg-base-300 text-base-content/70">
 						<th class="table-cell sm:hidden print:hidden">Game</th>
@@ -114,8 +124,8 @@
 						<th class="print:hidden"></th>
 					</tr>
 				</thead>
-				<tbody>
-					{#if data.logs.length == 0}
+				{#if data.logs.length == 0}
+					<tbody>
 						<tr>
 							<td colSpan={5} class="py-20 text-center">
 								<p class="mb-4">You have no DM logs.</p>
@@ -124,18 +134,17 @@
 								</p>
 							</td>
 						</tr>
-					{:else}
-						{#each sortedResults as log}
-							{@const hasDescription =
-								!!log.description?.trim() || log.storyAwardsGained.length > 0 || log.storyAwardsLost.length > 0}
-							<tr
-								class="[&>td]:border-t-base-300 data-[deleting=true]:hidden [&>td]:border-t [&>td]:border-b-0"
-								data-deleting={deletingLog.has(log.id)}
-							>
+					</tbody>
+				{:else}
+					{#each sortedResults as log}
+						{@const hasDescription =
+							!!log.description?.trim() || log.storyAwardsGained.length > 0 || log.storyAwardsLost.length > 0}
+						<tbody class="border-t border-neutral-500/20 first:border-0">
+							<tr class="border-0 data-[deleting=true]:hidden" data-deleting={deletingLog.has(log.id)}>
 								<td class="static! align-top">
 									<a
 										href={log.isDmLog ? `/dm-logs/${log.id}` : `/characters/${log.characterId}/log/${log.id}`}
-										class="text-secondary text-left font-semibold whitespace-pre-wrap"
+										class="row-link text-left font-semibold whitespace-pre-wrap"
 										aria-label="Edit Log"
 									>
 										<SearchResults text={log.name} terms={search.terms} />
@@ -251,7 +260,7 @@
 							</tr>
 							<!-- Notes -->
 							<tr
-								class="hidden data-[deleting=true]:hidden! data-[desc=true]:table-row max-sm:data-[mi=true]:table-row"
+								class="hidden border-0 data-[deleting=true]:hidden! data-[desc=true]:table-row max-sm:data-[mi=true]:table-row [&>td]:border-0"
 								data-deleting={deletingLog.has(log.id)}
 								data-desc={global.app.dmLogs.descriptions && hasDescription}
 								data-mi={log.magicItemsGained.length > 0 || log.magicItemsLost.length > 0}
@@ -290,9 +299,9 @@
 									{/if}
 								</td>
 							</tr>
-						{/each}
-					{/if}
-				</tbody>
+						</tbody>
+					{/each}
+				{/if}
 			</table>
 		</div>
 	</section>

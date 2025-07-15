@@ -9,6 +9,19 @@ import type { setupViewTransition } from "sveltekit-view-transition";
 
 export type TransitionAction = ReturnType<typeof setupViewTransition>["transition"];
 
+export type ModuleData = {
+	getPageTitle?: (data: any) => string;
+	pageTitle?: string;
+	getHeadData?: (data: any) => {
+		title: string;
+		description?: string;
+		image?: string;
+	};
+	headTitle?: string;
+	headDescription?: string;
+	headImage?: string;
+};
+
 /**
  * Functions
  */
@@ -24,8 +37,4 @@ export function hotkey(hotkeys: HotkeyItem[]): Attachment<HTMLElement | Document
 		if (node instanceof Document) node = node.body;
 		return hk(node, hotkeys).destroy;
 	};
-}
-
-export function isError(err: unknown): err is Error {
-	return !!err && typeof err === "object" && "message" in err && typeof err.message === "string";
 }

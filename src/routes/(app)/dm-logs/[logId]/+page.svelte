@@ -1,3 +1,10 @@
+<script module>
+	import type { PageData } from "./$types.js";
+	export function getPageTitle(data: PageData) {
+		return data.logId === "new" ? "New DM Log" : `Edit ${data.form.data.name}`;
+	}
+</script>
+
 <script lang="ts">
 	import BreadCrumbs from "$lib/components/BreadCrumbs.svelte";
 	import AddDropItems from "$lib/components/forms/AddDropItems.svelte";

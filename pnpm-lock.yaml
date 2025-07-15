@@ -50,6 +50,9 @@ importers:
       svelte-autosize:
         specifier: ^1.1.5
         version: 1.1.5(svelte@5.35.5)
+      svelte-breadcrumbs:
+        specifier: ^2.0.1
+        version: 2.0.1(svelte@5.35.5)
       svelte-contextify:
         specifier: ^1.0.4
         version: 1.0.4(svelte@5.35.5)
@@ -2607,6 +2610,11 @@ packages:
     peerDependencies:
       svelte: '>=3.0.0'
 
+  svelte-breadcrumbs@2.0.1:
+    resolution: {integrity: sha512-OSC307s01rXkRDrNrcdMQJomXdqlepCd+yazctkM1Unn1ORhAWBtZhn9qk6yR5zRkzoP2sPNf3mwV9AkGwkndQ==}
+    peerDependencies:
+      svelte: 5.x
+
   svelte-check@4.2.2:
     resolution: {integrity: sha512-1+31EOYZ7NKN0YDMKusav2hhEoA51GD9Ws6o//0SphMT0ve9mBTsTUEX7OmDMadUP3KjNHsSKtJrqdSaD8CrGQ==}
     engines: {node: '>= 18.0.0'}
@@ -2628,6 +2636,9 @@ packages:
     peerDependenciesMeta:
       svelte:
         optional: true
+
+  svelte-kit@1.2.0:
+    resolution: {integrity: sha512-RRaOHBhpDv4g2v9tcq8iNw055Pt0MlLps6JVA7/40f4KAbtztXSI4T6MZYbHRirO708urfAAMx6Qow+tQfCHug==}
 
   svelte-sonner@1.0.5:
     resolution: {integrity: sha512-9dpGPFqKb/QWudYqGnEz93vuY+NgCEvyNvxoCLMVGw6sDN/3oVeKV1xiEirW2E1N3vJEyj5imSBNOGltQHA7mg==}
@@ -5217,6 +5228,11 @@ snapshots:
       autosize: 6.0.1
       svelte: 5.35.5
 
+  svelte-breadcrumbs@2.0.1(svelte@5.35.5):
+    dependencies:
+      svelte: 5.35.5
+      svelte-kit: 1.2.0
+
   svelte-check@4.2.2(picomatch@4.0.2)(svelte@5.35.5)(typescript@5.8.3):
     dependencies:
       '@jridgewell/trace-mapping': 0.3.25
@@ -5243,6 +5259,8 @@ snapshots:
       postcss-selector-parser: 7.1.0
     optionalDependencies:
       svelte: 5.35.5
+
+  svelte-kit@1.2.0: {}
 
   svelte-sonner@1.0.5(svelte@5.35.5):
     dependencies:
