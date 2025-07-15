@@ -3,7 +3,7 @@
 	export const pageTitle = "DM Logs";
 	export function getHeadData(data: PageData) {
 		return {
-			title: `${data.user?.name}'s Characters`
+			title: `${data.user?.name}'s DM Logs`
 		};
 	}
 </script>
