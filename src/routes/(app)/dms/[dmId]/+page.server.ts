@@ -38,10 +38,6 @@ export const load = (event) =>
 		return {
 			...event.params,
 			title: `Edit ${dm.name}`,
-			breadcrumbs: parent.breadcrumbs.concat({
-				name: dm.name,
-				href: `/dms/${dm.id}`
-			}),
 			dm,
 			form,
 			user: parent.user

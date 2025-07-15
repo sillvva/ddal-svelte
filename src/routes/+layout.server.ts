@@ -24,7 +24,6 @@ export const load = async (event) => {
 	const app = serverGetCookie("app", appCookieSchema);
 
 	return {
-		breadcrumbs: [] as App.PageData["breadcrumbs"],
 		user,
 		session,
 		mobile,

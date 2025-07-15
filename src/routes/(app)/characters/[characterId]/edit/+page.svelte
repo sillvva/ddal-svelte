@@ -1,3 +1,10 @@
+<script module>
+	import type { PageParentData } from "./$types.js";
+	export function getPageTitle(data: PageParentData) {
+		return data.character?.name ? "Edit" : "New Character";
+	}
+</script>
+
 <script lang="ts">
 	import { page } from "$app/state";
 	import BreadCrumbs from "$lib/components/BreadCrumbs.svelte";

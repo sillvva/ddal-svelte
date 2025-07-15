@@ -1,3 +1,7 @@
+<script module>
+	export const pageTitle = "DM Logs";
+</script>
+
 <script lang="ts">
 	import { goto } from "$app/navigation";
 	import { page } from "$app/state";

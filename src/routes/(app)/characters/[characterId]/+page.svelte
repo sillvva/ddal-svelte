@@ -1,3 +1,10 @@
+<script module>
+	import type { PageParentData } from "./$types.js";
+	export function getPageTitle(data: PageParentData) {
+		return data.character?.name || "New Character";
+	}
+</script>
+
 <script lang="ts">
 	import { goto, pushState } from "$app/navigation";
 	import { page } from "$app/state";

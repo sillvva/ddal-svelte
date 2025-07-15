@@ -43,10 +43,6 @@ export const load = (event) =>
 		return {
 			...event.params,
 			title: logId === "new" ? "New DM Log" : `Edit ${form.data.name}`,
-			breadcrumbs: parent.breadcrumbs.concat({
-				name: logId === "new" ? "New DM Log" : `${form.data.name}`,
-				href: `/dm-logs/${logId}`
-			}),
 			characters: characters.map((c) => ({ id: c.id, name: c.name })),
 			form
 		};

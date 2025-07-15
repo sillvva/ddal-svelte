@@ -1,3 +1,7 @@
+<script module>
+	export const pageTitle = "DMs";
+</script>
+
 <script lang="ts">
 	import BreadCrumbs from "$lib/components/BreadCrumbs.svelte";
 	import Search from "$lib/components/Search.svelte";
@@ -10,7 +14,9 @@
 	let { data } = $props();
 
 	const search = $derived(new EntitySearchFactory(data.dms));
-	const sortedResults = $derived(search.results.toSorted((a, b) => sorter(a.isUser, b.isUser) || sorter(b.score, a.score) || sorter(a.name, b.name)));
+	const sortedResults = $derived(
+		search.results.toSorted((a, b) => sorter(a.isUser, b.isUser) || sorter(b.score, a.score) || sorter(a.name, b.name))
+	);
 
 	let deletingDM = new SvelteSet<string>();
 </script>

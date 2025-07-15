@@ -41,10 +41,6 @@ export const load = (event) =>
 		return {
 			...event.params,
 			title: logId === "new" ? `New Log - ${character.name}` : `Edit ${form.data.name}`,
-			breadcrumbs: parent.breadcrumbs.concat({
-				name: logId === "new" ? `New Log` : form.data.name,
-				href: `/characters/${character.id}/log/${form.data.id}`
-			}),
 			totalLevel: character.totalLevel,
 			user: { ...user, ...parent.user },
 			magicItems,

@@ -19,11 +19,6 @@ export const load = (event) =>
 		let title = "New Character";
 		if (event.params.characterId !== "new") {
 			title = "Edit";
-			parent.breadcrumbs = parent.breadcrumbs.concat({
-				name: title,
-				href: `/characters/${event.params.characterId}`
-			});
-
 			if (!parent.character) return yield* new FetchCharacterError("Character not found", 404);
 		}
 
@@ -49,7 +44,6 @@ export const load = (event) =>
 
 		return {
 			title,
-			breadcrumbs: parent.breadcrumbs,
 			...event.params,
 			form,
 			BLANK_CHARACTER

@@ -1,43 +1,36 @@
 <script lang="ts">
 	import { page } from "$app/state";
+	import { Breadcrumbs, type Crumb } from "svelte-breadcrumbs";
 	import BackButton from "./BackButton.svelte";
-
-	const breadcrumbs = $derived(
-		page.data.breadcrumbs.map((bc, i) => ({
-			name: bc.name,
-			href: !bc.href || i === page.data.breadcrumbs.length - 1 ? null : bc.href
-		}))
-	);
-
-	const back = $derived(
-		breadcrumbs
-			.slice(0, -1)
-			.filter((bc) => bc.href)
-			.at(-1)
-	);
 </script>
 
-{#if back?.href}
-	<BackButton href={back.href}>{back.name}</BackButton>
-{/if}
-
-<div class="breadcrumbs mb-4 flex-1 text-sm max-sm:hidden print:hidden">
-	<ul>
-		<li>
-			<span class="iconify mdi--home size-4"></span>
-		</li>
-		{#each breadcrumbs as bc}
-			{#if bc.href}
+<Breadcrumbs url={page.url} routeId={page.route.id} pageData={page.data} skipRoutesWithNoPage={false}>
+	{#snippet children({ crumbs }: { crumbs: Crumb[] })}
+		{@const back = crumbs.filter((bc) => bc.url).at(-1)}
+		{#if back?.url}
+			<BackButton href={back.url}>{back.title}</BackButton>
+		{/if}
+		<div class="breadcrumbs mb-4 flex-1 text-sm max-sm:hidden print:hidden">
+			<ul>
 				<li>
-					<a href={bc.href} class="text-secondary">
-						{bc.name}
-					</a>
+					<span class="iconify mdi--home size-4"></span>
 				</li>
-			{:else}
-				<li class="ellipsis-nowrap dark:drop-shadow-md">
-					{bc.name}
-				</li>
-			{/if}
-		{/each}
-	</ul>
-</div>
+				{#each crumbs as bc, i}
+					{#if (bc.url || i === crumbs.length - 1) && !bc.url?.endsWith("/new")}
+						{#if bc.url}
+							<li>
+								<a href={bc.url} class="text-secondary">
+									{bc.title}
+								</a>
+							</li>
+						{:else}
+							<li class="ellipsis-nowrap dark:drop-shadow-md">
+								{bc.title}
+							</li>
+						{/if}
+					{/if}
+				{/each}
+			</ul>
+		</div>
+	{/snippet}
+</Breadcrumbs>
