@@ -10,7 +10,7 @@ import {
 	type NumericRange,
 	type RequestEvent
 } from "@sveltejs/kit";
-import { Cause, Context, Data, DateTime, Effect, Exit, Layer, Logger } from "effect";
+import { Cause, Data, DateTime, Effect, Exit, Layer, Logger } from "effect";
 import { isFunction } from "effect/Predicate";
 import type { YieldWrap } from "effect/Utils";
 import {
@@ -50,19 +50,30 @@ export const Log = {
 		Effect.logDebug(message).pipe(logLevel, annotateError(extra), Effect.provide(logger || (dev ? Logger.pretty : Logger.json)))
 };
 
+export function debugSet<S extends string>(service: S, impl: Function, result: unknown) {
+	return Effect.gen(function* () {
+		const call = impl.toString();
+		if (call.includes("service.set")) {
+			yield* Log.debug(service, {
+				call: impl.toString(),
+				result: Array.isArray(result) ? result.slice(0, 5) : result
+			});
+		}
+	});
+}
+
 // -------------------------------------------------------------------------------------------------
 // DB
 // -------------------------------------------------------------------------------------------------
 
-interface DBImpl {
-	readonly db: Database | Transaction;
-}
-
-export class DBService extends Context.Tag("Database")<DBService, DBImpl>() {}
-
-export function DBLive(dbOrTx: Database | Transaction = db) {
-	return Layer.succeed(DBService, DBService.of({ db: dbOrTx }));
-}
+export class DBService extends Effect.Service<DBService>()("DBService", {
+	scoped: (dbOrTx: Database | Transaction = db) =>
+		Effect.gen(function* () {
+			return {
+				db: dbOrTx
+			};
+		})
+}) {}
 
 // -------------------------------------------------------------------------------------------------
 // Run

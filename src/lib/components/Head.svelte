@@ -57,9 +57,6 @@
 	}
 
 	const headerData = $derived.by(() => {
-		const paths = url.pathname.split("/").filter(Boolean);
-		const path = paths.at(-1)!;
-
 		const modules = $state.snapshot(routeModules) as Record<string, ModuleData>;
 		const routeModule = modules === undefined ? undefined : modules[`/src/routes${routeId}/+page.svelte`];
 
