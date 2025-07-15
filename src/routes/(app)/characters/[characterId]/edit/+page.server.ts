@@ -16,11 +16,8 @@ export const load = (event) =>
 
 		const parent = yield* Effect.promise(event.parent);
 
-		let title = "New Character";
-		if (event.params.characterId !== "new") {
-			title = "Edit";
-			if (!parent.character) return yield* new FetchCharacterError("Character not found", 404);
-		}
+		if (event.params.characterId !== "new" && !parent.character)
+			return yield* new FetchCharacterError("Character not found", 404);
 
 		const form = yield* validateForm(
 			parent.character
@@ -43,7 +40,6 @@ export const load = (event) =>
 		);
 
 		return {
-			title,
 			...event.params,
 			form,
 			BLANK_CHARACTER

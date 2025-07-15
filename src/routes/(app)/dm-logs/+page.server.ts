@@ -13,7 +13,6 @@ export const load = (event) =>
 		const logs = yield* withLog((service) => service.get.dmLogs(user.id));
 
 		return {
-			title: `${user.name}'s DM Logs`,
 			logs,
 			...event.params
 		};

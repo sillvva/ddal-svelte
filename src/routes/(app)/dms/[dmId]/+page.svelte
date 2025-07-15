@@ -1,7 +1,7 @@
 <script module>
 	import type { PageData } from "./$types.js";
 	export function getPageTitle(data: PageData) {
-		return data.form.data.name;
+		return `Edit ${data.form.data.name}`;
 	}
 </script>
 

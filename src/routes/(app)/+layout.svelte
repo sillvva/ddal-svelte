@@ -21,28 +21,7 @@
 		const hasCookie = document.cookie.includes("session-token");
 		if (!data.user && hasCookie) location.reload();
 	});
-
-	let defaultTitle = "Adventurers League Log Sheet";
-	const title = $derived(page.data.title ? page.data.title + " - " + defaultTitle : defaultTitle);
-	let defaultDescription = "A tool for tracking your Adventurers League characters and magic items.";
-	const description = $derived(page.data.description || defaultDescription);
-	let defaultImage = "https://ddal.dekok.app/images/barovia-gate.webp";
-	const image = $derived(page.data.image || defaultImage);
 </script>
-
-<svelte:head>
-	<title>{title.trim()}</title>
-	<meta name="title" content={title.trim()} />
-	<meta name="description" content={description.trim()} />
-	<meta property="og:title" content={title.trim()} />
-	<meta property="og:site_name" content="Adventurers League Log Sheet" />
-	<meta property="og:description" content={description.trim()} />
-	<meta property="og:image" content={image.trim()} />
-	<meta property="og:type" content="website" />
-	<meta property="og:locale" content="en_US" />
-	<meta property="og:url" content={page.url.toString()} />
-	<link rel="canonical" href={page.url.toString()} />
-</svelte:head>
 
 {#if global.pageLoader || navigating.type}
 	<div

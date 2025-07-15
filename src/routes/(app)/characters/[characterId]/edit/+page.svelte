@@ -3,6 +3,11 @@
 	export function getPageTitle(data: PageParentData) {
 		return data.character?.name ? "Edit" : "New Character";
 	}
+	export function getHeadData(data: PageParentData) {
+		return {
+			title: data.character?.name ? `Edit ${data.character.name}` : "New Character"
+		};
+	}
 </script>
 
 <script lang="ts">

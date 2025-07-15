@@ -37,7 +37,6 @@ export const load = (event) =>
 
 		return {
 			...event.params,
-			title: `Edit ${dm.name}`,
 			dm,
 			form,
 			user: parent.user

@@ -17,9 +17,6 @@ export const load = (event) =>
 		if (!character) return yield* new FetchCharacterError("Character not found", 404);
 
 		return {
-			title: character.name,
-			description: `Level ${character.totalLevel} ${character.race} ${character.class}`.replace(/ {2,}/g, " ").trim(),
-			image: character.imageUrl,
 			character
 		};
 	});

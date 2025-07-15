@@ -14,7 +14,6 @@ export const load = (event) =>
 		const dms = yield* withDM((service) => service.get.userDMs(user, { includeLogs: true }));
 
 		return {
-			title: `${user.name}'s DMs`,
 			...event.params,
 			dms
 		};

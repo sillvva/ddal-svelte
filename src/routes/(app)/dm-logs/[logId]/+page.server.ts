@@ -42,7 +42,6 @@ export const load = (event) =>
 
 		return {
 			...event.params,
-			title: logId === "new" ? "New DM Log" : `Edit ${form.data.name}`,
 			characters: characters.map((c) => ({ id: c.id, name: c.name })),
 			form
 		};

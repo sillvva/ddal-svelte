@@ -3,6 +3,15 @@
 	export function getPageTitle(data: PageParentData) {
 		return data.character?.name || "New Character";
 	}
+	export function getHeadData(data: PageParentData) {
+		return {
+			title: data.character?.name || "New Character",
+			description:
+				data.character &&
+				`Level ${data.character.totalLevel} ${data.character.race} ${data.character.class}`.replace(/ {2,}/g, " ").trim(),
+			image: data.character?.imageUrl
+		};
+	}
 </script>
 
 <script lang="ts">

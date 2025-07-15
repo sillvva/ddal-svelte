@@ -40,7 +40,6 @@ export const load = (event) =>
 
 		return {
 			...event.params,
-			title: logId === "new" ? `New Log - ${character.name}` : `Edit ${form.data.name}`,
 			totalLevel: character.totalLevel,
 			user: { ...user, ...parent.user },
 			magicItems,

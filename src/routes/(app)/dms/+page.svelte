@@ -1,5 +1,11 @@
 <script module>
+	import type { PageData } from "./$types.js";
 	export const pageTitle = "DMs";
+	export function getHeadData(data: PageData) {
+		return {
+			title: `${data.user?.name}'s DMs`
+		};
+	}
 </script>
 
 <script lang="ts">

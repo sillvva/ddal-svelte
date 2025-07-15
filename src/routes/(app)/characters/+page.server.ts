@@ -10,7 +10,6 @@ export const load = (event) =>
 		const characters = yield* withCharacter((service) => service.get.userCharacters(user.id, true));
 
 		return {
-			title: `${user.name}'s Characters`,
 			characters
 		};
 	});

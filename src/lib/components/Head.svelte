@@ -1,0 +1,74 @@
+<script lang="ts">
+	import { page } from "$app/state";
+	import type { ModuleData } from "$lib/util";
+	import { type Snippet } from "svelte";
+
+	interface Props {
+		children?: Snippet<
+			[
+				{
+					title: string;
+					description: string;
+					image: string;
+				}
+			]
+		>;
+	}
+
+	let { children }: Props = $props();
+
+	const routeId = $derived(page.route.id || "/");
+	const url = $derived(page.url);
+
+	let routeModules = $state(
+		import.meta.glob("/src/routes/**/*.svelte", {
+			eager: true
+		}) as Record<string, ModuleData>
+	);
+
+	let defaultTitle = "Adventurers League Log Sheet";
+	let defaultDescription = "A tool for tracking your Adventurers League characters and magic items.";
+	let defaultImage = "https://ddal.dekok.app/images/barovia-gate.webp";
+
+	function titleSanitizer(title: string) {
+		return title.replace(/([A-Z])/g, " $1").replace(/^./, (str) => str.toUpperCase());
+	}
+
+	// Given a module and a crumb, determine the page title
+	function getPageTitleFromModule(module: ModuleData | undefined) {
+		const paths = url.pathname.split("/").filter(Boolean);
+		const path = paths.at(-1)!;
+		const title =
+			module?.headTitle ||
+			module?.getHeadData?.(page.data)?.title ||
+			module?.pageTitle ||
+			module?.getPageTitle?.(page.data) ||
+			titleSanitizer(path);
+
+		return title ? `${title} - ${defaultTitle}` : defaultTitle;
+	}
+
+	function getPageDescriptionFromModule(module: ModuleData | undefined) {
+		return module?.headDescription || module?.getHeadData?.(page.data)?.description || defaultDescription;
+	}
+
+	function getPageImageFromModule(module: ModuleData | undefined) {
+		return module?.headImage || module?.getHeadData?.(page.data)?.image || defaultImage;
+	}
+
+	const headerData = $derived.by(() => {
+		const paths = url.pathname.split("/").filter(Boolean);
+		const path = paths.at(-1)!;
+
+		const modules = $state.snapshot(routeModules) as Record<string, ModuleData>;
+		const routeModule = modules === undefined ? undefined : modules[`/src/routes${routeId}/+page.svelte`];
+
+		return {
+			title: getPageTitleFromModule(routeModule),
+			description: getPageDescriptionFromModule(routeModule),
+			image: getPageImageFromModule(routeModule)
+		};
+	});
+</script>
+
+{@render children?.(headerData)}

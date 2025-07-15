@@ -9,6 +9,19 @@ import type { setupViewTransition } from "sveltekit-view-transition";
 
 export type TransitionAction = ReturnType<typeof setupViewTransition>["transition"];
 
+export type ModuleData = {
+	getPageTitle?: (data: any) => string;
+	pageTitle?: string;
+	getHeadData?: (data: any) => {
+		title: string;
+		description?: string;
+		image?: string;
+	};
+	headTitle?: string;
+	headDescription?: string;
+	headImage?: string;
+};
+
 /**
  * Functions
  */
