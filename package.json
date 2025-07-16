@@ -3,7 +3,7 @@
 	"version": "0.0.1",
 	"private": true,
 	"scripts": {
-		"dev": "supabase start && vite dev",
+		"dev": "supabase start; vite dev",
 		"build": "pnpm env-check && vite build",
 		"preview": "vite preview",
 		"env-check": "node -v && pnpm -v && vite -v",
