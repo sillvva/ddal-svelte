@@ -53,7 +53,9 @@
 	}
 
 	function getPageImageFromModule(module: ModuleData | undefined) {
-		return module?.headImage || module?.getHeadData?.(page.data)?.image || defaultImage;
+		const image = module?.headImage || module?.getHeadData?.(page.data)?.image || defaultImage;
+		if (image.startsWith("/")) return `${url.origin}${image}`;
+		return image;
 	}
 
 	const headerData = $derived.by(() => {
