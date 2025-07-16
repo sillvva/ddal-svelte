@@ -310,7 +310,7 @@ function itemsCRUD(params: CRUDMagicItemParams | CRUDStoryAwardParams) {
 }
 
 export class LogService extends Effect.Service<LogService>()("LogService", {
-	scoped: Effect.gen(function* () {
+	effect: Effect.gen(function* () {
 		const { db } = yield* DBService;
 
 		const impl: LogApiImpl = {
@@ -375,7 +375,6 @@ export class LogService extends Effect.Service<LogService>()("LogService", {
 						});
 					})
 			},
-
 			set: {
 				save: (log, user) =>
 					Effect.gen(function* () {

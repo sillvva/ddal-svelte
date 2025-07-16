@@ -45,7 +45,7 @@ interface CharacterApiImpl {
 }
 
 export class CharacterService extends Effect.Service<CharacterService>()("CharacterService", {
-	scoped: Effect.gen(function* () {
+	effect: Effect.gen(function* () {
 		const { db } = yield* DBService;
 
 		const impl: CharacterApiImpl = {
@@ -79,7 +79,6 @@ export class CharacterService extends Effect.Service<CharacterService>()("Charac
 						}).pipe(Effect.map((characters) => characters.map((character) => parseCharacter({ logs: [], ...character }))));
 					})
 			},
-
 			set: {
 				save: (characterId, userId, data) =>
 					Effect.gen(function* () {
