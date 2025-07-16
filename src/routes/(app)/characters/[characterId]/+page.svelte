@@ -9,7 +9,7 @@
 			description:
 				data.character &&
 				`Level ${data.character.totalLevel} ${data.character.race} ${data.character.class}`.replace(/ {2,}/g, " ").trim(),
-			image: data.character?.imageUrl
+			image: data.character && `/characters/${data.character.id}/og-image`
 		};
 	}
 </script>

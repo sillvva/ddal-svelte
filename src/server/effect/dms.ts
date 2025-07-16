@@ -61,7 +61,7 @@ interface DMApiImpl {
 }
 
 export class DMService extends Effect.Service<DMService>()("DMSService", {
-	scoped: Effect.gen(function* () {
+	effect: Effect.gen(function* () {
 		const { db } = yield* DBService;
 
 		const impl: DMApiImpl = {
@@ -142,7 +142,6 @@ export class DMService extends Effect.Service<DMService>()("DMSService", {
 						});
 					})
 			},
-
 			set: {
 				save: (dmId, user, data) =>
 					Effect.gen(function* () {

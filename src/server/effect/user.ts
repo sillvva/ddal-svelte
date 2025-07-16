@@ -14,7 +14,7 @@ interface UserApiImpl {
 }
 
 export class UserService extends Effect.Service<UserService>()("UserService", {
-	scoped: Effect.gen(function* () {
+	effect: Effect.gen(function* () {
 		const { db } = yield* DBService;
 
 		const impl: UserApiImpl = {

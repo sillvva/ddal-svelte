@@ -67,12 +67,7 @@ export function debugSet<S extends string>(service: S, impl: Function, result: u
 // -------------------------------------------------------------------------------------------------
 
 export class DBService extends Effect.Service<DBService>()("DBService", {
-	scoped: (dbOrTx: Database | Transaction = db) =>
-		Effect.gen(function* () {
-			return {
-				db: dbOrTx
-			};
-		})
+	effect: (dbOrTx: Database | Transaction = db) => Effect.succeed({ db: dbOrTx })
 }) {}
 
 // -------------------------------------------------------------------------------------------------
