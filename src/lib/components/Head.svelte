@@ -37,13 +37,13 @@
 	// Given a module and a crumb, determine the page title
 	function getPageTitleFromModule(module: ModuleData | undefined) {
 		const paths = url.pathname.split("/").filter(Boolean);
-		const path = paths.at(-1)!;
+		const path = paths.at(-1);
 		const title =
 			module?.headTitle ||
 			module?.getHeadData?.(page.data)?.title ||
 			module?.pageTitle ||
 			module?.getPageTitle?.(page.data) ||
-			titleSanitizer(path);
+			titleSanitizer(path || "");
 
 		return title ? `${title} - ${defaultTitle}` : defaultTitle;
 	}
