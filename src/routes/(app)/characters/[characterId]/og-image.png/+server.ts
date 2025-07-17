@@ -31,8 +31,9 @@ export const GET = async ({ params, url }) => {
 	try {
 		if (imageUrl === fallbackImageUrl) throw new Error("Using fallback image.");
 		response = await fetch(imageUrl, { method: "GET" });
-		if (!response.ok) throw new Error("Image not found. Using fallback image.");
+		if (!response.ok) throw new Error(`${response.status}: ${response.statusText}. Using fallback image.`);
 	} catch (e) {
+		console.error(e);
 		imageUrl = fallbackImageUrl;
 		response = await fetch(fallbackImageUrl, { method: "GET" });
 	}
