@@ -18,10 +18,22 @@ export const GET = async ({ params, url }) => {
 	const height = 630;
 
 	const fontData = await readFile(path.resolve("static/fonts/VecnaBold.ttf"));
-	const imageUrl =
+	const fallbackImageUrl = `${url.origin}${BLANK_CHARACTER.replace("webp", "jpg")}`;
+	let imageUrl =
 		!character.imageUrl || character.imageUrl == BLANK_CHARACTER || character.imageUrl.includes(".webp")
-			? `${url.origin}${BLANK_CHARACTER.replace("webp", "jpg")}`
+			? fallbackImageUrl
 			: character.imageUrl;
+
+	if (imageUrl !== fallbackImageUrl) {
+		try {
+			const res = await fetch(imageUrl, { method: "HEAD" });
+			if (!res.ok) {
+				imageUrl = fallbackImageUrl;
+			}
+		} catch (e) {
+			imageUrl = fallbackImageUrl;
+		}
+	}
 
 	const svg = await satori(
 		{
