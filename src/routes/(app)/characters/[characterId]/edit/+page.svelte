@@ -1,5 +1,5 @@
 <script module>
-	import type { PageParentData } from "./$types.js";
+	import { type PageParentData } from "./$types.js";
 	export function getPageTitle(data: PageParentData) {
 		return data.character?.name ? "Edit" : "New Character";
 	}
