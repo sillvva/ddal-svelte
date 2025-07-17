@@ -11,7 +11,7 @@ import { parse } from "valibot";
 
 export const GET = async ({ params, url }) => {
 	const characterId = parse(characterIdSchema, params.characterId);
-	const character = await run(withCharacter((service) => service.get.character(characterId, false)));
+	const character = await run(withCharacter((service) => service.get.character(characterId, true)));
 	if (!character) throw error(404, "Character not found");
 
 	const width = 1200;
