@@ -2,7 +2,7 @@ import type { DungeonMasterId, DungeonMasterSchema, LocalsUser, UserId } from "$
 import { buildConflictUpdateColumns, type Database, type InferQueryResult, type Transaction } from "$server/db";
 import { dungeonMasters, type DungeonMaster } from "$server/db/schema";
 import { sorter } from "@sillvva/utils";
-import { eq } from "drizzle-orm";
+import { and, eq } from "drizzle-orm";
 import { Effect, Layer } from "effect";
 import { isTupleOf } from "effect/Predicate";
 import { DBService, debugSet, FetchError, FormError, Log } from ".";
@@ -56,7 +56,7 @@ interface DMApiImpl {
 			data: DungeonMasterSchema
 		) => Effect.Effect<DungeonMaster, SaveDMError>;
 		readonly addUserDM: (user: LocalsUser, dm: UserDMs) => Effect.Effect<UserDMs, SaveDMError>;
-		readonly delete: (dm: UserDMs[number]) => Effect.Effect<{ id: DungeonMasterId }, SaveDMError>;
+		readonly delete: (dm: UserDMs[number], userId: UserId) => Effect.Effect<{ id: DungeonMasterId }, SaveDMError>;
 	};
 }
 
@@ -205,14 +205,18 @@ export class DMService extends Effect.Service<DMService>()("DMSService", {
 						return dms.toSpliced(0, 0, result);
 					}),
 
-				delete: (dm) =>
+				delete: (dm, userId) =>
 					Effect.gen(function* () {
-						yield* Log.info("DMApiLive.deleteDM", { dmId: dm.id });
+						yield* Log.info("DMApiLive.deleteDM", { dmId: dm.id, userId });
 
 						if (dm.logs.length) return yield* new SaveDMError("You cannot delete a DM that has logs", { status: 400 });
 
 						return yield* Effect.tryPromise({
-							try: () => db.delete(dungeonMasters).where(eq(dungeonMasters.id, dm.id)).returning({ id: dungeonMasters.id }),
+							try: () =>
+								db
+									.delete(dungeonMasters)
+									.where(and(eq(dungeonMasters.id, dm.id), eq(dungeonMasters.userId, userId)))
+									.returning({ id: dungeonMasters.id }),
 							catch: createSaveError
 						}).pipe(
 							Effect.flatMap((result) =>

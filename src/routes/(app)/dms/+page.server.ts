@@ -32,7 +32,7 @@ export const actions = {
 			if (!dm) redirect(302, "/dms");
 
 			return save(
-				withDM((service) => service.set.delete(dm)),
+				withDM((service) => service.set.delete(dm, user.id)),
 				{
 					onError: (err) => {
 						setError(form, "", err.message);
