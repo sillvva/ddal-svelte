@@ -17,19 +17,16 @@ export const GET = async ({ params, url }) => {
 	const width = 1200;
 	const height = 630;
 
-	const fontData = await readFile(path.resolve("static/fonts/VecnaBold.ttf"));
-	const fallbackImageUrl = `${url.origin}${BLANK_CHARACTER.replace("webp", "jpg")}`;
-	let imageUrl =
-		!character.imageUrl || character.imageUrl == BLANK_CHARACTER || character.imageUrl.includes(".webp")
-			? fallbackImageUrl
-			: character.imageUrl;
+	const draconis = await readFile(path.resolve("static/fonts/Draconis.ttf"));
+	const vecna = await readFile(path.resolve("static/fonts/Vecna.ttf"));
+	const vecnaBold = await readFile(path.resolve("static/fonts/VecnaBold.ttf"));
+	const fallbackImageUrl = `${url.origin}${BLANK_CHARACTER}`;
+	let imageUrl = !character.imageUrl || character.imageUrl.includes(".webp") ? fallbackImageUrl : character.imageUrl;
 
 	if (imageUrl !== fallbackImageUrl) {
 		try {
-			const res = await fetch(imageUrl, { method: "HEAD" });
-			if (!res.ok) {
-				imageUrl = fallbackImageUrl;
-			}
+			const res = await fetch(imageUrl, { method: "GET" });
+			if (!res.ok) imageUrl = fallbackImageUrl;
 		} catch (e) {
 			imageUrl = fallbackImageUrl;
 		}
@@ -57,8 +54,7 @@ export const GET = async ({ params, url }) => {
 								width: `${width}px`,
 								height: `${height}px`,
 								color: "white",
-								textShadow: "2px 2px 4px #000000",
-								fontFamily: "VecnaBold"
+								textShadow: "2px 2px 4px #000000"
 							},
 							children: [
 								{
@@ -80,7 +76,8 @@ export const GET = async ({ params, url }) => {
 														fontWeight: "bold",
 														paddingBottom: "10px",
 														borderBottom: "1px solid #fff4",
-														marginBottom: "10px"
+														marginBottom: "10px",
+														fontFamily: "VecnaBold"
 													},
 													children: character.name
 												}
@@ -119,6 +116,31 @@ export const GET = async ({ params, url }) => {
 								}
 							].filter(Boolean)
 						}
+					},
+					{
+						type: "div",
+						props: {
+							style: {
+								display: "flex",
+								flexDirection: "column",
+								justifyContent: "center",
+								position: "absolute",
+								top: "16px",
+								left: "16px",
+								padding: "36px 48px",
+								fontSize: "60px",
+								fontFamily: "Draconis",
+								color: "#fffc"
+							},
+							children: [
+								{
+									type: "div",
+									props: {
+										children: "Adventurers League Log Sheet"
+									}
+								}
+							]
+						}
 					}
 				]
 			}
@@ -128,9 +150,21 @@ export const GET = async ({ params, url }) => {
 			height,
 			fonts: [
 				{
+					name: "Vecna",
+					data: vecna,
+					weight: 400,
+					style: "normal"
+				},
+				{
 					name: "VecnaBold",
-					data: fontData,
+					data: vecnaBold,
 					weight: 700,
+					style: "normal"
+				},
+				{
+					name: "Draconis",
+					data: draconis,
+					weight: 400,
 					style: "normal"
 				}
 			]

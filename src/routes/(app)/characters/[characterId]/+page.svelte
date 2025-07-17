@@ -105,10 +105,13 @@
 									onclick={(e) => {
 										e.preventDefault();
 										triggerImageModal();
-									}}>View Image</a
+									}}>View Character Image</a
 								>
 							</li>
 						{/if}
+						<li role="menuitem">
+							<a href={`/characters/${data.character.id}/og-image.png`} target="_blank">View Open Graph Image</a>
+						</li>
 						<li role="menuitem">
 							<DeleteCharacter character={data.character} label="Delete Character" />
 						</li>

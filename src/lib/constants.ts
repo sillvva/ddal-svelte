@@ -6,7 +6,7 @@ export const searchSections = [
 	{ title: "DMs", url: "/dms" }
 ] as const;
 
-export const BLANK_CHARACTER = `/images/blank-character.webp` as const;
+export const BLANK_CHARACTER = `/images/blank-character.jpg` as const;
 
 type Provider = {
 	name: string;
