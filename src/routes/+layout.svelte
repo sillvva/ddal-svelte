@@ -22,9 +22,16 @@
 			<meta property="og:site_name" content="Adventurers League Log Sheet" />
 			<meta property="og:description" content={data.description.trim()} />
 			<meta property="og:image" content={data.image.trim()} />
+			<meta property="og:image:width" content="1200" />
+			<meta property="og:image:height" content="630" />
 			<meta property="og:type" content="website" />
 			<meta property="og:locale" content="en_US" />
 			<meta property="og:url" content={page.url.toString()} />
+			<meta name="twitter:card" content="summary_large_image" />
+			<meta name="twitter:title" content={data.title.trim()} />
+			<meta name="twitter:description" content={data.description.trim()} />
+			<meta name="twitter:image" content={data.image.trim()} />
+			<meta name="twitter:url" content={page.url.toString()} />
 			<link rel="canonical" href={page.url.toString()} />
 		{/snippet}
 	</Head>

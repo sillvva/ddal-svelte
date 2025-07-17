@@ -1,4 +1,3 @@
-import { type ProviderId } from "$lib/constants";
 import { privateEnv } from "$lib/env/private";
 import { appCookieSchema, localsSessionSchema, type UserId } from "$lib/schemas";
 import { serverGetCookie } from "$server/cookie";
@@ -14,13 +13,6 @@ import { passkey } from "better-auth/plugins/passkey";
 import { svelteKitHandler } from "better-auth/svelte-kit";
 import { parse } from "valibot";
 
-type SocialProviders = {
-	[key in ProviderId]: {
-		clientId: string;
-		clientSecret: string;
-	};
-};
-
 export const auth = betterAuth({
 	appName: "Adventurers League Log Sheet",
 	database: drizzleAdapter(db, {
@@ -29,13 +21,15 @@ export const auth = betterAuth({
 	socialProviders: {
 		google: {
 			clientId: privateEnv.GOOGLE_CLIENT_ID,
-			clientSecret: privateEnv.GOOGLE_CLIENT_SECRET
+			clientSecret: privateEnv.GOOGLE_CLIENT_SECRET,
+			disableSignUp: privateEnv.DISABLE_SIGNUPS
 		},
 		discord: {
 			clientId: privateEnv.DISCORD_CLIENT_ID,
-			clientSecret: privateEnv.DISCORD_CLIENT_SECRET
+			clientSecret: privateEnv.DISCORD_CLIENT_SECRET,
+			disableSignUp: privateEnv.DISABLE_SIGNUPS
 		}
-	} satisfies SocialProviders,
+	},
 	plugins: [passkey()],
 	account: {
 		accountLinking: {
