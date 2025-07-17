@@ -5,7 +5,7 @@
 	import BackButton from "./BackButton.svelte";
 
 	let routeModules = $derived(
-		import.meta.glob("/src/routes/**/*.svelte", {
+		import.meta.glob("/src/routes/**/+page.svelte", {
 			eager: true
 		}) as Record<string, ModuleData>
 	);

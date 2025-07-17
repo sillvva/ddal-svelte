@@ -21,7 +21,7 @@
 	const url = $derived(page.url);
 
 	let routeModules = $state(
-		import.meta.glob("/src/routes/**/*.svelte", {
+		import.meta.glob("/src/routes/**/+page.svelte", {
 			eager: true
 		}) as Record<string, ModuleData>
 	);
