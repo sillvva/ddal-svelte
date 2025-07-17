@@ -5,6 +5,7 @@ import { withCharacter } from "$server/effect/characters";
 import { Resvg } from "@resvg/resvg-js";
 import { error } from "@sveltejs/kit";
 import { readFile } from "fs/promises";
+import { imageSize } from "image-size";
 import path from "path";
 import satori from "satori";
 import { parse } from "valibot";
@@ -17,20 +18,31 @@ export const GET = async ({ params, url }) => {
 	const width = 1200;
 	const height = 630;
 
+	const imageContainerWidth = 420;
+	const imageContainerHeight = 540;
+
 	const draconis = await readFile(path.resolve("static/fonts/Draconis.ttf"));
 	const vecna = await readFile(path.resolve("static/fonts/Vecna.ttf"));
 	const vecnaBold = await readFile(path.resolve("static/fonts/VecnaBold.ttf"));
 	const fallbackImageUrl = `${url.origin}${BLANK_CHARACTER}`;
 	let imageUrl = !character.imageUrl || character.imageUrl.includes(".webp") ? fallbackImageUrl : character.imageUrl;
 
-	if (imageUrl !== fallbackImageUrl) {
-		try {
-			const res = await fetch(imageUrl, { method: "GET" });
-			if (!res.ok) imageUrl = fallbackImageUrl;
-		} catch (e) {
-			imageUrl = fallbackImageUrl;
-		}
+	let response;
+	try {
+		if (imageUrl === fallbackImageUrl) throw new Error("Using fallback image.");
+		response = await fetch(imageUrl, { method: "GET" });
+		if (!response.ok) throw new Error("Image not found. Using fallback image.");
+	} catch (e) {
+		imageUrl = fallbackImageUrl;
+		response = await fetch(fallbackImageUrl, { method: "GET" });
 	}
+
+	const arrayBuffer = await response.arrayBuffer();
+	const imgBuffer = Buffer.from(arrayBuffer);
+	const { width: imgWidth, height: imgHeight } = imageSize(imgBuffer);
+
+	const imageRatio = imgWidth / imgHeight;
+	const imageContainerRatio = imageContainerWidth / imageContainerHeight;
 
 	const svg = await satori(
 		{
@@ -100,18 +112,40 @@ export const GET = async ({ params, url }) => {
 									}
 								},
 								imageUrl && {
-									type: "img",
+									type: "div",
 									props: {
-										src: imageUrl,
-										width: 420,
-										height: 540,
 										style: {
-											objectFit: "cover",
+											display: "flex",
+											width: imageContainerWidth,
+											height: imageContainerHeight,
 											borderRadius: "24px",
 											margin: "60px",
 											boxShadow: "0 0 32px #000a",
-											backgroundColor: "#000a"
-										}
+											backgroundColor: "#000a",
+											overflow: "hidden",
+											position: "relative"
+										},
+										children: [
+											{
+												type: "img",
+												props: {
+													src: imageUrl,
+													style: {
+														position: "absolute",
+														top: 0,
+														left: "50%",
+														transform: "translateX(-50%)",
+														...(imageRatio > imageContainerRatio
+															? {
+																	height: "100%"
+																}
+															: {
+																	width: "100%"
+																})
+													}
+												}
+											}
+										]
 									}
 								}
 							].filter(Boolean)
