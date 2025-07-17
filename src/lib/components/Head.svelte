@@ -34,22 +34,22 @@
 		return title.replace(/([A-Z])/g, " $1").replace(/^./, (str) => str.toUpperCase());
 	}
 
-	// Given a module and a crumb, determine the page title
 	function getPageTitleFromModule(module: ModuleData | undefined) {
 		const paths = url.pathname.split("/").filter(Boolean);
 		const path = paths.at(-1);
-		const title =
+		const title = (
 			module?.headTitle ||
 			module?.getHeadData?.(page.data)?.title ||
 			module?.pageTitle ||
 			module?.getPageTitle?.(page.data) ||
-			titleSanitizer(path || "");
+			titleSanitizer(path || "")
+		).trim();
 
 		return title ? `${title} - ${defaultTitle}` : defaultTitle;
 	}
 
 	function getPageDescriptionFromModule(module: ModuleData | undefined) {
-		return module?.headDescription || module?.getHeadData?.(page.data)?.description || defaultDescription;
+		return (module?.headDescription || module?.getHeadData?.(page.data)?.description || defaultDescription).trim();
 	}
 
 	function getPageImageFromModule(module: ModuleData | undefined) {
