@@ -60,7 +60,7 @@
 
 	const headerData = $derived.by(() => {
 		const modules = $state.snapshot(routeModules) as Record<string, ModuleData>;
-		const routeModule = modules === undefined ? undefined : modules[`/src/routes${routeId}/+page.svelte`];
+		const routeModule = modules?.[`/src/routes${routeId}/+page.svelte`];
 
 		return {
 			title: getPageTitleFromModule(routeModule),

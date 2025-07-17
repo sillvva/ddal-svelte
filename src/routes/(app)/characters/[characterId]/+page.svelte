@@ -17,6 +17,7 @@
 <script lang="ts">
 	import { goto, pushState } from "$app/navigation";
 	import { page } from "$app/state";
+	import { authClient } from "$lib/auth.js";
 	import BreadCrumbs from "$lib/components/BreadCrumbs.svelte";
 	import Dropdown from "$lib/components/Dropdown.svelte";
 	import Items from "$lib/components/Items.svelte";
@@ -63,6 +64,18 @@
 	function scrollToSearch(searchBar: HTMLDivElement) {
 		if (search) scrollTo({ top: searchBar.offsetTop - 16, behavior: "smooth" });
 	}
+
+	$effect(() => {
+		if (global.app.settings.autoWebAuthn && !data.user) {
+			authClient.signIn.passkey({
+				fetchOptions: {
+					onSuccess: () => {
+						window.location.href = `/characters/${data.character.id}`;
+					}
+				}
+			});
+		}
+	});
 </script>
 
 {#if data.user}
