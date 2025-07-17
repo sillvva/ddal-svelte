@@ -72,9 +72,9 @@
 	},
 	"engines": {
 		"node": ">=22.0",
-		"pnpm": ">=10.0"
+		"bun": ">=1.2.19"
 	},
-	"packageManager": "pnpm@10.11.0",
+	"packageManager": "bun@1.2.19",
 	"overrides": {
 		"svelte-markdown": {
 			"svelte": "^5.0.0"
