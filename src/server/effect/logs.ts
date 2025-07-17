@@ -2,8 +2,8 @@ import { parseLog } from "$lib/entities";
 import type { LocalsUser, LogId, LogSchema, UserId } from "$lib/schemas";
 import { buildConflictUpdateColumns, type Database, type Filter, type InferQueryResult, type Transaction } from "$server/db";
 import { extendedLogIncludes, logIncludes } from "$server/db/includes";
-import { dungeonMasters, logs, magicItems, storyAwards } from "$server/db/schema";
-import { and, eq, inArray, isNull, notInArray } from "drizzle-orm";
+import { characters, dungeonMasters, logs, magicItems, storyAwards } from "$server/db/schema";
+import { and, eq, exists, inArray, isNull, notInArray, or } from "drizzle-orm";
 import { Effect, Layer } from "effect";
 import { isTupleOf } from "effect/Predicate";
 import { DBService, debugSet, FetchError, FormError, Log, run } from ".";
@@ -394,15 +394,42 @@ export class LogService extends Effect.Service<LogService>()("LogService", {
 					Effect.gen(function* () {
 						yield* Log.info("LogApiLive.deleteLog", { logId, userId });
 
-						const log = yield* impl.get.log(logId, userId).pipe(Effect.catchAll(createSaveError));
-
-						if (!log) return yield* new SaveLogError("Log not found", { status: 404 });
-						if (!log.isDmLog && log.character && log.character.userId !== userId)
-							return yield* new SaveLogError("Not authorized", { status: 401 });
-						if (log.isDmLog && log.dm.userId !== userId) return yield* new SaveLogError("Not authorized", { status: 401 });
-
 						return yield* Effect.tryPromise({
-							try: () => db.delete(logs).where(eq(logs.id, logId)).returning({ id: logs.id }),
+							try: () =>
+								db
+									.delete(logs)
+									.where(
+										and(
+											eq(logs.id, logId),
+											or(
+												and(
+													eq(logs.isDmLog, false),
+													exists(
+														db
+															.select()
+															.from(characters)
+															.where(and(eq(characters.id, logs.characterId), eq(characters.userId, userId)))
+													)
+												),
+												and(
+													eq(logs.isDmLog, true),
+													exists(
+														db
+															.select()
+															.from(dungeonMasters)
+															.where(
+																and(
+																	eq(dungeonMasters.id, logs.dungeonMasterId),
+																	eq(dungeonMasters.userId, userId),
+																	eq(dungeonMasters.isUser, true)
+																)
+															)
+													)
+												)
+											)
+										)
+									)
+									.returning({ id: logs.id }),
 							catch: createSaveError
 						}).pipe(
 							Effect.flatMap((logs) =>

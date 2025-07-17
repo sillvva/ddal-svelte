@@ -134,7 +134,10 @@ export class CharacterService extends Effect.Service<CharacterService>()("Charac
 												)
 											)
 										);
-									return await tx.delete(characters).where(eq(characters.id, characterId)).returning({ id: characters.id });
+									return await tx
+										.delete(characters)
+										.where(and(eq(characters.id, characterId), eq(characters.userId, userId)))
+										.returning({ id: characters.id });
 								}),
 							catch: createSaveError
 						}).pipe(
