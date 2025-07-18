@@ -18,7 +18,7 @@
 		"@iconify-json/mdi": "^1.2.3",
 		"@iconify/tailwind4": "^1.0.6",
 		"@sveltejs/adapter-node": "^5.2.13",
-		"@sveltejs/kit": "2.22.5",
+		"@sveltejs/kit": "2.25.1",
 		"@sveltejs/vite-plugin-svelte": "^6.1.0",
 		"@tailwindcss/postcss": "^4.1.11",
 		"@tailwindcss/vite": "^4.1.11",
@@ -46,7 +46,7 @@
 		"tslib": "^2.8.1",
 		"typescript": "5.8.3",
 		"vite": "^7.0.5",
-		"vite-plugin-devtools-json": "^0.2.1"
+		"vite-plugin-devtools-json": "^0.3.0"
 	},
 	"type": "module",
 	"dependencies": {
