@@ -1,5 +1,5 @@
-<script module>
-	import { type PageData } from "./$types.js";
+<script module lang="ts">
+	import type { PageData } from "./$types.js";
 	export const pageTitle = "DMs";
 	export function getHeadData(data: PageData) {
 		return {

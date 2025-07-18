@@ -1,5 +1,5 @@
-<script module>
-	import { type PageData } from "./$types.js";
+<script module lang="ts">
+	import type { PageData } from "./$types.js";
 	export function getPageTitle(data: PageData) {
 		return `Edit ${data.form.data.name}`;
 	}

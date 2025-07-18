@@ -1,5 +1,5 @@
-<script module>
-	import { type PageData } from "./$types.js";
+<script module lang="ts">
+	import type { PageData } from "./$types.js";
 	export function getHeadData(data: PageData) {
 		return {
 			title: `${data.user?.name}'s Characters`
