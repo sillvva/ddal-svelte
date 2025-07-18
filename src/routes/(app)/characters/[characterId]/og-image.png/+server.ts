@@ -115,8 +115,10 @@ export const GET = async ({ params, url }) => {
 												type: "img",
 												props: {
 													src: imageUrl,
+													width: 396,
+													height: 540,
 													style: {
-														maxWidth: 420,
+														maxWidth: 396,
 														maxHeight: 540,
 														width: "100%",
 														height: "100%",
