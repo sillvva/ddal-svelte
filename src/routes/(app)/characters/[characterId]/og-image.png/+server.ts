@@ -5,7 +5,6 @@ import { withCharacter } from "$server/effect/characters";
 import { Resvg } from "@resvg/resvg-js";
 import { error } from "@sveltejs/kit";
 import { readFile } from "fs/promises";
-import { imageSize } from "image-size";
 import path from "path";
 import satori from "satori";
 import { parse } from "valibot";
@@ -18,32 +17,19 @@ export const GET = async ({ params, url }) => {
 	const width = 1200;
 	const height = 630;
 
-	const imageContainerWidth = 420;
+	const imageContainerWidth = 396;
 	const imageContainerHeight = 540;
 
 	const draconis = await readFile(path.resolve("static/fonts/Draconis.ttf"));
 	const vecna = await readFile(path.resolve("static/fonts/Vecna.ttf"));
 	const vecnaBold = await readFile(path.resolve("static/fonts/VecnaBold.ttf"));
 	const fallbackImageUrl = `${url.origin}${BLANK_CHARACTER}`;
-	let imageUrl = !character.imageUrl || character.imageUrl.includes(".webp") ? fallbackImageUrl : character.imageUrl;
-
-	let response;
-	try {
-		if (imageUrl === fallbackImageUrl) throw new Error("Using fallback image.");
-		response = await fetch(imageUrl, { method: "GET" });
-		if (!response.ok) throw new Error(`${response.status}: ${response.statusText}. Using fallback image.`);
-	} catch (e) {
-		console.error(e);
-		imageUrl = fallbackImageUrl;
-		response = await fetch(fallbackImageUrl, { method: "GET" });
-	}
-
-	const arrayBuffer = await response.arrayBuffer();
-	const imgBuffer = Buffer.from(arrayBuffer);
-	const { width: imgWidth, height: imgHeight } = imageSize(imgBuffer);
-
-	const imageRatio = imgWidth / imgHeight;
-	const imageContainerRatio = imageContainerWidth / imageContainerHeight;
+	let imageUrl =
+		!character.imageUrl || character.imageUrl.includes(".webp")
+			? fallbackImageUrl
+			: character.imageUrl.startsWith("http")
+				? character.imageUrl
+				: `${url.origin}${character.imageUrl}`;
 
 	const svg = await satori(
 		{
@@ -54,8 +40,7 @@ export const GET = async ({ params, url }) => {
 					width: `${width}px`,
 					height: `${height}px`,
 					backgroundImage: `url(${url.origin}/images/barovia-gate.jpg)`,
-					backgroundSize: "cover",
-					backgroundPosition: "center center"
+					backgroundSize: "cover"
 				},
 				children: [
 					{
@@ -117,14 +102,13 @@ export const GET = async ({ params, url }) => {
 									props: {
 										style: {
 											display: "flex",
+											borderRadius: "24px",
+											margin: "48px",
 											width: imageContainerWidth,
 											height: imageContainerHeight,
-											borderRadius: "24px",
-											margin: "60px",
 											boxShadow: "0 0 32px #000a",
 											backgroundColor: "#000a",
-											overflow: "hidden",
-											position: "relative"
+											overflow: "hidden"
 										},
 										children: [
 											{
@@ -132,17 +116,12 @@ export const GET = async ({ params, url }) => {
 												props: {
 													src: imageUrl,
 													style: {
-														position: "absolute",
-														top: 0,
-														left: "50%",
-														transform: "translateX(-50%)",
-														...(imageRatio > imageContainerRatio
-															? {
-																	height: "100%"
-																}
-															: {
-																	width: "100%"
-																})
+														maxWidth: 420,
+														maxHeight: 540,
+														width: "100%",
+														height: "100%",
+														objectFit: "contain",
+														objectPosition: "top"
 													}
 												}
 											}
@@ -163,15 +142,27 @@ export const GET = async ({ params, url }) => {
 								top: "16px",
 								left: "16px",
 								padding: "36px 48px",
-								fontSize: "60px",
 								fontFamily: "Draconis",
-								color: "#fffc"
+								color: "#fffa",
+								lineHeight: "0.8"
 							},
 							children: [
 								{
 									type: "div",
 									props: {
-										children: "Adventurers League Log Sheet"
+										style: {
+											fontSize: "29px"
+										},
+										children: "Adventurers League"
+									}
+								},
+								{
+									type: "div",
+									props: {
+										style: {
+											fontSize: "60px"
+										},
+										children: "Log Sheet"
 									}
 								}
 							]
