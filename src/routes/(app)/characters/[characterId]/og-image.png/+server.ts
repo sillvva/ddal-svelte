@@ -269,7 +269,7 @@ export const GET = async ({ params, url }) => {
 	return new Response(pngBuffer, {
 		headers: {
 			"Content-Type": "image/png",
-			"Cache-Control": "public, max-age=3600"
+			"Cache-Control": "public, max-age=21600"
 		}
 	});
 };
