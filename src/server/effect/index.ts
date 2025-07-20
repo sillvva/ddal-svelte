@@ -22,7 +22,6 @@ import {
 } from "sveltekit-superforms";
 import { valibot } from "sveltekit-superforms/adapters";
 import type { BaseSchema, InferInput, InferOutput } from "valibot";
-import { db, type Database, type Transaction } from "../db";
 
 // -------------------------------------------------------------------------------------------------
 // Logs
@@ -30,7 +29,7 @@ import { db, type Database, type Transaction } from "../db";
 
 const logLevel = Logger.withMinimumLogLevel(privateEnv.LOG_LEVEL);
 
-function annotateError(extra: object = {}) {
+function annotate(extra: object = {}) {
 	const event = getRequestEvent();
 	return Effect.annotateLogs({
 		currentTime: DateTime.formatIso(Effect.runSync(DateTime.now)),
@@ -43,11 +42,11 @@ function annotateError(extra: object = {}) {
 
 export const Log = {
 	info: (message: string, extra?: object, logger?: Layer.Layer<never>) =>
-		Effect.logInfo(message).pipe(logLevel, annotateError(extra), Effect.provide(logger || Logger.json)),
+		Effect.logInfo(message).pipe(logLevel, annotate(extra), Effect.provide(logger || Logger.json)),
 	error: (message: string, extra?: object, logger?: Layer.Layer<never>) =>
-		Effect.logError(message).pipe(logLevel, annotateError(extra), Effect.provide(logger || (dev ? Logger.pretty : Logger.json))),
+		Effect.logError(message).pipe(logLevel, annotate(extra), Effect.provide(logger || (dev ? Logger.pretty : Logger.json))),
 	debug: (message: string, extra?: object, logger?: Layer.Layer<never>) =>
-		Effect.logDebug(message).pipe(logLevel, annotateError(extra), Effect.provide(logger || (dev ? Logger.pretty : Logger.json)))
+		Effect.logDebug(message).pipe(logLevel, annotate(extra), Effect.provide(logger || (dev ? Logger.pretty : Logger.json)))
 };
 
 export function debugSet<S extends string>(service: S, impl: Function, result: unknown) {
@@ -61,14 +60,6 @@ export function debugSet<S extends string>(service: S, impl: Function, result: u
 		}
 	});
 }
-
-// -------------------------------------------------------------------------------------------------
-// DB
-// -------------------------------------------------------------------------------------------------
-
-export class DBService extends Effect.Service<DBService>()("DBService", {
-	effect: (dbOrTx: Database | Transaction = db) => Effect.succeed({ db: dbOrTx })
-}) {}
 
 // -------------------------------------------------------------------------------------------------
 // Run

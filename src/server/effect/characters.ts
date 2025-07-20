@@ -1,13 +1,13 @@
 import { PlaceholderName } from "$lib/constants";
 import { getLogsSummary, parseCharacter } from "$lib/entities";
 import type { CharacterId, EditCharacterSchema, NewCharacterSchema, UserId } from "$lib/schemas";
-import { buildConflictUpdateColumns, type Database, type InferQueryResult, type Transaction } from "$server/db";
+import { buildConflictUpdateColumns, DBService, type Database, type InferQueryResult, type Transaction } from "$server/db";
 import { characterIncludes, extendedCharacterIncludes } from "$server/db/includes";
 import { characters, logs, type Character } from "$server/db/schema";
 import { and, eq, exists } from "drizzle-orm";
 import { Effect, Layer } from "effect";
 import { isTupleOf } from "effect/Predicate";
-import { DBService, debugSet, FetchError, FormError, Log } from ".";
+import { debugSet, FetchError, FormError, Log } from ".";
 
 export class FetchCharacterError extends FetchError {}
 function createFetchError(err: unknown): FetchCharacterError {
