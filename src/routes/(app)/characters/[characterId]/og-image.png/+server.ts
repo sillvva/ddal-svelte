@@ -110,7 +110,7 @@ export const GET = async ({ params, url }) => {
 											{
 												type: "div",
 												props: {
-													style: { fontSize: "32px", marginBottom: "12px", fontFamily: "Roboto" },
+													style: { fontSize: "36px", marginBottom: "12px", fontFamily: "Roboto" },
 													children: `${character.race} ${character.class}`.replace(/ {2,}/g, " ").trim()
 												}
 											}
@@ -209,10 +209,9 @@ export const GET = async ({ params, url }) => {
 									props: {
 										style: {
 											display: "flex",
+											flexDirection: "column",
 											alignItems: "center",
 											justifyContent: "center",
-											fontSize: "72px",
-											fontFamily: "VecnaBold",
 											color: "#fff",
 											paddingLeft: 5,
 											backgroundColor: "#0008",
@@ -221,7 +220,30 @@ export const GET = async ({ params, url }) => {
 											borderRadius: "100%",
 											boxShadow: "4px 4px 8px #000a"
 										},
-										children: `${character.totalLevel}`
+										children: [
+											{
+												type: "div",
+												props: {
+													style: {
+														display: "flex",
+														fontFamily: "Roboto",
+														fontSize: "16px"
+													},
+													children: "LEVEL"
+												}
+											},
+											{
+												type: "div",
+												props: {
+													style: {
+														display: "flex",
+														fontFamily: "VecnaBold",
+														fontSize: "56px"
+													},
+													children: character.totalLevel
+												}
+											}
+										]
 									}
 								}
 							]
