@@ -1,6 +1,7 @@
 import { privateEnv } from "$lib/env/private";
 import { relations } from "$server/db/relations";
 import * as schema from "$server/db/schema";
+import { run, type ErrorTypes, type FormError } from "$server/effect";
 import {
 	getTableColumns,
 	sql,
@@ -23,7 +24,19 @@ export const connection = postgres(privateEnv.DATABASE_URL, { prepare: false });
 export const db: Database = drizzle(connection, { schema, relations });
 
 export class DBService extends Effect.Service<DBService>()("DBService", {
-	effect: (tx?: Transaction) => Effect.succeed({ db: tx || db })
+	effect: (tx?: Transaction) =>
+		Effect.gen(function* () {
+			const transaction = <A, B extends ErrorTypes, C extends FormError<any, any>>(
+				effect: (tx: Transaction) => Effect.Effect<A, B>,
+				errHandler: (err: unknown) => C
+			): Effect.Effect<A, C> =>
+				Effect.tryPromise({
+					try: () => db.transaction((tx) => run(effect(tx))),
+					catch: errHandler
+				});
+
+			return { db: tx || db, transaction };
+		})
 }) {}
 
 export type TRSchema = ExtractTablesWithRelations<typeof relations>;

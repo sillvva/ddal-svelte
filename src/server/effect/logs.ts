@@ -13,7 +13,7 @@ import { characters, dungeonMasters, logs, magicItems, storyAwards } from "$serv
 import { and, eq, exists, inArray, isNull, notInArray, or } from "drizzle-orm";
 import { Effect, Layer } from "effect";
 import { isTupleOf } from "effect/Predicate";
-import { debugSet, FetchError, FormError, Log, run } from ".";
+import { debugSet, FetchError, FormError, Log } from ".";
 import { DMService, DMTx } from "./dms";
 
 export class FetchLogError extends FetchError {}
@@ -318,7 +318,7 @@ function itemsCRUD(params: CRUDMagicItemParams | CRUDStoryAwardParams) {
 
 export class LogService extends Effect.Service<LogService>()("LogService", {
 	effect: Effect.gen(function* () {
-		const { db } = yield* DBService;
+		const { db, transaction } = yield* DBService;
 
 		const impl: LogApiImpl = {
 			db,
@@ -388,13 +388,10 @@ export class LogService extends Effect.Service<LogService>()("LogService", {
 						yield* Log.info("LogApiLive.saveLog", { logId: log.id, userId: user.id });
 						yield* Log.debug("LogApiLive.saveLog", log);
 
-						return yield* Effect.tryPromise({
-							try: () =>
-								db.transaction((tx) => {
-									return run(upsertLog(log, user).pipe(Effect.provide(LogTx(tx)), Effect.provide(DMTx(tx))));
-								}),
-							catch: createSaveError
-						});
+						return yield* transaction(
+							(tx) => upsertLog(log, user).pipe(Effect.provide(LogTx(tx)), Effect.provide(DMTx(tx))),
+							createSaveError
+						);
 					}),
 
 				delete: (logId, userId) =>

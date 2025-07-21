@@ -65,7 +65,7 @@ export function debugSet<S extends string>(service: S, impl: Function, result: u
 // Run
 // -------------------------------------------------------------------------------------------------
 
-type ErrorTypes = FetchError | FormError<any, any> | never;
+export type ErrorTypes = FetchError | FormError<any, any> | never;
 
 // Overload signatures
 export async function run<A, B extends ErrorTypes, T extends YieldWrap<Effect.Effect<A, B>>, X, Y>(
