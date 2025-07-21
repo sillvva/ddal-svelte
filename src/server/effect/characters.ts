@@ -53,7 +53,7 @@ export class CharacterService extends Effect.Service<CharacterService>()("Charac
 			get: {
 				character: (characterId, includeLogs = true) =>
 					Effect.gen(function* () {
-						yield* Log.info("CharacterApiLive.getCharacter", { characterId, includeLogs });
+						yield* Log.info("CharacterService.getCharacter", { characterId, includeLogs });
 
 						return yield* Effect.tryPromise({
 							try: () =>
@@ -67,7 +67,7 @@ export class CharacterService extends Effect.Service<CharacterService>()("Charac
 
 				userCharacters: (userId, includeLogs = true) =>
 					Effect.gen(function* () {
-						yield* Log.info("CharacterApiLive.getUserCharacters", { userId, includeLogs });
+						yield* Log.info("CharacterService.getUserCharacters", { userId, includeLogs });
 
 						return yield* Effect.tryPromise({
 							try: () =>
@@ -82,8 +82,8 @@ export class CharacterService extends Effect.Service<CharacterService>()("Charac
 			set: {
 				save: (characterId, userId, data) =>
 					Effect.gen(function* () {
-						yield* Log.info("CharacterApiLive.saveCharacter", { characterId, userId });
-						yield* Log.debug("CharacterApiLive.saveCharacter", data);
+						yield* Log.info("CharacterService.saveCharacter", { characterId, userId });
+						yield* Log.debug("CharacterService.saveCharacter", data);
 
 						if (!characterId) yield* new SaveCharacterError("No character ID provided", { status: 400 });
 
@@ -114,7 +114,7 @@ export class CharacterService extends Effect.Service<CharacterService>()("Charac
 
 				delete: (characterId, userId) =>
 					Effect.gen(function* () {
-						yield* Log.info("CharacterApiLive.deleteCharacter", { characterId, userId });
+						yield* Log.info("CharacterService.deleteCharacter", { characterId, userId });
 
 						return yield* Effect.tryPromise({
 							try: () =>

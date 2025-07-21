@@ -326,7 +326,7 @@ export class LogService extends Effect.Service<LogService>()("LogService", {
 			get: {
 				log: (logId, userId) =>
 					Effect.gen(function* () {
-						yield* Log.info("LogApiLive.getLog", { logId, userId });
+						yield* Log.info("LogService.getLog", { logId, userId });
 
 						return yield* Effect.tryPromise({
 							try: () =>
@@ -345,7 +345,7 @@ export class LogService extends Effect.Service<LogService>()("LogService", {
 
 				dmLogs: (userId) =>
 					Effect.gen(function* () {
-						yield* Log.info("LogApiLive.getDMLogs", { userId });
+						yield* Log.info("LogService.getDMLogs", { userId });
 
 						return yield* Effect.tryPromise({
 							try: () =>
@@ -366,7 +366,7 @@ export class LogService extends Effect.Service<LogService>()("LogService", {
 
 				userLogs: (userId) =>
 					Effect.gen(function* () {
-						yield* Log.info("LogApiLive.getUserLogs", { userId });
+						yield* Log.info("LogService.getUserLogs", { userId });
 
 						return yield* Effect.tryPromise({
 							try: () =>
@@ -386,8 +386,8 @@ export class LogService extends Effect.Service<LogService>()("LogService", {
 			set: {
 				save: (log, user) =>
 					Effect.gen(function* () {
-						yield* Log.info("LogApiLive.saveLog", { logId: log.id, userId: user.id });
-						yield* Log.debug("LogApiLive.saveLog", log);
+						yield* Log.info("LogService.saveLog", { logId: log.id, userId: user.id });
+						yield* Log.debug("LogService.saveLog", log);
 
 						return yield* transaction(
 							(tx) => upsertLog(log, user).pipe(Effect.provide(LogTx(tx)), Effect.provide(DMTx(tx))),
@@ -397,7 +397,7 @@ export class LogService extends Effect.Service<LogService>()("LogService", {
 
 				delete: (logId, userId) =>
 					Effect.gen(function* () {
-						yield* Log.info("LogApiLive.deleteLog", { logId, userId });
+						yield* Log.info("LogService.deleteLog", { logId, userId });
 
 						return yield* Effect.tryPromise({
 							try: () =>
