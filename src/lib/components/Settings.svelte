@@ -1,5 +1,5 @@
 <script lang="ts">
-	import { invalidateAll } from "$app/navigation";
+	import { goto, invalidateAll } from "$app/navigation";
 	import { page } from "$app/state";
 	import { authClient } from "$lib/auth";
 	import { PROVIDERS } from "$lib/constants";
@@ -62,20 +62,37 @@
 						{user.email}
 					</div>
 				</div>
-				<button
-					class="btn p-3"
-					onclick={() =>
-						authClient.signOut({
-							fetchOptions: {
-								onSuccess: () => {
-									invalidateAll();
+				{#if session.impersonatedBy}
+					<button
+						class="btn btn-sm btn-primary tooltip"
+						data-tip="Stop impersonating"
+						aria-label="Stop impersonating"
+						onclick={async () => {
+							await authClient.admin.stopImpersonating();
+							await goto("/admin/users");
+							await invalidateAll();
+							open = false;
+						}}
+					>
+						<span class="iconify mdi--account-switch"></span>
+					</button>
+				{:else}
+					<button
+						class="btn tooltip p-3"
+						data-tip="Sign out"
+						aria-label="Sign out"
+						onclick={() =>
+							authClient.signOut({
+								fetchOptions: {
+									onSuccess: () => {
+										invalidateAll();
+									}
 								}
-							}
-						})}
-					aria-label="Sign out"
-				>
-					<i class="iconify mdi--logout h-5 w-5"></i>
-				</button>
+							})}
+					>
+						<i class="iconify mdi--logout h-5 w-5"></i>
+					</button>
+				{/if}
 			</div>
 			<div class="divider my-0"></div>
 			<ul class="menu menu-lg w-full px-0">

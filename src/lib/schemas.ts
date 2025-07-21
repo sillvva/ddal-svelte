@@ -300,6 +300,10 @@ export const localsUserSchema = v.object({
 	email: requiredString,
 	emailVerified: v.boolean(),
 	image: v.nullish(urlSchema),
+	role: v.picklist(["user", "admin"]),
+	banned: v.boolean(),
+	banReason: v.nullish(v.string()),
+	banExpires: v.nullish(v.date()),
 	createdAt: v.date(),
 	updatedAt: v.date(),
 	accounts: v.array(v.pick(localsAccountSchema, ["id", "accountId", "providerId", "createdAt", "updatedAt"])),
@@ -312,6 +316,7 @@ export const localsSessionSchema = v.object({
 	userId: userIdSchema,
 	ipAddress: v.nullish(v.string()),
 	userAgent: v.nullish(v.string()),
+	impersonatedBy: v.nullish(userIdSchema),
 	expiresAt: v.date(),
 	createdAt: v.date(),
 	updatedAt: v.date()

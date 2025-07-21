@@ -4,6 +4,8 @@ import { isNotNull } from "drizzle-orm";
 import * as pg from "drizzle-orm/pg-core";
 import { v7 } from "uuid";
 
+export const role = pg.pgEnum("role", ["user", "admin"]);
+
 export type User = typeof user.$inferSelect;
 export type InsertUser = typeof user.$inferInsert;
 export type UpdateUser = Partial<User>;
@@ -20,6 +22,10 @@ export const user = pg.pgTable("user", {
 		.notNull()
 		.$default(() => false),
 	image: pg.text(),
+	role: role().notNull().default("user"),
+	banned: pg.boolean().notNull().default(false),
+	banReason: pg.text("ban_reason"),
+	banExpires: pg.timestamp("ban_expires", { mode: "date", withTimezone: true }),
 	createdAt: pg
 		.timestamp("created_at", { mode: "date", withTimezone: true })
 		.notNull()
@@ -88,6 +94,7 @@ export const session = pg.pgTable(
 		ipAddress: pg.text("ip_address"),
 		userAgent: pg.text("user_agent"),
 		expiresAt: pg.timestamp("expires", { mode: "date" }).notNull(),
+		impersonatedBy: pg.uuid("impersonated_by").references(() => user.id, { onUpdate: "cascade", onDelete: "cascade" }),
 		createdAt: pg
 			.timestamp("created_at", { mode: "date", withTimezone: true })
 			.notNull()

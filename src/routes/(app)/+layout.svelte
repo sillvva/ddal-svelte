@@ -58,6 +58,9 @@
 				<a href="/characters" class="ml-8 flex items-center p-2 max-md:hidden">Character Logs</a>
 				<a href="/dm-logs" class="flex items-center p-2 max-md:hidden">DM Logs</a>
 				<a href="/dms" class="flex items-center p-2 max-md:hidden">DMs</a>
+				{#if data.user?.role === "admin"}
+					<a href="/admin/users" class="flex items-center p-2 max-md:hidden">Admin</a>
+				{/if}
 			{/if}
 			<div class="flex-1 max-sm:hidden">&nbsp;</div>
 			<div class="flex items-center gap-4">
