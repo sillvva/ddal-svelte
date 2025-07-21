@@ -130,7 +130,7 @@ function validateLogDM(log: LogSchema, user: LocalsUser) {
 		}
 
 		if (!dmId && (isUser || dmName || log.dm.DCI)) {
-			const search = yield* dmApi.get.fuzzyDM(user.id, isUser, log.dm).pipe(Effect.catchAll(createSaveError));
+			const search = yield* dmApi.get.fuzzyDM(user.id, isUser, log.dm);
 			if (search) {
 				if (search.name === dmName && search.DCI === log.dm.DCI) {
 					return { id: search.id, name: search.name, DCI: search.DCI, userId: user.id, isUser: search.isUser };
@@ -152,7 +152,7 @@ function validateLogDM(log: LogSchema, user: LocalsUser) {
 
 function upsertLogDM(log: LogSchema, user: LocalsUser) {
 	return Effect.gen(function* () {
-		const { db } = yield* LogService;
+		const { db } = yield* DMService;
 
 		const validated = yield* validateLogDM(log, user);
 
@@ -236,12 +236,13 @@ function upsertLog(log: LogSchema, user: LocalsUser) {
 			(params) => itemsCRUD(params)
 		);
 
-		return yield* logApi.get.log(result.id, user.id).pipe(
-			Effect.flatMap((result) =>
-				result ? Effect.succeed(result) : Effect.fail(new SaveLogError(log.id ? "Could not save log" : "Could not create log"))
-			),
-			Effect.catchAll(createSaveError)
-		);
+		return yield* logApi.get
+			.log(result.id, user.id)
+			.pipe(
+				Effect.flatMap((result) =>
+					result ? Effect.succeed(result) : Effect.fail(new SaveLogError(log.id ? "Could not save log" : "Could not create log"))
+				)
+			);
 	});
 }
 
