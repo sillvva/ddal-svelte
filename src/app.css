@@ -211,7 +211,8 @@
 			inset: 0;
 			z-index: 1;
 		}
-		:is(a, button, summary, [role="button"]):not(.row-link) {
+		:is(a, button, summary, [role="button"]):not(.row-link),
+		[data-desc]:has(:is(a, summary):not(.row-link)) {
 			position: relative;
 			z-index: 2;
 		}
