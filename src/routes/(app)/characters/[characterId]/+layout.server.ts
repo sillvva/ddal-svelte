@@ -6,7 +6,7 @@ import { parse } from "valibot";
 export const load = (event) =>
 	run(function* () {
 		const characterId = parse(characterIdSchema, event.params.characterId);
-		const character = yield* withCharacter((service) => service.get.character(characterId));
+		const character = characterId === "new" ? undefined : yield* withCharacter((service) => service.get.character(characterId));
 
 		return {
 			character
