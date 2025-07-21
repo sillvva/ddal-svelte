@@ -1,5 +1,5 @@
-<script module>
-	import { type PageParentData } from "./$types.js";
+<script module lang="ts">
+	import type { PageParentData } from "./$types.js";
 	export function getPageTitle(data: PageParentData) {
 		return data.character?.name || "New Character";
 	}
@@ -49,20 +49,20 @@
 		search.query = page.url.searchParams.get("s") || "";
 	});
 
-	function triggerImageModal() {
-		if (data.character.imageUrl) {
+	function triggerImageModal(imageUrl = data.character.imageUrl) {
+		if (imageUrl) {
 			pushState("", {
 				modal: {
 					type: "image",
 					name: data.character.name,
-					imageUrl: data.character.imageUrl
+					imageUrl
 				}
 			});
 		}
 	}
 
 	function scrollToSearch(searchBar: HTMLDivElement) {
-		if (search) scrollTo({ top: searchBar.offsetTop - 16, behavior: "smooth" });
+		if (search.query.trim()) scrollTo({ top: searchBar.offsetTop - 16, behavior: "smooth" });
 	}
 
 	$effect(() => {
@@ -103,14 +103,23 @@
 									href={data.character.imageUrl}
 									target="_blank"
 									onclick={(e) => {
+										if (data.mobile) return;
 										e.preventDefault();
 										triggerImageModal();
-									}}>View Character Image</a
+									}}>Character Image</a
 								>
 							</li>
 						{/if}
 						<li role="menuitem">
-							<a href={`/characters/${data.character.id}/og-image.png`} target="_blank">View Open Graph Image</a>
+							<a
+								href={`/characters/${data.character.id}/og-image.png`}
+								target="_blank"
+								onclick={(e) => {
+									if (data.mobile) return;
+									e.preventDefault();
+									triggerImageModal(`/characters/${data.character.id}/og-image.png`);
+								}}>Social Media Image</a
+							>
 						</li>
 						<li role="menuitem">
 							<DeleteCharacter character={data.character} label="Delete Character" />

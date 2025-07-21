@@ -1,10 +1,12 @@
 import { BLANK_CHARACTER } from "$lib/constants.js";
 import { characterIdSchema } from "$lib/schemas.js";
-import { run } from "$server/effect";
+import { FetchError, Log, run } from "$server/effect";
 import { withCharacter } from "$server/effect/characters";
 import { Resvg } from "@resvg/resvg-js";
-import { error } from "@sveltejs/kit";
+import { error, type NumericRange } from "@sveltejs/kit";
+import { Effect } from "effect";
 import { readFile } from "fs/promises";
+import imageSize from "image-size";
 import path from "path";
 import satori from "satori";
 import { parse } from "valibot";
@@ -23,6 +25,8 @@ export const GET = async ({ params, url }) => {
 	const draconis = await readFile(path.resolve("static/fonts/Draconis.ttf"));
 	const vecna = await readFile(path.resolve("static/fonts/Vecna.ttf"));
 	const vecnaBold = await readFile(path.resolve("static/fonts/VecnaBold.ttf"));
+	const roboto = await readFile(path.resolve("static/fonts/Roboto-Regular.ttf"));
+
 	const fallbackImageUrl = `${url.origin}${BLANK_CHARACTER}`;
 	let imageUrl =
 		!character.imageUrl || character.imageUrl.includes(".webp")
@@ -30,6 +34,29 @@ export const GET = async ({ params, url }) => {
 			: character.imageUrl.startsWith("http")
 				? character.imageUrl
 				: `${url.origin}${character.imageUrl}`;
+
+	let response;
+	try {
+		if (imageUrl === fallbackImageUrl) {
+			imageUrl = fallbackImageUrl;
+			response = await fetch(fallbackImageUrl, { method: "GET" });
+		} else {
+			response = await fetch(imageUrl, { method: "GET" });
+			if (!response.ok) throw new FetchError(response.statusText, response.status as NumericRange<400, 599>);
+		}
+	} catch (e) {
+		Effect.runFork(Log.debug("Using fallback image", { cause: e }));
+
+		imageUrl = fallbackImageUrl;
+		response = await fetch(fallbackImageUrl, { method: "GET" });
+	}
+
+	const arrayBuffer = await response.arrayBuffer();
+	const imgBuffer = Buffer.from(arrayBuffer);
+	const { width: imgWidth, height: imgHeight } = imageSize(imgBuffer);
+
+	const imageRatio = imgWidth / imgHeight;
+	const imageContainerRatio = imageContainerWidth / imageContainerHeight;
 
 	const svg = await satori(
 		{
@@ -83,15 +110,8 @@ export const GET = async ({ params, url }) => {
 											{
 												type: "div",
 												props: {
-													style: { fontSize: "40px", marginBottom: "12px" },
+													style: { fontSize: "32px", marginBottom: "12px", fontFamily: "Roboto" },
 													children: `${character.race} ${character.class}`.replace(/ {2,}/g, " ").trim()
-												}
-											},
-											{
-												type: "div",
-												props: {
-													style: { fontSize: "28px", marginBottom: "12px" },
-													children: `Level ${character.totalLevel}`
 												}
 											}
 										]
@@ -102,28 +122,33 @@ export const GET = async ({ params, url }) => {
 									props: {
 										style: {
 											display: "flex",
-											borderRadius: "24px",
-											margin: "48px",
 											width: imageContainerWidth,
 											height: imageContainerHeight,
+											borderRadius: "24px",
+											margin: "48px",
+											marginLeft: 0,
 											boxShadow: "0 0 32px #000a",
 											backgroundColor: "#000a",
-											overflow: "hidden"
+											overflow: "hidden",
+											position: "relative"
 										},
 										children: [
 											{
 												type: "img",
 												props: {
 													src: imageUrl,
-													width: 396,
-													height: 540,
 													style: {
-														maxWidth: 396,
-														maxHeight: 540,
-														width: "100%",
-														height: "100%",
-														objectFit: "contain",
-														objectPosition: "top"
+														position: "absolute",
+														top: 0,
+														left: "50%",
+														transform: "translateX(-50%)",
+														...(imageRatio > imageContainerRatio
+															? {
+																	height: "100%"
+																}
+															: {
+																	width: "100%"
+																})
 													}
 												}
 											}
@@ -138,33 +163,65 @@ export const GET = async ({ params, url }) => {
 						props: {
 							style: {
 								display: "flex",
-								flexDirection: "column",
-								justifyContent: "center",
 								position: "absolute",
 								top: "16px",
 								left: "16px",
 								padding: "36px 48px",
-								fontFamily: "Draconis",
-								color: "#fffa",
-								lineHeight: "0.8"
+								lineHeight: "0.8",
+								width: 740
 							},
 							children: [
 								{
 									type: "div",
 									props: {
 										style: {
-											fontSize: "29px"
+											display: "flex",
+											flexDirection: "column",
+											justifyContent: "center",
+											fontFamily: "Draconis",
+											color: "#fffa",
+											flex: 1
 										},
-										children: "Adventurers League"
+										children: [
+											{
+												type: "div",
+												props: {
+													style: {
+														fontSize: "29px"
+													},
+													children: "Adventurers League"
+												}
+											},
+											{
+												type: "div",
+												props: {
+													style: {
+														fontSize: "60px"
+													},
+													children: "Log Sheet"
+												}
+											}
+										]
 									}
 								},
 								{
 									type: "div",
 									props: {
 										style: {
-											fontSize: "60px"
+											display: "flex",
+											alignItems: "center",
+											justifyContent: "center",
+											fontSize: "72px",
+											fontFamily: "VecnaBold",
+											color: "#fff",
+											paddingLeft: 5,
+											backgroundColor: "#0008",
+											width: 90,
+											height: 90,
+											borderRadius: "100%",
+											boxShadow: "4px 4px 8px #000a"
 										},
-										children: "Log Sheet"
+										children: `${character.totalLevel}`
 									}
 								}
 							]
@@ -194,6 +251,12 @@ export const GET = async ({ params, url }) => {
 					data: draconis,
 					weight: 400,
 					style: "normal"
+				},
+				{
+					name: "Roboto",
+					data: roboto,
+					weight: 400,
+					style: "normal"
 				}
 			]
 		}
@@ -206,7 +269,7 @@ export const GET = async ({ params, url }) => {
 	return new Response(pngBuffer, {
 		headers: {
 			"Content-Type": "image/png",
-			"Cache-Control": "public, max-age=3600"
+			"Cache-Control": "public, max-age=21600"
 		}
 	});
 };

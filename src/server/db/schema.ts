@@ -1,17 +1,17 @@
 import type { ProviderId } from "$lib/constants";
 import type { CharacterId, DungeonMasterId, ItemId, LogId, UserId } from "$lib/schemas";
-import { createId } from "@paralleldrive/cuid2";
 import { isNotNull } from "drizzle-orm";
 import * as pg from "drizzle-orm/pg-core";
+import { v7 } from "uuid";
 
 export type User = typeof user.$inferSelect;
 export type InsertUser = typeof user.$inferInsert;
 export type UpdateUser = Partial<User>;
 export const user = pg.pgTable("user", {
 	id: pg
-		.text()
+		.uuid()
 		.primaryKey()
-		.$default(() => createId())
+		.$default(() => v7())
 		.$type<UserId>(),
 	name: pg.text().notNull(),
 	email: pg.text().notNull(),
@@ -38,13 +38,13 @@ export const account = pg.pgTable(
 	"account",
 	{
 		id: pg
-			.text()
+			.uuid()
 			.primaryKey()
-			.$default(() => createId()),
+			.$default(() => v7()),
 		accountId: pg.text("providerAccountId").notNull(),
 		providerId: pg.text("provider").notNull().$type<ProviderId>(),
 		userId: pg
-			.text()
+			.uuid()
 			.notNull()
 			.references(() => user.id, { onUpdate: "cascade", onDelete: "cascade" })
 			.$type<UserId>(),
@@ -76,12 +76,12 @@ export const session = pg.pgTable(
 	"session",
 	{
 		id: pg
-			.text()
+			.uuid()
 			.primaryKey()
-			.$default(() => createId()),
+			.$default(() => v7()),
 		token: pg.text("sessionToken").notNull(),
 		userId: pg
-			.text()
+			.uuid()
 			.notNull()
 			.$type<UserId>()
 			.references(() => user.id, { onUpdate: "cascade", onDelete: "cascade" }),
@@ -103,10 +103,10 @@ export const session = pg.pgTable(
 
 export const verification = pg.pgTable("verification", {
 	id: pg
-		.text()
+		.uuid()
 		.primaryKey()
 		.notNull()
-		.$default(() => createId()),
+		.$default(() => v7()),
 	identifier: pg.text().notNull(),
 	value: pg.text().notNull(),
 	expiresAt: pg.timestamp("expires_at", { mode: "date", withTimezone: true }).notNull(),
@@ -126,13 +126,13 @@ export type InsertPasskey = typeof passkey.$inferInsert;
 export type UpdatePasskey = Partial<Passkey>;
 export const passkey = pg.pgTable("passkey", {
 	id: pg
-		.text()
+		.uuid()
 		.primaryKey()
-		.$default(() => createId()),
+		.$default(() => v7()),
 	name: pg.text(),
 	publicKey: pg.text().notNull(),
 	userId: pg
-		.text()
+		.uuid()
 		.notNull()
 		.$type<UserId>()
 		.references(() => user.id, { onDelete: "cascade", onUpdate: "cascade" }),
@@ -155,9 +155,9 @@ export const characters = pg.pgTable(
 	"character",
 	{
 		id: pg
-			.text()
+			.uuid()
 			.primaryKey()
-			.$default(() => createId())
+			.$default(() => v7())
 			.$type<CharacterId>(),
 		name: pg.text().notNull(),
 		race: pg.text(),
@@ -166,7 +166,7 @@ export const characters = pg.pgTable(
 		imageUrl: pg.text("image_url"),
 		characterSheetUrl: pg.text("character_sheet_url"),
 		userId: pg
-			.text()
+			.uuid()
 			.notNull()
 			.$type<UserId>()
 			.references(() => user.id, { onUpdate: "cascade", onDelete: "cascade" }),
@@ -185,14 +185,14 @@ export const dungeonMasters = pg.pgTable(
 	"dungeonmaster",
 	{
 		id: pg
-			.text()
+			.uuid()
 			.primaryKey()
-			.$default(() => createId())
+			.$default(() => v7())
 			.$type<DungeonMasterId>(),
 		name: pg.text().notNull(),
 		DCI: pg.text(),
 		userId: pg
-			.text("user_id")
+			.uuid("user_id")
 			.notNull()
 			.$type<UserId>()
 			.references(() => user.id, { onUpdate: "cascade", onDelete: "cascade" }),
@@ -213,9 +213,9 @@ export const logs = pg.pgTable(
 	"log",
 	{
 		id: pg
-			.text()
+			.uuid()
 			.primaryKey()
-			.$default(() => createId())
+			.$default(() => v7())
 			.$type<LogId>(),
 		date: pg
 			.timestamp({ mode: "date" })
@@ -228,7 +228,7 @@ export const logs = pg.pgTable(
 			.$default(() => ""),
 		type: logType().notNull(),
 		dungeonMasterId: pg
-			.text()
+			.uuid()
 			.notNull()
 			.$type<DungeonMasterId>()
 			.references(() => dungeonMasters.id, {
@@ -262,7 +262,7 @@ export const logs = pg.pgTable(
 			.$default(() => 0),
 		appliedDate: pg.timestamp("applied_date", { mode: "date" }),
 		characterId: pg
-			.text()
+			.uuid()
 			.$type<CharacterId>()
 			.references(() => characters.id, { onUpdate: "cascade", onDelete: "cascade" }),
 		createdAt: pg
@@ -283,19 +283,19 @@ export const magicItems = pg.pgTable(
 	"magicitem",
 	{
 		id: pg
-			.text()
+			.uuid()
 			.primaryKey()
-			.$default(() => createId())
+			.$default(() => v7())
 			.$type<ItemId>(),
 		name: pg.text().notNull(),
 		description: pg.text(),
 		logGainedId: pg
-			.text()
+			.uuid()
 			.notNull()
 			.$type<LogId>()
 			.references(() => logs.id, { onUpdate: "cascade", onDelete: "cascade" }),
 		logLostId: pg
-			.text()
+			.uuid()
 			.$type<LogId>()
 			.references(() => logs.id, { onUpdate: "cascade", onDelete: "set null" })
 	},
@@ -312,19 +312,19 @@ export const storyAwards = pg.pgTable(
 	"storyaward",
 	{
 		id: pg
-			.text()
+			.uuid()
 			.primaryKey()
-			.$default(() => createId())
+			.$default(() => v7())
 			.$type<ItemId>(),
 		name: pg.text().notNull(),
 		description: pg.text(),
 		logGainedId: pg
-			.text()
+			.uuid()
 			.notNull()
 			.$type<LogId>()
 			.references(() => logs.id, { onUpdate: "cascade", onDelete: "cascade" }),
 		logLostId: pg
-			.text()
+			.uuid()
 			.$type<LogId>()
 			.references(() => logs.id, { onUpdate: "cascade", onDelete: "set null" })
 	},
@@ -333,3 +333,19 @@ export const storyAwards = pg.pgTable(
 		pg.index("StoryAward_logLostId_idx").on(table.logLostId)
 	]
 );
+
+const logLevel = pg.pgEnum("logLevel", ["ALL", "FATAL", "ERROR", "WARN", "INFO", "DEBUG", "TRACE", "OFF"]);
+
+export type AppLog = typeof appLogs.$inferSelect;
+export type InsertAppLog = typeof appLogs.$inferInsert;
+export type UpdateAppLog = Partial<AppLog>;
+export const appLogs = pg.pgTable("applog", {
+	id: pg
+		.uuid()
+		.primaryKey()
+		.$default(() => v7()),
+	label: pg.text().notNull(),
+	level: logLevel().notNull(),
+	annotations: pg.jsonb().notNull(),
+	timestamp: pg.timestamp({ mode: "date" }).notNull()
+});

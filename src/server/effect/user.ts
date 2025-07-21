@@ -1,8 +1,8 @@
 import { PROVIDERS } from "$lib/constants";
 import type { LocalsUser, UserId } from "$lib/schemas";
-import { db, type Database, type Transaction } from "$server/db";
+import { DBService, type Transaction } from "$server/db";
 import { Effect, Layer } from "effect";
-import { DBService, FetchError } from ".";
+import { FetchError } from ".";
 
 class FetchUserError extends FetchError {}
 function createFetchError(err: unknown): FetchUserError {
@@ -57,18 +57,15 @@ export class UserService extends Effect.Service<UserService>()("UserService", {
 		};
 
 		return impl;
-	})
+	}),
+	dependencies: [DBService.Default()]
 }) {}
 
-export const UserLive = (dbOrTx: Database | Transaction = db) =>
-	UserService.Default.pipe(Layer.provide(DBService.Default(dbOrTx)));
+export const UserTx = (tx: Transaction) => UserService.DefaultWithoutDependencies.pipe(Layer.provide(DBService.Default(tx)));
 
-export function withUser<R, E extends FetchUserError>(
-	impl: (service: UserApiImpl) => Effect.Effect<R, E>,
-	dbOrTx: Database | Transaction = db
-) {
+export function withUser<R, E extends FetchUserError>(impl: (service: UserApiImpl) => Effect.Effect<R, E>) {
 	return Effect.gen(function* () {
 		const userApi = yield* UserService;
 		return yield* impl(userApi);
-	}).pipe(Effect.provide(UserLive(dbOrTx)));
+	}).pipe(Effect.provide(UserService.Default));
 }

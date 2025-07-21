@@ -1,12 +1,19 @@
 import { parseLog } from "$lib/entities";
 import type { LocalsUser, LogId, LogSchema, UserId } from "$lib/schemas";
-import { buildConflictUpdateColumns, type Database, type Filter, type InferQueryResult, type Transaction } from "$server/db";
+import {
+	buildConflictUpdateColumns,
+	DBService,
+	type Database,
+	type Filter,
+	type InferQueryResult,
+	type Transaction
+} from "$server/db";
 import { extendedLogIncludes, logIncludes } from "$server/db/includes";
 import { characters, dungeonMasters, logs, magicItems, storyAwards } from "$server/db/schema";
 import { and, eq, exists, inArray, isNull, notInArray, or } from "drizzle-orm";
 import { Effect, Layer } from "effect";
 import { isTupleOf } from "effect/Predicate";
-import { DBService, debugSet, FetchError, FormError, Log, run } from ".";
+import { debugSet, FetchError, FormError, Log } from ".";
 import { DMService, DMTx } from "./dms";
 
 export class FetchLogError extends FetchError {}
@@ -123,7 +130,7 @@ function validateLogDM(log: LogSchema, user: LocalsUser) {
 		}
 
 		if (!dmId && (isUser || dmName || log.dm.DCI)) {
-			const search = yield* dmApi.get.fuzzyDM(user.id, isUser, log.dm).pipe(Effect.catchAll(createSaveError));
+			const search = yield* dmApi.get.fuzzyDM(user.id, isUser, log.dm);
 			if (search) {
 				if (search.name === dmName && search.DCI === log.dm.DCI) {
 					return { id: search.id, name: search.name, DCI: search.DCI, userId: user.id, isUser: search.isUser };
@@ -145,7 +152,7 @@ function validateLogDM(log: LogSchema, user: LocalsUser) {
 
 function upsertLogDM(log: LogSchema, user: LocalsUser) {
 	return Effect.gen(function* () {
-		const { db } = yield* LogService;
+		const { db } = yield* DMService;
 
 		const validated = yield* validateLogDM(log, user);
 
@@ -229,12 +236,13 @@ function upsertLog(log: LogSchema, user: LocalsUser) {
 			(params) => itemsCRUD(params)
 		);
 
-		return yield* logApi.get.log(result.id, user.id).pipe(
-			Effect.flatMap((result) =>
-				result ? Effect.succeed(result) : Effect.fail(new SaveLogError(log.id ? "Could not save log" : "Could not create log"))
-			),
-			Effect.catchAll(createSaveError)
-		);
+		return yield* logApi.get
+			.log(result.id, user.id)
+			.pipe(
+				Effect.flatMap((result) =>
+					result ? Effect.succeed(result) : Effect.fail(new SaveLogError(log.id ? "Could not save log" : "Could not create log"))
+				)
+			);
 	});
 }
 
@@ -311,14 +319,14 @@ function itemsCRUD(params: CRUDMagicItemParams | CRUDStoryAwardParams) {
 
 export class LogService extends Effect.Service<LogService>()("LogService", {
 	effect: Effect.gen(function* () {
-		const { db } = yield* DBService;
+		const { db, transaction } = yield* DBService;
 
 		const impl: LogApiImpl = {
 			db,
 			get: {
 				log: (logId, userId) =>
 					Effect.gen(function* () {
-						yield* Log.info("LogApiLive.getLog", { logId, userId });
+						yield* Log.info("LogService.getLog", { logId, userId });
 
 						return yield* Effect.tryPromise({
 							try: () =>
@@ -337,7 +345,7 @@ export class LogService extends Effect.Service<LogService>()("LogService", {
 
 				dmLogs: (userId) =>
 					Effect.gen(function* () {
-						yield* Log.info("LogApiLive.getDMLogs", { userId });
+						yield* Log.info("LogService.getDMLogs", { userId });
 
 						return yield* Effect.tryPromise({
 							try: () =>
@@ -358,7 +366,7 @@ export class LogService extends Effect.Service<LogService>()("LogService", {
 
 				userLogs: (userId) =>
 					Effect.gen(function* () {
-						yield* Log.info("LogApiLive.getUserLogs", { userId });
+						yield* Log.info("LogService.getUserLogs", { userId });
 
 						return yield* Effect.tryPromise({
 							try: () =>
@@ -378,21 +386,18 @@ export class LogService extends Effect.Service<LogService>()("LogService", {
 			set: {
 				save: (log, user) =>
 					Effect.gen(function* () {
-						yield* Log.info("LogApiLive.saveLog", { logId: log.id, userId: user.id });
-						yield* Log.debug("LogApiLive.saveLog", log);
+						yield* Log.info("LogService.saveLog", { logId: log.id, userId: user.id });
+						yield* Log.debug("LogService.saveLog", log);
 
-						return yield* Effect.tryPromise({
-							try: () =>
-								db.transaction((tx) => {
-									return run(upsertLog(log, user).pipe(Effect.provide(LogTx(tx)), Effect.provide(DMTx(tx))));
-								}),
-							catch: createSaveError
-						});
+						return yield* transaction(
+							(tx) => upsertLog(log, user).pipe(Effect.provide(LogTx(tx)), Effect.provide(DMTx(tx))),
+							createSaveError
+						);
 					}),
 
 				delete: (logId, userId) =>
 					Effect.gen(function* () {
-						yield* Log.info("LogApiLive.deleteLog", { logId, userId });
+						yield* Log.info("LogService.deleteLog", { logId, userId });
 
 						return yield* Effect.tryPromise({
 							try: () =>

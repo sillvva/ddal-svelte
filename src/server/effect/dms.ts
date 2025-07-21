@@ -1,11 +1,11 @@
 import type { DungeonMasterId, DungeonMasterSchema, LocalsUser, UserId } from "$lib/schemas";
-import { buildConflictUpdateColumns, type Database, type InferQueryResult, type Transaction } from "$server/db";
+import { buildConflictUpdateColumns, DBService, type Database, type InferQueryResult, type Transaction } from "$server/db";
 import { dungeonMasters, type DungeonMaster } from "$server/db/schema";
 import { sorter } from "@sillvva/utils";
 import { and, eq } from "drizzle-orm";
 import { Effect, Layer } from "effect";
 import { isTupleOf } from "effect/Predicate";
-import { DBService, debugSet, FetchError, FormError, Log } from ".";
+import { debugSet, FetchError, FormError, Log } from ".";
 
 export class FetchDMError extends FetchError {}
 function createFetchError(err: unknown): FetchDMError {
@@ -69,7 +69,7 @@ export class DMService extends Effect.Service<DMService>()("DMSService", {
 			get: {
 				userDMs: (user, { id, includeLogs = true } = {}) =>
 					Effect.gen(function* () {
-						yield* Log.info("DMApiLive.getUserDMs", { userId: user.id, id, includeLogs });
+						yield* Log.info("DMService.getUserDMs", { userId: user.id, id, includeLogs });
 
 						return yield* Effect.tryPromise({
 							try: async () => {
@@ -118,7 +118,7 @@ export class DMService extends Effect.Service<DMService>()("DMSService", {
 
 				fuzzyDM: (userId, isUser, dm) =>
 					Effect.gen(function* () {
-						yield* Log.info("DMApiLive.getFuzzyDM", {
+						yield* Log.info("DMService.getFuzzyDM", {
 							userId,
 							...(isUser ? { isUser } : { name: dm.name.trim() || undefined, DCI: dm.DCI || undefined })
 						});
@@ -145,8 +145,8 @@ export class DMService extends Effect.Service<DMService>()("DMSService", {
 			set: {
 				save: (dmId, user, data) =>
 					Effect.gen(function* () {
-						yield* Log.info("DMApiLive.saveDM", { dmId, userId: user.id });
-						yield* Log.debug("DMApiLive.saveDM", data);
+						yield* Log.info("DMService.saveDM", { dmId, userId: user.id });
+						yield* Log.debug("DMService.saveDM", data);
 
 						const [dm] = yield* impl.get.userDMs(user, { id: dmId }).pipe(Effect.catchAll(createSaveError));
 						if (!dm) return yield* new SaveDMError("DM does not exist", { status: 404 });
@@ -176,7 +176,7 @@ export class DMService extends Effect.Service<DMService>()("DMSService", {
 
 				addUserDM: (user, dms) =>
 					Effect.gen(function* () {
-						yield* Log.info("DMApiLive.addUserDM", { userId: user.id });
+						yield* Log.info("DMService.addUserDM", { userId: user.id });
 
 						const result = yield* Effect.tryPromise({
 							try: () =>
@@ -207,7 +207,7 @@ export class DMService extends Effect.Service<DMService>()("DMSService", {
 
 				delete: (dm, userId) =>
 					Effect.gen(function* () {
-						yield* Log.info("DMApiLive.deleteDM", { dmId: dm.id, userId });
+						yield* Log.info("DMService.deleteDM", { dmId: dm.id, userId });
 
 						if (dm.logs.length) return yield* new SaveDMError("You cannot delete a DM that has logs", { status: 400 });
 

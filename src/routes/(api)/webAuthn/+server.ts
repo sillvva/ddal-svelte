@@ -1,5 +1,5 @@
 import { authName } from "$lib/auth";
-import { db, q } from "$server/db/index";
+import { db } from "$server/db/index";
 import { passkey } from "$server/db/schema";
 import { Log } from "$server/effect";
 import { json } from "@sveltejs/kit";
@@ -15,7 +15,7 @@ export async function POST({ request, locals }) {
 	let { name, id } = (await request.json()) as RenameWebAuthnInput;
 
 	try {
-		const passkeys = await q.passkey.findMany({
+		const passkeys = await db.query.passkey.findMany({
 			where: {
 				userId: {
 					eq: user.id
@@ -53,7 +53,7 @@ export async function DELETE({ request, locals }) {
 		if (!user?.id) return json({ success: false, error: "Unauthorized" }, { status: 401 });
 
 		const { id } = (await request.json()) as DeleteWebAuthnInput;
-		const auth = await q.passkey.findFirst({
+		const auth = await db.query.passkey.findFirst({
 			where: {
 				id: id,
 				userId: {

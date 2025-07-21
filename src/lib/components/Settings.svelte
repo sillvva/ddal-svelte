@@ -161,7 +161,7 @@
 
 			<div class="flex flex-col gap-2">
 				<div class="px-4 text-xs text-gray-500 dark:text-gray-400">
-					User ID: {user.id}
+					User ID:<br />{user.id}
 				</div>
 				<div class="px-4 text-xs text-gray-500 dark:text-gray-400">
 					Logged in {session.createdAt.toLocaleString()}

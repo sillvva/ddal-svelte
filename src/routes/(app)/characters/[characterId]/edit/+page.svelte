@@ -1,5 +1,5 @@
-<script module>
-	import { type PageParentData } from "./$types.js";
+<script module lang="ts">
+	import type { PageParentData } from "./$types.js";
 	export function getPageTitle(data: PageParentData) {
 		return data.character?.name ? "Edit" : "New Character";
 	}
@@ -53,7 +53,14 @@
 		<Input type="url" {superform} field="characterSheetUrl" label="Character Sheet URL" />
 	</Control>
 	<Control class="col-span-12">
-		<Input type="url" {superform} field="imageUrl" label="Image URL" placeholder={`${page.url.origin}${data.BLANK_CHARACTER}`} />
+		<Input
+			type="url"
+			{superform}
+			field="imageUrl"
+			label="Image URL"
+			placeholder={`${page.url.origin}${data.BLANK_CHARACTER}`}
+			description="Images from imgur may not appear when sharing links due to rate limiting"
+		/>
 	</Control>
 	{#if !data.character?.id}
 		<Control class="col-span-12 -mb-4">

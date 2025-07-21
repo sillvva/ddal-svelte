@@ -1,16 +1,17 @@
+import { building } from "$app/environment";
 import { privateEnv } from "$lib/env/private";
 import { appCookieSchema, localsSessionSchema, type UserId } from "$lib/schemas";
 import { serverGetCookie } from "$server/cookie";
 import { db } from "$server/db";
 import { run } from "$server/effect";
 import { withUser } from "$server/effect/user";
-import { createId } from "@paralleldrive/cuid2";
 import { type Handle } from "@sveltejs/kit";
 import { sequence } from "@sveltejs/kit/hooks";
 import { betterAuth } from "better-auth";
 import { drizzleAdapter } from "better-auth/adapters/drizzle";
 import { passkey } from "better-auth/plugins/passkey";
 import { svelteKitHandler } from "better-auth/svelte-kit";
+import { v7 } from "uuid";
 import { parse } from "valibot";
 
 export const auth = betterAuth({
@@ -41,13 +42,13 @@ export const auth = betterAuth({
 	},
 	advanced: {
 		database: {
-			generateId: () => createId()
+			generateId: () => v7()
 		}
 	}
 });
 
 const authHandler: Handle = async ({ event, resolve }) => {
-	return svelteKitHandler({ event, resolve, auth });
+	return svelteKitHandler({ event, resolve, auth, building });
 };
 
 const session: Handle = async ({ event, resolve }) => {
