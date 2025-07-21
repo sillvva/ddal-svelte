@@ -452,13 +452,14 @@ export class LogService extends Effect.Service<LogService>()("LogService", {
 
 export const LogTx = (tx: Transaction) => LogService.DefaultWithoutDependencies.pipe(Layer.provide(DBService.Default(tx)));
 
-export function withLog<R, E extends FetchLogError | SaveLogError>(impl: (service: LogApiImpl) => Effect.Effect<R, E>) {
-	return Effect.gen(function* () {
-		const logApi = yield* LogService;
-		const result = yield* impl(logApi);
+export const withLog = Effect.fn("withLog")(
+	<R, E extends FetchLogError | SaveLogError>(impl: (service: LogApiImpl) => Effect.Effect<R, E>) =>
+		Effect.gen(function* () {
+			const logApi = yield* LogService;
+			const result = yield* impl(logApi);
 
-		yield* debugSet("LogService", impl, result);
+			yield* debugSet("LogService", impl, result);
 
-		return result;
-	}).pipe(Effect.provide(LogService.Default));
-}
+			return result;
+		}).pipe(Effect.provide(LogService.Default))
+);

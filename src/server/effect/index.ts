@@ -78,17 +78,15 @@ export const Log = {
 		Effect.logDebug(message).pipe(logLevel, annotate(extra), Effect.provide(logger))
 };
 
-export function debugSet<S extends string>(service: S, impl: Function, result: unknown) {
-	return Effect.gen(function* () {
-		const call = impl.toString();
-		if (call.includes("service.set")) {
-			yield* Log.debug(service, {
-				call: impl.toString(),
-				result: Array.isArray(result) ? result.slice(0, 5) : result
-			});
-		}
-	});
-}
+export const debugSet = Effect.fn("debugSet")(function* <S extends string>(service: S, impl: Function, result: unknown) {
+	const call = impl.toString();
+	if (call.includes(".set.")) {
+		yield* Log.debug(service, {
+			call: impl.toString(),
+			result: Array.isArray(result) ? result.slice(0, 5) : result
+		});
+	}
+});
 
 // -------------------------------------------------------------------------------------------------
 // Run
