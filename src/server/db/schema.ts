@@ -3,6 +3,7 @@ import type { CharacterId, DungeonMasterId, ItemId, LogId, UserId } from "$lib/s
 import { createId } from "@paralleldrive/cuid2";
 import { isNotNull } from "drizzle-orm";
 import * as pg from "drizzle-orm/pg-core";
+import { v7 } from "uuid";
 
 export type User = typeof user.$inferSelect;
 export type InsertUser = typeof user.$inferInsert;
@@ -333,3 +334,19 @@ export const storyAwards = pg.pgTable(
 		pg.index("StoryAward_logLostId_idx").on(table.logLostId)
 	]
 );
+
+const logLevel = pg.pgEnum("logLevel", ["ALL", "FATAL", "ERROR", "WARN", "INFO", "DEBUG", "TRACE", "OFF"]);
+
+export type AppLog = typeof appLogs.$inferSelect;
+export type InsertAppLog = typeof appLogs.$inferInsert;
+export type UpdateAppLog = Partial<AppLog>;
+export const appLogs = pg.pgTable("applog", {
+	id: pg
+		.uuid()
+		.primaryKey()
+		.$default(() => v7()),
+	label: pg.text().notNull(),
+	level: logLevel().notNull(),
+	annotations: pg.jsonb().notNull(),
+	timestamp: pg.timestamp({ mode: "date" }).notNull()
+});

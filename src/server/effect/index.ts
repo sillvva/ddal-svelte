@@ -1,6 +1,8 @@
 import { dev } from "$app/environment";
 import { getRequestEvent } from "$app/server";
 import { privateEnv } from "$lib/env/private";
+import { db } from "$server/db";
+import { appLogs } from "$server/db/schema";
 import {
 	error,
 	isHttpError,
@@ -11,7 +13,7 @@ import {
 	type RequestEvent
 } from "@sveltejs/kit";
 import { Cause, Data, DateTime, Effect, Exit, Layer, Logger } from "effect";
-import { isFunction } from "effect/Predicate";
+import { isFunction, isTupleOf } from "effect/Predicate";
 import type { YieldWrap } from "effect/Utils";
 import {
 	setError,
@@ -29,7 +31,34 @@ import type { BaseSchema, InferInput, InferOutput } from "valibot";
 
 const logLevel = Logger.withMinimumLogLevel(privateEnv.LOG_LEVEL);
 
-function annotate(extra: object = {}) {
+type LogHash = {
+	_id: string;
+	values: [["currentTime", string], ["routeId", string], ["params", string], ["userId", string], ["extra", object]];
+};
+
+const dbLogger = Logger.replace(
+	Logger.defaultLogger,
+	Logger.make((log) => {
+		const data = log.annotations.toJSON() as LogHash;
+		const values = {
+			label: (log.message as string[]).join(" | "),
+			timestamp: log.date,
+			level: log.logLevel.label,
+			annotations: Object.fromEntries(data.values)
+		};
+
+		Effect.promise(() => db.insert(appLogs).values([values]).returning({ id: appLogs.id })).pipe(
+			Effect.andThen((logs) => {
+				if (dev && isTupleOf(logs, 1))
+					console.log(logs[0].id, dev && ["ERROR", "DEBUG"].includes(values.level) ? values : JSON.stringify(values), "\n");
+				else console.log("Unable to log to database.", values.label);
+			}),
+			Effect.runPromise
+		);
+	})
+);
+
+function annotate(extra: Record<PropertyKey, any> = {}) {
 	const event = getRequestEvent();
 	return Effect.annotateLogs({
 		currentTime: DateTime.formatIso(Effect.runSync(DateTime.now)),
@@ -41,12 +70,12 @@ function annotate(extra: object = {}) {
 }
 
 export const Log = {
-	info: (message: string, extra?: object, logger?: Layer.Layer<never>) =>
-		Effect.logInfo(message).pipe(logLevel, annotate(extra), Effect.provide(logger || Logger.json)),
-	error: (message: string, extra?: object, logger?: Layer.Layer<never>) =>
-		Effect.logError(message).pipe(logLevel, annotate(extra), Effect.provide(logger || (dev ? Logger.pretty : Logger.json))),
-	debug: (message: string, extra?: object, logger?: Layer.Layer<never>) =>
-		Effect.logDebug(message).pipe(logLevel, annotate(extra), Effect.provide(logger || (dev ? Logger.pretty : Logger.json)))
+	info: (message: string, extra?: Record<PropertyKey, any>, logger: Layer.Layer<never> = dbLogger) =>
+		Effect.logInfo(message).pipe(logLevel, annotate(extra), Effect.provide(logger)),
+	error: (message: string, extra?: Record<PropertyKey, any>, logger: Layer.Layer<never> = dbLogger) =>
+		Effect.logError(message).pipe(logLevel, annotate(extra), Effect.provide(logger)),
+	debug: (message: string, extra?: Record<PropertyKey, any>, logger: Layer.Layer<never> = dbLogger) =>
+		Effect.logDebug(message).pipe(logLevel, annotate(extra), Effect.provide(logger))
 };
 
 export function debugSet<S extends string>(service: S, impl: Function, result: unknown) {
