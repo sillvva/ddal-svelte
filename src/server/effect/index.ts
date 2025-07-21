@@ -12,7 +12,7 @@ import {
 	type NumericRange,
 	type RequestEvent
 } from "@sveltejs/kit";
-import { Cause, Data, DateTime, Effect, Exit, Layer, Logger } from "effect";
+import { Cause, Data, Effect, Exit, Layer, Logger } from "effect";
 import { isFunction, isTupleOf } from "effect/Predicate";
 import type { YieldWrap } from "effect/Utils";
 import {
@@ -31,15 +31,15 @@ import type { BaseSchema, InferInput, InferOutput } from "valibot";
 
 const logLevel = Logger.withMinimumLogLevel(privateEnv.LOG_LEVEL);
 
-type LogHash = {
+type LogAnnotations = {
 	_id: string;
-	values: [["currentTime", string], ["routeId", string], ["params", string], ["userId", string], ["extra", object]];
+	values: [["routeId", string], ["params", string], ["userId", string], ["username", string], ["extra", object]];
 };
 
 const dbLogger = Logger.replace(
 	Logger.defaultLogger,
 	Logger.make((log) => {
-		const data = log.annotations.toJSON() as LogHash;
+		const data = log.annotations.toJSON() as LogAnnotations;
 		const values = {
 			label: (log.message as string[]).join(" | "),
 			timestamp: log.date,
@@ -61,8 +61,8 @@ const dbLogger = Logger.replace(
 function annotate(extra: Record<PropertyKey, any> = {}) {
 	const event = getRequestEvent();
 	return Effect.annotateLogs({
-		currentTime: DateTime.formatIso(Effect.runSync(DateTime.now)),
 		userId: event.locals.user?.id,
+		username: event.locals.user?.name,
 		routeId: event.route.id,
 		params: event.params,
 		extra
