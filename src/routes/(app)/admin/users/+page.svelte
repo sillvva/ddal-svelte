@@ -12,7 +12,7 @@
 	const parser = $derived(
 		new JSONSearchParser(data.users, {
 			defaultKey: "name",
-			validKeys: ["id", "name", "email", "role", "banned"]
+			validKeys: ["id", "name", "email", "role", "banned", "characters"]
 		})
 	);
 
@@ -33,6 +33,7 @@
 			<td>Name</td>
 			<td>Email</td>
 			<td class="text-center">Role</td>
+			<td class="text-center">Characters</td>
 			<td class="text-center">Banned</td>
 			{#if !data.mobile}
 				<td class="w-0"></td>
@@ -41,7 +42,7 @@
 	</thead>
 	<tbody>
 		{#each results as user}
-			<tr>
+			<tr data-banned={user.isBanned} class="data-[banned=true]:bg-error/10">
 				{#if !data.mobile}
 					<td class="pr-0 align-top transition-colors max-sm:hidden sm:pr-2">
 						<div class="avatar">
@@ -65,6 +66,7 @@
 				<td>{user.name}</td>
 				<td>{user.email}</td>
 				<td class="text-center">{user.role.toLocaleUpperCase()}</td>
+				<td class="text-center">{user.characters}</td>
 				<td class="text-center">{user.banned}</td>
 				{#if !data.mobile}
 					<td>

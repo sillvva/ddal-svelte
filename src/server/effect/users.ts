@@ -1,5 +1,5 @@
 import { PROVIDERS } from "$lib/constants";
-import type { LocalsUser, UserId } from "$lib/schemas";
+import type { CharacterId, LocalsUser, UserId } from "$lib/schemas";
 import { DBService, type Transaction } from "$server/db";
 import type { User } from "$server/db/schema";
 import { sorter } from "@sillvva/utils";
@@ -14,7 +14,7 @@ function createFetchError(err: unknown): FetchUserError {
 interface UserApiImpl {
 	readonly get: {
 		readonly localsUser: (userId: UserId) => Effect.Effect<LocalsUser | undefined, FetchUserError>;
-		readonly users: (userId: UserId) => Effect.Effect<User[], FetchUserError>;
+		readonly users: (userId: UserId) => Effect.Effect<(User & { characters: { id: CharacterId }[] })[], FetchUserError>;
 	};
 }
 
@@ -68,6 +68,11 @@ export class UserService extends Effect.Service<UserService>()("UserService", {
 									accounts: {
 										columns: {
 											providerId: true
+										}
+									},
+									characters: {
+										columns: {
+											id: true
 										}
 									}
 								},

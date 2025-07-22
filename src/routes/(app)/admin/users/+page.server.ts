@@ -11,7 +11,14 @@ export const load = async (event) => {
 
 	const users = await run(
 		withUser((service) => service.get.users(user.id)).pipe(
-			Effect.map((users) => users.map((user) => ({ ...user, isBanned: user.banned, banned: user.banned ? "Yes" : "No" })))
+			Effect.map((users) =>
+				users.map((user) => ({
+					...user,
+					characters: user.characters.length,
+					isBanned: user.banned,
+					banned: user.banned ? "Yes" : "No"
+				}))
+			)
 		)
 	);
 
