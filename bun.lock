@@ -7,6 +7,7 @@
         "@humanspeak/svelte-markdown": "^0.8.8",
         "@internationalized/date": "^3.8.2",
         "@resvg/resvg-js": "^2.6.2",
+        "@sillvva/search": "^1.0.2",
         "@sillvva/utils": "^0.5.6",
         "@svelteuidev/composables": "^0.15.7",
         "@types/regexp.escape": "^2.0.0",
@@ -318,6 +319,8 @@
     "@sideway/formula": ["@sideway/formula@3.0.1", "", {}, "sha512-/poHZJJVjx3L+zVD6g9KgHfYnb443oi7wLu/XKojDviHy6HOEOA6z1Trk5aR1dGcmPenJEgb2sK2I80LeS3MIg=="],
 
     "@sideway/pinpoint": ["@sideway/pinpoint@2.0.0", "", {}, "sha512-RNiOoTPkptFtSVzQevY/yWtZwf/RxyVnPy/OcA9HBM3MlGDnBEYL5B41H0MTn0Uec8Hi+2qUtTfG2WWZBmMejQ=="],
+
+    "@sillvva/search": ["@sillvva/search@1.0.2", "", { "dependencies": { "@sillvva/utils": "^0.5.5" }, "peerDependencies": { "drizzle-orm": ">=1.0.0-beta.1" }, "optionalPeers": ["drizzle-orm"] }, "sha512-2L7KtaNT2HZSVdKNhnA9zI47fJyxb7ZfPtguS4SA24H+s3lIrVt/4HCiz2JT6Wf+TDybdoLsTlkaylwlbssz5Q=="],
 
     "@sillvva/utils": ["@sillvva/utils@0.5.6", "", {}, "sha512-RITk3twQy3KABMiigi9XQ+RWuqxHrw+qhN9Yc2M+QY0oyg+mOrvZJHLABX+47zC2L/xJWGA7oDoy6oziaqSavw=="],
 

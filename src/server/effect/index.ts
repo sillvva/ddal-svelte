@@ -31,20 +31,25 @@ import type { BaseSchema, InferInput, InferOutput } from "valibot";
 
 const logLevel = Logger.withMinimumLogLevel(privateEnv.LOG_LEVEL);
 
-type LogAnnotations = {
+type AnnotationsList = {
 	_id: string;
 	values: [["routeId", string], ["params", string], ["userId", string], ["username", string], ["extra", object]];
+};
+
+type AnnotationsListEntries = AnnotationsList["values"][number];
+export type Annotations = {
+	[K in AnnotationsListEntries[0]]: Extract<AnnotationsListEntries, [K, any]>[1];
 };
 
 const dbLogger = Logger.replace(
 	Logger.defaultLogger,
 	Logger.make((log) => {
-		const data = log.annotations.toJSON() as LogAnnotations;
+		const data = log.annotations.toJSON() as AnnotationsList;
 		const values = {
 			label: (log.message as string[]).join(" | "),
 			timestamp: log.date,
 			level: log.logLevel.label,
-			annotations: Object.fromEntries(data.values)
+			annotations: Object.fromEntries(data.values) as Annotations
 		};
 
 		Effect.promise(() => db.insert(appLogs).values([values]).returning({ id: appLogs.id })).pipe(
@@ -78,17 +83,15 @@ export const Log = {
 		Effect.logDebug(message).pipe(logLevel, annotate(extra), Effect.provide(logger))
 };
 
-export function debugSet<S extends string>(service: S, impl: Function, result: unknown) {
-	return Effect.gen(function* () {
-		const call = impl.toString();
-		if (call.includes("service.set")) {
-			yield* Log.debug(service, {
-				call: impl.toString(),
-				result: Array.isArray(result) ? result.slice(0, 5) : result
-			});
-		}
-	});
-}
+export const debugSet = Effect.fn("debugSet")(function* <S extends string>(service: S, impl: Function, result: unknown) {
+	const call = impl.toString();
+	if (call.includes(".set.")) {
+		yield* Log.debug(service, {
+			call: impl.toString(),
+			result: Array.isArray(result) ? result.slice(0, 5) : result
+		});
+	}
+});
 
 // -------------------------------------------------------------------------------------------------
 // Run

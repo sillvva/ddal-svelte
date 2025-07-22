@@ -4,11 +4,12 @@ import { appCookieSchema, localsSessionSchema, type UserId } from "$lib/schemas"
 import { serverGetCookie } from "$server/cookie";
 import { db } from "$server/db";
 import { run } from "$server/effect";
-import { withUser } from "$server/effect/user";
+import { withUser } from "$server/effect/users";
 import { type Handle } from "@sveltejs/kit";
 import { sequence } from "@sveltejs/kit/hooks";
 import { betterAuth } from "better-auth";
 import { drizzleAdapter } from "better-auth/adapters/drizzle";
+import { admin } from "better-auth/plugins/admin";
 import { passkey } from "better-auth/plugins/passkey";
 import { svelteKitHandler } from "better-auth/svelte-kit";
 import { v7 } from "uuid";
@@ -31,7 +32,7 @@ export const auth = betterAuth({
 			disableSignUp: privateEnv.DISABLE_SIGNUPS
 		}
 	},
-	plugins: [passkey()],
+	plugins: [passkey(), admin()],
 	account: {
 		accountLinking: {
 			enabled: true
@@ -57,7 +58,7 @@ const session: Handle = async ({ event, resolve }) => {
 	const { session, user } = (await auth.api.getSession({ headers: event.request.headers })) ?? {};
 
 	event.locals.session = session && parse(localsSessionSchema, session);
-	event.locals.user = user && (await run(withUser((service) => service.getLocalsUser(user.id as UserId))));
+	event.locals.user = user && (await run(withUser((service) => service.get.localsUser(user.id as UserId))));
 
 	return await resolve(event);
 };

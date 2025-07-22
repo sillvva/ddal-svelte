@@ -159,15 +159,14 @@ export class CharacterService extends Effect.Service<CharacterService>()("Charac
 export const CharacterTx = (tx: Transaction) =>
 	CharacterService.DefaultWithoutDependencies.pipe(Layer.provide(DBService.Default(tx)));
 
-export function withCharacter<R, E extends FetchCharacterError | SaveCharacterError>(
-	impl: (service: CharacterApiImpl) => Effect.Effect<R, E>
-) {
-	return Effect.gen(function* () {
-		const CharacterApi = yield* CharacterService;
-		const result = yield* impl(CharacterApi);
+export const withCharacter = Effect.fn("withCharacter")(
+	<R, E extends FetchCharacterError | SaveCharacterError>(impl: (service: CharacterApiImpl) => Effect.Effect<R, E>) =>
+		Effect.gen(function* () {
+			const CharacterApi = yield* CharacterService;
+			const result = yield* impl(CharacterApi);
 
-		yield* debugSet("CharacterService", impl, result);
+			yield* debugSet("CharacterService", impl, result);
 
-		return result;
-	}).pipe(Effect.provide(CharacterService.Default));
-}
+			return result;
+		}).pipe(Effect.provide(CharacterService.Default))
+);

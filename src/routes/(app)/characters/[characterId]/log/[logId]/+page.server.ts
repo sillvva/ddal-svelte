@@ -24,7 +24,8 @@ export const load = (event) =>
 		if (!idResult.success) redirect(302, `/character/${character.id}`);
 		const logId = idResult.output;
 
-		const log = (yield* withLog((service) => service.get.log(logId, user.id))) || defaultLogData(user.id, character);
+		const log =
+			(logId !== "new" && (yield* withLog((service) => service.get.log(logId, user.id)))) || defaultLogData(user.id, character);
 
 		if (logId !== "new") {
 			if (!log.id) return yield* new FetchLogError("Log not found", 404);

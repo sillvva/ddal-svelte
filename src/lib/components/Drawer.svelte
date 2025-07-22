@@ -67,6 +67,22 @@
 			</a>
 		</li>
 	</ul>
+	{#if page.data.user?.role === "admin"}
+		<div class="divider my-0"></div>
+		<ul class="menu menu-lg w-full">
+			<li>
+				<a
+					href="/admin/users"
+					onkeydown={() => toggleDrawer(false)}
+					onclick={() => toggleDrawer(false)}
+					data-active={page.url.pathname.startsWith("/admin/users")}
+					class="data-[active=true]:bg-primary data-[active=true]:text-primary-content"
+				>
+					Users
+				</a>
+			</li>
+		</ul>
+	{/if}
 	<div class="divider my-0"></div>
 	<ul class="menu menu-lg w-full">
 		<li>

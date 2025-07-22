@@ -53,6 +53,7 @@
 		"@humanspeak/svelte-markdown": "^0.8.8",
 		"@internationalized/date": "^3.8.2",
 		"@resvg/resvg-js": "^2.6.2",
+		"@sillvva/search": "^1.0.2",
 		"@sillvva/utils": "^0.5.6",
 		"@svelteuidev/composables": "^0.15.7",
 		"@types/regexp.escape": "^2.0.0",

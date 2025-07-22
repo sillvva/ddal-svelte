@@ -234,13 +234,14 @@ export class DMService extends Effect.Service<DMService>()("DMSService", {
 
 export const DMTx = (tx: Transaction) => DMService.DefaultWithoutDependencies.pipe(Layer.provide(DBService.Default(tx)));
 
-export function withDM<R, E extends FetchDMError | SaveDMError>(impl: (service: DMApiImpl) => Effect.Effect<R, E>) {
-	return Effect.gen(function* () {
-		const dmApi = yield* DMService;
-		const result = yield* impl(dmApi);
+export const withDM = Effect.fn("withDM")(
+	<R, E extends FetchDMError | SaveDMError>(impl: (service: DMApiImpl) => Effect.Effect<R, E>) =>
+		Effect.gen(function* () {
+			const dmApi = yield* DMService;
+			const result = yield* impl(dmApi);
 
-		yield* debugSet("DMService", impl, result);
+			yield* debugSet("DMService", impl, result);
 
-		return result;
-	}).pipe(Effect.provide(DMService.Default));
-}
+			return result;
+		}).pipe(Effect.provide(DMService.Default))
+);
