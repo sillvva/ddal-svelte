@@ -53,6 +53,18 @@
 		Log Sheet
 	</h1>
 	<div class="max-xs:max-w-60 max-xs:gap-3 flex max-w-80 flex-col gap-4">
+		{#if data.error}
+			<div class="flex justify-center">
+				<div class="alert alert-error max-w-[28rem] min-w-60 shadow-lg">
+					<span class="iconify mdi--alert-circle size-6 max-sm:hidden"></span>
+					<div>
+						<h3 class="font-bold">Error</h3>
+						{#if data.error.message}<p class="mb-2 max-sm:text-sm">{data.error.message}</p>{/if}
+						<p class="font-mono text-xs">Code: {data.error.code}</p>
+					</div>
+				</div>
+			</div>
+		{/if}
 		{#each PROVIDERS as provider}
 			<button
 				class="bg-base-200 text-base-content hover:bg-base-300 max-xs:h-12 max-xs:px-4 flex h-16 items-center gap-4 rounded-lg px-8 py-4 transition-colors"
