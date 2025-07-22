@@ -16,7 +16,9 @@
 		(Array.isArray(text) ? text : text?.split(separator) || [])
 			.filter(
 				(item) =>
-					!filtered || (matches === 1 ? regexes.every((regex) => item.match(regex)) : regexes.some((regex) => item.match(regex)))
+					!filtered ||
+					!terms.length ||
+					(matches === 1 ? regexes.every((regex) => item.match(regex)) : regexes.some((regex) => item.match(regex)))
 			)
 			.join(separator)
 	);
