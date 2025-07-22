@@ -7,11 +7,14 @@ export const load = async (event) => {
 	const user = event.locals.user;
 	assertUser(user);
 
-	const logs = await run(
+	const today = new Date().toISOString().split("T")[0];
+	const search = event.url.searchParams.get("s") ?? `level:ERROR date:${today}`;
+
+	const { logs, metadata } = await run(
 		withAdmin((service) =>
-			service.get.logs().pipe(
-				Effect.map((logs) =>
-					logs.map((log) => {
+			service.get.logs(search).pipe(
+				Effect.map(({ logs, metadata }) => ({
+					logs: logs.map((log) => {
 						const parts = log.label.split(/\n\s+\b/).map((part) => part.trim());
 						const message = parts.shift();
 						const trace = parts.join("\n");
@@ -20,11 +23,12 @@ export const load = async (event) => {
 							message,
 							trace
 						};
-					})
-				)
+					}),
+					metadata
+				}))
 			)
 		)
 	);
 
-	return { logs };
+	return { logs, metadata, search };
 };

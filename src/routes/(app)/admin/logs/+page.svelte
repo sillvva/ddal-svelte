@@ -1,7 +1,54 @@
 <script lang="ts">
+	import { goto } from "$app/navigation";
+	import { page } from "$app/state";
+	import { debounce } from "@sillvva/utils";
+
 	let { data } = $props();
+
+	let search = $state(data.search || "");
+
+	const debouncedSearch = debounce((value: string) => {
+		if (value.trim()) {
+			page.url.searchParams.set("s", value);
+		} else {
+			page.url.searchParams.delete("s");
+		}
+		const params = page.url.searchParams.size ? "?" + page.url.searchParams.toString() : "";
+		goto(page.url.pathname + params, {
+			replaceState: true,
+			keepFocus: true,
+			noScroll: true,
+			invalidateAll: true
+		});
+	}, 400);
 </script>
 
+<div class="mb-4 flex flex-col gap-2">
+	<div class="flex w-full gap-2 sm:max-w-md md:max-w-md">
+		<search class="min-w-0 flex-1">
+			<label class="input focus-within:border-primary sm:input-sm flex w-full items-center gap-2">
+				<input
+					type="text"
+					value={search}
+					oninput={(e) => {
+						debouncedSearch.call(e.currentTarget.value);
+					}}
+					class="w-full flex-1"
+					aria-label="Search"
+					placeholder={data.search}
+				/>
+			</label>
+		</search>
+	</div>
+	{#if data.metadata.hasErrors}
+		{#each data.metadata.errors as error}
+			<div class="alert alert-error w-fit">
+				<span class="iconify mdi--alert-circle size-6"></span>
+				{error.message} at position {error.position}: <kbd>{error.value}</kbd>
+			</div>
+		{/each}
+	{/if}
+</div>
 <table class="linked-table bg-base-200 table w-full leading-5 max-sm:border-separate max-sm:border-spacing-y-2">
 	<thead class="max-sm:hidden">
 		<tr class="bg-base-300 text-base-content/70">
@@ -18,7 +65,7 @@
 			<tr class="border-0">
 				<td>{log.message}</td>
 				<td>{log.level}</td>
-				<td>{log.timestamp.toLocaleString()}</td>
+				<td>{log.timestamp.toISOString()}</td>
 				{#if !data.mobile}
 					<td>
 						<button

@@ -1,6 +1,11 @@
-import { DBService, type Transaction } from "$server/db";
-import type { AppLog } from "$server/db/schema";
-import { Effect, Layer, LogLevel } from "effect";
+import { DBService, type Filter, type Transaction, type TRSchema } from "$server/db";
+import type { relations } from "$server/db/relations";
+import { type AppLog } from "$server/db/schema";
+// import { DrizzleSearchParser } from "@sillvva/search/drizzle";
+import type { ASTNode, ParseMetadata } from "@sillvva/search";
+import { DrizzleSearchParser } from "@sillvva/search/drizzle";
+import { sql } from "drizzle-orm";
+import { Effect, Layer } from "effect";
 import { FetchError } from ".";
 
 class FetchAdminError extends FetchError {}
@@ -10,7 +15,9 @@ function createFetchError(err: unknown): FetchAdminError {
 
 interface AdminApiImpl {
 	readonly get: {
-		readonly logs: (filter?: { logLevels: LogLevel.LogLevel["label"][] }) => Effect.Effect<AppLog[], FetchAdminError>;
+		readonly logs: (
+			search?: string
+		) => Effect.Effect<{ logs: AppLog[]; metadata: ParseMetadata; ast: ASTNode | null }, FetchAdminError>;
 	};
 }
 
@@ -20,25 +27,22 @@ export class AdminService extends Effect.Service<AdminService>()("AdminService",
 
 		const impl: AdminApiImpl = {
 			get: {
-				logs: (
-					filter = {
-						logLevels: ["ERROR"]
-					}
-				) =>
-					Effect.tryPromise({
-						try: () =>
-							db.query.appLogs.findMany({
-								where: {
-									level: {
-										in: filter.logLevels
-									}
-								},
-								orderBy: {
-									timestamp: "desc"
-								}
-							}),
-						catch: createFetchError
-					})
+				logs: (search = "") => {
+					const { where, orderBy, metadata, ast } = logSearch.parse(search);
+
+					return Effect.promise(() =>
+						db.query.appLogs.findMany({
+							where,
+							orderBy: {
+								...orderBy,
+								timestamp: "desc"
+							}
+						})
+					).pipe(
+						Effect.catchAllDefect(() => Effect.succeed([] as AppLog[])),
+						Effect.andThen((logs) => ({ logs, metadata, ast }))
+					);
+				}
 			}
 		};
 
@@ -56,3 +60,67 @@ export const withAdmin = Effect.fn("withAdmin")(
 			return yield* impl(adminApi);
 		}).pipe(Effect.provide(AdminService.Default))
 );
+
+type Table = "appLogs";
+type Column = keyof TRSchema[Table]["columns"];
+
+export const validKeys = ["id", "date", "label", "level", "user", "userId", "route", "routeId"] as const satisfies (
+	| Column
+	| (string & {})
+)[];
+const defaultKey = "label" as const satisfies (typeof validKeys)[number] & Column;
+
+export const logSearch = new DrizzleSearchParser<typeof relations, Table>({
+	validKeys,
+	defaultKey,
+	filterFn: (ast) => {
+		const key = (ast.key || defaultKey) as (typeof validKeys)[number];
+
+		if (key === "user" || key === "userId") {
+			if (ast.isRegex) {
+				return {
+					RAW: (table) => sql`${table.annotations}->>'userId'::text ~* ${ast.value}`
+				};
+			}
+			return {
+				RAW: (table) => sql`${table.annotations}->>'userId'::text = ${ast.value}`
+			};
+		}
+
+		if (key === "route" || key === "routeId") {
+			if (ast.isRegex) {
+				return {
+					RAW: (table) => sql`${table.annotations}->>'routeId'::text ~* ${ast.value}`
+				};
+			}
+			return {
+				RAW: (table) => sql`${table.annotations}->'routeId'::text = ${ast.value}`
+			};
+		}
+
+		const keyColumns = new Map<typeof key, { col: Column; regex?: true; numeric?: true; date?: true }>([
+			["id", { col: "id" }],
+			["label", { col: "label", regex: true }],
+			["level", { col: "level", regex: true }],
+			["date", { col: "timestamp", date: true }]
+		]);
+
+		if (key === "level" && String(ast.value).toUpperCase() === "ALL") ast.value = "";
+
+		const column = keyColumns.get(key);
+		if (!column) return;
+
+		const filter: Filter<Table> = {};
+		if (column.date) {
+			const op = logSearch.parseDate(ast);
+			if (op && ast.isDate) filter[column.col] = op;
+			else return;
+		} else if (ast.isRegex) {
+			filter.RAW = (table) => (column.regex ? sql`${table[column.col]}::text ~* ${ast.value}` : sql`1=0`);
+		} else {
+			filter.RAW = (table) => sql`${table[column.col]}::text ilike ${`%${ast.value}%`}`;
+		}
+
+		return filter;
+	}
+});
