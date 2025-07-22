@@ -1,7 +1,7 @@
 import type { ProviderId } from "$lib/constants";
 import type { CharacterId, DungeonMasterId, ItemId, LogId, UserId } from "$lib/schemas";
 import type { Annotations } from "$server/effect";
-import { isNotNull } from "drizzle-orm";
+import { eq, isNotNull } from "drizzle-orm";
 import * as pg from "drizzle-orm/pg-core";
 import { v7 } from "uuid";
 
@@ -209,7 +209,10 @@ export const dungeonMasters = pg.pgTable(
 			.notNull()
 			.$default(() => false)
 	},
-	(table) => [pg.index("dungeonmaster_user_id_idx").on(table.userId)]
+	(table) => [
+		pg.uniqueIndex("dungeonmaster_userid_isuser_true_unique").on(table.userId).where(eq(table.isUser, true)),
+		pg.index("dungeonmaster_user_id_idx").on(table.userId)
+	]
 );
 
 export const logType = pg.pgEnum("logType", ["game", "nongame"]);
