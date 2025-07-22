@@ -9,6 +9,7 @@
 	<a href="/admin/users" role="tab" class={twMerge("tab", page.url.pathname.startsWith("/admin/users") && "tab-active")}>
 		Users
 	</a>
+	<a href="/admin/logs" role="tab" class={twMerge("tab", page.url.pathname.startsWith("/admin/logs") && "tab-active")}>Logs</a>
 </div>
 
 {@render children()}

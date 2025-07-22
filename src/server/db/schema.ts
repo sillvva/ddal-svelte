@@ -1,5 +1,6 @@
 import type { ProviderId } from "$lib/constants";
 import type { CharacterId, DungeonMasterId, ItemId, LogId, UserId } from "$lib/schemas";
+import type { Annotations } from "$server/effect";
 import { isNotNull } from "drizzle-orm";
 import * as pg from "drizzle-orm/pg-core";
 import { v7 } from "uuid";
@@ -353,6 +354,6 @@ export const appLogs = pg.pgTable("applog", {
 		.$default(() => v7()),
 	label: pg.text().notNull(),
 	level: logLevel().notNull(),
-	annotations: pg.jsonb().notNull(),
+	annotations: pg.jsonb().notNull().$type<Annotations>(),
 	timestamp: pg.timestamp({ mode: "date" }).notNull()
 });
