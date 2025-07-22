@@ -1,5 +1,5 @@
 import type { DungeonMasterId, DungeonMasterSchema, LocalsUser, UserId } from "$lib/schemas";
-import { buildConflictUpdateColumns, DBService, type Database, type InferQueryResult, type Transaction } from "$server/db";
+import { DBService, type Database, type InferQueryResult, type Transaction } from "$server/db";
 import { dungeonMasters, type DungeonMaster } from "$server/db/schema";
 import { sorter } from "@sillvva/utils";
 import { and, eq } from "drizzle-orm";
@@ -108,7 +108,7 @@ export class DMService extends Effect.Service<DMService>()("DMSService", {
 							// Sort the DMs by isUser and name
 							Effect.map((dms) => dms.toSorted((a, b) => sorter(a.isUser, b.isUser) || sorter(a.name, b.name))),
 							// Add the user DM if there isn't one already, and not searching for a specific DM
-							Effect.flatMap((dms) =>
+							Effect.tap((dms) =>
 								!id && !dms[0]?.isUser
 									? impl.set.addUserDM(user, dms).pipe(Effect.catchAll(createFetchError))
 									: Effect.succeed(dms)
@@ -178,21 +178,36 @@ export class DMService extends Effect.Service<DMService>()("DMSService", {
 					Effect.gen(function* () {
 						yield* Log.info("DMService.addUserDM", { userId: user.id });
 
+						const existing = yield* Effect.tryPromise({
+							try: () =>
+								db.query.dungeonMasters.findFirst({
+									where: {
+										userId: {
+											eq: user.id
+										},
+										isUser: true
+									}
+								}),
+							catch: createSaveError
+						});
+
 						const result = yield* Effect.tryPromise({
 							try: () =>
-								db
-									.insert(dungeonMasters)
-									.values({
-										name: user.name,
-										DCI: null,
-										userId: user.id,
-										isUser: true
-									})
-									.onConflictDoUpdate({
-										target: [dungeonMasters.userId, dungeonMasters.isUser],
-										set: buildConflictUpdateColumns(dungeonMasters, ["name"])
-									})
-									.returning(),
+								existing
+									? db
+											.update(dungeonMasters)
+											.set({ name: user.name })
+											.where(and(eq(dungeonMasters.userId, user.id), eq(dungeonMasters.isUser, true)))
+											.returning()
+									: db
+											.insert(dungeonMasters)
+											.values({
+												name: user.name,
+												DCI: null,
+												userId: user.id,
+												isUser: true
+											})
+											.returning(),
 							catch: createSaveError
 						}).pipe(
 							Effect.flatMap((dms) =>
