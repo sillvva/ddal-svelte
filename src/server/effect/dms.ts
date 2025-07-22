@@ -108,7 +108,7 @@ export class DMService extends Effect.Service<DMService>()("DMSService", {
 							// Sort the DMs by isUser and name
 							Effect.map((dms) => dms.toSorted((a, b) => sorter(a.isUser, b.isUser) || sorter(a.name, b.name))),
 							// Add the user DM if there isn't one already, and not searching for a specific DM
-							Effect.tap((dms) =>
+							Effect.flatMap((dms) =>
 								!id && !dms[0]?.isUser
 									? impl.set.addUserDM(user, dms).pipe(Effect.catchAll(createFetchError))
 									: Effect.succeed(dms)
