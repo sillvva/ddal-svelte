@@ -29,7 +29,7 @@
 			<label class="input focus-within:border-primary sm:input-sm flex w-full items-center gap-2">
 				<input
 					type="text"
-					value={search}
+					bind:value={search}
 					oninput={(e) => {
 						debouncedSearch.call(e.currentTarget.value);
 					}}

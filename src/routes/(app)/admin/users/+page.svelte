@@ -7,7 +7,7 @@
 
 	let { data } = $props();
 
-	let search = $state("");
+	let search = $state(data.search);
 
 	const parser = $derived(
 		new JSONSearchParser(data.users, {
