@@ -1,6 +1,7 @@
 <script lang="ts">
 	import { goto, invalidateAll } from "$app/navigation";
 	import { authClient } from "$lib/auth.js";
+	import { errorToast, successToast } from "$lib/factories.svelte.js";
 
 	let { data } = $props();
 </script>
@@ -43,26 +44,72 @@
 					</td>
 				{/if}
 				<td>{user.name}</td>
-				<td>{user.role}</td>
+				<td>{user.role.toLocaleUpperCase()}</td>
 				<td class="text-center">{user.banned ? "Yes" : "No"}</td>
 				{#if !data.mobile}
 					<td>
-						<button
-							class="btn btn-sm btn-primary tooltip"
-							aria-label="Impersonate {user.name}"
-							data-tip="Impersonate {user.name}"
-							onclick={async () => {
-								const { data } = await authClient.admin.impersonateUser({
-									userId: user.id
-								});
-								if (data) {
-									await invalidateAll();
-									goto("/characters");
-								}
-							}}
-						>
-							<span class="iconify mdi--account-switch"></span>
-						</button>
+						<div class="flex justify-end gap-2">
+							<button
+								class="btn btn-sm btn-primary tooltip"
+								aria-label="Impersonate {user.name}"
+								data-tip="Impersonate {user.name}"
+								disabled={user.role === "admin" || user.banned}
+								onclick={async () => {
+									if (user.role === "admin" || user.banned) return;
+									const { data } = await authClient.admin.impersonateUser({
+										userId: user.id
+									});
+									if (data) {
+										await invalidateAll();
+										goto("/characters");
+									}
+								}}
+							>
+								<span class="iconify mdi--account-switch"></span>
+							</button>
+							{#if !user.banned}
+								<button
+									class="btn btn-sm btn-error tooltip"
+									aria-label="Ban {user.name}"
+									data-tip="Ban {user.name}"
+									disabled={user.role === "admin" || user.banned}
+									onclick={async () => {
+										if (user.role === "admin" || user.banned) return;
+										const reason = prompt("Reason for ban");
+										if (!reason?.trim()) return errorToast("Reason is required");
+										const { data } = await authClient.admin.banUser({
+											userId: user.id,
+											banReason: reason
+										});
+										if (data) {
+											successToast(`${user.name} has been banned`);
+											await invalidateAll();
+										}
+									}}
+								>
+									<span class="iconify mdi--ban"></span>
+								</button>
+							{:else}
+								<button
+									class="btn btn-sm btn-success tooltip"
+									aria-label="Unban {user.name}"
+									data-tip="Unban {user.name}"
+									disabled={user.role === "admin" || !user.banned}
+									onclick={async () => {
+										if (user.role === "admin" || !user.banned) return;
+										const { data } = await authClient.admin.unbanUser({
+											userId: user.id
+										});
+										if (data) {
+											successToast(`${user.name} has been unbanned`);
+											await invalidateAll();
+										}
+									}}
+								>
+									<span class="iconify mdi--check"></span>
+								</button>
+							{/if}
+						</div>
 					</td>
 				{/if}
 			</tr>
