@@ -1,6 +1,7 @@
 import { dev } from "$app/environment";
 import { getRequestEvent } from "$app/server";
 import { privateEnv } from "$lib/env/private";
+import type { UserId } from "$lib/schemas";
 import { db } from "$server/db";
 import { appLogs } from "$server/db/schema";
 import {
@@ -33,7 +34,13 @@ const logLevel = Logger.withMinimumLogLevel(privateEnv.LOG_LEVEL);
 
 type AnnotationsList = {
 	_id: string;
-	values: [["routeId", string], ["params", string], ["userId", string], ["username", string], ["extra", object]];
+	values: [
+		["routeId", string | null],
+		["params", Partial<Record<string, string>>],
+		["userId", UserId | undefined],
+		["username", string | undefined],
+		["extra", object]
+	];
 };
 
 type AnnotationsListEntries = AnnotationsList["values"][number];
@@ -71,7 +78,7 @@ function annotate(extra: Record<PropertyKey, any> = {}) {
 		routeId: event.route.id,
 		params: event.params,
 		extra
-	});
+	} satisfies Annotations);
 }
 
 export const Log = {
