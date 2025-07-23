@@ -5,9 +5,10 @@ import { assertUser } from "$server/auth";
 import { run, save, validateForm } from "$server/effect";
 import { FetchCharacterError, withCharacter } from "$server/effect/characters";
 import { withLog } from "$server/effect/logs.js";
+import { redirect } from "@sveltejs/kit";
 import { Effect } from "effect";
 import { fail, setError } from "sveltekit-superforms";
-import { parse } from "valibot";
+import { safeParse } from "valibot";
 
 export const load = (event) =>
 	run(function* () {
@@ -56,7 +57,9 @@ export const actions = {
 			if (!form.valid) return fail(400, { form });
 			const { firstLog, ...data } = form.data;
 
-			const characterId = parse(characterIdSchema, event.params.characterId);
+			const result = safeParse(characterIdSchema, event.params.characterId);
+			if (!result.success) throw redirect(302, "/characters?uuid");
+			const characterId = result.output;
 
 			return save(
 				withCharacter((service) => service.set.save(characterId, user.id, data)),

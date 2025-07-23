@@ -9,7 +9,7 @@ import { sorter } from "@sillvva/utils";
 import { redirect } from "@sveltejs/kit";
 import { Effect } from "effect";
 import { fail } from "sveltekit-superforms";
-import { parse, safeParse } from "valibot";
+import { safeParse } from "valibot";
 
 export const load = (event) =>
 	run(function* () {
@@ -57,7 +57,10 @@ export const actions = {
 			const user = event.locals.user;
 			assertUser(user);
 
-			const characterId = parse(characterIdSchema, event.params.characterId);
+			const result = safeParse(characterIdSchema, event.params.characterId);
+			if (!result.success) throw redirect(302, "/characters?uuid");
+			const characterId = result.output;
+
 			const character = yield* withCharacter((service) => service.get.character(characterId));
 			if (!character) redirect(302, "/characters");
 

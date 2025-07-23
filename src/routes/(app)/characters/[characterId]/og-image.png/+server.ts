@@ -9,10 +9,13 @@ import { readFile } from "fs/promises";
 import imageSize from "image-size";
 import path from "path";
 import satori from "satori";
-import { parse } from "valibot";
+import { safeParse } from "valibot";
 
 export const GET = async ({ params, url }) => {
-	const characterId = parse(characterIdSchema, params.characterId);
+	const result = safeParse(characterIdSchema, params.characterId);
+	if (!result.success) throw error(404, "Character not found");
+	const characterId = result.output;
+
 	const character = await run(withCharacter((service) => service.get.character(characterId, true)));
 	if (!character) throw error(404, "Character not found");
 
