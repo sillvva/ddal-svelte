@@ -58,7 +58,7 @@ export const actions = {
 			const { firstLog, ...data } = form.data;
 
 			const result = safeParse(characterIdSchema, event.params.characterId);
-			if (!result.success) throw redirect(302, "/characters?uuid");
+			if (!result.success) throw redirect(302, "/characters?uuid=1");
 			const characterId = result.output;
 
 			return save(

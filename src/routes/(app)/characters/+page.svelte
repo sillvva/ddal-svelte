@@ -52,7 +52,7 @@
 		</Dropdown>
 	</div>
 
-	{#if page.url.searchParams.get("uuid") !== undefined}
+	{#if page.url.searchParams.get("uuid")}
 		<div class="alert alert-warning">
 			<span class="iconify mdi--alert size-6"></span>
 			Database IDs have been changed from CUIDs to UUIDs. This will break existing links to characters, but no data has been lost.

@@ -58,7 +58,7 @@ export const actions = {
 			assertUser(user);
 
 			const result = safeParse(characterIdSchema, event.params.characterId);
-			if (!result.success) throw redirect(302, "/characters?uuid");
+			if (!result.success) throw redirect(302, "/characters?uuid=1");
 			const characterId = result.output;
 
 			const character = yield* withCharacter((service) => service.get.character(characterId));
