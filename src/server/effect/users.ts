@@ -6,15 +6,12 @@ import { sorter } from "@sillvva/utils";
 import { Effect, Layer } from "effect";
 import { FetchError } from ".";
 
-class FetchUserError extends FetchError {}
-function createFetchError(err: unknown): FetchUserError {
-	return FetchUserError.from(err);
-}
+export class FetchUserError extends FetchError {}
 
 interface UserApiImpl {
 	readonly get: {
-		readonly localsUser: (userId: UserId) => Effect.Effect<LocalsUser | undefined, FetchUserError>;
-		readonly users: (userId: UserId) => Effect.Effect<(User & { characters: { id: CharacterId }[] })[], FetchUserError>;
+		readonly localsUser: (userId: UserId) => Effect.Effect<LocalsUser | undefined>;
+		readonly users: (userId: UserId) => Effect.Effect<(User & { characters: { id: CharacterId }[] })[]>;
 	};
 }
 
@@ -25,65 +22,61 @@ export class UserService extends Effect.Service<UserService>()("UserService", {
 		const impl: UserApiImpl = {
 			get: {
 				localsUser: (userId) =>
-					Effect.tryPromise({
-						try: () =>
-							db.query.user.findFirst({
-								with: {
-									accounts: {
-										columns: {
-											id: true,
-											accountId: true,
-											providerId: true,
-											scope: true,
-											createdAt: true,
-											updatedAt: true
-										},
-										where: {
-											providerId: {
-												in: PROVIDERS.map((p) => p.id)
-											}
-										}
+					Effect.promise(() =>
+						db.query.user.findFirst({
+							with: {
+								accounts: {
+									columns: {
+										id: true,
+										accountId: true,
+										providerId: true,
+										scope: true,
+										createdAt: true,
+										updatedAt: true
 									},
-									passkeys: {
-										columns: {
-											id: true,
-											name: true,
-											createdAt: true
+									where: {
+										providerId: {
+											in: PROVIDERS.map((p) => p.id)
 										}
 									}
 								},
-								where: {
-									id: {
-										eq: userId
+								passkeys: {
+									columns: {
+										id: true,
+										name: true,
+										createdAt: true
 									}
 								}
-							}),
-						catch: createFetchError
-					}),
+							},
+							where: {
+								id: {
+									eq: userId
+								}
+							}
+						})
+					),
 				users: (userId: UserId) =>
-					Effect.tryPromise({
-						try: () =>
-							db.query.user.findMany({
-								with: {
-									accounts: {
-										columns: {
-											providerId: true
-										}
-									},
-									characters: {
-										columns: {
-											id: true
-										}
+					Effect.promise(() =>
+						db.query.user.findMany({
+							with: {
+								accounts: {
+									columns: {
+										providerId: true
 									}
 								},
-								where: {
-									id: {
-										ne: userId
+								characters: {
+									columns: {
+										id: true
 									}
 								}
-							}),
-						catch: createFetchError
-					}).pipe(Effect.map((users) => users.sort((a, b) => sorter(a.name.toLowerCase(), b.name.toLowerCase()))))
+							},
+							where: {
+								id: {
+									ne: userId
+								}
+							}
+						})
+					).pipe(Effect.map((users) => users.sort((a, b) => sorter(a.name.toLowerCase(), b.name.toLowerCase()))))
 			}
 		};
 

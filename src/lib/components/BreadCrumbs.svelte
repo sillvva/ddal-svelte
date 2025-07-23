@@ -1,14 +1,8 @@
 <script lang="ts">
 	import { page } from "$app/state";
-	import type { ModuleData } from "$lib/util";
+	import { routeModules } from "$lib/util";
 	import { Breadcrumbs, type Crumb } from "svelte-breadcrumbs";
 	import BackButton from "./BackButton.svelte";
-
-	let routeModules = $derived(
-		import.meta.glob("/src/routes/**/+page.svelte", {
-			eager: true
-		}) as Record<string, ModuleData>
-	);
 </script>
 
 <Breadcrumbs url={page.url} routeId={page.route.id} pageData={page.data} skipRoutesWithNoPage {routeModules}>

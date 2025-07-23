@@ -1,46 +1,47 @@
 <script lang="ts">
 	import { goto } from "$app/navigation";
 	import { errorToast, successToast } from "$lib/factories.svelte";
+	import type { AppLogId } from "$lib/schemas";
 	import { getGlobal } from "$lib/stores.svelte";
-	import type { UserDM } from "$server/effect/dms";
+	import type { AppLog } from "$server/db/schema";
 	import type { SvelteSet } from "svelte/reactivity";
 	import { superForm } from "sveltekit-superforms";
 
 	const global = getGlobal();
 
 	interface Props {
-		dm: UserDM;
-		deletingDM?: SvelteSet<string>;
+		log: AppLog;
+		deletingLog?: SvelteSet<AppLogId>;
 		label?: string;
 		ondelete?: (event: { id: string }) => void;
 	}
 
-	let { dm, deletingDM, label = "", ondelete }: Props = $props();
+	let { log, deletingLog, label = "", ondelete }: Props = $props();
 
 	const { submit } = superForm(
-		{ id: dm.id },
+		{ id: log.id },
 		{
-			SPA: "/dms?/deleteDM",
+			SPA: "?/deleteLog",
 			onSubmit({ cancel, formData }) {
-				if (!confirm(`Are you sure you want to delete ${dm.name}? This action cannot be reversed.`)) return cancel();
-				formData.set("id", dm.id);
-				deletingDM?.add(dm.id);
+				if (!confirm(`Are you sure you want to delete this log? This action cannot be reversed.`)) return cancel();
+				formData.set("id", log.id);
+				deletingLog?.add(log.id);
 			},
 			onUpdated({ form }) {
 				const [error] = form.errors._errors || [];
 				if (error) {
 					errorToast(error);
-					deletingDM?.delete(dm.id);
+					deletingLog?.delete(log.id);
 				} else {
-					successToast(`${dm.name} deleted`);
-					ondelete?.({ id: dm.id });
+					successToast(`Log deleted`);
+					ondelete?.({ id: log.id });
 					global.searchData = [];
 				}
 			},
 			onResult({ result }) {
 				if (result.type === "redirect") {
-					successToast(`${dm.name} deleted`);
-					ondelete?.({ id: dm.id });
+					successToast(`Log deleted`);
+					ondelete?.({ id: log.id });
 					global.searchData = [];
 					goto(result.location);
 				}
@@ -49,7 +50,7 @@
 	);
 </script>
 
-<button type="button" class="btn btn-error sm:btn-sm" aria-label="Delete DM" onclick={submit}>
-	<span class="iconify mdi--trash-can"></span>
+<button class="btn btn-sm btn-error tooltip" data-tip="Delete log" aria-label="Delete log" onclick={submit}>
+	<span class="iconify mdi--delete"></span>
 	{label}
 </button>

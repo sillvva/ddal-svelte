@@ -342,8 +342,11 @@
 				{#each sortedResults as log, i}
 					{@const hasDescription =
 						!!log.description?.trim() || log.storyAwardsGained.length > 0 || log.storyAwardsLost.length > 0}
-					<tbody class="border-t border-neutral-500/20 first:border-0">
-						<tr class="border-0 data-[deleting=true]:hidden print:text-sm" data-deleting={deletingLog.has(log.id)}>
+					<tbody
+						class="border-t border-neutral-500/20 first:border-0 data-[deleting=true]:hidden"
+						data-deleting={deletingLog.has(log.id)}
+					>
+						<tr class="border-0 print:text-sm">
 							<td
 								class="static! pb-0 align-top data-[desc=true]:pb-3 sm:pb-3 print:p-2"
 								data-desc={hasDescription && global.app.log.descriptions}
@@ -468,8 +471,7 @@
 						</tr>
 						<!-- Notes -->
 						<tr
-							class="hidden border-0 data-[deleting=true]:hidden! data-[desc=true]:table-row max-sm:data-[mi=true]:table-row [&>td]:border-0"
-							data-deleting={deletingLog.has(log.id)}
+							class="hidden border-0 data-[desc=true]:table-row max-sm:data-[mi=true]:table-row [&>td]:border-0"
 							data-desc={global.app.log.descriptions && hasDescription}
 							data-mi={log.magicItemsGained.length > 0 || log.magicItemsLost.length > 0}
 							{@attach transition(`notes-${log.id}`)}

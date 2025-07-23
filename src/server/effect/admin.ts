@@ -1,23 +1,26 @@
+import type { AppLogId, AppLogSchema } from "$lib/schemas";
 import { DBService, type Filter, type Transaction, type TRSchema } from "$server/db";
 import type { relations } from "$server/db/relations";
-import { type AppLog } from "$server/db/schema";
-// import { DrizzleSearchParser } from "@sillvva/search/drizzle";
+import { appLogs, type AppLog } from "$server/db/schema";
 import type { ASTNode, ParseMetadata } from "@sillvva/search";
 import { DrizzleSearchParser } from "@sillvva/search/drizzle";
-import { sql } from "drizzle-orm";
+import { eq, sql } from "drizzle-orm";
 import { Effect, Layer } from "effect";
-import { FetchError } from ".";
+import { isTupleOf } from "effect/Predicate";
+import { FetchError, FormError } from ".";
 
-class FetchAdminError extends FetchError {}
-function createFetchError(err: unknown): FetchAdminError {
-	return FetchAdminError.from(err);
+export class FetchAdminError extends FetchError {}
+export class SaveAppLogError extends FormError<AppLogSchema> {}
+function createSaveAppLogError(err: unknown): SaveAppLogError {
+	return SaveAppLogError.from(err);
 }
 
 interface AdminApiImpl {
 	readonly get: {
-		readonly logs: (
-			search?: string
-		) => Effect.Effect<{ logs: AppLog[]; metadata: ParseMetadata; ast: ASTNode | null }, FetchAdminError>;
+		readonly logs: (search?: string) => Effect.Effect<{ logs: AppLog[]; metadata: ParseMetadata; ast: ASTNode | null }>;
+	};
+	readonly set: {
+		readonly deleteLog: (logId: AppLogId) => Effect.Effect<{ id: AppLogId }, SaveAppLogError>;
 	};
 }
 
@@ -38,11 +41,19 @@ export class AdminService extends Effect.Service<AdminService>()("AdminService",
 								timestamp: "desc"
 							}
 						})
-					).pipe(
-						Effect.catchAllDefect(() => Effect.succeed([] as AppLog[])),
-						Effect.andThen((logs) => ({ logs, metadata, ast }))
-					);
+					).pipe(Effect.andThen((logs) => ({ logs, metadata, ast })));
 				}
+			},
+			set: {
+				deleteLog: (logId) =>
+					Effect.tryPromise({
+						try: () => db.delete(appLogs).where(eq(appLogs.id, logId)).returning({ id: appLogs.id }),
+						catch: createSaveAppLogError
+					}).pipe(
+						Effect.flatMap((logs) =>
+							isTupleOf(logs, 1) ? Effect.succeed(logs[0]) : Effect.fail(new SaveAppLogError("Log not found", { status: 404 }))
+						)
+					)
 			}
 		};
 
@@ -54,7 +65,7 @@ export class AdminService extends Effect.Service<AdminService>()("AdminService",
 export const AdminTx = (tx: Transaction) => AdminService.DefaultWithoutDependencies.pipe(Layer.provide(DBService.Default(tx)));
 
 export const withAdmin = Effect.fn("withAdmin")(
-	<R, E extends FetchAdminError>(impl: (service: AdminApiImpl) => Effect.Effect<R, E>) =>
+	<R, E extends FetchAdminError | SaveAppLogError>(impl: (service: AdminApiImpl) => Effect.Effect<R, E>) =>
 		Effect.gen(function* () {
 			const adminApi = yield* AdminService;
 			return yield* impl(adminApi);

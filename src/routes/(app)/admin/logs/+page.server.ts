@@ -1,7 +1,11 @@
+import { appLogId } from "$lib/schemas";
 import { assertUser } from "$server/auth.js";
-import { run } from "$server/effect";
+import { run, save, validateForm } from "$server/effect";
 import { withAdmin } from "$server/effect/admin.js";
+import { fail } from "@sveltejs/kit";
 import { Effect } from "effect";
+import { setError } from "sveltekit-superforms";
+import { object } from "valibot";
 
 export const load = async (event) => {
 	const user = event.locals.user;
@@ -31,4 +35,28 @@ export const load = async (event) => {
 	);
 
 	return { logs, metadata, search };
+};
+
+export const actions = {
+	deleteLog: (event) =>
+		run(function* () {
+			const user = event.locals.user;
+			assertUser(user);
+
+			if (user.role !== "admin") return fail(403, { message: "You are not authorized to delete logs" });
+
+			const form = yield* validateForm(event, object({ id: appLogId }));
+			if (!form.valid) return fail(400, { form });
+
+			return save(
+				withAdmin((service) => service.set.deleteLog(form.data.id)),
+				{
+					onError: (err) => {
+						setError(form, "", err.message);
+						return fail(err.status, { form });
+					},
+					onSuccess: () => ({ form })
+				}
+			);
+		})
 };

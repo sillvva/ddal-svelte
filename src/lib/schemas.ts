@@ -6,7 +6,7 @@ import { PROVIDERS, themeGroups, themes } from "./constants";
 
 export type BrandedType = v.InferOutput<ReturnType<typeof brandedId>>;
 function brandedId<T extends string>(name: T) {
-	return v.pipe(v.string(), v.brand(name));
+	return v.pipe(v.string(), v.uuid(), v.brand(name));
 }
 
 const string = v.pipe(v.string(), v.trim());
@@ -320,4 +320,22 @@ export const localsSessionSchema = v.object({
 	expiresAt: v.date(),
 	createdAt: v.date(),
 	updatedAt: v.date()
+});
+
+export type AppLogId = v.InferOutput<typeof appLogId>;
+export const appLogId = brandedId("AppLogId");
+
+export type AppLogSchema = v.InferOutput<typeof appLogSchema>;
+export const appLogSchema = v.object({
+	id: appLogId,
+	label: v.string(),
+	level: v.picklist(["ALL", "FATAL", "ERROR", "WARN", "INFO", "DEBUG", "TRACE", "OFF"]),
+	annotations: v.object({
+		routeId: v.nullable(v.string()),
+		params: v.record(v.string(), v.optional(v.string())),
+		userId: v.optional(userIdSchema),
+		username: v.optional(v.string()),
+		extra: v.record(v.any(), v.any())
+	}),
+	timestamp: v.date()
 });

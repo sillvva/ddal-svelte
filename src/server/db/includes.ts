@@ -35,3 +35,17 @@ export const extendedCharacterIncludes = {
 		}
 	}
 } as const satisfies QueryConfig<"characters">["with"];
+
+export const userDMIncludes = {
+	logs: {
+		with: {
+			character: {
+				columns: {
+					id: true,
+					name: true,
+					userId: true
+				}
+			}
+		}
+	}
+} as const satisfies QueryConfig<"dungeonMasters">["with"];
