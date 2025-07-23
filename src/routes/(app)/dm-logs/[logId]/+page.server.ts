@@ -7,7 +7,7 @@ import { FetchLogError, withLog } from "$server/effect/logs";
 import { redirect } from "@sveltejs/kit";
 import { Effect } from "effect";
 import { fail } from "sveltekit-superforms";
-import { safeParse } from "valibot";
+import * as v from "valibot";
 
 export const load = (event) =>
 	run(function* () {
@@ -16,7 +16,7 @@ export const load = (event) =>
 
 		const parent = yield* Effect.promise(event.parent);
 
-		const idResult = safeParse(logIdSchema, event.params.logId || "");
+		const idResult = v.safeParse(v.union([logIdSchema, v.literal("new")]), event.params.logId || "");
 		if (!idResult.success) redirect(302, `/dm-logs`);
 		const logId = idResult.output;
 
@@ -54,11 +54,11 @@ export const actions = {
 			const user = event.locals.user;
 			assertUser(user);
 
-			const idResult = safeParse(logIdSchema, event.params.logId || "");
+			const idResult = v.safeParse(v.union([logIdSchema, v.literal("new")]), event.params.logId || "");
 			if (!idResult.success) redirect(302, `/dm-logs`);
 			const logId = idResult.output;
 
-			const log = yield* withLog((service) => service.get.log(logId, user.id));
+			const log = logId !== "new" ? yield* withLog((service) => service.get.log(logId, user.id)) : undefined;
 			if (logId !== "new" && !log?.id) redirect(302, `/dm-logs`);
 
 			const characters = yield* withCharacter((service) => service.get.userCharacters(user.id, true));

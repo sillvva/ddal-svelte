@@ -29,7 +29,7 @@ interface CharacterApiImpl {
 	};
 	readonly set: {
 		readonly save: (
-			characterId: CharacterId,
+			characterId: CharacterId | "new",
 			userId: UserId,
 			data: NewCharacterSchema
 		) => Effect.Effect<Character, SaveCharacterError>;

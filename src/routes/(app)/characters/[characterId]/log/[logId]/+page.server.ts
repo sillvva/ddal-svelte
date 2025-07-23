@@ -9,7 +9,7 @@ import { sorter } from "@sillvva/utils";
 import { redirect } from "@sveltejs/kit";
 import { Effect } from "effect";
 import { fail } from "sveltekit-superforms";
-import { safeParse } from "valibot";
+import * as v from "valibot";
 
 export const load = (event) =>
 	run(function* () {
@@ -20,7 +20,7 @@ export const load = (event) =>
 		const character = parent.character;
 		if (!character) return yield* new FetchCharacterError("Character not found", 404);
 
-		const idResult = safeParse(logIdSchema, event.params.logId || "");
+		const idResult = v.safeParse(v.union([logIdSchema, v.literal("new")]), event.params.logId || "");
 		if (!idResult.success) redirect(302, `/character/${character.id}`);
 		const logId = idResult.output;
 
@@ -57,18 +57,18 @@ export const actions = {
 			const user = event.locals.user;
 			assertUser(user);
 
-			const result = safeParse(characterIdSchema, event.params.characterId);
+			const result = v.safeParse(characterIdSchema, event.params.characterId);
 			if (!result.success) throw redirect(302, "/characters?uuid=1");
 			const characterId = result.output;
 
 			const character = yield* withCharacter((service) => service.get.character(characterId));
 			if (!character) redirect(302, "/characters");
 
-			const idResult = safeParse(logIdSchema, event.params.logId || "");
+			const idResult = v.safeParse(v.union([logIdSchema, v.literal("new")]), event.params.logId || "");
 			if (!idResult.success) redirect(302, `/character/${character.id}`);
 			const logId = idResult.output;
 
-			const log = yield* withLog((service) => service.get.log(logId, user.id));
+			const log = logId !== "new" ? yield* withLog((service) => service.get.log(logId, user.id)) : undefined;
 			if (logId !== "new" && !log?.id) redirect(302, `/characters/${character.id}`);
 
 			const form = yield* validateForm(event, characterLogSchema(character));

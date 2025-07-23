@@ -8,7 +8,7 @@ import { withLog } from "$server/effect/logs.js";
 import { redirect } from "@sveltejs/kit";
 import { Effect } from "effect";
 import { fail, setError } from "sveltekit-superforms";
-import { safeParse } from "valibot";
+import * as v from "valibot";
 
 export const load = (event) =>
 	run(function* () {
@@ -57,7 +57,7 @@ export const actions = {
 			if (!form.valid) return fail(400, { form });
 			const { firstLog, ...data } = form.data;
 
-			const result = safeParse(characterIdSchema, event.params.characterId);
+			const result = v.safeParse(v.union([characterIdSchema, v.literal("new")]), event.params.characterId);
 			if (!result.success) throw redirect(302, "/characters?uuid=1");
 			const characterId = result.output;
 
@@ -66,7 +66,7 @@ export const actions = {
 				{
 					onError: (err) => err.toForm(form),
 					onSuccess: async (character) => {
-						if (firstLog && event.params.characterId === "new") {
+						if (firstLog && characterId === "new") {
 							const log = defaultLogSchema(user.id, character);
 							log.name = "Character Creation";
 

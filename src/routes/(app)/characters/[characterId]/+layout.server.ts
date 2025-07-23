@@ -6,7 +6,7 @@ import * as v from "valibot";
 
 export const load = (event) =>
 	run(function* () {
-		const result = v.safeParse(characterIdSchema, event.params.characterId);
+		const result = v.safeParse(v.union([characterIdSchema, v.literal("new")]), event.params.characterId);
 		if (!result.success) throw redirect(302, "/characters?uuid=1");
 		const characterId = result.output;
 
