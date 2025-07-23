@@ -1,6 +1,6 @@
 import { BLANK_CHARACTER } from "$lib/constants.js";
 import { defaultLogSchema } from "$lib/entities.js";
-import { characterIdSchema, editCharacterSchema } from "$lib/schemas";
+import { characterIdSchema, editCharacterSchema, uuidOrNew } from "$lib/schemas";
 import { assertUser } from "$server/auth";
 import { run, save, validateForm } from "$server/effect";
 import { FetchCharacterError, withCharacter } from "$server/effect/characters";
@@ -8,7 +8,6 @@ import { withLog } from "$server/effect/logs.js";
 import { redirect } from "@sveltejs/kit";
 import { Effect } from "effect";
 import { fail, setError } from "sveltekit-superforms";
-import * as v from "valibot";
 
 export const load = (event) =>
 	run(function* () {
@@ -23,7 +22,7 @@ export const load = (event) =>
 		const form = yield* validateForm(
 			parent.character
 				? {
-						id: event.params.characterId !== "new" ? parent.character.id : "",
+						id: parent.character.id,
 						name: parent.character.name,
 						campaign: parent.character.campaign || "",
 						race: parent.character.race || "",
@@ -32,6 +31,7 @@ export const load = (event) =>
 						imageUrl: parent.character.imageUrl.replace(BLANK_CHARACTER, "")
 					}
 				: {
+						id: "new",
 						firstLog: parent.app.characters.firstLog
 					},
 			editCharacterSchema,
@@ -57,7 +57,7 @@ export const actions = {
 			if (!form.valid) return fail(400, { form });
 			const { firstLog, ...data } = form.data;
 
-			const result = v.safeParse(v.union([characterIdSchema, v.literal("new")]), event.params.characterId);
+			const result = uuidOrNew(event.params.characterId, characterIdSchema);
 			if (!result.success) throw redirect(302, "/characters?uuid=1");
 			const characterId = result.output;
 

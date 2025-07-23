@@ -9,6 +9,16 @@ function brandedId<T extends string>(name: T) {
 	return v.pipe(v.string(), v.uuid(), v.brand(name));
 }
 
+export function uuidOrNew<T extends string>(
+	value: string,
+	schema: v.SchemaWithPipe<readonly [v.StringSchema<undefined>, v.UuidAction<string, undefined>, v.BrandAction<string, T>]>
+): { success: boolean; output: "new" | v.InferOutput<typeof schema> } {
+	const result = v.safeParse(schema, value);
+	return value === "new"
+		? ({ success: true, output: "new" } as const)
+		: { success: result.success, output: result.output as v.InferOutput<typeof schema> };
+}
+
 const string = v.pipe(v.string(), v.trim());
 const requiredString = v.pipe(string, v.regex(/^.*(\p{L}|\p{N})+.*$/u, "Required"));
 const shortString = v.pipe(string, v.maxLength(50));
@@ -68,7 +78,7 @@ export const characterIdSchema = brandedId("CharacterId");
 
 export type EditCharacterSchema = v.InferOutput<typeof editCharacterSchema>;
 export const editCharacterSchema = v.object({
-	id: characterIdSchema,
+	id: v.union([characterIdSchema, v.literal("new")]),
 	...newCharacterSchema.entries,
 	firstLog: v.optional(v.boolean(), false)
 });
@@ -79,7 +89,7 @@ export const dungeonMasterIdSchema = brandedId("DungeonMasterId");
 export type DungeonMasterSchema = v.InferOutput<typeof dungeonMasterSchema>;
 export type DungeonMasterSchemaIn = v.InferInput<typeof dungeonMasterSchema>;
 export const dungeonMasterSchema = v.object({
-	id: v.optional(dungeonMasterIdSchema, ""),
+	id: v.union([dungeonMasterIdSchema, v.literal("")]),
 	name: v.pipe(requiredString, shortString),
 	DCI: v.nullish(v.pipe(string, v.regex(/\d{0,10}/, "Invalid DCI Format")), null),
 	userId: userIdSchema,
@@ -102,7 +112,7 @@ export const logIdSchema = brandedId("LogId");
 export type LogSchema = v.InferOutput<typeof logSchema>;
 export type LogSchemaIn = v.InferInput<typeof logSchema>;
 export const logSchema = v.object({
-	id: v.optional(logIdSchema, ""),
+	id: v.union([logIdSchema, v.literal("new")]),
 	name: v.pipe(requiredString, maxStringSize),
 	date: v.date(),
 	characterId: v.nullish(characterIdSchema, null),

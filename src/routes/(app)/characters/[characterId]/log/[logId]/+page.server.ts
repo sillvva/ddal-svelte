@@ -1,5 +1,5 @@
 import { defaultLogData, getItemEntities, logDataToSchema } from "$lib/entities.js";
-import { characterIdSchema, characterLogSchema, logIdSchema } from "$lib/schemas";
+import { characterIdSchema, characterLogSchema, logIdSchema, uuidOrNew } from "$lib/schemas";
 import { assertUser } from "$server/auth";
 import { run, save, validateForm } from "$server/effect";
 import { FetchCharacterError, withCharacter } from "$server/effect/characters.js";
@@ -20,7 +20,7 @@ export const load = (event) =>
 		const character = parent.character;
 		if (!character) return yield* new FetchCharacterError("Character not found", 404);
 
-		const idResult = v.safeParse(v.union([logIdSchema, v.literal("new")]), event.params.logId || "");
+		const idResult = uuidOrNew(event.params.logId || "", logIdSchema);
 		if (!idResult.success) redirect(302, `/character/${character.id}`);
 		const logId = idResult.output;
 
@@ -64,7 +64,7 @@ export const actions = {
 			const character = yield* withCharacter((service) => service.get.character(characterId));
 			if (!character) redirect(302, "/characters");
 
-			const idResult = v.safeParse(v.union([logIdSchema, v.literal("new")]), event.params.logId || "");
+			const idResult = uuidOrNew(event.params.logId || "", logIdSchema);
 			if (!idResult.success) redirect(302, `/character/${character.id}`);
 			const logId = idResult.output;
 
