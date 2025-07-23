@@ -154,7 +154,7 @@ export function defaultDM(userId: UserId): DungeonMaster {
 
 export function defaultLogData(userId: UserId, character = null as CharacterData | null) {
 	return parseLog({
-		id: "" as LogId,
+		id: "new" as LogId,
 		name: "",
 		description: "",
 		date: new Date(),
@@ -181,7 +181,7 @@ export function defaultLogData(userId: UserId, character = null as CharacterData
 
 export function defaultLogSchema(userId: UserId, character: Character): LogSchema {
 	return {
-		id: "" as LogId,
+		id: "new" as LogId,
 		name: "",
 		description: "",
 		date: new Date(),

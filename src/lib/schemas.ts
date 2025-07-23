@@ -78,7 +78,7 @@ export const characterIdSchema = brandedId("CharacterId");
 
 export type EditCharacterSchema = v.InferOutput<typeof editCharacterSchema>;
 export const editCharacterSchema = v.object({
-	id: v.fallback(v.union([characterIdSchema, v.literal("new")]), "new"),
+	id: v.union([characterIdSchema, v.literal("new")]),
 	...newCharacterSchema.entries,
 	firstLog: v.optional(v.boolean(), false)
 });
@@ -89,7 +89,7 @@ export const dungeonMasterIdSchema = brandedId("DungeonMasterId");
 export type DungeonMasterSchema = v.InferOutput<typeof dungeonMasterSchema>;
 export type DungeonMasterSchemaIn = v.InferInput<typeof dungeonMasterSchema>;
 export const dungeonMasterSchema = v.object({
-	id: v.fallback(v.union([dungeonMasterIdSchema, v.literal("")]), ""),
+	id: v.union([dungeonMasterIdSchema, v.literal("")]),
 	name: v.pipe(requiredString, shortString),
 	DCI: v.nullish(v.pipe(string, v.regex(/\d{0,10}/, "Invalid DCI Format")), null),
 	userId: userIdSchema,
@@ -112,7 +112,7 @@ export const logIdSchema = brandedId("LogId");
 export type LogSchema = v.InferOutput<typeof logSchema>;
 export type LogSchemaIn = v.InferInput<typeof logSchema>;
 export const logSchema = v.object({
-	id: v.fallback(v.union([logIdSchema, v.literal("new")]), "new"),
+	id: v.union([logIdSchema, v.literal("new")]),
 	name: v.pipe(requiredString, maxStringSize),
 	date: v.date(),
 	characterId: v.nullish(characterIdSchema, null),

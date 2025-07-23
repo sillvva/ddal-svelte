@@ -31,6 +31,7 @@ export const load = (event) =>
 						imageUrl: parent.character.imageUrl.replace(BLANK_CHARACTER, "")
 					}
 				: {
+						id: "new",
 						firstLog: parent.app.characters.firstLog
 					},
 			editCharacterSchema,
