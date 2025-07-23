@@ -19,10 +19,16 @@
 	const results = $derived(search.trim() ? parser.filter(search) : data.users);
 </script>
 
-<div class="mb-4 flex flex-wrap justify-between gap-2">
+<div class="mb-4 flex flex-wrap items-center justify-between gap-2">
 	<div class="flex w-full gap-2 sm:max-w-md md:max-w-md">
 		<Search bind:value={search} placeholder="Search by name, email, role, etc." />
 	</div>
+	<span class="badge badge-primary badge-lg">
+		{#if results.length < data.users.length}
+			Showing {results.length} of
+		{/if}
+		{data.users.length} users
+	</span>
 </div>
 <table class="linked-table bg-base-200 table w-full leading-5 max-sm:border-separate max-sm:border-spacing-y-2">
 	<thead class="max-sm:hidden">
