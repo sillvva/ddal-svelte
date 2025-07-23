@@ -17,11 +17,7 @@ import { debugSet, FetchError, FormError, Log } from ".";
 import { DMService, DMTx } from "./dms";
 
 export class FetchLogError extends FetchError {}
-function createFetchError(err: unknown): FetchLogError {
-	return FetchLogError.from(err);
-}
-
-class SaveLogError extends FormError<LogSchema> {}
+export class SaveLogError extends FormError<LogSchema> {}
 function createSaveError(err: unknown): SaveLogError {
 	return SaveLogError.from(err);
 }
@@ -99,9 +95,9 @@ export type UserLogData = InferQueryResult<"logs", typeof userLogsConfig>;
 interface LogApiImpl {
 	readonly db: Database | Transaction;
 	readonly get: {
-		readonly log: (logId: LogId, userId: UserId) => Effect.Effect<FullLogData | undefined, FetchLogError>;
-		readonly dmLogs: (userId: UserId) => Effect.Effect<FullLogData[], FetchLogError>;
-		readonly userLogs: (userId: UserId) => Effect.Effect<UserLogData[], FetchLogError>;
+		readonly log: (logId: LogId, userId: UserId) => Effect.Effect<FullLogData | undefined>;
+		readonly dmLogs: (userId: UserId) => Effect.Effect<FullLogData[]>;
+		readonly userLogs: (userId: UserId) => Effect.Effect<UserLogData[]>;
 	};
 	readonly set: {
 		readonly save: (log: LogSchema, user: LocalsUser) => Effect.Effect<FullLogData, SaveLogError>;
@@ -328,59 +324,53 @@ export class LogService extends Effect.Service<LogService>()("LogService", {
 					Effect.gen(function* () {
 						yield* Log.info("LogService.getLog", { logId, userId });
 
-						return yield* Effect.tryPromise({
-							try: () =>
-								db.query.logs.findFirst({
-									with: extendedLogIncludes,
-									where: {
-										id: {
-											eq: logId
-										},
-										OR: [characterLogFilter(userId), dmLogFilter(userId)]
-									}
-								}),
-							catch: createFetchError
-						}).pipe(Effect.andThen((log) => log && parseLog(log)));
+						return yield* Effect.promise(() =>
+							db.query.logs.findFirst({
+								with: extendedLogIncludes,
+								where: {
+									id: {
+										eq: logId
+									},
+									OR: [characterLogFilter(userId), dmLogFilter(userId)]
+								}
+							})
+						).pipe(Effect.andThen((log) => log && parseLog(log)));
 					}),
 
 				dmLogs: (userId) =>
 					Effect.gen(function* () {
 						yield* Log.info("LogService.getDMLogs", { userId });
 
-						return yield* Effect.tryPromise({
-							try: () =>
-								db.query.logs
-									.findMany({
-										with: extendedLogIncludes,
-										where: dmLogFilter(userId),
-										orderBy: {
-											date: "asc"
-										}
-									})
-									.then((logs) => {
-										return logs.map(parseLog);
-									}),
-							catch: createFetchError
-						});
+						return yield* Effect.promise(() =>
+							db.query.logs
+								.findMany({
+									with: extendedLogIncludes,
+									where: dmLogFilter(userId),
+									orderBy: {
+										date: "asc"
+									}
+								})
+								.then((logs) => {
+									return logs.map(parseLog);
+								})
+						);
 					}),
 
 				userLogs: (userId) =>
 					Effect.gen(function* () {
 						yield* Log.info("LogService.getUserLogs", { userId });
 
-						return yield* Effect.tryPromise({
-							try: () =>
-								db.query.logs.findMany({
-									...userLogsConfig,
-									where: {
-										OR: [characterLogFilter(userId), dmLogFilter(userId)]
-									},
-									orderBy: {
-										date: "asc"
-									}
-								}),
-							catch: createFetchError
-						});
+						return yield* Effect.promise(() =>
+							db.query.logs.findMany({
+								...userLogsConfig,
+								where: {
+									OR: [characterLogFilter(userId), dmLogFilter(userId)]
+								},
+								orderBy: {
+									date: "asc"
+								}
+							})
+						);
 					})
 			},
 			set: {

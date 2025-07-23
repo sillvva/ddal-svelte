@@ -8,16 +8,11 @@ import { sql } from "drizzle-orm";
 import { Effect, Layer } from "effect";
 import { FetchError } from ".";
 
-class FetchAdminError extends FetchError {}
-function createFetchError(err: unknown): FetchAdminError {
-	return FetchAdminError.from(err);
-}
+export class FetchAdminError extends FetchError {}
 
 interface AdminApiImpl {
 	readonly get: {
-		readonly logs: (
-			search?: string
-		) => Effect.Effect<{ logs: AppLog[]; metadata: ParseMetadata; ast: ASTNode | null }, FetchAdminError>;
+		readonly logs: (search?: string) => Effect.Effect<{ logs: AppLog[]; metadata: ParseMetadata; ast: ASTNode | null }>;
 	};
 }
 

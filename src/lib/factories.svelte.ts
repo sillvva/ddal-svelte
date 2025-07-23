@@ -1,5 +1,5 @@
 import type { FullCharacterData } from "$server/effect/characters";
-import type { UserDMs } from "$server/effect/dms";
+import type { UserDM } from "$server/effect/dms";
 import type { FullLogData, LogSummaryData, UserLogData } from "$server/effect/logs";
 import type { SearchData } from "$src/routes/(api)/command/+server";
 import { parseDateTime, type DateValue } from "@internationalized/date";
@@ -280,7 +280,7 @@ class BaseSearchFactory<TData extends Array<unknown>> {
 		};
 	}
 
-	protected getDMIndex(item: UserDMs[number]) {
+	protected getDMIndex(item: UserDM) {
 		return {
 			id: item.id,
 			index: new Map([
@@ -438,7 +438,7 @@ export class GlobalSearchFactory extends BaseSearchFactory<SearchData> {
 }
 
 export class EntitySearchFactory<
-	TData extends FullCharacterData[] | FullLogData[] | LogSummaryData[] | UserDMs
+	TData extends FullCharacterData[] | FullLogData[] | LogSummaryData[] | UserDM[]
 > extends BaseSearchFactory<TData> {
 	private _indexMap = $derived(
 		new Map(

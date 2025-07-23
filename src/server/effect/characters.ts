@@ -10,10 +10,6 @@ import { isTupleOf } from "effect/Predicate";
 import { debugSet, FetchError, FormError, Log } from ".";
 
 export class FetchCharacterError extends FetchError {}
-function createFetchError(err: unknown): FetchCharacterError {
-	return FetchCharacterError.from(err);
-}
-
 export class SaveCharacterError extends FormError<EditCharacterSchema> {}
 function createSaveError(err: unknown): SaveCharacterError {
 	return SaveCharacterError.from(err);
@@ -28,11 +24,8 @@ export interface FullCharacterData extends CharacterData, ReturnType<typeof getL
 interface CharacterApiImpl {
 	readonly db: Database | Transaction;
 	readonly get: {
-		readonly character: (
-			characterId: CharacterId,
-			includeLogs?: boolean
-		) => Effect.Effect<FullCharacterData | undefined, FetchCharacterError>;
-		readonly userCharacters: (userId: UserId, includeLogs?: boolean) => Effect.Effect<FullCharacterData[], FetchCharacterError>;
+		readonly character: (characterId: CharacterId, includeLogs?: boolean) => Effect.Effect<FullCharacterData | undefined>;
+		readonly userCharacters: (userId: UserId, includeLogs?: boolean) => Effect.Effect<FullCharacterData[]>;
 	};
 	readonly set: {
 		readonly save: (
@@ -55,28 +48,24 @@ export class CharacterService extends Effect.Service<CharacterService>()("Charac
 					Effect.gen(function* () {
 						yield* Log.info("CharacterService.getCharacter", { characterId, includeLogs });
 
-						return yield* Effect.tryPromise({
-							try: () =>
-								db.query.characters.findFirst({
-									with: includeLogs ? extendedCharacterIncludes : characterIncludes,
-									where: { id: { eq: characterId } }
-								}),
-							catch: createFetchError
-						}).pipe(Effect.andThen((character) => character && parseCharacter({ logs: [], ...character })));
+						return yield* Effect.promise(() =>
+							db.query.characters.findFirst({
+								with: includeLogs ? extendedCharacterIncludes : characterIncludes,
+								where: { id: { eq: characterId } }
+							})
+						).pipe(Effect.andThen((character) => character && parseCharacter({ logs: [], ...character })));
 					}),
 
 				userCharacters: (userId, includeLogs = true) =>
 					Effect.gen(function* () {
 						yield* Log.info("CharacterService.getUserCharacters", { userId, includeLogs });
 
-						return yield* Effect.tryPromise({
-							try: () =>
-								db.query.characters.findMany({
-									with: includeLogs ? extendedCharacterIncludes : characterIncludes,
-									where: { userId: { eq: userId }, name: { NOT: PlaceholderName } }
-								}),
-							catch: createFetchError
-						}).pipe(Effect.map((characters) => characters.map((character) => parseCharacter({ logs: [], ...character }))));
+						return yield* Effect.promise(() =>
+							db.query.characters.findMany({
+								with: includeLogs ? extendedCharacterIncludes : characterIncludes,
+								where: { userId: { eq: userId }, name: { NOT: PlaceholderName } }
+							})
+						).pipe(Effect.map((characters) => characters.map((character) => parseCharacter({ logs: [], ...character }))));
 					})
 			},
 			set: {

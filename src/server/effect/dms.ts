@@ -1,5 +1,6 @@
 import type { DungeonMasterId, DungeonMasterSchema, LocalsUser, UserId } from "$lib/schemas";
 import { DBService, type Database, type InferQueryResult, type Transaction } from "$server/db";
+import { userDMIncludes } from "$server/db/includes";
 import { dungeonMasters, type DungeonMaster } from "$server/db/schema";
 import { sorter } from "@sillvva/utils";
 import { and, eq } from "drizzle-orm";
@@ -17,24 +18,7 @@ function createSaveError(err: unknown): SaveDMError {
 	return SaveDMError.from(err);
 }
 
-export type UserDMs = InferQueryResult<
-	"dungeonMasters",
-	{
-		with: {
-			logs: {
-				with: {
-					character: {
-						columns: {
-							id: true;
-							name: true;
-							userId: true;
-						};
-					};
-				};
-			};
-		};
-	}
->[];
+export type UserDM = InferQueryResult<"dungeonMasters", { with: typeof userDMIncludes }>;
 
 interface DMApiImpl {
 	readonly db: Database | Transaction;
@@ -42,12 +26,8 @@ interface DMApiImpl {
 		readonly userDMs: (
 			user: LocalsUser,
 			{ id, includeLogs }: { id?: DungeonMasterId; includeLogs?: boolean }
-		) => Effect.Effect<UserDMs, FetchDMError>;
-		readonly fuzzyDM: (
-			userId: UserId,
-			isUser: boolean,
-			dm: DungeonMaster
-		) => Effect.Effect<DungeonMaster | undefined, FetchDMError>;
+		) => Effect.Effect<UserDM[], FetchDMError>;
+		readonly fuzzyDM: (userId: UserId, isUser: boolean, dm: DungeonMaster) => Effect.Effect<DungeonMaster | undefined>;
 	};
 	readonly set: {
 		readonly save: (
@@ -55,8 +35,8 @@ interface DMApiImpl {
 			user: LocalsUser,
 			data: DungeonMasterSchema
 		) => Effect.Effect<DungeonMaster, SaveDMError>;
-		readonly addUserDM: (user: LocalsUser, dm: UserDMs) => Effect.Effect<UserDMs, SaveDMError>;
-		readonly delete: (dm: UserDMs[number], userId: UserId) => Effect.Effect<{ id: DungeonMasterId }, SaveDMError>;
+		readonly addUserDM: (user: LocalsUser, dm: UserDM[]) => Effect.Effect<UserDM[], SaveDMError>;
+		readonly delete: (dm: UserDM, userId: UserId) => Effect.Effect<{ id: DungeonMasterId }, SaveDMError>;
 	};
 }
 
@@ -71,40 +51,17 @@ export class DMService extends Effect.Service<DMService>()("DMSService", {
 					Effect.gen(function* () {
 						yield* Log.info("DMService.getUserDMs", { userId: user.id, id, includeLogs });
 
-						return yield* Effect.tryPromise({
-							try: async () => {
-								return db.query.dungeonMasters.findMany({
-									with: includeLogs
-										? {
-												logs: {
-													with: {
-														character: {
-															columns: {
-																id: true,
-																name: true,
-																userId: true
-															}
-														}
-													}
-												}
-											}
-										: undefined,
-									where: {
-										id: id
-											? {
-													eq: id
-												}
-											: undefined,
-										userId: {
-											eq: user.id
-										}
-									}
-								});
-							},
-							catch: createFetchError
-						}).pipe(
+						return yield* Effect.promise(() =>
+							db.query.dungeonMasters.findMany({
+								with: includeLogs ? userDMIncludes : undefined,
+								where: {
+									id: id ? { eq: id } : undefined,
+									userId: { eq: user.id }
+								}
+							})
+						).pipe(
 							// Add empty logs to each DM, if includeLogs is false
-							Effect.map((dms) => dms.map((d) => ({ logs: [] as UserDMs[number]["logs"], ...d }))),
+							Effect.map((dms) => dms.map((d) => ({ logs: [] as UserDM["logs"], ...d }))),
 							// Sort the DMs by isUser and name
 							Effect.map((dms) => dms.toSorted((a, b) => sorter(a.isUser, b.isUser) || sorter(a.name, b.name))),
 							// Add the user DM if there isn't one already, and not searching for a specific DM
@@ -123,23 +80,19 @@ export class DMService extends Effect.Service<DMService>()("DMSService", {
 							...(isUser ? { isUser } : { name: dm.name.trim() || undefined, DCI: dm.DCI || undefined })
 						});
 
-						return yield* Effect.tryPromise({
-							try: () =>
-								db.query.dungeonMasters.findFirst({
-									where: {
-										userId: {
-											eq: userId
-										},
-										...(isUser
-											? { isUser }
-											: {
-													name: dm.name.trim() || undefined,
-													DCI: dm.DCI || undefined
-												})
-									}
-								}),
-							catch: createFetchError
-						});
+						return yield* Effect.promise(() =>
+							db.query.dungeonMasters.findFirst({
+								where: {
+									userId: { eq: userId },
+									...(isUser
+										? { isUser }
+										: {
+												name: dm.name.trim() || undefined,
+												DCI: dm.DCI || undefined
+											})
+								}
+							})
+						);
 					})
 			},
 			set: {
@@ -178,41 +131,25 @@ export class DMService extends Effect.Service<DMService>()("DMSService", {
 					Effect.gen(function* () {
 						yield* Log.info("DMService.addUserDM", { userId: user.id });
 
-						const existing = yield* Effect.tryPromise({
-							try: () =>
-								db.query.dungeonMasters.findFirst({
-									where: {
-										userId: {
-											eq: user.id
-										},
-										isUser: true
-									}
-								}),
-							catch: createSaveError
-						});
+						const existing = yield* Effect.promise(() =>
+							db.query.dungeonMasters.findFirst({
+								where: {
+									userId: { eq: user.id },
+									isUser: true
+								}
+							})
+						);
 
 						const result = yield* Effect.tryPromise({
 							try: () =>
 								existing
-									? db
-											.update(dungeonMasters)
-											.set({ name: user.name })
-											.where(and(eq(dungeonMasters.userId, user.id), eq(dungeonMasters.isUser, true)))
-											.returning()
-									: db
-											.insert(dungeonMasters)
-											.values({
-												name: user.name,
-												DCI: null,
-												userId: user.id,
-												isUser: true
-											})
-											.returning(),
+									? db.update(dungeonMasters).set({ name: user.name }).where(eq(dungeonMasters.id, existing.id)).returning()
+									: db.insert(dungeonMasters).values({ name: user.name, userId: user.id, isUser: true }).returning(),
 							catch: createSaveError
 						}).pipe(
 							Effect.flatMap((dms) =>
 								isTupleOf(dms, 1)
-									? Effect.succeed({ ...dms[0], logs: [] as UserDMs[number]["logs"] })
+									? Effect.succeed({ ...dms[0], logs: [] as UserDM["logs"] })
 									: Effect.fail(new SaveDMError("Failed to create DM"))
 							)
 						);
