@@ -27,7 +27,11 @@ interface DMApiImpl {
 			user: LocalsUser,
 			{ id, includeLogs }: { id?: DungeonMasterId; includeLogs?: boolean }
 		) => Effect.Effect<UserDM[], FetchDMError>;
-		readonly fuzzyDM: (userId: UserId, isUser: boolean, dm: DungeonMaster) => Effect.Effect<DungeonMaster | undefined>;
+		readonly fuzzyDM: (
+			userId: UserId,
+			isUser: boolean,
+			dm: Pick<DungeonMaster, "name" | "DCI">
+		) => Effect.Effect<DungeonMaster | undefined>;
 	};
 	readonly set: {
 		readonly save: (

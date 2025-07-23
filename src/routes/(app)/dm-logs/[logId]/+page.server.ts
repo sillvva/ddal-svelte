@@ -1,5 +1,5 @@
 import { defaultLogData, logDataToSchema } from "$lib/entities.js";
-import { dMLogSchema, logIdSchema } from "$lib/schemas";
+import { dMLogSchema, logIdSchema, uuidOrNew } from "$lib/schemas";
 import { assertUser } from "$server/auth";
 import { run, save, validateForm } from "$server/effect";
 import { withCharacter } from "$server/effect/characters.js";
@@ -7,16 +7,13 @@ import { FetchLogError, withLog } from "$server/effect/logs";
 import { redirect } from "@sveltejs/kit";
 import { Effect } from "effect";
 import { fail } from "sveltekit-superforms";
-import * as v from "valibot";
 
 export const load = (event) =>
 	run(function* () {
 		const user = event.locals.user;
 		assertUser(user);
 
-		const parent = yield* Effect.promise(event.parent);
-
-		const idResult = v.safeParse(v.union([logIdSchema, v.literal("new")]), event.params.logId || "");
+		const idResult = uuidOrNew(event.params.logId || "", logIdSchema);
 		if (!idResult.success) redirect(302, `/dm-logs`);
 		const logId = idResult.output;
 
@@ -54,7 +51,7 @@ export const actions = {
 			const user = event.locals.user;
 			assertUser(user);
 
-			const idResult = v.safeParse(v.union([logIdSchema, v.literal("new")]), event.params.logId || "");
+			const idResult = uuidOrNew(event.params.logId || "", logIdSchema);
 			if (!idResult.success) redirect(302, `/dm-logs`);
 			const logId = idResult.output;
 

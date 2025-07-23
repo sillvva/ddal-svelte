@@ -188,7 +188,7 @@ function upsertLog(log: LogSchema, user: LocalsUser) {
 				logApi.db
 					.insert(logs)
 					.values({
-						id: log.id || undefined,
+						id: log.id === "new" ? undefined : log.id,
 						name: log.name,
 						date: log.date,
 						description: log.description || "",
