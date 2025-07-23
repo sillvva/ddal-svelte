@@ -1,6 +1,6 @@
 <script lang="ts">
 	import { page } from "$app/state";
-	import type { ModuleData } from "$lib/util";
+	import { routeModules, type ModuleData } from "$lib/util";
 	import { type Snippet } from "svelte";
 
 	interface Props {
@@ -20,15 +20,9 @@
 	const routeId = $derived(page.route.id || "/");
 	const url = $derived(page.url);
 
-	let routeModules = $state(
-		import.meta.glob("/src/routes/**/+page.svelte", {
-			eager: true
-		}) as Record<string, ModuleData>
-	);
-
-	let defaultTitle = "Adventurers League Log Sheet";
-	let defaultDescription = "A tool for tracking your Adventurers League characters and magic items.";
-	let defaultImage = "https://ddal.dekok.app/images/barovia-gate.webp";
+	const defaultTitle = "Adventurers League Log Sheet";
+	const defaultDescription = "A tool for tracking your Adventurers League characters and magic items.";
+	const defaultImage = "https://ddal.dekok.app/images/barovia-gate.webp";
 
 	function titleSanitizer(title: string) {
 		return title.replace(/([A-Z])/g, " $1").replace(/^./, (str) => str.toUpperCase());
@@ -59,8 +53,7 @@
 	}
 
 	const headerData = $derived.by(() => {
-		const modules = $state.snapshot(routeModules) as Record<string, ModuleData>;
-		const routeModule = modules?.[`/src/routes${routeId}/+page.svelte`];
+		const routeModule = routeModules?.[`/src/routes${routeId}/+page.svelte`];
 
 		return {
 			title: getPageTitleFromModule(routeModule),

@@ -12,6 +12,7 @@ export type TransitionAction = ReturnType<typeof setupViewTransition>["transitio
 export type ModuleData = {
 	getPageTitle?: (data: App.PageData & Record<string, any>) => string;
 	pageTitle?: string;
+
 	getHeadData?: (data: App.PageData & Record<string, any>) => {
 		title: string;
 		description?: string;
@@ -21,6 +22,10 @@ export type ModuleData = {
 	headDescription?: string;
 	headImage?: string;
 };
+
+export const routeModules = import.meta.glob("/src/routes/**/+page.svelte", {
+	eager: true
+}) as Record<string, ModuleData>;
 
 /**
  * Functions
