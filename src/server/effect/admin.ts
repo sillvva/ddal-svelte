@@ -1,8 +1,7 @@
+import type { AppLogId, AppLogSchema } from "$lib/schemas";
 import { DBService, type Filter, type Transaction, type TRSchema } from "$server/db";
 import type { relations } from "$server/db/relations";
 import { appLogs, type AppLog } from "$server/db/schema";
-// import { DrizzleSearchParser } from "@sillvva/search/drizzle";
-import type { AppLogId, AppLogSchema } from "$lib/schemas";
 import type { ASTNode, ParseMetadata } from "@sillvva/search";
 import { DrizzleSearchParser } from "@sillvva/search/drizzle";
 import { eq, sql } from "drizzle-orm";
@@ -42,10 +41,7 @@ export class AdminService extends Effect.Service<AdminService>()("AdminService",
 								timestamp: "desc"
 							}
 						})
-					).pipe(
-						Effect.catchAllDefect(() => Effect.succeed([] as AppLog[])),
-						Effect.andThen((logs) => ({ logs, metadata, ast }))
-					);
+					).pipe(Effect.andThen((logs) => ({ logs, metadata, ast })));
 				}
 			},
 			set: {
