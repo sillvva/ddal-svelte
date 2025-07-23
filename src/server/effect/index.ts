@@ -152,6 +152,8 @@ export async function run<A, B extends ErrorTypes, T extends YieldWrap<Effect.Ef
 				} else if (isHttpError(defect)) {
 					Effect.runFork(Log.error("HttpError", defect));
 					throw defect;
+				} else if (typeof defect === "object" && defect !== null && "stack" in defect) {
+					failCause = { stack: defect.stack };
 				}
 			}
 
