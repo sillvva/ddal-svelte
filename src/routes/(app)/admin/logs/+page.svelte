@@ -60,7 +60,7 @@
 	<thead class="max-sm:hidden">
 		<tr class="bg-base-300 text-base-content/70">
 			<td>Label</td>
-			<td>Level</td>
+			<td class="text-center">Level</td>
 			<td>Timestamp</td>
 			{#if !data.mobile}
 				<td class="w-0"></td>
@@ -74,8 +74,8 @@
 		>
 			<tr class="border-0">
 				<td>{log.message}</td>
-				<td>{log.level}</td>
-				<td>{log.timestamp.toISOString()}</td>
+				<td class="text-center">{log.level}</td>
+				<td class="whitespace-nowrap">{log.timestamp.toISOString()}</td>
 				{#if !data.mobile}
 					<td>
 						<div class="flex justify-end gap-2">
