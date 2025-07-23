@@ -1,7 +1,7 @@
 import { dev } from "$app/environment";
 import { getRequestEvent } from "$app/server";
 import { privateEnv } from "$lib/env/private";
-import type { UserId } from "$lib/schemas";
+import type { AppLogSchema, UserId } from "$lib/schemas";
 import { db } from "$server/db";
 import { appLogs } from "$server/db/schema";
 import {
@@ -57,7 +57,7 @@ const dbLogger = Logger.replace(
 			timestamp: log.date,
 			level: log.logLevel.label,
 			annotations: Object.fromEntries(data.values) as Annotations
-		};
+		} satisfies Omit<AppLogSchema, "id">;
 
 		Effect.promise(() => db.insert(appLogs).values([values]).returning({ id: appLogs.id })).pipe(
 			Effect.andThen((logs) => {
