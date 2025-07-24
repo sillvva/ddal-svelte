@@ -237,9 +237,6 @@ export class FormError<
 	TOut extends Record<PropertyKey, any>,
 	TIn extends Record<PropertyKey, any> = TOut
 > extends Data.TaggedError("FormError")<ErrorParams> {
-	cause?: unknown;
-	status: NumericRange<400, 599> = 500;
-
 	constructor(
 		public message: string,
 		protected options: Partial<{
@@ -248,21 +245,19 @@ export class FormError<
 			cause: unknown;
 		}> = {}
 	) {
-		const status = options.status || 500;
-		super({ message, status });
-		this.cause = options.cause;
+		super({ message, status: options.status || 500, cause: options.cause });
 	}
 
 	static from<TOut extends Record<PropertyKey, any>, TIn extends Record<PropertyKey, any> = TOut>(
-		err: FormError<TOut, TIn> | Error | unknown
+		err: unknown,
+		field: "" | FormPathLeavesWithErrors<TOut> = ""
 	): FormError<TOut, TIn> {
-		if (err instanceof FormError) return err;
-		if (isTaggedError(err)) return new FormError<TOut, TIn>(err.message, { cause: err.cause, status: err.status });
-		return new FormError<TOut, TIn>(Cause.pretty(Cause.fail(err)), { cause: err, status: 500 });
+		if (isTaggedError(err)) return new FormError<TOut, TIn>(err.message, { cause: err.cause, status: err.status, field });
+		return new FormError<TOut, TIn>(Cause.pretty(Cause.fail(err)), { cause: err, status: 500, field });
 	}
 
 	toForm(form: SuperValidated<TOut, App.Superforms.Message, TIn>) {
-		return setError(form, this.options?.field || "", this.message, {
+		return setError(form, this.options?.field ?? "", this.message, {
 			status: this.status
 		});
 	}
