@@ -8,7 +8,7 @@ import { Data, Effect } from "effect";
 
 class UnauthorizedError extends Data.TaggedError("UnauthorizedError")<ErrorParams> {
 	constructor(err?: unknown) {
-		super({ message: "Unauthorized", status: 401, cause: err });
+		super({ message: "You must be logged in to perform this action", status: 401, cause: err });
 	}
 }
 class NoPasskeyError extends Data.TaggedError("NoPasskeyError")<ErrorParams> {
