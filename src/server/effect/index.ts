@@ -2,6 +2,7 @@ import { dev } from "$app/environment";
 import { getRequestEvent } from "$app/server";
 import { privateEnv } from "$lib/env/private";
 import type { AppLogSchema, UserId } from "$lib/schemas";
+import { isInstanceOfClass } from "$lib/util";
 import { db } from "$server/db";
 import { appLogs } from "$server/db/schema";
 import {
@@ -104,17 +105,15 @@ export const debugSet = Effect.fn("debugSet")(function* <S extends string>(servi
 // Run
 // -------------------------------------------------------------------------------------------------
 
-export type ErrorTypes = FetchError | FormError<any, any> | never;
-
 // Overload signatures
-export async function run<A, B extends ErrorTypes, T extends YieldWrap<Effect.Effect<A, B>>, X, Y>(
+export async function run<A, B extends InstanceType<ErrorClass> | never, T extends YieldWrap<Effect.Effect<A, B>>, X, Y>(
 	program: () => Generator<T, X, Y>
 ): Promise<X>;
 
-export async function run<A, B extends ErrorTypes>(program: Effect.Effect<A, B>): Promise<A>;
+export async function run<A, B extends InstanceType<ErrorClass> | never>(program: Effect.Effect<A, B>): Promise<A>;
 
 // Implementation
-export async function run<A, B extends ErrorTypes, T extends YieldWrap<Effect.Effect<A, B>>, X, Y>(
+export async function run<A, B extends InstanceType<ErrorClass> | never, T extends YieldWrap<Effect.Effect<A, B>>, X, Y>(
 	program: Effect.Effect<A, B> | (() => Generator<T, X, Y>)
 ): Promise<A | X> {
 	const effect = Effect.gen(function* () {
@@ -137,7 +136,7 @@ export async function run<A, B extends ErrorTypes, T extends YieldWrap<Effect.Ef
 
 			if (Cause.isFailType(cause)) {
 				const error = cause.error;
-				if (error instanceof FormError || error instanceof FetchError) {
+				if (isTaggedError(error)) {
 					status = error.status;
 					failCause = error.cause;
 				}
@@ -219,11 +218,22 @@ export async function save<
 // Errors
 // -------------------------------------------------------------------------------------------------
 
-export class FetchError extends Data.TaggedError("FetchError")<{
+export interface ErrorParams {
+	readonly _tag: string;
 	message: string;
 	status: NumericRange<400, 599>;
 	cause?: unknown;
-}> {
+}
+
+export interface ErrorClass {
+	new (...args: any[]): ErrorParams;
+}
+
+export function isTaggedError(error: unknown): error is InstanceType<ErrorClass> {
+	return isInstanceOfClass(error) && "status" in error && "cause" in error && "message" in error && "_tag" in error;
+}
+
+export class FetchError extends Data.TaggedError("FetchError")<ErrorParams> {
 	constructor(
 		public message: string,
 		public status: NumericRange<400, 599> = 500,
@@ -242,11 +252,7 @@ export class FetchError extends Data.TaggedError("FetchError")<{
 export class FormError<
 	TOut extends Record<PropertyKey, any>,
 	TIn extends Record<PropertyKey, any> = TOut
-> extends Data.TaggedError("FormError")<{
-	message: string;
-	status: NumericRange<400, 599>;
-	cause?: unknown;
-}> {
+> extends Data.TaggedError("FormError")<ErrorParams> {
 	cause?: unknown;
 	status: NumericRange<400, 599> = 500;
 
