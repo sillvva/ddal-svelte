@@ -54,6 +54,10 @@
 				{error.message} at position {error.position}: <kbd>{error.value}</kbd>
 			</div>
 		{/each}
+	{:else}
+		<div class="label pl-3 text-sm">
+			Valid keys: {data.validKeys.join(", ")}
+		</div>
 	{/if}
 </div>
 

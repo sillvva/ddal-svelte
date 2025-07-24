@@ -1,7 +1,7 @@
 import { appLogId } from "$lib/schemas";
 import { assertUser } from "$server/auth.js";
 import { run, save, validateForm } from "$server/effect";
-import { withAdmin } from "$server/effect/admin.js";
+import { validKeys, withAdmin } from "$server/effect/admin.js";
 import { fail } from "@sveltejs/kit";
 import { Effect } from "effect";
 import { setError } from "sveltekit-superforms";
@@ -34,7 +34,7 @@ export const load = async (event) => {
 		)
 	);
 
-	return { logs, metadata, search };
+	return { logs, metadata, search, validKeys };
 };
 
 export const actions = {

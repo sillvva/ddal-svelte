@@ -75,7 +75,7 @@ export const withAdmin = Effect.fn("withAdmin")(
 type Table = "appLogs";
 type Column = keyof TRSchema[Table]["columns"];
 
-export const validKeys = ["id", "date", "label", "level", "user", "userId", "route", "routeId"] as const satisfies (
+export const validKeys = ["id", "date", "label", "level", "username", "userId", "routeId"] as const satisfies (
 	| Column
 	| (string & {})
 )[];
@@ -87,7 +87,18 @@ export const logSearch = new DrizzleSearchParser<typeof relations, Table>({
 	filterFn: (ast) => {
 		const key = (ast.key || defaultKey) as (typeof validKeys)[number];
 
-		if (key === "user" || key === "userId") {
+		if (key === "username") {
+			if (ast.isRegex) {
+				return {
+					RAW: (table) => sql`${table.annotations}->>'username'::text ~* ${ast.value}`
+				};
+			}
+			return {
+				RAW: (table) => sql`${table.annotations}->>'username'::text = ${ast.value}`
+			};
+		}
+
+		if (key === "userId") {
 			if (ast.isRegex) {
 				return {
 					RAW: (table) => sql`${table.annotations}->>'userId'::text ~* ${ast.value}`
@@ -98,7 +109,7 @@ export const logSearch = new DrizzleSearchParser<typeof relations, Table>({
 			};
 		}
 
-		if (key === "route" || key === "routeId") {
+		if (key === "routeId") {
 			if (ast.isRegex) {
 				return {
 					RAW: (table) => sql`${table.annotations}->>'routeId'::text ~* ${ast.value}`
