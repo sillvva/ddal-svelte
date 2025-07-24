@@ -87,36 +87,14 @@ export const logSearch = new DrizzleSearchParser<typeof relations, Table>({
 	filterFn: (ast) => {
 		const key = (ast.key || defaultKey) as (typeof validKeys)[number];
 
-		if (key === "username") {
+		if (key === "username" || key === "userId" || key === "routeId") {
 			if (ast.isRegex) {
 				return {
-					RAW: (table) => sql`${table.annotations}->>'username'::text ~* ${ast.value}`
+					RAW: (table) => sql`${table.annotations}->>'${key}'::text ~* ${ast.value}`
 				};
 			}
 			return {
-				RAW: (table) => sql`${table.annotations}->>'username'::text = ${ast.value}`
-			};
-		}
-
-		if (key === "userId") {
-			if (ast.isRegex) {
-				return {
-					RAW: (table) => sql`${table.annotations}->>'userId'::text ~* ${ast.value}`
-				};
-			}
-			return {
-				RAW: (table) => sql`${table.annotations}->>'userId'::text = ${ast.value}`
-			};
-		}
-
-		if (key === "routeId") {
-			if (ast.isRegex) {
-				return {
-					RAW: (table) => sql`${table.annotations}->>'routeId'::text ~* ${ast.value}`
-				};
-			}
-			return {
-				RAW: (table) => sql`${table.annotations}->>'routeId'::text = ${ast.value}`
+				RAW: (table) => sql`${table.annotations}->>'${key}'::text = ${ast.value}`
 			};
 		}
 
