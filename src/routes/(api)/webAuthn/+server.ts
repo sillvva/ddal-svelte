@@ -67,7 +67,7 @@ export const POST = async ({ request, locals }) =>
 			return { success: true, name } satisfies RenameWebAuthnResponse;
 		}).pipe(
 			Effect.map((result) => json(result, { status: 200 })),
-			Effect.tapError((e) => Log.error(e.message, { status: e.status, cause: e.cause })),
+			Effect.tapError((e) => Log.error(`[RenameWebAuthn] ${e.message}`, { status: e.status, cause: e.cause })),
 			Effect.catchTag("NoPasskeyError", (e) =>
 				Effect.succeed(
 					json({ success: false, error: e.message, throw: true } satisfies RenameWebAuthnResponse, { status: e.status })
@@ -109,7 +109,7 @@ export const DELETE = ({ request, locals }) =>
 			return { success: true } satisfies DeleteWebAuthnResponse;
 		}).pipe(
 			Effect.map((result) => json(result, { status: 200 })),
-			Effect.tapError((e) => Log.error(e.message, { status: e.status, cause: e.cause })),
+			Effect.tapError((e) => Log.error(`[DeleteWebAuthn] ${e.message}`, { status: e.status, cause: e.cause })),
 			Effect.catchAll((e) =>
 				Effect.succeed(json({ success: false, error: e.message } satisfies DeleteWebAuthnResponse, { status: e.status }))
 			)
