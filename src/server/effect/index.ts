@@ -14,7 +14,7 @@ import {
 	type NumericRange,
 	type RequestEvent
 } from "@sveltejs/kit";
-import { Cause, Data, Effect, Exit, Layer, Logger } from "effect";
+import { Cause, Data, Effect, Exit, HashMap, Layer, Logger } from "effect";
 import { isFunction, isTupleOf } from "effect/Predicate";
 import type { YieldWrap } from "effect/Utils";
 import {
@@ -33,31 +33,22 @@ import type { BaseSchema, InferInput, InferOutput } from "valibot";
 
 const logLevel = Logger.withMinimumLogLevel(privateEnv.LOG_LEVEL);
 
-type AnnotationsList = {
-	_id: string;
-	values: [
-		["routeId", string | null],
-		["params", Partial<Record<string, string>>],
-		["userId", UserId | undefined],
-		["username", string | undefined],
-		["extra", object]
-	];
-};
-
-type AnnotationsListEntries = AnnotationsList["values"][number];
 export type Annotations = {
-	[K in AnnotationsListEntries[0]]: Extract<AnnotationsListEntries, [K, any]>[1];
+	routeId: string | null;
+	params: Partial<Record<string, string>>;
+	userId: UserId | undefined;
+	username: string | undefined;
+	extra: object;
 };
 
 const dbLogger = Logger.replace(
 	Logger.defaultLogger,
 	Logger.make((log) => {
-		const data = log.annotations.toJSON() as AnnotationsList;
 		const values = {
 			label: (log.message as string[]).join(" | "),
 			timestamp: log.date,
 			level: log.logLevel.label,
-			annotations: Object.fromEntries(data.values) as Annotations
+			annotations: Object.fromEntries(HashMap.toEntries(log.annotations)) as Annotations
 		} satisfies Omit<AppLogSchema, "id">;
 
 		Effect.promise(() => db.insert(appLogs).values([values]).returning({ id: appLogs.id })).pipe(
