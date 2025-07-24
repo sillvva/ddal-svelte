@@ -37,105 +37,101 @@ interface CharacterApiImpl {
 }
 
 export class CharacterService extends Effect.Service<CharacterService>()("CharacterService", {
-	effect: Effect.gen(function* () {
+	effect: Effect.fn("CharacterService")(function* () {
 		const { db } = yield* DBService;
 
 		const impl: CharacterApiImpl = {
 			db,
 			get: {
-				character: (characterId, includeLogs = true) =>
-					Effect.gen(function* () {
-						yield* Log.info("CharacterService.getCharacter", { characterId, includeLogs });
+				character: Effect.fn("CharacterService.getCharacter")(function* (characterId, includeLogs = true) {
+					yield* Log.info("CharacterService.getCharacter", { characterId, includeLogs });
 
-						return yield* Effect.promise(() =>
-							db.query.characters.findFirst({
-								with: includeLogs ? extendedCharacterIncludes : characterIncludes,
-								where: { id: { eq: characterId } }
-							})
-						).pipe(Effect.andThen((character) => character && parseCharacter({ logs: [], ...character })));
-					}),
+					return yield* Effect.promise(() =>
+						db.query.characters.findFirst({
+							with: includeLogs ? extendedCharacterIncludes : characterIncludes,
+							where: { id: { eq: characterId } }
+						})
+					).pipe(Effect.andThen((character) => character && parseCharacter({ logs: [], ...character })));
+				}),
 
-				userCharacters: (userId, includeLogs = true) =>
-					Effect.gen(function* () {
-						yield* Log.info("CharacterService.getUserCharacters", { userId, includeLogs });
+				userCharacters: Effect.fn("CharacterService.getUserCharacters")(function* (userId, includeLogs = true) {
+					yield* Log.info("CharacterService.getUserCharacters", { userId, includeLogs });
 
-						return yield* Effect.promise(() =>
-							db.query.characters.findMany({
-								with: includeLogs ? extendedCharacterIncludes : characterIncludes,
-								where: { userId: { eq: userId }, name: { NOT: PlaceholderName } }
-							})
-						).pipe(Effect.map((characters) => characters.map((character) => parseCharacter({ logs: [], ...character }))));
-					})
+					return yield* Effect.promise(() =>
+						db.query.characters.findMany({
+							with: includeLogs ? extendedCharacterIncludes : characterIncludes,
+							where: { userId: { eq: userId }, name: { NOT: PlaceholderName } }
+						})
+					).pipe(Effect.map((characters) => characters.map((character) => parseCharacter({ logs: [], ...character }))));
+				})
 			},
 			set: {
-				save: (characterId, userId, data) =>
-					Effect.gen(function* () {
-						yield* Log.info("CharacterService.saveCharacter", { characterId, userId });
-						yield* Log.debug("CharacterService.saveCharacter", data);
+				save: Effect.fn("CharacterService.saveCharacter")(function* (characterId, userId, data) {
+					yield* Log.info("CharacterService.saveCharacter", { characterId, userId });
+					yield* Log.debug("CharacterService.saveCharacter", data);
 
-						if (!characterId) yield* new SaveCharacterError("No character ID provided", { status: 400 });
+					if (!characterId) yield* new SaveCharacterError("No character ID provided", { status: 400 });
 
-						return yield* Effect.tryPromise({
-							try: () =>
-								db
-									.insert(characters)
-									.values({
-										...data,
-										id: characterId === "new" ? undefined : characterId,
-										userId
-									})
-									.onConflictDoUpdate({
-										target: characters.id,
-										set: buildConflictUpdateColumns(characters, ["id", "userId", "createdAt"], true),
-										where: eq(characters.userId, userId)
-									})
-									.returning(),
-							catch: createSaveError
-						}).pipe(
-							Effect.flatMap((characters) =>
-								isTupleOf(characters, 1)
-									? Effect.succeed(characters[0])
-									: Effect.fail(new SaveCharacterError("Failed to save character"))
-							)
-						);
-					}),
+					return yield* Effect.tryPromise({
+						try: () =>
+							db
+								.insert(characters)
+								.values({
+									...data,
+									id: characterId === "new" ? undefined : characterId,
+									userId
+								})
+								.onConflictDoUpdate({
+									target: characters.id,
+									set: buildConflictUpdateColumns(characters, ["id", "userId", "createdAt"], true),
+									where: eq(characters.userId, userId)
+								})
+								.returning(),
+						catch: createSaveError
+					}).pipe(
+						Effect.flatMap((characters) =>
+							isTupleOf(characters, 1)
+								? Effect.succeed(characters[0])
+								: Effect.fail(new SaveCharacterError("Failed to save character"))
+						)
+					);
+				}),
 
-				delete: (characterId, userId) =>
-					Effect.gen(function* () {
-						yield* Log.info("CharacterService.deleteCharacter", { characterId, userId });
+				delete: Effect.fn("CharacterService.deleteCharacter")(function* (characterId, userId) {
+					yield* Log.info("CharacterService.deleteCharacter", { characterId, userId });
 
-						return yield* Effect.tryPromise({
-							try: () =>
-								db.transaction(async (tx) => {
-									await tx
-										.update(logs)
-										.set({ characterId: null, appliedDate: null })
-										.where(
-											and(
-												eq(logs.characterId, characterId),
-												eq(logs.isDmLog, true),
-												exists(
-													db
-														.select()
-														.from(characters)
-														.where(and(eq(characters.id, characterId), eq(characters.userId, userId)))
-												)
+					return yield* Effect.tryPromise({
+						try: () =>
+							db.transaction(async (tx) => {
+								await tx
+									.update(logs)
+									.set({ characterId: null, appliedDate: null })
+									.where(
+										and(
+											eq(logs.characterId, characterId),
+											eq(logs.isDmLog, true),
+											exists(
+												db
+													.select()
+													.from(characters)
+													.where(and(eq(characters.id, characterId), eq(characters.userId, userId)))
 											)
-										);
-									return await tx
-										.delete(characters)
-										.where(and(eq(characters.id, characterId), eq(characters.userId, userId)))
-										.returning({ id: characters.id });
-								}),
-							catch: createSaveError
-						}).pipe(
-							Effect.flatMap((result) =>
-								isTupleOf(result, 1)
-									? Effect.succeed(result[0])
-									: Effect.fail(new SaveCharacterError("Character not found", { status: 404 }))
-							)
-						);
-					})
+										)
+									);
+								return await tx
+									.delete(characters)
+									.where(and(eq(characters.id, characterId), eq(characters.userId, userId)))
+									.returning({ id: characters.id });
+							}),
+						catch: createSaveError
+					}).pipe(
+						Effect.flatMap((result) =>
+							isTupleOf(result, 1)
+								? Effect.succeed(result[0])
+								: Effect.fail(new SaveCharacterError("Character not found", { status: 404 }))
+						)
+					);
+				})
 			}
 		};
 
@@ -145,16 +141,16 @@ export class CharacterService extends Effect.Service<CharacterService>()("Charac
 }) {}
 
 export const CharacterTx = (tx: Transaction) =>
-	CharacterService.DefaultWithoutDependencies.pipe(Layer.provide(DBService.Default(tx)));
+	CharacterService.DefaultWithoutDependencies().pipe(Layer.provide(DBService.Default(tx)));
 
 export const withCharacter = Effect.fn("withCharacter")(
-	<R, E extends SaveCharacterError>(impl: (service: CharacterApiImpl) => Effect.Effect<R, E>) =>
-		Effect.gen(function* () {
-			const CharacterApi = yield* CharacterService;
-			const result = yield* impl(CharacterApi);
+	function* <R, E extends SaveCharacterError>(impl: (service: CharacterApiImpl) => Effect.Effect<R, E>) {
+		const CharacterApi = yield* CharacterService;
+		const result = yield* impl(CharacterApi);
 
-			yield* debugSet("CharacterService", impl, result);
+		yield* debugSet("CharacterService", impl, result);
 
-			return result;
-		}).pipe(Effect.provide(CharacterService.Default))
+		return result;
+	},
+	(effect) => effect.pipe(Effect.provide(CharacterService.Default()))
 );

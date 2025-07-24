@@ -13,13 +13,13 @@ interface UserApiImpl {
 }
 
 export class UserService extends Effect.Service<UserService>()("UserService", {
-	effect: Effect.gen(function* () {
+	effect: Effect.fn("UserService")(function* () {
 		const { db } = yield* DBService;
 
 		const impl: UserApiImpl = {
 			get: {
-				localsUser: (userId) =>
-					Effect.promise(() =>
+				localsUser: Effect.fn("UserService.getLocalsUser")(function* (userId) {
+					return yield* Effect.promise(() =>
 						db.query.user.findFirst({
 							with: {
 								accounts: {
@@ -51,9 +51,10 @@ export class UserService extends Effect.Service<UserService>()("UserService", {
 								}
 							}
 						})
-					),
-				users: (userId: UserId) =>
-					Effect.promise(() =>
+					);
+				}),
+				users: Effect.fn("UserService.getUsers")(function* (userId) {
+					return yield* Effect.promise(() =>
 						db.query.user.findMany({
 							with: {
 								accounts: {
@@ -73,7 +74,8 @@ export class UserService extends Effect.Service<UserService>()("UserService", {
 								}
 							}
 						})
-					).pipe(Effect.map((users) => users.sort((a, b) => sorter(a.name.toLowerCase(), b.name.toLowerCase()))))
+					).pipe(Effect.map((users) => users.sort((a, b) => sorter(a.name.toLowerCase(), b.name.toLowerCase()))));
+				})
 			}
 		};
 
@@ -82,11 +84,12 @@ export class UserService extends Effect.Service<UserService>()("UserService", {
 	dependencies: [DBService.Default()]
 }) {}
 
-export const UserTx = (tx: Transaction) => UserService.DefaultWithoutDependencies.pipe(Layer.provide(DBService.Default(tx)));
+export const UserTx = (tx: Transaction) => UserService.DefaultWithoutDependencies().pipe(Layer.provide(DBService.Default(tx)));
 
-export const withUser = Effect.fn("withUser")(<R>(impl: (service: UserApiImpl) => Effect.Effect<R>) =>
-	Effect.gen(function* () {
+export const withUser = Effect.fn("withUser")(
+	function* <R>(impl: (service: UserApiImpl) => Effect.Effect<R>) {
 		const userApi = yield* UserService;
 		return yield* impl(userApi);
-	}).pipe(Effect.provide(UserService.Default))
+	},
+	(effect) => effect.pipe(Effect.provide(UserService.Default()))
 );

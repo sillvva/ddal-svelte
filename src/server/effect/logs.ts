@@ -104,142 +104,136 @@ interface LogApiImpl {
 	};
 }
 
-function validateLogDM(log: LogSchema, user: LocalsUser) {
-	return Effect.gen(function* () {
-		const dmApi = yield* DMService;
+const validateLogDM = Effect.fn("validateLogDM")(function* (log, user) {
+	const dmApi = yield* DMService;
 
-		let isUser = log.isDmLog || log.dm.isUser || ["", user.name.toLowerCase()].includes(log.dm.name.toLowerCase().trim());
-		let dmId = log.dm.id;
-		let dmName = log.dm.name.trim();
+	let isUser = log.isDmLog || log.dm.isUser || ["", user.name.toLowerCase()].includes(log.dm.name.toLowerCase().trim());
+	let dmId = log.dm.id;
+	let dmName = log.dm.name.trim();
 
-		if (!log.dm.name.trim()) {
-			if (isUser) {
-				dmName = user.name.trim();
-				isUser = true;
-			} else {
-				return yield* new SaveLogError("Dungeon Master name is required", {
-					status: 400,
-					field: "dm.name"
-				});
-			}
+	if (!log.dm.name.trim()) {
+		if (isUser) {
+			dmName = user.name.trim();
+			isUser = true;
+		} else {
+			return yield* new SaveLogError("Dungeon Master name is required", {
+				status: 400,
+				field: "dm.name"
+			});
 		}
+	}
 
-		if (!dmId && (isUser || dmName || log.dm.DCI)) {
-			const search = yield* dmApi.get.fuzzyDM(user.id, isUser, log.dm);
-			if (search) {
-				if (search.name === dmName && search.DCI === log.dm.DCI) {
-					return { id: search.id, name: search.name, DCI: search.DCI, userId: user.id, isUser: search.isUser };
-				}
-				if (search.isUser) isUser = true;
-				dmId = search.id;
+	if (!dmId && (isUser || dmName || log.dm.DCI)) {
+		const search = yield* dmApi.get.fuzzyDM(user.id, isUser, log.dm);
+		if (search) {
+			if (search.name === dmName && search.DCI === log.dm.DCI) {
+				return { id: search.id, name: search.name, DCI: search.DCI, userId: user.id, isUser: search.isUser };
 			}
+			if (search.isUser) isUser = true;
+			dmId = search.id;
 		}
+	}
 
-		return {
-			id: dmId || undefined,
-			name: dmName,
-			DCI: log.dm.DCI,
-			userId: user.id,
-			isUser
-		};
+	return {
+		id: dmId || undefined,
+		name: dmName,
+		DCI: log.dm.DCI,
+		userId: user.id,
+		isUser
+	};
+});
+
+const upsertLogDM = Effect.fn("upsertLogDM")(function* (log: LogSchema, user: LocalsUser) {
+	const { db } = yield* DMService;
+
+	const validated = yield* validateLogDM(log, user);
+
+	return yield* Effect.tryPromise({
+		try: () =>
+			db
+				.insert(dungeonMasters)
+				.values(validated)
+				.onConflictDoUpdate({
+					target: dungeonMasters.id,
+					set: buildConflictUpdateColumns(dungeonMasters, ["name", "DCI"])
+				})
+				.returning(),
+		catch: createSaveError
+	}).pipe(
+		Effect.flatMap((dms) =>
+			isTupleOf(dms, 1) ? Effect.succeed(dms[0]) : Effect.fail(new SaveLogError("Could not save Dungeon Master"))
+		)
+	);
+});
+
+const upsertLog = Effect.fn("upsertLog")(function* (log: LogSchema, user: LocalsUser) {
+	const logApi = yield* LogService;
+
+	const dm = yield* upsertLogDM(log, user);
+
+	const appliedDate: Date | null = log.isDmLog
+		? log.characterId && log.appliedDate !== null
+			? new Date(log.appliedDate)
+			: null
+		: new Date(log.date);
+
+	const [result] = yield* Effect.tryPromise({
+		try: () =>
+			logApi.db
+				.insert(logs)
+				.values({
+					id: log.id === "new" ? undefined : log.id,
+					name: log.name,
+					date: log.date,
+					description: log.description || "",
+					type: log.type,
+					isDmLog: log.isDmLog,
+					dungeonMasterId: dm.id,
+					acp: log.acp,
+					tcp: log.tcp,
+					experience: log.experience,
+					level: log.level,
+					gold: log.gold,
+					dtd: log.dtd,
+					characterId: log.characterId,
+					appliedDate
+				})
+				.onConflictDoUpdate({
+					target: logs.id,
+					set: buildConflictUpdateColumns(logs, ["id", "createdAt", "isDmLog"], true)
+				})
+				.returning(),
+		catch: createSaveError
 	});
-}
 
-function upsertLogDM(log: LogSchema, user: LocalsUser) {
-	return Effect.gen(function* () {
-		const { db } = yield* DMService;
+	if (!result?.id) return yield* new SaveLogError(log.id ? "Could not save log" : "Could not create log");
 
-		const validated = yield* validateLogDM(log, user);
+	yield* Effect.forEach(
+		[
+			{
+				logId: result.id,
+				table: magicItems,
+				gained: log.magicItemsGained,
+				lost: log.magicItemsLost
+			},
+			{
+				logId: result.id,
+				table: storyAwards,
+				gained: log.storyAwardsGained,
+				lost: log.storyAwardsLost
+			}
+		],
+		(params) => itemsCRUD(params)
+	);
 
-		return yield* Effect.tryPromise({
-			try: () =>
-				db
-					.insert(dungeonMasters)
-					.values(validated)
-					.onConflictDoUpdate({
-						target: dungeonMasters.id,
-						set: buildConflictUpdateColumns(dungeonMasters, ["name", "DCI"])
-					})
-					.returning(),
-			catch: createSaveError
-		}).pipe(
-			Effect.flatMap((dms) =>
-				isTupleOf(dms, 1) ? Effect.succeed(dms[0]) : Effect.fail(new SaveLogError("Could not save Dungeon Master"))
+	return yield* logApi.get
+		.log(result.id, user.id)
+		.pipe(
+			Effect.flatMap((result) =>
+				result ? Effect.succeed(result) : Effect.fail(new SaveLogError(log.id ? "Could not save log" : "Could not create log"))
 			)
 		);
-	});
-}
-
-function upsertLog(log: LogSchema, user: LocalsUser) {
-	return Effect.gen(function* () {
-		const logApi = yield* LogService;
-
-		const dm = yield* upsertLogDM(log, user);
-
-		const appliedDate: Date | null = log.isDmLog
-			? log.characterId && log.appliedDate !== null
-				? new Date(log.appliedDate)
-				: null
-			: new Date(log.date);
-
-		const [result] = yield* Effect.tryPromise({
-			try: () =>
-				logApi.db
-					.insert(logs)
-					.values({
-						id: log.id === "new" ? undefined : log.id,
-						name: log.name,
-						date: log.date,
-						description: log.description || "",
-						type: log.type,
-						isDmLog: log.isDmLog,
-						dungeonMasterId: dm.id,
-						acp: log.acp,
-						tcp: log.tcp,
-						experience: log.experience,
-						level: log.level,
-						gold: log.gold,
-						dtd: log.dtd,
-						characterId: log.characterId,
-						appliedDate
-					})
-					.onConflictDoUpdate({
-						target: logs.id,
-						set: buildConflictUpdateColumns(logs, ["id", "createdAt", "isDmLog"], true)
-					})
-					.returning(),
-			catch: createSaveError
-		});
-
-		if (!result?.id) return yield* new SaveLogError(log.id ? "Could not save log" : "Could not create log");
-
-		yield* Effect.forEach(
-			[
-				{
-					logId: result.id,
-					table: magicItems,
-					gained: log.magicItemsGained,
-					lost: log.magicItemsLost
-				},
-				{
-					logId: result.id,
-					table: storyAwards,
-					gained: log.storyAwardsGained,
-					lost: log.storyAwardsLost
-				}
-			],
-			(params) => itemsCRUD(params)
-		);
-
-		return yield* logApi.get
-			.log(result.id, user.id)
-			.pipe(
-				Effect.flatMap((result) =>
-					result ? Effect.succeed(result) : Effect.fail(new SaveLogError(log.id ? "Could not save log" : "Could not create log"))
-				)
-			);
-	});
-}
+});
 
 interface CRUDItemParams {
 	logId: LogId;
@@ -257,181 +251,174 @@ interface CRUDStoryAwardParams extends CRUDItemParams {
 	lost: LogSchema["storyAwardsLost"];
 }
 
-function itemsCRUD(params: CRUDMagicItemParams | CRUDStoryAwardParams) {
-	return Effect.gen(function* () {
-		const { db } = yield* LogService;
+const itemsCRUD = Effect.fn("itemsCRUD")(function* (params: CRUDMagicItemParams | CRUDStoryAwardParams) {
+	const { db } = yield* LogService;
 
-		const { logId, table, gained, lost } = params;
+	const { logId, table, gained, lost } = params;
 
-		const itemIds = gained.map((item) => item.id).filter(Boolean);
+	const itemIds = gained.map((item) => item.id).filter(Boolean);
+	yield* Effect.tryPromise({
+		try: () =>
+			db.delete(table).where(and(eq(table.logGainedId, logId), itemIds.length ? notInArray(table.id, itemIds) : undefined)),
+		catch: createSaveError
+	});
+
+	if (gained.length) {
 		yield* Effect.tryPromise({
 			try: () =>
-				db.delete(table).where(and(eq(table.logGainedId, logId), itemIds.length ? notInArray(table.id, itemIds) : undefined)),
+				db
+					.insert(table)
+					.values(
+						gained.map((item) => ({
+							id: item.id || undefined,
+							name: item.name,
+							description: item.description,
+							logGainedId: logId
+						}))
+					)
+					.onConflictDoUpdate({
+						target: table.id,
+						set: buildConflictUpdateColumns(table, ["name", "description"])
+					}),
 			catch: createSaveError
 		});
+	}
 
-		if (gained.length) {
-			yield* Effect.tryPromise({
-				try: () =>
-					db
-						.insert(table)
-						.values(
-							gained.map((item) => ({
-								id: item.id || undefined,
-								name: item.name,
-								description: item.description,
-								logGainedId: logId
-							}))
-						)
-						.onConflictDoUpdate({
-							target: table.id,
-							set: buildConflictUpdateColumns(table, ["name", "description"])
-						}),
-				catch: createSaveError
-			});
-		}
-
+	yield* Effect.tryPromise({
+		try: () =>
+			db
+				.update(table)
+				.set({ logLostId: null })
+				.where(and(eq(table.logLostId, logId), notInArray(table.id, lost))),
+		catch: createSaveError
+	});
+	if (lost.length) {
 		yield* Effect.tryPromise({
 			try: () =>
 				db
 					.update(table)
-					.set({ logLostId: null })
-					.where(and(eq(table.logLostId, logId), notInArray(table.id, lost))),
+					.set({ logLostId: logId })
+					.where(and(isNull(table.logLostId), inArray(table.id, lost))),
 			catch: createSaveError
 		});
-		if (lost.length) {
-			yield* Effect.tryPromise({
-				try: () =>
-					db
-						.update(table)
-						.set({ logLostId: logId })
-						.where(and(isNull(table.logLostId), inArray(table.id, lost))),
-				catch: createSaveError
-			});
-		}
-	});
-}
+	}
+});
 
 export class LogService extends Effect.Service<LogService>()("LogService", {
-	effect: Effect.gen(function* () {
+	effect: Effect.fn("LogService")(function* () {
 		const { db, transaction } = yield* DBService;
 
 		const impl: LogApiImpl = {
 			db,
 			get: {
-				log: (logId, userId) =>
-					Effect.gen(function* () {
-						yield* Log.info("LogService.getLog", { logId, userId });
-						if (logId === "new") return undefined;
+				log: Effect.fn("LogService.getLog")(function* (logId, userId) {
+					yield* Log.info("LogService.getLog", { logId, userId });
+					if (logId === "new") return undefined;
 
-						return yield* Effect.promise(() =>
-							db.query.logs.findFirst({
-								with: extendedLogIncludes,
-								where: {
-									id: {
-										eq: logId
-									},
-									OR: [characterLogFilter(userId), dmLogFilter(userId)]
-								}
-							})
-						).pipe(Effect.andThen((log) => log && parseLog(log)));
-					}),
-
-				dmLogs: (userId) =>
-					Effect.gen(function* () {
-						yield* Log.info("LogService.getDMLogs", { userId });
-
-						return yield* Effect.promise(() =>
-							db.query.logs
-								.findMany({
-									with: extendedLogIncludes,
-									where: dmLogFilter(userId),
-									orderBy: {
-										date: "asc"
-									}
-								})
-								.then((logs) => {
-									return logs.map(parseLog);
-								})
-						);
-					}),
-
-				userLogs: (userId) =>
-					Effect.gen(function* () {
-						yield* Log.info("LogService.getUserLogs", { userId });
-
-						return yield* Effect.promise(() =>
-							db.query.logs.findMany({
-								...userLogsConfig,
-								where: {
-									OR: [characterLogFilter(userId), dmLogFilter(userId)]
+					return yield* Effect.promise(() =>
+						db.query.logs.findFirst({
+							with: extendedLogIncludes,
+							where: {
+								id: {
+									eq: logId
 								},
+								OR: [characterLogFilter(userId), dmLogFilter(userId)]
+							}
+						})
+					).pipe(Effect.andThen((log) => log && parseLog(log)));
+				}),
+
+				dmLogs: Effect.fn("LogService.getDMLogs")(function* (userId) {
+					yield* Log.info("LogService.getDMLogs", { userId });
+
+					return yield* Effect.promise(() =>
+						db.query.logs
+							.findMany({
+								with: extendedLogIncludes,
+								where: dmLogFilter(userId),
 								orderBy: {
 									date: "asc"
 								}
 							})
-						);
-					})
+							.then((logs) => {
+								return logs.map(parseLog);
+							})
+					);
+				}),
+
+				userLogs: Effect.fn("LogService.getUserLogs")(function* (userId) {
+					yield* Log.info("LogService.getUserLogs", { userId });
+
+					return yield* Effect.promise(() =>
+						db.query.logs.findMany({
+							...userLogsConfig,
+							where: {
+								OR: [characterLogFilter(userId), dmLogFilter(userId)]
+							},
+							orderBy: {
+								date: "asc"
+							}
+						})
+					);
+				})
 			},
 			set: {
-				save: (log, user) =>
-					Effect.gen(function* () {
-						yield* Log.info("LogService.saveLog", { logId: log.id, userId: user.id });
-						yield* Log.debug("LogService.saveLog", log);
+				save: Effect.fn("LogService.saveLog")(function* (log, user) {
+					yield* Log.info("LogService.saveLog", { logId: log.id, userId: user.id });
+					yield* Log.debug("LogService.saveLog", log);
 
-						return yield* transaction(
-							(tx) => upsertLog(log, user).pipe(Effect.provide(LogTx(tx)), Effect.provide(DMTx(tx))),
-							createSaveError
-						);
-					}),
+					return yield* transaction(
+						(tx) => upsertLog(log, user).pipe(Effect.provide(LogTx(tx)), Effect.provide(DMTx(tx))),
+						createSaveError
+					);
+				}),
 
-				delete: (logId, userId) =>
-					Effect.gen(function* () {
-						yield* Log.info("LogService.deleteLog", { logId, userId });
+				delete: Effect.fn("LogService.deleteLog")(function* (logId, userId) {
+					yield* Log.info("LogService.deleteLog", { logId, userId });
 
-						return yield* Effect.tryPromise({
-							try: () =>
-								db
-									.delete(logs)
-									.where(
-										and(
-											eq(logs.id, logId),
-											or(
-												and(
-													eq(logs.isDmLog, false),
-													exists(
-														db
-															.select()
-															.from(characters)
-															.where(and(eq(characters.id, logs.characterId), eq(characters.userId, userId)))
-													)
-												),
-												and(
-													eq(logs.isDmLog, true),
-													exists(
-														db
-															.select()
-															.from(dungeonMasters)
-															.where(
-																and(
-																	eq(dungeonMasters.id, logs.dungeonMasterId),
-																	eq(dungeonMasters.userId, userId),
-																	eq(dungeonMasters.isUser, true)
-																)
+					return yield* Effect.tryPromise({
+						try: () =>
+							db
+								.delete(logs)
+								.where(
+									and(
+										eq(logs.id, logId),
+										or(
+											and(
+												eq(logs.isDmLog, false),
+												exists(
+													db
+														.select()
+														.from(characters)
+														.where(and(eq(characters.id, logs.characterId), eq(characters.userId, userId)))
+												)
+											),
+											and(
+												eq(logs.isDmLog, true),
+												exists(
+													db
+														.select()
+														.from(dungeonMasters)
+														.where(
+															and(
+																eq(dungeonMasters.id, logs.dungeonMasterId),
+																eq(dungeonMasters.userId, userId),
+																eq(dungeonMasters.isUser, true)
 															)
-													)
+														)
 												)
 											)
 										)
 									)
-									.returning({ id: logs.id }),
-							catch: createSaveError
-						}).pipe(
-							Effect.flatMap((logs) =>
-								isTupleOf(logs, 1) ? Effect.succeed(logs[0]) : Effect.fail(new SaveLogError("Log not found", { status: 404 }))
-							)
-						);
-					})
+								)
+								.returning({ id: logs.id }),
+						catch: createSaveError
+					}).pipe(
+						Effect.flatMap((logs) =>
+							isTupleOf(logs, 1) ? Effect.succeed(logs[0]) : Effect.fail(new SaveLogError("Log not found", { status: 404 }))
+						)
+					);
+				})
 			}
 		};
 
@@ -440,15 +427,16 @@ export class LogService extends Effect.Service<LogService>()("LogService", {
 	dependencies: [DBService.Default()]
 }) {}
 
-export const LogTx = (tx: Transaction) => LogService.DefaultWithoutDependencies.pipe(Layer.provide(DBService.Default(tx)));
+export const LogTx = (tx: Transaction) => LogService.DefaultWithoutDependencies().pipe(Layer.provide(DBService.Default(tx)));
 
-export const withLog = Effect.fn("withLog")(<R, E extends SaveLogError>(impl: (service: LogApiImpl) => Effect.Effect<R, E>) =>
-	Effect.gen(function* () {
+export const withLog = Effect.fn("withLog")(
+	function* <R, E extends SaveLogError>(impl: (service: LogApiImpl) => Effect.Effect<R, E>) {
 		const logApi = yield* LogService;
 		const result = yield* impl(logApi);
 
 		yield* debugSet("LogService", impl, result);
 
 		return result;
-	}).pipe(Effect.provide(LogService.Default))
+	},
+	(effect) => effect.pipe(Effect.provide(LogService.Default()))
 );

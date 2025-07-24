@@ -110,11 +110,13 @@ export async function run<A, B extends InstanceType<ErrorClass> | never, T exten
 	program: () => Generator<T, X, Y>
 ): Promise<X>;
 
-export async function run<A, B extends InstanceType<ErrorClass> | never>(program: Effect.Effect<A, B>): Promise<A>;
+export async function run<A, B extends InstanceType<ErrorClass> | never>(
+	program: Effect.Effect<A, B> | (() => Effect.Effect<A, B>)
+): Promise<A>;
 
 // Implementation
 export async function run<A, B extends InstanceType<ErrorClass> | never, T extends YieldWrap<Effect.Effect<A, B>>, X, Y>(
-	program: Effect.Effect<A, B> | (() => Generator<T, X, Y>)
+	program: Effect.Effect<A, B> | (() => Effect.Effect<A, B>) | (() => Generator<T, X, Y>)
 ): Promise<A | X> {
 	const effect = Effect.gen(function* () {
 		if (isFunction(program)) {
