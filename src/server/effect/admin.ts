@@ -105,7 +105,7 @@ export const logSearch = new DrizzleSearchParser<typeof relations, Table>({
 				};
 			}
 			return {
-				RAW: (table) => sql`${table.annotations}->'routeId'::text = ${ast.value}`
+				RAW: (table) => sql`${table.annotations}->>'routeId'::text = ${ast.value}`
 			};
 		}
 
