@@ -1,5 +1,5 @@
 import { parseLog } from "$lib/entities";
-import type { LocalsUser, LogId, LogSchema, UserId } from "$lib/schemas";
+import type { LocalsUser, LogId, LogIdOrNew, LogSchema, UserId } from "$lib/schemas";
 import {
 	buildConflictUpdateColumns,
 	DBService,
@@ -95,7 +95,7 @@ export type UserLogData = InferQueryResult<"logs", typeof userLogsConfig>;
 interface LogApiImpl {
 	readonly db: Database | Transaction;
 	readonly get: {
-		readonly log: (logId: LogId, userId: UserId) => Effect.Effect<FullLogData | undefined>;
+		readonly log: (logId: LogIdOrNew, userId: UserId) => Effect.Effect<FullLogData | undefined>;
 		readonly dmLogs: (userId: UserId) => Effect.Effect<FullLogData[]>;
 		readonly userLogs: (userId: UserId) => Effect.Effect<UserLogData[]>;
 	};
@@ -323,6 +323,7 @@ export class LogService extends Effect.Service<LogService>()("LogService", {
 				log: (logId, userId) =>
 					Effect.gen(function* () {
 						yield* Log.info("LogService.getLog", { logId, userId });
+						if (logId === "new") return undefined;
 
 						return yield* Effect.promise(() =>
 							db.query.logs.findFirst({

@@ -1,5 +1,5 @@
-import { defaultLogData, getItemEntities, logDataToSchema } from "$lib/entities.js";
-import { characterIdSchema, characterLogSchema, logIdSchema, uuidOrNew } from "$lib/schemas";
+import { defaultLogSchema, getItemEntities, logDataToSchema } from "$lib/entities.js";
+import { characterIdSchema, characterLogSchema, logIdOrNewSchema } from "$lib/schemas";
 import { assertUser } from "$server/auth";
 import { run, save, validateForm } from "$server/effect";
 import { FetchCharacterError, withCharacter } from "$server/effect/characters.js";
@@ -20,19 +20,19 @@ export const load = (event) =>
 		const character = parent.character;
 		if (!character) return yield* new FetchCharacterError("Character not found", 404);
 
-		const idResult = uuidOrNew(event.params.logId || "", logIdSchema);
+		const idResult = v.safeParse(logIdOrNewSchema, event.params.logId);
 		if (!idResult.success) redirect(302, `/character/${character.id}`);
 		const logId = idResult.output;
 
-		const log =
-			(logId !== "new" && (yield* withLog((service) => service.get.log(logId, user.id)))) || defaultLogData(user.id, character);
+		const logData = yield* withLog((service) => service.get.log(logId, user.id));
+		let log = logData ? logDataToSchema(user.id, logData) : defaultLogSchema(user.id);
 
 		if (logId !== "new") {
 			if (!log.id) return yield* new FetchLogError("Log not found", 404);
 			if (log.isDmLog) redirect(302, `/dm-logs/${log.id}`);
 		}
 
-		const form = yield* validateForm(logDataToSchema(user.id, log), characterLogSchema(character));
+		const form = yield* validateForm(log, characterLogSchema(character));
 
 		const itemEntities = getItemEntities(character, { excludeDropped: true, lastLogId: log.id });
 		const magicItems = itemEntities.magicItems.toSorted((a, b) => sorter(a.name, b.name));
@@ -57,14 +57,11 @@ export const actions = {
 			const user = event.locals.user;
 			assertUser(user);
 
-			const result = v.safeParse(characterIdSchema, event.params.characterId);
-			if (!result.success) throw redirect(302, "/characters?uuid=1");
-			const characterId = result.output;
-
+			const characterId = v.parse(characterIdSchema, event.params.characterId);
 			const character = yield* withCharacter((service) => service.get.character(characterId));
 			if (!character) redirect(302, "/characters");
 
-			const idResult = uuidOrNew(event.params.logId || "", logIdSchema);
+			const idResult = v.safeParse(logIdOrNewSchema, event.params.logId);
 			if (!idResult.success) redirect(302, `/character/${character.id}`);
 			const logId = idResult.output;
 
