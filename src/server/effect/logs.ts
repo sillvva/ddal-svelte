@@ -13,10 +13,9 @@ import { characters, dungeonMasters, logs, magicItems, storyAwards } from "$serv
 import { and, eq, exists, inArray, isNull, notInArray, or } from "drizzle-orm";
 import { Effect, Layer } from "effect";
 import { isTupleOf } from "effect/Predicate";
-import { debugSet, FetchError, FormError, Log } from ".";
+import { debugSet, FormError, Log } from ".";
 import { DMService, DMTx } from "./dms";
 
-export class FetchLogError extends FetchError {}
 export class SaveLogError extends FormError<LogSchema> {}
 function createSaveError(err: unknown): SaveLogError {
 	return SaveLogError.from(err);
@@ -443,14 +442,13 @@ export class LogService extends Effect.Service<LogService>()("LogService", {
 
 export const LogTx = (tx: Transaction) => LogService.DefaultWithoutDependencies.pipe(Layer.provide(DBService.Default(tx)));
 
-export const withLog = Effect.fn("withLog")(
-	<R, E extends FetchLogError | SaveLogError>(impl: (service: LogApiImpl) => Effect.Effect<R, E>) =>
-		Effect.gen(function* () {
-			const logApi = yield* LogService;
-			const result = yield* impl(logApi);
+export const withLog = Effect.fn("withLog")(<R, E extends SaveLogError>(impl: (service: LogApiImpl) => Effect.Effect<R, E>) =>
+	Effect.gen(function* () {
+		const logApi = yield* LogService;
+		const result = yield* impl(logApi);
 
-			yield* debugSet("LogService", impl, result);
+		yield* debugSet("LogService", impl, result);
 
-			return result;
-		}).pipe(Effect.provide(LogService.Default))
+		return result;
+	}).pipe(Effect.provide(LogService.Default))
 );

@@ -7,9 +7,8 @@ import { DrizzleSearchParser } from "@sillvva/search/drizzle";
 import { eq, sql } from "drizzle-orm";
 import { Effect, Layer } from "effect";
 import { isTupleOf } from "effect/Predicate";
-import { FetchError, FormError } from ".";
+import { FormError } from ".";
 
-export class FetchAdminError extends FetchError {}
 export class SaveAppLogError extends FormError<AppLogSchema> {}
 function createSaveAppLogError(err: unknown): SaveAppLogError {
 	return SaveAppLogError.from(err);
@@ -65,7 +64,7 @@ export class AdminService extends Effect.Service<AdminService>()("AdminService",
 export const AdminTx = (tx: Transaction) => AdminService.DefaultWithoutDependencies.pipe(Layer.provide(DBService.Default(tx)));
 
 export const withAdmin = Effect.fn("withAdmin")(
-	<R, E extends FetchAdminError | SaveAppLogError>(impl: (service: AdminApiImpl) => Effect.Effect<R, E>) =>
+	<R, E extends SaveAppLogError>(impl: (service: AdminApiImpl) => Effect.Effect<R, E>) =>
 		Effect.gen(function* () {
 			const adminApi = yield* AdminService;
 			return yield* impl(adminApi);

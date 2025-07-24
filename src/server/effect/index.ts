@@ -233,22 +233,6 @@ export function isTaggedError(error: unknown): error is InstanceType<ErrorClass>
 	return isInstanceOfClass(error) && "status" in error && "cause" in error && "message" in error && "_tag" in error;
 }
 
-export class FetchError extends Data.TaggedError("FetchError")<ErrorParams> {
-	constructor(
-		public message: string,
-		public status: NumericRange<400, 599> = 500,
-		public cause?: unknown
-	) {
-		super({ message, status, cause });
-	}
-
-	static from(err: FetchError | Error | unknown): FetchError {
-		if (err instanceof FetchError) return err;
-		if (err instanceof FormError) return new FetchError(err.message, err.status, err.cause);
-		return new FetchError(Cause.pretty(Cause.fail(err)), 500, err);
-	}
-}
-
 export class FormError<
 	TOut extends Record<PropertyKey, any>,
 	TIn extends Record<PropertyKey, any> = TOut
@@ -273,7 +257,7 @@ export class FormError<
 		err: FormError<TOut, TIn> | Error | unknown
 	): FormError<TOut, TIn> {
 		if (err instanceof FormError) return err;
-		if (err instanceof FetchError) return new FormError<TOut, TIn>(err.message, { cause: err.cause, status: err.status });
+		if (isTaggedError(err)) return new FormError<TOut, TIn>(err.message, { cause: err.cause, status: err.status });
 		return new FormError<TOut, TIn>(Cause.pretty(Cause.fail(err)), { cause: err, status: 500 });
 	}
 

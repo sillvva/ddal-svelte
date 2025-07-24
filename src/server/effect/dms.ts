@@ -4,13 +4,14 @@ import { userDMIncludes } from "$server/db/includes";
 import { dungeonMasters, type DungeonMaster } from "$server/db/schema";
 import { sorter } from "@sillvva/utils";
 import { and, eq } from "drizzle-orm";
-import { Effect, Layer } from "effect";
+import { Data, Effect, Layer } from "effect";
 import { isTupleOf } from "effect/Predicate";
-import { debugSet, FetchError, FormError, Log } from ".";
+import { debugSet, FormError, Log, type ErrorParams } from ".";
 
-export class FetchDMError extends FetchError {}
-function createFetchError(err: unknown): FetchDMError {
-	return FetchDMError.from(err);
+class FetchUserDMsError extends Data.TaggedError("FetchUserDMsError")<ErrorParams> {
+	constructor(params: Omit<ErrorParams, "_tag"> = { message: "Unable to fetch user DMs", status: 500 }) {
+		super(params);
+	}
 }
 
 export class SaveDMError extends FormError<DungeonMasterSchema> {}
@@ -26,7 +27,7 @@ interface DMApiImpl {
 		readonly userDMs: (
 			user: LocalsUser,
 			{ id, includeLogs }: { id?: DungeonMasterId; includeLogs?: boolean }
-		) => Effect.Effect<UserDM[], FetchDMError>;
+		) => Effect.Effect<UserDM[], FetchUserDMsError>;
 		readonly fuzzyDM: (
 			userId: UserId,
 			isUser: boolean,
@@ -71,7 +72,7 @@ export class DMService extends Effect.Service<DMService>()("DMSService", {
 							// Add the user DM if there isn't one already, and not searching for a specific DM
 							Effect.flatMap((dms) =>
 								!id && !dms[0]?.isUser
-									? impl.set.addUserDM(user, dms).pipe(Effect.catchAll(createFetchError))
+									? impl.set.addUserDM(user, dms).pipe(Effect.catchAll((e) => new FetchUserDMsError({ ...e, cause: e })))
 									: Effect.succeed(dms)
 							)
 						);
@@ -191,7 +192,7 @@ export class DMService extends Effect.Service<DMService>()("DMSService", {
 export const DMTx = (tx: Transaction) => DMService.DefaultWithoutDependencies.pipe(Layer.provide(DBService.Default(tx)));
 
 export const withDM = Effect.fn("withDM")(
-	<R, E extends FetchDMError | SaveDMError>(impl: (service: DMApiImpl) => Effect.Effect<R, E>) =>
+	<R, E extends FetchUserDMsError | SaveDMError>(impl: (service: DMApiImpl) => Effect.Effect<R, E>) =>
 		Effect.gen(function* () {
 			const dmApi = yield* DMService;
 			const result = yield* impl(dmApi);

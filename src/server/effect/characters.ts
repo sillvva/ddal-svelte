@@ -7,9 +7,8 @@ import { characters, logs, type Character } from "$server/db/schema";
 import { and, eq, exists } from "drizzle-orm";
 import { Effect, Layer } from "effect";
 import { isTupleOf } from "effect/Predicate";
-import { debugSet, FetchError, FormError, Log } from ".";
+import { debugSet, FormError, Log } from ".";
 
-export class FetchCharacterError extends FetchError {}
 export class SaveCharacterError extends FormError<EditCharacterSchema> {}
 function createSaveError(err: unknown): SaveCharacterError {
 	return SaveCharacterError.from(err);
@@ -149,7 +148,7 @@ export const CharacterTx = (tx: Transaction) =>
 	CharacterService.DefaultWithoutDependencies.pipe(Layer.provide(DBService.Default(tx)));
 
 export const withCharacter = Effect.fn("withCharacter")(
-	<R, E extends FetchCharacterError | SaveCharacterError>(impl: (service: CharacterApiImpl) => Effect.Effect<R, E>) =>
+	<R, E extends SaveCharacterError>(impl: (service: CharacterApiImpl) => Effect.Effect<R, E>) =>
 		Effect.gen(function* () {
 			const CharacterApi = yield* CharacterService;
 			const result = yield* impl(CharacterApi);
