@@ -3,7 +3,7 @@ import type { CharacterData, ExtendedCharacterData, FullCharacterData } from "$s
 import type { ExtendedLogData, FullLogData, LogData, LogSummaryData } from "$server/effect/logs";
 import { sorter } from "@sillvva/utils";
 import { BLANK_CHARACTER, PlaceholderName } from "./constants";
-import type { CharacterId, DungeonMasterId, LogId, LogIdOrNew, LogSchema, UserId } from "./schemas";
+import type { CharacterId, DungeonMasterId, LogIdOrNew, LogSchema, UserId } from "./schemas";
 
 export function getItemEntities(
 	character: FullCharacterData,
@@ -150,33 +150,6 @@ export function getLogsSummary(logs: LogData[], includeLogs = true) {
 
 export function defaultDM(userId: UserId): DungeonMaster {
 	return { id: "" as DungeonMasterId, name: "", DCI: null, userId: userId, isUser: true };
-}
-
-export function defaultLogData(userId: UserId, character = null as CharacterData | null) {
-	return parseLog({
-		id: "new" as LogId,
-		name: "",
-		description: "",
-		date: new Date(),
-		type: "game",
-		createdAt: new Date(),
-		experience: 0,
-		acp: 0,
-		tcp: 0,
-		level: 0,
-		gold: 0,
-		dtd: 0,
-		dungeonMasterId: "" as DungeonMasterId,
-		characterId: character?.id || null,
-		character,
-		appliedDate: null,
-		dm: defaultDM(userId),
-		isDmLog: !character,
-		magicItemsGained: [],
-		magicItemsLost: [],
-		storyAwardsGained: [],
-		storyAwardsLost: []
-	});
 }
 
 export function defaultLogSchema(
