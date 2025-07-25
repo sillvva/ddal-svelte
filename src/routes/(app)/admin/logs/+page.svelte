@@ -1,5 +1,5 @@
 <script lang="ts">
-	import { goto, invalidateAll } from "$app/navigation";
+	import { goto, invalidateAll, pushState } from "$app/navigation";
 	import { page } from "$app/state";
 	import DeleteAppLog from "$lib/components/forms/DeleteAppLog.svelte";
 	import type { AppLogId } from "$lib/schemas.js";
@@ -25,24 +25,50 @@
 			invalidateAll: true
 		});
 	}, 400);
+
+	let syntaxReference = $state("");
+
+	async function openSyntaxReference() {
+		if (!syntaxReference) {
+			syntaxReference = await fetch("/syntax-reference.md").then((res) => res.text());
+		}
+		pushState("", {
+			modal: {
+				type: "text",
+				name: "Syntax Reference",
+				description: syntaxReference,
+				width: "64rem",
+				maxWidth: "60vw",
+				maxHeight: "80vh"
+			}
+		});
+	}
 </script>
 
 <div class="mb-4 flex flex-col gap-2">
 	<div class="flex items-center justify-between">
 		<div class="flex w-full gap-2 sm:max-w-md md:max-w-md">
 			<search class="min-w-0 flex-1">
-				<label class="input focus-within:border-primary sm:input-sm flex w-full items-center gap-2">
+				<div class="focus-within:outline-primary join flex w-full items-center rounded-lg focus-within:outline-2">
 					<input
 						type="text"
 						bind:value={search}
 						oninput={(e) => {
 							debouncedSearch.call(e.currentTarget.value);
 						}}
-						class="w-full flex-1"
+						class="input sm:input-sm join-item flex-1"
 						aria-label="Search"
 						placeholder={data.search}
 					/>
-				</label>
+					<button
+						class="btn join-item tooltip"
+						data-tip="Syntax Reference"
+						aria-label="Syntax Reference"
+						onclick={openSyntaxReference}
+					>
+						<span class="iconify mdi--help-circle"></span>
+					</button>
+				</div>
 			</search>
 		</div>
 		<div class="flex justify-end text-sm">Logs are automatically deleted after 7 days.</div>

@@ -199,6 +199,10 @@
 		--fontsize: 0.875rem;
 		font-size: var(--fontsize);
 	}
+
+	.tooltip:before {
+		z-index: 20;
+	}
 }
 
 @layer utilities {

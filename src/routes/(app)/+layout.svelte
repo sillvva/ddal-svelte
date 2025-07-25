@@ -113,7 +113,11 @@
 >
 	{#if page.state.modal}
 		{#if page.state.modal.type === "text"}
-			<div class="modal-box bg-base-100 relative cursor-default drop-shadow-lg">
+			<div
+				class="modal-box bg-base-100 relative cursor-default drop-shadow-lg"
+				style:max-width={page.state.modal.maxWidth}
+				style:max-height={page.state.modal.maxHeight}
+			>
 				<button class="btn btn-circle btn-ghost btn-sm absolute top-2 right-2" onclick={() => history.back()} aria-label="Close">
 					<span class="iconify mdi--close"></span>
 				</button>

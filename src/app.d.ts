@@ -31,6 +31,10 @@ declare global {
 						name: string;
 						description: string;
 						date?: Date;
+						width?: number | string;
+						height?: number | string;
+						maxWidth?: number | string;
+						maxHeight?: number | string;
 				  }
 				| {
 						type: "image";
