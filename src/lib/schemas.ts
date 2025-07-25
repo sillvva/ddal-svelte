@@ -9,16 +9,6 @@ function brandedId<T extends string>(name: T) {
 	return v.pipe(v.string(), v.uuid(), v.brand(name));
 }
 
-export function uuidOrNew<T extends string>(
-	value: string,
-	schema: v.SchemaWithPipe<readonly [v.StringSchema<undefined>, v.UuidAction<string, undefined>, v.BrandAction<string, T>]>
-): { success: boolean; output: "new" | v.InferOutput<typeof schema> } {
-	const result = v.safeParse(schema, value);
-	return value === "new"
-		? ({ success: true, output: "new" } as const)
-		: { success: result.success, output: result.output as v.InferOutput<typeof schema> };
-}
-
 const string = v.pipe(v.string(), v.trim());
 const requiredString = v.pipe(string, v.regex(/^.*(\p{L}|\p{N})+.*$/u, "Required"));
 const shortString = v.pipe(string, v.maxLength(50));
@@ -76,9 +66,12 @@ export const newCharacterSchema = v.object({
 export type CharacterId = v.InferOutput<typeof characterIdSchema>;
 export const characterIdSchema = brandedId("CharacterId");
 
+export type CharacterIdOrNew = v.InferOutput<typeof characterIdOrNewSchema>;
+export const characterIdOrNewSchema = v.union([characterIdSchema, v.literal("new")]);
+
 export type EditCharacterSchema = v.InferOutput<typeof editCharacterSchema>;
 export const editCharacterSchema = v.object({
-	id: v.union([characterIdSchema, v.literal("new")]),
+	id: characterIdOrNewSchema,
 	...newCharacterSchema.entries,
 	firstLog: v.optional(v.boolean(), false)
 });
@@ -109,10 +102,13 @@ const itemSchema = v.object({
 export type LogId = v.InferOutput<typeof logIdSchema>;
 export const logIdSchema = brandedId("LogId");
 
+export type LogIdOrNew = v.InferOutput<typeof logIdOrNewSchema>;
+export const logIdOrNewSchema = v.union([logIdSchema, v.literal("new")]);
+
 export type LogSchema = v.InferOutput<typeof logSchema>;
 export type LogSchemaIn = v.InferInput<typeof logSchema>;
 export const logSchema = v.object({
-	id: v.union([logIdSchema, v.literal("new")]),
+	id: logIdOrNewSchema,
 	name: v.pipe(requiredString, maxStringSize),
 	date: v.date(),
 	characterId: v.nullish(characterIdSchema, null),

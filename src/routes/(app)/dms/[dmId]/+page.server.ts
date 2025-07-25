@@ -1,7 +1,7 @@
 import { dungeonMasterIdSchema, dungeonMasterSchema } from "$lib/schemas";
 import { assertUser } from "$server/auth";
 import { run, save, validateForm } from "$server/effect";
-import { FetchDMError, withDM } from "$server/effect/dms";
+import { DMNotFoundError, withDM } from "$server/effect/dms";
 import { redirect } from "@sveltejs/kit";
 import { Effect } from "effect";
 import { fail } from "sveltekit-superforms";
@@ -19,7 +19,7 @@ export const load = (event) =>
 		const dmId = idResult.output;
 
 		const [dm] = yield* withDM((service) => service.get.userDMs(user, { id: dmId }));
-		if (!dm) return yield* new FetchDMError("DM not found", 404);
+		if (!dm) return yield* new DMNotFoundError();
 
 		const form = yield* validateForm(
 			{

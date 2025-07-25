@@ -1,21 +1,23 @@
 import { appLogId } from "$lib/schemas";
 import { assertUser } from "$server/auth.js";
 import { run, save, validateForm } from "$server/effect";
-import { withAdmin } from "$server/effect/admin.js";
+import { validKeys, withAdmin } from "$server/effect/admin.js";
 import { fail } from "@sveltejs/kit";
-import { Effect } from "effect";
+import { DateTime, Effect } from "effect";
 import { setError } from "sveltekit-superforms";
 import { object } from "valibot";
 
-export const load = async (event) => {
-	const user = event.locals.user;
-	assertUser(user);
+export const load = async (event) =>
+	run(function* () {
+		const user = event.locals.user;
+		assertUser(user);
 
-	const today = new Date().toISOString().split("T")[0];
-	const search = event.url.searchParams.get("s") ?? `level:ERROR date:${today}`;
+		const today = yield* DateTime.now;
+		const yesterday = today.pipe(DateTime.subtract({ days: 1 }));
+		const range = `${DateTime.formatIsoDateUtc(yesterday)}..${DateTime.formatIsoDateUtc(today)}`;
+		const search = event.url.searchParams.get("s") ?? `level:error date:${range}`;
 
-	const { logs, metadata } = await run(
-		withAdmin((service) =>
+		const { logs, metadata } = yield* withAdmin((service) =>
 			service.get.logs(search).pipe(
 				Effect.map(({ logs, metadata }) => ({
 					logs: logs.map((log) => {
@@ -31,11 +33,10 @@ export const load = async (event) => {
 					metadata
 				}))
 			)
-		)
-	);
+		);
 
-	return { logs, metadata, search };
-};
+		return { logs, metadata, search, validKeys };
+	});
 
 export const actions = {
 	deleteLog: (event) =>

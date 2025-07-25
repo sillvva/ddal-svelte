@@ -2,6 +2,7 @@ import { dev } from "$app/environment";
 import { getRequestEvent } from "$app/server";
 import { privateEnv } from "$lib/env/private";
 import type { AppLogSchema, UserId } from "$lib/schemas";
+import { isInstanceOfClass } from "$lib/util";
 import { db } from "$server/db";
 import { appLogs } from "$server/db/schema";
 import {
@@ -13,7 +14,7 @@ import {
 	type NumericRange,
 	type RequestEvent
 } from "@sveltejs/kit";
-import { Cause, Data, Effect, Exit, Layer, Logger } from "effect";
+import { Cause, Data, Effect, Exit, HashMap, Layer, Logger } from "effect";
 import { isFunction, isTupleOf } from "effect/Predicate";
 import type { YieldWrap } from "effect/Utils";
 import {
@@ -32,31 +33,22 @@ import type { BaseSchema, InferInput, InferOutput } from "valibot";
 
 const logLevel = Logger.withMinimumLogLevel(privateEnv.LOG_LEVEL);
 
-type AnnotationsList = {
-	_id: string;
-	values: [
-		["routeId", string | null],
-		["params", Partial<Record<string, string>>],
-		["userId", UserId | undefined],
-		["username", string | undefined],
-		["extra", object]
-	];
-};
-
-type AnnotationsListEntries = AnnotationsList["values"][number];
 export type Annotations = {
-	[K in AnnotationsListEntries[0]]: Extract<AnnotationsListEntries, [K, any]>[1];
+	routeId: string | null;
+	params: Partial<Record<string, string>>;
+	userId: UserId | undefined;
+	username: string | undefined;
+	extra: object;
 };
 
 const dbLogger = Logger.replace(
 	Logger.defaultLogger,
 	Logger.make((log) => {
-		const data = log.annotations.toJSON() as AnnotationsList;
 		const values = {
 			label: (log.message as string[]).join(" | "),
 			timestamp: log.date,
 			level: log.logLevel.label,
-			annotations: Object.fromEntries(data.values) as Annotations
+			annotations: Object.fromEntries(HashMap.toEntries(log.annotations)) as Annotations
 		} satisfies Omit<AppLogSchema, "id">;
 
 		Effect.promise(() => db.insert(appLogs).values([values]).returning({ id: appLogs.id })).pipe(
@@ -104,20 +96,20 @@ export const debugSet = Effect.fn("debugSet")(function* <S extends string>(servi
 // Run
 // -------------------------------------------------------------------------------------------------
 
-export type ErrorTypes = FetchError | FormError<any, any> | never;
-
 // Overload signatures
-export async function run<A, B extends ErrorTypes, T extends YieldWrap<Effect.Effect<A, B>>, X, Y>(
+export async function run<A, B extends InstanceType<ErrorClass> | never, T extends YieldWrap<Effect.Effect<A, B>>, X, Y>(
 	program: () => Generator<T, X, Y>
 ): Promise<X>;
 
-export async function run<A, B extends ErrorTypes>(program: Effect.Effect<A, B>): Promise<A>;
+export async function run<A, B extends InstanceType<ErrorClass> | never>(
+	program: Effect.Effect<A, B> | (() => Effect.Effect<A, B>)
+): Promise<A>;
 
 // Implementation
-export async function run<A, B extends ErrorTypes, T extends YieldWrap<Effect.Effect<A, B>>, X, Y>(
-	program: Effect.Effect<A, B> | (() => Generator<T, X, Y>)
+export async function run<A, B extends InstanceType<ErrorClass> | never, T extends YieldWrap<Effect.Effect<A, B>>, X, Y>(
+	program: Effect.Effect<A, B> | (() => Effect.Effect<A, B>) | (() => Generator<T, X, Y>)
 ): Promise<A | X> {
-	const effect = Effect.gen(function* () {
+	const effect = Effect.fn(function* () {
 		if (isFunction(program)) {
 			// Generator function
 			return yield* program();
@@ -127,7 +119,7 @@ export async function run<A, B extends ErrorTypes, T extends YieldWrap<Effect.Ef
 		}
 	});
 
-	const result = await Effect.runPromiseExit(effect);
+	const result = await Effect.runPromiseExit(effect());
 	return Exit.match(result, {
 		onSuccess: (result) => result,
 		onFailure: (cause) => {
@@ -137,7 +129,7 @@ export async function run<A, B extends ErrorTypes, T extends YieldWrap<Effect.Ef
 
 			if (Cause.isFailType(cause)) {
 				const error = cause.error;
-				if (error instanceof FormError || error instanceof FetchError) {
+				if (isTaggedError(error)) {
 					status = error.status;
 					failCause = error.cause;
 				}
@@ -219,37 +211,25 @@ export async function save<
 // Errors
 // -------------------------------------------------------------------------------------------------
 
-export class FetchError extends Data.TaggedError("FetchError")<{
+export interface ErrorParams {
+	readonly _tag: string;
 	message: string;
 	status: NumericRange<400, 599>;
 	cause?: unknown;
-}> {
-	constructor(
-		public message: string,
-		public status: NumericRange<400, 599> = 500,
-		public cause?: unknown
-	) {
-		super({ message, status, cause });
-	}
+}
 
-	static from(err: FetchError | Error | unknown): FetchError {
-		if (err instanceof FetchError) return err;
-		if (err instanceof FormError) return new FetchError(err.message, err.status, err.cause);
-		return new FetchError(Cause.pretty(Cause.fail(err)), 500, err);
-	}
+export interface ErrorClass {
+	new (...args: any[]): ErrorParams;
+}
+
+export function isTaggedError(error: unknown): error is InstanceType<ErrorClass> {
+	return isInstanceOfClass(error) && "status" in error && "cause" in error && "message" in error && "_tag" in error;
 }
 
 export class FormError<
 	TOut extends Record<PropertyKey, any>,
 	TIn extends Record<PropertyKey, any> = TOut
-> extends Data.TaggedError("FormError")<{
-	message: string;
-	status: NumericRange<400, 599>;
-	cause?: unknown;
-}> {
-	cause?: unknown;
-	status: NumericRange<400, 599> = 500;
-
+> extends Data.TaggedError("FormError")<ErrorParams> {
 	constructor(
 		public message: string,
 		protected options: Partial<{
@@ -258,21 +238,19 @@ export class FormError<
 			cause: unknown;
 		}> = {}
 	) {
-		const status = options.status || 500;
-		super({ message, status });
-		this.cause = options.cause;
+		super({ message, status: options.status || 500, cause: options.cause });
 	}
 
 	static from<TOut extends Record<PropertyKey, any>, TIn extends Record<PropertyKey, any> = TOut>(
-		err: FormError<TOut, TIn> | Error | unknown
+		err: unknown,
+		field: "" | FormPathLeavesWithErrors<TOut> = ""
 	): FormError<TOut, TIn> {
-		if (err instanceof FormError) return err;
-		if (err instanceof FetchError) return new FormError<TOut, TIn>(err.message, { cause: err.cause, status: err.status });
-		return new FormError<TOut, TIn>(Cause.pretty(Cause.fail(err)), { cause: err, status: 500 });
+		if (isTaggedError(err)) return new FormError<TOut, TIn>(err.message, { cause: err.cause, status: err.status, field });
+		return new FormError<TOut, TIn>(Cause.pretty(Cause.fail(err)), { cause: err, status: 500, field });
 	}
 
 	toForm(form: SuperValidated<TOut, App.Superforms.Message, TIn>) {
-		return setError(form, this.options?.field || "", this.message, {
+		return setError(form, this.options?.field ?? "", this.message, {
 			status: this.status
 		});
 	}

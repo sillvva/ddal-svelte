@@ -4,9 +4,6 @@ import { DBService, type Transaction } from "$server/db";
 import type { User } from "$server/db/schema";
 import { sorter } from "@sillvva/utils";
 import { Effect, Layer } from "effect";
-import { FetchError } from ".";
-
-export class FetchUserError extends FetchError {}
 
 interface UserApiImpl {
 	readonly get: {
@@ -16,13 +13,13 @@ interface UserApiImpl {
 }
 
 export class UserService extends Effect.Service<UserService>()("UserService", {
-	effect: Effect.gen(function* () {
+	effect: Effect.fn("UserService")(function* () {
 		const { db } = yield* DBService;
 
 		const impl: UserApiImpl = {
 			get: {
-				localsUser: (userId) =>
-					Effect.promise(() =>
+				localsUser: Effect.fn("UserService.getLocalsUser")(function* (userId) {
+					return yield* Effect.promise(() =>
 						db.query.user.findFirst({
 							with: {
 								accounts: {
@@ -54,9 +51,10 @@ export class UserService extends Effect.Service<UserService>()("UserService", {
 								}
 							}
 						})
-					),
-				users: (userId: UserId) =>
-					Effect.promise(() =>
+					);
+				}),
+				users: Effect.fn("UserService.getUsers")(function* (userId) {
+					return yield* Effect.promise(() =>
 						db.query.user.findMany({
 							with: {
 								accounts: {
@@ -76,7 +74,8 @@ export class UserService extends Effect.Service<UserService>()("UserService", {
 								}
 							}
 						})
-					).pipe(Effect.map((users) => users.sort((a, b) => sorter(a.name.toLowerCase(), b.name.toLowerCase()))))
+					).pipe(Effect.map((users) => users.sort((a, b) => sorter(a.name.toLowerCase(), b.name.toLowerCase()))));
+				})
 			}
 		};
 
@@ -85,12 +84,12 @@ export class UserService extends Effect.Service<UserService>()("UserService", {
 	dependencies: [DBService.Default()]
 }) {}
 
-export const UserTx = (tx: Transaction) => UserService.DefaultWithoutDependencies.pipe(Layer.provide(DBService.Default(tx)));
+export const UserTx = (tx: Transaction) => UserService.DefaultWithoutDependencies().pipe(Layer.provide(DBService.Default(tx)));
 
 export const withUser = Effect.fn("withUser")(
-	<R, E extends FetchUserError>(impl: (service: UserApiImpl) => Effect.Effect<R, E>) =>
-		Effect.gen(function* () {
-			const userApi = yield* UserService;
-			return yield* impl(userApi);
-		}).pipe(Effect.provide(UserService.Default))
+	function* <R>(impl: (service: UserApiImpl) => Effect.Effect<R>) {
+		const userApi = yield* UserService;
+		return yield* impl(userApi);
+	},
+	(effect) => effect.pipe(Effect.provide(UserService.Default()))
 );

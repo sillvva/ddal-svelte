@@ -7,9 +7,8 @@ import { DrizzleSearchParser } from "@sillvva/search/drizzle";
 import { eq, sql } from "drizzle-orm";
 import { Effect, Layer } from "effect";
 import { isTupleOf } from "effect/Predicate";
-import { FetchError, FormError } from ".";
+import { FormError } from ".";
 
-export class FetchAdminError extends FetchError {}
 export class SaveAppLogError extends FormError<AppLogSchema> {}
 function createSaveAppLogError(err: unknown): SaveAppLogError {
 	return SaveAppLogError.from(err);
@@ -25,15 +24,15 @@ interface AdminApiImpl {
 }
 
 export class AdminService extends Effect.Service<AdminService>()("AdminService", {
-	effect: Effect.gen(function* () {
+	effect: Effect.fn("AdminService")(function* () {
 		const { db } = yield* DBService;
 
 		const impl: AdminApiImpl = {
 			get: {
-				logs: (search = "") => {
+				logs: Effect.fn("AdminService.getLogs")(function* (search = "") {
 					const { where, orderBy, metadata, ast } = logSearch.parse(search);
 
-					return Effect.promise(() =>
+					return yield* Effect.promise(() =>
 						db.query.appLogs.findMany({
 							where,
 							orderBy: {
@@ -41,19 +40,20 @@ export class AdminService extends Effect.Service<AdminService>()("AdminService",
 								timestamp: "desc"
 							}
 						})
-					).pipe(Effect.andThen((logs) => ({ logs, metadata, ast })));
-				}
+					).pipe(Effect.map((logs) => ({ logs, metadata, ast })));
+				})
 			},
 			set: {
-				deleteLog: (logId) =>
-					Effect.tryPromise({
+				deleteLog: Effect.fn("AdminService.deleteLog")(function* (logId) {
+					return yield* Effect.tryPromise({
 						try: () => db.delete(appLogs).where(eq(appLogs.id, logId)).returning({ id: appLogs.id }),
 						catch: createSaveAppLogError
 					}).pipe(
 						Effect.flatMap((logs) =>
 							isTupleOf(logs, 1) ? Effect.succeed(logs[0]) : Effect.fail(new SaveAppLogError("Log not found", { status: 404 }))
 						)
-					)
+					);
+				})
 			}
 		};
 
@@ -62,20 +62,20 @@ export class AdminService extends Effect.Service<AdminService>()("AdminService",
 	dependencies: [DBService.Default()]
 }) {}
 
-export const AdminTx = (tx: Transaction) => AdminService.DefaultWithoutDependencies.pipe(Layer.provide(DBService.Default(tx)));
+export const AdminTx = (tx: Transaction) => AdminService.DefaultWithoutDependencies().pipe(Layer.provide(DBService.Default(tx)));
 
 export const withAdmin = Effect.fn("withAdmin")(
-	<R, E extends FetchAdminError | SaveAppLogError>(impl: (service: AdminApiImpl) => Effect.Effect<R, E>) =>
-		Effect.gen(function* () {
-			const adminApi = yield* AdminService;
-			return yield* impl(adminApi);
-		}).pipe(Effect.provide(AdminService.Default))
+	function* <R, E extends SaveAppLogError>(impl: (service: AdminApiImpl) => Effect.Effect<R, E>) {
+		const adminApi = yield* AdminService;
+		return yield* impl(adminApi);
+	},
+	(effect) => effect.pipe(Effect.provide(AdminService.Default()))
 );
 
 type Table = "appLogs";
 type Column = keyof TRSchema[Table]["columns"];
 
-export const validKeys = ["id", "date", "label", "level", "user", "userId", "route", "routeId"] as const satisfies (
+export const validKeys = ["id", "date", "label", "level", "username", "userId", "routeId"] as const satisfies (
 	| Column
 	| (string & {})
 )[];
@@ -87,25 +87,14 @@ export const logSearch = new DrizzleSearchParser<typeof relations, Table>({
 	filterFn: (ast) => {
 		const key = (ast.key || defaultKey) as (typeof validKeys)[number];
 
-		if (key === "user" || key === "userId") {
+		if (key === "username" || key === "userId" || key === "routeId") {
 			if (ast.isRegex) {
 				return {
-					RAW: (table) => sql`${table.annotations}->>'userId'::text ~* ${ast.value}`
+					RAW: (table) => sql`${table.annotations}->>'${key}'::text ~* ${ast.value}`
 				};
 			}
 			return {
-				RAW: (table) => sql`${table.annotations}->>'userId'::text = ${ast.value}`
-			};
-		}
-
-		if (key === "route" || key === "routeId") {
-			if (ast.isRegex) {
-				return {
-					RAW: (table) => sql`${table.annotations}->>'routeId'::text ~* ${ast.value}`
-				};
-			}
-			return {
-				RAW: (table) => sql`${table.annotations}->'routeId'::text = ${ast.value}`
+				RAW: (table) => sql`${table.annotations}->>'${key}'::text = ${ast.value}`
 			};
 		}
 
