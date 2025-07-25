@@ -109,7 +109,7 @@ export async function run<A, B extends InstanceType<ErrorClass> | never>(
 export async function run<A, B extends InstanceType<ErrorClass> | never, T extends YieldWrap<Effect.Effect<A, B>>, X, Y>(
 	program: Effect.Effect<A, B> | (() => Effect.Effect<A, B>) | (() => Generator<T, X, Y>)
 ): Promise<A | X> {
-	const effect = Effect.gen(function* () {
+	const effect = Effect.fn(function* () {
 		if (isFunction(program)) {
 			// Generator function
 			return yield* program();
@@ -119,7 +119,7 @@ export async function run<A, B extends InstanceType<ErrorClass> | never, T exten
 		}
 	});
 
-	const result = await Effect.runPromiseExit(effect);
+	const result = await Effect.runPromiseExit(effect());
 	return Exit.match(result, {
 		onSuccess: (result) => result,
 		onFailure: (cause) => {
