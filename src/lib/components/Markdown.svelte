@@ -20,6 +20,7 @@
 	import tablehead from "$lib/components/renderers/tablehead.svelte";
 	import tablerow from "$lib/components/renderers/tablerow.svelte";
 	import type { HTMLAttributes } from "svelte/elements";
+	import code from "./renderers/html/code.svelte";
 	import details from "./renderers/html/details.svelte";
 	import summary from "./renderers/html/summary.svelte";
 
@@ -80,7 +81,8 @@
 				h3,
 				h4,
 				details,
-				summary
+				summary,
+				code
 			}
 		}}
 	/>
