@@ -2,9 +2,9 @@ import { defaultLogSchema, getItemEntities, logDataToSchema } from "$lib/entitie
 import { characterIdSchema, characterLogSchema, logIdOrNewSchema } from "$lib/schemas";
 import { assertUser } from "$server/auth";
 import { run, save, validateForm } from "$server/effect";
-import { FetchCharacterError, withCharacter } from "$server/effect/characters.js";
+import { CharacterNotFoundError, withCharacter } from "$server/effect/characters.js";
 import { withDM } from "$server/effect/dms.js";
-import { FetchLogError, withLog } from "$server/effect/logs.js";
+import { LogNotFoundError, withLog } from "$server/effect/logs.js";
 import { sorter } from "@sillvva/utils";
 import { redirect } from "@sveltejs/kit";
 import { Effect } from "effect";
@@ -18,7 +18,7 @@ export const load = (event) =>
 
 		const parent = yield* Effect.promise(event.parent);
 		const character = parent.character;
-		if (!character) return yield* new FetchCharacterError("Character not found", 404);
+		if (!character) return yield* new CharacterNotFoundError();
 
 		const idResult = v.safeParse(logIdOrNewSchema, event.params.logId);
 		if (!idResult.success) redirect(302, `/character/${character.id}`);
@@ -28,7 +28,7 @@ export const load = (event) =>
 		let log = logData ? logDataToSchema(user.id, logData) : defaultLogSchema(user.id);
 
 		if (logId !== "new") {
-			if (!log.id) return yield* new FetchLogError("Log not found", 404);
+			if (!log.id) return yield* new LogNotFoundError();
 			if (log.isDmLog) redirect(302, `/dm-logs/${log.id}`);
 		}
 

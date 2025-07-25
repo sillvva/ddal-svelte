@@ -5,9 +5,15 @@ import { buildConflictUpdateColumns, DBService, type Database, type InferQueryRe
 import { characterIncludes, extendedCharacterIncludes } from "$server/db/includes";
 import { characters, logs, type Character } from "$server/db/schema";
 import { and, eq, exists } from "drizzle-orm";
-import { Effect, Layer } from "effect";
+import { Data, Effect, Layer } from "effect";
 import { isTupleOf } from "effect/Predicate";
-import { debugSet, FormError, Log } from ".";
+import { debugSet, FormError, Log, type ErrorParams } from ".";
+
+export class CharacterNotFoundError extends Data.TaggedError("CharacterNotFoundError")<ErrorParams> {
+	constructor(err?: unknown) {
+		super({ message: "Character not found", status: 404, cause: err });
+	}
+}
 
 export class SaveCharacterError extends FormError<EditCharacterSchema> {}
 function createSaveError(err: unknown): SaveCharacterError {

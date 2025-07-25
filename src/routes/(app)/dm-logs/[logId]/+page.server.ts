@@ -3,7 +3,7 @@ import { dMLogSchema, logIdOrNewSchema } from "$lib/schemas";
 import { assertUser } from "$server/auth";
 import { run, save, validateForm } from "$server/effect";
 import { withCharacter } from "$server/effect/characters.js";
-import { FetchLogError, withLog } from "$server/effect/logs";
+import { LogNotFoundError, withLog } from "$server/effect/logs";
 import { redirect } from "@sveltejs/kit";
 import { Effect } from "effect";
 import { fail } from "sveltekit-superforms";
@@ -34,7 +34,7 @@ export const load = (event) =>
 		let log = logData ? logDataToSchema(user.id, logData) : defaultLogSchema(user.id);
 
 		if (logId !== "new") {
-			if (!log.id) return yield* new FetchLogError("Log not found", 404);
+			if (!log.id) return yield* new LogNotFoundError();
 			if (!log.isDmLog) redirect(302, `/characters/${log.characterId}/log/${log.id}`);
 		}
 

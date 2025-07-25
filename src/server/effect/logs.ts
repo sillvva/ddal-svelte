@@ -11,10 +11,16 @@ import {
 import { extendedLogIncludes, logIncludes } from "$server/db/includes";
 import { characters, dungeonMasters, logs, magicItems, storyAwards } from "$server/db/schema";
 import { and, eq, exists, inArray, isNull, notInArray, or } from "drizzle-orm";
-import { Effect, Layer } from "effect";
+import { Data, Effect, Layer } from "effect";
 import { isTupleOf } from "effect/Predicate";
-import { debugSet, FormError, Log } from ".";
+import { debugSet, FormError, Log, type ErrorParams } from ".";
 import { DMService, DMTx } from "./dms";
+
+export class LogNotFoundError extends Data.TaggedError("LogNotFoundError")<ErrorParams> {
+	constructor(err?: unknown) {
+		super({ message: "Log not found", status: 404, cause: err });
+	}
+}
 
 export class SaveLogError extends FormError<LogSchema> {}
 function createSaveError(err: unknown): SaveLogError {

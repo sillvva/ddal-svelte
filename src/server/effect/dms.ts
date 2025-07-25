@@ -14,6 +14,12 @@ class FetchUserDMsError extends Data.TaggedError("FetchUserDMsError")<ErrorParam
 	}
 }
 
+export class DMNotFoundError extends Data.TaggedError("DMNotFoundError")<ErrorParams> {
+	constructor(err?: unknown) {
+		super({ message: "DM not found", status: 404, cause: err });
+	}
+}
+
 export class SaveDMError extends FormError<DungeonMasterSchema> {}
 function createSaveError(err: unknown): SaveDMError {
 	return SaveDMError.from(err);

@@ -3,7 +3,7 @@ import { defaultLogSchema } from "$lib/entities.js";
 import { characterIdOrNewSchema, editCharacterSchema } from "$lib/schemas";
 import { assertUser } from "$server/auth";
 import { run, save, validateForm } from "$server/effect";
-import { FetchCharacterError, withCharacter } from "$server/effect/characters";
+import { CharacterNotFoundError, withCharacter } from "$server/effect/characters";
 import { withLog } from "$server/effect/logs.js";
 import { Effect } from "effect";
 import { fail, setError } from "sveltekit-superforms";
@@ -16,8 +16,7 @@ export const load = (event) =>
 
 		const parent = yield* Effect.promise(event.parent);
 
-		if (event.params.characterId !== "new" && !parent.character)
-			return yield* new FetchCharacterError("Character not found", 404);
+		if (event.params.characterId !== "new" && !parent.character) return yield* new CharacterNotFoundError();
 
 		const form = yield* validateForm(
 			parent.character
