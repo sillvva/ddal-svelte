@@ -45,7 +45,7 @@
 	}
 </script>
 
-<div class="mb-4 flex flex-col gap-2">
+<div class="fieldset mb-4 flex flex-col gap-1">
 	<div class="flex items-center justify-between">
 		<div class="flex w-full gap-2 sm:max-w-md md:max-w-md">
 			<search class="min-w-0 flex-1">
@@ -61,12 +61,12 @@
 						placeholder={data.search}
 					/>
 					<button
-						class="btn join-item tooltip"
+						class="btn sm:btn-sm join-item tooltip border-base-content/20 border"
 						data-tip="Syntax Reference"
 						aria-label="Syntax Reference"
 						onclick={openSyntaxReference}
 					>
-						<span class="iconify mdi--help-circle"></span>
+						<span class="iconify mdi--help-circle size-6 sm:size-4"></span>
 					</button>
 				</div>
 			</search>
@@ -75,7 +75,7 @@
 	</div>
 	{#if data.metadata.hasErrors}
 		{#each data.metadata.errors as error}
-			<div class="alert alert-error w-fit">
+			<div class="alert alert-error mt-1 w-fit rounded-lg py-1">
 				<span class="iconify mdi--alert-circle size-6"></span>
 				{error.message} at position {error.position}: <kbd>{error.value}</kbd>
 			</div>
