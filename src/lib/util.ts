@@ -43,10 +43,3 @@ export function hotkey(hotkeys: HotkeyItem[]): Attachment<HTMLElement | Document
 		return hk(node, hotkeys).destroy;
 	};
 }
-
-export function isInstanceOfClass(obj: unknown): obj is object {
-	// Exclude null and non-objects
-	if (obj === null || typeof obj !== "object") return false;
-	// Exclude plain objects (created with {} or new Object)
-	return Object.getPrototypeOf(obj) !== Object.prototype;
-}

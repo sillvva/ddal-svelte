@@ -2,9 +2,9 @@ import { dev } from "$app/environment";
 import { getRequestEvent } from "$app/server";
 import { privateEnv } from "$lib/env/private";
 import type { AppLogSchema, UserId } from "$lib/schemas";
-import { isInstanceOfClass } from "$lib/util";
 import { db } from "$server/db";
 import { appLogs } from "$server/db/schema";
+import { isInstanceOfClass } from "@sillvva/utils";
 import {
 	error,
 	isHttpError,
@@ -223,7 +223,18 @@ export interface ErrorClass {
 }
 
 export function isTaggedError(error: unknown): error is InstanceType<ErrorClass> {
-	return isInstanceOfClass(error) && "status" in error && "cause" in error && "message" in error && "_tag" in error;
+	return (
+		isInstanceOfClass(error) &&
+		"status" in error &&
+		typeof error.status === "number" &&
+		error.status >= 400 &&
+		error.status <= 599 &&
+		"cause" in error &&
+		"message" in error &&
+		typeof error.message === "string" &&
+		"_tag" in error &&
+		typeof error._tag === "string"
+	);
 }
 
 export class FormError<

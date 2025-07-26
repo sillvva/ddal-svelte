@@ -53,7 +53,7 @@
 	}
 
 	const headerData = $derived.by(() => {
-		const routeModule = routeModules?.[`/src/routes${routeId}/+page.svelte`];
+		const routeModule = routeModules[`/src/routes${routeId}/+page.svelte`];
 
 		return {
 			title: getPageTitleFromModule(routeModule),
