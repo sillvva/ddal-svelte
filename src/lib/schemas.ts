@@ -50,6 +50,8 @@ export const envPublicSchema = v.pipe(
 interface CombinedEnv extends EnvPrivate, EnvPublic {}
 export type Env = Prettify<CombinedEnv>;
 
+export const imageUrlWithFallback = v.pipe(v.fallback(v.union([urlSchema, v.literal(BLANK_CHARACTER)]), BLANK_CHARACTER));
+
 export type UserId = v.InferOutput<typeof userIdSchema>;
 export const userIdSchema = brandedId("UserId");
 
@@ -60,7 +62,7 @@ export const newCharacterSchema = v.object({
 	race: v.optional(shortString, ""),
 	class: v.optional(shortString, ""),
 	characterSheetUrl: optionalURL,
-	imageUrl: optionalURL
+	imageUrl: imageUrlWithFallback
 });
 
 export type CharacterId = v.InferOutput<typeof characterIdSchema>;
@@ -305,7 +307,7 @@ export const localsUserSchema = v.object({
 	name: requiredString,
 	email: requiredString,
 	emailVerified: v.boolean(),
-	image: v.nullish(v.union([urlSchema, v.literal(BLANK_CHARACTER)])),
+	image: v.nullish(imageUrlWithFallback),
 	role: v.picklist(["user", "admin"]),
 	banned: v.boolean(),
 	banReason: v.nullish(v.string()),

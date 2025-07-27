@@ -4,7 +4,9 @@
 	import { authClient, setDefaultUserImage } from "$lib/auth";
 	import { BLANK_CHARACTER, PROVIDERS } from "$lib/constants";
 	import { errorToast } from "$lib/factories.svelte";
+	import { imageUrlWithFallback } from "$lib/schemas";
 	import { twMerge } from "tailwind-merge";
+	import { parse } from "valibot";
 	import Passkeys from "./Passkeys.svelte";
 	import ThemeSwitcher from "./ThemeSwitcher.svelte";
 
@@ -58,19 +60,36 @@
 		{#if user}
 			<div class="flex items-center gap-4 py-4 pl-2">
 				<div
-					class="avatar ring-primary ring-offset-base-100 flex h-9 w-9 items-center justify-center overflow-hidden rounded-full ring-3 ring-offset-2"
+					class="avatar ring-primary group/avatar bg-primary ring-offset-base-100 flex h-9 w-9 items-center justify-center overflow-hidden rounded-full ring-3 ring-offset-2"
 				>
 					{#if user.image}
 						<img
 							src={user.image}
 							alt={user.name}
-							class="rounded-full object-cover object-center"
+							class="rounded-full object-cover object-center group-hover/avatar:hidden"
 							onerror={(e) => {
 								const img = e.currentTarget as HTMLImageElement;
 								img.onerror = null;
 								img.src = BLANK_CHARACTER;
 							}}
 						/>
+						<button
+							class="iconify mdi--account-edit-outline text-primary-content hidden size-8 cursor-pointer group-hover/avatar:block"
+							aria-label="Edit profile image"
+							onclick={() => {
+								const image = prompt("Enter a new image URL");
+								if (!image?.trim()) return;
+
+								const url = parse(imageUrlWithFallback, image.trim());
+
+								authClient.updateUser({ image: url }).then((result) => {
+									if (result.error?.code) {
+										return errorToast(authClient.$ERROR_CODES[result.error.code as keyof typeof authClient.$ERROR_CODES]);
+									}
+									invalidateAll();
+								});
+							}}
+						></button>
 					{:else if initials}
 						<span class="text-primary text-xl font-bold uppercase">{initials}</span>
 					{/if}
