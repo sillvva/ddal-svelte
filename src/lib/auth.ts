@@ -25,14 +25,12 @@ export async function setDefaultUserImage(userId: UserId) {
 	});
 }
 
-export async function switchAccount(userId: UserId, name: string, email: string, image: string) {
+export async function switchAccount(userId: UserId, account: { name: string; email: string; image: string }) {
 	await fetch("/updateUser", {
 		method: "POST",
 		body: JSON.stringify({
 			id: userId,
-			name,
-			email,
-			image
+			...account
 		} satisfies UpdateUserInput)
 	});
 }

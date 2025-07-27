@@ -171,27 +171,32 @@
 													aria-label="Switch account"
 													data-tip="Use this account"
 													onclick={() => {
-														const { name, email, image } = $state.snapshot(account);
-														switchAccount(user.id, name, email, image).then(() => {
+														switchAccount(user.id, account).then(() => {
 															invalidateAll();
 														});
 													}}
 												>
 													<span class="iconify mdi--accounts-switch size-5"></span>
 												</button>
+												<button
+													class="btn btn-error btn-sm font-semibold"
+													onclick={() => {
+														if (confirm("Are you sure you want to unlink this account?")) {
+															authClient.unlinkAccount({ providerId: provider.id }).then((result) => {
+																if (result.error?.code) {
+																	return errorToast(
+																		authClient.$ERROR_CODES[result.error.code as keyof typeof authClient.$ERROR_CODES]
+																	);
+																}
+																invalidateAll();
+															});
+														}
+													}}
+												>
+													Unlink
+												</button>
 											{/if}
 										{/if}
-										<button
-											class="btn btn-error btn-sm font-semibold"
-											onclick={() =>
-												authClient.unlinkAccount({ providerId: provider.id }).then((result) => {
-													if (result.error?.code) {
-														errorToast(authClient.$ERROR_CODES[result.error.code as keyof typeof authClient.$ERROR_CODES]);
-													}
-												})}
-										>
-											Unlink
-										</button>
 									{:else}
 										<span class="iconify mdi--check size-6 text-green-500"></span>
 									{/if}
@@ -205,8 +210,9 @@
 												})
 												.then((result) => {
 													if (result.error?.code) {
-														errorToast(authClient.$ERROR_CODES[result.error.code as keyof typeof authClient.$ERROR_CODES]);
+														return errorToast(authClient.$ERROR_CODES[result.error.code as keyof typeof authClient.$ERROR_CODES]);
 													}
+													invalidateAll();
 												})}
 									>
 										Link
