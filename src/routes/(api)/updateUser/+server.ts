@@ -6,7 +6,7 @@ import { json } from "@sveltejs/kit";
 import { Data, Effect } from "effect";
 
 export type UpdateUserResponse = User | { success: false; error: string };
-export type UpdateUserInput = Partial<Pick<User, "name" | "image">> & { id: UserId };
+export type UpdateUserInput = Partial<Pick<User, "name" | "email" | "image">> & { id: UserId };
 
 class UnauthorizedError extends Data.TaggedError("UnauthorizedError")<ErrorParams> {
 	constructor(err?: unknown) {

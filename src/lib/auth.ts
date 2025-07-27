@@ -24,3 +24,15 @@ export async function setDefaultUserImage(userId: UserId) {
 		} satisfies UpdateUserInput)
 	});
 }
+
+export async function switchAccount(userId: UserId, name: string, email: string, image: string) {
+	await fetch("/updateUser", {
+		method: "POST",
+		body: JSON.stringify({
+			id: userId,
+			name,
+			email,
+			image
+		} satisfies UpdateUserInput)
+	});
+}

@@ -1,12 +1,11 @@
 <script lang="ts">
 	import { goto, invalidateAll } from "$app/navigation";
 	import { page } from "$app/state";
-	import { authClient, setDefaultUserImage } from "$lib/auth";
-	import { BLANK_CHARACTER, PROVIDERS } from "$lib/constants";
+	import { authClient, setDefaultUserImage, switchAccount } from "$lib/auth";
+	import { BLANK_CHARACTER, PROVIDERS, type ProviderId } from "$lib/constants";
 	import { errorToast } from "$lib/factories.svelte";
-	import { imageUrlWithFallback } from "$lib/schemas";
+	import { isDefined } from "@sillvva/utils";
 	import { twMerge } from "tailwind-merge";
-	import { parse } from "valibot";
 	import Passkeys from "./Passkeys.svelte";
 	import ThemeSwitcher from "./ThemeSwitcher.svelte";
 
@@ -26,6 +25,31 @@
 			.join("")
 			.slice(0, 2) || ""
 	);
+
+	let userAccounts = $state<{ providerId: ProviderId; name: string; email: string; image: string }[]>([]);
+	let currentAccount = $derived<{ providerId: ProviderId; name: string; email: string; image: string } | undefined>(
+		userAccounts.find((a) => a.name === user?.name && a.email === user?.email && a.image === user?.image) || undefined
+	);
+	$effect(() => {
+		if (!userAccounts.length && open) {
+			Promise.all(
+				user.accounts.map(({ accountId, providerId }) =>
+					authClient.accountInfo({ accountId }).then((r) =>
+						r.data?.user?.name && r.data?.user?.email && r.data?.user?.image
+							? {
+									providerId,
+									name: r.data?.user.name,
+									email: r.data?.user.email,
+									image: r.data?.user.image
+								}
+							: undefined
+					)
+				)
+			).then((result) => {
+				userAccounts = result.filter(isDefined);
+			});
+		}
+	});
 </script>
 
 {#if user}
@@ -66,30 +90,13 @@
 						<img
 							src={user.image}
 							alt={user.name}
-							class="rounded-full object-cover object-center group-hover/avatar:hidden"
+							class="rounded-full object-cover object-center"
 							onerror={(e) => {
 								const img = e.currentTarget as HTMLImageElement;
 								img.onerror = null;
 								img.src = BLANK_CHARACTER;
 							}}
 						/>
-						<button
-							class="iconify mdi--account-edit-outline text-primary-content hidden size-8 cursor-pointer group-hover/avatar:block"
-							aria-label="Edit profile image"
-							onclick={() => {
-								const image = prompt("Enter a new image URL");
-								if (!image?.trim()) return;
-
-								const url = parse(imageUrlWithFallback, image.trim());
-
-								authClient.updateUser({ image: url }).then((result) => {
-									if (result.error?.code) {
-										return errorToast(authClient.$ERROR_CODES[result.error.code as keyof typeof authClient.$ERROR_CODES]);
-									}
-									invalidateAll();
-								});
-							}}
-						></button>
 					{:else if initials}
 						<span class="text-primary text-xl font-bold uppercase">{initials}</span>
 					{/if}
@@ -154,6 +161,26 @@
 							<span class="flex items-center">
 								{#if provider.account}
 									{#if user.accounts.length > 1}
+										{#if !userAccounts.length}
+											<span class="iconify mdi--loading size-5 animate-spin"></span>
+										{:else}
+											{@const account = userAccounts.find((a) => a.providerId === provider.id)}
+											{#if currentAccount?.providerId !== provider.id && account}
+												<button
+													class="btn btn-sm btn-ghost tooltip"
+													aria-label="Switch account"
+													data-tip="Use this account"
+													onclick={() => {
+														const { name, email, image } = $state.snapshot(account);
+														switchAccount(user.id, name, email, image).then(() => {
+															invalidateAll();
+														});
+													}}
+												>
+													<span class="iconify mdi--accounts-switch size-5"></span>
+												</button>
+											{/if}
+										{/if}
 										<button
 											class="btn btn-error btn-sm font-semibold"
 											onclick={() =>
