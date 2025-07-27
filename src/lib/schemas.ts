@@ -2,7 +2,7 @@ import type { FullCharacterData } from "$server/effect/characters";
 import type { Prettify } from "@sillvva/utils";
 import { LogLevel } from "effect";
 import * as v from "valibot";
-import { PROVIDERS, themeGroups, themes } from "./constants";
+import { BLANK_CHARACTER, PROVIDERS, themeGroups, themes } from "./constants";
 
 export type BrandedType = v.InferOutput<ReturnType<typeof brandedId>>;
 function brandedId<T extends string>(name: T) {
@@ -305,7 +305,7 @@ export const localsUserSchema = v.object({
 	name: requiredString,
 	email: requiredString,
 	emailVerified: v.boolean(),
-	image: v.nullish(urlSchema),
+	image: v.nullish(v.union([urlSchema, v.literal(BLANK_CHARACTER)])),
 	role: v.picklist(["user", "admin"]),
 	banned: v.boolean(),
 	banReason: v.nullish(v.string()),

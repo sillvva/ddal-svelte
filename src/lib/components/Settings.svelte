@@ -1,8 +1,8 @@
 <script lang="ts">
 	import { goto, invalidateAll } from "$app/navigation";
 	import { page } from "$app/state";
-	import { authClient } from "$lib/auth";
-	import { PROVIDERS } from "$lib/constants";
+	import { authClient, setDefaultUserImage } from "$lib/auth";
+	import { BLANK_CHARACTER, PROVIDERS } from "$lib/constants";
 	import { errorToast } from "$lib/factories.svelte";
 	import { twMerge } from "tailwind-merge";
 	import Passkeys from "./Passkeys.svelte";
@@ -36,7 +36,17 @@
 			tabindex="0"
 			onclick={() => (open = true)}
 		>
-			<img src={user.image || ""} alt={user.name} class="rounded-full object-cover object-center" />
+			<img
+				src={user.image || ""}
+				alt={user.name}
+				class="rounded-full object-cover object-center"
+				onerror={(e) => {
+					const img = e.currentTarget as HTMLImageElement;
+					img.onerror = null;
+					img.src = BLANK_CHARACTER;
+					setDefaultUserImage(user.id);
+				}}
+			/>
 		</button>
 	</div>
 
@@ -51,7 +61,16 @@
 					class="avatar ring-primary ring-offset-base-100 flex h-9 w-9 items-center justify-center overflow-hidden rounded-full ring-3 ring-offset-2"
 				>
 					{#if user.image}
-						<img src={user.image} alt={user.name} class="rounded-full object-cover object-center" />
+						<img
+							src={user.image}
+							alt={user.name}
+							class="rounded-full object-cover object-center"
+							onerror={(e) => {
+								const img = e.currentTarget as HTMLImageElement;
+								img.onerror = null;
+								img.src = BLANK_CHARACTER;
+							}}
+						/>
 					{:else if initials}
 						<span class="text-primary text-xl font-bold uppercase">{initials}</span>
 					{/if}

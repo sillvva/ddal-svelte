@@ -1,7 +1,8 @@
 <script lang="ts">
 	import { goto, invalidateAll } from "$app/navigation";
-	import { authClient } from "$lib/auth.js";
+	import { authClient, setDefaultUserImage } from "$lib/auth.js";
 	import Search from "$lib/components/Search.svelte";
+	import { BLANK_CHARACTER } from "$lib/constants.js";
 	import { errorToast, successToast } from "$lib/factories.svelte.js";
 	import { JSONSearchParser } from "@sillvva/search/json";
 
@@ -63,6 +64,12 @@
 											class="size-full object-cover object-top duration-150 ease-in-out group-hover/row:scale-125 motion-safe:transition-transform"
 											alt={user.name}
 											loading="lazy"
+											onerror={(e) => {
+												const img = e.currentTarget as HTMLImageElement;
+												img.onerror = null;
+												img.src = BLANK_CHARACTER;
+												setDefaultUserImage(user.id);
+											}}
 										/>
 									{:else}
 										<span class="iconify mdi--account size-12"></span>
