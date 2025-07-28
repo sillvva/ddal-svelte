@@ -33,7 +33,7 @@
 	// Add newlines around HTML tags, but skip tags inside markdown table blocks
 	function addNewlinesAroundTags(content: string) {
 		// Split content into table and non-table segments
-		const tableRegex = /((?:\|[^\n]*\|(?:\s*\n|$))+)/g;
+		const tableRegex = /((?:\|[^\n]*\|\s*(?:\n|$))+)/g;
 		const tagRegex = /<([a-zA-Z]+)([^>]*)(\/?>)|<\/[a-zA-Z]+>/g;
 		let lastIndex = 0;
 		let result = "";
@@ -85,6 +85,10 @@
 				form: null,
 				script: null,
 				style: null,
+				object: null,
+				base: null,
+				link: null,
+				meta: null,
 				table,
 				thead: tablehead,
 				tbody: tablebody,
