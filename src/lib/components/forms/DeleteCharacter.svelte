@@ -1,6 +1,7 @@
 <script lang="ts">
 	import { goto } from "$app/navigation";
 	import { errorToast, successToast } from "$lib/factories.svelte";
+	import type { CharacterId } from "$lib/schemas";
 	import { getGlobal } from "$lib/stores.svelte";
 	import type { Character } from "$server/db/schema";
 	import { superForm } from "sveltekit-superforms";
@@ -10,7 +11,7 @@
 	interface Props {
 		character: Character;
 		label?: string;
-		ondelete?: (event: { id: string }) => void;
+		ondelete?: (event: { id: CharacterId }) => void;
 	}
 
 	let { character, label = "", ondelete }: Props = $props();
@@ -18,7 +19,7 @@
 	const { submit } = superForm(
 		{ id: character.id },
 		{
-			SPA: "?/deleteCharacter",
+			SPA: `/characters/${character.id}?/deleteCharacter`,
 			onSubmit({ cancel, formData }) {
 				if (!confirm(`Are you sure you want to delete ${character.name}? This action cannot be reversed.`)) return cancel();
 				formData.set("id", character.id);
