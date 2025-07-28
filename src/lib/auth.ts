@@ -26,7 +26,7 @@ export async function setDefaultUserImage(userId: UserId) {
 }
 
 export type UserAccount = { providerId: ProviderId; name: string; email: string; image: string };
-export async function switchAccount(userId: UserId, account: UserAccount) {
+export async function setAccountDetails(userId: UserId, account: UserAccount) {
 	await fetch("/updateUser", {
 		method: "POST",
 		body: JSON.stringify({

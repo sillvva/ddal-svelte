@@ -1,15 +1,19 @@
 <script lang="ts">
 	import { goto, invalidateAll } from "$app/navigation";
 	import { page } from "$app/state";
-	import { authClient, setDefaultUserImage, switchAccount, type UserAccount } from "$lib/auth";
+	import { authClient, setAccountDetails, setDefaultUserImage, type UserAccount } from "$lib/auth";
 	import { BLANK_CHARACTER, PROVIDERS } from "$lib/constants";
 	import { errorToast } from "$lib/factories.svelte";
+	import { getGlobal } from "$lib/stores.svelte";
 	import { isDefined } from "@sillvva/utils";
+	import { isTupleOfAtLeast } from "effect/Predicate";
 	import { twMerge } from "tailwind-merge";
 	import Passkeys from "./Passkeys.svelte";
 	import ThemeSwitcher from "./ThemeSwitcher.svelte";
 
 	let open = $state(false);
+
+	const global = getGlobal();
 
 	const { user, session } = $derived(page.data);
 	const authProviders = $derived(
@@ -27,9 +31,8 @@
 	);
 
 	let userAccounts = $state<UserAccount[]>([]);
-	let currentAccount = $derived(
-		userAccounts.find((a) => a.name === user?.name && a.email === user?.email && a.image === user?.image)
-	);
+	const currentAccount = $derived(userAccounts.find((a) => a.providerId === global.app.settings.provider));
+
 	$effect(() => {
 		if (!userAccounts.length && open) {
 			Promise.all(
@@ -47,6 +50,26 @@
 				)
 			).then((result) => {
 				userAccounts = result.filter(isDefined);
+
+				const account =
+					userAccounts.find((a) => a.providerId === global.app.settings.provider) ||
+					userAccounts.find((a) => a.name === user.name && a.email === user.email) ||
+					(isTupleOfAtLeast(userAccounts, 1) ? userAccounts[0] : undefined);
+
+				if (account) {
+					if (!global.app.settings.provider) {
+						global.app.settings.provider = account.providerId;
+					}
+					if (
+						account.name !== user.name ||
+						account.email !== user.email ||
+						(account.image !== user.image && !account.image.includes(BLANK_CHARACTER))
+					) {
+						setAccountDetails(user.id, account).then(() => {
+							invalidateAll();
+						});
+					}
+				}
 			});
 		}
 	});
@@ -165,21 +188,25 @@
 											<span class="iconify mdi--loading size-5 animate-spin"></span>
 										{:else}
 											{@const account = userAccounts.find((a) => a.providerId === provider.id)}
-											{#if currentAccount?.providerId !== provider.id && account}
-												<button
-													class="btn btn-sm btn-ghost tooltip"
-													aria-label="Switch account"
-													data-tip="Use this account"
-													onclick={() => {
-														switchAccount(user.id, account).then(() => {
-															invalidateAll();
-														});
-													}}
-												>
-													<span class="iconify mdi--accounts-switch size-5"></span>
-												</button>
+											{#if account}
+												{#if currentAccount?.providerId !== provider.id || account.name !== user.name || account.email !== user.email || account.image !== user.image}
+													<button
+														class="btn btn-sm btn-ghost tooltip"
+														aria-label="Switch account"
+														data-tip="Use this account"
+														onclick={() => {
+															setAccountDetails(user.id, account).then(() => {
+																global.app.settings.provider = account.providerId;
+																invalidateAll();
+															});
+														}}
+													>
+														<span class="iconify mdi--accounts-switch size-5"></span>
+													</button>
+												{/if}
 												<button
 													class="btn btn-error btn-sm font-semibold"
+													disabled={currentAccount?.providerId === provider.id}
 													onclick={() => {
 														if (confirm("Are you sure you want to unlink this account?")) {
 															authClient.unlinkAccount({ providerId: provider.id }).then((result) => {
