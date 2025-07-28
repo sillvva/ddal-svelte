@@ -24,7 +24,7 @@
 	<div class="flex w-full gap-2 sm:max-w-md md:max-w-md">
 		<Search bind:value={search} placeholder="Search by name, email, role, etc." />
 	</div>
-	<span class="badge badge-primary badge-lg">
+	<span class="badge bg-base-300 text-base-content badge-lg">
 		{#if results.length < data.users.length}
 			Showing {results.length} of
 		{/if}

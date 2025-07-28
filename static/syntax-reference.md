@@ -31,15 +31,15 @@
       <td>This syntax combines the properties of the "keyword" syntax and the "regex" syntax.</td>
     </tr>
     <tr>
-      <td><code>key=10</code><div><code>key&gt;=2024-01-01 00:00</code></div></td>
-      <td>When using numeric operators for numbers or dates, the token will become a "keyword_numeric" or "keyword_date" token with the operator provided. See below (1) for supported date formats.</td>
+      <td><code>key=10</code><br></br><code>key&gt;=2024-01-01 00:00</code></td>
+      <td>When using numeric operators for numbers or dates, the token will become a "keyword_numeric" or "keyword_date" token with the operator provided. See below<sup>1</sup> for supported date formats.</td>
     </tr>
     <tr>
-      <td><code>key:10..20</code><div><code class="whitespace-nowrap">key:2024-01-01..2024-01-15</code></div></td>
-      <td>Range queries allow you to specify a range of values. For ranges, use <code>key:start..end</code>. The result will be two "keyword_numeric" or "keyword_date" tokens. See below (1) for supported date formats.</td>
+      <td><code>key:10..20</code><br></br><code class="whitespace-nowrap">key:2024-01-01..2024-01-15</code></td>
+      <td>Range queries allow you to specify a range of values. For ranges, use <code>key:start..end</code>. The result will be two "keyword_numeric" or "keyword_date" tokens. See below<sup>1</sup> for supported date formats.</td>
     </tr>
     <tr>
-      <td><code>AND</code> <code>&amp;</code> <div><code>OR</code> <code>|</code></div></td>
+      <td><code>AND</code> <code>&amp;</code><br></br><code>OR</code> <code>|</code></td>
       <td>Use <code>AND</code>/<code>&amp;</code> to require both conditions, <code>OR</code>/<code>|</code> for either condition. Adjacent terms default to <code>AND</code>.</td>
     </tr>
     <tr>
@@ -47,7 +47,7 @@
       <td>Tokens can be grouped together using parentheses. Groups can also be nested.</td>
     </tr>
     <tr>
-      <td><code>-</code><div><code>!</code></div></td>
+      <td><code>-</code><br></br><code>!</code></td>
       <td>The negator character can be used to negate any "word", "keyword", or "phrase" token. (Example: <code>-word -"phrase"</code> or <code>!word !"phrase"</code>) It can also be used to negate a group. (Example: <code>-(word1 OR word2)</code> or <code>!(word1 | word2)</code>)</td>
     </tr>
   </tbody>

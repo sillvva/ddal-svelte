@@ -4,7 +4,7 @@
     "": {
       "name": "ddal-svelte",
       "dependencies": {
-        "@humanspeak/svelte-markdown": "^0.8.8",
+        "@humanspeak/svelte-markdown": "^0.8.9",
         "@internationalized/date": "^3.8.2",
         "@resvg/resvg-js": "^2.6.2",
         "@sillvva/search": "^1.0.2",
@@ -180,7 +180,7 @@
 
     "@humanfs/node": ["@humanfs/node@0.16.6", "", { "dependencies": { "@humanfs/core": "^0.19.1", "@humanwhocodes/retry": "^0.3.0" } }, "sha512-YuI2ZHQL78Q5HbhDiBA1X4LmYdXCKCMQIfw0pw7piHJwyREFebJUvrQN4cMssyES6x+vfUbx1CIpaQUKYdQZOw=="],
 
-    "@humanspeak/svelte-markdown": ["@humanspeak/svelte-markdown@0.8.8", "", { "dependencies": { "github-slugger": "^2.0.0", "htmlparser2": "^10.0.0", "marked": "^16.0.0" }, "peerDependencies": { "svelte": "^5.0.0" } }, "sha512-9KQyyDWE3TCfx14T+eRAmlUiiCqs/39wKtmT/koQM3w1lB21Py4gjpvE34tUJK6BXmbVZ1Sq1fvopa0gVOGxjQ=="],
+    "@humanspeak/svelte-markdown": ["@humanspeak/svelte-markdown@0.8.9", "", { "dependencies": { "github-slugger": "^2.0.0", "htmlparser2": "^10.0.0", "marked": "^16.1.1" }, "peerDependencies": { "svelte": "^5.0.0" } }, "sha512-/MP8CXs7Xm0ufX+Bf5mwYVesUhgPCijUN330EadsDXKW1rpmRnCBoEf6ycMX5CuBGIK5kz45jhLimFNgKGJPZQ=="],
 
     "@humanwhocodes/module-importer": ["@humanwhocodes/module-importer@1.0.1", "", {}, "sha512-bxveV4V8v5Yb4ncFTT3rPSgZBOpCkjfK0y4oVVVJwIuDVBRMDXrPyXRL988i5ap9m9bnyEEjWfm5WkBmtffLfA=="],
 

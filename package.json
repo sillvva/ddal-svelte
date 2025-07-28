@@ -50,7 +50,7 @@
 	},
 	"type": "module",
 	"dependencies": {
-		"@humanspeak/svelte-markdown": "^0.8.8",
+		"@humanspeak/svelte-markdown": "^0.8.9",
 		"@internationalized/date": "^3.8.2",
 		"@resvg/resvg-js": "^2.6.2",
 		"@sillvva/search": "^1.0.2",

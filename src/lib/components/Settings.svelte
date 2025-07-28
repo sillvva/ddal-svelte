@@ -1,8 +1,8 @@
 <script lang="ts">
 	import { goto, invalidateAll } from "$app/navigation";
 	import { page } from "$app/state";
-	import { authClient, setDefaultUserImage, switchAccount } from "$lib/auth";
-	import { BLANK_CHARACTER, PROVIDERS, type ProviderId } from "$lib/constants";
+	import { authClient, setDefaultUserImage, switchAccount, type UserAccount } from "$lib/auth";
+	import { BLANK_CHARACTER, PROVIDERS } from "$lib/constants";
 	import { errorToast } from "$lib/factories.svelte";
 	import { isDefined } from "@sillvva/utils";
 	import { twMerge } from "tailwind-merge";
@@ -26,9 +26,9 @@
 			.slice(0, 2) || ""
 	);
 
-	let userAccounts = $state<{ providerId: ProviderId; name: string; email: string; image: string }[]>([]);
-	let currentAccount = $derived<{ providerId: ProviderId; name: string; email: string; image: string } | undefined>(
-		userAccounts.find((a) => a.name === user?.name && a.email === user?.email && a.image === user?.image) || undefined
+	let userAccounts = $state<UserAccount[]>([]);
+	let currentAccount = $derived(
+		userAccounts.find((a) => a.name === user?.name && a.email === user?.email && a.image === user?.image)
 	);
 	$effect(() => {
 		if (!userAccounts.length && open) {

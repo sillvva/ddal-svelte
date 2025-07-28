@@ -3,7 +3,7 @@ import type { Passkey } from "$server/db/schema";
 import type { UpdateUserInput } from "$src/routes/(api)/updateUser/+server";
 import { adminClient, passkeyClient } from "better-auth/client/plugins";
 import { createAuthClient } from "better-auth/svelte";
-import { BLANK_CHARACTER } from "./constants";
+import { BLANK_CHARACTER, type ProviderId } from "./constants";
 import type { UserId } from "./schemas";
 
 export const authClient = createAuthClient({
@@ -25,7 +25,8 @@ export async function setDefaultUserImage(userId: UserId) {
 	});
 }
 
-export async function switchAccount(userId: UserId, account: { name: string; email: string; image: string }) {
+export type UserAccount = { providerId: ProviderId; name: string; email: string; image: string };
+export async function switchAccount(userId: UserId, account: UserAccount) {
 	await fetch("/updateUser", {
 		method: "POST",
 		body: JSON.stringify({
