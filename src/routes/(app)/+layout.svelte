@@ -7,6 +7,7 @@
 	import Settings from "$lib/components/Settings.svelte";
 	import { getGlobal } from "$lib/stores.svelte.js";
 	import { hotkey } from "$lib/util";
+	import { sleep } from "@svelteuidev/composables";
 	import { fade } from "svelte/transition";
 
 	let { data, children } = $props();
@@ -16,6 +17,13 @@
 	afterNavigate(() => {
 		global.pageLoader = false;
 	});
+
+	async function closeModal() {
+		do {
+			history.back();
+			await sleep(10);
+		} while (page.state.modal);
+	}
 
 	$effect(() => {
 		const hasCookie = document.cookie.includes("session-token");
@@ -106,7 +114,7 @@
 		[
 			"Escape",
 			() => {
-				if (page.state.modal) history.back();
+				if (page.state.modal) closeModal();
 			}
 		]
 	])}
@@ -118,7 +126,7 @@
 				style:max-width={page.state.modal.maxWidth}
 				style:max-height={page.state.modal.maxHeight}
 			>
-				<button class="btn btn-circle btn-ghost btn-sm absolute top-2 right-2" onclick={() => history.back()} aria-label="Close">
+				<button class="btn btn-circle btn-ghost btn-sm absolute top-2 right-2" onclick={closeModal} aria-label="Close">
 					<span class="iconify mdi--close"></span>
 				</button>
 				<h3 id="modal-title" class="text-base-content cursor-text text-lg font-bold">{page.state.modal.name}</h3>
@@ -144,6 +152,6 @@
 			</div>
 		{/if}
 
-		<button class="modal-backdrop" onclick={() => history.back()} aria-label="Close">✕</button>
+		<button class="modal-backdrop" onclick={closeModal} aria-label="Close">✕</button>
 	{/if}
 </dialog>
