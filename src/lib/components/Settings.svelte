@@ -178,10 +178,10 @@
 				</li>
 				{#each authProviders as provider}
 					<li>
-						<label class="flex gap-2 hover:bg-transparent">
+						<span class="flex gap-2 hover:bg-transparent">
 							<span class={twMerge("size=6 iconify-color", provider.iconify)}></span>
 							<span class="flex-1">{provider.name}</span>
-							<span class="flex items-center">
+							<span class="join flex items-center">
 								{#if provider.account}
 									{#if user.accounts.length > 1}
 										{#if !userAccounts.length}
@@ -191,7 +191,7 @@
 											{#if account}
 												{#if currentAccount?.providerId !== provider.id || account.name !== user.name || account.email !== user.email || account.image !== user.image}
 													<button
-														class="btn btn-sm btn-ghost tooltip"
+														class="btn btn-sm tooltip join-item bg-base-300"
 														aria-label="Switch account"
 														data-tip="Use this account"
 														onclick={() => {
@@ -205,7 +205,7 @@
 													</button>
 												{/if}
 												<button
-													class="btn btn-error btn-sm font-semibold"
+													class="btn btn-error btn-sm join-item font-semibold"
 													disabled={currentAccount?.providerId === provider.id}
 													onclick={() => {
 														if (confirm("Are you sure you want to unlink this account?")) {
@@ -246,7 +246,7 @@
 									</button>
 								{/if}
 							</span>
-						</label>
+						</span>
 					</li>
 				{/each}
 			</ul>
