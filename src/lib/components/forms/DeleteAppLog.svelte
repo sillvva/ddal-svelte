@@ -50,7 +50,7 @@
 	);
 </script>
 
-<button class="btn btn-sm btn-error tooltip" data-tip="Delete log" aria-label="Delete log" onclick={submit}>
+<button class="btn btn-sm btn-error tooltip tooltip-left" data-tip="Delete log" aria-label="Delete log" onclick={submit}>
 	<span class="iconify mdi--delete"></span>
 	{label}
 </button>

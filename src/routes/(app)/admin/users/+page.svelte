@@ -87,7 +87,7 @@
 						<td>
 							<div class="flex justify-end gap-2">
 								<button
-									class="btn btn-sm btn-primary tooltip"
+									class="btn btn-sm btn-primary tooltip tooltip-left"
 									aria-label="Impersonate {user.name}"
 									data-tip="Impersonate {user.name}"
 									disabled={user.role === "admin" || user.isBanned}
@@ -106,7 +106,7 @@
 								</button>
 								{#if !user.isBanned}
 									<button
-										class="btn btn-sm btn-error tooltip"
+										class="btn btn-sm btn-error tooltip tooltip-left"
 										aria-label="Ban {user.name}"
 										data-tip="Ban {user.name}"
 										disabled={user.role === "admin" || user.isBanned}
@@ -128,7 +128,7 @@
 									</button>
 								{:else}
 									<button
-										class="btn btn-sm btn-success tooltip"
+										class="btn btn-sm btn-success tooltip tooltip-left"
 										aria-label="Unban {user.name}"
 										data-tip="Unban {user.name}"
 										disabled={user.role === "admin" || !user.isBanned}

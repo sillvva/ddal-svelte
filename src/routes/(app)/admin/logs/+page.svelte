@@ -112,7 +112,7 @@
 						<td>
 							<div class="flex justify-end gap-2">
 								<button
-									class="btn btn-sm btn-primary tooltip"
+									class="btn btn-sm btn-primary tooltip tooltip-left"
 									data-tip="Toggle details"
 									aria-label="Toggle details"
 									onclick={() => {
