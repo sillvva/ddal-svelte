@@ -48,6 +48,20 @@ declare global {
 				text: string;
 			};
 		}
+
+		interface ModuleData {
+			getPageTitle?: (data: App.PageData & Record<string, any>) => string;
+			pageTitle?: string;
+
+			getHeadData?: (data: App.PageData & Record<string, any>) => {
+				title: string;
+				description?: string;
+				image?: string;
+			};
+			headTitle?: string;
+			headDescription?: string;
+			headImage?: string;
+		}
 	}
 
 	interface ViewTransition {

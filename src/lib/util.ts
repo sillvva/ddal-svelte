@@ -9,24 +9,6 @@ import type { setupViewTransition } from "sveltekit-view-transition";
 
 export type TransitionAction = ReturnType<typeof setupViewTransition>["transition"];
 
-export type ModuleData = {
-	getPageTitle?: (data: App.PageData & Record<string, any>) => string;
-	pageTitle?: string;
-
-	getHeadData?: (data: App.PageData & Record<string, any>) => {
-		title: string;
-		description?: string;
-		image?: string;
-	};
-	headTitle?: string;
-	headDescription?: string;
-	headImage?: string;
-};
-
-export const routeModules = import.meta.glob("/src/routes/**/+page.svelte", {
-	eager: true
-}) as Record<string, ModuleData>;
-
 /**
  * Functions
  */

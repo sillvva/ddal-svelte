@@ -1,8 +1,7 @@
 <script lang="ts">
 	import { page } from "$app/state";
-	import { routeModules, type ModuleData } from "$lib/util";
+	import { routeModules } from "$lib/module";
 	import { type Snippet } from "svelte";
-
 	interface Props {
 		children?: Snippet<
 			[
@@ -28,7 +27,7 @@
 		return title.replace(/([A-Z])/g, " $1").replace(/^./, (str) => str.toUpperCase());
 	}
 
-	function getPageTitleFromModule(module: ModuleData | undefined) {
+	function getPageTitleFromModule(module: App.ModuleData | undefined) {
 		const paths = url.pathname.split("/").filter(Boolean);
 		const path = paths.at(-1);
 		const title = (
@@ -42,11 +41,11 @@
 		return title ? `${title} - ${defaultTitle}` : defaultTitle;
 	}
 
-	function getPageDescriptionFromModule(module: ModuleData | undefined) {
+	function getPageDescriptionFromModule(module: App.ModuleData | undefined) {
 		return (module?.headDescription || module?.getHeadData?.(page.data)?.description || defaultDescription).trim();
 	}
 
-	function getPageImageFromModule(module: ModuleData | undefined) {
+	function getPageImageFromModule(module: App.ModuleData | undefined) {
 		const image = module?.headImage || module?.getHeadData?.(page.data)?.image || defaultImage;
 		if (image.startsWith("/")) return `${url.origin}${image}`;
 		return image;

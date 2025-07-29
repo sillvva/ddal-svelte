@@ -1,6 +1,6 @@
 <script lang="ts">
 	import { page } from "$app/state";
-	import { routeModules } from "$lib/util";
+	import { routeModules } from "$lib/module";
 	import { Breadcrumbs, type Crumb } from "svelte-breadcrumbs";
 	import BackButton from "./BackButton.svelte";
 </script>
