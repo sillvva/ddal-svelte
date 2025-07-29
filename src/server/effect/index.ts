@@ -97,24 +97,22 @@ export const debugSet = Effect.fn("debugSet")(function* <S extends string>(servi
 // -------------------------------------------------------------------------------------------------
 
 // Overload signatures
-export async function run<A, B extends InstanceType<ErrorClass> | never, T extends YieldWrap<Effect.Effect<A, B>>, X, Y>(
+export async function run<A, B extends InstanceType<ErrorClass>, T extends YieldWrap<Effect.Effect<A, B>>, X, Y>(
 	program: () => Generator<T, X, Y>
 ): Promise<X>;
 
-export async function run<A, B extends InstanceType<ErrorClass> | never>(
+export async function run<A, B extends InstanceType<ErrorClass>>(
 	program: Effect.Effect<A, B> | (() => Effect.Effect<A, B>)
 ): Promise<A>;
 
 // Implementation
-export async function run<A, B extends InstanceType<ErrorClass> | never, T extends YieldWrap<Effect.Effect<A, B>>, X, Y>(
+export async function run<A, B extends InstanceType<ErrorClass>, T extends YieldWrap<Effect.Effect<A, B>>, X, Y>(
 	program: Effect.Effect<A, B> | (() => Effect.Effect<A, B>) | (() => Generator<T, X, Y>)
 ): Promise<A | X> {
 	const effect = Effect.fn(function* () {
 		if (isFunction(program)) {
-			// Generator function
 			return yield* program();
 		} else {
-			// Effect
 			return yield* program;
 		}
 	});
@@ -129,10 +127,8 @@ export async function run<A, B extends InstanceType<ErrorClass> | never, T exten
 
 			if (Cause.isFailType(cause)) {
 				const error = cause.error;
-				if (isTaggedError(error)) {
-					status = error.status;
-					failCause = error.cause;
-				}
+				status = error.status;
+				failCause = error.cause;
 			}
 
 			if (Cause.isDieType(cause)) {
