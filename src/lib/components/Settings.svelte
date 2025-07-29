@@ -101,7 +101,7 @@
 
 	<aside
 		id="settings"
-		class="bg-base-100 fixed inset-y-0 -right-80 z-50 flex w-80 flex-col overflow-y-auto px-4 py-4 transition-all data-[open=true]:right-0"
+		class="bg-base-100 fixed inset-y-0 -right-80 z-50 flex w-80 flex-col overflow-y-auto px-4 pb-4 transition-all data-[open=true]:right-0"
 		data-open={open}
 	>
 		{#if user}
@@ -162,7 +162,7 @@
 					</button>
 				{/if}
 			</div>
-			<div class="divider my-0"></div>
+			<div class="divider my-0 h-[9px]"></div>
 			<ul class="menu menu-lg w-full px-0">
 				<li>
 					<div class="flex items-center gap-2 hover:bg-transparent">
@@ -171,7 +171,7 @@
 					</div>
 				</li>
 			</ul>
-			<div class="divider my-0"></div>
+			<div class="divider my-0 h-[9px]"></div>
 			<ul class="menu menu-lg w-full px-0 [&_li>*]:px-2">
 				<li class="menu-title">
 					<span class="font-bold">Linked Accounts</span>
@@ -251,7 +251,7 @@
 				{/each}
 			</ul>
 			<Passkeys />
-			<div class="divider my-0"></div>
+			<div class="divider my-0 h-[9px]"></div>
 			<ul class="menu menu-lg w-full px-0">
 				<li>
 					<a href="https://github.com/sillvva/ddal-svelte/issues" target="_blank" rel="noreferrer noopener">
@@ -275,10 +275,10 @@
 			<div class="flex-1"></div>
 
 			<div class="flex flex-col gap-2">
-				<div class="px-4 text-xs text-gray-500 dark:text-gray-400">
+				<div class="px-2 text-xs text-gray-500 dark:text-gray-400">
 					User ID:<br />{user.id}
 				</div>
-				<div class="px-4 text-xs text-gray-500 dark:text-gray-400">
+				<div class="px-2 text-xs text-gray-500 dark:text-gray-400">
 					Logged in {session.createdAt.toLocaleString()}
 				</div>
 			</div>
@@ -308,11 +308,13 @@
 		}
 
 		:global(.menu li > *) {
-			padding-inline: 1rem;
+			padding-left: 0.5rem;
+			padding-right: 0rem;
 		}
 
-		:global(.menu li button) {
-			padding-inline: 1rem;
+		:global(.menu li > button) {
+			padding-left: 0.5rem;
+			padding-right: 0.5rem;
 			justify-content: start;
 			font-weight: normal;
 		}
