@@ -1,5 +1,5 @@
 import type { DungeonMaster, Log, MagicItem, StoryAward } from "$server/db/schema";
-import type { CharacterData, ExtendedCharacterData, FullCharacterData } from "$server/effect/characters";
+import type { CharacterData, FullCharacterData } from "$server/effect/characters";
 import type { ExtendedLogData, FullLogData, LogData, LogSummaryData } from "$server/effect/logs";
 import { sorter } from "@sillvva/utils";
 import { BLANK_CHARACTER, PlaceholderName } from "./constants";
@@ -97,7 +97,7 @@ export function getLevels(
 	};
 }
 
-export function getLogsSummary(logs: LogData[], includeLogs = true) {
+export function getLogsSummary(logs: LogData[]) {
 	const sortedLogs = logs.map(parseLog).toSorted((a, b) => sorter(a.showDate, b.showDate));
 
 	const levels = getLevels(sortedLogs);
@@ -134,17 +134,15 @@ export function getLogsSummary(logs: LogData[], includeLogs = true) {
 		lastLog: sortedLogs.at(-1)?.showDate || new Date(0),
 		logLevels: levels.logLevels,
 		tier: Math.floor((totalLevel + 1) / 6) + 1,
-		logs: includeLogs
-			? sortedLogs.map((log) => {
-					const levelGained = levels.logLevels.find((gl) => gl.id === log.id);
-					if (levelGained) level += levelGained.levels;
-					return {
-						...log,
-						levelGained: levelGained?.levels || 0,
-						totalLevel: level
-					} satisfies LogSummaryData;
-				})
-			: []
+		logs: sortedLogs.map((log) => {
+			const levelGained = levels.logLevels.find((gl) => gl.id === log.id);
+			if (levelGained) level += levelGained.levels;
+			return {
+				...log,
+				levelGained: levelGained?.levels || 0,
+				totalLevel: level
+			} satisfies LogSummaryData;
+		})
 	};
 }
 
@@ -180,11 +178,11 @@ export function defaultLogSchema(
 	};
 }
 
-export function parseCharacter(character: CharacterData | ExtendedCharacterData, includeLogs = true): FullCharacterData {
+export function parseCharacter(character: CharacterData): FullCharacterData {
 	return {
 		...character,
 		imageUrl: character.imageUrl || BLANK_CHARACTER,
-		...getLogsSummary("logs" in character ? character.logs : [], includeLogs)
+		...getLogsSummary(character.logs)
 	};
 }
 

@@ -15,37 +15,35 @@ export const logIncludes = {
 	storyAwardsLost: true
 } as const satisfies QueryConfig<"logs">["with"];
 
-export const characterIncludes = {
-	user: userIncludes
-} as const satisfies QueryConfig<"characters">["with"];
+export const characterIncludes = (includeLogs = true) =>
+	({
+		user: userIncludes,
+		logs: {
+			with: logIncludes,
+			orderBy: {
+				date: "asc"
+			},
+			limit: includeLogs ? undefined : 0
+		}
+	}) as const satisfies QueryConfig<"characters">["with"];
 
 export const extendedLogIncludes = {
 	...logIncludes,
 	character: {
-		with: characterIncludes
+		with: {
+			user: userIncludes
+		}
 	}
 } as const satisfies QueryConfig<"logs">["with"];
 
-export const extendedCharacterIncludes = {
-	...characterIncludes,
-	logs: {
-		with: logIncludes,
-		orderBy: {
-			date: "asc"
-		}
-	}
-} as const satisfies QueryConfig<"characters">["with"];
-
-export const userDMIncludes = {
-	logs: {
-		with: {
-			character: {
-				columns: {
-					id: true,
-					name: true,
-					userId: true
-				}
+export const userDMLogIncludes = {
+	with: {
+		character: {
+			columns: {
+				id: true,
+				name: true,
+				userId: true
 			}
 		}
 	}
-} as const satisfies QueryConfig<"dungeonMasters">["with"];
+} as const satisfies QueryConfig<"logs">;

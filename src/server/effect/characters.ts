@@ -2,7 +2,7 @@ import { PlaceholderName } from "$lib/constants";
 import { getLogsSummary, parseCharacter } from "$lib/entities";
 import type { CharacterId, EditCharacterSchema, NewCharacterSchema, UserId } from "$lib/schemas";
 import { buildConflictUpdateColumns, DBService, type Database, type InferQueryResult, type Transaction } from "$server/db";
-import { characterIncludes, extendedCharacterIncludes } from "$server/db/includes";
+import { characterIncludes } from "$server/db/includes";
 import { characters, logs, type Character } from "$server/db/schema";
 import { and, eq, exists } from "drizzle-orm";
 import { Data, Effect, Layer } from "effect";
@@ -20,9 +20,8 @@ function createSaveError(err: unknown): SaveCharacterError {
 	return SaveCharacterError.from(err);
 }
 
-export type CharacterData = InferQueryResult<"characters", { with: typeof characterIncludes }>;
-export type ExtendedCharacterData = InferQueryResult<"characters", { with: typeof extendedCharacterIncludes }>;
-export interface FullCharacterData extends CharacterData, ReturnType<typeof getLogsSummary> {
+export type CharacterData = InferQueryResult<"characters", { with: ReturnType<typeof characterIncludes> }>;
+export interface FullCharacterData extends Omit<CharacterData, "logs">, ReturnType<typeof getLogsSummary> {
 	imageUrl: string;
 }
 
@@ -49,32 +48,32 @@ export class CharacterService extends Effect.Service<CharacterService>()("Charac
 		const impl: CharacterApiImpl = {
 			db,
 			get: {
-				character: Effect.fn("CharacterService.getCharacter")(function* (characterId, includeLogs = true) {
-					yield* Log.info("CharacterService.getCharacter", { characterId, includeLogs });
+				character: Effect.fn("CharacterService.get.character")(function* (characterId, includeLogs = true) {
+					yield* Log.info("CharacterService.get.character", { characterId, includeLogs });
 
 					return yield* Effect.promise(() =>
 						db.query.characters.findFirst({
-							with: includeLogs ? extendedCharacterIncludes : characterIncludes,
+							with: characterIncludes(includeLogs),
 							where: { id: { eq: characterId } }
 						})
-					).pipe(Effect.andThen((character) => character && parseCharacter({ logs: [], ...character })));
+					).pipe(Effect.andThen((character) => character && parseCharacter(character)));
 				}),
 
-				userCharacters: Effect.fn("CharacterService.getUserCharacters")(function* (userId, includeLogs = true) {
-					yield* Log.info("CharacterService.getUserCharacters", { userId, includeLogs });
+				userCharacters: Effect.fn("CharacterService.get.userCharacters")(function* (userId, includeLogs = true) {
+					yield* Log.info("CharacterService.get.userCharacters", { userId, includeLogs });
 
 					return yield* Effect.promise(() =>
 						db.query.characters.findMany({
-							with: includeLogs ? extendedCharacterIncludes : characterIncludes,
+							with: characterIncludes(includeLogs),
 							where: { userId: { eq: userId }, name: { NOT: PlaceholderName } }
 						})
-					).pipe(Effect.map((characters) => characters.map((character) => parseCharacter({ logs: [], ...character }))));
+					).pipe(Effect.map((characters) => characters.map(parseCharacter)));
 				})
 			},
 			set: {
-				save: Effect.fn("CharacterService.saveCharacter")(function* (characterId, userId, data) {
-					yield* Log.info("CharacterService.saveCharacter", { characterId, userId });
-					yield* Log.debug("CharacterService.saveCharacter", data);
+				save: Effect.fn("CharacterService.set.save")(function* (characterId, userId, data) {
+					yield* Log.info("CharacterService.set.save", { characterId, userId });
+					yield* Log.debug("CharacterService.set.save", data);
 
 					if (!characterId) yield* new SaveCharacterError("No character ID provided", { status: 400 });
 
@@ -103,8 +102,8 @@ export class CharacterService extends Effect.Service<CharacterService>()("Charac
 					);
 				}),
 
-				delete: Effect.fn("CharacterService.deleteCharacter")(function* (characterId, userId) {
-					yield* Log.info("CharacterService.deleteCharacter", { characterId, userId });
+				delete: Effect.fn("CharacterService.set.delete")(function* (characterId, userId) {
+					yield* Log.info("CharacterService.set.delete", { characterId, userId });
 
 					return yield* Effect.tryPromise({
 						try: () =>

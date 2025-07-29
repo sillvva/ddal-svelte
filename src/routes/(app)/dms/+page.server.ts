@@ -11,7 +11,7 @@ export const load = (event) =>
 		const user = event.locals.user;
 		assertUser(user);
 
-		const dms = yield* withDM((service) => service.get.userDMs(user, { includeLogs: true }));
+		const dms = yield* withDM((service) => service.get.userDMs(user));
 
 		return {
 			...event.params,

@@ -23,7 +23,7 @@ export const POST = async ({ request, locals }) =>
 
 				let { id, ...rest } = (yield* Effect.promise(() => request.json())) as UpdateUserInput;
 
-				const result = yield* withUser((service) => service.set.updateUser(id, rest));
+				const result = yield* withUser((service) => service.set.update(id, rest));
 
 				return result satisfies UpdateUserResponse;
 			},

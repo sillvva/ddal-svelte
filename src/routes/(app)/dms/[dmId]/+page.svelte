@@ -48,11 +48,13 @@
 	<div class="mt-4 flex flex-col gap-4 sm:mt-8">
 		<section>
 			<h2 class="mb-2 text-2xl">Logs</h2>
-			<div class="bg-base-100 w-full overflow-x-auto rounded-lg">
-				{#if data.dm.logs.length == 0}
+			{#if data.dm.logs.length == 0}
+				<div class="bg-base-200 flex h-40 flex-col items-center justify-center gap-2 rounded-lg">
 					<p>This DM has no logs.</p>
 					<DeleteDm dm={data.dm} label="Delete DM" ondelete={() => goto("/dms")} />
-				{:else}
+				</div>
+			{:else}
+				<div class="bg-base-100 w-full overflow-x-auto rounded-lg">
 					<table class="table w-full">
 						<thead>
 							<tr class="bg-base-300">
@@ -102,8 +104,8 @@
 							{/each}
 						</tbody>
 					</table>
-				{/if}
-			</div>
+				</div>
+			{/if}
 		</section>
 	</div>
 </div>

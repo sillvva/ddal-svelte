@@ -20,7 +20,7 @@ interface UserApiImpl {
 		readonly users: (userId: UserId) => Effect.Effect<(User & { characters: { id: CharacterId }[] })[]>;
 	};
 	readonly set: {
-		readonly updateUser: (userId: UserId, data: Partial<Pick<User, "name" | "image">>) => Effect.Effect<User, UpdateUserError>;
+		readonly update: (userId: UserId, data: Partial<Pick<User, "name" | "image">>) => Effect.Effect<User, UpdateUserError>;
 	};
 }
 
@@ -30,7 +30,7 @@ export class UserService extends Effect.Service<UserService>()("UserService", {
 
 		const impl: UserApiImpl = {
 			get: {
-				localsUser: Effect.fn("UserService.getLocalsUser")(function* (userId) {
+				localsUser: Effect.fn("UserService.get.localsUser")(function* (userId) {
 					return yield* Effect.promise(() =>
 						db.query.user.findFirst({
 							with: {
@@ -65,7 +65,7 @@ export class UserService extends Effect.Service<UserService>()("UserService", {
 						})
 					);
 				}),
-				users: Effect.fn("UserService.getUsers")(function* (userId) {
+				users: Effect.fn("UserService.get.users")(function* (userId) {
 					return yield* Effect.promise(() =>
 						db.query.user.findMany({
 							with: {
@@ -90,7 +90,7 @@ export class UserService extends Effect.Service<UserService>()("UserService", {
 				})
 			},
 			set: {
-				updateUser: Effect.fn("UserService.updateUser")(function* (userId, data) {
+				update: Effect.fn("UserService.set.update")(function* (userId, data) {
 					return yield* Effect.tryPromise({
 						try: () => db.update(user).set(data).where(eq(user.id, userId)).returning(),
 						catch: () => new UpdateUserError()

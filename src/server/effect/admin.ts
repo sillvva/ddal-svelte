@@ -29,7 +29,7 @@ export class AdminService extends Effect.Service<AdminService>()("AdminService",
 
 		const impl: AdminApiImpl = {
 			get: {
-				logs: Effect.fn("AdminService.getLogs")(function* (search = "") {
+				logs: Effect.fn("AdminService.get.logs")(function* (search = "") {
 					const { where, orderBy, metadata, ast } = logSearch.parse(search);
 
 					return yield* Effect.promise(() =>
@@ -44,7 +44,7 @@ export class AdminService extends Effect.Service<AdminService>()("AdminService",
 				})
 			},
 			set: {
-				deleteLog: Effect.fn("AdminService.deleteLog")(function* (logId) {
+				deleteLog: Effect.fn("AdminService.set.deleteLog")(function* (logId) {
 					return yield* Effect.tryPromise({
 						try: () => db.delete(appLogs).where(eq(appLogs.id, logId)).returning({ id: appLogs.id }),
 						catch: createSaveAppLogError
