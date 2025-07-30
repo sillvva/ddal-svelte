@@ -35,7 +35,7 @@
 
 	$effect(() => {
 		if (!userAccounts.length && open) {
-			Promise.all(
+			Promise.allSettled(
 				user.accounts.map(({ accountId, providerId }) =>
 					authClient.accountInfo({ accountId }).then((r) =>
 						r.data?.user?.name && r.data?.user?.email && r.data?.user?.image
@@ -49,7 +49,7 @@
 					)
 				)
 			).then((result) => {
-				userAccounts = result.filter(isDefined);
+				userAccounts = result.map((r) => (r.status === "fulfilled" ? r.value : undefined)).filter(isDefined);
 
 				const account =
 					userAccounts.find((a) => a.providerId === global.app.settings.provider) ||
@@ -204,25 +204,25 @@
 														<span class="iconify mdi--accounts-switch size-5"></span>
 													</button>
 												{/if}
-												<button
-													class="btn btn-error btn-sm join-item font-semibold"
-													disabled={currentAccount?.providerId === provider.id}
-													onclick={() => {
-														if (confirm("Are you sure you want to unlink this account?")) {
-															authClient.unlinkAccount({ providerId: provider.id }).then((result) => {
-																if (result.error?.code) {
-																	return errorToast(
-																		authClient.$ERROR_CODES[result.error.code as keyof typeof authClient.$ERROR_CODES]
-																	);
-																}
-																invalidateAll();
-															});
-														}
-													}}
-												>
-													Unlink
-												</button>
 											{/if}
+											<button
+												class="btn btn-error btn-sm join-item font-semibold"
+												disabled={currentAccount?.providerId === provider.id}
+												onclick={() => {
+													if (confirm("Are you sure you want to unlink this account?")) {
+														authClient.unlinkAccount({ providerId: provider.id }).then((result) => {
+															if (result.error?.code) {
+																return errorToast(
+																	authClient.$ERROR_CODES[result.error.code as keyof typeof authClient.$ERROR_CODES]
+																);
+															}
+															invalidateAll();
+														});
+													}
+												}}
+											>
+												Unlink
+											</button>
 										{/if}
 									{:else}
 										<span class="iconify mdi--check size-6 text-green-500"></span>

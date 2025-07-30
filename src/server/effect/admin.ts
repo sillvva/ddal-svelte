@@ -1,5 +1,5 @@
 import type { AppLogId, AppLogSchema } from "$lib/schemas";
-import { DBService, type Filter, type Transaction, type TRSchema } from "$server/db";
+import { DBService, query, type Filter, type Transaction, type TRSchema } from "$server/db";
 import type { relations } from "$server/db/relations";
 import { appLogs, type AppLog } from "$server/db/schema";
 import type { ASTNode, ParseMetadata } from "@sillvva/search";
@@ -7,19 +7,18 @@ import { DrizzleSearchParser } from "@sillvva/search/drizzle";
 import { eq, sql } from "drizzle-orm";
 import { Effect, Layer } from "effect";
 import { isTupleOf } from "effect/Predicate";
-import { FormError } from ".";
+import { FormError, Log, type PostgresError } from ".";
 
 export class SaveAppLogError extends FormError<AppLogSchema> {}
-function createSaveAppLogError(err: unknown): SaveAppLogError {
-	return SaveAppLogError.from(err);
-}
 
 interface AdminApiImpl {
 	readonly get: {
-		readonly logs: (search?: string) => Effect.Effect<{ logs: AppLog[]; metadata: ParseMetadata; ast: ASTNode | null }>;
+		readonly logs: (
+			search?: string
+		) => Effect.Effect<{ logs: AppLog[]; metadata: ParseMetadata; ast: ASTNode | null }, PostgresError>;
 	};
 	readonly set: {
-		readonly deleteLog: (logId: AppLogId) => Effect.Effect<{ id: AppLogId }, SaveAppLogError>;
+		readonly deleteLog: (logId: AppLogId) => Effect.Effect<{ id: AppLogId }, SaveAppLogError | PostgresError>;
 	};
 }
 
@@ -31,8 +30,9 @@ export class AdminService extends Effect.Service<AdminService>()("AdminService",
 			get: {
 				logs: Effect.fn("AdminService.get.logs")(function* (search = "") {
 					const { where, orderBy, metadata, ast } = logSearch.parse(search);
+					yield* Log.info("AdminService.get.logs", { where, orderBy, metadata, ast });
 
-					return yield* Effect.promise(() =>
+					return yield* query(
 						db.query.appLogs.findMany({
 							where,
 							orderBy: {
@@ -45,10 +45,7 @@ export class AdminService extends Effect.Service<AdminService>()("AdminService",
 			},
 			set: {
 				deleteLog: Effect.fn("AdminService.set.deleteLog")(function* (logId) {
-					return yield* Effect.tryPromise({
-						try: () => db.delete(appLogs).where(eq(appLogs.id, logId)).returning({ id: appLogs.id }),
-						catch: createSaveAppLogError
-					}).pipe(
+					return yield* query(db.delete(appLogs).where(eq(appLogs.id, logId)).returning({ id: appLogs.id })).pipe(
 						Effect.flatMap((logs) =>
 							isTupleOf(logs, 1) ? Effect.succeed(logs[0]) : Effect.fail(new SaveAppLogError("Log not found", { status: 404 }))
 						)
@@ -65,7 +62,7 @@ export class AdminService extends Effect.Service<AdminService>()("AdminService",
 export const AdminTx = (tx: Transaction) => AdminService.DefaultWithoutDependencies().pipe(Layer.provide(DBService.Default(tx)));
 
 export const withAdmin = Effect.fn("withAdmin")(
-	function* <R, E extends SaveAppLogError>(impl: (service: AdminApiImpl) => Effect.Effect<R, E>) {
+	function* <R, E extends SaveAppLogError | PostgresError>(impl: (service: AdminApiImpl) => Effect.Effect<R, E>) {
 		const adminApi = yield* AdminService;
 		return yield* impl(adminApi);
 	},
@@ -81,20 +78,42 @@ export const validKeys = ["id", "date", "label", "level", "username", "userId", 
 )[];
 const defaultKey = "label" as const satisfies (typeof validKeys)[number] & Column;
 
-export const logSearch = new DrizzleSearchParser<typeof relations, Table>({
+const logSearch = new DrizzleSearchParser<typeof relations, Table>({
 	validKeys,
 	defaultKey,
 	filterFn: (ast) => {
 		const key = (ast.key || defaultKey) as (typeof validKeys)[number];
 
-		if (key === "username" || key === "userId" || key === "routeId") {
+		if (key === "username") {
 			if (ast.isRegex) {
 				return {
-					RAW: (table) => sql`${table.annotations}->>'${key}'::text ~* ${ast.value}`
+					RAW: (table) => sql`${table.annotations}->>'username'::text ~* ${ast.value}`
 				};
 			}
 			return {
-				RAW: (table) => sql`${table.annotations}->>'${key}'::text = ${ast.value}`
+				RAW: (table) => sql`${table.annotations}->>'username'::text ilike ${`%${ast.value}%`}`
+			};
+		}
+
+		if (key === "userId") {
+			if (ast.isRegex) {
+				return {
+					RAW: (table) => sql`${table.annotations}->>'userId'::text ~* ${ast.value}`
+				};
+			}
+			return {
+				RAW: (table) => sql`${table.annotations}->>'userId'::text ilike ${`%${ast.value}%`}`
+			};
+		}
+
+		if (key === "routeId") {
+			if (ast.isRegex) {
+				return {
+					RAW: (table) => sql`${table.annotations}->>'routeId'::text ~* ${ast.value}`
+				};
+			}
+			return {
+				RAW: (table) => sql`${table.annotations}->>'routeId'::text ilike ${`%${ast.value}%`}`
 			};
 		}
 

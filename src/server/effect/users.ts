@@ -1,12 +1,12 @@
 import { PROVIDERS } from "$lib/constants";
 import type { CharacterId, LocalsUser, UserId } from "$lib/schemas";
-import { DBService, type Transaction } from "$server/db";
+import { DBService, query, type Transaction } from "$server/db";
 import { user, type User } from "$server/db/schema";
 import { sorter } from "@sillvva/utils";
 import { eq } from "drizzle-orm";
 import { Data, Effect, Layer } from "effect";
 import { isTupleOf } from "effect/Predicate";
-import { debugSet, type ErrorParams } from ".";
+import { debugSet, type ErrorParams, type PostgresError } from ".";
 
 export class UpdateUserError extends Data.TaggedError("UpdateUserError")<ErrorParams> {
 	constructor(err?: unknown) {
@@ -16,11 +16,14 @@ export class UpdateUserError extends Data.TaggedError("UpdateUserError")<ErrorPa
 
 interface UserApiImpl {
 	readonly get: {
-		readonly localsUser: (userId: UserId) => Effect.Effect<LocalsUser | undefined>;
-		readonly users: (userId: UserId) => Effect.Effect<(User & { characters: { id: CharacterId }[] })[]>;
+		readonly localsUser: (userId: UserId) => Effect.Effect<LocalsUser | undefined, PostgresError>;
+		readonly users: (userId: UserId) => Effect.Effect<(User & { characters: { id: CharacterId }[] })[], PostgresError>;
 	};
 	readonly set: {
-		readonly update: (userId: UserId, data: Partial<Pick<User, "name" | "image">>) => Effect.Effect<User, UpdateUserError>;
+		readonly update: (
+			userId: UserId,
+			data: Partial<Pick<User, "name" | "image">>
+		) => Effect.Effect<User, UpdateUserError | PostgresError>;
 	};
 }
 
@@ -31,7 +34,7 @@ export class UserService extends Effect.Service<UserService>()("UserService", {
 		const impl: UserApiImpl = {
 			get: {
 				localsUser: Effect.fn("UserService.get.localsUser")(function* (userId) {
-					return yield* Effect.promise(() =>
+					return yield* query(
 						db.query.user.findFirst({
 							with: {
 								accounts: {
@@ -66,7 +69,7 @@ export class UserService extends Effect.Service<UserService>()("UserService", {
 					);
 				}),
 				users: Effect.fn("UserService.get.users")(function* (userId) {
-					return yield* Effect.promise(() =>
+					return yield* query(
 						db.query.user.findMany({
 							with: {
 								accounts: {
@@ -91,10 +94,7 @@ export class UserService extends Effect.Service<UserService>()("UserService", {
 			},
 			set: {
 				update: Effect.fn("UserService.set.update")(function* (userId, data) {
-					return yield* Effect.tryPromise({
-						try: () => db.update(user).set(data).where(eq(user.id, userId)).returning(),
-						catch: () => new UpdateUserError()
-					}).pipe(
+					return yield* query(db.update(user).set(data).where(eq(user.id, userId)).returning()).pipe(
 						Effect.flatMap((users) =>
 							isTupleOf(users, 1) ? Effect.succeed(users[0]) : Effect.fail(new UpdateUserError("Failed to update user"))
 						)
@@ -111,7 +111,7 @@ export class UserService extends Effect.Service<UserService>()("UserService", {
 export const UserTx = (tx: Transaction) => UserService.DefaultWithoutDependencies().pipe(Layer.provide(DBService.Default(tx)));
 
 export const withUser = Effect.fn("withUser")(
-	function* <R, E extends UpdateUserError>(impl: (service: UserApiImpl) => Effect.Effect<R, E>) {
+	function* <R, E extends UpdateUserError | PostgresError>(impl: (service: UserApiImpl) => Effect.Effect<R, E>) {
 		const userApi = yield* UserService;
 		const result = yield* impl(userApi);
 

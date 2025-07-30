@@ -1,13 +1,13 @@
 import { PlaceholderName } from "$lib/constants";
 import { getLogsSummary, parseCharacter } from "$lib/entities";
 import type { CharacterId, EditCharacterSchema, NewCharacterSchema, UserId } from "$lib/schemas";
-import { buildConflictUpdateColumns, DBService, type Database, type InferQueryResult, type Transaction } from "$server/db";
+import { buildConflictUpdateColumns, DBService, query, type Database, type InferQueryResult, type Transaction } from "$server/db";
 import { characterIncludes } from "$server/db/includes";
 import { characters, logs, type Character } from "$server/db/schema";
 import { and, eq, exists } from "drizzle-orm";
 import { Data, Effect, Layer } from "effect";
 import { isTupleOf } from "effect/Predicate";
-import { debugSet, FormError, Log, type ErrorParams } from ".";
+import { debugSet, FormError, Log, type ErrorParams, type PostgresError } from ".";
 
 export class CharacterNotFoundError extends Data.TaggedError("CharacterNotFoundError")<ErrorParams> {
 	constructor(err?: unknown) {
@@ -28,22 +28,28 @@ export interface FullCharacterData extends Omit<CharacterData, "logs">, ReturnTy
 interface CharacterApiImpl {
 	readonly db: Database | Transaction;
 	readonly get: {
-		readonly character: (characterId: CharacterId, includeLogs?: boolean) => Effect.Effect<FullCharacterData | undefined>;
-		readonly userCharacters: (userId: UserId, includeLogs?: boolean) => Effect.Effect<FullCharacterData[]>;
+		readonly character: (
+			characterId: CharacterId,
+			includeLogs?: boolean
+		) => Effect.Effect<FullCharacterData | undefined, PostgresError>;
+		readonly userCharacters: (userId: UserId, includeLogs?: boolean) => Effect.Effect<FullCharacterData[], PostgresError>;
 	};
 	readonly set: {
 		readonly save: (
 			characterId: CharacterId | "new",
 			userId: UserId,
 			data: NewCharacterSchema
-		) => Effect.Effect<Character, SaveCharacterError>;
-		readonly delete: (characterId: CharacterId, userId: UserId) => Effect.Effect<{ id: CharacterId }, SaveCharacterError>;
+		) => Effect.Effect<Character, SaveCharacterError | PostgresError>;
+		readonly delete: (
+			characterId: CharacterId,
+			userId: UserId
+		) => Effect.Effect<{ id: CharacterId }, SaveCharacterError | PostgresError>;
 	};
 }
 
 export class CharacterService extends Effect.Service<CharacterService>()("CharacterService", {
 	effect: Effect.fn("CharacterService")(function* () {
-		const { db } = yield* DBService;
+		const { db, transaction } = yield* DBService;
 
 		const impl: CharacterApiImpl = {
 			db,
@@ -51,7 +57,7 @@ export class CharacterService extends Effect.Service<CharacterService>()("Charac
 				character: Effect.fn("CharacterService.get.character")(function* (characterId, includeLogs = true) {
 					yield* Log.info("CharacterService.get.character", { characterId, includeLogs });
 
-					return yield* Effect.promise(() =>
+					return yield* query(
 						db.query.characters.findFirst({
 							with: characterIncludes(includeLogs),
 							where: { id: { eq: characterId } }
@@ -62,7 +68,7 @@ export class CharacterService extends Effect.Service<CharacterService>()("Charac
 				userCharacters: Effect.fn("CharacterService.get.userCharacters")(function* (userId, includeLogs = true) {
 					yield* Log.info("CharacterService.get.userCharacters", { userId, includeLogs });
 
-					return yield* Effect.promise(() =>
+					return yield* query(
 						db.query.characters.findMany({
 							with: characterIncludes(includeLogs),
 							where: { userId: { eq: userId }, name: { NOT: PlaceholderName } }
@@ -77,23 +83,21 @@ export class CharacterService extends Effect.Service<CharacterService>()("Charac
 
 					if (!characterId) yield* new SaveCharacterError("No character ID provided", { status: 400 });
 
-					return yield* Effect.tryPromise({
-						try: () =>
-							db
-								.insert(characters)
-								.values({
-									...data,
-									id: characterId === "new" ? undefined : characterId,
-									userId
-								})
-								.onConflictDoUpdate({
-									target: characters.id,
-									set: buildConflictUpdateColumns(characters, ["id", "userId", "createdAt"], true),
-									where: eq(characters.userId, userId)
-								})
-								.returning(),
-						catch: createSaveError
-					}).pipe(
+					return yield* query(
+						db
+							.insert(characters)
+							.values({
+								...data,
+								id: characterId === "new" ? undefined : characterId,
+								userId
+							})
+							.onConflictDoUpdate({
+								target: characters.id,
+								set: buildConflictUpdateColumns(characters, ["id", "userId", "createdAt"], true),
+								where: eq(characters.userId, userId)
+							})
+							.returning()
+					).pipe(
 						Effect.flatMap((characters) =>
 							isTupleOf(characters, 1)
 								? Effect.succeed(characters[0])
@@ -105,10 +109,10 @@ export class CharacterService extends Effect.Service<CharacterService>()("Charac
 				delete: Effect.fn("CharacterService.set.delete")(function* (characterId, userId) {
 					yield* Log.info("CharacterService.set.delete", { characterId, userId });
 
-					return yield* Effect.tryPromise({
-						try: () =>
-							db.transaction(async (tx) => {
-								await tx
+					return yield* transaction(
+						Effect.fn("CharacterService.set.delete.transaction")(function* (tx) {
+							yield* query(
+								tx
 									.update(logs)
 									.set({ characterId: null, appliedDate: null })
 									.where(
@@ -122,14 +126,18 @@ export class CharacterService extends Effect.Service<CharacterService>()("Charac
 													.where(and(eq(characters.id, characterId), eq(characters.userId, userId)))
 											)
 										)
-									);
-								return await tx
+									)
+							);
+
+							return yield* query(
+								tx
 									.delete(characters)
 									.where(and(eq(characters.id, characterId), eq(characters.userId, userId)))
-									.returning({ id: characters.id });
-							}),
-						catch: createSaveError
-					}).pipe(
+									.returning({ id: characters.id })
+							);
+						}),
+						createSaveError
+					).pipe(
 						Effect.flatMap((result) =>
 							isTupleOf(result, 1)
 								? Effect.succeed(result[0])
@@ -149,7 +157,7 @@ export const CharacterTx = (tx: Transaction) =>
 	CharacterService.DefaultWithoutDependencies().pipe(Layer.provide(DBService.Default(tx)));
 
 export const withCharacter = Effect.fn("withCharacter")(
-	function* <R, E extends SaveCharacterError>(impl: (service: CharacterApiImpl) => Effect.Effect<R, E>) {
+	function* <R, E extends SaveCharacterError | PostgresError>(impl: (service: CharacterApiImpl) => Effect.Effect<R, E>) {
 		const CharacterApi = yield* CharacterService;
 		const result = yield* impl(CharacterApi);
 

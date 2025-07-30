@@ -1,15 +1,15 @@
 import type { DungeonMasterId, DungeonMasterSchema, LocalsUser, UserId } from "$lib/schemas";
-import { DBService, type Database, type InferQueryResult, type Transaction } from "$server/db";
+import { DBService, query, type Database, type InferQueryResult, type Transaction } from "$server/db";
 import { userDMLogIncludes } from "$server/db/includes";
 import { dungeonMasters, type DungeonMaster } from "$server/db/schema";
 import { sorter } from "@sillvva/utils";
 import { and, eq } from "drizzle-orm";
 import { Data, Effect, Layer } from "effect";
 import { isTupleOf } from "effect/Predicate";
-import { debugSet, FormError, Log, type ErrorParams } from ".";
+import { debugSet, FormError, Log, type ErrorParams, type PostgresError } from ".";
 
 class FetchUserDMsError extends Data.TaggedError("FetchUserDMsError")<ErrorParams> {
-	constructor(params: Omit<ErrorParams, "_tag"> = { message: "Unable to fetch user DMs", status: 500 }) {
+	constructor(params: ErrorParams = { message: "Unable to fetch user DMs", status: 500 }) {
 		super(params);
 	}
 }
@@ -32,22 +32,22 @@ interface DMApiImpl {
 	readonly get: {
 		readonly userDMs: (
 			user: LocalsUser,
-			{ id, includeLogs }?: { id?: DungeonMasterId; includeLogs?: boolean }
-		) => Effect.Effect<UserDM[], FetchUserDMsError>;
+			options?: { id?: DungeonMasterId; includeLogs?: boolean }
+		) => Effect.Effect<UserDM[], FetchUserDMsError | PostgresError>;
 		readonly fuzzyDM: (
 			userId: UserId,
 			isUser: boolean,
 			dm: Pick<DungeonMaster, "name" | "DCI">
-		) => Effect.Effect<DungeonMaster | undefined>;
+		) => Effect.Effect<DungeonMaster | undefined, PostgresError>;
 	};
 	readonly set: {
 		readonly save: (
 			dmId: DungeonMasterId,
 			user: LocalsUser,
 			data: DungeonMasterSchema
-		) => Effect.Effect<DungeonMaster, SaveDMError>;
-		readonly addUserDM: (user: LocalsUser, dm: UserDM[]) => Effect.Effect<UserDM[], SaveDMError>;
-		readonly delete: (dm: UserDM, userId: UserId) => Effect.Effect<{ id: DungeonMasterId }, SaveDMError>;
+		) => Effect.Effect<DungeonMaster, SaveDMError | PostgresError>;
+		readonly addUserDM: (user: LocalsUser, dm: UserDM[]) => Effect.Effect<UserDM[], SaveDMError | PostgresError>;
+		readonly delete: (dm: UserDM, userId: UserId) => Effect.Effect<{ id: DungeonMasterId }, SaveDMError | PostgresError>;
 	};
 }
 
@@ -61,7 +61,7 @@ export class DMService extends Effect.Service<DMService>()("DMSService", {
 				userDMs: Effect.fn("DMService.get.userDMs")(function* (user, { id, includeLogs = true } = {}) {
 					yield* Log.info("DMService.get.userDMs", { userId: user.id, id, includeLogs });
 
-					return yield* Effect.promise(() =>
+					return yield* query(
 						db.query.dungeonMasters.findMany({
 							with: {
 								logs: {
@@ -92,7 +92,7 @@ export class DMService extends Effect.Service<DMService>()("DMSService", {
 						...(isUser ? { isUser } : { name: dm.name.trim() || undefined, DCI: dm.DCI || undefined })
 					});
 
-					return yield* Effect.promise(() =>
+					return yield* query(
 						db.query.dungeonMasters.findFirst({
 							where: {
 								userId: { eq: userId },
@@ -112,7 +112,7 @@ export class DMService extends Effect.Service<DMService>()("DMSService", {
 					yield* Log.info("DMService.set.save", { dmId, userId: user.id });
 					yield* Log.debug("DMService.set.save", data);
 
-					const [dm] = yield* impl.get.userDMs(user, { id: dmId }).pipe(Effect.catchAll(createSaveError));
+					const [dm] = yield* impl.get.userDMs(user, { id: dmId }).pipe(Effect.catchTag("FetchUserDMsError", createSaveError));
 					if (!dm) return yield* new SaveDMError("DM does not exist", { status: 404 });
 
 					if (!data.name.trim()) {
@@ -120,18 +120,16 @@ export class DMService extends Effect.Service<DMService>()("DMSService", {
 						else return yield* new SaveDMError("Name is required", { status: 400, field: "name" });
 					}
 
-					return yield* Effect.tryPromise({
-						try: () =>
-							db
-								.update(dungeonMasters)
-								.set({
-									name: data.name,
-									DCI: data.DCI || null
-								})
-								.where(eq(dungeonMasters.id, dmId))
-								.returning(),
-						catch: createSaveError
-					}).pipe(
+					return yield* query(
+						db
+							.update(dungeonMasters)
+							.set({
+								name: data.name,
+								DCI: data.DCI || null
+							})
+							.where(eq(dungeonMasters.id, dmId))
+							.returning()
+					).pipe(
 						Effect.flatMap((dms) =>
 							isTupleOf(dms, 1) ? Effect.succeed(dms[0]) : Effect.fail(new SaveDMError("Failed to save DM"))
 						)
@@ -141,7 +139,7 @@ export class DMService extends Effect.Service<DMService>()("DMSService", {
 				addUserDM: Effect.fn("DMService.set.addUserDM")(function* (user, dms) {
 					yield* Log.info("DMService.set.addUserDM", { userId: user.id });
 
-					const existing = yield* Effect.promise(() =>
+					const existing = yield* query(
 						db.query.dungeonMasters.findFirst({
 							where: {
 								userId: { eq: user.id },
@@ -150,13 +148,11 @@ export class DMService extends Effect.Service<DMService>()("DMSService", {
 						})
 					);
 
-					const result = yield* Effect.tryPromise({
-						try: () =>
-							existing
-								? db.update(dungeonMasters).set({ name: user.name }).where(eq(dungeonMasters.id, existing.id)).returning()
-								: db.insert(dungeonMasters).values({ name: user.name, userId: user.id, isUser: true }).returning(),
-						catch: createSaveError
-					}).pipe(
+					const result = yield* query(
+						existing
+							? db.update(dungeonMasters).set({ name: user.name }).where(eq(dungeonMasters.id, existing.id)).returning()
+							: db.insert(dungeonMasters).values({ name: user.name, userId: user.id, isUser: true }).returning()
+					).pipe(
 						Effect.flatMap((dms) =>
 							isTupleOf(dms, 1)
 								? Effect.succeed({ ...dms[0], logs: [] as UserDM["logs"] })
@@ -172,14 +168,12 @@ export class DMService extends Effect.Service<DMService>()("DMSService", {
 
 					if (dm.logs.length) return yield* new SaveDMError("You cannot delete a DM that has logs", { status: 400 });
 
-					return yield* Effect.tryPromise({
-						try: () =>
-							db
-								.delete(dungeonMasters)
-								.where(and(eq(dungeonMasters.id, dm.id), eq(dungeonMasters.userId, userId)))
-								.returning({ id: dungeonMasters.id }),
-						catch: createSaveError
-					}).pipe(
+					return yield* query(
+						db
+							.delete(dungeonMasters)
+							.where(and(eq(dungeonMasters.id, dm.id), eq(dungeonMasters.userId, userId)))
+							.returning({ id: dungeonMasters.id })
+					).pipe(
 						Effect.flatMap((result) =>
 							isTupleOf(result, 1) ? Effect.succeed(result[0]) : Effect.fail(new SaveDMError("DM not found", { status: 404 }))
 						)
@@ -196,7 +190,7 @@ export class DMService extends Effect.Service<DMService>()("DMSService", {
 export const DMTx = (tx: Transaction) => DMService.DefaultWithoutDependencies().pipe(Layer.provide(DBService.Default(tx)));
 
 export const withDM = Effect.fn("withDM")(
-	function* <R, E extends FetchUserDMsError | SaveDMError>(impl: (service: DMApiImpl) => Effect.Effect<R, E>) {
+	function* <R, E extends FetchUserDMsError | SaveDMError | PostgresError>(impl: (service: DMApiImpl) => Effect.Effect<R, E>) {
 		const dmApi = yield* DMService;
 		const result = yield* impl(dmApi);
 

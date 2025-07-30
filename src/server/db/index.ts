@@ -1,7 +1,7 @@
 import { privateEnv } from "$lib/env/private";
 import { relations } from "$server/db/relations";
 import * as schema from "$server/db/schema";
-import { run, type ErrorClass, type FormError } from "$server/effect";
+import { PostgresError, run, type ErrorClass, type FormError } from "$server/effect";
 import {
 	getTableColumns,
 	sql,
@@ -9,6 +9,7 @@ import {
 	type DBQueryConfig,
 	type ExtractTablesWithRelations,
 	type GetColumnData,
+	type Query,
 	type RelationsFilter,
 	type SQL
 } from "drizzle-orm";
@@ -39,6 +40,15 @@ export class DBService extends Effect.Service<DBService>()("DBService", {
 		return { db: tx || db, transaction };
 	})
 }) {}
+
+export function query<TQuery extends PromiseLike<any> & { toSQL: () => Query }>(
+	query: TQuery
+): Effect.Effect<Awaited<TQuery>, PostgresError> {
+	return Effect.tryPromise({
+		try: () => query,
+		catch: (err) => new PostgresError(err, query.toSQL())
+	});
+}
 
 export type TRSchema = ExtractTablesWithRelations<typeof relations>;
 export type Filter<TableName extends keyof TRSchema> = RelationsFilter<TRSchema[TableName], TRSchema>;
