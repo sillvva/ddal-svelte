@@ -81,6 +81,17 @@
 					Users
 				</a>
 			</li>
+			<li>
+				<a
+					href="/admin/logs"
+					onkeydown={() => toggleDrawer(false)}
+					onclick={() => toggleDrawer(false)}
+					data-active={page.url.pathname.startsWith("/admin/logs")}
+					class="data-[active=true]:bg-primary data-[active=true]:text-primary-content"
+				>
+					Logs
+				</a>
+			</li>
 		</ul>
 	{/if}
 	<div class="divider my-0"></div>
