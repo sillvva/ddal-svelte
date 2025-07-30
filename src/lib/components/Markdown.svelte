@@ -20,6 +20,7 @@
 	import tablehead from "$lib/components/renderers/tablehead.svelte";
 	import tablerow from "$lib/components/renderers/tablerow.svelte";
 	import type { HTMLAttributes } from "svelte/elements";
+	import code from "./renderers/html/code.svelte";
 	import details from "./renderers/html/details.svelte";
 	import summary from "./renderers/html/summary.svelte";
 
@@ -29,8 +30,26 @@
 
 	let { content = "", ...rest }: Props = $props();
 
+	// Add newlines around HTML tags, but skip tags inside markdown table blocks
 	function addNewlinesAroundTags(content: string) {
-		return content.replace(/<([a-zA-Z]+)([^>]*)(\/?>)|(<\/[a-zA-Z]+>)/g, "\n$&\n");
+		// Split content into table and non-table segments
+		const tableRegex = /((?:\|[^\n]*\|\s*(?:\n|$))+)/g;
+		const tagRegex = /<([a-zA-Z]+)([^>]*)(\/?>)|<\/[a-zA-Z]+>/g;
+		let lastIndex = 0;
+		let result = "";
+		let match: RegExpExecArray | null;
+
+		while ((match = tableRegex.exec(content)) !== null) {
+			// Process non-table segment before this table
+			const nonTableSegment = content.slice(lastIndex, match.index);
+			result += nonTableSegment.replace(tagRegex, "\n$&\n");
+			// Add the table segment unchanged
+			result += match[0];
+			lastIndex = match.index + match[0].length;
+		}
+		// Process any remaining non-table content after the last table
+		result += content.slice(lastIndex).replace(tagRegex, "\n$&\n");
+		return result;
 	}
 </script>
 
@@ -66,6 +85,10 @@
 				form: null,
 				script: null,
 				style: null,
+				object: null,
+				base: null,
+				link: null,
+				meta: null,
 				table,
 				thead: tablehead,
 				tbody: tablebody,
@@ -80,7 +103,8 @@
 				h3,
 				h4,
 				details,
-				summary
+				summary,
+				code
 			}
 		}}
 	/>

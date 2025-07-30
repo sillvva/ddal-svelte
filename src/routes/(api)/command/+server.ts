@@ -45,7 +45,7 @@ async function getData(user: LocalsUser) {
 		},
 		{
 			title: "DMs" as const,
-			items: await run(withDM((service) => service.get.userDMs(user, { includeLogs: true }))).then((dms) =>
+			items: await run(withDM((service) => service.get.userDMs(user))).then((dms) =>
 				dms
 					.map(
 						(dm) =>

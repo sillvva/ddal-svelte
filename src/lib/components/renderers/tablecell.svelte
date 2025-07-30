@@ -10,5 +10,5 @@
 {#if header}
 	<th class="align-bottom">{@render children?.()}</th>
 {:else}
-	<td class="align-top">{@render children?.()}</td>
+	<td class="align-top whitespace-normal">{@render children?.()}</td>
 {/if}

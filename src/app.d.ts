@@ -1,7 +1,7 @@
 // See https://kit.svelte.dev/docs/types#app
 // for information about these interfaces
 
-import type { LocalsSession, LocalsUser } from "$lib/schemas";
+import type { AppCookie, LocalsSession, LocalsUser } from "$lib/schemas";
 import "@auth/sveltekit";
 import "@total-typescript/ts-reset/fetch";
 import "@total-typescript/ts-reset/json-parse";
@@ -14,14 +14,12 @@ declare global {
 			user?: LocalsUser;
 		}
 		interface PageData {
+			app: AppCookie;
 			user: LocalsUser;
 			session: LocalsSession;
 			breadcrumbs: Array<{ name: string; href?: string }>;
 			mobile: boolean;
 			isMac: boolean;
-			title?: string;
-			description?: string;
-			image?: string;
 		}
 		// interface Platform {}
 		interface PageState {
@@ -47,6 +45,20 @@ declare global {
 				type: "error" | "success";
 				text: string;
 			};
+		}
+
+		interface ModuleData {
+			getPageTitle?: (data: App.PageData) => string;
+			pageTitle?: string;
+
+			getHeadData?: (data: App.PageData) => {
+				title: string;
+				description?: string;
+				image?: string;
+			};
+			headTitle?: string;
+			headDescription?: string;
+			headImage?: string;
 		}
 	}
 

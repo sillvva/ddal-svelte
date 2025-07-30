@@ -317,8 +317,8 @@ export class LogService extends Effect.Service<LogService>()("LogService", {
 		const impl: LogApiImpl = {
 			db,
 			get: {
-				log: Effect.fn("LogService.getLog")(function* (logId, userId) {
-					yield* Log.info("LogService.getLog", { logId, userId });
+				log: Effect.fn("LogService.get.log")(function* (logId, userId) {
+					yield* Log.info("LogService.get.log", { logId, userId });
 					if (logId === "new") return undefined;
 
 					return yield* Effect.promise(() =>
@@ -334,8 +334,8 @@ export class LogService extends Effect.Service<LogService>()("LogService", {
 					).pipe(Effect.andThen((log) => log && parseLog(log)));
 				}),
 
-				dmLogs: Effect.fn("LogService.getDMLogs")(function* (userId) {
-					yield* Log.info("LogService.getDMLogs", { userId });
+				dmLogs: Effect.fn("LogService.get.dmLogs")(function* (userId) {
+					yield* Log.info("LogService.get.dmLogs", { userId });
 
 					return yield* Effect.promise(() =>
 						db.query.logs
@@ -352,8 +352,8 @@ export class LogService extends Effect.Service<LogService>()("LogService", {
 					);
 				}),
 
-				userLogs: Effect.fn("LogService.getUserLogs")(function* (userId) {
-					yield* Log.info("LogService.getUserLogs", { userId });
+				userLogs: Effect.fn("LogService.get.userLogs")(function* (userId) {
+					yield* Log.info("LogService.get.userLogs", { userId });
 
 					return yield* Effect.promise(() =>
 						db.query.logs.findMany({
@@ -369,9 +369,9 @@ export class LogService extends Effect.Service<LogService>()("LogService", {
 				})
 			},
 			set: {
-				save: Effect.fn("LogService.saveLog")(function* (log, user) {
-					yield* Log.info("LogService.saveLog", { logId: log.id, userId: user.id });
-					yield* Log.debug("LogService.saveLog", log);
+				save: Effect.fn("LogService.set.save")(function* (log, user) {
+					yield* Log.info("LogService.set.save", { logId: log.id, userId: user.id });
+					yield* Log.debug("LogService.set.save", log);
 
 					return yield* transaction(
 						(tx) => upsertLog(log, user).pipe(Effect.provide(LogTx(tx)), Effect.provide(DMTx(tx))),
@@ -379,8 +379,8 @@ export class LogService extends Effect.Service<LogService>()("LogService", {
 					);
 				}),
 
-				delete: Effect.fn("LogService.deleteLog")(function* (logId, userId) {
-					yield* Log.info("LogService.deleteLog", { logId, userId });
+				delete: Effect.fn("LogService.set.delete")(function* (logId, userId) {
+					yield* Log.info("LogService.set.delete", { logId, userId });
 
 					return yield* Effect.tryPromise({
 						try: () =>

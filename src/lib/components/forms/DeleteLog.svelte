@@ -1,6 +1,7 @@
 <script lang="ts">
 	import { goto } from "$app/navigation";
 	import { errorToast, successToast } from "$lib/factories.svelte";
+	import type { LogId } from "$lib/schemas";
 	import { getGlobal } from "$lib/stores.svelte";
 	import type { FullLogData } from "$server/effect/logs";
 	import type { SvelteSet } from "svelte/reactivity";
@@ -12,7 +13,7 @@
 		log: FullLogData;
 		deletingLog?: SvelteSet<string>;
 		label?: string;
-		ondelete?: (event: { id: string }) => void;
+		ondelete?: (event: { id: LogId }) => void;
 	}
 
 	let { log, deletingLog, label = "", ondelete }: Props = $props();
@@ -20,7 +21,7 @@
 	const { submit } = superForm(
 		{ id: log.id },
 		{
-			SPA: "?/deleteLog",
+			SPA: log.isDmLog ? "/dm-logs?/deleteLog" : `/characters/${log.characterId}?/deleteLog`,
 			onSubmit({ cancel, formData }) {
 				if (!confirm(`Are you sure you want to delete ${log.name}? This action cannot be reversed.`)) return cancel();
 				formData.set("id", log.id);

@@ -1,6 +1,6 @@
 import type { DungeonMasterId, DungeonMasterSchema, LocalsUser, UserId } from "$lib/schemas";
 import { DBService, type Database, type InferQueryResult, type Transaction } from "$server/db";
-import { userDMIncludes } from "$server/db/includes";
+import { userDMLogIncludes } from "$server/db/includes";
 import { dungeonMasters, type DungeonMaster } from "$server/db/schema";
 import { sorter } from "@sillvva/utils";
 import { and, eq } from "drizzle-orm";
@@ -25,14 +25,14 @@ function createSaveError(err: unknown): SaveDMError {
 	return SaveDMError.from(err);
 }
 
-export type UserDM = InferQueryResult<"dungeonMasters", { with: typeof userDMIncludes }>;
+export type UserDM = InferQueryResult<"dungeonMasters", { with: { logs: typeof userDMLogIncludes } }>;
 
 interface DMApiImpl {
 	readonly db: Database | Transaction;
 	readonly get: {
 		readonly userDMs: (
 			user: LocalsUser,
-			{ id, includeLogs }: { id?: DungeonMasterId; includeLogs?: boolean }
+			{ id, includeLogs }?: { id?: DungeonMasterId; includeLogs?: boolean }
 		) => Effect.Effect<UserDM[], FetchUserDMsError>;
 		readonly fuzzyDM: (
 			userId: UserId,
@@ -58,20 +58,23 @@ export class DMService extends Effect.Service<DMService>()("DMSService", {
 		const impl: DMApiImpl = {
 			db,
 			get: {
-				userDMs: Effect.fn("DMService.getUserDMs")(function* (user, { id, includeLogs = true } = {}) {
-					yield* Log.info("DMService.getUserDMs", { userId: user.id, id, includeLogs });
+				userDMs: Effect.fn("DMService.get.userDMs")(function* (user, { id, includeLogs = true } = {}) {
+					yield* Log.info("DMService.get.userDMs", { userId: user.id, id, includeLogs });
 
 					return yield* Effect.promise(() =>
 						db.query.dungeonMasters.findMany({
-							with: includeLogs ? userDMIncludes : undefined,
+							with: {
+								logs: {
+									...userDMLogIncludes,
+									limit: includeLogs ? undefined : 0
+								}
+							},
 							where: {
 								id: id ? { eq: id } : undefined,
 								userId: { eq: user.id }
 							}
 						})
 					).pipe(
-						// Add empty logs to each DM, if includeLogs is false
-						Effect.map((dms) => dms.map((d) => ({ logs: [] as UserDM["logs"], ...d }))),
 						// Sort the DMs by isUser and name
 						Effect.map((dms) => dms.toSorted((a, b) => sorter(a.isUser, b.isUser) || sorter(a.name, b.name))),
 						// Add the user DM if there isn't one already, and not searching for a specific DM
@@ -83,8 +86,8 @@ export class DMService extends Effect.Service<DMService>()("DMSService", {
 					);
 				}),
 
-				fuzzyDM: Effect.fn("DMService.getFuzzyDM")(function* (userId, isUser, dm) {
-					yield* Log.info("DMService.getFuzzyDM", {
+				fuzzyDM: Effect.fn("DMService.get.fuzzyDM")(function* (userId, isUser, dm) {
+					yield* Log.info("DMService.get.fuzzyDM", {
 						userId,
 						...(isUser ? { isUser } : { name: dm.name.trim() || undefined, DCI: dm.DCI || undefined })
 					});
@@ -105,9 +108,9 @@ export class DMService extends Effect.Service<DMService>()("DMSService", {
 				})
 			},
 			set: {
-				save: Effect.fn("DMService.saveDM")(function* (dmId, user, data) {
-					yield* Log.info("DMService.saveDM", { dmId, userId: user.id });
-					yield* Log.debug("DMService.saveDM", data);
+				save: Effect.fn("DMService.set.save")(function* (dmId, user, data) {
+					yield* Log.info("DMService.set.save", { dmId, userId: user.id });
+					yield* Log.debug("DMService.set.save", data);
 
 					const [dm] = yield* impl.get.userDMs(user, { id: dmId }).pipe(Effect.catchAll(createSaveError));
 					if (!dm) return yield* new SaveDMError("DM does not exist", { status: 404 });
@@ -135,8 +138,8 @@ export class DMService extends Effect.Service<DMService>()("DMSService", {
 					);
 				}),
 
-				addUserDM: Effect.fn("DMService.addUserDM")(function* (user, dms) {
-					yield* Log.info("DMService.addUserDM", { userId: user.id });
+				addUserDM: Effect.fn("DMService.set.addUserDM")(function* (user, dms) {
+					yield* Log.info("DMService.set.addUserDM", { userId: user.id });
 
 					const existing = yield* Effect.promise(() =>
 						db.query.dungeonMasters.findFirst({
@@ -164,8 +167,8 @@ export class DMService extends Effect.Service<DMService>()("DMSService", {
 					return dms.toSpliced(0, 0, result);
 				}),
 
-				delete: Effect.fn("DMService.deleteDM")(function* (dm, userId) {
-					yield* Log.info("DMService.deleteDM", { dmId: dm.id, userId });
+				delete: Effect.fn("DMService.set.delete")(function* (dm, userId) {
+					yield* Log.info("DMService.set.delete", { dmId: dm.id, userId });
 
 					if (dm.logs.length) return yield* new SaveDMError("You cannot delete a DM that has logs", { status: 400 });
 

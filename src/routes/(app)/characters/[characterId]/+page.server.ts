@@ -6,7 +6,7 @@ import { withLog } from "$server/effect/logs.js";
 import { redirect } from "@sveltejs/kit";
 import { Effect } from "effect";
 import { fail, setError } from "sveltekit-superforms";
-import { object } from "valibot";
+import * as v from "valibot";
 
 export const load = (event) =>
 	run(function* () {
@@ -27,7 +27,7 @@ export const actions = {
 			const user = event.locals.user;
 			assertUser(user);
 
-			const form = yield* validateForm(event, object({ id: characterIdSchema }));
+			const form = yield* validateForm(event, v.object({ id: characterIdSchema }));
 			if (!form.valid) return fail(400, { form });
 
 			return save(
@@ -46,7 +46,7 @@ export const actions = {
 			const user = event.locals.user;
 			assertUser(user);
 
-			const form = yield* validateForm(event, object({ id: logIdSchema }));
+			const form = yield* validateForm(event, v.object({ id: logIdSchema }));
 			if (!form.valid) return fail(400, { form });
 
 			return save(

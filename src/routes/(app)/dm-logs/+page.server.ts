@@ -1,9 +1,9 @@
-import { logSchema } from "$lib/schemas.js";
+import { logIdSchema } from "$lib/schemas.js";
 import { assertUser } from "$server/auth";
 import { run, save, validateForm } from "$server/effect";
 import { withLog } from "$server/effect/logs.js";
 import { fail, setError } from "sveltekit-superforms";
-import { pick } from "valibot";
+import * as v from "valibot";
 
 export const load = (event) =>
 	run(function* () {
@@ -24,7 +24,7 @@ export const actions = {
 			const user = event.locals.user;
 			assertUser(user);
 
-			const form = yield* validateForm(event, pick(logSchema, ["id"]));
+			const form = yield* validateForm(event, v.object({ id: logIdSchema }));
 			if (!form.valid) return fail(400, { form });
 
 			return save(

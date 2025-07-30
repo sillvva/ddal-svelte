@@ -1,6 +1,7 @@
 <script lang="ts">
 	import { goto } from "$app/navigation";
 	import { errorToast, successToast } from "$lib/factories.svelte";
+	import type { DungeonMasterId } from "$lib/schemas";
 	import { getGlobal } from "$lib/stores.svelte";
 	import type { UserDM } from "$server/effect/dms";
 	import type { SvelteSet } from "svelte/reactivity";
@@ -12,7 +13,7 @@
 		dm: UserDM;
 		deletingDM?: SvelteSet<string>;
 		label?: string;
-		ondelete?: (event: { id: string }) => void;
+		ondelete?: (event: { id: DungeonMasterId }) => void;
 	}
 
 	let { dm, deletingDM, label = "", ondelete }: Props = $props();

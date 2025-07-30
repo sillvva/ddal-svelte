@@ -2,9 +2,9 @@ import { dev } from "$app/environment";
 import { getRequestEvent } from "$app/server";
 import { privateEnv } from "$lib/env/private";
 import type { AppLogSchema, UserId } from "$lib/schemas";
-import { isInstanceOfClass } from "$lib/util";
 import { db } from "$server/db";
 import { appLogs } from "$server/db/schema";
+import { isInstanceOfClass } from "@sillvva/utils";
 import {
 	error,
 	isHttpError,
@@ -97,24 +97,22 @@ export const debugSet = Effect.fn("debugSet")(function* <S extends string>(servi
 // -------------------------------------------------------------------------------------------------
 
 // Overload signatures
-export async function run<A, B extends InstanceType<ErrorClass> | never, T extends YieldWrap<Effect.Effect<A, B>>, X, Y>(
+export async function run<A, B extends InstanceType<ErrorClass>, T extends YieldWrap<Effect.Effect<A, B>>, X, Y>(
 	program: () => Generator<T, X, Y>
 ): Promise<X>;
 
-export async function run<A, B extends InstanceType<ErrorClass> | never>(
+export async function run<A, B extends InstanceType<ErrorClass>>(
 	program: Effect.Effect<A, B> | (() => Effect.Effect<A, B>)
 ): Promise<A>;
 
 // Implementation
-export async function run<A, B extends InstanceType<ErrorClass> | never, T extends YieldWrap<Effect.Effect<A, B>>, X, Y>(
+export async function run<A, B extends InstanceType<ErrorClass>, T extends YieldWrap<Effect.Effect<A, B>>, X, Y>(
 	program: Effect.Effect<A, B> | (() => Effect.Effect<A, B>) | (() => Generator<T, X, Y>)
 ): Promise<A | X> {
 	const effect = Effect.fn(function* () {
 		if (isFunction(program)) {
-			// Generator function
 			return yield* program();
 		} else {
-			// Effect
 			return yield* program;
 		}
 	});
@@ -129,10 +127,8 @@ export async function run<A, B extends InstanceType<ErrorClass> | never, T exten
 
 			if (Cause.isFailType(cause)) {
 				const error = cause.error;
-				if (isTaggedError(error)) {
-					status = error.status;
-					failCause = error.cause;
-				}
+				status = error.status;
+				failCause = error.cause;
 			}
 
 			if (Cause.isDieType(cause)) {
@@ -223,7 +219,18 @@ export interface ErrorClass {
 }
 
 export function isTaggedError(error: unknown): error is InstanceType<ErrorClass> {
-	return isInstanceOfClass(error) && "status" in error && "cause" in error && "message" in error && "_tag" in error;
+	return (
+		isInstanceOfClass(error) &&
+		"status" in error &&
+		typeof error.status === "number" &&
+		error.status >= 400 &&
+		error.status <= 599 &&
+		"cause" in error &&
+		"message" in error &&
+		typeof error.message === "string" &&
+		"_tag" in error &&
+		typeof error._tag === "string"
+	);
 }
 
 export class FormError<

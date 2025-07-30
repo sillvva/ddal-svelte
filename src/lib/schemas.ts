@@ -2,7 +2,7 @@ import type { FullCharacterData } from "$server/effect/characters";
 import type { Prettify } from "@sillvva/utils";
 import { LogLevel } from "effect";
 import * as v from "valibot";
-import { PROVIDERS, themeGroups, themes } from "./constants";
+import { BLANK_CHARACTER, PROVIDERS, themeGroups, themes } from "./constants";
 
 export type BrandedType = v.InferOutput<ReturnType<typeof brandedId>>;
 function brandedId<T extends string>(name: T) {
@@ -50,6 +50,8 @@ export const envPublicSchema = v.pipe(
 interface CombinedEnv extends EnvPrivate, EnvPublic {}
 export type Env = Prettify<CombinedEnv>;
 
+export const imageUrlWithFallback = v.pipe(v.fallback(v.union([urlSchema, v.literal(BLANK_CHARACTER)]), BLANK_CHARACTER));
+
 export type UserId = v.InferOutput<typeof userIdSchema>;
 export const userIdSchema = brandedId("UserId");
 
@@ -60,7 +62,7 @@ export const newCharacterSchema = v.object({
 	race: v.optional(shortString, ""),
 	class: v.optional(shortString, ""),
 	characterSheetUrl: optionalURL,
-	imageUrl: optionalURL
+	imageUrl: imageUrlWithFallback
 });
 
 export type CharacterId = v.InferOutput<typeof characterIdSchema>;
@@ -238,7 +240,8 @@ export const appCookieSchema = v.optional(
 			v.object({
 				theme: v.optional(v.picklist(themes.map((t) => t.value)), "system"),
 				mode: v.optional(v.picklist(themeGroups), "dark"),
-				autoWebAuthn: v.optional(v.boolean(), false)
+				autoWebAuthn: v.optional(v.boolean(), false),
+				provider: v.optional(v.picklist(PROVIDERS.map((p) => p.id)))
 			}),
 			{}
 		),
@@ -305,7 +308,7 @@ export const localsUserSchema = v.object({
 	name: requiredString,
 	email: requiredString,
 	emailVerified: v.boolean(),
-	image: v.nullish(urlSchema),
+	image: v.nullish(imageUrlWithFallback),
 	role: v.picklist(["user", "admin"]),
 	banned: v.boolean(),
 	banReason: v.nullish(v.string()),

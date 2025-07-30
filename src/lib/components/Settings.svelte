@@ -1,14 +1,19 @@
 <script lang="ts">
 	import { goto, invalidateAll } from "$app/navigation";
 	import { page } from "$app/state";
-	import { authClient } from "$lib/auth";
-	import { PROVIDERS } from "$lib/constants";
+	import { authClient, setAccountDetails, setDefaultUserImage, type UserAccount } from "$lib/auth";
+	import { BLANK_CHARACTER, PROVIDERS } from "$lib/constants";
 	import { errorToast } from "$lib/factories.svelte";
+	import { getGlobal } from "$lib/stores.svelte";
+	import { isDefined } from "@sillvva/utils";
+	import { isTupleOfAtLeast } from "effect/Predicate";
 	import { twMerge } from "tailwind-merge";
 	import Passkeys from "./Passkeys.svelte";
 	import ThemeSwitcher from "./ThemeSwitcher.svelte";
 
 	let open = $state(false);
+
+	const global = getGlobal();
 
 	const { user, session } = $derived(page.data);
 	const authProviders = $derived(
@@ -24,6 +29,50 @@
 			.join("")
 			.slice(0, 2) || ""
 	);
+
+	let userAccounts = $state<UserAccount[]>([]);
+	const currentAccount = $derived(userAccounts.find((a) => a.providerId === global.app.settings.provider));
+
+	$effect(() => {
+		if (!userAccounts.length && open) {
+			Promise.all(
+				user.accounts.map(({ accountId, providerId }) =>
+					authClient.accountInfo({ accountId }).then((r) =>
+						r.data?.user?.name && r.data?.user?.email && r.data?.user?.image
+							? {
+									providerId,
+									name: r.data?.user.name,
+									email: r.data?.user.email,
+									image: r.data?.user.image
+								}
+							: undefined
+					)
+				)
+			).then((result) => {
+				userAccounts = result.filter(isDefined);
+
+				const account =
+					userAccounts.find((a) => a.providerId === global.app.settings.provider) ||
+					userAccounts.find((a) => a.name === user.name && a.email === user.email) ||
+					(isTupleOfAtLeast(userAccounts, 1) ? userAccounts[0] : undefined);
+
+				if (account) {
+					if (!global.app.settings.provider) {
+						global.app.settings.provider = account.providerId;
+					}
+					if (
+						account.name !== user.name ||
+						account.email !== user.email ||
+						(account.image !== user.image && !account.image.includes(BLANK_CHARACTER))
+					) {
+						setAccountDetails(user.id, account).then(() => {
+							invalidateAll();
+						});
+					}
+				}
+			});
+		}
+	});
 </script>
 
 {#if user}
@@ -36,22 +85,41 @@
 			tabindex="0"
 			onclick={() => (open = true)}
 		>
-			<img src={user.image || ""} alt={user.name} class="rounded-full object-cover object-center" />
+			<img
+				src={user.image || ""}
+				alt={user.name}
+				class="rounded-full object-cover object-center"
+				onerror={(e) => {
+					const img = e.currentTarget as HTMLImageElement;
+					img.onerror = null;
+					img.src = BLANK_CHARACTER;
+					setDefaultUserImage(user.id);
+				}}
+			/>
 		</button>
 	</div>
 
 	<aside
 		id="settings"
-		class="bg-base-100 fixed inset-y-0 -right-80 z-50 flex w-80 flex-col overflow-y-auto px-4 py-4 transition-all data-[open=true]:right-0"
+		class="bg-base-100 fixed inset-y-0 -right-80 z-50 flex w-80 flex-col overflow-y-auto px-4 pb-4 transition-all data-[open=true]:right-0"
 		data-open={open}
 	>
 		{#if user}
 			<div class="flex items-center gap-4 py-4 pl-2">
 				<div
-					class="avatar ring-primary ring-offset-base-100 flex h-9 w-9 items-center justify-center overflow-hidden rounded-full ring-3 ring-offset-2"
+					class="avatar ring-primary group/avatar bg-primary ring-offset-base-100 flex h-9 w-9 items-center justify-center overflow-hidden rounded-full ring-3 ring-offset-2"
 				>
 					{#if user.image}
-						<img src={user.image} alt={user.name} class="rounded-full object-cover object-center" />
+						<img
+							src={user.image}
+							alt={user.name}
+							class="rounded-full object-cover object-center"
+							onerror={(e) => {
+								const img = e.currentTarget as HTMLImageElement;
+								img.onerror = null;
+								img.src = BLANK_CHARACTER;
+							}}
+						/>
 					{:else if initials}
 						<span class="text-primary text-xl font-bold uppercase">{initials}</span>
 					{/if}
@@ -94,7 +162,7 @@
 					</button>
 				{/if}
 			</div>
-			<div class="divider my-0"></div>
+			<div class="divider my-0 h-[9px]"></div>
 			<ul class="menu menu-lg w-full px-0">
 				<li>
 					<div class="flex items-center gap-2 hover:bg-transparent">
@@ -103,30 +171,59 @@
 					</div>
 				</li>
 			</ul>
-			<div class="divider my-0"></div>
+			<div class="divider my-0 h-[9px]"></div>
 			<ul class="menu menu-lg w-full px-0 [&_li>*]:px-2">
 				<li class="menu-title">
 					<span class="font-bold">Linked Accounts</span>
 				</li>
 				{#each authProviders as provider}
 					<li>
-						<label class="flex gap-2 hover:bg-transparent">
+						<span class="flex gap-2 hover:bg-transparent">
 							<span class={twMerge("size=6 iconify-color", provider.iconify)}></span>
 							<span class="flex-1">{provider.name}</span>
-							<span class="flex items-center">
+							<span class="join flex items-center">
 								{#if provider.account}
 									{#if user.accounts.length > 1}
-										<button
-											class="btn btn-error btn-sm font-semibold"
-											onclick={() =>
-												authClient.unlinkAccount({ providerId: provider.id }).then((result) => {
-													if (result.error?.code) {
-														errorToast(authClient.$ERROR_CODES[result.error.code as keyof typeof authClient.$ERROR_CODES]);
-													}
-												})}
-										>
-											Unlink
-										</button>
+										{#if !userAccounts.length}
+											<span class="iconify mdi--loading size-5 animate-spin"></span>
+										{:else}
+											{@const account = userAccounts.find((a) => a.providerId === provider.id)}
+											{#if account}
+												{#if currentAccount?.providerId !== provider.id || account.name !== user.name || account.email !== user.email || account.image !== user.image}
+													<button
+														class="btn btn-sm tooltip join-item bg-base-300"
+														aria-label="Switch account"
+														data-tip="Use this account"
+														onclick={() => {
+															setAccountDetails(user.id, account).then(() => {
+																global.app.settings.provider = account.providerId;
+																invalidateAll();
+															});
+														}}
+													>
+														<span class="iconify mdi--accounts-switch size-5"></span>
+													</button>
+												{/if}
+												<button
+													class="btn btn-error btn-sm join-item font-semibold"
+													disabled={currentAccount?.providerId === provider.id}
+													onclick={() => {
+														if (confirm("Are you sure you want to unlink this account?")) {
+															authClient.unlinkAccount({ providerId: provider.id }).then((result) => {
+																if (result.error?.code) {
+																	return errorToast(
+																		authClient.$ERROR_CODES[result.error.code as keyof typeof authClient.$ERROR_CODES]
+																	);
+																}
+																invalidateAll();
+															});
+														}
+													}}
+												>
+													Unlink
+												</button>
+											{/if}
+										{/if}
 									{:else}
 										<span class="iconify mdi--check size-6 text-green-500"></span>
 									{/if}
@@ -140,20 +237,21 @@
 												})
 												.then((result) => {
 													if (result.error?.code) {
-														errorToast(authClient.$ERROR_CODES[result.error.code as keyof typeof authClient.$ERROR_CODES]);
+														return errorToast(authClient.$ERROR_CODES[result.error.code as keyof typeof authClient.$ERROR_CODES]);
 													}
+													invalidateAll();
 												})}
 									>
 										Link
 									</button>
 								{/if}
 							</span>
-						</label>
+						</span>
 					</li>
 				{/each}
 			</ul>
 			<Passkeys />
-			<div class="divider my-0"></div>
+			<div class="divider my-0 h-[9px]"></div>
 			<ul class="menu menu-lg w-full px-0">
 				<li>
 					<a href="https://github.com/sillvva/ddal-svelte/issues" target="_blank" rel="noreferrer noopener">
@@ -177,10 +275,10 @@
 			<div class="flex-1"></div>
 
 			<div class="flex flex-col gap-2">
-				<div class="px-4 text-xs text-gray-500 dark:text-gray-400">
+				<div class="px-2 text-xs text-gray-500 dark:text-gray-400">
 					User ID:<br />{user.id}
 				</div>
-				<div class="px-4 text-xs text-gray-500 dark:text-gray-400">
+				<div class="px-2 text-xs text-gray-500 dark:text-gray-400">
 					Logged in {session.createdAt.toLocaleString()}
 				</div>
 			</div>
@@ -210,11 +308,13 @@
 		}
 
 		:global(.menu li > *) {
-			padding-inline: 1rem;
+			padding-left: 0.5rem;
+			padding-right: 0rem;
 		}
 
-		:global(.menu li button) {
-			padding-inline: 1rem;
+		:global(.menu li > button) {
+			padding-left: 0.5rem;
+			padding-right: 0.5rem;
 			justify-content: start;
 			font-weight: normal;
 		}

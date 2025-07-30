@@ -9,24 +9,6 @@ import type { setupViewTransition } from "sveltekit-view-transition";
 
 export type TransitionAction = ReturnType<typeof setupViewTransition>["transition"];
 
-export type ModuleData = {
-	getPageTitle?: (data: App.PageData & Record<string, any>) => string;
-	pageTitle?: string;
-
-	getHeadData?: (data: App.PageData & Record<string, any>) => {
-		title: string;
-		description?: string;
-		image?: string;
-	};
-	headTitle?: string;
-	headDescription?: string;
-	headImage?: string;
-};
-
-export const routeModules = import.meta.glob("/src/routes/**/+page.svelte", {
-	eager: true
-}) as Record<string, ModuleData>;
-
 /**
  * Functions
  */
@@ -42,11 +24,4 @@ export function hotkey(hotkeys: HotkeyItem[]): Attachment<HTMLElement | Document
 		if (node instanceof Document) node = node.body;
 		return hk(node, hotkeys).destroy;
 	};
-}
-
-export function isInstanceOfClass(obj: unknown): obj is object {
-	// Exclude null and non-objects
-	if (obj === null || typeof obj !== "object") return false;
-	// Exclude plain objects (created with {} or new Object)
-	return Object.getPrototypeOf(obj) !== Object.prototype;
 }

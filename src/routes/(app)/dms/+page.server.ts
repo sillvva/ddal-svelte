@@ -1,17 +1,17 @@
-import { dungeonMasterSchema } from "$lib/schemas.js";
+import { dungeonMasterIdSchema } from "$lib/schemas.js";
 import { assertUser } from "$server/auth";
 import { run, save, validateForm } from "$server/effect";
 import { withDM } from "$server/effect/dms";
 import { fail, redirect } from "@sveltejs/kit";
 import { setError } from "sveltekit-superforms";
-import { pick } from "valibot";
+import * as v from "valibot";
 
 export const load = (event) =>
 	run(function* () {
 		const user = event.locals.user;
 		assertUser(user);
 
-		const dms = yield* withDM((service) => service.get.userDMs(user, { includeLogs: true }));
+		const dms = yield* withDM((service) => service.get.userDMs(user));
 
 		return {
 			...event.params,
@@ -25,7 +25,7 @@ export const actions = {
 			const user = event.locals.user;
 			assertUser(user);
 
-			const form = yield* validateForm(event, pick(dungeonMasterSchema, ["id"]));
+			const form = yield* validateForm(event, v.object({ id: dungeonMasterIdSchema }));
 			if (!form.valid) return fail(400, { form });
 
 			const [dm] = yield* withDM((service) => service.get.userDMs(user, { id: form.data.id }));
