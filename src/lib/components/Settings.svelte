@@ -35,7 +35,7 @@
 
 	$effect(() => {
 		if (!userAccounts.length && open) {
-			Promise.all(
+			Promise.allSettled(
 				user.accounts.map(({ accountId, providerId }) =>
 					authClient.accountInfo({ accountId }).then((r) =>
 						r.data?.user?.name && r.data?.user?.email && r.data?.user?.image
@@ -49,7 +49,7 @@
 					)
 				)
 			).then((result) => {
-				userAccounts = result.filter(isDefined);
+				userAccounts = result.map((r) => (r.status === "fulfilled" ? r.value : undefined)).filter(isDefined);
 
 				const account =
 					userAccounts.find((a) => a.providerId === global.app.settings.provider) ||
