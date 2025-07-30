@@ -1,13 +1,13 @@
 import { PlaceholderName } from "$lib/constants";
 import { getLogsSummary, parseCharacter } from "$lib/entities";
 import type { CharacterId, EditCharacterSchema, NewCharacterSchema, UserId } from "$lib/schemas";
-import { buildConflictUpdateColumns, DBService, type Database, type InferQueryResult, type Transaction } from "$server/db";
+import { buildConflictUpdateColumns, DBService, query, type Database, type InferQueryResult, type Transaction } from "$server/db";
 import { characterIncludes } from "$server/db/includes";
 import { characters, logs, type Character } from "$server/db/schema";
 import { and, eq, exists } from "drizzle-orm";
 import { Data, Effect, Layer } from "effect";
 import { isTupleOf } from "effect/Predicate";
-import { debugSet, FormError, Log, PostgresError, type ErrorParams } from ".";
+import { debugSet, FormError, Log, type ErrorParams, type PostgresError } from ".";
 
 export class CharacterNotFoundError extends Data.TaggedError("CharacterNotFoundError")<ErrorParams> {
 	constructor(err?: unknown) {
@@ -57,29 +57,23 @@ export class CharacterService extends Effect.Service<CharacterService>()("Charac
 				character: Effect.fn("CharacterService.get.character")(function* (characterId, includeLogs = true) {
 					yield* Log.info("CharacterService.get.character", { characterId, includeLogs });
 
-					const query = db.query.characters.findFirst({
-						with: characterIncludes(includeLogs),
-						where: { id: { eq: characterId } }
-					});
-
-					return yield* Effect.tryPromise({
-						try: () => query,
-						catch: (err) => new PostgresError(err, query.toSQL())
-					}).pipe(Effect.andThen((character) => character && parseCharacter(character)));
+					return yield* query(
+						db.query.characters.findFirst({
+							with: characterIncludes(includeLogs),
+							where: { id: { eq: characterId } }
+						})
+					).pipe(Effect.andThen((character) => character && parseCharacter(character)));
 				}),
 
 				userCharacters: Effect.fn("CharacterService.get.userCharacters")(function* (userId, includeLogs = true) {
 					yield* Log.info("CharacterService.get.userCharacters", { userId, includeLogs });
 
-					const query = db.query.characters.findMany({
-						with: characterIncludes(includeLogs),
-						where: { userId: { eq: userId }, name: { NOT: PlaceholderName } }
-					});
-
-					return yield* Effect.tryPromise({
-						try: () => query,
-						catch: (err) => new PostgresError(err, query.toSQL())
-					}).pipe(Effect.map((characters) => characters.map(parseCharacter)));
+					return yield* query(
+						db.query.characters.findMany({
+							with: characterIncludes(includeLogs),
+							where: { userId: { eq: userId }, name: { NOT: PlaceholderName } }
+						})
+					).pipe(Effect.map((characters) => characters.map(parseCharacter)));
 				})
 			},
 			set: {
@@ -89,24 +83,21 @@ export class CharacterService extends Effect.Service<CharacterService>()("Charac
 
 					if (!characterId) yield* new SaveCharacterError("No character ID provided", { status: 400 });
 
-					const query = db
-						.insert(characters)
-						.values({
-							...data,
-							id: characterId === "new" ? undefined : characterId,
-							userId
-						})
-						.onConflictDoUpdate({
-							target: characters.id,
-							set: buildConflictUpdateColumns(characters, ["id", "userId", "createdAt"], true),
-							where: eq(characters.userId, userId)
-						})
-						.returning();
-
-					return yield* Effect.tryPromise({
-						try: () => query,
-						catch: (err) => new PostgresError(err, query.toSQL())
-					}).pipe(
+					return yield* query(
+						db
+							.insert(characters)
+							.values({
+								...data,
+								id: characterId === "new" ? undefined : characterId,
+								userId
+							})
+							.onConflictDoUpdate({
+								target: characters.id,
+								set: buildConflictUpdateColumns(characters, ["id", "userId", "createdAt"], true),
+								where: eq(characters.userId, userId)
+							})
+							.returning()
+					).pipe(
 						Effect.flatMap((characters) =>
 							isTupleOf(characters, 1)
 								? Effect.succeed(characters[0])
@@ -120,36 +111,30 @@ export class CharacterService extends Effect.Service<CharacterService>()("Charac
 
 					return yield* transaction(
 						Effect.fn("CharacterService.set.delete.transaction")(function* (tx) {
-							const updateLogsQuery = tx
-								.update(logs)
-								.set({ characterId: null, appliedDate: null })
-								.where(
-									and(
-										eq(logs.characterId, characterId),
-										eq(logs.isDmLog, true),
-										exists(
-											db
-												.select()
-												.from(characters)
-												.where(and(eq(characters.id, characterId), eq(characters.userId, userId)))
+							yield* query(
+								tx
+									.update(logs)
+									.set({ characterId: null, appliedDate: null })
+									.where(
+										and(
+											eq(logs.characterId, characterId),
+											eq(logs.isDmLog, true),
+											exists(
+												db
+													.select()
+													.from(characters)
+													.where(and(eq(characters.id, characterId), eq(characters.userId, userId)))
+											)
 										)
 									)
-								);
+							);
 
-							yield* Effect.tryPromise({
-								try: () => updateLogsQuery,
-								catch: (err) => new PostgresError(err, updateLogsQuery.toSQL())
-							});
-
-							const deleteCharacterQuery = tx
-								.delete(characters)
-								.where(and(eq(characters.id, characterId), eq(characters.userId, userId)))
-								.returning({ id: characters.id });
-
-							return yield* Effect.tryPromise({
-								try: () => deleteCharacterQuery,
-								catch: (err) => new PostgresError(err, deleteCharacterQuery.toSQL())
-							});
+							return yield* query(
+								tx
+									.delete(characters)
+									.where(and(eq(characters.id, characterId), eq(characters.userId, userId)))
+									.returning({ id: characters.id })
+							);
 						}),
 						createSaveError
 					).pipe(

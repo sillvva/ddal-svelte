@@ -2,7 +2,7 @@ import { dev } from "$app/environment";
 import { getRequestEvent } from "$app/server";
 import { privateEnv } from "$lib/env/private";
 import type { AppLogSchema, UserId } from "$lib/schemas";
-import { db } from "$server/db";
+import { db, query } from "$server/db";
 import { appLogs } from "$server/db/schema";
 import { isInstanceOfClass } from "@sillvva/utils";
 import {
@@ -52,7 +52,7 @@ const dbLogger = Logger.replace(
 			annotations: Object.fromEntries(HashMap.toEntries(log.annotations)) as Annotations
 		} satisfies Omit<AppLogSchema, "id">;
 
-		Effect.promise(() => db.insert(appLogs).values([values]).returning({ id: appLogs.id })).pipe(
+		query(db.insert(appLogs).values([values]).returning({ id: appLogs.id })).pipe(
 			Effect.andThen((logs) => {
 				if (dev && isTupleOf(logs, 1))
 					console.log(logs[0].id, dev && ["ERROR", "DEBUG"].includes(values.level) ? values : JSON.stringify(values), "\n");

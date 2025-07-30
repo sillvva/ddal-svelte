@@ -1,5 +1,5 @@
 import { authName } from "$lib/auth";
-import { db } from "$server/db/index";
+import { db, query } from "$server/db";
 import { passkey } from "$server/db/schema";
 import { Log, run, type ErrorParams } from "$server/effect";
 import { json } from "@sveltejs/kit";
@@ -22,12 +22,6 @@ class NameAlreadyExistsError extends Data.TaggedError("NameAlreadyExistsError")<
 	}
 }
 
-class DatabaseError extends Data.TaggedError("DatabaseError")<ErrorParams> {
-	constructor(err?: unknown) {
-		super({ message: "Failed to update passkey", status: 500, cause: err });
-	}
-}
-
 export type RenameWebAuthnResponse = { success: true; name: string } | { success: false; error: string; throw?: boolean };
 export type RenameWebAuthnInput = { name: string; id?: string };
 export const POST = async ({ request, locals }) =>
@@ -38,7 +32,7 @@ export const POST = async ({ request, locals }) =>
 				if (!user?.id) return yield* Effect.fail(new UnauthorizedError());
 
 				let { name, id } = (yield* Effect.promise(() => request.json())) as RenameWebAuthnInput;
-				const passkeys = yield* Effect.promise(() =>
+				const passkeys = yield* query(
 					db.query.passkey.findMany({
 						where: {
 							userId: {
@@ -55,15 +49,13 @@ export const POST = async ({ request, locals }) =>
 				const existing = passkeys.find((a) => a.name === name);
 				if (existing && (!auth.name || (id && existing.id !== id))) return yield* Effect.fail(new NameAlreadyExistsError());
 
-				yield* Effect.tryPromise({
-					try: () =>
-						db
-							.update(passkey)
-							.set({ name: name.trim() })
-							.where(and(eq(passkey.id, auth.id)))
-							.returning(),
-					catch: (e) => new DatabaseError(e)
-				});
+				yield* query(
+					db
+						.update(passkey)
+						.set({ name: name.trim() })
+						.where(and(eq(passkey.id, auth.id)))
+						.returning()
+				);
 
 				return { success: true, name } satisfies RenameWebAuthnResponse;
 			},
@@ -93,7 +85,7 @@ export const DELETE = ({ request, locals }) =>
 				if (!user?.id) return yield* Effect.fail(new UnauthorizedError());
 
 				const { id } = (yield* Effect.promise(() => request.json())) as DeleteWebAuthnInput;
-				const auth = yield* Effect.promise(() =>
+				const auth = yield* query(
 					db.query.passkey.findFirst({
 						where: {
 							id: id,
@@ -106,10 +98,7 @@ export const DELETE = ({ request, locals }) =>
 
 				if (!auth) return yield* Effect.fail(new NoPasskeyError());
 
-				yield* Effect.tryPromise({
-					try: () => db.delete(passkey).where(and(eq(passkey.id, auth.id))),
-					catch: (e) => new DatabaseError(e)
-				});
+				yield* query(db.delete(passkey).where(and(eq(passkey.id, auth.id))));
 
 				return { success: true } satisfies DeleteWebAuthnResponse;
 			},

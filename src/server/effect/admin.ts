@@ -1,5 +1,5 @@
 import type { AppLogId, AppLogSchema } from "$lib/schemas";
-import { DBService, type Filter, type Transaction, type TRSchema } from "$server/db";
+import { DBService, query, type Filter, type Transaction, type TRSchema } from "$server/db";
 import type { relations } from "$server/db/relations";
 import { appLogs, type AppLog } from "$server/db/schema";
 import type { ASTNode, ParseMetadata } from "@sillvva/search";
@@ -7,7 +7,7 @@ import { DrizzleSearchParser } from "@sillvva/search/drizzle";
 import { eq, sql } from "drizzle-orm";
 import { Effect, Layer } from "effect";
 import { isTupleOf } from "effect/Predicate";
-import { FormError, Log, PostgresError } from ".";
+import { FormError, Log, type PostgresError } from ".";
 
 export class SaveAppLogError extends FormError<AppLogSchema> {}
 
@@ -32,28 +32,20 @@ export class AdminService extends Effect.Service<AdminService>()("AdminService",
 					const { where, orderBy, metadata, ast } = logSearch.parse(search);
 					yield* Log.info("AdminService.get.logs", { where, orderBy, metadata, ast });
 
-					const query = db.query.appLogs.findMany({
-						where,
-						orderBy: {
-							...orderBy,
-							timestamp: "desc"
-						}
-					});
-
-					return yield* Effect.tryPromise({
-						try: () => query,
-						catch: (err) => new PostgresError(err, query.toSQL())
-					}).pipe(Effect.map((logs) => ({ logs, metadata, ast })));
+					return yield* query(
+						db.query.appLogs.findMany({
+							where,
+							orderBy: {
+								...orderBy,
+								timestamp: "desc"
+							}
+						})
+					).pipe(Effect.map((logs) => ({ logs, metadata, ast })));
 				})
 			},
 			set: {
 				deleteLog: Effect.fn("AdminService.set.deleteLog")(function* (logId) {
-					const query = db.delete(appLogs).where(eq(appLogs.id, logId)).returning({ id: appLogs.id });
-
-					return yield* Effect.tryPromise({
-						try: () => query,
-						catch: (err) => new PostgresError(err, query.toSQL())
-					}).pipe(
+					return yield* query(db.delete(appLogs).where(eq(appLogs.id, logId)).returning({ id: appLogs.id })).pipe(
 						Effect.flatMap((logs) =>
 							isTupleOf(logs, 1) ? Effect.succeed(logs[0]) : Effect.fail(new SaveAppLogError("Log not found", { status: 404 }))
 						)

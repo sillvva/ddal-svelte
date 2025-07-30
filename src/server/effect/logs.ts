@@ -3,6 +3,7 @@ import type { LocalsUser, LogId, LogIdOrNew, LogSchema, UserId } from "$lib/sche
 import {
 	buildConflictUpdateColumns,
 	DBService,
+	query,
 	type Database,
 	type Filter,
 	type InferQueryResult,
@@ -13,7 +14,7 @@ import { characters, dungeonMasters, logs, magicItems, storyAwards } from "$serv
 import { and, eq, exists, inArray, isNull, notInArray, or } from "drizzle-orm";
 import { Data, Effect, Layer } from "effect";
 import { isTupleOf } from "effect/Predicate";
-import { debugSet, FormError, Log, PostgresError, type ErrorParams } from ".";
+import { debugSet, FormError, Log, type ErrorParams, type PostgresError } from ".";
 import { DMService, DMTx } from "./dms";
 
 export class LogNotFoundError extends Data.TaggedError("LogNotFoundError")<ErrorParams> {
@@ -154,19 +155,16 @@ const upsertLogDM = Effect.fn("upsertLogDM")(function* (log: LogSchema, user: Lo
 
 	const validated = yield* validateLogDM(log, user);
 
-	const query = db
-		.insert(dungeonMasters)
-		.values(validated)
-		.onConflictDoUpdate({
-			target: dungeonMasters.id,
-			set: buildConflictUpdateColumns(dungeonMasters, ["name", "DCI"])
-		})
-		.returning();
-
-	return yield* Effect.tryPromise({
-		try: () => query,
-		catch: (err) => new PostgresError(err, query.toSQL())
-	}).pipe(
+	return yield* query(
+		db
+			.insert(dungeonMasters)
+			.values(validated)
+			.onConflictDoUpdate({
+				target: dungeonMasters.id,
+				set: buildConflictUpdateColumns(dungeonMasters, ["name", "DCI"])
+			})
+			.returning()
+	).pipe(
 		Effect.flatMap((dms) =>
 			isTupleOf(dms, 1) ? Effect.succeed(dms[0]) : Effect.fail(new SaveLogError("Could not save Dungeon Master"))
 		)
@@ -184,35 +182,32 @@ const upsertLog = Effect.fn("upsertLog")(function* (log: LogSchema, user: Locals
 			: null
 		: new Date(log.date);
 
-	const query = db
-		.insert(logs)
-		.values({
-			id: log.id === "new" ? undefined : log.id,
-			name: log.name,
-			date: log.date,
-			description: log.description || "",
-			type: log.type,
-			isDmLog: log.isDmLog,
-			dungeonMasterId: dm.id,
-			acp: log.acp,
-			tcp: log.tcp,
-			experience: log.experience,
-			level: log.level,
-			gold: log.gold,
-			dtd: log.dtd,
-			characterId: log.characterId,
-			appliedDate
-		})
-		.onConflictDoUpdate({
-			target: logs.id,
-			set: buildConflictUpdateColumns(logs, ["id", "createdAt", "isDmLog"], true)
-		})
-		.returning();
-
-	const [result] = yield* Effect.tryPromise({
-		try: () => query,
-		catch: (err) => new PostgresError(err, query.toSQL())
-	});
+	const [result] = yield* query(
+		db
+			.insert(logs)
+			.values({
+				id: log.id === "new" ? undefined : log.id,
+				name: log.name,
+				date: log.date,
+				description: log.description || "",
+				type: log.type,
+				isDmLog: log.isDmLog,
+				dungeonMasterId: dm.id,
+				acp: log.acp,
+				tcp: log.tcp,
+				experience: log.experience,
+				level: log.level,
+				gold: log.gold,
+				dtd: log.dtd,
+				characterId: log.characterId,
+				appliedDate
+			})
+			.onConflictDoUpdate({
+				target: logs.id,
+				set: buildConflictUpdateColumns(logs, ["id", "createdAt", "isDmLog"], true)
+			})
+			.returning()
+	);
 
 	if (!result?.id) return yield* new SaveLogError(log.id ? "Could not save log" : "Could not create log");
 
@@ -266,53 +261,43 @@ const itemsCRUD = Effect.fn("itemsCRUD")(function* (params: CRUDMagicItemParams 
 
 	const itemIds = gained.map((item) => item.id).filter(Boolean);
 
-	const removeGainedQuery = db
-		.delete(table)
-		.where(and(eq(table.logGainedId, logId), itemIds.length ? notInArray(table.id, itemIds) : undefined));
-	yield* Effect.tryPromise({
-		try: () => removeGainedQuery,
-		catch: (err) => new PostgresError(err, removeGainedQuery.toSQL())
-	});
+	yield* query(
+		db.delete(table).where(and(eq(table.logGainedId, logId), itemIds.length ? notInArray(table.id, itemIds) : undefined))
+	);
 
 	if (gained.length) {
-		const addGainedQuery = db
-			.insert(table)
-			.values(
-				gained.map((item) => ({
-					id: item.id || undefined,
-					name: item.name,
-					description: item.description,
-					logGainedId: logId
-				}))
-			)
-			.onConflictDoUpdate({
-				target: table.id,
-				set: buildConflictUpdateColumns(table, ["name", "description"])
-			});
-		yield* Effect.tryPromise({
-			try: () => addGainedQuery,
-			catch: (err) => new PostgresError(err, addGainedQuery.toSQL())
-		});
+		yield* query(
+			db
+				.insert(table)
+				.values(
+					gained.map((item) => ({
+						id: item.id || undefined,
+						name: item.name,
+						description: item.description,
+						logGainedId: logId
+					}))
+				)
+				.onConflictDoUpdate({
+					target: table.id,
+					set: buildConflictUpdateColumns(table, ["name", "description"])
+				})
+		);
 	}
 
-	const removeLostQuery = db
-		.update(table)
-		.set({ logLostId: null })
-		.where(and(eq(table.logLostId, logId), notInArray(table.id, lost)));
-	yield* Effect.tryPromise({
-		try: () => removeLostQuery,
-		catch: (err) => new PostgresError(err, removeLostQuery.toSQL())
-	});
+	yield* query(
+		db
+			.update(table)
+			.set({ logLostId: null })
+			.where(and(eq(table.logLostId, logId), notInArray(table.id, lost)))
+	);
 
 	if (lost.length) {
-		const addLostQuery = db
-			.update(table)
-			.set({ logLostId: logId })
-			.where(and(isNull(table.logLostId), inArray(table.id, lost)));
-		yield* Effect.tryPromise({
-			try: () => addLostQuery,
-			catch: (err) => new PostgresError(err, addLostQuery.toSQL())
-		});
+		yield* query(
+			db
+				.update(table)
+				.set({ logLostId: logId })
+				.where(and(isNull(table.logLostId), inArray(table.id, lost)))
+		);
 	}
 });
 
@@ -327,56 +312,47 @@ export class LogService extends Effect.Service<LogService>()("LogService", {
 					yield* Log.info("LogService.get.log", { logId, userId });
 					if (logId === "new") return undefined;
 
-					const query = db.query.logs.findFirst({
-						with: extendedLogIncludes,
-						where: {
-							id: {
-								eq: logId
-							},
-							OR: [characterLogFilter(userId), dmLogFilter(userId)]
-						}
-					});
-
-					return yield* Effect.tryPromise({
-						try: () => query,
-						catch: (err) => new PostgresError(err, query.toSQL())
-					}).pipe(Effect.andThen((log) => log && parseLog(log)));
+					return yield* query(
+						db.query.logs.findFirst({
+							with: extendedLogIncludes,
+							where: {
+								id: {
+									eq: logId
+								},
+								OR: [characterLogFilter(userId), dmLogFilter(userId)]
+							}
+						})
+					).pipe(Effect.andThen((log) => log && parseLog(log)));
 				}),
 
 				dmLogs: Effect.fn("LogService.get.dmLogs")(function* (userId) {
 					yield* Log.info("LogService.get.dmLogs", { userId });
 
-					const query = db.query.logs.findMany({
-						with: extendedLogIncludes,
-						where: dmLogFilter(userId),
-						orderBy: {
-							date: "asc"
-						}
-					});
-
-					return yield* Effect.tryPromise({
-						try: () => query,
-						catch: (err) => new PostgresError(err, query.toSQL())
-					}).pipe(Effect.map((logs) => logs.map(parseLog)));
+					return yield* query(
+						db.query.logs.findMany({
+							with: extendedLogIncludes,
+							where: dmLogFilter(userId),
+							orderBy: {
+								date: "asc"
+							}
+						})
+					).pipe(Effect.map((logs) => logs.map(parseLog)));
 				}),
 
 				userLogs: Effect.fn("LogService.get.userLogs")(function* (userId) {
 					yield* Log.info("LogService.get.userLogs", { userId });
 
-					const query = db.query.logs.findMany({
-						...userLogsConfig,
-						where: {
-							OR: [characterLogFilter(userId), dmLogFilter(userId)]
-						},
-						orderBy: {
-							date: "asc"
-						}
-					});
-
-					return yield* Effect.tryPromise({
-						try: () => query,
-						catch: (err) => new PostgresError(err, query.toSQL())
-					});
+					return yield* query(
+						db.query.logs.findMany({
+							...userLogsConfig,
+							where: {
+								OR: [characterLogFilter(userId), dmLogFilter(userId)]
+							},
+							orderBy: {
+								date: "asc"
+							}
+						})
+					);
 				})
 			},
 			set: {
@@ -393,45 +369,42 @@ export class LogService extends Effect.Service<LogService>()("LogService", {
 				delete: Effect.fn("LogService.set.delete")(function* (logId, userId) {
 					yield* Log.info("LogService.set.delete", { logId, userId });
 
-					const query = db
-						.delete(logs)
-						.where(
-							and(
-								eq(logs.id, logId),
-								or(
-									and(
-										eq(logs.isDmLog, false),
-										exists(
-											db
-												.select()
-												.from(characters)
-												.where(and(eq(characters.id, logs.characterId), eq(characters.userId, userId)))
-										)
-									),
-									and(
-										eq(logs.isDmLog, true),
-										exists(
-											db
-												.select()
-												.from(dungeonMasters)
-												.where(
-													and(
-														eq(dungeonMasters.id, logs.dungeonMasterId),
-														eq(dungeonMasters.userId, userId),
-														eq(dungeonMasters.isUser, true)
+					return yield* query(
+						db
+							.delete(logs)
+							.where(
+								and(
+									eq(logs.id, logId),
+									or(
+										and(
+											eq(logs.isDmLog, false),
+											exists(
+												db
+													.select()
+													.from(characters)
+													.where(and(eq(characters.id, logs.characterId), eq(characters.userId, userId)))
+											)
+										),
+										and(
+											eq(logs.isDmLog, true),
+											exists(
+												db
+													.select()
+													.from(dungeonMasters)
+													.where(
+														and(
+															eq(dungeonMasters.id, logs.dungeonMasterId),
+															eq(dungeonMasters.userId, userId),
+															eq(dungeonMasters.isUser, true)
+														)
 													)
-												)
+											)
 										)
 									)
 								)
 							)
-						)
-						.returning({ id: logs.id });
-
-					return yield* Effect.tryPromise({
-						try: () => query,
-						catch: (err) => new PostgresError(err, query.toSQL())
-					}).pipe(
+							.returning({ id: logs.id })
+					).pipe(
 						Effect.flatMap((logs) =>
 							isTupleOf(logs, 1) ? Effect.succeed(logs[0]) : Effect.fail(new SaveLogError("Log not found", { status: 404 }))
 						)
