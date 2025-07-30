@@ -13,7 +13,7 @@ import { characters, dungeonMasters, logs, magicItems, storyAwards } from "$serv
 import { and, eq, exists, inArray, isNull, notInArray, or } from "drizzle-orm";
 import { Data, Effect, Layer } from "effect";
 import { isTupleOf } from "effect/Predicate";
-import { debugSet, FormError, Log, type ErrorParams } from ".";
+import { debugSet, FormError, Log, PostgresError, type ErrorParams } from ".";
 import { DMService, DMTx } from "./dms";
 
 export class LogNotFoundError extends Data.TaggedError("LogNotFoundError")<ErrorParams> {
@@ -100,13 +100,13 @@ export type UserLogData = InferQueryResult<"logs", typeof userLogsConfig>;
 interface LogApiImpl {
 	readonly db: Database | Transaction;
 	readonly get: {
-		readonly log: (logId: LogIdOrNew, userId: UserId) => Effect.Effect<FullLogData | undefined>;
-		readonly dmLogs: (userId: UserId) => Effect.Effect<FullLogData[]>;
-		readonly userLogs: (userId: UserId) => Effect.Effect<UserLogData[]>;
+		readonly log: (logId: LogIdOrNew, userId: UserId) => Effect.Effect<FullLogData | undefined, PostgresError>;
+		readonly dmLogs: (userId: UserId) => Effect.Effect<FullLogData[], PostgresError>;
+		readonly userLogs: (userId: UserId) => Effect.Effect<UserLogData[], PostgresError>;
 	};
 	readonly set: {
-		readonly save: (log: LogSchema, user: LocalsUser) => Effect.Effect<FullLogData, SaveLogError>;
-		readonly delete: (logId: LogId, userId: UserId) => Effect.Effect<{ id: LogId }, SaveLogError>;
+		readonly save: (log: LogSchema, user: LocalsUser) => Effect.Effect<FullLogData, SaveLogError | PostgresError>;
+		readonly delete: (logId: LogId, userId: UserId) => Effect.Effect<{ id: LogId }, SaveLogError | PostgresError>;
 	};
 }
 
@@ -154,17 +154,18 @@ const upsertLogDM = Effect.fn("upsertLogDM")(function* (log: LogSchema, user: Lo
 
 	const validated = yield* validateLogDM(log, user);
 
+	const query = db
+		.insert(dungeonMasters)
+		.values(validated)
+		.onConflictDoUpdate({
+			target: dungeonMasters.id,
+			set: buildConflictUpdateColumns(dungeonMasters, ["name", "DCI"])
+		})
+		.returning();
+
 	return yield* Effect.tryPromise({
-		try: () =>
-			db
-				.insert(dungeonMasters)
-				.values(validated)
-				.onConflictDoUpdate({
-					target: dungeonMasters.id,
-					set: buildConflictUpdateColumns(dungeonMasters, ["name", "DCI"])
-				})
-				.returning(),
-		catch: createSaveError
+		try: () => query,
+		catch: (err) => new PostgresError(err, query.toSQL())
 	}).pipe(
 		Effect.flatMap((dms) =>
 			isTupleOf(dms, 1) ? Effect.succeed(dms[0]) : Effect.fail(new SaveLogError("Could not save Dungeon Master"))
@@ -173,7 +174,7 @@ const upsertLogDM = Effect.fn("upsertLogDM")(function* (log: LogSchema, user: Lo
 });
 
 const upsertLog = Effect.fn("upsertLog")(function* (log: LogSchema, user: LocalsUser) {
-	const logApi = yield* LogService;
+	const { db, get } = yield* LogService;
 
 	const dm = yield* upsertLogDM(log, user);
 
@@ -183,33 +184,34 @@ const upsertLog = Effect.fn("upsertLog")(function* (log: LogSchema, user: Locals
 			: null
 		: new Date(log.date);
 
+	const query = db
+		.insert(logs)
+		.values({
+			id: log.id === "new" ? undefined : log.id,
+			name: log.name,
+			date: log.date,
+			description: log.description || "",
+			type: log.type,
+			isDmLog: log.isDmLog,
+			dungeonMasterId: dm.id,
+			acp: log.acp,
+			tcp: log.tcp,
+			experience: log.experience,
+			level: log.level,
+			gold: log.gold,
+			dtd: log.dtd,
+			characterId: log.characterId,
+			appliedDate
+		})
+		.onConflictDoUpdate({
+			target: logs.id,
+			set: buildConflictUpdateColumns(logs, ["id", "createdAt", "isDmLog"], true)
+		})
+		.returning();
+
 	const [result] = yield* Effect.tryPromise({
-		try: () =>
-			logApi.db
-				.insert(logs)
-				.values({
-					id: log.id === "new" ? undefined : log.id,
-					name: log.name,
-					date: log.date,
-					description: log.description || "",
-					type: log.type,
-					isDmLog: log.isDmLog,
-					dungeonMasterId: dm.id,
-					acp: log.acp,
-					tcp: log.tcp,
-					experience: log.experience,
-					level: log.level,
-					gold: log.gold,
-					dtd: log.dtd,
-					characterId: log.characterId,
-					appliedDate
-				})
-				.onConflictDoUpdate({
-					target: logs.id,
-					set: buildConflictUpdateColumns(logs, ["id", "createdAt", "isDmLog"], true)
-				})
-				.returning(),
-		catch: createSaveError
+		try: () => query,
+		catch: (err) => new PostgresError(err, query.toSQL())
 	});
 
 	if (!result?.id) return yield* new SaveLogError(log.id ? "Could not save log" : "Could not create log");
@@ -232,7 +234,7 @@ const upsertLog = Effect.fn("upsertLog")(function* (log: LogSchema, user: Locals
 		(params) => itemsCRUD(params)
 	);
 
-	return yield* logApi.get
+	return yield* get
 		.log(result.id, user.id)
 		.pipe(
 			Effect.flatMap((result) =>
@@ -263,49 +265,53 @@ const itemsCRUD = Effect.fn("itemsCRUD")(function* (params: CRUDMagicItemParams 
 	const { logId, table, gained, lost } = params;
 
 	const itemIds = gained.map((item) => item.id).filter(Boolean);
+
+	const removeGainedQuery = db
+		.delete(table)
+		.where(and(eq(table.logGainedId, logId), itemIds.length ? notInArray(table.id, itemIds) : undefined));
 	yield* Effect.tryPromise({
-		try: () =>
-			db.delete(table).where(and(eq(table.logGainedId, logId), itemIds.length ? notInArray(table.id, itemIds) : undefined)),
-		catch: createSaveError
+		try: () => removeGainedQuery,
+		catch: (err) => new PostgresError(err, removeGainedQuery.toSQL())
 	});
 
 	if (gained.length) {
+		const addGainedQuery = db
+			.insert(table)
+			.values(
+				gained.map((item) => ({
+					id: item.id || undefined,
+					name: item.name,
+					description: item.description,
+					logGainedId: logId
+				}))
+			)
+			.onConflictDoUpdate({
+				target: table.id,
+				set: buildConflictUpdateColumns(table, ["name", "description"])
+			});
 		yield* Effect.tryPromise({
-			try: () =>
-				db
-					.insert(table)
-					.values(
-						gained.map((item) => ({
-							id: item.id || undefined,
-							name: item.name,
-							description: item.description,
-							logGainedId: logId
-						}))
-					)
-					.onConflictDoUpdate({
-						target: table.id,
-						set: buildConflictUpdateColumns(table, ["name", "description"])
-					}),
-			catch: createSaveError
+			try: () => addGainedQuery,
+			catch: (err) => new PostgresError(err, addGainedQuery.toSQL())
 		});
 	}
 
+	const removeLostQuery = db
+		.update(table)
+		.set({ logLostId: null })
+		.where(and(eq(table.logLostId, logId), notInArray(table.id, lost)));
 	yield* Effect.tryPromise({
-		try: () =>
-			db
-				.update(table)
-				.set({ logLostId: null })
-				.where(and(eq(table.logLostId, logId), notInArray(table.id, lost))),
-		catch: createSaveError
+		try: () => removeLostQuery,
+		catch: (err) => new PostgresError(err, removeLostQuery.toSQL())
 	});
+
 	if (lost.length) {
+		const addLostQuery = db
+			.update(table)
+			.set({ logLostId: logId })
+			.where(and(isNull(table.logLostId), inArray(table.id, lost)));
 		yield* Effect.tryPromise({
-			try: () =>
-				db
-					.update(table)
-					.set({ logLostId: logId })
-					.where(and(isNull(table.logLostId), inArray(table.id, lost))),
-			catch: createSaveError
+			try: () => addLostQuery,
+			catch: (err) => new PostgresError(err, addLostQuery.toSQL())
 		});
 	}
 });
@@ -321,51 +327,56 @@ export class LogService extends Effect.Service<LogService>()("LogService", {
 					yield* Log.info("LogService.get.log", { logId, userId });
 					if (logId === "new") return undefined;
 
-					return yield* Effect.promise(() =>
-						db.query.logs.findFirst({
-							with: extendedLogIncludes,
-							where: {
-								id: {
-									eq: logId
-								},
-								OR: [characterLogFilter(userId), dmLogFilter(userId)]
-							}
-						})
-					).pipe(Effect.andThen((log) => log && parseLog(log)));
+					const query = db.query.logs.findFirst({
+						with: extendedLogIncludes,
+						where: {
+							id: {
+								eq: logId
+							},
+							OR: [characterLogFilter(userId), dmLogFilter(userId)]
+						}
+					});
+
+					return yield* Effect.tryPromise({
+						try: () => query,
+						catch: (err) => new PostgresError(err, query.toSQL())
+					}).pipe(Effect.andThen((log) => log && parseLog(log)));
 				}),
 
 				dmLogs: Effect.fn("LogService.get.dmLogs")(function* (userId) {
 					yield* Log.info("LogService.get.dmLogs", { userId });
 
-					return yield* Effect.promise(() =>
-						db.query.logs
-							.findMany({
-								with: extendedLogIncludes,
-								where: dmLogFilter(userId),
-								orderBy: {
-									date: "asc"
-								}
-							})
-							.then((logs) => {
-								return logs.map(parseLog);
-							})
-					);
+					const query = db.query.logs.findMany({
+						with: extendedLogIncludes,
+						where: dmLogFilter(userId),
+						orderBy: {
+							date: "asc"
+						}
+					});
+
+					return yield* Effect.tryPromise({
+						try: () => query,
+						catch: (err) => new PostgresError(err, query.toSQL())
+					}).pipe(Effect.map((logs) => logs.map(parseLog)));
 				}),
 
 				userLogs: Effect.fn("LogService.get.userLogs")(function* (userId) {
 					yield* Log.info("LogService.get.userLogs", { userId });
 
-					return yield* Effect.promise(() =>
-						db.query.logs.findMany({
-							...userLogsConfig,
-							where: {
-								OR: [characterLogFilter(userId), dmLogFilter(userId)]
-							},
-							orderBy: {
-								date: "asc"
-							}
-						})
-					);
+					const query = db.query.logs.findMany({
+						...userLogsConfig,
+						where: {
+							OR: [characterLogFilter(userId), dmLogFilter(userId)]
+						},
+						orderBy: {
+							date: "asc"
+						}
+					});
+
+					return yield* Effect.tryPromise({
+						try: () => query,
+						catch: (err) => new PostgresError(err, query.toSQL())
+					});
 				})
 			},
 			set: {
@@ -382,43 +393,44 @@ export class LogService extends Effect.Service<LogService>()("LogService", {
 				delete: Effect.fn("LogService.set.delete")(function* (logId, userId) {
 					yield* Log.info("LogService.set.delete", { logId, userId });
 
-					return yield* Effect.tryPromise({
-						try: () =>
-							db
-								.delete(logs)
-								.where(
+					const query = db
+						.delete(logs)
+						.where(
+							and(
+								eq(logs.id, logId),
+								or(
 									and(
-										eq(logs.id, logId),
-										or(
-											and(
-												eq(logs.isDmLog, false),
-												exists(
-													db
-														.select()
-														.from(characters)
-														.where(and(eq(characters.id, logs.characterId), eq(characters.userId, userId)))
+										eq(logs.isDmLog, false),
+										exists(
+											db
+												.select()
+												.from(characters)
+												.where(and(eq(characters.id, logs.characterId), eq(characters.userId, userId)))
+										)
+									),
+									and(
+										eq(logs.isDmLog, true),
+										exists(
+											db
+												.select()
+												.from(dungeonMasters)
+												.where(
+													and(
+														eq(dungeonMasters.id, logs.dungeonMasterId),
+														eq(dungeonMasters.userId, userId),
+														eq(dungeonMasters.isUser, true)
+													)
 												)
-											),
-											and(
-												eq(logs.isDmLog, true),
-												exists(
-													db
-														.select()
-														.from(dungeonMasters)
-														.where(
-															and(
-																eq(dungeonMasters.id, logs.dungeonMasterId),
-																eq(dungeonMasters.userId, userId),
-																eq(dungeonMasters.isUser, true)
-															)
-														)
-												)
-											)
 										)
 									)
 								)
-								.returning({ id: logs.id }),
-						catch: createSaveError
+							)
+						)
+						.returning({ id: logs.id });
+
+					return yield* Effect.tryPromise({
+						try: () => query,
+						catch: (err) => new PostgresError(err, query.toSQL())
 					}).pipe(
 						Effect.flatMap((logs) =>
 							isTupleOf(logs, 1) ? Effect.succeed(logs[0]) : Effect.fail(new SaveLogError("Log not found", { status: 404 }))
@@ -436,7 +448,7 @@ export class LogService extends Effect.Service<LogService>()("LogService", {
 export const LogTx = (tx: Transaction) => LogService.DefaultWithoutDependencies().pipe(Layer.provide(DBService.Default(tx)));
 
 export const withLog = Effect.fn("withLog")(
-	function* <R, E extends SaveLogError>(impl: (service: LogApiImpl) => Effect.Effect<R, E>) {
+	function* <R, E extends SaveLogError | PostgresError>(impl: (service: LogApiImpl) => Effect.Effect<R, E>) {
 		const logApi = yield* LogService;
 		const result = yield* impl(logApi);
 

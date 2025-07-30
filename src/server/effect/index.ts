@@ -14,8 +14,9 @@ import {
 	type NumericRange,
 	type RequestEvent
 } from "@sveltejs/kit";
+import type { Query } from "drizzle-orm";
 import { Cause, Data, Effect, Exit, HashMap, Layer, Logger } from "effect";
-import { isFunction, isTupleOf } from "effect/Predicate";
+import { isFunction, isObject, isTupleOf } from "effect/Predicate";
 import type { YieldWrap } from "effect/Utils";
 import {
 	setError,
@@ -124,11 +125,18 @@ export async function run<A, B extends InstanceType<ErrorClass>, T extends Yield
 			let message = Cause.pretty(cause);
 			let status: NumericRange<400, 599> = 500;
 			let failCause: unknown;
+			const extra: Record<string, unknown> = {};
 
 			if (Cause.isFailType(cause)) {
 				const error = cause.error;
 				status = error.status;
 				failCause = error.cause;
+
+				for (const key in error) {
+					if (key !== "status" && key !== "cause") {
+						extra[key] = error[key];
+					}
+				}
 			}
 
 			if (Cause.isDieType(cause)) {
@@ -145,7 +153,7 @@ export async function run<A, B extends InstanceType<ErrorClass>, T extends Yield
 				}
 			}
 
-			Effect.runFork(Log.error(message, { status, cause: failCause }));
+			Effect.runFork(Log.error(message, { status, cause: failCause, ...extra }));
 
 			if (!dev) message = message.replace(/\n\s+at .+/, "");
 			throw error(status, message);
@@ -208,14 +216,14 @@ export async function save<
 // -------------------------------------------------------------------------------------------------
 
 export interface ErrorParams {
-	readonly _tag: string;
 	message: string;
 	status: NumericRange<400, 599>;
 	cause?: unknown;
+	[key: string]: unknown;
 }
 
 export interface ErrorClass {
-	new (...args: any[]): ErrorParams;
+	new (...args: any[]): { _tag: string } & ErrorParams;
 }
 
 export function isTaggedError(error: unknown): error is InstanceType<ErrorClass> {
@@ -260,5 +268,12 @@ export class FormError<
 		return setError(form, this.options?.field ?? "", this.message, {
 			status: this.status
 		});
+	}
+}
+
+export class PostgresError extends Data.TaggedError("PostgresError")<ErrorParams> {
+	constructor(err: unknown, query: Query) {
+		const message = isObject(err) && "message" in err ? String(err.message) : Cause.pretty(Cause.fail(err));
+		super({ message, status: 500, cause: err, query });
 	}
 }
