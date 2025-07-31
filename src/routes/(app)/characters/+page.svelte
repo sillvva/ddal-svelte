@@ -71,7 +71,7 @@
 		</section>
 	{:else}
 		<div class="flex flex-wrap justify-between gap-2">
-			<div class="flex w-full gap-2 sm:max-w-md md:max-w-md">
+			<div class="flex gap-2 max-sm:w-full sm:max-md:flex-1 md:w-md">
 				<a
 					href="/characters/new"
 					class="btn btn-primary btn-sm max-sm:hidden"
@@ -84,7 +84,8 @@
 						]
 					])}
 				>
-					New Character <kbd class="kbd kbd-sm max-sm:hover-none:hidden text-base-content">N</kbd>
+					New <span class="max-md:hidden">Character</span>
+					<kbd class="kbd kbd-sm max-md:hover-none:hidden text-base-content">N</kbd>
 				</a>
 				<Search bind:value={search.query} placeholder="Search by name, class, items, etc." />
 				<a href="/characters/new/edit" class="btn btn-primary sm:hidden" aria-label="New Character">
@@ -105,7 +106,7 @@
 					{/if}
 				</button>
 			</div>
-			<div class="ml-auto flex gap-2 sm:ml-0">
+			<div class="flex justify-end gap-2 max-sm:mb-2 max-sm:w-full">
 				{#if global.app.characters.display != "grid"}
 					<button
 						class="btn data-[enabled=true]:btn-primary sm:btn-sm max-xs:hidden"
@@ -154,11 +155,9 @@
 				data-display={global.app.characters.display}
 			>
 				<table class="linked-table bg-base-200 table w-full leading-5 max-sm:border-separate max-sm:border-spacing-y-2">
-					<thead class="max-sm:hidden">
+					<thead class="max-md:hidden">
 						<tr class="bg-base-300 text-base-content/70">
-							{#if !data.mobile}
-								<td></td>
-							{/if}
+							<td></td>
 							<td>Name</td>
 							<td>Campaign</td>
 							<td class="text-center">Tier</td>
@@ -168,28 +167,26 @@
 					<tbody>
 						{#each sortedResults as character}
 							<tr class="group/row">
-								{#if !data.mobile}
-									<td class="pr-0 align-top transition-colors max-sm:hidden sm:pr-2">
-										<div class="avatar">
-											<div class="mask mask-squircle bg-primary size-12" {@attach transition("image-" + character.id)}>
-												{#if character.imageUrl}
-													{#key character.imageUrl}
-														<img
-															src={character.imageUrl}
-															width={48}
-															height={48}
-															class="size-full object-cover object-top duration-150 ease-in-out group-hover/row:scale-125 motion-safe:transition-transform"
-															alt={character.name}
-															loading="lazy"
-														/>
-													{/key}
-												{:else}
-													<span class="iconify mdi--account size-12"></span>
-												{/if}
-											</div>
+								<td class="pr-0 align-top transition-colors sm:pr-2">
+									<div class="avatar">
+										<div class="mask mask-squircle bg-primary size-12" {@attach transition("image-" + character.id)}>
+											{#if character.imageUrl}
+												{#key character.imageUrl}
+													<img
+														src={character.imageUrl}
+														width={48}
+														height={48}
+														class="size-full object-cover object-top duration-150 ease-in-out group-hover/row:scale-125 motion-safe:transition-transform"
+														alt={character.name}
+														loading="lazy"
+													/>
+												{/key}
+											{:else}
+												<span class="iconify mdi--account size-12"></span>
+											{/if}
 										</div>
-									</td>
-								{/if}
+									</div>
+								</td>
 								<td>
 									<div class="text-base font-bold whitespace-pre-wrap text-black sm:text-xl dark:text-white">
 										<a href={`/characters/${character.id}`} aria-label={character.name} class="row-link">
@@ -197,13 +194,13 @@
 										</a>
 									</div>
 									<div class="text-xs whitespace-pre-wrap sm:text-sm">
-										<span class="inline pr-1 sm:hidden">Level {character.totalLevel}</span><SearchResults
+										<span class="inline pr-1 md:hidden">Level {character.totalLevel}</span><SearchResults
 											text={character.race}
 											terms={search.terms}
 										/>
 										<SearchResults text={character.class} terms={search.terms} />
 									</div>
-									<div class="mb-2 text-xs sm:hidden">
+									<div class="mb-2 text-xs md:hidden">
 										<SearchResults text={character.campaign} terms={search.terms} />
 									</div>
 									{#if (character.match.has("magicItems") || global.app.characters.magicItems) && character.magicItems.length}
@@ -234,13 +231,13 @@
 										</div>
 									{/if}
 								</td>
-								<td class="transition-colors max-sm:hidden">
+								<td class="transition-colors max-md:hidden">
 									<SearchResults text={character.campaign} terms={search.terms} />
 								</td>
-								<td class="text-center transition-colors max-sm:hidden">
+								<td class="text-center transition-colors max-md:hidden">
 									{character.tier}
 								</td>
-								<td class="text-center transition-colors max-sm:hidden">
+								<td class="text-center transition-colors max-md:hidden">
 									{character.totalLevel}
 								</td>
 							</tr>

@@ -9,7 +9,9 @@
 	{#snippet children({ crumbs }: { crumbs: Crumb[] })}
 		{@const back = crumbs.filter((bc) => bc.url).at(-1)}
 		{#if back?.url}
-			<BackButton href={back.url}>{back.title}</BackButton>
+			<div class="mb-4 flex h-8 flex-1 sm:hidden">
+				<BackButton href={back.url}>{back.title}</BackButton>
+			</div>
 		{/if}
 		<div class="breadcrumbs mb-4 flex-1 text-sm max-sm:hidden print:hidden">
 			<ul>

@@ -62,7 +62,7 @@
 	</div>
 
 	<div class="flex gap-2 sm:justify-between">
-		<div class="flex gap-2 sm:w-96">
+		<div class="flex gap-2 max-sm:flex-1 sm:w-96">
 			<a
 				href="/dm-logs/new"
 				class="btn btn-primary btn-sm max-sm:hidden"
