@@ -69,52 +69,27 @@ export const withAdmin = Effect.fn("withAdmin")(
 	(effect) => effect.pipe(Effect.provide(AdminService.Default()))
 );
 
+// -------------------------------------------------------------------------------------------------
+// Search
+// -------------------------------------------------------------------------------------------------
+
 type Table = "appLogs";
 type Column = keyof TRSchema[Table]["columns"];
+type Key = Column | (string & {});
+type ValidKey = (typeof validKeys)[number] | (string & {});
 
-export const validKeys = ["id", "date", "label", "level", "username", "userId", "routeId"] as const satisfies (
-	| Column
-	| (string & {})
-)[];
-const defaultKey = "label" as const satisfies (typeof validKeys)[number] & Column;
+export const validKeys = ["id", "date", "label", "level", "username", "userId", "routeId"] as const satisfies Key[];
+const defaultKey = "label" as const satisfies Column;
 
 const logSearch = new DrizzleSearchParser<typeof relations, Table>({
 	validKeys,
 	defaultKey,
 	filterFn: (ast) => {
-		const key = (ast.key || defaultKey) as (typeof validKeys)[number];
+		const key = (ast.key || defaultKey) as ValidKey;
 
-		if (key === "username") {
-			if (ast.isRegex) {
-				return {
-					RAW: (table) => sql`${table.annotations}->>'username'::text ~* ${ast.value}`
-				};
-			}
-			return {
-				RAW: (table) => sql`${table.annotations}->>'username'::text ilike ${`%${ast.value}%`}`
-			};
-		}
-
-		if (key === "userId") {
-			if (ast.isRegex) {
-				return {
-					RAW: (table) => sql`${table.annotations}->>'userId'::text ~* ${ast.value}`
-				};
-			}
-			return {
-				RAW: (table) => sql`${table.annotations}->>'userId'::text ilike ${`%${ast.value}%`}`
-			};
-		}
-
-		if (key === "routeId") {
-			if (ast.isRegex) {
-				return {
-					RAW: (table) => sql`${table.annotations}->>'routeId'::text ~* ${ast.value}`
-				};
-			}
-			return {
-				RAW: (table) => sql`${table.annotations}->>'routeId'::text ilike ${`%${ast.value}%`}`
-			};
+		if (key === "username" || key === "userId" || key === "routeId") {
+			if (ast.isRegex) return { RAW: (table) => sql`${table.annotations}->>${key}::text ~* ${ast.value}` };
+			return { RAW: (table) => sql`${table.annotations}->>${key}::text ilike ${`%${ast.value}%`}` };
 		}
 
 		const keyColumns = new Map<typeof key, { col: Column; regex?: true; numeric?: true; date?: true }>([
