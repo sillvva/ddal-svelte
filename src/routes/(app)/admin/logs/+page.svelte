@@ -91,48 +91,60 @@
 
 {#if data.logs.length}
 	<div class="overflow-x-auto rounded-lg">
-		<table class="linked-table bg-base-200 table w-full leading-5 max-sm:border-separate max-sm:border-spacing-y-2">
+		<table class="bg-base-200 table w-full leading-5 max-sm:border-separate max-sm:border-spacing-y-2">
 			<thead class="max-sm:hidden">
 				<tr class="bg-base-300 text-base-content/70">
 					<td>Label</td>
 					<td class="text-center max-sm:hidden">Level</td>
 					<td class="max-sm:hidden">Timestamp</td>
-					{#if !data.mobile}
-						<td class="w-0"></td>
-					{/if}
+					<td class="max-xs:hidden w-0"></td>
 				</tr>
 			</thead>
 			{#each data.logs as log}
+				{#snippet actions()}
+					<button
+						class="btn btn-sm btn-primary tooltip tooltip-left"
+						data-tip="Toggle details"
+						aria-label="Toggle details"
+						onclick={() => {
+							const details = document.querySelector(`tr[data-id="${log.id}"]`) as HTMLTableRowElement | null;
+							if (details) details.dataset.details = details.dataset.details === "true" ? "false" : "true";
+						}}
+					>
+						<span class="iconify mdi--eye"></span>
+					</button>
+					<DeleteAppLog
+						{log}
+						{deletingLog}
+						ondelete={() => {
+							const details = document.querySelector(`tr[data-id="${log.id}"]`) as HTMLTableRowElement | null;
+							if (details) details.dataset.details = "false";
+							invalidateAll();
+						}}
+					/>
+				{/snippet}
 				<tbody
-					class="border-t border-neutral-500/20 first:border-0 data-[deleting=true]:hidden"
+					class="scroll-mt-16 border-t border-neutral-500/20 first:border-0 data-[deleting=true]:hidden"
 					data-deleting={deletingLog.has(log.id)}
 				>
 					<tr class="border-0">
 						<td>
 							<span class="sm:hidden">[{log.level}]</span>
 							{log.message}
-							<div class="text-base-content/60 sm:hidden">{log.timestamp.toLocaleString()}</div>
+							<div class="flex items-center justify-between">
+								<div class="text-base-content/60 sm:hidden">{log.timestamp.toLocaleString()}</div>
+								<div class="xs:hidden mt-2 flex gap-2">
+									{@render actions()}
+								</div>
+							</div>
 						</td>
 						<td class="text-center max-sm:hidden">{log.level}</td>
 						<td class="whitespace-nowrap max-sm:hidden">{log.timestamp.toISOString()}</td>
-						{#if !data.mobile}
-							<td>
-								<div class="flex justify-end gap-2">
-									<button
-										class="btn btn-sm btn-primary tooltip tooltip-left"
-										data-tip="Toggle details"
-										aria-label="Toggle details"
-										onclick={() => {
-											const details = document.querySelector(`tr[data-id="${log.id}"]`) as HTMLTableRowElement | null;
-											if (details) details.dataset.details = details.dataset.details === "true" ? "false" : "true";
-										}}
-									>
-										<span class="iconify mdi--eye"></span>
-									</button>
-									<DeleteAppLog {log} {deletingLog} ondelete={() => invalidateAll()} />
-								</div>
-							</td>
-						{/if}
+						<td class="max-xs:hidden">
+							<div class="flex justify-end gap-2">
+								{@render actions()}
+							</div>
+						</td>
 					</tr>
 					<tr data-id={log.id} data-details={false} class="hidden data-[details=true]:table-row">
 						<td colspan="4">

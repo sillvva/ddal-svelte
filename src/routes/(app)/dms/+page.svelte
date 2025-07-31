@@ -9,7 +9,7 @@
 </script>
 
 <script lang="ts">
-	import BreadCrumbs from "$lib/components/BreadCrumbs.svelte";
+	import Breadcrumbs from "$lib/components/Breadcrumb.svelte";
 	import Search from "$lib/components/Search.svelte";
 	import SearchResults from "$lib/components/SearchResults.svelte";
 	import DeleteDm from "$lib/components/forms/DeleteDM.svelte";
@@ -28,7 +28,7 @@
 </script>
 
 <div class="flex flex-col gap-4">
-	<BreadCrumbs />
+	<Breadcrumbs />
 
 	<div class="flex flex-col gap-4">
 		<section class="flex max-sm:flex-1 sm:max-w-96">

@@ -11,7 +11,7 @@
 <script lang="ts">
 	import { goto } from "$app/navigation";
 	import { page } from "$app/state";
-	import BreadCrumbs from "$lib/components/BreadCrumbs.svelte";
+	import Breadcrumbs from "$lib/components/Breadcrumb.svelte";
 	import Dropdown from "$lib/components/Dropdown.svelte";
 	import Items from "$lib/components/Items.svelte";
 	import Markdown from "$lib/components/Markdown.svelte";
@@ -44,7 +44,7 @@
 
 <div class="flex flex-col gap-4">
 	<div class="flex gap-4 max-sm:hidden print:hidden">
-		<BreadCrumbs />
+		<Breadcrumbs />
 		<Dropdown class="dropdown-end">
 			<ul role="menu" class="menu dropdown-content rounded-box bg-base-300 w-52 shadow-sm">
 				<li role="menuitem">
