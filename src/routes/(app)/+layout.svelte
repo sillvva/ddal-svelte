@@ -56,7 +56,6 @@
 		style:view-transition-name="header"
 	>
 		<nav class="relative z-10 container mx-auto flex max-w-5xl gap-3 p-4">
-			<!-- <Drawer /> -->
 			<div class="inline max-w-10 shrink-0 flex-grow-1 md:hidden">&nbsp;</div>
 			<div class="inline max-w-10 shrink-0 flex-grow-1 md:hidden">&nbsp;</div>
 			<a
