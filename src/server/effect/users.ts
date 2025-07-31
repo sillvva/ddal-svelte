@@ -1,12 +1,12 @@
 import { PROVIDERS } from "$lib/constants";
 import type { CharacterId, LocalsUser, UserId } from "$lib/schemas";
-import { DBService, query, type Transaction } from "$server/db";
+import { DBService, query, type DrizzleError, type Transaction } from "$server/db";
 import { user, type User } from "$server/db/schema";
 import { sorter } from "@sillvva/utils";
 import { eq } from "drizzle-orm";
 import { Data, Effect, Layer } from "effect";
 import { isTupleOf } from "effect/Predicate";
-import { debugSet, type ErrorParams, type PostgresError } from ".";
+import { debugSet, type ErrorParams } from ".";
 
 export class UpdateUserError extends Data.TaggedError("UpdateUserError")<ErrorParams> {
 	constructor(err?: unknown) {
@@ -16,14 +16,14 @@ export class UpdateUserError extends Data.TaggedError("UpdateUserError")<ErrorPa
 
 interface UserApiImpl {
 	readonly get: {
-		readonly localsUser: (userId: UserId) => Effect.Effect<LocalsUser | undefined, PostgresError>;
-		readonly users: (userId: UserId) => Effect.Effect<(User & { characters: { id: CharacterId }[] })[], PostgresError>;
+		readonly localsUser: (userId: UserId) => Effect.Effect<LocalsUser | undefined, DrizzleError>;
+		readonly users: (userId: UserId) => Effect.Effect<(User & { characters: { id: CharacterId }[] })[], DrizzleError>;
 	};
 	readonly set: {
 		readonly update: (
 			userId: UserId,
 			data: Partial<Pick<User, "name" | "image">>
-		) => Effect.Effect<User, UpdateUserError | PostgresError>;
+		) => Effect.Effect<User, UpdateUserError | DrizzleError>;
 	};
 }
 
@@ -111,7 +111,7 @@ export class UserService extends Effect.Service<UserService>()("UserService", {
 export const UserTx = (tx: Transaction) => UserService.DefaultWithoutDependencies().pipe(Layer.provide(DBService.Default(tx)));
 
 export const withUser = Effect.fn("withUser")(
-	function* <R, E extends UpdateUserError | PostgresError>(impl: (service: UserApiImpl) => Effect.Effect<R, E>) {
+	function* <R, E extends UpdateUserError | DrizzleError>(impl: (service: UserApiImpl) => Effect.Effect<R, E>) {
 		const userApi = yield* UserService;
 		const result = yield* impl(userApi);
 

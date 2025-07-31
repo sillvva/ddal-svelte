@@ -1,7 +1,7 @@
 import { privateEnv } from "$lib/env/private";
 import { relations } from "$server/db/relations";
 import * as schema from "$server/db/schema";
-import { PostgresError, run, type ErrorClass, type FormError } from "$server/effect";
+import { run, type ErrorClass, type ErrorParams, type FormError } from "$server/effect";
 import {
 	getTableColumns,
 	sql,
@@ -15,7 +15,7 @@ import {
 } from "drizzle-orm";
 import type { PgTable, PgTransaction } from "drizzle-orm/pg-core";
 import { drizzle, type PostgresJsDatabase, type PostgresJsQueryResultHKT } from "drizzle-orm/postgres-js";
-import { Effect } from "effect";
+import { Cause, Data, Effect } from "effect";
 import postgres from "postgres";
 
 export type Database = PostgresJsDatabase<typeof schema, typeof relations>;
@@ -43,11 +43,17 @@ export class DBService extends Effect.Service<DBService>()("DBService", {
 
 export function query<TQuery extends PromiseLike<any> & { toSQL: () => Query }>(
 	query: TQuery
-): Effect.Effect<Awaited<TQuery>, PostgresError> {
+): Effect.Effect<Awaited<TQuery>, DrizzleError> {
 	return Effect.tryPromise({
 		try: () => query,
-		catch: (err) => new PostgresError(err, query.toSQL())
+		catch: (err) => new DrizzleError(err, query.toSQL())
 	});
+}
+
+export class DrizzleError extends Data.TaggedError("DrizzleError")<ErrorParams> {
+	constructor(err: unknown, query: Query) {
+		super({ message: Cause.pretty(Cause.fail(err)), status: 500, cause: err, query });
+	}
 }
 
 export type TRSchema = ExtractTablesWithRelations<typeof relations>;

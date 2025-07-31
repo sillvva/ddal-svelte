@@ -14,9 +14,8 @@ import {
 	type NumericRange,
 	type RequestEvent
 } from "@sveltejs/kit";
-import type { Query } from "drizzle-orm";
 import { Cause, Data, Effect, Exit, HashMap, Layer, Logger } from "effect";
-import { isFunction, isObject, isTupleOf } from "effect/Predicate";
+import { isFunction, isTupleOf } from "effect/Predicate";
 import type { YieldWrap } from "effect/Utils";
 import {
 	setError,
@@ -268,12 +267,5 @@ export class FormError<
 		return setError(form, this.options?.field ?? "", this.message, {
 			status: this.status
 		});
-	}
-}
-
-export class PostgresError extends Data.TaggedError("PostgresError")<ErrorParams> {
-	constructor(err: unknown, query: Query) {
-		const message = isObject(err) && "message" in err ? String(err.message) : Cause.pretty(Cause.fail(err));
-		super({ message, status: 500, cause: err, query });
 	}
 }

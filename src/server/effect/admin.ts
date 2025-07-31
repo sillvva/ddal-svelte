@@ -1,5 +1,5 @@
 import type { AppLogId, AppLogSchema } from "$lib/schemas";
-import { DBService, query, type Filter, type Transaction, type TRSchema } from "$server/db";
+import { DBService, query, type DrizzleError, type Filter, type Transaction, type TRSchema } from "$server/db";
 import type { relations } from "$server/db/relations";
 import { appLogs, type AppLog } from "$server/db/schema";
 import type { ASTNode, ParseMetadata } from "@sillvva/search";
@@ -7,7 +7,7 @@ import { DrizzleSearchParser } from "@sillvva/search/drizzle";
 import { eq, sql } from "drizzle-orm";
 import { Effect, Layer } from "effect";
 import { isTupleOf } from "effect/Predicate";
-import { FormError, Log, type PostgresError } from ".";
+import { FormError, Log } from ".";
 
 export class SaveAppLogError extends FormError<AppLogSchema> {}
 
@@ -15,10 +15,10 @@ interface AdminApiImpl {
 	readonly get: {
 		readonly logs: (
 			search?: string
-		) => Effect.Effect<{ logs: AppLog[]; metadata: ParseMetadata; ast: ASTNode | null }, PostgresError>;
+		) => Effect.Effect<{ logs: AppLog[]; metadata: ParseMetadata; ast: ASTNode | null }, DrizzleError>;
 	};
 	readonly set: {
-		readonly deleteLog: (logId: AppLogId) => Effect.Effect<{ id: AppLogId }, SaveAppLogError | PostgresError>;
+		readonly deleteLog: (logId: AppLogId) => Effect.Effect<{ id: AppLogId }, SaveAppLogError | DrizzleError>;
 	};
 }
 
@@ -62,7 +62,7 @@ export class AdminService extends Effect.Service<AdminService>()("AdminService",
 export const AdminTx = (tx: Transaction) => AdminService.DefaultWithoutDependencies().pipe(Layer.provide(DBService.Default(tx)));
 
 export const withAdmin = Effect.fn("withAdmin")(
-	function* <R, E extends SaveAppLogError | PostgresError>(impl: (service: AdminApiImpl) => Effect.Effect<R, E>) {
+	function* <R, E extends SaveAppLogError | DrizzleError>(impl: (service: AdminApiImpl) => Effect.Effect<R, E>) {
 		const adminApi = yield* AdminService;
 		return yield* impl(adminApi);
 	},
