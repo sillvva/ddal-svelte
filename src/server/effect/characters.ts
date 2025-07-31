@@ -1,13 +1,21 @@
 import { PlaceholderName } from "$lib/constants";
 import { getLogsSummary, parseCharacter } from "$lib/entities";
 import type { CharacterId, EditCharacterSchema, NewCharacterSchema, UserId } from "$lib/schemas";
-import { buildConflictUpdateColumns, DBService, query, type Database, type InferQueryResult, type Transaction } from "$server/db";
+import {
+	buildConflictUpdateColumns,
+	DBService,
+	query,
+	type Database,
+	type DrizzleError,
+	type InferQueryResult,
+	type Transaction
+} from "$server/db";
 import { characterIncludes } from "$server/db/includes";
 import { characters, logs, type Character } from "$server/db/schema";
 import { and, eq, exists } from "drizzle-orm";
 import { Data, Effect, Layer } from "effect";
 import { isTupleOf } from "effect/Predicate";
-import { debugSet, FormError, Log, type ErrorParams, type PostgresError } from ".";
+import { debugSet, FormError, Log, type ErrorParams } from ".";
 
 export class CharacterNotFoundError extends Data.TaggedError("CharacterNotFoundError")<ErrorParams> {
 	constructor(err?: unknown) {
@@ -31,19 +39,19 @@ interface CharacterApiImpl {
 		readonly character: (
 			characterId: CharacterId,
 			includeLogs?: boolean
-		) => Effect.Effect<FullCharacterData | undefined, PostgresError>;
-		readonly userCharacters: (userId: UserId, includeLogs?: boolean) => Effect.Effect<FullCharacterData[], PostgresError>;
+		) => Effect.Effect<FullCharacterData | undefined, DrizzleError>;
+		readonly userCharacters: (userId: UserId, includeLogs?: boolean) => Effect.Effect<FullCharacterData[], DrizzleError>;
 	};
 	readonly set: {
 		readonly save: (
 			characterId: CharacterId | "new",
 			userId: UserId,
 			data: NewCharacterSchema
-		) => Effect.Effect<Character, SaveCharacterError | PostgresError>;
+		) => Effect.Effect<Character, SaveCharacterError | DrizzleError>;
 		readonly delete: (
 			characterId: CharacterId,
 			userId: UserId
-		) => Effect.Effect<{ id: CharacterId }, SaveCharacterError | PostgresError>;
+		) => Effect.Effect<{ id: CharacterId }, SaveCharacterError | DrizzleError>;
 	};
 }
 
@@ -157,7 +165,7 @@ export const CharacterTx = (tx: Transaction) =>
 	CharacterService.DefaultWithoutDependencies().pipe(Layer.provide(DBService.Default(tx)));
 
 export const withCharacter = Effect.fn("withCharacter")(
-	function* <R, E extends SaveCharacterError | PostgresError>(impl: (service: CharacterApiImpl) => Effect.Effect<R, E>) {
+	function* <R, E extends SaveCharacterError | DrizzleError>(impl: (service: CharacterApiImpl) => Effect.Effect<R, E>) {
 		const CharacterApi = yield* CharacterService;
 		const result = yield* impl(CharacterApi);
 

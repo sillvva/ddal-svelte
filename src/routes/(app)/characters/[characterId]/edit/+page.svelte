@@ -12,7 +12,7 @@
 
 <script lang="ts">
 	import { page } from "$app/state";
-	import BreadCrumbs from "$lib/components/BreadCrumbs.svelte";
+	import Breadcrumbs from "$lib/components/Breadcrumb.svelte";
 	import Checkbox from "$lib/components/forms/Checkbox.svelte";
 	import Control from "$lib/components/forms/Control.svelte";
 	import Input from "$lib/components/forms/Input.svelte";
@@ -36,7 +36,7 @@
 	const { form } = $derived(superform);
 </script>
 
-<BreadCrumbs />
+<Breadcrumbs />
 
 <SuperForm action="?/saveCharacter" {superform} showMessage>
 	<Control class="col-span-12 sm:col-span-6">

@@ -1,12 +1,12 @@
 import type { DungeonMasterId, DungeonMasterSchema, LocalsUser, UserId } from "$lib/schemas";
-import { DBService, query, type Database, type InferQueryResult, type Transaction } from "$server/db";
+import { DBService, query, type Database, type DrizzleError, type InferQueryResult, type Transaction } from "$server/db";
 import { userDMLogIncludes } from "$server/db/includes";
 import { dungeonMasters, type DungeonMaster } from "$server/db/schema";
 import { sorter } from "@sillvva/utils";
 import { and, eq } from "drizzle-orm";
 import { Data, Effect, Layer } from "effect";
 import { isTupleOf } from "effect/Predicate";
-import { debugSet, FormError, Log, type ErrorParams, type PostgresError } from ".";
+import { debugSet, FormError, Log, type ErrorParams } from ".";
 
 class FetchUserDMsError extends Data.TaggedError("FetchUserDMsError")<ErrorParams> {
 	constructor(params: ErrorParams = { message: "Unable to fetch user DMs", status: 500 }) {
@@ -33,21 +33,21 @@ interface DMApiImpl {
 		readonly userDMs: (
 			user: LocalsUser,
 			options?: { id?: DungeonMasterId; includeLogs?: boolean }
-		) => Effect.Effect<UserDM[], FetchUserDMsError | PostgresError>;
+		) => Effect.Effect<UserDM[], FetchUserDMsError | DrizzleError>;
 		readonly fuzzyDM: (
 			userId: UserId,
 			isUser: boolean,
 			dm: Pick<DungeonMaster, "name" | "DCI">
-		) => Effect.Effect<DungeonMaster | undefined, PostgresError>;
+		) => Effect.Effect<DungeonMaster | undefined, DrizzleError>;
 	};
 	readonly set: {
 		readonly save: (
 			dmId: DungeonMasterId,
 			user: LocalsUser,
 			data: DungeonMasterSchema
-		) => Effect.Effect<DungeonMaster, SaveDMError | PostgresError>;
-		readonly addUserDM: (user: LocalsUser, dm: UserDM[]) => Effect.Effect<UserDM[], SaveDMError | PostgresError>;
-		readonly delete: (dm: UserDM, userId: UserId) => Effect.Effect<{ id: DungeonMasterId }, SaveDMError | PostgresError>;
+		) => Effect.Effect<DungeonMaster, SaveDMError | DrizzleError>;
+		readonly addUserDM: (user: LocalsUser, dm: UserDM[]) => Effect.Effect<UserDM[], SaveDMError | DrizzleError>;
+		readonly delete: (dm: UserDM, userId: UserId) => Effect.Effect<{ id: DungeonMasterId }, SaveDMError | DrizzleError>;
 	};
 }
 
@@ -190,7 +190,7 @@ export class DMService extends Effect.Service<DMService>()("DMSService", {
 export const DMTx = (tx: Transaction) => DMService.DefaultWithoutDependencies().pipe(Layer.provide(DBService.Default(tx)));
 
 export const withDM = Effect.fn("withDM")(
-	function* <R, E extends FetchUserDMsError | SaveDMError | PostgresError>(impl: (service: DMApiImpl) => Effect.Effect<R, E>) {
+	function* <R, E extends FetchUserDMsError | SaveDMError | DrizzleError>(impl: (service: DMApiImpl) => Effect.Effect<R, E>) {
 		const dmApi = yield* DMService;
 		const result = yield* impl(dmApi);
 

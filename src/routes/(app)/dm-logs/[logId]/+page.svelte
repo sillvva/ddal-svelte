@@ -6,7 +6,7 @@
 </script>
 
 <script lang="ts">
-	import BreadCrumbs from "$lib/components/BreadCrumbs.svelte";
+	import Breadcrumbs from "$lib/components/Breadcrumb.svelte";
 	import AddDropItems from "$lib/components/forms/AddDropItems.svelte";
 	import Combobox from "$lib/components/forms/Combobox.svelte";
 	import Control from "$lib/components/forms/Control.svelte";
@@ -35,7 +35,7 @@
 </script>
 
 {#key $form.id}
-	<BreadCrumbs />
+	<Breadcrumbs />
 
 	<SuperForm action="?/saveLog" {superform} showMessage>
 		<Control class="col-span-12 sm:col-span-6 lg:col-span-3">

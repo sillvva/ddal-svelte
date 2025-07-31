@@ -18,7 +18,7 @@
 	import { goto, pushState } from "$app/navigation";
 	import { page } from "$app/state";
 	import { authClient } from "$lib/auth.js";
-	import BreadCrumbs from "$lib/components/BreadCrumbs.svelte";
+	import Breadcrumbs from "$lib/components/Breadcrumb.svelte";
 	import Dropdown from "$lib/components/Dropdown.svelte";
 	import Items from "$lib/components/Items.svelte";
 	import Markdown from "$lib/components/Markdown.svelte";
@@ -80,7 +80,7 @@
 
 {#if data.user}
 	<div class="flex gap-4">
-		<BreadCrumbs />
+		<Breadcrumbs />
 		{#if myCharacter}
 			<div class="flex gap-4 print:hidden">
 				<a href={`/characters/${data.character.id}/edit`} class="btn btn-primary btn-sm max-sm:hidden">Edit</a>

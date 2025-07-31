@@ -9,7 +9,7 @@
 </script>
 
 <script lang="ts">
-	import BreadCrumbs from "$lib/components/BreadCrumbs.svelte";
+	import Breadcrumbs from "$lib/components/Breadcrumb.svelte";
 	import Search from "$lib/components/Search.svelte";
 	import SearchResults from "$lib/components/SearchResults.svelte";
 	import DeleteDm from "$lib/components/forms/DeleteDM.svelte";
@@ -28,10 +28,10 @@
 </script>
 
 <div class="flex flex-col gap-4">
-	<BreadCrumbs />
+	<Breadcrumbs />
 
 	<div class="flex flex-col gap-4">
-		<section class="flex max-w-96">
+		<section class="flex max-sm:flex-1 sm:max-w-96">
 			<Search bind:value={search.query} placeholder="Search" />
 		</section>
 		<section>
@@ -39,9 +39,9 @@
 				<table class="table w-full">
 					<thead>
 						<tr class="bg-base-300 text-base-content/70">
-							<th class="">DM</th>
+							<th class="max-sm:w-full">DM</th>
 							<th class="max-xs:hidden">DCI</th>
-							<th class="max-xs:hidden">Logs</th>
+							<th>Logs</th>
 							<th class="print:hidden"></th>
 						</tr>
 					</thead>
@@ -67,11 +67,10 @@
 											{#if dm.DCI}
 												<p class="text-xs text-gray-500">DCI: <SearchResults text={dm.DCI} terms={search.terms} /></p>
 											{/if}
-											<p class="text-xs text-gray-500">{dm.logs.length} logs</p>
 										</div>
 									</td>
 									<td class="max-xs:hidden"><SearchResults text={dm.DCI || ""} terms={search.terms} /></td>
-									<td class="max-xs:hidden">{dm.logs.length}</td>
+									<td>{dm.logs.length}</td>
 									<td class="w-16 print:hidden">
 										<div class="flex flex-row justify-end gap-2">
 											{#if dm.logs.length == 0}

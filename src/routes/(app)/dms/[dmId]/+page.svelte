@@ -7,7 +7,7 @@
 
 <script lang="ts">
 	import { goto } from "$app/navigation";
-	import BreadCrumbs from "$lib/components/BreadCrumbs.svelte";
+	import Breadcrumbs from "$lib/components/Breadcrumb.svelte";
 	import Control from "$lib/components/forms/Control.svelte";
 	import DeleteDm from "$lib/components/forms/DeleteDM.svelte";
 	import Input from "$lib/components/forms/Input.svelte";
@@ -33,7 +33,7 @@
 </script>
 
 <div class="flex flex-col gap-4">
-	<BreadCrumbs />
+	<Breadcrumbs />
 
 	<SuperForm action="?/saveDM" {superform}>
 		<Control class="col-span-12 sm:col-span-6">

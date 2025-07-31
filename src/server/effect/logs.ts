@@ -5,6 +5,7 @@ import {
 	DBService,
 	query,
 	type Database,
+	type DrizzleError,
 	type Filter,
 	type InferQueryResult,
 	type Transaction
@@ -14,7 +15,7 @@ import { characters, dungeonMasters, logs, magicItems, storyAwards } from "$serv
 import { and, eq, exists, inArray, isNull, notInArray, or } from "drizzle-orm";
 import { Data, Effect, Layer } from "effect";
 import { isTupleOf } from "effect/Predicate";
-import { debugSet, FormError, Log, type ErrorParams, type PostgresError } from ".";
+import { debugSet, FormError, Log, type ErrorParams } from ".";
 import { DMService, DMTx } from "./dms";
 
 export class LogNotFoundError extends Data.TaggedError("LogNotFoundError")<ErrorParams> {
@@ -101,13 +102,13 @@ export type UserLogData = InferQueryResult<"logs", typeof userLogsConfig>;
 interface LogApiImpl {
 	readonly db: Database | Transaction;
 	readonly get: {
-		readonly log: (logId: LogIdOrNew, userId: UserId) => Effect.Effect<FullLogData | undefined, PostgresError>;
-		readonly dmLogs: (userId: UserId) => Effect.Effect<FullLogData[], PostgresError>;
-		readonly userLogs: (userId: UserId) => Effect.Effect<UserLogData[], PostgresError>;
+		readonly log: (logId: LogIdOrNew, userId: UserId) => Effect.Effect<FullLogData | undefined, DrizzleError>;
+		readonly dmLogs: (userId: UserId) => Effect.Effect<FullLogData[], DrizzleError>;
+		readonly userLogs: (userId: UserId) => Effect.Effect<UserLogData[], DrizzleError>;
 	};
 	readonly set: {
-		readonly save: (log: LogSchema, user: LocalsUser) => Effect.Effect<FullLogData, SaveLogError | PostgresError>;
-		readonly delete: (logId: LogId, userId: UserId) => Effect.Effect<{ id: LogId }, SaveLogError | PostgresError>;
+		readonly save: (log: LogSchema, user: LocalsUser) => Effect.Effect<FullLogData, SaveLogError | DrizzleError>;
+		readonly delete: (logId: LogId, userId: UserId) => Effect.Effect<{ id: LogId }, SaveLogError | DrizzleError>;
 	};
 }
 
@@ -421,7 +422,7 @@ export class LogService extends Effect.Service<LogService>()("LogService", {
 export const LogTx = (tx: Transaction) => LogService.DefaultWithoutDependencies().pipe(Layer.provide(DBService.Default(tx)));
 
 export const withLog = Effect.fn("withLog")(
-	function* <R, E extends SaveLogError | PostgresError>(impl: (service: LogApiImpl) => Effect.Effect<R, E>) {
+	function* <R, E extends SaveLogError | DrizzleError>(impl: (service: LogApiImpl) => Effect.Effect<R, E>) {
 		const logApi = yield* LogService;
 		const result = yield* impl(logApi);
 

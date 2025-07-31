@@ -1,10 +1,12 @@
 <script lang="ts">
 	import { afterNavigate } from "$app/navigation";
 	import { navigating, page } from "$app/state";
+	import { setDefaultUserImage } from "$lib/auth.js";
 	import CommandTray from "$lib/components/CommandTray.svelte";
-	import Drawer from "$lib/components/Drawer.svelte";
 	import Markdown from "$lib/components/Markdown.svelte";
+	import MobileNav from "$lib/components/MobileNav.svelte";
 	import Settings from "$lib/components/Settings.svelte";
+	import { BLANK_CHARACTER } from "$lib/constants.js";
 	import { getGlobal } from "$lib/stores.svelte.js";
 	import { hotkey } from "$lib/util";
 	import { sleep } from "@svelteuidev/composables";
@@ -13,6 +15,8 @@
 	let { data, children } = $props();
 
 	const global = getGlobal();
+
+	let settingsOpen = $state(false);
 
 	afterNavigate(() => {
 		global.pageLoader = false;
@@ -46,17 +50,17 @@
 	</div>
 {/if}
 
-<div class="relative isolate flex min-h-screen flex-col">
+<div class="relative flex min-h-screen flex-col">
 	<header
-		class="border-base-300 bg-base-100 sticky top-0 z-20 w-full border-b transition-all"
+		class="border-base-300 bg-base-100/50 sticky top-0 z-20 w-full border-b backdrop-blur-sm transition-all"
 		style:view-transition-name="header"
 	>
-		<nav class="relative z-10 container mx-auto flex max-w-5xl gap-2 p-4">
-			<Drawer />
-			<div class="inline max-w-10 shrink-0 flex-grow-1 sm:hidden">&nbsp;</div>
+		<nav class="relative z-10 container mx-auto flex max-w-5xl gap-3 p-4">
+			<div class="inline max-w-10 shrink-0 flex-grow-1 md:hidden">&nbsp;</div>
+			<div class="inline max-w-10 shrink-0 flex-grow-1 md:hidden">&nbsp;</div>
 			<a
 				href={data.user ? "/characters" : "/"}
-				class="font-draconis flex min-w-fit flex-1 flex-col text-center sm:flex-none"
+				class="font-draconis flex min-w-fit flex-1 flex-col text-center md:flex-none"
 				aria-label="Home"
 			>
 				<h1 class="text-base-content text-base leading-4">Adventurers League</h1>
@@ -70,11 +74,35 @@
 					<a href="/admin/users" class="flex items-center p-2 max-md:hidden">Admin</a>
 				{/if}
 			{/if}
-			<div class="flex-1 max-sm:hidden">&nbsp;</div>
+			<div class="flex-1 max-md:hidden">&nbsp;</div>
 			<div class="flex items-center gap-4">
 				{#if data.user}
 					<CommandTray />
-					<Settings />
+
+					<!-- Avatar -->
+					<div class="hidden items-center print:flex">
+						{data.user.name}
+					</div>
+					<div class="avatar flex h-full min-w-fit items-center">
+						<button
+							class="ring-primary ring-offset-base-100 relative h-9 w-9 cursor-pointer overflow-hidden rounded-full ring-3 ring-offset-2 lg:h-11 lg:w-11"
+							tabindex="0"
+							onclick={() => (settingsOpen = true)}
+						>
+							<img
+								src={data.user.image || ""}
+								alt={data.user.name}
+								class="rounded-full object-cover object-center"
+								onerror={(e) => {
+									if (!data.user) return;
+									const img = e.currentTarget as HTMLImageElement;
+									img.onerror = null;
+									img.src = BLANK_CHARACTER;
+									setDefaultUserImage(data.user.id);
+								}}
+							/>
+						</button>
+					</div>
 				{:else}
 					<a
 						href={`/?redirect=${encodeURIComponent(`${page.url.pathname}${page.url.search}`)}`}
@@ -103,6 +131,7 @@
 			</p>
 		</div>
 	</footer>
+	<MobileNav />
 </div>
 
 <dialog
@@ -155,3 +184,5 @@
 		<button class="modal-backdrop" onclick={closeModal} aria-label="Close">✕</button>
 	{/if}
 </dialog>
+
+<Settings bind:open={settingsOpen} />

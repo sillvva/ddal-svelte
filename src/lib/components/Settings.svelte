@@ -1,7 +1,7 @@
 <script lang="ts">
 	import { goto, invalidateAll } from "$app/navigation";
 	import { page } from "$app/state";
-	import { authClient, setAccountDetails, setDefaultUserImage, type UserAccount } from "$lib/auth";
+	import { authClient, setAccountDetails, type UserAccount } from "$lib/auth";
 	import { BLANK_CHARACTER, PROVIDERS } from "$lib/constants";
 	import { errorToast } from "$lib/factories.svelte";
 	import { getGlobal } from "$lib/stores.svelte";
@@ -11,7 +11,11 @@
 	import Passkeys from "./Passkeys.svelte";
 	import ThemeSwitcher from "./ThemeSwitcher.svelte";
 
-	let open = $state(false);
+	interface Props {
+		open: boolean;
+	}
+
+	let { open = $bindable(false) }: Props = $props();
 
 	const global = getGlobal();
 
@@ -76,32 +80,9 @@
 </script>
 
 {#if user}
-	<div class="hidden items-center print:flex">
-		{user.name}
-	</div>
-	<div class="avatar flex h-full min-w-fit items-center">
-		<button
-			class="ring-primary ring-offset-base-100 relative h-9 w-9 cursor-pointer overflow-hidden rounded-full ring-3 ring-offset-2 lg:h-11 lg:w-11"
-			tabindex="0"
-			onclick={() => (open = true)}
-		>
-			<img
-				src={user.image || ""}
-				alt={user.name}
-				class="rounded-full object-cover object-center"
-				onerror={(e) => {
-					const img = e.currentTarget as HTMLImageElement;
-					img.onerror = null;
-					img.src = BLANK_CHARACTER;
-					setDefaultUserImage(user.id);
-				}}
-			/>
-		</button>
-	</div>
-
 	<aside
 		id="settings"
-		class="bg-base-100 fixed inset-y-0 -right-80 z-50 flex w-80 flex-col overflow-y-auto px-4 pb-4 transition-all data-[open=true]:right-0"
+		class="bg-base-100 fixed inset-y-0 -right-80 z-50 flex w-80 flex-col overflow-y-auto px-4 pb-4 shadow-lg shadow-black/50 transition-all data-[open=true]:right-0"
 		data-open={open}
 	>
 		{#if user}
@@ -285,7 +266,7 @@
 		{/if}
 	</aside>
 	<div
-		class="bg-base-300/50 fixed inset-0 -z-10 opacity-0 transition-all data-[open=false]:hidden data-[open=true]:z-40 data-[open=true]:opacity-100"
+		class="bg-base-300/50 fixed inset-0 -z-10 opacity-0 backdrop-blur-sm transition-all data-[open=false]:hidden data-[open=true]:z-40 data-[open=true]:opacity-100"
 		onkeydown={() => (open = false)}
 		onclick={() => (open = false)}
 		role="none"

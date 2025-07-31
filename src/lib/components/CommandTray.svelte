@@ -78,7 +78,7 @@
 
 <Dialog.Root bind:open={cmdOpen} onOpenChange={() => (search.query = "")}>
 	<Dialog.Trigger
-		class="hover-hover:md:input hover-hover:md:gap-4 hover-hover:md:cursor-text"
+		class="hover-hover:md:input hover-hover:md:gap-4 hover-hover:md:cursor-text h-10"
 		aria-label="Search"
 		onclick={() => open()}
 	>
