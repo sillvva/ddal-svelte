@@ -1,7 +1,7 @@
 import { getRequestEvent } from "$app/server";
 import { privateEnv } from "$lib/env/private";
 import { localsSessionSchema, localsUserSchema, type LocalsUser, type UserId } from "$lib/schemas";
-import { redirect, type RequestEvent } from "@sveltejs/kit";
+import { redirect } from "@sveltejs/kit";
 import { betterAuth } from "better-auth";
 import { drizzleAdapter } from "better-auth/adapters/drizzle";
 import { admin } from "better-auth/plugins/admin";
@@ -72,8 +72,9 @@ export async function getAuthSession(event = getRequestEvent()) {
 	};
 }
 
-export const assertAuth = Effect.fn(function* (event: RequestEvent = getRequestEvent(), adminOnly: boolean = false) {
-	const user = event.locals.user ?? (yield* Effect.promise(() => getAuthSession(event))).user;
+export const assertAuth = Effect.fn(function* (adminOnly: boolean = false) {
+	const event = getRequestEvent();
+	const user = event.locals.user;
 	assertUser(user);
 
 	if (adminOnly && user.role !== "admin") return redirect(302, "/characters");

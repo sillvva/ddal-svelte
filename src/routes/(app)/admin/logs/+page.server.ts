@@ -38,7 +38,7 @@ export const load = async (event) =>
 export const actions = {
 	deleteLog: (event) =>
 		run(function* () {
-			yield* assertAuth(event, true);
+			yield* assertAuth(true);
 
 			const form = yield* validateForm(event, v.object({ id: appLogId }));
 			if (!form.valid) return fail(400, { form });

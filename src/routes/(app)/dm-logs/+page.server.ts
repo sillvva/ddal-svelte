@@ -7,7 +7,7 @@ import * as v from "valibot";
 
 export const load = (event) =>
 	run(function* () {
-		const user = yield* assertAuth(event);
+		const user = yield* assertAuth();
 
 		const logs = yield* withLog((service) => service.get.dmLogs(user.id));
 
@@ -20,7 +20,7 @@ export const load = (event) =>
 export const actions = {
 	deleteLog: (event) =>
 		run(function* () {
-			const user = yield* assertAuth(event);
+			const user = yield* assertAuth();
 
 			const form = yield* validateForm(event, v.object({ id: logIdSchema }));
 			if (!form.valid) return fail(400, { form });

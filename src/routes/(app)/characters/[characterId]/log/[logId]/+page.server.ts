@@ -13,7 +13,7 @@ import * as v from "valibot";
 
 export const load = (event) =>
 	run(function* () {
-		const user = yield* assertAuth(event);
+		const user = yield* assertAuth();
 
 		const parent = yield* Effect.promise(event.parent);
 		const character = parent.character;
@@ -53,7 +53,7 @@ export const load = (event) =>
 export const actions = {
 	saveLog: (event) =>
 		run(function* () {
-			const user = yield* assertAuth(event);
+			const user = yield* assertAuth();
 
 			const characterId = v.parse(characterIdSchema, event.params.characterId);
 			const character = yield* withCharacter((service) => service.get.character(characterId));

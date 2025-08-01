@@ -9,7 +9,7 @@ import * as v from "valibot";
 
 export const load = (event) =>
 	run(function* () {
-		const user = yield* assertAuth(event);
+		const user = yield* assertAuth();
 
 		const parent = yield* Effect.promise(event.parent);
 
@@ -45,7 +45,7 @@ export const load = (event) =>
 export const actions = {
 	saveDM: (event) =>
 		run(function* () {
-			const user = yield* assertAuth(event);
+			const user = yield* assertAuth();
 
 			const idResult = v.safeParse(dungeonMasterIdSchema, event.params.dmId || "");
 			if (!idResult.success) redirect(302, `/dms`);

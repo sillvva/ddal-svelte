@@ -11,7 +11,7 @@ import * as v from "valibot";
 
 export const load = (event) =>
 	run(function* () {
-		const user = yield* assertAuth(event);
+		const user = yield* assertAuth();
 
 		const idResult = v.safeParse(logIdOrNewSchema, event.params.logId || "new");
 		if (!idResult.success) redirect(307, `/dm-logs`);
@@ -49,7 +49,7 @@ export const load = (event) =>
 export const actions = {
 	saveLog: (event) =>
 		run(function* () {
-			const user = yield* assertAuth(event);
+			const user = yield* assertAuth();
 
 			const idResult = v.safeParse(logIdOrNewSchema, event.params.logId || "new");
 			if (!idResult.success) redirect(302, `/dm-logs`);

@@ -11,7 +11,7 @@ import * as v from "valibot";
 
 export const load = (event) =>
 	run(function* () {
-		yield* assertAuth(event);
+		yield* assertAuth();
 
 		const parent = yield* Effect.promise(event.parent);
 
@@ -47,7 +47,7 @@ export const load = (event) =>
 export const actions = {
 	saveCharacter: (event) =>
 		run(function* () {
-			const user = yield* assertAuth(event);
+			const user = yield* assertAuth();
 
 			const form = yield* validateForm(event, editCharacterSchema);
 			if (!form.valid) return fail(400, { form });

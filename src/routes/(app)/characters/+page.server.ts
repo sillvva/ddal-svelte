@@ -4,7 +4,7 @@ import { withCharacter } from "$server/effect/characters.js";
 
 export const load = (event) =>
 	run(function* () {
-		const user = yield* assertAuth(event);
+		const user = yield* assertAuth();
 
 		const characters = yield* withCharacter((service) => service.get.userCharacters(user.id, true));
 

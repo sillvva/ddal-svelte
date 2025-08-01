@@ -8,7 +8,7 @@ import * as v from "valibot";
 
 export const load = (event) =>
 	run(function* () {
-		const user = yield* assertAuth(event);
+		const user = yield* assertAuth();
 
 		const dms = yield* withDM((service) => service.get.userDMs(user));
 
@@ -21,7 +21,7 @@ export const load = (event) =>
 export const actions = {
 	deleteDM: (event) =>
 		run(function* () {
-			const user = yield* assertAuth(event);
+			const user = yield* assertAuth();
 
 			const form = yield* validateForm(event, v.object({ id: dungeonMasterIdSchema }));
 			if (!form.valid) return fail(400, { form });
