@@ -2,7 +2,7 @@ import { dev } from "$app/environment";
 import { getRequestEvent } from "$app/server";
 import { privateEnv } from "$lib/env/private";
 import type { AppLogSchema, UserId } from "$lib/schemas";
-import { db, query } from "$server/db";
+import { db, DrizzleError, query } from "$server/db";
 import { appLogs } from "$server/db/schema";
 import { isInstanceOfClass } from "@sillvva/utils";
 import {
@@ -180,17 +180,19 @@ export function validateForm<
 export async function save<
 	TOut extends Record<PropertyKey, any>,
 	TIn extends Record<PropertyKey, any> = TOut,
-	TError extends FormError<any, TIn> = FormError<any, TIn>,
 	TSuccess extends any = any
 >(
-	program: Effect.Effect<TIn, TError>,
+	program: Effect.Effect<TIn, FormError<TOut, TIn> | DrizzleError>,
 	handlers: {
-		onError: (err: TError) => ActionFailure<{ form: SuperValidated<TOut, App.Superforms.Message, TIn> }>;
+		onError: (err: FormError<TOut, TIn>) => ActionFailure<{ form: SuperValidated<TOut> }>;
 		onSuccess: (data: TIn) => TSuccess;
 	}
 ) {
+	class SaveError extends FormError<TOut, TIn> {}
+	const runnable = program.pipe(Effect.catchTag("DrizzleError", SaveError.from<TOut, TIn>));
+
 	const result = await Effect.runPromise(
-		Effect.match(program, {
+		Effect.match(runnable, {
 			onSuccess: handlers.onSuccess,
 			onFailure: handlers.onError
 		})

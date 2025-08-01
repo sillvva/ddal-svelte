@@ -1,9 +1,9 @@
 import { BLANK_CHARACTER } from "$lib/constants.js";
 import { defaultLogSchema } from "$lib/entities.js";
-import { characterIdOrNewSchema, editCharacterSchema } from "$lib/schemas";
+import { characterIdOrNewSchema, editCharacterSchema, type EditCharacterSchema } from "$lib/schemas";
 import { assertUser } from "$server/auth";
 import { run, save, validateForm } from "$server/effect";
-import { CharacterNotFoundError, withCharacter } from "$server/effect/characters";
+import { CharacterNotFoundError, SaveCharacterError, withCharacter } from "$server/effect/characters";
 import { withLog } from "$server/effect/logs.js";
 import { Effect } from "effect";
 import { fail, setError } from "sveltekit-superforms";
@@ -68,7 +68,9 @@ export const actions = {
 							log.name = "Character Creation";
 
 							return await save(
-								withLog((service) => service.set.save(log, user)),
+								withLog((service) => service.set.save(log, user)).pipe(
+									Effect.catchAll(SaveCharacterError.from<EditCharacterSchema>)
+								),
 								{
 									onError: (err) => {
 										setError(form, "", err.message);

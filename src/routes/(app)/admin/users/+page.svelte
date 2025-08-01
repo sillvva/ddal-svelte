@@ -1,6 +1,6 @@
 <script lang="ts">
 	import { goto, invalidateAll } from "$app/navigation";
-	import { authClient, setDefaultUserImage } from "$lib/auth.js";
+	import { authClient } from "$lib/auth.js";
 	import Search from "$lib/components/Search.svelte";
 	import { BLANK_CHARACTER } from "$lib/constants.js";
 	import { errorToast, successToast } from "$lib/factories.svelte.js";
@@ -62,7 +62,6 @@
 												const img = e.currentTarget as HTMLImageElement;
 												img.onerror = null;
 												img.src = BLANK_CHARACTER;
-												setDefaultUserImage(user.id);
 											}}
 										/>
 									{:else}
