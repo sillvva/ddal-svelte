@@ -46,7 +46,7 @@
 			</thead>
 			<tbody>
 				{#each results as user}
-					<tr data-banned={user.isBanned} class="data-[banned=true]:bg-error/10">
+					<tr data-banned={user.banned} class="data-[banned=true]:bg-error/10">
 						<td class="pr-0 align-top transition-colors sm:pr-2">
 							<div class="avatar">
 								<div class="mask mask-squircle bg-primary size-12">
@@ -87,9 +87,9 @@
 									class="btn btn-sm btn-primary tooltip tooltip-left"
 									aria-label="Impersonate {user.name}"
 									data-tip="Impersonate {user.name}"
-									disabled={user.role === "admin" || user.isBanned}
+									disabled={user.role === "admin" || user.banned}
 									onclick={async () => {
-										if (user.role === "admin" || user.isBanned) return;
+										if (user.role === "admin" || user.banned) return;
 										const { data } = await authClient.admin.impersonateUser({
 											userId: user.id
 										});
@@ -101,14 +101,14 @@
 								>
 									<span class="iconify mdi--account-switch"></span>
 								</button>
-								{#if !user.isBanned}
+								{#if !user.banned}
 									<button
 										class="btn btn-sm btn-error tooltip tooltip-left"
 										aria-label="Ban {user.name}"
 										data-tip="Ban {user.name}"
-										disabled={user.role === "admin" || user.isBanned}
+										disabled={user.role === "admin"}
 										onclick={async () => {
-											if (user.role === "admin" || user.isBanned) return;
+											if (user.role === "admin") return;
 											const reason = prompt("Reason for ban");
 											if (!reason?.trim()) return errorToast("Reason is required");
 											const { data } = await authClient.admin.banUser({
@@ -128,9 +128,9 @@
 										class="btn btn-sm btn-success tooltip tooltip-left"
 										aria-label="Unban {user.name}"
 										data-tip="Unban {user.name}"
-										disabled={user.role === "admin" || !user.isBanned}
+										disabled={user.role === "admin"}
 										onclick={async () => {
-											if (user.role === "admin" || !user.isBanned) return;
+											if (user.role === "admin") return;
 											if (!confirm(`Are you sure you want to unban ${user.name}?`)) return;
 											const { data } = await authClient.admin.unbanUser({
 												userId: user.id

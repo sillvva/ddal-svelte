@@ -17,7 +17,7 @@ export class UpdateUserError extends Data.TaggedError("UpdateUserError")<ErrorPa
 interface UserApiImpl {
 	readonly get: {
 		readonly localsUser: (userId: UserId) => Effect.Effect<LocalsUser | undefined, DrizzleError>;
-		readonly users: (userId: UserId) => Effect.Effect<(User & { characters: { id: CharacterId }[] })[], DrizzleError>;
+		readonly users: () => Effect.Effect<(User & { characters: { id: CharacterId }[] })[], DrizzleError>;
 	};
 	readonly set: {
 		readonly update: (
@@ -68,7 +68,7 @@ export class UserService extends Effect.Service<UserService>()("UserService", {
 						})
 					);
 				}),
-				users: Effect.fn("UserService.get.users")(function* (userId) {
+				users: Effect.fn("UserService.get.users")(function* () {
 					return yield* query(
 						db.query.user.findMany({
 							with: {
@@ -84,8 +84,8 @@ export class UserService extends Effect.Service<UserService>()("UserService", {
 								}
 							},
 							where: {
-								id: {
-									ne: userId
+								role: {
+									ne: "admin"
 								}
 							}
 						})
