@@ -52,11 +52,11 @@ export const actions = {
 			const user = yield* assertAuth(event);
 
 			const idResult = v.safeParse(logIdOrNewSchema, event.params.logId || "new");
-			if (!idResult.success) redirect(307, `/dm-logs`);
+			if (!idResult.success) redirect(302, `/dm-logs`);
 			const logId = idResult.output;
 
 			const log = logId !== "new" ? yield* withLog((service) => service.get.log(logId, user.id)) : undefined;
-			if (logId !== "new" && !log?.id) redirect(307, `/dm-logs`);
+			if (logId !== "new" && !log?.id) redirect(302, `/dm-logs`);
 
 			const characters = yield* withCharacter((service) => service.get.userCharacters(user.id, true));
 

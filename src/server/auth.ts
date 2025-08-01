@@ -52,14 +52,14 @@ export function assertUser(user: LocalsUser | undefined): asserts user is Locals
 	const result = v.safeParse(localsUserSchema, user);
 	if (!result.success) {
 		Effect.runFork(Log.debug("assertUser", { issues: v.summarize(result.issues) }));
-		redirect(307, `/?redirect=${encodeURIComponent(`${url.pathname}${url.search}`)}`);
+		redirect(302, `/?redirect=${encodeURIComponent(`${url.pathname}${url.search}`)}`);
 	}
 	if (result.output.banned) {
 		event.cookies
 			.getAll()
 			.filter((c) => c.name.includes("auth"))
 			.forEach((c) => event.cookies.delete(c.name, { path: "/" }));
-		redirect(307, `/?code=BANNED&reason=${result.output.banReason}`);
+		redirect(302, `/?code=BANNED&reason=${result.output.banReason}`);
 	}
 }
 
@@ -76,7 +76,7 @@ export const assertAuth = Effect.fn(function* (event: RequestEvent = getRequestE
 	const user = event.locals.user ?? (yield* Effect.promise(() => getAuthSession(event))).user;
 	assertUser(user);
 
-	if (adminOnly && user.role !== "admin") return redirect(307, "/characters");
+	if (adminOnly && user.role !== "admin") return redirect(302, "/characters");
 
 	return user;
 });

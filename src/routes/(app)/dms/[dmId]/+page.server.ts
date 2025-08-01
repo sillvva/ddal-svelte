@@ -48,7 +48,7 @@ export const actions = {
 			const user = yield* assertAuth(event);
 
 			const idResult = v.safeParse(dungeonMasterIdSchema, event.params.dmId || "");
-			if (!idResult.success) redirect(307, `/dms`);
+			if (!idResult.success) redirect(302, `/dms`);
 			const dmId = idResult.output;
 
 			const form = yield* validateForm(event, dungeonMasterSchema);

@@ -57,14 +57,14 @@ export const actions = {
 
 			const characterId = v.parse(characterIdSchema, event.params.characterId);
 			const character = yield* withCharacter((service) => service.get.character(characterId));
-			if (!character) redirect(307, "/characters");
+			if (!character) redirect(302, "/characters");
 
 			const idResult = v.safeParse(logIdOrNewSchema, event.params.logId);
-			if (!idResult.success) redirect(307, `/character/${character.id}`);
+			if (!idResult.success) redirect(302, `/character/${character.id}`);
 			const logId = idResult.output;
 
 			const log = logId !== "new" ? yield* withLog((service) => service.get.log(logId, user.id)) : undefined;
-			if (logId !== "new" && !log?.id) redirect(307, `/characters/${character.id}`);
+			if (logId !== "new" && !log?.id) redirect(302, `/characters/${character.id}`);
 
 			const form = yield* validateForm(event, characterLogSchema(character));
 			if (!form.valid) return fail(400, { form });

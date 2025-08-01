@@ -199,8 +199,8 @@ export async function save<
 	);
 
 	if (typeof result === "string" && result.startsWith("/")) {
-		Effect.runFork(Log.debug("Redirect", { status: 307, location: result }));
-		redirect(307, result);
+		Effect.runFork(Log.debug("Redirect", { status: 303, location: result }));
+		redirect(303, result);
 	}
 
 	if (typeof result === "object" && result !== null && "status" in result) {
