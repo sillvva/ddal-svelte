@@ -25,8 +25,11 @@ export class LogNotFoundError extends Data.TaggedError("LogNotFoundError")<Error
 }
 
 export class SaveLogError extends FormError<LogSchema> {}
-function createSaveError(err: unknown): SaveLogError {
-	return SaveLogError.from(err);
+
+export class DeleteLogError extends FormError<{ id: LogId }> {
+	constructor(err?: unknown) {
+		super("Unable to delete log", { status: 500, cause: err });
+	}
 }
 
 export type LogData = InferQueryResult<"logs", { with: typeof logIncludes }>;
@@ -108,7 +111,7 @@ interface LogApiImpl {
 	};
 	readonly set: {
 		readonly save: (log: LogSchema, user: LocalsUser) => Effect.Effect<FullLogData, SaveLogError | DrizzleError>;
-		readonly delete: (logId: LogId, userId: UserId) => Effect.Effect<{ id: LogId }, SaveLogError | DrizzleError>;
+		readonly delete: (logId: LogId, userId: UserId) => Effect.Effect<{ id: LogId }, DeleteLogError | DrizzleError>;
 	};
 }
 
@@ -363,7 +366,7 @@ export class LogService extends Effect.Service<LogService>()("LogService", {
 
 					return yield* transaction(
 						(tx) => upsertLog(log, user).pipe(Effect.provide(LogTx(tx)), Effect.provide(DMTx(tx))),
-						createSaveError
+						(err) => new SaveLogError("Unable to save log", { status: 500, cause: err })
 					);
 				}),
 
@@ -405,11 +408,7 @@ export class LogService extends Effect.Service<LogService>()("LogService", {
 								)
 							)
 							.returning({ id: logs.id })
-					).pipe(
-						Effect.flatMap((logs) =>
-							isTupleOf(logs, 1) ? Effect.succeed(logs[0]) : Effect.fail(new SaveLogError("Log not found", { status: 404 }))
-						)
-					);
+					).pipe(Effect.flatMap((logs) => (isTupleOf(logs, 1) ? Effect.succeed(logs[0]) : Effect.fail(new DeleteLogError()))));
 				})
 			}
 		};
@@ -422,7 +421,7 @@ export class LogService extends Effect.Service<LogService>()("LogService", {
 export const LogTx = (tx: Transaction) => LogService.DefaultWithoutDependencies().pipe(Layer.provide(DBService.Default(tx)));
 
 export const withLog = Effect.fn("withLog")(
-	function* <R, E extends SaveLogError | DrizzleError>(impl: (service: LogApiImpl) => Effect.Effect<R, E>) {
+	function* <R, E extends SaveLogError | DeleteLogError | DrizzleError>(impl: (service: LogApiImpl) => Effect.Effect<R, E>) {
 		const logApi = yield* LogService;
 		const result = yield* impl(logApi);
 

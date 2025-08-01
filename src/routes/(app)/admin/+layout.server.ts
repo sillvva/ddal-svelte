@@ -1,11 +1,9 @@
-import { assertUser } from "$server/auth";
-import { redirect } from "@sveltejs/kit";
+import { assertAuth } from "$server/auth.js";
+import { run } from "$server/effect";
 
-export const load = async (event) => {
-	const user = event.locals.user;
-	assertUser(user);
+export const load = async (event) =>
+	run(function* () {
+		const user = yield* assertAuth(event, true);
 
-	if (user.role !== "admin") throw redirect(302, "/characters");
-
-	return { user };
-};
+		return { user };
+	});

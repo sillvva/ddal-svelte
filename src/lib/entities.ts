@@ -152,7 +152,7 @@ export function defaultDM(userId: UserId): DungeonMaster {
 
 export function defaultLogSchema(
 	userId: UserId,
-	character: { id: CharacterId | null; name: string } = { id: "" as CharacterId, name: "" }
+	character: { id: CharacterId | null; name: string } = { id: null, name: "" }
 ): LogSchema {
 	return {
 		id: "new",

@@ -18,6 +18,7 @@
 	import Input from "$lib/components/forms/Input.svelte";
 	import Submit from "$lib/components/forms/Submit.svelte";
 	import SuperForm from "$lib/components/forms/SuperForm.svelte";
+	import { BLANK_CHARACTER } from "$lib/constants.js";
 	import { errorToast, valibotForm } from "$lib/factories.svelte.js";
 	import { editCharacterSchema } from "$lib/schemas";
 	import { getGlobal } from "$lib/stores.svelte.js";
@@ -55,20 +56,20 @@
 		<Input type="url" {superform} field="characterSheetUrl" label="Character Sheet URL" />
 	</Control>
 	<Control class="col-span-12">
-		<div class="flex items-center gap-2">
+		<div class="flex items-center gap-4">
 			<div class="flex-1">
 				<Input
 					type="url"
 					{superform}
 					field="imageUrl"
 					label="Image URL"
-					placeholder={`${page.url.origin}${data.BLANK_CHARACTER}`}
+					placeholder={`${page.url.origin}${BLANK_CHARACTER}`}
 					description="Images from imgur may not appear when sharing links due to rate limiting"
 				/>
 			</div>
 			<div class="mask mask-squircle bg-primary size-12">
 				<img
-					src={$form.imageUrl || data.BLANK_CHARACTER}
+					src={$form.imageUrl || BLANK_CHARACTER}
 					width={48}
 					height={48}
 					class="size-full object-cover object-top duration-150 ease-in-out group-hover/row:scale-125 motion-safe:transition-transform"
@@ -76,8 +77,8 @@
 					loading="lazy"
 					onerror={(e) => {
 						const img = e.currentTarget as HTMLImageElement;
-						img.src = data.BLANK_CHARACTER;
-						$form.imageUrl = data.BLANK_CHARACTER;
+						img.src = BLANK_CHARACTER;
+						$form.imageUrl = BLANK_CHARACTER;
 						errorToast("Image URL does not load. Using default image.");
 					}}
 				/>

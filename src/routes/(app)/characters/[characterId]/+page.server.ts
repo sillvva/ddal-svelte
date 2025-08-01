@@ -1,5 +1,5 @@
 import { characterIdSchema, logIdSchema } from "$lib/schemas.js";
-import { assertUser } from "$server/auth";
+import { assertAuth } from "$server/auth";
 import { run, save, validateForm } from "$server/effect";
 import { CharacterNotFoundError, withCharacter } from "$server/effect/characters";
 import { withLog } from "$server/effect/logs.js";
@@ -24,8 +24,7 @@ export const load = (event) =>
 export const actions = {
 	deleteCharacter: (event) =>
 		run(function* () {
-			const user = event.locals.user;
-			assertUser(user);
+			const user = yield* assertAuth(event);
 
 			const form = yield* validateForm(event, v.object({ id: characterIdSchema }));
 			if (!form.valid) return fail(400, { form });
@@ -43,8 +42,7 @@ export const actions = {
 		}),
 	deleteLog: (event) =>
 		run(function* () {
-			const user = event.locals.user;
-			assertUser(user);
+			const user = yield* assertAuth(event);
 
 			const form = yield* validateForm(event, v.object({ id: logIdSchema }));
 			if (!form.valid) return fail(400, { form });

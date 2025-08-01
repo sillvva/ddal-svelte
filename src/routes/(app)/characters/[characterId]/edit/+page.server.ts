@@ -1,7 +1,7 @@
 import { BLANK_CHARACTER } from "$lib/constants.js";
 import { defaultLogSchema } from "$lib/entities.js";
 import { characterIdOrNewSchema, editCharacterSchema, type EditCharacterSchema } from "$lib/schemas";
-import { assertUser } from "$server/auth";
+import { assertAuth } from "$server/auth";
 import { run, save, validateForm } from "$server/effect";
 import { CharacterNotFoundError, SaveCharacterError, withCharacter } from "$server/effect/characters";
 import { withLog } from "$server/effect/logs.js";
@@ -11,8 +11,7 @@ import * as v from "valibot";
 
 export const load = (event) =>
 	run(function* () {
-		const user = event.locals.user;
-		assertUser(user);
+		yield* assertAuth(event);
 
 		const parent = yield* Effect.promise(event.parent);
 
@@ -27,7 +26,7 @@ export const load = (event) =>
 						race: parent.character.race || "",
 						class: parent.character.class || "",
 						characterSheetUrl: parent.character.characterSheetUrl || "",
-						imageUrl: parent.character.imageUrl.replace(BLANK_CHARACTER, "")
+						imageUrl: parent.character.imageUrl === BLANK_CHARACTER ? "" : parent.character.imageUrl
 					}
 				: {
 						id: "new",
@@ -41,16 +40,14 @@ export const load = (event) =>
 
 		return {
 			...event.params,
-			form,
-			BLANK_CHARACTER
+			form
 		};
 	});
 
 export const actions = {
 	saveCharacter: (event) =>
 		run(function* () {
-			const user = event.locals.user;
-			assertUser(user);
+			const user = yield* assertAuth(event);
 
 			const form = yield* validateForm(event, editCharacterSchema);
 			if (!form.valid) return fail(400, { form });

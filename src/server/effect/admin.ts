@@ -11,6 +11,12 @@ import { FormError, Log } from ".";
 
 export class SaveAppLogError extends FormError<AppLogSchema> {}
 
+export class DeleteLogError extends FormError<{ id: AppLogId }> {
+	constructor(err?: unknown) {
+		super("Unable to delete log", { status: 500, cause: err });
+	}
+}
+
 interface AdminApiImpl {
 	readonly get: {
 		readonly logs: (
@@ -18,7 +24,7 @@ interface AdminApiImpl {
 		) => Effect.Effect<{ logs: AppLog[]; metadata: ParseMetadata; ast: ASTNode | null }, DrizzleError>;
 	};
 	readonly set: {
-		readonly deleteLog: (logId: AppLogId) => Effect.Effect<{ id: AppLogId }, SaveAppLogError | DrizzleError>;
+		readonly deleteLog: (logId: AppLogId) => Effect.Effect<{ id: AppLogId }, DeleteLogError | DrizzleError>;
 	};
 }
 
@@ -46,9 +52,7 @@ export class AdminService extends Effect.Service<AdminService>()("AdminService",
 			set: {
 				deleteLog: Effect.fn("AdminService.set.deleteLog")(function* (logId) {
 					return yield* query(db.delete(appLogs).where(eq(appLogs.id, logId)).returning({ id: appLogs.id })).pipe(
-						Effect.flatMap((logs) =>
-							isTupleOf(logs, 1) ? Effect.succeed(logs[0]) : Effect.fail(new SaveAppLogError("Log not found", { status: 404 }))
-						)
+						Effect.flatMap((logs) => (isTupleOf(logs, 1) ? Effect.succeed(logs[0]) : Effect.fail(new DeleteLogError())))
 					);
 				})
 			}
@@ -62,7 +66,7 @@ export class AdminService extends Effect.Service<AdminService>()("AdminService",
 export const AdminTx = (tx: Transaction) => AdminService.DefaultWithoutDependencies().pipe(Layer.provide(DBService.Default(tx)));
 
 export const withAdmin = Effect.fn("withAdmin")(
-	function* <R, E extends SaveAppLogError | DrizzleError>(impl: (service: AdminApiImpl) => Effect.Effect<R, E>) {
+	function* <R, E extends SaveAppLogError | DeleteLogError | DrizzleError>(impl: (service: AdminApiImpl) => Effect.Effect<R, E>) {
 		const adminApi = yield* AdminService;
 		return yield* impl(adminApi);
 	},
