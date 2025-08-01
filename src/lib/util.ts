@@ -1,13 +1,6 @@
 import { wait } from "@sillvva/utils";
 import { hotkey as hk, type HotkeyItem } from "@svelteuidev/composables";
 import type { Attachment } from "svelte/attachments";
-import type { setupViewTransition } from "sveltekit-view-transition";
-
-/**
- * Types
- */
-
-export type TransitionAction = ReturnType<typeof setupViewTransition>["transition"];
 
 /**
  * Functions

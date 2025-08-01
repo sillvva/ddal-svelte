@@ -1,9 +1,9 @@
 import { searchSections } from "$lib/constants.js";
 import type { LocalsUser } from "$lib/schemas.js";
-import { run } from "$server/effect";
-import { withCharacter } from "$server/effect/characters";
-import { withDM } from "$server/effect/dms";
-import { withLog } from "$server/effect/logs";
+import { run } from "$lib/server/effect";
+import { withCharacter } from "$lib/server/effect/characters";
+import { withDM } from "$lib/server/effect/dms";
+import { withLog } from "$lib/server/effect/logs";
 import { sorter } from "@sillvva/utils";
 import { json } from "@sveltejs/kit";
 

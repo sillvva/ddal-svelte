@@ -1,6 +1,6 @@
-import { assertAuth } from "$server/auth";
-import { run } from "$server/effect";
-import { withCharacter } from "$server/effect/characters.js";
+import { assertAuth } from "$lib/server/auth";
+import { run } from "$lib/server/effect";
+import { withCharacter } from "$lib/server/effect/characters.js";
 
 export const load = (event) =>
 	run(function* () {

@@ -1,7 +1,7 @@
 import { building } from "$app/environment";
 import { appCookieSchema } from "$lib/schemas";
-import { auth, getAuthSession } from "$server/auth";
-import { serverGetCookie } from "$server/cookie";
+import { auth, getAuthSession } from "$lib/server/auth";
+import { serverGetCookie } from "$lib/server/cookie";
 import { type Handle } from "@sveltejs/kit";
 import { sequence } from "@sveltejs/kit/hooks";
 import { svelteKitHandler } from "better-auth/svelte-kit";

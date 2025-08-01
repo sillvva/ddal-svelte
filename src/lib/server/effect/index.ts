@@ -2,8 +2,8 @@ import { dev } from "$app/environment";
 import { getRequestEvent } from "$app/server";
 import { privateEnv } from "$lib/env/private";
 import type { AppLogSchema, UserId } from "$lib/schemas";
-import { db, DrizzleError, query } from "$server/db";
-import { appLogs } from "$server/db/schema";
+import { db, DrizzleError, query } from "$lib/server/db";
+import { appLogs } from "$lib/server/db/schema";
 import { isInstanceOfClass } from "@sillvva/utils";
 import {
 	error,
@@ -31,8 +31,6 @@ import type { BaseSchema, InferInput, InferOutput } from "valibot";
 // Logs
 // -------------------------------------------------------------------------------------------------
 
-const logLevel = Logger.withMinimumLogLevel(privateEnv.LOG_LEVEL);
-
 export type Annotations = {
 	routeId: string | null;
 	params: Partial<Record<string, string>>;
@@ -40,6 +38,8 @@ export type Annotations = {
 	username: string | undefined;
 	extra: object;
 };
+
+const logLevel = Logger.withMinimumLogLevel(privateEnv.LOG_LEVEL);
 
 const dbLogger = Logger.replace(
 	Logger.defaultLogger,
@@ -164,7 +164,7 @@ export async function run<A, B extends InstanceType<ErrorClass>, T extends Yield
 // Superforms
 // -------------------------------------------------------------------------------------------------
 
-type SuperValidateData = RequestEvent | Request | FormData | URLSearchParams | URL | null | undefined;
+export type SuperValidateData = RequestEvent | Request | FormData | URLSearchParams | URL | null | undefined;
 
 export function validateForm<
 	Input extends SuperValidateData | Partial<InferInput<Schema>>,

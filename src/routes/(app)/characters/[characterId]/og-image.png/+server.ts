@@ -1,7 +1,8 @@
 import { BLANK_CHARACTER } from "$lib/constants.js";
 import { characterIdSchema } from "$lib/schemas.js";
-import { run, type ErrorParams } from "$server/effect";
-import { withCharacter } from "$server/effect/characters";
+import { run } from "$lib/server/effect";
+import { withCharacter } from "$lib/server/effect/characters";
+import type { ErrorParams } from "$lib/types";
 import { Resvg } from "@resvg/resvg-js";
 import { error, type NumericRange } from "@sveltejs/kit";
 import { Data } from "effect";
@@ -12,7 +13,7 @@ import satori from "satori";
 import { safeParse } from "valibot";
 
 class UnableToFetchImageError extends Data.TaggedError("UnableToFetchImageError")<ErrorParams> {
-	constructor(params: Omit<ErrorParams, "_tag"> = { message: "Unable to fetch image", status: 500 }) {
+	constructor(params: ErrorParams = { message: "Unable to fetch image", status: 500 }) {
 		super(params);
 	}
 }
@@ -55,8 +56,6 @@ export const GET = async ({ params, url }) => {
 				throw new UnableToFetchImageError({ message: response.statusText, status: response.status as NumericRange<400, 599> });
 		}
 	} catch (e) {
-		// Effect.runFork(Log.debug("Using fallback image", { cause: e }));
-
 		imageUrl = fallbackImageUrl;
 		response = await fetch(fallbackImageUrl, { method: "GET" });
 	}

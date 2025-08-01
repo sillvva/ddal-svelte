@@ -1,10 +1,10 @@
 import { defaultLogSchema, getItemEntities, logDataToSchema } from "$lib/entities.js";
 import { characterIdSchema, characterLogSchema, logIdOrNewSchema } from "$lib/schemas";
-import { assertAuth } from "$server/auth";
-import { run, save, validateForm } from "$server/effect";
-import { CharacterNotFoundError, withCharacter } from "$server/effect/characters.js";
-import { withDM } from "$server/effect/dms.js";
-import { LogNotFoundError, withLog } from "$server/effect/logs.js";
+import { assertAuth } from "$lib/server/auth";
+import { run, save, validateForm } from "$lib/server/effect";
+import { CharacterNotFoundError, withCharacter } from "$lib/server/effect/characters.js";
+import { withDM } from "$lib/server/effect/dms.js";
+import { LogNotFoundError, withLog } from "$lib/server/effect/logs.js";
 import { sorter } from "@sillvva/utils";
 import { redirect } from "@sveltejs/kit";
 import { Effect } from "effect";

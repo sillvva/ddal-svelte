@@ -1,5 +1,5 @@
-import { getError } from "$server/auth";
-import { run } from "$server/effect";
+import { getError } from "$lib/server/auth";
+import { run } from "$lib/server/effect";
 import { redirect } from "@sveltejs/kit";
 
 export const load = (event) =>

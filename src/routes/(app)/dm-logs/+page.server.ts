@@ -1,7 +1,7 @@
 import { logIdSchema } from "$lib/schemas.js";
-import { assertAuth } from "$server/auth";
-import { run, save, validateForm } from "$server/effect";
-import { withLog } from "$server/effect/logs.js";
+import { assertAuth } from "$lib/server/auth";
+import { run, save, validateForm } from "$lib/server/effect";
+import { withLog } from "$lib/server/effect/logs.js";
 import { fail, setError } from "sveltekit-superforms";
 import * as v from "valibot";
 

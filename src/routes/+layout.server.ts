@@ -1,7 +1,7 @@
 import { building } from "$app/environment";
 import { privateEnv } from "$lib/env/private.js";
 import { appCookieSchema } from "$lib/schemas.js";
-import { serverGetCookie } from "$server/cookie.js";
+import { serverGetCookie } from "$lib/server/cookie.js";
 
 let checked = false;
 if (!checked && building && privateEnv) {

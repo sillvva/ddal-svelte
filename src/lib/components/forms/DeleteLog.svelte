@@ -2,8 +2,8 @@
 	import { goto } from "$app/navigation";
 	import { errorToast, successToast } from "$lib/factories.svelte";
 	import type { LogId } from "$lib/schemas";
+	import type { FullLogData } from "$lib/server/effect/logs";
 	import { getGlobal } from "$lib/stores.svelte";
-	import type { FullLogData } from "$server/effect/logs";
 	import type { SvelteSet } from "svelte/reactivity";
 	import { superForm } from "sveltekit-superforms";
 

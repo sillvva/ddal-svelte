@@ -15,7 +15,6 @@ const config = {
 		adapter: adapter(),
 		alias: {
 			$lib: path.resolve("./src/lib"),
-			$server: path.resolve("./src/server"),
 			$src: path.resolve("./src")
 		}
 	}

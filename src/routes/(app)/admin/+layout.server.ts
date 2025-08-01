@@ -1,5 +1,5 @@
-import { assertAuth } from "$server/auth.js";
-import { run } from "$server/effect";
+import { assertAuth } from "$lib/server/auth.js";
+import { run } from "$lib/server/effect";
 
 export const load = async (event) =>
 	run(function* () {

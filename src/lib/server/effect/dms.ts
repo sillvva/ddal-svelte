@@ -1,7 +1,7 @@
 import type { DungeonMasterId, DungeonMasterSchema, LocalsUser, UserId } from "$lib/schemas";
-import { DBService, query, type Database, type DrizzleError, type InferQueryResult, type Transaction } from "$server/db";
-import { userDMLogIncludes } from "$server/db/includes";
-import { dungeonMasters, type DungeonMaster } from "$server/db/schema";
+import { DBService, query, type Database, type DrizzleError, type InferQueryResult, type Transaction } from "$lib/server/db";
+import { userDMLogIncludes } from "$lib/server/db/includes";
+import { dungeonMasters, type DungeonMaster } from "$lib/server/db/schema";
 import { sorter } from "@sillvva/utils";
 import { and, eq } from "drizzle-orm";
 import { Data, Effect, Layer } from "effect";

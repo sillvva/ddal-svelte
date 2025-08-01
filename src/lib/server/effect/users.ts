@@ -1,7 +1,7 @@
 import { PROVIDERS } from "$lib/constants";
 import type { CharacterId, LocalsUser, UserId } from "$lib/schemas";
-import { DBService, query, type DrizzleError, type Transaction } from "$server/db";
-import { user, type User } from "$server/db/schema";
+import { DBService, query, type DrizzleError, type Transaction } from "$lib/server/db";
+import { user, type User } from "$lib/server/db/schema";
 import { sorter } from "@sillvva/utils";
 import { eq } from "drizzle-orm";
 import { Data, Effect, Layer } from "effect";

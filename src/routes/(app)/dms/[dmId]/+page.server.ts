@@ -1,7 +1,7 @@
 import { dungeonMasterIdSchema, dungeonMasterSchema } from "$lib/schemas";
-import { assertAuth } from "$server/auth";
-import { run, save, validateForm } from "$server/effect";
-import { DMNotFoundError, withDM } from "$server/effect/dms";
+import { assertAuth } from "$lib/server/auth";
+import { run, save, validateForm } from "$lib/server/effect";
+import { DMNotFoundError, withDM } from "$lib/server/effect/dms";
 import { redirect } from "@sveltejs/kit";
 import { Effect } from "effect";
 import { fail } from "sveltekit-superforms";

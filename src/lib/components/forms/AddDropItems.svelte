@@ -1,6 +1,6 @@
 <script lang="ts">
 	import type { ItemId, LogSchema } from "$lib/schemas";
-	import type { MagicItem, StoryAward } from "$server/db/schema";
+	import type { MagicItem, StoryAward } from "$lib/server/db/schema";
 	import { sorter } from "@sillvva/utils";
 	import type { Snippet } from "svelte";
 	import type { SuperForm } from "sveltekit-superforms";

@@ -1,4 +1,4 @@
-import type { FullCharacterData } from "$server/effect/characters";
+import type { FullCharacterData } from "$lib/server/effect/characters";
 import type { Prettify } from "@sillvva/utils";
 import { LogLevel } from "effect";
 import * as v from "valibot";

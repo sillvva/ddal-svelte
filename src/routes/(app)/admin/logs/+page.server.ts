@@ -1,7 +1,7 @@
 import { appLogId } from "$lib/schemas";
-import { assertAuth } from "$server/auth.js";
-import { run, save, validateForm } from "$server/effect";
-import { validKeys, withAdmin } from "$server/effect/admin.js";
+import { assertAuth } from "$lib/server/auth.js";
+import { run, save, validateForm } from "$lib/server/effect";
+import { validKeys, withAdmin } from "$lib/server/effect/admin.js";
 import { fail } from "@sveltejs/kit";
 import { DateTime, Effect } from "effect";
 import { setError } from "sveltekit-superforms";

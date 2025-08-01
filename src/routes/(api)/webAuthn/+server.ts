@@ -1,7 +1,8 @@
 import { authName } from "$lib/auth";
-import { db, query } from "$server/db";
-import { passkey } from "$server/db/schema";
-import { Log, run, type ErrorParams } from "$server/effect";
+import { db, query } from "$lib/server/db";
+import { passkey } from "$lib/server/db/schema";
+import { Log, run } from "$lib/server/effect";
+import type { ErrorParams } from "$lib/types";
 import { json } from "@sveltejs/kit";
 import { and, eq } from "drizzle-orm";
 import { Data, Effect } from "effect";

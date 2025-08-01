@@ -2,8 +2,8 @@
 	import { goto } from "$app/navigation";
 	import { errorToast, successToast } from "$lib/factories.svelte";
 	import type { DungeonMasterId } from "$lib/schemas";
+	import type { UserDM } from "$lib/server/effect/dms";
 	import { getGlobal } from "$lib/stores.svelte";
-	import type { UserDM } from "$server/effect/dms";
 	import type { SvelteSet } from "svelte/reactivity";
 	import { superForm } from "sveltekit-superforms";
 

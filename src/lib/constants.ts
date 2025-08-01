@@ -1,4 +1,4 @@
-import type { Account } from "$server/db/schema";
+import type { Account } from "$lib/server/db/schema";
 
 export const searchSections = [
 	{ title: "Characters", url: "/characters" },

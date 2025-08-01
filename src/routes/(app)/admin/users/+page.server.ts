@@ -1,5 +1,5 @@
-import { run } from "$server/effect";
-import { withUser } from "$server/effect/users";
+import { run } from "$lib/server/effect";
+import { withUser } from "$lib/server/effect/users";
 import { Effect } from "effect";
 
 export const load = async (event) =>

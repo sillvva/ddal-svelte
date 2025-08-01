@@ -1,7 +1,7 @@
 import { privateEnv } from "$lib/env/private";
-import { relations } from "$server/db/relations";
-import * as schema from "$server/db/schema";
-import { run, type ErrorClass, type ErrorParams, type FormError } from "$server/effect";
+import { relations } from "$lib/server/db/relations";
+import * as schema from "$lib/server/db/schema";
+import { run, type ErrorClass, type ErrorParams, type FormError } from "$lib/server/effect";
 import {
 	getTableColumns,
 	sql,

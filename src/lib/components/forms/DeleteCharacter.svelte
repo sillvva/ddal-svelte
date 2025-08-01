@@ -2,8 +2,8 @@
 	import { goto } from "$app/navigation";
 	import { errorToast, successToast } from "$lib/factories.svelte";
 	import type { CharacterId } from "$lib/schemas";
+	import type { Character } from "$lib/server/db/schema";
 	import { getGlobal } from "$lib/stores.svelte";
-	import type { Character } from "$server/db/schema";
 	import { superForm } from "sveltekit-superforms";
 
 	const global = getGlobal();

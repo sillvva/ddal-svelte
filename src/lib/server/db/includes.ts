@@ -1,4 +1,4 @@
-import type { QueryConfig } from "$server/db";
+import type { QueryConfig } from "$lib/server/db";
 
 export const userIncludes = {
 	columns: {

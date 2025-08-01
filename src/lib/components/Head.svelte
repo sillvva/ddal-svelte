@@ -1,6 +1,5 @@
 <script lang="ts">
 	import { page } from "$app/state";
-	import { routeModules } from "$lib/module";
 	import { type Snippet } from "svelte";
 	interface Props {
 		children?: Snippet<
@@ -22,6 +21,10 @@
 	const defaultTitle = "Adventurers League Log Sheet";
 	const defaultDescription = "A tool for tracking your Adventurers League characters and magic items.";
 	const defaultImage = "https://ddal.dekok.app/images/barovia-gate.webp";
+
+	const routeModules = import.meta.glob("/src/routes/**/+page.svelte", {
+		eager: true
+	}) satisfies Record<string, App.ModuleData>;
 
 	function titleSanitizer(title: string) {
 		return title.replace(/([A-Z])/g, " $1").replace(/^./, (str) => str.toUpperCase());

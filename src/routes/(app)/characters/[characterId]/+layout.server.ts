@@ -1,6 +1,6 @@
 import { characterIdOrNewSchema } from "$lib/schemas.js";
-import { run } from "$server/effect";
-import { withCharacter } from "$server/effect/characters";
+import { run } from "$lib/server/effect";
+import { withCharacter } from "$lib/server/effect/characters";
 import { redirect } from "@sveltejs/kit";
 import * as v from "valibot";
 

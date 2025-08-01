@@ -1,10 +1,10 @@
 import { BLANK_CHARACTER } from "$lib/constants.js";
 import { defaultLogSchema } from "$lib/entities.js";
 import { characterIdOrNewSchema, editCharacterSchema, type EditCharacterSchema } from "$lib/schemas";
-import { assertAuth } from "$server/auth";
-import { run, save, validateForm } from "$server/effect";
-import { CharacterNotFoundError, SaveCharacterError, withCharacter } from "$server/effect/characters";
-import { withLog } from "$server/effect/logs.js";
+import { assertAuth } from "$lib/server/auth";
+import { run, save, validateForm } from "$lib/server/effect";
+import { CharacterNotFoundError, SaveCharacterError, withCharacter } from "$lib/server/effect/characters";
+import { withLog } from "$lib/server/effect/logs.js";
 import { Effect } from "effect";
 import { fail, setError } from "sveltekit-superforms";
 import * as v from "valibot";

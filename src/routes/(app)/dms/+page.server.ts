@@ -1,7 +1,7 @@
 import { dungeonMasterIdSchema } from "$lib/schemas.js";
-import { assertAuth } from "$server/auth";
-import { run, save, validateForm } from "$server/effect";
-import { withDM } from "$server/effect/dms";
+import { assertAuth } from "$lib/server/auth";
+import { run, save, validateForm } from "$lib/server/effect";
+import { withDM } from "$lib/server/effect/dms";
 import { fail, redirect } from "@sveltejs/kit";
 import { setError } from "sveltekit-superforms";
 import * as v from "valibot";

@@ -1,7 +1,8 @@
 import type { UserId } from "$lib/schemas.js";
-import type { User } from "$server/db/schema.js";
-import { Log, run, type ErrorParams } from "$server/effect";
-import { withUser } from "$server/effect/users";
+import type { User } from "$lib/server/db/schema.js";
+import { Log, run } from "$lib/server/effect";
+import { withUser } from "$lib/server/effect/users";
+import type { ErrorParams } from "$lib/types";
 import { json } from "@sveltejs/kit";
 import { Data, Effect } from "effect";
 

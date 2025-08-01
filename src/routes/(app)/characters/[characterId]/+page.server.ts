@@ -1,8 +1,8 @@
 import { characterIdSchema, logIdSchema } from "$lib/schemas.js";
-import { assertAuth } from "$server/auth";
-import { run, save, validateForm } from "$server/effect";
-import { CharacterNotFoundError, withCharacter } from "$server/effect/characters";
-import { withLog } from "$server/effect/logs.js";
+import { assertAuth } from "$lib/server/auth";
+import { run, save, validateForm } from "$lib/server/effect";
+import { CharacterNotFoundError, withCharacter } from "$lib/server/effect/characters";
+import { withLog } from "$lib/server/effect/logs.js";
 import { redirect } from "@sveltejs/kit";
 import { Effect } from "effect";
 import { fail, setError } from "sveltekit-superforms";

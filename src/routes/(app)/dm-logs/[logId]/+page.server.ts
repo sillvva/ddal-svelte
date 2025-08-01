@@ -1,9 +1,9 @@
 import { defaultLogSchema, logDataToSchema } from "$lib/entities.js";
 import { dMLogSchema, logIdOrNewSchema } from "$lib/schemas";
-import { assertAuth } from "$server/auth";
-import { run, save, validateForm } from "$server/effect";
-import { withCharacter } from "$server/effect/characters.js";
-import { LogNotFoundError, withLog } from "$server/effect/logs";
+import { assertAuth } from "$lib/server/auth";
+import { run, save, validateForm } from "$lib/server/effect";
+import { withCharacter } from "$lib/server/effect/characters.js";
+import { LogNotFoundError, withLog } from "$lib/server/effect/logs";
 import { redirect } from "@sveltejs/kit";
 import { Effect } from "effect";
 import { fail } from "sveltekit-superforms";

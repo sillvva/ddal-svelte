@@ -1,5 +1,5 @@
 import { env } from "$env/dynamic/public";
-import type { Passkey } from "$server/db/schema";
+import type { Passkey } from "$lib/server/db/schema";
 import type { UpdateUserInput } from "$src/routes/(api)/updateUser/+server";
 import { adminClient, passkeyClient } from "better-auth/client/plugins";
 import { createAuthClient } from "better-auth/svelte";

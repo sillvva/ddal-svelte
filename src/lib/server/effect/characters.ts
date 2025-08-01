@@ -9,9 +9,9 @@ import {
 	type DrizzleError,
 	type InferQueryResult,
 	type Transaction
-} from "$server/db";
-import { characterIncludes } from "$server/db/includes";
-import { characters, logs, type Character } from "$server/db/schema";
+} from "$lib/server/db";
+import { characterIncludes } from "$lib/server/db/includes";
+import { characters, logs, type Character } from "$lib/server/db/schema";
 import { and, eq, exists } from "drizzle-orm";
 import { Data, Effect, Layer } from "effect";
 import { isTupleOf } from "effect/Predicate";
