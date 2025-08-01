@@ -178,14 +178,15 @@ export function validateForm<
 // -------------------------------------------------------------------------------------------------
 
 export async function save<
+	TSuccess extends `/${string}` | TForm | ActionFailure<TForm>,
 	TOut extends Record<PropertyKey, any>,
-	TIn extends Record<PropertyKey, any> = TOut,
-	TSuccess extends any = any
+	TForm extends { form: SuperValidated<TOut> },
+	TIn extends Record<PropertyKey, any> = TOut
 >(
 	program: Effect.Effect<TIn, FormError<TOut, TIn> | DrizzleError>,
 	handlers: {
-		onError: (err: FormError<TOut, TIn>) => ActionFailure<{ form: SuperValidated<TOut> }>;
-		onSuccess: (data: TIn) => TSuccess;
+		onError: (err: FormError<TOut, TIn>) => ActionFailure<TForm>;
+		onSuccess: (data: TIn) => TSuccess | Promise<TSuccess>;
 	}
 ) {
 	class SaveError extends FormError<TOut, TIn> {}
