@@ -1,17 +1,14 @@
 import { appLogId } from "$lib/schemas";
-import { assertUser } from "$server/auth.js";
+import { assertAuth } from "$server/auth.js";
 import { run, save, validateForm } from "$server/effect";
 import { validKeys, withAdmin } from "$server/effect/admin.js";
 import { fail } from "@sveltejs/kit";
 import { DateTime, Effect } from "effect";
 import { setError } from "sveltekit-superforms";
-import { object } from "valibot";
+import * as v from "valibot";
 
 export const load = async (event) =>
 	run(function* () {
-		const user = event.locals.user;
-		assertUser(user);
-
 		const today = yield* DateTime.now;
 		const yesterday = today.pipe(DateTime.subtract({ days: 1 }));
 		const range = `${DateTime.formatIsoDateUtc(yesterday)}..${DateTime.formatIsoDateUtc(today)}`;
@@ -41,12 +38,9 @@ export const load = async (event) =>
 export const actions = {
 	deleteLog: (event) =>
 		run(function* () {
-			const user = event.locals.user;
-			assertUser(user);
+			yield* assertAuth(event, true);
 
-			if (user.role !== "admin") return fail(403, { message: "You are not authorized to delete logs" });
-
-			const form = yield* validateForm(event, object({ id: appLogId }));
+			const form = yield* validateForm(event, v.object({ id: appLogId }));
 			if (!form.valid) return fail(400, { form });
 
 			return save(

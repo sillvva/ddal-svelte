@@ -1,5 +1,5 @@
 import { dungeonMasterIdSchema, dungeonMasterSchema } from "$lib/schemas";
-import { assertUser } from "$server/auth";
+import { assertAuth } from "$server/auth";
 import { run, save, validateForm } from "$server/effect";
 import { DMNotFoundError, withDM } from "$server/effect/dms";
 import { redirect } from "@sveltejs/kit";
@@ -9,13 +9,12 @@ import * as v from "valibot";
 
 export const load = (event) =>
 	run(function* () {
-		const user = event.locals.user;
-		assertUser(user);
+		const user = yield* assertAuth(event);
 
 		const parent = yield* Effect.promise(event.parent);
 
 		const idResult = v.safeParse(dungeonMasterIdSchema, event.params.dmId || "");
-		if (!idResult.success) redirect(302, `/dms`);
+		if (!idResult.success) redirect(307, `/dms`);
 		const dmId = idResult.output;
 
 		const [dm] = yield* withDM((service) => service.get.userDMs(user, { id: dmId }));
@@ -46,11 +45,10 @@ export const load = (event) =>
 export const actions = {
 	saveDM: (event) =>
 		run(function* () {
-			const user = event.locals.user;
-			assertUser(user);
+			const user = yield* assertAuth(event);
 
 			const idResult = v.safeParse(dungeonMasterIdSchema, event.params.dmId || "");
-			if (!idResult.success) redirect(302, `/dms`);
+			if (!idResult.success) redirect(307, `/dms`);
 			const dmId = idResult.output;
 
 			const form = yield* validateForm(event, dungeonMasterSchema);

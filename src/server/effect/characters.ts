@@ -24,8 +24,11 @@ export class CharacterNotFoundError extends Data.TaggedError("CharacterNotFoundE
 }
 
 export class SaveCharacterError extends FormError<EditCharacterSchema> {}
-function createSaveError(err: unknown): SaveCharacterError {
-	return SaveCharacterError.from(err);
+
+export class DeleteCharacterError extends FormError<{ id: CharacterId }> {
+	constructor(err?: unknown) {
+		super("Unable to delete character", { status: 500, cause: err });
+	}
 }
 
 export type CharacterData = InferQueryResult<"characters", { with: ReturnType<typeof characterIncludes> }>;
@@ -51,7 +54,7 @@ interface CharacterApiImpl {
 		readonly delete: (
 			characterId: CharacterId,
 			userId: UserId
-		) => Effect.Effect<{ id: CharacterId }, SaveCharacterError | DrizzleError>;
+		) => Effect.Effect<{ id: CharacterId }, DeleteCharacterError | DrizzleError>;
 	};
 }
 
@@ -144,12 +147,10 @@ export class CharacterService extends Effect.Service<CharacterService>()("Charac
 									.returning({ id: characters.id })
 							);
 						}),
-						createSaveError
+						(err) => new DeleteCharacterError(err)
 					).pipe(
 						Effect.flatMap((result) =>
-							isTupleOf(result, 1)
-								? Effect.succeed(result[0])
-								: Effect.fail(new SaveCharacterError("Character not found", { status: 404 }))
+							isTupleOf(result, 1) ? Effect.succeed(result[0]) : Effect.fail(new DeleteCharacterError())
 						)
 					);
 				})
@@ -165,7 +166,9 @@ export const CharacterTx = (tx: Transaction) =>
 	CharacterService.DefaultWithoutDependencies().pipe(Layer.provide(DBService.Default(tx)));
 
 export const withCharacter = Effect.fn("withCharacter")(
-	function* <R, E extends SaveCharacterError | DrizzleError>(impl: (service: CharacterApiImpl) => Effect.Effect<R, E>) {
+	function* <R, E extends SaveCharacterError | DeleteCharacterError | DrizzleError>(
+		impl: (service: CharacterApiImpl) => Effect.Effect<R, E>
+	) {
 		const CharacterApi = yield* CharacterService;
 		const result = yield* impl(CharacterApi);
 

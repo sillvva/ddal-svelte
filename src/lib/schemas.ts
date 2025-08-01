@@ -50,7 +50,9 @@ export const envPublicSchema = v.pipe(
 interface CombinedEnv extends EnvPrivate, EnvPublic {}
 export type Env = Prettify<CombinedEnv>;
 
-export const imageUrlWithFallback = v.pipe(v.fallback(v.union([urlSchema, v.literal(BLANK_CHARACTER)]), BLANK_CHARACTER));
+export const imageUrlWithFallback = v.pipe(
+	v.fallback(v.union([urlSchema, v.literal(""), v.literal(BLANK_CHARACTER)]), BLANK_CHARACTER)
+);
 
 export type UserId = v.InferOutput<typeof userIdSchema>;
 export const userIdSchema = brandedId("UserId");
@@ -62,7 +64,7 @@ export const newCharacterSchema = v.object({
 	race: v.optional(shortString, ""),
 	class: v.optional(shortString, ""),
 	characterSheetUrl: optionalURL,
-	imageUrl: imageUrlWithFallback
+	imageUrl: v.optional(imageUrlWithFallback, "")
 });
 
 export type CharacterId = v.InferOutput<typeof characterIdSchema>;
@@ -302,6 +304,9 @@ export const localsPasskeySchema = v.object({
 	aaguid: v.nullable(v.string())
 });
 
+export type Role = v.InferOutput<typeof roleSchema>;
+export const roleSchema = v.picklist(["user", "admin"]);
+
 export type LocalsUser = v.InferOutput<typeof localsUserSchema>;
 export const localsUserSchema = v.object({
 	id: userIdSchema,
@@ -309,7 +314,7 @@ export const localsUserSchema = v.object({
 	email: requiredString,
 	emailVerified: v.boolean(),
 	image: v.nullish(imageUrlWithFallback),
-	role: v.picklist(["user", "admin"]),
+	role: roleSchema,
 	banned: v.boolean(),
 	banReason: v.nullish(v.string()),
 	banExpires: v.nullish(v.date()),

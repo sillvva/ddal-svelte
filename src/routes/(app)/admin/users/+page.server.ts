@@ -1,16 +1,14 @@
-import { assertUser } from "$server/auth.js";
+import { assertAuth } from "$server/auth";
 import { run } from "$server/effect";
 import { withUser } from "$server/effect/users";
 import { Effect } from "effect";
 
-export const load = async (event) => {
-	const user = event.locals.user;
-	assertUser(user);
+export const load = async (event) =>
+	run(function* () {
+		const user = yield* assertAuth(event, true);
 
-	const search = event.url.searchParams.get("s") ?? "";
-
-	const users = await run(
-		withUser((service) => service.get.users(user.id)).pipe(
+		const search = event.url.searchParams.get("s") ?? "";
+		const users = yield* withUser((service) => service.get.users(user.id)).pipe(
 			Effect.map((users) =>
 				users.map((user) => ({
 					...user,
@@ -19,8 +17,7 @@ export const load = async (event) => {
 					banned: user.banned ? "Yes" : "No"
 				}))
 			)
-		)
-	);
+		);
 
-	return { users, search };
-};
+		return { users, search };
+	});

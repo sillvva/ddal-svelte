@@ -21,9 +21,7 @@ export class DMNotFoundError extends Data.TaggedError("DMNotFoundError")<ErrorPa
 }
 
 export class SaveDMError extends FormError<DungeonMasterSchema> {}
-function createSaveError(err: unknown): SaveDMError {
-	return SaveDMError.from(err);
-}
+export class DeleteDMError extends FormError<{ id: DungeonMasterId }> {}
 
 export type UserDM = InferQueryResult<"dungeonMasters", { with: { logs: typeof userDMLogIncludes } }>;
 
@@ -47,7 +45,7 @@ interface DMApiImpl {
 			data: DungeonMasterSchema
 		) => Effect.Effect<DungeonMaster, SaveDMError | DrizzleError>;
 		readonly addUserDM: (user: LocalsUser, dm: UserDM[]) => Effect.Effect<UserDM[], SaveDMError | DrizzleError>;
-		readonly delete: (dm: UserDM, userId: UserId) => Effect.Effect<{ id: DungeonMasterId }, SaveDMError | DrizzleError>;
+		readonly delete: (dm: UserDM, userId: UserId) => Effect.Effect<{ id: DungeonMasterId }, DeleteDMError | DrizzleError>;
 	};
 }
 
@@ -112,7 +110,9 @@ export class DMService extends Effect.Service<DMService>()("DMSService", {
 					yield* Log.info("DMService.set.save", { dmId, userId: user.id });
 					yield* Log.debug("DMService.set.save", data);
 
-					const [dm] = yield* impl.get.userDMs(user, { id: dmId }).pipe(Effect.catchTag("FetchUserDMsError", createSaveError));
+					const [dm] = yield* impl.get
+						.userDMs(user, { id: dmId })
+						.pipe(Effect.catchTag("FetchUserDMsError", (err) => new SaveDMError(err.message)));
 					if (!dm) return yield* new SaveDMError("DM does not exist", { status: 404 });
 
 					if (!data.name.trim()) {
@@ -166,7 +166,7 @@ export class DMService extends Effect.Service<DMService>()("DMSService", {
 				delete: Effect.fn("DMService.set.delete")(function* (dm, userId) {
 					yield* Log.info("DMService.set.delete", { dmId: dm.id, userId });
 
-					if (dm.logs.length) return yield* new SaveDMError("You cannot delete a DM that has logs", { status: 400 });
+					if (dm.logs.length) return yield* new DeleteDMError("You cannot delete a DM that has logs", { status: 400 });
 
 					return yield* query(
 						db
@@ -175,7 +175,7 @@ export class DMService extends Effect.Service<DMService>()("DMSService", {
 							.returning({ id: dungeonMasters.id })
 					).pipe(
 						Effect.flatMap((result) =>
-							isTupleOf(result, 1) ? Effect.succeed(result[0]) : Effect.fail(new SaveDMError("DM not found", { status: 404 }))
+							isTupleOf(result, 1) ? Effect.succeed(result[0]) : Effect.fail(new DeleteDMError("Unable to delete DM"))
 						)
 					);
 				})
@@ -190,7 +190,9 @@ export class DMService extends Effect.Service<DMService>()("DMSService", {
 export const DMTx = (tx: Transaction) => DMService.DefaultWithoutDependencies().pipe(Layer.provide(DBService.Default(tx)));
 
 export const withDM = Effect.fn("withDM")(
-	function* <R, E extends FetchUserDMsError | SaveDMError | DrizzleError>(impl: (service: DMApiImpl) => Effect.Effect<R, E>) {
+	function* <R, E extends FetchUserDMsError | SaveDMError | DeleteDMError | DrizzleError>(
+		impl: (service: DMApiImpl) => Effect.Effect<R, E>
+	) {
 		const dmApi = yield* DMService;
 		const result = yield* impl(dmApi);
 

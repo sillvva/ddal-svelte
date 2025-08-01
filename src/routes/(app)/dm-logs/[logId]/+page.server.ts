@@ -1,6 +1,6 @@
 import { defaultLogSchema, logDataToSchema } from "$lib/entities.js";
 import { dMLogSchema, logIdOrNewSchema } from "$lib/schemas";
-import { assertUser } from "$server/auth";
+import { assertAuth } from "$server/auth";
 import { run, save, validateForm } from "$server/effect";
 import { withCharacter } from "$server/effect/characters.js";
 import { LogNotFoundError, withLog } from "$server/effect/logs";
@@ -11,11 +11,10 @@ import * as v from "valibot";
 
 export const load = (event) =>
 	run(function* () {
-		const user = event.locals.user;
-		assertUser(user);
+		const user = yield* assertAuth(event);
 
 		const idResult = v.safeParse(logIdOrNewSchema, event.params.logId || "new");
-		if (!idResult.success) redirect(302, `/dm-logs`);
+		if (!idResult.success) redirect(307, `/dm-logs`);
 		const logId = idResult.output;
 
 		const characters = yield* withCharacter((service) => service.get.userCharacters(user.id, true)).pipe(
@@ -35,7 +34,7 @@ export const load = (event) =>
 
 		if (logId !== "new") {
 			if (!log.id) return yield* new LogNotFoundError();
-			if (!log.isDmLog) redirect(302, `/characters/${log.characterId}/log/${log.id}`);
+			if (!log.isDmLog) redirect(307, `/characters/${log.characterId}/log/${log.id}`);
 		}
 
 		const form = yield* validateForm(log, dMLogSchema(characters));
@@ -50,15 +49,14 @@ export const load = (event) =>
 export const actions = {
 	saveLog: (event) =>
 		run(function* () {
-			const user = event.locals.user;
-			assertUser(user);
+			const user = yield* assertAuth(event);
 
 			const idResult = v.safeParse(logIdOrNewSchema, event.params.logId || "new");
-			if (!idResult.success) redirect(302, `/dm-logs`);
+			if (!idResult.success) redirect(307, `/dm-logs`);
 			const logId = idResult.output;
 
 			const log = logId !== "new" ? yield* withLog((service) => service.get.log(logId, user.id)) : undefined;
-			if (logId !== "new" && !log?.id) redirect(302, `/dm-logs`);
+			if (logId !== "new" && !log?.id) redirect(307, `/dm-logs`);
 
 			const characters = yield* withCharacter((service) => service.get.userCharacters(user.id, true));
 
