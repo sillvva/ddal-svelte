@@ -1,4 +1,5 @@
 import { building } from "$app/environment";
+import { getRequestEvent } from "$app/server";
 import { privateEnv } from "$lib/env/private";
 import { appCookieSchema, localsSessionSchema, type UserId } from "$lib/schemas";
 import { serverGetCookie } from "$server/cookie";
@@ -55,10 +56,9 @@ const authHandler: Handle = async ({ event, resolve }) => {
 const session: Handle = async ({ event, resolve }) => {
 	if (!event.route.id) return await resolve(event);
 
-	const { session, user } = (await auth.api.getSession({ headers: event.request.headers })) ?? {};
-
-	event.locals.session = session && parse(localsSessionSchema, session);
-	event.locals.user = user && (await run(withUser((service) => service.get.localsUser(user.id as UserId))));
+	const { session, user } = await getAuthSession(event);
+	event.locals.session = session;
+	event.locals.user = user;
 
 	return await resolve(event);
 };
@@ -76,3 +76,12 @@ const preloadTheme: Handle = async ({ event, resolve }) => {
 };
 
 export const handle = sequence(authHandler, session, preloadTheme);
+
+export async function getAuthSession(event = getRequestEvent()) {
+	const { session, user } = (await auth.api.getSession({ headers: event.request.headers })) ?? {};
+
+	return {
+		session: session && parse(localsSessionSchema, session),
+		user: user && (await run(withUser((service) => service.get.localsUser(user.id as UserId))))
+	};
+}
