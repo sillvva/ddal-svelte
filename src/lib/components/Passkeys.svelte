@@ -10,7 +10,7 @@
 		DeleteWebAuthnResponse,
 		RenameWebAuthnInput,
 		RenameWebAuthnResponse
-	} from "$src/routes/(api)/webAuthn/+server";
+	} from "$src/routes/api/web-authn/+server";
 	import { tick } from "svelte";
 	import { scale } from "svelte/transition";
 	import Control from "./forms/Control.svelte";
@@ -58,7 +58,7 @@
 
 		const id = renameId;
 		const name = useDefault ? "" : renameName;
-		const response = await fetch("/webAuthn", {
+		const response = await fetch("/api/web-authn", {
 			method: "POST",
 			body: JSON.stringify({ name, id } satisfies RenameWebAuthnInput)
 		});
@@ -86,7 +86,7 @@
 		const auth = passkeys.find((a) => a.id === id);
 		if (!auth) return;
 		if (confirm(`Are you sure you want to delete "${auth.name}"?`)) {
-			const response = await fetch("/webAuthn", {
+			const response = await fetch("/api/web-authn", {
 				method: "DELETE",
 				body: JSON.stringify({ id } satisfies DeleteWebAuthnInput)
 			});

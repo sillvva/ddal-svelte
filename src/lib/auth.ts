@@ -1,6 +1,6 @@
 import { env } from "$env/dynamic/public";
 import type { Passkey } from "$lib/server/db/schema";
-import type { UpdateUserInput } from "$src/routes/(api)/updateUser/+server";
+import type { UpdateUserInput } from "$src/routes/api/update-user/+server";
 import { adminClient, passkeyClient } from "better-auth/client/plugins";
 import { createAuthClient } from "better-auth/svelte";
 import { BLANK_CHARACTER, type ProviderId } from "./constants";
@@ -16,7 +16,7 @@ export function authName(passkey: Passkey) {
 }
 
 export async function setDefaultUserImage(userId: UserId) {
-	await fetch("/updateUser", {
+	await fetch("/api/update-user", {
 		method: "POST",
 		body: JSON.stringify({
 			id: userId,
@@ -27,7 +27,7 @@ export async function setDefaultUserImage(userId: UserId) {
 
 export type UserAccount = { providerId: ProviderId; name: string; email: string; image: string };
 export async function setAccountDetails(userId: UserId, account: UserAccount) {
-	await fetch("/updateUser", {
+	await fetch("/api/update-user", {
 		method: "POST",
 		body: JSON.stringify({
 			id: userId,

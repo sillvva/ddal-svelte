@@ -1,5 +1,5 @@
 import { browser } from "$app/environment";
-import type { SearchData } from "$src/routes/(api)/command/+server";
+import type { SearchData } from "$src/routes/api/command/+server";
 import { Duration } from "effect";
 import Cookie from "js-cookie";
 import { getContext, setContext } from "svelte";

@@ -5,7 +5,7 @@
 	import { GlobalSearchFactory } from "$lib/factories.svelte";
 	import { getGlobal } from "$lib/stores.svelte";
 	import { hotkey } from "$lib/util";
-	import type { SearchData } from "$src/routes/(api)/command/+server";
+	import type { SearchData } from "$src/routes/api/command/+server";
 	import { Command, Dialog, Separator } from "bits-ui";
 	import { twMerge } from "tailwind-merge";
 	import SearchResults from "./SearchResults.svelte";
@@ -25,7 +25,7 @@
 	$effect(() => {
 		const controller = new AbortController();
 		if (!global.searchData.length && cmdOpen) {
-			fetch(`/command`, { signal: controller.signal })
+			fetch(`/api/command`, { signal: controller.signal })
 				.then((res) => res.json() as Promise<SearchData>)
 				.then((res) => (global.searchData = res));
 		} else {
