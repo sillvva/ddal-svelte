@@ -189,8 +189,7 @@ export async function save<
 		onSuccess: (data: TIn) => TSuccess | Promise<TSuccess>;
 	}
 ) {
-	class SaveError extends FormError<TOut, TIn> {}
-	const runnable = program.pipe(Effect.catchTag("DrizzleError", SaveError.from<TOut, TIn>));
+	const runnable = program.pipe(Effect.catchTag("DrizzleError", FormError.from<TOut, TIn>));
 
 	const result = await Effect.runPromise(
 		Effect.match(runnable, {
