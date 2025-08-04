@@ -1,6 +1,6 @@
 import { command, query } from "$app/server";
 import { appLogId } from "$lib/schemas";
-import { assertAuth } from "$lib/server/auth";
+import { assertAuth, assertAuthOrFail } from "$lib/server/auth";
 import { run, runRemote } from "$lib/server/effect";
 import { validKeys, withAdmin } from "$lib/server/effect/admin";
 import { DateTime, Effect } from "effect";
@@ -43,7 +43,7 @@ export const getLogs = query(v.string(), (search) =>
 
 export const deleteLog = command(appLogId, (id) =>
 	runRemote(function* () {
-		yield* assertAuth(true);
+		yield* assertAuthOrFail(true);
 		return yield* withAdmin((service) => service.set.deleteLog(id));
 	})
 );
