@@ -259,6 +259,7 @@
 											class="btn btn-error btn-sm"
 											aria-label="Delete Log"
 											onclick={async () => {
+												if (!confirm(`Are you sure you want to delete ${log.name}? This action cannot be undone.`)) return;
 												deletingLog.add(log.id);
 												const result = await deleteLog(log.id);
 												if (result.ok) {

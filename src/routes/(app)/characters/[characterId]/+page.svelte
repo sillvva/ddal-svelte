@@ -126,6 +126,7 @@
 								class="hover:bg-error"
 								aria-label="Delete Character"
 								onclick={async () => {
+									if (!confirm(`Are you sure you want to delete ${data.character.name}? This action cannot be undone.`)) return;
 									const result = await deleteCharacter(data.character.id);
 									if (result.ok) {
 										successToast(`${data.character.name} deleted`);
@@ -483,6 +484,7 @@
 											class="btn btn-error btn-sm"
 											aria-label="Delete Log"
 											onclick={async () => {
+												if (!confirm(`Are you sure you want to delete ${log.name}? This action cannot be undone.`)) return;
 												deletingLog.add(log.id);
 												const result = await deleteLog(log.id);
 												if (result.ok) {

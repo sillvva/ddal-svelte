@@ -80,6 +80,7 @@
 													class="btn btn-error sm:btn-sm"
 													aria-label="Delete DM"
 													onclick={async () => {
+														if (!confirm(`Are you sure you want to delete ${dm.name}? This action cannot be undone.`)) return;
 														deletingDM.add(dm.id);
 														const result = await deleteDM(dm.id);
 														if (result.ok) {

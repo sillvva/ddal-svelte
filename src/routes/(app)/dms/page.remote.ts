@@ -5,13 +5,13 @@ import { runRemote, type ErrorParams } from "$lib/server/effect";
 import { withDM } from "$lib/server/effect/dms";
 import { Data } from "effect";
 
-export class DMNotFoundError extends Data.TaggedError("DMNotFoundError")<ErrorParams> {
+class DMNotFoundError extends Data.TaggedError("DMNotFoundError")<ErrorParams> {
 	constructor(err?: unknown) {
 		super({ message: "Dungeon Master not found", status: 404, cause: err });
 	}
 }
 
-export class DeleteUserDMError extends Data.TaggedError("DeleteUserDMError")<ErrorParams> {
+class DeleteUserDMError extends Data.TaggedError("DeleteUserDMError")<ErrorParams> {
 	constructor(err?: unknown) {
 		super({ message: "Unable to delete User DM", status: 500, cause: err });
 	}
