@@ -1,9 +1,9 @@
 import type { FullCharacterData } from "$lib/server/effect/characters";
 import type { UserDM } from "$lib/server/effect/dms";
 import type { FullLogData, LogSummaryData, UserLogData } from "$lib/server/effect/logs";
-import type { SearchData } from "$src/routes/api/command/+server";
 import { parseDateTime, type DateValue } from "@internationalized/date";
 import { debounce, isDefined, substrCount, type MapKeys, type Prettify } from "@sillvva/utils";
+import { isHttpError } from "@sveltejs/kit";
 import { Duration } from "effect";
 import escape from "regexp.escape";
 import { toast } from "svelte-sonner";
@@ -20,6 +20,7 @@ import {
 } from "sveltekit-superforms";
 import { valibotClient } from "sveltekit-superforms/adapters";
 import * as v from "valibot";
+import type { SearchData } from "./remote/command.remote";
 
 export function successToast(message: string) {
 	toast.success("Success", {
@@ -38,6 +39,14 @@ export function errorToast(message: string) {
 		},
 		duration: Duration.toMillis("30 seconds")
 	});
+}
+
+export function unknownErrorToast(error: unknown) {
+	if (typeof error === "string") errorToast(error);
+	else if (typeof error === "object" && error !== null && "message" in error && typeof error.message === "string")
+		errorToast(error.message);
+	else if (isHttpError(error)) errorToast(error.body.message);
+	else errorToast("An unknown error occurred");
 }
 
 interface CustomFormOptions<S extends v.ObjectSchema<any, any>> {

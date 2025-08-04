@@ -1,12 +1,12 @@
 import { PROVIDERS } from "$lib/constants";
 import type { CharacterId, LocalsUser, UserId } from "$lib/schemas";
-import { DBService, query, type DrizzleError, type Transaction } from "$lib/server/db";
+import { DBService, runQuery, type DrizzleError, type Transaction } from "$lib/server/db";
 import { user, type User } from "$lib/server/db/schema";
 import { sorter } from "@sillvva/utils";
 import { eq } from "drizzle-orm";
 import { Data, Effect, Layer } from "effect";
 import { isTupleOf } from "effect/Predicate";
-import { debugSet, type ErrorParams } from ".";
+import { Log, type ErrorParams } from ".";
 
 export class UpdateUserError extends Data.TaggedError("UpdateUserError")<ErrorParams> {
 	constructor(err?: unknown) {
@@ -34,7 +34,7 @@ export class UserService extends Effect.Service<UserService>()("UserService", {
 		const impl: UserApiImpl = {
 			get: {
 				localsUser: Effect.fn("UserService.get.localsUser")(function* (userId) {
-					return yield* query(
+					return yield* runQuery(
 						db.query.user.findFirst({
 							with: {
 								accounts: {
@@ -69,7 +69,7 @@ export class UserService extends Effect.Service<UserService>()("UserService", {
 					);
 				}),
 				users: Effect.fn("UserService.get.users")(function* () {
-					return yield* query(
+					return yield* runQuery(
 						db.query.user.findMany({
 							with: {
 								accounts: {
@@ -94,10 +94,12 @@ export class UserService extends Effect.Service<UserService>()("UserService", {
 			},
 			set: {
 				update: Effect.fn("UserService.set.update")(function* (userId, data) {
-					return yield* query(db.update(user).set(data).where(eq(user.id, userId)).returning()).pipe(
+					return yield* runQuery(db.update(user).set(data).where(eq(user.id, userId)).returning()).pipe(
 						Effect.flatMap((users) =>
 							isTupleOf(users, 1) ? Effect.succeed(users[0]) : Effect.fail(new UpdateUserError("Failed to update user"))
-						)
+						),
+						Effect.tap((result) => Log.info("UserService.set.update", { userId, result })),
+						Effect.tapError(() => Log.debug("UserService.set.update", { userId, data }))
 					);
 				})
 			}
@@ -113,11 +115,7 @@ export const UserTx = (tx: Transaction) => UserService.DefaultWithoutDependencie
 export const withUser = Effect.fn("withUser")(
 	function* <R, E extends UpdateUserError | DrizzleError>(impl: (service: UserApiImpl) => Effect.Effect<R, E>) {
 		const userApi = yield* UserService;
-		const result = yield* impl(userApi);
-
-		yield* debugSet("UserService", impl, result);
-
-		return result;
+		return yield* impl(userApi);
 	},
 	(effect) => effect.pipe(Effect.provide(UserService.Default()))
 );

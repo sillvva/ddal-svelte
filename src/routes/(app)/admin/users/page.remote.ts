@@ -1,11 +1,11 @@
+import { query } from "$app/server";
 import { run } from "$lib/server/effect";
 import { withUser } from "$lib/server/effect/users";
 import { Effect } from "effect";
 
-export const load = async (event) =>
+export const getUsers = query(() =>
 	run(function* () {
-		const search = event.url.searchParams.get("s") ?? "";
-		const users = yield* withUser((service) => service.get.users()).pipe(
+		return yield* withUser((service) => service.get.users()).pipe(
 			Effect.map((users) =>
 				users.map((user) => ({
 					...user,
@@ -13,6 +13,5 @@ export const load = async (event) =>
 				}))
 			)
 		);
-
-		return { users, search };
-	});
+	})
+);

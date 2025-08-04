@@ -1,12 +1,13 @@
 <script lang="ts">
-	import { afterNavigate } from "$app/navigation";
+	import { afterNavigate, invalidateAll } from "$app/navigation";
 	import { navigating, page } from "$app/state";
-	import { setDefaultUserImage } from "$lib/auth.js";
 	import CommandTray from "$lib/components/CommandTray.svelte";
 	import Markdown from "$lib/components/Markdown.svelte";
 	import MobileNav from "$lib/components/MobileNav.svelte";
 	import Settings from "$lib/components/Settings.svelte";
 	import { BLANK_CHARACTER } from "$lib/constants.js";
+	import { errorToast } from "$lib/factories.svelte.js";
+	import { updateUser } from "$lib/remote/auth.remote.js";
 	import { getGlobal } from "$lib/stores.svelte.js";
 	import { hotkey } from "$lib/util";
 	import { sleep } from "@svelteuidev/composables";
@@ -93,12 +94,18 @@
 								src={data.user.image || ""}
 								alt={data.user.name}
 								class="rounded-full object-cover object-center"
-								onerror={(e) => {
+								onerror={async (e) => {
 									if (!data.user) return;
 									const img = e.currentTarget as HTMLImageElement;
 									img.onerror = null;
 									img.src = BLANK_CHARACTER;
-									setDefaultUserImage(data.user.id);
+
+									const result = await updateUser({ image: BLANK_CHARACTER });
+									if (result.ok) {
+										invalidateAll();
+									} else {
+										errorToast(result.error.message);
+									}
 								}}
 							/>
 						</button>

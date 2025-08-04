@@ -1,9 +1,6 @@
-import { logIdSchema } from "$lib/schemas.js";
 import { assertAuth } from "$lib/server/auth";
-import { run, save, validateForm } from "$lib/server/effect";
+import { run } from "$lib/server/effect";
 import { withLog } from "$lib/server/effect/logs.js";
-import { fail, setError } from "sveltekit-superforms";
-import * as v from "valibot";
 
 export const load = (event) =>
 	run(function* () {
@@ -16,24 +13,3 @@ export const load = (event) =>
 			...event.params
 		};
 	});
-
-export const actions = {
-	deleteLog: (event) =>
-		run(function* () {
-			const user = yield* assertAuth();
-
-			const form = yield* validateForm(event, v.object({ id: logIdSchema }));
-			if (!form.valid) return fail(400, { form });
-
-			return save(
-				withLog((service) => service.set.delete(form.data.id, user.id)),
-				{
-					onError: (err) => {
-						setError(form, "", err.message);
-						return fail(err.status, { form });
-					},
-					onSuccess: () => ({ form })
-				}
-			);
-		})
-};

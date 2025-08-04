@@ -1,16 +1,16 @@
 import { getRequestEvent } from "$app/server";
 import { privateEnv } from "$lib/env/private";
 import { localsSessionSchema, localsUserSchema, type LocalsUser, type UserId } from "$lib/schemas";
-import { redirect } from "@sveltejs/kit";
+import { redirect, type NumericRange } from "@sveltejs/kit";
 import { betterAuth } from "better-auth";
 import { drizzleAdapter } from "better-auth/adapters/drizzle";
 import { admin } from "better-auth/plugins/admin";
 import { passkey } from "better-auth/plugins/passkey";
-import { Effect } from "effect";
+import { Data, Effect } from "effect";
 import { v7 } from "uuid";
 import * as v from "valibot";
 import { db } from "./db";
-import { Log, run } from "./effect";
+import { Log, run, type ErrorParams } from "./effect";
 import { withUser } from "./effect/users";
 
 export const auth = betterAuth({
@@ -78,6 +78,22 @@ export const assertAuth = Effect.fn(function* (adminOnly: boolean = false) {
 	assertUser(user);
 
 	if (adminOnly && user.role !== "admin") return redirect(302, "/characters");
+
+	return user;
+});
+
+export class UnauthorizedError extends Data.TaggedError("UnauthorizedError")<ErrorParams> {
+	constructor(message = "Unauthorized", status: NumericRange<400, 499>) {
+		super({ message, status });
+	}
+}
+
+export const assertAuthOrFail = Effect.fn(function* (adminOnly: boolean = false) {
+	const event = getRequestEvent();
+	const user = event.locals.user;
+	if (!user) return yield* Effect.fail(new UnauthorizedError("Authentication required", 401));
+
+	if (adminOnly && user.role !== "admin") return yield* Effect.fail(new UnauthorizedError("Insufficient permissions", 403));
 
 	return user;
 });

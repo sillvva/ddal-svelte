@@ -41,7 +41,7 @@ export class DBService extends Effect.Service<DBService>()("DBService", {
 	})
 }) {}
 
-export function query<TQuery extends PromiseLike<any> & { toSQL: () => Query }>(
+export function runQuery<TQuery extends PromiseLike<any> & { toSQL: () => Query }>(
 	query: TQuery
 ): Effect.Effect<Awaited<TQuery>, DrizzleError> {
 	return Effect.tryPromise({

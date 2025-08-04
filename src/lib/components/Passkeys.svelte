@@ -3,14 +3,9 @@
 	import { page } from "$app/state";
 	import { authClient } from "$lib/auth";
 	import { errorToast, successToast } from "$lib/factories.svelte";
+	import { deletePasskey, renamePasskey } from "$lib/remote/auth.remote";
 	import { getGlobal } from "$lib/stores.svelte";
 	import { hotkey } from "$lib/util";
-	import type {
-		DeleteWebAuthnInput,
-		DeleteWebAuthnResponse,
-		RenameWebAuthnInput,
-		RenameWebAuthnResponse
-	} from "$src/routes/api/web-authn/+server";
 	import { tick } from "svelte";
 	import { scale } from "svelte/transition";
 	import Control from "./forms/Control.svelte";
@@ -58,27 +53,23 @@
 
 		const id = renameId;
 		const name = useDefault ? "" : renameName;
-		const response = await fetch("/api/web-authn", {
-			method: "POST",
-			body: JSON.stringify({ name, id } satisfies RenameWebAuthnInput)
-		});
 
-		const value = (await response.json()) as RenameWebAuthnResponse;
-
-		if (value.success) {
+		const result = await renamePasskey({ name, id });
+		if (result.ok) {
+			console.log(result);
 			if (defaultName) {
-				if (defaultName === value.name) successToast(`Passkey "${value.name}" saved`);
-				else successToast(`Passkey "${defaultName}" renamed to "${value.name}"`);
+				if (defaultName === result.data.name) successToast(`Passkey "${result.data.name}" saved`);
+				else successToast(`Passkey "${defaultName}" renamed to "${result.data.name}"`);
 			} else {
-				successToast(`Passkey "${value.name}" created`);
+				successToast(`Passkey "${result.data.name}" created`);
 			}
 			invalidateAll();
 			renaming = false;
+		} else if (result.error.extra.retry) {
+			initRename(id, name, result.error.message);
 		} else {
-			if (value.throw) {
-				errorToast(value.error);
-				renaming = false;
-			} else initRename(id, name, value.error);
+			errorToast(result.error.message);
+			renaming = false;
 		}
 	}
 
@@ -86,18 +77,12 @@
 		const auth = passkeys.find((a) => a.id === id);
 		if (!auth) return;
 		if (confirm(`Are you sure you want to delete "${auth.name}"?`)) {
-			const response = await fetch("/api/web-authn", {
-				method: "DELETE",
-				body: JSON.stringify({ id } satisfies DeleteWebAuthnInput)
-			});
-
-			const value = (await response.json()) as DeleteWebAuthnResponse;
-
-			if (value.success) {
+			const result = await deletePasskey({ id });
+			if (result.ok) {
 				successToast(`Passkey "${auth.name}" deleted`);
 				invalidateAll();
 			} else {
-				errorToast(value.error);
+				errorToast(result.error.message);
 			}
 		}
 	}

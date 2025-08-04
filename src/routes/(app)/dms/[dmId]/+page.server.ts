@@ -17,7 +17,7 @@ export const load = (event) =>
 		if (!idResult.success) redirect(307, `/dms`);
 		const dmId = idResult.output;
 
-		const [dm] = yield* withDM((service) => service.get.userDMs(user, { id: dmId }));
+		const [dm] = yield* withDM((service) => service.get.userDMs(user.id, { id: dmId }));
 		if (!dm) return yield* new DMNotFoundError();
 
 		const form = yield* validateForm(

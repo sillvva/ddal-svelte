@@ -9,26 +9,17 @@
 	import { goto } from "$app/navigation";
 	import Breadcrumbs from "$lib/components/Breadcrumb.svelte";
 	import Control from "$lib/components/forms/Control.svelte";
-	import DeleteDm from "$lib/components/forms/DeleteDM.svelte";
 	import Input from "$lib/components/forms/Input.svelte";
 	import Submit from "$lib/components/forms/Submit.svelte";
 	import SuperForm from "$lib/components/forms/SuperForm.svelte";
-	import { valibotForm } from "$lib/factories.svelte.js";
+	import { errorToast, successToast, valibotForm } from "$lib/factories.svelte.js";
 	import { dungeonMasterSchema } from "$lib/schemas";
-	import { getGlobal } from "$lib/stores.svelte.js";
 	import { sorter } from "@sillvva/utils";
+	import { deleteDM } from "../page.remote.js";
 
 	let { data } = $props();
 
-	const global = getGlobal();
-	const superform = $derived(
-		valibotForm(data.form, dungeonMasterSchema, {
-			onResult() {
-				global.searchData = [];
-			}
-		})
-	);
-
+	const superform = $derived(valibotForm(data.form, dungeonMasterSchema));
 	const sortedLogs = $derived(data.dm.logs.toSorted((a, b) => sorter(a.date, b.date)));
 </script>
 
@@ -51,7 +42,22 @@
 			{#if data.dm.logs.length == 0}
 				<div class="bg-base-200 flex h-40 flex-col items-center justify-center gap-2 rounded-lg">
 					<p>This DM has no logs.</p>
-					<DeleteDm dm={data.dm} label="Delete DM" ondelete={() => goto("/dms")} />
+					<button
+						type="button"
+						class="btn btn-error sm:btn-sm"
+						aria-label="Delete DM"
+						onclick={async () => {
+							const result = await deleteDM(data.dm.id);
+							if (result.ok) {
+								successToast(`${data.dm.name} deleted`);
+								goto("/dms");
+							} else {
+								errorToast(result.error.message);
+							}
+						}}
+					>
+						<span class="iconify mdi--trash-can"></span>
+					</button>
 				</div>
 			{:else}
 				<div class="bg-base-100 w-full overflow-x-auto rounded-lg">

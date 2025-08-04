@@ -4,7 +4,7 @@ import type { CharacterId, EditCharacterSchema, NewCharacterSchema, UserId } fro
 import {
 	buildConflictUpdateColumns,
 	DBService,
-	query,
+	runQuery,
 	type Database,
 	type DrizzleError,
 	type InferQueryResult,
@@ -15,7 +15,7 @@ import { characters, logs, type Character } from "$lib/server/db/schema";
 import { and, eq, exists } from "drizzle-orm";
 import { Data, Effect, Layer } from "effect";
 import { isTupleOf } from "effect/Predicate";
-import { debugSet, FormError, Log, type ErrorParams } from ".";
+import { FormError, Log, type ErrorParams } from ".";
 
 export class CharacterNotFoundError extends Data.TaggedError("CharacterNotFoundError")<ErrorParams> {
 	constructor(err?: unknown) {
@@ -66,35 +66,34 @@ export class CharacterService extends Effect.Service<CharacterService>()("Charac
 			db,
 			get: {
 				character: Effect.fn("CharacterService.get.character")(function* (characterId, includeLogs = true) {
-					yield* Log.info("CharacterService.get.character", { characterId, includeLogs });
-
-					return yield* query(
+					return yield* runQuery(
 						db.query.characters.findFirst({
 							with: characterIncludes(includeLogs),
 							where: { id: { eq: characterId } }
 						})
-					).pipe(Effect.andThen((character) => character && parseCharacter(character)));
+					).pipe(
+						Effect.andThen((character) => character && parseCharacter(character)),
+						Effect.tapError(() => Log.debug("CharacterService.get.character", { characterId, includeLogs }))
+					);
 				}),
 
 				userCharacters: Effect.fn("CharacterService.get.userCharacters")(function* (userId, includeLogs = true) {
-					yield* Log.info("CharacterService.get.userCharacters", { userId, includeLogs });
-
-					return yield* query(
+					return yield* runQuery(
 						db.query.characters.findMany({
 							with: characterIncludes(includeLogs),
 							where: { userId: { eq: userId }, name: { NOT: PlaceholderName } }
 						})
-					).pipe(Effect.map((characters) => characters.map(parseCharacter)));
+					).pipe(
+						Effect.map((characters) => characters.map(parseCharacter)),
+						Effect.tapError(() => Log.debug("CharacterService.get.userCharacters", { userId, includeLogs }))
+					);
 				})
 			},
 			set: {
 				save: Effect.fn("CharacterService.set.save")(function* (characterId, userId, data) {
-					yield* Log.info("CharacterService.set.save", { characterId, userId });
-					yield* Log.debug("CharacterService.set.save", data);
-
 					if (!characterId) yield* new SaveCharacterError("No character ID provided", { status: 400 });
 
-					return yield* query(
+					return yield* runQuery(
 						db
 							.insert(characters)
 							.values({
@@ -113,16 +112,16 @@ export class CharacterService extends Effect.Service<CharacterService>()("Charac
 							isTupleOf(characters, 1)
 								? Effect.succeed(characters[0])
 								: Effect.fail(new SaveCharacterError("Failed to save character"))
-						)
+						),
+						Effect.tap((result) => Log.info("CharacterService.set.save", { characterId, userId, result })),
+						Effect.tapError(() => Log.debug("CharacterService.set.save", { characterId, userId, data }))
 					);
 				}),
 
 				delete: Effect.fn("CharacterService.set.delete")(function* (characterId, userId) {
-					yield* Log.info("CharacterService.set.delete", { characterId, userId });
-
 					return yield* transaction(
 						Effect.fn("CharacterService.set.delete.transaction")(function* (tx) {
-							yield* query(
+							yield* runQuery(
 								tx
 									.update(logs)
 									.set({ characterId: null, appliedDate: null })
@@ -140,7 +139,7 @@ export class CharacterService extends Effect.Service<CharacterService>()("Charac
 									)
 							);
 
-							return yield* query(
+							return yield* runQuery(
 								tx
 									.delete(characters)
 									.where(and(eq(characters.id, characterId), eq(characters.userId, userId)))
@@ -151,7 +150,9 @@ export class CharacterService extends Effect.Service<CharacterService>()("Charac
 					).pipe(
 						Effect.flatMap((result) =>
 							isTupleOf(result, 1) ? Effect.succeed(result[0]) : Effect.fail(new DeleteCharacterError())
-						)
+						),
+						Effect.tap((result) => Log.info("CharacterService.set.delete", { characterId, userId, result })),
+						Effect.tapError(() => Log.debug("CharacterService.set.delete", { characterId, userId }))
 					);
 				})
 			}
@@ -170,11 +171,7 @@ export const withCharacter = Effect.fn("withCharacter")(
 		impl: (service: CharacterApiImpl) => Effect.Effect<R, E>
 	) {
 		const CharacterApi = yield* CharacterService;
-		const result = yield* impl(CharacterApi);
-
-		yield* debugSet("CharacterService", impl, result);
-
-		return result;
+		return yield* impl(CharacterApi);
 	},
 	(effect) => effect.pipe(Effect.provide(CharacterService.Default()))
 );

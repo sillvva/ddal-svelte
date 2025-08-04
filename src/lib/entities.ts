@@ -53,7 +53,6 @@ export function getLevels(
 	logs: Log[],
 	base: { level?: number; experience?: number; acp?: number } = { level: 0, experience: 0, acp: 0 }
 ) {
-	if (!logs) logs = [];
 	let totalLevel = Math.max(1, base.level || 0);
 	const logLevels: Array<{ id: string; levels: number }> = [];
 

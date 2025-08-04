@@ -1,9 +1,10 @@
 <script lang="ts">
 	import { goto, invalidateAll } from "$app/navigation";
 	import { page } from "$app/state";
-	import { authClient, setAccountDetails, type UserAccount } from "$lib/auth";
-	import { BLANK_CHARACTER, PROVIDERS } from "$lib/constants";
+	import { authClient } from "$lib/auth";
+	import { BLANK_CHARACTER, PROVIDERS, type ProviderId } from "$lib/constants";
 	import { errorToast } from "$lib/factories.svelte";
+	import { updateUser } from "$lib/remote/auth.remote";
 	import { getGlobal } from "$lib/stores.svelte";
 	import { isDefined } from "@sillvva/utils";
 	import { isTupleOfAtLeast } from "effect/Predicate";
@@ -14,6 +15,8 @@
 	interface Props {
 		open: boolean;
 	}
+
+	export type UserAccount = { providerId: ProviderId; name: string; email: string; image: string };
 
 	let { open = $bindable(false) }: Props = $props();
 
@@ -52,7 +55,7 @@
 							: undefined
 					)
 				)
-			).then((result) => {
+			).then(async (result) => {
 				userAccounts = result.map((r) => (r.status === "fulfilled" ? r.value : undefined)).filter(isDefined);
 
 				const account =
@@ -69,9 +72,12 @@
 						account.email !== user.email ||
 						(account.image !== user.image && !account.image.includes(BLANK_CHARACTER))
 					) {
-						setAccountDetails(user.id, account).then(() => {
+						const result = await updateUser(account);
+						if (result.ok) {
 							invalidateAll();
-						});
+						} else {
+							errorToast(result.error.message);
+						}
 					}
 				}
 			});
@@ -175,11 +181,14 @@
 														class="btn btn-sm tooltip join-item bg-base-300"
 														aria-label="Switch account"
 														data-tip="Use this account"
-														onclick={() => {
-															setAccountDetails(user.id, account).then(() => {
+														onclick={async () => {
+															const result = await updateUser(account);
+															if (result.ok) {
 																global.app.settings.provider = account.providerId;
 																invalidateAll();
-															});
+															} else {
+																errorToast(result.error.message);
+															}
 														}}
 													>
 														<span class="iconify mdi--accounts-switch size-5"></span>
@@ -189,16 +198,15 @@
 											<button
 												class="btn btn-error btn-sm join-item font-semibold"
 												disabled={currentAccount?.providerId === provider.id}
-												onclick={() => {
+												onclick={async () => {
 													if (confirm("Are you sure you want to unlink this account?")) {
-														authClient.unlinkAccount({ providerId: provider.id }).then((result) => {
-															if (result.error?.code) {
-																return errorToast(
-																	authClient.$ERROR_CODES[result.error.code as keyof typeof authClient.$ERROR_CODES]
-																);
-															}
-															invalidateAll();
-														});
+														const result = await authClient.unlinkAccount({ providerId: provider.id });
+														if (result.error?.code) {
+															return errorToast(
+																authClient.$ERROR_CODES[result.error.code as keyof typeof authClient.$ERROR_CODES]
+															);
+														}
+														invalidateAll();
 													}
 												}}
 											>

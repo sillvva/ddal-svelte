@@ -10,14 +10,14 @@ function brandedId<T extends string>(name: T) {
 }
 
 const string = v.pipe(v.string(), v.trim());
-const requiredString = v.pipe(string, v.regex(/^.*(\p{L}|\p{N})+.*$/u, "Required"));
-const shortString = v.pipe(string, v.maxLength(50));
-const maxTextSize = v.pipe(string, v.maxLength(5000));
-const maxStringSize = v.pipe(string, v.maxLength(255));
-const integer = v.pipe(v.number(), v.integer());
+export const requiredString = v.pipe(string, v.regex(/^.*(\p{L}|\p{N})+.*$/u, "Required"));
+export const shortString = v.pipe(string, v.maxLength(50));
+export const maxTextSize = v.pipe(string, v.maxLength(5000));
+export const maxStringSize = v.pipe(string, v.maxLength(255));
+export const integer = v.pipe(v.number(), v.integer());
 
-const urlSchema = v.pipe(string, v.url(), v.maxLength(500));
-const optionalURL = v.optional(v.fallback(urlSchema, ""), "");
+export const urlSchema = v.pipe(string, v.url(), v.maxLength(500));
+export const optionalURL = v.optional(v.fallback(urlSchema, ""), "");
 
 export type EnvPrivate = v.InferOutput<typeof envPrivateSchema>;
 export const envPrivateSchema = v.pipe(

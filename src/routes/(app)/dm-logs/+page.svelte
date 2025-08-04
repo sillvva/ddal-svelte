@@ -9,7 +9,7 @@
 </script>
 
 <script lang="ts">
-	import { goto } from "$app/navigation";
+	import { goto, invalidateAll } from "$app/navigation";
 	import { page } from "$app/state";
 	import Breadcrumbs from "$lib/components/Breadcrumb.svelte";
 	import Dropdown from "$lib/components/Dropdown.svelte";
@@ -17,14 +17,14 @@
 	import Markdown from "$lib/components/Markdown.svelte";
 	import Search from "$lib/components/Search.svelte";
 	import SearchResults from "$lib/components/SearchResults.svelte";
-	import DeleteLog from "$lib/components/forms/DeleteLog.svelte";
-	import { EntitySearchFactory } from "$lib/factories.svelte.js";
+	import { EntitySearchFactory, errorToast, successToast } from "$lib/factories.svelte.js";
 	import { getGlobal } from "$lib/stores.svelte.js";
 	import { createTransition, hotkey } from "$lib/util.js";
 	import { sorter } from "@sillvva/utils";
 	import { download } from "@svelteuidev/composables";
 	import { fromAction } from "svelte/attachments";
 	import { SvelteSet } from "svelte/reactivity";
+	import { deleteLog } from "./page.remote.js";
 
 	let { data } = $props();
 
@@ -254,7 +254,24 @@
 								<!-- Delete -->
 								<td class="w-8 align-top print:hidden">
 									<div class="flex flex-col gap-2">
-										<DeleteLog {log} {deletingLog} />
+										<button
+											type="button"
+											class="btn btn-error btn-sm"
+											aria-label="Delete Log"
+											onclick={async () => {
+												deletingLog.add(log.id);
+												const result = await deleteLog(log.id);
+												if (result.ok) {
+													successToast(`${log.name} deleted`);
+													invalidateAll();
+												} else {
+													errorToast(result.error.message);
+													deletingLog.delete(log.id);
+												}
+											}}
+										>
+											<span class="iconify mdi--trash-can size-4"></span>
+										</button>
 									</div>
 								</td>
 							</tr>

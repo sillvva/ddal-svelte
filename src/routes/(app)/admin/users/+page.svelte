@@ -1,23 +1,24 @@
 <script lang="ts">
 	import { goto, invalidateAll } from "$app/navigation";
+	import { page } from "$app/state";
 	import { authClient } from "$lib/auth.js";
 	import Search from "$lib/components/Search.svelte";
 	import { BLANK_CHARACTER } from "$lib/constants.js";
 	import { errorToast, successToast } from "$lib/factories.svelte.js";
 	import { JSONSearchParser } from "@sillvva/search/json";
+	import { getUsers } from "./page.remote";
 
-	let { data } = $props();
+	let search = $state(page.url.searchParams.get("s")?.trim() ?? "");
 
-	let search = $state(data.search);
-
+	const users = $derived(getUsers());
 	const parser = $derived(
-		new JSONSearchParser(data.users, {
+		new JSONSearchParser(users.current ?? [], {
 			defaultKey: "name",
 			validKeys: ["id", "name", "email", "role", "banned", "characters"]
 		})
 	);
 
-	const results = $derived(search.trim() ? parser.filter(search) : data.users);
+	const results = $derived(search.trim() ? parser.filter(search) : (users.current ?? []));
 </script>
 
 <div class="mb-4 flex flex-wrap items-center justify-between gap-2 max-sm:justify-end">
@@ -25,10 +26,10 @@
 		<Search bind:value={search} placeholder="Search by name, email, role, etc." />
 	</div>
 	<span class="badge bg-base-300 text-base-content badge-lg">
-		{#if results.length < data.users.length}
+		{#if results.length < (users.current?.length ?? 0)}
 			Showing {results.length} of
 		{/if}
-		{data.users.length} users
+		{users.current?.length} users
 	</span>
 </div>
 

@@ -1,5 +1,4 @@
 import { browser } from "$app/environment";
-import type { SearchData } from "$src/routes/api/command/+server";
 import { Duration } from "effect";
 import Cookie from "js-cookie";
 import { getContext, setContext } from "svelte";
@@ -49,7 +48,6 @@ export function setCookie<TSchema extends v.BaseSchema<any, any, any>>(
 class Global {
 	_app: AppCookie = $state(appDefaults);
 	_pageLoader: boolean = $state(false);
-	_searchData: SearchData = $state([]);
 
 	constructor(app: AppCookie) {
 		this._app = app;
@@ -71,13 +69,6 @@ class Global {
 	}
 	set pageLoader(value: boolean) {
 		this._pageLoader = value;
-	}
-
-	get searchData() {
-		return this._searchData;
-	}
-	set searchData(value: SearchData) {
-		this._searchData = value;
 	}
 }
 

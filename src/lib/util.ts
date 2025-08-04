@@ -18,3 +18,7 @@ export function hotkey(hotkeys: HotkeyItem[]): Attachment<HTMLElement | Document
 		return hk(node, hotkeys).destroy;
 	};
 }
+
+export function removeTrace(message: string) {
+	return message.replace(/\n\s+at .+/g, "");
+}

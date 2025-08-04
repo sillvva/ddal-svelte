@@ -11,8 +11,8 @@ const authHandler: Handle = async ({ event, resolve }) => {
 };
 
 const session: Handle = async ({ event, resolve }) => {
-	// future: allow remote functions to pass through this hook
-	if (!event.route.id) return await resolve(event);
+	const isRemote = new URL(event.request.url).pathname.startsWith("/_app/remote");
+	if (!event.route.id && !isRemote) return await resolve(event);
 
 	const { session, user } = await getAuthSession(event);
 	event.locals.session = session;

@@ -2,8 +2,9 @@ import { dev } from "$app/environment";
 import { getRequestEvent } from "$app/server";
 import { privateEnv } from "$lib/env/private";
 import type { AppLogSchema, UserId } from "$lib/schemas";
-import { db, DrizzleError, query } from "$lib/server/db";
+import { db, DrizzleError, runQuery } from "$lib/server/db";
 import { appLogs } from "$lib/server/db/schema";
+import { removeTrace } from "$lib/util";
 import { isInstanceOfClass } from "@sillvva/utils";
 import {
 	error,
@@ -51,11 +52,10 @@ const dbLogger = Logger.replace(
 			annotations: Object.fromEntries(HashMap.toEntries(log.annotations)) as Annotations
 		} satisfies Omit<AppLogSchema, "id">;
 
-		query(db.insert(appLogs).values([values]).returning({ id: appLogs.id })).pipe(
+		runQuery(db.insert(appLogs).values([values]).returning({ id: appLogs.id })).pipe(
 			Effect.andThen((logs) => {
 				if (dev && isTupleOf(logs, 1))
 					console.log(logs[0].id, dev && ["ERROR", "DEBUG"].includes(values.level) ? values : JSON.stringify(values), "\n");
-				else console.log("Unable to log to database.", values.label);
 			}),
 			Effect.runPromise
 		);
@@ -96,6 +96,44 @@ export const debugSet = Effect.fn("debugSet")(function* <S extends string>(servi
 // Run
 // -------------------------------------------------------------------------------------------------
 
+function handleCause<B extends InstanceType<ErrorClass>>(cause: Cause.Cause<B>) {
+	let message = Cause.pretty(cause);
+	let status: NumericRange<400, 599> = 500;
+	let failCause: unknown;
+	const extra: Record<string, unknown> = {};
+
+	if (Cause.isFailType(cause)) {
+		const error = cause.error;
+		status = error.status;
+		failCause = error.cause;
+
+		for (const key in error) {
+			if (key !== "status" && key !== "cause") {
+				extra[key] = error[key];
+			}
+		}
+	}
+
+	if (Cause.isDieType(cause)) {
+		const defect = cause.defect;
+		// This will propagate redirects and http errors directly to SvelteKit
+		if (isRedirect(defect)) {
+			Effect.runFork(Log.info(`Redirect to ${defect.location}`, defect));
+			throw defect;
+		} else if (isHttpError(defect)) {
+			Effect.runFork(Log.error(`HttpError [${defect.status}] ${defect.body.message}`, defect));
+			throw defect;
+		} else if (typeof defect === "object" && defect !== null && "stack" in defect) {
+			failCause = { stack: defect.stack };
+		}
+	}
+
+	Effect.runFork(Log.error(message, { status, cause: failCause, ...extra }));
+
+	if (!dev) message = removeTrace(message);
+	return { message, status, extra };
+}
+
 // Overload signatures
 export async function run<A, B extends InstanceType<ErrorClass>, T extends YieldWrap<Effect.Effect<A, B>>, X, Y>(
 	program: () => Generator<T, X, Y>
@@ -121,42 +159,41 @@ export async function run<A, B extends InstanceType<ErrorClass>, T extends Yield
 	return Exit.match(result, {
 		onSuccess: (result) => result,
 		onFailure: (cause) => {
-			let message = Cause.pretty(cause);
-			let status: NumericRange<400, 599> = 500;
-			let failCause: unknown;
-			const extra: Record<string, unknown> = {};
-
-			if (Cause.isFailType(cause)) {
-				const error = cause.error;
-				status = error.status;
-				failCause = error.cause;
-
-				for (const key in error) {
-					if (key !== "status" && key !== "cause") {
-						extra[key] = error[key];
-					}
-				}
-			}
-
-			if (Cause.isDieType(cause)) {
-				const defect = cause.defect;
-				// This will propagate redirects and http errors directly to SvelteKit
-				if (isRedirect(defect)) {
-					Effect.runFork(Log.debug("Redirect", defect));
-					throw defect;
-				} else if (isHttpError(defect)) {
-					Effect.runFork(Log.error("HttpError", defect));
-					throw defect;
-				} else if (typeof defect === "object" && defect !== null && "stack" in defect) {
-					failCause = { stack: defect.stack };
-				}
-			}
-
-			Effect.runFork(Log.error(message, { status, cause: failCause, ...extra }));
-
-			if (!dev) message = message.replace(/\n\s+at .+/, "");
+			const { message, status } = handleCause(cause);
 			throw error(status, message);
 		}
+	});
+}
+
+type RemoteResult<A> =
+	| { ok: true; data: A }
+	| { ok: false; error: { message: string; status: NumericRange<400, 599>; extra: Record<string, unknown> } };
+
+// Overload signatures
+export async function runRemote<A, B extends InstanceType<ErrorClass>, T extends YieldWrap<Effect.Effect<A, B>>, X, Y>(
+	program: () => Generator<T, X, Y>
+): Promise<RemoteResult<X>>;
+
+export async function runRemote<A, B extends InstanceType<ErrorClass>>(
+	program: Effect.Effect<A, B> | (() => Effect.Effect<A, B>)
+): Promise<RemoteResult<A>>;
+
+// Implementation
+export async function runRemote<A, B extends InstanceType<ErrorClass>, T extends YieldWrap<Effect.Effect<A, B>>, X, Y>(
+	program: Effect.Effect<A, B> | (() => Effect.Effect<A, B>) | (() => Generator<T, X, Y>)
+): Promise<RemoteResult<A | X>> {
+	const effect = Effect.fn(function* () {
+		if (isFunction(program)) {
+			return yield* program();
+		} else {
+			return yield* program;
+		}
+	});
+
+	const result = await Effect.runPromiseExit(effect());
+	return Exit.match(result, {
+		onSuccess: (result) => ({ ok: true, data: result }),
+		onFailure: (cause) => ({ ok: false, error: handleCause(cause) })
 	});
 }
 
@@ -199,7 +236,7 @@ export async function save<
 	);
 
 	if (typeof result === "string" && result.startsWith("/")) {
-		Effect.runFork(Log.debug("Redirect", { status: 303, location: result }));
+		Effect.runFork(Log.debug(`Redirect to ${result}`, { status: 303, location: result }));
 		redirect(303, result);
 	}
 

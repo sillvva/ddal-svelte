@@ -9,13 +9,14 @@
 </script>
 
 <script lang="ts">
+	import { invalidateAll } from "$app/navigation";
 	import Breadcrumbs from "$lib/components/Breadcrumb.svelte";
 	import Search from "$lib/components/Search.svelte";
 	import SearchResults from "$lib/components/SearchResults.svelte";
-	import DeleteDm from "$lib/components/forms/DeleteDM.svelte";
-	import { EntitySearchFactory } from "$lib/factories.svelte.js";
+	import { EntitySearchFactory, errorToast, successToast } from "$lib/factories.svelte.js";
 	import { sorter } from "@sillvva/utils";
 	import { SvelteSet } from "svelte/reactivity";
+	import { deleteDM } from "./page.remote.js";
 
 	let { data } = $props();
 
@@ -73,8 +74,25 @@
 									<td>{dm.logs.length}</td>
 									<td class="w-16 print:hidden">
 										<div class="flex flex-row justify-end gap-2">
-											{#if dm.logs.length == 0}
-												<DeleteDm {dm} {deletingDM} />
+											{#if dm.logs.length == 0 && !dm.isUser}
+												<button
+													type="button"
+													class="btn btn-error sm:btn-sm"
+													aria-label="Delete DM"
+													onclick={async () => {
+														deletingDM.add(dm.id);
+														const result = await deleteDM(dm.id);
+														if (result.ok) {
+															successToast(`${dm.name} deleted`);
+															invalidateAll();
+														} else {
+															errorToast(result.error.message);
+															deletingDM.delete(dm.id);
+														}
+													}}
+												>
+													<span class="iconify mdi--trash-can"></span>
+												</button>
 											{/if}
 										</div>
 									</td>

@@ -15,7 +15,7 @@
 </script>
 
 <script lang="ts">
-	import { goto, pushState } from "$app/navigation";
+	import { goto, invalidateAll, pushState } from "$app/navigation";
 	import { page } from "$app/state";
 	import { authClient } from "$lib/auth.js";
 	import Breadcrumbs from "$lib/components/Breadcrumb.svelte";
@@ -24,15 +24,14 @@
 	import Markdown from "$lib/components/Markdown.svelte";
 	import Search from "$lib/components/Search.svelte";
 	import SearchResults from "$lib/components/SearchResults.svelte";
-	import DeleteCharacter from "$lib/components/forms/DeleteCharacter.svelte";
-	import DeleteLog from "$lib/components/forms/DeleteLog.svelte";
-	import { EntitySearchFactory } from "$lib/factories.svelte.js";
+	import { EntitySearchFactory, errorToast, successToast } from "$lib/factories.svelte.js";
 	import { getGlobal, transition } from "$lib/stores.svelte.js";
 	import { createTransition, hotkey } from "$lib/util";
 	import { slugify, sorter } from "@sillvva/utils";
 	import { download } from "@svelteuidev/composables";
 	import { fromAction } from "svelte/attachments";
 	import { SvelteSet } from "svelte/reactivity";
+	import { deleteCharacter, deleteLog } from "./page.remote";
 
 	let { data } = $props();
 
@@ -122,7 +121,22 @@
 							>
 						</li>
 						<li role="menuitem">
-							<DeleteCharacter character={data.character} label="Delete Character" />
+							<button
+								type="button"
+								class="hover:bg-error"
+								aria-label="Delete Character"
+								onclick={async () => {
+									const result = await deleteCharacter(data.character.id);
+									if (result.ok) {
+										successToast(`${data.character.name} deleted`);
+										goto("/characters");
+									} else {
+										errorToast(result.error.message);
+									}
+								}}
+							>
+								Delete Character
+							</button>
 						</li>
 					</ul>
 				</Dropdown>
@@ -464,7 +478,24 @@
 							{#if myCharacter}
 								<td class="w-8 align-top print:hidden">
 									<div class="flex flex-col justify-center gap-2">
-										<DeleteLog {log} {deletingLog} />
+										<button
+											type="button"
+											class="btn btn-error btn-sm"
+											aria-label="Delete Log"
+											onclick={async () => {
+												deletingLog.add(log.id);
+												const result = await deleteLog(log.id);
+												if (result.ok) {
+													successToast(`${log.name} deleted`);
+													invalidateAll();
+												} else {
+													errorToast(result.error.message);
+													deletingLog.delete(log.id);
+												}
+											}}
+										>
+											<span class="iconify mdi--trash-can size-4"></span>
+										</button>
 									</div>
 								</td>
 							{/if}

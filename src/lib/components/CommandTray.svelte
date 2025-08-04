@@ -3,60 +3,40 @@
 	import { page } from "$app/state";
 	import { searchSections } from "$lib/constants.js";
 	import { GlobalSearchFactory } from "$lib/factories.svelte";
-	import { getGlobal } from "$lib/stores.svelte";
+	import { getCommandData, type SearchData } from "$lib/remote/command.remote";
 	import { hotkey } from "$lib/util";
-	import type { SearchData } from "$src/routes/api/command/+server";
 	import { Command, Dialog, Separator } from "bits-ui";
 	import { twMerge } from "tailwind-merge";
 	import SearchResults from "./SearchResults.svelte";
 
 	const defaultSelected: string = searchSections[0].url;
-	let global = getGlobal();
 
-	let cmdOpen = $state(false);
+	let open = $state(false);
 	let selected: string = $state(defaultSelected);
 	let command = $state<Command.Root | null>(null);
 	let viewport = $state<HTMLDivElement | null>(null);
 	let input = $state<HTMLInputElement | null>(null);
-	let categories = $derived(global.searchData.map((section) => section.title).filter((c) => c !== "Sections"));
+	let searchData = $state<SearchData>([]);
 
-	const search = $derived(new GlobalSearchFactory(global.searchData, cmdOpen ? "" : ""));
+	const search = $derived(new GlobalSearchFactory(searchData, open ? "" : ""));
+	const resultsCount = $derived(search.results.reduce((sum, section) => sum + section.items.length, 0));
+	const categories = $derived(searchData.map((section) => section.title).filter((c) => c !== "Sections"));
 
-	$effect(() => {
-		const controller = new AbortController();
-		if (!global.searchData.length && cmdOpen) {
-			fetch(`/api/command`, { signal: controller.signal })
-				.then((res) => res.json() as Promise<SearchData>)
-				.then((res) => (global.searchData = res));
-		} else {
-			controller.abort();
-		}
-
-		return () => {
-			controller.abort();
-		};
-	});
-
-	$effect(() => {
-		if (cmdOpen && input) setTimeout(() => input?.focus(), 100);
-	});
-
-	async function open() {
-		cmdOpen = true;
-		input?.focus();
-	}
-
-	function close() {
+	async function setOpen(newOpen: boolean) {
+		open = newOpen;
 		search.query = "";
-		cmdOpen = false;
+		if (open) {
+			searchData = await getCommandData();
+			input?.focus();
+		} else {
+			searchData = [];
+		}
 	}
 
 	function select(value: string) {
+		setOpen(false);
 		goto(value);
-		close();
 	}
-
-	const resultsCount = $derived(search.results.reduce((sum, section) => sum + section.items.length, 0));
 </script>
 
 <svelte:document
@@ -64,24 +44,20 @@
 		[
 			page.data.isMac ? "meta+k" : "ctrl+k",
 			() => {
-				open();
+				setOpen(true);
 			}
 		],
 		[
 			"Escape",
 			() => {
-				close();
+				setOpen(false);
 			}
 		]
 	])}
 />
 
-<Dialog.Root bind:open={cmdOpen} onOpenChange={() => (search.query = "")}>
-	<Dialog.Trigger
-		class="hover-hover:md:input hover-hover:md:gap-4 hover-hover:md:cursor-text h-10"
-		aria-label="Search"
-		onclick={() => open()}
-	>
+<Dialog.Root bind:open={() => open, setOpen}>
+	<Dialog.Trigger class="hover-hover:md:input hover-hover:md:gap-4 hover-hover:md:cursor-text h-10" aria-label="Search">
 		<span class="hover-hover:md:text-base-content/60 flex items-center gap-1">
 			<span class="iconify mdi--magnify hover-hover:md:size-4 hover-none:w-10 size-6 max-md:w-10"></span>
 			<span class="hover-hover:max-md:hidden hover-none:hidden">Search</span>
@@ -132,7 +108,7 @@
 										}}
 									/>
 								</label>
-								<select bind:value={search.category} class="select join-item w-auto">
+								<select id="search-category" bind:value={search.category} class="select join-item w-auto">
 									<option value={null}>All Categories</option>
 									{#each categories as category}
 										<option value={category}>{category}</option>
@@ -289,7 +265,7 @@
 									</Command.Group>
 								{/each}
 							</Command.Viewport>
-						{:else if !global.searchData.length}
+						{:else if !searchData.length}
 							<Command.Empty class="p-4 text-center font-bold">Loading data...</Command.Empty>
 						{:else}
 							<Command.Empty class="p-4 text-center font-bold">No results found.</Command.Empty>

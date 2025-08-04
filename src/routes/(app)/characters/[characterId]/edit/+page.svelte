@@ -26,13 +26,7 @@
 	let { data } = $props();
 
 	const global = getGlobal();
-	const superform = $derived(
-		valibotForm(data.form, editCharacterSchema, {
-			onResult() {
-				global.searchData = [];
-			}
-		})
-	);
+	const superform = $derived(valibotForm(data.form, editCharacterSchema));
 
 	const { form } = $derived(superform);
 </script>

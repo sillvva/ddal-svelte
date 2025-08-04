@@ -1,13 +1,13 @@
 import type { AppLogId, AppLogSchema } from "$lib/schemas";
-import { DBService, query, type DrizzleError, type Filter, type Transaction, type TRSchema } from "$lib/server/db";
+import { DBService, runQuery, type DrizzleError, type Filter, type Transaction, type TRSchema } from "$lib/server/db";
 import type { relations } from "$lib/server/db/relations";
 import { appLogs, type AppLog } from "$lib/server/db/schema";
-import type { ASTNode, ParseMetadata } from "@sillvva/search";
+import type { ParseMetadata } from "@sillvva/search";
 import { DrizzleSearchParser } from "@sillvva/search/drizzle";
 import { eq, sql } from "drizzle-orm";
 import { Effect, Layer } from "effect";
 import { isTupleOf } from "effect/Predicate";
-import { FormError, Log } from ".";
+import { FormError } from ".";
 
 export class SaveAppLogError extends FormError<AppLogSchema> {}
 
@@ -19,9 +19,7 @@ export class DeleteLogError extends FormError<{ id: AppLogId }> {
 
 interface AdminApiImpl {
 	readonly get: {
-		readonly logs: (
-			search?: string
-		) => Effect.Effect<{ logs: AppLog[]; metadata: ParseMetadata; ast: ASTNode | null }, DrizzleError>;
+		readonly logs: (search?: string) => Effect.Effect<{ logs: AppLog[]; metadata?: ParseMetadata }, DrizzleError>;
 	};
 	readonly set: {
 		readonly deleteLog: (logId: AppLogId) => Effect.Effect<{ id: AppLogId }, DeleteLogError | DrizzleError>;
@@ -35,10 +33,9 @@ export class AdminService extends Effect.Service<AdminService>()("AdminService",
 		const impl: AdminApiImpl = {
 			get: {
 				logs: Effect.fn("AdminService.get.logs")(function* (search = "") {
-					const { where, orderBy, metadata, ast } = logSearch.parse(search);
-					yield* Log.info("AdminService.get.logs", { where, orderBy, metadata, ast });
+					const { where, orderBy, metadata } = search.trim() ? logSearch.parse(search.trim()) : {};
 
-					return yield* query(
+					return yield* runQuery(
 						db.query.appLogs.findMany({
 							where,
 							orderBy: {
@@ -46,12 +43,12 @@ export class AdminService extends Effect.Service<AdminService>()("AdminService",
 								timestamp: "desc"
 							}
 						})
-					).pipe(Effect.map((logs) => ({ logs, metadata, ast })));
+					).pipe(Effect.map((logs) => ({ logs, metadata })));
 				})
 			},
 			set: {
 				deleteLog: Effect.fn("AdminService.set.deleteLog")(function* (logId) {
-					return yield* query(db.delete(appLogs).where(eq(appLogs.id, logId)).returning({ id: appLogs.id })).pipe(
+					return yield* runQuery(db.delete(appLogs).where(eq(appLogs.id, logId)).returning({ id: appLogs.id })).pipe(
 						Effect.flatMap((logs) => (isTupleOf(logs, 1) ? Effect.succeed(logs[0]) : Effect.fail(new DeleteLogError())))
 					);
 				})

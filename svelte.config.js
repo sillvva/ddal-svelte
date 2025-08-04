@@ -16,6 +16,9 @@ const config = {
 		alias: {
 			$lib: path.resolve("./src/lib"),
 			$src: path.resolve("./src")
+		},
+		experimental: {
+			remoteFunctions: true
 		}
 	}
 };

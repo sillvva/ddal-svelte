@@ -3,7 +3,7 @@ import type { LocalsUser, LogId, LogIdOrNew, LogSchema, UserId } from "$lib/sche
 import {
 	buildConflictUpdateColumns,
 	DBService,
-	query,
+	runQuery,
 	type Database,
 	type DrizzleError,
 	type Filter,
@@ -15,7 +15,7 @@ import { characters, dungeonMasters, logs, magicItems, storyAwards } from "$lib/
 import { and, eq, exists, inArray, isNull, notInArray, or } from "drizzle-orm";
 import { Data, Effect, Layer } from "effect";
 import { isTupleOf } from "effect/Predicate";
-import { debugSet, FormError, Log, type ErrorParams } from ".";
+import { FormError, Log, type ErrorParams } from ".";
 import { DMService, DMTx } from "./dms";
 
 export class LogNotFoundError extends Data.TaggedError("LogNotFoundError")<ErrorParams> {
@@ -159,7 +159,7 @@ const upsertLogDM = Effect.fn("upsertLogDM")(function* (log: LogSchema, user: Lo
 
 	const validated = yield* validateLogDM(log, user);
 
-	return yield* query(
+	return yield* runQuery(
 		db
 			.insert(dungeonMasters)
 			.values(validated)
@@ -186,7 +186,7 @@ const upsertLog = Effect.fn("upsertLog")(function* (log: LogSchema, user: Locals
 			: null
 		: new Date(log.date);
 
-	const [result] = yield* query(
+	const [result] = yield* runQuery(
 		db
 			.insert(logs)
 			.values({
@@ -215,22 +215,22 @@ const upsertLog = Effect.fn("upsertLog")(function* (log: LogSchema, user: Locals
 
 	if (!result?.id) return yield* new SaveLogError(log.id ? "Could not save log" : "Could not create log");
 
-	yield* Effect.forEach(
+	yield* Effect.all(
 		[
-			{
+			itemsCRUD({
 				logId: result.id,
 				table: magicItems,
 				gained: log.magicItemsGained,
 				lost: log.magicItemsLost
-			},
-			{
+			}),
+			itemsCRUD({
 				logId: result.id,
 				table: storyAwards,
 				gained: log.storyAwardsGained,
 				lost: log.storyAwardsLost
-			}
+			})
 		],
-		(params) => itemsCRUD(params)
+		{ concurrency: 2 }
 	);
 
 	return yield* get
@@ -265,12 +265,12 @@ const itemsCRUD = Effect.fn("itemsCRUD")(function* (params: CRUDMagicItemParams 
 
 	const itemIds = gained.map((item) => item.id).filter(Boolean);
 
-	yield* query(
+	yield* runQuery(
 		db.delete(table).where(and(eq(table.logGainedId, logId), itemIds.length ? notInArray(table.id, itemIds) : undefined))
 	);
 
 	if (gained.length) {
-		yield* query(
+		yield* runQuery(
 			db
 				.insert(table)
 				.values(
@@ -288,7 +288,7 @@ const itemsCRUD = Effect.fn("itemsCRUD")(function* (params: CRUDMagicItemParams 
 		);
 	}
 
-	yield* query(
+	yield* runQuery(
 		db
 			.update(table)
 			.set({ logLostId: null })
@@ -296,7 +296,7 @@ const itemsCRUD = Effect.fn("itemsCRUD")(function* (params: CRUDMagicItemParams 
 	);
 
 	if (lost.length) {
-		yield* query(
+		yield* runQuery(
 			db
 				.update(table)
 				.set({ logLostId: logId })
@@ -313,10 +313,9 @@ export class LogService extends Effect.Service<LogService>()("LogService", {
 			db,
 			get: {
 				log: Effect.fn("LogService.get.log")(function* (logId, userId) {
-					yield* Log.info("LogService.get.log", { logId, userId });
 					if (logId === "new") return undefined;
 
-					return yield* query(
+					return yield* runQuery(
 						db.query.logs.findFirst({
 							with: extendedLogIncludes,
 							where: {
@@ -326,13 +325,14 @@ export class LogService extends Effect.Service<LogService>()("LogService", {
 								OR: [characterLogFilter(userId), dmLogFilter(userId)]
 							}
 						})
-					).pipe(Effect.andThen((log) => log && parseLog(log)));
+					).pipe(
+						Effect.andThen((log) => log && parseLog(log)),
+						Effect.tapError(() => Log.debug("LogService.get.log", { logId, userId }))
+					);
 				}),
 
 				dmLogs: Effect.fn("LogService.get.dmLogs")(function* (userId) {
-					yield* Log.info("LogService.get.dmLogs", { userId });
-
-					return yield* query(
+					return yield* runQuery(
 						db.query.logs.findMany({
 							with: extendedLogIncludes,
 							where: dmLogFilter(userId),
@@ -340,13 +340,14 @@ export class LogService extends Effect.Service<LogService>()("LogService", {
 								date: "asc"
 							}
 						})
-					).pipe(Effect.map((logs) => logs.map(parseLog)));
+					).pipe(
+						Effect.map((logs) => logs.map(parseLog)),
+						Effect.tapError(() => Log.debug("LogService.get.dmLogs", { userId }))
+					);
 				}),
 
 				userLogs: Effect.fn("LogService.get.userLogs")(function* (userId) {
-					yield* Log.info("LogService.get.userLogs", { userId });
-
-					return yield* query(
+					return yield* runQuery(
 						db.query.logs.findMany({
 							...userLogsConfig,
 							where: {
@@ -356,24 +357,22 @@ export class LogService extends Effect.Service<LogService>()("LogService", {
 								date: "asc"
 							}
 						})
-					);
+					).pipe(Effect.tapError(() => Log.debug("LogService.get.userLogs", { userId })));
 				})
 			},
 			set: {
 				save: Effect.fn("LogService.set.save")(function* (log, user) {
-					yield* Log.info("LogService.set.save", { logId: log.id, userId: user.id });
-					yield* Log.debug("LogService.set.save", log);
-
 					return yield* transaction(
 						(tx) => upsertLog(log, user).pipe(Effect.provide(LogTx(tx)), Effect.provide(DMTx(tx))),
 						(err) => new SaveLogError("Unable to save log", { status: 500, cause: err })
+					).pipe(
+						Effect.tap((result) => Log.info("LogService.set.save", { logId: log.id, userId: user.id, result })),
+						Effect.tapError(() => Log.debug("LogService.set.save", { logId: log.id, userId: user.id, log }))
 					);
 				}),
 
 				delete: Effect.fn("LogService.set.delete")(function* (logId, userId) {
-					yield* Log.info("LogService.set.delete", { logId, userId });
-
-					return yield* query(
+					return yield* runQuery(
 						db
 							.delete(logs)
 							.where(
@@ -408,7 +407,11 @@ export class LogService extends Effect.Service<LogService>()("LogService", {
 								)
 							)
 							.returning({ id: logs.id })
-					).pipe(Effect.flatMap((logs) => (isTupleOf(logs, 1) ? Effect.succeed(logs[0]) : Effect.fail(new DeleteLogError()))));
+					).pipe(
+						Effect.flatMap((logs) => (isTupleOf(logs, 1) ? Effect.succeed(logs[0]) : Effect.fail(new DeleteLogError()))),
+						Effect.tap((result) => Log.info("LogService.set.delete", { logId, userId, result })),
+						Effect.tapError(() => Log.debug("LogService.set.delete", { logId, userId }))
+					);
 				})
 			}
 		};
@@ -423,11 +426,7 @@ export const LogTx = (tx: Transaction) => LogService.DefaultWithoutDependencies(
 export const withLog = Effect.fn("withLog")(
 	function* <R, E extends SaveLogError | DeleteLogError | DrizzleError>(impl: (service: LogApiImpl) => Effect.Effect<R, E>) {
 		const logApi = yield* LogService;
-		const result = yield* impl(logApi);
-
-		yield* debugSet("LogService", impl, result);
-
-		return result;
+		return yield* impl(logApi);
 	},
 	(effect) => effect.pipe(Effect.provide(LogService.Default()))
 );

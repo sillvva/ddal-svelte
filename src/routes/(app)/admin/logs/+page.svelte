@@ -1,29 +1,27 @@
 <script lang="ts">
-	import { goto, invalidateAll, pushState } from "$app/navigation";
+	import { pushState } from "$app/navigation";
 	import { page } from "$app/state";
-	import DeleteAppLog from "$lib/components/forms/DeleteAppLog.svelte";
-	import type { AppLogId } from "$lib/schemas.js";
+	import { errorToast, successToast } from "$lib/factories.svelte.js";
 	import { debounce } from "@sillvva/utils";
-	import { SvelteSet } from "svelte/reactivity";
+	import { SvelteURL } from "svelte/reactivity";
+	import { deleteLog, getBaseSearch, getLogs } from "./page.remote.js";
 
-	let { data } = $props();
+	const url = $derived(new SvelteURL(page.url));
 
-	let search = $state(data.search || "");
-	let deletingLog = new SvelteSet<AppLogId>();
+	const baseSearch = $derived(getBaseSearch());
+	const params = $derived(url.searchParams.get("s")?.trim() ?? baseSearch.current?.query ?? "");
+
+	const logSearch = $derived(getLogs(params));
 
 	const debouncedSearch = debounce((value: string) => {
-		if (value.trim()) {
-			page.url.searchParams.set("s", value);
+		const trimmed = value.trim();
+		if (trimmed) {
+			url.searchParams.set("s", trimmed);
+			pushState(url, {});
 		} else {
-			page.url.searchParams.delete("s");
+			url.searchParams.delete("s");
+			pushState(url, {});
 		}
-		const params = page.url.searchParams.size ? "?" + page.url.searchParams.toString() : "";
-		goto(page.url.pathname + params, {
-			replaceState: true,
-			keepFocus: true,
-			noScroll: true,
-			invalidateAll: true
-		});
 	}, 400);
 
 	let syntaxReference = $state("");
@@ -52,31 +50,30 @@
 				<div class="focus-within:outline-primary join flex flex-1 items-center rounded-lg focus-within:outline-2">
 					<input
 						type="text"
-						bind:value={search}
+						id="log-search"
+						defaultValue={params}
 						oninput={(e) => {
 							debouncedSearch.call(e.currentTarget.value);
 						}}
 						class="input sm:input-sm join-item flex-1"
 						aria-label="Search"
-						placeholder={data.search}
+						placeholder={baseSearch.current?.query ?? ""}
 					/>
-					{#if !data.mobile}
-						<button
-							class="btn sm:btn-sm join-item tooltip border-base-content/20 border"
-							data-tip="Syntax Reference"
-							aria-label="Syntax Reference"
-							onclick={openSyntaxReference}
-						>
-							<span class="iconify mdi--help-circle size-6 sm:size-4"></span>
-						</button>
-					{/if}
+					<button
+						class="btn sm:btn-sm join-item tooltip border-base-content/20 border max-sm:hidden"
+						data-tip="Syntax Reference"
+						aria-label="Syntax Reference"
+						onclick={openSyntaxReference}
+					>
+						<span class="iconify mdi--help-circle size-6 sm:size-4"></span>
+					</button>
 				</div>
 			</search>
 		</div>
 		<div class="flex justify-end text-sm max-sm:hidden">Logs are automatically deleted after 7 days.</div>
 	</div>
-	{#if data.metadata.hasErrors}
-		{#each data.metadata.errors as error}
+	{#if logSearch.current?.metadata?.hasErrors}
+		{#each logSearch.current.metadata.errors as error}
 			<div class="alert alert-error mt-1 w-fit rounded-lg py-1">
 				<span class="iconify mdi--alert-circle size-6"></span>
 				{error.message} at position {error.position}: <kbd>{error.value}</kbd>
@@ -84,12 +81,16 @@
 		{/each}
 	{:else}
 		<div class="label pl-3 text-sm whitespace-normal">
-			Valid keys: {data.validKeys.join(", ")}
+			Valid keys: {baseSearch.current?.validKeys.join(", ")}
 		</div>
 	{/if}
 </div>
 
-{#if data.logs.length}
+{#if logSearch.loading}
+	<div class="bg-base-200 flex h-40 flex-col items-center justify-center rounded-lg">
+		<span class="loading loading-spinner text-secondary w-16"></span>
+	</div>
+{:else if logSearch.current?.logs.length}
 	<div class="overflow-x-auto rounded-lg">
 		<table class="bg-base-200 table w-full leading-5 max-sm:border-separate max-sm:border-spacing-y-2">
 			<thead class="max-sm:hidden">
@@ -100,7 +101,7 @@
 					<td class="max-xs:hidden w-0"></td>
 				</tr>
 			</thead>
-			{#each data.logs as log}
+			{#each logSearch.current.logs as log}
 				{#snippet actions()}
 					<button
 						class="btn btn-sm btn-primary tooltip tooltip-left"
@@ -113,20 +114,25 @@
 					>
 						<span class="iconify mdi--eye"></span>
 					</button>
-					<DeleteAppLog
-						{log}
-						{deletingLog}
-						ondelete={() => {
-							const details = document.querySelector(`tr[data-id="${log.id}"]`) as HTMLTableRowElement | null;
-							if (details) details.dataset.details = "false";
-							invalidateAll();
+					<button
+						class="btn btn-sm btn-error tooltip tooltip-left"
+						data-tip="Delete log"
+						aria-label="Delete log"
+						onclick={async () => {
+							const result = await deleteLog(log.id).updates(
+								getLogs(params).withOverride((data) => ({ ...data, logs: data.logs.filter((l) => l.id !== log.id) }))
+							);
+							if (result.ok) {
+								successToast("Log deleted");
+							} else {
+								errorToast(result.error.message);
+							}
 						}}
-					/>
+					>
+						<span class="iconify mdi--delete"></span>
+					</button>
 				{/snippet}
-				<tbody
-					class="scroll-mt-16 border-t border-neutral-500/20 first:border-0 data-[deleting=true]:hidden"
-					data-deleting={deletingLog.has(log.id)}
-				>
+				<tbody class="scroll-mt-16 border-t border-neutral-500/20 first:border-0 data-[deleting=true]:hidden">
 					<tr class="border-0">
 						<td>
 							<span class="sm:hidden">[{log.level}]</span>
