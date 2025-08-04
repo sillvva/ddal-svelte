@@ -3,15 +3,12 @@ import { assertAuth } from "$lib/server/auth";
 import { run, save, validateForm } from "$lib/server/effect";
 import { DMNotFoundError, withDM } from "$lib/server/effect/dms";
 import { redirect } from "@sveltejs/kit";
-import { Effect } from "effect";
 import { fail } from "sveltekit-superforms";
 import * as v from "valibot";
 
 export const load = (event) =>
 	run(function* () {
 		const user = yield* assertAuth();
-
-		const parent = yield* Effect.promise(event.parent);
 
 		const idResult = v.safeParse(dungeonMasterIdSchema, event.params.dmId || "");
 		if (!idResult.success) redirect(307, `/dms`);
@@ -37,8 +34,7 @@ export const load = (event) =>
 		return {
 			...event.params,
 			dm,
-			form,
-			user: parent.user
+			form
 		};
 	});
 
