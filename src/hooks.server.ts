@@ -10,6 +10,16 @@ const authHandler: Handle = async ({ event, resolve }) => {
 	return svelteKitHandler({ event, resolve, auth, building });
 };
 
+const info: Handle = async ({ event, resolve }) => {
+	const userAgent = event.request.headers.get("user-agent");
+	event.locals.isMac = !!userAgent?.includes("Mac OS");
+	event.locals.mobile = !!userAgent?.match(
+		/Mobile|iP(hone|od|ad)|Android|BlackBerry|IEMobile|Kindle|NetFront|Silk-Accelerated|(hpw|web)OS|Fennec|Minimo|Opera M(obi|ini)|Blazer|Dolfin|Dolphin|Skyfire|Zune/
+	);
+
+	return await resolve(event);
+};
+
 const session: Handle = async ({ event, resolve }) => {
 	const isRemote = new URL(event.request.url).pathname.startsWith("/_app/remote");
 	if (!event.route.id && !isRemote) return await resolve(event);
@@ -33,4 +43,4 @@ const preloadTheme: Handle = async ({ event, resolve }) => {
 	});
 };
 
-export const handle = sequence(authHandler, session, preloadTheme);
+export const handle = sequence(authHandler, info, session, preloadTheme);

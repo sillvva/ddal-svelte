@@ -12,15 +12,7 @@ if (!checked && building && privateEnv) {
 }
 
 export const load = async (event) => {
-	const user = event.locals.user;
-	const session = event.locals.session;
-
-	const userAgent = event.request.headers.get("user-agent");
-	const isMac = !!userAgent?.includes("Mac OS");
-	const mobile = !!userAgent?.match(
-		/Mobile|iP(hone|od|ad)|Android|BlackBerry|IEMobile|Kindle|NetFront|Silk-Accelerated|(hpw|web)OS|Fennec|Minimo|Opera M(obi|ini)|Blazer|Dolfin|Dolphin|Skyfire|Zune/
-	);
-
+	const { user, session, mobile, isMac } = event.locals;
 	const app = serverGetCookie("app", appCookieSchema);
 
 	return {

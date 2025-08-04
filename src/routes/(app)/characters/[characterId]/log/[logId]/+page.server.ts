@@ -2,7 +2,7 @@ import { defaultLogSchema, getItemEntities, logDataToSchema } from "$lib/entitie
 import { characterIdSchema, characterLogSchema, logIdOrNewSchema } from "$lib/schemas";
 import { assertAuth } from "$lib/server/auth";
 import { run, save, validateForm } from "$lib/server/effect";
-import { CharacterNotFoundError, withCharacter } from "$lib/server/effect/characters.js";
+import { withCharacter } from "$lib/server/effect/characters.js";
 import { withDM } from "$lib/server/effect/dms.js";
 import { LogNotFoundError, withLog } from "$lib/server/effect/logs.js";
 import { sorter } from "@sillvva/utils";
@@ -17,7 +17,6 @@ export const load = (event) =>
 
 		const parent = yield* Effect.promise(event.parent);
 		const character = parent.character;
-		if (!character) return yield* new CharacterNotFoundError();
 
 		const idResult = v.safeParse(logIdOrNewSchema, event.params.logId);
 		if (!idResult.success) redirect(307, `/character/${character.id}`);

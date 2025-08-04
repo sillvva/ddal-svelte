@@ -12,6 +12,8 @@ declare global {
 		interface Locals {
 			session?: LocalsSession;
 			user?: LocalsUser;
+			mobile: boolean;
+			isMac: boolean;
 		}
 		interface PageData {
 			app: AppCookie;

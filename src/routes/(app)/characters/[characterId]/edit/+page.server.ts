@@ -3,7 +3,7 @@ import { defaultLogSchema } from "$lib/entities.js";
 import { characterIdOrNewSchema, editCharacterSchema, type EditCharacterSchema } from "$lib/schemas";
 import { assertAuth } from "$lib/server/auth";
 import { run, save, validateForm } from "$lib/server/effect";
-import { CharacterNotFoundError, SaveCharacterError, withCharacter } from "$lib/server/effect/characters";
+import { SaveCharacterError, withCharacter } from "$lib/server/effect/characters";
 import { withLog } from "$lib/server/effect/logs.js";
 import { Effect } from "effect";
 import { fail, setError } from "sveltekit-superforms";
@@ -15,23 +15,17 @@ export const load = (event) =>
 
 		const parent = yield* Effect.promise(event.parent);
 
-		if (event.params.characterId !== "new" && !parent.character) return yield* new CharacterNotFoundError();
-
 		const form = yield* validateForm(
-			parent.character
-				? {
-						id: parent.character.id,
-						name: parent.character.name,
-						campaign: parent.character.campaign || "",
-						race: parent.character.race || "",
-						class: parent.character.class || "",
-						characterSheetUrl: parent.character.characterSheetUrl || "",
-						imageUrl: parent.character.imageUrl === BLANK_CHARACTER ? "" : parent.character.imageUrl
-					}
-				: {
-						id: "new",
-						firstLog: parent.app.characters.firstLog
-					},
+			{
+				id: parent.character.id,
+				name: parent.character.name,
+				campaign: parent.character.campaign || "",
+				race: parent.character.race || "",
+				class: parent.character.class || "",
+				characterSheetUrl: parent.character.characterSheetUrl || "",
+				imageUrl: parent.character.imageUrl === BLANK_CHARACTER ? "" : parent.character.imageUrl,
+				firstLog: parent.app.characters.firstLog && parent.character.id === "new"
+			},
 			editCharacterSchema,
 			{
 				errors: false
