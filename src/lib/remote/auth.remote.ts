@@ -30,8 +30,8 @@ class NameAlreadyExistsError extends Data.TaggedError("NameAlreadyExistsError")<
 }
 
 class FailedError extends Data.TaggedError("FailedError")<ErrorParams> {
-	constructor(action: string) {
-		super({ message: `Failed to ${action}`, status: 500 });
+	constructor(action: string, cause?: unknown) {
+		super({ message: `Failed to ${action}`, status: 500, cause });
 	}
 }
 
@@ -49,7 +49,9 @@ export const updateUser = command(
 
 			if (Object.keys(input).length === 0) return yield* Effect.fail(new NoChangesError());
 
-			return yield* withUser((service) => service.set.update(user.id, input));
+			return yield* withUser((service) => service.set.update(user.id, input)).pipe(
+				Effect.catchTag("DrizzleError", (err) => Effect.fail(new FailedError("update user", err)))
+			);
 		})
 );
 
@@ -86,7 +88,7 @@ export const renamePasskey = command(
 					.set({ name: input.name.trim() })
 					.where(and(eq(passkey.id, auth.id)))
 					.returning()
-			).pipe(Effect.catchTag("DrizzleError", () => Effect.fail(new FailedError("rename passkey"))));
+			).pipe(Effect.catchTag("DrizzleError", (err) => Effect.fail(new FailedError("rename passkey", err))));
 
 			return { name: input.name };
 		})
@@ -114,7 +116,7 @@ export const deletePasskey = command(v.object({ id: v.pipe(v.string(), v.uuid())
 				.delete(passkey)
 				.where(and(eq(passkey.id, auth.id)))
 				.returning()
-		).pipe(Effect.catchTag("DrizzleError", () => Effect.fail(new FailedError("delete passkey"))));
+		).pipe(Effect.catchTag("DrizzleError", (err) => Effect.fail(new FailedError("delete passkey", err))));
 
 		if (isTupleOf(result, 1)) return result[0].id;
 		return yield* Effect.fail(new NoPasskeyError());
