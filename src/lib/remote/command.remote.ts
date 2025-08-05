@@ -94,3 +94,5 @@ export const getCommandData = query(() =>
 		)
 	)
 );
+
+export const placeholderQuery = query(() => true);

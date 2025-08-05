@@ -1,4 +1,5 @@
 import { command } from "$app/server";
+import { placeholderQuery } from "$lib/remote/command.remote";
 import { dungeonMasterIdSchema, dungeonMasterSchema, type DungeonMasterSchemaIn } from "$lib/schemas";
 import { assertAuthOrFail } from "$lib/server/auth";
 import { runOrReturn, runOrThrow, save, validateForm, type ErrorParams } from "$lib/server/effect";
@@ -50,6 +51,8 @@ export const deleteDM = command(dungeonMasterIdSchema, (id) =>
 		const [dm] = yield* withDM((service) => service.get.userDMs(user.id, { id }));
 		if (!dm) return yield* new DMNotFoundError();
 		if (dm.isUser) return yield* new DeleteUserDMError();
+
+		placeholderQuery().refresh();
 
 		return yield* withDM((service) => service.set.delete(dm, user.id));
 	})
