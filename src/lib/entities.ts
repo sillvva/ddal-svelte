@@ -151,7 +151,10 @@ export function defaultDM(userId: UserId): DungeonMaster {
 
 export function defaultLogSchema(
 	userId: UserId,
-	character: { id: CharacterId | null; name: string } = { id: null, name: "" }
+	options?: {
+		character?: { id: CharacterId | null; name: string };
+		defaults?: Partial<LogSchema>;
+	}
 ): LogSchema {
 	return {
 		id: "new",
@@ -165,15 +168,16 @@ export function defaultLogSchema(
 		level: 0,
 		gold: 0,
 		dtd: 0,
-		characterId: character.id,
-		characterName: character.name,
+		characterId: options?.character?.id || null,
+		characterName: options?.character?.name || "",
 		appliedDate: null,
 		dm: defaultDM(userId),
-		isDmLog: !character.id,
+		isDmLog: !options?.character?.id,
 		magicItemsGained: [],
 		magicItemsLost: [],
 		storyAwardsGained: [],
-		storyAwardsLost: []
+		storyAwardsLost: [],
+		...options?.defaults
 	};
 }
 

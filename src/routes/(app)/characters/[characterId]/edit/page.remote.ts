@@ -1,12 +1,10 @@
 import { command } from "$app/server";
 import { defaultLogSchema } from "$lib/entities";
-import { characterIdOrNewSchema, editCharacterSchema, type EditCharacterSchema, type EditCharacterSchemaIn } from "$lib/schemas";
+import { characterIdOrNewSchema, editCharacterSchema, type EditCharacterSchemaIn } from "$lib/schemas";
 import { assertAuthOrFail } from "$lib/server/auth";
 import { runOrThrow, save, validateForm } from "$lib/server/effect";
-import { SaveCharacterError, withCharacter } from "$lib/server/effect/characters";
+import { withCharacter } from "$lib/server/effect/characters";
 import { withLog } from "$lib/server/effect/logs";
-import { Effect } from "effect";
-import { setError } from "sveltekit-superforms";
 import * as v from "valibot";
 
 export const saveCharacter = command("unchecked", (input: EditCharacterSchemaIn) =>
@@ -29,18 +27,12 @@ export const saveCharacter = command("unchecked", (input: EditCharacterSchemaIn)
 				onSuccess: (character) =>
 					runOrThrow(function* () {
 						if (firstLog && characterId === "new") {
-							const log = defaultLogSchema(user.id, character);
-							log.name = "Character Creation";
+							const log = defaultLogSchema(user.id, { character, defaults: { name: "Character Creation" } });
 
 							return yield* save(
-								withLog((service) => service.set.save(log, user)).pipe(
-									Effect.catchAll(SaveCharacterError.from<EditCharacterSchema>)
-								),
+								withLog((service) => service.set.save(log, user)),
 								{
-									onError: (err) => {
-										setError(form, "", err.message);
-										return form;
-									},
+									onError: () => `/characters/${character.id}/log/new?firstLog=true` as const,
 									onSuccess: (logResult) => `/characters/${character.id}/log/${logResult.id}?firstLog=true` as const
 								}
 							);

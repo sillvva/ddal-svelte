@@ -224,13 +224,14 @@ export function validateForm<
 
 export const save = Effect.fn(function* <
 	TSuccess extends Pathname | TForm | Promise<Pathname | TForm>,
-	TOut extends Record<PropertyKey, any>,
+	TFailure extends Pathname | TForm | Promise<Pathname | TForm>,
 	TForm extends SuperValidated<TOut>,
+	TOut extends Record<PropertyKey, any>,
 	TIn extends Record<PropertyKey, any> = TOut
 >(
 	program: Effect.Effect<TIn, FormError<TOut, TIn> | DrizzleError>,
 	handlers: {
-		onError: (err: FormError<TOut, TIn>) => TForm;
+		onError: (err: FormError<TOut, TIn>) => TFailure;
 		onSuccess: (data: TIn) => TSuccess;
 	}
 ) {
