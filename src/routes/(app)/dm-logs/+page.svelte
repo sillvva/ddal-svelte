@@ -256,7 +256,7 @@
 									<div class="flex flex-col gap-2">
 										<button
 											type="button"
-											class="btn btn-error btn-sm"
+											class="btn btn-error btn-sm touch-hitbox"
 											aria-label="Delete Log"
 											onclick={async () => {
 												if (!confirm(`Are you sure you want to delete ${log.name}? This action cannot be undone.`)) return;

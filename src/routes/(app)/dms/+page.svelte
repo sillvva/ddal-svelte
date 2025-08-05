@@ -77,7 +77,7 @@
 											{#if dm.logs.length == 0 && !dm.isUser}
 												<button
 													type="button"
-													class="btn btn-error sm:btn-sm"
+													class="btn btn-error sm:btn-sm touch-hitbox"
 													aria-label="Delete DM"
 													onclick={async () => {
 														if (!confirm(`Are you sure you want to delete ${dm.name}? This action cannot be undone.`)) return;
