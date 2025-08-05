@@ -1,6 +1,6 @@
 import { BLANK_CHARACTER } from "$lib/constants.js";
 import { characterIdSchema } from "$lib/schemas.js";
-import { run } from "$lib/server/effect";
+import { runOrThrow } from "$lib/server/effect";
 import { withCharacter } from "$lib/server/effect/characters";
 import type { ErrorParams } from "$lib/types";
 import { Resvg } from "@resvg/resvg-js";
@@ -23,7 +23,7 @@ export const GET = async ({ params, url }) => {
 	if (!result.success) throw error(404, "Character not found");
 	const characterId = result.output;
 
-	const character = await run(withCharacter((service) => service.get.character(characterId, true)));
+	const character = await runOrThrow(withCharacter((service) => service.get.character(characterId, true)));
 	if (!character) throw error(404, "Character not found");
 
 	const width = 1200;

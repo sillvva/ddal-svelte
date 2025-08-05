@@ -1,7 +1,7 @@
 import { defaultLogSchema, getItemEntities, logDataToSchema } from "$lib/entities.js";
 import { characterLogSchema, logIdOrNewSchema } from "$lib/schemas";
 import { assertAuth } from "$lib/server/auth";
-import { run, validateForm } from "$lib/server/effect";
+import { runOrThrow, validateForm } from "$lib/server/effect";
 import { withDM } from "$lib/server/effect/dms.js";
 import { LogNotFoundError, withLog } from "$lib/server/effect/logs.js";
 import { sorter } from "@sillvva/utils";
@@ -10,7 +10,7 @@ import { Effect } from "effect";
 import * as v from "valibot";
 
 export const load = (event) =>
-	run(function* () {
+	runOrThrow(function* () {
 		const user = yield* assertAuth();
 
 		const parent = yield* Effect.promise(event.parent);

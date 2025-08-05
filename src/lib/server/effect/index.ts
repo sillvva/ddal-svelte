@@ -6,15 +6,7 @@ import { db, DrizzleError, runQuery } from "$lib/server/db";
 import { appLogs } from "$lib/server/db/schema";
 import { removeTrace } from "$lib/util";
 import { isInstanceOfClass } from "@sillvva/utils";
-import {
-	error,
-	isHttpError,
-	isRedirect,
-	redirect,
-	type ActionFailure,
-	type NumericRange,
-	type RequestEvent
-} from "@sveltejs/kit";
+import { error, isHttpError, isRedirect, type NumericRange, type RequestEvent } from "@sveltejs/kit";
 import { Cause, Data, Effect, Exit, HashMap, Layer, Logger } from "effect";
 import { isFunction, isTupleOf } from "effect/Predicate";
 import type { YieldWrap } from "effect/Utils";
@@ -135,16 +127,16 @@ function handleCause<B extends InstanceType<ErrorClass>>(cause: Cause.Cause<B>) 
 }
 
 // Overload signatures
-export async function run<A, B extends InstanceType<ErrorClass>, T extends YieldWrap<Effect.Effect<A, B>>, X, Y>(
+export async function runOrThrow<A, B extends InstanceType<ErrorClass>, T extends YieldWrap<Effect.Effect<A, B>>, X, Y>(
 	program: () => Generator<T, X, Y>
 ): Promise<X>;
 
-export async function run<A, B extends InstanceType<ErrorClass>>(
+export async function runOrThrow<A, B extends InstanceType<ErrorClass>>(
 	program: Effect.Effect<A, B> | (() => Effect.Effect<A, B>)
 ): Promise<A>;
 
 // Implementation
-export async function run<A, B extends InstanceType<ErrorClass>, T extends YieldWrap<Effect.Effect<A, B>>, X, Y>(
+export async function runOrThrow<A, B extends InstanceType<ErrorClass>, T extends YieldWrap<Effect.Effect<A, B>>, X, Y>(
 	program: Effect.Effect<A, B> | (() => Effect.Effect<A, B>) | (() => Generator<T, X, Y>)
 ): Promise<A | X> {
 	const effect = Effect.fn(function* () {
@@ -170,16 +162,16 @@ type RemoteResult<A> =
 	| { ok: false; error: { message: string; status: NumericRange<400, 599>; extra: Record<string, unknown> } };
 
 // Overload signatures
-export async function runRemote<A, B extends InstanceType<ErrorClass>, T extends YieldWrap<Effect.Effect<A, B>>, X, Y>(
+export async function runOrReturn<A, B extends InstanceType<ErrorClass>, T extends YieldWrap<Effect.Effect<A, B>>, X, Y>(
 	program: () => Generator<T, X, Y>
 ): Promise<RemoteResult<X>>;
 
-export async function runRemote<A, B extends InstanceType<ErrorClass>>(
+export async function runOrReturn<A, B extends InstanceType<ErrorClass>>(
 	program: Effect.Effect<A, B> | (() => Effect.Effect<A, B>)
 ): Promise<RemoteResult<A>>;
 
 // Implementation
-export async function runRemote<A, B extends InstanceType<ErrorClass>, T extends YieldWrap<Effect.Effect<A, B>>, X, Y>(
+export async function runOrReturn<A, B extends InstanceType<ErrorClass>, T extends YieldWrap<Effect.Effect<A, B>>, X, Y>(
 	program: Effect.Effect<A, B> | (() => Effect.Effect<A, B>) | (() => Generator<T, X, Y>)
 ): Promise<RemoteResult<A | X>> {
 	const effect = Effect.fn(function* () {
@@ -229,42 +221,7 @@ export function validateForm<
 // Save
 // -------------------------------------------------------------------------------------------------
 
-export async function save<
-	TSuccess extends `/${string}` | TForm,
-	TOut extends Record<PropertyKey, any>,
-	TForm extends ActionFailure<{ form: SuperValidated<TOut> }> | { form: SuperValidated<TOut> } | SuperValidated<TOut>,
-	TIn extends Record<PropertyKey, any> = TOut
->(
-	program: Effect.Effect<TIn, FormError<TOut, TIn> | DrizzleError>,
-	handlers: {
-		onError: (err: FormError<TOut, TIn>) => TForm;
-		onSuccess: (data: TIn) => TSuccess | Promise<TSuccess>;
-	}
-) {
-	const runnable = program.pipe(Effect.catchTag("DrizzleError", FormError.from<TOut, TIn>));
-
-	const result = await Effect.runPromise(
-		Effect.match(runnable, {
-			onSuccess: handlers.onSuccess,
-			onFailure: handlers.onError
-		})
-	);
-
-	if (typeof result === "string") {
-		Effect.runFork(Log.info(`Redirect to ${result}`, { status: 303, location: result }));
-		throw redirect(303, result);
-	}
-
-	if (typeof result === "object" && result !== null && "status" in result) {
-		Effect.runFork(Log.error("ActionFailure", result));
-	} else {
-		Effect.runFork(Log.info("Result", { result }));
-	}
-
-	return result;
-}
-
-export async function saveRemote<
+export const save = Effect.fn(function* <
 	TSuccess extends `/${string}` | TForm | Promise<`/${string}` | TForm>,
 	TOut extends Record<PropertyKey, any>,
 	TForm extends SuperValidated<TOut>,
@@ -278,16 +235,14 @@ export async function saveRemote<
 ) {
 	const runnable = program.pipe(Effect.catchTag("DrizzleError", FormError.from<TOut, TIn>));
 
-	const result = await Effect.runPromise(
-		Effect.match(runnable, {
-			onSuccess: handlers.onSuccess,
-			onFailure: handlers.onError
-		})
-	);
+	const result = yield* Effect.match(runnable, {
+		onSuccess: handlers.onSuccess,
+		onFailure: handlers.onError
+	});
 
 	Effect.runFork(Log.info("Result", { result }));
 	return result;
-}
+});
 
 // -------------------------------------------------------------------------------------------------
 // Errors

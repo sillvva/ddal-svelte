@@ -1,7 +1,7 @@
 import { command, query } from "$app/server";
 import { appLogId } from "$lib/schemas";
 import { assertAuth, assertAuthOrFail } from "$lib/server/auth";
-import { run, runRemote } from "$lib/server/effect";
+import { runOrReturn, runOrThrow } from "$lib/server/effect";
 import { validKeys, withAdmin } from "$lib/server/effect/admin";
 import { DateTime, Effect } from "effect";
 import * as v from "valibot";
@@ -13,10 +13,10 @@ const baseSearchFn = Effect.fn("baseSearchFn")(function* () {
 	return { query: `date:${range}`, validKeys };
 });
 
-export const getBaseSearch = query(() => run(baseSearchFn));
+export const getBaseSearch = query(() => runOrThrow(baseSearchFn));
 
 export const getLogs = query(v.string(), (search) =>
-	run(function* () {
+	runOrThrow(function* () {
 		yield* assertAuth(true);
 
 		const { logs, metadata } = yield* withAdmin((service) =>
@@ -42,7 +42,7 @@ export const getLogs = query(v.string(), (search) =>
 );
 
 export const deleteLog = command(appLogId, (id) =>
-	runRemote(function* () {
+	runOrReturn(function* () {
 		yield* assertAuthOrFail(true);
 		return yield* withAdmin((service) => service.set.deleteLog(id));
 	})

@@ -2,7 +2,7 @@ import { query } from "$app/server";
 import { searchSections } from "$lib/constants.js";
 import type { UserId } from "$lib/schemas.js";
 import { assertAuth } from "$lib/server/auth";
-import { Log, run } from "$lib/server/effect";
+import { Log, runOrThrow } from "$lib/server/effect";
 import { withCharacter } from "$lib/server/effect/characters";
 import { withDM } from "$lib/server/effect/dms";
 import { withLog } from "$lib/server/effect/logs";
@@ -78,7 +78,7 @@ const getData = Effect.fn("GetData")(function* (userId: UserId) {
 });
 
 export const getCommandData = query(() =>
-	run(
+	runOrThrow(
 		Effect.fn("GetCommandData")(
 			function* () {
 				const user = yield* assertAuth();

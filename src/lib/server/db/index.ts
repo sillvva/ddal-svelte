@@ -1,7 +1,7 @@
 import { privateEnv } from "$lib/env/private";
 import { relations } from "$lib/server/db/relations";
 import * as schema from "$lib/server/db/schema";
-import { run, type ErrorClass, type ErrorParams, type FormError } from "$lib/server/effect";
+import { runOrThrow, type ErrorClass, type ErrorParams, type FormError } from "$lib/server/effect";
 import {
 	getTableColumns,
 	sql,
@@ -32,7 +32,7 @@ export class DBService extends Effect.Service<DBService>()("DBService", {
 			C extends FormError<any, any>
 		>(effect: (tx: Transaction) => Effect.Effect<A, B>, errHandler: (err: unknown) => C) {
 			return yield* Effect.tryPromise({
-				try: () => db.transaction((tx) => run(effect(tx))),
+				try: () => db.transaction((tx) => runOrThrow(effect(tx))),
 				catch: errHandler
 			});
 		});

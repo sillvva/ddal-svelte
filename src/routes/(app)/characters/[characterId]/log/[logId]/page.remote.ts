@@ -1,14 +1,14 @@
 import { command } from "$app/server";
 import { characterIdSchema, characterLogSchema, logIdOrNewSchema, type LogSchemaIn } from "$lib/schemas";
 import { assertAuthOrFail } from "$lib/server/auth";
-import { run, saveRemote, validateForm } from "$lib/server/effect";
+import { runOrThrow, save, validateForm } from "$lib/server/effect";
 import { withCharacter } from "$lib/server/effect/characters";
 import { withLog } from "$lib/server/effect/logs";
 import { redirect } from "@sveltejs/kit";
 import * as v from "valibot";
 
 export const saveLog = command("unchecked", (input: LogSchemaIn) =>
-	run(function* () {
+	runOrThrow(function* () {
 		const user = yield* assertAuthOrFail();
 
 		const characterId = v.parse(characterIdSchema, input.characterId);
@@ -25,7 +25,7 @@ export const saveLog = command("unchecked", (input: LogSchemaIn) =>
 		const form = yield* validateForm(input, characterLogSchema(character));
 		if (!form.valid) return form;
 
-		return saveRemote(
+		return yield* save(
 			withLog((service) => service.set.save(form.data, user)),
 			{
 				onError: (err) => {

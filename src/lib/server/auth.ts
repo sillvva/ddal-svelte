@@ -10,7 +10,7 @@ import { Data, Effect } from "effect";
 import { v7 } from "uuid";
 import * as v from "valibot";
 import { db } from "./db";
-import { Log, run, type ErrorParams } from "./effect";
+import { Log, runOrThrow, type ErrorParams } from "./effect";
 import { withUser } from "./effect/users";
 
 export const auth = betterAuth({
@@ -68,7 +68,7 @@ export async function getAuthSession(event = getRequestEvent()) {
 
 	return {
 		session: session && v.parse(localsSessionSchema, session),
-		user: user && (await run(withUser((service) => service.get.localsUser(user.id as UserId))))
+		user: user && (await runOrThrow(withUser((service) => service.get.localsUser(user.id as UserId))))
 	};
 }
 

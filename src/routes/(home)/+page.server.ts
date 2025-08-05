@@ -1,9 +1,9 @@
 import { getError } from "$lib/server/auth";
-import { run } from "$lib/server/effect";
+import { runOrThrow } from "$lib/server/effect";
 import { redirect } from "@sveltejs/kit";
 
 export const load = (event) =>
-	run(function* () {
+	runOrThrow(function* () {
 		const user = event.locals.user;
 
 		const redirectTo = event.url.searchParams.get("redirect");

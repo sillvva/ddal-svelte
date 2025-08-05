@@ -4,7 +4,7 @@ import { imageUrlWithFallback, requiredString } from "$lib/schemas.js";
 import { assertAuthOrFail } from "$lib/server/auth";
 import { db, runQuery } from "$lib/server/db";
 import { passkey } from "$lib/server/db/schema.js";
-import { runRemote, type ErrorParams } from "$lib/server/effect";
+import { runOrReturn, type ErrorParams } from "$lib/server/effect";
 import { withUser } from "$lib/server/effect/users";
 import { and, eq } from "drizzle-orm";
 import { Data, Effect } from "effect";
@@ -44,7 +44,7 @@ export const updateUser = command(
 		})
 	),
 	(input) =>
-		runRemote(function* () {
+		runOrReturn(function* () {
 			const user = yield* assertAuthOrFail();
 
 			if (Object.keys(input).length === 0) return yield* Effect.fail(new NoChangesError());
@@ -61,7 +61,7 @@ export const renamePasskey = command(
 		id: v.optional(v.string())
 	}),
 	(input) =>
-		runRemote(function* () {
+		runOrReturn(function* () {
 			const user = yield* assertAuthOrFail();
 
 			const passkeys = yield* runQuery(
@@ -95,7 +95,7 @@ export const renamePasskey = command(
 );
 
 export const deletePasskey = command(v.object({ id: v.pipe(v.string(), v.uuid()) }), (input) =>
-	runRemote(function* () {
+	runOrReturn(function* () {
 		const user = yield* assertAuthOrFail();
 
 		const auth = yield* runQuery(

@@ -1,12 +1,12 @@
 import { parseCharacter } from "$lib/entities.js";
 import { characterIdOrNewSchema, type CharacterId } from "$lib/schemas.js";
-import { run } from "$lib/server/effect";
+import { runOrThrow } from "$lib/server/effect";
 import { CharacterNotFoundError, withCharacter } from "$lib/server/effect/characters";
 import { redirect } from "@sveltejs/kit";
 import * as v from "valibot";
 
 export const load = (event) =>
-	run(function* () {
+	runOrThrow(function* () {
 		const result = v.safeParse(characterIdOrNewSchema, event.params.characterId);
 		if (!result.success) throw redirect(307, `/characters${event.params.characterId !== "new" ? "?uuid=1" : ""}`);
 		const characterId = result.output;

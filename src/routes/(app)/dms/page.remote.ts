@@ -1,10 +1,10 @@
 import { command } from "$app/server";
 import { dungeonMasterIdSchema, dungeonMasterSchema, type DungeonMasterSchemaIn } from "$lib/schemas";
 import { assertAuthOrFail } from "$lib/server/auth";
-import { run, runRemote, saveRemote, validateForm, type ErrorParams } from "$lib/server/effect";
+import { runOrReturn, runOrThrow, save, validateForm, type ErrorParams } from "$lib/server/effect";
 import { withDM } from "$lib/server/effect/dms";
 import { redirect } from "@sveltejs/kit";
-import { Data, Effect } from "effect";
+import { Data } from "effect";
 import * as v from "valibot";
 
 class DMNotFoundError extends Data.TaggedError("DMNotFoundError")<ErrorParams> {
@@ -20,7 +20,7 @@ class DeleteUserDMError extends Data.TaggedError("DeleteUserDMError")<ErrorParam
 }
 
 export const saveDM = command("unchecked", (input: DungeonMasterSchemaIn) =>
-	run(function* () {
+	runOrThrow(function* () {
 		const user = yield* assertAuthOrFail();
 
 		const idResult = v.safeParse(dungeonMasterIdSchema, input.id);
@@ -30,23 +30,21 @@ export const saveDM = command("unchecked", (input: DungeonMasterSchemaIn) =>
 		const form = yield* validateForm(input, dungeonMasterSchema);
 		if (!form.valid) return form;
 
-		return yield* Effect.promise(() =>
-			saveRemote(
-				withDM((service) => service.set.save(dmId, user, form.data)),
-				{
-					onError: (err) => {
-						err.toForm(form);
-						return form;
-					},
-					onSuccess: () => "/dms"
-				}
-			)
+		return yield* save(
+			withDM((service) => service.set.save(dmId, user, form.data)),
+			{
+				onError: (err) => {
+					err.toForm(form);
+					return form;
+				},
+				onSuccess: () => "/dms"
+			}
 		);
 	})
 );
 
 export const deleteDM = command(dungeonMasterIdSchema, (id) =>
-	runRemote(function* () {
+	runOrReturn(function* () {
 		const user = yield* assertAuthOrFail();
 
 		const [dm] = yield* withDM((service) => service.get.userDMs(user.id, { id }));

@@ -1,12 +1,12 @@
 import { dungeonMasterIdSchema, dungeonMasterSchema } from "$lib/schemas";
 import { assertAuth } from "$lib/server/auth";
-import { run, validateForm } from "$lib/server/effect";
+import { runOrThrow, validateForm } from "$lib/server/effect";
 import { DMNotFoundError, withDM } from "$lib/server/effect/dms";
 import { redirect } from "@sveltejs/kit";
 import * as v from "valibot";
 
 export const load = (event) =>
-	run(function* () {
+	runOrThrow(function* () {
 		const user = yield* assertAuth();
 
 		const idResult = v.safeParse(dungeonMasterIdSchema, event.params.dmId || "");
