@@ -16,12 +16,13 @@
 	import MdTextInput from "$lib/components/forms/MDTextInput.svelte";
 	import Submit from "$lib/components/forms/Submit.svelte";
 	import SuperForm from "$lib/components/forms/SuperForm.svelte";
-	import { valibotForm } from "$lib/factories.svelte.js";
+	import { successToast, valibotForm } from "$lib/factories.svelte.js";
 	import { dMLogSchema } from "$lib/schemas";
+	import { saveLog } from "./page.remote.js";
 
 	let { data } = $props();
 
-	const superform = $derived(valibotForm(data.form, dMLogSchema()));
+	const superform = $derived(valibotForm(data.form, dMLogSchema(), { remote: true }));
 	const form = $derived(superform.form);
 
 	let season = $state($form.experience ? 1 : $form.acp ? 8 : 9);
@@ -30,7 +31,16 @@
 {#key $form.id}
 	<Breadcrumbs />
 
-	<SuperForm action="?/saveLog" {superform} showMessage>
+	<SuperForm
+		{superform}
+		remote={async (data) => {
+			const result = await saveLog(data);
+			if (typeof result === "string") {
+				successToast(`${data.name} saved successfully`);
+			}
+			return result;
+		}}
+	>
 		<Control class="col-span-12 sm:col-span-6 lg:col-span-3">
 			<Input type="text" {superform} field="name" label="Title" />
 		</Control>

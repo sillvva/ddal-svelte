@@ -203,6 +203,21 @@ export async function runRemote<A, B extends InstanceType<ErrorClass>, T extends
 
 export type SuperValidateData = RequestEvent | Request | FormData | URLSearchParams | URL | null | undefined;
 
+function parseRemoteFormData(formData: FormData) {
+	return JSON.parse(formData.get("data")?.toString() || "{}") as SuperValidateData;
+}
+
+export function validateRemoteForm<
+	Input extends SuperValidateData | Partial<InferInput<Schema>>,
+	Schema extends BaseSchema<any, any, any>
+>(input: Input, schema: Schema, options?: SuperValidateOptions<InferOutput<Schema>>) {
+	if (input instanceof FormData) {
+		return Effect.promise(() => superValidate(parseRemoteFormData(input), valibot(schema), options));
+	} else {
+		return Effect.promise(() => superValidate(input, valibot(schema), options));
+	}
+}
+
 export function validateForm<
 	Input extends SuperValidateData | Partial<InferInput<Schema>>,
 	Schema extends BaseSchema<any, any, any>
@@ -215,14 +230,14 @@ export function validateForm<
 // -------------------------------------------------------------------------------------------------
 
 export async function save<
-	TSuccess extends `/${string}` | TForm | ActionFailure<TForm>,
+	TSuccess extends `/${string}` | TForm,
 	TOut extends Record<PropertyKey, any>,
-	TForm extends { form: SuperValidated<TOut> },
+	TForm extends ActionFailure<{ form: SuperValidated<TOut> }> | { form: SuperValidated<TOut> } | SuperValidated<TOut>,
 	TIn extends Record<PropertyKey, any> = TOut
 >(
 	program: Effect.Effect<TIn, FormError<TOut, TIn> | DrizzleError>,
 	handlers: {
-		onError: (err: FormError<TOut, TIn>) => ActionFailure<TForm>;
+		onError: (err: FormError<TOut, TIn>) => TForm;
 		onSuccess: (data: TIn) => TSuccess | Promise<TSuccess>;
 	}
 ) {
@@ -235,9 +250,9 @@ export async function save<
 		})
 	);
 
-	if (typeof result === "string" && result.startsWith("/")) {
-		Effect.runFork(Log.debug(`Redirect to ${result}`, { status: 303, location: result }));
-		redirect(303, result);
+	if (typeof result === "string") {
+		Effect.runFork(Log.info(`Redirect to ${result}`, { status: 303, location: result }));
+		throw redirect(303, result);
 	}
 
 	if (typeof result === "object" && result !== null && "status" in result) {
@@ -246,6 +261,31 @@ export async function save<
 		Effect.runFork(Log.info("Result", { result }));
 	}
 
+	return result;
+}
+
+export async function saveRemote<
+	TSuccess extends `/${string}` | TForm | Promise<`/${string}` | TForm>,
+	TOut extends Record<PropertyKey, any>,
+	TForm extends SuperValidated<TOut>,
+	TIn extends Record<PropertyKey, any> = TOut
+>(
+	program: Effect.Effect<TIn, FormError<TOut, TIn> | DrizzleError>,
+	handlers: {
+		onError: (err: FormError<TOut, TIn>) => TForm;
+		onSuccess: (data: TIn) => TSuccess;
+	}
+) {
+	const runnable = program.pipe(Effect.catchTag("DrizzleError", FormError.from<TOut, TIn>));
+
+	const result = await Effect.runPromise(
+		Effect.match(runnable, {
+			onSuccess: handlers.onSuccess,
+			onFailure: handlers.onError
+		})
+	);
+
+	Effect.runFork(Log.info("Result", { result }));
 	return result;
 }
 

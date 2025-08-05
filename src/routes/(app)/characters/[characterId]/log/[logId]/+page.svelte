@@ -17,13 +17,14 @@
 	import Submit from "$lib/components/forms/Submit.svelte";
 	import SuperForm from "$lib/components/forms/SuperForm.svelte";
 	import { defaultDM } from "$lib/entities";
-	import { valibotForm } from "$lib/factories.svelte.js";
+	import { successToast, valibotForm } from "$lib/factories.svelte.js";
 	import { type DungeonMasterId, logSchema } from "$lib/schemas";
 	import { twMerge } from "tailwind-merge";
+	import { saveLog } from "./page.remote.js";
 
 	let { data } = $props();
 
-	const superform = $derived(valibotForm(data.form, logSchema));
+	const superform = $derived(valibotForm(data.form, logSchema, { remote: true }));
 	const form = $derived(superform.form);
 
 	let season = $state($form.experience ? 1 : $form.acp ? 8 : 9);
@@ -32,7 +33,16 @@
 {#key $form.id || "new"}
 	<Breadcrumbs />
 
-	<SuperForm action="?/saveLog" {superform} showMessage>
+	<SuperForm
+		{superform}
+		remote={async (data) => {
+			const result = await saveLog(data);
+			if (typeof result === "string") {
+				successToast(`${data.name} saved successfully`);
+			}
+			return result;
+		}}
+	>
 		{#if !data.firstLog}
 			<Control class="col-span-12 sm:col-span-4">
 				<GenericInput {superform} field="type" label="Log Type">

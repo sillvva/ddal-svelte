@@ -15,18 +15,27 @@
 	import { errorToast, successToast, valibotForm } from "$lib/factories.svelte.js";
 	import { dungeonMasterSchema } from "$lib/schemas";
 	import { sorter } from "@sillvva/utils";
-	import { deleteDM } from "../page.remote.js";
+	import { deleteDM, saveDM } from "../page.remote.js";
 
 	let { data } = $props();
 
-	const superform = $derived(valibotForm(data.form, dungeonMasterSchema));
+	const superform = $derived(valibotForm(data.form, dungeonMasterSchema, { remote: true }));
 	const sortedLogs = $derived(data.dm.logs.toSorted((a, b) => sorter(a.date, b.date)));
 </script>
 
 <div class="flex flex-col gap-4">
 	<Breadcrumbs />
 
-	<SuperForm action="?/saveDM" {superform}>
+	<SuperForm
+		{superform}
+		remote={async (data) => {
+			const result = await saveDM(data);
+			if (typeof result === "string") {
+				successToast(`${data.name} saved successfully`);
+			}
+			return result;
+		}}
+	>
 		<Control class="col-span-12 sm:col-span-6">
 			<Input type="text" {superform} field="name" label="DM Name" />
 		</Control>

@@ -74,6 +74,7 @@ export type CharacterIdOrNew = v.InferOutput<typeof characterIdOrNewSchema>;
 export const characterIdOrNewSchema = v.union([characterIdSchema, v.literal("new")]);
 
 export type EditCharacterSchema = v.InferOutput<typeof editCharacterSchema>;
+export type EditCharacterSchemaIn = v.InferInput<typeof editCharacterSchema>;
 export const editCharacterSchema = v.object({
 	id: characterIdOrNewSchema,
 	...newCharacterSchema.entries,

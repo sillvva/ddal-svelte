@@ -51,6 +51,7 @@ export function unknownErrorToast(error: unknown) {
 
 interface CustomFormOptions<S extends v.ObjectSchema<any, any>> {
 	nameField?: FormPathLeaves<v.InferOutput<S>, string>;
+	remote?: true;
 }
 
 export function valibotForm<S extends v.ObjectSchema<any, any>, Out extends v.InferOutput<S>, In extends v.InferInput<S>>(
@@ -64,6 +65,10 @@ export function valibotForm<S extends v.ObjectSchema<any, any>, Out extends v.In
 		validators: valibotClient(schema),
 		taintedMessage: "You have unsaved changes. Are you sure you want to leave?",
 		...rest,
+		onSubmit(event) {
+			if (options?.remote) event.cancel();
+			rest.onSubmit?.(event);
+		},
 		onResult(event) {
 			if (["success", "redirect"].includes(event.result.type)) {
 				const data = get(superform.form);

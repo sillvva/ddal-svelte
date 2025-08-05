@@ -1,13 +1,8 @@
 import { BLANK_CHARACTER } from "$lib/constants.js";
-import { defaultLogSchema } from "$lib/entities.js";
-import { characterIdOrNewSchema, editCharacterSchema, type EditCharacterSchema } from "$lib/schemas";
+import { editCharacterSchema } from "$lib/schemas";
 import { assertAuth } from "$lib/server/auth";
-import { run, save, validateForm } from "$lib/server/effect";
-import { SaveCharacterError, withCharacter } from "$lib/server/effect/characters";
-import { withLog } from "$lib/server/effect/logs.js";
+import { run, validateForm } from "$lib/server/effect";
 import { Effect } from "effect";
-import { fail, setError } from "sveltekit-superforms";
-import * as v from "valibot";
 
 export const load = (event) =>
 	run(function* () {
@@ -37,44 +32,3 @@ export const load = (event) =>
 			form
 		};
 	});
-
-export const actions = {
-	saveCharacter: (event) =>
-		run(function* () {
-			const user = yield* assertAuth();
-
-			const form = yield* validateForm(event, editCharacterSchema);
-			if (!form.valid) return fail(400, { form });
-			const { firstLog, ...data } = form.data;
-
-			const characterId = v.parse(characterIdOrNewSchema, event.params.characterId);
-
-			return save(
-				withCharacter((service) => service.set.save(characterId, user.id, data)),
-				{
-					onError: (err) => err.toForm(form),
-					onSuccess: async (character) => {
-						if (firstLog && characterId === "new") {
-							const log = defaultLogSchema(user.id, character);
-							log.name = "Character Creation";
-
-							return await save(
-								withLog((service) => service.set.save(log, user)).pipe(
-									Effect.catchAll(SaveCharacterError.from<EditCharacterSchema>)
-								),
-								{
-									onError: (err) => {
-										setError(form, "", err.message);
-										return fail(err.status, { form });
-									},
-									onSuccess: (logResult) => `/characters/${character.id}/log/${logResult.id}?firstLog=true`
-								}
-							);
-						}
-
-						return `/characters/${character.id}`;
-					}
-				}
-			);
-		})
-};

@@ -1,9 +1,11 @@
 import { command } from "$app/server";
-import { dungeonMasterIdSchema } from "$lib/schemas";
+import { dungeonMasterIdSchema, dungeonMasterSchema, type DungeonMasterSchemaIn } from "$lib/schemas";
 import { assertAuthOrFail } from "$lib/server/auth";
-import { runRemote, type ErrorParams } from "$lib/server/effect";
+import { run, runRemote, saveRemote, validateForm, type ErrorParams } from "$lib/server/effect";
 import { withDM } from "$lib/server/effect/dms";
-import { Data } from "effect";
+import { redirect } from "@sveltejs/kit";
+import { Data, Effect } from "effect";
+import * as v from "valibot";
 
 class DMNotFoundError extends Data.TaggedError("DMNotFoundError")<ErrorParams> {
 	constructor(err?: unknown) {
@@ -16,6 +18,32 @@ class DeleteUserDMError extends Data.TaggedError("DeleteUserDMError")<ErrorParam
 		super({ message: "Unable to delete User DM", status: 500, cause: err });
 	}
 }
+
+export const saveDM = command("unchecked", (input: DungeonMasterSchemaIn) =>
+	run(function* () {
+		const user = yield* assertAuthOrFail();
+
+		const idResult = v.safeParse(dungeonMasterIdSchema, input.id);
+		if (!idResult.success) redirect(302, `/dms`);
+		const dmId = idResult.output;
+
+		const form = yield* validateForm(input, dungeonMasterSchema);
+		if (!form.valid) return form;
+
+		return yield* Effect.promise(() =>
+			saveRemote(
+				withDM((service) => service.set.save(dmId, user, form.data)),
+				{
+					onError: (err) => {
+						err.toForm(form);
+						return form;
+					},
+					onSuccess: () => "/dms"
+				}
+			)
+		);
+	})
+);
 
 export const deleteDM = command(dungeonMasterIdSchema, (id) =>
 	runRemote(function* () {
