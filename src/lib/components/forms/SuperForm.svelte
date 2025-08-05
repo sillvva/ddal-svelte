@@ -1,6 +1,7 @@
 <script lang="ts">
 	import { dev } from "$app/environment";
 	import { goto } from "$app/navigation";
+	import type { Pathname } from "$app/types";
 	import { onMount, type Snippet } from "svelte";
 	import { fromAction } from "svelte/attachments";
 	import type { HTMLFormAttributes } from "svelte/elements";
@@ -11,7 +12,7 @@
 	type FormAttributes = Omit<HTMLFormAttributes, "hidden">;
 	type T = $$Generic<Record<PropertyKey, unknown>>;
 	type TForm = $$Generic<SuperValidated<T, App.Superforms.Message>>;
-	type TRemoteCommand = $$Generic<(data: T) => Promise<TForm | `/${string}`>>;
+	type TRemoteCommand = $$Generic<(data: T) => Promise<TForm | Pathname>>;
 
 	interface Props extends FormAttributes {
 		superform: SuperForm<T, App.Superforms.Message>;

@@ -1,5 +1,6 @@
 import { dev } from "$app/environment";
 import { getRequestEvent } from "$app/server";
+import type { Pathname } from "$app/types";
 import { privateEnv } from "$lib/env/private";
 import type { AppLogSchema, UserId } from "$lib/schemas";
 import { db, DrizzleError, runQuery } from "$lib/server/db";
@@ -222,7 +223,7 @@ export function validateForm<
 // -------------------------------------------------------------------------------------------------
 
 export const save = Effect.fn(function* <
-	TSuccess extends `/${string}` | TForm | Promise<`/${string}` | TForm>,
+	TSuccess extends Pathname | TForm | Promise<Pathname | TForm>,
 	TOut extends Record<PropertyKey, any>,
 	TForm extends SuperValidated<TOut>,
 	TIn extends Record<PropertyKey, any> = TOut
