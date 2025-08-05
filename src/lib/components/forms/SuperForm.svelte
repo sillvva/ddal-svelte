@@ -21,7 +21,7 @@
 
 	let { superform, children, remote, ...rest }: Props = $props();
 
-	const { form, errors, message, capture, restore, validateForm, enhance, submit, submitting } = superform;
+	const { form, errors, message, capture, restore, validateForm, enhance, submit, submitting, tainted } = superform;
 
 	const action = $derived(remote ? undefined : rest?.action);
 	const method = $derived(remote ? "post" : rest?.method || "post");
@@ -76,7 +76,10 @@
 
 			try {
 				const result = await remote($form);
-				if (typeof result === "string") return goto(result);
+				if (typeof result === "string") {
+					$tainted = undefined;
+					return goto(result);
+				}
 
 				$form = result.data;
 				$errors = result.errors;
@@ -94,6 +97,6 @@
 	</form>
 
 	{#if dev}
-		<SuperDebug data={{ $form, $errors, $message, isSubmitting }} />
+		<SuperDebug data={{ $form, $errors, $message, isSubmitting, $tainted }} />
 	{/if}
 </div>
