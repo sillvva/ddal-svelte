@@ -89,14 +89,14 @@
 			</div>
 		</div>
 	</Control>
-	{#if !data.character?.id}
+	{#if data.character?.id === "new"}
 		<Control class="col-span-12 -mb-4">
 			<span class="fieldset-legend">
 				<span>Options</span>
 			</span>
 		</Control>
 	{/if}
-	{#if !data.character?.id}
+	{#if data.character?.id === "new"}
 		<Control class="col-span-12 sm:col-span-6">
 			<Checkbox
 				{superform}
