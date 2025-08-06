@@ -1,7 +1,7 @@
 import { privateEnv } from "$lib/env/private";
 import { relations } from "$lib/server/db/relations";
 import * as schema from "$lib/server/db/schema";
-import { runOrThrow, type ErrorClass, type ErrorParams, type FormError } from "$lib/server/effect";
+import { runOrReturn, type ErrorClass, type ErrorParams } from "$lib/server/effect";
 import {
 	getTableColumns,
 	sql,
@@ -26,15 +26,12 @@ export const db: Database = drizzle(connection, { schema, relations });
 
 export class DBService extends Effect.Service<DBService>()("DBService", {
 	effect: Effect.fn("DBService")(function* (tx?: Transaction) {
-		const transaction = Effect.fn("DBService.transaction")(function* <
-			A,
-			B extends InstanceType<ErrorClass> | never,
-			C extends FormError<any, any>
-		>(effect: (tx: Transaction) => Effect.Effect<A, B>, errHandler: (err: unknown) => C) {
-			return yield* Effect.tryPromise({
-				try: () => db.transaction((tx) => runOrThrow(effect(tx))),
-				catch: errHandler
-			});
+		const transaction = Effect.fn("DBService.transaction")(function* <A, B extends InstanceType<ErrorClass> | never>(
+			effect: (tx: Transaction) => Effect.Effect<A, B>
+		) {
+			const result = yield* Effect.promise(() => db.transaction((tx) => runOrReturn(effect(tx))));
+			if (result.ok) return result.data;
+			else return yield* new TransactionError(result.error);
 		});
 
 		return { db: tx || db, transaction };
@@ -48,6 +45,12 @@ export function runQuery<TQuery extends PromiseLike<any> & { toSQL: () => Query 
 		try: () => query,
 		catch: (err) => new DrizzleError(err, query.toSQL())
 	});
+}
+
+export class TransactionError extends Data.TaggedError("TransactionError")<ErrorParams> {
+	constructor(err: unknown) {
+		super({ message: Cause.pretty(Cause.fail(err)), status: 500, cause: err });
+	}
 }
 
 export class DrizzleError extends Data.TaggedError("DrizzleError")<ErrorParams> {

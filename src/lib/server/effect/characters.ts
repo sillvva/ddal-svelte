@@ -5,6 +5,7 @@ import {
 	buildConflictUpdateColumns,
 	DBService,
 	runQuery,
+	TransactionError,
 	type Database,
 	type DrizzleError,
 	type InferQueryResult,
@@ -54,7 +55,7 @@ interface CharacterApiImpl {
 		readonly delete: (
 			characterId: CharacterId,
 			userId: UserId
-		) => Effect.Effect<{ id: CharacterId }, DeleteCharacterError | DrizzleError>;
+		) => Effect.Effect<{ id: CharacterId }, DeleteCharacterError | TransactionError>;
 	};
 }
 
@@ -145,8 +146,7 @@ export class CharacterService extends Effect.Service<CharacterService>()("Charac
 									.where(and(eq(characters.id, characterId), eq(characters.userId, userId)))
 									.returning({ id: characters.id })
 							);
-						}),
-						(err) => new DeleteCharacterError(err)
+						})
 					).pipe(
 						Effect.flatMap((result) =>
 							isTupleOf(result, 1) ? Effect.succeed(result[0]) : Effect.fail(new DeleteCharacterError())
@@ -167,7 +167,7 @@ export const CharacterTx = (tx: Transaction) =>
 	CharacterService.DefaultWithoutDependencies().pipe(Layer.provide(DBService.Default(tx)));
 
 export const withCharacter = Effect.fn("withCharacter")(
-	function* <R, E extends SaveCharacterError | DeleteCharacterError | DrizzleError>(
+	function* <R, E extends SaveCharacterError | DeleteCharacterError | DrizzleError | TransactionError>(
 		impl: (service: CharacterApiImpl) => Effect.Effect<R, E>
 	) {
 		const CharacterApi = yield* CharacterService;

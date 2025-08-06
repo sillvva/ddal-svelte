@@ -4,6 +4,7 @@ import {
 	buildConflictUpdateColumns,
 	DBService,
 	runQuery,
+	TransactionError,
 	type Database,
 	type DrizzleError,
 	type Filter,
@@ -110,7 +111,7 @@ interface LogApiImpl {
 		readonly userLogs: (userId: UserId) => Effect.Effect<UserLogData[], DrizzleError>;
 	};
 	readonly set: {
-		readonly save: (log: LogSchema, user: LocalsUser) => Effect.Effect<FullLogData, SaveLogError | DrizzleError>;
+		readonly save: (log: LogSchema, user: LocalsUser) => Effect.Effect<FullLogData, SaveLogError | TransactionError>;
 		readonly delete: (logId: LogId, userId: UserId) => Effect.Effect<{ id: LogId }, DeleteLogError | DrizzleError>;
 	};
 }
@@ -362,10 +363,7 @@ export class LogService extends Effect.Service<LogService>()("LogService", {
 			},
 			set: {
 				save: Effect.fn("LogService.set.save")(function* (log, user) {
-					return yield* transaction(
-						(tx) => upsertLog(log, user).pipe(Effect.provide(LogTx(tx)), Effect.provide(DMTx(tx))),
-						(err) => new SaveLogError("Unable to save log", { status: 500, cause: err })
-					).pipe(
+					return yield* transaction((tx) => upsertLog(log, user).pipe(Effect.provide(LogTx(tx)), Effect.provide(DMTx(tx)))).pipe(
 						Effect.tap((result) => Log.info("LogService.set.save", { logId: log.id, userId: user.id, result })),
 						Effect.tapError(() => Log.debug("LogService.set.save", { logId: log.id, userId: user.id, log }))
 					);
@@ -424,7 +422,9 @@ export class LogService extends Effect.Service<LogService>()("LogService", {
 export const LogTx = (tx: Transaction) => LogService.DefaultWithoutDependencies().pipe(Layer.provide(DBService.Default(tx)));
 
 export const withLog = Effect.fn("withLog")(
-	function* <R, E extends SaveLogError | DeleteLogError | DrizzleError>(impl: (service: LogApiImpl) => Effect.Effect<R, E>) {
+	function* <R, E extends SaveLogError | DeleteLogError | DrizzleError | TransactionError>(
+		impl: (service: LogApiImpl) => Effect.Effect<R, E>
+	) {
 		const logApi = yield* LogService;
 		return yield* impl(logApi);
 	},

@@ -3,7 +3,7 @@ import { getRequestEvent } from "$app/server";
 import type { Pathname } from "$app/types";
 import { privateEnv } from "$lib/env/private";
 import type { AppLogSchema, UserId } from "$lib/schemas";
-import { db, DrizzleError, runQuery } from "$lib/server/db";
+import { db, runQuery } from "$lib/server/db";
 import { appLogs } from "$lib/server/db/schema";
 import { removeTrace, type Awaitable } from "$lib/util";
 import { isInstanceOfClass } from "@sillvva/utils";
@@ -89,6 +89,69 @@ export const debugSet = Effect.fn("debugSet")(function* <S extends string>(servi
 // Run
 // -------------------------------------------------------------------------------------------------
 
+// Overload signatures
+export async function runOrThrow<A, B extends InstanceType<ErrorClass>, T extends YieldWrap<Effect.Effect<A, B>>, X, Y>(
+	program: () => Generator<T, X, Y>
+): Promise<X>;
+
+export async function runOrThrow<A, B extends InstanceType<ErrorClass>>(
+	program: Effect.Effect<A, B> | (() => Effect.Effect<A, B>)
+): Promise<A>;
+
+// Implementation
+export async function runOrThrow<A, B extends InstanceType<ErrorClass>, T extends YieldWrap<Effect.Effect<A, B>>, X, Y>(
+	program: Effect.Effect<A, B> | (() => Effect.Effect<A, B>) | (() => Generator<T, X, Y>)
+): Promise<A | X> {
+	const effect = Effect.fn(function* () {
+		if (isFunction(program)) {
+			return yield* program();
+		} else {
+			return yield* program;
+		}
+	});
+
+	const result = await Effect.runPromiseExit(effect());
+	return Exit.match(result, {
+		onSuccess: (result) => result,
+		onFailure: (cause) => {
+			const { message, status } = handleCause(cause);
+			throw error(status, message);
+		}
+	});
+}
+
+type EffectResult<A> =
+	| { ok: true; data: A }
+	| { ok: false; error: { message: string; status: NumericRange<400, 599>; extra: Record<string, unknown> } };
+
+// Overload signatures
+export async function runOrReturn<A, B extends InstanceType<ErrorClass>, T extends YieldWrap<Effect.Effect<A, B>>, X, Y>(
+	program: () => Generator<T, X, Y>
+): Promise<EffectResult<X>>;
+
+export async function runOrReturn<A, B extends InstanceType<ErrorClass>>(
+	program: Effect.Effect<A, B> | (() => Effect.Effect<A, B>)
+): Promise<EffectResult<A>>;
+
+// Implementation
+export async function runOrReturn<A, B extends InstanceType<ErrorClass>, T extends YieldWrap<Effect.Effect<A, B>>, X, Y>(
+	program: Effect.Effect<A, B> | (() => Effect.Effect<A, B>) | (() => Generator<T, X, Y>)
+): Promise<EffectResult<A | X>> {
+	const effect = Effect.fn(function* () {
+		if (isFunction(program)) {
+			return yield* program();
+		} else {
+			return yield* program;
+		}
+	});
+
+	const result = await Effect.runPromiseExit(effect());
+	return Exit.match(result, {
+		onSuccess: (result) => ({ ok: true, data: result }),
+		onFailure: (cause) => ({ ok: false, error: handleCause(cause) })
+	});
+}
+
 function handleCause<B extends InstanceType<ErrorClass>>(cause: Cause.Cause<B>) {
 	let message = Cause.pretty(cause);
 	let status: NumericRange<400, 599> = 500;
@@ -123,69 +186,6 @@ function handleCause<B extends InstanceType<ErrorClass>>(cause: Cause.Cause<B>) 
 
 	if (!dev) message = removeTrace(message);
 	return { message, status, extra };
-}
-
-// Overload signatures
-export async function runOrThrow<A, B extends InstanceType<ErrorClass>, T extends YieldWrap<Effect.Effect<A, B>>, X, Y>(
-	program: () => Generator<T, X, Y>
-): Promise<X>;
-
-export async function runOrThrow<A, B extends InstanceType<ErrorClass>>(
-	program: Effect.Effect<A, B> | (() => Effect.Effect<A, B>)
-): Promise<A>;
-
-// Implementation
-export async function runOrThrow<A, B extends InstanceType<ErrorClass>, T extends YieldWrap<Effect.Effect<A, B>>, X, Y>(
-	program: Effect.Effect<A, B> | (() => Effect.Effect<A, B>) | (() => Generator<T, X, Y>)
-): Promise<A | X> {
-	const effect = Effect.fn(function* () {
-		if (isFunction(program)) {
-			return yield* program();
-		} else {
-			return yield* program;
-		}
-	});
-
-	const result = await Effect.runPromiseExit(effect());
-	return Exit.match(result, {
-		onSuccess: (result) => result,
-		onFailure: (cause) => {
-			const { message, status } = handleCause(cause);
-			throw error(status, message);
-		}
-	});
-}
-
-type RemoteResult<A> =
-	| { ok: true; data: A }
-	| { ok: false; error: { message: string; status: NumericRange<400, 599>; extra: Record<string, unknown> } };
-
-// Overload signatures
-export async function runOrReturn<A, B extends InstanceType<ErrorClass>, T extends YieldWrap<Effect.Effect<A, B>>, X, Y>(
-	program: () => Generator<T, X, Y>
-): Promise<RemoteResult<X>>;
-
-export async function runOrReturn<A, B extends InstanceType<ErrorClass>>(
-	program: Effect.Effect<A, B> | (() => Effect.Effect<A, B>)
-): Promise<RemoteResult<A>>;
-
-// Implementation
-export async function runOrReturn<A, B extends InstanceType<ErrorClass>, T extends YieldWrap<Effect.Effect<A, B>>, X, Y>(
-	program: Effect.Effect<A, B> | (() => Effect.Effect<A, B>) | (() => Generator<T, X, Y>)
-): Promise<RemoteResult<A | X>> {
-	const effect = Effect.fn(function* () {
-		if (isFunction(program)) {
-			return yield* program();
-		} else {
-			return yield* program;
-		}
-	});
-
-	const result = await Effect.runPromiseExit(effect());
-	return Exit.match(result, {
-		onSuccess: (result) => ({ ok: true, data: result }),
-		onFailure: (cause) => ({ ok: false, error: handleCause(cause) })
-	});
 }
 
 // -------------------------------------------------------------------------------------------------
@@ -227,7 +227,7 @@ export const save = Effect.fn(function* <
 	TOut extends Record<PropertyKey, any>,
 	TIn extends Record<PropertyKey, any> = TOut
 >(
-	program: Effect.Effect<TIn, FormError<TOut, TIn> | DrizzleError>,
+	program: Effect.Effect<TIn, FormError<TOut, TIn> | InstanceType<ErrorClass>>,
 	handlers: {
 		onError: (err: FormError<TOut, TIn>) => Awaitable<TFailure>;
 		onSuccess: (data: TIn) => Awaitable<TSuccess>;
