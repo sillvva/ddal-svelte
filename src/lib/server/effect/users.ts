@@ -1,12 +1,12 @@
 import { PROVIDERS } from "$lib/constants";
-import type { CharacterId, LocalsUser, UserId } from "$lib/schemas";
+import type { CharacterId, LocalsUser, PasskeyId, UserId } from "$lib/schemas";
 import { DBService, runQuery, type DrizzleError, type Transaction } from "$lib/server/db";
-import { user, type User } from "$lib/server/db/schema";
+import { passkey, user, type Passkey, type User } from "$lib/server/db/schema";
 import { sorter } from "@sillvva/utils";
-import { eq } from "drizzle-orm";
+import { and, eq } from "drizzle-orm";
 import { Data, Effect, Layer } from "effect";
 import { isTupleOf } from "effect/Predicate";
-import { Log, type ErrorParams } from ".";
+import { AppLog, type ErrorParams } from ".";
 
 export class UpdateUserError extends Data.TaggedError("UpdateUserError")<ErrorParams> {
 	constructor(err?: unknown) {
@@ -14,16 +14,36 @@ export class UpdateUserError extends Data.TaggedError("UpdateUserError")<ErrorPa
 	}
 }
 
+export class RenamePasskeyError extends Data.TaggedError("RenamePasskeyError")<ErrorParams> {
+	constructor(err?: unknown) {
+		super({ message: "Could not rename passkey", status: 500, cause: err });
+	}
+}
+
+export class DeletePasskeyError extends Data.TaggedError("DeletePasskeyError")<ErrorParams> {
+	constructor(err?: unknown) {
+		super({ message: "Could not delete passkey", status: 500, cause: err });
+	}
+}
+
 interface UserApiImpl {
 	readonly get: {
 		readonly localsUser: (userId: UserId) => Effect.Effect<LocalsUser | undefined, DrizzleError>;
 		readonly users: () => Effect.Effect<(User & { characters: { id: CharacterId }[] })[], DrizzleError>;
+		readonly passkey: (userId: UserId, passkeyId: PasskeyId) => Effect.Effect<Passkey | undefined, DrizzleError>;
+		readonly passkeys: (userId: UserId) => Effect.Effect<Passkey[], DrizzleError>;
 	};
 	readonly set: {
 		readonly update: (
 			userId: UserId,
 			data: Partial<Pick<User, "name" | "image">>
 		) => Effect.Effect<User, UpdateUserError | DrizzleError>;
+		readonly renamePasskey: (
+			userId: UserId,
+			passkeyId: PasskeyId,
+			name: string
+		) => Effect.Effect<Passkey, RenamePasskeyError | DrizzleError>;
+		readonly deletePasskey: (userId: UserId, passkeyId: PasskeyId) => Effect.Effect<PasskeyId, DeletePasskeyError | DrizzleError>;
 	};
 }
 
@@ -90,6 +110,27 @@ export class UserService extends Effect.Service<UserService>()("UserService", {
 							}
 						})
 					).pipe(Effect.map((users) => users.sort((a, b) => sorter(a.name.toLowerCase(), b.name.toLowerCase()))));
+				}),
+				passkey: Effect.fn("UserService.get.passkey")(function* (userId, passkeyId) {
+					return yield* runQuery(
+						db.query.passkey.findFirst({
+							where: {
+								id: { eq: passkeyId },
+								userId: { eq: userId }
+							}
+						})
+					);
+				}),
+				passkeys: Effect.fn("UserService.get.passkeys")(function* (userId) {
+					return yield* runQuery(
+						db.query.passkey.findMany({
+							where: {
+								userId: {
+									eq: userId
+								}
+							}
+						})
+					);
 				})
 			},
 			set: {
@@ -98,8 +139,37 @@ export class UserService extends Effect.Service<UserService>()("UserService", {
 						Effect.flatMap((users) =>
 							isTupleOf(users, 1) ? Effect.succeed(users[0]) : Effect.fail(new UpdateUserError("Failed to update user"))
 						),
-						Effect.tap((result) => Log.info("UserService.set.update", { userId, result })),
-						Effect.tapError(() => Log.debug("UserService.set.update", { userId, data }))
+						Effect.tap((result) => AppLog.info("UserService.set.update", { userId, result })),
+						Effect.tapError(() => AppLog.debug("UserService.set.update", { userId, data }))
+					);
+				}),
+				renamePasskey: Effect.fn("UserService.set.renamePasskey")(function* (userId, passkeyId, name) {
+					return yield* runQuery(
+						db
+							.update(passkey)
+							.set({ name: name.trim() })
+							.where(and(eq(passkey.id, passkeyId), eq(passkey.userId, userId)))
+							.returning()
+					).pipe(
+						Effect.flatMap((passkeys) =>
+							isTupleOf(passkeys, 1)
+								? Effect.succeed(passkeys[0])
+								: Effect.fail(new RenamePasskeyError("Failed to rename passkey"))
+						)
+					);
+				}),
+				deletePasskey: Effect.fn("UserService.set.deletePasskey")(function* (userId, passkeyId) {
+					return yield* runQuery(
+						db
+							.delete(passkey)
+							.where(and(eq(passkey.id, passkeyId), eq(passkey.userId, userId)))
+							.returning({ id: passkey.id })
+					).pipe(
+						Effect.flatMap((passkeys) =>
+							isTupleOf(passkeys, 1)
+								? Effect.succeed(passkeys[0].id)
+								: Effect.fail(new DeletePasskeyError("Failed to delete passkey"))
+						)
 					);
 				})
 			}
@@ -113,7 +183,9 @@ export class UserService extends Effect.Service<UserService>()("UserService", {
 export const UserTx = (tx: Transaction) => UserService.DefaultWithoutDependencies().pipe(Layer.provide(DBService.Default(tx)));
 
 export const withUser = Effect.fn("withUser")(
-	function* <R, E extends UpdateUserError | DrizzleError>(impl: (service: UserApiImpl) => Effect.Effect<R, E>) {
+	function* <R, E extends UpdateUserError | DrizzleError | RenamePasskeyError | DeletePasskeyError>(
+		impl: (service: UserApiImpl) => Effect.Effect<R, E>
+	) {
 		const userApi = yield* UserService;
 		return yield* impl(userApi);
 	},

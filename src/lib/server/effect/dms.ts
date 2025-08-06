@@ -6,7 +6,7 @@ import { sorter } from "@sillvva/utils";
 import { and, eq } from "drizzle-orm";
 import { Data, Effect, Layer } from "effect";
 import { isTupleOf } from "effect/Predicate";
-import { FormError, Log, type ErrorParams } from ".";
+import { AppLog, FormError, type ErrorParams } from ".";
 import { assertAuthOrFail, UnauthorizedError } from "../auth";
 
 class FetchUserDMsError extends Data.TaggedError("FetchUserDMsError")<ErrorParams> {
@@ -80,7 +80,7 @@ export class DMService extends Effect.Service<DMService>()("DMSService", {
 								? impl.set.addUserDM(dms).pipe(Effect.catchAll((e) => new FetchUserDMsError({ ...e, cause: e })))
 								: Effect.succeed(dms)
 						),
-						Effect.tapError(() => Log.debug("DMService.get.userDMs", { userId, id, includeLogs }))
+						Effect.tapError(() => AppLog.debug("DMService.get.userDMs", { userId, id, includeLogs }))
 					);
 				}),
 
@@ -99,7 +99,7 @@ export class DMService extends Effect.Service<DMService>()("DMSService", {
 						})
 					).pipe(
 						Effect.tapError(() =>
-							Log.debug("DMService.get.fuzzyDM", {
+							AppLog.debug("DMService.get.fuzzyDM", {
 								userId,
 								...(isUser ? { isUser } : { name: dm.name.trim() || undefined, DCI: dm.DCI || undefined })
 							})
@@ -132,8 +132,8 @@ export class DMService extends Effect.Service<DMService>()("DMSService", {
 						Effect.flatMap((dms) =>
 							isTupleOf(dms, 1) ? Effect.succeed(dms[0]) : Effect.fail(new SaveDMError("Failed to save DM"))
 						),
-						Effect.tap((result) => Log.info("DMService.set.save", { dmId, userId: user.id, result })),
-						Effect.tapError(() => Log.debug("DMService.set.save", { dmId, userId: user.id, data }))
+						Effect.tap((result) => AppLog.info("DMService.set.save", { dmId, userId: user.id, result })),
+						Effect.tapError(() => AppLog.debug("DMService.set.save", { dmId, userId: user.id, data }))
 					);
 				}),
 
@@ -159,7 +159,7 @@ export class DMService extends Effect.Service<DMService>()("DMSService", {
 								? Effect.succeed({ ...dms[0], logs: [] as UserDM["logs"] })
 								: Effect.fail(new SaveDMError("Failed to create DM"))
 						),
-						Effect.tap((result) => Log.info("DMService.set.addUserDM", { result }))
+						Effect.tap((result) => AppLog.info("DMService.set.addUserDM", { result }))
 					);
 
 					return dms.toSpliced(0, 0, result);
@@ -177,8 +177,8 @@ export class DMService extends Effect.Service<DMService>()("DMSService", {
 						Effect.flatMap((result) =>
 							isTupleOf(result, 1) ? Effect.succeed(result[0]) : Effect.fail(new DeleteDMError("Unable to delete DM"))
 						),
-						Effect.tap((result) => Log.info("DMService.set.delete", { dmId: dm.id, userId, result })),
-						Effect.tapError(() => Log.debug("DMService.set.delete", { dmId: dm.id, userId }))
+						Effect.tap((result) => AppLog.info("DMService.set.delete", { dmId: dm.id, userId, result })),
+						Effect.tapError(() => AppLog.debug("DMService.set.delete", { dmId: dm.id, userId }))
 					);
 				})
 			}

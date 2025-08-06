@@ -1,5 +1,5 @@
 import type { ProviderId } from "$lib/constants";
-import type { AppLogId, CharacterId, DungeonMasterId, ItemId, LogId, UserId } from "$lib/schemas";
+import type { AppLogId, CharacterId, DungeonMasterId, ItemId, LogId, PasskeyId, UserId } from "$lib/schemas";
 import type { Annotations } from "$lib/server/effect";
 import { eq, isNotNull } from "drizzle-orm";
 import * as pg from "drizzle-orm/pg-core";
@@ -136,7 +136,8 @@ export const passkey = pg.pgTable("passkey", {
 	id: pg
 		.uuid()
 		.primaryKey()
-		.$default(() => v7()),
+		.$default(() => v7())
+		.$type<PasskeyId>(),
 	name: pg.text(),
 	publicKey: pg.text().notNull(),
 	userId: pg

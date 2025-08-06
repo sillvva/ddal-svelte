@@ -290,9 +290,12 @@ export const localsAccountSchema = v.object({
 	updatedAt: v.date()
 });
 
+export type PasskeyId = v.InferOutput<typeof passkeyIdSchema>;
+export const passkeyIdSchema = brandedId("PasskeyId");
+
 export type LocalsPasskey = v.InferOutput<typeof localsPasskeySchema>;
 export const localsPasskeySchema = v.object({
-	id: v.string(),
+	id: passkeyIdSchema,
 	name: v.nullable(v.string()),
 	publicKey: v.string(),
 	userId: userIdSchema,

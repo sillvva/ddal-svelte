@@ -38,7 +38,7 @@
 		remote={async (data) => {
 			const result = await saveLog(data);
 			if (typeof result === "string") {
-				successToast(`${data.name} saved successfully`);
+				successToast(`${data.name} saved`);
 			}
 			return result;
 		}}

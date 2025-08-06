@@ -66,7 +66,7 @@ function annotate(extra: Record<PropertyKey, any> = {}) {
 	} satisfies Annotations);
 }
 
-export const Log = {
+export const AppLog = {
 	info: (message: string, extra?: Record<PropertyKey, any>, logger: Layer.Layer<never> = dbLogger) =>
 		Effect.logInfo(message).pipe(logLevel, annotate(extra), Effect.provide(logger)),
 	error: (message: string, extra?: Record<PropertyKey, any>, logger: Layer.Layer<never> = dbLogger) =>
@@ -78,7 +78,7 @@ export const Log = {
 export const debugSet = Effect.fn("debugSet")(function* <S extends string>(service: S, impl: Function, result: unknown) {
 	const call = impl.toString();
 	if (call.includes(".set.")) {
-		yield* Log.debug(service, {
+		yield* AppLog.debug(service, {
 			call: impl.toString(),
 			result: Array.isArray(result) ? result.slice(0, 5) : result
 		});
@@ -172,17 +172,17 @@ function handleCause<B extends InstanceType<ErrorClass>>(cause: Cause.Cause<B>) 
 		const defect = cause.defect;
 		// This will propagate redirects and http errors directly to SvelteKit
 		if (isRedirect(defect)) {
-			Effect.runFork(Log.info(`Redirect to ${defect.location}`, defect));
+			Effect.runFork(AppLog.info(`Redirect to ${defect.location}`, defect));
 			throw defect;
 		} else if (isHttpError(defect)) {
-			Effect.runFork(Log.error(`HttpError [${defect.status}] ${defect.body.message}`, defect));
+			Effect.runFork(AppLog.error(`HttpError [${defect.status}] ${defect.body.message}`, defect));
 			throw defect;
 		} else if (typeof defect === "object" && defect !== null && "stack" in defect) {
 			extra.stack = defect.stack;
 		}
 	}
 
-	Effect.runFork(Log.error(message, extra));
+	Effect.runFork(AppLog.error(message, extra));
 
 	if (!dev) message = removeTrace(message);
 	return { message, status, extra };
@@ -226,7 +226,7 @@ export const save = Effect.fn(function* <
 				const result = await handlers.onError(error);
 
 				const message = removeTrace(Cause.pretty(Cause.fail(error)));
-				Effect.runFork(Log.error(`SaveError: ${message}`, { result, error }));
+				Effect.runFork(AppLog.error(`SaveError: ${message}`, { result, error }));
 
 				return result;
 			}

@@ -1,14 +1,10 @@
 import { command } from "$app/server";
 import { authName } from "$lib/auth";
-import { imageUrlWithFallback, requiredString } from "$lib/schemas.js";
+import { imageUrlWithFallback, passkeyIdSchema, requiredString } from "$lib/schemas.js";
 import { assertAuthOrFail } from "$lib/server/auth";
-import { db, runQuery } from "$lib/server/db";
-import { passkey } from "$lib/server/db/schema.js";
 import { runOrReturn, type ErrorParams } from "$lib/server/effect";
 import { withUser } from "$lib/server/effect/users";
-import { and, eq } from "drizzle-orm";
 import { Data, Effect } from "effect";
-import { isTupleOf } from "effect/Predicate";
 import * as v from "valibot";
 
 class NoChangesError extends Data.TaggedError("NoChangesError")<ErrorParams> {
@@ -64,61 +60,33 @@ export const renamePasskey = command(
 		runOrReturn(function* () {
 			const user = yield* assertAuthOrFail();
 
-			const passkeys = yield* runQuery(
-				db.query.passkey.findMany({
-					where: {
-						userId: {
-							eq: user.id
-						}
-					}
-				})
-			);
-
+			const passkeys = yield* withUser((service) => service.get.passkeys(user.id));
 			const auth = passkeys.find((a) => (input.id ? a.id === input.id : a.name === ""));
 			if (!auth) return yield* Effect.fail(new NoPasskeyError());
+
 			if (!input.name.trim()) input.name = authName(auth);
 
 			const existing = passkeys.find((a) => a.name === input.name);
 			if (existing && (!auth.name || (input.id && existing.id !== input.id)))
 				return yield* Effect.fail(new NameAlreadyExistsError());
 
-			yield* runQuery(
-				db
-					.update(passkey)
-					.set({ name: input.name.trim() })
-					.where(and(eq(passkey.id, auth.id)))
-					.returning()
-			).pipe(Effect.catchTag("DrizzleError", (err) => Effect.fail(new FailedError("rename passkey", err))));
+			yield* withUser((service) => service.set.renamePasskey(user.id, auth.id, input.name)).pipe(
+				Effect.catchAll((err) => Effect.fail(new FailedError("rename passkey", err)))
+			);
 
 			return { name: input.name };
 		})
 );
 
-export const deletePasskey = command(v.object({ id: v.pipe(v.string(), v.uuid()) }), (input) =>
+export const deletePasskey = command(passkeyIdSchema, (input) =>
 	runOrReturn(function* () {
 		const user = yield* assertAuthOrFail();
 
-		const auth = yield* runQuery(
-			db.query.passkey.findFirst({
-				where: {
-					id: input.id,
-					userId: {
-						eq: user.id
-					}
-				}
-			})
+		const passkey = yield* withUser((service) => service.get.passkey(user.id, input));
+		if (!passkey) return yield* Effect.fail(new NoPasskeyError());
+
+		return yield* withUser((service) => service.set.deletePasskey(user.id, input)).pipe(
+			Effect.catchAll((err) => Effect.fail(new FailedError("delete passkey", err)))
 		);
-
-		if (!auth) return yield* Effect.fail(new NoPasskeyError());
-
-		const result = yield* runQuery(
-			db
-				.delete(passkey)
-				.where(and(eq(passkey.id, auth.id)))
-				.returning()
-		).pipe(Effect.catchTag("DrizzleError", (err) => Effect.fail(new FailedError("delete passkey", err))));
-
-		if (isTupleOf(result, 1)) return result[0].id;
-		return yield* Effect.fail(new NoPasskeyError());
 	})
 );

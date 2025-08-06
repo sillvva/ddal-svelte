@@ -1,7 +1,7 @@
 import { getRequestEvent } from "$app/server";
 import { Duration, Effect } from "effect";
 import * as v from "valibot";
-import { Log } from "./effect";
+import { AppLog } from "./effect";
 
 /**
  * Get a cookie from the server.
@@ -21,7 +21,7 @@ export function serverGetCookie<TSchema extends v.BaseSchema<any, any, any>>(nam
 
 		return v.parse(schema, cookie);
 	} catch (error) {
-		Effect.runFork(Log.error("Error getting cookie", { error }));
+		Effect.runFork(AppLog.error("Error getting cookie", { error }));
 		return serverSetCookie(name, schema, undefined);
 	}
 }

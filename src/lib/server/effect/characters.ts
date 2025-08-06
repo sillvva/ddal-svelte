@@ -16,7 +16,7 @@ import { characters, logs, type Character } from "$lib/server/db/schema";
 import { and, eq, exists } from "drizzle-orm";
 import { Data, Effect, Layer } from "effect";
 import { isTupleOf } from "effect/Predicate";
-import { FormError, Log, type ErrorParams } from ".";
+import { AppLog, FormError, type ErrorParams } from ".";
 
 export class CharacterNotFoundError extends Data.TaggedError("CharacterNotFoundError")<ErrorParams> {
 	constructor(err?: unknown) {
@@ -74,7 +74,7 @@ export class CharacterService extends Effect.Service<CharacterService>()("Charac
 						})
 					).pipe(
 						Effect.andThen((character) => character && parseCharacter(character)),
-						Effect.tapError(() => Log.debug("CharacterService.get.character", { characterId, includeLogs }))
+						Effect.tapError(() => AppLog.debug("CharacterService.get.character", { characterId, includeLogs }))
 					);
 				}),
 
@@ -86,7 +86,7 @@ export class CharacterService extends Effect.Service<CharacterService>()("Charac
 						})
 					).pipe(
 						Effect.map((characters) => characters.map(parseCharacter)),
-						Effect.tapError(() => Log.debug("CharacterService.get.userCharacters", { userId, includeLogs }))
+						Effect.tapError(() => AppLog.debug("CharacterService.get.userCharacters", { userId, includeLogs }))
 					);
 				})
 			},
@@ -114,8 +114,8 @@ export class CharacterService extends Effect.Service<CharacterService>()("Charac
 								? Effect.succeed(characters[0])
 								: Effect.fail(new SaveCharacterError("Failed to save character"))
 						),
-						Effect.tap((result) => Log.info("CharacterService.set.save", { characterId, userId, result })),
-						Effect.tapError(() => Log.debug("CharacterService.set.save", { characterId, userId, data }))
+						Effect.tap((result) => AppLog.info("CharacterService.set.save", { characterId, userId, result })),
+						Effect.tapError(() => AppLog.debug("CharacterService.set.save", { characterId, userId, data }))
 					);
 				}),
 
@@ -151,8 +151,8 @@ export class CharacterService extends Effect.Service<CharacterService>()("Charac
 						Effect.flatMap((result) =>
 							isTupleOf(result, 1) ? Effect.succeed(result[0]) : Effect.fail(new DeleteCharacterError())
 						),
-						Effect.tap((result) => Log.info("CharacterService.set.delete", { characterId, userId, result })),
-						Effect.tapError(() => Log.debug("CharacterService.set.delete", { characterId, userId }))
+						Effect.tap((result) => AppLog.info("CharacterService.set.delete", { characterId, userId, result })),
+						Effect.tapError(() => AppLog.debug("CharacterService.set.delete", { characterId, userId }))
 					);
 				})
 			}

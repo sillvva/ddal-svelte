@@ -2,7 +2,7 @@ import { query } from "$app/server";
 import { searchSections } from "$lib/constants.js";
 import type { UserId } from "$lib/schemas.js";
 import { assertAuth } from "$lib/server/auth";
-import { Log, runOrThrow } from "$lib/server/effect";
+import { AppLog, runOrThrow } from "$lib/server/effect";
 import { withCharacter } from "$lib/server/effect/characters";
 import { withDM } from "$lib/server/effect/dms";
 import { withLog } from "$lib/server/effect/logs";
@@ -88,7 +88,7 @@ export const getCommandData = query(() =>
 			},
 			(effect) =>
 				effect.pipe(
-					Effect.tapError((e) => Log.error(`[GetCommandData] ${e.message}`, { status: e.status, cause: e.cause })),
+					Effect.tapError((e) => AppLog.error(`[GetCommandData] ${e.message}`, { status: e.status, cause: e.cause })),
 					Effect.catchAll(() => Effect.succeed([] as SearchData))
 				)
 		)

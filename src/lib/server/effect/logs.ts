@@ -16,7 +16,7 @@ import { characters, dungeonMasters, logs, magicItems, storyAwards } from "$lib/
 import { and, eq, exists, inArray, isNull, notInArray, or } from "drizzle-orm";
 import { Data, Effect, Layer } from "effect";
 import { isTupleOf } from "effect/Predicate";
-import { FormError, Log, type ErrorParams } from ".";
+import { AppLog, FormError, type ErrorParams } from ".";
 import { DMService, DMTx } from "./dms";
 
 export class LogNotFoundError extends Data.TaggedError("LogNotFoundError")<ErrorParams> {
@@ -328,7 +328,7 @@ export class LogService extends Effect.Service<LogService>()("LogService", {
 						})
 					).pipe(
 						Effect.andThen((log) => log && parseLog(log)),
-						Effect.tapError(() => Log.debug("LogService.get.log", { logId, userId }))
+						Effect.tapError(() => AppLog.debug("LogService.get.log", { logId, userId }))
 					);
 				}),
 
@@ -343,7 +343,7 @@ export class LogService extends Effect.Service<LogService>()("LogService", {
 						})
 					).pipe(
 						Effect.map((logs) => logs.map(parseLog)),
-						Effect.tapError(() => Log.debug("LogService.get.dmLogs", { userId }))
+						Effect.tapError(() => AppLog.debug("LogService.get.dmLogs", { userId }))
 					);
 				}),
 
@@ -358,14 +358,14 @@ export class LogService extends Effect.Service<LogService>()("LogService", {
 								date: "asc"
 							}
 						})
-					).pipe(Effect.tapError(() => Log.debug("LogService.get.userLogs", { userId })));
+					).pipe(Effect.tapError(() => AppLog.debug("LogService.get.userLogs", { userId })));
 				})
 			},
 			set: {
 				save: Effect.fn("LogService.set.save")(function* (log, user) {
 					return yield* transaction((tx) => upsertLog(log, user).pipe(Effect.provide(LogTx(tx)), Effect.provide(DMTx(tx)))).pipe(
-						Effect.tap((result) => Log.info("LogService.set.save", { logId: log.id, userId: user.id, result })),
-						Effect.tapError(() => Log.debug("LogService.set.save", { logId: log.id, userId: user.id, log }))
+						Effect.tap((result) => AppLog.info("LogService.set.save", { logId: log.id, userId: user.id, result })),
+						Effect.tapError(() => AppLog.debug("LogService.set.save", { logId: log.id, userId: user.id, log }))
 					);
 				}),
 
@@ -407,8 +407,8 @@ export class LogService extends Effect.Service<LogService>()("LogService", {
 							.returning({ id: logs.id })
 					).pipe(
 						Effect.flatMap((logs) => (isTupleOf(logs, 1) ? Effect.succeed(logs[0]) : Effect.fail(new DeleteLogError()))),
-						Effect.tap((result) => Log.info("LogService.set.delete", { logId, userId, result })),
-						Effect.tapError(() => Log.debug("LogService.set.delete", { logId, userId }))
+						Effect.tap((result) => AppLog.info("LogService.set.delete", { logId, userId, result })),
+						Effect.tapError(() => AppLog.debug("LogService.set.delete", { logId, userId }))
 					);
 				})
 			}

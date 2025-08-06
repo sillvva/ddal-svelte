@@ -10,7 +10,7 @@ import { Data, Effect } from "effect";
 import { v7 } from "uuid";
 import * as v from "valibot";
 import { db } from "./db";
-import { Log, runOrThrow, type ErrorParams } from "./effect";
+import { AppLog, runOrThrow, type ErrorParams } from "./effect";
 import { withUser } from "./effect/users";
 
 export const auth = betterAuth({
@@ -51,7 +51,7 @@ export function assertUser(user: LocalsUser | undefined): asserts user is Locals
 	const url = event.url;
 	const result = v.safeParse(localsUserSchema, user);
 	if (!result.success) {
-		Effect.runFork(Log.debug("assertUser", { issues: v.summarize(result.issues) }));
+		Effect.runFork(AppLog.debug("assertUser", { issues: v.summarize(result.issues) }));
 		redirect(302, `/?redirect=${encodeURIComponent(`${url.pathname}${url.search}`)}`);
 	}
 	if (result.output.banned) {
