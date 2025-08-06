@@ -27,14 +27,10 @@
 	const action = $derived(remote ? undefined : rest?.action);
 	const method = $derived(remote ? "post" : rest?.method || "post");
 
-	let isSubmitting = $state(false);
+	let isSubmitting = $derived($submitting);
 
 	onMount(() => {
 		superform.reset();
-	});
-
-	$effect(() => {
-		if (!remote) isSubmitting = $submitting;
 	});
 
 	function unknownErrorMessage(error: unknown) {
