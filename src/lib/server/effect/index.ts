@@ -194,21 +194,6 @@ function handleCause<B extends InstanceType<ErrorClass>>(cause: Cause.Cause<B>) 
 
 export type SuperValidateData = RequestEvent | Request | FormData | URLSearchParams | URL | null | undefined;
 
-function parseRemoteFormData(formData: FormData) {
-	return JSON.parse(formData.get("data")?.toString() || "{}") as SuperValidateData;
-}
-
-export function validateRemoteForm<
-	Input extends SuperValidateData | Partial<InferInput<Schema>>,
-	Schema extends BaseSchema<any, any, any>
->(input: Input, schema: Schema, options?: SuperValidateOptions<InferOutput<Schema>>) {
-	if (input instanceof FormData) {
-		return Effect.promise(() => superValidate(parseRemoteFormData(input), valibot(schema), options));
-	} else {
-		return Effect.promise(() => superValidate(input, valibot(schema), options));
-	}
-}
-
 export function validateForm<
 	Input extends SuperValidateData | Partial<InferInput<Schema>>,
 	Schema extends BaseSchema<any, any, any>
