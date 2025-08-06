@@ -3,6 +3,12 @@ import { hotkey as hk, type HotkeyItem } from "@svelteuidev/composables";
 import type { Attachment } from "svelte/attachments";
 
 /**
+ * Types
+ */
+
+export type Awaitable<T> = T | Promise<T>;
+
+/**
  * Functions
  */
 

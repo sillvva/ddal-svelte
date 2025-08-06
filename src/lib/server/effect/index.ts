@@ -5,11 +5,11 @@ import { privateEnv } from "$lib/env/private";
 import type { AppLogSchema, UserId } from "$lib/schemas";
 import { db, DrizzleError, runQuery } from "$lib/server/db";
 import { appLogs } from "$lib/server/db/schema";
-import { removeTrace } from "$lib/util";
+import { removeTrace, type Awaitable } from "$lib/util";
 import { isInstanceOfClass } from "@sillvva/utils";
 import { error, isHttpError, isRedirect, type NumericRange, type RequestEvent } from "@sveltejs/kit";
 import { Cause, Data, Effect, Exit, HashMap, Layer, Logger } from "effect";
-import { isFunction, isTupleOf } from "effect/Predicate";
+import { isFunction, isPromise, isTupleOf } from "effect/Predicate";
 import type { YieldWrap } from "effect/Utils";
 import {
 	setError,
@@ -221,26 +221,31 @@ export function validateForm<
 // -------------------------------------------------------------------------------------------------
 
 export const save = Effect.fn(function* <
-	TSuccess extends Pathname | TForm | Promise<Pathname | TForm>,
-	TFailure extends Pathname | TForm | Promise<Pathname | TForm>,
+	TSuccess extends Pathname | TForm,
+	TFailure extends Pathname | TForm,
 	TForm extends SuperValidated<TOut>,
 	TOut extends Record<PropertyKey, any>,
 	TIn extends Record<PropertyKey, any> = TOut
 >(
 	program: Effect.Effect<TIn, FormError<TOut, TIn> | DrizzleError>,
 	handlers: {
-		onError: (err: FormError<TOut, TIn>) => TFailure;
-		onSuccess: (data: TIn) => TSuccess;
+		onError: (err: FormError<TOut, TIn>) => Awaitable<TFailure>;
+		onSuccess: (data: TIn) => Awaitable<TSuccess>;
 	}
 ) {
 	const runnable = program.pipe(Effect.catchTag("DrizzleError", FormError.from<TOut, TIn>));
 
 	const result = yield* Effect.match(runnable, {
 		onSuccess: handlers.onSuccess,
-		onFailure: handlers.onError
+		onFailure: async (err) => {
+			const result = await handlers.onError(err);
+			if (typeof result === "object") Effect.runFork(Log.error("SaveError Form Data", { result }));
+			return result;
+		}
 	});
 
-	Effect.runFork(Log.info("Result", { result }));
+	if (isPromise(result)) return yield* Effect.promise(async () => result);
+
 	return result;
 });
 
