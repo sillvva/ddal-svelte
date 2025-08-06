@@ -92,16 +92,14 @@ export const debugSet = Effect.fn("debugSet")(function* <S extends string>(servi
 function handleCause<B extends InstanceType<ErrorClass>>(cause: Cause.Cause<B>) {
 	let message = Cause.pretty(cause);
 	let status: NumericRange<400, 599> = 500;
-	let failCause: unknown;
 	const extra: Record<string, unknown> = {};
 
 	if (Cause.isFailType(cause)) {
 		const error = cause.error;
 		status = error.status;
-		failCause = error.cause;
 
 		for (const key in error) {
-			if (key !== "status" && key !== "cause") {
+			if (!["_tag", "_op", "pipe", "name"].includes(key)) {
 				extra[key] = error[key];
 			}
 		}
@@ -117,11 +115,11 @@ function handleCause<B extends InstanceType<ErrorClass>>(cause: Cause.Cause<B>) 
 			Effect.runFork(Log.error(`HttpError [${defect.status}] ${defect.body.message}`, defect));
 			throw defect;
 		} else if (typeof defect === "object" && defect !== null && "stack" in defect) {
-			failCause = { stack: defect.stack };
+			extra.stack = defect.stack;
 		}
 	}
 
-	Effect.runFork(Log.error(message, { status, cause: failCause, ...extra }));
+	Effect.runFork(Log.error(message, extra));
 
 	if (!dev) message = removeTrace(message);
 	return { message, status, extra };
