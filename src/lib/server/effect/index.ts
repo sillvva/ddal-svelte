@@ -9,7 +9,7 @@ import { removeTrace, type Awaitable } from "$lib/util";
 import { isInstanceOfClass } from "@sillvva/utils";
 import { error, isHttpError, isRedirect, type NumericRange, type RequestEvent } from "@sveltejs/kit";
 import { Cause, Data, Effect, Exit, HashMap, Layer, Logger } from "effect";
-import { isFunction, isPromise, isTupleOf } from "effect/Predicate";
+import { isFunction, isTupleOf } from "effect/Predicate";
 import type { YieldWrap } from "effect/Utils";
 import {
 	setError,
@@ -233,20 +233,21 @@ export const save = Effect.fn(function* <
 		onSuccess: (data: TIn) => Awaitable<TSuccess>;
 	}
 ) {
-	const runnable = program.pipe(Effect.catchTag("DrizzleError", FormError.from<TOut, TIn>));
+	return yield* program.pipe(
+		Effect.catchAll(FormError.from<TOut, TIn>),
+		Effect.match({
+			onSuccess: handlers.onSuccess,
+			onFailure: async (error) => {
+				const result = await handlers.onError(error);
 
-	const result = yield* Effect.match(runnable, {
-		onSuccess: handlers.onSuccess,
-		onFailure: async (err) => {
-			const result = await handlers.onError(err);
-			if (typeof result === "object") Effect.runFork(Log.error("SaveError Form Data", result));
-			return result;
-		}
-	});
+				const message = removeTrace(Cause.pretty(Cause.fail(error)));
+				Effect.runFork(Log.error(`SaveError: ${message}`, { result, error }));
 
-	if (isPromise(result)) return yield* Effect.promise(async () => result);
-
-	return result;
+				return result;
+			}
+		}),
+		Effect.flatMap((result) => Effect.promise(async () => result))
+	);
 });
 
 // -------------------------------------------------------------------------------------------------
