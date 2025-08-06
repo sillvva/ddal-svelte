@@ -208,18 +208,18 @@ export function validateForm<
 export const save = Effect.fn(function* <
 	TSuccess extends Pathname | TForm,
 	TFailure extends Pathname | TForm,
-	TForm extends SuperValidated<TOut>,
-	TOut extends Record<PropertyKey, any>,
-	TIn extends Record<PropertyKey, any> = TOut
+	TForm extends SuperValidated<SchemaOut>,
+	SchemaOut extends Record<PropertyKey, any>,
+	ServiceOut extends Record<PropertyKey, any>
 >(
-	program: Effect.Effect<TIn, FormError<TOut, TIn> | InstanceType<ErrorClass>>,
+	program: Effect.Effect<ServiceOut, FormError<SchemaOut> | InstanceType<ErrorClass>>,
 	handlers: {
-		onError: (err: FormError<TOut, TIn>) => Awaitable<TFailure>;
-		onSuccess: (data: TIn) => Awaitable<TSuccess>;
+		onError: (err: FormError<SchemaOut>) => Awaitable<TFailure>;
+		onSuccess: (data: ServiceOut) => Awaitable<TSuccess>;
 	}
 ) {
 	return yield* program.pipe(
-		Effect.catchAll(FormError.from<TOut, TIn>),
+		Effect.catchAll(FormError.from<SchemaOut>),
 		Effect.match({
 			onSuccess: handlers.onSuccess,
 			onFailure: async (error) => {
@@ -265,14 +265,11 @@ export function isTaggedError(error: unknown): error is InstanceType<ErrorClass>
 	);
 }
 
-export class FormError<
-	TOut extends Record<PropertyKey, any>,
-	TIn extends Record<PropertyKey, any> = TOut
-> extends Data.TaggedError("FormError")<ErrorParams> {
+export class FormError<SchemaOut extends Record<PropertyKey, any>> extends Data.TaggedError("FormError")<ErrorParams> {
 	constructor(
 		public message: string,
 		protected options: Partial<{
-			field: "" | FormPathLeavesWithErrors<TOut>;
+			field: "" | FormPathLeavesWithErrors<SchemaOut>;
 			status: NumericRange<400, 599>;
 			cause: unknown;
 		}> = {}
@@ -280,15 +277,15 @@ export class FormError<
 		super({ message, status: options.status || 500, cause: options.cause });
 	}
 
-	static from<TOut extends Record<PropertyKey, any>, TIn extends Record<PropertyKey, any> = TOut>(
+	static from<SchemaOut extends Record<PropertyKey, any>>(
 		err: unknown,
-		field: "" | FormPathLeavesWithErrors<TOut> = ""
-	): FormError<TOut, TIn> {
-		if (isTaggedError(err)) return new FormError<TOut, TIn>(err.message, { cause: err.cause, status: err.status, field });
-		return new FormError<TOut, TIn>(Cause.pretty(Cause.fail(err)), { cause: err, status: 500, field });
+		field: "" | FormPathLeavesWithErrors<SchemaOut> = ""
+	): FormError<SchemaOut> {
+		if (isTaggedError(err)) return new FormError<SchemaOut>(err.message, { cause: err.cause, status: err.status, field });
+		return new FormError<SchemaOut>(Cause.pretty(Cause.fail(err)), { cause: err, status: 500, field });
 	}
 
-	toForm(form: SuperValidated<TOut, App.Superforms.Message, TIn>) {
+	toForm(form: SuperValidated<SchemaOut>) {
 		return setError(form, this.options?.field ?? "", this.message, {
 			status: this.status
 		});
