@@ -239,7 +239,7 @@ export const save = Effect.fn(function* <
 		onSuccess: handlers.onSuccess,
 		onFailure: async (err) => {
 			const result = await handlers.onError(err);
-			if (typeof result === "object") Effect.runFork(Log.error("SaveError Form Data", { result }));
+			if (typeof result === "object") Effect.runFork(Log.error("SaveError Form Data", result));
 			return result;
 		}
 	});
