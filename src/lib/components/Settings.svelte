@@ -119,7 +119,7 @@
 				</div>
 				{#if session.impersonatedBy}
 					<button
-						class="btn btn-sm btn-primary tooltip"
+						class="btn btn-sm btn-primary tooltip tooltip-left"
 						data-tip="Stop impersonating"
 						aria-label="Stop impersonating"
 						onclick={async () => {
@@ -133,7 +133,7 @@
 					</button>
 				{:else}
 					<button
-						class="btn tooltip p-3"
+						class="btn tooltip tooltip-left p-3"
 						data-tip="Sign out"
 						aria-label="Sign out"
 						onclick={() =>
