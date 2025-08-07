@@ -74,7 +74,7 @@ export async function getAuthSession(event = getRequestEvent()) {
 	};
 }
 
-export const assertAuth = Effect.fn(function* (adminOnly: boolean = false) {
+export const assertAuthOrRedirect = Effect.fn(function* (adminOnly: boolean = false) {
 	const event = getRequestEvent();
 	const user = event.locals.user;
 	assertUser(user);

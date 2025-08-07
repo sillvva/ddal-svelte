@@ -1,7 +1,7 @@
-import { assertAuth } from "$lib/server/auth.js";
+import { assertAuthOrRedirect } from "$lib/server/auth.js";
 import { runOrThrow } from "$lib/server/effect";
 
 export const load = async () =>
 	runOrThrow(function* () {
-		yield* assertAuth(true);
+		yield* assertAuthOrRedirect(true);
 	});

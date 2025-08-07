@@ -1,6 +1,6 @@
 import { command, query } from "$app/server";
 import { appLogId } from "$lib/schemas";
-import { assertAuth, assertAuthOrFail } from "$lib/server/auth";
+import { assertAuthOrFail, assertAuthOrRedirect } from "$lib/server/auth";
 import { runOrReturn, runOrThrow } from "$lib/server/effect";
 import { validKeys, withAdmin } from "$lib/server/effect/admin";
 import { DateTime, Effect } from "effect";
@@ -17,7 +17,7 @@ export const getBaseSearch = query(() => runOrThrow(baseSearchFn));
 
 export const getLogs = query(v.string(), (search) =>
 	runOrThrow(function* () {
-		yield* assertAuth(true);
+		yield* assertAuthOrRedirect(true);
 
 		const { logs, metadata } = yield* withAdmin((service) =>
 			service.get.logs(search).pipe(

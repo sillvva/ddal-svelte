@@ -1,7 +1,7 @@
 import { query } from "$app/server";
 import { searchSections } from "$lib/constants.js";
 import type { UserId } from "$lib/schemas.js";
-import { assertAuth } from "$lib/server/auth";
+import { assertAuthOrRedirect } from "$lib/server/auth";
 import { AppLog, runOrThrow } from "$lib/server/effect";
 import { withCharacter } from "$lib/server/effect/characters";
 import { withDM } from "$lib/server/effect/dms";
@@ -81,7 +81,7 @@ export const getCommandData = query(() =>
 	runOrThrow(
 		Effect.fn("GetCommandData")(
 			function* () {
-				const user = yield* assertAuth();
+				const user = yield* assertAuthOrRedirect();
 				const data: SearchData = [sectionData];
 				const searchData = yield* getData(user.id);
 				return data.concat(searchData) as SearchData;

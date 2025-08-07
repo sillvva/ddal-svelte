@@ -1,12 +1,12 @@
 import { BLANK_CHARACTER } from "$lib/constants.js";
 import { editCharacterSchema } from "$lib/schemas";
-import { assertAuth } from "$lib/server/auth";
+import { assertAuthOrRedirect } from "$lib/server/auth";
 import { runOrThrow, validateForm } from "$lib/server/effect";
 import { Effect } from "effect";
 
 export const load = (event) =>
 	runOrThrow(function* () {
-		yield* assertAuth();
+		yield* assertAuthOrRedirect();
 
 		const parent = yield* Effect.promise(event.parent);
 

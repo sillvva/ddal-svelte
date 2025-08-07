@@ -1,6 +1,6 @@
 import { defaultLogSchema, logDataToSchema } from "$lib/entities.js";
 import { dMLogSchema, logIdOrNewSchema } from "$lib/schemas";
-import { assertAuth } from "$lib/server/auth";
+import { assertAuthOrRedirect } from "$lib/server/auth";
 import { runOrThrow, validateForm } from "$lib/server/effect";
 import { withCharacter } from "$lib/server/effect/characters.js";
 import { LogNotFoundError, withLog } from "$lib/server/effect/logs";
@@ -10,7 +10,7 @@ import * as v from "valibot";
 
 export const load = (event) =>
 	runOrThrow(function* () {
-		const user = yield* assertAuth();
+		const user = yield* assertAuthOrRedirect();
 
 		const idResult = v.safeParse(logIdOrNewSchema, event.params.logId || "new");
 		if (!idResult.success) redirect(307, `/dm-logs`);
