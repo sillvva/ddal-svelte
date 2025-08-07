@@ -50,10 +50,12 @@ export function assertUser(user: LocalsUser | undefined): asserts user is Locals
 	const event = getRequestEvent();
 	const url = event.url;
 	const result = v.safeParse(localsUserSchema, user);
+
 	if (!result.success) {
 		Effect.runFork(AppLog.debug("assertUser", { issues: v.summarize(result.issues) }));
 		redirect(302, `/?redirect=${encodeURIComponent(`${url.pathname}${url.search}`)}`);
 	}
+
 	if (result.output.banned) {
 		event.cookies
 			.getAll()

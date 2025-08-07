@@ -1,7 +1,5 @@
 import { building } from "$app/environment";
 import { privateEnv } from "$lib/env/private.js";
-import { appCookieSchema } from "$lib/schemas.js";
-import { serverGetCookie } from "$lib/server/cookie.js";
 
 let checked = false;
 if (!checked && building && privateEnv) {
@@ -12,8 +10,7 @@ if (!checked && building && privateEnv) {
 }
 
 export const load = async (event) => {
-	const { user, session, mobile, isMac } = event.locals;
-	const app = serverGetCookie("app", appCookieSchema);
+	const { user, session, mobile, isMac, app } = event.locals;
 
 	return {
 		user,

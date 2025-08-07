@@ -14,6 +14,7 @@ declare global {
 			user?: LocalsUser;
 			mobile: boolean;
 			isMac: boolean;
+			app: AppCookie;
 		}
 		interface PageData {
 			app: AppCookie;

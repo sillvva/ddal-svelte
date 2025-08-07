@@ -12,7 +12,7 @@ export const load = (event) =>
 		const characterId = result.output;
 
 		if (event.params.characterId === "new" && event.url.pathname !== "/characters/new/edit")
-			throw redirect(301, "/characters/new/edit");
+			throw redirect(307, "/characters/new/edit");
 
 		const character =
 			characterId === "new"

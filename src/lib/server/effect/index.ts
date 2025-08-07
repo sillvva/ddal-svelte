@@ -26,10 +26,11 @@ import type { BaseSchema, InferInput, InferOutput } from "valibot";
 // -------------------------------------------------------------------------------------------------
 
 export type Annotations = {
-	routeId: string | null;
-	params: Partial<Record<string, string>>;
 	userId: UserId | undefined;
 	username: string | undefined;
+	impersonatedBy?: UserId | null;
+	routeId: string | null;
+	params: Partial<Record<string, string>>;
 	extra: object;
 };
 
@@ -60,6 +61,7 @@ function annotate(extra: Record<PropertyKey, any> = {}) {
 	return Effect.annotateLogs({
 		userId: event.locals.user?.id,
 		username: event.locals.user?.name,
+		impersonatedBy: event.locals.session?.impersonatedBy,
 		routeId: event.route.id,
 		params: event.params,
 		extra

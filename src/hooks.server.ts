@@ -11,6 +11,8 @@ const authHandler: Handle = async ({ event, resolve }) => {
 };
 
 const info: Handle = async ({ event, resolve }) => {
+	event.locals.app = serverGetCookie("app", appCookieSchema);
+
 	const userAgent = event.request.headers.get("user-agent");
 	event.locals.isMac = !!userAgent?.includes("Mac OS");
 	event.locals.mobile = !!userAgent?.match(
