@@ -3,7 +3,8 @@
 	"version": "0.0.1",
 	"private": true,
 	"scripts": {
-		"dev": "supabase start; vite dev",
+		"start:supabase": "./start-supabase.sh",
+		"dev": "bun start:supabase && vite dev",
 		"build": "bun env-check && vite build",
 		"preview": "vite preview",
 		"env-check": "node -v && bun -v && vite -v",
