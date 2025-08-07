@@ -18,9 +18,9 @@
 	import SuperForm from "$lib/components/forms/SuperForm.svelte";
 	import { defaultDM } from "$lib/entities";
 	import { successToast, valibotForm } from "$lib/factories.svelte.js";
+	import { saveLog } from "$lib/remote/logs.remote.js";
 	import { type DungeonMasterId, logSchema } from "$lib/schemas";
 	import { twMerge } from "tailwind-merge";
-	import { saveLog } from "./page.remote.js";
 
 	let { data } = $props();
 
@@ -33,16 +33,7 @@
 {#key $form.id || "new"}
 	<Breadcrumbs />
 
-	<SuperForm
-		{superform}
-		remote={async (data) => {
-			const result = await saveLog(data);
-			if (typeof result === "string") {
-				successToast(`${data.name} saved`);
-			}
-			return result;
-		}}
-	>
+	<SuperForm {superform} remote={saveLog} onRemoteSuccess={(data) => successToast(`${data.name} saved`)}>
 		{#if !data.firstLog}
 			<Control class="col-span-12 sm:col-span-4">
 				<GenericInput {superform} field="type" label="Log Type">

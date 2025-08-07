@@ -14,9 +14,9 @@
 	import Search from "$lib/components/Search.svelte";
 	import SearchResults from "$lib/components/SearchResults.svelte";
 	import { EntitySearchFactory, errorToast, successToast } from "$lib/factories.svelte.js";
+	import { deleteDM } from "$lib/remote/dms.remote.js";
 	import { sorter } from "@sillvva/utils";
 	import { SvelteSet } from "svelte/reactivity";
-	import { deleteDM } from "./page.remote.js";
 
 	let { data } = $props();
 

@@ -20,9 +20,9 @@
 	import SuperForm from "$lib/components/forms/SuperForm.svelte";
 	import { BLANK_CHARACTER } from "$lib/constants.js";
 	import { errorToast, successToast, valibotForm } from "$lib/factories.svelte.js";
+	import { saveCharacter } from "$lib/remote/characters.remote.js";
 	import { editCharacterSchema } from "$lib/schemas";
 	import { getGlobal } from "$lib/stores.svelte.js";
-	import { saveCharacter } from "./page.remote.js";
 
 	let { data } = $props();
 
@@ -34,16 +34,7 @@
 
 <Breadcrumbs />
 
-<SuperForm
-	{superform}
-	remote={async (data) => {
-		const result = await saveCharacter(data);
-		if (typeof result === "string") {
-			successToast(`${data.name} saved`);
-		}
-		return result;
-	}}
->
+<SuperForm {superform} remote={saveCharacter} onRemoteSuccess={(data) => successToast(`${data.name} saved`)}>
 	<Control class="col-span-12 sm:col-span-6">
 		<Input type="text" {superform} field="name" label="Character Name" />
 	</Control>

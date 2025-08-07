@@ -13,9 +13,9 @@
 	import Submit from "$lib/components/forms/Submit.svelte";
 	import SuperForm from "$lib/components/forms/SuperForm.svelte";
 	import { errorToast, successToast, valibotForm } from "$lib/factories.svelte.js";
+	import { deleteDM, saveDM } from "$lib/remote/dms.remote.js";
 	import { dungeonMasterSchema } from "$lib/schemas";
 	import { sorter } from "@sillvva/utils";
-	import { deleteDM, saveDM } from "../page.remote.js";
 
 	let { data } = $props();
 
@@ -26,16 +26,7 @@
 <div class="flex flex-col gap-4">
 	<Breadcrumbs />
 
-	<SuperForm
-		{superform}
-		remote={async (data) => {
-			const result = await saveDM(data);
-			if (typeof result === "string") {
-				successToast(`${data.name} saved`);
-			}
-			return result;
-		}}
-	>
+	<SuperForm {superform} remote={saveDM} onRemoteSuccess={(data) => successToast(`${data.name} saved`)}>
 		<Control class="col-span-12 sm:col-span-6">
 			<Input type="text" {superform} field="name" label="DM Name" />
 		</Control>

@@ -122,9 +122,12 @@ export async function runOrThrow<A, B extends InstanceType<ErrorClass>, T extend
 	});
 }
 
-type EffectResult<A> =
-	| { ok: true; data: A }
-	| { ok: false; error: { message: string; status: NumericRange<400, 599>; extra: Record<string, unknown> } };
+export type EffectSuccess<A> = { ok: true; data: A };
+export type EffectFailure = {
+	ok: false;
+	error: { message: string; status: NumericRange<400, 599>; extra: Record<string, unknown> };
+};
+export type EffectResult<A> = EffectSuccess<A> | EffectFailure;
 
 // Overload signatures
 export async function runOrReturn<A, B extends InstanceType<ErrorClass>, T extends YieldWrap<Effect.Effect<A, B>>, X, Y>(

@@ -17,8 +17,8 @@
 	import Submit from "$lib/components/forms/Submit.svelte";
 	import SuperForm from "$lib/components/forms/SuperForm.svelte";
 	import { successToast, valibotForm } from "$lib/factories.svelte.js";
+	import { saveLog } from "$lib/remote/logs.remote.js";
 	import { dMLogSchema } from "$lib/schemas";
-	import { saveLog } from "./page.remote.js";
 
 	let { data } = $props();
 
@@ -31,16 +31,7 @@
 {#key $form.id}
 	<Breadcrumbs />
 
-	<SuperForm
-		{superform}
-		remote={async (data) => {
-			const result = await saveLog(data);
-			if (typeof result === "string") {
-				successToast(`${data.name} saved`);
-			}
-			return result;
-		}}
-	>
+	<SuperForm {superform} remote={saveLog} onRemoteSuccess={(data) => successToast(`${data.name} saved`)}>
 		<Control class="col-span-12 sm:col-span-6 lg:col-span-3">
 			<Input type="text" {superform} field="name" label="Title" />
 		</Control>

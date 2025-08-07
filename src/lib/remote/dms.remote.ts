@@ -2,7 +2,7 @@ import { command } from "$app/server";
 import { placeholderQuery } from "$lib/remote/command.remote";
 import { dungeonMasterIdSchema, dungeonMasterSchema, type DungeonMasterSchemaIn } from "$lib/schemas";
 import { assertAuthOrFail } from "$lib/server/auth";
-import { runOrReturn, runOrThrow, save, validateForm, type ErrorParams } from "$lib/server/effect";
+import { runOrReturn, save, validateForm, type ErrorParams } from "$lib/server/effect";
 import { withDM } from "$lib/server/effect/dms";
 import { redirect } from "@sveltejs/kit";
 import { Data } from "effect";
@@ -21,7 +21,7 @@ class DeleteUserDMError extends Data.TaggedError("DeleteUserDMError")<ErrorParam
 }
 
 export const saveDM = command("unchecked", (input: DungeonMasterSchemaIn) =>
-	runOrThrow(function* () {
+	runOrReturn(function* () {
 		const user = yield* assertAuthOrFail();
 
 		const idResult = v.safeParse(dungeonMasterIdSchema, input.id);

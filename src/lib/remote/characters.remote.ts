@@ -1,14 +1,15 @@
 import { command } from "$app/server";
 import { defaultLogSchema } from "$lib/entities";
-import { characterIdOrNewSchema, editCharacterSchema, type EditCharacterSchemaIn } from "$lib/schemas";
+import { placeholderQuery } from "$lib/remote/command.remote";
+import { characterIdOrNewSchema, characterIdSchema, editCharacterSchema, type EditCharacterSchemaIn } from "$lib/schemas";
 import { assertAuthOrFail } from "$lib/server/auth";
-import { runOrThrow, save, validateForm } from "$lib/server/effect";
+import { FormError, runOrReturn, save, validateForm } from "$lib/server/effect";
 import { withCharacter } from "$lib/server/effect/characters";
 import { withLog } from "$lib/server/effect/logs";
 import * as v from "valibot";
 
 export const saveCharacter = command("unchecked", (input: EditCharacterSchemaIn) =>
-	runOrThrow(function* () {
+	runOrReturn(function* () {
 		const user = yield* assertAuthOrFail();
 
 		const form = yield* validateForm(input, editCharacterSchema);
@@ -24,8 +25,8 @@ export const saveCharacter = command("unchecked", (input: EditCharacterSchemaIn)
 					err.toForm(form);
 					return form;
 				},
-				onSuccess: (character) =>
-					runOrThrow(function* () {
+				onSuccess: async (character) => {
+					const result = await runOrReturn(function* () {
 						if (firstLog && characterId === "new") {
 							const log = defaultLogSchema(user.id, { character, defaults: { name: "Character Creation" } });
 
@@ -39,8 +40,24 @@ export const saveCharacter = command("unchecked", (input: EditCharacterSchemaIn)
 						}
 
 						return `/characters/${character.id}` as const;
-					})
+					});
+
+					if (result.ok) {
+						return result.data;
+					}
+
+					FormError.from(result.error).toForm(form);
+					return form;
+				}
 			}
 		);
+	})
+);
+
+export const deleteCharacter = command(characterIdSchema, (id) =>
+	runOrReturn(function* () {
+		const user = yield* assertAuthOrFail();
+		placeholderQuery().refresh();
+		return yield* withCharacter((service) => service.set.delete(id, user.id));
 	})
 );

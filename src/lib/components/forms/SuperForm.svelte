@@ -2,6 +2,7 @@
 	import { dev } from "$app/environment";
 	import { goto } from "$app/navigation";
 	import type { Pathname } from "$app/types";
+	import type { EffectFailure, EffectResult } from "$lib/server/effect";
 	import { onMount, type Snippet } from "svelte";
 	import { fromAction } from "svelte/attachments";
 	import type { HTMLFormAttributes } from "svelte/elements";
@@ -12,15 +13,17 @@
 	type FormAttributes = Omit<HTMLFormAttributes, "hidden">;
 	type T = $$Generic<Record<PropertyKey, unknown>>;
 	type TForm = $$Generic<SuperValidated<T, App.Superforms.Message>>;
-	type TRemoteCommand = $$Generic<(data: T) => Promise<TForm | Pathname>>;
+	type TRemoteCommand = $$Generic<(data: T) => Promise<EffectResult<TForm | Pathname>>>;
 
 	interface Props extends FormAttributes {
 		superform: SuperForm<T, App.Superforms.Message>;
 		remote?: TRemoteCommand;
+		onRemoteSuccess?: (data: T) => void;
+		onRemoteError?: (error: EffectFailure["error"]) => void;
 		children?: Snippet;
 	}
 
-	let { superform, children, remote, ...rest }: Props = $props();
+	let { superform, children, remote, onRemoteSuccess, onRemoteError, ...rest }: Props = $props();
 
 	const { form, errors, message, capture, restore, validateForm, enhance, submit, submitting, tainted } = superform;
 
@@ -33,12 +36,12 @@
 		superform.reset();
 	});
 
-	function unknownErrorMessage(error: unknown) {
-		console.log(error);
-		if (typeof error === "string") $errors = { _errors: [error] };
-		else if (typeof error === "object" && error !== null && "message" in error && typeof error.message === "string")
-			$errors = { _errors: [error.message] };
-		else $errors = { _errors: ["An unknown error occurred"] };
+	function errorMessage(error: string) {
+		console.error(error);
+		if (typeof error === "string") {
+			if (error.trim()) $errors = { _errors: [error] };
+			else $errors = { _errors: ["An unknown error occurred"] };
+		}
 	}
 
 	export const snapshot = {
@@ -71,18 +74,21 @@
 
 			isSubmitting = true;
 
-			try {
-				const result = await remote($form);
-				if (typeof result === "string") {
+			const result = await remote($form);
+			if (result.ok) {
+				onRemoteSuccess?.($form);
+
+				if (typeof result.data === "string") {
 					$tainted = undefined;
-					return goto(result);
+					return goto(result.data);
 				}
 
-				$form = result.data;
-				$errors = result.errors;
-				$message = result.message;
-			} catch (err) {
-				unknownErrorMessage(err);
+				$form = result.data.data;
+				$errors = result.data.errors;
+				$message = result.data.message;
+			} else {
+				errorMessage(result.error.message);
+				onRemoteError?.(result.error);
 			}
 
 			isSubmitting = false;

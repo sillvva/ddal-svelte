@@ -18,13 +18,13 @@
 	import Search from "$lib/components/Search.svelte";
 	import SearchResults from "$lib/components/SearchResults.svelte";
 	import { EntitySearchFactory, errorToast, successToast } from "$lib/factories.svelte.js";
+	import { deleteLog } from "$lib/remote/logs.remote.js";
 	import { getGlobal } from "$lib/stores.svelte.js";
 	import { createTransition, hotkey } from "$lib/util.js";
 	import { sorter } from "@sillvva/utils";
 	import { download } from "@svelteuidev/composables";
 	import { fromAction } from "svelte/attachments";
 	import { SvelteSet } from "svelte/reactivity";
-	import { deleteLog } from "./page.remote.js";
 
 	let { data } = $props();
 

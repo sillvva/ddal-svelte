@@ -25,13 +25,14 @@
 	import Search from "$lib/components/Search.svelte";
 	import SearchResults from "$lib/components/SearchResults.svelte";
 	import { EntitySearchFactory, errorToast, successToast } from "$lib/factories.svelte.js";
+	import { deleteCharacter } from "$lib/remote/characters.remote.js";
+	import { deleteLog } from "$lib/remote/logs.remote.js";
 	import { getGlobal, transition } from "$lib/stores.svelte.js";
 	import { createTransition, hotkey } from "$lib/util";
 	import { slugify, sorter } from "@sillvva/utils";
 	import { download } from "@svelteuidev/composables";
 	import { fromAction } from "svelte/attachments";
 	import { SvelteSet } from "svelte/reactivity";
-	import { deleteCharacter, deleteLog } from "./page.remote";
 
 	let { data } = $props();
 
