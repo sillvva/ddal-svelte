@@ -1,12 +1,12 @@
 <script lang="ts">
 	import { dev } from "$app/environment";
 	import { afterNavigate } from "$app/navigation";
-	import { base } from "$app/paths";
+	import { resolve } from "$app/paths";
 	import { page } from "$app/state";
 	import { MediaQuery } from "svelte/reactivity";
 	import SuperDebug from "sveltekit-superforms";
 
-	let previousPage = $state<string>(base || "/");
+	let previousPage = $state<string>(resolve("/"));
 	let display = $state(!dev);
 	const mobile = new MediaQuery("(hover: none)");
 
@@ -15,7 +15,7 @@
 	});
 </script>
 
-<div class="flex min-h-[calc(100vh-12rem)] flex-col items-center justify-center">
+<div class="flex min-h-screen flex-col items-center justify-center">
 	{#if !display}
 		<h1 class="font-vecna mb-12 text-4xl font-bold">Rolled a Natural 1!</h1>
 	{/if}
