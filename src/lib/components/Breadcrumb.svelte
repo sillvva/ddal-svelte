@@ -1,15 +1,16 @@
 <script lang="ts">
 	import { page } from "$app/state";
 	import { Breadcrumbs, type Crumb } from "svelte-breadcrumbs";
+	import { twMerge } from "tailwind-merge";
 	import BackButton from "./BackButton.svelte";
 </script>
 
 <Breadcrumbs url={page.url} routeId={page.route.id} pageData={page.data} skipRoutesWithNoPage>
 	{#snippet children({ crumbs }: { crumbs: Crumb[] })}
-		{#if crumbs.length > 1}
-			{@const back = crumbs.filter((bc) => bc.url).at(-1)}
-			<div class="mb-4 flex flex-1 items-center max-sm:h-8">
-				{#if back?.url}
+		<div class={twMerge("flex min-h-9 flex-1 items-center max-sm:min-h-8 sm:mb-4", crumbs.length === 1 && "max-sm:hidden")}>
+			{#if crumbs.length > 0}
+				{@const back = crumbs.filter((bc) => bc.url).at(-1)}
+				{#if back?.url && crumbs.length > 1}
 					<div class="flex-1 sm:hidden">
 						<BackButton href={back.url}>{back.title}</BackButton>
 					</div>
@@ -36,7 +37,7 @@
 						{/each}
 					</ul>
 				</div>
-			</div>
-		{/if}
+			{/if}
+		</div>
 	{/snippet}
 </Breadcrumbs>
