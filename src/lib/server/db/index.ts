@@ -38,9 +38,7 @@ export class DBService extends Effect.Service<DBService>()("DBService", {
 	})
 }) {}
 
-export function runQuery<TQuery extends PromiseLike<any> & { toSQL: () => Query }>(
-	query: TQuery
-): Effect.Effect<Awaited<TQuery>, DrizzleError> {
+export function runQuery<T>(query: PromiseLike<T> & { toSQL: () => Query }): Effect.Effect<T, DrizzleError> {
 	return Effect.tryPromise({
 		try: () => query,
 		catch: (err) => new DrizzleError(err, query.toSQL())
@@ -68,7 +66,7 @@ export type QueryConfig<TableName extends keyof TRSchema, Type extends "one" | "
 >;
 export type InferQueryResult<
 	TableName extends keyof TRSchema,
-	QBConfig extends QueryConfig<TableName, Type> = {},
+	QBConfig extends QueryConfig<TableName, Type> = object,
 	Type extends "one" | "many" = "one"
 > = BuildQueryResult<TRSchema, TRSchema[TableName], QBConfig>;
 

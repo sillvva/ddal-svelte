@@ -46,15 +46,10 @@ export const GET = async ({ params, url }) => {
 
 	let response;
 	try {
-		if (imageUrl === fallbackImageUrl) {
-			imageUrl = fallbackImageUrl;
-			response = await fetch(fallbackImageUrl, { method: "GET" });
-		} else {
-			response = await fetch(imageUrl, { method: "GET" });
-			if (!response.ok)
-				throw new UnableToFetchImageError({ message: response.statusText, status: response.status as NumericRange<400, 599> });
-		}
-	} catch (e) {
+		response = await fetch(imageUrl, { method: "GET" });
+		if (!response.ok)
+			throw new UnableToFetchImageError({ message: response.statusText, status: response.status as NumericRange<400, 599> });
+	} catch {
 		imageUrl = fallbackImageUrl;
 		response = await fetch(fallbackImageUrl, { method: "GET" });
 	}
@@ -296,7 +291,7 @@ export const GET = async ({ params, url }) => {
 	const png = resvg.render();
 	const pngBuffer = png.asPng();
 
-	return new Response(pngBuffer, {
+	return new Response(new Uint8Array(pngBuffer), {
 		headers: {
 			"Content-Type": "image/png",
 			"Cache-Control": "public, max-age=21600"

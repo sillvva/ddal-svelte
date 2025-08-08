@@ -21,7 +21,7 @@ export const load = (event) =>
 		const logId = idResult.output;
 
 		const logData = yield* withLog((service) => service.get.log(logId, user.id));
-		let log = logData ? logDataToSchema(user.id, logData) : defaultLogSchema(user.id, { character });
+		const log = logData ? logDataToSchema(user.id, logData) : defaultLogSchema(user.id, { character });
 
 		if (logId !== "new") {
 			if (!log.id) return yield* new LogNotFoundError();

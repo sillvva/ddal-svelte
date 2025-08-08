@@ -9,6 +9,8 @@ function brandedId<T extends string>(name: T) {
 	return v.pipe(v.string(), v.uuid(), v.brand(name));
 }
 
+export type AnyBaseSchema = v.BaseSchema<unknown, unknown, v.BaseIssue<unknown>>;
+
 const string = v.pipe(v.string(), v.trim());
 export const requiredString = v.pipe(string, v.regex(/^.*(\p{L}|\p{N})+.*$/u, "Required"));
 export const shortString = v.pipe(string, v.maxLength(50));

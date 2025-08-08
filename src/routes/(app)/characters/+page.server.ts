@@ -2,7 +2,7 @@ import { assertAuthOrRedirect } from "$lib/server/auth";
 import { runOrThrow } from "$lib/server/effect";
 import { withCharacter } from "$lib/server/effect/characters.js";
 
-export const load = (event) =>
+export const load = () =>
 	runOrThrow(function* () {
 		const user = yield* assertAuthOrRedirect();
 

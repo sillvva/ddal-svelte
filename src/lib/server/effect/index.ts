@@ -15,11 +15,13 @@ import {
 	setError,
 	superValidate,
 	type FormPathLeavesWithErrors,
+	type Infer,
+	type InferIn,
 	type SuperValidated,
 	type SuperValidateOptions
 } from "sveltekit-superforms";
 import { valibot } from "sveltekit-superforms/adapters";
-import type { BaseSchema, InferInput, InferOutput } from "valibot";
+import * as v from "valibot";
 
 // -------------------------------------------------------------------------------------------------
 // Logs
@@ -56,7 +58,7 @@ const dbLogger = Logger.replace(
 	})
 );
 
-function annotate(extra: Record<PropertyKey, any> = {}) {
+function annotate(extra: Record<PropertyKey, unknown> = {}) {
 	const event = getRequestEvent();
 	return Effect.annotateLogs({
 		userId: event.locals.user?.id,
@@ -69,15 +71,19 @@ function annotate(extra: Record<PropertyKey, any> = {}) {
 }
 
 export const AppLog = {
-	info: (message: string, extra?: Record<PropertyKey, any>, logger: Layer.Layer<never> = dbLogger) =>
+	info: (message: string, extra?: Record<string, unknown>, logger: Layer.Layer<never> = dbLogger) =>
 		Effect.logInfo(message).pipe(logLevel, annotate(extra), Effect.provide(logger)),
-	error: (message: string, extra?: Record<PropertyKey, any>, logger: Layer.Layer<never> = dbLogger) =>
+	error: (message: string, extra?: Record<string, unknown>, logger: Layer.Layer<never> = dbLogger) =>
 		Effect.logError(message).pipe(logLevel, annotate(extra), Effect.provide(logger)),
-	debug: (message: string, extra?: Record<PropertyKey, any>, logger: Layer.Layer<never> = dbLogger) =>
+	debug: (message: string, extra?: Record<string, unknown>, logger: Layer.Layer<never> = dbLogger) =>
 		Effect.logDebug(message).pipe(logLevel, annotate(extra), Effect.provide(logger))
 };
 
-export const debugSet = Effect.fn("debugSet")(function* <S extends string>(service: S, impl: Function, result: unknown) {
+export const debugSet = Effect.fn("debugSet")(function* <S extends string>(
+	service: S,
+	impl: (...args: unknown[]) => unknown,
+	result: unknown
+) {
 	const call = impl.toString();
 	if (call.includes(".set.")) {
 		yield* AppLog.debug(service, {
@@ -177,10 +183,10 @@ function handleCause<B extends InstanceType<ErrorClass>>(cause: Cause.Cause<B>) 
 		const defect = cause.defect;
 		// This will propagate redirects and http errors directly to SvelteKit
 		if (isRedirect(defect)) {
-			Effect.runFork(AppLog.info(`Redirect to ${defect.location}`, defect));
+			Effect.runFork(AppLog.info(`Redirect to ${defect.location}`, { defect }));
 			throw defect;
 		} else if (isHttpError(defect)) {
-			Effect.runFork(AppLog.error(`HttpError [${defect.status}] ${defect.body.message}`, defect));
+			Effect.runFork(AppLog.error(`HttpError [${defect.status}] ${defect.body.message}`, { defect }));
 			throw defect;
 		} else if (typeof defect === "object" && defect !== null && "stack" in defect) {
 			extra.stack = defect.stack;
@@ -200,9 +206,9 @@ function handleCause<B extends InstanceType<ErrorClass>>(cause: Cause.Cause<B>) 
 export type SuperValidateData = RequestEvent | Request | FormData | URLSearchParams | URL | null | undefined;
 
 export function validateForm<
-	Input extends SuperValidateData | Partial<InferInput<Schema>>,
-	Schema extends BaseSchema<any, any, any>
->(input: Input, schema: Schema, options?: SuperValidateOptions<InferOutput<Schema>>) {
+	Schema extends v.GenericSchema,
+	Input extends SuperValidateData | Partial<InferIn<Schema, "valibot">>
+>(input: Input, schema: Schema, options?: SuperValidateOptions<Infer<Schema, "valibot">>) {
 	return Effect.promise(() => superValidate(input, valibot(schema), options));
 }
 
@@ -214,8 +220,8 @@ export const save = Effect.fn(function* <
 	TSuccess extends Pathname | TForm,
 	TFailure extends Pathname | TForm,
 	TForm extends SuperValidated<SchemaOut>,
-	SchemaOut extends Record<PropertyKey, any>,
-	ServiceOut extends Record<PropertyKey, any>
+	SchemaOut extends Record<PropertyKey, unknown>,
+	ServiceOut = unknown
 >(
 	program: Effect.Effect<ServiceOut, FormError<SchemaOut> | InstanceType<ErrorClass>>,
 	handlers: {
@@ -252,7 +258,7 @@ export interface ErrorParams {
 }
 
 export interface ErrorClass {
-	new (...args: any[]): { _tag: string } & ErrorParams;
+	new (...args: unknown[]): { _tag: string } & ErrorParams;
 }
 
 export function isTaggedError(error: unknown): error is InstanceType<ErrorClass> {
@@ -270,7 +276,7 @@ export function isTaggedError(error: unknown): error is InstanceType<ErrorClass>
 	);
 }
 
-export class FormError<SchemaOut extends Record<PropertyKey, any>> extends Data.TaggedError("FormError")<ErrorParams> {
+export class FormError<SchemaOut extends Record<PropertyKey, unknown>> extends Data.TaggedError("FormError")<ErrorParams> {
 	constructor(
 		public message: string,
 		protected options: Partial<{
@@ -282,7 +288,7 @@ export class FormError<SchemaOut extends Record<PropertyKey, any>> extends Data.
 		super({ message, status: options.status || 500, cause: options.cause });
 	}
 
-	static from<SchemaOut extends Record<PropertyKey, any>>(
+	static from<SchemaOut extends Record<PropertyKey, unknown>>(
 		err: unknown,
 		field: "" | FormPathLeavesWithErrors<SchemaOut> = ""
 	): FormError<SchemaOut> {

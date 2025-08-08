@@ -46,13 +46,13 @@ export const auth = betterAuth({
 	}
 });
 
-export function assertUser(user: LocalsUser | undefined): asserts user is LocalsUser {
+export const assertUser = Effect.fn(function* (user: LocalsUser | undefined) {
 	const event = getRequestEvent();
 	const url = event.url;
 	const result = v.safeParse(localsUserSchema, user);
 
 	if (!result.success) {
-		Effect.runFork(AppLog.debug("assertUser", { issues: v.summarize(result.issues) }));
+		yield* AppLog.debug("assertUser", { issues: v.summarize(result.issues) });
 		redirect(302, `/?redirect=${encodeURIComponent(`${url.pathname}${url.search}`)}`);
 	}
 
@@ -63,7 +63,9 @@ export function assertUser(user: LocalsUser | undefined): asserts user is Locals
 			.forEach((c) => event.cookies.delete(c.name, { path: "/" }));
 		redirect(302, `/?code=BANNED&reason=${result.output.banReason}`);
 	}
-}
+
+	return result.output;
+});
 
 export async function getAuthSession(event = getRequestEvent()) {
 	const { session, user } = (await auth.api.getSession({ headers: event.request.headers })) ?? {};
@@ -76,8 +78,7 @@ export async function getAuthSession(event = getRequestEvent()) {
 
 export const assertAuthOrRedirect = Effect.fn(function* (adminOnly: boolean = false) {
 	const event = getRequestEvent();
-	const user = event.locals.user;
-	assertUser(user);
+	const user = yield* assertUser(event.locals.user);
 
 	if (adminOnly && user.role !== "admin") return redirect(302, "/characters");
 

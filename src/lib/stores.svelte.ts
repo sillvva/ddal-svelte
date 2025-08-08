@@ -4,9 +4,10 @@ import Cookie from "js-cookie";
 import { getContext, setContext } from "svelte";
 import { createContext } from "svelte-contextify";
 import { fromAction } from "svelte/attachments";
+import { SvelteDate } from "svelte/reactivity";
 import { setupViewTransition } from "sveltekit-view-transition";
 import * as v from "valibot";
-import { appCookieSchema, appDefaults, type AppCookie } from "./schemas";
+import { appCookieSchema, appDefaults, type AnyBaseSchema, type AppCookie } from "./schemas";
 
 export const { get: transitionGetter, set: transitionSetter } = createContext({
 	defaultValue: () => {
@@ -27,7 +28,7 @@ export const transition = (key: string) => fromAction(transitionGetter()(), () =
  * @param value Value of the cookie
  * @param expires Expiration time of the cookie in milliseconds
  */
-export function setCookie<TSchema extends v.BaseSchema<any, any, any>>(
+export function setCookie<TSchema extends AnyBaseSchema>(
 	name: string,
 	schema: TSchema,
 	value: v.InferInput<TSchema>,
@@ -39,7 +40,7 @@ export function setCookie<TSchema extends v.BaseSchema<any, any, any>>(
 	const parsed = v.parse(schema, value);
 	Cookie.set(name, typeof parsed !== "string" ? JSON.stringify(parsed) : parsed, {
 		path: "/",
-		expires: new Date(Date.now() + expires)
+		expires: new SvelteDate(Date.now() + expires)
 	});
 
 	return value;

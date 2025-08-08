@@ -7,6 +7,7 @@ import { isHttpError } from "@sveltejs/kit";
 import { Duration } from "effect";
 import escape from "regexp.escape";
 import { toast } from "svelte-sonner";
+import { SvelteDate, SvelteMap, SvelteSet } from "svelte/reactivity";
 import { derived, get, type Readable, type Writable } from "svelte/store";
 import {
 	dateProxy,
@@ -49,15 +50,22 @@ export function unknownErrorToast(error: unknown) {
 	else errorToast("An unknown error occurred");
 }
 
-interface CustomFormOptions<S extends v.ObjectSchema<any, any>> {
-	nameField?: FormPathLeaves<v.InferOutput<S>, string>;
+type StringKeys<T> = Extract<{ [K in keyof T]: T[K] extends string ? K : never }[keyof T], string>;
+
+interface CustomFormOptions<Out extends Record<string, unknown>> {
+	// Limit to top-level string fields of the output so indexing is type-safe
+	nameField?: StringKeys<Out> & string;
 	remote?: true;
 }
 
-export function valibotForm<S extends v.ObjectSchema<any, any>, Out extends v.InferOutput<S>, In extends v.InferInput<S>>(
+export function valibotForm<
+	S extends v.ObjectSchema<v.ObjectEntries, v.ErrorMessage<v.ObjectIssue> | undefined>,
+	Out extends v.InferOutput<S> & Record<string, unknown>,
+	In extends v.InferInput<S>
+>(
 	form: SuperValidated<Out, App.Superforms.Message, In>,
 	schema: S,
-	options?: FormOptions<Out, App.Superforms.Message, In> & CustomFormOptions<S>
+	options?: FormOptions<Out, App.Superforms.Message, In> & CustomFormOptions<Out>
 ) {
 	const { nameField = "name", ...rest } = options || {};
 	const superform = superForm(form, {
@@ -113,7 +121,7 @@ export function intDateProxy<T extends Record<string, unknown>, Path extends For
 			return options.empty === "null" ? null : undefined;
 		}
 
-		const date = value && new Date(value.toString());
+		const date = value && new SvelteDate(value.toString());
 		if (date) date.setSeconds(0);
 		if (date) date.setMilliseconds(0);
 
@@ -231,7 +239,7 @@ class BaseSearchFactory<TData extends Array<unknown>> {
 
 	protected hasMatch(item: string) {
 		const itemLower = item.toLowerCase();
-		const matches = new Set<string>();
+		const matches = new SvelteSet<string>();
 
 		let score = 0;
 		for (const token of this._tokens) {
@@ -306,10 +314,10 @@ class BaseSearchFactory<TData extends Array<unknown>> {
 	}
 }
 
-type MapIndexKeys<T extends (...args: any) => any> = MapKeys<ReturnType<T>["index"]>;
-type CharacterIndexKeys = MapIndexKeys<BaseSearchFactory<any>["getCharacterIndex"]>;
-type LogIndexKeys = MapIndexKeys<BaseSearchFactory<any>["getLogIndex"]>;
-type DMIndexKeys = MapIndexKeys<BaseSearchFactory<any>["getDMIndex"]>;
+type MapIndexKeys<F> = F extends (...args: infer _A) => { index: Map<infer K, infer V> } ? MapKeys<Map<K, V>> : never;
+type CharacterIndexKeys = MapIndexKeys<BaseSearchFactory<unknown[]>["getCharacterIndex"]>;
+type LogIndexKeys = MapIndexKeys<BaseSearchFactory<unknown[]>["getLogIndex"]>;
+type DMIndexKeys = MapIndexKeys<BaseSearchFactory<unknown[]>["getDMIndex"]>;
 
 type ExpandedSearchData<TData extends SearchData[number]> = TData extends {
 	title: infer Title;
@@ -342,11 +350,11 @@ export class GlobalSearchFactory extends BaseSearchFactory<SearchData> {
 
 	private _category = $state<SearchData[number]["title"] | null>(null);
 	private _indexMap = $derived(
-		new Map(
+		new SvelteMap(
 			this._tdata.map((entry) => {
 				return [
 					entry.title,
-					new Map(
+					new SvelteMap(
 						entry.items
 							.map((item) => {
 								if (item.type === "character") {
@@ -394,7 +402,7 @@ export class GlobalSearchFactory extends BaseSearchFactory<SearchData> {
 					const items = entry.items.slice(0, this._category ? this.MAX_RESULTS_WITH_CATEGORY : this.MAX_RESULTS_WITHOUT_CATEGORY);
 					return {
 						title: entry.title,
-						items: items.map((item) => ({ ...item, score: 0, match: new Set() })),
+						items: items.map((item) => ({ ...item, score: 0, match: new SvelteSet() })),
 						count: items.length
 					} as ExpandedSearchData<SearchData[number]>;
 				}
@@ -410,8 +418,8 @@ export class GlobalSearchFactory extends BaseSearchFactory<SearchData> {
 						if (!itemIndex) return null;
 
 						let totalScore = 0;
-						const matches = new Set<string>();
-						const matchTypes = new Set<TDataKeys>();
+						const matches = new SvelteSet<string>();
+						const matchTypes = new SvelteSet<TDataKeys>();
 
 						for (const [key, values] of itemIndex) {
 							for (const value of values) {
@@ -455,7 +463,7 @@ export class EntitySearchFactory<
 	TData extends FullCharacterData[] | FullLogData[] | LogSummaryData[] | UserDM[]
 > extends BaseSearchFactory<TData> {
 	private _indexMap = $derived(
-		new Map(
+		new SvelteMap(
 			this._tdata
 				.map((entry) => {
 					if ("class" in entry) {
@@ -487,7 +495,7 @@ export class EntitySearchFactory<
 					return {
 						...entry,
 						score: 0,
-						match: new Set<TDataKeys>()
+						match: new SvelteSet<TDataKeys>()
 					};
 				}
 
@@ -496,8 +504,8 @@ export class EntitySearchFactory<
 				const index = this._indexMap.get(entry.id) as Map<TDataKeys, string[]>;
 				if (!index) return null;
 
-				const matches = new Set<string>();
-				const matchTypes = new Set<TDataKeys>();
+				const matches = new SvelteSet<string>();
+				const matchTypes = new SvelteSet<TDataKeys>();
 
 				for (const [key, values] of index) {
 					for (const value of values) {
