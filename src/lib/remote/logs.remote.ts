@@ -9,7 +9,7 @@ import { Data } from "effect";
 import type { SuperValidated } from "sveltekit-superforms";
 import * as v from "valibot";
 
-export class InvalidCharacterIdError extends Data.TaggedError("InvalidCharacterIdError")<ErrorParams> {
+class InvalidCharacterIdError extends Data.TaggedError("InvalidCharacterIdError")<ErrorParams> {
 	constructor(err?: unknown) {
 		super({ message: "Invalid character ID", status: 400, cause: err });
 	}
