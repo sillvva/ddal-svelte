@@ -44,7 +44,10 @@ interface CharacterApiImpl {
 			characterId: CharacterId,
 			includeLogs?: boolean
 		) => Effect.Effect<FullCharacterData | undefined, DrizzleError>;
-		readonly userCharacters: (userId: UserId, includeLogs?: boolean) => Effect.Effect<FullCharacterData[], DrizzleError>;
+		readonly userCharacters: (
+			userId: UserId,
+			options?: { characterId?: CharacterId | null; includeLogs?: boolean }
+		) => Effect.Effect<FullCharacterData[], DrizzleError>;
 	};
 	readonly set: {
 		readonly save: (
@@ -78,11 +81,18 @@ export class CharacterService extends Effect.Service<CharacterService>()("Charac
 					);
 				}),
 
-				userCharacters: Effect.fn("CharacterService.get.userCharacters")(function* (userId, includeLogs = true) {
+				userCharacters: Effect.fn("CharacterService.get.userCharacters")(function* (
+					userId,
+					{ characterId, includeLogs = true } = {}
+				) {
 					return yield* runQuery(
 						db.query.characters.findMany({
 							with: characterIncludes(includeLogs),
-							where: { userId: { eq: userId }, name: { NOT: PlaceholderName } }
+							where: {
+								userId: { eq: userId },
+								name: { NOT: PlaceholderName },
+								...(characterId && { id: { eq: characterId } })
+							}
 						})
 					).pipe(
 						Effect.map((characters) => characters.map(parseCharacter)),

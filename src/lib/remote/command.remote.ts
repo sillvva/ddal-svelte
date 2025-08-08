@@ -25,7 +25,7 @@ const sectionData = {
 type GetData = Effect.Effect.Success<ReturnType<typeof getData>>;
 export type SearchData = Array<SectionData | GetData[number]>;
 const getData = Effect.fn("GetData")(function* (userId: UserId) {
-	const characters = yield* withCharacter((service) => service.get.userCharacters(userId, false));
+	const characters = yield* withCharacter((service) => service.get.userCharacters(userId, { includeLogs: false }));
 	const dms = yield* withDM((service) => service.get.userDMs(userId));
 	const logs = yield* withLog((service) => service.get.userLogs(userId));
 

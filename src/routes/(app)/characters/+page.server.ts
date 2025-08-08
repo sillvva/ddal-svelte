@@ -6,7 +6,7 @@ export const load = () =>
 	runOrThrow(function* () {
 		const user = yield* assertAuthOrRedirect();
 
-		const characters = yield* withCharacter((service) => service.get.userCharacters(user.id, true));
+		const characters = yield* withCharacter((service) => service.get.userCharacters(user.id));
 
 		return {
 			characters

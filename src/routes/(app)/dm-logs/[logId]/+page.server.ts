@@ -16,7 +16,15 @@ export const load = (event) =>
 		if (!idResult.success) redirect(307, `/dm-logs`);
 		const logId = idResult.output;
 
-		const characters = yield* withCharacter((service) => service.get.userCharacters(user.id, true)).pipe(
+		const logData = yield* withLog((service) => service.get.log(logId, user.id));
+		const log = logData ? logDataToSchema(user.id, logData) : defaultLogSchema(user.id);
+
+		if (logId !== "new") {
+			if (!log.id) return yield* new LogNotFoundError();
+			if (!log.isDmLog) redirect(307, `/characters/${log.characterId}/log/${log.id}`);
+		}
+
+		const characters = yield* withCharacter((service) => service.get.userCharacters(user.id)).pipe(
 			Effect.map((characters) =>
 				characters.map((c) => ({
 					...c,
@@ -28,15 +36,7 @@ export const load = (event) =>
 			)
 		);
 
-		const logData = yield* withLog((service) => service.get.log(logId, user.id));
-		const log = logData ? logDataToSchema(user.id, logData) : defaultLogSchema(user.id);
-
-		if (logId !== "new") {
-			if (!log.id) return yield* new LogNotFoundError();
-			if (!log.isDmLog) redirect(307, `/characters/${log.characterId}/log/${log.id}`);
-		}
-
-		const form = yield* validateForm(log, dMLogSchema(characters));
+		const form = yield* validateForm(log, dMLogSchema(characters.filter((c) => c.id !== log.characterId)));
 
 		return {
 			...event.params,
