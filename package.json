@@ -10,7 +10,7 @@
 		"env-check": "node -v && bun -v && vite -v",
 		"check": "svelte-kit sync && svelte-check --tsconfig ./tsconfig.json",
 		"check:watch": "svelte-kit sync && svelte-check --tsconfig ./tsconfig.json --watch",
-		"lint": "eslint src/**/*.(ts|svelte) --max-warnings=0",
+		"lint": "eslint \"src/**/*.{ts,svelte}\" --max-warnings=0",
 		"format": "prettier --plugin-search-dir . --write .",
 		"update": "bunx taze --group --interactive --recursive"
 	},
