@@ -73,7 +73,7 @@
 		<div class="flex justify-end text-sm max-sm:hidden">Logs are automatically deleted after 7 days.</div>
 	</div>
 	{#if logSearch.current?.metadata?.hasErrors}
-		{#each logSearch.current.metadata.errors as error}
+		{#each logSearch.current.metadata.errors as error, i (i)}
 			<div class="alert alert-error mt-1 w-fit rounded-lg py-1">
 				<span class="iconify mdi--alert-circle size-6"></span>
 				{error.message} at position {error.position}: <kbd>{error.value}</kbd>

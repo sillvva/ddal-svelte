@@ -20,7 +20,7 @@
 						<li>
 							<span class="iconify mdi--home size-4"></span>
 						</li>
-						{#each crumbs as bc, i}
+						{#each crumbs as bc, i (i)}
 							{#if (bc.url || i === crumbs.length - 1) && !bc.url?.endsWith("/new")}
 								{#if bc.url}
 									<li>

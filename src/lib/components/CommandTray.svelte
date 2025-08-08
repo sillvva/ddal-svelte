@@ -102,9 +102,10 @@
 										placeholder="Search"
 										class="outline-0"
 										oninput={(ev: Event) => {
-											const val = (ev.target as HTMLInputElement).value;
-											if (search.query !== val) {
-												search.query = val;
+											const value = (ev.target as HTMLInputElement).value;
+											const trimmed = value.trim();
+											if (search.query !== trimmed) {
+												search.query = trimmed;
 												command?.updateSelectedToIndex(0);
 												if (viewport) viewport.scrollTop = 0;
 											}
@@ -113,7 +114,7 @@
 								</label>
 								<select id="search-category" bind:value={search.category} class="select join-item w-auto">
 									<option value={null}>All Categories</option>
-									{#each categories as category}
+									{#each categories as category (category)}
 										<option value={category}>{category}</option>
 									{/each}
 								</select>
@@ -123,7 +124,7 @@
 					<Command.List class="flex flex-col gap-2">
 						{#if resultsCount}
 							<Command.Viewport class="h-96 overflow-y-auto" bind:ref={viewport}>
-								{#each search.results as section}
+								{#each search.results as section (section.title)}
 									{#if section.items.length && section.previousCount}
 										<Command.Separator class="divider mt-2 mb-0" />
 									{/if}
@@ -134,7 +135,7 @@
 										<Command.GroupItems class="menu flex w-full flex-col py-0">
 											{#snippet child({ props })}
 												<ul {...props}>
-													{#each section.items as item}
+													{#each section.items as item ("id" in item ? item.id : item.name)}
 														<Command.Item
 															value={item.url}
 															onSelect={() => select(item.url)}

@@ -112,9 +112,9 @@
 								</DatePicker.GridRow>
 							</DatePicker.GridHead>
 							<DatePicker.GridBody>
-								{#each month.weeks as weekDates}
+								{#each month.weeks as weekDates, i (i)}
 									<DatePicker.GridRow class="flex w-full">
-										{#each weekDates as date}
+										{#each weekDates as date, j (j)}
 											<DatePicker.Cell {date} month={month.value} class="relative size-10 p-0! text-center text-sm">
 												<DatePicker.Day
 													class={[

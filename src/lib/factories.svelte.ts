@@ -1,3 +1,4 @@
+/* eslint-disable svelte/prefer-svelte-reactivity */
 import type { FullCharacterData } from "$lib/server/effect/characters";
 import type { UserDM } from "$lib/server/effect/dms";
 import type { FullLogData, LogSummaryData, UserLogData } from "$lib/server/effect/logs";
@@ -7,7 +8,7 @@ import { isHttpError } from "@sveltejs/kit";
 import { Duration } from "effect";
 import escape from "regexp.escape";
 import { toast } from "svelte-sonner";
-import { SvelteDate, SvelteMap, SvelteSet } from "svelte/reactivity";
+import { SvelteDate, SvelteMap } from "svelte/reactivity";
 import { derived, get, type Readable, type Writable } from "svelte/store";
 import {
 	dateProxy,
@@ -184,6 +185,8 @@ class BaseSearchFactory<TData extends Array<unknown>> {
 	protected _query = $state<string>("");
 	protected _tokens = $state<Token[]>([]);
 
+	private _matchCache = new Map<string, { matches: Set<string>; score: number }>();
+
 	private _debouncedTokens = debounce((query: string) => {
 		this._tokens = this.tokenize(query);
 	}, this.DEBOUNCE_TIME);
@@ -200,6 +203,7 @@ class BaseSearchFactory<TData extends Array<unknown>> {
 
 	set query(query: string) {
 		this._query = query;
+		this._matchCache.clear();
 
 		if (query.trim().length < this.MIN_QUERY_LENGTH) this._tokens = [];
 		else this._debouncedTokens.call(query);
@@ -238,8 +242,14 @@ class BaseSearchFactory<TData extends Array<unknown>> {
 	}
 
 	protected hasMatch(item: string) {
+		const cacheKey = `${item}:${this._tokens.map((t) => t.value).join(",")}`;
+
+		if (this._matchCache.has(cacheKey)) {
+			return this._matchCache.get(cacheKey)!;
+		}
+
 		const itemLower = item.toLowerCase();
-		const matches = new SvelteSet<string>();
+		const matches = new Set<string>();
 
 		let score = 0;
 		for (const token of this._tokens) {
@@ -268,7 +278,9 @@ class BaseSearchFactory<TData extends Array<unknown>> {
 
 		score = Math.round((score / this._tokens.length) * this.SCORE_PRECISION) / this.SCORE_PRECISION;
 
-		return { matches, score };
+		const result = { matches, score };
+		this._matchCache.set(cacheKey, result);
+		return result;
 	}
 
 	protected getCharacterIndex(item: FullCharacterData) {
@@ -349,28 +361,26 @@ export class GlobalSearchFactory extends BaseSearchFactory<SearchData> {
 	private MAX_RESULTS_WITH_CATEGORY = 10 as const;
 
 	private _category = $state<SearchData[number]["title"] | null>(null);
-	private _indexMap = $derived(
-		new SvelteMap(
-			this._tdata.map((entry) => {
-				return [
-					entry.title,
-					new SvelteMap(
-						entry.items
-							.map((item) => {
-								if (item.type === "character") {
-									return this.getCharacterIndex(item);
-								} else if (item.type === "dm") {
-									return this.getDMIndex(item);
-								} else if (item.type === "log") {
-									return this.getLogIndex(item);
-								}
-							})
-							.filter(isDefined)
-							.map((item) => [item.id, item.index])
-					)
-				];
-			})
-		)
+	private _indexMap = new SvelteMap(
+		this._tdata.map((entry) => {
+			return [
+				entry.title,
+				new SvelteMap(
+					entry.items
+						.map((item) => {
+							if (item.type === "character") {
+								return this.getCharacterIndex(item);
+							} else if (item.type === "dm") {
+								return this.getDMIndex(item);
+							} else if (item.type === "log") {
+								return this.getLogIndex(item);
+							}
+						})
+						.filter(isDefined)
+						.map((item) => [item.id, item.index])
+				)
+			];
+		})
 	);
 
 	constructor(data: SearchData, defaultQuery: string = "") {
@@ -402,7 +412,7 @@ export class GlobalSearchFactory extends BaseSearchFactory<SearchData> {
 					const items = entry.items.slice(0, this._category ? this.MAX_RESULTS_WITH_CATEGORY : this.MAX_RESULTS_WITHOUT_CATEGORY);
 					return {
 						title: entry.title,
-						items: items.map((item) => ({ ...item, score: 0, match: new SvelteSet() })),
+						items: items.map((item) => ({ ...item, score: 0, match: new Set() })),
 						count: items.length
 					} as ExpandedSearchData<SearchData[number]>;
 				}
@@ -418,8 +428,8 @@ export class GlobalSearchFactory extends BaseSearchFactory<SearchData> {
 						if (!itemIndex) return null;
 
 						let totalScore = 0;
-						const matches = new SvelteSet<string>();
-						const matchTypes = new SvelteSet<TDataKeys>();
+						const matches = new Set<string>();
+						const matchTypes = new Set<TDataKeys>();
 
 						for (const [key, values] of itemIndex) {
 							for (const value of values) {
@@ -462,20 +472,18 @@ export class GlobalSearchFactory extends BaseSearchFactory<SearchData> {
 export class EntitySearchFactory<
 	TData extends FullCharacterData[] | FullLogData[] | LogSummaryData[] | UserDM[]
 > extends BaseSearchFactory<TData> {
-	private _indexMap = $derived(
-		new SvelteMap(
-			this._tdata
-				.map((entry) => {
-					if ("class" in entry) {
-						return this.getCharacterIndex(entry);
-					} else if ("isUser" in entry) {
-						return this.getDMIndex(entry);
-					} else {
-						return this.getLogIndex(entry);
-					}
-				})
-				.map((entry) => [entry.id, entry.index])
-		)
+	private _indexMap = new SvelteMap(
+		this._tdata
+			.map((entry) => {
+				if ("class" in entry) {
+					return this.getCharacterIndex(entry);
+				} else if ("isUser" in entry) {
+					return this.getDMIndex(entry);
+				} else {
+					return this.getLogIndex(entry);
+				}
+			})
+			.map((entry) => [entry.id, entry.index])
 	);
 
 	constructor(data: TData, defaultQuery: string = "") {
@@ -495,7 +503,7 @@ export class EntitySearchFactory<
 					return {
 						...entry,
 						score: 0,
-						match: new SvelteSet<TDataKeys>()
+						match: new Set<TDataKeys>()
 					};
 				}
 
@@ -504,8 +512,8 @@ export class EntitySearchFactory<
 				const index = this._indexMap.get(entry.id) as Map<TDataKeys, string[]>;
 				if (!index) return null;
 
-				const matches = new SvelteSet<string>();
-				const matchTypes = new SvelteSet<TDataKeys>();
+				const matches = new Set<string>();
+				const matchTypes = new Set<TDataKeys>();
 
 				for (const [key, values] of index) {
 					for (const value of values) {
