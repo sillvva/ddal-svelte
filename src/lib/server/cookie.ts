@@ -1,5 +1,4 @@
 import { getRequestEvent } from "$app/server";
-import type { AnyBaseSchema } from "$lib/schemas";
 import { Duration, Effect } from "effect";
 import * as v from "valibot";
 import { AppLog } from "./effect";
@@ -12,7 +11,7 @@ import { AppLog } from "./effect";
  * @param schema Default value of the cookie
  * @returns The cookie value
  */
-export function serverGetCookie<TSchema extends AnyBaseSchema>(name: string, schema: TSchema) {
+export function serverGetCookie<TSchema extends v.GenericSchema>(name: string, schema: TSchema) {
 	try {
 		const event = getRequestEvent();
 		if (!event) throw new Error("No event");
@@ -38,7 +37,7 @@ export function serverGetCookie<TSchema extends AnyBaseSchema>(name: string, sch
  * @param options.httpOnly Whether the cookie should be http-only. This prevents the cookie from being accessed from the browser.
  * @returns The cookie value
  */
-export function serverSetCookie<TSchema extends AnyBaseSchema>(
+export function serverSetCookie<TSchema extends v.GenericSchema>(
 	name: string,
 	schema: TSchema,
 	value: v.InferInput<TSchema>,

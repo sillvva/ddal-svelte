@@ -59,9 +59,9 @@ interface CustomFormOptions<Out extends Record<string, unknown>> {
 }
 
 export function valibotForm<
-	S extends v.ObjectSchema<v.ObjectEntries, v.ErrorMessage<v.ObjectIssue> | undefined>,
+	S extends v.GenericSchema,
 	Out extends v.InferOutput<S> & Record<string, unknown>,
-	In extends v.InferInput<S>
+	In extends v.InferInput<S> & Record<string, unknown>
 >(
 	form: SuperValidated<Out, App.Superforms.Message, In>,
 	schema: S,

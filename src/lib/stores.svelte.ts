@@ -7,7 +7,7 @@ import { fromAction } from "svelte/attachments";
 import { SvelteDate } from "svelte/reactivity";
 import { setupViewTransition } from "sveltekit-view-transition";
 import * as v from "valibot";
-import { appCookieSchema, appDefaults, type AnyBaseSchema, type AppCookie } from "./schemas";
+import { appCookieSchema, appDefaults, type AppCookie } from "./schemas";
 
 export const { get: transitionGetter, set: transitionSetter } = createContext({
 	defaultValue: () => {
@@ -28,7 +28,7 @@ export const transition = (key: string) => fromAction(transitionGetter()(), () =
  * @param value Value of the cookie
  * @param expires Expiration time of the cookie in milliseconds
  */
-export function setCookie<TSchema extends AnyBaseSchema>(
+export function setCookie<TSchema extends v.GenericSchema>(
 	name: string,
 	schema: TSchema,
 	value: v.InferInput<TSchema>,
