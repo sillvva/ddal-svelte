@@ -4,7 +4,6 @@ import { dungeonMasterIdSchema, dungeonMasterSchema, type DungeonMasterSchemaIn 
 import { assertAuthOrFail } from "$lib/server/auth";
 import { runOrReturn, save, validateForm, type ErrorParams } from "$lib/server/effect";
 import { withDM } from "$lib/server/effect/dms";
-import { redirect } from "@sveltejs/kit";
 import { Data } from "effect";
 import * as v from "valibot";
 
@@ -25,7 +24,7 @@ export const saveDM = command("unchecked", (input: DungeonMasterSchemaIn) =>
 		const user = yield* assertAuthOrFail();
 
 		const idResult = v.safeParse(dungeonMasterIdSchema, input.id);
-		if (!idResult.success) redirect(302, `/dms`);
+		if (!idResult.success) return `/dms`;
 		const dmId = idResult.output;
 
 		const form = yield* validateForm(input, dungeonMasterSchema);
