@@ -66,7 +66,7 @@
 	<li class="menu-title *:px-2">
 		<span class="font-bold">Passkeys</span>
 	</li>
-	{#each passkeys as passkey}
+	{#each passkeys as passkey (passkey.id)}
 		<li class="flex-row gap-2">
 			<button
 				class="group btn btn-ghost hover:bg-base-200 flex flex-1 gap-2 text-left"

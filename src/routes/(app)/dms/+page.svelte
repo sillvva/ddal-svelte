@@ -54,7 +54,7 @@
 								</td>
 							</tr>
 						{:else}
-							{#each sortedResults as dm}
+							{#each sortedResults as dm (dm.id)}
 								<tr class="data-[deleting=true]:hidden" data-deleting={deletingDM.has(dm.id)}>
 									<td>
 										<a

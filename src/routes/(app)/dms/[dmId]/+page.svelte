@@ -74,7 +74,7 @@
 							</tr>
 						</thead>
 						<tbody>
-							{#each sortedLogs as log}
+							{#each sortedLogs as log (log.id)}
 								<tr>
 									<td class="max-xs:px-2">
 										<div class="flex flex-col gap-1">

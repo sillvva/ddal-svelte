@@ -165,7 +165,7 @@
 						</tr>
 					</thead>
 					<tbody>
-						{#each sortedResults as character}
+						{#each sortedResults as character (character.id)}
 							<tr class="group/row">
 								<td class="pr-0 align-top transition-colors sm:pr-2">
 									<div class="avatar">
@@ -246,7 +246,7 @@
 				</table>
 			</div>
 
-			{#each [1, 2, 3, 4] as tier}
+			{#each [1, 2, 3, 4] as tier (tier)}
 				{#if sortedResults.filter((c) => c.tier == tier).length}
 					<h1
 						class="font-vecna max-xs:data-[display=grid]:hidden pt-6 pb-2 text-3xl font-bold data-[display=list]:hidden data-[tier=1]:pt-0 dark:text-white"
@@ -259,7 +259,7 @@
 						class="xs:data-[display=grid]:grid hidden w-full data-[display=grid]:grid-cols-2 data-[display=grid]:gap-4 sm:data-[display=grid]:grid-cols-3 md:data-[display=grid]:grid-cols-4"
 						data-display={global.app.characters.display}
 					>
-						{#each sortedResults.filter((c) => c.tier == tier) as character}
+						{#each sortedResults.filter((c) => c.tier == tier) as character (character.id)}
 							<a
 								href={`/characters/${character.id}`}
 								class="card card-compact bg-base-200 shadow-xl transition-transform duration-200 motion-safe:hover:scale-105"

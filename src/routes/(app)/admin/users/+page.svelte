@@ -46,7 +46,7 @@
 				</tr>
 			</thead>
 			<tbody>
-				{#each results as user}
+				{#each results as user (user.id)}
 					<tr data-banned={user.banned} class="data-[banned=true]:bg-error/10">
 						<td class="pr-0 align-top transition-colors sm:pr-2">
 							<div class="avatar">

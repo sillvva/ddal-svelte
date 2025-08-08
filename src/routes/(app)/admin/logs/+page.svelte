@@ -101,7 +101,7 @@
 					<td class="max-xs:hidden w-0"></td>
 				</tr>
 			</thead>
-			{#each logSearch.current.logs as log}
+			{#each logSearch.current.logs as log (log.id)}
 				{#snippet actions()}
 					<button
 						class="btn btn-sm btn-primary tooltip tooltip-left"

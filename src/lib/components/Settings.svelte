@@ -163,7 +163,7 @@
 				<li class="menu-title">
 					<span class="font-bold">Linked Accounts</span>
 				</li>
-				{#each authProviders as provider}
+				{#each authProviders as provider (provider.id)}
 					<li>
 						<span class="flex gap-2 hover:bg-transparent">
 							<span class={twMerge("size=6 iconify-color", provider.iconify)}></span>

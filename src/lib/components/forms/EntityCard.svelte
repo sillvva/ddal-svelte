@@ -90,7 +90,7 @@
 				<Control class="flex-1">
 					<GenericInput {superform} field={lostField} label="Select an Item">
 						<select bind:value={$lostValue} id={lostField} class="select select-bordered w-full">
-							{#each items.filter((item) => item.id === $lostValue || !arrValue.includes(item.id)) as item}
+							{#each items.filter((item) => item.id === $lostValue || !arrValue.includes(item.id)) as item (item.id)}
 								<option value={item.id}>
 									{item.name}
 								</option>

@@ -136,7 +136,7 @@
 						</tr>
 					</tbody>
 				{:else}
-					{#each sortedResults as log}
+					{#each sortedResults as log (log.id)}
 						{@const hasDescription =
 							!!log.description?.trim() || log.storyAwardsGained.length > 0 || log.storyAwardsLost.length > 0}
 						<tbody class="border-t border-neutral-500/20 first:border-0">
@@ -299,7 +299,7 @@
 										</div>
 									{/if}
 									{#if log.storyAwardsGained.length > 0 || log.storyAwardsLost.length > 0}
-										{#each log.storyAwardsGained as mi}
+										{#each log.storyAwardsGained as mi (mi.id)}
 											<div class="mt-2 text-sm whitespace-pre-wrap">
 												<span class="pr-2 font-semibold dark:text-white print:block">
 													{mi.name}{mi.description ? ":" : ""}

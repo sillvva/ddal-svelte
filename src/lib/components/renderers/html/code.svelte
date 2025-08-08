@@ -3,7 +3,7 @@
 
 	interface Props {
 		children?: Snippet;
-		attributes?: Record<string, any>;
+		attributes?: Record<string, unknown>;
 	}
 
 	const { children, attributes }: Props = $props();

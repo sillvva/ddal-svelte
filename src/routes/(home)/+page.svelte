@@ -65,7 +65,7 @@
 				</div>
 			</div>
 		{/if}
-		{#each PROVIDERS as provider}
+		{#each PROVIDERS as provider (provider.id)}
 			<button
 				class="bg-base-200 text-base-content hover:bg-base-300 max-xs:h-12 max-xs:px-4 flex h-16 items-center gap-4 rounded-lg px-8 py-4 transition-colors"
 				onclick={() => {

@@ -2,12 +2,13 @@
 	import { pushState } from "$app/navigation";
 	import type { MagicItem, StoryAward } from "$lib/server/db/schema";
 	import { sorter } from "@sillvva/utils";
+	import { SvelteMap } from "svelte/reactivity";
 	import { twMerge } from "tailwind-merge";
 	import SearchResults from "./SearchResults.svelte";
 
 	interface Props {
 		title?: string;
-		items: Array<MagicItem | StoryAward | { name: string; description?: string }>;
+		items: Array<MagicItem | StoryAward>;
 		formatting?: boolean;
 		terms?: string[];
 		collapsible?: boolean;
@@ -47,7 +48,7 @@
 	};
 
 	const consolidatedItems = $derived.by(() => {
-		const itemsMap = new Map<string, number>();
+		const itemsMap = new SvelteMap<string, number>();
 		return $state.snapshot(items).reduce(
 			(acc, item) => {
 				const name = fixName(item.name);
@@ -106,7 +107,7 @@
 		data-collapsed={collapsed}
 	>
 		{#if items.length}
-			{#each nonConsumables as mi}<span
+			{#each nonConsumables as mi (mi.id)}<span
 					role={mi.description ? "button" : "presentation"}
 					class="inline pr-2 pl-2 first:pl-0"
 					class:text-secondary={mi.description}
@@ -118,7 +119,7 @@
 					onkeypress={() => null}
 				>
 					<SearchResults text={mi.name} {terms} />
-				</span>{/each}{#each consumables as mi}<span
+				</span>{/each}{#each consumables as mi (mi.id)}<span
 					role={mi.description ? "button" : "presentation"}
 					class="inline pr-2 pl-2 italic first:pl-0"
 					class:text-secondary={mi.description}

@@ -5,7 +5,7 @@
 
 	interface Props {
 		depth: number;
-		raw?: any;
+		raw?: unknown;
 		text?: string;
 		class?: string;
 		children?: Snippet;

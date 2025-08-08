@@ -119,16 +119,16 @@
 	</div>
 </div>
 <div class="col-span-12 grid grid-cols-12 gap-4 dark:text-white">
-	{#each $form.magicItemsGained as _, index}
+	{#each $form.magicItemsGained as _, index (_.id)}
 		<EntityCard {superform} type="add" entity="magicItems" {index} />
 	{/each}
-	{#each $form.magicItemsLost as _, index}
+	{#each $form.magicItemsLost as _, index (_)}
 		<EntityCard {superform} type="drop" entity="magicItems" {index} items={sortedItems} />
 	{/each}
-	{#each $form.storyAwardsGained as _, index}
+	{#each $form.storyAwardsGained as _, index (_.id)}
 		<EntityCard {superform} type="add" entity="storyAwards" {index} />
 	{/each}
-	{#each $form.storyAwardsLost as _, index}
+	{#each $form.storyAwardsLost as _, index (_)}
 		<EntityCard {superform} type="drop" entity="storyAwards" {index} items={storyAwards} />
 	{/each}
 </div>

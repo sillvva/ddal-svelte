@@ -5,7 +5,7 @@ import js from "@eslint/js";
 import eslintConfigPrettier from "eslint-config-prettier/flat";
 import svelte from "eslint-plugin-svelte";
 import globals from "globals";
-import svelteKitConfig from "./svelte.config.js";
+import svelteConfig from "./svelte.config.js";
 
 // Use the typescript-eslint aggregator for flat config presets
 // (requires devDependency: "typescript-eslint")
@@ -63,7 +63,7 @@ export default [
 				projectService: true,
 				extraFileExtensions: [".svelte"],
 				// Pass through SvelteKit config for better rule behavior
-				svelteConfig: svelteKitConfig
+				svelteConfig
 			}
 		}
 	},

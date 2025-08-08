@@ -1,10 +1,10 @@
 <script lang="ts">
 	import type { Snippet } from "svelte";
-	import { twMerge } from "tailwind-merge";
+	import { twMerge, type ClassNameValue } from "tailwind-merge";
 
 	interface Props {
 		children?: Snippet;
-		attributes?: Record<string, any>;
+		attributes?: Record<string, unknown> & { class?: ClassNameValue };
 	}
 
 	const { children, attributes }: Props = $props();
