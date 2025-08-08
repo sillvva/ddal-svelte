@@ -1,11 +1,8 @@
-import { assertAuthOrRedirect } from "$lib/server/auth";
-import { runOrThrow } from "$lib/server/effect";
+import { authRedirect } from "$lib/server/effect";
 import { withCharacter } from "$lib/server/effect/characters.js";
 
 export const load = () =>
-	runOrThrow(function* () {
-		const user = yield* assertAuthOrRedirect();
-
+	authRedirect(function* ({ user }) {
 		const characters = yield* withCharacter((service) => service.get.userCharacters(user.id));
 
 		return {

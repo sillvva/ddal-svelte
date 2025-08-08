@@ -1,7 +1,6 @@
-import { command } from "$app/server";
+import { command, query } from "$app/server";
 import { imageUrlWithFallback, requiredString } from "$lib/schemas.js";
-import { assertAuthOrFail } from "$lib/server/auth";
-import { runOrReturn, type ErrorParams } from "$lib/server/effect";
+import { authReturn, type ErrorParams } from "$lib/server/effect";
 import { withUser } from "$lib/server/effect/users";
 import { Data, Effect } from "effect";
 import * as v from "valibot";
@@ -18,6 +17,12 @@ class FailedError extends Data.TaggedError("FailedError")<ErrorParams> {
 	}
 }
 
+export const getUser = query(() =>
+	authReturn(function* ({ event }) {
+		return { ...event.locals };
+	})
+);
+
 export const updateUser = command(
 	v.partial(
 		v.object({
@@ -27,9 +32,7 @@ export const updateUser = command(
 		})
 	),
 	(input) =>
-		runOrReturn(function* () {
-			const user = yield* assertAuthOrFail();
-
+		authReturn(function* ({ user }) {
 			if (Object.keys(input).length === 0) return yield* Effect.fail(new NoChangesError());
 
 			return yield* withUser((service) => service.set.update(user.id, input)).pipe(

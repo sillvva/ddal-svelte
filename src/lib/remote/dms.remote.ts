@@ -1,8 +1,7 @@
 import { command } from "$app/server";
 import { placeholderQuery } from "$lib/remote/command.remote";
 import { dungeonMasterIdSchema, dungeonMasterSchema, type DungeonMasterSchemaIn } from "$lib/schemas";
-import { assertAuthOrFail } from "$lib/server/auth";
-import { runOrReturn, save, validateForm, type ErrorParams } from "$lib/server/effect";
+import { authReturn, save, validateForm, type ErrorParams } from "$lib/server/effect";
 import { withDM } from "$lib/server/effect/dms";
 import { Data } from "effect";
 import * as v from "valibot";
@@ -20,9 +19,7 @@ class DeleteUserDMError extends Data.TaggedError("DeleteUserDMError")<ErrorParam
 }
 
 export const saveDM = command("unchecked", (input: DungeonMasterSchemaIn) =>
-	runOrReturn(function* () {
-		const user = yield* assertAuthOrFail();
-
+	authReturn(function* ({ user }) {
 		const idResult = v.safeParse(dungeonMasterIdSchema, input.id);
 		if (!idResult.success) return `/dms`;
 		const dmId = idResult.output;
@@ -44,9 +41,7 @@ export const saveDM = command("unchecked", (input: DungeonMasterSchemaIn) =>
 );
 
 export const deleteDM = command(dungeonMasterIdSchema, (id) =>
-	runOrReturn(function* () {
-		const user = yield* assertAuthOrFail();
-
+	authReturn(function* ({ user }) {
 		const [dm] = yield* withDM((service) => service.get.userDMs(user.id, { id }));
 		if (!dm) return yield* new DMNotFoundError();
 		if (dm.isUser) return yield* new DeleteUserDMError();

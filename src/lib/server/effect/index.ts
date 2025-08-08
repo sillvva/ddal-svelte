@@ -2,7 +2,7 @@ import { dev } from "$app/environment";
 import { getRequestEvent } from "$app/server";
 import type { Pathname } from "$app/types";
 import { privateEnv } from "$lib/env/private";
-import type { AppLogSchema, UserId } from "$lib/schemas";
+import type { AppLogSchema, LocalsUser, UserId } from "$lib/schemas";
 import { db, runQuery } from "$lib/server/db";
 import { appLogs } from "$lib/server/db/schema";
 import { removeTrace, type Awaitable } from "$lib/util";
@@ -22,6 +22,7 @@ import {
 } from "sveltekit-superforms";
 import { valibot } from "sveltekit-superforms/adapters";
 import * as v from "valibot";
+import { assertAuthOrFail, assertAuthOrRedirect } from "../auth";
 
 // -------------------------------------------------------------------------------------------------
 // Logs
@@ -197,6 +198,38 @@ function handleCause<B extends InstanceType<ErrorClass>>(cause: Cause.Cause<B>) 
 
 	if (!dev) message = removeTrace(message);
 	return { message, status, extra };
+}
+
+export async function authReturn<
+	TReturn,
+	A = unknown,
+	B extends InstanceType<ErrorClass> = InstanceType<ErrorClass>,
+	T extends YieldWrap<Effect.Effect<A, B>> = YieldWrap<Effect.Effect<A, B>>,
+	Y = unknown
+>(
+	program: (data: { user: LocalsUser; event: RequestEvent }) => Generator<T, TReturn, Y>,
+	adminOnly: boolean = false
+): Promise<EffectResult<TReturn>> {
+	return runOrReturn(function* () {
+		const { user, event } = yield* assertAuthOrFail(adminOnly);
+		return yield* program({ user, event });
+	});
+}
+
+export async function authRedirect<
+	TReturn,
+	A = unknown,
+	B extends InstanceType<ErrorClass> = InstanceType<ErrorClass>,
+	T extends YieldWrap<Effect.Effect<A, B>> = YieldWrap<Effect.Effect<A, B>>,
+	Y = unknown
+>(
+	program: (data: { user: LocalsUser; event: RequestEvent }) => Generator<T, TReturn, Y>,
+	adminOnly: boolean = false
+): Promise<TReturn> {
+	return runOrThrow(function* () {
+		const { user, event } = yield* assertAuthOrRedirect(adminOnly);
+		return yield* program({ user, event });
+	});
 }
 
 // -------------------------------------------------------------------------------------------------

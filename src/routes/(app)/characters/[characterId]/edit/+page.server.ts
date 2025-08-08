@@ -1,13 +1,10 @@
 import { BLANK_CHARACTER } from "$lib/constants.js";
 import { editCharacterSchema } from "$lib/schemas";
-import { assertAuthOrRedirect } from "$lib/server/auth";
-import { runOrThrow, validateForm } from "$lib/server/effect";
+import { authRedirect, validateForm } from "$lib/server/effect";
 import { Effect } from "effect";
 
 export const load = (event) =>
-	runOrThrow(function* () {
-		yield* assertAuthOrRedirect();
-
+	authRedirect(function* () {
 		const parent = yield* Effect.promise(event.parent);
 
 		const form = yield* validateForm(

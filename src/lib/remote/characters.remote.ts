@@ -2,16 +2,13 @@ import { command } from "$app/server";
 import { defaultLogSchema } from "$lib/entities";
 import { placeholderQuery } from "$lib/remote/command.remote";
 import { characterIdOrNewSchema, characterIdSchema, editCharacterSchema, type EditCharacterSchemaIn } from "$lib/schemas";
-import { assertAuthOrFail } from "$lib/server/auth";
-import { FormError, runOrReturn, save, validateForm } from "$lib/server/effect";
+import { authReturn, FormError, runOrReturn, save, validateForm } from "$lib/server/effect";
 import { withCharacter } from "$lib/server/effect/characters";
 import { withLog } from "$lib/server/effect/logs";
 import * as v from "valibot";
 
 export const saveCharacter = command("unchecked", (input: EditCharacterSchemaIn) =>
-	runOrReturn(function* () {
-		const user = yield* assertAuthOrFail();
-
+	authReturn(function* ({ user }) {
 		const form = yield* validateForm(input, editCharacterSchema);
 		if (!form.valid) return form;
 		const { firstLog, ...data } = form.data;
@@ -55,8 +52,7 @@ export const saveCharacter = command("unchecked", (input: EditCharacterSchemaIn)
 );
 
 export const deleteCharacter = command(characterIdSchema, (id) =>
-	runOrReturn(function* () {
-		const user = yield* assertAuthOrFail();
+	authReturn(function* ({ user }) {
 		placeholderQuery().refresh();
 		return yield* withCharacter((service) => service.set.delete(id, user.id));
 	})

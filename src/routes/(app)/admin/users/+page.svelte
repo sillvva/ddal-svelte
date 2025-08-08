@@ -5,8 +5,8 @@
 	import Search from "$lib/components/Search.svelte";
 	import { BLANK_CHARACTER } from "$lib/constants.js";
 	import { errorToast, successToast } from "$lib/factories.svelte.js";
+	import { getUsers } from "$lib/remote/admin.remote.js";
 	import { JSONSearchParser } from "@sillvva/search/json";
-	import { getUsers } from "./page.remote";
 
 	let search = $state(page.url.searchParams.get("s")?.trim() ?? "");
 

@@ -12,7 +12,7 @@ declare global {
 		interface Locals {
 			session?: LocalsSession;
 			user?: LocalsUser;
-			mobile: boolean;
+			isMobile: boolean;
 			isMac: boolean;
 			app: AppCookie;
 		}

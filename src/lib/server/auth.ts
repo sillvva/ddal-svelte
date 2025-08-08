@@ -82,7 +82,7 @@ export const assertAuthOrRedirect = Effect.fn(function* (adminOnly: boolean = fa
 
 	if (adminOnly && user.role !== "admin") return redirect(302, "/characters");
 
-	return user;
+	return { event, user };
 });
 
 export class UnauthorizedError extends Data.TaggedError("UnauthorizedError")<ErrorParams> {
@@ -98,7 +98,7 @@ export const assertAuthOrFail = Effect.fn(function* (adminOnly: boolean = false)
 
 	if (adminOnly && user.role !== "admin") return yield* Effect.fail(new UnauthorizedError("Insufficient permissions", 403));
 
-	return user;
+	return { event, user };
 });
 
 export function getError(code: string | null, reason: string | null) {

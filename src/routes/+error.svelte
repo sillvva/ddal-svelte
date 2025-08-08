@@ -37,11 +37,10 @@
 		{display}
 		data={{
 			...page,
+			mobile: mobile.current,
 			data: {
-				user: page.data.user,
-				mobile: page.data.mobile
-			},
-			hoverSupport: mobile.current
+				user: page.data.user
+			}
 		}}
 	/>
 </div>

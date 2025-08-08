@@ -1,8 +1,7 @@
 import { query } from "$app/server";
 import { searchSections } from "$lib/constants.js";
 import type { UserId } from "$lib/schemas.js";
-import { assertAuthOrRedirect } from "$lib/server/auth";
-import { AppLog, runOrThrow } from "$lib/server/effect";
+import { AppLog, authRedirect } from "$lib/server/effect";
 import { withCharacter } from "$lib/server/effect/characters";
 import { withDM } from "$lib/server/effect/dms";
 import { withLog } from "$lib/server/effect/logs";
@@ -78,21 +77,14 @@ const getData = Effect.fn("GetData")(function* (userId: UserId) {
 });
 
 export const getCommandData = query(() =>
-	runOrThrow(
-		Effect.fn("GetCommandData")(
-			function* () {
-				const user = yield* assertAuthOrRedirect();
-				const data: SearchData = [sectionData];
-				const searchData = yield* getData(user.id);
-				return data.concat(searchData) as SearchData;
-			},
-			(effect) =>
-				effect.pipe(
-					Effect.tapError((e) => AppLog.error(`[GetCommandData] ${e.message}`, { status: e.status, cause: e.cause })),
-					Effect.catchAll(() => Effect.succeed([] as SearchData))
-				)
-		)
-	)
+	authRedirect(function* ({ user }) {
+		const data: SearchData = [sectionData];
+		const searchData = yield* getData(user.id).pipe(
+			Effect.tapError((e) => AppLog.error(`[GetCommandData] ${e.message}`, { status: e.status, cause: e.cause })),
+			Effect.catchAll(() => Effect.succeed([] as SearchData))
+		);
+		return data.concat(searchData) as SearchData;
+	})
 );
 
 export const placeholderQuery = query(() => true);

@@ -103,7 +103,6 @@
 									href={data.character.imageUrl}
 									target="_blank"
 									onclick={(e) => {
-										if (data.mobile) return;
 										e.preventDefault();
 										triggerImageModal();
 									}}>Character Image</a
@@ -115,7 +114,6 @@
 								href={`/characters/${data.character.id}/og-image.png`}
 								target="_blank"
 								onclick={(e) => {
-									if (data.mobile) return;
 									e.preventDefault();
 									triggerImageModal(`/characters/${data.character.id}/og-image.png`);
 								}}>Social Media Image</a

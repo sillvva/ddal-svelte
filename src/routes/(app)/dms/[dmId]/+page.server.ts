@@ -1,14 +1,11 @@
 import { dungeonMasterIdSchema, dungeonMasterSchema } from "$lib/schemas";
-import { assertAuthOrRedirect } from "$lib/server/auth";
-import { runOrThrow, validateForm } from "$lib/server/effect";
+import { authRedirect, validateForm } from "$lib/server/effect";
 import { DMNotFoundError, withDM } from "$lib/server/effect/dms";
 import { redirect } from "@sveltejs/kit";
 import * as v from "valibot";
 
 export const load = (event) =>
-	runOrThrow(function* () {
-		const user = yield* assertAuthOrRedirect();
-
+	authRedirect(function* ({ user }) {
 		const idResult = v.safeParse(dungeonMasterIdSchema, event.params.dmId || "");
 		if (!idResult.success) redirect(307, `/dms`);
 		const dmId = idResult.output;

@@ -1,8 +1,7 @@
 import { command } from "$app/server";
 import type { Pathname } from "$app/types";
 import { characterIdSchema, characterLogSchema, dMLogSchema, logIdSchema, type LogSchema, type LogSchemaIn } from "$lib/schemas";
-import { assertAuthOrFail } from "$lib/server/auth";
-import { FormError, runOrReturn, save, validateForm, type ErrorParams } from "$lib/server/effect";
+import { authReturn, FormError, save, validateForm, type ErrorParams } from "$lib/server/effect";
 import { withCharacter } from "$lib/server/effect/characters";
 import { withLog } from "$lib/server/effect/logs";
 import { Data } from "effect";
@@ -16,9 +15,7 @@ class InvalidCharacterIdError extends Data.TaggedError("InvalidCharacterIdError"
 }
 
 export const saveLog = command("unchecked", (input: LogSchemaIn) =>
-	runOrReturn(function* () {
-		const user = yield* assertAuthOrFail();
-
+	authReturn(function* ({ user }) {
 		let form: SuperValidated<LogSchema>;
 		let redirectTo: Pathname;
 
@@ -70,8 +67,7 @@ export const saveLog = command("unchecked", (input: LogSchemaIn) =>
 );
 
 export const deleteLog = command(logIdSchema, (id) =>
-	runOrReturn(function* () {
-		const user = yield* assertAuthOrFail();
+	authReturn(function* ({ user }) {
 		return yield* withLog((service) => service.set.delete(id, user.id));
 	})
 );
