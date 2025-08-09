@@ -2,15 +2,14 @@ import { dev } from "$app/environment";
 import { getRequestEvent } from "$app/server";
 import type { Pathname } from "$app/types";
 import { privateEnv } from "$lib/env/private";
-import type { AppLogSchema, LocalsUser, UserId } from "$lib/schemas";
+import type { AppLogSchema, UserId } from "$lib/schemas";
 import { db, runQuery } from "$lib/server/db";
 import { appLogs } from "$lib/server/db/schema";
 import { removeTrace, type Awaitable } from "$lib/util";
 import { isInstanceOfClass } from "@sillvva/utils";
-import { error, isHttpError, isRedirect, type NumericRange, type RequestEvent } from "@sveltejs/kit";
-import { Cause, Data, Effect, Exit, HashMap, Layer, Logger } from "effect";
-import { isFunction, isTupleOf } from "effect/Predicate";
-import type { YieldWrap } from "effect/Utils";
+import { type NumericRange, type RequestEvent } from "@sveltejs/kit";
+import { Cause, Data, Effect, HashMap, Layer, Logger } from "effect";
+import { isTupleOf } from "effect/Predicate";
 import {
 	setError,
 	superValidate,
@@ -22,7 +21,6 @@ import {
 } from "sveltekit-superforms";
 import { valibot } from "sveltekit-superforms/adapters";
 import * as v from "valibot";
-import { assertAuthOrFail, assertAuthOrRedirect } from "../auth";
 
 // -------------------------------------------------------------------------------------------------
 // Logs
@@ -93,144 +91,6 @@ export const debugSet = Effect.fn("debugSet")(function* <S extends string>(
 		});
 	}
 });
-
-// -------------------------------------------------------------------------------------------------
-// Run
-// -------------------------------------------------------------------------------------------------
-
-// Overload signatures
-export async function runOrThrow<A, B extends InstanceType<ErrorClass>, T extends YieldWrap<Effect.Effect<A, B>>, X, Y>(
-	program: () => Generator<T, X, Y>
-): Promise<X>;
-
-export async function runOrThrow<A, B extends InstanceType<ErrorClass>>(
-	program: Effect.Effect<A, B> | (() => Effect.Effect<A, B>)
-): Promise<A>;
-
-// Implementation
-export async function runOrThrow<A, B extends InstanceType<ErrorClass>, T extends YieldWrap<Effect.Effect<A, B>>, X, Y>(
-	program: Effect.Effect<A, B> | (() => Effect.Effect<A, B>) | (() => Generator<T, X, Y>)
-): Promise<A | X> {
-	const effect = Effect.fn(function* () {
-		if (isFunction(program)) {
-			return yield* program();
-		} else {
-			return yield* program;
-		}
-	});
-
-	const result = await Effect.runPromiseExit(effect());
-	return Exit.match(result, {
-		onSuccess: (result) => result,
-		onFailure: (cause) => {
-			const { message, status } = handleCause(cause);
-			throw error(status, message);
-		}
-	});
-}
-
-export type EffectSuccess<A> = { ok: true; data: A };
-export type EffectFailure = {
-	ok: false;
-	error: { message: string; status: NumericRange<400, 599>; extra: Record<string, unknown> };
-};
-export type EffectResult<A> = EffectSuccess<A> | EffectFailure;
-
-// Overload signatures
-export async function runOrReturn<A, B extends InstanceType<ErrorClass>, T extends YieldWrap<Effect.Effect<A, B>>, X, Y>(
-	program: () => Generator<T, X, Y>
-): Promise<EffectResult<X>>;
-
-export async function runOrReturn<A, B extends InstanceType<ErrorClass>>(
-	program: Effect.Effect<A, B> | (() => Effect.Effect<A, B>)
-): Promise<EffectResult<A>>;
-
-// Implementation
-export async function runOrReturn<A, B extends InstanceType<ErrorClass>, T extends YieldWrap<Effect.Effect<A, B>>, X, Y>(
-	program: Effect.Effect<A, B> | (() => Effect.Effect<A, B>) | (() => Generator<T, X, Y>)
-): Promise<EffectResult<A | X>> {
-	const effect = Effect.fn(function* () {
-		if (isFunction(program)) {
-			return yield* program();
-		} else {
-			return yield* program;
-		}
-	});
-
-	const result = await Effect.runPromiseExit(effect());
-	return Exit.match(result, {
-		onSuccess: (result) => ({ ok: true, data: result }),
-		onFailure: (cause) => ({ ok: false, error: handleCause(cause) })
-	});
-}
-
-function handleCause<B extends InstanceType<ErrorClass>>(cause: Cause.Cause<B>) {
-	let message = Cause.pretty(cause);
-	let status: NumericRange<400, 599> = 500;
-	const extra: Record<string, unknown> = {};
-
-	if (Cause.isFailType(cause)) {
-		const error = cause.error;
-		status = error.status;
-
-		for (const key in error) {
-			if (!["_tag", "_op", "pipe", "name"].includes(key)) {
-				extra[key] = error[key];
-			}
-		}
-	}
-
-	if (Cause.isDieType(cause)) {
-		const defect = cause.defect;
-		// This will propagate redirects and http errors directly to SvelteKit
-		if (isRedirect(defect)) {
-			Effect.runFork(AppLog.info(`Redirect to ${defect.location}`, { defect }));
-			throw defect;
-		} else if (isHttpError(defect)) {
-			Effect.runFork(AppLog.error(`HttpError [${defect.status}] ${defect.body.message}`, { defect }));
-			throw defect;
-		} else if (typeof defect === "object" && defect !== null && "stack" in defect) {
-			extra.stack = defect.stack;
-		}
-	}
-
-	Effect.runFork(AppLog.error(message, extra));
-
-	if (!dev) message = removeTrace(message);
-	return { message, status, extra };
-}
-
-export async function authReturn<
-	TReturn,
-	A = unknown,
-	B extends InstanceType<ErrorClass> = InstanceType<ErrorClass>,
-	T extends YieldWrap<Effect.Effect<A, B>> = YieldWrap<Effect.Effect<A, B>>,
-	Y = unknown
->(
-	program: (data: { user: LocalsUser; event: RequestEvent }) => Generator<T, TReturn, Y>,
-	adminOnly: boolean = false
-): Promise<EffectResult<TReturn>> {
-	return runOrReturn(function* () {
-		const { user, event } = yield* assertAuthOrFail(adminOnly);
-		return yield* program({ user, event });
-	});
-}
-
-export async function authRedirect<
-	TReturn,
-	A = unknown,
-	B extends InstanceType<ErrorClass> = InstanceType<ErrorClass>,
-	T extends YieldWrap<Effect.Effect<A, B>> = YieldWrap<Effect.Effect<A, B>>,
-	Y = unknown
->(
-	program: (data: { user: LocalsUser; event: RequestEvent }) => Generator<T, TReturn, Y>,
-	adminOnly: boolean = false
-): Promise<TReturn> {
-	return runOrThrow(function* () {
-		const { user, event } = yield* assertAuthOrRedirect(adminOnly);
-		return yield* program({ user, event });
-	});
-}
 
 // -------------------------------------------------------------------------------------------------
 // Superforms

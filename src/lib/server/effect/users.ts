@@ -181,13 +181,3 @@ export class UserService extends Effect.Service<UserService>()("UserService", {
 }) {}
 
 export const UserTx = (tx: Transaction) => UserService.DefaultWithoutDependencies().pipe(Layer.provide(DBService.Default(tx)));
-
-export const withUser = Effect.fn("withUser")(
-	function* <R, E extends UpdateUserError | DrizzleError | RenamePasskeyError | DeletePasskeyError>(
-		impl: (service: UserApiImpl) => Effect.Effect<R, E>
-	) {
-		const userApi = yield* UserService;
-		return yield* impl(userApi);
-	},
-	(effect) => effect.pipe(Effect.provide(UserService.Default()))
-);

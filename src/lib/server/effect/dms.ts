@@ -138,7 +138,7 @@ export class DMService extends Effect.Service<DMService>()("DMSService", {
 				}),
 
 				addUserDM: Effect.fn("DMService.set.addUserDM")(function* (dms) {
-					const user = yield* assertAuthOrFail();
+					const { user } = yield* assertAuthOrFail();
 
 					const existing = yield* runQuery(
 						db.query.dungeonMasters.findFirst({
@@ -190,13 +190,3 @@ export class DMService extends Effect.Service<DMService>()("DMSService", {
 }) {}
 
 export const DMTx = (tx: Transaction) => DMService.DefaultWithoutDependencies().pipe(Layer.provide(DBService.Default(tx)));
-
-export const withDM = Effect.fn("withDM")(
-	function* <R, E extends FetchUserDMsError | SaveDMError | DeleteDMError | DrizzleError>(
-		impl: (service: DMApiImpl) => Effect.Effect<R, E>
-	) {
-		const dmApi = yield* DMService;
-		return yield* impl(dmApi);
-	},
-	(effect) => effect.pipe(Effect.provide(DMService.Default()))
-);

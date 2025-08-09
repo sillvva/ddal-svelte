@@ -1,9 +1,10 @@
-import { authRedirect } from "$lib/server/effect";
-import { withLog } from "$lib/server/effect/logs.js";
+import { LogService } from "$lib/server/effect/logs";
+import { authRedirect } from "$lib/server/effect/runtime.js";
 
 export const load = (event) =>
 	authRedirect(function* ({ user }) {
-		const logs = yield* withLog((service) => service.get.dmLogs(user.id));
+		const Logs = yield* LogService;
+		const logs = yield* Logs.get.dmLogs(user.id);
 
 		return {
 			logs,

@@ -420,13 +420,3 @@ export class LogService extends Effect.Service<LogService>()("LogService", {
 }) {}
 
 export const LogTx = (tx: Transaction) => LogService.DefaultWithoutDependencies().pipe(Layer.provide(DBService.Default(tx)));
-
-export const withLog = Effect.fn("withLog")(
-	function* <R, E extends SaveLogError | DeleteLogError | DrizzleError | TransactionError>(
-		impl: (service: LogApiImpl) => Effect.Effect<R, E>
-	) {
-		const logApi = yield* LogService;
-		return yield* impl(logApi);
-	},
-	(effect) => effect.pipe(Effect.provide(LogService.Default()))
-);

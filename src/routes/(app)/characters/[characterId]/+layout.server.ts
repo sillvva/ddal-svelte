@@ -1,12 +1,14 @@
 import { parseCharacter } from "$lib/entities.js";
 import { characterIdOrNewSchema, type CharacterId } from "$lib/schemas.js";
-import { runOrThrow } from "$lib/server/effect";
-import { withCharacter } from "$lib/server/effect/characters";
+import { CharacterService } from "$lib/server/effect/characters";
+import { runOrThrow } from "$lib/server/effect/runtime.js";
 import { redirect } from "@sveltejs/kit";
 import * as v from "valibot";
 
 export const load = (event) =>
 	runOrThrow(function* () {
+		const Character = yield* CharacterService;
+
 		const result = v.safeParse(characterIdOrNewSchema, event.params.characterId);
 		if (!result.success) throw redirect(307, `/characters${event.params.characterId !== "new" ? "?uuid=1" : ""}`);
 		const characterId = result.output;
@@ -31,7 +33,7 @@ export const load = (event) =>
 							logs: []
 						})
 					: redirect(307, "/")
-				: yield* withCharacter((service) => service.get.character(characterId));
+				: yield* Character.get.character(characterId);
 
 		return {
 			character

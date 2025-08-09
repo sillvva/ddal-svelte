@@ -10,8 +10,9 @@ import { Data, Effect } from "effect";
 import { v7 } from "uuid";
 import * as v from "valibot";
 import { db } from "./db";
-import { AppLog, runOrThrow, type ErrorParams } from "./effect";
-import { withUser } from "./effect/users";
+import { AppLog, type ErrorParams } from "./effect";
+import { runOrThrow } from "./effect/runtime";
+import { UserService } from "./effect/users";
 
 export const auth = betterAuth({
 	appName: "Adventurers League Log Sheet",
@@ -72,7 +73,12 @@ export async function getAuthSession(event = getRequestEvent()) {
 
 	return {
 		session: session && v.parse(localsSessionSchema, session),
-		user: user && (await runOrThrow(withUser((service) => service.get.localsUser(user.id as UserId))))
+		user:
+			user &&
+			(await runOrThrow(function* () {
+				const Users = yield* UserService;
+				return yield* Users.get.localsUser(user.id as UserId);
+			}))
 	};
 }
 

@@ -177,13 +177,3 @@ export class CharacterService extends Effect.Service<CharacterService>()("Charac
 
 export const CharacterTx = (tx: Transaction) =>
 	CharacterService.DefaultWithoutDependencies().pipe(Layer.provide(DBService.Default(tx)));
-
-export const withCharacter = Effect.fn("withCharacter")(
-	function* <R, E extends SaveCharacterError | DeleteCharacterError | DrizzleError | TransactionError | CharacterNotFoundError>(
-		impl: (service: CharacterApiImpl) => Effect.Effect<R, E>
-	) {
-		const CharacterApi = yield* CharacterService;
-		return yield* impl(CharacterApi);
-	},
-	(effect) => effect.pipe(Effect.provide(CharacterService.Default()))
-);

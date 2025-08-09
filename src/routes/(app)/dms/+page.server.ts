@@ -1,9 +1,10 @@
-import { authRedirect } from "$lib/server/effect";
-import { withDM } from "$lib/server/effect/dms";
+import { DMService } from "$lib/server/effect/dms";
+import { authRedirect } from "$lib/server/effect/runtime.js";
 
 export const load = (event) =>
 	authRedirect(function* ({ user }) {
-		const dms = yield* withDM((service) => service.get.userDMs(user.id));
+		const DMs = yield* DMService;
+		const dms = yield* DMs.get.userDMs(user.id);
 
 		return {
 			...event.params,

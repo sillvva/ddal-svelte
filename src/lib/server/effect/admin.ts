@@ -62,14 +62,6 @@ export class AdminService extends Effect.Service<AdminService>()("AdminService",
 
 export const AdminTx = (tx: Transaction) => AdminService.DefaultWithoutDependencies().pipe(Layer.provide(DBService.Default(tx)));
 
-export const withAdmin = Effect.fn("withAdmin")(
-	function* <R, E extends SaveAppLogError | DeleteLogError | DrizzleError>(impl: (service: AdminApiImpl) => Effect.Effect<R, E>) {
-		const adminApi = yield* AdminService;
-		return yield* impl(adminApi);
-	},
-	(effect) => effect.pipe(Effect.provide(AdminService.Default()))
-);
-
 // -------------------------------------------------------------------------------------------------
 // Search
 // -------------------------------------------------------------------------------------------------

@@ -1,10 +1,11 @@
 import { query } from "$app/server";
 import { searchSections } from "$lib/constants.js";
 import type { UserId } from "$lib/schemas.js";
-import { AppLog, authRedirect } from "$lib/server/effect";
-import { withCharacter } from "$lib/server/effect/characters";
-import { withDM } from "$lib/server/effect/dms";
-import { withLog } from "$lib/server/effect/logs";
+import { AppLog } from "$lib/server/effect";
+import { CharacterService } from "$lib/server/effect/characters";
+import { DMService } from "$lib/server/effect/dms";
+import { LogService } from "$lib/server/effect/logs";
+import { authRedirect } from "$lib/server/effect/runtime";
 import { sorter } from "@sillvva/utils";
 import { Effect } from "effect";
 
@@ -24,9 +25,13 @@ const sectionData = {
 type GetData = Effect.Effect.Success<ReturnType<typeof getData>>;
 export type SearchData = Array<SectionData | GetData[number]>;
 const getData = Effect.fn("GetData")(function* (userId: UserId) {
-	const characters = yield* withCharacter((service) => service.get.userCharacters(userId, { includeLogs: false }));
-	const dms = yield* withDM((service) => service.get.userDMs(userId));
-	const logs = yield* withLog((service) => service.get.userLogs(userId));
+	const Characters = yield* CharacterService;
+	const DMs = yield* DMService;
+	const Logs = yield* LogService;
+
+	const characters = yield* Characters.get.userCharacters(userId, { includeLogs: false });
+	const dms = yield* DMs.get.userDMs(userId);
+	const logs = yield* Logs.get.userLogs(userId);
 
 	return [
 		{

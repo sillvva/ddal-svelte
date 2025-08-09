@@ -1,8 +1,9 @@
 import { defaultLogSchema, getItemEntities, logDataToSchema } from "$lib/entities.js";
 import { characterLogSchema, logIdOrNewSchema } from "$lib/schemas";
-import { authRedirect, validateForm } from "$lib/server/effect";
-import { withDM } from "$lib/server/effect/dms.js";
-import { LogNotFoundError, withLog } from "$lib/server/effect/logs.js";
+import { validateForm } from "$lib/server/effect";
+import { DMService } from "$lib/server/effect/dms.js";
+import { LogNotFoundError, LogService } from "$lib/server/effect/logs.js";
+import { authRedirect } from "$lib/server/effect/runtime";
 import { sorter } from "@sillvva/utils";
 import { redirect } from "@sveltejs/kit";
 import { Effect } from "effect";
@@ -10,6 +11,9 @@ import * as v from "valibot";
 
 export const load = (event) =>
 	authRedirect(function* ({ user }) {
+		const Logs = yield* LogService;
+		const DMs = yield* DMService;
+
 		const parent = yield* Effect.promise(event.parent);
 		const character = parent.character;
 
@@ -17,7 +21,7 @@ export const load = (event) =>
 		if (!idResult.success) redirect(307, `/character/${character.id}`);
 		const logId = idResult.output;
 
-		const logData = yield* withLog((service) => service.get.log(logId, user.id));
+		const logData = yield* Logs.get.log(logId, user.id);
 		const log = logData ? logDataToSchema(user.id, logData) : defaultLogSchema(user.id, { character });
 
 		if (logId !== "new") {
@@ -30,7 +34,7 @@ export const load = (event) =>
 		const itemEntities = getItemEntities(character, { excludeDropped: true, lastLogId: log.id });
 		const magicItems = itemEntities.magicItems.toSorted((a, b) => sorter(a.name, b.name));
 		const storyAwards = itemEntities.storyAwards.toSorted((a, b) => sorter(a.name, b.name));
-		const dms = yield* withDM((service) => service.get.userDMs(user.id));
+		const dms = yield* DMs.get.userDMs(user.id);
 
 		return {
 			...event.params,

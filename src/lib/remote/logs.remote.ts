@@ -1,9 +1,10 @@
 import { command } from "$app/server";
 import type { Pathname } from "$app/types";
 import { characterIdSchema, characterLogSchema, dMLogSchema, logIdSchema, type LogSchema, type LogSchemaIn } from "$lib/schemas";
-import { authReturn, FormError, save, validateForm, type ErrorParams } from "$lib/server/effect";
-import { withCharacter } from "$lib/server/effect/characters";
-import { withLog } from "$lib/server/effect/logs";
+import { FormError, save, validateForm, type ErrorParams } from "$lib/server/effect";
+import { CharacterService } from "$lib/server/effect/characters";
+import { LogService } from "$lib/server/effect/logs";
+import { authReturn } from "$lib/server/effect/runtime";
 import { Data } from "effect";
 import type { SuperValidated } from "sveltekit-superforms";
 import * as v from "valibot";
@@ -16,23 +17,23 @@ class InvalidCharacterIdError extends Data.TaggedError("InvalidCharacterIdError"
 
 export const saveLog = command("unchecked", (input: LogSchemaIn) =>
 	authReturn(function* ({ user }) {
+		const Characters = yield* CharacterService;
+		const Logs = yield* LogService;
+
 		let form: SuperValidated<LogSchema>;
 		let redirectTo: Pathname;
 
 		if (input.isDmLog) {
-			const parsedId = v.safeParse(characterIdSchema, input.characterId);
+			const parsedId = v.safeParse(v.nullable(characterIdSchema), input.characterId);
 
 			const characters = input.characterId
-				? yield* withCharacter((service) =>
-						service.get.userCharacters(user.id, {
-							characterId: parsedId.success ? parsedId.output : null
-						})
-					)
+				? yield* Characters.get.userCharacters(user.id, {
+						characterId: parsedId.success ? parsedId.output : null
+					})
 				: [];
 
 			form = yield* validateForm(input, dMLogSchema(characters));
 			if (!parsedId.success) {
-				form.valid = false;
 				FormError.from<LogSchema>(new InvalidCharacterIdError(), "characterId").toForm(form);
 				return form;
 			}
@@ -40,7 +41,7 @@ export const saveLog = command("unchecked", (input: LogSchemaIn) =>
 			redirectTo = `/dm-logs`;
 		} else {
 			const characterId = v.parse(characterIdSchema, input.characterId);
-			const character = yield* withCharacter((service) => service.get.character(characterId));
+			const character = yield* Characters.get.character(characterId);
 
 			form = yield* validateForm(input, characterLogSchema(character));
 			redirectTo = `/characters/${character.id}`;
@@ -49,24 +50,22 @@ export const saveLog = command("unchecked", (input: LogSchemaIn) =>
 		if (!form.valid) return form;
 
 		const logId = form.data.id;
-		const log = logId !== "new" ? yield* withLog((service) => service.get.log(logId, user.id)) : undefined;
+		const log = logId !== "new" ? yield* Logs.get.log(logId, user.id) : undefined;
 		if (logId !== "new" && !log?.id) return redirectTo;
 
-		return yield* save(
-			withLog((service) => service.set.save(form.data, user)),
-			{
-				onError: (err) => {
-					err.toForm(form);
-					return form;
-				},
-				onSuccess: () => redirectTo
-			}
-		);
+		return yield* save(Logs.set.save(form.data, user), {
+			onError: (err) => {
+				err.toForm(form);
+				return form;
+			},
+			onSuccess: () => redirectTo
+		});
 	})
 );
 
 export const deleteLog = command(logIdSchema, (id) =>
 	authReturn(function* ({ user }) {
-		return yield* withLog((service) => service.set.delete(id, user.id));
+		const Logs = yield* LogService;
+		return yield* Logs.set.delete(id, user.id);
 	})
 );

@@ -1,6 +1,7 @@
 import { BLANK_CHARACTER } from "$lib/constants.js";
 import { editCharacterSchema } from "$lib/schemas";
-import { authRedirect, validateForm } from "$lib/server/effect";
+import { validateForm } from "$lib/server/effect";
+import { authRedirect } from "$lib/server/effect/runtime";
 import { Effect } from "effect";
 
 export const load = (event) =>

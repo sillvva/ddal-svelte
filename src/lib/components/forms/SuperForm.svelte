@@ -1,10 +1,10 @@
 <script lang="ts">
 	import { dev } from "$app/environment";
-	import { goto } from "$app/navigation";
+	import { beforeNavigate, goto } from "$app/navigation";
 	import type { Pathname } from "$app/types";
-	import type { EffectFailure, EffectResult } from "$lib/server/effect";
+	import { taintedMessage } from "$lib/factories.svelte";
+	import type { EffectFailure, EffectResult } from "$lib/server/effect/runtime";
 	import { onMount, type Snippet } from "svelte";
-	import { fromAction } from "svelte/attachments";
 	import type { HTMLFormAttributes } from "svelte/elements";
 	import type { SuperForm, SuperValidated } from "sveltekit-superforms";
 	import SuperDebug from "sveltekit-superforms/SuperDebug.svelte";
@@ -25,7 +25,7 @@
 
 	let { superform, children, remote, onRemoteSuccess, onRemoteError, ...rest }: Props = $props();
 
-	const { form, errors, message, capture, restore, validateForm, enhance, submit, submitting, tainted } = superform;
+	const { form, errors, message, capture, restore, validateForm, submit, submitting, tainted } = superform;
 
 	const action = $derived(remote ? undefined : rest?.action);
 	const method = $derived(remote ? "post" : rest?.method || "post");
@@ -43,6 +43,22 @@
 			else $errors = { _errors: ["An unknown error occurred"] };
 		}
 	}
+
+	function checkUnload() {
+		if ($tainted) return confirm(taintedMessage);
+		return true;
+	}
+
+	$effect(() => {
+		window.addEventListener("beforeunload", checkUnload);
+		return () => {
+			window.removeEventListener("beforeunload", checkUnload);
+		};
+	});
+
+	beforeNavigate(({ cancel }) => {
+		if (!checkUnload()) cancel();
+	});
 
 	export const snapshot = {
 		capture,
@@ -64,7 +80,6 @@
 		{...rest}
 		{method}
 		{action}
-		{@attach fromAction(enhance)}
 		onsubmit={async (e) => {
 			e.preventDefault();
 			if (!remote) return submit(e);
@@ -76,15 +91,20 @@
 
 			const result = await remote($form);
 			if (result.ok) {
-				onRemoteSuccess?.($form);
-
 				if (typeof result.data === "string") {
 					$tainted = undefined;
+					onRemoteSuccess?.($form);
 					return goto(result.data);
 				}
 
+				const errorsFields = Object.keys(result.data.errors);
+				if (errorsFields.length) {
+					$errors = result.data.errors;
+				} else {
+					onRemoteSuccess?.($form);
+				}
+
 				$form = result.data.data;
-				$errors = result.data.errors;
 				$message = result.data.message;
 			} else {
 				errorMessage(result.error.message);

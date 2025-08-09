@@ -1,7 +1,7 @@
 import { privateEnv } from "$lib/env/private";
 import { relations } from "$lib/server/db/relations";
 import * as schema from "$lib/server/db/schema";
-import { runOrReturn, type ErrorClass, type ErrorParams } from "$lib/server/effect";
+import { type ErrorClass, type ErrorParams } from "$lib/server/effect";
 import {
 	getTableColumns,
 	sql,
@@ -15,7 +15,7 @@ import {
 } from "drizzle-orm";
 import type { PgTable, PgTransaction } from "drizzle-orm/pg-core";
 import { drizzle, type PostgresJsDatabase, type PostgresJsQueryResultHKT } from "drizzle-orm/postgres-js";
-import { Cause, Data, Effect } from "effect";
+import { Cause, Data, Effect, Exit } from "effect";
 import postgres from "postgres";
 
 export type Database = PostgresJsDatabase<typeof schema, typeof relations>;
@@ -29,7 +29,22 @@ export class DBService extends Effect.Service<DBService>()("DBService", {
 		const transaction = Effect.fn("DBService.transaction")(function* <A, B extends InstanceType<ErrorClass> | never>(
 			effect: (tx: Transaction) => Effect.Effect<A, B>
 		) {
-			const result = yield* Effect.promise(() => db.transaction((tx) => runOrReturn(effect(tx))));
+			const result = yield* Effect.promise(() =>
+				db.transaction(async (tx) => {
+					const result = await Effect.runPromiseExit(effect(tx));
+					return Exit.match(result, {
+						onSuccess: (result) => ({ ok: true as const, data: result }),
+						onFailure: (cause) => ({
+							ok: false as const,
+							error: {
+								message: Cause.pretty(cause),
+								status: 500,
+								cause: cause
+							}
+						})
+					});
+				})
+			);
 			if (result.ok) return result.data;
 			else return yield* new TransactionError(result.error);
 		});

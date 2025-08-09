@@ -1,9 +1,10 @@
-import { authRedirect } from "$lib/server/effect";
-import { withCharacter } from "$lib/server/effect/characters.js";
+import { CharacterService } from "$lib/server/effect/characters";
+import { authRedirect } from "$lib/server/effect/runtime.js";
 
 export const load = () =>
 	authRedirect(function* ({ user }) {
-		const characters = yield* withCharacter((service) => service.get.userCharacters(user.id));
+		const Characters = yield* CharacterService;
+		const characters = yield* Characters.get.userCharacters(user.id);
 
 		return {
 			characters

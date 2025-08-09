@@ -1,8 +1,8 @@
 import { command, query } from "$app/server";
 import { appLogId } from "$lib/schemas";
-import { authRedirect, authReturn, runOrThrow } from "$lib/server/effect";
-import { validKeys, withAdmin } from "$lib/server/effect/admin";
-import { withUser } from "$lib/server/effect/users";
+import { AdminService, validKeys } from "$lib/server/effect/admin";
+import { authRedirect, authReturn, runOrThrow } from "$lib/server/effect/runtime";
+import { UserService } from "$lib/server/effect/users";
 import { DateTime, Effect } from "effect";
 import * as v from "valibot";
 
@@ -17,22 +17,22 @@ export const getBaseSearch = query(() =>
 
 export const getAppLogs = query(v.string(), (search) =>
 	authRedirect(function* () {
-		const { logs, metadata } = yield* withAdmin((service) =>
-			service.get.logs(search).pipe(
-				Effect.map(({ logs, metadata }) => ({
-					logs: logs.map((log) => {
-						const parts = log.label.split(/\n\s+\b/).map((part) => part.trim());
-						const message = parts.shift();
-						const trace = parts.join("\n");
-						return {
-							...log,
-							message,
-							trace
-						};
-					}),
-					metadata
-				}))
-			)
+		const Admin = yield* AdminService;
+
+		const { logs, metadata } = yield* Admin.get.logs(search).pipe(
+			Effect.map(({ logs, metadata }) => ({
+				logs: logs.map((log) => {
+					const parts = log.label.split(/\n\s+\b/).map((part) => part.trim());
+					const message = parts.shift();
+					const trace = parts.join("\n");
+					return {
+						...log,
+						message,
+						trace
+					};
+				}),
+				metadata
+			}))
 		);
 
 		return { logs, metadata };
@@ -41,13 +41,16 @@ export const getAppLogs = query(v.string(), (search) =>
 
 export const deleteAppLog = command(appLogId, (id) =>
 	authReturn(function* () {
-		return yield* withAdmin((service) => service.set.deleteLog(id));
+		const Admin = yield* AdminService;
+		return yield* Admin.set.deleteLog(id);
 	}, true)
 );
 
 export const getUsers = query(() =>
 	authRedirect(function* () {
-		return yield* withUser((service) => service.get.users()).pipe(
+		const Users = yield* UserService;
+
+		return yield* Users.get.users().pipe(
 			Effect.map((users) =>
 				users.map((user) => ({
 					...user,

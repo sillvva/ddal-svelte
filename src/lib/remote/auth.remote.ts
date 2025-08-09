@@ -1,7 +1,8 @@
 import { command } from "$app/server";
 import { imageUrlWithFallback, requiredString } from "$lib/schemas.js";
-import { authReturn, type ErrorParams } from "$lib/server/effect";
-import { withUser } from "$lib/server/effect/users";
+import { type ErrorParams } from "$lib/server/effect";
+import { authReturn } from "$lib/server/effect/runtime";
+import { UserService } from "$lib/server/effect/users";
 import { Data, Effect } from "effect";
 import * as v from "valibot";
 
@@ -27,10 +28,12 @@ export const updateUser = command(
 	),
 	(input) =>
 		authReturn(function* ({ user }) {
+			const Users = yield* UserService;
+
 			if (Object.keys(input).length === 0) return yield* Effect.fail(new NoChangesError());
 
-			return yield* withUser((service) => service.set.update(user.id, input)).pipe(
-				Effect.catchTag("DrizzleError", (err) => Effect.fail(new FailedError("update user", err)))
-			);
+			return yield* Users.set
+				.update(user.id, input)
+				.pipe(Effect.catchTag("DrizzleError", (err) => Effect.fail(new FailedError("update user", err))));
 		})
 );

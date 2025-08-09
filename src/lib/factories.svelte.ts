@@ -59,6 +59,7 @@ interface CustomFormOptions<Out extends Record<string, unknown>> {
 	remote?: true;
 }
 
+export const taintedMessage = "You have unsaved changes. Are you sure you want to leave?";
 export function valibotForm<
 	S extends v.GenericSchema,
 	Out extends v.InferOutput<S> & Record<string, unknown>,
@@ -72,7 +73,7 @@ export function valibotForm<
 	const superform = superForm(form, {
 		dataType: "json",
 		validators: valibotClient(schema),
-		taintedMessage: "You have unsaved changes. Are you sure you want to leave?",
+		taintedMessage,
 		...rest,
 		onSubmit(event) {
 			if (options?.remote) event.cancel();
