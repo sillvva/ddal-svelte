@@ -1,15 +1,3 @@
-<script module lang="ts">
-	import type { PageParentData } from "./$types.js";
-	export function getPageTitle(data: PageParentData) {
-		return data.character?.name ? "Edit" : "New Character";
-	}
-	export function getHeadData(data: PageParentData) {
-		return {
-			title: data.character?.name ? `Edit ${data.character.name}` : "New Character"
-		};
-	}
-</script>
-
 <script lang="ts">
 	import { page } from "$app/state";
 	import Breadcrumbs from "$lib/components/Breadcrumb.svelte";
@@ -22,7 +10,7 @@
 	import { errorToast, successToast, valibotForm } from "$lib/factories.svelte.js";
 	import { saveCharacter } from "$lib/remote/characters.remote.js";
 	import { editCharacterSchema } from "$lib/schemas";
-	import { getGlobal } from "$lib/stores.svelte.js";
+	import { getGlobal, setBreadcrumb } from "$lib/stores.svelte.js";
 
 	let { data } = $props();
 
@@ -30,6 +18,8 @@
 	const superform = $derived(valibotForm(data.form, editCharacterSchema, { remote: true }));
 
 	const { form } = $derived(superform);
+
+	setBreadcrumb({ url: `/characters/${data.character?.id}/edit`, title: data.character?.name ? "Edit" : "New Character" });
 </script>
 
 <Breadcrumbs />

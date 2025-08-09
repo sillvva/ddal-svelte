@@ -41,7 +41,6 @@ export const saveLog = command("unchecked", (input: LogSchemaIn) =>
 		} else {
 			const characterId = v.parse(characterIdSchema, input.characterId);
 			const character = yield* withCharacter((service) => service.get.character(characterId));
-			if (!character) return "/characters";
 
 			form = yield* validateForm(input, characterLogSchema(character));
 			redirectTo = `/characters/${character.id}`;

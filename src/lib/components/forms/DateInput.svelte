@@ -74,7 +74,7 @@
 	</DatePicker.Label>
 	<DatePicker.Input class={twMerge("input inline-flex w-full items-center gap-1 px-3 select-none", inputClass)}>
 		{#snippet children({ segments })}
-			{#each segments as { part, value } (part)}
+			{#each segments as { part, value }, i (i)}
 				<DatePicker.Segment
 					{part}
 					class="focus-visible:outline-primary aria-[valuetext=Empty]:text-base-content/70 rounded-xs py-1 outline-offset-4"
@@ -104,7 +104,7 @@
 						<DatePicker.Grid class="w-full border-collapse space-y-1 select-none">
 							<DatePicker.GridHead>
 								<DatePicker.GridRow class="mb-1 flex w-full justify-between">
-									{#each weekdays as day (day)}
+									{#each weekdays as day, i (i)}
 										<DatePicker.HeadCell class="text-base-content/50 w-10 rounded-md text-xs font-normal!">
 											<div>{day.slice(0, 2)}</div>
 										</DatePicker.HeadCell>

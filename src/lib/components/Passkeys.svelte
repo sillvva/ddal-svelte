@@ -1,12 +1,14 @@
 <script lang="ts">
 	import { invalidateAll } from "$app/navigation";
-	import { page } from "$app/state";
 	import { authClient } from "$lib/auth";
 	import { errorToast, successToast } from "$lib/factories.svelte";
+	import { getRequestDetails } from "$lib/remote/app.remote";
 	import type { PasskeyId } from "$lib/schemas";
 	import { getGlobal } from "$lib/stores.svelte";
 
-	const passkeys = $derived(page.data.user?.passkeys || []);
+	const request = $derived(getRequestDetails());
+	const user = $derived(request.current?.user);
+	const passkeys = $derived(user?.passkeys || []);
 	const global = getGlobal();
 
 	$effect(() => {

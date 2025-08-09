@@ -43,7 +43,7 @@ interface CharacterApiImpl {
 		readonly character: (
 			characterId: CharacterId,
 			includeLogs?: boolean
-		) => Effect.Effect<FullCharacterData | undefined, DrizzleError>;
+		) => Effect.Effect<FullCharacterData, DrizzleError | CharacterNotFoundError>;
 		readonly userCharacters: (
 			userId: UserId,
 			options?: { characterId?: CharacterId | null; includeLogs?: boolean }
@@ -76,7 +76,9 @@ export class CharacterService extends Effect.Service<CharacterService>()("Charac
 							where: { id: { eq: characterId } }
 						})
 					).pipe(
-						Effect.andThen((character) => character && parseCharacter(character)),
+						Effect.flatMap((character) =>
+							character ? Effect.succeed(parseCharacter(character)) : Effect.fail(new CharacterNotFoundError())
+						),
 						Effect.tapError(() => AppLog.debug("CharacterService.get.character", { characterId, includeLogs }))
 					);
 				}),
@@ -177,7 +179,7 @@ export const CharacterTx = (tx: Transaction) =>
 	CharacterService.DefaultWithoutDependencies().pipe(Layer.provide(DBService.Default(tx)));
 
 export const withCharacter = Effect.fn("withCharacter")(
-	function* <R, E extends SaveCharacterError | DeleteCharacterError | DrizzleError | TransactionError>(
+	function* <R, E extends SaveCharacterError | DeleteCharacterError | DrizzleError | TransactionError | CharacterNotFoundError>(
 		impl: (service: CharacterApiImpl) => Effect.Effect<R, E>
 	) {
 		const CharacterApi = yield* CharacterService;

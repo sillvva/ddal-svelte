@@ -3,12 +3,15 @@
 	import { afterNavigate } from "$app/navigation";
 	import { resolve } from "$app/paths";
 	import { page } from "$app/state";
-	import { MediaQuery } from "svelte/reactivity";
+	import { getRequestDetails } from "$lib/remote/app.remote";
 	import SuperDebug from "sveltekit-superforms";
 
 	let previousPage = $state<string>(resolve("/"));
 	let display = $state(!dev);
-	const mobile = new MediaQuery("(hover: none)");
+
+	const request = $derived(getRequestDetails());
+	const isMobile = $derived(request.current?.isMobile);
+	const user = $derived(request.current?.user);
 
 	afterNavigate(({ from }) => {
 		previousPage = from?.url.pathname || previousPage;
@@ -37,10 +40,9 @@
 		{display}
 		data={{
 			...page,
-			mobile: mobile.current,
-			data: {
-				user: page.data.user
-			}
+			isMobile,
+			user,
+			data: undefined
 		}}
 	/>
 </div>

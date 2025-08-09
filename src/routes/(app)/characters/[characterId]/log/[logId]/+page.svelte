@@ -1,10 +1,3 @@
-<script module lang="ts">
-	import type { PageData } from "./$types.js";
-	export function getPageTitle(data: PageData) {
-		return data.logId === "new" ? "New Log" : `Edit ${data.form.data.name}`;
-	}
-</script>
-
 <script lang="ts">
 	import Breadcrumbs from "$lib/components/Breadcrumb.svelte";
 	import AddDropItems from "$lib/components/forms/AddDropItems.svelte";
@@ -20,6 +13,7 @@
 	import { successToast, valibotForm } from "$lib/factories.svelte.js";
 	import { saveLog } from "$lib/remote/logs.remote.js";
 	import { type DungeonMasterId, logSchema } from "$lib/schemas";
+	import { setBreadcrumb } from "$lib/stores.svelte.js";
 	import { twMerge } from "tailwind-merge";
 
 	let { data } = $props();
@@ -28,6 +22,11 @@
 	const form = $derived(superform.form);
 
 	let season = $state($form.experience ? 1 : $form.acp ? 8 : 9);
+
+	setBreadcrumb({
+		url: `/characters/${data.character?.id}/log/${data.logId}`,
+		title: data.logId === "new" ? "New Log" : data.form.data.name
+	});
 </script>
 
 {#key $form.id || "new"}

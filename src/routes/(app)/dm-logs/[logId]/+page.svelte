@@ -1,10 +1,3 @@
-<script module lang="ts">
-	import type { PageData } from "./$types.js";
-	export function getPageTitle(data: PageData) {
-		return data.logId === "new" ? "New DM Log" : `Edit ${data.form.data.name}`;
-	}
-</script>
-
 <script lang="ts">
 	import Breadcrumbs from "$lib/components/Breadcrumb.svelte";
 	import AddDropItems from "$lib/components/forms/AddDropItems.svelte";
@@ -19,6 +12,7 @@
 	import { successToast, valibotForm } from "$lib/factories.svelte.js";
 	import { saveLog } from "$lib/remote/logs.remote.js";
 	import { dMLogSchema } from "$lib/schemas";
+	import { setBreadcrumb } from "$lib/stores.svelte.js";
 
 	let { data } = $props();
 
@@ -26,6 +20,8 @@
 	const form = $derived(superform.form);
 
 	let season = $state($form.experience ? 1 : $form.acp ? 8 : 9);
+
+	setBreadcrumb({ url: `/dm-logs/${data.logId}`, title: data.logId === "new" ? "New DM Log" : data.form.data.name });
 </script>
 
 {#key $form.id}

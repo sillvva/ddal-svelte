@@ -1,7 +1,7 @@
 <script lang="ts">
 	import { dev } from "$app/environment";
 	import { page } from "$app/state";
-	import Head from "$lib/components/Head.svelte";
+	import { defaultDescription, defaultImage, defaultTitle } from "$lib/constants";
 	import { createGlobal, setTransition } from "$lib/stores.svelte";
 	import { Toaster } from "svelte-sonner";
 	import "../app.css";
@@ -10,31 +10,37 @@
 
 	createGlobal(data.app);
 	setTransition();
+
+	const title = $derived(page.data.character ? `${page.data.character.name} - ${defaultTitle}` : defaultTitle);
+	const description = $derived(
+		page.data.character
+			? `Level ${page.data.character.totalLevel} ${page.data.character.race} ${page.data.character.class}`
+			: defaultDescription
+	);
+	const image = $derived(
+		page.data.character ? `${page.url.origin}/characters/${page.data.character.id}/og-image.png` : defaultImage
+	);
 </script>
 
 <svelte:head>
-	<Head>
-		{#snippet children(data)}
-			<title>{data.title.trim()}</title>
-			<meta name="title" content={data.title.trim()} />
-			<meta name="description" content={data.description.trim()} />
-			<meta property="og:title" content={data.title.trim()} />
-			<meta property="og:site_name" content="Adventurers League Log Sheet" />
-			<meta property="og:description" content={data.description.trim()} />
-			<meta property="og:image" content={data.image.trim()} />
-			<meta property="og:image:width" content="1200" />
-			<meta property="og:image:height" content="630" />
-			<meta property="og:type" content="website" />
-			<meta property="og:locale" content="en_US" />
-			<meta property="og:url" content={page.url.toString()} />
-			<meta name="twitter:card" content="summary_large_image" />
-			<meta name="twitter:title" content={data.title.trim()} />
-			<meta name="twitter:description" content={data.description.trim()} />
-			<meta name="twitter:image" content={data.image.trim()} />
-			<meta name="twitter:url" content={page.url.toString()} />
-			<link rel="canonical" href={page.url.toString()} />
-		{/snippet}
-	</Head>
+	<title>{title.trim()}</title>
+	<meta name="title" content={title.trim()} />
+	<meta name="description" content={description.trim()} />
+	<meta property="og:title" content={title.trim()} />
+	<meta property="og:site_name" content="Adventurers League Log Sheet" />
+	<meta property="og:description" content={description.trim()} />
+	<meta property="og:image" content={image.trim()} />
+	<meta property="og:image:width" content="1200" />
+	<meta property="og:image:height" content="630" />
+	<meta property="og:type" content="website" />
+	<meta property="og:locale" content="en_US" />
+	<meta property="og:url" content={page.url.toString()} />
+	<meta name="twitter:card" content="summary_large_image" />
+	<meta name="twitter:title" content={title.trim()} />
+	<meta name="twitter:description" content={description.trim()} />
+	<meta name="twitter:image" content={image.trim()} />
+	<meta name="twitter:url" content={page.url.toString()} />
+	<link rel="canonical" href={page.url.toString()} />
 </svelte:head>
 
 <div class="bg-base-100 text-base-content min-h-dvh noscript:hidden">

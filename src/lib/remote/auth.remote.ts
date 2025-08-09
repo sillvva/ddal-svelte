@@ -1,4 +1,4 @@
-import { command, query } from "$app/server";
+import { command } from "$app/server";
 import { imageUrlWithFallback, requiredString } from "$lib/schemas.js";
 import { authReturn, type ErrorParams } from "$lib/server/effect";
 import { withUser } from "$lib/server/effect/users";
@@ -16,12 +16,6 @@ class FailedError extends Data.TaggedError("FailedError")<ErrorParams> {
 		super({ message: `Failed to ${action}`, status: 500, cause });
 	}
 }
-
-export const getUser = query(() =>
-	authReturn(function* ({ event }) {
-		return { ...event.locals };
-	})
-);
 
 export const updateUser = command(
 	v.partial(

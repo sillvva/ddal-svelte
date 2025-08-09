@@ -1,7 +1,7 @@
 import { parseCharacter } from "$lib/entities.js";
 import { characterIdOrNewSchema, type CharacterId } from "$lib/schemas.js";
 import { runOrThrow } from "$lib/server/effect";
-import { CharacterNotFoundError, withCharacter } from "$lib/server/effect/characters";
+import { withCharacter } from "$lib/server/effect/characters";
 import { redirect } from "@sveltejs/kit";
 import * as v from "valibot";
 
@@ -30,10 +30,8 @@ export const load = (event) =>
 							createdAt: new Date(),
 							logs: []
 						})
-					: undefined
+					: redirect(307, "/")
 				: yield* withCharacter((service) => service.get.character(characterId));
-
-		if (!character) return yield* new CharacterNotFoundError();
 
 		return {
 			character

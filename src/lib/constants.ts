@@ -1,5 +1,9 @@
 import type { Account } from "$lib/server/db/schema";
 
+export const defaultTitle = "Adventurers League Log Sheet";
+export const defaultDescription = "A tool for tracking your Adventurers League characters and magic items.";
+export const defaultImage = "https://ddal.dekok.app/images/barovia-gate.webp";
+
 export const searchSections = [
 	{ title: "Characters", url: "/characters" },
 	{ title: "DM Logs", url: "/dm-logs" },

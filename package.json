@@ -72,7 +72,6 @@
 		"regexp.escape": "^2.0.1",
 		"satori": "^0.16.2",
 		"svelte-autosize": "^1.1.5",
-		"svelte-breadcrumbs": "^2.0.1",
 		"svelte-contextify": "^1.0.4",
 		"svelte-sonner": "^1.0.5",
 		"uuid": "^11.1.0",

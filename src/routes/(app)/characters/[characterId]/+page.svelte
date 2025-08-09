@@ -1,19 +1,3 @@
-<script module lang="ts">
-	import type { PageParentData } from "./$types.js";
-	export function getPageTitle(data: PageParentData) {
-		return data.character?.name || "New Character";
-	}
-	export function getHeadData(data: PageParentData) {
-		return {
-			title: data.character?.name || "New Character",
-			description:
-				data.character &&
-				`Level ${data.character.totalLevel} ${data.character.race} ${data.character.class}`.replace(/ {2,}/g, " ").trim(),
-			image: data.character && `/characters/${data.character.id}/og-image.png`
-		};
-	}
-</script>
-
 <script lang="ts">
 	import { goto, invalidateAll, pushState } from "$app/navigation";
 	import { page } from "$app/state";

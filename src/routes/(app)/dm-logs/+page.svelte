@@ -1,13 +1,3 @@
-<script module lang="ts">
-	import type { PageData } from "./$types.js";
-	export const pageTitle = "DM Logs";
-	export function getHeadData(data: PageData) {
-		return {
-			title: `${data.user?.name}'s DM Logs`
-		};
-	}
-</script>
-
 <script lang="ts">
 	import { goto, invalidateAll } from "$app/navigation";
 	import { page } from "$app/state";

@@ -23,7 +23,6 @@ export const GET = async ({ params, url }) => {
 	const characterId = result.output;
 
 	const character = await runOrThrow(withCharacter((service) => service.get.character(characterId, true)));
-	if (!character) throw error(404, "Character not found");
 
 	const width = 1200;
 	const height = 630;

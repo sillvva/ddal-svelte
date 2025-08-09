@@ -2,6 +2,7 @@
 // for information about these interfaces
 
 import type { AppCookie, LocalsSession, LocalsUser } from "$lib/schemas";
+import type { FullCharacterData } from "$lib/server/effect/characters";
 import "@auth/sveltekit";
 import "@total-typescript/ts-reset/fetch";
 import "@total-typescript/ts-reset/json-parse";
@@ -23,6 +24,7 @@ declare global {
 			breadcrumbs: Array<{ name: string; href?: string }>;
 			mobile: boolean;
 			isMac: boolean;
+			character?: FullCharacterData;
 		}
 		// interface Platform {}
 		interface PageState {

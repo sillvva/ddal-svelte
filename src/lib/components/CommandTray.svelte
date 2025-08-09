@@ -1,8 +1,8 @@
 <script lang="ts">
 	import { goto } from "$app/navigation";
-	import { page } from "$app/state";
 	import { searchSections } from "$lib/constants.js";
 	import { GlobalSearchFactory } from "$lib/factories.svelte";
+	import { getRequestDetails } from "$lib/remote/app.remote";
 	import { getCommandData, type SearchData } from "$lib/remote/command.remote";
 	import { hotkey } from "$lib/util";
 	import { Command, Dialog, Separator } from "bits-ui";
@@ -10,6 +10,8 @@
 	import SearchResults from "./SearchResults.svelte";
 
 	const defaultSelected: string = searchSections[0].url;
+	const request = $derived(getRequestDetails());
+	const isMac = $derived(request.current?.isMac);
 
 	let open = $state(false);
 	let selected: string = $state(defaultSelected);
@@ -42,7 +44,7 @@
 <svelte:document
 	{@attach hotkey([
 		[
-			page.data.isMac ? "meta+k" : "ctrl+k",
+			isMac ? "meta+k" : "ctrl+k",
 			() => {
 				setOpen(true);
 			}
@@ -67,7 +69,7 @@
 		</span>
 		<span class="hover-hover:max-md:hidden hover-none:hidden">
 			<kbd class="kbd kbd-sm">
-				{#if page.data.isMac}
+				{#if isMac}
 					⌘
 				{:else}
 					CTRL
@@ -82,7 +84,7 @@
 				<Dialog.Title class="sr-only">Command Search</Dialog.Title>
 				<Dialog.Description class="sr-only">
 					This is the command menu. Use the arrow keys to navigate and press
-					{#if page.data.isMac}
+					{#if isMac}
 						⌘K
 					{:else}
 						CTRL+K

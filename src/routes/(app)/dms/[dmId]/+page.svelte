@@ -1,10 +1,3 @@
-<script module lang="ts">
-	import type { PageData } from "./$types.js";
-	export function getPageTitle(data: PageData) {
-		return `Edit ${data.form.data.name}`;
-	}
-</script>
-
 <script lang="ts">
 	import { goto } from "$app/navigation";
 	import Breadcrumbs from "$lib/components/Breadcrumb.svelte";
@@ -15,12 +8,15 @@
 	import { errorToast, successToast, valibotForm } from "$lib/factories.svelte.js";
 	import { deleteDM, saveDM } from "$lib/remote/dms.remote.js";
 	import { dungeonMasterSchema } from "$lib/schemas";
+	import { setBreadcrumb } from "$lib/stores.svelte.js";
 	import { sorter } from "@sillvva/utils";
 
 	let { data } = $props();
 
 	const superform = $derived(valibotForm(data.form, dungeonMasterSchema, { remote: true }));
 	const sortedLogs = $derived(data.dm.logs.toSorted((a, b) => sorter(a.date, b.date)));
+
+	setBreadcrumb({ url: `/dms/${data.dm.id}`, title: data.dm.name });
 </script>
 
 <div class="flex flex-col gap-4">

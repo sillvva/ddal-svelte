@@ -1,5 +1,8 @@
 <script lang="ts">
-	import { page } from "$app/state";
+	import { getRequestDetails } from "$lib/remote/app.remote";
+
+	const request = $derived(getRequestDetails());
+	const user = $derived(request.current?.user);
 </script>
 
 <nav
@@ -17,7 +20,7 @@
 		<span class="iconify mdi--account-group size-8"></span>
 		<span class="text-center uppercase">DMs</span>
 	</a>
-	{#if page.data.user.role === "admin"}
+	{#if user?.role === "admin"}
 		<a href="/admin/users" class="flex h-full flex-col items-center justify-center text-xs">
 			<span class="iconify mdi--administrator-outline size-8"></span>
 			<span class="text-center uppercase">Admin</span>
