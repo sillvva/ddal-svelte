@@ -1,8 +1,24 @@
 import type { FullCharacterData } from "$lib/server/effect/services/characters";
 import type { Prettify } from "@sillvva/utils";
-import { LogLevel } from "effect";
+import { Data, Effect, LogLevel } from "effect";
 import * as v from "valibot";
 import { BLANK_CHARACTER, PROVIDERS, themeGroups, themes } from "./constants";
+import type { ErrorParams } from "./server/effect/errors";
+
+export class InvalidSchemaError extends Data.TaggedError("InvalidSchemaError")<ErrorParams> {
+	constructor(summary: string, input: unknown) {
+		super({ message: summary, status: 400, input });
+	}
+}
+
+export const parse = Effect.fn(function* <T extends v.GenericSchema>(schema: T, value: unknown) {
+	const parseResult = v.safeParse(schema, value);
+	if (parseResult.success) return parseResult.output;
+	else {
+		const error = v.summarize(parseResult.issues);
+		return yield* new InvalidSchemaError(error, value);
+	}
+});
 
 export type BrandedType = v.InferOutput<ReturnType<typeof brandedId>>;
 function brandedId<T extends string>(name: T) {

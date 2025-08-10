@@ -1,7 +1,15 @@
 import { command } from "$app/server";
 import type { Pathname } from "$app/types";
-import { characterIdSchema, characterLogSchema, dMLogSchema, logIdSchema, type LogSchema, type LogSchemaIn } from "$lib/schemas";
-import { type ErrorParams, FormError } from "$lib/server/effect/errors";
+import {
+	characterIdSchema,
+	characterLogSchema,
+	dMLogSchema,
+	logIdSchema,
+	parse,
+	type LogSchema,
+	type LogSchemaIn
+} from "$lib/schemas";
+import { FormError, type ErrorParams } from "$lib/server/effect/errors";
 import { save, validateForm } from "$lib/server/effect/forms";
 import { authReturn } from "$lib/server/effect/runtime";
 import { CharacterService } from "$lib/server/effect/services/characters";
@@ -41,7 +49,7 @@ export const saveLog = command("unchecked", (input: LogSchemaIn) =>
 
 			redirectTo = `/dm-logs`;
 		} else {
-			const characterId = v.parse(characterIdSchema, input.characterId);
+			const characterId = yield* parse(characterIdSchema, input.characterId);
 			const character = yield* Characters.get.character(characterId);
 
 			form = yield* validateForm(input, characterLogSchema(character));

@@ -1,13 +1,12 @@
 import { command } from "$app/server";
 import { defaultLogSchema } from "$lib/entities";
 import { placeholderQuery } from "$lib/remote/command.remote";
-import { characterIdOrNewSchema, characterIdSchema, editCharacterSchema, type EditCharacterSchemaIn } from "$lib/schemas";
+import { characterIdOrNewSchema, characterIdSchema, editCharacterSchema, parse, type EditCharacterSchemaIn } from "$lib/schemas";
 import { FormError } from "$lib/server/effect/errors";
 import { save, validateForm } from "$lib/server/effect/forms";
 import { authReturn, runOrReturn } from "$lib/server/effect/runtime";
 import { CharacterService } from "$lib/server/effect/services/characters";
 import { LogService } from "$lib/server/effect/services/logs";
-import * as v from "valibot";
 
 export const saveCharacter = command("unchecked", (input: EditCharacterSchemaIn) =>
 	authReturn(function* (user) {
@@ -17,7 +16,7 @@ export const saveCharacter = command("unchecked", (input: EditCharacterSchemaIn)
 		if (!form.valid) return form;
 		const { firstLog, ...data } = form.data;
 
-		const characterId = v.parse(characterIdOrNewSchema, input.id);
+		const characterId = yield* parse(characterIdOrNewSchema, input.id);
 
 		return yield* save(Characters.set.save(characterId, user.id, data), {
 			onError: (err) => {

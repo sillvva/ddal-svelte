@@ -1,6 +1,14 @@
 import { getRequestEvent } from "$app/server";
 import { privateEnv } from "$lib/env/private";
-import { localsSessionSchema, localsUserSchema, type LocalsSession, type LocalsUser, type UserId } from "$lib/schemas";
+import {
+	InvalidSchemaError,
+	localsSessionSchema,
+	localsUserSchema,
+	parse,
+	type LocalsSession,
+	type LocalsUser,
+	type UserId
+} from "$lib/schemas";
 import { DBService, DrizzleError } from "$lib/server/db";
 import { type ErrorParams } from "$lib/server/effect/errors";
 import { AppLog } from "$lib/server/effect/logging";
@@ -18,7 +26,7 @@ interface AuthApiImpl {
 	readonly auth: () => Effect.Effect<ReturnType<typeof betterAuth>>;
 	readonly getAuthSession: () => Effect.Effect<
 		{ session: LocalsSession | undefined; user: LocalsUser | undefined },
-		DrizzleError,
+		DrizzleError | InvalidSchemaError,
 		UserService
 	>;
 }
@@ -69,7 +77,7 @@ export class AuthService extends Effect.Service<AuthService>()("AuthService", {
 				const event = getRequestEvent();
 				const result = yield* Effect.promise(() => auth.api.getSession({ headers: event.request.headers }));
 				return {
-					session: result?.session && v.parse(localsSessionSchema, result.session),
+					session: result?.session && (yield* parse(localsSessionSchema, result.session)),
 					user: result?.user && (yield* Users.get.localsUser(result.user.id as UserId))
 				};
 			})
