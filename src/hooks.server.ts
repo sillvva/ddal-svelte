@@ -14,9 +14,11 @@ import { sequence } from "@sveltejs/kit/hooks";
 import { svelteKitHandler } from "better-auth/svelte-kit";
 import { Layer, ManagedRuntime } from "effect";
 
+const isRemoteFunction = (url: string) => url.startsWith("/_app/remote");
+
 const runtime: Handle = async ({ event, resolve }) => {
-	const isRemote = new URL(event.request.url).pathname.startsWith("/_app/remote");
-	if (!event.route.id && !isRemote) return await resolve(event);
+	// If the request is not a route, and not a remote function, skip the runtime
+	if (!event.route.id && !isRemoteFunction(event.url.pathname)) return await resolve(event);
 
 	const appLayer = Layer.mergeAll(
 		AuthService.DefaultWithoutDependencies(),
@@ -33,6 +35,9 @@ const runtime: Handle = async ({ event, resolve }) => {
 
 const authHandler: Handle = async ({ event, resolve }) =>
 	runOrThrow(function* () {
+		// If the request is not a route, and not a remote function, skip the auth
+		if (!event.route.id && !isRemoteFunction(event.url.pathname)) return resolve(event);
+
 		const Auth = yield* AuthService;
 		const auth = yield* Auth.auth();
 		return svelteKitHandler({ event, resolve, auth, building });
@@ -40,8 +45,8 @@ const authHandler: Handle = async ({ event, resolve }) =>
 
 const session: Handle = async ({ event, resolve }) =>
 	runOrThrow(function* () {
-		const isRemote = new URL(event.request.url).pathname.startsWith("/_app/remote");
-		if (!event.route.id && !isRemote) return resolve(event);
+		// If the request is not a route, and not a remote function, skip the session
+		if (!event.route.id && !isRemoteFunction(event.url.pathname)) return resolve(event);
 
 		const Auth = yield* AuthService;
 		const { session, user } = yield* Auth.getAuthSession();
@@ -52,6 +57,9 @@ const session: Handle = async ({ event, resolve }) =>
 	});
 
 const info: Handle = async ({ event, resolve }) => {
+	// If the request is not a route, and not a remote function, skip the info
+	if (!event.route.id && !isRemoteFunction(event.url.pathname)) return resolve(event);
+
 	event.locals.app = serverGetCookie("app", appCookieSchema);
 
 	const userAgent = event.request.headers.get("user-agent");
@@ -64,6 +72,9 @@ const info: Handle = async ({ event, resolve }) => {
 };
 
 const preloadTheme: Handle = async ({ event, resolve }) => {
+	// If the request is not a route, and not a remote function, skip the preloadTheme
+	if (!event.route.id && !isRemoteFunction(event.url.pathname)) return resolve(event);
+
 	const app = event.locals.app;
 	const mode = app.settings.mode;
 	const theme = event.route.id?.startsWith("/(app)") ? app.settings.theme : app.settings.mode;
