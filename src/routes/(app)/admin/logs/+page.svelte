@@ -1,6 +1,7 @@
 <script lang="ts">
 	import { pushState } from "$app/navigation";
 	import { page } from "$app/state";
+	import Head from "$lib/components/Head.svelte";
 	import { errorToast, successToast } from "$lib/factories.svelte.js";
 	import { deleteAppLog, getAppLogs, getBaseSearch } from "$lib/remote/admin.remote.js";
 	import { debounce } from "@sillvva/utils";
@@ -42,6 +43,8 @@
 		});
 	}
 </script>
+
+<Head title="App Logs" />
 
 <div class="fieldset mb-4 flex flex-col gap-1">
 	<div class="flex items-center justify-between">

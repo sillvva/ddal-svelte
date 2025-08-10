@@ -1,6 +1,6 @@
 <script lang="ts">
-	import { page } from "$app/state";
 	import { authClient } from "$lib/auth";
+	import Head from "$lib/components/Head.svelte";
 	import { PROVIDERS } from "$lib/constants";
 	import { errorToast } from "$lib/factories.svelte.js";
 	import { getGlobal } from "$lib/stores.svelte.js";
@@ -21,30 +21,9 @@
 			});
 		}
 	});
-
-	const title = "Adventurers League Log Sheet";
-	const description = "A tool for tracking your Adventurers League characters and magic items.";
-	const image = "https://ddal.dekok.app/images/barovia-gate.webp";
 </script>
 
-<svelte:head>
-	<title>{title}</title>
-	<meta name="title" content={title} />
-	<meta name="description" content={description} />
-	<meta property="og:title" content={title} />
-	<meta property="og:site_name" content="Adventurers League Log Sheet" />
-	<meta property="og:description" content={description} />
-	<meta property="og:image" content={image} />
-	<meta property="og:type" content="website" />
-	<meta property="og:locale" content="en_US" />
-	<meta property="og:url" content={page.url.origin} />
-	<meta name="twitter:card" content="summary_large_image" />
-	<meta name="twitter:title" content={title} />
-	<meta name="twitter:site" content="Adventurers League Log Sheet" />
-	<meta name="twitter:description" content={description} />
-	<meta name="twitter:image" content={image} />
-	<link rel="canonical" href={page.url.href} />
-</svelte:head>
+<Head />
 
 <main class="relative container mx-auto flex min-h-dvh flex-col items-center justify-center gap-8 p-4">
 	<h1 class="font-draconis text-base-content text-center text-4xl lg:text-6xl dark:text-white">

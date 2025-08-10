@@ -5,6 +5,7 @@
 	import Input from "$lib/components/forms/Input.svelte";
 	import Submit from "$lib/components/forms/Submit.svelte";
 	import SuperForm from "$lib/components/forms/SuperForm.svelte";
+	import Head from "$lib/components/Head.svelte";
 	import { errorToast, successToast, valibotForm } from "$lib/factories.svelte.js";
 	import { deleteDM, saveDM } from "$lib/remote/dms.remote.js";
 	import { dungeonMasterSchema } from "$lib/schemas";
@@ -18,6 +19,8 @@
 
 	setBreadcrumb({ url: `/dms/${data.dm.id}`, title: data.dm.name });
 </script>
+
+<Head title={data.dm.name} />
 
 <div class="flex flex-col gap-4">
 	<Breadcrumbs />

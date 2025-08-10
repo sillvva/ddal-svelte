@@ -1,6 +1,7 @@
 <script lang="ts">
 	import { invalidateAll } from "$app/navigation";
 	import Breadcrumbs from "$lib/components/Breadcrumb.svelte";
+	import Head from "$lib/components/Head.svelte";
 	import Search from "$lib/components/Search.svelte";
 	import SearchResults from "$lib/components/SearchResults.svelte";
 	import { EntitySearchFactory, errorToast, successToast } from "$lib/factories.svelte.js";
@@ -17,6 +18,8 @@
 
 	let deletingDM = new SvelteSet<string>();
 </script>
+
+<Head title={`${data.user?.name}'s DMs`} />
 
 <div class="flex flex-col gap-4">
 	<Breadcrumbs />

@@ -3,6 +3,7 @@
 	import { page } from "$app/state";
 	import Breadcrumbs from "$lib/components/Breadcrumb.svelte";
 	import Dropdown from "$lib/components/Dropdown.svelte";
+	import Head from "$lib/components/Head.svelte";
 	import Items from "$lib/components/Items.svelte";
 	import Markdown from "$lib/components/Markdown.svelte";
 	import Search from "$lib/components/Search.svelte";
@@ -31,6 +32,8 @@
 
 	let deletingLog = new SvelteSet<string>();
 </script>
+
+<Head title={`${data.user?.name}'s DM Logs`} />
 
 <div class="flex flex-col gap-4">
 	<div class="flex gap-4 max-sm:hidden print:hidden">

@@ -9,6 +9,7 @@
 	import MdTextInput from "$lib/components/forms/MDTextInput.svelte";
 	import Submit from "$lib/components/forms/Submit.svelte";
 	import SuperForm from "$lib/components/forms/SuperForm.svelte";
+	import Head from "$lib/components/Head.svelte";
 	import { successToast, valibotForm } from "$lib/factories.svelte.js";
 	import { saveLog } from "$lib/remote/logs.remote.js";
 	import { dMLogSchema } from "$lib/schemas";
@@ -23,6 +24,8 @@
 
 	setBreadcrumb({ url: `/dm-logs/${data.logId}`, title: data.logId === "new" ? "New DM Log" : data.form.data.name });
 </script>
+
+<Head title={data.form.data.name} />
 
 {#key $form.id}
 	<Breadcrumbs />

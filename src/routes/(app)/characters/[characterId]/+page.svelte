@@ -4,6 +4,7 @@
 	import { authClient } from "$lib/auth.js";
 	import Breadcrumbs from "$lib/components/Breadcrumb.svelte";
 	import Dropdown from "$lib/components/Dropdown.svelte";
+	import Head from "$lib/components/Head.svelte";
 	import Items from "$lib/components/Items.svelte";
 	import Markdown from "$lib/components/Markdown.svelte";
 	import Search from "$lib/components/Search.svelte";
@@ -61,6 +62,12 @@
 		}
 	});
 </script>
+
+<Head
+	title={data.character.name}
+	description={`Level ${data.character.totalLevel} ${data.character.race} ${data.character.class}`}
+	image={`${page.url.origin}/characters/${data.character.id}/og-image.png`}
+/>
 
 {#if data.user}
 	<div class="flex gap-4">

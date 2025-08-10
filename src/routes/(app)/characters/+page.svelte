@@ -3,6 +3,7 @@
 	import { page } from "$app/state";
 	import Breadcrumbs from "$lib/components/Breadcrumb.svelte";
 	import Dropdown from "$lib/components/Dropdown.svelte";
+	import Head from "$lib/components/Head.svelte";
 	import Search from "$lib/components/Search.svelte";
 	import SearchResults from "$lib/components/SearchResults.svelte";
 	import { EntitySearchFactory } from "$lib/factories.svelte.js";
@@ -22,6 +23,8 @@
 		search.results.toSorted((a, b) => sorter(b.score, a.score) || sorter(a.totalLevel, b.totalLevel) || sorter(a.name, b.name))
 	);
 </script>
+
+<Head title={`${data.user?.name}'s Characters`} />
 
 <div class="flex flex-col gap-4">
 	<div class="hidden gap-4 sm:flex">

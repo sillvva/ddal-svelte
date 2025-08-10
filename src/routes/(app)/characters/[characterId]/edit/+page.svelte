@@ -6,6 +6,7 @@
 	import Input from "$lib/components/forms/Input.svelte";
 	import Submit from "$lib/components/forms/Submit.svelte";
 	import SuperForm from "$lib/components/forms/SuperForm.svelte";
+	import Head from "$lib/components/Head.svelte";
 	import { BLANK_CHARACTER } from "$lib/constants.js";
 	import { errorToast, successToast, valibotForm } from "$lib/factories.svelte.js";
 	import { saveCharacter } from "$lib/remote/characters.remote.js";
@@ -21,6 +22,8 @@
 
 	setBreadcrumb({ url: `/characters/${data.character?.id}/edit`, title: data.character?.name ? "Edit" : "New Character" });
 </script>
+
+<Head title={data.character?.name} />
 
 <Breadcrumbs />
 
