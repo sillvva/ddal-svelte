@@ -29,7 +29,7 @@ function getDatabase(): Database {
 }
 
 export class DBService extends Effect.Service<DBService>()("DBService", {
-	scoped: Effect.fn("DBService")(function* (tx?: Transaction) {
+	effect: Effect.fn("DBService")(function* (tx?: Transaction) {
 		const db = tx || getDatabase();
 
 		const transaction = Effect.fn("DBService.transaction")(function* <A, B extends InstanceType<ErrorClass> | never>(
