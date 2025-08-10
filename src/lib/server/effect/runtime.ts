@@ -1,29 +1,21 @@
 import { dev } from "$app/environment";
+import { getRequestEvent } from "$app/server";
 import type { LocalsUser } from "$lib/schemas";
 import { removeTrace } from "$lib/util";
-import { error, isHttpError, isRedirect, type NumericRange, type RequestEvent } from "@sveltejs/kit";
-import { Cause, Effect, Exit, Layer, ManagedRuntime } from "effect";
+import { error, isHttpError, isRedirect, type NumericRange } from "@sveltejs/kit";
+import { Cause, Effect, Exit, ManagedRuntime } from "effect";
 import { isFunction } from "effect/Predicate";
 import type { YieldWrap } from "effect/Utils";
 import { AppLog, type ErrorClass } from ".";
 import { assertAuthOrFail, assertAuthOrRedirect } from "../auth";
-import { DBService } from "../db";
 import { AdminService } from "./admin";
 import { CharacterService } from "./characters";
 import { DMService } from "./dms";
 import { LogService } from "./logs";
 import { UserService } from "./users";
 
-const appLayer = Layer.mergeAll(
-	CharacterService.DefaultWithoutDependencies(),
-	LogService.DefaultWithoutDependencies(),
-	DMService.DefaultWithoutDependencies(),
-	UserService.DefaultWithoutDependencies(),
-	AdminService.DefaultWithoutDependencies()
-).pipe(Layer.provide(DBService.Default()));
-
-type Services = CharacterService | LogService | DMService | UserService | AdminService;
-type AppRuntime = ManagedRuntime.ManagedRuntime<Services, never>;
+export type Services = CharacterService | LogService | DMService | UserService | AdminService;
+export type AppRuntime = ManagedRuntime.ManagedRuntime<Services, never>;
 
 // Overload signatures
 export async function runOrThrow<
@@ -33,11 +25,10 @@ export async function runOrThrow<
 	T extends YieldWrap<Effect.Effect<A, B, C>>,
 	X,
 	Y
->(program: (runtime: AppRuntime) => Generator<T, X, Y>, runtime?: AppRuntime): Promise<X>;
+>(program: () => Generator<T, X, Y>): Promise<X>;
 
 export async function runOrThrow<A, B extends InstanceType<ErrorClass>, C extends Services>(
-	program: Effect.Effect<A, B, C> | ((runtime: AppRuntime) => Effect.Effect<A, B, C>),
-	runtime?: AppRuntime
+	program: Effect.Effect<A, B, C> | (() => Effect.Effect<A, B, C>)
 ): Promise<A>;
 
 // Implementation
@@ -48,35 +39,26 @@ export async function runOrThrow<
 	T extends YieldWrap<Effect.Effect<A, B, C>>,
 	X,
 	Y
->(
-	program:
-		| Effect.Effect<A, B, C>
-		| ((runtime: AppRuntime) => Effect.Effect<A, B, C>)
-		| ((runtime: AppRuntime) => Generator<T, X, Y>),
-	runtime?: AppRuntime
-): Promise<A | X> {
-	const rt = runtime ?? ManagedRuntime.make(appLayer);
+>(program: Effect.Effect<A, B, C> | (() => Effect.Effect<A, B, C>) | (() => Generator<T, X, Y>)): Promise<A | X> {
+	const event = getRequestEvent();
+	const rt = event.locals.runtime;
 
-	try {
-		const effect = Effect.fn(function* () {
-			if (isFunction(program)) {
-				return yield* program(rt);
-			} else {
-				return yield* program;
-			}
-		});
+	const effect = Effect.fn(function* () {
+		if (isFunction(program)) {
+			return yield* program();
+		} else {
+			return yield* program;
+		}
+	});
 
-		const result = await rt.runPromiseExit(effect());
-		return Exit.match(result, {
-			onSuccess: (result) => result,
-			onFailure: (cause) => {
-				const { message, status } = handleCause(cause);
-				throw error(status, message);
-			}
-		});
-	} finally {
-		await rt.dispose();
-	}
+	const result = await rt.runPromiseExit(effect());
+	return Exit.match(result, {
+		onSuccess: (result) => result,
+		onFailure: (cause) => {
+			const { message, status } = handleCause(cause);
+			throw error(status, message);
+		}
+	});
 }
 
 export type EffectSuccess<A> = { ok: true; data: A };
@@ -94,11 +76,10 @@ export async function runOrReturn<
 	T extends YieldWrap<Effect.Effect<A, B, C>>,
 	X,
 	Y
->(program: (runtime: AppRuntime) => Generator<T, X, Y>, runtime?: AppRuntime): Promise<EffectResult<X>>;
+>(program: () => Generator<T, X, Y>): Promise<EffectResult<X>>;
 
 export async function runOrReturn<A, B extends InstanceType<ErrorClass>, C extends Services>(
-	program: Effect.Effect<A, B, C> | ((runtime: AppRuntime) => Effect.Effect<A, B, C>),
-	runtime?: AppRuntime
+	program: Effect.Effect<A, B, C> | (() => Effect.Effect<A, B, C>)
 ): Promise<EffectResult<A>>;
 
 // Implementation
@@ -109,32 +90,23 @@ export async function runOrReturn<
 	T extends YieldWrap<Effect.Effect<A, B, C>>,
 	X,
 	Y
->(
-	program:
-		| Effect.Effect<A, B, C>
-		| ((runtime: AppRuntime) => Effect.Effect<A, B, C>)
-		| ((runtime: AppRuntime) => Generator<T, X, Y>),
-	runtime?: AppRuntime
-): Promise<EffectResult<A | X>> {
-	const rt = runtime ?? ManagedRuntime.make(appLayer);
+>(program: Effect.Effect<A, B, C> | (() => Effect.Effect<A, B, C>) | (() => Generator<T, X, Y>)): Promise<EffectResult<A | X>> {
+	const event = getRequestEvent();
+	const rt = event.locals.runtime;
 
-	try {
-		const effect = Effect.fn(function* () {
-			if (isFunction(program)) {
-				return yield* program(rt);
-			} else {
-				return yield* program;
-			}
-		});
+	const effect = Effect.fn(function* () {
+		if (isFunction(program)) {
+			return yield* program();
+		} else {
+			return yield* program;
+		}
+	});
 
-		const result = await rt.runPromiseExit(effect());
-		return Exit.match(result, {
-			onSuccess: (result) => ({ ok: true, data: result }),
-			onFailure: (cause) => ({ ok: false, error: handleCause(cause) })
-		});
-	} finally {
-		await rt.dispose();
-	}
+	const result = await rt.runPromiseExit(effect());
+	return Exit.match(result, {
+		onSuccess: (result) => ({ ok: true, data: result }),
+		onFailure: (cause) => ({ ok: false, error: handleCause(cause) })
+	});
 }
 
 export function handleCause<B extends InstanceType<ErrorClass>>(cause: Cause.Cause<B>) {
@@ -180,13 +152,10 @@ export async function authReturn<
 	C extends Services = Services,
 	T extends YieldWrap<Effect.Effect<A, B, C>> = YieldWrap<Effect.Effect<A, B, C>>,
 	Y = unknown
->(
-	program: (data: { user: LocalsUser; event: RequestEvent; runtime: AppRuntime }) => Generator<T, TReturn, Y>,
-	adminOnly: boolean = false
-): Promise<EffectResult<TReturn>> {
-	return runOrReturn(function* (runtime) {
-		const { user, event } = yield* assertAuthOrFail(adminOnly);
-		return yield* program({ user, event, runtime });
+>(program: (data: LocalsUser) => Generator<T, TReturn, Y>, adminOnly: boolean = false): Promise<EffectResult<TReturn>> {
+	return runOrReturn(function* () {
+		const user = yield* assertAuthOrFail(adminOnly);
+		return yield* program(user);
 	});
 }
 
@@ -197,12 +166,9 @@ export async function authRedirect<
 	C extends Services = Services,
 	T extends YieldWrap<Effect.Effect<A, B, C>> = YieldWrap<Effect.Effect<A, B, C>>,
 	Y = unknown
->(
-	program: (data: { user: LocalsUser; event: RequestEvent; runtime: AppRuntime }) => Generator<T, TReturn, Y>,
-	adminOnly: boolean = false
-): Promise<TReturn> {
-	return runOrThrow(function* (runtime) {
-		const { user, event } = yield* assertAuthOrRedirect(adminOnly);
-		return yield* program({ user, event, runtime });
+>(program: (user: LocalsUser) => Generator<T, TReturn, Y>, adminOnly: boolean = false): Promise<TReturn> {
+	return runOrThrow(function* () {
+		const user = yield* assertAuthOrRedirect(adminOnly);
+		return yield* program(user);
 	});
 }

@@ -20,7 +20,7 @@ class DeleteUserDMError extends Data.TaggedError("DeleteUserDMError")<ErrorParam
 }
 
 export const saveDM = command("unchecked", (input: DungeonMasterSchemaIn) =>
-	authReturn(function* ({ user }) {
+	authReturn(function* (user) {
 		const DMs = yield* DMService;
 
 		const idResult = v.safeParse(dungeonMasterIdSchema, input.id);
@@ -41,7 +41,7 @@ export const saveDM = command("unchecked", (input: DungeonMasterSchemaIn) =>
 );
 
 export const deleteDM = command(dungeonMasterIdSchema, (id) =>
-	authReturn(function* ({ user }) {
+	authReturn(function* (user) {
 		const DMs = yield* DMService;
 
 		const [dm] = yield* DMs.get.userDMs(user.id, { id });

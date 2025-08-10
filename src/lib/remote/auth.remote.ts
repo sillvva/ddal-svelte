@@ -27,7 +27,7 @@ export const updateUser = command(
 		})
 	),
 	(input) =>
-		authReturn(function* ({ user }) {
+		authReturn(function* (user) {
 			const Users = yield* UserService;
 
 			if (Object.keys(input).length === 0) return yield* Effect.fail(new NoChangesError());

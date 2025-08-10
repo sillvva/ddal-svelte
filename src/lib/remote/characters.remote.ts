@@ -9,7 +9,7 @@ import { authReturn, runOrReturn } from "$lib/server/effect/runtime";
 import * as v from "valibot";
 
 export const saveCharacter = command("unchecked", (input: EditCharacterSchemaIn) =>
-	authReturn(function* ({ user, runtime }) {
+	authReturn(function* (user) {
 		const Characters = yield* CharacterService;
 
 		const form = yield* validateForm(input, editCharacterSchema);
@@ -37,7 +37,7 @@ export const saveCharacter = command("unchecked", (input: EditCharacterSchemaIn)
 					}
 
 					return `/characters/${character.id}` as const;
-				}, runtime);
+				});
 
 				if (result.ok) {
 					return result.data;
@@ -51,7 +51,7 @@ export const saveCharacter = command("unchecked", (input: EditCharacterSchemaIn)
 );
 
 export const deleteCharacter = command(characterIdSchema, (id) =>
-	authReturn(function* ({ user }) {
+	authReturn(function* (user) {
 		const Characters = yield* CharacterService;
 		placeholderQuery().refresh();
 		return yield* Characters.set.delete(id, user.id);

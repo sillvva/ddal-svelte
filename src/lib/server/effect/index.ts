@@ -40,6 +40,9 @@ const logLevel = Logger.withMinimumLogLevel(privateEnv.LOG_LEVEL);
 const dbLogger = Logger.replace(
 	Logger.defaultLogger,
 	Logger.make((log) => {
+		const event = getRequestEvent();
+		const runtime = event.locals.runtime;
+
 		const values = {
 			label: (log.message as string[]).join(" | "),
 			timestamp: log.date,
@@ -52,7 +55,7 @@ const dbLogger = Logger.replace(
 				if (dev && isTupleOf(logs, 1))
 					console.log(logs[0].id, dev && ["ERROR", "DEBUG"].includes(values.level) ? values : JSON.stringify(values), "\n");
 			}),
-			Effect.runPromise
+			runtime.runPromise
 		);
 	})
 );

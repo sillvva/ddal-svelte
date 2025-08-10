@@ -138,7 +138,7 @@ export class DMService extends Effect.Service<DMService>()("DMSService", {
 				}),
 
 				addUserDM: Effect.fn("DMService.set.addUserDM")(function* (dms) {
-					const { user } = yield* assertAuthOrFail();
+					const user = yield* assertAuthOrFail();
 
 					const existing = yield* runQuery(
 						db.query.dungeonMasters.findFirst({

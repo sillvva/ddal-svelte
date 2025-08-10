@@ -108,8 +108,8 @@
 						data-tip="Toggle details"
 						aria-label="Toggle details"
 						onclick={() => {
-							const details = document.querySelector(`tr[data-id="${log.id}"]`) as HTMLTableRowElement | null;
-							if (details) details.dataset.details = details.dataset.details === "true" ? "false" : "true";
+							const row = document.querySelector(`tr[data-id="${log.id}"]`) as HTMLTableRowElement | null;
+							if (row) row.dataset.details = row.dataset.details === "true" ? "false" : "true";
 						}}
 					>
 						<span class="iconify mdi--eye"></span>

@@ -3,6 +3,7 @@
 
 import type { AppCookie, LocalsSession, LocalsUser } from "$lib/schemas";
 import type { FullCharacterData } from "$lib/server/effect/characters";
+import type { AppRuntime } from "$lib/server/effect/runtime";
 import "@auth/sveltekit";
 import "@total-typescript/ts-reset/fetch";
 import "@total-typescript/ts-reset/json-parse";
@@ -16,6 +17,7 @@ declare global {
 			isMobile: boolean;
 			isMac: boolean;
 			app: AppCookie;
+			runtime: AppRuntime;
 		}
 		interface PageData {
 			app: AppCookie;

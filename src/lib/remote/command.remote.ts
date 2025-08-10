@@ -82,7 +82,7 @@ const getData = Effect.fn("GetData")(function* (userId: UserId) {
 });
 
 export const getCommandData = query(() =>
-	authRedirect(function* ({ user }) {
+	authRedirect(function* (user) {
 		const data: SearchData = [sectionData];
 		const searchData = yield* getData(user.id).pipe(
 			Effect.tapError((e) => AppLog.error(`[GetCommandData] ${e.message}`, { status: e.status, cause: e.cause })),

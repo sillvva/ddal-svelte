@@ -1,3 +1,4 @@
+import { getRequestEvent } from "$app/server";
 import { privateEnv } from "$lib/env/private";
 import { relations } from "$lib/server/db/relations";
 import * as schema from "$lib/server/db/schema";
@@ -26,13 +27,17 @@ export const connection = postgres(privateEnv.DATABASE_URL, { prepare: false });
 export const db: Database = drizzle(connection, { schema, relations });
 
 export class DBService extends Effect.Service<DBService>()("DBService", {
-	effect: Effect.fn("DBService")(function* (tx?: Transaction) {
+	scoped: Effect.fn("DBService")(function* (tx?: Transaction) {
+		const database = tx || db;
+
 		const transaction = Effect.fn("DBService.transaction")(function* <A, B extends InstanceType<ErrorClass> | never>(
 			effect: (tx: Transaction) => Effect.Effect<A, B>
 		) {
+			const event = getRequestEvent();
+			const runtime = event.locals.runtime;
 			const result: EffectResult<A> = yield* Effect.promise(() =>
-				db.transaction(async (tx) => {
-					const result = await Effect.runPromiseExit(effect(tx));
+				database.transaction(async (tx) => {
+					const result = await runtime.runPromiseExit(effect(tx));
 					return Exit.match(result, {
 						onSuccess: (result) => ({ ok: true as const, data: result }),
 						onFailure: (cause) =>
@@ -53,7 +58,7 @@ export class DBService extends Effect.Service<DBService>()("DBService", {
 			else return yield* new TransactionError(result.error);
 		});
 
-		return { db: tx || db, transaction };
+		return { db: database, transaction };
 	})
 }) {}
 

@@ -6,7 +6,7 @@ import { redirect } from "@sveltejs/kit";
 import * as v from "valibot";
 
 export const load = (event) =>
-	authRedirect(function* ({ user }) {
+	authRedirect(function* (user) {
 		const DMs = yield* DMService;
 
 		const idResult = v.safeParse(dungeonMasterIdSchema, event.params.dmId || "");

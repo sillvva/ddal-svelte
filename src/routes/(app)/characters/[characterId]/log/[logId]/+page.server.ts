@@ -10,7 +10,7 @@ import { Effect } from "effect";
 import * as v from "valibot";
 
 export const load = (event) =>
-	authRedirect(function* ({ user }) {
+	authRedirect(function* (user) {
 		const Logs = yield* LogService;
 		const DMs = yield* DMService;
 

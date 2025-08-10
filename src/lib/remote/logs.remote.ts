@@ -16,7 +16,7 @@ class InvalidCharacterIdError extends Data.TaggedError("InvalidCharacterIdError"
 }
 
 export const saveLog = command("unchecked", (input: LogSchemaIn) =>
-	authReturn(function* ({ user }) {
+	authReturn(function* (user) {
 		const Characters = yield* CharacterService;
 		const Logs = yield* LogService;
 
@@ -64,7 +64,7 @@ export const saveLog = command("unchecked", (input: LogSchemaIn) =>
 );
 
 export const deleteLog = command(logIdSchema, (id) =>
-	authReturn(function* ({ user }) {
+	authReturn(function* (user) {
 		const Logs = yield* LogService;
 		return yield* Logs.set.delete(id, user.id);
 	})
