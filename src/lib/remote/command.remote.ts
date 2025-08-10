@@ -1,11 +1,11 @@
 import { query } from "$app/server";
 import { searchSections } from "$lib/constants.js";
 import type { UserId } from "$lib/schemas.js";
-import { AppLog } from "$lib/server/effect";
-import { CharacterService } from "$lib/server/effect/characters";
-import { DMService } from "$lib/server/effect/dms";
-import { LogService } from "$lib/server/effect/logs";
+import { AppLog } from "$lib/server/effect/logging";
 import { authRedirect } from "$lib/server/effect/runtime";
+import { CharacterService } from "$lib/server/effect/services/characters";
+import { DMService } from "$lib/server/effect/services/dms";
+import { LogService } from "$lib/server/effect/services/logs";
 import { sorter } from "@sillvva/utils";
 import { Effect } from "effect";
 

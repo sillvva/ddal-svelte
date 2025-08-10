@@ -1,6 +1,9 @@
 import { getRequestEvent } from "$app/server";
 import { privateEnv } from "$lib/env/private";
-import { localsSessionSchema, localsUserSchema, type LocalsUser, type UserId } from "$lib/schemas";
+import { localsSessionSchema, localsUserSchema, type LocalsSession, type LocalsUser, type UserId } from "$lib/schemas";
+import { DBService, DrizzleError } from "$lib/server/db";
+import { type ErrorParams } from "$lib/server/effect/errors";
+import { AppLog } from "$lib/server/effect/logging";
 import { redirect, type NumericRange } from "@sveltejs/kit";
 import { betterAuth } from "better-auth";
 import { drizzleAdapter } from "better-auth/adapters/drizzle";
@@ -9,43 +12,73 @@ import { passkey } from "better-auth/plugins/passkey";
 import { Data, Effect } from "effect";
 import { v7 } from "uuid";
 import * as v from "valibot";
-import { db } from "./db";
-import { AppLog, type ErrorParams } from "./effect";
-import { runOrThrow } from "./effect/runtime";
-import { UserService } from "./effect/users";
+import { UserService } from "./users";
 
-export const auth = betterAuth({
-	appName: "Adventurers League Log Sheet",
-	database: drizzleAdapter(db, {
-		provider: "pg"
+interface AuthApiImpl {
+	readonly auth: () => Effect.Effect<ReturnType<typeof betterAuth>>;
+	readonly getAuthSession: () => Effect.Effect<
+		{ session: LocalsSession | undefined; user: LocalsUser | undefined },
+		DrizzleError,
+		UserService
+	>;
+}
+
+export class AuthService extends Effect.Service<AuthService>()("AuthService", {
+	effect: Effect.fn("AuthService")(function* () {
+		const { db } = yield* DBService;
+
+		const impl: AuthApiImpl = {
+			auth: Effect.fn("AuthService.auth")(function* () {
+				return betterAuth({
+					appName: "Adventurers League Log Sheet",
+					database: drizzleAdapter(db, {
+						provider: "pg"
+					}),
+					socialProviders: {
+						google: {
+							clientId: privateEnv.GOOGLE_CLIENT_ID,
+							clientSecret: privateEnv.GOOGLE_CLIENT_SECRET,
+							disableSignUp: privateEnv.DISABLE_SIGNUPS
+						},
+						discord: {
+							clientId: privateEnv.DISCORD_CLIENT_ID,
+							clientSecret: privateEnv.DISCORD_CLIENT_SECRET,
+							disableSignUp: privateEnv.DISABLE_SIGNUPS
+						}
+					},
+					plugins: [passkey(), admin()],
+					account: {
+						accountLinking: {
+							enabled: true
+						}
+					},
+					session: {
+						expiresIn: 60 * 60 * 24 * 30 // 30 days
+					},
+					advanced: {
+						database: {
+							generateId: () => v7()
+						}
+					}
+				});
+			}),
+			getAuthSession: Effect.fn("AuthService.getAuthSession")(function* () {
+				const Users = yield* UserService;
+
+				const auth = yield* impl.auth();
+				const event = getRequestEvent();
+				const result = yield* Effect.promise(() => auth.api.getSession({ headers: event.request.headers }));
+				return {
+					session: result?.session && v.parse(localsSessionSchema, result.session),
+					user: result?.user && (yield* Users.get.localsUser(result.user.id as UserId))
+				};
+			})
+		};
+
+		return impl;
 	}),
-	socialProviders: {
-		google: {
-			clientId: privateEnv.GOOGLE_CLIENT_ID,
-			clientSecret: privateEnv.GOOGLE_CLIENT_SECRET,
-			disableSignUp: privateEnv.DISABLE_SIGNUPS
-		},
-		discord: {
-			clientId: privateEnv.DISCORD_CLIENT_ID,
-			clientSecret: privateEnv.DISCORD_CLIENT_SECRET,
-			disableSignUp: privateEnv.DISABLE_SIGNUPS
-		}
-	},
-	plugins: [passkey(), admin()],
-	account: {
-		accountLinking: {
-			enabled: true
-		}
-	},
-	session: {
-		expiresIn: 60 * 60 * 24 * 30 // 30 days
-	},
-	advanced: {
-		database: {
-			generateId: () => v7()
-		}
-	}
-});
+	dependencies: [DBService.Default()]
+}) {}
 
 export const assertUser = Effect.fn(function* (user: LocalsUser | undefined) {
 	const event = getRequestEvent();
@@ -67,20 +100,6 @@ export const assertUser = Effect.fn(function* (user: LocalsUser | undefined) {
 
 	return result.output;
 });
-
-export async function getAuthSession(event = getRequestEvent()) {
-	const { session, user } = (await auth.api.getSession({ headers: event.request.headers })) ?? {};
-
-	return {
-		session: session && v.parse(localsSessionSchema, session),
-		user:
-			user &&
-			(await runOrThrow(function* () {
-				const Users = yield* UserService;
-				return yield* Users.get.localsUser(user.id as UserId);
-			}))
-	};
-}
 
 export const assertAuthOrRedirect = Effect.fn(function* (adminOnly: boolean = false) {
 	const event = getRequestEvent();

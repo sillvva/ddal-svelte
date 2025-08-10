@@ -2,8 +2,8 @@
 // for information about these interfaces
 
 import type { AppCookie, LocalsSession, LocalsUser } from "$lib/schemas";
-import type { FullCharacterData } from "$lib/server/effect/characters";
 import type { AppRuntime } from "$lib/server/effect/runtime";
+import type { FullCharacterData } from "$lib/server/effect/services/characters";
 import "@auth/sveltekit";
 import "@total-typescript/ts-reset/fetch";
 import "@total-typescript/ts-reset/json-parse";

@@ -1,8 +1,8 @@
 import { command } from "$app/server";
 import { imageUrlWithFallback, requiredString } from "$lib/schemas.js";
-import { type ErrorParams } from "$lib/server/effect";
+import { type ErrorParams } from "$lib/server/effect/errors";
 import { authReturn } from "$lib/server/effect/runtime";
-import { UserService } from "$lib/server/effect/users";
+import { UserService } from "$lib/server/effect/services/users";
 import { Data, Effect } from "effect";
 import * as v from "valibot";
 

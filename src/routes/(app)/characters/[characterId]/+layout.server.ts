@@ -1,7 +1,7 @@
 import { parseCharacter } from "$lib/entities.js";
 import { characterIdOrNewSchema, type CharacterId } from "$lib/schemas.js";
-import { CharacterService } from "$lib/server/effect/characters";
 import { runOrThrow } from "$lib/server/effect/runtime.js";
+import { CharacterService } from "$lib/server/effect/services/characters";
 import { redirect } from "@sveltejs/kit";
 import * as v from "valibot";
 

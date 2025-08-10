@@ -1,4 +1,4 @@
-import { getError } from "$lib/server/auth";
+import { getError } from "$lib/server/effect/services/auth";
 import { redirect } from "@sveltejs/kit";
 
 export const load = (event) => {

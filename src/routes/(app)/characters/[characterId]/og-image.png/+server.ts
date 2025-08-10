@@ -1,8 +1,8 @@
 import { BLANK_CHARACTER } from "$lib/constants.js";
 import { characterIdSchema } from "$lib/schemas.js";
-import { type ErrorParams } from "$lib/server/effect";
-import { CharacterService } from "$lib/server/effect/characters";
+import { type ErrorParams } from "$lib/server/effect/errors";
 import { runOrThrow } from "$lib/server/effect/runtime.js";
+import { CharacterService } from "$lib/server/effect/services/characters";
 import { Resvg } from "@resvg/resvg-js";
 import { error, type NumericRange } from "@sveltejs/kit";
 import { Data } from "effect";

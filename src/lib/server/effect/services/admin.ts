@@ -1,13 +1,14 @@
+import { dev } from "$app/environment";
 import type { AppLogId, AppLogSchema } from "$lib/schemas";
 import { DBService, runQuery, type DrizzleError, type Filter, type Transaction, type TRSchema } from "$lib/server/db";
 import type { relations } from "$lib/server/db/relations";
 import { appLogs, type AppLog } from "$lib/server/db/schema";
+import { FormError } from "$lib/server/effect/errors";
 import type { ParseMetadata } from "@sillvva/search";
 import { DrizzleSearchParser } from "@sillvva/search/drizzle";
 import { eq, sql } from "drizzle-orm";
 import { Effect, Layer } from "effect";
 import { isTupleOf } from "effect/Predicate";
-import { FormError } from ".";
 
 export class SaveAppLogError extends FormError<AppLogSchema> {}
 
@@ -22,6 +23,7 @@ interface AdminApiImpl {
 		readonly logs: (search?: string) => Effect.Effect<{ logs: AppLog[]; metadata?: ParseMetadata }, DrizzleError>;
 	};
 	readonly set: {
+		readonly saveLog: (values: Omit<AppLogSchema, "id">) => Effect.Effect<{ id: AppLogId }, SaveAppLogError | DrizzleError>;
 		readonly deleteLog: (logId: AppLogId) => Effect.Effect<{ id: AppLogId }, DeleteLogError | DrizzleError>;
 	};
 }
@@ -47,6 +49,17 @@ export class AdminService extends Effect.Service<AdminService>()("AdminService",
 				})
 			},
 			set: {
+				saveLog: Effect.fn("AdminService.set.saveLog")(function* (values) {
+					return yield* runQuery(db.insert(appLogs).values([values]).returning({ id: appLogs.id })).pipe(
+						Effect.tap((logs) => {
+							if (dev && isTupleOf(logs, 1))
+								console.log(logs[0].id, dev && ["ERROR", "DEBUG"].includes(values.level) ? values : JSON.stringify(values), "\n");
+						}),
+						Effect.flatMap((logs) =>
+							isTupleOf(logs, 1) ? Effect.succeed(logs[0]) : Effect.fail(new SaveAppLogError("Unable to save app log"))
+						)
+					);
+				}),
 				deleteLog: Effect.fn("AdminService.set.deleteLog")(function* (logId) {
 					return yield* runQuery(db.delete(appLogs).where(eq(appLogs.id, logId)).returning({ id: appLogs.id })).pipe(
 						Effect.flatMap((logs) => (isTupleOf(logs, 1) ? Effect.succeed(logs[0]) : Effect.fail(new DeleteLogError())))

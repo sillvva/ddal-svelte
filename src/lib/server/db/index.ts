@@ -2,7 +2,7 @@ import { getRequestEvent } from "$app/server";
 import { privateEnv } from "$lib/env/private";
 import { relations } from "$lib/server/db/relations";
 import * as schema from "$lib/server/db/schema";
-import { type ErrorClass, type ErrorParams } from "$lib/server/effect";
+import { type ErrorClass, type ErrorParams } from "$lib/server/effect/errors";
 import {
 	getTableColumns,
 	sql,
@@ -23,12 +23,14 @@ import type { EffectFailure, EffectResult } from "../effect/runtime";
 export type Database = PostgresJsDatabase<typeof schema, typeof relations>;
 export type Transaction = PgTransaction<PostgresJsQueryResultHKT, typeof schema, typeof relations>;
 
-export const connection = postgres(privateEnv.DATABASE_URL, { prepare: false });
-export const db: Database = drizzle(connection, { schema, relations });
+function getDatabase(): Database {
+	const connection = postgres(privateEnv.DATABASE_URL, { prepare: false });
+	return drizzle(connection, { schema, relations });
+}
 
 export class DBService extends Effect.Service<DBService>()("DBService", {
 	scoped: Effect.fn("DBService")(function* (tx?: Transaction) {
-		const database = tx || db;
+		const db = tx || getDatabase();
 
 		const transaction = Effect.fn("DBService.transaction")(function* <A, B extends InstanceType<ErrorClass> | never>(
 			effect: (tx: Transaction) => Effect.Effect<A, B>
@@ -36,7 +38,7 @@ export class DBService extends Effect.Service<DBService>()("DBService", {
 			const event = getRequestEvent();
 			const runtime = event.locals.runtime;
 			const result: EffectResult<A> = yield* Effect.promise(() =>
-				database.transaction(async (tx) => {
+				db.transaction(async (tx) => {
 					const result = await runtime.runPromiseExit(effect(tx));
 					return Exit.match(result, {
 						onSuccess: (result) => ({ ok: true as const, data: result }),
@@ -58,7 +60,7 @@ export class DBService extends Effect.Service<DBService>()("DBService", {
 			else return yield* new TransactionError(result.error);
 		});
 
-		return { db: database, transaction };
+		return { db, transaction };
 	})
 }) {}
 

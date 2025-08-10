@@ -2,11 +2,12 @@ import { PROVIDERS } from "$lib/constants";
 import type { CharacterId, LocalsUser, PasskeyId, UserId } from "$lib/schemas";
 import { DBService, runQuery, type DrizzleError, type Transaction } from "$lib/server/db";
 import { passkey, user, type Passkey, type User } from "$lib/server/db/schema";
+import { type ErrorParams } from "$lib/server/effect/errors";
+import { AppLog } from "$lib/server/effect/logging";
 import { sorter } from "@sillvva/utils";
 import { and, eq } from "drizzle-orm";
 import { Data, Effect, Layer } from "effect";
 import { isTupleOf } from "effect/Predicate";
-import { AppLog, type ErrorParams } from ".";
 
 export class UpdateUserError extends Data.TaggedError("UpdateUserError")<ErrorParams> {
 	constructor(err?: unknown) {

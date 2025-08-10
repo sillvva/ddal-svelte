@@ -1,8 +1,8 @@
 import { command, query } from "$app/server";
 import { appLogId } from "$lib/schemas";
-import { AdminService, validKeys } from "$lib/server/effect/admin";
 import { authRedirect, authReturn, runOrThrow } from "$lib/server/effect/runtime";
-import { UserService } from "$lib/server/effect/users";
+import { AdminService, validKeys } from "$lib/server/effect/services/admin";
+import { UserService } from "$lib/server/effect/services/users";
 import { DateTime, Effect } from "effect";
 import * as v from "valibot";
 

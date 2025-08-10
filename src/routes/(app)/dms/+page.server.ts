@@ -1,5 +1,5 @@
-import { DMService } from "$lib/server/effect/dms";
 import { authRedirect } from "$lib/server/effect/runtime.js";
+import { DMService } from "$lib/server/effect/services/dms";
 
 export const load = (event) =>
 	authRedirect(function* (user) {

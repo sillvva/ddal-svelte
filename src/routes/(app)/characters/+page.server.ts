@@ -1,5 +1,5 @@
-import { CharacterService } from "$lib/server/effect/characters";
 import { authRedirect } from "$lib/server/effect/runtime.js";
+import { CharacterService } from "$lib/server/effect/services/characters";
 
 export const load = () =>
 	authRedirect(function* (user) {

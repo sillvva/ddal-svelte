@@ -6,15 +6,16 @@ import { error, isHttpError, isRedirect, type NumericRange } from "@sveltejs/kit
 import { Cause, Effect, Exit, ManagedRuntime } from "effect";
 import { isFunction } from "effect/Predicate";
 import type { YieldWrap } from "effect/Utils";
-import { AppLog, type ErrorClass } from ".";
-import { assertAuthOrFail, assertAuthOrRedirect } from "../auth";
-import { AdminService } from "./admin";
-import { CharacterService } from "./characters";
-import { DMService } from "./dms";
-import { LogService } from "./logs";
-import { UserService } from "./users";
+import { type ErrorClass } from "./errors";
+import { AppLog } from "./logging";
+import { AdminService } from "./services/admin";
+import { assertAuthOrFail, assertAuthOrRedirect, AuthService } from "./services/auth";
+import { CharacterService } from "./services/characters";
+import { DMService } from "./services/dms";
+import { LogService } from "./services/logs";
+import { UserService } from "./services/users";
 
-export type Services = CharacterService | LogService | DMService | UserService | AdminService;
+export type Services = CharacterService | LogService | DMService | UserService | AdminService | AuthService;
 export type AppRuntime = ManagedRuntime.ManagedRuntime<Services, never>;
 
 // Overload signatures

@@ -1,7 +1,7 @@
 import { dungeonMasterIdSchema, dungeonMasterSchema } from "$lib/schemas";
-import { validateForm } from "$lib/server/effect";
-import { DMNotFoundError, DMService } from "$lib/server/effect/dms";
+import { validateForm } from "$lib/server/effect/forms";
 import { authRedirect } from "$lib/server/effect/runtime.js";
+import { DMNotFoundError, DMService } from "$lib/server/effect/services/dms";
 import { redirect } from "@sveltejs/kit";
 import * as v from "valibot";
 

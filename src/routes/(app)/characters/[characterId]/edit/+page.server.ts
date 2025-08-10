@@ -1,6 +1,6 @@
 import { BLANK_CHARACTER } from "$lib/constants.js";
 import { editCharacterSchema } from "$lib/schemas";
-import { validateForm } from "$lib/server/effect";
+import { validateForm } from "$lib/server/effect/forms";
 import { authRedirect } from "$lib/server/effect/runtime";
 import { Effect } from "effect";
 

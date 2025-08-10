@@ -1,5 +1,5 @@
-import { LogService } from "$lib/server/effect/logs";
 import { authRedirect } from "$lib/server/effect/runtime.js";
+import { LogService } from "$lib/server/effect/services/logs";
 
 export const load = (event) =>
 	authRedirect(function* (user) {
