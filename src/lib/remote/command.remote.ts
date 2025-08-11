@@ -91,5 +91,3 @@ export const getCommandData = query(() =>
 		return data.concat(searchData) as SearchData;
 	})
 );
-
-export const placeholderQuery = query(() => true);

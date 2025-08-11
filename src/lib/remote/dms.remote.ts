@@ -1,5 +1,4 @@
 import { command } from "$app/server";
-import { placeholderQuery } from "$lib/remote/command.remote";
 import { dungeonMasterIdSchema, dungeonMasterSchema, type DungeonMasterSchemaIn } from "$lib/schemas";
 import { type ErrorParams } from "$lib/server/effect/errors";
 import { save, validateForm } from "$lib/server/effect/forms";
@@ -48,8 +47,6 @@ export const deleteDM = command(dungeonMasterIdSchema, (id) =>
 		const [dm] = yield* DMs.get.userDMs(user.id, { id });
 		if (!dm) return yield* new DMNotFoundError();
 		if (dm.isUser) return yield* new DeleteUserDMError();
-
-		placeholderQuery().refresh();
 
 		return yield* DMs.set.delete(dm, user.id);
 	})

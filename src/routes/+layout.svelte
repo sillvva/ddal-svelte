@@ -1,13 +1,24 @@
 <script lang="ts">
 	import { dev } from "$app/environment";
-	import { createGlobal, setTransition } from "$lib/stores.svelte";
+	import { onNavigate } from "$app/navigation";
+	import { createGlobal } from "$lib/stores.svelte";
 	import { Toaster } from "svelte-sonner";
 	import "../app.css";
 
 	let { data, children } = $props();
 
 	createGlobal(data.app);
-	setTransition();
+
+	onNavigate((navigation) => {
+		if (!document.startViewTransition) return;
+
+		return new Promise((resolve) => {
+			document.startViewTransition(() => {
+				resolve();
+				// await navigation.complete;
+			});
+		});
+	});
 </script>
 
 <div class="bg-base-100 text-base-content min-h-dvh noscript:hidden">

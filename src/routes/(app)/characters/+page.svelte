@@ -7,7 +7,7 @@
 	import Search from "$lib/components/Search.svelte";
 	import SearchResults from "$lib/components/SearchResults.svelte";
 	import { EntitySearchFactory } from "$lib/factories.svelte.js";
-	import { getGlobal, transition } from "$lib/stores.svelte.js";
+	import { getGlobal } from "$lib/stores.svelte.js";
 	import { createTransition, hotkey } from "$lib/util";
 	import { sorter } from "@sillvva/utils";
 	import { download } from "@svelteuidev/composables";
@@ -163,7 +163,7 @@
 							<tr class="group/row">
 								<td class="pr-0 align-top transition-colors sm:pr-2">
 									<div class="avatar">
-										<div class="mask mask-squircle bg-primary size-12" {@attach transition("image-" + character.id)}>
+										<div class="mask mask-squircle bg-primary size-12" style:view-transition-name={"image-" + character.id}>
 											{#if character.imageUrl}
 												{#key character.imageUrl}
 													<img
@@ -257,7 +257,7 @@
 							<a
 								href={`/characters/${character.id}`}
 								class="card card-compact bg-base-200 shadow-xl transition-transform duration-200 motion-safe:hover:scale-105"
-								{@attach transition("image-" + character.id)}
+								style:view-transition-name={"image-" + character.id}
 							>
 								<figure class="relative aspect-square overflow-hidden">
 									{#key character.imageUrl}

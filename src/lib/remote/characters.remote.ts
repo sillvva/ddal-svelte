@@ -1,6 +1,5 @@
 import { command } from "$app/server";
 import { defaultLogSchema } from "$lib/entities";
-import { placeholderQuery } from "$lib/remote/command.remote";
 import { characterIdOrNewSchema, characterIdSchema, editCharacterSchema, parse, type EditCharacterSchemaIn } from "$lib/schemas";
 import { FormError } from "$lib/server/effect/errors";
 import { save, validateForm } from "$lib/server/effect/forms";
@@ -53,7 +52,6 @@ export const saveCharacter = command("unchecked", (input: EditCharacterSchemaIn)
 export const deleteCharacter = command(characterIdSchema, (id) =>
 	authReturn(function* (user) {
 		const Characters = yield* CharacterService;
-		placeholderQuery().refresh();
 		return yield* Characters.set.delete(id, user.id);
 	})
 );

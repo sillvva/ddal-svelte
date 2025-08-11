@@ -12,7 +12,7 @@
 	import { EntitySearchFactory, errorToast, successToast } from "$lib/factories.svelte.js";
 	import { deleteCharacter } from "$lib/remote/characters.remote.js";
 	import { deleteLog } from "$lib/remote/logs.remote.js";
-	import { getGlobal, transition } from "$lib/stores.svelte.js";
+	import { getGlobal } from "$lib/stores.svelte.js";
 	import { createTransition, hotkey } from "$lib/util";
 	import { slugify, sorter } from "@sillvva/utils";
 	import { download } from "@svelteuidev/composables";
@@ -146,7 +146,7 @@
 						target="_blank"
 						rel="noreferrer noopener"
 						class="mask mask-squircle bg-primary mx-auto h-20"
-						{@attach transition("image-" + data.character.id)}
+						style:view-transition-name={"image-" + data.character.id}
 						onclick={(e) => {
 							e.preventDefault();
 							triggerImageModal();
@@ -197,7 +197,7 @@
 							target="_blank"
 							rel="noreferrer noopener"
 							class="mask mask-squircle bg-primary mx-auto h-52 w-full"
-							{@attach transition("image-" + data.character.id)}
+							style:view-transition-name={"image-" + data.character.id}
 							onclick={(e) => {
 								e.preventDefault();
 								triggerImageModal();
@@ -497,7 +497,7 @@
 							class="hidden border-0 data-[desc=true]:table-row max-sm:data-[mi=true]:table-row [&>td]:border-0"
 							data-desc={global.app.log.descriptions && hasDescription}
 							data-mi={log.magicItemsGained.length > 0 || log.magicItemsLost.length > 0}
-							{@attach transition(`notes-${log.id}`)}
+							style:view-transition-name={`notes-${log.id}`}
 						>
 							<td colSpan={100} class="max-w-[calc(100vw_-_50px)] pt-0 text-sm print:p-2 print:text-xs">
 								{#if log.description?.trim()}

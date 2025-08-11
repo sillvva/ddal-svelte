@@ -2,24 +2,9 @@ import { browser } from "$app/environment";
 import { Duration } from "effect";
 import Cookie from "js-cookie";
 import { getContext, setContext } from "svelte";
-import { createContext } from "svelte-contextify";
-import { fromAction } from "svelte/attachments";
 import { SvelteDate, SvelteMap } from "svelte/reactivity";
-import { setupViewTransition } from "sveltekit-view-transition";
 import * as v from "valibot";
 import { appCookieSchema, appDefaults, type AppCookie } from "./schemas";
-
-export const { get: transitionGetter, set: transitionSetter } = createContext({
-	defaultValue: () => {
-		const { transition } = setupViewTransition();
-		return transition;
-	}
-});
-export const setTransition = () => {
-	const { transition } = setupViewTransition();
-	if (browser) transitionSetter(() => transition);
-};
-export const transition = (key: string) => fromAction(transitionGetter()(), () => key);
 
 /**
  * Set a cookie from the browser using `js-cookie`.
