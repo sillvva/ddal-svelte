@@ -9,17 +9,12 @@ import { CharacterService } from "$lib/server/effect/services/characters";
 import { DMService } from "$lib/server/effect/services/dms";
 import { LogService } from "$lib/server/effect/services/logs";
 import { UserService } from "$lib/server/effect/services/users";
-import { type Handle, type RequestEvent } from "@sveltejs/kit";
+import { type Handle } from "@sveltejs/kit";
 import { sequence } from "@sveltejs/kit/hooks";
 import { svelteKitHandler } from "better-auth/svelte-kit";
 import { Layer, ManagedRuntime } from "effect";
 
-const isRemoteFunction = (event: RequestEvent) => event.request.url.includes("/_app/remote");
-
 const runtime: Handle = async ({ event, resolve }) => {
-	// If the request is not a route, and not a remote function, skip the runtime
-	if (!event.route.id && !isRemoteFunction(event)) return await resolve(event);
-
 	const appLayer = Layer.mergeAll(
 		AuthService.DefaultWithoutDependencies(),
 		AdminService.DefaultWithoutDependencies(),
@@ -35,9 +30,6 @@ const runtime: Handle = async ({ event, resolve }) => {
 
 const authHandler: Handle = async ({ event, resolve }) =>
 	runOrThrow(function* () {
-		// If the request is not a route, and not a remote function, skip the auth
-		if (!event.route.id && !isRemoteFunction(event)) return resolve(event);
-
 		const Auth = yield* AuthService;
 		const auth = yield* Auth.auth();
 		return svelteKitHandler({ event, resolve, auth, building });
@@ -45,9 +37,6 @@ const authHandler: Handle = async ({ event, resolve }) =>
 
 const session: Handle = async ({ event, resolve }) =>
 	runOrThrow(function* () {
-		// If the request is not a route, and not a remote function, skip the session
-		if (!event.route.id && !isRemoteFunction(event)) return resolve(event);
-
 		const Auth = yield* AuthService;
 		const { session, user } = yield* Auth.getAuthSession();
 		event.locals.session = session;
@@ -57,9 +46,6 @@ const session: Handle = async ({ event, resolve }) =>
 	});
 
 const info: Handle = async ({ event, resolve }) => {
-	// If the request is not a route, and not a remote function, skip the info
-	if (!event.route.id && !isRemoteFunction(event)) return resolve(event);
-
 	event.locals.app = serverGetCookie("app", appCookieSchema);
 
 	const userAgent = event.request.headers.get("user-agent");
@@ -72,9 +58,6 @@ const info: Handle = async ({ event, resolve }) => {
 };
 
 const preloadTheme: Handle = async ({ event, resolve }) => {
-	// If the request is not a route, and not a remote function, skip the preloadTheme
-	if (!event.route.id && !isRemoteFunction(event)) return resolve(event);
-
 	const app = event.locals.app;
 	const mode = app.settings.mode;
 	const theme = event.route.id?.startsWith("/(app)") ? app.settings.theme : app.settings.mode;
