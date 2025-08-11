@@ -107,6 +107,9 @@
 }
 
 @layer base {
+	html {
+		font-family: "Inter", sans-serif;
+	}
 	* {
 		box-sizing: border-box;
 		min-width: 0;
@@ -145,6 +148,14 @@
 		src: url("/fonts/VecnaBold.ttf") format("truetype");
 		font-weight: bold;
 		font-style: normal;
+		font-display: swap;
+	}
+
+	@font-face {
+		font-family: "Inter";
+		src: url("/fonts/Inter-VariableFont_opsz,wght.ttf") format("truetype");
+		font-weight: 100 900; /* Inter variable supports 100–900 */
+		font-stretch: 75% 125%; /* Inter variable supports width axis */
 		font-display: swap;
 	}
 
