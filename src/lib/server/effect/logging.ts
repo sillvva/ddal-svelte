@@ -55,17 +55,3 @@ export const AppLog = {
 	debug: (message: string, extra?: Record<string, unknown>, logger: Layer.Layer<never> = dbLogger) =>
 		Effect.logDebug(message).pipe(logLevel, annotate(extra), Effect.provide(logger))
 };
-
-export const debugSet = Effect.fn("debugSet")(function* <S extends string>(
-	service: S,
-	impl: (...args: unknown[]) => unknown,
-	result: unknown
-) {
-	const call = impl.toString();
-	if (call.includes(".set.")) {
-		yield* AppLog.debug(service, {
-			call: impl.toString(),
-			result: Array.isArray(result) ? result.slice(0, 5) : result
-		});
-	}
-});

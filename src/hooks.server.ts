@@ -14,17 +14,27 @@ import { sequence } from "@sveltejs/kit/hooks";
 import { svelteKitHandler } from "better-auth/svelte-kit";
 import { Layer, ManagedRuntime } from "effect";
 
-const runtime: Handle = async ({ event, resolve }) => {
-	const appLayer = Layer.mergeAll(
+const createAppRuntime = () => {
+	const dbLayer = DBService.Default();
+
+	const serviceLayer = Layer.mergeAll(
 		AuthService.DefaultWithoutDependencies(),
 		AdminService.DefaultWithoutDependencies(),
 		CharacterService.DefaultWithoutDependencies(),
 		DMService.DefaultWithoutDependencies(),
 		LogService.DefaultWithoutDependencies(),
 		UserService.DefaultWithoutDependencies()
-	).pipe(Layer.provide(DBService.Default()));
+	);
 
-	event.locals.runtime = ManagedRuntime.make(appLayer);
+	const appLayer = serviceLayer.pipe(Layer.provide(dbLayer));
+
+	return ManagedRuntime.make(appLayer);
+};
+
+const appRuntime = createAppRuntime();
+
+const runtime: Handle = async ({ event, resolve }) => {
+	event.locals.runtime = appRuntime;
 	return await resolve(event);
 };
 
@@ -70,3 +80,26 @@ const preloadTheme: Handle = async ({ event, resolve }) => {
 };
 
 export const handle = sequence(runtime, authHandler, session, info, preloadTheme);
+
+if (typeof process !== "undefined") {
+	let isShuttingDown = false;
+
+	const gracefulShutdown = async (signal: string) => {
+		if (isShuttingDown) return;
+		isShuttingDown = true;
+
+		console.log(`\nReceived ${signal}, shutting down gracefully...`);
+
+		try {
+			await appRuntime.dispose();
+			console.log("Cleanup completed");
+			process.exit(0);
+		} catch (err) {
+			console.error("Error during cleanup:", err);
+			process.exit(1);
+		}
+	};
+
+	process.on("SIGTERM", () => gracefulShutdown("SIGTERM"));
+	process.on("SIGINT", () => gracefulShutdown("SIGINT"));
+}
