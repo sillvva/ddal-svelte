@@ -23,14 +23,12 @@ import type { EffectFailure, EffectResult } from "../effect/runtime";
 export type Database = PostgresJsDatabase<typeof schema, typeof relations>;
 export type Transaction = PgTransaction<PostgresJsQueryResultHKT, typeof schema, typeof relations>;
 
-function getDatabase(): Database {
-	const connection = postgres(privateEnv.DATABASE_URL, { prepare: false });
-	return drizzle(connection, { schema, relations });
-}
+const connection = postgres(privateEnv.DATABASE_URL, { prepare: false });
+const db = drizzle(connection, { schema, relations });
 
 export class DBService extends Effect.Service<DBService>()("DBService", {
 	effect: Effect.fn("DBService")(function* (tx?: Transaction) {
-		const db = tx || getDatabase();
+		const database = tx || db;
 
 		const transaction = Effect.fn("DBService.transaction")(function* <A, B extends InstanceType<ErrorClass> | never>(
 			effect: (tx: Transaction) => Effect.Effect<A, B>
@@ -38,7 +36,7 @@ export class DBService extends Effect.Service<DBService>()("DBService", {
 			const event = getRequestEvent();
 			const runtime = event.locals.runtime;
 			const result: EffectResult<A> = yield* Effect.promise(() =>
-				db.transaction(async (tx) => {
+				database.transaction(async (tx) => {
 					const result = await runtime.runPromiseExit(effect(tx));
 					return Exit.match(result, {
 						onSuccess: (result) => ({ ok: true as const, data: result }),
@@ -60,9 +58,13 @@ export class DBService extends Effect.Service<DBService>()("DBService", {
 			else return yield* new TransactionError(result.error);
 		});
 
-		return { db, transaction };
+		return { db: database, transaction };
 	})
-}) {}
+}) {
+	static async end() {
+		await connection.end();
+	}
+}
 
 export function runQuery<T>(query: PromiseLike<T> & { toSQL: () => Query }): Effect.Effect<T, DrizzleError> {
 	return Effect.tryPromise({

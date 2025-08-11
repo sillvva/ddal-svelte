@@ -91,7 +91,10 @@ if (typeof process !== "undefined") {
 		console.log(`\nReceived ${signal}, shutting down gracefully...`);
 
 		try {
+			console.log("Disposing app runtime...");
 			await appRuntime.dispose();
+			console.log("Closing database connection...");
+			await DBService.end();
 			console.log("Cleanup completed");
 			process.exit(0);
 		} catch (err) {
