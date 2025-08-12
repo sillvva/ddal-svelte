@@ -115,8 +115,10 @@
 								type="button"
 								class="hover:bg-error"
 								aria-label="Delete Character"
+								disabled={!!deleteCharacter.pending}
 								onclick={async () => {
 									if (!confirm(`Are you sure you want to delete ${data.character.name}? This action cannot be undone.`)) return;
+									global.pageLoader = true;
 									const result = await deleteCharacter(data.character.id);
 									if (result.ok) {
 										successToast(`${data.character.name} deleted`);
@@ -124,6 +126,7 @@
 									} else {
 										errorToast(result.error.message);
 									}
+									global.pageLoader = false;
 								}}
 							>
 								Delete Character

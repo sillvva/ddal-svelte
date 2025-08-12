@@ -184,6 +184,7 @@
 														class="btn btn-sm tooltip join-item bg-base-300"
 														aria-label="Switch account"
 														data-tip="Use this account"
+														disabled={!!updateUser.pending}
 														onclick={async () => {
 															const result = await updateUser(account);
 															if (result.ok) {
@@ -200,7 +201,7 @@
 											{/if}
 											<button
 												class="btn btn-error btn-sm join-item font-semibold"
-												disabled={currentAccount?.providerId === provider.id}
+												disabled={currentAccount?.providerId === provider.id || !!updateUser.pending}
 												onclick={async () => {
 													if (confirm("Are you sure you want to unlink this account?")) {
 														const result = await authClient.unlinkAccount({ providerId: provider.id });

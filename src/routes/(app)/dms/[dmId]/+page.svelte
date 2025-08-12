@@ -9,10 +9,12 @@
 	import { errorToast, successToast, valibotForm } from "$lib/factories.svelte.js";
 	import { deleteDM, saveDM } from "$lib/remote/dms.remote.js";
 	import { dungeonMasterSchema } from "$lib/schemas";
-	import { setBreadcrumb } from "$lib/stores.svelte.js";
+	import { getGlobal, setBreadcrumb } from "$lib/stores.svelte.js";
 	import { sorter } from "@sillvva/utils";
 
 	let { data } = $props();
+
+	const global = getGlobal();
 
 	const superform = $derived(valibotForm(data.form, dungeonMasterSchema, { remote: true }));
 	const sortedLogs = $derived(data.dm.logs.toSorted((a, b) => sorter(a.date, b.date)));
@@ -45,8 +47,10 @@
 						type="button"
 						class="btn btn-error sm:btn-sm"
 						aria-label="Delete DM"
+						disabled={!!deleteDM.pending}
 						onclick={async () => {
 							if (!confirm(`Are you sure you want to delete ${data.dm.name}? This action cannot be undone.`)) return;
+							global.pageLoader = true;
 							const result = await deleteDM(data.dm.id);
 							if (result.ok) {
 								successToast(`${data.dm.name} deleted`);
@@ -54,6 +58,7 @@
 							} else {
 								errorToast(result.error.message);
 							}
+							global.pageLoader = false;
 						}}
 					>
 						<span class="iconify mdi--trash-can"></span>

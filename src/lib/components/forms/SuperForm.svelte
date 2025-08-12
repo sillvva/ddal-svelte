@@ -13,7 +13,7 @@
 	type FormAttributes = Omit<HTMLFormAttributes, "hidden">;
 	type T = $$Generic<Record<PropertyKey, unknown>>;
 	type TForm = $$Generic<SuperValidated<T, App.Superforms.Message>>;
-	type TRemoteCommand = $$Generic<(data: T) => Promise<EffectResult<TForm | Pathname>>>;
+	type TRemoteCommand = $$Generic<((data: T) => Promise<EffectResult<TForm | Pathname>>) & { pending: number }>;
 
 	interface Props extends FormAttributes {
 		superform: SuperForm<T, App.Superforms.Message>;
@@ -29,8 +29,7 @@
 
 	const action = $derived(remote ? undefined : rest?.action);
 	const method = $derived(remote ? "post" : rest?.method || "post");
-
-	let isSubmitting = $derived($submitting);
+	const isSubmitting = $derived($submitting || !!remote?.pending);
 
 	onMount(() => {
 		superform.reset();
@@ -87,8 +86,6 @@
 			const r = await validateForm({ update: true });
 			if (!r.valid) return;
 
-			isSubmitting = true;
-
 			const result = await remote($form);
 			if (result.ok) {
 				if (typeof result.data === "string") {
@@ -110,8 +107,6 @@
 				errorMessage(result.error.message);
 				onRemoteError?.(result.error);
 			}
-
-			isSubmitting = false;
 		}}
 	>
 		<fieldset class="grid grid-cols-12 gap-4" disabled={isSubmitting}>
