@@ -102,6 +102,7 @@
 
 									const result = await updateUser({ image: BLANK_CHARACTER });
 									if (result.ok) {
+										// TODO: await getRequestDetails();
 										invalidateAll();
 									} else {
 										errorToast(result.error.message);

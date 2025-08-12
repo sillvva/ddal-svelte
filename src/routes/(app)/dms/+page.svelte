@@ -78,6 +78,7 @@
 														const result = await deleteDM(dm.id);
 														if (result.ok) {
 															successToast(`${dm.name} deleted`);
+															// TODO: Refresh dm query
 															invalidateAll();
 														} else {
 															errorToast(result.error.message);

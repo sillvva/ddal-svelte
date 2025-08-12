@@ -479,6 +479,7 @@
 												const result = await deleteLog(log.id);
 												if (result.ok) {
 													successToast(`${log.name} deleted`);
+													// TODO: Refresh character query
 													invalidateAll();
 												} else {
 													errorToast(result.error.message);

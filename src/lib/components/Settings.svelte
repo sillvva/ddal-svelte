@@ -22,7 +22,7 @@
 
 	const global = getGlobal();
 
-	const request = $derived(getRequestDetails());
+	let request = $state(getRequestDetails());
 	const user = $derived(request.current?.user);
 	const session = $derived(request.current?.session);
 
@@ -77,7 +77,7 @@
 					) {
 						const result = await updateUser(account);
 						if (result.ok) {
-							invalidateAll();
+							request = getRequestDetails();
 						} else {
 							errorToast(result.error.message);
 						}
@@ -188,7 +188,7 @@
 															const result = await updateUser(account);
 															if (result.ok) {
 																global.app.settings.provider = account.providerId;
-																invalidateAll();
+																request = getRequestDetails();
 															} else {
 																errorToast(result.error.message);
 															}

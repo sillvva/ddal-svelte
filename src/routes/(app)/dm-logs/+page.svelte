@@ -257,6 +257,7 @@
 												const result = await deleteLog(log.id);
 												if (result.ok) {
 													successToast(`${log.name} deleted`);
+													// TODO: Refresh logs query
 													invalidateAll();
 												} else {
 													errorToast(result.error.message);

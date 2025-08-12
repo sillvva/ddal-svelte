@@ -32,8 +32,10 @@ export const updateUser = command(
 
 			if (Object.keys(input).length === 0) return yield* Effect.fail(new NoChangesError());
 
-			return yield* Users.set
+			const result = yield* Users.set
 				.update(user.id, input)
 				.pipe(Effect.catchTag("DrizzleError", (err) => Effect.fail(new FailedError("update user", err))));
+
+			return result;
 		})
 );
