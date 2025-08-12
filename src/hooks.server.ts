@@ -103,6 +103,6 @@ if (typeof process !== "undefined") {
 		}
 	};
 
-	process.on("SIGTERM", () => gracefulShutdown("SIGTERM"));
-	process.on("SIGINT", () => gracefulShutdown("SIGINT"));
+	process.once("SIGTERM", () => gracefulShutdown("SIGTERM"));
+	process.once("SIGINT", () => gracefulShutdown("SIGINT"));
 }
