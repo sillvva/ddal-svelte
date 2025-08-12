@@ -38,7 +38,7 @@ const dbLogger = Logger.replace(
 								dev &&
 								(["ERROR", "DEBUG"].includes(log.level)
 									? Console.dir(log, { depth: null })
-									: Console.log(log.timestamp, `[${log.level}]`, log.label))
+									: Console.log(log.timestamp, `[${log.level}]`, log.label, "\n" + JSON.stringify(log.annotations.extra)))
 						)
 					);
 			})
