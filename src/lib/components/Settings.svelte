@@ -77,7 +77,7 @@
 					) {
 						const result = await updateUser(account);
 						if (result.ok) {
-							request = getRequestDetails();
+							await getRequestDetails().refresh();
 						} else {
 							errorToast(result.error.message);
 						}
@@ -188,7 +188,7 @@
 															const result = await updateUser(account);
 															if (result.ok) {
 																global.app.settings.provider = account.providerId;
-																request = getRequestDetails();
+																await getRequestDetails().refresh();
 															} else {
 																errorToast(result.error.message);
 															}
