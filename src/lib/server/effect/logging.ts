@@ -1,7 +1,8 @@
+import { dev } from "$app/environment";
 import { getRequestEvent } from "$app/server";
 import { privateEnv } from "$lib/env/private";
 import type { UserId } from "$lib/schemas";
-import { Effect, HashMap, Layer, Logger } from "effect";
+import { Console, Effect, HashMap, Layer, Logger } from "effect";
 import { AdminService } from "./services/admin";
 
 export type Annotations = {
@@ -24,12 +25,22 @@ const dbLogger = Logger.replace(
 		await runtime.runPromise(
 			Effect.gen(function* () {
 				const Admin = yield* AdminService;
-				return yield* Admin.set.saveLog({
-					label: (log.message as string[]).join(" | "),
-					timestamp: log.date,
-					level: log.logLevel.label,
-					annotations: Object.fromEntries(HashMap.toEntries(log.annotations)) as Annotations
-				});
+				return yield* Admin.set
+					.saveLog({
+						label: (log.message as string[]).join(" | "),
+						timestamp: log.date,
+						level: log.logLevel.label,
+						annotations: Object.fromEntries(HashMap.toEntries(log.annotations)) as Annotations
+					})
+					.pipe(
+						Effect.tap(
+							(log) =>
+								dev &&
+								(["ERROR", "DEBUG"].includes(log.level)
+									? Console.dir(log, { depth: null })
+									: Console.log(log.timestamp, `[${log.level}]`, log.label))
+						)
+					);
 			})
 		);
 	})
