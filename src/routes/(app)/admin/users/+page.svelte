@@ -6,12 +6,12 @@
 	import Search from "$lib/components/Search.svelte";
 	import { BLANK_CHARACTER } from "$lib/constants.js";
 	import { errorToast, successToast } from "$lib/factories.svelte.js";
-	import { getUsers } from "$lib/remote/admin.remote.js";
+	import AdminAPI from "$lib/remote/admin";
 	import { JSONSearchParser } from "@sillvva/search/json";
 
 	let search = $state(page.url.searchParams.get("s")?.trim() ?? "");
 
-	const users = $derived(getUsers());
+	const users = $derived(AdminAPI.query.getUsers());
 	const parser = $derived(
 		new JSONSearchParser(users.current ?? [], {
 			defaultKey: "name",

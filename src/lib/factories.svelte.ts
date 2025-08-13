@@ -22,7 +22,7 @@ import {
 } from "sveltekit-superforms";
 import { valibotClient } from "sveltekit-superforms/adapters";
 import * as v from "valibot";
-import type { SearchData } from "./remote/command.remote";
+import type { SearchData } from "./remote/command";
 
 export function successToast(message: string) {
 	toast.success("Success", {

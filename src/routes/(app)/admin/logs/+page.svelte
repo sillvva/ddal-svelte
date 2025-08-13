@@ -3,16 +3,16 @@
 	import { page } from "$app/state";
 	import Head from "$lib/components/Head.svelte";
 	import { errorToast, successToast } from "$lib/factories.svelte.js";
-	import { deleteAppLog, getAppLogs, getBaseSearch } from "$lib/remote/admin.remote.js";
+	import AdminAPI from "$lib/remote/admin";
 	import { debounce } from "@sillvva/utils";
 	import { SvelteURL } from "svelte/reactivity";
 
 	const url = $derived(new SvelteURL(page.url));
 
-	const baseSearch = $derived(getBaseSearch());
+	const baseSearch = $derived(AdminAPI.query.getBaseSearch());
 	const params = $derived(url.searchParams.get("s")?.trim() ?? baseSearch.current?.query ?? "");
 
-	const logSearch = $derived(getAppLogs(params));
+	const logSearch = $derived(AdminAPI.query.getAppLogs(params));
 
 	const debouncedSearch = debounce((value: string) => {
 		const trimmed = value.trim();
@@ -122,8 +122,11 @@
 						data-tip="Delete log"
 						aria-label="Delete log"
 						onclick={async () => {
-							const result = await deleteAppLog(log.id).updates(
-								getAppLogs(params).withOverride((data) => ({ ...data, logs: data.logs.filter((l) => l.id !== log.id) }))
+							const result = await AdminAPI.action.deleteAppLog(log.id).updates(
+								AdminAPI.query.getAppLogs(params).withOverride((data) => ({
+									...data,
+									logs: data.logs.filter((l) => l.id !== log.id)
+								}))
 							);
 							if (result.ok) {
 								successToast("Log deleted");

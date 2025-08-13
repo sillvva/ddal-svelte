@@ -9,7 +9,7 @@
 	import Head from "$lib/components/Head.svelte";
 	import { BLANK_CHARACTER } from "$lib/constants.js";
 	import { errorToast, successToast, valibotForm } from "$lib/factories.svelte.js";
-	import { saveCharacter } from "$lib/remote/characters.remote.js";
+	import CharactersAPI from "$lib/remote/characters";
 	import { editCharacterSchema } from "$lib/schemas";
 	import { getGlobal, setBreadcrumb } from "$lib/stores.svelte.js";
 
@@ -27,7 +27,7 @@
 
 <Breadcrumbs />
 
-<SuperForm {superform} remote={saveCharacter} onRemoteSuccess={(data) => successToast(`${data.name} saved`)}>
+<SuperForm {superform} remote={CharactersAPI.form.save} onRemoteSuccess={(data) => successToast(`${data.name} saved`)}>
 	<Control class="col-span-12 sm:col-span-6">
 		<Input type="text" {superform} field="name" label="Character Name" />
 	</Control>

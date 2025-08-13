@@ -11,7 +11,7 @@
 	import SuperForm from "$lib/components/forms/SuperForm.svelte";
 	import Head from "$lib/components/Head.svelte";
 	import { successToast, valibotForm } from "$lib/factories.svelte.js";
-	import { saveLog } from "$lib/remote/logs.remote.js";
+	import LogsAPI from "$lib/remote/logs";
 	import { dMLogSchema } from "$lib/schemas";
 	import { setBreadcrumb } from "$lib/stores.svelte.js";
 
@@ -30,7 +30,7 @@
 {#key $form.id}
 	<Breadcrumbs />
 
-	<SuperForm {superform} remote={saveLog} onRemoteSuccess={(data) => successToast(`${data.name} saved`)}>
+	<SuperForm {superform} remote={LogsAPI.form.save} onRemoteSuccess={(data) => successToast(`${data.name} saved`)}>
 		<Control class="col-span-12 sm:col-span-6 lg:col-span-3">
 			<Input type="text" {superform} field="name" label="Title" />
 		</Control>

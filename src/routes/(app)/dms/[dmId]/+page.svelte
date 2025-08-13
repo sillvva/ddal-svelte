@@ -7,7 +7,7 @@
 	import SuperForm from "$lib/components/forms/SuperForm.svelte";
 	import Head from "$lib/components/Head.svelte";
 	import { errorToast, successToast, valibotForm } from "$lib/factories.svelte.js";
-	import { deleteDM, saveDM } from "$lib/remote/dms.remote.js";
+	import DMsAPI from "$lib/remote/dms";
 	import { dungeonMasterSchema } from "$lib/schemas";
 	import { getGlobal, setBreadcrumb } from "$lib/stores.svelte.js";
 	import { sorter } from "@sillvva/utils";
@@ -27,7 +27,7 @@
 <div class="flex flex-col gap-4">
 	<Breadcrumbs />
 
-	<SuperForm {superform} remote={saveDM} onRemoteSuccess={(data) => successToast(`${data.name} saved`)}>
+	<SuperForm {superform} remote={DMsAPI.form.save} onRemoteSuccess={(data) => successToast(`${data.name} saved`)}>
 		<Control class="col-span-12 sm:col-span-6">
 			<Input type="text" {superform} field="name" label="DM Name" />
 		</Control>
@@ -47,11 +47,11 @@
 						type="button"
 						class="btn btn-error sm:btn-sm"
 						aria-label="Delete DM"
-						disabled={!!deleteDM.pending}
+						disabled={!!DMsAPI.action.delete.pending}
 						onclick={async () => {
 							if (!confirm(`Are you sure you want to delete ${data.dm.name}? This action cannot be undone.`)) return;
 							global.pageLoader = true;
-							const result = await deleteDM(data.dm.id);
+							const result = await DMsAPI.action.delete(data.dm.id);
 							if (result.ok) {
 								successToast(`${data.dm.name} deleted`);
 								goto("/dms");

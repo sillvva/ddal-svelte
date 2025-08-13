@@ -33,7 +33,7 @@ export function validateForm<
 // Save
 // -------------------------------------------------------------------------------------------------
 
-export const save = Effect.fn(function* <
+export const saveForm = Effect.fn(function* <
 	TSuccess extends Pathname | TForm,
 	TFailure extends Pathname | TForm,
 	TForm extends SuperValidated<SchemaOut>,

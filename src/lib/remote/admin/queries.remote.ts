@@ -1,6 +1,5 @@
-import { command, query } from "$app/server";
-import { appLogId } from "$lib/schemas";
-import { authRedirect, authReturn, runOrThrow } from "$lib/server/effect/runtime";
+import { query } from "$app/server";
+import { authRedirect, runOrThrow } from "$lib/server/effect/runtime";
 import { AdminService, validKeys } from "$lib/server/effect/services/admin";
 import { UserService } from "$lib/server/effect/services/users";
 import { DateTime, Effect } from "effect";
@@ -36,13 +35,6 @@ export const getAppLogs = query(v.string(), (search) =>
 		);
 
 		return { logs, metadata };
-	}, true)
-);
-
-export const deleteAppLog = command(appLogId, (id) =>
-	authReturn(function* () {
-		const Admin = yield* AdminService;
-		return yield* Admin.set.deleteLog(id);
 	}, true)
 );
 

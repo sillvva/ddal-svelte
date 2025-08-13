@@ -2,15 +2,15 @@
 	import { goto } from "$app/navigation";
 	import { searchSections } from "$lib/constants.js";
 	import { GlobalSearchFactory } from "$lib/factories.svelte";
-	import { getRequestDetails } from "$lib/remote/app.remote";
-	import { getCommandData, type SearchData } from "$lib/remote/command.remote";
+	import AppAPI from "$lib/remote/app";
+	import CommandAPI, { type SearchData } from "$lib/remote/command";
 	import { hotkey } from "$lib/util";
 	import { Command, Dialog, Separator } from "bits-ui";
 	import { twMerge } from "tailwind-merge";
 	import SearchResults from "./SearchResults.svelte";
 
 	const defaultSelected: string = searchSections[0].url;
-	const request = $derived(getRequestDetails());
+	const request = $derived(AppAPI.query.request());
 	const isMac = $derived(request.current?.isMac);
 
 	let open = $state(false);
@@ -28,7 +28,7 @@
 		open = newOpen;
 		search.query = "";
 		if (open) {
-			searchData = await getCommandData();
+			searchData = await CommandAPI.query.getCommandData();
 			input?.focus();
 		} else {
 			searchData = [];

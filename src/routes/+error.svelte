@@ -3,13 +3,13 @@
 	import { afterNavigate } from "$app/navigation";
 	import { resolve } from "$app/paths";
 	import { page } from "$app/state";
-	import { getRequestDetails } from "$lib/remote/app.remote";
+	import AppAPI from "$lib/remote/app";
 	import SuperDebug from "sveltekit-superforms";
 
 	let previousPage = $state<string>(resolve("/"));
 	let display = $state(!dev);
 
-	const request = $derived(getRequestDetails());
+	const request = $derived(AppAPI.query.request());
 	const isMobile = $derived(request.current?.isMobile);
 	const user = $derived(request.current?.user);
 

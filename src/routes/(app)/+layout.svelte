@@ -7,7 +7,7 @@
 	import Settings from "$lib/components/Settings.svelte";
 	import { BLANK_CHARACTER } from "$lib/constants.js";
 	import { errorToast } from "$lib/factories.svelte.js";
-	import { updateUser } from "$lib/remote/auth.remote.js";
+	import AuthAPI from "$lib/remote/auth";
 	import { getGlobal } from "$lib/stores.svelte.js";
 	import { hotkey } from "$lib/util";
 	import { sleep } from "@svelteuidev/composables";
@@ -100,9 +100,9 @@
 									img.onerror = null;
 									img.src = BLANK_CHARACTER;
 
-									const result = await updateUser({ image: BLANK_CHARACTER });
+									const result = await AuthAPI.action.updateUser({ image: BLANK_CHARACTER });
 									if (result.ok) {
-										// TODO: await getRequestDetails().refresh();
+										// TODO: await AppAPI.query.request().refresh();
 										invalidateAll();
 									} else {
 										errorToast(result.error.message);

@@ -10,8 +10,8 @@
 	import Search from "$lib/components/Search.svelte";
 	import SearchResults from "$lib/components/SearchResults.svelte";
 	import { EntitySearchFactory, errorToast, successToast } from "$lib/factories.svelte.js";
-	import { deleteCharacter } from "$lib/remote/characters.remote.js";
-	import { deleteLog } from "$lib/remote/logs.remote.js";
+	import CharactersAPI from "$lib/remote/characters";
+	import LogsAPI from "$lib/remote/logs";
 	import { getGlobal } from "$lib/stores.svelte.js";
 	import { createTransition, hotkey } from "$lib/util";
 	import { slugify, sorter } from "@sillvva/utils";
@@ -115,11 +115,11 @@
 								type="button"
 								class="hover:bg-error"
 								aria-label="Delete Character"
-								disabled={!!deleteCharacter.pending}
+								disabled={!!CharactersAPI.action.delete.pending}
 								onclick={async () => {
 									if (!confirm(`Are you sure you want to delete ${data.character.name}? This action cannot be undone.`)) return;
 									global.pageLoader = true;
-									const result = await deleteCharacter(data.character.id);
+									const result = await CharactersAPI.action.delete(data.character.id);
 									if (result.ok) {
 										successToast(`${data.character.name} deleted`);
 										goto("/characters");
@@ -479,7 +479,7 @@
 											onclick={async () => {
 												if (!confirm(`Are you sure you want to delete ${log.name}? This action cannot be undone.`)) return;
 												deletingLog.add(log.id);
-												const result = await deleteLog(log.id);
+												const result = await LogsAPI.action.delete(log.id);
 												if (result.ok) {
 													successToast(`${log.name} deleted`);
 													// TODO: Refresh character query

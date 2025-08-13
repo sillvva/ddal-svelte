@@ -2,11 +2,11 @@
 	import { invalidateAll } from "$app/navigation";
 	import { authClient } from "$lib/auth";
 	import { errorToast, successToast } from "$lib/factories.svelte";
-	import { getRequestDetails } from "$lib/remote/app.remote";
+	import AppAPI from "$lib/remote/app";
 	import type { PasskeyId } from "$lib/schemas";
 	import { getGlobal } from "$lib/stores.svelte";
 
-	const request = $derived(getRequestDetails());
+	const request = $derived(AppAPI.query.request());
 	const user = $derived(request.current?.user);
 	const passkeys = $derived(user?.passkeys || []);
 	const global = getGlobal();

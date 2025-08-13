@@ -5,7 +5,7 @@
 	import Search from "$lib/components/Search.svelte";
 	import SearchResults from "$lib/components/SearchResults.svelte";
 	import { EntitySearchFactory, errorToast, successToast } from "$lib/factories.svelte.js";
-	import { deleteDM } from "$lib/remote/dms.remote.js";
+	import DMsAPI from "$lib/remote/dms";
 	import { sorter } from "@sillvva/utils";
 	import { SvelteSet } from "svelte/reactivity";
 
@@ -75,7 +75,7 @@
 													onclick={async () => {
 														if (!confirm(`Are you sure you want to delete ${dm.name}? This action cannot be undone.`)) return;
 														deletingDM.add(dm.id);
-														const result = await deleteDM(dm.id);
+														const result = await DMsAPI.action.delete(dm.id);
 														if (result.ok) {
 															successToast(`${dm.name} deleted`);
 															// TODO: Refresh dm query

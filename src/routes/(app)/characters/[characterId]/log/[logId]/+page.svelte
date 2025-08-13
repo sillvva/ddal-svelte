@@ -12,7 +12,7 @@
 	import Head from "$lib/components/Head.svelte";
 	import { defaultDM } from "$lib/entities";
 	import { successToast, valibotForm } from "$lib/factories.svelte.js";
-	import { saveLog } from "$lib/remote/logs.remote.js";
+	import LogsAPI from "$lib/remote/logs";
 	import { type DungeonMasterId, logSchema } from "$lib/schemas";
 	import { setBreadcrumb } from "$lib/stores.svelte.js";
 	import { twMerge } from "tailwind-merge";
@@ -35,7 +35,7 @@
 {#key $form.id || "new"}
 	<Breadcrumbs />
 
-	<SuperForm {superform} remote={saveLog} onRemoteSuccess={(data) => successToast(`${data.name} saved`)}>
+	<SuperForm {superform} remote={LogsAPI.form.save} onRemoteSuccess={(data) => successToast(`${data.name} saved`)}>
 		{#if !data.firstLog}
 			<Control class="col-span-12 sm:col-span-4">
 				<GenericInput {superform} field="type" label="Log Type">

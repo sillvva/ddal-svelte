@@ -1,7 +1,7 @@
 <script lang="ts">
-	import { getRequestDetails } from "$lib/remote/app.remote";
+	import AppAPI from "$lib/remote/app";
 
-	const request = $derived(getRequestDetails());
+	const request = $derived(AppAPI.query.request());
 	const user = $derived(request.current?.user);
 </script>
 

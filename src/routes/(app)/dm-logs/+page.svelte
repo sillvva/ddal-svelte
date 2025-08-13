@@ -9,7 +9,7 @@
 	import Search from "$lib/components/Search.svelte";
 	import SearchResults from "$lib/components/SearchResults.svelte";
 	import { EntitySearchFactory, errorToast, successToast } from "$lib/factories.svelte.js";
-	import { deleteLog } from "$lib/remote/logs.remote.js";
+	import LogsAPI from "$lib/remote/logs";
 	import { getGlobal } from "$lib/stores.svelte.js";
 	import { createTransition, hotkey } from "$lib/util.js";
 	import { sorter } from "@sillvva/utils";
@@ -254,7 +254,7 @@
 											onclick={async () => {
 												if (!confirm(`Are you sure you want to delete ${log.name}? This action cannot be undone.`)) return;
 												deletingLog.add(log.id);
-												const result = await deleteLog(log.id);
+												const result = await LogsAPI.action.delete(log.id);
 												if (result.ok) {
 													successToast(`${log.name} deleted`);
 													// TODO: Refresh logs query
