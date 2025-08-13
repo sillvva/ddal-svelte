@@ -26,9 +26,15 @@ interface AuthApiImpl {
 	readonly auth: () => Effect.Effect<ReturnType<typeof betterAuth>>;
 	readonly getAuthSession: () => Effect.Effect<
 		{ session: LocalsSession | undefined; user: LocalsUser | undefined },
-		DrizzleError | InvalidSchemaError,
+		DrizzleError | InvalidSchemaError | AuthError,
 		UserService
 	>;
+}
+
+class AuthError extends Data.TaggedError("AuthError")<ErrorParams> {
+	constructor(err: unknown) {
+		super({ message: "Authentication error", status: 500, cause: err });
+	}
 }
 
 export class AuthService extends Effect.Service<AuthService>()("AuthService", {
@@ -72,10 +78,14 @@ export class AuthService extends Effect.Service<AuthService>()("AuthService", {
 			}),
 			getAuthSession: Effect.fn("AuthService.getAuthSession")(function* () {
 				const Users = yield* UserService;
+				const event = getRequestEvent();
 
 				const auth = yield* impl.auth();
-				const event = getRequestEvent();
-				const result = yield* Effect.promise(() => auth.api.getSession({ headers: event.request.headers }));
+				const result = yield* Effect.tryPromise({
+					try: () => auth.api.getSession({ headers: event.request.headers }),
+					catch: (err) => new AuthError(err)
+				});
+
 				return {
 					session: result?.session && (yield* parse(localsSessionSchema, result.session)),
 					user: result?.user && (yield* Users.get.localsUser(result.user.id as UserId))
