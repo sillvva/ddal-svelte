@@ -8,10 +8,8 @@
 	import { SvelteURL } from "svelte/reactivity";
 
 	const url = $derived(new SvelteURL(page.url));
-
 	const baseSearch = $derived(AdminAPI.query.getBaseSearch());
 	const params = $derived(url.searchParams.get("s")?.trim() ?? baseSearch.current?.query ?? "");
-
 	const logSearch = $derived(AdminAPI.query.getAppLogs(params));
 
 	const debouncedSearch = debounce((value: string) => {

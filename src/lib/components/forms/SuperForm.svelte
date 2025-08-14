@@ -15,20 +15,29 @@
 	type TForm = $$Generic<SuperValidated<T, App.Superforms.Message>>;
 	type TRemoteCommand = $$Generic<((data: T) => Promise<EffectResult<TForm | Pathname>>) & { pending: number }>;
 
-	interface Props extends FormAttributes {
+	interface Props extends Omit<FormAttributes, "action"> {
 		superform: SuperForm<T, App.Superforms.Message>;
-		remote?: TRemoteCommand;
-		onRemoteSuccess?: (data: T) => void;
-		onRemoteError?: (error: EffectFailure["error"]) => void;
 		children?: Snippet;
 	}
 
-	let { superform, children, remote, onRemoteSuccess, onRemoteError, ...rest }: Props = $props();
+	interface ActionProps extends Props {
+		action: string;
+		remote?: never;
+		onRemoteSuccess?: never;
+		onRemoteError?: never;
+	}
 
+	interface RemoteProps extends Props {
+		action?: never;
+		remote?: TRemoteCommand;
+		onRemoteSuccess?: (data: T) => void;
+		onRemoteError?: (error: EffectFailure["error"]) => void;
+	}
+
+	let { superform, children, action, remote, onRemoteSuccess, onRemoteError, ...rest }: ActionProps | RemoteProps = $props();
 	const { form, errors, message, capture, restore, validateForm, submit, submitting, tainted } = superform;
 
-	const action = $derived(remote ? undefined : rest?.action);
-	const method = $derived(remote ? "post" : rest?.method || "post");
+	const method = $derived(remote ? "post" : rest.method || "post");
 	const isSubmitting = $derived($submitting || !!remote?.pending);
 
 	onMount(() => {
