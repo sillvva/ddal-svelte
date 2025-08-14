@@ -1,18 +1,18 @@
 import { command } from "$app/server";
 import { imageUrlWithFallback, requiredString } from "$lib/schemas.js";
-import { type ErrorParams } from "$lib/server/effect/errors";
+import { ErrorFactory } from "$lib/server/effect/errors";
 import { authReturn } from "$lib/server/effect/runtime";
 import { UserService } from "$lib/server/effect/services/users";
-import { Data, Effect } from "effect";
+import { Effect } from "effect";
 import * as v from "valibot";
 
-class NoChangesError extends Data.TaggedError("NoChangesError")<ErrorParams> {
+class NoChangesError extends ErrorFactory("NoChangesError") {
 	constructor(err?: unknown) {
 		super({ message: "No changes to update", status: 400, cause: err });
 	}
 }
 
-class FailedError extends Data.TaggedError("FailedError")<ErrorParams> {
+class FailedError extends ErrorFactory("FailedError") {
 	constructor(action: string, cause?: unknown) {
 		super({ message: `Failed to ${action}`, status: 500, cause });
 	}

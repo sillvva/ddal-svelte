@@ -1,11 +1,11 @@
 import type { FullCharacterData } from "$lib/server/effect/services/characters";
 import type { Prettify } from "@sillvva/utils";
-import { Data, Effect, LogLevel } from "effect";
+import { Effect, LogLevel } from "effect";
 import * as v from "valibot";
 import { BLANK_CHARACTER, PROVIDERS, themeGroups, themes } from "./constants";
-import type { ErrorParams } from "./server/effect/errors";
+import { ErrorFactory } from "./server/effect/errors";
 
-export class InvalidSchemaError extends Data.TaggedError("InvalidSchemaError")<ErrorParams> {
+export class InvalidSchemaError extends ErrorFactory("InvalidSchemaError") {
 	constructor(summary: string, input: unknown) {
 		super({ message: summary, status: 400, input });
 	}

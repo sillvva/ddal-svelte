@@ -1,17 +1,16 @@
 import { command } from "$app/server";
 import { dungeonMasterIdSchema } from "$lib/schemas";
-import { type ErrorParams } from "$lib/server/effect/errors";
+import { ErrorFactory } from "$lib/server/effect/errors";
 import { authReturn } from "$lib/server/effect/runtime";
 import { DMService } from "$lib/server/effect/services/dms";
-import { Data } from "effect";
 
-class DMNotFoundError extends Data.TaggedError("DMNotFoundError")<ErrorParams> {
+class DMNotFoundError extends ErrorFactory("DMNotFoundError") {
 	constructor(err?: unknown) {
 		super({ message: "Dungeon Master not found", status: 404, cause: err });
 	}
 }
 
-class DeleteUserDMError extends Data.TaggedError("DeleteUserDMError")<ErrorParams> {
+class DeleteUserDMError extends ErrorFactory("DeleteUserDMError") {
 	constructor(err?: unknown) {
 		super({ message: "Unable to delete User DM", status: 500, cause: err });
 	}

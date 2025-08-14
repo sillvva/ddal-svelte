@@ -1,16 +1,15 @@
 import { command } from "$app/server";
 import type { Pathname } from "$app/types";
 import { characterIdSchema, characterLogSchema, dMLogSchema, parse, type LogSchema, type LogSchemaIn } from "$lib/schemas";
-import { FormError, type ErrorParams } from "$lib/server/effect/errors";
-import { saveForm, validateForm } from "$lib/server/effect/forms";
+import { ErrorFactory } from "$lib/server/effect/errors";
+import { FormError, saveForm, validateForm } from "$lib/server/effect/forms";
 import { authReturn } from "$lib/server/effect/runtime";
 import { CharacterService } from "$lib/server/effect/services/characters";
 import { LogService } from "$lib/server/effect/services/logs";
-import { Data } from "effect";
 import type { SuperValidated } from "sveltekit-superforms";
 import * as v from "valibot";
 
-class InvalidCharacterIdError extends Data.TaggedError("InvalidCharacterIdError")<ErrorParams> {
+class InvalidCharacterIdError extends ErrorFactory("InvalidCharacterIdError") {
 	constructor(err?: unknown) {
 		super({ message: "Invalid character ID", status: 400, cause: err });
 	}
