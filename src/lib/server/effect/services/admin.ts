@@ -2,7 +2,7 @@ import type { AppLogId, AppLogSchema } from "$lib/schemas";
 import { DBService, runQuery, type DrizzleError, type Filter, type Transaction, type TRSchema } from "$lib/server/db";
 import type { relations } from "$lib/server/db/relations";
 import { appLogs, type AppLog } from "$lib/server/db/schema";
-import { FormError } from "$lib/server/effect/forms";
+import { FormError } from "$lib/server/effect/errors";
 import type { ParseMetadata } from "@sillvva/search";
 import { DrizzleSearchParser } from "@sillvva/search/drizzle";
 import { eq, sql } from "drizzle-orm";

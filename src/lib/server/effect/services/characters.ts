@@ -14,7 +14,7 @@ import {
 import { characterIncludes } from "$lib/server/db/includes";
 import { characters, logs, type Character } from "$lib/server/db/schema";
 import type { ErrorParams } from "$lib/server/effect/errors";
-import { FormError } from "$lib/server/effect/forms";
+import { FormError } from "$lib/server/effect/errors";
 import { AppLog } from "$lib/server/effect/logging";
 import { and, eq, exists } from "drizzle-orm";
 import { Data, Effect, Layer } from "effect";

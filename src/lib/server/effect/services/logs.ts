@@ -14,7 +14,7 @@ import {
 import { extendedLogIncludes, logIncludes } from "$lib/server/db/includes";
 import { characters, dungeonMasters, logs, magicItems, storyAwards } from "$lib/server/db/schema";
 import type { ErrorParams } from "$lib/server/effect/errors";
-import { FormError } from "$lib/server/effect/forms";
+import { FormError } from "$lib/server/effect/errors";
 import { AppLog } from "$lib/server/effect/logging";
 import { and, eq, exists, inArray, isNull, notInArray, or } from "drizzle-orm";
 import { Data, Effect, Layer } from "effect";

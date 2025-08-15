@@ -3,7 +3,7 @@ import { DBService, runQuery, type Database, type DrizzleError, type InferQueryR
 import { userDMLogIncludes } from "$lib/server/db/includes";
 import { dungeonMasters, type DungeonMaster } from "$lib/server/db/schema";
 import type { ErrorParams } from "$lib/server/effect/errors";
-import { FormError } from "$lib/server/effect/forms";
+import { FormError } from "$lib/server/effect/errors";
 import { AppLog } from "$lib/server/effect/logging";
 import { assertAuthOrFail, UnauthorizedError } from "$lib/server/effect/services/auth";
 import { sorter } from "@sillvva/utils";
