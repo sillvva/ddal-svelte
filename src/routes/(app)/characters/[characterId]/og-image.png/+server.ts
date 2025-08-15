@@ -1,19 +1,20 @@
 import { BLANK_CHARACTER } from "$lib/constants.js";
 import { characterIdSchema } from "$lib/schemas.js";
-import { ErrorFactory } from "$lib/server/effect/errors";
+import { type ErrorParams } from "$lib/server/effect/errors";
 import { runOrThrow } from "$lib/server/effect/runtime.js";
 import { CharacterService } from "$lib/server/effect/services/characters";
 import { Resvg } from "@resvg/resvg-js";
-import { error } from "@sveltejs/kit";
+import { error, type NumericRange } from "@sveltejs/kit";
+import { Data } from "effect";
 import { readFile } from "fs/promises";
 import imageSize from "image-size";
 import path from "path";
 import satori from "satori";
 import { safeParse } from "valibot";
 
-class UnableToFetchImageError extends ErrorFactory("UnableToFetchImageError") {
-	constructor(cause?: unknown) {
-		super({ message: "Unable to fetch image", status: 500, cause });
+class UnableToFetchImageError extends Data.TaggedError("UnableToFetchImageError")<ErrorParams> {
+	constructor(params: ErrorParams = { message: "Unable to fetch image", status: 500 }) {
+		super(params);
 	}
 }
 
@@ -49,7 +50,8 @@ export const GET = async ({ params, url }) => {
 	let response;
 	try {
 		response = await fetch(imageUrl, { method: "GET" });
-		if (!response.ok) throw new UnableToFetchImageError({ message: response.statusText, status: response.status });
+		if (!response.ok)
+			throw new UnableToFetchImageError({ message: response.statusText, status: response.status as NumericRange<400, 599> });
 	} catch {
 		imageUrl = fallbackImageUrl;
 		response = await fetch(fallbackImageUrl, { method: "GET" });

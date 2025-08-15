@@ -1,7 +1,9 @@
-import action from "./actions.remote";
-import form from "./forms.remote";
+import * as actions from "./actions.remote";
+import * as forms from "./forms.remote";
 
 export default {
-	action,
-	form
+	actions: {
+		delete: actions.deleteDM
+	},
+	forms
 };

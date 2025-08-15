@@ -10,7 +10,7 @@
 	import SearchResults from "./SearchResults.svelte";
 
 	const defaultSelected: string = searchSections[0].url;
-	const request = $derived(AppAPI.query.request());
+	const request = $derived(AppAPI.queries.request());
 	const isMac = $derived(request.current?.isMac);
 
 	let open = $state(false);
@@ -28,7 +28,7 @@
 		open = newOpen;
 		search.query = "";
 		if (open) {
-			searchData = await CommandAPI.query.getCommandData();
+			searchData = await CommandAPI.queries.getCommandData();
 			input?.focus();
 		} else {
 			searchData = [];

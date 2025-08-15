@@ -13,15 +13,15 @@ import {
 } from "$lib/server/db";
 import { extendedLogIncludes, logIncludes } from "$lib/server/db/includes";
 import { characters, dungeonMasters, logs, magicItems, storyAwards } from "$lib/server/db/schema";
-import { ErrorFactory } from "$lib/server/effect/errors";
+import type { ErrorParams } from "$lib/server/effect/errors";
 import { FormError } from "$lib/server/effect/forms";
 import { AppLog } from "$lib/server/effect/logging";
 import { and, eq, exists, inArray, isNull, notInArray, or } from "drizzle-orm";
-import { Effect, Layer } from "effect";
+import { Data, Effect, Layer } from "effect";
 import { isTupleOf } from "effect/Predicate";
 import { DMService, DMTx } from "./dms";
 
-export class LogNotFoundError extends ErrorFactory("LogNotFoundError") {
+export class LogNotFoundError extends Data.TaggedError("LogNotFoundError")<ErrorParams> {
 	constructor(err?: unknown) {
 		super({ message: "Log not found", status: 404, cause: err });
 	}

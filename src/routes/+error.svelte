@@ -9,7 +9,7 @@
 	let previousPage = $state<string>(resolve("/"));
 	let display = $state(!dev);
 
-	const request = $derived(AppAPI.query.request());
+	const request = $derived(AppAPI.queries.request());
 	const isMobile = $derived(request.current?.isMobile);
 	const user = $derived(request.current?.user);
 

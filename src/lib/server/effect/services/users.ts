@@ -2,26 +2,26 @@ import { PROVIDERS } from "$lib/constants";
 import type { CharacterId, LocalsUser, PasskeyId, UserId } from "$lib/schemas";
 import { DBService, runQuery, type DrizzleError, type Transaction } from "$lib/server/db";
 import { passkey, user, type Passkey, type User } from "$lib/server/db/schema";
-import { ErrorFactory } from "$lib/server/effect/errors";
+import { type ErrorParams } from "$lib/server/effect/errors";
 import { AppLog } from "$lib/server/effect/logging";
 import { sorter } from "@sillvva/utils";
 import { and, eq } from "drizzle-orm";
-import { Effect, Layer } from "effect";
+import { Data, Effect, Layer } from "effect";
 import { isTupleOf } from "effect/Predicate";
 
-export class UpdateUserError extends ErrorFactory("UpdateUserError") {
+export class UpdateUserError extends Data.TaggedError("UpdateUserError")<ErrorParams> {
 	constructor(err?: unknown) {
 		super({ message: "Could not update user", status: 500, cause: err });
 	}
 }
 
-export class RenamePasskeyError extends ErrorFactory("RenamePasskeyError") {
+export class RenamePasskeyError extends Data.TaggedError("RenamePasskeyError")<ErrorParams> {
 	constructor(err?: unknown) {
 		super({ message: "Could not rename passkey", status: 500, cause: err });
 	}
 }
 
-export class DeletePasskeyError extends ErrorFactory("DeletePasskeyError") {
+export class DeletePasskeyError extends Data.TaggedError("DeletePasskeyError")<ErrorParams> {
 	constructor(err?: unknown) {
 		super({ message: "Could not delete passkey", status: 500, cause: err });
 	}

@@ -5,25 +5,23 @@ import { authReturn } from "$lib/server/effect/runtime";
 import { DMService } from "$lib/server/effect/services/dms";
 import * as v from "valibot";
 
-export default {
-	save: command("unchecked", (input: DungeonMasterSchemaIn) =>
-		authReturn(function* (user) {
-			const DMs = yield* DMService;
+export const save = command("unchecked", (input: DungeonMasterSchemaIn) =>
+	authReturn(function* (user) {
+		const DMs = yield* DMService;
 
-			const idResult = v.safeParse(dungeonMasterIdSchema, input.id);
-			if (!idResult.success) return `/dms`;
-			const dmId = idResult.output;
+		const idResult = v.safeParse(dungeonMasterIdSchema, input.id);
+		if (!idResult.success) return `/dms`;
+		const dmId = idResult.output;
 
-			const form = yield* validateForm(input, dungeonMasterSchema);
-			if (!form.valid) return form;
+		const form = yield* validateForm(input, dungeonMasterSchema);
+		if (!form.valid) return form;
 
-			return yield* saveForm(DMs.set.save(dmId, user, form.data), {
-				onError: (err) => {
-					err.toForm(form);
-					return form;
-				},
-				onSuccess: () => "/dms"
-			});
-		})
-	)
-};
+		return yield* saveForm(DMs.set.save(dmId, user, form.data), {
+			onError: (err) => {
+				err.toForm(form);
+				return form;
+			},
+			onSuccess: () => "/dms"
+		});
+	})
+);

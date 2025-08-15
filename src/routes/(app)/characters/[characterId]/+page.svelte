@@ -115,11 +115,11 @@
 								type="button"
 								class="hover:bg-error"
 								aria-label="Delete Character"
-								disabled={!!CharactersAPI.action.delete.pending}
+								disabled={!!CharactersAPI.actions.delete.pending}
 								onclick={async () => {
 									if (!confirm(`Are you sure you want to delete ${data.character.name}? This action cannot be undone.`)) return;
 									global.pageLoader = true;
-									const result = await CharactersAPI.action.delete(data.character.id);
+									const result = await CharactersAPI.actions.delete(data.character.id);
 									if (result.ok) {
 										successToast(`${data.character.name} deleted`);
 										goto("/characters");
@@ -479,7 +479,7 @@
 											onclick={async () => {
 												if (!confirm(`Are you sure you want to delete ${log.name}? This action cannot be undone.`)) return;
 												deletingLog.add(log.id);
-												const result = await LogsAPI.action.delete(log.id);
+												const result = await LogsAPI.actions.delete(log.id);
 												if (result.ok) {
 													successToast(`${log.name} deleted`);
 													// TODO: Refresh character query

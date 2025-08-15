@@ -22,7 +22,7 @@
 
 	const global = getGlobal();
 
-	let request = $state(AppAPI.query.request());
+	let request = $state(AppAPI.queries.request());
 	const user = $derived(request.current?.user);
 	const session = $derived(request.current?.session);
 
@@ -75,9 +75,9 @@
 						account.email !== user?.email ||
 						(account.image !== user?.image && !account.image.includes(BLANK_CHARACTER))
 					) {
-						const result = await AuthAPI.action.updateUser(account);
+						const result = await AuthAPI.actions.updateUser(account);
 						if (result.ok) {
-							await AppAPI.query.request().refresh();
+							await AppAPI.queries.request().refresh();
 						} else {
 							errorToast(result.error.message);
 						}
@@ -184,12 +184,12 @@
 														class="btn btn-sm tooltip join-item bg-base-300"
 														aria-label="Switch account"
 														data-tip="Use this account"
-														disabled={!!AuthAPI.action.updateUser.pending}
+														disabled={!!AuthAPI.actions.updateUser.pending}
 														onclick={async () => {
-															const result = await AuthAPI.action.updateUser(account);
+															const result = await AuthAPI.actions.updateUser(account);
 															if (result.ok) {
 																global.app.settings.provider = account.providerId;
-																await AppAPI.query.request().refresh();
+																await AppAPI.queries.request().refresh();
 															} else {
 																errorToast(result.error.message);
 															}
@@ -201,7 +201,7 @@
 											{/if}
 											<button
 												class="btn btn-error btn-sm join-item font-semibold"
-												disabled={currentAccount?.providerId === provider.id || !!AuthAPI.action.updateUser.pending}
+												disabled={currentAccount?.providerId === provider.id || !!AuthAPI.actions.updateUser.pending}
 												onclick={async () => {
 													if (confirm("Are you sure you want to unlink this account?")) {
 														const result = await authClient.unlinkAccount({ providerId: provider.id });

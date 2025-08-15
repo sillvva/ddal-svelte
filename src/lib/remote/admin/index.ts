@@ -1,7 +1,7 @@
-import * as action from "./actions.remote";
-import * as query from "./queries.remote";
+import * as actions from "./actions.remote";
+import * as queries from "./queries.remote";
 
 export default {
-	action,
-	query
+	actions,
+	queries
 };

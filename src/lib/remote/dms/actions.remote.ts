@@ -1,31 +1,30 @@
 import { command } from "$app/server";
 import { dungeonMasterIdSchema } from "$lib/schemas";
-import { ErrorFactory } from "$lib/server/effect/errors";
+import { type ErrorParams } from "$lib/server/effect/errors";
 import { authReturn } from "$lib/server/effect/runtime";
 import { DMService } from "$lib/server/effect/services/dms";
+import { Data } from "effect";
 
-class DMNotFoundError extends ErrorFactory("DMNotFoundError") {
+class DMNotFoundError extends Data.TaggedError("DMNotFoundError")<ErrorParams> {
 	constructor(err?: unknown) {
 		super({ message: "Dungeon Master not found", status: 404, cause: err });
 	}
 }
 
-class DeleteUserDMError extends ErrorFactory("DeleteUserDMError") {
+class DeleteUserDMError extends Data.TaggedError("DeleteUserDMError")<ErrorParams> {
 	constructor(err?: unknown) {
 		super({ message: "Unable to delete User DM", status: 500, cause: err });
 	}
 }
 
-export default {
-	delete: command(dungeonMasterIdSchema, (id) =>
-		authReturn(function* (user) {
-			const DMs = yield* DMService;
+export const deleteDM = command(dungeonMasterIdSchema, (id) =>
+	authReturn(function* (user) {
+		const DMs = yield* DMService;
 
-			const [dm] = yield* DMs.get.userDMs(user.id, { id });
-			if (!dm) return yield* new DMNotFoundError();
-			if (dm.isUser) return yield* new DeleteUserDMError();
+		const [dm] = yield* DMs.get.userDMs(user.id, { id });
+		if (!dm) return yield* new DMNotFoundError();
+		if (dm.isUser) return yield* new DeleteUserDMError();
 
-			return yield* DMs.set.delete(dm, user.id);
-		})
-	)
-};
+		return yield* DMs.set.delete(dm, user.id);
+	})
+);

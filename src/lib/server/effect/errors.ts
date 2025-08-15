@@ -1,8 +1,7 @@
 import { isInstanceOfClass } from "@sillvva/utils";
 import { type NumericRange } from "@sveltejs/kit";
-import { Data } from "effect";
 
-interface ErrorParams {
+export interface ErrorParams {
 	message: string;
 	status: NumericRange<400, 599>;
 	cause?: unknown;
@@ -11,14 +10,6 @@ interface ErrorParams {
 
 export interface ErrorClass {
 	new (...args: unknown[]): { _tag: string } & ErrorParams;
-}
-
-export function ErrorFactory<T extends string>(tag: T) {
-	return class extends Data.TaggedError(tag)<ErrorParams> {
-		constructor(params: ErrorParams) {
-			super(params);
-		}
-	};
 }
 
 export function isTaggedError(error: unknown): error is InstanceType<ErrorClass> {

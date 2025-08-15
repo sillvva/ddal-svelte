@@ -1,5 +1,5 @@
-import * as action from "./actions.remote";
+import * as actions from "./actions.remote";
 
 export default {
-	action
+	actions
 };

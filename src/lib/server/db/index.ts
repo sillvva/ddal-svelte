@@ -2,7 +2,7 @@ import { getRequestEvent } from "$app/server";
 import { privateEnv } from "$lib/env/private";
 import { relations } from "$lib/server/db/relations";
 import * as schema from "$lib/server/db/schema";
-import { ErrorFactory, type ErrorClass } from "$lib/server/effect/errors";
+import { type ErrorClass, type ErrorParams } from "$lib/server/effect/errors";
 import {
 	getTableColumns,
 	sql,
@@ -16,7 +16,7 @@ import {
 } from "drizzle-orm";
 import type { PgTable, PgTransaction } from "drizzle-orm/pg-core";
 import { drizzle, type PostgresJsDatabase, type PostgresJsQueryResultHKT } from "drizzle-orm/postgres-js";
-import { Cause, Effect, Exit } from "effect";
+import { Cause, Data, Effect, Exit } from "effect";
 import postgres from "postgres";
 import type { EffectFailure, EffectResult } from "../effect/runtime";
 
@@ -73,13 +73,13 @@ export function runQuery<T>(query: PromiseLike<T> & { toSQL: () => Query }): Eff
 	});
 }
 
-export class TransactionError extends ErrorFactory("TransactionError") {
+export class TransactionError extends Data.TaggedError("TransactionError")<ErrorParams> {
 	constructor(err: unknown) {
 		super({ message: Cause.pretty(Cause.fail(err)), status: 500, cause: err });
 	}
 }
 
-export class DrizzleError extends ErrorFactory("DrizzleError") {
+export class DrizzleError extends Data.TaggedError("DrizzleError")<ErrorParams> {
 	constructor(err: unknown, query: Query) {
 		super({ message: Cause.pretty(Cause.fail(err)), status: 500, cause: err, query });
 	}

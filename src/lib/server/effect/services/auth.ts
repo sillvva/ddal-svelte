@@ -10,14 +10,14 @@ import {
 	type UserId
 } from "$lib/schemas";
 import { DBService, DrizzleError } from "$lib/server/db";
-import { ErrorFactory } from "$lib/server/effect/errors";
+import { type ErrorParams } from "$lib/server/effect/errors";
 import { AppLog } from "$lib/server/effect/logging";
 import { redirect, type NumericRange } from "@sveltejs/kit";
 import { betterAuth } from "better-auth";
 import { drizzleAdapter } from "better-auth/adapters/drizzle";
 import { admin } from "better-auth/plugins/admin";
 import { passkey } from "better-auth/plugins/passkey";
-import { Effect } from "effect";
+import { Data, Effect } from "effect";
 import { v7 } from "uuid";
 import * as v from "valibot";
 import { UserService } from "./users";
@@ -31,7 +31,7 @@ interface AuthApiImpl {
 	>;
 }
 
-class AuthError extends ErrorFactory("AuthError") {
+class AuthError extends Data.TaggedError("AuthError")<ErrorParams> {
 	constructor(err: unknown) {
 		super({ message: "Authentication error", status: 500, cause: err });
 	}
@@ -128,7 +128,7 @@ export const assertAuthOrRedirect = Effect.fn(function* (adminOnly: boolean = fa
 	return user;
 });
 
-export class UnauthorizedError extends ErrorFactory("UnauthorizedError") {
+export class UnauthorizedError extends Data.TaggedError("UnauthorizedError")<ErrorParams> {
 	constructor(message = "Unauthorized", status: NumericRange<400, 499>) {
 		super({ message, status });
 	}

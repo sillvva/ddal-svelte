@@ -30,7 +30,7 @@
 {#key $form.id}
 	<Breadcrumbs />
 
-	<SuperForm {superform} remote={LogsAPI.form.save} onRemoteSuccess={(data) => successToast(`${data.name} saved`)}>
+	<SuperForm {superform} remote={LogsAPI.forms.save} onRemoteSuccess={(data) => successToast(`${data.name} saved`)}>
 		<Control class="col-span-12 sm:col-span-6 lg:col-span-3">
 			<Input type="text" {superform} field="name" label="Title" />
 		</Control>

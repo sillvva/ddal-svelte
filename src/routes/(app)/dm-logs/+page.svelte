@@ -254,7 +254,7 @@
 											onclick={async () => {
 												if (!confirm(`Are you sure you want to delete ${log.name}? This action cannot be undone.`)) return;
 												deletingLog.add(log.id);
-												const result = await LogsAPI.action.delete(log.id);
+												const result = await LogsAPI.actions.delete(log.id);
 												if (result.ok) {
 													successToast(`${log.name} deleted`);
 													// TODO: Refresh logs query

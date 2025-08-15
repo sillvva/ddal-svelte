@@ -27,7 +27,7 @@
 
 <Breadcrumbs />
 
-<SuperForm {superform} remote={CharactersAPI.form.save} onRemoteSuccess={(data) => successToast(`${data.name} saved`)}>
+<SuperForm {superform} remote={CharactersAPI.forms.save} onRemoteSuccess={(data) => successToast(`${data.name} saved`)}>
 	<Control class="col-span-12 sm:col-span-6">
 		<Input type="text" {superform} field="name" label="Character Name" />
 	</Control>

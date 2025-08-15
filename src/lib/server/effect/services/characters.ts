@@ -13,14 +13,14 @@ import {
 } from "$lib/server/db";
 import { characterIncludes } from "$lib/server/db/includes";
 import { characters, logs, type Character } from "$lib/server/db/schema";
-import { ErrorFactory } from "$lib/server/effect/errors";
+import type { ErrorParams } from "$lib/server/effect/errors";
 import { FormError } from "$lib/server/effect/forms";
 import { AppLog } from "$lib/server/effect/logging";
 import { and, eq, exists } from "drizzle-orm";
-import { Effect, Layer } from "effect";
+import { Data, Effect, Layer } from "effect";
 import { isTupleOf } from "effect/Predicate";
 
-export class CharacterNotFoundError extends ErrorFactory("CharacterNotFoundError") {
+export class CharacterNotFoundError extends Data.TaggedError("CharacterNotFoundError")<ErrorParams> {
 	constructor(err?: unknown) {
 		super({ message: "Character not found", status: 404, cause: err });
 	}

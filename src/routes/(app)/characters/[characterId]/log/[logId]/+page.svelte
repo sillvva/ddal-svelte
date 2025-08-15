@@ -35,7 +35,7 @@
 {#key $form.id || "new"}
 	<Breadcrumbs />
 
-	<SuperForm {superform} remote={LogsAPI.form.save} onRemoteSuccess={(data) => successToast(`${data.name} saved`)}>
+	<SuperForm {superform} remote={LogsAPI.forms.save} onRemoteSuccess={(data) => successToast(`${data.name} saved`)}>
 		{#if !data.firstLog}
 			<Control class="col-span-12 sm:col-span-4">
 				<GenericInput {superform} field="type" label="Log Type">

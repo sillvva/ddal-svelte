@@ -11,7 +11,7 @@
 
 	let search = $state(page.url.searchParams.get("s")?.trim() ?? "");
 
-	const users = $derived(AdminAPI.query.getUsers());
+	const users = $derived(AdminAPI.queries.getUsers());
 	const parser = $derived(
 		new JSONSearchParser(users.current ?? [], {
 			defaultKey: "name",

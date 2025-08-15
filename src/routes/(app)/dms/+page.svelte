@@ -75,7 +75,7 @@
 													onclick={async () => {
 														if (!confirm(`Are you sure you want to delete ${dm.name}? This action cannot be undone.`)) return;
 														deletingDM.add(dm.id);
-														const result = await DMsAPI.action.delete(dm.id);
+														const result = await DMsAPI.actions.delete(dm.id);
 														if (result.ok) {
 															successToast(`${dm.name} deleted`);
 															// TODO: Refresh dm query

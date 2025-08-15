@@ -100,9 +100,9 @@
 									img.onerror = null;
 									img.src = BLANK_CHARACTER;
 
-									const result = await AuthAPI.action.updateUser({ image: BLANK_CHARACTER });
+									const result = await AuthAPI.actions.updateUser({ image: BLANK_CHARACTER });
 									if (result.ok) {
-										// TODO: await AppAPI.query.request().refresh();
+										// TODO: await AppAPI.queries.request().refresh();
 										invalidateAll();
 									} else {
 										errorToast(result.error.message);

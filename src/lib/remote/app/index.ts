@@ -1,5 +1,5 @@
-import query from "./queries.remote";
+import * as queries from "./queries.remote";
 
 export default {
-	query
+	queries
 };

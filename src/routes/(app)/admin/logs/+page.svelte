@@ -8,9 +8,9 @@
 	import { SvelteURL } from "svelte/reactivity";
 
 	const url = $derived(new SvelteURL(page.url));
-	const baseSearch = $derived(AdminAPI.query.getBaseSearch());
+	const baseSearch = $derived(AdminAPI.queries.getBaseSearch());
 	const params = $derived(url.searchParams.get("s")?.trim() ?? baseSearch.current?.query ?? "");
-	const logSearch = $derived(AdminAPI.query.getAppLogs(params));
+	const logSearch = $derived(AdminAPI.queries.getAppLogs(params));
 
 	const debouncedSearch = debounce((value: string) => {
 		const trimmed = value.trim();
@@ -120,8 +120,8 @@
 						data-tip="Delete log"
 						aria-label="Delete log"
 						onclick={async () => {
-							const result = await AdminAPI.action.deleteAppLog(log.id).updates(
-								AdminAPI.query.getAppLogs(params).withOverride((data) => ({
+							const result = await AdminAPI.actions.deleteAppLog(log.id).updates(
+								AdminAPI.queries.getAppLogs(params).withOverride((data) => ({
 									...data,
 									logs: data.logs.filter((l) => l.id !== log.id)
 								}))
