@@ -1,7 +1,7 @@
 import type { Pathname } from "$app/types";
 import { removeTrace, type Awaitable } from "$lib/util";
 import { type NumericRange, type RequestEvent } from "@sveltejs/kit";
-import { Cause, Data, Effect } from "effect";
+import { Cause, Effect } from "effect";
 import {
 	setError,
 	superValidate,
@@ -13,7 +13,7 @@ import {
 } from "sveltekit-superforms";
 import { valibot } from "sveltekit-superforms/adapters";
 import * as v from "valibot";
-import { isTaggedError, type ErrorClass, type ErrorParams } from "./errors";
+import { ErrorFactory, isTaggedError, type ErrorClass } from "./errors";
 import { AppLog } from "./logging";
 
 // -------------------------------------------------------------------------------------------------
@@ -67,7 +67,7 @@ export const saveForm = Effect.fn(function* <
 // FormError
 // -------------------------------------------------------------------------------------------------
 
-export class FormError<SchemaOut extends Record<PropertyKey, unknown>> extends Data.TaggedError("FormError")<ErrorParams> {
+export class FormError<SchemaOut extends Record<PropertyKey, unknown>> extends ErrorFactory("FormError") {
 	constructor(
 		public message: string,
 		protected options: Partial<{
