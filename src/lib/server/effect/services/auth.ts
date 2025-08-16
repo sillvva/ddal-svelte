@@ -17,7 +17,7 @@ import { betterAuth } from "better-auth";
 import { drizzleAdapter } from "better-auth/adapters/drizzle";
 import { admin } from "better-auth/plugins/admin";
 import { passkey } from "better-auth/plugins/passkey";
-import { Data, Effect } from "effect";
+import { Data, Duration, Effect } from "effect";
 import { v7 } from "uuid";
 import * as v from "valibot";
 import { UserService } from "./users";
@@ -67,7 +67,7 @@ export class AuthService extends Effect.Service<AuthService>()("AuthService", {
 						}
 					},
 					session: {
-						expiresIn: 60 * 60 * 24 * 30 // 30 days
+						expiresIn: Duration.toSeconds("30 days")
 					},
 					advanced: {
 						database: {
