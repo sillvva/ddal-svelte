@@ -1,9 +1,9 @@
 import { command } from "$app/server";
 import type { Pathname } from "$app/types";
-import { characterIdSchema, characterLogSchema, dMLogSchema, parse, type LogSchema, type LogSchemaIn } from "$lib/schemas";
+import { characterIdSchema, characterLogSchema, dMLogSchema, type LogSchema, type LogSchemaIn } from "$lib/schemas";
 import type { ErrorParams } from "$lib/server/effect/errors";
-import { FormError } from "$lib/server/effect/errors";
-import { saveForm, validateForm } from "$lib/server/effect/forms";
+import { FormError, RedirectError } from "$lib/server/effect/errors";
+import { parse, saveForm, validateForm } from "$lib/server/effect/forms";
 import { authReturn } from "$lib/server/effect/runtime";
 import { CharacterService } from "$lib/server/effect/services/characters";
 import { LogService } from "$lib/server/effect/services/logs";
@@ -42,7 +42,7 @@ export const save = command("unchecked", (input: LogSchemaIn) =>
 
 			redirectTo = `/dm-logs`;
 		} else {
-			const characterId = yield* parse(characterIdSchema, input.characterId);
+			const characterId = yield* parse(characterIdSchema, input.characterId, "/characters");
 			const character = yield* Characters.get.character(characterId);
 
 			form = yield* validateForm(input, characterLogSchema(character));
@@ -53,7 +53,7 @@ export const save = command("unchecked", (input: LogSchemaIn) =>
 
 		const logId = form.data.id;
 		const log = logId !== "new" ? yield* Logs.get.log(logId, user.id) : undefined;
-		if (logId !== "new" && !log?.id) return redirectTo;
+		if (logId !== "new" && !log?.id) return yield* new RedirectError("Log not found", redirectTo);
 
 		return yield* saveForm(Logs.set.save(form.data, user), {
 			onError: (err) => {

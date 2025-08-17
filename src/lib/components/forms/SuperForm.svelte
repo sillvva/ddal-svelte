@@ -113,8 +113,12 @@
 				$form = result.data.data;
 				$message = result.data.message;
 			} else {
-				errorMessage(result.error.message);
 				onRemoteError?.(result.error);
+				if (result.error.extra.redirectTo && typeof result.error.extra.redirectTo === "string") {
+					goto(result.error.extra.redirectTo);
+				} else {
+					errorMessage(result.error.message);
+				}
 			}
 		}}
 	>

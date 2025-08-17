@@ -2,7 +2,7 @@ import { dev } from "$app/environment";
 import { getRequestEvent } from "$app/server";
 import type { LocalsUser } from "$lib/schemas";
 import { removeTrace } from "$lib/util";
-import { error, isHttpError, isRedirect, type NumericRange } from "@sveltejs/kit";
+import { error, isHttpError, isRedirect, redirect, type NumericRange } from "@sveltejs/kit";
 import { Cause, Effect, Exit, ManagedRuntime } from "effect";
 import { isFunction } from "effect/Predicate";
 import type { YieldWrap } from "effect/Utils";
@@ -56,7 +56,10 @@ export async function runOrThrow<
 	return Exit.match(result, {
 		onSuccess: (result) => result,
 		onFailure: (cause) => {
-			const { message, status } = handleCause(cause);
+			const { message, status, extra } = handleCause(cause);
+			if (extra.redirectTo && typeof extra.redirectTo === "string") {
+				throw redirect(303, extra.redirectTo);
+			}
 			throw error(status, message);
 		}
 	});

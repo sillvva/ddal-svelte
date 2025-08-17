@@ -1,11 +1,11 @@
 import type { Pathname } from "$app/types";
 import { removeTrace, type Awaitable } from "$lib/util";
 import { type RequestEvent } from "@sveltejs/kit";
-import { Cause, Effect } from "effect";
+import { Cause, Data, Effect } from "effect";
 import { superValidate, type Infer, type InferIn, type SuperValidated, type SuperValidateOptions } from "sveltekit-superforms";
 import { valibot } from "sveltekit-superforms/adapters";
 import * as v from "valibot";
-import { FormError, type ErrorClass } from "./errors";
+import { FormError, RedirectError, type ErrorClass, type ErrorParams } from "./errors";
 import { AppLog } from "./logging";
 
 // -------------------------------------------------------------------------------------------------
@@ -20,6 +20,22 @@ export function validateForm<
 >(input: Input, schema: Schema, options?: SuperValidateOptions<Infer<Schema, "valibot">>) {
 	return Effect.promise(() => superValidate(input, valibot(schema), options));
 }
+
+export class InvalidSchemaError extends Data.TaggedError("InvalidSchemaError")<ErrorParams> {
+	constructor(summary: string, input: unknown) {
+		super({ message: summary, status: 400, input });
+	}
+}
+
+export const parse = Effect.fn(function* <T extends v.GenericSchema>(schema: T, value: unknown, redirectTo?: Pathname) {
+	const parseResult = v.safeParse(schema, value);
+	if (parseResult.success) return parseResult.output;
+	else {
+		const error = v.summarize(parseResult.issues);
+		if (redirectTo) return yield* new RedirectError(error, redirectTo);
+		else return yield* new InvalidSchemaError(error, value);
+	}
+});
 
 // -------------------------------------------------------------------------------------------------
 // Save

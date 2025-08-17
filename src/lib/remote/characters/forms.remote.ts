@@ -1,8 +1,8 @@
 import { command } from "$app/server";
 import { defaultLogSchema } from "$lib/entities";
-import { characterIdOrNewSchema, editCharacterSchema, parse, type EditCharacterSchemaIn } from "$lib/schemas";
+import { characterIdOrNewSchema, editCharacterSchema, type EditCharacterSchemaIn } from "$lib/schemas";
 import { FormError } from "$lib/server/effect/errors";
-import { saveForm, validateForm } from "$lib/server/effect/forms";
+import { parse, saveForm, validateForm } from "$lib/server/effect/forms";
 import { authReturn, runOrReturn } from "$lib/server/effect/runtime";
 import { CharacterService } from "$lib/server/effect/services/characters";
 import { LogService } from "$lib/server/effect/services/logs";
@@ -11,11 +11,11 @@ export const save = command("unchecked", (input: EditCharacterSchemaIn) =>
 	authReturn(function* (user) {
 		const Characters = yield* CharacterService;
 
+		const characterId = yield* parse(characterIdOrNewSchema, input.id, "/characters");
+
 		const form = yield* validateForm(input, editCharacterSchema);
 		if (!form.valid) return form;
 		const { firstLog, ...data } = form.data;
-
-		const characterId = yield* parse(characterIdOrNewSchema, input.id);
 
 		return yield* saveForm(Characters.set.save(characterId, user.id, data), {
 			onError: (err) => {

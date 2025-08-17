@@ -1,3 +1,4 @@
+import type { Pathname } from "$app/types";
 import { isInstanceOfClass } from "@sillvva/utils";
 import { type NumericRange } from "@sveltejs/kit";
 import { Cause, Data } from "effect";
@@ -27,6 +28,16 @@ export function isTaggedError(error: unknown): error is InstanceType<ErrorClass>
 		"_tag" in error &&
 		typeof error._tag === "string"
 	);
+}
+
+// -------------------------------------------------------------------------------------------------
+// RedirectError
+// -------------------------------------------------------------------------------------------------
+
+export class RedirectError extends Data.TaggedError("RedirectError")<ErrorParams> {
+	constructor(message: string, redirectTo: Pathname) {
+		super({ message, status: 500, redirectTo });
+	}
 }
 
 // -------------------------------------------------------------------------------------------------
