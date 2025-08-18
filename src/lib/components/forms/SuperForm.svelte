@@ -100,8 +100,9 @@
 				if (typeof result.data === "string") {
 					$tainted = undefined;
 					onRemoteSuccess?.($form);
-					await invalidateAll();
-					return goto(result.data);
+					return goto(result.data, {
+						invalidateAll: true
+					});
 				}
 
 				const errorsFields = Object.keys(result.data.errors);
