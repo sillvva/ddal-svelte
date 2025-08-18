@@ -62,7 +62,7 @@ export const saveForm = Effect.fn(function* <
 				const result = await handlers.onError(error);
 
 				const message = removeTrace(Cause.pretty(Cause.fail(error)));
-				Effect.runFork(AppLog.error(`SaveError: ${message}`, { result, error }));
+				Effect.runFork(AppLog.error(message, { result, error }));
 
 				return result;
 			}
