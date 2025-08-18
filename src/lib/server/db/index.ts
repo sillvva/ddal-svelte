@@ -18,7 +18,6 @@ import type { PgTable, PgTransaction } from "drizzle-orm/pg-core";
 import { drizzle, type PostgresJsDatabase, type PostgresJsQueryResultHKT } from "drizzle-orm/postgres-js";
 import { Cause, Data, Effect, Exit } from "effect";
 import postgres from "postgres";
-import type { EffectFailure, EffectResult } from "../effect/runtime";
 
 export type Database = PostgresJsDatabase<typeof schema, typeof relations>;
 export type Transaction = PgTransaction<PostgresJsQueryResultHKT, typeof schema, typeof relations>;
@@ -30,32 +29,33 @@ export class DBService extends Effect.Service<DBService>()("DBService", {
 	effect: Effect.fn("DBService")(function* (tx?: Transaction) {
 		const database = tx || db;
 
-		const transaction = Effect.fn("DBService.transaction")(function* <A, B extends InstanceType<ErrorClass> | never>(
-			effect: (tx: Transaction) => Effect.Effect<A, B>
+		const transaction = Effect.fn("DBService.transaction")(function* <A, B extends InstanceType<ErrorClass>>(
+			effect: (tx: Transaction) => Effect.Effect<A, B | never>
 		) {
 			const event = getRequestEvent();
 			const runtime = event.locals.runtime;
-			const result: EffectResult<A> = yield* Effect.promise(() =>
-				database.transaction(async (tx) => {
-					const result = await runtime.runPromiseExit(effect(tx));
-					return Exit.match(result, {
-						onSuccess: (result) => ({ ok: true as const, data: result }),
-						onFailure: (cause) =>
-							({
-								ok: false as const,
-								error: {
-									message: Cause.pretty(cause),
-									status: 500,
-									extra: {
-										cause: cause
+			const result = yield* Effect.tryPromise({
+				try: () =>
+					new Promise<A>((resolve, reject) => {
+						database
+							.transaction(async (tx) => {
+								const result = await runtime.runPromiseExit(effect(tx));
+								Exit.match(result, {
+									onSuccess: resolve,
+									onFailure: (cause) => {
+										reject(cause);
+										tx.rollback();
 									}
-								}
-							}) satisfies EffectFailure
-					});
-				})
-			);
-			if (result.ok) return result.data;
-			else return yield* new TransactionError(result.error);
+								});
+							})
+							.catch(reject);
+					}),
+				catch: (err) => {
+					if (Cause.isCause(err) && Cause.isFailType(err)) return err.error as B;
+					else return new TransactionError(err);
+				}
+			});
+			return result;
 		});
 
 		return { db: database, transaction };
@@ -75,13 +75,13 @@ export function runQuery<T>(query: PromiseLike<T> & { toSQL: () => Query }): Eff
 
 export class TransactionError extends Data.TaggedError("TransactionError")<ErrorParams> {
 	constructor(err: unknown) {
-		super({ message: Cause.pretty(Cause.fail(err)), status: 500, cause: err });
+		super({ message: Cause.pretty(Cause.isCause(err) ? err : Cause.fail(err)), status: 500, cause: err });
 	}
 }
 
 export class DrizzleError extends Data.TaggedError("DrizzleError")<ErrorParams> {
 	constructor(err: unknown, query: Query) {
-		super({ message: Cause.pretty(Cause.fail(err)), status: 500, cause: err, query });
+		super({ message: Cause.pretty(Cause.isCause(err) ? err : Cause.fail(err)), status: 500, cause: err, query });
 	}
 }
 

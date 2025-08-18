@@ -113,7 +113,10 @@ interface LogApiImpl {
 		readonly userLogs: (userId: UserId) => Effect.Effect<UserLogData[], DrizzleError>;
 	};
 	readonly set: {
-		readonly save: (log: LogSchema, user: LocalsUser) => Effect.Effect<FullLogData, SaveLogError | TransactionError>;
+		readonly save: (
+			log: LogSchema,
+			user: LocalsUser
+		) => Effect.Effect<FullLogData, SaveLogError | DrizzleError | TransactionError>;
 		readonly delete: (logId: LogId, userId: UserId) => Effect.Effect<{ id: LogId }, DeleteLogError | DrizzleError>;
 	};
 }

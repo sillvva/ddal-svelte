@@ -1,6 +1,6 @@
 <script lang="ts">
 	import { dev } from "$app/environment";
-	import { beforeNavigate, goto } from "$app/navigation";
+	import { beforeNavigate, goto, invalidateAll } from "$app/navigation";
 	import type { Pathname } from "$app/types";
 	import { taintedMessage } from "$lib/factories.svelte";
 	import type { EffectFailure, EffectResult } from "$lib/server/effect/runtime";
@@ -100,6 +100,7 @@
 				if (typeof result.data === "string") {
 					$tainted = undefined;
 					onRemoteSuccess?.($form);
+					await invalidateAll();
 					return goto(result.data);
 				}
 
@@ -107,6 +108,7 @@
 				if (errorsFields.length) {
 					$errors = result.data.errors;
 				} else {
+					await invalidateAll();
 					onRemoteSuccess?.($form);
 				}
 

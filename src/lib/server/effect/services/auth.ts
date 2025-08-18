@@ -1,16 +1,8 @@
 import { getRequestEvent } from "$app/server";
 import { privateEnv } from "$lib/env/private";
-import {
-	InvalidSchemaError,
-	localsSessionSchema,
-	localsUserSchema,
-	parse,
-	type LocalsSession,
-	type LocalsUser,
-	type UserId
-} from "$lib/schemas";
+import { localsSessionSchema, localsUserSchema, type LocalsSession, type LocalsUser, type UserId } from "$lib/schemas";
 import { DBService, DrizzleError } from "$lib/server/db";
-import { type ErrorParams } from "$lib/server/effect/errors";
+import { RedirectError, type ErrorParams } from "$lib/server/effect/errors";
 import { AppLog } from "$lib/server/effect/logging";
 import { redirect, type NumericRange } from "@sveltejs/kit";
 import { betterAuth } from "better-auth";
@@ -20,13 +12,14 @@ import { passkey } from "better-auth/plugins/passkey";
 import { Data, Duration, Effect } from "effect";
 import { v7 } from "uuid";
 import * as v from "valibot";
+import { parse, type InvalidSchemaError } from "../forms";
 import { UserService } from "./users";
 
 interface AuthApiImpl {
 	readonly auth: () => Effect.Effect<ReturnType<typeof betterAuth>>;
 	readonly getAuthSession: () => Effect.Effect<
 		{ session: LocalsSession | undefined; user: LocalsUser | undefined },
-		DrizzleError | InvalidSchemaError | AuthError,
+		DrizzleError | InvalidSchemaError | AuthError | RedirectError,
 		UserService
 	>;
 }

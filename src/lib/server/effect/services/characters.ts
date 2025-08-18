@@ -60,7 +60,7 @@ interface CharacterApiImpl {
 		readonly delete: (
 			characterId: CharacterId,
 			userId: UserId
-		) => Effect.Effect<{ id: CharacterId }, DeleteCharacterError | TransactionError>;
+		) => Effect.Effect<{ id: CharacterId }, DeleteCharacterError | DrizzleError | TransactionError>;
 	};
 }
 
