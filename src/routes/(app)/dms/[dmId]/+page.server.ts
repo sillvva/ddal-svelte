@@ -24,10 +24,7 @@ export const load = (event) =>
 				userId: dm.userId,
 				isUser: dm.isUser
 			},
-			dungeonMasterSchema,
-			{
-				errors: false
-			}
+			dungeonMasterSchema
 		);
 
 		return {

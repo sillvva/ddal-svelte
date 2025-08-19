@@ -1,6 +1,6 @@
 import { PlaceholderName } from "$lib/constants";
 import { getLogsSummary, parseCharacter } from "$lib/entities";
-import type { CharacterId, EditCharacterSchema, NewCharacterSchema, UserId } from "$lib/schemas";
+import type { CharacterId, CharacterSchema, EditCharacterSchema, UserId } from "$lib/schemas";
 import {
 	buildConflictUpdateColumns,
 	DBService,
@@ -52,11 +52,7 @@ interface CharacterApiImpl {
 		) => Effect.Effect<FullCharacterData[], DrizzleError>;
 	};
 	readonly set: {
-		readonly save: (
-			characterId: CharacterId | "new",
-			userId: UserId,
-			data: NewCharacterSchema
-		) => Effect.Effect<Character, SaveCharacterError | DrizzleError>;
+		readonly save: (data: CharacterSchema, userId: UserId) => Effect.Effect<Character, SaveCharacterError | DrizzleError>;
 		readonly delete: (
 			characterId: CharacterId,
 			userId: UserId
@@ -105,15 +101,15 @@ export class CharacterService extends Effect.Service<CharacterService>()("Charac
 				})
 			},
 			set: {
-				save: Effect.fn("CharacterService.set.save")(function* (characterId, userId, data) {
-					if (!characterId) yield* new SaveCharacterError("No character ID provided", { status: 400 });
+				save: Effect.fn("CharacterService.set.save")(function* (data, userId) {
+					if (!data.id) yield* new SaveCharacterError("No character ID provided", { status: 400 });
 
 					return yield* runQuery(
 						db
 							.insert(characters)
 							.values({
 								...data,
-								id: characterId === "new" ? undefined : characterId,
+								id: data.id === "new" ? undefined : data.id,
 								userId
 							})
 							.onConflictDoUpdate({
@@ -128,8 +124,8 @@ export class CharacterService extends Effect.Service<CharacterService>()("Charac
 								? Effect.succeed(characters[0])
 								: Effect.fail(new SaveCharacterError("Failed to save character"))
 						),
-						Effect.tap((result) => AppLog.info("CharacterService.set.save", { characterId, userId, result })),
-						Effect.tapError(() => AppLog.debug("CharacterService.set.save", { characterId, userId, data }))
+						Effect.tap((result) => AppLog.info("CharacterService.set.save", { userId, result })),
+						Effect.tapError(() => AppLog.debug("CharacterService.set.save", { userId, data }))
 					);
 				}),
 

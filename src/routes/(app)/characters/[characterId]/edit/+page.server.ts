@@ -21,7 +21,7 @@ export const load = (event) =>
 			},
 			editCharacterSchema,
 			{
-				errors: false
+				errors: parent.character.id !== "new"
 			}
 		);
 

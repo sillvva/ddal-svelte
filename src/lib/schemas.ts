@@ -57,8 +57,15 @@ export const imageUrlWithFallback = v.pipe(
 export type UserId = v.InferOutput<typeof userIdSchema>;
 export const userIdSchema = brandedId("UserId");
 
-export type NewCharacterSchema = v.InferOutput<typeof newCharacterSchema>;
-export const newCharacterSchema = v.object({
+export type CharacterId = v.InferOutput<typeof characterIdSchema>;
+export const characterIdSchema = brandedId("CharacterId");
+
+export type CharacterIdOrNew = v.InferOutput<typeof characterIdOrNewSchema>;
+export const characterIdOrNewSchema = v.union([characterIdSchema, v.literal("new")]);
+
+export type CharacterSchema = v.InferOutput<typeof characterSchema>;
+export const characterSchema = v.object({
+	id: characterIdOrNewSchema,
 	name: v.pipe(requiredString, shortString),
 	campaign: v.optional(shortString, ""),
 	race: v.optional(shortString, ""),
@@ -67,17 +74,10 @@ export const newCharacterSchema = v.object({
 	imageUrl: v.optional(imageUrlWithFallback, "")
 });
 
-export type CharacterId = v.InferOutput<typeof characterIdSchema>;
-export const characterIdSchema = brandedId("CharacterId");
-
-export type CharacterIdOrNew = v.InferOutput<typeof characterIdOrNewSchema>;
-export const characterIdOrNewSchema = v.union([characterIdSchema, v.literal("new")]);
-
 export type EditCharacterSchema = v.InferOutput<typeof editCharacterSchema>;
 export type EditCharacterSchemaIn = v.InferInput<typeof editCharacterSchema>;
 export const editCharacterSchema = v.object({
-	id: characterIdOrNewSchema,
-	...newCharacterSchema.entries,
+	...characterSchema.entries,
 	firstLog: v.optional(v.boolean(), false)
 });
 

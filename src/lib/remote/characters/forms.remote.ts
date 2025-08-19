@@ -17,7 +17,7 @@ export const save = command("unchecked", (input: EditCharacterSchemaIn) =>
 		if (!form.valid) return form;
 		const { firstLog, ...data } = form.data;
 
-		return yield* saveForm(Characters.set.save(characterId, user.id, data), {
+		return yield* saveForm(Characters.set.save(data, user.id), {
 			onError: (err) => {
 				err.toForm(form);
 				return form;
