@@ -23,7 +23,7 @@
 	setBreadcrumb({ url: `/characters/${data.character?.id}/edit`, title: data.character?.name ? "Edit" : "New Character" });
 </script>
 
-<Head title={data.character?.name} />
+<Head title={data.character?.name || "New Character"} />
 
 <Breadcrumbs />
 

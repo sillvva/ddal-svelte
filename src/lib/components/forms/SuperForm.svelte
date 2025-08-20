@@ -100,7 +100,7 @@
 				if (typeof result.data === "string") {
 					$tainted = undefined;
 					onRemoteSuccess?.($form);
-					return goto(result.data, {
+					return await goto(result.data, {
 						invalidateAll: true
 					});
 				}

@@ -25,7 +25,7 @@
 	setBreadcrumb({ url: `/dm-logs/${data.logId}`, title: data.logId === "new" ? "New DM Log" : data.form.data.name });
 </script>
 
-<Head title={data.form.data.name} />
+<Head title={data.form.data.name || "New DM Log"} />
 
 {#key $form.id}
 	<Breadcrumbs />

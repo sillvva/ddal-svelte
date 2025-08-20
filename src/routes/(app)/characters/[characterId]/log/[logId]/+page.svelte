@@ -30,7 +30,7 @@
 	});
 </script>
 
-<Head title={data.form.data.name} />
+<Head title={data.form.data.name || "New Log"} />
 
 {#key $form.id || "new"}
 	<Breadcrumbs />
