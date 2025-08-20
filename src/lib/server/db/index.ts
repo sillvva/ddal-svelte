@@ -36,23 +36,17 @@ export class DBService extends Effect.Service<DBService>()("DBService", {
 			const runtime = event.locals.runtime;
 			const result = yield* Effect.tryPromise({
 				try: () =>
-					new Promise<A>((resolve, reject) => {
-						database
-							.transaction(async (tx) => {
-								const result = await runtime.runPromiseExit(effect(tx));
-								Exit.match(result, {
-									onSuccess: resolve,
-									onFailure: (cause) => {
-										reject(cause);
-										tx.rollback();
-									}
-								});
-							})
-							.catch(reject);
+					database.transaction(async (tx) => {
+						const result = await runtime.runPromiseExit(effect(tx));
+						return Exit.match(result, {
+							onSuccess: (value) => value,
+							onFailure: (cause) => Promise.reject(cause)
+						});
 					}),
-				catch: (err) => {
-					if (Cause.isCause(err) && Cause.isFailType(err)) return err.error as B;
-					else return new TransactionError(err);
+				catch: (cause) => {
+					if (!Cause.isCause(cause)) throw cause; // This should never happen
+					if (Cause.isFailType(cause)) return cause.error as B;
+					else return new TransactionError(cause);
 				}
 			});
 			return result;
@@ -74,8 +68,8 @@ export function runQuery<T>(query: PromiseLike<T> & { toSQL: () => Query }): Eff
 }
 
 export class TransactionError extends Data.TaggedError("TransactionError")<ErrorParams> {
-	constructor(err: unknown) {
-		super({ message: Cause.pretty(Cause.isCause(err) ? err : Cause.fail(err)), status: 500, cause: err });
+	constructor(cause: Cause.Cause<unknown>) {
+		super({ message: Cause.pretty(cause), status: 500, cause });
 	}
 }
 
