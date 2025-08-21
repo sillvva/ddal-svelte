@@ -1,27 +1,34 @@
 <script lang="ts">
 	import { pushState } from "$app/navigation";
-	import { page } from "$app/state";
 	import Head from "$lib/components/Head.svelte";
 	import { errorToast, successToast } from "$lib/factories.svelte.js";
 	import AdminAPI from "$lib/remote/admin";
 	import { debounce } from "@sillvva/utils";
-	import { SvelteURL } from "svelte/reactivity";
+	import { queryParameters, ssp } from "sveltekit-search-params";
 
-	const url = $derived(new SvelteURL(page.url));
-	const baseSearch = $derived(AdminAPI.queries.getBaseSearch());
-	const params = $derived(url.searchParams.get("s")?.trim() ?? baseSearch.current?.query ?? "");
-	const logSearch = $derived(AdminAPI.queries.getAppLogs(params));
+	let value = $state("");
+
+	const baseSearch = AdminAPI.queries.getBaseSearch();
+	const params = queryParameters(
+		{
+			s: ssp.string()
+		},
+		{
+			showDefaults: false,
+			debounceHistory: 400
+		}
+	);
+
+	const search = $derived($params.s ?? baseSearch.current?.query ?? "");
+	const logSearch = $derived(AdminAPI.queries.getAppLogs(search));
 
 	const debouncedSearch = debounce((value: string) => {
-		const trimmed = value.trim();
-		if (trimmed) {
-			url.searchParams.set("s", trimmed);
-			pushState(url, {});
-		} else {
-			url.searchParams.delete("s");
-			pushState(url, {});
-		}
+		$params.s = value.trim() || null;
 	}, 400);
+
+	$effect(() => {
+		value = $params.s ?? "";
+	});
 
 	let syntaxReference = $state("");
 
@@ -52,7 +59,7 @@
 					<input
 						type="text"
 						id="log-search"
-						defaultValue={params}
+						{value}
 						oninput={(e) => {
 							debouncedSearch.call(e.currentTarget.value);
 						}}
@@ -121,7 +128,7 @@
 						aria-label="Delete log"
 						onclick={async () => {
 							const result = await AdminAPI.actions.deleteAppLog(log.id).updates(
-								AdminAPI.queries.getAppLogs(params).withOverride((data) => ({
+								AdminAPI.queries.getAppLogs(search).withOverride((data) => ({
 									...data,
 									logs: data.logs.filter((l) => l.id !== log.id)
 								}))

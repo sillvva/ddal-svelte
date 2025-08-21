@@ -1,18 +1,37 @@
 <script lang="ts">
-	import { goto } from "$app/navigation";
-	import { page } from "$app/state";
 	import { hotkey } from "$lib/util";
 	import type { HTMLInputAttributes } from "svelte/elements";
+	import { queryParameters, ssp } from "sveltekit-search-params";
 	import { twMerge } from "tailwind-merge";
 
 	interface Props extends HTMLInputAttributes {
 		class?: string | null;
 	}
 
-	let { value = $bindable(page.url.searchParams.get("s") || ""), class: className, type = "text", ...rest }: Props = $props();
+	const params = queryParameters(
+		{
+			s: ssp.string()
+		},
+		{
+			showDefaults: false,
+			pushHistory: false
+		}
+	);
 
+	let { value = $bindable($params.s || ""), class: className, type = "text", ...rest }: Props = $props();
+
+	// Sync value prop changes to $params.s
 	$effect(() => {
-		value = page.url.searchParams.get("s") || "";
+		if (value.trim()) {
+			$params.s = value;
+		} else {
+			$params.s = null;
+		}
+	});
+
+	// Sync $params.s changes to value prop (when URL changes)
+	$effect(() => {
+		value = $params.s || "";
 	});
 
 	let ref: HTMLInputElement | undefined = undefined;
@@ -33,20 +52,7 @@
 	<label class="input focus-within:border-primary sm:input-sm flex w-full items-center gap-2">
 		<input
 			{type}
-			{value}
-			oninput={(e) => {
-				if (e.currentTarget.value.trim()) {
-					page.url.searchParams.set("s", e.currentTarget.value);
-				} else {
-					page.url.searchParams.delete("s");
-				}
-				const params = page.url.searchParams.size ? "?" + page.url.searchParams.toString() : "";
-				goto(page.url.pathname + params, {
-					replaceState: true,
-					keepFocus: true,
-					noScroll: true
-				});
-			}}
+			bind:value
 			class={twMerge("w-full flex-1", className)}
 			aria-label={rest.placeholder || "Search"}
 			bind:this={ref}
