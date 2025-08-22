@@ -71,8 +71,8 @@
 					onerror={(e) => {
 						const img = e.currentTarget as HTMLImageElement;
 						img.src = BLANK_CHARACTER;
-						$form.imageUrl = BLANK_CHARACTER;
-						errorToast("Image URL does not load. Using default image.");
+						$form.imageUrl = "";
+						errorToast("Image URL does not load. Reverting to default image.");
 					}}
 				/>
 			</div>
