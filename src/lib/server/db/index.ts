@@ -2,7 +2,7 @@ import { getRequestEvent } from "$app/server";
 import { privateEnv } from "$lib/env/private";
 import { relations } from "$lib/server/db/relations";
 import * as schema from "$lib/server/db/schema";
-import { type ErrorClass, type ErrorParams } from "$lib/server/effect/errors";
+import { isTaggedError, type ErrorClass, type ErrorParams } from "$lib/server/effect/errors";
 import {
 	getTableColumns,
 	sql,
@@ -40,13 +40,14 @@ export class DBService extends Effect.Service<DBService>()("DBService", {
 						const result = await runtime.runPromiseExit(effect(tx));
 						return Exit.match(result, {
 							onSuccess: (value) => value,
-							onFailure: (cause) => Promise.reject(cause)
+							onFailure: (cause) => {
+								throw Cause.isFailType(cause) ? cause.error : new TransactionError(cause);
+							}
 						});
 					}),
-				catch: (cause) => {
-					if (!Cause.isCause(cause)) throw cause; // This should never happen
-					if (Cause.isFailType(cause)) return cause.error as B;
-					else return new TransactionError(cause);
+				catch: (error) => {
+					if (isTaggedError(error)) return error as B | TransactionError;
+					return new TransactionError(Cause.fail(error)); // Unexpected defects
 				}
 			});
 			return result;
