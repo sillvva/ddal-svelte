@@ -60,7 +60,6 @@ type StringKeys<T> = Extract<{ [K in keyof T]: T[K] extends string ? K : never }
 export interface CustomFormOptions<Out extends Record<string, unknown>> {
 	nameField?: StringKeys<Out> & string;
 	remote?: ((data: Out) => Promise<EffectResult<SuperValidated<Out> | Pathname>>) & { pending: number };
-	remoteInvalidate?: boolean;
 	onRemoteSuccess?: (data: Out) => Awaitable<void>;
 	onRemoteError?: (error: EffectFailure["error"]) => Awaitable<void>;
 }
@@ -78,7 +77,7 @@ export function valibotForm<
 	const {
 		nameField = "name",
 		remote,
-		remoteInvalidate = true,
+		invalidateAll: invalidate,
 		onRemoteSuccess,
 		onRemoteError,
 		onSubmit,
@@ -98,11 +97,13 @@ export function valibotForm<
 				const data = get(superform.form);
 				const result = await remote(data);
 				if (result.ok) {
+					const willInvalidate = !!invalidate || invalidate === undefined;
+
 					if (typeof result.data === "string") {
 						superform.tainted.set(undefined);
 						await onRemoteSuccess?.(data);
 						await goto(result.data, {
-							invalidateAll: remoteInvalidate
+							invalidateAll: willInvalidate
 						});
 						return;
 					}
@@ -111,7 +112,7 @@ export function valibotForm<
 					if (errorsFields.length) {
 						superform.errors.set(result.data.errors);
 					} else {
-						if (remoteInvalidate) await invalidateAll();
+						if (willInvalidate) await invalidateAll();
 						await onRemoteSuccess?.(data);
 					}
 
