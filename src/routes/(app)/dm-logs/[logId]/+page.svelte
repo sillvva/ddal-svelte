@@ -23,7 +23,7 @@
 			successToast(`${data.name} saved`);
 		}
 	});
-	const form = $derived(superform.form);
+	const { form } = superform;
 
 	let season = $state($form.experience ? 1 : $form.acp ? 8 : 9);
 
