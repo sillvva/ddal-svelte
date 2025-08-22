@@ -19,7 +19,12 @@
 
 	let { data } = $props();
 
-	const superform = $derived(valibotForm(data.form, logSchema, { remote: true }));
+	const superform = valibotForm(data.form, logSchema, {
+		remote: LogsAPI.forms.save,
+		onRemoteSuccess(data) {
+			successToast(`${data.name} saved`);
+		}
+	});
 	const form = $derived(superform.form);
 
 	let season = $state($form.experience ? 1 : $form.acp ? 8 : 9);
@@ -35,7 +40,7 @@
 {#key $form.id || "new"}
 	<Breadcrumbs />
 
-	<SuperForm {superform} remote={LogsAPI.forms.save} onRemoteSuccess={(data) => successToast(`${data.name} saved`)}>
+	<SuperForm {superform}>
 		{#if !data.firstLog}
 			<Control class="col-span-12 sm:col-span-4">
 				<GenericInput {superform} field="type" label="Log Type">

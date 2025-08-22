@@ -1,4 +1,6 @@
 /* eslint-disable svelte/prefer-svelte-reactivity */
+import { goto, invalidateAll } from "$app/navigation";
+import type { Pathname } from "$app/types";
 import type { FullCharacterData } from "$lib/server/effect/services/characters";
 import type { UserDM } from "$lib/server/effect/services/dms";
 import type { FullLogData, LogSummaryData, UserLogData } from "$lib/server/effect/services/logs";
@@ -23,6 +25,8 @@ import {
 import { valibotClient } from "sveltekit-superforms/adapters";
 import * as v from "valibot";
 import type { SearchData } from "./remote/command";
+import type { EffectFailure, EffectResult } from "./server/effect/runtime";
+import type { Awaitable } from "./util";
 
 export function successToast(message: string) {
 	toast.success("Success", {
@@ -53,10 +57,11 @@ export function unknownErrorToast(error: unknown) {
 
 type StringKeys<T> = Extract<{ [K in keyof T]: T[K] extends string ? K : never }[keyof T], string>;
 
-interface CustomFormOptions<Out extends Record<string, unknown>> {
-	// Limit to top-level string fields of the output so indexing is type-safe
+export interface CustomFormOptions<Out extends Record<string, unknown>> {
 	nameField?: StringKeys<Out> & string;
-	remote?: true;
+	remote?: ((data: Out) => Promise<EffectResult<SuperValidated<Out> | Pathname>>) & { pending: number };
+	onRemoteSuccess?: (data: Out) => Awaitable<void>;
+	onRemoteError?: (error: EffectFailure["error"]) => Awaitable<void>;
 }
 
 export const taintedMessage = "You have unsaved changes. Are you sure you want to leave?";
@@ -69,29 +74,73 @@ export function valibotForm<
 	schema: S,
 	options?: FormOptions<Out, App.Superforms.Message, In> & CustomFormOptions<Out>
 ) {
-	const { nameField = "name", ...rest } = options || {};
+	const { nameField = "name", remote, onRemoteSuccess, onRemoteError, onSubmit, onResult, onError, ...rest } = options || {};
 	const superform = superForm(form, {
 		dataType: "json",
 		validators: valibotClient(schema),
 		taintedMessage,
 		...rest,
-		onSubmit(event) {
-			if (options?.remote) event.cancel();
-			rest.onSubmit?.(event);
+		onSubmit: async (event) => {
+			if (remote) {
+				event.cancel();
+
+				const data = get(superform.form);
+				const result = await remote(data);
+				if (result.ok) {
+					if (typeof result.data === "string") {
+						superform.tainted.set(undefined);
+						await onRemoteSuccess?.(data);
+						await goto(result.data, {
+							invalidateAll: true
+						});
+						return;
+					}
+
+					const errorsFields = Object.keys(result.data.errors);
+					if (errorsFields.length) {
+						superform.errors.set(result.data.errors);
+					} else {
+						await invalidateAll();
+						await onRemoteSuccess?.(data);
+					}
+
+					superform.form.set(result.data.data);
+					superform.message.set(result.data.message);
+				} else {
+					await onRemoteError?.(result.error);
+					if (result.error.extra.redirectTo && typeof result.error.extra.redirectTo === "string") {
+						goto(result.error.extra.redirectTo);
+					} else {
+						const error = result.error.message;
+						if (typeof error === "string") {
+							if (error.trim()) superform.errors.set({ _errors: [error] });
+							else superform.errors.set({ _errors: ["An unknown error occurred"] });
+						}
+					}
+				}
+			}
+
+			onSubmit?.(event);
 		},
 		onResult(event) {
 			if (["success", "redirect"].includes(event.result.type)) {
 				const data = get(superform.form);
 				successToast(`${data[nameField]} saved`);
 			}
-			rest.onResult?.(event);
+			onResult?.(event);
 		},
-		onError(event) {
-			errorToast(event.result.error.message);
-			if (rest.onError instanceof Function) rest.onError?.(event);
-		}
+		onError:
+			onError instanceof Function
+				? (event) => {
+						errorToast(event.result.error.message);
+						onError(event);
+					}
+				: onError
 	});
-	return superform;
+	return {
+		...superform,
+		pending: remote?.pending
+	};
 }
 
 type ArgumentsType<T> = T extends (...args: infer U) => unknown ? U : never;

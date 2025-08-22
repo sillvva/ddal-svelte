@@ -16,7 +16,12 @@
 
 	const global = getGlobal();
 
-	const superform = $derived(valibotForm(data.form, dungeonMasterSchema, { remote: true }));
+	const superform = valibotForm(data.form, dungeonMasterSchema, {
+		remote: DMsAPI.forms.save,
+		onRemoteSuccess(data) {
+			successToast(`${data.name} saved`);
+		}
+	});
 	const sortedLogs = $derived(data.dm.logs.toSorted((a, b) => sorter(a.date, b.date)));
 
 	setBreadcrumb({ url: `/dms/${data.dm.id}`, title: data.dm.name });
@@ -27,7 +32,7 @@
 <div class="flex flex-col gap-4">
 	<Breadcrumbs />
 
-	<SuperForm {superform} remote={DMsAPI.forms.save} onRemoteSuccess={(data) => successToast(`${data.name} saved`)}>
+	<SuperForm {superform}>
 		<Control class="col-span-12 sm:col-span-6">
 			<Input type="text" {superform} field="name" label="DM Name" />
 		</Control>

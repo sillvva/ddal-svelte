@@ -16,9 +16,14 @@
 	let { data } = $props();
 
 	const global = getGlobal();
-	const superform = $derived(valibotForm(data.form, editCharacterSchema, { remote: true }));
+	const superform = valibotForm(data.form, editCharacterSchema, {
+		remote: CharactersAPI.forms.save,
+		onRemoteSuccess(data) {
+			successToast(`${data.name} saved`);
+		}
+	});
 
-	const { form } = $derived(superform);
+	const { form } = superform;
 
 	setBreadcrumb({ url: `/characters/${data.character?.id}/edit`, title: data.character?.name ? "Edit" : "New Character" });
 </script>
@@ -27,7 +32,7 @@
 
 <Breadcrumbs />
 
-<SuperForm {superform} remote={CharactersAPI.forms.save} onRemoteSuccess={(data) => successToast(`${data.name} saved`)}>
+<SuperForm {superform}>
 	<Control class="col-span-12 sm:col-span-6">
 		<Input type="text" {superform} field="name" label="Character Name" />
 	</Control>
