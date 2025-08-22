@@ -22,7 +22,6 @@ export function isTaggedError(error: unknown): error is InstanceType<ErrorClass>
 		typeof error.status === "number" &&
 		error.status >= 400 &&
 		error.status <= 599 &&
-		"cause" in error &&
 		"message" in error &&
 		typeof error.message === "string" &&
 		"_tag" in error &&
