@@ -8,7 +8,7 @@ export const save = command("unchecked", (input: DungeonMasterSchemaIn) =>
 	authReturn(function* (user) {
 		const DMs = yield* DMService;
 
-		const dmId = yield* parse(dungeonMasterIdSchema, input.id, "/dms");
+		const dmId = yield* parse(dungeonMasterIdSchema, input.id, "/dms", 404);
 
 		const form = yield* validateForm(input, dungeonMasterSchema);
 		if (!form.valid) return form;

@@ -51,7 +51,7 @@ export const GET = async ({ params, url }) => {
 	try {
 		response = await fetch(imageUrl, { method: "GET" });
 		if (!response.ok)
-			throw new UnableToFetchImageError({ message: response.statusText, status: response.status as NumericRange<400, 599> });
+			throw new UnableToFetchImageError({ message: response.statusText, status: response.status as NumericRange<300, 599> });
 	} catch {
 		imageUrl = fallbackImageUrl;
 		response = await fetch(fallbackImageUrl, { method: "GET" });

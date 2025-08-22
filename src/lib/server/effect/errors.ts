@@ -6,7 +6,7 @@ import { setError, type FormPathLeavesWithErrors, type SuperValidated } from "sv
 
 export interface ErrorParams {
 	message: string;
-	status: NumericRange<400, 599>;
+	status: NumericRange<300, 599>;
 	cause?: unknown;
 	[key: string]: unknown;
 }
@@ -34,8 +34,8 @@ export function isTaggedError(error: unknown): error is InstanceType<ErrorClass>
 // -------------------------------------------------------------------------------------------------
 
 export class RedirectError extends Data.TaggedError("RedirectError")<ErrorParams> {
-	constructor(message: string, redirectTo: Pathname) {
-		super({ message, status: 500, redirectTo });
+	constructor(message: string, redirectTo: Pathname, status: NumericRange<300, 599> = 302) {
+		super({ message, status, redirectTo });
 	}
 }
 
@@ -48,7 +48,7 @@ export class FormError<SchemaOut extends Record<PropertyKey, unknown>> extends D
 		public message: string,
 		protected options: Partial<{
 			field: "" | FormPathLeavesWithErrors<SchemaOut>;
-			status: NumericRange<400, 599>;
+			status: NumericRange<300, 599>;
 			cause: unknown;
 		}> = {}
 	) {
@@ -65,7 +65,7 @@ export class FormError<SchemaOut extends Record<PropertyKey, unknown>> extends D
 
 	toForm(form: SuperValidated<SchemaOut>) {
 		return setError(form, this.options?.field ?? "", this.message, {
-			status: this.status
+			status: this.status < 400 ? 400 : (this.status as NumericRange<400, 599>)
 		});
 	}
 }

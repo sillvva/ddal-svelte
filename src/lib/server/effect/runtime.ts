@@ -68,7 +68,7 @@ export async function runOrThrow<
 export type EffectSuccess<A> = { ok: true; data: A };
 export type EffectFailure = {
 	ok: false;
-	error: { message: string; status: NumericRange<400, 599>; extra: Record<string, unknown> };
+	error: { message: string; status: NumericRange<300, 599>; extra: Record<string, unknown> };
 };
 export type EffectResult<A> = EffectSuccess<A> | EffectFailure;
 
@@ -115,7 +115,7 @@ export async function runOrReturn<
 
 export function handleCause<B extends InstanceType<ErrorClass>>(cause: Cause.Cause<B>) {
 	let message = Cause.pretty(cause);
-	let status: NumericRange<400, 599> = 500;
+	let status: NumericRange<300, 599> = 500;
 	const extra: Record<string, unknown> = {};
 
 	if (Cause.isFailType(cause)) {

@@ -11,7 +11,7 @@ export const save = command("unchecked", (input: EditCharacterSchemaIn) =>
 	authReturn(function* (user) {
 		const Characters = yield* CharacterService;
 
-		const characterId = yield* parse(characterIdOrNewSchema, input.id, "/characters");
+		const characterId = yield* parse(characterIdOrNewSchema, input.id, "/characters", 404);
 
 		const form = yield* validateForm(input, editCharacterSchema);
 		if (!form.valid) return form;

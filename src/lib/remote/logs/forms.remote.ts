@@ -42,7 +42,7 @@ export const save = command("unchecked", (input: LogSchemaIn) =>
 
 			redirectTo = `/dm-logs`;
 		} else {
-			const characterId = yield* parse(characterIdSchema, input.characterId, "/characters");
+			const characterId = yield* parse(characterIdSchema, input.characterId, "/characters", 404);
 			const character = yield* Characters.get.character(characterId);
 
 			form = yield* validateForm(input, characterLogSchema(character));
@@ -53,7 +53,7 @@ export const save = command("unchecked", (input: LogSchemaIn) =>
 
 		const logId = form.data.id;
 		const log = logId !== "new" ? yield* Logs.get.log(logId, user.id) : undefined;
-		if (logId !== "new" && !log?.id) return yield* new RedirectError("Log not found", redirectTo);
+		if (logId !== "new" && !log?.id) return yield* new RedirectError("Log not found", redirectTo, 404);
 
 		return yield* saveForm(Logs.set.save(form.data, user), {
 			onError: (err) => {

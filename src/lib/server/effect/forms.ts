@@ -1,6 +1,6 @@
 import type { Pathname } from "$app/types";
 import { removeTrace, type Awaitable } from "$lib/util";
-import { type RequestEvent } from "@sveltejs/kit";
+import { type NumericRange, type RequestEvent } from "@sveltejs/kit";
 import { Cause, Data, Effect } from "effect";
 import { superValidate, type Infer, type InferIn, type SuperValidated, type SuperValidateOptions } from "sveltekit-superforms";
 import { valibot } from "sveltekit-superforms/adapters";
@@ -27,12 +27,17 @@ export class InvalidSchemaError extends Data.TaggedError("InvalidSchemaError")<E
 	}
 }
 
-export const parse = Effect.fn(function* <T extends v.GenericSchema>(schema: T, value: unknown, redirectTo?: Pathname) {
+export const parse = Effect.fn(function* <T extends v.GenericSchema>(
+	schema: T,
+	value: unknown,
+	redirectTo?: Pathname,
+	status: NumericRange<300, 599> = 302
+) {
 	const parseResult = v.safeParse(schema, value);
 	if (parseResult.success) return parseResult.output;
 	else {
 		const error = v.summarize(parseResult.issues);
-		if (redirectTo) return yield* new RedirectError(error, redirectTo);
+		if (redirectTo) return yield* new RedirectError(error, redirectTo, status);
 		else return yield* new InvalidSchemaError(error, value);
 	}
 });
