@@ -97,7 +97,7 @@ export function valibotForm<
 				const data = get(superform.form);
 				const result = await remote(data);
 				if (result.ok) {
-					const willInvalidate = !!invalidate || invalidate === undefined;
+					const willInvalidate = invalidate !== false;
 
 					if (typeof result.data === "string") {
 						superform.tainted.set(undefined);
