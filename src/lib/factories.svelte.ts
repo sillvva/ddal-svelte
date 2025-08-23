@@ -1,5 +1,5 @@
 /* eslint-disable svelte/prefer-svelte-reactivity */
-import { goto, invalidateAll } from "$app/navigation";
+import { goto } from "$app/navigation";
 import type { Pathname } from "$app/types";
 import type { FullCharacterData } from "$lib/server/effect/services/characters";
 import type { UserDM } from "$lib/server/effect/services/dms";
@@ -75,7 +75,6 @@ export function valibotForm<
 		onErrorResult = (error) => errorToast(error.message),
 		onSubmit,
 		onResult,
-		onUpdated,
 		...rest
 	}: FormOptions<Out, App.Superforms.Message, In> & CustomFormOptions<Out> = {}
 ) {
@@ -108,10 +107,7 @@ export function valibotForm<
 						taint: hasErrors ? true : "untaint-form"
 					});
 
-					if (!hasErrors) {
-						if (willInvalidate) await invalidateAll();
-						await onSuccessResult(data);
-					}
+					if (!hasErrors) await onSuccessResult(data);
 				} else {
 					await onErrorResult(result.error);
 					if (result.error.extra.redirectTo && typeof result.error.extra.redirectTo === "string") {
@@ -121,10 +117,7 @@ export function valibotForm<
 						});
 					} else {
 						const error = result.error.message;
-						if (typeof error === "string") {
-							if (error.trim()) superform.errors.set({ _errors: [error] });
-							else superform.errors.set({ _errors: ["An unknown error occurred"] });
-						}
+						superform.errors.set({ _errors: [error.trim() ? error : "An unknown error occurred"] });
 					}
 				}
 			}
@@ -136,9 +129,6 @@ export function valibotForm<
 				onSuccessResult(get(superform.form));
 			}
 			onResult?.(event);
-		},
-		onUpdated: (event) => {
-			onUpdated?.(event);
 		}
 	});
 	return {
