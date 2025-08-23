@@ -11,7 +11,7 @@
 	import SuperForm from "$lib/components/forms/SuperForm.svelte";
 	import Head from "$lib/components/Head.svelte";
 	import { defaultDM } from "$lib/entities";
-	import { successToast, valibotForm } from "$lib/factories.svelte.js";
+	import { valibotForm } from "$lib/factories.svelte.js";
 	import LogsAPI from "$lib/remote/logs";
 	import { type DungeonMasterId, logSchema } from "$lib/schemas";
 	import { setBreadcrumb } from "$lib/stores.svelte.js";
@@ -20,10 +20,7 @@
 	let { data } = $props();
 
 	const superform = valibotForm(data.form, logSchema, {
-		remote: LogsAPI.forms.save,
-		onRemoteSuccess(data) {
-			successToast(`${data.name} saved`);
-		}
+		remote: LogsAPI.forms.save
 	});
 	const { form } = superform;
 

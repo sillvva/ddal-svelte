@@ -61,7 +61,7 @@ export class DBService extends Effect.Service<DBService>()("DBService", {
 	}
 }
 
-export function runQuery<T>(query: PromiseLike<T> & { toSQL: () => Query }): Effect.Effect<T, DrizzleError> {
+export function runQuery<T>(query: PromiseLike<T> & { toSQL: () => Query }) {
 	return Effect.tryPromise({
 		try: () => query,
 		catch: (err) => new DrizzleError(err, query.toSQL())

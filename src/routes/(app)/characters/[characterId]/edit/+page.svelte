@@ -8,7 +8,7 @@
 	import SuperForm from "$lib/components/forms/SuperForm.svelte";
 	import Head from "$lib/components/Head.svelte";
 	import { BLANK_CHARACTER } from "$lib/constants.js";
-	import { errorToast, successToast, valibotForm } from "$lib/factories.svelte.js";
+	import { errorToast, valibotForm } from "$lib/factories.svelte.js";
 	import CharactersAPI from "$lib/remote/characters";
 	import { editCharacterSchema } from "$lib/schemas";
 	import { getGlobal, setBreadcrumb } from "$lib/stores.svelte.js";
@@ -17,10 +17,7 @@
 
 	const global = getGlobal();
 	const superform = valibotForm(data.form, editCharacterSchema, {
-		remote: CharactersAPI.forms.save,
-		onRemoteSuccess(data) {
-			successToast(`${data.name} saved`);
-		}
+		remote: CharactersAPI.forms.save
 	});
 
 	const { form } = superform;

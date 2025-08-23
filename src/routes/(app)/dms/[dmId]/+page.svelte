@@ -17,10 +17,7 @@
 	const global = getGlobal();
 
 	const superform = valibotForm(data.form, dungeonMasterSchema, {
-		remote: DMsAPI.forms.save,
-		onRemoteSuccess(data) {
-			successToast(`${data.name} saved`);
-		}
+		remote: DMsAPI.forms.save
 	});
 	const sortedLogs = $derived(data.dm.logs.toSorted((a, b) => sorter(a.date, b.date)));
 

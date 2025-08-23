@@ -55,16 +55,12 @@ export function unknownErrorToast(error: unknown) {
 	else errorToast("An unknown error occurred");
 }
 
-type StringKeys<T> = Extract<{ [K in keyof T]: T[K] extends string ? K : never }[keyof T], string>;
-
 export interface CustomFormOptions<Out extends Record<string, unknown>> {
-	nameField?: StringKeys<Out> & string;
 	remote?: ((data: Out) => Promise<EffectResult<SuperValidated<Out> | Pathname>>) & { pending: number };
-	onRemoteSuccess?: (data: Out) => Awaitable<void>;
-	onRemoteError?: (error: EffectFailure["error"]) => Awaitable<void>;
+	onSuccessResult?: (data: Out) => Awaitable<void>;
+	onErrorResult?: (error: EffectFailure["error"]) => Awaitable<void>;
 }
 
-export const taintedMessage = "You have unsaved changes. Are you sure you want to leave?";
 export function valibotForm<
 	S extends v.GenericSchema,
 	Out extends v.InferOutput<S> & Record<string, unknown>,
@@ -72,56 +68,57 @@ export function valibotForm<
 >(
 	form: SuperValidated<Out, App.Superforms.Message, In>,
 	schema: S,
-	options?: FormOptions<Out, App.Superforms.Message, In> & CustomFormOptions<Out>
-) {
-	const {
-		nameField = "name",
+	{
 		remote,
 		invalidateAll: invalidate,
-		onRemoteSuccess,
-		onRemoteError,
+		onSuccessResult = (data) => successToast(`${data.name} saved`),
+		onErrorResult = (error) => errorToast(error.message),
 		onSubmit,
 		onResult,
-		onError,
+		onUpdated,
 		...rest
-	} = options || {};
+	}: FormOptions<Out, App.Superforms.Message, In> & CustomFormOptions<Out> = {}
+) {
 	const superform = superForm(form, {
 		dataType: "json",
 		validators: valibotClient(schema),
-		taintedMessage,
+		taintedMessage: "You have unsaved changes. Are you sure you want to leave?",
 		...rest,
 		onSubmit: async (event) => {
 			if (remote) {
 				event.cancel();
 
+				const willInvalidate = invalidate !== false;
 				const data = get(superform.form);
 				const result = await remote(data);
 				if (result.ok) {
-					const willInvalidate = invalidate !== false;
-
 					if (typeof result.data === "string") {
 						superform.tainted.set(undefined);
-						await onRemoteSuccess?.(data);
+						await onSuccessResult(data);
 						await goto(result.data, {
 							invalidateAll: willInvalidate
 						});
 						return;
 					}
 
-					const errorsFields = Object.keys(result.data.errors);
-					if (errorsFields.length) {
-						superform.errors.set(result.data.errors);
-					} else {
-						if (willInvalidate) await invalidateAll();
-						await onRemoteSuccess?.(data);
-					}
-
-					superform.form.set(result.data.data);
+					const hasErrors = Object.keys(result.data.errors).length > 0;
+					superform.errors.set(result.data.errors);
 					superform.message.set(result.data.message);
+					superform.form.set(result.data.data, {
+						taint: hasErrors ? true : "untaint-form"
+					});
+
+					if (!hasErrors) {
+						if (willInvalidate) await invalidateAll();
+						await onSuccessResult(data);
+					}
 				} else {
-					await onRemoteError?.(result.error);
+					await onErrorResult(result.error);
 					if (result.error.extra.redirectTo && typeof result.error.extra.redirectTo === "string") {
-						goto(result.error.extra.redirectTo);
+						superform.tainted.set(undefined);
+						await goto(result.error.extra.redirectTo, {
+							invalidateAll: willInvalidate
+						});
 					} else {
 						const error = result.error.message;
 						if (typeof error === "string") {
@@ -136,20 +133,14 @@ export function valibotForm<
 		},
 		onResult(event) {
 			if (["success", "redirect"].includes(event.result.type)) {
-				const data = get(superform.form);
-				successToast(`${data[nameField]} saved`);
+				onSuccessResult(get(superform.form));
 			}
 			onResult?.(event);
 		},
-		onError:
-			onError instanceof Function
-				? (event) => {
-						errorToast(event.result.error.message);
-						onError(event);
-					}
-				: onError
+		onUpdated: (event) => {
+			onUpdated?.(event);
+		}
 	});
-
 	return {
 		...superform,
 		pending: remote?.pending
