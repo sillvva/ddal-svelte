@@ -174,7 +174,7 @@
 								{/if}
 								<div class="bg-base-100 overflow-x-scroll rounded-lg p-6">
 									<h3 class="mb-2 text-lg font-bold">Annotations</h3>
-									<pre>{JSON.stringify(log.annotations, null, 2)}</pre>
+									<pre class="whitespace-break-spaces">{JSON.stringify(log.annotations, null, 2)}</pre>
 								</div>
 							</div>
 						</td>
