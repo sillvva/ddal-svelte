@@ -19,6 +19,8 @@ import {
 	type FormOptions,
 	type FormPathLeaves,
 	type FormPathType,
+	type Infer,
+	type InferIn,
 	type SuperForm,
 	type SuperValidated
 } from "sveltekit-superforms";
@@ -61,17 +63,13 @@ export interface CustomFormOptions<Out extends Record<string, unknown>> {
 	onErrorResult?: (error: EffectFailure["error"]) => Awaitable<void>;
 }
 
-export function valibotForm<
-	S extends v.GenericSchema,
-	Out extends v.InferOutput<S> & Record<string, unknown>,
-	In extends v.InferInput<S> & Record<string, unknown>
->(
+export function valibotForm<S extends v.GenericSchema, Out extends Infer<S, "valibot">, In extends InferIn<S, "valibot">>(
 	form: SuperValidated<Out, App.Superforms.Message, In>,
 	schema: S,
 	{
 		remote,
 		invalidateAll: invalidate,
-		onSuccessResult = (data) => successToast(`${data.name} saved`),
+		onSuccessResult = (data) => (typeof data === "object" && "name" in data ? successToast(`${data.name} saved`) : undefined),
 		onErrorResult = (error) => errorToast(error.message),
 		onSubmit,
 		onResult,
