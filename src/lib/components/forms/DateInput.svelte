@@ -42,8 +42,8 @@
 	const proxyMin = $derived(minDateField && intDateProxy(superform, minDateField));
 	const proxyMax = $derived(maxDateField && intDateProxy(superform, maxDateField));
 
-	const minDateValue = $derived(minDate && dateToDV(minDate));
-	const maxDateValue = $derived(maxDate && dateToDV(maxDate));
+	const minDateValue = $derived(dateToDV(minDate));
+	const maxDateValue = $derived(dateToDV(maxDate));
 	const minProxyValue = $derived(proxyMin && $proxyMin);
 	const maxProxyValue = $derived(proxyMax && $proxyMax);
 	const minValue = $derived(rest?.minValue || minDateValue || minProxyValue);

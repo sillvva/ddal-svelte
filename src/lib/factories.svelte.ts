@@ -4,13 +4,13 @@ import type { Pathname } from "$app/types";
 import type { FullCharacterData } from "$lib/server/effect/services/characters";
 import type { UserDM } from "$lib/server/effect/services/dms";
 import type { FullLogData, LogSummaryData, UserLogData } from "$lib/server/effect/services/logs";
-import { parseDateTime, type DateValue } from "@internationalized/date";
+import { getLocalTimeZone, parseAbsoluteToLocal, toCalendarDateTime, type DateValue } from "@internationalized/date";
 import { debounce, isDefined, substrCount, type MapKeys, type Prettify } from "@sillvva/utils";
 import { isHttpError } from "@sveltejs/kit";
 import { Duration } from "effect";
 import escape from "regexp.escape";
 import { toast } from "svelte-sonner";
-import { SvelteDate, SvelteMap } from "svelte/reactivity";
+import { SvelteMap } from "svelte/reactivity";
 import { derived, get, type Readable, type Writable } from "svelte/store";
 import {
 	dateProxy,
@@ -18,7 +18,6 @@ import {
 	superForm,
 	type FormOptions,
 	type FormPathLeaves,
-	type FormPathType,
 	type Infer,
 	type InferIn,
 	type SuperForm,
@@ -138,20 +137,9 @@ export function valibotForm<S extends v.GenericSchema, Out extends Infer<S, "val
 type ArgumentsType<T> = T extends (...args: infer U) => unknown ? U : never;
 type IntDateProxyOptions = Omit<NonNullable<ArgumentsType<typeof dateProxy>[2]>, "format">;
 
-export function dateToDV(date: Date) {
-	date.setSeconds(0);
-	date.setMilliseconds(0);
-	return parseDateTime(
-		date
-			.toLocaleDateString("sv", {
-				year: "numeric",
-				month: "2-digit",
-				day: "2-digit",
-				hour: "2-digit",
-				minute: "2-digit"
-			})
-			.replace(" ", "T")
-	);
+export function dateToDV(date: Date | null | undefined) {
+	if (!date) return undefined;
+	return toCalendarDateTime(parseAbsoluteToLocal(date.toISOString()));
 }
 
 export function intDateProxy<T extends Record<string, unknown>, Path extends FormPathLeaves<T, Date>>(
@@ -160,27 +148,15 @@ export function intDateProxy<T extends Record<string, unknown>, Path extends For
 	options?: IntDateProxyOptions
 ): Writable<DateValue | undefined> {
 	function toValue(value?: DateValue) {
-		if (!value && options?.empty !== undefined) {
-			return options.empty === "null" ? null : undefined;
-		}
-
-		const date = value && new SvelteDate(value.toString());
-		if (date) date.setSeconds(0);
-		if (date) date.setMilliseconds(0);
-
-		return date;
+		if (!value) return options?.empty === "null" ? null : undefined;
+		return value.toDate(getLocalTimeZone());
 	}
 
-	const realProxy = fieldProxy(form, path, { taint: options?.taint });
+	// eslint-disable-next-line @typescript-eslint/no-explicit-any
+	const realProxy = fieldProxy<T, any, Date | null | undefined>(form, path, { taint: options?.taint });
 
 	let updatedValue: DateValue | undefined = undefined;
-	let initialized = false;
-
 	const proxy: Readable<DateValue | undefined> = derived(realProxy, (value: unknown) => {
-		if (!initialized) {
-			initialized = true;
-		}
-
 		// Prevent proxy updating itself
 		if (updatedValue !== undefined) {
 			const current = updatedValue;
@@ -197,14 +173,12 @@ export function intDateProxy<T extends Record<string, unknown>, Path extends For
 		subscribe: proxy.subscribe,
 		set(val: DateValue | undefined) {
 			updatedValue = val;
-			const newValue = toValue(updatedValue) as FormPathType<T, Path>;
-			realProxy.set(newValue);
+			realProxy.set(toValue(updatedValue));
 		},
 		update(updater) {
 			realProxy.update((f) => {
-				updatedValue = updater(dateToDV(f as Date));
-				const newValue = toValue(updatedValue) as FormPathType<T, Path>;
-				return newValue;
+				updatedValue = updater(dateToDV(f));
+				return toValue(updatedValue);
 			});
 		}
 	};

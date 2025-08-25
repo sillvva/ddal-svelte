@@ -37,7 +37,9 @@ export const load = (event) =>
 			)
 		);
 
-		const form = yield* validateForm(log, dMLogSchema(characters.filter((c) => c.id !== log.characterId)));
+		const form = yield* validateForm(log, dMLogSchema(characters.filter((c) => c.id !== log.characterId)), {
+			errors: logId !== "new"
+		});
 
 		return {
 			...event.params,

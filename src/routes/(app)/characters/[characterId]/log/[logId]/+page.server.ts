@@ -29,7 +29,9 @@ export const load = (event) =>
 			if (log.isDmLog) redirect(307, `/dm-logs/${log.id}`);
 		}
 
-		const form = yield* validateForm(log, characterLogSchema(character));
+		const form = yield* validateForm(log, characterLogSchema(character), {
+			errors: logId !== "new"
+		});
 
 		const itemEntities = getItemEntities(character, { excludeDropped: true, lastLogId: log.id });
 		const magicItems = itemEntities.magicItems.toSorted((a, b) => sorter(a.name, b.name));
