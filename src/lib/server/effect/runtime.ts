@@ -9,7 +9,7 @@ import type { YieldWrap } from "effect/Utils";
 import { type ErrorClass } from "./errors";
 import { AppLog } from "./logging";
 import { AdminService } from "./services/admin";
-import { assertAuthOrFail, assertAuthOrRedirect, AuthService } from "./services/auth";
+import { assertAuth, AuthService } from "./services/auth";
 import { CharacterService } from "./services/characters";
 import { DMService } from "./services/dms";
 import { LogService } from "./services/logs";
@@ -19,7 +19,7 @@ export type Services = CharacterService | LogService | DMService | UserService |
 export type AppRuntime = ManagedRuntime.ManagedRuntime<Services, never>;
 
 // Overload signatures
-export async function runOrThrow<
+export async function run<
 	A,
 	B extends InstanceType<ErrorClass>,
 	C extends Services,
@@ -28,12 +28,12 @@ export async function runOrThrow<
 	Y
 >(program: () => Generator<T, X, Y>): Promise<X>;
 
-export async function runOrThrow<A, B extends InstanceType<ErrorClass>, C extends Services>(
+export async function run<A, B extends InstanceType<ErrorClass>, C extends Services>(
 	program: Effect.Effect<A, B, C> | (() => Effect.Effect<A, B, C>)
 ): Promise<A>;
 
 // Implementation
-export async function runOrThrow<
+export async function run<
 	A,
 	B extends InstanceType<ErrorClass>,
 	C extends Services,
@@ -57,8 +57,8 @@ export async function runOrThrow<
 		onSuccess: (result) => result,
 		onFailure: (cause) => {
 			const { message, status, extra } = handleCause(cause);
-			if (extra.redirectTo && typeof extra.redirectTo === "string") {
-				throw redirect(303, extra.redirectTo);
+			if (extra.redirectTo && typeof extra.redirectTo === "string" && status <= 308) {
+				throw redirect(status, extra.redirectTo);
 			}
 			throw error(status, message);
 		}
@@ -73,7 +73,7 @@ export type EffectFailure = {
 export type EffectResult<A> = EffectSuccess<A> | EffectFailure;
 
 // Overload signatures
-export async function runOrReturn<
+export async function runSafe<
 	A,
 	B extends InstanceType<ErrorClass>,
 	C extends Services,
@@ -82,12 +82,12 @@ export async function runOrReturn<
 	Y
 >(program: () => Generator<T, X, Y>): Promise<EffectResult<X>>;
 
-export async function runOrReturn<A, B extends InstanceType<ErrorClass>, C extends Services>(
+export async function runSafe<A, B extends InstanceType<ErrorClass>, C extends Services>(
 	program: Effect.Effect<A, B, C> | (() => Effect.Effect<A, B, C>)
 ): Promise<EffectResult<A>>;
 
 // Implementation
-export async function runOrReturn<
+export async function runSafe<
 	A,
 	B extends InstanceType<ErrorClass>,
 	C extends Services,
@@ -149,30 +149,54 @@ export function handleCause<B extends InstanceType<ErrorClass>>(cause: Cause.Cau
 	return { message, status, extra };
 }
 
-export async function authReturn<
-	TReturn,
-	A = unknown,
-	B extends InstanceType<ErrorClass> = InstanceType<ErrorClass>,
-	C extends Services = Services,
-	T extends YieldWrap<Effect.Effect<A, B, C>> = YieldWrap<Effect.Effect<A, B, C>>,
-	Y = unknown
->(program: (data: LocalsUser) => Generator<T, TReturn, Y>, adminOnly: boolean = false): Promise<EffectResult<TReturn>> {
-	return runOrReturn(function* () {
-		const user = yield* assertAuthOrFail(adminOnly);
-		return yield* program(user);
-	});
-}
+// -------------------------------------------------------------------------------------------------
+// runAuth
+// -------------------------------------------------------------------------------------------------
 
-export async function authRedirect<
+export async function runAuth<
 	TReturn,
 	A = unknown,
 	B extends InstanceType<ErrorClass> = InstanceType<ErrorClass>,
 	C extends Services = Services,
 	T extends YieldWrap<Effect.Effect<A, B, C>> = YieldWrap<Effect.Effect<A, B, C>>,
 	Y = unknown
->(program: (user: LocalsUser) => Generator<T, TReturn, Y>, adminOnly: boolean = false): Promise<TReturn> {
-	return runOrThrow(function* () {
-		const user = yield* assertAuthOrRedirect(adminOnly);
-		return yield* program(user);
-	});
+>(
+	program: (data: LocalsUser) => Generator<T, TReturn, Y>,
+	options?: { adminOnly?: boolean; safe?: false | undefined }
+): Promise<TReturn>;
+
+export async function runAuth<
+	TReturn,
+	A = unknown,
+	B extends InstanceType<ErrorClass> = InstanceType<ErrorClass>,
+	C extends Services = Services,
+	T extends YieldWrap<Effect.Effect<A, B, C>> = YieldWrap<Effect.Effect<A, B, C>>,
+	Y = unknown
+>(
+	program: (data: LocalsUser) => Generator<T, TReturn, Y>,
+	options?: { adminOnly?: boolean; safe: true }
+): Promise<EffectResult<TReturn>>;
+
+export async function runAuth<
+	TReturn,
+	A = unknown,
+	B extends InstanceType<ErrorClass> = InstanceType<ErrorClass>,
+	C extends Services = Services,
+	T extends YieldWrap<Effect.Effect<A, B, C>> = YieldWrap<Effect.Effect<A, B, C>>,
+	Y = unknown
+>(
+	program: (data: LocalsUser) => Generator<T, TReturn, Y>,
+	{ adminOnly = false, safe = false }: { adminOnly?: boolean; safe?: boolean } = {}
+) {
+	if (safe) {
+		return runSafe(function* () {
+			const user = yield* assertAuth({ adminOnly });
+			return yield* program(user);
+		});
+	} else {
+		return run(function* () {
+			const user = yield* assertAuth({ adminOnly, redirect: true });
+			return yield* program(user);
+		});
+	}
 }

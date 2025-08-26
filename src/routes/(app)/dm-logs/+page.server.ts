@@ -1,8 +1,8 @@
-import { authRedirect } from "$lib/server/effect/runtime.js";
+import { runAuth } from "$lib/server/effect/runtime.js";
 import { LogService } from "$lib/server/effect/services/logs";
 
 export const load = (event) =>
-	authRedirect(function* (user) {
+	runAuth(function* (user) {
 		const Logs = yield* LogService;
 		const logs = yield* Logs.get.dmLogs(user.id);
 

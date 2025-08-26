@@ -2,10 +2,10 @@ import type { DungeonMasterId, DungeonMasterSchema, LocalsUser, UserId } from "$
 import { DBService, runQuery, type Database, type DrizzleError, type InferQueryResult, type Transaction } from "$lib/server/db";
 import { userDMLogIncludes } from "$lib/server/db/includes";
 import { dungeonMasters, type DungeonMaster } from "$lib/server/db/schema";
-import type { ErrorParams } from "$lib/server/effect/errors";
+import type { ErrorParams, RedirectError } from "$lib/server/effect/errors";
 import { FormError } from "$lib/server/effect/errors";
 import { AppLog } from "$lib/server/effect/logging";
-import { assertAuthOrFail, UnauthorizedError } from "$lib/server/effect/services/auth";
+import { assertAuth, UnauthorizedError } from "$lib/server/effect/services/auth";
 import { sorter } from "@sillvva/utils";
 import { and, eq } from "drizzle-orm";
 import { Data, Effect, Layer } from "effect";
@@ -47,7 +47,9 @@ interface DMApiImpl {
 			user: LocalsUser,
 			data: DungeonMasterSchema
 		) => Effect.Effect<DungeonMaster, SaveDMError | DrizzleError>;
-		readonly addUserDM: (dms: UserDM[]) => Effect.Effect<UserDM[], SaveDMError | DrizzleError | UnauthorizedError>;
+		readonly addUserDM: (
+			dms: UserDM[]
+		) => Effect.Effect<UserDM[], SaveDMError | DrizzleError | UnauthorizedError | RedirectError>;
 		readonly delete: (dm: UserDM, userId: UserId) => Effect.Effect<{ id: DungeonMasterId }, DeleteDMError | DrizzleError>;
 	};
 }
@@ -140,7 +142,7 @@ export class DMService extends Effect.Service<DMService>()("DMSService", {
 				}),
 
 				addUserDM: Effect.fn("DMService.set.addUserDM")(function* (dms) {
-					const user = yield* assertAuthOrFail();
+					const user = yield* assertAuth();
 
 					const existing = yield* runQuery(
 						db.query.dungeonMasters.findFirst({

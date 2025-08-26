@@ -2,7 +2,7 @@ import { building } from "$app/environment";
 import { appCookieSchema } from "$lib/schemas";
 import { serverGetCookie } from "$lib/server/cookie";
 import { DBService } from "$lib/server/db";
-import { runOrThrow } from "$lib/server/effect/runtime";
+import { run } from "$lib/server/effect/runtime";
 import { AdminService } from "$lib/server/effect/services/admin";
 import { AuthService } from "$lib/server/effect/services/auth";
 import { CharacterService } from "$lib/server/effect/services/characters";
@@ -39,14 +39,14 @@ const runtime: Handle = async ({ event, resolve }) => {
 };
 
 const authHandler: Handle = async ({ event, resolve }) =>
-	runOrThrow(function* () {
+	run(function* () {
 		const Auth = yield* AuthService;
 		const auth = yield* Auth.auth();
 		return svelteKitHandler({ event, resolve, auth, building });
 	});
 
 const session: Handle = async ({ event, resolve }) =>
-	runOrThrow(function* () {
+	run(function* () {
 		const Auth = yield* AuthService;
 		const { session, user } = yield* Auth.getAuthSession();
 		event.locals.session = session;

@@ -4,7 +4,7 @@ import { localsSessionSchema, localsUserSchema, type LocalsSession, type LocalsU
 import { DBService, DrizzleError } from "$lib/server/db";
 import { RedirectError, type ErrorParams } from "$lib/server/effect/errors";
 import { AppLog } from "$lib/server/effect/logging";
-import { redirect, type NumericRange } from "@sveltejs/kit";
+import { type NumericRange } from "@sveltejs/kit";
 import { betterAuth } from "better-auth";
 import { drizzleAdapter } from "better-auth/adapters/drizzle";
 import { admin } from "better-auth/plugins/admin";
@@ -91,14 +91,22 @@ export class AuthService extends Effect.Service<AuthService>()("AuthService", {
 	dependencies: [DBService.Default()]
 }) {}
 
-export const assertUser = Effect.fn(function* (user: LocalsUser | undefined) {
+export const assertAuth = Effect.fn(function* ({
+	adminOnly = false,
+	redirect = false
+}: { adminOnly?: boolean; redirect?: boolean } = {}) {
 	const event = getRequestEvent();
+	const user = event.locals.user;
 	const url = event.url;
 	const result = v.safeParse(localsUserSchema, user);
 
 	if (!result.success) {
 		yield* AppLog.debug("assertUser", { issues: v.summarize(result.issues) });
-		redirect(302, `/?redirect=${encodeURIComponent(`${url.pathname}${url.search}`)}`);
+		if (redirect) {
+			return yield* new RedirectError("Invalid user", `/?redirect=${encodeURIComponent(`${url.pathname}${url.search}`)}`, 302);
+		} else {
+			return yield* new UnauthorizedError("Invalid user", 401);
+		}
 	}
 
 	if (result.output.banned) {
@@ -106,19 +114,19 @@ export const assertUser = Effect.fn(function* (user: LocalsUser | undefined) {
 			.getAll()
 			.filter((c) => c.name.includes("auth"))
 			.forEach((c) => event.cookies.delete(c.name, { path: "/" }));
-		redirect(302, `/?code=BANNED&reason=${result.output.banReason}`);
+		if (redirect) {
+			return yield* new RedirectError("Banned", `/?code=BANNED&reason=${result.output.banReason}`, 302);
+		} else {
+			return yield* new UnauthorizedError("Banned", 403);
+		}
+	}
+
+	if (adminOnly && result.output.role !== "admin") {
+		if (redirect) return yield* new RedirectError("Insufficient permissions", "/characters", 302);
+		else return yield* new UnauthorizedError("Insufficient permissions", 403);
 	}
 
 	return result.output;
-});
-
-export const assertAuthOrRedirect = Effect.fn(function* (adminOnly: boolean = false) {
-	const event = getRequestEvent();
-	const user = yield* assertUser(event.locals.user);
-
-	if (adminOnly && user.role !== "admin") return redirect(302, "/characters");
-
-	return user;
 });
 
 export class UnauthorizedError extends Data.TaggedError("UnauthorizedError")<ErrorParams> {
@@ -126,16 +134,6 @@ export class UnauthorizedError extends Data.TaggedError("UnauthorizedError")<Err
 		super({ message, status });
 	}
 }
-
-export const assertAuthOrFail = Effect.fn(function* (adminOnly: boolean = false) {
-	const event = getRequestEvent();
-	const user = event.locals.user;
-	if (!user) return yield* Effect.fail(new UnauthorizedError("Authentication required", 401));
-
-	if (adminOnly && user.role !== "admin") return yield* Effect.fail(new UnauthorizedError("Insufficient permissions", 403));
-
-	return user;
-});
 
 export function getError(code: string | null, reason: string | null) {
 	switch (code) {

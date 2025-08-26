@@ -30,8 +30,8 @@ export class InvalidSchemaError extends Data.TaggedError("InvalidSchemaError")<E
 export const parse = Effect.fn(function* <T extends v.GenericSchema>(
 	schema: T,
 	value: unknown,
-	redirectTo?: Pathname,
-	status: NumericRange<300, 599> = 307
+	redirectTo?: Pathname | `${Pathname}?${string}`,
+	status: NumericRange<300, 308> = 302
 ) {
 	const parseResult = v.safeParse(schema, value);
 	if (parseResult.success) return parseResult.output;
@@ -45,8 +45,8 @@ export const parse = Effect.fn(function* <T extends v.GenericSchema>(
 export const parseEither = Effect.fn(function* <T extends v.GenericSchema>(
 	schema: T,
 	value: unknown,
-	redirectTo?: Pathname,
-	status: NumericRange<300, 599> = 307
+	redirectTo?: Pathname | `${Pathname}?${string}`,
+	status: NumericRange<300, 308> = 302
 ) {
 	const result = yield* Effect.either(parse(schema, value, redirectTo, status));
 	if (Either.isLeft(result)) return { success: false, failure: result.left } as const;

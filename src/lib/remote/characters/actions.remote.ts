@@ -1,11 +1,14 @@
 import { command } from "$app/server";
 import { characterIdSchema } from "$lib/schemas";
-import { authReturn } from "$lib/server/effect/runtime";
+import { runAuth } from "$lib/server/effect/runtime";
 import { CharacterService } from "$lib/server/effect/services/characters";
 
 export const deleteCharacter = command(characterIdSchema, (id) =>
-	authReturn(function* (user) {
-		const Characters = yield* CharacterService;
-		return yield* Characters.set.delete(id, user.id);
-	})
+	runAuth(
+		function* (user) {
+			const Characters = yield* CharacterService;
+			return yield* Characters.set.delete(id, user.id);
+		},
+		{ safe: true }
+	)
 );

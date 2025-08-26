@@ -1,11 +1,11 @@
 import { BLANK_CHARACTER } from "$lib/constants.js";
 import { editCharacterSchema } from "$lib/schemas";
 import { validateForm } from "$lib/server/effect/forms";
-import { authRedirect } from "$lib/server/effect/runtime";
+import { runAuth } from "$lib/server/effect/runtime";
 import { Effect } from "effect";
 
 export const load = (event) =>
-	authRedirect(function* () {
+	runAuth(function* () {
 		const parent = yield* Effect.promise(event.parent);
 
 		const form = yield* validateForm(

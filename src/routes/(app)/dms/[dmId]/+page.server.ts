@@ -1,18 +1,13 @@
 import { dungeonMasterIdSchema, dungeonMasterSchema } from "$lib/schemas";
-import { validateForm } from "$lib/server/effect/forms";
-import { authRedirect } from "$lib/server/effect/runtime.js";
+import { parse, validateForm } from "$lib/server/effect/forms";
+import { runAuth } from "$lib/server/effect/runtime.js";
 import { DMNotFoundError, DMService } from "$lib/server/effect/services/dms";
-import { redirect } from "@sveltejs/kit";
-import * as v from "valibot";
 
 export const load = (event) =>
-	authRedirect(function* (user) {
+	runAuth(function* (user) {
 		const DMs = yield* DMService;
 
-		const idResult = v.safeParse(dungeonMasterIdSchema, event.params.dmId || "");
-		if (!idResult.success) redirect(307, `/dms`);
-		const dmId = idResult.output;
-
+		const dmId = yield* parse(dungeonMasterIdSchema, event.params.dmId || "", `/dms`, 302);
 		const [dm] = yield* DMs.get.userDMs(user.id, { id: dmId });
 		if (!dm) return yield* new DMNotFoundError();
 

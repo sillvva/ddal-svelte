@@ -1,32 +1,28 @@
 import { defaultLogSchema, getItemEntities, logDataToSchema } from "$lib/entities.js";
 import { characterLogSchema, logIdOrNewSchema } from "$lib/schemas";
-import { validateForm } from "$lib/server/effect/forms";
-import { authRedirect } from "$lib/server/effect/runtime";
+import { RedirectError } from "$lib/server/effect/errors";
+import { parse, validateForm } from "$lib/server/effect/forms";
+import { runAuth } from "$lib/server/effect/runtime";
 import { DMService } from "$lib/server/effect/services/dms.js";
 import { LogNotFoundError, LogService } from "$lib/server/effect/services/logs.js";
 import { sorter } from "@sillvva/utils";
-import { redirect } from "@sveltejs/kit";
 import { Effect } from "effect";
-import * as v from "valibot";
 
 export const load = (event) =>
-	authRedirect(function* (user) {
+	runAuth(function* (user) {
 		const Logs = yield* LogService;
 		const DMs = yield* DMService;
 
 		const parent = yield* Effect.promise(event.parent);
 		const character = parent.character;
 
-		const idResult = v.safeParse(logIdOrNewSchema, event.params.logId);
-		if (!idResult.success) redirect(307, `/character/${character.id}`);
-		const logId = idResult.output;
-
+		const logId = yield* parse(logIdOrNewSchema, event.params.logId, `/characters/${character.id}`, 302);
 		const logData = yield* Logs.get.log(logId, user.id);
 		const log = logData ? logDataToSchema(user.id, logData) : defaultLogSchema(user.id, { character });
 
 		if (logId !== "new") {
 			if (!log.id) return yield* new LogNotFoundError();
-			if (log.isDmLog) redirect(307, `/dm-logs/${log.id}`);
+			if (log.isDmLog) return yield* new RedirectError("Redirecting to DM log", `/dm-logs/${log.id}`, 302);
 		}
 
 		const form = yield* validateForm(log, characterLogSchema(character), {

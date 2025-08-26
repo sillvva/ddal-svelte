@@ -1,7 +1,7 @@
 import { BLANK_CHARACTER } from "$lib/constants.js";
 import { characterIdSchema } from "$lib/schemas.js";
 import { type ErrorParams } from "$lib/server/effect/errors";
-import { runOrThrow } from "$lib/server/effect/runtime.js";
+import { run } from "$lib/server/effect/runtime.js";
 import { CharacterService } from "$lib/server/effect/services/characters";
 import { Resvg } from "@resvg/resvg-js";
 import { error, type NumericRange } from "@sveltejs/kit";
@@ -23,7 +23,7 @@ export const GET = async ({ params, url }) => {
 	if (!result.success) throw error(404, "Character not found");
 	const characterId = result.output;
 
-	const character = await runOrThrow(function* () {
+	const character = await run(function* () {
 		const Characters = yield* CharacterService;
 		return yield* Characters.get.character(characterId, true);
 	});

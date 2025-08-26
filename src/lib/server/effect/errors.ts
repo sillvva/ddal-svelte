@@ -33,8 +33,17 @@ export function isTaggedError(error: unknown): error is InstanceType<ErrorClass>
 // RedirectError
 // -------------------------------------------------------------------------------------------------
 
+/**
+ * A redirect error is an error that is thrown when a redirect is needed.
+ *
+ * - 301 - Moved Permanently, always GET
+ * - 302 - Moved Temporarily, always GET
+ * - 303 - See Other, POST -> GET, after successful form submission
+ * - 307 - Temporary Redirect, preserves method
+ * - 308 - Permanent Redirect, preserves method
+ */
 export class RedirectError extends Data.TaggedError("RedirectError")<ErrorParams> {
-	constructor(message: string, redirectTo: Pathname, status: NumericRange<300, 599> = 302) {
+	constructor(message: string, redirectTo: Pathname | `${Pathname}?${string}`, status: NumericRange<300, 308> = 302) {
 		super({ message, status, redirectTo });
 	}
 }

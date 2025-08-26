@@ -1,20 +1,18 @@
 import { parseCharacter } from "$lib/entities.js";
 import { characterIdOrNewSchema, type CharacterId } from "$lib/schemas.js";
-import { runOrThrow } from "$lib/server/effect/runtime.js";
+import { RedirectError } from "$lib/server/effect/errors.js";
+import { parse } from "$lib/server/effect/forms.js";
+import { run } from "$lib/server/effect/runtime.js";
 import { CharacterService } from "$lib/server/effect/services/characters";
-import { redirect } from "@sveltejs/kit";
-import * as v from "valibot";
 
 export const load = (event) =>
-	runOrThrow(function* () {
+	run(function* () {
 		const Character = yield* CharacterService;
 
-		const result = v.safeParse(characterIdOrNewSchema, event.params.characterId);
-		if (!result.success) throw redirect(307, `/characters${event.params.characterId !== "new" ? "?uuid=1" : ""}`);
-		const characterId = result.output;
+		const characterId = yield* parse(characterIdOrNewSchema, event.params.characterId, "/characters?uuid=1", 301);
 
 		if (event.params.characterId === "new" && event.url.pathname !== "/characters/new/edit")
-			throw redirect(307, "/characters/new/edit");
+			return yield* new RedirectError("Redirecting to new character form", "/characters/new/edit", 302);
 
 		const character =
 			characterId === "new"
@@ -32,7 +30,7 @@ export const load = (event) =>
 							createdAt: new Date(),
 							logs: []
 						})
-					: redirect(307, "/")
+					: yield* new RedirectError("Redirecting to login", "/", 302)
 				: yield* Character.get.character(characterId);
 
 		return {

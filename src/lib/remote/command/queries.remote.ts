@@ -2,7 +2,7 @@ import { query } from "$app/server";
 import { searchSections } from "$lib/constants.js";
 import type { UserId } from "$lib/schemas.js";
 import { AppLog } from "$lib/server/effect/logging";
-import { authRedirect } from "$lib/server/effect/runtime";
+import { runAuth } from "$lib/server/effect/runtime";
 import { CharacterService } from "$lib/server/effect/services/characters";
 import { DMService } from "$lib/server/effect/services/dms";
 import { LogService } from "$lib/server/effect/services/logs";
@@ -82,7 +82,7 @@ const getData = Effect.fn("GetData")(function* (userId: UserId) {
 });
 
 export const getCommandData = query(() =>
-	authRedirect(function* (user) {
+	runAuth(function* (user) {
 		const data: SearchData = [sectionData];
 		const searchData = yield* getData(user.id).pipe(
 			Effect.tapError((e) => AppLog.error(`[GetCommandData] ${e.message}`, { status: e.status, cause: e.cause })),
