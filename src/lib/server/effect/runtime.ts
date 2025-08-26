@@ -18,6 +18,10 @@ import { UserService } from "./services/users";
 export type Services = CharacterService | LogService | DMService | UserService | AdminService | AuthService;
 export type AppRuntime = ManagedRuntime.ManagedRuntime<Services, never>;
 
+// -------------------------------------------------------------------------------------------------
+// run
+// -------------------------------------------------------------------------------------------------
+
 // Overload signatures
 export async function run<
 	A,
@@ -64,6 +68,10 @@ export async function run<
 		}
 	});
 }
+
+// -------------------------------------------------------------------------------------------------
+// runSafe
+// -------------------------------------------------------------------------------------------------
 
 export type EffectSuccess<A> = { ok: true; data: A };
 export type EffectFailure = {
@@ -112,6 +120,10 @@ export async function runSafe<
 		onFailure: (cause) => ({ ok: false, error: handleCause(cause) })
 	});
 }
+
+// -------------------------------------------------------------------------------------------------
+// handleCause
+// -------------------------------------------------------------------------------------------------
 
 export function handleCause<B extends InstanceType<ErrorClass>>(cause: Cause.Cause<B>) {
 	let message = Cause.pretty(cause);
