@@ -1,7 +1,7 @@
 import type { Pathname } from "$app/types";
 import { removeTrace, type Awaitable } from "$lib/util";
 import { type NumericRange, type RequestEvent } from "@sveltejs/kit";
-import { Cause, Data, Effect } from "effect";
+import { Cause, Data, Effect, Either } from "effect";
 import { superValidate, type Infer, type InferIn, type SuperValidated, type SuperValidateOptions } from "sveltekit-superforms";
 import { valibot } from "sveltekit-superforms/adapters";
 import * as v from "valibot";
@@ -31,7 +31,7 @@ export const parse = Effect.fn(function* <T extends v.GenericSchema>(
 	schema: T,
 	value: unknown,
 	redirectTo?: Pathname,
-	status: NumericRange<300, 599> = 302
+	status: NumericRange<300, 599> = 307
 ) {
 	const parseResult = v.safeParse(schema, value);
 	if (parseResult.success) return parseResult.output;
@@ -40,6 +40,17 @@ export const parse = Effect.fn(function* <T extends v.GenericSchema>(
 		if (redirectTo) return yield* new RedirectError(error, redirectTo, status);
 		else return yield* new InvalidSchemaError(error, value);
 	}
+});
+
+export const parseEither = Effect.fn(function* <T extends v.GenericSchema>(
+	schema: T,
+	value: unknown,
+	redirectTo?: Pathname,
+	status: NumericRange<300, 599> = 307
+) {
+	const result = yield* Effect.either(parse(schema, value, redirectTo, status));
+	if (Either.isLeft(result)) return { success: false, failure: result.left } as const;
+	else return { success: true, data: result.right } as const;
 });
 
 // -------------------------------------------------------------------------------------------------

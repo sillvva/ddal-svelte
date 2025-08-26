@@ -1,21 +1,13 @@
 import { command } from "$app/server";
 import type { Pathname } from "$app/types";
 import { characterIdSchema, characterLogSchema, dMLogSchema, type LogSchema, type LogSchemaIn } from "$lib/schemas";
-import type { ErrorParams } from "$lib/server/effect/errors";
 import { FormError, RedirectError } from "$lib/server/effect/errors";
-import { parse, saveForm, validateForm } from "$lib/server/effect/forms";
+import { parse, parseEither, saveForm, validateForm } from "$lib/server/effect/forms";
 import { authReturn } from "$lib/server/effect/runtime";
 import { CharacterService } from "$lib/server/effect/services/characters";
 import { LogService } from "$lib/server/effect/services/logs";
-import { Data } from "effect";
 import type { SuperValidated } from "sveltekit-superforms";
 import * as v from "valibot";
-
-class InvalidCharacterIdError extends Data.TaggedError("InvalidCharacterIdError")<ErrorParams> {
-	constructor(err?: unknown) {
-		super({ message: "Invalid character ID", status: 400, cause: err });
-	}
-}
 
 export const save = command("unchecked", (input: LogSchemaIn) =>
 	authReturn(function* (user) {
@@ -26,17 +18,17 @@ export const save = command("unchecked", (input: LogSchemaIn) =>
 		let redirectTo: Pathname;
 
 		if (input.isDmLog) {
-			const parsedId = v.safeParse(v.nullable(characterIdSchema), input.characterId);
+			const parsedId = yield* parseEither(v.nullable(characterIdSchema), input.characterId);
 
 			const characters = input.characterId
 				? yield* Characters.get.userCharacters(user.id, {
-						characterId: parsedId.success ? parsedId.output : null
+						characterId: parsedId.data || null
 					})
 				: [];
 
 			form = yield* validateForm(input, dMLogSchema(characters));
 			if (!parsedId.success) {
-				FormError.from<LogSchema>(new InvalidCharacterIdError(), "characterId").toForm(form);
+				FormError.from<LogSchema>(parsedId.failure, "characterId").toForm(form);
 				return form;
 			}
 
