@@ -1,7 +1,17 @@
+<script lang="ts" module>
+	import type { PageData } from "./$types.js";
+
+	export const pageTitle = "DMs";
+	export function getPageHead(data: PageData) {
+		return {
+			title: `${data.user?.name}'s DMs`
+		};
+	}
+</script>
+
 <script lang="ts">
 	import { invalidateAll } from "$app/navigation";
-	import Breadcrumbs from "$lib/components/Breadcrumb.svelte";
-	import Head from "$lib/components/Head.svelte";
+	import Breadcrumbs from "$lib/components/Breadcrumbs.svelte";
 	import Search from "$lib/components/Search.svelte";
 	import SearchResults from "$lib/components/SearchResults.svelte";
 	import { EntitySearchFactory, errorToast, successToast } from "$lib/factories.svelte.js";
@@ -18,8 +28,6 @@
 
 	let deletingDM = new SvelteSet<string>();
 </script>
-
-<Head title={`${data.user?.name}'s DMs`} />
 
 <div class="flex flex-col gap-4">
 	<Breadcrumbs />

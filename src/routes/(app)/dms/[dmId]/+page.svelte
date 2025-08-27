@@ -1,15 +1,24 @@
+<script lang="ts" module>
+	import type { PageData } from "./$types.js";
+	export const getPageTitle = (data: PageData) => data.dm.name;
+	export function getPageHead(data: PageData) {
+		return {
+			title: data.dm.name
+		};
+	}
+</script>
+
 <script lang="ts">
 	import { goto } from "$app/navigation";
-	import Breadcrumbs from "$lib/components/Breadcrumb.svelte";
+	import Breadcrumbs from "$lib/components/Breadcrumbs.svelte";
 	import Control from "$lib/components/forms/Control.svelte";
 	import Input from "$lib/components/forms/Input.svelte";
 	import Submit from "$lib/components/forms/Submit.svelte";
 	import SuperForm from "$lib/components/forms/SuperForm.svelte";
-	import Head from "$lib/components/Head.svelte";
 	import { errorToast, successToast, valibotForm } from "$lib/factories.svelte.js";
 	import DMsAPI from "$lib/remote/dms";
 	import { dungeonMasterSchema } from "$lib/schemas";
-	import { getGlobal, setBreadcrumb } from "$lib/stores.svelte.js";
+	import { getGlobal } from "$lib/stores.svelte.js";
 	import { sorter } from "@sillvva/utils";
 
 	let { data } = $props();
@@ -20,11 +29,7 @@
 		remote: DMsAPI.forms.save
 	});
 	const sortedLogs = $derived(data.dm.logs.toSorted((a, b) => sorter(a.date, b.date)));
-
-	setBreadcrumb({ url: `/dms/${data.dm.id}`, title: data.dm.name });
 </script>
-
-<Head title={data.dm.name} />
 
 <div class="flex flex-col gap-4">
 	<Breadcrumbs />

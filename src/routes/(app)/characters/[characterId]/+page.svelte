@@ -1,10 +1,22 @@
+<script lang="ts" module>
+	import type { PageData } from "./$types.js";
+
+	export const getPageTitle = (data: PageData) => data.character.name;
+	export function getPageHead(data: PageData) {
+		return {
+			title: data.character.name,
+			description: `Level ${data.character.totalLevel} ${data.character.race} ${data.character.class}`,
+			image: `${page.url.origin}/characters/${data.character.id}/og-image.png`
+		};
+	}
+</script>
+
 <script lang="ts">
 	import { goto, invalidateAll, pushState } from "$app/navigation";
 	import { page } from "$app/state";
 	import { authClient } from "$lib/auth.js";
-	import Breadcrumbs from "$lib/components/Breadcrumb.svelte";
+	import Breadcrumbs from "$lib/components/Breadcrumbs.svelte";
 	import Dropdown from "$lib/components/Dropdown.svelte";
-	import Head from "$lib/components/Head.svelte";
 	import Items from "$lib/components/Items.svelte";
 	import Markdown from "$lib/components/Markdown.svelte";
 	import Search from "$lib/components/Search.svelte";
@@ -62,12 +74,6 @@
 		}
 	});
 </script>
-
-<Head
-	title={data.character.name}
-	description={`Level ${data.character.totalLevel} ${data.character.race} ${data.character.class}`}
-	image={`${page.url.origin}/characters/${data.character.id}/og-image.png`}
-/>
 
 {#if data.user}
 	<div class="flex gap-4">

@@ -122,8 +122,11 @@ export const assertAuth = Effect.fn(function* ({
 	}
 
 	if (adminOnly && result.output.role !== "admin") {
-		if (redirect) return yield* new RedirectError("Insufficient permissions", "/characters", 302);
-		else return yield* new UnauthorizedError("Insufficient permissions", 403);
+		if (redirect) {
+			return yield* new RedirectError("Insufficient permissions", "/characters", 302);
+		} else {
+			return yield* new UnauthorizedError("Insufficient permissions", 403);
+		}
 	}
 
 	return result.output;

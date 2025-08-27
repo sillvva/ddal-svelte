@@ -1,5 +1,15 @@
+<script lang="ts" module>
+	import type { PageData } from "./$types.js";
+	export const getPageTitle = (data: PageData) => data.form.data.name || "New Log";
+	export function getPageHead(data: PageData) {
+		return {
+			title: data.form.data.name || "New Log"
+		};
+	}
+</script>
+
 <script lang="ts">
-	import Breadcrumbs from "$lib/components/Breadcrumb.svelte";
+	import Breadcrumbs from "$lib/components/Breadcrumbs.svelte";
 	import AddDropItems from "$lib/components/forms/AddDropItems.svelte";
 	import Combobox from "$lib/components/forms/Combobox.svelte";
 	import Control from "$lib/components/forms/Control.svelte";
@@ -9,12 +19,10 @@
 	import MdTextInput from "$lib/components/forms/MDTextInput.svelte";
 	import Submit from "$lib/components/forms/Submit.svelte";
 	import SuperForm from "$lib/components/forms/SuperForm.svelte";
-	import Head from "$lib/components/Head.svelte";
 	import { defaultDM } from "$lib/entities";
 	import { valibotForm } from "$lib/factories.svelte.js";
 	import LogsAPI from "$lib/remote/logs";
 	import { type DungeonMasterId, logSchema } from "$lib/schemas";
-	import { setBreadcrumb } from "$lib/stores.svelte.js";
 	import { twMerge } from "tailwind-merge";
 
 	let { data } = $props();
@@ -25,14 +33,7 @@
 	const { form } = superform;
 
 	let season = $state($form.experience ? 1 : $form.acp ? 8 : 9);
-
-	setBreadcrumb({
-		url: `/characters/${data.character?.id}/log/${data.logId}`,
-		title: data.logId === "new" ? "New Log" : data.form.data.name
-	});
 </script>
-
-<Head title={data.form.data.name || "New Log"} />
 
 {#key $form.id || "new"}
 	<Breadcrumbs />

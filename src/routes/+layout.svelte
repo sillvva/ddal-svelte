@@ -1,5 +1,6 @@
 <script lang="ts">
 	import { dev } from "$app/environment";
+	import Head from "$lib/components/Head.svelte";
 	import { createGlobal } from "$lib/stores.svelte";
 	import { Toaster } from "svelte-sonner";
 	import { setupViewTransition } from "sveltekit-view-transition";
@@ -10,6 +11,8 @@
 	createGlobal(data.app);
 	setupViewTransition();
 </script>
+
+<Head />
 
 <div class="bg-base-100 text-base-content min-h-dvh noscript:hidden">
 	{@render children()}

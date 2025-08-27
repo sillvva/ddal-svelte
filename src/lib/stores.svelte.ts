@@ -2,7 +2,7 @@ import { browser } from "$app/environment";
 import { Duration } from "effect";
 import Cookie from "js-cookie";
 import { getContext, setContext } from "svelte";
-import { SvelteDate, SvelteMap } from "svelte/reactivity";
+import { SvelteDate } from "svelte/reactivity";
 import * as v from "valibot";
 import { appCookieSchema, appDefaults, type AppCookie } from "./schemas";
 
@@ -65,26 +65,4 @@ export function getGlobal() {
 export function createGlobal(app: AppCookie) {
 	const global = new Global(app);
 	return setContext(globalKey, global);
-}
-
-export interface Breadcrumb {
-	url: string;
-	title: string;
-}
-
-export interface BreadcrumbInternal extends Breadcrumb {
-	count: number;
-}
-
-const breadcrumbMap = new SvelteMap<string, BreadcrumbInternal>();
-const breadcrumbs: Breadcrumb[] = $derived.by(() => Array.from(breadcrumbMap.values()).toSorted((a, b) => a.count - b.count));
-
-export const getBreadcrumbs = (): Breadcrumb[] => breadcrumbs;
-export function setBreadcrumb(item: Breadcrumb) {
-	$effect(() => {
-		breadcrumbMap.set(item.url, { ...item, count: item.url.split("/").length });
-		return () => {
-			breadcrumbMap.delete(item.url);
-		};
-	});
 }

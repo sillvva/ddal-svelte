@@ -1,17 +1,26 @@
+<script lang="ts" module>
+	import type { PageData } from "./$types.js";
+	export const getPageTitle = (data: PageData) => data.character.name || "New Character";
+	export function getPageHead(data: PageData) {
+		return {
+			title: data.characterId === "new" ? "New Character" : `Edit ${data.character.name}`
+		};
+	}
+</script>
+
 <script lang="ts">
 	import { page } from "$app/state";
-	import Breadcrumbs from "$lib/components/Breadcrumb.svelte";
+	import Breadcrumbs from "$lib/components/Breadcrumbs.svelte";
 	import Checkbox from "$lib/components/forms/Checkbox.svelte";
 	import Control from "$lib/components/forms/Control.svelte";
 	import Input from "$lib/components/forms/Input.svelte";
 	import Submit from "$lib/components/forms/Submit.svelte";
 	import SuperForm from "$lib/components/forms/SuperForm.svelte";
-	import Head from "$lib/components/Head.svelte";
 	import { BLANK_CHARACTER } from "$lib/constants.js";
 	import { errorToast, valibotForm } from "$lib/factories.svelte.js";
 	import CharactersAPI from "$lib/remote/characters";
 	import { editCharacterSchema } from "$lib/schemas";
-	import { getGlobal, setBreadcrumb } from "$lib/stores.svelte.js";
+	import { getGlobal } from "$lib/stores.svelte.js";
 
 	let { data } = $props();
 
@@ -21,11 +30,7 @@
 	});
 
 	const { form } = superform;
-
-	setBreadcrumb({ url: `/characters/${data.character?.id}/edit`, title: data.character?.name ? "Edit" : "New Character" });
 </script>
-
-<Head title={data.character?.name || "New Character"} />
 
 <Breadcrumbs />
 

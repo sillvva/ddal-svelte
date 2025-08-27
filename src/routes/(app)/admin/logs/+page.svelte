@@ -1,6 +1,11 @@
+<script lang="ts" module>
+	export const pageHead = {
+		title: "App Logs"
+	};
+</script>
+
 <script lang="ts">
 	import { pushState } from "$app/navigation";
-	import Head from "$lib/components/Head.svelte";
 	import { errorToast, successToast } from "$lib/factories.svelte.js";
 	import AdminAPI from "$lib/remote/admin";
 	import { debounce } from "@sillvva/utils";
@@ -48,8 +53,6 @@
 		});
 	}
 </script>
-
-<Head title="App Logs" />
 
 <div class="fieldset mb-4 flex flex-col gap-1">
 	<div class="flex items-center justify-between">
