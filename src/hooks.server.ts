@@ -84,18 +84,13 @@ export const handle = sequence(runtime, authHandler, session, info, preloadTheme
 if (typeof process !== "undefined") {
 	let isShuttingDown = false;
 
-	const gracefulShutdown = async (signal: string) => {
+	const gracefulShutdown = async () => {
 		if (isShuttingDown) return;
 		isShuttingDown = true;
 
-		console.log(`\nReceived ${signal}, shutting down gracefully...`);
-
 		try {
-			console.log("Disposing app runtime...");
 			await appRuntime.dispose();
-			console.log("Closing database connection...");
 			await DBService.end();
-			console.log("Cleanup completed");
 			process.exit(0);
 		} catch (err) {
 			console.error("Error during cleanup:", err);
@@ -103,6 +98,6 @@ if (typeof process !== "undefined") {
 		}
 	};
 
-	process.once("SIGTERM", () => gracefulShutdown("SIGTERM"));
-	process.once("SIGINT", () => gracefulShutdown("SIGINT"));
+	process.once("SIGTERM", gracefulShutdown);
+	process.once("SIGINT", gracefulShutdown);
 }
