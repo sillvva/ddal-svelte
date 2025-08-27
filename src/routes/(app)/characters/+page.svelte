@@ -66,7 +66,7 @@
 			<div class="py-20 text-center">
 				<p class="mb-4">No characters found.</p>
 				<p>
-					<a href="/characters/new" class="btn btn-primary">Create your first character</a>
+					<a href="/characters/new/edit" class="btn btn-primary">Create your first character</a>
 				</p>
 			</div>
 		</section>
@@ -74,13 +74,13 @@
 		<div class="flex flex-wrap justify-between gap-2">
 			<div class="flex gap-2 max-sm:w-full sm:max-md:flex-1 md:w-md">
 				<a
-					href="/characters/new"
+					href="/characters/new/edit"
 					class="btn btn-primary btn-sm max-sm:hidden"
 					{@attach hotkey([
 						[
 							"n",
 							() => {
-								goto(`/characters/new`);
+								goto(`/characters/new/edit`);
 							}
 						]
 					])}
