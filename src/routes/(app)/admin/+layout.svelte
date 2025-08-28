@@ -19,15 +19,5 @@
 		</div>
 	{/snippet}
 
-	{#snippet failed(error)}
-		<div class="alert alert-error mb-4 w-full max-w-3xl shadow-lg">
-			<span class="iconify mdi--alert-circle size-6"></span>
-			<div class="flex flex-col">
-				<h3 class="font-bold">Error!</h3>
-				<div class="text-xs whitespace-pre-line">{JSON.stringify(error)}</div>
-			</div>
-		</div>
-	{/snippet}
-
 	{@render children()}
 </svelte:boundary>

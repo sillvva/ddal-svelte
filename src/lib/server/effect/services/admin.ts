@@ -22,7 +22,9 @@ interface AdminApiImpl {
 		readonly logs: (search?: string) => Effect.Effect<{ logs: AppLog[]; metadata?: ParseMetadata }, DrizzleError>;
 	};
 	readonly set: {
-		readonly saveLog: (values: Omit<AppLogSchema, "id">) => Effect.Effect<AppLog, SaveAppLogError | DrizzleError>;
+		readonly saveLog: (
+			values: Omit<AppLogSchema, "id">
+		) => Effect.Effect<Omit<AppLogSchema, "id">, SaveAppLogError | DrizzleError>;
 		readonly deleteLog: (logId: AppLogId) => Effect.Effect<{ id: AppLogId }, DeleteLogError | DrizzleError>;
 	};
 }
@@ -49,6 +51,9 @@ export class AdminService extends Effect.Service<AdminService>()("AdminService",
 			},
 			set: {
 				saveLog: Effect.fn("AdminService.set.saveLog")(function* (values) {
+					if (values.label.startsWith("RedirectError")) {
+						return values;
+					}
 					return yield* runQuery(db.insert(appLogs).values([values]).returning()).pipe(
 						Effect.flatMap((logs) =>
 							isTupleOf(logs, 1) ? Effect.succeed(logs[0]) : Effect.fail(new SaveAppLogError("Unable to save app log"))
