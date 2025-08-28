@@ -74,7 +74,7 @@ const preloadTheme: Handle = async ({ event, resolve }) => {
 
 	return await resolve(event, {
 		transformPageChunk: ({ html }) => {
-			return html.replace(/%theme%/g, `class="${mode}" data-theme="${theme}"`);
+			return html.replace(/%mode%/g, `class="${mode}"`).replace(/%theme%/g, theme === "system" ? "" : `data-theme="${theme}"`);
 		}
 	});
 };

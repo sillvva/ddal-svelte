@@ -29,12 +29,16 @@
 					global.app.settings.mode = mode;
 					const opposite = mode === "dark" ? "light" : "dark";
 					document.documentElement.classList.replace(opposite, mode);
-					document.documentElement.dataset.theme = theme;
+					if (theme === "system") {
+						document.documentElement.removeAttribute("data-theme");
+					} else {
+						document.documentElement.dataset.theme = theme;
+					}
 				},
 				() => {
 					document.documentElement.classList.remove("theme-switcher");
 				},
-				800
+				900
 			);
 		}
 	});
