@@ -7,6 +7,7 @@
 <script lang="ts">
 	import { pushState } from "$app/navigation";
 	import { page } from "$app/state";
+	import LoadingPanel from "$lib/components/LoadingPanel.svelte";
 	import { errorToast, successToast } from "$lib/factories.svelte.js";
 	import AdminAPI from "$lib/remote/admin";
 	import { queryParam, ssp } from "sveltekit-search-params";
@@ -85,9 +86,7 @@
 </div>
 
 {#if loading}
-	<div class="bg-base-200 flex h-40 flex-col items-center justify-center rounded-lg">
-		<span class="loading loading-spinner text-secondary w-16"></span>
-	</div>
+	<LoadingPanel />
 {:else if logSearch.logs.length}
 	<div class="overflow-x-auto rounded-lg">
 		<table class="bg-base-200 table w-full leading-5 max-sm:border-separate max-sm:border-spacing-y-2">

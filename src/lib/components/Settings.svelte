@@ -22,9 +22,9 @@
 
 	const global = getGlobal();
 
-	const request = $derived(await AppAPI.queries.request());
-	const user = $derived(request.user);
-	const session = $derived(request.session);
+	const request = $derived(AppAPI.queries.request());
+	const user = $derived(request.current?.user);
+	const session = $derived(request.current?.session);
 
 	const authProviders = $derived(
 		PROVIDERS.map((p) => ({

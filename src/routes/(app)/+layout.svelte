@@ -80,24 +80,7 @@
 			<div class="flex-1 max-md:hidden">&nbsp;</div>
 			<div class="flex items-center gap-4">
 				{#if data.user}
-					<svelte:boundary>
-						{#snippet pending()}
-							<span
-								class="hover-hover:md:input hover-hover:md:gap-4 hover-hover:md:cursor-text touch-hitbox flex h-10"
-								aria-label="Search"
-							>
-								<span class="hover-hover:md:text-base-content/60 flex items-center gap-1">
-									<span class="iconify mdi--magnify hover-hover:md:size-4 hover-none:w-10 size-6 max-md:w-10"></span>
-									<span class="hover-hover:max-md:hidden hover-none:hidden">Search</span>
-								</span>
-								<span class="hover-hover:max-md:hidden hover-none:hidden">
-									<kbd class="kbd kbd-sm"></kbd>
-									<kbd class="kbd kbd-sm">K</kbd>
-								</span>
-							</span>
-						{/snippet}
-						<CommandTray />
-					</svelte:boundary>
+					<CommandTray />
 
 					<!-- Avatar -->
 					<div class="hidden items-center print:flex">
@@ -144,14 +127,7 @@
 		{@render children()}
 	</div>
 	<Footer />
-
-	<svelte:boundary>
-		{#snippet pending()}
-			<div></div>
-		{/snippet}
-
-		<MobileNav />
-	</svelte:boundary>
+	<MobileNav />
 </div>
 
 <dialog
@@ -207,7 +183,7 @@
 
 <svelte:boundary>
 	{#snippet pending()}
-		<div></div>
+		{""}
 	{/snippet}
 
 	<Settings bind:open={settingsOpen} />

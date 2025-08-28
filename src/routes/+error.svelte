@@ -3,15 +3,12 @@
 	import { afterNavigate } from "$app/navigation";
 	import { resolve } from "$app/paths";
 	import { page } from "$app/state";
+	import LoadingPanel from "$lib/components/LoadingPanel.svelte";
 	import AppAPI from "$lib/remote/app";
 	import SuperDebug from "sveltekit-superforms";
 
 	let previousPage = $state<string>(resolve("/"));
 	let display = $state(!dev);
-
-	const request = $derived(AppAPI.queries.request());
-	const isMobile = $derived(request.current?.isMobile);
-	const user = $derived(request.current?.user);
 
 	afterNavigate(({ from }) => {
 		previousPage = from?.url.pathname || previousPage;
@@ -33,18 +30,26 @@
 		{/if}
 		<a href={previousPage} class="btn btn-sm">Go back</a>
 	</div>
-	{#if !display}
+	{#if display}
+		<svelte:boundary>
+			{@const request = await AppAPI.queries.request()}
+
+			{#snippet pending()}
+				<LoadingPanel />
+			{/snippet}
+
+			<SuperDebug
+				data={{
+					...page,
+					isMobile: request.isMobile,
+					user: request.user,
+					data: undefined
+				}}
+			/>
+		</svelte:boundary>
+	{:else}
 		<img src="/images/nat1.webp" alt="Error" class="size-80" />
 	{/if}
-	<SuperDebug
-		{display}
-		data={{
-			...page,
-			isMobile,
-			user,
-			data: undefined
-		}}
-	/>
 </div>
 
 <style>
