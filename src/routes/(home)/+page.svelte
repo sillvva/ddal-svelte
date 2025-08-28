@@ -25,13 +25,13 @@
 
 <Head />
 
-<main class="relative container mx-auto flex min-h-dvh flex-col items-center justify-center gap-8 p-4">
+<main class="relative container mx-auto flex min-h-dvh flex-col items-center justify-center gap-8 p-4 pb-20">
 	<h1 class="font-draconis text-base-content text-center text-4xl lg:text-6xl dark:text-white">
 		Adventurers League
 		<br />
 		Log Sheet
 	</h1>
-	<div class="max-xs:max-w-60 max-xs:gap-3 flex max-w-80 flex-col gap-4">
+	<div class="max-xs:max-w-80 max-xs:gap-3 flex max-w-80 flex-col gap-4">
 		{#if data.error}
 			<div class="flex justify-center">
 				<div class="alert alert-error max-w-[28rem] min-w-60 shadow-lg">
@@ -46,7 +46,7 @@
 		{/if}
 		{#each PROVIDERS as provider (provider.id)}
 			<button
-				class="bg-base-200 text-base-content hover:bg-base-300 max-xs:h-12 max-xs:px-4 flex h-16 items-center gap-4 rounded-lg px-8 py-4 transition-colors"
+				class="bg-base-200 text-base-content max-xs:justify-center hover:bg-base-300 max-xs:h-12 max-xs:px-4 flex h-16 items-center gap-4 rounded-lg px-8 py-4 transition-colors"
 				onclick={() => {
 					console.log("Signing in with", provider.name);
 					authClient.signIn
@@ -65,14 +65,14 @@
 				aria-label="Sign in with {provider.name}"
 			>
 				<span class={twMerge("iconify-color max-xs:size-5 size-8", provider.iconify)}></span>
-				<span class="max-xs:text-base flex h-full flex-1 items-center justify-center text-xl font-semibold"
+				<span class="max-xs:text-base xs:flex-1 flex h-full items-center justify-center text-xl font-semibold"
 					>Sign In with {provider.name}</span
 				>
 			</button>
 		{/each}
 		<hr class="border-base-content" />
 		<button
-			class="bg-base-200 text-base-content hover:bg-base-300 max-xs:h-12 max-xs:px-4 flex h-16 items-center gap-4 rounded-lg px-8 py-4 transition-colors"
+			class="bg-base-200 text-base-content max-xs:justify-center hover:bg-base-300 max-xs:h-12 max-xs:px-4 flex h-16 items-center gap-4 rounded-lg px-8 py-4 transition-colors"
 			onclick={() => {
 				console.log("Signing in with Passkey");
 				authClient.signIn.passkey({
@@ -86,7 +86,7 @@
 			aria-label="Sign in with Passkey"
 		>
 			<span class="iconify material-symbols--passkey max-xs:size-5 size-8"></span>
-			<span class="max-xs:text-base flex h-full flex-1 items-center justify-center text-xl font-semibold"
+			<span class="max-xs:text-base xs:flex-1 flex h-full items-center justify-center text-xl font-semibold"
 				>Sign In with Passkey</span
 			>
 		</button>

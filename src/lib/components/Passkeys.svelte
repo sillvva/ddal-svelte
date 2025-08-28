@@ -6,8 +6,8 @@
 	import type { PasskeyId } from "$lib/schemas";
 	import { getGlobal } from "$lib/stores.svelte";
 
-	const request = $derived(AppAPI.queries.request());
-	const user = $derived(request.current?.user);
+	const request = $derived(await AppAPI.queries.request());
+	const user = $derived(request.user);
 	const passkeys = $derived(user?.passkeys || []);
 	const global = getGlobal();
 

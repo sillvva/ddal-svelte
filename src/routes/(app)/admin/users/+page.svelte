@@ -16,15 +16,15 @@
 
 	let search = $state(page.url.searchParams.get("s")?.trim() ?? "");
 
-	const users = $derived(AdminAPI.queries.getUsers());
+	const users = $derived(await AdminAPI.queries.getUsers());
 	const parser = $derived(
-		new JSONSearchParser(users.current ?? [], {
+		new JSONSearchParser(users, {
 			defaultKey: "name",
 			validKeys: ["id", "name", "email", "role", "banned", "characters"]
 		})
 	);
 
-	const results = $derived(search.trim() ? parser.filter(search) : (users.current ?? []));
+	const results = $derived(search.trim() ? parser.filter(search) : users);
 </script>
 
 <div class="mb-4 flex flex-wrap items-center justify-between gap-2 max-sm:justify-end">
@@ -32,10 +32,10 @@
 		<Search bind:value={search} placeholder="Search by name, email, role, etc." />
 	</div>
 	<span class="badge bg-base-300 text-base-content badge-lg">
-		{#if results.length < (users.current?.length ?? 0)}
+		{#if results.length < (users.length ?? 0)}
 			Showing {results.length} of
 		{/if}
-		{users.current?.length} users
+		{users.length} users
 	</span>
 </div>
 

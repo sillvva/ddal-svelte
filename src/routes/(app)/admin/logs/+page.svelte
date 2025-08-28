@@ -6,34 +6,20 @@
 
 <script lang="ts">
 	import { pushState } from "$app/navigation";
+	import { page } from "$app/state";
 	import { errorToast, successToast } from "$lib/factories.svelte.js";
 	import AdminAPI from "$lib/remote/admin";
-	import { debounce } from "@sillvva/utils";
-	import { queryParameters, ssp } from "sveltekit-search-params";
+	import { queryParam, ssp } from "sveltekit-search-params";
 
-	let value = $state("");
-
-	const baseSearch = AdminAPI.queries.getBaseSearch();
-	const params = queryParameters(
-		{
-			s: ssp.string()
-		},
-		{
-			showDefaults: false,
-			debounceHistory: 400
-		}
-	);
-
-	const search = $derived($params.s ?? baseSearch.current?.query ?? "");
-	const logSearch = $derived(AdminAPI.queries.getAppLogs(search));
-
-	const debouncedSearch = debounce((value: string) => {
-		$params.s = value.trim() || null;
-	}, 400);
-
-	$effect(() => {
-		value = $params.s ?? "";
+	const s = queryParam("s", ssp.string(), {
+		showDefaults: false,
+		debounceHistory: 400
 	});
+
+	const baseSearch = $derived(await AdminAPI.queries.getBaseSearch());
+	const query = $derived(AdminAPI.queries.getAppLogs(page.url.searchParams.get("s") ?? baseSearch.query));
+	let loading = $derived(!query.current);
+	const logSearch = $derived(await query);
 
 	let syntaxReference = $state("");
 
@@ -62,13 +48,14 @@
 					<input
 						type="text"
 						id="log-search"
-						{value}
+						value={page.url.searchParams.get("s")}
 						oninput={(e) => {
-							debouncedSearch.call(e.currentTarget.value);
+							loading = true;
+							s.set(e.currentTarget.value.trim() || null);
 						}}
 						class="input sm:input-sm join-item flex-1"
 						aria-label="Search"
-						placeholder={baseSearch.current?.query ?? ""}
+						placeholder={baseSearch.query ?? ""}
 					/>
 					<button
 						class="btn sm:btn-sm join-item tooltip border-base-content/20 border max-sm:hidden"
@@ -83,8 +70,8 @@
 		</div>
 		<div class="flex justify-end text-sm max-sm:hidden">Logs are automatically deleted after 7 days.</div>
 	</div>
-	{#if logSearch.current?.metadata?.hasErrors}
-		{#each logSearch.current.metadata.errors as error, i (i)}
+	{#if logSearch.metadata?.hasErrors}
+		{#each logSearch.metadata.errors as error, i (i)}
 			<div class="alert alert-error mt-1 w-fit rounded-lg py-1">
 				<span class="iconify mdi--alert-circle size-6"></span>
 				{error.message} at position {error.position}: <kbd>{error.value}</kbd>
@@ -92,16 +79,16 @@
 		{/each}
 	{:else}
 		<div class="label pl-3 text-sm whitespace-normal">
-			Valid keys: {baseSearch.current?.validKeys.join(", ")}
+			Valid keys: {baseSearch.validKeys.join(", ")}
 		</div>
 	{/if}
 </div>
 
-{#if logSearch.loading}
+{#if loading}
 	<div class="bg-base-200 flex h-40 flex-col items-center justify-center rounded-lg">
 		<span class="loading loading-spinner text-secondary w-16"></span>
 	</div>
-{:else if logSearch.current?.logs.length}
+{:else if logSearch.logs.length}
 	<div class="overflow-x-auto rounded-lg">
 		<table class="bg-base-200 table w-full leading-5 max-sm:border-separate max-sm:border-spacing-y-2">
 			<thead class="max-sm:hidden">
@@ -112,7 +99,7 @@
 					<td class="max-xs:hidden w-0"></td>
 				</tr>
 			</thead>
-			{#each logSearch.current.logs as log (log.id)}
+			{#each logSearch.logs as log (log.id)}
 				{#snippet actions()}
 					<button
 						class="btn btn-sm btn-primary tooltip tooltip-left"
@@ -131,7 +118,7 @@
 						aria-label="Delete log"
 						onclick={async () => {
 							const result = await AdminAPI.actions.deleteAppLog(log.id).updates(
-								AdminAPI.queries.getAppLogs(search).withOverride((data) => ({
+								AdminAPI.queries.getAppLogs(page.url.searchParams.get("s") ?? baseSearch.query).withOverride((data) => ({
 									...data,
 									logs: data.logs.filter((l) => l.id !== log.id)
 								}))

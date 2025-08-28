@@ -3,13 +3,12 @@
 	import Head from "$lib/components/Head.svelte";
 	import { createGlobal } from "$lib/stores.svelte";
 	import { Toaster } from "svelte-sonner";
-	import { setupViewTransition } from "sveltekit-view-transition";
 	import "../app.css";
 
 	let { data, children } = $props();
 
 	createGlobal(data.app);
-	setupViewTransition();
+	// setupViewTransition();
 </script>
 
 <Head />

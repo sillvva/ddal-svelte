@@ -1,12 +1,14 @@
 <script lang="ts">
-	import { afterNavigate, invalidateAll } from "$app/navigation";
+	import { afterNavigate } from "$app/navigation";
 	import { navigating, page } from "$app/state";
 	import CommandTray from "$lib/components/CommandTray.svelte";
+	import Footer from "$lib/components/Footer.svelte";
 	import Markdown from "$lib/components/Markdown.svelte";
 	import MobileNav from "$lib/components/MobileNav.svelte";
 	import Settings from "$lib/components/Settings.svelte";
 	import { BLANK_CHARACTER } from "$lib/constants.js";
 	import { errorToast } from "$lib/factories.svelte.js";
+	import AppAPI from "$lib/remote/app";
 	import AuthAPI from "$lib/remote/auth";
 	import { getGlobal } from "$lib/stores.svelte.js";
 	import { hotkey } from "$lib/util";
@@ -78,7 +80,24 @@
 			<div class="flex-1 max-md:hidden">&nbsp;</div>
 			<div class="flex items-center gap-4">
 				{#if data.user}
-					<CommandTray />
+					<svelte:boundary>
+						{#snippet pending()}
+							<span
+								class="hover-hover:md:input hover-hover:md:gap-4 hover-hover:md:cursor-text touch-hitbox flex h-10"
+								aria-label="Search"
+							>
+								<span class="hover-hover:md:text-base-content/60 flex items-center gap-1">
+									<span class="iconify mdi--magnify hover-hover:md:size-4 hover-none:w-10 size-6 max-md:w-10"></span>
+									<span class="hover-hover:max-md:hidden hover-none:hidden">Search</span>
+								</span>
+								<span class="hover-hover:max-md:hidden hover-none:hidden">
+									<kbd class="kbd kbd-sm"></kbd>
+									<kbd class="kbd kbd-sm">K</kbd>
+								</span>
+							</span>
+						{/snippet}
+						<CommandTray />
+					</svelte:boundary>
 
 					<!-- Avatar -->
 					<div class="hidden items-center print:flex">
@@ -102,8 +121,7 @@
 
 									const result = await AuthAPI.actions.updateUser({ image: BLANK_CHARACTER });
 									if (result.ok) {
-										// TODO: await AppAPI.queries.request().refresh();
-										invalidateAll();
+										await AppAPI.queries.request().refresh();
 									} else {
 										errorToast(result.error.message);
 									}
@@ -125,21 +143,15 @@
 	<div class="relative z-10 container mx-auto max-w-5xl flex-1 p-4">
 		{@render children()}
 	</div>
-	<footer class="footer footer-center border-base-300 text-base-content relative z-16 border-t p-4 print:hidden">
-		<div>
-			<p>
-				The name
-				<a href="https://dnd.wizards.com/adventurers-league" target="_blank" rel="noreferrer noopener" class="text-secondary"
-					>Adventurers League</a
-				>
-				is property of Hasbro and
-				<a href="https://dnd.wizards.com/" target="_blank" rel="noreferrer noopener" class="text-secondary"
-					>Wizards of the Coast</a
-				>. This website is affiliated with neither.
-			</p>
-		</div>
-	</footer>
-	<MobileNav />
+	<Footer />
+
+	<svelte:boundary>
+		{#snippet pending()}
+			<div></div>
+		{/snippet}
+
+		<MobileNav />
+	</svelte:boundary>
 </div>
 
 <dialog
@@ -193,4 +205,10 @@
 	{/if}
 </dialog>
 
-<Settings bind:open={settingsOpen} />
+<svelte:boundary>
+	{#snippet pending()}
+		<div></div>
+	{/snippet}
+
+	<Settings bind:open={settingsOpen} />
+</svelte:boundary>

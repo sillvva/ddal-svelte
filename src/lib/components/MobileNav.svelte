@@ -1,8 +1,8 @@
 <script lang="ts">
 	import AppAPI from "$lib/remote/app";
 
-	const request = $derived(AppAPI.queries.request());
-	const user = $derived(request.current?.user);
+	const request = $derived(await AppAPI.queries.request());
+	const user = $derived(request.user);
 </script>
 
 <nav

@@ -10,8 +10,8 @@
 	import SearchResults from "./SearchResults.svelte";
 
 	const defaultSelected: string = searchSections[0].url;
-	const request = $derived(AppAPI.queries.request());
-	const isMac = $derived(request.current?.isMac);
+	const request = $derived(await AppAPI.queries.request());
+	const isMac = $derived(request.isMac);
 
 	let open = $state(false);
 	let selected: string = $state(defaultSelected);
