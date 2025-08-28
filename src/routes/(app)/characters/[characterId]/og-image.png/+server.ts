@@ -10,6 +10,7 @@ import { readFile } from "fs/promises";
 import imageSize from "image-size";
 import path from "path";
 import satori from "satori";
+import sharp from "sharp";
 import { safeParse } from "valibot";
 
 class UnableToFetchImageError extends Data.TaggedError("UnableToFetchImageError")<ErrorParams> {
@@ -292,11 +293,11 @@ export const GET = async ({ params, url }) => {
 
 	const resvg = new Resvg(svg, { fitTo: { mode: "width", value: width } });
 	const png = resvg.render();
-	const pngBuffer = png.asPng();
+	const buffer = await sharp(png.asPng()).jpeg({ quality: 80 }).toBuffer();
 
-	return new Response(new Uint8Array(pngBuffer), {
+	return new Response(new Uint8Array(buffer), {
 		headers: {
-			"Content-Type": "image/png",
+			"Content-Type": "image/jpeg",
 			"Cache-Control": "public, max-age=21600"
 		}
 	});
