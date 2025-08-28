@@ -22,7 +22,7 @@
 
 	const global = getGlobal();
 
-	let request = $state(await AppAPI.queries.request());
+	const request = $derived(await AppAPI.queries.request());
 	const user = $derived(request.user);
 	const session = $derived(request.session);
 
