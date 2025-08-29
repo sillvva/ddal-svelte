@@ -172,43 +172,23 @@ export async function runAuth<
 	C extends Services = Services,
 	T extends YieldWrap<Effect.Effect<A, B, C>> = YieldWrap<Effect.Effect<A, B, C>>,
 	Y = unknown
->(
-	program: (data: LocalsUser) => Generator<T, TReturn, Y>,
-	options?: { adminOnly?: boolean; safe?: false | undefined }
-): Promise<TReturn>;
+>(program: (data: LocalsUser) => Generator<T, TReturn, Y>, { adminOnly = false }: { adminOnly?: boolean } = {}) {
+	return run(function* () {
+		const user = yield* assertAuth({ adminOnly, redirect: true });
+		return yield* program(user);
+	});
+}
 
-export async function runAuth<
+export async function runAuthSafe<
 	TReturn,
 	A = unknown,
 	B extends InstanceType<ErrorClass> = InstanceType<ErrorClass>,
 	C extends Services = Services,
 	T extends YieldWrap<Effect.Effect<A, B, C>> = YieldWrap<Effect.Effect<A, B, C>>,
 	Y = unknown
->(
-	program: (data: LocalsUser) => Generator<T, TReturn, Y>,
-	options?: { adminOnly?: boolean; safe: true }
-): Promise<EffectResult<TReturn>>;
-
-export async function runAuth<
-	TReturn,
-	A = unknown,
-	B extends InstanceType<ErrorClass> = InstanceType<ErrorClass>,
-	C extends Services = Services,
-	T extends YieldWrap<Effect.Effect<A, B, C>> = YieldWrap<Effect.Effect<A, B, C>>,
-	Y = unknown
->(
-	program: (data: LocalsUser) => Generator<T, TReturn, Y>,
-	{ adminOnly = false, safe = false }: { adminOnly?: boolean; safe?: boolean } = {}
-) {
-	if (safe) {
-		return runSafe(function* () {
-			const user = yield* assertAuth({ adminOnly });
-			return yield* program(user);
-		});
-	} else {
-		return run(function* () {
-			const user = yield* assertAuth({ adminOnly, redirect: true });
-			return yield* program(user);
-		});
-	}
+>(program: (data: LocalsUser) => Generator<T, TReturn, Y>, { adminOnly = false }: { adminOnly?: boolean } = {}) {
+	return runSafe(function* () {
+		const user = yield* assertAuth({ adminOnly });
+		return yield* program(user);
+	});
 }
