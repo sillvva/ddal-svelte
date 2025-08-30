@@ -79,12 +79,18 @@
 						</td>
 						<td>
 							{user.name}
-							<div class="text-base-content/60 max-w-60 text-sm not-hover:truncate max-md:max-w-40">
+							<div class="text-base-content/60 max-w-60 text-xs not-hover:truncate max-md:max-w-40">
 								{user.email}
 							</div>
-							<div class="text-base-content/60 text-sm sm:hidden">
-								Characters: {user.characters}
-							</div>
+							{#if user.banned}
+								<div class="text-base-content/60 max-w-60 text-xs not-hover:truncate max-md:max-w-40">
+									Banned: {user.banReason}
+								</div>
+							{:else}
+								<div class="text-base-content/60 text-xs sm:hidden">
+									Characters: {user.characters}
+								</div>
+							{/if}
 						</td>
 						<td class="text-center max-sm:hidden">{user.role.toLocaleUpperCase()}</td>
 						<td class="text-center max-sm:hidden">{user.characters}</td>
@@ -115,17 +121,18 @@
 										data-tip="Ban {user.name}"
 										disabled={user.role === "admin"}
 										onclick={async () => {
-											if (user.role === "admin") return;
-											const reason = prompt("Reason for ban");
-											if (!reason?.trim()) return errorToast("Reason is required");
-											const { data } = await authClient.admin.banUser({
+											if (user.role === "admin") return errorToast("Cannot ban admins");
+
+											const banReason = prompt("Reason for ban");
+											if (!banReason?.trim()) return errorToast("Reason is required");
+
+											const result = await AdminAPI.actions.banUser({
 												userId: user.id,
-												banReason: reason
+												banReason
 											});
-											if (data) {
-												successToast(`${user.name} has been banned`);
-												await invalidateAll();
-											}
+
+											if (result.ok) successToast(`${user.name} has been banned`);
+											else errorToast(result.error.message);
 										}}
 									>
 										<span class="iconify mdi--ban"></span>
@@ -139,13 +146,10 @@
 										onclick={async () => {
 											if (user.role === "admin") return;
 											if (!confirm(`Are you sure you want to unban ${user.name}?`)) return;
-											const { data } = await authClient.admin.unbanUser({
-												userId: user.id
-											});
-											if (data) {
-												successToast(`${user.name} has been unbanned`);
-												await invalidateAll();
-											}
+
+											const result = await AdminAPI.actions.unbanUser(user.id);
+											if (result.ok) successToast(`${user.name} has been unbanned`);
+											else errorToast(result.error.message);
 										}}
 									>
 										<span class="iconify mdi--check"></span>

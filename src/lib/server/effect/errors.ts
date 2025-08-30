@@ -29,6 +29,12 @@ export function isTaggedError(error: unknown): error is InstanceType<ErrorClass>
 	);
 }
 
+export class FailedError extends Data.TaggedError("FailedError")<ErrorParams> {
+	constructor(action: string, cause?: unknown) {
+		super({ message: `Failed to ${action}`, status: 500, cause });
+	}
+}
+
 // -------------------------------------------------------------------------------------------------
 // RedirectError
 // -------------------------------------------------------------------------------------------------

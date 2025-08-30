@@ -2,7 +2,7 @@ import { dev } from "$app/environment";
 import { getRequestEvent } from "$app/server";
 import type { LocalsUser } from "$lib/schemas";
 import { removeTrace } from "$lib/util";
-import { error, isHttpError, isRedirect, redirect, type NumericRange } from "@sveltejs/kit";
+import { error, isHttpError, isRedirect, redirect, type NumericRange, type RequestEvent } from "@sveltejs/kit";
 import { Cause, Effect, Exit, ManagedRuntime } from "effect";
 import { isFunction } from "effect/Predicate";
 import type { YieldWrap } from "effect/Utils";
@@ -172,10 +172,13 @@ export async function runAuth<
 	C extends Services = Services,
 	T extends YieldWrap<Effect.Effect<A, B, C>> = YieldWrap<Effect.Effect<A, B, C>>,
 	Y = unknown
->(program: (data: LocalsUser) => Generator<T, TReturn, Y>, { adminOnly = false }: { adminOnly?: boolean } = {}) {
+>(
+	program: (user: LocalsUser, event: RequestEvent) => Generator<T, TReturn, Y>,
+	{ adminOnly = false }: { adminOnly?: boolean } = {}
+) {
 	return run(function* () {
-		const user = yield* assertAuth({ adminOnly, redirect: true });
-		return yield* program(user);
+		const { user, event } = yield* assertAuth({ adminOnly, redirect: true });
+		return yield* program(user, event);
 	});
 }
 
@@ -186,9 +189,12 @@ export async function runAuthSafe<
 	C extends Services = Services,
 	T extends YieldWrap<Effect.Effect<A, B, C>> = YieldWrap<Effect.Effect<A, B, C>>,
 	Y = unknown
->(program: (data: LocalsUser) => Generator<T, TReturn, Y>, { adminOnly = false }: { adminOnly?: boolean } = {}) {
+>(
+	program: (user: LocalsUser, event: RequestEvent) => Generator<T, TReturn, Y>,
+	{ adminOnly = false }: { adminOnly?: boolean } = {}
+) {
 	return runSafe(function* () {
-		const user = yield* assertAuth({ adminOnly });
-		return yield* program(user);
+		const { user, event } = yield* assertAuth({ adminOnly });
+		return yield* program(user, event);
 	});
 }
