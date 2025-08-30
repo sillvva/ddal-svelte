@@ -44,63 +44,65 @@
 				</div>
 			</div>
 		{/if}
-		{#each PROVIDERS as provider (provider.id)}
+		{#if !data.error || data.error.code !== "BANNED"}
+			{#each PROVIDERS as provider (provider.id)}
+				<button
+					class="bg-base-200 text-base-content max-xs:justify-center hover:bg-base-300 max-xs:h-12 max-xs:px-4 flex h-16 items-center gap-4 rounded-lg px-8 py-4 transition-colors"
+					onclick={() => {
+						console.log("Signing in with", provider.name);
+						authClient.signIn
+							.social({
+								provider: provider.id,
+								callbackURL: data.redirectTo || "/characters"
+							})
+							.then((result) => {
+								if (result.error?.message) {
+									console.error(result.error);
+									errorToast(result.error.message);
+								}
+								return result;
+							});
+					}}
+					aria-label="Sign in with {provider.name}"
+				>
+					<span class={twMerge("iconify-color max-xs:size-5 size-8", provider.iconify)}></span>
+					<span class="max-xs:text-base xs:flex-1 flex h-full items-center justify-center text-xl font-semibold"
+						>Sign In with {provider.name}</span
+					>
+				</button>
+			{/each}
+			<hr class="border-base-content" />
 			<button
 				class="bg-base-200 text-base-content max-xs:justify-center hover:bg-base-300 max-xs:h-12 max-xs:px-4 flex h-16 items-center gap-4 rounded-lg px-8 py-4 transition-colors"
 				onclick={() => {
-					console.log("Signing in with", provider.name);
-					authClient.signIn
-						.social({
-							provider: provider.id,
-							callbackURL: data.redirectTo || "/characters"
-						})
-						.then((result) => {
-							if (result.error?.message) {
-								console.error(result.error);
-								errorToast(result.error.message);
+					console.log("Signing in with Passkey");
+					authClient.signIn.passkey({
+						fetchOptions: {
+							onSuccess: () => {
+								window.location.href = data.redirectTo || "/characters";
 							}
-							return result;
-						});
+						}
+					});
 				}}
-				aria-label="Sign in with {provider.name}"
+				aria-label="Sign in with Passkey"
 			>
-				<span class={twMerge("iconify-color max-xs:size-5 size-8", provider.iconify)}></span>
+				<span class="iconify material-symbols--passkey max-xs:size-5 size-8"></span>
 				<span class="max-xs:text-base xs:flex-1 flex h-full items-center justify-center text-xl font-semibold"
-					>Sign In with {provider.name}</span
+					>Sign In with Passkey</span
 				>
 			</button>
-		{/each}
-		<hr class="border-base-content" />
-		<button
-			class="bg-base-200 text-base-content max-xs:justify-center hover:bg-base-300 max-xs:h-12 max-xs:px-4 flex h-16 items-center gap-4 rounded-lg px-8 py-4 transition-colors"
-			onclick={() => {
-				console.log("Signing in with Passkey");
-				authClient.signIn.passkey({
-					fetchOptions: {
-						onSuccess: () => {
-							window.location.href = data.redirectTo || "/characters";
-						}
-					}
-				});
-			}}
-			aria-label="Sign in with Passkey"
-		>
-			<span class="iconify material-symbols--passkey max-xs:size-5 size-8"></span>
-			<span class="max-xs:text-base xs:flex-1 flex h-full items-center justify-center text-xl font-semibold"
-				>Sign In with Passkey</span
-			>
-		</button>
-		<span class="text-base-content text-center text-xs text-pretty">
-			You must have an account and then add a Passkey in settings before you can sign in with a Passkey.
-		</span>
-		<div class="card bg-primary/50 shadow-sm">
-			<div class="card-body p-4">
-				<h3 class="text-xl">Important Notice</h3>
-				<p class="text-base-content text-xs text-pretty">
-					Authentication has been migrated to a new API. If you had a Passkey prior to July 8th, 2025, you will need to sign in
-					with another method and then add it again.
-				</p>
+			<span class="text-base-content text-center text-xs text-pretty">
+				You must have an account and then add a Passkey in settings before you can sign in with a Passkey.
+			</span>
+			<div class="card bg-primary/50 shadow-sm">
+				<div class="card-body p-4">
+					<h3 class="text-xl">Important Notice</h3>
+					<p class="text-base-content text-xs text-pretty">
+						Authentication has been migrated to a new API. If you had a Passkey prior to July 8th, 2025, you will need to sign in
+						with another method and then add it again.
+					</p>
+				</div>
 			</div>
-		</div>
+		{/if}
 	</div>
 </main>

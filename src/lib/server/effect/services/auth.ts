@@ -4,6 +4,7 @@ import { localsSessionSchema, localsUserSchema, type LocalsSession, type LocalsU
 import { DBService, DrizzleError, type Database } from "$lib/server/db";
 import { RedirectError, type ErrorParams } from "$lib/server/effect/errors";
 import { AppLog } from "$lib/server/effect/logging";
+import { isDefined } from "@sillvva/utils";
 import { type NumericRange } from "@sveltejs/kit";
 import { betterAuth, type BetterAuthOptions } from "better-auth";
 import { drizzleAdapter } from "better-auth/adapters/drizzle";
@@ -104,11 +105,11 @@ export const assertAuth = Effect.fn(function* ({
 	const result = v.safeParse(localsUserSchema, user);
 
 	if (!result.success) {
-		yield* AppLog.debug("assertUser", { issues: v.summarize(result.issues) });
+		if (user) yield* AppLog.debug("assertUser", { issues: v.summarize(result.issues) });
 		if (redirect) {
 			return yield* new RedirectError("Invalid user", `/?redirect=${encodeURIComponent(`${url.pathname}${url.search}`)}`, 302);
 		} else {
-			return yield* new UnauthorizedError("Invalid user", 401);
+			return yield* new UnauthorizedError("Invalid user", 401, result.issues);
 		}
 	}
 
@@ -117,8 +118,9 @@ export const assertAuth = Effect.fn(function* ({
 			.getAll()
 			.filter((c) => c.name.includes("auth"))
 			.forEach((c) => event.cookies.delete(c.name, { path: "/" }));
+		event.cookies.set("banned", result.output.banReason || "", { path: "/" });
 		if (redirect) {
-			return yield* new RedirectError("Banned", `/?code=BANNED&reason=${result.output.banReason}`, 302);
+			return yield* new RedirectError("Banned", "/", 302);
 		} else {
 			return yield* new UnauthorizedError("Banned", 403);
 		}
@@ -136,15 +138,21 @@ export const assertAuth = Effect.fn(function* ({
 });
 
 export class UnauthorizedError extends Data.TaggedError("UnauthorizedError")<ErrorParams> {
-	constructor(message = "Unauthorized", status: NumericRange<400, 499>) {
-		super({ message, status });
+	constructor(message = "Unauthorized", status: NumericRange<400, 499>, cause?: unknown) {
+		super({ message, status, cause });
 	}
 }
 
-export function getError(code: string | null, reason: string | null) {
-	switch (code) {
-		case "BANNED":
-			return { message: `You have been banned from the application.${reason ? ` Reason: ${reason}` : ""}`, code };
+export function getHomeError() {
+	const event = getRequestEvent();
+
+	const banned = event.cookies.get("banned");
+	if (isDefined(banned)) {
+		return {
+			message: `You have been banned from the application.${banned ? ` Reason: ${banned}` : ""}`,
+			code: "BANNED" as const
+		};
 	}
+
 	return null;
 }

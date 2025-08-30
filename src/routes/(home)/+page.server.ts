@@ -1,4 +1,4 @@
-import { getError } from "$lib/server/effect/services/auth";
+import { getHomeError } from "$lib/server/effect/services/auth";
 import { redirect } from "@sveltejs/kit";
 
 export const load = (event) => {
@@ -7,9 +7,7 @@ export const load = (event) => {
 	const redirectTo = event.url.searchParams.get("redirect");
 	if (user?.id) redirect(302, redirectTo || "/characters");
 
-	const code = event.url.searchParams.get("code");
-	const reason = event.url.searchParams.get("reason");
-	const error = getError(code, reason);
+	const error = getHomeError();
 
 	return {
 		redirectTo,
