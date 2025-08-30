@@ -126,11 +126,11 @@ export function valibotForm<S extends v.GenericSchema, Out extends Infer<S, "val
 			onSubmit?.(event);
 		},
 		onResult(event) {
+			if (event.result.type !== "redirect") pending.set(false);
 			if (["success", "redirect"].includes(event.result.type)) {
 				onSuccessResult(get(superform.form));
 			}
 			onResult?.(event);
-			pending.set(false);
 		}
 	});
 	return {
