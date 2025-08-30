@@ -34,7 +34,7 @@ export type ModuleData = {
 	pageTitle?: string;
 	getPageTitle?: (data: unknown) => string;
 	pageHead?: PageHead;
-	getPageHead?: (data: unknown) => PageHead;
+	getPageHead?: (data: unknown) => Partial<PageHead>;
 };
 export const routeModules: Record<string, ModuleData> = import.meta.glob("/src/routes/**/+page.svelte", {
 	eager: true

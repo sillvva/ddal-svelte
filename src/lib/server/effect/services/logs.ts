@@ -1,5 +1,5 @@
 import { parseLog } from "$lib/entities";
-import type { LocalsUser, LogId, LogIdOrNew, LogSchema, UserId } from "$lib/schemas";
+import type { DungeonMasterSchema, LocalsUser, LogId, LogSchema, UserId } from "$lib/schemas";
 import {
 	buildConflictUpdateColumns,
 	DBService,
@@ -108,7 +108,7 @@ export type UserLogData = InferQueryResult<"logs", typeof userLogsConfig>;
 interface LogApiImpl {
 	readonly db: Database | Transaction;
 	readonly get: {
-		readonly log: (logId: LogIdOrNew, userId: UserId) => Effect.Effect<FullLogData | undefined, DrizzleError>;
+		readonly log: (logId: LogId, userId: UserId) => Effect.Effect<FullLogData | undefined, DrizzleError>;
 		readonly dmLogs: (userId: UserId) => Effect.Effect<FullLogData[], DrizzleError>;
 		readonly userLogs: (userId: UserId) => Effect.Effect<UserLogData[], DrizzleError>;
 	};
@@ -121,7 +121,7 @@ interface LogApiImpl {
 	};
 }
 
-const validateLogDM = Effect.fn("validateLogDM")(function* (log, user) {
+const validateLogDM = Effect.fn("validateLogDM")(function* (log: LogSchema, user: LocalsUser) {
 	const dmApi = yield* DMService;
 
 	let isUser = log.isDmLog || log.dm.isUser || ["", user.name.toLowerCase()].includes(log.dm.name.toLowerCase().trim());
@@ -140,24 +140,22 @@ const validateLogDM = Effect.fn("validateLogDM")(function* (log, user) {
 		}
 	}
 
-	if (!dmId && (isUser || dmName || log.dm.DCI)) {
+	if (isUser || dmName || log.dm.DCI) {
 		const search = yield* dmApi.get.fuzzyDM(user.id, isUser, log.dm);
 		if (search) {
-			if (search.name === dmName && search.DCI === log.dm.DCI) {
-				return { id: search.id, name: search.name, DCI: search.DCI, userId: user.id, isUser: search.isUser };
-			}
+			if (search.name === dmName && search.DCI === log.dm.DCI) return search;
 			if (search.isUser) isUser = true;
 			dmId = search.id;
 		}
 	}
 
 	return {
-		id: dmId || undefined,
+		id: dmId,
 		name: dmName,
 		DCI: log.dm.DCI,
 		userId: user.id,
 		isUser
-	};
+	} satisfies DungeonMasterSchema;
 });
 
 const upsertLogDM = Effect.fn("upsertLogDM")(function* (log: LogSchema, user: LocalsUser) {
@@ -196,7 +194,7 @@ const upsertLog = Effect.fn("upsertLog")(function* (log: LogSchema, user: Locals
 		db
 			.insert(logs)
 			.values({
-				id: log.id === "new" ? undefined : log.id,
+				id: log.id,
 				name: log.name,
 				date: log.date,
 				description: log.description || "",
@@ -281,7 +279,7 @@ const itemsCRUD = Effect.fn("itemsCRUD")(function* (params: CRUDMagicItemParams 
 				.insert(table)
 				.values(
 					gained.map((item) => ({
-						id: item.id || undefined,
+						id: item.id,
 						name: item.name,
 						description: item.description,
 						logGainedId: logId

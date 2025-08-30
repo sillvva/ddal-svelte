@@ -17,11 +17,11 @@ export const load = (event) =>
 				class: parent.character.class || "",
 				characterSheetUrl: parent.character.characterSheetUrl || "",
 				imageUrl: parent.character.imageUrl === BLANK_CHARACTER ? "" : parent.character.imageUrl,
-				firstLog: parent.app.characters.firstLog && parent.character.id === "new"
+				firstLog: parent.app.characters.firstLog && parent.characterId === "new"
 			},
 			editCharacterSchema,
 			{
-				errors: parent.character.id !== "new"
+				errors: parent.characterId !== "new"
 			}
 		);
 

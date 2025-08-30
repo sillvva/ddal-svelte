@@ -1,17 +1,20 @@
 import { command } from "$app/server";
 import { defaultLogSchema } from "$lib/entities";
-import { characterIdOrNewSchema, editCharacterSchema, type EditCharacterSchemaIn } from "$lib/schemas";
-import { FormError } from "$lib/server/effect/errors";
+import { characterIdSchema, editCharacterSchema, type CharacterId, type EditCharacterSchemaIn } from "$lib/schemas";
+import { FormError, RedirectError } from "$lib/server/effect/errors";
 import { parse, saveForm, validateForm } from "$lib/server/effect/forms";
 import { runAuthSafe, runSafe } from "$lib/server/effect/runtime";
 import { CharacterService } from "$lib/server/effect/services/characters";
 import { LogService } from "$lib/server/effect/services/logs";
+import * as v from "valibot";
 
-export const save = command("unchecked", (input: EditCharacterSchemaIn) =>
+export const save = command("unchecked", (input: { id: CharacterId | "new"; data: EditCharacterSchemaIn }) =>
 	runAuthSafe(function* (user) {
 		const Characters = yield* CharacterService;
 
-		const characterId = yield* parse(characterIdOrNewSchema, input.id, "/characters", 301);
+		const characterId = yield* parse(v.union([characterIdSchema, v.literal("new")]), input.id, "/characters", 301);
+		const character = characterId !== "new" ? yield* Characters.get.character(characterId, false) : undefined;
+		if (characterId !== "new" && !character) return yield* new RedirectError("Character not found", "/characters", 302);
 
 		const form = yield* validateForm(input, editCharacterSchema);
 		if (!form.valid) return form;

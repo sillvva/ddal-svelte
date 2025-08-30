@@ -11,7 +11,7 @@ import { Duration } from "effect";
 import escape from "regexp.escape";
 import { toast } from "svelte-sonner";
 import { SvelteMap } from "svelte/reactivity";
-import { derived, get, type Readable, type Writable } from "svelte/store";
+import { derived, get, writable, type Readable, type Writable } from "svelte/store";
 import {
 	dateProxy,
 	fieldProxy,
@@ -57,7 +57,7 @@ export function unknownErrorToast(error: unknown) {
 }
 
 export interface CustomFormOptions<Out extends Record<string, unknown>> {
-	remote?: ((data: Out) => Promise<EffectResult<SuperValidated<Out> | Pathname>>) & { pending: number };
+	remote?: (data: Out) => Promise<EffectResult<SuperValidated<Out> | Pathname>>;
 	onSuccessResult?: (data: Out) => Awaitable<void>;
 	onErrorResult?: (error: EffectFailure["error"]) => Awaitable<void>;
 }
@@ -75,12 +75,14 @@ export function valibotForm<S extends v.GenericSchema, Out extends Infer<S, "val
 		...rest
 	}: FormOptions<Out, App.Superforms.Message, In> & CustomFormOptions<Out> = {}
 ) {
+	const pending = writable(false);
 	const superform = superForm(form, {
 		dataType: "json",
 		validators: valibotClient(schema),
 		taintedMessage: "You have unsaved changes. Are you sure you want to leave?",
 		...rest,
 		onSubmit: async (event) => {
+			pending.set(true);
 			if (remote) {
 				event.cancel();
 
@@ -105,6 +107,7 @@ export function valibotForm<S extends v.GenericSchema, Out extends Infer<S, "val
 					});
 
 					if (!hasErrors) await onSuccessResult(data);
+					pending.set(false);
 				} else {
 					await onErrorResult(result.error);
 					if (result.error.extra.redirectTo && typeof result.error.extra.redirectTo === "string") {
@@ -116,6 +119,7 @@ export function valibotForm<S extends v.GenericSchema, Out extends Infer<S, "val
 						const error = result.error.message;
 						superform.errors.set({ _errors: [error.trim() ? error : "An unknown error occurred"] });
 					}
+					pending.set(false);
 				}
 			}
 
@@ -126,11 +130,12 @@ export function valibotForm<S extends v.GenericSchema, Out extends Infer<S, "val
 				onSuccessResult(get(superform.form));
 			}
 			onResult?.(event);
+			pending.set(false);
 		}
 	});
 	return {
 		...superform,
-		pending: remote?.pending
+		pending
 	};
 }
 

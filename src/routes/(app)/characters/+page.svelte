@@ -1,6 +1,6 @@
 <script lang="ts" module>
 	export const pageTitle = "Characters";
-	export function getPageHead(data: PageData) {
+	export function getPageHead(data: Partial<PageData>) {
 		return {
 			title: `${data.user?.name}'s Characters`
 		};

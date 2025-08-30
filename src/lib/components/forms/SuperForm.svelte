@@ -5,6 +5,7 @@
 	import { onMount, type Snippet } from "svelte";
 	import { fromAction } from "svelte/attachments";
 	import type { HTMLFormAttributes } from "svelte/elements";
+	import type { Writable } from "svelte/store";
 	import type { SuperForm, SuperValidated } from "sveltekit-superforms";
 	import SuperDebug from "sveltekit-superforms/SuperDebug.svelte";
 	import FormMessage from "./FormMessage.svelte";
@@ -15,14 +16,15 @@
 	type TRemoteCommand = $$Generic<((data: T) => Promise<EffectResult<TForm | Pathname>>) & { pending: number }>;
 
 	interface Props extends Omit<FormAttributes, "action"> {
-		superform: SuperForm<T, App.Superforms.Message> & { pending?: number };
+		superform: SuperForm<T, App.Superforms.Message> & { pending: Writable<boolean> };
 		children?: Snippet;
 	}
 
 	let { superform, children, ...rest }: Props = $props();
 	const { form, errors, message, enhance, capture, restore, submitting, tainted } = superform;
+	const { pending } = superform;
 
-	const isSubmitting = $derived($submitting || !!superform.pending);
+	const isSubmitting = $derived($submitting || $pending);
 
 	onMount(() => {
 		superform.reset();

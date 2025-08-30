@@ -4,6 +4,7 @@
 	import { sorter } from "@sillvva/utils";
 	import type { Snippet } from "svelte";
 	import type { SuperForm } from "sveltekit-superforms";
+	import { v7 } from "uuid";
 	import EntityCard from "./EntityCard.svelte";
 
 	interface Props {
@@ -16,13 +17,16 @@
 	let { superform, magicItems = [], storyAwards = [], children }: Props = $props();
 
 	const { form } = superform;
-	const newItem = { id: "" as ItemId, name: "", description: "" };
+	const newItem = () => ({ id: v7() as ItemId, name: "", description: "" }) satisfies LogSchema["magicItemsGained"][0];
 
 	const sortedItems = $derived(
 		magicItems.toSorted((a, b) => sorter(a.name.replace(/^\d+x? ?/, ""), b.name.replace(/^\d+x? ?/, "")))
 	);
+	const sortedAwards = $derived(
+		storyAwards.toSorted((a, b) => sorter(a.name.replace(/^\d+x? ?/, ""), b.name.replace(/^\d+x? ?/, "")))
+	);
 	const remainingItems = $derived(sortedItems.filter((item) => !$form.magicItemsLost.includes(item.id)));
-	const remainingAwards = $derived(storyAwards.filter((item) => !$form.storyAwardsLost.includes(item.id)));
+	const remainingAwards = $derived(sortedAwards.filter((item) => !$form.storyAwardsLost.includes(item.id)));
 </script>
 
 <div
@@ -54,7 +58,7 @@
 				type="button"
 				class="btn join-item min-w-fit max-md:flex-1 max-md:px-0 max-md:data-[remaining=0]:flex-2"
 				data-remaining={remainingItems.length}
-				onclick={() => ($form.magicItemsGained = $form.magicItemsGained.concat(newItem))}
+				onclick={() => ($form.magicItemsGained = $form.magicItemsGained.concat(newItem()))}
 				aria-label="Add Magic Item"
 			>
 				<span class="iconify mdi--plus max-md:size-6"></span>
@@ -97,7 +101,7 @@
 					type="button"
 					class="btn join-item min-w-fit max-md:flex-1 max-md:px-0 max-md:data-[remaining=0]:flex-2"
 					data-remaining={remainingItems.length}
-					onclick={() => ($form.storyAwardsGained = $form.storyAwardsGained.concat(newItem))}
+					onclick={() => ($form.storyAwardsGained = $form.storyAwardsGained.concat(newItem()))}
 					aria-label="Add Story Award"
 				>
 					<span class="iconify mdi--plus max-md:size-6"></span>
@@ -122,13 +126,13 @@
 	{#each $form.magicItemsGained as _, index (_.id)}
 		<EntityCard {superform} type="add" entity="magicItems" {index} />
 	{/each}
-	{#each $form.magicItemsLost as _, index (_)}
+	{#each $form.magicItemsLost as _, index (index)}
 		<EntityCard {superform} type="drop" entity="magicItems" {index} items={sortedItems} />
 	{/each}
 	{#each $form.storyAwardsGained as _, index (_.id)}
 		<EntityCard {superform} type="add" entity="storyAwards" {index} />
 	{/each}
-	{#each $form.storyAwardsLost as _, index (_)}
+	{#each $form.storyAwardsLost as _, index (index)}
 		<EntityCard {superform} type="drop" entity="storyAwards" {index} items={storyAwards} />
 	{/each}
 </div>

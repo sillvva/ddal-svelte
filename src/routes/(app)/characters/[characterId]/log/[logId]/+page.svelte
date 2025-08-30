@@ -1,14 +1,15 @@
 <script lang="ts" module>
 	import type { PageData } from "./$types.js";
-	export const getPageTitle = (data: PageData) => data.form.data.name || "New Log";
-	export function getPageHead(data: PageData) {
+	export const getPageTitle = (data: Partial<PageData>) => data.form?.data.name || "New Log";
+	export function getPageHead(data: Partial<PageData>) {
 		return {
-			title: data.form.data.name || "New Log"
+			title: data.form?.data.name || "New Log"
 		};
 	}
 </script>
 
 <script lang="ts">
+	import { page } from "$app/state";
 	import Breadcrumbs from "$lib/components/Breadcrumbs.svelte";
 	import AddDropItems from "$lib/components/forms/AddDropItems.svelte";
 	import Combobox from "$lib/components/forms/Combobox.svelte";
@@ -22,13 +23,13 @@
 	import { defaultDM } from "$lib/entities";
 	import { valibotForm } from "$lib/factories.svelte.js";
 	import LogsAPI from "$lib/remote/logs";
-	import { type DungeonMasterId, logSchema } from "$lib/schemas";
+	import { type DungeonMasterId, type LogId, logSchema } from "$lib/schemas";
 	import { twMerge } from "tailwind-merge";
 
 	let { data } = $props();
 
 	const superform = valibotForm(data.form, logSchema, {
-		remote: LogsAPI.forms.save
+		remote: (log) => LogsAPI.forms.save({ logId: page.params.logId as LogId | "new", data: log })
 	});
 	const { form } = superform;
 

@@ -60,12 +60,9 @@ export const userIdSchema = brandedId("UserId");
 export type CharacterId = v.InferOutput<typeof characterIdSchema>;
 export const characterIdSchema = brandedId("CharacterId");
 
-export type CharacterIdOrNew = v.InferOutput<typeof characterIdOrNewSchema>;
-export const characterIdOrNewSchema = v.union([characterIdSchema, v.literal("new")]);
-
 export type CharacterSchema = v.InferOutput<typeof characterSchema>;
 export const characterSchema = v.object({
-	id: characterIdOrNewSchema,
+	id: characterIdSchema,
 	name: v.pipe(requiredString, shortString),
 	campaign: v.optional(shortString, ""),
 	race: v.optional(shortString, ""),
@@ -87,7 +84,7 @@ export const dungeonMasterIdSchema = brandedId("DungeonMasterId");
 export type DungeonMasterSchema = v.InferOutput<typeof dungeonMasterSchema>;
 export type DungeonMasterSchemaIn = v.InferInput<typeof dungeonMasterSchema>;
 export const dungeonMasterSchema = v.object({
-	id: v.union([dungeonMasterIdSchema, v.literal("")]),
+	id: dungeonMasterIdSchema,
 	name: v.pipe(requiredString, shortString),
 	DCI: v.nullish(v.pipe(string, v.regex(/\d{0,10}/, "Invalid DCI Format")), null),
 	userId: userIdSchema,
@@ -107,13 +104,10 @@ const itemSchema = v.object({
 export type LogId = v.InferOutput<typeof logIdSchema>;
 export const logIdSchema = brandedId("LogId");
 
-export type LogIdOrNew = v.InferOutput<typeof logIdOrNewSchema>;
-export const logIdOrNewSchema = v.union([logIdSchema, v.literal("new")]);
-
 export type LogSchema = v.InferOutput<typeof logSchema>;
 export type LogSchemaIn = v.InferInput<typeof logSchema>;
 export const logSchema = v.object({
-	id: logIdOrNewSchema,
+	id: logIdSchema,
 	name: v.pipe(requiredString, maxStringSize),
 	date: v.date(),
 	characterId: v.nullish(characterIdSchema, null),

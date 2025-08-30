@@ -1,9 +1,9 @@
 <script lang="ts" module>
 	import type { PageData } from "./$types.js";
-	export const getPageTitle = (data: PageData) => data.dm.name;
-	export function getPageHead(data: PageData) {
+	export const getPageTitle = (data: Partial<PageData>) => data.dm?.name || "DM";
+	export function getPageHead(data: Partial<PageData>) {
 		return {
-			title: data.dm.name
+			title: data.dm?.name || "DM"
 		};
 	}
 </script>

@@ -142,7 +142,7 @@ export class DMService extends Effect.Service<DMService>()("DMSService", {
 				}),
 
 				addUserDM: Effect.fn("DMService.set.addUserDM")(function* (dms) {
-					const user = yield* assertAuth();
+					const { user } = yield* assertAuth();
 
 					const existing = yield* runQuery(
 						db.query.dungeonMasters.findFirst({
