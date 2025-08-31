@@ -22,8 +22,6 @@ export const save = command("unchecked", (input: { logId: LogId | "new"; data: L
 		const Characters = yield* CharacterService;
 		const Logs = yield* LogService;
 
-		const logId = yield* parse(v.union([logIdSchema, v.literal("new")]), input.logId, `/characters/${input.logId}`, 302);
-
 		let form: SuperValidated<LogSchema>;
 		let redirectTo: Pathname;
 
@@ -53,6 +51,7 @@ export const save = command("unchecked", (input: { logId: LogId | "new"; data: L
 
 		if (!form.valid) return form;
 
+		const logId = yield* parse(v.union([logIdSchema, v.literal("new")]), input.logId, redirectTo, 302);
 		const log = logId !== "new" ? yield* Logs.get.log(logId, user.id) : undefined;
 		if (logId !== "new" && !log) return yield* new RedirectError("Log not found", redirectTo, 302);
 
