@@ -52,6 +52,8 @@ const session: Handle = async ({ event, resolve }) =>
 		event.locals.session = session;
 		event.locals.user = user;
 
+		if (user) event.cookies.delete("banned", { path: "/" });
+
 		return resolve(event);
 	});
 
