@@ -9,6 +9,7 @@
 </script>
 
 <script lang="ts">
+	import { page } from "$app/state";
 	import Breadcrumbs from "$lib/components/Breadcrumbs.svelte";
 	import AddDropItems from "$lib/components/forms/AddDropItems.svelte";
 	import Combobox from "$lib/components/forms/Combobox.svelte";
@@ -21,12 +22,12 @@
 	import SuperForm from "$lib/components/forms/SuperForm.svelte";
 	import { valibotForm } from "$lib/factories.svelte.js";
 	import LogsAPI from "$lib/remote/logs";
-	import { dMLogSchema } from "$lib/schemas";
+	import { dMLogSchema, type LogId } from "$lib/schemas";
 
 	let { data } = $props();
 
 	const superform = valibotForm(data.form, dMLogSchema(), {
-		remote: LogsAPI.forms.save
+		remote: (log) => LogsAPI.forms.save({ logId: page.params.logId as LogId | "new", data: log })
 	});
 	const { form } = superform;
 
