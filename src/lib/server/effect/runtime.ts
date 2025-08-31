@@ -139,23 +139,33 @@ export function handleCause<B extends InstanceType<ErrorClass>>(cause: Cause.Cau
 				extra[key] = error[key];
 			}
 		}
+
+		Effect.runFork(AppLog.error(message, extra));
 	}
 
 	if (Cause.isDieType(cause)) {
 		const defect = cause.defect;
-		// This will propagate redirects and http errors directly to SvelteKit
 		if (isRedirect(defect)) {
-			Effect.runFork(AppLog.info(`Redirect to ${defect.location}`, { defect }));
-			throw defect;
+			message = `Redirect to ${defect.location}`;
+			status = defect.status as NumericRange<300, 599>;
+			extra.redirectTo = defect.location;
 		} else if (isHttpError(defect)) {
-			Effect.runFork(AppLog.error(`HttpError [${defect.status}] ${defect.body.message}`, { defect }));
-			throw defect;
-		} else if (typeof defect === "object" && defect !== null && "stack" in defect) {
-			extra.stack = defect.stack;
+			status = defect.status as NumericRange<300, 599>;
+			message = defect.body.message;
+		}
+		if (typeof defect === "object" && defect !== null) {
+			if ("stack" in defect) {
+				extra.stack = defect.stack;
+			}
+			if ("status" in defect && typeof defect.status === "number") {
+				status = defect.status as NumericRange<300, 599>;
+			}
+			if ("message" in defect && typeof defect.message === "string") {
+				message = defect.message;
+				Effect.runFork(AppLog.error(message, extra));
+			}
 		}
 	}
-
-	Effect.runFork(AppLog.error(message, extra));
 
 	if (!dev) message = removeTrace(message);
 	return { message, status, extra };
