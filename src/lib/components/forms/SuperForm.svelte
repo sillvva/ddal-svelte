@@ -1,19 +1,15 @@
 <script lang="ts">
 	import { dev } from "$app/environment";
-	import type { Pathname } from "$app/types";
-	import type { EffectResult } from "$lib/server/effect/runtime";
 	import { onMount, type Snippet } from "svelte";
 	import { fromAction } from "svelte/attachments";
 	import type { HTMLFormAttributes } from "svelte/elements";
 	import type { Writable } from "svelte/store";
-	import type { SuperForm, SuperValidated } from "sveltekit-superforms";
+	import type { SuperForm } from "sveltekit-superforms";
 	import SuperDebug from "sveltekit-superforms/SuperDebug.svelte";
 	import FormMessage from "./FormMessage.svelte";
 
 	type FormAttributes = Omit<HTMLFormAttributes, "hidden">;
 	type T = $$Generic<Record<PropertyKey, unknown>>;
-	type TForm = $$Generic<SuperValidated<T, App.Superforms.Message>>;
-	type TRemoteCommand = $$Generic<((data: T) => Promise<EffectResult<TForm | Pathname>>) & { pending: number }>;
 
 	interface Props extends Omit<FormAttributes, "action"> {
 		superform: SuperForm<T, App.Superforms.Message> & { pending: Writable<boolean> };
