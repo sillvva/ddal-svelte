@@ -10,6 +10,7 @@ import { betterAuth, type BetterAuthOptions } from "better-auth";
 import { drizzleAdapter } from "better-auth/adapters/drizzle";
 import { admin } from "better-auth/plugins/admin";
 import { passkey } from "better-auth/plugins/passkey";
+import { sveltekitCookies } from "better-auth/svelte-kit";
 import { Data, Duration, Effect } from "effect";
 import { v7 } from "uuid";
 import * as v from "valibot";
@@ -34,7 +35,7 @@ const authConfig = (db: Database) =>
 				disableSignUp: privateEnv.DISABLE_SIGNUPS
 			}
 		},
-		plugins: [passkey(), admin()],
+		plugins: [passkey(), admin(), sveltekitCookies(getRequestEvent)],
 		account: {
 			accountLinking: {
 				enabled: true
