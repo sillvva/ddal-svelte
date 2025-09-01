@@ -5,7 +5,6 @@ import { DBService, DrizzleError, type Database } from "$lib/server/db";
 import { RedirectError, type ErrorParams } from "$lib/server/effect/errors";
 import { AppLog } from "$lib/server/effect/logging";
 import { isDefined } from "@sillvva/utils";
-import { type NumericRange } from "@sveltejs/kit";
 import { betterAuth, type BetterAuthOptions } from "better-auth";
 import { drizzleAdapter } from "better-auth/adapters/drizzle";
 import { admin } from "better-auth/plugins/admin";
@@ -107,11 +106,12 @@ export const assertAuth = Effect.fn(function* ({
 
 	if (!result.success) {
 		if (user) yield* AppLog.debug("assertUser", { issues: v.summarize(result.issues) });
-		if (redirect) {
-			return yield* new RedirectError("Invalid user", `/?redirect=${encodeURIComponent(`${url.pathname}${url.search}`)}`, 302);
-		} else {
-			return yield* new UnauthorizedError("Invalid user", 401, result.issues);
-		}
+		return yield* new UnauthorizedError({
+			message: "Invalid user",
+			status: redirect ? 302 : 401,
+			cause: result.issues,
+			redirectTo: redirect ? `/?redirect=${encodeURIComponent(`${url.pathname}${url.search}`)}` : undefined
+		});
 	}
 
 	if (result.output.banned) {
@@ -120,27 +120,27 @@ export const assertAuth = Effect.fn(function* ({
 			.filter((c) => c.name.includes("auth"))
 			.forEach((c) => event.cookies.delete(c.name, { path: "/" }));
 		event.cookies.set("banned", result.output.banReason || "", { path: "/" });
-		if (redirect) {
-			return yield* new RedirectError("Banned", "/", 302);
-		} else {
-			return yield* new UnauthorizedError("Banned", 403);
-		}
+		return yield* new UnauthorizedError({
+			message: "Banned",
+			status: redirect ? 302 : 403,
+			redirectTo: redirect ? "/" : undefined
+		});
 	}
 
 	if (adminOnly && result.output.role !== "admin") {
-		if (redirect) {
-			return yield* new RedirectError("Insufficient permissions", "/characters", 302);
-		} else {
-			return yield* new UnauthorizedError("Insufficient permissions", 403);
-		}
+		return yield* new UnauthorizedError({
+			message: "Insufficient permissions",
+			status: redirect ? 302 : 403,
+			redirectTo: redirect ? "/characters" : undefined
+		});
 	}
 
 	return { user: result.output, event };
 });
 
 export class UnauthorizedError extends Data.TaggedError("UnauthorizedError")<ErrorParams> {
-	constructor(message = "Unauthorized", status: NumericRange<400, 499>, cause?: unknown) {
-		super({ message, status, cause });
+	constructor({ message = "Unauthorized", status = 403, cause, redirectTo }: Partial<ErrorParams> = {}) {
+		super({ message, status, cause, redirectTo });
 	}
 }
 

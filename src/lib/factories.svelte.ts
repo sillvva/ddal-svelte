@@ -117,7 +117,7 @@ export function valibotForm<S extends v.GenericSchema, Out extends Infer<S, "val
 						});
 					} else {
 						const error = result.error.message;
-						superform.errors.set({ _errors: [error.trim() ? error : "An unknown error occurred"] });
+						superform.errors.set({ _errors: [error] });
 					}
 					pending.set(false);
 				}

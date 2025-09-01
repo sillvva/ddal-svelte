@@ -10,7 +10,9 @@
 	}
 
 	const pageHead = $derived(getHeadFromModule(routeModules[`/src/routes${page.route.id}/+page.svelte`]));
-	const pageTitle = $derived(pageHead?.title === defaultTitle ? defaultTitle : `${pageHead?.title?.trim()} - ${defaultTitle}`);
+	const pageTitle = $derived(
+		!pageHead?.title || pageHead?.title === defaultTitle ? defaultTitle : `${pageHead?.title?.trim()} - ${defaultTitle}`
+	);
 	const pageDescription = $derived(pageHead?.description || defaultDescription);
 	const pageImage = $derived(pageHead?.image || defaultImage);
 </script>

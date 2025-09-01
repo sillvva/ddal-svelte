@@ -133,6 +133,7 @@ export function handleCause<B extends InstanceType<ErrorClass>>(cause: Cause.Cau
 	if (Cause.isFailType(cause)) {
 		const error = cause.error;
 		status = error.status;
+		if (error.cause) extra.cause = error.cause;
 
 		for (const key in error) {
 			if (!["_tag", "_op", "pipe", "name"].includes(key)) {
