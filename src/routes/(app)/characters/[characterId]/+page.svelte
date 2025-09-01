@@ -6,7 +6,7 @@
 		return {
 			title: data.character?.name || "Character",
 			description: `Level ${data.character?.totalLevel} ${data.character?.race} ${data.character?.class}`,
-			image: `${page.url.origin}/characters/${data.character?.id}/og-image.png`
+			image: `${page.url.origin}/characters/${data.character?.id}/og-image.jpg`
 		};
 	}
 </script>
@@ -108,11 +108,11 @@
 						{/if}
 						<li role="menuitem">
 							<a
-								href={`/characters/${data.character.id}/og-image.png`}
+								href={`/characters/${data.character.id}/og-image.jpg`}
 								target="_blank"
 								onclick={(e) => {
 									e.preventDefault();
-									triggerImageModal(`/characters/${data.character.id}/og-image.png`);
+									triggerImageModal(`/characters/${data.character.id}/og-image.jpg`);
 								}}>Social Media Image</a
 							>
 						</li>
