@@ -1,8 +1,8 @@
 import { command } from "$app/server";
 import { defaultLogSchema } from "$lib/entities";
-import { characterIdParamSchema, editCharacterSchema, type CharacterIdParam, type EditCharacterSchemaIn } from "$lib/schemas";
+import { editCharacterSchema, type CharacterIdParam, type EditCharacterSchemaIn } from "$lib/schemas";
 import { FormError, RedirectError } from "$lib/server/effect/errors";
-import { parse, saveForm, validateForm } from "$lib/server/effect/forms";
+import { saveForm, validateForm } from "$lib/server/effect/forms";
 import { runAuthSafe, runSafe } from "$lib/server/effect/runtime";
 import { CharacterService } from "$lib/server/effect/services/characters";
 import { LogService } from "$lib/server/effect/services/logs";
@@ -11,11 +11,11 @@ export const save = command("unchecked", (input: { id: CharacterIdParam; data: E
 	runAuthSafe(function* (user) {
 		const Characters = yield* CharacterService;
 
-		const characterId = yield* parse(characterIdParamSchema, input.id, "/characters", 301);
+		const characterId = input.id;
 		const character = characterId !== "new" ? yield* Characters.get.character(characterId, false) : undefined;
 		if (characterId !== "new" && !character) return yield* new RedirectError("Character not found", "/characters", 302);
 
-		const form = yield* validateForm(input, editCharacterSchema);
+		const form = yield* validateForm(input.data, editCharacterSchema);
 		if (!form.valid) return form;
 		const { firstLog, ...data } = form.data;
 
