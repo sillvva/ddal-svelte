@@ -37,17 +37,22 @@ const dbLogger = Logger.replace(
 						Effect.tap(
 							(log) =>
 								dev &&
+								Console.log(
+									log.timestamp.toLocaleTimeString(),
+									chalk.bold[
+										log.level === "ERROR" ? "red" : log.level === "DEBUG" ? "yellow" : log.level === "INFO" ? "cyan" : "reset"
+									](`[${log.level}]`),
+									log.label
+								)
+						),
+						Effect.tap(
+							(log) =>
+								dev &&
 								(["ERROR", "DEBUG"].includes(log.level)
-									? Console.dir(log, { depth: null })
-									: Console.log(
-											chalk.underline(log.timestamp.toISOString()),
-											chalk.bold[
-												log.level === "ERROR" ? "red" : log.level === "DEBUG" ? "yellow" : log.level === "INFO" ? "cyan" : "reset"
-											](`[${log.level}]`),
-											log.label,
-											"\n" + chalk.dim(JSON.stringify(log.annotations.extra))
-										))
-						)
+									? Console.dir(log.annotations, { depth: null })
+									: Console.log(chalk.dim(JSON.stringify(log.annotations.extra))))
+						),
+						Effect.tap(() => dev && Console.log(""))
 					);
 			})
 		);
