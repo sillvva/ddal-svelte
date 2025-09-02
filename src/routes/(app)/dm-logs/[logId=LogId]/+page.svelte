@@ -1,5 +1,5 @@
 <script lang="ts" module>
-	import type { PageData } from "./$types.js";
+	import type { PageData, RouteParams } from "./$types.js";
 	export const getPageTitle = (data: Partial<PageData>) => data.form?.data.name || "New Log";
 	export function getPageHead(data: Partial<PageData>) {
 		return {
@@ -22,12 +22,13 @@
 	import SuperForm from "$lib/components/forms/SuperForm.svelte";
 	import { valibotForm } from "$lib/factories.svelte.js";
 	import LogsAPI from "$lib/remote/logs";
-	import { dMLogSchema, type LogId } from "$lib/schemas";
+	import { dMLogSchema } from "$lib/schemas";
 
 	let { data } = $props();
 
+	const params = $derived(page.params as RouteParams);
 	const superform = valibotForm(data.form, dMLogSchema(), {
-		remote: (log) => LogsAPI.forms.save({ logId: page.params.logId as LogId | "new", data: log })
+		remote: (log) => LogsAPI.forms.save({ logId: params.logId, data: log })
 	});
 	const { form } = superform;
 

@@ -1,5 +1,5 @@
 <script lang="ts" module>
-	import type { PageData } from "./$types.js";
+	import type { PageData, RouteParams } from "./$types.js";
 	export const getPageTitle = (data: Partial<PageData>) => data.character?.name || "New Character";
 	export function getPageHead(data: Partial<PageData>) {
 		return {
@@ -19,14 +19,15 @@
 	import { BLANK_CHARACTER } from "$lib/constants.js";
 	import { errorToast, valibotForm } from "$lib/factories.svelte.js";
 	import CharactersAPI from "$lib/remote/characters";
-	import { editCharacterSchema, type CharacterId } from "$lib/schemas";
+	import { editCharacterSchema } from "$lib/schemas";
 	import { getGlobal } from "$lib/stores.svelte.js";
 
 	let { data } = $props();
 
 	const global = getGlobal();
+	const params = $derived(page.params as RouteParams);
 	const superform = valibotForm(data.form, editCharacterSchema, {
-		remote: (data) => CharactersAPI.forms.save({ id: page.params.characterId as CharacterId | "new", data })
+		remote: (data) => CharactersAPI.forms.save({ id: params.characterId, data })
 	});
 
 	const { form } = superform;
