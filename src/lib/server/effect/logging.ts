@@ -2,6 +2,7 @@ import { dev } from "$app/environment";
 import { getRequestEvent } from "$app/server";
 import { privateEnv } from "$lib/env/private";
 import type { UserId } from "$lib/schemas";
+import chalk from "chalk";
 import { Console, Effect, HashMap, Layer, Logger } from "effect";
 import { AdminService } from "./services/admin";
 
@@ -38,7 +39,14 @@ const dbLogger = Logger.replace(
 								dev &&
 								(["ERROR", "DEBUG"].includes(log.level)
 									? Console.dir(log, { depth: null })
-									: Console.log(log.timestamp, `[${log.level}]`, log.label, "\n" + JSON.stringify(log.annotations.extra)))
+									: Console.log(
+											chalk.underline(log.timestamp.toISOString()),
+											chalk.bold[
+												log.level === "ERROR" ? "red" : log.level === "DEBUG" ? "yellow" : log.level === "INFO" ? "cyan" : "reset"
+											](`[${log.level}]`),
+											log.label,
+											"\n" + chalk.dim(JSON.stringify(log.annotations.extra))
+										))
 						)
 					);
 			})
