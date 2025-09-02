@@ -1,5 +1,5 @@
 <script lang="ts" module>
-	import type { PageData, RouteParams } from "./$types.js";
+	import type { PageData } from "./$types.js";
 	export const getPageTitle = (data: Partial<PageData>) => data.form?.data.name || "New Log";
 	export function getPageHead(data: Partial<PageData>) {
 		return {
@@ -9,7 +9,6 @@
 </script>
 
 <script lang="ts">
-	import { page } from "$app/state";
 	import Breadcrumbs from "$lib/components/Breadcrumbs.svelte";
 	import AddDropItems from "$lib/components/forms/AddDropItems.svelte";
 	import Combobox from "$lib/components/forms/Combobox.svelte";
@@ -26,9 +25,8 @@
 	import { type DungeonMasterId, logSchema } from "$lib/schemas";
 	import { twMerge } from "tailwind-merge";
 
-	let { data } = $props();
+	let { data, params } = $props();
 
-	const params = $derived(page.params as RouteParams);
 	const superform = valibotForm(data.form, logSchema, {
 		remote: (log) => LogsAPI.forms.save({ logId: params.logId, data: log })
 	});
