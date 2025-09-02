@@ -1,7 +1,7 @@
-import { logIdSchema, type LogId } from "$lib/schemas";
+import { logIdParamSchema, type LogIdParam } from "$lib/schemas";
 import type { ParamMatcher } from "@sveltejs/kit";
 import * as v from "valibot";
 
-export const match = ((param: string): param is LogId | "new" => {
-	return v.safeParse(v.union([logIdSchema, v.literal("new")]), param).success;
+export const match = ((param: string): param is LogIdParam => {
+	return v.safeParse(logIdParamSchema, param).success;
 }) satisfies ParamMatcher;

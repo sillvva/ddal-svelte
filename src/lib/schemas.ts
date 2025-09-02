@@ -60,6 +60,9 @@ export const userIdSchema = brandedId("UserId");
 export type CharacterId = v.InferOutput<typeof characterIdSchema>;
 export const characterIdSchema = brandedId("CharacterId");
 
+export type CharacterIdParam = v.InferOutput<typeof characterIdParamSchema>;
+export const characterIdParamSchema = v.union([characterIdSchema, v.literal("new")]);
+
 export type CharacterSchema = v.InferOutput<typeof characterSchema>;
 export const characterSchema = v.object({
 	id: characterIdSchema,
@@ -103,6 +106,9 @@ const itemSchema = v.object({
 
 export type LogId = v.InferOutput<typeof logIdSchema>;
 export const logIdSchema = brandedId("LogId");
+
+export type LogIdParam = v.InferOutput<typeof logIdParamSchema>;
+export const logIdParamSchema = v.union([logIdSchema, v.literal("new")]);
 
 export type LogSchema = v.InferOutput<typeof logSchema>;
 export type LogSchemaIn = v.InferInput<typeof logSchema>;

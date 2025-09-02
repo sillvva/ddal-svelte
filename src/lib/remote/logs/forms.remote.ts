@@ -4,8 +4,8 @@ import {
 	characterIdSchema,
 	characterLogSchema,
 	dMLogSchema,
-	logIdSchema,
-	type LogId,
+	logIdParamSchema,
+	type LogIdParam,
 	type LogSchema,
 	type LogSchemaIn
 } from "$lib/schemas";
@@ -17,7 +17,7 @@ import { LogService } from "$lib/server/effect/services/logs";
 import type { SuperValidated } from "sveltekit-superforms";
 import * as v from "valibot";
 
-export const save = command("unchecked", (input: { logId: LogId | "new"; data: LogSchemaIn }) =>
+export const save = command("unchecked", (input: { logId: LogIdParam; data: LogSchemaIn }) =>
 	runAuthSafe(function* (user) {
 		const Characters = yield* CharacterService;
 		const Logs = yield* LogService;
@@ -51,7 +51,7 @@ export const save = command("unchecked", (input: { logId: LogId | "new"; data: L
 
 		if (!form.valid) return form;
 
-		const logId = yield* parse(v.union([logIdSchema, v.literal("new")]), input.logId, redirectTo, 302);
+		const logId = yield* parse(logIdParamSchema, input.logId, redirectTo, 302);
 		const log = logId !== "new" ? yield* Logs.get.log(logId, user.id) : undefined;
 		if (logId !== "new" && !log) return yield* new RedirectError("Log not found", redirectTo, 302);
 
