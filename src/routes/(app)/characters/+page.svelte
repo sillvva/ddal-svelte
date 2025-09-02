@@ -53,14 +53,6 @@
 		</Dropdown>
 	</div>
 
-	{#if page.url.searchParams.get("uuid")}
-		<div class="alert alert-warning">
-			<span class="iconify mdi--alert size-6"></span>
-			Database IDs have been changed from CUIDs to UUIDs. This will break existing links to characters, but no data has been lost.
-			You will still be able to access your characters using the new UUID going forward.
-		</div>
-	{/if}
-
 	{#if !data.characters.length}
 		<section class="bg-base-200 rounded-lg">
 			<div class="py-20 text-center">

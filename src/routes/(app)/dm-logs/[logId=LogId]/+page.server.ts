@@ -1,13 +1,12 @@
 import { defaultLogSchema, logDataToSchema } from "$lib/entities.js";
-import { dMLogSchema, logIdSchema } from "$lib/schemas";
+import { dMLogSchema } from "$lib/schemas";
 import { RedirectError } from "$lib/server/effect/errors";
-import { parse, validateForm } from "$lib/server/effect/forms";
+import { validateForm } from "$lib/server/effect/forms";
 import { runAuth } from "$lib/server/effect/runtime.js";
 import { CharacterService } from "$lib/server/effect/services/characters.js";
 import { DMNotFoundError, DMService } from "$lib/server/effect/services/dms.js";
 import { LogNotFoundError, LogService } from "$lib/server/effect/services/logs";
 import { Effect } from "effect";
-import * as v from "valibot";
 
 export const load = (event) =>
 	runAuth(function* (user) {
@@ -22,7 +21,7 @@ export const load = (event) =>
 			Effect.map(({ logs, ...rest }) => rest)
 		);
 
-		const logId = yield* parse(v.union([logIdSchema, v.literal("new")]), event.params.logId || "new", `/dm-logs`, 302);
+		const logId = event.params.logId;
 		const logData = logId !== "new" ? yield* Logs.get.log(logId, user.id) : undefined;
 		const log = logData ? logDataToSchema(user.id, logData) : defaultLogSchema(user.id, { defaults: { dm: userDM } });
 

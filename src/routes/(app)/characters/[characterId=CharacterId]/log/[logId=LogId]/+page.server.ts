@@ -1,13 +1,12 @@
 import { defaultLogSchema, getItemEntities, logDataToSchema } from "$lib/entities.js";
-import { characterLogSchema, logIdSchema } from "$lib/schemas";
+import { characterLogSchema } from "$lib/schemas";
 import { RedirectError } from "$lib/server/effect/errors";
-import { parse, validateForm } from "$lib/server/effect/forms";
+import { validateForm } from "$lib/server/effect/forms";
 import { runAuth } from "$lib/server/effect/runtime";
 import { DMService } from "$lib/server/effect/services/dms.js";
 import { LogNotFoundError, LogService } from "$lib/server/effect/services/logs.js";
 import { sorter } from "@sillvva/utils";
 import { Effect } from "effect";
-import * as v from "valibot";
 
 export const load = (event) =>
 	runAuth(function* (user) {
@@ -17,7 +16,7 @@ export const load = (event) =>
 		const parent = yield* Effect.promise(event.parent);
 		const character = parent.character;
 
-		const logId = yield* parse(v.union([logIdSchema, v.literal("new")]), event.params.logId, `/characters/${character.id}`, 302);
+		const logId = event.params.logId;
 		const logData = logId !== "new" ? yield* Logs.get.log(logId, user.id) : undefined;
 		const log = logData ? logDataToSchema(user.id, logData) : defaultLogSchema(user.id, { character });
 

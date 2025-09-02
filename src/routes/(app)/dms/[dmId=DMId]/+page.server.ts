@@ -1,5 +1,5 @@
-import { dungeonMasterIdSchema, dungeonMasterSchema } from "$lib/schemas";
-import { parse, validateForm } from "$lib/server/effect/forms";
+import { dungeonMasterSchema } from "$lib/schemas";
+import { validateForm } from "$lib/server/effect/forms";
 import { runAuth } from "$lib/server/effect/runtime.js";
 import { DMNotFoundError, DMService } from "$lib/server/effect/services/dms";
 
@@ -7,7 +7,7 @@ export const load = (event) =>
 	runAuth(function* (user) {
 		const DMs = yield* DMService;
 
-		const dmId = yield* parse(dungeonMasterIdSchema, event.params.dmId || "", `/dms`, 302);
+		const dmId = event.params.dmId;
 		const [dm] = yield* DMs.get.userDMs(user.id, { id: dmId });
 		if (!dm) return yield* new DMNotFoundError();
 
