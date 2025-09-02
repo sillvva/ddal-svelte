@@ -6,7 +6,7 @@ import { BLANK_CHARACTER, PROVIDERS, themeGroups, themes } from "./constants";
 
 export type BrandedType = v.InferOutput<ReturnType<typeof brandedId>>;
 function brandedId<T extends string>(name: T) {
-	return v.pipe(v.string(), v.uuid(), v.brand(name));
+	return v.pipe(uuidV7, v.brand(name));
 }
 
 const string = v.pipe(v.string(), v.trim());
@@ -15,6 +15,11 @@ export const shortString = v.pipe(string, v.maxLength(50));
 export const maxTextSize = v.pipe(string, v.maxLength(5000));
 export const maxStringSize = v.pipe(string, v.maxLength(255));
 export const integer = v.pipe(v.number(), v.integer());
+export const uuidV7 = v.pipe(
+	v.string(),
+	v.uuid(),
+	v.check((s) => s.charAt(14) === "7", "Invalid UUIDv7")
+);
 
 export const urlSchema = v.pipe(string, v.url(), v.maxLength(500));
 export const optionalURL = v.optional(v.fallback(urlSchema, ""), "");
