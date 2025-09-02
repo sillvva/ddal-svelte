@@ -36,37 +36,49 @@
 	});
 </script>
 
-<div class="flex min-h-screen flex-col items-center justify-center">
+<div
+	class={twMerge("flex flex-col items-center justify-center p-4", !display && "-mt-30 min-h-screen max-lg:-mt-20 max-sm:-mt-10")}
+>
 	{#if !display}
-		<h1 class="font-vecna mb-12 text-4xl font-bold">Rolled a Natural 1!</h1>
+		{#if page.status === 404}
+			<img src="/images/d4.webp" alt="404" class="mb-2 size-60 max-lg:size-40 max-sm:size-20" />
+			<h1 class="font-vecna mb-12 text-4xl font-bold">4D4: Not Found!</h1>
+		{:else}
+			<img src="/images/nat1.webp" alt="Error" class="mb-2 size-60 max-lg:size-40 max-sm:size-20" />
+			<h1 class="font-vecna mb-12 text-4xl font-bold">Rolled a Natural 1!</h1>
+		{/if}
 	{/if}
 	<div class={twMerge("alert alert-error mb-4 w-full max-w-3xl shadow-lg", type === "warning" && "alert-warning")}>
 		<span class="iconify mdi--alert-circle size-6"></span>
-		<div class="flex flex-col">
-			<h3 class="font-bold">
+		<div class="flex gap-2 max-lg:flex-col">
+			<div class="flex flex-1 flex-col">
+				<h3 class="font-bold">
+					{#if !checkForUUIDs()}
+						Don't panic!
+					{:else}
+						Error {page.status}!
+					{/if}
+				</h3>
 				{#if !checkForUUIDs()}
-					Don't panic!
+					<div>
+						Database IDs have been changed from CUIDs to UUIDs. This will break existing links to characters, but no data has been
+						lost. You will still be able to access your characters using the new UUID going forward. Click <kbd
+							class="strong kbd kbd-sm text-base-content">Go back</kbd
+						> to be returned to your characters.
+					</div>
 				{:else}
-					Error {page.status}!
+					<div class="whitespace-pre-line">
+						{page.error?.message || "Something went wrong"}
+					</div>
 				{/if}
-			</h3>
-			{#if !checkForUUIDs()}
-				<div class="text-xs">
-					Database IDs have been changed from CUIDs to UUIDs. This will break existing links to characters, but no data has been
-					lost. You will still be able to access your characters using the new UUID going forward. Click <kbd
-						class="strong kbd kbd-sm text-base-content">Go back</kbd
-					> to be returned to your characters.
-				</div>
-			{:else}
-				<div class="text-xs whitespace-pre-line">
-					{page.error?.message || "Something went wrong"}
-				</div>
-			{/if}
+			</div>
+			<div class="flex items-center gap-2 max-sm:self-end">
+				{#if !display}
+					<button class="btn btn-sm" onclick={() => (display = true)}>View details</button>
+				{/if}
+				<a href={previousPage} class="btn btn-sm">Go back</a>
+			</div>
 		</div>
-		{#if !display}
-			<button class="btn btn-sm" onclick={() => (display = true)}>View details</button>
-		{/if}
-		<a href={previousPage} class="btn btn-sm">Go back</a>
 	</div>
 	{#if display}
 		<svelte:boundary>
@@ -85,8 +97,6 @@
 				}}
 			/>
 		</svelte:boundary>
-	{:else}
-		<img src="/images/nat1.webp" alt="Error" class="size-80" />
 	{/if}
 </div>
 
