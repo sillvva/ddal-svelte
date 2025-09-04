@@ -10,6 +10,8 @@
 
 	const global = getGlobal();
 
+	const lastMethod = authClient.getLastUsedLoginMethod();
+
 	$effect(() => {
 		if (global.app.settings.autoWebAuthn) {
 			authClient.signIn.passkey({
@@ -47,7 +49,7 @@
 		{#if !data.error || data.error.code !== "BANNED"}
 			{#each PROVIDERS as provider (provider.id)}
 				<button
-					class="bg-base-200 text-base-content max-xs:justify-center hover:bg-base-300 max-xs:h-12 max-xs:px-4 flex h-16 items-center gap-4 rounded-lg px-8 py-4 transition-colors"
+					class="bg-base-200 text-base-content max-xs:justify-center hover:bg-base-300 max-xs:h-12 max-xs:px-4 relative flex h-16 items-center gap-4 rounded-lg px-8 py-4 transition-colors"
 					onclick={() => {
 						console.log("Signing in with", provider.name);
 						authClient.signIn
@@ -69,6 +71,11 @@
 					<span class="max-xs:text-base xs:flex-1 flex h-full items-center justify-center text-xl font-semibold"
 						>Sign In with {provider.name}</span
 					>
+					{#if lastMethod === provider.id}
+						<span class="badge badge-soft badge-primary absolute top-0 right-0 translate-x-1/2 -translate-y-1/2">
+							Last used
+						</span>
+					{/if}
 				</button>
 			{/each}
 			<hr class="border-base-content" />

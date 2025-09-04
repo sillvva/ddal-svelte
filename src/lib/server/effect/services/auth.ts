@@ -7,6 +7,7 @@ import { AppLog } from "$lib/server/effect/logging";
 import { isDefined } from "@sillvva/utils";
 import { betterAuth, type BetterAuthOptions } from "better-auth";
 import { drizzleAdapter } from "better-auth/adapters/drizzle";
+import { lastLoginMethod } from "better-auth/plugins";
 import { admin } from "better-auth/plugins/admin";
 import { passkey } from "better-auth/plugins/passkey";
 import { sveltekitCookies } from "better-auth/svelte-kit";
@@ -34,7 +35,7 @@ const authConfig = (db: Database) =>
 				disableSignUp: privateEnv.DISABLE_SIGNUPS
 			}
 		},
-		plugins: [passkey(), admin(), sveltekitCookies(getRequestEvent)],
+		plugins: [passkey(), admin(), lastLoginMethod(), sveltekitCookies(getRequestEvent)],
 		account: {
 			accountLinking: {
 				enabled: true

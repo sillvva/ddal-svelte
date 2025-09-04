@@ -70,9 +70,9 @@ const info: Handle = async ({ event, resolve }) => {
 };
 
 const preloadTheme: Handle = async ({ event, resolve }) => {
-	const {
-		settings: { mode, theme }
-	} = event.locals.app;
+	const { settings } = event.locals.app;
+	const mode = settings.mode;
+	const theme = event.route.id === "/(home)" ? settings.mode : settings.theme;
 
 	return await resolve(event, {
 		transformPageChunk: ({ html }) => {
