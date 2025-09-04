@@ -74,7 +74,7 @@
 					{#if bc.url && bc.title && !["/characters/new"].includes(bc.url)}
 						{#if bc.url !== crumbs.at(-1)?.url}
 							<li>
-								<a href={bc.url} class="text-secondary">
+								<a href={bc.url} class="text-secondary-content">
 									{bc.title}
 								</a>
 							</li>

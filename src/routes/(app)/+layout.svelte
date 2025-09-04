@@ -49,7 +49,7 @@
 		in:fade={{ duration: 200, delay: 500 }}
 		out:fade={{ duration: 200 }}
 	>
-		<span class="loading loading-spinner text-secondary w-16"></span>
+		<span class="loading loading-spinner text-secondary-content w-16"></span>
 	</div>
 {/if}
 

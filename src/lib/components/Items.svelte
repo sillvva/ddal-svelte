@@ -110,7 +110,7 @@
 			{#each nonConsumables as mi (mi.id)}<span
 					role={mi.description ? "button" : "presentation"}
 					class="inline pr-2 pl-2 first:pl-0"
-					class:text-secondary={mi.description}
+					class:text-secondary-content={mi.description}
 					onclick={() => {
 						if (mi.description) {
 							pushState("", { modal: { type: "text", name: mi.name, description: mi.description } });
@@ -122,7 +122,7 @@
 				</span>{/each}{#each consumables as mi (mi.id)}<span
 					role={mi.description ? "button" : "presentation"}
 					class="inline pr-2 pl-2 italic first:pl-0"
-					class:text-secondary={mi.description}
+					class:text-secondary-content={mi.description}
 					class:italic={formatting}
 					onclick={() => {
 						if (mi.description) {

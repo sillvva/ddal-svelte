@@ -188,7 +188,7 @@
 								href={data.character.characterSheetUrl}
 								target="_blank"
 								rel="noreferrer noopner"
-								class="text-secondary font-semibold dark:not-print:drop-shadow-xs"
+								class="text-secondary-content font-semibold dark:not-print:drop-shadow-xs"
 							>
 								Character Sheet
 							</a>
@@ -384,7 +384,7 @@
 									<p class="text-sm font-normal">
 										<span class="font-semibold dark:text-white">DM:</span>
 										{#if myCharacter}
-											<a href="/dms/{log.dm.id}" class="text-secondary">{log.dm.name}</a>
+											<a href="/dms/{log.dm.id}" class="text-secondary-content">{log.dm.name}</a>
 										{:else}
 											{log.dm.name}
 										{/if}

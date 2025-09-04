@@ -60,7 +60,7 @@
 									<td>
 										<a
 											href="/dms/{dm.id}"
-											class="text-secondary text-left font-semibold whitespace-pre-wrap"
+											class="text-secondary-content text-left font-semibold whitespace-pre-wrap"
 											aria-label="Edit DM"
 										>
 											<SearchResults text={dm.name} terms={search.terms} />

@@ -10,4 +10,4 @@
 	let { href = "", title = undefined, children }: Props = $props();
 </script>
 
-<a {href} {title} class="text-secondary">{@render children?.()}</a>
+<a {href} {title} class="text-secondary-content">{@render children?.()}</a>

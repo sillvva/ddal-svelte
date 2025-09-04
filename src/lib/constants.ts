@@ -51,6 +51,11 @@ export const themes = [
 		group: "light"
 	},
 	{
+		name: "Monolight",
+		value: "monolight",
+		group: "light"
+	},
+	{
 		name: "Retro",
 		value: "retro",
 		group: "light"
@@ -73,6 +78,11 @@ export const themes = [
 	{
 		name: "Black",
 		value: "black",
+		group: "dark"
+	},
+	{
+		name: "Monodark",
+		value: "monodark",
 		group: "dark"
 	},
 	{

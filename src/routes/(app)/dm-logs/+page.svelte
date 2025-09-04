@@ -156,7 +156,7 @@
 									{#if log.character}
 										<p class="text-sm font-normal">
 											<span class="font-semibold">Character:</span>
-											<a href="/characters/{log.character.id}" class="text-secondary">
+											<a href="/characters/{log.character.id}" class="text-secondary-content">
 												<SearchResults text={log.character.name} terms={search.terms} />
 											</a>
 										</p>

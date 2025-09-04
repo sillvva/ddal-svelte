@@ -89,7 +89,7 @@
 								<tr>
 									<td class="max-xs:px-2">
 										<div class="flex flex-col gap-1">
-											<a href={`/characters/${log.character?.id}/log/${log.id}`} class="text-secondary lg:hidden">
+											<a href={`/characters/${log.character?.id}/log/${log.id}`} class="text-secondary-content lg:hidden">
 												{log.name}
 											</a>
 											<div class="min-w-max">
@@ -101,14 +101,14 @@
 									<td class="max-lg:hidden">
 										<a
 											href={log.isDmLog ? `/dm-logs/${log.id}` : `/characters/${log.character?.id}/log/${log.id}`}
-											class="text-secondary"
+											class="text-secondary-content"
 										>
 											{log.name}
 										</a>
 									</td>
 									<td class="max-xs:px-2">
 										{#if log.character?.name}
-											<a href={`/characters/${log.character?.id}`} class="text-secondary">
+											<a href={`/characters/${log.character?.id}`} class="text-secondary-content">
 												{log.character?.name}
 											</a>
 										{/if}
