@@ -8,8 +8,9 @@
 	import { pushState } from "$app/navigation";
 	import { page } from "$app/state";
 	import LoadingPanel from "$lib/components/LoadingPanel.svelte";
-	import { errorToast, successToast } from "$lib/factories.svelte.js";
+	import { successToast } from "$lib/factories.svelte.js";
 	import AdminAPI from "$lib/remote/admin";
+	import { parseEffectResult } from "$lib/util";
 	import { queryParam, ssp } from "sveltekit-search-params";
 
 	const s = queryParam("s", ssp.string(), {
@@ -122,11 +123,8 @@
 									logs: data.logs.filter((l) => l.id !== log.id)
 								}))
 							);
-							if (result.ok) {
-								successToast("Log deleted");
-							} else {
-								errorToast(result.error.message);
-							}
+							const parsed = await parseEffectResult(result);
+							if (parsed) successToast("Log deleted");
 						}}
 					>
 						<span class="iconify mdi--delete"></span>

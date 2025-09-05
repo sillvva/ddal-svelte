@@ -41,25 +41,16 @@ export function serverSetCookie<TSchema extends v.GenericSchema>(
 	name: string,
 	schema: TSchema,
 	value: v.InferInput<TSchema>,
-	options?: {
-		expires?: number;
-		httpOnly?: boolean;
-	}
+	{ expires = Duration.toMillis("365 days"), httpOnly = false } = {}
 ) {
-	const opts = {
-		expires: Duration.toMillis("365 days"),
-		httpOnly: false,
-		...options
-	};
-
 	const event = getRequestEvent();
 	if (!event) throw new Error("No event");
 
 	const parsed = v.parse(schema, value);
 	event.cookies.set(name, JSON.stringify(parsed), {
 		path: "/",
-		expires: new Date(Date.now() + opts.expires),
-		httpOnly: opts.httpOnly
+		expires: new Date(Date.now() + expires),
+		httpOnly
 	});
 
 	return parsed;

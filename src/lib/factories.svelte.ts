@@ -1,5 +1,6 @@
 /* eslint-disable svelte/prefer-svelte-reactivity */
 import { goto } from "$app/navigation";
+import { resolve } from "$app/paths";
 import type { Pathname } from "$app/types";
 import type { FullCharacterData } from "$lib/server/effect/services/characters";
 import type { UserDM } from "$lib/server/effect/services/dms";
@@ -27,7 +28,7 @@ import { valibotClient } from "sveltekit-superforms/adapters";
 import * as v from "valibot";
 import type { SearchData } from "./remote/command";
 import type { EffectFailure, EffectResult } from "./server/effect/runtime";
-import type { Awaitable } from "./util";
+import { isRedirectFailure, type Awaitable } from "./util";
 
 export function successToast(message: string) {
 	toast.success("Success", {
@@ -93,7 +94,7 @@ export function valibotForm<S extends v.GenericSchema, Out extends Infer<S, "val
 					if (typeof result.data === "string") {
 						superform.tainted.set(undefined);
 						await onSuccessResult(data);
-						await goto(result.data, {
+						await goto(resolve(result.data as Pathname & {}), {
 							invalidateAll: willInvalidate
 						});
 						return;
@@ -110,9 +111,9 @@ export function valibotForm<S extends v.GenericSchema, Out extends Infer<S, "val
 					pending.set(false);
 				} else {
 					await onErrorResult(result.error);
-					if (result.error.extra.redirectTo && typeof result.error.extra.redirectTo === "string") {
+					if (isRedirectFailure(result.error)) {
 						superform.tainted.set(undefined);
-						await goto(result.error.extra.redirectTo, {
+						await goto(resolve(result.error.extra.redirectTo), {
 							invalidateAll: willInvalidate
 						});
 					} else {

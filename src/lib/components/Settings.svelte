@@ -76,11 +76,8 @@
 						(account.image !== user?.image && !account.image.includes(BLANK_CHARACTER))
 					) {
 						const result = await AuthAPI.actions.updateUser(account);
-						if (result.ok) {
-							await AppAPI.queries.request().refresh();
-						} else {
-							errorToast(result.error.message);
-						}
+						const parsed = await parseEffectResult(result);
+						if (parsed) await AppAPI.queries.request().refresh();
 					}
 				}
 			});
@@ -187,11 +184,10 @@
 														disabled={!!AuthAPI.actions.updateUser.pending}
 														onclick={async () => {
 															const result = await AuthAPI.actions.updateUser(account);
-															if (result.ok) {
+															const parsed = await parseEffectResult(result);
+															if (parsed) {
 																global.app.settings.provider = account.providerId;
 																await AppAPI.queries.request().refresh();
-															} else {
-																errorToast(result.error.message);
 															}
 														}}
 													>

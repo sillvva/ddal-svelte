@@ -15,10 +15,11 @@
 	import Input from "$lib/components/forms/Input.svelte";
 	import Submit from "$lib/components/forms/Submit.svelte";
 	import SuperForm from "$lib/components/forms/SuperForm.svelte";
-	import { errorToast, successToast, valibotForm } from "$lib/factories.svelte.js";
+	import { successToast, valibotForm } from "$lib/factories.svelte.js";
 	import DMsAPI from "$lib/remote/dms";
 	import { dungeonMasterSchema } from "$lib/schemas";
 	import { getGlobal } from "$lib/stores.svelte.js";
+	import { parseEffectResult } from "$lib/util.js";
 	import { sorter } from "@sillvva/utils";
 
 	let { data } = $props();
@@ -59,11 +60,10 @@
 							if (!confirm(`Are you sure you want to delete ${data.dm.name}? This action cannot be undone.`)) return;
 							global.pageLoader = true;
 							const result = await DMsAPI.actions.delete(data.dm.id);
-							if (result.ok) {
+							const parsed = await parseEffectResult(result);
+							if (parsed) {
 								successToast(`${data.dm.name} deleted`);
 								goto("/dms");
-							} else {
-								errorToast(result.error.message);
 							}
 							global.pageLoader = false;
 						}}

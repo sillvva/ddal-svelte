@@ -7,11 +7,10 @@
 	import MobileNav from "$lib/components/MobileNav.svelte";
 	import Settings from "$lib/components/Settings.svelte";
 	import { BLANK_CHARACTER } from "$lib/constants.js";
-	import { errorToast } from "$lib/factories.svelte.js";
 	import AppAPI from "$lib/remote/app";
 	import AuthAPI from "$lib/remote/auth";
 	import { getGlobal } from "$lib/stores.svelte.js";
-	import { hotkey } from "$lib/util";
+	import { hotkey, parseEffectResult } from "$lib/util";
 	import { sleep } from "@svelteuidev/composables";
 	import { fade } from "svelte/transition";
 
@@ -103,11 +102,8 @@
 									img.src = BLANK_CHARACTER;
 
 									const result = await AuthAPI.actions.updateUser({ image: BLANK_CHARACTER });
-									if (result.ok) {
-										await AppAPI.queries.request().refresh();
-									} else {
-										errorToast(result.error.message);
-									}
+									const parsed = await parseEffectResult(result);
+									if (parsed) await AppAPI.queries.request().refresh();
 								}}
 							/>
 						</button>

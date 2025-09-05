@@ -21,11 +21,11 @@
 	import Markdown from "$lib/components/Markdown.svelte";
 	import Search from "$lib/components/Search.svelte";
 	import SearchResults from "$lib/components/SearchResults.svelte";
-	import { EntitySearchFactory, errorToast, successToast } from "$lib/factories.svelte.js";
+	import { EntitySearchFactory, successToast } from "$lib/factories.svelte.js";
 	import CharactersAPI from "$lib/remote/characters";
 	import LogsAPI from "$lib/remote/logs";
 	import { getGlobal } from "$lib/stores.svelte.js";
-	import { createTransition, hotkey } from "$lib/util";
+	import { createTransition, hotkey, parseEffectResult } from "$lib/util";
 	import { slugify, sorter } from "@sillvva/utils";
 	import { download } from "@svelteuidev/composables";
 	import { fromAction } from "svelte/attachments";
@@ -126,11 +126,10 @@
 									if (!confirm(`Are you sure you want to delete ${data.character.name}? This action cannot be undone.`)) return;
 									global.pageLoader = true;
 									const result = await CharactersAPI.actions.delete(data.character.id);
-									if (result.ok) {
+									const parsed = await parseEffectResult(result);
+									if (parsed) {
 										successToast(`${data.character.name} deleted`);
 										goto("/characters");
-									} else {
-										errorToast(result.error.message);
 									}
 									global.pageLoader = false;
 								}}
@@ -486,12 +485,12 @@
 												if (!confirm(`Are you sure you want to delete ${log.name}? This action cannot be undone.`)) return;
 												deletingLog.add(log.id);
 												const result = await LogsAPI.actions.delete(log.id);
-												if (result.ok) {
+												const parsed = await parseEffectResult(result);
+												if (parsed) {
 													successToast(`${log.name} deleted`);
 													// TODO: Refresh character query
 													invalidateAll();
 												} else {
-													errorToast(result.error.message);
 													deletingLog.delete(log.id);
 												}
 											}}

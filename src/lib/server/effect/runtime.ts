@@ -1,7 +1,7 @@
 import { dev } from "$app/environment";
 import { getRequestEvent } from "$app/server";
 import type { LocalsUser } from "$lib/schemas";
-import { removeTrace } from "$lib/util";
+import { isRedirectFailure, removeTrace } from "$lib/util";
 import { error, isHttpError, isRedirect, redirect, type NumericRange, type RequestEvent } from "@sveltejs/kit";
 import { Cause, Effect, Exit, ManagedRuntime } from "effect";
 import { isFunction } from "effect/Predicate";
@@ -60,11 +60,11 @@ export async function run<
 	return Exit.match(result, {
 		onSuccess: (result) => result,
 		onFailure: (cause) => {
-			const { message, status, extra } = handleCause(cause);
-			if (extra.redirectTo && typeof extra.redirectTo === "string" && status <= 308) {
-				throw redirect(status, extra.redirectTo);
+			const err = handleCause(cause);
+			if (isRedirectFailure(err)) {
+				throw redirect(err.status, err.extra.redirectTo);
 			}
-			throw error(status, message);
+			throw error(err.status, err.message);
 		}
 	});
 }
@@ -183,12 +183,9 @@ export async function runAuth<
 	C extends Services = Services,
 	T extends YieldWrap<Effect.Effect<A, B, C>> = YieldWrap<Effect.Effect<A, B, C>>,
 	Y = unknown
->(
-	program: (user: LocalsUser, event: RequestEvent) => Generator<T, TReturn, Y>,
-	{ adminOnly = false }: { adminOnly?: boolean } = {}
-) {
+>(program: (user: LocalsUser, event: RequestEvent) => Generator<T, TReturn, Y>, { adminOnly = false, redirect = true } = {}) {
 	return run(function* () {
-		const { user, event } = yield* assertAuth({ adminOnly, redirect: true });
+		const { user, event } = yield* assertAuth({ adminOnly, redirect });
 		return yield* program(user, event);
 	});
 }
@@ -200,12 +197,9 @@ export async function runAuthSafe<
 	C extends Services = Services,
 	T extends YieldWrap<Effect.Effect<A, B, C>> = YieldWrap<Effect.Effect<A, B, C>>,
 	Y = unknown
->(
-	program: (user: LocalsUser, event: RequestEvent) => Generator<T, TReturn, Y>,
-	{ adminOnly = false }: { adminOnly?: boolean } = {}
-) {
+>(program: (user: LocalsUser, event: RequestEvent) => Generator<T, TReturn, Y>, { adminOnly = false, redirect = true } = {}) {
 	return runSafe(function* () {
-		const { user, event } = yield* assertAuth({ adminOnly });
+		const { user, event } = yield* assertAuth({ adminOnly, redirect });
 		return yield* program(user, event);
 	});
 }

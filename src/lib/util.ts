@@ -1,6 +1,11 @@
+import { goto } from "$app/navigation";
+import { resolve } from "$app/paths";
+import type { Pathname } from "$app/types";
 import { wait } from "@sillvva/utils";
 import { hotkey as hk, type HotkeyItem } from "@svelteuidev/composables";
 import type { Attachment } from "svelte/attachments";
+import { errorToast } from "./factories.svelte";
+import type { EffectFailure, EffectResult } from "./server/effect/runtime";
 
 export type Awaitable<T> = T | Promise<T>;
 
@@ -39,3 +44,33 @@ export type ModuleData = {
 export const routeModules: Record<string, ModuleData> = import.meta.glob("/src/routes/**/+page.svelte", {
 	eager: true
 });
+
+export function canResolve(pathname: string): pathname is Pathname & {} {
+	try {
+		resolve(pathname as Pathname & {});
+		return true;
+	} catch {
+		console.error(`Cannot resolve pathname: ${pathname}`);
+		return false;
+	}
+}
+
+export function isRedirectFailure(
+	error: EffectFailure["error"]
+): error is EffectFailure["error"] & { extra: { redirectTo: Pathname & {} } } {
+	return Boolean(
+		error.extra.redirectTo &&
+			typeof error.extra.redirectTo === "string" &&
+			canResolve(error.extra.redirectTo) &&
+			error.status <= 308
+	);
+}
+
+export async function parseEffectResult<T>(result: EffectResult<T>) {
+	if (result.ok) return result.data;
+
+	errorToast(result.error.message);
+	if (isRedirectFailure(result.error)) {
+		await goto(resolve(result.error.extra.redirectTo));
+	}
+}

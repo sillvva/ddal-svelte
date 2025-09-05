@@ -12,6 +12,7 @@
 	import { BLANK_CHARACTER } from "$lib/constants.js";
 	import { errorToast, successToast } from "$lib/factories.svelte.js";
 	import AdminAPI from "$lib/remote/admin";
+	import { parseEffectResult } from "$lib/util";
 	import { JSONSearchParser } from "@sillvva/search/json";
 
 	let search = $state(page.url.searchParams.get("s")?.trim() ?? "");
@@ -131,8 +132,8 @@
 												banReason
 											});
 
-											if (result.ok) successToast(`${user.name} has been banned`);
-											else errorToast(result.error.message);
+											const parsed = await parseEffectResult(result);
+											if (parsed) successToast(`${user.name} has been banned`);
 										}}
 									>
 										<span class="iconify mdi--ban"></span>
@@ -148,8 +149,8 @@
 											if (!confirm(`Are you sure you want to unban ${user.name}?`)) return;
 
 											const result = await AdminAPI.actions.unbanUser(user.id);
-											if (result.ok) successToast(`${user.name} has been unbanned`);
-											else errorToast(result.error.message);
+											const parsed = await parseEffectResult(result);
+											if (parsed) successToast(`${user.name} has been unbanned`);
 										}}
 									>
 										<span class="iconify mdi--check"></span>

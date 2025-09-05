@@ -14,8 +14,9 @@
 	import Breadcrumbs from "$lib/components/Breadcrumbs.svelte";
 	import Search from "$lib/components/Search.svelte";
 	import SearchResults from "$lib/components/SearchResults.svelte";
-	import { EntitySearchFactory, errorToast, successToast } from "$lib/factories.svelte.js";
+	import { EntitySearchFactory, successToast } from "$lib/factories.svelte.js";
 	import DMsAPI from "$lib/remote/dms";
+	import { parseEffectResult } from "$lib/util.js";
 	import { sorter } from "@sillvva/utils";
 	import { SvelteSet } from "svelte/reactivity";
 
@@ -84,12 +85,12 @@
 														if (!confirm(`Are you sure you want to delete ${dm.name}? This action cannot be undone.`)) return;
 														deletingDM.add(dm.id);
 														const result = await DMsAPI.actions.delete(dm.id);
-														if (result.ok) {
+														const parsed = await parseEffectResult(result);
+														if (parsed) {
 															successToast(`${dm.name} deleted`);
 															// TODO: Refresh dm query
 															invalidateAll();
 														} else {
-															errorToast(result.error.message);
 															deletingDM.delete(dm.id);
 														}
 													}}

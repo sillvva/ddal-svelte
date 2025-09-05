@@ -2,7 +2,7 @@ import type { DungeonMasterId, DungeonMasterSchema, LocalsUser, UserId } from "$
 import { DBService, runQuery, type Database, type DrizzleError, type InferQueryResult, type Transaction } from "$lib/server/db";
 import { userDMLogIncludes } from "$lib/server/db/includes";
 import { dungeonMasters, type DungeonMaster } from "$lib/server/db/schema";
-import type { ErrorParams, RedirectError } from "$lib/server/effect/errors";
+import type { ErrorParams } from "$lib/server/effect/errors";
 import { FormError } from "$lib/server/effect/errors";
 import { AppLog } from "$lib/server/effect/logging";
 import { assertAuth, UnauthorizedError } from "$lib/server/effect/services/auth";
@@ -10,12 +10,6 @@ import { sorter } from "@sillvva/utils";
 import { and, eq } from "drizzle-orm";
 import { Data, Effect, Layer } from "effect";
 import { isTupleOf } from "effect/Predicate";
-
-class FetchUserDMsError extends Data.TaggedError("FetchUserDMsError")<ErrorParams> {
-	constructor(params: ErrorParams = { message: "Unable to fetch user DMs", status: 500 }) {
-		super(params);
-	}
-}
 
 export class DMNotFoundError extends Data.TaggedError("DMNotFoundError")<ErrorParams> {
 	constructor(err?: unknown) {
@@ -34,7 +28,7 @@ interface DMApiImpl {
 		readonly userDMs: (
 			userId: UserId,
 			options?: { id?: DungeonMasterId; includeLogs?: boolean }
-		) => Effect.Effect<UserDM[], FetchUserDMsError | DrizzleError>;
+		) => Effect.Effect<UserDM[], SaveDMError | UnauthorizedError | DrizzleError>;
 		readonly fuzzyDM: (
 			userId: UserId,
 			isUser: boolean,
@@ -47,9 +41,7 @@ interface DMApiImpl {
 			user: LocalsUser,
 			data: DungeonMasterSchema
 		) => Effect.Effect<DungeonMaster, SaveDMError | DrizzleError>;
-		readonly addUserDM: (
-			dms: UserDM[]
-		) => Effect.Effect<UserDM[], SaveDMError | DrizzleError | UnauthorizedError | RedirectError>;
+		readonly addUserDM: (dms: UserDM[]) => Effect.Effect<UserDM[], SaveDMError | DrizzleError | UnauthorizedError>;
 		readonly delete: (dm: UserDM, userId: UserId) => Effect.Effect<{ id: DungeonMasterId }, DeleteDMError | DrizzleError>;
 	};
 }
@@ -79,11 +71,7 @@ export class DMService extends Effect.Service<DMService>()("DMSService", {
 						// Sort the DMs by isUser and name
 						Effect.map((dms) => dms.toSorted((a, b) => sorter(a.isUser, b.isUser) || sorter(a.name, b.name))),
 						// Add the user DM if there isn't one already, and not searching for a specific DM
-						Effect.flatMap((dms) =>
-							!id && !dms[0]?.isUser
-								? impl.set.addUserDM(dms).pipe(Effect.catchAll((e) => new FetchUserDMsError({ ...e, cause: e })))
-								: Effect.succeed(dms)
-						),
+						Effect.flatMap((dms) => (!id && !dms[0]?.isUser ? impl.set.addUserDM(dms) : Effect.succeed(dms))),
 						Effect.tapError(() => AppLog.debug("DMService.get.userDMs", { userId, id, includeLogs }))
 					);
 				}),
@@ -115,7 +103,7 @@ export class DMService extends Effect.Service<DMService>()("DMSService", {
 				save: Effect.fn("DMService.set.save")(function* (dmId, user, data) {
 					const [dm] = yield* impl.get
 						.userDMs(user.id, { id: dmId })
-						.pipe(Effect.catchTag("FetchUserDMsError", (err) => new SaveDMError(err.message)));
+						.pipe(Effect.catchAll((err) => new SaveDMError(err.message)));
 					if (!dm) return yield* new SaveDMError("DM does not exist", { status: 404 });
 
 					if (!data.name.trim()) {

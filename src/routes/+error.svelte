@@ -20,11 +20,11 @@
 		if (page.status === 404 && page.error?.message === "Not Found") {
 			const url = page.url.pathname;
 			const segments = url.split("/");
-			return (
-				segments
-					.filter((segment) => segment.split("-").length === 5)
-					.filter((uuid) => v.safeParse(v.pipe(v.string(), v.uuid()), uuid).success).length > 0
-			);
+
+			const uuids = segments.filter((segment) => segment.split("-").length === 5);
+			if (!uuids.length) return true;
+
+			return uuids.filter((uuid) => v.safeParse(v.pipe(v.string(), v.uuid()), uuid).success).length > 0;
 		}
 
 		return false;
@@ -48,10 +48,15 @@
 			<h1 class="font-vecna mb-12 text-4xl font-bold">Rolled a Natural 1!</h1>
 		{/if}
 	{/if}
-	<div class={twMerge("alert alert-error mb-4 w-full max-w-3xl shadow-lg", type === "warning" && "alert-warning")}>
+	<div class={twMerge("alert alert-error mb-4 flex w-full max-w-3xl gap-4 shadow-lg", type === "warning" && "alert-warning")}>
 		<span class="iconify mdi--alert-circle size-6"></span>
-		<div class="flex gap-2 max-lg:flex-col">
-			<div class="flex flex-1 flex-col">
+		<div
+			class={twMerge(
+				"flex flex-1 gap-2",
+				((page.error && page.error.message.length >= 150) || !checkForUUIDs()) && "max-md:flex-col"
+			)}
+		>
+			<div class="flex flex-1 flex-col justify-center">
 				<h3 class="font-bold">
 					{#if !checkForUUIDs()}
 						Don't panic!
@@ -74,7 +79,7 @@
 			</div>
 			<div class="flex items-center gap-2 max-sm:self-end">
 				{#if !display}
-					<button class="btn btn-sm" onclick={() => (display = true)}>View details</button>
+					<button class="btn btn-sm max-sm:hidden" onclick={() => (display = true)}>View details</button>
 				{/if}
 				<a href={previousPage} class="btn btn-sm">Go back</a>
 			</div>
