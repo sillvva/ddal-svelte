@@ -27,7 +27,7 @@
 
 <Head />
 
-<main class="relative container mx-auto flex min-h-dvh flex-col items-center justify-center gap-8 p-4 pb-20">
+<main class="relative container mx-auto flex flex-1 flex-col items-center justify-center gap-8 p-4 pb-20">
 	<h1 class="font-draconis text-base-content text-center text-4xl lg:text-6xl dark:text-white">
 		Adventurers League
 		<br />

@@ -10,6 +10,7 @@
 	class="fixed! z-0 min-h-dvh min-w-full object-cover object-center opacity-25 dark:opacity-20 print:hidden"
 />
 
-{@render children()}
-
-<Footer fixed />
+<div class="flex min-h-dvh flex-col">
+	{@render children()}
+	<Footer fixed />
+</div>
