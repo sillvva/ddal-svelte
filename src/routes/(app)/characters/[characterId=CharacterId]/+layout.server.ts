@@ -9,13 +9,13 @@ export const load = (event) =>
 		const characterId = event.params.characterId;
 
 		if (characterId === "new" && event.url.pathname !== "/characters/new/edit")
-			return yield* new RedirectError("Redirecting to new character form", "/characters/new/edit", 302);
+			return yield* new RedirectError({ message: "Redirecting to new character form", redirectTo: "/characters/new/edit" });
 
 		const character =
 			characterId === "new"
 				? event.locals.user
 					? defaultCharacter(event.locals.user)
-					: yield* new RedirectError("Redirecting to login", "/", 302)
+					: yield* new RedirectError({ message: "Redirecting to login", redirectTo: "/" })
 				: yield* Character.get.character(characterId);
 
 		return {

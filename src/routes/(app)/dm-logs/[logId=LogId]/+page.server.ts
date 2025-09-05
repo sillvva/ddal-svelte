@@ -28,7 +28,10 @@ export const load = (event) =>
 		if (logId !== "new") {
 			if (!log.id) return yield* new LogNotFoundError();
 			if (!log.isDmLog)
-				return yield* new RedirectError("Redirecting to character log", `/characters/${log.characterId}/log/${log.id}`, 302);
+				return yield* new RedirectError({
+					message: "Redirecting to character log",
+					redirectTo: `/characters/${log.characterId}/log/${log.id}`
+				});
 		}
 
 		const characters = yield* Characters.get.userCharacters(user.id).pipe(

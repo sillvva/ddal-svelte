@@ -1,4 +1,4 @@
-import type { Pathname } from "$app/types";
+import type { FullPathname } from "$lib/constants";
 import { isInstanceOfClass } from "@sillvva/utils";
 import { type NumericRange } from "@sveltejs/kit";
 import { Cause, Data } from "effect";
@@ -49,8 +49,13 @@ export class FailedError extends Data.TaggedError("FailedError")<ErrorParams> {
  * - 308 - Permanent Redirect, preserves method
  */
 export class RedirectError extends Data.TaggedError("RedirectError")<ErrorParams> {
-	constructor(message: string, redirectTo: Pathname | `${Pathname}?${string}`, status: NumericRange<300, 308> = 302) {
-		super({ message, status, redirectTo });
+	constructor({
+		message = "Unauthorized",
+		status = 403,
+		cause,
+		redirectTo
+	}: Partial<ErrorParams & { redirectTo: FullPathname }> = {}) {
+		super({ message, status, cause, redirectTo });
 	}
 }
 

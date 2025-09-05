@@ -1,3 +1,4 @@
+import type { Pathname } from "$app/types";
 import type { Account } from "$lib/server/db/schema";
 
 export const defaultTitle = "Adventurers League Log Sheet";
@@ -99,3 +100,5 @@ export const themes = [
 
 export type Themes = (typeof themes)[number]["value"];
 export type ThemeGroups = (typeof themeGroups)[number];
+
+export type FullPathname = Pathname | `${Pathname}?${string}`;

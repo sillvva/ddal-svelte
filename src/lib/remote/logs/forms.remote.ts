@@ -53,7 +53,7 @@ export const save = command("unchecked", (input: { logId: LogIdParam; data: LogS
 
 		const logId = yield* parse(logIdParamSchema, input.logId, redirectTo, 302);
 		const log = logId !== "new" ? yield* Logs.get.log(logId, user.id) : undefined;
-		if (logId !== "new" && !log) return yield* new RedirectError("Log not found", redirectTo, 302);
+		if (logId !== "new" && !log) return yield* new RedirectError({ message: "Log not found", redirectTo });
 
 		return yield* saveForm(Logs.set.save(form.data, user), {
 			onError: (err) => {

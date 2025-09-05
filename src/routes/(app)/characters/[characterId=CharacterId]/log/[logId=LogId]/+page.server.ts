@@ -22,7 +22,7 @@ export const load = (event) =>
 
 		if (logId !== "new") {
 			if (!log.id) return yield* new LogNotFoundError();
-			if (log.isDmLog) return yield* new RedirectError("Redirecting to DM log", `/dm-logs/${log.id}`, 302);
+			if (log.isDmLog) return yield* new RedirectError({ message: "Redirecting to DM log", redirectTo: `/dm-logs/${log.id}` });
 		}
 
 		const form = yield* validateForm(log, characterLogSchema(character), {

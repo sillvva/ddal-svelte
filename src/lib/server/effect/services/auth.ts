@@ -96,10 +96,7 @@ export class AuthService extends Effect.Service<AuthService>()("AuthService", {
 	dependencies: [DBService.Default()]
 }) {}
 
-export const assertAuth = Effect.fn(function* ({
-	adminOnly = false,
-	redirect = false
-}: { adminOnly?: boolean; redirect?: boolean } = {}) {
+export const assertAuth = Effect.fn(function* (adminOnly = false) {
 	const event = getRequestEvent();
 	const user = event.locals.user;
 	const url = event.url;
@@ -107,11 +104,11 @@ export const assertAuth = Effect.fn(function* ({
 
 	if (!result.success) {
 		if (user) yield* AppLog.debug("assertUser", { issues: v.summarize(result.issues) });
-		return yield* new UnauthorizedError({
+		return yield* new RedirectError({
 			message: "Invalid user",
-			status: redirect ? 302 : 401,
+			status: 302,
 			cause: result.issues,
-			redirectTo: redirect ? `/?redirect=${encodeURIComponent(`${url.pathname}${url.search}`)}` : undefined
+			redirectTo: `/?redirect=${encodeURIComponent(`${url.pathname}${url.search}`)}`
 		});
 	}
 
@@ -121,29 +118,23 @@ export const assertAuth = Effect.fn(function* ({
 			.filter((c) => c.name.includes("auth"))
 			.forEach((c) => event.cookies.delete(c.name, { path: "/" }));
 		event.cookies.set("banned", result.output.banReason || "", { path: "/" });
-		return yield* new UnauthorizedError({
+		return yield* new RedirectError({
 			message: "Banned",
-			status: redirect ? 302 : 403,
-			redirectTo: redirect ? "/" : undefined
+			status: 302,
+			redirectTo: "/"
 		});
 	}
 
 	if (adminOnly && result.output.role !== "admin") {
-		return yield* new UnauthorizedError({
+		return yield* new RedirectError({
 			message: "Insufficient permissions",
-			status: redirect ? 302 : 403,
-			redirectTo: redirect ? "/characters" : undefined
+			status: 302,
+			redirectTo: "/characters"
 		});
 	}
 
 	return { user: result.output, event };
 });
-
-export class UnauthorizedError extends Data.TaggedError("UnauthorizedError")<ErrorParams> {
-	constructor({ message = "Unauthorized", status = 403, cause, redirectTo }: Partial<ErrorParams> = {}) {
-		super({ message, status, cause, redirectTo });
-	}
-}
 
 export function getHomeError() {
 	const event = getRequestEvent();

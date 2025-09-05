@@ -183,9 +183,9 @@ export async function runAuth<
 	C extends Services = Services,
 	T extends YieldWrap<Effect.Effect<A, B, C>> = YieldWrap<Effect.Effect<A, B, C>>,
 	Y = unknown
->(program: (user: LocalsUser, event: RequestEvent) => Generator<T, TReturn, Y>, { adminOnly = false, redirect = true } = {}) {
+>(program: (user: LocalsUser, event: RequestEvent) => Generator<T, TReturn, Y>, { adminOnly = false } = {}) {
 	return run(function* () {
-		const { user, event } = yield* assertAuth({ adminOnly, redirect });
+		const { user, event } = yield* assertAuth(adminOnly);
 		return yield* program(user, event);
 	});
 }
@@ -197,9 +197,9 @@ export async function runAuthSafe<
 	C extends Services = Services,
 	T extends YieldWrap<Effect.Effect<A, B, C>> = YieldWrap<Effect.Effect<A, B, C>>,
 	Y = unknown
->(program: (user: LocalsUser, event: RequestEvent) => Generator<T, TReturn, Y>, { adminOnly = false, redirect = true } = {}) {
+>(program: (user: LocalsUser, event: RequestEvent) => Generator<T, TReturn, Y>, { adminOnly = false } = {}) {
 	return runSafe(function* () {
-		const { user, event } = yield* assertAuth({ adminOnly, redirect });
+		const { user, event } = yield* assertAuth(adminOnly);
 		return yield* program(user, event);
 	});
 }

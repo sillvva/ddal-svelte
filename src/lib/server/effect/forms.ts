@@ -1,4 +1,5 @@
 import type { Pathname } from "$app/types";
+import type { FullPathname } from "$lib/constants";
 import { removeTrace, type Awaitable } from "$lib/util";
 import { type NumericRange, type RequestEvent } from "@sveltejs/kit";
 import { Cause, Data, Effect, Either } from "effect";
@@ -30,14 +31,14 @@ export class InvalidSchemaError extends Data.TaggedError("InvalidSchemaError")<E
 export const parse = Effect.fn(function* <T extends v.GenericSchema>(
 	schema: T,
 	value: unknown,
-	redirectTo?: Pathname | `${Pathname}?${string}`,
+	redirectTo?: FullPathname,
 	status: NumericRange<300, 308> = 302
 ) {
 	const parseResult = v.safeParse(schema, value);
 	if (parseResult.success) return parseResult.output;
 	else {
 		const error = v.summarize(parseResult.issues);
-		if (redirectTo) return yield* new RedirectError(error, redirectTo, status);
+		if (redirectTo) return yield* new RedirectError({ message: error, redirectTo, status, cause: parseResult.issues });
 		else return yield* new InvalidSchemaError(error, value);
 	}
 });
@@ -45,7 +46,7 @@ export const parse = Effect.fn(function* <T extends v.GenericSchema>(
 export const parseEither = Effect.fn(function* <T extends v.GenericSchema>(
 	schema: T,
 	value: unknown,
-	redirectTo?: Pathname | `${Pathname}?${string}`,
+	redirectTo?: FullPathname,
 	status: NumericRange<300, 308> = 302
 ) {
 	const result = yield* Effect.either(parse(schema, value, redirectTo, status));

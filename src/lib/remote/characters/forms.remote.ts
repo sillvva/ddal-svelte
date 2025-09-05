@@ -13,7 +13,8 @@ export const save = command("unchecked", (input: { id: CharacterIdParam; data: E
 
 		const characterId = input.id;
 		const character = characterId !== "new" ? yield* Characters.get.character(characterId, false) : undefined;
-		if (characterId !== "new" && !character) return yield* new RedirectError("Character not found", "/characters", 302);
+		if (characterId !== "new" && !character)
+			return yield* new RedirectError({ message: "Character not found", redirectTo: "/characters" });
 
 		const form = yield* validateForm(input.data, editCharacterSchema);
 		if (!form.valid) return form;

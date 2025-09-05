@@ -2,10 +2,10 @@ import type { DungeonMasterId, DungeonMasterSchema, LocalsUser, UserId } from "$
 import { DBService, runQuery, type Database, type DrizzleError, type InferQueryResult, type Transaction } from "$lib/server/db";
 import { userDMLogIncludes } from "$lib/server/db/includes";
 import { dungeonMasters, type DungeonMaster } from "$lib/server/db/schema";
-import type { ErrorParams } from "$lib/server/effect/errors";
+import type { ErrorParams, RedirectError } from "$lib/server/effect/errors";
 import { FormError } from "$lib/server/effect/errors";
 import { AppLog } from "$lib/server/effect/logging";
-import { assertAuth, UnauthorizedError } from "$lib/server/effect/services/auth";
+import { assertAuth } from "$lib/server/effect/services/auth";
 import { sorter } from "@sillvva/utils";
 import { and, eq } from "drizzle-orm";
 import { Data, Effect, Layer } from "effect";
@@ -28,7 +28,7 @@ interface DMApiImpl {
 		readonly userDMs: (
 			userId: UserId,
 			options?: { id?: DungeonMasterId; includeLogs?: boolean }
-		) => Effect.Effect<UserDM[], SaveDMError | UnauthorizedError | DrizzleError>;
+		) => Effect.Effect<UserDM[], SaveDMError | RedirectError | DrizzleError>;
 		readonly fuzzyDM: (
 			userId: UserId,
 			isUser: boolean,
@@ -41,7 +41,7 @@ interface DMApiImpl {
 			user: LocalsUser,
 			data: DungeonMasterSchema
 		) => Effect.Effect<DungeonMaster, SaveDMError | DrizzleError>;
-		readonly addUserDM: (dms: UserDM[]) => Effect.Effect<UserDM[], SaveDMError | DrizzleError | UnauthorizedError>;
+		readonly addUserDM: (dms: UserDM[]) => Effect.Effect<UserDM[], SaveDMError | DrizzleError | RedirectError>;
 		readonly delete: (dm: UserDM, userId: UserId) => Effect.Effect<{ id: DungeonMasterId }, DeleteDMError | DrizzleError>;
 	};
 }
