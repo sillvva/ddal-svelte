@@ -1,37 +1,28 @@
 <script lang="ts">
 	import { hotkey } from "$lib/util";
 	import type { HTMLInputAttributes } from "svelte/elements";
-	import { queryParameters, ssp } from "sveltekit-search-params";
+	import { queryParam, ssp } from "sveltekit-search-params";
 	import { twMerge } from "tailwind-merge";
 
 	interface Props extends HTMLInputAttributes {
 		class?: string | null;
 	}
 
-	const params = queryParameters(
-		{
-			s: ssp.string()
-		},
-		{
-			showDefaults: false,
-			pushHistory: false
-		}
-	);
-
-	let { value = $bindable($params.s || ""), class: className, type = "text", ...rest }: Props = $props();
-
-	// Sync value prop changes to $params.s
-	$effect(() => {
-		if (value.trim()) {
-			$params.s = value;
-		} else {
-			$params.s = null;
-		}
+	const s = queryParam("s", ssp.string(), {
+		showDefaults: false,
+		pushHistory: false
 	});
 
-	// Sync $params.s changes to value prop (when URL changes)
+	let { value = $bindable($s || ""), class: className, type = "text", ...rest }: Props = $props();
+
+	// Sync value prop changes to $s
 	$effect(() => {
-		value = $params.s || "";
+		$s = value.trim() || null;
+	});
+
+	// Sync $s changes to value prop (when URL changes)
+	$effect(() => {
+		value = $s || "";
 	});
 
 	let ref: HTMLInputElement | undefined = undefined;

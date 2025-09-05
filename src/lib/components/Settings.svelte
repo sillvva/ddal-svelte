@@ -6,6 +6,7 @@
 	import AppAPI from "$lib/remote/app";
 	import AuthAPI from "$lib/remote/auth";
 	import { getGlobal } from "$lib/stores.svelte";
+	import { parseEffectResult } from "$lib/util";
 	import { isDefined } from "@sillvva/utils";
 	import { isTupleOfAtLeast } from "effect/Predicate";
 	import { twMerge } from "tailwind-merge";
@@ -22,9 +23,9 @@
 
 	const global = getGlobal();
 
-	const request = $derived(AppAPI.queries.request());
-	const user = $derived(request.current?.user);
-	const session = $derived(request.current?.session);
+	const request = $derived(await AppAPI.queries.request());
+	const user = $derived(request.user);
+	const session = $derived(request.session);
 
 	const authProviders = $derived(
 		PROVIDERS.map((p) => ({

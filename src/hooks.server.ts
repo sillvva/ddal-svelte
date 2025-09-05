@@ -12,6 +12,7 @@ import { UserService } from "$lib/server/effect/services/users";
 import { type Handle } from "@sveltejs/kit";
 import { sequence } from "@sveltejs/kit/hooks";
 import { svelteKitHandler } from "better-auth/svelte-kit";
+import chalk from "chalk";
 import { Layer, ManagedRuntime } from "effect";
 
 const createAppRuntime = () => {
@@ -84,15 +85,15 @@ const preloadTheme: Handle = async ({ event, resolve }) => {
 export const handle = sequence(runtime, authHandler, session, info, preloadTheme);
 
 if (typeof process !== "undefined") {
-	let isShuttingDown = false;
-
-	const gracefulShutdown = async () => {
-		if (isShuttingDown) return;
-		isShuttingDown = true;
+	const gracefulShutdown = async (signal: string) => {
+		console.log("\nShut down signal received:", chalk.bold(signal));
 
 		try {
+			console.log("Disposing app runtime...");
 			await appRuntime.dispose();
+			console.log("Ending DB connection...");
 			await DBService.end();
+			console.log("Exiting process...");
 			process.exit(0);
 		} catch (err) {
 			console.error("Error during cleanup:", err);
@@ -100,6 +101,6 @@ if (typeof process !== "undefined") {
 		}
 	};
 
-	process.once("SIGTERM", gracefulShutdown);
-	process.once("SIGINT", gracefulShutdown);
+	process.removeAllListeners("SIGTERM").once("SIGTERM", () => gracefulShutdown("SIGTERM"));
+	process.removeAllListeners("SIGINT").once("SIGINT", () => gracefulShutdown("SIGINT"));
 }

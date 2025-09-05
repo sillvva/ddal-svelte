@@ -18,13 +18,13 @@
 		<span class="text-center uppercase">DMs</span>
 	</a>
 	<svelte:boundary>
-		{@const request = AppAPI.queries.request()}
+		{@const request = await AppAPI.queries.request()}
 
 		{#snippet pending()}
 			{""}
 		{/snippet}
 
-		{#if request.current?.user?.role === "admin"}
+		{#if request.user?.role === "admin"}
 			<a href="/admin/users" class="flex h-full flex-col items-center justify-center text-xs">
 				<span class="iconify mdi--administrator-outline size-8"></span>
 				<span class="text-center uppercase">Admin</span>
