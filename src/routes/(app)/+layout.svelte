@@ -178,9 +178,7 @@
 </dialog>
 
 <svelte:boundary>
-	{#snippet pending()}
-		{""}
-	{/snippet}
+	{#snippet pending()}{/snippet}
 
 	<Settings bind:open={settingsOpen} />
 </svelte:boundary>

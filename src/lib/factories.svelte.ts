@@ -1,6 +1,5 @@
 /* eslint-disable svelte/prefer-svelte-reactivity */
 import { goto } from "$app/navigation";
-import { resolve } from "$app/paths";
 import type { Pathname } from "$app/types";
 import type { FullCharacterData } from "$lib/server/effect/services/characters";
 import type { UserDM } from "$lib/server/effect/services/dms";
@@ -94,7 +93,7 @@ export function valibotForm<S extends v.GenericSchema, Out extends Infer<S, "val
 					if (typeof result.data === "string") {
 						superform.tainted.set(undefined);
 						await onSuccessResult(data);
-						await goto(resolve(result.data as Pathname & {}), {
+						await goto(result.data, {
 							invalidateAll: willInvalidate
 						});
 						return;
@@ -113,7 +112,7 @@ export function valibotForm<S extends v.GenericSchema, Out extends Infer<S, "val
 					await onErrorResult(result.error);
 					if (isRedirectFailure(result.error)) {
 						superform.tainted.set(undefined);
-						await goto(resolve(result.error.extra.redirectTo), {
+						await goto(result.error.extra.redirectTo, {
 							invalidateAll: willInvalidate
 						});
 					} else {

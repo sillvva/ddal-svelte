@@ -1,5 +1,4 @@
 import { goto } from "$app/navigation";
-import { resolve } from "$app/paths";
 import type { Pathname } from "$app/types";
 import { wait } from "@sillvva/utils";
 import { hotkey as hk, type HotkeyItem } from "@svelteuidev/composables";
@@ -45,25 +44,10 @@ export const routeModules: Record<string, ModuleData> = import.meta.glob("/src/r
 	eager: true
 });
 
-export function canResolve(pathname: string): pathname is Pathname & {} {
-	try {
-		resolve(pathname as Pathname & {});
-		return true;
-	} catch {
-		console.error(`Cannot resolve pathname: ${pathname}`);
-		return false;
-	}
-}
-
 export function isRedirectFailure(
 	error: EffectFailure["error"]
 ): error is EffectFailure["error"] & { extra: { redirectTo: Pathname & {} } } {
-	return Boolean(
-		error.extra.redirectTo &&
-			typeof error.extra.redirectTo === "string" &&
-			canResolve(error.extra.redirectTo) &&
-			error.status <= 308
-	);
+	return Boolean(error.extra.redirectTo && typeof error.extra.redirectTo === "string" && error.status <= 308);
 }
 
 export async function parseEffectResult<T>(result: EffectResult<T>) {
@@ -71,6 +55,6 @@ export async function parseEffectResult<T>(result: EffectResult<T>) {
 
 	errorToast(result.error.message);
 	if (isRedirectFailure(result.error)) {
-		await goto(resolve(result.error.extra.redirectTo));
+		await goto(result.error.extra.redirectTo);
 	}
 }

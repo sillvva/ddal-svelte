@@ -76,7 +76,8 @@ export default [
 	// Project-wide rule tweaks
 	{
 		rules: {
-			"require-yield": "off"
+			"require-yield": "off",
+			"svelte/no-navigation-without-resolve": "off"
 		}
 	},
 

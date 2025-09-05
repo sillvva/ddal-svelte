@@ -1,7 +1,6 @@
 <script lang="ts">
 	import { dev } from "$app/environment";
 	import { afterNavigate } from "$app/navigation";
-	import { resolve } from "$app/paths";
 	import { page } from "$app/state";
 	import LoadingPanel from "$lib/components/LoadingPanel.svelte";
 	import AppAPI from "$lib/remote/app";
@@ -9,7 +8,7 @@
 	import { twMerge } from "tailwind-merge";
 	import * as v from "valibot";
 
-	let previousPage = $state<string>(resolve("/"));
+	let previousPage = $state<string>("/");
 	let display = $state(!dev);
 
 	afterNavigate(({ from }) => {
