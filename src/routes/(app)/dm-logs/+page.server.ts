@@ -1,9 +1,12 @@
-import { runAuth } from "$lib/server/effect/runtime.js";
+import { run } from "$lib/server/effect/runtime.js";
+import { assertAuth } from "$lib/server/effect/services/auth";
 import { LogService } from "$lib/server/effect/services/logs";
 
 export const load = (event) =>
-	runAuth(function* (user) {
+	run(function* () {
+		const { user } = yield* assertAuth();
 		const Logs = yield* LogService;
+
 		const logs = yield* Logs.get.dmLogs(user.id);
 
 		return {

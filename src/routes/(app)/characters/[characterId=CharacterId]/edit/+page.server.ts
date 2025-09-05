@@ -1,13 +1,15 @@
 import { BLANK_CHARACTER } from "$lib/constants.js";
 import { editCharacterSchema } from "$lib/schemas";
 import { validateForm } from "$lib/server/effect/forms";
-import { runAuth } from "$lib/server/effect/runtime";
+import { run } from "$lib/server/effect/runtime";
+import { assertAuth } from "$lib/server/effect/services/auth.js";
 import { Effect } from "effect";
 
 export const load = (event) =>
-	runAuth(function* () {
-		const parent = yield* Effect.promise(event.parent);
+	run(function* () {
+		yield* assertAuth();
 
+		const parent = yield* Effect.promise(event.parent);
 		const form = yield* validateForm(
 			{
 				id: parent.character.id,

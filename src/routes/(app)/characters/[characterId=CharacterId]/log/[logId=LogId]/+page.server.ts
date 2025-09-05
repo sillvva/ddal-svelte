@@ -2,14 +2,16 @@ import { defaultLogSchema, getItemEntities, logDataToSchema } from "$lib/entitie
 import { characterLogSchema } from "$lib/schemas";
 import { RedirectError } from "$lib/server/effect/errors";
 import { validateForm } from "$lib/server/effect/forms";
-import { runAuth } from "$lib/server/effect/runtime";
+import { run } from "$lib/server/effect/runtime";
+import { assertAuth } from "$lib/server/effect/services/auth";
 import { DMService } from "$lib/server/effect/services/dms.js";
 import { LogNotFoundError, LogService } from "$lib/server/effect/services/logs.js";
 import { sorter } from "@sillvva/utils";
 import { Effect } from "effect";
 
 export const load = (event) =>
-	runAuth(function* (user) {
+	run(function* () {
+		const { user } = yield* assertAuth();
 		const Logs = yield* LogService;
 		const DMs = yield* DMService;
 

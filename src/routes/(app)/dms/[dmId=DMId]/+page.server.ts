@@ -1,10 +1,12 @@
 import { dungeonMasterSchema } from "$lib/schemas";
 import { validateForm } from "$lib/server/effect/forms";
-import { runAuth } from "$lib/server/effect/runtime.js";
+import { run } from "$lib/server/effect/runtime.js";
+import { assertAuth } from "$lib/server/effect/services/auth";
 import { DMNotFoundError, DMService } from "$lib/server/effect/services/dms";
 
 export const load = (event) =>
-	runAuth(function* (user) {
+	run(function* () {
+		const { user } = yield* assertAuth();
 		const DMs = yield* DMService;
 
 		const dmId = event.params.dmId;

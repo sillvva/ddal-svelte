@@ -1,7 +1,8 @@
 import { command } from "$app/server";
 import { dungeonMasterIdSchema } from "$lib/schemas";
 import { type ErrorParams } from "$lib/server/effect/errors";
-import { runAuthSafe } from "$lib/server/effect/runtime";
+import { runSafe } from "$lib/server/effect/runtime";
+import { assertAuth } from "$lib/server/effect/services/auth";
 import { DMService } from "$lib/server/effect/services/dms";
 import { Data } from "effect";
 
@@ -18,7 +19,8 @@ class DeleteUserDMError extends Data.TaggedError("DeleteUserDMError")<ErrorParam
 }
 
 export const deleteDM = command(dungeonMasterIdSchema, (id) =>
-	runAuthSafe(function* (user) {
+	runSafe(function* () {
+		const { user } = yield* assertAuth();
 		const DMs = yield* DMService;
 
 		const [dm] = yield* DMs.get.userDMs(user.id, { id });

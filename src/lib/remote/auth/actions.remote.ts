@@ -1,7 +1,8 @@
 import { command } from "$app/server";
 import { imageUrlWithFallback, requiredString } from "$lib/schemas.js";
 import { FailedError, type ErrorParams } from "$lib/server/effect/errors";
-import { runAuthSafe } from "$lib/server/effect/runtime";
+import { runSafe } from "$lib/server/effect/runtime";
+import { assertAuth } from "$lib/server/effect/services/auth";
 import { UserService } from "$lib/server/effect/services/users";
 import { Data, Effect } from "effect";
 import * as v from "valibot";
@@ -21,7 +22,8 @@ export const updateUser = command(
 		})
 	),
 	(input) =>
-		runAuthSafe(function* (user) {
+		runSafe(function* () {
+			const { user } = yield* assertAuth();
 			const Users = yield* UserService;
 
 			if (Object.keys(input).length === 0) return yield* Effect.fail(new NoChangesError());

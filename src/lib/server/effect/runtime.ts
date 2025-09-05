@@ -1,15 +1,14 @@
 import { dev } from "$app/environment";
 import { getRequestEvent } from "$app/server";
-import type { LocalsUser } from "$lib/schemas";
 import { isRedirectFailure, removeTrace } from "$lib/util";
-import { error, isHttpError, isRedirect, redirect, type NumericRange, type RequestEvent } from "@sveltejs/kit";
+import { error, isHttpError, isRedirect, redirect, type NumericRange } from "@sveltejs/kit";
 import { Cause, Effect, Exit, ManagedRuntime } from "effect";
 import { isFunction } from "effect/Predicate";
 import type { YieldWrap } from "effect/Utils";
 import { type ErrorClass } from "./errors";
 import { AppLog } from "./logging";
 import { AdminService } from "./services/admin";
-import { assertAuth, AuthService } from "./services/auth";
+import { AuthService } from "./services/auth";
 import { CharacterService } from "./services/characters";
 import { DMService } from "./services/dms";
 import { LogService } from "./services/logs";
@@ -170,36 +169,4 @@ export function handleCause<B extends InstanceType<ErrorClass>>(cause: Cause.Cau
 
 	if (!dev) message = removeTrace(message);
 	return { message, status, extra };
-}
-
-// -------------------------------------------------------------------------------------------------
-// runAuth
-// -------------------------------------------------------------------------------------------------
-
-export async function runAuth<
-	TReturn,
-	A = unknown,
-	B extends InstanceType<ErrorClass> = InstanceType<ErrorClass>,
-	C extends Services = Services,
-	T extends YieldWrap<Effect.Effect<A, B, C>> = YieldWrap<Effect.Effect<A, B, C>>,
-	Y = unknown
->(program: (user: LocalsUser, event: RequestEvent) => Generator<T, TReturn, Y>, { adminOnly = false } = {}) {
-	return run(function* () {
-		const { user, event } = yield* assertAuth(adminOnly);
-		return yield* program(user, event);
-	});
-}
-
-export async function runAuthSafe<
-	TReturn,
-	A = unknown,
-	B extends InstanceType<ErrorClass> = InstanceType<ErrorClass>,
-	C extends Services = Services,
-	T extends YieldWrap<Effect.Effect<A, B, C>> = YieldWrap<Effect.Effect<A, B, C>>,
-	Y = unknown
->(program: (user: LocalsUser, event: RequestEvent) => Generator<T, TReturn, Y>, { adminOnly = false } = {}) {
-	return runSafe(function* () {
-		const { user, event } = yield* assertAuth(adminOnly);
-		return yield* program(user, event);
-	});
 }

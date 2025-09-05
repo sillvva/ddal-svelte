@@ -11,14 +11,16 @@ import {
 } from "$lib/schemas";
 import { FormError, RedirectError } from "$lib/server/effect/errors";
 import { parse, parseEither, saveForm, validateForm } from "$lib/server/effect/forms";
-import { runAuthSafe } from "$lib/server/effect/runtime";
+import { runSafe } from "$lib/server/effect/runtime";
+import { assertAuth } from "$lib/server/effect/services/auth";
 import { CharacterService } from "$lib/server/effect/services/characters";
 import { LogService } from "$lib/server/effect/services/logs";
 import type { SuperValidated } from "sveltekit-superforms";
 import * as v from "valibot";
 
 export const save = command("unchecked", (input: { logId: LogIdParam; data: LogSchemaIn }) =>
-	runAuthSafe(function* (user) {
+	runSafe(function* () {
+		const { user } = yield* assertAuth();
 		const Characters = yield* CharacterService;
 		const Logs = yield* LogService;
 

@@ -1,8 +1,11 @@
-import { runAuth } from "$lib/server/effect/runtime.js";
+import { run } from "$lib/server/effect/runtime.js";
+import { assertAuth } from "$lib/server/effect/services/auth";
 import { DMService } from "$lib/server/effect/services/dms";
 
 export const load = (event) =>
-	runAuth(function* (user) {
+	run(function* () {
+		const { user } = yield* assertAuth();
+
 		const DMs = yield* DMService;
 		const dms = yield* DMs.get.userDMs(user.id);
 
