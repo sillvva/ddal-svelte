@@ -37,7 +37,7 @@ export const GET = async ({ params, url }) => {
 	const draconis = await readFile(path.resolve("static/fonts/Draconis.ttf"));
 	const vecna = await readFile(path.resolve("static/fonts/Vecna.ttf"));
 	const vecnaBold = await readFile(path.resolve("static/fonts/VecnaBold.ttf"));
-	const roboto = await readFile(path.resolve("static/fonts/Roboto-Regular.ttf"));
+	const inter = await readFile(path.resolve("static/fonts/Inter.ttf"));
 
 	const fallbackImageUrl = `${url.origin}${BLANK_CHARACTER}`;
 	let imageUrl =
@@ -109,7 +109,7 @@ export const GET = async ({ params, url }) => {
 											{
 												type: "div",
 												props: {
-													style: { fontSize: "18px", marginBottom: "6px", fontFamily: "Roboto" },
+													style: { fontSize: "18px", marginBottom: "6px", fontFamily: "Inter" },
 													children: `${character.race} ${character.class}`.replace(/ {2,}/g, " ").trim()
 												}
 											}
@@ -157,7 +157,7 @@ export const GET = async ({ params, url }) => {
 											flexDirection: "column",
 											justifyContent: "center",
 											fontFamily: "Draconis",
-											color: "#bbb",
+											color: "#ccc",
 											flex: 1
 										},
 										children: [
@@ -204,7 +204,7 @@ export const GET = async ({ params, url }) => {
 												props: {
 													style: {
 														display: "flex",
-														fontFamily: "Roboto",
+														fontFamily: "Inter",
 														fontSize: "10px"
 													},
 													children: "LEVEL"
@@ -253,9 +253,9 @@ export const GET = async ({ params, url }) => {
 					style: "normal"
 				},
 				{
-					name: "Roboto",
-					data: roboto,
-					weight: 400,
+					name: "Inter",
+					data: inter,
+					weight: 600,
 					style: "normal"
 				}
 			]

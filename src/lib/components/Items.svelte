@@ -121,7 +121,7 @@
 					<SearchResults text={mi.name} {terms} />
 				</span>{/each}{#each consumables as mi (mi.id)}<span
 					role={mi.description ? "button" : "presentation"}
-					class="inline pr-2 pl-2 italic first:pl-0"
+					class="text-base-content/75 inline pr-2 pl-2 italic first:pl-0"
 					class:text-secondary-content={mi.description}
 					class:italic={formatting}
 					onclick={() => {
