@@ -17,8 +17,7 @@ export const maxStringSize = v.pipe(string, v.maxLength(255));
 export const integer = v.pipe(v.number(), v.integer());
 export const uuidV7 = v.pipe(
 	v.string(),
-	v.uuid(),
-	v.check((s) => s.charAt(14) === "7", "Invalid UUIDv7")
+	v.regex(/^[\da-f]{8}-[\da-f]{4}-7[\da-f]{3}-[\da-f]{4}-[\da-f]{12}$/iu, "Invalid UUIDv7")
 );
 
 export const urlSchema = v.pipe(string, v.url(), v.maxLength(500));

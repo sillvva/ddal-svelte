@@ -31,8 +31,8 @@ export function serverGetCookie<TSchema extends v.GenericSchema>(name: string, s
  *
  * @param cookies Cookies object from the server
  * @param name Name of the cookie
+ * @param schema Schema of the cookie
  * @param value Value of the cookie
- * @param options Options for the cookie
  * @param options.expires Expiration time of the cookie in milliseconds
  * @param options.httpOnly Whether the cookie should be http-only. This prevents the cookie from being accessed from the browser.
  * @returns The cookie value
