@@ -34,7 +34,7 @@ export const load = (event) =>
 		const itemEntities = getItemEntities(character, { excludeDropped: true, lastLogId: log.id });
 		const magicItems = itemEntities.magicItems.toSorted((a, b) => sorter(a.name, b.name));
 		const storyAwards = itemEntities.storyAwards.toSorted((a, b) => sorter(a.name, b.name));
-		const dms = yield* DMs.get.userDMs(user.id);
+		const dms = yield* DMs.get.userDMs(user);
 
 		return {
 			...event.params,

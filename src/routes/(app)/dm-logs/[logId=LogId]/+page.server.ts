@@ -17,7 +17,7 @@ export const load = (event) =>
 		const Characters = yield* CharacterService;
 		const DMs = yield* DMService;
 
-		const userDM = yield* DMs.get.userDMs(user.id, { includeLogs: false }).pipe(
+		const userDM = yield* DMs.get.userDMs(user, { includeLogs: false }).pipe(
 			Effect.map((dms) => dms.find((dm) => dm.isUser)),
 			Effect.flatMap((dm) => (dm ? Effect.succeed(dm) : Effect.fail(new DMNotFoundError()))),
 			// eslint-disable-next-line @typescript-eslint/no-unused-vars

@@ -10,7 +10,7 @@ export const load = (event) =>
 		const DMs = yield* DMService;
 
 		const dmId = event.params.dmId;
-		const [dm] = yield* DMs.get.userDMs(user.id, { id: dmId });
+		const [dm] = yield* DMs.get.userDMs(user, { id: dmId });
 		if (!dm) return yield* new DMNotFoundError();
 
 		const form = yield* validateForm(

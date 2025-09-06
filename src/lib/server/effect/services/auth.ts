@@ -3,7 +3,6 @@ import { privateEnv } from "$lib/env/private";
 import { localsSessionSchema, localsUserSchema, type LocalsSession, type LocalsUser, type UserId } from "$lib/schemas";
 import { DBService, DrizzleError, type Database } from "$lib/server/db";
 import { RedirectError, type ErrorParams } from "$lib/server/effect/errors";
-import { AppLog } from "$lib/server/effect/logging";
 import { isDefined } from "@sillvva/utils";
 import { betterAuth, type BetterAuthOptions } from "better-auth";
 import { drizzleAdapter } from "better-auth/adapters/drizzle";
@@ -100,17 +99,17 @@ export const assertAuth = Effect.fn(function* (adminOnly = false) {
 	const event = getRequestEvent();
 	const user = event.locals.user;
 	const url = event.url;
-	const result = v.safeParse(localsUserSchema, user);
 
-	if (!result.success) {
-		if (user) yield* AppLog.debug("assertUser", { issues: v.summarize(result.issues) });
+	if (!user) {
 		return yield* new RedirectError({
 			message: "Invalid user",
 			status: 302,
-			cause: result.issues,
 			redirectTo: `/?redirect=${encodeURIComponent(`${url.pathname}${url.search}`)}`
 		});
 	}
+
+	const result = v.safeParse(localsUserSchema, user);
+	if (!result.success) return yield* new InvalidUser(result.issues);
 
 	if (result.output.banned) {
 		event.cookies
@@ -135,6 +134,12 @@ export const assertAuth = Effect.fn(function* (adminOnly = false) {
 
 	return { user: result.output, event };
 });
+
+export class InvalidUser extends Data.TaggedError("InvalidUser")<ErrorParams> {
+	constructor(err?: unknown) {
+		super({ message: "Invalid user", status: 401, cause: err });
+	}
+}
 
 export function getHomeError() {
 	const event = getRequestEvent();

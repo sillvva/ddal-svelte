@@ -2,10 +2,9 @@ import type { DungeonMasterId, DungeonMasterSchema, LocalsUser, UserId } from "$
 import { DBService, runQuery, type Database, type DrizzleError, type InferQueryResult, type Transaction } from "$lib/server/db";
 import { userDMLogIncludes } from "$lib/server/db/includes";
 import { dungeonMasters, type DungeonMaster } from "$lib/server/db/schema";
-import type { ErrorParams, RedirectError } from "$lib/server/effect/errors";
+import type { ErrorParams } from "$lib/server/effect/errors";
 import { FormError } from "$lib/server/effect/errors";
 import { AppLog } from "$lib/server/effect/logging";
-import { assertAuth } from "$lib/server/effect/services/auth";
 import { sorter } from "@sillvva/utils";
 import { and, eq } from "drizzle-orm";
 import { Data, Effect, Layer } from "effect";
@@ -26,9 +25,9 @@ interface DMApiImpl {
 	readonly db: Database | Transaction;
 	readonly get: {
 		readonly userDMs: (
-			userId: UserId,
+			user: LocalsUser,
 			options?: { id?: DungeonMasterId; includeLogs?: boolean }
-		) => Effect.Effect<UserDM[], SaveDMError | RedirectError | DrizzleError>;
+		) => Effect.Effect<UserDM[], SaveDMError | DrizzleError>;
 		readonly fuzzyDM: (
 			userId: UserId,
 			isUser: boolean,
@@ -41,7 +40,7 @@ interface DMApiImpl {
 			user: LocalsUser,
 			data: DungeonMasterSchema
 		) => Effect.Effect<DungeonMaster, SaveDMError | DrizzleError>;
-		readonly addUserDM: (dms: UserDM[]) => Effect.Effect<UserDM[], SaveDMError | DrizzleError | RedirectError>;
+		readonly addUserDM: (user: LocalsUser, dms: UserDM[]) => Effect.Effect<UserDM[], SaveDMError | DrizzleError>;
 		readonly delete: (dm: UserDM, userId: UserId) => Effect.Effect<{ id: DungeonMasterId }, DeleteDMError | DrizzleError>;
 	};
 }
@@ -53,7 +52,7 @@ export class DMService extends Effect.Service<DMService>()("DMSService", {
 		const impl: DMApiImpl = {
 			db,
 			get: {
-				userDMs: Effect.fn("DMService.get.userDMs")(function* (userId, { id, includeLogs = true } = {}) {
+				userDMs: Effect.fn("DMService.get.userDMs")(function* (user, { id, includeLogs = true } = {}) {
 					return yield* runQuery(
 						db.query.dungeonMasters.findMany({
 							with: {
@@ -64,15 +63,15 @@ export class DMService extends Effect.Service<DMService>()("DMSService", {
 							},
 							where: {
 								id: id ? { eq: id } : undefined,
-								userId: { eq: userId }
+								userId: { eq: user.id }
 							}
 						})
 					).pipe(
 						// Sort the DMs by isUser and name
 						Effect.map((dms) => dms.toSorted((a, b) => sorter(a.isUser, b.isUser) || sorter(a.name, b.name))),
 						// Add the user DM if there isn't one already, and not searching for a specific DM
-						Effect.flatMap((dms) => (!id && !dms[0]?.isUser ? impl.set.addUserDM(dms) : Effect.succeed(dms))),
-						Effect.tapError(() => AppLog.debug("DMService.get.userDMs", { userId, id, includeLogs }))
+						Effect.flatMap((dms) => (!id && !dms[0]?.isUser ? impl.set.addUserDM(user, dms) : Effect.succeed(dms))),
+						Effect.tapError(() => AppLog.debug("DMService.get.userDMs", { userId: user.id, id, includeLogs }))
 					);
 				}),
 
@@ -101,9 +100,7 @@ export class DMService extends Effect.Service<DMService>()("DMSService", {
 			},
 			set: {
 				save: Effect.fn("DMService.set.save")(function* (dmId, user, data) {
-					const [dm] = yield* impl.get
-						.userDMs(user.id, { id: dmId })
-						.pipe(Effect.catchAll((err) => new SaveDMError(err.message)));
+					const [dm] = yield* impl.get.userDMs(user, { id: dmId }).pipe(Effect.catchAll((err) => new SaveDMError(err.message)));
 					if (!dm) return yield* new SaveDMError("DM does not exist", { status: 404 });
 
 					if (!data.name.trim()) {
@@ -129,9 +126,7 @@ export class DMService extends Effect.Service<DMService>()("DMSService", {
 					);
 				}),
 
-				addUserDM: Effect.fn("DMService.set.addUserDM")(function* (dms) {
-					const { user } = yield* assertAuth();
-
+				addUserDM: Effect.fn("DMService.set.addUserDM")(function* (user, dms) {
 					const existing = yield* runQuery(
 						db.query.dungeonMasters.findFirst({
 							where: {

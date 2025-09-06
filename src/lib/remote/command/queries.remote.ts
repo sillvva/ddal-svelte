@@ -1,6 +1,6 @@
 import { query } from "$app/server";
 import { searchSections } from "$lib/constants.js";
-import type { UserId } from "$lib/schemas.js";
+import type { LocalsUser } from "$lib/schemas.js";
 import { AppLog } from "$lib/server/effect/logging";
 import { run } from "$lib/server/effect/runtime";
 import { assertAuth } from "$lib/server/effect/services/auth";
@@ -25,14 +25,14 @@ const sectionData = {
 
 type GetData = Effect.Effect.Success<ReturnType<typeof getData>>;
 export type SearchData = Array<SectionData | GetData[number]>;
-const getData = Effect.fn("GetData")(function* (userId: UserId) {
+const getData = Effect.fn("GetData")(function* (user: LocalsUser) {
 	const Characters = yield* CharacterService;
 	const DMs = yield* DMService;
 	const Logs = yield* LogService;
 
-	const characters = yield* Characters.get.userCharacters(userId, { includeLogs: false });
-	const dms = yield* DMs.get.userDMs(userId);
-	const logs = yield* Logs.get.userLogs(userId);
+	const characters = yield* Characters.get.userCharacters(user.id, { includeLogs: false });
+	const dms = yield* DMs.get.userDMs(user);
+	const logs = yield* Logs.get.userLogs(user.id);
 
 	return [
 		{
@@ -87,7 +87,7 @@ export const getCommandData = query(() =>
 		const { user } = yield* assertAuth();
 
 		const data: SearchData = [sectionData];
-		const searchData = yield* getData(user.id).pipe(
+		const searchData = yield* getData(user).pipe(
 			Effect.tapError((e) => AppLog.error(`[GetCommandData] ${e.message}`, { status: e.status, cause: e.cause })),
 			Effect.catchAll(() => Effect.succeed([] as SearchData))
 		);

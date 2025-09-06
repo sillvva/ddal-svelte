@@ -23,7 +23,7 @@ export const deleteDM = command(dungeonMasterIdSchema, (id) =>
 		const { user } = yield* assertAuth();
 		const DMs = yield* DMService;
 
-		const [dm] = yield* DMs.get.userDMs(user.id, { id });
+		const [dm] = yield* DMs.get.userDMs(user, { id });
 		if (!dm) return yield* new DMNotFoundError();
 		if (dm.isUser) return yield* new DeleteUserDMError();
 

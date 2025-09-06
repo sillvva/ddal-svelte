@@ -7,7 +7,7 @@ export const load = (event) =>
 		const { user } = yield* assertAuth();
 
 		const DMs = yield* DMService;
-		const dms = yield* DMs.get.userDMs(user.id);
+		const dms = yield* DMs.get.userDMs(user);
 
 		return {
 			...event.params,
