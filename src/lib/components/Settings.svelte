@@ -89,7 +89,7 @@
 {#if user}
 	<aside
 		id="settings"
-		class="bg-base-100 fixed inset-y-0 -right-80 z-50 flex w-80 flex-col overflow-y-auto px-4 pb-4 shadow-lg shadow-black/50 transition-all data-[open=true]:right-0"
+		class="bg-base-100 fixed inset-y-0 -right-80 z-50 flex w-80 flex-col overflow-y-auto px-4 pb-4 shadow-lg shadow-black/50 transition-all data-[open=true]:right-0 print:hidden"
 		data-open={open}
 	>
 		{#if user}

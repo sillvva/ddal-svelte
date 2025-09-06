@@ -69,7 +69,7 @@
 			<kbd class="kbd kbd-sm">
 				<svelte:boundary>
 					{@const request = await AppAPI.queries.request()}
-					{#snippet pending()}{""}{/snippet}
+					{#snippet pending()}{/snippet}
 					{request.isMac ? "⌘" : "CTRL"}
 				</svelte:boundary>
 			</kbd>

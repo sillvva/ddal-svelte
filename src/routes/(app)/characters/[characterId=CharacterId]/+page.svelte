@@ -76,10 +76,10 @@
 </script>
 
 {#if data.user}
-	<div class="flex gap-4">
+	<div class="flex gap-4 print:hidden">
 		<Breadcrumbs />
 		{#if myCharacter}
-			<div class="flex gap-4 print:hidden">
+			<div class="flex gap-4">
 				<a href={`/characters/${data.character.id}/edit`} class="btn btn-primary btn-sm max-sm:hidden">Edit</a>
 				<Dropdown class="dropdown-end">
 					<ul role="menu" class="menu dropdown-content rounded-box bg-base-300 z-20 w-52 shadow-sm">
@@ -170,7 +170,9 @@
 			{/if}
 			<div class="flex w-full flex-col">
 				<div class="xs:mb-0 mb-2 flex gap-4">
-					<h3 class="font-vecna flex-1 py-2 text-3xl font-bold text-black sm:py-0 sm:text-4xl dark:text-white">
+					<h3
+						class="font-vecna print:text-base-content flex-1 py-2 text-3xl font-bold text-black sm:py-0 sm:text-4xl dark:text-white print:text-2xl"
+					>
 						{data.character.name}
 					</h3>
 				</div>
@@ -220,25 +222,25 @@
 					</div>
 				{/if}
 				<div class="flex">
-					<h4 class="font-semibold dark:text-white">Level</h4>
+					<h4 class="print:text-base-content font-semibold dark:text-white">Level</h4>
 					<div class="flex-1 text-right">{data.character.totalLevel}</div>
 				</div>
 				<div class="flex">
-					<h4 class="font-semibold dark:text-white">Tier</h4>
+					<h4 class="print:text-base-content font-semibold dark:text-white">Tier</h4>
 					<div class="flex-1 text-right">{data.character.tier}</div>
 				</div>
 				<div class="flex">
-					<h4 class="font-semibold dark:text-white">Gold</h4>
+					<h4 class="print:text-base-content font-semibold dark:text-white">Gold</h4>
 					<div class="flex-1 text-right">{data.character.totalGold.toLocaleString()}</div>
 				</div>
 				{#if data.character.totalTcp}
 					<div class="flex">
-						<h4 class="font-semibold dark:text-white">TCP</h4>
+						<h4 class="print:text-base-content font-semibold dark:text-white">TCP</h4>
 						<div class="flex-1 text-right">{data.character.totalTcp}</div>
 					</div>
 				{/if}
 				<div class="flex">
-					<h4 class="font-semibold dark:text-white">Downtime</h4>
+					<h4 class="print:text-base-content font-semibold dark:text-white">Downtime</h4>
 					<div class="flex-1 text-right">{data.character.totalDtd}</div>
 				</div>
 			</div>

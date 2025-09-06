@@ -3,7 +3,7 @@
 </script>
 
 <nav
-	class="bg-base-100/50 border-base-content/10 sticky right-0 bottom-0 left-0 z-16 flex h-16 justify-evenly border-t backdrop-blur-sm *:w-20 md:hidden"
+	class="bg-base-100/50 border-base-content/10 sticky right-0 bottom-0 left-0 z-16 flex h-16 justify-evenly border-t backdrop-blur-sm *:w-20 md:hidden print:hidden"
 >
 	<a href="/characters" class="flex h-full flex-col items-center justify-center text-xs">
 		<span class="iconify mdi--account-circle size-8"></span>
@@ -18,12 +18,8 @@
 		<span class="text-center uppercase">DMs</span>
 	</a>
 	<svelte:boundary>
+		{#snippet pending()}{/snippet}
 		{@const request = await AppAPI.queries.request()}
-
-		{#snippet pending()}
-			{""}
-		{/snippet}
-
 		{#if request.user?.role === "admin"}
 			<a href="/admin/users" class="flex h-full flex-col items-center justify-center text-xs">
 				<span class="iconify mdi--administrator-outline size-8"></span>
