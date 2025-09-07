@@ -1,6 +1,6 @@
 import type { Pathname } from "$app/types";
 import type { FullPathname } from "$lib/constants";
-import { removeTrace, type Awaitable } from "$lib/util";
+import { type Awaitable } from "$lib/util";
 import { type NumericRange, type RequestEvent } from "@sveltejs/kit";
 import { Cause, Data, Effect, Either } from "effect";
 import { superValidate, type Infer, type InferIn, type SuperValidated, type SuperValidateOptions } from "sveltekit-superforms";
@@ -78,7 +78,7 @@ export const saveForm = Effect.fn(function* <
 			onFailure: async (error) => {
 				const result = await handlers.onError(error);
 
-				const message = removeTrace(Cause.pretty(Cause.fail(error)));
+				const message = Cause.pretty(Cause.fail(error));
 				Effect.runFork(AppLog.error(message, { result, error }));
 
 				return result;
