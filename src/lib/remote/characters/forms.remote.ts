@@ -23,10 +23,6 @@ export const save = command("unchecked", (input: { id: CharacterIdParam; data: E
 		const { firstLog, ...data } = form.data;
 
 		return yield* saveForm(Characters.set.save(data, user.id), {
-			onError: (err) => {
-				err.toForm(form);
-				return form;
-			},
 			onSuccess: async (character) => {
 				const result = await runSafe(function* () {
 					const Logs = yield* LogService;
@@ -35,8 +31,8 @@ export const save = command("unchecked", (input: { id: CharacterIdParam; data: E
 						const log = defaultLogSchema(user.id, { character, defaults: { name: "Character Creation" } });
 
 						return yield* saveForm(Logs.set.save(log, user), {
-							onError: () => `/characters/${character.id}/log/new?firstLog=true` as const,
-							onSuccess: (logResult) => `/characters/${character.id}/log/${logResult.id}?firstLog=true` as const
+							onSuccess: (logResult) => `/characters/${character.id}/log/${logResult.id}?firstLog=true` as const,
+							onError: () => `/characters/${character.id}/log/new?firstLog=true` as const
 						});
 					}
 
@@ -48,6 +44,10 @@ export const save = command("unchecked", (input: { id: CharacterIdParam; data: E
 				}
 
 				FormError.from(result.error).toForm(form);
+				return form;
+			},
+			onError: (err) => {
+				err.toForm(form);
 				return form;
 			}
 		});

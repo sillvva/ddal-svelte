@@ -58,11 +58,11 @@ export const save = command("unchecked", (input: { logId: LogIdParam; data: LogS
 		if (logId !== "new" && !log) return yield* new RedirectError({ message: "Log not found", redirectTo });
 
 		return yield* saveForm(Logs.set.save(form.data, user), {
+			onSuccess: () => redirectTo,
 			onError: (err) => {
 				err.toForm(form);
 				return form;
-			},
-			onSuccess: () => redirectTo
+			}
 		});
 	})
 );

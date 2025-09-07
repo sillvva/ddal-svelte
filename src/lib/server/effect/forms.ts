@@ -67,8 +67,8 @@ export const saveForm = Effect.fn(function* <
 >(
 	program: Effect.Effect<ServiceOut, FormError<SchemaOut> | InstanceType<ErrorClass>>,
 	handlers: {
-		onError: (err: FormError<SchemaOut>) => Awaitable<TFailure>;
 		onSuccess: (data: ServiceOut) => Awaitable<TSuccess>;
+		onError: (err: FormError<SchemaOut>) => Awaitable<TFailure>;
 	}
 ) {
 	return yield* program.pipe(

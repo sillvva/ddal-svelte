@@ -16,11 +16,11 @@ export const save = command("unchecked", (input: DungeonMasterSchemaIn) =>
 		if (!form.valid) return form;
 
 		return yield* saveForm(DMs.set.save(dmId, user, form.data), {
+			onSuccess: () => "/dms",
 			onError: (err) => {
 				err.toForm(form);
 				return form;
-			},
-			onSuccess: () => "/dms"
+			}
 		});
 	})
 );
