@@ -1,12 +1,12 @@
 <script lang="ts" module>
 	import type { PageData } from "./$types.js";
 
-	export const getPageTitle = (data: Partial<PageData>) => data.character?.name || "Character";
-	export function getPageHead(data: Partial<PageData>) {
+	export const getPageTitle = (data: PageData) => data.character.name || "Character";
+	export function getPageHead(data: PageData) {
 		return {
-			title: data.character?.name || "Character",
-			description: `Level ${data.character?.totalLevel} ${data.character?.race} ${data.character?.class}`,
-			image: `${page.url.origin}/characters/${data.character?.id}/og-image.jpg`
+			title: data.character.name || "Character",
+			description: `Level ${data.character.totalLevel} ${data.character.race} ${data.character.class}`,
+			image: `${page.url.origin}/characters/${data.character.id}/og-image.jpg`
 		};
 	}
 </script>

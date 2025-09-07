@@ -1,6 +1,7 @@
 <script lang="ts" module>
+	import type { PageData } from "./$types.js";
 	export const pageTitle = "Characters";
-	export function getPageHead(data: Partial<PageData>) {
+	export function getPageHead(data: PageData) {
 		return {
 			title: `${data.user?.name}'s Characters`
 		};
@@ -20,7 +21,6 @@
 	import { sorter } from "@sillvva/utils";
 	import { download } from "@svelteuidev/composables";
 	import { fromAction } from "svelte/attachments";
-	import type { PageData } from "./$types.js";
 
 	let { data } = $props();
 
