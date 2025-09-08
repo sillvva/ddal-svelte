@@ -1,5 +1,6 @@
 import { command } from "$app/server";
 import { dungeonMasterIdSchema, dungeonMasterSchema, type DungeonMasterSchemaIn } from "$lib/schemas";
+import { redirectOnFail } from "$lib/server/effect/errors";
 import { parse, saveForm, validateForm } from "$lib/server/effect/forms";
 import { runSafe } from "$lib/server/effect/runtime";
 import { assertAuth } from "$lib/server/effect/services/auth";
@@ -10,7 +11,7 @@ export const save = command("unchecked", (input: DungeonMasterSchemaIn) =>
 		const { user } = yield* assertAuth();
 		const DMs = yield* DMService;
 
-		const dmId = yield* parse(dungeonMasterIdSchema, input.id, "/dms", 301);
+		const dmId = yield* redirectOnFail(parse(dungeonMasterIdSchema, input.id), "/dms", 301);
 
 		const form = yield* validateForm(input, dungeonMasterSchema);
 		if (!form.valid) return form;

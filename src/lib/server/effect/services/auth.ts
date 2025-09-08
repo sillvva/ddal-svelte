@@ -54,7 +54,7 @@ interface AuthApiImpl {
 	readonly auth: () => Effect.Effect<ReturnType<typeof betterAuth<ReturnType<typeof authConfig>>>>;
 	readonly getAuthSession: () => Effect.Effect<
 		{ session: LocalsSession | undefined; user: LocalsUser | undefined },
-		DrizzleError | InvalidSchemaError | AuthError | RedirectError,
+		DrizzleError | InvalidSchemaError<typeof localsSessionSchema> | AuthError,
 		UserService
 	>;
 }

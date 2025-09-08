@@ -112,7 +112,7 @@ export function valibotForm<S extends v.GenericSchema, Out extends Infer<S, "val
 					await onErrorResult(result.error);
 					if (isRedirectFailure(result.error)) {
 						superform.tainted.set(undefined);
-						await goto(result.error.extra.redirectTo, {
+						await goto(result.error.redirectTo, {
 							invalidateAll: willInvalidate
 						});
 					} else {

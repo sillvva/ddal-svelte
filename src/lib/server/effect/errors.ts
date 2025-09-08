@@ -1,7 +1,7 @@
 import type { FullPathname } from "$lib/constants";
 import { isInstanceOfClass } from "@sillvva/utils";
 import { type NumericRange } from "@sveltejs/kit";
-import { Cause, Data } from "effect";
+import { Cause, Data, Effect } from "effect";
 import { setError, type FormPathLeavesWithErrors, type SuperValidated } from "sveltekit-superforms";
 
 export interface ErrorParams {
@@ -39,6 +39,10 @@ export class FailedError extends Data.TaggedError("FailedError")<ErrorParams> {
 // RedirectError
 // -------------------------------------------------------------------------------------------------
 
+interface RedirectErrorParams extends ErrorParams {
+	redirectTo: FullPathname;
+}
+
 /**
  * A redirect error is an error that is thrown when a redirect is needed.
  *
@@ -48,15 +52,23 @@ export class FailedError extends Data.TaggedError("FailedError")<ErrorParams> {
  * - 307 - Temporary Redirect, preserves method
  * - 308 - Permanent Redirect, preserves method
  */
-export class RedirectError extends Data.TaggedError("RedirectError")<ErrorParams> {
+export class RedirectError extends Data.TaggedError("RedirectError")<RedirectErrorParams> {
 	constructor({
 		message = "Unauthorized",
 		status = 403,
 		cause,
-		redirectTo
-	}: Partial<ErrorParams & { redirectTo: FullPathname }> = {}) {
+		redirectTo = "/"
+	}: Partial<ErrorParams> & { redirectTo: FullPathname }) {
 		super({ message, status, cause, redirectTo });
 	}
+}
+
+export function redirectOnFail<R, F extends InstanceType<ErrorClass>, S>(
+	effect: Effect.Effect<R, F, S>,
+	redirectTo: FullPathname,
+	status: NumericRange<300, 599>
+) {
+	return effect.pipe(Effect.catchAll((err) => new RedirectError({ message: err.message, redirectTo, status, cause: err })));
 }
 
 // -------------------------------------------------------------------------------------------------

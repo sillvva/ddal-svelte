@@ -23,27 +23,27 @@ export type AppRuntime = ManagedRuntime.ManagedRuntime<Services, never>;
 
 // Overload signatures
 export async function run<
-	A,
-	B extends InstanceType<ErrorClass>,
-	C extends Services,
-	T extends YieldWrap<Effect.Effect<A, B, C>>,
+	R,
+	F extends InstanceType<ErrorClass>,
+	S extends Services,
+	T extends YieldWrap<Effect.Effect<R, F, S>>,
 	X,
 	Y
 >(program: () => Generator<T, X, Y>): Promise<X>;
 
-export async function run<A, B extends InstanceType<ErrorClass>, C extends Services>(
-	program: Effect.Effect<A, B, C> | (() => Effect.Effect<A, B, C>)
-): Promise<A>;
+export async function run<R, F extends InstanceType<ErrorClass>, S extends Services>(
+	program: Effect.Effect<R, F, S> | (() => Effect.Effect<R, F, S>)
+): Promise<R>;
 
 // Implementation
 export async function run<
-	A,
-	B extends InstanceType<ErrorClass>,
-	C extends Services,
-	T extends YieldWrap<Effect.Effect<A, B, C>>,
+	R,
+	F extends InstanceType<ErrorClass>,
+	S extends Services,
+	T extends YieldWrap<Effect.Effect<R, F, S>>,
 	X,
 	Y
->(program: Effect.Effect<A, B, C> | (() => Effect.Effect<A, B, C>) | (() => Generator<T, X, Y>)): Promise<A | X> {
+>(program: Effect.Effect<R, F, S> | (() => Effect.Effect<R, F, S>) | (() => Generator<T, X, Y>)): Promise<R | X> {
 	const event = getRequestEvent();
 	const rt = event.locals.runtime;
 
@@ -61,7 +61,7 @@ export async function run<
 		onFailure: (cause) => {
 			const err = handleCause(cause);
 			if (isRedirectFailure(err)) {
-				throw redirect(err.status, err.extra.redirectTo);
+				throw redirect(err.status, err.redirectTo);
 			}
 			throw error(err.status, err.message);
 		}
@@ -72,36 +72,36 @@ export async function run<
 // runSafe
 // -------------------------------------------------------------------------------------------------
 
-export type EffectSuccess<A> = { ok: true; data: A };
+export type EffectSuccess<R> = { ok: true; data: R };
 export type EffectFailure = {
 	ok: false;
-	error: { message: string; status: NumericRange<300, 599>; extra: Record<string, unknown> };
+	error: { message: string; status: NumericRange<300, 599>; [key: string]: unknown };
 };
-export type EffectResult<A> = EffectSuccess<A> | EffectFailure;
+export type EffectResult<R> = EffectSuccess<R> | EffectFailure;
 
 // Overload signatures
 export async function runSafe<
-	A,
-	B extends InstanceType<ErrorClass>,
-	C extends Services,
-	T extends YieldWrap<Effect.Effect<A, B, C>>,
+	R,
+	F extends InstanceType<ErrorClass>,
+	S extends Services,
+	T extends YieldWrap<Effect.Effect<R, F, S>>,
 	X,
 	Y
 >(program: () => Generator<T, X, Y>): Promise<EffectResult<X>>;
 
-export async function runSafe<A, B extends InstanceType<ErrorClass>, C extends Services>(
-	program: Effect.Effect<A, B, C> | (() => Effect.Effect<A, B, C>)
-): Promise<EffectResult<A>>;
+export async function runSafe<R, F extends InstanceType<ErrorClass>, S extends Services>(
+	program: Effect.Effect<R, F, S> | (() => Effect.Effect<R, F, S>)
+): Promise<EffectResult<R>>;
 
 // Implementation
 export async function runSafe<
-	A,
-	B extends InstanceType<ErrorClass>,
-	C extends Services,
-	T extends YieldWrap<Effect.Effect<A, B, C>>,
+	R,
+	F extends InstanceType<ErrorClass>,
+	S extends Services,
+	T extends YieldWrap<Effect.Effect<R, F, S>>,
 	X,
 	Y
->(program: Effect.Effect<A, B, C> | (() => Effect.Effect<A, B, C>) | (() => Generator<T, X, Y>)): Promise<EffectResult<A | X>> {
+>(program: Effect.Effect<R, F, S> | (() => Effect.Effect<R, F, S>) | (() => Generator<T, X, Y>)): Promise<EffectResult<R | X>> {
 	const event = getRequestEvent();
 	const rt = event.locals.runtime;
 
@@ -124,7 +124,7 @@ export async function runSafe<
 // handleCause
 // -------------------------------------------------------------------------------------------------
 
-export function handleCause<B extends InstanceType<ErrorClass>>(cause: Cause.Cause<B>) {
+export function handleCause<F extends InstanceType<ErrorClass>>(cause: Cause.Cause<F>) {
 	let message = Cause.pretty(cause);
 	let status: NumericRange<300, 599> = 500;
 	const extra: Record<string, unknown> = {};
@@ -135,7 +135,7 @@ export function handleCause<B extends InstanceType<ErrorClass>>(cause: Cause.Cau
 		if (error.cause) extra.cause = error.cause;
 
 		for (const key in error) {
-			if (!["_tag", "_op", "pipe", "name"].includes(key)) {
+			if (!["_tag", "_op", "pipe", "name", "message", "status"].includes(key)) {
 				extra[key] = error[key];
 			}
 		}
@@ -168,5 +168,5 @@ export function handleCause<B extends InstanceType<ErrorClass>>(cause: Cause.Cau
 	}
 
 	if (!dev) message = removeTrace(message);
-	return { message, status, extra };
+	return { message, status, ...extra };
 }

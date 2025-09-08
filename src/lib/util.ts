@@ -1,8 +1,8 @@
 import { goto } from "$app/navigation";
-import type { Pathname } from "$app/types";
 import { wait } from "@sillvva/utils";
 import { hotkey as hk, type HotkeyItem } from "@svelteuidev/composables";
 import type { Attachment } from "svelte/attachments";
+import type { FullPathname } from "./constants";
 import { errorToast } from "./factories.svelte";
 import type { EffectFailure, EffectResult } from "./server/effect/runtime";
 
@@ -46,8 +46,8 @@ export const routeModules: Record<string, ModuleData> = import.meta.glob("/src/r
 
 export function isRedirectFailure(
 	error: EffectFailure["error"]
-): error is EffectFailure["error"] & { extra: { redirectTo: Pathname & {} } } {
-	return Boolean(error.extra.redirectTo && typeof error.extra.redirectTo === "string" && error.status <= 308);
+): error is EffectFailure["error"] & { redirectTo: FullPathname & {} } {
+	return Boolean(error.redirectTo && typeof error.redirectTo === "string" && error.status <= 308);
 }
 
 export async function parseEffectResult<T>(result: EffectResult<T>) {
@@ -55,6 +55,6 @@ export async function parseEffectResult<T>(result: EffectResult<T>) {
 
 	errorToast(result.error.message);
 	if (isRedirectFailure(result.error)) {
-		await goto(result.error.extra.redirectTo);
+		await goto(result.error.redirectTo);
 	}
 }

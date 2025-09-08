@@ -9,8 +9,8 @@ import {
 	type LogSchema,
 	type LogSchemaIn
 } from "$lib/schemas";
-import { FormError, RedirectError } from "$lib/server/effect/errors";
-import { parse, parseEither, saveForm, validateForm } from "$lib/server/effect/forms";
+import { FormError, RedirectError, redirectOnFail } from "$lib/server/effect/errors";
+import { parse, safeParse, saveForm, validateForm } from "$lib/server/effect/forms";
 import { runSafe } from "$lib/server/effect/runtime";
 import { assertAuth } from "$lib/server/effect/services/auth";
 import { CharacterService } from "$lib/server/effect/services/characters";
@@ -28,7 +28,7 @@ export const save = command("unchecked", (input: { logId: LogIdParam; data: LogS
 		let redirectTo: Pathname;
 
 		if (input.data.isDmLog) {
-			const parsedId = yield* parseEither(v.nullable(characterIdSchema), input.data.characterId);
+			const parsedId = yield* safeParse(v.nullable(characterIdSchema), input.data.characterId);
 
 			const characters = input.data.characterId
 				? yield* Characters.get.userCharacters(user.id, {
@@ -44,7 +44,7 @@ export const save = command("unchecked", (input: { logId: LogIdParam; data: LogS
 
 			redirectTo = `/dm-logs`;
 		} else {
-			const characterId = yield* parse(characterIdSchema, input.data.characterId, "/characters", 301);
+			const characterId = yield* redirectOnFail(parse(characterIdSchema, input.data.characterId), "/characters", 301);
 			const character = yield* Characters.get.character(characterId);
 
 			form = yield* validateForm(input.data, characterLogSchema(character));
@@ -53,7 +53,7 @@ export const save = command("unchecked", (input: { logId: LogIdParam; data: LogS
 
 		if (!form.valid) return form;
 
-		const logId = yield* parse(logIdParamSchema, input.logId, redirectTo, 302);
+		const logId = yield* redirectOnFail(parse(logIdParamSchema, input.logId), redirectTo, 302);
 		const log = logId !== "new" ? yield* Logs.get.log(logId, user.id) : undefined;
 		if (logId !== "new" && !log) return yield* new RedirectError({ message: "Log not found", redirectTo });
 

@@ -74,7 +74,11 @@ export class TransactionError extends Data.TaggedError("TransactionError")<Error
 	}
 }
 
-export class DrizzleError extends Data.TaggedError("DrizzleError")<ErrorParams> {
+interface DrizzleErrorParams extends ErrorParams {
+	query: Query;
+}
+
+export class DrizzleError extends Data.TaggedError("DrizzleError")<DrizzleErrorParams> {
 	constructor(err: unknown, query: Query) {
 		super({ message: Cause.pretty(Cause.isCause(err) ? err : Cause.fail(err)), status: 500, cause: err, query });
 	}
