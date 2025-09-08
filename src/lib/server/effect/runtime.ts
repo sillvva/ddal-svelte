@@ -1,6 +1,7 @@
 import { dev } from "$app/environment";
 import { getRequestEvent } from "$app/server";
 import { isRedirectFailure, removeTrace } from "$lib/util";
+import { omit } from "@sillvva/utils";
 import { error, isHttpError, isRedirect, redirect, type NumericRange } from "@sveltejs/kit";
 import { Cause, Effect, Exit, ManagedRuntime } from "effect";
 import { isFunction } from "effect/Predicate";
@@ -127,24 +128,20 @@ export async function runSafe<
 export function handleCause<F extends InstanceType<ErrorClass>>(cause: Cause.Cause<F>) {
 	let message = Cause.pretty(cause);
 	let status: NumericRange<300, 599> = 500;
-	const extra: Record<string, unknown> = {};
+	let extra: Record<string, unknown> = {};
 
 	if (Cause.isFailType(cause)) {
 		const error = cause.error;
-		status = error.status;
-		if (error.cause) extra.cause = error.cause;
 
-		for (const key in error) {
-			if (!["_tag", "_op", "pipe", "name", "message", "status"].includes(key)) {
-				extra[key] = error[key];
-			}
-		}
+		status = error.status;
+		extra = Object.assign(extra, omit(error, ["_tag", "_op", "pipe", "name", "message", "status"]));
 
 		Effect.runFork(AppLog.error(message, extra));
 	}
 
 	if (Cause.isDieType(cause)) {
 		const defect = cause.defect;
+
 		if (isRedirect(defect)) {
 			message = `Redirect to ${defect.location}`;
 			status = defect.status as NumericRange<300, 599>;
@@ -153,6 +150,7 @@ export function handleCause<F extends InstanceType<ErrorClass>>(cause: Cause.Cau
 			status = defect.status as NumericRange<300, 599>;
 			message = defect.body.message;
 		}
+
 		if (typeof defect === "object" && defect !== null) {
 			if ("stack" in defect) {
 				extra.stack = defect.stack;
