@@ -32,7 +32,6 @@
 		"@typescript-eslint/parser": "^8.43.0",
 		"autoprefixer": "^10.4.21",
 		"daisyui": "5.1.8",
-		"drizzle-kit": "1.0.0-beta.1-af4c434",
 		"eslint": "^9.35.0",
 		"eslint-config-prettier": "^10.1.8",
 		"eslint-plugin-svelte": "^3.12.2",
