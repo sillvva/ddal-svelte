@@ -17,8 +17,7 @@
 	}
 
 	let { superform, children, ...rest }: Props = $props();
-	const { form, errors, message, enhance, capture, restore, submitting, tainted } = superform;
-	const { pending } = superform;
+	const { form, errors, message, enhance, capture, restore, submitting, tainted, pending } = superform;
 
 	const isSubmitting = $derived($submitting || $pending);
 

@@ -1,13 +1,13 @@
 /* eslint-disable svelte/prefer-svelte-reactivity */
-import { goto } from "$app/navigation";
+import { goto, invalidateAll } from "$app/navigation";
 import type { FullCharacterData } from "$lib/server/effect/services/characters";
 import type { UserDM } from "$lib/server/effect/services/dms";
 import type { FullLogData, LogSummaryData, UserLogData } from "$lib/server/effect/services/logs";
 import { getLocalTimeZone, parseAbsoluteToLocal, toCalendarDateTime, type DateValue } from "@internationalized/date";
 import { debounce, isDefined, substrCount, type MapKeys, type Prettify } from "@sillvva/utils";
-import { isHttpError } from "@sveltejs/kit";
+import { isHttpError, type RemoteQuery, type RemoteQueryOverride } from "@sveltejs/kit";
 import { Duration } from "effect";
-import escape from "regexp.escape";
+import { onDestroy } from "svelte";
 import { toast } from "svelte-sonner";
 import { SvelteMap } from "svelte/reactivity";
 import { derived, get, writable, type Readable, type Writable } from "svelte/store";
@@ -56,8 +56,13 @@ export function unknownErrorToast(error: unknown) {
 	else errorToast("An unknown error occurred");
 }
 
+type RemoteUpdates = Array<RemoteQuery<unknown> | RemoteQueryOverride>;
+
 export interface CustomFormOptions<Out extends Record<string, unknown>> {
-	remote?: (data: Out) => Promise<EffectResult<SuperValidated<Out> | FullPathname>>;
+	remote?: (data: Out) => Promise<EffectResult<SuperValidated<Out> | FullPathname>> & {
+		updates?: (...queries: RemoteUpdates) => Promise<EffectResult<SuperValidated<Out> | FullPathname>>;
+	};
+	remoteUpdates?: RemoteUpdates;
 	onSuccessResult?: (data: Out) => Awaitable<void>;
 	onErrorResult?: (error: EffectFailure["error"]) => Awaitable<void>;
 }
@@ -67,7 +72,8 @@ export function valibotForm<S extends v.GenericSchema, Out extends Infer<S, "val
 	schema: S,
 	{
 		remote,
-		invalidateAll: invalidate,
+		remoteUpdates,
+		invalidateAll: inalidate,
 		onSuccessResult = (data) => (typeof data === "object" && "name" in data ? successToast(`${data.name} saved`) : undefined),
 		onErrorResult = (error) => errorToast(error.message),
 		onSubmit,
@@ -76,6 +82,7 @@ export function valibotForm<S extends v.GenericSchema, Out extends Infer<S, "val
 	}: FormOptions<Out, App.Superforms.Message, In> & CustomFormOptions<Out> = {}
 ) {
 	const pending = writable(false);
+	const submitCount = writable(0);
 	const superform = superForm(form, {
 		dataType: "json",
 		validators: valibotClient(schema),
@@ -83,19 +90,18 @@ export function valibotForm<S extends v.GenericSchema, Out extends Infer<S, "val
 		...rest,
 		onSubmit: async (event) => {
 			pending.set(true);
+			submitCount.update((count) => count + 1);
+
 			if (remote) {
 				event.cancel();
 
-				const willInvalidate = invalidate !== false;
 				const data = get(superform.form);
-				const result = await remote(data);
+				const result = await (remote(data).updates?.(...(remoteUpdates ?? [])) ?? remote(data));
 				if (result.ok) {
 					if (typeof result.data === "string") {
 						superform.tainted.set(undefined);
 						await onSuccessResult(data);
-						await goto(result.data, {
-							invalidateAll: willInvalidate
-						});
+						await goto(result.data);
 						return;
 					}
 
@@ -112,9 +118,7 @@ export function valibotForm<S extends v.GenericSchema, Out extends Infer<S, "val
 					await onErrorResult(result.error);
 					if (isRedirectFailure(result.error)) {
 						superform.tainted.set(undefined);
-						await goto(result.error.redirectTo, {
-							invalidateAll: willInvalidate
-						});
+						await goto(result.error.redirectTo);
 					} else {
 						const error = result.error.message;
 						superform.errors.set({ _errors: [error] });
@@ -133,9 +137,15 @@ export function valibotForm<S extends v.GenericSchema, Out extends Infer<S, "val
 			onResult?.(event);
 		}
 	});
+
+	onDestroy(async () => {
+		if (get(submitCount) > 0 && inalidate !== false && !remoteUpdates?.length) await invalidateAll();
+	});
+
 	return {
 		...superform,
-		pending
+		pending,
+		submitCount
 	};
 }
 
