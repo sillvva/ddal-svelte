@@ -77,7 +77,7 @@
 				.includes(($input || "").toLowerCase().replace(/\s+/g, ""))
 		)
 	);
-	const firstItem = $derived<Item>({ value: "", label: $input, itemLabel: `Add "${$input}"` });
+	const firstItem = $derived<Item>({ value: "", label: $input, itemLabel: `Add ${$input}` });
 	const filtered = $derived(
 		!$input?.trim() || !allowCustom || prefiltered.length === 1 ? prefiltered : [firstItem].concat(prefiltered)
 	);
@@ -86,7 +86,7 @@
 		$value
 			? values.find((v) => v.value === $value)
 			: $input.trim() && allowCustom
-				? { value: "", label: $input, itemLabel: `Add "${$input}"` }
+				? { value: "", label: $input, itemLabel: `Add ${$input}` }
 				: undefined
 	);
 

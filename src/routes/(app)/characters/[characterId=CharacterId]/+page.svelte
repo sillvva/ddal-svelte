@@ -129,7 +129,7 @@
 									const parsed = await parseEffectResult(result);
 									if (parsed) {
 										successToast(`${data.character.name} deleted`);
-										goto("/characters");
+										await goto("/characters");
 									}
 									global.pageLoader = false;
 								}}

@@ -1,6 +1,5 @@
 /* eslint-disable svelte/prefer-svelte-reactivity */
 import { goto } from "$app/navigation";
-import type { Pathname } from "$app/types";
 import type { FullCharacterData } from "$lib/server/effect/services/characters";
 import type { UserDM } from "$lib/server/effect/services/dms";
 import type { FullLogData, LogSummaryData, UserLogData } from "$lib/server/effect/services/logs";
@@ -25,6 +24,7 @@ import {
 } from "sveltekit-superforms";
 import { valibotClient } from "sveltekit-superforms/adapters";
 import * as v from "valibot";
+import type { FullPathname } from "./constants";
 import type { SearchData } from "./remote/command";
 import type { EffectFailure, EffectResult } from "./server/effect/runtime";
 import { isRedirectFailure, type Awaitable } from "./util";
@@ -57,7 +57,7 @@ export function unknownErrorToast(error: unknown) {
 }
 
 export interface CustomFormOptions<Out extends Record<string, unknown>> {
-	remote?: (data: Out) => Promise<EffectResult<SuperValidated<Out> | Pathname>>;
+	remote?: (data: Out) => Promise<EffectResult<SuperValidated<Out> | FullPathname>>;
 	onSuccessResult?: (data: Out) => Awaitable<void>;
 	onErrorResult?: (error: EffectFailure["error"]) => Awaitable<void>;
 }

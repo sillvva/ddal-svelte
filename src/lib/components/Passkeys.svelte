@@ -33,7 +33,7 @@
 			name,
 			fetchOptions: {
 				onSuccess: () => {
-					successToast(`Passkey "${name}" saved`);
+					successToast(`${name} saved`);
 					AppAPI.queries.request().refresh();
 				},
 				onError: ({ error }) => {
@@ -46,12 +46,12 @@
 	async function deleteWebAuthn(id: PasskeyId) {
 		const auth = passkeys.find((a) => a.id === id);
 		if (!auth) return;
-		if (confirm(`Are you sure you want to delete "${auth.name}"?`)) {
+		if (confirm(`Are you sure you want to delete ${auth.name}?`)) {
 			await authClient.passkey.deletePasskey({
 				id,
 				fetchOptions: {
 					onSuccess: () => {
-						successToast(`Passkey "${auth.name}" deleted`);
+						successToast(`${auth.name} deleted`);
 						AppAPI.queries.request().refresh();
 					},
 					onError: ({ error }) => {
