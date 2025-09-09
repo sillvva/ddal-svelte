@@ -58,15 +58,99 @@ export function unknownErrorToast(error: unknown) {
 
 type RemoteUpdates = Array<RemoteQuery<unknown> | RemoteQueryOverride>;
 
+/**
+ * Configuration options for custom form behavior when using remote functions.
+ */
 export interface CustomFormOptions<Out extends Record<string, unknown>> {
-	remote?: (data: Out) => Promise<EffectResult<SuperValidated<Out> | FullPathname>> & {
-		updates?: (...queries: RemoteUpdates) => Promise<EffectResult<SuperValidated<Out> | FullPathname>>;
-	};
-	remoteUpdates?: RemoteUpdates;
+	/**
+	 * Remote function handler that processes form data and returns validation results or redirect paths.
+	 * When provided, the form will use this instead of the default SvelteKit form actions.
+	 */
+	remote?: (data: Out) => Promise<EffectResult<SuperValidated<Out> | FullPathname>>;
+	/**
+	 * Must be undefined for CustomFormOptions. Use OptionsWithUpdates if you need remote updates.
+	 */
+	remoteUpdates?: undefined;
+	/**
+	 * Callback executed when form submission succeeds. Receives the validated form data.
+	 * @param data - The successfully validated form data
+	 */
 	onSuccessResult?: (data: Out) => Awaitable<void>;
+	/**
+	 * Callback executed when form submission fails. Receives the error details.
+	 * @param error - The error that occurred during submission
+	 */
 	onErrorResult?: (error: EffectFailure["error"]) => Awaitable<void>;
 }
 
+/**
+ * Configuration options for forms that need to update remote data after successful submission.
+ * Extends CustomFormOptions but requires remote updates functionality.
+ */
+export interface OptionsWithUpdates<Out extends Record<string, unknown>> extends Omit<CustomFormOptions<Out>, "remoteUpdates"> {
+	/**
+	 * Remote function handler with updates capability. Must include an `updates` method
+	 * that can invalidate specific remote queries after successful form submission.
+	 */
+	remote?: (data: Out) => Promise<EffectResult<SuperValidated<Out> | FullPathname>> & {
+		updates: (...queries: RemoteUpdates) => Promise<EffectResult<SuperValidated<Out> | FullPathname>>;
+	};
+	/**
+	 * Array of remote queries to invalidate after successful form submission.
+	 */
+	remoteUpdates: RemoteUpdates;
+}
+
+/**
+ * Creates a SvelteKit Superforms form with Valibot validation and enhanced remote function capabilities.
+ *
+ * This function combines the power of SvelteKit Superforms with Valibot schema validation, providing
+ * a type-safe form solution that supports both traditional form submission and remote functions.
+ * It includes built-in error handling, success notifications, and optional query invalidation.
+ *
+ * @param form - The SuperValidated form data from SvelteKit Superforms, typically from a load function
+ * @param schema - The Valibot schema used for client-side validation
+ * @param options - Configuration options for form behavior, validation, and submission handling
+ *
+ * @returns Enhanced SuperForm object with additional properties:
+ *   - All standard SvelteKit Superforms properties (form, errors, message, etc.)
+ *   - `pending` - Writable store indicating if form submission is in progress
+ *   - `submitCount` - Writable store tracking the number of submission attempts
+ *
+ * @example
+ * ```typescript
+ * // Basic usage with Valibot schema
+ * const schema = v.object({
+ *   name: v.string(),
+ *   email: v.pipe(v.string(), v.email())
+ * });
+ *
+ * const { form, errors, enhance } = $derived(valibotForm(data.form, schema));
+ *
+ * // Usage in Svelte component
+ * <form method="POST" use:enhance>
+ *   <input bind:value={$form.name} />
+ *   {#if $errors.name}
+ *     <span class="error">{$errors.name}</span>
+ *   {/if}
+ * </form>
+ * ```
+ *
+ * @example
+ * ```typescript
+ * // Advanced usage with remote functions and updates
+ * const { form, errors, enhance, pending } = $derived(valibotForm(data.form, schema, {
+ *   remote: updateCharacter,
+ *   remoteUpdates: [
+ *     getCharacters(user.id),
+ *     getCharacter(character.id)
+ *   ]
+ * }));
+ * ```
+ *
+ * @see {@link https://superforms.rocks/ SvelteKit Superforms Documentation}
+ * @see {@link https://valibot.dev/ Valibot Documentation}
+ */
 export function valibotForm<S extends v.GenericSchema, Out extends Infer<S, "valibot">, In extends InferIn<S, "valibot">>(
 	form: SuperValidated<Out, App.Superforms.Message, In>,
 	schema: S,
@@ -79,73 +163,104 @@ export function valibotForm<S extends v.GenericSchema, Out extends Infer<S, "val
 		onSubmit,
 		onResult,
 		...rest
-	}: FormOptions<Out, App.Superforms.Message, In> & CustomFormOptions<Out> = {}
+	}: FormOptions<Out, App.Superforms.Message, In> & (CustomFormOptions<Out> | OptionsWithUpdates<Out>) = {}
 ) {
+	// Create reactive stores for form state management
 	const pending = writable(false);
 	const submitCount = writable(0);
+
+	// Initialize the SvelteKit Superforms instance with Valibot validation
 	const superform = superForm(form, {
-		dataType: "json",
-		validators: valibotClient(schema),
+		dataType: "json", // Use JSON for form data transmission
+		validators: valibotClient(schema), // Integrate Valibot schema for client-side validation
 		taintedMessage: "You have unsaved changes. Are you sure you want to leave?",
-		...rest,
+		...rest, // Spread any additional Superforms options
+
+		// Custom submit handler that supports both traditional and remote function
 		onSubmit: async (event) => {
+			// Update form state to indicate submission is in progress
 			pending.set(true);
 			submitCount.update((count) => count + 1);
 
+			// Handle remote function if a remote handler is provided
 			if (remote) {
+				// Cancel the default form submission since we're handling it remotely
 				event.cancel();
 
+				// Get current form data and execute remote function
 				const data = get(superform.form);
-				const result = await (remote(data).updates?.(...(remoteUpdates ?? [])) ?? remote(data));
+				const result = (remoteUpdates && (await remote(data).updates(...remoteUpdates))) ?? (await remote(data));
+
 				if (result.ok) {
+					// Handle successful remote function submission
 					if (typeof result.data === "string") {
-						superform.tainted.set(undefined);
-						await onSuccessResult(data);
-						await goto(result.data);
+						// String result indicates a redirect path
+						superform.tainted.set(undefined); // Clear tainted state
+						await onSuccessResult(data); // Execute success callback
+						await goto(result.data); // Navigate to the specified path
 						return;
 					}
 
+					// Handle validation result from remote function
 					const hasErrors = Object.keys(result.data.errors).length > 0;
-					superform.errors.set(result.data.errors);
-					superform.message.set(result.data.message);
+					superform.errors.set(result.data.errors); // Update form errors
+					superform.message.set(result.data.message); // Update form message
 					superform.form.set(result.data.data, {
-						taint: hasErrors ? true : "untaint-form"
+						taint: hasErrors ? true : "untaint-form" // Manage form taint state
 					});
 
+					// Execute success callback only if there are no validation errors
 					if (!hasErrors) await onSuccessResult(data);
-					pending.set(false);
 				} else {
-					await onErrorResult(result.error);
+					// Handle remote function failure
+					await onErrorResult(result.error); // Execute error callback
+
 					if (isRedirectFailure(result.error)) {
-						superform.tainted.set(undefined);
-						await goto(result.error.redirectTo);
+						// Handle redirect failure (e.g., authentication required)
+						superform.tainted.set(undefined); // Clear tainted state
+						await goto(result.error.redirectTo); // Navigate to redirect path
+						return;
 					} else {
+						// Handle other types of errors
 						const error = result.error.message;
-						superform.errors.set({ _errors: [error] });
+						superform.errors.set({ _errors: [error] }); // Set form-level error
 					}
-					pending.set(false);
 				}
+
+				pending.set(false); // Clear pending state
 			}
 
+			// Execute custom onSubmit callback if provided
 			onSubmit?.(event);
 		},
+
+		// Handle form result events (success, failure, redirect)
 		onResult(event) {
+			// Clear pending state for non-redirect results
 			if (event.result.type !== "redirect") pending.set(false);
+
+			// Execute success callback for successful submissions or redirects
 			if (["success", "redirect"].includes(event.result.type)) {
 				onSuccessResult(get(superform.form));
 			}
+
+			// Execute custom onResult callback if provided
 			onResult?.(event);
 		}
 	});
 
+	// Cleanup: invalidate all data when component is destroyed (if conditions are met)
 	onDestroy(async () => {
-		if (get(submitCount) > 0 && inalidate !== false && !remoteUpdates?.length) await invalidateAll();
+		if (get(submitCount) > 0 && inalidate !== false && !remoteUpdates?.length) {
+			await invalidateAll();
+		}
 	});
 
+	// Return enhanced SuperForm with additional state management
 	return {
-		...superform,
-		pending,
-		submitCount
+		...superform, // Spread all standard Superforms properties
+		pending, // Reactive store for submission state
+		submitCount // Reactive store for submission attempt count
 	};
 }
 
