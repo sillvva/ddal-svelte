@@ -162,6 +162,7 @@ export function valibotForm<S extends v.GenericSchema, Out extends Infer<S, "val
 		onErrorResult = (error) => errorToast(error.message),
 		onSubmit,
 		onResult,
+		onError,
 		...rest
 	}: FormOptions<Out, App.Superforms.Message, In> & (CustomFormOptions<Out> | OptionsWithUpdates<Out>) = {}
 ) {
@@ -181,6 +182,13 @@ export function valibotForm<S extends v.GenericSchema, Out extends Infer<S, "val
 			// Update form state to indicate submission is in progress
 			pending.set(true);
 			submitCount.update((count) => count + 1);
+
+			// Execute custom onSubmit callback if provided
+			// If the callback returns false, cancel the submission
+			if ((await onSubmit?.(event)) === false) {
+				pending.set(false);
+				return event.cancel();
+			}
 
 			// Handle remote function if a remote handler is provided
 			if (remote) {
@@ -229,9 +237,6 @@ export function valibotForm<S extends v.GenericSchema, Out extends Infer<S, "val
 
 				pending.set(false); // Clear pending state
 			}
-
-			// Execute custom onSubmit callback if provided
-			onSubmit?.(event);
 		},
 
 		// Handle form result events (success, failure, redirect)
