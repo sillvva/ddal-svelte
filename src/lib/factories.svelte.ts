@@ -98,7 +98,7 @@ export interface OptionsWithUpdates<Out extends Record<string, unknown>> extends
 	/**
 	 * Array of remote queries to invalidate after successful form submission.
 	 */
-	remoteUpdates: RemoteUpdates;
+	remoteUpdates: () => RemoteUpdates;
 }
 
 /**
@@ -197,7 +197,7 @@ export function valibotForm<S extends v.GenericSchema, Out extends Infer<S, "val
 
 				// Get current form data and execute remote function
 				const data = get(superform.form);
-				const result = (remoteUpdates && (await remote(data).updates(...remoteUpdates))) ?? (await remote(data));
+				const result = (remoteUpdates && (await remote(data).updates(...remoteUpdates()))) ?? (await remote(data));
 
 				if (result.ok) {
 					// Handle successful remote function submission
