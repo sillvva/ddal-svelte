@@ -46,7 +46,7 @@
 	}
 </script>
 
-<div class="fieldset mb-4 flex flex-col gap-1">
+<div class="flex flex-col gap-1">
 	<div class="flex items-center justify-between">
 		<div class="flex w-full gap-2 sm:max-w-md md:max-w-md">
 			<search class="flex flex-1">
@@ -84,7 +84,7 @@
 			</div>
 		{/each}
 	{:else}
-		<div class="label pl-3 text-sm whitespace-normal">
+		<div class="label text-xs whitespace-normal">
 			Valid keys: {baseSearch.validKeys.join(", ")}
 		</div>
 	{/if}

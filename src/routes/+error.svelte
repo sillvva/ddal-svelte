@@ -6,7 +6,7 @@
 	import AppAPI from "$lib/remote/app";
 	import SuperDebug from "sveltekit-superforms";
 	import { twMerge } from "tailwind-merge";
-	import * as v from "valibot";
+	import Layout from "./(app)/+layout.svelte";
 
 	let previousPage = $state<string>("/");
 	let display = $state(!dev);
@@ -15,94 +15,83 @@
 		previousPage = from?.url.pathname || previousPage;
 	});
 
-	function checkForUUIDs() {
-		if (page.status === 404 && page.error?.message === "Not Found") {
-			const url = page.url.pathname;
-			const segments = url.split("/");
-
-			const uuids = segments.filter((segment) => segment.split("-").length === 5);
-			if (!uuids.length) return true;
-
-			return uuids.filter((uuid) => v.safeParse(v.pipe(v.string(), v.uuid()), uuid).success).length > 0;
-		}
-
-		return false;
+	function invalidParams() {
+		return page.status === 404 && !page.route.id && page.url.pathname !== "/";
 	}
 
 	const type = $derived.by(() => {
-		if (!checkForUUIDs()) return "warning";
+		if (invalidParams()) return "warning";
 		return "error";
 	});
 </script>
 
-<div
-	class={twMerge("flex flex-col items-center justify-center p-4", !display && "-mt-30 min-h-screen max-lg:-mt-20 max-sm:-mt-10")}
->
-	{#if !display}
-		{#if page.status === 404}
-			<img src="/images/d4.webp" alt="404" class="mb-2 size-60 max-lg:size-40 max-sm:size-20" />
-			<h1 class="font-vecna mb-12 text-4xl font-bold">4D4: Not Found!</h1>
-		{:else}
-			<img src="/images/nat1.webp" alt="Error" class="mb-2 size-60 max-lg:size-40 max-sm:size-20" />
-			<h1 class="font-vecna mb-12 text-4xl font-bold">Rolled a Natural 1!</h1>
-		{/if}
-	{/if}
-	<div class={twMerge("alert alert-error mb-4 flex w-full max-w-3xl gap-4 shadow-lg", type === "warning" && "alert-warning")}>
-		<span class="iconify mdi--alert-circle size-6"></span>
-		<div
-			class={twMerge(
-				"flex flex-1 gap-2",
-				((page.error && page.error.message.length >= 150) || !checkForUUIDs()) && "max-md:flex-col"
-			)}
-		>
-			<div class="flex flex-1 flex-col justify-center">
-				<h3 class="font-bold">
-					{#if !checkForUUIDs()}
-						Don't panic!
-					{:else}
-						Error {page.status}!
-					{/if}
-				</h3>
-				{#if !checkForUUIDs()}
-					<div>
-						Database IDs have been changed from CUIDs to UUIDs. This will break existing links to characters, but no data has been
-						lost. You will still be able to access your characters using the new UUID going forward. Click <kbd
-							class="strong kbd kbd-sm text-base-content">Go back</kbd
-						> to be returned to your characters.
-					</div>
+<Layout data={page.data}>
+	<div class="flex flex-1 flex-col items-center justify-center p-4">
+		{#if !display}
+			<div class="font-vecna mb-12 flex flex-col items-center text-3xl font-bold sm:text-5xl md:text-6xl">
+				{#if page.status === 404}
+					<img src="/images/d4.webp" alt="404" class="mb-2 size-50 max-lg:size-40 max-sm:size-30" />
+					<h1>4D4: Not Found!</h1>
 				{:else}
-					<div class="whitespace-pre-line">
-						{page.error?.message || "Something went wrong"}
-					</div>
+					<img src="/images/nat1.webp" alt="Error" class="mb-2 size-50 max-lg:size-40 max-sm:size-30" />
+					<h1>Rolled a Natural 1!</h1>
 				{/if}
 			</div>
-			<div class="flex items-center gap-2 max-sm:self-end">
+		{/if}
+		<div class={twMerge("alert alert-error mb-4 flex w-full max-w-3xl gap-4 shadow-lg", type === "warning" && "alert-warning")}>
+			<span class="iconify mdi--alert-circle max-xs:hidden size-6"></span>
+			<div
+				class={twMerge(
+					"flex flex-1 gap-2",
+					((page.error && page.error.message.length >= 150) || invalidParams()) && "max-md:flex-col"
+				)}
+			>
+				<div class="flex flex-1 flex-col justify-center">
+					<h3 class="font-bold">
+						{#if invalidParams()}
+							Don't panic!
+						{:else}
+							Error {page.status}!
+						{/if}
+					</h3>
+					{#if invalidParams()}
+						<div>
+							Database IDs have been changed from CUIDs to UUIDs. This will break existing links to characters, but no data has
+							been lost. You will still be able to access your characters using the new UUID going forward.
+						</div>
+					{:else}
+						<div class="whitespace-pre-line">
+							{page.error?.message || "Something went wrong"}
+						</div>
+					{/if}
+				</div>
 				{#if !display}
-					<button class="btn btn-sm max-sm:hidden" onclick={() => (display = true)}>View details</button>
+					<div class="flex items-center gap-2 max-sm:self-end">
+						<button class="btn btn-sm max-sm:hidden" onclick={() => (display = true)}>View details</button>
+					</div>
 				{/if}
-				<a href={previousPage} class="btn btn-sm">Go back</a>
 			</div>
 		</div>
+		{#if display}
+			<svelte:boundary>
+				{@const request = await AppAPI.queries.request()}
+
+				{#snippet pending()}
+					<LoadingPanel />
+				{/snippet}
+
+				<SuperDebug
+					data={{
+						...page,
+						isMobile: request.isMobile,
+						user: request.user,
+						data: undefined
+					}}
+				/>
+			</svelte:boundary>
+		{/if}
 	</div>
-	{#if display}
-		<svelte:boundary>
-			{@const request = await AppAPI.queries.request()}
-
-			{#snippet pending()}
-				<LoadingPanel />
-			{/snippet}
-
-			<SuperDebug
-				data={{
-					...page,
-					isMobile: request.isMobile,
-					user: request.user,
-					data: undefined
-				}}
-			/>
-		</svelte:boundary>
-	{/if}
-</div>
+</Layout>
 
 <style>
 	:global(.super-debug) {

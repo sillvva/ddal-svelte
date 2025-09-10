@@ -2,7 +2,7 @@
 	import type { PageData } from "./$types.js";
 
 	export const pageTitle = "DMs";
-	export function getPageHead(data: PageData) {
+	export function getPageHead(data: Partial<PageData>) {
 		return {
 			title: `${data.user?.name}'s DMs`
 		};

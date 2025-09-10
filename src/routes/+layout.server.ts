@@ -11,5 +11,10 @@ if (!checked && building && privateEnv) {
 
 export const load = async (event) => {
 	const { user, session, isMac, app } = event.locals;
-	return { user, session, isMac, app };
+	return {
+		user,
+		session,
+		isMac,
+		app
+	};
 };

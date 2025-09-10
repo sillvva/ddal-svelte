@@ -28,7 +28,7 @@
 	const results = $derived(search.trim() ? parser.filter(search) : users);
 </script>
 
-<div class="mb-4 flex flex-wrap items-center justify-between gap-2 max-sm:justify-end">
+<div class="flex flex-wrap items-center justify-between gap-2 max-sm:justify-end">
 	<div class="flex w-full gap-2 sm:max-w-md md:max-w-md">
 		<Search bind:value={search} placeholder="Search by name, email, role, etc." />
 	</div>

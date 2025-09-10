@@ -134,6 +134,7 @@ export function handleCause<F extends InstanceType<ErrorClass>>(cause: Cause.Cau
 		const error = cause.error;
 
 		status = error.status;
+		extra.cause = error.cause;
 		extra = Object.assign(extra, omit(error, ["_tag", "_op", "pipe", "name", "message", "status"]));
 
 		Effect.runFork(AppLog.error(message, extra));

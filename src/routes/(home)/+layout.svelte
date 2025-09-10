@@ -1,7 +1,12 @@
 <script>
 	import Footer from "$lib/components/Footer.svelte";
+	import { onMount } from "svelte";
 
 	let { children } = $props();
+
+	onMount(() => {
+		document.documentElement.dataset.theme = document.documentElement.classList.contains("dark") ? "dark" : "light";
+	});
 </script>
 
 <img

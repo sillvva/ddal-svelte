@@ -1,9 +1,9 @@
 <script lang="ts" module>
 	import type { PageData } from "./$types.js";
-	export const getPageTitle = (data: PageData) => data.character.name || "New Character";
-	export function getPageHead(data: PageData) {
+	export const getPageTitle = (data: Partial<PageData>) => data.character?.name || "New Character";
+	export function getPageHead(data: Partial<PageData>) {
 		return {
-			title: data.characterId === "new" ? "New Character" : `Edit ${data.character.name}`
+			title: data.characterId === "new" ? "New Character" : `Edit ${data.character?.name}`
 		};
 	}
 </script>

@@ -1,9 +1,9 @@
 <script lang="ts" module>
 	import type { PageData } from "./$types.js";
-	export const getPageTitle = (data: PageData) => data.dm.name || "DM";
-	export function getPageHead(data: PageData) {
+	export const getPageTitle = (data: Partial<PageData>) => data.dm?.name || "DM";
+	export function getPageHead(data: Partial<PageData>) {
 		return {
-			title: data.dm.name || "DM"
+			title: data.dm?.name || "DM"
 		};
 	}
 </script>
@@ -73,7 +73,7 @@
 				</div>
 			{:else}
 				<div class="bg-base-100 w-full overflow-x-auto rounded-lg">
-					<table class="table w-full">
+					<table class="bg-base-200 table w-full">
 						<thead>
 							<tr class="bg-base-300">
 								<th class="max-lg:hidden">Date</th>

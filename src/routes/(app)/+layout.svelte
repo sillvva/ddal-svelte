@@ -119,7 +119,7 @@
 			</div>
 		</nav>
 	</header>
-	<div class="relative z-10 container mx-auto max-w-5xl flex-1 p-4">
+	<div class="relative z-10 container mx-auto flex max-w-5xl flex-1 p-4 *:w-full">
 		{@render children()}
 	</div>
 	<Footer />
