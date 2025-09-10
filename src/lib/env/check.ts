@@ -11,6 +11,6 @@ export function checkEnv<TChecker extends () => EnvPrivate | EnvPublic | Env>(ch
 		} else if (err instanceof Error) {
 			message = err.message;
 		}
-		throw new Error(`❌ Invalid environment variables:\n\n${message}\n`);
+		throw new Error(`❌ Invalid environment variables:\n\n${message}\n`, { cause: err });
 	}
 }

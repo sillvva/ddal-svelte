@@ -63,9 +63,10 @@ const info: Handle = async ({ event, resolve }) => {
 
 	const userAgent = event.request.headers.get("user-agent");
 	event.locals.isMac = /Macintosh|MacIntel|MacPPC|Mac68K|Mac OS/i.test(userAgent || "");
-	event.locals.isMobile = !!userAgent?.match(
-		/Mobile|iP(hone|od|ad)|Android|BlackBerry|IEMobile|Kindle|NetFront|Silk-Accelerated|(hpw|web)OS|Fennec|Minimo|Opera M(obi|ini)|Blazer|Dolfin|Dolphin|Skyfire|Zune/
-	);
+	event.locals.isMobile =
+		/Mobile|iP(hone|od|ad)|Android|BlackBerry|IEMobile|Kindle|NetFront|Silk-Accelerated|(hpw|web)OS|Fennec|Minimo|Opera M(obi|ini)|Blazer|Dolfin|Dolphin|Skyfire|Zune/.test(
+			userAgent || ""
+		);
 
 	return await resolve(event);
 };
