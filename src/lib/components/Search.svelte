@@ -2,18 +2,13 @@
 	import { hotkey } from "$lib/util";
 	import type { HTMLInputAttributes } from "svelte/elements";
 	import { queryParam, ssp } from "sveltekit-search-params";
-	import { twMerge } from "tailwind-merge";
-
-	interface Props extends HTMLInputAttributes {
-		class?: string | null;
-	}
 
 	const s = queryParam("s", ssp.string(), {
 		showDefaults: false,
 		pushHistory: false
 	});
 
-	let { value = $bindable($s || ""), class: className, type = "text", ...rest }: Props = $props();
+	let { value = $bindable($s || ""), type = "text", ...rest }: Omit<HTMLInputAttributes, "class"> = $props();
 
 	// Sync value prop changes to $s
 	$effect(() => {
@@ -41,14 +36,7 @@
 
 <search class="min-w-0 flex-1">
 	<label class="input focus-within:border-primary sm:input-sm flex w-full items-center gap-2">
-		<input
-			{type}
-			bind:value
-			class={twMerge("w-full flex-1", className)}
-			aria-label={rest.placeholder || "Search"}
-			bind:this={ref}
-			{...rest}
-		/>
+		<input {type} bind:value class="w-full flex-1" aria-label={rest.placeholder || "Search"} bind:this={ref} {...rest} />
 		<kbd class="kbd kbd-sm max-sm:hidden">/</kbd>
 	</label>
 </search>

@@ -1,16 +1,13 @@
 <script lang="ts">
 	import { page } from "$app/state";
-	import { twMerge } from "tailwind-merge";
 
 	let { children } = $props();
 </script>
 
 <div class="flex flex-col gap-4">
 	<div role="tablist" class="tabs tabs-border">
-		<a href="/admin/users" role="tab" class={twMerge("tab", page.url.pathname.startsWith("/admin/users") && "tab-active")}>
-			Users
-		</a>
-		<a href="/admin/logs" role="tab" class={twMerge("tab", page.url.pathname.startsWith("/admin/logs") && "tab-active")}>Logs</a>
+		<a href="/admin/users" role="tab" class={["tab", page.url.pathname.startsWith("/admin/users") && "tab-active"]}> Users </a>
+		<a href="/admin/logs" role="tab" class={["tab", page.url.pathname.startsWith("/admin/logs") && "tab-active"]}>Logs</a>
 	</div>
 
 	<svelte:boundary>

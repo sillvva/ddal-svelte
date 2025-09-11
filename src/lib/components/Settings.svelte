@@ -9,7 +9,6 @@
 	import { parseEffectResult } from "$lib/util";
 	import { isDefined } from "@sillvva/utils";
 	import { isTupleOfAtLeast } from "effect/Predicate";
-	import { twMerge } from "tailwind-merge";
 	import Passkeys from "./Passkeys.svelte";
 	import ThemeSwitcher from "./ThemeSwitcher.svelte";
 
@@ -167,7 +166,7 @@
 				{#each authProviders as provider (provider.id)}
 					<li>
 						<span class="flex gap-2 hover:bg-transparent">
-							<span class={twMerge("size=6 iconify-color", provider.iconify)}></span>
+							<span class={["size=6 iconify-color", provider.iconify]}></span>
 							<span class="flex-1">{provider.name}</span>
 							<span class="join flex items-center">
 								{#if provider.account}

@@ -1,7 +1,6 @@
 <script lang="ts">
 	import { page } from "$app/state";
 	import { routeModules, type Crumb, type ModuleData } from "$lib/util.js";
-	import { twMerge } from "tailwind-merge";
 	import BackButton from "./BackButton.svelte";
 
 	export function titleSanitizer(title: string) {
@@ -57,7 +56,7 @@
 	});
 </script>
 
-<div class={twMerge("flex min-h-9 flex-1 items-center max-sm:min-h-8 sm:mb-4", crumbs.length === 1 && "max-sm:hidden")}>
+<div class={["flex min-h-9 flex-1 items-center max-sm:min-h-8 sm:mb-4", crumbs.length === 1 && "max-sm:hidden"]}>
 	{#if crumbs.length > 0}
 		{@const back = crumbs.at(-2)}
 		{#if back?.url && crumbs.length > 1}

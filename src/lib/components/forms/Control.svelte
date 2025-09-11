@@ -1,16 +1,15 @@
 <script lang="ts">
 	import type { Snippet } from "svelte";
-	import type { HTMLAttributes } from "svelte/elements";
-	import { twMerge } from "tailwind-merge";
+	import type { ClassValue, HTMLAttributes } from "svelte/elements";
 
 	interface Props extends Omit<HTMLAttributes<HTMLDivElement>, "class"> {
 		children?: Snippet;
-		class?: string | null;
+		class?: ClassValue;
 	}
 
 	let { class: className = "", children, ...rest }: Props = $props();
 </script>
 
-<div class={twMerge("fieldset", className)} {...rest}>
+<div class={["fieldset", className]} {...rest}>
 	{@render children?.()}
 </div>

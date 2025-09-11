@@ -2,12 +2,11 @@
 	import { clickoutside } from "@svelteuidev/composables";
 	import type { Snippet } from "svelte";
 	import { fromAction } from "svelte/attachments";
-	import type { HTMLAttributes } from "svelte/elements";
-	import { twMerge } from "tailwind-merge";
+	import type { ClassValue, HTMLAttributes } from "svelte/elements";
 
 	interface Props extends Omit<HTMLAttributes<HTMLDetailsElement>, "children" | "class"> {
 		children?: Snippet;
-		class?: string | null;
+		class?: ClassValue;
 	}
 
 	let { class: className = "", children }: Props = $props();
@@ -31,7 +30,7 @@
 
 <details
 	bind:open
-	class={twMerge("dropdown", className)}
+	class={["dropdown", className]}
 	{@attach menuClose}
 	{@attach fromAction(clickoutside, () => ({
 		enabled: open,

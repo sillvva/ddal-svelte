@@ -6,7 +6,6 @@
 	import CommandAPI, { type SearchData } from "$lib/remote/command";
 	import { hotkey } from "$lib/util";
 	import { Command, Dialog, Separator } from "bits-ui";
-	import { twMerge } from "tailwind-merge";
 	import SearchResults from "./SearchResults.svelte";
 
 	const defaultSelected: string = searchSections[0].url;
@@ -121,7 +120,7 @@
 									{#if section.items.length && section.previousCount}
 										<Command.Separator class="divider mt-2 mb-0" />
 									{/if}
-									<Command.Group value={section.title} class={twMerge(!section.items.length && "hidden")}>
+									<Command.Group value={section.title} class={[!section.items.length && "hidden"]}>
 										<Command.GroupHeading class="menu-title text-base-content/60 px-5">
 											{section.title}
 										</Command.GroupHeading>

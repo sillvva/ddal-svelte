@@ -2,7 +2,6 @@
 	import { dateToDV, intDateProxy } from "$lib/factories.svelte";
 	import { DatePicker, type DatePickerRootProps } from "bits-ui";
 	import { formFieldProxy, type FormPathLeaves, type SuperForm } from "sveltekit-superforms";
-	import { twMerge } from "tailwind-merge";
 
 	type TForm = $$Generic<Record<PropertyKey, unknown>>;
 	type TMin = $$Generic<Date | undefined>;
@@ -18,7 +17,6 @@
 		empty?: "null" | "undefined";
 		required?: boolean;
 		description?: string;
-		class?: string;
 	}
 
 	let {
@@ -32,7 +30,6 @@
 		empty = "null",
 		required,
 		description,
-		class: inputClass = "",
 		...rest
 	}: Props = $props();
 
@@ -72,7 +69,7 @@
 			{/if}
 		</span>
 	</DatePicker.Label>
-	<DatePicker.Input class={twMerge("input inline-flex w-full items-center gap-1 px-3 select-none", inputClass)}>
+	<DatePicker.Input class="input inline-flex w-full items-center gap-1 px-3 select-none sm:max-md:text-xs">
 		{#snippet children({ segments })}
 			{#each segments as { part, value }, i (i)}
 				<DatePicker.Segment

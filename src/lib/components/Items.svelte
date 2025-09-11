@@ -3,7 +3,6 @@
 	import type { MagicItem, StoryAward } from "$lib/server/db/schema";
 	import { sorter } from "@sillvva/utils";
 	import { SvelteMap } from "svelte/reactivity";
-	import { twMerge } from "tailwind-merge";
 	import SearchResults from "./SearchResults.svelte";
 
 	interface Props {
@@ -13,10 +12,9 @@
 		terms?: string[];
 		collapsible?: boolean;
 		sort?: boolean;
-		textClass?: string;
 	}
 
-	let { title = "", items, formatting = false, terms = [], collapsible = false, sort = false, textClass = "" }: Props = $props();
+	let { title = "", items, formatting = false, terms = [], collapsible = false, sort = false }: Props = $props();
 
 	let collapsed = $state(collapsible);
 
@@ -100,10 +98,7 @@
 		</div>
 	{/if}
 	<p
-		class={twMerge(
-			"divide-x divide-black/50 text-sm leading-6 text-wrap in-[table]:leading-5 data-[collapsed=true]:hidden md:data-[collapsed=true]:inline dark:divide-white/50 print:text-xs print:data-[collapsed=true]:inline",
-			textClass
-		)}
+		class="divide-x divide-black/50 text-sm leading-6 text-wrap in-[table]:leading-5 data-[collapsed=true]:hidden md:data-[collapsed=true]:inline dark:divide-white/50 print:text-xs print:data-[collapsed=true]:inline"
 		data-collapsed={collapsed}
 	>
 		{#if items.length}

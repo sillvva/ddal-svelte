@@ -5,7 +5,6 @@
 	import LoadingPanel from "$lib/components/LoadingPanel.svelte";
 	import AppAPI from "$lib/remote/app";
 	import SuperDebug from "sveltekit-superforms";
-	import { twMerge } from "tailwind-merge";
 	import Layout from "./(app)/+layout.svelte";
 
 	let previousPage = $state<string>("/");
@@ -16,13 +15,8 @@
 	});
 
 	function invalidParams() {
-		return page.status === 404 && !page.route.id && page.url.pathname !== "/";
+		return page.status === 404 && !page.route.id;
 	}
-
-	const type = $derived.by(() => {
-		if (invalidParams()) return "warning";
-		return "error";
-	});
 </script>
 
 <Layout data={page.data}>
@@ -38,13 +32,10 @@
 				{/if}
 			</div>
 		{/if}
-		<div class={twMerge("alert alert-error mb-4 flex w-full max-w-3xl gap-4 shadow-lg", type === "warning" && "alert-warning")}>
+		<div class={["alert mb-4 flex w-full max-w-3xl gap-4 shadow-lg", invalidParams() ? "alert-warning" : "alert-error"]}>
 			<span class="iconify mdi--alert-circle max-xs:hidden size-6"></span>
 			<div
-				class={twMerge(
-					"flex flex-1 gap-2",
-					((page.error && page.error.message.length >= 150) || invalidParams()) && "max-md:flex-col"
-				)}
+				class={["flex flex-1 gap-2", ((page.error && page.error.message.length >= 150) || invalidParams()) && "max-md:flex-col"]}
 			>
 				<div class="flex flex-1 flex-col justify-center">
 					<h3 class="font-bold">

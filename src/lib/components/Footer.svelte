@@ -1,6 +1,4 @@
 <script lang="ts">
-	import { twMerge } from "tailwind-merge";
-
 	interface Props {
 		fixed?: boolean;
 	}
@@ -9,10 +7,10 @@
 </script>
 
 <footer
-	class={twMerge(
-		"footer footer-center border-base-300 text-base-content  z-16 border-t p-4 max-sm:py-2 max-sm:text-xs print:hidden",
+	class={[
+		"footer footer-center border-base-300 text-base-content z-16 border-t p-4 max-sm:py-2 max-sm:text-xs print:hidden",
 		fixed ? "sticky right-0 bottom-0 left-0" : "relative"
-	)}
+	]}
 >
 	<div>
 		<p>

@@ -23,7 +23,6 @@
 	import { valibotForm } from "$lib/factories.svelte.js";
 	import LogsAPI from "$lib/remote/logs";
 	import { type DungeonMasterId, logSchema } from "$lib/schemas";
-	import { twMerge } from "tailwind-merge";
 
 	let { data, params } = $props();
 
@@ -49,7 +48,7 @@
 				</GenericInput>
 			</Control>
 		{/if}
-		<Control class={twMerge("col-span-12", !data.firstLog ? "sm:col-span-4" : "sm:col-span-6")}>
+		<Control class={["col-span-12", !data.firstLog ? "sm:col-span-4" : "sm:col-span-6"]}>
 			<Input
 				type="text"
 				{superform}
@@ -58,7 +57,7 @@
 				placeholder={data.firstLog ? "Introduction, Character Creation, etc." : ""}
 			/>
 		</Control>
-		<Control class={twMerge("col-span-12", !data.firstLog ? "sm:col-span-4" : "sm:col-span-6")}>
+		<Control class={["col-span-12", !data.firstLog ? "sm:col-span-4" : "sm:col-span-6"]}>
 			<DateInput {superform} field="date" label="Date" />
 		</Control>
 		{#if $form.type === "game"}

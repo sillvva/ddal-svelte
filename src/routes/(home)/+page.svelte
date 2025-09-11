@@ -4,7 +4,6 @@
 	import { PROVIDERS } from "$lib/constants";
 	import { errorToast } from "$lib/factories.svelte.js";
 	import { getGlobal } from "$lib/stores.svelte.js";
-	import { twMerge } from "tailwind-merge";
 
 	let { data } = $props();
 
@@ -67,7 +66,7 @@
 					}}
 					aria-label="Sign in with {provider.name}"
 				>
-					<span class={twMerge("iconify-color max-xs:size-5 size-8", provider.iconify)}></span>
+					<span class={["iconify-color max-xs:size-5 size-8", provider.iconify]}></span>
 					<span class="max-xs:text-base xs:flex-1 flex h-full items-center justify-center text-xl font-semibold"
 						>Sign In with {provider.name}</span
 					>
