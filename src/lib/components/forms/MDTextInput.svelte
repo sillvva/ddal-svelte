@@ -24,7 +24,7 @@
 		...rest
 	}: Props = $props();
 
-	let state = $state("edit");
+	let mode = $state("edit");
 
 	const { value, errors, constraints } = formFieldProxy(superform, field) satisfies FormFieldProxy<string>;
 
@@ -45,10 +45,10 @@
 <div>
 	{#if preview}
 		<div
-			class="tabs-boxed tabs bg-base-200 border-base-content/20 rounded-t-lg rounded-b-none border-[1px] border-b-0 [--tw-border-opacity:0.2]"
+			class="tabs-boxed tabs bg-base-200 border-base-content/20 rounded-t-lg rounded-b-none border border-b-0 [--tw-border-opacity:0.2]"
 		>
-			<input type="radio" {name} role="tab" class="tab rounded-md!" aria-label="Edit" bind:group={state} value="edit" />
-			<input type="radio" {name} role="tab" class="tab rounded-md!" aria-label="Preview" bind:group={state} value="preview" />
+			<input type="radio" {name} role="tab" class="tab rounded-md!" aria-label="Edit" bind:group={mode} value="edit" />
+			<input type="radio" {name} role="tab" class="tab rounded-md!" aria-label="Preview" bind:group={mode} value="preview" />
 		</div>
 	{/if}
 	<textarea
@@ -57,20 +57,20 @@
 		bind:value={$value}
 		class="textarea textarea-bordered focus:border-primary w-full rounded-b-lg data-[preview=true]:rounded-t-none data-[state=preview]:hidden"
 		data-preview={preview}
-		data-state={state}
+		data-state={mode}
 		style:--minRows={minRows && `${minRows}lh`}
 		style:--maxRows={maxRows && `${maxRows}lh`}
 		spellcheck="true"
 		{@attach autosize}
 		{...$constraints}
 	></textarea>
-	{#if preview && state === "preview"}
+	{#if preview && mode === "preview"}
 		<div class="border-base-content/20 bg-base-100 rounded-b-lg border-[1px] p-4 text-sm [--tw-border-opacity:0.2]">
 			<Markdown content={$value} />
 		</div>
 	{/if}
 </div>
-{#if !preview || state !== "preview"}
+{#if !preview || mode !== "preview"}
 	<label for={field} class="fieldset-label justify-between">
 		{#if $errors?.length}
 			<span class="text-error">{$errors}</span>

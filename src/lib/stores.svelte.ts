@@ -32,8 +32,8 @@ export function setCookie<TSchema extends v.GenericSchema>(
 }
 
 class Global {
-	_app: AppCookie = $state(appDefaults);
-	_pageLoader: boolean = $state(false);
+	private _app: AppCookie = $state(appDefaults);
+	private _pageLoader: boolean = $state(false);
 
 	constructor(app: AppCookie) {
 		this._app = app;
