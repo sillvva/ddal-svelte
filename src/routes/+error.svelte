@@ -1,21 +1,34 @@
 <script lang="ts">
 	import { dev } from "$app/environment";
-	import { afterNavigate } from "$app/navigation";
 	import { page } from "$app/state";
 	import LoadingPanel from "$lib/components/LoadingPanel.svelte";
 	import AppAPI from "$lib/remote/app";
+	import { uuidV7 } from "$lib/schemas";
 	import SuperDebug from "sveltekit-superforms";
+	import * as v from "valibot";
 	import Layout from "./(app)/+layout.svelte";
 
-	let previousPage = $state<string>("/");
 	let display = $state(!dev);
 
-	afterNavigate(({ from }) => {
-		previousPage = from?.url.pathname || previousPage;
-	});
+	const appRoutes = Object.keys(import.meta.glob("/src/routes/**/+page.svelte"))
+		.map((key) => key.replace(/\/src\/routes\/|\(\w+\)|\/?\+page\.svelte/g, ""))
+		.filter(Boolean)
+		.map((key) => key.split("/"));
 
 	function invalidParams() {
-		return page.status === 404 && !page.route.id;
+		if (page.status !== 404 || page.route.id) return false;
+
+		const paths = page.url.pathname.split("/");
+		let globs = appRoutes.filter((g) => g.length === paths.length);
+
+		for (const p in paths) {
+			if (!p) continue;
+			if (!globs.find((g) => g[p]?.match(/^\[/))) continue;
+			const result = v.safeParse(uuidV7, paths[p]);
+			if (!result.success) return true;
+		}
+
+		return false;
 	}
 </script>
 
