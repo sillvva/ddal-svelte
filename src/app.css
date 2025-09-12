@@ -13,8 +13,8 @@
 	color-scheme: dark;
 
 	--color-primary: oklch(48.38% 0.2633 287.85);
-	--color-secondary: oklch(72.67% 0.1872 308.45);
-	--color-secondary-content: oklch(0% 0 0);
+	--color-secondary: oklch(0% 0 0);
+	--color-secondary-content: oklch(72.67% 0.1872 308.45);
 	--color-error: oklch(48% 0.1905 27.52);
 	--color-error-content: oklch(100% 0 0);
 	--color-warning: oklch(83.242% 0.139 82.95);
@@ -31,7 +31,7 @@
 	color-scheme: light;
 
 	--color-primary: oklch(52.26% 0.2175 262.65);
-	--color-secondary: oklch(56.59% 0.238 265.11);
+	--color-secondary-content: oklch(56.59% 0.238 265.11);
 	--color-accent: oklch(52.78% 0 0);
 }
 
@@ -41,7 +41,42 @@
 	prefersdark: false;
 	color-scheme: dark;
 
-	--color-secondary: oklch(62.5% 0.241 354.308);
+	--color-secondary-content: oklch(62.5% 0.241 354.308);
+}
+
+@plugin "daisyui/theme" {
+	name: "monodark";
+	default: false;
+	prefersdark: false;
+	color-scheme: "dark";
+	--color-base-100: oklch(0% 0 0);
+	--color-base-200: oklch(0% 0 0);
+	--color-base-300: oklch(0.27 0.0055 286.03);
+	--color-base-content: oklch(100% 0 0);
+	--color-primary: oklch(0% 0 0);
+	--color-primary-content: oklch(100% 0 0);
+	--color-secondary: oklch(0% 0 0);
+	--color-secondary-content: oklch(100% 0 0);
+	--color-accent: oklch(0% 0 0);
+	--color-accent-content: oklch(100% 0 0);
+	--color-neutral: oklch(0% 0 0);
+	--color-neutral-content: oklch(100% 0 0);
+	--color-info: oklch(0% 0 0);
+	--color-info-content: oklch(100% 0 0);
+	--color-success: oklch(0% 0 0);
+	--color-success-content: oklch(100% 0 0);
+	--color-warning: oklch(0% 0 0);
+	--color-warning-content: oklch(98% 0.026 102.212);
+	--color-error: oklch(0.577 0.245 27.325);
+	--color-error-content: oklch(100% 0 0);
+	--radius-selector: 0.5rem;
+	--radius-field: 0.5rem;
+	--radius-box: 1rem;
+	--size-selector: 0.25rem;
+	--size-field: 0.21875rem;
+	--border: 1px;
+	--depth: 0;
+	--noise: 1;
 }
 
 @plugin "daisyui/theme" {
@@ -57,10 +92,45 @@
 	prefersdark: false;
 	color-scheme: dark;
 
-	--color-secondary: oklch(58.8664% 0.104092 60.664655);
-	--color-secondary-content: oklch(100% 0 0);
+	--color-secondary: oklch(100% 0 0);
+	--color-secondary-content: oklch(58.8664% 0.104092 60.664655);
 	--color-error: oklch(57.56% 0.1894 37.76);
 	--color-error-content: oklch(100% 0 0);
+}
+
+@plugin "daisyui/theme" {
+	name: "monolight";
+	default: true;
+	prefersdark: false;
+	color-scheme: "dark";
+	--color-base-100: oklch(100% 0 0);
+	--color-base-200: oklch(98% 0 0);
+	--color-base-300: oklch(97% 0 0);
+	--color-base-content: oklch(0% 0 0);
+	--color-primary: oklch(0% 0 0);
+	--color-primary-content: oklch(100% 0 0);
+	--color-secondary: oklch(0% 0 0);
+	--color-secondary-content: oklch(100% 0 0);
+	--color-accent: oklch(0% 0 0);
+	--color-accent-content: oklch(100% 0 0);
+	--color-neutral: oklch(0% 0 0);
+	--color-neutral-content: oklch(100% 0 0);
+	--color-info: oklch(0% 0 0);
+	--color-info-content: oklch(100% 0 0);
+	--color-success: oklch(0% 0 0);
+	--color-success-content: oklch(100% 0 0);
+	--color-warning: oklch(0% 0 0);
+	--color-warning-content: oklch(98% 0.026 102.212);
+	--color-error: oklch(0.577 0.245 27.325);
+	--color-error-content: oklch(100% 0 0);
+	--radius-selector: 0.5rem;
+	--radius-field: 0.5rem;
+	--radius-box: 1rem;
+	--size-selector: 0.25rem;
+	--size-field: 0.21875rem;
+	--border: 1px;
+	--depth: 0;
+	--noise: 1;
 }
 
 @plugin "daisyui/theme" {
@@ -69,8 +139,8 @@
 	prefersdark: false;
 	color-scheme: light;
 
-	--color-secondary: oklch(64.38% 0.2633 287.85);
-	--color-secondary-content: oklch(100% 0 0);
+	--color-secondary: oklch(100% 0 0);
+	--color-secondary-content: oklch(64.38% 0.2633 287.85);
 }
 
 @plugin "daisyui/theme" {
@@ -79,7 +149,7 @@
 	prefersdark: false;
 	color-scheme: light;
 
-	--color-secondary: oklch(48.38% 0.2633 287.85);
+	--color-secondary-content: oklch(48.38% 0.2633 287.85);
 }
 
 @plugin "daisyui/theme" {
@@ -107,6 +177,9 @@
 }
 
 @layer base {
+	html {
+		font-family: "Inter", sans-serif;
+	}
 	* {
 		box-sizing: border-box;
 		min-width: 0;
@@ -146,6 +219,24 @@
 		font-weight: bold;
 		font-style: normal;
 		font-display: swap;
+	}
+
+	@font-face {
+		font-family: "Inter";
+		src: url("/fonts/Inter-VariableFont_opsz,wght.ttf") format("truetype");
+		font-weight: 100 900; /* Inter variable supports 100–900 */
+		font-stretch: 75% 125%; /* Inter variable supports width axis */
+		font-display: swap;
+		font-style: normal;
+	}
+
+	@font-face {
+		font-family: "Inter";
+		src: url("/fonts/Inter-Italic-VariableFont_opsz,wght.ttf") format("truetype");
+		font-weight: 100 900; /* Inter variable supports 100–900 */
+		font-stretch: 75% 125%; /* Inter variable supports width axis */
+		font-display: swap;
+		font-style: italic;
 	}
 
 	/**
@@ -279,5 +370,22 @@
 @custom-variant hover-none {
 	@media (hover: none) {
 		@slot;
+	}
+}
+
+@utility touch-hitbox {
+	position: relative;
+	&:before {
+		content: "";
+		position: absolute;
+		display: block;
+		top: 50%;
+		left: 50%;
+		transform: translate(-50%, -50%);
+		width: 100%;
+		height: 100%;
+		min-height: 44px;
+		min-width: 44px;
+		z-index: 9999;
 	}
 }

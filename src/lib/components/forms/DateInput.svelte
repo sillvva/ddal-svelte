@@ -2,13 +2,12 @@
 	import { dateToDV, intDateProxy } from "$lib/factories.svelte";
 	import { DatePicker, type DatePickerRootProps } from "bits-ui";
 	import { formFieldProxy, type FormPathLeaves, type SuperForm } from "sveltekit-superforms";
-	import { twMerge } from "tailwind-merge";
 
 	type TForm = $$Generic<Record<PropertyKey, unknown>>;
 	type TMin = $$Generic<Date | undefined>;
 	type TMax = $$Generic<Date | undefined>;
 	interface Props extends DatePickerRootProps {
-		superform: SuperForm<TForm, any>;
+		superform: SuperForm<TForm>;
 		field: FormPathLeaves<TForm, Date>;
 		label: string;
 		minDate?: TMin;
@@ -18,7 +17,6 @@
 		empty?: "null" | "undefined";
 		required?: boolean;
 		description?: string;
-		class?: string;
 	}
 
 	let {
@@ -32,7 +30,6 @@
 		empty = "null",
 		required,
 		description,
-		class: inputClass = "",
 		...rest
 	}: Props = $props();
 
@@ -42,8 +39,8 @@
 	const proxyMin = $derived(minDateField && intDateProxy(superform, minDateField));
 	const proxyMax = $derived(maxDateField && intDateProxy(superform, maxDateField));
 
-	const minDateValue = $derived(minDate && dateToDV(minDate));
-	const maxDateValue = $derived(maxDate && dateToDV(maxDate));
+	const minDateValue = $derived(dateToDV(minDate));
+	const maxDateValue = $derived(dateToDV(maxDate));
 	const minProxyValue = $derived(proxyMin && $proxyMin);
 	const maxProxyValue = $derived(proxyMax && $proxyMax);
 	const minValue = $derived(rest?.minValue || minDateValue || minProxyValue);
@@ -72,9 +69,9 @@
 			{/if}
 		</span>
 	</DatePicker.Label>
-	<DatePicker.Input class={twMerge("input inline-flex w-full items-center gap-1 px-3 select-none", inputClass)}>
+	<DatePicker.Input class="input inline-flex w-full items-center gap-1 px-3 select-none sm:max-md:text-xs">
 		{#snippet children({ segments })}
-			{#each segments as { part, value }}
+			{#each segments as { part, value }, i (i)}
 				<DatePicker.Segment
 					{part}
 					class="focus-visible:outline-primary aria-[valuetext=Empty]:text-base-content/70 rounded-xs py-1 outline-offset-4"
@@ -100,11 +97,11 @@
 					/>
 				</DatePicker.Header>
 				<div class="flex flex-col space-y-4 pt-4 sm:flex-row sm:space-y-0 sm:space-x-4">
-					{#each months as month}
+					{#each months as month (month.value)}
 						<DatePicker.Grid class="w-full border-collapse space-y-1 select-none">
 							<DatePicker.GridHead>
 								<DatePicker.GridRow class="mb-1 flex w-full justify-between">
-									{#each weekdays as day}
+									{#each weekdays as day, i (i)}
 										<DatePicker.HeadCell class="text-base-content/50 w-10 rounded-md text-xs font-normal!">
 											<div>{day.slice(0, 2)}</div>
 										</DatePicker.HeadCell>
@@ -112,9 +109,9 @@
 								</DatePicker.GridRow>
 							</DatePicker.GridHead>
 							<DatePicker.GridBody>
-								{#each month.weeks as weekDates}
+								{#each month.weeks as weekDates, i (i)}
 									<DatePicker.GridRow class="flex w-full">
-										{#each weekDates as date}
+										{#each weekDates as date, j (j)}
 											<DatePicker.Cell {date} month={month.value} class="relative size-10 p-0! text-center text-sm">
 												<DatePicker.Day
 													class={[

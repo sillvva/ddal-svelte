@@ -1,12 +1,15 @@
 <script lang="ts">
 	import { afterNavigate } from "$app/navigation";
 	import { navigating, page } from "$app/state";
-	import { setDefaultUserImage } from "$lib/auth.js";
 	import CommandTray from "$lib/components/CommandTray.svelte";
+	import Footer from "$lib/components/Footer.svelte";
 	import Markdown from "$lib/components/Markdown.svelte";
 	import MobileNav from "$lib/components/MobileNav.svelte";
 	import Settings from "$lib/components/Settings.svelte";
 	import { BLANK_CHARACTER } from "$lib/constants.js";
+	import { parseEffectResult } from "$lib/factories.svelte";
+	import * as AppQueries from "$lib/remote/app/queries.remote";
+	import * as AuthActions from "$lib/remote/auth/actions.remote";
 	import { getGlobal } from "$lib/stores.svelte.js";
 	import { hotkey } from "$lib/util";
 	import { sleep } from "@svelteuidev/composables";
@@ -46,7 +49,7 @@
 		in:fade={{ duration: 200, delay: 500 }}
 		out:fade={{ duration: 200 }}
 	>
-		<span class="loading loading-spinner text-secondary w-16"></span>
+		<span class="loading loading-spinner text-secondary-content w-16"></span>
 	</div>
 {/if}
 
@@ -93,12 +96,15 @@
 								src={data.user.image || ""}
 								alt={data.user.name}
 								class="rounded-full object-cover object-center"
-								onerror={(e) => {
+								onerror={async (e) => {
 									if (!data.user) return;
 									const img = e.currentTarget as HTMLImageElement;
 									img.onerror = null;
 									img.src = BLANK_CHARACTER;
-									setDefaultUserImage(data.user.id);
+
+									const result = await AuthActions.updateUser({ image: BLANK_CHARACTER });
+									const parsed = await parseEffectResult(result);
+									if (parsed) await AppQueries.request().refresh();
 								}}
 							/>
 						</button>
@@ -114,23 +120,10 @@
 			</div>
 		</nav>
 	</header>
-	<div class="relative z-10 container mx-auto max-w-5xl flex-1 p-4">
+	<div class="relative z-10 container mx-auto flex max-w-5xl flex-1 p-4 *:w-full">
 		{@render children()}
 	</div>
-	<footer class="footer footer-center border-base-300 text-base-content relative z-16 border-t p-4 print:hidden">
-		<div>
-			<p>
-				The name
-				<a href="https://dnd.wizards.com/adventurers-league" target="_blank" rel="noreferrer noopener" class="text-secondary"
-					>Adventurers League</a
-				>
-				is property of Hasbro and
-				<a href="https://dnd.wizards.com/" target="_blank" rel="noreferrer noopener" class="text-secondary"
-					>Wizards of the Coast</a
-				>. This website is affiliated with neither.
-			</p>
-		</div>
-	</footer>
+	<Footer />
 	<MobileNav />
 </div>
 
@@ -185,4 +178,8 @@
 	{/if}
 </dialog>
 
-<Settings bind:open={settingsOpen} />
+<svelte:boundary>
+	{#snippet pending()}{/snippet}
+
+	<Settings bind:open={settingsOpen} />
+</svelte:boundary>

@@ -1,12 +1,13 @@
-import { assertAuth } from "$server/auth";
-import { run } from "$server/effect";
-import { withCharacter } from "$server/effect/characters.js";
+import { run } from "$lib/server/effect/runtime.js";
+import { assertAuth } from "$lib/server/effect/services/auth";
+import { CharacterService } from "$lib/server/effect/services/characters";
 
-export const load = (event) =>
+export const load = () =>
 	run(function* () {
-		const user = yield* assertAuth(event);
+		const { user } = yield* assertAuth();
+		const Characters = yield* CharacterService;
 
-		const characters = yield* withCharacter((service) => service.get.userCharacters(user.id, true));
+		const characters = yield* Characters.get.userCharacters(user.id);
 
 		return {
 			characters

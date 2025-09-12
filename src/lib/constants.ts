@@ -1,4 +1,9 @@
-import type { Account } from "$server/db/schema";
+import type { Pathname } from "$app/types";
+import type { Account } from "$lib/server/db/schema";
+
+export const defaultTitle = "Adventurers League Log Sheet";
+export const defaultDescription = "A tool for tracking your Adventurers League characters and magic items.";
+export const defaultImage = "https://ddal.dekok.app/images/barovia-gate.webp";
 
 export const searchSections = [
 	{ title: "Characters", url: "/characters" },
@@ -47,6 +52,11 @@ export const themes = [
 		group: "light"
 	},
 	{
+		name: "Monolight",
+		value: "monolight",
+		group: "light"
+	},
+	{
 		name: "Retro",
 		value: "retro",
 		group: "light"
@@ -72,6 +82,11 @@ export const themes = [
 		group: "dark"
 	},
 	{
+		name: "Monodark",
+		value: "monodark",
+		group: "dark"
+	},
+	{
 		name: "Halloween",
 		value: "halloween",
 		group: "dark"
@@ -85,3 +100,5 @@ export const themes = [
 
 export type Themes = (typeof themes)[number]["value"];
 export type ThemeGroups = (typeof themeGroups)[number];
+
+export type FullPathname = Pathname | `${Pathname}?${string}`;

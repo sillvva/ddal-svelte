@@ -1,17 +1,8 @@
 import { wait } from "@sillvva/utils";
 import { hotkey as hk, type HotkeyItem } from "@svelteuidev/composables";
 import type { Attachment } from "svelte/attachments";
-import type { setupViewTransition } from "sveltekit-view-transition";
 
-/**
- * Types
- */
-
-export type TransitionAction = ReturnType<typeof setupViewTransition>["transition"];
-
-/**
- * Functions
- */
+export type Awaitable<T> = T | Promise<T>;
 
 export async function createTransition(action: ViewTransitionCallback, after?: () => void | Promise<void>, afterDelay = 0) {
 	if (!document.startViewTransition) action();
@@ -25,3 +16,23 @@ export function hotkey(hotkeys: HotkeyItem[]): Attachment<HTMLElement | Document
 		return hk(node, hotkeys).destroy;
 	};
 }
+
+export function removeTrace(message: string) {
+	return message.replace(/\n\s+at .+/g, "");
+}
+
+export type Crumb = {
+	title: string;
+	url: string;
+};
+export type PageHead = {
+	title: string;
+	description?: string;
+	image?: string;
+};
+export type ModuleData = {
+	pageTitle?: string;
+	getPageTitle?: (data: unknown) => string;
+	pageHead?: PageHead;
+	getPageHead?: (data: unknown) => Partial<PageHead>;
+};

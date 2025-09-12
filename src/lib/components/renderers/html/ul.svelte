@@ -1,13 +1,12 @@
 <script lang="ts">
 	import type { Snippet } from "svelte";
-	import { twMerge } from "tailwind-merge";
 
 	interface Props {
 		children?: Snippet;
-		attributes?: Record<string, any>;
+		attributes?: Record<string, unknown>;
 	}
 
 	const { children, attributes }: Props = $props();
 </script>
 
-<ul {...attributes} class={twMerge("mb-2 ml-4 list-outside [&>li]:list-disc", attributes?.class)}>{@render children?.()}</ul>
+<ul {...attributes} class="mb-2 ml-4 list-outside [&>li]:list-disc">{@render children?.()}</ul>

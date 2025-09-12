@@ -1,31 +1,28 @@
 <script lang="ts">
 	import { dev } from "$app/environment";
-	import { type Snippet } from "svelte";
+	import { onMount, type Snippet } from "svelte";
 	import { fromAction } from "svelte/attachments";
 	import type { HTMLFormAttributes } from "svelte/elements";
+	import type { Writable } from "svelte/store";
 	import type { SuperForm } from "sveltekit-superforms";
 	import SuperDebug from "sveltekit-superforms/SuperDebug.svelte";
 	import FormMessage from "./FormMessage.svelte";
 
 	type FormAttributes = Omit<HTMLFormAttributes, "hidden">;
 	type T = $$Generic<Record<PropertyKey, unknown>>;
-	interface Props extends FormAttributes {
-		superform: SuperForm<T, App.Superforms.Message>;
-		showMessage?: boolean;
+
+	interface Props extends Omit<FormAttributes, "action"> {
+		superform: SuperForm<T, App.Superforms.Message> & { pending: Writable<boolean> };
 		children?: Snippet;
 	}
 
-	let { superform, showMessage = $bindable(false), children, ...rest }: Props = $props();
+	let { superform, children, ...rest }: Props = $props();
+	const { form, errors, message, enhance, capture, restore, submitting, tainted, pending } = superform;
 
-	const { form, enhance, submitting, errors, message, capture, restore } = superform;
-	const method = $derived(rest?.method || "post");
+	const isSubmitting = $derived($submitting || $pending);
 
-	$effect(() => {
+	onMount(() => {
 		superform.reset();
-	});
-
-	$effect(() => {
-		showMessage = !superform.options.resetForm;
 	});
 
 	export const snapshot = {
@@ -34,25 +31,23 @@
 	};
 </script>
 
-{#if showMessage}
+<div class="flex flex-col gap-4">
 	<FormMessage {message} />
-{/if}
 
-{#if $errors._errors?.[0]}
-	<div class="alert alert-error mb-4 shadow-lg">
-		<span class="iconify mdi--alert-circle size-6"></span>
-		{$errors._errors[0]}
-	</div>
-{/if}
+	{#if $errors._errors?.[0]}
+		<div class="alert alert-error shadow-lg">
+			<span class="iconify mdi--alert-circle size-6"></span>
+			{$errors._errors[0]}
+		</div>
+	{/if}
 
-<form {method} {...rest} {@attach fromAction(enhance)}>
-	<fieldset class="grid grid-cols-12 gap-4" disabled={$submitting}>
-		{@render children?.()}
-	</fieldset>
-</form>
+	<form {...rest} method="post" {@attach fromAction(enhance)}>
+		<fieldset class="grid grid-cols-12 gap-4" disabled={isSubmitting}>
+			{@render children?.()}
+		</fieldset>
+	</form>
 
-{#if dev}
-	<div class="my-4">
-		<SuperDebug data={{ $form, $errors }} />
-	</div>
-{/if}
+	{#if dev}
+		<SuperDebug data={{ $form, $errors, $message, isSubmitting, $tainted }} />
+	{/if}
+</div>

@@ -1,25 +1,10 @@
 import { browser } from "$app/environment";
-import type { SearchData } from "$src/routes/(api)/command/+server";
 import { Duration } from "effect";
 import Cookie from "js-cookie";
 import { getContext, setContext } from "svelte";
-import { createContext } from "svelte-contextify";
-import { fromAction } from "svelte/attachments";
-import { setupViewTransition } from "sveltekit-view-transition";
+import { SvelteDate } from "svelte/reactivity";
 import * as v from "valibot";
 import { appCookieSchema, appDefaults, type AppCookie } from "./schemas";
-
-export const { get: transitionGetter, set: transitionSetter } = createContext({
-	defaultValue: () => {
-		const { transition } = setupViewTransition();
-		return transition;
-	}
-});
-export const setTransition = () => {
-	const { transition } = setupViewTransition();
-	if (browser) transitionSetter(() => transition);
-};
-export const transition = (key: string) => fromAction(transitionGetter()(), () => key);
 
 /**
  * Set a cookie from the browser using `js-cookie`.
@@ -28,7 +13,7 @@ export const transition = (key: string) => fromAction(transitionGetter()(), () =
  * @param value Value of the cookie
  * @param expires Expiration time of the cookie in milliseconds
  */
-export function setCookie<TSchema extends v.BaseSchema<any, any, any>>(
+export function setCookie<TSchema extends v.GenericSchema>(
 	name: string,
 	schema: TSchema,
 	value: v.InferInput<TSchema>,
@@ -40,16 +25,15 @@ export function setCookie<TSchema extends v.BaseSchema<any, any, any>>(
 	const parsed = v.parse(schema, value);
 	Cookie.set(name, typeof parsed !== "string" ? JSON.stringify(parsed) : parsed, {
 		path: "/",
-		expires: new Date(Date.now() + expires)
+		expires: new SvelteDate(Date.now() + expires)
 	});
 
 	return value;
 }
 
 class Global {
-	_app: AppCookie = $state(appDefaults);
-	_pageLoader: boolean = $state(false);
-	_searchData: SearchData = $state([]);
+	private _app: AppCookie = $state(appDefaults);
+	private _pageLoader: boolean = $state(false);
 
 	constructor(app: AppCookie) {
 		this._app = app;
@@ -71,13 +55,6 @@ class Global {
 	}
 	set pageLoader(value: boolean) {
 		this._pageLoader = value;
-	}
-
-	get searchData() {
-		return this._searchData;
-	}
-	set searchData(value: SearchData) {
-		this._searchData = value;
 	}
 }
 

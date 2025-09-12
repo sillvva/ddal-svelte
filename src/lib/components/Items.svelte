@@ -1,21 +1,20 @@
 <script lang="ts">
 	import { pushState } from "$app/navigation";
-	import type { MagicItem, StoryAward } from "$server/db/schema";
+	import type { MagicItem, StoryAward } from "$lib/server/db/schema";
 	import { sorter } from "@sillvva/utils";
-	import { twMerge } from "tailwind-merge";
+	import { SvelteMap } from "svelte/reactivity";
 	import SearchResults from "./SearchResults.svelte";
 
 	interface Props {
 		title?: string;
-		items: Array<MagicItem | StoryAward | { name: string; description?: string }>;
+		items: Array<MagicItem | StoryAward>;
 		formatting?: boolean;
 		terms?: string[];
 		collapsible?: boolean;
 		sort?: boolean;
-		textClass?: string;
 	}
 
-	let { title = "", items, formatting = false, terms = [], collapsible = false, sort = false, textClass = "" }: Props = $props();
+	let { title = "", items, formatting = false, terms = [], collapsible = false, sort = false }: Props = $props();
 
 	let collapsed = $state(collapsible);
 
@@ -47,7 +46,7 @@
 	};
 
 	const consolidatedItems = $derived.by(() => {
-		const itemsMap = new Map<string, number>();
+		const itemsMap = new SvelteMap<string, number>();
 		return $state.snapshot(items).reduce(
 			(acc, item) => {
 				const name = fixName(item.name);
@@ -99,17 +98,14 @@
 		</div>
 	{/if}
 	<p
-		class={twMerge(
-			"divide-x divide-black/50 text-sm leading-6 text-wrap in-[table]:leading-5 data-[collapsed=true]:hidden md:data-[collapsed=true]:inline dark:divide-white/50 print:text-xs print:data-[collapsed=true]:inline",
-			textClass
-		)}
+		class="divide-x divide-black/50 text-sm leading-6 text-wrap in-[table]:leading-5 data-[collapsed=true]:hidden md:data-[collapsed=true]:inline dark:divide-white/50 print:text-xs print:data-[collapsed=true]:inline"
 		data-collapsed={collapsed}
 	>
 		{#if items.length}
-			{#each nonConsumables as mi}<span
+			{#each nonConsumables as mi (mi.id)}<span
 					role={mi.description ? "button" : "presentation"}
 					class="inline pr-2 pl-2 first:pl-0"
-					class:text-secondary={mi.description}
+					class:text-secondary-content={mi.description}
 					onclick={() => {
 						if (mi.description) {
 							pushState("", { modal: { type: "text", name: mi.name, description: mi.description } });
@@ -118,10 +114,10 @@
 					onkeypress={() => null}
 				>
 					<SearchResults text={mi.name} {terms} />
-				</span>{/each}{#each consumables as mi}<span
+				</span>{/each}{#each consumables as mi (mi.id)}<span
 					role={mi.description ? "button" : "presentation"}
-					class="inline pr-2 pl-2 italic first:pl-0"
-					class:text-secondary={mi.description}
+					class="text-base-content/75 inline pr-2 pl-2 italic first:pl-0"
+					class:text-secondary-content={mi.description}
 					class:italic={formatting}
 					onclick={() => {
 						if (mi.description) {

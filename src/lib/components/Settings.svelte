@@ -1,13 +1,13 @@
 <script lang="ts">
 	import { goto, invalidateAll } from "$app/navigation";
-	import { page } from "$app/state";
-	import { authClient, setAccountDetails, type UserAccount } from "$lib/auth";
-	import { BLANK_CHARACTER, PROVIDERS } from "$lib/constants";
-	import { errorToast } from "$lib/factories.svelte";
+	import { authClient } from "$lib/auth";
+	import { BLANK_CHARACTER, PROVIDERS, type ProviderId } from "$lib/constants";
+	import { errorToast, parseEffectResult } from "$lib/factories.svelte";
+	import * as AppQueries from "$lib/remote/app/queries.remote";
+	import * as AuthActions from "$lib/remote/auth/actions.remote";
 	import { getGlobal } from "$lib/stores.svelte";
 	import { isDefined } from "@sillvva/utils";
 	import { isTupleOfAtLeast } from "effect/Predicate";
-	import { twMerge } from "tailwind-merge";
 	import Passkeys from "./Passkeys.svelte";
 	import ThemeSwitcher from "./ThemeSwitcher.svelte";
 
@@ -15,11 +15,16 @@
 		open: boolean;
 	}
 
+	export type UserAccount = { providerId: ProviderId; name: string; email: string; image: string };
+
 	let { open = $bindable(false) }: Props = $props();
 
 	const global = getGlobal();
 
-	const { user, session } = $derived(page.data);
+	const request = $derived(await AppQueries.request());
+	const user = $derived(request.user);
+	const session = $derived(request.session);
+
 	const authProviders = $derived(
 		PROVIDERS.map((p) => ({
 			...p,
@@ -40,7 +45,7 @@
 	$effect(() => {
 		if (!userAccounts.length && open) {
 			Promise.allSettled(
-				user.accounts.map(({ accountId, providerId }) =>
+				user?.accounts.map(({ accountId, providerId }) =>
 					authClient.accountInfo({ accountId }).then((r) =>
 						r.data?.user?.name && r.data?.user?.email && r.data?.user?.image
 							? {
@@ -51,13 +56,13 @@
 								}
 							: undefined
 					)
-				)
-			).then((result) => {
+				) ?? []
+			).then(async (result) => {
 				userAccounts = result.map((r) => (r.status === "fulfilled" ? r.value : undefined)).filter(isDefined);
 
 				const account =
 					userAccounts.find((a) => a.providerId === global.app.settings.provider) ||
-					userAccounts.find((a) => a.name === user.name && a.email === user.email) ||
+					userAccounts.find((a) => a.name === user?.name && a.email === user?.email) ||
 					(isTupleOfAtLeast(userAccounts, 1) ? userAccounts[0] : undefined);
 
 				if (account) {
@@ -65,13 +70,13 @@
 						global.app.settings.provider = account.providerId;
 					}
 					if (
-						account.name !== user.name ||
-						account.email !== user.email ||
-						(account.image !== user.image && !account.image.includes(BLANK_CHARACTER))
+						account.name !== user?.name ||
+						account.email !== user?.email ||
+						(account.image !== user?.image && !account.image.includes(BLANK_CHARACTER))
 					) {
-						setAccountDetails(user.id, account).then(() => {
-							invalidateAll();
-						});
+						const result = await AuthActions.updateUser(account);
+						const parsed = await parseEffectResult(result);
+						if (parsed) await AppQueries.request().refresh();
 					}
 				}
 			});
@@ -82,7 +87,7 @@
 {#if user}
 	<aside
 		id="settings"
-		class="bg-base-100 fixed inset-y-0 -right-80 z-50 flex w-80 flex-col overflow-y-auto px-4 pb-4 shadow-lg shadow-black/50 transition-all data-[open=true]:right-0"
+		class="bg-base-100 fixed inset-y-0 -right-80 z-50 flex w-80 flex-col overflow-y-auto px-4 pb-4 transition-all data-[open=true]:right-0 data-[open=true]:shadow-lg data-[open=true]:shadow-black/50 print:hidden"
 		data-open={open}
 	>
 		{#if user}
@@ -111,9 +116,9 @@
 						{user.email}
 					</div>
 				</div>
-				{#if session.impersonatedBy}
+				{#if session?.impersonatedBy}
 					<button
-						class="btn btn-sm btn-primary tooltip"
+						class="btn btn-sm btn-primary tooltip tooltip-left"
 						data-tip="Stop impersonating"
 						aria-label="Stop impersonating"
 						onclick={async () => {
@@ -127,7 +132,7 @@
 					</button>
 				{:else}
 					<button
-						class="btn tooltip p-3"
+						class="btn tooltip tooltip-left p-3"
 						data-tip="Sign out"
 						aria-label="Sign out"
 						onclick={() =>
@@ -157,10 +162,10 @@
 				<li class="menu-title">
 					<span class="font-bold">Linked Accounts</span>
 				</li>
-				{#each authProviders as provider}
+				{#each authProviders as provider (provider.id)}
 					<li>
 						<span class="flex gap-2 hover:bg-transparent">
-							<span class={twMerge("size=6 iconify-color", provider.iconify)}></span>
+							<span class={["size=6 iconify-color", provider.iconify]}></span>
 							<span class="flex-1">{provider.name}</span>
 							<span class="join flex items-center">
 								{#if provider.account}
@@ -175,11 +180,14 @@
 														class="btn btn-sm tooltip join-item bg-base-300"
 														aria-label="Switch account"
 														data-tip="Use this account"
-														onclick={() => {
-															setAccountDetails(user.id, account).then(() => {
+														disabled={!!AuthActions.updateUser.pending}
+														onclick={async () => {
+															const result = await AuthActions.updateUser(account);
+															const parsed = await parseEffectResult(result);
+															if (parsed) {
 																global.app.settings.provider = account.providerId;
-																invalidateAll();
-															});
+																await AppQueries.request().refresh();
+															}
 														}}
 													>
 														<span class="iconify mdi--accounts-switch size-5"></span>
@@ -188,17 +196,16 @@
 											{/if}
 											<button
 												class="btn btn-error btn-sm join-item font-semibold"
-												disabled={currentAccount?.providerId === provider.id}
-												onclick={() => {
+												disabled={currentAccount?.providerId === provider.id || !!AuthActions.updateUser.pending}
+												onclick={async () => {
 													if (confirm("Are you sure you want to unlink this account?")) {
-														authClient.unlinkAccount({ providerId: provider.id }).then((result) => {
-															if (result.error?.code) {
-																return errorToast(
-																	authClient.$ERROR_CODES[result.error.code as keyof typeof authClient.$ERROR_CODES]
-																);
-															}
-															invalidateAll();
-														});
+														const result = await authClient.unlinkAccount({ providerId: provider.id });
+														if (result.error?.code) {
+															return errorToast(
+																authClient.$ERROR_CODES[result.error.code as keyof typeof authClient.$ERROR_CODES]
+															);
+														}
+														invalidateAll();
 													}
 												}}
 											>
@@ -260,7 +267,7 @@
 					User ID:<br />{user.id}
 				</div>
 				<div class="px-2 text-xs text-gray-500 dark:text-gray-400">
-					Logged in {session.createdAt.toLocaleString()}
+					Logged in {session?.createdAt.toLocaleString()}
 				</div>
 			</div>
 		{/if}

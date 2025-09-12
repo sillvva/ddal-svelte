@@ -45,9 +45,9 @@
 		required = undefined,
 		link = "",
 		placeholder = "",
-		oninput = (el?: HTMLInputElement, value?: string) => {},
-		onselect = (sel: { selected?: (typeof values)[number]; input: string }) => {},
-		onclear = () => {},
+		oninput,
+		onselect,
+		onclear,
 		description
 	}: Props = $props();
 
@@ -77,7 +77,7 @@
 				.includes(($input || "").toLowerCase().replace(/\s+/g, ""))
 		)
 	);
-	const firstItem = $derived<Item>({ value: "", label: $input, itemLabel: `Add "${$input}"` });
+	const firstItem = $derived<Item>({ value: "", label: $input, itemLabel: `Add ${$input}` });
 	const filtered = $derived(
 		!$input?.trim() || !allowCustom || prefiltered.length === 1 ? prefiltered : [firstItem].concat(prefiltered)
 	);
@@ -86,7 +86,7 @@
 		$value
 			? values.find((v) => v.value === $value)
 			: $input.trim() && allowCustom
-				? { value: "", label: $input, itemLabel: `Add "${$input}"` }
+				? { value: "", label: $input, itemLabel: `Add ${$input}` }
 				: undefined
 	);
 
@@ -94,7 +94,7 @@
 		$value = "";
 		$input = "";
 		selectedItem = undefined;
-		onclear();
+		onclear?.();
 		open = false;
 	}
 </script>
@@ -110,7 +110,7 @@
 		const item = filtered.find((item) => item.value === sel);
 		$input = item?.label || item?.value || "";
 		selectedItem = { value: item?.value || "", label: $input, itemLabel: $input };
-		onselect({ selected: item, input: $input });
+		onselect?.({ selected: item, input: $input });
 		open = false;
 	}}
 	onOpenChange={() => {
@@ -142,7 +142,7 @@
 						if (!cValue) return clear();
 						$input = cValue;
 						$value = "";
-						oninput(e.currentTarget, cValue);
+						oninput?.(e.currentTarget, cValue);
 						changed = true;
 					}}
 					onblur={() => {
@@ -163,7 +163,7 @@
 				<Combobox.ContentStatic class="menu dropdown-content bg-base-200 z-10 w-full rounded-lg p-2 shadow-sm">
 					{#snippet child({ props })}
 						<ul {...props}>
-							{#each filtered.slice(0, 8) as item}
+							{#each filtered.slice(0, 8) as item (item.value)}
 								<Combobox.Item
 									value={item.value}
 									label={item.label}

@@ -1,86 +1,64 @@
 <script lang="ts">
 	import { goto } from "$app/navigation";
-	import { page } from "$app/state";
 	import { searchSections } from "$lib/constants.js";
 	import { GlobalSearchFactory } from "$lib/factories.svelte";
-	import { getGlobal } from "$lib/stores.svelte";
+	import * as AppQueries from "$lib/remote/app/queries.remote";
+	import * as CommandQueries from "$lib/remote/command/queries.remote";
 	import { hotkey } from "$lib/util";
-	import type { SearchData } from "$src/routes/(api)/command/+server";
 	import { Command, Dialog, Separator } from "bits-ui";
-	import { twMerge } from "tailwind-merge";
 	import SearchResults from "./SearchResults.svelte";
 
 	const defaultSelected: string = searchSections[0].url;
-	let global = getGlobal();
 
-	let cmdOpen = $state(false);
+	let open = $state(false);
 	let selected: string = $state(defaultSelected);
 	let command = $state<Command.Root | null>(null);
 	let viewport = $state<HTMLDivElement | null>(null);
 	let input = $state<HTMLInputElement | null>(null);
-	let categories = $derived(global.searchData.map((section) => section.title).filter((c) => c !== "Sections"));
+	let searchData = $state<CommandQueries.SearchData>([]);
 
-	const search = $derived(new GlobalSearchFactory(global.searchData, cmdOpen ? "" : ""));
+	const search = $derived(new GlobalSearchFactory(searchData, open ? "" : ""));
+	const resultsCount = $derived(search.results.reduce((sum, section) => sum + section.items.length, 0));
+	const categories = $derived(searchData.map((section) => section.title).filter((c) => c !== "Sections"));
 
-	$effect(() => {
-		const controller = new AbortController();
-		if (!global.searchData.length && cmdOpen) {
-			fetch(`/command`, { signal: controller.signal })
-				.then((res) => res.json() as Promise<SearchData>)
-				.then((res) => (global.searchData = res));
-		} else {
-			controller.abort();
-		}
-
-		return () => {
-			controller.abort();
-		};
-	});
-
-	$effect(() => {
-		if (cmdOpen && input) setTimeout(() => input?.focus(), 100);
-	});
-
-	async function open() {
-		cmdOpen = true;
-		input?.focus();
-	}
-
-	function close() {
+	async function setOpen(newOpen: boolean) {
+		open = newOpen;
 		search.query = "";
-		cmdOpen = false;
+		if (open) {
+			searchData = await CommandQueries.getCommandData();
+			input?.focus();
+		} else {
+			searchData = [];
+		}
 	}
 
 	function select(value: string) {
+		setOpen(false);
 		goto(value);
-		close();
 	}
-
-	const resultsCount = $derived(search.results.reduce((sum, section) => sum + section.items.length, 0));
 </script>
 
 <svelte:document
 	{@attach hotkey([
 		[
-			page.data.isMac ? "meta+k" : "ctrl+k",
+			"mod+k",
 			() => {
-				open();
+				setOpen(true);
 			}
 		],
 		[
 			"Escape",
 			() => {
-				close();
+				setOpen(false);
 			}
 		]
 	])}
 />
 
-<Dialog.Root bind:open={cmdOpen} onOpenChange={() => (search.query = "")}>
+<Dialog.Root bind:open={() => open, setOpen}>
 	<Dialog.Trigger
-		class="hover-hover:md:input hover-hover:md:gap-4 hover-hover:md:cursor-text h-10"
+		class="hover-hover:md:input hover-hover:md:gap-4 hover-hover:md:cursor-text touch-hitbox h-10"
 		aria-label="Search"
-		onclick={() => open()}
 	>
 		<span class="hover-hover:md:text-base-content/60 flex items-center gap-1">
 			<span class="iconify mdi--magnify hover-hover:md:size-4 hover-none:w-10 size-6 max-md:w-10"></span>
@@ -88,11 +66,11 @@
 		</span>
 		<span class="hover-hover:max-md:hidden hover-none:hidden">
 			<kbd class="kbd kbd-sm">
-				{#if page.data.isMac}
-					⌘
-				{:else}
-					CTRL
-				{/if}
+				<svelte:boundary>
+					{@const request = await AppQueries.request()}
+					{#snippet pending()}{/snippet}
+					{request.isMac ? "⌘" : "CTRL"}
+				</svelte:boundary>
 			</kbd>
 			<kbd class="kbd kbd-sm">K</kbd>
 		</span>
@@ -101,14 +79,7 @@
 		<Dialog.Overlay class="bg-base-300/75! modal modal-open">
 			<Dialog.Content class="modal-box bg-base-100 relative cursor-default overflow-y-hidden px-4 py-5 drop-shadow-lg sm:p-6">
 				<Dialog.Title class="sr-only">Command Search</Dialog.Title>
-				<Dialog.Description class="sr-only">
-					This is the command menu. Use the arrow keys to navigate and press
-					{#if page.data.isMac}
-						⌘K
-					{:else}
-						CTRL+K
-					{/if} to open the search bar.
-				</Dialog.Description>
+				<Dialog.Description class="sr-only">This is the command menu. Use the arrow keys to navigate.</Dialog.Description>
 				<Command.Root label="Command Menu" bind:this={command} bind:value={selected} class="flex flex-col gap-4" loop>
 					<Command.Input bind:ref={input}>
 						{#snippet child({ props })}
@@ -123,18 +94,19 @@
 										placeholder="Search"
 										class="outline-0"
 										oninput={(ev: Event) => {
-											const val = (ev.target as HTMLInputElement).value;
-											if (search.query !== val) {
-												search.query = val;
+											const value = (ev.target as HTMLInputElement).value;
+											const trimmed = value.trim();
+											if (search.query !== trimmed) {
+												search.query = trimmed;
 												command?.updateSelectedToIndex(0);
 												if (viewport) viewport.scrollTop = 0;
 											}
 										}}
 									/>
 								</label>
-								<select bind:value={search.category} class="select join-item w-auto">
+								<select id="search-category" bind:value={search.category} class="select join-item w-auto">
 									<option value={null}>All Categories</option>
-									{#each categories as category}
+									{#each categories as category (category)}
 										<option value={category}>{category}</option>
 									{/each}
 								</select>
@@ -144,18 +116,18 @@
 					<Command.List class="flex flex-col gap-2">
 						{#if resultsCount}
 							<Command.Viewport class="h-96 overflow-y-auto" bind:ref={viewport}>
-								{#each search.results as section}
+								{#each search.results as section (section.title)}
 									{#if section.items.length && section.previousCount}
 										<Command.Separator class="divider mt-2 mb-0" />
 									{/if}
-									<Command.Group value={section.title} class={twMerge(!section.items.length && "hidden")}>
+									<Command.Group value={section.title} class={[!section.items.length && "hidden"]}>
 										<Command.GroupHeading class="menu-title text-base-content/60 px-5">
 											{section.title}
 										</Command.GroupHeading>
 										<Command.GroupItems class="menu flex w-full flex-col py-0">
 											{#snippet child({ props })}
 												<ul {...props}>
-													{#each section.items as item}
+													{#each section.items as item ("id" in item ? item.id : item.name)}
 														<Command.Item
 															value={item.url}
 															onSelect={() => select(item.url)}
@@ -289,7 +261,7 @@
 									</Command.Group>
 								{/each}
 							</Command.Viewport>
-						{:else if !global.searchData.length}
+						{:else if !searchData.length}
 							<Command.Empty class="p-4 text-center font-bold">Loading data...</Command.Empty>
 						{:else}
 							<Command.Empty class="p-4 text-center font-bold">No results found.</Command.Empty>

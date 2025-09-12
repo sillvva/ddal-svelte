@@ -1,7 +1,8 @@
-<script module lang="ts">
+<script lang="ts" module>
 	import type { PageData } from "./$types.js";
+
 	export const pageTitle = "DM Logs";
-	export function getHeadData(data: PageData) {
+	export function getPageHead(data: Partial<PageData>) {
 		return {
 			title: `${data.user?.name}'s DM Logs`
 		};
@@ -9,16 +10,16 @@
 </script>
 
 <script lang="ts">
-	import { goto } from "$app/navigation";
+	import { goto, invalidateAll } from "$app/navigation";
 	import { page } from "$app/state";
-	import Breadcrumbs from "$lib/components/Breadcrumb.svelte";
+	import Breadcrumbs from "$lib/components/Breadcrumbs.svelte";
 	import Dropdown from "$lib/components/Dropdown.svelte";
 	import Items from "$lib/components/Items.svelte";
 	import Markdown from "$lib/components/Markdown.svelte";
 	import Search from "$lib/components/Search.svelte";
 	import SearchResults from "$lib/components/SearchResults.svelte";
-	import DeleteLog from "$lib/components/forms/DeleteLog.svelte";
-	import { EntitySearchFactory } from "$lib/factories.svelte.js";
+	import { EntitySearchFactory, parseEffectResult, successToast } from "$lib/factories.svelte.js";
+	import * as LogsActions from "$lib/remote/logs/actions.remote";
 	import { getGlobal } from "$lib/stores.svelte.js";
 	import { createTransition, hotkey } from "$lib/util.js";
 	import { sorter } from "@sillvva/utils";
@@ -136,7 +137,7 @@
 						</tr>
 					</tbody>
 				{:else}
-					{#each sortedResults as log}
+					{#each sortedResults as log (log.id)}
 						{@const hasDescription =
 							!!log.description?.trim() || log.storyAwardsGained.length > 0 || log.storyAwardsLost.length > 0}
 						<tbody class="border-t border-neutral-500/20 first:border-0">
@@ -155,7 +156,7 @@
 									{#if log.character}
 										<p class="text-sm font-normal">
 											<span class="font-semibold">Character:</span>
-											<a href="/characters/{log.character.id}" class="text-secondary">
+											<a href="/characters/{log.character.id}" class="text-secondary-content">
 												<SearchResults text={log.character.name} terms={search.terms} />
 											</a>
 										</p>
@@ -254,7 +255,26 @@
 								<!-- Delete -->
 								<td class="w-8 align-top print:hidden">
 									<div class="flex flex-col gap-2">
-										<DeleteLog {log} {deletingLog} />
+										<button
+											type="button"
+											class="btn btn-error btn-sm touch-hitbox"
+											aria-label="Delete Log"
+											onclick={async () => {
+												if (!confirm(`Are you sure you want to delete ${log.name}? This action cannot be undone.`)) return;
+												deletingLog.add(log.id);
+												const result = await LogsActions.deleteLog(log.id);
+												const parsed = await parseEffectResult(result);
+												if (parsed) {
+													successToast(`${log.name} deleted`);
+													// TODO: Refresh logs query
+													invalidateAll();
+												} else {
+													deletingLog.delete(log.id);
+												}
+											}}
+										>
+											<span class="iconify mdi--trash-can size-4"></span>
+										</button>
 									</div>
 								</td>
 							</tr>
@@ -281,7 +301,7 @@
 										</div>
 									{/if}
 									{#if log.storyAwardsGained.length > 0 || log.storyAwardsLost.length > 0}
-										{#each log.storyAwardsGained as mi}
+										{#each log.storyAwardsGained as mi (mi.id)}
 											<div class="mt-2 text-sm whitespace-pre-wrap">
 												<span class="pr-2 font-semibold dark:text-white print:block">
 													{mi.name}{mi.description ? ":" : ""}

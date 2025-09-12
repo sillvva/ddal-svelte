@@ -29,12 +29,16 @@
 					global.app.settings.mode = mode;
 					const opposite = mode === "dark" ? "light" : "dark";
 					document.documentElement.classList.replace(opposite, mode);
-					document.documentElement.dataset.theme = theme;
+					if (theme === "system") {
+						document.documentElement.removeAttribute("data-theme");
+					} else {
+						document.documentElement.dataset.theme = theme;
+					}
 				},
 				() => {
 					document.documentElement.classList.remove("theme-switcher");
 				},
-				800
+				900
 			);
 		}
 	});
@@ -42,9 +46,9 @@
 
 <select class="select select-bordered select-sm flex-1 leading-4" bind:value={theme}>
 	<option value="system" selected={global.app.settings.theme === "system"}>System</option>
-	{#each themeGroups as group}
+	{#each themeGroups as group (group)}
 		<hr />
-		{#each themes.filter((t) => "group" in t && t.group === group) as theme}
+		{#each themes.filter((t) => "group" in t && t.group === group) as theme (theme.value)}
 			<option value={theme.value} selected={global.app.settings.theme === theme.value}>{theme.name}</option>
 		{/each}
 	{/each}

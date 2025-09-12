@@ -39,7 +39,7 @@
 </script>
 
 {#if parts.length && regex}
-	{#each parts as part}
+	{#each parts as part, i (i)}
 		{#if regex.test(part)}
 			<span class="bg-primary text-primary-content px-1 font-semibold">{part}</span>
 		{:else}

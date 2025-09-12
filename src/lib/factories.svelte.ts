@@ -1,25 +1,48 @@
-import type { FullCharacterData } from "$server/effect/characters";
-import type { UserDM } from "$server/effect/dms";
-import type { FullLogData, LogSummaryData, UserLogData } from "$server/effect/logs";
-import type { SearchData } from "$src/routes/(api)/command/+server";
-import { parseDateTime, type DateValue } from "@internationalized/date";
+/* eslint-disable svelte/prefer-svelte-reactivity */
+import { goto, invalidateAll } from "$app/navigation";
+import type { FullCharacterData } from "$lib/server/effect/services/characters";
+import type { UserDM } from "$lib/server/effect/services/dms";
+import type { FullLogData, LogSummaryData, UserLogData } from "$lib/server/effect/services/logs";
+import { getLocalTimeZone, parseAbsoluteToLocal, toCalendarDateTime, type DateValue } from "@internationalized/date";
 import { debounce, isDefined, substrCount, type MapKeys, type Prettify } from "@sillvva/utils";
+import { isHttpError, type RemoteQuery, type RemoteQueryOverride } from "@sveltejs/kit";
 import { Duration } from "effect";
-import escape from "regexp.escape";
+import { onDestroy } from "svelte";
 import { toast } from "svelte-sonner";
-import { derived, get, type Readable, type Writable } from "svelte/store";
+import { SvelteMap } from "svelte/reactivity";
+import { derived, get, writable, type Readable, type Writable } from "svelte/store";
 import {
 	dateProxy,
 	fieldProxy,
 	superForm,
 	type FormOptions,
 	type FormPathLeaves,
-	type FormPathType,
+	type Infer,
+	type InferIn,
 	type SuperForm,
 	type SuperValidated
 } from "sveltekit-superforms";
 import { valibotClient } from "sveltekit-superforms/adapters";
 import * as v from "valibot";
+import type { FullPathname } from "./constants";
+import type { SearchData } from "./remote/command/queries.remote";
+import type { EffectFailure, EffectResult } from "./server/effect/runtime";
+import type { Awaitable } from "./util";
+
+export function isRedirectFailure(
+	error: EffectFailure["error"]
+): error is EffectFailure["error"] & { redirectTo: FullPathname & {} } {
+	return Boolean(error.redirectTo && typeof error.redirectTo === "string" && error.status <= 308);
+}
+
+export async function parseEffectResult<T>(result: EffectResult<T>) {
+	if (result.ok) return result.data;
+
+	errorToast(result.error.message);
+	if (isRedirectFailure(result.error)) {
+		await goto(result.error.redirectTo);
+	}
+}
 
 export function successToast(message: string) {
 	toast.success("Success", {
@@ -40,53 +63,189 @@ export function errorToast(message: string) {
 	});
 }
 
-interface CustomFormOptions<S extends v.ObjectSchema<any, any>> {
-	nameField?: FormPathLeaves<v.InferOutput<S>, string>;
+export function unknownErrorToast(error: unknown) {
+	if (typeof error === "string") errorToast(error);
+	else if (typeof error === "object" && error !== null && "message" in error && typeof error.message === "string")
+		errorToast(error.message);
+	else if (isHttpError(error)) errorToast(error.body.message);
+	else errorToast("An unknown error occurred");
 }
 
-export function valibotForm<S extends v.ObjectSchema<any, any>, Out extends v.InferOutput<S>, In extends v.InferInput<S>>(
+type RemoteUpdates = Array<RemoteQuery<unknown> | RemoteQueryOverride>;
+
+/**
+ * Configuration options for custom form behavior when using remote functions.
+ */
+export interface CustomFormOptions<Out extends Record<string, unknown>> {
+	remote?: (data: Out) => Promise<EffectResult<SuperValidated<Out> | FullPathname>>;
+	remoteUpdates?: undefined;
+	onSuccessResult?: (data: Out) => Awaitable<void>;
+	onErrorResult?: (error: EffectFailure["error"]) => Awaitable<void>;
+}
+
+/**
+ * Configuration options for forms that need fine-grained query updates.
+ * Extends CustomFormOptions but requires remote updates functionality.
+ */
+export interface OptionsWithUpdates<Out extends Record<string, unknown>> extends Omit<CustomFormOptions<Out>, "remoteUpdates"> {
+	remote?: (data: Out) => Promise<EffectResult<SuperValidated<Out> | FullPathname>> & {
+		updates: (...queries: RemoteUpdates) => Promise<EffectResult<SuperValidated<Out> | FullPathname>>;
+	};
+	remoteUpdates: () => RemoteUpdates;
+}
+
+/**
+ * Creates a SvelteKit Superforms form with Valibot validation and enhanced remote function capabilities.
+ *
+ * This function combines the power of SvelteKit Superforms with Valibot schema validation, providing
+ * a type-safe form solution that supports both traditional form submission and remote functions.
+ * It includes built-in error handling, success notifications, and optional query invalidation.
+ *
+ * @param form - The SuperValidated form data from SvelteKit Superforms, typically from a load function
+ * @param schema - The Valibot schema used for client-side validation
+ * @param options - Configuration options for form behavior, validation, and submission handling
+ *
+ * @returns Enhanced SuperForm object with additional properties:
+ *   - All standard SvelteKit Superforms properties (form, errors, message, etc.)
+ *   - `pending` - Writable store indicating if form submission is in progress
+ *   - `submitCount` - Writable store tracking the number of submission attempts
+ *
+ * @example
+ * ```typescript
+ * // Basic usage with Valibot schema
+ * const schema = v.object({
+ *   name: v.string(),
+ *   email: v.pipe(v.string(), v.email())
+ * });
+ *
+ * const { form, errors, enhance } = $derived(valibotForm(data.form, schema));
+ *
+ * // Usage in Svelte component
+ * <form method="POST" use:enhance>
+ *   <input bind:value={$form.name} />
+ *   {#if $errors.name}
+ *     <span class="error">{$errors.name}</span>
+ *   {/if}
+ * </form>
+ * ```
+ *
+ * @example
+ * ```typescript
+ * // Advanced usage with remote functions and updates
+ * const { form, errors, enhance, pending } = $derived(valibotForm(data.form, schema, {
+ *   remote: updateCharacter,
+ *   remoteUpdates: [
+ *     getCharacters(user.id),
+ *     getCharacter(character.id)
+ *   ]
+ * }));
+ * ```
+ *
+ * @see {@link https://superforms.rocks/ SvelteKit Superforms Documentation}
+ * @see {@link https://valibot.dev/ Valibot Documentation}
+ */
+export function valibotForm<S extends v.GenericSchema, Out extends Infer<S, "valibot">, In extends InferIn<S, "valibot">>(
 	form: SuperValidated<Out, App.Superforms.Message, In>,
 	schema: S,
-	options?: FormOptions<Out, App.Superforms.Message, In> & CustomFormOptions<S>
+	{
+		remote,
+		remoteUpdates,
+		invalidateAll: inalidate,
+		onSuccessResult = (data) => (typeof data === "object" && "name" in data ? successToast(`${data.name} saved`) : undefined),
+		onErrorResult = (error) => errorToast(error.message),
+		onSubmit,
+		onResult,
+		onError,
+		...rest
+	}: FormOptions<Out, App.Superforms.Message, In> & (CustomFormOptions<Out> | OptionsWithUpdates<Out>) = {}
 ) {
-	const { nameField = "name", ...rest } = options || {};
+	const pending = writable(false);
+	const submitCount = writable(0);
+
 	const superform = superForm(form, {
 		dataType: "json",
 		validators: valibotClient(schema),
 		taintedMessage: "You have unsaved changes. Are you sure you want to leave?",
 		...rest,
-		onResult(event) {
-			if (["success", "redirect"].includes(event.result.type)) {
-				const data = get(superform.form);
-				successToast(`${data[nameField]} saved`);
+
+		onSubmit: async (event) => {
+			pending.set(true);
+			submitCount.update((count) => count + 1);
+
+			if ((await onSubmit?.(event)) === false) {
+				pending.set(false);
+				return event.cancel();
 			}
-			rest.onResult?.(event);
+
+			if (remote) {
+				event.cancel();
+
+				const data = get(superform.form);
+				const result = (remoteUpdates && (await remote(data).updates(...remoteUpdates()))) ?? (await remote(data));
+
+				if (result.ok) {
+					if (typeof result.data === "string") {
+						superform.tainted.set(undefined);
+						await onSuccessResult(data);
+						await goto(result.data);
+						return;
+					}
+
+					const hasErrors = Object.keys(result.data.errors).length > 0;
+					superform.errors.set(result.data.errors);
+					superform.message.set(result.data.message);
+					superform.form.set(result.data.data, {
+						taint: hasErrors ? true : "untaint-form"
+					});
+
+					if (!hasErrors) await onSuccessResult(data);
+				} else {
+					await onErrorResult(result.error);
+
+					if (isRedirectFailure(result.error)) {
+						superform.tainted.set(undefined);
+						await goto(result.error.redirectTo);
+						return;
+					} else {
+						const error = result.error.message;
+						superform.errors.set({ _errors: [error] });
+					}
+				}
+
+				pending.set(false);
+			}
 		},
-		onError(event) {
-			errorToast(event.result.error.message);
-			if (rest.onError instanceof Function) rest.onError?.(event);
+
+		onResult(event) {
+			if (event.result.type !== "redirect") pending.set(false);
+
+			if (["success", "redirect"].includes(event.result.type)) {
+				onSuccessResult(get(superform.form));
+			}
+
+			onResult?.(event);
 		}
 	});
-	return superform;
+
+	onDestroy(async () => {
+		if (get(submitCount) > 0 && inalidate !== false && !remoteUpdates?.length) {
+			await invalidateAll();
+		}
+	});
+
+	return {
+		...superform,
+		pending,
+		submitCount
+	};
 }
 
 type ArgumentsType<T> = T extends (...args: infer U) => unknown ? U : never;
 type IntDateProxyOptions = Omit<NonNullable<ArgumentsType<typeof dateProxy>[2]>, "format">;
 
-export function dateToDV(date: Date) {
-	date.setSeconds(0);
-	date.setMilliseconds(0);
-	return parseDateTime(
-		date
-			.toLocaleDateString("sv", {
-				year: "numeric",
-				month: "2-digit",
-				day: "2-digit",
-				hour: "2-digit",
-				minute: "2-digit"
-			})
-			.replace(" ", "T")
-	);
+export function dateToDV(date: Date | null | undefined) {
+	if (!date) return undefined;
+	return toCalendarDateTime(parseAbsoluteToLocal(date.toISOString()));
 }
 
 export function intDateProxy<T extends Record<string, unknown>, Path extends FormPathLeaves<T, Date>>(
@@ -95,27 +254,15 @@ export function intDateProxy<T extends Record<string, unknown>, Path extends For
 	options?: IntDateProxyOptions
 ): Writable<DateValue | undefined> {
 	function toValue(value?: DateValue) {
-		if (!value && options?.empty !== undefined) {
-			return options.empty === "null" ? null : undefined;
-		}
-
-		const date = value && new Date(value.toString());
-		if (date) date.setSeconds(0);
-		if (date) date.setMilliseconds(0);
-
-		return date;
+		if (!value) return options?.empty === "null" ? null : undefined;
+		return value.toDate(getLocalTimeZone());
 	}
 
-	const realProxy = fieldProxy(form, path, { taint: options?.taint });
+	// eslint-disable-next-line @typescript-eslint/no-explicit-any
+	const realProxy = fieldProxy<T, any, Date | null | undefined>(form, path, { taint: options?.taint });
 
 	let updatedValue: DateValue | undefined = undefined;
-	let initialized = false;
-
 	const proxy: Readable<DateValue | undefined> = derived(realProxy, (value: unknown) => {
-		if (!initialized) {
-			initialized = true;
-		}
-
 		// Prevent proxy updating itself
 		if (updatedValue !== undefined) {
 			const current = updatedValue;
@@ -132,14 +279,12 @@ export function intDateProxy<T extends Record<string, unknown>, Path extends For
 		subscribe: proxy.subscribe,
 		set(val: DateValue | undefined) {
 			updatedValue = val;
-			const newValue = toValue(updatedValue) as FormPathType<T, Path>;
-			realProxy.set(newValue);
+			realProxy.set(toValue(updatedValue));
 		},
 		update(updater) {
 			realProxy.update((f) => {
-				updatedValue = updater(dateToDV(f as Date));
-				const newValue = toValue(updatedValue) as FormPathType<T, Path>;
-				return newValue;
+				updatedValue = updater(dateToDV(f));
+				return toValue(updatedValue);
 			});
 		}
 	};
@@ -162,6 +307,8 @@ class BaseSearchFactory<TData extends Array<unknown>> {
 	protected _query = $state<string>("");
 	protected _tokens = $state<Token[]>([]);
 
+	private _matchCache = new Map<string, { matches: Set<string>; score: number }>();
+
 	private _debouncedTokens = debounce((query: string) => {
 		this._tokens = this.tokenize(query);
 	}, this.DEBOUNCE_TIME);
@@ -178,6 +325,7 @@ class BaseSearchFactory<TData extends Array<unknown>> {
 
 	set query(query: string) {
 		this._query = query;
+		this._matchCache.clear();
 
 		if (query.trim().length < this.MIN_QUERY_LENGTH) this._tokens = [];
 		else this._debouncedTokens.call(query);
@@ -216,6 +364,12 @@ class BaseSearchFactory<TData extends Array<unknown>> {
 	}
 
 	protected hasMatch(item: string) {
+		const cacheKey = `${item}:${this._tokens.map((t) => t.value).join(",")}`;
+
+		if (this._matchCache.has(cacheKey)) {
+			return this._matchCache.get(cacheKey)!;
+		}
+
 		const itemLower = item.toLowerCase();
 		const matches = new Set<string>();
 
@@ -246,7 +400,9 @@ class BaseSearchFactory<TData extends Array<unknown>> {
 
 		score = Math.round((score / this._tokens.length) * this.SCORE_PRECISION) / this.SCORE_PRECISION;
 
-		return { matches, score };
+		const result = { matches, score };
+		this._matchCache.set(cacheKey, result);
+		return result;
 	}
 
 	protected getCharacterIndex(item: FullCharacterData) {
@@ -292,10 +448,10 @@ class BaseSearchFactory<TData extends Array<unknown>> {
 	}
 }
 
-type MapIndexKeys<T extends (...args: any) => any> = MapKeys<ReturnType<T>["index"]>;
-type CharacterIndexKeys = MapIndexKeys<BaseSearchFactory<any>["getCharacterIndex"]>;
-type LogIndexKeys = MapIndexKeys<BaseSearchFactory<any>["getLogIndex"]>;
-type DMIndexKeys = MapIndexKeys<BaseSearchFactory<any>["getDMIndex"]>;
+type MapIndexKeys<F> = F extends (...args: infer _A) => { index: Map<infer K, infer V> } ? MapKeys<Map<K, V>> : never;
+type CharacterIndexKeys = MapIndexKeys<BaseSearchFactory<unknown[]>["getCharacterIndex"]>;
+type LogIndexKeys = MapIndexKeys<BaseSearchFactory<unknown[]>["getLogIndex"]>;
+type DMIndexKeys = MapIndexKeys<BaseSearchFactory<unknown[]>["getDMIndex"]>;
 
 type ExpandedSearchData<TData extends SearchData[number]> = TData extends {
 	title: infer Title;
@@ -327,28 +483,26 @@ export class GlobalSearchFactory extends BaseSearchFactory<SearchData> {
 	private MAX_RESULTS_WITH_CATEGORY = 10 as const;
 
 	private _category = $state<SearchData[number]["title"] | null>(null);
-	private _indexMap = $derived(
-		new Map(
-			this._tdata.map((entry) => {
-				return [
-					entry.title,
-					new Map(
-						entry.items
-							.map((item) => {
-								if (item.type === "character") {
-									return this.getCharacterIndex(item);
-								} else if (item.type === "dm") {
-									return this.getDMIndex(item);
-								} else if (item.type === "log") {
-									return this.getLogIndex(item);
-								}
-							})
-							.filter(isDefined)
-							.map((item) => [item.id, item.index])
-					)
-				];
-			})
-		)
+	private _indexMap = new SvelteMap(
+		this._tdata.map((entry) => {
+			return [
+				entry.title,
+				new SvelteMap(
+					entry.items
+						.map((item) => {
+							if (item.type === "character") {
+								return this.getCharacterIndex(item);
+							} else if (item.type === "dm") {
+								return this.getDMIndex(item);
+							} else if (item.type === "log") {
+								return this.getLogIndex(item);
+							}
+						})
+						.filter(isDefined)
+						.map((item) => [item.id, item.index])
+				)
+			];
+		})
 	);
 
 	constructor(data: SearchData, defaultQuery: string = "") {
@@ -440,20 +594,18 @@ export class GlobalSearchFactory extends BaseSearchFactory<SearchData> {
 export class EntitySearchFactory<
 	TData extends FullCharacterData[] | FullLogData[] | LogSummaryData[] | UserDM[]
 > extends BaseSearchFactory<TData> {
-	private _indexMap = $derived(
-		new Map(
-			this._tdata
-				.map((entry) => {
-					if ("class" in entry) {
-						return this.getCharacterIndex(entry);
-					} else if ("isUser" in entry) {
-						return this.getDMIndex(entry);
-					} else {
-						return this.getLogIndex(entry);
-					}
-				})
-				.map((entry) => [entry.id, entry.index])
-		)
+	private _indexMap = new SvelteMap(
+		this._tdata
+			.map((entry) => {
+				if ("class" in entry) {
+					return this.getCharacterIndex(entry);
+				} else if ("isUser" in entry) {
+					return this.getDMIndex(entry);
+				} else {
+					return this.getLogIndex(entry);
+				}
+			})
+			.map((entry) => [entry.id, entry.index])
 	);
 
 	constructor(data: TData, defaultQuery: string = "") {

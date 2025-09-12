@@ -1,20 +1,16 @@
-import { getError } from "$server/auth";
-import { run } from "$server/effect";
+import { getHomeError } from "$lib/server/effect/services/auth";
 import { redirect } from "@sveltejs/kit";
 
-export const load = (event) =>
-	run(function* () {
-		const user = event.locals.user;
+export const load = (event) => {
+	const user = event.locals.user;
 
-		const redirectTo = event.url.searchParams.get("redirect");
-		if (user?.id) redirect(307, redirectTo || "/characters");
+	const redirectTo = event.url.searchParams.get("redirect");
+	if (user?.id) redirect(302, redirectTo || "/characters");
 
-		const code = event.url.searchParams.get("code");
-		const reason = event.url.searchParams.get("reason");
-		const error = getError(code, reason);
+	const error = getHomeError();
 
-		return {
-			redirectTo,
-			error
-		};
-	});
+	return {
+		redirectTo,
+		error
+	};
+};

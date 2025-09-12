@@ -1,6 +1,7 @@
-<script module lang="ts">
+<script lang="ts" module>
 	import type { PageData } from "./$types.js";
-	export function getHeadData(data: PageData) {
+	export const pageTitle = "Characters";
+	export function getPageHead(data: Partial<PageData>) {
 		return {
 			title: `${data.user?.name}'s Characters`
 		};
@@ -10,12 +11,12 @@
 <script lang="ts">
 	import { goto } from "$app/navigation";
 	import { page } from "$app/state";
-	import Breadcrumbs from "$lib/components/Breadcrumb.svelte";
+	import Breadcrumbs from "$lib/components/Breadcrumbs.svelte";
 	import Dropdown from "$lib/components/Dropdown.svelte";
 	import Search from "$lib/components/Search.svelte";
 	import SearchResults from "$lib/components/SearchResults.svelte";
 	import { EntitySearchFactory } from "$lib/factories.svelte.js";
-	import { getGlobal, transition } from "$lib/stores.svelte.js";
+	import { getGlobal } from "$lib/stores.svelte.js";
 	import { createTransition, hotkey } from "$lib/util";
 	import { sorter } from "@sillvva/utils";
 	import { download } from "@svelteuidev/composables";
@@ -52,20 +53,12 @@
 		</Dropdown>
 	</div>
 
-	{#if page.url.searchParams.get("uuid")}
-		<div class="alert alert-warning">
-			<span class="iconify mdi--alert size-6"></span>
-			Database IDs have been changed from CUIDs to UUIDs. This will break existing links to characters, but no data has been lost.
-			You will still be able to access your characters using the new UUID going forward.
-		</div>
-	{/if}
-
 	{#if !data.characters.length}
 		<section class="bg-base-200 rounded-lg">
 			<div class="py-20 text-center">
 				<p class="mb-4">No characters found.</p>
 				<p>
-					<a href="/characters/new" class="btn btn-primary">Create your first character</a>
+					<a href="/characters/new/edit" class="btn btn-primary">Create your first character</a>
 				</p>
 			</div>
 		</section>
@@ -73,13 +66,13 @@
 		<div class="flex flex-wrap justify-between gap-2">
 			<div class="flex gap-2 max-sm:w-full sm:max-md:flex-1 md:w-md">
 				<a
-					href="/characters/new"
+					href="/characters/new/edit"
 					class="btn btn-primary btn-sm max-sm:hidden"
 					{@attach hotkey([
 						[
 							"n",
 							() => {
-								goto(`/characters/new`);
+								goto(`/characters/new/edit`);
 							}
 						]
 					])}
@@ -165,11 +158,11 @@
 						</tr>
 					</thead>
 					<tbody>
-						{#each sortedResults as character}
+						{#each sortedResults as character (character.id)}
 							<tr class="group/row">
 								<td class="pr-0 align-top transition-colors sm:pr-2">
 									<div class="avatar">
-										<div class="mask mask-squircle bg-primary size-12" {@attach transition("image-" + character.id)}>
+										<div class="mask mask-squircle bg-primary size-12" style:view-transition-name={"image-" + character.id}>
 											{#if character.imageUrl}
 												{#key character.imageUrl}
 													<img
@@ -246,7 +239,7 @@
 				</table>
 			</div>
 
-			{#each [1, 2, 3, 4] as tier}
+			{#each [1, 2, 3, 4] as tier (tier)}
 				{#if sortedResults.filter((c) => c.tier == tier).length}
 					<h1
 						class="font-vecna max-xs:data-[display=grid]:hidden pt-6 pb-2 text-3xl font-bold data-[display=list]:hidden data-[tier=1]:pt-0 dark:text-white"
@@ -259,11 +252,11 @@
 						class="xs:data-[display=grid]:grid hidden w-full data-[display=grid]:grid-cols-2 data-[display=grid]:gap-4 sm:data-[display=grid]:grid-cols-3 md:data-[display=grid]:grid-cols-4"
 						data-display={global.app.characters.display}
 					>
-						{#each sortedResults.filter((c) => c.tier == tier) as character}
+						{#each sortedResults.filter((c) => c.tier == tier) as character (character.id)}
 							<a
 								href={`/characters/${character.id}`}
 								class="card card-compact bg-base-200 shadow-xl transition-transform duration-200 motion-safe:hover:scale-105"
-								{@attach transition("image-" + character.id)}
+								style:view-transition-name={"image-" + character.id}
 							>
 								<figure class="relative aspect-square overflow-hidden">
 									{#key character.imageUrl}

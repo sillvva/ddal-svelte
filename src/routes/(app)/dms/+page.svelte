@@ -1,7 +1,8 @@
-<script module lang="ts">
+<script lang="ts" module>
 	import type { PageData } from "./$types.js";
+
 	export const pageTitle = "DMs";
-	export function getHeadData(data: PageData) {
+	export function getPageHead(data: Partial<PageData>) {
 		return {
 			title: `${data.user?.name}'s DMs`
 		};
@@ -9,11 +10,13 @@
 </script>
 
 <script lang="ts">
-	import Breadcrumbs from "$lib/components/Breadcrumb.svelte";
+	import { invalidateAll } from "$app/navigation";
+	import Breadcrumbs from "$lib/components/Breadcrumbs.svelte";
 	import Search from "$lib/components/Search.svelte";
 	import SearchResults from "$lib/components/SearchResults.svelte";
-	import DeleteDm from "$lib/components/forms/DeleteDM.svelte";
-	import { EntitySearchFactory } from "$lib/factories.svelte.js";
+	import { parseEffectResult } from "$lib/factories.svelte";
+	import { EntitySearchFactory, successToast } from "$lib/factories.svelte.js";
+	import * as DMsActions from "$lib/remote/dms/actions.remote";
 	import { sorter } from "@sillvva/utils";
 	import { SvelteSet } from "svelte/reactivity";
 
@@ -53,12 +56,12 @@
 								</td>
 							</tr>
 						{:else}
-							{#each sortedResults as dm}
+							{#each sortedResults as dm (dm.id)}
 								<tr class="data-[deleting=true]:hidden" data-deleting={deletingDM.has(dm.id)}>
 									<td>
 										<a
 											href="/dms/{dm.id}"
-											class="text-secondary text-left font-semibold whitespace-pre-wrap"
+											class="text-secondary-content text-left font-semibold whitespace-pre-wrap"
 											aria-label="Edit DM"
 										>
 											<SearchResults text={dm.name} terms={search.terms} />
@@ -73,8 +76,27 @@
 									<td>{dm.logs.length}</td>
 									<td class="w-16 print:hidden">
 										<div class="flex flex-row justify-end gap-2">
-											{#if dm.logs.length == 0}
-												<DeleteDm {dm} {deletingDM} />
+											{#if dm.logs.length == 0 && !dm.isUser}
+												<button
+													type="button"
+													class="btn btn-error sm:btn-sm touch-hitbox"
+													aria-label="Delete DM"
+													onclick={async () => {
+														if (!confirm(`Are you sure you want to delete ${dm.name}? This action cannot be undone.`)) return;
+														deletingDM.add(dm.id);
+														const result = await DMsActions.deleteDM(dm.id);
+														const parsed = await parseEffectResult(result);
+														if (parsed) {
+															successToast(`${dm.name} deleted`);
+															// TODO: Refresh dm query
+															invalidateAll();
+														} else {
+															deletingDM.delete(dm.id);
+														}
+													}}
+												>
+													<span class="iconify mdi--trash-can"></span>
+												</button>
 											{/if}
 										</div>
 									</td>

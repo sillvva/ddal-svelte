@@ -1,29 +1,31 @@
+<script lang="ts" module>
+	export const pageHead = {
+		title: "App Logs"
+	};
+</script>
+
 <script lang="ts">
-	import { goto, invalidateAll, pushState } from "$app/navigation";
+	import { pushState } from "$app/navigation";
 	import { page } from "$app/state";
-	import DeleteAppLog from "$lib/components/forms/DeleteAppLog.svelte";
-	import type { AppLogId } from "$lib/schemas.js";
+	import LoadingPanel from "$lib/components/LoadingPanel.svelte";
+	import { parseEffectResult } from "$lib/factories.svelte";
+	import { successToast } from "$lib/factories.svelte.js";
+	import * as AdminActions from "$lib/remote/admin/actions.remote";
+	import * as AdminQueries from "$lib/remote/admin/queries.remote";
 	import { debounce } from "@sillvva/utils";
-	import { SvelteSet } from "svelte/reactivity";
+	import { queryParam, ssp } from "sveltekit-search-params";
 
-	let { data } = $props();
+	const s = queryParam("s", ssp.string(), {
+		showDefaults: false
+	});
 
-	let search = $state(data.search || "");
-	let deletingLog = new SvelteSet<AppLogId>();
+	const baseSearch = $derived(await AdminQueries.getBaseSearch());
+	const query = $derived(AdminQueries.getAppLogs($s ?? baseSearch.query));
+	let loading = $derived(!query.current);
+	const logSearch = $derived(await query);
 
-	const debouncedSearch = debounce((value: string) => {
-		if (value.trim()) {
-			page.url.searchParams.set("s", value);
-		} else {
-			page.url.searchParams.delete("s");
-		}
-		const params = page.url.searchParams.size ? "?" + page.url.searchParams.toString() : "";
-		goto(page.url.pathname + params, {
-			replaceState: true,
-			keepFocus: true,
-			noScroll: true,
-			invalidateAll: true
-		});
+	const debouncedSearch = debounce((query: string) => {
+		$s = query.trim() || null;
 	}, 400);
 
 	let syntaxReference = $state("");
@@ -45,51 +47,53 @@
 	}
 </script>
 
-<div class="fieldset mb-4 flex flex-col gap-1">
+<div class="flex flex-col gap-1">
 	<div class="flex items-center justify-between">
 		<div class="flex w-full gap-2 sm:max-w-md md:max-w-md">
 			<search class="flex flex-1">
 				<div class="focus-within:outline-primary join flex flex-1 items-center rounded-lg focus-within:outline-2">
 					<input
 						type="text"
-						bind:value={search}
+						id="log-search"
+						value={page.url.searchParams.get("s")}
 						oninput={(e) => {
+							loading = true;
 							debouncedSearch.call(e.currentTarget.value);
 						}}
 						class="input sm:input-sm join-item flex-1"
 						aria-label="Search"
-						placeholder={data.search}
+						placeholder={baseSearch.query ?? ""}
 					/>
-					{#if !data.mobile}
-						<button
-							class="btn sm:btn-sm join-item tooltip border-base-content/20 border"
-							data-tip="Syntax Reference"
-							aria-label="Syntax Reference"
-							onclick={openSyntaxReference}
-						>
-							<span class="iconify mdi--help-circle size-6 sm:size-4"></span>
-						</button>
-					{/if}
+					<button
+						class="btn sm:btn-sm join-item tooltip border-base-content/20 border max-sm:hidden"
+						data-tip="Syntax Reference"
+						aria-label="Syntax Reference"
+						onclick={openSyntaxReference}
+					>
+						<span class="iconify mdi--help-circle size-6 sm:size-4"></span>
+					</button>
 				</div>
 			</search>
 		</div>
 		<div class="flex justify-end text-sm max-sm:hidden">Logs are automatically deleted after 7 days.</div>
 	</div>
-	{#if data.metadata.hasErrors}
-		{#each data.metadata.errors as error}
+	{#if logSearch.metadata?.hasErrors}
+		{#each logSearch.metadata.errors as error, i (i)}
 			<div class="alert alert-error mt-1 w-fit rounded-lg py-1">
 				<span class="iconify mdi--alert-circle size-6"></span>
 				{error.message} at position {error.position}: <kbd>{error.value}</kbd>
 			</div>
 		{/each}
 	{:else}
-		<div class="label pl-3 text-sm whitespace-normal">
-			Valid keys: {data.validKeys.join(", ")}
+		<div class="label text-xs whitespace-normal">
+			Valid keys: {baseSearch.validKeys.join(", ")}
 		</div>
 	{/if}
 </div>
 
-{#if data.logs.length}
+{#if loading}
+	<LoadingPanel />
+{:else if logSearch.logs.length}
 	<div class="overflow-x-auto rounded-lg">
 		<table class="bg-base-200 table w-full leading-5 max-sm:border-separate max-sm:border-spacing-y-2">
 			<thead class="max-sm:hidden">
@@ -100,33 +104,38 @@
 					<td class="max-xs:hidden w-0"></td>
 				</tr>
 			</thead>
-			{#each data.logs as log}
+			{#each logSearch.logs as log (log.id)}
 				{#snippet actions()}
 					<button
 						class="btn btn-sm btn-primary tooltip tooltip-left"
 						data-tip="Toggle details"
 						aria-label="Toggle details"
 						onclick={() => {
-							const details = document.querySelector(`tr[data-id="${log.id}"]`) as HTMLTableRowElement | null;
-							if (details) details.dataset.details = details.dataset.details === "true" ? "false" : "true";
+							const row = document.querySelector(`tr[data-id="${log.id}"]`) as HTMLTableRowElement | null;
+							if (row) row.dataset.details = row.dataset.details === "true" ? "false" : "true";
 						}}
 					>
 						<span class="iconify mdi--eye"></span>
 					</button>
-					<DeleteAppLog
-						{log}
-						{deletingLog}
-						ondelete={() => {
-							const details = document.querySelector(`tr[data-id="${log.id}"]`) as HTMLTableRowElement | null;
-							if (details) details.dataset.details = "false";
-							invalidateAll();
+					<button
+						class="btn btn-sm btn-error tooltip tooltip-left"
+						data-tip="Delete log"
+						aria-label="Delete log"
+						onclick={async () => {
+							const result = await AdminActions.deleteAppLog(log.id).updates(
+								AdminQueries.getAppLogs($s ?? baseSearch.query).withOverride((data) => ({
+									...data,
+									logs: data.logs.filter((l) => l.id !== log.id)
+								}))
+							);
+							const parsed = await parseEffectResult(result);
+							if (parsed) successToast("Log deleted");
 						}}
-					/>
+					>
+						<span class="iconify mdi--delete"></span>
+					</button>
 				{/snippet}
-				<tbody
-					class="scroll-mt-16 border-t border-neutral-500/20 first:border-0 data-[deleting=true]:hidden"
-					data-deleting={deletingLog.has(log.id)}
-				>
+				<tbody class="scroll-mt-16 border-t border-neutral-500/20 first:border-0 data-[deleting=true]:hidden">
 					<tr class="border-0">
 						<td>
 							<span class="sm:hidden">[{log.level}]</span>
@@ -157,7 +166,7 @@
 								{/if}
 								<div class="bg-base-100 overflow-x-scroll rounded-lg p-6">
 									<h3 class="mb-2 text-lg font-bold">Annotations</h3>
-									<pre>{JSON.stringify(log.annotations, null, 2)}</pre>
+									<pre class="whitespace-break-spaces">{JSON.stringify(log.annotations, null, 2)}</pre>
 								</div>
 							</div>
 						</td>

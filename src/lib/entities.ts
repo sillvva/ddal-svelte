@@ -1,14 +1,15 @@
-import type { DungeonMaster, Log, MagicItem, StoryAward } from "$server/db/schema";
-import type { CharacterData, FullCharacterData } from "$server/effect/characters";
-import type { ExtendedLogData, FullLogData, LogData, LogSummaryData } from "$server/effect/logs";
+import type { DungeonMaster, Log, MagicItem, StoryAward } from "$lib/server/db/schema";
+import type { CharacterData, FullCharacterData } from "$lib/server/effect/services/characters";
+import type { ExtendedLogData, FullLogData, LogData, LogSummaryData } from "$lib/server/effect/services/logs";
 import { sorter } from "@sillvva/utils";
+import { v7 } from "uuid";
 import { BLANK_CHARACTER, PlaceholderName } from "./constants";
-import type { CharacterId, DungeonMasterId, LogIdOrNew, LogSchema, UserId } from "./schemas";
+import type { CharacterId, DungeonMasterId, LocalsUser, LogId, LogSchema, UserId } from "./schemas";
 
 export function getItemEntities(
 	character: FullCharacterData,
 	options?: {
-		lastLogId?: LogIdOrNew;
+		lastLogId?: LogId;
 		lastLogDate?: string;
 		excludeDropped?: boolean;
 	}
@@ -53,7 +54,6 @@ export function getLevels(
 	logs: Log[],
 	base: { level?: number; experience?: number; acp?: number } = { level: 0, experience: 0, acp: 0 }
 ) {
-	if (!logs) logs = [];
 	let totalLevel = Math.max(1, base.level || 0);
 	const logLevels: Array<{ id: string; levels: number }> = [];
 
@@ -146,16 +146,35 @@ export function getLogsSummary(logs: LogData[]) {
 	};
 }
 
+export function defaultCharacter(user: LocalsUser): FullCharacterData {
+	return parseCharacter({
+		id: v7() as CharacterId,
+		name: "",
+		race: "",
+		class: "",
+		campaign: "",
+		imageUrl: "",
+		characterSheetUrl: "",
+		userId: user.id,
+		user: user,
+		createdAt: new Date(),
+		logs: []
+	});
+}
+
 export function defaultDM(userId: UserId): DungeonMaster {
-	return { id: "" as DungeonMasterId, name: "", DCI: null, userId: userId, isUser: true };
+	return { id: v7() as DungeonMasterId, name: "", DCI: null, userId: userId, isUser: false };
 }
 
 export function defaultLogSchema(
 	userId: UserId,
-	character: { id: CharacterId | null; name: string } = { id: null, name: "" }
+	options?: {
+		character?: { id: CharacterId | null; name: string };
+		defaults?: Partial<LogSchema>;
+	}
 ): LogSchema {
 	return {
-		id: "new",
+		id: v7() as LogId,
 		name: "",
 		description: "",
 		date: new Date(),
@@ -166,15 +185,16 @@ export function defaultLogSchema(
 		level: 0,
 		gold: 0,
 		dtd: 0,
-		characterId: character.id,
-		characterName: character.name,
+		characterId: options?.character?.id || null,
+		characterName: options?.character?.name || "",
 		appliedDate: null,
 		dm: defaultDM(userId),
-		isDmLog: !character.id,
+		isDmLog: !options?.character?.id,
 		magicItemsGained: [],
 		magicItemsLost: [],
 		storyAwardsGained: [],
-		storyAwardsLost: []
+		storyAwardsLost: [],
+		...options?.defaults
 	};
 }
 

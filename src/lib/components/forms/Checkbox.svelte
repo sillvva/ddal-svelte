@@ -10,7 +10,7 @@
 		label: string;
 	}
 
-	let { superform, field, required = false, label, type, checked, ...rest }: Props = $props();
+	let { superform, field, required = false, label, ...rest }: Props = $props();
 
 	const { value } = formFieldProxy(superform, field) satisfies FormFieldProxy<boolean>;
 </script>

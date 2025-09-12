@@ -1,4 +1,4 @@
-import type { FullCharacterData } from "$server/effect/characters";
+import type { FullCharacterData } from "$lib/server/effect/services/characters";
 import type { Prettify } from "@sillvva/utils";
 import { LogLevel } from "effect";
 import * as v from "valibot";
@@ -6,18 +6,22 @@ import { BLANK_CHARACTER, PROVIDERS, themeGroups, themes } from "./constants";
 
 export type BrandedType = v.InferOutput<ReturnType<typeof brandedId>>;
 function brandedId<T extends string>(name: T) {
-	return v.pipe(v.string(), v.uuid(), v.brand(name));
+	return v.pipe(uuidV7, v.brand(name));
 }
 
 const string = v.pipe(v.string(), v.trim());
-const requiredString = v.pipe(string, v.regex(/^.*(\p{L}|\p{N})+.*$/u, "Required"));
-const shortString = v.pipe(string, v.maxLength(50));
-const maxTextSize = v.pipe(string, v.maxLength(5000));
-const maxStringSize = v.pipe(string, v.maxLength(255));
-const integer = v.pipe(v.number(), v.integer());
+export const requiredString = v.pipe(string, v.regex(/^.*(\p{L}|\p{N})+.*$/u, "Required"));
+export const shortString = v.pipe(string, v.maxLength(50));
+export const maxTextSize = v.pipe(string, v.maxLength(5000));
+export const maxStringSize = v.pipe(string, v.maxLength(255));
+export const integer = v.pipe(v.number(), v.integer());
+export const uuidV7 = v.pipe(
+	v.string(),
+	v.regex(/^[\da-f]{8}-[\da-f]{4}-7[\da-f]{3}-[\da-f]{4}-[\da-f]{12}$/iu, "Invalid UUIDv7")
+);
 
-const urlSchema = v.pipe(string, v.url(), v.maxLength(500));
-const optionalURL = v.optional(v.fallback(urlSchema, ""), "");
+export const urlSchema = v.pipe(string, v.url(), v.maxLength(500));
+export const optionalURL = v.optional(v.fallback(urlSchema, ""), "");
 
 export type EnvPrivate = v.InferOutput<typeof envPrivateSchema>;
 export const envPrivateSchema = v.pipe(
@@ -57,8 +61,15 @@ export const imageUrlWithFallback = v.pipe(
 export type UserId = v.InferOutput<typeof userIdSchema>;
 export const userIdSchema = brandedId("UserId");
 
-export type NewCharacterSchema = v.InferOutput<typeof newCharacterSchema>;
-export const newCharacterSchema = v.object({
+export type CharacterId = v.InferOutput<typeof characterIdSchema>;
+export const characterIdSchema = brandedId("CharacterId");
+
+export type CharacterIdParam = v.InferOutput<typeof characterIdParamSchema>;
+export const characterIdParamSchema = v.union([characterIdSchema, v.literal("new")]);
+
+export type CharacterSchema = v.InferOutput<typeof characterSchema>;
+export const characterSchema = v.object({
+	id: characterIdSchema,
 	name: v.pipe(requiredString, shortString),
 	campaign: v.optional(shortString, ""),
 	race: v.optional(shortString, ""),
@@ -67,16 +78,10 @@ export const newCharacterSchema = v.object({
 	imageUrl: v.optional(imageUrlWithFallback, "")
 });
 
-export type CharacterId = v.InferOutput<typeof characterIdSchema>;
-export const characterIdSchema = brandedId("CharacterId");
-
-export type CharacterIdOrNew = v.InferOutput<typeof characterIdOrNewSchema>;
-export const characterIdOrNewSchema = v.union([characterIdSchema, v.literal("new")]);
-
 export type EditCharacterSchema = v.InferOutput<typeof editCharacterSchema>;
+export type EditCharacterSchemaIn = v.InferInput<typeof editCharacterSchema>;
 export const editCharacterSchema = v.object({
-	id: characterIdOrNewSchema,
-	...newCharacterSchema.entries,
+	...characterSchema.entries,
 	firstLog: v.optional(v.boolean(), false)
 });
 
@@ -86,7 +91,7 @@ export const dungeonMasterIdSchema = brandedId("DungeonMasterId");
 export type DungeonMasterSchema = v.InferOutput<typeof dungeonMasterSchema>;
 export type DungeonMasterSchemaIn = v.InferInput<typeof dungeonMasterSchema>;
 export const dungeonMasterSchema = v.object({
-	id: v.union([dungeonMasterIdSchema, v.literal("")]),
+	id: dungeonMasterIdSchema,
 	name: v.pipe(requiredString, shortString),
 	DCI: v.nullish(v.pipe(string, v.regex(/\d{0,10}/, "Invalid DCI Format")), null),
 	userId: userIdSchema,
@@ -106,13 +111,13 @@ const itemSchema = v.object({
 export type LogId = v.InferOutput<typeof logIdSchema>;
 export const logIdSchema = brandedId("LogId");
 
-export type LogIdOrNew = v.InferOutput<typeof logIdOrNewSchema>;
-export const logIdOrNewSchema = v.union([logIdSchema, v.literal("new")]);
+export type LogIdParam = v.InferOutput<typeof logIdParamSchema>;
+export const logIdParamSchema = v.union([logIdSchema, v.literal("new")]);
 
 export type LogSchema = v.InferOutput<typeof logSchema>;
 export type LogSchemaIn = v.InferInput<typeof logSchema>;
 export const logSchema = v.object({
-	id: logIdOrNewSchema,
+	id: logIdSchema,
 	name: v.pipe(requiredString, maxStringSize),
 	date: v.date(),
 	characterId: v.nullish(characterIdSchema, null),
@@ -289,9 +294,12 @@ export const localsAccountSchema = v.object({
 	updatedAt: v.date()
 });
 
+export type PasskeyId = v.InferOutput<typeof passkeyIdSchema>;
+export const passkeyIdSchema = brandedId("PasskeyId");
+
 export type LocalsPasskey = v.InferOutput<typeof localsPasskeySchema>;
 export const localsPasskeySchema = v.object({
-	id: v.string(),
+	id: passkeyIdSchema,
 	name: v.nullable(v.string()),
 	publicKey: v.string(),
 	userId: userIdSchema,
