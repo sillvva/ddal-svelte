@@ -84,6 +84,9 @@
 	default: false;
 	prefersdark: false;
 	color-scheme: dark;
+
+	--color-secondary: oklch(13.602% 0.031 276.934);
+	--color-secondary-content: oklch(68.011% 0.158 276.934);
 }
 
 @plugin "daisyui/theme" {
@@ -109,8 +112,8 @@
 	--color-base-content: oklch(0% 0 0);
 	--color-primary: oklch(0% 0 0);
 	--color-primary-content: oklch(100% 0 0);
-	--color-secondary: oklch(0% 0 0);
-	--color-secondary-content: oklch(100% 0 0);
+	--color-secondary: oklch(100% 0 0);
+	--color-secondary-content: oklch(50% 0 0);
 	--color-accent: oklch(0% 0 0);
 	--color-accent-content: oklch(100% 0 0);
 	--color-neutral: oklch(0% 0 0);
