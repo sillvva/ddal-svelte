@@ -20,19 +20,3 @@ export function hotkey(hotkeys: HotkeyItem[]): Attachment<HTMLElement | Document
 export function removeTrace(message: string) {
 	return message.replace(/\n\s+at .+/g, "");
 }
-
-export type Crumb = {
-	title: string;
-	url: string;
-};
-export type PageHead = {
-	title: string;
-	description?: string;
-	image?: string;
-};
-export type ModuleData = {
-	pageTitle?: string;
-	getPageTitle?: (data: unknown) => string;
-	pageHead?: PageHead;
-	getPageHead?: (data: unknown) => Partial<PageHead>;
-};
