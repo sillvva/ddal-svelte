@@ -25,9 +25,24 @@ import {
 import { valibotClient } from "sveltekit-superforms/adapters";
 import * as v from "valibot";
 import type { FullPathname } from "./constants";
-import type { SearchData } from "./remote/command";
+import type { SearchData } from "./remote/command/queries.remote";
 import type { EffectFailure, EffectResult } from "./server/effect/runtime";
-import { isRedirectFailure, type Awaitable } from "./util";
+import type { Awaitable } from "./util";
+
+export function isRedirectFailure(
+	error: EffectFailure["error"]
+): error is EffectFailure["error"] & { redirectTo: FullPathname & {} } {
+	return Boolean(error.redirectTo && typeof error.redirectTo === "string" && error.status <= 308);
+}
+
+export async function parseEffectResult<T>(result: EffectResult<T>) {
+	if (result.ok) return result.data;
+
+	errorToast(result.error.message);
+	if (isRedirectFailure(result.error)) {
+		await goto(result.error.redirectTo);
+	}
+}
 
 export function successToast(message: string) {
 	toast.success("Success", {

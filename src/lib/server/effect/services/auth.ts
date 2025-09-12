@@ -22,6 +22,7 @@ const authConfig = (db: Database) =>
 		database: drizzleAdapter(db, {
 			provider: "pg"
 		}),
+		secret: privateEnv.AUTH_SECRET,
 		socialProviders: {
 			google: {
 				clientId: privateEnv.GOOGLE_CLIENT_ID,

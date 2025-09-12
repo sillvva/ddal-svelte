@@ -15,11 +15,12 @@
 	import Input from "$lib/components/forms/Input.svelte";
 	import Submit from "$lib/components/forms/Submit.svelte";
 	import SuperForm from "$lib/components/forms/SuperForm.svelte";
+	import { parseEffectResult } from "$lib/factories.svelte";
 	import { successToast, valibotForm } from "$lib/factories.svelte.js";
-	import DMsAPI from "$lib/remote/dms";
+	import * as DMsActions from "$lib/remote/dms/actions.remote";
+	import * as DMsForms from "$lib/remote/dms/forms.remote";
 	import { dungeonMasterSchema } from "$lib/schemas";
 	import { getGlobal } from "$lib/stores.svelte.js";
-	import { parseEffectResult } from "$lib/util.js";
 	import { sorter } from "@sillvva/utils";
 
 	let { data } = $props();
@@ -27,7 +28,7 @@
 	const global = getGlobal();
 
 	const superform = valibotForm(data.form, dungeonMasterSchema, {
-		remote: DMsAPI.forms.save
+		remote: DMsForms.save
 	});
 	const sortedLogs = $derived(data.dm.logs.toSorted((a, b) => sorter(a.date, b.date)));
 </script>
@@ -55,11 +56,11 @@
 						type="button"
 						class="btn btn-error sm:btn-sm"
 						aria-label="Delete DM"
-						disabled={!!DMsAPI.actions.delete.pending}
+						disabled={!!DMsActions.deleteDM.pending}
 						onclick={async () => {
 							if (!confirm(`Are you sure you want to delete ${data.dm.name}? This action cannot be undone.`)) return;
 							global.pageLoader = true;
-							const result = await DMsAPI.actions.delete(data.dm.id);
+							const result = await DMsActions.deleteDM(data.dm.id);
 							const parsed = await parseEffectResult(result);
 							if (parsed) {
 								successToast(`${data.dm.name} deleted`);

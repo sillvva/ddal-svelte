@@ -1,6 +1,7 @@
 import { dev } from "$app/environment";
 import { getRequestEvent } from "$app/server";
-import { isRedirectFailure, removeTrace } from "$lib/util";
+import { isRedirectFailure } from "$lib/factories.svelte";
+import { removeTrace } from "$lib/util";
 import { omit } from "@sillvva/utils";
 import { error, isHttpError, isRedirect, redirect, type NumericRange } from "@sveltejs/kit";
 import { Cause, Effect, Exit, ManagedRuntime } from "effect";

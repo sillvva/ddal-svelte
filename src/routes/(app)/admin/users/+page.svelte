@@ -10,14 +10,15 @@
 	import { authClient } from "$lib/auth.js";
 	import Search from "$lib/components/Search.svelte";
 	import { BLANK_CHARACTER } from "$lib/constants.js";
+	import { parseEffectResult } from "$lib/factories.svelte";
 	import { errorToast, successToast } from "$lib/factories.svelte.js";
-	import AdminAPI from "$lib/remote/admin";
-	import { parseEffectResult } from "$lib/util";
+	import * as AdminActions from "$lib/remote/admin/actions.remote";
+	import * as AdminQueries from "$lib/remote/admin/queries.remote";
 	import { JSONSearchParser } from "@sillvva/search/json";
 
 	let search = $state(page.url.searchParams.get("s")?.trim() ?? "");
 
-	const users = $derived(await AdminAPI.queries.getUsers());
+	const users = $derived(await AdminQueries.getUsers());
 	const parser = $derived(
 		new JSONSearchParser(users, {
 			defaultKey: "name",
@@ -127,7 +128,7 @@
 											const banReason = prompt("Reason for ban");
 											if (!banReason?.trim()) return errorToast("Reason is required");
 
-											const result = await AdminAPI.actions.banUser({
+											const result = await AdminActions.banUser({
 												userId: user.id,
 												banReason
 											});
@@ -148,7 +149,7 @@
 											if (user.role === "admin") return;
 											if (!confirm(`Are you sure you want to unban ${user.name}?`)) return;
 
-											const result = await AdminAPI.actions.unbanUser(user.id);
+											const result = await AdminActions.unbanUser(user.id);
 											const parsed = await parseEffectResult(result);
 											if (parsed) successToast(`${user.name} has been unbanned`);
 										}}

@@ -1,10 +1,6 @@
-import { goto } from "$app/navigation";
 import { wait } from "@sillvva/utils";
 import { hotkey as hk, type HotkeyItem } from "@svelteuidev/composables";
 import type { Attachment } from "svelte/attachments";
-import type { FullPathname } from "./constants";
-import { errorToast } from "./factories.svelte";
-import type { EffectFailure, EffectResult } from "./server/effect/runtime";
 
 export type Awaitable<T> = T | Promise<T>;
 
@@ -40,21 +36,3 @@ export type ModuleData = {
 	pageHead?: PageHead;
 	getPageHead?: (data: unknown) => Partial<PageHead>;
 };
-export const routeModules: Record<string, ModuleData> = import.meta.glob("/src/routes/**/+page.svelte", {
-	eager: true
-});
-
-export function isRedirectFailure(
-	error: EffectFailure["error"]
-): error is EffectFailure["error"] & { redirectTo: FullPathname & {} } {
-	return Boolean(error.redirectTo && typeof error.redirectTo === "string" && error.status <= 308);
-}
-
-export async function parseEffectResult<T>(result: EffectResult<T>) {
-	if (result.ok) return result.data;
-
-	errorToast(result.error.message);
-	if (isRedirectFailure(result.error)) {
-		await goto(result.error.redirectTo);
-	}
-}

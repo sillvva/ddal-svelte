@@ -2,11 +2,10 @@
 	import { goto, invalidateAll } from "$app/navigation";
 	import { authClient } from "$lib/auth";
 	import { BLANK_CHARACTER, PROVIDERS, type ProviderId } from "$lib/constants";
-	import { errorToast } from "$lib/factories.svelte";
-	import AppAPI from "$lib/remote/app";
-	import AuthAPI from "$lib/remote/auth";
+	import { errorToast, parseEffectResult } from "$lib/factories.svelte";
+	import * as AppQueries from "$lib/remote/app/queries.remote";
+	import * as AuthActions from "$lib/remote/auth/actions.remote";
 	import { getGlobal } from "$lib/stores.svelte";
-	import { parseEffectResult } from "$lib/util";
 	import { isDefined } from "@sillvva/utils";
 	import { isTupleOfAtLeast } from "effect/Predicate";
 	import Passkeys from "./Passkeys.svelte";
@@ -22,7 +21,7 @@
 
 	const global = getGlobal();
 
-	const request = $derived(await AppAPI.queries.request());
+	const request = $derived(await AppQueries.request());
 	const user = $derived(request.user);
 	const session = $derived(request.session);
 
@@ -75,9 +74,9 @@
 						account.email !== user?.email ||
 						(account.image !== user?.image && !account.image.includes(BLANK_CHARACTER))
 					) {
-						const result = await AuthAPI.actions.updateUser(account);
+						const result = await AuthActions.updateUser(account);
 						const parsed = await parseEffectResult(result);
-						if (parsed) await AppAPI.queries.request().refresh();
+						if (parsed) await AppQueries.request().refresh();
 					}
 				}
 			});
@@ -181,13 +180,13 @@
 														class="btn btn-sm tooltip join-item bg-base-300"
 														aria-label="Switch account"
 														data-tip="Use this account"
-														disabled={!!AuthAPI.actions.updateUser.pending}
+														disabled={!!AuthActions.updateUser.pending}
 														onclick={async () => {
-															const result = await AuthAPI.actions.updateUser(account);
+															const result = await AuthActions.updateUser(account);
 															const parsed = await parseEffectResult(result);
 															if (parsed) {
 																global.app.settings.provider = account.providerId;
-																await AppAPI.queries.request().refresh();
+																await AppQueries.request().refresh();
 															}
 														}}
 													>
@@ -197,7 +196,7 @@
 											{/if}
 											<button
 												class="btn btn-error btn-sm join-item font-semibold"
-												disabled={currentAccount?.providerId === provider.id || !!AuthAPI.actions.updateUser.pending}
+												disabled={currentAccount?.providerId === provider.id || !!AuthActions.updateUser.pending}
 												onclick={async () => {
 													if (confirm("Are you sure you want to unlink this account?")) {
 														const result = await authClient.unlinkAccount({ providerId: provider.id });

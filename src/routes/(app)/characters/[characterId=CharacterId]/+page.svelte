@@ -21,11 +21,11 @@
 	import Markdown from "$lib/components/Markdown.svelte";
 	import Search from "$lib/components/Search.svelte";
 	import SearchResults from "$lib/components/SearchResults.svelte";
-	import { EntitySearchFactory, successToast } from "$lib/factories.svelte.js";
-	import CharactersAPI from "$lib/remote/characters";
-	import LogsAPI from "$lib/remote/logs";
+	import { EntitySearchFactory, parseEffectResult, successToast } from "$lib/factories.svelte.js";
+	import * as CharactersActions from "$lib/remote/characters/actions.remote";
+	import * as LogsActions from "$lib/remote/logs/actions.remote";
 	import { getGlobal } from "$lib/stores.svelte.js";
-	import { createTransition, hotkey, parseEffectResult } from "$lib/util";
+	import { createTransition, hotkey } from "$lib/util";
 	import { slugify, sorter } from "@sillvva/utils";
 	import { download } from "@svelteuidev/composables";
 	import { fromAction } from "svelte/attachments";
@@ -122,11 +122,11 @@
 									type="button"
 									class="hover:bg-error"
 									aria-label="Delete Character"
-									disabled={!!CharactersAPI.actions.delete.pending}
+									disabled={!!CharactersActions.deleteCharacter.pending}
 									onclick={async () => {
 										if (!confirm(`Are you sure you want to delete ${data.character.name}? This action cannot be undone.`)) return;
 										global.pageLoader = true;
-										const result = await CharactersAPI.actions.delete(data.character.id);
+										const result = await CharactersActions.deleteCharacter(data.character.id);
 										const parsed = await parseEffectResult(result);
 										if (parsed) {
 											successToast(`${data.character.name} deleted`);
@@ -487,7 +487,7 @@
 												onclick={async () => {
 													if (!confirm(`Are you sure you want to delete ${log.name}? This action cannot be undone.`)) return;
 													deletingLog.add(log.id);
-													const result = await LogsAPI.actions.delete(log.id);
+													const result = await LogsActions.deleteLog(log.id);
 													const parsed = await parseEffectResult(result);
 													if (parsed) {
 														successToast(`${log.name} deleted`);

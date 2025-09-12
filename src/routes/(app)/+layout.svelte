@@ -7,10 +7,11 @@
 	import MobileNav from "$lib/components/MobileNav.svelte";
 	import Settings from "$lib/components/Settings.svelte";
 	import { BLANK_CHARACTER } from "$lib/constants.js";
-	import AppAPI from "$lib/remote/app";
-	import AuthAPI from "$lib/remote/auth";
+	import { parseEffectResult } from "$lib/factories.svelte";
+	import * as AppQueries from "$lib/remote/app/queries.remote";
+	import * as AuthActions from "$lib/remote/auth/actions.remote";
 	import { getGlobal } from "$lib/stores.svelte.js";
-	import { hotkey, parseEffectResult } from "$lib/util";
+	import { hotkey } from "$lib/util";
 	import { sleep } from "@svelteuidev/composables";
 	import { fade } from "svelte/transition";
 
@@ -101,9 +102,9 @@
 									img.onerror = null;
 									img.src = BLANK_CHARACTER;
 
-									const result = await AuthAPI.actions.updateUser({ image: BLANK_CHARACTER });
+									const result = await AuthActions.updateUser({ image: BLANK_CHARACTER });
 									const parsed = await parseEffectResult(result);
-									if (parsed) await AppAPI.queries.request().refresh();
+									if (parsed) await AppQueries.request().refresh();
 								}}
 							/>
 						</button>

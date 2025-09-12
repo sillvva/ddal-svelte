@@ -1,7 +1,11 @@
 <script lang="ts">
 	import { page } from "$app/state";
 	import { defaultDescription, defaultImage, defaultTitle } from "$lib/constants";
-	import { routeModules, type ModuleData } from "$lib/util";
+	import type { ModuleData } from "$lib/util";
+
+	const routeModules: Record<string, ModuleData> = import.meta.glob("/src/routes/**/+page.svelte", {
+		eager: true
+	});
 
 	function getHeadFromModule(module: ModuleData | undefined) {
 		if (module?.pageHead) return module.pageHead;
