@@ -19,7 +19,7 @@
 		if (page.status !== 404 || page.route.id) return false;
 
 		const paths = page.url.pathname.split("/");
-		let globs = appRoutes.filter((g) => g.length === paths.length);
+		const globs = appRoutes.filter((g) => g.length === paths.length);
 
 		for (const p in paths) {
 			if (!p) continue;
