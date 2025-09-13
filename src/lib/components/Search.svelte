@@ -23,7 +23,8 @@
 	let ref: HTMLInputElement | undefined = undefined;
 </script>
 
-<svelte:document
+<search
+	class="min-w-0 flex-1"
 	{@attach hotkey([
 		[
 			"/",
@@ -32,9 +33,7 @@
 			}
 		]
 	])}
-/>
-
-<search class="min-w-0 flex-1">
+>
 	<label class="input focus-within:border-primary sm:input-sm flex w-full items-center gap-2">
 		<input {type} bind:value class="w-full flex-1" aria-label={rest.placeholder || "Search"} bind:this={ref} {...rest} />
 		<kbd class="kbd kbd-sm max-sm:hidden">/</kbd>

@@ -53,7 +53,7 @@
 	</div>
 {/if}
 
-<div class="relative flex min-h-screen flex-col">
+<div class="relative flex min-h-dvh flex-col">
 	<header
 		class="border-base-300 bg-base-100/50 sticky top-0 z-20 w-full border-b backdrop-blur-sm transition-all"
 		style:view-transition-name="header"

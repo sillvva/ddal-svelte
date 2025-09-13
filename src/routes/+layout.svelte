@@ -13,15 +13,9 @@
 
 <Head />
 
-<div class="bg-base-100 text-base-content min-h-dvh noscript:hidden">
-	{@render children()}
-</div>
+{@render children()}
 
 <Toaster richColors closeButton theme={data.app.settings.mode} />
-
-<div class="flex min-h-dvh items-center justify-center text-2xl not-noscript:hidden">
-	This site requires JavaScript to function properly.
-</div>
 
 {#if dev}
 	<div class="fixed right-0 bottom-0 z-50">
