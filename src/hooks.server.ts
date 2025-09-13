@@ -86,7 +86,7 @@ const preloadTheme: Handle = async ({ event, resolve }) => {
 export const handle = sequence(runtime, authHandler, session, info, preloadTheme);
 
 if (typeof process !== "undefined") {
-	const gracefulShutdown = async (signal: string) => {
+	process.on("sveltekit:shutdown", async (signal: string) => {
 		console.log("\nShut down signal received:", chalk.bold(signal));
 
 		try {
@@ -100,8 +100,5 @@ if (typeof process !== "undefined") {
 			console.error("Error during cleanup:", err);
 			process.exit(1);
 		}
-	};
-
-	process.removeAllListeners("SIGTERM").once("SIGTERM", () => gracefulShutdown("SIGTERM"));
-	process.removeAllListeners("SIGINT").once("SIGINT", () => gracefulShutdown("SIGINT"));
+	});
 }
