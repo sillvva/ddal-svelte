@@ -38,27 +38,24 @@
 	}
 </script>
 
-<svelte:document
-	{@attach hotkey([
-		[
-			"mod+k",
-			() => {
-				setOpen(true);
-			}
-		],
-		[
-			"Escape",
-			() => {
-				setOpen(false);
-			}
-		]
-	])}
-/>
-
 <Dialog.Root bind:open={() => open, setOpen}>
 	<Dialog.Trigger
 		class="hover-hover:md:input hover-hover:md:gap-4 hover-hover:md:cursor-text touch-hitbox h-10"
 		aria-label="Search"
+		{@attach hotkey([
+			[
+				"mod+k",
+				() => {
+					setOpen(true);
+				}
+			],
+			[
+				"Escape",
+				() => {
+					setOpen(false);
+				}
+			]
+		])}
 	>
 		<span class="hover-hover:md:text-base-content/60 flex items-center gap-1">
 			<span class="iconify mdi--magnify hover-hover:md:size-4 hover-none:w-10 size-6 max-md:w-10"></span>

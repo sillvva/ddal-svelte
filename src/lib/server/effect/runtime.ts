@@ -146,7 +146,7 @@ export function handleCause<F extends InstanceType<ErrorClass>>(cause: Cause.Cau
 
 		if (isRedirect(defect)) {
 			message = `Redirect to ${defect.location}`;
-			status = defect.status as NumericRange<300, 599>;
+			status = defect.status;
 			extra.redirectTo = defect.location;
 		} else if (isHttpError(defect)) {
 			status = defect.status as NumericRange<300, 599>;
