@@ -1,5 +1,6 @@
 <script lang="ts">
 	import { themeGroups, themes } from "$lib/constants";
+	import * as AppQueries from "$lib/remote/app/queries.remote";
 	import { getGlobal } from "$lib/stores.svelte";
 	import { createTransition } from "$lib/util";
 	import { MediaQuery } from "svelte/reactivity";
@@ -37,6 +38,7 @@
 				},
 				() => {
 					document.documentElement.classList.remove("theme-switcher");
+					AppQueries.request().refresh();
 				},
 				900
 			);

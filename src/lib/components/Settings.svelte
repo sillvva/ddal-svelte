@@ -1,5 +1,6 @@
 <script lang="ts">
 	import { goto, invalidateAll } from "$app/navigation";
+	import { page } from "$app/state";
 	import { authClient } from "$lib/auth";
 	import { BLANK_CHARACTER, PROVIDERS, type ProviderId } from "$lib/constants";
 	import { errorToast, parseEffectResult } from "$lib/factories.svelte";
@@ -139,7 +140,7 @@
 							authClient.signOut({
 								fetchOptions: {
 									onSuccess: () => {
-										invalidateAll();
+										goto(`/?redirect=${encodeURIComponent(`${page.url.pathname}${page.url.search}`)}`);
 									}
 								}
 							})}
