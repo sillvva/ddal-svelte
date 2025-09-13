@@ -4,7 +4,7 @@
 	"private": true,
 	"scripts": {
 		"start:supabase": "./start-supabase.sh",
-		"clean:circle": "ds src --exclude-types",
+		"clean:circular": "ds src --exclude-types",
 		"clean:install": "rm -rf node_modules pnpm-lock.yaml && corepack pnpm install",
 		"dev": "corepack pnpm start:supabase && vite dev",
 		"build": "corepack pnpm env-check && vite build",
