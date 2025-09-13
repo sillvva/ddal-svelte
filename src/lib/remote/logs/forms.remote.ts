@@ -44,7 +44,7 @@ export const save = command("unchecked", (input: { logId: LogIdParam; data: LogS
 
 			redirectTo = `/dm-logs`;
 		} else {
-			const characterId = yield* redirectOnFail(parse(characterIdSchema, input.data.characterId), "/characters", 301);
+			const characterId = yield* redirectOnFail(parse(characterIdSchema, input.data.characterId), "/characters", 302);
 			const character = yield* Characters.get.character(characterId);
 
 			form = yield* validateForm(input.data, characterLogSchema(character));
