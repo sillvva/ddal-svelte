@@ -8,8 +8,7 @@
 	import Settings from "$lib/components/Settings.svelte";
 	import { BLANK_CHARACTER } from "$lib/constants.js";
 	import { parseEffectResult } from "$lib/factories.svelte";
-	import AppAPI from "$lib/remote/app";
-	import AuthAPI from "$lib/remote/auth";
+	import * as API from "$lib/remote";
 	import { getGlobal } from "$lib/stores.svelte.js";
 	import { hotkey } from "$lib/util";
 	import { sleep } from "@svelteuidev/composables";
@@ -102,9 +101,9 @@
 									img.onerror = null;
 									img.src = BLANK_CHARACTER;
 
-									const result = await AuthAPI.actions.updateUser({ image: BLANK_CHARACTER });
+									const result = await API.auth.actions.updateUser({ image: BLANK_CHARACTER });
 									const parsed = await parseEffectResult(result);
-									if (parsed) await AppAPI.queries.request().refresh();
+									if (parsed) await API.app.queries.request().refresh();
 								}}
 							/>
 						</button>

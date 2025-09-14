@@ -26,7 +26,7 @@ import {
 import { valibotClient } from "sveltekit-superforms/adapters";
 import * as v from "valibot";
 import type { FullPathname } from "./constants";
-import type { SearchData } from "./remote/command/queries.remote";
+import type { SearchData } from "./remote/command";
 import type { EffectFailure, EffectResult } from "./server/effect/runtime";
 import type { Awaitable } from "./util";
 

@@ -12,12 +12,12 @@
 	import { BLANK_CHARACTER } from "$lib/constants.js";
 	import { parseEffectResult } from "$lib/factories.svelte";
 	import { errorToast, successToast } from "$lib/factories.svelte.js";
-	import AdminAPI from "$lib/remote/admin";
+	import * as API from "$lib/remote";
 	import { JSONSearchParser } from "@sillvva/search/json";
 
 	let search = $state(page.url.searchParams.get("s")?.trim() ?? "");
 
-	const users = $derived(await AdminAPI.queries.getUsers());
+	const users = $derived(await API.admin.queries.getUsers());
 	const parser = $derived(
 		new JSONSearchParser(users, {
 			defaultKey: "name",
@@ -127,7 +127,7 @@
 											const banReason = prompt("Reason for ban");
 											if (!banReason?.trim()) return errorToast("Reason is required");
 
-											const result = await AdminAPI.actions.banUser({
+											const result = await API.admin.actions.banUser({
 												userId: user.id,
 												banReason
 											});
@@ -148,7 +148,7 @@
 											if (user.role === "admin") return;
 											if (!confirm(`Are you sure you want to unban ${user.name}?`)) return;
 
-											const result = await AdminAPI.actions.unbanUser(user.id);
+											const result = await API.admin.actions.unbanUser(user.id);
 											const parsed = await parseEffectResult(result);
 											if (parsed) successToast(`${user.name} has been unbanned`);
 										}}

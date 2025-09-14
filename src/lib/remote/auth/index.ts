@@ -1,3 +1,1 @@
-import * as actions from "./actions.remote";
-
-export default { actions };
+export * as actions from "./actions.remote";

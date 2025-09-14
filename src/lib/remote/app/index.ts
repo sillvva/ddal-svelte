@@ -1,3 +1,1 @@
-import * as queries from "./queries.remote";
-
-export default { queries };
+export * as queries from "./queries.remote";

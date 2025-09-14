@@ -10,7 +10,7 @@
 	import LoadingPanel from "$lib/components/LoadingPanel.svelte";
 	import { parseEffectResult, SearchParamState } from "$lib/factories.svelte";
 	import { successToast } from "$lib/factories.svelte.js";
-	import AdminAPI from "$lib/remote/admin";
+	import * as API from "$lib/remote";
 	import { debounce } from "@sillvva/utils";
 	import * as v from "valibot";
 
@@ -21,8 +21,8 @@
 		showDefault: false
 	});
 
-	const baseSearch = $derived(await AdminAPI.queries.getBaseSearch());
-	const query = $derived(AdminAPI.queries.getAppLogs(s.state ?? baseSearch.query));
+	const baseSearch = $derived(await API.admin.queries.getBaseSearch());
+	const query = $derived(API.admin.queries.getAppLogs(s.state ?? baseSearch.query));
 	let loading = $derived(!query.current);
 	const logSearch = $derived(await query);
 
@@ -124,8 +124,8 @@
 						data-tip="Delete log"
 						aria-label="Delete log"
 						onclick={async () => {
-							const result = await AdminAPI.actions.deleteAppLog(log.id).updates(
-								AdminAPI.queries.getAppLogs(s.state ?? baseSearch.query).withOverride((data) => ({
+							const result = await API.admin.actions.deleteAppLog(log.id).updates(
+								API.admin.queries.getAppLogs(s.state ?? baseSearch.query).withOverride((data) => ({
 									...data,
 									logs: data.logs.filter((l) => l.id !== log.id)
 								}))

@@ -16,7 +16,7 @@
 	import SearchResults from "$lib/components/SearchResults.svelte";
 	import { parseEffectResult } from "$lib/factories.svelte";
 	import { EntitySearchFactory, successToast } from "$lib/factories.svelte.js";
-	import DMsAPI from "$lib/remote/dms";
+	import * as API from "$lib/remote";
 	import { sorter } from "@sillvva/utils";
 	import { SvelteSet } from "svelte/reactivity";
 
@@ -84,7 +84,7 @@
 													onclick={async () => {
 														if (!confirm(`Are you sure you want to delete ${dm.name}? This action cannot be undone.`)) return;
 														deletingDM.add(dm.id);
-														const result = await DMsAPI.actions.delete(dm.id);
+														const result = await API.dms.actions.deleteDM(dm.id);
 														const parsed = await parseEffectResult(result);
 														if (parsed) {
 															successToast(`${dm.name} deleted`);

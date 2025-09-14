@@ -2,7 +2,7 @@
 	import { dev } from "$app/environment";
 	import { page } from "$app/state";
 	import LoadingPanel from "$lib/components/LoadingPanel.svelte";
-	import AppAPI from "$lib/remote/app";
+	import * as API from "$lib/remote";
 	import { uuidV7 } from "$lib/schemas";
 	import SuperDebug from "sveltekit-superforms";
 	import * as v from "valibot";
@@ -78,7 +78,7 @@
 		</div>
 		{#if display}
 			<svelte:boundary>
-				{@const request = await AppAPI.queries.request()}
+				{@const request = await API.app.queries.request()}
 
 				{#snippet pending()}
 					<LoadingPanel />
