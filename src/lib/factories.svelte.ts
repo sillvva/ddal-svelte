@@ -1,5 +1,6 @@
 /* eslint-disable svelte/prefer-svelte-reactivity */
-import { goto, invalidateAll } from "$app/navigation";
+import { afterNavigate, goto, invalidateAll } from "$app/navigation";
+import { page } from "$app/state";
 import type { FullCharacterData } from "$lib/server/effect/services/characters";
 import type { UserDM } from "$lib/server/effect/services/dms";
 import type { FullLogData, LogSummaryData, UserLogData } from "$lib/server/effect/services/logs";
@@ -658,5 +659,136 @@ export class EntitySearchFactory<
 				};
 			})
 			.filter(isDefined);
+	}
+}
+
+interface GotoOptions {
+	replaceState?: boolean;
+	noScroll?: boolean;
+	keepFocus?: boolean;
+	invalidateAll?: boolean;
+	invalidate?: (string | URL | ((url: URL) => boolean))[] | undefined;
+}
+
+/**
+ * Creates a state that is synchronized with a URL search parameter.
+ * @template S Valibot schema type for the state
+ */
+export class SearchParamState<S extends v.GenericSchema> {
+	private internalState = $state<v.InferOutput<S>>();
+	private defaultValue: v.InferOutput<S>;
+	private showDefault: boolean;
+	private debounceNav: number;
+	private key: string;
+	private schema: S;
+	private options: GotoOptions = {
+		replaceState: true,
+		noScroll: true,
+		keepFocus: true,
+		invalidateAll: false
+	};
+
+	/**
+	 * Creates a state that is synchronized with a URL search parameter.
+	 *
+	 * @param args Configuration options.
+	 * @param args.key The name of the search parameter.
+	 * @param args.defaultValue Default value to use when parameter is missing or invalid.
+	 * @param args.showDefault Whether to show defaults in the URL search parameter.
+	 * @param args.debounceNav Time to debounce the navigation.
+	 * @param args.schema Valibot schema to validate the parameter.
+	 * @param args.options Navigation options.
+	 *
+	 * @example
+	 * ``ts
+	 * // Create a state synchronized with the 'tab' search parameter
+	 * const currentTab = new SearchParamState({
+	 *   key: 'tab',
+	 *   schema: v.enum(['home', 'search', 'settings']),
+	 *   defaultValue: 'home'
+	 * });
+	 *
+	 * // Access the current state
+	 * console.log(currentTab.state);
+	 *
+	 * // Update the state and 'tab' search parameter
+	 * currentTab.update('search');
+	 * ``
+	 */
+	constructor(args: {
+		key: string;
+		defaultValue: v.InferOutput<S>;
+		schema: S;
+		options?: GotoOptions;
+		showDefault?: boolean;
+		debounceNav?: number;
+	}) {
+		this.key = args.key;
+		this.options = { ...this.options, ...args.options };
+		this.schema = args.schema;
+		this.defaultValue = args.defaultValue;
+		this.showDefault = args.showDefault ?? false;
+		this.debounceNav = args.debounceNav ?? 500;
+
+		this.updateStateFromParams(page.url.searchParams);
+
+		afterNavigate((navigation) => {
+			const current = navigation.from?.url.searchParams.get(this.key);
+			const next = navigation.to?.url.searchParams.get(this.key);
+			if (current === next) return;
+
+			this.updateStateFromParams(navigation.to?.url.searchParams ?? new URLSearchParams());
+		});
+	}
+
+	/**
+	 * The current state.
+	 */
+	get state() {
+		return this.internalState!;
+	}
+
+	/**
+	 * Updates the states value and synchronizes it with the URL search parameter.
+	 *
+	 * @param newValues The new state value to set.
+	 */
+	update(newValues: v.InferOutput<S>) {
+		if (newValues === this.internalState) return;
+		this.internalState = newValues;
+
+		const fn = debounce((newValues: v.InferOutput<S>) => {
+			const newParams = new URLSearchParams(page.url.searchParams);
+			if (this.showDefault || newValues) {
+				newParams.set(this.key, typeof newValues === "string" ? newValues : JSON.stringify(newValues));
+			} else {
+				newParams.delete(this.key);
+			}
+
+			goto(newParams.size ? `${page.url.pathname}?${newParams.toString()}` : page.url.pathname, this.options);
+		}, this.debounceNav);
+
+		fn.call(newValues);
+	}
+
+	private updateStateFromParams(params: URLSearchParams) {
+		const rawValue = params.get(this.key);
+		let valueToValidate: unknown = rawValue;
+
+		if (rawValue) {
+			try {
+				valueToValidate = JSON.parse(rawValue);
+			} catch {
+				valueToValidate = rawValue;
+			}
+		}
+
+		const parsed = v.safeParse(this.schema, valueToValidate);
+
+		if (parsed.success) {
+			this.internalState = parsed.output;
+		} else {
+			this.internalState = this.defaultValue;
+		}
 	}
 }

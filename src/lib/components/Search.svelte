@@ -1,23 +1,27 @@
 <script lang="ts">
+	import { page } from "$app/state";
+	import { SearchParamState } from "$lib/factories.svelte";
 	import { hotkey } from "$lib/util";
 	import type { HTMLInputAttributes } from "svelte/elements";
-	import { queryParam, ssp } from "sveltekit-search-params";
+	import * as v from "valibot";
 
-	const s = queryParam("s", ssp.string(), {
-		showDefaults: false,
-		pushHistory: false
+	const s = new SearchParamState({
+		key: "s",
+		schema: v.nullable(v.string()),
+		defaultValue: page.url.searchParams.get("s"),
+		showDefault: false
 	});
 
-	let { value = $bindable($s || ""), type = "text", ...rest }: Omit<HTMLInputAttributes, "class"> = $props();
+	let { value = $bindable(s.state), type = "text", ...rest }: Omit<HTMLInputAttributes, "class"> = $props();
 
-	// Sync value prop changes to $s
+	// Sync value prop changes to s.state
 	$effect(() => {
-		$s = value.trim() || null;
+		s.update(value.trim() || null);
 	});
 
-	// Sync $s changes to value prop (when URL changes)
+	// Sync s.state changes to value prop (when URL changes)
 	$effect(() => {
-		value = $s || "";
+		value = s.state || "";
 	});
 
 	let ref: HTMLInputElement | undefined = undefined;

@@ -8,23 +8,26 @@
 	import { pushState } from "$app/navigation";
 	import { page } from "$app/state";
 	import LoadingPanel from "$lib/components/LoadingPanel.svelte";
-	import { parseEffectResult } from "$lib/factories.svelte";
+	import { parseEffectResult, SearchParamState } from "$lib/factories.svelte";
 	import { successToast } from "$lib/factories.svelte.js";
 	import AdminAPI from "$lib/remote/admin";
 	import { debounce } from "@sillvva/utils";
-	import { queryParam, ssp } from "sveltekit-search-params";
+	import * as v from "valibot";
 
-	const s = queryParam("s", ssp.string(), {
-		showDefaults: false
+	const s = new SearchParamState({
+		key: "s",
+		schema: v.nullable(v.string()),
+		defaultValue: page.url.searchParams.get("s"),
+		showDefault: false
 	});
 
 	const baseSearch = $derived(await AdminAPI.queries.getBaseSearch());
-	const query = $derived(AdminAPI.queries.getAppLogs($s ?? baseSearch.query));
+	const query = $derived(AdminAPI.queries.getAppLogs(s.state ?? baseSearch.query));
 	let loading = $derived(!query.current);
 	const logSearch = $derived(await query);
 
 	const debouncedSearch = debounce((query: string) => {
-		$s = query.trim() || null;
+		s.update(query.trim() || null);
 	}, 400);
 
 	let syntaxReference = $state("");
@@ -54,7 +57,7 @@
 					<input
 						type="text"
 						id="log-search"
-						value={page.url.searchParams.get("s")}
+						value={s.state}
 						oninput={(e) => {
 							loading = true;
 							debouncedSearch.call(e.currentTarget.value);
@@ -122,7 +125,7 @@
 						aria-label="Delete log"
 						onclick={async () => {
 							const result = await AdminAPI.actions.deleteAppLog(log.id).updates(
-								AdminAPI.queries.getAppLogs($s ?? baseSearch.query).withOverride((data) => ({
+								AdminAPI.queries.getAppLogs(s.state ?? baseSearch.query).withOverride((data) => ({
 									...data,
 									logs: data.logs.filter((l) => l.id !== log.id)
 								}))
