@@ -1,7 +1,6 @@
-import { dev } from "$app/environment";
 import { getRequestEvent } from "$app/server";
 import { isRedirectFailure } from "$lib/factories.svelte";
-import { removeTrace } from "$lib/util";
+import { getTrace } from "$lib/util";
 import { omit } from "@sillvva/utils";
 import { error, isHttpError, isRedirect, redirect, type NumericRange } from "@sveltejs/kit";
 import { Cause, Effect, Exit, ManagedRuntime } from "effect";
@@ -77,7 +76,7 @@ export async function run<
 export type EffectSuccess<R> = { ok: true; data: R };
 export type EffectFailure = {
 	ok: false;
-	error: { message: string; status: NumericRange<300, 599>; [key: string]: unknown };
+	error: { message: string; stack: string; status: NumericRange<300, 599>; [key: string]: unknown };
 };
 export type EffectResult<R> = EffectSuccess<R> | EffectFailure;
 
@@ -167,6 +166,6 @@ export function handleCause<F extends InstanceType<ErrorClass>>(cause: Cause.Cau
 		}
 	}
 
-	if (!dev) message = removeTrace(message);
-	return { message, status, ...extra };
+	const trace = getTrace(message);
+	return { message: trace.message, stack: trace.stack, status, ...extra };
 }

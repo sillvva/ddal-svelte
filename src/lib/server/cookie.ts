@@ -14,7 +14,6 @@ import { AppLog } from "./effect/logging";
 export function serverGetCookie<TSchema extends v.GenericSchema>(name: string, schema: TSchema) {
 	try {
 		const event = getRequestEvent();
-		if (!event) throw new Error("No event");
 
 		const val = event.cookies.get(name);
 		const cookie = val && val !== "undefined" ? JSON.parse(val) : serverSetCookie(name, schema, undefined);
@@ -44,7 +43,6 @@ export function serverSetCookie<TSchema extends v.GenericSchema>(
 	{ expires = Duration.toMillis("365 days"), httpOnly = false } = {}
 ) {
 	const event = getRequestEvent();
-	if (!event) throw new Error("No event");
 
 	const parsed = v.parse(schema, value);
 	event.cookies.set(name, JSON.stringify(parsed), {

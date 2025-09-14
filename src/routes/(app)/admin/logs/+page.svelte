@@ -158,10 +158,10 @@
 					<tr data-id={log.id} data-details={false} class="hidden data-[details=true]:table-row">
 						<td colspan="4">
 							<div class="grid grid-cols-1 gap-4">
-								{#if log.trace}
+								{#if log.stack}
 									<div class="bg-base-100 overflow-x-scroll rounded-lg p-6">
-										<h3 class="mb-2 text-lg font-bold">Trace</h3>
-										<pre>{log.trace}</pre>
+										<h3 class="mb-2 text-lg font-bold">Stack</h3>
+										<pre>{log.stack}</pre>
 									</div>
 								{/if}
 								<div class="bg-base-100 overflow-x-scroll rounded-lg p-6">
