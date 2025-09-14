@@ -1,7 +1,7 @@
 <script>
 	import Footer from "$lib/components/Footer.svelte";
 	import LoadingPanel from "$lib/components/LoadingPanel.svelte";
-	import * as AppQueries from "$lib/remote/app/queries.remote";
+	import AppAPI from "$lib/remote/app";
 
 	let { children } = $props();
 </script>
@@ -19,7 +19,7 @@
 		</div>
 	{/snippet}
 
-	{@const request = await AppQueries.request()}
+	{@const request = await AppAPI.queries.request()}
 	<div class="flex min-h-dvh flex-col" data-theme={request.app.settings.mode}>
 		{@render children()}
 		<Footer fixed />

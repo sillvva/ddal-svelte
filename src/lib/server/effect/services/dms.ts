@@ -35,11 +35,7 @@ interface DMApiImpl {
 		) => Effect.Effect<DungeonMaster | undefined, DrizzleError>;
 	};
 	readonly set: {
-		readonly save: (
-			dmId: DungeonMasterId,
-			user: LocalsUser,
-			data: DungeonMasterSchema
-		) => Effect.Effect<DungeonMaster, SaveDMError | DrizzleError>;
+		readonly save: (user: LocalsUser, data: DungeonMasterSchema) => Effect.Effect<DungeonMaster, SaveDMError | DrizzleError>;
 		readonly addUserDM: (user: LocalsUser, dms: UserDM[]) => Effect.Effect<UserDM[], SaveDMError | DrizzleError>;
 		readonly delete: (dm: UserDM, userId: UserId) => Effect.Effect<{ id: DungeonMasterId }, DeleteDMError | DrizzleError>;
 	};
@@ -99,8 +95,10 @@ export class DMService extends Effect.Service<DMService>()("DMSService", {
 				})
 			},
 			set: {
-				save: Effect.fn("DMService.set.save")(function* (dmId, user, data) {
-					const [dm] = yield* impl.get.userDMs(user, { id: dmId }).pipe(Effect.catchAll((err) => new SaveDMError(err.message)));
+				save: Effect.fn("DMService.set.save")(function* (user, data) {
+					const [dm] = yield* impl.get
+						.userDMs(user, { id: data.id })
+						.pipe(Effect.catchAll((err) => new SaveDMError(err.message)));
 					if (!dm) return yield* new SaveDMError("DM does not exist", { status: 404 });
 
 					if (!data.name.trim()) {
@@ -115,14 +113,14 @@ export class DMService extends Effect.Service<DMService>()("DMSService", {
 								name: data.name,
 								DCI: data.DCI || null
 							})
-							.where(eq(dungeonMasters.id, dmId))
+							.where(eq(dungeonMasters.id, data.id))
 							.returning()
 					).pipe(
 						Effect.flatMap((dms) =>
 							isTupleOf(dms, 1) ? Effect.succeed(dms[0]) : Effect.fail(new SaveDMError("Failed to save DM"))
 						),
-						Effect.tap((result) => AppLog.info("DMService.set.save", { dmId, userId: user.id, result })),
-						Effect.tapError(() => AppLog.debug("DMService.set.save", { dmId, userId: user.id, data }))
+						Effect.tap((result) => AppLog.info("DMService.set.save", { userId: user.id, result })),
+						Effect.tapError(() => AppLog.debug("DMService.set.save", { userId: user.id, data }))
 					);
 				}),
 

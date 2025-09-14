@@ -1,11 +1,11 @@
 <script lang="ts">
 	import { authClient } from "$lib/auth";
 	import { errorToast, successToast } from "$lib/factories.svelte";
-	import * as AppQueries from "$lib/remote/app/queries.remote";
+	import AppAPI from "$lib/remote/app";
 	import type { PasskeyId } from "$lib/schemas";
 	import { getGlobal } from "$lib/stores.svelte";
 
-	const request = $derived(await AppQueries.request());
+	const request = $derived(await AppAPI.queries.request());
 	const user = $derived(request.user);
 	const passkeys = $derived(user?.passkeys || []);
 	const global = getGlobal();
@@ -34,7 +34,7 @@
 			fetchOptions: {
 				onSuccess: () => {
 					successToast(`${name} saved`);
-					AppQueries.request().refresh();
+					AppAPI.queries.request().refresh();
 				},
 				onError: ({ error }) => {
 					initRename(id, name, error.message);
@@ -52,7 +52,7 @@
 				fetchOptions: {
 					onSuccess: () => {
 						successToast(`${auth.name} deleted`);
-						AppQueries.request().refresh();
+						AppAPI.queries.request().refresh();
 					},
 					onError: ({ error }) => {
 						errorToast(error.message);

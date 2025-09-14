@@ -4,8 +4,8 @@
 	import { authClient } from "$lib/auth";
 	import { BLANK_CHARACTER, PROVIDERS, type ProviderId } from "$lib/constants";
 	import { errorToast, parseEffectResult } from "$lib/factories.svelte";
-	import * as AppQueries from "$lib/remote/app/queries.remote";
-	import * as AuthActions from "$lib/remote/auth/actions.remote";
+	import AppAPI from "$lib/remote/app";
+	import AuthAPI from "$lib/remote/auth";
 	import { getGlobal } from "$lib/stores.svelte";
 	import { isDefined } from "@sillvva/utils";
 	import { isTupleOfAtLeast } from "effect/Predicate";
@@ -16,16 +16,18 @@
 		open: boolean;
 	}
 
-	export type UserAccount = { providerId: ProviderId; name: string; email: string; image: string };
-
 	let { open = $bindable(false) }: Props = $props();
 
 	const global = getGlobal();
 
-	const request = $derived(await AppQueries.request());
+	type UserAccount = { providerId: ProviderId; name: string; email: string; image: string };
+	let userAccounts = $state<UserAccount[]>([]);
+
+	const request = $derived(await AppAPI.queries.request());
 	const user = $derived(request.user);
 	const session = $derived(request.session);
 
+	const currentAccount = $derived(userAccounts.find((a) => a.providerId === global.app.settings.provider));
 	const authProviders = $derived(
 		PROVIDERS.map((p) => ({
 			...p,
@@ -39,9 +41,6 @@
 			.join("")
 			.slice(0, 2) || ""
 	);
-
-	let userAccounts = $state<UserAccount[]>([]);
-	const currentAccount = $derived(userAccounts.find((a) => a.providerId === global.app.settings.provider));
 
 	$effect(() => {
 		if (!userAccounts.length && open) {
@@ -75,9 +74,9 @@
 						account.email !== user?.email ||
 						(account.image !== user?.image && !account.image.includes(BLANK_CHARACTER))
 					) {
-						const result = await AuthActions.updateUser(account);
+						const result = await AuthAPI.actions.updateUser(account);
 						const parsed = await parseEffectResult(result);
-						if (parsed) await AppQueries.request().refresh();
+						if (parsed) await AppAPI.queries.request().refresh();
 					}
 				}
 			});
@@ -181,13 +180,13 @@
 														class="btn btn-sm tooltip join-item bg-base-300"
 														aria-label="Switch account"
 														data-tip="Use this account"
-														disabled={!!AuthActions.updateUser.pending}
+														disabled={!!AuthAPI.actions.updateUser.pending}
 														onclick={async () => {
-															const result = await AuthActions.updateUser(account);
+															const result = await AuthAPI.actions.updateUser(account);
 															const parsed = await parseEffectResult(result);
 															if (parsed) {
 																global.app.settings.provider = account.providerId;
-																await AppQueries.request().refresh();
+																await AppAPI.queries.request().refresh();
 															}
 														}}
 													>
@@ -197,7 +196,7 @@
 											{/if}
 											<button
 												class="btn btn-error btn-sm join-item font-semibold"
-												disabled={currentAccount?.providerId === provider.id || !!AuthActions.updateUser.pending}
+												disabled={currentAccount?.providerId === provider.id || !!AuthAPI.actions.updateUser.pending}
 												onclick={async () => {
 													if (confirm("Are you sure you want to unlink this account?")) {
 														const result = await authClient.unlinkAccount({ providerId: provider.id });

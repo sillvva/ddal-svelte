@@ -1,5 +1,5 @@
 <script lang="ts">
-	import * as AppQueries from "$lib/remote/app/queries.remote";
+	import AppAPI from "$lib/remote/app";
 </script>
 
 <nav
@@ -19,7 +19,7 @@
 	</a>
 	<svelte:boundary>
 		{#snippet pending()}{/snippet}
-		{@const request = await AppQueries.request()}
+		{@const request = await AppAPI.queries.request()}
 		{#if request.user?.role === "admin"}
 			<a href="/admin/users" class="flex h-full flex-col items-center justify-center text-xs">
 				<span class="iconify mdi--administrator-outline size-8"></span>

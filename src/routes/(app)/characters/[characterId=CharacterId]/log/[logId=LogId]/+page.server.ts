@@ -6,7 +6,7 @@ import { run } from "$lib/server/effect/runtime";
 import { assertAuth } from "$lib/server/effect/services/auth";
 import { DMService } from "$lib/server/effect/services/dms.js";
 import { LogNotFoundError, LogService } from "$lib/server/effect/services/logs.js";
-import { sorter } from "@sillvva/utils";
+import { omit, sorter } from "@sillvva/utils";
 import { Effect } from "effect";
 
 export const load = (event) =>
@@ -34,7 +34,9 @@ export const load = (event) =>
 		const itemEntities = getItemEntities(character, { excludeDropped: true, lastLogId: log.id });
 		const magicItems = itemEntities.magicItems.toSorted((a, b) => sorter(a.name, b.name));
 		const storyAwards = itemEntities.storyAwards.toSorted((a, b) => sorter(a.name, b.name));
-		const dms = yield* DMs.get.userDMs(user);
+		const dms = yield* DMs.get
+			.userDMs(user, { includeLogs: false })
+			.pipe(Effect.map((dms) => dms.map((dm) => omit(dm, ["logs"]))));
 
 		return {
 			...event.params,

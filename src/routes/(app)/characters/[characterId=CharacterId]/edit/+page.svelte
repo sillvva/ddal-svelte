@@ -18,15 +18,15 @@
 	import SuperForm from "$lib/components/forms/SuperForm.svelte";
 	import { BLANK_CHARACTER } from "$lib/constants.js";
 	import { errorToast, valibotForm } from "$lib/factories.svelte.js";
-	import * as CharactersForms from "$lib/remote/characters/forms.remote";
+	import CharactersAPI from "$lib/remote/characters";
 	import { editCharacterSchema } from "$lib/schemas";
 	import { getGlobal } from "$lib/stores.svelte.js";
 
-	let { data, params } = $props();
+	let { data } = $props();
 
 	const global = getGlobal();
 	const superform = valibotForm(data.form, editCharacterSchema, {
-		remote: (data) => CharactersForms.save({ id: params.characterId, data })
+		remote: CharactersAPI.forms.save
 	});
 
 	const { form } = superform;

@@ -21,13 +21,13 @@
 	import SuperForm from "$lib/components/forms/SuperForm.svelte";
 	import { defaultDM } from "$lib/entities";
 	import { valibotForm } from "$lib/factories.svelte.js";
-	import * as LogsForms from "$lib/remote/logs/forms.remote";
+	import LogsAPI from "$lib/remote/logs";
 	import { type DungeonMasterId, logSchema } from "$lib/schemas";
 
-	let { data, params } = $props();
+	let { data } = $props();
 
 	const superform = valibotForm(data.form, logSchema, {
-		remote: (log) => LogsForms.save({ logId: params.logId, data: log })
+		remote: LogsAPI.forms.save
 	});
 	const { form } = superform;
 

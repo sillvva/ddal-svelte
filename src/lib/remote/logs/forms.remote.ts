@@ -1,15 +1,7 @@
 import { command } from "$app/server";
 import type { Pathname } from "$app/types";
-import {
-	characterIdSchema,
-	characterLogSchema,
-	dMLogSchema,
-	logIdParamSchema,
-	type LogIdParam,
-	type LogSchema,
-	type LogSchemaIn
-} from "$lib/schemas";
-import { FormError, RedirectError, redirectOnFail } from "$lib/server/effect/errors";
+import { characterIdSchema, characterLogSchema, dMLogSchema, type LogSchema, type LogSchemaIn } from "$lib/schemas";
+import { FormError, redirectOnFail } from "$lib/server/effect/errors";
 import { parse, safeParse, saveForm, validateForm } from "$lib/server/effect/forms";
 import { runSafe } from "$lib/server/effect/runtime";
 import { assertAuth } from "$lib/server/effect/services/auth";
@@ -18,7 +10,7 @@ import { LogService } from "$lib/server/effect/services/logs";
 import type { SuperValidated } from "sveltekit-superforms";
 import * as v from "valibot";
 
-export const save = command("unchecked", (input: { logId: LogIdParam; data: LogSchemaIn }) =>
+export const save = command("unchecked", (input: LogSchemaIn) =>
 	runSafe(function* () {
 		const { user } = yield* assertAuth();
 		const Characters = yield* CharacterService;
@@ -27,16 +19,16 @@ export const save = command("unchecked", (input: { logId: LogIdParam; data: LogS
 		let form: SuperValidated<LogSchema>;
 		let redirectTo: Pathname;
 
-		if (input.data.isDmLog) {
-			const parsedId = yield* safeParse(v.nullable(characterIdSchema), input.data.characterId);
+		if (input.isDmLog) {
+			const parsedId = yield* safeParse(v.nullable(characterIdSchema), input.characterId);
 
-			const characters = input.data.characterId
+			const characters = input.characterId
 				? yield* Characters.get.userCharacters(user.id, {
 						characterId: parsedId.data || null
 					})
 				: [];
 
-			form = yield* validateForm(input.data, dMLogSchema(characters));
+			form = yield* validateForm(input, dMLogSchema(characters));
 			if (!parsedId.success) {
 				FormError.from<LogSchema>(parsedId.failure, "characterId").toForm(form);
 				return form;
@@ -44,18 +36,14 @@ export const save = command("unchecked", (input: { logId: LogIdParam; data: LogS
 
 			redirectTo = `/dm-logs`;
 		} else {
-			const characterId = yield* redirectOnFail(parse(characterIdSchema, input.data.characterId), "/characters", 302);
+			const characterId = yield* redirectOnFail(parse(characterIdSchema, input.characterId), "/characters", 302);
 			const character = yield* Characters.get.character(characterId);
 
-			form = yield* validateForm(input.data, characterLogSchema(character));
+			form = yield* validateForm(input, characterLogSchema(character));
 			redirectTo = `/characters/${character.id}`;
 		}
 
 		if (!form.valid) return form;
-
-		const logId = yield* redirectOnFail(parse(logIdParamSchema, input.logId), redirectTo, 302);
-		const log = logId !== "new" ? yield* Logs.get.log(logId, user.id) : undefined;
-		if (logId !== "new" && !log) return yield* new RedirectError({ message: "Log not found", redirectTo });
 
 		return yield* saveForm(Logs.set.save(form.data, user), {
 			onSuccess: () => redirectTo,

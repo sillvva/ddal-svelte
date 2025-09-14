@@ -2,8 +2,8 @@
 	import { goto } from "$app/navigation";
 	import { searchSections } from "$lib/constants.js";
 	import { GlobalSearchFactory } from "$lib/factories.svelte";
-	import * as AppQueries from "$lib/remote/app/queries.remote";
-	import * as CommandQueries from "$lib/remote/command/queries.remote";
+	import AppAPI from "$lib/remote/app";
+	import CommandAPI, { type SearchData } from "$lib/remote/command";
 	import { hotkey } from "$lib/util";
 	import { Command, Dialog, Separator } from "bits-ui";
 	import SearchResults from "./SearchResults.svelte";
@@ -15,7 +15,7 @@
 	let command = $state<Command.Root | null>(null);
 	let viewport = $state<HTMLDivElement | null>(null);
 	let input = $state<HTMLInputElement | null>(null);
-	let searchData = $state<CommandQueries.SearchData>([]);
+	let searchData = $state<SearchData>([]);
 
 	const search = $derived(new GlobalSearchFactory(searchData, open ? "" : ""));
 	const resultsCount = $derived(search.results.reduce((sum, section) => sum + section.items.length, 0));
@@ -25,7 +25,7 @@
 		open = newOpen;
 		search.query = "";
 		if (open) {
-			searchData = await CommandQueries.getCommandData();
+			searchData = await CommandAPI.queries.getCommandData();
 			input?.focus();
 		} else {
 			searchData = [];
@@ -64,7 +64,7 @@
 		<span class="hover-hover:max-md:hidden hover-none:hidden">
 			<kbd class="kbd kbd-sm">
 				<svelte:boundary>
-					{@const request = await AppQueries.request()}
+					{@const request = await AppAPI.queries.request()}
 					{#snippet pending()}{/snippet}
 					{request.isMac ? "⌘" : "CTRL"}
 				</svelte:boundary>
