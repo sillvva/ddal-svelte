@@ -8,26 +8,23 @@
 	import { pushState } from "$app/navigation";
 	import { page } from "$app/state";
 	import LoadingPanel from "$lib/components/LoadingPanel.svelte";
-	import { parseEffectResult, SearchParamState } from "$lib/factories.svelte";
+	import { parseEffectResult } from "$lib/factories.svelte";
 	import { successToast } from "$lib/factories.svelte.js";
 	import * as API from "$lib/remote";
 	import { debounce } from "@sillvva/utils";
-	import * as v from "valibot";
+	import { queryParam, ssp } from "sveltekit-search-params";
 
-	const s = new SearchParamState({
-		key: "s",
-		schema: v.nullable(v.string()),
-		defaultValue: page.url.searchParams.get("s"),
-		showDefault: false
+	const s = queryParam("s", ssp.string(), {
+		showDefaults: false
 	});
 
-	const baseSearch = $derived(await API.admin.queries.getBaseSearch());
-	const query = $derived(API.admin.queries.getAppLogs(s.state ?? baseSearch.query));
+	const baseSearch = $derived(await AdminAPI.queries.getBaseSearch());
+	const query = $derived(AdminAPI.queries.getAppLogs($s ?? baseSearch.query));
 	let loading = $derived(!query.current);
 	const logSearch = $derived(await query);
 
 	const debouncedSearch = debounce((query: string) => {
-		s.update(query.trim() || null);
+		$s = query.trim() || null;
 	}, 400);
 
 	let syntaxReference = $state("");
@@ -57,7 +54,7 @@
 					<input
 						type="text"
 						id="log-search"
-						value={s.state}
+						value={page.url.searchParams.get("s")}
 						oninput={(e) => {
 							loading = true;
 							debouncedSearch.call(e.currentTarget.value);
@@ -124,8 +121,8 @@
 						data-tip="Delete log"
 						aria-label="Delete log"
 						onclick={async () => {
-							const result = await API.admin.actions.deleteAppLog(log.id).updates(
-								API.admin.queries.getAppLogs(s.state ?? baseSearch.query).withOverride((data) => ({
+							const result = await AdminAPI.actions.deleteAppLog(log.id).updates(
+								AdminAPI.queries.getAppLogs($s ?? baseSearch.query).withOverride((data) => ({
 									...data,
 									logs: data.logs.filter((l) => l.id !== log.id)
 								}))
