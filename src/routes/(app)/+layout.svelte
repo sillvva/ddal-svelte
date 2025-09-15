@@ -150,15 +150,26 @@
 				<button class="btn btn-circle btn-ghost btn-sm absolute top-2 right-2" onclick={closeModal} aria-label="Close">
 					<span class="iconify mdi--close"></span>
 				</button>
-				<h3 id="modal-title" class="text-base-content cursor-text text-lg font-bold">{page.state.modal.name}</h3>
-				{#if page.state.modal.date}
-					<p class="text-xs">{page.state.modal.date.toLocaleString()}</p>
-				{/if}
-				<Markdown
-					id="modal-content"
-					content={page.state.modal.description}
-					class="sm:text-md cursor-text pt-4 text-sm whitespace-pre-wrap"
-				/>
+				<div class="flex flex-col gap-2">
+					<h3 id="modal-title" class="text-base-content cursor-text text-lg font-bold">
+						{#if page.state.modal.goto}
+							<a class="text-secondary-content flex items-center gap-2" href={page.state.modal.goto} onclick={closeModal}>
+								{page.state.modal.name}
+								<span class="iconify mdi--link"></span>
+							</a>
+						{:else}
+							{page.state.modal.name}
+						{/if}
+					</h3>
+					{#if page.state.modal.date}
+						<p class="text-xs">{page.state.modal.date.toLocaleString()}</p>
+					{/if}
+					<Markdown
+						id="modal-content"
+						content={page.state.modal.description}
+						class="sm:text-md cursor-text text-sm whitespace-pre-wrap"
+					/>
+				</div>
 			</div>
 		{/if}
 

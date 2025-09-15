@@ -31,14 +31,10 @@
 
 	const global = getGlobal();
 
-	const search = $derived(new EntitySearchFactory(data.logs));
+	const search = $derived(new EntitySearchFactory(data.logs, page.url.searchParams.get("s") || ""));
 	const sortedResults = $derived(
 		search.results.toSorted((a, b) => (global.app.dmLogs.sort === "asc" ? sorter(a.date, b.date) : sorter(b.date, a.date)))
 	);
-
-	$effect(() => {
-		search.query = page.url.searchParams.get("s") || "";
-	});
 
 	let deletingLog = new SvelteSet<string>();
 </script>

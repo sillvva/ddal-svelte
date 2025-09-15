@@ -11,6 +11,7 @@
 
 <script lang="ts">
 	import { invalidateAll } from "$app/navigation";
+	import { page } from "$app/state";
 	import Breadcrumbs from "$lib/components/Breadcrumbs.svelte";
 	import Search from "$lib/components/Search.svelte";
 	import SearchResults from "$lib/components/SearchResults.svelte";
@@ -22,7 +23,7 @@
 
 	let { data } = $props();
 
-	const search = $derived(new EntitySearchFactory(data.dms));
+	const search = $derived(new EntitySearchFactory(data.dms, page.url.searchParams.get("s") || ""));
 	const sortedResults = $derived(
 		search.results.toSorted((a, b) => sorter(a.isUser, b.isUser) || sorter(b.score, a.score) || sorter(a.name, b.name))
 	);

@@ -10,16 +10,6 @@
 
 	let { value = $bindable($s || ""), type = "text", ...rest }: Omit<HTMLInputAttributes, "class"> = $props();
 
-	// Sync value prop changes to $s
-	$effect(() => {
-		$s = value.trim() || null;
-	});
-
-	// Sync $s changes to value prop (when URL changes)
-	$effect(() => {
-		value = $s || "";
-	});
-
 	let ref: HTMLInputElement | undefined = undefined;
 </script>
 
@@ -34,8 +24,29 @@
 		]
 	])}
 >
-	<label class="input focus-within:border-primary sm:input-sm flex w-full items-center gap-2">
-		<input {type} bind:value class="w-full flex-1" aria-label={rest.placeholder || "Search"} bind:this={ref} {...rest} />
-		<kbd class="kbd kbd-sm max-sm:hidden">/</kbd>
+	<label class="input focus-within:border-primary sm:input-sm flex w-full items-center gap-2" class:pr-0={!!value.trim()}>
+		<input
+			{type}
+			bind:value
+			bind:this={ref}
+			class="w-full flex-1"
+			aria-label={rest.placeholder || "Search"}
+			oninput={() => ($s = value.trim() || null)}
+			{...rest}
+		/>
+		{#if value.trim()}
+			<button
+				class="btn btn-sm btn-ghost"
+				onclick={() => {
+					value = "";
+					$s = null;
+				}}
+				aria-label="Clear Search"
+			>
+				<span class="iconify mdi--close"></span>
+			</button>
+		{:else}
+			<kbd class="kbd kbd-sm max-sm:hidden">/</kbd>
+		{/if}
 	</label>
 </search>

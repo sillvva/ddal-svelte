@@ -347,7 +347,7 @@ class BaseSearchFactory<TData extends Array<unknown>> {
 		if (query.trim().length < this.MIN_QUERY_LENGTH) return [];
 
 		const tokens: Token[] = [];
-		const regex = /"([^"]+)"|(\w+)/g;
+		const regex = /"([^"]+)"|([\w-]+)/g;
 
 		let match: RegExpExecArray | null;
 		while ((match = regex.exec(query)) !== null) {

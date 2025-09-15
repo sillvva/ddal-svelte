@@ -35,6 +35,7 @@ declare global {
 						type: "text";
 						name: string;
 						description: string;
+						goto?: string;
 						date?: Date;
 						width?: number | string;
 						height?: number | string;

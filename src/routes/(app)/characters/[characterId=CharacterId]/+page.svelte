@@ -38,12 +38,9 @@
 
 	let deletingLog = new SvelteSet<string>();
 
-	const search = $derived(new EntitySearchFactory(data.character.logs));
+	const defaultQuery = $derived(page.url.searchParams.get("s") || "");
+	const search = $derived(new EntitySearchFactory(data.character.logs, defaultQuery));
 	const sortedResults = $derived(search.results.toSorted((a, b) => sorter(a.showDate, b.showDate)));
-
-	$effect(() => {
-		search.query = page.url.searchParams.get("s") || "";
-	});
 
 	function triggerImageModal(imageUrl = data.character.imageUrl) {
 		if (imageUrl) {
@@ -253,8 +250,8 @@
 				<div class="xs:basis-[60%] flex basis-full flex-col sm:basis-2/3 lg:basis-2/3 print:basis-2/3">
 					{#if data.character}
 						<div class="flex flex-col gap-4">
-							<Items title="Story Awards" items={data.character.storyAwards} collapsible sort />
-							<Items title="Magic Items" items={data.character.magicItems} collapsible formatting sort />
+							<Items title="Story Awards" items={data.character.storyAwards} collapsible sort search />
+							<Items title="Magic Items" items={data.character.magicItems} collapsible formatting sort search />
 						</div>
 					{/if}
 				</div>
@@ -262,19 +259,7 @@
 		</div>
 	</section>
 
-	{#if !sortedResults.length}
-		<section class="bg-base-200 mt-4 rounded-lg">
-			<div class="flex flex-col gap-4 py-20 text-center">
-				<div>No logs found.</div>
-				<p>
-					<a href="/characters/{data.character.id}/log/new" class="btn btn-primary">Create a Game Log</a>
-				</p>
-				<p>
-					<a href="/characters/{data.character.id}/log/new?firstLog=true" class="btn btn-primary">Create an Intro Log</a>
-				</p>
-			</div>
-		</section>
-	{:else}
+	{#if data.character.logs.length}
 		<div class="mt-4 flex flex-wrap gap-2 print:hidden" {@attach scrollToSearch}>
 			<div class="flex w-full gap-2 sm:max-w-md print:hidden">
 				{#if myCharacter}
@@ -294,9 +279,7 @@
 						New Log <kbd class="kbd kbd-sm max-sm:hover-none:hidden text-base-content">N</kbd>
 					</a>
 				{/if}
-				{#if data.character.logs.length}
-					<Search bind:value={search.query} placeholder="Search Logs" />
-				{/if}
+				<Search bind:value={search.query} placeholder="Search Logs" />
 				{#if myCharacter}
 					<a
 						href={`/characters/${data.character.id}/log/new`}
@@ -340,7 +323,21 @@
 				</button>
 			{/if}
 		</div>
+	{/if}
 
+	{#if !sortedResults.length}
+		<section class="bg-base-200 mt-4 rounded-lg">
+			<div class="flex flex-col gap-4 py-20 text-center">
+				<div>No logs found.</div>
+				<p>
+					<a href="/characters/{data.character.id}/log/new" class="btn btn-primary">Create a Game Log</a>
+				</p>
+				<p>
+					<a href="/characters/{data.character.id}/log/new?firstLog=true" class="btn btn-primary">Create an Intro Log</a>
+				</p>
+			</div>
+		</section>
+	{:else}
 		<section class="mt-4">
 			<div class="bg-base-200 w-full overflow-x-auto rounded-lg">
 				<table class="linked-table-groups table w-full leading-5">

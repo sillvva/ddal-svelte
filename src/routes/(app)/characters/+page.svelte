@@ -26,8 +26,7 @@
 
 	const global = getGlobal();
 
-	const defaultQuery = page.url.searchParams.get("s") || "";
-	const search = $derived(new EntitySearchFactory(data.characters, defaultQuery));
+	const search = $derived(new EntitySearchFactory(data.characters, page.url.searchParams.get("s") || ""));
 	const sortedResults = $derived(
 		search.results.toSorted((a, b) => sorter(b.score, a.score) || sorter(a.totalLevel, b.totalLevel) || sorter(a.name, b.name))
 	);

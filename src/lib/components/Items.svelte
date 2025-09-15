@@ -1,8 +1,10 @@
 <script lang="ts">
 	import { pushState } from "$app/navigation";
+	import { page } from "$app/state";
 	import type { MagicItem, StoryAward } from "$lib/server/db/schema";
 	import { sorter } from "@sillvva/utils";
 	import { SvelteMap } from "svelte/reactivity";
+	import { queryParam, ssp } from "sveltekit-search-params";
 	import SearchResults from "./SearchResults.svelte";
 
 	interface Props {
@@ -12,11 +14,17 @@
 		terms?: string[];
 		collapsible?: boolean;
 		sort?: boolean;
+		search?: boolean;
 	}
 
-	let { title = "", items, formatting = false, terms = [], collapsible = false, sort = false }: Props = $props();
+	let { title = "", items, formatting = false, terms = [], collapsible = false, sort = false, search = false }: Props = $props();
 
 	let collapsed = $state(collapsible);
+
+	const s = queryParam("s", ssp.string(), {
+		showDefaults: false,
+		pushHistory: false
+	});
 
 	const sorterName = (name: string) =>
 		sort
@@ -103,25 +111,37 @@
 	>
 		{#if items.length}
 			{#each nonConsumables as mi (mi.id)}<span
-					role={mi.description ? "button" : "presentation"}
+					role={mi.description || search ? "button" : "presentation"}
 					class="inline pr-2 pl-2 first:pl-0"
 					class:text-secondary-content={mi.description}
 					onclick={() => {
+						const url = new URL(page.url);
+						url.searchParams.set("s", mi.logGainedId);
 						if (mi.description) {
-							pushState("", { modal: { type: "text", name: mi.name, description: mi.description } });
+							pushState("", {
+								modal: { type: "text", name: mi.name, description: mi.description, goto: search ? url.toString() : undefined }
+							});
+						} else if (search) {
+							$s = mi.logGainedId;
 						}
 					}}
 					onkeypress={() => null}
 				>
 					<SearchResults text={mi.name} {terms} />
 				</span>{/each}{#each consumables as mi (mi.id)}<span
-					role={mi.description ? "button" : "presentation"}
+					role={mi.description || search ? "button" : "presentation"}
 					class="text-base-content/75 inline pr-2 pl-2 italic first:pl-0"
 					class:text-secondary-content={mi.description}
 					class:italic={formatting}
 					onclick={() => {
+						const url = new URL(page.url);
+						url.searchParams.set("s", mi.logGainedId);
 						if (mi.description) {
-							pushState("", { modal: { type: "text", name: mi.name, description: mi.description } });
+							pushState("", {
+								modal: { type: "text", name: mi.name, description: mi.description, goto: search ? url.toString() : undefined }
+							});
+						} else if (search) {
+							$s = mi.logGainedId;
 						}
 					}}
 					onkeypress={() => null}

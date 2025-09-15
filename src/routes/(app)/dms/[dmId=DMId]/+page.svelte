@@ -108,7 +108,7 @@
 									</td>
 									<td class="max-xs:px-2">
 										{#if log.character?.name}
-											<a href={`/characters/${log.character?.id}`} class="text-secondary-content">
+											<a href={`/characters/${log.character?.id}?s=${log.id}`} class="text-secondary-content">
 												{log.character?.name}
 											</a>
 										{/if}
