@@ -2,6 +2,7 @@ import { building } from "$app/environment";
 import { appCookieSchema } from "$lib/schemas";
 import { serverGetCookie } from "$lib/server/cookie";
 import { DBService } from "$lib/server/db";
+import { AppLog } from "$lib/server/effect/logging";
 import { run } from "$lib/server/effect/runtime";
 import { AdminService } from "$lib/server/effect/services/admin";
 import { AuthService } from "$lib/server/effect/services/auth";
@@ -9,11 +10,11 @@ import { CharacterService } from "$lib/server/effect/services/characters";
 import { DMService } from "$lib/server/effect/services/dms";
 import { LogService } from "$lib/server/effect/services/logs";
 import { UserService } from "$lib/server/effect/services/users";
-import { type Handle } from "@sveltejs/kit";
+import { type Handle, type HandleServerError } from "@sveltejs/kit";
 import { sequence } from "@sveltejs/kit/hooks";
 import { svelteKitHandler } from "better-auth/svelte-kit";
 import chalk from "chalk";
-import { Layer, ManagedRuntime } from "effect";
+import { Effect, Layer, ManagedRuntime } from "effect";
 
 const createAppRuntime = () => {
 	const dbLayer = DBService.Default();
@@ -53,7 +54,7 @@ const session: Handle = async ({ event, resolve }) =>
 		event.locals.session = session;
 		event.locals.user = user;
 
-		if (user) event.cookies.delete("banned", { path: "/" });
+		if (user && event.cookies.get("banned")) event.cookies.delete("banned", { path: "/" });
 
 		return resolve(event);
 	});
@@ -84,6 +85,11 @@ const preloadTheme: Handle = async ({ event, resolve }) => {
 };
 
 export const handle = sequence(runtime, authHandler, session, info, preloadTheme);
+
+export const handleError: HandleServerError = async ({ error, event, status, message }) => {
+	if (status !== 404) Effect.runFork(AppLog.error(message, { error, url: event.url }));
+	return { message };
+};
 
 if (typeof process !== "undefined") {
 	process.on("sveltekit:shutdown", async (signal: string) => {
