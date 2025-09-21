@@ -32,6 +32,11 @@
 		params.s = query.trim() || null;
 	}, 400);
 
+	const formatter = new Intl.DateTimeFormat(navigator.language, {
+		dateStyle: "full",
+		timeStyle: "long"
+	});
+
 	let syntaxReference = $state("");
 
 	async function openSyntaxReference() {
@@ -144,32 +149,36 @@
 					class={[
 						"group data-[details=true]:bg-base-200 scroll-mt-16 border-t border-neutral-500/20 first:border-0 data-[deleting=true]:hidden data-[details=true]:opacity-100",
 						Date.now() - log.timestamp.getTime() > 24 * 60 * 60 * 1000 &&
-							"bg-base-100/50 hover:bg-base-200 opacity-50 hover:opacity-100"
+							"bg-base-100/50 hover:bg-base-200 opacity-60 hover:opacity-100"
 					]}
 					data-details={false}
 				>
 					<tr class="border-0">
 						<td>
-							<span class="sm:hidden">[{log.level}]</span>
-							{log.message}
-							<div class="flex items-center justify-between">
-								<div class="text-base-content/60 group-data-[details=true]:hidden sm:hidden">
-									{getRelativeTime(log.timestamp)}
+							<div class="flex flex-col gap-1">
+								<div>
+									<span class="sm:hidden">[{log.level}]</span>
+									{log.message}
 								</div>
-								<div class="text-base-content/60 hidden max-sm:group-data-[details=true]:block">
-									{log.timestamp.toISOString()}
-								</div>
-								<div class="xs:hidden flex gap-2">
-									{@render actions()}
+								<div class="flex items-center justify-between">
+									<div class="text-base-content group-data-[details=true]:hidden sm:hidden">
+										{getRelativeTime(log.timestamp)}
+									</div>
+									<div class="text-base-content/60 hidden flex-1 max-sm:group-data-[details=true]:block">
+										{formatter.format(log.timestamp)}
+									</div>
+									<div class="xs:hidden flex gap-2">
+										{@render actions()}
+									</div>
 								</div>
 							</div>
 						</td>
 						<td class="text-center max-sm:hidden">{log.level}</td>
 						<td class="whitespace-nowrap max-sm:hidden sm:group-data-[details=true]:hidden">
-							<span class="sm:tooltip" data-tip={log.timestamp.toISOString()}>{getRelativeTime(log.timestamp)}</span>
+							<span class="sm:tooltip" data-tip={formatter.format(log.timestamp)}>{getRelativeTime(log.timestamp)}</span>
 						</td>
-						<td class="hidden whitespace-nowrap sm:group-data-[details=true]:table-cell">
-							{log.timestamp.toISOString()}
+						<td class="hidden sm:group-data-[details=true]:table-cell">
+							{formatter.format(log.timestamp)}
 						</td>
 						<td class="max-xs:hidden">
 							<div class="flex justify-end gap-2">
