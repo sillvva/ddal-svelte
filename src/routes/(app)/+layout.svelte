@@ -124,6 +124,11 @@
 	</main>
 	<Footer />
 	<MobileNav />
+	<svelte:boundary>
+		{#snippet pending()}{/snippet}
+
+		<Settings bind:open={settingsOpen} />
+	</svelte:boundary>
 </div>
 
 <dialog
@@ -187,9 +192,3 @@
 		<button class="modal-backdrop" onclick={closeModal} aria-label="Close">✕</button>
 	{/if}
 </dialog>
-
-<svelte:boundary>
-	{#snippet pending()}{/snippet}
-
-	<Settings bind:open={settingsOpen} />
-</svelte:boundary>

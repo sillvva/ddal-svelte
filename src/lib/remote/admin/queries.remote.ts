@@ -10,8 +10,8 @@ import * as v from "valibot";
 export const getBaseSearch = query(() =>
 	run(function* () {
 		const today = yield* DateTime.now;
-		const yesterday = today.pipe(DateTime.subtract({ days: 1 }));
-		const range = `${DateTime.formatIsoDateUtc(yesterday)}..${DateTime.formatIsoDateUtc(today)}`;
+		const weekAgo = today.pipe(DateTime.subtract({ days: 7 }));
+		const range = `${DateTime.formatIsoDateUtc(weekAgo)}..${DateTime.formatIsoDateUtc(today)}`;
 		return { query: `date:${range}`, validKeys };
 	})
 );
@@ -24,7 +24,9 @@ export const getAppLogs = query(v.string(), (search) =>
 		const { logs, metadata } = yield* Admin.get.logs(search).pipe(
 			Effect.map(({ logs, metadata }) => ({
 				logs: logs.map((log) => {
-					const trace = getTrace(log.label);
+					const err = log.annotations.extra.error as { stack?: string } | undefined;
+					const trace = getTrace(err?.stack ?? log.label);
+					if (err?.stack) log.annotations.extra.error = "See stack for more details";
 					return {
 						...log,
 						...trace

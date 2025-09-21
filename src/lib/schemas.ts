@@ -357,7 +357,7 @@ export const appLogSchema = v.object({
 		params: v.record(v.string(), v.optional(v.string())),
 		userId: v.optional(userIdSchema),
 		username: v.optional(v.string()),
-		extra: v.record(v.any(), v.any())
+		extra: v.record(v.string(), v.unknown())
 	}),
 	timestamp: v.date()
 });

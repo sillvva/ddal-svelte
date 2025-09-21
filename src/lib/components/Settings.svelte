@@ -281,33 +281,24 @@
 {/if}
 
 <style>
-	aside {
-		:global(.menu-lg li *) {
-			line-height: 1.5rem;
+	aside :global {
+		.menu-title {
+			padding: 0;
 		}
 
-		:global(.menu-title) {
-			padding-block: 0;
-		}
-
-		:global(.menu li) {
-			padding-inline: 0;
-		}
-
-		:global(.menu li > *) {
+		.menu li > * {
 			padding-left: 0.5rem;
 			padding-right: 0rem;
 		}
 
-		:global(.menu li > button) {
+		.menu li > button {
 			padding-left: 0.5rem;
 			padding-right: 0.5rem;
 			justify-content: start;
 			font-weight: normal;
 		}
 
-		:global(.menu li > :not(button, a):hover) {
-			background-color: transparent !important;
+		.menu li > :not(button, a):hover {
 			cursor: default;
 		}
 	}

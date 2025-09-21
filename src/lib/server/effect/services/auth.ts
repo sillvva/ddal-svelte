@@ -104,7 +104,6 @@ export const assertAuth = Effect.fn(function* (adminOnly = false) {
 	if (!user) {
 		return yield* new RedirectError({
 			message: "Invalid user",
-			status: 302,
 			redirectTo: `/?redirect=${encodeURIComponent(`${url.pathname}${url.search}`)}`
 		});
 	}
@@ -120,7 +119,6 @@ export const assertAuth = Effect.fn(function* (adminOnly = false) {
 		event.cookies.set("banned", result.output.banReason || "", { path: "/" });
 		return yield* new RedirectError({
 			message: "Banned",
-			status: 302,
 			redirectTo: "/"
 		});
 	}
@@ -128,7 +126,6 @@ export const assertAuth = Effect.fn(function* (adminOnly = false) {
 	if (adminOnly && result.output.role !== "admin") {
 		return yield* new RedirectError({
 			message: "Insufficient permissions",
-			status: 302,
 			redirectTo: "/characters"
 		});
 	}

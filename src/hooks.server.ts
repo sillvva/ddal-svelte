@@ -10,7 +10,7 @@ import { CharacterService } from "$lib/server/effect/services/characters";
 import { DMService } from "$lib/server/effect/services/dms";
 import { LogService } from "$lib/server/effect/services/logs";
 import { UserService } from "$lib/server/effect/services/users";
-import { type Handle, type HandleServerError } from "@sveltejs/kit";
+import { type Handle, type HandleServerError, type ServerInit } from "@sveltejs/kit";
 import { sequence } from "@sveltejs/kit/hooks";
 import { svelteKitHandler } from "better-auth/svelte-kit";
 import chalk from "chalk";
@@ -91,8 +91,13 @@ export const handleError: HandleServerError = async ({ error, event, status, mes
 	return { message };
 };
 
-if (typeof process !== "undefined") {
-	process.on("sveltekit:shutdown", async (signal: string) => {
+export const init: ServerInit = () => {
+	if (globalThis.initialized) return;
+	globalThis.initialized = true;
+
+	console.log("Initializing server...");
+
+	const gracefulShutdown = async (signal: string) => {
 		console.log("\nShut down signal received:", chalk.bold(signal));
 
 		try {
@@ -106,5 +111,8 @@ if (typeof process !== "undefined") {
 			console.error("Error during cleanup:", err);
 			process.exit(1);
 		}
-	});
-}
+	};
+
+	process.on("SIGINT", gracefulShutdown);
+	process.on("SIGTERM", gracefulShutdown);
+};

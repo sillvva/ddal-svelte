@@ -9,6 +9,8 @@ import "@total-typescript/ts-reset/fetch";
 import "@total-typescript/ts-reset/json-parse";
 
 declare global {
+	var initialized: boolean;
+
 	namespace App {
 		// interface Error {}
 		interface Locals {

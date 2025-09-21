@@ -11,6 +11,7 @@
 	import { parseEffectResult } from "$lib/factories.svelte";
 	import { successToast } from "$lib/factories.svelte.js";
 	import * as API from "$lib/remote";
+	import { getRelativeTime } from "$lib/util";
 	import { debounce } from "@sillvva/utils";
 	import { queryParam, ssp } from "sveltekit-search-params";
 
@@ -19,7 +20,7 @@
 	});
 
 	const baseSearch = $derived(await API.admin.queries.getBaseSearch());
-	const query = $derived(API.admin.queries.getAppLogs($s ?? baseSearch.query));
+	const query = $derived(API.admin.queries.getAppLogs($s ?? ""));
 	let loading = $derived(!query.current);
 	const logSearch = $derived(await query);
 
@@ -106,23 +107,24 @@
 			{#each logSearch.logs as log (log.id)}
 				{#snippet actions()}
 					<button
-						class="btn btn-sm btn-primary tooltip tooltip-left"
+						class="btn btn-sm btn-primary sm:tooltip tooltip-left"
 						data-tip="Toggle details"
 						aria-label="Toggle details"
 						onclick={() => {
-							const row = document.querySelector(`tr[data-id="${log.id}"]`) as HTMLTableRowElement | null;
+							const row = document.querySelector(`tbody:has(tr[data-id="${log.id}"])`) as HTMLTableRowElement | null;
+							console.log(row);
 							if (row) row.dataset.details = row.dataset.details === "true" ? "false" : "true";
 						}}
 					>
 						<span class="iconify mdi--eye"></span>
 					</button>
 					<button
-						class="btn btn-sm btn-error tooltip tooltip-left"
+						class="btn btn-sm btn-error sm:tooltip tooltip-left"
 						data-tip="Delete log"
 						aria-label="Delete log"
 						onclick={async () => {
 							const result = await API.admin.actions.deleteAppLog(log.id).updates(
-								API.admin.queries.getAppLogs($s ?? baseSearch.query).withOverride((data) => ({
+								API.admin.queries.getAppLogs($s ?? "").withOverride((data) => ({
 									...data,
 									logs: data.logs.filter((l) => l.id !== log.id)
 								}))
@@ -134,27 +136,44 @@
 						<span class="iconify mdi--delete"></span>
 					</button>
 				{/snippet}
-				<tbody class="scroll-mt-16 border-t border-neutral-500/20 first:border-0 data-[deleting=true]:hidden">
+				<tbody
+					class={[
+						"group data-[details=true]:bg-base-200 scroll-mt-16 border-t border-neutral-500/20 first:border-0 data-[deleting=true]:hidden data-[details=true]:opacity-100",
+						Date.now() - log.timestamp.getTime() > 24 * 60 * 60 * 1000 &&
+							"bg-base-100/50 hover:bg-base-200 opacity-50 hover:opacity-100"
+					]}
+					data-details={false}
+				>
 					<tr class="border-0">
 						<td>
 							<span class="sm:hidden">[{log.level}]</span>
 							{log.message}
 							<div class="flex items-center justify-between">
-								<div class="text-base-content/60 sm:hidden">{log.timestamp.toLocaleString()}</div>
-								<div class="xs:hidden mt-2 flex gap-2">
+								<div class="text-base-content/60 group-data-[details=true]:hidden sm:hidden">
+									{getRelativeTime(log.timestamp)}
+								</div>
+								<div class="text-base-content/60 hidden max-sm:group-data-[details=true]:block">
+									{log.timestamp.toISOString()}
+								</div>
+								<div class="xs:hidden flex gap-2">
 									{@render actions()}
 								</div>
 							</div>
 						</td>
 						<td class="text-center max-sm:hidden">{log.level}</td>
-						<td class="whitespace-nowrap max-sm:hidden">{log.timestamp.toISOString()}</td>
+						<td class="whitespace-nowrap max-sm:hidden sm:group-data-[details=true]:hidden">
+							<span class="sm:tooltip" data-tip={log.timestamp.toISOString()}>{getRelativeTime(log.timestamp)}</span>
+						</td>
+						<td class="hidden whitespace-nowrap sm:group-data-[details=true]:table-cell">
+							{log.timestamp.toISOString()}
+						</td>
 						<td class="max-xs:hidden">
 							<div class="flex justify-end gap-2">
 								{@render actions()}
 							</div>
 						</td>
 					</tr>
-					<tr data-id={log.id} data-details={false} class="hidden data-[details=true]:table-row">
+					<tr data-id={log.id} data-details={false} class="hidden group-data-[details=true]:table-row">
 						<td colspan="4">
 							<div class="grid grid-cols-1 gap-4">
 								{#if log.stack}

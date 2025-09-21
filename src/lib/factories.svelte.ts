@@ -32,7 +32,7 @@ import type { Awaitable } from "./util";
 export function isRedirectFailure(
 	error: EffectFailure["error"]
 ): error is EffectFailure["error"] & { redirectTo: FullPathname & {} } {
-	return Boolean(error.redirectTo && typeof error.redirectTo === "string" && error.status <= 308);
+	return Boolean(error.redirectTo && typeof error.redirectTo === "string" && error.status >= 301 && error.status <= 308);
 }
 
 export async function parseEffectResult<T>(result: EffectResult<T>) {
