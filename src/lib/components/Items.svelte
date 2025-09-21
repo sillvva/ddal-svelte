@@ -4,7 +4,7 @@
 	import type { MagicItem, StoryAward } from "$lib/server/db/schema";
 	import { sorter } from "@sillvva/utils";
 	import { SvelteMap } from "svelte/reactivity";
-	import { queryParam, ssp } from "sveltekit-search-params";
+	import { queryParameters, ssp } from "sveltekit-search-params";
 	import SearchResults from "./SearchResults.svelte";
 
 	interface Props {
@@ -21,10 +21,15 @@
 
 	let collapsed = $state(collapsible);
 
-	const s = queryParam("s", ssp.string(), {
-		showDefaults: false,
-		pushHistory: false
-	});
+	const params = queryParameters(
+		{
+			s: ssp.string()
+		},
+		{
+			showDefaults: false,
+			pushHistory: false
+		}
+	);
 
 	const sorterName = (name: string) =>
 		sort
@@ -122,7 +127,7 @@
 								modal: { type: "text", name: mi.name, description: mi.description, goto: search ? url.toString() : undefined }
 							});
 						} else if (search) {
-							$s = mi.logGainedId;
+							params.s = mi.logGainedId;
 						}
 					}}
 					onkeypress={() => null}
@@ -141,7 +146,7 @@
 								modal: { type: "text", name: mi.name, description: mi.description, goto: search ? url.toString() : undefined }
 							});
 						} else if (search) {
-							$s = mi.logGainedId;
+							params.s = mi.logGainedId;
 						}
 					}}
 					onkeypress={() => null}

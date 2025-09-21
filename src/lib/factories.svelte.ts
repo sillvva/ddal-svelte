@@ -5,7 +5,7 @@ import type { UserDM } from "$lib/server/effect/services/dms";
 import type { FullLogData, LogSummaryData, UserLogData } from "$lib/server/effect/services/logs";
 import { getLocalTimeZone, parseAbsoluteToLocal, toCalendarDateTime, type DateValue } from "@internationalized/date";
 import { debounce, isDefined, substrCount, type MapKeys, type Prettify } from "@sillvva/utils";
-import { isHttpError, type RemoteQuery, type RemoteQueryOverride } from "@sveltejs/kit";
+import { isHttpError, type NumericRange, type RemoteQuery, type RemoteQueryOverride } from "@sveltejs/kit";
 import { Duration } from "effect";
 import { onDestroy } from "svelte";
 import { toast } from "svelte-sonner";
@@ -31,7 +31,7 @@ import type { Awaitable } from "./util";
 
 export function isRedirectFailure(
 	error: EffectFailure["error"]
-): error is EffectFailure["error"] & { redirectTo: FullPathname & {} } {
+): error is EffectFailure["error"] & { status: NumericRange<301, 308>; redirectTo: FullPathname & {} } {
 	return Boolean(error.redirectTo && typeof error.redirectTo === "string" && error.status >= 301 && error.status <= 308);
 }
 

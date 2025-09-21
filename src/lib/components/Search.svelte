@@ -1,14 +1,19 @@
 <script lang="ts">
 	import { hotkey } from "$lib/util";
 	import type { HTMLInputAttributes } from "svelte/elements";
-	import { queryParam, ssp } from "sveltekit-search-params";
+	import { queryParameters, ssp } from "sveltekit-search-params";
 
-	const s = queryParam("s", ssp.string(), {
-		showDefaults: false,
-		pushHistory: false
-	});
+	const params = queryParameters(
+		{
+			s: ssp.string()
+		},
+		{
+			showDefaults: false,
+			pushHistory: false
+		}
+	);
 
-	let { value = $bindable($s || ""), type = "text", ...rest }: Omit<HTMLInputAttributes, "class"> = $props();
+	let { value = $bindable(params.s ?? ""), type = "text", ...rest }: Omit<HTMLInputAttributes, "class"> = $props();
 
 	let ref: HTMLInputElement | undefined = undefined;
 </script>
@@ -31,7 +36,7 @@
 			bind:this={ref}
 			class="w-full flex-1"
 			aria-label={rest.placeholder || "Search"}
-			oninput={() => ($s = value.trim() || null)}
+			oninput={() => (params.s = value.trim() || null)}
 			{...rest}
 		/>
 		{#if value.trim()}
@@ -39,7 +44,7 @@
 				class="btn btn-sm btn-ghost"
 				onclick={() => {
 					value = "";
-					$s = null;
+					params.s = null;
 				}}
 				aria-label="Clear Search"
 			>
