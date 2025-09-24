@@ -1,9 +1,12 @@
 <script lang="ts" module>
-	import type { PageData } from "./$types.js";
-	export const getPageTitle = (data: Partial<PageData>) => data.character?.name || "New Character";
-	export function getPageHead(data: Partial<PageData>) {
+	import type { RouteParams } from "./$types.js";
+	export async function getPageTitle(params: RouteParams) {
+		return params.characterId === "new" ? "New Character" : "Edit";
+	}
+	export async function getPageHead(params: RouteParams) {
+		const character = await API.characters.queries.getCharacter({ param: params.characterId });
 		return {
-			title: data.characterId === "new" ? "New Character" : `Edit ${data.character?.name}`
+			title: params.characterId === "new" ? "New Character" : `Edit ${character.name}`
 		};
 	}
 </script>
@@ -22,10 +25,11 @@
 	import { editCharacterSchema } from "$lib/schemas";
 	import { getGlobal } from "$lib/stores.svelte.js";
 
-	let { data } = $props();
+	let { params } = $props();
 
 	const global = getGlobal();
-	const superform = valibotForm(data.form, editCharacterSchema, {
+	const editForm = await API.characters.queries.getCharacterForm({ param: params.characterId, editing: true });
+	const superform = valibotForm(editForm.form, editCharacterSchema, {
 		remote: API.characters.forms.save
 	});
 
@@ -80,14 +84,14 @@
 			</div>
 		</div>
 	</Control>
-	{#if data.character?.id === "new"}
+	{#if params.characterId === "new"}
 		<Control class="col-span-12 -mb-4">
 			<span class="fieldset-legend">
 				<span>Options</span>
 			</span>
 		</Control>
 	{/if}
-	{#if data.character?.id === "new"}
+	{#if params.characterId === "new"}
 		<Control class="col-span-12 sm:col-span-6">
 			<Checkbox
 				{superform}

@@ -17,6 +17,8 @@
 	let input = $state<HTMLInputElement | null>(null);
 	let searchData = $state<SearchData>([]);
 
+	const request = $derived(await API.app.queries.request());
+
 	const search = $derived(new GlobalSearchFactory(searchData, open ? "" : ""));
 	const resultsCount = $derived(search.results.reduce((sum, section) => sum + section.items.length, 0));
 	const categories = $derived(searchData.map((section) => section.title).filter((c) => c !== "Sections"));
@@ -63,11 +65,7 @@
 		</span>
 		<span class="hover-hover:max-md:hidden hover-none:hidden">
 			<kbd class="kbd kbd-sm">
-				<svelte:boundary>
-					{@const request = await API.app.queries.request()}
-					{#snippet pending()}{/snippet}
-					{request.isMac ? "⌘" : "CTRL"}
-				</svelte:boundary>
+				{request.isMac ? "⌘" : "CTRL"}
 			</kbd>
 			<kbd class="kbd kbd-sm">K</kbd>
 		</span>

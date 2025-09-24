@@ -7,13 +7,13 @@
 		return title.replace(/([A-Z])/g, " $1").replace(/^./, (str) => str.toUpperCase());
 	}
 
-	function getPageTitleFromModule(module: ModuleData | undefined) {
+	async function getPageTitleFromModule(module: ModuleData | undefined) {
 		if (module?.pageTitle) return module.pageTitle;
-		if (module?.getPageTitle) return module.getPageTitle(page.data);
+		if (module?.getPageTitle) return await module.getPageTitle(page.params);
 		return undefined;
 	}
 
-	const crumbs = $derived.by(() => {
+	const temp = $derived.by(async () => {
 		let tmpCrumbs = [] as Crumb[];
 		if (page.route.id) {
 			let completeUrl = "";
@@ -35,7 +35,7 @@
 
 				tmpCrumbs.push({
 					url: completeUrl,
-					title: getPageTitleFromModule(routeModule) || titleSanitizer(path)
+					title: (await getPageTitleFromModule(routeModule)) || titleSanitizer(path)
 				});
 			}
 		} else {
@@ -54,6 +54,7 @@
 		}
 		return tmpCrumbs;
 	});
+	const crumbs = $derived(await temp);
 </script>
 
 <div class={["flex min-h-9 flex-1 items-center max-sm:min-h-8 sm:mb-4", crumbs.length === 1 && "max-sm:hidden"]}>

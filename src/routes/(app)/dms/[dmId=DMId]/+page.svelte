@@ -1,9 +1,13 @@
 <script lang="ts" module>
-	import type { PageData } from "./$types.js";
-	export const getPageTitle = (data: Partial<PageData>) => data.dm?.name || "DM";
-	export function getPageHead(data: Partial<PageData>) {
+	import type { RouteParams } from "./$types.js";
+	export async function getPageTitle(params: RouteParams) {
+		const data = await API.dms.queries.getDMForm(params.dmId);
+		return data.dm.name;
+	}
+	export async function getPageHead(params: RouteParams) {
+		const data = await API.dms.queries.getDMForm(params.dmId);
 		return {
-			title: data.dm?.name || "DM"
+			title: data.dm.name
 		};
 	}
 </script>
@@ -22,10 +26,11 @@
 	import { getGlobal } from "$lib/stores.svelte.js";
 	import { sorter } from "@sillvva/utils";
 
-	let { data } = $props();
+	let { params } = $props();
 
 	const global = getGlobal();
 
+	const data = await API.dms.queries.getDMForm(params.dmId);
 	const superform = valibotForm(data.form, dungeonMasterSchema, {
 		remote: API.dms.forms.save
 	});

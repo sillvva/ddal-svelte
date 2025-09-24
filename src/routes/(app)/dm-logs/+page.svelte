@@ -1,10 +1,9 @@
 <script lang="ts" module>
-	import type { PageData } from "./$types.js";
-
 	export const pageTitle = "DM Logs";
-	export function getPageHead(data: Partial<PageData>) {
+	export async function getPageHead() {
+		const request = await API.app.queries.request();
 		return {
-			title: `${data.user?.name}'s DM Logs`
+			title: `${request.user?.name}'s DM Logs`
 		};
 	}
 </script>
@@ -27,11 +26,10 @@
 	import { fromAction } from "svelte/attachments";
 	import { SvelteSet } from "svelte/reactivity";
 
-	let { data } = $props();
-
 	const global = getGlobal();
 
-	const search = $derived(new EntitySearchFactory(data.logs, page.url.searchParams.get("s") || ""));
+	const logs = $derived(await API.logs.queries.getDmLogs());
+	const search = $derived(new EntitySearchFactory(logs, page.url.searchParams.get("s") || ""));
 	const sortedResults = $derived(
 		search.results.toSorted((a, b) => (global.app.dmLogs.sort === "asc" ? sorter(a.date, b.date) : sorter(b.date, a.date)))
 	);
@@ -48,7 +46,7 @@
 					<button
 						{@attach fromAction(download, () => ({
 							filename: "dm-logs.json",
-							blob: new Blob([JSON.stringify(data.logs)])
+							blob: new Blob([JSON.stringify(logs)])
 						}))}
 					>
 						Export
@@ -121,7 +119,7 @@
 						<th class="print:hidden"></th>
 					</tr>
 				</thead>
-				{#if data.logs.length == 0}
+				{#if logs.length == 0}
 					<tbody>
 						<tr>
 							<td colSpan={5} class="py-20 text-center">

@@ -32,7 +32,7 @@
 	}
 </script>
 
-<Layout data={page.data}>
+<Layout>
 	<div class="flex flex-1 flex-col items-center justify-center p-4">
 		{#if !display}
 			<div class="font-vecna mb-12 flex flex-col items-center text-3xl font-bold sm:text-5xl md:text-6xl">

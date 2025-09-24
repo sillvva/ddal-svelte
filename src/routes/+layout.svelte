@@ -1,22 +1,27 @@
 <script lang="ts">
 	import { dev } from "$app/environment";
 	import Head from "$lib/components/Head.svelte";
+	import * as API from "$lib/remote";
+	import { appDefaults } from "$lib/schemas";
 	import { createGlobal } from "$lib/stores.svelte";
 	import { Toaster } from "svelte-sonner";
-	// import { setupViewTransition } from "sveltekit-view-transition";
+	import { setupViewTransition } from "sveltekit-view-transition";
 	import "../app.css";
 
-	let { data, children } = $props();
+	let { children } = $props();
 
-	createGlobal(data.app);
-	// setupViewTransition();
+	const global = createGlobal(appDefaults);
+	const request = await API.app.queries.request();
+	global.app = request.app;
+
+	setupViewTransition();
 </script>
 
 <Head />
 
 {@render children()}
 
-<Toaster richColors closeButton theme={data.app.settings.mode} />
+<Toaster richColors closeButton theme={global.app.settings.mode} />
 
 {#if dev}
 	<div class="fixed right-0 bottom-0 z-50">
@@ -26,8 +31,7 @@
 			<div class="hidden sm:max-md:block">sm</div>
 			<div class="hidden md:max-lg:block">md</div>
 			<div class="hidden lg:max-xl:block">lg</div>
-			<div class="hidden xl:max-2xl:block">xl</div>
-			<div class="hidden 2xl:block">2xl</div>
+			<div class="hidden xl:block">xl</div>
 		</div>
 	</div>
 {/if}

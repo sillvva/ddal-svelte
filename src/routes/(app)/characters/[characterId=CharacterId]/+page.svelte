@@ -1,12 +1,15 @@
 <script lang="ts" module>
-	import type { PageData } from "./$types.js";
-
-	export const getPageTitle = (data: Partial<PageData>) => data.character?.name || "Character";
-	export function getPageHead(data: Partial<PageData>) {
+	import type { RouteParams } from "./$types.js";
+	export async function getPageTitle(params: RouteParams) {
+		const character = await API.characters.queries.getCharacter({ param: params.characterId });
+		return character.name || "Character";
+	}
+	export async function getPageHead(params: RouteParams) {
+		const character = await API.characters.queries.getCharacter({ param: params.characterId });
 		return {
-			title: data.character?.name || "Character",
-			description: `Level ${data.character?.totalLevel} ${data.character?.race} ${data.character?.class}`,
-			image: `${page.url.origin}/characters/${data.character?.id}/og-image.jpg`
+			title: character.name || "Character",
+			description: `Level ${character.totalLevel} ${character.race} ${character.class}`,
+			image: `${page.url.origin}/characters/${character.id}/og-image.jpg`
 		};
 	}
 </script>
@@ -30,24 +33,26 @@
 	import { fromAction } from "svelte/attachments";
 	import { SvelteSet } from "svelte/reactivity";
 
-	let { data } = $props();
+	const { params } = $props();
 
 	const global = getGlobal();
 
-	const myCharacter = $derived(data.character.userId === data.user?.id);
+	const character = $derived(await API.characters.queries.getCharacter({ param: params.characterId, editRedirect: true }));
+	const request = $derived(await API.app.queries.request());
+	const myCharacter = $derived(character.userId === request.user?.id);
 
 	let deletingLog = new SvelteSet<string>();
 
 	const defaultQuery = $derived(page.url.searchParams.get("s") || "");
-	const search = $derived(new EntitySearchFactory(data.character.logs, defaultQuery));
+	const search = $derived(new EntitySearchFactory(character.logs, defaultQuery));
 	const sortedResults = $derived(search.results.toSorted((a, b) => sorter(a.showDate, b.showDate)));
 
-	function triggerImageModal(imageUrl = data.character.imageUrl) {
+	function triggerImageModal(imageUrl = character.imageUrl) {
 		if (imageUrl) {
 			pushState("", {
 				modal: {
 					type: "image",
-					name: data.character.name,
+					name: character.name,
 					imageUrl
 				}
 			});
@@ -59,11 +64,11 @@
 	}
 
 	$effect(() => {
-		if (global.app.settings.autoWebAuthn && !data.user) {
+		if (global.app.settings.autoWebAuthn && !request.user) {
 			authClient.signIn.passkey({
 				fetchOptions: {
 					onSuccess: () => {
-						window.location.href = `/characters/${data.character.id}`;
+						window.location.href = `/characters/${character.id}`;
 					}
 				}
 			});
@@ -72,29 +77,29 @@
 </script>
 
 <div>
-	{#if data.user}
+	{#if request.user}
 		<div class="flex gap-4 print:hidden">
 			<Breadcrumbs />
 			{#if myCharacter}
 				<div class="flex gap-4">
-					<a href={`/characters/${data.character.id}/edit`} class="btn btn-primary btn-sm max-sm:hidden">Edit</a>
+					<a href={`/characters/${character.id}/edit`} class="btn btn-primary btn-sm max-sm:hidden">Edit</a>
 					<Dropdown class="dropdown-end">
 						<ul role="menu" class="menu dropdown-content rounded-box bg-base-300 z-20 w-52 shadow-sm">
 							<li role="menuitem" class="sm:hidden">
-								<a href={`/characters/${data.character.id}/edit`}>Edit</a>
+								<a href={`/characters/${character.id}/edit`}>Edit</a>
 							</li>
 							<li role="menuitem" class="max-sm:hidden">
 								<button
 									{@attach fromAction(download, () => ({
-										filename: `${slugify(data.character.name)}.json`,
-										blob: new Blob([JSON.stringify(data.character)])
+										filename: `${slugify(character.name)}.json`,
+										blob: new Blob([JSON.stringify(character)])
 									}))}>Export</button
 								>
 							</li>
-							{#if data.character.imageUrl}
+							{#if character.imageUrl}
 								<li role="menuitem" class="xs:hidden">
 									<a
-										href={data.character.imageUrl}
+										href={character.imageUrl}
 										target="_blank"
 										onclick={(e) => {
 											e.preventDefault();
@@ -105,11 +110,11 @@
 							{/if}
 							<li role="menuitem">
 								<a
-									href={`/characters/${data.character.id}/og-image.jpg`}
+									href={`/characters/${character.id}/og-image.jpg`}
 									target="_blank"
 									onclick={(e) => {
 										e.preventDefault();
-										triggerImageModal(`/characters/${data.character.id}/og-image.jpg`);
+										triggerImageModal(`/characters/${character.id}/og-image.jpg`);
 									}}>Social Media Image</a
 								>
 							</li>
@@ -120,12 +125,12 @@
 									aria-label="Delete Character"
 									disabled={!!API.characters.actions.deleteCharacter.pending}
 									onclick={async () => {
-										if (!confirm(`Are you sure you want to delete ${data.character.name}? This action cannot be undone.`)) return;
+										if (!confirm(`Are you sure you want to delete ${character.name}? This action cannot be undone.`)) return;
 										global.pageLoader = true;
-										const result = await API.characters.actions.deleteCharacter(data.character.id);
+										const result = await API.characters.actions.deleteCharacter(character.id);
 										const parsed = await parseEffectResult(result);
 										if (parsed) {
-											successToast(`${data.character.name} deleted`);
+											successToast(`${character.name} deleted`);
 											await goto("/characters");
 										}
 										global.pageLoader = false;
@@ -144,24 +149,20 @@
 	<section class="flex">
 		<div class="flex flex-1 flex-col gap-6">
 			<div class="flex">
-				{#if data.character.imageUrl}
+				{#if character.imageUrl}
 					<div class="xs:max-md:flex relative mr-4 hidden w-20 flex-col items-end justify-center print:hidden">
 						<a
-							href={data.character.imageUrl}
+							href={character.imageUrl}
 							target="_blank"
 							rel="noreferrer noopener"
 							class="mask mask-squircle bg-primary mx-auto h-20"
-							style:view-transition-name={"image-" + data.character.id}
+							style:view-transition-name={"image-" + character.id}
 							onclick={(e) => {
 								e.preventDefault();
 								triggerImageModal();
 							}}
 						>
-							<img
-								src={data.character.imageUrl}
-								class="size-full object-cover object-top transition-all"
-								alt={data.character.name}
-							/>
+							<img src={character.imageUrl} class="size-full object-cover object-top transition-all" alt={character.name} />
 						</a>
 					</div>
 				{/if}
@@ -170,20 +171,20 @@
 						<h3
 							class="font-vecna print:text-base-content flex-1 py-2 text-3xl font-bold text-black sm:py-0 sm:text-4xl dark:text-white print:text-2xl"
 						>
-							{data.character.name}
+							{character.name}
 						</h3>
 					</div>
 					<p class="xs:text-sm flex-1 text-xs font-semibold">
-						{data.character.race}
-						{data.character.class}
+						{character.race}
+						{character.class}
 					</p>
 					<p class="flex-1 text-xs">
-						{data.character.campaign}
-						{#if data.character.characterSheetUrl}
+						{character.campaign}
+						{#if character.characterSheetUrl}
 							<span class="print:hidden">
 								-
 								<a
-									href={data.character.characterSheetUrl}
+									href={character.characterSheetUrl}
 									target="_blank"
 									rel="noreferrer noopner"
 									class="text-secondary-content font-semibold dark:not-print:drop-shadow-xs"
@@ -197,48 +198,44 @@
 			</div>
 			<div class="xs:flex-nowrap flex flex-1 flex-wrap gap-4 sm:gap-4 md:gap-6 print:flex-nowrap print:gap-2">
 				<div class="xs:basis-[40%] flex basis-full flex-col gap-2 sm:basis-1/3 sm:gap-4 md:basis-52 print:basis-1/3 print:gap-2">
-					{#if data.character.imageUrl}
+					{#if character.imageUrl}
 						<div class="relative flex flex-col items-end justify-center max-md:hidden print:hidden">
 							<a
-								href={data.character.imageUrl}
+								href={character.imageUrl}
 								target="_blank"
 								rel="noreferrer noopener"
 								class="mask mask-squircle bg-primary mx-auto h-52 w-full"
-								style:view-transition-name={"image-" + data.character.id}
+								style:view-transition-name={"image-" + character.id}
 								onclick={(e) => {
 									e.preventDefault();
 									triggerImageModal();
 								}}
 							>
-								<img
-									src={data.character.imageUrl}
-									class="size-full object-cover object-top transition-all"
-									alt={data.character.name}
-								/>
+								<img src={character.imageUrl} class="size-full object-cover object-top transition-all" alt={character.name} />
 							</a>
 						</div>
 					{/if}
 					<div class="flex">
 						<h4 class="print:text-base-content font-semibold dark:text-white">Level</h4>
-						<div class="flex-1 text-right">{data.character.totalLevel}</div>
+						<div class="flex-1 text-right">{character.totalLevel}</div>
 					</div>
 					<div class="flex">
 						<h4 class="print:text-base-content font-semibold dark:text-white">Tier</h4>
-						<div class="flex-1 text-right">{data.character.tier}</div>
+						<div class="flex-1 text-right">{character.tier}</div>
 					</div>
 					<div class="flex">
 						<h4 class="print:text-base-content font-semibold dark:text-white">Gold</h4>
-						<div class="flex-1 text-right">{data.character.totalGold.toLocaleString()}</div>
+						<div class="flex-1 text-right">{character.totalGold.toLocaleString()}</div>
 					</div>
-					{#if data.character.totalTcp}
+					{#if character.totalTcp}
 						<div class="flex">
 							<h4 class="print:text-base-content font-semibold dark:text-white">TCP</h4>
-							<div class="flex-1 text-right">{data.character.totalTcp}</div>
+							<div class="flex-1 text-right">{character.totalTcp}</div>
 						</div>
 					{/if}
 					<div class="flex">
 						<h4 class="print:text-base-content font-semibold dark:text-white">Downtime</h4>
-						<div class="flex-1 text-right">{data.character.totalDtd}</div>
+						<div class="flex-1 text-right">{character.totalDtd}</div>
 					</div>
 				</div>
 				<div
@@ -248,10 +245,10 @@
 					].join(" ")}
 				></div>
 				<div class="xs:basis-[60%] flex basis-full flex-col sm:basis-2/3 lg:basis-2/3 print:basis-2/3">
-					{#if data.character}
+					{#if character}
 						<div class="flex flex-col gap-4">
-							<Items title="Story Awards" items={data.character.storyAwards} collapsible sort search />
-							<Items title="Magic Items" items={data.character.magicItems} collapsible formatting sort search />
+							<Items title="Story Awards" items={character.storyAwards} collapsible sort search />
+							<Items title="Magic Items" items={character.magicItems} collapsible formatting sort search />
 						</div>
 					{/if}
 				</div>
@@ -259,19 +256,19 @@
 		</div>
 	</section>
 
-	{#if data.character.logs.length}
+	{#if character.logs.length}
 		<div class="mt-4 flex flex-wrap gap-2 print:hidden" {@attach scrollToSearch}>
 			<div class="flex w-full gap-2 sm:max-w-md print:hidden">
 				{#if myCharacter}
 					<a
-						href={`/characters/${data.character.id}/log/new`}
+						href={`/characters/${character.id}/log/new`}
 						class="btn btn-primary sm:btn-sm max-sm:hidden sm:px-3"
 						aria-label="New Log"
 						{@attach hotkey([
 							[
 								"n",
 								() => {
-									goto(`/characters/${data.character.id}/log/new`);
+									goto(`/characters/${character.id}/log/new`);
 								}
 							]
 						])}
@@ -282,7 +279,7 @@
 				<Search bind:value={search.query} placeholder="Search Logs" />
 				{#if myCharacter}
 					<a
-						href={`/characters/${data.character.id}/log/new`}
+						href={`/characters/${character.id}/log/new`}
 						class="btn btn-primary sm:btn-sm sm:hidden sm:px-3"
 						aria-label="New Log"
 					>
@@ -304,7 +301,7 @@
 					</button>
 				{/if}
 			</div>
-			{#if data.character.logs.length}
+			{#if character.logs.length}
 				<div class="flex-1 max-sm:hidden"></div>
 				<button
 					class="btn data-[desc=true]:btn-primary sm:btn-sm max-sm:hidden"
@@ -330,10 +327,10 @@
 			<div class="flex flex-col gap-4 py-20 text-center">
 				<div>No logs found.</div>
 				<p>
-					<a href="/characters/{data.character.id}/log/new" class="btn btn-primary">Create a Game Log</a>
+					<a href="/characters/{character.id}/log/new" class="btn btn-primary">Create a Game Log</a>
 				</p>
 				<p>
-					<a href="/characters/{data.character.id}/log/new?firstLog=true" class="btn btn-primary">Create an Intro Log</a>
+					<a href="/characters/{character.id}/log/new?firstLog=true" class="btn btn-primary">Create an Intro Log</a>
 				</p>
 			</div>
 		</section>

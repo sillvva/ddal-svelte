@@ -1,9 +1,17 @@
 <script lang="ts" module>
-	import type { PageData } from "./$types.js";
-	export const getPageTitle = (data: Partial<PageData>) => data.form?.data.name || "New Log";
-	export function getPageHead(data: Partial<PageData>) {
+	import type { RouteParams } from "./$types.js";
+	export async function getPageTitle(params: RouteParams) {
+		const dmLog = await API.logs.queries.getDMLogForm({
+			param: { logId: params.logId }
+		});
+		return dmLog.form.data.name || "New Log";
+	}
+	export async function getPageHead(params: RouteParams) {
+		const dmLog = await API.logs.queries.getDMLogForm({
+			param: { logId: params.logId }
+		});
 		return {
-			title: data.form?.data.name || "New Log"
+			title: dmLog.form.data.name || "New Log"
 		};
 	}
 </script>
@@ -23,9 +31,12 @@
 	import * as API from "$lib/remote";
 	import { dMLogSchema } from "$lib/schemas";
 
-	let { data } = $props();
+	const { params } = $props();
 
-	const superform = valibotForm(data.form, dMLogSchema(), {
+	const dmLog = await API.logs.queries.getDMLogForm({
+		param: { logId: params.logId }
+	});
+	const superform = valibotForm(dmLog.form, dMLogSchema(), {
 		remote: API.logs.forms.save
 	});
 	const { form } = superform;
@@ -49,7 +60,7 @@
 				label="Assigned Character"
 				valueField="characterId"
 				inputField="characterName"
-				values={data.characters.map((char) => ({ value: char.id, label: char.name }))}
+				values={dmLog.characters.map((char) => ({ value: char.id, label: char.name }))}
 				required={!!$form.appliedDate || undefined}
 				onselect={() => {
 					$form.appliedDate = $form.appliedDate || new Date();

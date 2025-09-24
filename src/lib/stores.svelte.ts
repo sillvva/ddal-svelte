@@ -31,7 +31,7 @@ export function setCookie<TSchema extends v.GenericSchema>(
 	return value;
 }
 
-class Global {
+export class Global {
 	private _app: AppCookie = $state(appDefaults);
 	private _pageLoader: boolean = $state(false);
 
@@ -63,6 +63,5 @@ export function getGlobal() {
 	return getContext<Global>(globalKey);
 }
 export function createGlobal(app: AppCookie) {
-	const global = new Global(app);
-	return setContext(globalKey, global);
+	return setContext(globalKey, new Global(app));
 }

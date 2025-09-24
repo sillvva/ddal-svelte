@@ -3,13 +3,13 @@
 	import { defaultDescription, defaultImage, defaultTitle } from "$lib/constants";
 	import { type ModuleData, routeModules } from "$lib/modules";
 
-	function getHeadFromModule(module: ModuleData | undefined) {
+	async function getHeadFromModule(module: ModuleData | undefined) {
 		if (module?.pageHead) return module.pageHead;
-		if (module?.getPageHead) return module.getPageHead(page.data);
+		if (module?.getPageHead) return await module.getPageHead(page.params);
 		return undefined;
 	}
 
-	const pageHead = $derived(getHeadFromModule(routeModules[`/src/routes${page.route.id}/+page.svelte`]));
+	const pageHead = $derived(await getHeadFromModule(routeModules[`/src/routes${page.route.id}/+page.svelte`]));
 	const pageTitle = $derived(
 		!pageHead?.title || pageHead?.title === defaultTitle ? defaultTitle : `${pageHead?.title?.trim()} - ${defaultTitle}`
 	);

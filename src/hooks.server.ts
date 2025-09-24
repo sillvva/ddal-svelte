@@ -1,4 +1,5 @@
 import { building } from "$app/environment";
+import { privateEnv } from "$lib/env/private.js";
 import { appCookieSchema } from "$lib/schemas";
 import { serverGetCookie } from "$lib/server/cookie";
 import { DBService } from "$lib/server/db";
@@ -15,6 +16,14 @@ import { sequence } from "@sveltejs/kit/hooks";
 import { svelteKitHandler } from "better-auth/svelte-kit";
 import chalk from "chalk";
 import { Effect, Layer, ManagedRuntime } from "effect";
+
+let checked = false;
+if (!checked && building && privateEnv) {
+	console.log("\n✅ Environment variables are valid");
+	console.table(privateEnv);
+	console.log("\n");
+	checked = true;
+}
 
 const createAppRuntime = () => {
 	const dbLayer = DBService.Default();

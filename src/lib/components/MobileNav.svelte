@@ -1,5 +1,7 @@
 <script lang="ts">
 	import * as API from "$lib/remote";
+
+	const request = $derived(await API.app.queries.request());
 </script>
 
 <nav
@@ -17,14 +19,10 @@
 		<span class="iconify mdi--account-group size-8"></span>
 		<span class="text-center uppercase">DMs</span>
 	</a>
-	<svelte:boundary>
-		{#snippet pending()}{/snippet}
-		{@const request = await API.app.queries.request()}
-		{#if request.user?.role === "admin"}
-			<a href="/admin/users" class="flex h-full flex-col items-center justify-center text-xs">
-				<span class="iconify mdi--administrator-outline size-8"></span>
-				<span class="text-center uppercase">Admin</span>
-			</a>
-		{/if}
-	</svelte:boundary>
+	{#if request.user?.role === "admin"}
+		<a href="/admin/users" class="flex h-full flex-col items-center justify-center text-xs">
+			<span class="iconify mdi--administrator-outline size-8"></span>
+			<span class="text-center uppercase">Admin</span>
+		</a>
+	{/if}
 </nav>

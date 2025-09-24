@@ -5,10 +5,11 @@
 	import type { PasskeyId } from "$lib/schemas";
 	import { getGlobal } from "$lib/stores.svelte";
 
+	const global = getGlobal();
+
 	const request = $derived(await API.app.queries.request());
 	const user = $derived(request.user);
 	const passkeys = $derived(user?.passkeys || []);
-	const global = getGlobal();
 
 	$effect(() => {
 		global.app.settings.autoWebAuthn = passkeys.length > 0;

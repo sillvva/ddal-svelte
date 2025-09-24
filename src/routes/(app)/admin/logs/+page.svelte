@@ -116,7 +116,7 @@
 			{#each logSearch.logs as log (log.id)}
 				{#snippet actions()}
 					<button
-						class="btn btn-sm btn-primary sm:tooltip tooltip-left"
+						class="btn btn-sm btn-primary sm:tooltip tooltip-left sm:inline-flex"
 						data-tip="Toggle details"
 						aria-label="Toggle details"
 						onclick={() => {
@@ -128,7 +128,7 @@
 						<span class="iconify mdi--eye"></span>
 					</button>
 					<button
-						class="btn btn-sm btn-error sm:tooltip tooltip-left"
+						class="btn btn-sm btn-error sm:tooltip tooltip-left sm:inline-flex"
 						data-tip="Delete log"
 						aria-label="Delete log"
 						onclick={async () => {

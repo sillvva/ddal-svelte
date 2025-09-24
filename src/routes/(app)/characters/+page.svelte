@@ -1,9 +1,9 @@
 <script lang="ts" module>
-	import type { PageData } from "./$types.js";
 	export const pageTitle = "Characters";
-	export function getPageHead(data: Partial<PageData>) {
+	export async function getPageHead() {
+		const request = await API.app.queries.request();
 		return {
-			title: `${data.user?.name}'s Characters`
+			title: `${request.user?.name}'s Characters`
 		};
 	}
 </script>
@@ -16,17 +16,17 @@
 	import Search from "$lib/components/Search.svelte";
 	import SearchResults from "$lib/components/SearchResults.svelte";
 	import { EntitySearchFactory } from "$lib/factories.svelte.js";
+	import * as API from "$lib/remote";
 	import { getGlobal } from "$lib/stores.svelte.js";
 	import { createTransition, hotkey } from "$lib/util";
 	import { sorter } from "@sillvva/utils";
 	import { download } from "@svelteuidev/composables";
 	import { fromAction } from "svelte/attachments";
 
-	let { data } = $props();
-
 	const global = getGlobal();
 
-	const search = $derived(new EntitySearchFactory(data.characters, page.url.searchParams.get("s") || ""));
+	const characters = $derived(await API.characters.queries.getCharacters());
+	const search = $derived(new EntitySearchFactory(characters, page.url.searchParams.get("s") || ""));
 	const sortedResults = $derived(
 		search.results.toSorted((a, b) => sorter(b.score, a.score) || sorter(a.totalLevel, b.totalLevel) || sorter(a.name, b.name))
 	);
@@ -42,7 +42,7 @@
 					<button
 						{@attach fromAction(download, () => ({
 							filename: "characters.json",
-							blob: new Blob([JSON.stringify(data.characters)])
+							blob: new Blob([JSON.stringify(characters)])
 						}))}
 					>
 						Export
@@ -52,7 +52,7 @@
 		</Dropdown>
 	</div>
 
-	{#if !data.characters.length}
+	{#if !characters.length}
 		<section class="bg-base-200 rounded-lg">
 			<div class="py-20 text-center">
 				<p class="mb-4">No characters found.</p>

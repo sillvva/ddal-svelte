@@ -1,10 +1,9 @@
 <script lang="ts" module>
-	import type { PageData } from "./$types.js";
-
 	export const pageTitle = "DMs";
-	export function getPageHead(data: Partial<PageData>) {
+	export async function getPageHead() {
+		const request = await API.app.queries.request();
 		return {
-			title: `${data.user?.name}'s DMs`
+			title: `${request.user?.name}'s DMs`
 		};
 	}
 </script>
@@ -21,9 +20,8 @@
 	import { sorter } from "@sillvva/utils";
 	import { SvelteSet } from "svelte/reactivity";
 
-	let { data } = $props();
-
-	const search = $derived(new EntitySearchFactory(data.dms, page.url.searchParams.get("s") || ""));
+	const dms = $derived(await API.dms.queries.getDMs());
+	const search = $derived(new EntitySearchFactory(dms, page.url.searchParams.get("s") || ""));
 	const sortedResults = $derived(
 		search.results.toSorted((a, b) => sorter(a.isUser, b.isUser) || sorter(b.score, a.score) || sorter(a.name, b.name))
 	);

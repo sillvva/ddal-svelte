@@ -3,12 +3,12 @@
 	import Head from "$lib/components/Head.svelte";
 	import { PROVIDERS } from "$lib/constants";
 	import { errorToast } from "$lib/factories.svelte.js";
+	import * as API from "$lib/remote";
 	import { getGlobal } from "$lib/stores.svelte.js";
-
-	let { data } = $props();
 
 	const global = getGlobal();
 
+	const data = await API.app.queries.home();
 	const lastMethod = authClient.getLastUsedLoginMethod();
 
 	$effect(() => {
