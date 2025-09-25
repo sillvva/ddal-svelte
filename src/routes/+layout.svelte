@@ -16,7 +16,7 @@
 
 	onNavigate(async (navigation) => {
 		if (!document.startViewTransition) return;
-		if (navigation.from?.route.id === navigation.to?.route.id) return;
+		if (navigation.from?.url.pathname === navigation.to?.url.pathname) return;
 		return new Promise((resolve) => {
 			document.startViewTransition(async () => {
 				resolve();
