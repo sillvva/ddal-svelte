@@ -1,6 +1,5 @@
 <script lang="ts">
 	import { authClient } from "$lib/auth";
-	import Head from "$lib/components/Head.svelte";
 	import { PROVIDERS } from "$lib/constants";
 	import { errorToast } from "$lib/factories.svelte.js";
 	import * as API from "$lib/remote";
@@ -23,8 +22,6 @@
 		}
 	});
 </script>
-
-<Head />
 
 <main class="relative container mx-auto flex flex-1 flex-col items-center justify-center gap-8 p-4 pb-20">
 	<h1 class="font-draconis text-base-content text-center text-4xl lg:text-6xl dark:text-white">

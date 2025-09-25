@@ -1,5 +1,5 @@
 <script lang="ts">
-	import { afterNavigate } from "$app/navigation";
+	import { afterNavigate, goto } from "$app/navigation";
 	import { navigating, page } from "$app/state";
 	import CommandTray from "$lib/components/CommandTray.svelte";
 	import Footer from "$lib/components/Footer.svelte";
@@ -150,9 +150,18 @@
 				<div class="flex flex-col gap-2">
 					<h3 id="modal-title" class="text-base-content cursor-text text-lg font-bold">
 						{#if page.state.modal.goto}
-							<a class="text-secondary-content flex items-center gap-2" href={page.state.modal.goto} onclick={closeModal}>
+							<a
+								class="text-secondary-content flex items-center gap-2"
+								href={page.state.modal.goto}
+								onclick={async (e) => {
+									e.preventDefault();
+									await closeModal();
+									const { href } = e.target as HTMLAnchorElement;
+									goto(href);
+								}}
+							>
 								{page.state.modal.name}
-								<span class="iconify mdi--link"></span>
+								<span class="iconify mdi--magnify"></span>
 							</a>
 						{:else}
 							{page.state.modal.name}

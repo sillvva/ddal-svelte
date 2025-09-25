@@ -1,11 +1,11 @@
 <script lang="ts">
 	import { dev } from "$app/environment";
+	import { onNavigate } from "$app/navigation";
 	import Head from "$lib/components/Head.svelte";
 	import * as API from "$lib/remote";
 	import { appDefaults } from "$lib/schemas";
 	import { createGlobal } from "$lib/stores.svelte";
 	import { Toaster } from "svelte-sonner";
-	import { setupViewTransition } from "sveltekit-view-transition";
 	import "../app.css";
 
 	let { children } = $props();
@@ -14,7 +14,16 @@
 	const request = await API.app.queries.request();
 	global.app = request.app;
 
-	setupViewTransition();
+	onNavigate(async (navigation) => {
+		if (!document.startViewTransition) return;
+		if (navigation.from?.route.id === navigation.to?.route.id) return;
+		return new Promise((resolve) => {
+			document.startViewTransition(async () => {
+				resolve();
+				await navigation.complete;
+			});
+		});
+	});
 </script>
 
 <Head />
