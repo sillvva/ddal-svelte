@@ -73,14 +73,15 @@
 						aria-label="Search"
 						placeholder={baseSearch.query ?? ""}
 					/>
-					<button
-						class="btn sm:btn-sm join-item tooltip border-base-content/20 border max-sm:hidden"
-						data-tip="Syntax Reference"
-						aria-label="Syntax Reference"
-						onclick={openSyntaxReference}
-					>
-						<span class="iconify mdi--help-circle size-6 sm:size-4"></span>
-					</button>
+					<div class="tooltip" data-tip="Syntax Reference">
+						<button
+							class="btn sm:btn-sm join-item border-base-content/20 border max-sm:hidden"
+							aria-label="Syntax Reference"
+							onclick={openSyntaxReference}
+						>
+							<span class="iconify mdi--help-circle size-6 sm:size-4"></span>
+						</button>
+					</div>
 				</div>
 			</search>
 		</div>
@@ -115,35 +116,37 @@
 			</thead>
 			{#each logSearch.logs as log (log.id)}
 				{#snippet actions()}
-					<button
-						class="btn btn-sm btn-primary sm:tooltip tooltip-left sm:inline-flex"
-						data-tip="Toggle details"
-						aria-label="Toggle details"
-						onclick={() => {
-							const row = document.querySelector(`tbody:has(tr[data-id="${log.id}"])`) as HTMLTableRowElement | null;
-							console.log(row);
-							if (row) row.dataset.details = row.dataset.details === "true" ? "false" : "true";
-						}}
-					>
-						<span class="iconify mdi--eye"></span>
-					</button>
-					<button
-						class="btn btn-sm btn-error sm:tooltip tooltip-left sm:inline-flex"
-						data-tip="Delete log"
-						aria-label="Delete log"
-						onclick={async () => {
-							const result = await API.admin.actions.deleteAppLog(log.id).updates(
-								API.admin.queries.getAppLogs(params.s ?? "").withOverride((data) => ({
-									...data,
-									logs: data.logs.filter((l) => l.id !== log.id)
-								}))
-							);
-							const parsed = await parseEffectResult(result);
-							if (parsed) successToast("Log deleted");
-						}}
-					>
-						<span class="iconify mdi--delete"></span>
-					</button>
+					<div class="sm:tooltip sm:tooltip-left" data-tip="Toggle details">
+						<button
+							class="btn btn-sm btn-primary"
+							aria-label="Toggle details"
+							onclick={() => {
+								const row = document.querySelector(`tbody:has(tr[data-id="${log.id}"])`) as HTMLTableRowElement | null;
+								console.log(row);
+								if (row) row.dataset.details = row.dataset.details === "true" ? "false" : "true";
+							}}
+						>
+							<span class="iconify mdi--eye"></span>
+						</button>
+					</div>
+					<div class="sm:tooltip sm:tooltip-left" data-tip="Delete log">
+						<button
+							class="btn btn-sm btn-error"
+							aria-label="Delete log"
+							onclick={async () => {
+								const result = await API.admin.actions.deleteAppLog(log.id).updates(
+									API.admin.queries.getAppLogs(params.s ?? "").withOverride((data) => ({
+										...data,
+										logs: data.logs.filter((l) => l.id !== log.id)
+									}))
+								);
+								const parsed = await parseEffectResult(result);
+								if (parsed) successToast("Log deleted");
+							}}
+						>
+							<span class="iconify mdi--delete"></span>
+						</button>
+					</div>
 				{/snippet}
 				<tbody
 					class={[

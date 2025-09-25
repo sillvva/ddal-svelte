@@ -97,64 +97,67 @@
 						<td class="text-center max-sm:hidden">{user.characters}</td>
 						<td class="max-xs:hidden">
 							<div class="flex justify-end gap-2">
-								<button
-									class="btn btn-sm btn-primary tooltip tooltip-left"
-									aria-label="Impersonate {user.name}"
-									data-tip="Impersonate {user.name}"
-									disabled={user.role === "admin" || user.banned}
-									onclick={async () => {
-										if (user.role === "admin" || user.banned) return;
-										const { data } = await authClient.admin.impersonateUser({
-											userId: user.id
-										});
-										if (data) {
-											await invalidateAll();
-											goto("/characters");
-										}
-									}}
-								>
-									<span class="iconify mdi--account-switch"></span>
-								</button>
-								{#if !user.banned}
+								<div class="sm:tooltip sm:tooltip-left" data-tip="Impersonate {user.name}">
 									<button
-										class="btn btn-sm btn-error tooltip tooltip-left"
-										aria-label="Ban {user.name}"
-										data-tip="Ban {user.name}"
-										disabled={user.role === "admin"}
+										class="btn btn-sm btn-primary"
+										aria-label="Impersonate {user.name}"
+										disabled={user.role === "admin" || user.banned}
 										onclick={async () => {
-											if (user.role === "admin") return errorToast("Cannot ban admins");
-
-											const banReason = prompt("Reason for ban");
-											if (!banReason?.trim()) return errorToast("Reason is required");
-
-											const result = await API.admin.actions.banUser({
-												userId: user.id,
-												banReason
+											if (user.role === "admin" || user.banned) return;
+											const { data } = await authClient.admin.impersonateUser({
+												userId: user.id
 											});
-
-											const parsed = await parseEffectResult(result);
-											if (parsed) successToast(`${user.name} has been banned`);
+											if (data) {
+												await invalidateAll();
+												goto("/characters");
+											}
 										}}
 									>
-										<span class="iconify mdi--ban"></span>
+										<span class="iconify mdi--account-switch"></span>
 									</button>
+								</div>
+								{#if !user.banned}
+									<div class="sm:tooltip sm:tooltip-left" data-tip="Ban {user.name}">
+										<button
+											class="btn btn-sm btn-error"
+											aria-label="Ban {user.name}"
+											disabled={user.role === "admin"}
+											onclick={async () => {
+												if (user.role === "admin") return errorToast("Cannot ban admins");
+
+												const banReason = prompt("Reason for ban");
+												if (!banReason?.trim()) return errorToast("Reason is required");
+
+												const result = await API.admin.actions.banUser({
+													userId: user.id,
+													banReason
+												});
+
+												const parsed = await parseEffectResult(result);
+												if (parsed) successToast(`${user.name} has been banned`);
+											}}
+										>
+											<span class="iconify mdi--ban"></span>
+										</button>
+									</div>
 								{:else}
-									<button
-										class="btn btn-sm btn-success tooltip tooltip-left"
-										aria-label="Unban {user.name}"
-										data-tip="Unban {user.name}"
-										disabled={user.role === "admin"}
-										onclick={async () => {
-											if (user.role === "admin") return;
-											if (!confirm(`Are you sure you want to unban ${user.name}?`)) return;
+									<div class="sm:tooltip sm:tooltip-left" data-tip="Unban {user.name}">
+										<button
+											class="btn btn-sm btn-success"
+											aria-label="Unban {user.name}"
+											disabled={user.role === "admin"}
+											onclick={async () => {
+												if (user.role === "admin") return;
+												if (!confirm(`Are you sure you want to unban ${user.name}?`)) return;
 
-											const result = await API.admin.actions.unbanUser(user.id);
-											const parsed = await parseEffectResult(result);
-											if (parsed) successToast(`${user.name} has been unbanned`);
-										}}
-									>
-										<span class="iconify mdi--check"></span>
-									</button>
+												const result = await API.admin.actions.unbanUser(user.id);
+												const parsed = await parseEffectResult(result);
+												if (parsed) successToast(`${user.name} has been unbanned`);
+											}}
+										>
+											<span class="iconify mdi--check"></span>
+										</button>
+									</div>
 								{/if}
 							</div>
 						</td>

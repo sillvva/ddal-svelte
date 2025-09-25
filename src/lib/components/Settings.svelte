@@ -116,35 +116,37 @@
 					</div>
 				</div>
 				{#if session?.impersonatedBy}
-					<button
-						class="btn btn-sm btn-primary tooltip tooltip-left"
-						data-tip="Stop impersonating"
-						aria-label="Stop impersonating"
-						onclick={async () => {
-							await authClient.admin.stopImpersonating();
-							await goto("/admin/users");
-							await invalidateAll();
-							open = false;
-						}}
-					>
-						<span class="iconify mdi--account-switch"></span>
-					</button>
+					<div class="tooltip tooltip-left" data-tip="Stop impersonating">
+						<button
+							class="btn btn-sm btn-primary"
+							aria-label="Stop impersonating"
+							onclick={async () => {
+								await authClient.admin.stopImpersonating();
+								await goto("/admin/users");
+								await invalidateAll();
+								open = false;
+							}}
+						>
+							<span class="iconify mdi--account-switch"></span>
+						</button>
+					</div>
 				{:else}
-					<button
-						class="btn tooltip tooltip-left p-3"
-						data-tip="Sign out"
-						aria-label="Sign out"
-						onclick={() =>
-							authClient.signOut({
-								fetchOptions: {
-									onSuccess: () => {
-										goto(`/?redirect=${encodeURIComponent(`${page.url.pathname}${page.url.search}`)}`);
+					<div class="tooltip tooltip-left" data-tip="Sign out">
+						<button
+							class="btn p-3"
+							aria-label="Sign out"
+							onclick={() =>
+								authClient.signOut({
+									fetchOptions: {
+										onSuccess: () => {
+											goto(`/?redirect=${encodeURIComponent(`${page.url.pathname}${page.url.search}`)}`);
+										}
 									}
-								}
-							})}
-					>
-						<i class="iconify mdi--logout h-5 w-5"></i>
-					</button>
+								})}
+						>
+							<i class="iconify mdi--logout h-5 w-5"></i>
+						</button>
+					</div>
 				{/if}
 			</div>
 			<div class="divider my-0 h-[9px]"></div>
@@ -175,22 +177,23 @@
 											{@const account = userAccounts.find((a) => a.providerId === provider.id)}
 											{#if account}
 												{#if currentAccount?.providerId !== provider.id || account.name !== user.name || account.email !== user.email || account.image !== user.image}
-													<button
-														class="btn btn-sm tooltip join-item bg-base-300"
-														aria-label="Switch account"
-														data-tip="Use this account"
-														disabled={!!API.auth.actions.updateUser.pending}
-														onclick={async () => {
-															const result = await API.auth.actions.updateUser(account);
-															const parsed = await parseEffectResult(result);
-															if (parsed) {
-																global.app.settings.provider = account.providerId;
-																await API.app.queries.request().refresh();
-															}
-														}}
-													>
-														<span class="iconify mdi--accounts-switch size-5"></span>
-													</button>
+													<div class="tooltip" data-tip="Use this account">
+														<button
+															class="btn btn-sm join-item bg-base-300"
+															aria-label="Switch account"
+															disabled={!!API.auth.actions.updateUser.pending}
+															onclick={async () => {
+																const result = await API.auth.actions.updateUser(account);
+																const parsed = await parseEffectResult(result);
+																if (parsed) {
+																	global.app.settings.provider = account.providerId;
+																	await API.app.queries.request().refresh();
+																}
+															}}
+														>
+															<span class="iconify mdi--accounts-switch size-5"></span>
+														</button>
+													</div>
 												{/if}
 											{/if}
 											<button
