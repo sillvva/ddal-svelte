@@ -1,15 +1,17 @@
 <script lang="ts">
 	import { pushState } from "$app/navigation";
 	import { page } from "$app/state";
+	import type { LogId } from "$lib/schemas";
 	import type { MagicItem, StoryAward } from "$lib/server/db/schema";
 	import { sorter } from "@sillvva/utils";
 	import { SvelteMap } from "svelte/reactivity";
 	import { queryParameters, ssp } from "sveltekit-search-params";
 	import SearchResults from "./SearchResults.svelte";
 
+	type Item = MagicItem | StoryAward;
 	interface Props {
 		title?: string;
-		items: Array<MagicItem | StoryAward>;
+		items: Array<Item>;
 		formatting?: boolean;
 		terms?: string[];
 		collapsible?: boolean;
@@ -71,15 +73,16 @@
 				if (existingIndex !== undefined && acc[existingIndex]) {
 					const existingQty = itemQty(acc[existingIndex]!);
 					acc[existingIndex]!.name = fixName(name, existingQty + qty);
+					acc[existingIndex]!.ids.push(item.logGainedId);
 				} else {
 					item.name = fixName(item.name, qty);
 					itemsMap.set(key, acc.length);
-					acc.push(item);
+					acc.push(Object.assign(item, { ids: [item.logGainedId] }));
 				}
 
 				return acc;
 			},
-			[] as typeof items
+			[] as (Item & { ids: LogId[] })[]
 		);
 	});
 
@@ -120,14 +123,14 @@
 					class="inline pr-2 pl-2 first:pl-0"
 					class:text-secondary-content={mi.description}
 					onclick={() => {
-						const url = new URL(page.url);
-						url.searchParams.set("s", mi.logGainedId);
 						if (mi.description) {
+							const url = new URL(page.url);
+							url.searchParams.set("s", mi.ids.join(" "));
 							pushState("", {
 								modal: { type: "text", name: mi.name, description: mi.description, goto: search ? url.toString() : undefined }
 							});
 						} else if (search) {
-							params.s = mi.logGainedId;
+							params.s = mi.ids.join(",");
 						}
 					}}
 					onkeypress={() => null}
@@ -139,14 +142,14 @@
 					class:text-secondary-content={mi.description}
 					class:italic={formatting}
 					onclick={() => {
-						const url = new URL(page.url);
-						url.searchParams.set("s", mi.logGainedId);
 						if (mi.description) {
+							const url = new URL(page.url);
+							url.searchParams.set("s", mi.ids.join(" "));
 							pushState("", {
 								modal: { type: "text", name: mi.name, description: mi.description, goto: search ? url.toString() : undefined }
 							});
 						} else if (search) {
-							params.s = mi.logGainedId;
+							params.s = mi.ids.join(",");
 						}
 					}}
 					onkeypress={() => null}
