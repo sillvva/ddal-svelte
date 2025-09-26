@@ -1,7 +1,7 @@
 import { query } from "$app/server";
+import { guardedQuery } from "$lib/server/effect/remote";
 import { run } from "$lib/server/effect/runtime";
 import { AdminService, validKeys } from "$lib/server/effect/services/admin";
-import { assertAuth } from "$lib/server/effect/services/auth";
 import { UserService } from "$lib/server/effect/services/users";
 import { getTrace } from "$lib/util";
 import { DateTime, Effect } from "effect";
@@ -16,9 +16,9 @@ export const getBaseSearch = query(() =>
 	})
 );
 
-export const getAppLogs = query(v.string(), (search) =>
-	run(function* () {
-		yield* assertAuth(true);
+export const getAppLogs = guardedQuery(
+	v.string(),
+	function* (search) {
 		const Admin = yield* AdminService;
 
 		const { logs, metadata } = yield* Admin.get.logs(search).pipe(
@@ -37,21 +37,19 @@ export const getAppLogs = query(v.string(), (search) =>
 		);
 
 		return { logs, metadata };
-	})
+	},
+	true
 );
 
-export const getUsers = query(() =>
-	run(function* () {
-		yield* assertAuth(true);
-		const Users = yield* UserService;
+export const getUsers = guardedQuery(function* () {
+	const Users = yield* UserService;
 
-		return yield* Users.get.users().pipe(
-			Effect.map((users) =>
-				users.map((user) => ({
-					...user,
-					characters: user.characters.length
-				}))
-			)
-		);
-	})
-);
+	return yield* Users.get.users().pipe(
+		Effect.map((users) =>
+			users.map((user) => ({
+				...user,
+				characters: user.characters.length
+			}))
+		)
+	);
+}, true);
