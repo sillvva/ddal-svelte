@@ -21,15 +21,15 @@ The Effect.ts integration follows a layered architecture pattern:
 
 ```
 ┌─────────────────────────────────────┐
-│          SvelteKit Routes           │
+│          SvelteKit Routes          │
 ├─────────────────────────────────────┤
-│       Remote Queries/Commands       │
+│       Remote Queries/Commands      │
 ├─────────────────────────────────────┤
-│           Effect Services           │
+│           Effect Services          │
 ├─────────────────────────────────────┤
-│           Database Layer            │
+│           Database Layer           │
 ├─────────────────────────────────────┤
-│           Managed Runtime           │
+│           Managed Runtime          │
 └─────────────────────────────────────┘
 ```
 
