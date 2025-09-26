@@ -27,13 +27,13 @@ export function guardedQuery<
 ): RemoteQueryFunction<v.InferInput<Schema>, X>;
 
 export function guardedQuery<
+	Input,
 	R,
 	F extends InstanceType<ErrorClass>,
 	S extends Services,
 	T extends YieldWrap<Effect.Effect<R, F, S>>,
 	X,
-	Y,
-	Input
+	Y
 >(
 	schema: "unchecked",
 	fn: (input: Input, auth: { user: LocalsUser; event: RequestEvent }) => Generator<T, X, Y>,
@@ -49,22 +49,22 @@ export function guardedQuery<
 	Y
 >(fn: (auth: { user: LocalsUser; event: RequestEvent }) => Generator<T, X, Y>, adminOnly?: boolean): RemoteQueryFunction<void, X>;
 
-export function guardedQuery(schema: any, fn: any, adminOnly = false) {
+export function guardedQuery(schemaOrFn: any, fnOrAdminOnly: any, adminOnly = false) {
 	// Handle the case where there's no schema parameter (third overload)
-	if (typeof schema === "function") {
+	if (typeof schemaOrFn === "function") {
 		return query(() =>
 			run(function* () {
-				const auth = yield* assertAuth(fn /*adminOnly*/);
-				return yield* schema(/*fn*/ auth);
+				const auth = yield* assertAuth(fnOrAdminOnly);
+				return yield* schemaOrFn(auth);
 			})
 		);
 	}
 
 	// Handle the case with schema parameter (first and second overload)
-	return query(schema, (output) =>
+	return query(schemaOrFn, (output) =>
 		run(function* () {
 			const auth = yield* assertAuth(adminOnly);
-			return yield* fn(output, auth);
+			return yield* fnOrAdminOnly(output, auth);
 		})
 	);
 }
@@ -88,34 +88,34 @@ export function guardedCommand<
 ): RemoteCommand<v.InferInput<Schema>, Promise<EffectResult<X>>>;
 
 export function guardedCommand<
+	Input,
 	R,
 	F extends InstanceType<ErrorClass>,
 	S extends Services,
 	T extends YieldWrap<Effect.Effect<R, F, S>>,
 	X,
-	Y,
-	Input
+	Y
 >(
 	fn: (input: Input, auth: { user: LocalsUser; event: RequestEvent }) => Generator<T, X, Y>,
 	adminOnly?: boolean
 ): RemoteCommand<Input, Promise<EffectResult<X>>>;
 
-export function guardedCommand(schema: any, fn: any, adminOnly = false) {
+export function guardedCommand(schemaOrFn: any, fnOrAdminOnly: any, adminOnly = false) {
 	// Handle the case where there's no schema parameter (second overload)
-	if (typeof schema === "function") {
+	if (typeof schemaOrFn === "function") {
 		return command("unchecked", (input) =>
 			runSafe(function* () {
-				const auth = yield* assertAuth(fn /*adminOnly*/);
-				return yield* schema(/*fn*/ input, auth);
+				const auth = yield* assertAuth(fnOrAdminOnly);
+				return yield* schemaOrFn(input, auth);
 			})
 		);
 	}
 
 	// Handle the case with schema parameter (first overload)
-	return command(schema, (output) =>
+	return command(schemaOrFn, (output) =>
 		runSafe(function* () {
 			const auth = yield* assertAuth(adminOnly);
-			return yield* fn(output, auth);
+			return yield* fnOrAdminOnly(output, auth);
 		})
 	);
 }

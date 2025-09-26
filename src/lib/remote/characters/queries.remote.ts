@@ -1,4 +1,3 @@
-import { getRequestEvent } from "$app/server";
 import { defaultCharacter } from "$lib/entities";
 import { characterIdParamSchema } from "$lib/schemas";
 import { RedirectError } from "$lib/server/effect/errors";
@@ -16,17 +15,16 @@ export const getCharacter = guardedQuery(
 		param: characterIdParamSchema,
 		editRedirect: v.optional(v.boolean(), false)
 	}),
-	function* (input) {
+	function* (input, { user }) {
 		const Character = yield* CharacterService;
-		const event = getRequestEvent();
 
 		if (input.param === "new" && input.editRedirect)
 			return yield* new RedirectError({ message: "Redirecting to new character form", redirectTo: "/characters/new/edit" });
 
 		const character =
 			input.param === "new"
-				? event.locals.user
-					? defaultCharacter(event.locals.user)
+				? user
+					? defaultCharacter(user)
 					: yield* new RedirectError({ message: "Redirecting to login", redirectTo: "/" })
 				: yield* Character.get.character(input.param);
 
