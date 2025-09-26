@@ -1,13 +1,13 @@
 <script lang="ts" module>
 	import type { RouteParams } from "./$types.js";
 	export async function getPageTitle(params: RouteParams) {
-		const dmLog = await API.logs.queries.getDMLogForm({
+		const dmLog = await API.logs.forms.dm({
 			param: { logId: params.logId }
 		});
 		return dmLog.form.data.name || "New Log";
 	}
 	export async function getPageHead(params: RouteParams) {
-		const dmLog = await API.logs.queries.getDMLogForm({
+		const dmLog = await API.logs.forms.dm({
 			param: { logId: params.logId }
 		});
 		return {
@@ -33,7 +33,7 @@
 
 	const { params } = $props();
 
-	const dmLog = await API.logs.queries.getDMLogForm({
+	const dmLog = await API.logs.forms.dm({
 		param: { logId: params.logId }
 	});
 	const superform = valibotForm(dmLog.form, dMLogSchema(), {

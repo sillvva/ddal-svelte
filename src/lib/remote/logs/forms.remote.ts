@@ -1,12 +1,117 @@
 import type { Pathname } from "$app/types";
-import { characterIdSchema, characterLogSchema, dMLogSchema, type LogSchema, type LogSchemaIn } from "$lib/schemas";
-import { FormError, redirectOnFail } from "$lib/server/effect/errors";
+import { defaultLogSchema, getItemEntities, logDataToSchema } from "$lib/entities";
+import {
+	characterIdSchema,
+	characterLogSchema,
+	dMLogSchema,
+	logIdParamSchema,
+	type LogSchema,
+	type LogSchemaIn
+} from "$lib/schemas";
+import { FormError, RedirectError, redirectOnFail } from "$lib/server/effect/errors";
 import { parse, safeParse, saveForm, validateForm } from "$lib/server/effect/forms";
-import { guardedCommand } from "$lib/server/effect/remote";
+import { guardedCommand, guardedQuery } from "$lib/server/effect/remote";
 import { CharacterService } from "$lib/server/effect/services/characters";
-import { LogService } from "$lib/server/effect/services/logs";
+import { DMNotFoundError, DMService } from "$lib/server/effect/services/dms";
+import { LogNotFoundError, LogService } from "$lib/server/effect/services/logs";
+import { omit, sorter } from "@sillvva/utils";
+import { Effect } from "effect";
 import type { SuperValidated } from "sveltekit-superforms";
 import * as v from "valibot";
+import { getCharacter } from "../characters/queries.remote";
+
+const characterLogFormSchema = v.object({
+	param: v.object({
+		characterId: characterIdSchema,
+		logId: logIdParamSchema
+	})
+});
+
+export const character = guardedQuery(characterLogFormSchema, function* (input, { user }) {
+	const Logs = yield* LogService;
+	const DMs = yield* DMService;
+
+	const character = yield* Effect.promise(() => getCharacter({ param: input.param.characterId }));
+
+	const logId = input.param.logId;
+	const logData = logId !== "new" ? yield* Logs.get.log(logId, user.id) : undefined;
+	const log = logData ? logDataToSchema(user.id, logData) : defaultLogSchema(user.id, { character });
+
+	if (logId !== "new") {
+		if (!log.id) return yield* new LogNotFoundError();
+		if (log.isDmLog) return yield* new RedirectError({ message: "Redirecting to DM log", redirectTo: `/dm-logs/${log.id}` });
+	}
+
+	const form = yield* validateForm(log, characterLogSchema(character), {
+		errors: logId !== "new"
+	});
+
+	const itemEntities = getItemEntities(character, { excludeDropped: true, lastLogId: log.id });
+	const magicItems = itemEntities.magicItems.toSorted((a, b) => sorter(a.name, b.name));
+	const storyAwards = itemEntities.storyAwards.toSorted((a, b) => sorter(a.name, b.name));
+	const dms = yield* DMs.get.userDMs(user, { includeLogs: false }).pipe(Effect.map((dms) => dms.map((dm) => omit(dm, ["logs"]))));
+
+	return {
+		totalLevel: character.totalLevel,
+		magicItems,
+		storyAwards,
+		dms,
+		form
+	};
+});
+
+const dmLogFormSchema = v.object({
+	param: v.object({
+		logId: logIdParamSchema
+	})
+});
+
+export const dm = guardedQuery(dmLogFormSchema, function* (input, { user }) {
+	const Logs = yield* LogService;
+	const Characters = yield* CharacterService;
+	const DMs = yield* DMService;
+
+	const userDM = yield* DMs.get.userDMs(user, { includeLogs: false }).pipe(
+		Effect.map((dms) => dms.find((dm) => dm.isUser)),
+		Effect.flatMap((dm) => (dm ? Effect.succeed(dm) : Effect.fail(new DMNotFoundError()))),
+		// eslint-disable-next-line @typescript-eslint/no-unused-vars
+		Effect.map(({ logs, ...rest }) => rest)
+	);
+
+	const logId = input.param.logId;
+	const logData = logId !== "new" ? yield* Logs.get.log(logId, user.id) : undefined;
+	const log = logData ? logDataToSchema(user.id, logData) : defaultLogSchema(user.id, { defaults: { dm: userDM } });
+
+	if (logId !== "new") {
+		if (!log.id) return yield* new LogNotFoundError();
+		if (!log.isDmLog)
+			return yield* new RedirectError({
+				message: "Redirecting to character log",
+				redirectTo: `/characters/${log.characterId}/log/${log.id}`
+			});
+	}
+
+	const characters = yield* Characters.get.userCharacters(user.id).pipe(
+		Effect.map((characters) =>
+			characters.map((c) => ({
+				...c,
+				logs: c.logs.filter((l) => l.id !== logId),
+				magicItems: [],
+				storyAwards: [],
+				logLevels: []
+			}))
+		)
+	);
+
+	const form = yield* validateForm(log, dMLogSchema(characters.filter((c) => c.id === log.characterId)), {
+		errors: logId !== "new"
+	});
+
+	return {
+		characters: characters.map((c) => ({ id: c.id, name: c.name })),
+		form
+	};
+});
 
 export const save = guardedCommand(function* (input: LogSchemaIn, { user }) {
 	const Characters = yield* CharacterService;

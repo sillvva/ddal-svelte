@@ -1,12 +1,12 @@
 import { command, query } from "$app/server";
 import type { LocalsUser } from "$lib/schemas";
 import { assertAuth } from "$lib/server/effect/services/auth";
-import { type RemoteCommand, type RemoteQueryFunction, type RequestEvent } from "@sveltejs/kit";
+import type { RemoteCommand, RemoteQueryFunction, RequestEvent } from "@sveltejs/kit";
 import { Effect } from "effect";
 import type { YieldWrap } from "effect/Utils";
 import * as v from "valibot";
-import { type ErrorClass } from "./errors";
-import { run, runSafe, type Services } from "./runtime";
+import type { ErrorClass } from "./errors";
+import { run, runSafe, type EffectResult, type Services } from "./runtime";
 
 // -------------------------------------------------------------------------------------------------
 // guardedQuery: Remote Query with auth guard
@@ -85,7 +85,7 @@ export function guardedCommand<
 	schema: Schema,
 	fn: (output: v.InferOutput<Schema>, auth: { user: LocalsUser; event: RequestEvent }) => Generator<T, X, Y>,
 	adminOnly?: boolean
-): RemoteCommand<v.InferInput<Schema>, X>;
+): RemoteCommand<v.InferInput<Schema>, Promise<EffectResult<X>>>;
 
 export function guardedCommand<
 	R,
@@ -98,7 +98,7 @@ export function guardedCommand<
 >(
 	fn: (input: Input, auth: { user: LocalsUser; event: RequestEvent }) => Generator<T, X, Y>,
 	adminOnly?: boolean
-): RemoteCommand<Input, X>;
+): RemoteCommand<Input, Promise<EffectResult<X>>>;
 
 export function guardedCommand(schema: any, fn: any, adminOnly = false) {
 	// Handle the case where there's no schema parameter (second overload)

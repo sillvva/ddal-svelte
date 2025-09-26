@@ -1,13 +1,13 @@
 <script lang="ts" module>
 	import type { RouteParams } from "./$types.js";
 	export async function getPageTitle(params: RouteParams) {
-		const characterLog = await API.logs.queries.getCharacterLogForm({
+		const characterLog = await API.logs.forms.character({
 			param: { characterId: params.characterId, logId: params.logId }
 		});
 		return characterLog.form.data.name || "New Log";
 	}
 	export async function getPageHead(params: RouteParams) {
-		const characterLog = await API.logs.queries.getCharacterLogForm({
+		const characterLog = await API.logs.forms.character({
 			param: { characterId: params.characterId, logId: params.logId }
 		});
 		return {
@@ -37,7 +37,7 @@
 
 	const firstLog = $derived(page.url.searchParams.get("firstLog") === "true");
 	const request = $derived(await API.app.queries.request());
-	const characterLog = await API.logs.queries.getCharacterLogForm({
+	const characterLog = await API.logs.forms.character({
 		param: { characterId: params.characterId, logId: params.logId }
 	});
 	const superform = valibotForm(characterLog.form, logSchema, {

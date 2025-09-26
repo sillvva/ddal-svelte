@@ -1,11 +1,11 @@
 <script lang="ts" module>
 	import type { RouteParams } from "./$types.js";
 	export async function getPageTitle(params: RouteParams) {
-		const data = await API.dms.queries.getDMForm(params.dmId);
+		const data = await API.dms.forms.edit(params.dmId);
 		return data.dm.name;
 	}
 	export async function getPageHead(params: RouteParams) {
-		const data = await API.dms.queries.getDMForm(params.dmId);
+		const data = await API.dms.forms.edit(params.dmId);
 		return {
 			title: data.dm.name
 		};
@@ -30,7 +30,7 @@
 
 	const global = getGlobal();
 
-	const data = await API.dms.queries.getDMForm(params.dmId);
+	const data = await API.dms.forms.edit(params.dmId);
 	const superform = valibotForm(data.form, dungeonMasterSchema, {
 		remote: API.dms.forms.save
 	});

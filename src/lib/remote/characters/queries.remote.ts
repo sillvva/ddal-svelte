@@ -1,18 +1,14 @@
 import { getRequestEvent } from "$app/server";
-import { BLANK_CHARACTER } from "$lib/constants";
 import { defaultCharacter } from "$lib/entities";
-import { characterIdParamSchema, editCharacterSchema } from "$lib/schemas";
+import { characterIdParamSchema } from "$lib/schemas";
 import { RedirectError } from "$lib/server/effect/errors";
-import { validateForm } from "$lib/server/effect/forms";
 import { guardedQuery } from "$lib/server/effect/remote";
 import { CharacterService } from "$lib/server/effect/services/characters";
-import { Effect } from "effect";
 import * as v from "valibot";
 
 export const getCharacters = guardedQuery(function* ({ user }) {
 	const Characters = yield* CharacterService;
-	const characters = yield* Characters.get.userCharacters(user.id);
-	return characters;
+	return yield* Characters.get.userCharacters(user.id);
 });
 
 export const getCharacter = guardedQuery(
@@ -35,37 +31,5 @@ export const getCharacter = guardedQuery(
 				: yield* Character.get.character(input.param);
 
 		return character;
-	}
-);
-
-export const getCharacterForm = guardedQuery(
-	v.object({
-		param: characterIdParamSchema,
-		editing: v.optional(v.boolean(), false)
-	}),
-	function* (input, { event }) {
-		const firstLog = event.locals.app.characters.firstLog;
-		const character = yield* Effect.promise(() => getCharacter(input));
-
-		const form = yield* validateForm(
-			{
-				id: character.id,
-				name: character.name,
-				campaign: character.campaign || "",
-				race: character.race || "",
-				class: character.class || "",
-				characterSheetUrl: character.characterSheetUrl || "",
-				imageUrl: character.imageUrl === BLANK_CHARACTER ? "" : character.imageUrl,
-				firstLog: firstLog && input.param === "new"
-			},
-			editCharacterSchema,
-			{
-				errors: input.param !== "new"
-			}
-		);
-
-		return {
-			form
-		};
 	}
 );
