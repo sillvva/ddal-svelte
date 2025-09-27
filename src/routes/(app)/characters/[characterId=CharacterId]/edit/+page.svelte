@@ -13,12 +13,12 @@
 
 <script lang="ts">
 	import { page } from "$app/state";
-	import Checkbox from "$lib/components/forms/Checkbox.svelte";
-	import Control from "$lib/components/forms/Control.svelte";
-	import Input from "$lib/components/forms/Input.svelte";
-	import Submit from "$lib/components/forms/Submit.svelte";
-	import SuperForm from "$lib/components/forms/SuperForm.svelte";
-	import NavMenu from "$lib/components/NavMenu.svelte";
+	import Checkbox from "$lib/components/forms/checkbox.svelte";
+	import Control from "$lib/components/forms/control.svelte";
+	import Input from "$lib/components/forms/input.svelte";
+	import Submit from "$lib/components/forms/submit.svelte";
+	import SuperForm from "$lib/components/forms/superform.svelte";
+	import NavMenu from "$lib/components/nav-menu.svelte";
 	import { BLANK_CHARACTER } from "$lib/constants.js";
 	import { errorToast, valibotForm } from "$lib/factories.svelte.js";
 	import * as API from "$lib/remote";

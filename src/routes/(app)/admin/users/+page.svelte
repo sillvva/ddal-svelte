@@ -8,7 +8,7 @@
 	import { goto, invalidateAll } from "$app/navigation";
 	import { page } from "$app/state";
 	import { authClient } from "$lib/auth.js";
-	import Search from "$lib/components/Search.svelte";
+	import Search from "$lib/components/search.svelte";
 	import { BLANK_CHARACTER } from "$lib/constants.js";
 	import { parseEffectResult } from "$lib/factories.svelte";
 	import { errorToast, successToast } from "$lib/factories.svelte.js";

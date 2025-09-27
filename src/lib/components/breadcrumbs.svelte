@@ -1,7 +1,7 @@
 <script lang="ts">
 	import { page } from "$app/state";
 	import { routeModules, type Crumb, type ModuleData } from "$lib/modules";
-	import BackButton from "./BackButton.svelte";
+	import BackButton from "./back-button.svelte";
 
 	export function titleSanitizer(title: string) {
 		return title.replace(/([A-Z])/g, " $1").replace(/^./, (str) => str.toUpperCase());

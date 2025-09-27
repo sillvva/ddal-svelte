@@ -1,11 +1,11 @@
 <script lang="ts">
 	import { afterNavigate, goto } from "$app/navigation";
 	import { navigating, page } from "$app/state";
-	import CommandTray from "$lib/components/CommandTray.svelte";
-	import Footer from "$lib/components/Footer.svelte";
-	import Markdown from "$lib/components/Markdown.svelte";
-	import MobileNav from "$lib/components/MobileNav.svelte";
-	import Settings from "$lib/components/Settings.svelte";
+	import CommandTray from "$lib/components/command-tray.svelte";
+	import Footer from "$lib/components/footer.svelte";
+	import Markdown from "$lib/components/markdown.svelte";
+	import MobileNav from "$lib/components/mobile-nav.svelte";
+	import Settings from "$lib/components/settings.svelte";
 	import { BLANK_CHARACTER } from "$lib/constants.js";
 	import { parseEffectResult } from "$lib/factories.svelte";
 	import * as API from "$lib/remote";

@@ -5,7 +5,7 @@
 	import type { Snippet } from "svelte";
 	import type { SuperForm } from "sveltekit-superforms";
 	import { v7 } from "uuid";
-	import EntityCard from "./EntityCard.svelte";
+	import EntityCard from "./entity-card.svelte";
 
 	interface Props {
 		superform: SuperForm<LogSchema, App.Superforms.Message>;
@@ -123,16 +123,20 @@
 	</div>
 </div>
 <div class="col-span-12 grid grid-cols-12 gap-4 dark:text-white">
-	{#each $form.magicItemsGained as _, index (_.id)}
+	<!-- eslint-disable-next-line @typescript-eslint/no-unused-vars -->
+	{#each $form.magicItemsGained as _, index (index)}
 		<EntityCard {superform} type="add" entity="magicItems" {index} />
 	{/each}
+	<!-- eslint-disable-next-line @typescript-eslint/no-unused-vars -->
 	{#each $form.magicItemsLost as _, index (index)}
 		<EntityCard {superform} type="drop" entity="magicItems" {index} items={sortedItems} />
 	{/each}
-	{#each $form.storyAwardsGained as _, index (_.id)}
+	<!-- eslint-disable-next-line @typescript-eslint/no-unused-vars -->
+	{#each $form.storyAwardsGained as _, index (index)}
 		<EntityCard {superform} type="add" entity="storyAwards" {index} />
 	{/each}
+	<!-- eslint-disable-next-line @typescript-eslint/no-unused-vars -->
 	{#each $form.storyAwardsLost as _, index (index)}
-		<EntityCard {superform} type="drop" entity="storyAwards" {index} items={storyAwards} />
+		<EntityCard {superform} type="drop" entity="storyAwards" {index} items={sortedAwards} />
 	{/each}
 </div>

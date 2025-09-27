@@ -2,7 +2,7 @@
 	import autosize from "svelte-autosize";
 	import type { HTMLTextareaAttributes } from "svelte/elements";
 	import { formFieldProxy, type FormFieldProxy, type FormPathLeaves, type SuperForm } from "sveltekit-superforms";
-	import Markdown from "../Markdown.svelte";
+	import Markdown from "../markdown.svelte";
 
 	type T = $$Generic<Record<PropertyKey, unknown>>;
 	interface Props extends HTMLTextareaAttributes {

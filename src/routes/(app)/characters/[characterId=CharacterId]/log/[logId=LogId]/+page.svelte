@@ -18,16 +18,16 @@
 
 <script lang="ts">
 	import { page } from "$app/state";
-	import AddDropItems from "$lib/components/forms/AddDropItems.svelte";
-	import Combobox from "$lib/components/forms/Combobox.svelte";
-	import Control from "$lib/components/forms/Control.svelte";
-	import DateInput from "$lib/components/forms/DateInput.svelte";
-	import GenericInput from "$lib/components/forms/GenericInput.svelte";
-	import Input from "$lib/components/forms/Input.svelte";
-	import MdTextInput from "$lib/components/forms/MDTextInput.svelte";
-	import Submit from "$lib/components/forms/Submit.svelte";
-	import SuperForm from "$lib/components/forms/SuperForm.svelte";
-	import NavMenu from "$lib/components/NavMenu.svelte";
+	import AddDropItems from "$lib/components/forms/add-drop-items.svelte";
+	import Combobox from "$lib/components/forms/combobox.svelte";
+	import Control from "$lib/components/forms/control.svelte";
+	import DateInput from "$lib/components/forms/date-input.svelte";
+	import GenericInput from "$lib/components/forms/generic-input.svelte";
+	import Input from "$lib/components/forms/input.svelte";
+	import MdTextInput from "$lib/components/forms/md-input.svelte";
+	import Submit from "$lib/components/forms/submit.svelte";
+	import SuperForm from "$lib/components/forms/superform.svelte";
+	import NavMenu from "$lib/components/nav-menu.svelte";
 	import { defaultDM } from "$lib/entities";
 	import { valibotForm } from "$lib/factories.svelte.js";
 	import * as API from "$lib/remote";

@@ -11,9 +11,9 @@
 <script lang="ts">
 	import { goto } from "$app/navigation";
 	import { page } from "$app/state";
-	import NavMenu from "$lib/components/NavMenu.svelte";
-	import Search from "$lib/components/Search.svelte";
-	import SearchResults from "$lib/components/SearchResults.svelte";
+	import NavMenu from "$lib/components/nav-menu.svelte";
+	import SearchResults from "$lib/components/search-results.svelte";
+	import Search from "$lib/components/search.svelte";
 	import { EntitySearchFactory } from "$lib/factories.svelte.js";
 	import * as API from "$lib/remote";
 	import { getGlobal } from "$lib/stores.svelte.js";

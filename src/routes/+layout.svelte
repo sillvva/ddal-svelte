@@ -1,7 +1,7 @@
 <script lang="ts">
 	import { dev } from "$app/environment";
 	import { onNavigate } from "$app/navigation";
-	import Head from "$lib/components/Head.svelte";
+	import Head from "$lib/components/head.svelte";
 	import * as API from "$lib/remote";
 	import { appDefaults } from "$lib/schemas";
 	import { createGlobal } from "$lib/stores.svelte";

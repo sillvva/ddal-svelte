@@ -6,7 +6,7 @@
 	import type { SearchData } from "$lib/remote/command";
 	import { hotkey } from "$lib/util";
 	import { Command, Dialog, Separator } from "bits-ui";
-	import SearchResults from "./SearchResults.svelte";
+	import SearchResults from "./search-results.svelte";
 
 	const defaultSelected: string = searchSections[0].url;
 

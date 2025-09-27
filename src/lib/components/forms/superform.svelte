@@ -6,7 +6,7 @@
 	import type { Writable } from "svelte/store";
 	import type { SuperForm } from "sveltekit-superforms";
 	import SuperDebug from "sveltekit-superforms/SuperDebug.svelte";
-	import FormMessage from "./FormMessage.svelte";
+	import FormMessage from "./form-message.svelte";
 
 	type FormAttributes = Omit<HTMLFormAttributes, "hidden">;
 	type T = $$Generic<Record<PropertyKey, unknown>>;

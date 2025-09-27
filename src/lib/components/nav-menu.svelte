@@ -1,7 +1,7 @@
 <script lang="ts">
 	import type { Snippet } from "svelte";
-	import Breadcrumbs from "./Breadcrumbs.svelte";
-	import Dropdown from "./Dropdown.svelte";
+	import Breadcrumbs from "./breadcrumbs.svelte";
+	import Dropdown from "./dropdown.svelte";
 
 	interface Props {
 		base?: boolean;

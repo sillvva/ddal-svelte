@@ -6,7 +6,7 @@
 	import { sorter } from "@sillvva/utils";
 	import { SvelteMap } from "svelte/reactivity";
 	import { queryParameters, ssp } from "sveltekit-search-params";
-	import SearchResults from "./SearchResults.svelte";
+	import SearchResults from "./search-results.svelte";
 
 	type Item = MagicItem | StoryAward;
 	interface Props {

@@ -6,7 +6,7 @@
 
 <script lang="ts">
 	import { pushState } from "$app/navigation";
-	import LoadingPanel from "$lib/components/LoadingPanel.svelte";
+	import LoadingPanel from "$lib/components/loading-panel.svelte";
 	import { parseEffectResult } from "$lib/factories.svelte";
 	import { successToast } from "$lib/factories.svelte.js";
 	import * as API from "$lib/remote";

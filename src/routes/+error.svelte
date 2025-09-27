@@ -1,7 +1,7 @@
 <script lang="ts">
 	import { dev } from "$app/environment";
 	import { page } from "$app/state";
-	import LoadingPanel from "$lib/components/LoadingPanel.svelte";
+	import LoadingPanel from "$lib/components/loading-panel.svelte";
 	import * as API from "$lib/remote";
 	import { uuidV7 } from "$lib/schemas";
 	import SuperDebug from "sveltekit-superforms";

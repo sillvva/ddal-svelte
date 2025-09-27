@@ -18,11 +18,11 @@
 	import { goto, invalidateAll, pushState } from "$app/navigation";
 	import { page } from "$app/state";
 	import { authClient } from "$lib/auth.js";
-	import Items from "$lib/components/Items.svelte";
-	import Markdown from "$lib/components/Markdown.svelte";
-	import NavMenu from "$lib/components/NavMenu.svelte";
-	import Search from "$lib/components/Search.svelte";
-	import SearchResults from "$lib/components/SearchResults.svelte";
+	import Items from "$lib/components/items.svelte";
+	import Markdown from "$lib/components/markdown.svelte";
+	import NavMenu from "$lib/components/nav-menu.svelte";
+	import SearchResults from "$lib/components/search-results.svelte";
+	import Search from "$lib/components/search.svelte";
 	import { EntitySearchFactory, parseEffectResult, successToast } from "$lib/factories.svelte.js";
 	import * as API from "$lib/remote";
 	import { getGlobal } from "$lib/stores.svelte.js";

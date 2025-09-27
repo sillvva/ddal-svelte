@@ -2,10 +2,10 @@
 	import type { ItemSchema, LogSchema } from "$lib/schemas";
 	import { writable } from "svelte/store";
 	import { formFieldProxy, type SuperForm } from "sveltekit-superforms";
-	import Control from "./Control.svelte";
-	import GenericInput from "./GenericInput.svelte";
-	import Input from "./Input.svelte";
-	import MdTextInput from "./MDTextInput.svelte";
+	import Control from "./control.svelte";
+	import GenericInput from "./generic-input.svelte";
+	import Input from "./input.svelte";
+	import MdTextInput from "./md-input.svelte";
 
 	interface BaseProps {
 		entity: "magicItems" | "storyAwards";

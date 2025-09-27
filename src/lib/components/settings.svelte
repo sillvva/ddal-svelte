@@ -8,8 +8,8 @@
 	import { getGlobal } from "$lib/stores.svelte";
 	import { isDefined } from "@sillvva/utils";
 	import { isTupleOfAtLeast } from "effect/Predicate";
-	import Passkeys from "./Passkeys.svelte";
-	import ThemeSwitcher from "./ThemeSwitcher.svelte";
+	import Passkeys from "./passkeys.svelte";
+	import ThemeSwitcher from "./theme-switcher.svelte";
 
 	interface Props {
 		open: boolean;
