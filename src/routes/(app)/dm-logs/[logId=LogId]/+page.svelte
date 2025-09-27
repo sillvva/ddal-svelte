@@ -17,7 +17,6 @@
 </script>
 
 <script lang="ts">
-	import Breadcrumbs from "$lib/components/Breadcrumbs.svelte";
 	import AddDropItems from "$lib/components/forms/AddDropItems.svelte";
 	import Combobox from "$lib/components/forms/Combobox.svelte";
 	import Control from "$lib/components/forms/Control.svelte";
@@ -27,6 +26,7 @@
 	import MdTextInput from "$lib/components/forms/MDTextInput.svelte";
 	import Submit from "$lib/components/forms/Submit.svelte";
 	import SuperForm from "$lib/components/forms/SuperForm.svelte";
+	import NavMenu from "$lib/components/NavMenu.svelte";
 	import { valibotForm } from "$lib/factories.svelte.js";
 	import * as API from "$lib/remote";
 	import { dMLogSchema } from "$lib/schemas";
@@ -45,7 +45,7 @@
 </script>
 
 {#key $form.id}
-	<Breadcrumbs />
+	<NavMenu />
 
 	<SuperForm {superform}>
 		<Control class="col-span-12 sm:col-span-6 lg:col-span-3">

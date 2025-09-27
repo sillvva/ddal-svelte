@@ -18,7 +18,6 @@
 
 <script lang="ts">
 	import { page } from "$app/state";
-	import Breadcrumbs from "$lib/components/Breadcrumbs.svelte";
 	import AddDropItems from "$lib/components/forms/AddDropItems.svelte";
 	import Combobox from "$lib/components/forms/Combobox.svelte";
 	import Control from "$lib/components/forms/Control.svelte";
@@ -28,6 +27,7 @@
 	import MdTextInput from "$lib/components/forms/MDTextInput.svelte";
 	import Submit from "$lib/components/forms/Submit.svelte";
 	import SuperForm from "$lib/components/forms/SuperForm.svelte";
+	import NavMenu from "$lib/components/NavMenu.svelte";
 	import { defaultDM } from "$lib/entities";
 	import { valibotForm } from "$lib/factories.svelte.js";
 	import * as API from "$lib/remote";
@@ -49,7 +49,7 @@
 </script>
 
 {#key $form.id || "new"}
-	<Breadcrumbs />
+	<NavMenu />
 
 	{#if request.user}
 		<SuperForm {superform}>

@@ -56,7 +56,7 @@
 	}
 </script>
 
-<div class="flex flex-col gap-1">
+<section class="flex flex-col gap-1">
 	<div class="flex items-center justify-between">
 		<div class="flex w-full gap-2 sm:max-w-md md:max-w-md">
 			<search class="flex flex-1">
@@ -99,12 +99,12 @@
 			Valid keys: {baseSearch.validKeys.join(", ")}
 		</div>
 	{/if}
-</div>
+</section>
 
 {#if loading}
 	<LoadingPanel />
 {:else if logSearch.logs.length}
-	<div class="overflow-x-auto rounded-lg">
+	<section class="overflow-x-auto rounded-lg">
 		<table class="bg-base-200 table w-full leading-5 max-sm:border-separate max-sm:border-spacing-y-2">
 			<thead class="max-sm:hidden">
 				<tr class="bg-base-300 text-base-content/70">
@@ -208,9 +208,9 @@
 				</tbody>
 			{/each}
 		</table>
-	</div>
+	</section>
 {:else}
-	<div class="bg-base-200 flex h-40 flex-col items-center justify-center rounded-lg">
+	<section class="bg-base-200 flex h-40 flex-col items-center justify-center rounded-lg">
 		<div class="text-base-content/60 text-lg">No logs found</div>
-	</div>
+	</section>
 {/if}

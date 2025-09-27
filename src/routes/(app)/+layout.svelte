@@ -115,7 +115,7 @@
 			</div>
 		</nav>
 	</header>
-	<main class="relative z-10 container mx-auto flex max-w-5xl flex-1 flex-col p-4 *:w-full">
+	<main class="relative z-10 container mx-auto flex max-w-5xl flex-1 flex-col gap-4 p-4 *:w-full">
 		{@render children()}
 	</main>
 	<Footer />

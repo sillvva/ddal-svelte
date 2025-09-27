@@ -13,12 +13,12 @@
 
 <script lang="ts">
 	import { page } from "$app/state";
-	import Breadcrumbs from "$lib/components/Breadcrumbs.svelte";
 	import Checkbox from "$lib/components/forms/Checkbox.svelte";
 	import Control from "$lib/components/forms/Control.svelte";
 	import Input from "$lib/components/forms/Input.svelte";
 	import Submit from "$lib/components/forms/Submit.svelte";
 	import SuperForm from "$lib/components/forms/SuperForm.svelte";
+	import NavMenu from "$lib/components/NavMenu.svelte";
 	import { BLANK_CHARACTER } from "$lib/constants.js";
 	import { errorToast, valibotForm } from "$lib/factories.svelte.js";
 	import * as API from "$lib/remote";
@@ -36,7 +36,7 @@
 	const { form } = superform;
 </script>
 
-<Breadcrumbs />
+<NavMenu />
 
 <SuperForm {superform}>
 	<Control class="col-span-12 sm:col-span-6">

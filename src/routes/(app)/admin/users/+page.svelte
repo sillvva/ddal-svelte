@@ -28,7 +28,7 @@
 	const results = $derived(search.trim() ? parser.filter(search) : users);
 </script>
 
-<div class="flex flex-wrap items-center justify-between gap-2 max-sm:justify-end">
+<section class="flex flex-wrap items-center justify-between gap-2 max-sm:justify-end">
 	<div class="flex w-full gap-2 sm:max-w-md md:max-w-md">
 		<Search bind:value={search} placeholder="Search by name, email, role, etc." />
 	</div>
@@ -38,10 +38,10 @@
 		{/if}
 		{users.length} users
 	</span>
-</div>
+</section>
 
 {#if results.length}
-	<div class="overflow-x-auto rounded-lg">
+	<section class="overflow-x-auto rounded-lg">
 		<table class="linked-table bg-base-200 table w-full leading-5 max-sm:border-separate max-sm:border-spacing-y-2">
 			<thead class="max-sm:hidden">
 				<tr class="bg-base-300 text-base-content/70">
@@ -165,9 +165,9 @@
 				{/each}
 			</tbody>
 		</table>
-	</div>
+	</section>
 {:else}
-	<div class="bg-base-200 flex h-40 flex-col items-center justify-center rounded-lg">
+	<section class="bg-base-200 flex h-40 flex-col items-center justify-center rounded-lg">
 		<div class="text-base-content/60 text-lg">No users found</div>
-	</div>
+	</section>
 {/if}
