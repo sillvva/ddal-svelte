@@ -101,9 +101,10 @@ export const assertAuth = Effect.fn(function* (adminOnly = false) {
 	const user = event.locals.user;
 
 	if (!user) {
-		const returnUrl = event.isRemoteRequest
-			? (event.request.headers.get("referer")?.replace(event.url.origin, "") ?? "/characters")
-			: `${event.locals.url.pathname}${event.locals.url.search}`;
+		const returnUrl =
+			event.route.id === null || event.url.pathname === "/"
+				? (event.request.headers.get("referer")?.replace(event.url.origin, "") ?? "/characters")
+				: `${event.url.pathname}${event.url.search}`;
 
 		return yield* new RedirectError({
 			message: "Invalid user",
