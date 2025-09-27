@@ -62,9 +62,10 @@ export async function run<
 		onFailure: (cause) => {
 			const err = handleCause(cause);
 			if (isRedirectFailure(err)) {
-				throw redirect(err.status, err.redirectTo);
+				redirect(err.status, err.redirectTo);
+			} else {
+				error(err.status, err.message);
 			}
-			throw error(err.status, err.message);
 		}
 	});
 }

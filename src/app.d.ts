@@ -20,6 +20,7 @@ declare global {
 			isMac: boolean;
 			app: AppCookie;
 			runtime: AppRuntime;
+			url: URL;
 		}
 		interface PageData {
 			app: AppCookie;

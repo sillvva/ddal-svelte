@@ -71,6 +71,8 @@ const session: Handle = async ({ event, resolve }) =>
 const info: Handle = async ({ event, resolve }) => {
 	event.locals.app = serverGetCookie("app", appCookieSchema);
 
+	event.locals.url = event.url;
+
 	const userAgent = event.request.headers.get("user-agent");
 	event.locals.isMac = /Macintosh|MacIntel|MacPPC|Mac68K|Mac OS/i.test(userAgent || "");
 	event.locals.isMobile =
@@ -96,7 +98,8 @@ const preloadTheme: Handle = async ({ event, resolve }) => {
 export const handle = sequence(runtime, authHandler, session, info, preloadTheme);
 
 export const handleError: HandleServerError = async ({ error, event, status, message }) => {
-	if (status !== 404) Effect.runFork(AppLog.error(message, { error, url: event.url }));
+	if (status < 400 || (status === 500 && message === "Internal Error")) return { message };
+	if (status !== 404) Effect.runFork(AppLog.error(message, { error, url: event.url, status }));
 	return { message };
 };
 

@@ -99,12 +99,15 @@ export class AuthService extends Effect.Service<AuthService>()("AuthService", {
 export const assertAuth = Effect.fn(function* (adminOnly = false) {
 	const event = getRequestEvent();
 	const user = event.locals.user;
-	const url = event.url;
 
 	if (!user) {
+		const returnUrl = event.isRemoteRequest
+			? (event.request.headers.get("referer")?.replace(event.url.origin, "") ?? "/characters")
+			: `${event.locals.url.pathname}${event.locals.url.search}`;
+
 		return yield* new RedirectError({
 			message: "Invalid user",
-			redirectTo: `/?redirect=${encodeURIComponent(`${url.pathname}${url.search}`)}`
+			redirectTo: `/?redirect=${encodeURIComponent(returnUrl)}`
 		});
 	}
 

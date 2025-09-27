@@ -51,9 +51,8 @@ export class AdminService extends Effect.Service<AdminService>()("AdminService",
 			},
 			set: {
 				saveLog: Effect.fn("AdminService.set.saveLog")(function* (values) {
-					if (values.label.startsWith("RedirectError")) {
-						return values;
-					}
+					if (values.label.startsWith("RedirectError")) return values;
+
 					return yield* runQuery(db.insert(appLogs).values([values]).returning()).pipe(
 						Effect.flatMap((logs) =>
 							isTupleOf(logs, 1) ? Effect.succeed(logs[0]) : Effect.fail(new SaveAppLogError("Unable to save app log"))

@@ -41,20 +41,20 @@ The managed runtime is created in `src/hooks.server.ts` and provides a centraliz
 
 ```typescript
 const createAppRuntime = () => {
-  const dbLayer = DBService.Default();
+	const dbLayer = DBService.Default();
 
-  const serviceLayer = Layer.mergeAll(
-    AuthService.DefaultWithoutDependencies(),
-    AdminService.DefaultWithoutDependencies(),
-    CharacterService.DefaultWithoutDependencies(),
-    DMService.DefaultWithoutDependencies(),
-    LogService.DefaultWithoutDependencies(),
-    UserService.DefaultWithoutDependencies()
-  );
+	const serviceLayer = Layer.mergeAll(
+		AuthService.DefaultWithoutDependencies(),
+		AdminService.DefaultWithoutDependencies(),
+		CharacterService.DefaultWithoutDependencies(),
+		DMService.DefaultWithoutDependencies(),
+		LogService.DefaultWithoutDependencies(),
+		UserService.DefaultWithoutDependencies()
+	);
 
-  const appLayer = serviceLayer.pipe(Layer.provide(dbLayer));
+	const appLayer = serviceLayer.pipe(Layer.provide(dbLayer));
 
-  return ManagedRuntime.make(appLayer);
+	return ManagedRuntime.make(appLayer);
 };
 
 const appRuntime = createAppRuntime();
@@ -66,8 +66,8 @@ The runtime is injected into every request through SvelteKit's `handle` function
 
 ```typescript
 const runtime: Handle = async ({ event, resolve }) => {
-  event.locals.runtime = appRuntime;
-  return await resolve(event);
+	event.locals.runtime = appRuntime;
+	return await resolve(event);
 };
 ```
 
@@ -79,11 +79,11 @@ The runtime includes proper cleanup on server shutdown:
 
 ```typescript
 const gracefulShutdown = async (signal: string) => {
-  console.log("Disposing app runtime...");
-  await appRuntime.dispose();
-  console.log("Ending DB connection...");
-  await DBService.end();
-  process.exit(0);
+	console.log("Disposing app runtime...");
+	await appRuntime.dispose();
+	console.log("Ending DB connection...");
+	await DBService.end();
+	process.exit(0);
 };
 ```
 
@@ -142,10 +142,10 @@ Database queries are wrapped in Effect for proper error handling:
 
 ```typescript
 export function runQuery<T>(query: PromiseLike<T> & { toSQL: () => Query }) {
-  return Effect.tryPromise({
-    try: () => query,
-    catch: (err) => new DrizzleError(err, query.toSQL())
-  });
+	return Effect.tryPromise({
+		try: () => query,
+		catch: (err) => new DrizzleError(err, query.toSQL())
+	});
 }
 ```
 
@@ -184,15 +184,24 @@ Services expose a structured API:
 
 ```typescript
 interface CharacterApiImpl {
-  readonly db: Database | Transaction;
-  readonly get: {
-    readonly character: (characterId: CharacterId, includeLogs?: boolean) => Effect.Effect<FullCharacterData, DrizzleError | CharacterNotFoundError>;
-    readonly userCharacters: (userId: UserId, options?: { characterId?: CharacterId | null; includeLogs?: boolean }) => Effect.Effect<FullCharacterData[], DrizzleError>;
-  };
-  readonly set: {
-    readonly save: (data: CharacterSchema, userId: UserId) => Effect.Effect<Character, SaveCharacterError | DrizzleError>;
-    readonly delete: (characterId: CharacterId, userId: UserId) => Effect.Effect<{ id: CharacterId }, DeleteCharacterError | DrizzleError | TransactionError>;
-  };
+	readonly db: Database | Transaction;
+	readonly get: {
+		readonly character: (
+			characterId: CharacterId,
+			includeLogs?: boolean
+		) => Effect.Effect<FullCharacterData, DrizzleError | CharacterNotFoundError>;
+		readonly userCharacters: (
+			userId: UserId,
+			options?: { characterId?: CharacterId | null; includeLogs?: boolean }
+		) => Effect.Effect<FullCharacterData[], DrizzleError>;
+	};
+	readonly set: {
+		readonly save: (data: CharacterSchema, userId: UserId) => Effect.Effect<Character, SaveCharacterError | DrizzleError>;
+		readonly delete: (
+			characterId: CharacterId,
+			userId: UserId
+		) => Effect.Effect<{ id: CharacterId }, DeleteCharacterError | DrizzleError | TransactionError>;
+	};
 }
 ```
 
@@ -204,35 +213,35 @@ The `run` function provides the primary way to execute Effect programs in the Sv
 
 ```typescript
 export async function run<
-  R,
-  F extends InstanceType<ErrorClass>,
-  S extends Services,
-  T extends YieldWrap<Effect.Effect<R, F, S>>,
-  X,
-  Y
+	R,
+	F extends InstanceType<ErrorClass>,
+	S extends Services,
+	T extends YieldWrap<Effect.Effect<R, F, S>>,
+	X,
+	Y
 >(program: Effect.Effect<R, F, S> | (() => Effect.Effect<R, F, S>) | (() => Generator<T, X, Y>)): Promise<R | X> {
-  const event = getRequestEvent();
-  const rt = event.locals.runtime;
+	const event = getRequestEvent();
+	const rt = event.locals.runtime;
 
-  const effect = Effect.fn(function* () {
-    if (isFunction(program)) {
-      return yield* program();
-    } else {
-      return yield* program;
-    }
-  });
+	const effect = Effect.fn(function* () {
+		if (isFunction(program)) {
+			return yield* program();
+		} else {
+			return yield* program;
+		}
+	});
 
-  const result = await rt.runPromiseExit(effect());
-  return Exit.match(result, {
-    onSuccess: (result) => result,
-    onFailure: (cause) => {
-      const err = handleCause(cause);
-      if (isRedirectFailure(err)) {
-        throw redirect(err.status, err.redirectTo);
-      }
-      throw error(err.status, err.message);
-    }
-  });
+	const result = await rt.runPromiseExit(effect());
+	return Exit.match(result, {
+		onSuccess: (result) => result,
+		onFailure: (cause) => {
+			const err = handleCause(cause);
+			if (isRedirectFailure(err)) {
+				throw redirect(err.status, err.redirectTo);
+			}
+			throw error(err.status, err.message);
+		}
+	});
 }
 ```
 
@@ -242,29 +251,29 @@ The `runSafe` function provides error-safe execution that returns a result type 
 
 ```typescript
 export async function runSafe<
-  R,
-  F extends InstanceType<ErrorClass>,
-  S extends Services,
-  T extends YieldWrap<Effect.Effect<R, F, S>>,
-  X,
-  Y
+	R,
+	F extends InstanceType<ErrorClass>,
+	S extends Services,
+	T extends YieldWrap<Effect.Effect<R, F, S>>,
+	X,
+	Y
 >(program: Effect.Effect<R, F, S> | (() => Effect.Effect<R, F, S>) | (() => Generator<T, X, Y>)): Promise<EffectResult<R | X>> {
-  const event = getRequestEvent();
-  const rt = event.locals.runtime;
+	const event = getRequestEvent();
+	const rt = event.locals.runtime;
 
-  const effect = Effect.fn(function* () {
-    if (isFunction(program)) {
-      return yield* program();
-    } else {
-      return yield* program;
-    }
-  });
+	const effect = Effect.fn(function* () {
+		if (isFunction(program)) {
+			return yield* program();
+		} else {
+			return yield* program;
+		}
+	});
 
-  const result = await rt.runPromiseExit(effect());
-  return Exit.match(result, {
-    onSuccess: (result) => ({ ok: true, data: result }),
-    onFailure: (cause) => ({ ok: false, error: handleCause(cause) })
-  });
+	const result = await rt.runPromiseExit(effect());
+	return Exit.match(result, {
+		onSuccess: (result) => ({ ok: true, data: result }),
+		onFailure: (cause) => ({ ok: false, error: handleCause(cause) })
+	});
 }
 ```
 
@@ -275,8 +284,8 @@ The `EffectResult` type is a discriminated union that represents the outcome of 
 ```typescript
 export type EffectSuccess<R> = { ok: true; data: R };
 export type EffectFailure = {
-  ok: false;
-  error: { message: string; stack: string; status: NumericRange<300, 599>; [key: string]: unknown };
+	ok: false;
+	error: { message: string; stack: string; status: NumericRange<300, 599>; [key: string]: unknown };
 };
 export type EffectResult<R> = EffectSuccess<R> | EffectFailure;
 ```
@@ -293,27 +302,31 @@ The `handleCause` function processes Effect causes from the `run` and `runSafe` 
 
 ```typescript
 export function handleCause<F extends InstanceType<ErrorClass>>(cause: Cause.Cause<F>) {
-  let message = Cause.pretty(cause);
-  let status: NumericRange<300, 599> = 500;
-  let extra: Record<string, unknown> = {};
+	let message = Cause.pretty(cause);
+	let status: NumericRange<300, 599> = 500;
+	let extra: Record<string, unknown> = {};
 
-  if (Cause.isFailType(cause)) { // Expected Errors
-    const error = cause.error;
-    status = error.status;
-    extra.cause = error.cause;
-    extra = Object.assign(extra, omit(error, ["_tag", "_op", "pipe", "name", "message", "status"]));
+	if (Cause.isFailType(cause)) {
+		// Expected Errors
+		const error = cause.error;
+		status = error.status;
+		extra.cause = error.cause;
+		extra = Object.assign(extra, omit(error, ["_tag", "_op", "pipe", "name", "message", "status"]));
 
-    Effect.runFork(AppLog.error(message, extra));
-  }
+		Effect.runFork(AppLog.error(message, extra));
+	}
 
-	if (Cause.isDieType(cause)) { // Unexpected Errors
+	if (Cause.isDieType(cause)) {
+		// Unexpected Errors
 		const defect = cause.defect;
 
-		if (isRedirect(defect)) { // SvelteKit redirect()
+		if (isRedirect(defect)) {
+			// SvelteKit redirect()
 			message = `Redirect to ${defect.location}`;
 			status = defect.status;
 			extra.redirectTo = defect.location;
-		} else if (isHttpError(defect)) { // SvelteKit error()
+		} else if (isHttpError(defect)) {
+			// SvelteKit error()
 			status = defect.status as NumericRange<300, 599>;
 			message = defect.body.message;
 		}
@@ -332,8 +345,8 @@ export function handleCause<F extends InstanceType<ErrorClass>>(cause: Cause.Cau
 		}
 	}
 
-  const trace = getTrace(message);
-  return { message: trace.message, stack: trace.stack, status, ...extra };
+	const trace = getTrace(message);
+	return { message: trace.message, stack: trace.stack, status, ...extra };
 }
 ```
 
@@ -342,12 +355,14 @@ export function handleCause<F extends InstanceType<ErrorClass>>(cause: Cause.Cau
 Both run functions support generator-based Effect programs for more readable async code:
 
 ```typescript
-const result = yield* run(function* () {
-  const Characters = yield* CharacterService;
-  const { user } = assertAuth();
+const result =
+	yield *
+	run(function* () {
+		const Characters = yield* CharacterService;
+		const { user } = assertAuth();
 
-  return yield* Characters.get.userCharacters(user.id);
-});
+		return yield* Characters.get.userCharacters(user.id);
+	});
 ```
 
 ## Command and Query Guards
@@ -358,17 +373,17 @@ The `guardedQuery` function provides authentication and authorization for remote
 
 ```typescript
 export function guardedQuery<
-  Schema extends v.GenericSchema,
-  R,
-  F extends InstanceType<ErrorClass>,
-  S extends Services,
-  T extends YieldWrap<Effect.Effect<R, F, S>>,
-  X,
-  Y
+	Schema extends v.GenericSchema,
+	R,
+	F extends InstanceType<ErrorClass>,
+	S extends Services,
+	T extends YieldWrap<Effect.Effect<R, F, S>>,
+	X,
+	Y
 >(
-  schema: Schema,
-  fn: (output: v.InferOutput<Schema>, auth: { user: LocalsUser; event: RequestEvent }) => Generator<T, X, Y>,
-  adminOnly?: boolean
+	schema: Schema,
+	fn: (output: v.InferOutput<Schema>, auth: { user: LocalsUser; event: RequestEvent }) => Generator<T, X, Y>,
+	adminOnly?: boolean
 ): RemoteQueryFunction<v.InferInput<Schema>, X>;
 ```
 
@@ -378,17 +393,17 @@ The `guardedCommand` function provides similar protection for remote commands:
 
 ```typescript
 export function guardedCommand<
-  Schema extends v.GenericSchema,
-  R,
-  F extends InstanceType<ErrorClass>,
-  S extends Services,
-  T extends YieldWrap<Effect.Effect<R, F, S>>,
-  X,
-  Y
+	Schema extends v.GenericSchema,
+	R,
+	F extends InstanceType<ErrorClass>,
+	S extends Services,
+	T extends YieldWrap<Effect.Effect<R, F, S>>,
+	X,
+	Y
 >(
-  schema: Schema,
-  fn: (output: v.InferOutput<Schema>, auth: { user: LocalsUser; event: RequestEvent }) => Generator<T, X, Y>,
-  adminOnly?: boolean
+	schema: Schema,
+	fn: (output: v.InferOutput<Schema>, auth: { user: LocalsUser; event: RequestEvent }) => Generator<T, X, Y>,
+	adminOnly?: boolean
 ): RemoteCommand<v.InferInput<Schema>, Promise<EffectResult<X>>>;
 ```
 
@@ -398,20 +413,23 @@ The `assertAuth` function provides authentication and authorization:
 
 ```typescript
 export const assertAuth = Effect.fn(function* (adminOnly = false) {
-  const event = getRequestEvent();
-  const user = event.locals.user;
-  const url = event.url;
+	const event = getRequestEvent();
+	const user = event.locals.user;
 
-  if (!user) {
-    return yield* new RedirectError({
-      message: "Invalid user",
-      redirectTo: `/?redirect=${encodeURIComponent(`${url.pathname}${url.search}`)}`
-    });
-  }
+	if (!user) {
+		const returnUrl = event.isRemoteRequest
+			? (event.request.headers.get("referer")?.replace(event.url.origin, "") ?? "/characters")
+			: `${event.locals.url.pathname}${event.locals.url.search}`;
 
-  // Additional validation and authorization logic...
+		return yield* new RedirectError({
+			message: "Invalid user",
+			redirectTo: `/?redirect=${encodeURIComponent(returnUrl)}`
+		});
+	}
 
-  return { user: result.output, event };
+	// Additional validation and authorization logic...
+
+	return { user: result.output, event };
 });
 ```
 
@@ -423,14 +441,14 @@ The project defines a universal error base type. All expected errors are extende
 
 ```typescript
 export interface ErrorParams {
-  message: string;
-  status: NumericRange<300, 599>;
-  cause?: unknown;
-  [key: string]: unknown;
+	message: string;
+	status: NumericRange<300, 599>;
+	cause?: unknown;
+	[key: string]: unknown;
 }
 
 export interface ErrorClass {
-  new (...args: unknown[]): { _tag: string } & ErrorParams;
+	new (...args: unknown[]): { _tag: string } & ErrorParams;
 }
 ```
 
@@ -440,20 +458,20 @@ All errors extend from tagged error classes:
 
 ```typescript
 export class CharacterNotFoundError extends Data.TaggedError("CharacterNotFoundError")<ErrorParams> {
-  constructor(err?: unknown) {
-    super({ message: "Character not found", status: 404, cause: err });
-  }
+	constructor(err?: unknown) {
+		super({ message: "Character not found", status: 404, cause: err });
+	}
 }
 
 export class RedirectError extends Data.TaggedError("RedirectError")<RedirectErrorParams> {
-  constructor({
-    message,
-    redirectTo,
-    status = 302,
-    cause
-  }: { message: string; redirectTo: FullPathname } & Partial<RedirectErrorParams>) {
-    super({ message, redirectTo, status, cause });
-  }
+	constructor({
+		message,
+		redirectTo,
+		status = 302,
+		cause
+	}: { message: string; redirectTo: FullPathname } & Partial<RedirectErrorParams>) {
+		super({ message, redirectTo, status, cause });
+	}
 }
 ```
 
@@ -463,12 +481,12 @@ The logging system integrates with Effect's logging infrastructure:
 
 ```typescript
 export const AppLog = {
-  info: (message: string, extra?: Record<string, unknown>, logger: Layer.Layer<never> = dbLogger) =>
-    Effect.logInfo(message).pipe(logLevel, annotate(extra), Effect.provide(logger)),
-  error: (message: string, extra?: Record<string, unknown>, logger: Layer.Layer<never> = dbLogger) =>
-    Effect.logError(message).pipe(logLevel, annotate(extra), Effect.provide(logger)),
-  debug: (message: string, extra?: Record<string, unknown>, logger: Layer.Layer<never> = dbLogger) =>
-    Effect.logDebug(message).pipe(logLevel, annotate(extra), Effect.provide(logger))
+	info: (message: string, extra?: Record<string, unknown>, logger: Layer.Layer<never> = dbLogger) =>
+		Effect.logInfo(message).pipe(logLevel, annotate(extra), Effect.provide(logger)),
+	error: (message: string, extra?: Record<string, unknown>, logger: Layer.Layer<never> = dbLogger) =>
+		Effect.logError(message).pipe(logLevel, annotate(extra), Effect.provide(logger)),
+	debug: (message: string, extra?: Record<string, unknown>, logger: Layer.Layer<never> = dbLogger) =>
+		Effect.logDebug(message).pipe(logLevel, annotate(extra), Effect.provide(logger))
 };
 ```
 
@@ -478,23 +496,23 @@ Logs are stored in the database with rich annotations:
 
 ```typescript
 const dbLogger = Logger.replace(
-  Logger.defaultLogger,
-  Logger.make(async (log) => {
-    const event = getRequestEvent();
-    const runtime = event.locals.runtime;
+	Logger.defaultLogger,
+	Logger.make(async (log) => {
+		const event = getRequestEvent();
+		const runtime = event.locals.runtime;
 
-    await runtime.runPromise(
-      Effect.gen(function* () {
-        const Admin = yield* AdminService;
-        return yield* Admin.set.saveLog({
-          label: (log.message as string[]).join(" | "),
-          timestamp: log.date,
-          level: log.logLevel.label,
-          annotations: Object.fromEntries(HashMap.toEntries(log.annotations)) as Annotations
-        });
-      })
-    );
-  })
+		await runtime.runPromise(
+			Effect.gen(function* () {
+				const Admin = yield* AdminService;
+				return yield* Admin.set.saveLog({
+					label: (log.message as string[]).join(" | "),
+					timestamp: log.date,
+					level: log.logLevel.label,
+					annotations: Object.fromEntries(HashMap.toEntries(log.annotations)) as Annotations
+				});
+			})
+		);
+	})
 );
 ```
 
@@ -506,10 +524,10 @@ The project integrates with SvelteKit Superforms for form handling:
 
 ```typescript
 export function validateForm<
-  Schema extends v.GenericSchema,
-  Input extends SuperValidateData | Partial<InferIn<Schema, "valibot">>
+	Schema extends v.GenericSchema,
+	Input extends SuperValidateData | Partial<InferIn<Schema, "valibot">>
 >(input: Input, schema: Schema, options?: SuperValidateOptions<Infer<Schema, "valibot">>) {
-  return Effect.promise(() => superValidate(input, valibot(schema), options));
+	return Effect.promise(() => superValidate(input, valibot(schema), options));
 }
 ```
 
@@ -519,22 +537,22 @@ Form errors are integrated with Effect error handling:
 
 ```typescript
 export class FormError<SchemaOut extends Record<PropertyKey, unknown>> extends Data.TaggedError("FormError")<ErrorParams> {
-  constructor(
-    public message: string,
-    protected options: Partial<{
-      field: "" | FormPathLeavesWithErrors<SchemaOut>;
-      status: NumericRange<300, 599>;
-      cause: unknown;
-    }> = {}
-  ) {
-    super({ message, status: options.status || 500, cause: options.cause });
-  }
+	constructor(
+		public message: string,
+		protected options: Partial<{
+			field: "" | FormPathLeavesWithErrors<SchemaOut>;
+			status: NumericRange<300, 599>;
+			cause: unknown;
+		}> = {}
+	) {
+		super({ message, status: options.status || 500, cause: options.cause });
+	}
 
-  toForm(form: SuperValidated<SchemaOut>) {
-    return setError(form, this.options?.field ?? "", this.message, {
-      status: this.status < 400 ? 400 : (this.status as NumericRange<400, 599>)
-    });
-  }
+	toForm(form: SuperValidated<SchemaOut>) {
+		return setError(form, this.options?.field ?? "", this.message, {
+			status: this.status < 400 ? 400 : (this.status as NumericRange<400, 599>)
+		});
+	}
 }
 ```
 
@@ -544,31 +562,31 @@ The `saveForm` function provides a complete form handling workflow:
 
 ```typescript
 export const saveForm = Effect.fn(function* <
-  TSuccess extends Pathname | TForm,
-  TFailure extends Pathname | TForm,
-  TForm extends SuperValidated<SchemaOut>,
-  SchemaOut extends Record<PropertyKey, unknown>,
-  ServiceOut = unknown
+	TSuccess extends Pathname | TForm,
+	TFailure extends Pathname | TForm,
+	TForm extends SuperValidated<SchemaOut>,
+	SchemaOut extends Record<PropertyKey, unknown>,
+	ServiceOut = unknown
 >(
-  program: Effect.Effect<ServiceOut, FormError<SchemaOut> | InstanceType<ErrorClass>>,
-  handlers: {
-    onSuccess: (data: ServiceOut) => Awaitable<TSuccess>;
-    onError: (err: FormError<SchemaOut>) => Awaitable<TFailure>;
-  }
+	program: Effect.Effect<ServiceOut, FormError<SchemaOut> | InstanceType<ErrorClass>>,
+	handlers: {
+		onSuccess: (data: ServiceOut) => Awaitable<TSuccess>;
+		onError: (err: FormError<SchemaOut>) => Awaitable<TFailure>;
+	}
 ) {
-  return yield* program.pipe(
-    Effect.catchAll(FormError.from<SchemaOut>),
-    Effect.match({
-      onSuccess: handlers.onSuccess,
-      onFailure: async (error) => {
-        const result = await handlers.onError(error);
-        const message = Cause.pretty(Cause.fail(error));
-        Effect.runFork(AppLog.error(message, { result, error }));
-        return result;
-      }
-    }),
-    Effect.flatMap((result) => Effect.promise(async () => result))
-  );
+	return yield* program.pipe(
+		Effect.catchAll(FormError.from<SchemaOut>),
+		Effect.match({
+			onSuccess: handlers.onSuccess,
+			onFailure: async (error) => {
+				const result = await handlers.onError(error);
+				const message = Cause.pretty(Cause.fail(error));
+				Effect.runFork(AppLog.error(message, { result, error }));
+				return result;
+			}
+		}),
+		Effect.flatMap((result) => Effect.promise(async () => result))
+	);
 });
 ```
 
@@ -578,8 +596,8 @@ export const saveForm = Effect.fn(function* <
 
 ```typescript
 export const getCharacters = guardedQuery(function* ({ user }) {
-  const Characters = yield* CharacterService;
-  return yield* Characters.get.userCharacters(user.id);
+	const Characters = yield* CharacterService;
+	return yield* Characters.get.userCharacters(user.id);
 });
 ```
 
@@ -587,35 +605,37 @@ export const getCharacters = guardedQuery(function* ({ user }) {
 
 ```typescript
 export const save = guardedCommand(function* (input: LogSchemaIn, { user }) {
-  const Characters = yield* CharacterService;
-  const Logs = yield* LogService;
+	const Characters = yield* CharacterService;
+	const Logs = yield* LogService;
 
-  // Form validation and processing...
+	// Form validation and processing...
 
-  return yield* saveForm(Logs.set.save(form.data, user), {
-    onSuccess: () => redirectTo,
-    onError: (err) => {
-      err.toForm(form);
-      return form;
-    }
-  });
+	return yield* saveForm(Logs.set.save(form.data, user), {
+		onSuccess: () => redirectTo,
+		onError: (err) => {
+			err.toForm(form);
+			return form;
+		}
+	});
 });
 ```
 
 ### Service Usage Example
 
 ```typescript
-const character = yield* runQuery(
-  db.query.characters.findFirst({
-    with: characterIncludes(includeLogs),
-    where: { id: { eq: characterId } }
-  })
-).pipe(
-  Effect.flatMap((character) =>
-    character ? Effect.succeed(parseCharacter(character)) : Effect.fail(new CharacterNotFoundError())
-  ),
-  Effect.tapError(() => AppLog.debug("CharacterService.get.character", { characterId, includeLogs }))
-);
+const character =
+	yield *
+	runQuery(
+		db.query.characters.findFirst({
+			with: characterIncludes(includeLogs),
+			where: { id: { eq: characterId } }
+		})
+	).pipe(
+		Effect.flatMap((character) =>
+			character ? Effect.succeed(parseCharacter(character)) : Effect.fail(new CharacterNotFoundError())
+		),
+		Effect.tapError(() => AppLog.debug("CharacterService.get.character", { characterId, includeLogs }))
+	);
 ```
 
 ## Best Practices
