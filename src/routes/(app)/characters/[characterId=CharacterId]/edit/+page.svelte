@@ -4,7 +4,7 @@
 		return params.characterId === "new" ? "New Character" : "Edit";
 	}
 	export async function getPageHead(params: RouteParams) {
-		const character = await API.characters.queries.getCharacter({ param: params.characterId });
+		const character = await API.characters.queries.get({ param: params.characterId });
 		return {
 			title: params.characterId === "new" ? "New Character" : `Edit ${character.name}`
 		};

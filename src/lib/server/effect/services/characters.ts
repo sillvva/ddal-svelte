@@ -42,11 +42,11 @@ export interface FullCharacterData extends Omit<CharacterData, "logs">, ReturnTy
 interface CharacterApiImpl {
 	readonly db: Database | Transaction;
 	readonly get: {
-		readonly character: (
+		readonly one: (
 			characterId: CharacterId,
 			includeLogs?: boolean
 		) => Effect.Effect<FullCharacterData, DrizzleError | CharacterNotFoundError>;
-		readonly userCharacters: (
+		readonly all: (
 			userId: UserId,
 			options?: { characterId?: CharacterId | null; includeLogs?: boolean }
 		) => Effect.Effect<FullCharacterData[], DrizzleError>;
@@ -67,7 +67,7 @@ export class CharacterService extends Effect.Service<CharacterService>()("Charac
 		const impl: CharacterApiImpl = {
 			db,
 			get: {
-				character: Effect.fn("CharacterService.get.character")(function* (characterId, includeLogs = true) {
+				one: Effect.fn("CharacterService.get.one")(function* (characterId, includeLogs = true) {
 					return yield* runQuery(
 						db.query.characters.findFirst({
 							with: characterIncludes(includeLogs),
@@ -77,14 +77,11 @@ export class CharacterService extends Effect.Service<CharacterService>()("Charac
 						Effect.flatMap((character) =>
 							character ? Effect.succeed(parseCharacter(character)) : Effect.fail(new CharacterNotFoundError())
 						),
-						Effect.tapError(() => AppLog.debug("CharacterService.get.character", { characterId, includeLogs }))
+						Effect.tapError(() => AppLog.debug("CharacterService.get.one", { characterId, includeLogs }))
 					);
 				}),
 
-				userCharacters: Effect.fn("CharacterService.get.userCharacters")(function* (
-					userId,
-					{ characterId, includeLogs = true } = {}
-				) {
+				all: Effect.fn("CharacterService.get.all")(function* (userId, { characterId, includeLogs = true } = {}) {
 					return yield* runQuery(
 						db.query.characters.findMany({
 							with: characterIncludes(includeLogs),
@@ -96,7 +93,7 @@ export class CharacterService extends Effect.Service<CharacterService>()("Charac
 						})
 					).pipe(
 						Effect.map((characters) => characters.map(parseCharacter)),
-						Effect.tapError(() => AppLog.debug("CharacterService.get.userCharacters", { userId, includeLogs }))
+						Effect.tapError(() => AppLog.debug("CharacterService.get.all", { userId, includeLogs }))
 					);
 				})
 			},

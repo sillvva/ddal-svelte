@@ -25,7 +25,7 @@ export const GET = async ({ params, url }) => {
 
 	const character = await run(function* () {
 		const Characters = yield* CharacterService;
-		return yield* Characters.get.character(characterId, true);
+		return yield* Characters.get.one(characterId, true);
 	});
 
 	const width = 600;

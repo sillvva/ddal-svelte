@@ -28,9 +28,9 @@ const getData = Effect.fn("GetData")(function* (user: LocalsUser) {
 	const DMs = yield* DMService;
 	const Logs = yield* LogService;
 
-	const characters = yield* Characters.get.userCharacters(user.id, { includeLogs: false });
-	const dms = yield* DMs.get.userDMs(user);
-	const logs = yield* Logs.get.userLogs(user.id);
+	const characters = yield* Characters.get.all(user.id, { includeLogs: false });
+	const dms = yield* DMs.get.all(user);
+	const logs = yield* Logs.get.all(user.id);
 
 	return [
 		{

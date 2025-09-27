@@ -19,7 +19,7 @@ class DeleteUserDMError extends Data.TaggedError("DeleteUserDMError")<ErrorParam
 export const deleteDM = guardedCommand(dungeonMasterIdSchema, function* (id, { user }) {
 	const DMs = yield* DMService;
 
-	const [dm] = yield* DMs.get.userDMs(user, { id });
+	const [dm] = yield* DMs.get.all(user, { id });
 	if (!dm) return yield* new DMNotFoundError();
 	if (dm.isUser) return yield* new DeleteUserDMError();
 

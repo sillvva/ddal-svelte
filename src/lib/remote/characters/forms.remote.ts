@@ -9,7 +9,7 @@ import { CharacterService } from "$lib/server/effect/services/characters";
 import { LogService } from "$lib/server/effect/services/logs";
 import { Effect } from "effect";
 import * as v from "valibot";
-import { getCharacter } from "./queries.remote";
+import { get } from "./queries.remote";
 
 export const edit = guardedQuery(
 	v.object({
@@ -18,7 +18,7 @@ export const edit = guardedQuery(
 	}),
 	function* (input, { event }) {
 		const firstLog = event.locals.app.characters.firstLog;
-		const character = yield* Effect.promise(() => getCharacter(input));
+		const character = yield* Effect.promise(() => get(input));
 
 		const form = yield* validateForm(
 			{
@@ -50,7 +50,7 @@ export const save = guardedCommand(function* (input: EditCharacterSchemaIn, { us
 	if (!form.valid) return form;
 	const { firstLog, ...data } = form.data;
 
-	const isNew = yield* Characters.get.character(data.id, false).pipe(
+	const isNew = yield* Characters.get.one(data.id, false).pipe(
 		Effect.map(() => false),
 		Effect.catchTag("CharacterNotFoundError", () => Effect.succeed(true)),
 		Effect.catchAll(() => Effect.succeed(false))

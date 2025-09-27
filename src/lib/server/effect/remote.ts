@@ -3,6 +3,7 @@ import type { LocalsUser } from "$lib/schemas";
 import { assertAuth } from "$lib/server/effect/services/auth";
 import type { RemoteCommand, RemoteQueryFunction, RequestEvent } from "@sveltejs/kit";
 import { Effect } from "effect";
+import { isFunction } from "effect/Predicate";
 import type { YieldWrap } from "effect/Utils";
 import * as v from "valibot";
 import type { ErrorClass } from "./errors";
@@ -51,7 +52,7 @@ export function guardedQuery<
 
 export function guardedQuery(schemaOrFn: any, fnOrAdminOnly: any, adminOnly = false) {
 	// Handle the case where there's no schema parameter (third overload)
-	if (typeof schemaOrFn === "function") {
+	if (isFunction(schemaOrFn)) {
 		return query(() =>
 			run(function* () {
 				const auth = yield* assertAuth(fnOrAdminOnly);
@@ -102,7 +103,7 @@ export function guardedCommand<
 
 export function guardedCommand(schemaOrFn: any, fnOrAdminOnly: any, adminOnly = false) {
 	// Handle the case where there's no schema parameter (second overload)
-	if (typeof schemaOrFn === "function") {
+	if (isFunction(schemaOrFn)) {
 		return command("unchecked", (input) =>
 			runSafe(function* () {
 				const auth = yield* assertAuth(fnOrAdminOnly);

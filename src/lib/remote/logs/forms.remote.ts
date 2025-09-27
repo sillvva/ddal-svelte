@@ -18,7 +18,6 @@ import { omit, sorter } from "@sillvva/utils";
 import { Effect } from "effect";
 import type { SuperValidated } from "sveltekit-superforms";
 import * as v from "valibot";
-import { getCharacter } from "../characters/queries.remote";
 
 const characterLogFormSchema = v.object({
 	param: v.object({
@@ -30,11 +29,12 @@ const characterLogFormSchema = v.object({
 export const character = guardedQuery(characterLogFormSchema, function* (input, { user }) {
 	const Logs = yield* LogService;
 	const DMs = yield* DMService;
+	const Characters = yield* CharacterService;
 
-	const character = yield* Effect.promise(() => getCharacter({ param: input.param.characterId }));
+	const character = yield* Characters.get.one(input.param.characterId);
 
 	const logId = input.param.logId;
-	const logData = logId !== "new" ? yield* Logs.get.log(logId, user.id) : undefined;
+	const logData = logId !== "new" ? yield* Logs.get.one(logId, user.id) : undefined;
 	const log = logData ? logDataToSchema(user.id, logData) : defaultLogSchema(user.id, { character });
 
 	if (logId !== "new") {
@@ -49,7 +49,7 @@ export const character = guardedQuery(characterLogFormSchema, function* (input, 
 	const itemEntities = getItemEntities(character, { excludeDropped: true, lastLogId: log.id });
 	const magicItems = itemEntities.magicItems.toSorted((a, b) => sorter(a.name, b.name));
 	const storyAwards = itemEntities.storyAwards.toSorted((a, b) => sorter(a.name, b.name));
-	const dms = yield* DMs.get.userDMs(user, { includeLogs: false }).pipe(Effect.map((dms) => dms.map((dm) => omit(dm, ["logs"]))));
+	const dms = yield* DMs.get.all(user, { includeLogs: false }).pipe(Effect.map((dms) => dms.map((dm) => omit(dm, ["logs"]))));
 
 	return {
 		totalLevel: character.totalLevel,
@@ -71,7 +71,7 @@ export const dm = guardedQuery(dmLogFormSchema, function* (input, { user }) {
 	const Characters = yield* CharacterService;
 	const DMs = yield* DMService;
 
-	const userDM = yield* DMs.get.userDMs(user, { includeLogs: false }).pipe(
+	const userDM = yield* DMs.get.all(user, { includeLogs: false }).pipe(
 		Effect.map((dms) => dms.find((dm) => dm.isUser)),
 		Effect.flatMap((dm) => (dm ? Effect.succeed(dm) : Effect.fail(new DMNotFoundError()))),
 		// eslint-disable-next-line @typescript-eslint/no-unused-vars
@@ -79,7 +79,7 @@ export const dm = guardedQuery(dmLogFormSchema, function* (input, { user }) {
 	);
 
 	const logId = input.param.logId;
-	const logData = logId !== "new" ? yield* Logs.get.log(logId, user.id) : undefined;
+	const logData = logId !== "new" ? yield* Logs.get.one(logId, user.id) : undefined;
 	const log = logData ? logDataToSchema(user.id, logData) : defaultLogSchema(user.id, { defaults: { dm: userDM } });
 
 	if (logId !== "new") {
@@ -91,7 +91,7 @@ export const dm = guardedQuery(dmLogFormSchema, function* (input, { user }) {
 			});
 	}
 
-	const characters = yield* Characters.get.userCharacters(user.id).pipe(
+	const characters = yield* Characters.get.all(user.id).pipe(
 		Effect.map((characters) =>
 			characters.map((c) => ({
 				...c,
@@ -124,7 +124,7 @@ export const save = guardedCommand(function* (input: LogSchemaIn, { user }) {
 		const parsedId = yield* safeParse(v.nullable(characterIdSchema), input.characterId);
 
 		const characters = input.characterId
-			? yield* Characters.get.userCharacters(user.id, {
+			? yield* Characters.get.all(user.id, {
 					characterId: parsedId.data || null
 				})
 			: [];
@@ -138,7 +138,7 @@ export const save = guardedCommand(function* (input: LogSchemaIn, { user }) {
 		redirectTo = `/dm-logs`;
 	} else {
 		const characterId = yield* redirectOnFail(parse(characterIdSchema, input.characterId), "/characters", 302);
-		const character = yield* Characters.get.character(characterId);
+		const character = yield* Characters.get.one(characterId);
 
 		form = yield* validateForm(input, characterLogSchema(character));
 		redirectTo = `/characters/${character.id}`;

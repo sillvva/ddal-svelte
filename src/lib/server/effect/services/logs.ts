@@ -108,9 +108,9 @@ export type UserLogData = InferQueryResult<"logs", typeof userLogsConfig>;
 interface LogApiImpl {
 	readonly db: Database | Transaction;
 	readonly get: {
-		readonly log: (logId: LogId, userId: UserId) => Effect.Effect<FullLogData | undefined, DrizzleError>;
-		readonly dmLogs: (userId: UserId) => Effect.Effect<FullLogData[], DrizzleError>;
-		readonly userLogs: (userId: UserId) => Effect.Effect<UserLogData[], DrizzleError>;
+		readonly one: (logId: LogId, userId: UserId) => Effect.Effect<FullLogData | undefined, DrizzleError>;
+		readonly dm: (userId: UserId) => Effect.Effect<FullLogData[], DrizzleError>;
+		readonly all: (userId: UserId) => Effect.Effect<UserLogData[], DrizzleError>;
 	};
 	readonly set: {
 		readonly save: (
@@ -122,7 +122,7 @@ interface LogApiImpl {
 }
 
 const validateLogDM = Effect.fn("validateLogDM")(function* (log: LogSchema, user: LocalsUser) {
-	const dmApi = yield* DMService;
+	const DMs = yield* DMService;
 
 	let isUser = log.isDmLog || log.dm.isUser || ["", user.name.toLowerCase()].includes(log.dm.name.toLowerCase().trim());
 	let dmId = log.dm.id;
@@ -141,7 +141,7 @@ const validateLogDM = Effect.fn("validateLogDM")(function* (log: LogSchema, user
 	}
 
 	if (isUser || dmName || log.dm.DCI) {
-		const search = yield* dmApi.get.fuzzyDM(user.id, isUser, log.dm);
+		const search = yield* DMs.get.fuzzySearch(user.id, isUser, log.dm);
 		if (search) {
 			if (search.name === dmName && search.DCI === log.dm.DCI) return search;
 			if (search.isUser) isUser = true;
@@ -238,7 +238,7 @@ const upsertLog = Effect.fn("upsertLog")(function* (log: LogSchema, user: Locals
 	);
 
 	return yield* get
-		.log(result.id, user.id)
+		.one(result.id, user.id)
 		.pipe(
 			Effect.flatMap((result) =>
 				result ? Effect.succeed(result) : Effect.fail(new SaveLogError(log.id ? "Could not save log" : "Could not create log"))
@@ -316,7 +316,7 @@ export class LogService extends Effect.Service<LogService>()("LogService", {
 		const impl: LogApiImpl = {
 			db,
 			get: {
-				log: Effect.fn("LogService.get.log")(function* (logId, userId) {
+				one: Effect.fn("LogService.get.one")(function* (logId, userId) {
 					if (logId === "new") return undefined;
 
 					return yield* runQuery(
@@ -331,11 +331,11 @@ export class LogService extends Effect.Service<LogService>()("LogService", {
 						})
 					).pipe(
 						Effect.andThen((log) => log && parseLog(log)),
-						Effect.tapError(() => AppLog.debug("LogService.get.log", { logId, userId }))
+						Effect.tapError(() => AppLog.debug("LogService.get.one", { logId, userId }))
 					);
 				}),
 
-				dmLogs: Effect.fn("LogService.get.dmLogs")(function* (userId) {
+				dm: Effect.fn("LogService.get.dm")(function* (userId) {
 					return yield* runQuery(
 						db.query.logs.findMany({
 							with: extendedLogIncludes,
@@ -346,11 +346,11 @@ export class LogService extends Effect.Service<LogService>()("LogService", {
 						})
 					).pipe(
 						Effect.map((logs) => logs.map(parseLog)),
-						Effect.tapError(() => AppLog.debug("LogService.get.dmLogs", { userId }))
+						Effect.tapError(() => AppLog.debug("LogService.get.dm", { userId }))
 					);
 				}),
 
-				userLogs: Effect.fn("LogService.get.userLogs")(function* (userId) {
+				all: Effect.fn("LogService.get.all")(function* (userId) {
 					return yield* runQuery(
 						db.query.logs.findMany({
 							...userLogsConfig,
@@ -361,7 +361,7 @@ export class LogService extends Effect.Service<LogService>()("LogService", {
 								date: "asc"
 							}
 						})
-					).pipe(Effect.tapError(() => AppLog.debug("LogService.get.userLogs", { userId })));
+					).pipe(Effect.tapError(() => AppLog.debug("LogService.get.all", { userId })));
 				})
 			},
 			set: {

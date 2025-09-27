@@ -25,7 +25,7 @@
 
 	const global = getGlobal();
 
-	const characters = $derived(await API.characters.queries.getCharacters());
+	const characters = $derived(await API.characters.queries.getAll());
 	const search = $derived(new EntitySearchFactory(characters, page.url.searchParams.get("s") || ""));
 	const sortedResults = $derived(
 		search.results.toSorted((a, b) => sorter(b.score, a.score) || sorter(a.totalLevel, b.totalLevel) || sorter(a.name, b.name))

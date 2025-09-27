@@ -1,11 +1,11 @@
 <script lang="ts" module>
 	import type { RouteParams } from "./$types.js";
 	export async function getPageTitle(params: RouteParams) {
-		const character = await API.characters.queries.getCharacter({ param: params.characterId });
+		const character = await API.characters.queries.get({ param: params.characterId });
 		return character.name || "Character";
 	}
 	export async function getPageHead(params: RouteParams) {
-		const character = await API.characters.queries.getCharacter({ param: params.characterId });
+		const character = await API.characters.queries.get({ param: params.characterId });
 		return {
 			title: character.name || "Character",
 			description: `Level ${character.totalLevel} ${character.race} ${character.class}`,
@@ -37,7 +37,7 @@
 
 	const global = getGlobal();
 
-	const character = $derived(await API.characters.queries.getCharacter({ param: params.characterId, editRedirect: true }));
+	const character = $derived(await API.characters.queries.get({ param: params.characterId, editRedirect: true }));
 	const request = $derived(await API.app.queries.request());
 	const myCharacter = $derived(character.userId === request.user?.id);
 

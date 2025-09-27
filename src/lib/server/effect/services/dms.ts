@@ -24,11 +24,11 @@ export type UserDM = InferQueryResult<"dungeonMasters", { with: { logs: typeof u
 interface DMApiImpl {
 	readonly db: Database | Transaction;
 	readonly get: {
-		readonly userDMs: (
+		readonly all: (
 			user: LocalsUser,
 			options?: { id?: DungeonMasterId; includeLogs?: boolean }
 		) => Effect.Effect<UserDM[], SaveDMError | DrizzleError>;
-		readonly fuzzyDM: (
+		readonly fuzzySearch: (
 			userId: UserId,
 			isUser: boolean,
 			dm: Pick<DungeonMaster, "name" | "DCI">
@@ -48,7 +48,7 @@ export class DMService extends Effect.Service<DMService>()("DMSService", {
 		const impl: DMApiImpl = {
 			db,
 			get: {
-				userDMs: Effect.fn("DMService.get.userDMs")(function* (user, { id, includeLogs = true } = {}) {
+				all: Effect.fn("DMService.get.all")(function* (user, { id, includeLogs = true } = {}) {
 					return yield* runQuery(
 						db.query.dungeonMasters.findMany({
 							with: {
@@ -67,11 +67,11 @@ export class DMService extends Effect.Service<DMService>()("DMSService", {
 						Effect.map((dms) => dms.toSorted((a, b) => sorter(a.isUser, b.isUser) || sorter(a.name, b.name))),
 						// Add the user DM if there isn't one already, and not searching for a specific DM
 						Effect.flatMap((dms) => (!id && !dms[0]?.isUser ? impl.set.addUserDM(user, dms) : Effect.succeed(dms))),
-						Effect.tapError(() => AppLog.debug("DMService.get.userDMs", { userId: user.id, id, includeLogs }))
+						Effect.tapError(() => AppLog.debug("DMService.get.all", { userId: user.id, id, includeLogs }))
 					);
 				}),
 
-				fuzzyDM: Effect.fn("DMService.get.fuzzyDM")(function* (userId, isUser, dm) {
+				fuzzySearch: Effect.fn("DMService.get.fuzzySearch")(function* (userId, isUser, dm) {
 					return yield* runQuery(
 						db.query.dungeonMasters.findFirst({
 							where: {
@@ -86,7 +86,7 @@ export class DMService extends Effect.Service<DMService>()("DMSService", {
 						})
 					).pipe(
 						Effect.tapError(() =>
-							AppLog.debug("DMService.get.fuzzyDM", {
+							AppLog.debug("DMService.get.fuzzySearch", {
 								userId,
 								...(isUser ? { isUser } : { name: dm.name.trim() || undefined, DCI: dm.DCI || undefined })
 							})
@@ -96,9 +96,7 @@ export class DMService extends Effect.Service<DMService>()("DMSService", {
 			},
 			set: {
 				save: Effect.fn("DMService.set.save")(function* (user, data) {
-					const [dm] = yield* impl.get
-						.userDMs(user, { id: data.id })
-						.pipe(Effect.catchAll((err) => new SaveDMError(err.message)));
+					const [dm] = yield* impl.get.all(user, { id: data.id }).pipe(Effect.catchAll((err) => new SaveDMError(err.message)));
 					if (!dm) return yield* new SaveDMError("DM does not exist", { status: 404 });
 
 					if (!data.name.trim()) {

@@ -6,7 +6,7 @@ import { DMNotFoundError, DMService } from "$lib/server/effect/services/dms";
 export const edit = guardedQuery(dungeonMasterIdSchema, function* (input, { user }) {
 	const DMs = yield* DMService;
 
-	const [dm] = yield* DMs.get.userDMs(user, { id: input });
+	const [dm] = yield* DMs.get.all(user, { id: input });
 	if (!dm) return yield* new DMNotFoundError();
 
 	const form = yield* validateForm(
