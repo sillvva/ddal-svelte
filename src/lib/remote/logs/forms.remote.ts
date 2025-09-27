@@ -22,7 +22,8 @@ import * as v from "valibot";
 const characterLogFormSchema = v.object({
 	param: v.object({
 		characterId: characterIdSchema,
-		logId: logIdParamSchema
+		logId: logIdParamSchema,
+		firstLog: v.optional(v.boolean(), false)
 	})
 });
 
@@ -35,7 +36,9 @@ export const character = guardedQuery(characterLogFormSchema, function* (input, 
 
 	const logId = input.param.logId;
 	const logData = logId !== "new" ? yield* Logs.get.one(logId, user.id) : undefined;
-	const log = logData ? logDataToSchema(user.id, logData) : defaultLogSchema(user.id, { character });
+	const log = logData
+		? logDataToSchema(user.id, logData)
+		: defaultLogSchema(user.id, { character, defaults: input.param.firstLog ? { name: "Character Creation" } : undefined });
 
 	if (logId !== "new") {
 		if (!log.id) return yield* new LogNotFoundError();

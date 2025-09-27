@@ -35,10 +35,10 @@
 
 	let { params } = $props();
 
-	const firstLog = $derived(page.url.searchParams.get("firstLog") === "true");
+	const firstLog = page.url.searchParams.get("firstLog") === "true";
 	const request = $derived(await API.app.queries.request());
 	const characterLog = await API.logs.forms.character({
-		param: { characterId: params.characterId, logId: params.logId }
+		param: { characterId: params.characterId, logId: params.logId, firstLog }
 	});
 	const superform = valibotForm(characterLog.form, logSchema, {
 		remote: API.logs.forms.save
