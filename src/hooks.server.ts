@@ -4,18 +4,13 @@ import { appCookieSchema } from "$lib/schemas";
 import { serverGetCookie } from "$lib/server/cookie";
 import { DBService } from "$lib/server/db";
 import { AppLog } from "$lib/server/effect/logging";
-import { run } from "$lib/server/effect/runtime";
-import { AdminService } from "$lib/server/effect/services/admin";
+import { createAppRuntime, run } from "$lib/server/effect/runtime";
 import { AuthService } from "$lib/server/effect/services/auth";
-import { CharacterService } from "$lib/server/effect/services/characters";
-import { DMService } from "$lib/server/effect/services/dms";
-import { LogService } from "$lib/server/effect/services/logs";
-import { UserService } from "$lib/server/effect/services/users";
 import { type Handle, type HandleServerError, type ServerInit } from "@sveltejs/kit";
 import { sequence } from "@sveltejs/kit/hooks";
 import { svelteKitHandler } from "better-auth/svelte-kit";
 import chalk from "chalk";
-import { Effect, Layer, ManagedRuntime } from "effect";
+import { Effect } from "effect";
 
 let checked = false;
 if (!checked && building && privateEnv) {
@@ -24,23 +19,6 @@ if (!checked && building && privateEnv) {
 	console.log("\n");
 	checked = true;
 }
-
-const createAppRuntime = () => {
-	const dbLayer = DBService.Default();
-
-	const serviceLayer = Layer.mergeAll(
-		AuthService.DefaultWithoutDependencies(),
-		AdminService.DefaultWithoutDependencies(),
-		CharacterService.DefaultWithoutDependencies(),
-		DMService.DefaultWithoutDependencies(),
-		LogService.DefaultWithoutDependencies(),
-		UserService.DefaultWithoutDependencies()
-	);
-
-	const appLayer = serviceLayer.pipe(Layer.provide(dbLayer));
-
-	return ManagedRuntime.make(appLayer);
-};
 
 const appRuntime = createAppRuntime();
 

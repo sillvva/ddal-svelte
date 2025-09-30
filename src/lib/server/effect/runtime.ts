@@ -3,9 +3,10 @@ import { isRedirectFailure } from "$lib/factories.svelte";
 import { getTrace } from "$lib/util";
 import { omit } from "@sillvva/utils";
 import { error, isHttpError, isRedirect, redirect, type NumericRange } from "@sveltejs/kit";
-import { Cause, Effect, Exit, ManagedRuntime } from "effect";
+import { Cause, Effect, Exit, Layer, ManagedRuntime } from "effect";
 import { isFunction } from "effect/Predicate";
 import type { YieldWrap } from "effect/Utils";
+import { DBService } from "../db";
 import { type ErrorClass } from "./errors";
 import { AppLog } from "./logging";
 import { AdminService } from "./services/admin";
@@ -17,6 +18,23 @@ import { UserService } from "./services/users";
 
 export type Services = CharacterService | LogService | DMService | UserService | AdminService | AuthService;
 export type AppRuntime = ManagedRuntime.ManagedRuntime<Services, never>;
+
+export const createAppRuntime = () => {
+	const dbLayer = DBService.Default();
+
+	const serviceLayer = Layer.mergeAll(
+		AuthService.DefaultWithoutDependencies(),
+		AdminService.DefaultWithoutDependencies(),
+		CharacterService.DefaultWithoutDependencies(),
+		DMService.DefaultWithoutDependencies(),
+		LogService.DefaultWithoutDependencies(),
+		UserService.DefaultWithoutDependencies()
+	);
+
+	const appLayer = serviceLayer.pipe(Layer.provide(dbLayer));
+
+	return ManagedRuntime.make(appLayer);
+};
 
 // -------------------------------------------------------------------------------------------------
 // run
