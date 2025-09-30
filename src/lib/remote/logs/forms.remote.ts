@@ -52,7 +52,7 @@ export const character = guardedQuery(characterLogFormSchema, function* (input, 
 	const itemEntities = getItemEntities(character, { excludeDropped: true, lastLogId: log.id });
 	const magicItems = itemEntities.magicItems.toSorted((a, b) => sorter(a.name, b.name));
 	const storyAwards = itemEntities.storyAwards.toSorted((a, b) => sorter(a.name, b.name));
-	const dms = yield* DMs.get.all(user, { includeLogs: false }).pipe(Effect.map((dms) => dms.map((dm) => omit(dm, ["logs"]))));
+	const dms = yield* DMs.get.all(user, false).pipe(Effect.map((dms) => dms.map((dm) => omit(dm, ["logs"]))));
 
 	return {
 		totalLevel: character.totalLevel,
@@ -74,7 +74,7 @@ export const dm = guardedQuery(dmLogFormSchema, function* (input, { user }) {
 	const Characters = yield* CharacterService;
 	const DMs = yield* DMService;
 
-	const userDM = yield* DMs.get.all(user, { includeLogs: false }).pipe(
+	const userDM = yield* DMs.get.all(user, false).pipe(
 		Effect.map((dms) => dms.find((dm) => dm.isUser)),
 		Effect.flatMap((dm) => (dm ? Effect.succeed(dm) : Effect.fail(new DMNotFoundError()))),
 		// eslint-disable-next-line @typescript-eslint/no-unused-vars

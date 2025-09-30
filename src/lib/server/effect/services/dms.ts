@@ -24,10 +24,12 @@ export type UserDM = InferQueryResult<"dungeonMasters", { with: { logs: typeof u
 interface DMApiImpl {
 	readonly db: Database | Transaction;
 	readonly get: {
-		readonly all: (
-			user: LocalsUser,
-			options?: { id?: DungeonMasterId; includeLogs?: boolean }
-		) => Effect.Effect<UserDM[], SaveDMError | DrizzleError>;
+		readonly one: (
+			dmId: DungeonMasterId,
+			userId: UserId,
+			includeLogs?: boolean
+		) => Effect.Effect<UserDM, DMNotFoundError | DrizzleError>;
+		readonly all: (user: LocalsUser, includeLogs?: boolean) => Effect.Effect<UserDM[], SaveDMError | DrizzleError>;
 		readonly fuzzySearch: (
 			userId: UserId,
 			isUser: boolean,
@@ -48,7 +50,27 @@ export class DMService extends Effect.Service<DMService>()("DMSService", {
 		const impl: DMApiImpl = {
 			db,
 			get: {
-				all: Effect.fn("DMService.get.all")(function* (user, { id, includeLogs = true } = {}) {
+				one: Effect.fn("DMService.get.one")(function* (dmId, userId, includeLogs = true) {
+					return yield* runQuery(
+						db.query.dungeonMasters.findFirst({
+							with: {
+								logs: {
+									...userDMLogIncludes,
+									limit: includeLogs ? undefined : 0
+								}
+							},
+							where: {
+								id: { eq: dmId },
+								userId: { eq: userId }
+							}
+						})
+					).pipe(
+						Effect.flatMap((dm) => (dm ? Effect.succeed(dm) : Effect.fail(new DMNotFoundError()))),
+						Effect.tapError(() => AppLog.debug("DMService.get.one", { dmId, userId, includeLogs }))
+					);
+				}),
+
+				all: Effect.fn("DMService.get.all")(function* (user, includeLogs = true) {
 					return yield* runQuery(
 						db.query.dungeonMasters.findMany({
 							with: {
@@ -58,16 +80,15 @@ export class DMService extends Effect.Service<DMService>()("DMSService", {
 								}
 							},
 							where: {
-								id: id ? { eq: id } : undefined,
 								userId: { eq: user.id }
 							}
 						})
 					).pipe(
 						// Sort the DMs by isUser and name
 						Effect.map((dms) => dms.toSorted((a, b) => sorter(a.isUser, b.isUser) || sorter(a.name, b.name))),
-						// Add the user DM if there isn't one already, and not searching for a specific DM
-						Effect.flatMap((dms) => (!id && !dms[0]?.isUser ? impl.set.addUserDM(user, dms) : Effect.succeed(dms))),
-						Effect.tapError(() => AppLog.debug("DMService.get.all", { userId: user.id, id, includeLogs }))
+						// Add the user DM if there isn't one already
+						Effect.flatMap((dms) => (!dms[0]?.isUser ? impl.set.addUserDM(user, dms) : Effect.succeed(dms))),
+						Effect.tapError(() => AppLog.debug("DMService.get.all", { userId: user.id, includeLogs }))
 					);
 				}),
 
@@ -96,8 +117,7 @@ export class DMService extends Effect.Service<DMService>()("DMSService", {
 			},
 			set: {
 				save: Effect.fn("DMService.set.save")(function* (user, data) {
-					const [dm] = yield* impl.get.all(user, { id: data.id }).pipe(Effect.catchAll((err) => new SaveDMError(err.message)));
-					if (!dm) return yield* new SaveDMError("DM does not exist", { status: 404 });
+					const dm = yield* impl.get.one(data.id, user.id).pipe(Effect.catchAll((err) => new SaveDMError(err.message)));
 
 					if (!data.name.trim()) {
 						if (dm.isUser) data.name = user.name;

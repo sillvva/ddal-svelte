@@ -1,13 +1,12 @@
 import { dungeonMasterIdSchema, dungeonMasterSchema, type DungeonMasterSchemaIn } from "$lib/schemas";
 import { saveForm, validateForm } from "$lib/server/effect/forms";
 import { guardedCommand, guardedQuery } from "$lib/server/effect/remote";
-import { DMNotFoundError, DMService } from "$lib/server/effect/services/dms";
+import { DMService } from "$lib/server/effect/services/dms";
 
 export const edit = guardedQuery(dungeonMasterIdSchema, function* (input, { user }) {
 	const DMs = yield* DMService;
 
-	const [dm] = yield* DMs.get.all(user, { id: input });
-	if (!dm) return yield* new DMNotFoundError();
+	const dm = yield* DMs.get.one(input, user.id);
 
 	const form = yield* validateForm(
 		{
