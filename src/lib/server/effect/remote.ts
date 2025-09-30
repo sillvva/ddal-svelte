@@ -1,6 +1,6 @@
 import { command, query } from "$app/server";
 import type { LocalsUser } from "$lib/schemas";
-import { assertAuth } from "$lib/server/effect/services/auth";
+import { AuthService } from "$lib/server/effect/services/auth";
 import type { RemoteCommand, RemoteQueryFunction, RequestEvent } from "@sveltejs/kit";
 import { Effect } from "effect";
 import { isFunction } from "effect/Predicate";
@@ -55,7 +55,8 @@ export function guardedQuery(schemaOrFn: any, fnOrAdminOnly: any, adminOnly = fa
 	if (isFunction(schemaOrFn)) {
 		return query(() =>
 			run(function* () {
-				const auth = yield* assertAuth(fnOrAdminOnly);
+				const Auth = yield* AuthService;
+				const auth = yield* Auth.guard(fnOrAdminOnly);
 				return yield* schemaOrFn(auth);
 			})
 		);
@@ -64,7 +65,8 @@ export function guardedQuery(schemaOrFn: any, fnOrAdminOnly: any, adminOnly = fa
 	// Handle the case with schema parameter (first and second overload)
 	return query(schemaOrFn, (output) =>
 		run(function* () {
-			const auth = yield* assertAuth(adminOnly);
+			const Auth = yield* AuthService;
+			const auth = yield* Auth.guard(adminOnly);
 			return yield* fnOrAdminOnly(output, auth);
 		})
 	);
@@ -106,7 +108,8 @@ export function guardedCommand(schemaOrFn: any, fnOrAdminOnly: any, adminOnly = 
 	if (isFunction(schemaOrFn)) {
 		return command("unchecked", (input) =>
 			runSafe(function* () {
-				const auth = yield* assertAuth(fnOrAdminOnly);
+				const Auth = yield* AuthService;
+				const auth = yield* Auth.guard(fnOrAdminOnly);
 				return yield* schemaOrFn(input, auth);
 			})
 		);
@@ -115,7 +118,8 @@ export function guardedCommand(schemaOrFn: any, fnOrAdminOnly: any, adminOnly = 
 	// Handle the case with schema parameter (first overload)
 	return command(schemaOrFn, (output) =>
 		runSafe(function* () {
-			const auth = yield* assertAuth(adminOnly);
+			const Auth = yield* AuthService;
+			const auth = yield* Auth.guard(adminOnly);
 			return yield* fnOrAdminOnly(output, auth);
 		})
 	);

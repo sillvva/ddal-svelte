@@ -14,11 +14,13 @@ export const requiredString = v.pipe(string, v.regex(/^.*(\p{L}|\p{N})+.*$/u, "R
 export const shortString = v.pipe(string, v.maxLength(50));
 export const maxTextSize = v.pipe(string, v.maxLength(5000));
 export const maxStringSize = v.pipe(string, v.maxLength(255));
-export const integer = v.pipe(v.number(), v.integer());
 export const uuidV7 = v.pipe(
 	v.string(),
 	v.regex(/^[\da-f]{8}-[\da-f]{4}-7[\da-f]{3}-[\da-f]{4}-[\da-f]{12}$/iu, "Invalid UUIDv7")
 );
+
+const numeric = v.union([v.number(), v.pipe(v.string(), v.transform(Number), v.number())]);
+export const integer = v.pipe(numeric, v.integer());
 
 export const urlSchema = v.pipe(string, v.url(), v.maxLength(500));
 export const optionalURL = v.optional(v.fallback(urlSchema, ""), "");
@@ -128,7 +130,7 @@ export const logSchema = v.object({
 	acp: v.nullable(v.pipe(integer, v.minValue(0)), 0),
 	tcp: v.nullable(integer, 0),
 	level: v.nullable(v.pipe(integer, v.minValue(0)), 0),
-	gold: v.nullable(v.number(), 0),
+	gold: v.nullable(numeric, 0),
 	dtd: v.nullable(integer, 0),
 	description: v.optional(maxTextSize, ""),
 	dm: v.object({

@@ -4,6 +4,7 @@ import { localsSessionSchema, localsUserSchema, type LocalsSession, type LocalsU
 import { DBService, DrizzleError, type Database } from "$lib/server/db";
 import { RedirectError, type ErrorParams } from "$lib/server/effect/errors";
 import { isDefined } from "@sillvva/utils";
+import type { RequestEvent } from "@sveltejs/kit";
 import { betterAuth, type BetterAuthOptions } from "better-auth";
 import { drizzleAdapter } from "better-auth/adapters/drizzle";
 import { lastLoginMethod } from "better-auth/plugins";
@@ -58,11 +59,18 @@ interface AuthApiImpl {
 		DrizzleError | InvalidSchemaError<typeof localsSessionSchema> | AuthError,
 		UserService
 	>;
+	readonly guard: (adminOnly?: boolean) => Effect.Effect<{ user: LocalsUser; event: RequestEvent }, RedirectError | InvalidUser>;
 }
 
 class AuthError extends Data.TaggedError("AuthError")<ErrorParams> {
 	constructor(err: unknown) {
 		super({ message: "Authentication error", status: 500, cause: err });
+	}
+}
+
+export class InvalidUser extends Data.TaggedError("InvalidUser")<ErrorParams> {
+	constructor(err?: unknown) {
+		super({ message: "Invalid user", status: 401, cause: err });
 	}
 }
 
@@ -88,6 +96,46 @@ export class AuthService extends Effect.Service<AuthService>()("AuthService", {
 					session: result?.session && (yield* parse(localsSessionSchema, result.session)),
 					user: result?.user && (yield* Users.get.localsUser(result.user.id as UserId))
 				};
+			}),
+			guard: Effect.fn(function* (adminOnly = false) {
+				const event = getRequestEvent();
+				const user = event.locals.user;
+
+				if (!user) {
+					const returnUrl =
+						event.route.id === null || event.url.pathname === "/"
+							? (event.request.headers.get("referer")?.replace(event.url.origin, "") ?? "/characters")
+							: `${event.url.pathname}${event.url.search}`;
+
+					return yield* new RedirectError({
+						message: "Invalid user",
+						redirectTo: `/?redirect=${encodeURIComponent(returnUrl)}`
+					});
+				}
+
+				const result = v.safeParse(localsUserSchema, user);
+				if (!result.success) return yield* new InvalidUser(result.issues);
+
+				if (result.output.banned) {
+					event.cookies
+						.getAll()
+						.filter((c) => c.name.includes("auth"))
+						.forEach((c) => event.cookies.delete(c.name, { path: "/" }));
+					event.cookies.set("banned", result.output.banReason || "", { path: "/" });
+					return yield* new RedirectError({
+						message: "Banned",
+						redirectTo: "/"
+					});
+				}
+
+				if (adminOnly && result.output.role !== "admin") {
+					return yield* new RedirectError({
+						message: "Insufficient permissions",
+						redirectTo: "/characters"
+					});
+				}
+
+				return { user: result.output, event };
 			})
 		};
 
@@ -95,53 +143,6 @@ export class AuthService extends Effect.Service<AuthService>()("AuthService", {
 	}),
 	dependencies: [DBService.Default()]
 }) {}
-
-export const assertAuth = Effect.fn(function* (adminOnly = false) {
-	const event = getRequestEvent();
-	const user = event.locals.user;
-
-	if (!user) {
-		const returnUrl =
-			event.route.id === null || event.url.pathname === "/"
-				? (event.request.headers.get("referer")?.replace(event.url.origin, "") ?? "/characters")
-				: `${event.url.pathname}${event.url.search}`;
-
-		return yield* new RedirectError({
-			message: "Invalid user",
-			redirectTo: `/?redirect=${encodeURIComponent(returnUrl)}`
-		});
-	}
-
-	const result = v.safeParse(localsUserSchema, user);
-	if (!result.success) return yield* new InvalidUser(result.issues);
-
-	if (result.output.banned) {
-		event.cookies
-			.getAll()
-			.filter((c) => c.name.includes("auth"))
-			.forEach((c) => event.cookies.delete(c.name, { path: "/" }));
-		event.cookies.set("banned", result.output.banReason || "", { path: "/" });
-		return yield* new RedirectError({
-			message: "Banned",
-			redirectTo: "/"
-		});
-	}
-
-	if (adminOnly && result.output.role !== "admin") {
-		return yield* new RedirectError({
-			message: "Insufficient permissions",
-			redirectTo: "/characters"
-		});
-	}
-
-	return { user: result.output, event };
-});
-
-export class InvalidUser extends Data.TaggedError("InvalidUser")<ErrorParams> {
-	constructor(err?: unknown) {
-		super({ message: "Invalid user", status: 401, cause: err });
-	}
-}
 
 export function getHomeError() {
 	const event = getRequestEvent();
