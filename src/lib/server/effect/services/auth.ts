@@ -1,11 +1,11 @@
 import { getRequestEvent } from "$app/server";
 import { privateEnv } from "$lib/env/private";
 import { localsSessionSchema, localsUserSchema, type LocalsSession, type LocalsUser, type UserId } from "$lib/schemas";
-import { DBService, DrizzleError, type Database } from "$lib/server/db";
+import { DBService, DrizzleError } from "$lib/server/db";
 import { RedirectError, type ErrorParams } from "$lib/server/effect/errors";
 import { isDefined } from "@sillvva/utils";
 import type { RequestEvent } from "@sveltejs/kit";
-import { betterAuth, type BetterAuthOptions } from "better-auth";
+import { betterAuth } from "better-auth";
 import { drizzleAdapter } from "better-auth/adapters/drizzle";
 import { lastLoginMethod } from "better-auth/plugins";
 import { admin } from "better-auth/plugins/admin";
@@ -17,43 +17,10 @@ import * as v from "valibot";
 import { parse, type InvalidSchemaError } from "../forms";
 import { UserService } from "./users";
 
-const authConfig = (db: Database) =>
-	({
-		appName: "Adventurers League Log Sheet",
-		database: drizzleAdapter(db, {
-			provider: "pg"
-		}),
-		secret: privateEnv.AUTH_SECRET,
-		socialProviders: {
-			google: {
-				clientId: privateEnv.GOOGLE_CLIENT_ID,
-				clientSecret: privateEnv.GOOGLE_CLIENT_SECRET,
-				disableSignUp: privateEnv.DISABLE_SIGNUPS
-			},
-			discord: {
-				clientId: privateEnv.DISCORD_CLIENT_ID,
-				clientSecret: privateEnv.DISCORD_CLIENT_SECRET,
-				disableSignUp: privateEnv.DISABLE_SIGNUPS
-			}
-		},
-		plugins: [passkey(), admin(), lastLoginMethod(), sveltekitCookies(getRequestEvent)],
-		account: {
-			accountLinking: {
-				enabled: true
-			}
-		},
-		session: {
-			expiresIn: Duration.toSeconds("30 days")
-		},
-		advanced: {
-			database: {
-				generateId: () => v7()
-			}
-		}
-	}) as const satisfies BetterAuthOptions;
+const authPlugins = [passkey(), admin(), lastLoginMethod(), sveltekitCookies(getRequestEvent)];
 
 interface AuthApiImpl {
-	readonly auth: () => Effect.Effect<ReturnType<typeof betterAuth<ReturnType<typeof authConfig>>>>;
+	readonly auth: () => Effect.Effect<ReturnType<typeof betterAuth<{ plugins: typeof authPlugins }>>>;
 	readonly getAuthSession: () => Effect.Effect<
 		{ session: LocalsSession | undefined; user: LocalsUser | undefined },
 		DrizzleError | InvalidSchemaError<typeof localsSessionSchema> | AuthError,
@@ -80,7 +47,39 @@ export class AuthService extends Effect.Service<AuthService>()("AuthService", {
 
 		const impl: AuthApiImpl = {
 			auth: Effect.fn("AuthService.auth")(function* () {
-				return betterAuth(authConfig(db));
+				return betterAuth({
+					appName: "Adventurers League Log Sheet",
+					database: drizzleAdapter(db, {
+						provider: "pg"
+					}),
+					secret: privateEnv.AUTH_SECRET,
+					socialProviders: {
+						google: {
+							clientId: privateEnv.GOOGLE_CLIENT_ID,
+							clientSecret: privateEnv.GOOGLE_CLIENT_SECRET,
+							disableSignUp: privateEnv.DISABLE_SIGNUPS
+						},
+						discord: {
+							clientId: privateEnv.DISCORD_CLIENT_ID,
+							clientSecret: privateEnv.DISCORD_CLIENT_SECRET,
+							disableSignUp: privateEnv.DISABLE_SIGNUPS
+						}
+					},
+					plugins: authPlugins,
+					account: {
+						accountLinking: {
+							enabled: true
+						}
+					},
+					session: {
+						expiresIn: Duration.toSeconds("30 days")
+					},
+					advanced: {
+						database: {
+							generateId: () => v7()
+						}
+					}
+				});
 			}),
 			getAuthSession: Effect.fn("AuthService.getAuthSession")(function* () {
 				const Users = yield* UserService;
