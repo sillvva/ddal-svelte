@@ -19,11 +19,10 @@ export function guardedQuery<
 	F extends InstanceType<ErrorClass>,
 	S extends Services,
 	T extends YieldWrap<Effect.Effect<R, F, S>>,
-	X,
-	Y
+	X
 >(
 	schema: Schema,
-	fn: (output: v.InferOutput<Schema>, auth: { user: LocalsUser; event: RequestEvent }) => Generator<T, X, Y>,
+	fn: (output: v.InferOutput<Schema>, auth: { user: LocalsUser; event: RequestEvent }) => Generator<T, X>,
 	adminOnly?: boolean
 ): RemoteQueryFunction<v.InferInput<Schema>, X>;
 
@@ -33,11 +32,10 @@ export function guardedQuery<
 	F extends InstanceType<ErrorClass>,
 	S extends Services,
 	T extends YieldWrap<Effect.Effect<R, F, S>>,
-	X,
-	Y
+	X
 >(
 	schema: "unchecked",
-	fn: (input: Input, auth: { user: LocalsUser; event: RequestEvent }) => Generator<T, X, Y>,
+	fn: (input: Input, auth: { user: LocalsUser; event: RequestEvent }) => Generator<T, X>,
 	adminOnly?: boolean
 ): RemoteQueryFunction<Input, X>;
 
@@ -46,9 +44,8 @@ export function guardedQuery<
 	F extends InstanceType<ErrorClass>,
 	S extends Services,
 	T extends YieldWrap<Effect.Effect<R, F, S>>,
-	X,
-	Y
->(fn: (auth: { user: LocalsUser; event: RequestEvent }) => Generator<T, X, Y>, adminOnly?: boolean): RemoteQueryFunction<void, X>;
+	X
+>(fn: (auth: { user: LocalsUser; event: RequestEvent }) => Generator<T, X>, adminOnly?: boolean): RemoteQueryFunction<void, X>;
 
 export function guardedQuery(schemaOrFn: any, fnOrAdminOnly: any, adminOnly = false) {
 	// Handle the case where there's no schema parameter (third overload)
@@ -82,11 +79,10 @@ export function guardedCommand<
 	F extends InstanceType<ErrorClass>,
 	S extends Services,
 	T extends YieldWrap<Effect.Effect<R, F, S>>,
-	X,
-	Y
+	X
 >(
 	schema: Schema,
-	fn: (output: v.InferOutput<Schema>, auth: { user: LocalsUser; event: RequestEvent }) => Generator<T, X, Y>,
+	fn: (output: v.InferOutput<Schema>, auth: { user: LocalsUser; event: RequestEvent }) => Generator<T, X>,
 	adminOnly?: boolean
 ): RemoteCommand<v.InferInput<Schema>, Promise<EffectResult<X>>>;
 
@@ -96,10 +92,9 @@ export function guardedCommand<
 	F extends InstanceType<ErrorClass>,
 	S extends Services,
 	T extends YieldWrap<Effect.Effect<R, F, S>>,
-	X,
-	Y
+	X
 >(
-	fn: (input: Input, auth: { user: LocalsUser; event: RequestEvent }) => Generator<T, X, Y>,
+	fn: (input: Input, auth: { user: LocalsUser; event: RequestEvent }) => Generator<T, X>,
 	adminOnly?: boolean
 ): RemoteCommand<Input, Promise<EffectResult<X>>>;
 

@@ -46,9 +46,8 @@ export async function run<
 	F extends InstanceType<ErrorClass>,
 	S extends Services,
 	T extends YieldWrap<Effect.Effect<R, F, S>>,
-	X,
-	Y
->(program: () => Generator<T, X, Y>): Promise<X>;
+	X
+>(program: () => Generator<T, X>): Promise<X>;
 
 export async function run<R, F extends InstanceType<ErrorClass>, S extends Services>(
 	program: Effect.Effect<R, F, S> | (() => Effect.Effect<R, F, S>)
@@ -60,9 +59,8 @@ export async function run<
 	F extends InstanceType<ErrorClass>,
 	S extends Services,
 	T extends YieldWrap<Effect.Effect<R, F, S>>,
-	X,
-	Y
->(program: Effect.Effect<R, F, S> | (() => Effect.Effect<R, F, S>) | (() => Generator<T, X, Y>)): Promise<R | X> {
+	X
+>(program: Effect.Effect<R, F, S> | (() => Effect.Effect<R, F, S>) | (() => Generator<T, X>)): Promise<R | X> {
 	const event = getRequestEvent();
 	const rt = event.locals.runtime;
 
@@ -105,9 +103,8 @@ export async function runSafe<
 	F extends InstanceType<ErrorClass>,
 	S extends Services,
 	T extends YieldWrap<Effect.Effect<R, F, S>>,
-	X,
-	Y
->(program: () => Generator<T, X, Y>): Promise<EffectResult<X>>;
+	X
+>(program: () => Generator<T, X>): Promise<EffectResult<X>>;
 
 export async function runSafe<R, F extends InstanceType<ErrorClass>, S extends Services>(
 	program: Effect.Effect<R, F, S> | (() => Effect.Effect<R, F, S>)
@@ -119,9 +116,8 @@ export async function runSafe<
 	F extends InstanceType<ErrorClass>,
 	S extends Services,
 	T extends YieldWrap<Effect.Effect<R, F, S>>,
-	X,
-	Y
->(program: Effect.Effect<R, F, S> | (() => Effect.Effect<R, F, S>) | (() => Generator<T, X, Y>)): Promise<EffectResult<R | X>> {
+	X
+>(program: Effect.Effect<R, F, S> | (() => Effect.Effect<R, F, S>) | (() => Generator<T, X>)): Promise<EffectResult<R | X>> {
 	const event = getRequestEvent();
 	const rt = event.locals.runtime;
 
