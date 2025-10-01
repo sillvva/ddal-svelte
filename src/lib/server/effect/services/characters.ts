@@ -6,7 +6,6 @@ import {
 	DBService,
 	runQuery,
 	TransactionError,
-	type Database,
 	type DrizzleError,
 	type InferQueryResult,
 	type Transaction
@@ -40,7 +39,6 @@ export interface FullCharacterData extends Omit<CharacterData, "logs">, ReturnTy
 }
 
 interface CharacterApiImpl {
-	readonly db: Database | Transaction;
 	readonly get: {
 		readonly one: (
 			characterId: CharacterId,
@@ -65,7 +63,6 @@ export class CharacterService extends Effect.Service<CharacterService>()("Charac
 		const { db, transaction } = yield* DBService;
 
 		const impl: CharacterApiImpl = {
-			db,
 			get: {
 				one: Effect.fn("CharacterService.get.one")(function* (characterId, includeLogs = true) {
 					return yield* runQuery(

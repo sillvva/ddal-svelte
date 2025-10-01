@@ -5,7 +5,6 @@ import {
 	DBService,
 	runQuery,
 	TransactionError,
-	type Database,
 	type DrizzleError,
 	type Filter,
 	type InferQueryResult,
@@ -106,7 +105,6 @@ const userLogsConfig = {
 export type UserLogData = InferQueryResult<"logs", typeof userLogsConfig>;
 
 interface LogApiImpl {
-	readonly db: Database | Transaction;
 	readonly get: {
 		readonly one: (logId: LogId, userId: UserId) => Effect.Effect<FullLogData | undefined, DrizzleError>;
 		readonly dm: (userId: UserId) => Effect.Effect<FullLogData[], DrizzleError>;
@@ -158,13 +156,11 @@ const validateLogDM = Effect.fn("validateLogDM")(function* (log: LogSchema, user
 	} satisfies DungeonMasterSchema;
 });
 
-const upsertLogDM = Effect.fn("upsertLogDM")(function* (log: LogSchema, user: LocalsUser) {
-	const { db } = yield* DMService;
-
+const upsertLogDM = Effect.fn("upsertLogDM")(function* (tx: Transaction, log: LogSchema, user: LocalsUser) {
 	const validated = yield* validateLogDM(log, user);
 
 	return yield* runQuery(
-		db
+		tx
 			.insert(dungeonMasters)
 			.values(validated)
 			.onConflictDoUpdate({
@@ -179,10 +175,10 @@ const upsertLogDM = Effect.fn("upsertLogDM")(function* (log: LogSchema, user: Lo
 	);
 });
 
-const upsertLog = Effect.fn("upsertLog")(function* (log: LogSchema, user: LocalsUser) {
-	const { db, get } = yield* LogService;
+const upsertLog = Effect.fn("upsertLog")(function* (tx: Transaction, log: LogSchema, user: LocalsUser) {
+	const Logs = yield* LogService;
 
-	const dm = yield* upsertLogDM(log, user);
+	const dm = yield* upsertLogDM(tx, log, user);
 
 	const appliedDate: Date | null = log.isDmLog
 		? log.characterId && log.appliedDate !== null
@@ -191,7 +187,7 @@ const upsertLog = Effect.fn("upsertLog")(function* (log: LogSchema, user: Locals
 		: new Date(log.date);
 
 	const [result] = yield* runQuery(
-		db
+		tx
 			.insert(logs)
 			.values({
 				id: log.id,
@@ -221,13 +217,13 @@ const upsertLog = Effect.fn("upsertLog")(function* (log: LogSchema, user: Locals
 
 	yield* Effect.all(
 		[
-			itemsCRUD({
+			itemsCRUD(tx, {
 				logId: result.id,
 				table: magicItems,
 				gained: log.magicItemsGained,
 				lost: log.magicItemsLost
 			}),
-			itemsCRUD({
+			itemsCRUD(tx, {
 				logId: result.id,
 				table: storyAwards,
 				gained: log.storyAwardsGained,
@@ -237,7 +233,7 @@ const upsertLog = Effect.fn("upsertLog")(function* (log: LogSchema, user: Locals
 		{ concurrency: 2 }
 	);
 
-	return yield* get
+	return yield* Logs.get
 		.one(result.id, user.id)
 		.pipe(
 			Effect.flatMap((result) =>
@@ -262,20 +258,18 @@ interface CRUDStoryAwardParams extends CRUDItemParams {
 	lost: LogSchema["storyAwardsLost"];
 }
 
-const itemsCRUD = Effect.fn("itemsCRUD")(function* (params: CRUDMagicItemParams | CRUDStoryAwardParams) {
-	const { db } = yield* LogService;
-
+const itemsCRUD = Effect.fn("itemsCRUD")(function* (tx: Transaction, params: CRUDMagicItemParams | CRUDStoryAwardParams) {
 	const { logId, table, gained, lost } = params;
 
 	const itemIds = gained.map((item) => item.id).filter(Boolean);
 
 	yield* runQuery(
-		db.delete(table).where(and(eq(table.logGainedId, logId), itemIds.length ? notInArray(table.id, itemIds) : undefined))
+		tx.delete(table).where(and(eq(table.logGainedId, logId), itemIds.length ? notInArray(table.id, itemIds) : undefined))
 	);
 
 	if (gained.length) {
 		yield* runQuery(
-			db
+			tx
 				.insert(table)
 				.values(
 					gained.map((item) => ({
@@ -293,7 +287,7 @@ const itemsCRUD = Effect.fn("itemsCRUD")(function* (params: CRUDMagicItemParams 
 	}
 
 	yield* runQuery(
-		db
+		tx
 			.update(table)
 			.set({ logLostId: null })
 			.where(and(eq(table.logLostId, logId), notInArray(table.id, lost)))
@@ -301,7 +295,7 @@ const itemsCRUD = Effect.fn("itemsCRUD")(function* (params: CRUDMagicItemParams 
 
 	if (lost.length) {
 		yield* runQuery(
-			db
+			tx
 				.update(table)
 				.set({ logLostId: logId })
 				.where(and(isNull(table.logLostId), inArray(table.id, lost)))
@@ -314,7 +308,6 @@ export class LogService extends Effect.Service<LogService>()("LogService", {
 		const { db, transaction } = yield* DBService;
 
 		const impl: LogApiImpl = {
-			db,
 			get: {
 				one: Effect.fn("LogService.get.one")(function* (logId, userId) {
 					if (logId === "new") return undefined;
@@ -366,7 +359,9 @@ export class LogService extends Effect.Service<LogService>()("LogService", {
 			},
 			set: {
 				save: Effect.fn("LogService.set.save")(function* (log, user) {
-					return yield* transaction((tx) => upsertLog(log, user).pipe(Effect.provide(LogTx(tx)), Effect.provide(DMTx(tx)))).pipe(
+					return yield* transaction((tx) =>
+						upsertLog(tx, log, user).pipe(Effect.provide(LogTx(tx)), Effect.provide(DMTx(tx)))
+					).pipe(
 						Effect.tap((result) => AppLog.info("LogService.set.save", { logId: log.id, userId: user.id, result })),
 						Effect.tapError(() => AppLog.debug("LogService.set.save", { logId: log.id, userId: user.id, log }))
 					);

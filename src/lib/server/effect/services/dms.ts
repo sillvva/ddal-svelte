@@ -1,5 +1,5 @@
 import type { DungeonMasterId, DungeonMasterSchema, LocalsUser, UserId } from "$lib/schemas";
-import { DBService, runQuery, type Database, type DrizzleError, type InferQueryResult, type Transaction } from "$lib/server/db";
+import { DBService, runQuery, type DrizzleError, type InferQueryResult, type Transaction } from "$lib/server/db";
 import { userDMLogIncludes } from "$lib/server/db/includes";
 import { dungeonMasters, type DungeonMaster } from "$lib/server/db/schema";
 import type { ErrorParams } from "$lib/server/effect/errors";
@@ -22,7 +22,6 @@ export class DeleteDMError extends FormError<{ id: DungeonMasterId }> {}
 export type UserDM = InferQueryResult<"dungeonMasters", { with: { logs: typeof userDMLogIncludes } }>;
 
 interface DMApiImpl {
-	readonly db: Database | Transaction;
 	readonly get: {
 		readonly one: (
 			dmId: DungeonMasterId,
@@ -48,7 +47,6 @@ export class DMService extends Effect.Service<DMService>()("DMSService", {
 		const { db } = yield* DBService;
 
 		const impl: DMApiImpl = {
-			db,
 			get: {
 				one: Effect.fn("DMService.get.one")(function* (dmId, userId, includeLogs = true) {
 					return yield* runQuery(
