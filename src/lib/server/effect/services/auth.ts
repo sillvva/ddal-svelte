@@ -101,8 +101,9 @@ export class AuthService extends Effect.Service<AuthService>()("AuthService", {
 				const user = event.locals.user;
 
 				if (!user) {
+					// Can't use event.url.pathname in remote functions
 					const returnUrl =
-						event.route.id === null || event.url.pathname === "/"
+						event.route.id === null
 							? (event.request.headers.get("referer")?.replace(event.url.origin, "") ?? "/characters")
 							: `${event.url.pathname}${event.url.search}`;
 
@@ -116,11 +117,15 @@ export class AuthService extends Effect.Service<AuthService>()("AuthService", {
 				if (!result.success) return yield* new InvalidUser(result.issues);
 
 				if (result.output.banned) {
-					event.cookies
-						.getAll()
-						.filter((c) => c.name.includes("auth"))
-						.forEach((c) => event.cookies.delete(c.name, { path: "/" }));
-					event.cookies.set("banned", result.output.banReason || "", { path: "/" });
+					try {
+						// Can't set or delete cookies in remote functions
+						event.cookies
+							.getAll()
+							.filter((c) => c.name.includes("auth"))
+							.forEach((c) => event.cookies.delete(c.name, { path: "/" }));
+						event.cookies.set("banned", result.output.banReason || "", { path: "/" });
+					} catch {}
+
 					return yield* new RedirectError({
 						message: "Banned",
 						redirectTo: "/"

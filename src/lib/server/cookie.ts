@@ -45,11 +45,14 @@ export function serverSetCookie<TSchema extends v.GenericSchema>(
 	const event = getRequestEvent();
 
 	const parsed = v.parse(schema, value);
-	event.cookies.set(name, JSON.stringify(parsed), {
-		path: "/",
-		expires: new Date(Date.now() + expires),
-		httpOnly
-	});
+	try {
+		// Can't set cookies in remote functions
+		event.cookies.set(name, JSON.stringify(parsed), {
+			path: "/",
+			expires: new Date(Date.now() + expires),
+			httpOnly
+		});
+	} catch {}
 
 	return parsed;
 }

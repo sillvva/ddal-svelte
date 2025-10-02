@@ -41,7 +41,12 @@ const session: Handle = async ({ event, resolve }) =>
 		event.locals.session = session;
 		event.locals.user = user;
 
-		if (user && event.cookies.get("banned")) event.cookies.delete("banned", { path: "/" });
+		if (user && event.cookies.get("banned")) {
+			try {
+				// Can't delete cookies in remote functions
+				event.cookies.delete("banned", { path: "/" });
+			} catch {}
+		}
 
 		return resolve(event);
 	});
