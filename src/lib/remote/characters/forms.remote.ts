@@ -4,40 +4,33 @@ import { saveForm, validateForm } from "$lib/server/effect/forms";
 import { guardedCommand, guardedQuery } from "$lib/server/effect/remote";
 import { CharacterService } from "$lib/server/effect/services/characters";
 import { Effect } from "effect";
-import * as v from "valibot";
 import { get } from "./queries.remote";
 
-export const edit = guardedQuery(
-	v.object({
-		param: characterIdParamSchema,
-		editing: v.optional(v.boolean(), false)
-	}),
-	function* (input, { event }) {
-		const firstLog = event.locals.app.characters.firstLog;
-		const character = yield* Effect.promise(() => get(input));
+export const edit = guardedQuery(characterIdParamSchema, function* (input, { event }) {
+	const firstLog = event.locals.app.characters.firstLog;
+	const character = yield* Effect.promise(() => get({ param: input }));
 
-		const form = yield* validateForm(
-			{
-				id: character.id,
-				name: character.name,
-				campaign: character.campaign || "",
-				race: character.race || "",
-				class: character.class || "",
-				characterSheetUrl: character.characterSheetUrl || "",
-				imageUrl: character.imageUrl === BLANK_CHARACTER ? "" : character.imageUrl,
-				firstLog: firstLog && input.param === "new"
-			},
-			editCharacterSchema,
-			{
-				errors: input.param !== "new"
-			}
-		);
+	const form = yield* validateForm(
+		{
+			id: character.id,
+			name: character.name,
+			campaign: character.campaign || "",
+			race: character.race || "",
+			class: character.class || "",
+			characterSheetUrl: character.characterSheetUrl || "",
+			imageUrl: character.imageUrl === BLANK_CHARACTER ? "" : character.imageUrl,
+			firstLog: firstLog && input === "new"
+		},
+		editCharacterSchema,
+		{
+			errors: input !== "new"
+		}
+	);
 
-		return {
-			form
-		};
-	}
-);
+	return {
+		form
+	};
+});
 
 export const save = guardedCommand(function* (input: EditCharacterSchemaIn, { user }) {
 	const Characters = yield* CharacterService;

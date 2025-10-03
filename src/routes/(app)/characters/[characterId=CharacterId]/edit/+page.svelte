@@ -28,7 +28,7 @@
 	let { params } = $props();
 
 	const global = getGlobal();
-	const editForm = await API.characters.forms.edit({ param: params.characterId, editing: true });
+	const editForm = await API.characters.forms.edit(params.characterId);
 	const superform = valibotForm(editForm.form, editCharacterSchema, {
 		remote: API.characters.forms.save
 	});
