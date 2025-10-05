@@ -1,7 +1,7 @@
-import { command, query } from "$app/server";
+import { command, form, query } from "$app/server";
 import type { LocalsUser } from "$lib/schemas";
 import { AuthService } from "$lib/server/effect/services/auth";
-import type { RemoteCommand, RemoteQueryFunction, RequestEvent } from "@sveltejs/kit";
+import type { RemoteCommand, RemoteForm, RemoteFormInput, RemoteQueryFunction, RequestEvent } from "@sveltejs/kit";
 import { Effect } from "effect";
 import { isFunction } from "effect/Predicate";
 import type { YieldWrap } from "effect/Utils";
@@ -112,6 +112,57 @@ export function guardedCommand(schemaOrFn: any, fnOrAdminOnly: any, adminOnly = 
 
 	// Handle the case with schema parameter (first overload)
 	return command(schemaOrFn, (output) =>
+		runSafe(function* () {
+			const Auth = yield* AuthService;
+			const auth = yield* Auth.guard(adminOnly);
+			return yield* fnOrAdminOnly(output, auth);
+		})
+	);
+}
+
+// -------------------------------------------------------------------------------------------------
+// guardedForm: Remote Form with auth guard
+// -------------------------------------------------------------------------------------------------
+
+export function guardedForm<
+	Schema extends v.ObjectSchema<any, any>,
+	R,
+	F extends InstanceType<ErrorClass>,
+	S extends Services,
+	T extends YieldWrap<Effect.Effect<R, F, S>>,
+	X
+>(
+	schema: Schema,
+	fn: (output: v.InferOutput<Schema>, auth: { user: LocalsUser; event: RequestEvent }) => Generator<T, X>,
+	adminOnly?: boolean
+): RemoteForm<v.InferInput<Schema>, EffectResult<X>>;
+
+export function guardedForm<
+	Input,
+	R,
+	F extends InstanceType<ErrorClass>,
+	S extends Services,
+	T extends YieldWrap<Effect.Effect<R, F, S>>,
+	X
+>(
+	fn: (input: Input, auth: { user: LocalsUser; event: RequestEvent }) => Generator<T, X>,
+	adminOnly?: boolean
+): RemoteForm<RemoteFormInput, EffectResult<X>>;
+
+export function guardedForm(schemaOrFn: any, fnOrAdminOnly: any, adminOnly = false) {
+	// Handle the case where there's no schema parameter (second overload)
+	if (isFunction(schemaOrFn)) {
+		return form("unchecked", (input) =>
+			runSafe(function* () {
+				const Auth = yield* AuthService;
+				const auth = yield* Auth.guard(fnOrAdminOnly);
+				return yield* schemaOrFn(input, auth);
+			})
+		);
+	}
+
+	// Handle the case with schema parameter (first overload)
+	return form(schemaOrFn, (output) =>
 		runSafe(function* () {
 			const Auth = yield* AuthService;
 			const auth = yield* Auth.guard(adminOnly);

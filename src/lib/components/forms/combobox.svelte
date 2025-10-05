@@ -190,7 +190,7 @@
 		</div>
 		{#if $input && clearable}
 			<button
-				class="btn join-item border-base-content/20 border"
+				class="btn join-item border-base-content/20 border px-2"
 				type="button"
 				onclick={(ev) => {
 					ev.preventDefault();
@@ -202,14 +202,14 @@
 			</button>
 		{/if}
 		{#if link}
-			<a href={link} class="btn join-item border-base-content/20 border" role="button" target="_blank" aria-label="Edit">
+			<a href={link} class="btn join-item border-base-content/20 border px-2" role="button" target="_blank" aria-label="Edit">
 				<span class="iconify mdi--pencil size-6"></span>
 			</a>
 		{/if}
 		{#if dev}
 			<button
 				type="button"
-				class="btn join-item border-base-content/20 border"
+				class="btn join-item border-base-content/20 border px-2"
 				onclick={(ev) => {
 					ev.preventDefault();
 					debug = !debug;

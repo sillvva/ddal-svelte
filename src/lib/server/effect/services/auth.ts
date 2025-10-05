@@ -42,6 +42,7 @@ export class InvalidUser extends Data.TaggedError("InvalidUser")<ErrorParams> {
 }
 
 export class AuthService extends Effect.Service<AuthService>()("AuthService", {
+	dependencies: [DBService.Default()],
 	effect: Effect.fn("AuthService")(function* () {
 		const { db } = yield* DBService;
 
@@ -101,12 +102,7 @@ export class AuthService extends Effect.Service<AuthService>()("AuthService", {
 				const user = event.locals.user;
 
 				if (!user) {
-					// Can't use event.url.pathname in remote functions
-					const returnUrl =
-						event.route.id === null
-							? (event.request.headers.get("referer")?.replace(event.url.origin, "") ?? "/characters")
-							: `${event.url.pathname}${event.url.search}`;
-
+					const returnUrl = `${event.url.pathname}${event.url.search}`;
 					return yield* new RedirectError({
 						message: "Invalid user",
 						redirectTo: `/?redirect=${encodeURIComponent(returnUrl)}`
@@ -144,8 +140,7 @@ export class AuthService extends Effect.Service<AuthService>()("AuthService", {
 		};
 
 		return impl;
-	}),
-	dependencies: [DBService.Default()]
+	})
 }) {}
 
 export function getHomeError() {

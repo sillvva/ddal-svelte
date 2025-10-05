@@ -304,6 +304,7 @@ const itemsCRUD = Effect.fn("itemsCRUD")(function* (tx: Transaction, params: CRU
 });
 
 export class LogService extends Effect.Service<LogService>()("LogService", {
+	dependencies: [DBService.Default()],
 	effect: Effect.fn("LogService")(function* () {
 		const { db, transaction } = yield* DBService;
 
@@ -413,8 +414,7 @@ export class LogService extends Effect.Service<LogService>()("LogService", {
 		};
 
 		return impl;
-	}),
-	dependencies: [DBService.Default()]
+	})
 }) {}
 
 export const LogTx = (tx: Transaction) => LogService.DefaultWithoutDependencies().pipe(Layer.provide(DBService.Default(tx)));

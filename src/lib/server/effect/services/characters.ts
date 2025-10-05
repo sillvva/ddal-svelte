@@ -59,6 +59,7 @@ interface CharacterApiImpl {
 }
 
 export class CharacterService extends Effect.Service<CharacterService>()("CharacterService", {
+	dependencies: [DBService.Default()],
 	effect: Effect.fn("CharacterService")(function* () {
 		const { db, transaction } = yield* DBService;
 
@@ -163,8 +164,7 @@ export class CharacterService extends Effect.Service<CharacterService>()("Charac
 		};
 
 		return impl;
-	}),
-	dependencies: [DBService.Default()]
+	})
 }) {}
 
 export const CharacterTx = (tx: Transaction) =>

@@ -43,6 +43,7 @@ interface DMApiImpl {
 }
 
 export class DMService extends Effect.Service<DMService>()("DMSService", {
+	dependencies: [DBService.Default()],
 	effect: Effect.fn("DMService")(function* () {
 		const { db } = yield* DBService;
 
@@ -186,8 +187,7 @@ export class DMService extends Effect.Service<DMService>()("DMSService", {
 		};
 
 		return impl;
-	}),
-	dependencies: [DBService.Default()]
+	})
 }) {}
 
 export const DMTx = (tx: Transaction) => DMService.DefaultWithoutDependencies().pipe(Layer.provide(DBService.Default(tx)));

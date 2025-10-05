@@ -34,6 +34,7 @@
 	const superform = valibotForm(data.form, dungeonMasterSchema, {
 		remote: API.dms.forms.save
 	});
+
 	const sortedLogs = $derived(data.dm.logs.toSorted((a, b) => sorter(a.date, b.date)));
 </script>
 

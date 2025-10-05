@@ -39,13 +39,13 @@ export const save = guardedCommand(function* (input: EditCharacterSchemaIn, { us
 	if (!form.valid) return form;
 	const { firstLog, ...data } = form.data;
 
-	const existing = yield* Characters.get
+	const preexisting = yield* Characters.get
 		.all(user.id, { characterId: data.id })
 		.pipe(Effect.map((characters) => characters.length > 0));
 
 	return yield* saveForm(Characters.set.save(data, user.id), {
 		onSuccess: async (character) => {
-			if (firstLog && !existing) {
+			if (firstLog && !preexisting) {
 				return `/characters/${character.id}/log/new?firstLog=true` as const;
 			} else {
 				return `/characters/${character.id}` as const;

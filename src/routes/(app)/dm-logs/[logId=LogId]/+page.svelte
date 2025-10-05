@@ -29,14 +29,14 @@
 	import NavMenu from "$lib/components/nav-menu.svelte";
 	import { valibotForm } from "$lib/factories.svelte.js";
 	import * as API from "$lib/remote";
-	import { dMLogSchema } from "$lib/schemas";
+	import { logSchema } from "$lib/schemas";
 
 	const { params } = $props();
 
 	const dmLog = await API.logs.forms.dm({
 		param: { logId: params.logId }
 	});
-	const superform = valibotForm(dmLog.form, dMLogSchema(), {
+	const superform = valibotForm(dmLog.form, logSchema, {
 		remote: API.logs.forms.save
 	});
 	const { form } = superform;

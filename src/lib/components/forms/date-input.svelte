@@ -71,14 +71,17 @@
 	</DatePicker.Label>
 	<DatePicker.Input class="input inline-flex w-full items-center gap-1 px-3 select-none sm:max-md:text-xs">
 		{#snippet children({ segments })}
-			{#each segments as { part, value }, i (i)}
-				<DatePicker.Segment
-					{part}
-					class="focus-visible:outline-primary aria-[valuetext=Empty]:text-base-content/70 rounded-xs py-1 outline-offset-4"
-				>
-					{value}
-				</DatePicker.Segment>
-			{/each}
+			<svelte:boundary>
+				{#snippet failed(err, reset)}{reset()}{console.error(err)}{/snippet}
+				{#each segments as { part, value }, i (i)}
+					<DatePicker.Segment
+						{part}
+						class="focus-visible:outline-primary aria-[valuetext=Empty]:text-base-content/70 rounded-xs py-1 outline-offset-4"
+					>
+						{value}
+					</DatePicker.Segment>
+				{/each}
+			</svelte:boundary>
 			<DatePicker.Trigger class="ml-auto inline-flex items-center justify-center">
 				<span class="iconify mdi--calendar size-6"></span>
 			</DatePicker.Trigger>

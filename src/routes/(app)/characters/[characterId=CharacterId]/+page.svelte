@@ -36,8 +36,8 @@
 
 	const global = getGlobal();
 
-	const character = $derived(await API.characters.queries.get({ param: params.characterId, editRedirect: true }));
 	const request = $derived(await API.app.queries.request());
+	const character = $derived(await API.characters.queries.get({ param: params.characterId, newRedirect: true }));
 	const myCharacter = $derived(character.userId === request.user?.id);
 
 	let deletingLog = new SvelteSet<string>();
