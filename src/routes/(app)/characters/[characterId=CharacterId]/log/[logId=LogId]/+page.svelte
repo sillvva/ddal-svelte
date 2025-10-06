@@ -54,6 +54,16 @@
 	<NavMenu />
 
 	<SuperForm {superform}>
+		{#if !firstLog}
+			<Control class="col-span-12 sm:col-span-4">
+				<GenericInput {superform} field="type" label="Log Type">
+					<select id="type" bind:value={$form.type} class="select select-bordered w-full">
+						<option value="game">Game</option>
+						<option value="nongame">Non-Game (Purchase, Trade, etc)</option>
+					</select>
+				</GenericInput>
+			</Control>
+		{/if}
 		<Control class={["col-span-12", !firstLog ? "sm:col-span-4" : "sm:col-span-6"]}>
 			<Input
 				type="text"
@@ -66,16 +76,6 @@
 		<Control class={["col-span-12", !firstLog ? "sm:col-span-4" : "sm:col-span-6"]}>
 			<DateInput {superform} field="date" label="Date" />
 		</Control>
-		{#if !firstLog}
-			<Control class="col-span-12 sm:col-span-4">
-				<GenericInput {superform} field="type" label="Log Type">
-					<select id="type" bind:value={$form.type} class="select select-bordered w-full">
-						<option value="game">Game</option>
-						<option value="nongame">Non-Game (Purchase, Trade, etc)</option>
-					</select>
-				</GenericInput>
-			</Control>
-		{/if}
 		{#if $form.type === "game"}
 			{#if !firstLog}
 				<Control class="col-span-12 sm:col-span-6">

@@ -6,7 +6,7 @@
 	type TForm = $$Generic<Record<PropertyKey, unknown>>;
 	type TMin = $$Generic<Date | undefined>;
 	type TMax = $$Generic<Date | undefined>;
-	interface Props extends DatePickerRootProps {
+	interface Props extends Omit<DatePickerRootProps, "value" | "minValue" | "maxValue"> {
 		superform: SuperForm<TForm>;
 		field: FormPathLeaves<TForm, Date>;
 		label: string;
@@ -43,14 +43,23 @@
 	const maxDateValue = $derived(dateToDV(maxDate));
 	const minProxyValue = $derived(proxyMin && $proxyMin);
 	const maxProxyValue = $derived(proxyMax && $proxyMax);
-	const minValue = $derived(rest?.minValue || minDateValue || minProxyValue);
-	const maxValue = $derived(rest?.maxValue || maxDateValue || maxProxyValue);
+	const minValue = $derived(minDateValue || minProxyValue);
+	const maxValue = $derived(maxDateValue || maxProxyValue);
+
+	let resetLimit = $state(0);
+	function resetHandler(err: unknown, reset: () => void) {
+		if (resetLimit <= 10) {
+			resetLimit++;
+			console.error(err);
+			reset();
+		}
+	}
 
 	$effect(() => {
-		if ($proxyValue && minValue && $proxyValue.compare(minValue) < 0) $proxyValue = minValue;
-	});
-	$effect(() => {
-		if ($proxyValue && maxValue && $proxyValue.compare(maxValue) > 0) $proxyValue = maxValue;
+		if ($proxyValue) {
+			if (minValue && $proxyValue.compare(minValue) < 0) $proxyValue = minValue;
+			if (maxValue && $proxyValue.compare(maxValue) > 0) $proxyValue = maxValue;
+		}
 	});
 </script>
 
@@ -72,7 +81,9 @@
 	<DatePicker.Input class="input inline-flex w-full items-center gap-1 px-3 select-none sm:max-md:text-xs">
 		{#snippet children({ segments })}
 			<svelte:boundary>
-				{#snippet failed(err, reset)}{reset()}{console.error(err)}{/snippet}
+				{#snippet failed(err, reset)}
+					<span class="text-error" {@attach () => resetHandler(err, reset)}>Error</span>
+				{/snippet}
 				{#each segments as { part, value }, i (i)}
 					<DatePicker.Segment
 						{part}
