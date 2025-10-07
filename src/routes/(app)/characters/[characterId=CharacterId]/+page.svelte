@@ -28,7 +28,7 @@
 	import { getGlobal } from "$lib/stores.svelte.js";
 	import { createTransition, hotkey } from "$lib/util";
 	import { slugify, sorter } from "@sillvva/utils";
-	import { download } from "@svelteuidev/composables";
+	import { clipboard, download } from "@svelteuidev/composables";
 	import { fromAction } from "svelte/attachments";
 	import { SvelteSet } from "svelte/reactivity";
 
@@ -78,11 +78,27 @@
 {#if request.user}
 	<NavMenu hideMenuActions={!myCharacter}>
 		{#snippet actions()}
-			<a href={`/characters/${character.id}/edit`} class="btn btn-primary btn-sm max-sm:hidden">Edit</a>
+			<a href={`/characters/${character.id}/edit`} class="btn btn-primary btn-sm h-9 max-sm:hidden">Edit</a>
+			<button
+				aria-label="Share Character"
+				class="btn btn-sm h-9 max-sm:hidden"
+				onclick={() => successToast("Character URL copied to clipboard")}
+				{@attach fromAction(clipboard, () => page.url.href)}
+			>
+				<span class="iconify mdi--share-variant size-4"></span>
+			</button>
 		{/snippet}
 		{#snippet menu()}
 			<li role="menuitem" class="sm:hidden">
 				<a href={`/characters/${character.id}/edit`}>Edit</a>
+			</li>
+			<li role="menuitem" class="sm:hidden">
+				<button
+					onclick={() => successToast("Character URL copied to clipboard")}
+					{@attach fromAction(clipboard, () => page.url.href)}
+				>
+					Copy Character URL
+				</button>
 			</li>
 			<li role="menuitem" class="max-sm:hidden">
 				<button
