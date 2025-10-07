@@ -57,7 +57,7 @@
 	const crumbs = $derived(await temp);
 </script>
 
-<div class={["flex h-8 flex-1 sm:mb-4", crumbs.length === 1 && "max-sm:hidden"]}>
+<div class={["flex h-9 flex-1 sm:mb-4", crumbs.length === 1 && "max-sm:hidden"]}>
 	{#if crumbs.length > 0}
 		{@const back = crumbs.at(-2)}
 		{#if back?.url && crumbs.length > 1}
@@ -66,7 +66,7 @@
 			</div>
 		{/if}
 		<div class="breadcrumbs flex-1 text-sm max-sm:hidden print:hidden">
-			<ul class="h-5">
+			<ul>
 				<li>
 					<span class="iconify mdi--home size-4"></span>
 				</li>

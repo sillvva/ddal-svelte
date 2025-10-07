@@ -40,7 +40,7 @@
 	}))}
 >
 	<summary class="list-none">
-		<button tabindex="0" class="btn btn-sm touch-hitbox" aria-label="Menu" onclick={() => (open = !open)}>
+		<button tabindex="0" class="btn btn-sm touch-hitbox h-9" aria-label="Menu" onclick={() => (open = !open)}>
 			<span class="iconify mdi--dots-horizontal size-6"></span>
 		</button>
 	</summary>
