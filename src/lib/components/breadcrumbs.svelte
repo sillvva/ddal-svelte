@@ -1,9 +1,13 @@
 <script lang="ts">
 	import { page } from "$app/state";
-	import { routeModules, type Crumb, type ModuleData } from "$lib/modules";
+	import type { Crumb, ModuleData } from "$lib/types";
 	import BackButton from "./back-button.svelte";
 
-	export function titleSanitizer(title: string) {
+	const routeModules: Record<string, ModuleData> = import.meta.glob("/src/routes/**/+page.svelte", {
+		eager: true
+	});
+
+	function titleSanitizer(title: string) {
 		return title.replace(/([A-Z])/g, " $1").replace(/^./, (str) => str.toUpperCase());
 	}
 

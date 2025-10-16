@@ -11,7 +11,8 @@
 	import * as API from "$lib/remote";
 	import { getGlobal } from "$lib/stores.svelte.js";
 	import { hotkey } from "$lib/util";
-	import { sleep } from "@svelteuidev/composables";
+	import { wait } from "@sillvva/utils";
+	import { Toaster } from "svelte-sonner";
 	import { fade } from "svelte/transition";
 
 	let { children } = $props();
@@ -28,7 +29,7 @@
 	async function closeModal() {
 		do {
 			history.back();
-			await sleep(10);
+			await wait(10);
 		} while (page.state.modal);
 	}
 
@@ -122,6 +123,8 @@
 	<MobileNav />
 	<Settings bind:open={settingsOpen} />
 </div>
+
+<Toaster richColors closeButton theme={global.app.settings.mode} />
 
 <dialog
 	class="modal bg-base-300/75!"

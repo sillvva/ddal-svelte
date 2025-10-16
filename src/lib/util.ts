@@ -2,8 +2,6 @@ import { wait } from "@sillvva/utils";
 import { hotkey as hk, type HotkeyItem } from "@svelteuidev/composables";
 import type { Attachment } from "svelte/attachments";
 
-export type Awaitable<T> = T | PromiseLike<T>;
-
 export async function createTransition(action: ViewTransitionCallback, after?: () => void | Promise<void>, afterDelay = 0) {
 	if (!document.startViewTransition) action();
 	else document.startViewTransition(action);

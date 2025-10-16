@@ -1,4 +1,4 @@
-import type { Awaitable } from "./util";
+export type Awaitable<T> = T | PromiseLike<T>;
 
 export type Crumb = {
 	title: string;
@@ -15,7 +15,3 @@ export type ModuleData = {
 	pageHead?: PageHead;
 	getPageHead?: (params: unknown) => Awaitable<Partial<PageHead>>;
 };
-
-export const routeModules: Record<string, ModuleData> = import.meta.glob("/src/routes/**/+page.svelte", {
-	eager: true
-});

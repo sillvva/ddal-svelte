@@ -5,7 +5,7 @@
 	import * as API from "$lib/remote";
 	import { appDefaults } from "$lib/schemas";
 	import { createGlobal } from "$lib/stores.svelte";
-	import { Toaster } from "svelte-sonner";
+	import { wait } from "@sillvva/utils";
 	import "../app.css";
 
 	let { children } = $props();
@@ -21,6 +21,7 @@
 			document.startViewTransition(async () => {
 				resolve();
 				await navigation.complete;
+				await wait(100);
 			});
 		});
 	});
@@ -29,8 +30,6 @@
 <Head />
 
 {@render children()}
-
-<Toaster richColors closeButton theme={global.app.settings.mode} />
 
 {#if dev}
 	<div class="fixed right-0 bottom-0 z-50">
