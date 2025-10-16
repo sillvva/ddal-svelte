@@ -18,7 +18,6 @@
 	let { children } = $props();
 
 	const global = getGlobal();
-	const request = $derived(await API.app.queries.request());
 
 	let settingsOpen = $state(false);
 
@@ -35,7 +34,7 @@
 
 	$effect(() => {
 		const hasCookie = document.cookie.includes("session-token");
-		if (!request.user && hasCookie) location.reload();
+		if (!global.user && hasCookie) location.reload();
 	});
 </script>
 
@@ -58,29 +57,29 @@
 			<div class="inline max-w-10 shrink-0 flex-grow-1 md:hidden">&nbsp;</div>
 			<div class="inline max-w-10 shrink-0 flex-grow-1 md:hidden">&nbsp;</div>
 			<a
-				href={request.user ? "/characters" : "/"}
+				href={global.user ? "/characters" : "/"}
 				class="font-draconis flex min-w-fit flex-1 flex-col text-center md:flex-none"
 				aria-label="Home"
 			>
 				<h1 class="text-base-content text-base leading-4">Adventurers League</h1>
 				<h2 class="text-3xl leading-7">Log Sheet</h2>
 			</a>
-			{#if request.user}
+			{#if global.user}
 				<a href="/characters" class="ml-8 flex items-center p-2 max-md:hidden">Character Logs</a>
 				<a href="/dm-logs" class="flex items-center p-2 max-md:hidden">DM Logs</a>
 				<a href="/dms" class="flex items-center p-2 max-md:hidden">DMs</a>
-				{#if request.user?.role === "admin"}
+				{#if global.user?.role === "admin"}
 					<a href="/admin/users" class="flex items-center p-2 max-md:hidden">Admin</a>
 				{/if}
 			{/if}
 			<div class="flex-1 max-md:hidden">&nbsp;</div>
 			<div class="flex items-center gap-4">
-				{#if request.user}
+				{#if global.user}
 					<CommandTray />
 
 					<!-- Avatar -->
 					<div class="hidden items-center print:flex">
-						{request.user.name}
+						{global.user.name}
 					</div>
 					<div class="avatar flex h-full min-w-fit items-center">
 						<button
@@ -89,18 +88,18 @@
 							onclick={() => (settingsOpen = true)}
 						>
 							<img
-								src={request.user.image || ""}
-								alt={request.user.name}
+								src={global.user.image || ""}
+								alt={global.user.name}
 								class="rounded-full object-cover object-center"
 								onerror={async (e) => {
-									if (!request.user) return;
+									if (!global.user) return;
 									const img = e.currentTarget as HTMLImageElement;
 									img.onerror = null;
 									img.src = BLANK_CHARACTER;
 
 									const result = await API.auth.actions.updateUser({ image: BLANK_CHARACTER });
 									const parsed = await parseEffectResult(result);
-									if (parsed) await API.app.queries.request().refresh();
+									if (parsed) await global.refresh();
 								}}
 							/>
 						</button>

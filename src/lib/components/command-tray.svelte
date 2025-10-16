@@ -17,8 +17,6 @@
 	let input = $state<HTMLInputElement | null>(null);
 	let searchData = $state<SearchData>([]);
 
-	const request = $derived(await API.app.queries.request());
-
 	const search = $derived(new GlobalSearchFactory(searchData, open ? "" : ""));
 	const resultsCount = $derived(search.results.reduce((sum, section) => sum + section.items.length, 0));
 	const categories = $derived(searchData.map((section) => section.title).filter((c) => c !== "Sections"));
@@ -59,6 +57,7 @@
 			]
 		])}
 	>
+		{@const request = await API.app.queries.request()}
 		<span class="hover-hover:md:text-base-content/60 flex items-center gap-1">
 			<span class="iconify mdi--magnify hover-hover:md:size-4 hover-none:w-10 size-6 max-md:w-10"></span>
 			<span class="hover-hover:max-md:hidden hover-none:hidden">Search</span>

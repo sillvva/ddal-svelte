@@ -1,14 +1,17 @@
 <script lang="ts">
 	import { dev } from "$app/environment";
 	import { page } from "$app/state";
-	import LoadingPanel from "$lib/components/loading-panel.svelte";
-	import * as API from "$lib/remote";
 	import { uuidV7 } from "$lib/schemas";
-	import SuperDebug from "sveltekit-superforms";
+	import { getGlobal } from "$lib/stores.svelte";
+	import { useOs } from "@svelteuidev/composables";
+	import SuperDebugRuned from "sveltekit-superforms/SuperDebug.svelte";
 	import * as v from "valibot";
 	import Layout from "./(app)/+layout.svelte";
 
 	let display = $state(!dev);
+
+	const global = getGlobal();
+	const os = useOs();
 
 	const appRoutes = Object.keys(import.meta.glob("/src/routes/**/+page.svelte"))
 		.map((key) => key.replace(/\/src\/routes\/|\(\w+\)|\/?\+page\.svelte/g, ""))
@@ -77,22 +80,14 @@
 			</div>
 		</div>
 		{#if display}
-			<svelte:boundary>
-				{@const request = await API.app.queries.request()}
-
-				{#snippet pending()}
-					<LoadingPanel />
-				{/snippet}
-
-				<SuperDebug
-					data={{
-						...page,
-						isMobile: request.isMobile,
-						user: request.user,
-						data: undefined
-					}}
-				/>
-			</svelte:boundary>
+			<SuperDebugRuned
+				data={{
+					...page,
+					os: os,
+					user: global.user,
+					data: undefined
+				}}
+			/>
 		{/if}
 	</div>
 </Layout>

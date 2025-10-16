@@ -36,9 +36,8 @@
 
 	const global = getGlobal();
 
-	const request = $derived(await API.app.queries.request());
 	const character = $derived(await API.characters.queries.get({ param: params.characterId, newRedirect: true }));
-	const myCharacter = $derived(character.userId === request.user?.id);
+	const myCharacter = $derived(character.userId === global.user?.id);
 
 	let deletingLog = new SvelteSet<string>();
 
@@ -63,7 +62,7 @@
 	}
 
 	$effect(() => {
-		if (global.app.settings.autoWebAuthn && !request.user) {
+		if (global.app.settings.autoWebAuthn && !global.user) {
 			authClient.signIn.passkey({
 				fetchOptions: {
 					onSuccess: () => {
@@ -75,7 +74,7 @@
 	});
 </script>
 
-{#if request.user}
+{#if global.user}
 	<NavMenu hideMenuActions={!myCharacter}>
 		{#snippet actions()}
 			<a href={`/characters/${character.id}/edit`} class="btn btn-primary btn-sm h-9 max-sm:hidden">Edit</a>
@@ -328,7 +327,7 @@
 {/if}
 
 {#if !sortedResults.length}
-	<section class="bg-base-200 mt-4 rounded-lg">
+	<section class="bg-base-200 rounded-lg">
 		<div class="flex flex-col gap-4 py-20 text-center">
 			<div>No logs found.</div>
 			<p>
@@ -340,7 +339,7 @@
 		</div>
 	</section>
 {:else}
-	<section class="mt-4">
+	<section>
 		<div class="bg-base-200 w-full overflow-x-auto rounded-lg">
 			<table class="linked-table-groups table w-full leading-5">
 				<thead>

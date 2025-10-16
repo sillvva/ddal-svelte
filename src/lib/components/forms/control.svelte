@@ -10,6 +10,6 @@
 	let { class: className = "", children, ...rest }: Props = $props();
 </script>
 
-<div class={["fieldset", className]} {...rest}>
+<div class={["fieldset has-[.checkbox]:auto-rows-auto", className]} {...rest}>
 	{@render children?.()}
 </div>

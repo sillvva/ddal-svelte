@@ -1,10 +1,10 @@
 <script>
 	import Footer from "$lib/components/footer.svelte";
-	import * as API from "$lib/remote";
+	import { getGlobal } from "$lib/stores.svelte";
 
 	let { children } = $props();
 
-	const request = $derived(await API.app.queries.request());
+	const global = getGlobal();
 </script>
 
 <img
@@ -13,7 +13,7 @@
 	class="fixed! z-0 min-h-dvh min-w-screen object-cover object-center opacity-25 dark:opacity-20 print:hidden"
 />
 
-<div class="flex min-h-dvh flex-col" data-theme={request.app.settings.mode}>
+<div class="flex min-h-dvh flex-col" data-theme={global.app.settings.mode}>
 	{@render children()}
 	<Footer fixed />
 </div>

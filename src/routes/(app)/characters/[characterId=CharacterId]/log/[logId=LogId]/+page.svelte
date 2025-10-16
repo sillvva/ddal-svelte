@@ -32,9 +32,11 @@
 	import { valibotForm } from "$lib/factories.svelte.js";
 	import * as API from "$lib/remote";
 	import { type DungeonMasterId, logSchema } from "$lib/schemas";
+	import { getGlobal } from "$lib/stores.svelte.js";
 
 	let { params } = $props();
 
+	const global = getGlobal();
 	const firstLog = page.url.searchParams.get("firstLog") === "true";
 	const characterLog = await API.logs.forms.character({
 		param: { characterId: params.characterId, logId: params.logId, firstLog }
@@ -44,8 +46,7 @@
 	});
 	const { form } = superform;
 
-	const request = $derived(await API.app.queries.request());
-	const user = $derived(request.user!);
+	const user = $derived(global.user!);
 
 	let season = $state($form.experience ? 1 : $form.acp ? 8 : 9);
 </script>

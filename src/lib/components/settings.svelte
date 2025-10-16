@@ -22,19 +22,15 @@
 	type UserAccount = { providerId: ProviderId; name: string; email: string; image: string };
 	let userAccounts = $state<UserAccount[]>([]);
 
-	const request = $derived(await API.app.queries.request());
-	const user = $derived(request.user);
-	const session = $derived(request.session);
-
 	const currentAccount = $derived(userAccounts.find((a) => a.providerId === global.app.settings.provider));
 	const authProviders = $derived(
 		PROVIDERS.map((p) => ({
 			...p,
-			account: user?.accounts.find((a) => a.providerId === p.id)
+			account: global.user?.accounts.find((a) => a.providerId === p.id)
 		}))
 	);
 	const initials = $derived(
-		user?.name
+		global.user?.name
 			.split(" ")
 			.map((n) => n[0])
 			.join("")
@@ -44,7 +40,7 @@
 	$effect(() => {
 		if (!userAccounts.length && open) {
 			Promise.allSettled(
-				user?.accounts.map(({ accountId, providerId }) =>
+				global.user?.accounts.map(({ accountId, providerId }) =>
 					authClient.accountInfo({ accountId }).then((r) =>
 						r.data?.user?.name && r.data?.user?.email && r.data?.user?.image
 							? {
@@ -61,7 +57,7 @@
 
 				const account =
 					userAccounts.find((a) => a.providerId === global.app.settings.provider) ||
-					userAccounts.find((a) => a.name === user?.name && a.email === user?.email) ||
+					userAccounts.find((a) => a.name === global.user?.name && a.email === global.user?.email) ||
 					(isTupleOfAtLeast(userAccounts, 1) ? userAccounts[0] : undefined);
 
 				if (account) {
@@ -69,13 +65,13 @@
 						global.app.settings.provider = account.providerId;
 					}
 					if (
-						account.name !== user?.name ||
-						account.email !== user?.email ||
-						(account.image !== user?.image && !account.image.includes(BLANK_CHARACTER))
+						account.name !== global.user?.name ||
+						account.email !== global.user?.email ||
+						(account.image !== global.user?.image && !account.image.includes(BLANK_CHARACTER))
 					) {
 						const result = await API.auth.actions.updateUser(account);
 						const parsed = await parseEffectResult(result);
-						if (parsed) await API.app.queries.request().refresh();
+						if (parsed) await global.refresh();
 					}
 				}
 			});
@@ -83,21 +79,21 @@
 	});
 </script>
 
-{#if user}
+{#if global.user}
 	<aside
 		id="settings"
 		class="bg-base-100 fixed inset-y-0 -right-80 z-50 flex w-80 flex-col overflow-y-auto px-4 pb-4 transition-all data-[open=true]:right-0 data-[open=true]:shadow-lg data-[open=true]:shadow-black/50 print:hidden"
 		data-open={open}
 	>
-		{#if user}
+		{#if global.user}
 			<div class="flex items-center gap-4 py-4 pl-2">
 				<div
 					class="avatar ring-primary group/avatar bg-primary ring-offset-base-100 flex h-9 w-9 items-center justify-center overflow-hidden rounded-full ring-3 ring-offset-2"
 				>
-					{#if user.image}
+					{#if global.user.image}
 						<img
-							src={user.image}
-							alt={user.name}
+							src={global.user.image}
+							alt={global.user.name}
 							class="rounded-full object-cover object-center"
 							onerror={(e) => {
 								const img = e.currentTarget as HTMLImageElement;
@@ -110,12 +106,12 @@
 					{/if}
 				</div>
 				<div class="flex-1">
-					<div class="ellipsis-nowrap font-medium">{user.name}</div>
+					<div class="ellipsis-nowrap font-medium">{global.user.name}</div>
 					<div class="ellipsis-nowrap text-xs font-medium text-gray-500 dark:text-gray-400">
-						{user.email}
+						{global.user.email}
 					</div>
 				</div>
-				{#if session?.impersonatedBy}
+				{#if global.session?.impersonatedBy}
 					<div class="tooltip tooltip-left" data-tip="Stop impersonating">
 						<button
 							class="btn btn-sm btn-primary"
@@ -170,13 +166,13 @@
 							<span class="flex-1">{provider.name}</span>
 							<span class="join flex items-center">
 								{#if provider.account}
-									{#if user.accounts.length > 1}
+									{#if global.user.accounts.length > 1}
 										{#if !userAccounts.length}
 											<span class="iconify mdi--loading size-5 animate-spin"></span>
 										{:else}
 											{@const account = userAccounts.find((a) => a.providerId === provider.id)}
 											{#if account}
-												{#if currentAccount?.providerId !== provider.id || account.name !== user.name || account.email !== user.email || account.image !== user.image}
+												{#if currentAccount?.providerId !== provider.id || account.name !== global.user.name || account.email !== global.user.email || account.image !== global.user.image}
 													<div class="tooltip" data-tip="Use this account">
 														<button
 															class="btn btn-sm join-item bg-base-300"
@@ -187,7 +183,7 @@
 																const parsed = await parseEffectResult(result);
 																if (parsed) {
 																	global.app.settings.provider = account.providerId;
-																	await API.app.queries.request().refresh();
+																	await global.refresh();
 																}
 															}}
 														>
@@ -266,10 +262,10 @@
 
 			<div class="flex flex-col gap-2">
 				<div class="px-2 text-xs text-gray-500 dark:text-gray-400">
-					User ID:<br />{user.id}
+					User ID:<br />{global.user.id}
 				</div>
 				<div class="px-2 text-xs text-gray-500 dark:text-gray-400">
-					Logged in {session?.createdAt.toLocaleString()}
+					Logged in {global.session?.createdAt.toLocaleString()}
 				</div>
 			</div>
 		{/if}

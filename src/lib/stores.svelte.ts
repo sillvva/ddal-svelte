@@ -4,7 +4,8 @@ import Cookie from "js-cookie";
 import { getContext, setContext } from "svelte";
 import { SvelteDate } from "svelte/reactivity";
 import * as v from "valibot";
-import { appCookieSchema, appDefaults, type AppCookie } from "./schemas";
+import * as API from "./remote";
+import { appCookieSchema, appDefaults, type AppCookie, type LocalsSession, type LocalsUser } from "./schemas";
 
 /**
  * Set a cookie from the browser using `js-cookie`.
@@ -33,6 +34,8 @@ export function setCookie<TSchema extends v.GenericSchema>(
 
 export class Global {
 	private _app: AppCookie = $state(appDefaults);
+	private _user: LocalsUser | undefined = $state();
+	private _session: LocalsSession | undefined = $state();
 	private _pageLoader: boolean = $state(false);
 
 	constructor(app: AppCookie) {
@@ -41,6 +44,12 @@ export class Global {
 		$effect(() => {
 			setCookie("app", appCookieSchema, this._app);
 		});
+
+		const request = API.app.queries.request();
+		$effect(() => {
+			this._user = request.current?.user;
+			this._session = request.current?.session;
+		});
 	}
 
 	get app() {
@@ -48,6 +57,24 @@ export class Global {
 	}
 	set app(value: AppCookie) {
 		this._app = value;
+	}
+
+	get user() {
+		return this._user;
+	}
+	set user(value: LocalsUser | undefined) {
+		this._user = value;
+	}
+
+	get session() {
+		return this._session;
+	}
+	set session(value: LocalsSession | undefined) {
+		this._session = value;
+	}
+
+	refresh() {
+		return API.app.queries.request().refresh();
 	}
 
 	get pageLoader() {
