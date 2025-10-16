@@ -28,7 +28,7 @@
 		content?: string;
 	}
 
-	let { content = "", ...rest }: Props = $props();
+	let { content = "", class: className, ...rest }: Props = $props();
 
 	// Add newlines around HTML tags, but skip tags inside markdown table blocks
 	function addNewlinesAroundTags(content: string) {
@@ -53,7 +53,7 @@
 	}
 </script>
 
-<div {...rest}>
+<div {...rest} class={["text-pretty", className]}>
 	<SvelteMarkdown
 		source={addNewlinesAroundTags(content)}
 		renderers={{
