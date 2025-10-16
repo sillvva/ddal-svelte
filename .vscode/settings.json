@@ -4,5 +4,11 @@
 	"explorer.fileNesting.patterns": {
 		"svelte.config.js": "*.config.ts, .zshrc",
 		"+page.svelte": "*page.remote.ts, +page.server.ts"
-	}
+	},
+	"editor.codeActionsOnSave": {
+		"source.fixAll": "explicit",
+		"source.fixAll.sortJSON": "never",
+		"source.organizeImports": "explicit",
+		"source.sortImports": "explicit"
+	},
 }
