@@ -29,6 +29,7 @@
 	import { createTransition, hotkey } from "$lib/util";
 	import { slugify, sorter } from "@sillvva/utils";
 	import { clipboard, download } from "@svelteuidev/composables";
+	import { onMount } from "svelte";
 	import { fromAction } from "svelte/attachments";
 	import { SvelteSet } from "svelte/reactivity";
 
@@ -61,7 +62,7 @@
 		if (search.query.trim()) scrollTo({ top: searchBar.offsetTop - 16, behavior: "smooth" });
 	}
 
-	$effect(() => {
+	onMount(() => {
 		if (global.app.settings.autoWebAuthn && !global.user) {
 			authClient.signIn.passkey({
 				fetchOptions: {

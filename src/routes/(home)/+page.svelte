@@ -4,13 +4,14 @@
 	import { errorToast } from "$lib/factories.svelte.js";
 	import * as API from "$lib/remote";
 	import { getGlobal } from "$lib/stores.svelte.js";
+	import { onMount } from "svelte";
 
 	const global = getGlobal();
 
 	const data = await API.app.queries.home();
 	const lastMethod = authClient.getLastUsedLoginMethod();
 
-	$effect(() => {
+	onMount(() => {
 		if (global.app.settings.autoWebAuthn) {
 			authClient.signIn.passkey({
 				fetchOptions: {

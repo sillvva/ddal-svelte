@@ -12,6 +12,7 @@
 	import { getGlobal } from "$lib/stores.svelte.js";
 	import { hotkey } from "$lib/util";
 	import { wait } from "@sillvva/utils";
+	import { onMount } from "svelte";
 	import { Toaster } from "svelte-sonner";
 	import { fade } from "svelte/transition";
 
@@ -32,7 +33,7 @@
 		} while (page.state.modal);
 	}
 
-	$effect(() => {
+	onMount(() => {
 		const hasCookie = document.cookie.includes("session-token");
 		if (!global.user && hasCookie) location.reload();
 	});
