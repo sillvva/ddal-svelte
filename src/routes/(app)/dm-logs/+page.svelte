@@ -1,9 +1,8 @@
 <script lang="ts" module>
 	export const pageTitle = "DM Logs";
 	export async function getPageHead() {
-		const request = await API.app.queries.request();
 		return {
-			title: `${request.user?.name}'s DM Logs`
+			title: `{username}'s DM Logs`
 		};
 	}
 </script>

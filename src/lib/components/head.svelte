@@ -1,16 +1,24 @@
 <script lang="ts">
 	import { page } from "$app/state";
 	import { defaultDescription, defaultImage, defaultTitle } from "$lib/constants";
-	import type { ModuleData } from "$lib/types";
+	import { getGlobal } from "$lib/stores.svelte.js";
+	import type { ModuleData, PageHead } from "$lib/types";
+
+	const global = getGlobal();
 
 	const routeModules: Record<string, ModuleData> = import.meta.glob("/src/routes/**/+page.svelte", {
 		eager: true
 	});
 
 	async function getHeadFromModule(module: ModuleData | undefined) {
-		if (module?.pageHead) return module.pageHead;
-		if (module?.getPageHead) return await module.getPageHead(page.params);
+		if (module?.pageHead) return parseHeadData(module.pageHead);
+		if (module?.getPageHead) return parseHeadData(await module.getPageHead(page.params));
 		return undefined;
+	}
+
+	function parseHeadData(headData: Partial<PageHead>) {
+		headData.title = headData.title?.replace("{username}", global.user?.name || "");
+		return headData;
 	}
 
 	const pageHead = $derived(await getHeadFromModule(routeModules[`/src/routes${page.route.id}/+page.svelte`]));

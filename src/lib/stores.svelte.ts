@@ -34,21 +34,15 @@ export function setCookie<TSchema extends v.GenericSchema>(
 
 export class Global {
 	private _app: AppCookie = $state(appDefaults);
-	private _user: LocalsUser | undefined = $state();
-	private _session: LocalsSession | undefined = $state();
-	private _pageLoader: boolean = $state(false);
+	private _user: LocalsUser | undefined = $state.raw();
+	private _session: LocalsSession | undefined = $state.raw();
+	private _pageLoader: boolean = $state.raw(false);
 
 	constructor(app: AppCookie) {
 		this._app = app;
 
 		$effect(() => {
 			setCookie("app", appCookieSchema, this._app);
-		});
-
-		const request = API.app.queries.request();
-		$effect(() => {
-			this._user = request.current?.user;
-			this._session = request.current?.session;
 		});
 	}
 
@@ -73,8 +67,11 @@ export class Global {
 		this._session = value;
 	}
 
-	refresh() {
-		return API.app.queries.request().refresh();
+	async refresh() {
+		const request = API.app.queries.request();
+		await request.refresh();
+		this._user = request.current?.user;
+		this._session = request.current?.session;
 	}
 
 	get pageLoader() {
