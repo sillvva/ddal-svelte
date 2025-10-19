@@ -8,7 +8,6 @@
 </script>
 
 <script lang="ts">
-	import { invalidateAll } from "$app/navigation";
 	import { page } from "$app/state";
 	import NavMenu from "$lib/components/nav-menu.svelte";
 	import SearchResults from "$lib/components/search-results.svelte";
@@ -19,7 +18,8 @@
 	import { sorter } from "@sillvva/utils";
 	import { SvelteSet } from "svelte/reactivity";
 
-	const dms = $derived(await API.dms.queries.getAll());
+	const dmsQuery = API.dms.queries.getAll();
+	const dms = $derived(await dmsQuery);
 	const search = $derived(new EntitySearchFactory(dms, page.url.searchParams.get("s") || ""));
 	const sortedResults = $derived(
 		search.results.toSorted((a, b) => sorter(a.isUser, b.isUser) || sorter(b.score, a.score) || sorter(a.name, b.name))
@@ -85,8 +85,7 @@
 												const parsed = await parseEffectResult(result);
 												if (parsed) {
 													successToast(`${dm.name} deleted`);
-													// TODO: Refresh dm query
-													invalidateAll();
+													await dmsQuery.refresh();
 												} else {
 													deletingDM.delete(dm.id);
 												}

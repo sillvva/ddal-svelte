@@ -8,7 +8,7 @@
 </script>
 
 <script lang="ts">
-	import { goto, invalidateAll } from "$app/navigation";
+	import { goto } from "$app/navigation";
 	import { page } from "$app/state";
 	import Items from "$lib/components/items.svelte";
 	import Markdown from "$lib/components/markdown.svelte";
@@ -26,7 +26,8 @@
 
 	const global = getGlobal();
 
-	const logs = $derived(await API.logs.queries.getDmLogs());
+	const dmLogsQuery = API.logs.queries.getDmLogs();
+	const logs = $derived(await dmLogsQuery);
 	const search = $derived(new EntitySearchFactory(logs, page.url.searchParams.get("s") || ""));
 	const sortedResults = $derived(
 		search.results.toSorted((a, b) => (global.app.dmLogs.sort === "asc" ? sorter(a.date, b.date) : sorter(b.date, a.date)))
@@ -254,8 +255,7 @@
 											const parsed = await parseEffectResult(result);
 											if (parsed) {
 												successToast(`${log.name} deleted`);
-												// TODO: Refresh logs query
-												invalidateAll();
+												await dmLogsQuery.refresh();
 											} else {
 												deletingLog.delete(log.id);
 											}

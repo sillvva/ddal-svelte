@@ -15,7 +15,7 @@
 </script>
 
 <script lang="ts">
-	import { goto, invalidateAll, pushState } from "$app/navigation";
+	import { goto, pushState } from "$app/navigation";
 	import { page } from "$app/state";
 	import { authClient } from "$lib/auth.js";
 	import Items from "$lib/components/items.svelte";
@@ -37,7 +37,8 @@
 
 	const global = getGlobal();
 
-	const character = $derived(await API.characters.queries.get({ param: params.characterId, newRedirect: true }));
+	const characterQuery = API.characters.queries.get({ param: params.characterId, newRedirect: true });
+	const character = $derived(await characterQuery);
 	const myCharacter = $derived(character.userId === global.user?.id);
 
 	let deletingLog = new SvelteSet<string>();
@@ -489,8 +490,7 @@
 												const parsed = await parseEffectResult(result);
 												if (parsed) {
 													successToast(`${log.name} deleted`);
-													// TODO: Refresh character query
-													invalidateAll();
+													await characterQuery.refresh();
 												} else {
 													deletingLog.delete(log.id);
 												}
