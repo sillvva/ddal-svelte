@@ -24,11 +24,20 @@
 		const paths = page.url.pathname.split("/");
 		const globs = appRoutes.filter((g) => g.length === paths.length);
 
-		for (const p in paths) {
-			if (!p) continue;
-			if (!globs.find((g) => g[p]?.match(/^\[/))) continue;
-			const result = v.safeParse(uuidV7, paths[p]);
-			if (!result.success) return true;
+		outer: for (let g = 1; g < globs.length; g++) {
+			const glob = globs[g]!;
+			inner: for (let p = 1; p < paths.length; p++) {
+				const path = paths[p]!;
+				const route = glob[p];
+
+				if (route === path) continue inner;
+				else if (!route?.match(/^\[/)) continue outer;
+
+				if (route?.match(/^\[/)) {
+					const result = v.safeParse(uuidV7, path);
+					if (!result.success) return true;
+				}
+			}
 		}
 
 		return false;
