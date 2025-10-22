@@ -1,7 +1,6 @@
 <script lang="ts">
 	import type { Snippet } from "svelte";
 	import Breadcrumbs from "./breadcrumbs.svelte";
-	import Dropdown from "./dropdown.svelte";
 
 	interface Props {
 		base?: boolean;
@@ -17,10 +16,23 @@
 	<Breadcrumbs />
 	{#if !hideMenuActions && (actions || menu)}
 		{@render actions?.()}
-		<Dropdown class="dropdown-end">
-			<ul role="menu" class="menu dropdown-content rounded-box bg-base-300 z-20 w-52 shadow-sm">
-				{@render menu?.()}
-			</ul>
-		</Dropdown>
+		<button
+			tabindex="0"
+			class="btn btn-sm touch-hitbox h-9"
+			aria-label="Menu"
+			popovertarget="nav-menu"
+			style:anchor-name="--nav-menu"
+		>
+			<span class="iconify mdi--dots-horizontal size-6"></span>
+		</button>
+		<ul
+			role="menu"
+			class="dropdown menu dropdown-bottom dropdown-end rounded-box bg-base-300 z-20 w-52 shadow-sm"
+			popover
+			id="nav-menu"
+			style:position-anchor="--nav-menu"
+		>
+			{@render menu?.()}
+		</ul>
 	{/if}
 </div>
