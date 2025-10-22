@@ -22,6 +22,7 @@
 	const global = getGlobal();
 
 	let settingsOpen = $state(false);
+	let loadingImage = $state(true);
 
 	afterNavigate(() => {
 		global.pageLoader = false;
@@ -56,8 +57,8 @@
 		style:view-transition-name="header"
 	>
 		<nav class="relative z-10 container mx-auto flex max-w-5xl gap-3 p-4">
-			<div class="inline max-w-10 shrink-0 flex-grow-1 md:hidden">&nbsp;</div>
-			<div class="inline max-w-10 shrink-0 flex-grow-1 md:hidden">&nbsp;</div>
+			<div class="inline max-w-10 shrink-0 grow md:hidden">&nbsp;</div>
+			<div class="inline max-w-10 shrink-0 grow md:hidden">&nbsp;</div>
 			<a
 				href={global.user ? "/characters" : "/"}
 				class="font-draconis flex min-w-fit flex-1 flex-col text-center md:flex-none"
@@ -188,11 +189,19 @@
 
 		{#if page.state.modal.type === "image"}
 			<div class="glass modal-box">
+				{#if loadingImage}
+					<div class="flex h-40 flex-col items-center justify-center rounded-lg">
+						<span class="loading loading-spinner text-secondary-content w-16"></span>
+					</div>
+				{/if}
+
 				<img
 					src={page.state.modal.imageUrl}
 					alt={page.state.modal.name}
 					class="relative max-h-dvh w-full max-w-(--breakpoint-xs)"
 					id="modal-content"
+					onloadstart={() => (loadingImage = true)}
+					onload={() => (loadingImage = false)}
 				/>
 			</div>
 		{/if}
