@@ -1,9 +1,8 @@
-import type { DungeonMasterId, DungeonMasterSchema, LocalsUser, UserId } from "$lib/schemas";
+import type { DungeonMasterFormSchema, DungeonMasterId, LocalsUser, UserId } from "$lib/schemas";
 import { DBService, runQuery, type DrizzleError, type InferQueryResult, type Transaction } from "$lib/server/db";
 import { userDMLogIncludes } from "$lib/server/db/includes";
 import { dungeonMasters, type DungeonMaster } from "$lib/server/db/schema";
 import type { ErrorParams } from "$lib/server/effect/errors";
-import { FormError } from "$lib/server/effect/errors";
 import { AppLog } from "$lib/server/effect/logging";
 import { sorter } from "@sillvva/utils";
 import { and, eq } from "drizzle-orm";
@@ -16,8 +15,17 @@ export class DMNotFoundError extends Data.TaggedError("DMNotFoundError")<ErrorPa
 	}
 }
 
-export class SaveDMError extends FormError<DungeonMasterSchema> {}
-export class DeleteDMError extends FormError<{ id: DungeonMasterId }> {}
+export class SaveDMError extends Data.TaggedError("SaveDMError")<ErrorParams> {
+	constructor(message: string, err?: unknown) {
+		super({ message, status: 404, cause: err });
+	}
+}
+
+export class DeleteDMError extends Data.TaggedError("DeleteDMError")<ErrorParams> {
+	constructor(message: string, err?: unknown) {
+		super({ message, status: 404, cause: err });
+	}
+}
 
 export type UserDM = InferQueryResult<"dungeonMasters", { with: { logs: typeof userDMLogIncludes } }>;
 
@@ -36,7 +44,7 @@ interface DMApiImpl {
 		) => Effect.Effect<DungeonMaster | undefined, DrizzleError>;
 	};
 	readonly set: {
-		readonly save: (user: LocalsUser, data: DungeonMasterSchema) => Effect.Effect<DungeonMaster, SaveDMError | DrizzleError>;
+		readonly save: (user: LocalsUser, data: DungeonMasterFormSchema) => Effect.Effect<DungeonMaster, SaveDMError | DrizzleError>;
 		readonly addUserDM: (user: LocalsUser, dms: UserDM[]) => Effect.Effect<UserDM[], SaveDMError | DrizzleError>;
 		readonly delete: (dm: UserDM, userId: UserId) => Effect.Effect<{ id: DungeonMasterId }, DeleteDMError | DrizzleError>;
 	};
@@ -55,7 +63,8 @@ export class DMService extends Effect.Service<DMService>()("DMSService", {
 							with: {
 								logs: {
 									...userDMLogIncludes,
-									limit: includeLogs ? undefined : 0
+									limit: includeLogs ? undefined : 0,
+									orderBy: { date: "desc" }
 								}
 							},
 							where: {
@@ -128,9 +137,9 @@ export class DMService extends Effect.Service<DMService>()("DMSService", {
 							.update(dungeonMasters)
 							.set({
 								name: data.name,
-								DCI: data.DCI || null
+								DCI: data.DCI
 							})
-							.where(eq(dungeonMasters.id, data.id))
+							.where(and(eq(dungeonMasters.id, data.id), eq(dungeonMasters.userId, user.id)))
 							.returning()
 					).pipe(
 						Effect.flatMap((dms) =>
@@ -154,7 +163,7 @@ export class DMService extends Effect.Service<DMService>()("DMSService", {
 					const result = yield* runQuery(
 						existing
 							? db.update(dungeonMasters).set({ name: user.name }).where(eq(dungeonMasters.id, existing.id)).returning()
-							: db.insert(dungeonMasters).values({ name: user.name, userId: user.id, isUser: true }).returning()
+							: db.insert(dungeonMasters).values({ name: user.name, DCI: "", userId: user.id, isUser: true }).returning()
 					).pipe(
 						Effect.flatMap((dms) =>
 							isTupleOf(dms, 1)

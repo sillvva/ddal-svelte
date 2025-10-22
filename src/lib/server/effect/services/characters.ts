@@ -1,6 +1,6 @@
 import { PlaceholderName } from "$lib/constants";
 import { getLogsSummary, parseCharacter } from "$lib/entities";
-import type { CharacterId, CharacterSchema, EditCharacterSchema, UserId } from "$lib/schemas";
+import type { CharacterId, CharacterSchema, UserId } from "$lib/schemas";
 import {
 	buildConflictUpdateColumns,
 	DBService,
@@ -13,7 +13,6 @@ import {
 import { characterIncludes } from "$lib/server/db/includes";
 import { characters, logs, type Character } from "$lib/server/db/schema";
 import type { ErrorParams } from "$lib/server/effect/errors";
-import { FormError } from "$lib/server/effect/errors";
 import { AppLog } from "$lib/server/effect/logging";
 import { and, eq, exists } from "drizzle-orm";
 import { Data, Effect, Layer } from "effect";
@@ -25,11 +24,15 @@ export class CharacterNotFoundError extends Data.TaggedError("CharacterNotFoundE
 	}
 }
 
-export class SaveCharacterError extends FormError<EditCharacterSchema> {}
+export class SaveCharacterError extends Data.TaggedError("SaveCharacterError")<ErrorParams> {
+	constructor(message: string, err?: unknown) {
+		super({ message, status: 404, cause: err });
+	}
+}
 
-export class DeleteCharacterError extends FormError<{ id: CharacterId }> {
+export class DeleteCharacterError extends Data.TaggedError("DeleteCharacterError")<ErrorParams> {
 	constructor(err?: unknown) {
-		super("Unable to delete character", { status: 500, cause: err });
+		super({ message: "Unable to delete character", status: 404, cause: err });
 	}
 }
 
@@ -46,7 +49,7 @@ interface CharacterApiImpl {
 		) => Effect.Effect<FullCharacterData, DrizzleError | CharacterNotFoundError>;
 		readonly all: (
 			userId: UserId,
-			options?: { characterId?: CharacterId | null; includeLogs?: boolean }
+			options?: { characterId?: CharacterId; includeLogs?: boolean }
 		) => Effect.Effect<FullCharacterData[], DrizzleError>;
 	};
 	readonly set: {

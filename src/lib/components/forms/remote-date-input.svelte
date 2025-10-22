@@ -1,98 +1,79 @@
 <script lang="ts">
-	import { dateToDV, intDateProxy } from "$lib/factories.svelte";
+	import { dateToCalendar } from "$lib/factories.svelte";
+	import { getLocalTimeZone, type DateValue } from "@internationalized/date";
+	import type { RemoteFormField } from "@sveltejs/kit";
 	import { DatePicker, type DatePickerRootProps } from "bits-ui";
-	import { formFieldProxy, type FormPathLeaves, type SuperForm } from "sveltekit-superforms";
+	import { isTupleOfAtLeast } from "effect/Predicate";
 
-	type TForm = $$Generic<Record<PropertyKey, unknown>>;
-	type TMin = $$Generic<Date | undefined>;
-	type TMax = $$Generic<Date | undefined>;
 	interface Props extends Omit<DatePickerRootProps, "value" | "minValue" | "maxValue"> {
-		superform: SuperForm<TForm>;
-		field: FormPathLeaves<TForm, Date>;
+		field: RemoteFormField<number>;
 		label: string;
-		minDate?: TMin;
-		minDateField?: TMin extends Date ? never : FormPathLeaves<TForm, Date>;
-		maxDate?: TMax;
-		maxDateField?: TMax extends Date ? never : FormPathLeaves<TForm, Date>;
-		empty?: "null" | "undefined";
+		min?: number;
+		max?: number;
 		required?: boolean;
 		description?: string;
 	}
 
 	let {
-		superform,
 		field,
 		label,
-		minDate,
-		minDateField,
-		maxDate,
-		maxDateField,
-		empty = "null",
+		min = new Date(2014, 0).getTime(),
+		max = new Date().getTime(),
 		required,
 		description,
 		...rest
 	}: Props = $props();
 
-	const { errors, constraints } = formFieldProxy(superform, field);
+	const issues = $derived(field.issues());
+	const attributes = $derived(field.as("number"));
+	const name = $derived("name" in attributes ? (attributes.name as string) : undefined);
+	const minDateValue = $derived(dateToCalendar(min));
+	const maxDateValue = $derived(dateToCalendar(max));
 
-	const proxyValue = $derived(intDateProxy(superform, field, { empty }));
-	const proxyMin = $derived(minDateField && intDateProxy(superform, minDateField));
-	const proxyMax = $derived(maxDateField && intDateProxy(superform, maxDateField));
-
-	const minDateValue = $derived(dateToDV(minDate));
-	const maxDateValue = $derived(dateToDV(maxDate));
-	const minProxyValue = $derived(proxyMin && $proxyMin);
-	const maxProxyValue = $derived(proxyMax && $proxyMax);
-	const minValue = $derived(minDateValue || minProxyValue);
-	const maxValue = $derived(maxDateValue || maxProxyValue);
-
-	let resetLimit = $state(0);
-	function resetHandler(err: unknown, reset: () => void) {
-		if (resetLimit <= 10) {
-			resetLimit++;
-			console.error(err);
-			reset();
-		}
+	function clamp(value: DateValue, min: DateValue, max: DateValue) {
+		if (value.compare(min) < 0) return min;
+		if (value.compare(max) > 0) return max;
+		return value;
 	}
-
-	$effect(() => {
-		if ($proxyValue) {
-			if (minValue && $proxyValue.compare(minValue) < 0) $proxyValue = minValue;
-			if (maxValue && $proxyValue.compare(maxValue) > 0) $proxyValue = maxValue;
-		}
-	});
 </script>
 
+<input {...field.as("number")} class="hidden" />
 <DatePicker.Root
 	granularity="minute"
 	{...rest}
-	bind:value={$proxyValue}
-	minValue={minValue?.set({ hour: 0, minute: 0, second: 0 })}
-	maxValue={maxValue?.set({ hour: 23, minute: 59, second: 59 })}
+	bind:value={
+		() => (field.value() ? clamp(dateToCalendar(field.value()), minDateValue, maxDateValue) : undefined),
+		(val) => {
+			if (val) {
+				const newValue = clamp(val, minDateValue, maxDateValue);
+				const date = newValue.toDate(getLocalTimeZone());
+				field.set(date.getTime());
+			} else {
+				field.set(0);
+			}
+		}
+	}
+	minValue={minDateValue.set({ hour: 0, minute: 0, second: 0 })}
+	maxValue={maxDateValue.set({ hour: 23, minute: 59, second: 59 })}
 >
 	<DatePicker.Label class="fieldset-legend">
 		<span>
 			{label}
-			{#if $constraints?.required || required}
+			{#if required}
 				<span class="text-error">*</span>
 			{/if}
 		</span>
 	</DatePicker.Label>
 	<DatePicker.Input class="input inline-flex w-full items-center gap-1 px-3 select-none sm:max-md:text-xs">
 		{#snippet children({ segments })}
-			<svelte:boundary>
-				{#snippet failed(err, reset)}
-					<span class="text-error" {@attach () => resetHandler(err, reset)}>Error</span>
-				{/snippet}
-				{#each segments as { part, value }, i (i)}
-					<DatePicker.Segment
-						{part}
-						class="focus-visible:outline-primary aria-[valuetext=Empty]:text-base-content/70 rounded-xs py-1 outline-offset-4"
-					>
-						{value}
-					</DatePicker.Segment>
-				{/each}
-			</svelte:boundary>
+			{#each segments as { part, value }, i (i)}
+				<DatePicker.Segment
+					{part}
+					class="focus-visible:outline-primary aria-[valuetext=Empty]:text-base-content/70 rounded-xs py-1 outline-offset-4"
+				>
+					{value}
+				</DatePicker.Segment>
+			{/each}
 			<DatePicker.Trigger class="ml-auto inline-flex items-center justify-center">
 				<span class="iconify mdi--calendar size-6"></span>
 			</DatePicker.Trigger>
@@ -154,10 +135,10 @@
 		</DatePicker.Calendar>
 	</DatePicker.Content>
 </DatePicker.Root>
-{#if $errors?.length || description}
-	<label for={field} class="fieldset-label">
-		{#if $errors?.length}
-			<span class="text-error">{$errors[0]}</span>
+{#if issues || description}
+	<label for={name} class="fieldset-label">
+		{#if issues && isTupleOfAtLeast(issues, 1)}
+			<span class="text-error">{issues[0]}</span>
 		{:else}
 			<span class="text-neutral-500">{description}</span>
 		{/if}

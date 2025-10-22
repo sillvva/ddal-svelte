@@ -13,7 +13,6 @@ import {
 import { extendedLogIncludes, logIncludes } from "$lib/server/db/includes";
 import { characters, dungeonMasters, logs, magicItems, storyAwards } from "$lib/server/db/schema";
 import type { ErrorParams } from "$lib/server/effect/errors";
-import { FormError } from "$lib/server/effect/errors";
 import { AppLog } from "$lib/server/effect/logging";
 import { and, eq, exists, inArray, isNull, notInArray, or } from "drizzle-orm";
 import { Data, Effect, Layer } from "effect";
@@ -26,11 +25,15 @@ export class LogNotFoundError extends Data.TaggedError("LogNotFoundError")<Error
 	}
 }
 
-export class SaveLogError extends FormError<LogSchema> {}
+export class SaveLogError extends Data.TaggedError("SaveLogError")<ErrorParams> {
+	constructor(message: string, err?: unknown) {
+		super({ message, status: 404, cause: err });
+	}
+}
 
-export class DeleteLogError extends FormError<{ id: LogId }> {
+export class DeleteLogError extends Data.TaggedError("DeleteLogError")<ErrorParams> {
 	constructor(err?: unknown) {
-		super("Unable to delete log", { status: 500, cause: err });
+		super({ message: "Unable to delete log", status: 404, cause: err });
 	}
 }
 

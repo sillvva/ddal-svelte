@@ -2,6 +2,7 @@
 	import { afterNavigate, goto } from "$app/navigation";
 	import { navigating, page } from "$app/state";
 	import CommandTray from "$lib/components/command-tray.svelte";
+	import Error from "$lib/components/error.svelte";
 	import Footer from "$lib/components/footer.svelte";
 	import Markdown from "$lib/components/markdown.svelte";
 	import MobileNav from "$lib/components/mobile-nav.svelte";
@@ -117,7 +118,10 @@
 		</nav>
 	</header>
 	<main class="relative z-10 container mx-auto flex max-w-5xl flex-1 flex-col gap-4 p-4 *:w-full">
-		{@render children()}
+		<svelte:boundary>
+			{#snippet failed(error)}<Error {error} />{/snippet}
+			{@render children()}
+		</svelte:boundary>
 	</main>
 	<Footer />
 	<MobileNav />

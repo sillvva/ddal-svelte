@@ -1,41 +1,24 @@
-import { dungeonMasterIdSchema, dungeonMasterSchema, type DungeonMasterSchemaIn } from "$lib/schemas";
-import { saveForm, validateForm } from "$lib/server/effect/forms";
-import { guardedCommand, guardedQuery } from "$lib/server/effect/remote";
+import * as API from "$lib/remote";
+import { dungeonMasterFormSchema, dungeonMasterIdSchema } from "$lib/schemas";
+import { guardedForm, guardedQuery, refreshAll } from "$lib/server/effect/remote";
 import { DMService } from "$lib/server/effect/services/dms";
+import { redirect } from "@sveltejs/kit";
+import { Effect } from "effect";
 
-export const edit = guardedQuery(dungeonMasterIdSchema, function* (input, { user }) {
+export const get = guardedQuery(dungeonMasterIdSchema, function* (input, { user }) {
 	const DMs = yield* DMService;
-
 	const dm = yield* DMs.get.one(input, user.id);
 
-	const form = yield* validateForm(
-		{
-			id: dm.id,
-			name: dm.name,
-			DCI: dm.DCI || null,
-			userId: dm.userId,
-			isUser: dm.isUser
-		},
-		dungeonMasterSchema
-	);
-
 	return {
-		dm,
-		form
+		id: dm.id,
+		name: dm.name,
+		DCI: dm.DCI || ""
 	};
 });
 
-export const save = guardedCommand(function* (input: DungeonMasterSchemaIn, { user }) {
+export const save = guardedForm(dungeonMasterFormSchema, function* (input, { user, invalid }) {
 	const DMs = yield* DMService;
-
-	const form = yield* validateForm(input, dungeonMasterSchema);
-	if (!form.valid) return form;
-
-	return yield* saveForm(DMs.set.save(user, form.data), {
-		onSuccess: () => "/dms",
-		onError: (err) => {
-			err.toForm(form);
-			return form;
-		}
-	});
+	yield* DMs.set.save(user, input).pipe(Effect.tapError((err) => Effect.fail(invalid(err.message))));
+	yield* refreshAll(API.dms.queries.get(input.id).refresh(), API.dms.queries.getAll().refresh());
+	redirect(303, "/dms");
 });

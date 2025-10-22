@@ -1,35 +1,28 @@
 <script lang="ts">
+	import type { RemoteFormField } from "@sveltejs/kit";
 	import autosize from "svelte-autosize";
 	import type { HTMLTextareaAttributes } from "svelte/elements";
-	import { formFieldProxy, type FormFieldProxy, type FormPathLeaves, type SuperForm } from "sveltekit-superforms";
 	import Markdown from "../markdown.svelte";
 
-	type T = $$Generic<Record<PropertyKey, unknown>>;
 	interface Props extends HTMLTextareaAttributes {
-		superform: SuperForm<T>;
-		field: FormPathLeaves<T, string>;
+		field: RemoteFormField<string>;
 		preview?: boolean;
 		name?: string;
 		minRows?: number;
 		maxRows?: number;
+		maxLength?: number;
 	}
 
-	let {
-		superform,
-		field,
-		preview = false,
-		name = `mdtab${Math.round(Math.random() * 100000)}`,
-		minRows,
-		maxRows,
-		...rest
-	}: Props = $props();
+	let { field, preview = false, minRows, maxRows, maxLength, ...rest }: Props = $props();
 
 	let mode = $state("edit");
 
-	const { value, errors, constraints } = formFieldProxy(superform, field) satisfies FormFieldProxy<string>;
+	const attributes = $derived(field.as("text"));
+	const name = $derived(attributes.name);
+	const issues = $derived(field.issues());
 
-	const graphemeCount = $derived(typeof $value === "string" ? [...new Intl.Segmenter().segment($value)].length : 0);
-	const lengthDiff = $derived($value.length - graphemeCount);
+	const graphemeCount = $derived(typeof field.value() === "string" ? [...new Intl.Segmenter().segment(field.value())].length : 0);
+	const lengthDiff = $derived(field.value().length - graphemeCount);
 
 	const markdownTip = "Supports Markdown and HTML. Scripting, media, and form tags are not allowed for security reasons.";
 	const graphemeTip = $derived(
@@ -39,7 +32,7 @@
 	);
 </script>
 
-<label for={field} class="fieldset-legend">
+<label for={name} class="fieldset-legend">
 	<span>Notes</span>
 </label>
 <div>
@@ -47,14 +40,23 @@
 		<div
 			class="tabs-boxed tabs bg-base-200 border-base-content/20 rounded-t-lg rounded-b-none border border-b-0 [--tw-border-opacity:0.2]"
 		>
-			<input type="radio" {name} role="tab" class="tab rounded-md!" aria-label="Edit" bind:group={mode} value="edit" />
-			<input type="radio" {name} role="tab" class="tab rounded-md!" aria-label="Preview" bind:group={mode} value="preview" />
+			<input type="radio" name="{name}tabs" role="tab" class="tab rounded-md!" aria-label="Edit" bind:group={mode} value="edit" />
+			<input
+				type="radio"
+				name="{name}tabs"
+				role="tab"
+				class="tab rounded-md!"
+				aria-label="Preview"
+				bind:group={mode}
+				value="preview"
+			/>
 		</div>
 	{/if}
 	<textarea
 		{...rest}
-		id={field}
-		bind:value={$value}
+		{name}
+		id={name}
+		bind:value={() => field.value(), (val) => field.set(val)}
 		class="textarea textarea-bordered focus:border-primary w-full rounded-b-lg data-[preview=true]:rounded-t-none data-[state=preview]:hidden"
 		data-preview={preview}
 		data-state={mode}
@@ -62,27 +64,26 @@
 		style:--maxRows={maxRows && `${maxRows}lh`}
 		spellcheck="true"
 		{@attach autosize}
-		{...$constraints}
 	></textarea>
 	{#if preview && mode === "preview"}
 		<div class="border-base-content/20 bg-base-100 rounded-b-lg border-[1px] p-4 text-sm [--tw-border-opacity:0.2]">
-			<Markdown content={$value} />
+			<Markdown content={field.value()} />
 		</div>
 	{/if}
 </div>
 {#if !preview || mode !== "preview"}
-	<label for={field} class="fieldset-label justify-between">
-		{#if $errors?.length}
-			<span class="text-error">{$errors}</span>
+	<label for={name} class="fieldset-label justify-between">
+		{#if issues?.length}
+			<span class="bg-error text-error-content rounded-lg px-2 py-1 text-pretty">{issues}</span>
 		{:else}
 			<span class="tooltip tooltip-bottom flex items-center gap-1" data-tip={markdownTip}>
 				Markdown and HTML Supported
 				<span class="iconify mdi--question-mark-circle"></span>
 			</span>
 		{/if}
-		{#if !$errors?.length && $constraints?.maxlength}
+		{#if !issues?.length && maxLength}
 			<span class="tooltip tooltip-bottom flex items-center gap-1" data-tip={graphemeTip}>
-				{$value.length.toLocaleString()} / {$constraints?.maxlength.toLocaleString()}
+				{field.value().length.toLocaleString()} / {maxLength.toLocaleString()}
 				{#if graphemeTip}
 					<span class="iconify mdi--question-mark-circle"></span>
 				{/if}

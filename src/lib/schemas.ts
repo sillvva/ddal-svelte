@@ -12,18 +12,35 @@ function brandedId<T extends string>(name: T) {
 const string = v.pipe(v.string(), v.trim());
 export const requiredString = v.pipe(string, v.regex(/^.*(\p{L}|\p{N})+.*$/u, "Required"));
 export const shortString = v.pipe(string, v.maxLength(50));
+export const largeTextSize = v.pipe(string, v.maxLength(2000));
 export const maxTextSize = v.pipe(string, v.maxLength(5000));
 export const maxStringSize = v.pipe(string, v.maxLength(255));
 export const uuidV7 = v.pipe(
 	v.string(),
 	v.regex(/^[\da-f]{8}-[\da-f]{4}-7[\da-f]{3}-[\da-f]{4}-[\da-f]{12}$/iu, "Invalid UUIDv7")
 );
-
-const numeric = v.union([v.number(), v.pipe(v.string(), v.transform(Number), v.number())]);
-export const integer = v.pipe(numeric, v.integer());
-
 export const urlSchema = v.pipe(string, v.url(), v.maxLength(500));
 export const optionalURL = v.optional(v.fallback(urlSchema, ""), "");
+export const orEmpty = <T extends v.GenericSchema>(schema: T) => v.union([schema, v.literal("")]);
+export const emptyToNull = <T extends v.GenericSchema>(schema: T) =>
+	v.pipe(
+		schema,
+		v.transform((out) => (out as Exclude<v.InferOutput<T>, "">) || null)
+	);
+
+export const integer = v.pipe(v.number(), v.integer());
+export const date = v.pipe(
+	v.number("Required"),
+	v.minValue(new Date(2014, 0).getTime(), "Date must be 2014 or later"),
+	v.transform((input) => new Date(input)),
+	v.date()
+);
+export const nullableDate = v.pipe(
+	v.number(),
+	v.check((input) => new Date(input).getFullYear() >= 2014 || input === 0, "Date must be 2014 or later"),
+	v.transform((input) => (input ? new Date(input) : null)),
+	v.nullable(v.date())
+);
 
 export type EnvPrivate = v.InferOutput<typeof envPrivateSchema>;
 export const envPrivateSchema = v.pipe(
@@ -72,12 +89,12 @@ export const characterIdParamSchema = v.union([characterIdSchema, v.literal("new
 export type CharacterSchema = v.InferOutput<typeof characterSchema>;
 export const characterSchema = v.object({
 	id: characterIdSchema,
-	name: v.pipe(requiredString, shortString),
-	campaign: v.optional(shortString, ""),
-	race: v.optional(shortString, ""),
-	class: v.optional(shortString, ""),
-	characterSheetUrl: optionalURL,
-	imageUrl: v.optional(imageUrlWithFallback, "")
+	name: v.pipe(requiredString, shortString, v.minLength(2)),
+	campaign: shortString,
+	race: shortString,
+	class: shortString,
+	characterSheetUrl: orEmpty(urlSchema),
+	imageUrl: imageUrlWithFallback
 });
 
 export type EditCharacterSchema = v.InferOutput<typeof editCharacterSchema>;
@@ -95,19 +112,28 @@ export type DungeonMasterSchemaIn = v.InferInput<typeof dungeonMasterSchema>;
 export const dungeonMasterSchema = v.object({
 	id: dungeonMasterIdSchema,
 	name: v.pipe(requiredString, shortString),
-	DCI: v.nullish(v.pipe(string, v.regex(/\d{0,10}/, "Invalid DCI Format")), null),
+	DCI: v.pipe(string, v.regex(/\d{0,10}/, "Invalid DCI Format")),
 	userId: userIdSchema,
 	isUser: v.boolean()
+});
+
+export type DungeonMasterFormSchema = v.InferOutput<typeof dungeonMasterFormSchema>;
+export type DungeonMasterFormSchemaIn = v.InferInput<typeof dungeonMasterFormSchema>;
+export const dungeonMasterFormSchema = v.object({
+	id: dungeonMasterIdSchema,
+	name: v.pipe(requiredString, shortString),
+	DCI: v.pipe(string, v.regex(/\d{0,10}/, "Invalid DCI Format"))
 });
 
 export type ItemId = v.InferOutput<typeof itemIdSchema>;
 export const itemIdSchema = brandedId("ItemID");
 
 export type ItemSchema = v.InferOutput<typeof itemSchema>;
+export type ItemSchemaIn = v.InferInput<typeof itemSchema>;
 const itemSchema = v.object({
-	id: v.optional(itemIdSchema, ""),
+	id: itemIdSchema,
 	name: requiredString,
-	description: v.nullish(maxTextSize, null)
+	description: largeTextSize
 });
 
 export type LogId = v.InferOutput<typeof logIdSchema>;
@@ -121,21 +147,22 @@ export type LogSchemaIn = v.InferInput<typeof logSchema>;
 export const logSchema = v.object({
 	id: logIdSchema,
 	name: v.pipe(requiredString, maxStringSize),
-	date: v.date(),
-	characterId: v.nullish(characterIdSchema, null),
-	characterName: v.optional(shortString, ""),
-	appliedDate: v.nullable(v.date()),
+	date: date,
+	characterId: emptyToNull(orEmpty(characterIdSchema)),
+	characterName: shortString,
+	appliedDate: nullableDate,
 	type: v.optional(v.picklist(["game", "nongame"]), "game"),
-	experience: v.nullable(v.pipe(integer, v.minValue(0)), 0),
-	acp: v.nullable(v.pipe(integer, v.minValue(0)), 0),
-	tcp: v.nullable(integer, 0),
-	level: v.nullable(v.pipe(integer, v.minValue(0)), 0),
-	gold: v.nullable(numeric, 0),
-	dtd: v.nullable(integer, 0),
+	experience: v.optional(v.pipe(integer, v.minValue(0)), 0),
+	acp: v.optional(v.pipe(integer, v.minValue(0)), 0),
+	tcp: v.optional(integer, 0),
+	level: v.optional(v.pipe(integer, v.minValue(0)), 0),
+	gold: v.optional(v.number(), 0),
+	dtd: v.optional(integer, 0),
 	description: v.optional(maxTextSize, ""),
 	dm: v.object({
 		...dungeonMasterSchema.entries,
-		name: v.optional(shortString, "")
+		name: v.optional(shortString, ""),
+		isUser: v.optional(v.boolean(), false)
 	}),
 	isDmLog: v.optional(v.boolean(), false),
 	magicItemsGained: v.optional(v.array(itemSchema), []),

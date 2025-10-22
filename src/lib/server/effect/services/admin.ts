@@ -2,18 +2,22 @@ import type { AppLogId, AppLogSchema } from "$lib/schemas";
 import { DBService, runQuery, type DrizzleError, type Filter, type Transaction, type TRSchema } from "$lib/server/db";
 import type { relations } from "$lib/server/db/relations";
 import { appLogs, type AppLog } from "$lib/server/db/schema";
-import { FormError } from "$lib/server/effect/errors";
+import { type ErrorParams } from "$lib/server/effect/errors";
 import type { ParseMetadata } from "@sillvva/search";
 import { DrizzleSearchParser } from "@sillvva/search/drizzle";
 import { eq, sql } from "drizzle-orm";
-import { Effect, Layer } from "effect";
+import { Data, Effect, Layer } from "effect";
 import { isTupleOf } from "effect/Predicate";
 
-export class SaveAppLogError extends FormError<AppLogSchema> {}
+export class SaveAppLogError extends Data.TaggedError("SaveAppLogError")<ErrorParams> {
+	constructor(message: string, err?: unknown) {
+		super({ message, status: 404, cause: err });
+	}
+}
 
-export class DeleteLogError extends FormError<{ id: AppLogId }> {
+export class DeleteLogError extends Data.TaggedError("DeleteLogError")<ErrorParams> {
 	constructor(err?: unknown) {
-		super("Unable to delete log", { status: 500, cause: err });
+		super({ message: "Unable to delete log", status: 404, cause: err });
 	}
 }
 

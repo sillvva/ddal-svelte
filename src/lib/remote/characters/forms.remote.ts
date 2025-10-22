@@ -1,59 +1,67 @@
 import { BLANK_CHARACTER } from "$lib/constants";
-import { characterIdParamSchema, editCharacterSchema, type EditCharacterSchemaIn } from "$lib/schemas";
-import { saveForm, validateForm } from "$lib/server/effect/forms";
-import { guardedCommand, guardedQuery } from "$lib/server/effect/remote";
+import * as API from "$lib/remote";
+import { characterIdParamSchema, editCharacterSchema } from "$lib/schemas";
+import { guardedForm, guardedQuery, refreshAll } from "$lib/server/effect/remote";
 import { CharacterService } from "$lib/server/effect/services/characters";
+import { isValidUrl } from "$lib/server/effect/util";
+import { redirect } from "@sveltejs/kit";
 import { Effect } from "effect";
-import { get } from "./queries.remote";
+import { get as getCharacter } from "./queries.remote";
 
-export const edit = guardedQuery(characterIdParamSchema, function* (input, { event }) {
+export const get = guardedQuery(characterIdParamSchema, function* (input, { event }) {
 	const firstLog = event.locals.app.characters.firstLog;
-	const character = yield* Effect.promise(() => get({ param: input }));
+	const character = yield* Effect.promise(() => getCharacter({ param: input }));
 
-	const form = yield* validateForm(
-		{
+	return {
+		character: {
 			id: character.id,
 			name: character.name,
-			campaign: character.campaign || "",
-			race: character.race || "",
-			class: character.class || "",
-			characterSheetUrl: character.characterSheetUrl || "",
+			race: character.race,
+			class: character.class,
+			campaign: character.campaign,
+			characterSheetUrl: character.characterSheetUrl,
 			imageUrl: character.imageUrl === BLANK_CHARACTER ? "" : character.imageUrl,
 			firstLog: firstLog && input === "new"
 		},
-		editCharacterSchema,
-		{
-			errors: input !== "new"
-		}
-	);
-
-	return {
-		form
+		initialErrors: input !== "new"
 	};
 });
 
-export const save = guardedCommand(function* (input: EditCharacterSchemaIn, { user }) {
+export const save = guardedForm(editCharacterSchema, function* (input, { user, invalid }) {
 	const Characters = yield* CharacterService;
 
-	const form = yield* validateForm(input, editCharacterSchema);
-	if (!form.valid) return form;
-	const { firstLog, ...data } = form.data;
+	const { firstLog, ...data } = input;
 
 	const preexisting = yield* Characters.get
 		.all(user.id, { characterId: data.id })
 		.pipe(Effect.map((characters) => characters.length > 0));
 
-	return yield* saveForm(Characters.set.save(data, user.id), {
-		onSuccess: async (character) => {
-			if (firstLog && !preexisting) {
-				return `/characters/${character.id}/log/new?firstLog=true` as const;
-			} else {
-				return `/characters/${character.id}` as const;
-			}
-		},
-		onError: (err) => {
-			err.toForm(form);
-			return form;
-		}
-	});
+	type Issue = ReturnType<typeof invalid.imageUrl>;
+	let issues: Issue[] = [];
+
+	if (data.imageUrl) {
+		const result = yield* isValidUrl(data.imageUrl);
+		if (!result) issues.push(invalid.imageUrl("URL appears to be broken"));
+	} else {
+		data.imageUrl = BLANK_CHARACTER;
+	}
+
+	if (data.characterSheetUrl) {
+		const result = yield* isValidUrl(data.characterSheetUrl);
+		if (!result) issues.push(invalid.characterSheetUrl("URL appears to be broken"));
+	}
+
+	if (issues.length) invalid(...issues);
+
+	const result = yield* Characters.set.save(data, user.id).pipe(Effect.tapError((err) => Effect.fail(invalid(err.message))));
+
+	if (preexisting) {
+		yield* refreshAll(API.characters.queries.get({ param: data.id }).refresh());
+	}
+
+	if (firstLog && !preexisting) {
+		redirect(303, `/characters/${result.id}/log/new?firstLog=true`);
+	} else {
+		redirect(303, `/characters/${result.id}`);
+	}
 });

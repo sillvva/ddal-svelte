@@ -1,21 +1,20 @@
 <script lang="ts">
 	import { dev } from "$app/environment";
+	import type { RemoteFormField } from "@sveltejs/kit";
 	import { Combobox } from "bits-ui";
-	import SuperDebug, { formFieldProxy, stringProxy, type FormPathLeaves, type SuperForm } from "sveltekit-superforms";
+	import SuperDebugRuned from "sveltekit-superforms/SuperDebug.svelte";
+	import RemoteFieldMessage from "./remote-field-message.svelte";
 
-	type T = $$Generic<Record<PropertyKey, unknown>>;
 	type Item = {
 		value: string;
 		label: string;
 		itemLabel?: string;
 	};
 	interface Props {
-		superform: SuperForm<T>;
-		valueField: FormPathLeaves<T>;
-		inputField: FormPathLeaves<T, string>;
-		errorField?: FormPathLeaves<T, string>;
+		valueField: RemoteFormField<string>;
+		inputField: RemoteFormField<string>;
+		errorField?: RemoteFormField<string>;
 		label: string;
-		name?: string;
 		values?: Array<Item>;
 		allowCustom?: boolean;
 		showOnEmpty?: boolean;
@@ -31,12 +30,10 @@
 	}
 
 	let {
-		superform,
 		valueField,
 		inputField,
 		errorField = valueField,
 		label,
-		name = "",
 		values = [],
 		allowCustom = false,
 		showOnEmpty = false,
@@ -55,12 +52,11 @@
 	let open = $state(false);
 	let changed = $state(false);
 
-	const { constraints } = formFieldProxy(superform, inputField);
-	const value = stringProxy(superform, valueField, { empty: "undefined" });
-	const input = stringProxy(superform, inputField, { empty: "undefined" });
-	const { errors } = formFieldProxy(superform, errorField);
-
-	if ($constraints?.required) required = true;
+	const input = $derived(inputField.value());
+	const attributes = $derived(valueField.as("select"));
+	const name = $derived(attributes.name);
+	const issues = $derived(errorField ? errorField.issues() : valueField.issues());
+	const invalid = $derived(!!issues?.length || undefined);
 
 	const withLabel = $derived(
 		values.map(({ value, label, itemLabel }) => ({
@@ -74,25 +70,25 @@
 			v.itemLabel
 				.toLowerCase()
 				.replace(/\s+/g, "")
-				.includes(($input || "").toLowerCase().replace(/\s+/g, ""))
+				.includes((input || "").toLowerCase().replace(/\s+/g, ""))
 		)
 	);
-	const firstItem = $derived<Item>({ value: "", label: $input, itemLabel: `Add ${$input}` });
+	const firstItem = $derived<Item>({ value: "", label: input, itemLabel: `Add ${input}` });
 	const filtered = $derived(
-		!$input?.trim() || !allowCustom || prefiltered.length === 1 ? prefiltered : [firstItem].concat(prefiltered)
+		!input?.trim() || !allowCustom || prefiltered.length === 1 ? prefiltered : [firstItem].concat(prefiltered)
 	);
 
 	let selectedItem = $state<Item | undefined>(
-		$value
-			? values.find((v) => v.value === $value)
-			: $input.trim() && allowCustom
-				? { value: "", label: $input, itemLabel: `Add ${$input}` }
+		valueField.value()
+			? values.find((v) => v.value === valueField.value())
+			: inputField.value()?.trim() && allowCustom
+				? { value: "", label: inputField.value(), itemLabel: `Add ${inputField.value()}` }
 				: undefined
 	);
 
 	function clear() {
-		$value = "";
-		$input = "";
+		valueField.set("");
+		inputField.set("");
 		selectedItem = undefined;
 		onclear?.();
 		open = false;
@@ -102,15 +98,15 @@
 <Combobox.Root
 	items={filtered}
 	type="single"
-	bind:value={$value}
+	bind:value={() => valueField.value(), (val) => valueField.set(val)}
 	bind:open
 	{name}
 	{disabled}
 	onValueChange={(sel) => {
 		const item = filtered.find((item) => item.value === sel);
-		$input = item?.label || item?.value || "";
-		selectedItem = { value: item?.value || "", label: $input, itemLabel: $input };
-		onselect?.({ selected: item, input: $input });
+		inputField.set(item?.label || item?.value || "");
+		selectedItem = { value: item?.value || "", label: input, itemLabel: input };
+		onselect?.({ selected: item, input: input });
 		open = false;
 	}}
 	onOpenChange={() => {
@@ -124,7 +120,7 @@
 		}, 50);
 	}}
 >
-	<label for={inputField} class="fieldset-legend">
+	<label for={name} class="fieldset-legend">
 		<span>
 			{label}
 			{#if required}
@@ -136,30 +132,30 @@
 		<div class="dropdown w-full">
 			<label>
 				<Combobox.Input
-					id={inputField}
+					id={name}
 					oninput={(e) => {
 						let cValue = e.currentTarget.value;
 						if (!cValue) return clear();
-						$input = cValue;
-						$value = "";
+						inputField.set(cValue);
+						valueField.set("");
 						oninput?.(e.currentTarget, cValue);
 						changed = true;
 					}}
 					onblur={() => {
 						if (!allowCustom && !selectedItem && !filtered.length) clear();
-						if (!$input) open = false;
+						if (!input) open = false;
 					}}
-					aria-invalid={($errors || []).length ? "true" : undefined}
+					aria-invalid={issues?.length ? "true" : undefined}
 					class="input join-item focus:border-primary w-full"
 					{required}
 					{placeholder}
 				>
 					{#snippet child({ props })}
-						<input {...props} bind:value={$input} />
+						<input {...props} {...inputField.as("text")} aria-invalid={invalid} />
 					{/snippet}
 				</Combobox.Input>
 			</label>
-			{#if (showOnEmpty || $input?.trim()) && filtered.length}
+			{#if (showOnEmpty || input?.trim()) && filtered.length}
 				<Combobox.ContentStatic class="menu dropdown-content bg-base-200 z-10 w-full rounded-lg p-2 shadow-sm">
 					{#snippet child({ props })}
 						<ul {...props}>
@@ -188,7 +184,7 @@
 				</Combobox.ContentStatic>
 			{/if}
 		</div>
-		{#if $input && clearable}
+		{#if input && clearable}
 			<button
 				class="btn join-item border-base-content/20 border px-2"
 				type="button"
@@ -220,17 +216,9 @@
 			</button>
 		{/if}
 	</div>
-	{#if $errors?.length || description}
-		<label for={inputField} class="fieldset-label">
-			{#if $errors?.length}
-				<span class="text-error">{$errors[0]}</span>
-			{:else}
-				<span class="text-neutral-500">{description}</span>
-			{/if}
-		</label>
-	{/if}
+	<RemoteFieldMessage {name} type="select" {description} {issues} />
 </Combobox.Root>
 
 {#if debug}
-	<SuperDebug data={selectedItem} />
+	<SuperDebugRuned data={selectedItem} />
 {/if}

@@ -1,33 +1,17 @@
 /* eslint-disable svelte/prefer-svelte-reactivity */
-import { goto, invalidateAll } from "$app/navigation";
+import { goto } from "$app/navigation";
 import type { FullCharacterData } from "$lib/server/effect/services/characters";
 import type { UserDM } from "$lib/server/effect/services/dms";
 import type { FullLogData, LogSummaryData, UserLogData } from "$lib/server/effect/services/logs";
-import { getLocalTimeZone, parseAbsoluteToLocal, toCalendarDateTime, type DateValue } from "@internationalized/date";
+import { parseAbsoluteToLocal, toCalendarDateTime } from "@internationalized/date";
 import { debounce, isDefined, substrCount, type MapKeys, type Prettify } from "@sillvva/utils";
-import { isHttpError, type NumericRange, type RemoteQuery, type RemoteQueryOverride } from "@sveltejs/kit";
+import { isHttpError, type NumericRange } from "@sveltejs/kit";
 import { Duration } from "effect";
-import { onDestroy } from "svelte";
 import { toast } from "svelte-sonner";
 import { SvelteMap } from "svelte/reactivity";
-import { derived, get, writable, type Readable, type Writable } from "svelte/store";
-import {
-	dateProxy,
-	fieldProxy,
-	superForm,
-	type FormOptions,
-	type FormPathLeaves,
-	type Infer,
-	type InferIn,
-	type SuperForm,
-	type SuperValidated
-} from "sveltekit-superforms";
-import { valibotClient } from "sveltekit-superforms/adapters";
-import * as v from "valibot";
 import type { FullPathname } from "./constants";
 import type { SearchData } from "./remote/command";
 import type { EffectFailure, EffectResult } from "./server/effect/runtime";
-import type { Awaitable } from "./util";
 
 export function isRedirectFailure(
 	error: EffectFailure["error"]
@@ -71,223 +55,8 @@ export function unknownErrorToast(error: unknown) {
 	else errorToast("An unknown error occurred");
 }
 
-type RemoteUpdates = Array<RemoteQuery<unknown> | RemoteQueryOverride>;
-
-/**
- * Configuration options for custom form behavior when using remote functions.
- */
-export interface CustomFormOptions<Out extends Record<string, unknown>> {
-	remote?: (data: Out) => Promise<EffectResult<SuperValidated<Out> | FullPathname>>;
-	remoteUpdates?: undefined;
-	onSuccessResult?: (data: Out) => Awaitable<void>;
-	onErrorResult?: (error: EffectFailure["error"]) => Awaitable<void>;
-}
-
-/**
- * Configuration options for forms that need fine-grained query updates.
- * Extends CustomFormOptions but requires remote updates functionality.
- */
-export interface OptionsWithUpdates<Out extends Record<string, unknown>> extends Omit<CustomFormOptions<Out>, "remoteUpdates"> {
-	remote?: (data: Out) => Promise<EffectResult<SuperValidated<Out> | FullPathname>> & {
-		updates: (...queries: RemoteUpdates) => Promise<EffectResult<SuperValidated<Out> | FullPathname>>;
-	};
-	remoteUpdates: () => RemoteUpdates;
-}
-
-/**
- * Creates a SvelteKit Superforms form with Valibot validation and enhanced remote function capabilities.
- *
- * This function combines the power of SvelteKit Superforms with Valibot schema validation, providing
- * a type-safe form solution that supports both traditional form submission and remote functions.
- * It includes built-in error handling, success notifications, and optional query invalidation.
- *
- * @param form - The SuperValidated form data from SvelteKit Superforms, typically from a load function
- * @param schema - The Valibot schema used for client-side validation
- * @param options - Configuration options for form behavior, validation, and submission handling
- *
- * @returns Enhanced SuperForm object with additional properties:
- *   - All standard SvelteKit Superforms properties (form, errors, message, etc.)
- *   - `pending` - Writable store indicating if form submission is in progress
- *   - `submitCount` - Writable store tracking the number of submission attempts
- *
- * @example
- * ```typescript
- * // Basic usage with Valibot schema
- * const schema = v.object({
- *   name: v.string(),
- *   email: v.pipe(v.string(), v.email())
- * });
- *
- * const { form, errors, enhance } = $derived(valibotForm(data.form, schema));
- *
- * // Usage in Svelte component
- * <form method="POST" use:enhance>
- *   <input bind:value={$form.name} />
- *   {#if $errors.name}
- *     <span class="error">{$errors.name}</span>
- *   {/if}
- * </form>
- * ```
- *
- * @example
- * ```typescript
- * // Advanced usage with remote functions and updates
- * const { form, errors, enhance, pending } = $derived(valibotForm(data.form, schema, {
- *   remote: updateCharacter,
- *   remoteUpdates: [
- *     getCharacters(user.id),
- *     getCharacter(character.id)
- *   ]
- * }));
- * ```
- *
- * @see {@link https://superforms.rocks/ SvelteKit Superforms Documentation}
- * @see {@link https://valibot.dev/ Valibot Documentation}
- */
-export function valibotForm<S extends v.GenericSchema, Out extends Infer<S, "valibot">, In extends InferIn<S, "valibot">>(
-	form: SuperValidated<Out, App.Superforms.Message, In>,
-	schema: S,
-	{
-		remote,
-		remoteUpdates,
-		invalidateAll: inalidate,
-		onSuccessResult = (data) => (typeof data === "object" && "name" in data ? successToast(`${data.name} saved`) : undefined),
-		onErrorResult = (error) => errorToast(error.message),
-		onSubmit,
-		onResult,
-		onError,
-		...rest
-	}: FormOptions<Out, App.Superforms.Message, In> & (CustomFormOptions<Out> | OptionsWithUpdates<Out>) = {}
-) {
-	const pending = writable(false);
-	const submitCount = writable(0);
-
-	const superform = superForm(form, {
-		dataType: "json",
-		validators: valibotClient(schema),
-		taintedMessage: "You have unsaved changes. Are you sure you want to leave?",
-		...rest,
-
-		onSubmit: async (event) => {
-			pending.set(true);
-			submitCount.update((count) => count + 1);
-
-			if ((await onSubmit?.(event)) === false) {
-				pending.set(false);
-				return event.cancel();
-			}
-
-			if (remote) {
-				event.cancel();
-
-				const data = get(superform.form);
-				const result = (remoteUpdates && (await remote(data).updates(...remoteUpdates()))) ?? (await remote(data));
-
-				if (result.ok) {
-					if (typeof result.data === "string") {
-						superform.tainted.set(undefined);
-						await onSuccessResult(data);
-						await goto(result.data);
-						return;
-					}
-
-					const hasErrors = Object.keys(result.data.errors).length > 0;
-					superform.errors.set(result.data.errors);
-					superform.message.set(result.data.message);
-					superform.form.set(result.data.data, {
-						taint: hasErrors ? true : "untaint-form"
-					});
-
-					if (!hasErrors) await onSuccessResult(data);
-				} else {
-					await onErrorResult(result.error);
-
-					if (isRedirectFailure(result.error)) {
-						superform.tainted.set(undefined);
-						await goto(result.error.redirectTo);
-						return;
-					} else {
-						const error = result.error.message;
-						superform.errors.set({ _errors: [error] });
-					}
-				}
-
-				pending.set(false);
-			}
-		},
-
-		onResult(event) {
-			if (event.result.type !== "redirect") pending.set(false);
-
-			if (["success", "redirect"].includes(event.result.type)) {
-				onSuccessResult(get(superform.form));
-			}
-
-			onResult?.(event);
-		}
-	});
-
-	onDestroy(async () => {
-		if (get(submitCount) > 0 && inalidate !== false && !remoteUpdates?.length) {
-			await invalidateAll();
-		}
-	});
-
-	return {
-		...superform,
-		pending,
-		submitCount
-	};
-}
-
-type ArgumentsType<T> = T extends (...args: infer U) => unknown ? U : never;
-type IntDateProxyOptions = Omit<NonNullable<ArgumentsType<typeof dateProxy>[2]>, "format">;
-
-export function dateToDV(date: Date | null | undefined) {
-	if (!date) return undefined;
-	return toCalendarDateTime(parseAbsoluteToLocal(date.toISOString()));
-}
-
-export function intDateProxy<T extends Record<string, unknown>, Path extends FormPathLeaves<T, Date>>(
-	form: Writable<T> | SuperForm<T>,
-	path: Path,
-	options?: IntDateProxyOptions
-): Writable<DateValue | undefined> {
-	function toValue(value?: DateValue) {
-		if (!value) return options?.empty === "null" ? null : undefined;
-		return value.toDate(getLocalTimeZone());
-	}
-
-	// eslint-disable-next-line @typescript-eslint/no-explicit-any
-	const realProxy = fieldProxy<T, any, Date | null | undefined>(form, path, { taint: options?.taint });
-
-	let updatedValue: DateValue | undefined = undefined;
-	const proxy: Readable<DateValue | undefined> = derived(realProxy, (value: unknown) => {
-		// Prevent proxy updating itself
-		if (updatedValue !== undefined) {
-			const current = updatedValue;
-			updatedValue = undefined;
-			return current;
-		}
-
-		if (value instanceof Date) return dateToDV(value);
-
-		return undefined;
-	});
-
-	return {
-		subscribe: proxy.subscribe,
-		set(val: DateValue | undefined) {
-			updatedValue = val;
-			realProxy.set(toValue(updatedValue));
-		},
-		update(updater) {
-			realProxy.update((f) => {
-				updatedValue = updater(dateToDV(f));
-				return toValue(updatedValue);
-			});
-		}
-	};
+export function dateToCalendar(date: Date | string | number) {
+	return toCalendarDateTime(parseAbsoluteToLocal(new Date(date).toISOString()));
 }
 
 type WordToken = { type: "word"; value: string };

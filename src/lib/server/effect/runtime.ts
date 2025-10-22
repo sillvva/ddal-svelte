@@ -165,6 +165,8 @@ export function handleCause<F extends InstanceType<ErrorClass>>(cause: Cause.Cau
 		} else if (isHttpError(defect)) {
 			status = defect.status as NumericRange<300, 599>;
 			message = defect.body.message;
+		} else if (defect instanceof Error) {
+			if (defect.name === "ValidationError") throw defect;
 		}
 
 		if (typeof defect === "object" && defect !== null) {

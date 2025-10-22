@@ -50,12 +50,6 @@ declare global {
 						imageUrl: string;
 				  };
 		}
-		namespace Superforms {
-			type Message = {
-				type: "error" | "success";
-				text: string;
-			};
-		}
 
 		interface ModuleData {
 			getPageTitle?: (data: App.PageData) => string;

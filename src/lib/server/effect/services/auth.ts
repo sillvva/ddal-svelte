@@ -14,7 +14,7 @@ import { sveltekitCookies } from "better-auth/svelte-kit";
 import { Data, Duration, Effect } from "effect";
 import { v7 } from "uuid";
 import * as v from "valibot";
-import { parse, type InvalidSchemaError } from "../forms";
+import { parse, type InvalidSchemaError } from "../util";
 import { UserService } from "./users";
 
 const authPlugins = [passkey(), admin(), lastLoginMethod(), sveltekitCookies(getRequestEvent)];
@@ -23,7 +23,7 @@ interface AuthApiImpl {
 	readonly auth: () => Effect.Effect<ReturnType<typeof betterAuth<{ plugins: typeof authPlugins }>>>;
 	readonly getAuthSession: () => Effect.Effect<
 		{ session: LocalsSession | undefined; user: LocalsUser | undefined },
-		DrizzleError | InvalidSchemaError<typeof localsSessionSchema> | AuthError,
+		DrizzleError | InvalidSchemaError | AuthError,
 		UserService
 	>;
 	readonly guard: (adminOnly?: boolean) => Effect.Effect<{ user: LocalsUser; event: RequestEvent }, RedirectError | InvalidUser>;

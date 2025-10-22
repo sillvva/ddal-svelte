@@ -5,6 +5,7 @@ import { RedirectError } from "$lib/server/effect/errors";
 import { guardedQuery } from "$lib/server/effect/remote";
 import { run } from "$lib/server/effect/runtime";
 import { CharacterService } from "$lib/server/effect/services/characters";
+import { redirect } from "@sveltejs/kit";
 import * as v from "valibot";
 
 export const getAll = guardedQuery(function* ({ user }) {
@@ -22,8 +23,7 @@ export const get = query(
 			const Character = yield* CharacterService;
 			const { locals } = getRequestEvent();
 
-			if (input.param === "new" && input.newRedirect)
-				return yield* new RedirectError({ message: "Redirecting to new character form", redirectTo: "/characters/new/edit" });
+			if (input.param === "new" && input.newRedirect) redirect(302, "/characters/new/edit");
 
 			const character =
 				input.param === "new"

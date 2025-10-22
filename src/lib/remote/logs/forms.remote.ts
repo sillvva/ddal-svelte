@@ -8,15 +8,15 @@ import {
 	type LogSchema,
 	type LogSchemaIn
 } from "$lib/schemas";
-import { FormError, RedirectError, redirectOnFail } from "$lib/server/effect/errors";
-import { parse, safeParse, saveForm, validateForm } from "$lib/server/effect/forms";
-import { guardedCommand, guardedQuery } from "$lib/server/effect/remote";
+import { RedirectError, redirectOnFail } from "$lib/server/effect/errors";
+import { guardedForm, guardedQuery } from "$lib/server/effect/remote";
 import { CharacterService } from "$lib/server/effect/services/characters";
 import { DMNotFoundError, DMService } from "$lib/server/effect/services/dms";
 import { LogNotFoundError, LogService } from "$lib/server/effect/services/logs";
+import { parse, safeParse } from "$lib/server/effect/util";
 import { omit, sorter } from "@sillvva/utils";
+import { redirect } from "@sveltejs/kit";
 import { Effect } from "effect";
-import type { SuperValidated } from "sveltekit-superforms";
 import * as v from "valibot";
 
 const characterLogFormSchema = v.object({
@@ -45,10 +45,6 @@ export const character = guardedQuery(characterLogFormSchema, function* (input, 
 		if (log.isDmLog) return yield* new RedirectError({ message: "Redirecting to DM log", redirectTo: `/dm-logs/${log.id}` });
 	}
 
-	const form = yield* validateForm(log, characterLogSchema(character), {
-		errors: logId !== "new"
-	});
-
 	const itemEntities = getItemEntities(character, { excludeDropped: true, lastLogId: log.id });
 	const magicItems = itemEntities.magicItems.toSorted((a, b) => sorter(a.name, b.name));
 	const storyAwards = itemEntities.storyAwards.toSorted((a, b) => sorter(a.name, b.name));
@@ -59,7 +55,13 @@ export const character = guardedQuery(characterLogFormSchema, function* (input, 
 		magicItems,
 		storyAwards,
 		dms,
-		form
+		log: {
+			...log,
+			characterId: log.characterId || "",
+			date: log.date.getTime(),
+			appliedDate: log.appliedDate?.getTime() || 0
+		},
+		initialErrors: logId !== "new"
 	};
 });
 
@@ -77,8 +79,7 @@ export const dm = guardedQuery(dmLogFormSchema, function* (input, { user }) {
 	const userDM = yield* DMs.get.all(user, false).pipe(
 		Effect.map((dms) => dms.find((dm) => dm.isUser)),
 		Effect.flatMap((dm) => (dm ? Effect.succeed(dm) : Effect.fail(new DMNotFoundError()))),
-		// eslint-disable-next-line @typescript-eslint/no-unused-vars
-		Effect.map(({ logs, ...rest }) => rest)
+		Effect.map((dm) => omit(dm, ["logs"]))
 	);
 
 	const logId = input.param.logId;
@@ -87,11 +88,7 @@ export const dm = guardedQuery(dmLogFormSchema, function* (input, { user }) {
 
 	if (logId !== "new") {
 		if (!log.id) return yield* new LogNotFoundError();
-		if (!log.isDmLog)
-			return yield* new RedirectError({
-				message: "Redirecting to character log",
-				redirectTo: `/characters/${log.characterId}/log/${log.id}`
-			});
+		if (!log.isDmLog) redirect(302, `/characters/${log.characterId}/log/${log.id}`);
 	}
 
 	const characters = yield* Characters.get.all(user.id).pipe(
@@ -106,54 +103,56 @@ export const dm = guardedQuery(dmLogFormSchema, function* (input, { user }) {
 		)
 	);
 
-	const form = yield* validateForm(log, dMLogSchema(characters.filter((c) => c.id === log.characterId)), {
-		errors: logId !== "new"
-	});
-
 	return {
 		characters: characters.map((c) => ({ id: c.id, name: c.name })),
-		form
+		initialErrors: logId !== "new",
+		log: {
+			...log,
+			characterId: log.characterId || "",
+			date: log.date.getTime(),
+			appliedDate: log.appliedDate?.getTime() || 0
+		}
 	};
 });
 
-export const save = guardedCommand(function* (input: LogSchemaIn, { user }) {
+export const save = guardedForm(function* (input: LogSchemaIn, { user, invalid }) {
 	const Characters = yield* CharacterService;
 	const Logs = yield* LogService;
 
-	let form: SuperValidated<LogSchema>;
+	let output: LogSchema;
 	let redirectTo: Pathname;
 
 	if (input.isDmLog) {
-		const parsedId = yield* safeParse(v.nullable(characterIdSchema), input.characterId);
+		const parsedId = yield* safeParse(characterIdSchema, input.characterId);
+		if (!parsedId.success && input.characterId) throw invalid(...parsedId.failure.issues);
 
 		const characters = input.characterId
-			? yield* Characters.get.all(user.id, {
-					characterId: parsedId.data || null
-				})
+			? yield* Characters.get
+					.all(user.id, {
+						characterId: parsedId.data
+					})
+					.pipe(Effect.tapError((err) => Effect.fail(invalid(invalid.characterId(err.message)))))
 			: [];
 
-		form = yield* validateForm(input, dMLogSchema(characters));
-		if (!parsedId.success) {
-			FormError.from<LogSchema>(parsedId.failure, "characterId").toForm(form);
-			return form;
-		}
+		const result = yield* safeParse(dMLogSchema(characters), input);
+		if (!result.success) throw invalid(...result.failure.issues);
 
+		output = result.data;
 		redirectTo = `/dm-logs`;
 	} else {
 		const characterId = yield* redirectOnFail(parse(characterIdSchema, input.characterId), "/characters", 302);
-		const character = yield* Characters.get.one(characterId);
+		const character = yield* Characters.get
+			.one(characterId)
+			.pipe(Effect.tapError((err) => Effect.fail(invalid(invalid.characterId(err.message)))));
 
-		form = yield* validateForm(input, characterLogSchema(character));
+		const result = yield* safeParse(characterLogSchema(character), input);
+		if (!result.success) throw invalid(...result.failure.issues);
+
+		output = result.data;
 		redirectTo = `/characters/${character.id}`;
 	}
 
-	if (!form.valid) return form;
+	yield* Logs.set.save(output, user).pipe(Effect.tapError((err) => Effect.fail(invalid(err.message))));
 
-	return yield* saveForm(Logs.set.save(form.data, user), {
-		onSuccess: () => redirectTo,
-		onError: (err) => {
-			err.toForm(form);
-			return form;
-		}
-	});
+	redirect(303, redirectTo);
 });

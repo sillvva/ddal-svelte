@@ -1,4 +1,5 @@
 import { wait } from "@sillvva/utils";
+import type { StandardSchemaV1 } from "@standard-schema/spec";
 import { hotkey as hk, type HotkeyItem } from "@svelteuidev/composables";
 import type { Attachment } from "svelte/attachments";
 
@@ -48,4 +49,8 @@ export function getRelativeTime(date: Date | number, lang = navigator.language):
 
 	const rtf = new Intl.RelativeTimeFormat(lang, { numeric: "auto" });
 	return rtf.format(-Math.floor(deltaSeconds / divisor), unit);
+}
+
+export function isStandardSchema(schema: object): schema is StandardSchemaV1 {
+	return "~standard" in schema;
 }
