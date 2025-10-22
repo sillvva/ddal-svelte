@@ -1,40 +1,44 @@
 <script lang="ts">
-	import type { ItemId, LogSchema, LogSchemaIn } from "$lib/schemas";
+	import type { DmLogSchemaIn, ItemId, LogSchema, LogSchemaIn } from "$lib/schemas";
 	import type { MagicItem, StoryAward } from "$lib/server/db/schema";
 	import { sorter } from "@sillvva/utils";
 	import type { RemoteFormFields } from "@sveltejs/kit";
 	import type { Snippet } from "svelte";
 	import { v7 } from "uuid";
 	import RemoteEntityCard from "./remote-entity-card.svelte";
+
+	type RequiredFields = "magicItemsGained" | "magicItemsLost" | "storyAwardsGained" | "storyAwardsLost";
+
 	interface Props {
-		form: RemoteFormFields<LogSchemaIn>;
+		fields: RemoteFormFields<LogSchemaIn> | RemoteFormFields<DmLogSchemaIn>;
+		log: Omit<LogSchemaIn, "dm"> & Required<Pick<LogSchemaIn, RequiredFields>>;
 		magicItems?: MagicItem[];
 		storyAwards?: StoryAward[];
 		children?: Snippet;
 	}
 
-	let { form, magicItems = [], storyAwards = [], children }: Props = $props();
+	let { fields, log = $bindable(), magicItems = [], storyAwards = [], children }: Props = $props();
 
 	const newItem = () => ({ id: v7() as ItemId, name: "", description: "" }) satisfies LogSchema["magicItemsGained"][number];
 
-	const type = $derived(form.type.value());
+	const type = $derived(log.type);
 	const sortedItems = $derived(
 		magicItems.toSorted((a, b) => sorter(a.name.replace(/^\d+x? ?/, ""), b.name.replace(/^\d+x? ?/, "")))
 	);
 	const sortedAwards = $derived(
 		storyAwards.toSorted((a, b) => sorter(a.name.replace(/^\d+x? ?/, ""), b.name.replace(/^\d+x? ?/, "")))
 	);
-	const remainingItems = $derived(sortedItems.filter((item) => !form.magicItemsLost.value().includes(item.id)));
-	const remainingAwards = $derived(sortedAwards.filter((item) => !form.storyAwardsLost.value().includes(item.id)));
+	const remainingItems = $derived(sortedItems.filter((item) => !log.magicItemsLost.includes(item.id)));
+	const remainingAwards = $derived(sortedAwards.filter((item) => !log.storyAwardsLost.includes(item.id)));
 
 	const buttons = $derived([
-		["Magic Items", remainingItems, form.magicItemsGained, form.magicItemsLost] as const,
-		...(type === "game" ? [["Story Awards", remainingAwards, form.storyAwardsGained, form.storyAwardsLost] as const] : [])
+		["Magic Items", remainingItems, log.magicItemsGained, log.magicItemsLost] as const,
+		...(type === "game" ? [["Story Awards", remainingAwards, log.storyAwardsGained, log.storyAwardsLost] as const] : [])
 	]);
 
 	const cards = $derived([
-		["magicItems", sortedItems, form.magicItemsGained, form.magicItemsLost],
-		["storyAwards", sortedAwards, form.storyAwardsGained, form.storyAwardsLost]
+		["magicItems", sortedItems, fields.magicItemsGained, fields.magicItemsLost],
+		["storyAwards", sortedAwards, fields.storyAwardsGained, fields.storyAwardsLost]
 	] as const);
 </script>
 
@@ -43,7 +47,7 @@
 >
 	{@render children?.()}
 	<div class="flex flex-1 flex-col gap-4 sm:flex-row md:max-w-fit">
-		{#each buttons as [label, remaining, gainedField, lostField], index (index)}
+		{#each buttons as [label, remaining, gained, lost], index (index)}
 			<div class="join flex min-w-fit flex-1">
 				<button
 					type="button"
@@ -52,14 +56,14 @@
 				>
 					<span>{label}</span>
 					<span class="flex flex-row gap-1">
-						{#if gainedField.value().length > 0}
+						{#if gained.length > 0}
 							<span class="badge badge-success badge-outline max-xs:px-1 rounded-sm">
-								{gainedField.value().length}
+								{gained.length}
 							</span>
 						{/if}
-						{#if lostField.value().length > 0}
+						{#if lost.length > 0}
 							<span class="badge badge-error badge-outline max-xs:px-1 rounded-sm">
-								{lostField.value().length}
+								{lost.length}
 							</span>
 						{/if}
 					</span>
@@ -68,7 +72,7 @@
 					type="button"
 					class="btn join-item min-w-fit max-md:flex-1 max-md:px-0 max-md:data-[remaining=0]:flex-2"
 					data-remaining={remaining.length}
-					onclick={() => gainedField.set(gainedField.value().concat(newItem()))}
+					onclick={() => gained.push(newItem())}
 					aria-label="Add Magic Item"
 				>
 					<span class="iconify mdi--plus max-md:size-6"></span>
@@ -78,7 +82,7 @@
 						type="button"
 						class="btn join-item min-w-fit max-md:flex-1 max-md:px-0"
 						onclick={() => {
-							if (remaining[0]) lostField.set(lostField.value().concat(remaining[0].id));
+							if (remaining[0]) lost.push(remaining[0].id);
 						}}
 						aria-label="Remove Magic Item"
 					>
@@ -92,10 +96,10 @@
 <div class="col-span-12 grid grid-cols-12 gap-4 dark:text-white">
 	{#each cards as [entity, items, gainedField, lostField], index (index)}
 		{#each gainedField.value() as item, index (item.id)}
-			<RemoteEntityCard {form} field={gainedField[index]!} type="add" {entity} />
+			<RemoteEntityCard bind:log field={gainedField[index]!} type="add" {entity} />
 		{/each}
 		{#each lostField.value() as id, index (id)}
-			<RemoteEntityCard {form} field={lostField[index]!} type="drop" {entity} {items} />
+			<RemoteEntityCard bind:log field={lostField[index]!} type="drop" {entity} {items} />
 		{/each}
 	{/each}
 </div>

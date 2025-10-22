@@ -1,11 +1,10 @@
-import type { Pathname } from "$app/types";
 import { defaultLogSchema, getItemEntities, logDataToSchema } from "$lib/entities";
 import {
 	characterIdSchema,
 	characterLogSchema,
 	dMLogSchema,
 	logIdParamSchema,
-	type LogSchema,
+	type DmLogSchemaIn,
 	type LogSchemaIn
 } from "$lib/schemas";
 import { RedirectError, redirectOnFail } from "$lib/server/effect/errors";
@@ -107,7 +106,7 @@ export const dm = guardedQuery(dmLogFormSchema, function* (input, { user }) {
 		characters: characters.map((c) => ({ id: c.id, name: c.name })),
 		initialErrors: logId !== "new",
 		log: {
-			...log,
+			...omit(log, ["dm"]),
 			characterId: log.characterId || "",
 			date: log.date.getTime(),
 			appliedDate: log.appliedDate?.getTime() || 0
@@ -115,44 +114,54 @@ export const dm = guardedQuery(dmLogFormSchema, function* (input, { user }) {
 	};
 });
 
-export const save = guardedForm(function* (input: LogSchemaIn, { user, invalid }) {
+export const saveCharacter = guardedForm(function* (input: LogSchemaIn, { user, invalid }) {
 	const Characters = yield* CharacterService;
 	const Logs = yield* LogService;
 
-	let output: LogSchema;
-	let redirectTo: Pathname;
+	const characterId = yield* redirectOnFail(parse(characterIdSchema, input.characterId), "/characters", 302);
+	const character = yield* Characters.get
+		.one(characterId)
+		.pipe(Effect.tapError((err) => Effect.fail(invalid(invalid.characterId(err.message)))));
 
-	if (input.isDmLog) {
-		const parsedId = yield* safeParse(characterIdSchema, input.characterId);
-		if (!parsedId.success && input.characterId) throw invalid(...parsedId.failure.issues);
+	const result = yield* safeParse(characterLogSchema(character), input);
+	if (!result.success) throw invalid(...result.failure.issues);
 
-		const characters = input.characterId
-			? yield* Characters.get
-					.all(user.id, {
-						characterId: parsedId.data
-					})
-					.pipe(Effect.tapError((err) => Effect.fail(invalid(invalid.characterId(err.message)))))
-			: [];
+	yield* Logs.set.save(result.data, user).pipe(Effect.tapError((err) => Effect.fail(invalid(err.message))));
 
-		const result = yield* safeParse(dMLogSchema(characters), input);
-		if (!result.success) throw invalid(...result.failure.issues);
+	redirect(303, `/characters/${character.id}`);
+});
 
-		output = result.data;
-		redirectTo = `/dm-logs`;
-	} else {
-		const characterId = yield* redirectOnFail(parse(characterIdSchema, input.characterId), "/characters", 302);
-		const character = yield* Characters.get
-			.one(characterId)
-			.pipe(Effect.tapError((err) => Effect.fail(invalid(invalid.characterId(err.message)))));
+export const saveDM = guardedForm(function* (input: DmLogSchemaIn, { user, invalid }) {
+	const Characters = yield* CharacterService;
+	const Logs = yield* LogService;
+	const DMs = yield* DMService;
 
-		const result = yield* safeParse(characterLogSchema(character), input);
-		if (!result.success) throw invalid(...result.failure.issues);
+	const userDM = yield* DMs.get.all(user, false).pipe(
+		Effect.map((dms) => dms.find((dm) => dm.isUser)),
+		Effect.flatMap((dm) => (dm ? Effect.succeed(dm) : Effect.fail(new DMNotFoundError()))),
+		Effect.map((dm) => omit(dm, ["logs"]))
+	);
 
-		output = result.data;
-		redirectTo = `/characters/${character.id}`;
-	}
+	const parsedId = yield* safeParse(characterIdSchema, input.characterId);
+	if (!parsedId.success && input.characterId) throw invalid(...parsedId.failure.issues);
 
-	yield* Logs.set.save(output, user).pipe(Effect.tapError((err) => Effect.fail(invalid(err.message))));
+	const characters = input.characterId
+		? yield* Characters.get
+				.all(user.id, {
+					characterId: parsedId.data
+				})
+				.pipe(Effect.tapError((err) => Effect.fail(invalid(invalid.characterId(err.message)))))
+		: [];
 
-	redirect(303, redirectTo);
+	const result = yield* safeParse(dMLogSchema(characters), input);
+	if (!result.success) throw invalid(...result.failure.issues);
+
+	const log = {
+		...result.data,
+		dm: userDM
+	};
+
+	yield* Logs.set.save(log, user).pipe(Effect.tapError((err) => Effect.fail(invalid(err.message))));
+
+	redirect(303, `/dm-logs`);
 });

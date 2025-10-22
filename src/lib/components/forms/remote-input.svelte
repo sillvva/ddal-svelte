@@ -25,7 +25,7 @@
 		field.as(
 			// @ts-expect-error expected
 			type,
-			value ?? (["string", "number"].includes(typeof field.value()) ? field.value() : undefined)
+			value ?? (["string", "number"].includes(typeof field.value()) ? field.value() || "" : undefined)
 		)
 	);
 	const name = $derived(attributes.name);
@@ -38,7 +38,7 @@
 		class={[
 			"label flex cursor-pointer rounded-lg border p-4 text-sm",
 			invalid ? "border-error" : "border-base-content/20",
-			hidden ? "hidden" : ""
+			hidden && "hidden"
 		]}
 	>
 		<div class="flex flex-1 flex-col gap-0.5">

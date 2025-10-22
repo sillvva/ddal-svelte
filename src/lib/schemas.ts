@@ -1,5 +1,5 @@
 import type { FullCharacterData } from "$lib/server/effect/services/characters";
-import type { Prettify } from "@sillvva/utils";
+import { omit, type Prettify } from "@sillvva/utils";
 import { LogLevel } from "effect";
 import * as v from "valibot";
 import { BLANK_CHARACTER, PROVIDERS, themeGroups, themes } from "./constants";
@@ -171,6 +171,13 @@ export const logSchema = v.object({
 	storyAwardsLost: v.optional(v.array(itemIdSchema), [])
 });
 
+export type DmLogSchema = v.InferOutput<typeof dmLogSchema>;
+export type DmLogSchemaIn = v.InferInput<typeof dmLogSchema>;
+export const dmLogSchema = v.object({
+	...omit(logSchema.entries, ["dm"]),
+	isDmLog: v.optional(v.boolean(), true)
+});
+
 export const characterLogSchema = (character: FullCharacterData) =>
 	v.pipe(
 		logSchema,
@@ -207,7 +214,7 @@ export const characterLogSchema = (character: FullCharacterData) =>
 
 export const dMLogSchema = (characters: FullCharacterData[] = []) =>
 	v.pipe(
-		logSchema,
+		dmLogSchema,
 		v.check((input) => input.isDmLog, "Only DM logs can be saved here."),
 		v.forward(
 			v.check((input) => {

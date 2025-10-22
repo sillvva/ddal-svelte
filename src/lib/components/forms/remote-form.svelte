@@ -27,7 +27,16 @@
 		children?: Snippet<[{ fields: Form["fields"] }]>;
 	}
 
-	let { schema, form: remoteForm, children, data, initialErrors = false, onsubmit, onresult, ...rest }: Props = $props();
+	let {
+		schema,
+		form: remoteForm,
+		children,
+		data = $bindable(),
+		initialErrors = false,
+		onsubmit,
+		onresult,
+		...rest
+	}: Props = $props();
 
 	let formEl = $state<HTMLFormElement | null>(null);
 	let hadIssues = $derived(false);

@@ -38,16 +38,16 @@
 	let { params } = $props();
 
 	const global = getGlobal();
+	const user = $derived(global.user!);
 
 	const schema = logSchema;
-	const form = API.logs.forms.save;
+	const form = API.logs.forms.saveCharacter;
 	const firstLog = page.url.searchParams.get("firstLog") === "true";
 	const { log, initialErrors, totalLevel, dms, magicItems, storyAwards } = await API.logs.forms.character({
 		param: { characterId: params.characterId, logId: params.logId, firstLog }
 	});
 
-	const user = $derived(global.user!);
-
+	let data = $state(log);
 	let season = $state(log.experience ? 1 : log.acp ? 8 : 9);
 </script>
 
@@ -56,7 +56,7 @@
 
 	<svelte:boundary>
 		{#snippet failed(error)}<Error {error} />{/snippet}
-		<RemoteForm {schema} {form} data={log} {initialErrors}>
+		<RemoteForm {schema} {form} bind:data {initialErrors}>
 			{#snippet children({ fields })}
 				<RemoteInput field={fields.id} type="hidden" />
 				<RemoteInput field={fields.characterId} type="hidden" />
@@ -84,7 +84,7 @@
 				<Control class={["col-span-12", !firstLog ? "sm:col-span-4" : "sm:col-span-6"]}>
 					<RemoteDateInput field={fields.date} label="Date" />
 				</Control>
-				{#if fields.type.value() === "game"}
+				{#if data.type === "game"}
 					{#if !firstLog}
 						<Control class="col-span-12 sm:col-span-6">
 							<RemoteCombobox
@@ -100,13 +100,11 @@
 								onselect={({ selected }) => {
 									const id = (selected?.value || "") as DungeonMasterId;
 									const name = selected?.label;
-									fields.dm.set(
-										dms.find((dm) => dm.id === id) || (name ? { ...fields.dm.value(), id, name } : defaultDM(user.id))
-									);
+									data.dm = dms.find((dm) => dm.id === id) || (name ? { ...data.dm, id, name } : defaultDM(user.id));
 								}}
 								clearable
-								onclear={() => fields.dm.set(defaultDM(user.id))}
-								link={fields.dm.id.value() ? `/dms/${fields.dm.id.value()}` : ""}
+								onclear={() => (data.dm = defaultDM(user.id))}
+								link={data.dm.id ? `/dms/${data.dm.id}` : ""}
 								placeholder={dms.find((dm) => dm.isUser)?.name || user.name}
 							/>
 						</Control>
@@ -114,11 +112,11 @@
 							<RemoteInput
 								field={fields.dm.DCI}
 								type="text"
-								disabled={!fields.dm.name.value()}
-								placeholder={fields.dm.name.value() ? undefined : dms.find((dm) => dm.isUser)?.DCI}
+								disabled={!data.dm.name}
+								placeholder={data.dm.name ? undefined : dms.find((dm) => dm.isUser)?.DCI}
 								label="DM DCI"
 							/>
-							{#if !fields.dm.name.value()}
+							{#if !data.dm.name}
 								<RemoteInput field={fields.dm.DCI} type="text" hidden />
 							{/if}
 						</Control>
@@ -165,21 +163,21 @@
 					<RemoteInput field={fields.dm.userId} type="hidden" />
 					<RemoteInput field={fields.dm.isUser} type="checkbox" hidden />
 				{/if}
-				{#if season === 8 || fields.type.value() === "nongame"}
-					<Control class={fields.type.value() === "game" ? "col-span-6 sm:col-span-2" : "col-span-4"}>
+				{#if season === 8 || data.type === "nongame"}
+					<Control class={data.type === "game" ? "col-span-6 sm:col-span-2" : "col-span-4"}>
 						<RemoteInput field={fields.tcp} type="number" label="TCP" />
 					</Control>
 				{/if}
-				<Control class={fields.type.value() === "game" ? "col-span-6 sm:col-span-2" : "col-span-4"}>
+				<Control class={data.type === "game" ? "col-span-6 sm:col-span-2" : "col-span-4"}>
 					<RemoteInput field={fields.gold} type="number" label="Gold" />
 				</Control>
-				<Control class={fields.type.value() === "game" ? "col-span-6 sm:col-span-2" : "col-span-4"}>
+				<Control class={data.type === "game" ? "col-span-6 sm:col-span-2" : "col-span-4"}>
 					<RemoteInput field={fields.dtd} type="number" label="Downtime" />
 				</Control>
 				<Control class="col-span-12 w-full">
 					<RemoteMdInput field={fields.description} name="notes" maxRows={20} maxLength={5000} preview />
 				</Control>
-				<RemoteAddDropItems form={fields} {magicItems} {storyAwards}>
+				<RemoteAddDropItems {fields} bind:log={data} {magicItems} {storyAwards}>
 					<RemoteSubmit>Save Log</RemoteSubmit>
 				</RemoteAddDropItems>
 			{/snippet}

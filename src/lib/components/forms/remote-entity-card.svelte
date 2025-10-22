@@ -6,9 +6,11 @@
 	import RemoteInput from "./remote-input.svelte";
 	import RemoteMdInput from "./remote-md-input.svelte";
 
+	type RequiredFields = "magicItemsGained" | "magicItemsLost" | "storyAwardsGained" | "storyAwardsLost";
+
 	interface BaseProps {
 		entity: "magicItems" | "storyAwards";
-		form: RemoteFormFields<LogSchemaIn>;
+		log: Omit<LogSchemaIn, "dm"> & Required<Pick<LogSchemaIn, RequiredFields>>;
 	}
 
 	interface AddProps extends BaseProps {
@@ -24,24 +26,21 @@
 
 	type Props = AddProps | DropProps;
 
-	let { entity, form, ...card }: Props = $props();
+	let { entity, log = $bindable(), ...card }: Props = $props();
 
 	const title = entity === "magicItems" ? "Magic Item" : "Story Award";
 
-	const arrValue = $derived(
-		card.type === "drop" ? (entity === "magicItems" ? form.magicItemsLost.value() : form.storyAwardsLost.value()) : []
-	);
+	const arrValue = $derived(card.type === "drop" ? (entity === "magicItems" ? log.magicItemsLost : log.storyAwardsLost) : []);
 
 	const ondelete = (ev: Event) => {
 		ev.preventDefault();
 		if (card.type === "add") {
-			if (entity === "magicItems")
-				form.magicItemsGained.set(form.magicItemsGained.value().filter((it) => it.id !== card.field.id.value()));
-			else form.storyAwardsGained.set(form.storyAwardsGained.value().filter((it) => it.id !== card.field.id.value()));
+			if (entity === "magicItems") log.magicItemsGained = log.magicItemsGained.filter((it) => it.id !== card.field.id.value());
+			else log.storyAwardsGained = log.storyAwardsGained.filter((it) => it.id !== card.field.id.value());
 		}
 		if (card.type === "drop") {
-			if (entity === "magicItems") form.magicItemsLost.set(form.magicItemsLost.value().filter((it) => it !== card.field.value()));
-			else form.storyAwardsLost.set(form.storyAwardsLost.value().filter((it) => it !== card.field.value()));
+			if (entity === "magicItems") log.magicItemsLost = log.magicItemsLost.filter((it) => it !== card.field.value());
+			else log.storyAwardsLost = log.storyAwardsLost.filter((it) => it !== card.field.value());
 		}
 	};
 </script>
