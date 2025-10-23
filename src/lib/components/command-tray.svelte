@@ -40,7 +40,7 @@
 
 <Dialog.Root bind:open={() => open, setOpen}>
 	<Dialog.Trigger
-		class="hover-hover:md:input hover-hover:md:gap-4 hover-hover:md:cursor-text touch-hitbox h-10"
+		class="hover-hover:md:input hover-hover:md:gap-4 hover-hover:md:cursor-text touch-hitbox h-10 w-auto"
 		aria-label="Search"
 		{@attach hotkey([
 			[

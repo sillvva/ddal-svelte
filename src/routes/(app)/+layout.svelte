@@ -56,7 +56,7 @@
 		class="border-base-300 bg-base-100/50 sticky top-0 z-20 w-full border-b backdrop-blur-sm transition-all"
 		style:view-transition-name="header"
 	>
-		<nav class="relative z-10 container mx-auto flex max-w-5xl gap-3 p-4">
+		<nav class="relative z-10 container mx-auto flex max-w-5xl items-center gap-3 p-4">
 			<div class="inline max-w-10 shrink-0 grow md:hidden">&nbsp;</div>
 			<div class="inline max-w-10 shrink-0 grow md:hidden">&nbsp;</div>
 			<a
@@ -68,17 +68,20 @@
 				<h2 class="text-3xl leading-7">Log Sheet</h2>
 			</a>
 			{#if global.user}
-				<a href="/characters" class="ml-8 flex items-center p-2 max-md:hidden">Character Logs</a>
-				<a href="/dm-logs" class="flex items-center p-2 max-md:hidden">DM Logs</a>
-				<a href="/dms" class="flex items-center p-2 max-md:hidden">DMs</a>
-				{#if global.user?.role === "admin"}
-					<a href="/admin/users" class="flex items-center p-2 max-md:hidden">Admin</a>
-				{/if}
+				<a href="/characters" class="ml-8 p-2 max-md:hidden">Character Logs</a>
+				<a href="/dm-logs" class="p-2 max-md:hidden">DM Logs</a>
+				<a href="/dms" class="p-2 max-md:hidden">DMs</a>
 			{/if}
-			<div class="flex-1 max-md:hidden">&nbsp;</div>
+			<div class="flex-1 max-md:hidden"></div>
 			<div class="flex items-center gap-4">
 				{#if global.user}
 					<CommandTray />
+
+					{#if global.user.role === "admin"}
+						<a href="/admin/users" class="btn btn-ghost p-2 max-md:hidden" aria-label="Admin">
+							<span class="iconify mdi--cog-outline size-6"></span>
+						</a>
+					{/if}
 
 					<!-- Avatar -->
 					<div class="hidden items-center print:flex">
