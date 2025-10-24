@@ -6,9 +6,9 @@
 	import { beforeNavigate } from "$app/navigation";
 	import { successToast, unknownErrorToast } from "$lib/factories.svelte";
 	import type { Awaitable } from "$lib/types";
-	import { omit } from "@sillvva/utils";
 	import type { StandardSchemaV1 } from "@standard-schema/spec";
 	import type { RemoteForm, RemoteFormInput, RemoteFormIssue } from "@sveltejs/kit";
+	import { Data, Equal } from "effect";
 	import { isTupleOfAtLeast } from "effect/Predicate";
 	import { onMount, tick, type Snippet } from "svelte";
 	import type { HTMLFormAttributes } from "svelte/elements";
@@ -42,24 +42,21 @@
 	let hadIssues = $derived(false);
 
 	const form = remoteForm.for((data.id ?? v7()) as FormId).preflight(schema);
-	const fields = form.fields;
-	fields.set(data);
+	form.fields.set(data);
 
 	const result = $derived(form.result);
-	const issues = $derived(fields.issues());
+	const issues = $derived(form.fields.issues());
 
-	const current = $derived(JSON.stringify(omit(fields.value(), ["id"])));
-	let initial = $state(JSON.stringify(omit(data, ["id"])));
-	let tainted = $derived(initial !== current);
+	let tainted = $derived(!Equal.equals(Data.struct(data), Data.struct(form.fields.value())));
 
 	async function validate() {
 		await form.validate({ includeUntouched: true, preflightOnly: true });
-		hadIssues ||= !!fields.allIssues()?.length;
+		hadIssues ||= !!form.fields.allIssues()?.length;
 	}
 
 	async function focusInvalid() {
 		await tick();
-		hadIssues ||= !!fields.allIssues()?.length;
+		hadIssues ||= !!form.fields.allIssues()?.length;
 
 		const invalid = formEl?.querySelector(":is(input, select, textarea):not(.hidden, [type=hidden], :disabled)[aria-invalid]") as
 			| HTMLInputElement
@@ -98,13 +95,13 @@
 				tainted = false;
 				await submit();
 
-				const issues = fields.allIssues();
+				const issues = form.fields.allIssues();
 				const success = !issues?.length;
 
 				onresult?.({ success, result: form.result, issues });
 
-				if (!issues?.length) {
-					successToast(`${fields.name?.value() || "Form"} saved successfully`);
+				if (success) {
+					successToast(`${form.fields.name?.value() || "Form"} saved successfully`);
 				} else {
 					tainted = wasTainted;
 					await focusInvalid();
@@ -132,9 +129,10 @@
 			data={{
 				action: form.action,
 				data: form.fields.value(),
-				issues: fields.allIssues(),
+				issues: form.fields.allIssues(),
 				result,
-				hadIssues
+				hadIssues,
+				tainted
 			}}
 		/>
 	{/if}

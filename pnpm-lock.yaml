@@ -161,7 +161,7 @@ importers:
         specifier: ^0.7.1
         version: 0.7.1(prettier-plugin-svelte@3.4.0(prettier@3.6.2)(svelte@5.41.4))(prettier@3.6.2)
       svelte:
-        specifier: ^5.41.3
+        specifier: ^5.41.4
         version: 5.41.4
       svelte-check:
         specifier: ^4.3.3
