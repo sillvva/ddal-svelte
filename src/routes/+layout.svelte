@@ -1,11 +1,11 @@
 <script lang="ts">
 	import { dev } from "$app/environment";
 	import { onNavigate } from "$app/navigation";
+	import { page } from "$app/state";
 	import Head from "$lib/components/head.svelte";
 	import * as API from "$lib/remote";
 	import { appDefaults } from "$lib/schemas";
 	import { createGlobal } from "$lib/stores.svelte";
-	import { wait } from "@sillvva/utils";
 	import "../app.css";
 
 	let { children } = $props();
@@ -16,14 +16,27 @@
 	global.user = request.user;
 	global.session = request.session;
 
-	onNavigate(async (navigation) => {
+	// TODO: Wait for PR #14800 to be merged, then remove this resolver
+	let resolver: (() => void) | null = null;
+	$effect.pre(() => {
+		void page.url;
+		resolver?.();
+		resolver = null;
+	});
+
+	onNavigate(({ complete, from, to }) => {
 		if (!document.startViewTransition) return;
-		if (navigation.from?.url.pathname === navigation.to?.url.pathname) return;
-		return new Promise((resolve) => {
+		if (from?.url.pathname === to?.url.pathname) return;
+		// TODO: Wait for PR #14800 to be merged, then remove this promise
+		const promise = new Promise<void>((res) => {
+			resolver = res;
+		});
+		return new Promise((res) => {
 			document.startViewTransition(async () => {
-				resolve();
-				await navigation.complete;
-				await wait(100);
+				res();
+				await complete;
+				// TODO: Wait for PR #14800 to be merged, then remove this promise
+				await promise;
 			});
 		});
 	});
