@@ -22,7 +22,11 @@ const authPlugins = [passkey(), admin(), lastLoginMethod(), sveltekitCookies(get
 interface AuthApiImpl {
 	readonly auth: () => Effect.Effect<ReturnType<typeof betterAuth<{ plugins: typeof authPlugins }>>>;
 	readonly getAuthSession: () => Effect.Effect<
-		{ session: LocalsSession | undefined; user: LocalsUser | undefined },
+		{
+			session: LocalsSession | undefined;
+			user: LocalsUser | undefined;
+			auth: ReturnType<typeof betterAuth<{ plugins: typeof authPlugins }>>;
+		},
 		DrizzleError | InvalidSchemaError | AuthError,
 		UserService
 	>;
@@ -54,6 +58,7 @@ export class AuthService extends Effect.Service<AuthService>()("AuthService", {
 						provider: "pg"
 					}),
 					secret: privateEnv.AUTH_SECRET,
+					baseUrl: privateEnv.PUBLIC_URL,
 					socialProviders: {
 						google: {
 							clientId: privateEnv.GOOGLE_CLIENT_ID,
@@ -94,7 +99,8 @@ export class AuthService extends Effect.Service<AuthService>()("AuthService", {
 
 				return {
 					session: result?.session && (yield* parse(localsSessionSchema, result.session)),
-					user: result?.user && (yield* Users.get.localsUser(result.user.id as UserId))
+					user: result?.user && (yield* Users.get.localsUser(result.user.id as UserId)),
+					auth
 				};
 			}),
 			guard: Effect.fn(function* (adminOnly = false) {
@@ -113,15 +119,6 @@ export class AuthService extends Effect.Service<AuthService>()("AuthService", {
 				if (!result.success) return yield* new InvalidUser(result.issues);
 
 				if (result.output.banned) {
-					try {
-						// Can't set or delete cookies in remote functions
-						event.cookies
-							.getAll()
-							.filter((c) => c.name.includes("auth"))
-							.forEach((c) => event.cookies.delete(c.name, { path: "/" }));
-						event.cookies.set("banned", result.output.banReason || "", { path: "/" });
-					} catch {}
-
 					return yield* new RedirectError({
 						message: "Banned",
 						redirectTo: "/"
@@ -145,12 +142,13 @@ export class AuthService extends Effect.Service<AuthService>()("AuthService", {
 
 export function getHomeError() {
 	const event = getRequestEvent();
+	const error = event.url.searchParams.get("error");
+	const description = event.url.searchParams.get("error_description");
 
-	const banned = event.cookies.get("banned");
-	if (isDefined(banned)) {
+	if (isDefined(error)) {
 		return {
-			message: `You have been banned from the application.${banned ? ` Reason: ${banned}` : ""}`,
-			code: "BANNED" as const
+			message: description,
+			code: error.toUpperCase()
 		};
 	}
 

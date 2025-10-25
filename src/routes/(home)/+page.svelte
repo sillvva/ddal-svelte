@@ -33,7 +33,7 @@
 	<div class="max-xs:max-w-80 max-xs:gap-3 flex max-w-80 flex-col gap-4">
 		{#if data.error}
 			<div class="flex justify-center">
-				<div class="alert alert-error max-w-[28rem] min-w-60 shadow-lg">
+				<div class="alert alert-error max-w-md min-w-60 shadow-lg">
 					<span class="iconify mdi--alert-circle size-6 max-sm:hidden"></span>
 					<div>
 						<h3 class="font-bold">Error</h3>

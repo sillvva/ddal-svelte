@@ -30,25 +30,12 @@ const runtime: Handle = async ({ event, resolve }) => {
 const authHandler: Handle = async ({ event, resolve }) =>
 	run(function* () {
 		const Auth = yield* AuthService;
-		const auth = yield* Auth.auth();
-		return svelteKitHandler({ event, resolve, auth, building });
-	});
 
-const session: Handle = async ({ event, resolve }) =>
-	run(function* () {
-		const Auth = yield* AuthService;
-		const { session, user } = yield* Auth.getAuthSession();
+		const { session, user, auth } = yield* Auth.getAuthSession();
 		event.locals.session = session;
 		event.locals.user = user;
 
-		if (user && event.cookies.get("banned")) {
-			try {
-				// Can't delete cookies in remote functions
-				event.cookies.delete("banned", { path: "/" });
-			} catch {}
-		}
-
-		return resolve(event);
+		return svelteKitHandler({ event, resolve, auth, building });
 	});
 
 const info: Handle = async ({ event, resolve }) => {
@@ -76,7 +63,7 @@ const preloadTheme: Handle = async ({ event, resolve }) => {
 	});
 };
 
-export const handle = sequence(runtime, authHandler, session, info, preloadTheme);
+export const handle = sequence(runtime, authHandler, info, preloadTheme);
 
 export const handleError: HandleServerError = async ({ error, event, status, message }) => {
 	if (status < 400 || (status === 500 && message === "Internal Error")) return { message };
