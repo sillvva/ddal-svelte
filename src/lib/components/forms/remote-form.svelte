@@ -6,9 +6,9 @@
 	import { beforeNavigate } from "$app/navigation";
 	import { successToast, unknownErrorToast } from "$lib/factories.svelte";
 	import type { Awaitable } from "$lib/types";
+	import { deepEqual } from "$lib/util";
 	import type { StandardSchemaV1 } from "@standard-schema/spec";
 	import type { RemoteForm, RemoteFormInput, RemoteFormIssue } from "@sveltejs/kit";
-	import { Data, Equal } from "effect";
 	import { isTupleOfAtLeast } from "effect/Predicate";
 	import { onMount, tick, type Snippet } from "svelte";
 	import type { HTMLFormAttributes } from "svelte/elements";
@@ -47,7 +47,8 @@
 	const result = $derived(form.result);
 	const issues = $derived(form.fields.issues());
 
-	let tainted = $derived(!Equal.equals(Data.struct(data), Data.struct(form.fields.value())));
+	const initial = $state.snapshot(data);
+	let tainted = $derived(!deepEqual(initial, form.fields.value()));
 
 	async function validate() {
 		await form.validate({ includeUntouched: true, preflightOnly: true });

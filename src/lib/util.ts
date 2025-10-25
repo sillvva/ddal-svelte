@@ -54,3 +54,92 @@ export function getRelativeTime(date: Date | number, lang = navigator.language):
 export function isStandardSchema(schema: object): schema is StandardSchemaV1 {
 	return "~standard" in schema;
 }
+
+/**
+ * Deeply compares two values to determine if they are equal.
+ * Handles primitives, objects, arrays, dates, RegExp, Sets, and Maps.
+ *
+ * @param a - First value to compare
+ * @param b - Second value to compare
+ * @returns true if values are deeply equal, false otherwise
+ */
+export function deepEqual(a: unknown, b: unknown): boolean {
+	// Handle same reference or primitive equality
+	if (a === b) return true;
+
+	// Handle null and undefined
+	if (a === null || b === null) return false;
+	if (a === undefined || b === undefined) return false;
+
+	// Handle different types
+	if (typeof a !== typeof b) return false;
+
+	// Handle Date objects
+	if (a instanceof Date && b instanceof Date) {
+		return a.getTime() === b.getTime();
+	}
+
+	// Handle RegExp objects
+	if (a instanceof RegExp && b instanceof RegExp) {
+		return a.source === b.source && a.flags === b.flags;
+	}
+
+	// Handle Set objects
+	if (a instanceof Set && b instanceof Set) {
+		if (a.size !== b.size) return false;
+		for (const item of a) {
+			let found = false;
+			for (const bItem of b) {
+				if (deepEqual(item, bItem)) {
+					found = true;
+					break;
+				}
+			}
+			if (!found) return false;
+		}
+		return true;
+	}
+
+	// Handle Map objects
+	if (a instanceof Map && b instanceof Map) {
+		if (a.size !== b.size) return false;
+		for (const [key, val] of a) {
+			if (!b.has(key) || !deepEqual(val, b.get(key))) {
+				return false;
+			}
+		}
+		return true;
+	}
+
+	// Handle Arrays
+	if (Array.isArray(a) && Array.isArray(b)) {
+		if (a.length !== b.length) return false;
+		for (let i = 0; i < a.length; i++) {
+			if (!deepEqual(a[i], b[i])) return false;
+		}
+		return true;
+	}
+
+	// Handle Objects (including Records)
+	if (typeof a === "object" && typeof b === "object") {
+		const keysA = Object.keys(a as Record<string, unknown>);
+		const keysB = Object.keys(b as Record<string, unknown>);
+
+		if (keysA.length !== keysB.length) return false;
+
+		for (const key of keysA) {
+			if (!keysB.includes(key)) return false;
+
+			const valA = (a as Record<string, unknown>)[key];
+			const valB = (b as Record<string, unknown>)[key];
+			console.log("deepEqual", key, valA, valB);
+
+			if (!deepEqual(valA, valB)) return false;
+		}
+
+		return true;
+	}
+
+	// Primitives that didn't match with ===
+	return false;
+}
