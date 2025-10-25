@@ -28,12 +28,12 @@
 		if (!document.startViewTransition) return;
 		if (from?.url.pathname === to?.url.pathname) return;
 		// TODO: Wait for PR #14800 to be merged, then remove this promise
-		const promise = new Promise<void>((res) => {
-			resolver = res;
+		const promise = new Promise<void>((resolve) => {
+			resolver = resolve;
 		});
-		return new Promise((res) => {
+		return new Promise((resolve) => {
 			document.startViewTransition(async () => {
-				res();
+				resolve();
 				await complete;
 				// TODO: Wait for PR #14800 to be merged, then remove this promise
 				await promise;
