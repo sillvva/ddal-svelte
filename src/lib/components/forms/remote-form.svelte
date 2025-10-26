@@ -6,7 +6,7 @@
 	import { beforeNavigate } from "$app/navigation";
 	import { successToast, unknownErrorToast } from "$lib/factories.svelte";
 	import type { Awaitable } from "$lib/types";
-	import { deepEqual } from "$lib/util";
+	import { deepEqual } from "@sillvva/utils";
 	import type { StandardSchemaV1 } from "@standard-schema/spec";
 	import type { RemoteForm, RemoteFormInput, RemoteFormIssue } from "@sveltejs/kit";
 	import { isTupleOfAtLeast } from "effect/Predicate";
