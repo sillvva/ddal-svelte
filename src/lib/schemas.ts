@@ -20,7 +20,9 @@ export const uuidV7 = v.pipe(
 	v.regex(/^[\da-f]{8}-[\da-f]{4}-7[\da-f]{3}-[\da-f]{4}-[\da-f]{12}$/iu, "Invalid UUIDv7")
 );
 export const urlSchema = v.pipe(string, v.url(), v.maxLength(500));
-export const optionalURL = v.optional(v.fallback(urlSchema, ""), "");
+export const imageUrlWithFallback = v.pipe(
+	v.fallback(v.union([urlSchema, v.literal(""), v.literal(BLANK_CHARACTER)]), BLANK_CHARACTER)
+);
 export const orEmpty = <T extends v.GenericSchema>(schema: T) => v.union([schema, v.literal("")]);
 export const emptyToNull = <T extends v.GenericSchema>(schema: T) =>
 	v.pipe(
@@ -72,10 +74,6 @@ export const envPublicSchema = v.pipe(
 
 interface CombinedEnv extends EnvPrivate, EnvPublic {}
 export type Env = Prettify<CombinedEnv>;
-
-export const imageUrlWithFallback = v.pipe(
-	v.fallback(v.union([urlSchema, v.literal(""), v.literal(BLANK_CHARACTER)]), BLANK_CHARACTER)
-);
 
 export type UserId = v.InferOutput<typeof userIdSchema>;
 export const userIdSchema = brandedId("UserId");
