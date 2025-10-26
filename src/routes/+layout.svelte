@@ -1,7 +1,6 @@
 <script lang="ts">
 	import { dev } from "$app/environment";
 	import { onNavigate } from "$app/navigation";
-	import { page } from "$app/state";
 	import Head from "$lib/components/head.svelte";
 	import * as API from "$lib/remote";
 	import { appDefaults } from "$lib/schemas";
@@ -16,27 +15,13 @@
 	global.user = request.user;
 	global.session = request.session;
 
-	// TODO: Wait for PR #14800 to be merged, then remove this resolver
-	let resolver: (() => void) | null = null;
-	$effect.pre(() => {
-		void page.url;
-		resolver?.();
-		resolver = null;
-	});
-
 	onNavigate(({ complete, from, to }) => {
 		if (!document.startViewTransition) return;
 		if (from?.url.pathname === to?.url.pathname) return;
-		// TODO: Wait for PR #14800 to be merged, then remove this promise
-		const promise = new Promise<void>((resolve) => {
-			resolver = resolve;
-		});
 		return new Promise((resolve) => {
 			document.startViewTransition(async () => {
 				resolve();
 				await complete;
-				// TODO: Wait for PR #14800 to be merged, then remove this promise
-				await promise;
 			});
 		});
 	});
