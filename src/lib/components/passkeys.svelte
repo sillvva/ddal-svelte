@@ -10,7 +10,9 @@
 	const passkeys = $derived(user?.passkeys || []);
 
 	$effect(() => {
-		global.app.settings.autoWebAuthn = passkeys.length > 0;
+		global.setApp((app) => {
+			app.settings.autoWebAuthn = passkeys.length > 0;
+		});
 	});
 
 	async function initRename(id: PasskeyId, currentName = "", error = "") {

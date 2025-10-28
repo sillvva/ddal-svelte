@@ -294,7 +294,12 @@
 				<button
 					class="btn data-[desc=true]:btn-primary sm:hidden"
 					data-desc={global.app.log.descriptions}
-					onclick={() => createTransition(() => (global.app.log.descriptions = !global.app.log.descriptions))}
+					onclick={() =>
+						createTransition(() => {
+							global.setApp((app) => {
+								app.log.descriptions = !app.log.descriptions;
+							});
+						})}
 					onkeypress={() => null}
 					aria-label="Toggle Notes"
 					tabindex="0"
@@ -312,7 +317,12 @@
 			<button
 				class="btn data-[desc=true]:btn-primary sm:btn-sm max-sm:hidden"
 				data-desc={global.app.log.descriptions}
-				onclick={() => createTransition(() => (global.app.log.descriptions = !global.app.log.descriptions))}
+				onclick={() =>
+					createTransition(() => {
+						global.setApp((app) => {
+							app.log.descriptions = !app.log.descriptions;
+						});
+					})}
 				onkeypress={() => null}
 				aria-label="Toggle Notes"
 				tabindex="0"
@@ -509,7 +519,7 @@
 							data-mi={log.magicItemsGained.length > 0 || log.magicItemsLost.length > 0}
 							style:view-transition-name={`notes-${log.id}`}
 						>
-							<td colSpan={100} class="max-w-[calc(100vw_-_50px)] pt-0 text-sm print:p-2 print:text-xs">
+							<td colSpan={100} class="max-w-[calc(100vw-50px)] pt-0 text-sm print:p-2 print:text-xs">
 								{#if log.description?.trim()}
 									<h4 class="text-base font-semibold">Notes:</h4>
 									<Markdown content={log.description} />

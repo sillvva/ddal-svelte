@@ -80,7 +80,9 @@
 						type="checkbox"
 						label="Create Starting Log"
 						onchange={() => {
-							global.app.characters.firstLog = fields.firstLog.value();
+							global.setApp((app) => {
+								app.characters.firstLog = fields.firstLog.value();
+							});
 						}}
 					/>
 				</Control>

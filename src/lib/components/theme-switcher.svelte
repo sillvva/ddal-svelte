@@ -25,8 +25,10 @@
 			document.documentElement.classList.add("theme-switcher");
 			createTransition(
 				() => {
-					global.app.settings.theme = theme;
-					global.app.settings.mode = mode;
+					global.setApp((app) => {
+						app.settings.theme = theme;
+						app.settings.mode = mode;
+					});
 					const opposite = mode === "dark" ? "light" : "dark";
 					document.documentElement.classList.replace(opposite, mode);
 					if (theme === "system") {

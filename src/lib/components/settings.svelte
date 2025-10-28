@@ -62,7 +62,9 @@
 
 				if (account) {
 					if (!global.app.settings.provider) {
-						global.app.settings.provider = account.providerId;
+						global.setApp((app) => {
+							app.settings.provider = account.providerId;
+						});
 					}
 					if (
 						account.name !== global.user?.name ||
@@ -182,7 +184,9 @@
 																const result = await API.auth.actions.updateUser(account);
 																const parsed = await parseEffectResult(result);
 																if (parsed) {
-																	global.app.settings.provider = account.providerId;
+																	global.setApp((app) => {
+																		app.settings.provider = account.providerId;
+																	});
 																	await global.refresh();
 																}
 															}}

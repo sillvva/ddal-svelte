@@ -1,11 +1,12 @@
 import { browser } from "$app/environment";
 import { Duration } from "effect";
 import Cookie from "js-cookie";
-import { getContext, setContext } from "svelte";
 import { SvelteDate } from "svelte/reactivity";
 import * as v from "valibot";
 import * as API from "./remote";
 import { appCookieSchema, appDefaults, type AppCookie, type LocalsSession, type LocalsUser } from "./schemas";
+import type { DeepReadonly } from "./types";
+import { createContext } from "./util";
 
 /**
  * Set a cookie from the browser using `js-cookie`.
@@ -38,19 +39,19 @@ export class Global {
 	private _session: LocalsSession | undefined = $state.raw();
 	private _pageLoader: boolean = $state.raw(false);
 
-	constructor(app: AppCookie) {
+	constructor(app: AppCookie = appDefaults) {
 		this._app = app;
-
-		$effect(() => {
-			setCookie("app", appCookieSchema, this._app);
-		});
 	}
 
-	get app() {
-		return this._app;
+	get app(): DeepReadonly<AppCookie> {
+		return $state.snapshot(this._app);
 	}
 	set app(value: AppCookie) {
 		this._app = value;
+	}
+	public setApp(fn: (app: AppCookie) => void) {
+		fn(this._app);
+		setCookie("app", appCookieSchema, $state.snapshot(this._app));
 	}
 
 	get user() {
@@ -82,10 +83,4 @@ export class Global {
 	}
 }
 
-const globalKey = Symbol("global");
-export function getGlobal() {
-	return getContext<Global>(globalKey);
-}
-export function createGlobal(app: AppCookie) {
-	return setContext(globalKey, new Global(app));
-}
+export const [getGlobal] = createContext(() => new Global());

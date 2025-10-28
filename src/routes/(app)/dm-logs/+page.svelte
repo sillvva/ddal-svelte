@@ -77,7 +77,12 @@
 		<button
 			class="btn data-[desc=true]:btn-primary sm:btn-sm"
 			data-desc={global.app.dmLogs.descriptions}
-			onclick={() => createTransition(() => (global.app.dmLogs.descriptions = !global.app.dmLogs.descriptions))}
+			onclick={() =>
+				createTransition(() =>
+					global.setApp((app) => {
+						app.dmLogs.descriptions = !global.app.dmLogs.descriptions;
+					})
+				)}
 			onkeypress={() => null}
 			aria-label="Toggle Notes"
 			tabindex="0"
@@ -91,7 +96,11 @@
 		</button>
 		<button
 			class="btn btn-primary sm:btn-sm"
-			onclick={() => (global.app.dmLogs.sort = global.app.dmLogs.sort === "asc" ? "desc" : "asc")}
+			onclick={() => {
+				global.setApp((app) => {
+					app.dmLogs.sort = app.dmLogs.sort === "asc" ? "desc" : "asc";
+				});
+			}}
 			aria-label="Sort"
 		>
 			<span

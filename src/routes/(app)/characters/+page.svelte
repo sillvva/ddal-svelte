@@ -79,7 +79,11 @@
 			<button
 				class="btn data-[enabled=true]:btn-primary xs:hidden inline-flex"
 				data-enabled={global.app.characters.magicItems}
-				onclick={() => (global.app.characters.magicItems = !global.app.characters.magicItems)}
+				onclick={() => {
+					global.setApp((app) => {
+						app.characters.magicItems = !app.characters.magicItems;
+					});
+				}}
 				onkeypress={() => null}
 				aria-label="Toggle Magic Items"
 				tabindex="0"
@@ -96,7 +100,12 @@
 				<button
 					class="btn data-[enabled=true]:btn-primary sm:btn-sm max-xs:hidden"
 					data-enabled={global.app.characters.magicItems}
-					onclick={() => createTransition(() => (global.app.characters.magicItems = !global.app.characters.magicItems))}
+					onclick={() =>
+						createTransition(() => {
+							global.setApp((app) => {
+								app.characters.magicItems = !app.characters.magicItems;
+							});
+						})}
 					onkeypress={() => null}
 					aria-label="Toggle Magic Items"
 					tabindex="0"
@@ -115,7 +124,12 @@
 				<button
 					class="btn join-item data-[display=list]:btn-primary data-[display=grid]:hover:btn-primary sm:btn-sm"
 					data-display={global.app.characters.display}
-					onclick={() => createTransition(() => (global.app.characters.display = "list"))}
+					onclick={() =>
+						createTransition(() => {
+							global.setApp((app) => {
+								app.characters.display = "list";
+							});
+						})}
 					onkeypress={() => null}
 					aria-label="List View"
 				>
@@ -124,7 +138,12 @@
 				<button
 					class="btn join-item data-[display=grid]:btn-primary data-[display=list]:hover:btn-primary sm:btn-sm"
 					data-display={global.app.characters.display}
-					onclick={() => createTransition(() => (global.app.characters.display = "grid"))}
+					onclick={() =>
+						createTransition(() => {
+							global.setApp((app) => {
+								app.characters.display = "grid";
+							});
+						})}
 					onkeypress={() => null}
 					aria-label="Grid View"
 				>

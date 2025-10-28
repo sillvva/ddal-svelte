@@ -1,6 +1,7 @@
 import { wait } from "@sillvva/utils";
 import type { StandardSchemaV1 } from "@standard-schema/spec";
 import { hotkey as hk, type HotkeyItem } from "@svelteuidev/composables";
+import { getContext, hasContext, setContext } from "svelte";
 import type { Attachment } from "svelte/attachments";
 
 export async function createTransition(action: ViewTransitionCallback, after?: () => void | Promise<void>, afterDelay = 0) {
@@ -53,4 +54,19 @@ export function getRelativeTime(date: Date | number, lang = navigator.language):
 
 export function isStandardSchema(schema: object): schema is StandardSchemaV1 {
 	return "~standard" in schema;
+}
+
+export function createContext<T>(createDefault?: () => T): [(getDefault?: () => T) => T, (context: T) => T] {
+	const key = Symbol("context");
+	return [
+		(getDefault) => {
+			if (!hasContext(key)) {
+				if (getDefault) return setContext(key, getDefault());
+				if (createDefault) return setContext(key, createDefault());
+				throw new Error("Context not found");
+			}
+			return getContext(key);
+		},
+		(context) => setContext(key, context)
+	];
 }
