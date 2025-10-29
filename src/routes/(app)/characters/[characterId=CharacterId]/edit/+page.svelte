@@ -31,13 +31,14 @@
 	const schema = editCharacterSchema;
 	let form = API.characters.forms.save;
 	const { character, initialErrors } = await API.characters.forms.get(params.characterId);
+	const data = $state(character);
 </script>
 
 <NavMenu />
 
 <svelte:boundary>
 	{#snippet failed(error)}<Error {error} />{/snippet}
-	<RemoteForm {schema} {form} data={character} {initialErrors}>
+	<RemoteForm {schema} {form} {data} {initialErrors}>
 		{#snippet children({ fields })}
 			<RemoteInput field={fields.id} type="hidden" />
 			<Control class="col-span-12 sm:col-span-6">
@@ -61,7 +62,7 @@
 					type="url"
 					label="Image URL"
 					placeholder={`${page.url.origin}${BLANK_CHARACTER}`}
-					warning={fields.value().imageUrl?.includes("imgur")
+					warning={data.imageUrl?.includes("imgur")
 						? "Images from imgur may not appear when sharing links due to rate limiting"
 						: undefined}
 				/>
@@ -81,7 +82,7 @@
 						label="Create Starting Log"
 						onchange={() => {
 							global.setApp((app) => {
-								app.characters.firstLog = fields.firstLog.value();
+								app.characters.firstLog = data.firstLog;
 							});
 						}}
 					/>
