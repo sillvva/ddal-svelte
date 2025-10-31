@@ -11,13 +11,14 @@
 	});
 
 	async function getHeadFromModule(module: ModuleData | undefined) {
-		if (module?.pageHead) return parseHeadData(module.pageHead);
-		if (module?.getPageHead) return parseHeadData(await module.getPageHead(page.params));
+		const username = global.user?.name || "";
+		if (module?.pageHead) return parseHeadData(module.pageHead, username);
+		if (module?.getPageHead) return parseHeadData(await module.getPageHead(page.params), username);
 		return undefined;
 	}
 
-	function parseHeadData(headData: Partial<PageHead>) {
-		headData.title = headData.title?.replace("{username}", global.user?.name || "");
+	function parseHeadData(headData: Partial<PageHead>, username: string) {
+		headData.title = headData.title?.replace("{username}", username);
 		return headData;
 	}
 
