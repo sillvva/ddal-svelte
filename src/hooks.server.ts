@@ -66,8 +66,8 @@ const preloadTheme: Handle = async ({ event, resolve }) => {
 export const handle = sequence(runtime, authHandler, info, preloadTheme);
 
 export const handleError: HandleServerError = async ({ error, event, status, message }) => {
-	if (status < 400 || (status === 500 && message === "Internal Error")) return { message };
-	if (status !== 404) Effect.runFork(AppLog.error(message, { error, url: event.url, status }));
+	if (status < 400 || status === 404 || (status === 500 && message === "Internal Error")) return { message };
+	Effect.runFork(AppLog.error(message, { error, url: event.url, status }));
 	return { message };
 };
 
