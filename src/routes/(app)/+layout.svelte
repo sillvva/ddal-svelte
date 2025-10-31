@@ -60,7 +60,11 @@
 			<div class="inline max-w-10 shrink-0 grow md:hidden">&nbsp;</div>
 			<div class="inline max-w-10 shrink-0 grow md:hidden">&nbsp;</div>
 			<a href={global.user ? "/characters" : "/"} class="flex flex-1 items-center justify-center gap-1 md:flex-none">
-				<img src="/images/dragon.webp" alt="Dragon" class="xs:block hidden size-10" />
+				<img
+					src="/images/{global.app.settings.mode === 'dark' ? 'dragon' : 'dragon-dark'}.webp"
+					alt="Dragon"
+					class="xs:block hidden size-10"
+				/>
 				<div class="font-draconis flex min-w-fit flex-col text-center">
 					<h1 class="text-base-content text-base leading-4">Adventurers League</h1>
 					<h2 class="text-3xl leading-7">Log Sheet</h2>
