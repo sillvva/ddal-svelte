@@ -59,13 +59,13 @@
 		<nav class="relative z-10 container mx-auto flex max-w-5xl items-center gap-3 p-4">
 			<div class="inline max-w-10 shrink-0 grow md:hidden">&nbsp;</div>
 			<div class="inline max-w-10 shrink-0 grow md:hidden">&nbsp;</div>
-			<div class="flex flex-1 items-center justify-center gap-1 md:flex-none">
+			<a href={global.user ? "/characters" : "/"} class="flex flex-1 items-center justify-center gap-1 md:flex-none">
 				<img src="/images/dragon.webp" alt="Dragon" class="xs:block hidden size-10" />
-				<a href={global.user ? "/characters" : "/"} class="font-draconis flex min-w-fit flex-col text-center" aria-label="Home">
+				<div class="font-draconis flex min-w-fit flex-col text-center">
 					<h1 class="text-base-content text-base leading-4">Adventurers League</h1>
 					<h2 class="text-3xl leading-7">Log Sheet</h2>
-				</a>
-			</div>
+				</div>
+			</a>
 			{#if global.user}
 				<a href="/characters" class="ml-8 p-2 max-md:hidden">Character Logs</a>
 				<a href="/dm-logs" class="p-2 max-md:hidden">DM Logs</a>
