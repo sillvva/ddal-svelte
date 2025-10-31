@@ -129,11 +129,11 @@
 		<SuperDebugRuned
 			data={{
 				action: form.action,
+				tainted,
 				data: form.fields.value(),
-				issues: form.fields.allIssues(),
 				result,
 				hadIssues,
-				tainted
+				issues: form.fields.allIssues()
 			}}
 		/>
 	{/if}
