@@ -1,11 +1,5 @@
 <script lang="ts" module>
 	import type { RouteParams } from "./$types.js";
-	export async function getPageTitle(params: RouteParams) {
-		const data = await API.logs.forms.dm({
-			param: { logId: params.logId }
-		});
-		return data.log.name || "New Log";
-	}
 	export async function getPageHead(params: RouteParams) {
 		const data = await API.logs.forms.dm({
 			param: { logId: params.logId }
@@ -30,7 +24,7 @@
 	import NavMenu from "$lib/components/nav-menu.svelte";
 	import * as API from "$lib/remote";
 	import { dmLogSchema } from "$lib/schemas";
-	import { getGlobal } from "$lib/stores.svelte.js";
+	import { getGlobal, setBreadcrumb } from "$lib/stores.svelte.js";
 
 	const { params } = $props();
 
@@ -44,6 +38,10 @@
 
 	let data = $state(log);
 	let season = $state(log.experience ? 1 : log.acp ? 8 : 9);
+
+	$effect(() => {
+		setBreadcrumb({ url: `/dm-logs/${log.id}`, title: log.name || "New Log" });
+	});
 </script>
 
 {#key log.id}

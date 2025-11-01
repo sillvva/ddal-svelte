@@ -16,8 +16,6 @@ export type PageHead = {
 	image?: string;
 };
 export type ModuleData = {
-	pageTitle?: string;
-	getPageTitle?: (params: unknown) => Awaitable<string>;
 	pageHead?: PageHead;
 	getPageHead?: (params: unknown) => Awaitable<Partial<PageHead>>;
 };

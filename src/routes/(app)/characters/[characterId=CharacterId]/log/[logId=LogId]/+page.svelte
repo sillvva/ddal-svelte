@@ -1,11 +1,5 @@
 <script lang="ts" module>
 	import type { RouteParams } from "./$types.js";
-	export async function getPageTitle(params: RouteParams) {
-		const data = await API.logs.forms.character({
-			param: { characterId: params.characterId, logId: params.logId }
-		});
-		return data.log.name || "New Log";
-	}
 	export async function getPageHead(params: RouteParams) {
 		const data = await API.logs.forms.character({
 			param: { characterId: params.characterId, logId: params.logId }
@@ -33,7 +27,7 @@
 	import { defaultDM } from "$lib/entities.js";
 	import * as API from "$lib/remote";
 	import { type DungeonMasterId, logSchema } from "$lib/schemas";
-	import { getGlobal } from "$lib/stores.svelte.js";
+	import { getGlobal, setBreadcrumb } from "$lib/stores.svelte.js";
 	import { v7 } from "uuid";
 
 	let { params } = $props();
@@ -50,6 +44,10 @@
 
 	let data = $state(log);
 	let season = $state(log.experience ? 1 : log.acp ? 8 : 9);
+
+	$effect(() => {
+		setBreadcrumb({ url: `/characters/${params.characterId}/log/${log.id}`, title: log.name || "New Log" });
+	});
 </script>
 
 {#key log.id}

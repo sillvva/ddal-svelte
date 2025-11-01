@@ -1,8 +1,5 @@
 <script lang="ts" module>
 	import type { RouteParams } from "./$types.js";
-	export async function getPageTitle(params: RouteParams) {
-		return params.characterId === "new" ? "New Character" : "Edit";
-	}
 	export async function getPageHead(params: RouteParams) {
 		const character = await API.characters.queries.get({ param: params.characterId });
 		return {
@@ -22,7 +19,7 @@
 	import { BLANK_CHARACTER } from "$lib/constants.js";
 	import * as API from "$lib/remote";
 	import { editCharacterSchema } from "$lib/schemas.js";
-	import { getGlobal } from "$lib/stores.svelte.js";
+	import { getGlobal, setBreadcrumb } from "$lib/stores.svelte.js";
 
 	let { params } = $props();
 
@@ -32,6 +29,11 @@
 	let form = API.characters.forms.save;
 	const { character, initialErrors } = await API.characters.forms.get(params.characterId);
 	const data = $state(character);
+
+	setBreadcrumb({
+		url: `/characters/${params.characterId}/edit`,
+		title: params.characterId === "new" ? "New Character" : "Edit"
+	});
 </script>
 
 <NavMenu />

@@ -52,9 +52,6 @@ declare global {
 		}
 
 		interface ModuleData {
-			getPageTitle?: (data: App.PageData) => string;
-			pageTitle?: string;
-
 			getHeadData?: (data: App.PageData) => {
 				title: string;
 				description?: string;

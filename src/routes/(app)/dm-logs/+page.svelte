@@ -1,5 +1,4 @@
 <script lang="ts" module>
-	export const pageTitle = "DM Logs";
 	export async function getPageHead() {
 		return {
 			title: `{username}'s DM Logs`

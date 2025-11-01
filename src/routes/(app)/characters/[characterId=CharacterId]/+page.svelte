@@ -1,9 +1,5 @@
 <script lang="ts" module>
 	import type { RouteParams } from "./$types.js";
-	export async function getPageTitle(params: RouteParams) {
-		const character = await API.characters.queries.get({ param: params.characterId });
-		return character.name || "Character";
-	}
 	export async function getPageHead(params: RouteParams) {
 		const character = await API.characters.queries.get({ param: params.characterId });
 		return {
