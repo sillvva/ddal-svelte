@@ -35,7 +35,7 @@
 	let deletingLog = new SvelteSet<string>();
 </script>
 
-<NavMenu base>
+<NavMenu base crumbs={[{ title: "DM Logs", url: "/dm-logs" }]}>
 	{#snippet menu()}
 		<li role="menuitem">
 			<button

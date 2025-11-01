@@ -19,7 +19,7 @@
 	import { successToast } from "$lib/factories.svelte.js";
 	import * as API from "$lib/remote";
 	import { dungeonMasterFormSchema } from "$lib/schemas.js";
-	import { getGlobal, setBreadcrumb } from "$lib/stores.svelte.js";
+	import { getGlobal } from "$lib/stores.svelte.js";
 
 	let { params } = $props();
 
@@ -29,13 +29,14 @@
 	const data = await API.dms.forms.get(params.dmId);
 	const form = API.dms.forms.save;
 	const schema = dungeonMasterFormSchema;
-
-	$effect(() => {
-		setBreadcrumb({ url: `/dms/${dm.id}`, title: dm.name });
-	});
 </script>
 
-<NavMenu />
+<NavMenu
+	crumbs={[
+		{ title: "DMs", url: "/dms" },
+		{ title: dm.name, url: `/dms/${dm.id}` }
+	]}
+/>
 
 <RemoteForm {schema} {form} {data}>
 	{#snippet children({ fields })}

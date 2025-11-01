@@ -122,7 +122,6 @@
 							aria-label="Toggle details"
 							onclick={() => {
 								const row = document.querySelector(`tbody:has(tr[data-id="${log.id}"])`) as HTMLTableRowElement | null;
-								console.log(row);
 								if (row) row.dataset.details = row.dataset.details === "true" ? "false" : "true";
 							}}
 						>

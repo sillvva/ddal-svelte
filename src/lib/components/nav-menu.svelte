@@ -1,19 +1,21 @@
 <script lang="ts">
+	import type { Crumb } from "$lib/types";
 	import type { Snippet } from "svelte";
 	import Breadcrumbs from "./breadcrumbs.svelte";
 
 	interface Props {
+		crumbs: Crumb[];
 		base?: boolean;
 		hideMenuActions?: boolean;
 		actions?: Snippet;
 		menu?: Snippet;
 	}
 
-	let { base, hideMenuActions, actions, menu }: Props = $props();
+	let { crumbs, base, hideMenuActions, actions, menu }: Props = $props();
 </script>
 
 <div class={["flex gap-4 print:hidden", base && "max-sm:hidden"]}>
-	<Breadcrumbs />
+	<Breadcrumbs {crumbs} />
 	{#if !hideMenuActions && (actions || menu)}
 		{@render actions?.()}
 		<button

@@ -29,7 +29,7 @@
 	);
 </script>
 
-<NavMenu base>
+<NavMenu base crumbs={[{ title: "Characters", url: "/characters" }]}>
 	{#snippet menu()}
 		<li role="menuitem">
 			<button

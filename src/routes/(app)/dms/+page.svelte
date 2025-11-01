@@ -27,7 +27,7 @@
 	let deletingDM = new SvelteSet<string>();
 </script>
 
-<NavMenu base />
+<NavMenu base crumbs={[{ title: "DMs", url: "/dms" }]} />
 
 <section class="flex max-sm:flex-1 sm:max-w-96">
 	<Search bind:value={search.query} placeholder="Search" />

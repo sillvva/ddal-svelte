@@ -73,7 +73,13 @@
 </script>
 
 {#if global.user}
-	<NavMenu hideMenuActions={!myCharacter}>
+	<NavMenu
+		hideMenuActions={!myCharacter}
+		crumbs={[
+			{ title: "Characters", url: "/characters" },
+			{ title: character.name, url: `/characters/${character.id}` }
+		]}
+	>
 		{#snippet actions()}
 			<a href={`/characters/${character.id}/edit`} class="btn btn-primary btn-sm h-9 max-sm:hidden">Edit</a>
 			<button

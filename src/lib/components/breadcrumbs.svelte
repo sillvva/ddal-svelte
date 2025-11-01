@@ -1,8 +1,12 @@
 <script lang="ts">
-	import { getBreadcrumbs } from "$lib/stores.svelte";
+	import type { Crumb } from "$lib/types";
 	import BackButton from "./back-button.svelte";
 
-	const crumbs = $derived(getBreadcrumbs());
+	interface Props {
+		crumbs: Crumb[];
+	}
+
+	let { crumbs }: Props = $props();
 </script>
 
 <div class={["flex min-h-9 flex-1 items-center max-sm:min-h-8 sm:mb-4", crumbs.length === 1 && "max-sm:hidden"]}>

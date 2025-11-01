@@ -24,7 +24,7 @@
 	import NavMenu from "$lib/components/nav-menu.svelte";
 	import * as API from "$lib/remote";
 	import { dmLogSchema } from "$lib/schemas";
-	import { getGlobal, setBreadcrumb } from "$lib/stores.svelte.js";
+	import { getGlobal } from "$lib/stores.svelte.js";
 
 	const { params } = $props();
 
@@ -38,14 +38,15 @@
 
 	let data = $state(log);
 	let season = $state(log.experience ? 1 : log.acp ? 8 : 9);
-
-	$effect(() => {
-		setBreadcrumb({ url: `/dm-logs/${log.id}`, title: log.name || "New Log" });
-	});
 </script>
 
 {#key log.id}
-	<NavMenu />
+	<NavMenu
+		crumbs={[
+			{ title: "DM Logs", url: "/dm-logs" },
+			{ title: log.name || "New Log", url: `/dm-logs/${log.id}` }
+		]}
+	/>
 
 	{#if global.user}
 		<svelte:boundary>

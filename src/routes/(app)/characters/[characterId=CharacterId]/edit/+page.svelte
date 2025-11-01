@@ -19,7 +19,7 @@
 	import { BLANK_CHARACTER } from "$lib/constants.js";
 	import * as API from "$lib/remote";
 	import { editCharacterSchema } from "$lib/schemas.js";
-	import { getGlobal, setBreadcrumb } from "$lib/stores.svelte.js";
+	import { getGlobal } from "$lib/stores.svelte.js";
 
 	let { params } = $props();
 
@@ -29,14 +29,15 @@
 	let form = API.characters.forms.save;
 	const { character, initialErrors } = await API.characters.forms.get(params.characterId);
 	const data = $state(character);
-
-	setBreadcrumb({
-		url: `/characters/${params.characterId}/edit`,
-		title: params.characterId === "new" ? "New Character" : "Edit"
-	});
 </script>
 
-<NavMenu />
+<NavMenu
+	crumbs={[
+		{ title: "Characters", url: "/characters" },
+		{ title: character.name, url: `/characters/${character.id}` },
+		{ title: params.characterId === "new" ? "New Character" : "Edit", url: `/characters/${character.id}/edit` }
+	]}
+/>
 
 <svelte:boundary>
 	{#snippet failed(error)}<Error {error} />{/snippet}

@@ -27,7 +27,7 @@
 	import { defaultDM } from "$lib/entities.js";
 	import * as API from "$lib/remote";
 	import { type DungeonMasterId, logSchema } from "$lib/schemas";
-	import { getGlobal, setBreadcrumb } from "$lib/stores.svelte.js";
+	import { getGlobal } from "$lib/stores.svelte.js";
 	import { v7 } from "uuid";
 
 	let { params } = $props();
@@ -38,20 +38,23 @@
 	const schema = logSchema;
 	const form = API.logs.forms.saveCharacter;
 	const firstLog = page.url.searchParams.get("firstLog") === "true";
+	const character = await API.characters.queries.get({ param: params.characterId });
 	const { log, initialErrors, totalLevel, dms, magicItems, storyAwards } = await API.logs.forms.character({
 		param: { characterId: params.characterId, logId: params.logId, firstLog }
 	});
 
 	let data = $state(log);
 	let season = $state(log.experience ? 1 : log.acp ? 8 : 9);
-
-	$effect(() => {
-		setBreadcrumb({ url: `/characters/${params.characterId}/log/${log.id}`, title: log.name || "New Log" });
-	});
 </script>
 
 {#key log.id}
-	<NavMenu />
+	<NavMenu
+		crumbs={[
+			{ title: "Characters", url: "/characters" },
+			{ title: character.name, url: `/characters/${character.id}` },
+			{ title: log.name || "New Log", url: `/characters/${character.id}/log/${log.id}` }
+		]}
+	/>
 
 	<svelte:boundary>
 		{#snippet failed(error)}<Error {error} />{/snippet}
