@@ -7,6 +7,7 @@ import { getTrace } from "$lib/util";
 import { DateTime, Effect } from "effect";
 import * as v from "valibot";
 
+// eslint-disable-next-line custom/enforce-guarded-functions
 export const getBaseSearch = query(() =>
 	run(function* () {
 		const today = yield* DateTime.now;

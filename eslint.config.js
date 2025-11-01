@@ -5,6 +5,7 @@ import js from "@eslint/js";
 import eslintConfigPrettier from "eslint-config-prettier/flat";
 import svelte from "eslint-plugin-svelte";
 import globals from "globals";
+import enforceGuardedExports from "./eslint/enforce-guarded-functions.js";
 import svelteConfig from "./svelte.config.js";
 
 // Use the typescript-eslint aggregator for flat config presets
@@ -82,5 +83,19 @@ export default [
 	},
 
 	// Keep Prettier last to disable conflicting stylistic rules
-	eslintConfigPrettier
+	eslintConfigPrettier,
+
+	{
+		files: ["**/*.remote.ts"],
+		plugins: {
+			custom: {
+				rules: {
+					"enforce-guarded-functions": enforceGuardedExports
+				}
+			}
+		},
+		rules: {
+			"custom/enforce-guarded-functions": "error"
+		}
+	}
 ];

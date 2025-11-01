@@ -4,12 +4,6 @@ import { guardedCommand } from "$lib/server/effect/remote";
 import { DMService } from "$lib/server/effect/services/dms";
 import { Data } from "effect";
 
-class DMNotFoundError extends Data.TaggedError("DMNotFoundError")<ErrorParams> {
-	constructor(err?: unknown) {
-		super({ message: "Dungeon Master not found", status: 404, cause: err });
-	}
-}
-
 class DeleteUserDMError extends Data.TaggedError("DeleteUserDMError")<ErrorParams> {
 	constructor(err?: unknown) {
 		super({ message: "Unable to delete User DM", status: 500, cause: err });
