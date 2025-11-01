@@ -4,6 +4,7 @@
 	import { Combobox } from "bits-ui";
 	import SuperDebugRuned from "sveltekit-superforms/SuperDebug.svelte";
 	import RemoteFieldMessage from "./remote-field-message.svelte";
+	import RemoteInput from "./remote-input.svelte";
 
 	type Item = {
 		value: string;
@@ -100,7 +101,6 @@
 	type="single"
 	bind:value={() => valueField.value(), (val) => valueField.set(val)}
 	bind:open
-	{name}
 	{disabled}
 	onValueChange={(sel) => {
 		const item = filtered.find((item) => item.value === sel);
@@ -217,6 +217,7 @@
 		{/if}
 	</div>
 	<RemoteFieldMessage {name} type="select" {description} {issues} />
+	<RemoteInput field={valueField} type="hidden" />
 </Combobox.Root>
 
 {#if debug}

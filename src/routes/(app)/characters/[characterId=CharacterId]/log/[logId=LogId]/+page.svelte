@@ -34,6 +34,7 @@
 	import * as API from "$lib/remote";
 	import { type DungeonMasterId, logSchema } from "$lib/schemas";
 	import { getGlobal } from "$lib/stores.svelte.js";
+	import { v7 } from "uuid";
 
 	let { params } = $props();
 
@@ -98,7 +99,7 @@
 								})) || []}
 								allowCustom
 								onselect={({ selected }) => {
-									const id = (selected?.value || "") as DungeonMasterId;
+									const id = (selected?.value || v7()) as DungeonMasterId;
 									const name = selected?.label;
 									data.dm = dms.find((dm) => dm.id === id) || (name ? { ...data.dm, id, name } : defaultDM(user.id));
 								}}
