@@ -79,7 +79,7 @@
 			onclick={() =>
 				createTransition(() =>
 					global.setApp((app) => {
-						app.dmLogs.descriptions = !global.app.dmLogs.descriptions;
+						app.dmLogs.descriptions = !app.dmLogs.descriptions;
 					})
 				)}
 			onkeypress={() => null}
