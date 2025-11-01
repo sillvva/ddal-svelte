@@ -28,7 +28,7 @@
 <main class="relative container mx-auto flex flex-1 flex-col items-center justify-center gap-8 p-4 pb-20">
 	<div class="flex flex-col items-center">
 		{#if !showPasskeyWarning}
-			<img src={global.app.settings.mode === "dark" ? "dragon.webp" : "dragon-dark.webp"} alt="Dragon" class="size-40" />
+			<img src="/images/{global.app.settings.mode === 'dark' ? 'dragon' : 'dragon-dark'}.webp" alt="Dragon" class="size-40" />
 		{/if}
 		<h1 class="font-draconis text-base-content text-center text-4xl lg:text-6xl dark:text-white">
 			<span class="text-[75%]">Adventurers League</span>
