@@ -1,9 +1,7 @@
-import { query } from "$app/server";
 import { searchSections } from "$lib/constants.js";
 import type { LocalsUser } from "$lib/schemas.js";
 import { AppLog } from "$lib/server/effect/logging";
-import { run } from "$lib/server/effect/runtime";
-import { assertAuth } from "$lib/server/effect/services/auth";
+import { guardedQuery } from "$lib/server/effect/remote";
 import { CharacterService } from "$lib/server/effect/services/characters";
 import { DMService } from "$lib/server/effect/services/dms";
 import { LogService } from "$lib/server/effect/services/logs";
@@ -30,9 +28,9 @@ const getData = Effect.fn("GetData")(function* (user: LocalsUser) {
 	const DMs = yield* DMService;
 	const Logs = yield* LogService;
 
-	const characters = yield* Characters.get.userCharacters(user.id, { includeLogs: false });
-	const dms = yield* DMs.get.userDMs(user);
-	const logs = yield* Logs.get.userLogs(user.id);
+	const characters = yield* Characters.get.all(user.id, { includeLogs: false });
+	const dms = yield* DMs.get.all(user);
+	const logs = yield* Logs.get.all(user.id);
 
 	return [
 		{
@@ -82,15 +80,11 @@ const getData = Effect.fn("GetData")(function* (user: LocalsUser) {
 	];
 });
 
-export const getCommandData = query(() =>
-	run(function* () {
-		const { user } = yield* assertAuth();
-
-		const data: SearchData = [sectionData];
-		const searchData = yield* getData(user).pipe(
-			Effect.tapError((e) => AppLog.error(`[GetCommandData] ${e.message}`, { status: e.status, cause: e.cause })),
-			Effect.catchAll(() => Effect.succeed([] as SearchData))
-		);
-		return data.concat(searchData) as SearchData;
-	})
-);
+export const getCommandData = guardedQuery(function* ({ user }) {
+	const data: SearchData = [sectionData];
+	const searchData = yield* getData(user).pipe(
+		Effect.tapError((e) => AppLog.error(`[GetCommandData] ${e.message}`, { status: e.status, cause: e.cause })),
+		Effect.catchAll(() => Effect.succeed([] as SearchData))
+	);
+	return data.concat(searchData) as SearchData;
+});

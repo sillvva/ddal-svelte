@@ -1,142 +1,188 @@
 <script lang="ts" module>
-	import type { PageData } from "./$types.js";
-	export const getPageTitle = (data: Partial<PageData>) => data.form?.data.name || "New Log";
-	export function getPageHead(data: Partial<PageData>) {
+	import type { RouteParams } from "./$types.js";
+	export async function getPageHead(params: RouteParams) {
+		const data = await API.logs.forms.character({
+			param: { characterId: params.characterId, logId: params.logId }
+		});
 		return {
-			title: data.form?.data.name || "New Log"
+			title: data.log.name || "New Log"
 		};
 	}
 </script>
 
 <script lang="ts">
-	import Breadcrumbs from "$lib/components/Breadcrumbs.svelte";
-	import AddDropItems from "$lib/components/forms/AddDropItems.svelte";
-	import Combobox from "$lib/components/forms/Combobox.svelte";
-	import Control from "$lib/components/forms/Control.svelte";
-	import DateInput from "$lib/components/forms/DateInput.svelte";
-	import GenericInput from "$lib/components/forms/GenericInput.svelte";
-	import Input from "$lib/components/forms/Input.svelte";
-	import MdTextInput from "$lib/components/forms/MDTextInput.svelte";
-	import Submit from "$lib/components/forms/Submit.svelte";
-	import SuperForm from "$lib/components/forms/SuperForm.svelte";
-	import { defaultDM } from "$lib/entities";
-	import { valibotForm } from "$lib/factories.svelte.js";
-	import * as LogsForms from "$lib/remote/logs/forms.remote";
+	import { page } from "$app/state";
+	import Error from "$lib/components/error.svelte";
+	import Control from "$lib/components/forms/control.svelte";
+	import GenericInput from "$lib/components/forms/generic-input.svelte";
+	import RemoteAddDropItems from "$lib/components/forms/remote-add-drop-items.svelte";
+	import RemoteCombobox from "$lib/components/forms/remote-combobox.svelte";
+	import RemoteDateInput from "$lib/components/forms/remote-date-input.svelte";
+	import RemoteForm from "$lib/components/forms/remote-form.svelte";
+	import RemoteGenericInput from "$lib/components/forms/remote-generic-input.svelte";
+	import RemoteInput from "$lib/components/forms/remote-input.svelte";
+	import RemoteMdInput from "$lib/components/forms/remote-md-input.svelte";
+	import RemoteSubmit from "$lib/components/forms/remote-submit.svelte";
+	import NavMenu from "$lib/components/nav-menu.svelte";
+	import { defaultDM } from "$lib/entities.js";
+	import * as API from "$lib/remote";
 	import { type DungeonMasterId, logSchema } from "$lib/schemas";
+	import { getGlobal } from "$lib/stores.svelte.js";
+	import { v7 } from "uuid";
 
-	let { data, params } = $props();
+	let { params } = $props();
 
-	const superform = valibotForm(data.form, logSchema, {
-		remote: (log) => LogsForms.save({ logId: params.logId, data: log })
+	const global = getGlobal();
+	const user = $derived(global.user!);
+
+	const schema = logSchema;
+	const form = API.logs.forms.saveCharacter;
+	const firstLog = page.url.searchParams.get("firstLog") === "true";
+	const character = await API.characters.queries.get({ param: params.characterId });
+	const { log, initialErrors, totalLevel, dms, magicItems, storyAwards } = await API.logs.forms.character({
+		param: { characterId: params.characterId, logId: params.logId, firstLog }
 	});
-	const { form } = superform;
 
-	let season = $state($form.experience ? 1 : $form.acp ? 8 : 9);
+	let data = $state(log);
+	let season = $state(log.experience ? 1 : log.acp ? 8 : 9);
 </script>
 
-{#key $form.id || "new"}
-	<Breadcrumbs />
+{#key log.id}
+	<NavMenu
+		crumbs={[
+			{ title: "Characters", url: "/characters" },
+			{ title: character.name, url: `/characters/${character.id}` },
+			{ title: log.name || "New Log", url: `/characters/${character.id}/log/${log.id}` }
+		]}
+	/>
 
-	<SuperForm {superform}>
-		{#if !data.firstLog}
-			<Control class="col-span-12 sm:col-span-4">
-				<GenericInput {superform} field="type" label="Log Type">
-					<select id="type" bind:value={$form.type} class="select select-bordered w-full">
-						<option value="game">Game</option>
-						<option value="nongame">Non-Game (Purchase, Trade, etc)</option>
-					</select>
-				</GenericInput>
-			</Control>
-		{/if}
-		<Control class={["col-span-12", !data.firstLog ? "sm:col-span-4" : "sm:col-span-6"]}>
-			<Input
-				type="text"
-				{superform}
-				field="name"
-				label="Title"
-				placeholder={data.firstLog ? "Introduction, Character Creation, etc." : ""}
-			/>
-		</Control>
-		<Control class={["col-span-12", !data.firstLog ? "sm:col-span-4" : "sm:col-span-6"]}>
-			<DateInput {superform} field="date" label="Date" />
-		</Control>
-		{#if $form.type === "game"}
-			{#if !data.firstLog}
-				<Control class="col-span-12 sm:col-span-6">
-					<Combobox
-						{superform}
-						label="DM Name"
-						valueField="dm.id"
-						inputField="dm.name"
-						values={data.dms.map((dm) => ({
-							value: dm.id,
-							label: dm.name,
-							itemLabel: dm.name + (dm.isUser ? ` (Me)` : "") + (dm.DCI ? ` (${dm.DCI})` : "")
-						})) || []}
-						allowCustom
-						onselect={({ selected }) => {
-							const id = (selected?.value || "") as DungeonMasterId;
-							const name = selected?.label;
-							$form.dm = data.dms.find((dm) => dm.id === id) || (name ? { ...$form.dm, id, name } : defaultDM(data.user.id));
-						}}
-						clearable
-						onclear={() => ($form.dm = defaultDM(data.user.id))}
-						link={$form.dm.id ? `/dms/${$form.dm.id}` : ""}
-						placeholder={data.dms.find((dm) => dm.isUser)?.name || data.user.name}
-					/>
-				</Control>
-				<Control class="col-span-12 sm:col-span-6">
-					<Input
+	<svelte:boundary>
+		{#snippet failed(error)}<Error {error} />{/snippet}
+		<RemoteForm {schema} {form} bind:data {initialErrors}>
+			{#snippet children({ fields })}
+				<RemoteInput field={fields.id} type="hidden" />
+				<RemoteInput field={fields.characterId} type="hidden" />
+				<RemoteInput field={fields.characterName} type="hidden" />
+				<RemoteInput field={fields.appliedDate} type="number" hidden />
+				{#if !firstLog}
+					<Control class="col-span-12 sm:col-span-4">
+						<RemoteGenericInput field={fields.type} as="select" label="Log Type">
+							<select {...fields.type.as("select")} class="select select-bordered w-full">
+								<option value="game">Game</option>
+								<option value="nongame">Non-Game (Purchase, Trade, etc)</option>
+							</select>
+						</RemoteGenericInput>
+					</Control>
+				{/if}
+				<Control class={["col-span-12", !firstLog ? "sm:col-span-4" : "sm:col-span-6"]}>
+					<RemoteInput
+						field={fields.name}
 						type="text"
-						{superform}
-						field="dm.DCI"
-						disabled={!$form.dm.name}
-						placeholder={$form.dm.name ? undefined : data.dms.find((dm) => dm.isUser)?.DCI}
-						label="DM DCI"
+						label="Title"
+						placeholder={firstLog ? "Introduction, Character Creation, etc." : ""}
+						required
 					/>
 				</Control>
-			{/if}
-			<Control class="col-span-12 sm:col-span-4">
-				<GenericInput labelFor="season" label="Season">
-					<select id="season" bind:value={season} class="select select-bordered w-full">
-						<option value={9}>Season 9+ (Level)</option>
-						<option value={8}>Season 8 (ACP/TCP)</option>
-						<option value={1}>Season 1-7 (Experience)</option>
-					</select>
-				</GenericInput>
-			</Control>
-			{#if season === 1}
-				<Control class="col-span-12 sm:col-span-4">
-					<Input type="number" {superform} field="experience" label="Experience" />
+				<Control class={["col-span-12", !firstLog ? "sm:col-span-4" : "sm:col-span-6"]}>
+					<RemoteDateInput field={fields.date} label="Date" />
 				</Control>
-			{/if}
-			{#if season === 8}
-				<Control class="col-span-6 sm:col-span-2">
-					<Input type="number" {superform} field="acp" label="ACP" />
+				{#if data.type === "game"}
+					{#if !firstLog}
+						<Control class="col-span-12 sm:col-span-6">
+							<RemoteCombobox
+								label="DM Name"
+								valueField={fields.dm.id}
+								inputField={fields.dm.name}
+								values={dms.map((dm) => ({
+									value: dm.id,
+									label: dm.name,
+									itemLabel: dm.name + (dm.isUser ? ` (Me)` : "") + (dm.DCI ? ` (${dm.DCI})` : "")
+								})) || []}
+								allowCustom
+								onselect={({ selected }) => {
+									const id = (selected?.value || v7()) as DungeonMasterId;
+									const name = selected?.label;
+									data.dm = dms.find((dm) => dm.id === id) || (name ? { ...data.dm, id, name } : defaultDM(user.id));
+								}}
+								clearable
+								onclear={() => (data.dm = defaultDM(user.id))}
+								link={data.dm.id ? `/dms/${data.dm.id}` : ""}
+								placeholder={dms.find((dm) => dm.isUser)?.name || user.name}
+							/>
+						</Control>
+						<Control class="col-span-12 sm:col-span-6">
+							<RemoteInput
+								field={fields.dm.DCI}
+								type="text"
+								disabled={!data.dm.name}
+								placeholder={data.dm.name ? undefined : dms.find((dm) => dm.isUser)?.DCI}
+								label="DM DCI"
+							/>
+							{#if !data.dm.name}
+								<RemoteInput field={fields.dm.DCI} type="text" hidden />
+							{/if}
+						</Control>
+					{:else}
+						<RemoteInput field={fields.dm.id} type="hidden" />
+						<RemoteInput field={fields.dm.name} type="text" hidden />
+						<RemoteInput field={fields.dm.DCI} type="text" hidden />
+					{/if}
+					<RemoteInput field={fields.dm.userId} type="hidden" />
+					<RemoteInput field={fields.dm.isUser} type="checkbox" hidden />
+					<Control class="col-span-12 sm:col-span-4">
+						<GenericInput labelFor="season" label="Season">
+							<select id="season" bind:value={season} class="select select-bordered w-full">
+								<option value={9}>Season 9+ (Level)</option>
+								<option value={8}>Season 8 (ACP/TCP)</option>
+								<option value={1}>Season 1-7 (Experience)</option>
+							</select>
+						</GenericInput>
+					</Control>
+					{#if season === 1}
+						<Control class="col-span-12 sm:col-span-4">
+							<RemoteInput field={fields.experience} type="number" label="Experience" />
+						</Control>
+					{/if}
+					{#if season === 8}
+						<Control class="col-span-6 sm:col-span-2">
+							<RemoteInput field={fields.acp} type="number" label="ACP" />
+						</Control>
+					{/if}
+					{#if season === 9}
+						<Control class="col-span-12 sm:col-span-4">
+							<RemoteInput
+								field={fields.level}
+								type="number"
+								label="Level"
+								max={Math.max(fields.level.value(), 20 - totalLevel)}
+							/>
+						</Control>
+					{/if}
+				{:else}
+					<RemoteInput field={fields.dm.id} type="hidden" />
+					<RemoteInput field={fields.dm.name} type="text" hidden />
+					<RemoteInput field={fields.dm.DCI} type="text" hidden />
+					<RemoteInput field={fields.dm.userId} type="hidden" />
+					<RemoteInput field={fields.dm.isUser} type="checkbox" hidden />
+				{/if}
+				{#if season === 8 || data.type === "nongame"}
+					<Control class={data.type === "game" ? "col-span-6 sm:col-span-2" : "col-span-4"}>
+						<RemoteInput field={fields.tcp} type="number" label="TCP" />
+					</Control>
+				{/if}
+				<Control class={data.type === "game" ? "col-span-6 sm:col-span-2" : "col-span-4"}>
+					<RemoteInput field={fields.gold} type="number" label="Gold" />
 				</Control>
-			{/if}
-			{#if season === 9}
-				<Control class="col-span-12 sm:col-span-4">
-					<Input type="number" {superform} field="level" label="Level" max={Math.max($form.level, 20 - data.totalLevel)} />
+				<Control class={data.type === "game" ? "col-span-6 sm:col-span-2" : "col-span-4"}>
+					<RemoteInput field={fields.dtd} type="number" label="Downtime" />
 				</Control>
-			{/if}
-		{/if}
-		{#if season === 8 || $form.type === "nongame"}
-			<Control class={$form.type === "game" ? "col-span-6 sm:col-span-2" : "col-span-4"}>
-				<Input type="number" {superform} field="tcp" label="TCP" />
-			</Control>
-		{/if}
-		<Control class={$form.type === "game" ? "col-span-6 sm:col-span-2" : "col-span-4"}>
-			<Input type="number" {superform} field="gold" label="Gold" />
-		</Control>
-		<Control class={$form.type === "game" ? "col-span-6 sm:col-span-2" : "col-span-4"}>
-			<Input type="number" {superform} field="dtd" label="Downtime" />
-		</Control>
-		<Control class="col-span-12 w-full">
-			<MdTextInput {superform} field="description" name="notes" maxRows={20} preview />
-		</Control>
-		<AddDropItems {superform} magicItems={data.magicItems} storyAwards={data.storyAwards}>
-			<Submit {superform}>Save Log</Submit>
-		</AddDropItems>
-	</SuperForm>
+				<Control class="col-span-12 w-full">
+					<RemoteMdInput field={fields.description} name="notes" maxRows={20} maxLength={5000} preview />
+				</Control>
+				<RemoteAddDropItems {fields} bind:log={data} {magicItems} {storyAwards}>
+					<RemoteSubmit>Save Log</RemoteSubmit>
+				</RemoteAddDropItems>
+			{/snippet}
+		</RemoteForm>
+	</svelte:boundary>
 {/key}

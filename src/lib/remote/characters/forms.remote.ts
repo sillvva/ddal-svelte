@@ -1,55 +1,67 @@
-import { command } from "$app/server";
-import { defaultLogSchema } from "$lib/entities";
-import { editCharacterSchema, type CharacterIdParam, type EditCharacterSchemaIn } from "$lib/schemas";
-import { FormError, RedirectError } from "$lib/server/effect/errors";
-import { saveForm, validateForm } from "$lib/server/effect/forms";
-import { runSafe } from "$lib/server/effect/runtime";
-import { assertAuth } from "$lib/server/effect/services/auth";
+import { BLANK_CHARACTER } from "$lib/constants";
+import * as API from "$lib/remote";
+import { characterIdParamSchema, editCharacterSchema } from "$lib/schemas";
+import { guardedForm, guardedQuery, refreshAll } from "$lib/server/effect/remote";
 import { CharacterService } from "$lib/server/effect/services/characters";
-import { LogService } from "$lib/server/effect/services/logs";
+import { isValidUrl } from "$lib/server/effect/util";
+import { redirect } from "@sveltejs/kit";
+import { Effect } from "effect";
+import { get as getCharacter } from "./queries.remote";
 
-export const save = command("unchecked", (input: { id: CharacterIdParam; data: EditCharacterSchemaIn }) =>
-	runSafe(function* () {
-		const { user } = yield* assertAuth();
-		const Characters = yield* CharacterService;
+export const get = guardedQuery(characterIdParamSchema, function* (input, { event }) {
+	const firstLog = event.locals.app.characters.firstLog;
+	const character = yield* Effect.promise(() => getCharacter({ param: input }));
 
-		const characterId = input.id;
-		const character = characterId !== "new" ? yield* Characters.get.character(characterId, false) : undefined;
-		if (characterId !== "new" && !character)
-			return yield* new RedirectError({ message: "Character not found", redirectTo: "/characters" });
+	return {
+		character: {
+			id: character.id,
+			name: character.name,
+			race: character.race,
+			class: character.class,
+			campaign: character.campaign,
+			characterSheetUrl: character.characterSheetUrl,
+			imageUrl: character.imageUrl === BLANK_CHARACTER ? "" : character.imageUrl,
+			firstLog: firstLog && input === "new"
+		},
+		initialErrors: input !== "new"
+	};
+});
 
-		const form = yield* validateForm(input.data, editCharacterSchema);
-		if (!form.valid) return form;
-		const { firstLog, ...data } = form.data;
+export const save = guardedForm(editCharacterSchema, function* (input, { user, invalid }) {
+	const Characters = yield* CharacterService;
 
-		return yield* saveForm(Characters.set.save(data, user.id), {
-			onSuccess: async (character) => {
-				const result = await runSafe(function* () {
-					const Logs = yield* LogService;
+	const { firstLog, ...data } = input;
 
-					if (firstLog && characterId === "new") {
-						const log = defaultLogSchema(user.id, { character, defaults: { name: "Character Creation" } });
+	const preexisting = yield* Characters.get
+		.all(user.id, { characterId: data.id })
+		.pipe(Effect.map((characters) => characters.length > 0));
 
-						return yield* saveForm(Logs.set.save(log, user), {
-							onSuccess: (logResult) => `/characters/${character.id}/log/${logResult.id}?firstLog=true` as const,
-							onError: () => `/characters/${character.id}/log/new?firstLog=true` as const
-						});
-					}
+	type Issue = ReturnType<typeof invalid.imageUrl>;
+	let issues: Issue[] = [];
 
-					return `/characters/${character.id}` as const;
-				});
+	if (data.imageUrl) {
+		const result = yield* isValidUrl(data.imageUrl);
+		if (!result) issues.push(invalid.imageUrl("URL appears to be broken"));
+	} else {
+		data.imageUrl = BLANK_CHARACTER;
+	}
 
-				if (result.ok) {
-					return result.data;
-				}
+	if (data.characterSheetUrl) {
+		const result = yield* isValidUrl(data.characterSheetUrl);
+		if (!result) issues.push(invalid.characterSheetUrl("URL appears to be broken"));
+	}
 
-				FormError.from(result.error).toForm(form);
-				return form;
-			},
-			onError: (err) => {
-				err.toForm(form);
-				return form;
-			}
-		});
-	})
-);
+	if (issues.length) invalid(...issues);
+
+	const result = yield* Characters.set.save(data, user.id).pipe(Effect.tapError((err) => Effect.fail(invalid(err.message))));
+
+	if (preexisting) {
+		yield* refreshAll(API.characters.queries.get({ param: data.id }).refresh());
+	}
+
+	if (firstLog && !preexisting) {
+		redirect(303, `/characters/${result.id}/log/new?firstLog=true`);
+	} else {
+		redirect(303, `/characters/${result.id}`);
+	}
+});

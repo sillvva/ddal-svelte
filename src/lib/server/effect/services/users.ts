@@ -49,6 +49,7 @@ interface UserApiImpl {
 }
 
 export class UserService extends Effect.Service<UserService>()("UserService", {
+	dependencies: [DBService.Default()],
 	effect: Effect.fn("UserService")(function* () {
 		const { db } = yield* DBService;
 
@@ -177,8 +178,7 @@ export class UserService extends Effect.Service<UserService>()("UserService", {
 		};
 
 		return impl;
-	}),
-	dependencies: [DBService.Default()]
+	})
 }) {}
 
 export const UserTx = (tx: Transaction) => UserService.DefaultWithoutDependencies().pipe(Layer.provide(DBService.Default(tx)));

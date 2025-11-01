@@ -1,12 +1,11 @@
 import { PlaceholderName } from "$lib/constants";
 import { getLogsSummary, parseCharacter } from "$lib/entities";
-import type { CharacterId, CharacterSchema, EditCharacterSchema, UserId } from "$lib/schemas";
+import type { CharacterId, CharacterSchema, UserId } from "$lib/schemas";
 import {
 	buildConflictUpdateColumns,
 	DBService,
 	runQuery,
 	TransactionError,
-	type Database,
 	type DrizzleError,
 	type InferQueryResult,
 	type Transaction
@@ -14,7 +13,6 @@ import {
 import { characterIncludes } from "$lib/server/db/includes";
 import { characters, logs, type Character } from "$lib/server/db/schema";
 import type { ErrorParams } from "$lib/server/effect/errors";
-import { FormError } from "$lib/server/effect/errors";
 import { AppLog } from "$lib/server/effect/logging";
 import { and, eq, exists } from "drizzle-orm";
 import { Data, Effect, Layer } from "effect";
@@ -26,11 +24,15 @@ export class CharacterNotFoundError extends Data.TaggedError("CharacterNotFoundE
 	}
 }
 
-export class SaveCharacterError extends FormError<EditCharacterSchema> {}
+export class SaveCharacterError extends Data.TaggedError("SaveCharacterError")<ErrorParams> {
+	constructor(message: string, err?: unknown) {
+		super({ message, status: 404, cause: err });
+	}
+}
 
-export class DeleteCharacterError extends FormError<{ id: CharacterId }> {
+export class DeleteCharacterError extends Data.TaggedError("DeleteCharacterError")<ErrorParams> {
 	constructor(err?: unknown) {
-		super("Unable to delete character", { status: 500, cause: err });
+		super({ message: "Unable to delete character", status: 404, cause: err });
 	}
 }
 
@@ -40,15 +42,14 @@ export interface FullCharacterData extends Omit<CharacterData, "logs">, ReturnTy
 }
 
 interface CharacterApiImpl {
-	readonly db: Database | Transaction;
 	readonly get: {
-		readonly character: (
+		readonly one: (
 			characterId: CharacterId,
 			includeLogs?: boolean
 		) => Effect.Effect<FullCharacterData, DrizzleError | CharacterNotFoundError>;
-		readonly userCharacters: (
+		readonly all: (
 			userId: UserId,
-			options?: { characterId?: CharacterId | null; includeLogs?: boolean }
+			options?: { characterId?: CharacterId; includeLogs?: boolean }
 		) => Effect.Effect<FullCharacterData[], DrizzleError>;
 	};
 	readonly set: {
@@ -61,13 +62,13 @@ interface CharacterApiImpl {
 }
 
 export class CharacterService extends Effect.Service<CharacterService>()("CharacterService", {
+	dependencies: [DBService.Default()],
 	effect: Effect.fn("CharacterService")(function* () {
 		const { db, transaction } = yield* DBService;
 
 		const impl: CharacterApiImpl = {
-			db,
 			get: {
-				character: Effect.fn("CharacterService.get.character")(function* (characterId, includeLogs = true) {
+				one: Effect.fn("CharacterService.get.one")(function* (characterId, includeLogs = true) {
 					return yield* runQuery(
 						db.query.characters.findFirst({
 							with: characterIncludes(includeLogs),
@@ -77,14 +78,11 @@ export class CharacterService extends Effect.Service<CharacterService>()("Charac
 						Effect.flatMap((character) =>
 							character ? Effect.succeed(parseCharacter(character)) : Effect.fail(new CharacterNotFoundError())
 						),
-						Effect.tapError(() => AppLog.debug("CharacterService.get.character", { characterId, includeLogs }))
+						Effect.tapError(() => AppLog.debug("CharacterService.get.one", { characterId, includeLogs }))
 					);
 				}),
 
-				userCharacters: Effect.fn("CharacterService.get.userCharacters")(function* (
-					userId,
-					{ characterId, includeLogs = true } = {}
-				) {
+				all: Effect.fn("CharacterService.get.all")(function* (userId, { characterId, includeLogs = true } = {}) {
 					return yield* runQuery(
 						db.query.characters.findMany({
 							with: characterIncludes(includeLogs),
@@ -96,7 +94,7 @@ export class CharacterService extends Effect.Service<CharacterService>()("Charac
 						})
 					).pipe(
 						Effect.map((characters) => characters.map(parseCharacter)),
-						Effect.tapError(() => AppLog.debug("CharacterService.get.userCharacters", { userId, includeLogs }))
+						Effect.tapError(() => AppLog.debug("CharacterService.get.all", { userId, includeLogs }))
 					);
 				})
 			},
@@ -169,8 +167,7 @@ export class CharacterService extends Effect.Service<CharacterService>()("Charac
 		};
 
 		return impl;
-	}),
-	dependencies: [DBService.Default()]
+	})
 }) {}
 
 export const CharacterTx = (tx: Transaction) =>

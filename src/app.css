@@ -165,12 +165,7 @@
 @variant dark (&:where(.dark, .dark *));
 
 @theme {
-	--breakpoint-xs: 500px;
-	--breakpoint-sm: 640px;
-	--breakpoint-md: 768px;
-	--breakpoint-lg: 1024px;
-	--breakpoint-xl: 1280px;
-	--breakpoint-2xl: 1440px;
+	--breakpoint-xs: 30rem; /* 480px */
 
 	--font-draconis: "Draconis";
 	--font-vecna: "Vecna";
@@ -251,6 +246,11 @@
 		to {
 			clip-path: polygon(50% -71%, -50% 71%, 50% 171%, 171% 50%);
 		}
+	}
+
+	:root:not(.theme-switcher)::view-transition-old(root),
+	:root:not(.theme-switcher)::view-transition-new(root) {
+		animation-duration: 0.4s;
 	}
 }
 

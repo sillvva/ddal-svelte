@@ -1,17 +1,18 @@
 <script lang="ts">
 	import { authClient } from "$lib/auth";
-	import Head from "$lib/components/Head.svelte";
 	import { PROVIDERS } from "$lib/constants";
 	import { errorToast } from "$lib/factories.svelte.js";
+	import * as API from "$lib/remote";
 	import { getGlobal } from "$lib/stores.svelte.js";
-
-	let { data } = $props();
+	import { onMount } from "svelte";
 
 	const global = getGlobal();
 
+	const data = await API.app.queries.home();
 	const lastMethod = authClient.getLastUsedLoginMethod();
+	let showPasskeyWarning = $state(false);
 
-	$effect(() => {
+	onMount(() => {
 		if (global.app.settings.autoWebAuthn) {
 			authClient.signIn.passkey({
 				fetchOptions: {
@@ -24,18 +25,21 @@
 	});
 </script>
 
-<Head />
-
 <main class="relative container mx-auto flex flex-1 flex-col items-center justify-center gap-8 p-4 pb-20">
-	<h1 class="font-draconis text-base-content text-center text-4xl lg:text-6xl dark:text-white">
-		Adventurers League
-		<br />
-		Log Sheet
-	</h1>
+	<div class="flex flex-col items-center">
+		{#if !showPasskeyWarning}
+			<img src="/images/{global.app.settings.mode === 'dark' ? 'dragon' : 'dragon-dark'}.webp" alt="Dragon" class="size-40" />
+		{/if}
+		<h1 class="font-draconis text-base-content text-center text-4xl lg:text-6xl dark:text-white">
+			<span class="text-[75%]">Adventurers League</span>
+			<br />
+			Log Sheet
+		</h1>
+	</div>
 	<div class="max-xs:max-w-80 max-xs:gap-3 flex max-w-80 flex-col gap-4">
 		{#if data.error}
 			<div class="flex justify-center">
-				<div class="alert alert-error max-w-[28rem] min-w-60 shadow-lg">
+				<div class="alert alert-error max-w-md min-w-60 shadow-lg">
 					<span class="iconify mdi--alert-circle size-6 max-sm:hidden"></span>
 					<div>
 						<h3 class="font-bold">Error</h3>
@@ -82,6 +86,7 @@
 				class="bg-base-200 text-base-content max-xs:justify-center hover:bg-base-300 max-xs:h-12 max-xs:px-4 flex h-16 items-center gap-4 rounded-lg px-8 py-4 transition-colors"
 				onclick={() => {
 					console.log("Signing in with Passkey");
+					showPasskeyWarning = true;
 					authClient.signIn.passkey({
 						fetchOptions: {
 							onSuccess: () => {
@@ -100,15 +105,17 @@
 			<span class="text-base-content text-center text-xs text-pretty">
 				You must have an account and then add a Passkey in settings before you can sign in with a Passkey.
 			</span>
-			<div class="card bg-primary/50 shadow-sm">
-				<div class="card-body p-4">
-					<h3 class="text-xl">Important Notice</h3>
-					<p class="text-base-content text-xs text-pretty">
-						Authentication has been migrated to a new API. If you had a Passkey prior to July 8th, 2025, you will need to sign in
-						with another method and then add it again.
-					</p>
+			{#if showPasskeyWarning}
+				<div class="card bg-warning/70 text-black shadow-sm">
+					<div class="card-body p-4">
+						<h3 class="text-xl">Important Notice</h3>
+						<p class="text-xs text-pretty">
+							Authentication has been migrated to a new API. If you had a Passkey prior to July 8th, 2025, you will need to sign
+							in with another method and then add it again.
+						</p>
+					</div>
 				</div>
-			</div>
+			{/if}
 		{/if}
 	</div>
 </main>

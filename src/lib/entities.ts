@@ -4,7 +4,7 @@ import type { ExtendedLogData, FullLogData, LogData, LogSummaryData } from "$lib
 import { sorter } from "@sillvva/utils";
 import { v7 } from "uuid";
 import { BLANK_CHARACTER, PlaceholderName } from "./constants";
-import type { CharacterId, DungeonMasterId, LocalsUser, LogId, LogSchema, UserId } from "./schemas";
+import { type CharacterId, type DungeonMasterId, type LocalsUser, type LogId, type LogSchema, type UserId } from "./schemas";
 
 export function getItemEntities(
 	character: FullCharacterData,
@@ -163,7 +163,7 @@ export function defaultCharacter(user: LocalsUser): FullCharacterData {
 }
 
 export function defaultDM(userId: UserId): DungeonMaster {
-	return { id: v7() as DungeonMasterId, name: "", DCI: null, userId: userId, isUser: false };
+	return { id: v7() as DungeonMasterId, name: "", DCI: "", userId: userId, isUser: false };
 }
 
 export function defaultLogSchema(
@@ -185,7 +185,7 @@ export function defaultLogSchema(
 		level: 0,
 		gold: 0,
 		dtd: 0,
-		characterId: options?.character?.id || null,
+		characterId: options?.character?.id || ("" as CharacterId),
 		characterName: options?.character?.name || "",
 		appliedDate: null,
 		dm: defaultDM(userId),

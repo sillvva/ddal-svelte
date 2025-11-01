@@ -1,36 +1,24 @@
 import { building } from "$app/environment";
+import { privateEnv } from "$lib/env/private.js";
 import { appCookieSchema } from "$lib/schemas";
 import { serverGetCookie } from "$lib/server/cookie";
 import { DBService } from "$lib/server/db";
-import { run } from "$lib/server/effect/runtime";
-import { AdminService } from "$lib/server/effect/services/admin";
+import { AppLog } from "$lib/server/effect/logging";
+import { createAppRuntime, run } from "$lib/server/effect/runtime";
 import { AuthService } from "$lib/server/effect/services/auth";
-import { CharacterService } from "$lib/server/effect/services/characters";
-import { DMService } from "$lib/server/effect/services/dms";
-import { LogService } from "$lib/server/effect/services/logs";
-import { UserService } from "$lib/server/effect/services/users";
-import { type Handle } from "@sveltejs/kit";
+import { type Handle, type HandleServerError, type ServerInit } from "@sveltejs/kit";
 import { sequence } from "@sveltejs/kit/hooks";
 import { svelteKitHandler } from "better-auth/svelte-kit";
 import chalk from "chalk";
-import { Layer, ManagedRuntime } from "effect";
+import { Effect } from "effect";
 
-const createAppRuntime = () => {
-	const dbLayer = DBService.Default();
-
-	const serviceLayer = Layer.mergeAll(
-		AuthService.DefaultWithoutDependencies(),
-		AdminService.DefaultWithoutDependencies(),
-		CharacterService.DefaultWithoutDependencies(),
-		DMService.DefaultWithoutDependencies(),
-		LogService.DefaultWithoutDependencies(),
-		UserService.DefaultWithoutDependencies()
-	);
-
-	const appLayer = serviceLayer.pipe(Layer.provide(dbLayer));
-
-	return ManagedRuntime.make(appLayer);
-};
+let checked = false;
+if (!checked && building && privateEnv) {
+	console.log("\n✅ Environment variables are valid");
+	console.table(privateEnv);
+	console.log("\n");
+	checked = true;
+}
 
 const appRuntime = createAppRuntime();
 
@@ -42,20 +30,12 @@ const runtime: Handle = async ({ event, resolve }) => {
 const authHandler: Handle = async ({ event, resolve }) =>
 	run(function* () {
 		const Auth = yield* AuthService;
-		const auth = yield* Auth.auth();
-		return svelteKitHandler({ event, resolve, auth, building });
-	});
 
-const session: Handle = async ({ event, resolve }) =>
-	run(function* () {
-		const Auth = yield* AuthService;
-		const { session, user } = yield* Auth.getAuthSession();
+		const { session, user, auth } = yield* Auth.getAuthSession();
 		event.locals.session = session;
 		event.locals.user = user;
 
-		if (user) event.cookies.delete("banned", { path: "/" });
-
-		return resolve(event);
+		return svelteKitHandler({ event, resolve, auth, building });
 	});
 
 const info: Handle = async ({ event, resolve }) => {
@@ -83,10 +63,21 @@ const preloadTheme: Handle = async ({ event, resolve }) => {
 	});
 };
 
-export const handle = sequence(runtime, authHandler, session, info, preloadTheme);
+export const handle = sequence(runtime, authHandler, info, preloadTheme);
 
-if (typeof process !== "undefined") {
-	process.on("sveltekit:shutdown", async (signal: string) => {
+export const handleError: HandleServerError = async ({ error, event, status, message }) => {
+	if (status < 400 || status === 404 || (status === 500 && message === "Internal Error")) return { message };
+	Effect.runFork(AppLog.error(message, { error, url: event.url, status }));
+	return { message };
+};
+
+export const init: ServerInit = () => {
+	if (globalThis.initialized) return;
+	globalThis.initialized = true;
+
+	console.log("Initializing server...");
+
+	const gracefulShutdown = async (signal: string) => {
 		console.log("\nShut down signal received:", chalk.bold(signal));
 
 		try {
@@ -100,5 +91,8 @@ if (typeof process !== "undefined") {
 			console.error("Error during cleanup:", err);
 			process.exit(1);
 		}
-	});
-}
+	};
+
+	process.on("SIGINT", gracefulShutdown);
+	process.on("SIGTERM", gracefulShutdown);
+};

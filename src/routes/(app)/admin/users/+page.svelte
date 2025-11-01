@@ -8,17 +8,16 @@
 	import { goto, invalidateAll } from "$app/navigation";
 	import { page } from "$app/state";
 	import { authClient } from "$lib/auth.js";
-	import Search from "$lib/components/Search.svelte";
+	import Search from "$lib/components/search.svelte";
 	import { BLANK_CHARACTER } from "$lib/constants.js";
 	import { parseEffectResult } from "$lib/factories.svelte";
 	import { errorToast, successToast } from "$lib/factories.svelte.js";
-	import * as AdminActions from "$lib/remote/admin/actions.remote";
-	import * as AdminQueries from "$lib/remote/admin/queries.remote";
+	import * as API from "$lib/remote";
 	import { JSONSearchParser } from "@sillvva/search/json";
 
 	let search = $state(page.url.searchParams.get("s")?.trim() ?? "");
 
-	const users = $derived(await AdminQueries.getUsers());
+	const users = $derived(await API.admin.queries.getUsers());
 	const parser = $derived(
 		new JSONSearchParser(users, {
 			defaultKey: "name",
@@ -29,7 +28,7 @@
 	const results = $derived(search.trim() ? parser.filter(search) : users);
 </script>
 
-<div class="flex flex-wrap items-center justify-between gap-2 max-sm:justify-end">
+<section class="flex flex-wrap items-center justify-between gap-2 max-sm:justify-end">
 	<div class="flex w-full gap-2 sm:max-w-md md:max-w-md">
 		<Search bind:value={search} placeholder="Search by name, email, role, etc." />
 	</div>
@@ -39,10 +38,10 @@
 		{/if}
 		{users.length} users
 	</span>
-</div>
+</section>
 
 {#if results.length}
-	<div class="overflow-x-auto rounded-lg">
+	<section class="overflow-x-auto rounded-lg">
 		<table class="linked-table bg-base-200 table w-full leading-5 max-sm:border-separate max-sm:border-spacing-y-2">
 			<thead class="max-sm:hidden">
 				<tr class="bg-base-300 text-base-content/70">
@@ -98,64 +97,67 @@
 						<td class="text-center max-sm:hidden">{user.characters}</td>
 						<td class="max-xs:hidden">
 							<div class="flex justify-end gap-2">
-								<button
-									class="btn btn-sm btn-primary tooltip tooltip-left"
-									aria-label="Impersonate {user.name}"
-									data-tip="Impersonate {user.name}"
-									disabled={user.role === "admin" || user.banned}
-									onclick={async () => {
-										if (user.role === "admin" || user.banned) return;
-										const { data } = await authClient.admin.impersonateUser({
-											userId: user.id
-										});
-										if (data) {
-											await invalidateAll();
-											goto("/characters");
-										}
-									}}
-								>
-									<span class="iconify mdi--account-switch"></span>
-								</button>
-								{#if !user.banned}
+								<div class="sm:tooltip sm:tooltip-left" data-tip="Impersonate {user.name}">
 									<button
-										class="btn btn-sm btn-error tooltip tooltip-left"
-										aria-label="Ban {user.name}"
-										data-tip="Ban {user.name}"
-										disabled={user.role === "admin"}
+										class="btn btn-sm btn-primary"
+										aria-label="Impersonate {user.name}"
+										disabled={user.role === "admin" || user.banned}
 										onclick={async () => {
-											if (user.role === "admin") return errorToast("Cannot ban admins");
-
-											const banReason = prompt("Reason for ban");
-											if (!banReason?.trim()) return errorToast("Reason is required");
-
-											const result = await AdminActions.banUser({
-												userId: user.id,
-												banReason
+											if (user.role === "admin" || user.banned) return;
+											const { data } = await authClient.admin.impersonateUser({
+												userId: user.id
 											});
-
-											const parsed = await parseEffectResult(result);
-											if (parsed) successToast(`${user.name} has been banned`);
+											if (data) {
+												await invalidateAll();
+												goto("/characters");
+											}
 										}}
 									>
-										<span class="iconify mdi--ban"></span>
+										<span class="iconify mdi--account-switch"></span>
 									</button>
+								</div>
+								{#if !user.banned}
+									<div class="sm:tooltip sm:tooltip-left" data-tip="Ban {user.name}">
+										<button
+											class="btn btn-sm btn-error"
+											aria-label="Ban {user.name}"
+											disabled={user.role === "admin"}
+											onclick={async () => {
+												if (user.role === "admin") return errorToast("Cannot ban admins");
+
+												const banReason = prompt("Reason for ban");
+												if (!banReason?.trim()) return errorToast("Reason is required");
+
+												const result = await API.admin.actions.banUser({
+													userId: user.id,
+													banReason
+												});
+
+												const parsed = await parseEffectResult(result);
+												if (parsed) successToast(`${user.name} has been banned`);
+											}}
+										>
+											<span class="iconify mdi--ban"></span>
+										</button>
+									</div>
 								{:else}
-									<button
-										class="btn btn-sm btn-success tooltip tooltip-left"
-										aria-label="Unban {user.name}"
-										data-tip="Unban {user.name}"
-										disabled={user.role === "admin"}
-										onclick={async () => {
-											if (user.role === "admin") return;
-											if (!confirm(`Are you sure you want to unban ${user.name}?`)) return;
+									<div class="sm:tooltip sm:tooltip-left" data-tip="Unban {user.name}">
+										<button
+											class="btn btn-sm btn-success"
+											aria-label="Unban {user.name}"
+											disabled={user.role === "admin"}
+											onclick={async () => {
+												if (user.role === "admin") return;
+												if (!confirm(`Are you sure you want to unban ${user.name}?`)) return;
 
-											const result = await AdminActions.unbanUser(user.id);
-											const parsed = await parseEffectResult(result);
-											if (parsed) successToast(`${user.name} has been unbanned`);
-										}}
-									>
-										<span class="iconify mdi--check"></span>
-									</button>
+												const result = await API.admin.actions.unbanUser(user.id);
+												const parsed = await parseEffectResult(result);
+												if (parsed) successToast(`${user.name} has been unbanned`);
+											}}
+										>
+											<span class="iconify mdi--check"></span>
+										</button>
+									</div>
 								{/if}
 							</div>
 						</td>
@@ -163,9 +165,9 @@
 				{/each}
 			</tbody>
 		</table>
-	</div>
+	</section>
 {:else}
-	<div class="bg-base-200 flex h-40 flex-col items-center justify-center rounded-lg">
+	<section class="bg-base-200 flex h-40 flex-col items-center justify-center rounded-lg">
 		<div class="text-base-content/60 text-lg">No users found</div>
-	</div>
+	</section>
 {/if}

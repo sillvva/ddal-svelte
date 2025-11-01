@@ -1,21 +1,34 @@
 <script lang="ts">
 	import { dev } from "$app/environment";
-	import Head from "$lib/components/Head.svelte";
-	import { createGlobal } from "$lib/stores.svelte";
-	import { Toaster } from "svelte-sonner";
+	import { onNavigate } from "$app/navigation";
+	import Head from "$lib/components/head.svelte";
+	import * as API from "$lib/remote";
+	import { getGlobal } from "$lib/stores.svelte";
 	import "../app.css";
 
-	let { data, children } = $props();
+	let { children } = $props();
 
-	createGlobal(data.app);
-	// setupViewTransition();
+	const global = getGlobal();
+	const request = await API.app.queries.request();
+	global.app = request.app;
+	global.user = request.user;
+	global.session = request.session;
+
+	onNavigate(({ complete, from, to }) => {
+		if (!document.startViewTransition) return;
+		if (from?.url.pathname === to?.url.pathname) return;
+		return new Promise((resolve) => {
+			document.startViewTransition(async () => {
+				resolve();
+				await complete;
+			});
+		});
+	});
 </script>
 
 <Head />
 
 {@render children()}
-
-<Toaster richColors closeButton theme={data.app.settings.mode} />
 
 {#if dev}
 	<div class="fixed right-0 bottom-0 z-50">
@@ -25,8 +38,7 @@
 			<div class="hidden sm:max-md:block">sm</div>
 			<div class="hidden md:max-lg:block">md</div>
 			<div class="hidden lg:max-xl:block">lg</div>
-			<div class="hidden xl:max-2xl:block">xl</div>
-			<div class="hidden 2xl:block">2xl</div>
+			<div class="hidden xl:block">xl</div>
 		</div>
 	</div>
 {/if}

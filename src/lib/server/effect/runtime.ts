@@ -1,12 +1,12 @@
-import { dev } from "$app/environment";
 import { getRequestEvent } from "$app/server";
 import { isRedirectFailure } from "$lib/factories.svelte";
-import { removeTrace } from "$lib/util";
+import { getTrace } from "$lib/util";
 import { omit } from "@sillvva/utils";
 import { error, isHttpError, isRedirect, redirect, type NumericRange } from "@sveltejs/kit";
-import { Cause, Effect, Exit, ManagedRuntime } from "effect";
+import { Cause, Effect, Exit, Layer, ManagedRuntime } from "effect";
 import { isFunction } from "effect/Predicate";
 import type { YieldWrap } from "effect/Utils";
+import { DBService } from "../db";
 import { type ErrorClass } from "./errors";
 import { AppLog } from "./logging";
 import { AdminService } from "./services/admin";
@@ -19,6 +19,23 @@ import { UserService } from "./services/users";
 export type Services = CharacterService | LogService | DMService | UserService | AdminService | AuthService;
 export type AppRuntime = ManagedRuntime.ManagedRuntime<Services, never>;
 
+export const createAppRuntime = () => {
+	const dbLayer = DBService.Default();
+
+	const serviceLayer = Layer.mergeAll(
+		AuthService.DefaultWithoutDependencies(),
+		AdminService.DefaultWithoutDependencies(),
+		CharacterService.DefaultWithoutDependencies(),
+		DMService.DefaultWithoutDependencies(),
+		LogService.DefaultWithoutDependencies(),
+		UserService.DefaultWithoutDependencies()
+	);
+
+	const appLayer = serviceLayer.pipe(Layer.provide(dbLayer));
+
+	return ManagedRuntime.make(appLayer);
+};
+
 // -------------------------------------------------------------------------------------------------
 // run
 // -------------------------------------------------------------------------------------------------
@@ -29,9 +46,8 @@ export async function run<
 	F extends InstanceType<ErrorClass>,
 	S extends Services,
 	T extends YieldWrap<Effect.Effect<R, F, S>>,
-	X,
-	Y
->(program: () => Generator<T, X, Y>): Promise<X>;
+	X
+>(program: () => Generator<T, X>): Promise<X>;
 
 export async function run<R, F extends InstanceType<ErrorClass>, S extends Services>(
 	program: Effect.Effect<R, F, S> | (() => Effect.Effect<R, F, S>)
@@ -43,9 +59,8 @@ export async function run<
 	F extends InstanceType<ErrorClass>,
 	S extends Services,
 	T extends YieldWrap<Effect.Effect<R, F, S>>,
-	X,
-	Y
->(program: Effect.Effect<R, F, S> | (() => Effect.Effect<R, F, S>) | (() => Generator<T, X, Y>)): Promise<R | X> {
+	X
+>(program: Effect.Effect<R, F, S> | (() => Effect.Effect<R, F, S>) | (() => Generator<T, X>)): Promise<R | X> {
 	const event = getRequestEvent();
 	const rt = event.locals.runtime;
 
@@ -63,9 +78,10 @@ export async function run<
 		onFailure: (cause) => {
 			const err = handleCause(cause);
 			if (isRedirectFailure(err)) {
-				throw redirect(err.status, err.redirectTo);
+				redirect(err.status, err.redirectTo);
+			} else {
+				error(err.status, err.message);
 			}
-			throw error(err.status, err.message);
 		}
 	});
 }
@@ -77,7 +93,7 @@ export async function run<
 export type EffectSuccess<R> = { ok: true; data: R };
 export type EffectFailure = {
 	ok: false;
-	error: { message: string; status: NumericRange<300, 599>; [key: string]: unknown };
+	error: { message: string; stack: string; status: NumericRange<300, 599>; [key: string]: unknown };
 };
 export type EffectResult<R> = EffectSuccess<R> | EffectFailure;
 
@@ -87,9 +103,8 @@ export async function runSafe<
 	F extends InstanceType<ErrorClass>,
 	S extends Services,
 	T extends YieldWrap<Effect.Effect<R, F, S>>,
-	X,
-	Y
->(program: () => Generator<T, X, Y>): Promise<EffectResult<X>>;
+	X
+>(program: () => Generator<T, X>): Promise<EffectResult<X>>;
 
 export async function runSafe<R, F extends InstanceType<ErrorClass>, S extends Services>(
 	program: Effect.Effect<R, F, S> | (() => Effect.Effect<R, F, S>)
@@ -101,9 +116,8 @@ export async function runSafe<
 	F extends InstanceType<ErrorClass>,
 	S extends Services,
 	T extends YieldWrap<Effect.Effect<R, F, S>>,
-	X,
-	Y
->(program: Effect.Effect<R, F, S> | (() => Effect.Effect<R, F, S>) | (() => Generator<T, X, Y>)): Promise<EffectResult<R | X>> {
+	X
+>(program: Effect.Effect<R, F, S> | (() => Effect.Effect<R, F, S>) | (() => Generator<T, X>)): Promise<EffectResult<R | X>> {
 	const event = getRequestEvent();
 	const rt = event.locals.runtime;
 
@@ -151,6 +165,8 @@ export function handleCause<F extends InstanceType<ErrorClass>>(cause: Cause.Cau
 		} else if (isHttpError(defect)) {
 			status = defect.status as NumericRange<300, 599>;
 			message = defect.body.message;
+		} else if (defect instanceof Error) {
+			if (defect.name === "ValidationError") throw defect;
 		}
 
 		if (typeof defect === "object" && defect !== null) {
@@ -167,6 +183,6 @@ export function handleCause<F extends InstanceType<ErrorClass>>(cause: Cause.Cau
 		}
 	}
 
-	if (!dev) message = removeTrace(message);
-	return { message, status, ...extra };
+	const trace = getTrace(message);
+	return { message: trace.message, stack: trace.stack, status, ...extra };
 }

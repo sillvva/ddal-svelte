@@ -1,14 +1,17 @@
 <script lang="ts">
 	import { dev } from "$app/environment";
 	import { page } from "$app/state";
-	import LoadingPanel from "$lib/components/LoadingPanel.svelte";
-	import * as AppQueries from "$lib/remote/app/queries.remote";
 	import { uuidV7 } from "$lib/schemas";
-	import SuperDebug from "sveltekit-superforms";
+	import { getGlobal } from "$lib/stores.svelte";
+	import { useOs } from "@svelteuidev/composables";
+	import SuperDebugRuned from "sveltekit-superforms/SuperDebug.svelte";
 	import * as v from "valibot";
 	import Layout from "./(app)/+layout.svelte";
 
 	let display = $state(!dev);
+
+	const global = getGlobal();
+	const os = useOs();
 
 	const appRoutes = Object.keys(import.meta.glob("/src/routes/**/+page.svelte"))
 		.map((key) => key.replace(/\/src\/routes\/|\(\w+\)|\/?\+page\.svelte/g, ""))
@@ -21,18 +24,27 @@
 		const paths = page.url.pathname.split("/");
 		const globs = appRoutes.filter((g) => g.length === paths.length);
 
-		for (const p in paths) {
-			if (!p) continue;
-			if (!globs.find((g) => g[p]?.match(/^\[/))) continue;
-			const result = v.safeParse(uuidV7, paths[p]);
-			if (!result.success) return true;
+		outer: for (let g = 1; g < globs.length; g++) {
+			const glob = globs[g]!;
+			inner: for (let p = 1; p < paths.length; p++) {
+				const path = paths[p]!;
+				const route = glob[p];
+
+				if (route === path) continue inner;
+				else if (!route?.match(/^\[/)) continue outer;
+
+				if (route?.match(/^\[/)) {
+					const result = v.safeParse(uuidV7, path);
+					if (!result.success) return true;
+				}
+			}
 		}
 
 		return false;
 	}
 </script>
 
-<Layout data={page.data}>
+<Layout>
 	<div class="flex flex-1 flex-col items-center justify-center p-4">
 		{#if !display}
 			<div class="font-vecna mb-12 flex flex-col items-center text-3xl font-bold sm:text-5xl md:text-6xl">
@@ -77,22 +89,14 @@
 			</div>
 		</div>
 		{#if display}
-			<svelte:boundary>
-				{@const request = await AppQueries.request()}
-
-				{#snippet pending()}
-					<LoadingPanel />
-				{/snippet}
-
-				<SuperDebug
-					data={{
-						...page,
-						isMobile: request.isMobile,
-						user: request.user,
-						data: undefined
-					}}
-				/>
-			</svelte:boundary>
+			<SuperDebugRuned
+				data={{
+					...page,
+					os: os,
+					user: global.user,
+					data: undefined
+				}}
+			/>
 		{/if}
 	</div>
 </Layout>

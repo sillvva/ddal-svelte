@@ -1,27 +1,24 @@
-import { command } from "$app/server";
-import { dungeonMasterIdSchema, dungeonMasterSchema, type DungeonMasterSchemaIn } from "$lib/schemas";
-import { redirectOnFail } from "$lib/server/effect/errors";
-import { parse, saveForm, validateForm } from "$lib/server/effect/forms";
-import { runSafe } from "$lib/server/effect/runtime";
-import { assertAuth } from "$lib/server/effect/services/auth";
+import * as API from "$lib/remote";
+import { dungeonMasterFormSchema, dungeonMasterIdSchema } from "$lib/schemas";
+import { guardedForm, guardedQuery, refreshAll } from "$lib/server/effect/remote";
 import { DMService } from "$lib/server/effect/services/dms";
+import { redirect } from "@sveltejs/kit";
+import { Effect } from "effect";
 
-export const save = command("unchecked", (input: DungeonMasterSchemaIn) =>
-	runSafe(function* () {
-		const { user } = yield* assertAuth();
-		const DMs = yield* DMService;
+export const get = guardedQuery(dungeonMasterIdSchema, function* (input, { user }) {
+	const DMs = yield* DMService;
+	const dm = yield* DMs.get.one(input, user.id);
 
-		const dmId = yield* redirectOnFail(parse(dungeonMasterIdSchema, input.id), "/dms", 301);
+	return {
+		id: dm.id,
+		name: dm.name,
+		DCI: dm.DCI || ""
+	};
+});
 
-		const form = yield* validateForm(input, dungeonMasterSchema);
-		if (!form.valid) return form;
-
-		return yield* saveForm(DMs.set.save(dmId, user, form.data), {
-			onSuccess: () => "/dms",
-			onError: (err) => {
-				err.toForm(form);
-				return form;
-			}
-		});
-	})
-);
+export const save = guardedForm(dungeonMasterFormSchema, function* (input, { user, invalid }) {
+	const DMs = yield* DMService;
+	yield* DMs.set.save(user, input).pipe(Effect.tapError((err) => Effect.fail(invalid(err.message))));
+	yield* refreshAll(API.dms.queries.get(input.id).refresh(), API.dms.queries.getAll().refresh());
+	redirect(303, "/dms");
+});

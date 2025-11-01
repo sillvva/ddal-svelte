@@ -1,50 +1,51 @@
-import { command } from "$app/server";
 import { appLogId, requiredString, userIdSchema } from "$lib/schemas";
 import { FailedError } from "$lib/server/effect/errors";
-import { runSafe } from "$lib/server/effect/runtime";
+import { guardedCommand } from "$lib/server/effect/remote";
 import { AdminService } from "$lib/server/effect/services/admin";
-import { assertAuth, AuthService } from "$lib/server/effect/services/auth";
+import { AuthService } from "$lib/server/effect/services/auth";
 import { Effect } from "effect";
 import * as v from "valibot";
 import { getUsers } from "./queries.remote";
 
-export const deleteAppLog = command(appLogId, (id) =>
-	runSafe(function* () {
-		yield* assertAuth(true);
+export const deleteAppLog = guardedCommand(
+	appLogId,
+	function* (id) {
 		const Admin = yield* AdminService;
 		return yield* Admin.set.deleteLog(id);
-	})
+	},
+	true
 );
 
-export const banUser = command(
-	v.object({
-		userId: userIdSchema,
-		banReason: requiredString
-	}),
-	({ userId, banReason }) =>
-		runSafe(function* () {
-			const { event } = yield* assertAuth(true);
-			const Auth = yield* AuthService;
+const banUserSchema = v.object({
+	userId: userIdSchema,
+	banReason: requiredString
+});
 
-			const auth = yield* Auth.auth();
-			const result = yield* Effect.tryPromise({
-				try: () =>
-					auth.api.banUser({
-						body: { userId, banReason },
-						headers: event.request.headers
-					}),
-				catch: (err) => new FailedError("ban user", err)
-			});
+export const banUser = guardedCommand(
+	banUserSchema,
+	function* ({ userId, banReason }, { event }) {
+		const Auth = yield* AuthService;
 
-			yield* Effect.promise(() => getUsers().refresh());
+		const auth = yield* Auth.auth();
+		const result = yield* Effect.tryPromise({
+			try: () =>
+				auth.api.banUser({
+					body: { userId, banReason },
+					headers: event.request.headers
+				}),
+			catch: (err) => new FailedError("ban user", err)
+		});
 
-			return result;
-		})
+		yield* Effect.promise(() => getUsers().refresh());
+
+		return result;
+	},
+	true
 );
 
-export const unbanUser = command(userIdSchema, (userId) =>
-	runSafe(function* () {
-		const { event } = yield* assertAuth(true);
+export const unbanUser = guardedCommand(
+	userIdSchema,
+	function* (userId, { event }) {
 		const Auth = yield* AuthService;
 
 		const auth = yield* Auth.auth();
@@ -60,5 +61,6 @@ export const unbanUser = command(userIdSchema, (userId) =>
 		yield* Effect.promise(() => getUsers().refresh());
 
 		return result;
-	})
+	},
+	true
 );

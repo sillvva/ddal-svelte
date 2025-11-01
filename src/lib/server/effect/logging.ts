@@ -12,7 +12,7 @@ export type Annotations = {
 	impersonatedBy?: UserId | null;
 	routeId: string | null;
 	params: Partial<Record<string, string>>;
-	extra: object;
+	extra: Record<string, unknown>;
 };
 
 const logLevel = Logger.withMinimumLogLevel(privateEnv.LOG_LEVEL);

@@ -3,12 +3,13 @@
 
 import type { AppCookie, LocalsSession, LocalsUser } from "$lib/schemas";
 import type { AppRuntime } from "$lib/server/effect/runtime";
-import type { FullCharacterData } from "$lib/server/effect/services/characters";
 import "@auth/sveltekit";
 import "@total-typescript/ts-reset/fetch";
 import "@total-typescript/ts-reset/json-parse";
 
 declare global {
+	var initialized: boolean;
+
 	namespace App {
 		// interface Error {}
 		interface Locals {
@@ -19,15 +20,7 @@ declare global {
 			app: AppCookie;
 			runtime: AppRuntime;
 		}
-		interface PageData {
-			app: AppCookie;
-			user: LocalsUser;
-			session: LocalsSession;
-			breadcrumbs: Array<{ name: string; href?: string }>;
-			mobile: boolean;
-			isMac: boolean;
-			character?: FullCharacterData;
-		}
+		// interface PageData {}
 		// interface Platform {}
 		interface PageState {
 			modal?:
@@ -35,6 +28,7 @@ declare global {
 						type: "text";
 						name: string;
 						description: string;
+						goto?: string;
 						date?: Date;
 						width?: number | string;
 						height?: number | string;
@@ -47,17 +41,8 @@ declare global {
 						imageUrl: string;
 				  };
 		}
-		namespace Superforms {
-			type Message = {
-				type: "error" | "success";
-				text: string;
-			};
-		}
 
 		interface ModuleData {
-			getPageTitle?: (data: App.PageData) => string;
-			pageTitle?: string;
-
 			getHeadData?: (data: App.PageData) => {
 				title: string;
 				description?: string;

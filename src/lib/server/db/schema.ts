@@ -169,11 +169,11 @@ export const characters = pg.pgTable(
 			.$default(() => v7())
 			.$type<CharacterId>(),
 		name: pg.text().notNull(),
-		race: pg.text(),
-		class: pg.text(),
-		campaign: pg.text(),
-		imageUrl: pg.text("image_url"),
-		characterSheetUrl: pg.text("character_sheet_url"),
+		race: pg.text().notNull(),
+		class: pg.text().notNull(),
+		campaign: pg.text().notNull(),
+		imageUrl: pg.text("image_url").notNull(),
+		characterSheetUrl: pg.text("character_sheet_url").notNull(),
 		userId: pg
 			.uuid()
 			.notNull()
@@ -199,7 +199,7 @@ export const dungeonMasters = pg.pgTable(
 			.$default(() => v7())
 			.$type<DungeonMasterId>(),
 		name: pg.text().notNull(),
-		DCI: pg.text(),
+		DCI: pg.text().notNull(),
 		userId: pg
 			.uuid("user_id")
 			.notNull()
@@ -300,7 +300,7 @@ export const magicItems = pg.pgTable(
 			.$default(() => v7())
 			.$type<ItemId>(),
 		name: pg.text().notNull(),
-		description: pg.text(),
+		description: pg.text().notNull(),
 		logGainedId: pg
 			.uuid()
 			.notNull()
@@ -329,7 +329,7 @@ export const storyAwards = pg.pgTable(
 			.$default(() => v7())
 			.$type<ItemId>(),
 		name: pg.text().notNull(),
-		description: pg.text(),
+		description: pg.text().notNull(),
 		logGainedId: pg
 			.uuid()
 			.notNull()

@@ -1,10 +1,12 @@
 import { browser } from "$app/environment";
 import { Duration } from "effect";
 import Cookie from "js-cookie";
-import { getContext, setContext } from "svelte";
 import { SvelteDate } from "svelte/reactivity";
 import * as v from "valibot";
-import { appCookieSchema, appDefaults, type AppCookie } from "./schemas";
+import * as API from "./remote";
+import { appCookieSchema, appDefaults, type AppCookie, type LocalsSession, type LocalsUser } from "./schemas";
+import type { DeepReadonly } from "./types";
+import { createContext } from "./util";
 
 /**
  * Set a cookie from the browser using `js-cookie`.
@@ -31,23 +33,46 @@ export function setCookie<TSchema extends v.GenericSchema>(
 	return value;
 }
 
-class Global {
+export class Global {
 	private _app: AppCookie = $state(appDefaults);
-	private _pageLoader: boolean = $state(false);
+	private _user: LocalsUser | undefined = $state.raw();
+	private _session: LocalsSession | undefined = $state.raw();
+	private _pageLoader: boolean = $state.raw(false);
 
-	constructor(app: AppCookie) {
+	constructor(app: AppCookie = appDefaults) {
 		this._app = app;
-
-		$effect(() => {
-			setCookie("app", appCookieSchema, this._app);
-		});
 	}
 
-	get app() {
-		return this._app;
+	get app(): DeepReadonly<AppCookie> {
+		return $state.snapshot(this._app);
 	}
 	set app(value: AppCookie) {
 		this._app = value;
+	}
+	public setApp(fn: (app: AppCookie) => void) {
+		fn(this._app);
+		setCookie("app", appCookieSchema, $state.snapshot(this._app));
+	}
+
+	get user() {
+		return this._user;
+	}
+	set user(value: LocalsUser | undefined) {
+		this._user = value;
+	}
+
+	get session() {
+		return this._session;
+	}
+	set session(value: LocalsSession | undefined) {
+		this._session = value;
+	}
+
+	async refresh() {
+		const request = API.app.queries.request();
+		await request.refresh();
+		this._user = request.current?.user;
+		this._session = request.current?.session;
 	}
 
 	get pageLoader() {
@@ -58,11 +83,4 @@ class Global {
 	}
 }
 
-const globalKey = Symbol("global");
-export function getGlobal() {
-	return getContext<Global>(globalKey);
-}
-export function createGlobal(app: AppCookie) {
-	const global = new Global(app);
-	return setContext(globalKey, global);
-}
+export const [getGlobal] = createContext(() => new Global());
