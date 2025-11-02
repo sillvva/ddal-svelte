@@ -1,5 +1,6 @@
 import { appLogId, requiredString, userIdSchema } from "$lib/schemas";
 import { FailedError } from "$lib/server/effect/errors";
+import { AppLog } from "$lib/server/effect/logging";
 import { guardedCommand } from "$lib/server/effect/remote";
 import { AdminService } from "$lib/server/effect/services/admin";
 import { AuthService } from "$lib/server/effect/services/auth";
@@ -63,4 +64,16 @@ export const unbanUser = guardedCommand(
 		return result;
 	},
 	true
+);
+
+export const logClientError = guardedCommand(
+	v.object({
+		message: requiredString,
+		name: v.optional(v.string()),
+		stack: v.optional(requiredString),
+		cause: v.optional(v.unknown())
+	}),
+	function* ({ message, name, stack, cause }) {
+		AppLog.error(message, { error: { name, stack, cause }, source: "client" });
+	}
 );

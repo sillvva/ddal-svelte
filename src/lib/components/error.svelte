@@ -1,9 +1,11 @@
 <script lang="ts">
 	import { dev } from "$app/environment";
 	import { page } from "$app/state";
+	import { logClientError } from "$lib/remote/admin/actions.remote";
 	import { getGlobal } from "$lib/stores.svelte";
 	import { omit } from "@sillvva/utils";
 	import { useOs } from "@svelteuidev/composables";
+	import { onMount } from "svelte";
 	import SuperDebugRuned from "sveltekit-superforms/SuperDebug.svelte";
 
 	interface Props {
@@ -12,15 +14,28 @@
 
 	let { error }: Props = $props();
 
+	function hasKey<K extends string>(obj: unknown, key: K): obj is Record<K, unknown> {
+		return obj !== null && typeof obj === "object" && key in obj;
+	}
+
 	let message = $derived(
 		typeof error === "string"
 			? error
-			: typeof error === "object" && error !== null && "message" in error && typeof error.message === "string"
+			: hasKey(error, "message") && typeof error.message === "string"
 				? error.message
 				: "Something went wrong"
 	);
 
-	console.error(error);
+	onMount(() => {
+		console.error(error);
+
+		logClientError({
+			message: message,
+			name: hasKey(error, "name") && typeof error.name === "string" ? error.name : undefined,
+			stack: hasKey(error, "stack") && typeof error.stack === "string" ? error.stack : undefined,
+			cause: hasKey(error, "cause") ? error.cause : undefined
+		});
+	});
 
 	let display = $state(!dev);
 
