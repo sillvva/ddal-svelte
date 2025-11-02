@@ -112,7 +112,7 @@
 
 <section>
 	<div class="bg-base-200 w-full overflow-x-auto rounded-lg">
-		<table class="linked-table-groups table w-full">
+		<table class="linked-table table w-full">
 			<thead>
 				<tr class="bg-base-300 text-base-content/70">
 					<th class="table-cell sm:hidden print:hidden">Game</th>
@@ -142,7 +142,7 @@
 							<td class="static! align-top">
 								<a
 									href={log.isDmLog ? `/dm-logs/${log.id}` : `/characters/${log.characterId}/log/${log.id}`}
-									class="row-link text-left font-semibold whitespace-pre-wrap"
+									class="row-link text-secondary-content font-semibold whitespace-pre-wrap"
 									aria-label="Edit Log"
 								>
 									<SearchResults text={log.name} terms={search.terms} />
@@ -283,7 +283,9 @@
 						>
 							<td colSpan={3} class="pt-0">
 								{#if log.description?.trim()}
-									<h4 class="text-base font-semibold">Notes:</h4>
+									<h4 class="text-base font-semibold">
+										<a href={`/dm-logs/${log.id}`} class="row-link">Notes:</a>
+									</h4>
 									<Markdown content={log.description} />
 								{/if}
 								{#if log.magicItemsGained.length > 0 || log.magicItemsLost.length > 0}
