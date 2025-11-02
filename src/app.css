@@ -328,6 +328,18 @@
 			}
 		}
 	}
+	@supports (hanging-punctuation: first) and (font: -apple-system-body) and (-webkit-appearance: none) {
+		.linked-table tr,
+		.linked-table-groups tbody {
+			/*
+				Safari doesn't support `position: relative` on `<tr>` elements,
+				but transform and clip-path can be used as an alternative.
+				Source: https://mtsknn.fi/blog/relative-tr-in-safari/
+			*/
+			transform: translate(0);
+			clip-path: inset(0);
+		}
+	}
 }
 
 @utility super-debug {

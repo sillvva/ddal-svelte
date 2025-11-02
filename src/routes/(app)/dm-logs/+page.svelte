@@ -301,9 +301,9 @@
 								{#if log.storyAwardsGained.length > 0 || log.storyAwardsLost.length > 0}
 									{#each log.storyAwardsGained as mi (mi.id)}
 										<div class="mt-2 text-sm whitespace-pre-wrap">
-											<span class="pr-2 font-semibold dark:text-white print:block">
+											<a href={`/dm-logs/${log.id}`} class="row-link pr-2 font-semibold dark:text-white print:block">
 												{mi.name}{mi.description ? ":" : ""}
-											</span>
+											</a>
 											{#if mi.description}
 												<Markdown content={mi.description || ""} />
 											{/if}
