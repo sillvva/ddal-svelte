@@ -110,7 +110,7 @@ export class AuthService extends Effect.Service<AuthService>()("AuthService", {
 				if (!user) {
 					const returnUrl = `${event.url.pathname}${event.url.search}`;
 					return yield* new RedirectError({
-						message: "Invalid user",
+						message: "User is not authenticated",
 						redirectTo: `/?redirect=${encodeURIComponent(returnUrl)}`
 					});
 				}
