@@ -76,13 +76,13 @@
 				<a href="/dms" class="p-2 max-md:hidden">DMs</a>
 			{/if}
 			<div class="flex-1 max-md:hidden"></div>
-			<div class="flex items-center gap-4">
+			<div class="flex items-center gap-2">
 				{#if global.user}
 					<CommandTray />
 
 					{#if global.user.role === "admin"}
 						<a href="/admin/users" class="btn btn-ghost p-2 max-md:hidden" aria-label="Admin">
-							<span class="iconify mdi--cog-outline size-6"></span>
+							<span class="iconify mdi--administrator size-6"></span>
 						</a>
 					{/if}
 
