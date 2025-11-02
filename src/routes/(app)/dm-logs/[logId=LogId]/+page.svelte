@@ -51,7 +51,7 @@
 	{#if global.user}
 		<svelte:boundary>
 			{#snippet failed(error)}<Error {error} />{/snippet}
-			<RemoteForm {schema} {form} bind:data {initialErrors}>
+			<RemoteForm {schema} {form} {data} {initialErrors}>
 				{#snippet children({ fields })}
 					<RemoteInput field={fields.id} type="hidden" />
 					<Control class="col-span-12 sm:col-span-6 lg:col-span-3">
