@@ -192,14 +192,16 @@
 						<td colspan="4">
 							<div class="grid grid-cols-1 gap-4">
 								{#if log.stack}
-									<div class="bg-base-100 overflow-x-scroll rounded-lg p-6">
+									<div class="bg-base-100 rounded-lg p-6">
 										<h3 class="mb-2 text-lg font-bold">Stack</h3>
-										<pre>{log.stack}</pre>
+										<pre class="overflow-x-scroll">{log.stack}</pre>
 									</div>
 								{/if}
-								<div class="bg-base-100 overflow-x-scroll rounded-lg p-6">
+								<div class="bg-base-100 rounded-lg p-6">
 									<h3 class="mb-2 text-lg font-bold">Annotations</h3>
-									<pre class="whitespace-break-spaces">{JSON.stringify(log.annotations, null, 2)}</pre>
+									<div class="highlighted overflow-x-scroll">
+										{@html log.highlighted}
+									</div>
 								</div>
 							</div>
 						</td>
@@ -213,3 +215,10 @@
 		<div class="text-base-content/60 text-lg">No logs found</div>
 	</section>
 {/if}
+
+<style>
+	.highlighted :global(pre) {
+		background-color: transparent !important;
+		white-space: pre-wrap !important;
+	}
+</style>

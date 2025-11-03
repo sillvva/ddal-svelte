@@ -71,6 +71,7 @@
 		"regexp.escape": "^2.0.1",
 		"satori": "^0.18.3",
 		"sharp": "^0.34.4",
+		"shiki": "^3.14.0",
 		"svelte-autosize": "^1.1.5",
 		"svelte-breadcrumbs": "^2.0.1",
 		"svelte-contextify": "^1.0.4",

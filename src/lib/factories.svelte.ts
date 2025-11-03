@@ -7,11 +7,17 @@ import { parseAbsoluteToLocal, toCalendarDateTime } from "@internationalized/dat
 import { debounce, isDefined, substrCount, type MapKeys, type Prettify } from "@sillvva/utils";
 import { isHttpError, type NumericRange } from "@sveltejs/kit";
 import { Duration } from "effect";
+import { createHighlighter } from "shiki";
 import { toast } from "svelte-sonner";
 import { SvelteMap } from "svelte/reactivity";
 import type { FullPathname } from "./constants";
 import type { SearchData } from "./remote/command";
 import type { EffectFailure, EffectResult } from "./server/effect/runtime";
+
+export const highlighter = await createHighlighter({
+	themes: ["catppuccin-mocha", "catppuccin-latte"],
+	langs: ["json"]
+});
 
 export function isRedirectFailure(
 	error: EffectFailure["error"]
