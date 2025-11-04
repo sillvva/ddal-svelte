@@ -78,9 +78,9 @@ class BaseSearchFactory<TData extends Array<unknown>> {
 	private WORD_BOUNDARY_BONUS = 0.3 as const;
 	protected WHOLE_QUERY_MULTIPLIER = 2 as const;
 
-	protected _tdata = $state([] as unknown as TData);
-	protected _query = $state<string>("");
-	protected _tokens = $state<Token[]>([]);
+	protected _tdata = $state.raw([] as unknown as TData);
+	protected _query = $state.raw<string>("");
+	protected _tokens = $state.raw<Token[]>([]);
 
 	private _matchCache = new Map<string, { matches: Set<string>; score: number }>();
 
