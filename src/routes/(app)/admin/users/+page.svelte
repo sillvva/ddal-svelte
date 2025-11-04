@@ -1,13 +1,8 @@
-<script lang="ts" module>
-	export const pageHead = {
-		title: "Users"
-	};
-</script>
-
 <script lang="ts">
 	import { goto, invalidateAll } from "$app/navigation";
 	import { page } from "$app/state";
 	import { authClient } from "$lib/auth.js";
+	import Head from "$lib/components/head.svelte";
 	import Search from "$lib/components/search.svelte";
 	import { BLANK_CHARACTER } from "$lib/constants.js";
 	import { parseEffectResult } from "$lib/factories.svelte";
@@ -27,6 +22,8 @@
 
 	const results = $derived(search.trim() ? parser.filter(search) : users);
 </script>
+
+<Head title="Users" />
 
 <section class="flex flex-wrap items-center justify-between gap-2 max-sm:justify-end">
 	<div class="flex w-full gap-2 sm:max-w-md md:max-w-md">

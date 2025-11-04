@@ -1,19 +1,8 @@
-<script lang="ts" module>
-	import type { RouteParams } from "./$types.js";
-	export async function getPageHead(params: RouteParams) {
-		const character = await API.characters.queries.get({ param: params.characterId });
-		return {
-			title: character.name || "Character",
-			description: `Level ${character.totalLevel} ${character.race} ${character.class}`,
-			image: `${page.url.origin}/characters/${character.id}/og-image.jpg`
-		};
-	}
-</script>
-
 <script lang="ts">
 	import { goto, pushState } from "$app/navigation";
 	import { page } from "$app/state";
 	import { authClient } from "$lib/auth.js";
+	import Head from "$lib/components/head.svelte";
 	import Items from "$lib/components/items.svelte";
 	import Markdown from "$lib/components/markdown.svelte";
 	import NavMenu from "$lib/components/nav-menu.svelte";
@@ -71,6 +60,12 @@
 		}
 	});
 </script>
+
+<Head
+	title={character.name}
+	description={`Level ${character.totalLevel} ${character.race} ${character.class}`}
+	image={`${page.url.origin}/characters/${character.id}/og-image.jpg`}
+/>
 
 {#if global.user}
 	<NavMenu

@@ -1,21 +1,17 @@
-<script lang="ts" module>
-	export async function getPageHead() {
-		return {
-			title: `{username}'s DMs`
-		};
-	}
-</script>
-
 <script lang="ts">
 	import { page } from "$app/state";
+	import Head from "$lib/components/head.svelte";
 	import NavMenu from "$lib/components/nav-menu.svelte";
 	import SearchResults from "$lib/components/search-results.svelte";
 	import Search from "$lib/components/search.svelte";
 	import { parseEffectResult } from "$lib/factories.svelte";
 	import { EntitySearchFactory, successToast } from "$lib/factories.svelte.js";
 	import * as API from "$lib/remote";
+	import { getGlobal } from "$lib/stores.svelte";
 	import { sorter } from "@sillvva/utils";
 	import { SvelteSet } from "svelte/reactivity";
+
+	const global = getGlobal();
 
 	const dmsQuery = API.dms.queries.getAll();
 	const dms = $derived(await dmsQuery);
@@ -26,6 +22,8 @@
 
 	let deletingDM = new SvelteSet<string>();
 </script>
+
+<Head title="{global.user?.name}'s DMs" />
 
 <NavMenu base crumbs={[{ title: "DMs", url: "/dms" }]} />
 

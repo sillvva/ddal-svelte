@@ -1,14 +1,7 @@
-<script lang="ts" module>
-	export async function getPageHead() {
-		return {
-			title: `{username}'s DM Logs`
-		};
-	}
-</script>
-
 <script lang="ts">
 	import { goto } from "$app/navigation";
 	import { page } from "$app/state";
+	import Head from "$lib/components/head.svelte";
 	import Items from "$lib/components/items.svelte";
 	import Markdown from "$lib/components/markdown.svelte";
 	import NavMenu from "$lib/components/nav-menu.svelte";
@@ -34,6 +27,8 @@
 
 	let deletingLog = new SvelteSet<string>();
 </script>
+
+<Head title="{global.user?.name}'s DM Logs" />
 
 <NavMenu base crumbs={[{ title: "DM Logs", url: "/dm-logs" }]}>
 	{#snippet menu()}

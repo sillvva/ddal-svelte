@@ -1,11 +1,6 @@
-<script lang="ts" module>
-	export const pageHead = {
-		title: "App Logs"
-	};
-</script>
-
 <script lang="ts">
 	import { pushState } from "$app/navigation";
+	import Head from "$lib/components/head.svelte";
 	import LoadingPanel from "$lib/components/loading-panel.svelte";
 	import { parseEffectResult } from "$lib/factories.svelte";
 	import { successToast } from "$lib/factories.svelte.js";
@@ -55,6 +50,8 @@
 		});
 	}
 </script>
+
+<Head title="App Logs" />
 
 <section class="flex flex-col gap-1">
 	<div class="flex items-center justify-between">

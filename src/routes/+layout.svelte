@@ -1,7 +1,6 @@
 <script lang="ts">
 	import { dev } from "$app/environment";
 	import { onNavigate } from "$app/navigation";
-	import Head from "$lib/components/head.svelte";
 	import * as API from "$lib/remote";
 	import { getGlobal } from "$lib/stores.svelte";
 	import "../app.css";
@@ -25,8 +24,6 @@
 		});
 	});
 </script>
-
-<Head />
 
 {@render children()}
 

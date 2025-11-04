@@ -41,17 +41,6 @@ declare global {
 						imageUrl: string;
 				  };
 		}
-
-		interface ModuleData {
-			getHeadData?: (data: App.PageData) => {
-				title: string;
-				description?: string;
-				image?: string;
-			};
-			headTitle?: string;
-			headDescription?: string;
-			headImage?: string;
-		}
 	}
 
 	interface ViewTransition {

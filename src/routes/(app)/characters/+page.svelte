@@ -1,14 +1,7 @@
-<script lang="ts" module>
-	export async function getPageHead() {
-		return {
-			title: `{username}'s Characters`
-		};
-	}
-</script>
-
 <script lang="ts">
 	import { goto } from "$app/navigation";
 	import { page } from "$app/state";
+	import Head from "$lib/components/head.svelte";
 	import NavMenu from "$lib/components/nav-menu.svelte";
 	import SearchResults from "$lib/components/search-results.svelte";
 	import Search from "$lib/components/search.svelte";
@@ -28,6 +21,8 @@
 		search.results.toSorted((a, b) => sorter(b.score, a.score) || sorter(a.totalLevel, b.totalLevel) || sorter(a.name, b.name))
 	);
 </script>
+
+<Head title="{global.user?.name}'s Characters" />
 
 <NavMenu base crumbs={[{ title: "Characters", url: "/characters" }]}>
 	{#snippet menu()}

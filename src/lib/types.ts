@@ -10,12 +10,3 @@ export type Crumb = {
 	title: string;
 	url: string;
 };
-export type PageHead = {
-	title: string;
-	description?: string;
-	image?: string;
-};
-export type ModuleData = {
-	pageHead?: PageHead;
-	getPageHead?: (params: unknown) => Awaitable<Partial<PageHead>>;
-};

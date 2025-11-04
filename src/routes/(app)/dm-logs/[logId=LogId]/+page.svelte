@@ -1,15 +1,3 @@
-<script lang="ts" module>
-	import type { RouteParams } from "./$types.js";
-	export async function getPageHead(params: RouteParams) {
-		const data = await API.logs.forms.dm({
-			param: { logId: params.logId }
-		});
-		return {
-			title: data.log.name || "New Log"
-		};
-	}
-</script>
-
 <script lang="ts">
 	import Error from "$lib/components/error.svelte";
 	import Control from "$lib/components/forms/control.svelte";
@@ -21,6 +9,7 @@
 	import RemoteInput from "$lib/components/forms/remote-input.svelte";
 	import RemoteMdInput from "$lib/components/forms/remote-md-input.svelte";
 	import RemoteSubmit from "$lib/components/forms/remote-submit.svelte";
+	import Head from "$lib/components/head.svelte";
 	import NavMenu from "$lib/components/nav-menu.svelte";
 	import * as API from "$lib/remote";
 	import { dmLogSchema } from "$lib/schemas";
@@ -41,6 +30,8 @@
 </script>
 
 {#key log.id}
+	<Head title={log.name || "New Log"} />
+
 	<NavMenu
 		crumbs={[
 			{ title: "DM Logs", url: "/dm-logs" },
