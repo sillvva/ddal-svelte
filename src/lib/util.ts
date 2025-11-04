@@ -60,12 +60,10 @@ export function createContext<T>(createDefault?: () => T): [(getDefault?: () => 
 	const key = Symbol("context");
 	return [
 		(getDefault) => {
-			if (!hasContext(key)) {
-				if (getDefault) return setContext(key, getDefault());
-				if (createDefault) return setContext(key, createDefault());
-				throw new Error("Context not found");
-			}
-			return getContext(key);
+			if (hasContext(key)) return getContext(key);
+			if (getDefault) return setContext(key, getDefault());
+			if (createDefault) return setContext(key, createDefault());
+			throw new Error("Context not found");
 		},
 		(context) => setContext(key, context)
 	];
