@@ -27,6 +27,7 @@
 <NavMenu
 	crumbs={[
 		{ title: "Characters", url: "/characters" },
+		// excluded for new character, due to empty name
 		{ title: character.name, url: `/characters/${character.id}` },
 		{ title: params.characterId === "new" ? "New Character" : "Edit", url: `/characters/${character.id}/edit` }
 	]}
