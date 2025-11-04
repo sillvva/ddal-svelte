@@ -10,8 +10,6 @@
 	const global = getGlobal();
 	const request = await API.app.queries.request();
 	global.app = request.app;
-	global.user = request.user;
-	global.session = request.session;
 
 	onNavigate(({ complete, from, to }) => {
 		if (!document.startViewTransition) return;

@@ -5,7 +5,7 @@
 	import { BLANK_CHARACTER, PROVIDERS, type ProviderId } from "$lib/constants";
 	import { errorToast, parseEffectResult } from "$lib/factories.svelte";
 	import * as API from "$lib/remote";
-	import { getGlobal } from "$lib/stores.svelte";
+	import { getAuth, getGlobal } from "$lib/stores.svelte";
 	import { isDefined } from "@sillvva/utils";
 	import { isTupleOfAtLeast } from "effect/Predicate";
 	import Passkeys from "./passkeys.svelte";
@@ -18,6 +18,7 @@
 	let { open = $bindable(false) }: Props = $props();
 
 	const global = getGlobal();
+	const auth = $derived(await getAuth());
 
 	type UserAccount = { providerId: ProviderId; name: string; email: string; image: string };
 	let userAccounts = $state<UserAccount[]>([]);
@@ -26,11 +27,11 @@
 	const authProviders = $derived(
 		PROVIDERS.map((p) => ({
 			...p,
-			account: global.user?.accounts.find((a) => a.providerId === p.id)
+			account: auth.user?.accounts.find((a) => a.providerId === p.id)
 		}))
 	);
 	const initials = $derived(
-		global.user?.name
+		auth.user?.name
 			.split(" ")
 			.map((n) => n[0])
 			.join("")
@@ -40,7 +41,7 @@
 	$effect(() => {
 		if (!userAccounts.length && open) {
 			Promise.allSettled(
-				global.user?.accounts.map(({ accountId, providerId }) =>
+				auth.user?.accounts.map(({ accountId, providerId }) =>
 					authClient.accountInfo({ accountId }).then((r) =>
 						r.data?.user?.name && r.data?.user?.email && r.data?.user?.image
 							? {
@@ -57,7 +58,7 @@
 
 				const account =
 					userAccounts.find((a) => a.providerId === global.app.settings.provider) ||
-					userAccounts.find((a) => a.name === global.user?.name && a.email === global.user?.email) ||
+					userAccounts.find((a) => a.name === auth.user?.name && a.email === auth.user?.email) ||
 					(isTupleOfAtLeast(userAccounts, 1) ? userAccounts[0] : undefined);
 
 				if (account) {
@@ -67,13 +68,13 @@
 						});
 					}
 					if (
-						account.name !== global.user?.name ||
-						account.email !== global.user?.email ||
-						(account.image !== global.user?.image && !account.image.includes(BLANK_CHARACTER))
+						account.name !== auth.user?.name ||
+						account.email !== auth.user?.email ||
+						(account.image !== auth.user?.image && !account.image.includes(BLANK_CHARACTER))
 					) {
 						const result = await API.auth.actions.updateUser(account);
 						const parsed = await parseEffectResult(result);
-						if (parsed) await global.refresh();
+						if (parsed) await auth.refresh();
 					}
 				}
 			});
@@ -81,21 +82,21 @@
 	});
 </script>
 
-{#if global.user}
+{#if auth.user}
 	<aside
 		id="settings"
 		class="bg-base-100 fixed inset-y-0 -right-80 z-50 flex w-80 flex-col overflow-y-auto px-4 pb-4 transition-all data-[open=true]:right-0 data-[open=true]:shadow-lg data-[open=true]:shadow-black/50 print:hidden"
 		data-open={open}
 	>
-		{#if global.user}
+		{#if auth.user}
 			<div class="flex items-center gap-4 py-4 pl-2">
 				<div
 					class="avatar ring-primary group/avatar bg-primary ring-offset-base-100 flex h-9 w-9 items-center justify-center overflow-hidden rounded-full ring-3 ring-offset-2"
 				>
-					{#if global.user.image}
+					{#if auth.user.image}
 						<img
-							src={global.user.image}
-							alt={global.user.name}
+							src={auth.user.image}
+							alt={auth.user.name}
 							class="rounded-full object-cover object-center"
 							onerror={(e) => {
 								const img = e.currentTarget as HTMLImageElement;
@@ -108,12 +109,12 @@
 					{/if}
 				</div>
 				<div class="flex-1">
-					<div class="ellipsis-nowrap font-medium">{global.user.name}</div>
+					<div class="ellipsis-nowrap font-medium">{auth.user.name}</div>
 					<div class="ellipsis-nowrap text-xs font-medium text-gray-500 dark:text-gray-400">
-						{global.user.email}
+						{auth.user.email}
 					</div>
 				</div>
-				{#if global.session?.impersonatedBy}
+				{#if auth.session?.impersonatedBy}
 					<div class="tooltip tooltip-left" data-tip="Stop impersonating">
 						<button
 							class="btn btn-sm btn-primary"
@@ -168,13 +169,13 @@
 							<span class="flex-1">{provider.name}</span>
 							<span class="join flex items-center">
 								{#if provider.account}
-									{#if global.user.accounts.length > 1}
+									{#if auth.user.accounts.length > 1}
 										{#if !userAccounts.length}
 											<span class="iconify mdi--loading size-5 animate-spin"></span>
 										{:else}
 											{@const account = userAccounts.find((a) => a.providerId === provider.id)}
 											{#if account}
-												{#if currentAccount?.providerId !== provider.id || account.name !== global.user.name || account.email !== global.user.email || account.image !== global.user.image}
+												{#if currentAccount?.providerId !== provider.id || account.name !== auth.user.name || account.email !== auth.user.email || account.image !== auth.user.image}
 													<div class="tooltip" data-tip="Use this account">
 														<button
 															class="btn btn-sm join-item bg-base-300"
@@ -187,7 +188,7 @@
 																	global.setApp((app) => {
 																		app.settings.provider = account.providerId;
 																	});
-																	await global.refresh();
+																	await auth.refresh();
 																}
 															}}
 														>
@@ -266,10 +267,10 @@
 
 			<div class="flex flex-col gap-2">
 				<div class="px-2 text-xs text-gray-500 dark:text-gray-400">
-					User ID:<br />{global.user.id}
+					User ID:<br />{auth.user.id}
 				</div>
 				<div class="px-2 text-xs text-gray-500 dark:text-gray-400">
-					Logged in {global.session?.createdAt.toLocaleString()}
+					Logged in {auth.session?.createdAt.toLocaleString()}
 				</div>
 			</div>
 		{/if}

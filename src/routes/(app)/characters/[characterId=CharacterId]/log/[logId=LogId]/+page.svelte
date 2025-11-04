@@ -16,13 +16,13 @@
 	import { defaultDM } from "$lib/entities.js";
 	import * as API from "$lib/remote";
 	import { type DungeonMasterId, logSchema } from "$lib/schemas";
-	import { getGlobal } from "$lib/stores.svelte.js";
+	import { getAuth } from "$lib/stores.svelte.js";
 	import { v7 } from "uuid";
 
 	let { params } = $props();
 
-	const global = getGlobal();
-	const user = $derived(global.user!);
+	const auth = $derived(await getAuth());
+	const user = $derived(auth.user!);
 
 	const schema = logSchema;
 	const form = API.logs.forms.saveCharacter;

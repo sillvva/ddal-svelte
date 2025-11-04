@@ -2,7 +2,7 @@
 	import { dev } from "$app/environment";
 	import { page } from "$app/state";
 	import { logClientError } from "$lib/remote/admin/actions.remote";
-	import { getGlobal } from "$lib/stores.svelte";
+	import { getAuth } from "$lib/stores.svelte";
 	import { omit } from "@sillvva/utils";
 	import { useOs } from "@svelteuidev/composables";
 	import { onMount } from "svelte";
@@ -39,7 +39,7 @@
 
 	let display = $state(!dev);
 
-	const global = getGlobal();
+	const { user } = $derived(await getAuth());
 	const os = useOs();
 </script>
 
@@ -71,8 +71,8 @@
 			data={{
 				error,
 				...omit(page, ["error"]),
-				os: os,
-				user: global.user,
+				os,
+				user,
 				data: undefined
 			}}
 		/>

@@ -7,11 +7,11 @@
 	import { parseEffectResult } from "$lib/factories.svelte";
 	import { EntitySearchFactory, successToast } from "$lib/factories.svelte.js";
 	import * as API from "$lib/remote";
-	import { getGlobal } from "$lib/stores.svelte";
+	import { getAuth } from "$lib/stores.svelte";
 	import { sorter } from "@sillvva/utils";
 	import { SvelteSet } from "svelte/reactivity";
 
-	const global = getGlobal();
+	const auth = $derived(await getAuth());
 
 	const dmsQuery = API.dms.queries.getAll();
 	const dms = $derived(await dmsQuery);
@@ -23,7 +23,7 @@
 	let deletingDM = new SvelteSet<string>();
 </script>
 
-<Head title="{global.user?.name}'s DMs" />
+<Head title="{auth.user?.name}'s DMs" />
 
 <NavMenu base crumbs={[{ title: "DMs", url: "/dms" }]} />
 

@@ -10,7 +10,7 @@
 	import Search from "$lib/components/search.svelte";
 	import { EntitySearchFactory, parseEffectResult, successToast } from "$lib/factories.svelte.js";
 	import * as API from "$lib/remote";
-	import { getGlobal } from "$lib/stores.svelte.js";
+	import { getAuth, getGlobal } from "$lib/stores.svelte.js";
 	import { createTransition, hotkey } from "$lib/util";
 	import { slugify, sorter } from "@sillvva/utils";
 	import { clipboard, download } from "@svelteuidev/composables";
@@ -21,10 +21,11 @@
 	const { params } = $props();
 
 	const global = getGlobal();
+	const auth = $derived(await getAuth());
 
 	const characterQuery = API.characters.queries.get({ param: params.characterId, newRedirect: true });
 	const character = $derived(await characterQuery);
-	const myCharacter = $derived(character.userId === global.user?.id);
+	const myCharacter = $derived(character.userId === auth.user?.id);
 
 	let deletingLog = new SvelteSet<string>();
 
@@ -49,7 +50,7 @@
 	}
 
 	onMount(() => {
-		if (global.app.settings.autoWebAuthn && !global.user) {
+		if (global.app.settings.autoWebAuthn && !auth.user) {
 			authClient.signIn.passkey({
 				fetchOptions: {
 					onSuccess: () => {
@@ -67,7 +68,7 @@
 	image={`${page.url.origin}/characters/${character.id}/og-image.jpg`}
 />
 
-{#if global.user}
+{#if auth.user}
 	<NavMenu
 		hideMenuActions={!myCharacter}
 		crumbs={[

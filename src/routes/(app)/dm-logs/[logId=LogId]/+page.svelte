@@ -13,11 +13,11 @@
 	import NavMenu from "$lib/components/nav-menu.svelte";
 	import * as API from "$lib/remote";
 	import { dmLogSchema } from "$lib/schemas";
-	import { getGlobal } from "$lib/stores.svelte.js";
+	import { getAuth } from "$lib/stores.svelte.js";
 
 	const { params } = $props();
 
-	const global = getGlobal();
+	const auth = $derived(await getAuth());
 
 	const schema = dmLogSchema;
 	const form = API.logs.forms.saveDM;
@@ -39,7 +39,7 @@
 		]}
 	/>
 
-	{#if global.user}
+	{#if auth.user}
 		<svelte:boundary>
 			{#snippet failed(error)}<Error {error} />{/snippet}
 			<RemoteForm {schema} {form} {data} {initialErrors}>

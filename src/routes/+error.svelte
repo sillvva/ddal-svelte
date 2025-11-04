@@ -2,7 +2,7 @@
 	import { dev } from "$app/environment";
 	import { page } from "$app/state";
 	import { uuidV7 } from "$lib/schemas";
-	import { getGlobal } from "$lib/stores.svelte";
+	import { getAuth } from "$lib/stores.svelte";
 	import { useOs } from "@svelteuidev/composables";
 	import SuperDebugRuned from "sveltekit-superforms/SuperDebug.svelte";
 	import * as v from "valibot";
@@ -10,8 +10,8 @@
 
 	let display = $state(!dev);
 
-	const global = getGlobal();
 	const os = useOs();
+	const auth = $derived(await getAuth());
 
 	const appRoutes = Object.keys(import.meta.glob("/src/routes/**/+page.svelte"))
 		.map((key) => key.replace(/\/src\/routes\/|\(\w+\)|\/?\+page\.svelte/g, ""))
@@ -93,7 +93,7 @@
 				data={{
 					...page,
 					os: os,
-					user: global.user,
+					user: auth.user,
 					data: undefined
 				}}
 			/>

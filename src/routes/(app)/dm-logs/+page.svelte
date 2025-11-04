@@ -9,7 +9,7 @@
 	import Search from "$lib/components/search.svelte";
 	import { EntitySearchFactory, parseEffectResult, successToast } from "$lib/factories.svelte.js";
 	import * as API from "$lib/remote";
-	import { getGlobal } from "$lib/stores.svelte.js";
+	import { getAuth, getGlobal } from "$lib/stores.svelte.js";
 	import { createTransition, hotkey } from "$lib/util.js";
 	import { sorter } from "@sillvva/utils";
 	import { download } from "@svelteuidev/composables";
@@ -17,6 +17,7 @@
 	import { SvelteSet } from "svelte/reactivity";
 
 	const global = getGlobal();
+	const auth = $derived(await getAuth());
 
 	const dmLogsQuery = API.logs.queries.getDmLogs();
 	const logs = $derived(await dmLogsQuery);
@@ -28,7 +29,7 @@
 	let deletingLog = new SvelteSet<string>();
 </script>
 
-<Head title="{global.user?.name}'s DM Logs" />
+<Head title="{auth.user?.name}'s DM Logs" />
 
 <NavMenu base crumbs={[{ title: "DM Logs", url: "/dm-logs" }]}>
 	{#snippet menu()}

@@ -2,11 +2,12 @@
 	import { authClient } from "$lib/auth";
 	import { errorToast, successToast } from "$lib/factories.svelte";
 	import type { PasskeyId } from "$lib/schemas";
-	import { getGlobal } from "$lib/stores.svelte";
+	import { getAuth, getGlobal } from "$lib/stores.svelte";
 
 	const global = getGlobal();
+	const auth = $derived(await getAuth());
 
-	const user = $derived(global.user);
+	const { user } = $derived(auth);
 	const passkeys = $derived(user?.passkeys || []);
 
 	$effect(() => {
@@ -35,7 +36,7 @@
 			fetchOptions: {
 				onSuccess: () => {
 					successToast(`${name} saved`);
-					global.refresh();
+					auth.refresh();
 				},
 				onError: ({ error }) => {
 					initRename(id, name, error.message);
@@ -45,15 +46,15 @@
 	}
 
 	async function deleteWebAuthn(id: PasskeyId) {
-		const auth = passkeys.find((a) => a.id === id);
-		if (!auth) return;
-		if (confirm(`Are you sure you want to delete ${auth.name}?`)) {
+		const passkey = passkeys.find((a) => a.id === id);
+		if (!passkey) return;
+		if (confirm(`Are you sure you want to delete ${passkey.name}?`)) {
 			await authClient.passkey.deletePasskey({
 				id,
 				fetchOptions: {
 					onSuccess: () => {
-						successToast(`${auth.name} deleted`);
-						global.refresh();
+						successToast(`${passkey.name} deleted`);
+						auth.refresh();
 					},
 					onError: ({ error }) => {
 						errorToast(error.message);

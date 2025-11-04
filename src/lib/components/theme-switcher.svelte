@@ -39,7 +39,6 @@
 				},
 				() => {
 					document.documentElement.classList.remove("theme-switcher");
-					global.refresh();
 				},
 				900
 			);

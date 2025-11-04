@@ -10,7 +10,7 @@
 	import { BLANK_CHARACTER } from "$lib/constants.js";
 	import { parseEffectResult } from "$lib/factories.svelte";
 	import * as API from "$lib/remote";
-	import { getGlobal } from "$lib/stores.svelte.js";
+	import { getAuth, getGlobal } from "$lib/stores.svelte.js";
 	import { hotkey } from "$lib/util";
 	import { wait } from "@sillvva/utils";
 	import { onMount } from "svelte";
@@ -23,6 +23,8 @@
 
 	let settingsOpen = $state(false);
 	let loadingImage = $state(true);
+
+	const auth = $derived(await getAuth());
 
 	afterNavigate(() => {
 		global.pageLoader = false;
@@ -37,7 +39,7 @@
 
 	onMount(() => {
 		const hasCookie = document.cookie.includes("session-token");
-		if (!global.user && hasCookie) location.reload();
+		if (!auth.user && hasCookie) location.reload();
 	});
 </script>
 
@@ -59,7 +61,7 @@
 		<nav class="relative z-10 container mx-auto flex max-w-5xl items-center gap-3 p-4">
 			<div class="inline max-w-10 shrink-0 grow md:hidden">&nbsp;</div>
 			<div class="inline max-w-10 shrink-0 grow md:hidden">&nbsp;</div>
-			<a href={global.user ? "/characters" : "/"} class="flex flex-1 items-center justify-center gap-1 md:flex-none">
+			<a href={auth.user ? "/characters" : "/"} class="flex flex-1 items-center justify-center gap-1 md:flex-none">
 				<img
 					src="/images/{global.app.settings.mode === 'dark' ? 'dragon' : 'dragon-dark'}.webp"
 					alt="Dragon"
@@ -70,17 +72,17 @@
 					<h2 class="text-3xl leading-7">Log Sheet</h2>
 				</div>
 			</a>
-			{#if global.user}
+			{#if auth.user}
 				<a href="/characters" class="ml-8 p-2 max-md:hidden">Character Logs</a>
 				<a href="/dm-logs" class="p-2 max-md:hidden">DM Logs</a>
 				<a href="/dms" class="p-2 max-md:hidden">DMs</a>
 			{/if}
 			<div class="flex-1 max-md:hidden"></div>
 			<div class="flex items-center gap-2">
-				{#if global.user}
+				{#if auth.user}
 					<CommandTray />
 
-					{#if global.user.role === "admin"}
+					{#if auth.user.role === "admin"}
 						<a href="/admin/users" class="btn btn-ghost p-2 max-md:hidden" aria-label="Admin">
 							<span class="iconify mdi--administrator size-6"></span>
 						</a>
@@ -88,7 +90,7 @@
 
 					<!-- Avatar -->
 					<div class="hidden items-center print:flex">
-						{global.user.name}
+						{auth.user.name}
 					</div>
 					<div class="avatar flex h-full min-w-fit items-center">
 						<button
@@ -97,18 +99,18 @@
 							onclick={() => (settingsOpen = true)}
 						>
 							<img
-								src={global.user.image || ""}
-								alt={global.user.name}
+								src={auth.user.image || ""}
+								alt={auth.user.name}
 								class="rounded-full object-cover object-center"
 								onerror={async (e) => {
-									if (!global.user) return;
+									if (!auth.user) return;
 									const img = e.currentTarget as HTMLImageElement;
 									img.onerror = null;
 									img.src = BLANK_CHARACTER;
 
 									const result = await API.auth.actions.updateUser({ image: BLANK_CHARACTER });
 									const parsed = await parseEffectResult(result);
-									if (parsed) await global.refresh();
+									if (parsed) await auth.refresh();
 								}}
 							/>
 						</button>

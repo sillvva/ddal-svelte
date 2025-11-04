@@ -7,13 +7,14 @@
 	import Search from "$lib/components/search.svelte";
 	import { EntitySearchFactory } from "$lib/factories.svelte.js";
 	import * as API from "$lib/remote";
-	import { getGlobal } from "$lib/stores.svelte.js";
+	import { getAuth, getGlobal } from "$lib/stores.svelte.js";
 	import { createTransition, hotkey } from "$lib/util";
 	import { sorter } from "@sillvva/utils";
 	import { download } from "@svelteuidev/composables";
 	import { fromAction } from "svelte/attachments";
 
 	const global = getGlobal();
+	const auth = $derived(await getAuth());
 
 	const characters = $derived(await API.characters.queries.getAll());
 	const search = $derived(new EntitySearchFactory(characters, page.url.searchParams.get("s") || ""));
@@ -22,7 +23,7 @@
 	);
 </script>
 
-<Head title="{global.user?.name}'s Characters" />
+<Head title="{auth.user?.name}'s Characters" />
 
 <NavMenu base crumbs={[{ title: "Characters", url: "/characters" }]}>
 	{#snippet menu()}
