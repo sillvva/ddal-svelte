@@ -68,9 +68,9 @@ export const unbanUser = guardedCommand(
 
 export const logClientError = guardedCommand(
 	v.object({
-		message: requiredString,
+		message: v.string(),
 		name: v.optional(v.string()),
-		stack: v.optional(requiredString),
+		stack: v.optional(v.string()),
 		cause: v.optional(v.unknown())
 	}),
 	function* ({ message, name, stack, cause }) {
