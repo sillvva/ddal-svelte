@@ -12,7 +12,7 @@
 
 	let open = $state(false);
 	let selected: string = $state(defaultSelected);
-	let command = $state<Command.Root | null>(null);
+	let command = $state<Command.Root>();
 	let viewport = $state<HTMLDivElement | null>(null);
 	let input = $state<HTMLInputElement | null>(null);
 	let searchData = $state<SearchData>([]);

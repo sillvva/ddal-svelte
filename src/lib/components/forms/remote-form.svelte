@@ -29,7 +29,7 @@
 
 	let { schema, form: remoteForm, children, data, initialErrors = false, onsubmit, onresult, ...rest }: Props = $props();
 
-	let formEl = $state<HTMLFormElement | null>(null);
+	let formEl: HTMLFormElement;
 	let hadIssues = $derived(false);
 
 	const form = remoteForm.for((data.id ?? v7()) as FormId).preflight(schema);
@@ -50,7 +50,7 @@
 		await tick();
 		hadIssues ||= !!form.fields.allIssues()?.length;
 
-		const invalid = formEl?.querySelector(":is(input, select, textarea):not(.hidden, [type=hidden], :disabled)[aria-invalid]") as
+		const invalid = formEl.querySelector(":is(input, select, textarea):not(.hidden, [type=hidden], :disabled)[aria-invalid]") as
 			| HTMLInputElement
 			| HTMLSelectElement
 			| HTMLTextAreaElement
