@@ -7,6 +7,7 @@ import { parseAbsoluteToLocal, toCalendarDateTime } from "@internationalized/dat
 import { debounce, isDefined, substrCount, type MapKeys, type Prettify } from "@sillvva/utils";
 import { isHttpError, type NumericRange } from "@sveltejs/kit";
 import { Duration } from "effect";
+import escapeRegex from "regexp.escape";
 import { createHighlighter } from "shiki";
 import { toast } from "svelte-sonner";
 import { SvelteMap } from "svelte/reactivity";
@@ -159,7 +160,7 @@ class BaseSearchFactory<TData extends Array<unknown>> {
 			const index = itemLower.indexOf(token.value);
 			subtotal += Math.max(0, this.POSITION_BONUS_MAX - (index / itemLower.length) * this.POSITION_BONUS_MAX);
 
-			const escapedTerm = escape(token.value);
+			const escapedTerm = escapeRegex(token.value);
 			if (new RegExp(`\\b${escapedTerm}\\b`, "i").test(item)) {
 				subtotal += this.WORD_BOUNDARY_BONUS;
 			}
