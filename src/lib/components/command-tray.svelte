@@ -6,21 +6,30 @@
 	import type { SearchData } from "$lib/remote/command";
 	import { hotkey } from "$lib/util";
 	import { Command, Dialog, Separator } from "bits-ui";
+	import { untrack } from "svelte";
 	import SearchResults from "./search-results.svelte";
 
 	const defaultSelected: string = searchSections[0].url;
 
 	let open = $state(false);
-	let selected: string = $state(defaultSelected);
-	let command = $state<Command.Root>();
+	let selected = $state(defaultSelected);
+	let searchData = $state<SearchData>([]);
+	let command: Command.Root | undefined;
 	let viewport = $state<HTMLDivElement | null>(null);
 	let input = $state<HTMLInputElement | null>(null);
-	let searchData = $state<SearchData>([]);
 
 	const request = await API.app.queries.request();
 	const search = $derived(new GlobalSearchFactory(searchData, open ? "" : ""));
 	const resultsCount = $derived(search.results.reduce((sum, section) => sum + section.items.length, 0));
 	const categories = $derived(searchData.map((section) => section.title).filter((c) => c !== "Sections"));
+
+	$effect(() => {
+		void search.results;
+		untrack(() => {
+			command?.updateSelectedToIndex(0);
+			if (viewport) viewport.scrollTop = 0;
+		});
+	});
 
 	async function setOpen(newOpen: boolean) {
 		open = newOpen;
@@ -90,11 +99,7 @@
 										oninput={(ev: Event) => {
 											const value = (ev.target as HTMLInputElement).value;
 											const trimmed = value.trim();
-											if (search.query !== trimmed) {
-												search.query = trimmed;
-												command?.updateSelectedToIndex(0);
-												if (viewport) viewport.scrollTop = 0;
-											}
+											if (search.query !== trimmed) search.query = trimmed;
 										}}
 									/>
 								</label>
