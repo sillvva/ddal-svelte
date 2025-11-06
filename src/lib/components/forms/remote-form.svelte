@@ -33,7 +33,11 @@
 	let hadIssues = $derived(false);
 
 	const form = remoteForm.for((data.id ?? v7()) as FormId).preflight(schema);
+
 	form.fields.set(data);
+	$effect(() => {
+		form.fields.set(data);
+	});
 
 	const result = $derived(form.result);
 	const issues = $derived(form.fields.issues());
