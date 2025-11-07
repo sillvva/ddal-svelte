@@ -144,7 +144,7 @@ export function handleCause<F extends InstanceType<ErrorClass>>(cause: Cause.Cau
 	let message = Cause.pretty(cause);
 	let status: NumericRange<300, 599> = 500;
 	let extra: Record<string, unknown> = {};
-	let type = "unknown";
+	let type = "UnknownCause";
 
 	if (Cause.isFailType(cause)) {
 		const error = cause.error;
@@ -160,6 +160,7 @@ export function handleCause<F extends InstanceType<ErrorClass>>(cause: Cause.Cau
 	if (Cause.isDieType(cause)) {
 		const defect = cause.defect;
 		type = "UnknownDefect";
+		extra.defect = defect;
 
 		if (isRedirect(defect)) {
 			type = "Redirect";
@@ -172,7 +173,6 @@ export function handleCause<F extends InstanceType<ErrorClass>>(cause: Cause.Cau
 			message = defect.body.message;
 		} else if (defect instanceof Error) {
 			type = defect.name;
-			if (defect.name === "ValidationError") extra.invalid = defect;
 		}
 
 		if (typeof defect === "object" && defect !== null) {

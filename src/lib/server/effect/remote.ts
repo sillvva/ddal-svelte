@@ -216,7 +216,7 @@ export function guardedForm<
 			if (result.ok) return result.data;
 
 			if (isRedirectFailure(result.error)) redirect(result.error.status, result.error.redirectTo);
-			if (isValidationError(result.error)) throw result.error.invalid;
+			if (isValidationError(result.error)) throw result.error.defect;
 			throw invalid(result.error.message);
 		});
 	}
@@ -233,7 +233,7 @@ export function guardedForm<
 			if (result.ok) return result.data;
 
 			if (isRedirectFailure(result.error)) redirect(result.error.status, result.error.redirectTo);
-			if (isValidationError(result.error)) throw result.error.invalid;
+			if (isValidationError(result.error)) throw result.error.defect;
 			throw invalid(result.error.message);
 		});
 	}
