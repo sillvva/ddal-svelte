@@ -13,7 +13,7 @@ import { CharacterService } from "$lib/server/effect/services/characters";
 import { DMNotFoundError, DMService } from "$lib/server/effect/services/dms";
 import { LogNotFoundError, LogService } from "$lib/server/effect/services/logs";
 import { parse, safeParse } from "$lib/server/effect/util";
-import { omit, sorter } from "@sillvva/utils";
+import { omit } from "@sillvva/utils";
 import { redirect } from "@sveltejs/kit";
 import { Effect } from "effect";
 import * as v from "valibot";
@@ -45,14 +45,12 @@ export const character = guardedQuery(characterLogFormSchema, function* (input, 
 	}
 
 	const itemEntities = getItemEntities(character, { excludeDropped: true, lastLogId: log.id });
-	const magicItems = itemEntities.magicItems.toSorted((a, b) => sorter(a.name, b.name));
-	const storyAwards = itemEntities.storyAwards.toSorted((a, b) => sorter(a.name, b.name));
 	const dms = yield* DMs.get.all(user, false).pipe(Effect.map((dms) => dms.map((dm) => omit(dm, ["logs"]))));
 
 	return {
 		totalLevel: character.totalLevel,
-		magicItems,
-		storyAwards,
+		magicItems: itemEntities.magicItems,
+		storyAwards: itemEntities.storyAwards,
 		dms,
 		log: {
 			...log,
