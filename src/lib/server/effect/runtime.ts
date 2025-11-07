@@ -159,6 +159,7 @@ export function handleCause<F extends InstanceType<ErrorClass>>(cause: Cause.Cau
 
 	if (Cause.isDieType(cause)) {
 		const defect = cause.defect;
+		type = "UnknownDefect";
 
 		if (isRedirect(defect)) {
 			type = "Redirect";
