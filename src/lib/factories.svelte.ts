@@ -26,6 +26,12 @@ export function isRedirectFailure(
 	return Boolean(error.redirectTo && typeof error.redirectTo === "string" && error.status >= 301 && error.status <= 308);
 }
 
+export function isValidationError(
+	error: EffectFailure["error"]
+): error is EffectFailure["error"] & { invalid: Error & { name: "ValidationError" } } {
+	return Boolean(error.type === "ValidationError");
+}
+
 export async function parseEffectResult<T>(result: EffectResult<T>) {
 	if (result.ok) return result.data;
 

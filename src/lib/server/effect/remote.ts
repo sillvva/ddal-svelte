@@ -1,9 +1,18 @@
 import { command, form, query } from "$app/server";
+import { isRedirectFailure, isValidationError } from "$lib/factories.svelte";
 import type { LocalsUser } from "$lib/schemas";
 import { AuthService } from "$lib/server/effect/services/auth";
 import { isStandardSchema } from "$lib/util";
 import type { StandardSchemaV1 } from "@standard-schema/spec";
-import type { Invalid, RemoteCommand, RemoteForm, RemoteFormInput, RemoteQueryFunction, RequestEvent } from "@sveltejs/kit";
+import {
+	redirect,
+	type Invalid,
+	type RemoteCommand,
+	type RemoteForm,
+	type RemoteFormInput,
+	type RemoteQueryFunction,
+	type RequestEvent
+} from "@sveltejs/kit";
 import { Effect } from "effect";
 import { isFunction } from "effect/Predicate";
 import type { YieldWrap } from "effect/Utils";
@@ -197,24 +206,36 @@ export function guardedForm<
 ) {
 	// Handle the case with schema parameter (first overload)
 	if (isStandardSchema(schemaOrFn) && isFunction(fnOrAdminOnly)) {
-		return form(schemaOrFn, (output, invalid) =>
-			run(function* () {
+		return form(schemaOrFn, async (output, invalid) => {
+			const result = await runSafe(function* () {
 				const Auth = yield* AuthService;
 				const auth = yield* Auth.guard(adminOnly);
 				return yield* fnOrAdminOnly(output, { invalid, ...auth });
-			})
-		);
+			});
+
+			if (result.ok) return result.data;
+
+			if (isRedirectFailure(result.error)) redirect(result.error.status, result.error.redirectTo);
+			if (isValidationError(result.error)) throw result.error.invalid;
+			throw invalid(result.error.message);
+		});
 	}
 
 	// Handle the case where there's no schema parameter (second overload)
 	if (isFunction(schemaOrFn) && !isFunction(fnOrAdminOnly)) {
-		return form("unchecked", (input: Input, invalid) =>
-			run(function* () {
+		return form("unchecked", async (input: Input, invalid) => {
+			const result = await runSafe(function* () {
 				const Auth = yield* AuthService;
 				const auth = yield* Auth.guard(fnOrAdminOnly);
 				return yield* schemaOrFn(input, { invalid, ...auth });
-			})
-		);
+			});
+
+			if (result.ok) return result.data;
+
+			if (isRedirectFailure(result.error)) redirect(result.error.status, result.error.redirectTo);
+			if (isValidationError(result.error)) throw result.error.invalid;
+			throw invalid(result.error.message);
+		});
 	}
 
 	throw new Error("Invalid arguments");

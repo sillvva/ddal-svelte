@@ -93,7 +93,7 @@ export async function run<
 export type EffectSuccess<R> = { ok: true; data: R };
 export type EffectFailure = {
 	ok: false;
-	error: { message: string; stack: string; status: NumericRange<300, 599>; [key: string]: unknown };
+	error: { message: string; stack: string; status: NumericRange<300, 599>; type: string; [key: string]: unknown };
 };
 export type EffectResult<R> = EffectSuccess<R> | EffectFailure;
 
@@ -144,10 +144,12 @@ export function handleCause<F extends InstanceType<ErrorClass>>(cause: Cause.Cau
 	let message = Cause.pretty(cause);
 	let status: NumericRange<300, 599> = 500;
 	let extra: Record<string, unknown> = {};
+	let type = "unknown";
 
 	if (Cause.isFailType(cause)) {
 		const error = cause.error;
 
+		type = error._tag;
 		status = error.status;
 		extra.cause = error.cause;
 		extra = Object.assign(extra, omit(error, ["_tag", "_op", "pipe", "name", "message", "status"]));
@@ -159,17 +161,23 @@ export function handleCause<F extends InstanceType<ErrorClass>>(cause: Cause.Cau
 		const defect = cause.defect;
 
 		if (isRedirect(defect)) {
+			type = "Redirect";
 			message = `Redirect to ${defect.location}`;
 			status = defect.status;
 			extra.redirectTo = defect.location;
 		} else if (isHttpError(defect)) {
+			type = "HttpError";
 			status = defect.status as NumericRange<300, 599>;
 			message = defect.body.message;
 		} else if (defect instanceof Error) {
-			if (defect.name === "ValidationError") throw defect;
+			type = defect.name;
+			if (defect.name === "ValidationError") extra.invalid = defect;
 		}
 
 		if (typeof defect === "object" && defect !== null) {
+			if ("name" in defect && typeof defect.name === "string") {
+				type = defect.name;
+			}
 			if ("stack" in defect) {
 				extra.stack = defect.stack;
 			}
@@ -184,5 +192,5 @@ export function handleCause<F extends InstanceType<ErrorClass>>(cause: Cause.Cau
 	}
 
 	const trace = getTrace(message);
-	return { message: trace.message, stack: trace.stack, status, ...extra };
+	return { message: trace.message, stack: trace.stack, status, type, ...extra };
 }
