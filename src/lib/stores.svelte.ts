@@ -5,7 +5,6 @@ import { SvelteDate } from "svelte/reactivity";
 import * as v from "valibot";
 import * as API from "./remote";
 import { appCookieSchema, appDefaults, type AppCookie } from "./schemas";
-import type { DeepReadonly } from "./types";
 import { createContext } from "./util";
 
 /**

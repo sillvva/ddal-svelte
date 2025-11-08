@@ -1,5 +1,4 @@
 <script lang="ts">
-	import type { Crumb } from "$lib/types";
 	import type { Snippet } from "svelte";
 	import Breadcrumbs from "./breadcrumbs.svelte";
 
