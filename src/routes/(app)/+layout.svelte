@@ -8,10 +8,9 @@
 	import MobileNav from "$lib/components/mobile-nav.svelte";
 	import Settings from "$lib/components/settings.svelte";
 	import { BLANK_CHARACTER } from "$lib/constants.js";
-	import { parseEffectResult } from "$lib/factories.svelte";
 	import * as API from "$lib/remote";
 	import { getAuth, getGlobal } from "$lib/stores.svelte.js";
-	import { hotkey } from "$lib/util";
+	import { hotkey, parseEffectResult } from "$lib/util";
 	import { wait } from "@sillvva/utils";
 	import { onMount } from "svelte";
 	import { Toaster } from "svelte-sonner";

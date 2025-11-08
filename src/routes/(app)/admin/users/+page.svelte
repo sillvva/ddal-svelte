@@ -5,9 +5,9 @@
 	import Head from "$lib/components/head.svelte";
 	import Search from "$lib/components/search.svelte";
 	import { BLANK_CHARACTER } from "$lib/constants.js";
-	import { parseEffectResult } from "$lib/factories.svelte";
 	import { errorToast, successToast } from "$lib/factories.svelte.js";
 	import * as API from "$lib/remote";
+	import { parseEffectResult } from "$lib/util";
 	import { JSONSearchParser } from "@sillvva/search/json";
 
 	let search = $state(page.url.searchParams.get("s")?.trim() ?? "");

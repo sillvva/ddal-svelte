@@ -6,11 +6,11 @@
 	import RemoteSubmit from "$lib/components/forms/remote-submit.svelte";
 	import Head from "$lib/components/head.svelte";
 	import NavMenu from "$lib/components/nav-menu.svelte";
-	import { parseEffectResult } from "$lib/factories.svelte";
 	import { successToast } from "$lib/factories.svelte.js";
 	import * as API from "$lib/remote";
 	import { dungeonMasterFormSchema } from "$lib/schemas.js";
 	import { getGlobal } from "$lib/stores.svelte.js";
+	import { parseEffectResult } from "$lib/util";
 
 	let { params } = $props();
 

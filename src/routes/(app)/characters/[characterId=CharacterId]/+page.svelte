@@ -8,10 +8,10 @@
 	import NavMenu from "$lib/components/nav-menu.svelte";
 	import SearchResults from "$lib/components/search-results.svelte";
 	import Search from "$lib/components/search.svelte";
-	import { EntitySearchFactory, parseEffectResult, successToast } from "$lib/factories.svelte.js";
+	import { EntitySearchFactory, successToast } from "$lib/factories.svelte.js";
 	import * as API from "$lib/remote";
 	import { getAuth, getGlobal } from "$lib/stores.svelte.js";
-	import { createTransition, hotkey } from "$lib/util";
+	import { createTransition, hotkey, parseEffectResult } from "$lib/util";
 	import { slugify, sorter } from "@sillvva/utils";
 	import { clipboard, download } from "@svelteuidev/composables";
 	import { onMount } from "svelte";

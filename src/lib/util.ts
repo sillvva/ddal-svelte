@@ -1,8 +1,13 @@
+import { goto } from "$app/navigation";
 import { wait } from "@sillvva/utils";
 import type { StandardSchemaV1 } from "@standard-schema/spec";
+import type { NumericRange } from "@sveltejs/kit";
 import { hotkey as hk, type HotkeyItem } from "@svelteuidev/composables";
 import { getContext, hasContext, setContext } from "svelte";
 import type { Attachment } from "svelte/attachments";
+import type { FullPathname } from "./constants";
+import { errorToast } from "./factories.svelte";
+import type { EffectFailure, EffectResult } from "./server/effect/runtime";
 
 export async function createTransition(action: ViewTransitionCallback, after?: () => void | Promise<void>, afterDelay = 0) {
 	if (!document.startViewTransition) action();
@@ -67,4 +72,25 @@ export function createContext<T>(createDefault?: () => T): [(getDefault?: () => 
 		},
 		(context) => setContext(key, context)
 	];
+}
+
+export function isRedirectFailure(
+	error: EffectFailure["error"]
+): error is EffectFailure["error"] & { status: NumericRange<301, 308>; redirectTo: FullPathname & {} } {
+	return Boolean(error.redirectTo && typeof error.redirectTo === "string" && error.status >= 301 && error.status <= 308);
+}
+
+export function isValidationError(
+	error: EffectFailure["error"]
+): error is EffectFailure["error"] & { invalid: Error & { name: "ValidationError" } } {
+	return Boolean(error.name === "ValidationError" && error.type === "Die");
+}
+
+export async function parseEffectResult<T>(result: EffectResult<T>) {
+	if (result.ok) return result.data;
+
+	errorToast(result.error.message);
+	if (isRedirectFailure(result.error)) {
+		await goto(result.error.redirectTo);
+	}
 }

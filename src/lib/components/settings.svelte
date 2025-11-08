@@ -3,9 +3,10 @@
 	import { page } from "$app/state";
 	import { authClient } from "$lib/auth";
 	import { BLANK_CHARACTER, PROVIDERS, type ProviderId } from "$lib/constants";
-	import { errorToast, parseEffectResult } from "$lib/factories.svelte";
+	import { errorToast } from "$lib/factories.svelte";
 	import * as API from "$lib/remote";
 	import { getAuth, getGlobal } from "$lib/stores.svelte";
+	import { parseEffectResult } from "$lib/util";
 	import { isDefined } from "@sillvva/utils";
 	import { isTupleOfAtLeast } from "effect/Predicate";
 	import Passkeys from "./passkeys.svelte";

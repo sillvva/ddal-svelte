@@ -4,10 +4,10 @@
 	import NavMenu from "$lib/components/nav-menu.svelte";
 	import SearchResults from "$lib/components/search-results.svelte";
 	import Search from "$lib/components/search.svelte";
-	import { parseEffectResult } from "$lib/factories.svelte";
 	import { EntitySearchFactory, successToast } from "$lib/factories.svelte.js";
 	import * as API from "$lib/remote";
 	import { getAuth } from "$lib/stores.svelte";
+	import { parseEffectResult } from "$lib/util";
 	import { sorter } from "@sillvva/utils";
 	import { SvelteSet } from "svelte/reactivity";
 

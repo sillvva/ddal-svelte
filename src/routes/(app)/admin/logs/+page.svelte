@@ -2,10 +2,9 @@
 	import { pushState } from "$app/navigation";
 	import Head from "$lib/components/head.svelte";
 	import LoadingPanel from "$lib/components/loading-panel.svelte";
-	import { parseEffectResult } from "$lib/factories.svelte";
 	import { successToast } from "$lib/factories.svelte.js";
 	import * as API from "$lib/remote";
-	import { getRelativeTime } from "$lib/util";
+	import { getRelativeTime, parseEffectResult } from "$lib/util";
 	import { debounce } from "@sillvva/utils";
 	import { queryParameters, ssp } from "sveltekit-search-params";
 

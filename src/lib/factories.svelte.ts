@@ -1,45 +1,21 @@
 /* eslint-disable svelte/prefer-svelte-reactivity */
-import { goto } from "$app/navigation";
 import type { FullCharacterData } from "$lib/server/effect/services/characters";
 import type { UserDM } from "$lib/server/effect/services/dms";
 import type { FullLogData, LogSummaryData, UserLogData } from "$lib/server/effect/services/logs";
 import { parseAbsoluteToLocal, toCalendarDateTime } from "@internationalized/date";
 import { debounce, isDefined, substrCount, type MapKeys, type Prettify } from "@sillvva/utils";
-import { isHttpError, type NumericRange } from "@sveltejs/kit";
+import { isHttpError } from "@sveltejs/kit";
 import { Duration } from "effect";
 import escapeRegex from "regexp.escape";
 import { createHighlighter } from "shiki";
 import { toast } from "svelte-sonner";
 import { SvelteMap } from "svelte/reactivity";
-import type { FullPathname } from "./constants";
 import type { SearchData } from "./remote/command";
-import type { EffectFailure, EffectResult } from "./server/effect/runtime";
 
 export const highlighter = await createHighlighter({
 	themes: ["catppuccin-mocha", "catppuccin-latte"],
 	langs: ["json"]
 });
-
-export function isRedirectFailure(
-	error: EffectFailure["error"]
-): error is EffectFailure["error"] & { status: NumericRange<301, 308>; redirectTo: FullPathname & {} } {
-	return Boolean(error.redirectTo && typeof error.redirectTo === "string" && error.status >= 301 && error.status <= 308);
-}
-
-export function isValidationError(
-	error: EffectFailure["error"]
-): error is EffectFailure["error"] & { invalid: Error & { name: "ValidationError" } } {
-	return Boolean(error.type === "ValidationError");
-}
-
-export async function parseEffectResult<T>(result: EffectResult<T>) {
-	if (result.ok) return result.data;
-
-	errorToast(result.error.message);
-	if (isRedirectFailure(result.error)) {
-		await goto(result.error.redirectTo);
-	}
-}
 
 export function successToast(message: string) {
 	toast.success("Success", {
