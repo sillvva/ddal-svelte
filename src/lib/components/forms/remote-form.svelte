@@ -5,7 +5,6 @@
 	import { dev } from "$app/environment";
 	import { beforeNavigate } from "$app/navigation";
 	import { successToast, unknownErrorToast } from "$lib/factories.svelte";
-	import type { Awaitable } from "$lib/types";
 	import { deepEqual } from "@sillvva/utils";
 	import type { StandardSchemaV1 } from "@standard-schema/spec";
 	import type { RemoteForm, RemoteFormInput, RemoteFormIssue } from "@sveltejs/kit";
@@ -27,25 +26,20 @@
 		children?: Snippet<[{ fields: Form["fields"] }]>;
 	}
 
-	let {
-		schema,
-		form: remoteForm,
-		children,
-		data = $bindable(),
-		initialErrors = false,
-		onsubmit,
-		onresult,
-		...rest
-	}: Props = $props();
+	let { schema, form: remoteForm, children, data, initialErrors = false, onsubmit, onresult, ...rest }: Props = $props();
 
-	let formEl = $state<HTMLFormElement | null>(null);
-	let hadIssues = $derived(false);
+	let formEl: HTMLFormElement;
 
 	const form = remoteForm.for((data.id ?? v7()) as FormId).preflight(schema);
+
 	form.fields.set(data);
+	$effect(() => {
+		form.fields.set(data);
+	});
 
 	const result = $derived(form.result);
 	const issues = $derived(form.fields.issues());
+	let hadIssues = $state(!!form.fields.issues());
 
 	const initial = $state.snapshot(data);
 	let tainted = $derived(!deepEqual(initial, form.fields.value()));
@@ -59,7 +53,7 @@
 		await tick();
 		hadIssues ||= !!form.fields.allIssues()?.length;
 
-		const invalid = formEl?.querySelector(":is(input, select, textarea):not(.hidden, [type=hidden], :disabled)[aria-invalid]") as
+		const invalid = formEl.querySelector(":is(input, select, textarea):not(.hidden, [type=hidden], :disabled)[aria-invalid]") as
 			| HTMLInputElement
 			| HTMLSelectElement
 			| HTMLTextAreaElement

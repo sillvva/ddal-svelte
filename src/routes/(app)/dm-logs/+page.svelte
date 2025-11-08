@@ -1,29 +1,23 @@
-<script lang="ts" module>
-	export async function getPageHead() {
-		return {
-			title: `{username}'s DM Logs`
-		};
-	}
-</script>
-
 <script lang="ts">
 	import { goto } from "$app/navigation";
 	import { page } from "$app/state";
+	import Head from "$lib/components/head.svelte";
 	import Items from "$lib/components/items.svelte";
 	import Markdown from "$lib/components/markdown.svelte";
 	import NavMenu from "$lib/components/nav-menu.svelte";
 	import SearchResults from "$lib/components/search-results.svelte";
 	import Search from "$lib/components/search.svelte";
-	import { EntitySearchFactory, parseEffectResult, successToast } from "$lib/factories.svelte.js";
+	import { EntitySearchFactory, successToast } from "$lib/factories.svelte.js";
 	import * as API from "$lib/remote";
-	import { getGlobal } from "$lib/stores.svelte.js";
-	import { createTransition, hotkey } from "$lib/util.js";
+	import { getAuth, getGlobal } from "$lib/stores.svelte.js";
+	import { createTransition, hotkey, parseEffectResult } from "$lib/util.js";
 	import { sorter } from "@sillvva/utils";
 	import { download } from "@svelteuidev/composables";
 	import { fromAction } from "svelte/attachments";
 	import { SvelteSet } from "svelte/reactivity";
 
 	const global = getGlobal();
+	const auth = $derived(await getAuth());
 
 	const dmLogsQuery = API.logs.queries.getDmLogs();
 	const logs = $derived(await dmLogsQuery);
@@ -34,6 +28,8 @@
 
 	let deletingLog = new SvelteSet<string>();
 </script>
+
+<Head title="{auth.user?.name}'s DM Logs" />
 
 <NavMenu base crumbs={[{ title: "DM Logs", url: "/dm-logs" }]}>
 	{#snippet menu()}
@@ -112,7 +108,7 @@
 
 <section>
 	<div class="bg-base-200 w-full overflow-x-auto rounded-lg">
-		<table class="linked-table-groups table w-full">
+		<table class="linked-table table w-full">
 			<thead>
 				<tr class="bg-base-300 text-base-content/70">
 					<th class="table-cell sm:hidden print:hidden">Game</th>
@@ -142,7 +138,7 @@
 							<td class="static! align-top">
 								<a
 									href={log.isDmLog ? `/dm-logs/${log.id}` : `/characters/${log.characterId}/log/${log.id}`}
-									class="row-link text-left font-semibold whitespace-pre-wrap"
+									class="row-link text-secondary-content font-semibold whitespace-pre-wrap"
 									aria-label="Edit Log"
 								>
 									<SearchResults text={log.name} terms={search.terms} />
@@ -283,7 +279,9 @@
 						>
 							<td colSpan={3} class="pt-0">
 								{#if log.description?.trim()}
-									<h4 class="text-base font-semibold">Notes:</h4>
+									<h4 class="text-base font-semibold">
+										<a href={`/dm-logs/${log.id}`} class="row-link">Notes:</a>
+									</h4>
 									<Markdown content={log.description} />
 								{/if}
 								{#if log.magicItemsGained.length > 0 || log.magicItemsLost.length > 0}
@@ -299,9 +297,9 @@
 								{#if log.storyAwardsGained.length > 0 || log.storyAwardsLost.length > 0}
 									{#each log.storyAwardsGained as mi (mi.id)}
 										<div class="mt-2 text-sm whitespace-pre-wrap">
-											<span class="pr-2 font-semibold dark:text-white print:block">
+											<a href={`/dm-logs/${log.id}`} class="row-link pr-2 font-semibold dark:text-white print:block">
 												{mi.name}{mi.description ? ":" : ""}
-											</span>
+											</a>
 											{#if mi.description}
 												<Markdown content={mi.description || ""} />
 											{/if}

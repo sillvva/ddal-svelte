@@ -298,11 +298,26 @@
 	}
 }
 
-@layer utilities {
-	.linked-table tr,
-	.linked-table-groups tbody {
+@utility linked-table {
+	tr {
+		/** 
+		* row is relative to isolate absolute elements 
+		*/
 		position: relative;
 		isolation: isolate;
+		/**
+		* Safari doesn't support `position: relative` 
+		* on `<tr>` elements, but transform and clip-path
+		* can be used as an alternative.
+		*/
+		@supports (hanging-punctuation: first) and (font: -apple-system-body) and (-webkit-appearance: none) {
+			transform: translate(0);
+			clip-path: inset(0);
+		}
+		/** 
+		* `a.row-link` has inner pseudo element that expands
+		* to cover row with z-index of 1.
+		*/
 		a.row-link::before {
 			content: "";
 			display: block;
@@ -310,10 +325,28 @@
 			inset: 0;
 			z-index: 1;
 		}
-		:is(a, button, summary, [role="button"]):not(.row-link),
-		[data-desc]:has(:is(a, summary):not(.row-link)) {
+		/** 
+		* Interactive elements have relative position and 
+		* a z-index of 2 to elevate them above the link.
+		* Pseudo element expands clickable area to a
+		* minimum size of 44px x 44px
+		*/
+		:is(a, button, summary, [role="button"]):not(.row-link) {
 			position: relative;
 			z-index: 2;
+			&:before {
+				content: "";
+				position: absolute;
+				display: block;
+				top: 50%;
+				left: 50%;
+				transform: translate(-50%, -50%);
+				width: 100%;
+				height: 100%;
+				min-height: 44px;
+				min-width: 44px;
+				z-index: 3;
+			}
 		}
 	}
 }

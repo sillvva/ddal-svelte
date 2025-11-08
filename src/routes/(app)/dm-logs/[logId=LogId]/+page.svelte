@@ -1,15 +1,3 @@
-<script lang="ts" module>
-	import type { RouteParams } from "./$types.js";
-	export async function getPageHead(params: RouteParams) {
-		const data = await API.logs.forms.dm({
-			param: { logId: params.logId }
-		});
-		return {
-			title: data.log.name || "New Log"
-		};
-	}
-</script>
-
 <script lang="ts">
 	import Error from "$lib/components/error.svelte";
 	import Control from "$lib/components/forms/control.svelte";
@@ -21,26 +9,34 @@
 	import RemoteInput from "$lib/components/forms/remote-input.svelte";
 	import RemoteMdInput from "$lib/components/forms/remote-md-input.svelte";
 	import RemoteSubmit from "$lib/components/forms/remote-submit.svelte";
+	import Head from "$lib/components/head.svelte";
 	import NavMenu from "$lib/components/nav-menu.svelte";
 	import * as API from "$lib/remote";
 	import { dmLogSchema } from "$lib/schemas";
-	import { getGlobal } from "$lib/stores.svelte.js";
+	import { getAuth } from "$lib/stores.svelte.js";
 
 	const { params } = $props();
 
-	const global = getGlobal();
+	const auth = $derived(await getAuth());
 
 	const schema = dmLogSchema;
 	const form = API.logs.forms.saveDM;
-	const { log, characters, initialErrors } = await API.logs.forms.dm({
-		param: { logId: params.logId }
-	});
+	const { log, characters, initialErrors } = $derived(
+		await API.logs.forms.dm({
+			param: { logId: params.logId }
+		})
+	);
 
-	let data = $state(log);
-	let season = $state(log.experience ? 1 : log.acp ? 8 : 9);
+	let data = $derived.by(() => {
+		const data = $state(log);
+		return data;
+	});
+	let season = $derived(log.experience ? 1 : log.acp ? 8 : 9);
 </script>
 
 {#key log.id}
+	<Head title={log.name || "New Log"} />
+
 	<NavMenu
 		crumbs={[
 			{ title: "DM Logs", url: "/dm-logs" },
@@ -48,10 +44,10 @@
 		]}
 	/>
 
-	{#if global.user}
+	{#if auth.user}
 		<svelte:boundary>
 			{#snippet failed(error)}<Error {error} />{/snippet}
-			<RemoteForm {schema} {form} bind:data {initialErrors}>
+			<RemoteForm {schema} {form} {data} {initialErrors}>
 				{#snippet children({ fields })}
 					<RemoteInput field={fields.id} type="hidden" />
 					<Control class="col-span-12 sm:col-span-6 lg:col-span-3">
@@ -81,7 +77,17 @@
 					</Control>
 					<Control class="col-span-12 sm:col-span-4">
 						<GenericInput labelFor="season" label="Season">
-							<select id="season" bind:value={season} class="select select-bordered w-full">
+							<select
+								id="season"
+								bind:value={season}
+								class="select select-bordered w-full"
+								onchange={() => {
+									data.experience = 0;
+									data.acp = 0;
+									data.level = 0;
+									data.tcp = 0;
+								}}
+							>
 								<option value={9}>Season 9+ (Level)</option>
 								<option value={8}>Season 8 (ACP/TCP)</option>
 								<option value={1}>Season 1-7 (Experience)</option>

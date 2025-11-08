@@ -1,26 +1,20 @@
-<script lang="ts" module>
-	export async function getPageHead() {
-		return {
-			title: `{username}'s Characters`
-		};
-	}
-</script>
-
 <script lang="ts">
 	import { goto } from "$app/navigation";
 	import { page } from "$app/state";
+	import Head from "$lib/components/head.svelte";
 	import NavMenu from "$lib/components/nav-menu.svelte";
 	import SearchResults from "$lib/components/search-results.svelte";
 	import Search from "$lib/components/search.svelte";
 	import { EntitySearchFactory } from "$lib/factories.svelte.js";
 	import * as API from "$lib/remote";
-	import { getGlobal } from "$lib/stores.svelte.js";
+	import { getAuth, getGlobal } from "$lib/stores.svelte.js";
 	import { createTransition, hotkey } from "$lib/util";
 	import { sorter } from "@sillvva/utils";
 	import { download } from "@svelteuidev/composables";
 	import { fromAction } from "svelte/attachments";
 
 	const global = getGlobal();
+	const auth = $derived(await getAuth());
 
 	const characters = $derived(await API.characters.queries.getAll());
 	const search = $derived(new EntitySearchFactory(characters, page.url.searchParams.get("s") || ""));
@@ -28,6 +22,8 @@
 		search.results.toSorted((a, b) => sorter(b.score, a.score) || sorter(a.totalLevel, b.totalLevel) || sorter(a.name, b.name))
 	);
 </script>
+
+<Head title="{auth.user?.name}'s Characters" />
 
 <NavMenu base crumbs={[{ title: "Characters", url: "/characters" }]}>
 	{#snippet menu()}

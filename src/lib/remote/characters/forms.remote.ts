@@ -37,7 +37,7 @@ export const save = guardedForm(editCharacterSchema, function* (input, { user, i
 		.pipe(Effect.map((characters) => characters.length > 0));
 
 	type Issue = ReturnType<typeof invalid.imageUrl>;
-	let issues: Issue[] = [];
+	const issues: Issue[] = [];
 
 	if (data.imageUrl) {
 		const result = yield* isValidUrl(data.imageUrl);

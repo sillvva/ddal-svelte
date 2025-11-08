@@ -2,6 +2,7 @@ import { getRequestEvent, query } from "$app/server";
 import { getHomeError } from "$lib/server/effect/services/auth";
 import { redirect } from "@sveltejs/kit";
 
+// eslint-disable-next-line custom/enforce-guarded-functions
 export const request = query(() => {
 	const {
 		locals: { user, session, app, isMobile, isMac }
@@ -9,6 +10,7 @@ export const request = query(() => {
 	return { user, session, app, isMobile, isMac };
 });
 
+// eslint-disable-next-line custom/enforce-guarded-functions
 export const home = query(() => {
 	const event = getRequestEvent();
 	const user = event.locals.user;

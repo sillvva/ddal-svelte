@@ -1,6 +1,5 @@
 import { getRequestEvent } from "$app/server";
-import { isRedirectFailure } from "$lib/factories.svelte";
-import { getTrace } from "$lib/util";
+import { getTrace, isRedirectFailure } from "$lib/util";
 import { omit } from "@sillvva/utils";
 import { error, isHttpError, isRedirect, redirect, type NumericRange } from "@sveltejs/kit";
 import { Cause, Effect, Exit, Layer, ManagedRuntime } from "effect";
@@ -93,7 +92,14 @@ export async function run<
 export type EffectSuccess<R> = { ok: true; data: R };
 export type EffectFailure = {
 	ok: false;
-	error: { message: string; stack: string; status: NumericRange<300, 599>; [key: string]: unknown };
+	error: {
+		name: string;
+		type: Cause.Cause<unknown>["_tag"];
+		message: string;
+		stack: string;
+		status: NumericRange<300, 599>;
+		[key: string]: unknown;
+	};
 };
 export type EffectResult<R> = EffectSuccess<R> | EffectFailure;
 
@@ -141,6 +147,7 @@ export async function runSafe<
 // -------------------------------------------------------------------------------------------------
 
 export function handleCause<F extends InstanceType<ErrorClass>>(cause: Cause.Cause<F>) {
+	let name = `Unknown${cause._tag}`;
 	let message = Cause.pretty(cause);
 	let status: NumericRange<300, 599> = 500;
 	let extra: Record<string, unknown> = {};
@@ -148,6 +155,7 @@ export function handleCause<F extends InstanceType<ErrorClass>>(cause: Cause.Cau
 	if (Cause.isFailType(cause)) {
 		const error = cause.error;
 
+		name = error._tag;
 		status = error.status;
 		extra.cause = error.cause;
 		extra = Object.assign(extra, omit(error, ["_tag", "_op", "pipe", "name", "message", "status"]));
@@ -157,19 +165,26 @@ export function handleCause<F extends InstanceType<ErrorClass>>(cause: Cause.Cau
 
 	if (Cause.isDieType(cause)) {
 		const defect = cause.defect;
+		name = "UnknownDefect";
+		extra.defect = defect;
 
 		if (isRedirect(defect)) {
+			name = "Redirect";
 			message = `Redirect to ${defect.location}`;
 			status = defect.status;
 			extra.redirectTo = defect.location;
 		} else if (isHttpError(defect)) {
+			name = "HttpError";
 			status = defect.status as NumericRange<300, 599>;
 			message = defect.body.message;
 		} else if (defect instanceof Error) {
-			if (defect.name === "ValidationError") throw defect;
+			name = defect.name;
 		}
 
 		if (typeof defect === "object" && defect !== null) {
+			if ("name" in defect && typeof defect.name === "string") {
+				name = defect.name;
+			}
 			if ("stack" in defect) {
 				extra.stack = defect.stack;
 			}
@@ -184,5 +199,5 @@ export function handleCause<F extends InstanceType<ErrorClass>>(cause: Cause.Cau
 	}
 
 	const trace = getTrace(message);
-	return { message: trace.message, stack: trace.stack, status, ...extra };
+	return { name, type: cause._tag, message: trace.message, stack: trace.stack, status, ...extra };
 }

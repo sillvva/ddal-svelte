@@ -1,13 +1,3 @@
-<script lang="ts" module>
-	import type { RouteParams } from "./$types.js";
-	export async function getPageHead(params: RouteParams) {
-		const character = await API.characters.queries.get({ param: params.characterId });
-		return {
-			title: params.characterId === "new" ? "New Character" : `Edit ${character.name}`
-		};
-	}
-</script>
-
 <script lang="ts">
 	import { page } from "$app/state";
 	import Error from "$lib/components/error.svelte";
@@ -15,6 +5,7 @@
 	import RemoteForm from "$lib/components/forms/remote-form.svelte";
 	import RemoteInput from "$lib/components/forms/remote-input.svelte";
 	import RemoteSubmit from "$lib/components/forms/remote-submit.svelte";
+	import Head from "$lib/components/head.svelte";
 	import NavMenu from "$lib/components/nav-menu.svelte";
 	import { BLANK_CHARACTER } from "$lib/constants.js";
 	import * as API from "$lib/remote";
@@ -26,14 +17,21 @@
 	const global = getGlobal();
 
 	const schema = editCharacterSchema;
-	let form = API.characters.forms.save;
-	const { character, initialErrors } = await API.characters.forms.get(params.characterId);
-	const data = $state(character);
+	const form = API.characters.forms.save;
+	const { character, initialErrors } = $derived(await API.characters.forms.get(params.characterId));
+
+	let data = $derived.by(() => {
+		const state = $state(character);
+		return state;
+	});
 </script>
+
+<Head title={params.characterId === "new" ? "New Character" : `Edit ${character.name}`} />
 
 <NavMenu
 	crumbs={[
 		{ title: "Characters", url: "/characters" },
+		// excluded for new character, due to empty name
 		{ title: character.name, url: `/characters/${character.id}` },
 		{ title: params.characterId === "new" ? "New Character" : "Edit", url: `/characters/${character.id}/edit` }
 	]}

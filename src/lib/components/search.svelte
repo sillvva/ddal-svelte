@@ -15,7 +15,7 @@
 
 	let { value = $bindable(params.s ?? ""), type = "text", ...rest }: Omit<HTMLInputAttributes, "class"> = $props();
 
-	let ref: HTMLInputElement | undefined = undefined;
+	let ref: HTMLInputElement;
 </script>
 
 <search
@@ -24,7 +24,7 @@
 		[
 			"/",
 			() => {
-				ref?.focus();
+				ref.focus();
 			}
 		]
 	])}

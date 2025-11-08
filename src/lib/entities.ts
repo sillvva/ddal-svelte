@@ -47,7 +47,10 @@ export function getItemEntities(
 				}
 			}
 		});
-	return { magicItems, storyAwards };
+	return {
+		magicItems: magicItems.toSorted((a, b) => sorter(a.name, b.name)),
+		storyAwards: storyAwards.toSorted((a, b) => sorter(a.name, b.name))
+	};
 }
 
 export function getLevels(

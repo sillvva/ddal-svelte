@@ -10,7 +10,7 @@
 
 	type Item = MagicItem | StoryAward;
 	interface Props {
-		title?: string;
+		title?: `Magic Items${":" | ""}` | `Story Awards${":" | ""}`;
 		items: Array<Item>;
 		formatting?: boolean;
 		terms?: string[];
@@ -19,7 +19,15 @@
 		search?: boolean;
 	}
 
-	let { title = "", items, formatting = false, terms = [], collapsible = false, sort = false, search = false }: Props = $props();
+	let {
+		title = "Magic Items",
+		items,
+		formatting = false,
+		terms = [],
+		collapsible = false,
+		sort = false,
+		search = false
+	}: Props = $props();
 
 	let collapsed = $state(collapsible);
 
@@ -42,17 +50,22 @@
 					.replace(/^(A|An|The) /, "")
 			: name;
 	const isConsumable = (name: string) =>
-		name.trim().match(/^(\d+x? )?((Potion|Scroll|Spell Scroll|Charm|Elixir)s? of)|Alchemist('?s)? Fire|Antitoxin/);
+		title.startsWith("Magic Items") &&
+		name
+			.trim()
+			.match(/^(\d+x? )?((Potion|(?:Spell )?Scroll|Charm|Oil|Elixir)s? of)|Alchemist('?s)? Fire|Antitoxin|Spellwrought Tattoo/);
 	const itemQty = (item: { name: string }) => parseInt(item.name.match(/^(\d+)x? /)?.[1] || "1");
 	const fixName = (name: string, qty = 1) => {
+		if (title.startsWith("Story Awards")) return name;
+
 		let val = name
 			.trim()
 			.replace(/^\d+x? ?/, "")
-			.replace(/^(Potion|Scroll|Spell Scroll)s/, "$1")
+			.replace(/^(Potion|(?:Spell )?Scroll|Charm|Oil|Elixir)s/, "$1")
 			.replace("Spell Scroll", "Scroll");
 
 		if (qty > 1) {
-			if (isConsumable(name)) val = val.replace(/^(Potion|Scroll|Spell Scroll)( .+)$/, "$1s$2");
+			if (isConsumable(name)) val = val.replace(/^(Potion|(?:Spell )?Scroll|Charm|Oil|Elixir)( .+)$/, "$1s$2");
 			val = `${qty} ${val}`;
 		} else {
 			val = val;

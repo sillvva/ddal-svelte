@@ -1,5 +1,4 @@
 <script lang="ts">
-	import type { Crumb } from "$lib/types";
 	import BackButton from "./back-button.svelte";
 
 	interface Props {

@@ -13,6 +13,7 @@ export const getAll = guardedQuery(function* ({ user }) {
 	return yield* Characters.get.all(user.id);
 });
 
+// eslint-disable-next-line custom/enforce-guarded-functions
 export const get = query(
 	v.object({
 		param: characterIdParamSchema,

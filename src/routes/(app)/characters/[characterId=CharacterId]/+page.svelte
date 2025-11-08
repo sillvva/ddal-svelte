@@ -1,28 +1,17 @@
-<script lang="ts" module>
-	import type { RouteParams } from "./$types.js";
-	export async function getPageHead(params: RouteParams) {
-		const character = await API.characters.queries.get({ param: params.characterId });
-		return {
-			title: character.name || "Character",
-			description: `Level ${character.totalLevel} ${character.race} ${character.class}`,
-			image: `${page.url.origin}/characters/${character.id}/og-image.jpg`
-		};
-	}
-</script>
-
 <script lang="ts">
 	import { goto, pushState } from "$app/navigation";
 	import { page } from "$app/state";
 	import { authClient } from "$lib/auth.js";
+	import Head from "$lib/components/head.svelte";
 	import Items from "$lib/components/items.svelte";
 	import Markdown from "$lib/components/markdown.svelte";
 	import NavMenu from "$lib/components/nav-menu.svelte";
 	import SearchResults from "$lib/components/search-results.svelte";
 	import Search from "$lib/components/search.svelte";
-	import { EntitySearchFactory, parseEffectResult, successToast } from "$lib/factories.svelte.js";
+	import { EntitySearchFactory, successToast } from "$lib/factories.svelte.js";
 	import * as API from "$lib/remote";
-	import { getGlobal } from "$lib/stores.svelte.js";
-	import { createTransition, hotkey } from "$lib/util";
+	import { getAuth, getGlobal } from "$lib/stores.svelte.js";
+	import { createTransition, hotkey, parseEffectResult } from "$lib/util";
 	import { slugify, sorter } from "@sillvva/utils";
 	import { clipboard, download } from "@svelteuidev/composables";
 	import { onMount } from "svelte";
@@ -32,10 +21,11 @@
 	const { params } = $props();
 
 	const global = getGlobal();
+	const auth = $derived(await getAuth());
 
 	const characterQuery = API.characters.queries.get({ param: params.characterId, newRedirect: true });
 	const character = $derived(await characterQuery);
-	const myCharacter = $derived(character.userId === global.user?.id);
+	const myCharacter = $derived(character.userId === auth.user?.id);
 
 	let deletingLog = new SvelteSet<string>();
 
@@ -60,7 +50,7 @@
 	}
 
 	onMount(() => {
-		if (global.app.settings.autoWebAuthn && !global.user) {
+		if (global.app.settings.autoWebAuthn && !auth.user) {
 			authClient.signIn.passkey({
 				fetchOptions: {
 					onSuccess: () => {
@@ -72,7 +62,13 @@
 	});
 </script>
 
-{#if global.user}
+<Head
+	title={character.name}
+	description={`Level ${character.totalLevel} ${character.race} ${character.class}`}
+	image={`${page.url.origin}/characters/${character.id}/og-image.jpg`}
+/>
+
+{#if auth.user}
 	<NavMenu
 		hideMenuActions={!myCharacter}
 		crumbs={[
@@ -355,7 +351,7 @@
 {:else}
 	<section>
 		<div class="bg-base-200 w-full overflow-x-auto rounded-lg">
-			<table class="linked-table-groups table w-full leading-5">
+			<table class="linked-table table w-full leading-5">
 				<thead>
 					<tr class="bg-base-300 text-base-content/70">
 						<td class="print:p-2">Log Entry</td>
@@ -381,12 +377,12 @@
 								{#if myCharacter}
 									<a
 										href={log.isDmLog ? `/dm-logs/${log.id}` : `/characters/${log.characterId}/log/${log.id}`}
-										class="row-link text-left font-semibold whitespace-pre-wrap"
+										class="row-link text-secondary-content font-semibold whitespace-pre-wrap"
 									>
 										<SearchResults text={log.name} terms={search.terms} />
 									</a>
 								{:else}
-									<span class="text-left font-semibold whitespace-pre-wrap">
+									<span class="font-semibold whitespace-pre-wrap">
 										<SearchResults text={log.name} terms={search.terms} />
 									</span>
 								{/if}
@@ -523,7 +519,14 @@
 						>
 							<td colSpan={100} class="max-w-[calc(100vw-50px)] pt-0 text-sm print:p-2 print:text-xs">
 								{#if log.description?.trim()}
-									<h4 class="text-base font-semibold">Notes:</h4>
+									<h4 class="text-base font-semibold">
+										<a
+											href={log.isDmLog ? `/dm-logs/${log.id}` : `/characters/${log.characterId}/log/${log.id}`}
+											class="row-link"
+										>
+											Notes:
+										</a>
+									</h4>
 									<Markdown content={log.description} />
 								{/if}
 								{#if log.magicItemsGained.length > 0 || log.magicItemsLost.length > 0}
@@ -539,9 +542,12 @@
 								{#if log.storyAwardsGained.length > 0 || log.storyAwardsLost.length > 0}
 									{#each log.storyAwardsGained as mi (mi.id)}
 										<div class="mt-2 text-sm whitespace-pre-wrap">
-											<span class="pr-2 font-semibold dark:text-white print:block">
+											<a
+												href={`/characters/${log.characterId}/log/${log.id}`}
+												class="row-link pr-2 font-semibold dark:text-white print:block"
+											>
 												{mi.name}{mi.description ? ":" : ""}
-											</span>
+											</a>
 											{#if mi.description}
 												<Markdown content={mi.description || ""} />
 											{/if}

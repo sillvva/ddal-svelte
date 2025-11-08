@@ -1,35 +1,28 @@
-<script lang="ts" module>
-	import type { RouteParams } from "./$types.js";
-	export async function getPageHead(params: RouteParams) {
-		const dm = await API.dms.queries.get(params.dmId);
-		return {
-			title: dm.name
-		};
-	}
-</script>
-
 <script lang="ts">
 	import { goto } from "$app/navigation";
 	import Control from "$lib/components/forms/control.svelte";
 	import RemoteForm from "$lib/components/forms/remote-form.svelte";
 	import RemoteInput from "$lib/components/forms/remote-input.svelte";
 	import RemoteSubmit from "$lib/components/forms/remote-submit.svelte";
+	import Head from "$lib/components/head.svelte";
 	import NavMenu from "$lib/components/nav-menu.svelte";
-	import { parseEffectResult } from "$lib/factories.svelte";
 	import { successToast } from "$lib/factories.svelte.js";
 	import * as API from "$lib/remote";
 	import { dungeonMasterFormSchema } from "$lib/schemas.js";
 	import { getGlobal } from "$lib/stores.svelte.js";
+	import { parseEffectResult } from "$lib/util";
 
 	let { params } = $props();
 
 	const global = getGlobal();
 
-	const dm = await API.dms.queries.get(params.dmId);
-	const data = await API.dms.forms.get(params.dmId);
-	const form = API.dms.forms.save;
 	const schema = dungeonMasterFormSchema;
+	const form = API.dms.forms.save;
+	const data = $derived(await API.dms.forms.get(params.dmId));
+	const dm = $derived(await API.dms.queries.get(params.dmId));
 </script>
+
+<Head title={dm.name} />
 
 <NavMenu
 	crumbs={[

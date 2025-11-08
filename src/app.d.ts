@@ -41,17 +41,6 @@ declare global {
 						imageUrl: string;
 				  };
 		}
-
-		interface ModuleData {
-			getHeadData?: (data: App.PageData) => {
-				title: string;
-				description?: string;
-				image?: string;
-			};
-			headTitle?: string;
-			headDescription?: string;
-			headImage?: string;
-		}
 	}
 
 	interface ViewTransition {
@@ -82,4 +71,19 @@ declare global {
 	interface Document {
 		startViewTransition: (callback: ViewTransitionCallback) => ViewTransition;
 	}
+
+	type Awaitable<T> = T | PromiseLike<T>;
+
+	type DeepReadonly<T> = T extends Record<PropertyKey, unknown> | unknown[]
+		? {
+				readonly [K in keyof T]: T[K] extends Record<PropertyKey, unknown> | unknown[] ? DeepReadonly<T[K]> : T[K];
+			}
+		: T;
+
+	type Crumb = {
+		title: string;
+		url: string;
+	};
+
+	type NamedError<T extends string> = Error & { name: T };
 }

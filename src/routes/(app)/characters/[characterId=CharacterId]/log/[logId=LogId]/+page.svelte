@@ -1,15 +1,3 @@
-<script lang="ts" module>
-	import type { RouteParams } from "./$types.js";
-	export async function getPageHead(params: RouteParams) {
-		const data = await API.logs.forms.character({
-			param: { characterId: params.characterId, logId: params.logId }
-		});
-		return {
-			title: data.log.name || "New Log"
-		};
-	}
-</script>
-
 <script lang="ts">
 	import { page } from "$app/state";
 	import Error from "$lib/components/error.svelte";
@@ -23,31 +11,39 @@
 	import RemoteInput from "$lib/components/forms/remote-input.svelte";
 	import RemoteMdInput from "$lib/components/forms/remote-md-input.svelte";
 	import RemoteSubmit from "$lib/components/forms/remote-submit.svelte";
+	import Head from "$lib/components/head.svelte";
 	import NavMenu from "$lib/components/nav-menu.svelte";
 	import { defaultDM } from "$lib/entities.js";
 	import * as API from "$lib/remote";
 	import { type DungeonMasterId, logSchema } from "$lib/schemas";
-	import { getGlobal } from "$lib/stores.svelte.js";
+	import { getAuth } from "$lib/stores.svelte.js";
 	import { v7 } from "uuid";
 
 	let { params } = $props();
 
-	const global = getGlobal();
-	const user = $derived(global.user!);
+	const auth = $derived(await getAuth());
+	const user = $derived(auth.user!);
 
 	const schema = logSchema;
 	const form = API.logs.forms.saveCharacter;
-	const firstLog = page.url.searchParams.get("firstLog") === "true";
-	const character = await API.characters.queries.get({ param: params.characterId });
-	const { log, initialErrors, totalLevel, dms, magicItems, storyAwards } = await API.logs.forms.character({
-		param: { characterId: params.characterId, logId: params.logId, firstLog }
-	});
+	const firstLog = $derived(page.url.searchParams.get("firstLog") === "true");
+	const character = $derived(await API.characters.queries.get({ param: params.characterId }));
+	const { log, initialErrors, totalLevel, dms, magicItems, storyAwards } = $derived(
+		await API.logs.forms.character({
+			param: { characterId: params.characterId, logId: params.logId, firstLog }
+		})
+	);
 
-	let data = $state(log);
-	let season = $state(log.experience ? 1 : log.acp ? 8 : 9);
+	let data = $derived.by(() => {
+		const state = $state(log);
+		return state;
+	});
+	let season = $derived(log.experience ? 1 : log.acp ? 8 : 9);
 </script>
 
 {#key log.id}
+	<Head title={log.name || "New Log"} />
+
 	<NavMenu
 		crumbs={[
 			{ title: "Characters", url: "/characters" },
@@ -58,7 +54,7 @@
 
 	<svelte:boundary>
 		{#snippet failed(error)}<Error {error} />{/snippet}
-		<RemoteForm {schema} {form} bind:data {initialErrors}>
+		<RemoteForm {schema} {form} {data} {initialErrors}>
 			{#snippet children({ fields })}
 				<RemoteInput field={fields.id} type="hidden" />
 				<RemoteInput field={fields.characterId} type="hidden" />
@@ -131,7 +127,17 @@
 					<RemoteInput field={fields.dm.isUser} type="checkbox" hidden />
 					<Control class="col-span-12 sm:col-span-4">
 						<GenericInput labelFor="season" label="Season">
-							<select id="season" bind:value={season} class="select select-bordered w-full">
+							<select
+								id="season"
+								bind:value={season}
+								class="select select-bordered w-full"
+								onchange={() => {
+									data.experience = 0;
+									data.acp = 0;
+									data.level = 0;
+									data.tcp = 0;
+								}}
+							>
 								<option value={9}>Season 9+ (Level)</option>
 								<option value={8}>Season 8 (ACP/TCP)</option>
 								<option value={1}>Season 1-7 (Experience)</option>

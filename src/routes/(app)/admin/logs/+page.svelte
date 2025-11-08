@@ -1,16 +1,10 @@
-<script lang="ts" module>
-	export const pageHead = {
-		title: "App Logs"
-	};
-</script>
-
 <script lang="ts">
 	import { pushState } from "$app/navigation";
+	import Head from "$lib/components/head.svelte";
 	import LoadingPanel from "$lib/components/loading-panel.svelte";
-	import { parseEffectResult } from "$lib/factories.svelte";
 	import { successToast } from "$lib/factories.svelte.js";
 	import * as API from "$lib/remote";
-	import { getRelativeTime } from "$lib/util";
+	import { getRelativeTime, parseEffectResult } from "$lib/util";
 	import { debounce } from "@sillvva/utils";
 	import { queryParameters, ssp } from "sveltekit-search-params";
 
@@ -55,6 +49,8 @@
 		});
 	}
 </script>
+
+<Head title="App Logs" />
 
 <section class="flex flex-col gap-1">
 	<div class="flex items-center justify-between">
@@ -192,14 +188,16 @@
 						<td colspan="4">
 							<div class="grid grid-cols-1 gap-4">
 								{#if log.stack}
-									<div class="bg-base-100 overflow-x-scroll rounded-lg p-6">
+									<div class="bg-base-100 rounded-lg p-6">
 										<h3 class="mb-2 text-lg font-bold">Stack</h3>
-										<pre>{log.stack}</pre>
+										<pre class="overflow-x-scroll">{log.stack}</pre>
 									</div>
 								{/if}
-								<div class="bg-base-100 overflow-x-scroll rounded-lg p-6">
+								<div class="bg-base-100 rounded-lg p-6">
 									<h3 class="mb-2 text-lg font-bold">Annotations</h3>
-									<pre class="whitespace-break-spaces">{JSON.stringify(log.annotations, null, 2)}</pre>
+									<div class="highlighted overflow-x-scroll">
+										{@html log.highlighted}
+									</div>
 								</div>
 							</div>
 						</td>
@@ -213,3 +211,10 @@
 		<div class="text-base-content/60 text-lg">No logs found</div>
 	</section>
 {/if}
+
+<style>
+	.highlighted :global(pre) {
+		background-color: transparent !important;
+		white-space: pre-wrap !important;
+	}
+</style>
