@@ -29,7 +29,6 @@
 	let { schema, form: remoteForm, children, data, initialErrors = false, onsubmit, onresult, ...rest }: Props = $props();
 
 	let formEl: HTMLFormElement;
-	let hadIssues = $derived(false);
 
 	const form = remoteForm.for((data.id ?? v7()) as FormId).preflight(schema);
 
@@ -40,6 +39,7 @@
 
 	const result = $derived(form.result);
 	const issues = $derived(form.fields.issues());
+	let hadIssues = $state(!!form.fields.issues());
 
 	const initial = $state.snapshot(data);
 	let tainted = $derived(!deepEqual(initial, form.fields.value()));

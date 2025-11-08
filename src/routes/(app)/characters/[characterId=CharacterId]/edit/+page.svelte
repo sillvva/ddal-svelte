@@ -20,7 +20,7 @@
 	const form = API.characters.forms.save;
 	const { character, initialErrors } = $derived(await API.characters.forms.get(params.characterId));
 
-	const data = $derived.by(() => {
+	let data = $derived.by(() => {
 		const state = $state(character);
 		return state;
 	});
