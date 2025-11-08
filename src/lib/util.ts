@@ -82,7 +82,7 @@ export function isRedirectFailure(
 
 export function isValidationError(
 	error: EffectFailure["error"]
-): error is EffectFailure["error"] & { invalid: Error & { name: "ValidationError" } } {
+): error is EffectFailure["error"] & { defect: Error & { name: "ValidationError" } } {
 	return Boolean(error.name === "ValidationError" && error.type === "Die");
 }
 
