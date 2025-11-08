@@ -31,10 +31,7 @@
 		const data = $state(log);
 		return data;
 	});
-	let season = $derived.by(() => {
-		const season = $state(log.experience ? 1 : log.acp ? 8 : 9);
-		return season;
-	});
+	let season = $derived(log.experience ? 1 : log.acp ? 8 : 9);
 </script>
 
 {#key log.id}
