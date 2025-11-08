@@ -80,7 +80,17 @@
 					</Control>
 					<Control class="col-span-12 sm:col-span-4">
 						<GenericInput labelFor="season" label="Season">
-							<select id="season" bind:value={season} class="select select-bordered w-full">
+							<select
+								id="season"
+								bind:value={season}
+								class="select select-bordered w-full"
+								onchange={() => {
+									data.experience = 0;
+									data.acp = 0;
+									data.level = 0;
+									data.tcp = 0;
+								}}
+							>
 								<option value={9}>Season 9+ (Level)</option>
 								<option value={8}>Season 8 (ACP/TCP)</option>
 								<option value={1}>Season 1-7 (Experience)</option>
