@@ -8,6 +8,7 @@ import type { Attachment } from "svelte/attachments";
 import type { FullPathname } from "./constants";
 import { errorToast } from "./factories.svelte";
 import type { EffectFailure, EffectResult } from "./server/effect/runtime";
+import type { NamedError } from "./types";
 
 export async function createTransition(action: ViewTransitionCallback, after?: () => void | Promise<void>, afterDelay = 0) {
 	if (!document.startViewTransition) action();
@@ -82,7 +83,7 @@ export function isRedirectFailure(
 
 export function isValidationError(
 	error: EffectFailure["error"]
-): error is EffectFailure["error"] & { defect: Error & { name: "ValidationError" } } {
+): error is EffectFailure["error"] & { defect: NamedError<"ValidationError"> } {
 	return Boolean(error.name === "ValidationError" && error.type === "Die");
 }
 

@@ -10,3 +10,5 @@ export type Crumb = {
 	title: string;
 	url: string;
 };
+
+export type NamedError<T extends string> = Error & { name: T };
