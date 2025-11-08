@@ -16,10 +16,10 @@
 
 	const global = getGlobal();
 
-	const dm = await API.dms.queries.get(params.dmId);
-	const data = await API.dms.forms.get(params.dmId);
-	const form = API.dms.forms.save;
 	const schema = dungeonMasterFormSchema;
+	const form = API.dms.forms.save;
+	const data = $derived(await API.dms.forms.get(params.dmId));
+	const dm = $derived(await API.dms.queries.get(params.dmId));
 </script>
 
 <Head title={dm.name} />

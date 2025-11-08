@@ -21,12 +21,20 @@
 
 	const schema = dmLogSchema;
 	const form = API.logs.forms.saveDM;
-	const { log, characters, initialErrors } = await API.logs.forms.dm({
-		param: { logId: params.logId }
-	});
+	const { log, characters, initialErrors } = $derived(
+		await API.logs.forms.dm({
+			param: { logId: params.logId }
+		})
+	);
 
-	let data = $state(log);
-	let season = $state(log.experience ? 1 : log.acp ? 8 : 9);
+	let data = $derived.by(() => {
+		const data = $state(log);
+		return data;
+	});
+	let season = $derived.by(() => {
+		const season = $state(log.experience ? 1 : log.acp ? 8 : 9);
+		return season;
+	});
 </script>
 
 {#key log.id}

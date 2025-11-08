@@ -17,9 +17,13 @@
 	const global = getGlobal();
 
 	const schema = editCharacterSchema;
-	let form = API.characters.forms.save;
-	const { character, initialErrors } = await API.characters.forms.get(params.characterId);
-	const data = $state(character);
+	const form = API.characters.forms.save;
+	const { character, initialErrors } = $derived(await API.characters.forms.get(params.characterId));
+
+	const data = $derived.by(() => {
+		const state = $state(character);
+		return state;
+	});
 </script>
 
 <Head title={params.characterId === "new" ? "New Character" : `Edit ${character.name}`} />

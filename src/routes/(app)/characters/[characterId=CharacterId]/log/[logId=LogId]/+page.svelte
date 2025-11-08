@@ -26,14 +26,22 @@
 
 	const schema = logSchema;
 	const form = API.logs.forms.saveCharacter;
-	const firstLog = page.url.searchParams.get("firstLog") === "true";
-	const character = await API.characters.queries.get({ param: params.characterId });
-	const { log, initialErrors, totalLevel, dms, magicItems, storyAwards } = await API.logs.forms.character({
-		param: { characterId: params.characterId, logId: params.logId, firstLog }
-	});
+	const firstLog = $derived(page.url.searchParams.get("firstLog") === "true");
+	const character = $derived(await API.characters.queries.get({ param: params.characterId }));
+	const { log, initialErrors, totalLevel, dms, magicItems, storyAwards } = $derived(
+		await API.logs.forms.character({
+			param: { characterId: params.characterId, logId: params.logId, firstLog }
+		})
+	);
 
-	let data = $state(log);
-	let season = $state(log.experience ? 1 : log.acp ? 8 : 9);
+	let data = $derived.by(() => {
+		const state = $state(log);
+		return state;
+	});
+	let season = $derived.by(() => {
+		const season = $state(log.experience ? 1 : log.acp ? 8 : 9);
+		return season;
+	});
 </script>
 
 {#key log.id}
