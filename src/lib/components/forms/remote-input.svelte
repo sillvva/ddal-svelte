@@ -68,10 +68,8 @@
 		{...rest}
 		aria-invalid={invalid}
 		id={name}
-		class={[
-			type !== "hidden" && !hidden && "input focus:border-primary focus:aria-[invalid]:border-error w-full",
-			hidden && "hidden"
-		]}
+		class={[type !== "hidden" && !hidden && "input focus:border-primary focus:aria-[invalid]:border-error w-full"]}
+		{hidden}
 	/>
 	<RemoteFieldMessage {name} type={hidden ? "hidden" : type} {description} {warning} {issues} />
 {/if}

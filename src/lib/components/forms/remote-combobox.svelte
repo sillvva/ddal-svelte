@@ -54,7 +54,7 @@
 	let changed = $state(false);
 
 	const input = $derived(inputField.value());
-	const attributes = $derived(valueField.as("select"));
+	const attributes = $derived(inputField.as("text"));
 	const name = $derived(attributes.name);
 	const issues = $derived(errorField ? errorField.issues() : valueField.issues());
 	const invalid = $derived(!!issues?.length || undefined);
@@ -217,7 +217,7 @@
 		{/if}
 	</div>
 	<RemoteFieldMessage {name} type="select" {description} {issues} />
-	<RemoteInput field={valueField} type="hidden" />
+	<RemoteInput field={valueField} type="text" hidden />
 </Combobox.Root>
 
 {#if debug}
