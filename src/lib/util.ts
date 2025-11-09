@@ -1,7 +1,6 @@
 import { goto } from "$app/navigation";
 import { wait } from "@sillvva/utils";
 import type { StandardSchemaV1 } from "@standard-schema/spec";
-import type { NumericRange } from "@sveltejs/kit";
 import { hotkey as hk, type HotkeyItem } from "@svelteuidev/composables";
 import { getContext, hasContext, setContext } from "svelte";
 import type { Attachment } from "svelte/attachments";
@@ -76,7 +75,7 @@ export function createContext<T>(createDefault?: () => T): [(getDefault?: () => 
 
 export function isRedirectFailure(
 	error: EffectFailure["error"]
-): error is EffectFailure["error"] & { status: NumericRange<301, 308>; redirectTo: FullPathname & {} } {
+): error is EffectFailure["error"] & { redirectTo: FullPathname & {} } {
 	return Boolean(error.redirectTo && typeof error.redirectTo === "string" && error.status >= 301 && error.status <= 308);
 }
 

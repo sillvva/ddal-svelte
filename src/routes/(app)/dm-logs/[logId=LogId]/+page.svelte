@@ -62,7 +62,7 @@
 							valueField={fields.characterId}
 							inputField={fields.characterName}
 							values={characters.map((char) => ({ value: char.id, label: char.name }))}
-							required={!!data.appliedDate || undefined}
+							required={!!data.appliedDate}
 							onselect={() => {
 								data.appliedDate = data.date || new Date().getTime();
 							}}
