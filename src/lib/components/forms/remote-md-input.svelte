@@ -66,7 +66,7 @@
 		{@attach autosize}
 	></textarea>
 	{#if preview && mode === "preview"}
-		<div class="border-base-content/20 bg-base-100 rounded-b-lg border-[1px] p-4 text-sm [--tw-border-opacity:0.2]">
+		<div class="border-base-content/20 bg-base-100 rounded-b-lg border p-4 text-sm [--tw-border-opacity:0.2]">
 			<Markdown content={field.value()} />
 		</div>
 	{/if}
