@@ -179,7 +179,7 @@ export function guardedForm<
 	T extends YieldWrap<Effect.Effect<R, F, S>>,
 	X
 >(
-	fn: (output: Input, auth: { user: LocalsUser; event: RequestEvent; invalid: Invalid<Input> }) => Generator<T, X>,
+	fn: (input: Input, auth: { user: LocalsUser; event: RequestEvent; invalid: Invalid<Input> }) => Generator<T, X>,
 	adminOnly?: boolean
 ): RemoteForm<Input, X>;
 
@@ -194,7 +194,7 @@ export function guardedForm<
 >(
 	schemaOrFn:
 		| Schema
-		| ((output: Input, auth: { user: LocalsUser; event: RequestEvent; invalid: Invalid<Input> }) => Generator<T, X>),
+		| ((input: Input, auth: { user: LocalsUser; event: RequestEvent; invalid: Invalid<Input> }) => Generator<T, X>),
 	fnOrAdminOnly?:
 		| ((
 				output: StandardSchemaV1.InferOutput<Schema>,
