@@ -2,6 +2,7 @@ import { goto } from "$app/navigation";
 import { wait } from "@sillvva/utils";
 import type { StandardSchemaV1 } from "@standard-schema/spec";
 import { hotkey as hk, type HotkeyItem } from "@svelteuidev/composables";
+import { isObject } from "effect/Predicate";
 import { getContext, hasContext, setContext } from "svelte";
 import type { Attachment } from "svelte/attachments";
 import type { FullPathname } from "./constants";
@@ -56,8 +57,8 @@ export function getRelativeTime(date: Date | number, lang = navigator.language):
 	return rtf.format(-Math.floor(deltaSeconds / divisor), unit);
 }
 
-export function isStandardSchema(schema: object): schema is StandardSchemaV1 {
-	return "~standard" in schema;
+export function isStandardSchema(schema: unknown): schema is StandardSchemaV1 {
+	return isObject(schema) && "~standard" in schema;
 }
 
 export function createContext<T>(createDefault?: () => T): [(getDefault?: () => T) => T, (context: T) => T] {

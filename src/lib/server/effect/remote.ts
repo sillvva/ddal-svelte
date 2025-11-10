@@ -13,7 +13,7 @@ import {
 	type RequestEvent
 } from "@sveltejs/kit";
 import { Effect } from "effect";
-import { isFunction } from "effect/Predicate";
+import { isFunction, isString } from "effect/Predicate";
 import type { YieldWrap } from "effect/Utils";
 import type { ErrorClass } from "./errors";
 import { run, runSafe, type EffectResult, type Services } from "./runtime";
@@ -179,9 +179,21 @@ export function guardedForm<
 	T extends YieldWrap<Effect.Effect<R, F, S>>,
 	X
 >(
+	schema: "unchecked",
 	fn: (input: Input, auth: { user: LocalsUser; event: RequestEvent; invalid: Invalid<Input> }) => Generator<T, X>,
 	adminOnly?: boolean
 ): RemoteForm<Input, X>;
+
+export function guardedForm<
+	R,
+	F extends InstanceType<ErrorClass>,
+	S extends Services,
+	T extends YieldWrap<Effect.Effect<R, F, S>>,
+	X
+>(
+	fn: (auth: { user: LocalsUser; event: RequestEvent; invalid: Invalid<void> }) => Generator<T, X>,
+	adminOnly?: boolean
+): RemoteForm<void, X>;
 
 export function guardedForm<
 	Schema extends StandardSchemaV1<RemoteFormInput, Record<string, unknown>>,
@@ -194,46 +206,68 @@ export function guardedForm<
 >(
 	schemaOrFn:
 		| Schema
-		| ((input: Input, auth: { user: LocalsUser; event: RequestEvent; invalid: Invalid<Input> }) => Generator<T, X>),
+		| "unchecked"
+		| ((auth: { user: LocalsUser; event: RequestEvent; invalid: Invalid<void> }) => Generator<T, X>),
 	fnOrAdminOnly?:
 		| ((
 				output: StandardSchemaV1.InferOutput<Schema>,
 				auth: { user: LocalsUser; event: RequestEvent; invalid: Invalid<StandardSchemaV1.InferInput<Schema>> }
 		  ) => Generator<T, X>)
+		| ((input: Input, auth: { user: LocalsUser; event: RequestEvent; invalid: Invalid<Input> }) => Generator<T, X>)
 		| boolean,
 	adminOnly = false
 ) {
+	function parseResult(result: EffectResult<X>, invalid: Invalid<unknown>) {
+		if (result.ok) return result.data;
+		if (isRedirectFailure(result.error)) redirect(result.error.status, result.error.redirectTo);
+		if (isValidationError(result.error)) throw result.error.defect;
+		throw invalid(result.error.message);
+	}
+
 	// Handle the case with schema parameter (first overload)
 	if (isStandardSchema(schemaOrFn) && isFunction(fnOrAdminOnly)) {
+		const fn = fnOrAdminOnly as (
+			output: StandardSchemaV1.InferOutput<Schema>,
+			auth: { user: LocalsUser; event: RequestEvent; invalid: Invalid<StandardSchemaV1.InferInput<Schema>> }
+		) => Generator<T, X>;
 		return form(schemaOrFn, async (output, invalid) => {
 			const result = await runSafe(function* () {
 				const Auth = yield* AuthService;
 				const auth = yield* Auth.guard(adminOnly);
-				return yield* fnOrAdminOnly(output, { invalid, ...auth });
+				return yield* fn(output, { invalid, ...auth });
 			});
 
-			if (result.ok) return result.data;
-
-			if (isRedirectFailure(result.error)) redirect(result.error.status, result.error.redirectTo);
-			if (isValidationError(result.error)) throw result.error.defect;
-			throw invalid(result.error.message);
+			return parseResult(result, invalid);
 		});
 	}
 
 	// Handle the case where there's no schema parameter (second overload)
+	if (isString(schemaOrFn) && isFunction(fnOrAdminOnly)) {
+		const fn = fnOrAdminOnly as (
+			input: Input,
+			auth: { user: LocalsUser; event: RequestEvent; invalid: Invalid<Input> }
+		) => Generator<T, X>;
+		return form(schemaOrFn, async (input: Input, invalid) => {
+			const result = await runSafe(function* () {
+				const Auth = yield* AuthService;
+				const auth = yield* Auth.guard(adminOnly);
+				return yield* fn(input, { invalid, ...auth });
+			});
+
+			return parseResult(result, invalid);
+		});
+	}
+
+	// Handle the case where there's no schema parameter (third overload)
 	if (isFunction(schemaOrFn) && !isFunction(fnOrAdminOnly)) {
-		return form("unchecked", async (input: Input, invalid) => {
+		return form(async (invalid) => {
 			const result = await runSafe(function* () {
 				const Auth = yield* AuthService;
 				const auth = yield* Auth.guard(fnOrAdminOnly);
-				return yield* schemaOrFn(input, { invalid, ...auth });
+				return yield* schemaOrFn({ invalid, ...auth });
 			});
 
-			if (result.ok) return result.data;
-
-			if (isRedirectFailure(result.error)) redirect(result.error.status, result.error.redirectTo);
-			if (isValidationError(result.error)) throw result.error.defect;
-			throw invalid(result.error.message);
+			return parseResult(result, invalid);
 		});
 	}
 

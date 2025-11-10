@@ -112,7 +112,7 @@ export const dm = guardedQuery(dmLogFormSchema, function* (input, { user }) {
 	};
 });
 
-export const saveCharacter = guardedForm(function* (input: LogSchemaIn, { user, invalid }) {
+export const saveCharacter = guardedForm("unchecked", function* (input: LogSchemaIn, { user, invalid }) {
 	const Characters = yield* CharacterService;
 	const Logs = yield* LogService;
 
@@ -129,7 +129,7 @@ export const saveCharacter = guardedForm(function* (input: LogSchemaIn, { user, 
 	redirect(303, `/characters/${character.id}`);
 });
 
-export const saveDM = guardedForm(function* (input: DmLogSchemaIn, { user, invalid }) {
+export const saveDM = guardedForm("unchecked", function* (input: DmLogSchemaIn, { user, invalid }) {
 	const Characters = yield* CharacterService;
 	const Logs = yield* LogService;
 	const DMs = yield* DMService;

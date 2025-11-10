@@ -25,7 +25,7 @@ export const impersonateUser = guardedForm(
 	true
 );
 
-export const stopImpersonating = guardedForm(function* (_, { event }) {
+export const stopImpersonating = guardedForm(function* ({ event }) {
 	const Auth = yield* AuthService;
 	const auth = yield* Auth.auth();
 

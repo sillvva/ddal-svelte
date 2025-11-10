@@ -3,7 +3,7 @@ import { AuthService } from "$lib/server/effect/services/auth";
 import { redirect } from "@sveltejs/kit";
 import { Effect } from "effect";
 
-export const signOut = guardedForm(function* (_, { event }) {
+export const signOut = guardedForm(function* ({ event }) {
 	const Auth = yield* AuthService;
 	const auth = yield* Auth.auth();
 
