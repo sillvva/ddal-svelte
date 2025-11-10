@@ -77,7 +77,7 @@
 				<a href="/dms" class="p-2 max-md:hidden">DMs</a>
 			{/if}
 			<div class="flex-1 max-md:hidden"></div>
-			<div class="flex items-center gap-2">
+			<div class={["flex items-center", auth.user?.role === "admin" ? "gap-2" : "gap-4"]}>
 				{#if auth.user}
 					<CommandTray />
 
