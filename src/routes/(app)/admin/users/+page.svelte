@@ -1,12 +1,11 @@
 <script lang="ts">
-	import { goto, invalidateAll } from "$app/navigation";
 	import { page } from "$app/state";
-	import { authClient } from "$lib/auth.js";
 	import Head from "$lib/components/head.svelte";
 	import Search from "$lib/components/search.svelte";
 	import { BLANK_CHARACTER } from "$lib/constants.js";
 	import { errorToast, successToast } from "$lib/factories.svelte.js";
 	import * as API from "$lib/remote";
+	import { impersonateUser } from "$lib/remote/admin/forms.remote";
 	import { parseEffectResult } from "$lib/util";
 	import { JSONSearchParser } from "@sillvva/search/json";
 
@@ -51,6 +50,7 @@
 			</thead>
 			<tbody>
 				{#each results as user (user.id)}
+					{@const impersonate = impersonateUser.for(user.id)}
 					<tr data-banned={user.banned} class="data-[banned=true]:bg-error/10">
 						<td class="pr-0 align-top transition-colors sm:pr-2">
 							<div class="avatar">
@@ -94,25 +94,28 @@
 						<td class="text-center max-sm:hidden">{user.characters}</td>
 						<td class="max-xs:hidden">
 							<div class="flex justify-end gap-2">
-								<div class="sm:tooltip sm:tooltip-left" data-tip="Impersonate {user.name}">
+								<form
+									{...impersonate.enhance(async ({ submit }) => {
+										await submit();
+
+										const issues = impersonate.fields.issues();
+										if (issues?.length) {
+											issues.forEach((issue) => errorToast(issue.message));
+										}
+									})}
+									class="sm:tooltip sm:tooltip-left"
+									data-tip="Impersonate {user.name}"
+								>
+									<input {...impersonate.fields.userId.as("hidden", user.id)} />
 									<button
+										type="submit"
 										class="btn btn-sm btn-primary"
 										aria-label="Impersonate {user.name}"
 										disabled={user.role === "admin" || user.banned}
-										onclick={async () => {
-											if (user.role === "admin" || user.banned) return;
-											const { data } = await authClient.admin.impersonateUser({
-												userId: user.id
-											});
-											if (data) {
-												await invalidateAll();
-												goto("/characters");
-											}
-										}}
 									>
 										<span class="iconify mdi--account-switch"></span>
 									</button>
-								</div>
+								</form>
 								{#if !user.banned}
 									<div class="sm:tooltip sm:tooltip-left" data-tip="Ban {user.name}">
 										<button
