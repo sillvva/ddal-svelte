@@ -182,11 +182,11 @@
 						{character.name}
 					</h3>
 				</div>
-				<p class="xs:text-sm flex-1 text-xs font-semibold">
+				<p class="flex-1 text-sm font-semibold">
 					{character.race}
 					{character.class}
 				</p>
-				<p class="flex-1 text-xs">
+				<p class="flex-1 text-sm">
 					{character.campaign}
 					{#if character.characterSheetUrl}
 						<span class="print:hidden">
@@ -202,6 +202,12 @@
 						</span>
 					{/if}
 				</p>
+				{#if character.user?.id !== auth.user?.id}
+					<p class="flex-1 text-sm">
+						<span class="font-semibold dark:text-white">Player:</span>
+						{character.user?.name}
+					</p>
+				{/if}
 			</div>
 		</div>
 		<div class="xs:flex-nowrap flex flex-1 flex-wrap gap-4 sm:gap-4 md:gap-6 print:flex-nowrap print:gap-2">
