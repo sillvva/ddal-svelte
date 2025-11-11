@@ -7,7 +7,7 @@
 	import { successToast, unknownErrorToast } from "$lib/factories.svelte";
 	import { debounce, deepEqual } from "@sillvva/utils";
 	import type { StandardSchemaV1 } from "@standard-schema/spec";
-	import type { RemoteForm, RemoteFormInput, RemoteFormIssue } from "@sveltejs/kit";
+	import type { RemoteForm, RemoteFormAllIssue, RemoteFormInput, RemoteFormIssue } from "@sveltejs/kit";
 	import { isTupleOfAtLeast } from "effect/Predicate";
 	import { onMount, tick, type Snippet } from "svelte";
 	import type { HTMLFormAttributes } from "svelte/elements";
@@ -24,8 +24,9 @@
 		onsubmit?: <T>(ctx: { readonly tainted: boolean; readonly form: HTMLFormElement; readonly data: Input }) => Awaitable<T>;
 		onresult?: (ctx: {
 			readonly success: boolean;
-			readonly result: Form["result"];
+			readonly result?: Form["result"];
 			readonly issues?: RemoteFormIssue[];
+			readonly error?: unknown;
 		}) => Awaitable<void>;
 		onissues?: (ctx: { readonly issues: RemoteFormIssue[] }) => Awaitable<void>;
 		children?: Snippet<[{ fields: Form["fields"] }]>;
@@ -54,7 +55,8 @@
 
 	const result = $derived(form.result);
 	const issues = $derived(form.fields.issues());
-	let hadIssues = $state(!!form.fields.issues());
+	let lastIssues = $state<RemoteFormAllIssue[] | undefined>(form.fields.allIssues());
+	let hadIssues = $derived(!!lastIssues?.length || !!form.fields.issues()?.length);
 
 	const initial = $state.snapshot(data);
 	let tainted = $derived(!deepEqual(initial, form.fields.value()));
@@ -62,13 +64,16 @@
 	async function validate() {
 		await form.validate({ includeUntouched: true, preflightOnly: true });
 		const issues = form.fields.allIssues();
-		if (issues && onissues) onissues({ issues });
-		hadIssues ||= !!issues?.length;
+		if (issues && onissues && !deepEqual(lastIssues, issues)) onissues({ issues });
+		if (issues?.length) lastIssues = issues;
 	}
 
 	async function focusInvalid() {
 		await tick();
-		hadIssues ||= !!form.fields.allIssues()?.length;
+
+		const issues = form.fields.allIssues();
+		if (issues?.length) lastIssues = issues;
+		else return;
 
 		const invalid = formEl.querySelector(":is(input, select, textarea):not(.hidden, [type=hidden], :disabled)[aria-invalid]") as
 			| HTMLInputElement
@@ -117,9 +122,11 @@
 				} else {
 					tainted = wasTainted;
 					await focusInvalid();
+					onissues?.({ issues });
 				}
-			} catch (err) {
-				unknownErrorToast(err || "Oh no! Something went wrong");
+			} catch (error) {
+				unknownErrorToast(error || "Oh no! Something went wrong");
+				onresult?.({ success: false, error });
 				tainted = wasTainted;
 			}
 		})}
