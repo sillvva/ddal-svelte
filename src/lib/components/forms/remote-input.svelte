@@ -74,19 +74,17 @@
 			? map.field.as(map.type, typeof map.value === "string" ? map.value : map.field.value() || "")
 			: map.type === "checkbox" && typeof map.value === "string"
 				? map.field.as("checkbox", map.value)
-				: map.type === "radio" && typeof map.value === "string"
-					? map.field.as("radio", map.value)
-					: map.type === "submit" && typeof map.value === "string"
-						? map.field.as("submit", map.value)
-						: map.type === "number" || map.type === "range"
+				: map.type === "radio" || map.type === "submit"
+					? map.field.as(map.type, map.value)
+					: map.type === "number" || map.type === "range"
+						? map.field.as(map.type)
+						: map.type === "file"
 							? map.field.as(map.type)
-							: map.type === "file"
+							: map.type === "file multiple"
 								? map.field.as(map.type)
-								: map.type === "file multiple"
-									? map.field.as(map.type)
-									: map.type === "checkbox"
-										? map.field.as("checkbox")
-										: map.field.as(map.type || "text"))
+								: map.type === "checkbox"
+									? map.field.as("checkbox")
+									: map.field.as(map.type || "text"))
 	});
 	const name = $derived(attributes.name);
 	const issues = $derived(map.field.issues());
