@@ -33,7 +33,7 @@
 
 <section>
 	<div class="bg-base-200 w-full overflow-x-auto rounded-lg">
-		<table class="table w-full">
+		<table class="linked-table table w-full">
 			<thead>
 				<tr class="bg-base-300 text-base-content/70">
 					<th class="max-sm:w-full">DM</th>
@@ -55,7 +55,7 @@
 							<td>
 								<a
 									href="/dms/{dm.id}"
-									class="text-secondary-content text-left font-semibold whitespace-pre-wrap"
+									class="text-secondary-content row-link text-left font-semibold whitespace-pre-wrap"
 									aria-label="Edit DM"
 								>
 									<SearchResults text={dm.name} terms={search.terms} />
