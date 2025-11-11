@@ -5,7 +5,7 @@
 	import { dev } from "$app/environment";
 	import { beforeNavigate } from "$app/navigation";
 	import { successToast, unknownErrorToast } from "$lib/factories.svelte";
-	import { deepEqual } from "@sillvva/utils";
+	import { debounce, deepEqual } from "@sillvva/utils";
 	import type { StandardSchemaV1 } from "@standard-schema/spec";
 	import type { RemoteForm, RemoteFormInput, RemoteFormIssue } from "@sveltejs/kit";
 	import { isTupleOfAtLeast } from "effect/Predicate";
@@ -22,11 +22,26 @@
 		data: Input;
 		initialErrors?: boolean;
 		onsubmit?: <T>(ctx: { readonly tainted: boolean; readonly form: HTMLFormElement; readonly data: Input }) => Awaitable<T>;
-		onresult?: (ctx: { readonly success: boolean; readonly result: Form["result"]; readonly issues?: RemoteFormIssue[] }) => void;
+		onresult?: (ctx: {
+			readonly success: boolean;
+			readonly result: Form["result"];
+			readonly issues?: RemoteFormIssue[];
+		}) => Awaitable<void>;
+		onissues?: (ctx: { readonly issues: RemoteFormIssue[] }) => Awaitable<void>;
 		children?: Snippet<[{ fields: Form["fields"] }]>;
 	}
 
-	let { schema, form: remoteForm, children, data, initialErrors = false, onsubmit, onresult, ...rest }: Props = $props();
+	let {
+		schema,
+		form: remoteForm,
+		children,
+		data,
+		initialErrors = false,
+		onsubmit,
+		onresult,
+		onissues,
+		...rest
+	}: Props = $props();
 
 	let formEl: HTMLFormElement;
 
@@ -46,7 +61,9 @@
 
 	async function validate() {
 		await form.validate({ includeUntouched: true, preflightOnly: true });
-		hadIssues ||= !!form.fields.allIssues()?.length;
+		const issues = form.fields.allIssues();
+		if (issues && onissues) onissues({ issues });
+		hadIssues ||= !!issues?.length;
 	}
 
 	async function focusInvalid() {
@@ -110,7 +127,7 @@
 		bind:this={formEl}
 		onsubmit={focusInvalid}
 		oninput={(ev) => {
-			if (hadIssues) validate();
+			if (hadIssues) debounce(validate, 300).call();
 			rest.oninput?.(ev);
 		}}
 	>
