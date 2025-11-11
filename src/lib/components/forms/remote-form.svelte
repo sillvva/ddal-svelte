@@ -56,7 +56,7 @@
 	const result = $derived(form.result);
 	const issues = $derived(form.fields.issues());
 	let lastIssues = $state<RemoteFormAllIssue[] | undefined>(form.fields.allIssues());
-	let hadIssues = $derived(!!lastIssues?.length || !!form.fields.issues()?.length);
+	let hadIssues = $derived(!!lastIssues?.length || !!form.fields.allIssues()?.length);
 
 	const initial = $state.snapshot(data);
 	let tainted = $derived(!deepEqual(initial, form.fields.value()));
