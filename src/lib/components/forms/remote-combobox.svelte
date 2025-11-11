@@ -217,7 +217,7 @@
 		{/if}
 	</div>
 	<RemoteFieldMessage {name} type="select" {description} {issues} />
-	<RemoteInput field={valueField} type="text" hidden />
+	<RemoteInput field={valueField} hidden />
 </Combobox.Root>
 
 {#if debug}

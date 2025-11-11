@@ -115,13 +115,13 @@
 								label="DM DCI"
 							/>
 							{#if !data.dm.name}
-								<RemoteInput field={fields.dm.DCI} type="text" hidden />
+								<RemoteInput field={fields.dm.DCI} hidden />
 							{/if}
 						</Control>
 					{:else}
 						<RemoteInput field={fields.dm.id} type="hidden" />
-						<RemoteInput field={fields.dm.name} type="text" hidden />
-						<RemoteInput field={fields.dm.DCI} type="text" hidden />
+						<RemoteInput field={fields.dm.name} hidden />
+						<RemoteInput field={fields.dm.DCI} hidden />
 					{/if}
 					<RemoteInput field={fields.dm.userId} type="hidden" />
 					<RemoteInput field={fields.dm.isUser} type="checkbox" hidden />
@@ -166,8 +166,8 @@
 					{/if}
 				{:else}
 					<RemoteInput field={fields.dm.id} type="hidden" />
-					<RemoteInput field={fields.dm.name} type="text" hidden />
-					<RemoteInput field={fields.dm.DCI} type="text" hidden />
+					<RemoteInput field={fields.dm.name} hidden />
+					<RemoteInput field={fields.dm.DCI} hidden />
 					<RemoteInput field={fields.dm.userId} type="hidden" />
 					<RemoteInput field={fields.dm.isUser} type="checkbox" hidden />
 				{/if}

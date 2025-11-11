@@ -43,16 +43,16 @@
 		{#snippet children({ fields })}
 			<RemoteInput field={fields.id} type="hidden" />
 			<Control class="col-span-12 sm:col-span-6">
-				<RemoteInput field={fields.name} type="text" label="Character Name" required />
+				<RemoteInput field={fields.name} label="Character Name" required />
 			</Control>
 			<Control class="col-span-12 sm:col-span-6">
-				<RemoteInput field={fields.campaign} type="text" label="Campaign" />
+				<RemoteInput field={fields.campaign} label="Campaign" />
 			</Control>
 			<Control class="col-span-12 sm:col-span-6">
-				<RemoteInput field={fields.race} type="text" label="Species" />
+				<RemoteInput field={fields.race} label="Species" />
 			</Control>
 			<Control class="col-span-12 sm:col-span-6">
-				<RemoteInput field={fields.class} type="text" label="Class" />
+				<RemoteInput field={fields.class} label="Class" />
 			</Control>
 			<Control class="col-span-12">
 				<RemoteInput field={fields.characterSheetUrl} type="url" label="Character Sheet URL" />

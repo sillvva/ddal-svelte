@@ -35,10 +35,10 @@
 	{#snippet children({ fields })}
 		<RemoteInput field={fields.id} type="hidden" />
 		<Control class="col-span-12 sm:col-span-6">
-			<RemoteInput field={fields.name} type="text" label="DM Name" required />
+			<RemoteInput field={fields.name} label="DM Name" required />
 		</Control>
 		<Control class="col-span-12 sm:col-span-6">
-			<RemoteInput field={fields.DCI} type="text" label="DCI" />
+			<RemoteInput field={fields.DCI} label="DCI" />
 		</Control>
 		<div class="col-span-12 my-4 flex justify-center">
 			<RemoteSubmit>Save DM</RemoteSubmit>

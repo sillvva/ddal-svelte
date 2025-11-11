@@ -51,7 +51,7 @@
 				{#snippet children({ fields })}
 					<RemoteInput field={fields.id} type="hidden" />
 					<Control class="col-span-12 sm:col-span-6 lg:col-span-3">
-						<RemoteInput field={fields.name} type="text" label="Title" required />
+						<RemoteInput field={fields.name} label="Title" required />
 					</Control>
 					<Control class="col-span-12 sm:col-span-6 lg:col-span-3">
 						<RemoteDateInput field={fields.date} label="Date" />
