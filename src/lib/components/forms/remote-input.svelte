@@ -6,19 +6,17 @@
 	type InputTypeMap =
 		| {
 				type?: "text";
-				value?: string;
 				field: RemoteFormField<string>;
 		  }
 		| {
-				type: "email" | "password" | "url" | "tel" | "search" | "button" | "reset" | "color";
-				value?: string;
+				type: "email" | "password" | "url" | "tel" | "search" | "button" | "reset" | "color" | "button";
 				field: RemoteFormField<string>;
 		  }
-		| { type: "number"; value?: number; field: RemoteFormField<number> }
-		| { type: "range"; value?: number; field: RemoteFormField<number> }
+		| { type: "number"; field: RemoteFormField<number> }
+		| { type: "range"; field: RemoteFormField<number> }
 		| {
 				type: "checkbox";
-				value?: boolean;
+				value?: undefined;
 				field: RemoteFormField<boolean>;
 		  }
 		| {
@@ -39,11 +37,6 @@
 		| {
 				type: "submit";
 				value: string;
-				field: RemoteFormField<string>;
-		  }
-		| {
-				type: "button";
-				value?: string;
 				field: RemoteFormField<string>;
 		  }
 		| {
