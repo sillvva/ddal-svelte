@@ -2,6 +2,7 @@
 	import { page } from "$app/state";
 	import Error from "$lib/components/error.svelte";
 	import Control from "$lib/components/forms/control.svelte";
+	import RemoteCombobox from "$lib/components/forms/remote-combobox.svelte";
 	import RemoteForm from "$lib/components/forms/remote-form.svelte";
 	import RemoteInput from "$lib/components/forms/remote-input.svelte";
 	import RemoteSubmit from "$lib/components/forms/remote-submit.svelte";
@@ -46,7 +47,17 @@
 				<RemoteInput field={fields.name} label="Character Name" required />
 			</Control>
 			<Control class="col-span-12 sm:col-span-6">
-				<RemoteInput field={fields.campaign} label="Campaign" />
+				<RemoteCombobox
+					inputField={fields.campaign}
+					label="Campaign"
+					values={[
+						{ value: "Forgotten Realms" },
+						{ value: "Eberron" },
+						{ value: "Dragonlance" },
+						{ value: "Ravenloft" },
+						{ value: "Critical Role" }
+					]}
+				/>
 			</Control>
 			<Control class="col-span-12 sm:col-span-6">
 				<RemoteInput field={fields.race} label="Species" />

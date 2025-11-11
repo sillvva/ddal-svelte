@@ -8,11 +8,16 @@
 
 	type Item = {
 		value: string;
-		label: string;
+		label?: string;
 		itemLabel?: string;
 	};
+	type WithLabel = Item & {
+		label: string;
+		itemLabel: string;
+	};
+
 	interface Props {
-		valueField: RemoteFormField<string>;
+		valueField?: RemoteFormField<string>;
 		inputField: RemoteFormField<string>;
 		errorField?: RemoteFormField<string>;
 		label: string;
@@ -31,8 +36,8 @@
 	}
 
 	let {
-		valueField,
 		inputField,
+		valueField = inputField,
 		errorField = valueField,
 		label,
 		values = [],
@@ -56,10 +61,11 @@
 	const input = $derived(inputField.value());
 	const attributes = $derived(inputField.as("text"));
 	const name = $derived(attributes.name);
-	const issues = $derived(errorField ? errorField.issues() : valueField.issues());
+	const issues = $derived(errorField ? errorField.issues() : valueField?.issues());
 	const invalid = $derived(!!issues?.length || undefined);
+	const isValueField = $derived(valueField.as("text").name === inputField.as("text").name);
 
-	const withLabel = $derived(
+	const withLabel: WithLabel[] = $derived(
 		values.map(({ value, label, itemLabel }) => ({
 			value,
 			label: label || value,
@@ -74,7 +80,7 @@
 				.includes((input || "").toLowerCase().replace(/\s+/g, ""))
 		)
 	);
-	const firstItem = $derived<Item>({ value: "", label: input, itemLabel: `Add ${input}` });
+	const firstItem = $derived<WithLabel>({ value: "", label: input, itemLabel: `Add ${input}` });
 	const filtered = $derived(
 		!input?.trim() || !allowCustom || prefiltered.length === 1 ? prefiltered : [firstItem].concat(prefiltered)
 	);
@@ -88,7 +94,7 @@
 	);
 
 	function clear() {
-		valueField.set("");
+		valueField?.set("");
 		inputField.set("");
 		selectedItem = undefined;
 		onclear?.();
@@ -104,7 +110,7 @@
 	{disabled}
 	onValueChange={(sel) => {
 		const item = filtered.find((item) => item.value === sel);
-		inputField.set(item?.label || item?.value || "");
+		if (!isValueField) inputField.set(item?.label || item?.value || "");
 		selectedItem = { value: item?.value || "", label: input, itemLabel: input };
 		onselect?.({ selected: item, input: input });
 		open = false;
@@ -136,8 +142,10 @@
 					oninput={(e) => {
 						let cValue = e.currentTarget.value;
 						if (!cValue) return clear();
-						inputField.set(cValue);
-						valueField.set("");
+						if (!isValueField) {
+							inputField.set(cValue);
+							valueField.set("");
+						}
 						oninput?.(e.currentTarget, cValue);
 						changed = true;
 					}}
@@ -217,7 +225,9 @@
 		{/if}
 	</div>
 	<RemoteFieldMessage {name} type="select" {description} {issues} />
-	<RemoteInput field={valueField} hidden />
+	{#if !isValueField}
+		<RemoteInput field={valueField} hidden />
+	{/if}
 </Combobox.Root>
 
 {#if debug}
