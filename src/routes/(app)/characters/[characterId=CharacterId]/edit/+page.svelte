@@ -50,6 +50,9 @@
 				<RemoteCombobox
 					inputField={fields.campaign}
 					label="Campaign"
+					allowCustom
+					clearable
+					required
 					values={[
 						{ value: "Forgotten Realms" },
 						{ value: "Eberron" },
@@ -60,10 +63,10 @@
 				/>
 			</Control>
 			<Control class="col-span-12 sm:col-span-6">
-				<RemoteInput field={fields.race} label="Species" />
+				<RemoteInput field={fields.race} label="Species" required />
 			</Control>
 			<Control class="col-span-12 sm:col-span-6">
-				<RemoteInput field={fields.class} label="Class" />
+				<RemoteInput field={fields.class} label="Class" required />
 			</Control>
 			<Control class="col-span-12">
 				<RemoteInput field={fields.characterSheetUrl} type="url" label="Character Sheet URL" />
