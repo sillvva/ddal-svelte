@@ -94,15 +94,3 @@ export async function parseEffectResult<T>(result: EffectResult<T>) {
 		await goto(result.error.redirectTo);
 	}
 }
-
-export function getIssuePath(path: Array<string | number>) {
-	let result = "";
-	for (const segment of path) {
-		if (typeof segment === "number") {
-			result += `[${segment}]`;
-		} else if (typeof segment === "string") {
-			result += result === "" ? segment : "." + segment;
-		}
-	}
-	return result;
-}

@@ -6,8 +6,8 @@
 	import { errorToast, successToast } from "$lib/factories.svelte.js";
 	import * as API from "$lib/remote";
 	import { banUser, impersonateUser, unbanUser } from "$lib/remote/admin/forms.remote";
-	import { getIssuePath } from "$lib/util";
 	import { JSONSearchParser } from "@sillvva/search/json";
+	import { toJSObjectNotation } from "@sillvva/utils";
 
 	let search = $state(page.url.searchParams.get("s")?.trim() ?? "");
 
@@ -140,7 +140,7 @@
 
 											const issues = banForm.fields.allIssues();
 											if (issues?.length) {
-												issues.forEach((issue) => errorToast(`${getIssuePath(issue.path) || "Error"}: ${issue.message}`));
+												issues.forEach((issue) => errorToast(`${toJSObjectNotation(issue.path) || "Error"}: ${issue.message}`));
 											} else {
 												successToast(`${user.name} has been banned`);
 											}
@@ -169,7 +169,7 @@
 
 											const issues = unbanForm.fields.allIssues();
 											if (issues?.length) {
-												issues.forEach((issue) => errorToast(`${getIssuePath(issue.path) || "Error"}: ${issue.message}`));
+												issues.forEach((issue) => errorToast(`${toJSObjectNotation(issue.path) || "Error"}: ${issue.message}`));
 											} else {
 												successToast(`${user.name} has been unbanned`);
 											}
