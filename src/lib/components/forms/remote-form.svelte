@@ -37,7 +37,7 @@
 		form: remoteForm,
 		children,
 		data,
-		initialErrors = false,
+		initialErrors = !!data.id,
 		onsubmit,
 		onresult,
 		onissues,
@@ -55,11 +55,13 @@
 
 	const result = $derived(form.result);
 	const issues = $derived(form.fields.issues());
-	let lastIssues = $state<RemoteFormAllIssue[] | undefined>(form.fields.allIssues());
-	let hadIssues = $derived(!!lastIssues?.length || !!form.fields.allIssues()?.length);
+	let lastIssues = $state.raw<RemoteFormAllIssue[] | undefined>(form.fields.allIssues());
+	const hadIssues = $derived(!!lastIssues?.length || !!form.fields.allIssues()?.length);
 
 	const initial = $state.snapshot(data);
 	let tainted = $derived(!deepEqual(initial, form.fields.value()));
+
+	const debouncedValidate = debounce(validate, 300);
 
 	async function validate() {
 		await form.validate({ includeUntouched: true, preflightOnly: true });
@@ -134,7 +136,7 @@
 		bind:this={formEl}
 		onsubmit={focusInvalid}
 		oninput={(ev) => {
-			if (hadIssues) debounce(validate, 300).call();
+			if (hadIssues) debouncedValidate.call();
 			rest.oninput?.(ev);
 		}}
 	>
