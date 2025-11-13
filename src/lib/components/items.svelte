@@ -14,6 +14,8 @@
 		items: Array<Item>;
 		formatting?: boolean;
 		terms?: string[];
+		filtered?: boolean;
+		matches?: number;
 		collapsible?: boolean;
 		sort?: boolean;
 		search?: boolean;
@@ -24,6 +26,8 @@
 		items,
 		formatting = false,
 		terms = [],
+		filtered = false,
+		matches = 1,
 		collapsible = false,
 		sort = false,
 		search = false
@@ -73,30 +77,40 @@
 		return val;
 	};
 
+	const regexes = $derived(terms.map((term) => new RegExp(term, "gi")));
+
 	const consolidatedItems = $derived.by(() => {
 		const itemsMap = new SvelteMap<string, number>();
-		return $state.snapshot(items).reduce(
-			(acc, item) => {
-				const name = fixName(item.name);
-				const qty = itemQty(item);
-				const desc = item.description?.trim();
-				const key = `${name || ""}_${desc || ""}`;
+		return $state
+			.snapshot(items)
+			.filter(
+				(item) =>
+					!filtered ||
+					!terms.length ||
+					(matches === 1 ? regexes.every((regex) => item.name.match(regex)) : regexes.some((regex) => item.name.match(regex)))
+			)
+			.reduce(
+				(acc, item) => {
+					const name = fixName(item.name);
+					const qty = itemQty(item);
+					const desc = item.description?.trim();
+					const key = `${name || ""}_${desc || ""}`;
 
-				const existingIndex = itemsMap.get(key);
-				if (existingIndex !== undefined && acc[existingIndex]) {
-					const existingQty = itemQty(acc[existingIndex]!);
-					acc[existingIndex]!.name = fixName(name, existingQty + qty);
-					acc[existingIndex]!.ids.push(item.logGainedId);
-				} else {
-					item.name = fixName(item.name, qty);
-					itemsMap.set(key, acc.length);
-					acc.push(Object.assign(item, { ids: [item.logGainedId] }));
-				}
+					const existingIndex = itemsMap.get(key);
+					if (existingIndex !== undefined && acc[existingIndex]) {
+						const existingQty = itemQty(acc[existingIndex]!);
+						acc[existingIndex]!.name = fixName(name, existingQty + qty);
+						acc[existingIndex]!.ids.push(item.logGainedId);
+					} else {
+						item.name = fixName(item.name, qty);
+						itemsMap.set(key, acc.length);
+						acc.push(Object.assign(item, { ids: [item.logGainedId] }));
+					}
 
-				return acc;
-			},
-			[] as (Item & { ids: LogId[] })[]
-		);
+					return acc;
+				},
+				[] as (Item & { ids: LogId[] })[]
+			);
 	});
 
 	const sortedItems = $derived(
@@ -105,6 +119,18 @@
 
 	const nonConsumables = $derived(sortedItems.filter((item) => !isConsumable(item.name)));
 	const consumables = $derived(sortedItems.filter((item) => isConsumable(item.name)));
+
+	function onclick(item: Item & { ids: LogId[] }) {
+		if (item.description) {
+			const url = new URL(page.url);
+			url.searchParams.set("s", item.ids.join(" "));
+			pushState("", {
+				modal: { type: "text", name: item.name, description: item.description, goto: search ? url.toString() : undefined }
+			});
+		} else if (search) {
+			params.s = item.ids.join(",");
+		}
+	}
 </script>
 
 <div
@@ -135,39 +161,19 @@
 					role={mi.description || search ? "button" : "presentation"}
 					class="inline pr-2 pl-2 first:pl-0"
 					class:text-secondary-content={mi.description}
-					onclick={() => {
-						if (mi.description) {
-							const url = new URL(page.url);
-							url.searchParams.set("s", mi.ids.join(" "));
-							pushState("", {
-								modal: { type: "text", name: mi.name, description: mi.description, goto: search ? url.toString() : undefined }
-							});
-						} else if (search) {
-							params.s = mi.ids.join(",");
-						}
-					}}
+					onclick={() => onclick(mi)}
 					onkeypress={() => null}
 				>
-					<SearchResults text={mi.name} {terms} />
+					<SearchResults text={mi.name} {terms} {filtered} {matches} />
 				</span>{/each}{#each consumables as mi (mi.id)}<span
 					role={mi.description || search ? "button" : "presentation"}
 					class="text-base-content/75 inline pr-2 pl-2 italic first:pl-0"
 					class:text-secondary-content={mi.description}
 					class:italic={formatting}
-					onclick={() => {
-						if (mi.description) {
-							const url = new URL(page.url);
-							url.searchParams.set("s", mi.ids.join(" "));
-							pushState("", {
-								modal: { type: "text", name: mi.name, description: mi.description, goto: search ? url.toString() : undefined }
-							});
-						} else if (search) {
-							params.s = mi.ids.join(",");
-						}
-					}}
+					onclick={() => onclick(mi)}
 					onkeypress={() => null}
 				>
-					<SearchResults text={mi.name} {terms} />
+					<SearchResults text={mi.name} {terms} {filtered} {matches} />
 				</span>{/each}
 		{:else}
 			None

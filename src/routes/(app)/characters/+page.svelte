@@ -2,6 +2,7 @@
 	import { goto } from "$app/navigation";
 	import { page } from "$app/state";
 	import Head from "$lib/components/head.svelte";
+	import Items from "$lib/components/items.svelte";
 	import NavMenu from "$lib/components/nav-menu.svelte";
 	import SearchResults from "$lib/components/search-results.svelte";
 	import Search from "$lib/components/search.svelte";
@@ -206,23 +207,13 @@
 									{#if (character.match.has("magicItems") || global.app.characters.magicItems) && character.magicItems.length}
 										<div class="mb-2">
 											<p class="font-semibold">Magic Items:</p>
-											<SearchResults
-												text={character.magicItems.map((item) => item.name)}
-												terms={search.terms}
-												filtered
-												matches={character.match.size}
-											/>
+											<Items items={character.magicItems} terms={search.terms} filtered matches={character.match.size} />
 										</div>
 									{/if}
 									{#if character.match.has("storyAwards") && character.storyAwards.length}
 										<div class="mb-2">
 											<p class="font-semibold">Story Awards:</p>
-											<SearchResults
-												text={character.storyAwards.map((award) => award.name)}
-												terms={search.terms}
-												filtered
-												matches={character.match.size}
-											/>
+											<Items items={character.storyAwards} terms={search.terms} filtered matches={character.match.size} />
 										</div>
 									{/if}
 									{#if search.terms.length > 0}
@@ -272,12 +263,7 @@
 									{#if search.query.length >= 1 && character.match.has("magicItems")}
 										<div class="absolute inset-0 flex items-center bg-black/50 p-2 text-center text-xs text-white">
 											<div class="flex-1">
-												<SearchResults
-													text={character.magicItems.map((item) => item.name)}
-													terms={search.terms}
-													filtered
-													matches={character.match.size}
-												/>
+												<Items items={character.magicItems} terms={search.terms} filtered matches={character.match.size} />
 											</div>
 										</div>
 									{/if}

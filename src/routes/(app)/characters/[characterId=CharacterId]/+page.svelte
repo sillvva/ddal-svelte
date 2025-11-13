@@ -492,7 +492,7 @@
 									{/if}
 									{#if log.magicItemsGained.length > 0 || log.magicItemsLost.length > 0}
 										<div>
-											<Items title="Magic Items:" items={log.magicItemsGained} terms={search.terms} sort />
+											<Items title="Magic Items:" items={log.magicItemsGained} terms={search.terms} sort filtered />
 											<div class="text-sm whitespace-pre-wrap line-through">
 												<SearchResults text={log.magicItemsLost.map((mi) => mi.name).join(" | ")} terms={search.terms} />
 											</div>
@@ -547,7 +547,7 @@
 									{/if}
 									{#if log.magicItemsGained.length > 0 || log.magicItemsLost.length > 0}
 										<div class="mt-2 sm:hidden print:hidden">
-											<Items title="Magic Items:" items={log.magicItemsGained} terms={search.terms} sort />
+											<Items title="Magic Items:" items={log.magicItemsGained} terms={search.terms} sort filtered />
 											{#if log.magicItemsLost.length}
 												<p class="mt-2 text-sm whitespace-pre-wrap line-through">
 													<SearchResults text={log.magicItemsLost.map((mi) => mi.name).join(" | ")} terms={search.terms} />
