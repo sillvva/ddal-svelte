@@ -57,8 +57,7 @@ export const character = guardedQuery(characterLogFormSchema, function* (input, 
 			characterId: log.characterId || "",
 			date: log.date.getTime(),
 			appliedDate: log.appliedDate?.getTime() || 0
-		},
-		initialErrors: logId !== "new"
+		}
 	};
 });
 
@@ -102,7 +101,6 @@ export const dm = guardedQuery(dmLogFormSchema, function* (input, { user }) {
 
 	return {
 		characters: characters.map((c) => ({ id: c.id, name: c.name })),
-		initialErrors: logId !== "new",
 		log: {
 			...omit(log, ["dm"]),
 			characterId: log.characterId || "",

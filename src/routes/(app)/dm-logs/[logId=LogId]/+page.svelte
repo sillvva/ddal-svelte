@@ -22,11 +22,12 @@
 
 	const schema = dmLogSchema;
 	const form = API.logs.forms.saveDM;
-	const { log, characters, initialErrors } = $derived(
+	const { log, characters } = $derived(
 		await API.logs.forms.dm({
 			param: { logId: params.logId }
 		})
 	);
+	const initialErrors = $derived(params.logId !== "new");
 
 	let data = $derived.by(() => {
 		const data = $state(log);

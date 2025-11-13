@@ -19,7 +19,8 @@
 
 	const schema = editCharacterSchema;
 	const form = API.characters.forms.save;
-	const { character, initialErrors } = $derived(await API.characters.forms.get(params.characterId));
+	const character = $derived(await API.characters.forms.get(params.characterId));
+	const initialErrors = $derived(params.characterId !== "new");
 
 	let data = $derived.by(() => {
 		const state = $state(character);

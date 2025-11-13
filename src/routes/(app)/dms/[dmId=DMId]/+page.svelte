@@ -32,7 +32,7 @@
 		]}
 	/>
 
-	<RemoteForm {schema} {form} {data}>
+	<RemoteForm {schema} {form} {data} initialErrors>
 		{#snippet children({ fields })}
 			<RemoteInput field={fields.id} type="hidden" />
 			<Control class="col-span-12 sm:col-span-6">

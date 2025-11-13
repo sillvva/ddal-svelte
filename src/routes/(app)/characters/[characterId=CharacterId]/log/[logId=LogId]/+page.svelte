@@ -31,11 +31,12 @@
 
 	// svelte-ignore await_waterfall
 	const character = $derived(await API.characters.queries.get({ param: params.characterId }));
-	const { log, initialErrors, totalLevel, dms, magicItems, storyAwards } = $derived(
+	const { log, totalLevel, dms, magicItems, storyAwards } = $derived(
 		await API.logs.forms.character({
 			param: { characterId: params.characterId, logId: params.logId, firstLog }
 		})
 	);
+	const initialErrors = $derived(params.logId !== "new");
 
 	let data = $derived.by(() => {
 		const state = $state(log);
