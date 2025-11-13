@@ -21,12 +21,15 @@
 
 	let { params } = $props();
 
+	// svelte-ignore await_waterfall
 	const auth = $derived(await getAuth());
 	const user = $derived(auth.user!);
 
 	const schema = logSchema;
 	const form = API.logs.forms.saveCharacter;
 	const firstLog = $derived(page.url.searchParams.get("firstLog") === "true");
+
+	// svelte-ignore await_waterfall
 	const character = $derived(await API.characters.queries.get({ param: params.characterId }));
 	const { log, initialErrors, totalLevel, dms, magicItems, storyAwards } = $derived(
 		await API.logs.forms.character({

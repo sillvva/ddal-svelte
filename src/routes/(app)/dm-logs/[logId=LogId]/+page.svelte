@@ -17,6 +17,7 @@
 
 	const { params } = $props();
 
+	// svelte-ignore await_waterfall
 	const auth = $derived(await getAuth());
 
 	const schema = dmLogSchema;
