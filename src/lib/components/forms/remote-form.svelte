@@ -56,7 +56,6 @@
 	const result = $derived(form.result);
 	const issues = $derived(form.fields.issues());
 	let lastIssues = $state.raw<RemoteFormAllIssue[] | undefined>(form.fields.allIssues());
-	const hasIssues = $derived(!!form.fields.allIssues()?.length);
 
 	const initial = $state.snapshot(data);
 	let tainted = $derived(!deepEqual(initial, form.fields.value()));
@@ -135,12 +134,8 @@
 		{...rest}
 		bind:this={formEl}
 		onsubmit={focusInvalid}
-		onchange={async (ev) => {
-			if (!hasIssues && !!lastIssues) await validate();
-			rest.onchange?.(ev);
-		}}
 		oninput={(ev) => {
-			if (hasIssues) debouncedValidate.call();
+			if (!!lastIssues) debouncedValidate.call();
 			rest.oninput?.(ev);
 		}}
 	>
