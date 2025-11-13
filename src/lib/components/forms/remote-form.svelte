@@ -136,7 +136,7 @@
 		bind:this={formEl}
 		onsubmit={focusInvalid}
 		onchange={async (ev) => {
-			if (!hasIssues) await validate();
+			if (!hasIssues && !!lastIssues) await validate();
 			rest.onchange?.(ev);
 		}}
 		oninput={(ev) => {
