@@ -1,14 +1,13 @@
 <script lang="ts">
-	import { goto, invalidateAll } from "$app/navigation";
 	import { page } from "$app/state";
-	import { authClient } from "$lib/auth.js";
 	import Head from "$lib/components/head.svelte";
 	import Search from "$lib/components/search.svelte";
 	import { BLANK_CHARACTER } from "$lib/constants.js";
 	import { errorToast, successToast } from "$lib/factories.svelte.js";
 	import * as API from "$lib/remote";
-	import { parseEffectResult } from "$lib/util";
+	import { banUser, impersonateUser, unbanUser } from "$lib/remote/admin/forms.remote";
 	import { JSONSearchParser } from "@sillvva/search/json";
+	import { toJSObjectNotation } from "@sillvva/utils";
 
 	let search = $state(page.url.searchParams.get("s")?.trim() ?? "");
 
@@ -51,6 +50,9 @@
 			</thead>
 			<tbody>
 				{#each results as user (user.id)}
+					{@const impersonateForm = impersonateUser.for(user.id)}
+					{@const banForm = banUser.for(user.id)}
+					{@const unbanForm = unbanUser.for(user.id)}
 					<tr data-banned={user.banned} class="data-[banned=true]:bg-error/10">
 						<td class="pr-0 align-top transition-colors sm:pr-2">
 							<div class="avatar">
@@ -94,67 +96,92 @@
 						<td class="text-center max-sm:hidden">{user.characters}</td>
 						<td class="max-xs:hidden">
 							<div class="flex justify-end gap-2">
-								<div class="sm:tooltip sm:tooltip-left" data-tip="Impersonate {user.name}">
+								<form
+									{...impersonateForm.enhance(async ({ submit }) => {
+										await submit();
+
+										const issues = impersonateForm.fields.issues();
+										if (issues?.length) {
+											issues.forEach((issue) => errorToast(issue.message));
+										}
+									})}
+									class="sm:tooltip sm:tooltip-left"
+									data-tip="Impersonate {user.name}"
+								>
+									<input {...impersonateForm.fields.userId.as("hidden", user.id)} />
 									<button
+										type="submit"
 										class="btn btn-sm btn-primary"
 										aria-label="Impersonate {user.name}"
 										disabled={user.role === "admin" || user.banned}
-										onclick={async () => {
-											if (user.role === "admin" || user.banned) return;
-											const { data } = await authClient.admin.impersonateUser({
-												userId: user.id
-											});
-											if (data) {
-												await invalidateAll();
-												goto("/characters");
-											}
-										}}
 									>
 										<span class="iconify mdi--account-switch"></span>
 									</button>
-								</div>
+								</form>
 								{#if !user.banned}
-									<div class="sm:tooltip sm:tooltip-left" data-tip="Ban {user.name}">
-										<button
-											class="btn btn-sm btn-error"
-											aria-label="Ban {user.name}"
-											disabled={user.role === "admin"}
-											onclick={async () => {
-												if (user.role === "admin") return errorToast("Cannot ban admins");
+									<form
+										onsubmit={(e) => {
+											e.preventDefault();
+											const banReason = prompt("Reason for ban");
+											if (!banReason?.trim()) return errorToast("Reason is required");
+											banForm.fields.banReason.set(banReason);
+											e.currentTarget.requestSubmit();
+										}}
+										{...banForm.enhance(async ({ submit }) => {
+											await submit().updates(
+												API.admin.queries
+													.getUsers()
+													.withOverride((users) =>
+														users.map((u) =>
+															u.id === user.id ? { ...u, banned: true, banReason: banForm.fields.banReason.value() } : u
+														)
+													)
+											);
 
-												const banReason = prompt("Reason for ban");
-												if (!banReason?.trim()) return errorToast("Reason is required");
-
-												const result = await API.admin.actions.banUser({
-													userId: user.id,
-													banReason
-												});
-
-												const parsed = await parseEffectResult(result);
-												if (parsed) successToast(`${user.name} has been banned`);
-											}}
-										>
+											const issues = banForm.fields.allIssues();
+											if (issues?.length) {
+												issues.forEach((issue) => errorToast(`${toJSObjectNotation(issue.path) || "Error"}: ${issue.message}`));
+											} else {
+												successToast(`${user.name} has been banned`);
+											}
+										})}
+										class="sm:tooltip sm:tooltip-left"
+										data-tip="Ban {user.name}"
+									>
+										<input {...banForm.fields.userId.as("hidden", user.id)} />
+										<input {...banForm.fields.banReason.as("text")} hidden />
+										<button type="submit" class="btn btn-sm btn-error" aria-label="Ban {user.name}">
 											<span class="iconify mdi--ban"></span>
 										</button>
-									</div>
+									</form>
 								{:else}
-									<div class="sm:tooltip sm:tooltip-left" data-tip="Unban {user.name}">
-										<button
-											class="btn btn-sm btn-success"
-											aria-label="Unban {user.name}"
-											disabled={user.role === "admin"}
-											onclick={async () => {
-												if (user.role === "admin") return;
-												if (!confirm(`Are you sure you want to unban ${user.name}?`)) return;
+									<form
+										{...unbanForm.enhance(async ({ submit }) => {
+											if (!confirm(`Are you sure you want to unban ${user.name}?`)) return;
 
-												const result = await API.admin.actions.unbanUser(user.id);
-												const parsed = await parseEffectResult(result);
-												if (parsed) successToast(`${user.name} has been unbanned`);
-											}}
-										>
+											await submit().updates(
+												API.admin.queries
+													.getUsers()
+													.withOverride((users) =>
+														users.map((u) => (u.id === user.id ? { ...u, banned: false, banReason: null } : u))
+													)
+											);
+
+											const issues = unbanForm.fields.allIssues();
+											if (issues?.length) {
+												issues.forEach((issue) => errorToast(`${toJSObjectNotation(issue.path) || "Error"}: ${issue.message}`));
+											} else {
+												successToast(`${user.name} has been unbanned`);
+											}
+										})}
+										class="sm:tooltip sm:tooltip-left"
+										data-tip="Unban {user.name}"
+									>
+										<input {...unbanForm.fields.userId.as("hidden", user.id)} />
+										<button type="submit" class="btn btn-sm btn-success" aria-label="Unban {user.name}">
 											<span class="iconify mdi--check"></span>
 										</button>
-									</div>
+									</form>
 								{/if}
 							</div>
 						</td>

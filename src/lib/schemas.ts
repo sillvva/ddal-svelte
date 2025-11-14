@@ -87,10 +87,10 @@ export const characterIdParamSchema = v.union([characterIdSchema, v.literal("new
 export type CharacterSchema = v.InferOutput<typeof characterSchema>;
 export const characterSchema = v.object({
 	id: characterIdSchema,
-	name: v.pipe(requiredString, shortString, v.minLength(2)),
-	campaign: shortString,
-	race: shortString,
-	class: shortString,
+	name: v.pipe(requiredString, shortString),
+	campaign: v.pipe(requiredString, shortString),
+	race: v.pipe(requiredString, shortString),
+	class: v.pipe(requiredString, shortString),
 	characterSheetUrl: orEmpty(urlSchema),
 	imageUrl: imageUrlWithFallback
 });

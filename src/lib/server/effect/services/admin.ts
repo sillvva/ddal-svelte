@@ -1,13 +1,19 @@
-import type { AppLogId, AppLogSchema } from "$lib/schemas";
+import type { AppLogId, AppLogSchema, UserId } from "$lib/schemas";
 import { DBService, runQuery, type DrizzleError, type Filter, type Transaction, type TRSchema } from "$lib/server/db";
 import type { relations } from "$lib/server/db/relations";
-import { appLogs, type AppLog } from "$lib/server/db/schema";
+import { appLogs, type AppLog, type User } from "$lib/server/db/schema";
 import { type ErrorParams } from "$lib/server/effect/errors";
 import type { ParseMetadata } from "@sillvva/search";
 import { DrizzleSearchParser } from "@sillvva/search/drizzle";
 import { eq, sql } from "drizzle-orm";
 import { Data, Effect, Layer } from "effect";
 import { isTupleOf } from "effect/Predicate";
+
+export class UserNotFoundError extends Data.TaggedError("UserNotFoundError")<ErrorParams> {
+	constructor(err?: unknown) {
+		super({ message: "User not found", status: 404, cause: err });
+	}
+}
 
 export class SaveAppLogError extends Data.TaggedError("SaveAppLogError")<ErrorParams> {
 	constructor(message: string, err?: unknown) {
@@ -23,6 +29,7 @@ export class DeleteLogError extends Data.TaggedError("DeleteLogError")<ErrorPara
 
 interface AdminApiImpl {
 	readonly get: {
+		readonly user: (userId: UserId) => Effect.Effect<User, UserNotFoundError | DrizzleError>;
 		readonly logs: (search?: string) => Effect.Effect<{ logs: AppLog[]; metadata?: ParseMetadata }, DrizzleError>;
 	};
 	readonly set: {
@@ -39,6 +46,17 @@ export class AdminService extends Effect.Service<AdminService>()("AdminService",
 
 		const impl: AdminApiImpl = {
 			get: {
+				user: Effect.fn("AdminService.get.user")(function* (userId) {
+					return yield* runQuery(
+						db.query.user.findFirst({
+							where: {
+								id: {
+									eq: userId
+								}
+							}
+						})
+					).pipe(Effect.flatMap((user) => (user ? Effect.succeed(user) : Effect.fail(new UserNotFoundError()))));
+				}),
 				logs: Effect.fn("AdminService.get.logs")(function* (search = "") {
 					const { where, orderBy, metadata } = search.trim() ? logSearch.parse(search.trim()) : {};
 

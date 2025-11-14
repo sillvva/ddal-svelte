@@ -57,8 +57,7 @@ export const character = guardedQuery(characterLogFormSchema, function* (input, 
 			characterId: log.characterId || "",
 			date: log.date.getTime(),
 			appliedDate: log.appliedDate?.getTime() || 0
-		},
-		initialErrors: logId !== "new"
+		}
 	};
 });
 
@@ -102,7 +101,6 @@ export const dm = guardedQuery(dmLogFormSchema, function* (input, { user }) {
 
 	return {
 		characters: characters.map((c) => ({ id: c.id, name: c.name })),
-		initialErrors: logId !== "new",
 		log: {
 			...omit(log, ["dm"]),
 			characterId: log.characterId || "",
@@ -112,7 +110,7 @@ export const dm = guardedQuery(dmLogFormSchema, function* (input, { user }) {
 	};
 });
 
-export const saveCharacter = guardedForm(function* (input: LogSchemaIn, { user, invalid }) {
+export const saveCharacter = guardedForm("unchecked", function* (input: LogSchemaIn, { user, invalid }) {
 	const Characters = yield* CharacterService;
 	const Logs = yield* LogService;
 
@@ -129,7 +127,7 @@ export const saveCharacter = guardedForm(function* (input: LogSchemaIn, { user, 
 	redirect(303, `/characters/${character.id}`);
 });
 
-export const saveDM = guardedForm(function* (input: DmLogSchemaIn, { user, invalid }) {
+export const saveDM = guardedForm("unchecked", function* (input: DmLogSchemaIn, { user, invalid }) {
 	const Characters = yield* CharacterService;
 	const Logs = yield* LogService;
 	const DMs = yield* DMService;

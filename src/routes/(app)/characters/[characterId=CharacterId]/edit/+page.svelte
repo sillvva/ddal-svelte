@@ -2,6 +2,7 @@
 	import { page } from "$app/state";
 	import Error from "$lib/components/error.svelte";
 	import Control from "$lib/components/forms/control.svelte";
+	import RemoteCombobox from "$lib/components/forms/remote-combobox.svelte";
 	import RemoteForm from "$lib/components/forms/remote-form.svelte";
 	import RemoteInput from "$lib/components/forms/remote-input.svelte";
 	import RemoteSubmit from "$lib/components/forms/remote-submit.svelte";
@@ -18,7 +19,8 @@
 
 	const schema = editCharacterSchema;
 	const form = API.characters.forms.save;
-	const { character, initialErrors } = $derived(await API.characters.forms.get(params.characterId));
+	const character = $derived(await API.characters.forms.get(params.characterId));
+	const initialErrors = $derived(params.characterId !== "new");
 
 	let data = $derived.by(() => {
 		const state = $state(character);
@@ -43,16 +45,29 @@
 		{#snippet children({ fields })}
 			<RemoteInput field={fields.id} type="hidden" />
 			<Control class="col-span-12 sm:col-span-6">
-				<RemoteInput field={fields.name} type="text" label="Character Name" required />
+				<RemoteInput field={fields.name} label="Character Name" required />
 			</Control>
 			<Control class="col-span-12 sm:col-span-6">
-				<RemoteInput field={fields.campaign} type="text" label="Campaign" />
+				<RemoteCombobox
+					inputField={fields.campaign}
+					label="Campaign"
+					allowCustom
+					clearable
+					required
+					values={[
+						{ value: "Forgotten Realms" },
+						{ value: "Eberron" },
+						{ value: "Dragonlance" },
+						{ value: "Ravenloft" },
+						{ value: "Critical Role" }
+					]}
+				/>
 			</Control>
 			<Control class="col-span-12 sm:col-span-6">
-				<RemoteInput field={fields.race} type="text" label="Species" />
+				<RemoteInput field={fields.race} label="Species" required />
 			</Control>
 			<Control class="col-span-12 sm:col-span-6">
-				<RemoteInput field={fields.class} type="text" label="Class" />
+				<RemoteInput field={fields.class} label="Class" required />
 			</Control>
 			<Control class="col-span-12">
 				<RemoteInput field={fields.characterSheetUrl} type="url" label="Character Sheet URL" />

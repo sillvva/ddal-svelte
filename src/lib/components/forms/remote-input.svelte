@@ -1,7 +1,52 @@
 <script lang="ts" generics="V extends RemoteFormFieldValue">
-	import type { RemoteFormField, RemoteFormFieldType, RemoteFormFieldValue } from "@sveltejs/kit";
+	import type { RemoteFormField, RemoteFormFieldValue } from "@sveltejs/kit";
 	import type { HTMLInputAttributes } from "svelte/elements";
 	import RemoteFieldMessage from "./remote-field-message.svelte";
+
+	type InputTypeMap =
+		| {
+				type?: "text";
+				field: RemoteFormField<string>;
+		  }
+		| {
+				type: "email" | "password" | "url" | "tel" | "search" | "button" | "reset" | "color" | "button";
+				field: RemoteFormField<string>;
+		  }
+		| { type: "number"; field: RemoteFormField<number> }
+		| { type: "range"; field: RemoteFormField<number> }
+		| {
+				type: "checkbox";
+				value?: undefined;
+				field: RemoteFormField<boolean>;
+		  }
+		| {
+				type: "checkbox";
+				value: string;
+				field: RemoteFormField<string[]>;
+		  }
+		| {
+				type: "radio";
+				value: string;
+				field: RemoteFormField<string>;
+		  }
+		| {
+				type: "hidden";
+				value?: string;
+				field: RemoteFormField<string>;
+		  }
+		| {
+				type: "submit";
+				value: string;
+				field: RemoteFormField<string>;
+		  }
+		| {
+				type: "file";
+				field: RemoteFormField<File>;
+		  }
+		| {
+				type: "file multiple";
+				field: RemoteFormField<File[]>;
+		  };
 
 	type Props = {
 		label?: string;
@@ -9,31 +54,37 @@
 		description?: string;
 		warning?: string;
 		hidden?: boolean;
-	} & (V extends string[]
-		? { type: "checkbox"; value: string } | { type: "select multiple"; value?: undefined }
-		: V extends string
-			?
-					| { type: "radio" | "submit"; value: string }
-					| { type: "hidden"; value?: string }
-					| { type: Exclude<RemoteFormFieldType<V>, "radio" | "hidden" | "submit">; value?: undefined }
-			: { type: RemoteFormFieldType<V>; value?: undefined }) &
-		Omit<HTMLInputAttributes, "type" | "id" | "value" | "name" | "checked">;
+	} & InputTypeMap &
+		Omit<HTMLInputAttributes, "type" | "name" | "id" | "value" | "checked" | "defaultValue" | "defaultChecked">;
 
-	let { label, field, type, value, description, warning, hidden, required, ...rest }: Props = $props();
+	let { label, description, warning, hidden, required, ...rest }: Props = $props();
 
-	const attributes = $derived(
-		field.as(
-			// @ts-expect-error expected
-			type,
-			value ?? (["string", "number"].includes(typeof field.value()) ? field.value() || "" : undefined)
-		)
-	);
+	const map: InputTypeMap = $derived(rest);
+	const attributes = $derived({
+		...rest,
+		field: undefined,
+		...(map.type === "hidden"
+			? map.field.as(map.type, typeof map.value === "string" ? map.value : map.field.value() || "")
+			: map.type === "checkbox" && typeof map.value === "string"
+				? map.field.as("checkbox", map.value)
+				: map.type === "radio" || map.type === "submit"
+					? map.field.as(map.type, map.value)
+					: map.type === "number" || map.type === "range"
+						? map.field.as(map.type)
+						: map.type === "file"
+							? map.field.as(map.type)
+							: map.type === "file multiple"
+								? map.field.as(map.type)
+								: map.type === "checkbox"
+									? map.field.as("checkbox")
+									: map.field.as(map.type || "text"))
+	});
 	const name = $derived(attributes.name);
-	const issues = $derived(field.issues());
+	const issues = $derived(map.field.issues());
 	const invalid = $derived(!!issues?.length || undefined);
 </script>
 
-{#if type === "checkbox"}
+{#if map.type === "checkbox"}
 	<label
 		class={[
 			"label flex cursor-pointer rounded-lg border p-4 text-sm",
@@ -50,10 +101,10 @@
 			</span>
 			<RemoteFieldMessage {name} type="checkbox" {description} {warning} {issues} />
 		</div>
-		<input {...attributes} {...rest} aria-invalid={invalid} id={name} type="checkbox" class="checkbox-primary checkbox" />
+		<input {...attributes} aria-invalid={invalid} id={name} type="checkbox" class="checkbox-primary checkbox" />
 	</label>
 {:else}
-	{#if type !== "hidden" && !hidden}
+	{#if map.type !== "hidden" && !hidden}
 		<label for={name} class="fieldset-legend">
 			<span>
 				{label}
@@ -65,11 +116,10 @@
 	{/if}
 	<input
 		{...attributes}
-		{...rest}
 		aria-invalid={invalid}
 		id={name}
-		class={[type !== "hidden" && !hidden && "input focus:border-primary focus:aria-[invalid]:border-error w-full"]}
+		class={[map.type !== "hidden" && !hidden && "input focus:border-primary focus:aria-[invalid]:border-error w-full"]}
 		{hidden}
 	/>
-	<RemoteFieldMessage {name} type={hidden ? "hidden" : type} {description} {warning} {issues} />
+	<RemoteFieldMessage {name} type={hidden ? "hidden" : map.type || "text"} {description} {warning} {issues} />
 {/if}

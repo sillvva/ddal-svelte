@@ -1,10 +1,11 @@
 <script lang="ts">
-	import { goto, invalidateAll } from "$app/navigation";
-	import { page } from "$app/state";
+	import { invalidateAll } from "$app/navigation";
 	import { authClient } from "$lib/auth";
 	import { BLANK_CHARACTER, PROVIDERS, type ProviderId } from "$lib/constants";
 	import { errorToast } from "$lib/factories.svelte";
 	import * as API from "$lib/remote";
+	import { stopImpersonating } from "$lib/remote/admin/forms.remote";
+	import { signOut } from "$lib/remote/auth/forms.remote";
 	import { getAuth, getGlobal } from "$lib/stores.svelte";
 	import { parseEffectResult } from "$lib/util";
 	import { isDefined } from "@sillvva/utils";
@@ -116,37 +117,17 @@
 					</div>
 				</div>
 				{#if auth.session?.impersonatedBy}
-					<div class="tooltip tooltip-left" data-tip="Stop impersonating">
-						<button
-							class="btn btn-sm btn-primary"
-							aria-label="Stop impersonating"
-							onclick={async () => {
-								await authClient.admin.stopImpersonating();
-								await goto("/admin/users");
-								await invalidateAll();
-								open = false;
-							}}
-						>
-							<span class="iconify mdi--account-switch"></span>
+					<form {...stopImpersonating} class="tooltip tooltip-left" data-tip="Stop impersonating">
+						<button type="submit" class="btn btn-primary p-3" aria-label="Stop impersonating" onclick={() => (open = false)}>
+							<span class="iconify mdi--account-switch size-5"></span>
 						</button>
-					</div>
+					</form>
 				{:else}
-					<div class="tooltip tooltip-left" data-tip="Sign out">
-						<button
-							class="btn p-3"
-							aria-label="Sign out"
-							onclick={() =>
-								authClient.signOut({
-									fetchOptions: {
-										onSuccess: () => {
-											goto(`/?redirect=${encodeURIComponent(`${page.url.pathname}${page.url.search}`)}`);
-										}
-									}
-								})}
-						>
-							<i class="iconify mdi--logout h-5 w-5"></i>
+					<form {...signOut} class="tooltip tooltip-left" data-tip="Sign out">
+						<button type="submit" class="btn p-3" aria-label="Sign out">
+							<span class="iconify mdi--logout size-5"></span>
 						</button>
-					</div>
+					</form>
 				{/if}
 			</div>
 			<div class="divider my-0 h-[9px]"></div>

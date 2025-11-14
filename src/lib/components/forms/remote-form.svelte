@@ -5,9 +5,9 @@
 	import { dev } from "$app/environment";
 	import { beforeNavigate } from "$app/navigation";
 	import { successToast, unknownErrorToast } from "$lib/factories.svelte";
-	import { deepEqual } from "@sillvva/utils";
+	import { debounce, deepEqual } from "@sillvva/utils";
 	import type { StandardSchemaV1 } from "@standard-schema/spec";
-	import type { RemoteForm, RemoteFormInput, RemoteFormIssue } from "@sveltejs/kit";
+	import type { RemoteForm, RemoteFormAllIssue, RemoteFormInput, RemoteFormIssue } from "@sveltejs/kit";
 	import { isTupleOfAtLeast } from "effect/Predicate";
 	import { onMount, tick, type Snippet } from "svelte";
 	import type { HTMLFormAttributes } from "svelte/elements";
@@ -22,11 +22,27 @@
 		data: Input;
 		initialErrors?: boolean;
 		onsubmit?: <T>(ctx: { readonly tainted: boolean; readonly form: HTMLFormElement; readonly data: Input }) => Awaitable<T>;
-		onresult?: (ctx: { readonly success: boolean; readonly result: Form["result"]; readonly issues?: RemoteFormIssue[] }) => void;
+		onresult?: (ctx: {
+			readonly success: boolean;
+			readonly result?: Form["result"];
+			readonly issues?: RemoteFormIssue[];
+			readonly error?: unknown;
+		}) => Awaitable<void>;
+		onissues?: (ctx: { readonly issues: RemoteFormIssue[] }) => Awaitable<void>;
 		children?: Snippet<[{ fields: Form["fields"] }]>;
 	}
 
-	let { schema, form: remoteForm, children, data, initialErrors = false, onsubmit, onresult, ...rest }: Props = $props();
+	let {
+		schema,
+		form: remoteForm,
+		children,
+		data,
+		initialErrors = !!data.id,
+		onsubmit,
+		onresult,
+		onissues,
+		...rest
+	}: Props = $props();
 
 	let formEl: HTMLFormElement;
 
@@ -39,19 +55,26 @@
 
 	const result = $derived(form.result);
 	const issues = $derived(form.fields.issues());
-	let hadIssues = $state(!!form.fields.issues());
+	let lastIssues = $state.raw<RemoteFormAllIssue[] | undefined>(form.fields.allIssues());
 
 	const initial = $state.snapshot(data);
 	let tainted = $derived(!deepEqual(initial, form.fields.value()));
 
+	const debouncedValidate = debounce(validate, 300);
+
 	async function validate() {
 		await form.validate({ includeUntouched: true, preflightOnly: true });
-		hadIssues ||= !!form.fields.allIssues()?.length;
+		const issues = form.fields.allIssues();
+		if (issues && onissues && !deepEqual(lastIssues, issues)) onissues({ issues });
+		if (issues?.length) lastIssues = issues;
 	}
 
 	async function focusInvalid() {
 		await tick();
-		hadIssues ||= !!form.fields.allIssues()?.length;
+
+		const issues = form.fields.allIssues();
+		if (issues?.length) lastIssues = issues;
+		else return;
 
 		const invalid = formEl.querySelector(":is(input, select, textarea):not(.hidden, [type=hidden], :disabled)[aria-invalid]") as
 			| HTMLInputElement
@@ -100,9 +123,11 @@
 				} else {
 					tainted = wasTainted;
 					await focusInvalid();
+					onissues?.({ issues });
 				}
-			} catch (err) {
-				unknownErrorToast(err || "Oh no! Something went wrong");
+			} catch (error) {
+				unknownErrorToast(error || "Oh no! Something went wrong");
+				onresult?.({ success: false, error });
 				tainted = wasTainted;
 			}
 		})}
@@ -110,7 +135,7 @@
 		bind:this={formEl}
 		onsubmit={focusInvalid}
 		oninput={(ev) => {
-			if (hadIssues) validate();
+			if (!!lastIssues) debouncedValidate.call();
 			rest.oninput?.(ev);
 		}}
 	>
@@ -126,7 +151,6 @@
 				tainted,
 				data: form.fields.value(),
 				result,
-				hadIssues,
 				issues: form.fields.allIssues()
 			}}
 		/>

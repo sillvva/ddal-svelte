@@ -17,15 +17,17 @@
 
 	const { params } = $props();
 
+	// svelte-ignore await_waterfall
 	const auth = $derived(await getAuth());
 
 	const schema = dmLogSchema;
 	const form = API.logs.forms.saveDM;
-	const { log, characters, initialErrors } = $derived(
+	const { log, characters } = $derived(
 		await API.logs.forms.dm({
 			param: { logId: params.logId }
 		})
 	);
+	const initialErrors = $derived(params.logId !== "new");
 
 	let data = $derived.by(() => {
 		const data = $state(log);
@@ -51,7 +53,7 @@
 				{#snippet children({ fields })}
 					<RemoteInput field={fields.id} type="hidden" />
 					<Control class="col-span-12 sm:col-span-6 lg:col-span-3">
-						<RemoteInput field={fields.name} type="text" label="Title" required />
+						<RemoteInput field={fields.name} label="Title" required />
 					</Control>
 					<Control class="col-span-12 sm:col-span-6 lg:col-span-3">
 						<RemoteDateInput field={fields.date} label="Date" />
@@ -62,7 +64,7 @@
 							valueField={fields.characterId}
 							inputField={fields.characterName}
 							values={characters.map((char) => ({ value: char.id, label: char.name }))}
-							required={!!data.appliedDate || undefined}
+							required={!!data.appliedDate}
 							onselect={() => {
 								data.appliedDate = data.date || new Date().getTime();
 							}}

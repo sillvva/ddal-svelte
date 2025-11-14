@@ -1,8 +1,8 @@
 import { goto } from "$app/navigation";
 import { wait } from "@sillvva/utils";
 import type { StandardSchemaV1 } from "@standard-schema/spec";
-import type { NumericRange } from "@sveltejs/kit";
 import { hotkey as hk, type HotkeyItem } from "@svelteuidev/composables";
+import { isObject } from "effect/Predicate";
 import { getContext, hasContext, setContext } from "svelte";
 import type { Attachment } from "svelte/attachments";
 import type { FullPathname } from "./constants";
@@ -57,8 +57,8 @@ export function getRelativeTime(date: Date | number, lang = navigator.language):
 	return rtf.format(-Math.floor(deltaSeconds / divisor), unit);
 }
 
-export function isStandardSchema(schema: object): schema is StandardSchemaV1 {
-	return "~standard" in schema;
+export function isStandardSchema(schema: unknown): schema is StandardSchemaV1 {
+	return isObject(schema) && "~standard" in schema;
 }
 
 export function createContext<T>(createDefault?: () => T): [(getDefault?: () => T) => T, (context: T) => T] {
@@ -76,7 +76,7 @@ export function createContext<T>(createDefault?: () => T): [(getDefault?: () => 
 
 export function isRedirectFailure(
 	error: EffectFailure["error"]
-): error is EffectFailure["error"] & { status: NumericRange<301, 308>; redirectTo: FullPathname & {} } {
+): error is EffectFailure["error"] & { redirectTo: FullPathname & {} } {
 	return Boolean(error.redirectTo && typeof error.redirectTo === "string" && error.status >= 301 && error.status <= 308);
 }
 

@@ -13,17 +13,14 @@ export const get = guardedQuery(characterIdParamSchema, function* (input, { even
 	const character = yield* Effect.promise(() => getCharacter({ param: input }));
 
 	return {
-		character: {
-			id: character.id,
-			name: character.name,
-			race: character.race,
-			class: character.class,
-			campaign: character.campaign,
-			characterSheetUrl: character.characterSheetUrl,
-			imageUrl: character.imageUrl === BLANK_CHARACTER ? "" : character.imageUrl,
-			firstLog: firstLog && input === "new"
-		},
-		initialErrors: input !== "new"
+		id: character.id,
+		name: character.name,
+		race: character.race,
+		class: character.class,
+		campaign: character.campaign,
+		characterSheetUrl: character.characterSheetUrl,
+		imageUrl: character.imageUrl === BLANK_CHARACTER ? "" : character.imageUrl,
+		firstLog: firstLog && input === "new"
 	};
 });
 

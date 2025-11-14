@@ -21,18 +21,22 @@
 
 	let { params } = $props();
 
+	// svelte-ignore await_waterfall
 	const auth = $derived(await getAuth());
 	const user = $derived(auth.user!);
 
 	const schema = logSchema;
 	const form = API.logs.forms.saveCharacter;
 	const firstLog = $derived(page.url.searchParams.get("firstLog") === "true");
+
+	// svelte-ignore await_waterfall
 	const character = $derived(await API.characters.queries.get({ param: params.characterId }));
-	const { log, initialErrors, totalLevel, dms, magicItems, storyAwards } = $derived(
+	const { log, totalLevel, dms, magicItems, storyAwards } = $derived(
 		await API.logs.forms.character({
 			param: { characterId: params.characterId, logId: params.logId, firstLog }
 		})
 	);
+	const initialErrors = $derived(params.logId !== "new");
 
 	let data = $derived.by(() => {
 		const state = $state(log);
@@ -115,13 +119,13 @@
 								label="DM DCI"
 							/>
 							{#if !data.dm.name}
-								<RemoteInput field={fields.dm.DCI} type="text" hidden />
+								<RemoteInput field={fields.dm.DCI} hidden />
 							{/if}
 						</Control>
 					{:else}
 						<RemoteInput field={fields.dm.id} type="hidden" />
-						<RemoteInput field={fields.dm.name} type="text" hidden />
-						<RemoteInput field={fields.dm.DCI} type="text" hidden />
+						<RemoteInput field={fields.dm.name} hidden />
+						<RemoteInput field={fields.dm.DCI} hidden />
 					{/if}
 					<RemoteInput field={fields.dm.userId} type="hidden" />
 					<RemoteInput field={fields.dm.isUser} type="checkbox" hidden />
@@ -166,8 +170,8 @@
 					{/if}
 				{:else}
 					<RemoteInput field={fields.dm.id} type="hidden" />
-					<RemoteInput field={fields.dm.name} type="text" hidden />
-					<RemoteInput field={fields.dm.DCI} type="text" hidden />
+					<RemoteInput field={fields.dm.name} hidden />
+					<RemoteInput field={fields.dm.DCI} hidden />
 					<RemoteInput field={fields.dm.userId} type="hidden" />
 					<RemoteInput field={fields.dm.isUser} type="checkbox" hidden />
 				{/if}
