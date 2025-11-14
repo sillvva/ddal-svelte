@@ -7,7 +7,7 @@
 	import { successToast, unknownErrorToast } from "$lib/factories.svelte";
 	import { debounce, deepEqual } from "@sillvva/utils";
 	import type { StandardSchemaV1 } from "@standard-schema/spec";
-	import type { RemoteForm, RemoteFormAllIssue, RemoteFormInput, RemoteFormIssue } from "@sveltejs/kit";
+	import type { RemoteForm, RemoteFormInput, RemoteFormIssue } from "@sveltejs/kit";
 	import { isTupleOfAtLeast } from "effect/Predicate";
 	import { onMount, tick, type Snippet } from "svelte";
 	import type { HTMLFormAttributes } from "svelte/elements";
@@ -55,7 +55,7 @@
 
 	const result = $derived(form.result);
 	const issues = $derived(form.fields.issues());
-	let lastIssues = $state.raw<RemoteFormAllIssue[] | undefined>(form.fields.allIssues());
+	let lastIssues = $state.raw<RemoteFormIssue[] | undefined>(form.fields.allIssues());
 
 	const initial = $state.snapshot(data);
 	let tainted = $derived(!deepEqual(initial, form.fields.value()));

@@ -13,7 +13,6 @@
 	import { hotkey, parseEffectResult } from "$lib/util";
 	import { wait } from "@sillvva/utils";
 	import { onMount } from "svelte";
-	import { Toaster } from "svelte-sonner";
 	import { fade } from "svelte/transition";
 
 	let { children } = $props();
@@ -135,8 +134,6 @@
 	<MobileNav />
 	<Settings bind:open={settingsOpen} />
 </div>
-
-<Toaster richColors closeButton theme={global.app.settings.mode} />
 
 <dialog
 	class="modal bg-base-300/75!"
