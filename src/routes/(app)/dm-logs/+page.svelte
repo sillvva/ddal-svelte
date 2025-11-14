@@ -134,8 +134,11 @@
 					{#each sortedResults as log (log.id)}
 						{@const hasDescription =
 							!!log.description?.trim() || log.storyAwardsGained.length > 0 || log.storyAwardsLost.length > 0}
-						<tbody class="border-t border-neutral-500/20 first:border-0">
-							<tr class="border-0 data-[deleting=true]:hidden" data-deleting={deletingLog.has(log.id)}>
+						<tbody class="first-of-type:[&>tr>td]:border-t-0">
+							<tr
+								class="data-[deleting=true]:hidden [&>td]:border-0 [&>td]:border-t [&>td]:border-neutral-500/20"
+								data-deleting={deletingLog.has(log.id)}
+							>
 								<td class="static! align-top">
 									<a
 										href={log.isDmLog ? `/dm-logs/${log.id}` : `/characters/${log.characterId}/log/${log.id}`}
