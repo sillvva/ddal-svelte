@@ -3,13 +3,16 @@
 	import { onNavigate } from "$app/navigation";
 	import * as API from "$lib/remote";
 	import { getGlobal } from "$lib/stores.svelte";
+	import { Toaster } from "svelte-sonner";
 	import "../app.css";
 
 	let { children } = $props();
 
 	const global = getGlobal();
-	const request = await API.app.queries.request();
-	global.app = request.app;
+	API.app.queries.request().then((result) => {
+		global.app = result.app;
+		return result;
+	});
 
 	onNavigate(({ complete, from, to }) => {
 		if (!document.startViewTransition) return;
@@ -24,6 +27,8 @@
 </script>
 
 {@render children()}
+
+<Toaster richColors closeButton theme={global.app.settings.mode} />
 
 {#if dev}
 	<div class="fixed right-0 bottom-0 z-50">
