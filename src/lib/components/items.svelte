@@ -79,38 +79,39 @@
 
 	const regexes = $derived(terms.map((term) => new RegExp(term, "gi")));
 
+	const filteredItems = $derived(
+		items.filter(
+			(item) =>
+				!filtered ||
+				!terms.length ||
+				(matches === 1 ? regexes.every((regex) => item.name.match(regex)) : regexes.some((regex) => item.name.match(regex)))
+		)
+	);
+
 	const consolidatedItems = $derived.by(() => {
 		const itemsMap = new SvelteMap<string, number>();
-		return $state
-			.snapshot(items)
-			.filter(
-				(item) =>
-					!filtered ||
-					!terms.length ||
-					(matches === 1 ? regexes.every((regex) => item.name.match(regex)) : regexes.some((regex) => item.name.match(regex)))
-			)
-			.reduce(
-				(acc, item) => {
-					const name = fixName(item.name);
-					const qty = itemQty(item);
-					const desc = item.description?.trim();
-					const key = `${name || ""}_${desc || ""}`;
+		return (filteredItems.length ? filteredItems : items).reduce(
+			(acc, item) => {
+				const name = fixName(item.name);
+				const qty = itemQty(item);
+				const desc = item.description?.trim();
+				const key = `${name || ""}_${desc || ""}`;
 
-					const existingIndex = itemsMap.get(key);
-					if (existingIndex !== undefined && acc[existingIndex]) {
-						const existingQty = itemQty(acc[existingIndex]!);
-						acc[existingIndex]!.name = fixName(name, existingQty + qty);
-						acc[existingIndex]!.ids.push(item.logGainedId);
-					} else {
-						item.name = fixName(item.name, qty);
-						itemsMap.set(key, acc.length);
-						acc.push(Object.assign(item, { ids: [item.logGainedId] }));
-					}
+				const existingIndex = itemsMap.get(key);
+				if (existingIndex !== undefined && acc[existingIndex]) {
+					const existingQty = itemQty(acc[existingIndex]!);
+					acc[existingIndex]!.name = fixName(name, existingQty + qty);
+					acc[existingIndex]!.ids.push(item.logGainedId);
+				} else {
+					item.name = fixName(item.name, qty);
+					itemsMap.set(key, acc.length);
+					acc.push(Object.assign(item, { ids: [item.logGainedId] }));
+				}
 
-					return acc;
-				},
-				[] as (Item & { ids: LogId[] })[]
-			);
+				return acc;
+			},
+			[] as (Item & { ids: LogId[] })[]
+		);
 	});
 
 	const sortedItems = $derived(

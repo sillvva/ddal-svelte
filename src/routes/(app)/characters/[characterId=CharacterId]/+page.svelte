@@ -489,9 +489,20 @@
 									{/if}
 									{#if log.magicItemsGained.length > 0 || log.magicItemsLost.length > 0}
 										<div>
-											<Items title="Magic Items:" items={log.magicItemsGained} terms={search.terms} sort filtered />
+											<Items
+												title="Magic Items:"
+												items={log.magicItemsGained}
+												terms={search.terms}
+												sort
+												filtered
+												matches={log.match.size}
+											/>
 											<div class="text-sm whitespace-pre-wrap line-through">
-												<SearchResults text={log.magicItemsLost.map((mi) => mi.name).join(" | ")} terms={search.terms} />
+												<SearchResults
+													text={log.magicItemsLost.map((mi) => mi.name).join(" | ")}
+													terms={search.terms}
+													matches={log.match.size}
+												/>
 											</div>
 										</div>
 									{/if}

@@ -12,23 +12,24 @@
 	const regexes = $derived(terms.map((term) => new RegExp(term, "gi")));
 	const regex = $derived(terms.length ? new RegExp(terms.join("|"), "gi") : null);
 
-	const items = $derived(
-		(Array.isArray(text) ? text : text?.split(separator) || [])
-			.filter(
-				(item) =>
-					!filtered ||
-					!terms.length ||
-					(matches === 1 ? regexes.every((regex) => item.match(regex)) : regexes.some((regex) => item.match(regex)))
-			)
-			.join(separator)
+	const items = $derived(Array.isArray(text) ? text : text?.split(separator) || []);
+	const filteredItems = $derived(
+		items.filter(
+			(item) =>
+				!filtered ||
+				!terms.length ||
+				(matches === 1 ? regexes.every((regex) => item.match(regex)) : regexes.some((regex) => item.match(regex)))
+		)
 	);
 
-	const match = $derived(regex && items.match(regex));
+	const joinedItems = $derived((filteredItems.length ? filteredItems : items).join(separator));
+
+	const match = $derived(regex && joinedItems.match(regex));
 
 	const parts = $derived.by(() => {
 		if (!match) return [];
 
-		const splittedItems = regex ? items.split(regex) : [];
+		const splittedItems = regex ? joinedItems.split(regex) : [];
 
 		for (let i = 1; i < splittedItems.length; i += 2) {
 			splittedItems.splice(i, 0, match[(i - 1) / 2] || "");
