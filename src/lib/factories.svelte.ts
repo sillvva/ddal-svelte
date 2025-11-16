@@ -134,12 +134,13 @@ class BaseSearchFactory<TData extends Array<unknown>> {
 		let score = 0;
 		for (const token of this._tokens) {
 			let subtotal = 0;
+			const tokenLower = token.value.toLowerCase();
 
-			const oc = substrCount(itemLower, token.value);
+			const oc = substrCount(itemLower, tokenLower);
 			if (!oc) continue;
 			subtotal += oc;
 
-			const index = itemLower.indexOf(token.value);
+			const index = itemLower.indexOf(tokenLower);
 			subtotal += Math.max(0, this.POSITION_BONUS_MAX - (index / itemLower.length) * this.POSITION_BONUS_MAX);
 
 			const escapedTerm = escapeRegex(token.value);
@@ -155,6 +156,8 @@ class BaseSearchFactory<TData extends Array<unknown>> {
 			score += subtotal;
 			matches.add(token.value);
 		}
+
+		if (matches.size === this._tokens.length) score *= this.WHOLE_QUERY_MULTIPLIER;
 
 		score = Math.round((score / this._tokens.length) * this.SCORE_PRECISION) / this.SCORE_PRECISION;
 
@@ -393,6 +396,7 @@ export class EntitySearchFactory<
 				if (!index) return null;
 
 				const matches = new Set<string>();
+				const matchedTokens = new Set<string>();
 				const matchTypes = new Set<TDataKeys>();
 
 				for (const [key, values] of index) {
@@ -400,14 +404,19 @@ export class EntitySearchFactory<
 						const matchResult = this.hasMatch(value);
 						if (matchResult.matches.size) {
 							totalScore += matchResult.score;
-							matchResult.matches.forEach((match) => matches.add(match));
+							matches.add(value);
+							matchResult.matches.forEach((match) => matchedTokens.add(match));
 							matchTypes.add(key);
 						}
 					}
 				}
 
+				if (matches.size === 1 && matchedTokens.size !== this._tokens.length) {
+					totalScore *= 0;
+					matches.clear();
+				}
 				if (matches.size === 0) return null;
-				if (matches.size === this._tokens.length) totalScore *= this.WHOLE_QUERY_MULTIPLIER;
+				if (matchedTokens.size === this._tokens.length) totalScore *= this.WHOLE_QUERY_MULTIPLIER;
 
 				return {
 					...entry,

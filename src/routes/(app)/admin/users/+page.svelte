@@ -5,7 +5,6 @@
 	import { BLANK_CHARACTER } from "$lib/constants.js";
 	import { errorToast, successToast } from "$lib/factories.svelte.js";
 	import * as API from "$lib/remote";
-	import { banUser, impersonateUser, unbanUser } from "$lib/remote/admin/forms.remote";
 	import { JSONSearchParser } from "@sillvva/search/json";
 	import { toJSObjectNotation } from "@sillvva/utils";
 
@@ -50,9 +49,9 @@
 			</thead>
 			<tbody>
 				{#each results as user (user.id)}
-					{@const impersonateForm = impersonateUser.for(user.id)}
-					{@const banForm = banUser.for(user.id)}
-					{@const unbanForm = unbanUser.for(user.id)}
+					{@const impersonateForm = API.admin.forms.impersonateUser.for(user.id)}
+					{@const banForm = API.admin.forms.banUser.for(user.id)}
+					{@const unbanForm = API.admin.forms.unbanUser.for(user.id)}
 					<tr data-banned={user.banned} class="data-[banned=true]:bg-error/10">
 						<td class="pr-0 align-top transition-colors sm:pr-2">
 							<div class="avatar">

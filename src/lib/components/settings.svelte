@@ -4,7 +4,6 @@
 	import { BLANK_CHARACTER, PROVIDERS, type ProviderId } from "$lib/constants";
 	import { errorToast } from "$lib/factories.svelte";
 	import * as API from "$lib/remote";
-	import { stopImpersonating } from "$lib/remote/admin/forms.remote";
 	import { signOut } from "$lib/remote/auth/forms.remote";
 	import { getAuth, getGlobal } from "$lib/stores.svelte";
 	import { parseEffectResult } from "$lib/util";
@@ -117,7 +116,7 @@
 					</div>
 				</div>
 				{#if auth.session?.impersonatedBy}
-					<form {...stopImpersonating} class="tooltip tooltip-left" data-tip="Stop impersonating">
+					<form {...API.admin.forms.stopImpersonating} class="tooltip tooltip-left" data-tip="Stop impersonating">
 						<button type="submit" class="btn btn-primary p-3" aria-label="Stop impersonating" onclick={() => (open = false)}>
 							<span class="iconify mdi--account-switch size-5"></span>
 						</button>

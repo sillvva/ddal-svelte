@@ -36,7 +36,7 @@
 			bind:this={ref}
 			class="w-full flex-1"
 			aria-label={rest.placeholder || "Search"}
-			oninput={() => (params.s = value.trim() || null)}
+			oninput={() => (params.s = value || null)}
 			{...rest}
 		/>
 		{#if value.trim()}
