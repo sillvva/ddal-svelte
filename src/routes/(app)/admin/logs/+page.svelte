@@ -54,7 +54,7 @@
 	{@const baseSearch = await API.admin.queries.getBaseSearch()}
 	{@const logSearch = await query}
 	<section class="flex flex-col gap-1">
-		<div class="flex items-center justify-between">
+		<div class="flex items-center justify-between gap-2">
 			<div class="flex w-full gap-2 sm:max-w-md md:max-w-md">
 				<search class="flex flex-1">
 					<div class="focus-within:outline-primary join flex flex-1 items-center rounded-lg focus-within:outline-2">
@@ -66,13 +66,13 @@
 								loading = true;
 								debouncedSearch.call(e.currentTarget.value);
 							}}
-							class="input sm:input-sm join-item flex-1"
+							class="input sm:input-sm join-item flex-1 max-sm:rounded-r-lg"
 							aria-label="Search"
 							placeholder={baseSearch.query ?? ""}
 						/>
-						<div class="tooltip" data-tip="Syntax Reference">
+						<div class="tooltip max-sm:hidden" data-tip="Syntax Reference">
 							<button
-								class="btn sm:btn-sm join-item border-base-content/20 border max-sm:hidden"
+								class="btn sm:btn-sm join-item border-base-content/20 border"
 								aria-label="Syntax Reference"
 								onclick={openSyntaxReference}
 							>
@@ -160,11 +160,16 @@
 										{log.message}
 									</div>
 									<div class="flex items-center justify-between">
-										<div class="text-base-content group-data-[details=true]:hidden sm:hidden">
-											{getRelativeTime(log.timestamp)}
-										</div>
-										<div class="text-base-content/60 hidden flex-1 max-sm:group-data-[details=true]:block">
-											{formatter.format(log.timestamp)}
+										<div class="text-base-content/60">
+											Triggered
+											<span class="text-base-content group-data-[details=true]:hidden sm:hidden">
+												{getRelativeTime(log.timestamp)}
+											</span>
+											<span class="text-base-content/60 hidden flex-1 max-sm:group-data-[details=true]:block">
+												{formatter.format(log.timestamp)}
+											</span>
+											by
+											<span class="text-base-content">{log.annotations.username}</span>
 										</div>
 										<div class="xs:hidden flex gap-2">
 											{@render actions()}
