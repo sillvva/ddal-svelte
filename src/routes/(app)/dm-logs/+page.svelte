@@ -10,10 +10,8 @@
 	import { EntitySearchFactory, successToast } from "$lib/factories.svelte.js";
 	import * as API from "$lib/remote";
 	import { getAuth, getGlobal } from "$lib/stores.svelte.js";
-	import { createTransition, hotkey, parseEffectResult } from "$lib/util.js";
+	import { createTransition, download, hotkey, parseEffectResult } from "$lib/util.js";
 	import { sorter } from "@sillvva/utils";
-	import { download } from "@svelteuidev/composables";
-	import { fromAction } from "svelte/attachments";
 	import { SvelteSet } from "svelte/reactivity";
 
 	const global = getGlobal();
@@ -36,7 +34,7 @@
 		{#snippet menu()}
 			<li role="menuitem">
 				<button
-					{@attach fromAction(download, () => ({
+					{@attach download(() => ({
 						filename: "dm-logs.json",
 						blob: new Blob([JSON.stringify(logs)])
 					}))}

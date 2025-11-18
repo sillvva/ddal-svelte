@@ -9,10 +9,8 @@
 	import { EntitySearchFactory } from "$lib/factories.svelte.js";
 	import * as API from "$lib/remote";
 	import { getAuth, getGlobal } from "$lib/stores.svelte.js";
-	import { createTransition, hotkey } from "$lib/util";
+	import { createTransition, download, hotkey } from "$lib/util";
 	import { sorter } from "@sillvva/utils";
-	import { download } from "@svelteuidev/composables";
-	import { fromAction } from "svelte/attachments";
 
 	const global = getGlobal();
 </script>
@@ -31,7 +29,7 @@
 		{#snippet menu()}
 			<li role="menuitem">
 				<button
-					{@attach fromAction(download, () => ({
+					{@attach download(() => ({
 						filename: "characters.json",
 						blob: new Blob([JSON.stringify(characters)])
 					}))}
