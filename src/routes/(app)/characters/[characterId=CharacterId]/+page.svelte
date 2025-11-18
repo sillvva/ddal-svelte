@@ -22,23 +22,19 @@
 	const { params } = $props();
 
 	const global = getGlobal();
-	const characterQuery = API.characters.queries.get({ param: params.characterId, newRedirect: true });
 	const defaultQuery = $derived(page.url.searchParams.get("s") || "");
 
 	let deletingLog = new SvelteSet<string>();
 
-	async function triggerImageModal(image?: string) {
-		const character = await characterQuery;
+	async function triggerImageModal(character: FullCharacterData, image?: string) {
 		const imageUrl = image || character.imageUrl;
-		if (imageUrl) {
-			pushState("", {
-				modal: {
-					type: "image",
-					name: character.name,
-					imageUrl
-				}
-			});
-		}
+		pushState("", {
+			modal: {
+				type: "image",
+				name: character.name,
+				imageUrl
+			}
+		});
 	}
 
 	function scroller(search: EntitySearchFactory<FullCharacterData["logs"]>) {
@@ -63,6 +59,7 @@
 
 <svelte:boundary>
 	{@const { user } = await getAuth()}
+	{@const characterQuery = API.characters.queries.get({ param: params.characterId, newRedirect: true })}
 	{@const character = await characterQuery}
 	{@const myCharacter = character.userId === user?.id}
 	{@const search = new EntitySearchFactory(character.logs, defaultQuery)}
@@ -120,7 +117,7 @@
 							target="_blank"
 							onclick={(e) => {
 								e.preventDefault();
-								triggerImageModal();
+								triggerImageModal(character);
 							}}>Character Image</a
 						>
 					</li>
@@ -131,7 +128,7 @@
 						target="_blank"
 						onclick={(e) => {
 							e.preventDefault();
-							triggerImageModal(`/characters/${character.id}/og-image.jpg`);
+							triggerImageModal(character, `/characters/${character.id}/og-image.jpg`);
 						}}>Social Media Image</a
 					>
 				</li>
@@ -173,7 +170,7 @@
 							style:view-transition-name={"image-" + character.id}
 							onclick={(e) => {
 								e.preventDefault();
-								triggerImageModal();
+								triggerImageModal(character);
 							}}
 						>
 							<img src={character.imageUrl} class="size-full object-cover object-top transition-all" alt={character.name} />
@@ -228,7 +225,7 @@
 								style:view-transition-name={"image-" + character.id}
 								onclick={(e) => {
 									e.preventDefault();
-									triggerImageModal();
+									triggerImageModal(character);
 								}}
 							>
 								<img src={character.imageUrl} class="size-full object-cover object-top transition-all" alt={character.name} />
