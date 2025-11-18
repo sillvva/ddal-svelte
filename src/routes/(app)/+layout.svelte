@@ -81,7 +81,7 @@
 					<CommandTray />
 
 					{#if auth.user.role === "admin"}
-						<a href="/admin/users" class="btn btn-ghost p-2 max-md:hidden" aria-label="Admin">
+						<a href="/admin/users" class="btn btn-ghost mr-1 p-2 max-md:hidden" aria-label="Admin">
 							<span class="iconify mdi--administrator size-6"></span>
 						</a>
 					{/if}
