@@ -17,9 +17,6 @@
 
 	const { params } = $props();
 
-	// svelte-ignore await_waterfall
-	const auth = $derived(await getAuth());
-
 	const schema = dmLogSchema;
 	const form = API.logs.forms.saveDM;
 	const { log, characters } = $derived(
@@ -46,8 +43,9 @@
 		]}
 	/>
 
-	{#if auth.user}
-		<svelte:boundary>
+	<svelte:boundary>
+		{@const auth = await getAuth()}
+		{#if auth.user}
 			{#snippet failed(error)}<Error {error} />{/snippet}
 			<RemoteForm {schema} {form} {data} {initialErrors}>
 				{#snippet children({ fields })}
@@ -128,6 +126,6 @@
 					</RemoteAddDropItems>
 				{/snippet}
 			</RemoteForm>
-		</svelte:boundary>
-	{/if}
+		{/if}
+	</svelte:boundary>
 {/key}

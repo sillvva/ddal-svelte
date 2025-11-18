@@ -17,9 +17,7 @@
 		}
 	);
 
-	const query = $derived(API.admin.queries.getAppLogs(params.s ?? ""));
-	let loading = $derived(!query.current);
-
+	let debouncing = $state(false);
 	const debouncedSearch = debounce((query: string) => {
 		params.s = query.trim() || null;
 	}, 400);
@@ -52,6 +50,7 @@
 
 <svelte:boundary>
 	{@const baseSearch = await API.admin.queries.getBaseSearch()}
+	{@const query = API.admin.queries.getAppLogs(params.s ?? "")}
 	{@const logSearch = await query}
 	<section class="flex flex-col gap-1">
 		<div class="flex items-center justify-between gap-2">
@@ -63,7 +62,7 @@
 							id="log-search"
 							value={params.s ?? ""}
 							oninput={(e) => {
-								loading = true;
+								debouncing = true;
 								debouncedSearch.call(e.currentTarget.value);
 							}}
 							class="input sm:input-sm join-item flex-1 max-sm:rounded-r-lg"
@@ -98,7 +97,7 @@
 		{/if}
 	</section>
 
-	{#if loading}
+	{#if query.loading || debouncing}
 		<LoadingPanel />
 	{:else if logSearch.logs.length}
 		<section class="overflow-x-auto rounded-lg">
