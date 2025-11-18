@@ -9,10 +9,8 @@
 	let { children } = $props();
 
 	const global = getGlobal();
-	API.app.queries.request().then((result) => {
-		global.app = result.app;
-		return result;
-	});
+	const request = await API.app.queries.request();
+	global.app = request.app;
 
 	onNavigate(({ complete, from, to }) => {
 		if (!document.startViewTransition) return;
