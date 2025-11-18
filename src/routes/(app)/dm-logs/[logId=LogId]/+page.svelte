@@ -19,12 +19,12 @@
 
 	const schema = dmLogSchema;
 	const form = API.logs.forms.saveDM;
+	const initialErrors = $derived(params.logId !== "new");
 	const { log, characters } = $derived(
 		await API.logs.forms.dm({
 			param: { logId: params.logId }
 		})
 	);
-	const initialErrors = $derived(params.logId !== "new");
 
 	let data = $derived.by(() => {
 		const data = $state(log);
@@ -33,7 +33,11 @@
 	let season = $derived(log.experience ? 1 : log.acp ? 8 : 9);
 </script>
 
-{#key log.id}
+<svelte:boundary>
+	{#snippet failed(error)}<Error {error} />{/snippet}
+
+	{@const auth = await getAuth()}
+
 	<Head title={log.name || "New Log"} />
 
 	<NavMenu
@@ -43,89 +47,85 @@
 		]}
 	/>
 
-	<svelte:boundary>
-		{@const auth = await getAuth()}
-		{#if auth.user}
-			{#snippet failed(error)}<Error {error} />{/snippet}
-			<RemoteForm {schema} {form} {data} {initialErrors}>
-				{#snippet children({ fields })}
-					<RemoteInput field={fields.id} type="hidden" />
-					<Control class="col-span-12 sm:col-span-6 lg:col-span-3">
-						<RemoteInput field={fields.name} label="Title" required />
-					</Control>
-					<Control class="col-span-12 sm:col-span-6 lg:col-span-3">
-						<RemoteDateInput field={fields.date} label="Date" />
-					</Control>
-					<Control class="col-span-12 sm:col-span-6 lg:col-span-3">
-						<RemoteCombobox
-							label="Assigned Character"
-							valueField={fields.characterId}
-							inputField={fields.characterName}
-							values={characters.map((char) => ({ value: char.id, label: char.name }))}
-							required={!!data.appliedDate}
-							onselect={() => {
-								data.appliedDate = data.date || new Date().getTime();
+	{#if auth.user}
+		<RemoteForm {schema} {form} {data} {initialErrors}>
+			{#snippet children({ fields })}
+				<RemoteInput field={fields.id} type="hidden" />
+				<Control class="col-span-12 sm:col-span-6 lg:col-span-3">
+					<RemoteInput field={fields.name} label="Title" required />
+				</Control>
+				<Control class="col-span-12 sm:col-span-6 lg:col-span-3">
+					<RemoteDateInput field={fields.date} label="Date" />
+				</Control>
+				<Control class="col-span-12 sm:col-span-6 lg:col-span-3">
+					<RemoteCombobox
+						label="Assigned Character"
+						valueField={fields.characterId}
+						inputField={fields.characterName}
+						values={characters.map((char) => ({ value: char.id, label: char.name }))}
+						required={!!data.appliedDate}
+						onselect={() => {
+							data.appliedDate = data.date || new Date().getTime();
+						}}
+						clearable
+						onclear={() => {
+							data.appliedDate = 0;
+						}}
+					/>
+				</Control>
+				<Control class="col-span-12 sm:col-span-6 lg:col-span-3">
+					<RemoteDateInput field={fields.appliedDate} label="Assigned Date" min={data.date} required={!!data.characterId} />
+				</Control>
+				<Control class="col-span-12 sm:col-span-4">
+					<GenericInput labelFor="season" label="Season">
+						<select
+							id="season"
+							bind:value={season}
+							class="select select-bordered w-full"
+							onchange={() => {
+								data.experience = 0;
+								data.acp = 0;
+								data.level = 0;
+								data.tcp = 0;
 							}}
-							clearable
-							onclear={() => {
-								data.appliedDate = 0;
-							}}
-						/>
-					</Control>
-					<Control class="col-span-12 sm:col-span-6 lg:col-span-3">
-						<RemoteDateInput field={fields.appliedDate} label="Assigned Date" min={data.date} required={!!data.characterId} />
-					</Control>
+						>
+							<option value={9}>Season 9+ (Level)</option>
+							<option value={8}>Season 8 (ACP/TCP)</option>
+							<option value={1}>Season 1-7 (Experience)</option>
+						</select>
+					</GenericInput>
+				</Control>
+				{#if season === 1}
 					<Control class="col-span-12 sm:col-span-4">
-						<GenericInput labelFor="season" label="Season">
-							<select
-								id="season"
-								bind:value={season}
-								class="select select-bordered w-full"
-								onchange={() => {
-									data.experience = 0;
-									data.acp = 0;
-									data.level = 0;
-									data.tcp = 0;
-								}}
-							>
-								<option value={9}>Season 9+ (Level)</option>
-								<option value={8}>Season 8 (ACP/TCP)</option>
-								<option value={1}>Season 1-7 (Experience)</option>
-							</select>
-						</GenericInput>
+						<RemoteInput field={fields.experience} type="number" label="Experience" />
 					</Control>
-					{#if season === 1}
-						<Control class="col-span-12 sm:col-span-4">
-							<RemoteInput field={fields.experience} type="number" label="Experience" />
-						</Control>
-					{/if}
-					{#if season === 9}
-						<Control class="col-span-12 sm:col-span-4">
-							<RemoteInput field={fields.level} type="number" label="Level" />
-						</Control>
-					{/if}
-					{#if season === 8}
-						<Control class="col-span-6 sm:col-span-2">
-							<RemoteInput field={fields.acp} type="number" label="ACP" />
-						</Control>
-						<Control class="col-span-6 sm:col-span-2">
-							<RemoteInput field={fields.tcp} type="number" label="TCP" />
-						</Control>
-					{/if}
+				{/if}
+				{#if season === 9}
+					<Control class="col-span-12 sm:col-span-4">
+						<RemoteInput field={fields.level} type="number" label="Level" />
+					</Control>
+				{/if}
+				{#if season === 8}
 					<Control class="col-span-6 sm:col-span-2">
-						<RemoteInput field={fields.gold} type="number" label="Gold" />
+						<RemoteInput field={fields.acp} type="number" label="ACP" />
 					</Control>
 					<Control class="col-span-6 sm:col-span-2">
-						<RemoteInput field={fields.dtd} type="number" label="Downtime" />
+						<RemoteInput field={fields.tcp} type="number" label="TCP" />
 					</Control>
-					<Control class="col-span-12">
-						<RemoteMdInput field={fields.description} name="notes" maxLength={5000} maxRows={20} preview />
-					</Control>
-					<RemoteAddDropItems {fields} bind:log={data}>
-						<RemoteSubmit>Save Log</RemoteSubmit>
-					</RemoteAddDropItems>
-				{/snippet}
-			</RemoteForm>
-		{/if}
-	</svelte:boundary>
-{/key}
+				{/if}
+				<Control class="col-span-6 sm:col-span-2">
+					<RemoteInput field={fields.gold} type="number" label="Gold" />
+				</Control>
+				<Control class="col-span-6 sm:col-span-2">
+					<RemoteInput field={fields.dtd} type="number" label="Downtime" />
+				</Control>
+				<Control class="col-span-12">
+					<RemoteMdInput field={fields.description} name="notes" maxLength={5000} maxRows={20} preview />
+				</Control>
+				<RemoteAddDropItems {fields} bind:log={data}>
+					<RemoteSubmit>Save Log</RemoteSubmit>
+				</RemoteAddDropItems>
+			{/snippet}
+		</RemoteForm>
+	{/if}
+</svelte:boundary>

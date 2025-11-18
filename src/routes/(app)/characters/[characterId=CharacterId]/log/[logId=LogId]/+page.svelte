@@ -21,22 +21,15 @@
 
 	let { params } = $props();
 
-	// svelte-ignore await_waterfall
-	const auth = $derived(await getAuth());
-	const user = $derived(auth.user!);
-
 	const schema = logSchema;
 	const form = API.logs.forms.saveCharacter;
 	const firstLog = $derived(page.url.searchParams.get("firstLog") === "true");
-
-	// svelte-ignore await_waterfall
-	const character = $derived(await API.characters.queries.get({ param: params.characterId }));
+	const initialErrors = $derived(params.logId !== "new");
 	const { log, totalLevel, dms, magicItems, storyAwards } = $derived(
 		await API.logs.forms.character({
 			param: { characterId: params.characterId, logId: params.logId, firstLog }
 		})
 	);
-	const initialErrors = $derived(params.logId !== "new");
 
 	let data = $derived.by(() => {
 		const state = $state(log);
@@ -45,7 +38,13 @@
 	let season = $derived(log.experience ? 1 : log.acp ? 8 : 9);
 </script>
 
-{#key log.id}
+<svelte:boundary>
+	{#snippet failed(error)}<Error {error} />{/snippet}
+
+	{@const auth = await getAuth()}
+	{@const user = auth.user!}
+	{@const character = await API.characters.queries.get({ param: params.characterId })}
+
 	<Head title={log.name || "New Log"} />
 
 	<NavMenu
@@ -56,143 +55,135 @@
 		]}
 	/>
 
-	<svelte:boundary>
-		{#snippet failed(error)}<Error {error} />{/snippet}
-		<RemoteForm {schema} {form} {data} {initialErrors}>
-			{#snippet children({ fields })}
-				<RemoteInput field={fields.id} type="hidden" />
-				<RemoteInput field={fields.characterId} type="hidden" />
-				<RemoteInput field={fields.characterName} type="hidden" />
-				<RemoteInput field={fields.appliedDate} type="number" hidden />
+	<RemoteForm {schema} {form} {data} {initialErrors}>
+		{#snippet children({ fields })}
+			<RemoteInput field={fields.id} type="hidden" />
+			<RemoteInput field={fields.characterId} type="hidden" />
+			<RemoteInput field={fields.characterName} type="hidden" />
+			<RemoteInput field={fields.appliedDate} type="number" hidden />
+			{#if !firstLog}
+				<Control class="col-span-12 sm:col-span-4">
+					<RemoteGenericInput field={fields.type} as="select" label="Log Type">
+						<select {...fields.type.as("select")} class="select select-bordered w-full">
+							<option value="game">Game</option>
+							<option value="nongame">Non-Game (Purchase, Trade, etc)</option>
+						</select>
+					</RemoteGenericInput>
+				</Control>
+			{/if}
+			<Control class={["col-span-12", !firstLog ? "sm:col-span-4" : "sm:col-span-6"]}>
+				<RemoteInput
+					field={fields.name}
+					type="text"
+					label="Title"
+					placeholder={firstLog ? "Introduction, Character Creation, etc." : ""}
+					required
+				/>
+			</Control>
+			<Control class={["col-span-12", !firstLog ? "sm:col-span-4" : "sm:col-span-6"]}>
+				<RemoteDateInput field={fields.date} label="Date" />
+			</Control>
+			{#if data.type === "game"}
 				{#if !firstLog}
-					<Control class="col-span-12 sm:col-span-4">
-						<RemoteGenericInput field={fields.type} as="select" label="Log Type">
-							<select {...fields.type.as("select")} class="select select-bordered w-full">
-								<option value="game">Game</option>
-								<option value="nongame">Non-Game (Purchase, Trade, etc)</option>
-							</select>
-						</RemoteGenericInput>
+					<Control class="col-span-12 sm:col-span-6">
+						<RemoteCombobox
+							label="DM Name"
+							valueField={fields.dm.id}
+							inputField={fields.dm.name}
+							values={dms.map((dm) => ({
+								value: dm.id,
+								label: dm.name,
+								itemLabel: dm.name + (dm.isUser ? ` (Me)` : "") + (dm.DCI ? ` (${dm.DCI})` : "")
+							})) || []}
+							allowCustom
+							onselect={({ selected }) => {
+								const id = (selected?.value || v7()) as DungeonMasterId;
+								const name = selected?.label;
+								data.dm = dms.find((dm) => dm.id === id) || (name ? { ...data.dm, id, name } : defaultDM(user.id));
+							}}
+							clearable
+							onclear={() => (data.dm = defaultDM(user.id))}
+							link={data.dm.id ? `/dms/${data.dm.id}` : ""}
+							placeholder={dms.find((dm) => dm.isUser)?.name || user.name}
+						/>
 					</Control>
-				{/if}
-				<Control class={["col-span-12", !firstLog ? "sm:col-span-4" : "sm:col-span-6"]}>
-					<RemoteInput
-						field={fields.name}
-						type="text"
-						label="Title"
-						placeholder={firstLog ? "Introduction, Character Creation, etc." : ""}
-						required
-					/>
-				</Control>
-				<Control class={["col-span-12", !firstLog ? "sm:col-span-4" : "sm:col-span-6"]}>
-					<RemoteDateInput field={fields.date} label="Date" />
-				</Control>
-				{#if data.type === "game"}
-					{#if !firstLog}
-						<Control class="col-span-12 sm:col-span-6">
-							<RemoteCombobox
-								label="DM Name"
-								valueField={fields.dm.id}
-								inputField={fields.dm.name}
-								values={dms.map((dm) => ({
-									value: dm.id,
-									label: dm.name,
-									itemLabel: dm.name + (dm.isUser ? ` (Me)` : "") + (dm.DCI ? ` (${dm.DCI})` : "")
-								})) || []}
-								allowCustom
-								onselect={({ selected }) => {
-									const id = (selected?.value || v7()) as DungeonMasterId;
-									const name = selected?.label;
-									data.dm = dms.find((dm) => dm.id === id) || (name ? { ...data.dm, id, name } : defaultDM(user.id));
-								}}
-								clearable
-								onclear={() => (data.dm = defaultDM(user.id))}
-								link={data.dm.id ? `/dms/${data.dm.id}` : ""}
-								placeholder={dms.find((dm) => dm.isUser)?.name || user.name}
-							/>
-						</Control>
-						<Control class="col-span-12 sm:col-span-6">
-							<RemoteInput
-								field={fields.dm.DCI}
-								type="text"
-								disabled={!data.dm.name}
-								placeholder={data.dm.name ? undefined : dms.find((dm) => dm.isUser)?.DCI}
-								label="DM DCI"
-							/>
-							{#if !data.dm.name}
-								<RemoteInput field={fields.dm.DCI} hidden />
-							{/if}
-						</Control>
-					{:else}
-						<RemoteInput field={fields.dm.id} type="hidden" />
-						<RemoteInput field={fields.dm.name} hidden />
-						<RemoteInput field={fields.dm.DCI} hidden />
-					{/if}
-					<RemoteInput field={fields.dm.userId} type="hidden" />
-					<RemoteInput field={fields.dm.isUser} type="checkbox" hidden />
-					<Control class="col-span-12 sm:col-span-4">
-						<GenericInput labelFor="season" label="Season">
-							<select
-								id="season"
-								bind:value={season}
-								class="select select-bordered w-full"
-								onchange={() => {
-									data.experience = 0;
-									data.acp = 0;
-									data.level = 0;
-									data.tcp = 0;
-								}}
-							>
-								<option value={9}>Season 9+ (Level)</option>
-								<option value={8}>Season 8 (ACP/TCP)</option>
-								<option value={1}>Season 1-7 (Experience)</option>
-							</select>
-						</GenericInput>
+					<Control class="col-span-12 sm:col-span-6">
+						<RemoteInput
+							field={fields.dm.DCI}
+							type="text"
+							disabled={!data.dm.name}
+							placeholder={data.dm.name ? undefined : dms.find((dm) => dm.isUser)?.DCI}
+							label="DM DCI"
+						/>
+						{#if !data.dm.name}
+							<RemoteInput field={fields.dm.DCI} hidden />
+						{/if}
 					</Control>
-					{#if season === 1}
-						<Control class="col-span-12 sm:col-span-4">
-							<RemoteInput field={fields.experience} type="number" label="Experience" />
-						</Control>
-					{/if}
-					{#if season === 8}
-						<Control class="col-span-6 sm:col-span-2">
-							<RemoteInput field={fields.acp} type="number" label="ACP" />
-						</Control>
-					{/if}
-					{#if season === 9}
-						<Control class="col-span-12 sm:col-span-4">
-							<RemoteInput
-								field={fields.level}
-								type="number"
-								label="Level"
-								max={Math.max(fields.level.value(), 20 - totalLevel)}
-							/>
-						</Control>
-					{/if}
 				{:else}
 					<RemoteInput field={fields.dm.id} type="hidden" />
 					<RemoteInput field={fields.dm.name} hidden />
 					<RemoteInput field={fields.dm.DCI} hidden />
-					<RemoteInput field={fields.dm.userId} type="hidden" />
-					<RemoteInput field={fields.dm.isUser} type="checkbox" hidden />
 				{/if}
-				{#if season === 8 || data.type === "nongame"}
-					<Control class={data.type === "game" ? "col-span-6 sm:col-span-2" : "col-span-4"}>
-						<RemoteInput field={fields.tcp} type="number" label="TCP" />
+				<RemoteInput field={fields.dm.userId} type="hidden" />
+				<RemoteInput field={fields.dm.isUser} type="checkbox" hidden />
+				<Control class="col-span-12 sm:col-span-4">
+					<GenericInput labelFor="season" label="Season">
+						<select
+							id="season"
+							bind:value={season}
+							class="select select-bordered w-full"
+							onchange={() => {
+								data.experience = 0;
+								data.acp = 0;
+								data.level = 0;
+								data.tcp = 0;
+							}}
+						>
+							<option value={9}>Season 9+ (Level)</option>
+							<option value={8}>Season 8 (ACP/TCP)</option>
+							<option value={1}>Season 1-7 (Experience)</option>
+						</select>
+					</GenericInput>
+				</Control>
+				{#if season === 1}
+					<Control class="col-span-12 sm:col-span-4">
+						<RemoteInput field={fields.experience} type="number" label="Experience" />
 					</Control>
 				{/if}
+				{#if season === 8}
+					<Control class="col-span-6 sm:col-span-2">
+						<RemoteInput field={fields.acp} type="number" label="ACP" />
+					</Control>
+				{/if}
+				{#if season === 9}
+					<Control class="col-span-12 sm:col-span-4">
+						<RemoteInput field={fields.level} type="number" label="Level" max={Math.max(fields.level.value(), 20 - totalLevel)} />
+					</Control>
+				{/if}
+			{:else}
+				<RemoteInput field={fields.dm.id} type="hidden" />
+				<RemoteInput field={fields.dm.name} hidden />
+				<RemoteInput field={fields.dm.DCI} hidden />
+				<RemoteInput field={fields.dm.userId} type="hidden" />
+				<RemoteInput field={fields.dm.isUser} type="checkbox" hidden />
+			{/if}
+			{#if season === 8 || data.type === "nongame"}
 				<Control class={data.type === "game" ? "col-span-6 sm:col-span-2" : "col-span-4"}>
-					<RemoteInput field={fields.gold} type="number" label="Gold" />
+					<RemoteInput field={fields.tcp} type="number" label="TCP" />
 				</Control>
-				<Control class={data.type === "game" ? "col-span-6 sm:col-span-2" : "col-span-4"}>
-					<RemoteInput field={fields.dtd} type="number" label="Downtime" />
-				</Control>
-				<Control class="col-span-12 w-full">
-					<RemoteMdInput field={fields.description} name="notes" maxRows={20} maxLength={5000} preview />
-				</Control>
-				<RemoteAddDropItems {fields} bind:log={data} {magicItems} {storyAwards}>
-					<RemoteSubmit>Save Log</RemoteSubmit>
-				</RemoteAddDropItems>
-			{/snippet}
-		</RemoteForm>
-	</svelte:boundary>
-{/key}
+			{/if}
+			<Control class={data.type === "game" ? "col-span-6 sm:col-span-2" : "col-span-4"}>
+				<RemoteInput field={fields.gold} type="number" label="Gold" />
+			</Control>
+			<Control class={data.type === "game" ? "col-span-6 sm:col-span-2" : "col-span-4"}>
+				<RemoteInput field={fields.dtd} type="number" label="Downtime" />
+			</Control>
+			<Control class="col-span-12 w-full">
+				<RemoteMdInput field={fields.description} name="notes" maxRows={20} maxLength={5000} preview />
+			</Control>
+			<RemoteAddDropItems {fields} bind:log={data} {magicItems} {storyAwards}>
+				<RemoteSubmit>Save Log</RemoteSubmit>
+			</RemoteAddDropItems>
+		{/snippet}
+	</RemoteForm>
+</svelte:boundary>
