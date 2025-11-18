@@ -116,9 +116,10 @@
 				{:else}
 					<a
 						href={`/?redirect=${encodeURIComponent(`${page.url.pathname}${page.url.search}`)}`}
-						class="bg-base-200/50 text-base-content hover:bg-base-300 flex h-12 items-center gap-2 rounded-lg p-2 transition-colors"
+						class="btn btn-ghost max-md:px-0"
 					>
-						<span class="flex h-full flex-1 items-center justify-center font-semibold">Sign In</span>
+						<span class="iconify mdi--log-in size-6"></span>
+						Sign In
 					</a>
 				{/if}
 			</div>
