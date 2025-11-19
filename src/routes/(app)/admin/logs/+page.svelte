@@ -17,9 +17,6 @@
 		}
 	);
 
-	// svelte-ignore await_waterfall
-	let result = $derived(await API.admin.queries.getAppLogs(params.s ?? ""));
-
 	let debouncing = $state(false);
 	const debouncedSearch = debounce((query: string) => {
 		params.s = query.trim() || null;
@@ -54,6 +51,7 @@
 
 <svelte:boundary>
 	{@const baseSearch = await API.admin.queries.getBaseSearch()}
+	{@const logsQuery = API.admin.queries.getAppLogs(params.s ?? "")}
 
 	<section class="flex flex-col gap-1">
 		<div class="flex w-full gap-2 sm:max-w-md md:max-w-md">
@@ -65,7 +63,6 @@
 						value={params.s ?? ""}
 						oninput={(e) => {
 							debouncing = true;
-							result = { logs: [], metadata: undefined };
 							debouncedSearch.call(e.currentTarget.value);
 						}}
 						class="input sm:input-sm join-item flex-1 max-sm:rounded-r-lg"
@@ -84,8 +81,8 @@
 				</div>
 			</search>
 		</div>
-		{#if result.metadata?.hasErrors}
-			{#each result.metadata.errors as error, i (i)}
+		{#if logsQuery.current?.metadata?.hasErrors}
+			{#each logsQuery.current.metadata.errors as error, i (i)}
 				<div class="alert alert-error mt-1 w-fit rounded-lg py-1">
 					<span class="iconify mdi--alert-circle size-6"></span>
 					{error.message} at position {error.position}: <kbd>{error.value}</kbd>
@@ -98,7 +95,9 @@
 		{/if}
 	</section>
 
-	{#if result.logs.length}
+	{#if logsQuery.loading || !logsQuery.current || debouncing}
+		<LoadingPanel />
+	{:else if logsQuery.current.logs.length}
 		<section class="overflow-x-auto rounded-lg">
 			<table class="bg-base-200 table w-full leading-5 max-sm:border-separate max-sm:border-spacing-y-2">
 				<thead class="max-sm:hidden">
@@ -109,7 +108,7 @@
 						<td class="max-xs:hidden w-0"></td>
 					</tr>
 				</thead>
-				{#each result.logs as log (log.id)}
+				{#each logsQuery.current.logs as log (log.id)}
 					{#snippet actions()}
 						<div class="sm:tooltip sm:tooltip-left" data-tip="Toggle details">
 							<button
@@ -210,8 +209,6 @@
 				{/each}
 			</table>
 		</section>
-	{:else if $effect.pending() || debouncing}
-		<LoadingPanel />
 	{:else}
 		<section class="bg-base-200 flex h-40 flex-col items-center justify-center rounded-lg">
 			<div class="text-base-content/60 text-lg">No logs found</div>
