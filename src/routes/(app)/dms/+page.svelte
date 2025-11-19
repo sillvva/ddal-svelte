@@ -11,14 +11,12 @@
 	import { sorter } from "@sillvva/utils";
 	import { SvelteSet } from "svelte/reactivity";
 
-	const dmsQuery = API.dms.queries.getAll();
-
 	let deletingDM = new SvelteSet<string>();
 </script>
 
 <svelte:boundary>
 	{@const { user } = await getAuth()}
-	{@const dms = await dmsQuery}
+	{@const dms = await API.dms.queries.getAll()}
 	{@const search = new EntitySearchFactory(dms, page.url.searchParams.get("s") || "")}
 	{@const sortedResults = search.results.toSorted(
 		(a, b) => sorter(a.isUser, b.isUser) || sorter(b.score, a.score) || sorter(a.name, b.name)
@@ -83,7 +81,7 @@
 													const parsed = await parseEffectResult(result);
 													if (parsed) {
 														successToast(`${dm.name} deleted`);
-														await dmsQuery.refresh();
+														await API.dms.queries.getAll().refresh();
 													} else {
 														deletingDM.delete(dm.id);
 													}

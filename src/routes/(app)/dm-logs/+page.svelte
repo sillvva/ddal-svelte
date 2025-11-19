@@ -15,14 +15,13 @@
 	import { SvelteSet } from "svelte/reactivity";
 
 	const global = getGlobal();
-	const dmLogsQuery = API.logs.queries.getDmLogs();
 
 	let deletingLog = new SvelteSet<string>();
 </script>
 
 <svelte:boundary>
 	{@const { user } = await getAuth()}
-	{@const logs = await dmLogsQuery}
+	{@const logs = await API.logs.queries.getDmLogs()}
 	{@const search = new EntitySearchFactory(logs, page.url.searchParams.get("s") || "")}
 	{@const sortedResults = search.results.toSorted((a, b) =>
 		global.app.dmLogs.sort === "asc" ? sorter(a.date, b.date) : sorter(b.date, a.date)
@@ -261,7 +260,7 @@
 												const parsed = await parseEffectResult(result);
 												if (parsed) {
 													successToast(`${log.name} deleted`);
-													await dmLogsQuery.refresh();
+													await API.logs.queries.getDmLogs().refresh();
 												} else {
 													deletingLog.delete(log.id);
 												}
