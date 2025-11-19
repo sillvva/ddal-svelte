@@ -10,9 +10,10 @@
 
 	interface Props {
 		error: unknown;
+		boundary?: string;
 	}
 
-	let { error }: Props = $props();
+	let { error, boundary }: Props = $props();
 
 	function hasKey<K extends string>(obj: unknown, key: K): obj is Record<K, unknown> {
 		return obj !== null && typeof obj === "object" && key in obj;
@@ -33,7 +34,8 @@
 			message: message,
 			name: hasKey(error, "name") && typeof error.name === "string" ? error.name : undefined,
 			stack: hasKey(error, "stack") && typeof error.stack === "string" ? error.stack : undefined,
-			cause: hasKey(error, "cause") ? error.cause : undefined
+			cause: hasKey(error, "cause") ? error.cause : undefined,
+			boundary
 		});
 	});
 

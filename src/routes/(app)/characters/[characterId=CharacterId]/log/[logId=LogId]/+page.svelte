@@ -39,7 +39,7 @@
 </script>
 
 <svelte:boundary>
-	{#snippet failed(error)}<Error {error} />{/snippet}
+	{#snippet failed(error)}<Error {error} boundary="edit-character-log" />{/snippet}
 
 	{@const auth = await getAuth()}
 	{@const user = auth.user!}

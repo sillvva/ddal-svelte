@@ -18,9 +18,10 @@ export const logClientError = guardedCommand(
 		message: v.string(),
 		name: v.optional(v.string()),
 		stack: v.optional(v.string()),
-		cause: v.optional(v.unknown())
+		cause: v.optional(v.unknown()),
+		boundary: v.optional(v.string())
 	}),
-	function* ({ message, name, stack, cause }) {
-		AppLog.error(message, { error: { name, stack, cause }, source: "client" });
+	function* ({ message, name, stack, cause, boundary }) {
+		AppLog.error(message, { error: { name, stack, cause }, source: boundary ?? "client" });
 	}
 );

@@ -127,7 +127,7 @@
 	</header>
 	<main class="relative z-10 container mx-auto flex max-w-5xl flex-1 flex-col gap-4 p-4 *:w-full">
 		<svelte:boundary>
-			{#snippet failed(error)}<Error {error} />{/snippet}
+			{#snippet failed(error)}<Error {error} boundary="layout" />{/snippet}
 			{@render children()}
 		</svelte:boundary>
 	</main>
