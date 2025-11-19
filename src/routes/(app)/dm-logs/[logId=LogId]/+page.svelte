@@ -20,7 +20,7 @@
 	const schema = dmLogSchema;
 	const form = API.logs.forms.saveDM;
 	const initialErrors = $derived(params.logId !== "new");
-	const { log, characters } = $derived(
+	const log = $derived(
 		await API.logs.forms.dm({
 			param: { logId: params.logId }
 		})
@@ -37,6 +37,7 @@
 	{#snippet failed(error)}<Error {error} boundary="edit-dm-log" />{/snippet}
 
 	{@const auth = await getAuth()}
+	{@const characters = await API.characters.queries.getAllSelect()}
 
 	<Head title={log.name || "New Log"} />
 
@@ -122,7 +123,7 @@
 				<Control class="col-span-12">
 					<RemoteMdInput field={fields.description} name="notes" maxLength={5000} maxRows={20} preview />
 				</Control>
-				<RemoteAddDropItems {fields} bind:log={data}>
+				<RemoteAddDropItems {fields} bind:log={data} logId={log.id}>
 					<RemoteSubmit>Save Log</RemoteSubmit>
 				</RemoteAddDropItems>
 			{/snippet}

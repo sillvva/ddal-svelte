@@ -25,11 +25,7 @@
 	const form = API.logs.forms.saveCharacter;
 	const firstLog = $derived(page.url.searchParams.get("firstLog") === "true");
 	const initialErrors = $derived(params.logId !== "new");
-	const { log, totalLevel, dms, magicItems, storyAwards } = $derived(
-		await API.logs.forms.character({
-			param: { characterId: params.characterId, logId: params.logId, firstLog }
-		})
-	);
+	const log = $derived(await API.logs.forms.character({ characterId: params.characterId, logId: params.logId, firstLog }));
 
 	let data = $derived.by(() => {
 		const state = $state(log);
@@ -85,6 +81,7 @@
 			</Control>
 			{#if data.type === "game"}
 				{#if !firstLog}
+					{@const dms = await API.dms.queries.getAllWithoutLogs()}
 					<Control class="col-span-12 sm:col-span-6">
 						<RemoteCombobox
 							label="DM Name"
@@ -157,7 +154,12 @@
 				{/if}
 				{#if season === 9}
 					<Control class="col-span-12 sm:col-span-4">
-						<RemoteInput field={fields.level} type="number" label="Level" max={Math.max(fields.level.value(), 20 - totalLevel)} />
+						<RemoteInput
+							field={fields.level}
+							type="number"
+							label="Level"
+							max={Math.max(fields.level.value(), 20 - character.totalLevel)}
+						/>
 					</Control>
 				{/if}
 			{:else}
@@ -181,7 +183,7 @@
 			<Control class="col-span-12 w-full">
 				<RemoteMdInput field={fields.description} name="notes" maxRows={20} maxLength={5000} preview />
 			</Control>
-			<RemoteAddDropItems {fields} bind:log={data} {magicItems} {storyAwards}>
+			<RemoteAddDropItems {fields} bind:log={data} characterId={log.characterId} logId={log.id}>
 				<RemoteSubmit>Save Log</RemoteSubmit>
 			</RemoteAddDropItems>
 		{/snippet}

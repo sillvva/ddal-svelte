@@ -1,5 +1,6 @@
-import { defaultLogSchema, getItemEntities, logDataToSchema } from "$lib/entities";
+import { defaultLogSchema, logDataToSchema } from "$lib/entities";
 import {
+	characterIdParamSchema,
 	characterIdSchema,
 	characterLogSchema,
 	dMLogSchema,
@@ -19,45 +20,36 @@ import { Effect } from "effect";
 import * as v from "valibot";
 
 const characterLogFormSchema = v.object({
-	param: v.object({
-		characterId: characterIdSchema,
-		logId: logIdParamSchema,
-		firstLog: v.optional(v.boolean(), false)
-	})
+	characterId: characterIdParamSchema,
+	logId: logIdParamSchema,
+	firstLog: v.optional(v.boolean(), false)
 });
 
 export const character = guardedQuery(characterLogFormSchema, function* (input, { user }) {
 	const Logs = yield* LogService;
-	const DMs = yield* DMService;
 	const Characters = yield* CharacterService;
 
-	const character = yield* Characters.get.one(input.param.characterId);
+	if (input.characterId === "new") redirect(302, "/characters/new/edit");
 
-	const logId = input.param.logId;
+	const logId = input.logId;
 	const logData = logId !== "new" ? yield* Logs.get.one(logId, user.id) : undefined;
 	const log = logData
 		? logDataToSchema(user.id, logData)
-		: defaultLogSchema(user.id, { character, defaults: input.param.firstLog ? { name: "Character Creation" } : undefined });
+		: defaultLogSchema(user.id, {
+				character: yield* Characters.get.one(input.characterId, false),
+				defaults: input.firstLog ? { name: "Character Creation" } : undefined
+			});
 
 	if (logId !== "new") {
 		if (!log.id) return yield* new LogNotFoundError();
 		if (log.isDmLog) return yield* new RedirectError({ message: "Redirecting to DM log", redirectTo: `/dm-logs/${log.id}` });
 	}
 
-	const itemEntities = getItemEntities(character, { excludeDropped: true, lastLogId: log.id });
-	const dms = yield* DMs.get.all(user, false).pipe(Effect.map((dms) => dms.map((dm) => omit(dm, ["logs"]))));
-
 	return {
-		totalLevel: character.totalLevel,
-		magicItems: itemEntities.magicItems,
-		storyAwards: itemEntities.storyAwards,
-		dms,
-		log: {
-			...log,
-			characterId: log.characterId || "",
-			date: log.date.getTime(),
-			appliedDate: log.appliedDate?.getTime() || 0
-		}
+		...log,
+		characterId: input.characterId,
+		date: log.date.getTime(),
+		appliedDate: log.appliedDate?.getTime() || 0
 	};
 });
 
@@ -69,7 +61,6 @@ const dmLogFormSchema = v.object({
 
 export const dm = guardedQuery(dmLogFormSchema, function* (input, { user }) {
 	const Logs = yield* LogService;
-	const Characters = yield* CharacterService;
 	const DMs = yield* DMService;
 
 	const userDM = yield* DMs.get.all(user, false).pipe(
@@ -87,26 +78,11 @@ export const dm = guardedQuery(dmLogFormSchema, function* (input, { user }) {
 		if (!log.isDmLog) redirect(302, `/characters/${log.characterId}/log/${log.id}`);
 	}
 
-	const characters = yield* Characters.get.all(user.id).pipe(
-		Effect.map((characters) =>
-			characters.map((c) => ({
-				...c,
-				logs: c.logs.filter((l) => l.id !== logId),
-				magicItems: [],
-				storyAwards: [],
-				logLevels: []
-			}))
-		)
-	);
-
 	return {
-		characters: characters.map((c) => ({ id: c.id, name: c.name })),
-		log: {
-			...omit(log, ["dm"]),
-			characterId: log.characterId || "",
-			date: log.date.getTime(),
-			appliedDate: log.appliedDate?.getTime() || 0
-		}
+		...omit(log, ["dm"]),
+		characterId: log.characterId || "",
+		date: log.date.getTime(),
+		appliedDate: log.appliedDate?.getTime() || 0
 	};
 });
 
