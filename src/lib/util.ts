@@ -36,9 +36,9 @@ export function download(params: () => { blob: Blob; filename: string }) {
 				await tick();
 				document.body.removeChild(anchor);
 				URL.revokeObjectURL(url);
-				node.dispatchEvent(new CustomEvent("usedownload", { detail: { blob: blob, filename: filename } }));
+				node.dispatchEvent(new CustomEvent("download", { detail: { blob: blob, filename: filename } }));
 			} catch {
-				node.dispatchEvent(new CustomEvent("usedownload-error", { detail: { blob: blob, filename: filename } }));
+				node.dispatchEvent(new CustomEvent("download-error", { detail: { blob: blob, filename: filename } }));
 			}
 		};
 		node.addEventListener("click", click, true);
