@@ -11,7 +11,6 @@
 	let display = $state(!dev);
 
 	const os = useOs();
-	const auth = $derived(await getAuth());
 
 	const appRoutes = Object.keys(import.meta.glob("/src/routes/**/+page.svelte"))
 		.map((key) => key.replace(/\/src\/routes\/|\(\w+\)|\/?\+page\.svelte/g, ""))
@@ -89,6 +88,7 @@
 			</div>
 		</div>
 		{#if display}
+			{@const auth = await getAuth()}
 			<SuperDebugRuned
 				data={{
 					...page,
