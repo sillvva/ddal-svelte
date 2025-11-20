@@ -15,14 +15,13 @@
 	import { createTransition, hotkey, parseEffectResult } from "$lib/util";
 	import { slugify, sorter } from "@sillvva/utils";
 	import { clipboard, download } from "@svelteuidev/composables";
-	import { onMount } from "svelte";
+	import { onMount, untrack } from "svelte";
 	import { fromAction } from "svelte/attachments";
 	import { SvelteSet } from "svelte/reactivity";
 
 	const { params } = $props();
 
 	const global = getGlobal();
-	const defaultQuery = $derived(page.url.searchParams.get("s") || "");
 
 	let deletingLog = new SvelteSet<string>();
 
@@ -62,7 +61,10 @@
 	{@const queryParms = { param: params.characterId, newRedirect: true }}
 	{@const character = await API.characters.queries.get(queryParms)}
 	{@const myCharacter = character.userId === user?.id}
-	{@const search = new EntitySearchFactory(character.logs, defaultQuery)}
+	{@const search = new EntitySearchFactory(
+		character.logs,
+		untrack(() => page.url.searchParams.get("s") || "")
+	)}
 	{@const sortedResults = search.results.toSorted((a, b) => sorter(a.showDate, b.showDate))}
 
 	<Head

@@ -12,6 +12,7 @@
 	import { getAuth, getGlobal } from "$lib/stores.svelte.js";
 	import { createTransition, download, hotkey, parseEffectResult } from "$lib/util.js";
 	import { sorter } from "@sillvva/utils";
+	import { untrack } from "svelte";
 	import { SvelteSet } from "svelte/reactivity";
 
 	const global = getGlobal();
@@ -22,7 +23,10 @@
 <svelte:boundary>
 	{@const { user } = await getAuth()}
 	{@const logs = await API.logs.queries.getDmLogs()}
-	{@const search = new EntitySearchFactory(logs, page.url.searchParams.get("s") || "")}
+	{@const search = new EntitySearchFactory(
+		logs,
+		untrack(() => page.url.searchParams.get("s") || "")
+	)}
 	{@const sortedResults = search.results.toSorted((a, b) =>
 		global.app.dmLogs.sort === "asc" ? sorter(a.date, b.date) : sorter(b.date, a.date)
 	)}

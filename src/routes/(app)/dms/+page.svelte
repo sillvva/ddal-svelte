@@ -9,6 +9,7 @@
 	import { getAuth } from "$lib/stores.svelte";
 	import { parseEffectResult } from "$lib/util";
 	import { sorter } from "@sillvva/utils";
+	import { untrack } from "svelte";
 	import { SvelteSet } from "svelte/reactivity";
 
 	let deletingDM = new SvelteSet<string>();
@@ -17,7 +18,10 @@
 <svelte:boundary>
 	{@const { user } = await getAuth()}
 	{@const dms = await API.dms.queries.getAll()}
-	{@const search = new EntitySearchFactory(dms, page.url.searchParams.get("s") || "")}
+	{@const search = new EntitySearchFactory(
+		dms,
+		untrack(() => page.url.searchParams.get("s") || "")
+	)}
 	{@const sortedResults = search.results.toSorted(
 		(a, b) => sorter(a.isUser, b.isUser) || sorter(b.score, a.score) || sorter(a.name, b.name)
 	)}

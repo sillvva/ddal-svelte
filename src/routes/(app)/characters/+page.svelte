@@ -11,6 +11,7 @@
 	import { getAuth, getGlobal } from "$lib/stores.svelte.js";
 	import { createTransition, download, hotkey } from "$lib/util";
 	import { sorter } from "@sillvva/utils";
+	import { untrack } from "svelte";
 
 	const global = getGlobal();
 </script>
@@ -18,7 +19,10 @@
 <svelte:boundary>
 	{@const { user } = await getAuth()}
 	{@const characters = await API.characters.queries.getAll()}
-	{@const search = new EntitySearchFactory(characters, page.url.searchParams.get("s") || "")}
+	{@const search = new EntitySearchFactory(
+		characters,
+		untrack(() => page.url.searchParams.get("s") || "")
+	)}
 	{@const sortedResults = search.results.toSorted(
 		(a, b) => sorter(b.score, a.score) || sorter(a.totalLevel, b.totalLevel) || sorter(a.name, b.name)
 	)}
