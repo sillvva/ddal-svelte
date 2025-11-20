@@ -16,8 +16,8 @@
 
 	let { value = $bindable(params.s ?? ""), type = "text", ...rest }: Omit<HTMLInputAttributes, "class"> = $props();
 
-	const updateValue = debounce((v) => {
-		params.s = value || null;
+	const updateValue = debounce((v: string) => {
+		params.s = v || null;
 		value = v;
 	}, 300);
 
