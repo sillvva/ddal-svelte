@@ -1,5 +1,5 @@
 import { parseLog } from "$lib/entities";
-import type { DungeonMasterSchema, LocalsUser, LogId, LogSchema, UserId } from "$lib/schemas";
+import type { DungeonMasterId, DungeonMasterSchema, LocalsUser, LogId, LogSchema, UserId } from "$lib/schemas";
 import {
 	buildConflictUpdateColumns,
 	DBService,
@@ -17,6 +17,7 @@ import { AppLog } from "$lib/server/effect/logging";
 import { and, eq, exists, inArray, isNull, notInArray, or } from "drizzle-orm";
 import { Data, Effect, Layer } from "effect";
 import { isTupleOf } from "effect/Predicate";
+import { v7 } from "uuid";
 import { DMService, DMTx } from "./dms";
 
 export class LogNotFoundError extends Data.TaggedError("LogNotFoundError")<ErrorParams> {
@@ -141,7 +142,7 @@ const validateLogDM = Effect.fn("validateLogDM")(function* (log: LogSchema, user
 		}
 	}
 
-	if (isUser || dmName || log.dm.DCI) {
+	if (isUser || (dmName && !dmId) || log.dm.DCI) {
 		const search = yield* DMs.get.fuzzySearch(user.id, isUser, log.dm);
 		if (search) {
 			if (search.name === dmName && search.DCI === log.dm.DCI) return search;
@@ -151,7 +152,7 @@ const validateLogDM = Effect.fn("validateLogDM")(function* (log: LogSchema, user
 	}
 
 	return {
-		id: dmId,
+		id: dmId || (v7() as DungeonMasterId),
 		name: dmName,
 		DCI: log.dm.DCI,
 		userId: user.id,
