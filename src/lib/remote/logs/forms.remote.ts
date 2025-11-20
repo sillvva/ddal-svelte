@@ -15,7 +15,7 @@ import { DMNotFoundError, DMService } from "$lib/server/effect/services/dms";
 import { LogNotFoundError, LogService } from "$lib/server/effect/services/logs";
 import { parse, safeParse } from "$lib/server/effect/util";
 import { omit } from "@sillvva/utils";
-import { redirect } from "@sveltejs/kit";
+import { invalid, redirect } from "@sveltejs/kit";
 import { Effect } from "effect";
 import * as v from "valibot";
 
@@ -86,24 +86,24 @@ export const dm = guardedQuery(dmLogFormSchema, function* (input, { user }) {
 	};
 });
 
-export const saveCharacter = guardedForm("unchecked", function* (input: LogSchemaIn, { user, invalid }) {
+export const saveCharacter = guardedForm("unchecked", function* (input: LogSchemaIn, { user, issue }) {
 	const Characters = yield* CharacterService;
 	const Logs = yield* LogService;
 
 	const characterId = yield* redirectOnFail(parse(characterIdSchema, input.characterId), "/characters", 302);
 	const character = yield* Characters.get
 		.one(characterId)
-		.pipe(Effect.tapError((err) => Effect.fail(invalid(invalid.characterId(err.message)))));
+		.pipe(Effect.tapError((err) => Effect.fail(invalid(issue.characterId(err.message)))));
 
 	const result = yield* safeParse(characterLogSchema(character), input);
-	if (!result.success) throw invalid(...result.failure.issues);
+	if (!result.success) invalid(...result.failure.issues);
 
 	yield* Logs.set.save(result.data, user).pipe(Effect.tapError((err) => Effect.fail(invalid(err.message))));
 
 	redirect(303, `/characters/${character.id}`);
 });
 
-export const saveDM = guardedForm("unchecked", function* (input: DmLogSchemaIn, { user, invalid }) {
+export const saveDM = guardedForm("unchecked", function* (input: DmLogSchemaIn, { user, issue }) {
 	const Characters = yield* CharacterService;
 	const Logs = yield* LogService;
 	const DMs = yield* DMService;
@@ -122,7 +122,7 @@ export const saveDM = guardedForm("unchecked", function* (input: DmLogSchemaIn, 
 				.all(user.id, {
 					characterId: parsedId.data
 				})
-				.pipe(Effect.tapError((err) => Effect.fail(invalid(invalid.characterId(err.message)))))
+				.pipe(Effect.tapError((err) => Effect.fail(invalid(issue.characterId(err.message)))))
 		: [];
 
 	const result = yield* safeParse(dMLogSchema(characters), input);

@@ -2,7 +2,7 @@ import * as API from "$lib/remote";
 import { dungeonMasterFormSchema, dungeonMasterIdSchema } from "$lib/schemas";
 import { guardedForm, guardedQuery, refreshAll } from "$lib/server/effect/remote";
 import { DMService } from "$lib/server/effect/services/dms";
-import { redirect } from "@sveltejs/kit";
+import { invalid, redirect } from "@sveltejs/kit";
 import { Effect } from "effect";
 
 export const get = guardedQuery(dungeonMasterIdSchema, function* (input, { user }) {
@@ -16,7 +16,7 @@ export const get = guardedQuery(dungeonMasterIdSchema, function* (input, { user 
 	};
 });
 
-export const save = guardedForm(dungeonMasterFormSchema, function* (input, { user, invalid }) {
+export const save = guardedForm(dungeonMasterFormSchema, function* (input, { user }) {
 	const DMs = yield* DMService;
 	yield* DMs.set.save(user, input).pipe(Effect.tapError((err) => Effect.fail(invalid(err.message))));
 	yield* refreshAll(API.dms.queries.get(input.id).refresh(), API.dms.queries.getAll().refresh());

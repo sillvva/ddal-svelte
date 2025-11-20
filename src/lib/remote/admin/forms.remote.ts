@@ -2,18 +2,18 @@ import { requiredString, userIdSchema } from "$lib/schemas";
 import { guardedForm } from "$lib/server/effect/remote";
 import { AdminService } from "$lib/server/effect/services/admin";
 import { AuthService } from "$lib/server/effect/services/auth";
-import { redirect } from "@sveltejs/kit";
+import { invalid, redirect } from "@sveltejs/kit";
 import { Effect } from "effect";
 import * as v from "valibot";
 
 export const impersonateUser = guardedForm(
 	v.object({ userId: userIdSchema }),
-	function* ({ userId }, { event, invalid }) {
+	function* ({ userId }, { event, issue }) {
 		const Auth = yield* AuthService;
 		const Admin = yield* AdminService;
 
 		const auth = yield* Auth.auth();
-		const user = yield* Admin.get.user(userId).pipe(Effect.catchAll((err) => Effect.die(invalid(err.message))));
+		const user = yield* Admin.get.user(userId).pipe(Effect.catchAll((err) => Effect.die(invalid(issue(err.message)))));
 
 		if (user.banned) throw invalid("User is banned");
 		if (user.role === "admin") throw invalid("Cannot impersonate this user");
@@ -40,7 +40,7 @@ export const stopImpersonating = guardedForm(function* ({ event }) {
 
 export const banUser = guardedForm(
 	v.object({ userId: userIdSchema, banReason: requiredString }),
-	function* ({ userId, banReason }, { event, invalid }) {
+	function* ({ userId, banReason }, { event }) {
 		const Auth = yield* AuthService;
 		const Admin = yield* AdminService;
 
