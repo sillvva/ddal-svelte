@@ -25,6 +25,7 @@
 	const form = API.logs.forms.saveCharacter;
 	const firstLog = $derived(page.url.searchParams.get("firstLog") === "true");
 	const initialErrors = $derived(params.logId !== "new");
+	// svelte-ignore await_waterfall
 	const log = $derived(await API.logs.forms.character({ characterId: params.characterId, logId: params.logId, firstLog }));
 
 	let data = $derived.by(() => {
