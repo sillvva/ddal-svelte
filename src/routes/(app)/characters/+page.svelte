@@ -9,10 +9,9 @@
 	import { EntitySearchFactory } from "$lib/factories.svelte.js";
 	import * as API from "$lib/remote";
 	import { getAuth, getGlobal } from "$lib/stores.svelte.js";
-	import { createTransition, hotkey } from "$lib/util";
+	import { createTransition, download, hotkey } from "$lib/util";
 	import { sorter } from "@sillvva/utils";
-	import { download } from "@svelteuidev/composables";
-	import { fromAction } from "svelte/attachments";
+	import { untrack } from "svelte";
 
 	const global = getGlobal();
 </script>
@@ -20,7 +19,10 @@
 <svelte:boundary>
 	{@const { user } = await getAuth()}
 	{@const characters = await API.characters.queries.getAll()}
-	{@const search = new EntitySearchFactory(characters, page.url.searchParams.get("s") || "")}
+	{@const search = new EntitySearchFactory(
+		characters,
+		untrack(() => page.url.searchParams.get("s") || "")
+	)}
 	{@const sortedResults = search.results.toSorted(
 		(a, b) => sorter(b.score, a.score) || sorter(a.totalLevel, b.totalLevel) || sorter(a.name, b.name)
 	)}
@@ -31,7 +33,7 @@
 		{#snippet menu()}
 			<li role="menuitem">
 				<button
-					{@attach fromAction(download, () => ({
+					{@attach download(() => ({
 						filename: "characters.json",
 						blob: new Blob([JSON.stringify(characters)])
 					}))}
@@ -207,7 +209,13 @@
 									{#if (character.match.has("magicItems") || global.app.characters.magicItems) && character.magicItems.length}
 										<div class="mb-2">
 											<p class="font-semibold">Magic Items:</p>
-											<Items items={character.magicItems} terms={search.terms} filtered matches={character.match.size} />
+											<Items
+												items={character.magicItems}
+												terms={search.terms}
+												filtered
+												matches={character.match.size}
+												formatting
+											/>
 										</div>
 									{/if}
 									{#if character.match.has("storyAwards") && character.storyAwards.length}
@@ -263,7 +271,13 @@
 									{#if search.query.length >= 1 && character.match.has("magicItems")}
 										<div class="absolute inset-0 flex items-center bg-black/50 p-2 text-center text-xs text-white">
 											<div class="flex-1">
-												<Items items={character.magicItems} terms={search.terms} filtered matches={character.match.size} />
+												<Items
+													items={character.magicItems}
+													terms={search.terms}
+													filtered
+													matches={character.match.size}
+													formatting
+												/>
 											</div>
 										</div>
 									{/if}

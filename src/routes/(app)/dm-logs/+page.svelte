@@ -10,22 +10,23 @@
 	import { EntitySearchFactory, successToast } from "$lib/factories.svelte.js";
 	import * as API from "$lib/remote";
 	import { getAuth, getGlobal } from "$lib/stores.svelte.js";
-	import { createTransition, hotkey, parseEffectResult } from "$lib/util.js";
+	import { createTransition, download, hotkey, parseEffectResult } from "$lib/util.js";
 	import { sorter } from "@sillvva/utils";
-	import { download } from "@svelteuidev/composables";
-	import { fromAction } from "svelte/attachments";
+	import { untrack } from "svelte";
 	import { SvelteSet } from "svelte/reactivity";
 
 	const global = getGlobal();
-	const dmLogsQuery = API.logs.queries.getDmLogs();
 
 	let deletingLog = new SvelteSet<string>();
 </script>
 
 <svelte:boundary>
 	{@const { user } = await getAuth()}
-	{@const logs = await dmLogsQuery}
-	{@const search = new EntitySearchFactory(logs, page.url.searchParams.get("s") || "")}
+	{@const logs = await API.logs.queries.getDmLogs()}
+	{@const search = new EntitySearchFactory(
+		logs,
+		untrack(() => page.url.searchParams.get("s") || "")
+	)}
 	{@const sortedResults = search.results.toSorted((a, b) =>
 		global.app.dmLogs.sort === "asc" ? sorter(a.date, b.date) : sorter(b.date, a.date)
 	)}
@@ -36,7 +37,7 @@
 		{#snippet menu()}
 			<li role="menuitem">
 				<button
-					{@attach fromAction(download, () => ({
+					{@attach download(() => ({
 						filename: "dm-logs.json",
 						blob: new Blob([JSON.stringify(logs)])
 					}))}
@@ -245,7 +246,7 @@
 									{/if}
 									{#if log.magicItemsGained.length > 0}
 										<div>
-											<Items title="Magic Items" items={log.magicItemsGained} terms={search.terms} sort />
+											<Items title="Magic Items" items={log.magicItemsGained} terms={search.terms} sort formatting />
 										</div>
 									{/if}
 								</td>
@@ -263,7 +264,7 @@
 												const parsed = await parseEffectResult(result);
 												if (parsed) {
 													successToast(`${log.name} deleted`);
-													await dmLogsQuery.refresh();
+													await API.logs.queries.getDmLogs().refresh();
 												} else {
 													deletingLog.delete(log.id);
 												}
@@ -290,7 +291,7 @@
 									{/if}
 									{#if log.magicItemsGained.length > 0 || log.magicItemsLost.length > 0}
 										<div class="mt-2 sm:hidden print:hidden">
-											<Items title="Magic Items:" items={log.magicItemsGained} terms={search.terms} sort />
+											<Items title="Magic Items:" items={log.magicItemsGained} terms={search.terms} sort filtered formatting />
 											{#if log.magicItemsLost.length}
 												<p class="mt-2 text-sm whitespace-pre-wrap line-through">
 													<SearchResults text={log.magicItemsLost.map((mi) => mi.name).join(" | ")} terms={search.terms} />

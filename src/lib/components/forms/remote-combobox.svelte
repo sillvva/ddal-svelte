@@ -33,6 +33,7 @@
 		oninput?: (el?: HTMLInputElement, value?: string) => void;
 		onselect?: (sel: { selected?: (typeof values)[number]; input: string }) => void;
 		onclear?: () => void;
+		onblur?: (el?: HTMLInputElement) => void;
 	}
 
 	let {
@@ -51,6 +52,7 @@
 		oninput,
 		onselect,
 		onclear,
+		onblur,
 		description
 	}: Props = $props();
 
@@ -149,9 +151,10 @@
 						oninput?.(e.currentTarget, cValue);
 						changed = true;
 					}}
-					onblur={() => {
+					onblur={(ev) => {
 						if (!allowCustom && !selectedItem && !filtered.length) clear();
 						if (!input) open = false;
+						onblur?.(ev.currentTarget);
 					}}
 					aria-invalid={issues?.length ? "true" : undefined}
 					class="input join-item focus:border-primary w-full"

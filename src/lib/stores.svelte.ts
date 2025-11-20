@@ -62,11 +62,10 @@ export class Global {
 export const [getGlobal] = createContext(() => new Global());
 
 export async function getAuth() {
-	const request = API.app.queries.request();
-	const result = await request;
+	const result = await API.app.queries.request();
 	return {
 		user: result.user,
 		session: result.session,
-		refresh: () => request.refresh()
+		refresh: () => API.app.queries.request().refresh()
 	};
 }

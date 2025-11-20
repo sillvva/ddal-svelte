@@ -81,7 +81,7 @@
 					<CommandTray />
 
 					{#if auth.user.role === "admin"}
-						<a href="/admin/users" class="btn btn-ghost p-2 max-md:hidden" aria-label="Admin">
+						<a href="/admin/users" class="btn btn-ghost mr-1 p-2 max-md:hidden" aria-label="Admin">
 							<span class="iconify mdi--administrator size-6"></span>
 						</a>
 					{/if}
@@ -116,9 +116,10 @@
 				{:else}
 					<a
 						href={`/?redirect=${encodeURIComponent(`${page.url.pathname}${page.url.search}`)}`}
-						class="bg-base-200/50 text-base-content hover:bg-base-300 flex h-12 items-center gap-2 rounded-lg p-2 transition-colors"
+						class="btn btn-ghost max-md:px-0"
 					>
-						<span class="flex h-full flex-1 items-center justify-center font-semibold">Sign In</span>
+						<span class="iconify mdi--log-in size-6"></span>
+						Sign In
 					</a>
 				{/if}
 			</div>
@@ -126,7 +127,7 @@
 	</header>
 	<main class="relative z-10 container mx-auto flex max-w-5xl flex-1 flex-col gap-4 p-4 *:w-full">
 		<svelte:boundary>
-			{#snippet failed(error)}<Error {error} />{/snippet}
+			{#snippet failed(error)}<Error {error} boundary="layout" />{/snippet}
 			{@render children()}
 		</svelte:boundary>
 	</main>

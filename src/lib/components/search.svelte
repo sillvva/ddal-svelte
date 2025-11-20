@@ -1,5 +1,6 @@
 <script lang="ts">
 	import { hotkey } from "$lib/util";
+	import { debounce } from "@sillvva/utils";
 	import type { HTMLInputAttributes } from "svelte/elements";
 	import { queryParameters, ssp } from "sveltekit-search-params";
 
@@ -14,6 +15,11 @@
 	);
 
 	let { value = $bindable(params.s ?? ""), type = "text", ...rest }: Omit<HTMLInputAttributes, "class"> = $props();
+
+	const updateValue = debounce((v: string) => {
+		params.s = v || null;
+		value = v;
+	}, 300);
 
 	let ref: HTMLInputElement;
 </script>
@@ -32,14 +38,21 @@
 	<label class="input focus-within:border-primary sm:input-sm flex w-full items-center gap-2" class:pr-0={!!value.trim()}>
 		<input
 			{type}
-			bind:value
+			{value}
 			bind:this={ref}
 			class="w-full flex-1"
 			aria-label={rest.placeholder || "Search"}
-			oninput={() => (params.s = value || null)}
+			oninput={(e) => {
+				const val = e.currentTarget.value;
+				if (val) updateValue.call(val);
+				else {
+					params.s = null;
+					value = "";
+				}
+			}}
 			{...rest}
 		/>
-		{#if value.trim()}
+		{#if params.s?.trim()}
 			<button
 				class="btn btn-sm btn-ghost"
 				onclick={() => {

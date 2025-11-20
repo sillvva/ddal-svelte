@@ -17,11 +17,10 @@
 		}
 	);
 
-	const query = $derived(API.admin.queries.getAppLogs(params.s ?? ""));
-	let loading = $derived(!query.current);
-
+	let debouncing = $state(false);
 	const debouncedSearch = debounce((query: string) => {
 		params.s = query.trim() || null;
+		debouncing = false;
 	}, 400);
 
 	const formatter = new Intl.DateTimeFormat(navigator.language, {
@@ -52,40 +51,38 @@
 
 <svelte:boundary>
 	{@const baseSearch = await API.admin.queries.getBaseSearch()}
-	{@const logSearch = await query}
+	{@const logsQuery = API.admin.queries.getAppLogs(params.s ?? "")}
+
 	<section class="flex flex-col gap-1">
-		<div class="flex items-center justify-between">
-			<div class="flex w-full gap-2 sm:max-w-md md:max-w-md">
-				<search class="flex flex-1">
-					<div class="focus-within:outline-primary join flex flex-1 items-center rounded-lg focus-within:outline-2">
-						<input
-							type="text"
-							id="log-search"
-							value={params.s ?? ""}
-							oninput={(e) => {
-								loading = true;
-								debouncedSearch.call(e.currentTarget.value);
-							}}
-							class="input sm:input-sm join-item flex-1"
-							aria-label="Search"
-							placeholder={baseSearch.query ?? ""}
-						/>
-						<div class="tooltip" data-tip="Syntax Reference">
-							<button
-								class="btn sm:btn-sm join-item border-base-content/20 border max-sm:hidden"
-								aria-label="Syntax Reference"
-								onclick={openSyntaxReference}
-							>
-								<span class="iconify mdi--help-circle size-6 sm:size-4"></span>
-							</button>
-						</div>
+		<div class="flex w-full gap-2 sm:max-w-md md:max-w-md">
+			<search class="flex flex-1">
+				<div class="focus-within:outline-primary join flex flex-1 items-center rounded-lg focus-within:outline-2">
+					<input
+						type="text"
+						id="log-search"
+						value={params.s ?? ""}
+						oninput={(e) => {
+							debouncing = true;
+							debouncedSearch.call(e.currentTarget.value);
+						}}
+						class="input sm:input-sm join-item flex-1 max-sm:rounded-r-lg"
+						aria-label="Search"
+						placeholder={baseSearch.query ?? ""}
+					/>
+					<div class="tooltip max-sm:hidden" data-tip="Syntax Reference">
+						<button
+							class="btn sm:btn-sm join-item border-base-content/20 border"
+							aria-label="Syntax Reference"
+							onclick={openSyntaxReference}
+						>
+							<span class="iconify mdi--help-circle size-6 sm:size-4"></span>
+						</button>
 					</div>
-				</search>
-			</div>
-			<div class="flex justify-end text-sm max-sm:hidden">Logs are automatically deleted after 7 days.</div>
+				</div>
+			</search>
 		</div>
-		{#if logSearch.metadata?.hasErrors}
-			{#each logSearch.metadata.errors as error, i (i)}
+		{#if logsQuery.current?.metadata?.hasErrors}
+			{#each logsQuery.current.metadata.errors as error, i (i)}
 				<div class="alert alert-error mt-1 w-fit rounded-lg py-1">
 					<span class="iconify mdi--alert-circle size-6"></span>
 					{error.message} at position {error.position}: <kbd>{error.value}</kbd>
@@ -98,9 +95,9 @@
 		{/if}
 	</section>
 
-	{#if loading}
+	{#if logsQuery.loading || !logsQuery.current || debouncing}
 		<LoadingPanel />
-	{:else if logSearch.logs.length}
+	{:else if logsQuery.current.logs.length}
 		<section class="overflow-x-auto rounded-lg">
 			<table class="bg-base-200 table w-full leading-5 max-sm:border-separate max-sm:border-spacing-y-2">
 				<thead class="max-sm:hidden">
@@ -111,7 +108,7 @@
 						<td class="max-xs:hidden w-0"></td>
 					</tr>
 				</thead>
-				{#each logSearch.logs as log (log.id)}
+				{#each logsQuery.current.logs as log (log.id)}
 					{#snippet actions()}
 						<div class="sm:tooltip sm:tooltip-left" data-tip="Toggle details">
 							<button
@@ -160,11 +157,16 @@
 										{log.message}
 									</div>
 									<div class="flex items-center justify-between">
-										<div class="text-base-content group-data-[details=true]:hidden sm:hidden">
-											{getRelativeTime(log.timestamp)}
-										</div>
-										<div class="text-base-content/60 hidden flex-1 max-sm:group-data-[details=true]:block">
-											{formatter.format(log.timestamp)}
+										<div class="text-base-content/60">
+											Triggered
+											<span class="text-base-content group-data-[details=true]:hidden sm:hidden">
+												{getRelativeTime(log.timestamp)}
+											</span>
+											<span class="text-base-content/60 hidden flex-1 max-sm:group-data-[details=true]:block">
+												{formatter.format(log.timestamp)}
+											</span>
+											by
+											<span class="text-base-content">{log.annotations.username || "Unknown"}</span>
 										</div>
 										<div class="xs:hidden flex gap-2">
 											{@render actions()}

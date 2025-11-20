@@ -3,7 +3,7 @@ import { wait } from "@sillvva/utils";
 import type { StandardSchemaV1 } from "@standard-schema/spec";
 import { hotkey as hk, type HotkeyItem } from "@svelteuidev/composables";
 import { isObject } from "effect/Predicate";
-import { getContext, hasContext, setContext } from "svelte";
+import { getContext, hasContext, setContext, tick } from "svelte";
 import type { Attachment } from "svelte/attachments";
 import type { FullPathname } from "./constants";
 import { errorToast } from "./factories.svelte";
@@ -19,6 +19,29 @@ export function hotkey(hotkeys: HotkeyItem[]): Attachment<HTMLElement | Document
 	return (node: HTMLElement | Document) => {
 		if (node instanceof Document) node = node.body;
 		return hk(node, hotkeys).destroy;
+	};
+}
+
+export function download(params: () => { blob: Blob; filename: string }) {
+	return (node: HTMLElement) => {
+		const click = async () => {
+			const { blob, filename } = params();
+			try {
+				const anchor = document.createElement("a");
+				const url = URL.createObjectURL(blob);
+				anchor.href = url;
+				anchor.download = filename || "";
+				document.body.appendChild(anchor);
+				anchor.click();
+				await tick();
+				document.body.removeChild(anchor);
+				URL.revokeObjectURL(url);
+				node.dispatchEvent(new CustomEvent("download", { detail: { blob: blob, filename: filename } }));
+			} catch {
+				node.dispatchEvent(new CustomEvent("download-error", { detail: { blob: blob, filename: filename } }));
+			}
+		};
+		node.addEventListener("click", click, true);
 	};
 }
 

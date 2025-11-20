@@ -1,16 +1,22 @@
 import { getRequestEvent, query } from "$app/server";
-import { defaultCharacter } from "$lib/entities";
-import { characterIdParamSchema } from "$lib/schemas";
+import { defaultCharacter, getItemEntities } from "$lib/entities";
+import { characterIdParamSchema, characterIdSchema, logIdSchema } from "$lib/schemas";
 import { RedirectError } from "$lib/server/effect/errors";
 import { guardedQuery } from "$lib/server/effect/remote";
 import { run } from "$lib/server/effect/runtime";
 import { CharacterService } from "$lib/server/effect/services/characters";
 import { redirect } from "@sveltejs/kit";
+import { Effect } from "effect";
 import * as v from "valibot";
 
 export const getAll = guardedQuery(function* ({ user }) {
 	const Characters = yield* CharacterService;
 	return yield* Characters.get.all(user.id);
+});
+
+export const getAllSelect = guardedQuery(function* ({ user }) {
+	const Characters = yield* CharacterService;
+	return yield* Characters.get.all(user.id).pipe(Effect.map((characters) => characters.map((c) => ({ id: c.id, name: c.name }))));
 });
 
 // eslint-disable-next-line custom/enforce-guarded-functions
@@ -35,4 +41,20 @@ export const get = query(
 
 			return character;
 		})
+);
+
+export const getItems = guardedQuery(
+	v.object({
+		characterId: v.optional(characterIdSchema),
+		logId: logIdSchema
+	}),
+	function* (input) {
+		if (!input.characterId) return { magicItems: [], storyAwards: [] };
+
+		const Characters = yield* CharacterService;
+		const character = yield* Characters.get.one(input.characterId);
+		const itemEntities = getItemEntities(character, { excludeDropped: true, lastLogId: input.logId });
+
+		return { magicItems: itemEntities.magicItems, storyAwards: itemEntities.storyAwards };
+	}
 );

@@ -159,6 +159,7 @@ export const logSchema = v.object({
 	description: v.optional(maxTextSize, ""),
 	dm: v.object({
 		...dungeonMasterSchema.entries,
+		id: orEmpty(dungeonMasterIdSchema),
 		name: v.optional(shortString, ""),
 		isUser: v.optional(v.boolean(), false)
 	}),

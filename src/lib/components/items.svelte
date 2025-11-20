@@ -48,7 +48,7 @@
 	const sorterName = (name: string) =>
 		sort
 			? name
-					.replace(/^\d+x? ?/, "")
+					.replace(/^\d+(x|×)? ?/, "")
 					.replace("Spell Scroll", "Scroll")
 					.replace(/^(\w+)s/, "$1")
 					.replace(/^(A|An|The) /, "")
@@ -57,20 +57,22 @@
 		title.startsWith("Magic Items") &&
 		name
 			.trim()
-			.match(/^(\d+x? )?((Potion|(?:Spell )?Scroll|Charm|Oil|Elixir)s? of)|Alchemist('?s)? Fire|Antitoxin|Spellwrought Tattoo/);
+			.match(
+				/^(\d+(x|×)? )?((Potion|(?:Spell )?Scroll|Charm|Oil|Elixir)s? of)|Alchemist('?s)? Fire|Antitoxin|Spellwrought Tattoo|Elemental Gem/
+			);
 	const itemQty = (item: { name: string }) => parseInt(item.name.match(/^(\d+)x? /)?.[1] || "1");
 	const fixName = (name: string, qty = 1) => {
 		if (title.startsWith("Story Awards")) return name;
 
 		let val = name
 			.trim()
-			.replace(/^\d+x? ?/, "")
+			.replace(/^\d+(x|×)? ?/, "")
 			.replace(/^(Potion|(?:Spell )?Scroll|Charm|Oil|Elixir)s/, "$1")
 			.replace("Spell Scroll", "Scroll");
 
 		if (qty > 1) {
 			if (isConsumable(name)) val = val.replace(/^(Potion|(?:Spell )?Scroll|Charm|Oil|Elixir)( .+)$/, "$1s$2");
-			val = `${qty} ${val}`;
+			val = `${qty}× ${val}`;
 		} else {
 			val = val;
 		}
@@ -94,7 +96,7 @@
 			(acc, item) => {
 				const name = fixName(item.name);
 				const qty = itemQty(item);
-				const desc = item.description?.trim();
+				const desc = item.description?.trim().slice(0, 25);
 				const key = `${name || ""}_${desc || ""}`;
 
 				const existingIndex = itemsMap.get(key);
@@ -168,9 +170,8 @@
 					<SearchResults text={mi.name} {terms} {filtered} {matches} />
 				</span>{/each}{#each consumables as mi (mi.id)}<span
 					role={mi.description || search ? "button" : "presentation"}
-					class="text-base-content/75 inline pr-2 pl-2 italic first:pl-0"
+					class={["inline pr-2 pl-2 first:pl-0", formatting ? "text-base-content/75 italic" : null]}
 					class:text-secondary-content={mi.description}
-					class:italic={formatting}
 					onclick={() => onclick(mi)}
 					onkeypress={() => null}
 				>

@@ -40,7 +40,7 @@
 />
 
 <svelte:boundary>
-	{#snippet failed(error)}<Error {error} />{/snippet}
+	{#snippet failed(error)}<Error {error} boundary="edit-character" />{/snippet}
 	<RemoteForm {schema} {form} {data} {initialErrors}>
 		{#snippet children({ fields })}
 			<RemoteInput field={fields.id} type="hidden" />

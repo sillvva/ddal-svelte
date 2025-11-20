@@ -15,30 +15,25 @@
 	import { createTransition, hotkey, parseEffectResult } from "$lib/util";
 	import { slugify, sorter } from "@sillvva/utils";
 	import { clipboard, download } from "@svelteuidev/composables";
-	import { onMount } from "svelte";
+	import { onMount, untrack } from "svelte";
 	import { fromAction } from "svelte/attachments";
 	import { SvelteSet } from "svelte/reactivity";
 
 	const { params } = $props();
 
 	const global = getGlobal();
-	const characterQuery = API.characters.queries.get({ param: params.characterId, newRedirect: true });
-	const defaultQuery = $derived(page.url.searchParams.get("s") || "");
 
 	let deletingLog = new SvelteSet<string>();
 
-	async function triggerImageModal(image?: string) {
-		const character = await characterQuery;
+	async function triggerImageModal(character: FullCharacterData, image?: string) {
 		const imageUrl = image || character.imageUrl;
-		if (imageUrl) {
-			pushState("", {
-				modal: {
-					type: "image",
-					name: character.name,
-					imageUrl
-				}
-			});
-		}
+		pushState("", {
+			modal: {
+				type: "image",
+				name: character.name,
+				imageUrl
+			}
+		});
 	}
 
 	function scroller(search: EntitySearchFactory<FullCharacterData["logs"]>) {
@@ -63,9 +58,13 @@
 
 <svelte:boundary>
 	{@const { user } = await getAuth()}
-	{@const character = await characterQuery}
+	{@const queryParms = { param: params.characterId, newRedirect: true }}
+	{@const character = await API.characters.queries.get(queryParms)}
 	{@const myCharacter = character.userId === user?.id}
-	{@const search = new EntitySearchFactory(character.logs, defaultQuery)}
+	{@const search = new EntitySearchFactory(
+		character.logs,
+		untrack(() => page.url.searchParams.get("s") || "")
+	)}
 	{@const sortedResults = search.results.toSorted((a, b) => sorter(a.showDate, b.showDate))}
 
 	<Head
@@ -120,7 +119,7 @@
 							target="_blank"
 							onclick={(e) => {
 								e.preventDefault();
-								triggerImageModal();
+								triggerImageModal(character);
 							}}>Character Image</a
 						>
 					</li>
@@ -131,7 +130,7 @@
 						target="_blank"
 						onclick={(e) => {
 							e.preventDefault();
-							triggerImageModal(`/characters/${character.id}/og-image.jpg`);
+							triggerImageModal(character, `/characters/${character.id}/og-image.jpg`);
 						}}>Social Media Image</a
 					>
 				</li>
@@ -173,7 +172,7 @@
 							style:view-transition-name={"image-" + character.id}
 							onclick={(e) => {
 								e.preventDefault();
-								triggerImageModal();
+								triggerImageModal(character);
 							}}
 						>
 							<img src={character.imageUrl} class="size-full object-cover object-top transition-all" alt={character.name} />
@@ -228,7 +227,7 @@
 								style:view-transition-name={"image-" + character.id}
 								onclick={(e) => {
 									e.preventDefault();
-									triggerImageModal();
+									triggerImageModal(character);
 								}}
 							>
 								<img src={character.imageUrl} class="size-full object-cover object-top transition-all" alt={character.name} />
@@ -495,6 +494,7 @@
 												terms={search.terms}
 												sort
 												filtered
+												formatting
 												matches={log.match.size}
 											/>
 											<div class="text-sm whitespace-pre-wrap line-through">
@@ -522,7 +522,7 @@
 													const parsed = await parseEffectResult(result);
 													if (parsed) {
 														successToast(`${log.name} deleted`);
-														await characterQuery.refresh();
+														await API.characters.queries.get(queryParms).refresh();
 													} else {
 														deletingLog.delete(log.id);
 													}
@@ -555,7 +555,7 @@
 									{/if}
 									{#if log.magicItemsGained.length > 0 || log.magicItemsLost.length > 0}
 										<div class="mt-2 sm:hidden print:hidden">
-											<Items title="Magic Items:" items={log.magicItemsGained} terms={search.terms} sort filtered />
+											<Items title="Magic Items:" items={log.magicItemsGained} terms={search.terms} sort filtered formatting />
 											{#if log.magicItemsLost.length}
 												<p class="mt-2 text-sm whitespace-pre-wrap line-through">
 													<SearchResults text={log.magicItemsLost.map((mi) => mi.name).join(" | ")} terms={search.terms} />
