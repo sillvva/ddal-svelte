@@ -10,7 +10,9 @@
 
 	const global = getGlobal();
 	const request = await API.app.queries.request();
-	global.app = request.app;
+	global.setApp((app) => {
+		Object.assign(app, request.app);
+	});
 
 	onNavigate(({ complete, from, to }) => {
 		if (!document.startViewTransition) return;
