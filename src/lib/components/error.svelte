@@ -5,7 +5,6 @@
 	import { getAuth } from "$lib/stores.svelte";
 	import { omit } from "@sillvva/utils";
 	import { useOs } from "@svelteuidev/composables";
-	import { onMount } from "svelte";
 	import SuperDebugRuned from "sveltekit-superforms/SuperDebug.svelte";
 
 	interface Props {
@@ -19,24 +18,20 @@
 		return obj !== null && typeof obj === "object" && key in obj;
 	}
 
-	let message = $derived(
+	let message =
 		typeof error === "string"
 			? error
 			: hasKey(error, "message") && typeof error.message === "string"
 				? error.message
-				: "Something went wrong"
-	);
+				: "Something went wrong";
 
-	onMount(() => {
-		console.error(error);
-
-		logClientError({
-			message: message,
-			name: hasKey(error, "name") && typeof error.name === "string" ? error.name : undefined,
-			stack: hasKey(error, "stack") && typeof error.stack === "string" ? error.stack : undefined,
-			cause: hasKey(error, "cause") ? error.cause : undefined,
-			boundary
-		});
+	console.error(error);
+	logClientError({
+		message: message,
+		name: hasKey(error, "name") && typeof error.name === "string" ? error.name : undefined,
+		stack: hasKey(error, "stack") && typeof error.stack === "string" ? error.stack : undefined,
+		cause: hasKey(error, "cause") ? error.cause : undefined,
+		boundary
 	});
 
 	let display = $state(!dev);
