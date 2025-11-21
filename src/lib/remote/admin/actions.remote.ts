@@ -22,6 +22,6 @@ export const logClientError = guardedCommand(
 		boundary: v.optional(v.string())
 	}),
 	function* ({ message, name, stack, cause, boundary }) {
-		AppLog.error(message, { error: { name, stack, cause }, source: boundary ?? "client" });
+		yield* AppLog.error(message, { error: { name, stack, cause }, source: boundary ?? "client" });
 	}
 );

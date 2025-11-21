@@ -1,5 +1,5 @@
 <script lang="ts">
-	import { dev } from "$app/environment";
+	import { browser, dev } from "$app/environment";
 	import { page } from "$app/state";
 	import { logClientError } from "$lib/remote/admin/actions.remote";
 	import { getAuth } from "$lib/stores.svelte";
@@ -26,13 +26,15 @@
 				: "Something went wrong";
 
 	console.error(error);
-	logClientError({
-		message: message,
-		name: hasKey(error, "name") && typeof error.name === "string" ? error.name : undefined,
-		stack: hasKey(error, "stack") && typeof error.stack === "string" ? error.stack : undefined,
-		cause: hasKey(error, "cause") ? error.cause : undefined,
-		boundary
-	});
+	if (browser) {
+		logClientError({
+			message: message,
+			name: hasKey(error, "name") && typeof error.name === "string" ? error.name : undefined,
+			stack: hasKey(error, "stack") && typeof error.stack === "string" ? error.stack : undefined,
+			cause: hasKey(error, "cause") ? error.cause : undefined,
+			boundary
+		});
+	}
 
 	let display = $state(!dev);
 
@@ -65,15 +67,21 @@
 		</div>
 		{#if display}
 			{@const { user } = await getAuth()}
-			<SuperDebugRuned
-				data={{
-					error,
-					...omit(page, ["error"]),
-					os,
-					user,
-					data: undefined
-				}}
-			/>
+			<div class="flex max-w-full flex-col gap-4">
+				{#if hasKey(error, "stack") && typeof error.stack === "string"}
+					<pre class="bg-base-200 w-full overflow-x-scroll rounded-lg p-4">{@html error.stack}</pre>
+				{/if}
+				<SuperDebugRuned
+					data={{
+						error: message,
+						boundary,
+						...omit(page, ["error"]),
+						os,
+						user,
+						data: undefined
+					}}
+				/>
+			</div>
 		{/if}
 	</div>
 </svelte:boundary>
