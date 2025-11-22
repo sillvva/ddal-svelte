@@ -3,13 +3,13 @@ import { privateEnv } from "$lib/env/private";
 import { localsSessionSchema, localsUserSchema, type LocalsSession, type LocalsUser, type UserId } from "$lib/schemas";
 import { DBService, DrizzleError } from "$lib/server/db";
 import { RedirectError, type ErrorParams } from "$lib/server/effect/errors";
+import { passkey } from "@better-auth/passkey";
 import { isDefined } from "@sillvva/utils";
 import type { RequestEvent } from "@sveltejs/kit";
-import { betterAuth } from "better-auth";
 import { drizzleAdapter } from "better-auth/adapters/drizzle";
+import { betterAuth } from "better-auth/minimal";
 import { lastLoginMethod } from "better-auth/plugins";
 import { admin } from "better-auth/plugins/admin";
-import { passkey } from "better-auth/plugins/passkey";
 import { sveltekitCookies } from "better-auth/svelte-kit";
 import { Data, Duration, Effect } from "effect";
 import { v7 } from "uuid";
@@ -18,14 +18,15 @@ import { parse, type InvalidSchemaError } from "../util";
 import { UserService } from "./users";
 
 const authPlugins = [passkey(), admin(), lastLoginMethod(), sveltekitCookies(getRequestEvent)];
+type Auth = ReturnType<typeof betterAuth<{ plugins: typeof authPlugins }>>;
 
 interface AuthApiImpl {
-	readonly auth: () => Effect.Effect<ReturnType<typeof betterAuth<{ plugins: typeof authPlugins }>>>;
+	readonly auth: () => Effect.Effect<Auth>;
 	readonly getAuthSession: () => Effect.Effect<
 		{
 			session: LocalsSession | undefined;
 			user: LocalsUser | undefined;
-			auth: ReturnType<typeof betterAuth<{ plugins: typeof authPlugins }>>;
+			auth: Auth;
 		},
 		DrizzleError | InvalidSchemaError | AuthError,
 		UserService

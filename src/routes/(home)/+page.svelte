@@ -1,5 +1,4 @@
 <script lang="ts">
-	import { goto } from "$app/navigation";
 	import { authClient } from "$lib/auth";
 	import { PROVIDERS } from "$lib/constants";
 	import { errorToast } from "$lib/factories.svelte.js";
@@ -15,10 +14,9 @@
 
 	onMount(async () => {
 		if (global.app.settings.autoWebAuthn) {
-			showPasskeyWarning = true;
 			const { data, error } = await authClient.signIn.passkey();
 			if (data) {
-				goto(home.redirectTo || "/characters", { invalidateAll: true });
+				window.location.href = home.redirectTo || "/characters";
 			} else if (error) {
 				console.error(error);
 				errorToast(error.message ?? "An unknown error occurred");
@@ -81,13 +79,13 @@
 			{/each}
 			<hr class="border-base-content" />
 			<button
-				class="bg-base-200 text-base-content max-xs:justify-center hover:bg-base-300 max-xs:h-12 max-xs:px-4 flex h-16 items-center gap-4 rounded-lg px-8 py-4 transition-colors"
+				class="bg-base-200 text-base-content max-xs:justify-center hover:bg-base-300 max-xs:h-12 max-xs:px-4 relative flex h-16 items-center gap-4 rounded-lg px-8 py-4 transition-colors"
 				onclick={async () => {
 					console.log("Signing in with Passkey");
 					showPasskeyWarning = true;
 					const { data, error } = await authClient.signIn.passkey();
 					if (data) {
-						goto(home.redirectTo || "/characters", { invalidateAll: true });
+						window.location.href = home.redirectTo || "/characters";
 					} else if (error?.message) {
 						console.error(error);
 						errorToast(error.message);
@@ -99,6 +97,10 @@
 				<span class="max-xs:text-base xs:flex-1 flex h-full items-center justify-center text-xl font-semibold"
 					>Sign In with Passkey</span
 				>
+
+				{#if lastMethod === "passkey"}
+					<span class="badge badge-soft badge-primary absolute top-0 right-0 translate-x-1/2 -translate-y-1/2"> Last used </span>
+				{/if}
 			</button>
 			<span class="text-base-content text-center text-xs text-pretty">
 				You must have an account and then add a Passkey in settings before you can sign in with a Passkey.

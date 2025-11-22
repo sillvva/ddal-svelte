@@ -43,7 +43,7 @@
 		if (!userAccounts.length && open) {
 			Promise.allSettled(
 				auth.user?.accounts.map(({ accountId, providerId }) =>
-					authClient.accountInfo({ accountId }).then((r) =>
+					authClient.accountInfo({ query: { accountId } }).then((r) =>
 						r.data?.user?.name && r.data?.user?.email && r.data?.user?.image
 							? {
 									providerId,
