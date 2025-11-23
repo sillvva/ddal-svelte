@@ -2,11 +2,13 @@
 	import { dev } from "$app/environment";
 	import { onNavigate } from "$app/navigation";
 	import * as API from "$lib/remote";
-	import { getGlobal } from "$lib/stores.svelte";
+	import { getGlobal, getLogger } from "$lib/stores.svelte";
 	import { Toaster } from "svelte-sonner";
 	import "../app.css";
 
 	let { children } = $props();
+
+	getLogger();
 
 	const global = getGlobal();
 	const request = await API.app.queries.request();

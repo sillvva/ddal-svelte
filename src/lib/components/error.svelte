@@ -1,8 +1,7 @@
 <script lang="ts">
-	import { browser, dev } from "$app/environment";
+	import { dev } from "$app/environment";
 	import { page } from "$app/state";
-	import { logClientError } from "$lib/remote/admin/actions.remote";
-	import { getAuth } from "$lib/stores.svelte";
+	import { getAuth, getLogger } from "$lib/stores.svelte";
 	import { omit } from "@sillvva/utils";
 	import { useOs } from "@svelteuidev/composables";
 	import SuperDebugRuned from "sveltekit-superforms/SuperDebug.svelte";
@@ -14,31 +13,11 @@
 
 	let { error, boundary }: Props = $props();
 
-	function hasKey<K extends string>(obj: unknown, key: K): obj is Record<K, unknown> {
-		return obj !== null && typeof obj === "object" && key in obj;
-	}
-
-	let message =
-		typeof error === "string"
-			? error
-			: hasKey(error, "message") && typeof error.message === "string"
-				? error.message
-				: "Something went wrong";
-
-	console.error(error);
-	if (browser && message !== "Something went wrong") {
-		logClientError({
-			message: message,
-			name: hasKey(error, "name") && typeof error.name === "string" ? error.name : undefined,
-			stack: hasKey(error, "stack") && typeof error.stack === "string" ? error.stack : undefined,
-			cause: hasKey(error, "cause") ? error.cause : undefined,
-			boundary
-		});
-	}
+	const os = useOs();
+	const logger = getLogger();
+	const err = logger.log(error, boundary);
 
 	let display = $state(!dev);
-
-	const os = useOs();
 </script>
 
 <svelte:boundary>
@@ -51,11 +30,11 @@
 		{/if}
 		<div class="alert alert-error mb-4 flex w-full max-w-3xl gap-4 shadow-lg">
 			<span class="iconify mdi--alert-circle max-xs:hidden size-6"></span>
-			<div class={["flex flex-1 gap-2", message.length >= 150 && "max-md:flex-col"]}>
+			<div class={["flex flex-1 gap-2", err.message.length >= 150 && "max-md:flex-col"]}>
 				<div class="flex flex-1 flex-col justify-center">
 					<h3 class="font-bold">Error!</h3>
 					<div class="whitespace-pre-line">
-						{message}
+						{err.message}
 					</div>
 				</div>
 				{#if !display}
@@ -68,12 +47,12 @@
 		{#if display}
 			{@const { user } = await getAuth()}
 			<div class="flex max-w-full flex-col gap-4">
-				{#if hasKey(error, "stack") && typeof error.stack === "string"}
-					<pre class="bg-base-200 w-full overflow-x-scroll rounded-lg p-4">{@html error.stack}</pre>
+				{#if err.stack}
+					<pre class="bg-base-200 w-full overflow-x-scroll rounded-lg p-4">{@html err.stack}</pre>
 				{/if}
 				<SuperDebugRuned
 					data={{
-						error: message,
+						error: err.message,
 						boundary,
 						...omit(page, ["error"]),
 						os,

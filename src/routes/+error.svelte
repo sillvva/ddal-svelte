@@ -1,9 +1,8 @@
 <script lang="ts">
 	import { browser, dev } from "$app/environment";
 	import { page } from "$app/state";
-	import { logClientError } from "$lib/remote/admin/actions.remote";
 	import { uuidV7 } from "$lib/schemas";
-	import { getAuth } from "$lib/stores.svelte";
+	import { getAuth, getLogger } from "$lib/stores.svelte";
 	import { useOs } from "@svelteuidev/composables";
 	import SuperDebugRuned from "sveltekit-superforms/SuperDebug.svelte";
 	import * as v from "valibot";
@@ -12,19 +11,9 @@
 	let display = $state(!dev);
 
 	const os = useOs();
+	const logger = getLogger();
 
-	$effect(() => {
-		if (!page.error) return;
-
-		console.error(page.error.message);
-		if (browser) {
-			logClientError({
-				message: page.error.message,
-				status: page.status,
-				boundary: "+error.svelte"
-			});
-		}
-	});
+	if (browser && page.error) logger.log(page.error, "+error.svelte");
 
 	const appRoutes = Object.keys(import.meta.glob("/src/routes/**/+page.svelte"))
 		.map((key) => key.replace(/\/src\/routes\/|\(\w+\)|\/?\+page\.svelte/g, ""))

@@ -6,7 +6,7 @@ import { type ErrorParams } from "$lib/server/effect/errors";
 import type { ParseMetadata } from "@sillvva/search";
 import { DrizzleSearchParser } from "@sillvva/search/drizzle";
 import { eq, sql } from "drizzle-orm";
-import { Data, Effect, Layer } from "effect";
+import { Data, DateTime, Effect, Layer } from "effect";
 import { isTupleOf } from "effect/Predicate";
 
 export class UserNotFoundError extends Data.TaggedError("UserNotFoundError")<ErrorParams> {
@@ -74,6 +74,46 @@ export class AdminService extends Effect.Service<AdminService>()("AdminService",
 			set: {
 				saveLog: Effect.fn("AdminService.set.saveLog")(function* (values) {
 					if (values.label.startsWith("RedirectError")) return values;
+
+					// Check if there's an existing record with the same label, routeId, and username in the last 5 seconds
+					const today = yield* DateTime.now;
+					const thirtySecondsAgo = today.pipe(DateTime.subtract({ seconds: 5 }));
+					const routeId = values.annotations.routeId;
+					const username = values.annotations.username;
+
+					if (!username) return values;
+
+					const whereConditions: Filter<"appLogs"> = {
+						label: { eq: values.label },
+						timestamp: { gte: DateTime.toDate(thirtySecondsAgo) },
+						RAW: (table, { and: andOp }) => {
+							const conditions: ReturnType<typeof sql>[] = [];
+
+							if (routeId !== null) {
+								conditions.push(sql`${table.annotations}->>'routeId' = ${routeId}`);
+							} else {
+								conditions.push(sql`${table.annotations}->>'routeId' IS NULL`);
+							}
+
+							if (username !== undefined) {
+								conditions.push(sql`${table.annotations}->>'username' = ${username}`);
+							} else {
+								conditions.push(sql`${table.annotations}->>'username' IS NULL`);
+							}
+
+							const result = andOp(...conditions);
+							return result ?? sql`1=1`;
+						}
+					};
+
+					const existingLog = yield* runQuery(
+						db.query.appLogs.findFirst({
+							where: whereConditions
+						})
+					);
+
+					// If a matching record exists, return it instead of inserting
+					if (existingLog) return existingLog;
 
 					return yield* runQuery(db.insert(appLogs).values([values]).returning()).pipe(
 						Effect.flatMap((logs) =>
