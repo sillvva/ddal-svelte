@@ -98,7 +98,10 @@ class Logger {
 
 		if (!browser) return err;
 		// Prevent logging the same error within 5 seconds
-		if (now - this._lastLog.timestamp < 5000 && message === this._lastLog.label) return err;
+		if (now - this._lastLog.timestamp < 5000 && message === this._lastLog.label) {
+			this._lastLog = { label: message, timestamp: now };
+			return err;
+		}
 
 		console.error(error);
 		if (message !== "Something went wrong") {
