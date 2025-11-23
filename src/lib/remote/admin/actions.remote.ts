@@ -16,6 +16,7 @@ export const deleteAppLog = guardedCommand(
 export const logClientError = guardedCommand(
 	v.object({
 		message: v.string(),
+		status: v.optional(v.number()),
 		name: v.optional(v.string()),
 		stack: v.optional(v.string()),
 		cause: v.optional(v.unknown()),

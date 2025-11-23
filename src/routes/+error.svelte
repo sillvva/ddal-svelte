@@ -1,6 +1,7 @@
 <script lang="ts">
-	import { dev } from "$app/environment";
+	import { browser, dev } from "$app/environment";
 	import { page } from "$app/state";
+	import { logClientError } from "$lib/remote/admin/actions.remote";
 	import { uuidV7 } from "$lib/schemas";
 	import { getAuth } from "$lib/stores.svelte";
 	import { useOs } from "@svelteuidev/composables";
@@ -11,6 +12,19 @@
 	let display = $state(!dev);
 
 	const os = useOs();
+
+	$effect(() => {
+		if (!page.error) return;
+
+		console.error(page.error.message);
+		if (browser) {
+			logClientError({
+				message: page.error.message,
+				status: page.status,
+				boundary: "+error.svelte"
+			});
+		}
+	});
 
 	const appRoutes = Object.keys(import.meta.glob("/src/routes/**/+page.svelte"))
 		.map((key) => key.replace(/\/src\/routes\/|\(\w+\)|\/?\+page\.svelte/g, ""))
@@ -47,11 +61,10 @@
 	<div class="flex flex-1 flex-col items-center justify-center p-4">
 		{#if !display}
 			<div class="font-vecna mb-12 flex flex-col items-center text-3xl font-bold sm:text-5xl md:text-6xl">
+				<img src="/images/confused-goblin.webp" alt="Error" class="mb-2 size-80 max-lg:size-65 max-sm:size-50" />
 				{#if page.status === 404}
-					<img src="/images/d4.webp" alt="404" class="mb-2 size-50 max-lg:size-40 max-sm:size-30" />
 					<h1>4D4: Not Found!</h1>
 				{:else}
-					<img src="/images/nat1.webp" alt="Error" class="mb-2 size-50 max-lg:size-40 max-sm:size-30" />
 					<h1>Rolled a Natural 1!</h1>
 				{/if}
 			</div>

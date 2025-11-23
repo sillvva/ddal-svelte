@@ -26,7 +26,7 @@
 				: "Something went wrong";
 
 	console.error(error);
-	if (browser) {
+	if (browser && message !== "Something went wrong") {
 		logClientError({
 			message: message,
 			name: hasKey(error, "name") && typeof error.name === "string" ? error.name : undefined,
@@ -45,7 +45,7 @@
 	<div class="flex flex-1 flex-col items-center justify-center p-4">
 		{#if !display}
 			<div class="font-vecna mb-12 flex flex-col items-center text-3xl font-bold sm:text-5xl md:text-6xl">
-				<img src="/images/nat1.webp" alt="Error" class="mb-2 size-50 max-lg:size-40 max-sm:size-30" />
+				<img src="/images/confused-goblin.webp" alt="Error" class="mb-2 size-80 max-lg:size-65 max-sm:size-50" />
 				<h1>Rolled a Natural 1!</h1>
 			</div>
 		{/if}
