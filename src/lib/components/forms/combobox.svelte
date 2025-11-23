@@ -3,8 +3,8 @@
 	import type { RemoteFormField } from "@sveltejs/kit";
 	import { Combobox } from "bits-ui";
 	import SuperDebugRuned from "sveltekit-superforms/SuperDebug.svelte";
-	import RemoteFieldMessage from "./remote-field-message.svelte";
-	import RemoteInput from "./remote-input.svelte";
+	import FieldMessage from "./field-message.svelte";
+	import Input from "./input.svelte";
 
 	type Item = {
 		value: string;
@@ -227,9 +227,9 @@
 			</button>
 		{/if}
 	</div>
-	<RemoteFieldMessage {name} type="select" {description} {issues} />
+	<FieldMessage {name} type="select" {description} {issues} />
 	{#if !isValueField}
-		<RemoteInput field={valueField} hidden />
+		<Input field={valueField} hidden />
 	{/if}
 </Combobox.Root>
 

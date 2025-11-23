@@ -1,9 +1,9 @@
 <script lang="ts">
 	import { goto } from "$app/navigation";
 	import Control from "$lib/components/forms/control.svelte";
+	import Input from "$lib/components/forms/input.svelte";
 	import RemoteForm from "$lib/components/forms/remote-form.svelte";
-	import RemoteInput from "$lib/components/forms/remote-input.svelte";
-	import RemoteSubmit from "$lib/components/forms/remote-submit.svelte";
+	import Submit from "$lib/components/forms/submit.svelte";
 	import Head from "$lib/components/head.svelte";
 	import NavMenu from "$lib/components/nav-menu.svelte";
 	import { successToast } from "$lib/factories.svelte.js";
@@ -34,15 +34,15 @@
 
 	<RemoteForm {schema} {form} {data} initialErrors>
 		{#snippet children({ fields })}
-			<RemoteInput field={fields.id} type="hidden" />
+			<Input field={fields.id} type="hidden" />
 			<Control class="col-span-12 sm:col-span-6">
-				<RemoteInput field={fields.name} label="DM Name" required />
+				<Input field={fields.name} label="DM Name" required />
 			</Control>
 			<Control class="col-span-12 sm:col-span-6">
-				<RemoteInput field={fields.DCI} label="DCI" />
+				<Input field={fields.DCI} label="DCI" />
 			</Control>
 			<div class="col-span-12 my-4 flex justify-center">
-				<RemoteSubmit>Save DM</RemoteSubmit>
+				<Submit>Save DM</Submit>
 			</div>
 		{/snippet}
 	</RemoteForm>

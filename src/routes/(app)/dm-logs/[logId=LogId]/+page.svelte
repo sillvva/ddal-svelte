@@ -1,14 +1,14 @@
 <script lang="ts">
 	import Error from "$lib/components/error.svelte";
+	import AddDropItems from "$lib/components/forms/add-drop-items.svelte";
+	import Combobox from "$lib/components/forms/combobox.svelte";
 	import Control from "$lib/components/forms/control.svelte";
-	import GenericInput from "$lib/components/forms/generic-input.svelte";
-	import RemoteAddDropItems from "$lib/components/forms/remote-add-drop-items.svelte";
-	import RemoteCombobox from "$lib/components/forms/remote-combobox.svelte";
-	import RemoteDateInput from "$lib/components/forms/remote-date-input.svelte";
+	import DateInput from "$lib/components/forms/date-input.svelte";
+	import InputWrapper from "$lib/components/forms/input-wrapper.svelte";
+	import Input from "$lib/components/forms/input.svelte";
+	import MarkdownInput from "$lib/components/forms/md-input.svelte";
 	import RemoteForm from "$lib/components/forms/remote-form.svelte";
-	import RemoteInput from "$lib/components/forms/remote-input.svelte";
-	import RemoteMdInput from "$lib/components/forms/remote-md-input.svelte";
-	import RemoteSubmit from "$lib/components/forms/remote-submit.svelte";
+	import Submit from "$lib/components/forms/submit.svelte";
 	import Head from "$lib/components/head.svelte";
 	import NavMenu from "$lib/components/nav-menu.svelte";
 	import * as API from "$lib/remote";
@@ -52,15 +52,15 @@
 	{#if auth.user}
 		<RemoteForm {schema} {form} {data} {initialErrors}>
 			{#snippet children({ fields })}
-				<RemoteInput field={fields.id} type="hidden" />
+				<Input field={fields.id} type="hidden" />
 				<Control class="col-span-12 sm:col-span-6 lg:col-span-3">
-					<RemoteInput field={fields.name} label="Title" required />
+					<Input field={fields.name} label="Title" required />
 				</Control>
 				<Control class="col-span-12 sm:col-span-6 lg:col-span-3">
-					<RemoteDateInput field={fields.date} label="Date" />
+					<DateInput field={fields.date} label="Date" />
 				</Control>
 				<Control class="col-span-12 sm:col-span-6 lg:col-span-3">
-					<RemoteCombobox
+					<Combobox
 						label="Assigned Character"
 						valueField={fields.characterId}
 						inputField={fields.characterName}
@@ -76,10 +76,10 @@
 					/>
 				</Control>
 				<Control class="col-span-12 sm:col-span-6 lg:col-span-3">
-					<RemoteDateInput field={fields.appliedDate} label="Assigned Date" min={data.date} required={!!data.characterId} />
+					<DateInput field={fields.appliedDate} label="Assigned Date" min={data.date} required={!!data.characterId} />
 				</Control>
 				<Control class="col-span-12 sm:col-span-4">
-					<GenericInput labelFor="season" label="Season">
+					<InputWrapper type="select" labelFor="season" label="Season">
 						<select
 							id="season"
 							bind:value={season}
@@ -95,38 +95,38 @@
 							<option value={8}>Season 8 (ACP/TCP)</option>
 							<option value={1}>Season 1-7 (Experience)</option>
 						</select>
-					</GenericInput>
+					</InputWrapper>
 				</Control>
 				{#if season === 1}
 					<Control class="col-span-12 sm:col-span-4">
-						<RemoteInput field={fields.experience} type="number" label="Experience" />
+						<Input field={fields.experience} type="number" label="Experience" />
 					</Control>
 				{/if}
 				{#if season === 9}
 					<Control class="col-span-12 sm:col-span-4">
-						<RemoteInput field={fields.level} type="number" label="Level" />
+						<Input field={fields.level} type="number" label="Level" />
 					</Control>
 				{/if}
 				{#if season === 8}
 					<Control class="col-span-6 sm:col-span-2">
-						<RemoteInput field={fields.acp} type="number" label="ACP" />
+						<Input field={fields.acp} type="number" label="ACP" />
 					</Control>
 					<Control class="col-span-6 sm:col-span-2">
-						<RemoteInput field={fields.tcp} type="number" label="TCP" />
+						<Input field={fields.tcp} type="number" label="TCP" />
 					</Control>
 				{/if}
 				<Control class="col-span-6 sm:col-span-2">
-					<RemoteInput field={fields.gold} type="number" label="Gold" />
+					<Input field={fields.gold} type="number" label="Gold" />
 				</Control>
 				<Control class="col-span-6 sm:col-span-2">
-					<RemoteInput field={fields.dtd} type="number" label="Downtime" />
+					<Input field={fields.dtd} type="number" label="Downtime" />
 				</Control>
 				<Control class="col-span-12">
-					<RemoteMdInput field={fields.description} name="notes" maxLength={5000} maxRows={20} preview />
+					<MarkdownInput field={fields.description} name="notes" maxLength={5000} maxRows={20} preview />
 				</Control>
-				<RemoteAddDropItems {fields} bind:log={data} logId={log.id}>
-					<RemoteSubmit>Save Log</RemoteSubmit>
-				</RemoteAddDropItems>
+				<AddDropItems {fields} bind:log={data} logId={log.id}>
+					<Submit>Save Log</Submit>
+				</AddDropItems>
 			{/snippet}
 		</RemoteForm>
 	{/if}

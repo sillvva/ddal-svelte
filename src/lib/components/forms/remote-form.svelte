@@ -59,7 +59,7 @@
 	let lastIssues = $state.raw<RemoteFormIssue[] | undefined>(fields.allIssues());
 
 	const initial = $state.snapshot(data);
-	let tainted = $derived(!deepEqual(initial, form.fields.value()));
+	let tainted = $derived(!deepEqual(initial, fields.value()));
 
 	const debouncedValidate = debounce(validate, 300);
 

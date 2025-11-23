@@ -2,9 +2,9 @@
 	import type { ItemSchema, ItemSchemaIn, LogSchemaIn } from "$lib/schemas";
 	import type { RemoteFormField, RemoteFormFields } from "@sveltejs/kit";
 	import Control from "./control.svelte";
-	import RemoteGenericInput from "./remote-generic-input.svelte";
-	import RemoteInput from "./remote-input.svelte";
-	import RemoteMdInput from "./remote-md-input.svelte";
+	import InputWrapper from "./input-wrapper.svelte";
+	import Input from "./input.svelte";
+	import MarkdownInput from "./md-input.svelte";
 
 	type RequiredFields = "magicItemsGained" | "magicItemsLost" | "storyAwardsGained" | "storyAwardsLost";
 
@@ -51,15 +51,15 @@
 			<h4 class="text-xl">Add {title}</h4>
 			<div class="flex gap-4">
 				<Control class="flex-1">
-					<RemoteInput field={card.field.id} type="hidden" />
-					<RemoteInput field={card.field.name} type="text" label="Name" required />
+					<Input field={card.field.id} type="hidden" />
+					<Input field={card.field.name} type="text" label="Name" required />
 				</Control>
 				<button type="button" class="btn btn-error mt-10" onclick={(ev) => ondelete(ev)} aria-label="Delete Entry">
 					<span class="iconify mdi--trash-can size-6"></span>
 				</button>
 			</div>
 			<Control>
-				<RemoteMdInput field={card.field.description} maxRows={8} maxLength={2000} preview />
+				<MarkdownInput field={card.field.description} maxRows={8} maxLength={2000} preview />
 			</Control>
 		</div>
 	</div>
@@ -69,7 +69,7 @@
 			<h4 class="text-xl">Drop {title}</h4>
 			<div class="flex gap-4">
 				<Control class="flex-1">
-					<RemoteGenericInput field={card.field} as="select" label="Select an Item">
+					<InputWrapper field={card.field} as="select" label="Select an Item">
 						<select {...card.field.as("select")} id={card.field.as("select").name} class="select select-bordered w-full">
 							{#each card.items.filter((item) => item.id === card.field.value() || !arrValue.includes(item.id)) as item (item.id)}
 								<option value={item.id}>
@@ -77,7 +77,7 @@
 								</option>
 							{/each}
 						</select>
-					</RemoteGenericInput>
+					</InputWrapper>
 				</Control>
 				<button type="button" class="btn btn-error mt-10" onclick={(ev) => ondelete(ev)} aria-label="Delete Entry">
 					<span class="iconify mdi--trash-can size-6"></span>

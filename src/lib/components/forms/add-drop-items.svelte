@@ -5,7 +5,7 @@
 	import type { RemoteFormFields } from "@sveltejs/kit";
 	import type { Snippet } from "svelte";
 	import { v7 } from "uuid";
-	import RemoteEntityCard from "./remote-entity-card.svelte";
+	import EntityCard from "./entity-card.svelte";
 
 	type RequiredFields = "magicItemsGained" | "magicItemsLost" | "storyAwardsGained" | "storyAwardsLost";
 
@@ -95,10 +95,10 @@
 	<div class="col-span-12 grid grid-cols-12 gap-4 dark:text-white">
 		{#each cards as [entity, items, gainedField, lostField], index (index)}
 			{#each gainedField.value() as item, index (item.id)}
-				<RemoteEntityCard bind:log field={gainedField[index]!} type="add" {entity} />
+				<EntityCard bind:log field={gainedField[index]!} type="add" {entity} />
 			{/each}
 			{#each lostField.value() as id, index (id)}
-				<RemoteEntityCard bind:log field={lostField[index]!} type="drop" {entity} {items} />
+				<EntityCard bind:log field={lostField[index]!} type="drop" {entity} {items} />
 			{/each}
 		{/each}
 	</div>
