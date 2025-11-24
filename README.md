@@ -13,43 +13,39 @@ A SvelteKit 5 application for managing D&D Adventurers League campaigns, with lo
 
 1. **Clone the repository:**
 
-   ```bash
+```bash
 git clone <your-repo-url>
 cd ddal-svelte
-   ```
+```
 
 2. **Copy and configure your environment variables:**
 
-   ```bash
+```bash
 cp .env.example .env
 # Edit .env to match your local setup (database credentials, API keys, etc.)
-   ```
-   > The `.env` file is required for local development. See `.env.example` for required variables.
+```
+
+> The `.env` file is required for local development. See `.env.example` for required variables.
 
 3. **Install dependencies:**
 
-   Using Bun (recommended):
-   ```bash
-bun install
-   ```
-   Or with pnpm:
-   ```bash
+```bash
 corepack pnpm install
-   ```
-   Or with npm:
-   ```bash
+bun install
 npm install
-   ```
+```
 
 ## Running Supabase Locally
 
 By default, the dev script will start Supabase and the SvelteKit dev server.
 
 - **With Supabase CLI (recommended):**
-  ```bash
+
+```bash
 supabase start
-  ```
-  This will spin up the local database and Supabase services using Docker.
+```
+
+This will spin up the local database and Supabase services using Docker.
 
 - **With Docker Compose (alternative):**
   If you want to run Supabase manually, follow the [Supabase Docker quickstart](https://supabase.com/docs/guides/self-hosting/docker) and ensure your `.env` and `supabase/config.toml` are configured.
@@ -59,7 +55,7 @@ supabase start
 Start the local dev server (and Supabase):
 
 ```bash
-corepack pnpm dev
+pnpm dev
 # or
 bun run dev
 # or
@@ -99,6 +95,7 @@ corepack pnpm format
 ```
 
 ## Notes
+
 - The project uses [Drizzle ORM](https://orm.drizzle.team/) for database access.
 - See `supabase/` for database schema and migrations.
 - For more details, check the scripts in `package.json`.
