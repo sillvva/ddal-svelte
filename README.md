@@ -21,7 +21,9 @@ cd ddal-svelte
 2. **Copy and configure your environment variables:**
 
 ```bash
-cp .env.example .env
+cp .env.example.local .env.local
+cp .env.example.development.local .env.development.local
+cp .env.example.production.local .env.production.local
 # Edit .env to match your local setup (database credentials, API keys, etc.)
 ```
 
@@ -30,7 +32,7 @@ cp .env.example .env
 3. **Install dependencies:**
 
 ```bash
-corepack pnpm install
+pnpm install
 bun install
 npm install
 ```
@@ -70,7 +72,7 @@ npm run dev
 To create a production build:
 
 ```bash
-corepack pnpm build
+pnpm build
 # or
 bun run build
 # or
@@ -80,7 +82,7 @@ npm run build
 Preview the production build:
 
 ```bash
-corepack pnpm preview
+pnpm preview
 # or
 bun run preview
 # or
@@ -90,8 +92,8 @@ npm run preview
 ## Linting & Formatting
 
 ```bash
-corepack pnpm lint
-corepack pnpm format
+pnpm lint
+pnpm format
 ```
 
 ## Notes

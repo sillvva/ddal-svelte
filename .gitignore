@@ -5,7 +5,9 @@ node_modules
 /package
 .env
 .env.*
-!.env.example
+!.env.example.local
+!.env.example.development.local
+!.env.example.production.local
 vite.config.js.timestamp-*
 vite.config.ts.timestamp-*
 replica.db*
