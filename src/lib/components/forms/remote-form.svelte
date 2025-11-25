@@ -29,7 +29,7 @@
 			readonly error?: unknown;
 		}) => Awaitable<void>;
 		onissues?: (ctx: { readonly issues: RemoteFormIssue[] }) => Awaitable<void>;
-		children?: Snippet<[{ fields: Form["fields"] }]>;
+		children?: Snippet<[{ fields: Form["fields"]; dirty: boolean; touched: boolean }]>;
 	}
 
 	let {
@@ -59,7 +59,8 @@
 	let lastIssues = $state.raw<RemoteFormIssue[] | undefined>(fields.allIssues());
 
 	const initial = $state.snapshot(data);
-	let tainted = $derived(!deepEqual(initial, fields.value()));
+	let dirty = $derived(!deepEqual(initial, fields.value()));
+	let touched = $state.raw(false);
 
 	const debouncedValidate = debounce(validate, 300);
 
@@ -90,7 +91,7 @@
 	});
 
 	beforeNavigate((ev) => {
-		if ((tainted || issues) && !confirm("You have unsaved changes. Are you sure you want to leave?")) {
+		if ((dirty || issues) && !confirm("You have unsaved changes. Are you sure you want to leave?")) {
 			return ev.cancel();
 		}
 	});
@@ -106,12 +107,12 @@
 
 	<form
 		{...form.enhance(async ({ submit, form: formEl, data }) => {
-			const bf = !onsubmit || (await onsubmit({ tainted, form: formEl, data }));
+			const bf = !onsubmit || (await onsubmit({ tainted: dirty, form: formEl, data }));
 			if (!bf) return;
 
-			let wasTainted = tainted;
+			let wasDirty = dirty;
 			try {
-				tainted = false;
+				dirty = false;
 				await submit();
 
 				const issues = fields.allIssues();
@@ -122,14 +123,14 @@
 				if (success) {
 					successToast(`${fields.name?.value() || "Form"} saved successfully`);
 				} else {
-					tainted = wasTainted;
+					dirty = wasDirty;
 					await focusInvalid();
 					onissues?.({ issues });
 				}
 			} catch (error) {
 				unknownErrorToast(error || "Oh no! Something went wrong");
 				onresult?.({ success: false, error });
-				tainted = wasTainted;
+				dirty = wasDirty;
 			}
 		})}
 		{...rest}
@@ -140,8 +141,8 @@
 			rest.oninput?.(ev);
 		}}
 	>
-		<fieldset class="grid grid-cols-12 gap-4" disabled={!!$effect.pending()}>
-			{@render children?.({ fields: form.fields })}
+		<fieldset class="grid grid-cols-12 gap-4" disabled={!!$effect.pending()} onfocusin={() => (touched = true)}>
+			{@render children?.({ fields: form.fields, dirty, touched })}
 		</fieldset>
 	</form>
 
@@ -149,7 +150,8 @@
 		<SuperDebugRuned
 			data={{
 				action: form.action,
-				tainted,
+				dirty,
+				touched,
 				data: fields.value(),
 				result,
 				issues: fields.allIssues()
