@@ -1,77 +1,80 @@
 <script lang="ts">
-	import type { ItemSchema, ItemSchemaIn, LogSchemaIn } from "$lib/schemas";
-	import type { RemoteFormField, RemoteFormFields } from "@sveltejs/kit";
+	import type { DmLogSchemaIn, ItemSchema, LogSchemaIn } from "$lib/schemas";
+	import type { RemoteFormFields } from "@sveltejs/kit";
 	import Control from "./control.svelte";
 	import InputWrapper from "./input-wrapper.svelte";
 	import Input from "./input.svelte";
 	import MarkdownInput from "./md-input.svelte";
 
-	type RequiredFields = "magicItemsGained" | "magicItemsLost" | "storyAwardsGained" | "storyAwardsLost";
-
 	interface BaseProps {
 		entity: "magicItems" | "storyAwards";
-		log: Omit<LogSchemaIn, "dm"> & Required<Pick<LogSchemaIn, RequiredFields>>;
+		fields: RemoteFormFields<LogSchemaIn> | RemoteFormFields<DmLogSchemaIn>;
+		index: number;
 	}
 
 	interface AddProps extends BaseProps {
 		type: "add";
-		field: RemoteFormFields<ItemSchemaIn>;
 	}
 
 	interface DropProps extends BaseProps {
 		type: "drop";
-		field: RemoteFormField<string>;
 		items: ItemSchema[];
 	}
 
 	type Props = AddProps | DropProps;
 
-	let { entity, log = $bindable(), ...card }: Props = $props();
+	let { entity, fields, index, ...card }: Props = $props();
 
 	const title = entity === "magicItems" ? "Magic Item" : "Story Award";
 
-	const arrValue = $derived(card.type === "drop" ? (entity === "magicItems" ? log.magicItemsLost : log.storyAwardsLost) : []);
+	const arrValue = $derived(
+		card.type === "drop" ? (entity === "magicItems" ? fields.magicItemsLost.value() : fields.storyAwardsLost.value()) : []
+	);
+	const gainedField = $derived(entity === "magicItems" ? fields.magicItemsGained[index] : fields.storyAwardsGained[index]);
+	const lostField = $derived(entity === "magicItems" ? fields.magicItemsLost[index] : fields.storyAwardsLost[index]);
 
 	const ondelete = (ev: Event) => {
 		ev.preventDefault();
-		if (card.type === "add") {
-			if (entity === "magicItems") log.magicItemsGained = log.magicItemsGained.filter((it) => it.id !== card.field.id.value());
-			else log.storyAwardsGained = log.storyAwardsGained.filter((it) => it.id !== card.field.id.value());
+		if (card.type === "add" && gainedField) {
+			if (entity === "magicItems")
+				fields.magicItemsGained.set(fields.magicItemsGained.value().filter((it) => it.id !== gainedField.id.value()));
+			else fields.storyAwardsGained.set(fields.storyAwardsGained.value().filter((it) => it.id !== gainedField.id.value()));
 		}
-		if (card.type === "drop") {
-			if (entity === "magicItems") log.magicItemsLost = log.magicItemsLost.filter((it) => it !== card.field.value());
-			else log.storyAwardsLost = log.storyAwardsLost.filter((it) => it !== card.field.value());
+		if (card.type === "drop" && lostField) {
+			if (entity === "magicItems")
+				fields.magicItemsLost.set(fields.magicItemsLost.value().filter((it) => it !== lostField.value()));
+			else fields.storyAwardsLost.set(fields.storyAwardsLost.value().filter((it) => it !== lostField.value()));
 		}
 	};
 </script>
 
-{#if card.type === "add"}
+{#if card.type === "add" && gainedField}
 	<div class="card bg-base-300/70 col-span-12 shadow-xl sm:col-span-6">
 		<div class="card-body flex flex-col">
 			<h4 class="text-xl">Add {title}</h4>
 			<div class="flex gap-4">
 				<Control class="flex-1">
-					<Input field={card.field.id} type="hidden" />
-					<Input field={card.field.name} type="text" label="Name" required />
+					<Input field={gainedField.id} type="hidden" />
+					<Input field={gainedField.name} type="text" label="Name" required />
 				</Control>
 				<button type="button" class="btn btn-error mt-10" onclick={(ev) => ondelete(ev)} aria-label="Delete Entry">
 					<span class="iconify mdi--trash-can size-6"></span>
 				</button>
 			</div>
 			<Control>
-				<MarkdownInput field={card.field.description} maxRows={8} maxLength={2000} preview />
+				<MarkdownInput field={gainedField.description} maxRows={8} maxLength={2000} preview />
 			</Control>
 		</div>
 	</div>
-{:else if card.type === "drop"}
+{:else if card.type === "drop" && lostField}
 	<div class="card bg-base-300/70 col-span-12 shadow-xl sm:col-span-6">
 		<div class="card-body flex flex-col">
 			<h4 class="text-xl">Drop {title}</h4>
 			<div class="flex gap-4">
 				<Control class="flex-1">
-					<InputWrapper field={card.field} as="select" label="Select an Item">
-						<select {...card.field.as("select")} id={card.field.as("select").name} class="select select-bordered w-full">
-							{#each card.items.filter((item) => item.id === card.field.value() || !arrValue.includes(item.id)) as item (item.id)}
+					<InputWrapper field={lostField} as="select" label="Select an Item">
+						<select {...lostField.as("select")} id={lostField.as("select").name} class="select select-bordered w-full">
+							{#each card.items.filter((item) => item.id === lostField.value() || !arrValue.includes(item.id)) as item (item.id)}
 								<option value={item.id}>
 									{item.name}
 								</option>
@@ -84,7 +87,7 @@
 				</button>
 			</div>
 			<div class="text-sm">
-				{card.items.find((item) => card.field.value() === item.id)?.description || ""}
+				{card.items.find((item) => lostField.value() === item.id)?.description || ""}
 			</div>
 		</div>
 	</div>

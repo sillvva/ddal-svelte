@@ -25,7 +25,9 @@
 	const firstLog = $derived(page.url.searchParams.get("firstLog") === "true");
 	const initialErrors = $derived(params.logId !== "new");
 	// svelte-ignore await_waterfall
-	const log = $derived(await API.logs.forms.character({ characterId: params.characterId, logId: params.logId, firstLog }));
+	const { log, magicItems, storyAwards } = $derived(
+		await API.logs.forms.character({ characterId: params.characterId, logId: params.logId, firstLog })
+	);
 
 	let data = $derived.by(() => {
 		const state = $state(log);
@@ -35,8 +37,6 @@
 </script>
 
 <svelte:boundary>
-	{#snippet failed(error)}<Error {error} boundary="edit-character-log" />{/snippet}
-
 	{@const auth = await getAuth()}
 	{@const user = auth.user!}
 	{@const character = await API.characters.queries.get({ param: params.characterId })}
@@ -81,41 +81,44 @@
 			</Control>
 			{#if data.type === "game"}
 				{#if !firstLog}
-					{@const dms = await API.dms.queries.getAllWithoutLogs()}
-					<Control class="col-span-12 sm:col-span-6">
-						<Combobox
-							label="DM Name"
-							valueField={fields.dm.id}
-							inputField={fields.dm.name}
-							values={dms.map((dm) => ({
-								value: dm.id,
-								label: dm.name,
-								itemLabel: dm.name + (dm.isUser ? ` (Me)` : "") + (dm.DCI ? ` (${dm.DCI})` : "")
-							})) || []}
-							allowCustom
-							onselect={({ selected }) => {
-								const id = (selected?.value || v7()) as DungeonMasterId;
-								const name = selected?.label;
-								data.dm = dms.find((dm) => dm.id === id) || (name ? { ...data.dm, id, name } : defaultDM(user.id));
-							}}
-							clearable
-							onclear={() => (data.dm = defaultDM(user.id))}
-							link={data.dm.id ? `/dms/${data.dm.id}` : ""}
-							placeholder={dms.find((dm) => dm.isUser)?.name || user.name}
-						/>
-					</Control>
-					<Control class="col-span-12 sm:col-span-6">
-						<Input
-							field={fields.dm.DCI}
-							type="text"
-							disabled={!data.dm.name}
-							placeholder={data.dm.name ? undefined : dms.find((dm) => dm.isUser)?.DCI}
-							label="DM DCI"
-						/>
-						{#if !data.dm.name}
-							<Input field={fields.dm.DCI} hidden />
-						{/if}
-					</Control>
+					<svelte:boundary>
+						{#snippet failed(error)}<Error {error} boundary="get-dms" />{/snippet}
+						{@const dms = await API.dms.queries.getAllWithoutLogs()}
+						<Control class="col-span-12 sm:col-span-6">
+							<Combobox
+								label="DM Name"
+								valueField={fields.dm.id}
+								inputField={fields.dm.name}
+								values={dms.map((dm) => ({
+									value: dm.id,
+									label: dm.name,
+									itemLabel: dm.name + (dm.isUser ? ` (Me)` : "") + (dm.DCI ? ` (${dm.DCI})` : "")
+								})) || []}
+								allowCustom
+								onselect={({ selected }) => {
+									const id = (selected?.value || v7()) as DungeonMasterId;
+									const name = selected?.label;
+									data.dm = dms.find((dm) => dm.id === id) || (name ? { ...data.dm, id, name } : defaultDM(user.id));
+								}}
+								clearable
+								onclear={() => (data.dm = defaultDM(user.id))}
+								link={data.dm.id ? `/dms/${data.dm.id}` : ""}
+								placeholder={dms.find((dm) => dm.isUser)?.name || user.name}
+							/>
+						</Control>
+						<Control class="col-span-12 sm:col-span-6">
+							<Input
+								field={fields.dm.DCI}
+								type="text"
+								disabled={!data.dm.name}
+								placeholder={data.dm.name ? undefined : dms.find((dm) => dm.isUser)?.DCI}
+								label="DM DCI"
+							/>
+							{#if !data.dm.name}
+								<Input field={fields.dm.DCI} hidden />
+							{/if}
+						</Control>
+					</svelte:boundary>
 				{:else}
 					<Input field={fields.dm.id} type="hidden" />
 					<Input field={fields.dm.name} hidden />
@@ -183,7 +186,7 @@
 			<Control class="col-span-12 w-full">
 				<MarkdownInput field={fields.description} name="notes" maxRows={20} maxLength={5000} preview />
 			</Control>
-			<AddDropItems {fields} bind:log={data} characterId={log.characterId} logId={log.id}>
+			<AddDropItems {fields} {magicItems} {storyAwards}>
 				<Submit>Save Log</Submit>
 			</AddDropItems>
 		{/snippet}

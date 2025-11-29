@@ -1,6 +1,6 @@
 import { getRequestEvent, query } from "$app/server";
 import { defaultCharacter, getItemEntities } from "$lib/entities";
-import { characterIdParamSchema, characterIdSchema, logIdSchema } from "$lib/schemas";
+import { characterIdParamSchema, characterIdSchema, logIdParamSchema } from "$lib/schemas";
 import { RedirectError } from "$lib/server/effect/errors";
 import { guardedQuery } from "$lib/server/effect/remote";
 import { run } from "$lib/server/effect/runtime";
@@ -46,15 +46,14 @@ export const get = query(
 export const getItems = guardedQuery(
 	v.object({
 		characterId: v.optional(characterIdSchema),
-		logId: logIdSchema
+		logId: logIdParamSchema
 	}),
 	function* (input) {
+		if (input.logId === "new") return { magicItems: [], storyAwards: [] };
 		if (!input.characterId) return { magicItems: [], storyAwards: [] };
 
 		const Characters = yield* CharacterService;
 		const character = yield* Characters.get.one(input.characterId);
-		const itemEntities = getItemEntities(character, { excludeDropped: true, lastLogId: input.logId });
-
-		return { magicItems: itemEntities.magicItems, storyAwards: itemEntities.storyAwards };
+		return getItemEntities(character, { excludeDropped: true, lastLogId: input.logId });
 	}
 );

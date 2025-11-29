@@ -18,6 +18,7 @@ import { omit } from "@sillvva/utils";
 import { invalid, redirect } from "@sveltejs/kit";
 import { Effect } from "effect";
 import * as v from "valibot";
+import { getItems } from "../characters/queries.remote";
 
 const characterLogFormSchema = v.object({
 	characterId: characterIdParamSchema,
@@ -30,13 +31,14 @@ export const character = guardedQuery(characterLogFormSchema, function* (input, 
 	const Characters = yield* CharacterService;
 
 	if (input.characterId === "new") redirect(302, "/characters/new/edit");
+	const characterId = input.characterId;
 
 	const logId = input.logId;
 	const logData = logId !== "new" ? yield* Logs.get.one(logId, user.id) : undefined;
 	const log = logData
 		? logDataToSchema(user.id, logData)
 		: defaultLogSchema(user.id, {
-				character: yield* Characters.get.one(input.characterId, false),
+				character: yield* Characters.get.one(characterId, false),
 				defaults: input.firstLog ? { name: "Character Creation" } : undefined
 			});
 
@@ -45,11 +47,17 @@ export const character = guardedQuery(characterLogFormSchema, function* (input, 
 		if (log.isDmLog) return yield* new RedirectError({ message: "Redirecting to DM log", redirectTo: `/dm-logs/${log.id}` });
 	}
 
+	const { magicItems, storyAwards } = yield* Effect.promise(() => getItems({ logId, characterId }));
+
 	return {
-		...log,
-		characterId: input.characterId,
-		date: log.date.getTime(),
-		appliedDate: log.appliedDate?.getTime() || 0
+		log: {
+			...log,
+			characterId,
+			date: log.date.getTime(),
+			appliedDate: log.appliedDate?.getTime() || 0
+		},
+		magicItems,
+		storyAwards
 	};
 });
 
