@@ -38,7 +38,7 @@ export const character = guardedQuery(characterLogFormSchema, function* (input, 
 	const log = logData
 		? logDataToSchema(user.id, logData)
 		: defaultLogSchema(user.id, {
-				character: omit(character, ["logs"]),
+				character,
 				defaults: input.firstLog ? { name: "Character Creation" } : undefined
 			});
 
