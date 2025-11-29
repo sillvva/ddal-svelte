@@ -7,11 +7,11 @@ import { isValidUrl } from "$lib/server/effect/util";
 import type { StandardSchemaV1 } from "@standard-schema/spec";
 import { invalid, redirect } from "@sveltejs/kit";
 import { Effect } from "effect";
-import { get as getCharacter } from "./queries.remote";
+import * as queries from "./queries.remote";
 
 export const get = guardedQuery(characterIdParamSchema, function* (input, { event }) {
 	const firstLog = event.locals.app.characters.firstLog;
-	const character = yield* Effect.promise(() => getCharacter({ param: input }));
+	const character = yield* Effect.promise(() => queries.get({ param: input }));
 
 	return {
 		id: character.id,
