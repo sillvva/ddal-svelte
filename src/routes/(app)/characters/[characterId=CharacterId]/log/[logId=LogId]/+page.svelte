@@ -47,7 +47,7 @@
 
 <svelte:boundary>
 	{#snippet failed(error)}<Error {error} boundary="edit-character-log" />{/snippet}
-	<Head title={log.name || "New Log"} />
+	<Head title={`${log.name || "New Log"} - ${character.name}`} />
 
 	<NavMenu
 		crumbs={[
