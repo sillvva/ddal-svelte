@@ -4,12 +4,20 @@ import type { ExtendedLogData, FullLogData, LogData, LogSummaryData } from "$lib
 import { sorter } from "@sillvva/utils";
 import { v7 } from "uuid";
 import { BLANK_CHARACTER, PlaceholderName } from "./constants";
-import { type CharacterId, type DungeonMasterId, type LocalsUser, type LogId, type LogSchema, type UserId } from "./schemas";
+import {
+	type CharacterId,
+	type DungeonMasterId,
+	type LocalsUser,
+	type LogId,
+	type LogIdParam,
+	type LogSchema,
+	type UserId
+} from "./schemas";
 
 export function getItemEntities(
 	character: FullCharacterData,
 	options?: {
-		lastLogId?: LogId;
+		lastLogId?: LogIdParam;
 		lastLogDate?: string;
 		excludeDropped?: boolean;
 	}
@@ -17,6 +25,9 @@ export function getItemEntities(
 	const { lastLogId = "", lastLogDate = "", excludeDropped = false } = options || {};
 	const magicItems: MagicItem[] = [];
 	const storyAwards: StoryAward[] = [];
+
+	if (lastLogId === "new") return { magicItems: [], storyAwards: [] };
+
 	let lastLog = false;
 	character.logs
 		.toSorted((a, b) => sorter(a.date, b.date))
