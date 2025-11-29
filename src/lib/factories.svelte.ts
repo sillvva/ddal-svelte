@@ -8,6 +8,7 @@ import { isHttpError } from "@sveltejs/kit";
 import { Duration } from "effect";
 import escapeRegex from "regexp.escape";
 import { createHighlighter } from "shiki";
+import { getContext, hasContext, setContext } from "svelte";
 import { toast } from "svelte-sonner";
 import { SvelteMap } from "svelte/reactivity";
 import type { SearchData } from "./remote/command";
@@ -426,4 +427,16 @@ export class EntitySearchFactory<
 			})
 			.filter(isDefined);
 	}
+}
+
+export function createContext<T>(createDefault?: () => T): [() => T, (context: T) => T] {
+	const key = Symbol("context");
+	return [
+		() => {
+			if (hasContext(key)) return getContext(key);
+			if (createDefault) return setContext(key, createDefault());
+			throw new Error("Context not found");
+		},
+		(context) => setContext(key, context)
+	];
 }
