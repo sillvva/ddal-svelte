@@ -1,6 +1,5 @@
-import { defaultLogSchema, getItemEntities, logDataToSchema } from "$lib/entities";
+import { defaultLogSchema, logDataToSchema } from "$lib/entities";
 import {
-	characterIdParamSchema,
 	characterIdSchema,
 	characterLogSchema,
 	dMLogSchema,
@@ -20,25 +19,25 @@ import { Effect } from "effect";
 import * as v from "valibot";
 
 const characterLogFormSchema = v.object({
-	characterId: characterIdParamSchema,
+	character: v.object({
+		id: characterIdSchema,
+		name: v.string()
+	}),
 	logId: logIdParamSchema,
 	firstLog: v.optional(v.boolean(), false)
 });
 
 export const character = guardedQuery(characterLogFormSchema, function* (input, { user }) {
 	const Logs = yield* LogService;
-	const Characters = yield* CharacterService;
 
-	if (input.characterId === "new") redirect(302, "/characters/new/edit");
-	const characterId = input.characterId;
-	const character = yield* Characters.get.one(characterId);
+	if (input.character.id === "new") redirect(302, "/characters/new/edit");
 
 	const logId = input.logId;
 	const logData = logId !== "new" ? yield* Logs.get.one(logId, user.id) : undefined;
 	const log = logData
 		? logDataToSchema(user.id, logData)
 		: defaultLogSchema(user.id, {
-				character,
+				character: input.character,
 				defaults: input.firstLog ? { name: "Character Creation" } : undefined
 			});
 
@@ -47,17 +46,11 @@ export const character = guardedQuery(characterLogFormSchema, function* (input, 
 		if (log.isDmLog) return yield* new RedirectError({ message: "Redirecting to DM log", redirectTo: `/dm-logs/${log.id}` });
 	}
 
-	const { magicItems, storyAwards } = getItemEntities(character, { excludeDropped: true, lastLogId: logId });
-
 	return {
-		log: {
-			...log,
-			characterId,
-			date: log.date.getTime(),
-			appliedDate: log.appliedDate?.getTime() || 0
-		},
-		magicItems,
-		storyAwards
+		...log,
+		characterId: input.character.id,
+		date: log.date.getTime(),
+		appliedDate: log.appliedDate?.getTime() || 0
 	};
 });
 

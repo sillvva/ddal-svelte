@@ -25,6 +25,7 @@
 			param: { logId: params.logId }
 		})
 	);
+	const characters = $derived(await API.characters.queries.getAllSelect());
 
 	let data = $derived.by(() => {
 		const data = $state(log);
@@ -35,8 +36,6 @@
 
 <svelte:boundary>
 	{#snippet failed(error)}<Error {error} boundary="edit-dm-log" />{/snippet}
-	{@const characters = await API.characters.queries.getAllSelect()}
-
 	<Head title={log.name || "New Log"} />
 
 	<NavMenu

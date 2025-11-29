@@ -1,5 +1,6 @@
 <script lang="ts">
 	import { goto } from "$app/navigation";
+	import Error from "$lib/components/error.svelte";
 	import Control from "$lib/components/forms/control.svelte";
 	import Input from "$lib/components/forms/input.svelte";
 	import RemoteForm from "$lib/components/forms/remote-form.svelte";
@@ -17,11 +18,19 @@
 	const global = getGlobal();
 	const schema = dungeonMasterFormSchema;
 	const form = API.dms.forms.save;
+
+	// svelte-ignore await_waterfall
+	const dm = $derived(await API.dms.queries.get(params.dmId));
+
+	const data = $derived({
+		id: dm.id,
+		name: dm.name,
+		DCI: dm.DCI || ""
+	});
 </script>
 
 <svelte:boundary>
-	{@const data = await API.dms.forms.get(params.dmId)}
-	{@const dm = await API.dms.queries.get(params.dmId)}
+	{#snippet failed(error)}<Error {error} boundary="edit-dm" />{/snippet}
 
 	<Head title={dm.name} />
 

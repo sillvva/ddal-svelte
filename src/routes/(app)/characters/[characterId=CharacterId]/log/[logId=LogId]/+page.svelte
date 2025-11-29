@@ -12,7 +12,7 @@
 	import Submit from "$lib/components/forms/submit.svelte";
 	import Head from "$lib/components/head.svelte";
 	import NavMenu from "$lib/components/nav-menu.svelte";
-	import { defaultDM } from "$lib/entities.js";
+	import { defaultDM, getItemEntities } from "$lib/entities.js";
 	import * as API from "$lib/remote";
 	import { type DungeonMasterId, logSchema } from "$lib/schemas";
 	import { getAuth } from "$lib/stores.svelte.js";
@@ -20,13 +20,22 @@
 
 	let { params } = $props();
 
+	// svelte-ignore await_waterfall
+	const auth = $derived(await getAuth());
+	const user = $derived(auth.user!);
+	// svelte-ignore await_waterfall
+	const character = $derived(await API.characters.queries.get({ param: params.characterId }));
+	// svelte-ignore await_waterfall
+	const dms = $derived(await API.dms.queries.getAllWithoutLogs());
+	const { magicItems, storyAwards } = $derived(getItemEntities(character, { excludeDropped: true, lastLogId: params.logId }));
+
 	const schema = logSchema;
 	const form = API.logs.forms.saveCharacter;
 	const firstLog = $derived(page.url.searchParams.get("firstLog") === "true");
 	const initialErrors = $derived(params.logId !== "new");
 	// svelte-ignore await_waterfall
-	const { log, magicItems, storyAwards } = $derived(
-		await API.logs.forms.character({ characterId: params.characterId, logId: params.logId, firstLog })
+	const log = $derived(
+		await API.logs.forms.character({ character: { id: character.id, name: character.name }, logId: params.logId, firstLog })
 	);
 
 	let data = $derived.by(() => {
@@ -37,10 +46,7 @@
 </script>
 
 <svelte:boundary>
-	{@const auth = await getAuth()}
-	{@const user = auth.user!}
-	{@const character = await API.characters.queries.get({ param: params.characterId })}
-
+	{#snippet failed(error)}<Error {error} boundary="edit-character-log" />{/snippet}
 	<Head title={log.name || "New Log"} />
 
 	<NavMenu
@@ -81,44 +87,40 @@
 			</Control>
 			{#if data.type === "game"}
 				{#if !firstLog}
-					<svelte:boundary>
-						{#snippet failed(error)}<Error {error} boundary="get-dms" />{/snippet}
-						{@const dms = await API.dms.queries.getAllWithoutLogs()}
-						<Control class="col-span-12 sm:col-span-6">
-							<Combobox
-								label="DM Name"
-								valueField={fields.dm.id}
-								inputField={fields.dm.name}
-								values={dms.map((dm) => ({
-									value: dm.id,
-									label: dm.name,
-									itemLabel: dm.name + (dm.isUser ? ` (Me)` : "") + (dm.DCI ? ` (${dm.DCI})` : "")
-								})) || []}
-								allowCustom
-								onselect={({ selected }) => {
-									const id = (selected?.value || v7()) as DungeonMasterId;
-									const name = selected?.label;
-									data.dm = dms.find((dm) => dm.id === id) || (name ? { ...data.dm, id, name } : defaultDM(user.id));
-								}}
-								clearable
-								onclear={() => (data.dm = defaultDM(user.id))}
-								link={data.dm.id ? `/dms/${data.dm.id}` : ""}
-								placeholder={dms.find((dm) => dm.isUser)?.name || user.name}
-							/>
-						</Control>
-						<Control class="col-span-12 sm:col-span-6">
-							<Input
-								field={fields.dm.DCI}
-								type="text"
-								disabled={!data.dm.name}
-								placeholder={data.dm.name ? undefined : dms.find((dm) => dm.isUser)?.DCI}
-								label="DM DCI"
-							/>
-							{#if !data.dm.name}
-								<Input field={fields.dm.DCI} hidden />
-							{/if}
-						</Control>
-					</svelte:boundary>
+					<Control class="col-span-12 sm:col-span-6">
+						<Combobox
+							label="DM Name"
+							valueField={fields.dm.id}
+							inputField={fields.dm.name}
+							values={dms.map((dm) => ({
+								value: dm.id,
+								label: dm.name,
+								itemLabel: dm.name + (dm.isUser ? ` (Me)` : "") + (dm.DCI ? ` (${dm.DCI})` : "")
+							})) || []}
+							allowCustom
+							onselect={({ selected }) => {
+								const id = (selected?.value || v7()) as DungeonMasterId;
+								const name = selected?.label;
+								data.dm = dms.find((dm) => dm.id === id) || (name ? { ...data.dm, id, name } : defaultDM(user.id));
+							}}
+							clearable
+							onclear={() => (data.dm = defaultDM(user.id))}
+							link={data.dm.id ? `/dms/${data.dm.id}` : ""}
+							placeholder={dms.find((dm) => dm.isUser)?.name || user.name}
+						/>
+					</Control>
+					<Control class="col-span-12 sm:col-span-6">
+						<Input
+							field={fields.dm.DCI}
+							type="text"
+							disabled={!data.dm.name}
+							placeholder={data.dm.name ? undefined : dms.find((dm) => dm.isUser)?.DCI}
+							label="DM DCI"
+						/>
+						{#if !data.dm.name}
+							<Input field={fields.dm.DCI} hidden />
+						{/if}
+					</Control>
 				{:else}
 					<Input field={fields.dm.id} type="hidden" />
 					<Input field={fields.dm.name} hidden />
