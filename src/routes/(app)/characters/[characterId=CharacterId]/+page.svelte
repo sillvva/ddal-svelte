@@ -58,8 +58,8 @@
 
 <svelte:boundary>
 	{@const { user } = await getAuth()}
-	{@const queryParms = { param: params.characterId, newRedirect: true }}
-	{@const character = await API.characters.queries.get(queryParms)}
+	{@const queryParams = { param: params.characterId, newRedirect: true }}
+	{@const character = await API.characters.queries.get(queryParams)}
 	{@const myCharacter = character.userId === user?.id}
 	{@const search = new EntitySearchFactory(
 		character.logs,
@@ -522,7 +522,7 @@
 													const parsed = await parseEffectResult(result);
 													if (parsed) {
 														successToast(`${log.name} deleted`);
-														await API.characters.queries.get(queryParms).refresh();
+														await API.characters.queries.get(queryParams).refresh();
 													} else {
 														deletingLog.delete(log.id);
 													}
