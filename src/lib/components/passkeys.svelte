@@ -2,18 +2,18 @@
 	import { authClient } from "$lib/auth";
 	import { errorToast, successToast } from "$lib/factories.svelte";
 	import type { PasskeyId } from "$lib/schemas";
-	import { getAuth, getGlobal } from "$lib/stores.svelte";
+	import { getApp, getAuth, setApp } from "$lib/stores.svelte";
 
-	const global = getGlobal();
+	const app = $derived(await getApp());
 	const auth = $derived(await getAuth());
-
-	const { user } = $derived(auth);
-	const passkeys = $derived(user?.passkeys || []);
+	const passkeys = $derived(auth.user?.passkeys || []);
 
 	$effect(() => {
-		global.setApp((app) => {
-			app.settings.autoWebAuthn = passkeys.length > 0;
-		});
+		if (app.settings.autoWebAuthn !== passkeys.length > 0) {
+			setApp((app) => {
+				app.settings.autoWebAuthn = passkeys.length > 0;
+			});
+		}
 	});
 
 	async function initRename(id: PasskeyId, currentName = "", error = "") {

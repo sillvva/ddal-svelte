@@ -9,7 +9,7 @@ import type { FullPathname } from "./constants";
 import { errorToast } from "./factories.svelte";
 import type { EffectFailure, EffectResult } from "./server/effect/runtime";
 
-export async function createTransition(action: ViewTransitionCallback, after?: () => void | Promise<void>, afterDelay = 0) {
+export async function createTransition(action: ViewTransitionCallback, after?: () => Awaitable<void>, afterDelay = 0) {
 	if (!document.startViewTransition) action();
 	else document.startViewTransition(action);
 	if (after) wait(afterDelay).then(after);

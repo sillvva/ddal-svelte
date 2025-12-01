@@ -3,17 +3,18 @@
 	import { PROVIDERS } from "$lib/constants";
 	import { errorToast } from "$lib/factories.svelte.js";
 	import * as API from "$lib/remote";
-	import { getGlobal } from "$lib/stores.svelte.js";
+	import { getApp } from "$lib/stores.svelte.js";
 	import { onMount } from "svelte";
 
-	const global = getGlobal();
+	// svelte-ignore await_waterfall
+	const app = $derived(await getApp());
 
 	const home = await API.app.queries.home();
 	const lastMethod = authClient.getLastUsedLoginMethod();
 	let showPasskeyWarning = $state(false);
 
 	onMount(async () => {
-		if (global.app.settings.autoWebAuthn) {
+		if (app.settings.autoWebAuthn) {
 			const { data, error } = await authClient.signIn.passkey();
 			if (data) {
 				window.location.href = home.redirectTo || "/characters";
@@ -28,7 +29,7 @@
 <main class="relative container mx-auto flex flex-1 flex-col items-center justify-center gap-8 p-4 pb-20">
 	<div class="flex flex-col items-center">
 		{#if !showPasskeyWarning}
-			<img src="/images/{global.app.settings.mode === 'dark' ? 'dragon' : 'dragon-dark'}.webp" alt="Dragon" class="size-40" />
+			<img src="/images/{app.settings.mode === 'dark' ? 'dragon' : 'dragon-dark'}.webp" alt="Dragon" class="size-40" />
 		{/if}
 		<h1 class="font-draconis text-base-content text-center text-4xl lg:text-6xl dark:text-white">
 			<span class="text-[75%]">Adventurers League</span>

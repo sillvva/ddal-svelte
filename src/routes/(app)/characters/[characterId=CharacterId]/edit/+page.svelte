@@ -11,11 +11,9 @@
 	import { BLANK_CHARACTER } from "$lib/constants.js";
 	import * as API from "$lib/remote";
 	import { editCharacterSchema } from "$lib/schemas.js";
-	import { getGlobal } from "$lib/stores.svelte.js";
+	import { setApp } from "$lib/stores.svelte.js";
 
 	let { params } = $props();
-
-	const global = getGlobal();
 
 	const schema = editCharacterSchema;
 	const form = API.characters.forms.save;
@@ -97,7 +95,7 @@
 						type="checkbox"
 						label="Create Starting Log"
 						onchange={() => {
-							global.setApp((app) => {
+							setApp((app) => {
 								app.characters.firstLog = data.firstLog;
 							});
 						}}

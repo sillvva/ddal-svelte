@@ -1,12 +1,13 @@
 import { browser } from "$app/environment";
 import { Duration } from "effect";
 import Cookie from "js-cookie";
+import { untrack } from "svelte";
 import { SvelteDate } from "svelte/reactivity";
 import * as v from "valibot";
 import { createContext } from "./factories.svelte";
 import * as API from "./remote";
 import { logClientError } from "./remote/admin/actions.remote";
-import { appCookieSchema, appDefaults, type AppCookie } from "./schemas";
+import { appCookieSchema, type AppCookie } from "./schemas";
 
 /**
  * Set a cookie from the browser using `js-cookie`.
@@ -34,23 +35,7 @@ export function setCookie<TSchema extends v.GenericSchema>(
 }
 
 export class Global {
-	private _app: AppCookie = $state(appDefaults);
 	private _pageLoader: boolean = $state.raw(false);
-
-	constructor(app: AppCookie = appDefaults) {
-		this._app = app;
-	}
-
-	get app(): DeepReadonly<AppCookie> {
-		return $state.snapshot(this._app);
-	}
-	set app(value: AppCookie) {
-		this._app = value;
-	}
-	public setApp(fn: (app: AppCookie) => void) {
-		fn(this._app);
-		setCookie("app", appCookieSchema, $state.snapshot(this._app));
-	}
 
 	get pageLoader() {
 		return this._pageLoader;
@@ -69,6 +54,21 @@ export async function getAuth() {
 		session: result.session,
 		refresh: () => API.app.queries.request().refresh()
 	};
+}
+
+export async function getApp() {
+	const result = await API.app.queries.request();
+	return result.app;
+}
+
+export async function setApp(fn: (app: AppCookie) => void) {
+	return await untrack(async () => {
+		const app = await getApp();
+		fn(app);
+		setCookie("app", appCookieSchema, app);
+		await API.app.queries.request().refresh();
+		return app;
+	});
 }
 
 class Logger {

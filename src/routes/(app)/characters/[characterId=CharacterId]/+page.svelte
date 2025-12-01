@@ -11,7 +11,7 @@
 	import { EntitySearchFactory, successToast } from "$lib/factories.svelte.js";
 	import * as API from "$lib/remote";
 	import type { FullCharacterData } from "$lib/server/effect/services/characters.js";
-	import { getAuth, getGlobal } from "$lib/stores.svelte.js";
+	import { getApp, getAuth, getGlobal, setApp } from "$lib/stores.svelte.js";
 	import { createTransition, hotkey, parseEffectResult } from "$lib/util";
 	import { slugify, sorter } from "@sillvva/utils";
 	import { clipboard, download } from "@svelteuidev/composables";
@@ -22,6 +22,8 @@
 	const { params } = $props();
 
 	const global = getGlobal();
+	// svelte-ignore await_waterfall
+	const app = $derived(await getApp());
 
 	let deletingLog = new SvelteSet<string>();
 
@@ -44,7 +46,7 @@
 
 	onMount(async () => {
 		const { user } = await getAuth();
-		if (global.app.settings.autoWebAuthn && !user) {
+		if (app.settings.autoWebAuthn && !user) {
 			authClient.signIn.passkey({
 				fetchOptions: {
 					onSuccess: () => {
@@ -306,10 +308,10 @@
 					</a>
 					<button
 						class="btn data-[desc=true]:btn-primary sm:hidden"
-						data-desc={global.app.log.descriptions}
+						data-desc={app.log.descriptions}
 						onclick={() =>
-							createTransition(() => {
-								global.setApp((app) => {
+							createTransition(async () => {
+								await setApp((app) => {
 									app.log.descriptions = !app.log.descriptions;
 								});
 							})}
@@ -317,7 +319,7 @@
 						aria-label="Toggle Notes"
 						tabindex="0"
 					>
-						{#if global.app.log.descriptions}
+						{#if app.log.descriptions}
 							<span class="iconify mdi--note-text size-6"></span>
 						{:else}
 							<span class="iconify mdi--note-text-outline size-6"></span>
@@ -329,10 +331,10 @@
 				<div class="flex-1 max-sm:hidden"></div>
 				<button
 					class="btn data-[desc=true]:btn-primary sm:btn-sm max-sm:hidden"
-					data-desc={global.app.log.descriptions}
+					data-desc={app.log.descriptions}
 					onclick={() =>
-						createTransition(() => {
-							global.setApp((app) => {
+						createTransition(async () => {
+							await setApp((app) => {
 								app.log.descriptions = !app.log.descriptions;
 							});
 						})}
@@ -340,7 +342,7 @@
 					aria-label="Toggle Notes"
 					tabindex="0"
 				>
-					{#if global.app.log.descriptions}
+					{#if app.log.descriptions}
 						<span class="iconify mdi--eye size-5"></span>
 					{:else}
 						<span class="iconify mdi--eye-off size-5"></span>
@@ -384,7 +386,7 @@
 							<tr class="print:text-sm [&>td]:border-0 [&>td]:border-t [&>td]:border-neutral-500/20">
 								<td
 									class="static! pb-0 align-top data-[desc=true]:pb-3 sm:pb-3 print:p-2"
-									data-desc={hasDescription && global.app.log.descriptions}
+									data-desc={hasDescription && app.log.descriptions}
 								>
 									{#if myCharacter}
 										<a
@@ -537,7 +539,7 @@
 							<!-- Notes -->
 							<tr
 								class="hidden border-0 data-[desc=true]:table-row max-sm:data-[mi=true]:table-row [&>td]:border-0"
-								data-desc={global.app.log.descriptions && hasDescription}
+								data-desc={app.log.descriptions && hasDescription}
 								data-mi={log.magicItemsGained.length > 0 || log.magicItemsLost.length > 0}
 								style:view-transition-name={`notes-${log.id}`}
 							>

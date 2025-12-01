@@ -5,7 +5,7 @@
 	import { errorToast } from "$lib/factories.svelte";
 	import * as API from "$lib/remote";
 	import { signOut } from "$lib/remote/auth/forms.remote";
-	import { getAuth, getGlobal } from "$lib/stores.svelte";
+	import { getApp, getAuth, setApp } from "$lib/stores.svelte";
 	import { parseEffectResult } from "$lib/util";
 	import { isDefined } from "@sillvva/utils";
 	import { isTupleOfAtLeast } from "effect/Predicate";
@@ -18,13 +18,15 @@
 
 	let { open = $bindable(false) }: Props = $props();
 
-	const global = getGlobal();
+	// svelte-ignore await_waterfall
+	const app = $derived(await getApp());
+	// svelte-ignore await_waterfall
 	const auth = $derived(await getAuth());
 
 	type UserAccount = { providerId: ProviderId; name: string; email: string; image: string };
 	let userAccounts = $state<UserAccount[]>([]);
 
-	const currentAccount = $derived(userAccounts.find((a) => a.providerId === global.app.settings.provider));
+	const currentAccount = $derived(userAccounts.find((a) => a.providerId === app.settings.provider));
 	const authProviders = $derived(
 		PROVIDERS.map((p) => ({
 			...p,
@@ -58,13 +60,13 @@
 				userAccounts = result.map((r) => (r.status === "fulfilled" ? r.value : undefined)).filter(isDefined);
 
 				const account =
-					userAccounts.find((a) => a.providerId === global.app.settings.provider) ||
+					userAccounts.find((a) => a.providerId === app.settings.provider) ||
 					userAccounts.find((a) => a.name === auth.user?.name && a.email === auth.user?.email) ||
 					(isTupleOfAtLeast(userAccounts, 1) ? userAccounts[0] : undefined);
 
 				if (account) {
-					if (!global.app.settings.provider) {
-						global.setApp((app) => {
+					if (!app.settings.provider) {
+						await setApp((app) => {
 							app.settings.provider = account.providerId;
 						});
 					}
@@ -166,7 +168,7 @@
 																const result = await API.auth.actions.updateUser(account);
 																const parsed = await parseEffectResult(result);
 																if (parsed) {
-																	global.setApp((app) => {
+																	await setApp((app) => {
 																		app.settings.provider = account.providerId;
 																	});
 																	await auth.refresh();
