@@ -8,7 +8,7 @@
 	import { JSONSearchParser } from "@sillvva/search/json";
 	import { toJSObjectNotation } from "@sillvva/utils";
 
-	let search = $state(page.url.searchParams.get("s")?.trim() ?? "");
+	let search = $derived(page.url.searchParams.get("s")?.trim() ?? "");
 
 	const users = $derived(await API.admin.queries.getUsers());
 	const parser = $derived(
