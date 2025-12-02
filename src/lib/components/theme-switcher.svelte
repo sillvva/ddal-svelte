@@ -6,10 +6,7 @@
 
 	const app = $derived(await getApp());
 
-	let theme = $derived.by(() => {
-		const theme = $state(app.settings.theme);
-		return theme;
-	});
+	let theme = $derived(app.settings.theme);
 	const mq = new MediaQuery("(prefers-color-scheme: dark)");
 	const mode = $derived.by(() => {
 		const selected = themes.find((t) => t.value === theme);

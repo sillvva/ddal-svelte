@@ -17,6 +17,7 @@
 		filtered?: boolean;
 		matches?: number;
 		collapsible?: boolean;
+		collapsed?: boolean;
 		sort?: boolean;
 		search?: boolean;
 	}
@@ -29,11 +30,10 @@
 		filtered = false,
 		matches = 1,
 		collapsible = false,
+		collapsed = $bindable(collapsible),
 		sort = false,
 		search = false
 	}: Props = $props();
-
-	let collapsed = $state(collapsible);
 
 	const params = queryParameters(
 		{

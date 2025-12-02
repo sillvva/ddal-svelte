@@ -49,6 +49,7 @@
 	const form = remoteForm.for((data.id ?? v7()) as FormId).preflight(schema);
 	const fields = form.fields as RemoteFormFields<unknown>;
 
+	// svelte-ignore state_referenced_locally
 	fields.set(data);
 	$effect(() => {
 		fields.set(data);
@@ -56,6 +57,7 @@
 
 	const result = $derived(form.result);
 	const issues = $derived(fields.issues());
+	// svelte-ignore state_referenced_locally
 	let lastIssues = $state.raw<RemoteFormIssue[] | undefined>(fields.allIssues());
 
 	const initial = $state.snapshot(data);
