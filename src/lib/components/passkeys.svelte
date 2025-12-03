@@ -4,7 +4,9 @@
 	import type { PasskeyId } from "$lib/schemas";
 	import { getApp, getAuth, setApp } from "$lib/stores.svelte";
 
+	// svelte-ignore await_waterfall
 	const app = $derived(await getApp());
+	// svelte-ignore await_waterfall
 	const auth = $derived(await getAuth());
 	const passkeys = $derived(auth.user?.passkeys || []);
 
