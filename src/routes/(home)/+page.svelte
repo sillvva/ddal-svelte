@@ -3,13 +3,14 @@
 	import { PROVIDERS } from "$lib/constants";
 	import { errorToast } from "$lib/factories.svelte.js";
 	import * as API from "$lib/remote";
-	import { getApp } from "$lib/stores.svelte.js";
+	import { getRequest } from "$lib/stores.svelte.js";
 	import { onMount } from "svelte";
 
 	// svelte-ignore await_waterfall
-	const app = $derived(await getApp());
+	const { app } = $derived(await getRequest());
+	// svelte-ignore await_waterfall
+	const home = $derived(await API.app.queries.home());
 
-	const home = await API.app.queries.home();
 	const lastMethod = authClient.getLastUsedLoginMethod();
 	let showPasskeyWarning = $state(false);
 

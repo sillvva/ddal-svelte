@@ -2,17 +2,14 @@
 	import { authClient } from "$lib/auth";
 	import { errorToast, successToast } from "$lib/factories.svelte";
 	import type { PasskeyId } from "$lib/schemas";
-	import { getApp, getAuth, setApp } from "$lib/stores.svelte";
+	import { getRequest } from "$lib/stores.svelte";
 
-	// svelte-ignore await_waterfall
-	const app = $derived(await getApp());
-	// svelte-ignore await_waterfall
-	const auth = $derived(await getAuth());
-	const passkeys = $derived(auth.user?.passkeys || []);
+	const { user, app, ...request } = $derived(await getRequest());
+	const passkeys = $derived(user?.passkeys || []);
 
 	$effect(() => {
 		if (app.settings.autoWebAuthn !== passkeys.length > 0) {
-			setApp((app) => {
+			app.set((app) => {
 				app.settings.autoWebAuthn = passkeys.length > 0;
 			});
 		}
@@ -38,7 +35,7 @@
 			fetchOptions: {
 				onSuccess: () => {
 					successToast(`${name} saved`);
-					auth.refresh();
+					request.refresh();
 				},
 				onError: ({ error }) => {
 					initRename(id, name, error.message);
@@ -56,7 +53,7 @@
 				fetchOptions: {
 					onSuccess: () => {
 						successToast(`${passkey.name} deleted`);
-						auth.refresh();
+						request.refresh();
 					},
 					onError: ({ error }) => {
 						errorToast(error.message);

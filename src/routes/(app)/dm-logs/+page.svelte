@@ -9,20 +9,17 @@
 	import Search from "$lib/components/search.svelte";
 	import { EntitySearchFactory, successToast } from "$lib/factories.svelte.js";
 	import * as API from "$lib/remote";
-	import { getApp, getAuth, setApp } from "$lib/stores.svelte.js";
+	import { getRequest } from "$lib/stores.svelte.js";
 	import { createTransition, download, hotkey, parseEffectResult } from "$lib/util.js";
 	import { sorter } from "@sillvva/utils";
 	import { untrack } from "svelte";
 	import { SvelteSet } from "svelte/reactivity";
 
-	// svelte-ignore await_waterfall
-	const app = $derived(await getApp());
-
 	let deletingLog = new SvelteSet<string>();
 </script>
 
 <svelte:boundary>
-	{@const { user } = await getAuth()}
+	{@const { user, app } = await getRequest()}
 	{@const logs = await API.logs.queries.getDmLogs()}
 	{@const search = new EntitySearchFactory(
 		logs,
@@ -78,7 +75,7 @@
 				onclick={() =>
 					createTransition(
 						async () =>
-							await setApp((app) => {
+							await app.set((app) => {
 								app.dmLogs.descriptions = !app.dmLogs.descriptions;
 							})
 					)}
@@ -96,7 +93,7 @@
 			<button
 				class="btn btn-primary sm:btn-sm"
 				onclick={async () => {
-					await setApp((app) => {
+					await app.set((app) => {
 						app.dmLogs.sort = app.dmLogs.sort === "asc" ? "desc" : "asc";
 					});
 				}}

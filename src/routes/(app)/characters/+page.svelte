@@ -8,17 +8,14 @@
 	import Search from "$lib/components/search.svelte";
 	import { EntitySearchFactory } from "$lib/factories.svelte.js";
 	import * as API from "$lib/remote";
-	import { getApp, getAuth, setApp } from "$lib/stores.svelte.js";
+	import { getRequest } from "$lib/stores.svelte.js";
 	import { createTransition, download, hotkey } from "$lib/util";
 	import { sorter } from "@sillvva/utils";
 	import { untrack } from "svelte";
-
-	// svelte-ignore await_waterfall
-	const app = $derived(await getApp());
 </script>
 
 <svelte:boundary>
-	{@const { user } = await getAuth()}
+	{@const { user, app } = await getRequest()}
 	{@const characters = await API.characters.queries.getAll()}
 	{@const search = new EntitySearchFactory(
 		characters,
@@ -80,7 +77,7 @@
 					class="btn data-[enabled=true]:btn-primary xs:hidden inline-flex"
 					data-enabled={app.characters.magicItems}
 					onclick={() => {
-						setApp((app) => {
+						app.set((app) => {
 							app.characters.magicItems = !app.characters.magicItems;
 						});
 					}}
@@ -102,7 +99,7 @@
 						data-enabled={app.characters.magicItems}
 						onclick={() =>
 							createTransition(() => {
-								setApp((app) => {
+								app.set((app) => {
 									app.characters.magicItems = !app.characters.magicItems;
 								});
 							})}
@@ -126,7 +123,7 @@
 						data-display={app.characters.display}
 						onclick={() =>
 							createTransition(() => {
-								setApp((app) => {
+								app.set((app) => {
 									app.characters.display = "list";
 								});
 							})}
@@ -140,7 +137,7 @@
 						data-display={app.characters.display}
 						onclick={() =>
 							createTransition(() => {
-								setApp((app) => {
+								app.set((app) => {
 									app.characters.display = "grid";
 								});
 							})}

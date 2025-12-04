@@ -2,7 +2,7 @@
 	import { browser, dev } from "$app/environment";
 	import { page } from "$app/state";
 	import { uuidV7 } from "$lib/schemas";
-	import { getAuth, getLogger } from "$lib/stores.svelte";
+	import { getLogger, getRequest } from "$lib/stores.svelte";
 	import { useOs } from "@svelteuidev/composables";
 	import SuperDebugRuned from "sveltekit-superforms/SuperDebug.svelte";
 	import * as v from "valibot";
@@ -90,12 +90,12 @@
 			</div>
 		</div>
 		{#if display}
-			{@const auth = await getAuth()}
+			{@const { user } = await getRequest()}
 			<SuperDebugRuned
 				data={{
 					...page,
 					os: os,
-					user: auth.user,
+					user,
 					data: undefined
 				}}
 			/>

@@ -1,7 +1,6 @@
 import { browser } from "$app/environment";
 import { Duration } from "effect";
 import Cookie from "js-cookie";
-import { untrack } from "svelte";
 import { SvelteDate } from "svelte/reactivity";
 import * as v from "valibot";
 import { createContext } from "./factories.svelte";
@@ -47,28 +46,22 @@ export class Global {
 
 export const [getGlobal] = createContext(() => new Global());
 
-export async function getAuth() {
+export async function getRequest() {
 	const result = await API.app.queries.request();
-	return {
-		user: result.user,
-		session: result.session,
+	const impl = {
+		...result,
+		app: {
+			...result.app,
+			set: async (fn: (app: AppCookie) => Awaitable<void>) => {
+				await fn(result.app);
+				setCookie("app", appCookieSchema, result.app);
+				await impl.refresh();
+				return result.app;
+			}
+		},
 		refresh: () => API.app.queries.request().refresh()
 	};
-}
-
-export async function getApp() {
-	const result = await API.app.queries.request();
-	return result.app;
-}
-
-export async function setApp(fn: (app: AppCookie) => void) {
-	return await untrack(async () => {
-		const app = await getApp();
-		fn(app);
-		setCookie("app", appCookieSchema, app);
-		await API.app.queries.request().refresh();
-		return app;
-	});
+	return impl;
 }
 
 class Logger {

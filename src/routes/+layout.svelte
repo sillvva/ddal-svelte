@@ -1,7 +1,7 @@
 <script lang="ts">
 	import { dev } from "$app/environment";
 	import { onNavigate } from "$app/navigation";
-	import { getApp, getGlobal, getLogger } from "$lib/stores.svelte";
+	import { getGlobal, getLogger, getRequest } from "$lib/stores.svelte";
 	import { Toaster } from "svelte-sonner";
 	import "../app.css";
 
@@ -9,7 +9,7 @@
 
 	getLogger();
 	getGlobal();
-	const app = $derived(await getApp());
+	const { app } = $derived(await getRequest());
 
 	onNavigate(({ complete, from, to }) => {
 		if (!document.startViewTransition) return;

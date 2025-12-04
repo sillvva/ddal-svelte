@@ -1,7 +1,7 @@
 <script lang="ts">
 	import { dev } from "$app/environment";
 	import { page } from "$app/state";
-	import { getAuth, getLogger } from "$lib/stores.svelte";
+	import { getLogger, getRequest } from "$lib/stores.svelte";
 	import { omit } from "@sillvva/utils";
 	import { useOs } from "@svelteuidev/composables";
 	import SuperDebugRuned from "sveltekit-superforms/SuperDebug.svelte";
@@ -45,7 +45,7 @@
 			</div>
 		</div>
 		{#if display}
-			{@const { user } = await getAuth()}
+			{@const { user } = await getRequest()}
 			<div class="flex max-w-full flex-col gap-4">
 				{#if err.stack}
 					<pre class="bg-base-200 w-full overflow-x-scroll rounded-lg p-4">{@html err.stack}</pre>

@@ -1,10 +1,10 @@
 <script lang="ts">
 	import { themeGroups, themes } from "$lib/constants";
-	import { getApp, setApp } from "$lib/stores.svelte";
+	import { getRequest } from "$lib/stores.svelte";
 	import { createTransition } from "$lib/util";
 	import { MediaQuery } from "svelte/reactivity";
 
-	const app = $derived(await getApp());
+	const { app } = $derived(await getRequest());
 
 	let theme = $derived(app.settings.theme);
 	const mq = new MediaQuery("(prefers-color-scheme: dark)");
@@ -25,7 +25,7 @@
 			document.documentElement.classList.add("theme-switcher");
 			createTransition(
 				async () => {
-					await setApp((app) => {
+					await app.set((app) => {
 						app.settings.theme = theme;
 						app.settings.mode = mode;
 					});

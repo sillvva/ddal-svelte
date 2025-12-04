@@ -11,7 +11,7 @@
 	import { EntitySearchFactory, successToast } from "$lib/factories.svelte.js";
 	import * as API from "$lib/remote";
 	import type { FullCharacterData } from "$lib/server/effect/services/characters.js";
-	import { getApp, getAuth, getGlobal, setApp } from "$lib/stores.svelte.js";
+	import { getGlobal, getRequest } from "$lib/stores.svelte.js";
 	import { createTransition, hotkey, parseEffectResult } from "$lib/util";
 	import { slugify, sorter } from "@sillvva/utils";
 	import { clipboard, download } from "@svelteuidev/composables";
@@ -22,8 +22,6 @@
 	const { params } = $props();
 
 	const global = getGlobal();
-	// svelte-ignore await_waterfall
-	const app = $derived(await getApp());
 
 	let deletingLog = new SvelteSet<string>();
 
@@ -45,7 +43,7 @@
 	}
 
 	onMount(async () => {
-		const { user } = await getAuth();
+		const { user, app } = await getRequest();
 		if (app.settings.autoWebAuthn && !user) {
 			authClient.signIn.passkey({
 				fetchOptions: {
@@ -59,7 +57,7 @@
 </script>
 
 <svelte:boundary>
-	{@const { user } = await getAuth()}
+	{@const { user, app } = await getRequest()}
 	{@const queryParams = { param: params.characterId, newRedirect: true }}
 	{@const character = await API.characters.queries.get(queryParams)}
 	{@const myCharacter = character.userId === user?.id}
@@ -311,7 +309,7 @@
 						data-desc={app.log.descriptions}
 						onclick={() =>
 							createTransition(async () => {
-								await setApp((app) => {
+								await app.set((app) => {
 									app.log.descriptions = !app.log.descriptions;
 								});
 							})}
@@ -334,7 +332,7 @@
 					data-desc={app.log.descriptions}
 					onclick={() =>
 						createTransition(async () => {
-							await setApp((app) => {
+							await app.set((app) => {
 								app.log.descriptions = !app.log.descriptions;
 							});
 						})}

@@ -6,7 +6,7 @@
 	import Search from "$lib/components/search.svelte";
 	import { EntitySearchFactory, successToast } from "$lib/factories.svelte.js";
 	import * as API from "$lib/remote";
-	import { getAuth } from "$lib/stores.svelte";
+	import { getRequest } from "$lib/stores.svelte";
 	import { parseEffectResult } from "$lib/util";
 	import { sorter } from "@sillvva/utils";
 	import { untrack } from "svelte";
@@ -16,7 +16,7 @@
 </script>
 
 <svelte:boundary>
-	{@const { user } = await getAuth()}
+	{@const { user } = await getRequest()}
 	{@const dms = await API.dms.queries.getAll()}
 	{@const search = new EntitySearchFactory(
 		dms,

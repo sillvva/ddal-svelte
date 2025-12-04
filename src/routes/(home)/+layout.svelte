@@ -1,10 +1,10 @@
 <script>
 	import Footer from "$lib/components/footer.svelte";
-	import { getApp } from "$lib/stores.svelte";
+	import { getRequest } from "$lib/stores.svelte";
 
 	let { children } = $props();
 
-	const app = $derived(await getApp());
+	const { app } = $derived(await getRequest());
 </script>
 
 <img
