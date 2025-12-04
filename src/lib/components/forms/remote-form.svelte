@@ -49,16 +49,17 @@
 
 	const form = remoteForm.for((data.id ?? v7()) as FormId).preflight(schema);
 	const fields = form.fields as RemoteFormFields<unknown>;
-	let initial = $state.raw(untrack(() => data));
+	let initial = $state.raw(untrack(() => $state.snapshot(data)));
 
-	form.fields.set(untrack(() => data) as any);
+	// svelte-ignore state_referenced_locally
+	form.fields.set(data as any);
 	$effect(() => {
 		form.fields.set(data as any);
 	});
 
 	$effect(() => {
 		void page.url;
-		initial = untrack(() => data);
+		initial = untrack(() => $state.snapshot(data));
 	});
 
 	const result = $derived(form.result);
