@@ -9,7 +9,7 @@
 	import type { StandardSchemaV1 } from "@standard-schema/spec";
 	import type { RemoteForm, RemoteFormFields, RemoteFormInput, RemoteFormIssue } from "@sveltejs/kit";
 	import { isTupleOfAtLeast } from "effect/Predicate";
-	import { onMount, tick, type Snippet } from "svelte";
+	import { onMount, tick, untrack, type Snippet } from "svelte";
 	import type { HTMLFormAttributes } from "svelte/elements";
 	import SuperDebugRuned from "sveltekit-superforms/SuperDebug.svelte";
 	import { v7 } from "uuid";
@@ -48,20 +48,18 @@
 
 	const form = remoteForm.for((data.id ?? v7()) as FormId).preflight(schema);
 	const fields = form.fields as RemoteFormFields<unknown>;
+	const initial = untrack(() => data);
 
-	// svelte-ignore state_referenced_locally
-	fields.set(data);
+	form.fields.set(initial as any);
 	$effect(() => {
-		fields.set(data);
+		form.fields.set(data as any);
 	});
 
 	const result = $derived(form.result);
-	const issues = $derived(fields.issues());
-	// svelte-ignore state_referenced_locally
-	let lastIssues = $state.raw<RemoteFormIssue[] | undefined>(fields.allIssues());
+	const issues = $derived(form.fields.issues());
 
-	const initial = $state.snapshot(data);
-	let dirty = $derived(!deepEqual(initial, fields.value()));
+	let lastIssues = $state.raw<RemoteFormIssue[] | undefined>(fields.allIssues());
+	let dirty = $derived(!deepEqual(initial, form.fields.value()));
 	let touched = $state.raw(false);
 
 	const debouncedValidate = debounce(validate, 300);
@@ -154,7 +152,7 @@
 				action: form.action,
 				dirty,
 				touched,
-				data: fields.value(),
+				data: form.fields.value(),
 				result,
 				issues: fields.allIssues()
 			}}
