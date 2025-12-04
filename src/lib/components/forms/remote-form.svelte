@@ -4,6 +4,7 @@
 >
 	import { dev } from "$app/environment";
 	import { beforeNavigate } from "$app/navigation";
+	import { page } from "$app/state";
 	import { successToast, unknownErrorToast } from "$lib/factories.svelte";
 	import { debounce, deepEqual } from "@sillvva/utils";
 	import type { StandardSchemaV1 } from "@standard-schema/spec";
@@ -48,11 +49,16 @@
 
 	const form = remoteForm.for((data.id ?? v7()) as FormId).preflight(schema);
 	const fields = form.fields as RemoteFormFields<unknown>;
-	const initial = untrack(() => data);
+	let initial = $state.raw(untrack(() => data));
 
-	form.fields.set(initial as any);
+	form.fields.set(untrack(() => data) as any);
 	$effect(() => {
 		form.fields.set(data as any);
+	});
+
+	$effect(() => {
+		void page.url;
+		initial = untrack(() => data);
 	});
 
 	const result = $derived(form.result);
