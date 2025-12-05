@@ -441,7 +441,7 @@ export function createContext<T>(createDefault?: () => T): [() => T, (context: T
 	];
 }
 
-export function proxify<T>(object: T, snapshot = false) {
+export function proxify<T, S extends boolean = false>(object: T, snapshot: S = false as S) {
 	const _ = $state(snapshot ? $state.snapshot(object) : object);
-	return _;
+	return _ as S extends true ? $state.Snapshot<T> : T;
 }
