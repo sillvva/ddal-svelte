@@ -2,7 +2,7 @@ import type { StandardSchemaV1 } from "@standard-schema/spec";
 import { Data, Effect, Either } from "effect";
 
 export const isValidUrl = Effect.fn(function* (url: string) {
-	return yield* Effect.promise(() => fetch(url, { method: "HEAD" }).catch(() => ({ ok: false }))).pipe(
+	return yield* Effect.tryPromise(() => fetch(url, { method: "HEAD" }).catch(() => ({ ok: false }))).pipe(
 		Effect.flatMap((response) => Effect.succeed(response.ok))
 	);
 });
@@ -60,7 +60,7 @@ function summarize(issues: readonly StandardSchemaV1.Issue[]) {
 }
 
 export const parse = Effect.fn(function* <I, O = I>(schema: StandardSchemaV1<I, O>, input: I) {
-	const parseResult = yield* Effect.promise(() => Promise.resolve(schema["~standard"].validate(input)));
+	const parseResult = yield* Effect.tryPromise(() => Promise.resolve(schema["~standard"].validate(input)));
 	if (parseResult.issues) {
 		const summary = summarize(parseResult.issues);
 		return yield* new InvalidSchemaError(input, summary, parseResult.issues);

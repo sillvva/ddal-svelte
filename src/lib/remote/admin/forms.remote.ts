@@ -18,7 +18,7 @@ export const impersonateUser = guardedForm(
 		if (user.banned) throw invalid("User is banned");
 		if (user.role === "admin") throw invalid("Cannot impersonate this user");
 
-		yield* Effect.promise(() => auth.api.impersonateUser({ body: { userId }, headers: event.request.headers }));
+		yield* Effect.tryPromise(() => auth.api.impersonateUser({ body: { userId }, headers: event.request.headers }));
 
 		redirect(302, "/characters");
 	},
@@ -29,7 +29,7 @@ export const stopImpersonating = guardedForm(function* ({ event }) {
 	const Auth = yield* AuthService;
 	const auth = yield* Auth.auth();
 
-	yield* Effect.promise(() =>
+	yield* Effect.tryPromise(() =>
 		auth.api.stopImpersonating({
 			headers: event.request.headers
 		})
@@ -50,7 +50,7 @@ export const banUser = guardedForm(
 		if (user.role === "admin") throw invalid("Cannot ban admins");
 		if (user.banned) throw invalid("User is already banned");
 
-		return yield* Effect.promise(() => auth.api.banUser({ body: { userId, banReason }, headers: event.request.headers }));
+		return yield* Effect.tryPromise(() => auth.api.banUser({ body: { userId, banReason }, headers: event.request.headers }));
 	},
 	true
 );
@@ -61,7 +61,7 @@ export const unbanUser = guardedForm(
 		const Auth = yield* AuthService;
 
 		const auth = yield* Auth.auth();
-		return yield* Effect.promise(() => auth.api.unbanUser({ body: { userId }, headers: event.request.headers }));
+		return yield* Effect.tryPromise(() => auth.api.unbanUser({ body: { userId }, headers: event.request.headers }));
 	},
 	true
 );

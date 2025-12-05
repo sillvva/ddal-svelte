@@ -11,7 +11,7 @@ import * as queries from "./queries.remote";
 
 export const get = guardedQuery(characterIdParamSchema, function* (input, { event }) {
 	const firstLog = event.locals.app.characters.firstLog;
-	const character = yield* Effect.promise(() => queries.get({ param: input }));
+	const character = yield* Effect.tryPromise(() => queries.get({ param: input }));
 
 	return {
 		id: character.id,

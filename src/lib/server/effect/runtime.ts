@@ -3,10 +3,11 @@ import { getTrace, isRedirectFailure } from "$lib/util";
 import { omit } from "@sillvva/utils";
 import { error, isHttpError, isRedirect, redirect, type NumericRange } from "@sveltejs/kit";
 import { Cause, Effect, Exit, Layer, ManagedRuntime } from "effect";
+import type { UnknownException } from "effect/Cause";
 import { isFunction } from "effect/Predicate";
 import type { YieldWrap } from "effect/Utils";
 import { DBService } from "../db";
-import { type ErrorClass } from "./errors";
+import { isTaggedError, type ErrorClass } from "./errors";
 import { AppLog } from "./logging";
 import { AdminService } from "./services/admin";
 import { AuthService } from "./services/auth";
@@ -42,20 +43,20 @@ export const createAppRuntime = () => {
 // Overload signatures
 export async function run<
 	R,
-	F extends InstanceType<ErrorClass>,
+	F extends InstanceType<ErrorClass> | UnknownException,
 	S extends Services,
 	T extends YieldWrap<Effect.Effect<R, F, S>>,
 	X
 >(program: () => Generator<T, X>): Promise<X>;
 
-export async function run<R, F extends InstanceType<ErrorClass>, S extends Services>(
+export async function run<R, F extends InstanceType<ErrorClass> | UnknownException, S extends Services>(
 	program: Effect.Effect<R, F, S> | (() => Effect.Effect<R, F, S>)
 ): Promise<R>;
 
 // Implementation
 export async function run<
 	R,
-	F extends InstanceType<ErrorClass>,
+	F extends InstanceType<ErrorClass> | UnknownException,
 	S extends Services,
 	T extends YieldWrap<Effect.Effect<R, F, S>>,
 	X
@@ -106,20 +107,20 @@ export type EffectResult<R> = EffectSuccess<R> | EffectFailure;
 // Overload signatures
 export async function runSafe<
 	R,
-	F extends InstanceType<ErrorClass>,
+	F extends InstanceType<ErrorClass> | UnknownException,
 	S extends Services,
 	T extends YieldWrap<Effect.Effect<R, F, S>>,
 	X
 >(program: () => Generator<T, X>): Promise<EffectResult<X>>;
 
-export async function runSafe<R, F extends InstanceType<ErrorClass>, S extends Services>(
+export async function runSafe<R, F extends InstanceType<ErrorClass> | UnknownException, S extends Services>(
 	program: Effect.Effect<R, F, S> | (() => Effect.Effect<R, F, S>)
 ): Promise<EffectResult<R>>;
 
 // Implementation
 export async function runSafe<
 	R,
-	F extends InstanceType<ErrorClass>,
+	F extends InstanceType<ErrorClass> | UnknownException,
 	S extends Services,
 	T extends YieldWrap<Effect.Effect<R, F, S>>,
 	X
@@ -146,7 +147,7 @@ export async function runSafe<
 // handleCause
 // -------------------------------------------------------------------------------------------------
 
-export function handleCause<F extends InstanceType<ErrorClass>>(cause: Cause.Cause<F>) {
+export function handleCause<F extends InstanceType<ErrorClass> | UnknownException>(cause: Cause.Cause<F>) {
 	let name = `Unknown${cause._tag}`;
 	let message = Cause.pretty(cause);
 	let status: NumericRange<300, 599> = 500;
@@ -156,9 +157,14 @@ export function handleCause<F extends InstanceType<ErrorClass>>(cause: Cause.Cau
 		const error = cause.error;
 
 		name = error._tag;
-		status = error.status;
+		status = "status" in error ? error.status : 500;
 		extra.cause = error.cause;
-		extra = Object.assign(extra, omit(error, ["_tag", "_op", "pipe", "name", "message", "status"]));
+		extra = Object.assign(
+			extra,
+			isTaggedError(error)
+				? omit(error, ["_tag", "_op", "pipe", "name", "message", "status"])
+				: omit(error, ["_tag", "pipe", "name", "message"])
+		);
 
 		Effect.runFork(AppLog.error(message, extra));
 	}

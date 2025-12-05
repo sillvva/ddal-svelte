@@ -14,6 +14,7 @@ import {
 	type RequestEvent
 } from "@sveltejs/kit";
 import { Effect } from "effect";
+import type { UnknownException } from "effect/Cause";
 import { isFunction, isString } from "effect/Predicate";
 import type { YieldWrap } from "effect/Utils";
 import type { ErrorClass } from "./errors";
@@ -26,7 +27,7 @@ import { run, runSafe, type EffectResult, type Services } from "./runtime";
 export function guardedQuery<
 	Schema extends StandardSchemaV1,
 	R,
-	F extends InstanceType<ErrorClass>,
+	F extends InstanceType<ErrorClass> | UnknownException,
 	S extends Services,
 	T extends YieldWrap<Effect.Effect<R, F, S>>,
 	X
@@ -38,7 +39,7 @@ export function guardedQuery<
 
 export function guardedQuery<
 	R,
-	F extends InstanceType<ErrorClass>,
+	F extends InstanceType<ErrorClass> | UnknownException,
 	S extends Services,
 	T extends YieldWrap<Effect.Effect<R, F, S>>,
 	X
@@ -47,7 +48,7 @@ export function guardedQuery<
 export function guardedQuery<
 	Schema extends StandardSchemaV1,
 	R,
-	F extends InstanceType<ErrorClass>,
+	F extends InstanceType<ErrorClass> | UnknownException,
 	S extends Services,
 	T extends YieldWrap<Effect.Effect<R, F, S>>,
 	X
@@ -90,7 +91,7 @@ export function guardedQuery<
 export function guardedCommand<
 	Schema extends StandardSchemaV1,
 	R,
-	F extends InstanceType<ErrorClass>,
+	F extends InstanceType<ErrorClass> | UnknownException,
 	S extends Services,
 	T extends YieldWrap<Effect.Effect<R, F, S>>,
 	X
@@ -103,7 +104,7 @@ export function guardedCommand<
 export function guardedCommand<
 	Input,
 	R,
-	F extends InstanceType<ErrorClass>,
+	F extends InstanceType<ErrorClass> | UnknownException,
 	S extends Services,
 	T extends YieldWrap<Effect.Effect<R, F, S>>,
 	X
@@ -116,7 +117,7 @@ export function guardedCommand<
 	Schema extends StandardSchemaV1,
 	Input,
 	R,
-	F extends InstanceType<ErrorClass>,
+	F extends InstanceType<ErrorClass> | UnknownException,
 	S extends Services,
 	T extends YieldWrap<Effect.Effect<R, F, S>>,
 	X
@@ -159,7 +160,7 @@ export function guardedCommand<
 export function guardedForm<
 	Schema extends StandardSchemaV1<RemoteFormInput, Record<string, unknown>>,
 	R,
-	F extends InstanceType<ErrorClass>,
+	F extends InstanceType<ErrorClass> | UnknownException,
 	S extends Services,
 	T extends YieldWrap<Effect.Effect<R, F, S>>,
 	X
@@ -175,7 +176,7 @@ export function guardedForm<
 export function guardedForm<
 	Input extends RemoteFormInput,
 	R,
-	F extends InstanceType<ErrorClass>,
+	F extends InstanceType<ErrorClass> | UnknownException,
 	S extends Services,
 	T extends YieldWrap<Effect.Effect<R, F, S>>,
 	X
@@ -187,7 +188,7 @@ export function guardedForm<
 
 export function guardedForm<
 	R,
-	F extends InstanceType<ErrorClass>,
+	F extends InstanceType<ErrorClass> | UnknownException,
 	S extends Services,
 	T extends YieldWrap<Effect.Effect<R, F, S>>,
 	X
@@ -200,7 +201,7 @@ export function guardedForm<
 	Schema extends StandardSchemaV1<RemoteFormInput, Record<string, unknown>>,
 	Input extends RemoteFormInput,
 	R,
-	F extends InstanceType<ErrorClass>,
+	F extends InstanceType<ErrorClass> | UnknownException,
 	S extends Services,
 	T extends YieldWrap<Effect.Effect<R, F, S>>,
 	X
@@ -277,5 +278,5 @@ export function guardedForm<
 // -------------------------------------------------------------------------------------------------
 
 export const refreshAll = Effect.fn(function* (...queries: Promise<void>[]) {
-	return yield* Effect.promise(() => Promise.all(queries));
+	return yield* Effect.tryPromise(() => Promise.all(queries));
 });
