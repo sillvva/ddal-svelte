@@ -106,6 +106,8 @@ export const init: ServerInit = () => {
 	if (globalThis.initialized) return;
 	globalThis.initialized = true;
 
+	console.log("Initializing server...");
+
 	const gracefulShutdown = async (signal: string) => {
 		console.log("\nShut down signal received:", chalk.bold(signal));
 
@@ -135,36 +137,40 @@ The `DBService` is defined as an Effect service that provides database access an
 
 ```typescript
 export class DBService extends Effect.Service<DBService>()("DBService", {
-  effect: Effect.fn("DBService")(function* (tx?: Transaction) {
-    const database = tx || db;
+	effect: Effect.fn("DBService")(function* (tx?: Transaction) {
+		const database = tx || db;
 
-    const transaction = Effect.fn("DBService.transaction")(function* <A, B extends InstanceType<ErrorClass>>(
-      effect: (tx: Transaction) => Effect.Effect<A, B | never>
-    ) {
-      const event = getRequestEvent();
-      const runtime = event.locals.runtime;
-      const result = yield* Effect.tryPromise({
-        try: () =>
-          database.transaction(async (tx) => {
-            const result = await runtime.runPromiseExit(effect(tx));
-            return Exit.match(result, {
-              onSuccess: (value) => value,
-              onFailure: (cause) => {
-                throw Cause.isFailType(cause) ? cause.error : new TransactionError(cause);
-              }
-            });
-          }),
-        catch: (error) => {
-          if (isTaggedError(error)) return error as B | TransactionError;
-          return new TransactionError(Cause.fail(error));
-        }
-      });
-      return result;
-    });
+		const transaction = Effect.fn("DBService.transaction")(function* <A, B extends InstanceType<ErrorClass>>(
+			effect: (tx: Transaction) => Effect.Effect<A, B | never>
+		) {
+			const event = getRequestEvent();
+			const runtime = event.locals.runtime;
+			const result = yield* Effect.tryPromise({
+				try: () =>
+					database.transaction(async (tx) => {
+						const result = await runtime.runPromiseExit(effect(tx));
+						return Exit.match(result, {
+							onSuccess: (value) => value,
+							onFailure: (cause) => {
+								throw Cause.isFailType(cause) ? cause.error : new TransactionError(cause);
+							}
+						});
+					}),
+				catch: (error) => {
+					if (isTaggedError(error)) return error as B | TransactionError;
+					return new TransactionError(Cause.fail(error)); // Unexpected defects
+				}
+			});
+			return result;
+		});
 
-    return { db: database, transaction };
-  })
-});
+		return { db: database, transaction };
+	})
+}) {
+	static async end() {
+		await connection.end();
+	}
+}
 ```
 
 ### Transaction Support
@@ -198,7 +204,7 @@ const transaction = Effect.fn("DBService.transaction")(function* <A, B extends I
 			}),
 		catch: (error) => {
 			if (isTaggedError(error)) return error as B | TransactionError;
-			return new TransactionError(Cause.fail(error));
+			return new TransactionError(Cause.fail(error)); // Unexpected defects
 		}
 	});
 	return result;
@@ -265,15 +271,14 @@ Services expose a structured API:
 
 ```typescript
 interface CharacterApiImpl {
-	readonly db: Database | Transaction;
 	readonly get: {
-		readonly character: (
+		readonly one: (
 			characterId: CharacterId,
 			includeLogs?: boolean
 		) => Effect.Effect<FullCharacterData, DrizzleError | CharacterNotFoundError>;
-		readonly userCharacters: (
+		readonly all: (
 			userId: UserId,
-			options?: { characterId?: CharacterId | null; includeLogs?: boolean }
+			options?: { characterId?: CharacterId; includeLogs?: boolean }
 		) => Effect.Effect<FullCharacterData[], DrizzleError>;
 	};
 	readonly set: {
@@ -296,21 +301,21 @@ The `run` function provides the primary way to execute Effect programs in the Sv
 // Overload for generator functions
 export async function run<
 	R,
-	F extends InstanceType<ErrorClass>,
+	F extends InstanceType<ErrorClass> | UnknownException,
 	S extends Services,
 	T extends YieldWrap<Effect.Effect<R, F, S>>,
 	X
 >(program: () => Generator<T, X>): Promise<X>;
 
 // Overload for Effect or Effect factory functions
-export async function run<R, F extends InstanceType<ErrorClass>, S extends Services>(
+export async function run<R, F extends InstanceType<ErrorClass> | UnknownException, S extends Services>(
 	program: Effect.Effect<R, F, S> | (() => Effect.Effect<R, F, S>)
 ): Promise<R>;
 
 // Implementation
 export async function run<
 	R,
-	F extends InstanceType<ErrorClass>,
+	F extends InstanceType<ErrorClass> | UnknownException,
 	S extends Services,
 	T extends YieldWrap<Effect.Effect<R, F, S>>,
 	X
@@ -351,21 +356,21 @@ The `runSafe` function provides error-safe execution that returns a result type 
 // Overload for generator functions
 export async function runSafe<
 	R,
-	F extends InstanceType<ErrorClass>,
+	F extends InstanceType<ErrorClass> | UnknownException,
 	S extends Services,
 	T extends YieldWrap<Effect.Effect<R, F, S>>,
 	X
 >(program: () => Generator<T, X>): Promise<EffectResult<X>>;
 
 // Overload for Effect or Effect factory functions
-export async function runSafe<R, F extends InstanceType<ErrorClass>, S extends Services>(
+export async function runSafe<R, F extends InstanceType<ErrorClass> | UnknownException, S extends Services>(
 	program: Effect.Effect<R, F, S> | (() => Effect.Effect<R, F, S>)
 ): Promise<EffectResult<R>>;
 
 // Implementation
 export async function runSafe<
 	R,
-	F extends InstanceType<ErrorClass>,
+	F extends InstanceType<ErrorClass> | UnknownException,
 	S extends Services,
 	T extends YieldWrap<Effect.Effect<R, F, S>>,
 	X
@@ -397,13 +402,20 @@ The `EffectResult` type is a discriminated union that represents the outcome of 
 export type EffectSuccess<R> = { ok: true; data: R };
 export type EffectFailure = {
 	ok: false;
-	error: { message: string; stack: string; status: NumericRange<300, 599>; [key: string]: unknown };
+	error: {
+		name: string;
+		type: Cause.Cause<unknown>["_tag"];
+		message: string;
+		stack: string;
+		status: NumericRange<300, 599>;
+		[key: string]: unknown;
+	};
 };
 export type EffectResult<R> = EffectSuccess<R> | EffectFailure;
 ```
 
 - **`EffectSuccess<R>`**: Represents successful execution with the result data
-- **`EffectFailure`**: Represents failed execution with error details including message, stack trace, HTTP status, and additional metadata
+- **`EffectFailure`**: Represents failed execution with error details including name, type, message, stack trace, HTTP status, and additional metadata
 - **`EffectResult<R>`**: The union type that can be either success or failure
 
 This type allows for safe error handling without throwing exceptions, making it ideal for scenarios where you want to handle errors gracefully or when working with remote commands that need to return structured responses.
@@ -413,40 +425,50 @@ This type allows for safe error handling without throwing exceptions, making it 
 The `handleCause` function processes Effect causes from the `run` and `runSafe` methods and converts them into an object structure compatible with the `EffectFailure` type.
 
 ```typescript
-export function handleCause<F extends InstanceType<ErrorClass>>(cause: Cause.Cause<F>) {
+export function handleCause<F extends InstanceType<ErrorClass> | UnknownException>(cause: Cause.Cause<F>) {
+	let name = `Unknown${cause._tag}`;
 	let message = Cause.pretty(cause);
 	let status: NumericRange<300, 599> = 500;
 	let extra: Record<string, unknown> = {};
 
 	if (Cause.isFailType(cause)) {
-		// Expected Errors
 		const error = cause.error;
-		status = error.status;
+
+		name = error._tag;
+		status = "status" in error ? error.status : 500;
 		extra.cause = error.cause;
-		extra = Object.assign(extra, omit(error, ["_tag", "_op", "pipe", "name", "message", "status"]));
+		extra = Object.assign(
+			extra,
+			isTaggedError(error)
+				? omit(error, ["_tag", "_op", "pipe", "name", "message", "status"])
+				: omit(error, ["_tag", "pipe", "name", "message"])
+		);
 
 		Effect.runFork(AppLog.error(message, extra));
 	}
 
 	if (Cause.isDieType(cause)) {
-		// Unexpected Errors
 		const defect = cause.defect;
+		name = "UnknownDefect";
+		extra.defect = defect;
 
 		if (isRedirect(defect)) {
-			// SvelteKit redirect()
+			name = "Redirect";
 			message = `Redirect to ${defect.location}`;
 			status = defect.status;
 			extra.redirectTo = defect.location;
 		} else if (isHttpError(defect)) {
-			// SvelteKit error()
+			name = "HttpError";
 			status = defect.status as NumericRange<300, 599>;
 			message = defect.body.message;
 		} else if (defect instanceof Error) {
-			// Re-throw ValidationError to preserve original error handling
-			if (defect.name === "ValidationError") throw defect;
+			name = defect.name;
 		}
 
 		if (typeof defect === "object" && defect !== null) {
+			if ("name" in defect && typeof defect.name === "string") {
+				name = defect.name;
+			}
 			if ("stack" in defect) {
 				extra.stack = defect.stack;
 			}
@@ -461,11 +483,11 @@ export function handleCause<F extends InstanceType<ErrorClass>>(cause: Cause.Cau
 	}
 
 	const trace = getTrace(message);
-	return { message: trace.message, stack: trace.stack, status, ...extra };
+	return { name, type: cause._tag, message: trace.message, stack: trace.stack, status, ...extra };
 }
 ```
 
-The function handles both expected errors (failures) and unexpected errors (defects), with special handling for SvelteKit redirects, HTTP errors, and ValidationErrors that need to be re-thrown to preserve their original error handling behavior.
+The function handles both expected errors (failures) and unexpected errors (defects), with special handling for SvelteKit redirects and HTTP errors. It returns an error object with `name`, `type`, `message`, `stack`, `status`, and additional metadata.
 
 ### Generator Support
 
@@ -478,7 +500,7 @@ const result =
 		const Characters = yield* CharacterService;
 		const { user } = assertAuth();
 
-		return yield* Characters.get.userCharacters(user.id);
+		return yield* Characters.get.all(user.id);
 	});
 ```
 
@@ -493,7 +515,7 @@ The `guardedQuery` function provides authentication and authorization for remote
 export function guardedQuery<
 	Schema extends StandardSchemaV1,
 	R,
-	F extends InstanceType<ErrorClass>,
+	F extends InstanceType<ErrorClass> | UnknownException,
 	S extends Services,
 	T extends YieldWrap<Effect.Effect<R, F, S>>,
 	X
@@ -506,7 +528,7 @@ export function guardedQuery<
 // Without schema (no input validation)
 export function guardedQuery<
 	R,
-	F extends InstanceType<ErrorClass>,
+	F extends InstanceType<ErrorClass> | UnknownException,
 	S extends Services,
 	T extends YieldWrap<Effect.Effect<R, F, S>>,
 	X
@@ -534,7 +556,7 @@ The `guardedCommand` function provides similar protection for remote commands, r
 export function guardedCommand<
 	Schema extends StandardSchemaV1,
 	R,
-	F extends InstanceType<ErrorClass>,
+	F extends InstanceType<ErrorClass> | UnknownException,
 	S extends Services,
 	T extends YieldWrap<Effect.Effect<R, F, S>>,
 	X
@@ -548,7 +570,7 @@ export function guardedCommand<
 export function guardedCommand<
 	Input,
 	R,
-	F extends InstanceType<ErrorClass>,
+	F extends InstanceType<ErrorClass> | UnknownException,
 	S extends Services,
 	T extends YieldWrap<Effect.Effect<R, F, S>>,
 	X
@@ -579,7 +601,7 @@ The `guardedForm` function provides authentication and authorization for remote 
 export function guardedForm<
 	Schema extends StandardSchemaV1<RemoteFormInput, Record<string, unknown>>,
 	R,
-	F extends InstanceType<ErrorClass>,
+	F extends InstanceType<ErrorClass> | UnknownException,
 	S extends Services,
 	T extends YieldWrap<Effect.Effect<R, F, S>>,
 	X
@@ -587,35 +609,53 @@ export function guardedForm<
 	schema: Schema,
 	fn: (
 		output: StandardSchemaV1.InferOutput<Schema>,
-		auth: { user: LocalsUser; event: RequestEvent; invalid: Invalid<StandardSchemaV1.InferInput<Schema>> }
+		auth: { user: LocalsUser; event: RequestEvent; issue: InvalidField<StandardSchemaV1.InferInput<Schema>> }
 	) => Generator<T, X>,
 	adminOnly?: boolean
 ): RemoteForm<StandardSchemaV1.InferInput<Schema>, X>;
 
-// Without schema
+// Without schema (unchecked)
 export function guardedForm<
 	Input extends RemoteFormInput,
 	R,
-	F extends InstanceType<ErrorClass>,
+	F extends InstanceType<ErrorClass> | UnknownException,
 	S extends Services,
 	T extends YieldWrap<Effect.Effect<R, F, S>>,
 	X
 >(
-	fn: (output: Input, auth: { user: LocalsUser; event: RequestEvent; invalid: Invalid<Input> }) => Generator<T, X>,
+	schema: "unchecked",
+	fn: (input: Input, auth: { user: LocalsUser; event: RequestEvent; issue: InvalidField<Input> }) => Generator<T, X>,
 	adminOnly?: boolean
 ): RemoteForm<Input, X>;
+
+// Without schema (no input)
+export function guardedForm<
+	R,
+	F extends InstanceType<ErrorClass> | UnknownException,
+	S extends Services,
+	T extends YieldWrap<Effect.Effect<R, F, S>>,
+	X
+>(
+	fn: (auth: { user: LocalsUser; event: RequestEvent; issue: InvalidField<void> }) => Generator<T, X>,
+	adminOnly?: boolean
+): RemoteForm<void, X>;
 ```
 
-Forms provide access to the `invalid` function for handling validation errors:
+Forms provide access to the `issue` function for handling validation errors. The function uses `runSafe` and handles errors appropriately:
 
 ```typescript
-return form(schemaOrFn, (output, invalid) =>
-	run(function* () {
+return form(schemaOrFn, async (output, issue) => {
+	const result = await runSafe(function* () {
 		const Auth = yield* AuthService;
 		const auth = yield* Auth.guard(adminOnly);
-		return yield* fnOrAdminOnly(output, { invalid, ...auth });
-	})
-);
+		return yield* fn(output, { issue, ...auth });
+	});
+
+	if (result.ok) return result.data;
+	if (isRedirectFailure(result.error)) redirect(result.error.status, result.error.redirectTo);
+	if (isValidationError(result.error)) throw result.error.defect;
+	throw invalid(result.error.message);
+});
 ```
 
 ### Authentication Guard
@@ -630,7 +670,7 @@ guard: Effect.fn(function* (adminOnly = false) {
 	if (!user) {
 		const returnUrl = `${event.url.pathname}${event.url.search}`;
 		return yield* new RedirectError({
-			message: "Invalid user",
+			message: "User is not authenticated",
 			redirectTo: `/?redirect=${encodeURIComponent(returnUrl)}`
 		});
 	}
@@ -688,6 +728,20 @@ export class FailedError extends Data.TaggedError("FailedError")<ErrorParams> {
 	}
 }
 
+interface RedirectErrorParams extends ErrorParams {
+	redirectTo: FullPathname;
+	status: NumericRange<301, 308>;
+}
+
+/**
+ * A redirect error is an error that is thrown when a redirect is needed.
+ *
+ * - 301 - Moved Permanently, always GET
+ * - 302 - Moved Temporarily, always GET
+ * - 303 - See Other, POST -> GET, after successful form submission
+ * - 307 - Temporary Redirect, preserves method
+ * - 308 - Permanent Redirect, preserves method
+ */
 export class RedirectError extends Data.TaggedError("RedirectError")<RedirectErrorParams> {
 	constructor({
 		message,
@@ -847,18 +901,18 @@ export class InvalidSchemaError extends Data.TaggedError("InvalidSchemaError")<I
 
 ### Form Integration
 
-Forms are handled using SvelteKit's `form` function with the `guardedForm` wrapper. The `invalid` function provided by SvelteKit is used to handle validation errors:
+Forms are handled using SvelteKit's `form` function with the `guardedForm` wrapper. The `issue` function provided by SvelteKit is used to handle validation errors:
 
 ```typescript
-export const save = guardedForm(dungeonMasterFormSchema, function* (input, { user, invalid }) {
+export const save = guardedForm(dungeonMasterFormSchema, function* (input, { user, issue }) {
 	const DMs = yield* DMService;
-	yield* DMs.set.save(user, input).pipe(Effect.tapError((err) => Effect.fail(invalid(err.message))));
+	yield* DMs.set.save(user, input).pipe(Effect.tapError((err) => Effect.fail(issue(err.message))));
 	yield* refreshAll(API.dms.queries.get(input.id).refresh(), API.dms.queries.getAll().refresh());
 	redirect(303, "/dms");
 });
 ```
 
-The `invalid` function allows setting field-specific or general form errors that will be automatically integrated with SvelteKit's form validation system.
+The `issue` function allows setting field-specific or general form errors that will be automatically integrated with SvelteKit's form validation system.
 
 ## Usage Patterns
 
@@ -904,14 +958,14 @@ export const save = guardedCommand(inputSchema, function* (input, { user }) {
 
 ### Remote Form Example
 
-Remote forms have access to the `invalid` function for validation errors:
+Remote forms have access to the `issue` function for validation errors:
 
 ```typescript
-export const save = guardedForm(dungeonMasterFormSchema, function* (input, { user, invalid }) {
+export const save = guardedForm(dungeonMasterFormSchema, function* (input, { user, issue }) {
 	const DMs = yield* DMService;
 
-	// Save the form data, handling errors with invalid()
-	yield* DMs.set.save(user, input).pipe(Effect.tapError((err) => Effect.fail(invalid(err.message))));
+	// Save the form data, handling errors with issue()
+	yield* DMs.set.save(user, input).pipe(Effect.tapError((err) => Effect.fail(issue(err.message))));
 
 	// Refresh queries after successful save
 	yield* refreshAll(API.dms.queries.get(input.id).refresh(), API.dms.queries.getAll().refresh());
@@ -927,7 +981,7 @@ The `refreshAll` utility helps refresh multiple queries after mutations:
 
 ```typescript
 export const refreshAll = Effect.fn(function* (...queries: Promise<void>[]) {
-	return yield* Effect.promise(() => Promise.all(queries));
+	return yield* Effect.tryPromise(() => Promise.all(queries));
 });
 ```
 
@@ -947,7 +1001,7 @@ const character =
 		Effect.flatMap((character) =>
 			character ? Effect.succeed(parseCharacter(character)) : Effect.fail(new CharacterNotFoundError())
 		),
-		Effect.tapError(() => AppLog.debug("CharacterService.get.character", { characterId, includeLogs }))
+		Effect.tapError(() => AppLog.debug("CharacterService.get.one", { characterId, includeLogs }))
 	);
 ```
 
@@ -1004,7 +1058,7 @@ if (result.success) {
 ### 5. Form Handling
 
 - Use `guardedForm` for form endpoints with authentication
-- Leverage the `invalid` function for form validation errors
+- Leverage the `issue` function for form validation errors
 - Refresh related queries after successful form submissions using `refreshAll`
 - Use SvelteKit redirects for navigation after form success
 
