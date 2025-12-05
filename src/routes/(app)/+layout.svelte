@@ -9,7 +9,7 @@
 	import Settings from "$lib/components/settings.svelte";
 	import { BLANK_CHARACTER } from "$lib/constants.js";
 	import * as API from "$lib/remote";
-	import { getGlobal, getRequest } from "$lib/stores.svelte.js";
+	import { getGlobal } from "$lib/stores.svelte.js";
 	import { hotkey, parseEffectResult } from "$lib/util";
 	import { wait } from "@sillvva/utils";
 	import { onMount } from "svelte";
@@ -18,7 +18,7 @@
 	let { children } = $props();
 
 	const global = getGlobal();
-	const { user, app, ...request } = $derived(await getRequest());
+	const { user, ...request } = $derived(await API.getRequest());
 
 	let settingsOpen = $state(false);
 	let loadingImage = $state(true);
@@ -60,7 +60,7 @@
 			<div class="inline max-w-10 shrink-0 grow md:hidden">&nbsp;</div>
 			<a href={user ? "/characters" : "/"} class="flex flex-1 items-center justify-center gap-1 md:flex-none">
 				<img
-					src="/images/{app.settings.mode === 'dark' ? 'dragon' : 'dragon-dark'}.webp"
+					src="/images/{global.app.settings.mode === 'dark' ? 'dragon' : 'dragon-dark'}.webp"
 					alt="Dragon"
 					class="xs:block hidden size-10"
 				/>

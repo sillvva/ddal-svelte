@@ -9,24 +9,26 @@
 	import Search from "$lib/components/search.svelte";
 	import { EntitySearchFactory, successToast } from "$lib/factories.svelte.js";
 	import * as API from "$lib/remote";
-	import { getRequest } from "$lib/stores.svelte.js";
+	import { getGlobal } from "$lib/stores.svelte.js";
 	import { createTransition, download, hotkey, parseEffectResult } from "$lib/util.js";
 	import { sorter } from "@sillvva/utils";
 	import { untrack } from "svelte";
 	import { SvelteSet } from "svelte/reactivity";
 
+	const global = getGlobal();
+
 	let deletingLog = new SvelteSet<string>();
 </script>
 
 <svelte:boundary>
-	{@const { user, app } = await getRequest()}
+	{@const { user } = await API.getRequest()}
 	{@const logs = await API.logs.queries.getDmLogs()}
 	{@const search = new EntitySearchFactory(
 		logs,
 		untrack(() => page.url.searchParams.get("s") || "")
 	)}
 	{@const sortedResults = search.results.toSorted((a, b) =>
-		app.dmLogs.sort === "asc" ? sorter(a.date, b.date) : sorter(b.date, a.date)
+		global.app.dmLogs.sort === "asc" ? sorter(a.date, b.date) : sorter(b.date, a.date)
 	)}
 
 	<Head title="{user?.name}'s DM Logs" />
@@ -71,19 +73,16 @@
 		<div class="flex gap-2">
 			<button
 				class="btn data-[desc=true]:btn-primary sm:btn-sm"
-				data-desc={app.dmLogs.descriptions}
+				data-desc={global.app.dmLogs.descriptions}
 				onclick={() =>
-					createTransition(
-						async () =>
-							await app.set((app) => {
-								app.dmLogs.descriptions = !app.dmLogs.descriptions;
-							})
-					)}
+					createTransition(() => {
+						global.app.dmLogs.descriptions = !global.app.dmLogs.descriptions;
+					})}
 				onkeypress={() => null}
 				aria-label="Toggle Notes"
 				tabindex="0"
 			>
-				{#if app.log.descriptions}
+				{#if global.app.dmLogs.descriptions}
 					<span class="iconify mdi--eye size-5 max-md:size-6"></span>
 				{:else}
 					<span class="iconify mdi--eye-off size-5 max-md:size-6"></span>
@@ -92,16 +91,14 @@
 			</button>
 			<button
 				class="btn btn-primary sm:btn-sm"
-				onclick={async () => {
-					await app.set((app) => {
-						app.dmLogs.sort = app.dmLogs.sort === "asc" ? "desc" : "asc";
-					});
+				onclick={() => {
+					global.app.dmLogs.sort = global.app.dmLogs.sort === "asc" ? "desc" : "asc";
 				}}
 				aria-label="Sort"
 			>
 				<span
 					class="iconify data-[sort=asc]:mdi--sort-calendar-ascending data-[sort=desc]:mdi--sort-calendar-descending size-5 max-md:size-6"
-					data-sort={app.dmLogs.sort}
+					data-sort={global.app.dmLogs.sort}
 				></span>
 			</button>
 		</div>
@@ -278,7 +275,7 @@
 							<tr
 								class="hidden border-0 data-[deleting=true]:hidden! data-[desc=true]:table-row max-sm:data-[mi=true]:table-row [&>td]:border-0"
 								data-deleting={deletingLog.has(log.id)}
-								data-desc={app.dmLogs.descriptions && hasDescription}
+								data-desc={global.app.dmLogs.descriptions && hasDescription}
 								data-mi={log.magicItemsGained.length > 0 || log.magicItemsLost.length > 0}
 							>
 								<td colSpan={3} class="pt-0">

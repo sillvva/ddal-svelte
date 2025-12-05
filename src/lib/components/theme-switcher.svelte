@@ -1,12 +1,12 @@
 <script lang="ts">
 	import { themeGroups, themes } from "$lib/constants";
-	import { getRequest } from "$lib/stores.svelte";
+	import { getGlobal } from "$lib/stores.svelte";
 	import { createTransition } from "$lib/util";
 	import { MediaQuery } from "svelte/reactivity";
 
-	const { app } = $derived(await getRequest());
+	const global = getGlobal();
 
-	let theme = $derived(app.settings.theme);
+	let theme = $derived(global.app.settings.theme);
 	const mq = new MediaQuery("(prefers-color-scheme: dark)");
 	const mode = $derived.by(() => {
 		const selected = themes.find((t) => t.value === theme);
@@ -17,18 +17,16 @@
 				return selected.group;
 			}
 		}
-		return app.settings.mode;
+		return global.app.settings.mode;
 	});
 
 	$effect(() => {
-		if (theme !== app.settings.theme || mode !== app.settings.mode) {
+		if (theme !== global.app.settings.theme || mode !== global.app.settings.mode) {
 			document.documentElement.classList.add("theme-switcher");
 			createTransition(
 				async () => {
-					await app.set((app) => {
-						app.settings.theme = theme;
-						app.settings.mode = mode;
-					});
+					global.app.settings.theme = theme;
+					global.app.settings.mode = mode;
 					const opposite = mode === "dark" ? "light" : "dark";
 					document.documentElement.classList.replace(opposite, mode);
 					if (theme === "system") {
@@ -47,11 +45,11 @@
 </script>
 
 <select class="select select-bordered select-sm flex-1 leading-4" bind:value={theme}>
-	<option value="system" selected={app.settings.theme === "system"}>System</option>
+	<option value="system" selected={global.app.settings.theme === "system"}>System</option>
 	{#each themeGroups as group (group)}
 		<hr />
 		{#each themes.filter((t) => "group" in t && t.group === group) as theme (theme.value)}
-			<option value={theme.value} selected={app.settings.theme === theme.value}>{theme.name}</option>
+			<option value={theme.value} selected={global.app.settings.theme === theme.value}>{theme.name}</option>
 		{/each}
 	{/each}
 </select>

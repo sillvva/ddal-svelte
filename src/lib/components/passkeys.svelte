@@ -1,17 +1,17 @@
 <script lang="ts">
 	import { authClient } from "$lib/auth";
 	import { errorToast, successToast } from "$lib/factories.svelte";
+	import * as API from "$lib/remote";
 	import type { PasskeyId } from "$lib/schemas";
-	import { getRequest } from "$lib/stores.svelte";
+	import { getGlobal } from "$lib/stores.svelte";
 
-	const { user, app, ...request } = $derived(await getRequest());
+	const { user, ...request } = $derived(await API.getRequest());
+	const global = getGlobal();
 	const passkeys = $derived(user?.passkeys || []);
 
 	$effect(() => {
-		if (app.settings.autoWebAuthn !== passkeys.length > 0) {
-			app.set((app) => {
-				app.settings.autoWebAuthn = passkeys.length > 0;
-			});
+		if (global.app.settings.autoWebAuthn !== passkeys.length > 0) {
+			global.app.settings.autoWebAuthn = passkeys.length > 0;
 		}
 	});
 

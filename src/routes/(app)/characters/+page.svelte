@@ -8,14 +8,16 @@
 	import Search from "$lib/components/search.svelte";
 	import { EntitySearchFactory } from "$lib/factories.svelte.js";
 	import * as API from "$lib/remote";
-	import { getRequest } from "$lib/stores.svelte.js";
+	import { getGlobal } from "$lib/stores.svelte.js";
 	import { createTransition, download, hotkey } from "$lib/util";
 	import { sorter } from "@sillvva/utils";
 	import { untrack } from "svelte";
+
+	const global = getGlobal();
 </script>
 
 <svelte:boundary>
-	{@const { user, app } = await getRequest()}
+	{@const { user } = await API.getRequest()}
 	{@const characters = await API.characters.queries.getAll()}
 	{@const search = new EntitySearchFactory(
 		characters,
@@ -75,17 +77,15 @@
 				</a>
 				<button
 					class="btn data-[enabled=true]:btn-primary xs:hidden inline-flex"
-					data-enabled={app.characters.magicItems}
+					data-enabled={global.app.characters.magicItems}
 					onclick={() => {
-						app.set((app) => {
-							app.characters.magicItems = !app.characters.magicItems;
-						});
+						global.app.characters.magicItems = !global.app.characters.magicItems;
 					}}
 					onkeypress={() => null}
 					aria-label="Toggle Magic Items"
 					tabindex="0"
 				>
-					{#if app.characters.magicItems}
+					{#if global.app.characters.magicItems}
 						<span class="iconify mdi--shield-sword size-6"></span>
 					{:else}
 						<span class="iconify mdi--shield-sword-outline size-6"></span>
@@ -93,21 +93,19 @@
 				</button>
 			</div>
 			<div class="flex justify-end gap-2 max-sm:mb-2 max-sm:w-full">
-				{#if app.characters.display != "grid"}
+				{#if global.app.characters.display != "grid"}
 					<button
 						class="btn data-[enabled=true]:btn-primary sm:btn-sm max-xs:hidden"
-						data-enabled={app.characters.magicItems}
+						data-enabled={global.app.characters.magicItems}
 						onclick={() =>
-							createTransition(() => {
-								app.set((app) => {
-									app.characters.magicItems = !app.characters.magicItems;
-								});
+							createTransition(async () => {
+								global.app.characters.magicItems = !global.app.characters.magicItems;
 							})}
 						onkeypress={() => null}
 						aria-label="Toggle Magic Items"
 						tabindex="0"
 					>
-						{#if app.characters.magicItems}
+						{#if global.app.characters.magicItems}
 							<span class="iconify mdi--eye max-xs:hidden size-5 sm:max-md:hidden"></span>
 							<span class="iconify mdi--shield-sword xs:max-sm:hidden size-6 md:hidden"></span>
 						{:else}
@@ -120,12 +118,10 @@
 				<div class="join max-xs:hidden">
 					<button
 						class="btn join-item data-[display=list]:btn-primary data-[display=grid]:hover:btn-primary sm:btn-sm"
-						data-display={app.characters.display}
+						data-display={global.app.characters.display}
 						onclick={() =>
 							createTransition(() => {
-								app.set((app) => {
-									app.characters.display = "list";
-								});
+								global.app.characters.display = "list";
 							})}
 						onkeypress={() => null}
 						aria-label="List View"
@@ -134,12 +130,10 @@
 					</button>
 					<button
 						class="btn join-item data-[display=grid]:btn-primary data-[display=list]:hover:btn-primary sm:btn-sm"
-						data-display={app.characters.display}
+						data-display={global.app.characters.display}
 						onclick={() =>
 							createTransition(() => {
-								app.set((app) => {
-									app.characters.display = "grid";
-								});
+								global.app.characters.display = "grid";
 							})}
 						onkeypress={() => null}
 						aria-label="Grid View"
@@ -153,7 +147,7 @@
 		<div class="max-sm:-mt-4">
 			<div
 				class="xs:data-[display=grid]:hidden w-full overflow-x-auto rounded-lg data-[display=grid]:block"
-				data-display={app.characters.display}
+				data-display={global.app.characters.display}
 			>
 				<table class="linked-table bg-base-200 table w-full leading-5 max-sm:border-separate max-sm:border-spacing-y-2">
 					<thead class="max-md:hidden">
@@ -204,7 +198,7 @@
 									<div class="mb-2 text-xs md:hidden">
 										<SearchResults text={character.campaign} terms={search.terms} />
 									</div>
-									{#if (character.match.has("magicItems") || app.characters.magicItems) && character.magicItems.length}
+									{#if (character.match.has("magicItems") || global.app.characters.magicItems) && character.magicItems.length}
 										<div class="mb-2">
 											<p class="font-semibold">Magic Items:</p>
 											<Items
@@ -247,14 +241,14 @@
 				{#if sortedResults.filter((c) => c.tier == tier).length}
 					<h1
 						class="font-vecna max-xs:data-[display=grid]:hidden pt-6 pb-2 text-3xl font-bold data-[display=list]:hidden data-[tier=1]:pt-0 dark:text-white"
-						data-display={app.characters.display}
+						data-display={global.app.characters.display}
 						data-tier={tier}
 					>
 						Tier {tier}
 					</h1>
 					<div
 						class="xs:data-[display=grid]:grid hidden w-full data-[display=grid]:grid-cols-2 data-[display=grid]:gap-4 sm:data-[display=grid]:grid-cols-3 md:data-[display=grid]:grid-cols-4"
-						data-display={app.characters.display}
+						data-display={global.app.characters.display}
 					>
 						{#each sortedResults.filter((c) => c.tier == tier) as character (character.id)}
 							<a

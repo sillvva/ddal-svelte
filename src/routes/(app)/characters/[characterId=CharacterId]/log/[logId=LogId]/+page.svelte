@@ -15,13 +15,12 @@
 	import { defaultDM, getItemEntities } from "$lib/entities.js";
 	import * as API from "$lib/remote";
 	import { type DungeonMasterId, logSchema } from "$lib/schemas";
-	import { getRequest } from "$lib/stores.svelte.js";
 	import { v7 } from "uuid";
 
 	let { params } = $props();
 
 	// svelte-ignore await_waterfall
-	const request = $derived(await getRequest());
+	const request = $derived(await API.getRequest());
 	const user = $derived(request.user!);
 	// svelte-ignore await_waterfall
 	const character = $derived(await API.characters.queries.get({ param: params.characterId }));

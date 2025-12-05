@@ -1,8 +1,9 @@
 <script lang="ts">
 	import { browser, dev } from "$app/environment";
 	import { page } from "$app/state";
+	import * as API from "$lib/remote";
 	import { uuidV7 } from "$lib/schemas";
-	import { getLogger, getRequest } from "$lib/stores.svelte";
+	import { getLogger } from "$lib/stores.svelte";
 	import { useOs } from "@svelteuidev/composables";
 	import SuperDebugRuned from "sveltekit-superforms/SuperDebug.svelte";
 	import * as v from "valibot";
@@ -90,7 +91,7 @@
 			</div>
 		</div>
 		{#if display}
-			{@const { user } = await getRequest()}
+			{@const { user } = await API.getRequest()}
 			<SuperDebugRuned
 				data={{
 					...page,

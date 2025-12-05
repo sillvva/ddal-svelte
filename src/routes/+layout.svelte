@@ -1,15 +1,18 @@
 <script lang="ts">
 	import { dev } from "$app/environment";
 	import { onNavigate } from "$app/navigation";
-	import { getGlobal, getLogger, getRequest } from "$lib/stores.svelte";
+	import * as API from "$lib/remote";
+	import { getGlobal, getLogger } from "$lib/stores.svelte";
+	import { untrack } from "svelte";
 	import { Toaster } from "svelte-sonner";
 	import "../app.css";
 
 	let { children } = $props();
 
 	getLogger();
-	getGlobal();
-	const { app } = $derived(await getRequest());
+	const global = getGlobal();
+	const request = $derived(await API.getRequest());
+	global.app = untrack(() => $state.snapshot(request.app));
 
 	onNavigate(({ complete, from, to }) => {
 		if (!document.startViewTransition) return;
@@ -25,7 +28,7 @@
 
 {@render children()}
 
-<Toaster richColors closeButton theme={app.settings.mode} />
+<Toaster richColors closeButton theme={global.app.settings.mode} />
 
 {#if dev}
 	<div class="fixed right-0 bottom-0 z-50">

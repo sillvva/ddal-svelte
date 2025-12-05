@@ -4,7 +4,7 @@
 	import { BLANK_CHARACTER, PROVIDERS, type ProviderId } from "$lib/constants";
 	import { errorToast } from "$lib/factories.svelte";
 	import * as API from "$lib/remote";
-	import { getRequest } from "$lib/stores.svelte";
+	import { getGlobal } from "$lib/stores.svelte";
 	import { parseEffectResult } from "$lib/util";
 	import { isDefined } from "@sillvva/utils";
 	import { isTupleOfAtLeast } from "effect/Predicate";
@@ -17,12 +17,13 @@
 
 	let { open = $bindable(false) }: Props = $props();
 
-	const { user, session, app, ...request } = $derived(await getRequest());
+	const { user, session, ...request } = $derived(await API.getRequest());
+	const global = getGlobal();
 
 	type UserAccount = { providerId: ProviderId; name: string; email: string; image: string };
 	let userAccounts = $state<UserAccount[]>([]);
 
-	const currentAccount = $derived(userAccounts.find((a) => a.providerId === app.settings.provider));
+	const currentAccount = $derived(userAccounts.find((a) => a.providerId === global.app.settings.provider));
 	const authProviders = $derived(
 		PROVIDERS.map((p) => ({
 			...p,
@@ -56,15 +57,13 @@
 				userAccounts = result.map((r) => (r.status === "fulfilled" ? r.value : undefined)).filter(isDefined);
 
 				const account =
-					userAccounts.find((a) => a.providerId === app.settings.provider) ||
+					userAccounts.find((a) => a.providerId === global.app.settings.provider) ||
 					userAccounts.find((a) => a.name === user?.name && a.email === user?.email) ||
 					(isTupleOfAtLeast(userAccounts, 1) ? userAccounts[0] : undefined);
 
 				if (account) {
-					if (!app.settings.provider) {
-						await app.set((app) => {
-							app.settings.provider = account.providerId;
-						});
+					if (!global.app.settings.provider) {
+						global.app.settings.provider = account.providerId;
 					}
 					if (
 						account.name !== user?.name ||
@@ -163,9 +162,7 @@
 															const result = await API.auth.actions.updateUser(account);
 															const parsed = await parseEffectResult(result);
 															if (parsed) {
-																await app.set((app) => {
-																	app.settings.provider = account.providerId;
-																});
+																global.app.settings.provider = account.providerId;
 															}
 														}}
 													>

@@ -11,7 +11,7 @@
 	import { EntitySearchFactory, successToast } from "$lib/factories.svelte.js";
 	import * as API from "$lib/remote";
 	import type { FullCharacterData } from "$lib/server/effect/services/characters.js";
-	import { getGlobal, getRequest } from "$lib/stores.svelte.js";
+	import { getGlobal } from "$lib/stores.svelte.js";
 	import { createTransition, hotkey, parseEffectResult } from "$lib/util";
 	import { slugify, sorter } from "@sillvva/utils";
 	import { clipboard, download } from "@svelteuidev/composables";
@@ -43,8 +43,8 @@
 	}
 
 	onMount(async () => {
-		const { user, app } = await getRequest();
-		if (app.settings.autoWebAuthn && !user) {
+		const { user } = await API.getRequest();
+		if (global.app.settings.autoWebAuthn && !user) {
 			authClient.signIn.passkey({
 				fetchOptions: {
 					onSuccess: () => {
@@ -57,7 +57,7 @@
 </script>
 
 <svelte:boundary>
-	{@const { user, app } = await getRequest()}
+	{@const { user } = await API.getRequest()}
 	{@const queryParams = { param: params.characterId, newRedirect: true }}
 	{@const character = await API.characters.queries.get(queryParams)}
 	{@const myCharacter = character.userId === user?.id}
@@ -306,18 +306,16 @@
 					</a>
 					<button
 						class="btn data-[desc=true]:btn-primary sm:hidden"
-						data-desc={app.log.descriptions}
+						data-desc={global.app.log.descriptions}
 						onclick={() =>
 							createTransition(async () => {
-								await app.set((app) => {
-									app.log.descriptions = !app.log.descriptions;
-								});
+								global.app.log.descriptions = !global.app.log.descriptions;
 							})}
 						onkeypress={() => null}
 						aria-label="Toggle Notes"
 						tabindex="0"
 					>
-						{#if app.log.descriptions}
+						{#if global.app.log.descriptions}
 							<span class="iconify mdi--note-text size-6"></span>
 						{:else}
 							<span class="iconify mdi--note-text-outline size-6"></span>
@@ -329,18 +327,16 @@
 				<div class="flex-1 max-sm:hidden"></div>
 				<button
 					class="btn data-[desc=true]:btn-primary sm:btn-sm max-sm:hidden"
-					data-desc={app.log.descriptions}
+					data-desc={global.app.log.descriptions}
 					onclick={() =>
 						createTransition(async () => {
-							await app.set((app) => {
-								app.log.descriptions = !app.log.descriptions;
-							});
+							global.app.log.descriptions = !global.app.log.descriptions;
 						})}
 					onkeypress={() => null}
 					aria-label="Toggle Notes"
 					tabindex="0"
 				>
-					{#if app.log.descriptions}
+					{#if global.app.log.descriptions}
 						<span class="iconify mdi--eye size-5"></span>
 					{:else}
 						<span class="iconify mdi--eye-off size-5"></span>
@@ -384,7 +380,7 @@
 							<tr class="print:text-sm [&>td]:border-0 [&>td]:border-t [&>td]:border-neutral-500/20">
 								<td
 									class="static! pb-0 align-top data-[desc=true]:pb-3 sm:pb-3 print:p-2"
-									data-desc={hasDescription && app.log.descriptions}
+									data-desc={hasDescription && global.app.log.descriptions}
 								>
 									{#if myCharacter}
 										<a
@@ -537,7 +533,7 @@
 							<!-- Notes -->
 							<tr
 								class="hidden border-0 data-[desc=true]:table-row max-sm:data-[mi=true]:table-row [&>td]:border-0"
-								data-desc={app.log.descriptions && hasDescription}
+								data-desc={global.app.log.descriptions && hasDescription}
 								data-mi={log.magicItemsGained.length > 0 || log.magicItemsLost.length > 0}
 								style:view-transition-name={`notes-${log.id}`}
 							>

@@ -1,12 +1,13 @@
 import { browser } from "$app/environment";
 import { Duration } from "effect";
 import Cookie from "js-cookie";
+import { untrack } from "svelte";
 import { SvelteDate } from "svelte/reactivity";
 import * as v from "valibot";
 import { createContext } from "./factories.svelte";
 import * as API from "./remote";
 import { logClientError } from "./remote/admin/actions.remote";
-import { appCookieSchema, type AppCookie } from "./schemas";
+import { appCookieSchema, appDefaults } from "./schemas";
 
 /**
  * Set a cookie from the browser using `js-cookie`.
@@ -34,7 +35,24 @@ export function setCookie<TSchema extends v.GenericSchema>(
 }
 
 export class Global {
+	private _app = $state(appDefaults);
 	private _pageLoader: boolean = $state.raw(false);
+
+	constructor() {
+		$effect(() => {
+			setCookie("app", appCookieSchema, this._app);
+			untrack(() => {
+				API.app.queries.request().refresh();
+			});
+		});
+	}
+
+	get app() {
+		return this._app;
+	}
+	set app(app) {
+		this._app = app;
+	}
 
 	get pageLoader() {
 		return this._pageLoader;
@@ -45,24 +63,6 @@ export class Global {
 }
 
 export const [getGlobal] = createContext(() => new Global());
-
-export async function getRequest() {
-	const result = await API.app.queries.request();
-	const impl = {
-		...result,
-		app: {
-			...result.app,
-			set: async (fn: (app: AppCookie) => Awaitable<void>) => {
-				await fn(result.app);
-				setCookie("app", appCookieSchema, result.app);
-				await impl.refresh();
-				return result.app;
-			}
-		},
-		refresh: () => API.app.queries.request().refresh()
-	};
-	return impl;
-}
 
 class Logger {
 	private _lastLog: { label: string; timestamp: number } = $state.raw({ label: "", timestamp: 0 });

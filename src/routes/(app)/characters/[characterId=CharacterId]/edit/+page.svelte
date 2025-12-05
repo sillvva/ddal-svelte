@@ -11,16 +11,14 @@
 	import { BLANK_CHARACTER } from "$lib/constants.js";
 	import * as API from "$lib/remote";
 	import { editCharacterSchema } from "$lib/schemas.js";
-	import { getRequest } from "$lib/stores.svelte.js";
+	import { getGlobal } from "$lib/stores.svelte.js";
 
 	let { params } = $props();
 
-	// svelte-ignore await_waterfall
-	const { app } = $derived(await getRequest());
+	const global = getGlobal();
 
 	const schema = editCharacterSchema;
 	const form = API.characters.forms.save;
-	// svelte-ignore await_waterfall
 	const character = $derived(await API.characters.forms.get(params.characterId));
 	const initialErrors = $derived(params.characterId !== "new");
 
@@ -99,9 +97,7 @@
 						type="checkbox"
 						label="Create Starting Log"
 						onchange={() => {
-							app.set((app) => {
-								app.characters.firstLog = data.firstLog;
-							});
+							global.app.characters.firstLog = data.firstLog;
 						}}
 					/>
 				</Control>
