@@ -9,6 +9,7 @@
 	import Head from "$lib/components/head.svelte";
 	import NavMenu from "$lib/components/nav-menu.svelte";
 	import { BLANK_CHARACTER } from "$lib/constants.js";
+	import { proxify } from "$lib/factories.svelte.js";
 	import * as API from "$lib/remote";
 	import { editCharacterSchema } from "$lib/schemas.js";
 	import { getGlobal } from "$lib/stores.svelte.js";
@@ -22,10 +23,7 @@
 	const character = $derived(await API.characters.forms.get(params.characterId));
 	const initialErrors = $derived(params.characterId !== "new");
 
-	let data = $derived.by(() => {
-		const state = $state(character);
-		return state;
-	});
+	let data = $derived(proxify(character));
 </script>
 
 <Head title={params.characterId === "new" ? "New Character" : `Edit ${character.name}`} />

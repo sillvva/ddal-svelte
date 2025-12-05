@@ -440,3 +440,8 @@ export function createContext<T>(createDefault?: () => T): [() => T, (context: T
 		(context) => setContext(key, context)
 	];
 }
+
+export function proxify<T>(object: T, snapshot = false) {
+	const _ = $state(snapshot ? $state.snapshot(object) : object);
+	return _;
+}

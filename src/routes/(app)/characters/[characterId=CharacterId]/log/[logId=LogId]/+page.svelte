@@ -13,6 +13,7 @@
 	import Head from "$lib/components/head.svelte";
 	import NavMenu from "$lib/components/nav-menu.svelte";
 	import { defaultDM, getItemEntities } from "$lib/entities.js";
+	import { proxify } from "$lib/factories.svelte.js";
 	import * as API from "$lib/remote";
 	import { type DungeonMasterId, logSchema } from "$lib/schemas";
 	import { v7 } from "uuid";
@@ -37,10 +38,7 @@
 		await API.logs.forms.character({ character: { id: character.id, name: character.name }, logId: params.logId, firstLog })
 	);
 
-	let data = $derived.by(() => {
-		const state = $state(log);
-		return state;
-	});
+	let data = $derived(proxify(log));
 	let season = $derived(log.experience ? 1 : log.acp ? 8 : 9);
 </script>
 

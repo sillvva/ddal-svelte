@@ -11,6 +11,7 @@
 	import Submit from "$lib/components/forms/submit.svelte";
 	import Head from "$lib/components/head.svelte";
 	import NavMenu from "$lib/components/nav-menu.svelte";
+	import { proxify } from "$lib/factories.svelte.js";
 	import * as API from "$lib/remote";
 	import { dmLogSchema } from "$lib/schemas";
 
@@ -27,10 +28,7 @@
 	);
 	const characters = $derived(await API.characters.queries.getAllSelect());
 
-	let data = $derived.by(() => {
-		const data = $state(log);
-		return data;
-	});
+	let data = $derived(proxify(log));
 	let season = $derived(log.experience ? 1 : log.acp ? 8 : 9);
 </script>
 
