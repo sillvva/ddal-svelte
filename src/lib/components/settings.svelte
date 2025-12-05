@@ -4,7 +4,6 @@
 	import { BLANK_CHARACTER, PROVIDERS, type ProviderId } from "$lib/constants";
 	import { errorToast } from "$lib/factories.svelte";
 	import * as API from "$lib/remote";
-	import { signOut } from "$lib/remote/auth/forms.remote";
 	import { getRequest } from "$lib/stores.svelte";
 	import { parseEffectResult } from "$lib/util";
 	import { isDefined } from "@sillvva/utils";
@@ -120,7 +119,7 @@
 					</button>
 				</form>
 			{:else}
-				<form {...signOut} class="tooltip tooltip-left" data-tip="Sign out">
+				<form {...API.auth.forms.signOut} class="tooltip tooltip-left" data-tip="Sign out">
 					<button type="submit" class="btn p-3" aria-label="Sign out">
 						<span class="iconify mdi--logout size-5"></span>
 					</button>
