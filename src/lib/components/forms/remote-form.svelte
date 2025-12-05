@@ -49,7 +49,6 @@
 
 	const form = remoteForm.for((data.id ?? v7()) as FormId).preflight(schema);
 	const fields = form.fields as RemoteFormFields<unknown>;
-	let initial = $state.raw(untrack(() => $state.snapshot(data)));
 
 	// svelte-ignore state_referenced_locally
 	form.fields.set(data as any);
@@ -57,6 +56,9 @@
 		form.fields.set(data as any);
 	});
 
+	let initial = $state.raw(untrack(() => $state.snapshot(data)));
+	let dirty = $derived(!deepEqual(initial, form.fields.value()));
+	let touched = $state.raw(false);
 	$effect(() => {
 		void page.url;
 		initial = untrack(() => $state.snapshot(data));
@@ -64,10 +66,7 @@
 
 	const result = $derived(form.result);
 	const issues = $derived(form.fields.issues());
-
 	let lastIssues = $state.raw<RemoteFormIssue[] | undefined>(fields.allIssues());
-	let dirty = $derived(!deepEqual(initial, form.fields.value()));
-	let touched = $state.raw(false);
 
 	const debouncedValidate = debounce(validate, 300);
 
