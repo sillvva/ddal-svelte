@@ -1,11 +1,9 @@
 import { browser } from "$app/environment";
 import { Duration } from "effect";
 import Cookie from "js-cookie";
-import { untrack } from "svelte";
 import { SvelteDate } from "svelte/reactivity";
 import * as v from "valibot";
 import { createContext } from "./factories.svelte";
-import * as API from "./remote";
 import { logClientError } from "./remote/admin/actions.remote";
 import { appCookieSchema, appDefaults } from "./schemas";
 
@@ -39,12 +37,7 @@ export class Global {
 	private _pageLoader: boolean = $state.raw(false);
 
 	constructor() {
-		$effect(() => {
-			setCookie("app", appCookieSchema, this._app);
-			untrack(() => {
-				API.app.queries.request().refresh();
-			});
-		});
+		$effect(() => void setCookie("app", appCookieSchema, this._app));
 	}
 
 	get app() {
