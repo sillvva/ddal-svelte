@@ -242,61 +242,70 @@
 				</table>
 			</div>
 
-			{#each [1, 2, 3, 4] as tier (tier)}
-				{#if sortedResults.filter((c) => c.tier == tier).length}
+			{#snippet grid(results: typeof sortedResults)}
+				<div
+					class="xs:data-[display=grid]:grid hidden w-full data-[display=grid]:grid-cols-2 data-[display=grid]:gap-4 sm:data-[display=grid]:grid-cols-3 md:data-[display=grid]:grid-cols-4"
+					data-display={global.app.characters.display}
+				>
+					{#each results as character (character.id)}
+						<div
+							class="card linked-card card-compact bg-base-200 shadow-xl transition-transform duration-200 motion-safe:hover:scale-105"
+							style:view-transition-name={"image-" + character.id}
+						>
+							<figure class="relative aspect-square overflow-hidden">
+								{#key character.imageUrl}
+									<img src={character.imageUrl} alt={character.name} class="size-full object-cover object-top" loading="lazy" />
+								{/key}
+								{#if search.query.length >= 1 && character.match.has("magicItems")}
+									<div class="absolute inset-0 flex items-center bg-black/50 p-2 text-center text-xs text-white">
+										<div class="flex-1">
+											<Items
+												type="Magic Items"
+												items={character.magicItems}
+												terms={search.terms}
+												filtered
+												matches={character.match.size}
+												formatting
+											/>
+										</div>
+									</div>
+								{/if}
+							</figure>
+							<div class="card-body p-4 text-center">
+								<div class="flex flex-col gap-1">
+									<h2 class="card-title ellipsis-nowrap block text-sm text-balance dark:text-white">
+										<a href={`/characters/${character.id}`} class="card-link">
+											<SearchResults text={character.name} terms={search.terms} />
+										</a>
+									</h2>
+									<p class="text-xs text-balance">
+										<SearchResults text={`${character.race} ${character.class}`} terms={search.terms} />
+									</p>
+									<p class="text-xs">
+										Level {character.totalLevel} | Tier {character.tier}
+										{#if search.terms.length}| Score {Math.round(character.score * 100) / 100}{/if}
+									</p>
+								</div>
+							</div>
+						</div>
+					{/each}
+				</div>
+			{/snippet}
+
+			{#if search.terms.length}
+				{@render grid(sortedResults)}
+			{:else}
+				{#each [...new Set(sortedResults.map((c) => c.tier))].sort(sorter) as tier, index (tier)}
 					<h1
-						class="font-vecna max-xs:data-[display=grid]:hidden pt-6 pb-2 text-3xl font-bold data-[display=list]:hidden data-[tier=1]:pt-0 dark:text-white"
+						class="font-vecna max-xs:data-[display=grid]:hidden pt-6 pb-2 text-3xl font-bold data-[display=list]:hidden data-[index=0]:pt-0 dark:text-white"
 						data-display={global.app.characters.display}
-						data-tier={tier}
+						data-index={index}
 					>
 						Tier {tier}
 					</h1>
-					<div
-						class="xs:data-[display=grid]:grid hidden w-full data-[display=grid]:grid-cols-2 data-[display=grid]:gap-4 sm:data-[display=grid]:grid-cols-3 md:data-[display=grid]:grid-cols-4"
-						data-display={global.app.characters.display}
-					>
-						{#each sortedResults.filter((c) => c.tier == tier) as character (character.id)}
-							<div
-								class="card linked-card card-compact bg-base-200 shadow-xl transition-transform duration-200 motion-safe:hover:scale-105"
-								style:view-transition-name={"image-" + character.id}
-							>
-								<figure class="relative aspect-square overflow-hidden">
-									{#key character.imageUrl}
-										<img src={character.imageUrl} alt={character.name} class="size-full object-cover object-top" loading="lazy" />
-									{/key}
-									{#if search.query.length >= 1 && character.match.has("magicItems")}
-										<div class="absolute inset-0 flex items-center bg-black/50 p-2 text-center text-xs text-white">
-											<div class="flex-1">
-												<Items
-													type="Magic Items"
-													items={character.magicItems}
-													terms={search.terms}
-													filtered
-													matches={character.match.size}
-													formatting
-												/>
-											</div>
-										</div>
-									{/if}
-								</figure>
-								<div class="card-body p-4 text-center">
-									<div class="flex flex-col gap-1">
-										<h2 class="card-title ellipsis-nowrap block text-sm text-balance dark:text-white">
-											<a href={`/characters/${character.id}`} class="card-link">
-												<SearchResults text={character.name} terms={search.terms} />
-											</a>
-										</h2>
-										<p class="text-xs text-balance">
-											<SearchResults text={`${character.race} ${character.class}`} terms={search.terms} />
-										</p>
-										<p class="text-xs">Level {character.totalLevel} | Tier {character.tier}</p>
-									</div>
-								</div>
-							</div>
-						{/each}
-					</div>
-				{/if}
-			{/each}
+					{@render grid(sortedResults.filter((c) => c.tier == tier))}
+				{/each}
+			{/if}
 		</div>
 	{/if}
 </svelte:boundary>
