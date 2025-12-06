@@ -199,9 +199,9 @@
 										<SearchResults text={character.campaign} terms={search.terms} />
 									</div>
 									{#if (character.match.has("magicItems") || global.app.characters.magicItems) && character.magicItems.length}
-										<div class="mb-2">
-											<p class="font-semibold">Magic Items:</p>
+										<div class="my-2">
 											<Items
+												title="Magic Items"
 												items={character.magicItems}
 												terms={search.terms}
 												filtered
@@ -212,8 +212,13 @@
 									{/if}
 									{#if character.match.has("storyAwards") && character.storyAwards.length}
 										<div class="mb-2">
-											<p class="font-semibold">Story Awards:</p>
-											<Items items={character.storyAwards} terms={search.terms} filtered matches={character.match.size} />
+											<Items
+												type="Story Awards"
+												items={character.storyAwards}
+												terms={search.terms}
+												filtered
+												matches={character.match.size}
+											/>
 										</div>
 									{/if}
 									{#if search.terms.length > 0}
@@ -251,9 +256,8 @@
 						data-display={global.app.characters.display}
 					>
 						{#each sortedResults.filter((c) => c.tier == tier) as character (character.id)}
-							<a
-								href={`/characters/${character.id}`}
-								class="card card-compact bg-base-200 shadow-xl transition-transform duration-200 motion-safe:hover:scale-105"
+							<div
+								class="card linked-card card-compact bg-base-200 shadow-xl transition-transform duration-200 motion-safe:hover:scale-105"
 								style:view-transition-name={"image-" + character.id}
 							>
 								<figure class="relative aspect-square overflow-hidden">
@@ -264,6 +268,7 @@
 										<div class="absolute inset-0 flex items-center bg-black/50 p-2 text-center text-xs text-white">
 											<div class="flex-1">
 												<Items
+													type="Magic Items"
 													items={character.magicItems}
 													terms={search.terms}
 													filtered
@@ -277,7 +282,9 @@
 								<div class="card-body p-4 text-center">
 									<div class="flex flex-col gap-1">
 										<h2 class="card-title ellipsis-nowrap block text-sm text-balance dark:text-white">
-											<SearchResults text={character.name} terms={search.terms} />
+											<a href={`/characters/${character.id}`} class="card-link">
+												<SearchResults text={character.name} terms={search.terms} />
+											</a>
 										</h2>
 										<p class="text-xs text-balance">
 											<SearchResults text={`${character.race} ${character.class}`} terms={search.terms} />
@@ -285,7 +292,7 @@
 										<p class="text-xs">Level {character.totalLevel} | Tier {character.tier}</p>
 									</div>
 								</div>
-							</a>
+							</div>
 						{/each}
 					</div>
 				{/if}
