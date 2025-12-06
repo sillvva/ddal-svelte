@@ -5,7 +5,7 @@
 	import { dev } from "$app/environment";
 	import { beforeNavigate } from "$app/navigation";
 	import { page } from "$app/state";
-	import { successToast, unknownErrorToast } from "$lib/factories.svelte";
+	import { initForm, successToast, unknownErrorToast } from "$lib/factories.svelte";
 	import { debounce, deepEqual } from "@sillvva/utils";
 	import type { StandardSchemaV1 } from "@standard-schema/spec";
 	import type { RemoteForm, RemoteFormFields, RemoteFormInput, RemoteFormIssue } from "@sveltejs/kit";
@@ -49,12 +49,7 @@
 
 	const form = remoteForm.for((data.id ?? v7()) as FormId).preflight(schema);
 	const fields = form.fields as RemoteFormFields<unknown>;
-
-	// svelte-ignore state_referenced_locally
-	form.fields.set(data as any);
-	$effect(() => {
-		form.fields.set(data as any);
-	});
+	initForm(() => form.fields.set(data as any));
 
 	let initial = $state.raw(untrack(() => $state.snapshot(data)));
 	let dirty = $derived(!deepEqual(initial, form.fields.value()));

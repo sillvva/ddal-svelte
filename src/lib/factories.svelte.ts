@@ -445,3 +445,12 @@ export function proxify<T>(object: T) {
 	const _ = $state({ current: object });
 	return _;
 }
+
+export function initForm(init: () => unknown) {
+	init();
+	let hasHydrated = false;
+	$effect(() => {
+		if (!hasHydrated) return void (hasHydrated = true);
+		init();
+	});
+}
