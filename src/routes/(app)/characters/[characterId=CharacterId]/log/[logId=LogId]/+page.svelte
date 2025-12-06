@@ -54,7 +54,7 @@
 		]}
 	/>
 
-	<RemoteForm {schema} {form} {data} {initialErrors}>
+	<RemoteForm {schema} {form} data={data.current} {initialErrors}>
 		{#snippet children({ fields })}
 			<Input field={fields.id} type="hidden" />
 			<Input field={fields.characterId} type="hidden" />
@@ -82,7 +82,7 @@
 			<Control class={["col-span-12", !firstLog ? "sm:col-span-4" : "sm:col-span-6"]}>
 				<DateInput field={fields.date} label="Date" />
 			</Control>
-			{#if data.type === "game"}
+			{#if data.current.type === "game"}
 				{#if !firstLog}
 					<Control class="col-span-12 sm:col-span-6">
 						<Combobox
@@ -98,11 +98,12 @@
 							onselect={({ selected }) => {
 								const id = (selected?.value || v7()) as DungeonMasterId;
 								const name = selected?.label;
-								data.dm = dms.find((dm) => dm.id === id) || (name ? { ...data.dm, id, name } : defaultDM(user.id));
+								data.current.dm =
+									dms.find((dm) => dm.id === id) || (name ? { ...data.current.dm, id, name } : defaultDM(user.id));
 							}}
 							clearable
-							onclear={() => (data.dm = defaultDM(user.id))}
-							link={data.dm.id ? `/dms/${data.dm.id}` : ""}
+							onclear={() => (data.current.dm = defaultDM(user.id))}
+							link={data.current.dm.id ? `/dms/${data.current.dm.id}` : ""}
 							placeholder={dms.find((dm) => dm.isUser)?.name || user.name}
 						/>
 					</Control>
@@ -110,11 +111,11 @@
 						<Input
 							field={fields.dm.DCI}
 							type="text"
-							disabled={!data.dm.name}
-							placeholder={data.dm.name ? undefined : dms.find((dm) => dm.isUser)?.DCI}
+							disabled={!data.current.dm.name}
+							placeholder={data.current.dm.name ? undefined : dms.find((dm) => dm.isUser)?.DCI}
 							label="DM DCI"
 						/>
-						{#if !data.dm.name}
+						{#if !data.current.dm.name}
 							<Input field={fields.dm.DCI} hidden />
 						{/if}
 					</Control>
@@ -132,10 +133,10 @@
 							bind:value={season}
 							class="select select-bordered w-full"
 							onchange={() => {
-								data.experience = 0;
-								data.acp = 0;
-								data.level = 0;
-								data.tcp = 0;
+								data.current.experience = 0;
+								data.current.acp = 0;
+								data.current.level = 0;
+								data.current.tcp = 0;
 							}}
 						>
 							<option value={9}>Season 9+ (Level)</option>
@@ -171,15 +172,15 @@
 				<Input field={fields.dm.userId} type="hidden" />
 				<Input field={fields.dm.isUser} type="checkbox" hidden />
 			{/if}
-			{#if season === 8 || data.type === "nongame"}
-				<Control class={data.type === "game" ? "col-span-6 sm:col-span-2" : "col-span-4"}>
+			{#if season === 8 || data.current.type === "nongame"}
+				<Control class={data.current.type === "game" ? "col-span-6 sm:col-span-2" : "col-span-4"}>
 					<Input field={fields.tcp} type="number" label="TCP" />
 				</Control>
 			{/if}
-			<Control class={data.type === "game" ? "col-span-6 sm:col-span-2" : "col-span-4"}>
+			<Control class={data.current.type === "game" ? "col-span-6 sm:col-span-2" : "col-span-4"}>
 				<Input field={fields.gold} type="number" label="Gold" />
 			</Control>
-			<Control class={data.type === "game" ? "col-span-6 sm:col-span-2" : "col-span-4"}>
+			<Control class={data.current.type === "game" ? "col-span-6 sm:col-span-2" : "col-span-4"}>
 				<Input field={fields.dtd} type="number" label="Downtime" />
 			</Control>
 			<Control class="col-span-12 w-full">

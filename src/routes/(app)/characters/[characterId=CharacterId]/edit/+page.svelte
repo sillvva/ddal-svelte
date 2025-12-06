@@ -39,7 +39,7 @@
 
 <svelte:boundary>
 	{#snippet failed(error)}<Error {error} boundary="edit-character" />{/snippet}
-	<RemoteForm {schema} {form} {data} {initialErrors}>
+	<RemoteForm {schema} {form} data={data.current} {initialErrors}>
 		{#snippet children({ fields })}
 			<Input field={fields.id} type="hidden" />
 			<Control class="col-span-12 sm:col-span-6">
@@ -76,7 +76,7 @@
 					type="url"
 					label="Image URL"
 					placeholder={`${page.url.origin}${BLANK_CHARACTER}`}
-					warning={data.imageUrl?.includes("imgur")
+					warning={data.current.imageUrl?.includes("imgur")
 						? "Images from imgur may not appear when sharing links due to rate limiting"
 						: undefined}
 				/>
@@ -95,7 +95,7 @@
 						type="checkbox"
 						label="Create Starting Log"
 						onchange={() => {
-							global.app.characters.firstLog = data.firstLog;
+							global.app.characters.firstLog = data.current.firstLog;
 						}}
 					/>
 				</Control>

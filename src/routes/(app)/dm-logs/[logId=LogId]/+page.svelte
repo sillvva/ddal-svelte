@@ -43,7 +43,7 @@
 		]}
 	/>
 
-	<RemoteForm {schema} {form} {data} {initialErrors}>
+	<RemoteForm {schema} {form} data={data.current} {initialErrors}>
 		{#snippet children({ fields })}
 			<Input field={fields.id} type="hidden" />
 			<Control class="col-span-12 sm:col-span-6 lg:col-span-3">
@@ -58,18 +58,23 @@
 					valueField={fields.characterId}
 					inputField={fields.characterName}
 					values={characters.map((char) => ({ value: char.id, label: char.name }))}
-					required={!!data.appliedDate}
+					required={!!data.current.appliedDate}
 					onselect={() => {
-						data.appliedDate = data.date || new Date().getTime();
+						data.current.appliedDate = data.current.date || new Date().getTime();
 					}}
 					clearable
 					onclear={() => {
-						data.appliedDate = 0;
+						data.current.appliedDate = 0;
 					}}
 				/>
 			</Control>
 			<Control class="col-span-12 sm:col-span-6 lg:col-span-3">
-				<DateInput field={fields.appliedDate} label="Assigned Date" min={data.date} required={!!data.characterId} />
+				<DateInput
+					field={fields.appliedDate}
+					label="Assigned Date"
+					min={data.current.date}
+					required={!!data.current.characterId}
+				/>
 			</Control>
 			<Control class="col-span-12 sm:col-span-4">
 				<InputWrapper type="select" labelFor="season" label="Season">
@@ -78,10 +83,10 @@
 						bind:value={season}
 						class="select select-bordered w-full"
 						onchange={() => {
-							data.experience = 0;
-							data.acp = 0;
-							data.level = 0;
-							data.tcp = 0;
+							data.current.experience = 0;
+							data.current.acp = 0;
+							data.current.level = 0;
+							data.current.tcp = 0;
 						}}
 					>
 						<option value={9}>Season 9+ (Level)</option>
