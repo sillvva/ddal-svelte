@@ -152,8 +152,8 @@
 				<table class="linked-table bg-base-200 table w-full leading-5 max-sm:border-separate max-sm:border-spacing-y-2">
 					<thead class="max-md:hidden">
 						<tr class="bg-base-300 text-base-content/70">
-							<td></td>
-							<td>Name</td>
+							<td class="w-18"></td>
+							<td>Characters ({sortedResults.length})</td>
 							<td>Campaign</td>
 							<td class="text-center">Tier</td>
 							<td class="text-center">Level</td>
