@@ -1,4 +1,5 @@
 /* eslint-disable svelte/prefer-svelte-reactivity */
+import { browser } from "$app/environment";
 import type { FullCharacterData } from "$lib/server/effect/services/characters";
 import type { UserDM } from "$lib/server/effect/services/dms";
 import type { FullLogData, LogSummaryData, UserLogData } from "$lib/server/effect/services/logs";
@@ -441,10 +442,8 @@ export function proxify<T>(object: T) {
 }
 
 export function initForm(init: () => unknown) {
-	init();
-	let hasHydrated = false;
+	if (!browser) init();
 	$effect(() => {
-		if (!hasHydrated) return void (hasHydrated = true);
 		init();
 	});
 }
