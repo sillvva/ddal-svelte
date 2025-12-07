@@ -52,7 +52,7 @@
 
 	// svelte-ignore state_referenced_locally
 	let initial = $state.raw($state.snapshot(data));
-	let dirty = $derived(!deepEqual(initial, form.fields.value()));
+	let dirty = $derived(!deepEqual(initial, $state.snapshot(form.fields.value())));
 	let touched = $state.raw(false);
 	$effect(() => {
 		void page.url;
