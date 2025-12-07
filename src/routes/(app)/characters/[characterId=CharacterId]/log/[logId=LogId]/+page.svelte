@@ -54,11 +54,11 @@
 		]}
 	/>
 
-	<RemoteForm {schema} {form} data={data.current} {initialErrors}>
+	<RemoteForm {schema} {form} {data} {initialErrors}>
 		{#snippet children({ fields })}
-			<Input field={fields.id} type="hidden" />
-			<Input field={fields.characterId} type="hidden" />
-			<Input field={fields.characterName} type="hidden" />
+			<Input field={fields.id} hidden />
+			<Input field={fields.characterId} hidden />
+			<Input field={fields.characterName} hidden />
 			<Input field={fields.appliedDate} type="number" hidden />
 			{#if !firstLog}
 				<Control class="col-span-12 sm:col-span-4">
@@ -82,7 +82,7 @@
 			<Control class={["col-span-12", !firstLog ? "sm:col-span-4" : "sm:col-span-6"]}>
 				<DateInput field={fields.date} label="Date" />
 			</Control>
-			{#if data.current.type === "game"}
+			{#if data.type === "game"}
 				{#if !firstLog}
 					<Control class="col-span-12 sm:col-span-6">
 						<Combobox
@@ -98,12 +98,11 @@
 							onselect={({ selected }) => {
 								const id = (selected?.value || v7()) as DungeonMasterId;
 								const name = selected?.label;
-								data.current.dm =
-									dms.find((dm) => dm.id === id) || (name ? { ...data.current.dm, id, name } : defaultDM(user.id));
+								data.dm = dms.find((dm) => dm.id === id) || (name ? { ...data.dm, id, name } : defaultDM(user.id));
 							}}
 							clearable
-							onclear={() => (data.current.dm = defaultDM(user.id))}
-							link={data.current.dm.id ? `/dms/${data.current.dm.id}` : ""}
+							onclear={() => (data.dm = defaultDM(user.id))}
+							link={data.dm.id ? `/dms/${data.dm.id}` : ""}
 							placeholder={dms.find((dm) => dm.isUser)?.name || user.name}
 						/>
 					</Control>
@@ -111,20 +110,20 @@
 						<Input
 							field={fields.dm.DCI}
 							type="text"
-							disabled={!data.current.dm.name}
-							placeholder={data.current.dm.name ? undefined : dms.find((dm) => dm.isUser)?.DCI}
+							disabled={!data.dm.name}
+							placeholder={data.dm.name ? undefined : dms.find((dm) => dm.isUser)?.DCI}
 							label="DM DCI"
 						/>
-						{#if !data.current.dm.name}
+						{#if !data.dm.name}
 							<Input field={fields.dm.DCI} hidden />
 						{/if}
 					</Control>
 				{:else}
-					<Input field={fields.dm.id} type="hidden" />
+					<Input field={fields.dm.id} hidden />
 					<Input field={fields.dm.name} hidden />
 					<Input field={fields.dm.DCI} hidden />
 				{/if}
-				<Input field={fields.dm.userId} type="hidden" />
+				<Input field={fields.dm.userId} hidden />
 				<Input field={fields.dm.isUser} type="checkbox" hidden />
 				<Control class="col-span-12 sm:col-span-4">
 					<InputWrapper type="select" labelFor="season" label="Season">
@@ -133,10 +132,10 @@
 							bind:value={season}
 							class="select select-bordered w-full"
 							onchange={() => {
-								data.current.experience = 0;
-								data.current.acp = 0;
-								data.current.level = 0;
-								data.current.tcp = 0;
+								data.experience = 0;
+								data.acp = 0;
+								data.level = 0;
+								data.tcp = 0;
 							}}
 						>
 							<option value={9}>Season 9+ (Level)</option>
@@ -166,21 +165,21 @@
 					</Control>
 				{/if}
 			{:else}
-				<Input field={fields.dm.id} type="hidden" />
+				<Input field={fields.dm.id} hidden />
 				<Input field={fields.dm.name} hidden />
 				<Input field={fields.dm.DCI} hidden />
-				<Input field={fields.dm.userId} type="hidden" />
+				<Input field={fields.dm.userId} hidden />
 				<Input field={fields.dm.isUser} type="checkbox" hidden />
 			{/if}
-			{#if season === 8 || data.current.type === "nongame"}
-				<Control class={data.current.type === "game" ? "col-span-6 sm:col-span-2" : "col-span-4"}>
+			{#if season === 8 || data.type === "nongame"}
+				<Control class={data.type === "game" ? "col-span-6 sm:col-span-2" : "col-span-4"}>
 					<Input field={fields.tcp} type="number" label="TCP" />
 				</Control>
 			{/if}
-			<Control class={data.current.type === "game" ? "col-span-6 sm:col-span-2" : "col-span-4"}>
+			<Control class={data.type === "game" ? "col-span-6 sm:col-span-2" : "col-span-4"}>
 				<Input field={fields.gold} type="number" label="Gold" />
 			</Control>
-			<Control class={data.current.type === "game" ? "col-span-6 sm:col-span-2" : "col-span-4"}>
+			<Control class={data.type === "game" ? "col-span-6 sm:col-span-2" : "col-span-4"}>
 				<Input field={fields.dtd} type="number" label="Downtime" />
 			</Control>
 			<Control class="col-span-12 w-full">

@@ -82,7 +82,7 @@
 			</search>
 		</div>
 		{#if logsQuery.current?.metadata?.hasErrors}
-			{#each logsQuery.current.metadata.errors as error, i (i)}
+			{#each logsQuery.metadata.errors as error, i (i)}
 				<div class="alert alert-error mt-1 w-fit rounded-lg py-1">
 					<span class="iconify mdi--alert-circle size-6"></span>
 					{error.message} at position {error.position}: <kbd>{error.value}</kbd>
@@ -97,7 +97,7 @@
 
 	{#if logsQuery.loading || !logsQuery.current || debouncing}
 		<LoadingPanel />
-	{:else if logsQuery.current.logs.length}
+	{:else if logsQuery.logs.length}
 		<section class="overflow-x-auto rounded-lg">
 			<table class="bg-base-200 table w-full leading-5 max-sm:border-separate max-sm:border-spacing-y-2">
 				<thead class="max-sm:hidden">
@@ -108,7 +108,7 @@
 						<td class="max-xs:hidden w-0"></td>
 					</tr>
 				</thead>
-				{#each logsQuery.current.logs as log (log.id)}
+				{#each logsQuery.logs as log (log.id)}
 					{#snippet actions()}
 						<div class="sm:tooltip sm:tooltip-left" data-tip="Toggle details">
 							<button

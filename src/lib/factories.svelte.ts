@@ -1,5 +1,4 @@
 /* eslint-disable svelte/prefer-svelte-reactivity */
-import { browser } from "$app/environment";
 import type { FullCharacterData } from "$lib/server/effect/services/characters";
 import type { UserDM } from "$lib/server/effect/services/dms";
 import type { FullLogData, LogSummaryData, UserLogData } from "$lib/server/effect/services/logs";
@@ -437,13 +436,11 @@ export function createContext<T>(createDefault?: () => T): [() => T, (context: T
 }
 
 export function proxify<T>(object: T) {
-	const _ = $state({ current: object });
+	const _ = $state(object);
 	return _;
 }
 
-export function initForm(init: () => unknown) {
-	if (!browser) init();
-	$effect(() => {
-		init();
-	});
+export function initForm(init: () => void | (() => void)) {
+	init();
+	$effect(init);
 }

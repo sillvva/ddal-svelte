@@ -48,7 +48,7 @@
 	let formEl: HTMLFormElement;
 
 	const form = remoteForm.for((data.id ?? v7()) as FormId).preflight(schema);
-	initForm(() => form.fields.set(data as any));
+	initForm(() => void form.fields.set(data as any));
 
 	// svelte-ignore state_referenced_locally
 	let initial = $state.raw($state.snapshot(data));
