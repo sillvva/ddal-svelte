@@ -229,7 +229,7 @@
 				</a>
 			</li>
 			<li>
-				<a href="http://paypal.me/Sillvva" target="_blank" rel="noreferrer noopener">
+				<a href="https://account.venmo.com/u/Matt-DeKok" target="_blank" rel="noreferrer noopener">
 					<span class="iconify mdi--gift size-6"></span>
 					Contribute
 				</a>
