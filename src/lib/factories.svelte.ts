@@ -7,16 +7,10 @@ import { debounce, isDefined, substrCount, type MapKeys, type Prettify } from "@
 import { isHttpError } from "@sveltejs/kit";
 import { Duration } from "effect";
 import escapeRegex from "regexp.escape";
-import { createHighlighter } from "shiki";
 import { getContext, hasContext, setContext } from "svelte";
 import { toast } from "svelte-sonner";
 import { SvelteMap } from "svelte/reactivity";
 import type { SearchData } from "./remote/command";
-
-export const highlighter = await createHighlighter({
-	themes: ["catppuccin-mocha", "catppuccin-latte"],
-	langs: ["json"]
-});
 
 export function successToast(message: string) {
 	toast.success("Success", {

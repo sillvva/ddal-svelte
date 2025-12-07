@@ -1,11 +1,12 @@
 import { query } from "$app/server";
-import { highlighter } from "$lib/factories.svelte";
+import { highlighterConfig, highlighterThemeDark, highlighterThemeLight } from "$lib/constants";
 import { guardedQuery } from "$lib/server/effect/remote";
 import { run } from "$lib/server/effect/runtime";
 import { AdminService, validKeys } from "$lib/server/effect/services/admin";
 import { UserService } from "$lib/server/effect/services/users";
 import { getTrace } from "$lib/util";
 import { DateTime, Effect } from "effect";
+import { createHighlighter } from "shiki";
 import * as v from "valibot";
 
 // eslint-disable-next-line custom/enforce-guarded-functions
@@ -24,6 +25,7 @@ export const getAppLogs = guardedQuery(
 		const Admin = yield* AdminService;
 
 		const mode = event.locals.app.settings.mode;
+		const highlighter = yield* Effect.tryPromise(() => createHighlighter(highlighterConfig));
 
 		const { logs, metadata } = yield* Admin.get.logs(search).pipe(
 			Effect.map(({ logs, metadata }) => ({
@@ -38,7 +40,7 @@ export const getAppLogs = guardedQuery(
 						...trace,
 						highlighted: highlighter.codeToHtml(JSON.stringify(log.annotations, null, 2), {
 							lang: "json",
-							theme: mode === "dark" ? "catppuccin-mocha" : "catppuccin-latte"
+							theme: mode === "dark" ? highlighterThemeDark : highlighterThemeLight
 						})
 					};
 				}),
