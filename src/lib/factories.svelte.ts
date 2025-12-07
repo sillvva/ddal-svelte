@@ -2,7 +2,6 @@
 import type { FullCharacterData } from "$lib/server/effect/services/characters";
 import type { UserDM } from "$lib/server/effect/services/dms";
 import type { FullLogData, LogSummaryData, UserLogData } from "$lib/server/effect/services/logs";
-import { parseAbsoluteToLocal, toCalendarDateTime } from "@internationalized/date";
 import { debounce, isDefined, substrCount, type MapKeys, type Prettify } from "@sillvva/utils";
 import { Duration } from "effect";
 import escapeRegex from "regexp.escape";
@@ -33,10 +32,6 @@ export function errorToast(message: string) {
 
 export function unknownErrorToast(error: unknown) {
 	errorToast(unknownErrorMessage(error));
-}
-
-export function dateToCalendar(date: Date | string | number) {
-	return toCalendarDateTime(parseAbsoluteToLocal(new Date(date).toISOString()));
 }
 
 type WordToken = { type: "word"; value: string };

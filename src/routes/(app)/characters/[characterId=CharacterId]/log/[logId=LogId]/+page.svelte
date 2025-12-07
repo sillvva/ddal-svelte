@@ -55,7 +55,7 @@
 	/>
 
 	<RemoteForm {schema} {form} {data} {initialErrors}>
-		{#snippet children({ fields })}
+		{#snippet children({ fields, initial })}
 			<Input field={fields.id} hidden />
 			<Input field={fields.characterId} hidden />
 			<Input field={fields.characterName} hidden />
@@ -80,7 +80,7 @@
 				/>
 			</Control>
 			<Control class={["col-span-12", !firstLog ? "sm:col-span-4" : "sm:col-span-6"]}>
-				<DateInput field={fields.date} label="Date" />
+				<DateInput field={fields.date} initial={initial.date} label="Date" />
 			</Control>
 			{#if data.type === "game"}
 				{#if !firstLog}

@@ -30,7 +30,7 @@
 			readonly error?: unknown;
 		}) => Awaitable<void>;
 		onissues?: (ctx: { readonly issues: RemoteFormIssue[] }) => Awaitable<void>;
-		children?: Snippet<[{ fields: Form["fields"]; dirty: boolean; touched: boolean }]>;
+		children?: Snippet<[{ fields: Form["fields"]; initial: Input; dirty: boolean; touched: boolean }]>;
 	}
 
 	let {
@@ -143,7 +143,7 @@
 		}}
 	>
 		<fieldset class="grid grid-cols-12 gap-4" disabled={!!$effect.pending()} onfocusin={() => (touched = true)}>
-			{@render children?.({ fields: form.fields, dirty, touched })}
+			{@render children?.({ fields: form.fields, initial, dirty, touched })}
 		</fieldset>
 	</form>
 

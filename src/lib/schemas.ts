@@ -283,7 +283,8 @@ export const appCookieSchema = v.optional(
 				theme: v.optional(v.picklist(themes.map((t) => t.value)), "system"),
 				mode: v.optional(v.picklist(themeGroups), "dark"),
 				autoWebAuthn: v.optional(v.boolean(), false),
-				provider: v.optional(v.picklist(PROVIDERS.map((p) => p.id)))
+				provider: v.optional(v.picklist(PROVIDERS.map((p) => p.id))),
+				timezone: v.optional(v.string(), "")
 			}),
 			{}
 		),

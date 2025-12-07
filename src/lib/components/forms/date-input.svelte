@@ -1,13 +1,16 @@
 <script lang="ts">
-	import { dateToCalendar } from "$lib/factories.svelte";
-	import { getLocalTimeZone, type DateValue } from "@internationalized/date";
+	import { dev } from "$app/environment";
+	import { getGlobal } from "$lib/stores.svelte";
+	import { getLocalTimeZone, parseAbsolute, type DateValue } from "@internationalized/date";
 	import type { RemoteFormField } from "@sveltejs/kit";
 	import { DatePicker, type DatePickerRootProps } from "bits-ui";
 	import { isTupleOfAtLeast } from "effect/Predicate";
+	import SuperDebugRuned from "sveltekit-superforms/SuperDebug.svelte";
 	import Input from "./input.svelte";
 
 	interface Props extends Omit<DatePickerRootProps, "value" | "minValue" | "maxValue"> {
 		field: RemoteFormField<number>;
+		initial?: number;
 		label: string;
 		min?: number;
 		max?: number;
@@ -17,6 +20,7 @@
 
 	let {
 		field,
+		initial = 0,
 		label,
 		min = new Date(2014, 0).getTime(),
 		max = new Date().getTime(),
@@ -25,11 +29,20 @@
 		...rest
 	}: Props = $props();
 
+	const { app } = getGlobal();
+
+	let debug = $state(false);
+
+	let timezone = $derived(initial ? app.settings.timezone : getLocalTimeZone());
 	const issues = $derived(field.issues());
 	const attributes = $derived(field.as("number"));
 	const name = $derived("name" in attributes ? (attributes.name as string) : undefined);
-	const minDateValue = $derived(dateToCalendar(min));
-	const maxDateValue = $derived(dateToCalendar(max));
+	const minDateValue = $derived(dateToCalendar(min, timezone));
+	const maxDateValue = $derived(dateToCalendar(max, timezone));
+
+	function dateToCalendar(date: Date | string | number, timezone: string) {
+		return parseAbsolute(new Date(date).toISOString(), timezone);
+	}
 
 	function clamp(value: DateValue, min: DateValue, max: DateValue) {
 		if (value.compare(min) < 0) return min;
@@ -41,13 +54,15 @@
 <Input {field} type="number" hidden />
 <DatePicker.Root
 	granularity="minute"
+	hideTimeZone
 	{...rest}
 	bind:value={
-		() => (field.value() ? clamp(dateToCalendar(field.value()), minDateValue, maxDateValue) : undefined),
+		() => (field.value() ? clamp(dateToCalendar(field.value(), timezone), minDateValue, maxDateValue) : undefined),
 		(val) => {
 			if (val) {
 				const newValue = clamp(val, minDateValue, maxDateValue);
-				const date = newValue.toDate(getLocalTimeZone());
+				timezone = getLocalTimeZone();
+				const date = newValue.toDate(timezone);
 				field.set(date.getTime());
 			} else {
 				field.set(0);
@@ -64,6 +79,19 @@
 				<span class="text-error">*</span>
 			{/if}
 		</span>
+		{#if dev}
+			<button
+				type="button"
+				class="btn btn-xs btn-ghost h-4.5"
+				aria-label="Open Calendar"
+				onclick={(ev) => {
+					ev.preventDefault();
+					debug = !debug;
+				}}
+			>
+				<span class="iconify mdi--information-outline size-4"></span>
+			</button>
+		{/if}
 	</DatePicker.Label>
 	<DatePicker.Input class="input inline-flex w-full items-center gap-1 px-3 select-none sm:max-md:text-xs">
 		{#snippet children({ segments })}
@@ -144,4 +172,16 @@
 			<span class="text-neutral-500">{description}</span>
 		{/if}
 	</label>
+{/if}
+
+{#if debug}
+	<SuperDebugRuned
+		data={{
+			timezone,
+			current: field.value() ? clamp(dateToCalendar(field.value(), timezone), minDateValue, maxDateValue).toString() : undefined,
+			initial: initial ? clamp(dateToCalendar(initial, timezone), minDateValue, maxDateValue).toString() : undefined,
+			min: minDateValue.toString(),
+			max: maxDateValue.toString()
+		}}
+	/>
 {/if}

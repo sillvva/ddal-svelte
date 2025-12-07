@@ -44,13 +44,13 @@
 	/>
 
 	<RemoteForm {schema} {form} {data} {initialErrors}>
-		{#snippet children({ fields })}
+		{#snippet children({ fields, initial })}
 			<Input field={fields.id} type="hidden" />
 			<Control class="col-span-12 sm:col-span-6 lg:col-span-3">
 				<Input field={fields.name} label="Title" required />
 			</Control>
 			<Control class="col-span-12 sm:col-span-6 lg:col-span-3">
-				<DateInput field={fields.date} label="Date" />
+				<DateInput field={fields.date} initial={initial.date} label="Date" />
 			</Control>
 			<Control class="col-span-12 sm:col-span-6 lg:col-span-3">
 				<Combobox
@@ -69,7 +69,13 @@
 				/>
 			</Control>
 			<Control class="col-span-12 sm:col-span-6 lg:col-span-3">
-				<DateInput field={fields.appliedDate} label="Assigned Date" min={data.date} required={!!data.characterId} />
+				<DateInput
+					field={fields.appliedDate}
+					initial={initial.appliedDate}
+					label="Assigned Date"
+					min={data.date}
+					required={!!data.characterId}
+				/>
 			</Control>
 			<Control class="col-span-12 sm:col-span-4">
 				<InputWrapper type="select" labelFor="season" label="Season">
