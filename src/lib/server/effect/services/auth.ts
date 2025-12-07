@@ -12,6 +12,7 @@ import { lastLoginMethod } from "better-auth/plugins";
 import { admin } from "better-auth/plugins/admin";
 import { sveltekitCookies } from "better-auth/svelte-kit";
 import { Data, Duration, Effect } from "effect";
+import type { UnknownException } from "effect/Cause";
 import { v7 } from "uuid";
 import * as v from "valibot";
 import { parse, type InvalidSchemaError } from "../util";
@@ -28,7 +29,7 @@ interface AuthApiImpl {
 			user: LocalsUser | undefined;
 			auth: Auth;
 		},
-		DrizzleError | InvalidSchemaError | AuthError,
+		DrizzleError | InvalidSchemaError | AuthError | UnknownException,
 		UserService
 	>;
 	readonly guard: (adminOnly?: boolean) => Effect.Effect<{ user: LocalsUser; event: RequestEvent }, RedirectError | InvalidUser>;

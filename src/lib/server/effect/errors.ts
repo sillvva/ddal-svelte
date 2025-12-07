@@ -2,6 +2,7 @@ import type { FullPathname } from "$lib/constants";
 import { isInstanceOfClass } from "@sillvva/utils";
 import { type NumericRange } from "@sveltejs/kit";
 import { Data, Effect } from "effect";
+import type { UnknownException } from "effect/Cause";
 
 export interface ErrorParams {
 	message: string;
@@ -63,7 +64,7 @@ export class RedirectError extends Data.TaggedError("RedirectError")<RedirectErr
 	}
 }
 
-export function redirectOnFail<R, F extends InstanceType<ErrorClass>, S>(
+export function redirectOnFail<R, F extends InstanceType<ErrorClass> | UnknownException, S>(
 	effect: Effect.Effect<R, F, S>,
 	redirectTo: FullPathname,
 	status: NumericRange<301, 308>

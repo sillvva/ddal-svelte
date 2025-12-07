@@ -1,13 +1,13 @@
 import type { StandardSchemaV1 } from "@standard-schema/spec";
+import { invalid } from "@sveltejs/kit";
 import { Data, Effect, Either } from "effect";
+import { type ErrorParams } from "./errors";
 
 export const isValidUrl = Effect.fn(function* (url: string) {
 	return yield* Effect.tryPromise(() => fetch(url, { method: "HEAD" }).catch(() => ({ ok: false }))).pipe(
 		Effect.flatMap((response) => Effect.succeed(response.ok))
 	);
 });
-
-import { type ErrorParams } from "./errors";
 
 // -------------------------------------------------------------------------------------------------
 // Validate
@@ -72,4 +72,13 @@ export const safeParse = Effect.fn(function* <I, O = I>(schema: StandardSchemaV1
 	const result = yield* Effect.either(parse<I, O>(schema, input));
 	if (Either.isLeft(result)) return { success: false, failure: result.left } as const;
 	else return { success: true, data: result.right } as const;
+});
+
+export const formParse = Effect.fn(function* <I, O = I>(schema: StandardSchemaV1<I, O>, input: I) {
+	const result = yield* safeParse(schema, input);
+	if (!result.success) {
+		if (result.failure instanceof InvalidSchemaError) invalid(...result.failure.issues);
+		else invalid(result.failure.message);
+	}
+	return result.data;
 });

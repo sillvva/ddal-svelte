@@ -4,13 +4,13 @@ import type { UserDM } from "$lib/server/effect/services/dms";
 import type { FullLogData, LogSummaryData, UserLogData } from "$lib/server/effect/services/logs";
 import { parseAbsoluteToLocal, toCalendarDateTime } from "@internationalized/date";
 import { debounce, isDefined, substrCount, type MapKeys, type Prettify } from "@sillvva/utils";
-import { isHttpError } from "@sveltejs/kit";
 import { Duration } from "effect";
 import escapeRegex from "regexp.escape";
 import { getContext, hasContext, setContext } from "svelte";
 import { toast } from "svelte-sonner";
 import { SvelteMap } from "svelte/reactivity";
 import type { SearchData } from "./remote/command";
+import { unknownErrorMessage } from "./util";
 
 export function successToast(message: string) {
 	toast.success("Success", {
@@ -32,11 +32,7 @@ export function errorToast(message: string) {
 }
 
 export function unknownErrorToast(error: unknown) {
-	if (typeof error === "string") errorToast(error);
-	else if (typeof error === "object" && error !== null && "message" in error && typeof error.message === "string")
-		errorToast(error.message);
-	else if (isHttpError(error)) errorToast(error.body.message);
-	else errorToast("An unknown error occurred");
+	errorToast(unknownErrorMessage(error));
 }
 
 export function dateToCalendar(date: Date | string | number) {

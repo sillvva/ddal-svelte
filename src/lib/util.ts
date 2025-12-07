@@ -1,6 +1,7 @@
 import { goto } from "$app/navigation";
 import { wait } from "@sillvva/utils";
 import type { StandardSchemaV1 } from "@standard-schema/spec";
+import { isHttpError } from "@sveltejs/kit";
 import { hotkey as hk, type HotkeyItem } from "@svelteuidev/composables";
 import { isObject } from "effect/Predicate";
 import { tick } from "svelte";
@@ -78,6 +79,14 @@ export function getRelativeTime(date: Date | number, lang = navigator.language):
 
 	const rtf = new Intl.RelativeTimeFormat(lang, { numeric: "auto" });
 	return rtf.format(-Math.floor(deltaSeconds / divisor), unit);
+}
+
+export function unknownErrorMessage(error: unknown): string {
+	if (typeof error === "string") return error;
+	else if (typeof error === "object" && error !== null && "message" in error && typeof error.message === "string")
+		return error.message;
+	else if (isHttpError(error)) return error.body.message;
+	else return "An unknown error occurred";
 }
 
 export function isStandardSchema(schema: unknown): schema is StandardSchemaV1 {
