@@ -217,6 +217,12 @@
 		<div class="divider my-0 h-[9px]"></div>
 		<ul class="menu menu-lg w-full px-0">
 			<li>
+				<a href="https://github.com/sillvva/ddal-svelte" target="_blank" rel="noreferrer noopener">
+					<span class="iconify mdi--github size-6"></span>
+					Github
+				</a>
+			</li>
+			<li>
 				<a href="https://github.com/sillvva/ddal-svelte/issues" target="_blank" rel="noreferrer noopener">
 					<span class="iconify mdi--bug size-6"></span>
 					Report a bug
