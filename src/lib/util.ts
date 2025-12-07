@@ -3,13 +3,13 @@ import { wait } from "@sillvva/utils";
 import type { StandardSchemaV1 } from "@standard-schema/spec";
 import { hotkey as hk, type HotkeyItem } from "@svelteuidev/composables";
 import { isObject } from "effect/Predicate";
-import { getContext, hasContext, setContext, tick } from "svelte";
+import { tick } from "svelte";
 import type { Attachment } from "svelte/attachments";
 import type { FullPathname } from "./constants";
 import { errorToast } from "./factories.svelte";
 import type { EffectFailure, EffectResult } from "./server/effect/runtime";
 
-export async function createTransition(action: ViewTransitionCallback, after?: () => void | Promise<void>, afterDelay = 0) {
+export async function createTransition(action: ViewTransitionCallback, after?: () => Awaitable<void>, afterDelay = 0) {
 	if (!document.startViewTransition) action();
 	else document.startViewTransition(action);
 	if (after) wait(afterDelay).then(after);
@@ -82,19 +82,6 @@ export function getRelativeTime(date: Date | number, lang = navigator.language):
 
 export function isStandardSchema(schema: unknown): schema is StandardSchemaV1 {
 	return isObject(schema) && "~standard" in schema;
-}
-
-export function createContext<T>(createDefault?: () => T): [(getDefault?: () => T) => T, (context: T) => T] {
-	const key = Symbol("context");
-	return [
-		(getDefault) => {
-			if (hasContext(key)) return getContext(key);
-			if (getDefault) return setContext(key, getDefault());
-			if (createDefault) return setContext(key, createDefault());
-			throw new Error("Context not found");
-		},
-		(context) => setContext(key, context)
-	];
 }
 
 export function isRedirectFailure(

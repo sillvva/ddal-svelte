@@ -4,13 +4,14 @@ import { characterIdParamSchema, editCharacterSchema } from "$lib/schemas";
 import { guardedForm, guardedQuery, refreshAll } from "$lib/server/effect/remote";
 import { CharacterService } from "$lib/server/effect/services/characters";
 import { isValidUrl } from "$lib/server/effect/util";
-import { redirect } from "@sveltejs/kit";
+import type { StandardSchemaV1 } from "@standard-schema/spec";
+import { invalid, redirect } from "@sveltejs/kit";
 import { Effect } from "effect";
-import { get as getCharacter } from "./queries.remote";
+import * as queries from "./queries.remote";
 
 export const get = guardedQuery(characterIdParamSchema, function* (input, { event }) {
 	const firstLog = event.locals.app.characters.firstLog;
-	const character = yield* Effect.promise(() => getCharacter({ param: input }));
+	const character = yield* Effect.tryPromise(() => queries.get({ param: input }));
 
 	return {
 		id: character.id,
@@ -24,7 +25,7 @@ export const get = guardedQuery(characterIdParamSchema, function* (input, { even
 	};
 });
 
-export const save = guardedForm(editCharacterSchema, function* (input, { user, invalid }) {
+export const save = guardedForm(editCharacterSchema, function* (input, { user, issue }) {
 	const Characters = yield* CharacterService;
 
 	const { firstLog, ...data } = input;
@@ -33,19 +34,18 @@ export const save = guardedForm(editCharacterSchema, function* (input, { user, i
 		.all(user.id, { characterId: data.id })
 		.pipe(Effect.map((characters) => characters.length > 0));
 
-	type Issue = ReturnType<typeof invalid.imageUrl>;
-	const issues: Issue[] = [];
+	const issues: StandardSchemaV1.Issue[] = [];
 
 	if (data.imageUrl) {
 		const result = yield* isValidUrl(data.imageUrl);
-		if (!result) issues.push(invalid.imageUrl("URL appears to be broken"));
+		if (!result) issues.push(issue.imageUrl("URL appears to be broken"));
 	} else {
 		data.imageUrl = BLANK_CHARACTER;
 	}
 
 	if (data.characterSheetUrl) {
 		const result = yield* isValidUrl(data.characterSheetUrl);
-		if (!result) issues.push(invalid.characterSheetUrl("URL appears to be broken"));
+		if (!result) issues.push(issue.characterSheetUrl("URL appears to be broken"));
 	}
 
 	if (issues.length) invalid(...issues);

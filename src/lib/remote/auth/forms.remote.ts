@@ -7,7 +7,7 @@ export const signOut = guardedForm(function* ({ event }) {
 	const Auth = yield* AuthService;
 	const auth = yield* Auth.auth();
 
-	yield* Effect.promise(() =>
+	yield* Effect.tryPromise(() =>
 		auth.api.signOut({
 			headers: event.request.headers
 		})

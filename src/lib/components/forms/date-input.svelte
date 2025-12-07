@@ -4,7 +4,7 @@
 	import type { RemoteFormField } from "@sveltejs/kit";
 	import { DatePicker, type DatePickerRootProps } from "bits-ui";
 	import { isTupleOfAtLeast } from "effect/Predicate";
-	import RemoteInput from "./remote-input.svelte";
+	import Input from "./input.svelte";
 
 	interface Props extends Omit<DatePickerRootProps, "value" | "minValue" | "maxValue"> {
 		field: RemoteFormField<number>;
@@ -38,7 +38,7 @@
 	}
 </script>
 
-<RemoteInput {field} type="number" hidden />
+<Input {field} type="number" hidden />
 <DatePicker.Root
 	granularity="minute"
 	{...rest}

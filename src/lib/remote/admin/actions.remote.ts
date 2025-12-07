@@ -16,12 +16,13 @@ export const deleteAppLog = guardedCommand(
 export const logClientError = guardedCommand(
 	v.object({
 		message: v.string(),
+		status: v.optional(v.number()),
 		name: v.optional(v.string()),
 		stack: v.optional(v.string()),
 		cause: v.optional(v.unknown()),
 		boundary: v.optional(v.string())
 	}),
 	function* ({ message, name, stack, cause, boundary }) {
-		AppLog.error(message, { error: { name, stack, cause }, source: boundary ?? "client" });
+		yield* AppLog.error(message, { error: { name, stack, cause }, source: boundary ?? "client" });
 	}
 );

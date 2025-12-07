@@ -1,13 +1,15 @@
 <script lang="ts">
-	import type { RemoteFormFieldType, RemoteFormFieldValue, RemoteFormIssue } from "@sveltejs/kit";
+	import type { RemoteFormFieldType, RemoteFormFieldValue } from "@sveltejs/kit";
 	import { isTupleOfAtLeast } from "effect/Predicate";
 
 	interface Props {
-		name: string;
+		name?: string;
 		type: RemoteFormFieldType<RemoteFormFieldValue>;
 		description?: string;
 		warning?: string;
-		issues?: RemoteFormIssue[];
+		issues?: {
+			message: string;
+		}[];
 	}
 
 	let { name, type = "text", description, warning, issues }: Props = $props();

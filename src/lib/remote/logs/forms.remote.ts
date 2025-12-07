@@ -1,6 +1,5 @@
 import { defaultLogSchema, logDataToSchema } from "$lib/entities";
 import {
-	characterIdParamSchema,
 	characterIdSchema,
 	characterLogSchema,
 	dMLogSchema,
@@ -15,28 +14,30 @@ import { DMNotFoundError, DMService } from "$lib/server/effect/services/dms";
 import { LogNotFoundError, LogService } from "$lib/server/effect/services/logs";
 import { parse, safeParse } from "$lib/server/effect/util";
 import { omit } from "@sillvva/utils";
-import { redirect } from "@sveltejs/kit";
+import { invalid, redirect } from "@sveltejs/kit";
 import { Effect } from "effect";
 import * as v from "valibot";
 
 const characterLogFormSchema = v.object({
-	characterId: characterIdParamSchema,
+	character: v.object({
+		id: characterIdSchema,
+		name: v.string()
+	}),
 	logId: logIdParamSchema,
 	firstLog: v.optional(v.boolean(), false)
 });
 
 export const character = guardedQuery(characterLogFormSchema, function* (input, { user }) {
 	const Logs = yield* LogService;
-	const Characters = yield* CharacterService;
 
-	if (input.characterId === "new") redirect(302, "/characters/new/edit");
+	if (input.character.id === "new") redirect(302, "/characters/new/edit");
 
 	const logId = input.logId;
 	const logData = logId !== "new" ? yield* Logs.get.one(logId, user.id) : undefined;
 	const log = logData
 		? logDataToSchema(user.id, logData)
 		: defaultLogSchema(user.id, {
-				character: yield* Characters.get.one(input.characterId, false),
+				character: input.character,
 				defaults: input.firstLog ? { name: "Character Creation" } : undefined
 			});
 
@@ -47,7 +48,7 @@ export const character = guardedQuery(characterLogFormSchema, function* (input, 
 
 	return {
 		...log,
-		characterId: input.characterId,
+		characterId: input.character.id,
 		date: log.date.getTime(),
 		appliedDate: log.appliedDate?.getTime() || 0
 	};
@@ -86,24 +87,24 @@ export const dm = guardedQuery(dmLogFormSchema, function* (input, { user }) {
 	};
 });
 
-export const saveCharacter = guardedForm("unchecked", function* (input: LogSchemaIn, { user, invalid }) {
+export const saveCharacter = guardedForm("unchecked", function* (input: LogSchemaIn, { user, issue }) {
 	const Characters = yield* CharacterService;
 	const Logs = yield* LogService;
 
 	const characterId = yield* redirectOnFail(parse(characterIdSchema, input.characterId), "/characters", 302);
 	const character = yield* Characters.get
 		.one(characterId)
-		.pipe(Effect.tapError((err) => Effect.fail(invalid(invalid.characterId(err.message)))));
+		.pipe(Effect.tapError((err) => Effect.fail(invalid(issue.characterId(err.message)))));
 
 	const result = yield* safeParse(characterLogSchema(character), input);
-	if (!result.success) throw invalid(...result.failure.issues);
+	if (!result.success) invalid(...result.failure.issues);
 
 	yield* Logs.set.save(result.data, user).pipe(Effect.tapError((err) => Effect.fail(invalid(err.message))));
 
 	redirect(303, `/characters/${character.id}`);
 });
 
-export const saveDM = guardedForm("unchecked", function* (input: DmLogSchemaIn, { user, invalid }) {
+export const saveDM = guardedForm("unchecked", function* (input: DmLogSchemaIn, { user, issue }) {
 	const Characters = yield* CharacterService;
 	const Logs = yield* LogService;
 	const DMs = yield* DMService;
@@ -122,7 +123,7 @@ export const saveDM = guardedForm("unchecked", function* (input: DmLogSchemaIn, 
 				.all(user.id, {
 					characterId: parsedId.data
 				})
-				.pipe(Effect.tapError((err) => Effect.fail(invalid(invalid.characterId(err.message)))))
+				.pipe(Effect.tapError((err) => Effect.fail(invalid(issue.characterId(err.message)))))
 		: [];
 
 	const result = yield* safeParse(dMLogSchema(characters), input);

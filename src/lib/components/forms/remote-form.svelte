@@ -4,12 +4,13 @@
 >
 	import { dev } from "$app/environment";
 	import { beforeNavigate } from "$app/navigation";
-	import { successToast, unknownErrorToast } from "$lib/factories.svelte";
+	import { page } from "$app/state";
+	import { initForm, successToast, unknownErrorToast } from "$lib/factories.svelte";
 	import { debounce, deepEqual } from "@sillvva/utils";
 	import type { StandardSchemaV1 } from "@standard-schema/spec";
-	import type { RemoteForm, RemoteFormInput, RemoteFormIssue } from "@sveltejs/kit";
+	import type { RemoteForm, RemoteFormFields, RemoteFormInput, RemoteFormIssue } from "@sveltejs/kit";
 	import { isTupleOfAtLeast } from "effect/Predicate";
-	import { onMount, tick, type Snippet } from "svelte";
+	import { onMount, tick, untrack, type Snippet } from "svelte";
 	import type { HTMLFormAttributes } from "svelte/elements";
 	import SuperDebugRuned from "sveltekit-superforms/SuperDebug.svelte";
 	import { v7 } from "uuid";
@@ -29,7 +30,7 @@
 			readonly error?: unknown;
 		}) => Awaitable<void>;
 		onissues?: (ctx: { readonly issues: RemoteFormIssue[] }) => Awaitable<void>;
-		children?: Snippet<[{ fields: Form["fields"] }]>;
+		children?: Snippet<[{ fields: Form["fields"]; dirty: boolean; touched: boolean }]>;
 	}
 
 	let {
@@ -47,24 +48,26 @@
 	let formEl: HTMLFormElement;
 
 	const form = remoteForm.for((data.id ?? v7()) as FormId).preflight(schema);
+	const fields = form.fields as RemoteFormFields<unknown>;
+	initForm(() => form.fields.set(data as any));
 
-	form.fields.set(data);
+	let initial = $state.raw(untrack(() => $state.snapshot(data)));
+	let dirty = $derived(!deepEqual(initial, form.fields.value()));
+	let touched = $state.raw(false);
 	$effect(() => {
-		form.fields.set(data);
+		void page.url;
+		initial = untrack(() => $state.snapshot(data));
 	});
 
 	const result = $derived(form.result);
 	const issues = $derived(form.fields.issues());
-	let lastIssues = $state.raw<RemoteFormIssue[] | undefined>(form.fields.allIssues());
-
-	const initial = $state.snapshot(data);
-	let tainted = $derived(!deepEqual(initial, form.fields.value()));
+	let lastIssues = $state.raw<RemoteFormIssue[] | undefined>(fields.allIssues());
 
 	const debouncedValidate = debounce(validate, 300);
 
 	async function validate() {
 		await form.validate({ includeUntouched: true, preflightOnly: true });
-		const issues = form.fields.allIssues();
+		const issues = fields.allIssues();
 		if (issues && onissues && !deepEqual(lastIssues, issues)) onissues({ issues });
 		if (issues?.length) lastIssues = issues;
 	}
@@ -72,7 +75,7 @@
 	async function focusInvalid() {
 		await tick();
 
-		const issues = form.fields.allIssues();
+		const issues = fields.allIssues();
 		if (issues?.length) lastIssues = issues;
 		else return;
 
@@ -89,7 +92,7 @@
 	});
 
 	beforeNavigate((ev) => {
-		if ((tainted || issues) && !confirm("You have unsaved changes. Are you sure you want to leave?")) {
+		if ((dirty || issues) && !confirm("You have unsaved changes. Are you sure you want to leave?")) {
 			return ev.cancel();
 		}
 	});
@@ -105,30 +108,30 @@
 
 	<form
 		{...form.enhance(async ({ submit, form: formEl, data }) => {
-			const bf = !onsubmit || (await onsubmit({ tainted, form: formEl, data }));
+			const bf = !onsubmit || (await onsubmit({ tainted: dirty, form: formEl, data }));
 			if (!bf) return;
 
-			let wasTainted = tainted;
+			let wasDirty = dirty;
 			try {
-				tainted = false;
+				dirty = false;
 				await submit();
 
-				const issues = form.fields.allIssues();
+				const issues = fields.allIssues();
 				const success = !issues?.length;
 
 				onresult?.({ success, result: form.result, issues });
 
 				if (success) {
-					successToast(`${form.fields.name?.value() || "Form"} saved successfully`);
+					successToast(`${fields.name?.value() || "Form"} saved successfully`);
 				} else {
-					tainted = wasTainted;
+					dirty = wasDirty;
 					await focusInvalid();
 					onissues?.({ issues });
 				}
 			} catch (error) {
 				unknownErrorToast(error || "Oh no! Something went wrong");
 				onresult?.({ success: false, error });
-				tainted = wasTainted;
+				dirty = wasDirty;
 			}
 		})}
 		{...rest}
@@ -139,8 +142,8 @@
 			rest.oninput?.(ev);
 		}}
 	>
-		<fieldset class="grid grid-cols-12 gap-4" disabled={!!$effect.pending()}>
-			{@render children?.({ fields: form.fields })}
+		<fieldset class="grid grid-cols-12 gap-4" disabled={!!$effect.pending()} onfocusin={() => (touched = true)}>
+			{@render children?.({ fields: form.fields, dirty, touched })}
 		</fieldset>
 	</form>
 
@@ -148,10 +151,11 @@
 		<SuperDebugRuned
 			data={{
 				action: form.action,
-				tainted,
+				dirty,
+				touched,
 				data: form.fields.value(),
 				result,
-				issues: form.fields.allIssues()
+				issues: fields.allIssues()
 			}}
 		/>
 	{/if}

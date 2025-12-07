@@ -1,9 +1,10 @@
 <script lang="ts">
 	import { goto } from "$app/navigation";
+	import Error from "$lib/components/error.svelte";
 	import Control from "$lib/components/forms/control.svelte";
+	import Input from "$lib/components/forms/input.svelte";
 	import RemoteForm from "$lib/components/forms/remote-form.svelte";
-	import RemoteInput from "$lib/components/forms/remote-input.svelte";
-	import RemoteSubmit from "$lib/components/forms/remote-submit.svelte";
+	import Submit from "$lib/components/forms/submit.svelte";
 	import Head from "$lib/components/head.svelte";
 	import NavMenu from "$lib/components/nav-menu.svelte";
 	import { successToast } from "$lib/factories.svelte.js";
@@ -17,11 +18,19 @@
 	const global = getGlobal();
 	const schema = dungeonMasterFormSchema;
 	const form = API.dms.forms.save;
+
+	// svelte-ignore await_waterfall
+	const dm = $derived(await API.dms.queries.get(params.dmId));
+
+	const data = $derived({
+		id: dm.id,
+		name: dm.name,
+		DCI: dm.DCI || ""
+	});
 </script>
 
 <svelte:boundary>
-	{@const data = await API.dms.forms.get(params.dmId)}
-	{@const dm = await API.dms.queries.get(params.dmId)}
+	{#snippet failed(error)}<Error {error} boundary="edit-dm" />{/snippet}
 
 	<Head title={dm.name} />
 
@@ -34,15 +43,15 @@
 
 	<RemoteForm {schema} {form} {data} initialErrors>
 		{#snippet children({ fields })}
-			<RemoteInput field={fields.id} type="hidden" />
+			<Input field={fields.id} type="hidden" />
 			<Control class="col-span-12 sm:col-span-6">
-				<RemoteInput field={fields.name} label="DM Name" required />
+				<Input field={fields.name} label="DM Name" required />
 			</Control>
 			<Control class="col-span-12 sm:col-span-6">
-				<RemoteInput field={fields.DCI} label="DCI" />
+				<Input field={fields.DCI} label="DCI" />
 			</Control>
 			<div class="col-span-12 my-4 flex justify-center">
-				<RemoteSubmit>Save DM</RemoteSubmit>
+				<Submit>Save DM</Submit>
 			</div>
 		{/snippet}
 	</RemoteForm>

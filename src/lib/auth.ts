@@ -1,6 +1,7 @@
 import { env } from "$env/dynamic/public";
 import type { Passkey } from "$lib/server/db/schema";
-import { adminClient, lastLoginMethodClient, passkeyClient } from "better-auth/client/plugins";
+import { passkeyClient } from "@better-auth/passkey/client";
+import { adminClient, lastLoginMethodClient } from "better-auth/client/plugins";
 import { createAuthClient } from "better-auth/svelte";
 
 export const authClient = createAuthClient({

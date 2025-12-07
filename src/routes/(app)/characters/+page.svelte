@@ -8,7 +8,7 @@
 	import Search from "$lib/components/search.svelte";
 	import { EntitySearchFactory } from "$lib/factories.svelte.js";
 	import * as API from "$lib/remote";
-	import { getAuth, getGlobal } from "$lib/stores.svelte.js";
+	import { getGlobal } from "$lib/stores.svelte.js";
 	import { createTransition, download, hotkey } from "$lib/util";
 	import { sorter } from "@sillvva/utils";
 	import { untrack } from "svelte";
@@ -17,7 +17,7 @@
 </script>
 
 <svelte:boundary>
-	{@const { user } = await getAuth()}
+	{@const { user } = await API.getRequest()}
 	{@const characters = await API.characters.queries.getAll()}
 	{@const search = new EntitySearchFactory(
 		characters,
@@ -79,9 +79,7 @@
 					class="btn data-[enabled=true]:btn-primary xs:hidden inline-flex"
 					data-enabled={global.app.characters.magicItems}
 					onclick={() => {
-						global.setApp((app) => {
-							app.characters.magicItems = !app.characters.magicItems;
-						});
+						global.app.characters.magicItems = !global.app.characters.magicItems;
 					}}
 					onkeypress={() => null}
 					aria-label="Toggle Magic Items"
@@ -100,10 +98,8 @@
 						class="btn data-[enabled=true]:btn-primary sm:btn-sm max-xs:hidden"
 						data-enabled={global.app.characters.magicItems}
 						onclick={() =>
-							createTransition(() => {
-								global.setApp((app) => {
-									app.characters.magicItems = !app.characters.magicItems;
-								});
+							createTransition(async () => {
+								global.app.characters.magicItems = !global.app.characters.magicItems;
 							})}
 						onkeypress={() => null}
 						aria-label="Toggle Magic Items"
@@ -125,9 +121,7 @@
 						data-display={global.app.characters.display}
 						onclick={() =>
 							createTransition(() => {
-								global.setApp((app) => {
-									app.characters.display = "list";
-								});
+								global.app.characters.display = "list";
 							})}
 						onkeypress={() => null}
 						aria-label="List View"
@@ -139,9 +133,7 @@
 						data-display={global.app.characters.display}
 						onclick={() =>
 							createTransition(() => {
-								global.setApp((app) => {
-									app.characters.display = "grid";
-								});
+								global.app.characters.display = "grid";
 							})}
 						onkeypress={() => null}
 						aria-label="Grid View"
@@ -160,8 +152,8 @@
 				<table class="linked-table bg-base-200 table w-full leading-5 max-sm:border-separate max-sm:border-spacing-y-2">
 					<thead class="max-md:hidden">
 						<tr class="bg-base-300 text-base-content/70">
-							<td></td>
-							<td>Name</td>
+							<td class="w-18"></td>
+							<td>Characters ({sortedResults.length})</td>
 							<td>Campaign</td>
 							<td class="text-center">Tier</td>
 							<td class="text-center">Level</td>
@@ -207,9 +199,9 @@
 										<SearchResults text={character.campaign} terms={search.terms} />
 									</div>
 									{#if (character.match.has("magicItems") || global.app.characters.magicItems) && character.magicItems.length}
-										<div class="mb-2">
-											<p class="font-semibold">Magic Items:</p>
+										<div class="my-2">
 											<Items
+												title="Magic Items"
 												items={character.magicItems}
 												terms={search.terms}
 												filtered
@@ -220,8 +212,13 @@
 									{/if}
 									{#if character.match.has("storyAwards") && character.storyAwards.length}
 										<div class="mb-2">
-											<p class="font-semibold">Story Awards:</p>
-											<Items items={character.storyAwards} terms={search.terms} filtered matches={character.match.size} />
+											<Items
+												type="Story Awards"
+												items={character.storyAwards}
+												terms={search.terms}
+												filtered
+												matches={character.match.size}
+											/>
 										</div>
 									{/if}
 									{#if search.terms.length > 0}
@@ -245,59 +242,70 @@
 				</table>
 			</div>
 
-			{#each [1, 2, 3, 4] as tier (tier)}
-				{#if sortedResults.filter((c) => c.tier == tier).length}
+			{#snippet grid(results: typeof sortedResults)}
+				<div
+					class="xs:data-[display=grid]:grid hidden w-full data-[display=grid]:grid-cols-2 data-[display=grid]:gap-4 sm:data-[display=grid]:grid-cols-3 md:data-[display=grid]:grid-cols-4"
+					data-display={global.app.characters.display}
+				>
+					{#each results as character (character.id)}
+						<div
+							class="card linked-card card-compact bg-base-200 shadow-xl transition-transform duration-200 motion-safe:hover:scale-105"
+							style:view-transition-name={"image-" + character.id}
+						>
+							<figure class="relative aspect-square overflow-hidden">
+								{#key character.imageUrl}
+									<img src={character.imageUrl} alt={character.name} class="size-full object-cover object-top" loading="lazy" />
+								{/key}
+								{#if search.query.length >= 1 && character.match.has("magicItems")}
+									<div class="absolute inset-0 flex items-center bg-black/50 p-2 text-center text-xs text-white">
+										<div class="flex-1">
+											<Items
+												type="Magic Items"
+												items={character.magicItems}
+												terms={search.terms}
+												filtered
+												matches={character.match.size}
+												formatting
+											/>
+										</div>
+									</div>
+								{/if}
+							</figure>
+							<div class="card-body p-4 text-center">
+								<div class="flex flex-col gap-1">
+									<h2 class="card-title ellipsis-nowrap block text-sm text-balance dark:text-white">
+										<a href={`/characters/${character.id}`} class="card-link">
+											<SearchResults text={character.name} terms={search.terms} />
+										</a>
+									</h2>
+									<p class="text-xs text-balance">
+										<SearchResults text={`${character.race} ${character.class}`} terms={search.terms} />
+									</p>
+									<p class="text-xs">
+										Level {character.totalLevel} | Tier {character.tier}
+										{#if search.terms.length}| Score {Math.round(character.score * 100) / 100}{/if}
+									</p>
+								</div>
+							</div>
+						</div>
+					{/each}
+				</div>
+			{/snippet}
+
+			{#if search.terms.length}
+				{@render grid(sortedResults)}
+			{:else}
+				{#each [...new Set(sortedResults.map((c) => c.tier))].sort(sorter) as tier, index (tier)}
 					<h1
-						class="font-vecna max-xs:data-[display=grid]:hidden pt-6 pb-2 text-3xl font-bold data-[display=list]:hidden data-[tier=1]:pt-0 dark:text-white"
+						class="font-vecna max-xs:data-[display=grid]:hidden pt-6 pb-2 text-3xl font-bold data-[display=list]:hidden data-[index=0]:pt-0 dark:text-white"
 						data-display={global.app.characters.display}
-						data-tier={tier}
+						data-index={index}
 					>
 						Tier {tier}
 					</h1>
-					<div
-						class="xs:data-[display=grid]:grid hidden w-full data-[display=grid]:grid-cols-2 data-[display=grid]:gap-4 sm:data-[display=grid]:grid-cols-3 md:data-[display=grid]:grid-cols-4"
-						data-display={global.app.characters.display}
-					>
-						{#each sortedResults.filter((c) => c.tier == tier) as character (character.id)}
-							<a
-								href={`/characters/${character.id}`}
-								class="card card-compact bg-base-200 shadow-xl transition-transform duration-200 motion-safe:hover:scale-105"
-								style:view-transition-name={"image-" + character.id}
-							>
-								<figure class="relative aspect-square overflow-hidden">
-									{#key character.imageUrl}
-										<img src={character.imageUrl} alt={character.name} class="size-full object-cover object-top" loading="lazy" />
-									{/key}
-									{#if search.query.length >= 1 && character.match.has("magicItems")}
-										<div class="absolute inset-0 flex items-center bg-black/50 p-2 text-center text-xs text-white">
-											<div class="flex-1">
-												<Items
-													items={character.magicItems}
-													terms={search.terms}
-													filtered
-													matches={character.match.size}
-													formatting
-												/>
-											</div>
-										</div>
-									{/if}
-								</figure>
-								<div class="card-body p-4 text-center">
-									<div class="flex flex-col gap-1">
-										<h2 class="card-title ellipsis-nowrap block text-sm text-balance dark:text-white">
-											<SearchResults text={character.name} terms={search.terms} />
-										</h2>
-										<p class="text-xs text-balance">
-											<SearchResults text={`${character.race} ${character.class}`} terms={search.terms} />
-										</p>
-										<p class="text-xs">Level {character.totalLevel} | Tier {character.tier}</p>
-									</div>
-								</div>
-							</a>
-						{/each}
-					</div>
-				{/if}
-			{/each}
+					{@render grid(sortedResults.filter((c) => c.tier == tier))}
+				{/each}
+			{/if}
 		</div>
 	{/if}
 </svelte:boundary>

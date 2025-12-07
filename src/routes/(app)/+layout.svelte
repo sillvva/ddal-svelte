@@ -9,7 +9,7 @@
 	import Settings from "$lib/components/settings.svelte";
 	import { BLANK_CHARACTER } from "$lib/constants.js";
 	import * as API from "$lib/remote";
-	import { getAuth, getGlobal } from "$lib/stores.svelte.js";
+	import { getGlobal } from "$lib/stores.svelte.js";
 	import { hotkey, parseEffectResult } from "$lib/util";
 	import { wait } from "@sillvva/utils";
 	import { onMount } from "svelte";
@@ -18,11 +18,10 @@
 	let { children } = $props();
 
 	const global = getGlobal();
+	const { user, ...request } = $derived(await API.getRequest());
 
 	let settingsOpen = $state(false);
 	let loadingImage = $state(true);
-
-	const auth = $derived(await getAuth());
 
 	afterNavigate(() => {
 		global.pageLoader = false;
@@ -37,7 +36,7 @@
 
 	onMount(() => {
 		const hasCookie = document.cookie.includes("session-token");
-		if (!auth.user && hasCookie) location.reload();
+		if (!user && hasCookie) location.reload();
 	});
 </script>
 
@@ -59,7 +58,7 @@
 		<nav class="relative z-10 container mx-auto flex max-w-5xl items-center gap-3 p-4">
 			<div class="inline max-w-10 shrink-0 grow md:hidden">&nbsp;</div>
 			<div class="inline max-w-10 shrink-0 grow md:hidden">&nbsp;</div>
-			<a href={auth.user ? "/characters" : "/"} class="flex flex-1 items-center justify-center gap-1 md:flex-none">
+			<a href={user ? "/characters" : "/"} class="flex flex-1 items-center justify-center gap-1 md:flex-none">
 				<img
 					src="/images/{global.app.settings.mode === 'dark' ? 'dragon' : 'dragon-dark'}.webp"
 					alt="Dragon"
@@ -70,17 +69,17 @@
 					<h2 class="text-3xl leading-7">Log Sheet</h2>
 				</div>
 			</a>
-			{#if auth.user}
+			{#if user}
 				<a href="/characters" class="ml-8 p-2 max-md:hidden">Character Logs</a>
 				<a href="/dm-logs" class="p-2 max-md:hidden">DM Logs</a>
 				<a href="/dms" class="p-2 max-md:hidden">DMs</a>
 			{/if}
 			<div class="flex-1 max-md:hidden"></div>
-			<div class={["flex items-center", auth.user?.role === "admin" ? "gap-2" : "gap-4"]}>
-				{#if auth.user}
+			<div class={["flex items-center", user?.role === "admin" ? "gap-2" : "gap-4"]}>
+				{#if user}
 					<CommandTray />
 
-					{#if auth.user.role === "admin"}
+					{#if user.role === "admin"}
 						<a href="/admin/users" class="btn btn-ghost mr-1 p-2 max-md:hidden" aria-label="Admin">
 							<span class="iconify mdi--administrator size-6"></span>
 						</a>
@@ -88,7 +87,7 @@
 
 					<!-- Avatar -->
 					<div class="hidden items-center print:flex">
-						{auth.user.name}
+						{user.name}
 					</div>
 					<div class="avatar flex h-full min-w-fit items-center">
 						<button
@@ -97,18 +96,18 @@
 							onclick={() => (settingsOpen = true)}
 						>
 							<img
-								src={auth.user.image || ""}
-								alt={auth.user.name}
+								src={user.image || ""}
+								alt={user.name}
 								class="rounded-full object-cover object-center"
 								onerror={async (e) => {
-									if (!auth.user) return;
+									if (!user) return;
 									const img = e.currentTarget as HTMLImageElement;
 									img.onerror = null;
 									img.src = BLANK_CHARACTER;
 
 									const result = await API.auth.actions.updateUser({ image: BLANK_CHARACTER });
 									const parsed = await parseEffectResult(result);
-									if (parsed) await auth.refresh();
+									if (parsed) await request.refresh();
 								}}
 							/>
 						</button>

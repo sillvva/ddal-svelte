@@ -1,7 +1,8 @@
 <script lang="ts" generics="V extends RemoteFormFieldValue">
 	import type { RemoteFormField, RemoteFormFieldValue } from "@sveltejs/kit";
 	import type { HTMLInputAttributes } from "svelte/elements";
-	import RemoteFieldMessage from "./remote-field-message.svelte";
+	import FieldMessage from "./field-message.svelte";
+	import InputWrapper from "./input-wrapper.svelte";
 
 	type InputTypeMap =
 		| {
@@ -99,27 +100,18 @@
 					<span class="text-error">*</span>
 				{/if}
 			</span>
-			<RemoteFieldMessage {name} type="checkbox" {description} {warning} {issues} />
+			<FieldMessage {name} type="checkbox" {description} {warning} {issues} />
 		</div>
 		<input {...attributes} aria-invalid={invalid} id={name} type="checkbox" class="checkbox-primary checkbox" />
 	</label>
 {:else}
-	{#if map.type !== "hidden" && !hidden}
-		<label for={name} class="fieldset-legend">
-			<span>
-				{label}
-				{#if required}
-					<span class="text-error">*</span>
-				{/if}
-			</span>
-		</label>
-	{/if}
-	<input
-		{...attributes}
-		aria-invalid={invalid}
-		id={name}
-		class={[map.type !== "hidden" && !hidden && "input focus:border-primary focus:aria-[invalid]:border-error w-full"]}
-		{hidden}
-	/>
-	<RemoteFieldMessage {name} type={hidden ? "hidden" : map.type || "text"} {description} {warning} {issues} />
+	<InputWrapper type={hidden ? "hidden" : map.type || "text"} {label} {required}>
+		<input
+			{...attributes}
+			aria-invalid={invalid}
+			id={name}
+			class={[map.type !== "hidden" && !hidden && "input focus:border-primary focus:aria-[invalid]:border-error w-full"]}
+			{hidden}
+		/>
+	</InputWrapper>
 {/if}

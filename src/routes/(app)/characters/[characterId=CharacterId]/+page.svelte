@@ -11,7 +11,7 @@
 	import { EntitySearchFactory, successToast } from "$lib/factories.svelte.js";
 	import * as API from "$lib/remote";
 	import type { FullCharacterData } from "$lib/server/effect/services/characters.js";
-	import { getAuth, getGlobal } from "$lib/stores.svelte.js";
+	import { getGlobal } from "$lib/stores.svelte.js";
 	import { createTransition, hotkey, parseEffectResult } from "$lib/util";
 	import { slugify, sorter } from "@sillvva/utils";
 	import { clipboard, download } from "@svelteuidev/composables";
@@ -43,7 +43,7 @@
 	}
 
 	onMount(async () => {
-		const { user } = await getAuth();
+		const { user } = await API.getRequest();
 		if (global.app.settings.autoWebAuthn && !user) {
 			authClient.signIn.passkey({
 				fetchOptions: {
@@ -57,9 +57,9 @@
 </script>
 
 <svelte:boundary>
-	{@const { user } = await getAuth()}
-	{@const queryParms = { param: params.characterId, newRedirect: true }}
-	{@const character = await API.characters.queries.get(queryParms)}
+	{@const { user } = await API.getRequest()}
+	{@const queryParams = { param: params.characterId, newRedirect: true }}
+	{@const character = await API.characters.queries.get(queryParams)}
 	{@const myCharacter = character.userId === user?.id}
 	{@const search = new EntitySearchFactory(
 		character.logs,
@@ -308,10 +308,8 @@
 						class="btn data-[desc=true]:btn-primary sm:hidden"
 						data-desc={global.app.log.descriptions}
 						onclick={() =>
-							createTransition(() => {
-								global.setApp((app) => {
-									app.log.descriptions = !app.log.descriptions;
-								});
+							createTransition(async () => {
+								global.app.log.descriptions = !global.app.log.descriptions;
 							})}
 						onkeypress={() => null}
 						aria-label="Toggle Notes"
@@ -331,10 +329,8 @@
 					class="btn data-[desc=true]:btn-primary sm:btn-sm max-sm:hidden"
 					data-desc={global.app.log.descriptions}
 					onclick={() =>
-						createTransition(() => {
-							global.setApp((app) => {
-								app.log.descriptions = !app.log.descriptions;
-							});
+						createTransition(async () => {
+							global.app.log.descriptions = !global.app.log.descriptions;
 						})}
 					onkeypress={() => null}
 					aria-label="Toggle Notes"
@@ -522,7 +518,7 @@
 													const parsed = await parseEffectResult(result);
 													if (parsed) {
 														successToast(`${log.name} deleted`);
-														await API.characters.queries.get(queryParms).refresh();
+														await API.characters.queries.get(queryParams).refresh();
 													} else {
 														deletingLog.delete(log.id);
 													}

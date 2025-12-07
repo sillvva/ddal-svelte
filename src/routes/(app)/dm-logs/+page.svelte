@@ -9,7 +9,7 @@
 	import Search from "$lib/components/search.svelte";
 	import { EntitySearchFactory, successToast } from "$lib/factories.svelte.js";
 	import * as API from "$lib/remote";
-	import { getAuth, getGlobal } from "$lib/stores.svelte.js";
+	import { getGlobal } from "$lib/stores.svelte.js";
 	import { createTransition, download, hotkey, parseEffectResult } from "$lib/util.js";
 	import { sorter } from "@sillvva/utils";
 	import { untrack } from "svelte";
@@ -21,7 +21,7 @@
 </script>
 
 <svelte:boundary>
-	{@const { user } = await getAuth()}
+	{@const { user } = await API.getRequest()}
 	{@const logs = await API.logs.queries.getDmLogs()}
 	{@const search = new EntitySearchFactory(
 		logs,
@@ -75,16 +75,14 @@
 				class="btn data-[desc=true]:btn-primary sm:btn-sm"
 				data-desc={global.app.dmLogs.descriptions}
 				onclick={() =>
-					createTransition(() =>
-						global.setApp((app) => {
-							app.dmLogs.descriptions = !app.dmLogs.descriptions;
-						})
-					)}
+					createTransition(() => {
+						global.app.dmLogs.descriptions = !global.app.dmLogs.descriptions;
+					})}
 				onkeypress={() => null}
 				aria-label="Toggle Notes"
 				tabindex="0"
 			>
-				{#if global.app.log.descriptions}
+				{#if global.app.dmLogs.descriptions}
 					<span class="iconify mdi--eye size-5 max-md:size-6"></span>
 				{:else}
 					<span class="iconify mdi--eye-off size-5 max-md:size-6"></span>
@@ -94,9 +92,7 @@
 			<button
 				class="btn btn-primary sm:btn-sm"
 				onclick={() => {
-					global.setApp((app) => {
-						app.dmLogs.sort = app.dmLogs.sort === "asc" ? "desc" : "asc";
-					});
+					global.app.dmLogs.sort = global.app.dmLogs.sort === "asc" ? "desc" : "asc";
 				}}
 				aria-label="Sort"
 			>

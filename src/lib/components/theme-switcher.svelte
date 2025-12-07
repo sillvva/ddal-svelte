@@ -6,7 +6,7 @@
 
 	const global = getGlobal();
 
-	let theme = $state(global.app.settings.theme);
+	let theme = $derived(global.app.settings.theme);
 	const mq = new MediaQuery("(prefers-color-scheme: dark)");
 	const mode = $derived.by(() => {
 		const selected = themes.find((t) => t.value === theme);
@@ -24,11 +24,9 @@
 		if (theme !== global.app.settings.theme || mode !== global.app.settings.mode) {
 			document.documentElement.classList.add("theme-switcher");
 			createTransition(
-				() => {
-					global.setApp((app) => {
-						app.settings.theme = theme;
-						app.settings.mode = mode;
-					});
+				async () => {
+					global.app.settings.theme = theme;
+					global.app.settings.mode = mode;
 					const opposite = mode === "dark" ? "light" : "dark";
 					document.documentElement.classList.replace(opposite, mode);
 					if (theme === "system") {

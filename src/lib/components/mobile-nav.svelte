@@ -1,8 +1,8 @@
 <script lang="ts">
 	import { page } from "$app/state";
-	import { getAuth } from "$lib/stores.svelte";
+	import * as API from "$lib/remote";
 
-	const { user } = $derived(await getAuth());
+	const { user } = $derived(await API.getRequest());
 </script>
 
 <nav class="bg-base-100/50 dock border-base-content/10 sticky z-16 border-t backdrop-blur-sm md:hidden print:hidden">

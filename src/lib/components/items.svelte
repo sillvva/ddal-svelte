@@ -9,31 +9,42 @@
 	import SearchResults from "./search-results.svelte";
 
 	type Item = MagicItem | StoryAward;
+	type Type = "Magic Items" | "Story Awards";
 	interface Props {
-		title?: `Magic Items${":" | ""}` | `Story Awards${":" | ""}`;
 		items: Array<Item>;
 		formatting?: boolean;
 		terms?: string[];
 		filtered?: boolean;
 		matches?: number;
 		collapsible?: boolean;
+		collapsed?: boolean;
 		sort?: boolean;
 		search?: boolean;
 	}
 
+	interface WithType extends Props {
+		type: Type;
+		title?: never;
+	}
+
+	interface WithTitle extends Props {
+		type?: never;
+		title?: `${Type}${":" | ""}`;
+	}
+
 	let {
-		title = "Magic Items",
+		type,
+		title = type ? undefined : "Magic Items",
 		items,
 		formatting = false,
 		terms = [],
 		filtered = false,
 		matches = 1,
 		collapsible = false,
+		collapsed = $bindable(collapsible),
 		sort = false,
 		search = false
-	}: Props = $props();
-
-	let collapsed = $state(collapsible);
+	}: WithType | WithTitle = $props();
 
 	const params = queryParameters(
 		{
@@ -54,7 +65,7 @@
 					.replace(/^(A|An|The) /, "")
 			: name;
 	const isConsumable = (name: string) =>
-		title.startsWith("Magic Items") &&
+		(title || type)?.startsWith("Magic Items") &&
 		name
 			.trim()
 			.match(
@@ -62,7 +73,7 @@
 			);
 	const itemQty = (item: { name: string }) => parseInt(item.name.match(/^(\d+)x? /)?.[1] || "1");
 	const fixName = (name: string, qty = 1) => {
-		if (title.startsWith("Story Awards")) return name;
+		if ((title || type)?.startsWith("Story Awards")) return name;
 
 		let val = name
 			.trim()

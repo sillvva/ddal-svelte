@@ -1,19 +1,18 @@
 <script lang="ts">
 	import { authClient } from "$lib/auth";
 	import { errorToast, successToast } from "$lib/factories.svelte";
+	import * as API from "$lib/remote";
 	import type { PasskeyId } from "$lib/schemas";
-	import { getAuth, getGlobal } from "$lib/stores.svelte";
+	import { getGlobal } from "$lib/stores.svelte";
 
+	const { user, ...request } = $derived(await API.getRequest());
 	const global = getGlobal();
-	const auth = $derived(await getAuth());
-
-	const { user } = $derived(auth);
 	const passkeys = $derived(user?.passkeys || []);
 
 	$effect(() => {
-		global.setApp((app) => {
-			app.settings.autoWebAuthn = passkeys.length > 0;
-		});
+		if (global.app.settings.autoWebAuthn !== passkeys.length > 0) {
+			global.app.settings.autoWebAuthn = passkeys.length > 0;
+		}
 	});
 
 	async function initRename(id: PasskeyId, currentName = "", error = "") {
@@ -36,7 +35,7 @@
 			fetchOptions: {
 				onSuccess: () => {
 					successToast(`${name} saved`);
-					auth.refresh();
+					request.refresh();
 				},
 				onError: ({ error }) => {
 					initRename(id, name, error.message);
@@ -54,7 +53,7 @@
 				fetchOptions: {
 					onSuccess: () => {
 						successToast(`${passkey.name} deleted`);
-						auth.refresh();
+						request.refresh();
 					},
 					onError: ({ error }) => {
 						errorToast(error.message);
