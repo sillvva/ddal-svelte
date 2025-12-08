@@ -3,6 +3,7 @@ import type { FullCharacterData } from "$lib/server/effect/services/characters";
 import type { UserDM } from "$lib/server/effect/services/dms";
 import type { FullLogData, LogSummaryData, UserLogData } from "$lib/server/effect/services/logs";
 import { debounce, isDefined, substrCount, type MapKeys, type Prettify } from "@sillvva/utils";
+import type { RemoteForm, RemoteFormInput } from "@sveltejs/kit";
 import { Duration } from "effect";
 import escapeRegex from "regexp.escape";
 import { getContext, hasContext, setContext } from "svelte";
@@ -51,9 +52,16 @@ export function proxify<T>(object: T) {
 	return _;
 }
 
-export function initForm(init: () => void | (() => void)) {
-	init();
-	$effect(init);
+export function initForm<Input extends RemoteFormInput>(form: RemoteForm<Input, unknown>, getter: () => Input) {
+	let hydrated = false;
+	// eslint-disable-next-line @typescript-eslint/no-explicit-any
+	form.fields.set(getter() as any);
+	$effect(() => {
+		const values = getter();
+		if (!hydrated) return void (hydrated = true);
+		// eslint-disable-next-line @typescript-eslint/no-explicit-any
+		form.fields.set(values as any);
+	});
 }
 
 type WordToken = { type: "word"; value: string };
