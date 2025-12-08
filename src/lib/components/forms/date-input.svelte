@@ -39,6 +39,8 @@
 	const name = $derived("name" in attributes ? attributes.name : undefined);
 	const minDateValue = $derived(dateToCalendar(min, timezone));
 	const maxDateValue = $derived(dateToCalendar(max, timezone));
+	const minValue = $derived(minDateValue.set({ hour: 0, minute: 0, second: 0, millisecond: 0 }));
+	const maxValue = $derived(maxDateValue.set({ hour: 23, minute: 59, second: 59, millisecond: 999 }));
 
 	function dateToCalendar(date: Date | string | number, timezone: string) {
 		return parseAbsolute(new Date(date).toISOString(), timezone);
@@ -69,8 +71,8 @@
 			}
 		}
 	}
-	minValue={minDateValue.set({ hour: 0, minute: 0, second: 0 })}
-	maxValue={maxDateValue.set({ hour: 23, minute: 59, second: 59 })}
+	{minValue}
+	{maxValue}
 >
 	<DatePicker.Label class="fieldset-legend">
 		<span>
@@ -180,8 +182,8 @@
 			timezone,
 			current: field.value() ? clamp(dateToCalendar(field.value(), timezone), minDateValue, maxDateValue).toString() : undefined,
 			initial: initial ? clamp(dateToCalendar(initial, timezone), minDateValue, maxDateValue).toString() : undefined,
-			min: minDateValue.toString(),
-			max: maxDateValue.toString()
+			min: minValue.toString(),
+			max: maxValue.toString()
 		}}
 	/>
 {/if}
