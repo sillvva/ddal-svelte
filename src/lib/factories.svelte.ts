@@ -34,6 +34,28 @@ export function unknownErrorToast(error: unknown) {
 	errorToast(unknownErrorMessage(error));
 }
 
+export function createContext<T>(createDefault?: () => T): [() => T, (context: T) => T] {
+	const key = Symbol("context");
+	return [
+		() => {
+			if (hasContext(key)) return getContext(key);
+			if (createDefault) return setContext(key, createDefault());
+			throw new Error("Context not found");
+		},
+		(context) => setContext(key, context)
+	];
+}
+
+export function proxify<T>(object: T) {
+	const _ = $state(object);
+	return _;
+}
+
+export function initForm(init: () => void | (() => void)) {
+	init();
+	$effect(init);
+}
+
 type WordToken = { type: "word"; value: string };
 type PhraseToken = { type: "phrase"; value: string };
 type Token = WordToken | PhraseToken;
@@ -412,26 +434,4 @@ export class EntitySearchFactory<
 			})
 			.filter(isDefined);
 	}
-}
-
-export function createContext<T>(createDefault?: () => T): [() => T, (context: T) => T] {
-	const key = Symbol("context");
-	return [
-		() => {
-			if (hasContext(key)) return getContext(key);
-			if (createDefault) return setContext(key, createDefault());
-			throw new Error("Context not found");
-		},
-		(context) => setContext(key, context)
-	];
-}
-
-export function proxify<T>(object: T) {
-	const _ = $state(object);
-	return _;
-}
-
-export function initForm(init: () => void | (() => void)) {
-	init();
-	$effect(init);
 }
