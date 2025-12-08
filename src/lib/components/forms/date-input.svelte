@@ -36,7 +36,7 @@
 	let timezone = $derived(initial ? app.settings.timezone : getLocalTimeZone());
 	const issues = $derived(field.issues());
 	const attributes = $derived(field.as("number"));
-	const name = $derived("name" in attributes ? (attributes.name as string) : undefined);
+	const name = $derived("name" in attributes ? attributes.name : undefined);
 	const minDateValue = $derived(dateToCalendar(min, timezone));
 	const maxDateValue = $derived(dateToCalendar(max, timezone));
 
