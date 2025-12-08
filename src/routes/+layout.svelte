@@ -10,7 +10,10 @@
 
 	getLogger();
 	const global = getGlobal();
-	const request = $derived(await API.getRequest());
+
+	// svelte-ignore await_waterfall
+	const request = $derived(await API.app.queries.request());
+
 	// svelte-ignore state_referenced_locally
 	global.app = $state.snapshot(request.app);
 

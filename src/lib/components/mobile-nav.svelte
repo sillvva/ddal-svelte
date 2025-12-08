@@ -2,7 +2,7 @@
 	import { page } from "$app/state";
 	import * as API from "$lib/remote";
 
-	const { user } = $derived(await API.getRequest());
+	const { user } = $derived(await API.app.queries.request());
 </script>
 
 <nav class="bg-base-100/50 dock border-base-content/10 sticky z-16 border-t backdrop-blur-sm md:hidden print:hidden">

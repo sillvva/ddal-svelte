@@ -43,7 +43,7 @@
 	}
 
 	onMount(async () => {
-		const { user } = await API.getRequest();
+		const { user } = await API.app.queries.request();
 		if (global.app.settings.autoWebAuthn && !user) {
 			authClient.signIn.passkey({
 				fetchOptions: {
@@ -57,7 +57,7 @@
 </script>
 
 <svelte:boundary>
-	{@const { user } = await API.getRequest()}
+	{@const { user } = await API.app.queries.request()}
 	{@const queryParams = { param: params.characterId, newRedirect: true }}
 	{@const character = await API.characters.queries.get(queryParams)}
 	{@const myCharacter = character.userId === user?.id}

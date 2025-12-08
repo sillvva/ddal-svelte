@@ -18,7 +18,7 @@
 	let { children } = $props();
 
 	const global = getGlobal();
-	const { user, ...request } = $derived(await API.getRequest());
+	const { user, ...request } = $derived(await API.app.queries.request());
 
 	let settingsOpen = $state(false);
 	let loadingImage = $state(true);
@@ -107,7 +107,7 @@
 
 									const result = await API.auth.actions.updateUser({ image: BLANK_CHARACTER });
 									const parsed = await parseEffectResult(result);
-									if (parsed) await request.refresh();
+									if (parsed) await API.app.queries.request().refresh();
 								}}
 							/>
 						</button>

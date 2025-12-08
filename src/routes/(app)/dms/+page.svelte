@@ -15,7 +15,7 @@
 </script>
 
 <svelte:boundary>
-	{@const { user } = await API.getRequest()}
+	{@const { user } = await API.app.queries.request()}
 	{@const dms = await API.dms.queries.getAll()}
 	{@const search = new EntitySearchFactory(
 		dms,
