@@ -18,16 +18,9 @@
 		description?: string;
 	}
 
-	let {
-		field,
-		initial = 0,
-		label,
-		min = new Date(2014, 0).getTime(),
-		max = new Date().getTime(),
-		required,
-		description,
-		...rest
-	}: Props = $props();
+	const earliest = new Date(2014, 0).getTime();
+
+	let { field, initial = 0, label, min = earliest, max = new Date().getTime(), required, description, ...rest }: Props = $props();
 
 	const { app } = getGlobal();
 
@@ -37,7 +30,7 @@
 	const issues = $derived(field.issues());
 	const attributes = $derived(field.as("number"));
 	const name = $derived("name" in attributes ? attributes.name : undefined);
-	const minDateValue = $derived(dateToCalendar(min, timezone));
+	const minDateValue = $derived(dateToCalendar(Math.max(min, earliest), timezone));
 	const maxDateValue = $derived(dateToCalendar(max, timezone));
 	const minValue = $derived(minDateValue.set({ hour: 0, minute: 0, second: 0, millisecond: 0 }));
 	const maxValue = $derived(maxDateValue.set({ hour: 23, minute: 59, second: 59, millisecond: 999 }));
