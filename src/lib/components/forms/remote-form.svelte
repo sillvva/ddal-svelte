@@ -30,7 +30,7 @@
 			readonly error?: unknown;
 		}) => Awaitable<void>;
 		onissues?: (ctx: { readonly issues: RemoteFormIssue[] }) => Awaitable<void>;
-		children?: Snippet<[{ fields: Form["fields"]; dirty: boolean; touched: boolean }]>;
+		children?: Snippet<[{ fields: Form["fields"]; initial: Input; dirty: boolean; touched: boolean }]>;
 	}
 
 	let {
@@ -48,11 +48,11 @@
 	let formEl: HTMLFormElement;
 
 	const form = remoteForm.for((data.id ?? v7()) as FormId).preflight(schema);
-	const fields = form.fields as RemoteFormFields<unknown>;
-	initForm(() => form.fields.set(data as any));
+	initForm(() => void form.fields.set(data as any));
 
-	let initial = $state.raw(untrack(() => $state.snapshot(data)));
-	let dirty = $derived(!deepEqual(initial, form.fields.value()));
+	// svelte-ignore state_referenced_locally
+	let initial = $state.raw($state.snapshot(data));
+	let dirty = $derived(!deepEqual(initial, $state.snapshot(form.fields.value())));
 	let touched = $state.raw(false);
 	$effect(() => {
 		void page.url;
@@ -61,13 +61,13 @@
 
 	const result = $derived(form.result);
 	const issues = $derived(form.fields.issues());
-	let lastIssues = $state.raw<RemoteFormIssue[] | undefined>(fields.allIssues());
+	let lastIssues = $state.raw<RemoteFormIssue[] | undefined>((form.fields as RemoteFormFields<unknown>).allIssues());
 
 	const debouncedValidate = debounce(validate, 300);
 
 	async function validate() {
 		await form.validate({ includeUntouched: true, preflightOnly: true });
-		const issues = fields.allIssues();
+		const issues = (form.fields as RemoteFormFields<unknown>).allIssues();
 		if (issues && onissues && !deepEqual(lastIssues, issues)) onissues({ issues });
 		if (issues?.length) lastIssues = issues;
 	}
@@ -75,7 +75,7 @@
 	async function focusInvalid() {
 		await tick();
 
-		const issues = fields.allIssues();
+		const issues = (form.fields as RemoteFormFields<unknown>).allIssues();
 		if (issues?.length) lastIssues = issues;
 		else return;
 
@@ -116,13 +116,13 @@
 				dirty = false;
 				await submit();
 
-				const issues = fields.allIssues();
+				const issues = (form.fields as RemoteFormFields<unknown>).allIssues();
 				const success = !issues?.length;
 
 				onresult?.({ success, result: form.result, issues });
 
 				if (success) {
-					successToast(`${fields.name?.value() || "Form"} saved successfully`);
+					successToast(`${(form.fields as RemoteFormFields<unknown>).name?.value() || "Form"} saved successfully`);
 				} else {
 					dirty = wasDirty;
 					await focusInvalid();
@@ -143,19 +143,18 @@
 		}}
 	>
 		<fieldset class="grid grid-cols-12 gap-4" disabled={!!$effect.pending()} onfocusin={() => (touched = true)}>
-			{@render children?.({ fields: form.fields, dirty, touched })}
+			{@render children?.({ fields: form.fields, initial, dirty, touched })}
 		</fieldset>
 	</form>
 
 	{#if dev}
 		<SuperDebugRuned
 			data={{
-				action: form.action,
 				dirty,
 				touched,
 				data: form.fields.value(),
 				result,
-				issues: fields.allIssues()
+				issues: (form.fields as RemoteFormFields<unknown>).allIssues()
 			}}
 		/>
 	{/if}

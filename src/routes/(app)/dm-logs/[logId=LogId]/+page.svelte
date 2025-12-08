@@ -43,14 +43,14 @@
 		]}
 	/>
 
-	<RemoteForm {schema} {form} data={data.current} {initialErrors}>
-		{#snippet children({ fields })}
+	<RemoteForm {schema} {form} {data} {initialErrors}>
+		{#snippet children({ fields, initial })}
 			<Input field={fields.id} type="hidden" />
 			<Control class="col-span-12 sm:col-span-6 lg:col-span-3">
 				<Input field={fields.name} label="Title" required />
 			</Control>
 			<Control class="col-span-12 sm:col-span-6 lg:col-span-3">
-				<DateInput field={fields.date} label="Date" />
+				<DateInput field={fields.date} initial={initial.date} label="Date" />
 			</Control>
 			<Control class="col-span-12 sm:col-span-6 lg:col-span-3">
 				<Combobox
@@ -58,22 +58,23 @@
 					valueField={fields.characterId}
 					inputField={fields.characterName}
 					values={characters.map((char) => ({ value: char.id, label: char.name }))}
-					required={!!data.current.appliedDate}
+					required={!!data.appliedDate}
 					onselect={() => {
-						data.current.appliedDate = data.current.date || new Date().getTime();
+						data.appliedDate = data.date || new Date().getTime();
 					}}
 					clearable
 					onclear={() => {
-						data.current.appliedDate = 0;
+						data.appliedDate = 0;
 					}}
 				/>
 			</Control>
 			<Control class="col-span-12 sm:col-span-6 lg:col-span-3">
 				<DateInput
 					field={fields.appliedDate}
+					initial={initial.appliedDate}
 					label="Assigned Date"
-					min={data.current.date}
-					required={!!data.current.characterId}
+					min={data.date}
+					required={!!data.characterId}
 				/>
 			</Control>
 			<Control class="col-span-12 sm:col-span-4">
@@ -83,10 +84,10 @@
 						bind:value={season}
 						class="select select-bordered w-full"
 						onchange={() => {
-							data.current.experience = 0;
-							data.current.acp = 0;
-							data.current.level = 0;
-							data.current.tcp = 0;
+							data.experience = 0;
+							data.acp = 0;
+							data.level = 0;
+							data.tcp = 0;
 						}}
 					>
 						<option value={9}>Season 9+ (Level)</option>

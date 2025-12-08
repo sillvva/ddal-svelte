@@ -2,21 +2,14 @@
 import type { FullCharacterData } from "$lib/server/effect/services/characters";
 import type { UserDM } from "$lib/server/effect/services/dms";
 import type { FullLogData, LogSummaryData, UserLogData } from "$lib/server/effect/services/logs";
-import { parseAbsoluteToLocal, toCalendarDateTime } from "@internationalized/date";
 import { debounce, isDefined, substrCount, type MapKeys, type Prettify } from "@sillvva/utils";
-import { isHttpError } from "@sveltejs/kit";
 import { Duration } from "effect";
 import escapeRegex from "regexp.escape";
-import { createHighlighter } from "shiki";
 import { getContext, hasContext, setContext } from "svelte";
 import { toast } from "svelte-sonner";
 import { SvelteMap } from "svelte/reactivity";
 import type { SearchData } from "./remote/command";
-
-export const highlighter = await createHighlighter({
-	themes: ["catppuccin-mocha", "catppuccin-latte"],
-	langs: ["json"]
-});
+import { unknownErrorMessage } from "./util";
 
 export function successToast(message: string) {
 	toast.success("Success", {
@@ -38,15 +31,29 @@ export function errorToast(message: string) {
 }
 
 export function unknownErrorToast(error: unknown) {
-	if (typeof error === "string") errorToast(error);
-	else if (typeof error === "object" && error !== null && "message" in error && typeof error.message === "string")
-		errorToast(error.message);
-	else if (isHttpError(error)) errorToast(error.body.message);
-	else errorToast("An unknown error occurred");
+	errorToast(unknownErrorMessage(error));
 }
 
-export function dateToCalendar(date: Date | string | number) {
-	return toCalendarDateTime(parseAbsoluteToLocal(new Date(date).toISOString()));
+export function createContext<T>(createDefault?: () => T): [() => T, (context: T) => T] {
+	const key = Symbol("context");
+	return [
+		() => {
+			if (hasContext(key)) return getContext(key);
+			if (createDefault) return setContext(key, createDefault());
+			throw new Error("Context not found");
+		},
+		(context) => setContext(key, context)
+	];
+}
+
+export function proxify<T>(object: T) {
+	const _ = $state(object);
+	return _;
+}
+
+export function initForm(init: () => void | (() => void)) {
+	init();
+	$effect(init);
 }
 
 type WordToken = { type: "word"; value: string };
@@ -427,30 +434,4 @@ export class EntitySearchFactory<
 			})
 			.filter(isDefined);
 	}
-}
-
-export function createContext<T>(createDefault?: () => T): [() => T, (context: T) => T] {
-	const key = Symbol("context");
-	return [
-		() => {
-			if (hasContext(key)) return getContext(key);
-			if (createDefault) return setContext(key, createDefault());
-			throw new Error("Context not found");
-		},
-		(context) => setContext(key, context)
-	];
-}
-
-export function proxify<T>(object: T) {
-	const _ = $state({ current: object });
-	return _;
-}
-
-export function initForm(init: () => unknown) {
-	init();
-	let hasHydrated = false;
-	$effect(() => {
-		if (!hasHydrated) return void (hasHydrated = true);
-		init();
-	});
 }

@@ -6,8 +6,10 @@
 	import * as API from "$lib/remote";
 	import { getGlobal } from "$lib/stores.svelte";
 	import { parseEffectResult } from "$lib/util";
+	import { getLocalTimeZone } from "@internationalized/date";
 	import { isDefined } from "@sillvva/utils";
 	import { isTupleOfAtLeast } from "effect/Predicate";
+	import { onMount } from "svelte";
 	import Passkeys from "./passkeys.svelte";
 	import ThemeSwitcher from "./theme-switcher.svelte";
 
@@ -37,6 +39,12 @@
 			.join("")
 			.slice(0, 2) || ""
 	);
+
+	onMount(() => {
+		if (!global.app.settings.timezone) {
+			global.app.settings.timezone = getLocalTimeZone();
+		}
+	});
 
 	$effect(() => {
 		if (!userAccounts.length && open) {

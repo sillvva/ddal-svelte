@@ -12,7 +12,7 @@ import { guardedForm, guardedQuery } from "$lib/server/effect/remote";
 import { CharacterService } from "$lib/server/effect/services/characters";
 import { DMNotFoundError, DMService } from "$lib/server/effect/services/dms";
 import { LogNotFoundError, LogService } from "$lib/server/effect/services/logs";
-import { parse, safeParse } from "$lib/server/effect/util";
+import { formParse, parse } from "$lib/server/effect/util";
 import { omit } from "@sillvva/utils";
 import { invalid, redirect } from "@sveltejs/kit";
 import { Effect } from "effect";
@@ -96,10 +96,8 @@ export const saveCharacter = guardedForm("unchecked", function* (input: LogSchem
 		.one(characterId)
 		.pipe(Effect.tapError((err) => Effect.fail(invalid(issue.characterId(err.message)))));
 
-	const result = yield* safeParse(characterLogSchema(character), input);
-	if (!result.success) invalid(...result.failure.issues);
-
-	yield* Logs.set.save(result.data, user).pipe(Effect.tapError((err) => Effect.fail(invalid(err.message))));
+	const result = yield* formParse(characterLogSchema(character), input);
+	yield* Logs.set.save(result, user).pipe(Effect.tapError((err) => Effect.fail(invalid(err.message))));
 
 	redirect(303, `/characters/${character.id}`);
 });
@@ -115,22 +113,20 @@ export const saveDM = guardedForm("unchecked", function* (input: DmLogSchemaIn, 
 		Effect.map((dm) => omit(dm, ["logs"]))
 	);
 
-	const parsedId = yield* safeParse(characterIdSchema, input.characterId);
-	if (!parsedId.success && input.characterId) throw invalid(...parsedId.failure.issues);
+	const parsedId = yield* formParse(characterIdSchema, input.characterId);
 
 	const characters = input.characterId
 		? yield* Characters.get
 				.all(user.id, {
-					characterId: parsedId.data
+					characterId: parsedId
 				})
 				.pipe(Effect.tapError((err) => Effect.fail(invalid(issue.characterId(err.message)))))
 		: [];
 
-	const result = yield* safeParse(dMLogSchema(characters), input);
-	if (!result.success) throw invalid(...result.failure.issues);
+	const result = yield* formParse(dMLogSchema(characters), input);
 
 	const log = {
-		...result.data,
+		...result,
 		dm: userDM
 	};
 

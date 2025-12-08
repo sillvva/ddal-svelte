@@ -135,6 +135,19 @@
 				<span class="text-error">*</span>
 			{/if}
 		</span>
+		{#if dev}
+			<button
+				type="button"
+				class="btn btn-xs btn-ghost h-4.5"
+				aria-label="Open Calendar"
+				onclick={(ev) => {
+					ev.preventDefault();
+					debug = !debug;
+				}}
+			>
+				<span class="iconify mdi--information-outline size-4"></span>
+			</button>
+		{/if}
 	</label>
 	<div class="join">
 		<div class="dropdown w-full">
@@ -212,19 +225,6 @@
 			<a href={link} class="btn join-item border-base-content/20 border px-2" role="button" target="_blank" aria-label="Edit">
 				<span class="iconify mdi--pencil size-6"></span>
 			</a>
-		{/if}
-		{#if dev}
-			<button
-				type="button"
-				class="btn join-item border-base-content/20 border px-2"
-				onclick={(ev) => {
-					ev.preventDefault();
-					debug = !debug;
-				}}
-				aria-label="Debug"
-			>
-				<span class="iconify mdi--information-outline size-6"></span>
-			</button>
 		{/if}
 	</div>
 	<FieldMessage {name} type="select" {description} {issues} />

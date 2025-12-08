@@ -3,7 +3,6 @@
 	import { onNavigate } from "$app/navigation";
 	import * as API from "$lib/remote";
 	import { getGlobal, getLogger } from "$lib/stores.svelte";
-	import { untrack } from "svelte";
 	import { Toaster } from "svelte-sonner";
 	import "../app.css";
 
@@ -12,7 +11,8 @@
 	getLogger();
 	const global = getGlobal();
 	const request = $derived(await API.getRequest());
-	global.app = untrack(() => $state.snapshot(request.app));
+	// svelte-ignore state_referenced_locally
+	global.app = $state.snapshot(request.app);
 
 	onNavigate(({ complete, from, to }) => {
 		if (!document.startViewTransition) return;

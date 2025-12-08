@@ -1,5 +1,6 @@
 import type { Pathname } from "$app/types";
 import type { Account } from "$lib/server/db/schema";
+import type { BundledHighlighterOptions, BundledLanguage, BundledTheme } from "shiki";
 
 export const defaultTitle = "Adventurers League Log Sheet";
 export const defaultDescription = "A tool for tracking your Adventurers League characters and magic items.";
@@ -102,3 +103,11 @@ export type Themes = (typeof themes)[number]["value"];
 export type ThemeGroups = (typeof themeGroups)[number];
 
 export type FullPathname = Pathname | `${Pathname}?${string}`;
+
+type HighlighterTheme = BundledHighlighterOptions<BundledLanguage, BundledTheme>["themes"][number] & string;
+export const highlighterThemeLight: HighlighterTheme = "catppuccin-latte";
+export const highlighterThemeDark: HighlighterTheme = "catppuccin-mocha";
+export const highlighterConfig: BundledHighlighterOptions<BundledLanguage, BundledTheme> = {
+	themes: [highlighterThemeDark, highlighterThemeLight],
+	langs: ["json"]
+};
