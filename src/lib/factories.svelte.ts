@@ -282,10 +282,6 @@ export class GlobalSearchFactory extends BaseSearchFactory<SearchData> {
 		})
 	);
 
-	constructor(data: SearchData, defaultQuery: string = "") {
-		super(data, defaultQuery);
-	}
-
 	get category() {
 		return this._category;
 	}
@@ -384,10 +380,6 @@ export class EntitySearchFactory<
 			})
 			.map((entry) => [entry.id, entry.index])
 	);
-
-	constructor(data: TData, defaultQuery: string = "") {
-		super(data, defaultQuery);
-	}
 
 	get results() {
 		type TDataKeys = TData extends FullCharacterData[]
