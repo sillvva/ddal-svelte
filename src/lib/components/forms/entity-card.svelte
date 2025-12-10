@@ -25,7 +25,7 @@
 
 	let { entity, fields, index, ...card }: Props = $props();
 
-	const title = entity === "magicItems" ? "Magic Item" : "Story Award";
+	const title = $derived(entity === "magicItems" ? "Magic Item" : "Story Award");
 
 	const arrValue = $derived(
 		card.type === "drop" ? (entity === "magicItems" ? fields.magicItemsLost.value() : fields.storyAwardsLost.value()) : []
