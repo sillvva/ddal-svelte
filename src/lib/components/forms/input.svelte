@@ -105,7 +105,12 @@
 		<input {...attributes} aria-invalid={invalid} id={name} type="checkbox" class="checkbox-primary checkbox" />
 	</label>
 {:else}
-	<InputWrapper type={hidden ? "hidden" : map.type || "text"} {label} {required}>
+	<InputWrapper
+		type={hidden ? "hidden" : map.type || "text"}
+		{label}
+		{required}
+		fieldErrors={issues?.map((issue) => issue.message)}
+	>
 		<input
 			{...attributes}
 			aria-invalid={invalid}
