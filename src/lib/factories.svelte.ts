@@ -62,6 +62,8 @@ export function initForm<Input extends RemoteFormInput>(form: RemoteForm<Input, 
 		// eslint-disable-next-line @typescript-eslint/no-explicit-any
 		form.fields.set(values as any);
 	});
+
+	return $state.snapshot(getter());
 }
 
 type WordToken = { type: "word"; value: string };

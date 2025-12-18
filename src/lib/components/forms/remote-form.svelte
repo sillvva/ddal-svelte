@@ -49,10 +49,8 @@
 	let formEl: HTMLFormElement;
 
 	const form = remoteForm.for((data.id ?? v7()) as FormId).preflight(schema);
-	initForm(form, () => data);
 
-	// svelte-ignore state_referenced_locally
-	let initial = $state.raw($state.snapshot(data));
+	let initial = $state.raw(initForm(form, () => data));
 	let dirty = $derived(!deepEqual(initial, $state.snapshot(form.fields.value())));
 	let touched = $state.raw(false);
 	$effect(() => {
