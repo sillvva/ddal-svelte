@@ -17,6 +17,7 @@
 
 	type Input = StandardSchemaV1.InferInput<Schema>;
 	type FormId = Input extends { id: infer Id } ? (Id extends string | number ? Id : string | number) : string | number;
+	type Fields = RemoteFormFields<unknown>;
 	interface Props extends Omit<HTMLFormAttributes, "children" | "action" | "method" | "onsubmit"> {
 		schema: Schema;
 		form: Form;
@@ -61,22 +62,21 @@
 
 	const result = $derived(form.result);
 	const issues = $derived(form.fields.issues());
-	let lastIssues = $state.raw<RemoteFormIssue[] | undefined>((form.fields as RemoteFormFields<unknown>).allIssues());
+	const allIssues = $derived((form.fields as Fields).allIssues());
+	let lastIssues = $state.raw<RemoteFormIssue[] | undefined>((form.fields as Fields).allIssues());
 
 	const debouncedValidate = debounce(validate, 300);
 
 	async function validate() {
 		await form.validate({ includeUntouched: true, preflightOnly: true });
-		const issues = (form.fields as RemoteFormFields<unknown>).allIssues();
-		if (issues && onissues && !deepEqual(lastIssues, issues)) onissues({ issues });
-		if (issues?.length) lastIssues = issues;
+		if (allIssues && onissues && !deepEqual(lastIssues, allIssues)) onissues({ issues: allIssues });
+		if (allIssues) lastIssues = allIssues;
 	}
 
 	async function focusInvalid() {
 		await tick();
 
-		const issues = (form.fields as RemoteFormFields<unknown>).allIssues();
-		if (issues?.length) lastIssues = issues;
+		if (allIssues) lastIssues = allIssues;
 		else return;
 
 		const invalid = formEl.querySelector(":is(input, select, textarea):not(.hidden, [type=hidden], :disabled)[aria-invalid]") as
@@ -116,17 +116,15 @@
 				dirty = false;
 				await submit();
 
-				const issues = (form.fields as RemoteFormFields<unknown>).allIssues();
-				const success = !issues?.length;
-
-				onresult?.({ success, result: form.result, issues });
+				const success = !allIssues;
+				onresult?.({ success, result: form.result, issues: allIssues });
 
 				if (success) {
-					successToast(`${(form.fields as RemoteFormFields<unknown>).name?.value() || "Form"} saved successfully`);
+					successToast(`${(form.fields as Fields).name?.value() || "Form"} saved successfully`);
 				} else {
 					dirty = wasDirty;
 					await focusInvalid();
-					onissues?.({ issues });
+					onissues?.({ issues: allIssues });
 				}
 			} catch (error) {
 				unknownErrorToast(error || "Oh no! Something went wrong");
