@@ -4,12 +4,12 @@
 >
 	import { dev } from "$app/environment";
 	import { beforeNavigate } from "$app/navigation";
-	import { initForm, successToast, unknownErrorToast } from "$lib/factories.svelte";
+	import { successToast, unknownErrorToast } from "$lib/factories.svelte";
 	import { debounce, deepEqual } from "@sillvva/utils";
 	import type { StandardSchemaV1 } from "@standard-schema/spec";
 	import type { RemoteForm, RemoteFormFields, RemoteFormInput, RemoteFormIssue } from "@sveltejs/kit";
 	import { isTupleOfAtLeast } from "effect/Predicate";
-	import { onMount, tick, untrack, type Snippet } from "svelte";
+	import { tick, untrack, type Snippet } from "svelte";
 	import type { HTMLFormAttributes } from "svelte/elements";
 	import SuperDebugRuned from "sveltekit-superforms/SuperDebug.svelte";
 	import { v7 } from "uuid";
@@ -49,27 +49,51 @@
 
 	let formEl: HTMLFormElement;
 
-	// svelte-ignore state_referenced_locally
-	const form = remoteForm.for(key).preflight(schema);
+	const form = $derived(remoteForm.for(key).preflight(schema));
 
-	let initial = $state.raw(initForm(form, () => data));
-	let dirty = $derived(!deepEqual(initial, $state.snapshot(form.fields.value())));
+	// svelte-ignore state_referenced_locally
+	form.fields.set(data as any);
+	// svelte-ignore state_referenced_locally
+	let initial = $state.raw($state.snapshot(data));
 	let touched = $state.raw(false);
-	$effect(() => {
-		void key;
-		initial = untrack(() => $state.snapshot(data));
-	});
+	let dirty = $derived(!deepEqual(initial, $state.snapshot(form.fields.value())));
 
 	const result = $derived(form.result);
 	const issues = $derived(form.fields.issues());
 	const allIssues = $derived((form.fields as Fields).allIssues());
-	let lastIssues = $state.raw<RemoteFormIssue[] | undefined>((form.fields as Fields).allIssues());
+	let lastIssues = $state.raw<RemoteFormIssue[] | undefined>();
+
+	let hydrated1 = false;
+	$effect(() => {
+		// When the form, key, or schema changes
+		void form;
+		// During hydration, do the following:
+		if (!hydrated1) {
+			// Validate if there are initial errors
+			untrack(() => initialErrors && validate());
+			return void (hydrated1 = true);
+		}
+		// For any changes after hydration, do the following:
+		untrack(() => {
+			form.fields.set(data as any);
+			initial = $state.snapshot(data);
+			if (initialErrors) validate(true);
+		});
+	});
+
+	let hydrated2 = false;
+	$effect(() => {
+		void data;
+		if (!hydrated2) return void (hydrated2 = true);
+		form.fields.set(data as any);
+	});
 
 	const debouncedValidate = debounce(validate, 300);
 
-	async function validate() {
+	async function validate(reset = false) {
 		await form.validate({ includeUntouched: true, preflightOnly: true });
 		if (allIssues && onissues && !deepEqual(lastIssues, allIssues)) onissues({ issues: allIssues });
+		if (reset) lastIssues = undefined;
 		if (allIssues) lastIssues = allIssues;
 	}
 
@@ -86,10 +110,6 @@
 			| null;
 		invalid?.focus();
 	}
-
-	onMount(() => {
-		if (initialErrors) validate();
-	});
 
 	beforeNavigate((ev) => {
 		if ((dirty || issues) && !confirm("You have unsaved changes. Are you sure you want to leave?")) {

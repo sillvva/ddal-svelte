@@ -3,7 +3,6 @@ import type { FullCharacterData } from "$lib/server/effect/services/characters";
 import type { UserDM } from "$lib/server/effect/services/dms";
 import type { FullLogData, LogSummaryData, UserLogData } from "$lib/server/effect/services/logs";
 import { debounce, isDefined, substrCount, type MapKeys, type Prettify } from "@sillvva/utils";
-import type { RemoteForm, RemoteFormInput } from "@sveltejs/kit";
 import { Duration } from "effect";
 import escapeRegex from "regexp.escape";
 import { getContext, hasContext, setContext } from "svelte";
@@ -50,20 +49,6 @@ export function createContext<T>(createDefault?: () => T): [() => T, (context: T
 export function proxify<T>(object: T) {
 	const _ = $state(object);
 	return _;
-}
-
-export function initForm<Input extends RemoteFormInput>(form: RemoteForm<Input, unknown>, getter: () => Input) {
-	let hydrated = false;
-	// eslint-disable-next-line @typescript-eslint/no-explicit-any
-	form.fields.set(getter() as any);
-	$effect(() => {
-		const values = getter();
-		if (!hydrated) return void (hydrated = true);
-		// eslint-disable-next-line @typescript-eslint/no-explicit-any
-		form.fields.set(values as any);
-	});
-
-	return $state.snapshot(getter());
 }
 
 type WordToken = { type: "word"; value: string };
