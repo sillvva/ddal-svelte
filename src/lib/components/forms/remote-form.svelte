@@ -67,14 +67,14 @@
 	$effect(() => {
 		// When the form, key, or schema changes
 		void form;
-		// During hydration, do the following:
-		if (!hydrated1) {
-			// Validate if there are initial errors
-			untrack(() => initialErrors && validate());
-			return void (hydrated1 = true);
-		}
-		// For any changes after hydration, do the following:
 		untrack(() => {
+			// During hydration, do the following:
+			if (!hydrated1) {
+				// Validate if there are initial errors
+				if (initialErrors) validate();
+				return void (hydrated1 = true);
+			}
+			// After hydration, on change, do the following:
 			form.fields.set(data as any);
 			initial = $state.snapshot(data);
 			if (initialErrors) validate(true);
