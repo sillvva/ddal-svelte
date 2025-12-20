@@ -4,7 +4,6 @@
 >
 	import { dev } from "$app/environment";
 	import { beforeNavigate } from "$app/navigation";
-	import { page } from "$app/state";
 	import { initForm, successToast, unknownErrorToast } from "$lib/factories.svelte";
 	import { debounce, deepEqual } from "@sillvva/utils";
 	import type { StandardSchemaV1 } from "@standard-schema/spec";
@@ -22,6 +21,7 @@
 		schema: Schema;
 		form: Form;
 		data: Input;
+		key?: FormId;
 		initialErrors?: boolean;
 		onsubmit?: <T>(ctx: { readonly tainted: boolean; readonly form: HTMLFormElement; readonly data: Input }) => Awaitable<T>;
 		onresult?: (ctx: {
@@ -39,6 +39,7 @@
 		form: remoteForm,
 		children,
 		data,
+		key = (data.id ?? v7()) as FormId,
 		initialErrors = !!data.id,
 		onsubmit,
 		onresult,
@@ -48,13 +49,14 @@
 
 	let formEl: HTMLFormElement;
 
-	const form = remoteForm.for((data.id ?? v7()) as FormId).preflight(schema);
+	// svelte-ignore state_referenced_locally
+	const form = remoteForm.for(key).preflight(schema);
 
 	let initial = $state.raw(initForm(form, () => data));
 	let dirty = $derived(!deepEqual(initial, $state.snapshot(form.fields.value())));
 	let touched = $state.raw(false);
 	$effect(() => {
-		void page.url;
+		void key;
 		initial = untrack(() => $state.snapshot(data));
 	});
 
