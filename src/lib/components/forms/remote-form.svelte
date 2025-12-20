@@ -1,7 +1,4 @@
-<script
-	lang="ts"
-	generics="Schema extends StandardSchemaV1<RemoteFormInput, unknown>, Form extends RemoteForm<StandardSchemaV1.InferInput<Schema>, unknown>"
->
+<script lang="ts" generics="Input extends RemoteFormInput">
 	import { dev } from "$app/environment";
 	import { beforeNavigate } from "$app/navigation";
 	import { successToast, unknownErrorToast } from "$lib/factories.svelte";
@@ -14,13 +11,14 @@
 	import SuperDebugRuned from "sveltekit-superforms/SuperDebug.svelte";
 	import { v7 } from "uuid";
 
-	type Input = StandardSchemaV1.InferInput<Schema>;
+	type Form = RemoteForm<Input, unknown>;
 	type FormId = Input extends { id: infer Id } ? (Id extends string | number ? Id : string | number) : string | number;
 	type Fields = RemoteFormFields<unknown>;
+
 	interface Props extends Omit<HTMLFormAttributes, "children" | "action" | "method" | "onsubmit"> {
-		schema: Schema;
 		form: Form;
-		data: Input;
+		schema?: StandardSchemaV1<Input, unknown>;
+		data?: Input;
 		key?: FormId;
 		initialErrors?: boolean;
 		onsubmit?: <T>(ctx: { readonly tainted: boolean; readonly form: HTMLFormElement; readonly data: Input }) => Awaitable<T>;
@@ -31,25 +29,25 @@
 			readonly error?: unknown;
 		}) => Awaitable<void>;
 		onissues?: (ctx: { readonly issues: RemoteFormIssue[] }) => Awaitable<void>;
-		children?: Snippet<[{ fields: Form["fields"]; initial: Input; dirty: boolean; touched: boolean }]>;
+		children?: Snippet<[{ fields: Form["fields"]; initial: Input; dirty: boolean; touched: boolean; reset: () => Input }]>;
 	}
 
 	let {
-		schema,
 		form: remoteForm,
-		children,
-		data,
-		key = (data.id ?? v7()) as FormId,
-		initialErrors = !!data.id,
+		schema,
+		data = {} as Input,
+		key = (data?.id ?? v7()) as FormId,
+		initialErrors = !!data?.id,
 		onsubmit,
 		onresult,
 		onissues,
+		children,
 		...rest
 	}: Props = $props();
 
 	let formEl: HTMLFormElement;
 
-	const form = $derived(remoteForm.for(key).preflight(schema));
+	const form = $derived(schema ? remoteForm.for(key).preflight(schema) : remoteForm.for(key));
 
 	// svelte-ignore state_referenced_locally
 	form.fields.set(data as any);
@@ -161,7 +159,13 @@
 		}}
 	>
 		<fieldset class="grid grid-cols-12 gap-4" disabled={!!$effect.pending()} onfocusin={() => (touched = true)}>
-			{@render children?.({ fields: form.fields, initial, dirty, touched })}
+			{@render children?.({
+				fields: form.fields,
+				initial: initial as Input,
+				dirty,
+				touched,
+				reset: () => form.fields.set(initial as any)
+			})}
 		</fieldset>
 	</form>
 
@@ -172,7 +176,7 @@
 				touched,
 				data: form.fields.value(),
 				result,
-				issues: (form.fields as RemoteFormFields<unknown>).allIssues()
+				issues: (form.fields as Fields).allIssues()
 			}}
 		/>
 	{/if}
