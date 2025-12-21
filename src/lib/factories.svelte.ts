@@ -54,18 +54,21 @@ export function proxify<T>(object: T) {
 export function watch<T>(args: {
 	/** Depedencies to track */
 	track: () => T;
+	/** Effects that run during SSR */
+	ssr?: (value: T) => unknown;
+	/** Effects that run during hydration */
+	hydration?: (value: T) => unknown;
 	/** Effects that run on change, after hydration */
 	effect: (current: T, previous: T) => void | (() => void);
-	/** Effects that run during hydration */
-	hydration?: () => unknown;
 }) {
 	let hydrated = false;
+	args.ssr?.(args.track());
 	let prev = args.track();
 	$effect(() => {
 		void args.track();
 		return untrack(() => {
 			if (!hydrated) {
-				if (args.hydration) args.hydration();
+				if (args.hydration) args.hydration(args.track());
 				return void (hydrated = true);
 			}
 			const cleanup = args.effect(args.track(), prev);
@@ -73,6 +76,7 @@ export function watch<T>(args: {
 			return cleanup;
 		});
 	});
+	return $state.snapshot(args.track());
 }
 
 type WordToken = { type: "word"; value: string };

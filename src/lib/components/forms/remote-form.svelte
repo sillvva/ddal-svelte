@@ -49,10 +49,20 @@
 
 	const form = $derived(schema ? remoteForm.for(key).preflight(schema) : remoteForm.for(key));
 
-	// svelte-ignore state_referenced_locally
-	form.fields.set(data as any);
-	// svelte-ignore state_referenced_locally
-	let initial = $state.raw($state.snapshot(data));
+	let initial = $state.raw(
+		watch({
+			track: () => data as any,
+			// set the initial data during SSR
+			ssr: (data) => {
+				form.fields.set(data);
+			},
+			// update the form fields when the data changes
+			effect: (data) => {
+				form.fields.set(data);
+			}
+		})
+	);
+
 	let touched = $state.raw(false);
 	let dirty = $derived(!deepEqual(initial, $state.snapshot(form.fields.value())));
 
@@ -62,21 +72,16 @@
 	let lastIssues = $state.raw<RemoteFormIssue[] | undefined>();
 
 	watch({
+		// if the form instance changes, reset the form
 		track: () => form,
+		hydration: () => {
+			if (initialErrors) validate();
+		},
 		effect: (form) => {
 			form.fields.set(data as any);
 			initial = $state.snapshot(data);
+			touched = false;
 			if (initialErrors) validate(true);
-		},
-		hydration: () => {
-			if (initialErrors) validate();
-		}
-	});
-
-	watch({
-		track: () => data,
-		effect: (data) => {
-			form.fields.set(data as any);
 		}
 	});
 
