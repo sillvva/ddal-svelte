@@ -1,12 +1,12 @@
 <script lang="ts" generics="Input extends RemoteFormInput">
 	import { dev } from "$app/environment";
 	import { beforeNavigate } from "$app/navigation";
-	import { successToast, unknownErrorToast } from "$lib/factories.svelte";
+	import { successToast, unknownErrorToast, watch } from "$lib/factories.svelte";
 	import { debounce, deepEqual } from "@sillvva/utils";
 	import type { StandardSchemaV1 } from "@standard-schema/spec";
 	import type { RemoteForm, RemoteFormFields, RemoteFormInput, RemoteFormIssue } from "@sveltejs/kit";
 	import { isTupleOfAtLeast } from "effect/Predicate";
-	import { tick, untrack, type Snippet } from "svelte";
+	import { tick, type Snippet } from "svelte";
 	import type { HTMLFormAttributes } from "svelte/elements";
 	import SuperDebugRuned from "sveltekit-superforms/SuperDebug.svelte";
 	import { v7 } from "uuid";
@@ -61,29 +61,23 @@
 	const allIssues = $derived((form.fields as Fields).allIssues());
 	let lastIssues = $state.raw<RemoteFormIssue[] | undefined>();
 
-	let hydrated1 = false;
-	$effect(() => {
-		// When the form, key, or schema changes
-		void form;
-		untrack(() => {
-			// During hydration, do the following:
-			if (!hydrated1) {
-				// Validate if there are initial errors
-				if (initialErrors) validate();
-				return void (hydrated1 = true);
-			}
-			// After hydration, on change, do the following:
+	watch({
+		track: () => form,
+		effect: (form) => {
 			form.fields.set(data as any);
 			initial = $state.snapshot(data);
 			if (initialErrors) validate(true);
-		});
+		},
+		hydration: () => {
+			if (initialErrors) validate();
+		}
 	});
 
-	let hydrated2 = false;
-	$effect(() => {
-		void data;
-		if (!hydrated2) return void (hydrated2 = true);
-		form.fields.set(data as any);
+	watch({
+		track: () => data,
+		effect: (data) => {
+			form.fields.set(data as any);
+		}
 	});
 
 	const debouncedValidate = debounce(validate, 300);

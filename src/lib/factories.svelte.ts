@@ -5,7 +5,7 @@ import type { FullLogData, LogSummaryData, UserLogData } from "$lib/server/effec
 import { debounce, isDefined, substrCount, type MapKeys, type Prettify } from "@sillvva/utils";
 import { Duration } from "effect";
 import escapeRegex from "regexp.escape";
-import { getContext, hasContext, setContext } from "svelte";
+import { getContext, hasContext, setContext, untrack } from "svelte";
 import { toast } from "svelte-sonner";
 import { SvelteMap } from "svelte/reactivity";
 import type { SearchData } from "./remote/command";
@@ -49,6 +49,30 @@ export function createContext<T>(createDefault?: () => T): [() => T, (context: T
 export function proxify<T>(object: T) {
 	const _ = $state(object);
 	return _;
+}
+
+export function watch<T>(args: {
+	/** Depedencies to track */
+	track: () => T;
+	/** Effects that run on change, after hydration */
+	effect: (current: T, previous: T) => void | (() => void);
+	/** Effects that run during hydration */
+	hydration?: () => unknown;
+}) {
+	let hydrated = false;
+	let prev = args.track();
+	$effect(() => {
+		void args.track();
+		return untrack(() => {
+			if (!hydrated) {
+				if (args.hydration) args.hydration();
+				return void (hydrated = true);
+			}
+			const cleanup = args.effect(args.track(), prev);
+			prev = args.track();
+			return cleanup;
+		});
+	});
 }
 
 type WordToken = { type: "word"; value: string };
