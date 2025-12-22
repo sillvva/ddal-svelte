@@ -1,15 +1,20 @@
 /* eslint-disable svelte/prefer-svelte-reactivity */
+import { beforeNavigate } from "$app/navigation";
 import type { FullCharacterData } from "$lib/server/effect/services/characters";
 import type { UserDM } from "$lib/server/effect/services/dms";
 import type { FullLogData, LogSummaryData, UserLogData } from "$lib/server/effect/services/logs";
-import { debounce, isDefined, substrCount, type MapKeys, type Prettify } from "@sillvva/utils";
+import { debounce, deepEqual, isDefined, substrCount, type MapKeys, type Prettify } from "@sillvva/utils";
+import type { StandardSchemaV1 } from "@standard-schema/spec";
+import type { RemoteForm, RemoteFormFields, RemoteFormInput, RemoteFormIssue } from "@sveltejs/kit";
 import { Duration } from "effect";
 import escapeRegex from "regexp.escape";
-import { getContext, hasContext, setContext, untrack } from "svelte";
+import { getContext, hasContext, onMount, setContext, tick, untrack } from "svelte";
 import { toast } from "svelte-sonner";
+import type { HTMLFormAttributes } from "svelte/elements";
 import { SvelteMap } from "svelte/reactivity";
+import { v7 } from "uuid";
 import type { SearchData } from "./remote/command";
-import { unknownErrorMessage } from "./util";
+import { unknownErrorMessage, type HTMLEvent } from "./util";
 
 export function successToast(message: string) {
 	toast.success("Success", {
@@ -54,15 +59,15 @@ export function proxify<T>(object: T) {
 export function watch<T>(args: {
 	/** Depedencies to track */
 	track: () => T;
-	/** Effects that run during SSR */
+	/** Effects that run once during SSR */
 	ssr?: (value: T) => unknown;
-	/** Effects that run during hydration */
+	/** Effects that run once during hydration */
 	hydration?: (value: T) => unknown;
-	/** Effects that run on change, after hydration */
+	/** Effects that run on dependency change, after hydration */
 	effect: (current: T, previous: T) => void | (() => void);
 }) {
-	let hydrated = false;
 	args.ssr?.(args.track());
+	let hydrated = false;
 	let prev = args.track();
 	$effect(() => {
 		void args.track();
@@ -77,6 +82,188 @@ export function watch<T>(args: {
 		});
 	});
 	return $state.snapshot(args.track());
+}
+
+type FormId<Input extends RemoteFormInput> = Input extends { id: infer Id }
+	? Id extends string | number
+		? Id
+		: string | number
+	: string | number;
+
+export interface RemoteFormOptions<Input extends RemoteFormInput> extends Omit<
+	HTMLFormAttributes,
+	"children" | "action" | "method" | "onsubmit"
+> {
+	form: RemoteForm<Input, unknown>;
+	schema?: StandardSchemaV1<Input, unknown>;
+	key?: FormId<Input>;
+	data?: Input;
+	initialErrors?: boolean;
+	navBlockMessage?: string;
+	onissues?: (ctx: { readonly issues: RemoteFormIssue[] }) => unknown;
+	onsubmit?: <T>(ctx: { readonly dirty: boolean; readonly form: HTMLFormElement; readonly data: Input }) => Awaitable<T>;
+	onresult?: (ctx: {
+		readonly success: boolean;
+		readonly result?: RemoteForm<Input, unknown>["result"];
+		readonly issues?: RemoteFormIssue[];
+		readonly error?: unknown;
+	}) => Awaitable<void>;
+	formEl?: HTMLFormElement;
+}
+
+export function configureForm<Input extends RemoteFormInput>(getProps: () => RemoteFormOptions<Input>) {
+	type Fields = RemoteFormFields<unknown>;
+
+	const {
+		form: remoteForm,
+		schema,
+		data = {} as Input,
+		key: formKey,
+		initialErrors: initialErrorsProp,
+		navBlockMessage,
+		onsubmit,
+		onresult,
+		onissues,
+		...rest
+	} = $derived(getProps());
+
+	const key = $derived(formKey ?? ((data?.id ?? v7()) as FormId<Input>));
+	const form = $derived(schema ? remoteForm.for(key).preflight(schema) : remoteForm.for(key));
+
+	let initial = $state.raw(
+		watch({
+			track: () => data,
+			ssr: (data) => {
+				// eslint-disable-next-line @typescript-eslint/no-explicit-any
+				form.fields.set(data as any);
+			},
+			effect: (data) => {
+				// eslint-disable-next-line @typescript-eslint/no-explicit-any
+				form.fields.set(data as any);
+			}
+		})
+	);
+
+	let touched = $state.raw(false);
+	let submitting = $state.raw(false);
+	let submitted = $state.raw(false);
+	let dirty = $derived(!deepEqual(initial, $state.snapshot(form.fields.value())));
+
+	const attributes = $derived(
+		Object.assign(
+			form.enhance(async ({ submit, form: formEl, data }) => {
+				const bf = !onsubmit || (await onsubmit({ dirty, form: formEl, data }));
+				if (!bf) return;
+
+				submitting = true;
+				submitted = true;
+				const wasDirty = dirty;
+				try {
+					dirty = false;
+					await submit();
+
+					const success = !allIssues;
+					onresult?.({ success, result: form.result, issues: allIssues });
+
+					if (!success) {
+						dirty = wasDirty;
+						await focusInvalid();
+						onissues?.({ issues: allIssues });
+					}
+				} catch (error) {
+					onresult?.({ success: false, error });
+					dirty = wasDirty;
+				} finally {
+					submitting = false;
+				}
+			}),
+			{
+				...rest,
+				onsubmit: focusInvalid,
+				oninput: (ev: HTMLEvent<HTMLFormElement>) => {
+					const { oninput } = getProps();
+					if (lastIssues) debouncedValidate.call();
+					oninput?.(ev);
+				}
+			}
+		)
+	);
+
+	const result = $derived(form.result);
+	const issues = $derived(form.fields.issues());
+	const allIssues = $derived((form.fields as Fields).allIssues());
+	const initialErrors = $derived(initialErrorsProp ?? !!data?.id);
+	let lastIssues = $state.raw<RemoteFormIssue[] | undefined>();
+
+	watch({
+		track: () => form,
+		hydration: () => {
+			if (initialErrors) validate();
+		},
+		effect: (form) => {
+			// eslint-disable-next-line @typescript-eslint/no-explicit-any
+			form.fields.set(data as any);
+			initial = $state.snapshot(data);
+			touched = false;
+			if (initialErrors) validate(true);
+		}
+	});
+
+	const debouncedValidate = debounce(validate, 300);
+
+	async function validate(reset = false) {
+		const { onissues } = getProps();
+		await form.validate({ includeUntouched: true, preflightOnly: true });
+		if (allIssues && onissues && !deepEqual(lastIssues, allIssues)) onissues({ issues: allIssues });
+		if (reset) lastIssues = undefined;
+		if (allIssues) lastIssues = allIssues;
+	}
+
+	async function focusInvalid() {
+		await tick();
+
+		if (allIssues) lastIssues = allIssues;
+		else return;
+
+		const el = rest.formEl;
+		if (!el) return;
+
+		const invalid = el.querySelector(":is(input, select, textarea):not(.hidden, [type=hidden], :disabled)[aria-invalid]") as
+			| HTMLInputElement
+			| HTMLSelectElement
+			| HTMLTextAreaElement
+			| null;
+		invalid?.focus();
+	}
+
+	onMount(() => {
+		const handleFocusIn = () => void (touched = true);
+		rest.formEl?.addEventListener("focusin", handleFocusIn);
+		return () => {
+			rest.formEl?.removeEventListener("focusin", handleFocusIn);
+		};
+	});
+
+	beforeNavigate((ev) => {
+		if ((dirty || issues) && navBlockMessage && !confirm(navBlockMessage)) ev.cancel();
+	});
+
+	return () => ({
+		form,
+		attributes,
+		initial,
+		touched,
+		dirty,
+		submitting,
+		submitted,
+		result,
+		issues,
+		allIssues,
+		validate,
+		debouncedValidate,
+		// eslint-disable-next-line @typescript-eslint/no-explicit-any
+		reset: () => form.fields.set(initial as any)
+	});
 }
 
 type WordToken = { type: "word"; value: string };

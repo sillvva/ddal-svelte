@@ -10,6 +10,10 @@ import type { FullPathname } from "./constants";
 import { errorToast } from "./factories.svelte";
 import type { EffectFailure, EffectResult } from "./server/effect/runtime";
 
+export type HTMLEvent<T extends Element> = Event & {
+	currentTarget: EventTarget & T;
+};
+
 export async function createTransition(action: ViewTransitionCallback, after?: () => Awaitable<void>, afterDelay = 0) {
 	if (!document.startViewTransition) action();
 	else document.startViewTransition(action);
