@@ -637,3 +637,34 @@ export class EntitySearchFactory<
 			.filter(isDefined);
 	}
 }
+
+export function swipeAction(action: () => Promise<void>) {
+	return (container: HTMLDivElement) => {
+		const checkScroll = async (threshold: number) => {
+			const scrollLeft = container.scrollLeft;
+			if (scrollLeft >= threshold) {
+				// Only fire once per open
+				if (!container.dataset.open) {
+					container.dataset.open = "true";
+					container.scrollLeft = 0;
+					await action();
+				}
+			} else {
+				container.dataset.open = "";
+			}
+		};
+
+		const scrollListener = () => checkScroll(90);
+		const touchendListener = () => checkScroll(60);
+
+		// Listen to scroll and touchend
+		container.addEventListener("scroll", scrollListener);
+		container.addEventListener("touchend", touchendListener);
+
+		// Cleanup
+		return () => {
+			container.removeEventListener("scroll", scrollListener);
+			container.removeEventListener("touchend", touchendListener);
+		};
+	};
+}
