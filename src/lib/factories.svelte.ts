@@ -90,14 +90,14 @@ type FormId<Input extends RemoteFormInput> = Input extends { id: infer Id }
 		: string | number
 	: string | number;
 
-export interface RemoteFormOptions<Input extends RemoteFormInput> extends Omit<
+export interface RemoteFormOptions<Input extends RemoteFormInput, Data extends Input | undefined = undefined> extends Omit<
 	HTMLFormAttributes,
 	"children" | "action" | "method" | "onsubmit"
 > {
 	form: RemoteForm<Input, unknown>;
 	schema?: StandardSchemaV1<Input, unknown>;
 	key?: FormId<Input>;
-	data?: Input;
+	data?: Data;
 	initialErrors?: boolean;
 	navBlockMessage?: string;
 	onissues?: (ctx: { readonly issues: RemoteFormIssue[] }) => unknown;
@@ -111,13 +111,15 @@ export interface RemoteFormOptions<Input extends RemoteFormInput> extends Omit<
 	formEl?: HTMLFormElement;
 }
 
-export function configureForm<Input extends RemoteFormInput>(getProps: () => RemoteFormOptions<Input>) {
+export function configureForm<Input extends RemoteFormInput, Data extends Input | undefined = undefined>(
+	getProps: () => RemoteFormOptions<Input, Data>
+) {
 	type Fields = RemoteFormFields<unknown>;
 
 	const {
 		form: remoteForm,
 		schema,
-		data = {} as Input,
+		data: formData,
 		key: formKey,
 		initialErrors: initialErrorsProp,
 		navBlockMessage,
@@ -127,7 +129,9 @@ export function configureForm<Input extends RemoteFormInput>(getProps: () => Rem
 		...rest
 	} = $derived(getProps());
 
-	const key = $derived(formKey ?? ((data?.id ?? v7()) as FormId<Input>));
+	type FormData = Data extends undefined ? Record<string, never> : Data;
+	const data = $derived((formData ?? {}) as FormData);
+	const key = $derived(formKey ?? ((data.id ?? v7()) as FormId<Input>));
 	const form = $derived(schema ? remoteForm.for(key).preflight(schema) : remoteForm.for(key));
 
 	let initial = $state.raw(

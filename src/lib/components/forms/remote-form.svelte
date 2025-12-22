@@ -1,4 +1,4 @@
-<script lang="ts" generics="Input extends RemoteFormInput">
+<script lang="ts" generics="Input extends RemoteFormInput, Data extends Input | undefined = undefined">
 	import { dev } from "$app/environment";
 	import { configureForm, errorToast, successToast, type RemoteFormOptions } from "$lib/factories.svelte";
 	import type { RemoteForm, RemoteFormFields, RemoteFormInput } from "@sveltejs/kit";
@@ -8,12 +8,12 @@
 
 	type Fields = RemoteFormFields<unknown>;
 
-	interface Props extends RemoteFormOptions<Input> {
+	interface Props extends RemoteFormOptions<Input, Data> {
 		children?: Snippet<
 			[
 				{
 					fields: RemoteForm<Input, unknown>["fields"];
-					initial: $state.Snapshot<Input>;
+					initial: $state.Snapshot<Data extends undefined ? Record<string, never> : Data>;
 					dirty: boolean;
 					touched: boolean;
 					reset: () => Input;
