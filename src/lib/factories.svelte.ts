@@ -106,7 +106,7 @@ export interface RemoteFormOptions<Input extends RemoteFormInput> extends Omit<
 		readonly success: boolean;
 		readonly result?: RemoteForm<Input, unknown>["result"];
 		readonly issues?: RemoteFormIssue[];
-		readonly error?: unknown;
+		readonly error?: string;
 	}) => Awaitable<void>;
 	formEl?: HTMLFormElement;
 }
@@ -171,7 +171,7 @@ export function configureForm<Input extends RemoteFormInput>(getProps: () => Rem
 						onissues?.({ issues: allIssues });
 					}
 				} catch (error) {
-					onresult?.({ success: false, error });
+					onresult?.({ success: false, error: unknownErrorMessage(error) });
 					dirty = wasDirty;
 				} finally {
 					submitting = false;

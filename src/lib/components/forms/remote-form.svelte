@@ -1,6 +1,6 @@
 <script lang="ts" generics="Input extends RemoteFormInput">
 	import { dev } from "$app/environment";
-	import { configureForm, successToast, unknownErrorToast, type RemoteFormOptions } from "$lib/factories.svelte";
+	import { configureForm, errorToast, successToast, type RemoteFormOptions } from "$lib/factories.svelte";
 	import type { RemoteForm, RemoteFormFields, RemoteFormInput } from "@sveltejs/kit";
 	import { isTupleOfAtLeast } from "effect/Predicate";
 	import { type Snippet } from "svelte";
@@ -34,7 +34,7 @@
 			if (ctx.success) {
 				successToast(`${(form.fields as Fields).name?.value() || "Form"} saved successfully`);
 			} else if (ctx.error) {
-				unknownErrorToast(ctx.error || "Oh no! Something went wrong");
+				errorToast(ctx.error);
 			}
 		}
 	}));
