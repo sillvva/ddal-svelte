@@ -1,22 +1,23 @@
 <script lang="ts" generics="Input extends RemoteFormInput, Data extends Input | undefined = undefined">
 	import { dev } from "$app/environment";
 	import { configureForm, errorToast, successToast, type RemoteFormOptions } from "$lib/factories.svelte";
-	import type { RemoteForm, RemoteFormFields, RemoteFormInput } from "@sveltejs/kit";
+	import type { RemoteFormFields, RemoteFormInput } from "@sveltejs/kit";
 	import { isTupleOfAtLeast } from "effect/Predicate";
 	import { type Snippet } from "svelte";
 	import SuperDebugRuned from "sveltekit-superforms/SuperDebug.svelte";
 
 	type Fields = RemoteFormFields<unknown>;
+	type Configured = ReturnType<ReturnType<typeof configureForm<Input, Data>>>;
 
 	interface Props extends RemoteFormOptions<Input, Data> {
 		children?: Snippet<
 			[
 				{
-					fields: RemoteForm<Input, unknown>["fields"];
-					initial: $state.Snapshot<Data extends undefined ? Record<string, never> : Data>;
-					dirty: boolean;
-					touched: boolean;
-					reset: () => Input;
+					fields: Configured["form"]["fields"];
+					initial: Configured["initial"];
+					dirty: Configured["dirty"];
+					touched: Configured["touched"];
+					reset: Configured["reset"];
 				}
 			]
 		>;
