@@ -115,16 +115,18 @@
 				>
 					<div
 						class="swipe-container"
-						{@attach swipeAction(async () => {
-							if (!confirm(`Are you sure you want to delete ${log.name}? This action cannot be undone.`)) return;
-							deletingLog.add(log.id);
-							const result = await API.logs.actions.deleteLog(log.id);
-							const parsed = await parseEffectResult(result);
-							if (parsed) {
-								successToast(`${log.name} deleted`);
-								await API.logs.queries.getDmLogs().refresh();
-							} else {
-								deletingLog.delete(log.id);
+						{@attach swipeAction({
+							right: async () => {
+								if (!confirm(`Are you sure you want to delete ${log.name}? This action cannot be undone.`)) return;
+								deletingLog.add(log.id);
+								const result = await API.logs.actions.deleteLog(log.id);
+								const parsed = await parseEffectResult(result);
+								if (parsed) {
+									successToast(`${log.name} deleted`);
+									await API.logs.queries.getDmLogs().refresh();
+								} else {
+									deletingLog.delete(log.id);
+								}
 							}
 						})}
 					>
@@ -227,7 +229,7 @@
 								{/if}
 							</div>
 						</div>
-						<button class="action bg-error text-white" aria-label="Delete Log">
+						<button class="action right bg-error text-white" aria-label="Delete Log">
 							<span class="iconify mdi--trash-can size-6"></span>
 						</button>
 					</div>

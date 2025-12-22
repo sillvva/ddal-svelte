@@ -638,24 +638,33 @@ export class EntitySearchFactory<
 	}
 }
 
-export function swipeAction(action: () => Promise<void>) {
+export function swipeAction(actions: { left?: () => Promise<void>; right?: () => Promise<void> }) {
 	return (container: HTMLDivElement) => {
+		const buttonWidth = 90;
+		const hasLeftButton = container.querySelector(".action.left") !== null;
 		const checkScroll = async (threshold: number) => {
-			const scrollLeft = container.scrollLeft;
-			if (scrollLeft >= threshold) {
+			const scrollLeft = container.scrollLeft - (hasLeftButton ? buttonWidth : 0);
+			if (0 - scrollLeft >= threshold) {
 				// Only fire once per open
 				if (!container.dataset.open) {
 					container.dataset.open = "true";
 					container.scrollLeft = 0;
-					await action();
+					await actions.left?.();
+				}
+			} else if (scrollLeft >= threshold) {
+				// Only fire once per open
+				if (!container.dataset.open) {
+					container.dataset.open = "true";
+					container.scrollLeft = 0;
+					await actions.right?.();
 				}
 			} else {
 				container.dataset.open = "";
 			}
 		};
 
-		const scrollListener = () => checkScroll(90);
-		const touchendListener = () => checkScroll(60);
+		const scrollListener = () => checkScroll(buttonWidth);
+		const touchendListener = () => checkScroll((buttonWidth * 2) / 3);
 
 		// Listen to scroll and touchend
 		container.addEventListener("scroll", scrollListener);
