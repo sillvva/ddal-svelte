@@ -208,11 +208,15 @@ export function configureForm<Input extends RemoteFormInput, Data extends Input 
 	watch({
 		track: () => form,
 		hydration: async () => {
-			// for some reason, the form incorrectly shows
-			// errors during hydration if called immediately
-			setTimeout(() => {
-				if (initialErrors) validate();
-			}, 50);
+			if (initialErrors) await validate().then(focusInvalid);
+			if (allIssues) {
+				console.warn(
+					"[Initial Issues]",
+					"There were issues with the form data during hydration.",
+					"Ensure your form fields are not disabled when the validation is run.",
+					"Disabled fields are treated as undefined values, just as they would be if the form was submitted."
+				);
+			}
 		},
 		effect: (form) => {
 			// eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -239,14 +243,9 @@ export function configureForm<Input extends RemoteFormInput, Data extends Input 
 		if (allIssues) lastIssues = allIssues;
 		else return;
 
-		const el = rest.formEl;
-		if (!el) return;
-
-		const invalid = el.querySelector(":is(input, select, textarea):not(.hidden, [type=hidden], :disabled)[aria-invalid]") as
-			| HTMLInputElement
-			| HTMLSelectElement
-			| HTMLTextAreaElement
-			| null;
+		const invalid = rest.formEl?.querySelector(
+			":is(input, select, textarea):not(.hidden, [type=hidden], :disabled)[aria-invalid]"
+		) as HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement | null | undefined;
 		invalid?.focus();
 	}
 

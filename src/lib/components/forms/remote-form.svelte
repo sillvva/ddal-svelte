@@ -10,7 +10,7 @@
 	type Fields = RemoteFormFields<unknown>;
 	type Configured = ReturnType<ReturnType<typeof configureForm<Input, Data>>>;
 
-	interface Props extends RemoteFormOptions<Input, Data> {
+	interface Props extends Omit<RemoteFormOptions<Input, Data>, "formEl"> {
 		children?: Snippet<
 			[
 				{
@@ -27,7 +27,7 @@
 
 	let { children, ...rest }: Props = $props();
 
-	let formEl: HTMLFormElement;
+	let formEl: HTMLFormElement | undefined = $state.raw();
 
 	const configured = setContext(
 		"configured",
