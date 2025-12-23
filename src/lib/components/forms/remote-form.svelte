@@ -1,6 +1,6 @@
 <script lang="ts" generics="Input extends RemoteFormInput, Data extends Input | undefined = undefined">
 	import { dev } from "$app/environment";
-	import { navigating } from "$app/state";
+	import { navigating, page } from "$app/state";
 	import { configureForm, errorToast, successToast, type RemoteFormOptions } from "$lib/factories.svelte";
 	import type { RemoteFormFields, RemoteFormInput } from "@sveltejs/kit";
 	import { isTupleOfAtLeast } from "effect/Predicate";
@@ -57,7 +57,10 @@
 	{/if}
 
 	<form {...attributes} bind:this={formEl}>
-		<fieldset class="grid grid-cols-12 gap-4" disabled={pending || !!navigating.to}>
+		<fieldset
+			class="grid grid-cols-12 gap-4"
+			disabled={pending || (!!navigating.to && navigating.to.url.pathname !== page.url.pathname)}
+		>
 			{@render children?.({
 				fields: form.fields,
 				initial,
