@@ -11,18 +11,7 @@
 	type Configured = ReturnType<ReturnType<typeof configureForm<Input, Data>>>;
 
 	interface Props extends Omit<RemoteFormOptions<Input, Data>, "formEl"> {
-		children?: Snippet<
-			[
-				{
-					fields: Configured["form"]["fields"];
-					initial: Configured["initial"];
-					dirty: Configured["dirty"];
-					touched: Configured["touched"];
-					submitting: Configured["submitting"];
-					reset: Configured["reset"];
-				}
-			]
-		>;
+		children?: Snippet<[Configured]>;
 	}
 
 	let { children, ...rest }: Props = $props();
@@ -45,7 +34,7 @@
 		}))
 	);
 
-	const { form, attributes, issues, dirty, touched, submitting, result, initial, reset } = $derived(configured());
+	const { form, attributes, issues, dirty, touched, submitting, result } = $derived(configured());
 </script>
 
 <div class="flex flex-col gap-4">
@@ -61,14 +50,7 @@
 			class="grid grid-cols-12 gap-4"
 			disabled={submitting || (!!navigating.to && navigating.to.url.pathname !== page.url.pathname)}
 		>
-			{@render children?.({
-				fields: form.fields,
-				initial,
-				dirty,
-				touched,
-				submitting,
-				reset
-			})}
+			{@render children?.(configured())}
 		</fieldset>
 	</form>
 

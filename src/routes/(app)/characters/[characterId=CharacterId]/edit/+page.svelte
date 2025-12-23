@@ -40,14 +40,14 @@
 <svelte:boundary>
 	{#snippet failed(error)}<Error {error} boundary="edit-character" />{/snippet}
 	<RemoteForm {schema} {form} {data} {initialErrors}>
-		{#snippet children({ fields })}
-			<Input field={fields.id} type="hidden" />
+		{#snippet children({ form })}
+			<Input field={form.fields.id} type="hidden" />
 			<Control class="col-span-12 sm:col-span-6">
-				<Input field={fields.name} label="Character Name" required />
+				<Input field={form.fields.name} label="Character Name" required />
 			</Control>
 			<Control class="col-span-12 sm:col-span-6">
 				<Combobox
-					inputField={fields.campaign}
+					inputField={form.fields.campaign}
 					label="Campaign"
 					allowCustom
 					clearable
@@ -62,17 +62,17 @@
 				/>
 			</Control>
 			<Control class="col-span-12 sm:col-span-6">
-				<Input field={fields.race} label="Species" required />
+				<Input field={form.fields.race} label="Species" required />
 			</Control>
 			<Control class="col-span-12 sm:col-span-6">
-				<Input field={fields.class} label="Class" required />
+				<Input field={form.fields.class} label="Class" required />
 			</Control>
 			<Control class="col-span-12">
-				<Input field={fields.characterSheetUrl} type="url" label="Character Sheet URL" />
+				<Input field={form.fields.characterSheetUrl} type="url" label="Character Sheet URL" />
 			</Control>
 			<Control class="col-span-12">
 				<Input
-					field={fields.imageUrl}
+					field={form.fields.imageUrl}
 					type="url"
 					label="Image URL"
 					placeholder={`${page.url.origin}${BLANK_CHARACTER}`}
@@ -91,7 +91,7 @@
 			{#if params.characterId === "new"}
 				<Control class="col-span-12 sm:col-span-6">
 					<Input
-						field={fields.firstLog}
+						field={form.fields.firstLog}
 						type="checkbox"
 						label="Create Starting Log"
 						onchange={() => {

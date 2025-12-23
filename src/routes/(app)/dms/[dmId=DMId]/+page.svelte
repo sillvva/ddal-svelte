@@ -42,13 +42,13 @@
 	/>
 
 	<RemoteForm {schema} {form} {data} initialErrors>
-		{#snippet children({ fields })}
-			<Input field={fields.id} type="hidden" />
+		{#snippet children({ form })}
+			<Input field={form.fields.id} type="hidden" />
 			<Control class="col-span-12 sm:col-span-6">
-				<Input field={fields.name} label="DM Name" required />
+				<Input field={form.fields.name} label="DM Name" required />
 			</Control>
 			<Control class="col-span-12 sm:col-span-6">
-				<Input field={fields.DCI} label="DCI" />
+				<Input field={form.fields.DCI} label="DCI" />
 			</Control>
 			<div class="col-span-12 my-4 flex justify-center">
 				<Submit>Save DM</Submit>
