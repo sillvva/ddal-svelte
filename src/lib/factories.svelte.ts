@@ -84,23 +84,20 @@ export function watch<T>(args: {
 	return $state.snapshot(args.track());
 }
 
-export type GenericFormConfig = ReturnType<typeof configureForm<RemoteFormInput, undefined>>;
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+export type GenericFormConfig = ReturnType<typeof configureForm<any>>;
 export type GenericForm = ReturnType<GenericFormConfig>;
 
-type FormId<Input extends RemoteFormInput> = Input extends { id: infer Id }
-	? Id extends string | number
-		? Id
-		: string | number
-	: string | number;
+type FormId<Input> = Input extends { id: infer Id } ? (Id extends string | number ? Id : string | number) : string | number;
 
-export interface RemoteFormOptions<Input extends RemoteFormInput, Data extends Input | undefined = undefined> extends Omit<
+export interface RemoteFormOptions<Input extends RemoteFormInput | undefined = undefined> extends Omit<
 	HTMLFormAttributes,
 	"children" | "action" | "method" | "onsubmit"
 > {
 	form: RemoteForm<Input, unknown>;
 	schema?: StandardSchemaV1<Input, unknown>;
 	key?: FormId<Input>;
-	data?: Data;
+	data?: Input;
 	initialErrors?: boolean;
 	navBlockMessage?: string;
 	onissues?: (ctx: { readonly issues: RemoteFormIssue[] }) => unknown;
@@ -114,9 +111,7 @@ export interface RemoteFormOptions<Input extends RemoteFormInput, Data extends I
 	formEl?: HTMLFormElement;
 }
 
-export function configureForm<Input extends RemoteFormInput, Data extends Input | undefined = undefined>(
-	getProps: () => RemoteFormOptions<Input, Data>
-) {
+export function configureForm<Input extends RemoteFormInput | undefined = undefined>(getProps: () => RemoteFormOptions<Input>) {
 	type Fields = RemoteFormFields<unknown>;
 
 	const {
@@ -132,7 +127,7 @@ export function configureForm<Input extends RemoteFormInput, Data extends Input 
 		...rest
 	} = $derived(getProps());
 
-	type FormData = Data extends undefined ? Record<string, never> : Data;
+	type FormData = Input extends undefined ? Record<string, never> : Input;
 	const data = $derived((formData ?? {}) as FormData);
 	const key = $derived(formKey ?? ((data.id ?? v7()) as FormId<Input>));
 	const form = $derived(schema ? remoteForm.for(key).preflight(schema) : remoteForm.for(key));

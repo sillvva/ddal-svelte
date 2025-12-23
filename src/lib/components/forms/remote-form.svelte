@@ -1,4 +1,4 @@
-<script lang="ts" generics="Input extends RemoteFormInput, Data extends Input | undefined = undefined">
+<script lang="ts" generics="Input extends RemoteFormInput | undefined = undefined">
 	import { dev } from "$app/environment";
 	import { navigating, page } from "$app/state";
 	import { configureForm, errorToast, successToast, type RemoteFormOptions } from "$lib/factories.svelte";
@@ -8,9 +8,9 @@
 	import SuperDebugRuned from "sveltekit-superforms/SuperDebug.svelte";
 
 	type Fields = RemoteFormFields<unknown>;
-	type Configured = ReturnType<ReturnType<typeof configureForm<Input, Data>>>;
+	type Configured = ReturnType<ReturnType<typeof configureForm<Input>>>;
 
-	interface Props extends Omit<RemoteFormOptions<Input, Data>, "formEl"> {
+	interface Props extends Omit<RemoteFormOptions<Input>, "formEl"> {
 		children?: Snippet<[Configured]>;
 	}
 
