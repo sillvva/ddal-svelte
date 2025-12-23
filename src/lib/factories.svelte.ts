@@ -1,6 +1,5 @@
 /* eslint-disable svelte/prefer-svelte-reactivity */
 import { beforeNavigate } from "$app/navigation";
-import { navigating } from "$app/state";
 import type { FullCharacterData } from "$lib/server/effect/services/characters";
 import type { UserDM } from "$lib/server/effect/services/dms";
 import type { FullLogData, LogSummaryData, UserLogData } from "$lib/server/effect/services/logs";
@@ -156,7 +155,7 @@ export function configureForm<Input extends RemoteFormInput, Data extends Input 
 	let submitting = $state.raw(false);
 	let submitted = $state.raw(false);
 	let dirty = $derived(!deepEqual(initial, $state.snapshot(form.fields.value())));
-	const pending = $derived(submitting || !!$effect.pending() || !!navigating.to);
+	const pending = $derived(submitting || !!$effect.pending());
 
 	const attributes = $derived(
 		Object.assign(
