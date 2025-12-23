@@ -3,7 +3,7 @@
 	import { configureForm, errorToast, successToast, type RemoteFormOptions } from "$lib/factories.svelte";
 	import type { RemoteFormFields, RemoteFormInput } from "@sveltejs/kit";
 	import { isTupleOfAtLeast } from "effect/Predicate";
-	import { type Snippet } from "svelte";
+	import { setContext, type Snippet } from "svelte";
 	import SuperDebugRuned from "sveltekit-superforms/SuperDebug.svelte";
 
 	type Fields = RemoteFormFields<unknown>;
@@ -17,6 +17,7 @@
 					initial: Configured["initial"];
 					dirty: Configured["dirty"];
 					touched: Configured["touched"];
+					submitting: Configured["submitting"];
 					reset: Configured["reset"];
 				}
 			]
@@ -27,19 +28,23 @@
 
 	let formEl: HTMLFormElement;
 
-	const configured = configureForm(() => ({
-		...rest,
-		formEl,
-		navBlockMessage: "You have unsaved changes. Are you sure you want to leave?",
-		onresult: (ctx) => {
-			if (ctx.success) {
-				successToast(`${(form.fields as Fields).name?.value() || "Form"} saved successfully`);
-			} else if (ctx.error) {
-				errorToast(ctx.error);
+	const configured = setContext(
+		"configured",
+		configureForm(() => ({
+			...rest,
+			formEl,
+			navBlockMessage: "You have unsaved changes. Are you sure you want to leave?",
+			onresult: (ctx) => {
+				if (ctx.success) {
+					successToast(`${(form.fields as Fields).name?.value() || "Form"} saved successfully`);
+				} else if (ctx.error) {
+					errorToast(ctx.error);
+				}
 			}
-		}
-	}));
-	const { form, attributes, issues, dirty, touched, result, initial, reset } = $derived(configured());
+		}))
+	);
+
+	const { form, attributes, issues, dirty, touched, submitting, pending, result, initial, reset } = $derived(configured());
 </script>
 
 <div class="flex flex-col gap-4">
@@ -51,12 +56,13 @@
 	{/if}
 
 	<form {...attributes} bind:this={formEl}>
-		<fieldset class="grid grid-cols-12 gap-4" disabled={!!$effect.pending()}>
+		<fieldset class="grid grid-cols-12 gap-4" disabled={pending}>
 			{@render children?.({
 				fields: form.fields,
 				initial,
 				dirty,
 				touched,
+				submitting,
 				reset
 			})}
 		</fieldset>

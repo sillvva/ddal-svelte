@@ -1,5 +1,6 @@
 /* eslint-disable svelte/prefer-svelte-reactivity */
 import { beforeNavigate } from "$app/navigation";
+import { navigating } from "$app/state";
 import type { FullCharacterData } from "$lib/server/effect/services/characters";
 import type { UserDM } from "$lib/server/effect/services/dms";
 import type { FullLogData, LogSummaryData, UserLogData } from "$lib/server/effect/services/logs";
@@ -84,6 +85,9 @@ export function watch<T>(args: {
 	return $state.snapshot(args.track());
 }
 
+export type GenericFormConfig = ReturnType<typeof configureForm<RemoteFormInput, undefined>>;
+export type GenericForm = ReturnType<GenericFormConfig>;
+
 type FormId<Input extends RemoteFormInput> = Input extends { id: infer Id }
 	? Id extends string | number
 		? Id
@@ -152,10 +156,13 @@ export function configureForm<Input extends RemoteFormInput, Data extends Input 
 	let submitting = $state.raw(false);
 	let submitted = $state.raw(false);
 	let dirty = $derived(!deepEqual(initial, $state.snapshot(form.fields.value())));
+	const pending = $derived(submitting || !!$effect.pending() || !!navigating.to);
 
 	const attributes = $derived(
 		Object.assign(
 			form.enhance(async ({ submit, form: formEl, data }) => {
+				if (pending) return;
+
 				const bf = !onsubmit || (await onsubmit({ dirty, form: formEl, data }));
 				if (!bf) return;
 
@@ -260,6 +267,7 @@ export function configureForm<Input extends RemoteFormInput, Data extends Input 
 		dirty,
 		submitting,
 		submitted,
+		pending,
 		result,
 		issues,
 		allIssues,
