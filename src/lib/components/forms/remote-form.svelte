@@ -45,7 +45,7 @@
 		}))
 	);
 
-	const { form, attributes, issues, dirty, touched, submitting, pending, result, initial, reset } = $derived(configured());
+	const { form, attributes, issues, dirty, touched, submitting, result, initial, reset } = $derived(configured());
 </script>
 
 <div class="flex flex-col gap-4">
@@ -59,7 +59,7 @@
 	<form {...attributes} bind:this={formEl}>
 		<fieldset
 			class="grid grid-cols-12 gap-4"
-			disabled={pending || (!!navigating.to && navigating.to.url.pathname !== page.url.pathname)}
+			disabled={submitting || (!!navigating.to && navigating.to.url.pathname !== page.url.pathname)}
 		>
 			{@render children?.({
 				fields: form.fields,

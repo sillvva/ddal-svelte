@@ -9,7 +9,7 @@
 	}
 
 	const configured = getContext<GenericFormConfig>("configured");
-	const { pending } = $derived(configured());
+	const { submitting } = $derived(configured());
 
 	let { name, value = "Save", children }: Props = $props();
 </script>
@@ -21,7 +21,7 @@
 	class="btn btn-primary disabled:bg-primary text-primary-content w-full disabled:opacity-50 sm:w-auto"
 	aria-label="Submit"
 >
-	{#if pending}
+	{#if submitting}
 		<span class="loading"></span>
 	{/if}
 	{@render children?.()}

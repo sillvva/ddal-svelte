@@ -155,12 +155,11 @@ export function configureForm<Input extends RemoteFormInput, Data extends Input 
 	let submitting = $state.raw(false);
 	let submitted = $state.raw(false);
 	let dirty = $derived(!deepEqual(initial, $state.snapshot(form.fields.value())));
-	const pending = $derived(submitting || !!$effect.pending());
 
 	const attributes = $derived(
 		Object.assign(
 			form.enhance(async ({ submit, form: formEl, data }) => {
-				if (pending) return;
+				if (submitting) return;
 
 				const bf = !onsubmit || (await onsubmit({ dirty, form: formEl, data }));
 				if (!bf) return;
@@ -269,7 +268,6 @@ export function configureForm<Input extends RemoteFormInput, Data extends Input 
 		dirty,
 		submitting,
 		submitted,
-		pending,
 		result,
 		issues,
 		allIssues,
