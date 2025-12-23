@@ -284,7 +284,8 @@ export const appCookieSchema = v.optional(
 				mode: v.optional(v.picklist(themeGroups), "dark"),
 				autoWebAuthn: v.optional(v.boolean(), false),
 				provider: v.optional(v.picklist(PROVIDERS.map((p) => p.id))),
-				timezone: v.optional(v.string(), "")
+				timezone: v.optional(v.string(), ""),
+				maxwidth: v.optional(v.picklist(["container", "full"]), "container")
 			}),
 			{}
 		),

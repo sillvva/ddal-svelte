@@ -135,9 +135,18 @@
 		<div class="divider my-0 h-[9px]"></div>
 		<ul class="menu menu-lg w-full px-0">
 			<li>
-				<div class="flex items-center gap-2 hover:bg-transparent">
+				<div class="flex items-center gap-2 py-0 hover:bg-transparent">
 					<span class="flex-1">Theme</span>
 					<ThemeSwitcher />
+				</div>
+			</li>
+			<li>
+				<div class="flex items-center gap-2 py-0 hover:bg-transparent">
+					<span class="flex-1">Max Width</span>
+					<select class="select select-bordered select-sm flex-1" bind:value={global.app.settings.maxwidth}>
+						<option value="container">Container</option>
+						<option value="full">Full</option>
+					</select>
 				</div>
 			</li>
 		</ul>
