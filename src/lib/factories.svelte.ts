@@ -208,8 +208,12 @@ export function configureForm<Input extends RemoteFormInput, Data extends Input 
 
 	watch({
 		track: () => form,
-		hydration: () => {
-			if (initialErrors) validate();
+		hydration: async () => {
+			// for some reason, the form incorrectly shows
+			// errors during hydration if called immediately
+			setTimeout(() => {
+				if (initialErrors) validate();
+			}, 50);
 		},
 		effect: (form) => {
 			// eslint-disable-next-line @typescript-eslint/no-explicit-any
