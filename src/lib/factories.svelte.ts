@@ -202,7 +202,7 @@ export function configureForm<Input extends RemoteFormInput | undefined = undefi
 		track: () => form,
 		hydration: async () => {
 			if (initialErrors) await validate().then(focusInvalid);
-			if (allIssues) {
+			if (formData && allIssues?.some((issue) => issue.message.includes("undefined"))) {
 				console.warn(
 					"[Initial Issues]",
 					"There were issues with the form data during hydration.",
