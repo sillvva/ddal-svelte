@@ -1,17 +1,16 @@
 <script lang="ts" generics="Input extends RemoteFormInput | undefined = undefined">
 	import { dev } from "$app/environment";
 	import { navigating, page } from "$app/state";
-	import { configureForm, errorToast, successToast, type RemoteFormOptions } from "$lib/factories.svelte";
+	import { configureForm, errorToast, successToast, type GenericForm, type RemoteFormOptions } from "$lib/factories.svelte";
 	import type { RemoteFormFields, RemoteFormInput } from "@sveltejs/kit";
 	import { isTupleOfAtLeast } from "effect/Predicate";
 	import { setContext, type Snippet } from "svelte";
 	import SuperDebugRuned from "sveltekit-superforms/SuperDebug.svelte";
 
 	type Fields = RemoteFormFields<unknown>;
-	type Configured = ReturnType<ReturnType<typeof configureForm<Input>>>;
 
 	interface Props extends Omit<RemoteFormOptions<Input>, "formEl"> {
-		children?: Snippet<[Configured]>;
+		children?: Snippet<[GenericForm<Input>]>;
 	}
 
 	let { children, ...rest }: Props = $props();

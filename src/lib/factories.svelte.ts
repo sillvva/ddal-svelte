@@ -84,9 +84,8 @@ export function watch<T>(args: {
 	return $state.snapshot(args.track());
 }
 
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-export type GenericFormConfig = ReturnType<typeof configureForm<any>>;
-export type GenericForm = ReturnType<GenericFormConfig>;
+export type GenericFormConfig<T extends RemoteFormInput | undefined = RemoteFormInput> = ReturnType<typeof configureForm<T>>;
+export type GenericForm<T extends RemoteFormInput | undefined = RemoteFormInput> = ReturnType<GenericFormConfig<T>>;
 
 type FormId<Input> = Input extends { id: infer Id } ? (Id extends string | number ? Id : string | number) : string | number;
 
