@@ -10,11 +10,10 @@ import { Duration } from "effect";
 import escapeRegex from "regexp.escape";
 import { getContext, hasContext, onMount, setContext, tick, untrack } from "svelte";
 import { toast } from "svelte-sonner";
-import type { HTMLFormAttributes } from "svelte/elements";
 import { SvelteMap } from "svelte/reactivity";
 import { v7 } from "uuid";
 import type { SearchData } from "./remote/command";
-import { unknownErrorMessage, type HTMLEvent } from "./util";
+import { unknownErrorMessage } from "./util";
 
 export function successToast(message: string) {
 	toast.success("Success", {
@@ -89,10 +88,7 @@ export type GenericForm<T extends RemoteFormInput | undefined = RemoteFormInput>
 
 type FormId<Input> = Input extends { id: infer Id } ? (Id extends string | number ? Id : string | number) : string | number;
 
-export interface RemoteFormOptions<Input extends RemoteFormInput | undefined = undefined> extends Omit<
-	HTMLFormAttributes,
-	"children" | "action" | "method" | "onsubmit"
-> {
+export interface RemoteFormOptions<Input extends RemoteFormInput | undefined = undefined> {
 	form: RemoteForm<Input, unknown>;
 	schema?: StandardSchemaV1<Input, unknown>;
 	key?: FormId<Input>;
@@ -123,7 +119,7 @@ export function configureForm<Input extends RemoteFormInput | undefined = undefi
 		onsubmit,
 		onresult,
 		onissues,
-		...rest
+		formEl
 	} = $derived(getProps());
 
 	type FormData = Input extends undefined ? Record<string, never> : Input;
@@ -181,12 +177,9 @@ export function configureForm<Input extends RemoteFormInput | undefined = undefi
 				}
 			}),
 			{
-				...rest,
 				onsubmit: focusInvalid,
-				oninput: (ev: HTMLEvent<HTMLFormElement>) => {
-					const { oninput } = getProps();
+				oninput: () => {
 					if (lastIssues) debouncedValidate.call();
-					oninput?.(ev);
 				}
 			}
 		)
@@ -202,32 +195,32 @@ export function configureForm<Input extends RemoteFormInput | undefined = undefi
 		track: () => form,
 		hydration: async () => {
 			if (initialErrors) await validate().then(focusInvalid);
-			if (formData && allIssues?.some((issue) => issue.message.includes("undefined"))) {
-				console.warn(
-					"[Initial Issues]",
-					"There were issues with the form data during hydration.",
-					"Ensure your form fields are not disabled when the validation is run.",
-					"Disabled fields are treated as undefined values, just as they would be if the form was submitted."
-				);
-			}
 		},
 		effect: (form) => {
 			// eslint-disable-next-line @typescript-eslint/no-explicit-any
 			form.fields.set(data as any);
 			initial = $state.snapshot(data);
 			touched = false;
-			if (initialErrors) validate(true);
+			if (initialErrors) validate(true).then(focusInvalid);
 		}
 	});
 
 	const debouncedValidate = debounce(validate, 300);
 
 	async function validate(reset = false) {
-		const { onissues } = getProps();
 		await form.validate({ includeUntouched: true, preflightOnly: true });
 		if (allIssues && onissues && !deepEqual(lastIssues, allIssues)) onissues({ issues: allIssues });
 		if (reset) lastIssues = undefined;
 		if (allIssues) lastIssues = allIssues;
+		if (
+			formEl?.querySelector(":is(input, select, textarea):disabled") &&
+			allIssues?.some((issue) => issue.message.includes("undefined"))
+		) {
+			console.warn(
+				"Ensure your form fields are not disabled when the validation is run.",
+				"Disabled fields are treated as undefined values, just as they would be if the form was submitted."
+			);
+		}
 	}
 
 	async function focusInvalid() {
@@ -236,17 +229,20 @@ export function configureForm<Input extends RemoteFormInput | undefined = undefi
 		if (allIssues) lastIssues = allIssues;
 		else return;
 
-		const invalid = rest.formEl?.querySelector(
-			":is(input, select, textarea):not(.hidden, [type=hidden], :disabled)[aria-invalid]"
-		) as HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement | null | undefined;
+		const invalid = formEl?.querySelector(":is(input, select, textarea):not(.hidden, [type=hidden], :disabled)[aria-invalid]") as
+			| HTMLInputElement
+			| HTMLSelectElement
+			| HTMLTextAreaElement
+			| null
+			| undefined;
 		invalid?.focus();
 	}
 
 	onMount(() => {
 		const handleFocusIn = () => void (touched = true);
-		rest.formEl?.addEventListener("focusin", handleFocusIn);
+		formEl?.addEventListener("focusin", handleFocusIn);
 		return () => {
-			rest.formEl?.removeEventListener("focusin", handleFocusIn);
+			formEl?.removeEventListener("focusin", handleFocusIn);
 		};
 	});
 
