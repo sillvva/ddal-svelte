@@ -55,18 +55,24 @@ export function proxify<T>(object: T) {
 	return _;
 }
 
-export function use<T>(args: {
-	/** Depedencies to track */
-	track: () => T;
-	/** Effects that run once each during SSR and hydration */
-	ssr?: (value: T) => unknown;
-	/** Effects that run once during mount */
-	mount?: (value: T) => unknown;
-	/** Effects that run on dependency change, before the DOM updates */
-	pre?: (current: T, previous: T) => void | (() => void);
-	/** Effects that run on dependency change, after the DOM updates */
-	effect?: (current: T, previous: T) => void | (() => void);
-}) {
+export function use<T>(
+	args:
+		| (() => T)
+		| {
+				/** Depedencies to track */
+				track: () => T;
+				/** Effects that run once each during SSR and hydration */
+				ssr?: (value: T) => unknown;
+				/** Effects that run once during mount */
+				mount?: (value: T) => unknown;
+				/** Effects that run on dependency change, before the DOM updates */
+				pre?: (current: T, previous: T) => void | (() => void);
+				/** Effects that run on dependency change, after the DOM updates */
+				effect?: (current: T, previous: T) => void | (() => void);
+		  }
+) {
+	if (typeof args === "function") return $state.snapshot(args());
+
 	const initial = args.track();
 	let mounted = false;
 	let pre_v = initial;
