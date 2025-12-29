@@ -1,6 +1,7 @@
 <script lang="ts">
 	import { dev } from "$app/environment";
 	import { onNavigate } from "$app/navigation";
+	import { use } from "$lib/factories.svelte";
 	import * as API from "$lib/remote";
 	import { getGlobal, getLogger } from "$lib/stores.svelte";
 	import { Toaster } from "svelte-sonner";
@@ -13,9 +14,7 @@
 
 	// svelte-ignore await_waterfall
 	const request = $derived(await API.app.queries.request());
-
-	// svelte-ignore state_referenced_locally
-	global.app = $state.snapshot(request.app);
+	global.app = use(() => request.app);
 
 	onNavigate(({ complete, from, to }) => {
 		if (!document.startViewTransition) return;
