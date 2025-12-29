@@ -55,28 +55,40 @@ export function proxify<T>(object: T) {
 	return _;
 }
 
-export function watch<T>(args: {
+export function use<T>(args: {
 	/** Depedencies to track */
 	track: () => T;
-	/** Effects that run once during SSR */
+	/** Effects that run once each during SSR and hydration */
 	ssr?: (value: T) => unknown;
-	/** Effects that run once during hydration */
-	hydration?: (value: T) => unknown;
-	/** Effects that run on dependency change, after hydration */
-	effect: (current: T, previous: T) => void | (() => void);
+	/** Effects that run once during mount */
+	mount?: (value: T) => unknown;
+	/** Effects that run on dependency change, before the DOM updates */
+	pre?: (current: T, previous: T) => void | (() => void);
+	/** Effects that run on dependency change, after the DOM updates */
+	effect?: (current: T, previous: T) => void | (() => void);
 }) {
 	args.ssr?.(args.track());
-	let hydrated = false;
+	let mounted = false;
 	let prev = args.track();
 	$effect(() => {
-		void args.track();
+		if (args.effect) args.track();
 		return untrack(() => {
-			if (!hydrated) {
-				if (args.hydration) args.hydration(args.track());
-				return void (hydrated = true);
+			if (!mounted) {
+				if (args.mount) args.mount(args.track());
+				return void (mounted = true);
 			}
-			const cleanup = args.effect(args.track(), prev);
+			const cleanup = args.effect?.(args.track(), prev);
 			prev = args.track();
+			return cleanup;
+		});
+	});
+	let pre_v = args.track();
+	$effect.pre(() => {
+		if (args.pre) args.track();
+		return untrack(() => {
+			if (!mounted) return;
+			const cleanup = args.pre?.(args.track(), pre_v);
+			pre_v = args.track();
 			return cleanup;
 		});
 	});
@@ -127,17 +139,15 @@ export function configureForm<Input extends RemoteFormInput | undefined = undefi
 	const key = $derived(formKey ?? ((data.id ?? v7()) as FormId<Input>));
 	const form = $derived(schema ? remoteForm.for(key).preflight(schema) : remoteForm.for(key));
 
+	const initialize = (data: FormData) => {
+		// eslint-disable-next-line @typescript-eslint/no-explicit-any
+		form.fields.set(data as any);
+	};
 	let initial = $state.raw(
-		watch({
+		use({
 			track: () => data,
-			ssr: (data) => {
-				// eslint-disable-next-line @typescript-eslint/no-explicit-any
-				form.fields.set(data as any);
-			},
-			effect: (data) => {
-				// eslint-disable-next-line @typescript-eslint/no-explicit-any
-				form.fields.set(data as any);
-			}
+			ssr: initialize,
+			effect: initialize
 		})
 	);
 
@@ -155,11 +165,11 @@ export function configureForm<Input extends RemoteFormInput | undefined = undefi
 				if (!bf) return;
 
 				submitting = true;
-				submitted = true;
 				const wasDirty = dirty;
 				try {
 					dirty = false;
 					await submit();
+					submitted = true;
 
 					const success = !allIssues;
 					onresult?.({ success, result: form.result, issues: allIssues });
@@ -191,9 +201,9 @@ export function configureForm<Input extends RemoteFormInput | undefined = undefi
 	const initialErrors = $derived(initialErrorsProp ?? !!data?.id);
 	let lastIssues = $state.raw<RemoteFormIssue[] | undefined>();
 
-	watch({
+	use({
 		track: () => form,
-		hydration: async () => {
+		mount: async () => {
 			if (initialErrors) await validate().then(focusInvalid);
 		},
 		effect: (form) => {
