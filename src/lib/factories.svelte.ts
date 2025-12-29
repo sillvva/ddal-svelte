@@ -67,32 +67,39 @@ export function use<T>(args: {
 	/** Effects that run on dependency change, after the DOM updates */
 	effect?: (current: T, previous: T) => void | (() => void);
 }) {
-	args.ssr?.(args.track());
+	const initial = args.track();
 	let mounted = false;
-	let prev = args.track();
+	let pre_v = initial;
+	let prev = initial;
+
+	args.ssr?.(initial);
+
+	if (args.pre) {
+		$effect.pre(() => {
+			const current = args.track();
+			return untrack(() => {
+				if (!mounted) return;
+				const cleanup = args.pre?.(current, pre_v);
+				pre_v = current;
+				return cleanup;
+			});
+		});
+	}
+
 	$effect(() => {
-		if (args.effect) args.track();
+		const current = args.effect ? args.track() : untrack(() => args.track());
 		return untrack(() => {
 			if (!mounted) {
-				if (args.mount) args.mount(args.track());
+				if (args.mount) args.mount(current);
 				return void (mounted = true);
 			}
-			const cleanup = args.effect?.(args.track(), prev);
-			prev = args.track();
+			const cleanup = args.effect?.(current, prev);
+			prev = current;
 			return cleanup;
 		});
 	});
-	let pre_v = args.track();
-	$effect.pre(() => {
-		if (args.pre) args.track();
-		return untrack(() => {
-			if (!mounted) return;
-			const cleanup = args.pre?.(args.track(), pre_v);
-			pre_v = args.track();
-			return cleanup;
-		});
-	});
-	return $state.snapshot(args.track());
+
+	return $state.snapshot(initial);
 }
 
 export type GenericFormConfig<T extends RemoteFormInput | undefined = RemoteFormInput> = ReturnType<typeof configureForm<T>>;
