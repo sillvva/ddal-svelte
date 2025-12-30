@@ -95,7 +95,7 @@ export function use<T>(
 
 	$effect(() => {
 		const current = args.effect ? args.track() : untrack(() => args.track());
-		void $state.snapshot(current);
+		if (args.effect) void $state.snapshot(current);
 		return untrack(() => {
 			if (!mounted) {
 				if (args.mount) args.mount(current);
