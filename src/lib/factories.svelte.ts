@@ -83,6 +83,7 @@ export function use<T>(
 	if (args.pre) {
 		$effect.pre(() => {
 			const current = args.track();
+			void $state.snapshot(current);
 			return untrack(() => {
 				if (!mounted) return;
 				const cleanup = args.pre?.(current, pre_v);
@@ -94,6 +95,7 @@ export function use<T>(
 
 	$effect(() => {
 		const current = args.effect ? args.track() : untrack(() => args.track());
+		void $state.snapshot(current);
 		return untrack(() => {
 			if (!mounted) {
 				if (args.mount) args.mount(current);
@@ -160,7 +162,7 @@ export function configureForm<Input extends RemoteFormInput | undefined = undefi
 		use({
 			track: () => data,
 			ssr: initialize,
-			effect: initialize
+			pre: initialize
 		})
 	);
 
@@ -219,9 +221,8 @@ export function configureForm<Input extends RemoteFormInput | undefined = undefi
 		mount: async () => {
 			if (initialErrors) await validate().then(focusInvalid);
 		},
-		effect: (form) => {
-			// eslint-disable-next-line @typescript-eslint/no-explicit-any
-			form.fields.set(data as any);
+		effect: () => {
+			initialize(data);
 			initial = $state.snapshot(data);
 			touched = false;
 			if (initialErrors) validate(true).then(focusInvalid);
@@ -233,8 +234,8 @@ export function configureForm<Input extends RemoteFormInput | undefined = undefi
 	async function validate(reset = false) {
 		await form.validate({ includeUntouched: true, preflightOnly: true });
 		if (allIssues && onissues && !deepEqual(lastIssues, allIssues)) onissues({ issues: allIssues });
-		if (reset) lastIssues = undefined;
 		if (allIssues) lastIssues = allIssues;
+		else if (reset) lastIssues = undefined;
 		if (
 			formEl?.querySelector(":is(input, select, textarea):disabled") &&
 			allIssues?.some((issue) => issue.message.includes("undefined"))
