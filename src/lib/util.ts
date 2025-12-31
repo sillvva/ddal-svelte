@@ -1,9 +1,8 @@
 import { goto } from "$app/navigation";
-import { wait } from "@sillvva/utils";
+import { isObject, wait } from "@sillvva/utils";
 import type { StandardSchemaV1 } from "@standard-schema/spec";
 import { isHttpError } from "@sveltejs/kit";
 import { hotkey as hk, type HotkeyItem } from "@svelteuidev/composables";
-import { isObject } from "effect/Predicate";
 import { tick } from "svelte";
 import type { Attachment } from "svelte/attachments";
 import type { FullPathname } from "./constants";

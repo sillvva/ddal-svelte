@@ -2,9 +2,9 @@
 	import { dev } from "$app/environment";
 	import { getGlobal } from "$lib/stores.svelte";
 	import { getLocalTimeZone, parseAbsolute, type DateValue } from "@internationalized/date";
+	import { isTupleOfAtLeast } from "@sillvva/utils";
 	import type { RemoteFormField } from "@sveltejs/kit";
 	import { DatePicker, type DatePickerRootProps } from "bits-ui";
-	import { isTupleOfAtLeast } from "effect/Predicate";
 	import SuperDebugRuned from "sveltekit-superforms/SuperDebug.svelte";
 	import Input from "./input.svelte";
 

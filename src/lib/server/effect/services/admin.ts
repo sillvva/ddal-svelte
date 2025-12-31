@@ -5,9 +5,9 @@ import { appLogs, type AppLog, type User } from "$lib/server/db/schema";
 import { type ErrorParams } from "$lib/server/effect/errors";
 import type { ParseMetadata } from "@sillvva/search";
 import { DrizzleSearchParser } from "@sillvva/search/drizzle";
+import { isTupleOf } from "@sillvva/utils";
 import { eq, sql } from "drizzle-orm";
 import { Data, DateTime, Effect, Layer } from "effect";
-import { isTupleOf } from "effect/Predicate";
 
 export class UserNotFoundError extends Data.TaggedError("UserNotFoundError")<ErrorParams> {
 	constructor(err?: unknown) {

@@ -6,8 +6,7 @@
 	import { getGlobal } from "$lib/stores.svelte";
 	import { parseEffectResult } from "$lib/util";
 	import { getLocalTimeZone } from "@internationalized/date";
-	import { isDefined } from "@sillvva/utils";
-	import { isTupleOfAtLeast } from "effect/Predicate";
+	import { isDefined, isTupleOfAtLeast } from "@sillvva/utils";
 	import { onMount, tick } from "svelte";
 	import Passkeys from "./passkeys.svelte";
 	import ThemeSwitcher from "./theme-switcher.svelte";

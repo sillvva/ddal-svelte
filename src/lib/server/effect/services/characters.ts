@@ -14,9 +14,9 @@ import { characterIncludes } from "$lib/server/db/includes";
 import { characters, logs, type Character } from "$lib/server/db/schema";
 import type { ErrorParams } from "$lib/server/effect/errors";
 import { AppLog } from "$lib/server/effect/logging";
+import { isTupleOf } from "@sillvva/utils";
 import { and, eq, exists } from "drizzle-orm";
 import { Data, Effect, Layer } from "effect";
-import { isTupleOf } from "effect/Predicate";
 
 export class CharacterNotFoundError extends Data.TaggedError("CharacterNotFoundError")<ErrorParams> {
 	constructor(err?: unknown) {

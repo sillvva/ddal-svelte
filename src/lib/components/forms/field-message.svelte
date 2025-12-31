@@ -1,6 +1,6 @@
 <script lang="ts">
+	import { isTupleOfAtLeast } from "@sillvva/utils";
 	import type { RemoteFormFieldType, RemoteFormFieldValue } from "@sveltejs/kit";
-	import { isTupleOfAtLeast } from "effect/Predicate";
 
 	interface Props {
 		name?: string;

@@ -14,9 +14,9 @@ import { extendedLogIncludes, logIncludes } from "$lib/server/db/includes";
 import { characters, dungeonMasters, logs, magicItems, storyAwards } from "$lib/server/db/schema";
 import type { ErrorParams } from "$lib/server/effect/errors";
 import { AppLog } from "$lib/server/effect/logging";
+import { isTupleOf } from "@sillvva/utils";
 import { and, eq, exists, inArray, isNull, notInArray, or } from "drizzle-orm";
 import { Data, Effect, Layer } from "effect";
-import { isTupleOf } from "effect/Predicate";
 import { v7 } from "uuid";
 import { DMService, DMTx } from "./dms";
 

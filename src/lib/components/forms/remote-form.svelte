@@ -2,8 +2,8 @@
 	import { dev } from "$app/environment";
 	import { navigating, page } from "$app/state";
 	import { configureForm, errorToast, successToast, type GenericForm, type RemoteFormOptions } from "$lib/factories.svelte";
+	import { isTupleOfAtLeast } from "@sillvva/utils";
 	import type { RemoteFormFields, RemoteFormInput } from "@sveltejs/kit";
-	import { isTupleOfAtLeast } from "effect/Predicate";
 	import { setContext, type Snippet } from "svelte";
 	import SuperDebugRuned from "sveltekit-superforms/SuperDebug.svelte";
 
