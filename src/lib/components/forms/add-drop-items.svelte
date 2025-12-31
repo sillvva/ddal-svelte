@@ -14,7 +14,7 @@
 
 	let { magicItems = [], storyAwards = [], children }: Props = $props();
 
-	const configured = getContext<GenericFormConfig<LogSchemaIn | DmLogSchemaIn>>("configured");
+	const configured = getContext<GenericFormConfig<LogSchemaIn | DmLogSchemaIn>>("configured-form");
 	const { form } = $derived(configured());
 
 	const newItem = () => ({ id: v7() as ItemId, name: "", description: "" }) satisfies LogSchema["magicItemsGained"][number];

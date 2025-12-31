@@ -25,7 +25,7 @@
 
 	let { entity, index, ...card }: Props = $props();
 
-	const configured = getContext<GenericFormConfig<LogSchemaIn | DmLogSchemaIn>>("configured");
+	const configured = getContext<GenericFormConfig<LogSchemaIn | DmLogSchemaIn>>("configured-form");
 	const { form } = $derived(configured());
 
 	const title = $derived(entity === "magicItems" ? "Magic Item" : "Story Award");

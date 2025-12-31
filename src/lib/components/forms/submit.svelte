@@ -8,7 +8,7 @@
 		children?: Snippet;
 	}
 
-	const configured = getContext<GenericFormConfig>("configured");
+	const configured = getContext<GenericFormConfig>("configured-form");
 	const { submitting } = $derived(configured());
 
 	let { name, value = "Save", children }: Props = $props();

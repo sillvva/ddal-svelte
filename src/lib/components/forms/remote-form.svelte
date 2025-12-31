@@ -18,7 +18,7 @@
 	let formEl: HTMLFormElement | undefined = $state.raw();
 
 	const configured = setContext(
-		"configured",
+		"configured-form",
 		configureForm(() => ({
 			...rest,
 			formEl,
