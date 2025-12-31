@@ -83,7 +83,7 @@ export function use<T>(
 	if (args.pre) {
 		$effect.pre(() => {
 			const current = args.track();
-			void $state.snapshot(current);
+			$state.snapshot(current);
 			return untrack(() => {
 				if (!mounted) return;
 				const cleanup = args.pre?.(current, pre_v);
@@ -95,7 +95,7 @@ export function use<T>(
 
 	$effect(() => {
 		const current = args.effect ? args.track() : untrack(() => args.track());
-		if (args.effect) void $state.snapshot(current);
+		if (args.effect) $state.snapshot(current);
 		return untrack(() => {
 			if (!mounted) {
 				if (args.mount) args.mount(current);

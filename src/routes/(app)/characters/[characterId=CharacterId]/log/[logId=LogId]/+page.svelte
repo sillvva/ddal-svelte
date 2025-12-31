@@ -185,7 +185,7 @@
 			<Control class="col-span-12 w-full">
 				<MarkdownInput field={form.fields.description} name="notes" maxRows={20} maxLength={5000} preview />
 			</Control>
-			<AddDropItems fields={form.fields} {magicItems} {storyAwards}>
+			<AddDropItems {magicItems} {storyAwards}>
 				<Submit>Save Log</Submit>
 			</AddDropItems>
 		{/snippet}

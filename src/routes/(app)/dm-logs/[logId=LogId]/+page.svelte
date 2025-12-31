@@ -123,7 +123,7 @@
 			<Control class="col-span-12">
 				<MarkdownInput field={form.fields.description} name="notes" maxLength={5000} maxRows={20} preview />
 			</Control>
-			<AddDropItems fields={form.fields}>
+			<AddDropItems>
 				<Submit>Save Log</Submit>
 			</AddDropItems>
 		{/snippet}
