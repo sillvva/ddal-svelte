@@ -1,5 +1,14 @@
 import { parseLog } from "$lib/entities";
-import type { DungeonMasterId, DungeonMasterSchema, LocalsUser, LogId, LogSchema, UserId } from "$lib/schemas";
+import type {
+	DungeonMasterId,
+	DungeonMasterSchema,
+	ItemsGainedSchema,
+	ItemsLostSchema,
+	LocalsUser,
+	LogId,
+	LogSchema,
+	UserId
+} from "$lib/schemas";
 import {
 	buildConflictUpdateColumns,
 	DBService,
@@ -221,20 +230,20 @@ const upsertLog = Effect.fn("upsertLog")(function* (tx: Transaction, log: LogSch
 
 	yield* Effect.all(
 		[
-			itemsCRUD(tx, {
+			...itemsCRUD(tx, {
 				logId: result.id,
 				table: magicItems,
 				gained: log.magicItemsGained,
 				lost: log.magicItemsLost
 			}),
-			itemsCRUD(tx, {
+			...itemsCRUD(tx, {
 				logId: result.id,
 				table: storyAwards,
 				gained: log.storyAwardsGained,
 				lost: log.storyAwardsLost
 			})
 		],
-		{ concurrency: 2 }
+		{ concurrency: 4 }
 	);
 
 	return yield* Logs.get
@@ -248,64 +257,73 @@ const upsertLog = Effect.fn("upsertLog")(function* (tx: Transaction, log: LogSch
 
 interface CRUDItemParams {
 	logId: LogId;
+	gained: ItemsGainedSchema;
+	lost: ItemsLostSchema;
 }
 
 interface CRUDMagicItemParams extends CRUDItemParams {
 	table: typeof magicItems;
-	gained: LogSchema["magicItemsGained"];
-	lost: LogSchema["magicItemsLost"];
 }
 
 interface CRUDStoryAwardParams extends CRUDItemParams {
 	table: typeof storyAwards;
-	gained: LogSchema["storyAwardsGained"];
-	lost: LogSchema["storyAwardsLost"];
 }
 
-const itemsCRUD = Effect.fn("itemsCRUD")(function* (tx: Transaction, params: CRUDMagicItemParams | CRUDStoryAwardParams) {
+function itemsCRUD(tx: Transaction, params: CRUDMagicItemParams | CRUDStoryAwardParams) {
 	const { logId, table, gained, lost } = params;
 
+	const effects: Effect.Effect<void, DrizzleError>[] = [];
 	const itemIds = gained.map((item) => item.id).filter(Boolean);
 
-	yield* runQuery(
-		tx.delete(table).where(and(eq(table.logGainedId, logId), itemIds.length ? notInArray(table.id, itemIds) : undefined))
+	effects.push(
+		runQuery(
+			tx.delete(table).where(and(eq(table.logGainedId, logId), itemIds.length ? notInArray(table.id, itemIds) : undefined))
+		)
 	);
 
 	if (gained.length) {
-		yield* runQuery(
-			tx
-				.insert(table)
-				.values(
-					gained.map((item) => ({
-						id: item.id,
-						name: item.name,
-						description: item.description,
-						logGainedId: logId
-					}))
-				)
-				.onConflictDoUpdate({
-					target: table.id,
-					set: buildConflictUpdateColumns(table, ["name", "description"])
-				})
+		effects.push(
+			runQuery(
+				tx
+					.insert(table)
+					.values(
+						gained.map((item) => ({
+							id: item.id,
+							name: item.name,
+							description: item.description,
+							logGainedId: logId
+						}))
+					)
+					.onConflictDoUpdate({
+						target: table.id,
+						set: buildConflictUpdateColumns(table, ["name", "description"])
+					})
+			)
 		);
 	}
 
-	yield* runQuery(
-		tx
-			.update(table)
-			.set({ logLostId: null })
-			.where(and(eq(table.logLostId, logId), notInArray(table.id, lost)))
+	effects.push(
+		runQuery(
+			tx
+				.update(table)
+				.set({ logLostId: null })
+				.where(and(eq(table.logLostId, logId), lost.length ? notInArray(table.id, lost) : undefined))
+		)
 	);
 
 	if (lost.length) {
-		yield* runQuery(
-			tx
-				.update(table)
-				.set({ logLostId: logId })
-				.where(and(isNull(table.logLostId), inArray(table.id, lost)))
+		effects.push(
+			runQuery(
+				tx
+					.update(table)
+					.set({ logLostId: logId })
+					.where(and(isNull(table.logLostId), inArray(table.id, lost)))
+			)
 		);
 	}
-});
+
+	return effects;
+}
 
 export class LogService extends Effect.Service<LogService>()("LogService", {
 	dependencies: [DBService.Default()],

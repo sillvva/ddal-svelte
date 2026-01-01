@@ -134,6 +134,12 @@ const itemSchema = v.object({
 	description: largeTextSize
 });
 
+export type ItemsGainedSchema = v.InferOutput<typeof itemsGainedSchema>;
+export const itemsGainedSchema = v.optional(v.array(itemSchema), []);
+
+export type ItemsLostSchema = v.InferOutput<typeof itemsLostSchema>;
+export const itemsLostSchema = v.optional(v.array(itemIdSchema), []);
+
 export type LogId = v.InferOutput<typeof logIdSchema>;
 export const logIdSchema = brandedId("LogId");
 
@@ -164,10 +170,10 @@ export const logSchema = v.object({
 		isUser: v.optional(v.boolean(), false)
 	}),
 	isDmLog: v.optional(v.boolean(), false),
-	magicItemsGained: v.optional(v.array(itemSchema), []),
-	magicItemsLost: v.optional(v.array(itemIdSchema), []),
-	storyAwardsGained: v.optional(v.array(itemSchema), []),
-	storyAwardsLost: v.optional(v.array(itemIdSchema), [])
+	magicItemsGained: itemsGainedSchema,
+	magicItemsLost: itemsLostSchema,
+	storyAwardsGained: itemsGainedSchema,
+	storyAwardsLost: itemsLostSchema
 });
 
 export type DmLogSchema = v.InferOutput<typeof dmLogSchema>;
