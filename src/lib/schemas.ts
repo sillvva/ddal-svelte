@@ -24,10 +24,10 @@ export const imageUrlWithFallback = v.pipe(
 	v.fallback(v.union([urlSchema, v.literal(""), v.literal(BLANK_CHARACTER)]), BLANK_CHARACTER)
 );
 export const orEmpty = <T extends v.GenericSchema>(schema: T) => v.union([schema, v.literal("")]);
-export const emptyToNullish = <T extends v.GenericSchema, N extends null | undefined = null>(schema: T, nullish: N = null as N) =>
+export const emptyToNull = <T extends v.GenericSchema>(schema: T) =>
 	v.pipe(
 		schema,
-		v.transform((out) => (out === "" ? nullish : (out as Exclude<v.InferOutput<T>, "">)))
+		v.transform((out) => (out === "" ? null : (out as Exclude<v.InferOutput<T>, "">)))
 	);
 
 export const integer = v.pipe(v.number(), v.integer());
@@ -152,7 +152,7 @@ export const logSchema = v.object({
 	id: logIdSchema,
 	name: v.pipe(requiredString, maxStringSize),
 	date: date,
-	characterId: emptyToNullish(orEmpty(characterIdSchema)),
+	characterId: emptyToNull(characterIdSchema),
 	characterName: shortString,
 	appliedDate: nullableDate,
 	type: v.optional(v.picklist(["game", "nongame"]), "game"),
