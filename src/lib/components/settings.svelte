@@ -5,11 +5,11 @@
 	import * as API from "$lib/remote";
 	import { getGlobal } from "$lib/stores.svelte";
 	import { parseEffectResult } from "$lib/util";
-	import { getLocalTimeZone } from "@internationalized/date";
 	import { isDefined, isTupleOfAtLeast } from "@sillvva/utils";
-	import { onMount, tick } from "svelte";
+	import { tick } from "svelte";
 	import Passkeys from "./passkeys.svelte";
 	import ThemeSwitcher from "./theme-switcher.svelte";
+	import TimeZone from "./time-zone.svelte";
 
 	interface Props {
 		open: boolean;
@@ -37,12 +37,6 @@
 			.join("")
 			.slice(0, 2) || ""
 	);
-
-	onMount(() => {
-		if (!global.app.settings.timezone) {
-			global.app.settings.timezone = getLocalTimeZone();
-		}
-	});
 
 	$effect(() => {
 		if (!userAccounts.length && open) {
@@ -132,7 +126,7 @@
 			{/if}
 		</div>
 		<div class="divider my-0 h-[9px]"></div>
-		<ul class="menu menu-lg w-full px-0">
+		<ul class="menu menu-lg w-full gap-2 px-0">
 			<li>
 				<div class="flex items-center gap-2 py-0 hover:bg-transparent">
 					<span class="flex-1">Theme</span>
@@ -141,11 +135,17 @@
 			</li>
 			<li>
 				<div class="flex items-center gap-2 py-0 hover:bg-transparent">
-					<span class="flex-1">Max Width</span>
+					<span class="flex-1">Layout</span>
 					<select class="select select-bordered select-sm flex-1" bind:value={global.app.settings.maxwidth}>
 						<option value="container">Container</option>
-						<option value="full">Full</option>
+						<option value="full">Full Width</option>
 					</select>
+				</div>
+			</li>
+			<li>
+				<div class="flex items-center gap-2 py-0 hover:bg-transparent">
+					<span class="min-w-29 flex-1">Time Zone</span>
+					<TimeZone />
 				</div>
 			</li>
 		</ul>
