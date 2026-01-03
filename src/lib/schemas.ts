@@ -11,15 +11,14 @@ function brandedId<T extends string>(name: T) {
 
 const string = v.pipe(v.string(), v.trim());
 export const requiredString = v.pipe(string, v.regex(/^.*(\p{L}|\p{N})+.*$/u, "Required"));
-export const shortString = v.pipe(string, v.maxLength(50));
-export const largeTextSize = v.pipe(string, v.maxLength(2000));
-export const maxTextSize = v.pipe(string, v.maxLength(5000));
-export const maxStringSize = v.pipe(string, v.maxLength(255));
+export const shortString = v.pipe(string, v.maxLength(64));
+export const text = v.pipe(string, v.maxLength(2000));
+export const largeText = v.pipe(string, v.maxLength(5000));
 export const uuidV7 = v.pipe(
 	v.string(),
 	v.regex(/^[\da-f]{8}-[\da-f]{4}-7[\da-f]{3}-[\da-f]{4}-[\da-f]{12}$/iu, "ID is missing or invalid")
 );
-export const urlSchema = v.pipe(string, v.url(), v.maxLength(500));
+export const urlSchema = v.pipe(text, v.url());
 export const imageUrlWithFallback = v.pipe(
 	v.fallback(v.union([urlSchema, v.literal(""), v.literal(BLANK_CHARACTER)]), BLANK_CHARACTER)
 );
@@ -131,7 +130,7 @@ export type ItemSchemaIn = v.InferInput<typeof itemSchema>;
 const itemSchema = v.object({
 	id: itemIdSchema,
 	name: requiredString,
-	description: largeTextSize
+	description: text
 });
 
 export type ItemsGainedSchema = v.InferOutput<typeof itemsGainedSchema>;
@@ -150,7 +149,7 @@ export type LogSchema = v.InferOutput<typeof logSchema>;
 export type LogSchemaIn = v.InferInput<typeof logSchema>;
 export const logSchema = v.object({
 	id: logIdSchema,
-	name: v.pipe(requiredString, maxStringSize),
+	name: v.pipe(requiredString, shortString),
 	date: date,
 	characterId: emptyToNull(characterIdSchema),
 	characterName: shortString,
@@ -162,7 +161,7 @@ export const logSchema = v.object({
 	level: v.optional(v.pipe(integer, v.minValue(0)), 0),
 	gold: v.optional(v.number(), 0),
 	dtd: v.optional(integer, 0),
-	description: v.optional(maxTextSize, ""),
+	description: v.optional(largeText, ""),
 	dm: v.object({
 		...dungeonMasterSchema.entries,
 		id: orEmpty(dungeonMasterIdSchema),
