@@ -20,8 +20,8 @@
 		}))
 	);
 
-	let defaultValue = $state.snapshot(field?.value() || global.app.settings.timezone);
-	let searchValue = $derived(field?.value() || global.app.settings.timezone);
+	let defaultValue = $state.snapshot(field ? field.value() || getLocalTimeZone() : global.app.settings.timezone);
+	let searchValue = $derived(field ? field.value() || getLocalTimeZone() : global.app.settings.timezone);
 	let filteredTimeZones = $derived(
 		timeZones.filter((tz) => tz.label.toLowerCase().includes(searchValue.toLowerCase()) && tz.value !== getLocalTimeZone())
 	);

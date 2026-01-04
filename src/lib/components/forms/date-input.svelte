@@ -1,6 +1,5 @@
 <script lang="ts">
 	import { dev } from "$app/environment";
-	import { getGlobal } from "$lib/stores.svelte";
 	import { getLocalTimeZone, parseAbsolute, type DateValue } from "@internationalized/date";
 	import { isTupleOfAtLeast } from "@sillvva/utils";
 	import type { RemoteFormField } from "@sveltejs/kit";
@@ -34,9 +33,8 @@
 	}: Props = $props();
 
 	let debug = $state(false);
-	const global = getGlobal();
 
-	const tz = $derived(timezone || global.app.settings.timezone || getLocalTimeZone());
+	const tz = $derived(timezone || getLocalTimeZone());
 	const issues = $derived(field.issues());
 	const attributes = $derived(field.as("number"));
 	const name = $derived("name" in attributes ? attributes.name : undefined);
