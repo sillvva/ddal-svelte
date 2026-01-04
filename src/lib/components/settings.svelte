@@ -5,11 +5,11 @@
 	import * as API from "$lib/remote";
 	import { getGlobal } from "$lib/stores.svelte";
 	import { parseEffectResult } from "$lib/util";
+	import { getLocalTimeZone } from "@internationalized/date";
 	import { isDefined, isTupleOfAtLeast } from "@sillvva/utils";
 	import { onMount, tick } from "svelte";
 	import Passkeys from "./passkeys.svelte";
 	import ThemeSwitcher from "./theme-switcher.svelte";
-	import TimeZone from "./time-zone.svelte";
 
 	interface Props {
 		open: boolean;
@@ -44,6 +44,10 @@
 		return () => {
 			document.removeEventListener("open-settings", handleOpenSettings);
 		};
+	});
+
+	onMount(() => {
+		global.app.settings.timezone = getLocalTimeZone();
 	});
 
 	$effect(() => {
@@ -148,12 +152,6 @@
 						<option value="container">Container</option>
 						<option value="full">Full Width</option>
 					</select>
-				</div>
-			</li>
-			<li>
-				<div class="flex items-center gap-2 py-0 hover:bg-transparent">
-					<span class="min-w-29 flex-1">Time Zone</span>
-					<TimeZone />
 				</div>
 			</li>
 		</ul>

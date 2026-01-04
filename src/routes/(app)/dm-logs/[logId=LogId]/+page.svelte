@@ -11,7 +11,6 @@
 	import Submit from "$lib/components/forms/submit.svelte";
 	import Head from "$lib/components/head.svelte";
 	import NavMenu from "$lib/components/nav-menu.svelte";
-	import TimeZone from "$lib/components/time-zone.svelte";
 	import { proxify } from "$lib/factories.svelte.js";
 	import * as API from "$lib/remote";
 	import { dmLogSchema } from "$lib/schemas";
@@ -47,18 +46,14 @@
 	<RemoteForm {schema} {form} {data} {initialErrors}>
 		{#snippet children({ form, initial })}
 			<Input field={form.fields.id} type="hidden" />
-			<Control class="col-span-12 sm:col-span-4 lg:col-span-6">
+			<Input field={form.fields.timezone} hidden />
+			<Control class="col-span-12 sm:col-span-7">
 				<Input field={form.fields.name} label="Title" required />
 			</Control>
-			<Control class="col-span-12 sm:col-span-4 lg:col-span-3">
+			<Control class="col-span-12 sm:col-span-5">
 				<DateInput field={form.fields.date} initial={initial.date} label="Date" timezone={data.timezone} />
 			</Control>
-			<Control class="col-span-12 sm:col-span-4 lg:col-span-3">
-				<InputWrapper field={form.fields.timezone} as="select" label="Time Zone">
-					<TimeZone field={form.fields.timezone} />
-				</InputWrapper>
-			</Control>
-			<Control class="col-span-12 sm:col-span-6">
+			<Control class="col-span-12 sm:col-span-7">
 				<Combobox
 					label="Assigned Character"
 					valueField={form.fields.characterId}
@@ -74,7 +69,7 @@
 					}}
 				/>
 			</Control>
-			<Control class="col-span-12 sm:col-span-6">
+			<Control class="col-span-12 sm:col-span-5">
 				<DateInput
 					field={form.fields.appliedDate}
 					initial={initial.appliedDate}

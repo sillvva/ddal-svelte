@@ -1,6 +1,7 @@
 <script lang="ts">
 	import { dev } from "$app/environment";
-	import { getLocalTimeZone, parseAbsolute, type DateValue } from "@internationalized/date";
+	import { getGlobal } from "$lib/stores.svelte";
+	import { parseAbsolute, type DateValue } from "@internationalized/date";
 	import { isTupleOfAtLeast } from "@sillvva/utils";
 	import type { RemoteFormField } from "@sveltejs/kit";
 	import { DatePicker, type DatePickerRootProps } from "bits-ui";
@@ -32,9 +33,11 @@
 		...rest
 	}: Props = $props();
 
+	const global = getGlobal();
+
 	let debug = $state(false);
 
-	const tz = $derived(timezone || getLocalTimeZone());
+	const tz = $derived(timezone || global.app.settings.timezone);
 	const issues = $derived(field.issues());
 	const attributes = $derived(field.as("number"));
 	const name = $derived("name" in attributes ? attributes.name : undefined);
