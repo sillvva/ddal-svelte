@@ -12,6 +12,7 @@
 	import Submit from "$lib/components/forms/submit.svelte";
 	import Head from "$lib/components/head.svelte";
 	import NavMenu from "$lib/components/nav-menu.svelte";
+	import TimeZone from "$lib/components/time-zone.svelte";
 	import { defaultDM, getItemEntities } from "$lib/entities.js";
 	import { proxify } from "$lib/factories.svelte.js";
 	import * as API from "$lib/remote";
@@ -60,18 +61,20 @@
 			<Input field={form.fields.characterId} hidden />
 			<Input field={form.fields.characterName} hidden />
 			<Input field={form.fields.appliedDate} type="number" hidden />
-			<Input field={form.fields.timezone} hidden />
 			{#if !firstLog}
-				<Control class="col-span-12 sm:col-span-4">
+				<Control class="col-span-12 sm:col-span-4 lg:col-span-3">
 					<InputWrapper field={form.fields.type} as="select" label="Log Type">
-						<select {...form.fields.type.as("select")} class="select select-bordered w-full">
+						<select
+							{...form.fields.type.as("select")}
+							class={["select select-bordered w-full", data.type !== "game" && "text-xs!"]}
+						>
 							<option value="game">Game</option>
 							<option value="nongame">Non-Game (Purchase, Trade, etc)</option>
 						</select>
 					</InputWrapper>
 				</Control>
 			{/if}
-			<Control class={["col-span-12", !firstLog ? "sm:col-span-4" : "sm:col-span-6"]}>
+			<Control class={["col-span-12", !firstLog ? "sm:col-span-8 lg:col-span-3" : "sm:col-span-4 md:col-span-5 lg:col-span-6"]}>
 				<Input
 					field={form.fields.name}
 					type="text"
@@ -80,8 +83,13 @@
 					required
 				/>
 			</Control>
-			<Control class={["col-span-12", !firstLog ? "sm:col-span-4" : "sm:col-span-6"]}>
+			<Control class={["col-span-12", !firstLog ? "sm:col-span-6 lg:col-span-3" : "sm:col-span-4 lg:col-span-3"]}>
 				<DateInput field={form.fields.date} initial={initial.date} label="Date" timezone={data.timezone} />
+			</Control>
+			<Control class={["col-span-12", !firstLog ? "sm:col-span-6 lg:col-span-3" : "sm:col-span-4 md:col-span-3"]}>
+				<InputWrapper field={form.fields.timezone} as="select" label="Time Zone">
+					<TimeZone field={form.fields.timezone} />
+				</InputWrapper>
 			</Control>
 			{#if data.type === "game"}
 				{#if !firstLog}

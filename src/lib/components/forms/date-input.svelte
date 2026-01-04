@@ -1,5 +1,6 @@
 <script lang="ts">
 	import { dev } from "$app/environment";
+	import { getGlobal } from "$lib/stores.svelte";
 	import { getLocalTimeZone, parseAbsolute, type DateValue } from "@internationalized/date";
 	import { isTupleOfAtLeast } from "@sillvva/utils";
 	import type { RemoteFormField } from "@sveltejs/kit";
@@ -33,7 +34,9 @@
 	}: Props = $props();
 
 	let debug = $state(false);
+	const global = getGlobal();
 
+	const tz = $derived(timezone || global.app.settings.timezone || getLocalTimeZone());
 	const issues = $derived(field.issues());
 	const attributes = $derived(field.as("number"));
 	const name = $derived("name" in attributes ? attributes.name : undefined);
@@ -43,7 +46,7 @@
 	const maxValue = $derived(maxDateValue.set({ hour: 23, minute: 59, second: 59, millisecond: 999 }));
 
 	function dateToCalendar(date: Date | string | number) {
-		return parseAbsolute(new Date(date).toISOString(), timezone || getLocalTimeZone());
+		return parseAbsolute(new Date(date).toISOString(), tz);
 	}
 
 	function clamp(value: DateValue, min: DateValue, max: DateValue) {
@@ -62,7 +65,7 @@
 		(val) => {
 			if (val) {
 				const newValue = clamp(val, minDateValue, maxDateValue);
-				const date = newValue.toDate(timezone || getLocalTimeZone());
+				const date = newValue.toDate(tz);
 				field.set(date.getTime());
 			} else {
 				field.set(0);
@@ -93,7 +96,7 @@
 			</button>
 		{/if}
 	</DatePicker.Label>
-	<DatePicker.Input class="input inline-flex w-full items-center gap-1 px-3 select-none sm:max-md:text-xs">
+	<DatePicker.Input class="input inline-flex w-full items-center gap-1 px-3 select-none sm:text-xs">
 		{#snippet children({ segments })}
 			{#each segments as { part, value }, i (i)}
 				<DatePicker.Segment
@@ -164,18 +167,20 @@
 		</DatePicker.Calendar>
 	</DatePicker.Content>
 </DatePicker.Root>
-<label for={name} class="fieldset-label">
-	{#if issues && isTupleOfAtLeast(issues, 1)}
-		<span class="text-error">{issues[0]}</span>
-	{:else if description}
-		<span class="text-neutral-500">{description}</span>
-	{/if}
-</label>
+{#if issues || description}
+	<label for={name} class="fieldset-label">
+		{#if issues && isTupleOfAtLeast(issues, 1)}
+			<span class="text-error">{issues[0]}</span>
+		{:else if description}
+			<span class="text-neutral-500">{description}</span>
+		{/if}
+	</label>
+{/if}
 
 {#if debug}
 	<SuperDebugRuned
 		data={{
-			timezone: timezone || getLocalTimeZone(),
+			timezone: tz,
 			current: field.value() ? clamp(dateToCalendar(field.value()), minDateValue, maxDateValue).toString() : undefined,
 			initial: initial ? clamp(dateToCalendar(initial), minDateValue, maxDateValue).toString() : undefined,
 			min: minValue.toString(),

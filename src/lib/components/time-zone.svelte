@@ -1,7 +1,14 @@
 <script lang="ts">
 	import { getGlobal } from "$lib/stores.svelte";
 	import { getLocalTimeZone } from "@internationalized/date";
+	import type { RemoteFormField } from "@sveltejs/kit";
 	import { Combobox } from "bits-ui";
+
+	interface Props {
+		field?: RemoteFormField<string>;
+	}
+
+	let { field }: Props = $props();
 
 	const global = getGlobal();
 
@@ -13,22 +20,42 @@
 		}))
 	);
 
-	let defaultValue = $state.snapshot(global.app.settings.timezone);
-	let searchValue = $derived(global.app.settings.timezone);
+	let defaultValue = $state.snapshot(field?.value() || global.app.settings.timezone);
+	let searchValue = $derived(field?.value() || global.app.settings.timezone);
 	let filteredTimeZones = $derived(
 		timeZones.filter((tz) => tz.label.toLowerCase().includes(searchValue.toLowerCase()) && tz.value !== getLocalTimeZone())
 	);
 
 	$effect(() => {
+		if (field) return;
 		if (!global.app.settings.timezone) {
 			global.app.settings.timezone = getLocalTimeZone();
 		}
 	});
 </script>
 
-<Combobox.Root name="timezone" type="single" items={timeZones} bind:value={global.app.settings.timezone}>
-	<div class="dropdown dropdown-end">
-		<Combobox.Input class="input input-bordered input-sm text-xs!" aria-label="Search a time zone" {defaultValue}>
+<Combobox.Root
+	name="timezone"
+	type="single"
+	items={timeZones}
+	bind:value={
+		() => field?.value() || global.app.settings.timezone,
+		(val) => {
+			if (!val) return;
+			if (field) {
+				field.set(val);
+			} else {
+				global.app.settings.timezone = val;
+			}
+		}
+	}
+>
+	<div class={["dropdown dropdown-end", !field && "w-full"]}>
+		<Combobox.Input
+			class={["input input-bordered w-full", !field && "input-sm text-xs!"]}
+			aria-label="Search a time zone"
+			{defaultValue}
+		>
 			{#snippet child({ props })}
 				<input {...props} bind:value={searchValue} />
 			{/snippet}
