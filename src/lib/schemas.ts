@@ -42,6 +42,10 @@ export const nullableDate = v.pipe(
 	v.transform((input) => (input ? new Date(input) : null)),
 	v.nullable(v.date())
 );
+export const timezoneSchema = v.pipe(
+	v.string(),
+	v.check((input) => input === "" || Intl.supportedValuesOf("timeZone").includes(input), "Invalid timezone")
+);
 
 export type EnvPrivate = v.InferOutput<typeof envPrivateSchema>;
 export const envPrivateSchema = v.pipe(
@@ -151,7 +155,7 @@ export const logSchema = v.object({
 	id: logIdSchema,
 	name: v.pipe(requiredString, shortString),
 	date: date,
-	timezone: v.string(),
+	timezone: timezoneSchema,
 	characterId: emptyToNull(characterIdSchema),
 	characterName: shortString,
 	appliedDate: nullableDate,
@@ -290,7 +294,7 @@ export const appCookieSchema = v.optional(
 				mode: v.optional(v.picklist(themeGroups), "dark"),
 				autoWebAuthn: v.optional(v.boolean(), false),
 				provider: v.optional(v.picklist(PROVIDERS.map((p) => p.id))),
-				timezone: v.optional(v.string(), ""),
+				timezone: v.optional(timezoneSchema, ""),
 				maxwidth: v.optional(v.picklist(["container", "full"]), "container")
 			}),
 			{}
