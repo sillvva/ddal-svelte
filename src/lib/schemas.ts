@@ -151,6 +151,7 @@ export const logSchema = v.object({
 	id: logIdSchema,
 	name: v.pipe(requiredString, shortString),
 	date: date,
+	timezone: v.string(),
 	characterId: emptyToNull(characterIdSchema),
 	characterName: shortString,
 	appliedDate: nullableDate,

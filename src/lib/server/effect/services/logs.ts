@@ -206,6 +206,7 @@ const upsertLog = Effect.fn("upsertLog")(function* (tx: Transaction, log: LogSch
 				id: log.id,
 				name: log.name,
 				date: log.date,
+				timezone: log.timezone,
 				description: log.description || "",
 				type: log.type,
 				isDmLog: log.isDmLog,

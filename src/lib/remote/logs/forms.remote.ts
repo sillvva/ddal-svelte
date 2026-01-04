@@ -87,7 +87,7 @@ export const dm = guardedQuery(dmLogFormSchema, function* (input, { user }) {
 	};
 });
 
-export const saveCharacter = guardedForm("unchecked", function* (input: LogSchemaIn, { user, issue }) {
+export const saveCharacter = guardedForm("unchecked", function* (input: LogSchemaIn, { user, issue, event }) {
 	const Characters = yield* CharacterService;
 	const Logs = yield* LogService;
 
@@ -96,13 +96,16 @@ export const saveCharacter = guardedForm("unchecked", function* (input: LogSchem
 		.one(characterId)
 		.pipe(Effect.tapError((err) => Effect.fail(invalid(issue.characterId(err.message)))));
 
-	const result = yield* formParse(characterLogSchema(character), input);
+	const result = yield* formParse(characterLogSchema(character), {
+		...input,
+		timezone: input.timezone || event.locals.app.settings.timezone
+	});
 	yield* Logs.set.save(result, user).pipe(Effect.tapError((err) => Effect.fail(invalid(err.message))));
 
 	redirect(303, `/characters/${character.id}`);
 });
 
-export const saveDM = guardedForm("unchecked", function* (input: DmLogSchemaIn, { user, issue }) {
+export const saveDM = guardedForm("unchecked", function* (input: DmLogSchemaIn, { user, issue, event }) {
 	const Characters = yield* CharacterService;
 	const Logs = yield* LogService;
 	const DMs = yield* DMService;
@@ -123,7 +126,10 @@ export const saveDM = guardedForm("unchecked", function* (input: DmLogSchemaIn, 
 				.pipe(Effect.tapError((err) => Effect.fail(invalid(issue.characterId(err.message)))))
 		: [];
 
-	const result = yield* formParse(dMLogSchema(characters), input);
+	const result = yield* formParse(dMLogSchema(characters), {
+		...input,
+		timezone: input.timezone || event.locals.app.settings.timezone
+	});
 
 	const log = {
 		...result,

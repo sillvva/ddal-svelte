@@ -46,11 +46,12 @@
 	<RemoteForm {schema} {form} {data} {initialErrors}>
 		{#snippet children({ form, initial })}
 			<Input field={form.fields.id} type="hidden" />
+			<Input field={form.fields.timezone} hidden />
 			<Control class="col-span-12 sm:col-span-6 lg:col-span-3">
 				<Input field={form.fields.name} label="Title" required />
 			</Control>
 			<Control class="col-span-12 sm:col-span-6 lg:col-span-3">
-				<DateInput field={form.fields.date} initial={initial.date} label="Date" />
+				<DateInput field={form.fields.date} initial={initial.date} label="Date" timezone={data.timezone} />
 			</Control>
 			<Control class="col-span-12 sm:col-span-6 lg:col-span-3">
 				<Combobox
@@ -75,6 +76,7 @@
 					label="Assigned Date"
 					min={data.date}
 					required={!!data.characterId}
+					timezone={data.timezone}
 				/>
 			</Control>
 			<Control class="col-span-12 sm:col-span-4">

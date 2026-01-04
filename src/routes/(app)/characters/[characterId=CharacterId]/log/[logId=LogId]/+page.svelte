@@ -60,6 +60,7 @@
 			<Input field={form.fields.characterId} hidden />
 			<Input field={form.fields.characterName} hidden />
 			<Input field={form.fields.appliedDate} type="number" hidden />
+			<Input field={form.fields.timezone} hidden />
 			{#if !firstLog}
 				<Control class="col-span-12 sm:col-span-4">
 					<InputWrapper field={form.fields.type} as="select" label="Log Type">
@@ -80,7 +81,7 @@
 				/>
 			</Control>
 			<Control class={["col-span-12", !firstLog ? "sm:col-span-4" : "sm:col-span-6"]}>
-				<DateInput field={form.fields.date} initial={initial.date} label="Date" />
+				<DateInput field={form.fields.date} initial={initial.date} label="Date" timezone={data.timezone} />
 			</Control>
 			{#if data.type === "game"}
 				{#if !firstLog}
