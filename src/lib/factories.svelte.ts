@@ -236,15 +236,6 @@ export function configureForm<Input extends RemoteFormInput | undefined = undefi
 		if (allIssues && onissues && !deepEqual(lastIssues, allIssues)) onissues({ issues: allIssues });
 		if (allIssues) lastIssues = allIssues;
 		else if (reset) lastIssues = undefined;
-		if (
-			formEl?.querySelector(":is(input, select, textarea):disabled") &&
-			allIssues?.some((issue) => issue.message.includes("undefined"))
-		) {
-			console.warn(
-				"Ensure your form fields are not disabled when the validation is run.",
-				"Disabled fields are treated as undefined values, just as they would be if the form was submitted."
-			);
-		}
 	}
 
 	async function focusInvalid() {
@@ -260,6 +251,16 @@ export function configureForm<Input extends RemoteFormInput | undefined = undefi
 			| null
 			| undefined;
 		invalid?.focus();
+
+		if (
+			formEl?.querySelector(":is(input, select, textarea):disabled") &&
+			allIssues?.some((issue) => issue.message.includes("undefined"))
+		) {
+			console.warn(
+				"Ensure your form fields are not disabled when the validation is run.",
+				"Disabled fields are treated as undefined values, because they are excluded from the form data."
+			);
+		}
 	}
 
 	onMount(() => {
