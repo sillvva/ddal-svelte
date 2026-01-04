@@ -6,7 +6,7 @@
 	import { getGlobal } from "$lib/stores.svelte";
 	import { parseEffectResult } from "$lib/util";
 	import { isDefined, isTupleOfAtLeast } from "@sillvva/utils";
-	import { tick } from "svelte";
+	import { onMount, tick } from "svelte";
 	import Passkeys from "./passkeys.svelte";
 	import ThemeSwitcher from "./theme-switcher.svelte";
 	import TimeZone from "./time-zone.svelte";
@@ -37,6 +37,14 @@
 			.join("")
 			.slice(0, 2) || ""
 	);
+
+	onMount(() => {
+		const handleOpenSettings = () => void (open = true);
+		document.addEventListener("open-settings", handleOpenSettings);
+		return () => {
+			document.removeEventListener("open-settings", handleOpenSettings);
+		};
+	});
 
 	$effect(() => {
 		if (!userAccounts.length && open) {

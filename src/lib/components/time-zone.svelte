@@ -15,7 +15,9 @@
 
 	let defaultValue = $state.snapshot(global.app.settings.timezone);
 	let searchValue = $derived(global.app.settings.timezone);
-	let filteredTimeZones = $derived(timeZones.filter((tz) => tz.label.toLowerCase().includes(searchValue.toLowerCase())));
+	let filteredTimeZones = $derived(
+		timeZones.filter((tz) => tz.label.toLowerCase().includes(searchValue.toLowerCase()) && tz.value !== getLocalTimeZone())
+	);
 
 	$effect(() => {
 		if (!global.app.settings.timezone) {
@@ -36,8 +38,21 @@
 		</Combobox.Trigger>
 		<Combobox.ContentStatic class="menu dropdown-content bg-base-200 z-10 max-h-96 rounded-lg p-2 shadow-sm">
 			{#snippet child({ props })}
+				{@const localTimeZone = getLocalTimeZone()}
 				<ul {...props}>
 					<Combobox.Viewport>
+						<Combobox.Item
+							class={[
+								"hover:bg-base-content/25 rounded-lg px-3 py-1",
+								"data-highlighted:bg-base-content/25",
+								"data-selected:bg-primary data-selected:text-primary-content data-selected:font-bold"
+							].join(" ")}
+							value={localTimeZone}
+							label={localTimeZone}
+						>
+							{localTimeZone}
+							<span class="text-base-content/50 font-normal">(Local)</span>
+						</Combobox.Item>
 						{#each filteredTimeZones as timeZone (timeZone.value)}
 							<Combobox.Item
 								class={[
@@ -53,8 +68,6 @@
 									<span class="text-base-content/50 font-normal">(Local)</span>
 								{/if}
 							</Combobox.Item>
-						{:else}
-							<span class="block px-5 py-2 text-sm"> No results found, try again. </span>
 						{/each}
 					</Combobox.Viewport>
 				</ul>

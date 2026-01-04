@@ -159,15 +159,26 @@
 		</DatePicker.Calendar>
 	</DatePicker.Content>
 </DatePicker.Root>
-{#if issues || description}
-	<label for={name} class="fieldset-label">
-		{#if issues && isTupleOfAtLeast(issues, 1)}
-			<span class="text-error">{issues[0]}</span>
-		{:else}
-			<span class="text-neutral-500">{description}</span>
-		{/if}
-	</label>
-{/if}
+<label for={name} class="fieldset-label">
+	{#if issues && isTupleOfAtLeast(issues, 1)}
+		<span class="text-error">{issues[0]}</span>
+	{:else if description}
+		<span class="text-neutral-500">{description}</span>
+	{:else if timezone !== getLocalTimeZone()}
+		<span class="text-warning tooltip tooltip-bottom" data-tip={`System time zone is ${getLocalTimeZone()}.`}>
+			TZ: {timezone}
+		</span>
+		<button
+			type="button"
+			class="btn-link text-base-content cursor-pointer"
+			onclick={() => document.dispatchEvent(new CustomEvent("open-settings"))}
+		>
+			Settings
+		</button>
+	{:else}
+		<span class="text-neutral-500">TZ: {timezone}</span>
+	{/if}
+</label>
 
 {#if debug}
 	<SuperDebugRuned
