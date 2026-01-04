@@ -32,7 +32,7 @@
 			{/snippet}
 		</Combobox.Input>
 		<Combobox.Trigger class="absolute end-2 top-1/2 size-6 -translate-y-1/2 touch-none">
-			<span class="iconify mdi--chevron-down size-4"></span>
+			<span class="iconify mdi--menu-down mt-0.5 size-5"></span>
 		</Combobox.Trigger>
 		<Combobox.ContentStatic class="menu dropdown-content bg-base-200 z-10 max-h-96 rounded-lg p-2 shadow-sm">
 			{#snippet child({ props })}
