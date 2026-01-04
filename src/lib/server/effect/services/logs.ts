@@ -260,38 +260,35 @@ const upsertLog = Effect.fn("upsertLog")(function* (tx: Transaction, log: LogSch
 
 export const addMissingTimeZones = Effect.fn("addMissingTimeZones")(function* (
 	tx: Database | Transaction,
+	timezone: string,
 	logRecords: Pick<FullLogData, "id" | "timezone">[]
 ) {
-	const event = getRequestEvent();
-	const timezone = event.locals.app.settings.timezone;
-	if (timezone) {
-		const logsWithoutTimeZone = logRecords
-			.filter((log) => log.timezone === null)
-			.map((log) => ({ id: log.id, timezone: log.timezone }));
+	const logsWithoutTimeZone = logRecords
+		.filter((log) => log.timezone === null)
+		.map((log) => ({ id: log.id, timezone: log.timezone }));
 
-		if (logsWithoutTimeZone.length > 0) {
-			const batchSize = 200;
-			const effects = [];
+	if (logsWithoutTimeZone.length > 0) {
+		const batchSize = 200;
+		const effects = [];
 
-			for (let i = 0; i < logsWithoutTimeZone.length; i += batchSize) {
-				const batch = logsWithoutTimeZone.slice(i, i + batchSize);
-				effects.push(
-					runQuery(
-						tx
-							.update(logs)
-							.set({ timezone })
-							.where(
-								inArray(
-									logs.id,
-									batch.map((log) => log.id)
-								)
+		for (let i = 0; i < logsWithoutTimeZone.length; i += batchSize) {
+			const batch = logsWithoutTimeZone.slice(i, i + batchSize);
+			effects.push(
+				runQuery(
+					tx
+						.update(logs)
+						.set({ timezone })
+						.where(
+							inArray(
+								logs.id,
+								batch.map((log) => log.id)
 							)
-					)
-				);
-			}
-
-			yield* Effect.all(effects, { concurrency: 5 });
+						)
+				)
+			);
 		}
+
+		yield* Effect.all(effects, { concurrency: 5 });
 	}
 });
 
@@ -405,7 +402,14 @@ export class LogService extends Effect.Service<LogService>()("LogService", {
 						Effect.tapError(() => AppLog.debug("LogService.get.dm", { userId }))
 					);
 
-					yield* addMissingTimeZones(db, dmLogs);
+					const event = getRequestEvent();
+					const timezone = event.locals.app.settings.timezone;
+					if (timezone) {
+						yield* addMissingTimeZones(db, timezone, dmLogs);
+						dmLogs.forEach((log) => {
+							log.timezone = log.timezone || timezone;
+						});
+					}
 
 					return dmLogs;
 				}),

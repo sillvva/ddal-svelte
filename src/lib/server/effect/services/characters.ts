@@ -1,3 +1,4 @@
+import { getRequestEvent } from "$app/server";
 import { PlaceholderName } from "$lib/constants";
 import { getLogsSummary, parseCharacter } from "$lib/entities";
 import type { CharacterId, CharacterSchema, UserId } from "$lib/schemas";
@@ -98,8 +99,17 @@ export class CharacterService extends Effect.Service<CharacterService>()("Charac
 						Effect.tapError(() => AppLog.debug("CharacterService.get.all", { userId, includeLogs }))
 					);
 
-					const logRecords = characters.flatMap((character) => character.logs);
-					yield* addMissingTimeZones(db, logRecords);
+					const event = getRequestEvent();
+					const timezone = event.locals.app.settings.timezone;
+					if (timezone) {
+						const logRecords = characters.flatMap((character) => character.logs);
+						yield* addMissingTimeZones(db, timezone, logRecords);
+						characters.forEach((character) => {
+							character.logs.forEach((log) => {
+								log.timezone = log.timezone || timezone;
+							});
+						});
+					}
 
 					return characters;
 				})
