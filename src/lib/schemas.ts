@@ -156,7 +156,7 @@ export const logSchema = v.object({
 	name: v.pipe(requiredString, shortString),
 	date: date,
 	timezone: timezoneSchema,
-	characterId: emptyToNull(characterIdSchema),
+	characterId: emptyToNull(orEmpty(characterIdSchema)),
 	characterName: shortString,
 	appliedDate: nullableDate,
 	type: v.optional(v.picklist(["game", "nongame"]), "game"),
