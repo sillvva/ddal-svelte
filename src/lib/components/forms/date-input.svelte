@@ -26,7 +26,7 @@
 
 	let debug = $state(false);
 
-	let timezone = $derived(initial ? app.settings.timezone : getLocalTimeZone());
+	let timezone = $derived(initial && app.settings.timezone ? app.settings.timezone : getLocalTimeZone());
 	const issues = $derived(field.issues());
 	const attributes = $derived(field.as("number"));
 	const name = $derived("name" in attributes ? attributes.name : undefined);
