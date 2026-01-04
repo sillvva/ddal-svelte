@@ -12,7 +12,7 @@
 	import * as API from "$lib/remote";
 	import type { FullCharacterData } from "$lib/server/effect/services/characters.js";
 	import { getGlobal } from "$lib/stores.svelte.js";
-	import { createTransition, hotkey, parseEffectResult } from "$lib/util";
+	import { createTransition, formatDate, hotkey, parseEffectResult } from "$lib/util";
 	import { slugify, sorter } from "@sillvva/utils";
 	import { clipboard, download } from "@svelteuidev/composables";
 	import { onMount, untrack } from "svelte";
@@ -531,7 +531,7 @@
 										</span>
 									{/if}
 									<p class="text-netural-content mb-2 text-sm font-normal whitespace-nowrap">
-										{new Date(log.showDate).toLocaleString([], { dateStyle: "medium", timeStyle: "short" })}
+										{formatDate(new Date(log.showDate), log.timezone)}
 									</p>
 									{#if log.type === "game" && !log.dm.isUser}
 										<p class="text-sm font-normal">

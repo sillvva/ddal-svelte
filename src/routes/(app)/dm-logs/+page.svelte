@@ -10,7 +10,7 @@
 	import { EntitySearchFactory, successToast, swipeAction } from "$lib/factories.svelte.js";
 	import * as API from "$lib/remote";
 	import { getGlobal } from "$lib/stores.svelte.js";
-	import { createTransition, download, hotkey, parseEffectResult } from "$lib/util.js";
+	import { createTransition, download, formatDate, hotkey, parseEffectResult } from "$lib/util.js";
 	import { sorter } from "@sillvva/utils";
 	import { untrack } from "svelte";
 	import { SvelteSet } from "svelte/reactivity";
@@ -278,7 +278,7 @@
 										<SearchResults text={log.name} terms={search.terms} />
 									</a>
 									<p class="text-netural-content text-xs font-normal whitespace-nowrap">
-										{new Date(log.date).toLocaleString([], { dateStyle: "medium", timeStyle: "short" })}
+										{formatDate(new Date(log.date), log.timezone)}
 									</p>
 									{#if log.character}
 										<p class="text-sm font-normal">
