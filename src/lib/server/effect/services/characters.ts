@@ -17,6 +17,7 @@ import { AppLog } from "$lib/server/effect/logging";
 import { isTupleOf } from "@sillvva/utils";
 import { and, eq, exists } from "drizzle-orm";
 import { Data, Effect, Layer } from "effect";
+import { addMissingTimeZones } from "./logs";
 
 export class CharacterNotFoundError extends Data.TaggedError("CharacterNotFoundError")<ErrorParams> {
 	constructor(err?: unknown) {
@@ -83,7 +84,7 @@ export class CharacterService extends Effect.Service<CharacterService>()("Charac
 				}),
 
 				all: Effect.fn("CharacterService.get.all")(function* (userId, { characterId, includeLogs = true } = {}) {
-					return yield* runQuery(
+					const characters = yield* runQuery(
 						db.query.characters.findMany({
 							with: characterIncludes(includeLogs),
 							where: {
@@ -96,6 +97,11 @@ export class CharacterService extends Effect.Service<CharacterService>()("Charac
 						Effect.map((characters) => characters.map(parseCharacter)),
 						Effect.tapError(() => AppLog.debug("CharacterService.get.all", { userId, includeLogs }))
 					);
+
+					const logRecords = characters.flatMap((character) => character.logs);
+					yield* addMissingTimeZones(db, logRecords);
+
+					return characters;
 				})
 			},
 			set: {

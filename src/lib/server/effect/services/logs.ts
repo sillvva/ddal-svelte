@@ -1,3 +1,4 @@
+import { getRequestEvent } from "$app/server";
 import { parseLog } from "$lib/entities";
 import type {
 	DungeonMasterId,
@@ -14,6 +15,7 @@ import {
 	DBService,
 	runQuery,
 	TransactionError,
+	type Database,
 	type DrizzleError,
 	type Filter,
 	type InferQueryResult,
@@ -256,6 +258,43 @@ const upsertLog = Effect.fn("upsertLog")(function* (tx: Transaction, log: LogSch
 		);
 });
 
+export const addMissingTimeZones = Effect.fn("addMissingTimeZones")(function* (
+	tx: Database | Transaction,
+	logRecords: Pick<FullLogData, "id" | "timezone">[]
+) {
+	const event = getRequestEvent();
+	const timezone = event.locals.app.settings.timezone;
+	if (timezone) {
+		const logsWithoutTimeZone = logRecords
+			.filter((log) => log.timezone === null)
+			.map((log) => ({ id: log.id, timezone: log.timezone }));
+
+		if (logsWithoutTimeZone.length > 0) {
+			const batchSize = 200;
+			const effects = [];
+
+			for (let i = 0; i < logsWithoutTimeZone.length; i += batchSize) {
+				const batch = logsWithoutTimeZone.slice(i, i + batchSize);
+				effects.push(
+					runQuery(
+						tx
+							.update(logs)
+							.set({ timezone })
+							.where(
+								inArray(
+									logs.id,
+									batch.map((log) => log.id)
+								)
+							)
+					)
+				);
+			}
+
+			yield* Effect.all(effects, { concurrency: 5 });
+		}
+	}
+});
+
 interface CRUDItemParams {
 	logId: LogId;
 	gained: ItemsGainedSchema;
@@ -353,7 +392,7 @@ export class LogService extends Effect.Service<LogService>()("LogService", {
 				}),
 
 				dm: Effect.fn("LogService.get.dm")(function* (userId) {
-					return yield* runQuery(
+					const dmLogs = yield* runQuery(
 						db.query.logs.findMany({
 							with: extendedLogIncludes,
 							where: dmLogFilter(userId),
@@ -365,6 +404,10 @@ export class LogService extends Effect.Service<LogService>()("LogService", {
 						Effect.map((logs) => logs.map(parseLog)),
 						Effect.tapError(() => AppLog.debug("LogService.get.dm", { userId }))
 					);
+
+					yield* addMissingTimeZones(db, dmLogs);
+
+					return dmLogs;
 				}),
 
 				all: Effect.fn("LogService.get.all")(function* (userId) {
