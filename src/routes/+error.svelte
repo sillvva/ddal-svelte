@@ -91,7 +91,7 @@
 			</div>
 		</div>
 		{#if display}
-			{@const { user } = await API.getRequest()}
+			{@const { user } = await API.app.queries.request()}
 			<SuperDebugRuned
 				data={{
 					...page,

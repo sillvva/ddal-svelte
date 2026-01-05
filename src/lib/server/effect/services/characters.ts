@@ -1,3 +1,4 @@
+import { getRequestEvent } from "$app/server";
 import { PlaceholderName } from "$lib/constants";
 import { getLogsSummary, parseCharacter } from "$lib/entities";
 import type { CharacterId, CharacterSchema, UserId } from "$lib/schemas";
@@ -14,9 +15,10 @@ import { characterIncludes } from "$lib/server/db/includes";
 import { characters, logs, type Character } from "$lib/server/db/schema";
 import type { ErrorParams } from "$lib/server/effect/errors";
 import { AppLog } from "$lib/server/effect/logging";
+import { isTupleOf } from "@sillvva/utils";
 import { and, eq, exists } from "drizzle-orm";
 import { Data, Effect, Layer } from "effect";
-import { isTupleOf } from "effect/Predicate";
+import { addMissingTimeZones } from "./logs";
 
 export class CharacterNotFoundError extends Data.TaggedError("CharacterNotFoundError")<ErrorParams> {
 	constructor(err?: unknown) {
@@ -83,7 +85,7 @@ export class CharacterService extends Effect.Service<CharacterService>()("Charac
 				}),
 
 				all: Effect.fn("CharacterService.get.all")(function* (userId, { characterId, includeLogs = true } = {}) {
-					return yield* runQuery(
+					const characters = yield* runQuery(
 						db.query.characters.findMany({
 							with: characterIncludes(includeLogs),
 							where: {
@@ -96,6 +98,20 @@ export class CharacterService extends Effect.Service<CharacterService>()("Charac
 						Effect.map((characters) => characters.map(parseCharacter)),
 						Effect.tapError(() => AppLog.debug("CharacterService.get.all", { userId, includeLogs }))
 					);
+
+					const event = getRequestEvent();
+					const timezone = event.locals.app.settings.timezone;
+					if (timezone) {
+						const logRecords = characters.flatMap((character) => character.logs);
+						yield* addMissingTimeZones(db, timezone, logRecords);
+						characters.forEach((character) => {
+							character.logs.forEach((log) => {
+								log.timezone = log.timezone || timezone;
+							});
+						});
+					}
+
+					return characters;
 				})
 			},
 			set: {

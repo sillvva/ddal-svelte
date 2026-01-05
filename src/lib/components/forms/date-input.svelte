@@ -1,10 +1,10 @@
 <script lang="ts">
 	import { dev } from "$app/environment";
 	import { getGlobal } from "$lib/stores.svelte";
-	import { getLocalTimeZone, parseAbsolute, type DateValue } from "@internationalized/date";
+	import { parseAbsolute, type DateValue } from "@internationalized/date";
+	import { isTupleOfAtLeast } from "@sillvva/utils";
 	import type { RemoteFormField } from "@sveltejs/kit";
 	import { DatePicker, type DatePickerRootProps } from "bits-ui";
-	import { isTupleOfAtLeast } from "effect/Predicate";
 	import SuperDebugRuned from "sveltekit-superforms/SuperDebug.svelte";
 	import Input from "./input.svelte";
 
@@ -14,34 +14,40 @@
 		label: string;
 		min?: number;
 		max?: number;
+		timezone?: string;
 		required?: boolean;
 		description?: string;
 	}
+
+	const earliest = new Date(2014, 0).getTime();
 
 	let {
 		field,
 		initial = 0,
 		label,
-		min = new Date(2014, 0).getTime(),
+		min = earliest,
 		max = new Date().getTime(),
+		timezone,
 		required,
 		description,
 		...rest
 	}: Props = $props();
 
-	const { app } = getGlobal();
+	const global = getGlobal();
 
 	let debug = $state(false);
 
-	let timezone = $derived(initial ? app.settings.timezone : getLocalTimeZone());
+	const tz = $derived(timezone || global.app.settings.timezone);
 	const issues = $derived(field.issues());
 	const attributes = $derived(field.as("number"));
-	const name = $derived("name" in attributes ? (attributes.name as string) : undefined);
-	const minDateValue = $derived(dateToCalendar(min, timezone));
-	const maxDateValue = $derived(dateToCalendar(max, timezone));
+	const name = $derived("name" in attributes ? attributes.name : undefined);
+	const minDateValue = $derived(dateToCalendar(Math.max(min, earliest)));
+	const maxDateValue = $derived(dateToCalendar(max));
+	const minValue = $derived(minDateValue.set({ hour: 0, minute: 0, second: 0, millisecond: 0 }));
+	const maxValue = $derived(maxDateValue.set({ hour: 23, minute: 59, second: 59, millisecond: 999 }));
 
-	function dateToCalendar(date: Date | string | number, timezone: string) {
-		return parseAbsolute(new Date(date).toISOString(), timezone);
+	function dateToCalendar(date: Date | string | number) {
+		return parseAbsolute(new Date(date).toISOString(), tz);
 	}
 
 	function clamp(value: DateValue, min: DateValue, max: DateValue) {
@@ -54,23 +60,21 @@
 <Input {field} type="number" hidden />
 <DatePicker.Root
 	granularity="minute"
-	hideTimeZone
 	{...rest}
 	bind:value={
-		() => (field.value() ? clamp(dateToCalendar(field.value(), timezone), minDateValue, maxDateValue) : undefined),
+		() => (field.value() ? clamp(dateToCalendar(field.value()), minDateValue, maxDateValue) : undefined),
 		(val) => {
 			if (val) {
 				const newValue = clamp(val, minDateValue, maxDateValue);
-				timezone = getLocalTimeZone();
-				const date = newValue.toDate(timezone);
+				const date = newValue.toDate(tz);
 				field.set(date.getTime());
 			} else {
 				field.set(0);
 			}
 		}
 	}
-	minValue={minDateValue.set({ hour: 0, minute: 0, second: 0 })}
-	maxValue={maxDateValue.set({ hour: 23, minute: 59, second: 59 })}
+	{minValue}
+	{maxValue}
 >
 	<DatePicker.Label class="fieldset-legend">
 		<span>
@@ -93,7 +97,7 @@
 			</button>
 		{/if}
 	</DatePicker.Label>
-	<DatePicker.Input class="input inline-flex w-full items-center gap-1 px-3 select-none sm:max-md:text-xs">
+	<DatePicker.Input class="input inline-flex w-full items-center gap-1 px-3 select-none sm:text-xs">
 		{#snippet children({ segments })}
 			{#each segments as { part, value }, i (i)}
 				<DatePicker.Segment
@@ -164,24 +168,24 @@
 		</DatePicker.Calendar>
 	</DatePicker.Content>
 </DatePicker.Root>
-{#if issues || description}
-	<label for={name} class="fieldset-label">
-		{#if issues && isTupleOfAtLeast(issues, 1)}
-			<span class="text-error">{issues[0]}</span>
-		{:else}
-			<span class="text-neutral-500">{description}</span>
-		{/if}
-	</label>
-{/if}
+<label for={name} class="fieldset-label">
+	{#if issues && isTupleOfAtLeast(issues, 1)}
+		<span class="text-error">{issues[0]}</span>
+	{:else if description}
+		<span class="text-neutral-500">{description}</span>
+	{:else}
+		<span>&nbsp;</span>
+	{/if}
+</label>
 
 {#if debug}
 	<SuperDebugRuned
 		data={{
-			timezone,
-			current: field.value() ? clamp(dateToCalendar(field.value(), timezone), minDateValue, maxDateValue).toString() : undefined,
-			initial: initial ? clamp(dateToCalendar(initial, timezone), minDateValue, maxDateValue).toString() : undefined,
-			min: minDateValue.toString(),
-			max: maxDateValue.toString()
+			timezone: tz,
+			current: field.value() ? clamp(dateToCalendar(field.value()), minDateValue, maxDateValue).toString() : undefined,
+			initial: initial ? clamp(dateToCalendar(initial), minDateValue, maxDateValue).toString() : undefined,
+			min: minValue.toString(),
+			max: maxValue.toString()
 		}}
 	/>
 {/if}

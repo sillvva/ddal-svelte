@@ -11,23 +11,22 @@ function brandedId<T extends string>(name: T) {
 
 const string = v.pipe(v.string(), v.trim());
 export const requiredString = v.pipe(string, v.regex(/^.*(\p{L}|\p{N})+.*$/u, "Required"));
-export const shortString = v.pipe(string, v.maxLength(50));
-export const largeTextSize = v.pipe(string, v.maxLength(2000));
-export const maxTextSize = v.pipe(string, v.maxLength(5000));
-export const maxStringSize = v.pipe(string, v.maxLength(255));
+export const shortString = v.pipe(string, v.maxLength(64));
+export const text = v.pipe(string, v.maxLength(2000));
+export const largeText = v.pipe(string, v.maxLength(5000));
 export const uuidV7 = v.pipe(
 	v.string(),
 	v.regex(/^[\da-f]{8}-[\da-f]{4}-7[\da-f]{3}-[\da-f]{4}-[\da-f]{12}$/iu, "ID is missing or invalid")
 );
-export const urlSchema = v.pipe(string, v.url(), v.maxLength(500));
+export const urlSchema = v.pipe(text, v.url());
 export const imageUrlWithFallback = v.pipe(
 	v.fallback(v.union([urlSchema, v.literal(""), v.literal(BLANK_CHARACTER)]), BLANK_CHARACTER)
 );
 export const orEmpty = <T extends v.GenericSchema>(schema: T) => v.union([schema, v.literal("")]);
-export const emptyToNullish = <T extends v.GenericSchema, N extends null | undefined = null>(schema: T, nullish: N = null as N) =>
+export const emptyToNull = <T extends v.GenericSchema>(schema: T) =>
 	v.pipe(
 		schema,
-		v.transform((out) => (out === "" ? nullish : (out as Exclude<v.InferOutput<T>, "">)))
+		v.transform((out) => (out === "" ? null : (out as Exclude<v.InferOutput<T>, "">)))
 	);
 
 export const integer = v.pipe(v.number(), v.integer());
@@ -42,6 +41,10 @@ export const nullableDate = v.pipe(
 	v.check((input) => new Date(input).getFullYear() >= 2014 || input === 0, "Date must be 2014 or later"),
 	v.transform((input) => (input ? new Date(input) : null)),
 	v.nullable(v.date())
+);
+export const timezoneSchema = v.pipe(
+	v.string(),
+	v.check((input) => input === "" || Intl.supportedValuesOf("timeZone").includes(input), "Invalid timezone")
 );
 
 export type EnvPrivate = v.InferOutput<typeof envPrivateSchema>;
@@ -131,8 +134,14 @@ export type ItemSchemaIn = v.InferInput<typeof itemSchema>;
 const itemSchema = v.object({
 	id: itemIdSchema,
 	name: requiredString,
-	description: largeTextSize
+	description: text
 });
+
+export type ItemsGainedSchema = v.InferOutput<typeof itemsGainedSchema>;
+export const itemsGainedSchema = v.optional(v.array(itemSchema), []);
+
+export type ItemsLostSchema = v.InferOutput<typeof itemsLostSchema>;
+export const itemsLostSchema = v.optional(v.array(itemIdSchema), []);
 
 export type LogId = v.InferOutput<typeof logIdSchema>;
 export const logIdSchema = brandedId("LogId");
@@ -144,9 +153,10 @@ export type LogSchema = v.InferOutput<typeof logSchema>;
 export type LogSchemaIn = v.InferInput<typeof logSchema>;
 export const logSchema = v.object({
 	id: logIdSchema,
-	name: v.pipe(requiredString, maxStringSize),
+	name: v.pipe(requiredString, shortString),
 	date: date,
-	characterId: emptyToNullish(orEmpty(characterIdSchema)),
+	timezone: timezoneSchema,
+	characterId: emptyToNull(orEmpty(characterIdSchema)),
 	characterName: shortString,
 	appliedDate: nullableDate,
 	type: v.optional(v.picklist(["game", "nongame"]), "game"),
@@ -156,7 +166,7 @@ export const logSchema = v.object({
 	level: v.optional(v.pipe(integer, v.minValue(0)), 0),
 	gold: v.optional(v.number(), 0),
 	dtd: v.optional(integer, 0),
-	description: v.optional(maxTextSize, ""),
+	description: v.optional(largeText, ""),
 	dm: v.object({
 		...dungeonMasterSchema.entries,
 		id: orEmpty(dungeonMasterIdSchema),
@@ -164,10 +174,10 @@ export const logSchema = v.object({
 		isUser: v.optional(v.boolean(), false)
 	}),
 	isDmLog: v.optional(v.boolean(), false),
-	magicItemsGained: v.optional(v.array(itemSchema), []),
-	magicItemsLost: v.optional(v.array(itemIdSchema), []),
-	storyAwardsGained: v.optional(v.array(itemSchema), []),
-	storyAwardsLost: v.optional(v.array(itemIdSchema), [])
+	magicItemsGained: itemsGainedSchema,
+	magicItemsLost: itemsLostSchema,
+	storyAwardsGained: itemsGainedSchema,
+	storyAwardsLost: itemsLostSchema
 });
 
 export type DmLogSchema = v.InferOutput<typeof dmLogSchema>;
@@ -284,7 +294,8 @@ export const appCookieSchema = v.optional(
 				mode: v.optional(v.picklist(themeGroups), "dark"),
 				autoWebAuthn: v.optional(v.boolean(), false),
 				provider: v.optional(v.picklist(PROVIDERS.map((p) => p.id))),
-				timezone: v.optional(v.string(), "")
+				timezone: v.optional(timezoneSchema, ""),
+				maxwidth: v.optional(v.picklist(["container", "full"]), "container")
 			}),
 			{}
 		),

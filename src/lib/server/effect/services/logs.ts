@@ -1,10 +1,21 @@
+import { getRequestEvent } from "$app/server";
 import { parseLog } from "$lib/entities";
-import type { DungeonMasterId, DungeonMasterSchema, LocalsUser, LogId, LogSchema, UserId } from "$lib/schemas";
+import type {
+	DungeonMasterId,
+	DungeonMasterSchema,
+	ItemsGainedSchema,
+	ItemsLostSchema,
+	LocalsUser,
+	LogId,
+	LogSchema,
+	UserId
+} from "$lib/schemas";
 import {
 	buildConflictUpdateColumns,
 	DBService,
 	runQuery,
 	TransactionError,
+	type Database,
 	type DrizzleError,
 	type Filter,
 	type InferQueryResult,
@@ -14,9 +25,9 @@ import { extendedLogIncludes, logIncludes } from "$lib/server/db/includes";
 import { characters, dungeonMasters, logs, magicItems, storyAwards } from "$lib/server/db/schema";
 import type { ErrorParams } from "$lib/server/effect/errors";
 import { AppLog } from "$lib/server/effect/logging";
+import { isTupleOf } from "@sillvva/utils";
 import { and, eq, exists, inArray, isNull, notInArray, or } from "drizzle-orm";
 import { Data, Effect, Layer } from "effect";
-import { isTupleOf } from "effect/Predicate";
 import { v7 } from "uuid";
 import { DMService, DMTx } from "./dms";
 
@@ -197,6 +208,7 @@ const upsertLog = Effect.fn("upsertLog")(function* (tx: Transaction, log: LogSch
 				id: log.id,
 				name: log.name,
 				date: log.date,
+				timezone: log.timezone,
 				description: log.description || "",
 				type: log.type,
 				isDmLog: log.isDmLog,
@@ -221,20 +233,20 @@ const upsertLog = Effect.fn("upsertLog")(function* (tx: Transaction, log: LogSch
 
 	yield* Effect.all(
 		[
-			itemsCRUD(tx, {
+			...itemsCRUD(tx, {
 				logId: result.id,
 				table: magicItems,
 				gained: log.magicItemsGained,
 				lost: log.magicItemsLost
 			}),
-			itemsCRUD(tx, {
+			...itemsCRUD(tx, {
 				logId: result.id,
 				table: storyAwards,
 				gained: log.storyAwardsGained,
 				lost: log.storyAwardsLost
 			})
 		],
-		{ concurrency: 2 }
+		{ concurrency: 4 }
 	);
 
 	return yield* Logs.get
@@ -246,66 +258,109 @@ const upsertLog = Effect.fn("upsertLog")(function* (tx: Transaction, log: LogSch
 		);
 });
 
+export const addMissingTimeZones = Effect.fn("addMissingTimeZones")(function* (
+	tx: Database | Transaction,
+	timezone: string,
+	logRecords: Pick<FullLogData, "id" | "timezone">[]
+) {
+	const logsWithoutTimeZone = logRecords
+		.filter((log) => log.timezone === null)
+		.map((log) => ({ id: log.id, timezone: log.timezone }));
+
+	if (logsWithoutTimeZone.length > 0) {
+		const batchSize = 200;
+		const effects = [];
+
+		for (let i = 0; i < logsWithoutTimeZone.length; i += batchSize) {
+			const batch = logsWithoutTimeZone.slice(i, i + batchSize);
+			effects.push(
+				runQuery(
+					tx
+						.update(logs)
+						.set({ timezone })
+						.where(
+							inArray(
+								logs.id,
+								batch.map((log) => log.id)
+							)
+						)
+				)
+			);
+		}
+
+		yield* Effect.all(effects, { concurrency: 5 });
+	}
+});
+
 interface CRUDItemParams {
 	logId: LogId;
+	gained: ItemsGainedSchema;
+	lost: ItemsLostSchema;
 }
 
 interface CRUDMagicItemParams extends CRUDItemParams {
 	table: typeof magicItems;
-	gained: LogSchema["magicItemsGained"];
-	lost: LogSchema["magicItemsLost"];
 }
 
 interface CRUDStoryAwardParams extends CRUDItemParams {
 	table: typeof storyAwards;
-	gained: LogSchema["storyAwardsGained"];
-	lost: LogSchema["storyAwardsLost"];
 }
 
-const itemsCRUD = Effect.fn("itemsCRUD")(function* (tx: Transaction, params: CRUDMagicItemParams | CRUDStoryAwardParams) {
+function itemsCRUD(tx: Transaction, params: CRUDMagicItemParams | CRUDStoryAwardParams) {
 	const { logId, table, gained, lost } = params;
 
+	const effects: Effect.Effect<void, DrizzleError>[] = [];
 	const itemIds = gained.map((item) => item.id).filter(Boolean);
 
-	yield* runQuery(
-		tx.delete(table).where(and(eq(table.logGainedId, logId), itemIds.length ? notInArray(table.id, itemIds) : undefined))
+	effects.push(
+		runQuery(
+			tx.delete(table).where(and(eq(table.logGainedId, logId), itemIds.length ? notInArray(table.id, itemIds) : undefined))
+		)
 	);
 
 	if (gained.length) {
-		yield* runQuery(
-			tx
-				.insert(table)
-				.values(
-					gained.map((item) => ({
-						id: item.id,
-						name: item.name,
-						description: item.description,
-						logGainedId: logId
-					}))
-				)
-				.onConflictDoUpdate({
-					target: table.id,
-					set: buildConflictUpdateColumns(table, ["name", "description"])
-				})
+		effects.push(
+			runQuery(
+				tx
+					.insert(table)
+					.values(
+						gained.map((item) => ({
+							id: item.id,
+							name: item.name,
+							description: item.description,
+							logGainedId: logId
+						}))
+					)
+					.onConflictDoUpdate({
+						target: table.id,
+						set: buildConflictUpdateColumns(table, ["name", "description"])
+					})
+			)
 		);
 	}
 
-	yield* runQuery(
-		tx
-			.update(table)
-			.set({ logLostId: null })
-			.where(and(eq(table.logLostId, logId), notInArray(table.id, lost)))
+	effects.push(
+		runQuery(
+			tx
+				.update(table)
+				.set({ logLostId: null })
+				.where(and(eq(table.logLostId, logId), lost.length ? notInArray(table.id, lost) : undefined))
+		)
 	);
 
 	if (lost.length) {
-		yield* runQuery(
-			tx
-				.update(table)
-				.set({ logLostId: logId })
-				.where(and(isNull(table.logLostId), inArray(table.id, lost)))
+		effects.push(
+			runQuery(
+				tx
+					.update(table)
+					.set({ logLostId: logId })
+					.where(and(isNull(table.logLostId), inArray(table.id, lost)))
+			)
 		);
 	}
-});
+
+	return effects;
+}
 
 export class LogService extends Effect.Service<LogService>()("LogService", {
 	dependencies: [DBService.Default()],
@@ -334,7 +389,7 @@ export class LogService extends Effect.Service<LogService>()("LogService", {
 				}),
 
 				dm: Effect.fn("LogService.get.dm")(function* (userId) {
-					return yield* runQuery(
+					const dmLogs = yield* runQuery(
 						db.query.logs.findMany({
 							with: extendedLogIncludes,
 							where: dmLogFilter(userId),
@@ -346,6 +401,17 @@ export class LogService extends Effect.Service<LogService>()("LogService", {
 						Effect.map((logs) => logs.map(parseLog)),
 						Effect.tapError(() => AppLog.debug("LogService.get.dm", { userId }))
 					);
+
+					const event = getRequestEvent();
+					const timezone = event.locals.app.settings.timezone;
+					if (timezone) {
+						yield* addMissingTimeZones(db, timezone, dmLogs);
+						dmLogs.forEach((log) => {
+							log.timezone = log.timezone || timezone;
+						});
+					}
+
+					return dmLogs;
 				}),
 
 				all: Effect.fn("LogService.get.all")(function* (userId) {

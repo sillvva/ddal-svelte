@@ -46,7 +46,7 @@
 			</div>
 		</div>
 		{#if display}
-			{@const { user } = await API.getRequest()}
+			{@const { user } = await API.app.queries.request()}
 			<div class="flex max-w-full flex-col gap-4">
 				{#if err.stack}
 					<pre class="bg-base-200 w-full overflow-x-scroll rounded-lg p-4">{@html err.stack}</pre>

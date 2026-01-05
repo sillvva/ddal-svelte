@@ -5,7 +5,7 @@
 	import type { PasskeyId } from "$lib/schemas";
 	import { getGlobal } from "$lib/stores.svelte";
 
-	const { user, ...request } = $derived(await API.getRequest());
+	const { user, ...request } = $derived(await API.app.queries.request());
 	const global = getGlobal();
 	const passkeys = $derived(user?.passkeys || []);
 
@@ -35,7 +35,7 @@
 			fetchOptions: {
 				onSuccess: () => {
 					successToast(`${name} saved`);
-					request.refresh();
+					API.app.queries.request().refresh();
 				},
 				onError: ({ error }) => {
 					initRename(id, name, error.message);
@@ -53,7 +53,7 @@
 				fetchOptions: {
 					onSuccess: () => {
 						successToast(`${passkey.name} deleted`);
-						request.refresh();
+						API.app.queries.request().refresh();
 					},
 					onError: ({ error }) => {
 						errorToast(error.message);

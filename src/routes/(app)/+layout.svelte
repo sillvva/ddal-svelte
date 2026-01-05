@@ -18,7 +18,7 @@
 	let { children } = $props();
 
 	const global = getGlobal();
-	const { user, ...request } = $derived(await API.getRequest());
+	const { user, ...request } = $derived(await API.app.queries.request());
 
 	let settingsOpen = $state(false);
 	let loadingImage = $state(true);
@@ -55,7 +55,10 @@
 		class="border-base-300 bg-base-100/50 sticky top-0 z-20 w-full border-b backdrop-blur-sm transition-all"
 		style:view-transition-name="header"
 	>
-		<nav class="relative z-10 container mx-auto flex max-w-5xl items-center gap-3 p-4">
+		<nav
+			class="relative z-10 flex items-center gap-3 p-4 data-[maxwidth=container]:container data-[maxwidth=container]:mx-auto data-[maxwidth=container]:max-w-5xl"
+			data-maxwidth={global.app.settings.maxwidth}
+		>
 			<div class="inline max-w-10 shrink-0 grow md:hidden">&nbsp;</div>
 			<div class="inline max-w-10 shrink-0 grow md:hidden">&nbsp;</div>
 			<a href={user ? "/characters" : "/"} class="flex flex-1 items-center justify-center gap-1 md:flex-none">
@@ -107,7 +110,7 @@
 
 									const result = await API.auth.actions.updateUser({ image: BLANK_CHARACTER });
 									const parsed = await parseEffectResult(result);
-									if (parsed) await request.refresh();
+									if (parsed) await API.app.queries.request().refresh();
 								}}
 							/>
 						</button>
@@ -124,7 +127,10 @@
 			</div>
 		</nav>
 	</header>
-	<main class="relative z-10 container mx-auto flex max-w-5xl flex-1 flex-col gap-4 p-4 *:w-full">
+	<main
+		class="relative z-10 flex flex-1 flex-col gap-4 p-4 *:w-full data-[maxwidth=container]:container data-[maxwidth=container]:mx-auto data-[maxwidth=container]:max-w-5xl"
+		data-maxwidth={global.app.settings.maxwidth}
+	>
 		<svelte:boundary>
 			{#snippet failed(error)}<Error {error} boundary="layout" />{/snippet}
 			{@render children()}

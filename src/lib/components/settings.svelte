@@ -1,5 +1,4 @@
 <script lang="ts">
-	import { invalidateAll } from "$app/navigation";
 	import { authClient } from "$lib/auth";
 	import { BLANK_CHARACTER, PROVIDERS, type ProviderId } from "$lib/constants";
 	import { errorToast } from "$lib/factories.svelte";
@@ -7,9 +6,8 @@
 	import { getGlobal } from "$lib/stores.svelte";
 	import { parseEffectResult } from "$lib/util";
 	import { getLocalTimeZone } from "@internationalized/date";
-	import { isDefined } from "@sillvva/utils";
-	import { isTupleOfAtLeast } from "effect/Predicate";
-	import { onMount } from "svelte";
+	import { isDefined, isTupleOfAtLeast } from "@sillvva/utils";
+	import { onMount, tick } from "svelte";
 	import Passkeys from "./passkeys.svelte";
 	import ThemeSwitcher from "./theme-switcher.svelte";
 
@@ -19,7 +17,7 @@
 
 	let { open = $bindable(false) }: Props = $props();
 
-	const { user, session, ...request } = $derived(await API.getRequest());
+	const { user, session } = $derived(await API.app.queries.request());
 	const global = getGlobal();
 
 	type UserAccount = { providerId: ProviderId; name: string; email: string; image: string };
@@ -41,9 +39,15 @@
 	);
 
 	onMount(() => {
-		if (!global.app.settings.timezone) {
-			global.app.settings.timezone = getLocalTimeZone();
-		}
+		const handleOpenSettings = () => void (open = true);
+		document.addEventListener("open-settings", handleOpenSettings);
+		return () => {
+			document.removeEventListener("open-settings", handleOpenSettings);
+		};
+	});
+
+	onMount(() => {
+		global.app.settings.timezone = getLocalTimeZone();
 	});
 
 	$effect(() => {
@@ -80,7 +84,7 @@
 					) {
 						const result = await API.auth.actions.updateUser(account);
 						const parsed = await parseEffectResult(result);
-						if (parsed) await request.refresh();
+						if (parsed) await API.app.queries.request();
 					}
 				}
 			});
@@ -134,11 +138,20 @@
 			{/if}
 		</div>
 		<div class="divider my-0 h-[9px]"></div>
-		<ul class="menu menu-lg w-full px-0">
+		<ul class="menu menu-lg w-full gap-2 px-0">
 			<li>
-				<div class="flex items-center gap-2 hover:bg-transparent">
+				<div class="flex items-center gap-2 py-0 hover:bg-transparent">
 					<span class="flex-1">Theme</span>
 					<ThemeSwitcher />
+				</div>
+			</li>
+			<li>
+				<div class="flex items-center gap-2 py-0 hover:bg-transparent">
+					<span class="flex-1">Layout</span>
+					<select class="select select-bordered select-sm flex-1" bind:value={global.app.settings.maxwidth}>
+						<option value="container">Container</option>
+						<option value="full">Full Width</option>
+					</select>
 				</div>
 			</li>
 		</ul>
@@ -148,6 +161,7 @@
 				<span class="font-bold">Linked Accounts</span>
 			</li>
 			{#each authProviders as provider (provider.id)}
+				{@const account = userAccounts.find((a) => a.providerId === provider.id)}
 				<li>
 					<span class="flex gap-2 hover:bg-transparent">
 						<span class={["size=6 iconify-color", provider.iconify]}></span>
@@ -158,7 +172,6 @@
 									{#if !userAccounts.length}
 										<span class="iconify mdi--loading size-5 animate-spin"></span>
 									{:else}
-										{@const account = userAccounts.find((a) => a.providerId === provider.id)}
 										{#if account}
 											{#if currentAccount?.providerId !== provider.id || account.name !== user.name || account.email !== user.email || account.image !== user.image}
 												<div class="tooltip" data-tip="Use this account">
@@ -169,9 +182,9 @@
 														onclick={async () => {
 															const result = await API.auth.actions.updateUser(account);
 															const parsed = await parseEffectResult(result);
-															if (parsed) {
-																global.app.settings.provider = account.providerId;
-															}
+															if (parsed) global.app.settings.provider = provider.id;
+															await tick();
+															await API.app.queries.request().refresh();
 														}}
 													>
 														<span class="iconify mdi--accounts-switch size-5"></span>
@@ -183,12 +196,13 @@
 											class="btn btn-error btn-sm join-item font-semibold"
 											disabled={currentAccount?.providerId === provider.id || !!API.auth.actions.updateUser.pending}
 											onclick={async () => {
+												if (currentAccount?.providerId === provider.id || !!API.auth.actions.updateUser.pending) return;
 												if (confirm("Are you sure you want to unlink this account?")) {
 													const result = await authClient.unlinkAccount({ providerId: provider.id });
 													if (result.error?.code) {
 														return errorToast(authClient.$ERROR_CODES[result.error.code as keyof typeof authClient.$ERROR_CODES]);
 													}
-													invalidateAll();
+													await API.app.queries.request().refresh();
 												}
 											}}
 										>
@@ -206,11 +220,11 @@
 											.linkSocial({
 												provider: provider.id
 											})
-											.then((result) => {
+											.then(async (result) => {
 												if (result.error?.code) {
 													return errorToast(authClient.$ERROR_CODES[result.error.code as keyof typeof authClient.$ERROR_CODES]);
 												}
-												invalidateAll();
+												await API.app.queries.request().refresh();
 											})}
 								>
 									Link

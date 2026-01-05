@@ -42,13 +42,13 @@
 	/>
 
 	<RemoteForm {schema} {form} {data} initialErrors>
-		{#snippet children({ fields })}
-			<Input field={fields.id} type="hidden" />
+		{#snippet children({ form })}
+			<Input field={form.fields.id} type="hidden" />
 			<Control class="col-span-12 sm:col-span-6">
-				<Input field={fields.name} label="DM Name" required />
+				<Input field={form.fields.name} label="DM Name" required />
 			</Control>
 			<Control class="col-span-12 sm:col-span-6">
-				<Input field={fields.DCI} label="DCI" />
+				<Input field={form.fields.DCI} label="DCI" />
 			</Control>
 			<div class="col-span-12 my-4 flex justify-center">
 				<Submit>Save DM</Submit>
@@ -56,7 +56,7 @@
 		{/snippet}
 	</RemoteForm>
 
-	<section class="mt-r sm:mt-8">
+	<section class="mt-4">
 		<h2 class="mb-2 text-2xl">Logs</h2>
 		{#if dm.logs.length == 0}
 			<div class="bg-base-200 flex h-40 flex-col items-center justify-center gap-2 rounded-lg">
@@ -125,7 +125,10 @@
 								</td>
 								{#if dm.isUser}
 									<td class="max-md:hidden">
-										<div class="min-w-max">{log.isDmLog ? "DM Log" : "Log"} ({log.type})</div>
+										<div class="min-w-max">
+											{log.isDmLog ? "DM Log" : "Log"}{#if !log.isDmLog}{" "}
+												({log.type}){/if}
+										</div>
 									</td>
 								{/if}
 							</tr>

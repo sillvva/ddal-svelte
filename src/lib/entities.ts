@@ -192,6 +192,7 @@ export function defaultLogSchema(
 		name: "",
 		description: "",
 		date: new Date(),
+		timezone: "",
 		type: "game",
 		experience: 0,
 		acp: 0,
@@ -232,6 +233,7 @@ export function logDataToSchema(userId: UserId, log: FullLogData): LogSchema {
 	return {
 		...log,
 		date: new Date(log.date),
+		timezone: log.timezone || "",
 		characterName: log.character?.name || "",
 		appliedDate: log.appliedDate ? new Date(log.appliedDate) : null,
 		dm: log.dm.id ? log.dm : defaultDM(userId),

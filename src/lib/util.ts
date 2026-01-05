@@ -1,14 +1,18 @@
 import { goto } from "$app/navigation";
-import { wait } from "@sillvva/utils";
+import { getLocalTimeZone } from "@internationalized/date";
+import { isObject, wait } from "@sillvva/utils";
 import type { StandardSchemaV1 } from "@standard-schema/spec";
 import { isHttpError } from "@sveltejs/kit";
 import { hotkey as hk, type HotkeyItem } from "@svelteuidev/composables";
-import { isObject } from "effect/Predicate";
 import { tick } from "svelte";
 import type { Attachment } from "svelte/attachments";
 import type { FullPathname } from "./constants";
 import { errorToast } from "./factories.svelte";
 import type { EffectFailure, EffectResult } from "./server/effect/runtime";
+
+export type HTMLEvent<T extends Element> = Event & {
+	currentTarget: EventTarget & T;
+};
 
 export async function createTransition(action: ViewTransitionCallback, after?: () => Awaitable<void>, afterDelay = 0) {
 	if (!document.startViewTransition) action();
@@ -87,6 +91,21 @@ export function unknownErrorMessage(error: unknown): string {
 		return error.message;
 	else if (isHttpError(error)) return error.body.message;
 	else return "An unknown error occurred";
+}
+
+export function formatDate(date: Date, timeZone: string | null) {
+	const formatter = new Intl.DateTimeFormat("en-US", {
+		month: "short",
+		day: "numeric",
+		year: "numeric",
+		hour: "numeric",
+		minute: "2-digit",
+		hour12: true,
+		timeZone: timeZone || getLocalTimeZone(),
+		timeZoneName: timeZone && timeZone !== getLocalTimeZone() ? "short" : undefined
+	});
+
+	return formatter.format(date);
 }
 
 export function isStandardSchema(schema: unknown): schema is StandardSchemaV1 {

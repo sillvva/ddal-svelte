@@ -1,6 +1,7 @@
 <script lang="ts">
+	import type { GenericFormConfig } from "$lib/factories.svelte";
 	import type { DmLogSchemaIn, ItemSchema, LogSchemaIn } from "$lib/schemas";
-	import type { RemoteFormFields } from "@sveltejs/kit";
+	import { getContext } from "svelte";
 	import Control from "./control.svelte";
 	import InputWrapper from "./input-wrapper.svelte";
 	import Input from "./input.svelte";
@@ -8,7 +9,6 @@
 
 	interface BaseProps {
 		entity: "magicItems" | "storyAwards";
-		fields: RemoteFormFields<LogSchemaIn> | RemoteFormFields<DmLogSchemaIn>;
 		index: number;
 	}
 
@@ -23,27 +23,37 @@
 
 	type Props = AddProps | DropProps;
 
-	let { entity, fields, index, ...card }: Props = $props();
+	let { entity, index, ...card }: Props = $props();
 
-	const title = entity === "magicItems" ? "Magic Item" : "Story Award";
+	const configured = getContext<GenericFormConfig<LogSchemaIn | DmLogSchemaIn>>("configured-form");
+	const { form } = $derived(configured());
+
+	const title = $derived(entity === "magicItems" ? "Magic Item" : "Story Award");
 
 	const arrValue = $derived(
-		card.type === "drop" ? (entity === "magicItems" ? fields.magicItemsLost.value() : fields.storyAwardsLost.value()) : []
+		card.type === "drop"
+			? entity === "magicItems"
+				? form.fields.magicItemsLost.value()
+				: form.fields.storyAwardsLost.value()
+			: []
 	);
-	const gainedField = $derived(entity === "magicItems" ? fields.magicItemsGained[index] : fields.storyAwardsGained[index]);
-	const lostField = $derived(entity === "magicItems" ? fields.magicItemsLost[index] : fields.storyAwardsLost[index]);
+	const gainedField = $derived(
+		entity === "magicItems" ? form.fields.magicItemsGained[index] : form.fields.storyAwardsGained[index]
+	);
+	const lostField = $derived(entity === "magicItems" ? form.fields.magicItemsLost[index] : form.fields.storyAwardsLost[index]);
 
 	const ondelete = (ev: Event) => {
 		ev.preventDefault();
 		if (card.type === "add" && gainedField) {
 			if (entity === "magicItems")
-				fields.magicItemsGained.set(fields.magicItemsGained.value().filter((it) => it.id !== gainedField.id.value()));
-			else fields.storyAwardsGained.set(fields.storyAwardsGained.value().filter((it) => it.id !== gainedField.id.value()));
+				form.fields.magicItemsGained.set(form.fields.magicItemsGained.value().filter((it) => it.id !== gainedField.id.value()));
+			else
+				form.fields.storyAwardsGained.set(form.fields.storyAwardsGained.value().filter((it) => it.id !== gainedField.id.value()));
 		}
 		if (card.type === "drop" && lostField) {
 			if (entity === "magicItems")
-				fields.magicItemsLost.set(fields.magicItemsLost.value().filter((it) => it !== lostField.value()));
-			else fields.storyAwardsLost.set(fields.storyAwardsLost.value().filter((it) => it !== lostField.value()));
+				form.fields.magicItemsLost.set(form.fields.magicItemsLost.value().filter((it) => it !== lostField.value()));
+			else form.fields.storyAwardsLost.set(form.fields.storyAwardsLost.value().filter((it) => it !== lostField.value()));
 		}
 	};
 </script>

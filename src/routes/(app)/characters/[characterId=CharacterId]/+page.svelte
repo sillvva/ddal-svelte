@@ -8,11 +8,11 @@
 	import NavMenu from "$lib/components/nav-menu.svelte";
 	import SearchResults from "$lib/components/search-results.svelte";
 	import Search from "$lib/components/search.svelte";
-	import { EntitySearchFactory, successToast } from "$lib/factories.svelte.js";
+	import { EntitySearchFactory, successToast, swipeAction } from "$lib/factories.svelte.js";
 	import * as API from "$lib/remote";
 	import type { FullCharacterData } from "$lib/server/effect/services/characters.js";
 	import { getGlobal } from "$lib/stores.svelte.js";
-	import { createTransition, hotkey, parseEffectResult } from "$lib/util";
+	import { createTransition, formatDate, hotkey, parseEffectResult } from "$lib/util";
 	import { slugify, sorter } from "@sillvva/utils";
 	import { clipboard, download } from "@svelteuidev/composables";
 	import { onMount, untrack } from "svelte";
@@ -43,7 +43,7 @@
 	}
 
 	onMount(async () => {
-		const { user } = await API.getRequest();
+		const { user } = await API.app.queries.request();
 		if (global.app.settings.autoWebAuthn && !user) {
 			authClient.signIn.passkey({
 				fetchOptions: {
@@ -57,7 +57,7 @@
 </script>
 
 <svelte:boundary>
-	{@const { user } = await API.getRequest()}
+	{@const { user } = await API.app.queries.request()}
 	{@const queryParams = { param: params.characterId, newRedirect: true }}
 	{@const character = await API.characters.queries.get(queryParams)}
 	{@const myCharacter = character.userId === user?.id}
@@ -361,7 +361,143 @@
 		</section>
 	{:else}
 		<section>
-			<div class="bg-base-200 w-full overflow-x-auto rounded-lg">
+			<!-- Mobile List -->
+			<ul class="overflow-hidden rounded-lg sm:hidden print:hidden">
+				{#each sortedResults as log (log.id)}
+					{@const hasDescription =
+						!!log.description?.trim() || log.storyAwardsGained.length > 0 || log.storyAwardsLost.length > 0}
+					<li
+						class="border-b border-b-neutral-500/40 last:border-b-0 data-[deleting=true]:hidden"
+						data-deleting={deletingLog.has(log.id)}
+					>
+						<div
+							class="swipe-container"
+							{@attach swipeAction({
+								right: async () => {
+									if (!confirm(`Are you sure you want to delete ${log.name}? This action cannot be undone.`)) return;
+									deletingLog.add(log.id);
+									const result = await API.logs.actions.deleteLog(log.id);
+									const parsed = await parseEffectResult(result);
+									if (parsed) {
+										successToast(`${log.name} deleted`);
+										await API.characters.queries.get(queryParams).refresh();
+									} else {
+										deletingLog.delete(log.id);
+									}
+								}
+							})}
+						>
+							<div class="content bg-base-200">
+								{#if myCharacter}
+									<a
+										href={log.isDmLog ? `/dm-logs/${log.id}` : `/characters/${log.characterId}/log/${log.id}`}
+										class="row-link text-secondary-content font-semibold whitespace-pre-wrap"
+									>
+										<SearchResults text={log.name} terms={search.terms} />
+									</a>
+								{:else}
+									<span class="font-semibold whitespace-pre-wrap">
+										<SearchResults text={log.name} terms={search.terms} />
+									</span>
+								{/if}
+								<p class="text-netural-content mb-2 text-sm font-normal whitespace-nowrap">
+									{new Date(log.showDate).toLocaleString([], { dateStyle: "medium", timeStyle: "short" })}
+								</p>
+								{#if log.type === "game" && !log.dm.isUser}
+									<p class="text-sm font-normal">
+										<span class="font-semibold dark:text-white">DM:</span>
+										{#if myCharacter}
+											<a href="/dms/{log.dm.id}" class="text-secondary-content">{log.dm.name}</a>
+										{:else}
+											{log.dm.name}
+										{/if}
+									</p>
+								{/if}
+								<!-- Mobile Details -->
+								<div class="text-sm">
+									{#if log.type === "game"}
+										{#if log.experience > 0}
+											<p>
+												<span class="font-semibold dark:text-white">Experience:</span>&nbsp;{log.experience}
+											</p>
+										{/if}
+										{#if log.acp > 0}
+											<p>
+												<span class="font-semibold dark:text-white">ACP:</span>
+												{log.acp}
+											</p>
+										{/if}
+										<p>
+											<span class="font-semibold dark:text-white">Levels:</span>&nbsp;{log.levelGained}&nbsp;({log.totalLevel})
+										</p>
+									{/if}
+									{#if log.dtd !== 0}
+										<p>
+											<span class="font-semibold dark:text-white">Downtime&nbsp;Days:</span>&nbsp;{log.dtd}
+										</p>
+									{/if}
+									{#if log.tcp !== 0}
+										<p>
+											<span class="font-semibold dark:text-white">TCP:</span>
+											{log.tcp}
+										</p>
+									{/if}
+									{#if log.gold !== 0}
+										<p>
+											<span class="font-semibold dark:text-white">Gold:</span>
+											{log.gold.toLocaleString()}
+										</p>
+									{/if}
+								</div>
+								<!-- Notes -->
+								<div class="text-sm data-[desc=false]:hidden" data-desc={global.app.log.descriptions && hasDescription}>
+									<hr class="my-2 border-neutral-500/20" />
+									{#if log.description?.trim()}
+										<h4 class="text-base font-semibold">Notes:</h4>
+										<Markdown content={log.description} />
+									{/if}
+									{#if log.magicItemsGained.length > 0 || log.magicItemsLost.length > 0}
+										<div class="mt-2">
+											<Items title="Magic Items:" items={log.magicItemsGained} terms={search.terms} sort filtered formatting />
+											{#if log.magicItemsLost.length}
+												<p class="mt-2 text-sm whitespace-pre-wrap line-through">
+													<SearchResults text={log.magicItemsLost.map((mi) => mi.name).join(" | ")} terms={search.terms} />
+												</p>
+											{/if}
+										</div>
+									{/if}
+									{#if log.storyAwardsGained.length > 0 || log.storyAwardsLost.length > 0}
+										{#each log.storyAwardsGained as mi (mi.id)}
+											<div class="mt-2 text-sm whitespace-pre-wrap">
+												<a
+													href={`/characters/${log.characterId}/log/${log.id}`}
+													class="row-link pr-2 font-semibold dark:text-white print:block"
+												>
+													{mi.name}{mi.description ? ":" : ""}
+												</a>
+												{#if mi.description}
+													<Markdown content={mi.description || ""} />
+												{/if}
+											</div>
+										{/each}
+										{#if log.storyAwardsLost.length}
+											<p class="text-sm whitespace-pre-wrap line-through">
+												{log.storyAwardsLost.map((mi) => mi.name).join(" | ")}
+											</p>
+										{/if}
+									{/if}
+								</div>
+							</div>
+							<button class="action right bg-error text-white" aria-label="Delete Log">
+								<span class="iconify mdi--trash-can size-6"></span>
+							</button>
+						</div>
+					</li>
+				{/each}
+			</ul>
+
+			<!-- Desktop List -->
+			<div class="bg-base-200 w-full overflow-x-auto rounded-lg max-sm:hidden print:block!">
 				<table class="linked-table table w-full leading-5">
 					<thead>
 						<tr class="bg-base-300 text-base-content/70">
@@ -379,7 +515,7 @@
 						<tbody class="data-[deleting=true]:hidden first-of-type:[&>tr>td]:border-t-0" data-deleting={deletingLog.has(log.id)}>
 							<tr class="print:text-sm [&>td]:border-0 [&>td]:border-t [&>td]:border-neutral-500/20">
 								<td
-									class="static! pb-0 align-top data-[desc=true]:pb-3 sm:pb-3 print:p-2"
+									class="static! align-top data-[desc=true]:pb-3 sm:pb-3 print:p-2 [desc=true]:pb-0"
 									data-desc={hasDescription && global.app.log.descriptions}
 								>
 									{#if myCharacter}
@@ -395,7 +531,7 @@
 										</span>
 									{/if}
 									<p class="text-netural-content mb-2 text-sm font-normal whitespace-nowrap">
-										{new Date(log.showDate).toLocaleString([], { dateStyle: "medium", timeStyle: "short" })}
+										{formatDate(new Date(log.showDate), log.timezone)}
 									</p>
 									{#if log.type === "game" && !log.dm.isUser}
 										<p class="text-sm font-normal">

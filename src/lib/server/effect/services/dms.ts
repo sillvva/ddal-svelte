@@ -4,10 +4,9 @@ import { userDMLogIncludes } from "$lib/server/db/includes";
 import { dungeonMasters, type DungeonMaster } from "$lib/server/db/schema";
 import type { ErrorParams } from "$lib/server/effect/errors";
 import { AppLog } from "$lib/server/effect/logging";
-import { sorter } from "@sillvva/utils";
+import { isTupleOf, sorter } from "@sillvva/utils";
 import { and, eq } from "drizzle-orm";
 import { Data, Effect, Layer } from "effect";
-import { isTupleOf } from "effect/Predicate";
 
 export class DMNotFoundError extends Data.TaggedError("DMNotFoundError")<ErrorParams> {
 	constructor(err?: unknown) {

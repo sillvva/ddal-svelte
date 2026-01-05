@@ -280,7 +280,8 @@ export const logs = pg.pgTable(
 		createdAt: pg
 			.timestamp("created_at", { mode: "date" })
 			.notNull()
-			.$default(() => new Date())
+			.$default(() => new Date()),
+		timezone: pg.text()
 	},
 	(table) => [
 		pg.index("Log_characterId_partial_idx").on(table.characterId).where(isNotNull(table.characterId)),

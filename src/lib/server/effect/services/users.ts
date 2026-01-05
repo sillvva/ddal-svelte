@@ -4,10 +4,9 @@ import { DBService, runQuery, type DrizzleError, type Transaction } from "$lib/s
 import { passkey, user, type Passkey, type User } from "$lib/server/db/schema";
 import { type ErrorParams } from "$lib/server/effect/errors";
 import { AppLog } from "$lib/server/effect/logging";
-import { sorter } from "@sillvva/utils";
+import { isTupleOf, sorter } from "@sillvva/utils";
 import { and, eq } from "drizzle-orm";
 import { Data, Effect, Layer } from "effect";
-import { isTupleOf } from "effect/Predicate";
 
 export class UpdateUserError extends Data.TaggedError("UpdateUserError")<ErrorParams> {
 	constructor(err?: unknown) {

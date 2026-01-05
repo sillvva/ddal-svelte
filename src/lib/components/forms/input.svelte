@@ -105,12 +105,20 @@
 		<input {...attributes} aria-invalid={invalid} id={name} type="checkbox" class="checkbox-primary checkbox" />
 	</label>
 {:else}
-	<InputWrapper type={hidden ? "hidden" : map.type || "text"} {label} {required}>
+	<InputWrapper
+		type={hidden ? "hidden" : map.type || "text"}
+		{label}
+		labelFor={name}
+		{required}
+		fieldErrors={issues?.map((issue) => issue.message)}
+	>
 		<input
 			{...attributes}
 			aria-invalid={invalid}
 			id={name}
 			class={[map.type !== "hidden" && !hidden && "input focus:border-primary focus:aria-[invalid]:border-error w-full"]}
+			autocomplete={rest.autocomplete || "off"}
+			{required}
 			{hidden}
 		/>
 	</InputWrapper>

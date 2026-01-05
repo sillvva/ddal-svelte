@@ -9,10 +9,10 @@
 	let { children } = $props();
 
 	getLogger();
+
 	const global = getGlobal();
-	const request = $derived(await API.getRequest());
-	// svelte-ignore state_referenced_locally
-	global.app = $state.snapshot(request.app);
+	const request = await API.app.queries.request();
+	global.app = request.app;
 
 	onNavigate(({ complete, from, to }) => {
 		if (!document.startViewTransition) return;

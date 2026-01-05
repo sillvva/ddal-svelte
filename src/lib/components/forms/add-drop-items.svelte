@@ -1,21 +1,21 @@
 <script lang="ts">
+	import type { GenericFormConfig } from "$lib/factories.svelte";
 	import type { DmLogSchemaIn, ItemId, ItemSchema, LogSchema, LogSchemaIn } from "$lib/schemas";
 	import { sorter } from "@sillvva/utils";
-	import type { RemoteFormFields } from "@sveltejs/kit";
-	import type { Snippet } from "svelte";
+	import { getContext, type Snippet } from "svelte";
 	import { v7 } from "uuid";
 	import EntityCard from "./entity-card.svelte";
 
-	type RequiredFields = "magicItemsGained" | "magicItemsLost" | "storyAwardsGained" | "storyAwardsLost";
-
 	interface Props {
-		fields: RemoteFormFields<LogSchemaIn> | RemoteFormFields<DmLogSchemaIn>;
 		magicItems?: ItemSchema[];
 		storyAwards?: ItemSchema[];
 		children?: Snippet;
 	}
 
-	let { fields, magicItems = [], storyAwards = [], children }: Props = $props();
+	let { magicItems = [], storyAwards = [], children }: Props = $props();
+
+	const configured = getContext<GenericFormConfig<LogSchemaIn | DmLogSchemaIn>>("configured-form");
+	const { form } = $derived(configured());
 
 	const newItem = () => ({ id: v7() as ItemId, name: "", description: "" }) satisfies LogSchema["magicItemsGained"][number];
 
@@ -25,21 +25,31 @@
 	const sortedAwards = $derived(
 		storyAwards.toSorted((a, b) => sorter(a.name.replace(/^\d+x? ?/, ""), b.name.replace(/^\d+x? ?/, "")))
 	);
-	const remainingItems = $derived(sortedItems.filter((item) => !fields.magicItemsLost.value().includes(item.id)));
-	const remainingAwards = $derived(sortedAwards.filter((item) => !fields.storyAwardsLost.value().includes(item.id)));
+	const remainingItems = $derived(sortedItems.filter((item) => !form.fields.magicItemsLost.value().includes(item.id)));
+	const remainingAwards = $derived(sortedAwards.filter((item) => !form.fields.storyAwardsLost.value().includes(item.id)));
 
-	const itemButtons = $derived(["Magic Items", remainingItems, fields.magicItemsGained, fields.magicItemsLost] as const);
-	const awardButtons = $derived(["Story Awards", remainingAwards, fields.storyAwardsGained, fields.storyAwardsLost] as const);
-	const buttons = $derived(fields.type.value() === "game" ? [itemButtons, awardButtons] : [itemButtons]);
+	const itemButtons = $derived([
+		"Magic Items",
+		remainingItems,
+		form.fields.magicItemsGained,
+		form.fields.magicItemsLost
+	] as const);
+	const awardButtons = $derived([
+		"Story Awards",
+		remainingAwards,
+		form.fields.storyAwardsGained,
+		form.fields.storyAwardsLost
+	] as const);
+	const buttons = $derived(form.fields.type.value() === "game" ? [itemButtons, awardButtons] : [itemButtons]);
 
 	const cards = $derived([
-		["magicItems", sortedItems, fields.magicItemsGained, fields.magicItemsLost],
-		["storyAwards", sortedAwards, fields.storyAwardsGained, fields.storyAwardsLost]
+		["magicItems", sortedItems, form.fields.magicItemsGained, form.fields.magicItemsLost],
+		["storyAwards", sortedAwards, form.fields.storyAwardsGained, form.fields.storyAwardsLost]
 	] as const);
 </script>
 
 <div
-	class="bg-base-100 col-span-12 flex flex-col justify-between gap-8 md:sticky md:top-19 md:z-10 md:flex-row md:py-4 md:max-lg:gap-4"
+	class="bg-base-100 col-span-12 flex flex-col justify-between gap-8 md:sticky md:top-19 md:z-10 md:flex-row md:pt-8 md:pb-4 md:max-lg:gap-4"
 >
 	{@render children?.()}
 	<div class="flex flex-1 flex-col gap-4 sm:flex-row md:max-w-fit">
@@ -92,10 +102,10 @@
 <div class="col-span-12 grid grid-cols-12 gap-4 dark:text-white">
 	{#each cards as [entity, items, gainedField, lostField], index (index)}
 		{#each gainedField.value() as item, index (item.id)}
-			<EntityCard {fields} type="add" {entity} {index} />
+			<EntityCard type="add" {entity} {index} />
 		{/each}
 		{#each lostField.value() as id, index (id)}
-			<EntityCard {fields} type="drop" {entity} {index} {items} />
+			<EntityCard type="drop" {entity} {index} {items} />
 		{/each}
 	{/each}
 </div>

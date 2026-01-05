@@ -17,7 +17,7 @@
 </script>
 
 <svelte:boundary>
-	{@const { user } = await API.getRequest()}
+	{@const { user } = await API.app.queries.request()}
 	{@const characters = await API.characters.queries.getAll()}
 	{@const search = new EntitySearchFactory(
 		characters,
@@ -244,15 +244,15 @@
 
 			{#snippet grid(results: typeof sortedResults)}
 				<div
-					class="xs:data-[display=grid]:grid hidden w-full data-[display=grid]:grid-cols-2 data-[display=grid]:gap-4 sm:data-[display=grid]:grid-cols-3 md:data-[display=grid]:grid-cols-4"
+					class="xs:data-[display=grid]:grid hidden w-full grid-cols-[repeat(auto-fill,minmax(200px,1fr))] gap-4"
 					data-display={global.app.characters.display}
 				>
 					{#each results as character (character.id)}
 						<div
-							class="card linked-card card-compact bg-base-200 shadow-xl transition-transform duration-200 motion-safe:hover:scale-105"
+							class="card linked-card card-compact bg-base-200 row-span-4 grid grid-rows-subgrid gap-1 pb-3 text-center shadow-xl transition-transform duration-200 motion-safe:hover:scale-105"
 							style:view-transition-name={"image-" + character.id}
 						>
-							<figure class="relative aspect-square overflow-hidden">
+							<figure class="relative mb-2 aspect-square overflow-hidden">
 								{#key character.imageUrl}
 									<img src={character.imageUrl} alt={character.name} class="size-full object-cover object-top" loading="lazy" />
 								{/key}
@@ -271,22 +271,18 @@
 									</div>
 								{/if}
 							</figure>
-							<div class="card-body p-4 text-center">
-								<div class="flex flex-col gap-1">
-									<h2 class="card-title ellipsis-nowrap block text-sm text-balance dark:text-white">
-										<a href={`/characters/${character.id}`} class="card-link">
-											<SearchResults text={character.name} terms={search.terms} />
-										</a>
-									</h2>
-									<p class="text-xs text-balance">
-										<SearchResults text={`${character.race} ${character.class}`} terms={search.terms} />
-									</p>
-									<p class="text-xs">
-										Level {character.totalLevel} | Tier {character.tier}
-										{#if search.terms.length}| Score {Math.round(character.score * 100) / 100}{/if}
-									</p>
-								</div>
-							</div>
+							<h2 class="card-title ellipsis-nowrap block px-4 text-sm text-balance dark:text-white">
+								<a href={`/characters/${character.id}`} class="card-link">
+									<SearchResults text={character.name} terms={search.terms} />
+								</a>
+							</h2>
+							<p class="px-4 text-xs text-balance">
+								<SearchResults text={`${character.race} ${character.class}`} terms={search.terms} />
+							</p>
+							<p class="text-xs">
+								Level {character.totalLevel} | Tier {character.tier}
+								{#if search.terms.length}| Score {Math.round(character.score * 100) / 100}{/if}
+							</p>
 						</div>
 					{/each}
 				</div>

@@ -1,101 +1,40 @@
-<script
-	lang="ts"
-	generics="Schema extends StandardSchemaV1<RemoteFormInput, unknown>, Form extends RemoteForm<StandardSchemaV1.InferInput<Schema>, unknown>"
->
+<script lang="ts" generics="Input extends RemoteFormInput | undefined = undefined">
 	import { dev } from "$app/environment";
-	import { beforeNavigate } from "$app/navigation";
-	import { page } from "$app/state";
-	import { initForm, successToast, unknownErrorToast } from "$lib/factories.svelte";
-	import { debounce, deepEqual } from "@sillvva/utils";
-	import type { StandardSchemaV1 } from "@standard-schema/spec";
-	import type { RemoteForm, RemoteFormFields, RemoteFormInput, RemoteFormIssue } from "@sveltejs/kit";
-	import { isTupleOfAtLeast } from "effect/Predicate";
-	import { onMount, tick, untrack, type Snippet } from "svelte";
-	import type { HTMLFormAttributes } from "svelte/elements";
+	import { navigating, page } from "$app/state";
+	import { configureForm, errorToast, successToast, type GenericForm, type RemoteFormOptions } from "$lib/factories.svelte";
+	import { isTupleOfAtLeast } from "@sillvva/utils";
+	import type { RemoteFormFields, RemoteFormInput } from "@sveltejs/kit";
+	import { setContext, type Snippet } from "svelte";
 	import SuperDebugRuned from "sveltekit-superforms/SuperDebug.svelte";
-	import { v7 } from "uuid";
 
-	type Input = StandardSchemaV1.InferInput<Schema>;
-	type FormId = Input extends { id: infer Id } ? (Id extends string | number ? Id : string | number) : string | number;
-	interface Props extends Omit<HTMLFormAttributes, "children" | "action" | "method" | "onsubmit"> {
-		schema: Schema;
-		form: Form;
-		data: Input;
-		initialErrors?: boolean;
-		onsubmit?: <T>(ctx: { readonly tainted: boolean; readonly form: HTMLFormElement; readonly data: Input }) => Awaitable<T>;
-		onresult?: (ctx: {
-			readonly success: boolean;
-			readonly result?: Form["result"];
-			readonly issues?: RemoteFormIssue[];
-			readonly error?: unknown;
-		}) => Awaitable<void>;
-		onissues?: (ctx: { readonly issues: RemoteFormIssue[] }) => Awaitable<void>;
-		children?: Snippet<[{ fields: Form["fields"]; initial: Input; dirty: boolean; touched: boolean }]>;
+	type Fields = RemoteFormFields<unknown>;
+
+	interface Props extends Omit<RemoteFormOptions<Input>, "formEl"> {
+		children?: Snippet<[GenericForm<Input>]>;
 	}
 
-	let {
-		schema,
-		form: remoteForm,
-		children,
-		data,
-		initialErrors = !!data.id,
-		onsubmit,
-		onresult,
-		onissues,
-		...rest
-	}: Props = $props();
+	let { children, ...rest }: Props = $props();
 
-	let formEl: HTMLFormElement;
+	let formEl: HTMLFormElement | undefined = $state.raw();
 
-	const form = remoteForm.for((data.id ?? v7()) as FormId).preflight(schema);
-	initForm(() => void form.fields.set(data as any));
+	const configured = setContext(
+		"configured-form",
+		configureForm(() => ({
+			...rest,
+			formEl,
+			navBlockMessage: rest.navBlockMessage || "You have unsaved changes. Are you sure you want to leave?",
+			onresult: (ctx) => {
+				if (ctx.success) {
+					successToast(`${(form.fields as Fields).name?.value() || "Form"} saved successfully`);
+				} else if (ctx.error) {
+					errorToast(ctx.error);
+				}
+				rest.onresult?.(ctx);
+			}
+		}))
+	);
 
-	// svelte-ignore state_referenced_locally
-	let initial = $state.raw($state.snapshot(data));
-	let dirty = $derived(!deepEqual(initial, $state.snapshot(form.fields.value())));
-	let touched = $state.raw(false);
-	$effect(() => {
-		void page.url;
-		initial = untrack(() => $state.snapshot(data));
-	});
-
-	const result = $derived(form.result);
-	const issues = $derived(form.fields.issues());
-	let lastIssues = $state.raw<RemoteFormIssue[] | undefined>((form.fields as RemoteFormFields<unknown>).allIssues());
-
-	const debouncedValidate = debounce(validate, 300);
-
-	async function validate() {
-		await form.validate({ includeUntouched: true, preflightOnly: true });
-		const issues = (form.fields as RemoteFormFields<unknown>).allIssues();
-		if (issues && onissues && !deepEqual(lastIssues, issues)) onissues({ issues });
-		if (issues?.length) lastIssues = issues;
-	}
-
-	async function focusInvalid() {
-		await tick();
-
-		const issues = (form.fields as RemoteFormFields<unknown>).allIssues();
-		if (issues?.length) lastIssues = issues;
-		else return;
-
-		const invalid = formEl.querySelector(":is(input, select, textarea):not(.hidden, [type=hidden], :disabled)[aria-invalid]") as
-			| HTMLInputElement
-			| HTMLSelectElement
-			| HTMLTextAreaElement
-			| null;
-		invalid?.focus();
-	}
-
-	onMount(() => {
-		if (initialErrors) validate();
-	});
-
-	beforeNavigate((ev) => {
-		if ((dirty || issues) && !confirm("You have unsaved changes. Are you sure you want to leave?")) {
-			return ev.cancel();
-		}
-	});
+	const { form, attributes, issues, dirty, touched, submitting, result } = $derived(configured());
 </script>
 
 <div class="flex flex-col gap-4">
@@ -106,44 +45,12 @@
 		</div>
 	{/if}
 
-	<form
-		{...form.enhance(async ({ submit, form: formEl, data }) => {
-			const bf = !onsubmit || (await onsubmit({ tainted: dirty, form: formEl, data }));
-			if (!bf) return;
-
-			let wasDirty = dirty;
-			try {
-				dirty = false;
-				await submit();
-
-				const issues = (form.fields as RemoteFormFields<unknown>).allIssues();
-				const success = !issues?.length;
-
-				onresult?.({ success, result: form.result, issues });
-
-				if (success) {
-					successToast(`${(form.fields as RemoteFormFields<unknown>).name?.value() || "Form"} saved successfully`);
-				} else {
-					dirty = wasDirty;
-					await focusInvalid();
-					onissues?.({ issues });
-				}
-			} catch (error) {
-				unknownErrorToast(error || "Oh no! Something went wrong");
-				onresult?.({ success: false, error });
-				dirty = wasDirty;
-			}
-		})}
-		{...rest}
-		bind:this={formEl}
-		onsubmit={focusInvalid}
-		oninput={(ev) => {
-			if (!!lastIssues) debouncedValidate.call();
-			rest.oninput?.(ev);
-		}}
-	>
-		<fieldset class="grid grid-cols-12 gap-4" disabled={!!$effect.pending()} onfocusin={() => (touched = true)}>
-			{@render children?.({ fields: form.fields, initial, dirty, touched })}
+	<form {...attributes} bind:this={formEl}>
+		<fieldset
+			class="grid grid-cols-12 gap-x-4"
+			disabled={submitting || (!!navigating.to && navigating.to.url.pathname !== page.url.pathname)}
+		>
+			{@render children?.(configured())}
 		</fieldset>
 	</form>
 
@@ -154,7 +61,7 @@
 				touched,
 				data: form.fields.value(),
 				result,
-				issues: (form.fields as RemoteFormFields<unknown>).allIssues()
+				issues: (form.fields as Fields).allIssues()
 			}}
 		/>
 	{/if}
