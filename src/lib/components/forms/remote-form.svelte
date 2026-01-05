@@ -22,13 +22,14 @@
 		configureForm(() => ({
 			...rest,
 			formEl,
-			navBlockMessage: "You have unsaved changes. Are you sure you want to leave?",
+			navBlockMessage: rest.navBlockMessage || "You have unsaved changes. Are you sure you want to leave?",
 			onresult: (ctx) => {
 				if (ctx.success) {
 					successToast(`${(form.fields as Fields).name?.value() || "Form"} saved successfully`);
 				} else if (ctx.error) {
 					errorToast(ctx.error);
 				}
+				rest.onresult?.(ctx);
 			}
 		}))
 	);
