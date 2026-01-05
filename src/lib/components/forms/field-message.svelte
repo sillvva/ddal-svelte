@@ -23,7 +23,7 @@
 	{:else if description}
 		<span class="text-pretty text-neutral-500">{description}</span>
 	{/if}
-{:else if type !== "hidden" && (issues?.length || warning || description)}
+{:else if type !== "hidden"}
 	<label for={name} class="fieldset-label">
 		{#if issues && isTupleOfAtLeast(issues, 1)}
 			<span class="bg-error text-error-content rounded-lg px-2 py-1 text-pretty">{issues[0].message}</span>
@@ -31,6 +31,8 @@
 			<span class="bg-warning text-warning-content rounded-lg px-2 py-1 text-pretty">{warning}</span>
 		{:else if description}
 			<span class="text-pretty text-neutral-500">{description}</span>
+		{:else}
+			<span>&nbsp;</span>
 		{/if}
 	</label>
 {/if}

@@ -82,7 +82,7 @@
 				/>
 			</Control>
 			{#if params.characterId === "new"}
-				<Control class="col-span-12 -mb-4">
+				<Control class="col-span-12">
 					<span class="fieldset-legend">
 						<span>Options</span>
 					</span>
@@ -100,7 +100,7 @@
 					/>
 				</Control>
 			{/if}
-			<div class="col-span-12 my-4 flex justify-center">
+			<div class="col-span-12 mt-8 mb-4 flex justify-center">
 				<Submit>Save Character</Submit>
 			</div>
 		{/snippet}

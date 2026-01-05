@@ -46,7 +46,7 @@
 
 	<form {...attributes} bind:this={formEl}>
 		<fieldset
-			class="grid grid-cols-12 gap-4"
+			class="grid grid-cols-12 gap-x-4"
 			disabled={submitting || (!!navigating.to && navigating.to.url.pathname !== page.url.pathname)}
 		>
 			{@render children?.(configured())}

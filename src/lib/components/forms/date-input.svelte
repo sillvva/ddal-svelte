@@ -168,15 +168,15 @@
 		</DatePicker.Calendar>
 	</DatePicker.Content>
 </DatePicker.Root>
-{#if issues || description}
-	<label for={name} class="fieldset-label">
-		{#if issues && isTupleOfAtLeast(issues, 1)}
-			<span class="text-error">{issues[0]}</span>
-		{:else if description}
-			<span class="text-neutral-500">{description}</span>
-		{/if}
-	</label>
-{/if}
+<label for={name} class="fieldset-label">
+	{#if issues && isTupleOfAtLeast(issues, 1)}
+		<span class="text-error">{issues[0]}</span>
+	{:else if description}
+		<span class="text-neutral-500">{description}</span>
+	{:else}
+		<span>&nbsp;</span>
+	{/if}
+</label>
 
 {#if debug}
 	<SuperDebugRuned

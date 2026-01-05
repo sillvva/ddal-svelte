@@ -49,7 +49,7 @@
 </script>
 
 <div
-	class="bg-base-100 col-span-12 flex flex-col justify-between gap-8 md:sticky md:top-19 md:z-10 md:flex-row md:py-4 md:max-lg:gap-4"
+	class="bg-base-100 col-span-12 flex flex-col justify-between gap-8 md:sticky md:top-19 md:z-10 md:flex-row md:pt-8 md:pb-4 md:max-lg:gap-4"
 >
 	{@render children?.()}
 	<div class="flex flex-1 flex-col gap-4 sm:flex-row md:max-w-fit">

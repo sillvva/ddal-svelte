@@ -56,7 +56,7 @@
 		{/snippet}
 	</RemoteForm>
 
-	<section class="mt-r sm:mt-8">
+	<section class="mt-4">
 		<h2 class="mb-2 text-2xl">Logs</h2>
 		{#if dm.logs.length == 0}
 			<div class="bg-base-200 flex h-40 flex-col items-center justify-center gap-2 rounded-lg">
@@ -125,7 +125,10 @@
 								</td>
 								{#if dm.isUser}
 									<td class="max-md:hidden">
-										<div class="min-w-max">{log.isDmLog ? "DM Log" : "Log"} ({log.type})</div>
+										<div class="min-w-max">
+											{log.isDmLog ? "DM Log" : "Log"}{#if !log.isDmLog}{" "}
+												({log.type}){/if}
+										</div>
 									</td>
 								{/if}
 							</tr>
