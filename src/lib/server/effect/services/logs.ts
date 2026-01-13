@@ -263,10 +263,7 @@ export const addMissingTimeZones = Effect.fn("addMissingTimeZones")(function* (
 	timezone: string,
 	logRecords: Pick<FullLogData, "id" | "timezone">[]
 ) {
-	const logsWithoutTimeZone = logRecords
-		.filter((log) => log.timezone === null)
-		.map((log) => ({ id: log.id, timezone: log.timezone }));
-
+	const logsWithoutTimeZone = logRecords.filter((log) => log.timezone === null);
 	if (logsWithoutTimeZone.length > 0) {
 		const batchSize = 200;
 		const effects = [];
