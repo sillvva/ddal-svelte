@@ -1,6 +1,7 @@
 <script lang="ts">
 	import { dev } from "$app/environment";
 	import { page } from "$app/state";
+	import { use } from "$lib/factories.svelte";
 	import * as API from "$lib/remote";
 	import { getLogger } from "$lib/stores.svelte";
 	import { omit } from "@sillvva/utils";
@@ -16,7 +17,7 @@
 
 	const os = useOs();
 	const logger = getLogger();
-	const err = logger.log(error, boundary);
+	const err = use(() => logger.log(error, boundary));
 
 	let display = $state(!dev);
 </script>

@@ -87,7 +87,7 @@
 		!input?.trim() || !allowCustom || prefiltered.length === 1 ? prefiltered : [firstItem].concat(prefiltered)
 	);
 
-	let selectedItem = $state<Item | undefined>(
+	let selectedItem = $derived<Item | undefined>(
 		valueField.value()
 			? values.find((v) => v.value === valueField.value())
 			: inputField.value()?.trim() && allowCustom
