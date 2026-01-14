@@ -286,6 +286,10 @@ export const addMissingTimeZones = Effect.fn("addMissingTimeZones")(function* (
 		}
 
 		yield* Effect.all(effects, { concurrency: 5 });
+
+		logRecords.forEach((log) => {
+			log.timezone ||= timezone;
+		});
 	}
 });
 
@@ -401,12 +405,7 @@ export class LogService extends Effect.Service<LogService>()("LogService", {
 
 					const event = getRequestEvent();
 					const timezone = event.locals.app.settings.timezone;
-					if (timezone) {
-						yield* addMissingTimeZones(db, timezone, dmLogs);
-						dmLogs.forEach((log) => {
-							log.timezone = log.timezone || timezone;
-						});
-					}
+					if (timezone) yield* addMissingTimeZones(db, timezone, dmLogs);
 
 					return dmLogs;
 				}),

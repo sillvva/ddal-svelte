@@ -104,11 +104,6 @@ export class CharacterService extends Effect.Service<CharacterService>()("Charac
 					if (timezone) {
 						const logRecords = characters.flatMap((character) => character.logs);
 						yield* addMissingTimeZones(db, timezone, logRecords);
-						characters.forEach((character) => {
-							character.logs.forEach((log) => {
-								log.timezone = log.timezone || timezone;
-							});
-						});
 					}
 
 					return characters;
