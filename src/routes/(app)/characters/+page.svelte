@@ -11,18 +11,15 @@
 	import { getGlobal } from "$lib/stores.svelte.js";
 	import { createTransition, download, hotkey } from "$lib/util";
 	import { sorter } from "@sillvva/utils";
-	import { untrack } from "svelte";
 
 	const global = getGlobal();
+	const searchKey = "s";
 </script>
 
 <svelte:boundary>
 	{@const { user } = await API.app.queries.request()}
 	{@const characters = await API.characters.queries.getAll()}
-	{@const search = new EntitySearchFactory(
-		characters,
-		untrack(() => page.url.searchParams.get("s") || "")
-	)}
+	{@const search = new EntitySearchFactory(characters, page.url.searchParams.get(searchKey) || "")}
 	{@const sortedResults = search.results.toSorted(
 		(a, b) => sorter(b.score, a.score) || sorter(a.totalLevel, b.totalLevel) || sorter(a.name, b.name)
 	)}
@@ -71,7 +68,7 @@
 					New <span class="max-md:hidden">Character</span>
 					<kbd class="kbd kbd-sm max-md:hover-none:hidden text-base-content">N</kbd>
 				</a>
-				<Search bind:value={search.query} placeholder="Search by name, class, items, etc." />
+				<Search name={searchKey} placeholder="Search by name, class, items, etc." />
 				<a href="/characters/new/edit" class="btn btn-primary sm:hidden" aria-label="New Character">
 					<span class="iconify mdi--plus inline size-6"></span>
 				</a>

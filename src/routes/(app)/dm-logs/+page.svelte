@@ -12,21 +12,18 @@
 	import { getGlobal } from "$lib/stores.svelte.js";
 	import { createTransition, download, formatDate, hotkey, parseEffectResult } from "$lib/util.js";
 	import { sorter } from "@sillvva/utils";
-	import { untrack } from "svelte";
 	import { SvelteSet } from "svelte/reactivity";
 
 	const global = getGlobal();
 
 	let deletingLog = new SvelteSet<string>();
+	const searchKey = "s";
 </script>
 
 <svelte:boundary>
 	{@const { user } = await API.app.queries.request()}
 	{@const logs = await API.logs.queries.getDmLogs()}
-	{@const search = new EntitySearchFactory(
-		logs,
-		untrack(() => page.url.searchParams.get("s") || "")
-	)}
+	{@const search = new EntitySearchFactory(logs, page.url.searchParams.get(searchKey) || "")}
 	{@const sortedResults = search.results.toSorted((a, b) =>
 		global.app.dmLogs.sort === "asc" ? sorter(a.date, b.date) : sorter(b.date, a.date)
 	)}
@@ -65,7 +62,7 @@
 			>
 				New Log <kbd class="kbd kbd-sm max-sm:hover-none:hidden text-base-content">N</kbd>
 			</a>
-			<Search bind:value={search.query} placeholder="Search by name, class, items, etc." />
+			<Search name={searchKey} placeholder="Search by name, class, items, etc." />
 			<a href="/dm-logs/new" class="btn btn-primary inline-flex sm:hidden" aria-label="New Log">
 				<span class="iconify mdi--plus inline size-6"></span>
 			</a>

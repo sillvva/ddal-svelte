@@ -8,7 +8,8 @@
 	import { JSONSearchParser } from "@sillvva/search/json";
 	import { toJSObjectNotation } from "@sillvva/utils";
 
-	let search = $derived(page.url.searchParams.get("s")?.trim() ?? "");
+	const searchKey = "s";
+	const search = $derived(page.url.searchParams.get(searchKey) ?? "");
 
 	const users = $derived(await API.admin.queries.getUsers());
 	const parser = $derived(
@@ -25,7 +26,7 @@
 
 <section class="flex flex-wrap items-center justify-between gap-2 max-sm:justify-end">
 	<div class="flex w-full gap-2 sm:max-w-md md:max-w-md">
-		<Search bind:value={search} placeholder="Search by name, email, role, etc." />
+		<Search name={searchKey} placeholder="Search by name, email, role, etc." />
 	</div>
 	<span class="badge bg-base-300 text-base-content badge-lg">
 		{#if results.length < (users.length ?? 0)}

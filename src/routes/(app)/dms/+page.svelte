@@ -8,19 +8,16 @@
 	import * as API from "$lib/remote";
 	import { parseEffectResult } from "$lib/util";
 	import { sorter } from "@sillvva/utils";
-	import { untrack } from "svelte";
 	import { SvelteSet } from "svelte/reactivity";
 
 	let deletingDM = new SvelteSet<string>();
+	const searchKey = "s";
 </script>
 
 <svelte:boundary>
 	{@const { user } = await API.app.queries.request()}
 	{@const dms = await API.dms.queries.getAll()}
-	{@const search = new EntitySearchFactory(
-		dms,
-		untrack(() => page.url.searchParams.get("s") || "")
-	)}
+	{@const search = new EntitySearchFactory(dms, page.url.searchParams.get(searchKey) || "")}
 	{@const sortedResults = search.results.toSorted(
 		(a, b) => sorter(a.isUser, b.isUser) || sorter(b.score, a.score) || sorter(a.name, b.name)
 	)}
@@ -30,7 +27,7 @@
 	<NavMenu base crumbs={[{ title: "DMs", url: "/dms" }]} />
 
 	<section class="flex max-sm:flex-1 sm:max-w-96">
-		<Search bind:value={search.query} placeholder="Search" />
+		<Search name={searchKey} placeholder="Search" />
 	</section>
 
 	<section>

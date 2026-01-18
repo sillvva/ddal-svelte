@@ -15,7 +15,7 @@
 	import { createTransition, formatDate, hotkey, parseEffectResult } from "$lib/util";
 	import { slugify, sorter } from "@sillvva/utils";
 	import { clipboard, download } from "@svelteuidev/composables";
-	import { onMount, untrack } from "svelte";
+	import { onMount } from "svelte";
 	import { fromAction } from "svelte/attachments";
 	import { SvelteSet } from "svelte/reactivity";
 
@@ -24,6 +24,7 @@
 	const global = getGlobal();
 
 	let deletingLog = new SvelteSet<string>();
+	const searchKey = "s";
 
 	async function triggerImageModal(character: FullCharacterData, image?: string) {
 		const imageUrl = image || character.imageUrl;
@@ -61,10 +62,7 @@
 	{@const queryParams = { param: params.characterId, newRedirect: true }}
 	{@const character = await API.characters.queries.get(queryParams)}
 	{@const myCharacter = character.userId === user?.id}
-	{@const search = new EntitySearchFactory(
-		character.logs,
-		untrack(() => page.url.searchParams.get("s") || "")
-	)}
+	{@const search = new EntitySearchFactory(character.logs, page.url.searchParams.get(searchKey) || "")}
 	{@const sortedResults = search.results.toSorted((a, b) => sorter(a.showDate, b.showDate))}
 
 	<Head
@@ -295,7 +293,7 @@
 						New Log <kbd class="kbd kbd-sm max-sm:hover-none:hidden text-base-content">N</kbd>
 					</a>
 				{/if}
-				<Search bind:value={search.query} placeholder="Search Logs" />
+				<Search name={searchKey} placeholder="Search Logs" />
 				{#if myCharacter}
 					<a
 						href={`/characters/${character.id}/log/new`}
