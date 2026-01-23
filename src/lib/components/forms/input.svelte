@@ -88,7 +88,7 @@
 {#if map.type === "checkbox"}
 	<label
 		class={[
-			"label flex cursor-pointer rounded-lg border p-4 text-sm",
+			"label flex cursor-pointer rounded-lg border p-4 text-sm max-sm:text-base",
 			invalid ? "border-error" : "border-base-content/20",
 			hidden && "hidden"
 		]}
@@ -116,7 +116,9 @@
 			{...attributes}
 			aria-invalid={invalid}
 			id={name}
-			class={[map.type !== "hidden" && !hidden && "input focus:border-primary focus:aria-[invalid]:border-error w-full"]}
+			class={[
+				map.type !== "hidden" && !hidden && "input focus:border-primary focus:aria-[invalid]:border-error w-full max-sm:text-base"
+			]}
 			autocomplete={rest.autocomplete || "off"}
 			{required}
 			{hidden}

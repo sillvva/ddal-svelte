@@ -83,7 +83,11 @@
 			<div class="flex gap-4">
 				<Control class="flex-1">
 					<InputWrapper field={lostField} as="select" label="Select an Item">
-						<select {...lostField.as("select")} id={lostField.as("select").name} class="select select-bordered w-full">
+						<select
+							{...lostField.as("select")}
+							id={lostField.as("select").name}
+							class="select select-bordered w-full max-sm:text-base"
+						>
 							{#each card.items.filter((item) => item.id === lostField.value() || !arrValue.includes(item.id)) as item (item.id)}
 								<option value={item.id}>
 									{item.name}

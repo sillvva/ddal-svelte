@@ -66,7 +66,7 @@
 					<InputWrapper field={form.fields.type} as="select" label="Log Type">
 						<select
 							{...form.fields.type.as("select")}
-							class={["select select-bordered w-full", data.type !== "game" && "text-xs!"]}
+							class={["select select-bordered w-full max-sm:text-base", data.type !== "game" && "text-xs!"]}
 						>
 							<option value="game">Game</option>
 							<option value="nongame">Non-Game (Purchase, Trade, etc)</option>
@@ -134,7 +134,7 @@
 						<select
 							id="season"
 							bind:value={season}
-							class="select select-bordered w-full"
+							class="select select-bordered w-full max-sm:text-base"
 							onchange={() => {
 								data.experience = 0;
 								data.acp = 0;

@@ -97,7 +97,7 @@
 			</button>
 		{/if}
 	</DatePicker.Label>
-	<DatePicker.Input class="input inline-flex w-full items-center gap-1 px-3 select-none sm:text-xs">
+	<DatePicker.Input class="input inline-flex w-full items-center gap-1 px-3 select-none max-sm:text-base sm:text-xs">
 		{#snippet children({ segments })}
 			{#each segments as { part, value }, i (i)}
 				<DatePicker.Segment

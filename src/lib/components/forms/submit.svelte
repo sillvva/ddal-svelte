@@ -18,7 +18,7 @@
 	type="submit"
 	{name}
 	{value}
-	class="btn btn-primary disabled:bg-primary text-primary-content w-full disabled:opacity-50 sm:w-auto"
+	class="btn btn-primary disabled:bg-primary text-primary-content w-full disabled:opacity-50 max-sm:text-base sm:w-auto"
 	aria-label="Submit"
 >
 	{#if submitting}

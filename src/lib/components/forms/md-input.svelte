@@ -57,7 +57,7 @@
 		{name}
 		id={name}
 		bind:value={() => field.value(), (val) => field.set(val)}
-		class="textarea textarea-bordered focus:border-primary w-full rounded-b-lg data-[preview=true]:rounded-t-none data-[state=preview]:hidden"
+		class="textarea textarea-bordered focus:border-primary w-full rounded-b-lg data-[preview=true]:rounded-t-none data-[state=preview]:hidden max-sm:text-base"
 		data-preview={preview}
 		data-state={mode}
 		style:--minRows={minRows && `${minRows}lh`}

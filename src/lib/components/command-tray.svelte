@@ -89,7 +89,7 @@
 							<div
 								class="join focus-within:border-primary border-input *:focus:border-primary rounded-lg border *:border-y-0 *:first:border-l-0 *:last:border-r-0"
 							>
-								<label class="input join-item flex w-full flex-1 items-center gap-2">
+								<label class="input join-item flex w-full flex-1 items-center gap-2 max-sm:text-base">
 									<span class="iconify mdi--magnify size-6"></span>
 									<input
 										{...props}
@@ -103,7 +103,7 @@
 										}}
 									/>
 								</label>
-								<select id="search-category" bind:value={search.category} class="select join-item w-auto">
+								<select id="search-category" bind:value={search.category} class="select join-item w-auto max-sm:text-base">
 									<option value={null}>All Categories</option>
 									{#each categories as category (category)}
 										<option value={category}>{category}</option>

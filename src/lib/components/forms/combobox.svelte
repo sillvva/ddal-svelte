@@ -170,7 +170,7 @@
 						onblur?.(ev.currentTarget);
 					}}
 					aria-invalid={issues?.length ? "true" : undefined}
-					class="input join-item focus:border-primary w-full"
+					class="input join-item focus:border-primary w-full max-sm:text-base"
 					{required}
 					{placeholder}
 				>

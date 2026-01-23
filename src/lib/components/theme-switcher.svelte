@@ -44,7 +44,7 @@
 	});
 </script>
 
-<select class="select select-bordered select-sm flex-1 leading-4" bind:value={theme}>
+<select class="select select-bordered select-sm flex-1 leading-4 max-sm:text-base" bind:value={theme}>
 	<option value="system" selected={global.app.settings.theme === "system"}>System</option>
 	{#each themeGroups as group (group)}
 		<hr />

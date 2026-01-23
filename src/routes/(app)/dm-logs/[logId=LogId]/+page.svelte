@@ -84,7 +84,7 @@
 					<select
 						id="season"
 						bind:value={season}
-						class="select select-bordered w-full"
+						class="select select-bordered w-full max-sm:text-base"
 						onchange={() => {
 							data.experience = 0;
 							data.acp = 0;

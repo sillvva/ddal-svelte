@@ -148,7 +148,7 @@
 			<li>
 				<div class="flex items-center gap-2 py-0 hover:bg-transparent">
 					<span class="flex-1">Layout</span>
-					<select class="select select-bordered select-sm flex-1" bind:value={global.app.settings.maxwidth}>
+					<select class="select select-bordered select-sm flex-1 max-sm:text-base" bind:value={global.app.settings.maxwidth}>
 						<option value="container">Container</option>
 						<option value="full">Full Width</option>
 					</select>

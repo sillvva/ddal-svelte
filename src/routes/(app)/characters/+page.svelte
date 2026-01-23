@@ -185,14 +185,14 @@
 											<SearchResults text={character.name} terms={search.terms} />
 										</a>
 									</div>
-									<div class="text-xs whitespace-pre-wrap sm:text-sm">
+									<div class="text-sm text-balance whitespace-pre-wrap sm:text-sm">
 										<span class="inline pr-1 md:hidden">Level {character.totalLevel}</span><SearchResults
 											text={character.race}
 											terms={search.terms}
 										/>
 										<SearchResults text={character.class} terms={search.terms} />
 									</div>
-									<div class="mb-2 text-xs md:hidden">
+									<div class="max-sm:text-base-content/70 mb-2 text-sm md:hidden">
 										<SearchResults text={character.campaign} terms={search.terms} />
 									</div>
 									{#if (character.match.has("magicItems") || global.app.characters.magicItems) && character.magicItems.length}

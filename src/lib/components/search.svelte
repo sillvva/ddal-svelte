@@ -48,7 +48,7 @@
 
 <form bind:this={formRef} method="get" class="min-w-0 flex-1">
 	<search
-		class="input focus-within:border-primary sm:input-sm flex w-full items-center gap-2 noscript:pr-0"
+		class="input focus-within:border-primary sm:input-sm flex w-full items-center gap-2 max-sm:*:text-base noscript:pr-0"
 		class:pr-0={!!value.trim()}
 		{@attach hotkey([
 			[
