@@ -1,13 +1,11 @@
-<script lang="ts" generics="Input extends RemoteFormInput | undefined = undefined">
+<script lang="ts" generics="Input extends RemoteFormInput = RemoteFormInput">
 	import { dev } from "$app/environment";
 	import { navigating, page } from "$app/state";
 	import { configureForm, errorToast, successToast, type GenericForm, type RemoteFormOptions } from "$lib/factories.svelte";
 	import { isTupleOfAtLeast } from "@sillvva/utils";
-	import type { RemoteFormFields, RemoteFormInput } from "@sveltejs/kit";
+	import type { RemoteFormInput } from "@sveltejs/kit";
 	import { setContext, type Snippet } from "svelte";
 	import SuperDebugRuned from "sveltekit-superforms/SuperDebug.svelte";
-
-	type Fields = RemoteFormFields<unknown>;
 
 	interface Props extends Omit<RemoteFormOptions<Input>, "formEl"> {
 		children?: Snippet<[GenericForm<Input>]>;
@@ -25,7 +23,7 @@
 			navBlockMessage: rest.navBlockMessage || "You have unsaved changes. Are you sure you want to leave?",
 			onresult: (ctx) => {
 				if (ctx.success) {
-					successToast(`${(form.fields as Fields).name?.value() || "Form"} saved successfully`);
+					successToast(`${form.fields.name?.value() || "Form"} saved successfully`);
 				} else if (ctx.error) {
 					errorToast(ctx.error);
 				}
@@ -61,7 +59,7 @@
 				touched,
 				data: form.fields.value(),
 				result,
-				issues: (form.fields as Fields).allIssues()
+				issues: form.fields.allIssues()
 			}}
 		/>
 	{/if}

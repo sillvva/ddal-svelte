@@ -5,7 +5,7 @@ import type { UserDM } from "$lib/server/effect/services/dms";
 import type { FullLogData, LogSummaryData, UserLogData } from "$lib/server/effect/services/logs";
 import { debounce, deepEqual, isDefined, substrCount, type MapKeys, type Prettify } from "@sillvva/utils";
 import type { StandardSchemaV1 } from "@standard-schema/spec";
-import type { RemoteForm, RemoteFormFields, RemoteFormInput, RemoteFormIssue } from "@sveltejs/kit";
+import type { RemoteForm, RemoteFormInput, RemoteFormIssue } from "@sveltejs/kit";
 import { Duration } from "effect";
 import escapeRegex from "regexp.escape";
 import { getContext, hasContext, onMount, setContext, tick, untrack } from "svelte";
@@ -110,12 +110,12 @@ export function use<T>(
 	return $state.snapshot(initial);
 }
 
-export type GenericFormConfig<T extends RemoteFormInput | undefined = RemoteFormInput> = ReturnType<typeof configureForm<T>>;
-export type GenericForm<T extends RemoteFormInput | undefined = RemoteFormInput> = ReturnType<GenericFormConfig<T>>;
+export type GenericFormConfig<T extends RemoteFormInput = RemoteFormInput> = ReturnType<typeof configureForm<T>>;
+export type GenericForm<T extends RemoteFormInput = RemoteFormInput> = ReturnType<GenericFormConfig<T>>;
 
 type FormId<Input> = Input extends { id: infer Id } ? (Id extends string | number ? Id : string | number) : string | number;
 
-export interface RemoteFormOptions<Input extends RemoteFormInput | undefined = undefined> {
+export interface RemoteFormOptions<Input extends RemoteFormInput = RemoteFormInput> {
 	form: RemoteForm<Input, unknown>;
 	schema?: StandardSchemaV1<Input, unknown>;
 	key?: FormId<Input>;
@@ -133,9 +133,7 @@ export interface RemoteFormOptions<Input extends RemoteFormInput | undefined = u
 	formEl?: HTMLFormElement;
 }
 
-export function configureForm<Input extends RemoteFormInput | undefined = undefined>(getProps: () => RemoteFormOptions<Input>) {
-	type Fields = RemoteFormFields<unknown>;
-
+export function configureForm<Input extends RemoteFormInput = RemoteFormInput>(getProps: () => RemoteFormOptions<Input>) {
 	const {
 		form: remoteForm,
 		schema,
@@ -154,15 +152,11 @@ export function configureForm<Input extends RemoteFormInput | undefined = undefi
 	const key = $derived(formKey ?? ((data.id ?? v7()) as FormId<Input>));
 	const form = $derived(schema ? remoteForm.for(key).preflight(schema) : remoteForm.for(key));
 
-	const initialize = (data: FormData) => {
-		// eslint-disable-next-line @typescript-eslint/no-explicit-any
-		form.fields.set(data as any);
-	};
 	let initial = $state.raw(
 		use({
 			track: () => data,
-			ssr: initialize,
-			pre: initialize
+			ssr: form.fields.set,
+			pre: form.fields.set
 		})
 	);
 
@@ -212,7 +206,7 @@ export function configureForm<Input extends RemoteFormInput | undefined = undefi
 
 	const result = $derived(form.result);
 	const issues = $derived(form.fields.issues());
-	const allIssues = $derived((form.fields as Fields).allIssues());
+	const allIssues = $derived(form.fields.allIssues());
 	const initialErrors = $derived(initialErrorsProp ?? !!data?.id);
 	let lastIssues = $state.raw<RemoteFormIssue[] | undefined>();
 
@@ -222,7 +216,7 @@ export function configureForm<Input extends RemoteFormInput | undefined = undefi
 			if (initialErrors) await validate().then(focusInvalid);
 		},
 		effect: () => {
-			initialize(data);
+			form.fields.set(data);
 			initial = $state.snapshot(data);
 			touched = false;
 			if (initialErrors) validate(true).then(focusInvalid);
@@ -288,8 +282,7 @@ export function configureForm<Input extends RemoteFormInput | undefined = undefi
 		allIssues,
 		validate,
 		debouncedValidate,
-		// eslint-disable-next-line @typescript-eslint/no-explicit-any
-		reset: () => form.fields.set(initial as any)
+		reset: () => form.fields.set(initial)
 	});
 }
 
