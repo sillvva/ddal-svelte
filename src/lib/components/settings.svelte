@@ -200,7 +200,9 @@
 												if (confirm("Are you sure you want to unlink this account?")) {
 													const result = await authClient.unlinkAccount({ providerId: provider.id });
 													if (result.error?.code) {
-														return errorToast(authClient.$ERROR_CODES[result.error.code as keyof typeof authClient.$ERROR_CODES]);
+														return errorToast(
+															authClient.$ERROR_CODES[result.error.code as keyof typeof authClient.$ERROR_CODES].message
+														);
 													}
 													await API.app.queries.request().refresh();
 												}
@@ -222,7 +224,9 @@
 											})
 											.then(async (result) => {
 												if (result.error?.code) {
-													return errorToast(authClient.$ERROR_CODES[result.error.code as keyof typeof authClient.$ERROR_CODES]);
+													return errorToast(
+														authClient.$ERROR_CODES[result.error.code as keyof typeof authClient.$ERROR_CODES].message
+													);
 												}
 												await API.app.queries.request().refresh();
 											})}

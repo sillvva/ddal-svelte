@@ -46,9 +46,11 @@
 		ev.preventDefault();
 		if (card.type === "add" && gainedField) {
 			if (entity === "magicItems")
-				form.fields.magicItemsGained.set(form.fields.magicItemsGained.value().filter((it) => it.id !== gainedField.id.value()));
+				form.fields.magicItemsGained.set(form.fields.magicItemsGained.value().filter((it) => it?.id !== gainedField.id.value()));
 			else
-				form.fields.storyAwardsGained.set(form.fields.storyAwardsGained.value().filter((it) => it.id !== gainedField.id.value()));
+				form.fields.storyAwardsGained.set(
+					form.fields.storyAwardsGained.value().filter((it) => it?.id !== gainedField.id.value())
+				);
 		}
 		if (card.type === "drop" && lostField) {
 			if (entity === "magicItems")

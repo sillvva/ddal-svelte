@@ -155,8 +155,8 @@ export function configureForm<Input extends RemoteFormInput = RemoteFormInput>(g
 	let initial = $state.raw(
 		use({
 			track: () => data,
-			ssr: form.fields.set,
-			pre: form.fields.set
+			ssr: (data) => form.fields.set(data),
+			pre: (data) => form.fields.set(data)
 		})
 	);
 

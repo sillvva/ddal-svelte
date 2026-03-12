@@ -60,7 +60,7 @@
 	let open = $state(false);
 	let changed = $state(false);
 
-	const input = $derived(inputField.value());
+	const input = $derived(inputField.value() || "");
 	const attributes = $derived(inputField.as("text"));
 	const name = $derived(attributes.name);
 	const issues = $derived(errorField ? errorField.issues() : valueField?.issues());

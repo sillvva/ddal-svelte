@@ -1,7 +1,7 @@
 import { getRequestEvent } from "$app/server";
 import { privateEnv } from "$lib/env/private";
 import { localsSessionSchema, localsUserSchema, type LocalsSession, type LocalsUser, type UserId } from "$lib/schemas";
-import { DBService, DrizzleError } from "$lib/server/db";
+import { DBService, DrizzleError, type Database, type Transaction } from "$lib/server/db";
 import { RedirectError, type ErrorParams } from "$lib/server/effect/errors";
 import { passkey } from "@better-auth/passkey";
 import { isDefined } from "@sillvva/utils";
@@ -18,8 +18,44 @@ import * as v from "valibot";
 import { parse, type InvalidSchemaError } from "../util";
 import { UserService } from "./users";
 
-const authPlugins = [passkey(), admin(), lastLoginMethod(), sveltekitCookies(getRequestEvent)];
-type Auth = ReturnType<typeof betterAuth<{ plugins: typeof authPlugins }>>;
+const AuthProgram = Effect.fn("AuthService.auth")(function* (db: Database | Transaction) {
+	return betterAuth({
+		appName: "Adventurers League Log Sheet",
+		database: drizzleAdapter(db, {
+			provider: "pg"
+		}),
+		secret: privateEnv.AUTH_SECRET,
+		baseURL: privateEnv.PUBLIC_URL,
+		socialProviders: {
+			google: {
+				clientId: privateEnv.GOOGLE_CLIENT_ID,
+				clientSecret: privateEnv.GOOGLE_CLIENT_SECRET,
+				disableSignUp: privateEnv.DISABLE_SIGNUPS
+			},
+			discord: {
+				clientId: privateEnv.DISCORD_CLIENT_ID,
+				clientSecret: privateEnv.DISCORD_CLIENT_SECRET,
+				disableSignUp: privateEnv.DISABLE_SIGNUPS
+			}
+		},
+		plugins: [passkey(), admin(), lastLoginMethod(), sveltekitCookies(getRequestEvent)],
+		account: {
+			accountLinking: {
+				enabled: true
+			}
+		},
+		session: {
+			expiresIn: Duration.toSeconds("30 days")
+		},
+		advanced: {
+			database: {
+				generateId: () => v7()
+			}
+		}
+	});
+});
+
+type Auth = Effect.Effect.Success<ReturnType<typeof AuthProgram>>;
 
 interface AuthApiImpl {
 	readonly auth: () => Effect.Effect<Auth>;
@@ -54,40 +90,7 @@ export class AuthService extends Effect.Service<AuthService>()("AuthService", {
 
 		const impl: AuthApiImpl = {
 			auth: Effect.fn("AuthService.auth")(function* () {
-				return betterAuth({
-					appName: "Adventurers League Log Sheet",
-					database: drizzleAdapter(db, {
-						provider: "pg"
-					}),
-					secret: privateEnv.AUTH_SECRET,
-					baseUrl: privateEnv.PUBLIC_URL,
-					socialProviders: {
-						google: {
-							clientId: privateEnv.GOOGLE_CLIENT_ID,
-							clientSecret: privateEnv.GOOGLE_CLIENT_SECRET,
-							disableSignUp: privateEnv.DISABLE_SIGNUPS
-						},
-						discord: {
-							clientId: privateEnv.DISCORD_CLIENT_ID,
-							clientSecret: privateEnv.DISCORD_CLIENT_SECRET,
-							disableSignUp: privateEnv.DISABLE_SIGNUPS
-						}
-					},
-					plugins: authPlugins,
-					account: {
-						accountLinking: {
-							enabled: true
-						}
-					},
-					session: {
-						expiresIn: Duration.toSeconds("30 days")
-					},
-					advanced: {
-						database: {
-							generateId: () => v7()
-						}
-					}
-				});
+				return yield* AuthProgram(db);
 			}),
 			getAuthSession: Effect.fn("AuthService.getAuthSession")(function* () {
 				const Users = yield* UserService;

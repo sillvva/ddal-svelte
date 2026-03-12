@@ -10,6 +10,11 @@ import type { FullPathname } from "./constants";
 import { errorToast } from "./factories.svelte";
 import type { EffectFailure, EffectResult } from "./server/effect/runtime";
 
+export type Crumb = {
+	title: string;
+	url: string;
+};
+
 export type HTMLEvent<T extends Element> = Event & {
 	currentTarget: EventTarget & T;
 };

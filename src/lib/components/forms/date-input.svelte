@@ -41,6 +41,7 @@
 	const issues = $derived(field.issues());
 	const attributes = $derived(field.as("number"));
 	const name = $derived("name" in attributes ? attributes.name : undefined);
+	const value = $derived(field.value() || 0);
 	const minDateValue = $derived(dateToCalendar(Math.max(min, earliest)));
 	const maxDateValue = $derived(dateToCalendar(max));
 	const minValue = $derived(minDateValue.set({ hour: 0, minute: 0, second: 0, millisecond: 0 }));
@@ -62,7 +63,7 @@
 	granularity="minute"
 	{...rest}
 	bind:value={
-		() => (field.value() ? clamp(dateToCalendar(field.value()), minDateValue, maxDateValue) : undefined),
+		() => (value ? clamp(dateToCalendar(value), minDateValue, maxDateValue) : undefined),
 		(val) => {
 			if (val) {
 				const newValue = clamp(val, minDateValue, maxDateValue);
@@ -182,7 +183,7 @@
 	<SuperDebugRuned
 		data={{
 			timezone: tz,
-			current: field.value() ? clamp(dateToCalendar(field.value()), minDateValue, maxDateValue).toString() : undefined,
+			current: value ? clamp(dateToCalendar(value), minDateValue, maxDateValue).toString() : undefined,
 			initial: initial ? clamp(dateToCalendar(initial), minDateValue, maxDateValue).toString() : undefined,
 			min: minValue.toString(),
 			max: maxValue.toString()

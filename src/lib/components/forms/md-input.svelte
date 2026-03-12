@@ -20,9 +20,10 @@
 	const attributes = $derived(field.as("text"));
 	const name = $derived(attributes.name);
 	const issues = $derived(field.issues());
+	const value = $derived(field.value() || "");
 
-	const graphemeCount = $derived(typeof field.value() === "string" ? [...new Intl.Segmenter().segment(field.value())].length : 0);
-	const lengthDiff = $derived(field.value().length - graphemeCount);
+	const graphemeCount = $derived(typeof value === "string" ? [...new Intl.Segmenter().segment(value)].length : 0);
+	const lengthDiff = $derived(value.length - graphemeCount);
 
 	const markdownTip = "Supports Markdown and HTML. Scripting, media, and form tags are not allowed for security reasons.";
 	const graphemeTip = $derived(
@@ -83,7 +84,7 @@
 		{/if}
 		{#if !issues?.length && maxLength}
 			<span class="tooltip tooltip-bottom flex items-center gap-1" data-tip={graphemeTip}>
-				{field.value().length.toLocaleString()} / {maxLength.toLocaleString()}
+				{value.length.toLocaleString()} / {maxLength.toLocaleString()}
 				{#if graphemeTip}
 					<span class="iconify mdi--question-mark-circle"></span>
 				{/if}

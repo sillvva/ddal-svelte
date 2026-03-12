@@ -1,7 +1,7 @@
 <script lang="ts">
 	import type { GenericFormConfig } from "$lib/factories.svelte";
 	import type { DmLogSchemaIn, ItemId, ItemSchema, LogSchema, LogSchemaIn } from "$lib/schemas";
-	import { sorter } from "@sillvva/utils";
+	import { isDefined, sorter } from "@sillvva/utils";
 	import { getContext, type Snippet } from "svelte";
 	import { v7 } from "uuid";
 	import EntityCard from "./entity-card.svelte";
@@ -101,10 +101,10 @@
 </div>
 <div class="col-span-12 grid grid-cols-12 gap-4 dark:text-white">
 	{#each cards as [entity, items, gainedField, lostField], index (index)}
-		{#each gainedField.value() as item, index (item.id)}
+		{#each gainedField.value().filter(isDefined) as item, index (item.id)}
 			<EntityCard type="add" {entity} {index} />
 		{/each}
-		{#each lostField.value() as id, index (id)}
+		{#each lostField.value().filter(isDefined) as id, index (id)}
 			<EntityCard type="drop" {entity} {index} {items} />
 		{/each}
 	{/each}
