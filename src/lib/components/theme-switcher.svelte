@@ -1,50 +1,46 @@
 <script lang="ts">
-	import { themeGroups, themes } from "$lib/constants";
+	import { themeGroups, themes, type Themes } from "$lib/constants";
 	import { getGlobal } from "$lib/stores.svelte";
 	import { createTransition } from "$lib/util";
 	import { MediaQuery } from "svelte/reactivity";
 
 	const global = getGlobal();
-
-	let theme = $derived(global.app.settings.theme);
 	const mq = new MediaQuery("(prefers-color-scheme: dark)");
-	const mode = $derived.by(() => {
-		const selected = themes.find((t) => t.value === theme);
-		if (selected) {
-			if (selected.value === "system") {
-				return mq.current ? "dark" : "light";
-			} else {
-				return selected.group;
-			}
-		}
-		return global.app.settings.mode;
-	});
+</script>
 
-	$effect(() => {
-		if (theme !== global.app.settings.theme || mode !== global.app.settings.mode) {
-			document.documentElement.classList.add("theme-switcher");
-			createTransition(
-				async () => {
+<select
+	class="select select-bordered select-sm flex-1 leading-4 max-sm:text-base"
+	value={global.app.settings.theme}
+	onchange={(ev) => {
+		document.documentElement.classList.add("theme-switcher");
+		createTransition(
+			async () => {
+				const value = (ev.target as HTMLSelectElement).value as Themes;
+				const selected = themes.find((t) => t.value === value);
+
+				if (selected) {
+					const theme = selected.value;
+					const mode = selected.value === "system" ? (mq.current ? "dark" : "light") : selected.group;
+
 					global.app.settings.theme = theme;
-					global.app.settings.mode = mode;
-					const opposite = mode === "dark" ? "light" : "dark";
-					document.documentElement.classList.replace(opposite, mode);
 					if (theme === "system") {
 						document.documentElement.removeAttribute("data-theme");
 					} else {
 						document.documentElement.dataset.theme = theme;
 					}
-				},
-				() => {
-					document.documentElement.classList.remove("theme-switcher");
-				},
-				900
-			);
-		}
-	});
-</script>
 
-<select class="select select-bordered select-sm flex-1 leading-4 max-sm:text-base" bind:value={theme}>
+					global.app.settings.mode = mode;
+					const opposite = mode === "dark" ? "light" : "dark";
+					document.documentElement.classList.replace(opposite, mode);
+				}
+			},
+			() => {
+				document.documentElement.classList.remove("theme-switcher");
+			},
+			900
+		);
+	}}
+>
 	<option value="system" selected={global.app.settings.theme === "system"}>System</option>
 	{#each themeGroups as group (group)}
 		<hr />
