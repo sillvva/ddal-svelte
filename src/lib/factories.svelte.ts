@@ -177,16 +177,15 @@ export function configureForm<Input extends RemoteFormInput = RemoteFormInput>(g
 				const wasDirty = dirty;
 				try {
 					dirty = false;
-					await submit();
+					const success = await submit();
 					submitted = true;
 
-					const success = !allIssues;
 					onresult?.({ success, result: form.result, issues: allIssues });
+					if (allIssues) onissues?.({ issues: allIssues });
 
 					if (!success) {
 						dirty = wasDirty;
 						await focusInvalid();
-						onissues?.({ issues: allIssues });
 					}
 				} catch (error) {
 					onresult?.({ success: false, error: unknownErrorMessage(error) });
