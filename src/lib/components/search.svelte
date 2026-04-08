@@ -1,10 +1,11 @@
 <script lang="ts">
-	import { afterNavigate, beforeNavigate, goto } from "$app/navigation";
+	import { pushState, replaceState } from "$app/navigation";
 	import { page } from "$app/state";
 	import { hotkey } from "$lib/util";
 	import { debounce } from "@sillvva/utils";
-	import { tick } from "svelte";
+	import { onMount } from "svelte";
 	import type { HTMLInputAttributes } from "svelte/elements";
+	import { SvelteURL } from "svelte/reactivity";
 
 	let {
 		name = "s",
@@ -12,41 +13,49 @@
 		...rest
 	}: Omit<HTMLInputAttributes, "class" | "name" | "value"> & { name?: string } = $props();
 
-	const value = $derived(page.url.searchParams.get(name) ?? "");
+	const url = new SvelteURL(page.url);
+	const value = $derived(url.searchParams.get(name) ?? "");
 
-	const updateValue = debounce(() => {
-		formRef.requestSubmit();
+	const updateValue = debounce((val: string) => {
+		updateSearch(val);
 	}, 300);
 
-	beforeNavigate(() => {
-		if (ref && ref.contains(document.activeElement)) {
-			localStorage.setItem("hasFocus", "true");
-			const pos = ref.selectionStart ?? 0;
-			localStorage.setItem("position", String(pos));
-		}
-	});
-
-	afterNavigate(async () => {
-		await tick();
-		if (localStorage.getItem("hasFocus") === "true") {
-			const savedPosition = Number.parseInt(localStorage.getItem("position") ?? "0", 10);
-			localStorage.removeItem("hasFocus");
-			localStorage.removeItem("position");
-			if (ref) {
-				ref.focus();
-				await tick();
-				if (document.activeElement === ref) {
-					ref.setSelectionRange(savedPosition, savedPosition);
+	function updateSearch(val: string, replace: boolean = false) {
+		if (replace) {
+			replaceState(url, {
+				...page.state,
+				search: {
+					...page.state.search,
+					[name]: val
 				}
-			}
+			});
+		} else {
+			pushState(url, {
+				...page.state,
+				search: {
+					...page.state.search,
+					[name]: val
+				}
+			});
 		}
+	}
+
+	onMount(() => {
+		if (value) updateSearch(value, true);
 	});
 
-	let formRef: HTMLFormElement;
 	let ref: HTMLInputElement;
 </script>
 
-<form bind:this={formRef} method="get" class="min-w-0 flex-1">
+<form
+	method="get"
+	class="min-w-0 flex-1"
+	onsubmit={(e) => {
+		e.preventDefault();
+		updateValue.cancel();
+		updateSearch(ref.value);
+	}}
+>
 	<search
 		class="input focus-within:border-primary sm:input-sm flex w-full items-center gap-2 max-sm:*:text-base noscript:pr-0"
 		class:pr-0={!!value.trim()}
@@ -67,12 +76,13 @@
 			class="w-full flex-1"
 			aria-label={rest.placeholder || "Search"}
 			oninput={(e) => {
-				const val = e.currentTarget.value;
-				if (val) updateValue.call();
-				else {
-					const url = new URL(page.url);
+				const val = (e.target as HTMLInputElement).value;
+				if (val) {
+					url.searchParams.set(name, val);
+					updateValue.call(val);
+				} else {
 					url.searchParams.delete(name);
-					goto(url.pathname + url.search);
+					updateValue.call("");
 				}
 			}}
 			{...rest}
@@ -83,9 +93,8 @@
 					type="button"
 					class="btn btn-sm btn-ghost"
 					onclick={() => {
-						const url = new URL(page.url);
 						url.searchParams.delete(name);
-						goto(url.pathname + url.search);
+						updateSearch("");
 					}}
 					aria-label="Clear Search"
 				>

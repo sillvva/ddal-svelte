@@ -40,6 +40,7 @@ declare global {
 						name: string;
 						imageUrl: string;
 				  };
+			search?: Record<string, string>;
 		}
 	}
 

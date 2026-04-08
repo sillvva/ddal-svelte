@@ -62,7 +62,10 @@
 	{@const queryParams = { param: params.characterId, newRedirect: true }}
 	{@const character = await API.characters.queries.get(queryParams)}
 	{@const myCharacter = character.userId === user?.id}
-	{@const search = new EntitySearchFactory(character.logs, page.url.searchParams.get(searchKey) || "")}
+	{@const search = new EntitySearchFactory(
+		character.logs,
+		page.url.searchParams.get(searchKey) ?? page.state.search?.[searchKey] ?? ""
+	)}
 	{@const sortedResults = search.results.toSorted((a, b) => sorter(a.showDate, b.showDate))}
 
 	<Head

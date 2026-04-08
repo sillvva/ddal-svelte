@@ -17,7 +17,7 @@
 <svelte:boundary>
 	{@const { user } = await API.app.queries.request()}
 	{@const dms = await API.dms.queries.getAll()}
-	{@const search = new EntitySearchFactory(dms, page.url.searchParams.get(searchKey) || "")}
+	{@const search = new EntitySearchFactory(dms, page.url.searchParams.get(searchKey) ?? page.state.search?.[searchKey] ?? "")}
 	{@const sortedResults = search.results.toSorted(
 		(a, b) => sorter(a.isUser, b.isUser) || sorter(b.score, a.score) || sorter(a.name, b.name)
 	)}

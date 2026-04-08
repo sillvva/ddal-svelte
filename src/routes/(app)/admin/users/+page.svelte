@@ -9,7 +9,7 @@
 	import { toJSObjectNotation } from "@sillvva/utils";
 
 	const searchKey = "s";
-	const search = $derived(page.url.searchParams.get(searchKey) ?? "");
+	const search = $derived(page.url.searchParams.get(searchKey) ?? page.state.search?.[searchKey] ?? "");
 
 	const users = $derived(await API.admin.queries.getUsers());
 	const parser = $derived(
@@ -133,7 +133,7 @@
 													.getUsers()
 													.withOverride((users) =>
 														users.map((u) =>
-															u.id === user.id ? { ...u, banned: true, banReason: banForm.fields.banReason.value() } : u
+															u.id === user.id ? { ...u, banned: true, banReason: banForm.fields.banReason.value() ?? null } : u
 														)
 													)
 											);

@@ -23,7 +23,7 @@
 <svelte:boundary>
 	{@const { user } = await API.app.queries.request()}
 	{@const logs = await API.logs.queries.getDmLogs()}
-	{@const search = new EntitySearchFactory(logs, page.url.searchParams.get(searchKey) || "")}
+	{@const search = new EntitySearchFactory(logs, page.url.searchParams.get(searchKey) ?? page.state.search?.[searchKey] ?? "")}
 	{@const sortedResults = search.results.toSorted((a, b) =>
 		global.app.dmLogs.sort === "asc" ? sorter(a.date, b.date) : sorter(b.date, a.date)
 	)}

@@ -199,6 +199,7 @@
 									<div class="bg-base-100 rounded-lg p-6">
 										<h3 class="mb-2 text-lg font-bold">Annotations</h3>
 										<div class="highlighted overflow-x-scroll">
+											<!-- eslint-disable-next-line svelte/no-at-html-tags -->
 											{@html log.highlighted}
 										</div>
 									</div>
