@@ -18,18 +18,16 @@
 	const global = getGlobal();
 	const schema = dungeonMasterFormSchema;
 	const form = API.dms.forms.save;
-
-	// svelte-ignore await_waterfall
-	const dm = $derived(await API.dms.queries.get(params.dmId));
-
-	const data = $derived({
-		id: dm.id,
-		name: dm.name,
-		DCI: dm.DCI || ""
-	});
 </script>
 
 <svelte:boundary>
+	{@const dm = await API.dms.queries.get(params.dmId)}
+	{@const data = {
+		id: dm.id,
+		name: dm.name,
+		DCI: dm.DCI || ""
+	}}
+
 	{#snippet failed(error)}<Error {error} boundary="edit-dm" />{/snippet}
 
 	<Head title={dm.name} />
@@ -126,8 +124,8 @@
 								{#if dm.isUser}
 									<td class="max-md:hidden">
 										<div class="min-w-max">
-											{log.isDmLog ? "DM Log" : "Log"}{#if !log.isDmLog}{" "}
-												({log.type}){/if}
+											{log.isDmLog ? "DM Log" : "Log"}{#if !log.isDmLog}
+												&nbsp;({log.type}){/if}
 										</div>
 									</td>
 								{/if}

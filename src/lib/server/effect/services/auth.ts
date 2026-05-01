@@ -1,75 +1,20 @@
 import { getRequestEvent } from "$app/server";
 import { privateEnv } from "$lib/env/private";
-import { localsSessionSchema, localsUserSchema, type LocalsSession, type LocalsUser, type UserId } from "$lib/schemas";
-import { DBService, DrizzleError, type Database, type Transaction } from "$lib/server/db";
+import { localsSessionSchema, localsUserSchema, type UserId } from "$lib/schemas";
+import { DBService } from "$lib/server/db";
 import { RedirectError, type ErrorParams } from "$lib/server/effect/errors";
 import { passkey } from "@better-auth/passkey";
 import { isDefined } from "@sillvva/utils";
-import type { RequestEvent } from "@sveltejs/kit";
 import { drizzleAdapter } from "better-auth/adapters/drizzle";
 import { betterAuth } from "better-auth/minimal";
 import { lastLoginMethod } from "better-auth/plugins";
 import { admin } from "better-auth/plugins/admin";
 import { sveltekitCookies } from "better-auth/svelte-kit";
 import { Data, Duration, Effect } from "effect";
-import type { UnknownException } from "effect/Cause";
 import { v7 } from "uuid";
 import * as v from "valibot";
-import { parse, type InvalidSchemaError } from "../util";
+import { parse } from "../util";
 import { UserService } from "./users";
-
-const AuthProgram = Effect.fn("AuthService.auth")(function* (db: Database | Transaction) {
-	return betterAuth({
-		appName: "Adventurers League Log Sheet",
-		database: drizzleAdapter(db, {
-			provider: "pg"
-		}),
-		secret: privateEnv.AUTH_SECRET,
-		baseURL: privateEnv.PUBLIC_URL,
-		socialProviders: {
-			google: {
-				clientId: privateEnv.GOOGLE_CLIENT_ID,
-				clientSecret: privateEnv.GOOGLE_CLIENT_SECRET,
-				disableSignUp: privateEnv.DISABLE_SIGNUPS
-			},
-			discord: {
-				clientId: privateEnv.DISCORD_CLIENT_ID,
-				clientSecret: privateEnv.DISCORD_CLIENT_SECRET,
-				disableSignUp: privateEnv.DISABLE_SIGNUPS
-			}
-		},
-		plugins: [passkey(), admin(), lastLoginMethod(), sveltekitCookies(getRequestEvent)],
-		account: {
-			accountLinking: {
-				enabled: true
-			}
-		},
-		session: {
-			expiresIn: Duration.toSeconds("30 days")
-		},
-		advanced: {
-			database: {
-				generateId: () => v7()
-			}
-		}
-	});
-});
-
-type Auth = Effect.Effect.Success<ReturnType<typeof AuthProgram>>;
-
-interface AuthApiImpl {
-	readonly auth: () => Effect.Effect<Auth>;
-	readonly getAuthSession: () => Effect.Effect<
-		{
-			session: LocalsSession | undefined;
-			user: LocalsUser | undefined;
-			auth: Auth;
-		},
-		DrizzleError | InvalidSchemaError | AuthError | UnknownException,
-		UserService
-	>;
-	readonly guard: (adminOnly?: boolean) => Effect.Effect<{ user: LocalsUser; event: RequestEvent }, RedirectError | InvalidUser>;
-}
 
 class AuthError extends Data.TaggedError("AuthError")<ErrorParams> {
 	constructor(err: unknown) {
@@ -88,15 +33,47 @@ export class AuthService extends Effect.Service<AuthService>()("AuthService", {
 	effect: Effect.fn("AuthService")(function* () {
 		const { db } = yield* DBService;
 
-		const impl: AuthApiImpl = {
-			auth: Effect.fn("AuthService.auth")(function* () {
-				return yield* AuthProgram(db);
+		const auth = betterAuth({
+			appName: "Adventurers League Log Sheet",
+			database: drizzleAdapter(db, {
+				provider: "pg"
 			}),
+			secret: privateEnv.AUTH_SECRET,
+			baseURL: privateEnv.PUBLIC_URL,
+			socialProviders: {
+				google: {
+					clientId: privateEnv.GOOGLE_CLIENT_ID,
+					clientSecret: privateEnv.GOOGLE_CLIENT_SECRET,
+					disableSignUp: privateEnv.DISABLE_SIGNUPS
+				},
+				discord: {
+					clientId: privateEnv.DISCORD_CLIENT_ID,
+					clientSecret: privateEnv.DISCORD_CLIENT_SECRET,
+					disableSignUp: privateEnv.DISABLE_SIGNUPS
+				}
+			},
+			plugins: [passkey(), admin(), lastLoginMethod(), sveltekitCookies(getRequestEvent)],
+			account: {
+				accountLinking: {
+					enabled: true
+				}
+			},
+			session: {
+				expiresIn: Duration.toSeconds("30 days")
+			},
+			advanced: {
+				database: {
+					generateId: () => v7()
+				}
+			}
+		});
+
+		return {
+			auth,
 			getAuthSession: Effect.fn("AuthService.getAuthSession")(function* () {
 				const Users = yield* UserService;
 				const event = getRequestEvent();
 
-				const auth = yield* impl.auth();
 				const result = yield* Effect.tryPromise({
 					try: () => auth.api.getSession({ headers: event.request.headers }),
 					catch: (err) => new AuthError(err)
@@ -140,8 +117,6 @@ export class AuthService extends Effect.Service<AuthService>()("AuthService", {
 				return { user: result.output, event };
 			})
 		};
-
-		return impl;
 	})
 }) {}
 

@@ -9,10 +9,9 @@ import * as v from "valibot";
 export const impersonateUser = guardedForm(
 	v.object({ userId: userIdSchema }),
 	function* ({ userId }, { event, issue }) {
-		const Auth = yield* AuthService;
+		const { auth } = yield* AuthService;
 		const Admin = yield* AdminService;
 
-		const auth = yield* Auth.auth();
 		const user = yield* Admin.get.user(userId).pipe(Effect.catchAll((err) => Effect.die(invalid(issue(err.message)))));
 
 		if (user.banned) throw invalid("User is banned");
@@ -31,8 +30,7 @@ export const impersonateUser = guardedForm(
 );
 
 export const stopImpersonating = guardedForm(function* ({ event }) {
-	const Auth = yield* AuthService;
-	const auth = yield* Auth.auth();
+	const { auth } = yield* AuthService;
 
 	yield* Effect.tryPromise(() =>
 		auth.api.stopImpersonating({
@@ -46,10 +44,9 @@ export const stopImpersonating = guardedForm(function* ({ event }) {
 export const banUser = guardedForm(
 	v.object({ userId: userIdSchema, banReason: requiredString }),
 	function* ({ userId, banReason }, { event }) {
-		const Auth = yield* AuthService;
+		const { auth } = yield* AuthService;
 		const Admin = yield* AdminService;
 
-		const auth = yield* Auth.auth();
 		const user = yield* Admin.get.user(userId).pipe(Effect.catchAll((err) => Effect.die(invalid(err.message))));
 
 		if (user.role === "admin") throw invalid("Cannot ban admins");
@@ -68,8 +65,7 @@ export const banUser = guardedForm(
 export const unbanUser = guardedForm(
 	v.object({ userId: userIdSchema }),
 	function* ({ userId }, { event }) {
-		const Auth = yield* AuthService;
-		const auth = yield* Auth.auth();
+		const { auth } = yield* AuthService;
 
 		return yield* Effect.tryPromise(() =>
 			auth.api.unbanUser({

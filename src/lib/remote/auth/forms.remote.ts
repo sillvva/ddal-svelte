@@ -4,8 +4,7 @@ import { redirect } from "@sveltejs/kit";
 import { Effect } from "effect";
 
 export const signOut = guardedForm(function* ({ event }) {
-	const Auth = yield* AuthService;
-	const auth = yield* Auth.auth();
+	const { auth } = yield* AuthService;
 
 	yield* Effect.tryPromise(() =>
 		auth.api.signOut({

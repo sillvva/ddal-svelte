@@ -1,9 +1,7 @@
-import type { AppLogId, AppLogSchema, UserId } from "$lib/schemas";
-import { DBService, runQuery, type DrizzleError, type Filter, type Transaction, type TRSchema } from "$lib/server/db";
+import { DBService, runQuery, type Filter, type Transaction, type TRSchema } from "$lib/server/db";
 import type { relations } from "$lib/server/db/relations";
-import { appLogs, type AppLog, type User } from "$lib/server/db/schema";
+import { appLogs } from "$lib/server/db/schema";
 import { type ErrorParams } from "$lib/server/effect/errors";
-import type { ParseMetadata } from "@sillvva/search";
 import { DrizzleSearchParser } from "@sillvva/search/drizzle";
 import { isTupleOf } from "@sillvva/utils";
 import { eq, sql } from "drizzle-orm";
@@ -27,24 +25,11 @@ export class DeleteLogError extends Data.TaggedError("DeleteLogError")<ErrorPara
 	}
 }
 
-interface AdminApiImpl {
-	readonly get: {
-		readonly user: (userId: UserId) => Effect.Effect<User, UserNotFoundError | DrizzleError>;
-		readonly logs: (search?: string) => Effect.Effect<{ logs: AppLog[]; metadata?: ParseMetadata }, DrizzleError>;
-	};
-	readonly set: {
-		readonly saveLog: (
-			values: Omit<AppLogSchema, "id">
-		) => Effect.Effect<Omit<AppLogSchema, "id">, SaveAppLogError | DrizzleError>;
-		readonly deleteLog: (logId: AppLogId) => Effect.Effect<{ id: AppLogId }, DeleteLogError | DrizzleError>;
-	};
-}
-
 export class AdminService extends Effect.Service<AdminService>()("AdminService", {
 	effect: Effect.fn("AdminService")(function* () {
 		const { db } = yield* DBService;
 
-		const impl: AdminApiImpl = {
+		return {
 			get: {
 				user: Effect.fn("AdminService.get.user")(function* (userId) {
 					return yield* runQuery(
@@ -128,8 +113,6 @@ export class AdminService extends Effect.Service<AdminService>()("AdminService",
 				})
 			}
 		};
-
-		return impl;
 	}),
 	dependencies: [DBService.Default()]
 }) {}

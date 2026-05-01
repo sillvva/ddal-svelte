@@ -4,6 +4,7 @@ import {
 	characterLogSchema,
 	dMLogSchema,
 	logIdParamSchema,
+	orEmpty,
 	type DmLogSchemaIn,
 	type LogSchemaIn
 } from "$lib/schemas";
@@ -116,9 +117,9 @@ export const saveDM = guardedForm("unchecked", function* (input: DmLogSchemaIn, 
 		Effect.map((dm) => omit(dm, ["logs"]))
 	);
 
-	const parsedId = yield* formParse(characterIdSchema, input.characterId);
+	const parsedId = yield* formParse(orEmpty(characterIdSchema), input.characterId);
 
-	const characters = input.characterId
+	const characters = parsedId
 		? yield* Characters.get
 				.all(user.id, {
 					characterId: parsedId

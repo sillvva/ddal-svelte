@@ -2,17 +2,9 @@ import { getRequestEvent } from "$app/server";
 import { PlaceholderName } from "$lib/constants";
 import { getLogsSummary, parseCharacter } from "$lib/entities";
 import type { CharacterId, CharacterSchema, UserId } from "$lib/schemas";
-import {
-	buildConflictUpdateColumns,
-	DBService,
-	runQuery,
-	TransactionError,
-	type DrizzleError,
-	type InferQueryResult,
-	type Transaction
-} from "$lib/server/db";
+import { buildConflictUpdateColumns, DBService, runQuery, type InferQueryResult, type Transaction } from "$lib/server/db";
 import { characterIncludes } from "$lib/server/db/includes";
-import { characters, logs, type Character } from "$lib/server/db/schema";
+import { characters, logs } from "$lib/server/db/schema";
 import type { ErrorParams } from "$lib/server/effect/errors";
 import { AppLog } from "$lib/server/effect/logging";
 import { isTupleOf } from "@sillvva/utils";
@@ -43,34 +35,14 @@ export interface FullCharacterData extends Omit<CharacterData, "logs">, ReturnTy
 	imageUrl: string;
 }
 
-interface CharacterApiImpl {
-	readonly get: {
-		readonly one: (
-			characterId: CharacterId,
-			includeLogs?: boolean
-		) => Effect.Effect<FullCharacterData, DrizzleError | CharacterNotFoundError>;
-		readonly all: (
-			userId: UserId,
-			options?: { characterId?: CharacterId; includeLogs?: boolean }
-		) => Effect.Effect<FullCharacterData[], DrizzleError>;
-	};
-	readonly set: {
-		readonly save: (data: CharacterSchema, userId: UserId) => Effect.Effect<Character, SaveCharacterError | DrizzleError>;
-		readonly delete: (
-			characterId: CharacterId,
-			userId: UserId
-		) => Effect.Effect<{ id: CharacterId }, DeleteCharacterError | DrizzleError | TransactionError>;
-	};
-}
-
 export class CharacterService extends Effect.Service<CharacterService>()("CharacterService", {
 	dependencies: [DBService.Default()],
 	effect: Effect.fn("CharacterService")(function* () {
 		const { db, transaction } = yield* DBService;
 
-		const impl: CharacterApiImpl = {
+		return {
 			get: {
-				one: Effect.fn("CharacterService.get.one")(function* (characterId, includeLogs = true) {
+				one: Effect.fn("CharacterService.get.one")(function* (characterId: CharacterId, includeLogs = true) {
 					return yield* runQuery(
 						db.query.characters.findFirst({
 							with: characterIncludes(includeLogs),
@@ -84,7 +56,10 @@ export class CharacterService extends Effect.Service<CharacterService>()("Charac
 					);
 				}),
 
-				all: Effect.fn("CharacterService.get.all")(function* (userId, { characterId, includeLogs = true } = {}) {
+				all: Effect.fn("CharacterService.get.all")(function* (
+					userId: UserId,
+					{ characterId, includeLogs = true }: { characterId?: CharacterId; includeLogs?: boolean } = {}
+				) {
 					const characters = yield* runQuery(
 						db.query.characters.findMany({
 							with: characterIncludes(includeLogs),
@@ -110,7 +85,7 @@ export class CharacterService extends Effect.Service<CharacterService>()("Charac
 				})
 			},
 			set: {
-				save: Effect.fn("CharacterService.set.save")(function* (data, userId) {
+				save: Effect.fn("CharacterService.set.save")(function* (data: CharacterSchema, userId: UserId) {
 					if (!data.id) yield* new SaveCharacterError("No character ID provided", { status: 400 });
 
 					return yield* runQuery(
@@ -138,7 +113,7 @@ export class CharacterService extends Effect.Service<CharacterService>()("Charac
 					);
 				}),
 
-				delete: Effect.fn("CharacterService.set.delete")(function* (characterId, userId) {
+				delete: Effect.fn("CharacterService.set.delete")(function* (characterId: CharacterId, userId: UserId) {
 					return yield* transaction(
 						Effect.fn("CharacterService.set.delete.transaction")(function* (tx) {
 							yield* runQuery(
@@ -176,8 +151,6 @@ export class CharacterService extends Effect.Service<CharacterService>()("Charac
 				})
 			}
 		};
-
-		return impl;
 	})
 }) {}
 
