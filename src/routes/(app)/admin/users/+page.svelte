@@ -50,9 +50,9 @@
 			</thead>
 			<tbody>
 				{#each results as user (user.id)}
-					{@const impersonateForm = API.admin.forms.impersonateUser.for(user.id)}
-					{@const banForm = API.admin.forms.banUser.for(user.id)}
-					{@const unbanForm = API.admin.forms.unbanUser.for(user.id)}
+					{const impersonateForm = API.admin.forms.impersonateUser.for(user.id)}
+					{const banForm = API.admin.forms.banUser.for(user.id)}
+					{const unbanForm = API.admin.forms.unbanUser.for(user.id)}
 					<tr data-banned={user.banned} class="data-[banned=true]:bg-error/10">
 						<td class="pr-0 align-top transition-colors sm:pr-2">
 							<div class="avatar">

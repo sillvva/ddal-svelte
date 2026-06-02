@@ -30,13 +30,6 @@
 			account: user?.accounts.find((a) => a.providerId === p.id)
 		}))
 	);
-	const initials = $derived(
-		user?.name
-			.split(" ")
-			.map((n) => n[0])
-			.join("")
-			.slice(0, 2) || ""
-	);
 
 	onMount(() => {
 		const handleOpenSettings = () => void (open = true);
@@ -102,6 +95,8 @@
 			<div
 				class="avatar ring-primary group/avatar bg-primary ring-offset-base-100 flex h-9 w-9 items-center justify-center overflow-hidden rounded-full ring-3 ring-offset-2"
 			>
+				{const nameParts = user.name.split(" ")}
+				{const initials = nameParts.map((n) => n[0] + (nameParts.length === 1 ? n[1] : "")).join("").slice(0, 2) || ""}
 				{#if user.image}
 					<img
 						src={user.image}
@@ -114,7 +109,7 @@
 						}}
 					/>
 				{:else if initials}
-					<span class="text-primary text-xl font-bold uppercase">{initials}</span>
+					<span class="text-primary-content text-xl font-bold uppercase">{initials}</span>
 				{/if}
 			</div>
 			<div class="flex-1">
@@ -137,7 +132,7 @@
 				</form>
 			{/if}
 		</div>
-		<div class="divider my-0 h-[9px]"></div>
+		<div class="divider my-0 h-2.25"></div>
 		<ul class="menu menu-lg w-full gap-2 px-0">
 			<li>
 				<div class="flex items-center gap-2 py-0 hover:bg-transparent">
@@ -155,13 +150,13 @@
 				</div>
 			</li>
 		</ul>
-		<div class="divider my-0 h-[9px]"></div>
+		<div class="divider my-0 h-2.25"></div>
 		<ul class="menu menu-lg w-full px-0 [&_li>*]:px-2">
 			<li class="menu-title">
 				<span class="font-bold">Linked Accounts</span>
 			</li>
 			{#each authProviders as provider (provider.id)}
-				{@const account = userAccounts.find((a) => a.providerId === provider.id)}
+				{const account = userAccounts.find((a) => a.providerId === provider.id)}
 				<li>
 					<span class="flex gap-2 hover:bg-transparent">
 						<span class={["size=6 iconify-color", provider.iconify]}></span>
@@ -240,7 +235,7 @@
 			{/each}
 		</ul>
 		<Passkeys />
-		<div class="divider my-0 h-[9px]"></div>
+		<div class="divider my-0 h-2.25"></div>
 		<ul class="menu menu-lg w-full px-0">
 			<li>
 				<a href="https://github.com/sillvva/ddal-svelte" target="_blank" rel="noreferrer noopener">

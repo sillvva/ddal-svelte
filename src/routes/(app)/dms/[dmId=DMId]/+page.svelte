@@ -21,8 +21,8 @@
 </script>
 
 <svelte:boundary>
-	{@const dm = await API.dms.queries.get(params.dmId)}
-	{@const data = {
+	{const dm = await API.dms.queries.get(params.dmId)}
+	{const data = {
 		id: dm.id,
 		name: dm.name,
 		DCI: dm.DCI || ""

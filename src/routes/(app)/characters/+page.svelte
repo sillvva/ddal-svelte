@@ -17,13 +17,13 @@
 </script>
 
 <svelte:boundary>
-	{@const { user } = await API.app.queries.request()}
-	{@const characters = await API.characters.queries.getAll()}
-	{@const search = new EntitySearchFactory(
+	{const { user } = await API.app.queries.request()}
+	{const characters = await API.characters.queries.getAll()}
+	{const search = new EntitySearchFactory(
 		characters,
 		page.url.searchParams.get(searchKey) ?? page.state.search?.[searchKey] ?? ""
 	)}
-	{@const sortedResults = search.results.toSorted(
+	{const sortedResults = search.results.toSorted(
 		(a, b) => sorter(b.score, a.score) || sorter(a.totalLevel, b.totalLevel) || sorter(a.name, b.name)
 	)}
 

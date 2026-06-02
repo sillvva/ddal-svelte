@@ -11,7 +11,7 @@
 
 <div class={["flex min-h-9 flex-1 items-center max-sm:min-h-8 sm:mb-4", crumbs.length === 1 && "max-sm:hidden"]}>
 	{#if crumbs.length > 0}
-		{@const back = crumbs.filter((bc) => !!bc.title).at(-2)}
+		{const back = crumbs.filter((bc) => !!bc.title).at(-2)}
 		{#if back?.url && crumbs.length > 1}
 			<div class="flex-1 sm:hidden">
 				<BackButton href={back.url}>{back.title}</BackButton>

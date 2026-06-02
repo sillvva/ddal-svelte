@@ -28,8 +28,6 @@
 		timeStyle: "long"
 	});
 
-	const logsQuery = $derived(API.admin.queries.getAppLogs(params.s ?? ""));
-
 	let syntaxReference = $state("");
 
 	async function openSyntaxReference() {
@@ -52,7 +50,8 @@
 <Head title="App Logs" />
 
 <svelte:boundary>
-	{@const baseSearch = await API.admin.queries.getBaseSearch()}
+	{const baseSearch = await API.admin.queries.getBaseSearch()}
+	{const logsQuery = await API.admin.queries.getAppLogs(params.s ?? "")}
 
 	<section class="flex flex-col gap-1">
 		<div class="flex w-full gap-2 sm:max-w-md md:max-w-md">
