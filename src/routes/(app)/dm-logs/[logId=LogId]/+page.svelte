@@ -20,7 +20,6 @@
 	const schema = dmLogSchema;
 	const form = API.logs.forms.saveDM;
 	const initialErrors = $derived(params.logId !== "new");
-	// svelte-ignore await_waterfall
 	const log = $derived(
 		await API.logs.forms.dm({
 			param: { logId: params.logId }

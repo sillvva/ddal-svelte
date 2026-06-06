@@ -114,7 +114,7 @@
 		{/snippet}
 	</DatePicker.Input>
 	<DatePicker.Content class="z-10000 mt-2">
-		<DatePicker.Calendar class="shadow-popover border-base-300 bg-base-200 rounded-lg border p-[22px]">
+		<DatePicker.Calendar class="shadow-popover border-base-300 bg-base-200 rounded-lg border p-5.5">
 			{#snippet children({ months, weekdays })}
 				<DatePicker.Header class="flex items-center justify-between">
 					<DatePicker.PrevButton
@@ -153,7 +153,7 @@
 													].join(" ")}
 												>
 													<div
-														class="group-data-selected:bg-base-content/50 absolute top-[5px] size-1 rounded-full transition-all not-group-data-today:hidden"
+														class="group-data-selected:bg-base-content/50 absolute top-1.25 size-1 rounded-full transition-all not-group-data-today:hidden"
 													></div>
 													{date.day}
 												</DatePicker.Day>

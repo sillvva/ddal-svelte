@@ -20,12 +20,9 @@
 
 	let { params } = $props();
 
-	// svelte-ignore await_waterfall
 	const request = $derived(await API.app.queries.request());
 	const user = $derived(request.user!);
-	// svelte-ignore await_waterfall
 	const character = $derived(await API.characters.queries.get({ param: params.characterId }));
-	// svelte-ignore await_waterfall
 	const dms = $derived(await API.dms.queries.getAllWithoutLogs());
 	const { magicItems, storyAwards } = $derived(getItemEntities(character, { excludeDropped: true, lastLogId: params.logId }));
 
@@ -33,7 +30,6 @@
 	const form = API.logs.forms.saveCharacter;
 	const firstLog = $derived(page.url.searchParams.get("firstLog") === "true");
 	const initialErrors = $derived(params.logId !== "new");
-	// svelte-ignore await_waterfall
 	const log = $derived(
 		await API.logs.forms.character({ character: { id: character.id, name: character.name }, logId: params.logId, firstLog })
 	);
@@ -164,7 +160,7 @@
 							field={form.fields.level}
 							type="number"
 							label="Level"
-							max={Math.max(form.fields.level.value(), 20 - character.totalLevel)}
+							max={Math.max(form.fields.level.value() || 0, 20 - character.totalLevel)}
 						/>
 					</Control>
 				{/if}
