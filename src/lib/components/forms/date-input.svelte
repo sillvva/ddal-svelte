@@ -5,7 +5,7 @@
 	import { isTupleOfAtLeast } from "@sillvva/utils";
 	import type { RemoteFormField } from "@sveltejs/kit";
 	import { DatePicker, type DatePickerRootProps } from "bits-ui";
-	import SuperDebugRuned from "sveltekit-superforms/SuperDebug.svelte";
+	import Debug from "../debug.svelte";
 	import Input from "./input.svelte";
 
 	interface Props extends Omit<DatePickerRootProps, "value" | "minValue" | "maxValue"> {
@@ -180,7 +180,7 @@
 </label>
 
 {#if debug}
-	<SuperDebugRuned
+	<Debug
 		data={{
 			timezone: tz,
 			current: value ? clamp(dateToCalendar(value), minDateValue, maxDateValue).toString() : undefined,

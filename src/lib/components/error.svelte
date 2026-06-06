@@ -6,7 +6,7 @@
 	import { getLogger } from "$lib/stores.svelte";
 	import { omit } from "@sillvva/utils";
 	import { useOs } from "@svelteuidev/composables";
-	import SuperDebugRuned from "sveltekit-superforms/SuperDebug.svelte";
+	import Debug from "./debug.svelte";
 
 	interface Props {
 		error: unknown;
@@ -50,9 +50,10 @@
 			{const { user } = await API.app.queries.request()}
 			<div class="flex max-w-full flex-col gap-4">
 				{#if err.stack}
+					<!-- eslint-disable-next-line svelte/no-at-html-tags -->
 					<pre class="bg-base-200 w-full overflow-x-scroll rounded-lg p-4">{@html err.stack}</pre>
 				{/if}
-				<SuperDebugRuned
+				<Debug
 					data={{
 						error: err.message,
 						boundary,

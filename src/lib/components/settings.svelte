@@ -96,7 +96,11 @@
 				class="avatar ring-primary group/avatar bg-primary ring-offset-base-100 flex h-9 w-9 items-center justify-center overflow-hidden rounded-full ring-3 ring-offset-2"
 			>
 				{const nameParts = user.name.split(" ")}
-				{const initials = nameParts.map((n) => n[0] + (nameParts.length === 1 ? n[1] : "")).join("").slice(0, 2) || ""}
+				{const initials =
+					nameParts
+						.map((n) => (n[0] || "") + (nameParts.length === 1 ? n[1] : ""))
+						.join("")
+						.slice(0, 2) || ""}
 				{#if user.image}
 					<img
 						src={user.image}

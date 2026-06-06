@@ -2,7 +2,7 @@
 	import { dev } from "$app/environment";
 	import type { RemoteFormField } from "@sveltejs/kit";
 	import { Combobox } from "bits-ui";
-	import SuperDebugRuned from "sveltekit-superforms/SuperDebug.svelte";
+	import Debug from "../debug.svelte";
 	import FieldMessage from "./field-message.svelte";
 	import Input from "./input.svelte";
 
@@ -234,5 +234,5 @@
 </Combobox.Root>
 
 {#if debug}
-	<SuperDebugRuned data={selectedItem} />
+	<Debug data={selectedItem} />
 {/if}

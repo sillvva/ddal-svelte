@@ -1,11 +1,11 @@
 <script lang="ts">
 	import { browser, dev } from "$app/environment";
 	import { page } from "$app/state";
+	import Debug from "$lib/components/debug.svelte";
 	import * as API from "$lib/remote";
 	import { uuidV7 } from "$lib/schemas";
 	import { getLogger } from "$lib/stores.svelte";
 	import { useOs } from "@svelteuidev/composables";
-	import SuperDebugRuned from "sveltekit-superforms/SuperDebug.svelte";
 	import * as v from "valibot";
 	import Layout from "./(app)/+layout.svelte";
 
@@ -92,7 +92,7 @@
 		</div>
 		{#if display}
 			{const { user } = await API.app.queries.request()}
-			<SuperDebugRuned
+			<Debug
 				data={{
 					...page,
 					os: os,

@@ -18,7 +18,7 @@
 	let { children } = $props();
 
 	const global = getGlobal();
-	const { user, ...request } = $derived(await API.app.queries.request());
+	const { user } = $derived(await API.app.queries.request());
 
 	let settingsOpen = $state(false);
 	let loadingImage = $state(true);

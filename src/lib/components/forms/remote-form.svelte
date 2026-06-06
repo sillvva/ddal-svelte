@@ -1,11 +1,11 @@
 <script lang="ts" generics="Input extends RemoteFormInput = RemoteFormInput">
 	import { dev } from "$app/environment";
 	import { navigating, page } from "$app/state";
+	import Debug from "$lib/components/debug.svelte";
 	import { configureForm, errorToast, successToast, type GenericForm, type RemoteFormOptions } from "$lib/factories.svelte";
 	import { isTupleOfAtLeast } from "@sillvva/utils";
 	import type { RemoteFormInput } from "@sveltejs/kit";
 	import { setContext, type Snippet } from "svelte";
-	import SuperDebugRuned from "sveltekit-superforms/SuperDebug.svelte";
 
 	interface Props extends Omit<RemoteFormOptions<Input>, "formEl"> {
 		children?: Snippet<[GenericForm<Input>]>;
@@ -53,7 +53,7 @@
 	</form>
 
 	{#if dev}
-		<SuperDebugRuned
+		<Debug
 			data={{
 				dirty,
 				touched,

@@ -1,5 +1,6 @@
 <script lang="ts">
 	import { pushState } from "$app/navigation";
+	import Debug from "$lib/components/debug.svelte";
 	import Head from "$lib/components/head.svelte";
 	import LoadingPanel from "$lib/components/loading-panel.svelte";
 	import { successToast } from "$lib/factories.svelte.js";
@@ -51,7 +52,7 @@
 
 <svelte:boundary>
 	{const baseSearch = await API.admin.queries.getBaseSearch()}
-	{const logsQuery = await API.admin.queries.getAppLogs(params.s ?? "")}
+	{const logsQuery = API.admin.queries.getAppLogs(params.s ?? "")}
 
 	<section class="flex flex-col gap-1">
 		<div class="flex w-full gap-2 sm:max-w-md md:max-w-md">
@@ -196,13 +197,7 @@
 											<pre class="overflow-x-scroll">{log.stack}</pre>
 										</div>
 									{/if}
-									<div class="bg-base-100 rounded-lg p-6">
-										<h3 class="mb-2 text-lg font-bold">Annotations</h3>
-										<div class="highlighted overflow-x-scroll">
-											<!-- eslint-disable-next-line svelte/no-at-html-tags -->
-											{@html log.highlighted}
-										</div>
-									</div>
+									<Debug title="Annotations" data={log.annotations} />
 								</div>
 							</td>
 						</tr>
@@ -216,10 +211,3 @@
 		</section>
 	{/if}
 </svelte:boundary>
-
-<style>
-	.highlighted :global(pre) {
-		background-color: transparent !important;
-		white-space: pre-wrap !important;
-	}
-</style>
