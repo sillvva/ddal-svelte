@@ -30,11 +30,11 @@
 	);
 </script>
 
-<div class="relative rounded-lg p-4 bg-slate-800">
+<div class="debug-container relative rounded-lg p-4 bg-slate-800">
 	{#if data}
 		<button
 			type="button"
-			class="absolute right-2 top-2 rounded aspect-square pt-2 tooltip tooltip-left bg-slate-700 px-2 py-1 text-xs font-medium text-slate-100 hover:bg-slate-600"
+			class="copy-btn absolute right-2 top-2 rounded aspect-square pt-2 tooltip tooltip-left bg-slate-700 px-2 py-1 text-xs font-medium text-slate-100 hover:bg-slate-600"
 			aria-label="Copy to clipboard"
 			data-tip={tooltip}
 			onclick={copyCode}
@@ -53,6 +53,16 @@
 </div>
 
 <style>
+	.debug-container {
+		container-type: inline-size;
+	}
+
+	@container (max-width: 299px) {
+		.copy-btn {
+			display: none;
+		}
+	}
+
 	.highlighted :global(pre) {
 		background-color: transparent !important;
 		white-space: pre-wrap !important;
