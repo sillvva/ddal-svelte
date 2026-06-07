@@ -47,14 +47,15 @@ export const GET = async ({ params, url }) => {
 				? character.imageUrl
 				: `${url.origin}${character.imageUrl}`;
 
-	let response;
 	try {
-		response = await fetch(imageUrl, { method: "GET" });
+		const response = await fetch(imageUrl, { method: "GET" });
 		if (!response.ok)
 			throw new UnableToFetchImageError({ message: response.statusText, status: response.status as NumericRange<300, 599> });
 	} catch {
 		imageUrl = fallbackImageUrl;
-		response = await fetch(fallbackImageUrl, { method: "GET" });
+		const response = await fetch(fallbackImageUrl, { method: "GET" });
+		if (!response.ok)
+			throw new UnableToFetchImageError({ message: response.statusText, status: response.status as NumericRange<300, 599> });
 	}
 
 	const svg = await satori(
