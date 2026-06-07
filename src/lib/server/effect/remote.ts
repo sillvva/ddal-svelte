@@ -99,7 +99,7 @@ export function guardedCommand<
 	schema: Schema,
 	fn: (output: StandardSchemaV1.InferOutput<Schema>, auth: { user: LocalsUser; event: RequestEvent }) => Generator<T, X>,
 	adminOnly?: boolean
-): RemoteCommand<StandardSchemaV1.InferInput<Schema>, Promise<EffectResult<X>>>;
+): RemoteCommand<StandardSchemaV1.InferInput<Schema>, EffectResult<X>>;
 
 export function guardedCommand<
 	Input,
@@ -111,7 +111,7 @@ export function guardedCommand<
 >(
 	fn: (input: Input, auth: { user: LocalsUser; event: RequestEvent }) => Generator<T, X>,
 	adminOnly?: boolean
-): RemoteCommand<Input, Promise<EffectResult<X>>>;
+): RemoteCommand<Input, EffectResult<X>>;
 
 export function guardedCommand<
 	Schema extends StandardSchemaV1,
