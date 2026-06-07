@@ -17,6 +17,7 @@ if (!checked && building && privateEnv) {
 	console.log("\n✅ Environment variables are valid");
 	console.table(privateEnv);
 	console.log("\n");
+	// eslint-disable-next-line no-useless-assignment
 	checked = true;
 }
 
