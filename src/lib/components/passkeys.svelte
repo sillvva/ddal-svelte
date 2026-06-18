@@ -16,13 +16,13 @@
 	});
 
 	async function initRename(id: PasskeyId, currentName = "", error = "") {
-		const name =
-			prompt("Enter a name for this passkey" + (error ? `\n\n${error}` : ""), currentName.trim()) || id.split("-").at(-1) || "";
+		const passkey = passkeys.find((a) => a.id === id);
+		const fallback = id.split("-").at(-1);
 
-		if (!name.trim()) {
-			initRename(id, name, "Passkey name cannot be empty");
-			return;
-		}
+		const name = prompt("Enter a name for this passkey" + (error ? `\n\n${error}` : ""), currentName.trim()) || fallback || "";
+
+		if (name.trim() === passkey?.name) return;
+		if ((name.trim() === fallback || name.trim() === "") && passkey?.name) return;
 
 		if (passkeys.find((a) => a.name === name)) {
 			initRename(id, name, "Passkey name already exists");
