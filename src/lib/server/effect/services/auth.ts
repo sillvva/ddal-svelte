@@ -85,6 +85,36 @@ export class AuthService extends Effect.Service<AuthService>()("AuthService", {
 					auth
 				};
 			}),
+			getAccounts: Effect.fn("AuthService.getAccounts")(function* () {
+				const event = getRequestEvent();
+				const user = event.locals.user;
+
+				const tasks =
+					user?.accounts.map(({ accountId, providerId }) =>
+						Effect.promise(() =>
+							auth.api
+								.accountInfo({
+									headers: event.request.headers,
+									query: {
+										accountId: accountId
+									}
+								})
+								.then((r) =>
+									r?.user?.name && r.user?.email && r.user?.image
+										? {
+												providerId,
+												name: r?.user.name,
+												email: r?.user.email,
+												image: r?.user.image
+											}
+										: undefined
+								)
+						)
+					) ?? [];
+
+				const result = yield* Effect.all(tasks);
+				return result.filter(isDefined);
+			}),
 			guard: Effect.fn(function* (adminOnly = false) {
 				const event = getRequestEvent();
 				const user = event.locals.user;

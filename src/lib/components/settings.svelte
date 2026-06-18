@@ -3,10 +3,11 @@
 	import { BLANK_CHARACTER, PROVIDERS, type ProviderId } from "$lib/constants";
 	import { errorToast } from "$lib/factories.svelte";
 	import * as API from "$lib/remote";
+	import { getAccounts } from "$lib/remote/auth/queries.remote";
 	import { getGlobal } from "$lib/stores.svelte";
 	import { parseEffectResult } from "$lib/util";
 	import { getLocalTimeZone } from "@internationalized/date";
-	import { isDefined, isTupleOfAtLeast } from "@sillvva/utils";
+	import { isTupleOfAtLeast } from "@sillvva/utils";
 	import { onMount, tick } from "svelte";
 	import Passkeys from "./passkeys.svelte";
 	import ThemeSwitcher from "./theme-switcher.svelte";
@@ -45,21 +46,8 @@
 
 	$effect(() => {
 		if (!userAccounts.length && open) {
-			Promise.allSettled(
-				user?.accounts.map(({ accountId, providerId }) =>
-					authClient.accountInfo({ query: { accountId } }).then((r) =>
-						r.data?.user?.name && r.data?.user?.email && r.data?.user?.image
-							? {
-									providerId,
-									name: r.data?.user.name,
-									email: r.data?.user.email,
-									image: r.data?.user.image
-								}
-							: undefined
-					)
-				) ?? []
-			).then(async (result) => {
-				userAccounts = result.map((r) => (r.status === "fulfilled" ? r.value : undefined)).filter(isDefined);
+			getAccounts().then(async (result) => {
+				userAccounts = result;
 
 				const account =
 					userAccounts.find((a) => a.providerId === global.app.settings.provider) ||
@@ -160,7 +148,7 @@
 				<span class="font-bold">Linked Accounts</span>
 			</li>
 			{#each authProviders as provider (provider.id)}
-				{const account = userAccounts.find((a) => a.providerId === provider.id)}
+				{@const account = userAccounts.find((a) => a.providerId === provider.id)}
 				<li>
 					<span class="flex gap-2 hover:bg-transparent">
 						<span class={["size=6 iconify-color", provider.iconify]}></span>
