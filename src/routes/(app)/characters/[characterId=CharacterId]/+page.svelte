@@ -58,15 +58,14 @@
 </script>
 
 <svelte:boundary>
-	{const { user } = await API.app.queries.request()}
-	{const queryParams = { param: params.characterId, newRedirect: true }}
-	{const character = await API.characters.queries.get(queryParams)}
-	{const myCharacter = character.userId === user?.id}
-	{const search = new EntitySearchFactory(
-		character.logs,
-		page.url.searchParams.get(searchKey) ?? page.state.search?.[searchKey] ?? ""
+	{const { user } = $derived(await API.app.queries.request())}
+	{const queryParams = $derived({ param: params.characterId, newRedirect: true })}
+	{const character = $derived(await API.characters.queries.get(queryParams))}
+	{const myCharacter = $derived(character.userId === user?.id)}
+	{const search = $derived(
+		new EntitySearchFactory(character.logs, page.url.searchParams.get(searchKey) ?? page.state.search?.[searchKey] ?? "")
 	)}
-	{const sortedResults = search.results.toSorted((a, b) => sorter(a.showDate, b.showDate))}
+	{const sortedResults = $derived(search.results.toSorted((a, b) => sorter(a.showDate, b.showDate)))}
 
 	<Head
 		title={character.name}
@@ -365,7 +364,9 @@
 			<!-- Mobile List -->
 			<ul class="overflow-hidden rounded-lg sm:hidden print:hidden">
 				{#each sortedResults as log (log.id)}
-					{const hasDescription = !!log.description?.trim() || log.storyAwardsGained.length > 0 || log.storyAwardsLost.length > 0}
+					{const hasDescription = $derived(
+						!!log.description?.trim() || log.storyAwardsGained.length > 0 || log.storyAwardsLost.length > 0
+					)}
 					<li
 						class="border-b border-b-neutral-500/40 last:border-b-0 data-[deleting=true]:hidden"
 						data-deleting={deletingLog.has(log.id)}
@@ -510,8 +511,9 @@
 						</tr>
 					</thead>
 					{#each sortedResults as log (log.id)}
-						{const hasDescription =
-							!!log.description?.trim() || log.storyAwardsGained.length > 0 || log.storyAwardsLost.length > 0}
+						{const hasDescription = $derived(
+							!!log.description?.trim() || log.storyAwardsGained.length > 0 || log.storyAwardsLost.length > 0
+						)}
 						<tbody class="data-[deleting=true]:hidden first-of-type:[&>tr>td]:border-t-0" data-deleting={deletingLog.has(log.id)}>
 							<tr class="print:text-sm [&>td]:border-0 [&>td]:border-t [&>td]:border-neutral-500/20">
 								<td

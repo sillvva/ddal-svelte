@@ -15,11 +15,13 @@
 </script>
 
 <svelte:boundary>
-	{const { user } = await API.app.queries.request()}
-	{const dms = await API.dms.queries.getAll()}
-	{const search = new EntitySearchFactory(dms, page.url.searchParams.get(searchKey) ?? page.state.search?.[searchKey] ?? "")}
-	{const sortedResults = search.results.toSorted(
-		(a, b) => sorter(a.isUser, b.isUser) || sorter(b.score, a.score) || sorter(a.name, b.name)
+	{const { user } = $derived(await API.app.queries.request())}
+	{const dms = $derived(await API.dms.queries.getAll())}
+	{const search = $derived(
+		new EntitySearchFactory(dms, page.url.searchParams.get(searchKey) ?? page.state.search?.[searchKey] ?? "")
+	)}
+	{const sortedResults = $derived(
+		search.results.toSorted((a, b) => sorter(a.isUser, b.isUser) || sorter(b.score, a.score) || sorter(a.name, b.name))
 	)}
 
 	<Head title="{user?.name}'s DMs" />

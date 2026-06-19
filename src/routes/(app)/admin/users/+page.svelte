@@ -50,9 +50,6 @@
 			</thead>
 			<tbody>
 				{#each results as user (user.id)}
-					{const impersonateForm = API.admin.forms.impersonateUser.for(user.id)}
-					{const banForm = API.admin.forms.banUser.for(user.id)}
-					{const unbanForm = API.admin.forms.unbanUser.for(user.id)}
 					<tr data-banned={user.banned} class="data-[banned=true]:bg-error/10">
 						<td class="pr-0 align-top transition-colors sm:pr-2">
 							<div class="avatar">
@@ -96,6 +93,7 @@
 						<td class="text-center max-sm:hidden">{user.characters}</td>
 						<td class="max-xs:hidden">
 							<div class="flex justify-end gap-2">
+								{const impersonateForm = $derived(API.admin.forms.impersonateUser.for(user.id))}
 								<form
 									{...impersonateForm.enhance(async ({ submit }) => {
 										await submit();
@@ -119,6 +117,7 @@
 									</button>
 								</form>
 								{#if !user.banned}
+									{const banForm = $derived(API.admin.forms.banUser.for(user.id))}
 									<form
 										onsubmit={(e) => {
 											e.preventDefault();
@@ -155,6 +154,7 @@
 										</button>
 									</form>
 								{:else}
+									{const unbanForm = $derived(API.admin.forms.unbanUser.for(user.id))}
 									<form
 										{...unbanForm.enhance(async ({ submit }) => {
 											if (!confirm(`Are you sure you want to unban ${user.name}?`)) return;

@@ -106,8 +106,10 @@
 <div class="col-span-12 grid grid-cols-12 gap-4 dark:text-white">
 	{#each cards as [entity, items, gainedField, lostField], index (index)}
 		{#each gainedField.value().filter(isDefined) as item, index (item.id)}
-			{const title = entity === "magicItems" ? "Magic Item" : "Story Award"}
-			{const field = entity === "magicItems" ? form.fields.magicItemsGained[index] : form.fields.storyAwardsGained[index]}
+			{const title = $derived(entity === "magicItems" ? "Magic Item" : "Story Award")}
+			{const field = $derived(
+				entity === "magicItems" ? form.fields.magicItemsGained[index] : form.fields.storyAwardsGained[index]
+			)}
 
 			{#if field}
 				<div class="card bg-base-300/70 col-span-12 shadow-xl sm:col-span-6">
@@ -147,9 +149,11 @@
 			{/if}
 		{/each}
 		{#each lostField.value().filter(isDefined) as id, index (id)}
-			{const title = entity === "magicItems" ? "Magic Item" : "Story Award"}
-			{const arrValue = entity === "magicItems" ? form.fields.magicItemsLost.value() : form.fields.storyAwardsLost.value()}
-			{const field = entity === "magicItems" ? form.fields.magicItemsLost[index] : form.fields.storyAwardsLost[index]}
+			{const title = $derived(entity === "magicItems" ? "Magic Item" : "Story Award")}
+			{const arrValue = $derived(
+				entity === "magicItems" ? form.fields.magicItemsLost.value() : form.fields.storyAwardsLost.value()
+			)}
+			{const field = $derived(entity === "magicItems" ? form.fields.magicItemsLost[index] : form.fields.storyAwardsLost[index])}
 
 			{#if field}
 				<div class="card bg-base-300/70 col-span-12 shadow-xl sm:col-span-6">

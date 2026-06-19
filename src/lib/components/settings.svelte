@@ -1,6 +1,6 @@
 <script lang="ts">
 	import { authClient } from "$lib/auth";
-	import { BLANK_CHARACTER, PROVIDERS, type ProviderId } from "$lib/constants";
+	import { BLANK_CHARACTER, PROVIDERS } from "$lib/constants";
 	import { errorToast } from "$lib/factories.svelte";
 	import * as API from "$lib/remote";
 	import { getAccounts } from "$lib/remote/auth/queries.remote";
@@ -21,9 +21,7 @@
 	const { user, session } = $derived(await API.app.queries.request());
 	const global = getGlobal();
 
-	type UserAccount = { providerId: ProviderId; name: string; email: string; image: string };
-	let userAccounts = $state<UserAccount[]>([]);
-
+	const userAccounts = $derived(await getAccounts());
 	const currentAccount = $derived(userAccounts.find((a) => a.providerId === global.app.settings.provider));
 	const authProviders = $derived(
 		PROVIDERS.map((p) => ({
@@ -42,33 +40,28 @@
 
 	onMount(() => {
 		global.app.settings.timezone = getLocalTimeZone();
-	});
 
-	$effect(() => {
-		if (!userAccounts.length && open) {
-			getAccounts().then(async (result) => {
-				userAccounts = result;
+		const account =
+			userAccounts.find((a) => a.providerId === global.app.settings.provider) ||
+			userAccounts.find((a) => a.name === user?.name && a.email === user?.email) ||
+			(isTupleOfAtLeast(userAccounts, 1) ? userAccounts[0] : undefined);
 
-				const account =
-					userAccounts.find((a) => a.providerId === global.app.settings.provider) ||
-					userAccounts.find((a) => a.name === user?.name && a.email === user?.email) ||
-					(isTupleOfAtLeast(userAccounts, 1) ? userAccounts[0] : undefined);
+		if (account) {
+			if (!global.app.settings.provider) {
+				global.app.settings.provider = account.providerId;
+			}
 
-				if (account) {
-					if (!global.app.settings.provider) {
-						global.app.settings.provider = account.providerId;
-					}
-					if (
-						account.name !== user?.name ||
-						account.email !== user?.email ||
-						(account.image !== user?.image && !account.image.includes(BLANK_CHARACTER))
-					) {
-						const result = await API.auth.actions.updateUser(account);
-						const parsed = await parseEffectResult(result);
-						if (parsed) await API.app.queries.request();
-					}
-				}
-			});
+			// User information has changed
+			if (
+				account.name !== user?.name ||
+				account.email !== user?.email ||
+				(account.image !== user?.image && !account.image.includes(BLANK_CHARACTER))
+			) {
+				API.auth.actions.updateUser(account).then(async (result) => {
+					const parsed = await parseEffectResult(result);
+					if (parsed) await API.app.queries.request();
+				});
+			}
 		}
 	});
 </script>
@@ -83,12 +76,13 @@
 			<div
 				class="avatar ring-primary group/avatar bg-primary ring-offset-base-100 flex h-9 w-9 items-center justify-center overflow-hidden rounded-full ring-3 ring-offset-2"
 			>
-				{const nameParts = user.name.split(" ")}
-				{const initials =
+				{const nameParts = $derived(user.name.split(" "))}
+				{const initials = $derived(
 					nameParts
 						.map((n) => (n[0] || "") + (nameParts.length === 1 ? n[1] : ""))
 						.join("")
-						.slice(0, 2) || ""}
+						.slice(0, 2) || ""
+				)}
 				{#if user.image}
 					<img
 						src={user.image}
@@ -148,7 +142,7 @@
 				<span class="font-bold">Linked Accounts</span>
 			</li>
 			{#each authProviders as provider (provider.id)}
-				{@const account = userAccounts.find((a) => a.providerId === provider.id)}
+				{const account = $derived(userAccounts.find((a) => a.providerId === provider.id))}
 				<li>
 					<span class="flex gap-2 hover:bg-transparent">
 						<span class={["size=6 iconify-color", provider.iconify]}></span>

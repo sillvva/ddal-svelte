@@ -91,7 +91,7 @@
 			</div>
 		</div>
 		{#if display}
-			{const { user } = await API.app.queries.request()}
+			{const { user } = $derived(await API.app.queries.request())}
 			<Debug
 				data={{
 					...page,

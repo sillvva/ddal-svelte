@@ -51,8 +51,8 @@
 <Head title="App Logs" />
 
 <svelte:boundary>
-	{const baseSearch = await API.admin.queries.getBaseSearch()}
-	{const logsQuery = API.admin.queries.getAppLogs(params.s ?? "")}
+	{const baseSearch = $derived(await API.admin.queries.getBaseSearch())}
+	{const logsQuery = $derived(API.admin.queries.getAppLogs(params.s ?? ""))}
 
 	<section class="flex flex-col gap-1">
 		<div class="flex w-full gap-2 sm:max-w-md md:max-w-md">

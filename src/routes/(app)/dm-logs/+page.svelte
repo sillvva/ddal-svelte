@@ -21,11 +21,13 @@
 </script>
 
 <svelte:boundary>
-	{const { user } = await API.app.queries.request()}
-	{const logs = await API.logs.queries.getDmLogs()}
-	{const search = new EntitySearchFactory(logs, page.url.searchParams.get(searchKey) ?? page.state.search?.[searchKey] ?? "")}
-	{const sortedResults = search.results.toSorted((a, b) =>
-		global.app.dmLogs.sort === "asc" ? sorter(a.date, b.date) : sorter(b.date, a.date)
+	{const { user } = $derived(await API.app.queries.request())}
+	{const logs = $derived(await API.logs.queries.getDmLogs())}
+	{const search = $derived(
+		new EntitySearchFactory(logs, page.url.searchParams.get(searchKey) ?? page.state.search?.[searchKey] ?? "")
+	)}
+	{const sortedResults = $derived(
+		search.results.toSorted((a, b) => (global.app.dmLogs.sort === "asc" ? sorter(a.date, b.date) : sorter(b.date, a.date)))
 	)}
 
 	<Head title="{user?.name}'s DM Logs" />
@@ -105,7 +107,9 @@
 		<!-- Mobile List -->
 		<ul class="overflow-hidden rounded-lg sm:hidden print:hidden">
 			{#each sortedResults as log (log.id)}
-				{const hasDescription = !!log.description?.trim() || log.storyAwardsGained.length > 0 || log.storyAwardsLost.length > 0}
+				{const hasDescription = $derived(
+					!!log.description?.trim() || log.storyAwardsGained.length > 0 || log.storyAwardsLost.length > 0
+				)}
 				<li
 					class="border-b border-b-neutral-500/40 last:border-b-0 data-[deleting=true]:hidden"
 					data-deleting={deletingLog.has(log.id)}
@@ -259,8 +263,9 @@
 					</tbody>
 				{:else}
 					{#each sortedResults as log (log.id)}
-						{const hasDescription =
-							!!log.description?.trim() || log.storyAwardsGained.length > 0 || log.storyAwardsLost.length > 0}
+						{const hasDescription = $derived(
+							!!log.description?.trim() || log.storyAwardsGained.length > 0 || log.storyAwardsLost.length > 0
+						)}
 						<tbody class="first-of-type:[&>tr>td]:border-t-0">
 							<tr
 								class="data-[deleting=true]:hidden [&>td]:border-0 [&>td]:border-t [&>td]:border-neutral-500/20"

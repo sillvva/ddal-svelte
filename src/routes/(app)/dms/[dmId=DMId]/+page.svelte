@@ -21,12 +21,12 @@
 </script>
 
 <svelte:boundary>
-	{const dm = await API.dms.queries.get(params.dmId)}
-	{const data = {
+	{const dm = $derived(await API.dms.queries.get(params.dmId))}
+	{const data = $derived({
 		id: dm.id,
 		name: dm.name,
 		DCI: dm.DCI || ""
-	}}
+	})}
 
 	{#snippet failed(error)}<Error {error} boundary="edit-dm" />{/snippet}
 
