@@ -261,7 +261,7 @@
 					class={[
 						"divider xs:divider-horizontal xs:mx-0 max-xs:hidden print:flex",
 						"before:bg-black/50 after:bg-black/50 dark:before:bg-white/50 dark:after:bg-white/50"
-					].join(" ")}
+					]}
 				></div>
 				<div class="xs:basis-[60%] flex basis-full flex-col sm:basis-2/3 lg:basis-2/3 print:basis-2/3">
 					{#if character}

@@ -150,7 +150,7 @@
 														"data-disabled:text-base-content/30 data-disabled:pointer-events-none",
 														"data-selected:bg-base-300 data-selected:font-medium",
 														"data-unavailable:text-base-content/30 data-unavailable:line-through"
-													].join(" ")}
+													]}
 												>
 													<div
 														class="group-data-selected:bg-base-content/50 absolute top-1.25 size-1 rounded-full transition-all not-group-data-today:hidden"

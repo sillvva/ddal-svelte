@@ -191,7 +191,7 @@
 										"hover:bg-base-content/25 rounded-lg",
 										"data-highlighted:bg-base-content/25",
 										"data-selected:bg-primary data-selected:text-primary-content data-selected:font-bold"
-									].join(" ")}
+									]}
 									role="option"
 								>
 									{#snippet child({ props })}
