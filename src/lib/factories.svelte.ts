@@ -252,7 +252,7 @@ export function configureForm<Input extends RemoteFormInput = RemoteFormInput>(g
 			allIssues?.some((issue) => issue.message.includes("undefined"))
 		) {
 			console.warn(
-				"Ensure your form fields are not disabled when the validation is run.",
+				"Ensure form fields are not disabled when the validation is run.",
 				"Disabled fields are treated as undefined values, because they are excluded from the form data."
 			);
 		}
