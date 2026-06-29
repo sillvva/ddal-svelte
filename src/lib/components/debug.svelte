@@ -44,7 +44,7 @@
 		</button>
 	{/if}
 	{#if title}
-		<h3 class="mb-2 text-lg font-bold">{title}</h3>
+		<div class="mb-2 text-lg font-bold">{title}</div>
 	{/if}
 	<div class="highlighted overflow-x-scroll">
 		<!-- eslint-disable-next-line svelte/no-at-html-tags -->

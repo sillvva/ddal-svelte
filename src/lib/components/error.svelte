@@ -27,7 +27,7 @@
 		{#if !display}
 			<div class="font-vecna mb-12 flex flex-col items-center text-3xl font-bold sm:text-5xl md:text-6xl">
 				<img src="/images/confused-goblin.webp" alt="Error" class="mb-2 size-80 max-lg:size-65 max-sm:size-50" />
-				<h1>Rolled a Natural 1!</h1>
+				<h2>Rolled a Natural 1!</h2>
 			</div>
 		{/if}
 		<div class="alert alert-error mb-4 flex w-full max-w-3xl gap-4 shadow-lg">

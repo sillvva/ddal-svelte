@@ -291,13 +291,13 @@
 				{@render grid(sortedResults)}
 			{:else}
 				{#each [...new Set(sortedResults.map((c) => c.tier))].sort(sorter) as tier, index (tier)}
-					<h1
+					<h2
 						class="font-vecna max-xs:data-[display=grid]:hidden pt-6 pb-2 text-3xl font-bold data-[display=list]:hidden data-[index=0]:pt-0 dark:text-white"
 						data-display={global.app.characters.display}
 						data-index={index}
 					>
 						Tier {tier}
-					</h1>
+					</h2>
 					{@render grid(sortedResults.filter((c) => c.tier == tier))}
 				{/each}
 			{/if}

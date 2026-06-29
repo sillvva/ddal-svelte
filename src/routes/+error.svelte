@@ -53,9 +53,9 @@
 			<div class="font-vecna mb-12 flex flex-col items-center text-3xl font-bold sm:text-5xl md:text-6xl">
 				<img src="/images/confused-goblin.webp" alt="Error" class="mb-2 size-80 max-lg:size-65 max-sm:size-50" />
 				{#if page.status === 404}
-					<h1>4D4: Not Found!</h1>
+					<h2>4D4: Not Found!</h2>
 				{:else}
-					<h1>Rolled a Natural 1!</h1>
+					<h2>Rolled a Natural 1!</h2>
 				{/if}
 			</div>
 		{/if}

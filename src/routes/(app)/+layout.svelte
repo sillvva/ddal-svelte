@@ -67,10 +67,10 @@
 					alt="Dragon"
 					class="xs:block hidden size-10"
 				/>
-				<div class="font-draconis flex min-w-fit flex-col text-center">
-					<h1 class="text-base-content text-base leading-4">Adventurers League</h1>
-					<h2 class="text-3xl leading-7">Log Sheet</h2>
-				</div>
+				<h1 class="font-draconis flex min-w-fit flex-col text-center">
+					<div class="text-base-content text-base leading-4">Adventurers League</div>
+					<div class="text-3xl leading-7">Log Sheet</div>
+				</h1>
 			</a>
 			{#if user}
 				<a href="/characters" class="ml-8 p-2 max-md:hidden">Character Logs</a>

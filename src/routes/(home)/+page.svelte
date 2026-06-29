@@ -43,7 +43,7 @@
 				<div class="alert alert-error max-w-md min-w-60 shadow-lg">
 					<span class="iconify mdi--alert-circle size-6 max-sm:hidden"></span>
 					<div>
-						<h3 class="font-bold">Error</h3>
+						<h2 class="font-bold">Error</h2>
 						{#if home.error.message}<p class="mb-2 max-sm:text-sm">{home.error.message}</p>{/if}
 						<p class="font-mono text-xs">Code: {home.error.code}</p>
 					</div>
@@ -109,7 +109,7 @@
 			{#if showPasskeyWarning}
 				<div class="card bg-warning/70 text-black shadow-sm">
 					<div class="card-body p-4">
-						<h3 class="text-xl">Important Notice</h3>
+						<h2 class="text-xl">Important Notice</h2>
 						<p class="text-xs text-pretty">
 							Authentication has been migrated to a new API. If you had a Passkey prior to July 8th, 2025, you will need to sign
 							in with another method and then add it again.

@@ -181,11 +181,11 @@
 				{/if}
 				<div class="flex w-full flex-col">
 					<div class="xs:mb-0 mb-2 flex gap-4">
-						<h3
+						<h2
 							class="font-vecna print:text-base-content flex-1 py-2 text-3xl font-bold text-black sm:py-0 sm:text-4xl dark:text-white print:text-2xl"
 						>
 							{character.name}
-						</h3>
+						</h2>
 					</div>
 					<p class="flex-1 text-sm font-semibold">
 						{character.race}
