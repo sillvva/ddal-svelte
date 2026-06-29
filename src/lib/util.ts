@@ -83,8 +83,7 @@ export function getRelativeTime(date: Date | number, lang = navigator.language):
 	const unitIndex = cutoffs.findIndex((cutoff) => cutoff > Math.abs(deltaSeconds));
 
 	const divisor = cutoffs[unitIndex - 1] ?? day;
-	const unit = units[unitIndex];
-	if (!unit) return "in the future";
+	const unit = units[unitIndex] ?? "day";
 
 	const rtf = new Intl.RelativeTimeFormat(lang, { numeric: "auto" });
 	return rtf.format(-Math.floor(deltaSeconds / divisor), unit);
