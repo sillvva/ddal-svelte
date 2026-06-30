@@ -59,7 +59,7 @@
 			) {
 				API.auth.actions.updateUser(account).then(async (result) => {
 					const parsed = await parseEffectResult(result);
-					if (parsed) await API.app.queries.request();
+					if (parsed) await API.app.queries.request().refresh();
 				});
 			}
 		}
