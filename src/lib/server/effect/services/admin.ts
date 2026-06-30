@@ -15,13 +15,13 @@ export class UserNotFoundError extends Data.TaggedError("UserNotFoundError")<Err
 
 export class SaveAppLogError extends Data.TaggedError("SaveAppLogError")<ErrorParams> {
 	constructor(message: string, err?: unknown) {
-		super({ message, status: 404, cause: err });
+		super({ message, status: 500, cause: err });
 	}
 }
 
 export class DeleteLogError extends Data.TaggedError("DeleteLogError")<ErrorParams> {
 	constructor(err?: unknown) {
-		super({ message: "Unable to delete log", status: 404, cause: err });
+		super({ message: "Unable to delete log", status: 500, cause: err });
 	}
 }
 
