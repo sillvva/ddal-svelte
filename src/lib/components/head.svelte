@@ -34,4 +34,8 @@
 	<meta name="twitter:image" content={pageImage.trim()} />
 	<meta name="twitter:url" content={page.url.toString()} />
 	<link rel="canonical" href={page.url.toString()} />
+	<link rel="preload" href="/fonts/Draconis.ttf" as="font" type="font/ttf" crossorigin="" />
+	<link rel="preload" href="/fonts/Vecna.ttf" as="font" type="font/ttf" crossorigin="" />
+	<link rel="preload" href="/fonts/VecnaBold.ttf" as="font" type="font/ttf" crossorigin="" />
+	<link rel="preload" href="/fonts/Inter-VariableFont_opsz,wght.ttf" as="font" type="font/ttf" crossorigin="" />
 </svelte:head>
