@@ -19,26 +19,20 @@
 	import { v7 } from "uuid";
 
 	let { params } = $props();
-
-	const request = $derived(await API.app.queries.request());
-	const user = $derived(request.user!);
-	const character = $derived(await API.characters.queries.get({ param: params.characterId }));
-	const dms = $derived(await API.dms.queries.getAllWithoutLogs());
-	const { magicItems, storyAwards } = $derived(getItemEntities(character, { excludeDropped: true, lastLogId: params.logId }));
-
-	const schema = logSchema;
-	const form = API.logs.forms.saveCharacter;
-	const firstLog = $derived(page.url.searchParams.get("firstLog") === "true");
-	const initialErrors = $derived(params.logId !== "new");
-	const log = $derived(
-		await API.logs.forms.character({ character: { id: character.id, name: character.name }, logId: params.logId, firstLog })
-	);
-
-	let data = $derived(proxify(log));
-	let season = $derived(log.experience ? 1 : log.acp ? 8 : 9);
 </script>
 
 <svelte:boundary>
+	{const character = $derived(await API.characters.queries.get({ param: params.characterId }))}
+	{const { magicItems, storyAwards } = $derived(getItemEntities(character, { excludeDropped: true, lastLogId: params.logId }))}
+
+	{const schema = logSchema}
+	{const form = API.logs.forms.saveCharacter}
+	{const firstLog = $derived(page.url.searchParams.get("firstLog") === "true")}
+	{const initialErrors = $derived(params.logId !== "new")}
+	{const log = $derived(
+		await API.logs.forms.character({ character: { id: character.id, name: character.name }, logId: params.logId, firstLog })
+	)}
+
 	{#snippet failed(error)}<Error {error} boundary="edit-character-log" />{/snippet}
 	<Head title={`${log.name || "New Log"} - ${character.name}`} />
 
@@ -50,6 +44,7 @@
 		]}
 	/>
 
+	{let data = $derived(proxify(log))}
 	<RemoteForm {schema} {form} {data} {initialErrors}>
 		{#snippet children({ form, initial })}
 			<Input field={form.fields.id} hidden />
@@ -82,9 +77,13 @@
 			<Control class={["col-span-12", !firstLog ? "sm:col-span-5 md:col-span-4" : "sm:col-span-6 md:col-span-5 lg:col-span-4"]}>
 				<DateInput field={form.fields.date} initial={initial.date} label="Date" timezone={data.timezone} />
 			</Control>
+			{let season = $derived(log.experience ? 1 : log.acp ? 8 : 9)}
 			{#if data.type === "game"}
 				{#if !firstLog}
+					{const dms = $derived(await API.dms.queries.getAllWithoutLogs())}
 					<Control class="col-span-12 sm:col-span-6">
+						{const request = $derived(await API.app.queries.request())}
+						{const user = $derived(request.user!)}
 						<Combobox
 							label="DM Name"
 							valueField={form.fields.dm.id}

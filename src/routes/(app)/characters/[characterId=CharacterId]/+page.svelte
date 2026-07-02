@@ -11,6 +11,7 @@
 	import { EntitySearchFactory, successToast, swipeAction } from "$lib/factories.svelte.js";
 	import * as API from "$lib/remote";
 	import type { FullCharacterData } from "$lib/server/effect/services/characters.js";
+	import type { FullLogData } from "$lib/server/effect/services/logs.js";
 	import { getGlobal } from "$lib/stores.svelte.js";
 	import { createTransition, formatDate, hotkey, parseEffectResult } from "$lib/util";
 	import { slugify, sorter } from "@sillvva/utils";
@@ -25,6 +26,8 @@
 
 	let deletingLog = new SvelteSet<string>();
 	const searchKey = "s";
+
+	const queryParams = $derived({ param: params.characterId, newRedirect: true });
 
 	async function triggerImageModal(character: FullCharacterData, image?: string) {
 		const imageUrl = image || character.imageUrl;
@@ -43,6 +46,19 @@
 		};
 	}
 
+	async function deleteLog(log: FullLogData) {
+		if (!confirm(`Are you sure you want to delete ${log.name}? This action cannot be undone.`)) return;
+		deletingLog.add(log.id);
+		const result = await API.logs.actions.deleteLog(log.id);
+		const parsed = await parseEffectResult(result);
+		if (parsed) {
+			successToast(`${log.name} deleted`);
+			await API.characters.queries.get(queryParams).refresh();
+		} else {
+			deletingLog.delete(log.id);
+		}
+	}
+
 	onMount(async () => {
 		const { user } = await API.app.queries.request();
 		if (global.app.settings.autoWebAuthn && !user) {
@@ -59,7 +75,6 @@
 
 <svelte:boundary>
 	{const { user } = $derived(await API.app.queries.request())}
-	{const queryParams = $derived({ param: params.characterId, newRedirect: true })}
 	{const character = $derived(await API.characters.queries.get(queryParams))}
 	{const myCharacter = $derived(character.userId === user?.id)}
 	{const search = $derived(
@@ -374,18 +389,7 @@
 						<div
 							class="swipe-container"
 							{@attach swipeAction({
-								right: async () => {
-									if (!confirm(`Are you sure you want to delete ${log.name}? This action cannot be undone.`)) return;
-									deletingLog.add(log.id);
-									const result = await API.logs.actions.deleteLog(log.id);
-									const parsed = await parseEffectResult(result);
-									if (parsed) {
-										successToast(`${log.name} deleted`);
-										await API.characters.queries.get(queryParams).refresh();
-									} else {
-										deletingLog.delete(log.id);
-									}
-								}
+								right: () => deleteLog(log)
 							})}
 						>
 							<div class="content bg-base-200">
@@ -649,18 +653,7 @@
 												type="button"
 												class="btn btn-error btn-sm touch-hitbox"
 												aria-label="Delete Log"
-												onclick={async () => {
-													if (!confirm(`Are you sure you want to delete ${log.name}? This action cannot be undone.`)) return;
-													deletingLog.add(log.id);
-													const result = await API.logs.actions.deleteLog(log.id);
-													const parsed = await parseEffectResult(result);
-													if (parsed) {
-														successToast(`${log.name} deleted`);
-														await API.characters.queries.get(queryParams).refresh();
-													} else {
-														deletingLog.delete(log.id);
-													}
-												}}
+												onclick={() => deleteLog(log)}
 											>
 												<span class="iconify mdi--trash-can size-4"></span>
 											</button>

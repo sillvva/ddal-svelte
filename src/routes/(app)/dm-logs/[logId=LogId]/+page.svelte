@@ -20,18 +20,15 @@
 	const schema = dmLogSchema;
 	const form = API.logs.forms.saveDM;
 	const initialErrors = $derived(params.logId !== "new");
-	const log = $derived(
-		await API.logs.forms.dm({
-			param: { logId: params.logId }
-		})
-	);
-	const characters = $derived(await API.characters.queries.getAllSelect());
-
-	let data = $derived(proxify(log));
-	let season = $derived(log.experience ? 1 : log.acp ? 8 : 9);
 </script>
 
 <svelte:boundary>
+	{const log = $derived(
+		await API.logs.forms.dm({
+			param: { logId: params.logId }
+		})
+	)}
+
 	{#snippet failed(error)}<Error {error} boundary="edit-dm-log" />{/snippet}
 	<Head title={log.name || "New Log"} />
 
@@ -42,6 +39,7 @@
 		]}
 	/>
 
+	{let data = $derived(proxify(log))}
 	<RemoteForm {schema} {form} {data} {initialErrors}>
 		{#snippet children({ form, initial })}
 			<Input field={form.fields.id} type="hidden" />
@@ -53,6 +51,7 @@
 				<DateInput field={form.fields.date} initial={initial.date} label="Date" timezone={data.timezone} />
 			</Control>
 			<Control class="col-span-12 sm:col-span-7">
+				{const characters = $derived(await API.characters.queries.getAllSelect())}
 				<Combobox
 					label="Assigned Character"
 					valueField={form.fields.characterId}
@@ -78,6 +77,7 @@
 					timezone={data.timezone}
 				/>
 			</Control>
+			{let season = $derived(log.experience ? 1 : log.acp ? 8 : 9)}
 			<Control class="col-span-12 sm:col-span-4">
 				<InputWrapper type="select" labelFor="season" label="Season">
 					<select

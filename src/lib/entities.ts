@@ -1,7 +1,7 @@
 import type { DungeonMaster, Log, MagicItem, StoryAward } from "$lib/server/db/schema";
 import type { CharacterData, FullCharacterData } from "$lib/server/effect/services/characters";
 import type { ExtendedLogData, FullLogData, LogData, LogSummaryData } from "$lib/server/effect/services/logs";
-import { sorter } from "@sillvva/utils";
+import { omit, sorter } from "@sillvva/utils";
 import { v7 } from "uuid";
 import { BLANK_CHARACTER, PlaceholderName } from "./constants";
 import {
@@ -231,7 +231,7 @@ export function parseLog(log: LogData | ExtendedLogData): FullLogData {
 
 export function logDataToSchema(userId: UserId, log: FullLogData): LogSchema {
 	return {
-		...log,
+		...omit(log, ["createdAt", "character", "showDate"]),
 		date: new Date(log.date),
 		timezone: log.timezone || "",
 		characterName: log.character?.name || "",

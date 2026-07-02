@@ -9,6 +9,7 @@
 	import Search from "$lib/components/search.svelte";
 	import { EntitySearchFactory, successToast, swipeAction } from "$lib/factories.svelte.js";
 	import * as API from "$lib/remote";
+	import type { FullLogData } from "$lib/server/effect/services/logs";
 	import { getGlobal } from "$lib/stores.svelte.js";
 	import { createTransition, download, formatDate, hotkey, parseEffectResult } from "$lib/util.js";
 	import { sorter } from "@sillvva/utils";
@@ -18,6 +19,19 @@
 
 	let deletingLog = new SvelteSet<string>();
 	const searchKey = "s";
+
+	async function deleteLog(log: FullLogData) {
+		if (!confirm(`Are you sure you want to delete ${log.name}? This action cannot be undone.`)) return;
+		deletingLog.add(log.id);
+		const result = await API.logs.actions.deleteLog(log.id);
+		const parsed = await parseEffectResult(result);
+		if (parsed) {
+			successToast(`${log.name} deleted`);
+			await API.logs.queries.getDmLogs().refresh();
+		} else {
+			deletingLog.delete(log.id);
+		}
+	}
 </script>
 
 <svelte:boundary>
@@ -117,18 +131,7 @@
 					<div
 						class="swipe-container"
 						{@attach swipeAction({
-							right: async () => {
-								if (!confirm(`Are you sure you want to delete ${log.name}? This action cannot be undone.`)) return;
-								deletingLog.add(log.id);
-								const result = await API.logs.actions.deleteLog(log.id);
-								const parsed = await parseEffectResult(result);
-								if (parsed) {
-									successToast(`${log.name} deleted`);
-									await API.logs.queries.getDmLogs().refresh();
-								} else {
-									deletingLog.delete(log.id);
-								}
-							}
+							right: () => deleteLog(log)
 						})}
 					>
 						<div class="content bg-base-200">
@@ -388,18 +391,7 @@
 											type="button"
 											class="btn btn-error btn-sm touch-hitbox"
 											aria-label="Delete Log"
-											onclick={async () => {
-												if (!confirm(`Are you sure you want to delete ${log.name}? This action cannot be undone.`)) return;
-												deletingLog.add(log.id);
-												const result = await API.logs.actions.deleteLog(log.id);
-												const parsed = await parseEffectResult(result);
-												if (parsed) {
-													successToast(`${log.name} deleted`);
-													await API.logs.queries.getDmLogs().refresh();
-												} else {
-													deletingLog.delete(log.id);
-												}
-											}}
+											onclick={() => deleteLog(log)}
 										>
 											<span class="iconify mdi--trash-can size-4"></span>
 										</button>
