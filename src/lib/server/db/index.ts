@@ -1,29 +1,28 @@
 import { getRequestEvent } from "$app/server";
 import { privateEnv } from "$lib/env/private";
 import { relations } from "$lib/server/db/relations";
-import * as schema from "$lib/server/db/schema";
 import { isTaggedError, type ErrorClass, type ErrorParams } from "$lib/server/effect/errors";
 import {
 	getTableColumns,
 	sql,
 	type BuildQueryResult,
 	type DBQueryConfig,
-	type ExtractTablesWithRelations,
 	type GetColumnData,
 	type Query,
 	type RelationsFilter,
 	type SQL
 } from "drizzle-orm";
-import type { PgTable, PgTransaction } from "drizzle-orm/pg-core";
+import type { PgAsyncTransaction, PgTable } from "drizzle-orm/pg-core";
 import { drizzle, type PostgresJsDatabase, type PostgresJsQueryResultHKT } from "drizzle-orm/postgres-js";
 import { Cause, Data, Effect, Exit } from "effect";
 import postgres from "postgres";
 
-export type Database = PostgresJsDatabase<typeof schema, typeof relations>;
-export type Transaction = PgTransaction<PostgresJsQueryResultHKT, typeof schema, typeof relations>;
+export type TRSchema = typeof relations;
+export type Database = PostgresJsDatabase<TRSchema>;
+export type Transaction = PgAsyncTransaction<PostgresJsQueryResultHKT, TRSchema>;
 
-const connection = postgres(privateEnv.DATABASE_URL, { prepare: false });
-const db = drizzle(connection, { schema, relations });
+const client = postgres(privateEnv.DATABASE_URL, { prepare: false });
+const db = drizzle({ client, relations });
 
 export class DBService extends Effect.Service<DBService>()("DBService", {
 	effect: Effect.fn("DBService")(function* (tx?: Transaction) {
@@ -57,7 +56,7 @@ export class DBService extends Effect.Service<DBService>()("DBService", {
 	})
 }) {
 	static async end() {
-		await connection.end();
+		await client.end();
 	}
 }
 
@@ -84,7 +83,7 @@ export class DrizzleError extends Data.TaggedError("DrizzleError")<DrizzleErrorP
 	}
 }
 
-export type TRSchema = ExtractTablesWithRelations<typeof relations>;
+
 export type Filter<TableName extends keyof TRSchema> = RelationsFilter<TRSchema[TableName], TRSchema>;
 export type QueryConfig<TableName extends keyof TRSchema, Type extends "one" | "many" = "one"> = DBQueryConfig<
 	Type,

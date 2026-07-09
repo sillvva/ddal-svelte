@@ -3,3 +3,6 @@ allowBuilds:
   svelte-kit: true
 minimumReleaseAge: 1440 # 24 hours
 minimumReleaseAgeStrict: true
+minimumReleaseAgeExclude:
+  - "@humanspeak/svelte-markdown"
+  - "@types/node"

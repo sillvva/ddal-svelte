@@ -2,6 +2,7 @@ import { getRequestEvent } from "$app/server";
 import { privateEnv } from "$lib/env/private";
 import { localsSessionSchema, localsUserSchema, type UserId } from "$lib/schemas";
 import { DBService } from "$lib/server/db";
+import * as schema from "$lib/server/db/schema";
 import { RedirectError, type ErrorParams } from "$lib/server/effect/errors";
 import { passkey } from "@better-auth/passkey";
 import { isDefined } from "@sillvva/utils";
@@ -36,7 +37,8 @@ export class AuthService extends Effect.Service<AuthService>()("AuthService", {
 		const auth = betterAuth({
 			appName: "Adventurers League Log Sheet",
 			database: drizzleAdapter(db, {
-				provider: "pg"
+				provider: "pg",
+				schema: schema
 			}),
 			secret: privateEnv.AUTH_SECRET,
 			baseURL: privateEnv.PUBLIC_URL,
