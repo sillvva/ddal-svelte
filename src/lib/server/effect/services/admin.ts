@@ -66,7 +66,7 @@ export class AdminService extends Effect.Service<AdminService>()("AdminService",
 			 * Mutations
 			 */
 
-			ssaveLog: Effect.fn("AdminService.saveLog")(function* (values) {
+			saveLog: Effect.fn("AdminService.saveLog")(function* (values) {
 				if (values.label.startsWith("RedirectError")) return values;
 
 				// Check if there's an existing record with the same label, routeId, and username in the last 5 seconds
