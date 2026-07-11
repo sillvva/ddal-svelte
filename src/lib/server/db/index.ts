@@ -3,7 +3,7 @@ import { privateEnv } from "$lib/env/private";
 import { relations } from "$lib/server/db/relations";
 import { isTaggedError, type ErrorClass, type ErrorParams } from "$lib/server/effect/errors";
 import {
-	getTableColumns,
+	getColumns,
 	sql,
 	type BuildQueryResult,
 	type DBQueryConfig,
@@ -101,7 +101,7 @@ export function buildConflictUpdateColumns<
 	Columns extends keyof Table["_"]["columns"],
 	Omit extends boolean = false
 >(table: Table, columns: Columns[], omit: Omit = false as Omit) {
-	const cls = getTableColumns(table);
+	const cls = getColumns(table);
 
 	type Keys = Omit extends true ? Exclude<keyof Table["_"]["columns"], Columns> : Columns;
 	const keys = Object.keys(cls).filter((key) => columns.includes(key as Columns) !== omit) as Keys[];
