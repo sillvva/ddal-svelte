@@ -5,7 +5,6 @@ import { type ErrorParams } from "$lib/server/effect/errors";
 import { DrizzleSearchParser } from "@sillvva/search/drizzle";
 import { isTupleOf } from "@sillvva/utils";
 import { eq, sql } from "drizzle-orm";
-import type { PgTableWithColumns } from "drizzle-orm/pg-core/table";
 import { Data, DateTime, Effect, Layer } from "effect";
 
 export class UserNotFoundError extends Data.TaggedError("UserNotFoundError")<ErrorParams> {
@@ -136,7 +135,6 @@ type TableConfig = TRSchema[Table]["table"]["_"];
 type Column = keyof TableConfig["columns"];
 type Key = Column | (string & {});
 type ValidKey = (typeof validKeys)[number] | (string & {});
-type TableWithColumns = PgTableWithColumns<TableConfig>;
 
 export const validKeys = ["id", "date", "label", "level", "username", "userId", "routeId"] as const satisfies Key[];
 const defaultKey = "label" as const satisfies Column;
@@ -148,8 +146,8 @@ const logSearch = new DrizzleSearchParser<typeof relations, Table>({
 		const key = (ast.key || defaultKey) as ValidKey;
 
 		if (key === "username" || key === "userId" || key === "routeId") {
-			if (ast.isRegex) return { RAW: (table: TableWithColumns) => sql`${table.annotations}->>${key}::text ~* ${ast.value}` };
-			return { RAW: (table: TableWithColumns) => sql`${table.annotations}->>${key}::text ilike ${`%${ast.value}%`}` };
+			if (ast.isRegex) return { RAW: (table) => sql`${table.annotations}->>${key}::text ~* ${ast.value}` };
+			return { RAW: (table) => sql`${table.annotations}->>${key}::text ilike ${`%${ast.value}%`}` };
 		}
 
 		const keyColumns = new Map<typeof key, { col: Column; regex?: true; numeric?: true; date?: true }>([
