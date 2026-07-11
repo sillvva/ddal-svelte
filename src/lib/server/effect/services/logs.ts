@@ -403,7 +403,7 @@ function itemsCRUD(tx: Transaction, params: CRUDMagicItemParams | CRUDStoryAward
 	return effects;
 }
 
-const deleteLog = Effect.fn("LogService.set.delete")(function* (logId: LogId, userId: UserId, db: Database | Transaction) {
+const deleteLog = Effect.fn("LogService.delete")(function* (logId: LogId, userId: UserId, db: Database | Transaction) {
 	return yield* runQuery(
 		db
 			.delete(logs)
@@ -441,8 +441,8 @@ const deleteLog = Effect.fn("LogService.set.delete")(function* (logId: LogId, us
 			.returning({ id: logs.id })
 	).pipe(
 		Effect.flatMap((logs) => (isTupleOf(logs, 1) ? Effect.succeed(logs[0]) : Effect.fail(new DeleteLogError()))),
-		Effect.tap((result) => AppLog.info("LogService.set.delete", { logId, userId, result })),
-		Effect.tapError(() => AppLog.debug("LogService.set.delete", { logId, userId }))
+		Effect.tap((result) => AppLog.info("LogService.delete", { logId, userId, result })),
+		Effect.tapError(() => AppLog.debug("LogService.delete", { logId, userId }))
 	);
 });
 
@@ -452,6 +452,10 @@ export class LogService extends Effect.Service<LogService>()("LogService", {
 		const { db, transaction } = yield* DBService;
 
 		return {
+			/**
+			 * Queries
+			 */
+
 			get: {
 				one: Effect.fn("LogService.get.one")(function* (logId: LogId, userId: UserId) {
 					return yield* getCharacterLog(logId, userId, db);
@@ -463,17 +467,20 @@ export class LogService extends Effect.Service<LogService>()("LogService", {
 					return yield* getAllLogs(userId, db);
 				})
 			},
-			set: {
-				save: Effect.fn("LogService.set.save")(function* (log: LogSchema, user: LocalsUser) {
-					return yield* transaction((tx) => upsertLog(tx, log, user, db).pipe(Effect.provide(DMTx(tx)))).pipe(
-						Effect.tap((result) => AppLog.info("LogService.set.save", { logId: log.id, userId: user.id, result })),
-						Effect.tapError(() => AppLog.debug("LogService.set.save", { logId: log.id, userId: user.id, log }))
-					);
-				}),
-				delete: Effect.fn("LogService.set.delete")(function* (logId: LogId, userId: UserId) {
-					return yield* deleteLog(logId, userId, db);
-				})
-			}
+
+			/**
+			 * Mutations
+			 */
+
+			save: Effect.fn("LogService.save")(function* (log: LogSchema, user: LocalsUser) {
+				return yield* transaction((tx) => upsertLog(tx, log, user, db).pipe(Effect.provide(DMTx(tx)))).pipe(
+					Effect.tap((result) => AppLog.info("LogService.save", { logId: log.id, userId: user.id, result })),
+					Effect.tapError(() => AppLog.debug("LogService.save", { logId: log.id, userId: user.id, log }))
+				);
+			}),
+			delete: Effect.fn("LogService.delete")(function* (logId: LogId, userId: UserId) {
+				return yield* deleteLog(logId, userId, db);
+			})
 		};
 	})
 }) {}

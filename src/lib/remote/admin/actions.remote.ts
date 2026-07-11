@@ -13,7 +13,7 @@ export const deleteAppLog = guardedCommand(
 	function* (id) {
 		const Admin = yield* AdminService;
 
-		const result = yield* Admin.set.deleteLog(id);
+		const result = yield* Admin.deleteLog(id);
 		yield* Effect.promise(() => requested(getAppLogs, 1).refreshAll());
 
 		return result;

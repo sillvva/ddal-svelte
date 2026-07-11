@@ -7,7 +7,7 @@ import { Effect } from "effect";
 
 export const save = guardedForm(dungeonMasterFormSchema, function* (input, { user }) {
 	const DMs = yield* DMService;
-	yield* DMs.set.save(user, input).pipe(Effect.tapError((err) => Effect.fail(invalid(err.message))));
+	yield* DMs.save(user, input).pipe(Effect.tapError((err) => Effect.fail(invalid(err.message))));
 	yield* refreshAll(API.dms.queries.get(input.id).refresh(), API.dms.queries.getAll().refresh());
 	redirect(303, "/dms");
 });

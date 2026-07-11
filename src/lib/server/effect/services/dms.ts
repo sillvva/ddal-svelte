@@ -103,7 +103,7 @@ export class DMService extends Effect.Service<DMService>()("DMSService", {
 			);
 		});
 
-		const save = Effect.fn("DMService.set.save")(function* (user: LocalsUser, data: DungeonMasterFormSchema) {
+		const save = Effect.fn("DMService.save")(function* (user: LocalsUser, data: DungeonMasterFormSchema) {
 			const dm = yield* getOne(data.id, user.id).pipe(Effect.catchAll((err) => new SaveDMError(err.message)));
 
 			if (!data.name.trim()) {
@@ -122,12 +122,12 @@ export class DMService extends Effect.Service<DMService>()("DMSService", {
 					.returning()
 			).pipe(
 				Effect.flatMap((dms) => (isTupleOf(dms, 1) ? Effect.succeed(dms[0]) : Effect.fail(new SaveDMError("Failed to save DM")))),
-				Effect.tap((result) => AppLog.info("DMService.set.save", { userId: user.id, result })),
-				Effect.tapError(() => AppLog.debug("DMService.set.save", { userId: user.id, data }))
+				Effect.tap((result) => AppLog.info("DMService.save", { userId: user.id, result })),
+				Effect.tapError(() => AppLog.debug("DMService.save", { userId: user.id, data }))
 			);
 		});
 
-		const addUserDM = Effect.fn("DMService.set.addUserDM")(function* (user: LocalsUser, dms: UserDM[]) {
+		const addUserDM = Effect.fn("DMService.addUserDM")(function* (user: LocalsUser, dms: UserDM[]) {
 			const existing = yield* runQuery(
 				db.query.dungeonMasters.findFirst({
 					where: {
@@ -147,13 +147,13 @@ export class DMService extends Effect.Service<DMService>()("DMSService", {
 						? Effect.succeed({ ...dms[0], logs: [] as UserDM["logs"] })
 						: Effect.fail(new SaveDMError("Failed to create DM"))
 				),
-				Effect.tap((result) => AppLog.info("DMService.set.addUserDM", { result }))
+				Effect.tap((result) => AppLog.info("DMService.addUserDM", { result }))
 			);
 
 			return dms.toSpliced(0, 0, result);
 		});
 
-		const deleteDM = Effect.fn("DMService.set.delete")(function* (dm: UserDM, userId: UserId) {
+		const deleteDM = Effect.fn("DMService.delete")(function* (dm: UserDM, userId: UserId) {
 			if (dm.logs.length) return yield* new DeleteDMError("You cannot delete a DM that has logs", { status: 400 });
 
 			return yield* runQuery(
@@ -165,22 +165,29 @@ export class DMService extends Effect.Service<DMService>()("DMSService", {
 				Effect.flatMap((result) =>
 					isTupleOf(result, 1) ? Effect.succeed(result[0]) : Effect.fail(new DeleteDMError("Unable to delete DM"))
 				),
-				Effect.tap((result) => AppLog.info("DMService.set.delete", { dmId: dm.id, userId, result })),
-				Effect.tapError(() => AppLog.debug("DMService.set.delete", { dmId: dm.id, userId }))
+				Effect.tap((result) => AppLog.info("DMService.delete", { dmId: dm.id, userId, result })),
+				Effect.tapError(() => AppLog.debug("DMService.delete", { dmId: dm.id, userId }))
 			);
 		});
 
 		return {
+			/**
+			 * Queries
+			 */
+
 			get: {
 				one: getOne,
 				all: getAll,
 				fuzzySearch
 			},
-			set: {
-				save,
-				addUserDM,
-				delete: deleteDM
-			}
+
+			/**
+			 * Mutations
+			 */
+
+			save,
+			addUserDM,
+			delete: deleteDM
 		};
 	})
 }) {}

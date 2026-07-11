@@ -50,7 +50,7 @@ export const save = guardedForm(editCharacterSchema, function* (input, { user, i
 
 	if (issues.length) invalid(...issues);
 
-	const result = yield* Characters.set.save(data, user.id).pipe(Effect.tapError((err) => Effect.fail(invalid(err.message))));
+	const result = yield* Characters.save(data, user.id).pipe(Effect.tapError((err) => Effect.fail(invalid(err.message))));
 
 	if (preexisting) {
 		yield* refreshAll(API.characters.queries.get({ param: data.id }).refresh());

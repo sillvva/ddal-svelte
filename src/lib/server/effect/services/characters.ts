@@ -41,6 +41,10 @@ export class CharacterService extends Effect.Service<CharacterService>()("Charac
 		const { db, transaction } = yield* DBService;
 
 		return {
+			/**
+			 * Queries
+			 */
+
 			get: {
 				one: Effect.fn("CharacterService.get.one")(function* (characterId: CharacterId, includeLogs = true) {
 					return yield* runQuery(
@@ -84,72 +88,75 @@ export class CharacterService extends Effect.Service<CharacterService>()("Charac
 					return characters;
 				})
 			},
-			set: {
-				save: Effect.fn("CharacterService.set.save")(function* (data: CharacterSchema, userId: UserId) {
-					if (!data.id) yield* new SaveCharacterError("No character ID provided", { status: 400 });
 
-					return yield* runQuery(
-						db
-							.insert(characters)
-							.values({
-								...data,
-								id: data.id === "new" ? undefined : data.id,
-								userId
-							})
-							.onConflictDoUpdate({
-								target: characters.id,
-								set: buildConflictUpdateColumns(characters, ["id", "userId", "createdAt"], true),
-								where: eq(characters.userId, userId)
-							})
-							.returning()
-					).pipe(
-						Effect.flatMap((characters) =>
-							isTupleOf(characters, 1)
-								? Effect.succeed(characters[0])
-								: Effect.fail(new SaveCharacterError("Failed to save character"))
-						),
-						Effect.tap((result) => AppLog.info("CharacterService.set.save", { userId, result })),
-						Effect.tapError(() => AppLog.debug("CharacterService.set.save", { userId, data }))
-					);
-				}),
+			/**
+			 * Mutations
+			 */
 
-				delete: Effect.fn("CharacterService.set.delete")(function* (characterId: CharacterId, userId: UserId) {
-					return yield* transaction(
-						Effect.fn("CharacterService.set.delete.transaction")(function* (tx) {
-							yield* runQuery(
-								tx
-									.update(logs)
-									.set({ characterId: null, appliedDate: null })
-									.where(
-										and(
-											eq(logs.characterId, characterId),
-											eq(logs.isDmLog, true),
-											exists(
-												db
-													.select()
-													.from(characters)
-													.where(and(eq(characters.id, characterId), eq(characters.userId, userId)))
-											)
+			save: Effect.fn("CharacterService.save")(function* (data: CharacterSchema, userId: UserId) {
+				if (!data.id) yield* new SaveCharacterError("No character ID provided", { status: 400 });
+
+				return yield* runQuery(
+					db
+						.insert(characters)
+						.values({
+							...data,
+							id: data.id === "new" ? undefined : data.id,
+							userId
+						})
+						.onConflictDoUpdate({
+							target: characters.id,
+							set: buildConflictUpdateColumns(characters, ["id", "userId", "createdAt"], true),
+							where: eq(characters.userId, userId)
+						})
+						.returning()
+				).pipe(
+					Effect.flatMap((characters) =>
+						isTupleOf(characters, 1)
+							? Effect.succeed(characters[0])
+							: Effect.fail(new SaveCharacterError("Failed to save character"))
+					),
+					Effect.tap((result) => AppLog.info("CharacterService.save", { userId, result })),
+					Effect.tapError(() => AppLog.debug("CharacterService.save", { userId, data }))
+				);
+			}),
+
+			delete: Effect.fn("CharacterService.delete")(function* (characterId: CharacterId, userId: UserId) {
+				return yield* transaction(
+					Effect.fn("CharacterService.delete.transaction")(function* (tx) {
+						yield* runQuery(
+							tx
+								.update(logs)
+								.set({ characterId: null, appliedDate: null })
+								.where(
+									and(
+										eq(logs.characterId, characterId),
+										eq(logs.isDmLog, true),
+										exists(
+											db
+												.select()
+												.from(characters)
+												.where(and(eq(characters.id, characterId), eq(characters.userId, userId)))
 										)
 									)
-							);
+								)
+						);
 
-							return yield* runQuery(
-								tx
-									.delete(characters)
-									.where(and(eq(characters.id, characterId), eq(characters.userId, userId)))
-									.returning({ id: characters.id })
-							);
-						})
-					).pipe(
-						Effect.flatMap((result) =>
-							isTupleOf(result, 1) ? Effect.succeed(result[0]) : Effect.fail(new DeleteCharacterError())
-						),
-						Effect.tap((result) => AppLog.info("CharacterService.set.delete", { characterId, userId, result })),
-						Effect.tapError(() => AppLog.debug("CharacterService.set.delete", { characterId, userId }))
-					);
-				})
-			}
+						return yield* runQuery(
+							tx
+								.delete(characters)
+								.where(and(eq(characters.id, characterId), eq(characters.userId, userId)))
+								.returning({ id: characters.id })
+						);
+					})
+				).pipe(
+					Effect.flatMap((result) =>
+						isTupleOf(result, 1) ? Effect.succeed(result[0]) : Effect.fail(new DeleteCharacterError())
+					),
+					Effect.tap((result) => AppLog.info("CharacterService.delete", { characterId, userId, result })),
+					Effect.tapError(() => AppLog.debug("CharacterService.delete", { characterId, userId }))
+				);
+			})
 		};
 	})
 }) {}

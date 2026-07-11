@@ -32,6 +32,10 @@ export class UserService extends Effect.Service<UserService>()("UserService", {
 		const { db } = yield* DBService;
 
 		return {
+			/**
+			 * Queries
+			 */
+
 			get: {
 				localsUser: Effect.fn("UserService.get.localsUser")(function* (userId: UserId) {
 					return yield* runQuery(
@@ -113,46 +117,49 @@ export class UserService extends Effect.Service<UserService>()("UserService", {
 					);
 				})
 			},
-			set: {
-				update: Effect.fn("UserService.set.update")(function* (userId: UserId, data: Partial<Pick<User, "name" | "image">>) {
-					return yield* runQuery(db.update(user).set(data).where(eq(user.id, userId)).returning()).pipe(
-						Effect.flatMap((users) =>
-							isTupleOf(users, 1) ? Effect.succeed(users[0]) : Effect.fail(new UpdateUserError("Failed to update user"))
-						),
-						Effect.tap((result) => AppLog.info("UserService.set.update", { userId, result })),
-						Effect.tapError(() => AppLog.debug("UserService.set.update", { userId, data }))
-					);
-				}),
-				renamePasskey: Effect.fn("UserService.set.renamePasskey")(function* (userId: UserId, passkeyId: PasskeyId, name: string) {
-					return yield* runQuery(
-						db
-							.update(passkey)
-							.set({ name: name.trim() })
-							.where(and(eq(passkey.id, passkeyId), eq(passkey.userId, userId)))
-							.returning()
-					).pipe(
-						Effect.flatMap((passkeys) =>
-							isTupleOf(passkeys, 1)
-								? Effect.succeed(passkeys[0])
-								: Effect.fail(new RenamePasskeyError("Failed to rename passkey"))
-						)
-					);
-				}),
-				deletePasskey: Effect.fn("UserService.set.deletePasskey")(function* (userId: UserId, passkeyId: PasskeyId) {
-					return yield* runQuery(
-						db
-							.delete(passkey)
-							.where(and(eq(passkey.id, passkeyId), eq(passkey.userId, userId)))
-							.returning({ id: passkey.id })
-					).pipe(
-						Effect.flatMap((passkeys) =>
-							isTupleOf(passkeys, 1)
-								? Effect.succeed(passkeys[0].id)
-								: Effect.fail(new DeletePasskeyError("Failed to delete passkey"))
-						)
-					);
-				})
-			}
+
+			/**
+			 * Mutations
+			 */
+
+			update: Effect.fn("UserService.update")(function* (userId: UserId, data: Partial<Pick<User, "name" | "image">>) {
+				return yield* runQuery(db.update(user).set(data).where(eq(user.id, userId)).returning()).pipe(
+					Effect.flatMap((users) =>
+						isTupleOf(users, 1) ? Effect.succeed(users[0]) : Effect.fail(new UpdateUserError("Failed to update user"))
+					),
+					Effect.tap((result) => AppLog.info("UserService.update", { userId, result })),
+					Effect.tapError(() => AppLog.debug("UserService.update", { userId, data }))
+				);
+			}),
+			renamePasskey: Effect.fn("UserService.renamePasskey")(function* (userId: UserId, passkeyId: PasskeyId, name: string) {
+				return yield* runQuery(
+					db
+						.update(passkey)
+						.set({ name: name.trim() })
+						.where(and(eq(passkey.id, passkeyId), eq(passkey.userId, userId)))
+						.returning()
+				).pipe(
+					Effect.flatMap((passkeys) =>
+						isTupleOf(passkeys, 1)
+							? Effect.succeed(passkeys[0])
+							: Effect.fail(new RenamePasskeyError("Failed to rename passkey"))
+					)
+				);
+			}),
+			deletePasskey: Effect.fn("UserService.deletePasskey")(function* (userId: UserId, passkeyId: PasskeyId) {
+				return yield* runQuery(
+					db
+						.delete(passkey)
+						.where(and(eq(passkey.id, passkeyId), eq(passkey.userId, userId)))
+						.returning({ id: passkey.id })
+				).pipe(
+					Effect.flatMap((passkeys) =>
+						isTupleOf(passkeys, 1)
+							? Effect.succeed(passkeys[0].id)
+							: Effect.fail(new DeletePasskeyError("Failed to delete passkey"))
+					)
+				);
+			})
 		};
 	})
 }) {}

@@ -101,7 +101,7 @@ export const saveCharacter = guardedForm("unchecked", function* (input: LogSchem
 		...input,
 		timezone: input.timezone || event.locals.app.settings.timezone
 	});
-	yield* Logs.set.save(result, user).pipe(Effect.tapError((err) => Effect.fail(invalid(err.message))));
+	yield* Logs.save(result, user).pipe(Effect.tapError((err) => Effect.fail(invalid(err.message))));
 
 	redirect(303, `/characters/${character.id}`);
 });
@@ -137,7 +137,7 @@ export const saveDM = guardedForm("unchecked", function* (input: DmLogSchemaIn, 
 		dm: userDM
 	};
 
-	yield* Logs.set.save(log, user).pipe(Effect.tapError((err) => Effect.fail(invalid(err.message))));
+	yield* Logs.save(log, user).pipe(Effect.tapError((err) => Effect.fail(invalid(err.message))));
 
 	redirect(303, `/dm-logs`);
 });

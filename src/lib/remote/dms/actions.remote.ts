@@ -16,5 +16,5 @@ export const deleteDM = guardedCommand(dungeonMasterIdSchema, function* (id, { u
 	const dm = yield* DMs.get.one(id, user.id, false);
 	if (dm.isUser) return yield* new DeleteUserDMError();
 
-	return yield* DMs.set.delete(dm, user.id);
+	return yield* DMs.delete(dm, user.id);
 });
