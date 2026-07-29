@@ -29,14 +29,14 @@ export class DBService extends Effect.Service<DBService>()("DBService", {
 		const database = tx || db;
 
 		const transaction = Effect.fn("DBService.transaction")(function* <A, B extends InstanceType<ErrorClass>>(
-			effect: (tx: Transaction) => Effect.Effect<A, B | never>
+			program: (tx: Transaction) => Effect.Effect<A, B | never>
 		) {
 			const event = getRequestEvent();
 			const runtime = event.locals.runtime;
 			const result = yield* Effect.tryPromise({
 				try: () =>
 					database.transaction(async (tx) => {
-						const result = await runtime.runPromiseExit(effect(tx));
+						const result = await runtime.runPromiseExit(program(tx));
 						return Exit.match(result, {
 							onSuccess: (value) => value,
 							onFailure: (cause) => {

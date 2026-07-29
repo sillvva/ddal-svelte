@@ -10,6 +10,8 @@ import type { FullPathname } from "./constants";
 import { errorToast } from "./factories.svelte";
 import type { EffectFailure, EffectResult } from "./server/effect/runtime";
 
+export type IsAny<T> = 0 extends 1 & T ? true : false;
+
 export type Crumb = {
 	title: string;
 	url: string;

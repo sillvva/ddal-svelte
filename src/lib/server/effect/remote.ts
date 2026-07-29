@@ -1,7 +1,7 @@
 import { command, form, query } from "$app/server";
 import type { LocalsUser } from "$lib/schemas";
 import { AuthService } from "$lib/server/effect/services/auth";
-import { isRedirectFailure, isStandardSchema, isValidationError } from "$lib/util";
+import { isRedirectFailure, isStandardSchema, isValidationError, type IsAny } from "$lib/util";
 import { isFunction, isString } from "@sillvva/utils";
 import type { StandardSchemaV1 } from "@standard-schema/spec";
 import {
@@ -157,6 +157,22 @@ export function guardedCommand<
 // guardedForm: Remote Form with auth guard
 // -------------------------------------------------------------------------------------------------
 
+type HasNonOptionalBoolean<T> =
+	IsAny<T> extends true
+		? never
+		: [T] extends [boolean]
+			? true
+			: T extends Array<infer U>
+				? HasNonOptionalBoolean<U>
+				: T extends Record<string, any>
+					? { [K in keyof T]: HasNonOptionalBoolean<T[K]> }[keyof T]
+					: never;
+
+type FormSchemaValidate<Schema extends StandardSchemaV1<RemoteFormInput, Record<string, unknown>>> =
+	true extends HasNonOptionalBoolean<StandardSchemaV1.InferInput<Schema>>
+		? "Error: All booleans in form schemas must be optional (e.g. `v.optional(v.boolean(), false)`) because checkbox inputs do not send a false value when unchecked."
+		: Schema;
+
 export function guardedForm<
 	Schema extends StandardSchemaV1<RemoteFormInput, Record<string, unknown>>,
 	R,
@@ -165,7 +181,7 @@ export function guardedForm<
 	T extends YieldWrap<Effect.Effect<R, F, S>>,
 	X
 >(
-	schema: Schema,
+	schema: FormSchemaValidate<Schema>,
 	fn: (
 		output: StandardSchemaV1.InferOutput<Schema>,
 		auth: { user: LocalsUser; event: RequestEvent; issue: InvalidField<StandardSchemaV1.InferInput<Schema>> }
@@ -206,7 +222,7 @@ export function guardedForm<
 	T extends YieldWrap<Effect.Effect<R, F, S>>,
 	X
 >(
-	schemaOrFn: Schema | "unchecked" | ((auth: { user: LocalsUser; event: RequestEvent }) => Generator<T, X>),
+	schemaOrFn: FormSchemaValidate<Schema> | "unchecked" | ((auth: { user: LocalsUser; event: RequestEvent }) => Generator<T, X>),
 	fnOrAdminOnly?:
 		| ((
 				output: StandardSchemaV1.InferOutput<Schema>,
@@ -229,7 +245,7 @@ export function guardedForm<
 			output: StandardSchemaV1.InferOutput<Schema>,
 			auth: { user: LocalsUser; event: RequestEvent; issue: InvalidField<StandardSchemaV1.InferInput<Schema>> }
 		) => Generator<T, X>;
-		return form(schemaOrFn, async (output, issue) => {
+		return form(schemaOrFn as any, async (output, issue: InvalidField<StandardSchemaV1.InferInput<Schema>>) => {
 			const result = await runSafe(function* () {
 				const Auth = yield* AuthService;
 				const auth = yield* Auth.guard(adminOnly);
@@ -246,7 +262,7 @@ export function guardedForm<
 			input: Input,
 			auth: { user: LocalsUser; event: RequestEvent; issue: InvalidField<Input> }
 		) => Generator<T, X>;
-		return form(schemaOrFn, async (input: Input, issue) => {
+		return form("unchecked", async (input: Input, issue: InvalidField<Input>) => {
 			const result = await runSafe(function* () {
 				const Auth = yield* AuthService;
 				const auth = yield* Auth.guard(adminOnly);

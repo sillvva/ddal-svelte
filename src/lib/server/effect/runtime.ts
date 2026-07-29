@@ -175,7 +175,7 @@ export function handleCause<F extends InstanceType<ErrorClass> | UnknownExceptio
 
 		if (isRedirect(defect)) {
 			name = "Redirect";
-			message = `Redirect to ${defect.location}`;
+			message = `Redirect to ${defect.location}`; 
 			status = defect.status;
 			extra.redirectTo = defect.location;
 		} else if (isHttpError(defect)) {
