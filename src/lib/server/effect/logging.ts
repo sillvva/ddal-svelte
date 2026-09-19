@@ -26,34 +26,32 @@ const dbLogger = Logger.replace(
 		await runtime.runPromise(
 			Effect.gen(function* () {
 				const Admin = yield* AdminService;
-				return yield* Admin.set
-					.saveLog({
-						label: (log.message as string[]).join(" | "),
-						timestamp: log.date,
-						level: log.logLevel.label,
-						annotations: Object.fromEntries(HashMap.toEntries(log.annotations)) as Annotations
-					})
-					.pipe(
-						Effect.tap(
-							(log) =>
-								dev &&
-								Console.log(
-									log.timestamp.toLocaleTimeString(),
-									chalk.bold[
-										log.level === "ERROR" ? "red" : log.level === "DEBUG" ? "yellow" : log.level === "INFO" ? "cyan" : "reset"
-									](`[${log.level}]`),
-									log.label
-								)
-						),
-						Effect.tap(
-							(log) =>
-								dev &&
-								(["ERROR", "DEBUG"].includes(log.level)
-									? Console.dir(log.annotations, { depth: null })
-									: Console.log(chalk.dim(JSON.stringify(log.annotations.extra))))
-						),
-						Effect.tap(() => dev && Console.log(""))
-					);
+				return yield* Admin.saveLog({
+					label: (log.message as string[]).join(" | "),
+					timestamp: log.date,
+					level: log.logLevel.label,
+					annotations: Object.fromEntries(HashMap.toEntries(log.annotations)) as Annotations
+				}).pipe(
+					Effect.tap(
+						(log) =>
+							dev &&
+							Console.log(
+								log.timestamp.toLocaleTimeString(),
+								chalk.bold[
+									log.level === "ERROR" ? "red" : log.level === "DEBUG" ? "yellow" : log.level === "INFO" ? "cyan" : "reset"
+								](`[${log.level}]`),
+								log.label
+							)
+					),
+					Effect.tap(
+						(log) =>
+							dev &&
+							(["ERROR", "DEBUG"].includes(log.level)
+								? Console.dir(log.annotations, { depth: null })
+								: Console.log(chalk.dim(JSON.stringify(log.annotations.extra))))
+					),
+					Effect.tap(() => dev && Console.log(""))
+				);
 			})
 		);
 	})
