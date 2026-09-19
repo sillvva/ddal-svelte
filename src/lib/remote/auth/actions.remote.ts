@@ -24,9 +24,9 @@ export const updateUser = guardedCommand(userFieldsSchema, function* (input, { u
 
 	if (Object.keys(input).length === 0) return yield* Effect.fail(new NoChangesError());
 
-	const result = yield* Users.set
-		.update(user.id, input)
-		.pipe(Effect.catchTag("DrizzleError", (err) => Effect.fail(new FailedError("update user", err))));
+	const result = yield* Users.update(user.id, input).pipe(
+		Effect.catchTag("DrizzleError", (err) => Effect.fail(new FailedError("update user", err)))
+	);
 
 	return result;
 });
