@@ -38,7 +38,7 @@ export function unknownErrorToast(error: unknown) {
 	errorToast(unknownErrorMessage(error));
 }
 
-export function createContext<T>(createDefault?: () => T): [() => T, (context: T) => T] {
+export function createContext<T>(createDefault?: () => T): [() => T, (context: T) => T, () => boolean] {
 	const key = Symbol("context");
 	return [
 		() => {
@@ -46,7 +46,8 @@ export function createContext<T>(createDefault?: () => T): [() => T, (context: T
 			if (createDefault) return setContext(key, createDefault());
 			throw new Error("Context not found");
 		},
-		(context) => setContext(key, context)
+		(context) => setContext(key, context),
+		() => hasContext(key)
 	];
 }
 
