@@ -38,7 +38,7 @@
 <div class="flex flex-col gap-4">
 	{#if issues && isTupleOfAtLeast(issues, 1)}
 		<div class="alert alert-error shadow-lg">
-			<span class="iconify mdi--alert-circle size-6"></span>
+			<span class="iconify size-6 mdi--alert-circle"></span>
 			{issues[0].message}
 		</div>
 	{/if}

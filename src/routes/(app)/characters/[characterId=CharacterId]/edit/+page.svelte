@@ -40,7 +40,8 @@
 <svelte:boundary>
 	{#snippet failed(error)}<Error {error} boundary="edit-character" />{/snippet}
 	<RemoteForm {schema} {form} {data} {initialErrors}>
-		{#snippet children({ form })}
+		{#snippet children(ctx)}
+			{const { form } = $derived(ctx)}
 			<Input field={form.fields.id} type="hidden" />
 			<Control class="col-span-12 sm:col-span-6">
 				<Input field={form.fields.name} label="Character Name" required />
@@ -101,7 +102,7 @@
 				</Control>
 			{/if}
 			<div class="col-span-12 mt-8 mb-4 flex justify-center">
-				<Submit>Save Character</Submit>
+				<Submit form={ctx}>Save Character</Submit>
 			</div>
 		{/snippet}
 	</RemoteForm>

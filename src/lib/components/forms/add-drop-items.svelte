@@ -1,8 +1,8 @@
 <script lang="ts">
-	import type { GenericFormConfig } from "$lib/factories.svelte";
+	import type { GenericForm } from "$lib/factories.svelte";
 	import type { DmLogSchemaIn, ItemId, ItemSchema, LogSchema, LogSchemaIn } from "$lib/schemas";
 	import { isDefined, sorter } from "@sillvva/utils";
-	import { getContext, type Snippet } from "svelte";
+	import { type Snippet } from "svelte";
 	import { v7 } from "uuid";
 	import Control from "./control.svelte";
 	import InputWrapper from "./input-wrapper.svelte";
@@ -10,15 +10,15 @@
 	import MarkdownInput from "./md-input.svelte";
 
 	interface Props {
+		form: GenericForm<LogSchemaIn | DmLogSchemaIn>;
 		magicItems?: ItemSchema[];
 		storyAwards?: ItemSchema[];
 		children?: Snippet;
 	}
 
-	let { magicItems = [], storyAwards = [], children }: Props = $props();
+	let { form: configuredForm, magicItems = [], storyAwards = [], children }: Props = $props();
 
-	const configured = getContext<GenericFormConfig<LogSchemaIn | DmLogSchemaIn>>("configured-form");
-	const { form } = $derived(configured());
+	const { form } = $derived(configuredForm);
 
 	const newItem = () => ({ id: v7() as ItemId, name: "", description: "" }) satisfies LogSchema["magicItemsGained"][number];
 
@@ -52,7 +52,7 @@
 </script>
 
 <div
-	class="bg-base-100 col-span-12 flex flex-col justify-between gap-8 pt-8 md:sticky md:top-19 md:z-10 md:flex-row md:pb-4 md:max-lg:gap-4"
+	class="col-span-12 flex flex-col justify-between gap-8 bg-base-100 pt-8 md:sticky md:top-19 md:z-10 md:flex-row md:pb-4 md:max-lg:gap-4"
 >
 	{@render children?.()}
 	<div class="flex flex-1 flex-col gap-4 sm:flex-row md:max-w-fit">
@@ -61,17 +61,17 @@
 				<button
 					type="button"
 					tabindex="-1"
-					class="btn join-item border-base-200! bg-base-300! min-w-fit flex-2 basis-0 cursor-default justify-between gap-3"
+					class="btn join-item min-w-fit flex-2 basis-0 cursor-default justify-between gap-3 border-base-200! bg-base-300!"
 				>
 					<span>{label}</span>
 					<span class="flex flex-row gap-1">
 						{#if gained.value().length > 0}
-							<span class="badge badge-success badge-outline max-xs:px-1 rounded-sm">
+							<span class="badge rounded-sm badge-outline badge-success max-xs:px-1">
 								{gained.value().length}
 							</span>
 						{/if}
 						{#if lost.value().length > 0}
-							<span class="badge badge-error badge-outline max-xs:px-1 rounded-sm">
+							<span class="badge rounded-sm badge-outline badge-error max-xs:px-1">
 								{lost.value().length}
 							</span>
 						{/if}
@@ -112,7 +112,7 @@
 			)}
 
 			{#if field}
-				<div class="card bg-base-300/70 col-span-12 shadow-xl sm:col-span-6">
+				<div class="card col-span-12 bg-base-300/70 shadow-xl sm:col-span-6">
 					<div class="card-body flex flex-col">
 						<h4 class="text-xl">Add {title}</h4>
 						<div class="flex gap-4">
@@ -122,7 +122,7 @@
 							</Control>
 							<button
 								type="button"
-								class="btn btn-error mt-10"
+								class="btn mt-10 btn-error"
 								onclick={(ev: Event) => {
 									ev.preventDefault();
 									if (field) {
@@ -138,7 +138,7 @@
 								}}
 								aria-label="Delete Entry"
 							>
-								<span class="iconify mdi--trash-can size-6"></span>
+								<span class="iconify size-6 mdi--trash-can"></span>
 							</button>
 						</div>
 						<Control>
@@ -156,7 +156,7 @@
 			{const field = $derived(entity === "magicItems" ? form.fields.magicItemsLost[index] : form.fields.storyAwardsLost[index])}
 
 			{#if field}
-				<div class="card bg-base-300/70 col-span-12 shadow-xl sm:col-span-6">
+				<div class="card col-span-12 bg-base-300/70 shadow-xl sm:col-span-6">
 					<div class="card-body flex flex-col">
 						<h4 class="text-xl">Drop {title}</h4>
 						<div class="flex gap-4">
@@ -165,7 +165,7 @@
 									<select
 										{...field.as("select")}
 										id={field.as("select").name}
-										class="select select-bordered w-full max-sm:text-base"
+										class="select-bordered select w-full max-sm:text-base"
 									>
 										{#each items.filter((item) => item.id === field.value() || !arrValue.includes(item.id)) as item (item.id)}
 											<option value={item.id}>
@@ -177,7 +177,7 @@
 							</Control>
 							<button
 								type="button"
-								class="btn btn-error mt-10"
+								class="btn mt-10 btn-error"
 								onclick={(ev: Event) => {
 									ev.preventDefault();
 									if (field) {
@@ -189,7 +189,7 @@
 								}}
 								aria-label="Delete Entry"
 							>
-								<span class="iconify mdi--trash-can size-6"></span>
+								<span class="iconify size-6 mdi--trash-can"></span>
 							</button>
 						</div>
 						<div class="text-sm">

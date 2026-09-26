@@ -40,7 +40,8 @@
 	/>
 
 	<RemoteForm {schema} {form} {data} initialErrors>
-		{#snippet children({ form })}
+		{#snippet children(ctx)}
+			{const { form } = $derived(ctx)}
 			<Input field={form.fields.id} type="hidden" />
 			<Control class="col-span-12 sm:col-span-6">
 				<Input field={form.fields.name} label="DM Name" required />
@@ -49,7 +50,7 @@
 				<Input field={form.fields.DCI} label="DCI" />
 			</Control>
 			<div class="col-span-12 my-4 flex justify-center">
-				<Submit>Save DM</Submit>
+				<Submit form={ctx}>Save DM</Submit>
 			</div>
 		{/snippet}
 	</RemoteForm>
@@ -57,7 +58,7 @@
 	<section class="mt-4">
 		<h2 class="mb-2 text-2xl">Logs</h2>
 		{#if dm.logs.length == 0}
-			<div class="bg-base-200 flex h-40 flex-col items-center justify-center gap-2 rounded-lg">
+			<div class="flex h-40 flex-col items-center justify-center gap-2 rounded-lg bg-base-200">
 				<p>This DM has no logs.</p>
 				<button
 					type="button"
@@ -80,8 +81,8 @@
 				</button>
 			</div>
 		{:else}
-			<div class="bg-base-100 w-full overflow-x-auto rounded-lg">
-				<table class="bg-base-200 table w-full">
+			<div class="w-full overflow-x-auto rounded-lg bg-base-100">
+				<table class="table w-full bg-base-200">
 					<thead>
 						<tr class="bg-base-300">
 							<th class="max-lg:hidden">Date</th>

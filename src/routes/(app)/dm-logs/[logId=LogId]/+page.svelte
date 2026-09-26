@@ -41,7 +41,8 @@
 
 	{let data = $derived(proxify(log))}
 	<RemoteForm {schema} {form} {data} {initialErrors}>
-		{#snippet children({ form, initial })}
+		{#snippet children(ctx)}
+			{const { form, initial } = $derived(ctx)}
 			<Input field={form.fields.id} type="hidden" />
 			<Input field={form.fields.timezone} hidden />
 			<Control class="col-span-12 sm:col-span-7">
@@ -83,7 +84,7 @@
 					<select
 						id="season"
 						bind:value={season}
-						class="select select-bordered w-full max-sm:text-base"
+						class="select-bordered select w-full max-sm:text-base"
 						onchange={() => {
 							data.experience = 0;
 							data.acp = 0;
@@ -124,8 +125,8 @@
 			<Control class="col-span-12">
 				<MarkdownInput field={form.fields.description} name="notes" maxLength={5000} maxRows={20} preview />
 			</Control>
-			<AddDropItems>
-				<Submit>Save Log</Submit>
+			<AddDropItems form={ctx}>
+				<Submit form={ctx}>Save Log</Submit>
 			</AddDropItems>
 		{/snippet}
 	</RemoteForm>

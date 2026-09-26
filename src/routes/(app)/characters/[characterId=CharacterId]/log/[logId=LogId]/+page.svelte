@@ -46,7 +46,8 @@
 
 	{let data = $derived(proxify(log))}
 	<RemoteForm {schema} {form} {data} {initialErrors}>
-		{#snippet children({ form, initial })}
+		{#snippet children(ctx)}
+			{const { form, initial } = $derived(ctx)}
 			<Input field={form.fields.id} hidden />
 			<Input field={form.fields.characterId} hidden />
 			<Input field={form.fields.characterName} hidden />
@@ -57,7 +58,7 @@
 					<InputWrapper field={form.fields.type} as="select" label="Log Type">
 						<select
 							{...form.fields.type.as("select")}
-							class={["select select-bordered w-full max-sm:text-base", data.type !== "game" && "text-xs!"]}
+							class={["select-bordered select w-full max-sm:text-base", data.type !== "game" && "text-xs!"]}
 						>
 							<option value="game">Game</option>
 							<option value="nongame">Non-Game (Purchase, Trade, etc)</option>
@@ -129,7 +130,7 @@
 						<select
 							id="season"
 							bind:value={season}
-							class="select select-bordered w-full max-sm:text-base"
+							class="select-bordered select w-full max-sm:text-base"
 							onchange={() => {
 								data.experience = 0;
 								data.acp = 0;
@@ -184,8 +185,8 @@
 			<Control class="col-span-12 w-full">
 				<MarkdownInput field={form.fields.description} name="notes" maxRows={20} maxLength={5000} preview />
 			</Control>
-			<AddDropItems {magicItems} {storyAwards}>
-				<Submit>Save Log</Submit>
+			<AddDropItems form={ctx} {magicItems} {storyAwards}>
+				<Submit form={ctx}>Save Log</Submit>
 			</AddDropItems>
 		{/snippet}
 	</RemoteForm>
