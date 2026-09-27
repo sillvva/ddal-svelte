@@ -82,9 +82,9 @@
 			{#if data.type === "game"}
 				{#if !firstLog}
 					{const dms = $derived(await API.dms.queries.getAllWithoutLogs())}
+					{const request = $derived(await API.app.queries.request())}
+					{const user = $derived(request.user!)}
 					<Control class="col-span-12 sm:col-span-6">
-						{const request = $derived(await API.app.queries.request())}
-						{const user = $derived(request.user!)}
 						<Combobox
 							label="DM Name"
 							valueField={form.fields.dm.id}
