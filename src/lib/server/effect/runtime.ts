@@ -90,18 +90,29 @@ export async function run<
 // -------------------------------------------------------------------------------------------------
 
 export type EffectSuccess<R> = { ok: true; data: R };
+export type EffectError = {
+	name: string;
+	type: Cause.Cause<unknown>["_tag"];
+	message: string;
+	stack: string;
+	status: NumericRange<300, 599>;
+	cause?: unknown;
+	defect?: unknown;
+	redirectTo?: unknown;
+};
 export type EffectFailure = {
 	ok: false;
-	error: {
-		name: string;
-		type: Cause.Cause<unknown>["_tag"];
-		message: string;
-		stack: string;
-		status: NumericRange<300, 599>;
-		[key: string]: unknown;
-	};
+	error: EffectError;
 };
 export type EffectResult<R> = EffectSuccess<R> | EffectFailure;
+
+/** Command payload sent to the client. `stack` stays on the server. */
+export type ClientEffectResult<R> =
+	| EffectSuccess<R>
+	| {
+			ok: false;
+			error: Omit<EffectError, "stack">;
+	  };
 
 // Overload signatures
 export async function runSafe<
@@ -175,7 +186,7 @@ export function handleCause<F extends InstanceType<ErrorClass> | UnknownExceptio
 
 		if (isRedirect(defect)) {
 			name = "Redirect";
-			message = `Redirect to ${defect.location}`; 
+			message = `Redirect to ${defect.location}`;
 			status = defect.status;
 			extra.redirectTo = defect.location;
 		} else if (isHttpError(defect)) {

@@ -8,7 +8,7 @@ import { tick } from "svelte";
 import type { Attachment } from "svelte/attachments";
 import type { FullPathname } from "./constants";
 import { errorToast } from "./factories.svelte";
-import type { EffectFailure, EffectResult } from "./server/effect/runtime";
+import type { ClientEffectResult, EffectFailure } from "./server/effect/runtime";
 
 export type IsAny<T> = 0 extends 1 & T ? true : false;
 
@@ -118,9 +118,9 @@ export function isStandardSchema(schema: unknown): schema is StandardSchemaV1 {
 	return isObject(schema) && "~standard" in schema;
 }
 
-export function isRedirectFailure(
-	error: EffectFailure["error"]
-): error is EffectFailure["error"] & { redirectTo: FullPathname & {} } {
+export function isRedirectFailure<E extends { status: number; redirectTo?: unknown }>(
+	error: E
+): error is E & { redirectTo: FullPathname & {} } {
 	return Boolean(error.redirectTo && typeof error.redirectTo === "string" && error.status >= 301 && error.status <= 308);
 }
 
@@ -130,7 +130,7 @@ export function isValidationError(
 	return Boolean(error.name === "ValidationError" && error.type === "Die");
 }
 
-export async function parseEffectResult<T>(result: EffectResult<T>) {
+export async function parseEffectResult<T>(result: ClientEffectResult<T>) {
 	if (result.ok) return result.data;
 
 	errorToast(result.error.message);
