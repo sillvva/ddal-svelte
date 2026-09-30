@@ -174,10 +174,16 @@ type FormSchemaValidate<Schema extends StandardSchemaV1<RemoteFormInput, Record<
 		? "Error: All booleans in form schemas must be optional (e.g. `v.optional(v.boolean(), false)`) because checkbox inputs do not send a false value when unchecked."
 		: Schema;
 
+function isFormSchema<Schema extends StandardSchemaV1<RemoteFormInput, Record<string, unknown>>>(
+	schema: unknown
+): schema is FormSchemaValidate<Schema> {
+	return isStandardSchema(schema);
+}
+
 /** Kit's `form()` checkbox conditional does not unify with `FormSchemaValidate`, so the already-validated schema is passed through this signature. */
 const formWithSchema = form as <Schema extends StandardSchemaV1<RemoteFormInput, Record<string, unknown>>, Output>(
-	schema: Schema,
-	fn: (data: StandardSchemaV1.InferOutput<Schema>, issue: InvalidField<StandardSchemaV1.InferInput<Schema>>) => Promise<Output>
+	schema: FormSchemaValidate<Schema>,
+	fn: (data: StandardSchemaV1.InferOutput<Schema>, issue: InvalidField<StandardSchemaV1.InferInput<Schema>>) => Awaitable<Output>
 ) => RemoteForm<StandardSchemaV1.InferInput<Schema>, Output>;
 
 export function guardedForm<
@@ -232,13 +238,12 @@ export function guardedForm<
 	}
 
 	// Handle the case with schema parameter (first overload)
-	if (isStandardSchema(schemaOrFn) && isFunction(fnOrAdminOnly)) {
-		const schema = schemaOrFn as Schema;
+	if (isFormSchema<Schema>(schemaOrFn) && isFunction(fnOrAdminOnly)) {
 		const fn = fnOrAdminOnly as (
 			output: StandardSchemaV1.InferOutput<Schema>,
 			auth: FormAuth<StandardSchemaV1.InferInput<Schema>>
 		) => AppGen<A, E, R, Y>;
-		return formWithSchema(schema, async (output, issue) => {
+		return formWithSchema(schemaOrFn, async (output, issue) => {
 			const result = await runSafe(authed(adminOnly, (auth) => fn(output, { issue, ...auth })));
 			return parseResult(result);
 		});
