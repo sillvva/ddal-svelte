@@ -1,10 +1,13 @@
-<script lang="ts" generics="Input extends RemoteFormInput = RemoteFormInput">
-	import { dev } from "$app/environment";
+<script
+	lang="ts"
+	generics="Input extends RemoteFormInput = RemoteFormInput"
+>
+	import type { RemoteFormInput } from '$app/server';
+	import { dev } from '$app/env';
 	import { navigating, page } from "$app/state";
-	import Debug from "$lib/components/debug.svelte";
-	import { configureForm, errorToast, successToast, type GenericForm, type RemoteFormOptions } from "$lib/factories.svelte";
+	import Debug from "#lib/components/debug.svelte";
+	import { configureForm, errorToast, successToast, type GenericForm, type RemoteFormOptions } from "#lib/factories.svelte.js";
 	import { isTupleOfAtLeast } from "@sillvva/utils";
-	import type { RemoteFormInput } from "@sveltejs/kit";
 	import { setContext, type Snippet } from "svelte";
 
 	interface Props extends Omit<RemoteFormOptions<Input>, "formEl"> {
@@ -18,17 +21,17 @@
 	const configured = setContext(
 		"configured-form",
 		configureForm(() => ({
-			...rest,
-			formEl,
-			navBlockMessage: rest.navBlockMessage || "You have unsaved changes. Are you sure you want to leave?",
-			onresult: (ctx) => {
-				if (ctx.success) {
-					successToast(`${form.fields.name?.value() || "Form"} saved successfully`);
-				} else if (ctx.error) {
-					errorToast(ctx.error);
-				}
-				rest.onresult?.(ctx);
+		...rest,
+		formEl,
+		navBlockMessage: rest.navBlockMessage || "You have unsaved changes. Are you sure you want to leave?",
+		onresult: (ctx) => {
+			if (ctx.success) {
+				successToast(`${form.fields.name?.value() || "Form"} saved successfully`);
+			} else if (ctx.error) {
+				errorToast(ctx.error);
 			}
+			rest.onresult?.(ctx);
+		}
 		}))
 	);
 
@@ -46,10 +49,8 @@
 	<form {...attributes} bind:this={formEl}>
 		<fieldset
 			class="grid grid-cols-12 gap-x-4"
-			disabled={submitting || (!!navigating.to && navigating.to.url.pathname !== page.url.pathname)}
-		>
-			{@render children?.(configured())}
-		</fieldset>
+			disabled={submitting || !!navigating.to && navigating.to.url.pathname !== page.url.pathname}
+		>{@render children?.(configured())}</fieldset>
 	</form>
 
 	{#if dev}

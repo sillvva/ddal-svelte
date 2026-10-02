@@ -1,6 +1,6 @@
 <script lang="ts">
-	import { highlighterConfig, highlighterThemeDark, highlighterThemeLight } from "$lib/constants";
-	import { getGlobal } from "$lib/stores.svelte";
+	import { highlighterConfig, highlighterThemeDark, highlighterThemeLight } from "#lib/constants.js";
+	import { getGlobal } from "#lib/stores.svelte.js";
 	import { createHighlighter } from "shiki";
 
 	type Props = {

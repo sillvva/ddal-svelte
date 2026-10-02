@@ -1,6 +1,5 @@
-import type { FullCharacterData } from "$lib/server/effect/services/characters";
-import { omit, type Prettify } from "@sillvva/utils";
-import { LogLevel } from "effect";
+import type { FullCharacterData } from "#lib/server/effect/services/characters.js";
+import { omit } from "@sillvva/utils";
 import * as v from "valibot";
 import { BLANK_CHARACTER, PROVIDERS, themeGroups, themes } from "./constants";
 
@@ -46,37 +45,6 @@ export const timezoneSchema = v.pipe(
 	v.string(),
 	v.check((input) => input === "" || Intl.supportedValuesOf("timeZone").includes(input), "Invalid timezone")
 );
-
-export type EnvPrivate = v.InferOutput<typeof envPrivateSchema>;
-export const envPrivateSchema = v.pipe(
-	v.object({
-		DATABASE_URL: urlSchema,
-		AUTH_SECRET: v.pipe(string, v.minLength(10)),
-		GOOGLE_CLIENT_ID: requiredString,
-		GOOGLE_CLIENT_SECRET: requiredString,
-		DISCORD_CLIENT_ID: requiredString,
-		DISCORD_CLIENT_SECRET: requiredString,
-		DISABLE_SIGNUPS: v.optional(v.boolean(), false),
-		LOG_LEVEL: v.pipe(
-			v.optional(v.picklist(["none", "debug", "info", "error"]), "error"),
-			v.transform((b) =>
-				b === "debug" ? LogLevel.Debug : b === "info" ? LogLevel.Info : b === "error" ? LogLevel.Error : LogLevel.None
-			)
-		)
-	}),
-	v.readonly()
-);
-
-export type EnvPublic = v.InferOutput<typeof envPublicSchema>;
-export const envPublicSchema = v.pipe(
-	v.object({
-		PUBLIC_URL: urlSchema
-	}),
-	v.readonly()
-);
-
-interface CombinedEnv extends EnvPrivate, EnvPublic {}
-export type Env = Prettify<CombinedEnv>;
 
 export type UserId = v.InferOutput<typeof userIdSchema>;
 export const userIdSchema = brandedId("UserId");

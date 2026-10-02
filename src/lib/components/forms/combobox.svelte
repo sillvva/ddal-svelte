@@ -1,6 +1,6 @@
 <script lang="ts">
-	import { dev } from "$app/environment";
-	import type { RemoteFormField } from "@sveltejs/kit";
+	import type { RemoteFormField } from '$app/server';
+	import { dev } from '$app/env';
 	import { Combobox } from "bits-ui";
 	import Debug from "../debug.svelte";
 	import FieldMessage from "./field-message.svelte";
@@ -109,22 +109,22 @@
 	type="single"
 	bind:value={() => valueField.value(), (val) => valueField.set(val)}
 	bind:open
-	{disabled}
+	disabled={disabled}
 	onValueChange={(sel) => {
 		const item = filtered.find((item) => item.value === sel);
 		if (!isValueField) inputField.set(item?.label || item?.value || "");
 		selectedItem = { value: item?.value || "", label: input, itemLabel: input };
-		onselect?.({ selected: item, input: input });
+		onselect?.({ selected: item, input });
 		open = false;
 	}}
 	onOpenChange={() => {
 		setTimeout(() => {
-			if (!open) {
-				if (changed) {
-					if (!allowCustom && !selectedItem) clear();
-					changed = false;
+				if (!open) {
+					if (changed) {
+						if (!allowCustom && !selectedItem) clear();
+						changed = false;
+					}
 				}
-			}
 		}, 50);
 	}}
 >
@@ -171,8 +171,8 @@
 					}}
 					aria-invalid={issues?.length ? "true" : undefined}
 					class="input join-item focus:border-primary w-full max-sm:text-base"
-					{required}
-					{placeholder}
+					required={required}
+					placeholder={placeholder}
 				>
 					{#snippet child({ props })}
 						<input {...props} {...inputField.as("text")} aria-invalid={invalid} />
@@ -227,7 +227,14 @@
 			</a>
 		{/if}
 	</div>
-	<FieldMessage {name} type="select" {description} {issues} />
+
+	<FieldMessage
+		name={name}
+		type="select"
+		description={description}
+		issues={issues}
+	/>
+
 	{#if !isValueField}
 		<Input field={valueField} hidden />
 	{/if}

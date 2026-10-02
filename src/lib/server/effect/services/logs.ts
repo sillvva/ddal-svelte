@@ -1,5 +1,5 @@
 import { getRequestEvent } from "$app/server";
-import { parseLog } from "$lib/entities";
+import { parseLog } from "#lib/entities.js";
 import type {
 	DungeonMasterId,
 	DungeonMasterSchema,
@@ -9,7 +9,7 @@ import type {
 	LogId,
 	LogSchema,
 	UserId
-} from "$lib/schemas";
+} from "#lib/schemas.js";
 import {
 	buildConflictUpdateColumns,
 	DBService,
@@ -19,11 +19,11 @@ import {
 	type Filter,
 	type InferQueryResult,
 	type Transaction
-} from "$lib/server/db";
-import { extendedLogIncludes, logIncludes } from "$lib/server/db/includes";
-import { characters, dungeonMasters, logs, magicItems, storyAwards } from "$lib/server/db/schema";
-import type { ErrorParams } from "$lib/server/effect/errors";
-import { AppLog } from "$lib/server/effect/logging";
+} from "#lib/server/db/index.js";
+import { extendedLogIncludes, logIncludes } from "#lib/server/db/includes.js";
+import { characters, dungeonMasters, logs, magicItems, storyAwards } from "#lib/server/db/schema.js";
+import type { ErrorParams } from "#lib/server/effect/errors.js";
+import { AppLog } from "#lib/server/effect/logging.js";
 import { isTupleOf } from "@sillvva/utils";
 import { and, eq, exists, inArray, isNull, notInArray, or } from "drizzle-orm";
 import { Data, Effect } from "effect";

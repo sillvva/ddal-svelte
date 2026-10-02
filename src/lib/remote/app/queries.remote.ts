@@ -1,6 +1,7 @@
 import { getRequestEvent, query } from "$app/server";
-import { getHomeError } from "$lib/server/effect/services/auth";
+import { getHomeError } from "#lib/server/effect/services/auth.js";
 import { redirect } from "@sveltejs/kit";
+import * as v from "valibot";
 
 // eslint-disable-next-line custom/enforce-guarded-functions
 export const request = query(() => {
@@ -10,18 +11,27 @@ export const request = query(() => {
 	return { user, session, app, isMobile, isMac };
 });
 
+function appPath(value: string | null) {
+	if (!value || !value.startsWith("/") || value.startsWith("//")) return null;
+	return value;
+}
+
 // eslint-disable-next-line custom/enforce-guarded-functions
-export const home = query(() => {
-	const event = getRequestEvent();
-	const user = event.locals.user;
+export const home = query(
+	v.object({
+		redirect: v.nullable(v.string()),
+		error: v.nullable(v.string()),
+		errorDescription: v.nullable(v.string())
+	}),
+	({ redirect: redirectTo, error, errorDescription }) => {
+		const { locals } = getRequestEvent();
+		const destination = appPath(redirectTo);
 
-	const redirectTo = event.url.searchParams.get("redirect");
-	if (user?.id) redirect(302, redirectTo || "/characters");
+		if (locals.user?.id) redirect(302, destination ?? "/characters");
 
-	const error = getHomeError();
-
-	return {
-		redirectTo,
-		error
-	};
-});
+		return {
+			redirectTo: destination,
+			error: getHomeError(error, errorDescription)
+		};
+	}
+);

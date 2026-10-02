@@ -1,7 +1,7 @@
-import * as API from "$lib/remote";
-import { dungeonMasterFormSchema } from "$lib/schemas";
-import { guardedForm, refreshAll } from "$lib/server/effect/remote";
-import { DMService } from "$lib/server/effect/services/dms";
+import * as API from "#lib/remote/index.js";
+import { dungeonMasterFormSchema } from "#lib/schemas.js";
+import { guardedForm, refreshAll } from "#lib/server/effect/guarded.js";
+import { DMService } from "#lib/server/effect/services/dms.js";
 import { invalid, redirect } from "@sveltejs/kit";
 import { Effect } from "effect";
 

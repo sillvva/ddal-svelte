@@ -1,5 +1,5 @@
-import { guardedForm } from "$lib/server/effect/remote";
-import { AuthService } from "$lib/server/effect/services/auth";
+import { guardedForm } from "#lib/server/effect/guarded.js";
+import { AuthService } from "#lib/server/effect/services/auth.js";
 import { redirect } from "@sveltejs/kit";
 import { Effect } from "effect";
 

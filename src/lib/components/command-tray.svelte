@@ -1,10 +1,10 @@
 <script lang="ts">
 	import { goto } from "$app/navigation";
-	import { searchSections } from "$lib/constants.js";
-	import { GlobalSearchFactory } from "$lib/factories.svelte";
-	import * as API from "$lib/remote";
-	import type { SearchData } from "$lib/remote/command";
-	import { hotkey } from "$lib/util";
+	import { searchSections } from "#lib/constants.js";
+	import { GlobalSearchFactory } from "#lib/factories.svelte.js";
+	import * as API from "#lib/remote/index.js";
+	import type { SearchData } from "#lib/remote/command/index.js";
+	import { hotkey } from "#lib/util.js";
 	import { Command, Dialog, Separator } from "bits-ui";
 	import { untrack } from "svelte";
 	import SearchResults from "./search-results.svelte";
@@ -44,7 +44,9 @@
 
 	function select(value: string) {
 		setOpen(false);
-		goto(value);
+		void goto(value).catch(() => {
+			window.location.href = value;
+		});
 	}
 </script>
 

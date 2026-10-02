@@ -1,5 +1,5 @@
-import type { Pathname } from "$app/types";
-import type { Account } from "$lib/server/db/schema";
+import type { ResolvedPathname } from "$app/types";
+import type { Account } from "#lib/server/db/schema.js";
 import type { BundledHighlighterOptions, BundledLanguage, BundledTheme } from "shiki";
 
 export const defaultTitle = "Adventurers League Log Sheet";
@@ -22,11 +22,7 @@ type Provider = {
 };
 export type ProviderId = (typeof PROVIDERS)[number]["id"];
 export const PROVIDERS = [
-	{
-		name: "Google",
-		id: "google",
-		iconify: "logos--google-icon"
-	},
+	{ name: "Google", id: "google", iconify: "logos--google-icon" },
 	{
 		name: "Discord",
 		id: "discord",
@@ -102,7 +98,7 @@ export const themes = [
 export type Themes = (typeof themes)[number]["value"];
 export type ThemeGroups = (typeof themeGroups)[number];
 
-export type FullPathname = Pathname | `${Pathname}?${string}`;
+export type FullPathname = ResolvedPathname | `${ResolvedPathname}?${string}`;
 
 type HighlighterTheme = BundledHighlighterOptions<BundledLanguage, BundledTheme>["themes"][number] & string;
 export const highlighterThemeLight: HighlighterTheme = "catppuccin-latte";

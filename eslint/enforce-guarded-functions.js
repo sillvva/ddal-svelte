@@ -18,7 +18,7 @@ export default {
 	},
 
 	create(context) {
-		const filename = context.getFilename();
+		const filename = context.filename ?? context.getFilename();
 
 		// Only apply this rule to files ending in .remote.ts
 		if (!filename.endsWith(".remote.ts")) {

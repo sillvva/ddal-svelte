@@ -1,14 +1,21 @@
 <script lang="ts">
-	import { authClient } from "$lib/auth";
-	import { PROVIDERS } from "$lib/constants";
-	import { errorToast } from "$lib/factories.svelte.js";
-	import * as API from "$lib/remote";
-	import { getGlobal } from "$lib/stores.svelte.js";
+	import { page } from "$app/state";
+	import { authClient } from "#lib/auth.js";
+	import { PROVIDERS } from "#lib/constants.js";
+	import { errorToast } from "#lib/factories.svelte.js";
+	import * as API from "#lib/remote/index.js";
+	import { getGlobal } from "#lib/stores.svelte.js";
 	import { onMount } from "svelte";
 
 	const global = getGlobal();
 
-	const home = $derived(await API.app.queries.home());
+	const home = $derived(
+		await API.app.queries.home({
+			redirect: page.url.searchParams.get("redirect"),
+			error: page.url.searchParams.get("error"),
+			errorDescription: page.url.searchParams.get("error_description")
+		})
+	);
 
 	const lastMethod = authClient.getLastUsedLoginMethod();
 	let showPasskeyWarning = $state(false);

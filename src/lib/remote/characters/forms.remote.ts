@@ -1,9 +1,9 @@
-import { BLANK_CHARACTER } from "$lib/constants";
-import * as API from "$lib/remote";
-import { characterIdParamSchema, editCharacterSchema } from "$lib/schemas";
-import { guardedForm, guardedQuery, refreshAll } from "$lib/server/effect/remote";
-import { CharacterService } from "$lib/server/effect/services/characters";
-import { isValidUrl } from "$lib/server/effect/util";
+import { BLANK_CHARACTER } from "#lib/constants.js";
+import * as API from "#lib/remote/index.js";
+import { characterIdParamSchema, editCharacterSchema } from "#lib/schemas.js";
+import { guardedForm, guardedQuery, refreshAll } from "#lib/server/effect/guarded.js";
+import { CharacterService } from "#lib/server/effect/services/characters.js";
+import { isValidUrl } from "#lib/server/effect/util.js";
 import type { StandardSchemaV1 } from "@standard-schema/spec";
 import { invalid, redirect } from "@sveltejs/kit";
 import { Effect } from "effect";

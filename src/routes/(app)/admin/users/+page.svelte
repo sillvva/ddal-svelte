@@ -1,10 +1,10 @@
 <script lang="ts">
 	import { page } from "$app/state";
-	import Head from "$lib/components/head.svelte";
-	import Search from "$lib/components/search.svelte";
-	import { BLANK_CHARACTER } from "$lib/constants.js";
-	import { errorToast, successToast } from "$lib/factories.svelte.js";
-	import * as API from "$lib/remote";
+	import Head from "#lib/components/head.svelte";
+	import Search from "#lib/components/search.svelte";
+	import { BLANK_CHARACTER } from "#lib/constants.js";
+	import { errorToast, successToast } from "#lib/factories.svelte.js";
+	import * as API from "#lib/remote/index.js";
 	import { JSONSearchParser } from "@sillvva/search/json";
 	import { toJSObjectNotation } from "@sillvva/utils";
 

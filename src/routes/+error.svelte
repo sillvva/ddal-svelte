@@ -1,10 +1,10 @@
 <script lang="ts">
-	import { browser, dev } from "$app/environment";
+	import { browser, dev } from '$app/env';
 	import { page } from "$app/state";
-	import Debug from "$lib/components/debug.svelte";
-	import * as API from "$lib/remote";
-	import { uuidV7 } from "$lib/schemas";
-	import { getLogger } from "$lib/stores.svelte";
+	import Debug from "#lib/components/debug.svelte";
+	import * as API from "#lib/remote/index.js";
+	import { uuidV7 } from "#lib/schemas.js";
+	import { getLogger } from "#lib/stores.svelte.js";
 	import { useOs } from "@svelteuidev/composables";
 	import * as v from "valibot";
 	import Layout from "./(app)/+layout.svelte";
@@ -62,7 +62,10 @@
 		<div class={["alert mb-4 flex w-full max-w-3xl gap-4 shadow-lg", invalidParams() ? "alert-warning" : "alert-error"]}>
 			<span class="iconify mdi--alert-circle max-xs:hidden size-6"></span>
 			<div
-				class={["flex flex-1 gap-2", ((page.error && page.error.message.length >= 150) || invalidParams()) && "max-md:flex-col"]}
+				class={[
+					"flex flex-1 gap-2",
+					(page.error && page.error.message.length >= 150 || invalidParams()) && "max-md:flex-col"
+				]}
 			>
 				<div class="flex flex-1 flex-col justify-center">
 					<h3 class="font-bold">
@@ -85,21 +88,17 @@
 				</div>
 				{#if !display}
 					<div class="flex items-center gap-2 max-sm:self-end">
-						<button class="btn btn-sm max-sm:hidden" onclick={() => (display = true)}>View details</button>
+						<button
+							class="btn btn-sm max-sm:hidden"
+							onclick={() => display = true}
+						>View details</button>
 					</div>
 				{/if}
 			</div>
 		</div>
 		{#if display}
 			{const { user } = $derived(await API.app.queries.request())}
-			<Debug
-				data={{
-					...page,
-					os: os,
-					user,
-					data: undefined
-				}}
-			/>
+			<Debug data={{ ...page, os, user, data: undefined }} />
 		{/if}
 	</div>
 </Layout>

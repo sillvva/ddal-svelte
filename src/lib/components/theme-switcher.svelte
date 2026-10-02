@@ -1,7 +1,7 @@
 <script lang="ts">
-	import { themeGroups, themes, type Themes } from "$lib/constants";
-	import { getGlobal } from "$lib/stores.svelte";
-	import { createTransition } from "$lib/util";
+	import { themeGroups, themes, type Themes } from "#lib/constants.js";
+	import { getGlobal } from "#lib/stores.svelte.js";
+	import { createTransition } from "#lib/util.js";
 	import { MediaQuery } from "svelte/reactivity";
 
 	const global = getGlobal();

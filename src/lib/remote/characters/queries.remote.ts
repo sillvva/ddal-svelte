@@ -1,10 +1,10 @@
 import { getRequestEvent, query } from "$app/server";
-import { defaultCharacter } from "$lib/entities";
-import { characterIdParamSchema } from "$lib/schemas";
-import { RedirectError } from "$lib/server/effect/errors";
-import { guardedQuery } from "$lib/server/effect/remote";
-import { run } from "$lib/server/effect/runtime";
-import { CharacterService } from "$lib/server/effect/services/characters";
+import { defaultCharacter } from "#lib/entities.js";
+import { characterIdParamSchema } from "#lib/schemas.js";
+import { RedirectError } from "#lib/server/effect/errors.js";
+import { guardedQuery } from "#lib/server/effect/guarded.js";
+import { run } from "#lib/server/effect/runtime.js";
+import { CharacterService } from "#lib/server/effect/services/characters.js";
 import { redirect } from "@sveltejs/kit";
 import { Effect } from "effect";
 import * as v from "valibot";

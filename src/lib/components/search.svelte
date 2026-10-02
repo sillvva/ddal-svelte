@@ -1,7 +1,7 @@
 <script lang="ts">
-	import { pushState, replaceState } from "$app/navigation";
+	import { goto } from "$app/navigation";
 	import { page } from "$app/state";
-	import { hotkey } from "$lib/util";
+	import { hotkey } from "#lib/util.js";
 	import { debounce } from "@sillvva/utils";
 	import { onMount } from "svelte";
 	import type { HTMLInputAttributes } from "svelte/elements";
@@ -13,7 +13,7 @@
 		...rest
 	}: Omit<HTMLInputAttributes, "class" | "name" | "value"> & { name?: string } = $props();
 
-	const url = new SvelteURL(page.url);
+	const url = new SvelteURL(page.url.href);
 	const value = $derived(url.searchParams.get(name) ?? "");
 
 	const updateValue = debounce((val: string) => {
@@ -22,20 +22,15 @@
 
 	function updateSearch(val: string, replace: boolean = false) {
 		if (replace) {
-			replaceState(url, {
-				...page.state,
-				search: {
-					...page.state.search,
-					[name]: val
-				}
+			goto(url, {
+				shallow: true,
+				replace: true,
+				state: { ...page.state, search: { ...page.state.search, [name]: val } }
 			});
 		} else {
-			pushState(url, {
-				...page.state,
-				search: {
-					...page.state.search,
-					[name]: val
-				}
+			goto(url, {
+				shallow: true,
+				state: { ...page.state, search: { ...page.state.search, [name]: val } }
 			});
 		}
 	}
@@ -69,9 +64,9 @@
 		])}
 	>
 		<input
-			{type}
-			{name}
-			{value}
+			type={type}
+			name={name}
+			value={value}
 			bind:this={ref}
 			class="w-full flex-1"
 			aria-label={rest.placeholder || "Search"}

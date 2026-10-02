@@ -1,9 +1,9 @@
 import { getRequestEvent } from "$app/server";
-import { privateEnv } from "$lib/env/private";
-import { localsSessionSchema, localsUserSchema, type UserId } from "$lib/schemas";
-import { DBService } from "$lib/server/db";
-import * as schema from "$lib/server/db/schema";
-import { RedirectError, type ErrorParams } from "$lib/server/effect/errors";
+import { privateEnv } from "#lib/env/private.js";
+import { localsSessionSchema, localsUserSchema, type UserId } from "#lib/schemas.js";
+import { DBService } from "#lib/server/db/index.js";
+import * as schema from "#lib/server/db/schema.js";
+import { RedirectError, type ErrorParams } from "#lib/server/effect/errors.js";
 import { passkey } from "@better-auth/passkey";
 import { isDefined } from "@sillvva/utils";
 import { drizzleAdapter } from "better-auth/adapters/drizzle";
@@ -122,10 +122,11 @@ export class AuthService extends Effect.Service<AuthService>()("AuthService", {
 				const user = event.locals.user;
 
 				if (!user) {
-					const returnUrl = `${event.url.pathname}${event.url.search}`;
+					const returnUrl = event.locals.requestPath;
+					const safe = returnUrl.startsWith("/") && !returnUrl.startsWith("//") ? returnUrl : "/characters";
 					return yield* new RedirectError({
 						message: "User is not authenticated",
-						redirectTo: `/?redirect=${encodeURIComponent(returnUrl)}`
+						redirectTo: `/?redirect=${encodeURIComponent(safe)}`
 					});
 				}
 
@@ -152,11 +153,7 @@ export class AuthService extends Effect.Service<AuthService>()("AuthService", {
 	})
 }) {}
 
-export function getHomeError() {
-	const event = getRequestEvent();
-	const error = event.url.searchParams.get("error");
-	const description = event.url.searchParams.get("error_description");
-
+export function getHomeError(error: string | null, description: string | null) {
 	if (isDefined(error)) {
 		return {
 			message: description,

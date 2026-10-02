@@ -1,7 +1,7 @@
-import { requiredString, userIdSchema } from "$lib/schemas";
-import { guardedForm } from "$lib/server/effect/remote";
-import { AdminService } from "$lib/server/effect/services/admin";
-import { AuthService } from "$lib/server/effect/services/auth";
+import { requiredString, userIdSchema } from "#lib/schemas.js";
+import { guardedForm } from "#lib/server/effect/guarded.js";
+import { AdminService } from "#lib/server/effect/services/admin.js";
+import { AuthService } from "#lib/server/effect/services/auth.js";
 import { invalid, redirect } from "@sveltejs/kit";
 import { Effect } from "effect";
 import * as v from "valibot";

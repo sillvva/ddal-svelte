@@ -1,6 +1,6 @@
-import type { DungeonMaster, Log, MagicItem, StoryAward } from "$lib/server/db/schema";
-import type { CharacterData, FullCharacterData } from "$lib/server/effect/services/characters";
-import type { ExtendedLogData, FullLogData, LogData, LogSummaryData } from "$lib/server/effect/services/logs";
+import type { DungeonMaster, Log, MagicItem, StoryAward } from "#lib/server/db/schema.js";
+import type { CharacterData, FullCharacterData } from "#lib/server/effect/services/characters.js";
+import type { ExtendedLogData, FullLogData, LogData, LogSummaryData } from "#lib/server/effect/services/logs.js";
 import { omit, sorter } from "@sillvva/utils";
 import { v7 } from "uuid";
 import { BLANK_CHARACTER, PlaceholderName } from "./constants";

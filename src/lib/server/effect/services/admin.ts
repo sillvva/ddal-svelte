@@ -1,7 +1,7 @@
-import { DBService, runQuery, type Filter, type Transaction, type TRSchema } from "$lib/server/db";
-import type { relations } from "$lib/server/db/relations";
-import { appLogs } from "$lib/server/db/schema";
-import { type ErrorParams } from "$lib/server/effect/errors";
+import { DBService, runQuery, type Filter, type Transaction, type TRSchema } from "#lib/server/db/index.js";
+import type { relations } from "#lib/server/db/relations.js";
+import { appLogs } from "#lib/server/db/schema.js";
+import { type ErrorParams } from "#lib/server/effect/errors.js";
 import { DrizzleSearchParser } from "@sillvva/search/drizzle";
 import { isTupleOf } from "@sillvva/utils";
 import { eq, sql } from "drizzle-orm";

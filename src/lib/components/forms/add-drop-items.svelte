@@ -1,6 +1,6 @@
 <script lang="ts">
-	import type { GenericForm } from "$lib/factories.svelte";
-	import type { DmLogSchemaIn, ItemId, ItemSchema, LogSchema, LogSchemaIn } from "$lib/schemas";
+	import type { GenericForm } from "#lib/factories.svelte.js";
+	import type { DmLogSchemaIn, ItemId, ItemSchema, LogSchema, LogSchemaIn } from "#lib/schemas.js";
 	import { isDefined, sorter } from "@sillvva/utils";
 	import { type Snippet } from "svelte";
 	import { v7 } from "uuid";

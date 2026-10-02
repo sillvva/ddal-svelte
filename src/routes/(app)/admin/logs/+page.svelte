@@ -1,11 +1,11 @@
 <script lang="ts">
-	import { pushState } from "$app/navigation";
-	import Debug from "$lib/components/debug.svelte";
-	import Head from "$lib/components/head.svelte";
-	import LoadingPanel from "$lib/components/loading-panel.svelte";
-	import { successToast } from "$lib/factories.svelte.js";
-	import * as API from "$lib/remote";
-	import { getRelativeTime, parseEffectResult } from "$lib/util";
+	import { goto } from "$app/navigation";
+	import Debug from "#lib/components/debug.svelte";
+	import Head from "#lib/components/head.svelte";
+	import LoadingPanel from "#lib/components/loading-panel.svelte";
+	import { successToast } from "#lib/factories.svelte.js";
+	import * as API from "#lib/remote/index.js";
+	import { getRelativeTime, parseEffectResult } from "#lib/util.js";
 	import { debounce } from "@sillvva/utils";
 	import { queryParameters, ssp } from "sveltekit-search-params";
 
@@ -20,8 +20,8 @@
 
 	let debouncing = $state(false);
 	const debouncedSearch = debounce((query: string) => {
-		params.s = query.trim() || null;
-		debouncing = false;
+			params.s = query.trim() || null;
+			debouncing = false;
 	}, 400);
 
 	const formatter = new Intl.DateTimeFormat(navigator.language, {
@@ -35,14 +35,18 @@
 		if (!syntaxReference) {
 			syntaxReference = await fetch("/syntax-reference.md").then((res) => res.text());
 		}
-		pushState("", {
-			modal: {
-				type: "text",
-				name: "Syntax Reference",
-				description: syntaxReference,
-				width: "64rem",
-				maxWidth: "60vw",
-				maxHeight: "80vh"
+
+		goto("", {
+			shallow: true,
+			state: {
+				modal: {
+					type: "text",
+					name: "Syntax Reference",
+					description: syntaxReference,
+					width: "64rem",
+					maxWidth: "60vw",
+					maxHeight: "80vh"
+				}
 			}
 		});
 	}

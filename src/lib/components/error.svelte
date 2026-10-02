@@ -1,9 +1,9 @@
 <script lang="ts">
-	import { dev } from "$app/environment";
+	import { dev } from '$app/env';
 	import { page } from "$app/state";
-	import { use } from "$lib/factories.svelte";
-	import * as API from "$lib/remote";
-	import { getLogger } from "$lib/stores.svelte";
+	import { use } from "#lib/factories.svelte.js";
+	import * as API from "#lib/remote/index.js";
+	import { getLogger } from "#lib/stores.svelte.js";
 	import { omit } from "@sillvva/utils";
 	import { useOs } from "@svelteuidev/composables";
 	import Debug from "./debug.svelte";
@@ -41,7 +41,10 @@
 				</div>
 				{#if !display}
 					<div class="flex items-center gap-2 max-sm:self-end">
-						<button class="btn btn-sm max-sm:hidden" onclick={() => (display = true)}>View details</button>
+						<button
+							class="btn btn-sm max-sm:hidden"
+							onclick={() => display = true}
+						>View details</button>
 					</div>
 				{/if}
 			</div>

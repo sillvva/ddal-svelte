@@ -1,8 +1,10 @@
-import type { FullPathname } from "$lib/constants";
+import type { FullPathname } from "#lib/constants.js";
+import type { NumericRange } from "#lib/util.js";
 import { isInstanceOfClass } from "@sillvva/utils";
-import { type NumericRange } from "@sveltejs/kit";
 import { Data, Effect } from "effect";
 import type { UnknownException } from "effect/Cause";
+
+
 
 export interface ErrorParams {
 	message: string;

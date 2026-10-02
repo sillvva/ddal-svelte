@@ -6,7 +6,14 @@ import eslintConfigPrettier from "eslint-config-prettier/flat";
 import svelte from "eslint-plugin-svelte";
 import globals from "globals";
 import enforceGuardedExports from "./eslint/enforce-guarded-functions.js";
-import svelteConfig from "./svelte.config.js";
+
+const svelteConfig = {
+	compilerOptions: {
+		experimental: {
+			async: true
+		}
+	}
+};
 
 // Use the typescript-eslint aggregator for flat config presets
 // (requires devDependency: "typescript-eslint")

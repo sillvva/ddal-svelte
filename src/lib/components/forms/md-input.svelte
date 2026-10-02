@@ -1,5 +1,5 @@
 <script lang="ts">
-	import type { RemoteFormField } from "@sveltejs/kit";
+	import type { RemoteFormField } from '$app/server';
 	import autosize from "svelte-autosize";
 	import type { HTMLTextareaAttributes } from "svelte/elements";
 	import Markdown from "../markdown.svelte";
@@ -41,7 +41,16 @@
 		<div
 			class="tabs-boxed tabs bg-base-200 border-base-content/20 rounded-t-lg rounded-b-none border border-b-0 [--tw-border-opacity:0.2]"
 		>
-			<input type="radio" name="{name}tabs" role="tab" class="tab rounded-md!" aria-label="Edit" bind:group={mode} value="edit" />
+			<input
+				type="radio"
+				name="{name}tabs"
+				role="tab"
+				class="tab rounded-md!"
+				aria-label="Edit"
+				bind:group={mode}
+				value="edit"
+			/>
+
 			<input
 				type="radio"
 				name="{name}tabs"
@@ -55,7 +64,7 @@
 	{/if}
 	<textarea
 		{...rest}
-		{name}
+		name={name}
 		id={name}
 		bind:value={() => field.value(), (val) => field.set(val)}
 		class="textarea textarea-bordered focus:border-primary w-full rounded-b-lg data-[preview=true]:rounded-t-none data-[state=preview]:hidden max-sm:text-base"

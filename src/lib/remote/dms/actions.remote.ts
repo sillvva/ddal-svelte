@@ -1,7 +1,7 @@
-import { dungeonMasterIdSchema } from "$lib/schemas";
-import { type ErrorParams } from "$lib/server/effect/errors";
-import { guardedCommand } from "$lib/server/effect/remote";
-import { DMService } from "$lib/server/effect/services/dms";
+import { dungeonMasterIdSchema } from "#lib/schemas.js";
+import { type ErrorParams } from "#lib/server/effect/errors.js";
+import { guardedCommand } from "#lib/server/effect/guarded.js";
+import { DMService } from "#lib/server/effect/services/dms.js";
 import { Data } from "effect";
 
 class DeleteUserDMError extends Data.TaggedError("DeleteUserDMError")<ErrorParams> {

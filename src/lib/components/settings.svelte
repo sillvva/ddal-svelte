@@ -1,11 +1,11 @@
 <script lang="ts">
-	import { authClient } from "$lib/auth";
-	import { BLANK_CHARACTER, PROVIDERS } from "$lib/constants";
-	import { errorToast } from "$lib/factories.svelte";
-	import * as API from "$lib/remote";
-	import { getAccounts } from "$lib/remote/auth/queries.remote";
-	import { getGlobal } from "$lib/stores.svelte";
-	import { parseEffectResult } from "$lib/util";
+	import { authClient } from "#lib/auth.js";
+	import { BLANK_CHARACTER, PROVIDERS } from "#lib/constants.js";
+	import { errorToast } from "#lib/factories.svelte.js";
+	import * as API from "#lib/remote/index.js";
+	import { getAccounts } from "#lib/remote/auth/queries.remote.js";
+	import { getGlobal } from "#lib/stores.svelte.js";
+	import { parseEffectResult } from "#lib/util.js";
 	import { getLocalTimeZone } from "@internationalized/date";
 	import { isTupleOfAtLeast } from "@sillvva/utils";
 	import { onMount, tick } from "svelte";

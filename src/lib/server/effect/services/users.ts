@@ -1,9 +1,9 @@
-import { PROVIDERS } from "$lib/constants";
-import type { PasskeyId, UserId } from "$lib/schemas";
-import { DBService, runQuery, type Transaction } from "$lib/server/db";
-import { passkey, user, type User } from "$lib/server/db/schema";
-import { type ErrorParams } from "$lib/server/effect/errors";
-import { AppLog } from "$lib/server/effect/logging";
+import { PROVIDERS } from "#lib/constants.js";
+import type { PasskeyId, UserId } from "#lib/schemas.js";
+import { DBService, runQuery, type Transaction } from "#lib/server/db/index.js";
+import { passkey, user, type User } from "#lib/server/db/schema.js";
+import { type ErrorParams } from "#lib/server/effect/errors.js";
+import { AppLog } from "#lib/server/effect/logging.js";
 import { isTupleOf, sorter } from "@sillvva/utils";
 import { and, eq } from "drizzle-orm";
 import { Data, Effect, Layer } from "effect";

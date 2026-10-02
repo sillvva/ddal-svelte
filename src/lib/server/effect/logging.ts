@@ -1,7 +1,7 @@
-import { dev } from "$app/environment";
+import { dev } from "$app/env";
 import { getRequestEvent } from "$app/server";
-import { privateEnv } from "$lib/env/private";
-import type { UserId } from "$lib/schemas";
+import { privateEnv } from "#lib/env/private.js";
+import type { UserId } from "#lib/schemas.js";
 import chalk from "chalk";
 import { Console, Effect, HashMap, Layer, Logger } from "effect";
 import { AdminService } from "./services/admin";
@@ -25,33 +25,33 @@ const dbLogger = Logger.replace(
 
 		await runtime.runPromise(
 			Effect.gen(function* () {
-				const Admin = yield* AdminService;
-				return yield* Admin.saveLog({
-					label: (log.message as string[]).join(" | "),
-					timestamp: log.date,
-					level: log.logLevel.label,
-					annotations: Object.fromEntries(HashMap.toEntries(log.annotations)) as Annotations
-				}).pipe(
+		const Admin = yield* AdminService;
+		return yield* Admin.saveLog({
+			label: (log.message as string[]).join(" | "),
+			timestamp: log.date,
+			level: log.logLevel.label,
+			annotations: Object.fromEntries(HashMap.toEntries(log.annotations)) as Annotations
+		}).pipe(
 					Effect.tap(
 						(log) =>
 							dev &&
 							Console.log(
-								log.timestamp.toLocaleTimeString(),
+				log.timestamp.toLocaleTimeString(),
 								chalk.bold[
 									log.level === "ERROR" ? "red" : log.level === "DEBUG" ? "yellow" : log.level === "INFO" ? "cyan" : "reset"
 								](`[${log.level}]`),
-								log.label
+				log.label
 							)
 					),
 					Effect.tap(
 						(log) =>
 							dev &&
 							(["ERROR", "DEBUG"].includes(log.level)
-								? Console.dir(log.annotations, { depth: null })
+				? Console.dir(log.annotations, { depth: null })
 								: Console.log(chalk.dim(JSON.stringify(log.annotations.extra))))
 					),
-					Effect.tap(() => dev && Console.log(""))
-				);
+			Effect.tap(() => dev && Console.log(""))
+		);
 			})
 		);
 	})
@@ -63,8 +63,8 @@ function annotate(extra: Record<PropertyKey, unknown> = {}) {
 		userId: event.locals.user?.id,
 		username: event.locals.user?.name,
 		impersonatedBy: event.locals.session?.impersonatedBy,
-		routeId: event.route.id,
-		params: event.params,
+		routeId: event.locals.routeId,
+		params: event.locals.params,
 		extra
 	} satisfies Annotations);
 }

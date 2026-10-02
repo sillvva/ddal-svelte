@@ -1,10 +1,10 @@
-import { searchSections } from "$lib/constants.js";
-import type { LocalsUser } from "$lib/schemas.js";
-import { AppLog } from "$lib/server/effect/logging";
-import { guardedQuery } from "$lib/server/effect/remote";
-import { CharacterService } from "$lib/server/effect/services/characters";
-import { DMService } from "$lib/server/effect/services/dms";
-import { LogService } from "$lib/server/effect/services/logs";
+import { searchSections } from "#lib/constants.js";
+import type { LocalsUser } from "#lib/schemas.js";
+import { AppLog } from "#lib/server/effect/logging.js";
+import { guardedQuery } from "#lib/server/effect/guarded.js";
+import { CharacterService } from "#lib/server/effect/services/characters.js";
+import { DMService } from "#lib/server/effect/services/dms.js";
+import { LogService } from "#lib/server/effect/services/logs.js";
 import { sorter } from "@sillvva/utils";
 import { Effect } from "effect";
 

@@ -1,9 +1,9 @@
 <script lang="ts">
-	import { dev } from "$app/environment";
-	import { getGlobal } from "$lib/stores.svelte";
+	import type { RemoteFormField } from '$app/server';
+	import { dev } from '$app/env';
+	import { getGlobal } from "#lib/stores.svelte.js";
 	import { parseAbsolute, type DateValue } from "@internationalized/date";
 	import { isTupleOfAtLeast } from "@sillvva/utils";
-	import type { RemoteFormField } from "@sveltejs/kit";
 	import { DatePicker, type DatePickerRootProps } from "bits-ui";
 	import Debug from "../debug.svelte";
 	import Input from "./input.svelte";
@@ -58,24 +58,23 @@
 	}
 </script>
 
-<Input {field} type="number" hidden />
+<Input field={field} type="number" hidden />
 <DatePicker.Root
 	granularity="minute"
 	{...rest}
-	bind:value={
-		() => (value ? clamp(dateToCalendar(value), minDateValue, maxDateValue) : undefined),
-		(val) => {
-			if (val) {
-				const newValue = clamp(val, minDateValue, maxDateValue);
-				const date = newValue.toDate(tz);
-				field.set(date.getTime());
-			} else {
-				field.set(0);
-			}
+	bind:value={() => value
+		? clamp(dateToCalendar(value), minDateValue, maxDateValue)
+		: undefined, (val) => {
+		if (val) {
+			const newValue = clamp(val, minDateValue, maxDateValue);
+			const date = newValue.toDate(tz);
+			field.set(date.getTime());
+		} else {
+			field.set(0);
 		}
-	}
-	{minValue}
-	{maxValue}
+	}}
+	minValue={minValue}
+	maxValue={maxValue}
 >
 	<DatePicker.Label class="fieldset-legend">
 		<span>
@@ -102,7 +101,7 @@
 		{#snippet children({ segments })}
 			{#each segments as { part, value }, i (i)}
 				<DatePicker.Segment
-					{part}
+					part={part}
 					class="focus-visible:outline-primary aria-[valuetext=Empty]:text-base-content/70 rounded-xs py-1 outline-offset-4"
 				>
 					{value}
@@ -141,7 +140,11 @@
 								{#each month.weeks as weekDates, i (i)}
 									<DatePicker.GridRow class="flex w-full">
 										{#each weekDates as date, j (j)}
-											<DatePicker.Cell {date} month={month.value} class="relative size-10 p-0! text-center text-sm">
+											<DatePicker.Cell
+												date={date}
+												month={month.value}
+												class="relative size-10 p-0! text-center text-sm"
+											>
 												<DatePicker.Day
 													class={[
 														"rounded-9px group relative inline-flex size-10 items-center justify-center whitespace-nowrap",
@@ -175,7 +178,7 @@
 	{:else if description}
 		<span class="text-neutral-500">{description}</span>
 	{:else}
-		<span>&nbsp;</span>
+		<span></span>
 	{/if}
 </label>
 

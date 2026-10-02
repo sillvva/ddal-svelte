@@ -1,19 +1,19 @@
 <script lang="ts">
-	import { goto, pushState } from "$app/navigation";
+	import { goto } from "$app/navigation";
 	import { page } from "$app/state";
-	import { authClient } from "$lib/auth.js";
-	import Head from "$lib/components/head.svelte";
-	import Items from "$lib/components/items.svelte";
-	import Markdown from "$lib/components/markdown.svelte";
-	import NavMenu from "$lib/components/nav-menu.svelte";
-	import SearchResults from "$lib/components/search-results.svelte";
-	import Search from "$lib/components/search.svelte";
-	import { EntitySearchFactory, successToast, swipeAction } from "$lib/factories.svelte.js";
-	import * as API from "$lib/remote";
-	import type { FullCharacterData } from "$lib/server/effect/services/characters.js";
-	import type { FullLogData } from "$lib/server/effect/services/logs.js";
-	import { getGlobal } from "$lib/stores.svelte.js";
-	import { createTransition, formatDate, hotkey, parseEffectResult } from "$lib/util";
+	import { authClient } from "#lib/auth.js";
+	import Head from "#lib/components/head.svelte";
+	import Items from "#lib/components/items.svelte";
+	import Markdown from "#lib/components/markdown.svelte";
+	import NavMenu from "#lib/components/nav-menu.svelte";
+	import SearchResults from "#lib/components/search-results.svelte";
+	import Search from "#lib/components/search.svelte";
+	import { EntitySearchFactory, successToast, swipeAction } from "#lib/factories.svelte.js";
+	import * as API from "#lib/remote/index.js";
+	import type { FullCharacterData } from "#lib/server/effect/services/characters.js";
+	import type { FullLogData } from "#lib/server/effect/services/logs.js";
+	import { getGlobal } from "#lib/stores.svelte.js";
+	import { createTransition, formatDate, hotkey, parseEffectResult } from "#lib/util.js";
 	import { slugify, sorter } from "@sillvva/utils";
 	import { clipboard, download } from "@svelteuidev/composables";
 	import { onMount } from "svelte";
@@ -31,12 +31,10 @@
 
 	async function triggerImageModal(character: FullCharacterData, image?: string) {
 		const imageUrl = image || character.imageUrl;
-		pushState("", {
-			modal: {
-				type: "image",
-				name: character.name,
-				imageUrl
-			}
+
+		goto("", {
+			shallow: true,
+			state: { modal: { type: "image", name: character.name, imageUrl } }
 		});
 	}
 
@@ -108,9 +106,8 @@
 				</button>
 			{/snippet}
 			{#snippet menu()}
-				<li role="menuitem" class="sm:hidden">
-					<a href={`/characters/${character.id}/edit`}>Edit</a>
-				</li>
+				<li role="menuitem" class="sm:hidden"><a href={`/characters/${character.id}/edit`}>Edit</a></li>
+
 				<li role="menuitem" class="sm:hidden">
 					<button
 						onclick={() => successToast("Character URL copied to clipboard")}
@@ -423,7 +420,8 @@
 									{#if log.type === "game"}
 										{#if log.experience > 0}
 											<p>
-												<span class="font-semibold dark:text-white">Experience:</span>&nbsp;{log.experience}
+												<span class="font-semibold dark:text-white">Experience:</span>
+												{log.experience}
 											</p>
 										{/if}
 										{#if log.acp > 0}
@@ -433,12 +431,14 @@
 											</p>
 										{/if}
 										<p>
-											<span class="font-semibold dark:text-white">Levels:</span>&nbsp;{log.levelGained}&nbsp;({log.totalLevel})
+											<span class="font-semibold dark:text-white">Levels:</span>
+											{log.levelGained} ({log.totalLevel})
 										</p>
 									{/if}
 									{#if log.dtd !== 0}
 										<p>
-											<span class="font-semibold dark:text-white">Downtime&nbsp;Days:</span>&nbsp;{log.dtd}
+											<span class="font-semibold dark:text-white">Downtime Days:</span>
+											{log.dtd}
 										</p>
 									{/if}
 									{#if log.tcp !== 0}
@@ -554,7 +554,8 @@
 										{#if log.type === "game"}
 											{#if log.experience > 0}
 												<p>
-													<span class="font-semibold dark:text-white">Experience:</span>&nbsp;{log.experience}
+													<span class="font-semibold dark:text-white">Experience:</span>
+													{log.experience}
 												</p>
 											{/if}
 											{#if log.acp > 0}
@@ -564,12 +565,14 @@
 												</p>
 											{/if}
 											<p>
-												<span class="font-semibold dark:text-white">Levels:</span>&nbsp;{log.levelGained}&nbsp;({log.totalLevel})
+												<span class="font-semibold dark:text-white">Levels:</span>
+												{log.levelGained} ({log.totalLevel})
 											</p>
 										{/if}
 										{#if log.dtd !== 0}
 											<p>
-												<span class="font-semibold dark:text-white">Downtime&nbsp;Days:</span>&nbsp;{log.dtd}
+												<span class="font-semibold dark:text-white">Downtime Days:</span>
+												{log.dtd}
 											</p>
 										{/if}
 										{#if log.tcp !== 0}
@@ -590,7 +593,8 @@
 								<td class="align-top max-sm:hidden print:table-cell print:p-2">
 									{#if log.experience > 0}
 										<p>
-											<span class="font-semibold dark:text-white">Experience:</span>&nbsp;{log.experience}
+											<span class="font-semibold dark:text-white">Experience:</span>
+											{log.experience}
 										</p>
 									{/if}
 									{#if log.acp > 0}
@@ -601,12 +605,14 @@
 									{/if}
 									{#if (log.levelGained || 0) > 0}
 										<p>
-											<span class="font-semibold dark:text-white">Levels:</span>&nbsp;{log.levelGained}&nbsp;({log.totalLevel})
+											<span class="font-semibold dark:text-white">Levels:</span>
+											{log.levelGained} ({log.totalLevel})
 										</p>
 									{/if}
 									{#if log.dtd !== 0}
 										<p>
-											<span class="text-sm font-semibold dark:text-white">Downtime&nbsp;Days:</span>&nbsp;{log.dtd}
+											<span class="text-sm font-semibold dark:text-white">Downtime Days:</span>
+											{log.dtd}
 										</p>
 									{/if}
 								</td>

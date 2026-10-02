@@ -1,7 +1,7 @@
 import { getRequestEvent } from "$app/server";
-import { privateEnv } from "$lib/env/private";
-import { relations } from "$lib/server/db/relations";
-import { isTaggedError, type ErrorClass, type ErrorParams } from "$lib/server/effect/errors";
+import { privateEnv } from "#lib/env/private.js";
+import { relations } from "#lib/server/db/relations.js";
+import { isTaggedError, type ErrorClass, type ErrorParams } from "#lib/server/effect/errors.js";
 import {
 	getColumns,
 	sql,

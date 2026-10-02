@@ -12,6 +12,19 @@ import type { ClientEffectResult, EffectFailure } from "./server/effect/runtime"
 
 export type IsAny<T> = 0 extends 1 & T ? true : false;
 
+/** Non-negative integers strictly below `N`, as a union of literals. */
+type LessThan<N extends number, Acc extends number[] = []> = N extends Acc["length"]
+	? Exclude<Acc[number], undefined>
+	: LessThan<N, [...Acc, Acc["length"]]>;
+
+/**
+ * Inclusive union of non-negative integer literals from `Start` through `End`.
+ *
+ * @example
+ * const status: NumericRange<300, 599> = 400;
+ */
+export type NumericRange<Start extends number, End extends number> = Exclude<End | LessThan<End>, LessThan<Start>>;
+
 export type Crumb = {
 	title: string;
 	url: string;
@@ -135,6 +148,10 @@ export async function parseEffectResult<T>(result: ClientEffectResult<T>) {
 
 	errorToast(result.error.message);
 	if (isRedirectFailure(result.error)) {
-		await goto(result.error.redirectTo);
+		try {
+			await goto(result.error.redirectTo);
+		} catch {
+			window.location.href = result.error.redirectTo;
+		}
 	}
 }

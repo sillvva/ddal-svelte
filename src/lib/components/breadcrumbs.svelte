@@ -1,5 +1,5 @@
 <script lang="ts">
-	import type { Crumb } from "$lib/util";
+	import type { Crumb } from "#lib/util.js";
 	import BackButton from "./back-button.svelte";
 
 	interface Props {
@@ -20,7 +20,7 @@
 		<div class="breadcrumbs flex-1 text-sm max-sm:hidden print:hidden">
 			<ul class="h-5">
 				<li>
-					<span class="iconify mdi--home size-4"></span>
+					<span class="iconify size-4 mdi--home"></span>
 				</li>
 				{#each crumbs as bc, i (i)}
 					{#if bc.url && bc.title}

@@ -1,7 +1,7 @@
-import { imageUrlWithFallback, requiredString } from "$lib/schemas.js";
-import { FailedError, type ErrorParams } from "$lib/server/effect/errors";
-import { guardedCommand } from "$lib/server/effect/remote";
-import { UserService } from "$lib/server/effect/services/users";
+import { imageUrlWithFallback, requiredString } from "#lib/schemas.js";
+import { FailedError, type ErrorParams } from "#lib/server/effect/errors.js";
+import { guardedCommand } from "#lib/server/effect/guarded.js";
+import { UserService } from "#lib/server/effect/services/users.js";
 import { Data, Effect } from "effect";
 import * as v from "valibot";
 

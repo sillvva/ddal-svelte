@@ -1,9 +1,9 @@
 <script lang="ts">
-	import { authClient } from "$lib/auth";
-	import { errorToast, successToast } from "$lib/factories.svelte";
-	import * as API from "$lib/remote";
-	import type { PasskeyId } from "$lib/schemas";
-	import { getGlobal } from "$lib/stores.svelte";
+	import { authClient } from "#lib/auth.js";
+	import { errorToast, successToast } from "#lib/factories.svelte.js";
+	import * as API from "#lib/remote/index.js";
+	import type { PasskeyId } from "#lib/schemas.js";
+	import { getGlobal } from "#lib/stores.svelte.js";
 
 	const { user } = $derived(await API.app.queries.request());
 	const global = getGlobal();

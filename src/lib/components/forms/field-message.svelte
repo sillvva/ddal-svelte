@@ -1,6 +1,6 @@
 <script lang="ts">
+	import type { RemoteFormFieldType, RemoteFormFieldValue } from '$app/server';
 	import { isTupleOfAtLeast } from "@sillvva/utils";
-	import type { RemoteFormFieldType, RemoteFormFieldValue } from "@sveltejs/kit";
 
 	interface Props {
 		name?: string;
@@ -32,7 +32,7 @@
 		{:else if description}
 			<span class="text-pretty text-neutral-500">{description}</span>
 		{:else}
-			<span>&nbsp;</span>
+			<span></span>
 		{/if}
 	</label>
 {/if}

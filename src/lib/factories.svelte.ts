@@ -1,11 +1,10 @@
-/* eslint-disable svelte/prefer-svelte-reactivity */
+import type { FullCharacterData } from "#lib/server/effect/services/characters.js";
+import type { UserDM } from "#lib/server/effect/services/dms.js";
+import type { FullLogData, LogSummaryData, UserLogData } from "#lib/server/effect/services/logs.js";
 import { beforeNavigate } from "$app/navigation";
-import type { FullCharacterData } from "$lib/server/effect/services/characters";
-import type { UserDM } from "$lib/server/effect/services/dms";
-import type { FullLogData, LogSummaryData, UserLogData } from "$lib/server/effect/services/logs";
+import type { RemoteForm, RemoteFormInput, RemoteFormIssue } from "$app/server";
 import { debounce, deepEqual, isDefined, substrCount, type MapKeys, type Prettify } from "@sillvva/utils";
 import type { StandardSchemaV1 } from "@standard-schema/spec";
-import type { RemoteForm, RemoteFormInput, RemoteFormIssue } from "@sveltejs/kit";
 import { Duration } from "effect";
 import escapeRegex from "regexp.escape";
 import { getContext, hasContext, onMount, setContext, tick, untrack } from "svelte";
@@ -151,6 +150,7 @@ export function configureForm<Input extends RemoteFormInput = RemoteFormInput>(g
 	type FormData = Input extends undefined ? Record<string, never> : Input;
 	const data = $derived((formData ?? {}) as FormData);
 	const key = $derived(formKey ?? ((data.id ?? v7()) as FormId<Input>));
+
 	const form = $derived(schema ? remoteForm.for(key).preflight(schema) : remoteForm.for(key));
 
 	let initial = $state.raw(
@@ -228,7 +228,7 @@ export function configureForm<Input extends RemoteFormInput = RemoteFormInput>(g
 	const debouncedValidate = debounce(validate, 300);
 
 	async function validate(reset = false) {
-		await form.validate({ includeUntouched: true, preflightOnly: true });
+		await form.validate({ all: true, preflightOnly: true });
 		if (allIssues && onissues && !deepEqual(lastIssues, allIssues)) onissues({ issues: allIssues });
 		if (allIssues) lastIssues = allIssues;
 		else if (reset) lastIssues = undefined;
@@ -264,6 +264,7 @@ export function configureForm<Input extends RemoteFormInput = RemoteFormInput>(g
 	});
 
 	beforeNavigate((ev) => {
+		if (ev.shallow) return;
 		if ((dirty || issues) && navBlockMessage && !confirm(navBlockMessage)) ev.cancel();
 	});
 

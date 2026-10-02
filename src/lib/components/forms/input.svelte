@@ -1,28 +1,37 @@
-<script lang="ts" generics="V extends RemoteFormFieldValue">
-	import type { RemoteFormField, RemoteFormFieldValue } from "@sveltejs/kit";
+<script
+	lang="ts"
+	generics="V extends RemoteFormFieldValue"
+>
+	import type { RemoteFormField, RemoteFormFieldValue } from '$app/server';
 	import type { HTMLInputAttributes } from "svelte/elements";
 	import FieldMessage from "./field-message.svelte";
 	import InputWrapper from "./input-wrapper.svelte";
 
-	type InputTypeMap =
-		| {
-				type?: "text";
-				field: RemoteFormField<string>;
-		  }
-		| {
-				type: "email" | "password" | "url" | "tel" | "search" | "button" | "reset" | "color" | "button";
-				field: RemoteFormField<string>;
-		  }
-		| { type: "number"; field: RemoteFormField<number> }
-		| { type: "range"; field: RemoteFormField<number> }
-		| {
-				type: "checkbox";
-				value?: undefined;
+	type InputTypeMap = 
+		{ type?: "text"; field: RemoteFormField<string> } |
+		{ 
+			type: 
+				"email" |
+				"password" |
+				"url" |
+				"tel" |
+				"search" |
+				"button" |
+				"reset" |
+				"color" |
+				"button";
+			field: RemoteFormField<string>
+		 } |
+		{ type: "number"; field: RemoteFormField<number> } |
+		{ type: "range"; field: RemoteFormField<number> } |
+		{ 
+			type: "checkbox";
+			value?: undefined;
 				field: RemoteFormField<boolean>;
 		  }
 		| {
-				type: "checkbox";
-				value: string;
+			type: "checkbox";
+			value: string;
 				field: RemoteFormField<string[]>;
 		  }
 		| {
@@ -31,13 +40,13 @@
 				field: RemoteFormField<string>;
 		  }
 		| {
-				type: "hidden";
-				value?: string;
+			type: "hidden";
+			value?: string;
 				field: RemoteFormField<string>;
 		  }
 		| {
-				type: "submit";
-				value: string;
+			type: "submit";
+			value: string;
 				field: RemoteFormField<string>;
 		  }
 		| {
@@ -50,10 +59,10 @@
 		  };
 
 	type Props = {
-		label?: string;
-		field: RemoteFormField<V>;
-		description?: string;
-		warning?: string;
+			label?: string;
+			field: RemoteFormField<V>;
+			description?: string;
+			warning?: string;
 		hidden?: boolean;
 	} & InputTypeMap &
 		Omit<HTMLInputAttributes, "type" | "name" | "id" | "value" | "checked" | "defaultValue" | "defaultChecked">;
@@ -64,7 +73,7 @@
 	const attributes = $derived({
 		...rest,
 		field: undefined,
-		...(map.type === "hidden"
+		...map.type === "hidden"
 			? map.field.as(map.type, typeof map.value === "string" ? map.value : map.field.value() || "")
 			: map.type === "checkbox" && typeof map.value === "string"
 				? map.field.as("checkbox", map.value)
@@ -78,7 +87,7 @@
 								? map.field.as(map.type)
 								: map.type === "checkbox"
 									? map.field.as("checkbox")
-									: map.field.as(map.type || "text"))
+									: map.field.as(map.type || "text")
 	});
 	const name = $derived(attributes.name);
 	const issues = $derived(map.field.issues());
@@ -100,16 +109,23 @@
 					<span class="text-error">*</span>
 				{/if}
 			</span>
-			<FieldMessage {name} type="checkbox" {description} {warning} {issues} />
+
+			<FieldMessage
+				name={name}
+				type="checkbox"
+				description={description}
+				warning={warning}
+				issues={issues}
+			/>
 		</div>
 		<input {...attributes} aria-invalid={invalid} id={name} type="checkbox" class="checkbox-primary checkbox" />
 	</label>
 {:else}
 	<InputWrapper
 		type={hidden ? "hidden" : map.type || "text"}
-		{label}
+		label={label}
 		labelFor={name}
-		{required}
+		required={required}
 		fieldErrors={issues?.map((issue) => issue.message)}
 	>
 		<input
@@ -120,8 +136,8 @@
 				map.type !== "hidden" && !hidden && "input focus:border-primary focus:aria-[invalid]:border-error w-full max-sm:text-base"
 			]}
 			autocomplete={rest.autocomplete || "off"}
-			{required}
-			{hidden}
+			required={required}
+			hidden={hidden}
 		/>
 	</InputWrapper>
 {/if}

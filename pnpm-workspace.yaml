@@ -2,7 +2,7 @@ allowBuilds:
   esbuild: true
   svelte-kit: true
 minimumReleaseAge: 1440 # 24 hours
-minimumReleaseAgeStrict: true
+minimumReleaseAgeStrict: false
 minimumReleaseAgeExclude:
-  - "@humanspeak/svelte-markdown"
-  - "@types/node"
+  - "@sveltejs/kit"
+  - "@sveltejs/adapter-node"

@@ -1,15 +1,23 @@
-import * as env from "$env/static/private";
-import { envPrivateSchema, type Env } from "$lib/schemas";
-import { parse } from "valibot";
-import { checkEnv } from "./check";
-import { checkPublicEnv } from "./public";
+import {
+	AUTH_SECRET,
+	DATABASE_URL,
+	DISABLE_SIGNUPS,
+	DISCORD_CLIENT_ID,
+	DISCORD_CLIENT_SECRET,
+	GOOGLE_CLIENT_ID,
+	GOOGLE_CLIENT_SECRET,
+	LOG_LEVEL
+} from "$app/env/private";
+import { publicEnv } from "./public.js";
 
-export function checkPrivateEnv(): Env {
-	if (!env) throw new Error("No environment variables found");
-	return {
-		...parse(envPrivateSchema, env),
-		...checkPublicEnv()
-	};
-}
-
-export const privateEnv = checkEnv(checkPrivateEnv);
+export const privateEnv = {
+	DATABASE_URL,
+	AUTH_SECRET,
+	GOOGLE_CLIENT_ID,
+	GOOGLE_CLIENT_SECRET,
+	DISCORD_CLIENT_ID,
+	DISCORD_CLIENT_SECRET,
+	DISABLE_SIGNUPS,
+	LOG_LEVEL,
+	...publicEnv
+};

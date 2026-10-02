@@ -1,12 +1,12 @@
 <script lang="ts">
 	import { page } from "$app/state";
-	import Head from "$lib/components/head.svelte";
-	import NavMenu from "$lib/components/nav-menu.svelte";
-	import SearchResults from "$lib/components/search-results.svelte";
-	import Search from "$lib/components/search.svelte";
-	import { EntitySearchFactory, successToast } from "$lib/factories.svelte.js";
-	import * as API from "$lib/remote";
-	import { parseEffectResult } from "$lib/util";
+	import Head from "#lib/components/head.svelte";
+	import NavMenu from "#lib/components/nav-menu.svelte";
+	import SearchResults from "#lib/components/search-results.svelte";
+	import Search from "#lib/components/search.svelte";
+	import { EntitySearchFactory, successToast } from "#lib/factories.svelte.js";
+	import * as API from "#lib/remote/index.js";
+	import { parseEffectResult } from "#lib/util.js";
 	import { sorter } from "@sillvva/utils";
 	import { SvelteSet } from "svelte/reactivity";
 

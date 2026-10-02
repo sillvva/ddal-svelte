@@ -1,17 +1,17 @@
 <script lang="ts">
 	import { goto } from "$app/navigation";
 	import { page } from "$app/state";
-	import Head from "$lib/components/head.svelte";
-	import Items from "$lib/components/items.svelte";
-	import Markdown from "$lib/components/markdown.svelte";
-	import NavMenu from "$lib/components/nav-menu.svelte";
-	import SearchResults from "$lib/components/search-results.svelte";
-	import Search from "$lib/components/search.svelte";
-	import { EntitySearchFactory, successToast, swipeAction } from "$lib/factories.svelte.js";
-	import * as API from "$lib/remote";
-	import type { FullLogData } from "$lib/server/effect/services/logs";
-	import { getGlobal } from "$lib/stores.svelte.js";
-	import { createTransition, download, formatDate, hotkey, parseEffectResult } from "$lib/util.js";
+	import Head from "#lib/components/head.svelte";
+	import Items from "#lib/components/items.svelte";
+	import Markdown from "#lib/components/markdown.svelte";
+	import NavMenu from "#lib/components/nav-menu.svelte";
+	import SearchResults from "#lib/components/search-results.svelte";
+	import Search from "#lib/components/search.svelte";
+	import { EntitySearchFactory, successToast, swipeAction } from "#lib/factories.svelte.js";
+	import * as API from "#lib/remote/index.js";
+	import type { FullLogData } from "#lib/server/effect/services/logs.js";
+	import { getGlobal } from "#lib/stores.svelte.js";
+	import { createTransition, download, formatDate, hotkey, parseEffectResult } from "#lib/util.js";
 	import { sorter } from "@sillvva/utils";
 	import { SvelteSet } from "svelte/reactivity";
 

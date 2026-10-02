@@ -1,19 +1,19 @@
-import { command, form, query } from "$app/server";
-import type { LocalsUser } from "$lib/schemas";
-import { AuthService } from "$lib/server/effect/services/auth";
-import { isRedirectFailure, isStandardSchema, isValidationError, type IsAny } from "$lib/util";
-import { isFunction, isString, omit } from "@sillvva/utils";
-import type { StandardSchemaV1 } from "@standard-schema/spec";
+import type { LocalsUser } from "#lib/schemas.js";
+import { AuthService } from "#lib/server/effect/services/auth.js";
+import { isRedirectFailure, isStandardSchema, isValidationError, type IsAny } from "#lib/util.js";
 import {
-	invalid,
-	redirect,
-	type InvalidField,
+	command,
+	form,
+	query,
 	type RemoteCommand,
 	type RemoteForm,
 	type RemoteFormInput,
-	type RemoteQueryFunction,
-	type RequestEvent
-} from "@sveltejs/kit";
+	type RemoteFormInvalidField,
+	type RemoteQueryFunction
+} from "$app/server";
+import { isFunction, isString, omit } from "@sillvva/utils";
+import type { StandardSchemaV1 } from "@standard-schema/spec";
+import { invalid, redirect, type RequestEvent } from "@sveltejs/kit";
 import { Effect } from "effect";
 import type { UnknownException } from "effect/Cause";
 import type { YieldWrap } from "effect/Utils";
@@ -28,7 +28,7 @@ type AppError = InstanceType<ErrorClass> | UnknownException;
 
 type Auth = { user: LocalsUser; event: RequestEvent };
 
-type FormAuth<Input> = Auth & { issue: InvalidField<Input> };
+type FormAuth<Input> = Auth & { issue: RemoteFormInvalidField<Input> };
 
 /**
  * Generator passed to a guarded remote function.
@@ -165,10 +165,9 @@ type HasNonOptionalBoolean<T> =
 			? true
 			: T extends Array<infer U>
 				? HasNonOptionalBoolean<U>
-				: T extends Record<string, any>
+				: T extends Record<string, unknown>
 					? { [K in keyof T]: HasNonOptionalBoolean<T[K]> }[keyof T]
 					: never;
-
 type FormSchemaValidate<Schema extends StandardSchemaV1<RemoteFormInput, Record<string, unknown>>> =
 	true extends HasNonOptionalBoolean<StandardSchemaV1.InferInput<Schema>>
 		? "Error: All booleans in form schemas must be optional (e.g. `v.optional(v.boolean(), false)`) because checkbox inputs do not send a false value when unchecked."
@@ -183,7 +182,10 @@ function isFormSchema<Schema extends StandardSchemaV1<RemoteFormInput, Record<st
 /** Kit's `form()` checkbox conditional does not unify with `FormSchemaValidate`, so the already-validated schema is passed through this signature. */
 const formWithSchema = form as <Schema extends StandardSchemaV1<RemoteFormInput, Record<string, unknown>>, Output>(
 	schema: FormSchemaValidate<Schema>,
-	fn: (data: StandardSchemaV1.InferOutput<Schema>, issue: InvalidField<StandardSchemaV1.InferInput<Schema>>) => Awaitable<Output>
+	fn: (
+		data: StandardSchemaV1.InferOutput<Schema>,
+		issue: RemoteFormInvalidField<StandardSchemaV1.InferInput<Schema>>
+	) => Awaitable<Output>
 ) => RemoteForm<StandardSchemaV1.InferInput<Schema>, Output>;
 
 export function guardedForm<

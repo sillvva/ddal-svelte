@@ -1,4 +1,4 @@
-import { defaultLogSchema, logDataToSchema } from "$lib/entities";
+import { defaultLogSchema, logDataToSchema } from "#lib/entities.js";
 import {
 	characterIdSchema,
 	characterLogSchema,
@@ -7,13 +7,13 @@ import {
 	orEmpty,
 	type DmLogSchemaIn,
 	type LogSchemaIn
-} from "$lib/schemas";
-import { RedirectError, redirectOnFail } from "$lib/server/effect/errors";
-import { guardedForm, guardedQuery } from "$lib/server/effect/remote";
-import { CharacterService } from "$lib/server/effect/services/characters";
-import { DMNotFoundError, DMService } from "$lib/server/effect/services/dms";
-import { LogNotFoundError, LogService } from "$lib/server/effect/services/logs";
-import { formParse, parse } from "$lib/server/effect/util";
+} from "#lib/schemas.js";
+import { RedirectError, redirectOnFail } from "#lib/server/effect/errors.js";
+import { guardedForm, guardedQuery } from "#lib/server/effect/guarded.js";
+import { CharacterService } from "#lib/server/effect/services/characters.js";
+import { DMNotFoundError, DMService } from "#lib/server/effect/services/dms.js";
+import { LogNotFoundError, LogService } from "#lib/server/effect/services/logs.js";
+import { formParse, parse } from "#lib/server/effect/util.js";
 import { omit } from "@sillvva/utils";
 import { invalid, redirect } from "@sveltejs/kit";
 import { Effect } from "effect";

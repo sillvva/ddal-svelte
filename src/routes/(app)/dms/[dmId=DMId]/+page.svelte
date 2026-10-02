@@ -1,17 +1,17 @@
 <script lang="ts">
 	import { goto } from "$app/navigation";
-	import Error from "$lib/components/error.svelte";
-	import Control from "$lib/components/forms/control.svelte";
-	import Input from "$lib/components/forms/input.svelte";
-	import RemoteForm from "$lib/components/forms/remote-form.svelte";
-	import Submit from "$lib/components/forms/submit.svelte";
-	import Head from "$lib/components/head.svelte";
-	import NavMenu from "$lib/components/nav-menu.svelte";
-	import { successToast } from "$lib/factories.svelte.js";
-	import * as API from "$lib/remote";
-	import { dungeonMasterFormSchema } from "$lib/schemas.js";
-	import { getGlobal } from "$lib/stores.svelte.js";
-	import { parseEffectResult } from "$lib/util";
+	import Error from "#lib/components/error.svelte";
+	import Control from "#lib/components/forms/control.svelte";
+	import Input from "#lib/components/forms/input.svelte";
+	import RemoteForm from "#lib/components/forms/remote-form.svelte";
+	import Submit from "#lib/components/forms/submit.svelte";
+	import Head from "#lib/components/head.svelte";
+	import NavMenu from "#lib/components/nav-menu.svelte";
+	import { successToast } from "#lib/factories.svelte.js";
+	import * as API from "#lib/remote/index.js";
+	import { dungeonMasterFormSchema } from "#lib/schemas.js";
+	import { getGlobal } from "#lib/stores.svelte.js";
+	import { parseEffectResult } from "#lib/util.js";
 
 	let { params } = $props();
 

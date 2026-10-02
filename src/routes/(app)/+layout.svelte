@@ -1,16 +1,16 @@
 <script lang="ts">
 	import { afterNavigate, goto } from "$app/navigation";
 	import { navigating, page } from "$app/state";
-	import CommandTray from "$lib/components/command-tray.svelte";
-	import Error from "$lib/components/error.svelte";
-	import Footer from "$lib/components/footer.svelte";
-	import Markdown from "$lib/components/markdown.svelte";
-	import MobileNav from "$lib/components/mobile-nav.svelte";
-	import Settings from "$lib/components/settings.svelte";
-	import { BLANK_CHARACTER } from "$lib/constants.js";
-	import * as API from "$lib/remote";
-	import { getGlobal } from "$lib/stores.svelte.js";
-	import { hotkey, parseEffectResult } from "$lib/util";
+	import CommandTray from "#lib/components/command-tray.svelte";
+	import Error from "#lib/components/error.svelte";
+	import Footer from "#lib/components/footer.svelte";
+	import Markdown from "#lib/components/markdown.svelte";
+	import MobileNav from "#lib/components/mobile-nav.svelte";
+	import Settings from "#lib/components/settings.svelte";
+	import { BLANK_CHARACTER } from "#lib/constants.js";
+	import * as API from "#lib/remote/index.js";
+	import { getGlobal } from "#lib/stores.svelte.js";
+	import { hotkey, parseEffectResult } from "#lib/util.js";
 	import { wait } from "@sillvva/utils";
 	import { onMount } from "svelte";
 	import { fade } from "svelte/transition";
@@ -23,7 +23,9 @@
 	let settingsOpen = $state(false);
 	let loadingImage = $state(true);
 
-	afterNavigate(() => {
+	afterNavigate(({ shallow }) => {
+		if (shallow) return;
+
 		global.pageLoader = false;
 	});
 
@@ -59,9 +61,13 @@
 			class="relative z-10 flex items-center gap-3 p-4 data-[maxwidth=container]:container data-[maxwidth=container]:mx-auto data-[maxwidth=container]:max-w-5xl"
 			data-maxwidth={global.app.settings.maxwidth}
 		>
-			<div class="inline max-w-10 shrink-0 grow md:hidden">&nbsp;</div>
-			<div class="inline max-w-10 shrink-0 grow md:hidden">&nbsp;</div>
-			<a href={user ? "/characters" : "/"} class="flex flex-1 items-center justify-center gap-1 md:flex-none">
+			<div class="inline max-w-10 shrink-0 grow md:hidden"></div>
+			<div class="inline max-w-10 shrink-0 grow md:hidden"></div>
+
+			<a
+				href={user ? "/characters" : "/"}
+				class="flex flex-1 items-center justify-center gap-1 md:flex-none"
+			>
 				<img
 					src="/images/{global.app.settings.mode === 'dark' ? 'dragon' : 'dragon-dark'}.webp"
 					alt="Dragon"
@@ -96,7 +102,7 @@
 						<button
 							class="ring-primary ring-offset-base-100 relative h-9 w-9 cursor-pointer overflow-hidden rounded-full ring-3 ring-offset-2 lg:h-11 lg:w-11"
 							tabindex="0"
-							onclick={() => (settingsOpen = true)}
+							onclick={() => settingsOpen = true}
 						>
 							<img
 								src={user.image || ""}
@@ -132,7 +138,10 @@
 		data-maxwidth={global.app.settings.maxwidth}
 	>
 		<svelte:boundary>
-			{#snippet failed(error)}<Error {error} boundary="layout" />{/snippet}
+			{#snippet failed(error)}
+				<Error error={error} boundary="layout" />
+			{/snippet}
+
 			{@render children()}
 		</svelte:boundary>
 	</main>
@@ -174,8 +183,12 @@
 								onclick={async (e) => {
 									e.preventDefault();
 									await closeModal();
-									const { href } = e.target as HTMLAnchorElement;
-									goto(href);
+									const { href } = e.currentTarget;
+									try {
+										await goto(href);
+									} catch {
+										window.location.href = href;
+									}
 								}}
 							>
 								{page.state.modal.name}
@@ -210,8 +223,8 @@
 					alt={page.state.modal.name}
 					class="relative max-h-dvh w-full max-w-(--breakpoint-xs)"
 					id="modal-content"
-					onloadstart={() => (loadingImage = true)}
-					onload={() => (loadingImage = false)}
+					onloadstart={() => loadingImage = true}
+					onload={() => loadingImage = false}
 				/>
 			</div>
 		{/if}

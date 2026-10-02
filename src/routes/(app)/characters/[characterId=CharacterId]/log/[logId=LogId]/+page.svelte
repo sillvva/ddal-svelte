@@ -1,21 +1,21 @@
 <script lang="ts">
 	import { page } from "$app/state";
-	import Error from "$lib/components/error.svelte";
-	import AddDropItems from "$lib/components/forms/add-drop-items.svelte";
-	import Combobox from "$lib/components/forms/combobox.svelte";
-	import Control from "$lib/components/forms/control.svelte";
-	import DateInput from "$lib/components/forms/date-input.svelte";
-	import InputWrapper from "$lib/components/forms/input-wrapper.svelte";
-	import Input from "$lib/components/forms/input.svelte";
-	import MarkdownInput from "$lib/components/forms/md-input.svelte";
-	import RemoteForm from "$lib/components/forms/remote-form.svelte";
-	import Submit from "$lib/components/forms/submit.svelte";
-	import Head from "$lib/components/head.svelte";
-	import NavMenu from "$lib/components/nav-menu.svelte";
-	import { defaultDM, getItemEntities } from "$lib/entities.js";
-	import { proxify } from "$lib/factories.svelte.js";
-	import * as API from "$lib/remote";
-	import { type DungeonMasterId, logSchema } from "$lib/schemas";
+	import Error from "#lib/components/error.svelte";
+	import AddDropItems from "#lib/components/forms/add-drop-items.svelte";
+	import Combobox from "#lib/components/forms/combobox.svelte";
+	import Control from "#lib/components/forms/control.svelte";
+	import DateInput from "#lib/components/forms/date-input.svelte";
+	import InputWrapper from "#lib/components/forms/input-wrapper.svelte";
+	import Input from "#lib/components/forms/input.svelte";
+	import MarkdownInput from "#lib/components/forms/md-input.svelte";
+	import RemoteForm from "#lib/components/forms/remote-form.svelte";
+	import Submit from "#lib/components/forms/submit.svelte";
+	import Head from "#lib/components/head.svelte";
+	import NavMenu from "#lib/components/nav-menu.svelte";
+	import { defaultDM, getItemEntities } from "#lib/entities.js";
+	import { proxify } from "#lib/factories.svelte.js";
+	import * as API from "#lib/remote/index.js";
+	import { type DungeonMasterId, logSchema } from "#lib/schemas.js";
 	import { v7 } from "uuid";
 
 	let { params } = $props();

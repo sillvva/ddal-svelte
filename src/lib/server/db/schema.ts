@@ -1,6 +1,6 @@
-import type { ProviderId } from "$lib/constants";
-import type { AppLogId, CharacterId, DungeonMasterId, ItemId, LogId, PasskeyId, UserId } from "$lib/schemas";
-import type { Annotations } from "$lib/server/effect/logging";
+import type { ProviderId } from "#lib/constants.js";
+import type { AppLogId, CharacterId, DungeonMasterId, ItemId, LogId, PasskeyId, UserId } from "#lib/schemas.js";
+import type { Annotations } from "#lib/server/effect/logging.js";
 import { eq, isNotNull } from "drizzle-orm";
 import * as pg from "drizzle-orm/pg-core";
 import { v7 } from "uuid";
