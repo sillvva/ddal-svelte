@@ -4,9 +4,9 @@ import { Data, Effect, Either } from "effect";
 import { type ErrorParams } from "./errors";
 
 export const isValidUrl = Effect.fn(function* (url: string) {
-	return yield* Effect.tryPromise(() => fetch(url, { method: "HEAD" }).catch(() => ({ ok: false }))).pipe(
-		Effect.flatMap((response) => Effect.succeed(response.ok))
-	);
+	return yield* Effect.tryPromise(() =>
+		fetch(url, { method: "HEAD", signal: AbortSignal.timeout(5_000) }).catch(() => ({ ok: false }))
+	).pipe(Effect.flatMap((response) => Effect.succeed(response.ok)));
 });
 
 // -------------------------------------------------------------------------------------------------
