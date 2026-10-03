@@ -6,9 +6,7 @@ import { AppLog } from "#lib/server/effect/logging.js";
 import { createAppRuntime, run } from "#lib/server/effect/runtime.js";
 import { AuthService } from "#lib/server/effect/services/auth.js";
 import { building } from "$app/env";
-
 import { sequence, type Handle, type HandleServerError, type ServerInit } from "@sveltejs/kit/hooks";
-
 import { svelteKitHandler } from "better-auth/svelte-kit";
 import chalk from "chalk";
 import { Effect } from "effect";
