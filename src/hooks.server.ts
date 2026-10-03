@@ -1,4 +1,3 @@
-import { building } from "$app/env";
 import { privateEnv } from "#lib/env/private.js";
 import { appCookieSchema } from "#lib/schemas.js";
 import { serverGetCookie } from "#lib/server/cookie.js";
@@ -6,13 +5,9 @@ import { DBService } from "#lib/server/db/index.js";
 import { AppLog } from "#lib/server/effect/logging.js";
 import { createAppRuntime, run } from "#lib/server/effect/runtime.js";
 import { AuthService } from "#lib/server/effect/services/auth.js";
+import { building } from "$app/env";
 
-import {
-	sequence,
-	type Handle,
-	type HandleServerError,
-	type ServerInit
-} from "@sveltejs/kit/hooks";
+import { sequence, type Handle, type HandleServerError, type ServerInit } from "@sveltejs/kit/hooks";
 
 import { svelteKitHandler } from "better-auth/svelte-kit";
 import chalk from "chalk";
@@ -46,11 +41,11 @@ const runtime: Handle = async ({ event, resolve }) => {
 
 const authHandler: Handle = async ({ event, resolve }) =>
 	run(function* () {
-	const Auth = yield* AuthService;
+		const Auth = yield* AuthService;
 
-	const { session, user, auth } = yield* Auth.getAuthSession();
-	event.locals.session = session;
-	event.locals.user = user;
+		const { session, user, auth } = yield* Auth.getAuthSession();
+		event.locals.session = session;
+		event.locals.user = user;
 
 		return svelteKitHandler({ event, resolve, auth, building });
 	});
@@ -60,8 +55,11 @@ const info: Handle = async ({ event, resolve }) => {
 
 	const userAgent = event.request.headers.get("user-agent");
 
-	event.locals.isMac = (/Macintosh|MacIntel|MacPPC|Mac68K|Mac OS/i).test(userAgent || "");
-	event.locals.isMobile = (/Mobile|iP(hone|od|ad)|Android|BlackBerry|IEMobile|Kindle|NetFront|Silk-Accelerated|(hpw|web)OS|Fennec|Minimo|Opera M(obi|ini)|Blazer|Dolfin|Dolphin|Skyfire|Zune/).test(userAgent || "");
+	event.locals.isMac = /Macintosh|MacIntel|MacPPC|Mac68K|Mac OS/i.test(userAgent || "");
+	event.locals.isMobile =
+		/Mobile|iP(hone|od|ad)|Android|BlackBerry|IEMobile|Kindle|NetFront|Silk-Accelerated|(hpw|web)OS|Fennec|Minimo|Opera M(obi|ini)|Blazer|Dolfin|Dolphin|Skyfire|Zune/.test(
+			userAgent || ""
+		);
 
 	return await resolve(event);
 };
