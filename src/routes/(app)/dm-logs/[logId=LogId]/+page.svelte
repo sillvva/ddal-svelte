@@ -123,7 +123,7 @@
 				<Input field={form.fields.dtd} type="number" label="Downtime" />
 			</Control>
 			<Control class="col-span-12">
-				<MarkdownInput field={form.fields.description} name="notes" maxLength={5000} maxRows={20} preview />
+				<MarkdownInput field={form.fields.description} maxLength={5000} maxRows={20} preview />
 			</Control>
 			<AddDropItems form={ctx}>
 				<Submit form={ctx}>Save Log</Submit>

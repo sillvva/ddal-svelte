@@ -1,5 +1,4 @@
 <script lang="ts">
-	import { page } from "$app/state";
 	import Error from "#lib/components/error.svelte";
 	import AddDropItems from "#lib/components/forms/add-drop-items.svelte";
 	import Combobox from "#lib/components/forms/combobox.svelte";
@@ -16,6 +15,7 @@
 	import { proxify } from "#lib/factories.svelte.js";
 	import * as API from "#lib/remote/index.js";
 	import { type DungeonMasterId, logSchema } from "#lib/schemas.js";
+	import { page } from "$app/state";
 	import { v7 } from "uuid";
 
 	let { params } = $props();
@@ -183,7 +183,7 @@
 				<Input field={form.fields.dtd} type="number" label="Downtime" />
 			</Control>
 			<Control class="col-span-12 w-full">
-				<MarkdownInput field={form.fields.description} name="notes" maxRows={20} maxLength={5000} preview />
+				<MarkdownInput field={form.fields.description} maxRows={20} maxLength={5000} preview />
 			</Control>
 			<AddDropItems form={ctx} {magicItems} {storyAwards}>
 				<Submit form={ctx}>Save Log</Submit>
