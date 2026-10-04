@@ -1,8 +1,8 @@
 <script lang="ts">
-	import { goto } from "$app/navigation";
-	import { page } from "$app/state";
 	import type { LogId } from "#lib/schemas.js";
 	import type { MagicItem, StoryAward } from "#lib/server/db/schema.js";
+	import { goto } from "$app/navigation";
+	import { page } from "$app/state";
 	import { sorter } from "@sillvva/utils";
 	import { SvelteMap } from "svelte/reactivity";
 	import { queryParameters, ssp } from "sveltekit-search-params";
@@ -22,8 +22,14 @@
 		search?: boolean;
 	}
 
-	interface WithType extends Props { type: Type; title?: never }
-	interface WithTitle extends Props { type?: never; title?: `${Type}${":" | ""}` }
+	interface WithType extends Props {
+		type: Type;
+		title?: never;
+	}
+	interface WithTitle extends Props {
+		type?: never;
+		title?: `${Type}${":" | ""}`;
+	}
 
 	let {
 		type,
@@ -106,8 +112,8 @@
 				const existingIndex = itemsMap.get(key);
 				if (existingIndex !== undefined && acc[existingIndex]) {
 					const existingQty = itemQty(acc[existingIndex]!);
-					(acc[existingIndex]!).name = fixName(name, existingQty + qty);
-					(acc[existingIndex]!).ids.push(item.logGainedId);
+					acc[existingIndex]!.name = fixName(name, existingQty + qty);
+					acc[existingIndex]!.ids.push(item.logGainedId);
 				} else {
 					item.name = fixName(item.name, qty);
 					itemsMap.set(key, acc.length);
@@ -154,19 +160,13 @@
 	data-col-no-items={collapsible && !items.length}
 >
 	{#if title}
-		<div
-			role="presentation"
-			onclick={collapsible ? () => collapsed = !collapsed : () => {}}
-			onkeypress={() => {}}
-		>
-			<h4
-				class="flex text-left leading-8 font-semibold in-[table]:leading-5 dark:text-white"
-			>
+		<div role="presentation" onclick={collapsible ? () => (collapsed = !collapsed) : () => {}} onkeypress={() => {}}>
+			<h4 class="flex text-left leading-8 font-semibold in-[table]:leading-5 dark:text-white">
 				<span class="flex-1">{title}</span>
 
 				{#if collapsible}
 					<span
-						class="iconify mdi--chevron-up data-[collapsed=true]:mdi--chevron-down ml-2 inline size-6 justify-self-end md:hidden print:hidden"
+						class="ml-2 iconify inline size-6 justify-self-end mdi--chevron-up data-[collapsed=true]:mdi--chevron-down md:hidden print:hidden"
 						data-collapsed={collapsed}
 					></span>
 				{/if}
@@ -185,12 +185,7 @@
 					onclick={() => onclick(mi)}
 					onkeypress={() => null}
 				>
-					<SearchResults
-						text={mi.name}
-						terms={terms}
-						filtered={filtered}
-						matches={matches}
-					/>
+					<SearchResults text={mi.name} {terms} {filtered} {matches} />
 				</span>
 			{/each}{#each consumables as mi (mi.id)}
 				<span
@@ -200,12 +195,7 @@
 					onclick={() => onclick(mi)}
 					onkeypress={() => null}
 				>
-					<SearchResults
-						text={mi.name}
-						terms={terms}
-						filtered={filtered}
-						matches={matches}
-					/>
+					<SearchResults text={mi.name} {terms} {filtered} {matches} />
 				</span>
 			{/each}
 		{:else}

@@ -1,7 +1,6 @@
 <script lang="ts">
-	import { goto } from "$app/navigation";
-	import { page } from "$app/state";
 	import { authClient } from "#lib/auth.js";
+	import Error from "#lib/components/error.svelte";
 	import Head from "#lib/components/head.svelte";
 	import Items from "#lib/components/items.svelte";
 	import Markdown from "#lib/components/markdown.svelte";
@@ -14,6 +13,8 @@
 	import type { FullLogData } from "#lib/server/effect/services/logs.js";
 	import { getGlobal } from "#lib/stores.svelte.js";
 	import { createTransition, formatDate, hotkey, parseEffectResult } from "#lib/util.js";
+	import { goto } from "$app/navigation";
+	import { page } from "$app/state";
 	import { slugify, sorter } from "@sillvva/utils";
 	import { clipboard, download } from "@svelteuidev/composables";
 	import { onMount } from "svelte";
@@ -80,6 +81,10 @@
 	)}
 	{const sortedResults = $derived(search.results.toSorted((a, b) => sorter(a.showDate, b.showDate)))}
 
+	{#snippet failed(error)}
+		<Error {error} boundary="[characterId=CharacterId]/+page.svelte" />
+	{/snippet}
+
 	<Head
 		title={character.name}
 		description={`Level ${character.totalLevel} ${character.race} ${character.class}`}
@@ -95,14 +100,14 @@
 			]}
 		>
 			{#snippet actions()}
-				<a href={`/characters/${character.id}/edit`} class="btn btn-primary btn-sm h-9 max-sm:hidden">Edit</a>
+				<a href={`/characters/${character.id}/edit`} class="btn h-9 btn-sm btn-primary max-sm:hidden">Edit</a>
 				<button
 					aria-label="Share Character"
-					class="btn btn-sm h-9 max-sm:hidden"
+					class="btn h-9 btn-sm max-sm:hidden"
 					onclick={() => successToast("Character URL copied to clipboard")}
 					{@attach fromAction(clipboard, () => page.url.href)}
 				>
-					<span class="iconify mdi--share-variant size-4"></span>
+					<span class="iconify size-4 mdi--share-variant"></span>
 				</button>
 			{/snippet}
 			{#snippet menu()}
@@ -175,12 +180,12 @@
 		<div class="flex flex-1 flex-col gap-6">
 			<div class="flex">
 				{#if character.imageUrl}
-					<div class="xs:max-md:flex relative mr-4 hidden w-20 flex-col items-end justify-center print:hidden">
+					<div class="relative mr-4 hidden w-20 flex-col items-end justify-center xs:max-md:flex print:hidden">
 						<a
 							href={character.imageUrl}
 							target="_blank"
 							rel="noreferrer noopener"
-							class="mask mask-squircle bg-primary mx-auto h-20"
+							class="mx-auto mask h-20 bg-primary mask-squircle"
 							style:view-transition-name={"image-" + character.id}
 							onclick={(e) => {
 								e.preventDefault();
@@ -192,9 +197,9 @@
 					</div>
 				{/if}
 				<div class="flex w-full flex-col">
-					<div class="xs:mb-0 mb-2 flex gap-4">
+					<div class="mb-2 flex gap-4 xs:mb-0">
 						<h2
-							class="font-vecna print:text-base-content flex-1 py-2 text-3xl font-bold text-black sm:py-0 sm:text-4xl dark:text-white print:text-2xl"
+							class="flex-1 py-2 font-vecna text-3xl font-bold text-black sm:py-0 sm:text-4xl dark:text-white print:text-2xl print:text-base-content"
 						>
 							{character.name}
 						</h2>
@@ -212,7 +217,7 @@
 									href={character.characterSheetUrl}
 									target="_blank"
 									rel="noreferrer noopner"
-									class="text-secondary-content font-semibold dark:not-print:drop-shadow-xs"
+									class="font-semibold text-secondary-content dark:not-print:drop-shadow-xs"
 								>
 									Character Sheet
 								</a>
@@ -227,15 +232,15 @@
 					{/if}
 				</div>
 			</div>
-			<div class="xs:flex-nowrap flex flex-1 flex-wrap gap-4 sm:gap-4 md:gap-6 print:flex-nowrap print:gap-2">
-				<div class="xs:basis-[40%] flex basis-full flex-col gap-2 sm:basis-1/3 sm:gap-4 md:basis-52 print:basis-1/3 print:gap-2">
+			<div class="flex flex-1 flex-wrap gap-4 xs:flex-nowrap sm:gap-4 md:gap-6 print:flex-nowrap print:gap-2">
+				<div class="flex basis-full flex-col gap-2 xs:basis-[40%] sm:basis-1/3 sm:gap-4 md:basis-52 print:basis-1/3 print:gap-2">
 					{#if character.imageUrl}
 						<div class="relative flex flex-col items-end justify-center max-md:hidden print:hidden">
 							<a
 								href={character.imageUrl}
 								target="_blank"
 								rel="noreferrer noopener"
-								class="mask mask-squircle bg-primary mx-auto h-52 w-full"
+								class="mx-auto mask h-52 w-full bg-primary mask-squircle"
 								style:view-transition-name={"image-" + character.id}
 								onclick={(e) => {
 									e.preventDefault();
@@ -247,39 +252,44 @@
 						</div>
 					{/if}
 					<div class="flex">
-						<h4 class="print:text-base-content font-semibold dark:text-white">Level</h4>
+						<h4 class="font-semibold dark:text-white print:text-base-content">Level</h4>
 						<div class="flex-1 text-right">{character.totalLevel}</div>
 					</div>
 					<div class="flex">
-						<h4 class="print:text-base-content font-semibold dark:text-white">Tier</h4>
+						<h4 class="font-semibold dark:text-white print:text-base-content">Tier</h4>
 						<div class="flex-1 text-right">{character.tier}</div>
 					</div>
 					<div class="flex">
-						<h4 class="print:text-base-content font-semibold dark:text-white">Gold</h4>
+						<h4 class="font-semibold dark:text-white print:text-base-content">Gold</h4>
 						<div class="flex-1 text-right">{character.totalGold.toLocaleString()}</div>
 					</div>
 					{#if character.totalTcp}
 						<div class="flex">
-							<h4 class="print:text-base-content font-semibold dark:text-white">TCP</h4>
+							<h4 class="font-semibold dark:text-white print:text-base-content">TCP</h4>
 							<div class="flex-1 text-right">{character.totalTcp}</div>
 						</div>
 					{/if}
 					<div class="flex">
-						<h4 class="print:text-base-content font-semibold dark:text-white">Downtime</h4>
+						<h4 class="font-semibold dark:text-white print:text-base-content">Downtime</h4>
 						<div class="flex-1 text-right">{character.totalDtd}</div>
 					</div>
 				</div>
 				<div
 					class={[
-						"divider xs:divider-horizontal xs:mx-0 max-xs:hidden print:flex",
+						"divider max-xs:hidden xs:mx-0 xs:divider-horizontal print:flex",
 						"before:bg-black/50 after:bg-black/50 dark:before:bg-white/50 dark:after:bg-white/50"
 					]}
 				></div>
-				<div class="xs:basis-[60%] flex basis-full flex-col sm:basis-2/3 lg:basis-2/3 print:basis-2/3">
+				<div class="flex basis-full flex-col xs:basis-[60%] sm:basis-2/3 lg:basis-2/3 print:basis-2/3">
 					{#if character}
 						<div class="flex flex-col gap-4">
-							<Items title="Story Awards" items={character.storyAwards} collapsible sort search />
-							<Items title="Magic Items" items={character.magicItems} collapsible formatting sort search />
+							<svelte:boundary>
+								{#snippet failed(error)}
+									<Error {error} boundary="Story Awards and Magic Items" />
+								{/snippet}
+								<Items title="Story Awards" items={character.storyAwards} collapsible sort search />
+								<Items title="Magic Items" items={character.magicItems} collapsible formatting sort search />
+							</svelte:boundary>
 						</div>
 					{/if}
 				</div>
@@ -293,7 +303,7 @@
 				{#if myCharacter}
 					<a
 						href={`/characters/${character.id}/log/new`}
-						class="btn btn-primary sm:btn-sm max-sm:hidden sm:px-3"
+						class="btn btn-primary max-sm:hidden sm:px-3 sm:btn-sm"
 						aria-label="New Log"
 						{@attach hotkey([
 							[
@@ -304,17 +314,17 @@
 							]
 						])}
 					>
-						New Log <kbd class="kbd kbd-sm max-sm:hover-none:hidden text-base-content">N</kbd>
+						New Log <kbd class="kbd kbd-sm text-base-content max-sm:hover-none:hidden">N</kbd>
 					</a>
 				{/if}
 				<Search name={searchKey} placeholder="Search Logs" />
 				{#if myCharacter}
 					<a
 						href={`/characters/${character.id}/log/new`}
-						class="btn btn-primary sm:btn-sm sm:hidden sm:px-3"
+						class="btn btn-primary sm:hidden sm:px-3 sm:btn-sm"
 						aria-label="New Log"
 					>
-						<span class="iconify mdi--plus size-6"></span>
+						<span class="iconify size-6 mdi--plus"></span>
 					</a>
 					<button
 						class="btn data-[desc=true]:btn-primary sm:hidden"
@@ -328,9 +338,9 @@
 						tabindex="0"
 					>
 						{#if global.app.log.descriptions}
-							<span class="iconify mdi--note-text size-6"></span>
+							<span class="iconify size-6 mdi--note-text"></span>
 						{:else}
-							<span class="iconify mdi--note-text-outline size-6"></span>
+							<span class="iconify size-6 mdi--note-text-outline"></span>
 						{/if}
 					</button>
 				{/if}
@@ -338,7 +348,7 @@
 			{#if character.logs.length}
 				<div class="flex-1 max-sm:hidden"></div>
 				<button
-					class="btn data-[desc=true]:btn-primary sm:btn-sm max-sm:hidden"
+					class="btn data-[desc=true]:btn-primary max-sm:hidden sm:btn-sm"
 					data-desc={global.app.log.descriptions}
 					onclick={() =>
 						createTransition(async () => {
@@ -349,9 +359,9 @@
 					tabindex="0"
 				>
 					{#if global.app.log.descriptions}
-						<span class="iconify mdi--eye size-5"></span>
+						<span class="iconify size-5 mdi--eye"></span>
 					{:else}
-						<span class="iconify mdi--eye-off size-5"></span>
+						<span class="iconify size-5 mdi--eye-off"></span>
 					{/if}
 					<span class="max-sm:hidden">Notes</span>
 				</button>
@@ -360,7 +370,7 @@
 	{/if}
 
 	{#if !sortedResults.length}
-		<section class="bg-base-200 rounded-lg">
+		<section class="rounded-lg bg-base-200">
 			<div class="flex flex-col gap-4 py-20 text-center">
 				<div>No logs found.</div>
 				<p>
@@ -393,7 +403,7 @@
 								{#if myCharacter}
 									<a
 										href={log.isDmLog ? `/dm-logs/${log.id}` : `/characters/${log.characterId}/log/${log.id}`}
-										class="row-link text-secondary-content font-semibold whitespace-pre-wrap"
+										class="row-link font-semibold whitespace-pre-wrap text-secondary-content"
 									>
 										<SearchResults text={log.name} terms={search.terms} />
 									</a>
@@ -494,7 +504,7 @@
 								</div>
 							</div>
 							<button class="action right bg-error text-white" aria-label="Delete Log">
-								<span class="iconify mdi--trash-can size-6"></span>
+								<span class="iconify size-6 mdi--trash-can"></span>
 							</button>
 						</div>
 					</li>
@@ -502,7 +512,7 @@
 			</ul>
 
 			<!-- Desktop List -->
-			<div class="bg-base-200 w-full overflow-x-auto rounded-lg max-sm:hidden print:block!">
+			<div class="w-full overflow-x-auto rounded-lg bg-base-200 max-sm:hidden print:block!">
 				<table class="linked-table table w-full leading-5">
 					<thead>
 						<tr class="bg-base-300 text-base-content/70">
@@ -527,7 +537,7 @@
 									{#if myCharacter}
 										<a
 											href={log.isDmLog ? `/dm-logs/${log.id}` : `/characters/${log.characterId}/log/${log.id}`}
-											class="row-link text-secondary-content font-semibold whitespace-pre-wrap"
+											class="row-link font-semibold whitespace-pre-wrap text-secondary-content"
 										>
 											<SearchResults text={log.name} terms={search.terms} />
 										</a>
@@ -657,11 +667,11 @@
 										<div class="flex flex-col justify-center gap-2">
 											<button
 												type="button"
-												class="btn btn-error btn-sm touch-hitbox"
+												class="btn touch-hitbox btn-sm btn-error"
 												aria-label="Delete Log"
 												onclick={() => deleteLog(log)}
 											>
-												<span class="iconify mdi--trash-can size-4"></span>
+												<span class="iconify size-4 mdi--trash-can"></span>
 											</button>
 										</div>
 									</td>
