@@ -89,6 +89,13 @@ export default [
 		}
 	},
 
+	{
+		files: ["src/lib/factories.svelte.ts"],
+		rules: {
+			"svelte/prefer-svelte-reactivity": "off"
+		}
+	},
+
 	// Keep Prettier last to disable conflicting stylistic rules
 	eslintConfigPrettier,
 
