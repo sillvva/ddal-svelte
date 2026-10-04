@@ -1,5 +1,4 @@
 import { defineEnvVars } from "@sveltejs/kit/env";
-import { LogLevel } from "effect";
 import * as v from "valibot";
 
 const requiredString = v.pipe(v.string(), v.trim(), v.regex(/^.*(\p{L}|\p{N})+.*$/u, "Required"));
@@ -43,7 +42,13 @@ export const variables = defineEnvVars({
 		schema: v.pipe(
 			v.optional(v.picklist(["none", "debug", "info", "error"]), "error"),
 			v.transform((level) =>
-				level === "debug" ? LogLevel.Debug : level === "info" ? LogLevel.Info : level === "error" ? LogLevel.Error : LogLevel.None
+				level === "debug"
+					? ("Debug" as const)
+					: level === "info"
+						? ("Info" as const)
+						: level === "error"
+							? ("Error" as const)
+							: ("None" as const)
 			)
 		)
 	}

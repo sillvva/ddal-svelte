@@ -21,7 +21,7 @@ const sectionData = {
 	)
 };
 
-type GetData = Effect.Effect.Success<ReturnType<typeof getData>>;
+type GetData = Effect.Success<ReturnType<typeof getData>>;
 export type SearchData = Array<SectionData | GetData[number]>;
 const getData = Effect.fn("GetData")(function* (user: LocalsUser) {
 	const Characters = yield* CharacterService;
@@ -84,7 +84,7 @@ export const getCommandData = guardedQuery(function* ({ user }) {
 	const data: SearchData = [sectionData];
 	const searchData = yield* getData(user).pipe(
 		Effect.tapError((e) => AppLog.error(`[GetCommandData] ${e.message}`, { status: e.status, cause: e.cause })),
-		Effect.catchAll(() => Effect.succeed([] as SearchData))
+		Effect.catch(() => Effect.succeed([] as SearchData))
 	);
 	return data.concat(searchData) as SearchData;
 });

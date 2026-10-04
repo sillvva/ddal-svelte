@@ -14,9 +14,7 @@ import {
 import { isFunction, isString, omit } from "@sillvva/utils";
 import type { StandardSchemaV1 } from "@standard-schema/spec";
 import { invalid, redirect, type RequestEvent } from "@sveltejs/kit";
-import { Effect } from "effect";
-import type { UnknownException } from "effect/Cause";
-import type { YieldWrap } from "effect/Utils";
+import { Cause, Effect } from "effect";
 import type { ErrorClass } from "./errors";
 import { run, runSafe, type ClientEffectResult, type EffectResult, type Services } from "./runtime";
 
@@ -24,7 +22,7 @@ import { run, runSafe, type ClientEffectResult, type EffectResult, type Services
 // Shared types
 // -------------------------------------------------------------------------------------------------
 
-type AppError = InstanceType<ErrorClass> | UnknownException;
+type AppError = InstanceType<ErrorClass> | Cause.UnknownError;
 
 type Auth = { user: LocalsUser; event: RequestEvent };
 
@@ -36,7 +34,7 @@ type FormAuth<Input> = Auth & { issue: RemoteFormInvalidField<Input> };
  * `E` and `R` stay in the constraint so every failure is an app error and every
  * requirement is an app service.
  */
-type AppGen<A, E extends AppError, R extends Services, Y extends YieldWrap<Effect.Effect<unknown, E, R>>> = Generator<Y, A>;
+type AppGen<A, E extends AppError, R extends Services, Y extends Effect.Effect<unknown, E, R>> = Generator<Y, A>;
 
 function stripStack<A>(result: EffectResult<A>): ClientEffectResult<A> {
 	if (result.ok) return result;
@@ -45,7 +43,7 @@ function stripStack<A>(result: EffectResult<A>): ClientEffectResult<A> {
 
 function authed<A>(
 	adminOnly: boolean,
-	body: (auth: Auth) => AppGen<A, AppError, Services, YieldWrap<Effect.Effect<unknown, AppError, Services>>>
+	body: (auth: Auth) => AppGen<A, AppError, Services, Effect.Effect<unknown, AppError, Services>>
 ) {
 	return Effect.gen(function* () {
 		const Auth = yield* AuthService;
@@ -63,14 +61,14 @@ export function guardedQuery<
 	A,
 	E extends AppError,
 	R extends Services,
-	Y extends YieldWrap<Effect.Effect<unknown, E, R>>
+	Y extends Effect.Effect<unknown, E, R>
 >(
 	schema: Schema,
 	fn: (output: StandardSchemaV1.InferOutput<Schema>, auth: Auth) => AppGen<A, E, R, Y>,
 	adminOnly?: boolean
 ): RemoteQueryFunction<StandardSchemaV1.InferInput<Schema>, A>;
 
-export function guardedQuery<A, E extends AppError, R extends Services, Y extends YieldWrap<Effect.Effect<unknown, E, R>>>(
+export function guardedQuery<A, E extends AppError, R extends Services, Y extends Effect.Effect<unknown, E, R>>(
 	fn: (auth: Auth) => AppGen<A, E, R, Y>,
 	adminOnly?: boolean
 ): RemoteQueryFunction<void, A>;
@@ -80,7 +78,7 @@ export function guardedQuery<
 	A,
 	E extends AppError,
 	R extends Services,
-	Y extends YieldWrap<Effect.Effect<unknown, E, R>>
+	Y extends Effect.Effect<unknown, E, R>
 >(
 	schemaOrFn: Schema | ((auth: Auth) => AppGen<A, E, R, Y>),
 	fnOrAdminOnly?: ((output: StandardSchemaV1.InferOutput<Schema>, auth: Auth) => AppGen<A, E, R, Y>) | boolean,
@@ -108,20 +106,17 @@ export function guardedCommand<
 	A,
 	E extends AppError,
 	R extends Services,
-	Y extends YieldWrap<Effect.Effect<unknown, E, R>>
+	Y extends Effect.Effect<unknown, E, R>
 >(
 	schema: Schema,
 	fn: (output: StandardSchemaV1.InferOutput<Schema>, auth: Auth) => AppGen<A, E, R, Y>,
 	adminOnly?: boolean
 ): RemoteCommand<StandardSchemaV1.InferInput<Schema>, ClientEffectResult<A>>;
 
-export function guardedCommand<
-	Input,
-	A,
-	E extends AppError,
-	R extends Services,
-	Y extends YieldWrap<Effect.Effect<unknown, E, R>>
->(fn: (input: Input, auth: Auth) => AppGen<A, E, R, Y>, adminOnly?: boolean): RemoteCommand<Input, ClientEffectResult<A>>;
+export function guardedCommand<Input, A, E extends AppError, R extends Services, Y extends Effect.Effect<unknown, E, R>>(
+	fn: (input: Input, auth: Auth) => AppGen<A, E, R, Y>,
+	adminOnly?: boolean
+): RemoteCommand<Input, ClientEffectResult<A>>;
 
 export function guardedCommand<
 	Schema extends StandardSchemaV1,
@@ -129,7 +124,7 @@ export function guardedCommand<
 	A,
 	E extends AppError,
 	R extends Services,
-	Y extends YieldWrap<Effect.Effect<unknown, E, R>>
+	Y extends Effect.Effect<unknown, E, R>
 >(
 	schemaOrFn: Schema | ((input: Input, auth: Auth) => AppGen<A, E, R, Y>),
 	fnOrAdminOnly?: ((output: StandardSchemaV1.InferOutput<Schema>, auth: Auth) => AppGen<A, E, R, Y>) | boolean,
@@ -193,7 +188,7 @@ export function guardedForm<
 	A,
 	E extends AppError,
 	R extends Services,
-	Y extends YieldWrap<Effect.Effect<unknown, E, R>>
+	Y extends Effect.Effect<unknown, E, R>
 >(
 	schema: FormSchemaValidate<Schema>,
 	fn: (output: StandardSchemaV1.InferOutput<Schema>, auth: FormAuth<StandardSchemaV1.InferInput<Schema>>) => AppGen<A, E, R, Y>,
@@ -205,14 +200,14 @@ export function guardedForm<
 	A,
 	E extends AppError,
 	R extends Services,
-	Y extends YieldWrap<Effect.Effect<unknown, E, R>>
+	Y extends Effect.Effect<unknown, E, R>
 >(
 	schema: "unchecked",
 	fn: (input: Input, auth: FormAuth<Input>) => AppGen<A, E, R, Y>,
 	adminOnly?: boolean
 ): RemoteForm<Input, A>;
 
-export function guardedForm<A, E extends AppError, R extends Services, Y extends YieldWrap<Effect.Effect<unknown, E, R>>>(
+export function guardedForm<A, E extends AppError, R extends Services, Y extends Effect.Effect<unknown, E, R>>(
 	fn: (auth: Auth) => AppGen<A, E, R, Y>,
 	adminOnly?: boolean
 ): RemoteForm<void, A>;
@@ -223,7 +218,7 @@ export function guardedForm<
 	A,
 	E extends AppError,
 	R extends Services,
-	Y extends YieldWrap<Effect.Effect<unknown, E, R>>
+	Y extends Effect.Effect<unknown, E, R>
 >(
 	schemaOrFn: FormSchemaValidate<Schema> | "unchecked" | ((auth: Auth) => AppGen<A, E, R, Y>),
 	fnOrAdminOnly?:

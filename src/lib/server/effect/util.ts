@@ -1,6 +1,6 @@
 import type { StandardSchemaV1 } from "@standard-schema/spec";
 import { invalid } from "@sveltejs/kit";
-import { Data, Effect, Either } from "effect";
+import { Data, Effect, Result } from "effect";
 import { type ErrorParams } from "./errors";
 
 export const isValidUrl = Effect.fn(function* (url: string) {
@@ -69,9 +69,9 @@ export const parse = Effect.fn(function* <I, O = I>(schema: StandardSchemaV1<I, 
 });
 
 export const safeParse = Effect.fn(function* <I, O = I>(schema: StandardSchemaV1<I, O>, input: I) {
-	const result = yield* Effect.either(parse<I, O>(schema, input));
-	if (Either.isLeft(result)) return { success: false, failure: result.left } as const;
-	else return { success: true, data: result.right } as const;
+	const result = yield* Effect.result(parse<I, O>(schema, input));
+	if (Result.isFailure(result)) return { success: false, failure: result.failure } as const;
+	else return { success: true, data: result.success } as const;
 });
 
 export const formParse = Effect.fn(function* <I, O = I>(schema: StandardSchemaV1<I, O>, input: I) {

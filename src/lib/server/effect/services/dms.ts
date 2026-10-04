@@ -6,7 +6,7 @@ import type { ErrorParams } from "#lib/server/effect/errors.js";
 import { AppLog } from "#lib/server/effect/logging.js";
 import { isTupleOf, sorter } from "@sillvva/utils";
 import { and, eq } from "drizzle-orm";
-import { Data, Effect, Layer } from "effect";
+import { Context, Data, Effect, Layer } from "effect";
 
 export class DMNotFoundError extends Data.TaggedError("DMNotFoundError")<ErrorParams> {
 	constructor(err?: unknown) {
@@ -28,9 +28,8 @@ export class DeleteDMError extends Data.TaggedError("DeleteDMError")<ErrorParams
 
 export type UserDM = InferQueryResult<"dungeonMasters", { with: { logs: typeof userDMLogIncludes } }>;
 
-export class DMService extends Effect.Service<DMService>()("DMSService", {
-	dependencies: [DBService.Default()],
-	effect: Effect.fn("DMService")(function* () {
+export class DMService extends Context.Service<DMService>()("DMService", {
+	make: Effect.fn("DMService")(function* () {
 		const { db } = yield* DBService;
 
 		const getOne = Effect.fn("DMService.get.one")(function* (dmId: DungeonMasterId, userId: UserId, includeLogs = true) {
@@ -104,7 +103,7 @@ export class DMService extends Effect.Service<DMService>()("DMSService", {
 		});
 
 		const save = Effect.fn("DMService.save")(function* (user: LocalsUser, data: DungeonMasterFormSchema) {
-			const dm = yield* getOne(data.id, user.id).pipe(Effect.catchAll((err) => new SaveDMError(err.message)));
+			const dm = yield* getOne(data.id, user.id).pipe(Effect.catch((err) => Effect.fail(new SaveDMError(err.message))));
 
 			if (!data.name.trim()) {
 				if (dm.isUser) data.name = user.name;
@@ -189,7 +188,9 @@ export class DMService extends Effect.Service<DMService>()("DMSService", {
 			addUserDM,
 			delete: deleteDM
 		};
-	})
-}) {}
+	})()
+}) {
+	static readonly layer = Layer.effect(this, this.make);
+}
 
-export const DMTx = (tx: Transaction) => DMService.DefaultWithoutDependencies().pipe(Layer.provide(DBService.Default(tx)));
+export const DMTx = (tx: Transaction) => DMService.layer.pipe(Layer.provide(DBService.layer(tx)));

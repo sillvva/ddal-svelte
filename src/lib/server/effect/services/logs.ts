@@ -26,7 +26,7 @@ import type { ErrorParams } from "#lib/server/effect/errors.js";
 import { AppLog } from "#lib/server/effect/logging.js";
 import { isTupleOf } from "@sillvva/utils";
 import { and, eq, exists, inArray, isNull, notInArray, or } from "drizzle-orm";
-import { Data, Effect } from "effect";
+import { Context, Data, Effect, Layer } from "effect";
 import { v7 } from "uuid";
 import { DMService, DMTx } from "./dms";
 
@@ -133,7 +133,7 @@ const getCharacterLog = Effect.fn("LogService.get.one")(function* (logId: LogId,
 			}
 		})
 	).pipe(
-		Effect.andThen((log) => log && parseLog(log)),
+		Effect.map((log) => log && parseLog(log)),
 		Effect.tapError(() => AppLog.debug("LogService.get.one", { logId, userId }))
 	);
 });
@@ -446,9 +446,8 @@ const deleteLog = Effect.fn("LogService.delete")(function* (logId: LogId, userId
 	);
 });
 
-export class LogService extends Effect.Service<LogService>()("LogService", {
-	dependencies: [DBService.Default()],
-	effect: Effect.fn("LogService")(function* () {
+export class LogService extends Context.Service<LogService>()("LogService", {
+	make: Effect.fn("LogService")(function* () {
 		const { db, transaction } = yield* DBService;
 
 		return {
@@ -482,5 +481,7 @@ export class LogService extends Effect.Service<LogService>()("LogService", {
 				return yield* deleteLog(logId, userId, db);
 			})
 		};
-	})
-}) {}
+	})()
+}) {
+	static readonly layer = Layer.effect(this, this.make);
+}

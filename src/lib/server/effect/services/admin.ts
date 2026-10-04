@@ -5,7 +5,7 @@ import { type ErrorParams } from "#lib/server/effect/errors.js";
 import { DrizzleSearchParser } from "@sillvva/search/drizzle";
 import { isTupleOf } from "@sillvva/utils";
 import { eq, sql } from "drizzle-orm";
-import { Data, DateTime, Effect, Layer } from "effect";
+import { Context, Data, DateTime, Effect, Layer } from "effect";
 
 export class UserNotFoundError extends Data.TaggedError("UserNotFoundError")<ErrorParams> {
 	constructor(err?: unknown) {
@@ -25,8 +25,8 @@ export class DeleteLogError extends Data.TaggedError("DeleteLogError")<ErrorPara
 	}
 }
 
-export class AdminService extends Effect.Service<AdminService>()("AdminService", {
-	effect: Effect.fn("AdminService")(function* () {
+export class AdminService extends Context.Service<AdminService>()("AdminService", {
+	make: Effect.fn("AdminService")(function* () {
 		const { db } = yield* DBService;
 
 		return {
@@ -120,11 +120,12 @@ export class AdminService extends Effect.Service<AdminService>()("AdminService",
 				);
 			})
 		};
-	}),
-	dependencies: [DBService.Default()]
-}) {}
+	})()
+}) {
+	static readonly layer = Layer.effect(this, this.make);
+}
 
-export const AdminTx = (tx: Transaction) => AdminService.DefaultWithoutDependencies().pipe(Layer.provide(DBService.Default(tx)));
+export const AdminTx = (tx: Transaction) => AdminService.layer.pipe(Layer.provide(DBService.layer(tx)));
 
 // -------------------------------------------------------------------------------------------------
 // Search

@@ -14,7 +14,7 @@ import {
 } from "drizzle-orm";
 import type { PgAsyncTransaction, PgTable } from "drizzle-orm/pg-core";
 import { drizzle, type PostgresJsDatabase, type PostgresJsQueryResultHKT } from "drizzle-orm/postgres-js";
-import { Cause, Data, Effect, Exit } from "effect";
+import { Cause, Context, Data, Effect, Exit, Layer } from "effect";
 import postgres from "postgres";
 
 export type TRSchema = typeof relations;
@@ -24,8 +24,8 @@ export type Transaction = PgAsyncTransaction<PostgresJsQueryResultHKT, TRSchema>
 const client = postgres(privateEnv.DATABASE_URL, { prepare: false });
 const db = drizzle({ client, relations });
 
-export class DBService extends Effect.Service<DBService>()("DBService", {
-	effect: Effect.fn("DBService")(function* (tx?: Transaction) {
+export class DBService extends Context.Service<DBService>()("DBService", {
+	make: Effect.fn("DBService")(function* (tx?: Transaction) {
 		const database = tx || db;
 
 		const transaction = Effect.fn("DBService.transaction")(function* <A, B extends InstanceType<ErrorClass>>(
@@ -40,7 +40,8 @@ export class DBService extends Effect.Service<DBService>()("DBService", {
 						return Exit.match(result, {
 							onSuccess: (value) => value,
 							onFailure: (cause) => {
-								throw Cause.isFailType(cause) ? cause.error : new TransactionError(cause);
+								const fail = cause.reasons.find(Cause.isFailReason);
+								throw fail ? fail.error : new TransactionError(cause);
 							}
 						});
 					}),
@@ -55,6 +56,10 @@ export class DBService extends Effect.Service<DBService>()("DBService", {
 		return { db: database, transaction };
 	})
 }) {
+	static layer(tx?: Transaction) {
+		return Layer.effect(this, this.make(tx));
+	}
+
 	static async end() {
 		await client.end();
 	}
@@ -82,7 +87,6 @@ export class DrizzleError extends Data.TaggedError("DrizzleError")<DrizzleErrorP
 		super({ message: Cause.pretty(Cause.isCause(err) ? err : Cause.fail(err)), status: 500, cause: err, query });
 	}
 }
-
 
 export type Filter<TableName extends keyof TRSchema> = RelationsFilter<TRSchema[TableName], TRSchema>;
 export type QueryConfig<TableName extends keyof TRSchema, Type extends "one" | "many" = "one"> = DBQueryConfig<

@@ -12,7 +12,7 @@ export const impersonateUser = guardedForm(
 		const { auth } = yield* AuthService;
 		const Admin = yield* AdminService;
 
-		const user = yield* Admin.get.user(userId).pipe(Effect.catchAll((err) => Effect.die(invalid(issue(err.message)))));
+		const user = yield* Admin.get.user(userId).pipe(Effect.catch((err) => Effect.die(invalid(issue(err.message)))));
 
 		if (user.banned) throw invalid("User is banned");
 		if (user.role === "admin") throw invalid("Cannot impersonate this user");
@@ -47,7 +47,7 @@ export const banUser = guardedForm(
 		const { auth } = yield* AuthService;
 		const Admin = yield* AdminService;
 
-		const user = yield* Admin.get.user(userId).pipe(Effect.catchAll((err) => Effect.die(invalid(err.message))));
+		const user = yield* Admin.get.user(userId).pipe(Effect.catch((err) => Effect.die(invalid(err.message))));
 
 		if (user.role === "admin") throw invalid("Cannot ban admins");
 		if (user.banned) throw invalid("User is already banned");

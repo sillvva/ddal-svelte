@@ -11,7 +11,7 @@ import { betterAuth } from "better-auth/minimal";
 import { lastLoginMethod } from "better-auth/plugins";
 import { admin } from "better-auth/plugins/admin";
 import { sveltekitCookies } from "better-auth/svelte-kit";
-import { Data, Duration, Effect } from "effect";
+import { Context, Data, Duration, Effect, Layer } from "effect";
 import { v7 } from "uuid";
 import * as v from "valibot";
 import { parse } from "../util";
@@ -29,9 +29,8 @@ export class InvalidUser extends Data.TaggedError("InvalidUser")<ErrorParams> {
 	}
 }
 
-export class AuthService extends Effect.Service<AuthService>()("AuthService", {
-	dependencies: [DBService.Default()],
-	effect: Effect.fn("AuthService")(function* () {
+export class AuthService extends Context.Service<AuthService>()("AuthService", {
+	make: Effect.fn("AuthService")(function* () {
 		const { db } = yield* DBService;
 
 		const auth = betterAuth({
@@ -150,8 +149,10 @@ export class AuthService extends Effect.Service<AuthService>()("AuthService", {
 				return { user: result.output, event };
 			})
 		};
-	})
-}) {}
+	})()
+}) {
+	static readonly layer = Layer.effect(this, this.make);
+}
 
 export function getHomeError(error: string | null, description: string | null) {
 	if (isDefined(error)) {

@@ -1,10 +1,7 @@
 import type { FullPathname } from "#lib/constants.js";
 import type { NumericRange } from "#lib/util.js";
 import { isInstanceOfClass } from "@sillvva/utils";
-import { Data, Effect } from "effect";
-import type { UnknownException } from "effect/Cause";
-
-
+import { Cause, Data, Effect } from "effect";
 
 export interface ErrorParams {
 	message: string;
@@ -66,10 +63,12 @@ export class RedirectError extends Data.TaggedError("RedirectError")<RedirectErr
 	}
 }
 
-export function redirectOnFail<R, F extends InstanceType<ErrorClass> | UnknownException, S>(
+export function redirectOnFail<R, F extends InstanceType<ErrorClass> | Cause.UnknownError, S>(
 	effect: Effect.Effect<R, F, S>,
 	redirectTo: FullPathname,
 	status: NumericRange<301, 308>
 ) {
-	return effect.pipe(Effect.catchAll((err) => new RedirectError({ message: err.message, redirectTo, status, cause: err })));
+	return effect.pipe(
+		Effect.catch((err) => Effect.fail(new RedirectError({ message: err.message, redirectTo, status, cause: err })))
+	);
 }

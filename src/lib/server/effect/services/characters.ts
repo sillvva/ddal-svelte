@@ -1,15 +1,21 @@
-import { getRequestEvent } from "$app/server";
 import { PlaceholderName } from "#lib/constants.js";
 import { getLogsSummary, parseCharacter } from "#lib/entities.js";
 import type { CharacterId, CharacterSchema, UserId } from "#lib/schemas.js";
-import { buildConflictUpdateColumns, DBService, runQuery, type InferQueryResult, type Transaction } from "#lib/server/db/index.js";
 import { characterIncludes } from "#lib/server/db/includes.js";
+import {
+	buildConflictUpdateColumns,
+	DBService,
+	runQuery,
+	type InferQueryResult,
+	type Transaction
+} from "#lib/server/db/index.js";
 import { characters, logs } from "#lib/server/db/schema.js";
 import type { ErrorParams } from "#lib/server/effect/errors.js";
 import { AppLog } from "#lib/server/effect/logging.js";
+import { getRequestEvent } from "$app/server";
 import { isTupleOf } from "@sillvva/utils";
 import { and, eq, exists } from "drizzle-orm";
-import { Data, Effect, Layer } from "effect";
+import { Context, Data, Effect, Layer } from "effect";
 import { addMissingTimeZones } from "./logs";
 
 export class CharacterNotFoundError extends Data.TaggedError("CharacterNotFoundError")<ErrorParams> {
@@ -35,9 +41,8 @@ export interface FullCharacterData extends Omit<CharacterData, "logs">, ReturnTy
 	imageUrl: string;
 }
 
-export class CharacterService extends Effect.Service<CharacterService>()("CharacterService", {
-	dependencies: [DBService.Default()],
-	effect: Effect.fn("CharacterService")(function* () {
+export class CharacterService extends Context.Service<CharacterService>()("CharacterService", {
+	make: Effect.fn("CharacterService")(function* () {
 		const { db, transaction } = yield* DBService;
 
 		return {
@@ -158,8 +163,9 @@ export class CharacterService extends Effect.Service<CharacterService>()("Charac
 				);
 			})
 		};
-	})
-}) {}
+	})()
+}) {
+	static readonly layer = Layer.effect(this, this.make);
+}
 
-export const CharacterTx = (tx: Transaction) =>
-	CharacterService.DefaultWithoutDependencies().pipe(Layer.provide(DBService.Default(tx)));
+export const CharacterTx = (tx: Transaction) => CharacterService.layer.pipe(Layer.provide(DBService.layer(tx)));

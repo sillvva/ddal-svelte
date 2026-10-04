@@ -6,7 +6,7 @@ import { type ErrorParams } from "#lib/server/effect/errors.js";
 import { AppLog } from "#lib/server/effect/logging.js";
 import { isTupleOf, sorter } from "@sillvva/utils";
 import { and, eq } from "drizzle-orm";
-import { Data, Effect, Layer } from "effect";
+import { Context, Data, Effect, Layer } from "effect";
 
 export class UpdateUserError extends Data.TaggedError("UpdateUserError")<ErrorParams> {
 	constructor(err?: unknown) {
@@ -26,9 +26,8 @@ export class DeletePasskeyError extends Data.TaggedError("DeletePasskeyError")<E
 	}
 }
 
-export class UserService extends Effect.Service<UserService>()("UserService", {
-	dependencies: [DBService.Default()],
-	effect: Effect.fn("UserService")(function* () {
+export class UserService extends Context.Service<UserService>()("UserService", {
+	make: Effect.fn("UserService")(function* () {
 		const { db } = yield* DBService;
 
 		return {
@@ -140,9 +139,7 @@ export class UserService extends Effect.Service<UserService>()("UserService", {
 						.returning()
 				).pipe(
 					Effect.flatMap((passkeys) =>
-						isTupleOf(passkeys, 1)
-							? Effect.succeed(passkeys[0])
-							: Effect.fail(new RenamePasskeyError("Failed to rename passkey"))
+						isTupleOf(passkeys, 1) ? Effect.succeed(passkeys[0]) : Effect.fail(new RenamePasskeyError("Failed to rename passkey"))
 					)
 				);
 			}),
@@ -161,7 +158,9 @@ export class UserService extends Effect.Service<UserService>()("UserService", {
 				);
 			})
 		};
-	})
-}) {}
+	})()
+}) {
+	static readonly layer = Layer.effect(this, this.make);
+}
 
-export const UserTx = (tx: Transaction) => UserService.DefaultWithoutDependencies().pipe(Layer.provide(DBService.Default(tx)));
+export const UserTx = (tx: Transaction) => UserService.layer.pipe(Layer.provide(DBService.layer(tx)));
