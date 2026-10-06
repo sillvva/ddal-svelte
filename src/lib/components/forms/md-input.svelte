@@ -22,13 +22,14 @@
 	const value = $derived(field.value() || "");
 
 	const segmenter = new Intl.Segmenter();
-	const graphemeCount = $derived(typeof value === "string" ? [...segmenter.segment(value)].length : 0);
-	const lengthDiff = $derived(value.length - graphemeCount);
+	const graphemes = $derived(typeof value === "string" ? [...segmenter.segment(value)] : []);
+	const graphemeCount = $derived(graphemes.length);
+	const largeGraphemeCount = $derived(graphemes.filter((grapheme) => grapheme.segment.length > 1).length);
 
 	const markdownTip = "Supports Markdown and HTML. Scripting, media, and form tags are not allowed for security reasons.";
 	const graphemeTip = $derived(
-		lengthDiff
-			? `You have used ${graphemeCount} characters, but ${lengthDiff} are counted differently due to special characters like emojis.`
+		largeGraphemeCount
+			? `You have actually used ${graphemeCount} characters, but ${largeGraphemeCount} special characters like emojis count as more than one.`
 			: undefined
 	);
 </script>
