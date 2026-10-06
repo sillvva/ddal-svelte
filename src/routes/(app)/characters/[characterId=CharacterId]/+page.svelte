@@ -159,6 +159,15 @@
 						disabled={!!API.characters.actions.deleteCharacter.pending}
 						onclick={async () => {
 							if (!confirm(`Are you sure you want to delete ${character.name}? This action cannot be undone.`)) return;
+
+							const dmLogs = character.logs
+								.filter((log) => log.isDmLog)
+								.map((log) => {
+									const date = formatDate(new Date(log.showDate), log.timezone);
+									return `‣ [${date}] ${log.name}`;
+								});
+							alert(`${dmLogs.length} DM logs will be unassigned from this character:\n\n${dmLogs.join("\n")}`);
+
 							global.pageLoader = true;
 							const result = await API.characters.actions.deleteCharacter(character.id);
 							const parsed = await parseEffectResult(result);
@@ -413,7 +422,7 @@
 									</span>
 								{/if}
 								<p class="text-netural-content mb-2 text-sm font-normal whitespace-nowrap">
-									{new Date(log.showDate).toLocaleString([], { dateStyle: "medium", timeStyle: "short" })}
+									{formatDate(new Date(log.showDate), log.timezone)}
 								</p>
 								{#if log.type === "game" && !log.dm.isUser}
 									<p class="text-sm font-normal">
