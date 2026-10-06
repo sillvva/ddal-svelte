@@ -21,7 +21,8 @@
 	const issues = $derived(field.issues());
 	const value = $derived(field.value() || "");
 
-	const graphemeCount = $derived(typeof value === "string" ? [...new Intl.Segmenter().segment(value)].length : 0);
+	const segmenter = new Intl.Segmenter();
+	const graphemeCount = $derived(typeof value === "string" ? [...segmenter.segment(value)].length : 0);
 	const lengthDiff = $derived(value.length - graphemeCount);
 
 	const markdownTip = "Supports Markdown and HTML. Scripting, media, and form tags are not allowed for security reasons.";
