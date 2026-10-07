@@ -54,7 +54,8 @@
   },
   "type": "module",
   "dependencies": {
-    "@better-auth/passkey": "^1.6.33",
+    "@better-auth/drizzle-adapter": "^1.7.7",
+    "@better-auth/passkey": "^1.7.7",
     "@humanspeak/svelte-markdown": "^2.0.0",
     "@internationalized/date": "^3.12.4",
     "@resvg/resvg-js": "^2.6.2",
@@ -63,7 +64,7 @@
     "@standard-schema/spec": "^1.1.0",
     "@svelteuidev/composables": "^0.15.7",
     "@types/regexp.escape": "^2.0.0",
-    "better-auth": "^1.6.33",
+    "better-auth": "^1.7.7",
     "bits-ui": "^2.19.5",
     "chalk": "^6.0.1",
     "drizzle-orm": "^1.0.0-beta.22",

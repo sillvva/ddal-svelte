@@ -303,8 +303,10 @@ export const localsAccountSchema = v.object({
 	refreshToken: v.nullable(v.string()),
 	accessToken: v.nullable(v.string()),
 	accessTokenExpiresAt: v.nullable(v.date()),
+	refreshTokenExpiresAt: v.nullable(v.date()),
 	scope: v.nullable(v.string()),
 	idToken: v.nullable(v.string()),
+	password: v.nullable(v.string()),
 	createdAt: v.date(),
 	updatedAt: v.date()
 });

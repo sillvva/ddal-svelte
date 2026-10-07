@@ -1,12 +1,12 @@
-import { getRequestEvent } from "$app/server";
 import { privateEnv } from "#lib/env/private.js";
 import { localsSessionSchema, localsUserSchema, type UserId } from "#lib/schemas.js";
 import { DBService } from "#lib/server/db/index.js";
 import * as schema from "#lib/server/db/schema.js";
 import { RedirectError, type ErrorParams } from "#lib/server/effect/errors.js";
+import { getRequestEvent } from "$app/server";
+import { drizzleAdapter } from "@better-auth/drizzle-adapter/relations-v2";
 import { passkey } from "@better-auth/passkey";
 import { isDefined } from "@sillvva/utils";
-import { drizzleAdapter } from "better-auth/adapters/drizzle";
 import { betterAuth } from "better-auth/minimal";
 import { lastLoginMethod } from "better-auth/plugins";
 import { admin } from "better-auth/plugins/admin";
@@ -91,13 +91,13 @@ export class AuthService extends Context.Service<AuthService>()("AuthService", {
 				const user = event.locals.user;
 
 				const tasks =
-					user?.accounts.map(({ accountId, providerId }) =>
+					user?.accounts.map(({ id, providerId }) =>
 						Effect.promise(() =>
 							auth.api
 								.accountInfo({
 									headers: event.request.headers,
 									query: {
-										accountId: accountId
+										accountId: id
 									}
 								})
 								.then((r) =>

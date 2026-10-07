@@ -58,8 +58,10 @@ export const account = pg.pgTable(
 		refreshToken: pg.text("refresh_token"),
 		accessToken: pg.text("access_token"),
 		accessTokenExpiresAt: pg.timestamp("expires_at", { mode: "date", withTimezone: true }),
+		refreshTokenExpiresAt: pg.timestamp("refresh_expires_at", { mode: "date", withTimezone: true }),
 		scope: pg.text(),
 		idToken: pg.text("id_token"),
+		password: pg.text(),
 		createdAt: pg
 			.timestamp("created_at", { mode: "date", withTimezone: true })
 			.notNull()
