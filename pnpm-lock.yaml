@@ -12,8 +12,8 @@ importers:
         specifier: ^1.6.33
         version: 1.6.33(@better-auth/core@1.7.5(@better-auth/utils@0.4.2)(@better-fetch/fetch@1.3.1)(better-call@1.4.0(zod@4.6.5))(jose@6.2.12)(kysely@0.29.6)(nanostores@1.5.3))(@better-auth/utils@0.4.2)(@better-fetch/fetch@1.3.1)(better-auth@1.6.33(@sveltejs/kit@3.0.1(@sveltejs/vite-plugin-svelte@7.3.1(svelte@5.57.1(@typescript-eslint/types@8.71.1))(vite@8.3.2(@types/node@24.13.6)(jiti@2.7.0)))(svelte@5.57.1(@typescript-eslint/types@8.71.1))(typescript@6.0.3)(vite@8.3.2(@types/node@24.13.6)(jiti@2.7.0)))(drizzle-kit@1.0.0-rc.4-ca0f029)(drizzle-orm@1.0.0-rc.4-5d5b77c(effect@4.0.1)(postgres@3.4.9)(valibot@1.5.0(typescript@6.0.3))(zod@4.6.5))(svelte@5.57.1(@typescript-eslint/types@8.71.1)))(better-call@1.4.0(zod@4.6.5))(nanostores@1.5.3)
       '@humanspeak/svelte-markdown':
-        specifier: ^1.9.1
-        version: 1.9.1(shiki@4.5.0)(svelte@5.57.1(@typescript-eslint/types@8.71.1))
+        specifier: ^2.0.0
+        version: 2.0.0(shiki@4.5.0)(svelte@5.57.1(@typescript-eslint/types@8.71.1))
       '@internationalized/date':
         specifier: ^3.12.4
         version: 3.12.4
@@ -42,8 +42,8 @@ importers:
         specifier: ^2.19.5
         version: 2.19.5(@internationalized/date@3.12.4)(@sveltejs/kit@3.0.1(@sveltejs/vite-plugin-svelte@7.3.1(svelte@5.57.1(@typescript-eslint/types@8.71.1))(vite@8.3.2(@types/node@24.13.6)(jiti@2.7.0)))(svelte@5.57.1(@typescript-eslint/types@8.71.1))(typescript@6.0.3)(vite@8.3.2(@types/node@24.13.6)(jiti@2.7.0)))(svelte@5.57.1(@typescript-eslint/types@8.71.1))
       chalk:
-        specifier: ^5.6.2
-        version: 5.6.2
+        specifier: ^6.0.1
+        version: 6.0.1
       drizzle-orm:
         specifier: ^1.0.0-beta.22
         version: 1.0.0-rc.4-5d5b77c(effect@4.0.1)(postgres@3.4.9)(valibot@1.5.0(typescript@6.0.3))(zod@4.6.5)
@@ -542,19 +542,22 @@ packages:
     resolution: {integrity: sha512-ZZ1w0aoQkwuUuC7Yf+7sdeaNfqQiiLcSRbfI08oAxqLtpXQr9AIVX7Ay7HLDuiLYAaFPu8oBYNq/QIi9URHJ3Q==}
     engines: {node: '>=18.18.0'}
 
-  '@humanspeak/memory-cache@1.1.2':
-    resolution: {integrity: sha512-6kmeqrCVThw4RYZsJ74l9cOdZQ84XHnGIzrv+Po49CZBNNVDEzi0CGsTx+KKmr/Hb6hY6yDGxeWTiz4VHkdsEg==}
+  '@humanspeak/memory-cache@1.2.0':
+    resolution: {integrity: sha512-im7GIIpgjdD6Fx68xCeiXw3XiDv30/WMRAaodMm+ep0ptYfEUd0cdNeTAylHGIRTJIeByKFHdTmPjAktyDM/JQ==}
     engines: {node: '>=20.19.0'}
 
-  '@humanspeak/svelte-markdown@1.9.1':
-    resolution: {integrity: sha512-2JjpATdZfhGQurV38LtkUkPkyQzM7eXku6LoDBeK6i69qqOe0OLmMwpqtMnhwG3ItdxXOt/3miPbSaNTFqMl5Q==}
+  '@humanspeak/svelte-markdown@2.0.0':
+    resolution: {integrity: sha512-Dg3YNMMX0/ZOVNKGEilQjagMT8a/GgfufDycWxRoLXqVd/Ygs3WCQuwrsqJuBST4fAK5oFh0jql1c6Unw3o9iA==}
     engines: {node: '>=22'}
     peerDependencies:
+      '@tanstack/highlight': '>=0.1.0'
       katex: '>=0.16.0'
       mermaid: '>=10.0.0'
       shiki: '>=4.0.0'
       svelte: ^5.0.0
     peerDependenciesMeta:
+      '@tanstack/highlight':
+        optional: true
       katex:
         optional: true
       mermaid:
@@ -1515,9 +1518,9 @@ packages:
   ccount@2.0.1:
     resolution: {integrity: sha512-eyrF0jiFpY+3drT6383f1qhkbGsLSifNAjA61IUjZjmLCWjItY6LB9ft9YhoDgwfmclB2zhu51Lc7+95b8NRAg==}
 
-  chalk@5.6.2:
-    resolution: {integrity: sha512-7NzBL0rN6fMUW+f7A6Io4h40qQlG+xGmtMxfbnH/K7TAtt8JQWVQK+6g0UXKMeVJoyV5EkkNsErQ8pVD3bLHbA==}
-    engines: {node: ^12.17.0 || ^14.13 || >=16.0.0}
+  chalk@6.0.1:
+    resolution: {integrity: sha512-/Ce6KNm3vIbWdMlNna6RVIZ/ICQxnJxCicet5LBKK9ZffBkqzDw0xh9EiKSljdRtiIQ1S1z4YgcscUUGzNCWrA==}
+    engines: {node: '>=22'}
 
   character-entities-html4@2.1.0:
     resolution: {integrity: sha512-1v7fgQRj6hnSwFpq1Eu0ynr/CDEw0rXo2B61qXrLNdHZmPKgb7fqS1a2JwF0rISo9q77jDI8VMEHoApn8qDoZA==}
@@ -1819,8 +1822,8 @@ packages:
     resolution: {integrity: sha512-V0hjH4dGPh9Ao5p0MoRY6BVqtwCjhz6vI5LT8AJ55H+4g9/4vbHx1I54fS0XuclLhDHArPQCiMjDxjaL8fPxhw==}
     engines: {node: '>=0.12'}
 
-  entities@8.0.0:
-    resolution: {integrity: sha512-zwfzJecQ/Uej6tusMqwAqU/6KL2XaB2VZ2Jg54Je6ahNBGNH6Ek6g3jjNCF0fG9EWQKGZNddNjU5F1ZQn/sBnA==}
+  entities@8.1.0:
+    resolution: {integrity: sha512-kxL7msIffSuh9aaFAMD7rxAIuTRMAHMeBtgHW2yUdWw732ZNh4MehkF2gdjvtdmikkaIP9bFDDJOPlsvm7avrA==}
     engines: {node: '>=20.19.0'}
 
   es-abstract-get@1.0.0:
@@ -2437,8 +2440,8 @@ packages:
   magic-string@1.4.3:
     resolution: {integrity: sha512-z12OxmaPGE0F4xlpGdjuAUckipLpQlTAuAmyGhNoD7ODpYUzvDfvtxUbjM/jwznyP178oju/KDdyi220wNJ0RQ==}
 
-  marked@18.0.13:
-    resolution: {integrity: sha512-xTxVzZsBFwunP6HDmtBkabUQEYArnP7/rMDGmPj9SlrKlQ4i8MdYVow+nJL0eOqwpUqhzBoTBRADGN6uYwPyOw==}
+  marked@18.1.0:
+    resolution: {integrity: sha512-PamYXWWWg2nboG3oX5Ffzpy3EFZROqZJK9hSlMmUnekp7TxPs5DcT95vwd46m73/exfKCRVMtgXoPMI4FEJL6w==}
     engines: {node: '>= 20'}
     hasBin: true
 
@@ -3436,14 +3439,14 @@ snapshots:
 
   '@humanfs/types@0.15.0': {}
 
-  '@humanspeak/memory-cache@1.1.2': {}
+  '@humanspeak/memory-cache@1.2.0': {}
 
-  '@humanspeak/svelte-markdown@1.9.1(shiki@4.5.0)(svelte@5.57.1(@typescript-eslint/types@8.71.1))':
+  '@humanspeak/svelte-markdown@2.0.0(shiki@4.5.0)(svelte@5.57.1(@typescript-eslint/types@8.71.1))':
     dependencies:
-      '@humanspeak/memory-cache': 1.1.2
+      '@humanspeak/memory-cache': 1.2.0
       github-slugger: 2.0.0
       htmlparser2: 12.0.0
-      marked: 18.0.13
+      marked: 18.1.0
       svelte: 5.57.1(@typescript-eslint/types@8.71.1)
     optionalDependencies:
       shiki: 4.5.0
@@ -4307,7 +4310,7 @@ snapshots:
 
   ccount@2.0.1: {}
 
-  chalk@5.6.2: {}
+  chalk@6.0.1: {}
 
   character-entities-html4@2.1.0: {}
 
@@ -4435,7 +4438,7 @@ snapshots:
     dependencies:
       domelementtype: 3.0.0
       domhandler: 6.0.1
-      entities: 8.0.0
+      entities: 8.1.0
 
   domelementtype@2.3.0: {}
 
@@ -4495,7 +4498,7 @@ snapshots:
 
   entities@4.5.0: {}
 
-  entities@8.0.0: {}
+  entities@8.1.0: {}
 
   es-abstract-get@1.0.0:
     dependencies:
@@ -4891,7 +4894,7 @@ snapshots:
       domelementtype: 3.0.0
       domhandler: 6.0.1
       domutils: 4.0.2
-      entities: 8.0.0
+      entities: 8.1.0
 
   ignore@5.3.2: {}
 
@@ -5169,7 +5172,7 @@ snapshots:
     dependencies:
       '@jridgewell/sourcemap-codec': 1.6.0
 
-  marked@18.0.13: {}
+  marked@18.1.0: {}
 
   math-intrinsics@1.1.0: {}
 
