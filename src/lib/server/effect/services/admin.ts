@@ -14,8 +14,8 @@ export class UserNotFoundError extends Data.TaggedError("UserNotFoundError")<Err
 }
 
 export class SaveAppLogError extends Data.TaggedError("SaveAppLogError")<ErrorParams> {
-	constructor(message: string, err?: unknown) {
-		super({ message, status: 500, cause: err });
+	constructor(err?: unknown) {
+		super({ message: "Unable to save app log", status: 500, cause: err });
 	}
 }
 
@@ -109,9 +109,7 @@ export class AdminService extends Context.Service<AdminService>()("AdminService"
 				if (existingLog) return existingLog;
 
 				return yield* runQuery(db.insert(appLogs).values([values]).returning()).pipe(
-					Effect.flatMap((logs) =>
-						isTupleOf(logs, 1) ? Effect.succeed(logs[0]) : Effect.fail(new SaveAppLogError("Unable to save app log"))
-					)
+					Effect.flatMap((logs) => (isTupleOf(logs, 1) ? Effect.succeed(logs[0]) : Effect.fail(new SaveAppLogError())))
 				);
 			}),
 			deleteLog: Effect.fn("AdminService.deleteLog")(function* (logId) {
