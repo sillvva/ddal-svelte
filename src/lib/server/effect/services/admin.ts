@@ -1,6 +1,7 @@
+import type { AppLogId, UserId } from "#lib/schemas.js";
 import { DBService, runQuery, type Filter, type Transaction, type TRSchema } from "#lib/server/db/index.js";
 import type { relations } from "#lib/server/db/relations.js";
-import { appLogs } from "#lib/server/db/schema.js";
+import { appLogs, type InsertAppLog } from "#lib/server/db/schema.js";
 import { type ErrorParams } from "#lib/server/effect/errors.js";
 import { DrizzleSearchParser } from "@sillvva/search/drizzle";
 import { isTupleOf } from "@sillvva/utils";
@@ -35,7 +36,7 @@ export class AdminService extends Context.Service<AdminService>()("AdminService"
 			 */
 
 			get: {
-				user: Effect.fn("AdminService.get.user")(function* (userId) {
+				user: Effect.fn("AdminService.get.user")(function* (userId: UserId) {
 					return yield* runQuery(
 						db.query.user.findFirst({
 							where: {
@@ -46,7 +47,7 @@ export class AdminService extends Context.Service<AdminService>()("AdminService"
 						})
 					).pipe(Effect.flatMap((user) => (user ? Effect.succeed(user) : Effect.fail(new UserNotFoundError()))));
 				}),
-				logs: Effect.fn("AdminService.get.logs")(function* (search = "") {
+				logs: Effect.fn("AdminService.get.logs")(function* (search: string = "") {
 					const { where, orderBy, metadata } = search.trim() ? logSearch.parse(search.trim()) : {};
 
 					return yield* runQuery(
@@ -65,7 +66,7 @@ export class AdminService extends Context.Service<AdminService>()("AdminService"
 			 * Mutations
 			 */
 
-			saveLog: Effect.fn("AdminService.saveLog")(function* (values) {
+			saveLog: Effect.fn("AdminService.saveLog")(function* (values: InsertAppLog) {
 				if (values.label.startsWith("RedirectError")) return values;
 
 				// Check if there's an existing record with the same label, routeId, and username in the last 5 seconds
@@ -112,7 +113,7 @@ export class AdminService extends Context.Service<AdminService>()("AdminService"
 					Effect.flatMap((logs) => (isTupleOf(logs, 1) ? Effect.succeed(logs[0]) : Effect.fail(new SaveAppLogError())))
 				);
 			}),
-			deleteLog: Effect.fn("AdminService.deleteLog")(function* (logId) {
+			deleteLog: Effect.fn("AdminService.deleteLog")(function* (logId: AppLogId) {
 				return yield* runQuery(db.delete(appLogs).where(eq(appLogs.id, logId)).returning({ id: appLogs.id })).pipe(
 					Effect.flatMap((logs) => (isTupleOf(logs, 1) ? Effect.succeed(logs[0]) : Effect.fail(new DeleteLogError())))
 				);
