@@ -261,9 +261,9 @@
 				<div class="collapse-content text-sm">
 					<form
 						{@attach bindDeleteAccountForm}
-						{...API.auth.forms.deleteAccount.enhance(async ({ submit, fields }) => {
-							await submit();
-							fields.allIssues()?.forEach((issue) => errorToast(issue.message));
+						{...API.auth.forms.deleteAccount.enhance(async ({ submit }) => {
+							const result = await submit();
+							if (!result) errorToast("Failed to delete account");
 						})}
 					>
 						<button
