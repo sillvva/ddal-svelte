@@ -64,12 +64,14 @@ export function getItemEntities(
 	};
 }
 
+export type LogLevel = { id: LogId; levels: number };
+
 export function getLevels(
 	logs: Log[],
 	base: { level?: number; experience?: number; acp?: number } = { level: 0, experience: 0, acp: 0 }
 ) {
 	let totalLevel = Math.max(1, base.level || 0);
-	const logLevels: Array<{ id: string; levels: number }> = [];
+	const logLevels: LogLevel[] = [];
 
 	const xpLevels = [
 		0, 300, 900, 2700, 6500, 14000, 23000, 34000, 48000, 64000, 85000, 100000, 120000, 140000, 165000, 195000, 225000, 265000,

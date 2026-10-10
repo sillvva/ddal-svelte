@@ -1,7 +1,8 @@
 import { searchSections } from "#lib/constants.js";
+import type { LogLevel } from "#lib/entities.ts";
 import type { LocalsUser } from "#lib/schemas.js";
-import { AppLog } from "#lib/server/effect/logging.js";
 import { guardedQuery } from "#lib/server/effect/guarded.js";
+import { AppLog } from "#lib/server/effect/logging.js";
 import { CharacterService } from "#lib/server/effect/services/characters.js";
 import { DMService } from "#lib/server/effect/services/dms.js";
 import { LogService } from "#lib/server/effect/services/logs.js";
@@ -40,10 +41,7 @@ const getData = Effect.fn("GetData")(function* (user: LocalsUser) {
 					(character) =>
 						({
 							...character,
-							logLevels: [] as {
-								id: string;
-								levels: number;
-							}[],
+							logLevels: [] as LogLevel[],
 							type: "character",
 							url: `/characters/${character.id}`
 						}) as const
