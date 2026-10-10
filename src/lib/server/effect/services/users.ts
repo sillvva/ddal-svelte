@@ -1,11 +1,11 @@
 import { PROVIDERS } from "#lib/constants.js";
 import type { PasskeyId, UserId } from "#lib/schemas.js";
 import { DBService, runQuery, type Transaction } from "#lib/server/db/index.js";
-import { passkey, user, type User } from "#lib/server/db/schema.js";
+import { characters, dungeonMasters, logs, passkey, user, type User } from "#lib/server/db/schema.js";
 import { type ErrorParams } from "#lib/server/effect/errors.js";
 import { AppLog } from "#lib/server/effect/logging.js";
 import { isTupleOf, sorter } from "@sillvva/utils";
-import { and, eq } from "drizzle-orm";
+import { and, eq, exists, or } from "drizzle-orm";
 import { Context, Data, Effect, Layer } from "effect";
 
 export class UpdateUserError extends Data.TaggedError("UpdateUserError")<ErrorParams> {
@@ -26,9 +26,15 @@ export class DeletePasskeyError extends Data.TaggedError("DeletePasskeyError")<E
 	}
 }
 
+export class DeleteUserError extends Data.TaggedError("DeleteUserError")<ErrorParams> {
+	constructor(err?: unknown) {
+		super({ message: "Could not delete account", status: 500, cause: err });
+	}
+}
+
 export class UserService extends Context.Service<UserService>()("UserService", {
 	make: Effect.fn("UserService")(function* () {
-		const { db } = yield* DBService;
+		const { db, transaction } = yield* DBService;
 
 		return {
 			/**
@@ -155,6 +161,39 @@ export class UserService extends Context.Service<UserService>()("UserService", {
 							? Effect.succeed(passkeys[0].id)
 							: Effect.fail(new DeletePasskeyError("Failed to delete passkey"))
 					)
+				);
+			}),
+			delete: Effect.fn("UserService.delete")(function* (userId: UserId) {
+				return yield* transaction(
+					Effect.fn("UserService.delete.transaction")(function* (tx) {
+						// Logs reference dungeon masters with ON DELETE RESTRICT, so they must go before the user row.
+						yield* runQuery(
+							tx.delete(logs).where(
+								or(
+									exists(
+										db
+											.select()
+											.from(dungeonMasters)
+											.where(and(eq(dungeonMasters.id, logs.dungeonMasterId), eq(dungeonMasters.userId, userId)))
+									),
+									exists(
+										db
+											.select()
+											.from(characters)
+											.where(and(eq(characters.id, logs.characterId), eq(characters.userId, userId)))
+									)
+								)
+							)
+						);
+
+						return yield* runQuery(tx.delete(user).where(eq(user.id, userId)).returning({ id: user.id }));
+					})
+				).pipe(
+					Effect.flatMap((result) =>
+						isTupleOf(result, 1) ? Effect.succeed(result[0]) : Effect.fail(new DeleteUserError())
+					),
+					Effect.tap((result) => AppLog.info("UserService.delete", { userId, result })),
+					Effect.tapError(() => AppLog.debug("UserService.delete", { userId }))
 				);
 			})
 		};
