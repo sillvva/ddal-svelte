@@ -28,16 +28,21 @@ export class DBService extends Context.Service<DBService>()("DBService", {
 	make: Effect.fn("DBService")(function* (tx?: Transaction) {
 		const database = tx || db;
 
-		const transaction = Effect.fn("DBService.transaction")(function* <A, B extends InstanceType<ErrorClass>>(
-			program: (tx: Transaction) => Effect.Effect<A, B | never>
-		) {
+		const transaction = Effect.fn("DBService.transaction")(function* <
+			A,
+			E extends InstanceType<ErrorClass>,
+			Y extends Effect.Effect<A, E>
+		>(program: (tx: Transaction) => Generator<Y, A>) {
 			const event = getRequestEvent();
 			const runtime = event.locals.runtime;
 			const result = yield* Effect.tryPromise({
 				try: () =>
 					database.transaction(async (tx) => {
-						const result = await runtime.runPromiseExit(program(tx));
-						return Exit.match(result, {
+						const effect = Effect.gen(function* (): Effect.fn.Return<A, E> {
+							return yield* program(tx);
+						});
+						const exit = await runtime.runPromiseExit(effect);
+						return Exit.match(exit, {
 							onSuccess: (value) => value,
 							onFailure: (cause) => {
 								const fail = cause.reasons.find(Cause.isFailReason);
@@ -46,7 +51,7 @@ export class DBService extends Context.Service<DBService>()("DBService", {
 						});
 					}),
 				catch: (error) => {
-					if (isTaggedError(error)) return error as B | TransactionError;
+					if (isTaggedError(error)) return error as E | TransactionError;
 					return new TransactionError(Cause.fail(error)); // Unexpected defects
 				}
 			});

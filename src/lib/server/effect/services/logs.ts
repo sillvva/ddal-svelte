@@ -472,7 +472,9 @@ export class LogService extends Context.Service<LogService>()("LogService", {
 			 */
 
 			save: Effect.fn("LogService.save")(function* (log: LogSchema, user: LocalsUser) {
-				return yield* transaction((tx) => upsertLog(tx, log, user, db).pipe(Effect.provide(DMTx(tx)))).pipe(
+				return yield* transaction(function* (tx) {
+					return yield* upsertLog(tx, log, user, db).pipe(Effect.provide(DMTx(tx)));
+				}).pipe(
 					Effect.tap((result) => AppLog.info("LogService.save", { logId: log.id, userId: user.id, result })),
 					Effect.tapError(() => AppLog.debug("LogService.save", { logId: log.id, userId: user.id, log }))
 				);
