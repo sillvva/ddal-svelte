@@ -164,32 +164,32 @@ export class UserService extends Context.Service<UserService>()("UserService", {
 				);
 			}),
 			delete: Effect.fn("UserService.delete")(function* (userId: UserId) {
-				return yield* transaction(function* (tx) {
-					// Logs reference dungeon masters with ON DELETE RESTRICT, so they must go before the user row.
-					yield* runQuery(
-						tx.delete(logs).where(
-							or(
-								exists(
-									db
-										.select()
-										.from(dungeonMasters)
-										.where(and(eq(dungeonMasters.id, logs.dungeonMasterId), eq(dungeonMasters.userId, userId)))
-								),
-								exists(
-									db
-										.select()
-										.from(characters)
-										.where(and(eq(characters.id, logs.characterId), eq(characters.userId, userId)))
+				return yield* transaction(
+					Effect.fn(function* (tx) {
+						// Logs reference dungeon masters with ON DELETE RESTRICT, so they must go before the user row.
+						yield* runQuery(
+							tx.delete(logs).where(
+								or(
+									exists(
+										db
+											.select()
+											.from(dungeonMasters)
+											.where(and(eq(dungeonMasters.id, logs.dungeonMasterId), eq(dungeonMasters.userId, userId)))
+									),
+									exists(
+										db
+											.select()
+											.from(characters)
+											.where(and(eq(characters.id, logs.characterId), eq(characters.userId, userId)))
+									)
 								)
 							)
-						)
-					);
+						);
 
-					return yield* runQuery(tx.delete(user).where(eq(user.id, userId)).returning({ id: user.id }));
-				}).pipe(
-					Effect.flatMap((result) =>
-						isTupleOf(result, 1) ? Effect.succeed(result[0]) : Effect.fail(new DeleteUserError())
-					),
+						return yield* runQuery(tx.delete(user).where(eq(user.id, userId)).returning({ id: user.id }));
+					})
+				).pipe(
+					Effect.flatMap((result) => (isTupleOf(result, 1) ? Effect.succeed(result[0]) : Effect.fail(new DeleteUserError()))),
 					Effect.tap((result) => AppLog.info("UserService.delete", { userId, result })),
 					Effect.tapError(() => AppLog.debug("UserService.delete", { userId }))
 				);

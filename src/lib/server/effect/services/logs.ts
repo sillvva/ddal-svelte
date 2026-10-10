@@ -1,4 +1,3 @@
-import { getRequestEvent } from "$app/server";
 import { parseLog } from "#lib/entities.js";
 import type {
 	DungeonMasterId,
@@ -10,6 +9,7 @@ import type {
 	LogSchema,
 	UserId
 } from "#lib/schemas.js";
+import { extendedLogIncludes, logIncludes } from "#lib/server/db/includes.js";
 import {
 	buildConflictUpdateColumns,
 	DBService,
@@ -20,10 +20,10 @@ import {
 	type InferQueryResult,
 	type Transaction
 } from "#lib/server/db/index.js";
-import { extendedLogIncludes, logIncludes } from "#lib/server/db/includes.js";
 import { characters, dungeonMasters, logs, magicItems, storyAwards } from "#lib/server/db/schema.js";
 import type { ErrorParams } from "#lib/server/effect/errors.js";
 import { AppLog } from "#lib/server/effect/logging.js";
+import { getRequestEvent } from "$app/server";
 import { isTupleOf } from "@sillvva/utils";
 import { and, eq, exists, inArray, isNull, notInArray, or } from "drizzle-orm";
 import { Context, Data, Effect, Layer } from "effect";
@@ -472,9 +472,11 @@ export class LogService extends Context.Service<LogService>()("LogService", {
 			 */
 
 			save: Effect.fn("LogService.save")(function* (log: LogSchema, user: LocalsUser) {
-				return yield* transaction(function* (tx) {
-					return yield* upsertLog(tx, log, user, db).pipe(Effect.provide(DMTx(tx)));
-				}).pipe(
+				return yield* transaction(
+					Effect.fn(function* (tx) {
+						return yield* upsertLog(tx, log, user, db).pipe(Effect.provide(DMTx(tx)));
+					})
+				).pipe(
 					Effect.tap((result) => AppLog.info("LogService.save", { logId: log.id, userId: user.id, result })),
 					Effect.tapError(() => AppLog.debug("LogService.save", { logId: log.id, userId: user.id, log }))
 				);

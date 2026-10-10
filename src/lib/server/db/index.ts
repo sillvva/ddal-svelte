@@ -1,7 +1,7 @@
-import { getRequestEvent } from "$app/server";
 import { privateEnv } from "#lib/env/private.js";
 import { relations } from "#lib/server/db/relations.js";
 import { isTaggedError, type ErrorClass, type ErrorParams } from "#lib/server/effect/errors.js";
+import { getRequestEvent } from "$app/server";
 import {
 	getColumns,
 	sql,
@@ -28,20 +28,15 @@ export class DBService extends Context.Service<DBService>()("DBService", {
 	make: Effect.fn("DBService")(function* (tx?: Transaction) {
 		const database = tx || db;
 
-		const transaction = Effect.fn("DBService.transaction")(function* <
-			A,
-			E extends InstanceType<ErrorClass>,
-			Y extends Effect.Effect<A, E>
-		>(program: (tx: Transaction) => Generator<Y, A>) {
+		const transaction = Effect.fn("DBService.transaction")(function* <A, E extends InstanceType<ErrorClass>>(
+			program: (tx: Transaction) => Effect.Effect<A, E>
+		) {
 			const event = getRequestEvent();
 			const runtime = event.locals.runtime;
 			const result = yield* Effect.tryPromise({
 				try: () =>
 					database.transaction(async (tx) => {
-						const effect = Effect.gen(function* (): Effect.fn.Return<A, E> {
-							return yield* program(tx);
-						});
-						const exit = await runtime.runPromiseExit(effect);
+						const exit = await runtime.runPromiseExit(program(tx));
 						return Exit.match(exit, {
 							onSuccess: (value) => value,
 							onFailure: (cause) => {

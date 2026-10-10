@@ -127,32 +127,34 @@ export class CharacterService extends Context.Service<CharacterService>()("Chara
 			}),
 
 			delete: Effect.fn("CharacterService.delete")(function* (characterId: CharacterId, userId: UserId) {
-				return yield* transaction(function* (tx) {
-					yield* runQuery(
-						tx
-							.update(logs)
-							.set({ characterId: null, appliedDate: null })
-							.where(
-								and(
-									eq(logs.characterId, characterId),
-									eq(logs.isDmLog, true),
-									exists(
-										db
-											.select()
-											.from(characters)
-											.where(and(eq(characters.id, characterId), eq(characters.userId, userId)))
+				return yield* transaction(
+					Effect.fn(function* (tx) {
+						yield* runQuery(
+							tx
+								.update(logs)
+								.set({ characterId: null, appliedDate: null })
+								.where(
+									and(
+										eq(logs.characterId, characterId),
+										eq(logs.isDmLog, true),
+										exists(
+											db
+												.select()
+												.from(characters)
+												.where(and(eq(characters.id, characterId), eq(characters.userId, userId)))
+										)
 									)
 								)
-							)
-					);
+						);
 
-					return yield* runQuery(
-						tx
-							.delete(characters)
-							.where(and(eq(characters.id, characterId), eq(characters.userId, userId)))
-							.returning({ id: characters.id })
-					);
-				}).pipe(
+						return yield* runQuery(
+							tx
+								.delete(characters)
+								.where(and(eq(characters.id, characterId), eq(characters.userId, userId)))
+								.returning({ id: characters.id })
+						);
+					})
+				).pipe(
 					Effect.flatMap((result) =>
 						isTupleOf(result, 1) ? Effect.succeed(result[0]) : Effect.fail(new DeleteCharacterError())
 					),
