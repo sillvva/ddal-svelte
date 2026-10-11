@@ -1,23 +1,131 @@
 import { BLANK_CHARACTER } from "#lib/constants.js";
 import { characterIdSchema } from "#lib/schemas.js";
-import { type ErrorParams } from "#lib/server/effect/errors.js";
 import { run } from "#lib/server/effect/runtime.js";
 import { CharacterService } from "#lib/server/effect/services/characters.js";
-import type { NumericRange } from "#lib/util.js";
 import { Resvg } from "@resvg/resvg-js";
 import { error } from "@sveltejs/kit";
-import { Data } from "effect";
 import { readFile } from "fs/promises";
 import path from "path";
-import satori from "satori";
+import satori, { type Font } from "satori";
 import sharp from "sharp";
 import { safeParse } from "valibot";
 
-class UnableToFetchImageError extends Data.TaggedError("UnableToFetchImageError")<ErrorParams> {
-	constructor(params: ErrorParams = { message: "Unable to fetch image", status: 500 }) {
-		super(params);
+const staticRoot = path.resolve("static");
+
+function imageDataUri(bytes: Buffer, mime = "image/jpeg") {
+	return `data:${mime};base64,${bytes.toString("base64")}`;
+}
+
+function mimeForImage(filename: string) {
+	switch (path.extname(filename).toLowerCase()) {
+		case ".png":
+			return "image/png";
+		case ".gif":
+			return "image/gif";
+		case ".webp":
+			return "image/webp";
+		case ".svg":
+			return "image/svg+xml";
+		default:
+			return "image/jpeg";
 	}
 }
+
+async function readStaticImage(pathname: string) {
+	let decoded: string;
+	try {
+		decoded = decodeURIComponent(pathname);
+	} catch {
+		return null;
+	}
+
+	const filePath = path.resolve(staticRoot, decoded.replace(/^\/+/, ""));
+	if (filePath !== staticRoot && !filePath.startsWith(`${staticRoot}${path.sep}`)) return null;
+
+	try {
+		return imageDataUri(await readFile(filePath), mimeForImage(filePath));
+	} catch {
+		return null;
+	}
+}
+
+function isLocalImage(imageUrl: string, origin: string) {
+	if (imageUrl.startsWith("/")) return true;
+
+	try {
+		const parsed = new URL(imageUrl);
+		const originUrl = new URL(origin);
+		return (
+			parsed.host === originUrl.host ||
+			parsed.hostname === "localhost" ||
+			parsed.hostname === "127.0.0.1" ||
+			parsed.hostname === "::1"
+		);
+	} catch {
+		return false;
+	}
+}
+
+async function resolvePortrait(imageUrl: string, origin: string) {
+	if (!imageUrl || imageUrl === BLANK_CHARACTER || imageUrl.includes(".webp")) return blankCharacter;
+
+	if (isLocalImage(imageUrl, origin)) {
+		const pathname = imageUrl.startsWith("/") ? imageUrl : new URL(imageUrl).pathname;
+		return (await readStaticImage(pathname)) ?? blankCharacter;
+	}
+
+	try {
+		const response = await fetch(imageUrl);
+		if (!response.ok) return blankCharacter;
+
+		const headerMime = response.headers.get("content-type")?.split(";")[0]?.trim();
+		const mime = headerMime === "image/jpg" ? "image/jpeg" : headerMime || mimeForImage(new URL(imageUrl).pathname);
+		if (!mime.startsWith("image/") || mime === "image/webp") return blankCharacter;
+
+		return imageDataUri(Buffer.from(await response.arrayBuffer()), mime);
+	} catch {
+		return blankCharacter;
+	}
+}
+
+const [draconis, vecna, vecnaBold, inter, baroviaGateBytes, blankCharacterBytes] = await Promise.all([
+	readFile(path.resolve("static/fonts/Draconis.ttf")),
+	readFile(path.resolve("static/fonts/Vecna.ttf")),
+	readFile(path.resolve("static/fonts/VecnaBold.ttf")),
+	readFile(path.resolve("static/fonts/Inter.ttf")),
+	readFile(path.resolve("static/images/barovia-gate.jpg")),
+	readFile(path.resolve("static/images/blank-character.jpg"))
+]);
+
+const baroviaGate = imageDataUri(baroviaGateBytes);
+const blankCharacter = imageDataUri(blankCharacterBytes);
+
+const fonts: Font[] = [
+	{
+		name: "Vecna",
+		data: vecna,
+		weight: 400,
+		style: "normal"
+	},
+	{
+		name: "VecnaBold",
+		data: vecnaBold,
+		weight: 700,
+		style: "normal"
+	},
+	{
+		name: "Draconis",
+		data: draconis,
+		weight: 400,
+		style: "normal"
+	},
+	{
+		name: "Inter",
+		data: inter,
+		weight: 600,
+		style: "normal"
+	}
+];
 
 export const GET = async ({ params, url }) => {
 	const result = safeParse(characterIdSchema, params.characterId);
@@ -35,29 +143,7 @@ export const GET = async ({ params, url }) => {
 	const imageContainerWidth = 198;
 	const imageContainerHeight = 270;
 
-	const draconis = await readFile(path.resolve("static/fonts/Draconis.ttf"));
-	const vecna = await readFile(path.resolve("static/fonts/Vecna.ttf"));
-	const vecnaBold = await readFile(path.resolve("static/fonts/VecnaBold.ttf"));
-	const inter = await readFile(path.resolve("static/fonts/Inter.ttf"));
-
-	const fallbackImageUrl = `${url.origin}${BLANK_CHARACTER}`;
-	let imageUrl =
-		!character.imageUrl || character.imageUrl.includes(".webp")
-			? fallbackImageUrl
-			: character.imageUrl.startsWith("http")
-				? character.imageUrl
-				: `${url.origin}${character.imageUrl}`;
-
-	try {
-		const response = await fetch(imageUrl, { method: "GET" });
-		if (!response.ok)
-			throw new UnableToFetchImageError({ message: response.statusText, status: response.status as NumericRange<300, 599> });
-	} catch {
-		imageUrl = fallbackImageUrl;
-		const response = await fetch(fallbackImageUrl, { method: "GET" });
-		if (!response.ok)
-			throw new UnableToFetchImageError({ message: response.statusText, status: response.status as NumericRange<300, 599> });
-	}
+	const imageUrl = await resolvePortrait(character.imageUrl, url.origin);
 
 	const svg = await satori(
 		{
@@ -67,7 +153,7 @@ export const GET = async ({ params, url }) => {
 					display: "flex",
 					width: `${width}px`,
 					height: `${height}px`,
-					backgroundImage: `url(${url.origin}/images/barovia-gate.jpg)`,
+					backgroundImage: `url("${baroviaGate}")`,
 					backgroundSize: "cover"
 				},
 				children: [
@@ -235,32 +321,7 @@ export const GET = async ({ params, url }) => {
 		{
 			width,
 			height,
-			fonts: [
-				{
-					name: "Vecna",
-					data: vecna,
-					weight: 400,
-					style: "normal"
-				},
-				{
-					name: "VecnaBold",
-					data: vecnaBold,
-					weight: 700,
-					style: "normal"
-				},
-				{
-					name: "Draconis",
-					data: draconis,
-					weight: 400,
-					style: "normal"
-				},
-				{
-					name: "Inter",
-					data: inter,
-					weight: 600,
-					style: "normal"
-				}
-			]
+			fonts
 		}
 	);
 
