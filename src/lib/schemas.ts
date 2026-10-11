@@ -1,7 +1,7 @@
 import type { FullCharacterData } from "#lib/server/effect/services/characters.js";
 import { omit } from "@sillvva/utils";
 import * as v from "valibot";
-import { BLANK_CHARACTER, PROVIDERS, themeGroups, themes } from "./constants";
+import { BLANK_CHARACTER, PASSKEY_PLACEHOLDER_EMAIL_DOMAIN, PROVIDERS, themeGroups, themes } from "./constants";
 
 export type BrandedType = v.InferOutput<ReturnType<typeof brandedId>>;
 function brandedId<T extends string>(name: T) {
@@ -21,6 +21,32 @@ export const urlSchema = v.pipe(text, v.url());
 export const imageUrlWithFallback = v.pipe(
 	v.fallback(v.union([urlSchema, v.literal(""), v.literal(BLANK_CHARACTER)]), BLANK_CHARACTER)
 );
+
+/** Common mailbox addresses, within RFC 5321 length limits, excluding the passkey signup placeholder domain. */
+function isStoredEmail(value: string) {
+	const at = value.lastIndexOf("@");
+	if (at < 1 || value.indexOf("@") !== at) return false;
+
+	const local = value.slice(0, at);
+	const domain = value.slice(at + 1);
+	if (local.length > 64 || domain.length > 253) return false;
+	if (domain === PASSKEY_PLACEHOLDER_EMAIL_DOMAIN || domain.endsWith(`.${PASSKEY_PLACEHOLDER_EMAIL_DOMAIN}`)) return false;
+
+	const labels = domain.split(".");
+	const tld = labels.at(-1);
+	if (labels.length < 2 || !tld || !/^[a-z]{2,63}$/u.test(tld)) return false;
+
+	return labels.every((label) => /^[a-z0-9](?:[a-z0-9-]{0,61}[a-z0-9])?$/u.test(label));
+}
+
+export const emailSchema = v.pipe(
+	string,
+	v.toLowerCase(),
+	v.maxLength(254, "Email is too long"),
+	v.email("Enter a valid email address"),
+	v.check(isStoredEmail, "Enter a valid email address")
+);
+
 export const orEmpty = <T extends v.GenericSchema>(schema: T) => v.union([schema, v.literal("")]);
 export const emptyToNull = <T extends v.GenericSchema>(schema: T) =>
 	v.pipe(
@@ -338,6 +364,7 @@ export const localsUserSchema = v.object({
 	name: requiredString,
 	email: requiredString,
 	emailVerified: v.boolean(),
+	onboarded: v.boolean(),
 	image: v.nullish(imageUrlWithFallback),
 	role: roleSchema,
 	banned: v.boolean(),
@@ -347,6 +374,12 @@ export const localsUserSchema = v.object({
 	updatedAt: v.date(),
 	accounts: v.array(v.pick(localsAccountSchema, ["id", "accountId", "providerId", "createdAt", "updatedAt"])),
 	passkeys: v.array(v.pick(localsPasskeySchema, ["id", "name", "createdAt"]))
+});
+
+export type OnboardingSchema = v.InferOutput<typeof onboardingSchema>;
+export const onboardingSchema = v.object({
+	name: v.pipe(requiredString, shortString),
+	email: emailSchema
 });
 
 export type LocalsSession = v.InferOutput<typeof localsSessionSchema>;

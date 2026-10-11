@@ -1,5 +1,6 @@
-import { getRequestEvent, query } from "$app/server";
+import { privateEnv } from "#lib/env/private.js";
 import { getHomeError } from "#lib/server/effect/services/auth.js";
+import { getRequestEvent, query } from "$app/server";
 import { redirect } from "@sveltejs/kit";
 import * as v from "valibot";
 
@@ -27,11 +28,15 @@ export const home = query(
 		const { locals } = getRequestEvent();
 		const destination = appPath(redirectTo);
 
-		if (locals.user?.id) redirect(302, destination ?? "/characters");
+		if (locals.user?.id) {
+			if (!locals.user.onboarded) redirect(302, "/onboarding");
+			redirect(302, destination ?? "/characters");
+		}
 
 		return {
 			redirectTo: destination,
-			error: getHomeError(error, errorDescription)
+			error: getHomeError(error, errorDescription),
+			signupsEnabled: !privateEnv.DISABLE_SIGNUPS
 		};
 	}
 );

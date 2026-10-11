@@ -1,12 +1,13 @@
 import { PROVIDERS } from "#lib/constants.js";
-import type { PasskeyId, UserId } from "#lib/schemas.js";
+import { emailSchema, type PasskeyId, type UserId } from "#lib/schemas.js";
 import { DBService, runQuery, type Transaction } from "#lib/server/db/index.js";
 import { characters, dungeonMasters, logs, passkey, user, type User } from "#lib/server/db/schema.js";
 import { type ErrorParams } from "#lib/server/effect/errors.js";
 import { AppLog } from "#lib/server/effect/logging.js";
 import { isTupleOf, sorter } from "@sillvva/utils";
-import { and, eq, exists, or } from "drizzle-orm";
+import { and, eq, exists, ne, or, sql } from "drizzle-orm";
 import { Context, Data, Effect, Layer } from "effect";
+import * as v from "valibot";
 
 export class UpdateUserError extends Data.TaggedError("UpdateUserError")<ErrorParams> {
 	constructor(err?: unknown) {
@@ -127,6 +128,38 @@ export class UserService extends Context.Service<UserService>()("UserService", {
 			 * Mutations
 			 */
 
+			emailTaken: Effect.fn("UserService.emailTaken")(function* (email: string, userId: UserId) {
+				const matches = yield* runQuery(
+					db
+						.select({ id: user.id })
+						.from(user)
+						.where(and(sql`lower(${user.email}) = ${email.toLowerCase()}`, ne(user.id, userId)))
+						.limit(1)
+				);
+				return matches.length > 0;
+			}),
+			completeOnboarding: Effect.fn("UserService.completeOnboarding")(function* (
+				userId: UserId,
+				data: Pick<User, "name" | "email">
+			) {
+				const parsed = v.safeParse(emailSchema, data.email);
+				if (!parsed.success) return yield* new UpdateUserError("Enter a valid email address");
+				const email = parsed.output;
+
+				return yield* runQuery(
+					db
+						.update(user)
+						.set({ name: data.name.trim(), email, onboarded: true })
+						.where(and(eq(user.id, userId), eq(user.onboarded, false)))
+						.returning()
+				).pipe(
+					Effect.flatMap((users) =>
+						isTupleOf(users, 1) ? Effect.succeed(users[0]) : Effect.fail(new UpdateUserError("Failed to finish account setup"))
+					),
+					Effect.tap((result) => AppLog.info("UserService.completeOnboarding", { userId, result })),
+					Effect.tapError(() => AppLog.debug("UserService.completeOnboarding", { userId, data }))
+				);
+			}),
 			update: Effect.fn("UserService.update")(function* (userId: UserId, data: Partial<Pick<User, "name" | "image">>) {
 				return yield* runQuery(db.update(user).set(data).where(eq(user.id, userId)).returning()).pipe(
 					Effect.flatMap((users) =>

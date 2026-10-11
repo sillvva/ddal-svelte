@@ -23,6 +23,8 @@ export const user = pg.pgTable("user", {
 		.notNull()
 		.$default(() => false),
 	image: pg.text(),
+	/** False until a passkey-first signup submits a username and email. */
+	onboarded: pg.boolean().notNull().default(true),
 	role: role().notNull().default("user"),
 	banned: pg.boolean().notNull().default(false),
 	banReason: pg.text("ban_reason"),

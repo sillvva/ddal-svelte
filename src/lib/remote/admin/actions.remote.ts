@@ -17,7 +17,7 @@ export const deleteAppLog = guardedCommand(
 
 		return result;
 	},
-	true
+	"admin"
 );
 
 export const logClientError = guardedCommand(

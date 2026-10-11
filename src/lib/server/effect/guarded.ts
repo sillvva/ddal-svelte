@@ -1,5 +1,5 @@
 import type { LocalsUser } from "#lib/schemas.js";
-import { AuthService } from "#lib/server/effect/services/auth.js";
+import { AuthService, type GuardAccess } from "#lib/server/effect/services/auth.js";
 import { isRedirectFailure, isStandardSchema, isValidationError, type IsAny } from "#lib/util.js";
 import {
 	command,
@@ -42,12 +42,12 @@ function stripStack<A>(result: EffectResult<A>): ClientEffectResult<A> {
 }
 
 function authed<A>(
-	adminOnly: boolean,
+	access: GuardAccess,
 	body: (auth: Auth) => AppGen<A, AppError, Services, Effect.Effect<unknown, AppError, Services>>
 ) {
 	return Effect.gen(function* () {
 		const Auth = yield* AuthService;
-		const auth = yield* Auth.guard(adminOnly);
+		const auth = yield* Auth.guard(access);
 		return yield* body(auth);
 	});
 }
@@ -65,12 +65,12 @@ export function guardedQuery<
 >(
 	schema: Schema,
 	fn: (output: StandardSchemaV1.InferOutput<Schema>, auth: Auth) => AppGen<A, E, R, Y>,
-	adminOnly?: boolean
+	access?: GuardAccess
 ): RemoteQueryFunction<StandardSchemaV1.InferInput<Schema>, A>;
 
 export function guardedQuery<A, E extends AppError, R extends Services, Y extends Effect.Effect<unknown, E, R>>(
 	fn: (auth: Auth) => AppGen<A, E, R, Y>,
-	adminOnly?: boolean
+	access?: GuardAccess
 ): RemoteQueryFunction<void, A>;
 
 export function guardedQuery<
@@ -81,17 +81,17 @@ export function guardedQuery<
 	Y extends Effect.Effect<unknown, E, R>
 >(
 	schemaOrFn: Schema | ((auth: Auth) => AppGen<A, E, R, Y>),
-	fnOrAdminOnly?: ((output: StandardSchemaV1.InferOutput<Schema>, auth: Auth) => AppGen<A, E, R, Y>) | boolean,
-	adminOnly = false
+	fnOrAccess?: ((output: StandardSchemaV1.InferOutput<Schema>, auth: Auth) => AppGen<A, E, R, Y>) | GuardAccess,
+	access: GuardAccess = null
 ) {
 	// Handle the case with schema parameter (first overload)
-	if (isStandardSchema(schemaOrFn) && isFunction(fnOrAdminOnly)) {
-		return query(schemaOrFn, (output) => run(authed(adminOnly, (auth) => fnOrAdminOnly(output, auth))));
+	if (isStandardSchema(schemaOrFn) && isFunction(fnOrAccess)) {
+		return query(schemaOrFn, (output) => run(authed(access, (auth) => fnOrAccess(output, auth))));
 	}
 
 	// Handle the case where there's no schema parameter (second overload)
-	if (isFunction(schemaOrFn) && !isFunction(fnOrAdminOnly)) {
-		return query(() => run(authed(fnOrAdminOnly ?? false, (auth) => schemaOrFn(auth))));
+	if (isFunction(schemaOrFn) && !isFunction(fnOrAccess)) {
+		return query(() => run(authed(fnOrAccess ?? null, (auth) => schemaOrFn(auth))));
 	}
 
 	throw new Error("Invalid arguments");
@@ -110,12 +110,12 @@ export function guardedCommand<
 >(
 	schema: Schema,
 	fn: (output: StandardSchemaV1.InferOutput<Schema>, auth: Auth) => AppGen<A, E, R, Y>,
-	adminOnly?: boolean
+	access?: GuardAccess
 ): RemoteCommand<StandardSchemaV1.InferInput<Schema>, ClientEffectResult<A>>;
 
 export function guardedCommand<Input, A, E extends AppError, R extends Services, Y extends Effect.Effect<unknown, E, R>>(
 	fn: (input: Input, auth: Auth) => AppGen<A, E, R, Y>,
-	adminOnly?: boolean
+	access?: GuardAccess
 ): RemoteCommand<Input, ClientEffectResult<A>>;
 
 export function guardedCommand<
@@ -127,21 +127,21 @@ export function guardedCommand<
 	Y extends Effect.Effect<unknown, E, R>
 >(
 	schemaOrFn: Schema | ((input: Input, auth: Auth) => AppGen<A, E, R, Y>),
-	fnOrAdminOnly?: ((output: StandardSchemaV1.InferOutput<Schema>, auth: Auth) => AppGen<A, E, R, Y>) | boolean,
-	adminOnly = false
+	fnOrAccess?: ((output: StandardSchemaV1.InferOutput<Schema>, auth: Auth) => AppGen<A, E, R, Y>) | GuardAccess,
+	access: GuardAccess = null
 ) {
 	// Handle the case with schema parameter (first overload)
-	if (isStandardSchema(schemaOrFn) && isFunction(fnOrAdminOnly)) {
+	if (isStandardSchema(schemaOrFn) && isFunction(fnOrAccess)) {
 		return command(schemaOrFn, async (output) => {
-			const result = await runSafe(authed(adminOnly, (auth) => fnOrAdminOnly(output, auth)));
+			const result = await runSafe(authed(access, (auth) => fnOrAccess(output, auth)));
 			return stripStack(result);
 		});
 	}
 
 	// Handle the case where there's no schema parameter (second overload)
-	if (isFunction(schemaOrFn) && !isFunction(fnOrAdminOnly)) {
+	if (isFunction(schemaOrFn) && !isFunction(fnOrAccess)) {
 		return command("unchecked", async (input: Input) => {
-			const result = await runSafe(authed(fnOrAdminOnly ?? false, (auth) => schemaOrFn(input, auth)));
+			const result = await runSafe(authed(fnOrAccess ?? null, (auth) => schemaOrFn(input, auth)));
 			return stripStack(result);
 		});
 	}
@@ -192,7 +192,7 @@ export function guardedForm<
 >(
 	schema: FormSchemaValidate<Schema>,
 	fn: (output: StandardSchemaV1.InferOutput<Schema>, auth: FormAuth<StandardSchemaV1.InferInput<Schema>>) => AppGen<A, E, R, Y>,
-	adminOnly?: boolean
+	access?: GuardAccess
 ): RemoteForm<StandardSchemaV1.InferInput<Schema>, A>;
 
 export function guardedForm<
@@ -204,12 +204,12 @@ export function guardedForm<
 >(
 	schema: "unchecked",
 	fn: (input: Input, auth: FormAuth<Input>) => AppGen<A, E, R, Y>,
-	adminOnly?: boolean
+	access?: GuardAccess
 ): RemoteForm<Input, A>;
 
 export function guardedForm<A, E extends AppError, R extends Services, Y extends Effect.Effect<unknown, E, R>>(
 	fn: (auth: Auth) => AppGen<A, E, R, Y>,
-	adminOnly?: boolean
+	access?: GuardAccess
 ): RemoteForm<void, A>;
 
 export function guardedForm<
@@ -221,11 +221,11 @@ export function guardedForm<
 	Y extends Effect.Effect<unknown, E, R>
 >(
 	schemaOrFn: FormSchemaValidate<Schema> | "unchecked" | ((auth: Auth) => AppGen<A, E, R, Y>),
-	fnOrAdminOnly?:
+	fnOrAccess?:
 		| ((output: StandardSchemaV1.InferOutput<Schema>, auth: FormAuth<StandardSchemaV1.InferInput<Schema>>) => AppGen<A, E, R, Y>)
 		| ((input: Input, auth: FormAuth<Input>) => AppGen<A, E, R, Y>)
-		| boolean,
-	adminOnly = false
+		| GuardAccess,
+	access: GuardAccess = null
 ) {
 	function parseResult(result: EffectResult<A>) {
 		if (result.ok) return result.data;
@@ -235,30 +235,30 @@ export function guardedForm<
 	}
 
 	// Handle the case with schema parameter (first overload)
-	if (isFormSchema<Schema>(schemaOrFn) && isFunction(fnOrAdminOnly)) {
-		const fn = fnOrAdminOnly as (
+	if (isFormSchema<Schema>(schemaOrFn) && isFunction(fnOrAccess)) {
+		const fn = fnOrAccess as (
 			output: StandardSchemaV1.InferOutput<Schema>,
 			auth: FormAuth<StandardSchemaV1.InferInput<Schema>>
 		) => AppGen<A, E, R, Y>;
 		return formWithSchema(schemaOrFn, async (output, issue) => {
-			const result = await runSafe(authed(adminOnly, (auth) => fn(output, { issue, ...auth })));
+			const result = await runSafe(authed(access, (auth) => fn(output, { issue, ...auth })));
 			return parseResult(result);
 		});
 	}
 
 	// Handle the case where there's no schema parameter (second overload)
-	if (isString(schemaOrFn) && isFunction(fnOrAdminOnly)) {
-		const fn = fnOrAdminOnly as (input: Input, auth: FormAuth<Input>) => AppGen<A, E, R, Y>;
+	if (isString(schemaOrFn) && isFunction(fnOrAccess)) {
+		const fn = fnOrAccess as (input: Input, auth: FormAuth<Input>) => AppGen<A, E, R, Y>;
 		return form("unchecked", async (input: Input, issue) => {
-			const result = await runSafe(authed(adminOnly, (auth) => fn(input, { issue, ...auth })));
+			const result = await runSafe(authed(access, (auth) => fn(input, { issue, ...auth })));
 			return parseResult(result);
 		});
 	}
 
 	// Handle the case where there's no schema parameter (third overload)
-	if (isFunction(schemaOrFn) && !isFunction(fnOrAdminOnly)) {
+	if (isFunction(schemaOrFn) && !isFunction(fnOrAccess)) {
 		return form(async () => {
-			const result = await runSafe(authed(fnOrAdminOnly ?? false, (auth) => schemaOrFn({ ...auth })));
+			const result = await runSafe(authed(fnOrAccess ?? null, (auth) => schemaOrFn({ ...auth })));
 			return parseResult(result);
 		});
 	}

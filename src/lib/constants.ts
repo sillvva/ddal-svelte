@@ -14,6 +14,9 @@ export const searchSections = [
 
 export const BLANK_CHARACTER = `/images/blank-character.jpg` as const;
 
+/** Reserved domain for accounts created by passkey registration before onboarding. */
+export const PASSKEY_PLACEHOLDER_EMAIL_DOMAIN = "passkey.invalid";
+
 type Provider = {
 	name: string;
 	id: string;

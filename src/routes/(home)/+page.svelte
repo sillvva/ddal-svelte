@@ -19,15 +19,62 @@
 
 	const lastMethod = authClient.getLastUsedLoginMethod();
 	let showPasskeyWarning = $state(false);
+	let passkeyPending = $state(false);
+
+	function afterPasskeySignIn(signedIn: boolean) {
+		if (signedIn) {
+			window.location.href = home.redirectTo || "/characters";
+			return;
+		}
+		passkeyPending = false;
+		showPasskeyWarning = false;
+	}
+
+	async function signInWithPasskey() {
+		if (passkeyPending) return;
+		passkeyPending = true;
+		showPasskeyWarning = true;
+		const { data, error } = await authClient.signIn.passkey();
+		if (data) {
+			afterPasskeySignIn(true);
+			return;
+		}
+		afterPasskeySignIn(false);
+		if (error?.message) {
+			console.error(error);
+			errorToast(error.message);
+		}
+	}
+
+	async function createAccountWithPasskey() {
+		if (passkeyPending) return;
+		passkeyPending = true;
+		showPasskeyWarning = true;
+		const { data, error } = await authClient.passkey.addPasskey({ createSession: true });
+		if (data) {
+			window.location.href = "/onboarding";
+			return;
+		}
+		passkeyPending = false;
+		showPasskeyWarning = false;
+		if (error?.message) {
+			console.error(error);
+			errorToast(error.message);
+		}
+	}
 
 	onMount(async () => {
 		if (global.app.settings.autoWebAuthn) {
+			passkeyPending = true;
 			const { data, error } = await authClient.signIn.passkey();
 			if (data) {
-				window.location.href = home.redirectTo || "/characters";
+				afterPasskeySignIn(true);
 			} else if (error) {
+				afterPasskeySignIn(false);
 				console.error(error);
 				errorToast(error.message ?? "An unknown error occurred");
+			} else {
+				afterPasskeySignIn(false);
 			}
 		}
 	});
@@ -87,18 +134,12 @@
 			{/each}
 			<hr class="border-base-content" />
 			<button
-				class="relative flex h-16 items-center gap-4 rounded-lg bg-base-200 px-8 py-4 text-base-content transition-colors hover:bg-base-300 max-xs:h-12 max-xs:justify-center max-xs:px-4"
-				onclick={async () => {
+				class="relative flex h-16 items-center gap-4 rounded-lg bg-base-200 px-8 py-4 text-base-content transition-colors hover:bg-base-300 disabled:opacity-60 max-xs:h-12 max-xs:justify-center max-xs:px-4"
+				onclick={() => {
 					console.log("Signing in with Passkey");
-					showPasskeyWarning = true;
-					const { data, error } = await authClient.signIn.passkey();
-					if (data) {
-						window.location.href = home.redirectTo || "/characters";
-					} else if (error?.message) {
-						console.error(error);
-						errorToast(error.message);
-					}
+					void signInWithPasskey();
 				}}
+				disabled={passkeyPending}
 				aria-label="Sign in with Passkey"
 			>
 				<span class="iconify size-8 material-symbols--passkey max-xs:size-5"></span>
@@ -109,9 +150,20 @@
 					<span class="absolute top-0 right-0 badge translate-x-1/2 -translate-y-1/2 badge-soft badge-primary">Last used</span>
 				{/if}
 			</button>
-			<span class="text-center text-xs text-pretty text-base-content">
-				You must have an account and then add a Passkey in settings before you can sign in with a Passkey.
-			</span>
+			{#if home.signupsEnabled}
+				<button
+					type="button"
+					class="text-center text-sm font-semibold text-secondary-content underline-offset-2 hover:underline disabled:opacity-60"
+					onclick={() => void createAccountWithPasskey()}
+					disabled={passkeyPending}
+				>
+					Create an account with a passkey
+				</button>
+			{:else}
+				<span class="text-center text-xs text-pretty text-base-content">
+					You must have an account and then add a Passkey in settings before you can sign in with a Passkey.
+				</span>
+			{/if}
 		{/if}
 	</div>
 </main>

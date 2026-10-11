@@ -1,3 +1,4 @@
+import { BLANK_CHARACTER, PASSKEY_PLACEHOLDER_EMAIL_DOMAIN } from "#lib/constants.js";
 import { privateEnv } from "#lib/env/private.js";
 import { localsSessionSchema, localsUserSchema, type UserId } from "#lib/schemas.js";
 import { DBService } from "#lib/server/db/index.js";
@@ -5,8 +6,9 @@ import * as schema from "#lib/server/db/schema.js";
 import { RedirectError, type ErrorParams } from "#lib/server/effect/errors.js";
 import { getRequestEvent } from "$app/server";
 import { drizzleAdapter } from "@better-auth/drizzle-adapter/relations-v2";
-import { passkey } from "@better-auth/passkey";
+import { getAuthenticatorName, passkey } from "@better-auth/passkey";
 import { isDefined } from "@sillvva/utils";
+import { APIError } from "better-auth/api";
 import { betterAuth } from "better-auth/minimal";
 import { lastLoginMethod } from "better-auth/plugins";
 import { admin } from "better-auth/plugins/admin";
@@ -16,6 +18,11 @@ import { v7 } from "uuid";
 import * as v from "valibot";
 import { parse } from "../util";
 import { UserService } from "./users";
+
+const PASSKEY_SIGNUP_NAME = "New Adventurer";
+
+/** `"admin"` requires an admin. `"onboarding"` allows only unfinished passkey signups. `null` is any signed-in user. */
+export type GuardAccess = "admin" | "onboarding" | null;
 
 class AuthError extends Data.TaggedError("AuthError")<ErrorParams> {
 	constructor(err: unknown) {
@@ -28,6 +35,25 @@ export class InvalidUser extends Data.TaggedError("InvalidUser")<ErrorParams> {
 		super({ message: "Invalid user", status: 401, cause: err });
 	}
 }
+
+const authenticate = Effect.fn("AuthService.authenticate")(function* () {
+	const event = getRequestEvent();
+	const user = event.locals.user;
+
+	if (!user) {
+		const returnUrl = event.locals.requestPath;
+		const safe = returnUrl.startsWith("/") && !returnUrl.startsWith("//") ? returnUrl : "/characters";
+		return yield* new RedirectError({
+			message: "User is not authenticated",
+			redirectTo: `/?redirect=${encodeURIComponent(safe)}`
+		});
+	}
+
+	const result = v.safeParse(localsUserSchema, user);
+	if (!result.success) return yield* new InvalidUser(result.issues);
+
+	return { user: result.output, event };
+});
 
 export class AuthService extends Context.Service<AuthService>()("AuthService", {
 	make: Effect.fn("AuthService")(function* () {
@@ -53,7 +79,52 @@ export class AuthService extends Context.Service<AuthService>()("AuthService", {
 					disableSignUp: privateEnv.DISABLE_SIGNUPS
 				}
 			},
-			plugins: [passkey(), admin(), lastLoginMethod(), sveltekitCookies(getRequestEvent)],
+			plugins: [
+				passkey({
+					registration: {
+						requireSession: false,
+						resolveUser: () => {
+							if (privateEnv.DISABLE_SIGNUPS) {
+								throw new APIError("FORBIDDEN", { message: "New accounts are disabled" });
+							}
+
+							const id = v7();
+							return {
+								id,
+								name: "Adventurers League Log Sheet",
+								displayName: "Adventurers League Log Sheet"
+							};
+						},
+						afterVerification: async ({ user, verification }) => {
+							const existing = await db.query.user.findFirst({
+								where: { id: { eq: user.id as UserId } }
+							});
+
+							if (!existing) {
+								if (privateEnv.DISABLE_SIGNUPS) {
+									throw new APIError("FORBIDDEN", { message: "New accounts are disabled" });
+								}
+
+								await db.insert(schema.user).values({
+									id: user.id as UserId,
+									name: PASSKEY_SIGNUP_NAME,
+									email: `${user.id}@${PASSKEY_PLACEHOLDER_EMAIL_DOMAIN}`,
+									emailVerified: false,
+									image: BLANK_CHARACTER,
+									onboarded: false
+								});
+							}
+
+							return {
+								name: getAuthenticatorName(verification.registrationInfo?.aaguid) ?? "Passkey"
+							};
+						}
+					}
+				}),
+				admin(),
+				lastLoginMethod(),
+				sveltekitCookies(getRequestEvent)
+			],
 			account: {
 				accountLinking: {
 					enabled: true
@@ -116,37 +187,38 @@ export class AuthService extends Context.Service<AuthService>()("AuthService", {
 				const result = yield* Effect.all(tasks);
 				return result.filter(isDefined);
 			}),
-			guard: Effect.fn(function* (adminOnly = false) {
-				const event = getRequestEvent();
-				const user = event.locals.user;
+			guard: Effect.fn(function* (access: GuardAccess = null) {
+				const auth = yield* authenticate();
 
-				if (!user) {
-					const returnUrl = event.locals.requestPath;
-					const safe = returnUrl.startsWith("/") && !returnUrl.startsWith("//") ? returnUrl : "/characters";
-					return yield* new RedirectError({
-						message: "User is not authenticated",
-						redirectTo: `/?redirect=${encodeURIComponent(safe)}`
-					});
-				}
-
-				const result = v.safeParse(localsUserSchema, user);
-				if (!result.success) return yield* new InvalidUser(result.issues);
-
-				if (result.output.banned) {
+				if (auth.user.banned) {
 					return yield* new RedirectError({
 						message: "Banned",
 						redirectTo: "/"
 					});
 				}
 
-				if (adminOnly && result.output.role !== "admin") {
+				if (access === "onboarding" && auth.user.onboarded) {
+					return yield* new RedirectError({
+						message: "Account already onboarded",
+						redirectTo: "/characters"
+					});
+				}
+
+				if (access !== "onboarding" && !auth.user.onboarded) {
+					return yield* new RedirectError({
+						message: "Finish creating your account",
+						redirectTo: "/onboarding"
+					});
+				}
+
+				if (access === "admin" && auth.user.role !== "admin") {
 					return yield* new RedirectError({
 						message: "Insufficient permissions",
 						redirectTo: "/characters"
 					});
 				}
 
-				return { user: result.output, event };
+				return auth;
 			})
 		};
 	})()

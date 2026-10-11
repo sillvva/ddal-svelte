@@ -12,9 +12,11 @@
 
 	interface Props extends Omit<RemoteFormOptions<Input>, "formEl"> {
 		children?: Snippet<[GenericForm<Input>]>;
+		/** Replaces the default success toast. `false` skips it, for forms that redirect. */
+		successMessage?: string | false;
 	}
 
-	let { children, ...rest }: Props = $props();
+	let { children, successMessage, ...rest }: Props = $props();
 
 	let formEl: HTMLFormElement | undefined = $state.raw();
 
@@ -25,8 +27,8 @@
 		formEl,
 		navBlockMessage: rest.navBlockMessage || "You have unsaved changes. Are you sure you want to leave?",
 		onresult: (ctx) => {
-			if (ctx.success) {
-				successToast(`${form.fields.name?.value() || "Form"} saved successfully`);
+			if (ctx.success && successMessage !== false) {
+				successToast(successMessage || `${form.fields.name?.value() || "Form"} saved successfully`);
 			} else if (ctx.error) {
 				errorToast(ctx.error);
 			}

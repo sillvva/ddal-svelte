@@ -18,6 +18,7 @@
 	let { children } = $props();
 
 	const global = getGlobal();
+	await API.auth.queries.requireOnboarded();
 	const { user } = $derived(await API.app.queries.request());
 
 	let settingsOpen = $state(false);

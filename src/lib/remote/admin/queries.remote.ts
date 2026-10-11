@@ -50,7 +50,7 @@ export const getAppLogs = guardedQuery(
 
 		return { logs, metadata };
 	},
-	true
+	"admin"
 );
 
 export const getUsers = guardedQuery(function* () {
@@ -64,4 +64,4 @@ export const getUsers = guardedQuery(function* () {
 			}))
 		)
 	);
-}, true);
+}, "admin");

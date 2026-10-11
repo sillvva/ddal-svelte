@@ -26,7 +26,7 @@ export const impersonateUser = guardedForm(
 
 		redirect(302, "/characters");
 	},
-	true
+	"admin"
 );
 
 export const stopImpersonating = guardedForm(function* ({ event }) {
@@ -59,7 +59,7 @@ export const banUser = guardedForm(
 			})
 		);
 	},
-	true
+	"admin"
 );
 
 export const unbanUser = guardedForm(
@@ -74,5 +74,5 @@ export const unbanUser = guardedForm(
 			})
 		);
 	},
-	true
+	"admin"
 );
