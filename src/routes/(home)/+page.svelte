@@ -1,10 +1,10 @@
 <script lang="ts">
-	import { page } from "$app/state";
 	import { authClient } from "#lib/auth.js";
 	import { PROVIDERS } from "#lib/constants.js";
 	import { errorToast } from "#lib/factories.svelte.js";
 	import * as API from "#lib/remote/index.js";
 	import { getGlobal } from "#lib/stores.svelte.js";
+	import { page } from "$app/state";
 	import { onMount } from "svelte";
 
 	const global = getGlobal();
@@ -38,17 +38,17 @@
 		{#if !showPasskeyWarning}
 			<img src="/images/{global.app.settings.mode === 'dark' ? 'dragon' : 'dragon-dark'}.webp" alt="Dragon" class="size-40" />
 		{/if}
-		<h1 class="font-draconis text-base-content text-center text-4xl lg:text-6xl dark:text-white">
+		<h1 class="text-center font-draconis text-4xl text-base-content lg:text-6xl dark:text-white">
 			<span class="text-[75%]">Adventurers League</span>
 			<br />
 			Log Sheet
 		</h1>
 	</div>
-	<div class="max-xs:max-w-80 max-xs:gap-3 flex max-w-80 flex-col gap-4">
+	<div class="flex max-w-80 flex-col gap-4 max-xs:max-w-80 max-xs:gap-3">
 		{#if home.error}
 			<div class="flex justify-center">
-				<div class="alert alert-error max-w-md min-w-60 shadow-lg">
-					<span class="iconify mdi--alert-circle size-6 max-sm:hidden"></span>
+				<div class="alert max-w-md min-w-60 alert-error shadow-lg">
+					<span class="iconify size-6 mdi--alert-circle max-sm:hidden"></span>
 					<div>
 						<h2 class="font-bold">Error</h2>
 						{#if home.error.message}<p class="mb-2 max-sm:text-sm">{home.error.message}</p>{/if}
@@ -60,7 +60,7 @@
 		{#if !home.error || home.error.code !== "BANNED"}
 			{#each PROVIDERS as provider (provider.id)}
 				<button
-					class="bg-base-200 text-base-content max-xs:justify-center hover:bg-base-300 max-xs:h-12 max-xs:px-4 relative flex h-16 items-center gap-4 rounded-lg px-8 py-4 transition-colors"
+					class="relative flex h-16 items-center gap-4 rounded-lg bg-base-200 px-8 py-4 text-base-content transition-colors hover:bg-base-300 max-xs:h-12 max-xs:justify-center max-xs:px-4"
 					onclick={async () => {
 						console.log("Signing in with", provider.name);
 						const { error } = await authClient.signIn.social({
@@ -74,12 +74,12 @@
 					}}
 					aria-label="Sign in with {provider.name}"
 				>
-					<span class={["iconify-color max-xs:size-5 size-8", provider.iconify]}></span>
-					<span class="max-xs:text-base xs:flex-1 flex h-full items-center justify-center text-xl font-semibold"
+					<span class={["iconify-color size-8 max-xs:size-5", provider.iconify]}></span>
+					<span class="flex h-full items-center justify-center text-xl font-semibold max-xs:text-base xs:flex-1"
 						>Sign In with {provider.name}</span
 					>
 					{#if lastMethod === provider.id}
-						<span class="badge badge-soft badge-primary absolute top-0 right-0 translate-x-1/2 -translate-y-1/2">
+						<span class="absolute top-0 right-0 badge translate-x-1/2 -translate-y-1/2 badge-soft badge-primary">
 							Last used
 						</span>
 					{/if}
@@ -87,7 +87,7 @@
 			{/each}
 			<hr class="border-base-content" />
 			<button
-				class="bg-base-200 text-base-content max-xs:justify-center hover:bg-base-300 max-xs:h-12 max-xs:px-4 relative flex h-16 items-center gap-4 rounded-lg px-8 py-4 transition-colors"
+				class="relative flex h-16 items-center gap-4 rounded-lg bg-base-200 px-8 py-4 text-base-content transition-colors hover:bg-base-300 max-xs:h-12 max-xs:justify-center max-xs:px-4"
 				onclick={async () => {
 					console.log("Signing in with Passkey");
 					showPasskeyWarning = true;
@@ -101,29 +101,18 @@
 				}}
 				aria-label="Sign in with Passkey"
 			>
-				<span class="iconify material-symbols--passkey max-xs:size-5 size-8"></span>
-				<span class="max-xs:text-base xs:flex-1 flex h-full items-center justify-center text-xl font-semibold"
+				<span class="iconify size-8 material-symbols--passkey max-xs:size-5"></span>
+				<span class="flex h-full items-center justify-center text-xl font-semibold max-xs:text-base xs:flex-1"
 					>Sign In with Passkey</span
 				>
 
 				{#if lastMethod === "passkey"}
-					<span class="badge badge-soft badge-primary absolute top-0 right-0 translate-x-1/2 -translate-y-1/2"> Last used </span>
+					<span class="absolute top-0 right-0 badge translate-x-1/2 -translate-y-1/2 badge-soft badge-primary"> Last used </span>
 				{/if}
 			</button>
-			<span class="text-base-content text-center text-xs text-pretty">
+			<span class="text-center text-xs text-pretty text-base-content">
 				You must have an account and then add a Passkey in settings before you can sign in with a Passkey.
 			</span>
-			{#if showPasskeyWarning}
-				<div class="card bg-warning/70 text-black shadow-sm">
-					<div class="card-body p-4">
-						<h2 class="text-xl">Important Notice</h2>
-						<p class="text-xs text-pretty">
-							Authentication has been migrated to a new API. If you had a Passkey prior to July 8th, 2025, you will need to sign
-							in with another method and then add it again.
-						</p>
-					</div>
-				</div>
-			{/if}
 		{/if}
 	</div>
 </main>
