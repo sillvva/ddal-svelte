@@ -75,9 +75,9 @@
 					aria-label="Sign in with {provider.name}"
 				>
 					<span class={["iconify-color size-8 max-xs:size-5", provider.iconify]}></span>
-					<span class="flex h-full items-center justify-center text-xl font-semibold max-xs:text-base xs:flex-1"
-						>Sign In with {provider.name}</span
-					>
+					<span class="flex h-full items-center justify-center text-xl font-semibold max-xs:text-base xs:flex-1">
+						Sign In with {provider.name}
+					</span>
 					{#if lastMethod === provider.id}
 						<span class="absolute top-0 right-0 badge translate-x-1/2 -translate-y-1/2 badge-soft badge-primary">
 							Last used
@@ -102,12 +102,11 @@
 				aria-label="Sign in with Passkey"
 			>
 				<span class="iconify size-8 material-symbols--passkey max-xs:size-5"></span>
-				<span class="flex h-full items-center justify-center text-xl font-semibold max-xs:text-base xs:flex-1"
-					>Sign In with Passkey</span
-				>
-
+				<span class="flex h-full items-center justify-center text-xl font-semibold max-xs:text-base xs:flex-1">
+					Sign In with Passkey
+				</span>
 				{#if lastMethod === "passkey"}
-					<span class="absolute top-0 right-0 badge translate-x-1/2 -translate-y-1/2 badge-soft badge-primary"> Last used </span>
+					<span class="absolute top-0 right-0 badge translate-x-1/2 -translate-y-1/2 badge-soft badge-primary">Last used</span>
 				{/if}
 			</button>
 			<span class="text-center text-xs text-pretty text-base-content">
