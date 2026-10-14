@@ -55,7 +55,10 @@ export class CharacterService extends Context.Service<CharacterService>()("Chara
 					return yield* runQuery(
 						db.query.characters.findFirst({
 							with: characterIncludes(includeLogs),
-							where: { id: { eq: characterId } }
+							where: {
+								id: { eq: characterId },
+								user: { banned: { eq: false } }
+							}
 						})
 					).pipe(
 						Effect.flatMap((character) =>
