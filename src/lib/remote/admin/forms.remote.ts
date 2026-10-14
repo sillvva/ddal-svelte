@@ -9,7 +9,7 @@ import * as v from "valibot";
 export const impersonateUser = guardedForm(
 	v.object({ userId: userIdSchema }),
 	function* ({ userId }, { event, issue }) {
-		const { auth } = yield* AuthService;
+		const Auth = yield* AuthService;
 		const Admin = yield* AdminService;
 
 		const user = yield* Admin.get.user(userId).pipe(Effect.catch((err) => Effect.die(invalid(issue(err.message)))));
@@ -18,7 +18,7 @@ export const impersonateUser = guardedForm(
 		if (user.role === "admin") throw invalid("Cannot impersonate this user");
 
 		yield* Effect.tryPromise(() =>
-			auth.api.impersonateUser({
+			Auth.api.impersonateUser({
 				body: { userId },
 				headers: event.request.headers
 			})
@@ -30,10 +30,10 @@ export const impersonateUser = guardedForm(
 );
 
 export const stopImpersonating = guardedForm(function* ({ event }) {
-	const { auth } = yield* AuthService;
+	const Auth = yield* AuthService;
 
 	yield* Effect.tryPromise(() =>
-		auth.api.stopImpersonating({
+		Auth.api.stopImpersonating({
 			headers: event.request.headers
 		})
 	);
@@ -44,7 +44,7 @@ export const stopImpersonating = guardedForm(function* ({ event }) {
 export const banUser = guardedForm(
 	v.object({ userId: userIdSchema, banReason: requiredString }),
 	function* ({ userId, banReason }, { event }) {
-		const { auth } = yield* AuthService;
+		const Auth = yield* AuthService;
 		const Admin = yield* AdminService;
 
 		const user = yield* Admin.get.user(userId).pipe(Effect.catch((err) => Effect.die(invalid(err.message))));
@@ -53,7 +53,7 @@ export const banUser = guardedForm(
 		if (user.banned) throw invalid("User is already banned");
 
 		return yield* Effect.tryPromise(() =>
-			auth.api.banUser({
+			Auth.api.banUser({
 				body: { userId, banReason },
 				headers: event.request.headers
 			})
@@ -65,10 +65,10 @@ export const banUser = guardedForm(
 export const unbanUser = guardedForm(
 	v.object({ userId: userIdSchema }),
 	function* ({ userId }, { event }) {
-		const { auth } = yield* AuthService;
+		const Auth = yield* AuthService;
 
 		return yield* Effect.tryPromise(() =>
-			auth.api.unbanUser({
+			Auth.api.unbanUser({
 				body: { userId },
 				headers: event.request.headers
 			})

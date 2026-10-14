@@ -4,7 +4,7 @@ import type { relations } from "#lib/server/db/relations.js";
 import { appLogs, type InsertAppLog } from "#lib/server/db/schema.js";
 import { type ErrorParams } from "#lib/server/effect/errors.js";
 import { DrizzleSearchParser } from "@sillvva/search/drizzle";
-import { isTupleOf } from "@sillvva/utils";
+import { isTupleOf, sorter } from "@sillvva/utils";
 import { eq, sql } from "drizzle-orm";
 import { Context, Data, DateTime, Effect, Layer } from "effect";
 
@@ -46,6 +46,29 @@ export class AdminService extends Context.Service<AdminService>()("AdminService"
 							}
 						})
 					).pipe(Effect.flatMap((user) => (user ? Effect.succeed(user) : Effect.fail(new UserNotFoundError()))));
+				}),
+				users: Effect.fn("AdminService.get.users")(function* () {
+					return yield* runQuery(
+						db.query.user.findMany({
+							with: {
+								accounts: {
+									columns: {
+										providerId: true
+									}
+								},
+								characters: {
+									columns: {
+										id: true
+									}
+								}
+							},
+							where: {
+								role: {
+									ne: "admin"
+								}
+							}
+						})
+					).pipe(Effect.map((users) => users.sort((a, b) => sorter(a.name.toLowerCase(), b.name.toLowerCase()))));
 				}),
 				logs: Effect.fn("AdminService.get.logs")(function* (search: string = "") {
 					const { where, orderBy, metadata } = search.trim() ? logSearch.parse(search.trim()) : {};

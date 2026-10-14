@@ -1,7 +1,7 @@
 import { imageUrlWithFallback, requiredString } from "#lib/schemas.js";
 import { FailedError, type ErrorParams } from "#lib/server/effect/errors.js";
 import { guardedCommand } from "#lib/server/effect/guarded.js";
-import { UserService } from "#lib/server/effect/services/users.js";
+import { AuthService } from "#lib/server/effect/services/auth.js";
 import { Data, Effect } from "effect";
 import * as v from "valibot";
 
@@ -20,13 +20,13 @@ const userFieldsSchema = v.partial(
 );
 
 export const updateUser = guardedCommand(userFieldsSchema, function* (input, { user }) {
-	const Users = yield* UserService;
+	const Auth = yield* AuthService;
 
 	if (Object.keys(input).length === 0) return yield* Effect.fail(new NoChangesError());
 
-	const result = yield* Users.update(user.id, input).pipe(
-		Effect.catchTag("DrizzleError", (err) => Effect.fail(new FailedError("update user", err)))
-	);
+	const result = yield* Auth.user
+		.update(user.id, input)
+		.pipe(Effect.catchTag("DrizzleError", (err) => Effect.fail(new FailedError("update user", err))));
 
 	return result;
 });

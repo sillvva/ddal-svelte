@@ -3,7 +3,6 @@ import { highlighterConfig, highlighterThemeDark, highlighterThemeLight } from "
 import { guardedQuery } from "#lib/server/effect/guarded.js";
 import { run } from "#lib/server/effect/runtime.js";
 import { AdminService, validKeys } from "#lib/server/effect/services/admin.js";
-import { UserService } from "#lib/server/effect/services/users.js";
 import { getTrace } from "#lib/util.js";
 import { DateTime, Effect } from "effect";
 import { createHighlighter } from "shiki";
@@ -54,9 +53,9 @@ export const getAppLogs = guardedQuery(
 );
 
 export const getUsers = guardedQuery(function* () {
-	const Users = yield* UserService;
+	const Admin = yield* AdminService;
 
-	return yield* Users.get.users().pipe(
+	return yield* Admin.get.users().pipe(
 		Effect.map((users) =>
 			users.map((user) => ({
 				...user,
