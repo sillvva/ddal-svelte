@@ -142,51 +142,6 @@ export class AuthService extends Context.Service<AuthService>()("AuthService", {
 
 		return {
 			auth,
-			getAuthSession: Effect.fn("AuthService.getAuthSession")(function* () {
-				const Users = yield* UserService;
-				const event = getRequestEvent();
-
-				const result = yield* Effect.tryPromise({
-					try: () => auth.api.getSession({ headers: event.request.headers }),
-					catch: (err) => new AuthError(err)
-				});
-
-				return {
-					session: result?.session && (yield* parse(localsSessionSchema, result.session)),
-					user: result?.user && (yield* Users.get.localsUser(result.user.id as UserId)),
-					auth
-				};
-			}),
-			getAccounts: Effect.fn("AuthService.getAccounts")(function* () {
-				const event = getRequestEvent();
-				const user = event.locals.user;
-
-				const tasks =
-					user?.accounts.map(({ id, providerId }) =>
-						Effect.promise(() =>
-							auth.api
-								.accountInfo({
-									headers: event.request.headers,
-									query: {
-										accountId: id
-									}
-								})
-								.then((r) =>
-									r?.user?.name && r.user?.email && r.user?.image
-										? {
-												providerId,
-												name: r?.user.name,
-												email: r?.user.email,
-												image: r?.user.image
-											}
-										: undefined
-								)
-						)
-					) ?? [];
-
-				const result = yield* Effect.all(tasks);
-				return result.filter(isDefined);
-			}),
 			guard: Effect.fn(function* (access: GuardAccess = null) {
 				const auth = yield* authenticate();
 
@@ -219,7 +174,58 @@ export class AuthService extends Context.Service<AuthService>()("AuthService", {
 				}
 
 				return auth;
-			})
+			}),
+
+			/**
+			 * Queries
+			 */
+			get: {
+				session: Effect.fn("AuthService.get.session")(function* () {
+					const Users = yield* UserService;
+					const event = getRequestEvent();
+
+					const result = yield* Effect.tryPromise({
+						try: () => auth.api.getSession({ headers: event.request.headers }),
+						catch: (err) => new AuthError(err)
+					});
+
+					return {
+						session: result?.session && (yield* parse(localsSessionSchema, result.session)),
+						user: result?.user && (yield* Users.get.localsUser(result.user.id as UserId)),
+						auth
+					};
+				}),
+				accounts: Effect.fn("AuthService.get.accounts")(function* () {
+					const event = getRequestEvent();
+					const user = event.locals.user;
+
+					const tasks =
+						user?.accounts.map(({ id, providerId }) =>
+							Effect.promise(() =>
+								auth.api
+									.accountInfo({
+										headers: event.request.headers,
+										query: {
+											accountId: id
+										}
+									})
+									.then((r) =>
+										r?.user?.name && r.user?.email && r.user?.image
+											? {
+													providerId,
+													name: r?.user.name,
+													email: r?.user.email,
+													image: r?.user.image
+												}
+											: undefined
+									)
+							)
+						) ?? [];
+
+					const result = yield* Effect.all(tasks);
+					return result.filter(isDefined);
+				})
+			}
 		};
 	})()
 }) {

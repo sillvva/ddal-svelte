@@ -1,7 +1,7 @@
 import { PROVIDERS } from "#lib/constants.js";
-import { emailSchema, type PasskeyId, type UserId } from "#lib/schemas.js";
+import { emailSchema, type UserId } from "#lib/schemas.js";
 import { DBService, runQuery, type Transaction } from "#lib/server/db/index.js";
-import { characters, dungeonMasters, logs, passkey, user, type User } from "#lib/server/db/schema.js";
+import { characters, dungeonMasters, logs, user, type User } from "#lib/server/db/schema.js";
 import { type ErrorParams } from "#lib/server/effect/errors.js";
 import { AppLog } from "#lib/server/effect/logging.js";
 import { isTupleOf, sorter } from "@sillvva/utils";
@@ -12,18 +12,6 @@ import * as v from "valibot";
 export class UpdateUserError extends Data.TaggedError("UpdateUserError")<ErrorParams> {
 	constructor(err?: unknown) {
 		super({ message: "Could not update user", status: 500, cause: err });
-	}
-}
-
-export class RenamePasskeyError extends Data.TaggedError("RenamePasskeyError")<ErrorParams> {
-	constructor(err?: unknown) {
-		super({ message: "Could not rename passkey", status: 500, cause: err });
-	}
-}
-
-export class DeletePasskeyError extends Data.TaggedError("DeletePasskeyError")<ErrorParams> {
-	constructor(err?: unknown) {
-		super({ message: "Could not delete passkey", status: 500, cause: err });
 	}
 }
 
@@ -100,27 +88,6 @@ export class UserService extends Context.Service<UserService>()("UserService", {
 							}
 						})
 					).pipe(Effect.map((users) => users.sort((a, b) => sorter(a.name.toLowerCase(), b.name.toLowerCase()))));
-				}),
-				passkey: Effect.fn("UserService.get.passkey")(function* (userId: UserId, passkeyId: PasskeyId) {
-					return yield* runQuery(
-						db.query.passkey.findFirst({
-							where: {
-								id: { eq: passkeyId },
-								userId: { eq: userId }
-							}
-						})
-					);
-				}),
-				passkeys: Effect.fn("UserService.get.passkeys")(function* (userId: UserId) {
-					return yield* runQuery(
-						db.query.passkey.findMany({
-							where: {
-								userId: {
-									eq: userId
-								}
-							}
-						})
-					);
 				})
 			},
 
@@ -167,33 +134,6 @@ export class UserService extends Context.Service<UserService>()("UserService", {
 					),
 					Effect.tap((result) => AppLog.info("UserService.update", { userId, result })),
 					Effect.tapError(() => AppLog.debug("UserService.update", { userId, data }))
-				);
-			}),
-			renamePasskey: Effect.fn("UserService.renamePasskey")(function* (userId: UserId, passkeyId: PasskeyId, name: string) {
-				return yield* runQuery(
-					db
-						.update(passkey)
-						.set({ name: name.trim() })
-						.where(and(eq(passkey.id, passkeyId), eq(passkey.userId, userId)))
-						.returning()
-				).pipe(
-					Effect.flatMap((passkeys) =>
-						isTupleOf(passkeys, 1) ? Effect.succeed(passkeys[0]) : Effect.fail(new RenamePasskeyError("Failed to rename passkey"))
-					)
-				);
-			}),
-			deletePasskey: Effect.fn("UserService.deletePasskey")(function* (userId: UserId, passkeyId: PasskeyId) {
-				return yield* runQuery(
-					db
-						.delete(passkey)
-						.where(and(eq(passkey.id, passkeyId), eq(passkey.userId, userId)))
-						.returning({ id: passkey.id })
-				).pipe(
-					Effect.flatMap((passkeys) =>
-						isTupleOf(passkeys, 1)
-							? Effect.succeed(passkeys[0].id)
-							: Effect.fail(new DeletePasskeyError("Failed to delete passkey"))
-					)
 				);
 			}),
 			delete: Effect.fn("UserService.delete")(function* (userId: UserId) {

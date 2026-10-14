@@ -3,7 +3,7 @@ import { AuthService } from "#lib/server/effect/services/auth.js";
 
 export const getAccounts = guardedQuery(function* () {
 	const Auth = yield* AuthService;
-	return yield* Auth.getAccounts();
+	return yield* Auth.get.accounts();
 });
 
 /** Sends unfinished passkey signups to onboarding and everyone else through the normal auth guard. */

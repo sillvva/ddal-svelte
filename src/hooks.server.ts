@@ -41,7 +41,7 @@ const authHandler: Handle = async ({ event, resolve }) =>
 	run(function* () {
 		const Auth = yield* AuthService;
 
-		const { session, user, auth } = yield* Auth.getAuthSession();
+		const { session, user, auth } = yield* Auth.get.session();
 		event.locals.session = session;
 		event.locals.user = user;
 
