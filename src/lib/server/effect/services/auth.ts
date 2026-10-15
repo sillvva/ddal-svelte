@@ -257,12 +257,13 @@ export class AuthService extends Context.Service<AuthService>()("AuthService", {
 										}
 									})
 									.then((r) =>
-										r?.user?.name && r.user?.email && r.user?.image
+										r.user.name && r.user.email && r.user.image
 											? {
+													id,
 													providerId,
-													name: r?.user.name,
-													email: r?.user.email,
-													image: r?.user.image
+													name: r.user.name,
+													email: r.user.email,
+													image: r.user.image
 												}
 											: undefined
 									)

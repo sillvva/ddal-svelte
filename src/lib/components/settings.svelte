@@ -173,17 +173,18 @@
 			</li>
 			{#each authProviders as provider (provider.id)}
 				{const account = $derived(userAccounts.find((a) => a.providerId === provider.id))}
-				<li>
-					<span class="flex gap-2 hover:bg-transparent">
-						<span class={["size=6 iconify-color", provider.iconify]}></span>
-						<span class="flex-1">{provider.name}</span>
-						<span class="join flex items-center">
-							{#if provider.account}
-								{#if user.accounts.length > 1}
-									{#if !userAccounts.length}
-										<span class="iconify size-5 animate-spin mdi--loading"></span>
-									{:else}
-										{#if account}
+				{#if account}
+					{const accountId = $derived(account.id)}
+					<li>
+						<span class="flex gap-2 hover:bg-transparent">
+							<span class={["size=6 iconify-color", provider.iconify]}></span>
+							<span class="flex-1">{provider.name}</span>
+							<span class="join flex items-center">
+								{#if provider.account}
+									{#if user.accounts.length > 1}
+										{#if !userAccounts.length}
+											<span class="iconify size-5 animate-spin mdi--loading"></span>
+										{:else}
 											{#if currentAccount?.providerId !== provider.id || account.name !== user.name || account.email !== user.email || account.image !== user.image}
 												<div class="tooltip" data-tip="Use this account">
 													<button
@@ -202,55 +203,51 @@
 													</button>
 												</div>
 											{/if}
+											<button
+												class="btn join-item font-semibold btn-error btn-sm"
+												disabled={currentAccount?.providerId === provider.id || !!API.auth.actions.updateUser.pending}
+												onclick={async () => {
+													if (currentAccount?.providerId === provider.id || !!API.auth.actions.updateUser.pending) return;
+													if (!confirm("Are you sure you want to unlink this account?")) return;
+													const result = await authClient.unlinkAccount({ accountId });
+													if (result.error?.code) {
+														return errorToast(
+															authClient.$ERROR_CODES[result.error.code as keyof typeof authClient.$ERROR_CODES].message
+														);
+													}
+													await API.app.queries.request().refresh();
+												}}
+											>
+												Unlink
+											</button>
 										{/if}
-										<button
-											class="btn join-item font-semibold btn-error btn-sm"
-											disabled={currentAccount?.providerId === provider.id || !!API.auth.actions.updateUser.pending}
-											onclick={async () => {
-												if (currentAccount?.providerId === provider.id || !!API.auth.actions.updateUser.pending) return;
-												const accountId = provider.account?.id;
-												if (!accountId || !confirm("Are you sure you want to unlink this account?")) return;
-												const result = await authClient.unlinkAccount({
-													providerId: provider.id,
-													accountId
-												});
-												if (result.error?.code) {
-													return errorToast(
-														authClient.$ERROR_CODES[result.error.code as keyof typeof authClient.$ERROR_CODES].message
-													);
-												}
-												await API.app.queries.request().refresh();
-											}}
-										>
-											Unlink
-										</button>
+									{:else}
+										<span class="iconify size-6 text-green-500 mdi--check"></span>
 									{/if}
 								{:else}
-									<span class="iconify size-6 text-green-500 mdi--check"></span>
+									<button
+										class="btn btn-primary btn-sm"
+										onclick={() =>
+											authClient
+												.linkSocial({
+													provider: provider.id
+												})
+												.then(async (result) => {
+													if (result.error?.code) {
+														return errorToast(
+															authClient.$ERROR_CODES[result.error.code as keyof typeof authClient.$ERROR_CODES].message
+														);
+													}
+													await API.app.queries.request().refresh();
+												})}
+									>
+										Link
+									</button>
 								{/if}
-							{:else}
-								<button
-									class="btn btn-primary btn-sm"
-									onclick={() =>
-										authClient
-											.linkSocial({
-												provider: provider.id
-											})
-											.then(async (result) => {
-												if (result.error?.code) {
-													return errorToast(
-														authClient.$ERROR_CODES[result.error.code as keyof typeof authClient.$ERROR_CODES].message
-													);
-												}
-												await API.app.queries.request().refresh();
-											})}
-								>
-									Link
-								</button>
-							{/if}
+							</span>
 						</span>
-					</span>
-				</li>
+					</li>
+				{/if}
 			{/each}
 		</ul>
 		<Passkeys />
