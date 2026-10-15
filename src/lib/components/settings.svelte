@@ -210,9 +210,10 @@
 													if (currentAccount?.providerId === provider.id || !!API.auth.actions.updateUser.pending) return;
 													if (!confirm("Are you sure you want to unlink this account?")) return;
 													const result = await authClient.unlinkAccount({ accountId });
-													if (result.error?.code) {
+													if (result.error) {
 														return errorToast(
-															authClient.$ERROR_CODES[result.error.code as keyof typeof authClient.$ERROR_CODES].message
+															result.error.message ||
+																authClient.$ERROR_CODES[result.error.code as keyof typeof authClient.$ERROR_CODES].message
 														);
 													}
 													await API.app.queries.request().refresh();
