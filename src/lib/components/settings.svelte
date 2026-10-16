@@ -367,7 +367,7 @@
 				>
 					<h3 id="delete-account-title" class="pr-8 text-lg font-bold text-base-content">Delete account</h3>
 					<p id="delete-account-description" class="text-sm">
-						This action cannot be undone. Enter the last segment of your user ID to confirm.
+						This action cannot be undone. Your data will be lost forever. Enter the last segment of your user ID to confirm.
 					</p>
 					<p class="font-mono text-xs break-all text-base-content/70">
 						{user.id.slice(0, -userIdSegment.length)}<span class="font-semibold text-error">{userIdSegment}</span>
