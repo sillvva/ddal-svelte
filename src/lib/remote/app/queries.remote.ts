@@ -1,6 +1,6 @@
 import { privateEnv } from "#lib/env/private.js";
-import { getHomeError } from "#lib/server/effect/services/auth.js";
 import { getRequestEvent, query } from "$app/server";
+import { isDefined } from "@sillvva/utils";
 import { redirect } from "@sveltejs/kit";
 import * as v from "valibot";
 
@@ -35,7 +35,12 @@ export const home = query(
 
 		return {
 			redirectTo: destination,
-			error: getHomeError(error, errorDescription),
+			error: isDefined(error)
+				? {
+						message: errorDescription,
+						code: error.toUpperCase()
+					}
+				: null,
 			signupsEnabled: !privateEnv.DISABLE_SIGNUPS
 		};
 	}

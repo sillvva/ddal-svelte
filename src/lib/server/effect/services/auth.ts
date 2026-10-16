@@ -359,14 +359,3 @@ export class AuthService extends Context.Service<AuthService>()("AuthService", {
 }) {
 	static readonly layer = Layer.effect(this, this.make);
 }
-
-export function getHomeError(error: string | null, description: string | null) {
-	if (isDefined(error)) {
-		return {
-			message: description,
-			code: error.toUpperCase()
-		};
-	}
-
-	return null;
-}
