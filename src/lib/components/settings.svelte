@@ -167,120 +167,126 @@
 			</li>
 		</ul>
 		<div class="divider my-0 h-2.25"></div>
-		<ul class="menu w-full menu-lg px-0 [&_li>*]:px-2">
-			<li class="menu-title">
-				<span class="font-bold">Linked Accounts</span>
-			</li>
-			{#each authProviders as provider (provider.id)}
-				{const account = $derived(userAccounts.find((a) => a.providerId === provider.id))}
-				{#if account}
-					{const accountId = $derived(account.id)}
-					<li>
-						<span class="flex gap-2 hover:bg-transparent">
-							<span class={["size=6 iconify-color", provider.iconify]}></span>
-							<span class="flex-1">{provider.name}</span>
-							<span class="join flex items-center">
-								{#if provider.account}
-									{#if user.accounts.length > 1}
-										{#if !userAccounts.length}
-											<span class="iconify size-5 animate-spin mdi--loading"></span>
-										{:else}
-											{#if currentAccount?.providerId !== provider.id || account.name !== user.name || account.email !== user.email || account.image !== user.image}
-												<div class="tooltip" data-tip="Use this account">
+		<div class="collapse max-lg:collapse-arrow lg:collapse-open">
+			<input type="checkbox" class="lg:hidden" />
+			<div class="collapse-title px-2 font-semibold lg:hidden">Account Settings</div>
+			<div class="collapse-content px-0 pb-0">
+				<ul class="menu w-full menu-lg px-0 [&_li>*]:px-2">
+					<li class="menu-title">
+						<span class="font-bold">Linked Accounts</span>
+					</li>
+					{#each authProviders as provider (provider.id)}
+						{const account = $derived(userAccounts.find((a) => a.providerId === provider.id))}
+						{#if account}
+							{const accountId = $derived(account.id)}
+							<li>
+								<span class="flex gap-2 hover:bg-transparent">
+									<span class={["size=6 iconify-color", provider.iconify]}></span>
+									<span class="flex-1">{provider.name}</span>
+									<span class="join flex items-center">
+										{#if provider.account}
+											{#if user.accounts.length > 1}
+												{#if !userAccounts.length}
+													<span class="iconify size-5 animate-spin mdi--loading"></span>
+												{:else}
+													{#if currentAccount?.providerId !== provider.id || account.name !== user.name || account.email !== user.email || account.image !== user.image}
+														<div class="tooltip" data-tip="Use this account">
+															<button
+																class="btn join-item bg-base-300 btn-sm"
+																aria-label="Switch account"
+																disabled={!!API.auth.actions.updateUser.pending}
+																onclick={async () => {
+																	const result = await API.auth.actions.updateUser(account);
+																	const parsed = await parseEffectResult(result);
+																	if (parsed) global.app.settings.provider = provider.id;
+																	await tick();
+																	await API.app.queries.request().refresh();
+																}}
+															>
+																<span class="iconify size-5 mdi--accounts-switch"></span>
+															</button>
+														</div>
+													{/if}
 													<button
-														class="btn join-item bg-base-300 btn-sm"
-														aria-label="Switch account"
-														disabled={!!API.auth.actions.updateUser.pending}
+														class="btn join-item font-semibold btn-error btn-sm"
+														disabled={currentAccount?.providerId === provider.id || !!API.auth.actions.updateUser.pending}
 														onclick={async () => {
-															const result = await API.auth.actions.updateUser(account);
-															const parsed = await parseEffectResult(result);
-															if (parsed) global.app.settings.provider = provider.id;
-															await tick();
+															if (currentAccount?.providerId === provider.id || !!API.auth.actions.updateUser.pending) return;
+															if (!confirm("Are you sure you want to unlink this account?")) return;
+															const result = await authClient.unlinkAccount({ accountId });
+															if (result.error) {
+																return errorToast(
+																	result.error.message ||
+																		authClient.$ERROR_CODES[result.error.code as keyof typeof authClient.$ERROR_CODES].message
+																);
+															}
 															await API.app.queries.request().refresh();
 														}}
 													>
-														<span class="iconify size-5 mdi--accounts-switch"></span>
+														Unlink
 													</button>
-												</div>
+												{/if}
+											{:else}
+												<span class="iconify size-6 text-green-500 mdi--check"></span>
 											{/if}
+										{:else}
 											<button
-												class="btn join-item font-semibold btn-error btn-sm"
-												disabled={currentAccount?.providerId === provider.id || !!API.auth.actions.updateUser.pending}
-												onclick={async () => {
-													if (currentAccount?.providerId === provider.id || !!API.auth.actions.updateUser.pending) return;
-													if (!confirm("Are you sure you want to unlink this account?")) return;
-													const result = await authClient.unlinkAccount({ accountId });
-													if (result.error) {
-														return errorToast(
-															result.error.message ||
-																authClient.$ERROR_CODES[result.error.code as keyof typeof authClient.$ERROR_CODES].message
-														);
-													}
-													await API.app.queries.request().refresh();
-												}}
+												class="btn btn-primary btn-sm"
+												onclick={() =>
+													authClient
+														.linkSocial({
+															provider: provider.id
+														})
+														.then(async (result) => {
+															if (result.error?.code) {
+																return errorToast(
+																	authClient.$ERROR_CODES[result.error.code as keyof typeof authClient.$ERROR_CODES].message
+																);
+															}
+															await API.app.queries.request().refresh();
+														})}
 											>
-												Unlink
+												Link
 											</button>
 										{/if}
+									</span>
+								</span>
+							</li>
+						{/if}
+					{/each}
+				</ul>
+				<Passkeys />
+				{#if !session?.impersonatedBy}
+					<div class="collapse-arrow collapse my-2 border border-base-300 bg-base-100">
+						<input type="checkbox" />
+						<div class="collapse-title font-semibold text-error">Danger Zone</div>
+						<div class="collapse-content text-sm">
+							<form
+								{@attach bindDeleteAccountForm}
+								{...API.auth.forms.deleteAccount.enhance(async ({ submit }) => {
+									const result = await submit();
+									if (!result) errorToast("Failed to delete account");
+								})}
+							>
+								<button
+									type="button"
+									class="btn btn-block btn-error"
+									disabled={!!API.auth.forms.deleteAccount.pending}
+									onclick={openDeleteConfirm}
+								>
+									{#if API.auth.forms.deleteAccount.pending}
+										<span class="iconify size-5 animate-spin mdi--loading"></span>
 									{:else}
-										<span class="iconify size-6 text-green-500 mdi--check"></span>
+										<span class="iconify size-5 mdi--account-remove"></span>
 									{/if}
-								{:else}
-									<button
-										class="btn btn-primary btn-sm"
-										onclick={() =>
-											authClient
-												.linkSocial({
-													provider: provider.id
-												})
-												.then(async (result) => {
-													if (result.error?.code) {
-														return errorToast(
-															authClient.$ERROR_CODES[result.error.code as keyof typeof authClient.$ERROR_CODES].message
-														);
-													}
-													await API.app.queries.request().refresh();
-												})}
-									>
-										Link
-									</button>
-								{/if}
-							</span>
-						</span>
-					</li>
+									Delete account
+								</button>
+							</form>
+						</div>
+					</div>
 				{/if}
-			{/each}
-		</ul>
-		<Passkeys />
-		{#if !session?.impersonatedBy}
-			<div class="collapse-arrow collapse my-2 border border-base-300 bg-base-100">
-				<input type="checkbox" />
-				<div class="collapse-title font-semibold text-error">Danger Zone</div>
-				<div class="collapse-content text-sm">
-					<form
-						{@attach bindDeleteAccountForm}
-						{...API.auth.forms.deleteAccount.enhance(async ({ submit }) => {
-							const result = await submit();
-							if (!result) errorToast("Failed to delete account");
-						})}
-					>
-						<button
-							type="button"
-							class="btn btn-block btn-error"
-							disabled={!!API.auth.forms.deleteAccount.pending}
-							onclick={openDeleteConfirm}
-						>
-							{#if API.auth.forms.deleteAccount.pending}
-								<span class="iconify size-5 animate-spin mdi--loading"></span>
-							{:else}
-								<span class="iconify size-5 mdi--account-remove"></span>
-							{/if}
-							Delete account
-						</button>
-					</form>
-				</div>
 			</div>
-		{/if}
+		</div>
 		<div class="divider my-0 h-2.25"></div>
 		<ul class="menu w-full menu-lg px-0">
 			<li>
