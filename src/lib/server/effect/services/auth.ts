@@ -156,7 +156,7 @@ export class AuthService extends Context.Service<AuthService>()("AuthService", {
 
 		return {
 			api: auth.api,
-			guard: Effect.fn(function* (access: GuardAccess = null) {
+			guard: Effect.fn("AuthService.guard")(function* (access: GuardAccess = null) {
 				const auth = yield* authenticate();
 
 				if (auth.user.banned) {

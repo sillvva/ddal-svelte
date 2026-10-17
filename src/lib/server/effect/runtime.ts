@@ -6,6 +6,7 @@ import { Cause, Effect, Exit, Layer, ManagedRuntime } from "effect";
 import { DBService } from "../db";
 import { isTaggedError, type ErrorClass } from "./errors";
 import { AppLog } from "./logging";
+import { captureRemoteSource, labelMessage, remoteLabel } from "./remote-label.js";
 import { AdminService } from "./services/admin";
 import { AuthService } from "./services/auth";
 import { CharacterService } from "./services/characters";
@@ -35,6 +36,38 @@ export const createAppRuntime = () => {
 // run
 // -------------------------------------------------------------------------------------------------
 
+export type RunOptions = {
+	/** Remote export that owns this program, such as `auth.queries.getAccounts`. */
+	remote?: string;
+};
+
+type Runnable<R, F extends InstanceType<ErrorClass> | Cause.UnknownError, S extends Services, T extends Effect.Effect<R, F, S>, X> =
+	| Effect.Effect<R, F, S>
+	| (() => Effect.Effect<R, F, S>)
+	| (() => Generator<T, X>);
+
+function resolveRemote(options?: RunOptions) {
+	return options?.remote ?? remoteLabel(undefined, captureRemoteSource());
+}
+
+function programEffect<
+	R,
+	F extends InstanceType<ErrorClass> | Cause.UnknownError,
+	S extends Services,
+	T extends Effect.Effect<R, F, S>,
+	X
+>(remote: string | undefined, program: Runnable<R, F, S, T, X>) {
+	const body = function* () {
+		if (isFunction(program)) {
+			return yield* program();
+		} else {
+			return yield* program;
+		}
+	};
+
+	return remote ? Effect.fn(remote)(body) : Effect.fn(body);
+}
+
 // Overload signatures
 export async function run<
 	R,
@@ -42,10 +75,11 @@ export async function run<
 	S extends Services,
 	T extends Effect.Effect<R, F, S>,
 	X
->(program: () => Generator<T, X>): Promise<X>;
+>(program: () => Generator<T, X>, options?: RunOptions): Promise<X>;
 
 export async function run<R, F extends InstanceType<ErrorClass> | Cause.UnknownError, S extends Services>(
-	program: Effect.Effect<R, F, S> | (() => Effect.Effect<R, F, S>)
+	program: Effect.Effect<R, F, S> | (() => Effect.Effect<R, F, S>),
+	options?: RunOptions
 ): Promise<R>;
 
 // Implementation
@@ -55,23 +89,17 @@ export async function run<
 	S extends Services,
 	T extends Effect.Effect<R, F, S>,
 	X
->(program: Effect.Effect<R, F, S> | (() => Effect.Effect<R, F, S>) | (() => Generator<T, X>)): Promise<R | X> {
+>(program: Runnable<R, F, S, T, X>, options?: RunOptions): Promise<R | X> {
 	const event = getRequestEvent();
 	const rt = event.locals.runtime;
-
-	const effect = Effect.fn(function* () {
-		if (isFunction(program)) {
-			return yield* program();
-		} else {
-			return yield* program;
-		}
-	});
+	const remote = resolveRemote(options);
+	const effect = programEffect(remote, program);
 
 	const result = await rt.runPromiseExit(effect());
 	return Exit.match(result, {
 		onSuccess: (result) => result,
 		onFailure: (cause) => {
-			const err = handleCause(cause);
+			const err = handleCause(cause, remote);
 			if (isRedirectFailure(err)) {
 				redirect(err.status, err.redirectTo);
 			} else {
@@ -117,10 +145,11 @@ export async function runSafe<
 	S extends Services,
 	T extends Effect.Effect<R, F, S>,
 	X
->(program: () => Generator<T, X>): Promise<EffectResult<X>>;
+>(program: () => Generator<T, X>, options?: RunOptions): Promise<EffectResult<X>>;
 
 export async function runSafe<R, F extends InstanceType<ErrorClass> | Cause.UnknownError, S extends Services>(
-	program: Effect.Effect<R, F, S> | (() => Effect.Effect<R, F, S>)
+	program: Effect.Effect<R, F, S> | (() => Effect.Effect<R, F, S>),
+	options?: RunOptions
 ): Promise<EffectResult<R>>;
 
 // Implementation
@@ -130,22 +159,16 @@ export async function runSafe<
 	S extends Services,
 	T extends Effect.Effect<R, F, S>,
 	X
->(program: Effect.Effect<R, F, S> | (() => Effect.Effect<R, F, S>) | (() => Generator<T, X>)): Promise<EffectResult<R | X>> {
+>(program: Runnable<R, F, S, T, X>, options?: RunOptions): Promise<EffectResult<R | X>> {
 	const event = getRequestEvent();
 	const rt = event.locals.runtime;
-
-	const effect = Effect.fn(function* () {
-		if (isFunction(program)) {
-			return yield* program();
-		} else {
-			return yield* program;
-		}
-	});
+	const remote = resolveRemote(options);
+	const effect = programEffect(remote, program);
 
 	const result = await rt.runPromiseExit(effect());
 	return Exit.match(result, {
 		onSuccess: (result) => ({ ok: true, data: result }),
-		onFailure: (cause) => ({ ok: false, error: handleCause(cause) })
+		onFailure: (cause) => ({ ok: false, error: handleCause(cause, remote) })
 	});
 }
 
@@ -153,12 +176,19 @@ export async function runSafe<
 // handleCause
 // -------------------------------------------------------------------------------------------------
 
-export function handleCause<F extends InstanceType<ErrorClass> | Cause.UnknownError>(cause: Cause.Cause<F>): EffectError {
+export function handleCause<F extends InstanceType<ErrorClass> | Cause.UnknownError>(
+	cause: Cause.Cause<F>,
+	remote?: string
+): EffectError {
 	const reason = cause.reasons.find((entry) => Cause.isFailReason(entry) || Cause.isDieReason(entry)) ?? cause.reasons[0];
 	let name = `Unknown${reason?._tag ?? "Empty"}`;
 	let message = Cause.pretty(cause);
 	let status: NumericRange<300, 599> = 500;
 	let extra: Record<string, unknown> = {};
+
+	const report = (details: Record<string, unknown>) => {
+		Effect.runFork(AppLog.error(labelMessage(message, remote), remote ? { ...details, remote } : details));
+	};
 
 	if (reason && Cause.isFailReason(reason)) {
 		const error = reason.error;
@@ -173,7 +203,7 @@ export function handleCause<F extends InstanceType<ErrorClass> | Cause.UnknownEr
 				: omit(error, ["_tag", "pipe", "name", "message"])
 		);
 
-		Effect.runFork(AppLog.error(message, extra));
+		report(extra);
 	}
 
 	if (reason && Cause.isDieReason(reason)) {
@@ -206,7 +236,7 @@ export function handleCause<F extends InstanceType<ErrorClass> | Cause.UnknownEr
 			}
 			if ("message" in defect && typeof defect.message === "string") {
 				message = defect.message;
-				Effect.runFork(AppLog.error(message, extra));
+				report(extra);
 			}
 		}
 	}

@@ -16,6 +16,7 @@ import type { StandardSchemaV1 } from "@standard-schema/spec";
 import { invalid, redirect, type RequestEvent } from "@sveltejs/kit";
 import { Cause, Effect } from "effect";
 import type { ErrorClass } from "./errors";
+import { captureRemoteSource, remoteLabel } from "./remote-label.js";
 import { run, runSafe, type ClientEffectResult, type EffectResult, type Services } from "./runtime";
 
 // -------------------------------------------------------------------------------------------------
@@ -39,6 +40,15 @@ type AppGen<A, E extends AppError, R extends Services, Y extends Effect.Effect<u
 function stripStack<A>(result: EffectResult<A>): ClientEffectResult<A> {
 	if (result.ok) return result;
 	return { ok: false, error: omit(result.error, ["stack"]) };
+}
+
+/** Remember the `*.remote.ts` caller, then read SvelteKit's export name when the function runs. */
+function bindRemote<T extends object>(create: (label: () => string | undefined) => T): T {
+	const source = captureRemoteSource();
+	const box: { current?: object } = {};
+	const created = create(() => remoteLabel(box.current, source));
+	box.current = created;
+	return created;
 }
 
 function authed<A>(
@@ -86,12 +96,14 @@ export function guardedQuery<
 ) {
 	// Handle the case with schema parameter (first overload)
 	if (isStandardSchema(schemaOrFn) && isFunction(fnOrAccess)) {
-		return query(schemaOrFn, (output) => run(authed(access, (auth) => fnOrAccess(output, auth))));
+		return bindRemote((label) =>
+			query(schemaOrFn, (output) => run(authed(access, (auth) => fnOrAccess(output, auth)), { remote: label() }))
+		);
 	}
 
 	// Handle the case where there's no schema parameter (second overload)
 	if (isFunction(schemaOrFn) && !isFunction(fnOrAccess)) {
-		return query(() => run(authed(fnOrAccess ?? null, (auth) => schemaOrFn(auth))));
+		return bindRemote((label) => query(() => run(authed(fnOrAccess ?? null, (auth) => schemaOrFn(auth)), { remote: label() })));
 	}
 
 	throw new Error("Invalid arguments");
@@ -132,18 +144,22 @@ export function guardedCommand<
 ) {
 	// Handle the case with schema parameter (first overload)
 	if (isStandardSchema(schemaOrFn) && isFunction(fnOrAccess)) {
-		return command(schemaOrFn, async (output) => {
-			const result = await runSafe(authed(access, (auth) => fnOrAccess(output, auth)));
-			return stripStack(result);
-		});
+		return bindRemote((label) =>
+			command(schemaOrFn, async (output) => {
+				const result = await runSafe(authed(access, (auth) => fnOrAccess(output, auth)), { remote: label() });
+				return stripStack(result);
+			})
+		);
 	}
 
 	// Handle the case where there's no schema parameter (second overload)
 	if (isFunction(schemaOrFn) && !isFunction(fnOrAccess)) {
-		return command("unchecked", async (input: Input) => {
-			const result = await runSafe(authed(fnOrAccess ?? null, (auth) => schemaOrFn(input, auth)));
-			return stripStack(result);
-		});
+		return bindRemote((label) =>
+			command("unchecked", async (input: Input) => {
+				const result = await runSafe(authed(fnOrAccess ?? null, (auth) => schemaOrFn(input, auth)), { remote: label() });
+				return stripStack(result);
+			})
+		);
 	}
 
 	throw new Error("Invalid arguments");
@@ -240,27 +256,33 @@ export function guardedForm<
 			output: StandardSchemaV1.InferOutput<Schema>,
 			auth: FormAuth<StandardSchemaV1.InferInput<Schema>>
 		) => AppGen<A, E, R, Y>;
-		return formWithSchema(schemaOrFn, async (output, issue) => {
-			const result = await runSafe(authed(access, (auth) => fn(output, { issue, ...auth })));
-			return parseResult(result);
-		});
+		return bindRemote((label) =>
+			formWithSchema(schemaOrFn, async (output, issue) => {
+				const result = await runSafe(authed(access, (auth) => fn(output, { issue, ...auth })), { remote: label() });
+				return parseResult(result);
+			})
+		);
 	}
 
 	// Handle the case where there's no schema parameter (second overload)
 	if (isString(schemaOrFn) && isFunction(fnOrAccess)) {
 		const fn = fnOrAccess as (input: Input, auth: FormAuth<Input>) => AppGen<A, E, R, Y>;
-		return form("unchecked", async (input: Input, issue) => {
-			const result = await runSafe(authed(access, (auth) => fn(input, { issue, ...auth })));
-			return parseResult(result);
-		});
+		return bindRemote((label) =>
+			form("unchecked", async (input: Input, issue) => {
+				const result = await runSafe(authed(access, (auth) => fn(input, { issue, ...auth })), { remote: label() });
+				return parseResult(result);
+			})
+		);
 	}
 
 	// Handle the case where there's no schema parameter (third overload)
 	if (isFunction(schemaOrFn) && !isFunction(fnOrAccess)) {
-		return form(async () => {
-			const result = await runSafe(authed(fnOrAccess ?? null, (auth) => schemaOrFn({ ...auth })));
-			return parseResult(result);
-		});
+		return bindRemote((label) =>
+			form(async () => {
+				const result = await runSafe(authed(fnOrAccess ?? null, (auth) => schemaOrFn({ ...auth })), { remote: label() });
+				return parseResult(result);
+			})
+		);
 	}
 
 	throw new Error("Invalid arguments");
