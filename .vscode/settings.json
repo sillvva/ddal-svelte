@@ -1,4 +1,5 @@
 {
+	"js/ts.tsdk.path": "node_modules/typescript/lib",
 	"editor.formatOnSave": true,
 	"editor.formatOnPaste": true,
 	"explorer.fileNesting.patterns": {
@@ -10,5 +11,5 @@
 		"source.fixAll.sortJSON": "never",
 		"source.organizeImports": "explicit",
 		"source.sortImports": "explicit"
-	},
+	}
 }
