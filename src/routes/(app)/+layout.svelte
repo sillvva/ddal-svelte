@@ -18,7 +18,6 @@
 	let { children } = $props();
 
 	const global = getGlobal();
-	await API.auth.queries.requireOnboarded();
 	const { user } = $derived(await API.app.queries.request());
 
 	let settingsOpen = $state(false);
@@ -87,7 +86,7 @@
 					<CommandTray />
 
 					{#if user.role === "admin"}
-						<a href="/admin/users" class="btn mr-1 p-2 btn-ghost max-md:hidden" aria-label="Admin">
+						<a href="/admin/users" class="btn mr-1 btn-ghost p-2 max-md:hidden" aria-label="Admin">
 							<span class="iconify size-6 mdi--administrator"></span>
 						</a>
 					{/if}

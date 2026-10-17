@@ -2,7 +2,6 @@
 	import { authClient } from "#lib/auth.js";
 	import { BLANK_CHARACTER, PROVIDERS } from "#lib/constants.js";
 	import { errorToast } from "#lib/factories.svelte.js";
-	import { getAccounts } from "#lib/remote/auth/queries.remote.js";
 	import * as API from "#lib/remote/index.js";
 	import { getGlobal } from "#lib/stores.svelte.js";
 	import { hotkey, parseEffectResult } from "#lib/util.js";
@@ -51,7 +50,7 @@
 		confirmation = "";
 	}
 
-	const userAccounts = $derived(await getAccounts());
+	const userAccounts = $derived(user ? await API.auth.queries.getAccounts() : []);
 	const currentAccount = $derived(userAccounts.find((a) => a.providerId === global.app.settings.provider));
 	const authProviders = $derived(
 		PROVIDERS.map((p) => ({

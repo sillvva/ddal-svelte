@@ -6,11 +6,6 @@ export const getAccounts = guardedQuery(function* () {
 	return yield* Auth.get.accounts();
 });
 
-/** Sends unfinished passkey signups to onboarding and everyone else through the normal auth guard. */
-export const requireOnboarded = guardedQuery(function* () {
-	return true;
-});
-
 export const onboarding = guardedQuery(function* () {
 	return true;
 }, "onboarding");
