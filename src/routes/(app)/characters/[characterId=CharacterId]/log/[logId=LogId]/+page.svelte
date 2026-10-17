@@ -102,7 +102,7 @@
 							}}
 							clearable
 							onclear={() => (data.dm = defaultDM(user.id))}
-							link={data.dm.id ? `/dms/${data.dm.id}` : ""}
+							link={data.dm.id && data.dm.name ? `/dms/${data.dm.id}` : ""}
 							placeholder={dms.find((dm) => dm.isUser)?.name || user.name}
 						/>
 					</Control>
