@@ -5,16 +5,17 @@
 	import InputWrapper from "./input-wrapper.svelte";
 
 	type InputTypeMap =
-		| { type?: "text"; field: RemoteFormField<string> }
+		| { type?: "text"; field: RemoteFormField<string>; value?: string }
 		| {
-				type: "email" | "password" | "url" | "tel" | "search" | "button" | "reset" | "color" | "button";
+				type: "email" | "password" | "url" | "tel" | "search" | "button" | "reset" | "color" | "button" | "hidden";
 				field: RemoteFormField<string>;
+				value?: string;
 		  }
-		| { type: "number"; field: RemoteFormField<number> }
-		| { type: "range"; field: RemoteFormField<number> }
+		| { type: "number"; field: RemoteFormField<number>; value?: number }
+		| { type: "range"; field: RemoteFormField<number>; value?: number }
 		| {
 				type: "checkbox";
-				value?: undefined;
+				value?: boolean;
 				field: RemoteFormField<boolean>;
 		  }
 		| {
@@ -25,11 +26,6 @@
 		| {
 				type: "radio";
 				value: string;
-				field: RemoteFormField<string>;
-		  }
-		| {
-				type: "hidden";
-				value?: string;
 				field: RemoteFormField<string>;
 		  }
 		| {
@@ -61,21 +57,19 @@
 	const attributes = $derived({
 		...rest,
 		field: undefined,
-		...(map.type === "hidden"
-			? map.field.as(map.type, typeof map.value === "string" ? map.value : map.field.value() || "")
-			: map.type === "checkbox" && typeof map.value === "string"
+		...(map.type === "checkbox"
+			? typeof map.value === "string"
 				? map.field.as("checkbox", map.value)
-				: map.type === "radio" || map.type === "submit"
-					? map.field.as(map.type, map.value)
-					: map.type === "number" || map.type === "range"
+				: map.field.as("checkbox", map.value)
+			: map.type === "radio" || map.type === "submit"
+				? map.field.as(map.type, map.value)
+				: map.type === "number" || map.type === "range"
+					? map.field.as(map.type, map.field.value() ?? map.value)
+					: map.type === "file"
 						? map.field.as(map.type)
-						: map.type === "file"
+						: map.type === "file multiple"
 							? map.field.as(map.type)
-							: map.type === "file multiple"
-								? map.field.as(map.type)
-								: map.type === "checkbox"
-									? map.field.as("checkbox")
-									: map.field.as(map.type || "text"))
+							: map.field.as(map.type || "text", map.field.value() ?? map.value ?? ""))
 	});
 	const name = $derived(attributes.name);
 	const issues = $derived(map.field.issues());
