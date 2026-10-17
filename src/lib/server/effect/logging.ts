@@ -2,6 +2,7 @@ import { privateEnv } from "#lib/env/private.js";
 import type { UserId } from "#lib/schemas.js";
 import { dev } from "$app/env";
 import { getRequestEvent } from "$app/server";
+import { omit } from "@sillvva/utils";
 import chalk from "chalk";
 import { Console, Effect, Layer, LogLevel, Logger, References } from "effect";
 import { AdminService } from "./services/admin";
@@ -12,7 +13,7 @@ export type Annotations = {
 	impersonatedBy?: UserId | null;
 	routeId: string | null;
 	remote?: string;
-	params: Partial<Record<string, string>>;
+	params?: Partial<Record<string, string>>;
 	extra: Record<string, unknown>;
 };
 
@@ -71,25 +72,15 @@ const dbLogger = Logger.layer([
 function annotate(extra: Record<PropertyKey, unknown> = {}) {
 	const event = getRequestEvent();
 	const remote = typeof extra.remote === "string" ? extra.remote : undefined;
-	const details = remote ? omitRemote(extra) : extra;
 	return Effect.annotateLogs({
-		userId: event.locals.user?.id,
-		username: event.locals.user?.name,
-		impersonatedBy: event.locals.session?.impersonatedBy,
+		...(event.locals.user?.id ? { userId: event.locals.user.id } : {}),
+		...(event.locals.user?.name ? { username: event.locals.user.name } : {}),
+		...(event.locals.session?.impersonatedBy ? { impersonatedBy: event.locals.session.impersonatedBy } : {}),
 		routeId: event.locals.routeId,
 		...(remote ? { remote } : {}),
-		params: event.locals.params,
-		extra: details
+		...(Object.keys(event.locals.params).length > 0 ? { params: event.locals.params } : {}),
+		extra: omit(extra, ["remote"])
 	} satisfies Annotations);
-}
-
-function omitRemote(extra: Record<PropertyKey, unknown>) {
-	const details: Record<PropertyKey, unknown> = {};
-	for (const key of Reflect.ownKeys(extra)) {
-		if (key === "remote") continue;
-		details[key] = extra[key];
-	}
-	return details;
 }
 
 function withLogLevel<A, E, R>(effect: Effect.Effect<A, E, R>) {

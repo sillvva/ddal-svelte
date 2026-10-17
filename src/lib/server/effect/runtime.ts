@@ -6,7 +6,7 @@ import { Cause, Effect, Exit, Layer, ManagedRuntime } from "effect";
 import { DBService } from "../db";
 import { isTaggedError, type ErrorClass } from "./errors";
 import { AppLog } from "./logging";
-import { captureRemoteSource, labelMessage, remoteLabel } from "./remote-label.js";
+import { captureRemoteSource, remoteLabel } from "./remote-label.js";
 import { AdminService } from "./services/admin";
 import { AuthService } from "./services/auth";
 import { CharacterService } from "./services/characters";
@@ -41,10 +41,13 @@ export type RunOptions = {
 	remote?: string;
 };
 
-type Runnable<R, F extends InstanceType<ErrorClass> | Cause.UnknownError, S extends Services, T extends Effect.Effect<R, F, S>, X> =
-	| Effect.Effect<R, F, S>
-	| (() => Effect.Effect<R, F, S>)
-	| (() => Generator<T, X>);
+type Runnable<
+	R,
+	F extends InstanceType<ErrorClass> | Cause.UnknownError,
+	S extends Services,
+	T extends Effect.Effect<R, F, S>,
+	X
+> = Effect.Effect<R, F, S> | (() => Effect.Effect<R, F, S>) | (() => Generator<T, X>);
 
 function resolveRemote(options?: RunOptions) {
 	return options?.remote ?? remoteLabel(undefined, captureRemoteSource());
@@ -184,11 +187,7 @@ export function handleCause<F extends InstanceType<ErrorClass> | Cause.UnknownEr
 	let name = `Unknown${reason?._tag ?? "Empty"}`;
 	let message = Cause.pretty(cause);
 	let status: NumericRange<300, 599> = 500;
-	let extra: Record<string, unknown> = {};
-
-	const report = (details: Record<string, unknown>) => {
-		Effect.runFork(AppLog.error(labelMessage(message, remote), remote ? { ...details, remote } : details));
-	};
+	let extra: Record<string, unknown> = { remote };
 
 	if (reason && Cause.isFailReason(reason)) {
 		const error = reason.error;
@@ -203,7 +202,7 @@ export function handleCause<F extends InstanceType<ErrorClass> | Cause.UnknownEr
 				: omit(error, ["_tag", "pipe", "name", "message"])
 		);
 
-		report(extra);
+		Effect.runFork(AppLog.error(message, extra));
 	}
 
 	if (reason && Cause.isDieReason(reason)) {
@@ -236,7 +235,7 @@ export function handleCause<F extends InstanceType<ErrorClass> | Cause.UnknownEr
 			}
 			if ("message" in defect && typeof defect.message === "string") {
 				message = defect.message;
-				report(extra);
+				Effect.runFork(AppLog.error(message, extra));
 			}
 		}
 	}

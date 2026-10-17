@@ -44,14 +44,3 @@ export function remoteLabel(fn: unknown, source: RemoteSource | undefined): stri
 	if (source) return `${source.id}:${source.line}`;
 	return undefined;
 }
-
-/** Keep the error tag at the start so `RedirectError` logs stay classified. */
-export function labelMessage(message: string, remote: string | undefined): string {
-	if (!remote) return message;
-
-	const newline = message.indexOf("\n");
-	const head = newline === -1 ? message : message.slice(0, newline);
-	const tail = newline === -1 ? "" : message.slice(newline);
-	const labeled = head.includes(": ") ? head.replace(": ", ` [${remote}]: `) : `${head} [${remote}]`;
-	return `${labeled}${tail}`;
-}
