@@ -55,7 +55,7 @@
 	const authProviders = $derived(
 		PROVIDERS.map((p) => ({
 			...p,
-			account: user?.accounts.find((a) => a.providerId === p.id)
+			account: userAccounts.find((a) => a.providerId === p.id)
 		}))
 	);
 
@@ -175,83 +175,73 @@
 						<span class="font-bold">Linked Accounts</span>
 					</li>
 					{#each authProviders as provider (provider.id)}
-						{const account = $derived(userAccounts.find((a) => a.providerId === provider.id))}
-						{#if account}
-							{const accountId = $derived(account.id)}
-							<li>
-								<span class="flex gap-2 hover:bg-transparent">
-									<span class={["size=6 iconify-color", provider.iconify]}></span>
-									<span class="flex-1">{provider.name}</span>
-									<span class="join flex items-center">
-										{#if provider.account}
-											{#if user.accounts.length > 1}
-												{#if !userAccounts.length}
-													<span class="iconify size-5 animate-spin mdi--loading"></span>
-												{:else}
-													{#if currentAccount?.providerId !== provider.id || account.name !== user.name || account.email !== user.email || account.image !== user.image}
-														<div class="tooltip" data-tip="Use this account">
-															<button
-																class="btn join-item bg-base-300 btn-sm"
-																aria-label="Switch account"
-																disabled={!!API.auth.actions.updateUser.pending}
-																onclick={async () => {
-																	const result = await API.auth.actions.updateUser(account);
-																	const parsed = await parseEffectResult(result);
-																	if (parsed) global.app.settings.provider = provider.id;
-																	await tick();
-																	await API.app.queries.request().refresh();
-																}}
-															>
-																<span class="iconify size-5 mdi--accounts-switch"></span>
-															</button>
-														</div>
-													{/if}
-													<button
-														class="btn join-item font-semibold btn-error btn-sm"
-														disabled={currentAccount?.providerId === provider.id || !!API.auth.actions.updateUser.pending}
-														onclick={async () => {
-															if (currentAccount?.providerId === provider.id || !!API.auth.actions.updateUser.pending) return;
-															if (!confirm("Are you sure you want to unlink this account?")) return;
-															const result = await authClient.unlinkAccount({ accountId });
-															if (result.error) {
-																return errorToast(
-																	result.error.message ||
-																		authClient.$ERROR_CODES[result.error.code as keyof typeof authClient.$ERROR_CODES].message
-																);
-															}
-															await API.app.queries.request().refresh();
-														}}
-													>
-														Unlink
-													</button>
-												{/if}
-											{:else}
-												<span class="iconify size-6 text-green-500 mdi--check"></span>
-											{/if}
-										{:else}
-											<button
-												class="btn btn-primary btn-sm"
-												onclick={() =>
-													authClient
-														.linkSocial({
-															provider: provider.id
-														})
-														.then(async (result) => {
-															if (result.error?.code) {
-																return errorToast(
-																	authClient.$ERROR_CODES[result.error.code as keyof typeof authClient.$ERROR_CODES].message
-																);
-															}
-															await API.app.queries.request().refresh();
-														})}
-											>
-												Link
-											</button>
+						<li>
+							<span class="flex gap-2 hover:bg-transparent">
+								<span class={["size=6 iconify-color", provider.iconify]}></span>
+								<span class="flex-1">{provider.name}</span>
+								<span class="join flex items-center">
+									{#if provider.account}
+										{const account = $derived(provider.account)}
+										{const accountId = $derived(account.id)}
+										{#if currentAccount?.providerId !== provider.id || account.name !== user.name || account.email !== user.email || account.image !== user.image}
+											<div class="tooltip" data-tip="Use this account">
+												<button
+													class="btn join-item bg-base-300 btn-sm"
+													aria-label="Switch account"
+													disabled={!!API.auth.actions.updateUser.pending}
+													onclick={async () => {
+														const result = await API.auth.actions.updateUser(account);
+														const parsed = await parseEffectResult(result);
+														if (parsed) global.app.settings.provider = provider.id;
+														await tick();
+														await API.app.queries.request().refresh();
+													}}
+												>
+													<span class="iconify size-5 mdi--accounts-switch"></span>
+												</button>
+											</div>
 										{/if}
-									</span>
+										<button
+											class="btn join-item font-semibold btn-error btn-sm"
+											disabled={currentAccount?.providerId === provider.id || !!API.auth.actions.updateUser.pending}
+											onclick={async () => {
+												if (currentAccount?.providerId === provider.id || !!API.auth.actions.updateUser.pending) return;
+												if (!confirm("Are you sure you want to unlink this account?")) return;
+												const result = await authClient.unlinkAccount({ accountId });
+												if (result.error) {
+													return errorToast(
+														result.error.message ||
+															authClient.$ERROR_CODES[result.error.code as keyof typeof authClient.$ERROR_CODES].message
+													);
+												}
+												await API.app.queries.request().refresh();
+											}}
+										>
+											Unlink
+										</button>
+									{:else}
+										<button
+											class="btn btn-primary btn-sm"
+											onclick={() =>
+												authClient
+													.linkSocial({
+														provider: provider.id
+													})
+													.then(async (result) => {
+														if (result.error?.code) {
+															return errorToast(
+																authClient.$ERROR_CODES[result.error.code as keyof typeof authClient.$ERROR_CODES].message
+															);
+														}
+														await API.app.queries.request().refresh();
+													})}
+										>
+											Link
+										</button>
+									{/if}
 								</span>
-							</li>
-						{/if}
+							</span>
+						</li>
 					{/each}
 				</ul>
 				<Passkeys />
