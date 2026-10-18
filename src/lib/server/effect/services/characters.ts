@@ -94,6 +94,21 @@ export class CharacterService extends Context.Service<CharacterService>()("Chara
 					}
 
 					return characters;
+				}),
+
+				select: Effect.fn("CharacterService.get.select")(function* (userId: UserId) {
+					return yield* runQuery(
+						db.query.characters.findMany({
+							columns: {
+								id: true,
+								name: true
+							},
+							where: {
+								userId: { eq: userId },
+								name: { NOT: PlaceholderName }
+							}
+						})
+					).pipe(Effect.tapError(() => AppLog.debug("CharacterService.get.select", { userId })));
 				})
 			},
 

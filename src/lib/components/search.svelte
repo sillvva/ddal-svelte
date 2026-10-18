@@ -1,7 +1,7 @@
 <script lang="ts">
+	import { hotkey } from "#lib/util.js";
 	import { goto } from "$app/navigation";
 	import { page } from "$app/state";
-	import { hotkey } from "#lib/util.js";
 	import { debounce } from "@sillvva/utils";
 	import { onMount } from "svelte";
 	import type { HTMLInputAttributes } from "svelte/elements";
@@ -15,6 +15,7 @@
 
 	const url = new SvelteURL(page.url.href);
 	const value = $derived(url.searchParams.get(name) ?? "");
+	let ref: HTMLInputElement;
 
 	const updateValue = debounce((val: string) => {
 		updateSearch(val);
@@ -38,8 +39,6 @@
 	onMount(() => {
 		if (value) updateSearch(value, true);
 	});
-
-	let ref: HTMLInputElement;
 </script>
 
 <form
@@ -52,7 +51,7 @@
 	}}
 >
 	<search
-		class="input focus-within:border-primary sm:input-sm flex w-full items-center gap-2 max-sm:*:text-base noscript:pr-0"
+		class="input flex w-full items-center gap-2 focus-within:border-primary max-sm:*:text-base sm:input-sm noscript:pr-0"
 		class:pr-0={!!value.trim()}
 		{@attach hotkey([
 			[
@@ -64,9 +63,9 @@
 		])}
 	>
 		<input
-			type={type}
-			name={name}
-			value={value}
+			{type}
+			{name}
+			{value}
 			bind:this={ref}
 			class="w-full flex-1"
 			aria-label={rest.placeholder || "Search"}
@@ -86,7 +85,7 @@
 			{#if value?.trim()}
 				<button
 					type="button"
-					class="btn btn-sm btn-ghost"
+					class="btn btn-ghost btn-sm"
 					onclick={() => {
 						url.searchParams.delete(name);
 						updateSearch("");
@@ -100,7 +99,7 @@
 			{/if}
 		</span>
 		<span class="hidden noscript:inline">
-			<button type="submit" class="btn btn-sm btn-ghost" aria-label="Search">
+			<button type="submit" class="btn btn-ghost btn-sm" aria-label="Search">
 				<span class="iconify mdi--magnify"></span>
 			</button>
 		</span>

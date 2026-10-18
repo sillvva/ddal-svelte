@@ -1,12 +1,11 @@
-import { getRequestEvent, query } from "$app/server";
 import { defaultCharacter } from "#lib/entities.js";
 import { characterIdParamSchema } from "#lib/schemas.js";
 import { RedirectError } from "#lib/server/effect/errors.js";
 import { guardedQuery } from "#lib/server/effect/guarded.js";
 import { run } from "#lib/server/effect/runtime.js";
 import { CharacterService } from "#lib/server/effect/services/characters.js";
+import { getRequestEvent, query } from "$app/server";
 import { redirect } from "@sveltejs/kit";
-import { Effect } from "effect";
 import * as v from "valibot";
 
 export const getAll = guardedQuery(function* ({ user }) {
@@ -16,7 +15,7 @@ export const getAll = guardedQuery(function* ({ user }) {
 
 export const getAllSelect = guardedQuery(function* ({ user }) {
 	const Characters = yield* CharacterService;
-	return yield* Characters.get.all(user.id).pipe(Effect.map((characters) => characters.map((c) => ({ id: c.id, name: c.name }))));
+	return yield* Characters.get.select(user.id);
 });
 
 // eslint-disable-next-line custom/enforce-guarded-functions
