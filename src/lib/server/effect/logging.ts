@@ -71,13 +71,12 @@ const dbLogger = Logger.layer([
 
 function annotate(extra: Record<PropertyKey, unknown> = {}) {
 	const event = getRequestEvent();
-	const remote = typeof extra.remote === "string" ? extra.remote : undefined;
 	return Effect.annotateLogs({
 		...(event.locals.user?.id ? { userId: event.locals.user.id } : {}),
 		...(event.locals.user?.name ? { username: event.locals.user.name } : {}),
 		...(event.locals.session?.impersonatedBy ? { impersonatedBy: event.locals.session.impersonatedBy } : {}),
 		routeId: event.locals.routeId,
-		...(remote ? { remote } : {}),
+		...(extra.remote && typeof extra.remote === "string" ? { remote: extra.remote } : {}),
 		...(Object.keys(event.locals.params).length > 0 ? { params: event.locals.params } : {}),
 		extra: omit(extra, ["remote"])
 	} satisfies Annotations);
