@@ -6,7 +6,7 @@ import { Cause, Effect, Exit, Layer, ManagedRuntime } from "effect";
 import { DBService } from "../db";
 import { isTaggedError, type ErrorClass } from "./errors";
 import { AppLog } from "./logging";
-import { captureRemoteSource, remoteLabel } from "./remote-label.js";
+import { remoteLabel } from "./remote-label.js";
 import { AdminService } from "./services/admin";
 import { AuthService } from "./services/auth";
 import { CharacterService } from "./services/characters";
@@ -50,7 +50,7 @@ type Runnable<
 > = Effect.Effect<R, F, S> | (() => Effect.Effect<R, F, S>) | (() => Generator<T, X>);
 
 function resolveRemote(options?: RunOptions) {
-	return options?.remote ?? remoteLabel(undefined, captureRemoteSource());
+	return options?.remote ?? remoteLabel();
 }
 
 function programEffect<

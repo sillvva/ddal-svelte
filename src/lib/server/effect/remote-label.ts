@@ -37,7 +37,7 @@ function remoteExportName(fn: unknown): string | undefined {
  * `auth.queries.getAccounts` when SvelteKit has assigned the export name.
  * Falls back to `auth.queries:12` for a direct `run()` call in a remote module.
  */
-export function remoteLabel(fn: unknown, source: RemoteSource | undefined): string | undefined {
+export function remoteLabel(fn?: unknown, source = captureRemoteSource()): string | undefined {
 	const name = remoteExportName(fn);
 	if (source && name) return `${source.id}.${name}`;
 	if (name) return name;
