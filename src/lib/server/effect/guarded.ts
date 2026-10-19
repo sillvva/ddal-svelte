@@ -97,13 +97,21 @@ export function guardedQuery<
 	// Handle the case with schema parameter (first overload)
 	if (isStandardSchema(schemaOrFn) && isFunction(fnOrAccess)) {
 		return bindRemote((label) =>
-			query(schemaOrFn, (output) => run(authed(access, (auth) => fnOrAccess(output, auth)), { remote: label() }))
+			query(schemaOrFn, (output) => {
+				const program = authed(access, (auth) => fnOrAccess(output, auth));
+				return run(program, { remote: label() });
+			})
 		);
 	}
 
 	// Handle the case where there's no schema parameter (second overload)
 	if (isFunction(schemaOrFn) && !isFunction(fnOrAccess)) {
-		return bindRemote((label) => query(() => run(authed(fnOrAccess ?? null, (auth) => schemaOrFn(auth)), { remote: label() })));
+		return bindRemote((label) =>
+			query(() => {
+				const program = authed(fnOrAccess ?? null, (auth) => schemaOrFn(auth));
+				return run(program, { remote: label() });
+			})
+		);
 	}
 
 	throw new Error("Invalid arguments");
@@ -146,7 +154,8 @@ export function guardedCommand<
 	if (isStandardSchema(schemaOrFn) && isFunction(fnOrAccess)) {
 		return bindRemote((label) =>
 			command(schemaOrFn, async (output) => {
-				const result = await runSafe(authed(access, (auth) => fnOrAccess(output, auth)), { remote: label() });
+				const program = authed(access, (auth) => fnOrAccess(output, auth));
+				const result = await runSafe(program, { remote: label() });
 				return stripStack(result);
 			})
 		);
@@ -156,7 +165,8 @@ export function guardedCommand<
 	if (isFunction(schemaOrFn) && !isFunction(fnOrAccess)) {
 		return bindRemote((label) =>
 			command("unchecked", async (input: Input) => {
-				const result = await runSafe(authed(fnOrAccess ?? null, (auth) => schemaOrFn(input, auth)), { remote: label() });
+				const program = authed(fnOrAccess ?? null, (auth) => schemaOrFn(input, auth));
+				const result = await runSafe(program, { remote: label() });
 				return stripStack(result);
 			})
 		);
@@ -258,7 +268,8 @@ export function guardedForm<
 		) => AppGen<A, E, R, Y>;
 		return bindRemote((label) =>
 			formWithSchema(schemaOrFn, async (output, issue) => {
-				const result = await runSafe(authed(access, (auth) => fn(output, { issue, ...auth })), { remote: label() });
+				const program = authed(access, (auth) => fn(output, { issue, ...auth }));
+				const result = await runSafe(program, { remote: label() });
 				return parseResult(result);
 			})
 		);
@@ -269,7 +280,8 @@ export function guardedForm<
 		const fn = fnOrAccess as (input: Input, auth: FormAuth<Input>) => AppGen<A, E, R, Y>;
 		return bindRemote((label) =>
 			form("unchecked", async (input: Input, issue) => {
-				const result = await runSafe(authed(access, (auth) => fn(input, { issue, ...auth })), { remote: label() });
+				const program = authed(access, (auth) => fn(input, { issue, ...auth }));
+				const result = await runSafe(program, { remote: label() });
 				return parseResult(result);
 			})
 		);
@@ -279,7 +291,8 @@ export function guardedForm<
 	if (isFunction(schemaOrFn) && !isFunction(fnOrAccess)) {
 		return bindRemote((label) =>
 			form(async () => {
-				const result = await runSafe(authed(fnOrAccess ?? null, (auth) => schemaOrFn({ ...auth })), { remote: label() });
+				const program = authed(fnOrAccess ?? null, (auth) => schemaOrFn({ ...auth }));
+				const result = await runSafe(program, { remote: label() });
 				return parseResult(result);
 			})
 		);
