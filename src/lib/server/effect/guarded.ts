@@ -1,6 +1,6 @@
 import type { LocalsUser } from "#lib/schemas.js";
 import { AuthService, type GuardAccess } from "#lib/server/effect/services/auth.js";
-import { isRedirectFailure, isStandardSchema, isValidationError, type IsAny } from "#lib/util.js";
+import { isRedirectFailure, isStandardSchema, isValidationError } from "#lib/util.js";
 import {
 	command,
 	form,
@@ -179,38 +179,17 @@ export function guardedCommand<
 // guardedForm: Remote Form with auth guard
 // -------------------------------------------------------------------------------------------------
 
-type HasNonOptionalBoolean<T> =
-	IsAny<T> extends true
-		? never
-		: [T] extends [boolean]
-			? true
-			: T extends Array<infer U>
-				? HasNonOptionalBoolean<U>
-				: T extends Record<string, unknown>
-					? { [K in keyof T]: HasNonOptionalBoolean<T[K]> }[keyof T]
-					: never;
-type FormSchemaValidate<Schema extends StandardSchemaV1<RemoteFormInput, Record<string, unknown>>> =
-	true extends HasNonOptionalBoolean<StandardSchemaV1.InferInput<Schema>>
-		? "Error: All booleans in form schemas must be optional (e.g. `v.optional(v.boolean(), false)`) because checkbox inputs do not send a false value when unchecked."
-		: Schema;
+type FormSchema = StandardSchemaV1<RemoteFormInput, Record<string, unknown>>;
+type FormSchemaValidate<Schema extends FormSchema> =
+	// @ts-expect-error The resolved signature is the schema overload.
+	Parameters<typeof form<Schema, unknown>>[0];
 
-function isFormSchema<Schema extends StandardSchemaV1<RemoteFormInput, Record<string, unknown>>>(
-	schema: unknown
-): schema is FormSchemaValidate<Schema> {
+function isFormSchema<Schema extends FormSchema>(schema: unknown): schema is FormSchemaValidate<Schema> {
 	return isStandardSchema(schema);
 }
 
-/** Kit's `form()` checkbox conditional does not unify with `FormSchemaValidate`, so the already-validated schema is passed through this signature. */
-const formWithSchema = form as <Schema extends StandardSchemaV1<RemoteFormInput, Record<string, unknown>>, Output>(
-	schema: FormSchemaValidate<Schema>,
-	fn: (
-		data: StandardSchemaV1.InferOutput<Schema>,
-		issue: RemoteFormInvalidField<StandardSchemaV1.InferInput<Schema>>
-	) => Awaitable<Output>
-) => RemoteForm<StandardSchemaV1.InferInput<Schema>, Output>;
-
 export function guardedForm<
-	Schema extends StandardSchemaV1<RemoteFormInput, Record<string, unknown>>,
+	Schema extends FormSchema,
 	A,
 	E extends AppError,
 	R extends Services,
@@ -239,7 +218,7 @@ export function guardedForm<A, E extends AppError, R extends Services, Y extends
 ): RemoteForm<void, A>;
 
 export function guardedForm<
-	Schema extends StandardSchemaV1<RemoteFormInput, Record<string, unknown>>,
+	Schema extends FormSchema,
 	Input extends RemoteFormInput,
 	A,
 	E extends AppError,
@@ -267,7 +246,7 @@ export function guardedForm<
 			auth: FormAuth<StandardSchemaV1.InferInput<Schema>>
 		) => AppGen<A, E, R, Y>;
 		return bindRemote((label) =>
-			formWithSchema(schemaOrFn, async (output, issue) => {
+			form(schemaOrFn, async (output, issue) => {
 				const program = authed(access, (auth) => fn(output, { issue, ...auth }));
 				const result = await runSafe(program, { remote: label() });
 				return parseResult(result);
