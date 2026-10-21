@@ -5,7 +5,7 @@ import { appLogs, type InsertAppLog } from "#lib/server/db/schema.js";
 import { type ErrorParams } from "#lib/server/effect/errors.js";
 import { DrizzleSearchParser } from "@sillvva/search/drizzle";
 import { isTupleOf, sorter } from "@sillvva/utils";
-import { eq, sql } from "drizzle-orm";
+import { EmptyFilter, eq, sql } from "drizzle-orm";
 import { Context, Data, DateTime, Effect, Layer } from "effect";
 
 export class UserNotFoundError extends Data.TaggedError("UserNotFoundError")<ErrorParams> {
@@ -75,7 +75,7 @@ export class AdminService extends Context.Service<AdminService>()("AdminService"
 
 					return yield* runQuery(
 						db.query.appLogs.findMany({
-							where,
+							where: where ?? EmptyFilter,
 							orderBy: {
 								...orderBy,
 								timestamp: "desc"

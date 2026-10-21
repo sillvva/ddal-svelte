@@ -5,7 +5,7 @@ import { dungeonMasters, type DungeonMaster } from "#lib/server/db/schema.js";
 import type { ErrorParams } from "#lib/server/effect/errors.js";
 import { AppLog } from "#lib/server/effect/logging.js";
 import { isTupleOf, sorter } from "@sillvva/utils";
-import { and, eq } from "drizzle-orm";
+import { and, EmptyFilter, eq } from "drizzle-orm";
 import { Context, Data, Effect, Layer } from "effect";
 
 export class DMNotFoundError extends Data.TaggedError("DMNotFoundError")<ErrorParams> {
@@ -87,8 +87,8 @@ export class DMService extends Context.Service<DMService>()("DMService", {
 						...(isUser
 							? { isUser }
 							: {
-									name: dm.name.trim() || undefined,
-									DCI: dm.DCI || undefined
+									name: dm.name.trim() || EmptyFilter,
+									DCI: dm.DCI || EmptyFilter
 								})
 					}
 				})

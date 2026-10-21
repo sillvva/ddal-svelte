@@ -6,3 +6,5 @@ minimumReleaseAgeStrict: false
 minimumReleaseAgeExclude:
   - "@sveltejs/kit"
   - "@sveltejs/adapter-node"
+  - drizzle-orm@1.0.0-rc.5
+  - drizzle-kit@1.0.0-rc.5
