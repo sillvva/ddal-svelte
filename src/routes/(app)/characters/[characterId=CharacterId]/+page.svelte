@@ -100,7 +100,7 @@
 			]}
 		>
 			{#snippet actions()}
-				<a href={`/characters/${character.id}/edit`} class="btn h-9 btn-sm btn-primary max-sm:hidden">Edit</a>
+				<a href={`/characters/${character.id}/edit`} class="btn h-9 btn-primary btn-sm max-sm:hidden">Edit</a>
 				<button
 					aria-label="Share Character"
 					class="btn h-9 btn-sm max-sm:hidden"
@@ -112,7 +112,6 @@
 			{/snippet}
 			{#snippet menu()}
 				<li role="menuitem" class="sm:hidden"><a href={`/characters/${character.id}/edit`}>Edit</a></li>
-
 				<li role="menuitem" class="sm:hidden">
 					<button
 						onclick={() => successToast("Character URL copied to clipboard")}
@@ -676,7 +675,7 @@
 										<div class="flex flex-col justify-center gap-2">
 											<button
 												type="button"
-												class="btn touch-hitbox btn-sm btn-error"
+												class="btn touch-hitbox btn-error btn-sm"
 												aria-label="Delete Log"
 												onclick={() => deleteLog(log)}
 											>
