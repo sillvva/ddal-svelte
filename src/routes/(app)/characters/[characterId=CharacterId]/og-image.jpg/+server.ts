@@ -234,7 +234,7 @@ export const GET = async ({ params, url }) => {
 								left: "8px",
 								padding: "18px 24px",
 								lineHeight: "0.8",
-								width: 370
+								width: width - imageContainerWidth - 72
 							},
 							children: [
 								{
