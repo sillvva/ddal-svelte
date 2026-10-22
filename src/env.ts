@@ -3,20 +3,42 @@ import * as v from "valibot";
 
 const requiredString = v.pipe(v.string(), v.trim(), v.regex(/^.*(\p{L}|\p{N})+.*$/u, "Required"));
 const url = v.pipe(v.string(), v.trim(), v.url());
-const optionalUrl = v.pipe(
+
+// Coolify swaps URL and FQDN values in preview deployments (https://github.com/coollabsio/coolify/issues/4719)
+// These schemas normalize both forms
+const optionalCoolifyUrl = v.pipe(
 	v.optional(v.string(), ""),
-	v.transform((value) => (value === "" ? undefined : value)),
+	v.transform((value) => {
+		if (!value || value === "") return undefined;
+		// Handle comma-separated domains (take first)
+		const first = value.split(",")[0]?.trim();
+		if (!first) return undefined;
+		// If no scheme, prepend https://
+		const normalized = first.includes("://") ? first : `https://${first}`;
+		return normalized;
+	}),
 	v.optional(url)
 );
-const hostname = v.pipe(
-	v.string(),
-	v.trim(),
-	v.regex(/^[a-zA-Z0-9]([a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?(\.[a-zA-Z0-9]([a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?)*$/, "Invalid hostname")
-);
-const optionalHostname = v.pipe(
+
+const optionalCoolifyFqdn = v.pipe(
 	v.optional(v.string(), ""),
-	v.transform((value) => (value === "" ? undefined : value)),
-	v.optional(hostname)
+	v.transform((value) => {
+		if (!value || value === "") return undefined;
+		// Handle comma-separated domains (take first)
+		const first = value.split(",")[0]?.trim();
+		if (!first) return undefined;
+		// Strip scheme and path to get bare hostname
+		let hostname = first.replace(/^https?:\/\//, "").replace(/\/.*$/, "").replace(/\/$/, "");
+		// Remove port if present for validation
+		hostname = hostname.split(":")[0] || hostname;
+		return hostname;
+	}),
+	v.optional(
+		v.pipe(
+			v.string(),
+			v.regex(/^[a-zA-Z0-9]([a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?(\.[a-zA-Z0-9]([a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?)*$/, "Invalid hostname")
+		)
+	)
 );
 
 export const variables = defineEnvVars({
@@ -27,13 +49,13 @@ export const variables = defineEnvVars({
 	},
 	PUBLIC_COOLIFY_URL: {
 		public: true,
-		description: "Application URL injected by Coolify (full URL with protocol, e.g. https://example.com)",
-		schema: optionalUrl
+		description: "Application URL injected by Coolify (accepts bare host or URL, normalized to https://)",
+		schema: optionalCoolifyUrl
 	},
 	PUBLIC_COOLIFY_FQDN: {
 		public: true,
-		description: "Application hostname injected by Coolify (bare hostname, e.g. example.com)",
-		schema: optionalHostname
+		description: "Application hostname injected by Coolify (accepts host or URL, normalized to bare hostname)",
+		schema: optionalCoolifyFqdn
 	},
 	DATABASE_URL: {
 		description: "Postgres connection string",
