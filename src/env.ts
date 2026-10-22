@@ -13,7 +13,7 @@ export const variables = defineEnvVars({
 	COOLIFY_URL: {
 		public: true,
 		description: "Application URL injected by Coolify",
-		schema: v.optional(url)
+		schema: v.optional(v.union([url, v.literal("localhost")]))
 	},
 	COOLIFY_FQDN: {
 		public: true,
