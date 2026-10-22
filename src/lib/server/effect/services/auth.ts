@@ -1,11 +1,19 @@
 import { BLANK_CHARACTER, PASSKEY_PLACEHOLDER_EMAIL_DOMAIN, PROVIDERS } from "#lib/constants.js";
-import { privateEnv } from "#lib/env/private.js";
 import { emailSchema, localsSessionSchema, localsUserSchema, type UserId } from "#lib/schemas.js";
 import { DBService, runQuery } from "#lib/server/db/index.js";
 import type { User } from "#lib/server/db/schema.js";
 import * as schema from "#lib/server/db/schema.js";
 import { RedirectError, type ErrorParams } from "#lib/server/effect/errors.js";
 import { AppLog } from "#lib/server/effect/logging.js";
+import {
+	AUTH_SECRET,
+	DISABLE_SIGNUPS,
+	DISCORD_CLIENT_ID,
+	DISCORD_CLIENT_SECRET,
+	GOOGLE_CLIENT_ID,
+	GOOGLE_CLIENT_SECRET
+} from "$app/env/private";
+import { PUBLIC_URL } from "$app/env/public";
 import { getRequestEvent } from "$app/server";
 import { drizzleAdapter } from "@better-auth/drizzle-adapter/relations-v2";
 import { getAuthenticatorName, passkey } from "@better-auth/passkey";
@@ -79,18 +87,18 @@ export class AuthService extends Context.Service<AuthService>()("AuthService", {
 				provider: "pg",
 				schema: schema
 			}),
-			secret: privateEnv.AUTH_SECRET,
-			baseURL: privateEnv.PUBLIC_URL,
+			secret: AUTH_SECRET,
+			baseURL: PUBLIC_URL,
 			socialProviders: {
 				google: {
-					clientId: privateEnv.GOOGLE_CLIENT_ID,
-					clientSecret: privateEnv.GOOGLE_CLIENT_SECRET,
-					disableSignUp: privateEnv.DISABLE_SIGNUPS
+					clientId: GOOGLE_CLIENT_ID,
+					clientSecret: GOOGLE_CLIENT_SECRET,
+					disableSignUp: DISABLE_SIGNUPS
 				},
 				discord: {
-					clientId: privateEnv.DISCORD_CLIENT_ID,
-					clientSecret: privateEnv.DISCORD_CLIENT_SECRET,
-					disableSignUp: privateEnv.DISABLE_SIGNUPS
+					clientId: DISCORD_CLIENT_ID,
+					clientSecret: DISCORD_CLIENT_SECRET,
+					disableSignUp: DISABLE_SIGNUPS
 				}
 			},
 			plugins: [
@@ -98,7 +106,7 @@ export class AuthService extends Context.Service<AuthService>()("AuthService", {
 					registration: {
 						requireSession: false,
 						resolveUser: () => {
-							if (privateEnv.DISABLE_SIGNUPS) {
+							if (DISABLE_SIGNUPS) {
 								throw new APIError("FORBIDDEN", { message: "New accounts are disabled" });
 							}
 
@@ -115,7 +123,7 @@ export class AuthService extends Context.Service<AuthService>()("AuthService", {
 							});
 
 							if (!existing) {
-								if (privateEnv.DISABLE_SIGNUPS) {
+								if (DISABLE_SIGNUPS) {
 									throw new APIError("FORBIDDEN", { message: "New accounts are disabled" });
 								}
 

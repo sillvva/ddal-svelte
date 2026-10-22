@@ -1,6 +1,6 @@
-import { privateEnv } from "#lib/env/private.js";
 import { relations } from "#lib/server/db/relations.js";
 import { isTaggedError, type ErrorClass, type ErrorParams } from "#lib/server/effect/errors.js";
+import { DATABASE_URL } from "$app/env/private";
 import { getRequestEvent } from "$app/server";
 import {
 	getColumns,
@@ -21,7 +21,7 @@ export type TRSchema = typeof relations;
 export type Database = PostgresJsDatabase<TRSchema>;
 export type Transaction = PgAsyncTransaction<PostgresJsQueryResultHKT, TRSchema>;
 
-const client = postgres(privateEnv.DATABASE_URL, { prepare: false });
+const client = postgres(DATABASE_URL, { prepare: false });
 const db = drizzle({ client, relations });
 
 export class DBService extends Context.Service<DBService>()("DBService", {

@@ -1,6 +1,6 @@
-import { privateEnv } from "#lib/env/private.js";
 import type { UserId } from "#lib/schemas.js";
 import { dev } from "$app/env";
+import { LOG_LEVEL } from "$app/env/private";
 import { getRequestEvent } from "$app/server";
 import { omit } from "@sillvva/utils";
 import chalk from "chalk";
@@ -83,7 +83,7 @@ function annotate(extra: Record<PropertyKey, unknown> = {}) {
 }
 
 function withLogLevel<A, E, R>(effect: Effect.Effect<A, E, R>) {
-	return effect.pipe(Effect.provideService(References.MinimumLogLevel, privateEnv.LOG_LEVEL));
+	return effect.pipe(Effect.provideService(References.MinimumLogLevel, LOG_LEVEL));
 }
 
 export const AppLog = {

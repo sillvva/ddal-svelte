@@ -1,4 +1,4 @@
-import { privateEnv } from "#lib/env/private.js";
+import { DISABLE_SIGNUPS } from "$app/env/private";
 import { getRequestEvent, query } from "$app/server";
 import { isDefined } from "@sillvva/utils";
 import { redirect } from "@sveltejs/kit";
@@ -41,7 +41,7 @@ export const home = query(
 						code: error.toUpperCase()
 					}
 				: null,
-			signupsEnabled: !privateEnv.DISABLE_SIGNUPS
+			signupsEnabled: !DISABLE_SIGNUPS
 		};
 	}
 );
