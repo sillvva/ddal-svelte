@@ -3,6 +3,21 @@ import * as v from "valibot";
 
 const requiredString = v.pipe(v.string(), v.trim(), v.regex(/^.*(\p{L}|\p{N})+.*$/u, "Required"));
 const url = v.pipe(v.string(), v.trim(), v.url());
+const optionalUrl = v.pipe(
+	v.optional(v.string(), ""),
+	v.transform((value) => (value === "" ? undefined : value)),
+	v.optional(url)
+);
+const hostname = v.pipe(
+	v.string(),
+	v.trim(),
+	v.regex(/^[a-zA-Z0-9]([a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?(\.[a-zA-Z0-9]([a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?)*$/, "Invalid hostname")
+);
+const optionalHostname = v.pipe(
+	v.optional(v.string(), ""),
+	v.transform((value) => (value === "" ? undefined : value)),
+	v.optional(hostname)
+);
 
 export const variables = defineEnvVars({
 	PUBLIC_URL: {
@@ -10,15 +25,15 @@ export const variables = defineEnvVars({
 		description: "Public origin of the app, used as the auth base URL",
 		schema: url
 	},
-	COOLIFY_URL: {
+	PUBLIC_COOLIFY_URL: {
 		public: true,
-		description: "Application URL injected by Coolify",
-		schema: v.optional(v.union([url, v.literal("localhost")]))
+		description: "Application URL injected by Coolify (full URL with protocol, e.g. https://example.com)",
+		schema: optionalUrl
 	},
-	COOLIFY_FQDN: {
+	PUBLIC_COOLIFY_FQDN: {
 		public: true,
-		description: "Application hostname injected by Coolify",
-		schema: v.optional(url)
+		description: "Application hostname injected by Coolify (bare hostname, e.g. example.com)",
+		schema: optionalHostname
 	},
 	DATABASE_URL: {
 		description: "Postgres connection string",
