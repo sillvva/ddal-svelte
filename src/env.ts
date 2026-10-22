@@ -10,6 +10,16 @@ export const variables = defineEnvVars({
 		description: "Public origin of the app, used as the auth base URL",
 		schema: url
 	},
+	COOLIFY_URL: {
+		public: true,
+		description: "Application URL injected by Coolify",
+		schema: v.optional(url)
+	},
+	COOLIFY_FQDN: {
+		public: true,
+		description: "Application hostname injected by Coolify",
+		schema: v.optional(url)
+	},
 	DATABASE_URL: {
 		description: "Postgres connection string",
 		schema: url
