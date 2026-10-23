@@ -34,6 +34,12 @@ export class FailedError extends Data.TaggedError("FailedError")<ErrorParams> {
 	}
 }
 
+export class AuthTokenError extends Data.TaggedError("AuthTokenError")<ErrorParams> {
+	constructor(message: string, cause?: unknown) {
+		super({ message, status: 401, cause });
+	}
+}
+
 // -------------------------------------------------------------------------------------------------
 // RedirectError
 // -------------------------------------------------------------------------------------------------

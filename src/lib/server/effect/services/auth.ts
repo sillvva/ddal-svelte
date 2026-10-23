@@ -3,7 +3,7 @@ import { emailSchema, localsSessionSchema, localsUserSchema, type UserId } from 
 import { DBService, runQuery } from "#lib/server/db/index.js";
 import type { User } from "#lib/server/db/schema.js";
 import * as schema from "#lib/server/db/schema.js";
-import { RedirectError, type ErrorParams } from "#lib/server/effect/errors.js";
+import { AuthTokenError, RedirectError, type ErrorParams } from "#lib/server/effect/errors.js";
 import { AppLog } from "#lib/server/effect/logging.js";
 import {
 	AUTH_SECRET,
@@ -250,13 +250,14 @@ export class AuthService extends Context.Service<AuthService>()("AuthService", {
 						auth
 					};
 				}),
-				accounts: Effect.fn("AuthService.get.accounts")(function* () {
-					const event = getRequestEvent();
-					const user = event.locals.user;
+			accounts: Effect.fn("AuthService.get.accounts")(function* () {
+				const event = getRequestEvent();
+				const user = event.locals.user;
 
-					const tasks =
-						user?.accounts.map(({ id, providerId }) =>
-							Effect.promise(() =>
+				const tasks =
+					user?.accounts.map(({ id, providerId }) =>
+						Effect.tryPromise({
+							try: () =>
 								auth.api
 									.accountInfo({
 										headers: event.request.headers,
@@ -274,13 +275,72 @@ export class AuthService extends Context.Service<AuthService>()("AuthService", {
 													image: r.user.image
 												}
 											: undefined
+									),
+							catch: (error) => {
+								// Check if this is a Better Auth token refresh error
+								const isBetterAuthError =
+									error instanceof APIError ||
+									(typeof error === "object" &&
+										error !== null &&
+										"code" in error &&
+										typeof error.code === "string" &&
+										error.code === "FAILED_TO_GET_ACCESS_TOKEN");
+
+								if (isBetterAuthError) {
+									// Get provider name for error message
+									const provider = PROVIDERS.find((p) => p.id === providerId);
+									const providerName = provider?.name ?? "your OAuth provider";
+
+									return new AuthTokenError(
+										`Your session with ${providerName} has expired. Please sign in again.`,
+										error
+									);
+								}
+
+								// For other errors, return a generic error with context
+								return new Error(`Failed to fetch account info for ${providerId}: ${String(error)}`);
+							}
+						}).pipe(
+							// Log non-auth errors and convert them to undefined so we can skip them
+							Effect.catchIf(
+								(e) => !(e instanceof AuthTokenError),
+								(error) =>
+									AppLog.error("Failed to fetch account info", { id, providerId, error }).pipe(
+										Effect.as(undefined as undefined)
 									)
 							)
-						) ?? [];
+						)
+					) ?? [];
 
-					const result = yield* Effect.all(tasks);
-					return result.filter(isDefined);
-				}),
+				// Use Effect.all with mode: "either" to collect all results
+				const results = yield* Effect.all(tasks, { mode: "either" });
+
+				// Check if any result is an AuthTokenError
+				for (const result of results) {
+					if (result._tag === "Left" && result.left instanceof AuthTokenError) {
+						// Sign out the user
+						yield* Effect.tryPromise(() =>
+							auth.api.signOut({
+								headers: event.request.headers
+							})
+						).pipe(Effect.catchAll(() => Effect.void)); // Ignore signout errors
+
+						// Redirect to login with error message
+						return yield* new RedirectError({
+							message: result.left.message,
+							redirectTo: `/?error=session_expired&error_description=${encodeURIComponent(result.left.message)}`
+						});
+					}
+				}
+
+				// Filter successful results
+				const accounts = results
+					.filter((r): r is Extract<typeof r, { _tag: "Right" }> => r._tag === "Right")
+					.map((r) => r.right)
+					.filter(isDefined);
+
+				return accounts;
+			}),
 				emailTaken: Effect.fn("AuthService.get.emailTaken")(function* (email: string, userId: UserId) {
 					const matches = yield* runQuery(
 						db
