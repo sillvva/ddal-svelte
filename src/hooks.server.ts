@@ -5,22 +5,10 @@ import { AppLog } from "#lib/server/effect/logging.js";
 import { createAppRuntime, run } from "#lib/server/effect/runtime.js";
 import { AuthService } from "#lib/server/effect/services/auth.js";
 import { building } from "$app/env";
-import * as privateEnv from "$app/env/private";
-import * as publicEnv from "$app/env/public";
 import { sequence, type Handle, type HandleServerError, type ServerInit } from "@sveltejs/kit/hooks";
 import { svelteKitHandler } from "better-auth/svelte-kit";
 import chalk from "chalk";
 import { Effect } from "effect";
-
-let checked = false;
-if (!checked && building && privateEnv) {
-	console.log("\n✅ Environment variables are valid");
-	console.table(privateEnv);
-	console.table(publicEnv);
-	console.log("\n");
-	// eslint-disable-next-line no-useless-assignment
-	checked = true;
-}
 
 const appRuntime = createAppRuntime();
 
