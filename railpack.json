@@ -21,7 +21,7 @@
     "startCommand": "node build/index.js",
     "variables": {
       "HOST": "0.0.0.0",
-      "PORT": "3000"
+      "PORT": "4173"
     },
     "inputs": [
       {
