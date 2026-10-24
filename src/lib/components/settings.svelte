@@ -51,11 +51,14 @@
 	}
 
 	const userAccounts = $derived(user ? await API.auth.queries.getAccounts() : []);
-	const currentAccount = $derived(userAccounts.find((a) => a.providerId === global.app.settings.provider));
+	const currentProvider = $derived(global.app.settings.provider);
 	const authProviders = $derived(
 		PROVIDERS.map((p) => ({
 			...p,
-			account: userAccounts.find((a) => a.providerId === p.id)
+			account: userAccounts.find((a) => a.providerId === p.id),
+			matched: userAccounts.some(
+				(a) => currentProvider === p.id && a.name === user?.name && a.email === user?.email && a.image === user?.image
+			)
 		}))
 	);
 
@@ -183,7 +186,12 @@
 									{#if provider.account}
 										{const account = $derived(provider.account)}
 										{const accountId = $derived(account.id)}
-										{#if currentAccount?.providerId !== provider.id || account.name !== user.name || account.email !== user.email || account.image !== user.image}
+										{const cantUnlink = $derived(
+											currentProvider === provider.id ||
+												!!API.auth.actions.updateUser.pending ||
+												!authProviders.some((a) => a.matched)
+										)}
+										{#if !provider.matched}
 											<div class="tooltip" data-tip="Use this account">
 												<button
 													class="btn join-item bg-base-300 btn-sm"
@@ -203,9 +211,9 @@
 										{/if}
 										<button
 											class="btn join-item font-semibold btn-error btn-sm"
-											disabled={currentAccount?.providerId === provider.id || !!API.auth.actions.updateUser.pending}
+											disabled={cantUnlink}
 											onclick={async () => {
-												if (currentAccount?.providerId === provider.id || !!API.auth.actions.updateUser.pending) return;
+												if (cantUnlink) return;
 												if (!confirm("Are you sure you want to unlink this account?")) return;
 												const result = await authClient.unlinkAccount({ accountId });
 												if (result.error) {
