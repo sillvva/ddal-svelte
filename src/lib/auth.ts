@@ -1,11 +1,11 @@
 import type { Passkey } from "#lib/server/db/schema.js";
-import { PUBLIC_COOLIFY_FQDN } from "$app/env/public";
+import { PUBLIC_URL } from "$app/env/public";
 import { passkeyClient } from "@better-auth/passkey/client";
 import { adminClient, lastLoginMethodClient } from "better-auth/client/plugins";
 import { createAuthClient } from "better-auth/svelte";
 
 export const authClient = createAuthClient({
-	baseURL: PUBLIC_COOLIFY_FQDN,
+	baseURL: PUBLIC_URL,
 	plugins: [passkeyClient(), adminClient(), lastLoginMethodClient()]
 });
 

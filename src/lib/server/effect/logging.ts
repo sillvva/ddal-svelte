@@ -1,6 +1,6 @@
 import type { UserId } from "#lib/schemas.js";
 import { dev } from "$app/env";
-import { LOG_LEVEL } from "$app/env/private";
+import { LOG_LEVEL } from "$app/env/public";
 import { getRequestEvent } from "$app/server";
 import { omit } from "@sillvva/utils";
 import chalk from "chalk";

@@ -13,7 +13,7 @@ import {
 	GOOGLE_CLIENT_ID,
 	GOOGLE_CLIENT_SECRET
 } from "$app/env/private";
-import { PUBLIC_COOLIFY_FQDN } from "$app/env/public";
+import { PUBLIC_URL } from "$app/env/public";
 import { getRequestEvent } from "$app/server";
 import { drizzleAdapter } from "@better-auth/drizzle-adapter/relations-v2";
 import { getAuthenticatorName, passkey } from "@better-auth/passkey";
@@ -88,7 +88,7 @@ export class AuthService extends Context.Service<AuthService>()("AuthService", {
 				schema: schema
 			}),
 			secret: AUTH_SECRET,
-			baseURL: PUBLIC_COOLIFY_FQDN,
+			baseURL: PUBLIC_URL,
 			socialProviders: {
 				google: {
 					clientId: GOOGLE_CLIENT_ID,
