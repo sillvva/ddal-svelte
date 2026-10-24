@@ -162,6 +162,20 @@
 	color-scheme: light;
 }
 
+@plugin "daisyui/theme" {
+	name: "autumn";
+	default: false;
+	prefersdark: false;
+	color-scheme: light;
+}
+
+@plugin "daisyui/theme" {
+	name: "forest";
+	default: false;
+	prefersdark: false;
+	color-scheme: dark;
+}
+
 @variant dark (&:where(.dark, .dark *));
 
 @theme {

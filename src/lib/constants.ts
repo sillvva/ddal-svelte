@@ -1,5 +1,5 @@
-import type { ResolvedPathname } from "$app/types";
 import type { Account } from "#lib/server/db/schema.js";
+import type { ResolvedPathname } from "$app/types";
 import type { BundledHighlighterOptions, BundledLanguage, BundledTheme } from "shiki";
 
 export const defaultTitle = "Adventurers League Log Sheet";
@@ -72,6 +72,11 @@ export const themes = [
 		group: "light"
 	},
 	{
+		name: "Autumn",
+		value: "autumn",
+		group: "light"
+	},
+	{
 		name: "Dark",
 		value: "dark",
 		group: "dark"
@@ -94,6 +99,11 @@ export const themes = [
 	{
 		name: "Night",
 		value: "night",
+		group: "dark"
+	},
+	{
+		name: "Forest",
+		value: "forest",
 		group: "dark"
 	}
 ] as const satisfies Theme[];
