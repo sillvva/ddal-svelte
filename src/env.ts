@@ -5,26 +5,9 @@ const requiredString = v.pipe(v.string(), v.trim(), v.regex(/^.*(\p{L}|\p{N})+.*
 const url = v.pipe(v.string(), v.trim(), v.url());
 
 export const variables = defineEnvVars({
-	PUBLIC_COOLIFY_URL: {
+	PUBLIC_URL: {
 		public: true,
-		description: "Application hostname injected by Coolify",
-		schema: v.optional(
-			v.union([
-				v.pipe(
-					v.string(),
-					v.trim(),
-					v.regex(
-						/^[a-zA-Z0-9]([a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?(\.[a-zA-Z0-9]([a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?)*$/,
-						"Invalid hostname"
-					)
-				),
-				v.literal("localhost")
-			])
-		)
-	},
-	PUBLIC_COOLIFY_FQDN: {
-		public: true,
-		description: "Application URL injected by Coolify",
+		description: "Public origin of the app, used as the auth base URL",
 		schema: url
 	},
 	DATABASE_URL: {
