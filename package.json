@@ -9,6 +9,7 @@
 		"clean:install": "rm -rf node_modules pnpm-lock.yaml && pnpm install",
 		"clean:dev": "rm -rf .svelte-kit && pnpm dev",
 		"dev": "pnpm start:supabase && vite dev",
+		"op": "pnpm start:supabase && op run --environment 4iuxdmr3wcxhjj7m7gd4qen46u -- vite dev",
 		"build": "pnpm env-check && vite build",
 		"preview": "vite preview",
 		"env-check": "node -v && pnpm -v && vite -v",
