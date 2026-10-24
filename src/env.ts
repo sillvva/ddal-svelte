@@ -5,11 +5,6 @@ const requiredString = v.pipe(v.string(), v.trim(), v.regex(/^.*(\p{L}|\p{N})+.*
 const url = v.pipe(v.string(), v.trim(), v.url());
 
 export const variables = defineEnvVars({
-	PUBLIC_URL: {
-		public: true,
-		description: "Public origin of the app, used as the auth base URL",
-		schema: v.optional(url)
-	},
 	PUBLIC_COOLIFY_URL: {
 		public: true,
 		description: "Application hostname injected by Coolify",
@@ -60,6 +55,7 @@ export const variables = defineEnvVars({
 		)
 	},
 	LOG_LEVEL: {
+		public: true,
 		description: "Server log level: none, debug, info, or error",
 		schema: v.pipe(
 			v.optional(v.picklist(["none", "debug", "info", "error"]), "error"),
