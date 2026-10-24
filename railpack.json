@@ -1,14 +1,14 @@
 {
-  "$schema": "https://schema.railpack.com",
-  "provider": "node",
-  "packages": {
-    "node": "24"
-  },
-  "deploy": {
-    "startCommand": "node build/index.js",
-    "variables": {
-      "HOST": "0.0.0.0",
-      "PORT": "4173"
-    }
-  }
+	"$schema": "https://schema.railpack.com",
+	"provider": "node",
+	"packages": {
+		"node": "24.22"
+	},
+	"deploy": {
+		"startCommand": "node build/index.js",
+		"variables": {
+			"HOST": "0.0.0.0",
+			"PORT": "4173"
+		}
+	}
 }
