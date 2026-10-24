@@ -283,6 +283,7 @@
 									{/if}
 									Delete account
 								</button>
+								<p class="mt-2 text-center text-xs text-white">This action is irreversible.</p>
 							</form>
 						</div>
 					</div>
