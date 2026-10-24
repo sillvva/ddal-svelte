@@ -208,25 +208,30 @@
 													<span class="iconify size-5 mdi--accounts-switch"></span>
 												</button>
 											</div>
+											<button
+												class="btn join-item font-semibold btn-error btn-sm"
+												disabled={cantUnlink}
+												onclick={async () => {
+													if (cantUnlink) return;
+													if (!confirm("Are you sure you want to unlink this account?")) return;
+													const result = await authClient.unlinkAccount({ accountId });
+													if (result.error) {
+														return errorToast(
+															result.error.message ||
+																authClient.$ERROR_CODES[result.error.code as keyof typeof authClient.$ERROR_CODES].message
+														);
+													}
+													await API.app.queries.request().refresh();
+												}}
+											>
+												Unlink
+											</button>
+										{:else}
+											<button class="btn font-semibold btn-sm" disabled>
+												<span class="iconify size-5 mdi--check"></span>
+												Active
+											</button>
 										{/if}
-										<button
-											class="btn join-item font-semibold btn-error btn-sm"
-											disabled={cantUnlink}
-											onclick={async () => {
-												if (cantUnlink) return;
-												if (!confirm("Are you sure you want to unlink this account?")) return;
-												const result = await authClient.unlinkAccount({ accountId });
-												if (result.error) {
-													return errorToast(
-														result.error.message ||
-															authClient.$ERROR_CODES[result.error.code as keyof typeof authClient.$ERROR_CODES].message
-													);
-												}
-												await API.app.queries.request().refresh();
-											}}
-										>
-											Unlink
-										</button>
 									{:else}
 										<button
 											class="btn btn-primary btn-sm"
