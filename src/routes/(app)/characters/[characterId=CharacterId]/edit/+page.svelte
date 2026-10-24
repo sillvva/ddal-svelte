@@ -1,18 +1,18 @@
 <script lang="ts">
 	import { page } from "$app/state";
-	import Error from "$lib/components/error.svelte";
-	import Combobox from "$lib/components/forms/combobox.svelte";
-	import Control from "$lib/components/forms/control.svelte";
-	import Input from "$lib/components/forms/input.svelte";
-	import RemoteForm from "$lib/components/forms/remote-form.svelte";
-	import Submit from "$lib/components/forms/submit.svelte";
-	import Head from "$lib/components/head.svelte";
-	import NavMenu from "$lib/components/nav-menu.svelte";
-	import { BLANK_CHARACTER } from "$lib/constants.js";
-	import { proxify } from "$lib/factories.svelte.js";
-	import * as API from "$lib/remote";
-	import { editCharacterSchema } from "$lib/schemas.js";
-	import { getGlobal } from "$lib/stores.svelte.js";
+	import Error from "#lib/components/error.svelte";
+	import Combobox from "#lib/components/forms/combobox.svelte";
+	import Control from "#lib/components/forms/control.svelte";
+	import Input from "#lib/components/forms/input.svelte";
+	import RemoteForm from "#lib/components/forms/remote-form.svelte";
+	import Submit from "#lib/components/forms/submit.svelte";
+	import Head from "#lib/components/head.svelte";
+	import NavMenu from "#lib/components/nav-menu.svelte";
+	import { BLANK_CHARACTER } from "#lib/constants.js";
+	import { proxify } from "#lib/factories.svelte.js";
+	import * as API from "#lib/remote/index.js";
+	import { editCharacterSchema } from "#lib/schemas.js";
+	import { getGlobal } from "#lib/stores.svelte.js";
 
 	let { params } = $props();
 
@@ -40,7 +40,8 @@
 <svelte:boundary>
 	{#snippet failed(error)}<Error {error} boundary="edit-character" />{/snippet}
 	<RemoteForm {schema} {form} {data} {initialErrors}>
-		{#snippet children({ form })}
+		{#snippet children(ctx)}
+			{const { form } = $derived(ctx)}
 			<Input field={form.fields.id} type="hidden" />
 			<Control class="col-span-12 sm:col-span-6">
 				<Input field={form.fields.name} label="Character Name" required />
@@ -101,7 +102,7 @@
 				</Control>
 			{/if}
 			<div class="col-span-12 mt-8 mb-4 flex justify-center">
-				<Submit>Save Character</Submit>
+				<Submit form={ctx}>Save Character</Submit>
 			</div>
 		{/snippet}
 	</RemoteForm>

@@ -1,35 +1,33 @@
 <script lang="ts">
 	import { goto } from "$app/navigation";
-	import Error from "$lib/components/error.svelte";
-	import Control from "$lib/components/forms/control.svelte";
-	import Input from "$lib/components/forms/input.svelte";
-	import RemoteForm from "$lib/components/forms/remote-form.svelte";
-	import Submit from "$lib/components/forms/submit.svelte";
-	import Head from "$lib/components/head.svelte";
-	import NavMenu from "$lib/components/nav-menu.svelte";
-	import { successToast } from "$lib/factories.svelte.js";
-	import * as API from "$lib/remote";
-	import { dungeonMasterFormSchema } from "$lib/schemas.js";
-	import { getGlobal } from "$lib/stores.svelte.js";
-	import { parseEffectResult } from "$lib/util";
+	import Error from "#lib/components/error.svelte";
+	import Control from "#lib/components/forms/control.svelte";
+	import Input from "#lib/components/forms/input.svelte";
+	import RemoteForm from "#lib/components/forms/remote-form.svelte";
+	import Submit from "#lib/components/forms/submit.svelte";
+	import Head from "#lib/components/head.svelte";
+	import NavMenu from "#lib/components/nav-menu.svelte";
+	import { successToast } from "#lib/factories.svelte.js";
+	import * as API from "#lib/remote/index.js";
+	import { dungeonMasterFormSchema } from "#lib/schemas.js";
+	import { getGlobal } from "#lib/stores.svelte.js";
+	import { parseEffectResult } from "#lib/util.js";
 
 	let { params } = $props();
 
 	const global = getGlobal();
 	const schema = dungeonMasterFormSchema;
 	const form = API.dms.forms.save;
-
-	// svelte-ignore await_waterfall
-	const dm = $derived(await API.dms.queries.get(params.dmId));
-
-	const data = $derived({
-		id: dm.id,
-		name: dm.name,
-		DCI: dm.DCI || ""
-	});
 </script>
 
 <svelte:boundary>
+	{const dm = $derived(await API.dms.queries.get(params.dmId))}
+	{const data = $derived({
+		id: dm.id,
+		name: dm.name,
+		DCI: dm.DCI || ""
+	})}
+
 	{#snippet failed(error)}<Error {error} boundary="edit-dm" />{/snippet}
 
 	<Head title={dm.name} />
@@ -42,7 +40,8 @@
 	/>
 
 	<RemoteForm {schema} {form} {data} initialErrors>
-		{#snippet children({ form })}
+		{#snippet children(ctx)}
+			{const { form } = $derived(ctx)}
 			<Input field={form.fields.id} type="hidden" />
 			<Control class="col-span-12 sm:col-span-6">
 				<Input field={form.fields.name} label="DM Name" required />
@@ -51,7 +50,7 @@
 				<Input field={form.fields.DCI} label="DCI" />
 			</Control>
 			<div class="col-span-12 my-4 flex justify-center">
-				<Submit>Save DM</Submit>
+				<Submit form={ctx}>Save DM</Submit>
 			</div>
 		{/snippet}
 	</RemoteForm>
@@ -59,7 +58,7 @@
 	<section class="mt-4">
 		<h2 class="mb-2 text-2xl">Logs</h2>
 		{#if dm.logs.length == 0}
-			<div class="bg-base-200 flex h-40 flex-col items-center justify-center gap-2 rounded-lg">
+			<div class="flex h-40 flex-col items-center justify-center gap-2 rounded-lg bg-base-200">
 				<p>This DM has no logs.</p>
 				<button
 					type="button"
@@ -82,8 +81,8 @@
 				</button>
 			</div>
 		{:else}
-			<div class="bg-base-100 w-full overflow-x-auto rounded-lg">
-				<table class="bg-base-200 table w-full">
+			<div class="w-full overflow-x-auto rounded-lg bg-base-100">
+				<table class="table w-full bg-base-200">
 					<thead>
 						<tr class="bg-base-300">
 							<th class="max-lg:hidden">Date</th>
@@ -126,8 +125,8 @@
 								{#if dm.isUser}
 									<td class="max-md:hidden">
 										<div class="min-w-max">
-											{log.isDmLog ? "DM Log" : "Log"}{#if !log.isDmLog}{" "}
-												({log.type}){/if}
+											{log.isDmLog ? "DM Log" : "Log"}{#if !log.isDmLog}
+												&nbsp;({log.type}){/if}
 										</div>
 									</td>
 								{/if}

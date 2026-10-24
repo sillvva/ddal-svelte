@@ -1,4 +1,4 @@
-import { browser } from "$app/environment";
+import { browser } from "$app/env";
 import { Duration } from "effect";
 import Cookie from "js-cookie";
 import { SvelteDate } from "svelte/reactivity";
@@ -75,7 +75,7 @@ class Logger {
 					: "Something went wrong";
 
 		const err = {
-			message: message,
+			message,
 			name: this.hasKey(error, "name") && typeof error.name === "string" ? error.name : undefined,
 			stack: this.hasKey(error, "stack") && typeof error.stack === "string" ? error.stack : undefined,
 			cause: this.hasKey(error, "cause") ? error.cause : undefined,

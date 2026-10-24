@@ -1,8 +1,8 @@
 <script lang="ts">
-	import { dev } from "$app/environment";
-	import type { RemoteFormField } from "@sveltejs/kit";
+	import type { RemoteFormField } from '$app/server';
+	import { dev } from '$app/env';
 	import { Combobox } from "bits-ui";
-	import SuperDebugRuned from "sveltekit-superforms/SuperDebug.svelte";
+	import Debug from "../debug.svelte";
 	import FieldMessage from "./field-message.svelte";
 	import Input from "./input.svelte";
 
@@ -60,7 +60,7 @@
 	let open = $state(false);
 	let changed = $state(false);
 
-	const input = $derived(inputField.value());
+	const input = $derived(inputField.value() || "");
 	const attributes = $derived(inputField.as("text"));
 	const name = $derived(attributes.name);
 	const issues = $derived(errorField ? errorField.issues() : valueField?.issues());
@@ -87,7 +87,7 @@
 		!input?.trim() || !allowCustom || prefiltered.length === 1 ? prefiltered : [firstItem].concat(prefiltered)
 	);
 
-	let selectedItem = $state<Item | undefined>(
+	let selectedItem = $derived<Item | undefined>(
 		valueField.value()
 			? values.find((v) => v.value === valueField.value())
 			: inputField.value()?.trim() && allowCustom
@@ -109,22 +109,22 @@
 	type="single"
 	bind:value={() => valueField.value(), (val) => valueField.set(val)}
 	bind:open
-	{disabled}
+	disabled={disabled}
 	onValueChange={(sel) => {
 		const item = filtered.find((item) => item.value === sel);
 		if (!isValueField) inputField.set(item?.label || item?.value || "");
 		selectedItem = { value: item?.value || "", label: input, itemLabel: input };
-		onselect?.({ selected: item, input: input });
+		onselect?.({ selected: item, input });
 		open = false;
 	}}
 	onOpenChange={() => {
 		setTimeout(() => {
-			if (!open) {
-				if (changed) {
-					if (!allowCustom && !selectedItem) clear();
-					changed = false;
+				if (!open) {
+					if (changed) {
+						if (!allowCustom && !selectedItem) clear();
+						changed = false;
+					}
 				}
-			}
 		}, 50);
 	}}
 >
@@ -170,9 +170,9 @@
 						onblur?.(ev.currentTarget);
 					}}
 					aria-invalid={issues?.length ? "true" : undefined}
-					class="input join-item focus:border-primary w-full"
-					{required}
-					{placeholder}
+					class="input join-item focus:border-primary w-full max-sm:text-base"
+					required={required}
+					placeholder={placeholder}
 				>
 					{#snippet child({ props })}
 						<input {...props} {...inputField.as("text")} aria-invalid={invalid} />
@@ -191,7 +191,7 @@
 										"hover:bg-base-content/25 rounded-lg",
 										"data-highlighted:bg-base-content/25",
 										"data-selected:bg-primary data-selected:text-primary-content data-selected:font-bold"
-									].join(" ")}
+									]}
 									role="option"
 								>
 									{#snippet child({ props })}
@@ -227,12 +227,19 @@
 			</a>
 		{/if}
 	</div>
-	<FieldMessage {name} type="select" {description} {issues} />
+
+	<FieldMessage
+		name={name}
+		type="select"
+		description={description}
+		issues={issues}
+	/>
+
 	{#if !isValueField}
 		<Input field={valueField} hidden />
 	{/if}
 </Combobox.Root>
 
 {#if debug}
-	<SuperDebugRuned data={selectedItem} />
+	<Debug data={selectedItem} />
 {/if}

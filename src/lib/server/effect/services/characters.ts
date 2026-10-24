@@ -1,23 +1,21 @@
-import { getRequestEvent } from "$app/server";
-import { PlaceholderName } from "$lib/constants";
-import { getLogsSummary, parseCharacter } from "$lib/entities";
-import type { CharacterId, CharacterSchema, UserId } from "$lib/schemas";
+import { PlaceholderName } from "#lib/constants.js";
+import { getLogsSummary, parseCharacter } from "#lib/entities.js";
+import type { CharacterId, CharacterSchema, UserId } from "#lib/schemas.js";
+import { characterIncludes } from "#lib/server/db/includes.js";
 import {
 	buildConflictUpdateColumns,
 	DBService,
 	runQuery,
-	TransactionError,
-	type DrizzleError,
 	type InferQueryResult,
 	type Transaction
-} from "$lib/server/db";
-import { characterIncludes } from "$lib/server/db/includes";
-import { characters, logs, type Character } from "$lib/server/db/schema";
-import type { ErrorParams } from "$lib/server/effect/errors";
-import { AppLog } from "$lib/server/effect/logging";
+} from "#lib/server/db/index.js";
+import { characters, logs } from "#lib/server/db/schema.js";
+import type { ErrorParams } from "#lib/server/effect/errors.js";
+import { AppLog } from "#lib/server/effect/logging.js";
+import { getRequestEvent } from "$app/server";
 import { isTupleOf } from "@sillvva/utils";
 import { and, eq, exists } from "drizzle-orm";
-import { Data, Effect, Layer } from "effect";
+import { Context, Data, Effect, Layer } from "effect";
 import { addMissingTimeZones } from "./logs";
 
 export class CharacterNotFoundError extends Data.TaggedError("CharacterNotFoundError")<ErrorParams> {
@@ -43,38 +41,24 @@ export interface FullCharacterData extends Omit<CharacterData, "logs">, ReturnTy
 	imageUrl: string;
 }
 
-interface CharacterApiImpl {
-	readonly get: {
-		readonly one: (
-			characterId: CharacterId,
-			includeLogs?: boolean
-		) => Effect.Effect<FullCharacterData, DrizzleError | CharacterNotFoundError>;
-		readonly all: (
-			userId: UserId,
-			options?: { characterId?: CharacterId; includeLogs?: boolean }
-		) => Effect.Effect<FullCharacterData[], DrizzleError>;
-	};
-	readonly set: {
-		readonly save: (data: CharacterSchema, userId: UserId) => Effect.Effect<Character, SaveCharacterError | DrizzleError>;
-		readonly delete: (
-			characterId: CharacterId,
-			userId: UserId
-		) => Effect.Effect<{ id: CharacterId }, DeleteCharacterError | DrizzleError | TransactionError>;
-	};
-}
-
-export class CharacterService extends Effect.Service<CharacterService>()("CharacterService", {
-	dependencies: [DBService.Default()],
-	effect: Effect.fn("CharacterService")(function* () {
+export class CharacterService extends Context.Service<CharacterService>()("CharacterService", {
+	make: Effect.fn("CharacterService")(function* () {
 		const { db, transaction } = yield* DBService;
 
-		const impl: CharacterApiImpl = {
+		return {
+			/**
+			 * Queries
+			 */
+
 			get: {
-				one: Effect.fn("CharacterService.get.one")(function* (characterId, includeLogs = true) {
+				one: Effect.fn("CharacterService.get.one")(function* (characterId: CharacterId, includeLogs = true) {
 					return yield* runQuery(
 						db.query.characters.findFirst({
 							with: characterIncludes(includeLogs),
-							where: { id: { eq: characterId } }
+							where: {
+								id: { eq: characterId },
+								user: { banned: { eq: false } }
+							}
 						})
 					).pipe(
 						Effect.flatMap((character) =>
@@ -84,7 +68,10 @@ export class CharacterService extends Effect.Service<CharacterService>()("Charac
 					);
 				}),
 
-				all: Effect.fn("CharacterService.get.all")(function* (userId, { characterId, includeLogs = true } = {}) {
+				all: Effect.fn("CharacterService.get.all")(function* (
+					userId: UserId,
+					{ characterId, includeLogs = true }: { characterId?: CharacterId; includeLogs?: boolean } = {}
+				) {
 					const characters = yield* runQuery(
 						db.query.characters.findMany({
 							with: characterIncludes(includeLogs),
@@ -104,87 +91,99 @@ export class CharacterService extends Effect.Service<CharacterService>()("Charac
 					if (timezone) {
 						const logRecords = characters.flatMap((character) => character.logs);
 						yield* addMissingTimeZones(db, timezone, logRecords);
-						characters.forEach((character) => {
-							character.logs.forEach((log) => {
-								log.timezone = log.timezone || timezone;
-							});
-						});
 					}
 
 					return characters;
-				})
-			},
-			set: {
-				save: Effect.fn("CharacterService.set.save")(function* (data, userId) {
-					if (!data.id) yield* new SaveCharacterError("No character ID provided", { status: 400 });
-
-					return yield* runQuery(
-						db
-							.insert(characters)
-							.values({
-								...data,
-								id: data.id === "new" ? undefined : data.id,
-								userId
-							})
-							.onConflictDoUpdate({
-								target: characters.id,
-								set: buildConflictUpdateColumns(characters, ["id", "userId", "createdAt"], true),
-								where: eq(characters.userId, userId)
-							})
-							.returning()
-					).pipe(
-						Effect.flatMap((characters) =>
-							isTupleOf(characters, 1)
-								? Effect.succeed(characters[0])
-								: Effect.fail(new SaveCharacterError("Failed to save character"))
-						),
-						Effect.tap((result) => AppLog.info("CharacterService.set.save", { userId, result })),
-						Effect.tapError(() => AppLog.debug("CharacterService.set.save", { userId, data }))
-					);
 				}),
 
-				delete: Effect.fn("CharacterService.set.delete")(function* (characterId, userId) {
-					return yield* transaction(
-						Effect.fn("CharacterService.set.delete.transaction")(function* (tx) {
-							yield* runQuery(
-								tx
-									.update(logs)
-									.set({ characterId: null, appliedDate: null })
-									.where(
-										and(
-											eq(logs.characterId, characterId),
-											eq(logs.isDmLog, true),
-											exists(
-												db
-													.select()
-													.from(characters)
-													.where(and(eq(characters.id, characterId), eq(characters.userId, userId)))
-											)
+				select: Effect.fn("CharacterService.get.select")(function* (userId: UserId) {
+					return yield* runQuery(
+						db.query.characters.findMany({
+							columns: {
+								id: true,
+								name: true
+							},
+							where: {
+								userId: { eq: userId },
+								name: { NOT: PlaceholderName }
+							}
+						})
+					).pipe(Effect.tapError(() => AppLog.debug("CharacterService.get.select", { userId })));
+				})
+			},
+
+			/**
+			 * Mutations
+			 */
+
+			save: Effect.fn("CharacterService.save")(function* (data: CharacterSchema, userId: UserId) {
+				if (!data.id) yield* new SaveCharacterError("No character ID provided", { status: 400 });
+
+				return yield* runQuery(
+					db
+						.insert(characters)
+						.values({
+							...data,
+							id: data.id === "new" ? undefined : data.id,
+							userId
+						})
+						.onConflictDoUpdate({
+							target: characters.id,
+							set: buildConflictUpdateColumns(characters, ["id", "userId", "createdAt"], true),
+							where: eq(characters.userId, userId)
+						})
+						.returning()
+				).pipe(
+					Effect.flatMap((characters) =>
+						isTupleOf(characters, 1)
+							? Effect.succeed(characters[0])
+							: Effect.fail(new SaveCharacterError("Failed to save character"))
+					),
+					Effect.tap((result) => AppLog.info("CharacterService.save", { userId, result })),
+					Effect.tapError(() => AppLog.debug("CharacterService.save", { userId, data }))
+				);
+			}),
+
+			delete: Effect.fn("CharacterService.delete")(function* (characterId: CharacterId, userId: UserId) {
+				return yield* transaction(
+					Effect.fn(function* (tx) {
+						yield* runQuery(
+							tx
+								.update(logs)
+								.set({ characterId: null, appliedDate: null })
+								.where(
+									and(
+										eq(logs.characterId, characterId),
+										eq(logs.isDmLog, true),
+										exists(
+											db
+												.select()
+												.from(characters)
+												.where(and(eq(characters.id, characterId), eq(characters.userId, userId)))
 										)
 									)
-							);
+								)
+						);
 
-							return yield* runQuery(
-								tx
-									.delete(characters)
-									.where(and(eq(characters.id, characterId), eq(characters.userId, userId)))
-									.returning({ id: characters.id })
-							);
-						})
-					).pipe(
-						Effect.flatMap((result) =>
-							isTupleOf(result, 1) ? Effect.succeed(result[0]) : Effect.fail(new DeleteCharacterError())
-						),
-						Effect.tap((result) => AppLog.info("CharacterService.set.delete", { characterId, userId, result })),
-						Effect.tapError(() => AppLog.debug("CharacterService.set.delete", { characterId, userId }))
-					);
-				})
-			}
+						return yield* runQuery(
+							tx
+								.delete(characters)
+								.where(and(eq(characters.id, characterId), eq(characters.userId, userId)))
+								.returning({ id: characters.id })
+						);
+					})
+				).pipe(
+					Effect.flatMap((result) =>
+						isTupleOf(result, 1) ? Effect.succeed(result[0]) : Effect.fail(new DeleteCharacterError())
+					),
+					Effect.tap((result) => AppLog.info("CharacterService.delete", { characterId, userId, result })),
+					Effect.tapError(() => AppLog.debug("CharacterService.delete", { characterId, userId }))
+				);
+			})
 		};
+	})()
+}) {
+	static readonly layer = Layer.effect(this, this.make);
+}
 
-		return impl;
-	})
-}) {}
-
-export const CharacterTx = (tx: Transaction) =>
-	CharacterService.DefaultWithoutDependencies().pipe(Layer.provide(DBService.Default(tx)));
+export const CharacterTx = (tx: Transaction) => CharacterService.layer.pipe(Layer.provide(DBService.layer(tx)));

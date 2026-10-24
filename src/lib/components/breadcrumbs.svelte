@@ -1,4 +1,5 @@
 <script lang="ts">
+	import type { Crumb } from "#lib/util.js";
 	import BackButton from "./back-button.svelte";
 
 	interface Props {
@@ -10,7 +11,7 @@
 
 <div class={["flex min-h-9 flex-1 items-center max-sm:min-h-8 sm:mb-4", crumbs.length === 1 && "max-sm:hidden"]}>
 	{#if crumbs.length > 0}
-		{@const back = crumbs.at(-2)}
+		{const back = $derived(crumbs.filter((bc) => !!bc.title).at(-2))}
 		{#if back?.url && crumbs.length > 1}
 			<div class="flex-1 sm:hidden">
 				<BackButton href={back.url}>{back.title}</BackButton>
@@ -19,7 +20,7 @@
 		<div class="breadcrumbs flex-1 text-sm max-sm:hidden print:hidden">
 			<ul class="h-5">
 				<li>
-					<span class="iconify mdi--home size-4"></span>
+					<span class="iconify size-4 mdi--home"></span>
 				</li>
 				{#each crumbs as bc, i (i)}
 					{#if bc.url && bc.title}

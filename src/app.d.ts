@@ -1,8 +1,8 @@
 // See https://kit.svelte.dev/docs/types#app
 // for information about these interfaces
 
-import type { AppCookie, LocalsSession, LocalsUser } from "$lib/schemas";
-import type { AppRuntime } from "$lib/server/effect/runtime";
+import type { AppCookie, LocalsSession, LocalsUser } from "#lib/schemas.js";
+import type { AppRuntime } from "#lib/server/effect/runtime.js";
 import "@auth/sveltekit";
 import "@total-typescript/ts-reset/fetch";
 import "@total-typescript/ts-reset/json-parse";
@@ -19,6 +19,12 @@ declare global {
 			isMac: boolean;
 			app: AppCookie;
 			runtime: AppRuntime;
+			/** Page path captured in `handle`, because queries cannot read `event.url`. */
+			requestPath: string;
+			/** Route id captured in `handle`, because queries cannot read `event.route`. */
+			routeId: string | null;
+			/** Route params captured in `handle`, because queries cannot read `event.params`. */
+			params: Partial<Record<string, string>>;
 		}
 		// interface PageData {}
 		// interface Platform {}
@@ -40,6 +46,7 @@ declare global {
 						name: string;
 						imageUrl: string;
 				  };
+			search?: Record<string, string>;
 		}
 	}
 

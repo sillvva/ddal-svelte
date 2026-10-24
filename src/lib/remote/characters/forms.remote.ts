@@ -1,9 +1,9 @@
-import { BLANK_CHARACTER } from "$lib/constants";
-import * as API from "$lib/remote";
-import { characterIdParamSchema, editCharacterSchema } from "$lib/schemas";
-import { guardedForm, guardedQuery, refreshAll } from "$lib/server/effect/remote";
-import { CharacterService } from "$lib/server/effect/services/characters";
-import { isValidUrl } from "$lib/server/effect/util";
+import { BLANK_CHARACTER } from "#lib/constants.js";
+import * as API from "#lib/remote/index.js";
+import { characterIdParamSchema, editCharacterSchema } from "#lib/schemas.js";
+import { guardedForm, guardedQuery, refreshAll } from "#lib/server/effect/guarded.js";
+import { CharacterService } from "#lib/server/effect/services/characters.js";
+import { isValidUrl } from "#lib/server/effect/util.js";
 import type { StandardSchemaV1 } from "@standard-schema/spec";
 import { invalid, redirect } from "@sveltejs/kit";
 import { Effect } from "effect";
@@ -50,7 +50,7 @@ export const save = guardedForm(editCharacterSchema, function* (input, { user, i
 
 	if (issues.length) invalid(...issues);
 
-	const result = yield* Characters.set.save(data, user.id).pipe(Effect.tapError((err) => Effect.fail(invalid(err.message))));
+	const result = yield* Characters.save(data, user.id).pipe(Effect.tapError((err) => Effect.fail(invalid(err.message))));
 
 	if (preexisting) {
 		yield* refreshAll(API.characters.queries.get({ param: data.id }).refresh());

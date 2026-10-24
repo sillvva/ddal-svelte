@@ -1,18 +1,19 @@
-import { defaultLogSchema, logDataToSchema } from "$lib/entities";
+import { defaultLogSchema, logDataToSchema } from "#lib/entities.js";
 import {
 	characterIdSchema,
 	characterLogSchema,
 	dMLogSchema,
 	logIdParamSchema,
+	orEmpty,
 	type DmLogSchemaIn,
 	type LogSchemaIn
-} from "$lib/schemas";
-import { RedirectError, redirectOnFail } from "$lib/server/effect/errors";
-import { guardedForm, guardedQuery } from "$lib/server/effect/remote";
-import { CharacterService } from "$lib/server/effect/services/characters";
-import { DMNotFoundError, DMService } from "$lib/server/effect/services/dms";
-import { LogNotFoundError, LogService } from "$lib/server/effect/services/logs";
-import { formParse, parse } from "$lib/server/effect/util";
+} from "#lib/schemas.js";
+import { RedirectError, redirectOnFail } from "#lib/server/effect/errors.js";
+import { guardedForm, guardedQuery } from "#lib/server/effect/guarded.js";
+import { CharacterService } from "#lib/server/effect/services/characters.js";
+import { DMNotFoundError, DMService } from "#lib/server/effect/services/dms.js";
+import { LogNotFoundError, LogService } from "#lib/server/effect/services/logs.js";
+import { formParse, parse } from "#lib/server/effect/util.js";
 import { omit } from "@sillvva/utils";
 import { invalid, redirect } from "@sveltejs/kit";
 import { Effect } from "effect";
@@ -100,7 +101,7 @@ export const saveCharacter = guardedForm("unchecked", function* (input: LogSchem
 		...input,
 		timezone: input.timezone || event.locals.app.settings.timezone
 	});
-	yield* Logs.set.save(result, user).pipe(Effect.tapError((err) => Effect.fail(invalid(err.message))));
+	yield* Logs.save(result, user).pipe(Effect.tapError((err) => Effect.fail(invalid(err.message))));
 
 	redirect(303, `/characters/${character.id}`);
 });
@@ -116,9 +117,9 @@ export const saveDM = guardedForm("unchecked", function* (input: DmLogSchemaIn, 
 		Effect.map((dm) => omit(dm, ["logs"]))
 	);
 
-	const parsedId = yield* formParse(characterIdSchema, input.characterId);
+	const parsedId = yield* formParse(orEmpty(characterIdSchema), input.characterId);
 
-	const characters = input.characterId
+	const characters = parsedId
 		? yield* Characters.get
 				.all(user.id, {
 					characterId: parsedId
@@ -136,7 +137,7 @@ export const saveDM = guardedForm("unchecked", function* (input: DmLogSchemaIn, 
 		dm: userDM
 	};
 
-	yield* Logs.set.save(log, user).pipe(Effect.tapError((err) => Effect.fail(invalid(err.message))));
+	yield* Logs.save(log, user).pipe(Effect.tapError((err) => Effect.fail(invalid(err.message))));
 
 	redirect(303, `/dm-logs`);
 });

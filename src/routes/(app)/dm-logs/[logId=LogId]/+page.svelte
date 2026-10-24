@@ -1,38 +1,34 @@
 <script lang="ts">
-	import Error from "$lib/components/error.svelte";
-	import AddDropItems from "$lib/components/forms/add-drop-items.svelte";
-	import Combobox from "$lib/components/forms/combobox.svelte";
-	import Control from "$lib/components/forms/control.svelte";
-	import DateInput from "$lib/components/forms/date-input.svelte";
-	import InputWrapper from "$lib/components/forms/input-wrapper.svelte";
-	import Input from "$lib/components/forms/input.svelte";
-	import MarkdownInput from "$lib/components/forms/md-input.svelte";
-	import RemoteForm from "$lib/components/forms/remote-form.svelte";
-	import Submit from "$lib/components/forms/submit.svelte";
-	import Head from "$lib/components/head.svelte";
-	import NavMenu from "$lib/components/nav-menu.svelte";
-	import { proxify } from "$lib/factories.svelte.js";
-	import * as API from "$lib/remote";
-	import { dmLogSchema } from "$lib/schemas";
+	import Error from "#lib/components/error.svelte";
+	import AddDropItems from "#lib/components/forms/add-drop-items.svelte";
+	import Combobox from "#lib/components/forms/combobox.svelte";
+	import Control from "#lib/components/forms/control.svelte";
+	import DateInput from "#lib/components/forms/date-input.svelte";
+	import InputWrapper from "#lib/components/forms/input-wrapper.svelte";
+	import Input from "#lib/components/forms/input.svelte";
+	import MarkdownInput from "#lib/components/forms/md-input.svelte";
+	import RemoteForm from "#lib/components/forms/remote-form.svelte";
+	import Submit from "#lib/components/forms/submit.svelte";
+	import Head from "#lib/components/head.svelte";
+	import NavMenu from "#lib/components/nav-menu.svelte";
+	import { proxify } from "#lib/factories.svelte.js";
+	import * as API from "#lib/remote/index.js";
+	import { dmLogSchema } from "#lib/schemas.js";
 
 	const { params } = $props();
 
 	const schema = dmLogSchema;
 	const form = API.logs.forms.saveDM;
 	const initialErrors = $derived(params.logId !== "new");
-	// svelte-ignore await_waterfall
-	const log = $derived(
-		await API.logs.forms.dm({
-			param: { logId: params.logId }
-		})
-	);
-	const characters = $derived(await API.characters.queries.getAllSelect());
-
-	let data = $derived(proxify(log));
-	let season = $derived(log.experience ? 1 : log.acp ? 8 : 9);
 </script>
 
 <svelte:boundary>
+	{const log = $derived(
+		await API.logs.forms.dm({
+			param: { logId: params.logId }
+		})
+	)}
+
 	{#snippet failed(error)}<Error {error} boundary="edit-dm-log" />{/snippet}
 	<Head title={log.name || "New Log"} />
 
@@ -43,8 +39,10 @@
 		]}
 	/>
 
+	{let data = $derived(proxify(log))}
 	<RemoteForm {schema} {form} {data} {initialErrors}>
-		{#snippet children({ form, initial })}
+		{#snippet children(ctx)}
+			{const { form, initial } = $derived(ctx)}
 			<Input field={form.fields.id} type="hidden" />
 			<Input field={form.fields.timezone} hidden />
 			<Control class="col-span-12 sm:col-span-7">
@@ -54,6 +52,7 @@
 				<DateInput field={form.fields.date} initial={initial.date} label="Date" timezone={data.timezone} />
 			</Control>
 			<Control class="col-span-12 sm:col-span-7">
+				{const characters = $derived(await API.characters.queries.getAllSelect())}
 				<Combobox
 					label="Assigned Character"
 					valueField={form.fields.characterId}
@@ -79,12 +78,13 @@
 					timezone={data.timezone}
 				/>
 			</Control>
+			{let season = $derived(log.experience ? 1 : log.acp ? 8 : 9)}
 			<Control class="col-span-12 sm:col-span-4">
 				<InputWrapper type="select" labelFor="season" label="Season">
 					<select
 						id="season"
 						bind:value={season}
-						class="select select-bordered w-full"
+						class="select-bordered select w-full max-sm:text-base"
 						onchange={() => {
 							data.experience = 0;
 							data.acp = 0;
@@ -123,10 +123,10 @@
 				<Input field={form.fields.dtd} type="number" label="Downtime" />
 			</Control>
 			<Control class="col-span-12">
-				<MarkdownInput field={form.fields.description} name="notes" maxLength={5000} maxRows={20} preview />
+				<MarkdownInput field={form.fields.description} maxLength={5000} maxRows={20} preview />
 			</Control>
-			<AddDropItems>
-				<Submit>Save Log</Submit>
+			<AddDropItems form={ctx}>
+				<Submit form={ctx}>Save Log</Submit>
 			</AddDropItems>
 		{/snippet}
 	</RemoteForm>

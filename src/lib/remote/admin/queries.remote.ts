@@ -1,10 +1,9 @@
 import { query } from "$app/server";
-import { highlighterConfig, highlighterThemeDark, highlighterThemeLight } from "$lib/constants";
-import { guardedQuery } from "$lib/server/effect/remote";
-import { run } from "$lib/server/effect/runtime";
-import { AdminService, validKeys } from "$lib/server/effect/services/admin";
-import { UserService } from "$lib/server/effect/services/users";
-import { getTrace } from "$lib/util";
+import { highlighterConfig, highlighterThemeDark, highlighterThemeLight } from "#lib/constants.js";
+import { guardedQuery } from "#lib/server/effect/guarded.js";
+import { run } from "#lib/server/effect/runtime.js";
+import { AdminService, validKeys } from "#lib/server/effect/services/admin.js";
+import { getTrace } from "#lib/util.js";
 import { DateTime, Effect } from "effect";
 import { createHighlighter } from "shiki";
 import * as v from "valibot";
@@ -50,13 +49,13 @@ export const getAppLogs = guardedQuery(
 
 		return { logs, metadata };
 	},
-	true
+	"admin"
 );
 
 export const getUsers = guardedQuery(function* () {
-	const Users = yield* UserService;
+	const Admin = yield* AdminService;
 
-	return yield* Users.get.users().pipe(
+	return yield* Admin.get.users().pipe(
 		Effect.map((users) =>
 			users.map((user) => ({
 				...user,
@@ -64,4 +63,4 @@ export const getUsers = guardedQuery(function* () {
 			}))
 		)
 	);
-}, true);
+}, "admin");

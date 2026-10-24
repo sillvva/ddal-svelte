@@ -1,10 +1,10 @@
 <script lang="ts">
 	import { goto } from "$app/navigation";
-	import { searchSections } from "$lib/constants.js";
-	import { GlobalSearchFactory } from "$lib/factories.svelte";
-	import * as API from "$lib/remote";
-	import type { SearchData } from "$lib/remote/command";
-	import { hotkey } from "$lib/util";
+	import { searchSections } from "#lib/constants.js";
+	import { GlobalSearchFactory } from "#lib/factories.svelte.js";
+	import * as API from "#lib/remote/index.js";
+	import type { SearchData } from "#lib/remote/command/index.js";
+	import { hotkey } from "#lib/util.js";
 	import { Command, Dialog, Separator } from "bits-ui";
 	import { untrack } from "svelte";
 	import SearchResults from "./search-results.svelte";
@@ -44,7 +44,9 @@
 
 	function select(value: string) {
 		setOpen(false);
-		goto(value);
+		void goto(value).catch(() => {
+			window.location.href = value;
+		});
 	}
 </script>
 
@@ -89,7 +91,7 @@
 							<div
 								class="join focus-within:border-primary border-input *:focus:border-primary rounded-lg border *:border-y-0 *:first:border-l-0 *:last:border-r-0"
 							>
-								<label class="input join-item flex w-full flex-1 items-center gap-2">
+								<label class="input join-item flex w-full flex-1 items-center gap-2 max-sm:text-base">
 									<span class="iconify mdi--magnify size-6"></span>
 									<input
 										{...props}
@@ -103,7 +105,7 @@
 										}}
 									/>
 								</label>
-								<select id="search-category" bind:value={search.category} class="select join-item w-auto">
+								<select id="search-category" bind:value={search.category} class="select join-item w-auto max-sm:text-base">
 									<option value={null}>All Categories</option>
 									{#each categories as category (category)}
 										<option value={category}>{category}</option>

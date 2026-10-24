@@ -1,5 +1,4 @@
-import { getRequestEvent } from "$app/server";
-import { parseLog } from "$lib/entities";
+import { parseLog } from "#lib/entities.js";
 import type {
 	DungeonMasterId,
 	DungeonMasterSchema,
@@ -9,25 +8,25 @@ import type {
 	LogId,
 	LogSchema,
 	UserId
-} from "$lib/schemas";
+} from "#lib/schemas.js";
+import { extendedLogIncludes, logIncludes } from "#lib/server/db/includes.js";
 import {
 	buildConflictUpdateColumns,
 	DBService,
 	runQuery,
-	TransactionError,
 	type Database,
 	type DrizzleError,
 	type Filter,
 	type InferQueryResult,
 	type Transaction
-} from "$lib/server/db";
-import { extendedLogIncludes, logIncludes } from "$lib/server/db/includes";
-import { characters, dungeonMasters, logs, magicItems, storyAwards } from "$lib/server/db/schema";
-import type { ErrorParams } from "$lib/server/effect/errors";
-import { AppLog } from "$lib/server/effect/logging";
+} from "#lib/server/db/index.js";
+import { characters, dungeonMasters, logs, magicItems, storyAwards } from "#lib/server/db/schema.js";
+import type { ErrorParams } from "#lib/server/effect/errors.js";
+import { AppLog } from "#lib/server/effect/logging.js";
+import { getRequestEvent } from "$app/server";
 import { isTupleOf } from "@sillvva/utils";
 import { and, eq, exists, inArray, isNull, notInArray, or } from "drizzle-orm";
-import { Data, Effect, Layer } from "effect";
+import { Context, Data, Effect, Layer } from "effect";
 import { v7 } from "uuid";
 import { DMService, DMTx } from "./dms";
 
@@ -119,20 +118,60 @@ const userLogsConfig = {
 
 export type UserLogData = InferQueryResult<"logs", typeof userLogsConfig>;
 
-interface LogApiImpl {
-	readonly get: {
-		readonly one: (logId: LogId, userId: UserId) => Effect.Effect<FullLogData | undefined, DrizzleError>;
-		readonly dm: (userId: UserId) => Effect.Effect<FullLogData[], DrizzleError>;
-		readonly all: (userId: UserId) => Effect.Effect<UserLogData[], DrizzleError>;
-	};
-	readonly set: {
-		readonly save: (
-			log: LogSchema,
-			user: LocalsUser
-		) => Effect.Effect<FullLogData, SaveLogError | DrizzleError | TransactionError>;
-		readonly delete: (logId: LogId, userId: UserId) => Effect.Effect<{ id: LogId }, DeleteLogError | DrizzleError>;
-	};
-}
+// Getters
+const getCharacterLog = Effect.fn("LogService.get.one")(function* (logId: LogId, userId: UserId, db: Database | Transaction) {
+	if (logId === "new") return undefined;
+
+	return yield* runQuery(
+		db.query.logs.findFirst({
+			with: extendedLogIncludes,
+			where: {
+				id: {
+					eq: logId
+				},
+				OR: [characterLogFilter(userId), dmLogFilter(userId)]
+			}
+		})
+	).pipe(
+		Effect.map((log) => log && parseLog(log)),
+		Effect.tapError(() => AppLog.debug("LogService.get.one", { logId, userId }))
+	);
+});
+
+const getDMLogs = Effect.fn("LogService.get.dm")(function* (userId: UserId, db: Database | Transaction) {
+	const dmLogs = yield* runQuery(
+		db.query.logs.findMany({
+			with: extendedLogIncludes,
+			where: dmLogFilter(userId),
+			orderBy: {
+				date: "asc"
+			}
+		})
+	).pipe(
+		Effect.map((logs) => logs.map(parseLog)),
+		Effect.tapError(() => AppLog.debug("LogService.get.dm", { userId }))
+	);
+
+	const event = getRequestEvent();
+	const timezone = event.locals.app.settings.timezone;
+	if (timezone) yield* addMissingTimeZones(db, timezone, dmLogs);
+
+	return dmLogs;
+});
+
+const getAllLogs = Effect.fn("LogService.get.all")(function* (userId: UserId, db: Database | Transaction) {
+	return yield* runQuery(
+		db.query.logs.findMany({
+			...userLogsConfig,
+			where: {
+				OR: [characterLogFilter(userId), dmLogFilter(userId)]
+			},
+			orderBy: {
+				date: "asc"
+			}
+		})
+	).pipe(Effect.tapError(() => AppLog.debug("LogService.get.all", { userId })));
+});
 
 const validateLogDM = Effect.fn("validateLogDM")(function* (log: LogSchema, user: LocalsUser) {
 	const DMs = yield* DMService;
@@ -190,9 +229,12 @@ const upsertLogDM = Effect.fn("upsertLogDM")(function* (tx: Transaction, log: Lo
 	);
 });
 
-const upsertLog = Effect.fn("upsertLog")(function* (tx: Transaction, log: LogSchema, user: LocalsUser) {
-	const Logs = yield* LogService;
-
+const upsertLog = Effect.fn("upsertLog")(function* (
+	tx: Transaction,
+	log: LogSchema,
+	user: LocalsUser,
+	db: Database | Transaction
+) {
 	const dm = yield* upsertLogDM(tx, log, user);
 
 	const appliedDate: Date | null = log.isDmLog
@@ -249,13 +291,11 @@ const upsertLog = Effect.fn("upsertLog")(function* (tx: Transaction, log: LogSch
 		{ concurrency: 4 }
 	);
 
-	return yield* Logs.get
-		.one(result.id, user.id)
-		.pipe(
-			Effect.flatMap((result) =>
-				result ? Effect.succeed(result) : Effect.fail(new SaveLogError(log.id ? "Could not save log" : "Could not create log"))
-			)
-		);
+	return yield* getCharacterLog(result.id, user.id, db).pipe(
+		Effect.flatMap((result) =>
+			result ? Effect.succeed(result) : Effect.fail(new SaveLogError(log.id ? "Could not save log" : "Could not create log"))
+		)
+	);
 });
 
 export const addMissingTimeZones = Effect.fn("addMissingTimeZones")(function* (
@@ -263,10 +303,7 @@ export const addMissingTimeZones = Effect.fn("addMissingTimeZones")(function* (
 	timezone: string,
 	logRecords: Pick<FullLogData, "id" | "timezone">[]
 ) {
-	const logsWithoutTimeZone = logRecords
-		.filter((log) => log.timezone === null)
-		.map((log) => ({ id: log.id, timezone: log.timezone }));
-
+	const logsWithoutTimeZone = logRecords.filter((log) => log.timezone === null);
 	if (logsWithoutTimeZone.length > 0) {
 		const batchSize = 200;
 		const effects = [];
@@ -289,6 +326,10 @@ export const addMissingTimeZones = Effect.fn("addMissingTimeZones")(function* (
 		}
 
 		yield* Effect.all(effects, { concurrency: 5 });
+
+		logRecords.forEach((log) => {
+			log.timezone ||= timezone;
+		});
 	}
 });
 
@@ -362,129 +403,89 @@ function itemsCRUD(tx: Transaction, params: CRUDMagicItemParams | CRUDStoryAward
 	return effects;
 }
 
-export class LogService extends Effect.Service<LogService>()("LogService", {
-	dependencies: [DBService.Default()],
-	effect: Effect.fn("LogService")(function* () {
-		const { db, transaction } = yield* DBService;
-
-		const impl: LogApiImpl = {
-			get: {
-				one: Effect.fn("LogService.get.one")(function* (logId, userId) {
-					if (logId === "new") return undefined;
-
-					return yield* runQuery(
-						db.query.logs.findFirst({
-							with: extendedLogIncludes,
-							where: {
-								id: {
-									eq: logId
-								},
-								OR: [characterLogFilter(userId), dmLogFilter(userId)]
-							}
-						})
-					).pipe(
-						Effect.andThen((log) => log && parseLog(log)),
-						Effect.tapError(() => AppLog.debug("LogService.get.one", { logId, userId }))
-					);
-				}),
-
-				dm: Effect.fn("LogService.get.dm")(function* (userId) {
-					const dmLogs = yield* runQuery(
-						db.query.logs.findMany({
-							with: extendedLogIncludes,
-							where: dmLogFilter(userId),
-							orderBy: {
-								date: "asc"
-							}
-						})
-					).pipe(
-						Effect.map((logs) => logs.map(parseLog)),
-						Effect.tapError(() => AppLog.debug("LogService.get.dm", { userId }))
-					);
-
-					const event = getRequestEvent();
-					const timezone = event.locals.app.settings.timezone;
-					if (timezone) {
-						yield* addMissingTimeZones(db, timezone, dmLogs);
-						dmLogs.forEach((log) => {
-							log.timezone = log.timezone || timezone;
-						});
-					}
-
-					return dmLogs;
-				}),
-
-				all: Effect.fn("LogService.get.all")(function* (userId) {
-					return yield* runQuery(
-						db.query.logs.findMany({
-							...userLogsConfig,
-							where: {
-								OR: [characterLogFilter(userId), dmLogFilter(userId)]
-							},
-							orderBy: {
-								date: "asc"
-							}
-						})
-					).pipe(Effect.tapError(() => AppLog.debug("LogService.get.all", { userId })));
-				})
-			},
-			set: {
-				save: Effect.fn("LogService.set.save")(function* (log, user) {
-					return yield* transaction((tx) =>
-						upsertLog(tx, log, user).pipe(Effect.provide(LogTx(tx)), Effect.provide(DMTx(tx)))
-					).pipe(
-						Effect.tap((result) => AppLog.info("LogService.set.save", { logId: log.id, userId: user.id, result })),
-						Effect.tapError(() => AppLog.debug("LogService.set.save", { logId: log.id, userId: user.id, log }))
-					);
-				}),
-
-				delete: Effect.fn("LogService.set.delete")(function* (logId, userId) {
-					return yield* runQuery(
-						db
-							.delete(logs)
-							.where(
-								and(
-									eq(logs.id, logId),
-									or(
+const deleteLog = Effect.fn("LogService.delete")(function* (logId: LogId, userId: UserId, db: Database | Transaction) {
+	return yield* runQuery(
+		db
+			.delete(logs)
+			.where(
+				and(
+					eq(logs.id, logId),
+					or(
+						and(
+							eq(logs.isDmLog, false),
+							exists(
+								db
+									.select()
+									.from(characters)
+									.where(and(eq(characters.id, logs.characterId), eq(characters.userId, userId)))
+							)
+						),
+						and(
+							eq(logs.isDmLog, true),
+							exists(
+								db
+									.select()
+									.from(dungeonMasters)
+									.where(
 										and(
-											eq(logs.isDmLog, false),
-											exists(
-												db
-													.select()
-													.from(characters)
-													.where(and(eq(characters.id, logs.characterId), eq(characters.userId, userId)))
-											)
-										),
-										and(
-											eq(logs.isDmLog, true),
-											exists(
-												db
-													.select()
-													.from(dungeonMasters)
-													.where(
-														and(
-															eq(dungeonMasters.id, logs.dungeonMasterId),
-															eq(dungeonMasters.userId, userId),
-															eq(dungeonMasters.isUser, true)
-														)
-													)
-											)
+											eq(dungeonMasters.id, logs.dungeonMasterId),
+											eq(dungeonMasters.userId, userId),
+											eq(dungeonMasters.isUser, true)
 										)
 									)
-								)
 							)
-							.returning({ id: logs.id })
-					).pipe(
-						Effect.flatMap((logs) => (isTupleOf(logs, 1) ? Effect.succeed(logs[0]) : Effect.fail(new DeleteLogError()))),
-						Effect.tap((result) => AppLog.info("LogService.set.delete", { logId, userId, result })),
-						Effect.tapError(() => AppLog.debug("LogService.set.delete", { logId, userId }))
-					);
+						)
+					)
+				)
+			)
+			.returning({ id: logs.id })
+	).pipe(
+		Effect.flatMap((logs) => (isTupleOf(logs, 1) ? Effect.succeed(logs[0]) : Effect.fail(new DeleteLogError()))),
+		Effect.tap((result) => AppLog.info("LogService.delete", { logId, userId, result })),
+		Effect.tapError(() => AppLog.debug("LogService.delete", { logId, userId }))
+	);
+});
+
+export class LogService extends Context.Service<LogService>()("LogService", {
+	make: Effect.fn("LogService")(function* () {
+		const { db, transaction } = yield* DBService;
+
+		return {
+			/**
+			 * Queries
+			 */
+
+			get: {
+				one: Effect.fn("LogService.get.one")(function* (logId: LogId, userId: UserId) {
+					return yield* getCharacterLog(logId, userId, db);
+				}),
+				dm: Effect.fn("LogService.get.dm")(function* (userId) {
+					return yield* getDMLogs(userId, db);
+				}),
+				all: Effect.fn("LogService.get.all")(function* (userId) {
+					return yield* getAllLogs(userId, db);
 				})
-			}
+			},
+
+			/**
+			 * Mutations
+			 */
+
+			save: Effect.fn("LogService.save")(function* (log: LogSchema, user: LocalsUser) {
+				return yield* transaction(
+					Effect.fn(function* (tx) {
+						return yield* upsertLog(tx, log, user, db).pipe(Effect.provide(DMTx(tx)));
+					})
+				).pipe(
+					Effect.tap((result) => AppLog.info("LogService.save", { logId: log.id, userId: user.id, result })),
+					Effect.tapError(() => AppLog.debug("LogService.save", { logId: log.id, userId: user.id, log }))
+				);
+			}),
+			delete: Effect.fn("LogService.delete")(function* (logId: LogId, userId: UserId) {
+				return yield* deleteLog(logId, userId, db);
+			})
 		};
-
-		return impl;
-	})
-}) {}
-
-export const LogTx = (tx: Transaction) => LogService.DefaultWithoutDependencies().pipe(Layer.provide(DBService.Default(tx)));
+	})()
+}) {
+	static readonly layer = Layer.effect(this, this.make);
+}

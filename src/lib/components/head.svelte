@@ -1,6 +1,6 @@
 <script lang="ts">
 	import { page } from "$app/state";
-	import { defaultDescription, defaultImage, defaultTitle } from "$lib/constants";
+	import { defaultDescription, defaultImage, defaultTitle } from "#lib/constants.js";
 
 	interface Props {
 		title: string;

@@ -1,8 +1,8 @@
 <script lang="ts">
-	import { pushState } from "$app/navigation";
+	import type { LogId } from "#lib/schemas.js";
+	import type { MagicItem, StoryAward } from "#lib/server/db/schema.js";
+	import { goto } from "$app/navigation";
 	import { page } from "$app/state";
-	import type { LogId } from "$lib/schemas";
-	import type { MagicItem, StoryAward } from "$lib/server/db/schema";
 	import { sorter } from "@sillvva/utils";
 	import { SvelteMap } from "svelte/reactivity";
 	import { queryParameters, ssp } from "sveltekit-search-params";
@@ -26,7 +26,6 @@
 		type: Type;
 		title?: never;
 	}
-
 	interface WithTitle extends Props {
 		type?: never;
 		title?: `${Type}${":" | ""}`;
@@ -136,10 +135,19 @@
 
 	function onclick(item: Item & { ids: LogId[] }) {
 		if (item.description) {
-			const url = new URL(page.url);
+			const url = new URL(page.url.href);
 			url.searchParams.set("s", item.ids.join(" "));
-			pushState("", {
-				modal: { type: "text", name: item.name, description: item.description, goto: search ? url.toString() : undefined }
+
+			goto("", {
+				shallow: true,
+				state: {
+					modal: {
+						type: "text",
+						name: item.name,
+						description: item.description,
+						goto: search ? url.toString() : undefined
+					}
+				}
 			});
 		} else if (search) {
 			params.s = item.ids.join(",");
@@ -154,12 +162,11 @@
 	{#if title}
 		<div role="presentation" onclick={collapsible ? () => (collapsed = !collapsed) : () => {}} onkeypress={() => {}}>
 			<h4 class="flex text-left leading-8 font-semibold in-[table]:leading-5 dark:text-white">
-				<span class="flex-1">
-					{title}
-				</span>
+				<span class="flex-1">{title}</span>
+
 				{#if collapsible}
 					<span
-						class="iconify mdi--chevron-up data-[collapsed=true]:mdi--chevron-down ml-2 inline size-6 justify-self-end md:hidden print:hidden"
+						class="ml-2 iconify inline size-6 justify-self-end mdi--chevron-up data-[collapsed=true]:mdi--chevron-down md:hidden print:hidden"
 						data-collapsed={collapsed}
 					></span>
 				{/if}
@@ -179,7 +186,9 @@
 					onkeypress={() => null}
 				>
 					<SearchResults text={mi.name} {terms} {filtered} {matches} />
-				</span>{/each}{#each consumables as mi (mi.id)}<span
+				</span>
+			{/each}{#each consumables as mi (mi.id)}
+				<span
 					role={mi.description || search ? "button" : "presentation"}
 					class={["inline pr-2 pl-2 first:pl-0", formatting ? "text-base-content/75 italic" : null]}
 					class:text-secondary-content={mi.description}
@@ -187,7 +196,8 @@
 					onkeypress={() => null}
 				>
 					<SearchResults text={mi.name} {terms} {filtered} {matches} />
-				</span>{/each}
+				</span>
+			{/each}
 		{:else}
 			None
 		{/if}

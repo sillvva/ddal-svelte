@@ -1,21 +1,24 @@
 <script lang="ts">
-	import type { GenericFormConfig } from "$lib/factories.svelte";
-	import type { DmLogSchemaIn, ItemId, ItemSchema, LogSchema, LogSchemaIn } from "$lib/schemas";
-	import { sorter } from "@sillvva/utils";
-	import { getContext, type Snippet } from "svelte";
+	import type { GenericForm } from "#lib/factories.svelte.js";
+	import type { DmLogSchemaIn, ItemId, ItemSchema, LogSchema, LogSchemaIn } from "#lib/schemas.js";
+	import { isDefined, sorter } from "@sillvva/utils";
+	import { type Snippet } from "svelte";
 	import { v7 } from "uuid";
-	import EntityCard from "./entity-card.svelte";
+	import Control from "./control.svelte";
+	import InputWrapper from "./input-wrapper.svelte";
+	import Input from "./input.svelte";
+	import MarkdownInput from "./md-input.svelte";
 
 	interface Props {
+		form: GenericForm<LogSchemaIn | DmLogSchemaIn>;
 		magicItems?: ItemSchema[];
 		storyAwards?: ItemSchema[];
 		children?: Snippet;
 	}
 
-	let { magicItems = [], storyAwards = [], children }: Props = $props();
+	let { form: configuredForm, magicItems = [], storyAwards = [], children }: Props = $props();
 
-	const configured = getContext<GenericFormConfig<LogSchemaIn | DmLogSchemaIn>>("configured-form");
-	const { form } = $derived(configured());
+	const { form } = $derived(configuredForm);
 
 	const newItem = () => ({ id: v7() as ItemId, name: "", description: "" }) satisfies LogSchema["magicItemsGained"][number];
 
@@ -49,7 +52,7 @@
 </script>
 
 <div
-	class="bg-base-100 col-span-12 flex flex-col justify-between gap-8 md:sticky md:top-19 md:z-10 md:flex-row md:pt-8 md:pb-4 md:max-lg:gap-4"
+	class="col-span-12 flex flex-col justify-between gap-8 bg-base-100 pt-8 md:sticky md:top-19 md:z-10 md:flex-row md:pb-4 md:max-lg:gap-4"
 >
 	{@render children?.()}
 	<div class="flex flex-1 flex-col gap-4 sm:flex-row md:max-w-fit">
@@ -58,17 +61,17 @@
 				<button
 					type="button"
 					tabindex="-1"
-					class="btn join-item border-base-200! bg-base-300! min-w-fit flex-2 basis-0 cursor-default justify-between gap-3"
+					class="btn join-item min-w-fit flex-2 basis-0 cursor-default justify-between gap-3 border-base-200! bg-base-300!"
 				>
 					<span>{label}</span>
 					<span class="flex flex-row gap-1">
 						{#if gained.value().length > 0}
-							<span class="badge badge-success badge-outline max-xs:px-1 rounded-sm">
+							<span class="badge rounded-sm badge-outline badge-success max-xs:px-1">
 								{gained.value().length}
 							</span>
 						{/if}
 						{#if lost.value().length > 0}
-							<span class="badge badge-error badge-outline max-xs:px-1 rounded-sm">
+							<span class="badge rounded-sm badge-outline badge-error max-xs:px-1">
 								{lost.value().length}
 							</span>
 						{/if}
@@ -99,13 +102,102 @@
 		{/each}
 	</div>
 </div>
+
 <div class="col-span-12 grid grid-cols-12 gap-4 dark:text-white">
 	{#each cards as [entity, items, gainedField, lostField], index (index)}
-		{#each gainedField.value() as item, index (item.id)}
-			<EntityCard type="add" {entity} {index} />
+		{#each gainedField.value().filter(isDefined) as item, index (item.id)}
+			{const title = $derived(entity === "magicItems" ? "Magic Item" : "Story Award")}
+			{const field = $derived(
+				entity === "magicItems" ? form.fields.magicItemsGained[index] : form.fields.storyAwardsGained[index]
+			)}
+
+			{#if field}
+				<div class="card col-span-12 bg-base-300/70 shadow-xl sm:col-span-6">
+					<div class="card-body flex flex-col">
+						<h4 class="text-xl">Add {title}</h4>
+						<div class="flex gap-4">
+							<Control class="flex-1">
+								<Input field={field.id} type="hidden" />
+								<Input field={field.name} type="text" label="Name" required />
+							</Control>
+							<button
+								type="button"
+								class="btn mt-10 btn-error"
+								onclick={(ev: Event) => {
+									ev.preventDefault();
+									if (field) {
+										if (entity === "magicItems")
+											form.fields.magicItemsGained.set(
+												form.fields.magicItemsGained.value().filter((it) => it?.id !== field.id.value())
+											);
+										else
+											form.fields.storyAwardsGained.set(
+												form.fields.storyAwardsGained.value().filter((it) => it?.id !== field.id.value())
+											);
+									}
+								}}
+								aria-label="Delete Entry"
+							>
+								<span class="iconify size-6 mdi--trash-can"></span>
+							</button>
+						</div>
+						<Control>
+							<MarkdownInput field={field.description} maxRows={8} maxLength={2000} preview />
+						</Control>
+					</div>
+				</div>
+			{/if}
 		{/each}
-		{#each lostField.value() as id, index (id)}
-			<EntityCard type="drop" {entity} {index} {items} />
+		{#each lostField.value().filter(isDefined) as id, index (id)}
+			{const title = $derived(entity === "magicItems" ? "Magic Item" : "Story Award")}
+			{const arrValue = $derived(
+				entity === "magicItems" ? form.fields.magicItemsLost.value() : form.fields.storyAwardsLost.value()
+			)}
+			{const field = $derived(entity === "magicItems" ? form.fields.magicItemsLost[index] : form.fields.storyAwardsLost[index])}
+
+			{#if field}
+				<div class="card col-span-12 bg-base-300/70 shadow-xl sm:col-span-6">
+					<div class="card-body flex flex-col">
+						<h4 class="text-xl">Drop {title}</h4>
+						<div class="flex gap-4">
+							<Control class="flex-1">
+								<InputWrapper {field} as="select" label="Select an Item">
+									<select
+										{...field.as("select")}
+										id={field.as("select").name}
+										class="select-bordered select w-full max-sm:text-base"
+									>
+										{#each items.filter((item) => item.id === field.value() || !arrValue.includes(item.id)) as item (item.id)}
+											<option value={item.id}>
+												{item.name}
+											</option>
+										{/each}
+									</select>
+								</InputWrapper>
+							</Control>
+							<button
+								type="button"
+								class="btn mt-10 btn-error"
+								onclick={(ev: Event) => {
+									ev.preventDefault();
+									if (field) {
+										if (entity === "magicItems")
+											form.fields.magicItemsLost.set(form.fields.magicItemsLost.value().filter((it) => it !== field.value()));
+										else
+											form.fields.storyAwardsLost.set(form.fields.storyAwardsLost.value().filter((it) => it !== field.value()));
+									}
+								}}
+								aria-label="Delete Entry"
+							>
+								<span class="iconify size-6 mdi--trash-can"></span>
+							</button>
+						</div>
+						<div class="text-sm">
+							{items.find((item) => field.value() === item.id)?.description || ""}
+						</div>
+					</div>
+				</div>
+			{/if}
 		{/each}
 	{/each}
 </div>

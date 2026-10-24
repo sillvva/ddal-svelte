@@ -1,11 +1,11 @@
 <script lang="ts">
-	import { dev } from "$app/environment";
-	import { getGlobal } from "$lib/stores.svelte";
+	import type { RemoteFormField } from '$app/server';
+	import { dev } from '$app/env';
+	import { getGlobal } from "#lib/stores.svelte.js";
 	import { parseAbsolute, type DateValue } from "@internationalized/date";
 	import { isTupleOfAtLeast } from "@sillvva/utils";
-	import type { RemoteFormField } from "@sveltejs/kit";
 	import { DatePicker, type DatePickerRootProps } from "bits-ui";
-	import SuperDebugRuned from "sveltekit-superforms/SuperDebug.svelte";
+	import Debug from "../debug.svelte";
 	import Input from "./input.svelte";
 
 	interface Props extends Omit<DatePickerRootProps, "value" | "minValue" | "maxValue"> {
@@ -41,6 +41,7 @@
 	const issues = $derived(field.issues());
 	const attributes = $derived(field.as("number"));
 	const name = $derived("name" in attributes ? attributes.name : undefined);
+	const value = $derived(field.value() || 0);
 	const minDateValue = $derived(dateToCalendar(Math.max(min, earliest)));
 	const maxDateValue = $derived(dateToCalendar(max));
 	const minValue = $derived(minDateValue.set({ hour: 0, minute: 0, second: 0, millisecond: 0 }));
@@ -57,24 +58,23 @@
 	}
 </script>
 
-<Input {field} type="number" hidden />
+<Input field={field} type="number" hidden />
 <DatePicker.Root
 	granularity="minute"
 	{...rest}
-	bind:value={
-		() => (field.value() ? clamp(dateToCalendar(field.value()), minDateValue, maxDateValue) : undefined),
-		(val) => {
-			if (val) {
-				const newValue = clamp(val, minDateValue, maxDateValue);
-				const date = newValue.toDate(tz);
-				field.set(date.getTime());
-			} else {
-				field.set(0);
-			}
+	bind:value={() => value
+		? clamp(dateToCalendar(value), minDateValue, maxDateValue)
+		: undefined, (val) => {
+		if (val) {
+			const newValue = clamp(val, minDateValue, maxDateValue);
+			const date = newValue.toDate(tz);
+			field.set(date.getTime());
+		} else {
+			field.set(0);
 		}
-	}
-	{minValue}
-	{maxValue}
+	}}
+	minValue={minValue}
+	maxValue={maxValue}
 >
 	<DatePicker.Label class="fieldset-legend">
 		<span>
@@ -97,11 +97,11 @@
 			</button>
 		{/if}
 	</DatePicker.Label>
-	<DatePicker.Input class="input inline-flex w-full items-center gap-1 px-3 select-none sm:text-xs">
+	<DatePicker.Input class="input inline-flex w-full items-center gap-1 px-3 select-none max-sm:text-base sm:text-xs">
 		{#snippet children({ segments })}
 			{#each segments as { part, value }, i (i)}
 				<DatePicker.Segment
-					{part}
+					part={part}
 					class="focus-visible:outline-primary aria-[valuetext=Empty]:text-base-content/70 rounded-xs py-1 outline-offset-4"
 				>
 					{value}
@@ -113,7 +113,7 @@
 		{/snippet}
 	</DatePicker.Input>
 	<DatePicker.Content class="z-10000 mt-2">
-		<DatePicker.Calendar class="shadow-popover border-base-300 bg-base-200 rounded-lg border p-[22px]">
+		<DatePicker.Calendar class="shadow-popover border-base-300 bg-base-200 rounded-lg border p-5.5">
 			{#snippet children({ months, weekdays })}
 				<DatePicker.Header class="flex items-center justify-between">
 					<DatePicker.PrevButton
@@ -140,7 +140,11 @@
 								{#each month.weeks as weekDates, i (i)}
 									<DatePicker.GridRow class="flex w-full">
 										{#each weekDates as date, j (j)}
-											<DatePicker.Cell {date} month={month.value} class="relative size-10 p-0! text-center text-sm">
+											<DatePicker.Cell
+												date={date}
+												month={month.value}
+												class="relative size-10 p-0! text-center text-sm"
+											>
 												<DatePicker.Day
 													class={[
 														"rounded-9px group relative inline-flex size-10 items-center justify-center whitespace-nowrap",
@@ -149,10 +153,10 @@
 														"data-disabled:text-base-content/30 data-disabled:pointer-events-none",
 														"data-selected:bg-base-300 data-selected:font-medium",
 														"data-unavailable:text-base-content/30 data-unavailable:line-through"
-													].join(" ")}
+													]}
 												>
 													<div
-														class="group-data-selected:bg-base-content/50 absolute top-[5px] size-1 rounded-full transition-all not-group-data-today:hidden"
+														class="group-data-selected:bg-base-content/50 absolute top-1.25 size-1 rounded-full transition-all not-group-data-today:hidden"
 													></div>
 													{date.day}
 												</DatePicker.Day>
@@ -174,15 +178,15 @@
 	{:else if description}
 		<span class="text-neutral-500">{description}</span>
 	{:else}
-		<span>&nbsp;</span>
+		<span></span>
 	{/if}
 </label>
 
 {#if debug}
-	<SuperDebugRuned
+	<Debug
 		data={{
 			timezone: tz,
-			current: field.value() ? clamp(dateToCalendar(field.value()), minDateValue, maxDateValue).toString() : undefined,
+			current: value ? clamp(dateToCalendar(value), minDateValue, maxDateValue).toString() : undefined,
 			initial: initial ? clamp(dateToCalendar(initial), minDateValue, maxDateValue).toString() : undefined,
 			min: minValue.toString(),
 			max: maxValue.toString()

@@ -1,11 +1,10 @@
-/* eslint-disable svelte/prefer-svelte-reactivity */
+import type { FullCharacterData } from "#lib/server/effect/services/characters.js";
+import type { UserDM } from "#lib/server/effect/services/dms.js";
+import type { FullLogData, LogSummaryData, UserLogData } from "#lib/server/effect/services/logs.js";
 import { beforeNavigate } from "$app/navigation";
-import type { FullCharacterData } from "$lib/server/effect/services/characters";
-import type { UserDM } from "$lib/server/effect/services/dms";
-import type { FullLogData, LogSummaryData, UserLogData } from "$lib/server/effect/services/logs";
+import type { RemoteForm, RemoteFormInput, RemoteFormIssue } from "$app/server";
 import { debounce, deepEqual, isDefined, substrCount, type MapKeys, type Prettify } from "@sillvva/utils";
 import type { StandardSchemaV1 } from "@standard-schema/spec";
-import type { RemoteForm, RemoteFormFields, RemoteFormInput, RemoteFormIssue } from "@sveltejs/kit";
 import { Duration } from "effect";
 import escapeRegex from "regexp.escape";
 import { getContext, hasContext, onMount, setContext, tick, untrack } from "svelte";
@@ -38,7 +37,7 @@ export function unknownErrorToast(error: unknown) {
 	errorToast(unknownErrorMessage(error));
 }
 
-export function createContext<T>(createDefault?: () => T): [() => T, (context: T) => T] {
+export function createContext<T>(createDefault?: () => T): [() => T, (context: T) => T, () => boolean] {
 	const key = Symbol("context");
 	return [
 		() => {
@@ -46,7 +45,8 @@ export function createContext<T>(createDefault?: () => T): [() => T, (context: T
 			if (createDefault) return setContext(key, createDefault());
 			throw new Error("Context not found");
 		},
-		(context) => setContext(key, context)
+		(context) => setContext(key, context),
+		() => hasContext(key)
 	];
 }
 
@@ -110,12 +110,12 @@ export function use<T>(
 	return $state.snapshot(initial);
 }
 
-export type GenericFormConfig<T extends RemoteFormInput | undefined = RemoteFormInput> = ReturnType<typeof configureForm<T>>;
-export type GenericForm<T extends RemoteFormInput | undefined = RemoteFormInput> = ReturnType<GenericFormConfig<T>>;
+export type GenericFormConfig<T extends RemoteFormInput = RemoteFormInput> = ReturnType<typeof configureForm<T>>;
+export type GenericForm<T extends RemoteFormInput = RemoteFormInput> = ReturnType<GenericFormConfig<T>>;
 
 type FormId<Input> = Input extends { id: infer Id } ? (Id extends string | number ? Id : string | number) : string | number;
 
-export interface RemoteFormOptions<Input extends RemoteFormInput | undefined = undefined> {
+export interface RemoteFormOptions<Input extends RemoteFormInput = RemoteFormInput> {
 	form: RemoteForm<Input, unknown>;
 	schema?: StandardSchemaV1<Input, unknown>;
 	key?: FormId<Input>;
@@ -133,9 +133,7 @@ export interface RemoteFormOptions<Input extends RemoteFormInput | undefined = u
 	formEl?: HTMLFormElement;
 }
 
-export function configureForm<Input extends RemoteFormInput | undefined = undefined>(getProps: () => RemoteFormOptions<Input>) {
-	type Fields = RemoteFormFields<unknown>;
-
+export function configureForm<Input extends RemoteFormInput = RemoteFormInput>(getProps: () => RemoteFormOptions<Input>) {
 	const {
 		form: remoteForm,
 		schema,
@@ -152,17 +150,14 @@ export function configureForm<Input extends RemoteFormInput | undefined = undefi
 	type FormData = Input extends undefined ? Record<string, never> : Input;
 	const data = $derived((formData ?? {}) as FormData);
 	const key = $derived(formKey ?? ((data.id ?? v7()) as FormId<Input>));
+
 	const form = $derived(schema ? remoteForm.for(key).preflight(schema) : remoteForm.for(key));
 
-	const initialize = (data: FormData) => {
-		// eslint-disable-next-line @typescript-eslint/no-explicit-any
-		form.fields.set(data as any);
-	};
 	let initial = $state.raw(
 		use({
 			track: () => data,
-			ssr: initialize,
-			pre: initialize
+			ssr: (data) => form.fields.set(data),
+			pre: (data) => form.fields.set(data)
 		})
 	);
 
@@ -173,8 +168,10 @@ export function configureForm<Input extends RemoteFormInput | undefined = undefi
 
 	const attributes = $derived(
 		Object.assign(
-			form.enhance(async ({ submit, form: formEl, data }) => {
+			form.enhance(async (form) => {
 				if (submitting) return;
+				const formEl = form.element;
+				const data = form.fields.value();
 
 				const bf = !onsubmit || (await onsubmit({ dirty, form: formEl, data }));
 				if (!bf) return;
@@ -183,16 +180,15 @@ export function configureForm<Input extends RemoteFormInput | undefined = undefi
 				const wasDirty = dirty;
 				try {
 					dirty = false;
-					await submit();
+					const success = await form.submit();
 					submitted = true;
 
-					const success = !allIssues;
 					onresult?.({ success, result: form.result, issues: allIssues });
+					if (allIssues) onissues?.({ issues: allIssues });
 
 					if (!success) {
 						dirty = wasDirty;
 						await focusInvalid();
-						onissues?.({ issues: allIssues });
 					}
 				} catch (error) {
 					onresult?.({ success: false, error: unknownErrorMessage(error) });
@@ -212,7 +208,7 @@ export function configureForm<Input extends RemoteFormInput | undefined = undefi
 
 	const result = $derived(form.result);
 	const issues = $derived(form.fields.issues());
-	const allIssues = $derived((form.fields as Fields).allIssues());
+	const allIssues = $derived(form.fields.allIssues());
 	const initialErrors = $derived(initialErrorsProp ?? !!data?.id);
 	let lastIssues = $state.raw<RemoteFormIssue[] | undefined>();
 
@@ -222,7 +218,7 @@ export function configureForm<Input extends RemoteFormInput | undefined = undefi
 			if (initialErrors) await validate().then(focusInvalid);
 		},
 		effect: () => {
-			initialize(data);
+			form.fields.set(data);
 			initial = $state.snapshot(data);
 			touched = false;
 			if (initialErrors) validate(true).then(focusInvalid);
@@ -232,7 +228,7 @@ export function configureForm<Input extends RemoteFormInput | undefined = undefi
 	const debouncedValidate = debounce(validate, 300);
 
 	async function validate(reset = false) {
-		await form.validate({ includeUntouched: true, preflightOnly: true });
+		await form.validate({ all: true, preflightOnly: true });
 		if (allIssues && onissues && !deepEqual(lastIssues, allIssues)) onissues({ issues: allIssues });
 		if (allIssues) lastIssues = allIssues;
 		else if (reset) lastIssues = undefined;
@@ -245,11 +241,7 @@ export function configureForm<Input extends RemoteFormInput | undefined = undefi
 		else return;
 
 		const invalid = formEl?.querySelector(":is(input, select, textarea):not(.hidden, [type=hidden], :disabled)[aria-invalid]") as
-			| HTMLInputElement
-			| HTMLSelectElement
-			| HTMLTextAreaElement
-			| null
-			| undefined;
+			HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement | null | undefined;
 		invalid?.focus();
 
 		if (
@@ -257,7 +249,7 @@ export function configureForm<Input extends RemoteFormInput | undefined = undefi
 			allIssues?.some((issue) => issue.message.includes("undefined"))
 		) {
 			console.warn(
-				"Ensure your form fields are not disabled when the validation is run.",
+				"Ensure form fields are not disabled when the validation is run.",
 				"Disabled fields are treated as undefined values, because they are excluded from the form data."
 			);
 		}
@@ -272,6 +264,7 @@ export function configureForm<Input extends RemoteFormInput | undefined = undefi
 	});
 
 	beforeNavigate((ev) => {
+		if (ev.shallow) return;
 		if ((dirty || issues) && navBlockMessage && !confirm(navBlockMessage)) ev.cancel();
 	});
 
@@ -288,8 +281,7 @@ export function configureForm<Input extends RemoteFormInput | undefined = undefi
 		allIssues,
 		validate,
 		debouncedValidate,
-		// eslint-disable-next-line @typescript-eslint/no-explicit-any
-		reset: () => form.fields.set(initial as any)
+		reset: () => form.fields.set(initial)
 	});
 }
 

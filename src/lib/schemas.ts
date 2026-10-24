@@ -1,8 +1,7 @@
-import type { FullCharacterData } from "$lib/server/effect/services/characters";
-import { omit, type Prettify } from "@sillvva/utils";
-import { LogLevel } from "effect";
+import type { FullCharacterData } from "#lib/server/effect/services/characters.js";
+import { omit } from "@sillvva/utils";
 import * as v from "valibot";
-import { BLANK_CHARACTER, PROVIDERS, themeGroups, themes } from "./constants";
+import { BLANK_CHARACTER, PASSKEY_PLACEHOLDER_EMAIL_DOMAIN, PROVIDERS, themeGroups, themes } from "./constants";
 
 export type BrandedType = v.InferOutput<ReturnType<typeof brandedId>>;
 function brandedId<T extends string>(name: T) {
@@ -22,6 +21,32 @@ export const urlSchema = v.pipe(text, v.url());
 export const imageUrlWithFallback = v.pipe(
 	v.fallback(v.union([urlSchema, v.literal(""), v.literal(BLANK_CHARACTER)]), BLANK_CHARACTER)
 );
+
+/** Common mailbox addresses, within RFC 5321 length limits, excluding the passkey signup placeholder domain. */
+function isStoredEmail(value: string) {
+	const at = value.lastIndexOf("@");
+	if (at < 1 || value.indexOf("@") !== at) return false;
+
+	const local = value.slice(0, at);
+	const domain = value.slice(at + 1);
+	if (local.length > 64 || domain.length > 253) return false;
+	if (domain === PASSKEY_PLACEHOLDER_EMAIL_DOMAIN || domain.endsWith(`.${PASSKEY_PLACEHOLDER_EMAIL_DOMAIN}`)) return false;
+
+	const labels = domain.split(".");
+	const tld = labels.at(-1);
+	if (labels.length < 2 || !tld || !/^[a-z]{2,63}$/u.test(tld)) return false;
+
+	return labels.every((label) => /^[a-z0-9](?:[a-z0-9-]{0,61}[a-z0-9])?$/u.test(label));
+}
+
+export const emailSchema = v.pipe(
+	string,
+	v.toLowerCase(),
+	v.maxLength(254, "Email is too long"),
+	v.email("Enter a valid email address"),
+	v.check(isStoredEmail, "Enter a valid email address")
+);
+
 export const orEmpty = <T extends v.GenericSchema>(schema: T) => v.union([schema, v.literal("")]);
 export const emptyToNull = <T extends v.GenericSchema>(schema: T) =>
 	v.pipe(
@@ -46,37 +71,6 @@ export const timezoneSchema = v.pipe(
 	v.string(),
 	v.check((input) => input === "" || Intl.supportedValuesOf("timeZone").includes(input), "Invalid timezone")
 );
-
-export type EnvPrivate = v.InferOutput<typeof envPrivateSchema>;
-export const envPrivateSchema = v.pipe(
-	v.object({
-		DATABASE_URL: urlSchema,
-		AUTH_SECRET: v.pipe(string, v.minLength(10)),
-		GOOGLE_CLIENT_ID: requiredString,
-		GOOGLE_CLIENT_SECRET: requiredString,
-		DISCORD_CLIENT_ID: requiredString,
-		DISCORD_CLIENT_SECRET: requiredString,
-		DISABLE_SIGNUPS: v.optional(v.boolean(), false),
-		LOG_LEVEL: v.pipe(
-			v.optional(v.picklist(["none", "debug", "info", "error"]), "error"),
-			v.transform((b) =>
-				b === "debug" ? LogLevel.Debug : b === "info" ? LogLevel.Info : b === "error" ? LogLevel.Error : LogLevel.None
-			)
-		)
-	}),
-	v.readonly()
-);
-
-export type EnvPublic = v.InferOutput<typeof envPublicSchema>;
-export const envPublicSchema = v.pipe(
-	v.object({
-		PUBLIC_URL: urlSchema
-	}),
-	v.readonly()
-);
-
-interface CombinedEnv extends EnvPrivate, EnvPublic {}
-export type Env = Prettify<CombinedEnv>;
 
 export type UserId = v.InferOutput<typeof userIdSchema>;
 export const userIdSchema = brandedId("UserId");
@@ -335,8 +329,10 @@ export const localsAccountSchema = v.object({
 	refreshToken: v.nullable(v.string()),
 	accessToken: v.nullable(v.string()),
 	accessTokenExpiresAt: v.nullable(v.date()),
+	refreshTokenExpiresAt: v.nullable(v.date()),
 	scope: v.nullable(v.string()),
 	idToken: v.nullable(v.string()),
+	password: v.nullable(v.string()),
 	createdAt: v.date(),
 	updatedAt: v.date()
 });
@@ -368,6 +364,7 @@ export const localsUserSchema = v.object({
 	name: requiredString,
 	email: requiredString,
 	emailVerified: v.boolean(),
+	onboarded: v.boolean(),
 	image: v.nullish(imageUrlWithFallback),
 	role: roleSchema,
 	banned: v.boolean(),
@@ -377,6 +374,12 @@ export const localsUserSchema = v.object({
 	updatedAt: v.date(),
 	accounts: v.array(v.pick(localsAccountSchema, ["id", "accountId", "providerId", "createdAt", "updatedAt"])),
 	passkeys: v.array(v.pick(localsPasskeySchema, ["id", "name", "createdAt"]))
+});
+
+export type OnboardingSchema = v.InferOutput<typeof onboardingSchema>;
+export const onboardingSchema = v.object({
+	name: v.pipe(requiredString, shortString),
+	email: emailSchema
 });
 
 export type LocalsSession = v.InferOutput<typeof localsSessionSchema>;

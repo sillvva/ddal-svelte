@@ -1,30 +1,29 @@
 <script lang="ts">
 	import { goto } from "$app/navigation";
 	import { page } from "$app/state";
-	import Head from "$lib/components/head.svelte";
-	import Items from "$lib/components/items.svelte";
-	import NavMenu from "$lib/components/nav-menu.svelte";
-	import SearchResults from "$lib/components/search-results.svelte";
-	import Search from "$lib/components/search.svelte";
-	import { EntitySearchFactory } from "$lib/factories.svelte.js";
-	import * as API from "$lib/remote";
-	import { getGlobal } from "$lib/stores.svelte.js";
-	import { createTransition, download, hotkey } from "$lib/util";
+	import Head from "#lib/components/head.svelte";
+	import Items from "#lib/components/items.svelte";
+	import NavMenu from "#lib/components/nav-menu.svelte";
+	import SearchResults from "#lib/components/search-results.svelte";
+	import Search from "#lib/components/search.svelte";
+	import { EntitySearchFactory } from "#lib/factories.svelte.js";
+	import * as API from "#lib/remote/index.js";
+	import { getGlobal } from "#lib/stores.svelte.js";
+	import { createTransition, download, hotkey } from "#lib/util.js";
 	import { sorter } from "@sillvva/utils";
-	import { untrack } from "svelte";
 
 	const global = getGlobal();
+	const searchKey = "s";
 </script>
 
 <svelte:boundary>
-	{@const { user } = await API.app.queries.request()}
-	{@const characters = await API.characters.queries.getAll()}
-	{@const search = new EntitySearchFactory(
-		characters,
-		untrack(() => page.url.searchParams.get("s") || "")
+	{const { user } = $derived(await API.app.queries.request())}
+	{const characters = $derived(await API.characters.queries.getAll())}
+	{const search = $derived(
+		new EntitySearchFactory(characters, page.url.searchParams.get(searchKey) ?? page.state.search?.[searchKey] ?? "")
 	)}
-	{@const sortedResults = search.results.toSorted(
-		(a, b) => sorter(b.score, a.score) || sorter(a.totalLevel, b.totalLevel) || sorter(a.name, b.name)
+	{const sortedResults = $derived(
+		search.results.toSorted((a, b) => sorter(b.score, a.score) || sorter(a.totalLevel, b.totalLevel) || sorter(a.name, b.name))
 	)}
 
 	<Head title="{user?.name}'s Characters" />
@@ -71,7 +70,7 @@
 					New <span class="max-md:hidden">Character</span>
 					<kbd class="kbd kbd-sm max-md:hover-none:hidden text-base-content">N</kbd>
 				</a>
-				<Search bind:value={search.query} placeholder="Search by name, class, items, etc." />
+				<Search name={searchKey} placeholder="Search by name, class, items, etc." />
 				<a href="/characters/new/edit" class="btn btn-primary sm:hidden" aria-label="New Character">
 					<span class="iconify mdi--plus inline size-6"></span>
 				</a>
@@ -188,14 +187,14 @@
 											<SearchResults text={character.name} terms={search.terms} />
 										</a>
 									</div>
-									<div class="text-xs whitespace-pre-wrap sm:text-sm">
+									<div class="text-sm text-balance whitespace-pre-wrap sm:text-sm">
 										<span class="inline pr-1 md:hidden">Level {character.totalLevel}</span><SearchResults
 											text={character.race}
 											terms={search.terms}
 										/>
 										<SearchResults text={character.class} terms={search.terms} />
 									</div>
-									<div class="mb-2 text-xs md:hidden">
+									<div class="max-sm:text-base-content/70 mb-2 text-sm md:hidden">
 										<SearchResults text={character.campaign} terms={search.terms} />
 									</div>
 									{#if (character.match.has("magicItems") || global.app.characters.magicItems) && character.magicItems.length}
@@ -292,13 +291,13 @@
 				{@render grid(sortedResults)}
 			{:else}
 				{#each [...new Set(sortedResults.map((c) => c.tier))].sort(sorter) as tier, index (tier)}
-					<h1
+					<h2
 						class="font-vecna max-xs:data-[display=grid]:hidden pt-6 pb-2 text-3xl font-bold data-[display=list]:hidden data-[index=0]:pt-0 dark:text-white"
 						data-display={global.app.characters.display}
 						data-index={index}
 					>
 						Tier {tier}
-					</h1>
+					</h2>
 					{@render grid(sortedResults.filter((c) => c.tier == tier))}
 				{/each}
 			{/if}
