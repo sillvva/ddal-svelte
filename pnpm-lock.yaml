@@ -74,12 +74,6 @@ importers:
       svelte-autosize:
         specifier: ^1.1.5
         version: 1.1.5(svelte@5.57.2(@typescript-eslint/types@8.72.0))
-      svelte-breadcrumbs:
-        specifier: ^2.0.1
-        version: 2.0.1(svelte@5.57.2(@typescript-eslint/types@8.72.0))
-      svelte-contextify:
-        specifier: ^1.0.4
-        version: 1.0.4(svelte@5.57.2(@typescript-eslint/types@8.72.0))
       svelte-sonner:
         specifier: ^1.2.1
         version: 1.2.1(svelte@5.57.2(@typescript-eslint/types@8.72.0))
@@ -2745,11 +2739,6 @@ packages:
     peerDependencies:
       svelte: '>=3.0.0'
 
-  svelte-breadcrumbs@2.0.1:
-    resolution: {integrity: sha512-OSC307s01rXkRDrNrcdMQJomXdqlepCd+yazctkM1Unn1ORhAWBtZhn9qk6yR5zRkzoP2sPNf3mwV9AkGwkndQ==}
-    peerDependencies:
-      svelte: 5.x
-
   svelte-check@4.7.7:
     resolution: {integrity: sha512-Ge2IMdeTpbJuzNFGRiiMg0RWgbScysKQu7xwcyFJ22+DU9F5nPX51+Q3gHmGqRxYQMx2knreVWt5oCtfe0vf2g==}
     engines: {node: '>= 18.0.0'}
@@ -2757,11 +2746,6 @@ packages:
     peerDependencies:
       svelte: ^4.0.0 || ^5.0.0-next.0
       typescript: ^5.0.0 || ^6.0.0
-
-  svelte-contextify@1.0.4:
-    resolution: {integrity: sha512-dp4+XXpZ+ZzlTkDVyPBzyBGKH0GHxyM/TB81emTozt0hHGmUzYqBiBko4Bc2/wb36MleexiDFm9OPRlLBz53kA==}
-    peerDependencies:
-      svelte: ^4.0.0 || ^5.0.0-next.0
 
   svelte-eslint-parser@1.9.0:
     resolution: {integrity: sha512-aKdKQAZP7MobfVcQNyy5Yk0QjlC9m5T1lTS0qA7+0EIsFzFX3WgbGHfb8267QK+4hI8Az9+2f+hk5sp39op8sg==}
@@ -2771,9 +2755,6 @@ packages:
     peerDependenciesMeta:
       svelte:
         optional: true
-
-  svelte-kit@1.2.0:
-    resolution: {integrity: sha512-RRaOHBhpDv4g2v9tcq8iNw055Pt0MlLps6JVA7/40f4KAbtztXSI4T6MZYbHRirO708urfAAMx6Qow+tQfCHug==}
 
   svelte-sonner@1.2.1:
     resolution: {integrity: sha512-N00LOWb60fjKXULbpngku+7E9Krb16KpNq4/Eax5Vu7o1Dpbca55QpaLPsB+yp82JIEdFhfJuv5cVXLoe0ZtVA==}
@@ -5358,11 +5339,6 @@ snapshots:
       autosize: 6.0.1
       svelte: 5.57.2(@typescript-eslint/types@8.72.0)
 
-  svelte-breadcrumbs@2.0.1(svelte@5.57.2(@typescript-eslint/types@8.72.0)):
-    dependencies:
-      svelte: 5.57.2(@typescript-eslint/types@8.72.0)
-      svelte-kit: 1.2.0
-
   svelte-check@4.7.7(picomatch@4.0.7)(svelte@5.57.2(@typescript-eslint/types@8.72.0))(typescript@6.0.3):
     dependencies:
       '@jridgewell/trace-mapping': 0.3.31
@@ -5376,10 +5352,6 @@ snapshots:
     transitivePeerDependencies:
       - picomatch
 
-  svelte-contextify@1.0.4(svelte@5.57.2(@typescript-eslint/types@8.72.0)):
-    dependencies:
-      svelte: 5.57.2(@typescript-eslint/types@8.72.0)
-
   svelte-eslint-parser@1.9.0(svelte@5.57.2(@typescript-eslint/types@8.72.0)):
     dependencies:
       eslint-scope: 8.4.0
@@ -5391,8 +5363,6 @@ snapshots:
       semver: 7.8.5
     optionalDependencies:
       svelte: 5.57.2(@typescript-eslint/types@8.72.0)
-
-  svelte-kit@1.2.0: {}
 
   svelte-sonner@1.2.1(svelte@5.57.2(@typescript-eslint/types@8.72.0)):
     dependencies:
