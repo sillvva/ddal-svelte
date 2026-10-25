@@ -330,7 +330,7 @@
 	</aside>
 
 	<div
-		class="fixed inset-0 -z-10 bg-base-300/50 opacity-0 backdrop-blur-sm transition-all data-[open=false]:hidden data-[open=true]:z-40 data-[open=true]:opacity-100"
+		class="fixed inset-0 -z-10 bg-base-300/25 opacity-0 backdrop-blur-sm transition-all data-[open=false]:hidden data-[open=true]:z-40 data-[open=true]:opacity-100"
 		onkeydown={() => (open = false)}
 		onclick={() => (open = false)}
 		role="none"
@@ -338,7 +338,7 @@
 	></div>
 
 	<dialog
-		class="modal bg-base-300/75!"
+		class="modal bg-base-300/25!"
 		open={deleteConfirmOpen || undefined}
 		aria-labelledby="delete-account-title"
 		aria-describedby="delete-account-description"

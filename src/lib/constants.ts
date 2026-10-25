@@ -52,8 +52,8 @@ export const themes = [
 		group: "light"
 	},
 	{
-		name: "Monolight",
-		value: "monolight",
+		name: "Caramellatte",
+		value: "caramellatte",
 		group: "light"
 	},
 	{
@@ -67,13 +67,23 @@ export const themes = [
 		group: "light"
 	},
 	{
-		name: "Garden",
-		value: "garden",
+		name: "Magenta",
+		value: "magenta",
 		group: "light"
 	},
 	{
-		name: "Autumn",
-		value: "autumn",
+		name: "Sky",
+		value: "sky",
+		group: "light"
+	},
+	{
+		name: "Grove",
+		value: "grove",
+		group: "light"
+	},
+	{
+		name: "Plum",
+		value: "plum",
 		group: "light"
 	},
 	{
@@ -87,8 +97,8 @@ export const themes = [
 		group: "dark"
 	},
 	{
-		name: "Monodark",
-		value: "monodark",
+		name: "Abyss",
+		value: "abyss",
 		group: "dark"
 	},
 	{
@@ -104,6 +114,16 @@ export const themes = [
 	{
 		name: "Forest",
 		value: "forest",
+		group: "dark"
+	},
+	{
+		name: "Coolify",
+		value: "coolify",
+		group: "dark"
+	},
+	{
+		name: "Mint",
+		value: "mint",
 		group: "dark"
 	}
 ] as const satisfies Theme[];

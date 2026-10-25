@@ -64,7 +64,7 @@
 </button>
 
 <dialog
-	class="modal bg-base-300/75!"
+	class="modal bg-base-300/25!"
 	aria-labelledby="theme-picker-title"
 	open={dialogOpen || undefined}
 	onclose={() => (dialogOpen = false)}
