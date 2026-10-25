@@ -1,8 +1,8 @@
 <script lang="ts">
-	import { dev } from "$app/environment";
+	import { dev } from '$app/env';
 	import { onNavigate } from "$app/navigation";
-	import * as API from "$lib/remote";
-	import { getGlobal, getLogger } from "$lib/stores.svelte";
+	import * as API from "#lib/remote/index.js";
+	import { getGlobal, getLogger } from "#lib/stores.svelte.js";
 	import { Toaster } from "svelte-sonner";
 	import "../app.css";
 
@@ -14,7 +14,8 @@
 	const request = await API.app.queries.request();
 	global.app = request.app;
 
-	onNavigate(({ complete, from, to }) => {
+	onNavigate(({ complete, from, to, shallow }) => {
+		if (shallow) return;
 		if (!document.startViewTransition) return;
 		if (from?.url.pathname === to?.url.pathname) return;
 		return new Promise((resolve) => {

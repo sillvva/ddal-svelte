@@ -1,10 +1,11 @@
 <script lang="ts">
-	import { pushState } from "$app/navigation";
-	import Head from "$lib/components/head.svelte";
-	import LoadingPanel from "$lib/components/loading-panel.svelte";
-	import { successToast } from "$lib/factories.svelte.js";
-	import * as API from "$lib/remote";
-	import { getRelativeTime, parseEffectResult } from "$lib/util";
+	import { goto } from "$app/navigation";
+	import Debug from "#lib/components/debug.svelte";
+	import Head from "#lib/components/head.svelte";
+	import LoadingPanel from "#lib/components/loading-panel.svelte";
+	import { successToast } from "#lib/factories.svelte.js";
+	import * as API from "#lib/remote/index.js";
+	import { getRelativeTime, parseEffectResult } from "#lib/util.js";
 	import { debounce } from "@sillvva/utils";
 	import { queryParameters, ssp } from "sveltekit-search-params";
 
@@ -19,8 +20,8 @@
 
 	let debouncing = $state(false);
 	const debouncedSearch = debounce((query: string) => {
-		params.s = query.trim() || null;
-		debouncing = false;
+			params.s = query.trim() || null;
+			debouncing = false;
 	}, 400);
 
 	const formatter = new Intl.DateTimeFormat(navigator.language, {
@@ -34,14 +35,18 @@
 		if (!syntaxReference) {
 			syntaxReference = await fetch("/syntax-reference.md").then((res) => res.text());
 		}
-		pushState("", {
-			modal: {
-				type: "text",
-				name: "Syntax Reference",
-				description: syntaxReference,
-				width: "64rem",
-				maxWidth: "60vw",
-				maxHeight: "80vh"
+
+		goto("", {
+			shallow: true,
+			state: {
+				modal: {
+					type: "text",
+					name: "Syntax Reference",
+					description: syntaxReference,
+					width: "64rem",
+					maxWidth: "60vw",
+					maxHeight: "80vh"
+				}
 			}
 		});
 	}
@@ -50,8 +55,8 @@
 <Head title="App Logs" />
 
 <svelte:boundary>
-	{@const baseSearch = await API.admin.queries.getBaseSearch()}
-	{@const logsQuery = API.admin.queries.getAppLogs(params.s ?? "")}
+	{const baseSearch = $derived(await API.admin.queries.getBaseSearch())}
+	{const logsQuery = $derived(API.admin.queries.getAppLogs(params.s ?? ""))}
 
 	<section class="flex flex-col gap-1">
 		<div class="flex w-full gap-2 sm:max-w-md md:max-w-md">
@@ -196,12 +201,7 @@
 											<pre class="overflow-x-scroll">{log.stack}</pre>
 										</div>
 									{/if}
-									<div class="bg-base-100 rounded-lg p-6">
-										<h3 class="mb-2 text-lg font-bold">Annotations</h3>
-										<div class="highlighted overflow-x-scroll">
-											{@html log.highlighted}
-										</div>
-									</div>
+									<Debug title="Annotations" data={log.annotations} />
 								</div>
 							</td>
 						</tr>
@@ -215,10 +215,3 @@
 		</section>
 	{/if}
 </svelte:boundary>
-
-<style>
-	.highlighted :global(pre) {
-		background-color: transparent !important;
-		white-space: pre-wrap !important;
-	}
-</style>

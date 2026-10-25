@@ -1,6 +1,6 @@
 <script>
-	import Footer from "$lib/components/footer.svelte";
-	import { getGlobal } from "$lib/stores.svelte";
+	import Footer from "#lib/components/footer.svelte";
+	import { getGlobal } from "#lib/stores.svelte.js";
 
 	let { children } = $props();
 

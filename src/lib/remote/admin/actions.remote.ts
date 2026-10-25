@@ -1,16 +1,23 @@
-import { appLogId } from "$lib/schemas";
-import { AppLog } from "$lib/server/effect/logging";
-import { guardedCommand } from "$lib/server/effect/remote";
-import { AdminService } from "$lib/server/effect/services/admin";
+import { appLogId } from "#lib/schemas.js";
+import { guardedCommand } from "#lib/server/effect/guarded.js";
+import { AppLog } from "#lib/server/effect/logging.js";
+import { AdminService } from "#lib/server/effect/services/admin.js";
+import { requested } from "$app/server";
+import { Effect } from "effect";
 import * as v from "valibot";
+import { getAppLogs } from "./queries.remote";
 
 export const deleteAppLog = guardedCommand(
 	appLogId,
 	function* (id) {
 		const Admin = yield* AdminService;
-		return yield* Admin.set.deleteLog(id);
+
+		const result = yield* Admin.deleteLog(id);
+		yield* Effect.promise(() => requested(getAppLogs, 1).refreshAll());
+
+		return result;
 	},
-	true
+	"admin"
 );
 
 export const logClientError = guardedCommand(

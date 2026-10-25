@@ -1,10 +1,11 @@
-import { searchSections } from "$lib/constants.js";
-import type { LocalsUser } from "$lib/schemas.js";
-import { AppLog } from "$lib/server/effect/logging";
-import { guardedQuery } from "$lib/server/effect/remote";
-import { CharacterService } from "$lib/server/effect/services/characters";
-import { DMService } from "$lib/server/effect/services/dms";
-import { LogService } from "$lib/server/effect/services/logs";
+import { searchSections } from "#lib/constants.js";
+import type { LogLevel } from "#lib/entities.ts";
+import type { LocalsUser } from "#lib/schemas.js";
+import { guardedQuery } from "#lib/server/effect/guarded.js";
+import { AppLog } from "#lib/server/effect/logging.js";
+import { CharacterService } from "#lib/server/effect/services/characters.js";
+import { DMService } from "#lib/server/effect/services/dms.js";
+import { LogService } from "#lib/server/effect/services/logs.js";
 import { sorter } from "@sillvva/utils";
 import { Effect } from "effect";
 
@@ -21,7 +22,7 @@ const sectionData = {
 	)
 };
 
-type GetData = Effect.Effect.Success<ReturnType<typeof getData>>;
+type GetData = Effect.Success<ReturnType<typeof getData>>;
 export type SearchData = Array<SectionData | GetData[number]>;
 const getData = Effect.fn("GetData")(function* (user: LocalsUser) {
 	const Characters = yield* CharacterService;
@@ -40,10 +41,7 @@ const getData = Effect.fn("GetData")(function* (user: LocalsUser) {
 					(character) =>
 						({
 							...character,
-							logLevels: [] as {
-								id: string;
-								levels: number;
-							}[],
+							logLevels: [] as LogLevel[],
 							type: "character",
 							url: `/characters/${character.id}`
 						}) as const
@@ -84,7 +82,7 @@ export const getCommandData = guardedQuery(function* ({ user }) {
 	const data: SearchData = [sectionData];
 	const searchData = yield* getData(user).pipe(
 		Effect.tapError((e) => AppLog.error(`[GetCommandData] ${e.message}`, { status: e.status, cause: e.cause })),
-		Effect.catchAll(() => Effect.succeed([] as SearchData))
+		Effect.catch(() => Effect.succeed([] as SearchData))
 	);
 	return data.concat(searchData) as SearchData;
 });

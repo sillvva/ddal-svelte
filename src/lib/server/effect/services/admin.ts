@@ -1,13 +1,12 @@
-import type { AppLogId, AppLogSchema, UserId } from "$lib/schemas";
-import { DBService, runQuery, type DrizzleError, type Filter, type Transaction, type TRSchema } from "$lib/server/db";
-import type { relations } from "$lib/server/db/relations";
-import { appLogs, type AppLog, type User } from "$lib/server/db/schema";
-import { type ErrorParams } from "$lib/server/effect/errors";
-import type { ParseMetadata } from "@sillvva/search";
+import type { AppLogId, UserId } from "#lib/schemas.js";
+import { DBService, runQuery, type Filter, type Transaction, type TRSchema } from "#lib/server/db/index.js";
+import type { relations } from "#lib/server/db/relations.js";
+import { appLogs, type InsertAppLog } from "#lib/server/db/schema.js";
+import { type ErrorParams } from "#lib/server/effect/errors.js";
 import { DrizzleSearchParser } from "@sillvva/search/drizzle";
-import { isTupleOf } from "@sillvva/utils";
-import { eq, sql } from "drizzle-orm";
-import { Data, DateTime, Effect, Layer } from "effect";
+import { isTupleOf, sorter } from "@sillvva/utils";
+import { EmptyFilter, eq, sql } from "drizzle-orm";
+import { Context, Data, DateTime, Effect, Layer } from "effect";
 
 export class UserNotFoundError extends Data.TaggedError("UserNotFoundError")<ErrorParams> {
 	constructor(err?: unknown) {
@@ -16,37 +15,28 @@ export class UserNotFoundError extends Data.TaggedError("UserNotFoundError")<Err
 }
 
 export class SaveAppLogError extends Data.TaggedError("SaveAppLogError")<ErrorParams> {
-	constructor(message: string, err?: unknown) {
-		super({ message, status: 404, cause: err });
+	constructor(err?: unknown) {
+		super({ message: "Unable to save app log", status: 500, cause: err });
 	}
 }
 
 export class DeleteLogError extends Data.TaggedError("DeleteLogError")<ErrorParams> {
 	constructor(err?: unknown) {
-		super({ message: "Unable to delete log", status: 404, cause: err });
+		super({ message: "Unable to delete log", status: 500, cause: err });
 	}
 }
 
-interface AdminApiImpl {
-	readonly get: {
-		readonly user: (userId: UserId) => Effect.Effect<User, UserNotFoundError | DrizzleError>;
-		readonly logs: (search?: string) => Effect.Effect<{ logs: AppLog[]; metadata?: ParseMetadata }, DrizzleError>;
-	};
-	readonly set: {
-		readonly saveLog: (
-			values: Omit<AppLogSchema, "id">
-		) => Effect.Effect<Omit<AppLogSchema, "id">, SaveAppLogError | DrizzleError>;
-		readonly deleteLog: (logId: AppLogId) => Effect.Effect<{ id: AppLogId }, DeleteLogError | DrizzleError>;
-	};
-}
-
-export class AdminService extends Effect.Service<AdminService>()("AdminService", {
-	effect: Effect.fn("AdminService")(function* () {
+export class AdminService extends Context.Service<AdminService>()("AdminService", {
+	make: Effect.fn("AdminService")(function* () {
 		const { db } = yield* DBService;
 
-		const impl: AdminApiImpl = {
+		return {
+			/**
+			 * Queries
+			 */
+
 			get: {
-				user: Effect.fn("AdminService.get.user")(function* (userId) {
+				user: Effect.fn("AdminService.get.user")(function* (userId: UserId) {
 					return yield* runQuery(
 						db.query.user.findFirst({
 							where: {
@@ -57,12 +47,35 @@ export class AdminService extends Effect.Service<AdminService>()("AdminService",
 						})
 					).pipe(Effect.flatMap((user) => (user ? Effect.succeed(user) : Effect.fail(new UserNotFoundError()))));
 				}),
-				logs: Effect.fn("AdminService.get.logs")(function* (search = "") {
+				users: Effect.fn("AdminService.get.users")(function* () {
+					return yield* runQuery(
+						db.query.user.findMany({
+							with: {
+								accounts: {
+									columns: {
+										providerId: true
+									}
+								},
+								characters: {
+									columns: {
+										id: true
+									}
+								}
+							},
+							where: {
+								role: {
+									ne: "admin"
+								}
+							}
+						})
+					).pipe(Effect.map((users) => users.sort((a, b) => sorter(a.name.toLowerCase(), b.name.toLowerCase()))));
+				}),
+				logs: Effect.fn("AdminService.get.logs")(function* (search: string = "") {
 					const { where, orderBy, metadata } = search.trim() ? logSearch.parse(search.trim()) : {};
 
 					return yield* runQuery(
 						db.query.appLogs.findMany({
-							where,
+							where: where ?? EmptyFilter,
 							orderBy: {
 								...orderBy,
 								timestamp: "desc"
@@ -71,77 +84,78 @@ export class AdminService extends Effect.Service<AdminService>()("AdminService",
 					).pipe(Effect.map((logs) => ({ logs, metadata })));
 				})
 			},
-			set: {
-				saveLog: Effect.fn("AdminService.set.saveLog")(function* (values) {
-					if (values.label.startsWith("RedirectError")) return values;
 
-					// Check if there's an existing record with the same label, routeId, and username in the last 5 seconds
-					const today = yield* DateTime.now;
-					const thirtySecondsAgo = today.pipe(DateTime.subtract({ seconds: 5 }));
-					const routeId = values.annotations.routeId;
-					const username = values.annotations.username;
+			/**
+			 * Mutations
+			 */
 
-					if (!username) return values;
+			saveLog: Effect.fn("AdminService.saveLog")(function* (values: InsertAppLog) {
+				if (values.label.startsWith("RedirectError")) return values;
 
-					const whereConditions: Filter<"appLogs"> = {
-						label: { eq: values.label },
-						timestamp: { gte: DateTime.toDate(thirtySecondsAgo) },
-						RAW: (table, { and: andOp }) => {
-							const conditions: ReturnType<typeof sql>[] = [];
+				// Check if there's an existing record with the same label, routeId, and username in the last 5 seconds
+				const today = yield* DateTime.now;
+				const thirtySecondsAgo = today.pipe(DateTime.subtract({ seconds: 5 }));
+				const routeId = values.annotations.routeId;
+				const username = values.annotations.username;
 
-							if (routeId !== null) {
-								conditions.push(sql`${table.annotations}->>'routeId' = ${routeId}`);
-							} else {
-								conditions.push(sql`${table.annotations}->>'routeId' IS NULL`);
-							}
+				if (!username) return values;
 
-							if (username !== undefined) {
-								conditions.push(sql`${table.annotations}->>'username' = ${username}`);
-							} else {
-								conditions.push(sql`${table.annotations}->>'username' IS NULL`);
-							}
+				const whereConditions: Filter<"appLogs"> = {
+					label: { eq: values.label },
+					timestamp: { gte: DateTime.toDate(thirtySecondsAgo) },
+					RAW: (table, { and: andOp }) => {
+						const conditions: ReturnType<typeof sql>[] = [];
 
-							const result = andOp(...conditions);
-							return result ?? sql`1=1`;
+						if (routeId !== null) {
+							conditions.push(sql`${table.annotations}->>'routeId' = ${routeId}`);
+						} else {
+							conditions.push(sql`${table.annotations}->>'routeId' IS NULL`);
 						}
-					};
 
-					const existingLog = yield* runQuery(
-						db.query.appLogs.findFirst({
-							where: whereConditions
-						})
-					);
+						if (username !== undefined) {
+							conditions.push(sql`${table.annotations}->>'username' = ${username}`);
+						} else {
+							conditions.push(sql`${table.annotations}->>'username' IS NULL`);
+						}
 
-					// If a matching record exists, return it instead of inserting
-					if (existingLog) return existingLog;
+						const result = andOp(...conditions);
+						return result ?? sql`1=1`;
+					}
+				};
 
-					return yield* runQuery(db.insert(appLogs).values([values]).returning()).pipe(
-						Effect.flatMap((logs) =>
-							isTupleOf(logs, 1) ? Effect.succeed(logs[0]) : Effect.fail(new SaveAppLogError("Unable to save app log"))
-						)
-					);
-				}),
-				deleteLog: Effect.fn("AdminService.set.deleteLog")(function* (logId) {
-					return yield* runQuery(db.delete(appLogs).where(eq(appLogs.id, logId)).returning({ id: appLogs.id })).pipe(
-						Effect.flatMap((logs) => (isTupleOf(logs, 1) ? Effect.succeed(logs[0]) : Effect.fail(new DeleteLogError())))
-					);
-				})
-			}
+				const existingLog = yield* runQuery(
+					db.query.appLogs.findFirst({
+						where: whereConditions
+					})
+				);
+
+				// If a matching record exists, return it instead of inserting
+				if (existingLog) return existingLog;
+
+				return yield* runQuery(db.insert(appLogs).values([values]).returning()).pipe(
+					Effect.flatMap((logs) => (isTupleOf(logs, 1) ? Effect.succeed(logs[0]) : Effect.fail(new SaveAppLogError())))
+				);
+			}),
+			deleteLog: Effect.fn("AdminService.deleteLog")(function* (logId: AppLogId) {
+				return yield* runQuery(db.delete(appLogs).where(eq(appLogs.id, logId)).returning({ id: appLogs.id })).pipe(
+					Effect.flatMap((logs) => (isTupleOf(logs, 1) ? Effect.succeed(logs[0]) : Effect.fail(new DeleteLogError())))
+				);
+			})
 		};
+	})()
+}) {
+	static readonly layer = Layer.effect(this, this.make);
+}
 
-		return impl;
-	}),
-	dependencies: [DBService.Default()]
-}) {}
-
-export const AdminTx = (tx: Transaction) => AdminService.DefaultWithoutDependencies().pipe(Layer.provide(DBService.Default(tx)));
+export const AdminTx = (tx: Transaction) => AdminService.layer.pipe(Layer.provide(DBService.layer(tx)));
 
 // -------------------------------------------------------------------------------------------------
 // Search
 // -------------------------------------------------------------------------------------------------
 
 type Table = "appLogs";
-type Column = keyof TRSchema[Table]["columns"];
+type TableConfig = TRSchema[Table]["table"]["_"];
+type Column = keyof TableConfig["columns"];
 type Key = Column | (string & {});
 type ValidKey = (typeof validKeys)[number] | (string & {});
 

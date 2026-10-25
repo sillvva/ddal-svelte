@@ -1,33 +1,30 @@
+import { getTrace, isRedirectFailure, type NumericRange } from "#lib/util.js";
 import { getRequestEvent } from "$app/server";
-import { getTrace, isRedirectFailure } from "$lib/util";
 import { isFunction, omit } from "@sillvva/utils";
-import { error, isHttpError, isRedirect, redirect, type NumericRange } from "@sveltejs/kit";
+import { error, isHttpError, isRedirect, redirect } from "@sveltejs/kit";
 import { Cause, Effect, Exit, Layer, ManagedRuntime } from "effect";
-import type { UnknownException } from "effect/Cause";
-import type { YieldWrap } from "effect/Utils";
 import { DBService } from "../db";
 import { isTaggedError, type ErrorClass } from "./errors";
 import { AppLog } from "./logging";
+import { remoteLabel } from "./remote-label.js";
 import { AdminService } from "./services/admin";
 import { AuthService } from "./services/auth";
 import { CharacterService } from "./services/characters";
 import { DMService } from "./services/dms";
 import { LogService } from "./services/logs";
-import { UserService } from "./services/users";
 
-export type Services = CharacterService | LogService | DMService | UserService | AdminService | AuthService;
+export type Services = CharacterService | LogService | DMService | AdminService | AuthService;
 export type AppRuntime = ManagedRuntime.ManagedRuntime<Services, never>;
 
 export const createAppRuntime = () => {
-	const dbLayer = DBService.Default();
+	const dbLayer = DBService.layer();
 
 	const serviceLayer = Layer.mergeAll(
-		AuthService.DefaultWithoutDependencies(),
-		AdminService.DefaultWithoutDependencies(),
-		CharacterService.DefaultWithoutDependencies(),
-		DMService.DefaultWithoutDependencies(),
-		LogService.DefaultWithoutDependencies(),
-		UserService.DefaultWithoutDependencies()
+		AuthService.layer,
+		AdminService.layer,
+		CharacterService.layer,
+		DMService.layer,
+		LogService.layer
 	);
 
 	const appLayer = serviceLayer.pipe(Layer.provide(dbLayer));
@@ -39,43 +36,73 @@ export const createAppRuntime = () => {
 // run
 // -------------------------------------------------------------------------------------------------
 
-// Overload signatures
-export async function run<
+export type RunOptions = {
+	/** Remote export that owns this program, such as `auth.queries.getAccounts`. */
+	remote?: string;
+};
+
+type Runnable<
 	R,
-	F extends InstanceType<ErrorClass> | UnknownException,
+	F extends InstanceType<ErrorClass> | Cause.UnknownError,
 	S extends Services,
-	T extends YieldWrap<Effect.Effect<R, F, S>>,
+	T extends Effect.Effect<R, F, S>,
 	X
->(program: () => Generator<T, X>): Promise<X>;
+> = Effect.Effect<R, F, S> | (() => Effect.Effect<R, F, S>) | (() => Generator<T, X>);
 
-export async function run<R, F extends InstanceType<ErrorClass> | UnknownException, S extends Services>(
-	program: Effect.Effect<R, F, S> | (() => Effect.Effect<R, F, S>)
-): Promise<R>;
+function resolveRemote(options?: RunOptions) {
+	return options?.remote ?? remoteLabel();
+}
 
-// Implementation
-export async function run<
+function programEffect<
 	R,
-	F extends InstanceType<ErrorClass> | UnknownException,
+	F extends InstanceType<ErrorClass> | Cause.UnknownError,
 	S extends Services,
-	T extends YieldWrap<Effect.Effect<R, F, S>>,
+	T extends Effect.Effect<R, F, S>,
 	X
->(program: Effect.Effect<R, F, S> | (() => Effect.Effect<R, F, S>) | (() => Generator<T, X>)): Promise<R | X> {
-	const event = getRequestEvent();
-	const rt = event.locals.runtime;
-
-	const effect = Effect.fn(function* () {
+>(remote: string | undefined, program: Runnable<R, F, S, T, X>) {
+	const body = function* () {
 		if (isFunction(program)) {
 			return yield* program();
 		} else {
 			return yield* program;
 		}
-	});
+	};
+
+	return remote ? Effect.fn(remote)(body) : Effect.fn(body);
+}
+
+// Overload signatures
+export async function run<
+	R,
+	F extends InstanceType<ErrorClass> | Cause.UnknownError,
+	S extends Services,
+	T extends Effect.Effect<R, F, S>,
+	X
+>(program: () => Generator<T, X>, options?: RunOptions): Promise<X>;
+
+export async function run<R, F extends InstanceType<ErrorClass> | Cause.UnknownError, S extends Services>(
+	program: Effect.Effect<R, F, S> | (() => Effect.Effect<R, F, S>),
+	options?: RunOptions
+): Promise<R>;
+
+// Implementation
+export async function run<
+	R,
+	F extends InstanceType<ErrorClass> | Cause.UnknownError,
+	S extends Services,
+	T extends Effect.Effect<R, F, S>,
+	X
+>(program: Runnable<R, F, S, T, X>, options?: RunOptions): Promise<R | X> {
+	const event = getRequestEvent();
+	const rt = event.locals.runtime;
+	const remote = resolveRemote(options);
+	const effect = programEffect(remote, program);
 
 	const result = await rt.runPromiseExit(effect());
 	return Exit.match(result, {
 		onSuccess: (result) => result,
 		onFailure: (cause) => {
-			const err = handleCause(cause);
+			const err = handleCause(cause, remote);
 			if (isRedirectFailure(err)) {
 				redirect(err.status, err.redirectTo);
 			} else {
@@ -90,55 +117,61 @@ export async function run<
 // -------------------------------------------------------------------------------------------------
 
 export type EffectSuccess<R> = { ok: true; data: R };
+export type EffectError = {
+	name: string;
+	type: Cause.Reason<unknown>["_tag"] | "Empty";
+	message: string;
+	stack: string;
+	status: NumericRange<300, 599>;
+	cause?: unknown;
+	defect?: unknown;
+	redirectTo?: unknown;
+};
 export type EffectFailure = {
 	ok: false;
-	error: {
-		name: string;
-		type: Cause.Cause<unknown>["_tag"];
-		message: string;
-		stack: string;
-		status: NumericRange<300, 599>;
-		[key: string]: unknown;
-	};
+	error: EffectError;
 };
 export type EffectResult<R> = EffectSuccess<R> | EffectFailure;
+
+/** Command payload sent to the client. `stack` stays on the server. */
+export type ClientEffectResult<R> =
+	| EffectSuccess<R>
+	| {
+			ok: false;
+			error: Omit<EffectError, "stack">;
+	  };
 
 // Overload signatures
 export async function runSafe<
 	R,
-	F extends InstanceType<ErrorClass> | UnknownException,
+	F extends InstanceType<ErrorClass> | Cause.UnknownError,
 	S extends Services,
-	T extends YieldWrap<Effect.Effect<R, F, S>>,
+	T extends Effect.Effect<R, F, S>,
 	X
->(program: () => Generator<T, X>): Promise<EffectResult<X>>;
+>(program: () => Generator<T, X>, options?: RunOptions): Promise<EffectResult<X>>;
 
-export async function runSafe<R, F extends InstanceType<ErrorClass> | UnknownException, S extends Services>(
-	program: Effect.Effect<R, F, S> | (() => Effect.Effect<R, F, S>)
+export async function runSafe<R, F extends InstanceType<ErrorClass> | Cause.UnknownError, S extends Services>(
+	program: Effect.Effect<R, F, S> | (() => Effect.Effect<R, F, S>),
+	options?: RunOptions
 ): Promise<EffectResult<R>>;
 
 // Implementation
 export async function runSafe<
 	R,
-	F extends InstanceType<ErrorClass> | UnknownException,
+	F extends InstanceType<ErrorClass> | Cause.UnknownError,
 	S extends Services,
-	T extends YieldWrap<Effect.Effect<R, F, S>>,
+	T extends Effect.Effect<R, F, S>,
 	X
->(program: Effect.Effect<R, F, S> | (() => Effect.Effect<R, F, S>) | (() => Generator<T, X>)): Promise<EffectResult<R | X>> {
+>(program: Runnable<R, F, S, T, X>, options?: RunOptions): Promise<EffectResult<R | X>> {
 	const event = getRequestEvent();
 	const rt = event.locals.runtime;
-
-	const effect = Effect.fn(function* () {
-		if (isFunction(program)) {
-			return yield* program();
-		} else {
-			return yield* program;
-		}
-	});
+	const remote = resolveRemote(options);
+	const effect = programEffect(remote, program);
 
 	const result = await rt.runPromiseExit(effect());
 	return Exit.match(result, {
 		onSuccess: (result) => ({ ok: true, data: result }),
-		onFailure: (cause) => ({ ok: false, error: handleCause(cause) })
+		onFailure: (cause) => ({ ok: false, error: handleCause(cause, remote) })
 	});
 }
 
@@ -146,14 +179,18 @@ export async function runSafe<
 // handleCause
 // -------------------------------------------------------------------------------------------------
 
-export function handleCause<F extends InstanceType<ErrorClass> | UnknownException>(cause: Cause.Cause<F>) {
-	let name = `Unknown${cause._tag}`;
+export function handleCause<F extends InstanceType<ErrorClass> | Cause.UnknownError>(
+	cause: Cause.Cause<F>,
+	remote?: string
+): EffectError {
+	const reason = cause.reasons.find((entry) => Cause.isFailReason(entry) || Cause.isDieReason(entry)) ?? cause.reasons[0];
+	let name = `Unknown${reason?._tag ?? "Empty"}`;
 	let message = Cause.pretty(cause);
 	let status: NumericRange<300, 599> = 500;
-	let extra: Record<string, unknown> = {};
+	let extra: Record<string, unknown> = { remote };
 
-	if (Cause.isFailType(cause)) {
-		const error = cause.error;
+	if (reason && Cause.isFailReason(reason)) {
+		const error = reason.error;
 
 		name = error._tag;
 		status = "status" in error ? error.status : 500;
@@ -168,8 +205,8 @@ export function handleCause<F extends InstanceType<ErrorClass> | UnknownExceptio
 		Effect.runFork(AppLog.error(message, extra));
 	}
 
-	if (Cause.isDieType(cause)) {
-		const defect = cause.defect;
+	if (reason && Cause.isDieReason(reason)) {
+		const defect = reason.defect;
 		name = "UnknownDefect";
 		extra.defect = defect;
 
@@ -204,5 +241,12 @@ export function handleCause<F extends InstanceType<ErrorClass> | UnknownExceptio
 	}
 
 	const trace = getTrace(message);
-	return { name, type: cause._tag, message: trace.message, stack: trace.stack, status, ...extra };
+	const failure: EffectError = {
+		name,
+		type: reason?._tag ?? "Empty",
+		message: trace.message,
+		stack: trace.stack,
+		status
+	};
+	return Object.assign(failure, extra);
 }

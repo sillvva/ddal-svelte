@@ -1,4 +1,5 @@
 <script lang="ts">
+	import type { Crumb } from "#lib/util.js";
 	import type { Snippet } from "svelte";
 	import Breadcrumbs from "./breadcrumbs.svelte";
 
@@ -18,19 +19,20 @@
 	{#if !hideMenuActions}
 		{#if actions}
 			{@render actions?.()}
-		{:else if menu}
+		{/if}
+		{#if menu}
 			<button
 				tabindex="0"
-				class="btn btn-sm touch-hitbox h-9"
+				class="btn touch-hitbox h-9 btn-sm"
 				aria-label="Menu"
 				popovertarget="nav-menu"
 				style:anchor-name="--nav-menu"
 			>
-				<span class="iconify mdi--dots-horizontal size-6"></span>
+				<span class="iconify size-6 mdi--dots-horizontal"></span>
 			</button>
 			<ul
 				role="menu"
-				class="dropdown menu dropdown-bottom dropdown-end rounded-box bg-base-300 z-20 w-52 shadow-sm"
+				class="menu dropdown dropdown-end dropdown-bottom z-20 w-52 rounded-box bg-base-300 shadow-sm"
 				popover
 				id="nav-menu"
 				style:position-anchor="--nav-menu"

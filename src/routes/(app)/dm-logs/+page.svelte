@@ -1,34 +1,47 @@
 <script lang="ts">
 	import { goto } from "$app/navigation";
 	import { page } from "$app/state";
-	import Head from "$lib/components/head.svelte";
-	import Items from "$lib/components/items.svelte";
-	import Markdown from "$lib/components/markdown.svelte";
-	import NavMenu from "$lib/components/nav-menu.svelte";
-	import SearchResults from "$lib/components/search-results.svelte";
-	import Search from "$lib/components/search.svelte";
-	import { EntitySearchFactory, successToast, swipeAction } from "$lib/factories.svelte.js";
-	import * as API from "$lib/remote";
-	import { getGlobal } from "$lib/stores.svelte.js";
-	import { createTransition, download, formatDate, hotkey, parseEffectResult } from "$lib/util.js";
+	import Head from "#lib/components/head.svelte";
+	import Items from "#lib/components/items.svelte";
+	import Markdown from "#lib/components/markdown.svelte";
+	import NavMenu from "#lib/components/nav-menu.svelte";
+	import SearchResults from "#lib/components/search-results.svelte";
+	import Search from "#lib/components/search.svelte";
+	import { EntitySearchFactory, successToast, swipeAction } from "#lib/factories.svelte.js";
+	import * as API from "#lib/remote/index.js";
+	import type { FullLogData } from "#lib/server/effect/services/logs.js";
+	import { getGlobal } from "#lib/stores.svelte.js";
+	import { createTransition, download, formatDate, hotkey, parseEffectResult } from "#lib/util.js";
 	import { sorter } from "@sillvva/utils";
-	import { untrack } from "svelte";
 	import { SvelteSet } from "svelte/reactivity";
 
 	const global = getGlobal();
 
 	let deletingLog = new SvelteSet<string>();
+	const searchKey = "s";
+
+	async function deleteLog(log: FullLogData) {
+		if (!confirm(`Are you sure you want to delete ${log.name}? This action cannot be undone.`)) return;
+		deletingLog.add(log.id);
+		const result = await API.logs.actions.deleteLog(log.id);
+		const parsed = await parseEffectResult(result);
+		if (parsed) {
+			successToast(`${log.name} deleted`);
+			await API.logs.queries.getDmLogs().refresh();
+		} else {
+			deletingLog.delete(log.id);
+		}
+	}
 </script>
 
 <svelte:boundary>
-	{@const { user } = await API.app.queries.request()}
-	{@const logs = await API.logs.queries.getDmLogs()}
-	{@const search = new EntitySearchFactory(
-		logs,
-		untrack(() => page.url.searchParams.get("s") || "")
+	{const { user } = $derived(await API.app.queries.request())}
+	{const logs = $derived(await API.logs.queries.getDmLogs())}
+	{const search = $derived(
+		new EntitySearchFactory(logs, page.url.searchParams.get(searchKey) ?? page.state.search?.[searchKey] ?? "")
 	)}
-	{@const sortedResults = search.results.toSorted((a, b) =>
-		global.app.dmLogs.sort === "asc" ? sorter(a.date, b.date) : sorter(b.date, a.date)
+	{const sortedResults = $derived(
+		search.results.toSorted((a, b) => (global.app.dmLogs.sort === "asc" ? sorter(a.date, b.date) : sorter(b.date, a.date)))
 	)}
 
 	<Head title="{user?.name}'s DM Logs" />
@@ -65,7 +78,7 @@
 			>
 				New Log <kbd class="kbd kbd-sm max-sm:hover-none:hidden text-base-content">N</kbd>
 			</a>
-			<Search bind:value={search.query} placeholder="Search by name, class, items, etc." />
+			<Search name={searchKey} placeholder="Search by name, class, items, etc." />
 			<a href="/dm-logs/new" class="btn btn-primary inline-flex sm:hidden" aria-label="New Log">
 				<span class="iconify mdi--plus inline size-6"></span>
 			</a>
@@ -108,7 +121,9 @@
 		<!-- Mobile List -->
 		<ul class="overflow-hidden rounded-lg sm:hidden print:hidden">
 			{#each sortedResults as log (log.id)}
-				{@const hasDescription = !!log.description?.trim() || log.storyAwardsGained.length > 0 || log.storyAwardsLost.length > 0}
+				{const hasDescription = $derived(
+					!!log.description?.trim() || log.storyAwardsGained.length > 0 || log.storyAwardsLost.length > 0
+				)}
 				<li
 					class="border-b border-b-neutral-500/40 last:border-b-0 data-[deleting=true]:hidden"
 					data-deleting={deletingLog.has(log.id)}
@@ -116,18 +131,7 @@
 					<div
 						class="swipe-container"
 						{@attach swipeAction({
-							right: async () => {
-								if (!confirm(`Are you sure you want to delete ${log.name}? This action cannot be undone.`)) return;
-								deletingLog.add(log.id);
-								const result = await API.logs.actions.deleteLog(log.id);
-								const parsed = await parseEffectResult(result);
-								if (parsed) {
-									successToast(`${log.name} deleted`);
-									await API.logs.queries.getDmLogs().refresh();
-								} else {
-									deletingLog.delete(log.id);
-								}
-							}
+							right: () => deleteLog(log)
 						})}
 					>
 						<div class="content bg-base-200">
@@ -262,8 +266,9 @@
 					</tbody>
 				{:else}
 					{#each sortedResults as log (log.id)}
-						{@const hasDescription =
-							!!log.description?.trim() || log.storyAwardsGained.length > 0 || log.storyAwardsLost.length > 0}
+						{const hasDescription = $derived(
+							!!log.description?.trim() || log.storyAwardsGained.length > 0 || log.storyAwardsLost.length > 0
+						)}
 						<tbody class="first-of-type:[&>tr>td]:border-t-0">
 							<tr
 								class="data-[deleting=true]:hidden [&>td]:border-0 [&>td]:border-t [&>td]:border-neutral-500/20"
@@ -386,18 +391,7 @@
 											type="button"
 											class="btn btn-error btn-sm touch-hitbox"
 											aria-label="Delete Log"
-											onclick={async () => {
-												if (!confirm(`Are you sure you want to delete ${log.name}? This action cannot be undone.`)) return;
-												deletingLog.add(log.id);
-												const result = await API.logs.actions.deleteLog(log.id);
-												const parsed = await parseEffectResult(result);
-												if (parsed) {
-													successToast(`${log.name} deleted`);
-													await API.logs.queries.getDmLogs().refresh();
-												} else {
-													deletingLog.delete(log.id);
-												}
-											}}
+											onclick={() => deleteLog(log)}
 										>
 											<span class="iconify mdi--trash-can size-4"></span>
 										</button>

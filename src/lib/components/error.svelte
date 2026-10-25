@@ -1,11 +1,12 @@
 <script lang="ts">
-	import { dev } from "$app/environment";
+	import { dev } from '$app/env';
 	import { page } from "$app/state";
-	import * as API from "$lib/remote";
-	import { getLogger } from "$lib/stores.svelte";
+	import { use } from "#lib/factories.svelte.js";
+	import * as API from "#lib/remote/index.js";
+	import { getLogger } from "#lib/stores.svelte.js";
 	import { omit } from "@sillvva/utils";
 	import { useOs } from "@svelteuidev/composables";
-	import SuperDebugRuned from "sveltekit-superforms/SuperDebug.svelte";
+	import Debug from "./debug.svelte";
 
 	interface Props {
 		error: unknown;
@@ -16,7 +17,7 @@
 
 	const os = useOs();
 	const logger = getLogger();
-	const err = logger.log(error, boundary);
+	const err = use(() => logger.log(error, boundary));
 
 	let display = $state(!dev);
 </script>
@@ -26,7 +27,7 @@
 		{#if !display}
 			<div class="font-vecna mb-12 flex flex-col items-center text-3xl font-bold sm:text-5xl md:text-6xl">
 				<img src="/images/confused-goblin.webp" alt="Error" class="mb-2 size-80 max-lg:size-65 max-sm:size-50" />
-				<h1>Rolled a Natural 1!</h1>
+				<h2>Rolled a Natural 1!</h2>
 			</div>
 		{/if}
 		<div class="alert alert-error mb-4 flex w-full max-w-3xl gap-4 shadow-lg">
@@ -40,18 +41,22 @@
 				</div>
 				{#if !display}
 					<div class="flex items-center gap-2 max-sm:self-end">
-						<button class="btn btn-sm max-sm:hidden" onclick={() => (display = true)}>View details</button>
+						<button
+							class="btn btn-sm max-sm:hidden"
+							onclick={() => display = true}
+						>View details</button>
 					</div>
 				{/if}
 			</div>
 		</div>
 		{#if display}
-			{@const { user } = await API.app.queries.request()}
+			{const { user } = $derived(await API.app.queries.request())}
 			<div class="flex max-w-full flex-col gap-4">
 				{#if err.stack}
+					<!-- eslint-disable-next-line svelte/no-at-html-tags -->
 					<pre class="bg-base-200 w-full overflow-x-scroll rounded-lg p-4">{@html err.stack}</pre>
 				{/if}
-				<SuperDebugRuned
+				<Debug
 					data={{
 						error: err.message,
 						boundary,

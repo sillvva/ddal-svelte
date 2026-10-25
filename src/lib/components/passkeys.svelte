@@ -1,11 +1,11 @@
 <script lang="ts">
-	import { authClient } from "$lib/auth";
-	import { errorToast, successToast } from "$lib/factories.svelte";
-	import * as API from "$lib/remote";
-	import type { PasskeyId } from "$lib/schemas";
-	import { getGlobal } from "$lib/stores.svelte";
+	import { authClient } from "#lib/auth.js";
+	import { errorToast, successToast } from "#lib/factories.svelte.js";
+	import * as API from "#lib/remote/index.js";
+	import type { PasskeyId } from "#lib/schemas.js";
+	import { getGlobal } from "#lib/stores.svelte.js";
 
-	const { user, ...request } = $derived(await API.app.queries.request());
+	const { user } = $derived(await API.app.queries.request());
 	const global = getGlobal();
 	const passkeys = $derived(user?.passkeys || []);
 
@@ -16,13 +16,13 @@
 	});
 
 	async function initRename(id: PasskeyId, currentName = "", error = "") {
-		const name =
-			prompt("Enter a name for this passkey" + (error ? `\n\n${error}` : ""), currentName.trim()) || id.split("-").at(-1) || "";
+		const passkey = passkeys.find((a) => a.id === id);
+		const fallback = currentName.trim() || id.split("-").at(-1);
 
-		if (!name.trim()) {
-			initRename(id, name, "Passkey name cannot be empty");
-			return;
-		}
+		const name = prompt("Enter a name for this passkey" + (error ? `\n\n${error}` : ""), currentName.trim()) || fallback || "";
+
+		if (name.trim() === passkey?.name) return;
+		if ((name.trim() === fallback || name.trim() === "") && passkey?.name) return;
 
 		if (passkeys.find((a) => a.name === name)) {
 			initRename(id, name, "Passkey name already exists");
@@ -64,19 +64,19 @@
 	}
 </script>
 
-<ul class="menu menu-lg w-full px-0">
+<ul class="menu w-full menu-lg px-0">
 	<li class="menu-title *:px-2">
 		<span class="font-bold">Passkeys</span>
 	</li>
 	{#each passkeys as passkey (passkey.id)}
 		<li class="flex-row gap-2">
 			<button
-				class="group btn btn-ghost hover:bg-base-200 flex flex-1 gap-2 text-left"
+				class="group btn flex flex-1 gap-2 btn-ghost text-left hover:bg-base-200"
 				onclick={() => initRename(passkey.id, passkey.name || "")}
 				aria-label="Rename Passkey"
 			>
-				<span class="iconify material-symbols--passkey group-hover:mdi--pencil size-6"></span>
-				<span class="ellipsis-nowrap flex-1">
+				<span class="iconify size-6 material-symbols--passkey group-hover:mdi--pencil"></span>
+				<span class="flex-1 ellipsis-nowrap">
 					{passkey.name}
 				</span>
 			</button>
@@ -88,7 +88,7 @@
 				}}
 				aria-label="Delete Passkey"
 			>
-				<span class="iconify mdi--delete size-6"></span>
+				<span class="iconify size-6 mdi--delete"></span>
 			</button>
 		</li>
 	{/each}
@@ -110,7 +110,7 @@
 						}
 					})}
 		>
-			<span class="iconify mdi--plus size-6"></span>
+			<span class="iconify size-6 mdi--plus"></span>
 			<span>Add Passkey</span>
 		</button>
 	</li>

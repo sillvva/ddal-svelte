@@ -1,5 +1,5 @@
-import type { Pathname } from "$app/types";
-import type { Account } from "$lib/server/db/schema";
+import type { Account } from "#lib/server/db/schema.js";
+import type { ResolvedPathname } from "$app/types";
 import type { BundledHighlighterOptions, BundledLanguage, BundledTheme } from "shiki";
 
 export const defaultTitle = "Adventurers League Log Sheet";
@@ -14,6 +14,9 @@ export const searchSections = [
 
 export const BLANK_CHARACTER = `/images/blank-character.jpg` as const;
 
+/** Reserved domain for accounts created by passkey registration before onboarding. */
+export const PASSKEY_PLACEHOLDER_EMAIL_DOMAIN = "passkey.invalid";
+
 type Provider = {
 	name: string;
 	id: string;
@@ -22,11 +25,7 @@ type Provider = {
 };
 export type ProviderId = (typeof PROVIDERS)[number]["id"];
 export const PROVIDERS = [
-	{
-		name: "Google",
-		id: "google",
-		iconify: "logos--google-icon"
-	},
+	{ name: "Google", id: "google", iconify: "logos--google-icon" },
 	{
 		name: "Discord",
 		id: "discord",
@@ -53,8 +52,8 @@ export const themes = [
 		group: "light"
 	},
 	{
-		name: "Monolight",
-		value: "monolight",
+		name: "Caramellatte",
+		value: "caramellatte",
 		group: "light"
 	},
 	{
@@ -68,8 +67,28 @@ export const themes = [
 		group: "light"
 	},
 	{
-		name: "Garden",
-		value: "garden",
+		name: "Magenta",
+		value: "magenta",
+		group: "light"
+	},
+	{
+		name: "Professional",
+		value: "professional",
+		group: "light"
+	},
+	{
+		name: "Grove",
+		value: "grove",
+		group: "light"
+	},
+	{
+		name: "Plum",
+		value: "plum",
+		group: "light"
+	},
+	{
+		name: "Winter",
+		value: "winter",
 		group: "light"
 	},
 	{
@@ -83,8 +102,8 @@ export const themes = [
 		group: "dark"
 	},
 	{
-		name: "Monodark",
-		value: "monodark",
+		name: "Abyss",
+		value: "abyss",
 		group: "dark"
 	},
 	{
@@ -93,8 +112,28 @@ export const themes = [
 		group: "dark"
 	},
 	{
+		name: "Ocean",
+		value: "ocean",
+		group: "dark"
+	},
+	{
+		name: "Red Dragon",
+		value: "red-dragon",
+		group: "dark"
+	},
+	{
 		name: "Night",
 		value: "night",
+		group: "dark"
+	},
+	{
+		name: "Coolify",
+		value: "coolify",
+		group: "dark"
+	},
+	{
+		name: "Mint",
+		value: "mint",
 		group: "dark"
 	}
 ] as const satisfies Theme[];
@@ -102,7 +141,7 @@ export const themes = [
 export type Themes = (typeof themes)[number]["value"];
 export type ThemeGroups = (typeof themeGroups)[number];
 
-export type FullPathname = Pathname | `${Pathname}?${string}`;
+export type FullPathname = ResolvedPathname | `${ResolvedPathname}?${string}`;
 
 type HighlighterTheme = BundledHighlighterOptions<BundledLanguage, BundledTheme>["themes"][number] & string;
 export const highlighterThemeLight: HighlighterTheme = "catppuccin-latte";

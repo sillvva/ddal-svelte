@@ -1,6 +1,6 @@
-import type { ProviderId } from "$lib/constants";
-import type { AppLogId, CharacterId, DungeonMasterId, ItemId, LogId, PasskeyId, UserId } from "$lib/schemas";
-import type { Annotations } from "$lib/server/effect/logging";
+import type { ProviderId } from "#lib/constants.js";
+import type { AppLogId, CharacterId, DungeonMasterId, ItemId, LogId, PasskeyId, UserId } from "#lib/schemas.js";
+import type { Annotations } from "#lib/server/effect/logging.js";
 import { eq, isNotNull } from "drizzle-orm";
 import * as pg from "drizzle-orm/pg-core";
 import { v7 } from "uuid";
@@ -23,6 +23,8 @@ export const user = pg.pgTable("user", {
 		.notNull()
 		.$default(() => false),
 	image: pg.text(),
+	/** False until a passkey-first signup submits a username and email. */
+	onboarded: pg.boolean().notNull().default(true),
 	role: role().notNull().default("user"),
 	banned: pg.boolean().notNull().default(false),
 	banReason: pg.text("ban_reason"),
@@ -58,8 +60,10 @@ export const account = pg.pgTable(
 		refreshToken: pg.text("refresh_token"),
 		accessToken: pg.text("access_token"),
 		accessTokenExpiresAt: pg.timestamp("expires_at", { mode: "date", withTimezone: true }),
+		refreshTokenExpiresAt: pg.timestamp("refresh_expires_at", { mode: "date", withTimezone: true }),
 		scope: pg.text(),
 		idToken: pg.text("id_token"),
+		password: pg.text(),
 		createdAt: pg
 			.timestamp("created_at", { mode: "date", withTimezone: true })
 			.notNull()

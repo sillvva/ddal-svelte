@@ -8,7 +8,27 @@ import { tick } from "svelte";
 import type { Attachment } from "svelte/attachments";
 import type { FullPathname } from "./constants";
 import { errorToast } from "./factories.svelte";
-import type { EffectFailure, EffectResult } from "./server/effect/runtime";
+import type { ClientEffectResult, EffectFailure } from "./server/effect/runtime";
+
+export type IsAny<T> = 0 extends 1 & T ? true : false;
+
+/** Non-negative integers strictly below `N`, as a union of literals. */
+type LessThan<N extends number, Acc extends number[] = []> = N extends Acc["length"]
+	? Exclude<Acc[number], undefined>
+	: LessThan<N, [...Acc, Acc["length"]]>;
+
+/**
+ * Inclusive union of non-negative integer literals from `Start` through `End`.
+ *
+ * @example
+ * const status: NumericRange<300, 599> = 400;
+ */
+export type NumericRange<Start extends number, End extends number> = Exclude<End | LessThan<End>, LessThan<Start>>;
+
+export type Crumb = {
+	title: string;
+	url: string;
+};
 
 export type HTMLEvent<T extends Element> = Event & {
 	currentTarget: EventTarget & T;
@@ -78,8 +98,7 @@ export function getRelativeTime(date: Date | number, lang = navigator.language):
 	const unitIndex = cutoffs.findIndex((cutoff) => cutoff > Math.abs(deltaSeconds));
 
 	const divisor = cutoffs[unitIndex - 1] ?? day;
-	const unit = units[unitIndex];
-	if (!unit) return "in the future";
+	const unit = units[unitIndex] ?? "day";
 
 	const rtf = new Intl.RelativeTimeFormat(lang, { numeric: "auto" });
 	return rtf.format(-Math.floor(deltaSeconds / divisor), unit);
@@ -112,9 +131,9 @@ export function isStandardSchema(schema: unknown): schema is StandardSchemaV1 {
 	return isObject(schema) && "~standard" in schema;
 }
 
-export function isRedirectFailure(
-	error: EffectFailure["error"]
-): error is EffectFailure["error"] & { redirectTo: FullPathname & {} } {
+export function isRedirectFailure<E extends { status: number; redirectTo?: unknown }>(
+	error: E
+): error is E & { redirectTo: FullPathname & {} } {
 	return Boolean(error.redirectTo && typeof error.redirectTo === "string" && error.status >= 301 && error.status <= 308);
 }
 
@@ -124,11 +143,15 @@ export function isValidationError(
 	return Boolean(error.name === "ValidationError" && error.type === "Die");
 }
 
-export async function parseEffectResult<T>(result: EffectResult<T>) {
+export async function parseEffectResult<T>(result: ClientEffectResult<T>) {
 	if (result.ok) return result.data;
 
 	errorToast(result.error.message);
 	if (isRedirectFailure(result.error)) {
-		await goto(result.error.redirectTo);
+		try {
+			await goto(result.error.redirectTo);
+		} catch {
+			window.location.href = result.error.redirectTo;
+		}
 	}
 }

@@ -1,6 +1,6 @@
-import { dungeonMasterIdSchema } from "$lib/schemas";
-import { guardedQuery } from "$lib/server/effect/remote";
-import { DMService } from "$lib/server/effect/services/dms";
+import { dungeonMasterIdSchema } from "#lib/schemas.js";
+import { guardedQuery } from "#lib/server/effect/guarded.js";
+import { DMService } from "#lib/server/effect/services/dms.js";
 import { omit } from "@sillvva/utils";
 import { Effect } from "effect";
 

@@ -1,48 +1,38 @@
 <script lang="ts">
+	import Error from "#lib/components/error.svelte";
+	import AddDropItems from "#lib/components/forms/add-drop-items.svelte";
+	import Combobox from "#lib/components/forms/combobox.svelte";
+	import Control from "#lib/components/forms/control.svelte";
+	import DateInput from "#lib/components/forms/date-input.svelte";
+	import InputWrapper from "#lib/components/forms/input-wrapper.svelte";
+	import Input from "#lib/components/forms/input.svelte";
+	import MarkdownInput from "#lib/components/forms/md-input.svelte";
+	import RemoteForm from "#lib/components/forms/remote-form.svelte";
+	import Submit from "#lib/components/forms/submit.svelte";
+	import Head from "#lib/components/head.svelte";
+	import NavMenu from "#lib/components/nav-menu.svelte";
+	import { defaultDM, getItemEntities } from "#lib/entities.js";
+	import { proxify } from "#lib/factories.svelte.js";
+	import * as API from "#lib/remote/index.js";
+	import { type DungeonMasterId, logSchema } from "#lib/schemas.js";
 	import { page } from "$app/state";
-	import Error from "$lib/components/error.svelte";
-	import AddDropItems from "$lib/components/forms/add-drop-items.svelte";
-	import Combobox from "$lib/components/forms/combobox.svelte";
-	import Control from "$lib/components/forms/control.svelte";
-	import DateInput from "$lib/components/forms/date-input.svelte";
-	import InputWrapper from "$lib/components/forms/input-wrapper.svelte";
-	import Input from "$lib/components/forms/input.svelte";
-	import MarkdownInput from "$lib/components/forms/md-input.svelte";
-	import RemoteForm from "$lib/components/forms/remote-form.svelte";
-	import Submit from "$lib/components/forms/submit.svelte";
-	import Head from "$lib/components/head.svelte";
-	import NavMenu from "$lib/components/nav-menu.svelte";
-	import { defaultDM, getItemEntities } from "$lib/entities.js";
-	import { proxify } from "$lib/factories.svelte.js";
-	import * as API from "$lib/remote";
-	import { type DungeonMasterId, logSchema } from "$lib/schemas";
 	import { v7 } from "uuid";
 
 	let { params } = $props();
-
-	// svelte-ignore await_waterfall
-	const request = $derived(await API.app.queries.request());
-	const user = $derived(request.user!);
-	// svelte-ignore await_waterfall
-	const character = $derived(await API.characters.queries.get({ param: params.characterId }));
-	// svelte-ignore await_waterfall
-	const dms = $derived(await API.dms.queries.getAllWithoutLogs());
-	const { magicItems, storyAwards } = $derived(getItemEntities(character, { excludeDropped: true, lastLogId: params.logId }));
-
-	const schema = logSchema;
-	const form = API.logs.forms.saveCharacter;
-	const firstLog = $derived(page.url.searchParams.get("firstLog") === "true");
-	const initialErrors = $derived(params.logId !== "new");
-	// svelte-ignore await_waterfall
-	const log = $derived(
-		await API.logs.forms.character({ character: { id: character.id, name: character.name }, logId: params.logId, firstLog })
-	);
-
-	let data = $derived(proxify(log));
-	let season = $derived(log.experience ? 1 : log.acp ? 8 : 9);
 </script>
 
 <svelte:boundary>
+	{const character = $derived(await API.characters.queries.get({ param: params.characterId }))}
+	{const { magicItems, storyAwards } = $derived(getItemEntities(character, { excludeDropped: true, lastLogId: params.logId }))}
+
+	{const schema = logSchema}
+	{const form = API.logs.forms.saveCharacter}
+	{const firstLog = $derived(page.url.searchParams.get("firstLog") === "true")}
+	{const initialErrors = $derived(params.logId !== "new")}
+	{const log = $derived(
+		await API.logs.forms.character({ character: { id: character.id, name: character.name }, logId: params.logId, firstLog })
+	)}
+
 	{#snippet failed(error)}<Error {error} boundary="edit-character-log" />{/snippet}
 	<Head title={`${log.name || "New Log"} - ${character.name}`} />
 
@@ -54,8 +44,10 @@
 		]}
 	/>
 
+	{let data = $derived(proxify(log))}
 	<RemoteForm {schema} {form} {data} {initialErrors}>
-		{#snippet children({ form, initial })}
+		{#snippet children(ctx)}
+			{const { form, initial } = $derived(ctx)}
 			<Input field={form.fields.id} hidden />
 			<Input field={form.fields.characterId} hidden />
 			<Input field={form.fields.characterName} hidden />
@@ -66,7 +58,7 @@
 					<InputWrapper field={form.fields.type} as="select" label="Log Type">
 						<select
 							{...form.fields.type.as("select")}
-							class={["select select-bordered w-full", data.type !== "game" && "text-xs!"]}
+							class={["select-bordered select w-full max-sm:text-base", data.type !== "game" && "text-xs!"]}
 						>
 							<option value="game">Game</option>
 							<option value="nongame">Non-Game (Purchase, Trade, etc)</option>
@@ -86,8 +78,12 @@
 			<Control class={["col-span-12", !firstLog ? "sm:col-span-5 md:col-span-4" : "sm:col-span-6 md:col-span-5 lg:col-span-4"]}>
 				<DateInput field={form.fields.date} initial={initial.date} label="Date" timezone={data.timezone} />
 			</Control>
+			{let season = $derived(log.experience ? 1 : log.acp ? 8 : 9)}
 			{#if data.type === "game"}
 				{#if !firstLog}
+					{const dms = $derived(await API.dms.queries.getAllWithoutLogs())}
+					{const request = $derived(await API.app.queries.request())}
+					{const user = $derived(request.user!)}
 					<Control class="col-span-12 sm:col-span-6">
 						<Combobox
 							label="DM Name"
@@ -106,7 +102,7 @@
 							}}
 							clearable
 							onclear={() => (data.dm = defaultDM(user.id))}
-							link={data.dm.id ? `/dms/${data.dm.id}` : ""}
+							link={data.dm.id && data.dm.name ? `/dms/${data.dm.id}` : ""}
 							placeholder={dms.find((dm) => dm.isUser)?.name || user.name}
 						/>
 					</Control>
@@ -134,7 +130,7 @@
 						<select
 							id="season"
 							bind:value={season}
-							class="select select-bordered w-full"
+							class="select-bordered select w-full max-sm:text-base"
 							onchange={() => {
 								data.experience = 0;
 								data.acp = 0;
@@ -164,7 +160,7 @@
 							field={form.fields.level}
 							type="number"
 							label="Level"
-							max={Math.max(form.fields.level.value(), 20 - character.totalLevel)}
+							max={Math.max(form.fields.level.value() || 0, 20 - character.totalLevel)}
 						/>
 					</Control>
 				{/if}
@@ -187,10 +183,10 @@
 				<Input field={form.fields.dtd} type="number" label="Downtime" />
 			</Control>
 			<Control class="col-span-12 w-full">
-				<MarkdownInput field={form.fields.description} name="notes" maxRows={20} maxLength={5000} preview />
+				<MarkdownInput field={form.fields.description} maxRows={20} maxLength={5000} preview />
 			</Control>
-			<AddDropItems {magicItems} {storyAwards}>
-				<Submit>Save Log</Submit>
+			<AddDropItems form={ctx} {magicItems} {storyAwards}>
+				<Submit form={ctx}>Save Log</Submit>
 			</AddDropItems>
 		{/snippet}
 	</RemoteForm>

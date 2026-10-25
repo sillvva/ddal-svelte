@@ -1,9 +1,10 @@
-import { dev } from "$app/environment";
+import type { UserId } from "#lib/schemas.js";
+import { dev } from "$app/env";
+import { LOG_LEVEL } from "$app/env/public";
 import { getRequestEvent } from "$app/server";
-import { privateEnv } from "$lib/env/private";
-import type { UserId } from "$lib/schemas";
+import { omit } from "@sillvva/utils";
 import chalk from "chalk";
-import { Console, Effect, HashMap, Layer, Logger } from "effect";
+import { Console, Effect, Layer, LogLevel, Logger, References } from "effect";
 import { AdminService } from "./services/admin";
 
 export type Annotations = {
@@ -11,71 +12,85 @@ export type Annotations = {
 	username?: string | undefined;
 	impersonatedBy?: UserId | null;
 	routeId: string | null;
-	params: Partial<Record<string, string>>;
+	remote?: string;
+	params?: Partial<Record<string, string>>;
 	extra: Record<string, unknown>;
 };
 
-const logLevel = Logger.withMinimumLogLevel(privateEnv.LOG_LEVEL);
+const dbLogLevel = {
+	All: "ALL",
+	Fatal: "FATAL",
+	Error: "ERROR",
+	Warn: "WARN",
+	Info: "INFO",
+	Debug: "DEBUG",
+	Trace: "TRACE",
+	None: "OFF"
+} as const satisfies Record<LogLevel.LogLevel, "ALL" | "FATAL" | "ERROR" | "WARN" | "INFO" | "DEBUG" | "TRACE" | "OFF">;
 
-const dbLogger = Logger.replace(
-	Logger.defaultLogger,
-	Logger.make(async (log) => {
+const dbLogger = Logger.layer([
+	Logger.make(async (options) => {
 		const event = getRequestEvent();
 		const runtime = event.locals.runtime;
+		const annotations = options.fiber.getRef(References.CurrentLogAnnotations) as Annotations;
+		const label = (Array.isArray(options.message) ? options.message : [options.message]).map(String).join(" | ");
+		const level = dbLogLevel[options.logLevel];
 
 		await runtime.runPromise(
 			Effect.gen(function* () {
 				const Admin = yield* AdminService;
-				return yield* Admin.set
-					.saveLog({
-						label: (log.message as string[]).join(" | "),
-						timestamp: log.date,
-						level: log.logLevel.label,
-						annotations: Object.fromEntries(HashMap.toEntries(log.annotations)) as Annotations
-					})
-					.pipe(
-						Effect.tap(
-							(log) =>
-								dev &&
-								Console.log(
+				return yield* Admin.saveLog({
+					label,
+					timestamp: options.date,
+					level,
+					annotations
+				}).pipe(
+					Effect.tap((log) =>
+						dev
+							? Console.log(
 									log.timestamp.toLocaleTimeString(),
 									chalk.bold[
 										log.level === "ERROR" ? "red" : log.level === "DEBUG" ? "yellow" : log.level === "INFO" ? "cyan" : "reset"
 									](`[${log.level}]`),
 									log.label
 								)
-						),
-						Effect.tap(
-							(log) =>
-								dev &&
-								(["ERROR", "DEBUG"].includes(log.level)
-									? Console.dir(log.annotations, { depth: null })
-									: Console.log(chalk.dim(JSON.stringify(log.annotations.extra))))
-						),
-						Effect.tap(() => dev && Console.log(""))
-					);
+							: Effect.void
+					),
+					Effect.tap((log) => {
+						if (!dev) return Effect.void;
+						return ["ERROR", "DEBUG"].includes(log.level)
+							? Console.dir(log.annotations, { depth: null })
+							: Console.log(chalk.dim(JSON.stringify(log.annotations.extra)));
+					}),
+					Effect.tap(() => (dev ? Console.log("") : Effect.void))
+				);
 			})
 		);
 	})
-);
+]);
 
 function annotate(extra: Record<PropertyKey, unknown> = {}) {
 	const event = getRequestEvent();
 	return Effect.annotateLogs({
-		userId: event.locals.user?.id,
-		username: event.locals.user?.name,
-		impersonatedBy: event.locals.session?.impersonatedBy,
-		routeId: event.route.id,
-		params: event.params,
-		extra
+		...(event.locals.user?.id ? { userId: event.locals.user.id } : {}),
+		...(event.locals.user?.name ? { username: event.locals.user.name } : {}),
+		...(event.locals.session?.impersonatedBy ? { impersonatedBy: event.locals.session.impersonatedBy } : {}),
+		routeId: event.locals.routeId,
+		...(extra.remote && typeof extra.remote === "string" ? { remote: extra.remote } : {}),
+		...(Object.keys(event.locals.params).length > 0 ? { params: event.locals.params } : {}),
+		extra: omit(extra, ["remote"])
 	} satisfies Annotations);
+}
+
+function withLogLevel<A, E, R>(effect: Effect.Effect<A, E, R>) {
+	return effect.pipe(Effect.provideService(References.MinimumLogLevel, LOG_LEVEL));
 }
 
 export const AppLog = {
 	info: (message: string, extra?: Record<string, unknown>, logger: Layer.Layer<never> = dbLogger) =>
-		Effect.logInfo(message).pipe(logLevel, annotate(extra), Effect.provide(logger)),
+		Effect.logInfo(message).pipe(withLogLevel, annotate(extra), Effect.provide(logger)),
 	error: (message: string, extra?: Record<string, unknown>, logger: Layer.Layer<never> = dbLogger) =>
-		Effect.logError(message).pipe(logLevel, annotate(extra), Effect.provide(logger)),
+		Effect.logError(message).pipe(withLogLevel, annotate(extra), Effect.provide(logger)),
 	debug: (message: string, extra?: Record<string, unknown>, logger: Layer.Layer<never> = dbLogger) =>
-		Effect.logDebug(message).pipe(logLevel, annotate(extra), Effect.provide(logger))
+		Effect.logDebug(message).pipe(withLogLevel, annotate(extra), Effect.provide(logger))
 };

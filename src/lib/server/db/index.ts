@@ -1,52 +1,52 @@
+import { relations } from "#lib/server/db/relations.js";
+import { isTaggedError, type ErrorClass, type ErrorParams } from "#lib/server/effect/errors.js";
+import { DATABASE_URL } from "$app/env/private";
 import { getRequestEvent } from "$app/server";
-import { privateEnv } from "$lib/env/private";
-import { relations } from "$lib/server/db/relations";
-import * as schema from "$lib/server/db/schema";
-import { isTaggedError, type ErrorClass, type ErrorParams } from "$lib/server/effect/errors";
 import {
-	getTableColumns,
+	getColumns,
 	sql,
 	type BuildQueryResult,
 	type DBQueryConfig,
-	type ExtractTablesWithRelations,
 	type GetColumnData,
 	type Query,
 	type RelationsFilter,
 	type SQL
 } from "drizzle-orm";
-import type { PgTable, PgTransaction } from "drizzle-orm/pg-core";
+import type { PgAsyncTransaction, PgTable } from "drizzle-orm/pg-core";
 import { drizzle, type PostgresJsDatabase, type PostgresJsQueryResultHKT } from "drizzle-orm/postgres-js";
-import { Cause, Data, Effect, Exit } from "effect";
+import { Cause, Context, Data, Effect, Exit, Layer } from "effect";
 import postgres from "postgres";
 
-export type Database = PostgresJsDatabase<typeof schema, typeof relations>;
-export type Transaction = PgTransaction<PostgresJsQueryResultHKT, typeof schema, typeof relations>;
+export type TRSchema = typeof relations;
+export type Database = PostgresJsDatabase<TRSchema>;
+export type Transaction = PgAsyncTransaction<PostgresJsQueryResultHKT, TRSchema>;
 
-const connection = postgres(privateEnv.DATABASE_URL, { prepare: false });
-const db = drizzle(connection, { schema, relations });
+const client = postgres(DATABASE_URL, { prepare: false });
+const db = drizzle({ client, relations });
 
-export class DBService extends Effect.Service<DBService>()("DBService", {
-	effect: Effect.fn("DBService")(function* (tx?: Transaction) {
+export class DBService extends Context.Service<DBService>()("DBService", {
+	make: Effect.fn("DBService")(function* (tx?: Transaction) {
 		const database = tx || db;
 
-		const transaction = Effect.fn("DBService.transaction")(function* <A, B extends InstanceType<ErrorClass>>(
-			effect: (tx: Transaction) => Effect.Effect<A, B | never>
+		const transaction = Effect.fn("DBService.transaction")(function* <A, E extends InstanceType<ErrorClass>>(
+			program: (tx: Transaction) => Effect.Effect<A, E>
 		) {
 			const event = getRequestEvent();
 			const runtime = event.locals.runtime;
 			const result = yield* Effect.tryPromise({
 				try: () =>
 					database.transaction(async (tx) => {
-						const result = await runtime.runPromiseExit(effect(tx));
-						return Exit.match(result, {
+						const exit = await runtime.runPromiseExit(program(tx));
+						return Exit.match(exit, {
 							onSuccess: (value) => value,
 							onFailure: (cause) => {
-								throw Cause.isFailType(cause) ? cause.error : new TransactionError(cause);
+								const fail = cause.reasons.find(Cause.isFailReason);
+								throw fail ? fail.error : new TransactionError(cause);
 							}
 						});
 					}),
 				catch: (error) => {
-					if (isTaggedError(error)) return error as B | TransactionError;
+					if (isTaggedError(error)) return error as E | TransactionError;
 					return new TransactionError(Cause.fail(error)); // Unexpected defects
 				}
 			});
@@ -56,8 +56,12 @@ export class DBService extends Effect.Service<DBService>()("DBService", {
 		return { db: database, transaction };
 	})
 }) {
+	static layer(tx?: Transaction) {
+		return Layer.effect(this, this.make(tx));
+	}
+
 	static async end() {
-		await connection.end();
+		await client.end();
 	}
 }
 
@@ -84,7 +88,6 @@ export class DrizzleError extends Data.TaggedError("DrizzleError")<DrizzleErrorP
 	}
 }
 
-export type TRSchema = ExtractTablesWithRelations<typeof relations>;
 export type Filter<TableName extends keyof TRSchema> = RelationsFilter<TRSchema[TableName], TRSchema>;
 export type QueryConfig<TableName extends keyof TRSchema, Type extends "one" | "many" = "one"> = DBQueryConfig<
 	Type,
@@ -102,7 +105,7 @@ export function buildConflictUpdateColumns<
 	Columns extends keyof Table["_"]["columns"],
 	Omit extends boolean = false
 >(table: Table, columns: Columns[], omit: Omit = false as Omit) {
-	const cls = getTableColumns(table);
+	const cls = getColumns(table);
 
 	type Keys = Omit extends true ? Exclude<keyof Table["_"]["columns"], Columns> : Columns;
 	const keys = Object.keys(cls).filter((key) => columns.includes(key as Columns) !== omit) as Keys[];

@@ -1,21 +1,23 @@
 <script lang="ts">
-	import { goto, pushState } from "$app/navigation";
+	import { authClient } from "#lib/auth.js";
+	import Error from "#lib/components/error.svelte";
+	import Head from "#lib/components/head.svelte";
+	import Items from "#lib/components/items.svelte";
+	import Markdown from "#lib/components/markdown.svelte";
+	import NavMenu from "#lib/components/nav-menu.svelte";
+	import SearchResults from "#lib/components/search-results.svelte";
+	import Search from "#lib/components/search.svelte";
+	import { EntitySearchFactory, successToast, swipeAction } from "#lib/factories.svelte.js";
+	import * as API from "#lib/remote/index.js";
+	import type { FullCharacterData } from "#lib/server/effect/services/characters.js";
+	import type { FullLogData } from "#lib/server/effect/services/logs.js";
+	import { getGlobal } from "#lib/stores.svelte.js";
+	import { createTransition, formatDate, hotkey, parseEffectResult } from "#lib/util.js";
+	import { goto } from "$app/navigation";
 	import { page } from "$app/state";
-	import { authClient } from "$lib/auth.js";
-	import Head from "$lib/components/head.svelte";
-	import Items from "$lib/components/items.svelte";
-	import Markdown from "$lib/components/markdown.svelte";
-	import NavMenu from "$lib/components/nav-menu.svelte";
-	import SearchResults from "$lib/components/search-results.svelte";
-	import Search from "$lib/components/search.svelte";
-	import { EntitySearchFactory, successToast, swipeAction } from "$lib/factories.svelte.js";
-	import * as API from "$lib/remote";
-	import type { FullCharacterData } from "$lib/server/effect/services/characters.js";
-	import { getGlobal } from "$lib/stores.svelte.js";
-	import { createTransition, formatDate, hotkey, parseEffectResult } from "$lib/util";
 	import { slugify, sorter } from "@sillvva/utils";
 	import { clipboard, download } from "@svelteuidev/composables";
-	import { onMount, untrack } from "svelte";
+	import { onMount } from "svelte";
 	import { fromAction } from "svelte/attachments";
 	import { SvelteSet } from "svelte/reactivity";
 
@@ -24,15 +26,16 @@
 	const global = getGlobal();
 
 	let deletingLog = new SvelteSet<string>();
+	const searchKey = "s";
+
+	const queryParams = $derived({ param: params.characterId, newRedirect: true });
 
 	async function triggerImageModal(character: FullCharacterData, image?: string) {
 		const imageUrl = image || character.imageUrl;
-		pushState("", {
-			modal: {
-				type: "image",
-				name: character.name,
-				imageUrl
-			}
+
+		goto("", {
+			shallow: true,
+			state: { modal: { type: "image", name: character.name, imageUrl } }
 		});
 	}
 
@@ -40,6 +43,19 @@
 		return function scrollToSearch(searchBar: HTMLDivElement) {
 			if (search.query.trim()) scrollTo({ top: searchBar.offsetTop - 16, behavior: "smooth" });
 		};
+	}
+
+	async function deleteLog(log: FullLogData) {
+		if (!confirm(`Are you sure you want to delete ${log.name}? This action cannot be undone.`)) return;
+		deletingLog.add(log.id);
+		const result = await API.logs.actions.deleteLog(log.id);
+		const parsed = await parseEffectResult(result);
+		if (parsed) {
+			successToast(`${log.name} deleted`);
+			await API.characters.queries.get(queryParams).refresh();
+		} else {
+			deletingLog.delete(log.id);
+		}
 	}
 
 	onMount(async () => {
@@ -57,15 +73,17 @@
 </script>
 
 <svelte:boundary>
-	{@const { user } = await API.app.queries.request()}
-	{@const queryParams = { param: params.characterId, newRedirect: true }}
-	{@const character = await API.characters.queries.get(queryParams)}
-	{@const myCharacter = character.userId === user?.id}
-	{@const search = new EntitySearchFactory(
-		character.logs,
-		untrack(() => page.url.searchParams.get("s") || "")
+	{const { user } = $derived(await API.app.queries.request())}
+	{const character = $derived(await API.characters.queries.get(queryParams))}
+	{const myCharacter = $derived(character.userId === user?.id)}
+	{const search = $derived(
+		new EntitySearchFactory(character.logs, page.url.searchParams.get(searchKey) ?? page.state.search?.[searchKey] ?? "")
 	)}
-	{@const sortedResults = search.results.toSorted((a, b) => sorter(a.showDate, b.showDate))}
+	{const sortedResults = $derived(search.results.toSorted((a, b) => sorter(a.showDate, b.showDate)))}
+
+	{#snippet failed(error)}
+		<Error {error} boundary="[characterId=CharacterId]/+page.svelte" />
+	{/snippet}
 
 	<Head
 		title={character.name}
@@ -82,20 +100,18 @@
 			]}
 		>
 			{#snippet actions()}
-				<a href={`/characters/${character.id}/edit`} class="btn btn-primary btn-sm h-9 max-sm:hidden">Edit</a>
+				<a href={`/characters/${character.id}/edit`} class="btn h-9 btn-primary btn-sm max-sm:hidden">Edit</a>
 				<button
 					aria-label="Share Character"
-					class="btn btn-sm h-9 max-sm:hidden"
+					class="btn h-9 btn-sm max-sm:hidden"
 					onclick={() => successToast("Character URL copied to clipboard")}
 					{@attach fromAction(clipboard, () => page.url.href)}
 				>
-					<span class="iconify mdi--share-variant size-4"></span>
+					<span class="iconify size-4 mdi--share-variant"></span>
 				</button>
 			{/snippet}
 			{#snippet menu()}
-				<li role="menuitem" class="sm:hidden">
-					<a href={`/characters/${character.id}/edit`}>Edit</a>
-				</li>
+				<li role="menuitem" class="sm:hidden"><a href={`/characters/${character.id}/edit`}>Edit</a></li>
 				<li role="menuitem" class="sm:hidden">
 					<button
 						onclick={() => successToast("Character URL copied to clipboard")}
@@ -142,6 +158,15 @@
 						disabled={!!API.characters.actions.deleteCharacter.pending}
 						onclick={async () => {
 							if (!confirm(`Are you sure you want to delete ${character.name}? This action cannot be undone.`)) return;
+
+							const dmLogs = character.logs
+								.filter((log) => log.isDmLog)
+								.map((log) => {
+									const date = formatDate(new Date(log.showDate), log.timezone);
+									return `‣ [${date}] ${log.name}`;
+								});
+							alert(`${dmLogs.length} DM logs will be unassigned from this character:\n\n${dmLogs.join("\n")}`);
+
 							global.pageLoader = true;
 							const result = await API.characters.actions.deleteCharacter(character.id);
 							const parsed = await parseEffectResult(result);
@@ -163,12 +188,12 @@
 		<div class="flex flex-1 flex-col gap-6">
 			<div class="flex">
 				{#if character.imageUrl}
-					<div class="xs:max-md:flex relative mr-4 hidden w-20 flex-col items-end justify-center print:hidden">
+					<div class="relative mr-4 hidden w-20 flex-col items-end justify-center xs:max-md:flex print:hidden">
 						<a
 							href={character.imageUrl}
 							target="_blank"
 							rel="noreferrer noopener"
-							class="mask mask-squircle bg-primary mx-auto h-20"
+							class="mx-auto mask h-20 bg-primary mask-squircle"
 							style:view-transition-name={"image-" + character.id}
 							onclick={(e) => {
 								e.preventDefault();
@@ -180,12 +205,12 @@
 					</div>
 				{/if}
 				<div class="flex w-full flex-col">
-					<div class="xs:mb-0 mb-2 flex gap-4">
-						<h3
-							class="font-vecna print:text-base-content flex-1 py-2 text-3xl font-bold text-black sm:py-0 sm:text-4xl dark:text-white print:text-2xl"
+					<div class="mb-2 flex gap-4 xs:mb-0">
+						<h2
+							class="flex-1 py-2 font-vecna text-3xl font-bold text-black sm:py-0 sm:text-4xl dark:text-white print:text-2xl print:text-base-content"
 						>
 							{character.name}
-						</h3>
+						</h2>
 					</div>
 					<p class="flex-1 text-sm font-semibold">
 						{character.race}
@@ -200,7 +225,7 @@
 									href={character.characterSheetUrl}
 									target="_blank"
 									rel="noreferrer noopner"
-									class="text-secondary-content font-semibold dark:not-print:drop-shadow-xs"
+									class="font-semibold text-secondary-content dark:not-print:drop-shadow-xs"
 								>
 									Character Sheet
 								</a>
@@ -215,15 +240,15 @@
 					{/if}
 				</div>
 			</div>
-			<div class="xs:flex-nowrap flex flex-1 flex-wrap gap-4 sm:gap-4 md:gap-6 print:flex-nowrap print:gap-2">
-				<div class="xs:basis-[40%] flex basis-full flex-col gap-2 sm:basis-1/3 sm:gap-4 md:basis-52 print:basis-1/3 print:gap-2">
+			<div class="flex flex-1 flex-wrap gap-4 xs:flex-nowrap sm:gap-4 md:gap-6 print:flex-nowrap print:gap-2">
+				<div class="flex basis-full flex-col gap-2 xs:basis-[40%] sm:basis-1/3 sm:gap-4 md:basis-52 print:basis-1/3 print:gap-2">
 					{#if character.imageUrl}
 						<div class="relative flex flex-col items-end justify-center max-md:hidden print:hidden">
 							<a
 								href={character.imageUrl}
 								target="_blank"
 								rel="noreferrer noopener"
-								class="mask mask-squircle bg-primary mx-auto h-52 w-full"
+								class="mx-auto mask h-52 w-full bg-primary mask-squircle"
 								style:view-transition-name={"image-" + character.id}
 								onclick={(e) => {
 									e.preventDefault();
@@ -235,39 +260,44 @@
 						</div>
 					{/if}
 					<div class="flex">
-						<h4 class="print:text-base-content font-semibold dark:text-white">Level</h4>
+						<h4 class="font-semibold dark:text-white print:text-base-content">Level</h4>
 						<div class="flex-1 text-right">{character.totalLevel}</div>
 					</div>
 					<div class="flex">
-						<h4 class="print:text-base-content font-semibold dark:text-white">Tier</h4>
+						<h4 class="font-semibold dark:text-white print:text-base-content">Tier</h4>
 						<div class="flex-1 text-right">{character.tier}</div>
 					</div>
 					<div class="flex">
-						<h4 class="print:text-base-content font-semibold dark:text-white">Gold</h4>
+						<h4 class="font-semibold dark:text-white print:text-base-content">Gold</h4>
 						<div class="flex-1 text-right">{character.totalGold.toLocaleString()}</div>
 					</div>
 					{#if character.totalTcp}
 						<div class="flex">
-							<h4 class="print:text-base-content font-semibold dark:text-white">TCP</h4>
+							<h4 class="font-semibold dark:text-white print:text-base-content">TCP</h4>
 							<div class="flex-1 text-right">{character.totalTcp}</div>
 						</div>
 					{/if}
 					<div class="flex">
-						<h4 class="print:text-base-content font-semibold dark:text-white">Downtime</h4>
+						<h4 class="font-semibold dark:text-white print:text-base-content">Downtime</h4>
 						<div class="flex-1 text-right">{character.totalDtd}</div>
 					</div>
 				</div>
 				<div
 					class={[
-						"divider xs:divider-horizontal xs:mx-0 max-xs:hidden print:flex",
+						"divider max-xs:hidden xs:mx-0 xs:divider-horizontal print:flex",
 						"before:bg-black/50 after:bg-black/50 dark:before:bg-white/50 dark:after:bg-white/50"
-					].join(" ")}
+					]}
 				></div>
-				<div class="xs:basis-[60%] flex basis-full flex-col sm:basis-2/3 lg:basis-2/3 print:basis-2/3">
+				<div class="flex basis-full flex-col xs:basis-[60%] sm:basis-2/3 lg:basis-2/3 print:basis-2/3">
 					{#if character}
 						<div class="flex flex-col gap-4">
-							<Items title="Story Awards" items={character.storyAwards} collapsible sort search />
-							<Items title="Magic Items" items={character.magicItems} collapsible formatting sort search />
+							<svelte:boundary>
+								{#snippet failed(error)}
+									<Error {error} boundary="Story Awards and Magic Items" />
+								{/snippet}
+								<Items title="Story Awards" items={character.storyAwards} collapsible sort search />
+								<Items title="Magic Items" items={character.magicItems} collapsible formatting sort search />
+							</svelte:boundary>
 						</div>
 					{/if}
 				</div>
@@ -281,7 +311,7 @@
 				{#if myCharacter}
 					<a
 						href={`/characters/${character.id}/log/new`}
-						class="btn btn-primary sm:btn-sm max-sm:hidden sm:px-3"
+						class="btn btn-primary max-sm:hidden sm:px-3 sm:btn-sm"
 						aria-label="New Log"
 						{@attach hotkey([
 							[
@@ -292,17 +322,17 @@
 							]
 						])}
 					>
-						New Log <kbd class="kbd kbd-sm max-sm:hover-none:hidden text-base-content">N</kbd>
+						New Log <kbd class="kbd kbd-sm text-base-content max-sm:hover-none:hidden">N</kbd>
 					</a>
 				{/if}
-				<Search bind:value={search.query} placeholder="Search Logs" />
+				<Search name={searchKey} placeholder="Search Logs" />
 				{#if myCharacter}
 					<a
 						href={`/characters/${character.id}/log/new`}
-						class="btn btn-primary sm:btn-sm sm:hidden sm:px-3"
+						class="btn btn-primary sm:hidden sm:px-3 sm:btn-sm"
 						aria-label="New Log"
 					>
-						<span class="iconify mdi--plus size-6"></span>
+						<span class="iconify size-6 mdi--plus"></span>
 					</a>
 					<button
 						class="btn data-[desc=true]:btn-primary sm:hidden"
@@ -316,9 +346,9 @@
 						tabindex="0"
 					>
 						{#if global.app.log.descriptions}
-							<span class="iconify mdi--note-text size-6"></span>
+							<span class="iconify size-6 mdi--note-text"></span>
 						{:else}
-							<span class="iconify mdi--note-text-outline size-6"></span>
+							<span class="iconify size-6 mdi--note-text-outline"></span>
 						{/if}
 					</button>
 				{/if}
@@ -326,7 +356,7 @@
 			{#if character.logs.length}
 				<div class="flex-1 max-sm:hidden"></div>
 				<button
-					class="btn data-[desc=true]:btn-primary sm:btn-sm max-sm:hidden"
+					class="btn data-[desc=true]:btn-primary max-sm:hidden sm:btn-sm"
 					data-desc={global.app.log.descriptions}
 					onclick={() =>
 						createTransition(async () => {
@@ -337,9 +367,9 @@
 					tabindex="0"
 				>
 					{#if global.app.log.descriptions}
-						<span class="iconify mdi--eye size-5"></span>
+						<span class="iconify size-5 mdi--eye"></span>
 					{:else}
-						<span class="iconify mdi--eye-off size-5"></span>
+						<span class="iconify size-5 mdi--eye-off"></span>
 					{/if}
 					<span class="max-sm:hidden">Notes</span>
 				</button>
@@ -348,7 +378,7 @@
 	{/if}
 
 	{#if !sortedResults.length}
-		<section class="bg-base-200 rounded-lg">
+		<section class="rounded-lg bg-base-200">
 			<div class="flex flex-col gap-4 py-20 text-center">
 				<div>No logs found.</div>
 				<p>
@@ -364,8 +394,9 @@
 			<!-- Mobile List -->
 			<ul class="overflow-hidden rounded-lg sm:hidden print:hidden">
 				{#each sortedResults as log (log.id)}
-					{@const hasDescription =
-						!!log.description?.trim() || log.storyAwardsGained.length > 0 || log.storyAwardsLost.length > 0}
+					{const hasDescription = $derived(
+						!!log.description?.trim() || log.storyAwardsGained.length > 0 || log.storyAwardsLost.length > 0
+					)}
 					<li
 						class="border-b border-b-neutral-500/40 last:border-b-0 data-[deleting=true]:hidden"
 						data-deleting={deletingLog.has(log.id)}
@@ -373,25 +404,14 @@
 						<div
 							class="swipe-container"
 							{@attach swipeAction({
-								right: async () => {
-									if (!confirm(`Are you sure you want to delete ${log.name}? This action cannot be undone.`)) return;
-									deletingLog.add(log.id);
-									const result = await API.logs.actions.deleteLog(log.id);
-									const parsed = await parseEffectResult(result);
-									if (parsed) {
-										successToast(`${log.name} deleted`);
-										await API.characters.queries.get(queryParams).refresh();
-									} else {
-										deletingLog.delete(log.id);
-									}
-								}
+								right: () => deleteLog(log)
 							})}
 						>
 							<div class="content bg-base-200">
 								{#if myCharacter}
 									<a
 										href={log.isDmLog ? `/dm-logs/${log.id}` : `/characters/${log.characterId}/log/${log.id}`}
-										class="row-link text-secondary-content font-semibold whitespace-pre-wrap"
+										class="row-link font-semibold whitespace-pre-wrap text-secondary-content"
 									>
 										<SearchResults text={log.name} terms={search.terms} />
 									</a>
@@ -401,7 +421,7 @@
 									</span>
 								{/if}
 								<p class="text-netural-content mb-2 text-sm font-normal whitespace-nowrap">
-									{new Date(log.showDate).toLocaleString([], { dateStyle: "medium", timeStyle: "short" })}
+									{formatDate(new Date(log.showDate), log.timezone)}
 								</p>
 								{#if log.type === "game" && !log.dm.isUser}
 									<p class="text-sm font-normal">
@@ -418,7 +438,8 @@
 									{#if log.type === "game"}
 										{#if log.experience > 0}
 											<p>
-												<span class="font-semibold dark:text-white">Experience:</span>&nbsp;{log.experience}
+												<span class="font-semibold dark:text-white">Experience:</span>
+												{log.experience}
 											</p>
 										{/if}
 										{#if log.acp > 0}
@@ -428,12 +449,14 @@
 											</p>
 										{/if}
 										<p>
-											<span class="font-semibold dark:text-white">Levels:</span>&nbsp;{log.levelGained}&nbsp;({log.totalLevel})
+											<span class="font-semibold dark:text-white">Levels:</span>
+											{log.levelGained} ({log.totalLevel})
 										</p>
 									{/if}
 									{#if log.dtd !== 0}
 										<p>
-											<span class="font-semibold dark:text-white">Downtime&nbsp;Days:</span>&nbsp;{log.dtd}
+											<span class="font-semibold dark:text-white">Downtime Days:</span>
+											{log.dtd}
 										</p>
 									{/if}
 									{#if log.tcp !== 0}
@@ -489,7 +512,7 @@
 								</div>
 							</div>
 							<button class="action right bg-error text-white" aria-label="Delete Log">
-								<span class="iconify mdi--trash-can size-6"></span>
+								<span class="iconify size-6 mdi--trash-can"></span>
 							</button>
 						</div>
 					</li>
@@ -497,7 +520,7 @@
 			</ul>
 
 			<!-- Desktop List -->
-			<div class="bg-base-200 w-full overflow-x-auto rounded-lg max-sm:hidden print:block!">
+			<div class="w-full overflow-x-auto rounded-lg bg-base-200 max-sm:hidden print:block!">
 				<table class="linked-table table w-full leading-5">
 					<thead>
 						<tr class="bg-base-300 text-base-content/70">
@@ -510,8 +533,9 @@
 						</tr>
 					</thead>
 					{#each sortedResults as log (log.id)}
-						{@const hasDescription =
-							!!log.description?.trim() || log.storyAwardsGained.length > 0 || log.storyAwardsLost.length > 0}
+						{const hasDescription = $derived(
+							!!log.description?.trim() || log.storyAwardsGained.length > 0 || log.storyAwardsLost.length > 0
+						)}
 						<tbody class="data-[deleting=true]:hidden first-of-type:[&>tr>td]:border-t-0" data-deleting={deletingLog.has(log.id)}>
 							<tr class="print:text-sm [&>td]:border-0 [&>td]:border-t [&>td]:border-neutral-500/20">
 								<td
@@ -521,7 +545,7 @@
 									{#if myCharacter}
 										<a
 											href={log.isDmLog ? `/dm-logs/${log.id}` : `/characters/${log.characterId}/log/${log.id}`}
-											class="row-link text-secondary-content font-semibold whitespace-pre-wrap"
+											class="row-link font-semibold whitespace-pre-wrap text-secondary-content"
 										>
 											<SearchResults text={log.name} terms={search.terms} />
 										</a>
@@ -548,7 +572,8 @@
 										{#if log.type === "game"}
 											{#if log.experience > 0}
 												<p>
-													<span class="font-semibold dark:text-white">Experience:</span>&nbsp;{log.experience}
+													<span class="font-semibold dark:text-white">Experience:</span>
+													{log.experience}
 												</p>
 											{/if}
 											{#if log.acp > 0}
@@ -558,12 +583,14 @@
 												</p>
 											{/if}
 											<p>
-												<span class="font-semibold dark:text-white">Levels:</span>&nbsp;{log.levelGained}&nbsp;({log.totalLevel})
+												<span class="font-semibold dark:text-white">Levels:</span>
+												{log.levelGained} ({log.totalLevel})
 											</p>
 										{/if}
 										{#if log.dtd !== 0}
 											<p>
-												<span class="font-semibold dark:text-white">Downtime&nbsp;Days:</span>&nbsp;{log.dtd}
+												<span class="font-semibold dark:text-white">Downtime Days:</span>
+												{log.dtd}
 											</p>
 										{/if}
 										{#if log.tcp !== 0}
@@ -584,7 +611,8 @@
 								<td class="align-top max-sm:hidden print:table-cell print:p-2">
 									{#if log.experience > 0}
 										<p>
-											<span class="font-semibold dark:text-white">Experience:</span>&nbsp;{log.experience}
+											<span class="font-semibold dark:text-white">Experience:</span>
+											{log.experience}
 										</p>
 									{/if}
 									{#if log.acp > 0}
@@ -595,12 +623,14 @@
 									{/if}
 									{#if (log.levelGained || 0) > 0}
 										<p>
-											<span class="font-semibold dark:text-white">Levels:</span>&nbsp;{log.levelGained}&nbsp;({log.totalLevel})
+											<span class="font-semibold dark:text-white">Levels:</span>
+											{log.levelGained} ({log.totalLevel})
 										</p>
 									{/if}
 									{#if log.dtd !== 0}
 										<p>
-											<span class="text-sm font-semibold dark:text-white">Downtime&nbsp;Days:</span>&nbsp;{log.dtd}
+											<span class="text-sm font-semibold dark:text-white">Downtime Days:</span>
+											{log.dtd}
 										</p>
 									{/if}
 								</td>
@@ -645,22 +675,11 @@
 										<div class="flex flex-col justify-center gap-2">
 											<button
 												type="button"
-												class="btn btn-error btn-sm touch-hitbox"
+												class="btn touch-hitbox btn-error btn-sm"
 												aria-label="Delete Log"
-												onclick={async () => {
-													if (!confirm(`Are you sure you want to delete ${log.name}? This action cannot be undone.`)) return;
-													deletingLog.add(log.id);
-													const result = await API.logs.actions.deleteLog(log.id);
-													const parsed = await parseEffectResult(result);
-													if (parsed) {
-														successToast(`${log.name} deleted`);
-														await API.characters.queries.get(queryParams).refresh();
-													} else {
-														deletingLog.delete(log.id);
-													}
-												}}
+												onclick={() => deleteLog(log)}
 											>
-												<span class="iconify mdi--trash-can size-4"></span>
+												<span class="iconify size-4 mdi--trash-can"></span>
 											</button>
 										</div>
 									</td>

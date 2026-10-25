@@ -1,6 +1,6 @@
 <script lang="ts">
 	import { page } from "$app/state";
-	import * as API from "$lib/remote";
+	import * as API from "#lib/remote/index.js";
 
 	const { user } = $derived(await API.app.queries.request());
 </script>

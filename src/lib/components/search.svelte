@@ -1,70 +1,107 @@
 <script lang="ts">
-	import { hotkey } from "$lib/util";
+	import { hotkey } from "#lib/util.js";
+	import { goto } from "$app/navigation";
+	import { page } from "$app/state";
 	import { debounce } from "@sillvva/utils";
+	import { onMount } from "svelte";
 	import type { HTMLInputAttributes } from "svelte/elements";
-	import { queryParameters, ssp } from "sveltekit-search-params";
+	import { SvelteURL } from "svelte/reactivity";
 
-	const params = queryParameters(
-		{
-			s: ssp.string()
-		},
-		{
-			showDefaults: false,
-			pushHistory: false
-		}
-	);
+	let {
+		name = "s",
+		type = "text",
+		...rest
+	}: Omit<HTMLInputAttributes, "class" | "name" | "value"> & { name?: string } = $props();
 
-	let { value = $bindable(params.s ?? ""), type = "text", ...rest }: Omit<HTMLInputAttributes, "class"> = $props();
+	const url = new SvelteURL(page.url.href);
+	const value = $derived(url.searchParams.get(name) ?? "");
+	let ref: HTMLInputElement;
 
-	const updateValue = debounce((v: string) => {
-		params.s = v || null;
-		value = v;
+	const updateValue = debounce((val: string) => {
+		updateSearch(val);
 	}, 300);
 
-	let ref: HTMLInputElement;
+	function updateSearch(val: string, replace: boolean = false) {
+		if (replace) {
+			goto(url, {
+				shallow: true,
+				replace: true,
+				state: { ...page.state, search: { ...page.state.search, [name]: val } }
+			});
+		} else {
+			goto(url, {
+				shallow: true,
+				state: { ...page.state, search: { ...page.state.search, [name]: val } }
+			});
+		}
+	}
+
+	onMount(() => {
+		if (value) updateSearch(value, true);
+	});
 </script>
 
-<search
+<form
+	method="get"
 	class="min-w-0 flex-1"
-	{@attach hotkey([
-		[
-			"/",
-			() => {
-				ref.focus();
-			}
-		]
-	])}
+	onsubmit={(e) => {
+		e.preventDefault();
+		updateValue.cancel();
+		updateSearch(ref.value);
+	}}
 >
-	<label class="input focus-within:border-primary sm:input-sm flex w-full items-center gap-2" class:pr-0={!!value.trim()}>
+	<search
+		class="input flex w-full items-center gap-2 focus-within:border-primary max-sm:*:text-base sm:input-sm noscript:pr-0"
+		class:pr-0={!!value.trim()}
+		{@attach hotkey([
+			[
+				"/",
+				() => {
+					ref.focus();
+				}
+			]
+		])}
+	>
 		<input
 			{type}
+			{name}
 			{value}
 			bind:this={ref}
 			class="w-full flex-1"
 			aria-label={rest.placeholder || "Search"}
 			oninput={(e) => {
-				const val = e.currentTarget.value;
-				if (val) updateValue.call(val);
-				else {
-					params.s = null;
-					value = "";
+				const val = (e.target as HTMLInputElement).value;
+				if (val) {
+					url.searchParams.set(name, val);
+					updateValue.call(val);
+				} else {
+					url.searchParams.delete(name);
+					updateValue.call("");
 				}
 			}}
 			{...rest}
 		/>
-		{#if params.s?.trim()}
-			<button
-				class="btn btn-sm btn-ghost"
-				onclick={() => {
-					value = "";
-					params.s = null;
-				}}
-				aria-label="Clear Search"
-			>
-				<span class="iconify mdi--close"></span>
+		<span class="noscript:hidden">
+			{#if value?.trim()}
+				<button
+					type="button"
+					class="btn btn-ghost btn-sm"
+					onclick={() => {
+						url.searchParams.delete(name);
+						updateSearch("");
+					}}
+					aria-label="Clear Search"
+				>
+					<span class="iconify mdi--close"></span>
+				</button>
+			{:else}
+				<kbd class="kbd kbd-sm max-sm:hidden">/</kbd>
+			{/if}
+		</span>
+		<span class="hidden noscript:inline">
+			<button type="submit" class="btn btn-ghost btn-sm" aria-label="Search">
+				<span class="iconify mdi--magnify"></span>
 			</button>
-		{:else}
-			<kbd class="kbd kbd-sm max-sm:hidden">/</kbd>
-		{/if}
-	</label>
-</search>
+		</span>
+	</search>
+</form>

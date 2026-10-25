@@ -1,14 +1,15 @@
 <script lang="ts">
 	import { page } from "$app/state";
-	import Head from "$lib/components/head.svelte";
-	import Search from "$lib/components/search.svelte";
-	import { BLANK_CHARACTER } from "$lib/constants.js";
-	import { errorToast, successToast } from "$lib/factories.svelte.js";
-	import * as API from "$lib/remote";
+	import Head from "#lib/components/head.svelte";
+	import Search from "#lib/components/search.svelte";
+	import { BLANK_CHARACTER } from "#lib/constants.js";
+	import { errorToast, successToast } from "#lib/factories.svelte.js";
+	import * as API from "#lib/remote/index.js";
 	import { JSONSearchParser } from "@sillvva/search/json";
 	import { toJSObjectNotation } from "@sillvva/utils";
 
-	let search = $derived(page.url.searchParams.get("s")?.trim() ?? "");
+	const searchKey = "s";
+	const search = $derived(page.url.searchParams.get(searchKey) ?? page.state.search?.[searchKey] ?? "");
 
 	const users = $derived(await API.admin.queries.getUsers());
 	const parser = $derived(
@@ -25,7 +26,7 @@
 
 <section class="flex flex-wrap items-center justify-between gap-2 max-sm:justify-end">
 	<div class="flex w-full gap-2 sm:max-w-md md:max-w-md">
-		<Search bind:value={search} placeholder="Search by name, email, role, etc." />
+		<Search name={searchKey} placeholder="Search by name, email, role, etc." />
 	</div>
 	<span class="badge bg-base-300 text-base-content badge-lg">
 		{#if results.length < (users.length ?? 0)}
@@ -49,9 +50,6 @@
 			</thead>
 			<tbody>
 				{#each results as user (user.id)}
-					{@const impersonateForm = API.admin.forms.impersonateUser.for(user.id)}
-					{@const banForm = API.admin.forms.banUser.for(user.id)}
-					{@const unbanForm = API.admin.forms.unbanUser.for(user.id)}
 					<tr data-banned={user.banned} class="data-[banned=true]:bg-error/10">
 						<td class="pr-0 align-top transition-colors sm:pr-2">
 							<div class="avatar">
@@ -95,6 +93,7 @@
 						<td class="text-center max-sm:hidden">{user.characters}</td>
 						<td class="max-xs:hidden">
 							<div class="flex justify-end gap-2">
+								{const impersonateForm = $derived(API.admin.forms.impersonateUser.for(user.id))}
 								<form
 									{...impersonateForm.enhance(async ({ submit }) => {
 										await submit();
@@ -118,6 +117,7 @@
 									</button>
 								</form>
 								{#if !user.banned}
+									{const banForm = $derived(API.admin.forms.banUser.for(user.id))}
 									<form
 										onsubmit={(e) => {
 											e.preventDefault();
@@ -132,7 +132,7 @@
 													.getUsers()
 													.withOverride((users) =>
 														users.map((u) =>
-															u.id === user.id ? { ...u, banned: true, banReason: banForm.fields.banReason.value() } : u
+															u.id === user.id ? { ...u, banned: true, banReason: banForm.fields.banReason.value() ?? null } : u
 														)
 													)
 											);
@@ -154,6 +154,7 @@
 										</button>
 									</form>
 								{:else}
+									{const unbanForm = $derived(API.admin.forms.unbanUser.for(user.id))}
 									<form
 										{...unbanForm.enhance(async ({ submit }) => {
 											if (!confirm(`Are you sure you want to unban ${user.name}?`)) return;

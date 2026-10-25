@@ -1,28 +1,27 @@
 <script lang="ts">
 	import { page } from "$app/state";
-	import Head from "$lib/components/head.svelte";
-	import NavMenu from "$lib/components/nav-menu.svelte";
-	import SearchResults from "$lib/components/search-results.svelte";
-	import Search from "$lib/components/search.svelte";
-	import { EntitySearchFactory, successToast } from "$lib/factories.svelte.js";
-	import * as API from "$lib/remote";
-	import { parseEffectResult } from "$lib/util";
+	import Head from "#lib/components/head.svelte";
+	import NavMenu from "#lib/components/nav-menu.svelte";
+	import SearchResults from "#lib/components/search-results.svelte";
+	import Search from "#lib/components/search.svelte";
+	import { EntitySearchFactory, successToast } from "#lib/factories.svelte.js";
+	import * as API from "#lib/remote/index.js";
+	import { parseEffectResult } from "#lib/util.js";
 	import { sorter } from "@sillvva/utils";
-	import { untrack } from "svelte";
 	import { SvelteSet } from "svelte/reactivity";
 
 	let deletingDM = new SvelteSet<string>();
+	const searchKey = "s";
 </script>
 
 <svelte:boundary>
-	{@const { user } = await API.app.queries.request()}
-	{@const dms = await API.dms.queries.getAll()}
-	{@const search = new EntitySearchFactory(
-		dms,
-		untrack(() => page.url.searchParams.get("s") || "")
+	{const { user } = $derived(await API.app.queries.request())}
+	{const dms = $derived(await API.dms.queries.getAll())}
+	{const search = $derived(
+		new EntitySearchFactory(dms, page.url.searchParams.get(searchKey) ?? page.state.search?.[searchKey] ?? "")
 	)}
-	{@const sortedResults = search.results.toSorted(
-		(a, b) => sorter(a.isUser, b.isUser) || sorter(b.score, a.score) || sorter(a.name, b.name)
+	{const sortedResults = $derived(
+		search.results.toSorted((a, b) => sorter(a.isUser, b.isUser) || sorter(b.score, a.score) || sorter(a.name, b.name))
 	)}
 
 	<Head title="{user?.name}'s DMs" />
@@ -30,7 +29,7 @@
 	<NavMenu base crumbs={[{ title: "DMs", url: "/dms" }]} />
 
 	<section class="flex max-sm:flex-1 sm:max-w-96">
-		<Search bind:value={search.query} placeholder="Search" />
+		<Search name={searchKey} placeholder="Search" />
 	</section>
 
 	<section>

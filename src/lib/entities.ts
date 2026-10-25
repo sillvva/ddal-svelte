@@ -1,7 +1,7 @@
-import type { DungeonMaster, Log, MagicItem, StoryAward } from "$lib/server/db/schema";
-import type { CharacterData, FullCharacterData } from "$lib/server/effect/services/characters";
-import type { ExtendedLogData, FullLogData, LogData, LogSummaryData } from "$lib/server/effect/services/logs";
-import { sorter } from "@sillvva/utils";
+import type { DungeonMaster, Log, MagicItem, StoryAward } from "#lib/server/db/schema.js";
+import type { CharacterData, FullCharacterData } from "#lib/server/effect/services/characters.js";
+import type { ExtendedLogData, FullLogData, LogData, LogSummaryData } from "#lib/server/effect/services/logs.js";
+import { omit, sorter } from "@sillvva/utils";
 import { v7 } from "uuid";
 import { BLANK_CHARACTER, PlaceholderName } from "./constants";
 import {
@@ -64,12 +64,14 @@ export function getItemEntities(
 	};
 }
 
+export type LogLevel = { id: LogId; levels: number };
+
 export function getLevels(
 	logs: Log[],
 	base: { level?: number; experience?: number; acp?: number } = { level: 0, experience: 0, acp: 0 }
 ) {
 	let totalLevel = Math.max(1, base.level || 0);
-	const logLevels: Array<{ id: string; levels: number }> = [];
+	const logLevels: LogLevel[] = [];
 
 	const xpLevels = [
 		0, 300, 900, 2700, 6500, 14000, 23000, 34000, 48000, 64000, 85000, 100000, 120000, 140000, 165000, 195000, 225000, 265000,
@@ -231,7 +233,7 @@ export function parseLog(log: LogData | ExtendedLogData): FullLogData {
 
 export function logDataToSchema(userId: UserId, log: FullLogData): LogSchema {
 	return {
-		...log,
+		...omit(log, ["createdAt", "character", "showDate"]),
 		date: new Date(log.date),
 		timezone: log.timezone || "",
 		characterName: log.character?.name || "",

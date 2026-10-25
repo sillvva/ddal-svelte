@@ -1,5 +1,5 @@
 <script lang="ts">
-	import type { RemoteFormField } from "@sveltejs/kit";
+	import type { RemoteFormField } from "$app/server";
 	import autosize from "svelte-autosize";
 	import type { HTMLTextareaAttributes } from "svelte/elements";
 	import Markdown from "../markdown.svelte";
@@ -7,7 +7,6 @@
 	interface Props extends HTMLTextareaAttributes {
 		field: RemoteFormField<string>;
 		preview?: boolean;
-		name?: string;
 		minRows?: number;
 		maxRows?: number;
 		maxLength?: number;
@@ -20,14 +19,17 @@
 	const attributes = $derived(field.as("text"));
 	const name = $derived(attributes.name);
 	const issues = $derived(field.issues());
+	const value = $derived(field.value() || "");
 
-	const graphemeCount = $derived(typeof field.value() === "string" ? [...new Intl.Segmenter().segment(field.value())].length : 0);
-	const lengthDiff = $derived(field.value().length - graphemeCount);
+	const segmenter = new Intl.Segmenter();
+	const graphemes = $derived(typeof value === "string" ? [...segmenter.segment(value)] : []);
+	const graphemeCount = $derived(graphemes.length);
+	const largeGraphemeCount = $derived(graphemes.filter((grapheme) => grapheme.segment.length > 1).length);
 
 	const markdownTip = "Supports Markdown and HTML. Scripting, media, and form tags are not allowed for security reasons.";
 	const graphemeTip = $derived(
-		lengthDiff
-			? `You have used ${graphemeCount} characters, but ${lengthDiff} are counted differently due to special characters like emojis.`
+		largeGraphemeCount
+			? `You have actually used ${graphemeCount} characters, but ${largeGraphemeCount} special characters like emojis count as more than one.`
 			: undefined
 	);
 </script>
@@ -38,18 +40,10 @@
 <div>
 	{#if preview}
 		<div
-			class="tabs-boxed tabs bg-base-200 border-base-content/20 rounded-t-lg rounded-b-none border border-b-0 [--tw-border-opacity:0.2]"
+			class="tabs-boxed tabs rounded-t-lg rounded-b-none border border-b-0 border-base-content/20 bg-base-200 [--tw-border-opacity:0.2]"
 		>
-			<input type="radio" name="{name}tabs" role="tab" class="tab rounded-md!" aria-label="Edit" bind:group={mode} value="edit" />
-			<input
-				type="radio"
-				name="{name}tabs"
-				role="tab"
-				class="tab rounded-md!"
-				aria-label="Preview"
-				bind:group={mode}
-				value="preview"
-			/>
+			<input type="radio" role="tab" class="tab rounded-md!" aria-label="Edit" bind:group={mode} value="edit" />
+			<input type="radio" role="tab" class="tab rounded-md!" aria-label="Preview" bind:group={mode} value="preview" />
 		</div>
 	{/if}
 	<textarea
@@ -57,16 +51,15 @@
 		{name}
 		id={name}
 		bind:value={() => field.value(), (val) => field.set(val)}
-		class="textarea textarea-bordered focus:border-primary w-full rounded-b-lg data-[preview=true]:rounded-t-none data-[state=preview]:hidden"
+		class="textarea-bordered textarea w-full rounded-b-lg focus:border-primary data-[preview=true]:rounded-t-none data-[state=preview]:hidden max-sm:text-base"
 		data-preview={preview}
 		data-state={mode}
 		style:--minRows={minRows && `${minRows}lh`}
 		style:--maxRows={maxRows && `${maxRows}lh`}
 		spellcheck="true"
-		{@attach autosize}
-	></textarea>
+		{@attach autosize}></textarea>
 	{#if preview && mode === "preview"}
-		<div class="border-base-content/20 bg-base-100 rounded-b-lg border p-4 text-sm [--tw-border-opacity:0.2]">
+		<div class="rounded-b-lg border border-base-content/20 bg-base-100 p-4 text-sm [--tw-border-opacity:0.2]">
 			<Markdown content={field.value()} />
 		</div>
 	{/if}
@@ -74,7 +67,7 @@
 {#if !preview || mode !== "preview"}
 	<label for={name} class="fieldset-label justify-between">
 		{#if issues?.length}
-			<span class="bg-error text-error-content rounded-lg px-2 py-1 text-pretty">{issues}</span>
+			<span class="rounded-lg bg-error px-2 py-1 text-pretty text-error-content">{issues}</span>
 		{:else}
 			<span class="tooltip tooltip-bottom flex items-center gap-1" data-tip={markdownTip}>
 				Markdown and HTML Supported
@@ -83,7 +76,7 @@
 		{/if}
 		{#if !issues?.length && maxLength}
 			<span class="tooltip tooltip-bottom flex items-center gap-1" data-tip={graphemeTip}>
-				{field.value().length.toLocaleString()} / {maxLength.toLocaleString()}
+				{value.length.toLocaleString()} / {maxLength.toLocaleString()}
 				{#if graphemeTip}
 					<span class="iconify mdi--question-mark-circle"></span>
 				{/if}
