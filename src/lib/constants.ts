@@ -72,8 +72,8 @@ export const themes = [
 		group: "light"
 	},
 	{
-		name: "Sky",
-		value: "sky",
+		name: "Professional",
+		value: "professional",
 		group: "light"
 	},
 	{
@@ -84,6 +84,11 @@ export const themes = [
 	{
 		name: "Plum",
 		value: "plum",
+		group: "light"
+	},
+	{
+		name: "Winter",
+		value: "winter",
 		group: "light"
 	},
 	{
@@ -107,13 +112,18 @@ export const themes = [
 		group: "dark"
 	},
 	{
-		name: "Night",
-		value: "night",
+		name: "Ocean",
+		value: "ocean",
 		group: "dark"
 	},
 	{
-		name: "Forest",
-		value: "forest",
+		name: "Red Dragon",
+		value: "red-dragon",
+		group: "dark"
+	},
+	{
+		name: "Night",
+		value: "night",
 		group: "dark"
 	},
 	{
