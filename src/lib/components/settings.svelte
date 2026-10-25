@@ -328,6 +328,7 @@
 			</div>
 		</div>
 	</aside>
+
 	<div
 		class="fixed inset-0 -z-10 bg-base-300/50 opacity-0 backdrop-blur-sm transition-all data-[open=false]:hidden data-[open=true]:z-40 data-[open=true]:opacity-100"
 		onkeydown={() => (open = false)}
@@ -350,56 +351,54 @@
 			]
 		])}
 	>
-		{#if deleteConfirmOpen}
-			<div class="relative modal-box cursor-default bg-base-100 drop-shadow-lg">
-				<button
-					type="button"
-					class="btn absolute top-2 right-2 btn-circle btn-ghost btn-sm"
-					onclick={closeDeleteConfirm}
-					aria-label="Close"
-				>
-					<span class="iconify mdi--close"></span>
-				</button>
-				<form
-					class="flex flex-col gap-3"
-					onsubmit={(event) => {
-						event.preventDefault();
-						if (!confirmationMatches || API.auth.forms.deleteAccount.pending) return;
-						deleteAccountForm?.requestSubmit();
-					}}
-				>
-					<h3 id="delete-account-title" class="pr-8 text-lg font-bold text-base-content">Delete account</h3>
-					<p id="delete-account-description" class="text-sm">
-						This action cannot be undone. Your data will be lost forever. Enter the last segment of your user ID to confirm.
-					</p>
-					<p class="font-mono text-xs break-all text-base-content/70">
-						{user.id.slice(0, -userIdSegment.length)}<span class="font-semibold text-error">{userIdSegment}</span>
-					</p>
-					<label class="flex flex-col gap-1">
-						<span class="text-xs font-medium">User ID segment</span>
-						<input
-							class="input w-full font-mono max-sm:text-base"
-							{@attach focusInput}
-							bind:value={confirmation}
-							autocomplete="off"
-							autocapitalize="off"
-							spellcheck="false"
-							placeholder="Last segment"
-						/>
-					</label>
-					<div class="modal-action">
-						<button type="button" class="btn" onclick={closeDeleteConfirm}>Cancel</button>
-						<button type="submit" class="btn btn-error" disabled={!confirmationMatches || !!API.auth.forms.deleteAccount.pending}>
-							{#if API.auth.forms.deleteAccount.pending}
-								<span class="iconify size-5 animate-spin mdi--loading"></span>
-							{/if}
-							Delete account
-						</button>
-					</div>
-				</form>
-			</div>
-			<button type="button" class="modal-backdrop" onclick={closeDeleteConfirm} aria-label="Close">✕</button>
-		{/if}
+		<div class="relative modal-box cursor-default bg-base-100 drop-shadow-lg">
+			<button
+				type="button"
+				class="btn absolute top-2 right-2 btn-circle btn-ghost btn-sm"
+				onclick={closeDeleteConfirm}
+				aria-label="Close"
+			>
+				<span class="iconify mdi--close"></span>
+			</button>
+			<form
+				class="flex flex-col gap-3"
+				onsubmit={(event) => {
+					event.preventDefault();
+					if (!confirmationMatches || API.auth.forms.deleteAccount.pending) return;
+					deleteAccountForm?.requestSubmit();
+				}}
+			>
+				<h3 id="delete-account-title" class="pr-8 text-lg font-bold text-base-content">Delete account</h3>
+				<p id="delete-account-description" class="text-sm">
+					This action cannot be undone. Your data will be lost forever. Enter the last segment of your user ID to confirm.
+				</p>
+				<p class="font-mono text-xs break-all text-base-content/70">
+					{user.id.slice(0, -userIdSegment.length)}<span class="font-semibold text-error">{userIdSegment}</span>
+				</p>
+				<label class="flex flex-col gap-1">
+					<span class="text-xs font-medium">User ID segment</span>
+					<input
+						class="input w-full font-mono max-sm:text-base"
+						{@attach focusInput}
+						bind:value={confirmation}
+						autocomplete="off"
+						autocapitalize="off"
+						spellcheck="false"
+						placeholder="Last segment"
+					/>
+				</label>
+				<div class="modal-action">
+					<button type="button" class="btn" onclick={closeDeleteConfirm}>Cancel</button>
+					<button type="submit" class="btn btn-error" disabled={!confirmationMatches || !!API.auth.forms.deleteAccount.pending}>
+						{#if API.auth.forms.deleteAccount.pending}
+							<span class="iconify size-5 animate-spin mdi--loading"></span>
+						{/if}
+						Delete account
+					</button>
+				</div>
+			</form>
+		</div>
+		<button type="button" class="modal-backdrop" onclick={closeDeleteConfirm} aria-label="Close">✕</button>
 	</dialog>
 {/if}
 

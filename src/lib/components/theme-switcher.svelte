@@ -1,13 +1,13 @@
 <script lang="ts">
 	import { themeGroups, themes, type Themes } from "#lib/constants.js";
 	import { getGlobal } from "#lib/stores.svelte.js";
-	import { createTransition } from "#lib/util.js";
+	import { createTransition, hotkey } from "#lib/util.js";
 	import { MediaQuery } from "svelte/reactivity";
 
 	const global = getGlobal();
 	const mq = new MediaQuery("(prefers-color-scheme: dark)");
 
-	let open = $state(false);
+	let dialogOpen = $state(false);
 
 	const current = $derived(themes.find((theme) => theme.value === global.app.settings.theme) ?? themes[0]);
 	const systemTheme = $derived(themes.find((theme) => theme.value === "system"));
@@ -17,16 +17,6 @@
 			themes: themes.filter((theme) => "group" in theme && theme.group === group)
 		}))
 	);
-
-	function portalDialog(node: HTMLDialogElement) {
-		document.body.append(node);
-		node.showModal();
-		node.querySelector<HTMLButtonElement>("[aria-pressed='true']")?.focus();
-		return () => {
-			node.close();
-			node.remove();
-		};
-	}
 
 	function closeDialog(event: MouseEvent) {
 		(event.currentTarget as HTMLElement).closest("dialog")?.close();
@@ -67,59 +57,65 @@
 	type="button"
 	class="select-bordered select flex-1 cursor-pointer text-left leading-4 select-sm max-sm:text-base"
 	aria-haspopup="dialog"
-	aria-expanded={open}
-	onclick={() => (open = true)}
+	aria-expanded={dialogOpen}
+	onclick={() => (dialogOpen = true)}
 >
 	{current.name}
 </button>
 
-{#if open}
-	<dialog
-		class="modal bg-base-300/75!"
-		aria-labelledby="theme-picker-title"
-		{@attach portalDialog}
-		onclose={() => (open = false)}
+<dialog
+	class="modal bg-base-300/75!"
+	aria-labelledby="theme-picker-title"
+	open={dialogOpen || undefined}
+	onclose={() => (dialogOpen = false)}
+	{@attach hotkey([
+		[
+			"Escape",
+			() => {
+				if (dialogOpen) dialogOpen = false;
+			}
+		]
+	])}
+>
+	<div
+		class="relative modal-box max-h-[calc(100dvh-2rem)] w-[calc(100%-2rem)] max-w-2xl cursor-default overflow-y-auto bg-base-100 drop-shadow-lg"
 	>
-		<div
-			class="relative modal-box max-h-[calc(100dvh-2rem)] w-[calc(100%-2rem)] max-w-2xl cursor-default overflow-y-auto bg-base-100 drop-shadow-lg"
-		>
-			<button
-				type="button"
-				class="btn absolute top-2 right-2 btn-circle btn-ghost btn-sm"
-				onclick={closeDialog}
-				aria-label="Close"
-			>
-				<span class="iconify mdi--close"></span>
-			</button>
-			<h3 id="theme-picker-title" class="mb-4 pr-8 text-lg font-bold text-base-content">Themes</h3>
-			<div class="flex flex-col gap-6">
-				{#if systemTheme}
+		<button type="button" class="btn absolute top-2 right-2 btn-circle btn-ghost btn-sm" onclick={closeDialog} aria-label="Close">
+			<span class="iconify mdi--close"></span>
+		</button>
+		<h3 id="theme-picker-title" class="mb-4 pr-8 text-lg font-bold text-base-content">Themes</h3>
+		<div class="flex flex-col gap-6">
+			{#if systemTheme}
+				<div class="grid grid-cols-2 gap-x-4 gap-y-5 p-1 sm:grid-cols-3">
+					{@render themeOption(systemTheme)}
+				</div>
+			{/if}
+			{#each themesByGroup as { group, themes: groupThemes } (group)}
+				<section class="flex flex-col gap-3" aria-labelledby="theme-group-{group}">
+					<h4 id="theme-group-{group}" class="px-1 text-xs font-semibold tracking-wide text-base-content/60 uppercase">
+						{group}
+					</h4>
 					<div class="grid grid-cols-2 gap-x-4 gap-y-5 p-1 sm:grid-cols-3">
-						{@render themeOption(systemTheme)}
+						{#each groupThemes as theme (theme.value)}
+							{@render themeOption(theme)}
+						{/each}
 					</div>
-				{/if}
-				{#each themesByGroup as { group, themes: groupThemes } (group)}
-					<section class="flex flex-col gap-3" aria-labelledby="theme-group-{group}">
-						<h4 id="theme-group-{group}" class="px-1 text-xs font-semibold tracking-wide text-base-content/60 uppercase">
-							{group}
-						</h4>
-						<div class="grid grid-cols-2 gap-x-4 gap-y-5 p-1 sm:grid-cols-3">
-							{#each groupThemes as theme (theme.value)}
-								{@render themeOption(theme)}
-							{/each}
-						</div>
-					</section>
-				{/each}
-			</div>
+				</section>
+			{/each}
 		</div>
-		<button type="button" class="modal-backdrop" onclick={closeDialog} aria-label="Close">✕</button>
-	</dialog>
-{/if}
+	</div>
+	<button type="button" class="modal-backdrop" onclick={closeDialog} aria-label="Close">✕</button>
+</dialog>
 
 {#snippet themeOption(theme: (typeof themes)[number])}
 	{@const selected = global.app.settings.theme === theme.value}
 	{@const preview = theme.value === "system" ? (mq.current ? "black" : "light") : theme.value}
-	<button type="button" class="group flex flex-col gap-2 rounded-lg text-left" aria-pressed={selected} onclick={() => applyTheme(theme.value)}>
+	<button
+		type="button"
+		class="group flex flex-col gap-2 rounded-lg text-left"
+		aria-pressed={selected}
+		onclick={() => applyTheme(theme.value)}
+	>
 		<span
 			class={[
 				"block rounded-xl ring-offset-2 ring-offset-base-100",
