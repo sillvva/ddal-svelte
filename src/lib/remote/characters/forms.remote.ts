@@ -4,6 +4,7 @@ import { characterIdParamSchema, editCharacterSchema } from "#lib/schemas.js";
 import { guardedForm, guardedQuery, refreshAll } from "#lib/server/effect/guarded.js";
 import { CharacterService } from "#lib/server/effect/services/characters.js";
 import { StorageService } from "#lib/server/effect/services/storage.js";
+import { ImageUploadError } from "#lib/server/images/errors.js";
 import { isValidUrl } from "#lib/server/effect/util.js";
 import type { StandardSchemaV1 } from "@standard-schema/spec";
 import { invalid, redirect } from "@sveltejs/kit";
@@ -34,7 +35,6 @@ export const save = guardedForm(editCharacterSchema, function* (input, { user, i
 
 	const existing = yield* Characters.get.all(user.id, { characterId: data.id, includeLogs: false });
 	const preexisting = existing.length > 0;
-	const previousImageUrl = existing[0]?.imageUrl;
 
 	const issues: StandardSchemaV1.Issue[] = [];
 
@@ -58,16 +58,13 @@ export const save = guardedForm(editCharacterSchema, function* (input, { user, i
 
 	if (issues.length) invalid(...issues);
 
-	const result = yield* Characters.save(data, user.id, stored.bytes).pipe(
-		Effect.tapError((err) => Effect.fail(invalid(err.message)))
+	data.imageUrl = stored.imageUrl;
+
+	const result = yield* Characters.save(data, user.id, stored.copy).pipe(
+		Effect.tapError((err) => Effect.fail(invalid(err instanceof ImageUploadError ? issue.imageUrl(err.message) : err.message)))
 	);
 
-	yield* Storage.finalizeSavedImage({
-		userId: user.id,
-		characterId: result.id,
-		imageUrl: data.imageUrl,
-		previousImageUrl
-	});
+	yield* Storage.cleanupAfterSave(stored.copy?.from ?? null);
 
 	if (preexisting) {
 		yield* refreshAll(API.characters.queries.get({ param: data.id }).refresh());

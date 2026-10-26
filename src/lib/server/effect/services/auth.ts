@@ -5,6 +5,7 @@ import type { User } from "#lib/server/db/schema.js";
 import * as schema from "#lib/server/db/schema.js";
 import { AuthTokenError, RedirectError, type ErrorParams } from "#lib/server/effect/errors.js";
 import { AppLog } from "#lib/server/effect/logging.js";
+import { collectUserKeys, scheduleDeletions } from "#lib/server/images/portrait-db.js";
 import {
 	AUTH_SECRET,
 	DISABLE_SIGNUPS,
@@ -388,6 +389,10 @@ export class AuthService extends Context.Service<AuthService>()("AuthService", {
 				delete: Effect.fn("AuthService.user.delete")(function* (userId: UserId) {
 					return yield* transaction(
 						Effect.fn(function* (tx) {
+							// Record permanent object keys before the user row (and its characters) disappear.
+							const keys = yield* collectUserKeys(tx, userId);
+							yield* scheduleDeletions(tx, keys);
+
 							// Logs reference dungeon masters with ON DELETE RESTRICT, so they must go before the user row.
 							yield* runQuery(
 								tx.delete(schema.logs).where(
