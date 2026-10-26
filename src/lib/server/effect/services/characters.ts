@@ -116,7 +116,7 @@ export class CharacterService extends Context.Service<CharacterService>()("Chara
 			 * Mutations
 			 */
 
-			save: Effect.fn("CharacterService.save")(function* (data: CharacterSchema, userId: UserId) {
+			save: Effect.fn("CharacterService.save")(function* (data: CharacterSchema, userId: UserId, imageBytes = 0) {
 				if (!data.id) yield* new SaveCharacterError("No character ID provided", { status: 400 });
 
 				return yield* runQuery(
@@ -124,6 +124,7 @@ export class CharacterService extends Context.Service<CharacterService>()("Chara
 						.insert(characters)
 						.values({
 							...data,
+							imageBytes,
 							id: data.id === "new" ? undefined : data.id,
 							userId
 						})

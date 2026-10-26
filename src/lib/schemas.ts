@@ -1,6 +1,7 @@
 import type { FullCharacterData } from "#lib/server/effect/services/characters.js";
 import { omit } from "@sillvva/utils";
 import * as v from "valibot";
+import { CHARACTER_IMAGE_LIMITS, STORED_IMAGE_CONTENT_TYPES } from "./images/limits";
 import { BLANK_CHARACTER, PASSKEY_PLACEHOLDER_EMAIL_DOMAIN, PROVIDERS, themeGroups, themes } from "./constants";
 
 export type BrandedType = v.InferOutput<ReturnType<typeof brandedId>>;
@@ -78,6 +79,9 @@ export const userIdSchema = brandedId("UserId");
 export type CharacterId = v.InferOutput<typeof characterIdSchema>;
 export const characterIdSchema = brandedId("CharacterId");
 
+export type CharacterImageUploadId = v.InferOutput<typeof characterImageUploadIdSchema>;
+export const characterImageUploadIdSchema = brandedId("CharacterImageUploadId");
+
 export type CharacterIdParam = v.InferOutput<typeof characterIdParamSchema>;
 export const characterIdParamSchema = v.union([characterIdSchema, v.literal("new")]);
 
@@ -97,6 +101,18 @@ export type EditCharacterSchemaIn = v.InferInput<typeof editCharacterSchema>;
 export const editCharacterSchema = v.object({
 	...characterSchema.entries,
 	firstLog: v.optional(v.boolean(), false)
+});
+
+export type PrepareCharacterImageSchema = v.InferOutput<typeof prepareCharacterImageSchema>;
+export const prepareCharacterImageSchema = v.object({
+	characterId: characterIdSchema,
+	contentType: v.picklist(STORED_IMAGE_CONTENT_TYPES),
+	bytes: v.pipe(v.number(), v.integer(), v.minValue(1), v.maxValue(CHARACTER_IMAGE_LIMITS.maxStoredBytes))
+});
+
+export type CompleteCharacterImageSchema = v.InferOutput<typeof completeCharacterImageSchema>;
+export const completeCharacterImageSchema = v.object({
+	uploadId: characterImageUploadIdSchema
 });
 
 export type DungeonMasterId = v.InferOutput<typeof dungeonMasterIdSchema>;

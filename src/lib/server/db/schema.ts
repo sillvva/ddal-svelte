@@ -1,5 +1,14 @@
 import type { ProviderId } from "#lib/constants.js";
-import type { AppLogId, CharacterId, DungeonMasterId, ItemId, LogId, PasskeyId, UserId } from "#lib/schemas.js";
+import type {
+	AppLogId,
+	CharacterId,
+	CharacterImageUploadId,
+	DungeonMasterId,
+	ItemId,
+	LogId,
+	PasskeyId,
+	UserId
+} from "#lib/schemas.js";
 import type { Annotations } from "#lib/server/effect/logging.js";
 import { eq, isNotNull } from "drizzle-orm";
 import * as pg from "drizzle-orm/pg-core";
@@ -177,6 +186,8 @@ export const characters = pg.pgTable(
 		class: pg.text().notNull(),
 		campaign: pg.text().notNull(),
 		imageUrl: pg.text("image_url").notNull(),
+		/** Byte size of this character's object in R2. External image URLs stay at 0. */
+		imageBytes: pg.integer("image_bytes").notNull().default(0),
 		characterSheetUrl: pg.text("character_sheet_url").notNull(),
 		userId: pg
 			.uuid()
@@ -189,6 +200,36 @@ export const characters = pg.pgTable(
 			.$default(() => new Date())
 	},
 	(table) => [pg.index("Character_userId_idx").on(table.userId)]
+);
+
+export type CharacterImageUpload = typeof characterImageUploads.$inferSelect;
+export type InsertCharacterImageUpload = typeof characterImageUploads.$inferInsert;
+export const characterImageUploads = pg.pgTable(
+	"character_image_upload",
+	{
+		id: pg.uuid().primaryKey().$type<CharacterImageUploadId>(),
+		userId: pg
+			.uuid("user_id")
+			.notNull()
+			.$type<UserId>()
+			.references(() => user.id, { onUpdate: "cascade", onDelete: "cascade" }),
+		characterId: pg.uuid("character_id").notNull().$type<CharacterId>(),
+		objectKey: pg.text("object_key").notNull().unique(),
+		bytes: pg.integer().notNull(),
+		contentType: pg.text("content_type").notNull(),
+		createdAt: pg
+			.timestamp("created_at", { mode: "date", withTimezone: true })
+			.notNull()
+			.$default(() => new Date()),
+		completedAt: pg.timestamp("completed_at", { mode: "date", withTimezone: true }),
+		attached: pg.boolean().notNull().default(false),
+		discardedAt: pg.timestamp("discarded_at", { mode: "date", withTimezone: true }),
+		removedAt: pg.timestamp("removed_at", { mode: "date", withTimezone: true })
+	},
+	(table) => [
+		pg.index("character_image_upload_user_created_idx").on(table.userId, table.createdAt),
+		pg.index("character_image_upload_character_idx").on(table.characterId)
+	]
 );
 
 export type DungeonMaster = typeof dungeonMasters.$inferSelect;

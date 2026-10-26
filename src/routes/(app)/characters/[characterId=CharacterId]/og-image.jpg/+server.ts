@@ -67,7 +67,7 @@ function isLocalImage(imageUrl: string, origin: string) {
 }
 
 async function resolvePortrait(imageUrl: string, origin: string) {
-	if (!imageUrl || imageUrl === BLANK_CHARACTER || imageUrl.includes(".webp")) return blankCharacter;
+	if (!imageUrl || imageUrl === BLANK_CHARACTER) return blankCharacter;
 
 	if (isLocalImage(imageUrl, origin)) {
 		const pathname = imageUrl.startsWith("/") ? imageUrl : new URL(imageUrl).pathname;
@@ -80,9 +80,15 @@ async function resolvePortrait(imageUrl: string, origin: string) {
 
 		const headerMime = response.headers.get("content-type")?.split(";")[0]?.trim();
 		const mime = headerMime === "image/jpg" ? "image/jpeg" : headerMime || mimeForImage(new URL(imageUrl).pathname);
-		if (!mime.startsWith("image/") || mime === "image/webp") return blankCharacter;
+		if (!mime.startsWith("image/") || mime === "image/svg+xml") return blankCharacter;
 
-		return imageDataUri(Buffer.from(await response.arrayBuffer()), mime);
+		const bytes = Buffer.from(await response.arrayBuffer());
+		if (mime === "image/webp") {
+			const jpeg = await sharp(bytes).jpeg({ quality: 85 }).toBuffer();
+			return imageDataUri(jpeg, "image/jpeg");
+		}
+
+		return imageDataUri(bytes, mime);
 	} catch {
 		return blankCharacter;
 	}

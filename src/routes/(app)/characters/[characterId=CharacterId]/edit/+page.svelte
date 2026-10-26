@@ -1,14 +1,13 @@
 <script lang="ts">
-	import { page } from "$app/state";
 	import Error from "#lib/components/error.svelte";
 	import Combobox from "#lib/components/forms/combobox.svelte";
+	import CharacterImage from "#lib/components/forms/character-image.svelte";
 	import Control from "#lib/components/forms/control.svelte";
 	import Input from "#lib/components/forms/input.svelte";
 	import RemoteForm from "#lib/components/forms/remote-form.svelte";
 	import Submit from "#lib/components/forms/submit.svelte";
 	import Head from "#lib/components/head.svelte";
 	import NavMenu from "#lib/components/nav-menu.svelte";
-	import { BLANK_CHARACTER } from "#lib/constants.js";
 	import { proxify } from "#lib/factories.svelte.js";
 	import * as API from "#lib/remote/index.js";
 	import { editCharacterSchema } from "#lib/schemas.js";
@@ -24,6 +23,7 @@
 	const initialErrors = $derived(params.characterId !== "new");
 
 	let data = $derived(proxify(character));
+	let imageUploadPending = $state(false);
 </script>
 
 <Head title={params.characterId === "new" ? "New Character" : `Edit ${character.name}`} />
@@ -72,15 +72,16 @@
 				<Input field={form.fields.characterSheetUrl} type="url" label="Character Sheet URL" />
 			</Control>
 			<Control class="col-span-12">
-				<Input
-					field={form.fields.imageUrl}
-					type="url"
-					label="Image URL"
-					placeholder={`${page.url.origin}${BLANK_CHARACTER}`}
-					warning={data.imageUrl?.includes("imgur")
-						? "Images from imgur may not appear when sharing links due to rate limiting"
-						: undefined}
-				/>
+				{#key data.id}
+					<CharacterImage
+						field={form.fields.imageUrl}
+						characterId={data.id}
+						savedUrl={data.imageUrl}
+						onpending={(pending) => {
+							imageUploadPending = pending;
+						}}
+					/>
+				{/key}
 			</Control>
 			{#if params.characterId === "new"}
 				<Control class="col-span-12">
@@ -102,7 +103,7 @@
 				</Control>
 			{/if}
 			<div class="col-span-12 mt-8 mb-4 flex justify-center">
-				<Submit form={ctx}>Save Character</Submit>
+				<Submit form={ctx} disabled={imageUploadPending}>Save Character</Submit>
 			</div>
 		{/snippet}
 	</RemoteForm>
