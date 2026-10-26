@@ -221,15 +221,33 @@ export const characterImageUploads = pg.pgTable(
 			.timestamp("created_at", { mode: "date", withTimezone: true })
 			.notNull()
 			.$default(() => new Date()),
-		completedAt: pg.timestamp("completed_at", { mode: "date", withTimezone: true }),
-		attached: pg.boolean().notNull().default(false),
-		discardedAt: pg.timestamp("discarded_at", { mode: "date", withTimezone: true }),
-		removedAt: pg.timestamp("removed_at", { mode: "date", withTimezone: true })
+		completedAt: pg.timestamp("completed_at", { mode: "date", withTimezone: true })
 	},
 	(table) => [
 		pg.index("character_image_upload_user_created_idx").on(table.userId, table.createdAt),
 		pg.index("character_image_upload_character_idx").on(table.characterId)
 	]
+);
+
+/**
+ * Permanent R2 keys whose objects still need to be deleted.
+ * Rows have no user foreign key, so they survive account deletion and can be retried later.
+ */
+export const pendingObjectDeletions = pg.pgTable(
+	"pending_object_deletion",
+	{
+		id: pg
+			.uuid()
+			.primaryKey()
+			.$default(() => v7()),
+		objectKey: pg.text("object_key").notNull().unique(),
+		createdAt: pg
+			.timestamp("created_at", { mode: "date", withTimezone: true })
+			.notNull()
+			.$default(() => new Date()),
+		attempts: pg.integer().notNull().default(0)
+	},
+	(table) => [pg.index("pending_object_deletion_created_idx").on(table.createdAt)]
 );
 
 export type DungeonMaster = typeof dungeonMasters.$inferSelect;

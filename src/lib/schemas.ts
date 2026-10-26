@@ -18,7 +18,16 @@ export const uuidV7 = v.pipe(
 	v.string(),
 	v.regex(/^[\da-f]{8}-[\da-f]{4}-7[\da-f]{3}-[\da-f]{4}-[\da-f]{12}$/iu, "ID is missing or invalid")
 );
-export const urlSchema = v.pipe(text, v.url());
+function isHttpUrl(value: string) {
+	try {
+		const protocol = new URL(value).protocol;
+		return protocol === "http:" || protocol === "https:";
+	} catch {
+		return false;
+	}
+}
+
+export const urlSchema = v.pipe(text, v.url("Enter a valid URL"), v.check(isHttpUrl, "Enter an http or https URL"));
 export const imageUrlWithFallback = v.pipe(
 	v.fallback(v.union([urlSchema, v.literal(""), v.literal(BLANK_CHARACTER)]), BLANK_CHARACTER)
 );

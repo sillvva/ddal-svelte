@@ -29,9 +29,8 @@ export const deleteAccount = guardedForm(function* ({ user, event }) {
 
 	const Auth = yield* AuthService;
 	const Storage = yield* StorageService;
-	const keys = yield* Storage.collectUserKeys(user.id);
 	yield* Auth.user.delete(user.id);
-	yield* Storage.purgeKeys(user.id, keys);
+	yield* Storage.purgePending();
 
 	yield* Effect.tryPromise({
 		try: () =>
@@ -60,9 +59,8 @@ export const completeOnboarding = guardedForm(
 export const cancelOnboarding = guardedForm(function* ({ user, event }) {
 	const Auth = yield* AuthService;
 	const Storage = yield* StorageService;
-	const keys = yield* Storage.collectUserKeys(user.id);
 	yield* Auth.user.delete(user.id);
-	yield* Storage.purgeKeys(user.id, keys);
+	yield* Storage.purgePending();
 
 	yield* Effect.tryPromise({
 		try: () =>

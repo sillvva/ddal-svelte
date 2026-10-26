@@ -53,10 +53,6 @@ export const variables = defineEnvVars({
 			)
 		)
 	},
-	R2_ACCOUNT_ID: {
-		description: "Cloudflare R2 account identifier",
-		schema: requiredString
-	},
 	R2_BUCKET: {
 		description: "Cloudflare R2 bucket name",
 		schema: requiredString
@@ -69,10 +65,6 @@ export const variables = defineEnvVars({
 		public: true,
 		description: "Public base URL for serving assets from R2 bucket",
 		schema: url
-	},
-	R2_TOKEN: {
-		description: "Cloudflare R2 access token",
-		schema: requiredString
 	},
 	R2_ACCESS_KEY_ID: {
 		description: "Cloudflare R2 S3 access key ID",
