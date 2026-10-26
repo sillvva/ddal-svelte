@@ -97,6 +97,10 @@
 	let failure = $state("");
 	let status = $state("");
 	let localPreview = $state("");
+	let dragDepth = $state(0);
+
+	const acceptingDrop = $derived(dragDepth > 0 && !uploading);
+	const acceptedTypes: ReadonlySet<string> = new Set(CHARACTER_IMAGE_LIMITS.acceptedInputTypes);
 
 	onNavigate((navigation) => {
 		if (navigation.shallow) return;
@@ -111,13 +115,13 @@
 		}
 	});
 
-	const preview = $derived(localPreview || (source === "url" ? field.value() : "") || BLANK_CHARACTER);
+	const preview = $derived(localPreview || field.value() || uploadedUrl || BLANK_CHARACTER);
 	const imgurWarning = $derived(
 		source === "url" && field.value()?.includes("imgur")
 			? "Images from imgur may not appear when sharing links due to rate limiting"
 			: undefined
 	);
-	const help = `JPEG, PNG, WebP, or GIF up to ${formatBytes(CHARACTER_IMAGE_LIMITS.maxOriginalBytes)}.`;
+	const help = `JPEG, PNG, WebP, or GIF up to ${formatBytes(CHARACTER_IMAGE_LIMITS.maxOriginalBytes)}. Drop an image here or choose a file.`;
 
 	function setPending(pending: boolean) {
 		uploading = pending;
@@ -137,13 +141,64 @@
 		else field.set(uploadedUrl);
 	}
 
+	function showUpload() {
+		if (source === "upload") return;
+		urlDraft = field.value() ?? "";
+		source = "upload";
+		field.set(uploadedUrl);
+	}
+
+	function fileFromDataTransfer(transfer: DataTransfer | null) {
+		if (!transfer) return null;
+		return [...transfer.files].find((file) => acceptedTypes.has(file.type)) ?? null;
+	}
+
+	function isFileDrag(transfer: DataTransfer | null) {
+		return !!transfer && [...transfer.types].includes("Files");
+	}
+
+	function onDragEnter(event: DragEvent) {
+		if (!isFileDrag(event.dataTransfer) || uploading) return;
+		event.preventDefault();
+		dragDepth += 1;
+	}
+
+	function onDragOver(event: DragEvent) {
+		if (!isFileDrag(event.dataTransfer) || uploading) return;
+		event.preventDefault();
+		if (event.dataTransfer) event.dataTransfer.dropEffect = "copy";
+	}
+
+	function onDragLeave(event: DragEvent) {
+		if (dragDepth === 0) return;
+		event.preventDefault();
+		dragDepth = Math.max(0, dragDepth - 1);
+	}
+
+	function onDrop(event: DragEvent) {
+		event.preventDefault();
+		dragDepth = 0;
+		if (uploading) return;
+		const file = fileFromDataTransfer(event.dataTransfer);
+		if (!file) {
+			failure = "Drop a JPEG, PNG, WebP, or GIF image.";
+			showUpload();
+			return;
+		}
+		void uploadFile(file);
+	}
+
 	async function onFile(event: Event) {
 		const input = event.currentTarget;
 		if (!(input instanceof HTMLInputElement)) return;
 		const file = input.files?.[0];
 		input.value = "";
 		if (!file || uploading) return;
+		await uploadFile(file);
+	}
 
+	async function uploadFile(file: File) {
+		showUpload();
 		failure = "";
 		status = "Resizing image…";
 		setPending(true);
@@ -186,7 +241,6 @@
 
 			uploadedUrl = completed.data.imageUrl;
 			field.set(completed.data.imageUrl);
-			source = "url";
 			status = "";
 		} catch (error) {
 			failure =
@@ -204,7 +258,25 @@
 	}
 </script>
 
-<div class="mt-2 flex flex-1 flex-col gap-3 sm:flex-row sm:items-start">
+<div
+	class={[
+		"relative mt-2 flex flex-1 flex-col gap-3 rounded-lg border border-dashed p-3 sm:flex-row sm:items-start",
+		acceptingDrop ? "border-primary bg-primary/10" : "border-transparent"
+	]}
+	role="group"
+	aria-label="Character portrait. Drop an image to upload."
+	ondragenter={onDragEnter}
+	ondragover={onDragOver}
+	ondragleave={onDragLeave}
+	ondrop={onDrop}
+>
+	{#if acceptingDrop}
+		<div
+			class="pointer-events-none absolute inset-0 z-10 flex items-center justify-center rounded-lg bg-primary/15 text-sm font-medium text-primary"
+		>
+			Drop image to upload
+		</div>
+	{/if}
 	<img
 		src={preview}
 		alt="Character portrait"
