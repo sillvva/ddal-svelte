@@ -389,8 +389,6 @@
 	<dialog
 		class="modal bg-base-300/25!"
 		open={avatarOpen || undefined}
-		aria-labelledby="avatar-title"
-		aria-describedby="avatar-description"
 		{@attach hotkey([
 			[
 				"Escape",

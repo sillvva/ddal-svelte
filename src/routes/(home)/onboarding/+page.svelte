@@ -13,7 +13,7 @@
 	await API.auth.queries.onboarding();
 
 	let avatarUploading = $state(false);
-	let initialData = {
+	const initialData = {
 		name: "",
 		email: "",
 		uploadId: undefined
