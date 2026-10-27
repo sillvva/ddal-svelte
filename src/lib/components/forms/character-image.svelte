@@ -36,13 +36,17 @@
 
 	function sourceFor(url: string): ImageSource {
 		if (!url || url === BLANK_CHARACTER) return "url";
-		return isStoredImage(url) ? "upload" : "url";
+		const key = keyFromPublicUrl(url, R2_PUBLIC_URL);
+		// A saved portrait opens on Upload. A staged tmp/ URL is shown and submitted as a URL; save copies it.
+		if (key && isPermanentCharacterImageKey(key)) return "upload";
+		return "url";
 	}
 
 	const startingUrl = untrack(() => field.value() || savedUrl);
-	let source = $state<ImageSource>(sourceFor(startingUrl));
-	let urlDraft = $state(sourceFor(startingUrl) === "url" ? startingUrl : "");
-	let uploadedUrl = $state(sourceFor(startingUrl) === "upload" ? startingUrl : "");
+	const startingSource = sourceFor(startingUrl);
+	let source = $state<ImageSource>(startingSource);
+	let urlDraft = $state(startingSource === "url" ? startingUrl : "");
+	let uploadedUrl = $state(isStoredImage(startingUrl) ? startingUrl : "");
 	let uploading = $state(false);
 	let failure = $state("");
 	let status = $state("");
@@ -65,11 +69,14 @@
 		onpending?.(pending);
 	}
 
+	function remember(current: string) {
+		if (source === "url") urlDraft = current;
+		if (isStoredImage(current)) uploadedUrl = current;
+	}
+
 	function choose(next: ImageSource) {
 		if (uploading || next === source) return;
-		if (source === "url") urlDraft = field.value() ?? "";
-		const current = field.value() ?? "";
-		if (source === "upload" && isStoredImage(current)) uploadedUrl = current;
+		remember(field.value() ?? "");
 
 		source = next;
 		failure = "";
@@ -80,9 +87,19 @@
 
 	function showUpload() {
 		if (source === "upload") return;
-		urlDraft = field.value() ?? "";
+		remember(field.value() ?? "");
 		source = "upload";
 		field.set(uploadedUrl);
+	}
+
+	/** Put a staged `tmp/` URL in the URL input, which is what save submits. */
+	function useImageUrl(imageUrl: string) {
+		uploadedUrl = imageUrl;
+		urlDraft = imageUrl;
+		source = "url";
+		failure = "";
+		status = "";
+		field.set(imageUrl);
 	}
 
 	function fileFromDataTransfer(transfer: DataTransfer | null) {
@@ -173,9 +190,7 @@
 				return;
 			}
 
-			uploadedUrl = completed.data.imageUrl;
-			field.set(completed.data.imageUrl);
-			status = "";
+			useImageUrl(completed.data.imageUrl);
 		} catch (error) {
 			failure =
 				error instanceof TypeError
