@@ -229,12 +229,7 @@ const upsertLogDM = Effect.fn("upsertLogDM")(function* (tx: Transaction, log: Lo
 	);
 });
 
-const upsertLog = Effect.fn("upsertLog")(function* (
-	tx: Transaction,
-	log: LogSchema,
-	user: LocalsUser,
-	db: Database | Transaction
-) {
+const upsertLog = Effect.fn("upsertLog")(function* (tx: Transaction, log: LogSchema, user: LocalsUser) {
 	const dm = yield* upsertLogDM(tx, log, user);
 
 	const appliedDate: Date | null = log.isDmLog
@@ -291,7 +286,7 @@ const upsertLog = Effect.fn("upsertLog")(function* (
 		{ concurrency: 4 }
 	);
 
-	return yield* getCharacterLog(result.id, user.id, db).pipe(
+	return yield* getCharacterLog(result.id, user.id, tx).pipe(
 		Effect.flatMap((result) =>
 			result ? Effect.succeed(result) : Effect.fail(new SaveLogError(log.id ? "Could not save log" : "Could not create log"))
 		)
@@ -474,7 +469,7 @@ export class LogService extends Context.Service<LogService>()("LogService", {
 			save: Effect.fn("LogService.save")(function* (log: LogSchema, user: LocalsUser) {
 				return yield* transaction(
 					Effect.fn(function* (tx) {
-						return yield* upsertLog(tx, log, user, db).pipe(Effect.provide(DMTx(tx)));
+						return yield* upsertLog(tx, log, user).pipe(Effect.provide(DMTx(tx)));
 					})
 				).pipe(
 					Effect.tap((result) => AppLog.info("LogService.save", { logId: log.id, userId: user.id, result })),
