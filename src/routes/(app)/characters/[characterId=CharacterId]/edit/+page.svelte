@@ -1,7 +1,7 @@
 <script lang="ts">
 	import Error from "#lib/components/error.svelte";
 	import Combobox from "#lib/components/forms/combobox.svelte";
-	import CharacterImage from "#lib/components/forms/character-image.svelte";
+	import ImageUpload from "#lib/components/forms/image-upload.svelte";
 	import Control from "#lib/components/forms/control.svelte";
 	import Input from "#lib/components/forms/input.svelte";
 	import RemoteForm from "#lib/components/forms/remote-form.svelte";
@@ -73,7 +73,8 @@
 			</Control>
 			<Control class="col-span-12">
 				{#key data.id}
-					<CharacterImage
+					<ImageUpload
+						purpose="character"
 						field={form.fields.imageUrl}
 						characterId={data.id}
 						savedUrl={data.imageUrl}

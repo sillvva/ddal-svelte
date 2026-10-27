@@ -1,11 +1,13 @@
 import { BLANK_CHARACTER, PASSKEY_PLACEHOLDER_EMAIL_DOMAIN, PROVIDERS } from "#lib/constants.js";
+import { ownedAvatarKey } from "#lib/images/object-key.js";
 import { emailSchema, localsSessionSchema, localsUserSchema, type UserId } from "#lib/schemas.js";
 import { DBService, runQuery } from "#lib/server/db/index.js";
 import type { User } from "#lib/server/db/schema.js";
 import * as schema from "#lib/server/db/schema.js";
 import { AuthTokenError, RedirectError, type ErrorParams } from "#lib/server/effect/errors.js";
 import { AppLog } from "#lib/server/effect/logging.js";
-import { collectUserKeys, scheduleDeletions } from "#lib/server/images/portrait-db.js";
+import { ImageUploadError } from "#lib/server/images/errors.js";
+import { clearScheduledDeletions, collectUserKeys, lockPortraitUser, scheduleDeletions } from "#lib/server/images/portrait-db.js";
 import {
 	AUTH_SECRET,
 	DISABLE_SIGNUPS,
@@ -14,7 +16,7 @@ import {
 	GOOGLE_CLIENT_ID,
 	GOOGLE_CLIENT_SECRET
 } from "$app/env/private";
-import { PUBLIC_URL } from "$app/env/public";
+import { PUBLIC_URL, R2_PUBLIC_URL } from "$app/env/public";
 import { getRequestEvent } from "$app/server";
 import { drizzleAdapter } from "@better-auth/drizzle-adapter/relations-v2";
 import { getAuthenticatorName, passkey } from "@better-auth/passkey";
@@ -378,7 +380,42 @@ export class AuthService extends Context.Service<AuthService>()("AuthService", {
 			}),
 			user: {
 				update: Effect.fn("AuthService.user.update")(function* (userId: UserId, data: Partial<Pick<User, "name" | "image">>) {
-					return yield* runQuery(db.update(schema.user).set(data).where(eq(schema.user.id, userId)).returning()).pipe(
+					const write =
+						data.image === undefined
+							? runQuery(db.update(schema.user).set(data).where(eq(schema.user.id, userId)).returning())
+							: transaction(
+									Effect.fn(function* (tx) {
+										yield* lockPortraitUser(tx, userId);
+										const rows = yield* runQuery(
+											tx
+												.select({ image: schema.user.image, imageBytes: schema.user.imageBytes })
+												.from(schema.user)
+												.where(eq(schema.user.id, userId))
+												.limit(1)
+										);
+										const current = rows[0];
+										if (!current) return yield* new UpdateUserError("Failed to update user");
+
+										const previousKey = current.image ? ownedAvatarKey(userId, current.image, R2_PUBLIC_URL) : null;
+										const nextKey = data.image ? ownedAvatarKey(userId, data.image, R2_PUBLIC_URL) : null;
+										// Avatar bytes are recorded only by the avatar save. Reject pointing the profile at some other object.
+										if (nextKey && nextKey !== previousKey) {
+											return yield* new ImageUploadError("Upload that image again before saving.");
+										}
+										if (previousKey && previousKey !== nextKey) yield* scheduleDeletions(tx, [previousKey]);
+										if (nextKey) yield* clearScheduledDeletions(tx, [nextKey]);
+
+										return yield* runQuery(
+											tx
+												.update(schema.user)
+												.set({ ...data, imageBytes: nextKey ? current.imageBytes : 0 })
+												.where(eq(schema.user.id, userId))
+												.returning()
+										);
+									})
+								);
+
+					return yield* write.pipe(
 						Effect.flatMap((users) =>
 							isTupleOf(users, 1) ? Effect.succeed(users[0]) : Effect.fail(new UpdateUserError("Failed to update user"))
 						),

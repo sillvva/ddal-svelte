@@ -4,4 +4,5 @@ export * as auth from "./auth";
 export * as characters from "./characters";
 export * as command from "./command";
 export * as dms from "./dms";
+export * as images from "./images";
 export * as logs from "./logs";

@@ -1,20 +1,41 @@
+/**
+ * Total bytes of saved portraits and avatars per account.
+ * Unsaved `tmp/` uploads do not count.
+ */
+export const USER_IMAGE_QUOTA_BYTES = 20 * 1024 * 1024;
+
 /** Limits for character portraits stored in R2. */
 export const CHARACTER_IMAGE_LIMITS = {
 	/** Largest file the browser will read before resizing. */
 	maxOriginalBytes: 2 * 1024 * 1024,
 	/** Largest object accepted into the bucket. Enforced again when the upload is confirmed. */
 	maxStoredBytes: Math.floor(0.5 * 1024 * 1024),
-	/** Longest edge after the browser resize. */
+	/** Longest edge after the browser resize. The portrait keeps its aspect ratio. */
 	maxEdgePx: 800,
 	/** Reject decoded images above this pixel count before drawing them. */
 	maxPixels: 24_000_000,
-	/** Total bytes of saved portraits per account. Unsaved `tmp/` uploads do not count. */
-	quotaBytes: 20 * 1024 * 1024,
+	/** See `USER_IMAGE_QUOTA_BYTES`. Portraits and avatars share this budget. */
+	quotaBytes: USER_IMAGE_QUOTA_BYTES,
+	/** Issued upload rows per account, portraits and avatars together. */
 	maxUploadsPerWindow: 20,
 	rateWindowMs: 60 * 60 * 1000,
 	/** Presigned PUT lifetime. The URL can only write under `tmp/`. */
 	signedUrlSeconds: 120,
 	acceptedInputTypes: ["image/jpeg", "image/png", "image/webp", "image/gif"] as const
+} as const;
+
+/**
+ * Profile pictures for accounts that do not sign in with OAuth.
+ * The browser center-crops to a square and scales the long edge down to `maxEdgePx`.
+ * Stored bytes count toward `USER_IMAGE_QUOTA_BYTES`.
+ */
+export const AVATAR_IMAGE_LIMITS = {
+	maxOriginalBytes: CHARACTER_IMAGE_LIMITS.maxOriginalBytes,
+	/** 256px WebP or JPEG stays under this after the quality steps in the resizer. */
+	maxStoredBytes: 100 * 1024,
+	maxEdgePx: 256,
+	maxPixels: CHARACTER_IMAGE_LIMITS.maxPixels,
+	acceptedInputTypes: CHARACTER_IMAGE_LIMITS.acceptedInputTypes
 } as const;
 
 export const STORED_IMAGE_CONTENT_TYPES = ["image/webp", "image/jpeg"] as const;

@@ -32,6 +32,8 @@ export const user = pg.pgTable("user", {
 		.notNull()
 		.$default(() => false),
 	image: pg.text(),
+	/** Byte size of this user's avatar object in R2. Provider and other external URLs stay at 0. */
+	imageBytes: pg.integer("image_bytes").notNull().default(0),
 	/** False until a passkey-first signup submits a username and email. */
 	onboarded: pg.boolean().notNull().default(true),
 	role: role().notNull().default("user"),
@@ -213,7 +215,9 @@ export const characterImageUploads = pg.pgTable(
 			.notNull()
 			.$type<UserId>()
 			.references(() => user.id, { onUpdate: "cascade", onDelete: "cascade" }),
-		characterId: pg.uuid("character_id").notNull().$type<CharacterId>(),
+		/** Set for portrait uploads. Null for avatar uploads. */
+		characterId: pg.uuid("character_id").$type<CharacterId>(),
+		purpose: pg.text("purpose").$type<"character" | "avatar">().notNull().default("character"),
 		objectKey: pg.text("object_key").notNull().unique(),
 		bytes: pg.integer().notNull(),
 		contentType: pg.text("content_type").notNull(),

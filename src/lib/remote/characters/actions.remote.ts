@@ -13,10 +13,10 @@ export const deleteCharacter = guardedCommand(characterIdSchema, function* (id, 
 
 export const prepareCharacterImage = guardedCommand(prepareCharacterImageSchema, function* (input, { user }) {
 	const Storage = yield* StorageService;
-	return yield* Storage.prepare({ ...input, userId: user.id });
+	return yield* Storage.prepare({ purpose: "character", ...input, userId: user.id });
 });
 
 export const completeCharacterImage = guardedCommand(completeCharacterImageSchema, function* (input, { user }) {
 	const Storage = yield* StorageService;
-	return yield* Storage.complete(user.id, input.uploadId);
+	return yield* Storage.complete(user.id, input.uploadId, "character");
 });
