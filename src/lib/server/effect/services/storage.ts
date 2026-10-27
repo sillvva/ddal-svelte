@@ -24,10 +24,10 @@ import {
 	temporaryAvatarImageKey,
 	temporaryCharacterImageKey
 } from "#lib/images/object-key.js";
-import type { CharacterId, CharacterImageUploadId, UserId } from "#lib/schemas.js";
+import type { CharacterId, ImageUploadId, UserId } from "#lib/schemas.js";
 import { runQuery, type Transaction } from "#lib/server/db/index.js";
 import { DBService } from "#lib/server/db/index.js";
-import { characterImageUploads, characters, user } from "#lib/server/db/schema.js";
+import { imageUploads, characters, user } from "#lib/server/db/schema.js";
 import { AppLog } from "#lib/server/effect/logging.js";
 import { ImageUploadError } from "#lib/server/images/errors.js";
 import {
@@ -238,13 +238,9 @@ export function copyVerifiedStage(tx: Transaction, userId: UserId, characterId: 
 		const rows = yield* runQuery(
 			tx
 				.select()
-				.from(characterImageUploads)
+				.from(imageUploads)
 				.where(
-					and(
-						eq(characterImageUploads.objectKey, staged.from),
-						eq(characterImageUploads.userId, userId),
-						eq(characterImageUploads.characterId, characterId)
-					)
+					and(eq(imageUploads.objectKey, staged.from), eq(imageUploads.userId, userId), eq(imageUploads.characterId, characterId))
 				)
 				.limit(1)
 		);
@@ -278,14 +274,8 @@ export function copyVerifiedAvatar(tx: Transaction, userId: UserId, staged: Stag
 		const rows = yield* runQuery(
 			tx
 				.select()
-				.from(characterImageUploads)
-				.where(
-					and(
-						eq(characterImageUploads.objectKey, staged.from),
-						eq(characterImageUploads.userId, userId),
-						eq(characterImageUploads.purpose, "avatar")
-					)
-				)
+				.from(imageUploads)
+				.where(and(eq(imageUploads.objectKey, staged.from), eq(imageUploads.userId, userId), eq(imageUploads.purpose, "avatar")))
 				.limit(1)
 		);
 		const upload = rows[0];
@@ -429,11 +419,11 @@ export class StorageService extends Context.Service<StorageService>()("StorageSe
 						const [recent] = yield* runQuery(
 							tx
 								.select({ total: sql<number>`count(*)::int` })
-								.from(characterImageUploads)
+								.from(imageUploads)
 								.where(
 									and(
-										eq(characterImageUploads.userId, input.userId),
-										gt(characterImageUploads.createdAt, new Date(Date.now() - CHARACTER_IMAGE_LIMITS.rateWindowMs))
+										eq(imageUploads.userId, input.userId),
+										gt(imageUploads.createdAt, new Date(Date.now() - CHARACTER_IMAGE_LIMITS.rateWindowMs))
 									)
 								)
 						);
@@ -444,13 +434,13 @@ export class StorageService extends Context.Service<StorageService>()("StorageSe
 							);
 						}
 
-						const uploadId = v7() as CharacterImageUploadId;
+						const uploadId = v7() as ImageUploadId;
 						const objectKey =
 							input.purpose === "character"
 								? temporaryCharacterImageKey(input.userId, input.characterId, uploadId, input.contentType)
 								: temporaryAvatarImageKey(input.userId, uploadId, input.contentType);
 						yield* runQuery(
-							tx.insert(characterImageUploads).values({
+							tx.insert(imageUploads).values({
 								id: uploadId,
 								userId: input.userId,
 								characterId: input.purpose === "character" ? input.characterId : null,
@@ -475,14 +465,14 @@ export class StorageService extends Context.Service<StorageService>()("StorageSe
 
 			complete: Effect.fn("StorageService.complete")(function* (
 				userId: UserId,
-				uploadId: CharacterImageUploadId,
+				uploadId: ImageUploadId,
 				purpose?: PrepareImageInput["purpose"]
 			) {
 				const found = yield* runQuery(
 					db
 						.select()
-						.from(characterImageUploads)
-						.where(and(eq(characterImageUploads.id, uploadId), eq(characterImageUploads.userId, userId)))
+						.from(imageUploads)
+						.where(and(eq(imageUploads.id, uploadId), eq(imageUploads.userId, userId)))
 						.limit(1)
 				);
 				const upload = found[0];
@@ -517,9 +507,7 @@ export class StorageService extends Context.Service<StorageService>()("StorageSe
 				);
 
 				if (!upload.completedAt) {
-					yield* runQuery(
-						db.update(characterImageUploads).set({ completedAt: new Date() }).where(eq(characterImageUploads.id, upload.id))
-					);
+					yield* runQuery(db.update(imageUploads).set({ completedAt: new Date() }).where(eq(imageUploads.id, upload.id)));
 				}
 
 				// `tmp/` objects are public on the image host until save copies them, or the lifecycle rule deletes them.
@@ -548,12 +536,12 @@ export class StorageService extends Context.Service<StorageService>()("StorageSe
 						const rows = yield* runQuery(
 							db
 								.select()
-								.from(characterImageUploads)
+								.from(imageUploads)
 								.where(
 									and(
-										eq(characterImageUploads.objectKey, key),
-										eq(characterImageUploads.userId, input.userId),
-										eq(characterImageUploads.characterId, input.characterId)
+										eq(imageUploads.objectKey, key),
+										eq(imageUploads.userId, input.userId),
+										eq(imageUploads.characterId, input.characterId)
 									)
 								)
 								.limit(1)
@@ -610,7 +598,7 @@ export class StorageService extends Context.Service<StorageService>()("StorageSe
 			 * Promotes a verified avatar from `tmp/` to its permanent key and stores it on the user.
 			 * Closing the dialog without calling this leaves the staged object for the bucket lifecycle rule.
 			 */
-			saveAvatar: Effect.fn("StorageService.saveAvatar")(function* (userId: UserId, uploadId: CharacterImageUploadId) {
+			saveAvatar: Effect.fn("StorageService.saveAvatar")(function* (userId: UserId, uploadId: ImageUploadId) {
 				let copiedKey: string | null = null;
 				let tmpKey: string | null = null;
 
@@ -622,14 +610,8 @@ export class StorageService extends Context.Service<StorageService>()("StorageSe
 						const found = yield* runQuery(
 							tx
 								.select()
-								.from(characterImageUploads)
-								.where(
-									and(
-										eq(characterImageUploads.id, uploadId),
-										eq(characterImageUploads.userId, userId),
-										eq(characterImageUploads.purpose, "avatar")
-									)
-								)
+								.from(imageUploads)
+								.where(and(eq(imageUploads.id, uploadId), eq(imageUploads.userId, userId), eq(imageUploads.purpose, "avatar")))
 								.limit(1)
 						);
 						const upload = found[0];

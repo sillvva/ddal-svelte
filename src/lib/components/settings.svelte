@@ -4,7 +4,7 @@
 	import { BLANK_CHARACTER, PROVIDERS } from "#lib/constants.js";
 	import { errorToast } from "#lib/factories.svelte.js";
 	import * as API from "#lib/remote/index.js";
-	import type { CharacterImageUploadId } from "#lib/schemas.js";
+	import type { ImageUploadId } from "#lib/schemas.js";
 	import { getGlobal } from "#lib/stores.svelte.js";
 	import { hotkey, parseEffectResult } from "#lib/util.js";
 	import { getLocalTimeZone } from "@internationalized/date";
@@ -27,7 +27,7 @@
 	let deleteAccountForm = $state<HTMLFormElement | null>(null);
 	let avatarOpen = $state(false);
 	let avatarUploading = $state(false);
-	let stagedAvatar = $state<{ uploadId: CharacterImageUploadId; imageUrl: string } | null>(null);
+	let stagedAvatar = $state<{ uploadId: ImageUploadId; imageUrl: string } | null>(null);
 
 	const canEditAvatar = $derived(!!user && user.accounts.length === 0);
 	const avatarSavePending = $derived(!!API.images.actions.saveAvatar.pending);

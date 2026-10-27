@@ -11,7 +11,7 @@ import {
 } from "#lib/images/object-key.js";
 import type { CharacterId, UserId } from "#lib/schemas.js";
 import { runQuery, type Transaction } from "#lib/server/db/index.js";
-import { account, characterImageUploads, characters, pendingObjectDeletions, user } from "#lib/server/db/schema.js";
+import { account, imageUploads, characters, pendingObjectDeletions, user } from "#lib/server/db/schema.js";
 import { ImageUploadError } from "#lib/server/images/errors.js";
 import { R2_PUBLIC_URL } from "$app/env/public";
 import { and, eq, inArray, isNull, or, sql } from "drizzle-orm";
@@ -156,17 +156,17 @@ export function promoteAvatarUploadRow(tx: Transaction, userId: UserId, permanen
 	const temporaryKey = `${TEMPORARY_IMAGE_PREFIX}${permanentKey}`;
 	return runQuery(
 		tx
-			.update(characterImageUploads)
+			.update(imageUploads)
 			.set({ objectKey: permanentKey, completedAt: new Date() })
 			.where(
 				and(
-					eq(characterImageUploads.userId, userId),
-					eq(characterImageUploads.purpose, "avatar"),
-					isNull(characterImageUploads.characterId),
-					or(eq(characterImageUploads.objectKey, permanentKey), eq(characterImageUploads.objectKey, temporaryKey))
+					eq(imageUploads.userId, userId),
+					eq(imageUploads.purpose, "avatar"),
+					isNull(imageUploads.characterId),
+					or(eq(imageUploads.objectKey, permanentKey), eq(imageUploads.objectKey, temporaryKey))
 				)
 			)
-			.returning({ bytes: characterImageUploads.bytes })
+			.returning({ bytes: imageUploads.bytes })
 	).pipe(Effect.map((rows) => rows[0] ?? null));
 }
 
@@ -174,16 +174,16 @@ export function promoteUploadRow(tx: Transaction, userId: UserId, characterId: C
 	const temporaryKey = `${TEMPORARY_IMAGE_PREFIX}${permanentKey}`;
 	return runQuery(
 		tx
-			.update(characterImageUploads)
+			.update(imageUploads)
 			.set({ objectKey: permanentKey, completedAt: new Date() })
 			.where(
 				and(
-					eq(characterImageUploads.userId, userId),
-					eq(characterImageUploads.characterId, characterId),
-					or(eq(characterImageUploads.objectKey, permanentKey), eq(characterImageUploads.objectKey, temporaryKey))
+					eq(imageUploads.userId, userId),
+					eq(imageUploads.characterId, characterId),
+					or(eq(imageUploads.objectKey, permanentKey), eq(imageUploads.objectKey, temporaryKey))
 				)
 			)
-			.returning({ bytes: characterImageUploads.bytes })
+			.returning({ bytes: imageUploads.bytes })
 	).pipe(Effect.map((rows) => rows[0] ?? null));
 }
 
@@ -198,9 +198,9 @@ export function collectCharacterKeys(tx: Transaction, userId: UserId, characterI
 		);
 		const uploads = yield* runQuery(
 			tx
-				.select({ objectKey: characterImageUploads.objectKey })
-				.from(characterImageUploads)
-				.where(and(eq(characterImageUploads.userId, userId), eq(characterImageUploads.characterId, characterId)))
+				.select({ objectKey: imageUploads.objectKey })
+				.from(imageUploads)
+				.where(and(eq(imageUploads.userId, userId), eq(imageUploads.characterId, characterId)))
 		);
 		const keys = new Set<string>();
 		for (const row of uploads) {
@@ -218,10 +218,7 @@ export function collectUserKeys(tx: Transaction, userId: UserId) {
 			tx.select({ id: characters.id, imageUrl: characters.imageUrl }).from(characters).where(eq(characters.userId, userId))
 		);
 		const uploads = yield* runQuery(
-			tx
-				.select({ objectKey: characterImageUploads.objectKey })
-				.from(characterImageUploads)
-				.where(eq(characterImageUploads.userId, userId))
+			tx.select({ objectKey: imageUploads.objectKey }).from(imageUploads).where(eq(imageUploads.userId, userId))
 		);
 		const [accountRow] = yield* runQuery(tx.select({ image: user.image }).from(user).where(eq(user.id, userId)).limit(1));
 		const keys = new Set<string>();

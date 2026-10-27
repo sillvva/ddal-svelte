@@ -10,7 +10,7 @@
 	} from "#lib/images/object-key.js";
 	import { resizeAvatarImage, resizeCharacterImage } from "#lib/images/resize.js";
 	import * as API from "#lib/remote/index.js";
-	import type { CharacterId, CharacterImageUploadId } from "#lib/schemas.js";
+	import type { CharacterId, ImageUploadId } from "#lib/schemas.js";
 	import { R2_PUBLIC_URL } from "$app/env/public";
 	import type { RemoteFormField } from "$app/server";
 	import { untrack } from "svelte";
@@ -33,7 +33,7 @@
 		savedUrl?: string;
 		onpending?: (pending: boolean) => void;
 		/** Verified `tmp/` object. The parent promotes it when the user saves. */
-		onstaged?: (staged: { uploadId: CharacterImageUploadId; imageUrl: string }) => void;
+		onstaged?: (staged: { uploadId: ImageUploadId; imageUrl: string }) => void;
 	}
 
 	type Props = CharacterProps | AvatarProps;
@@ -146,7 +146,7 @@
 	}
 
 	/** Put a staged `tmp/` URL in the URL input, which is what character save submits. */
-	function useImageUrl(imageUrl: string, uploadId: CharacterImageUploadId) {
+	function useImageUrl(imageUrl: string, uploadId: ImageUploadId) {
 		uploadedUrl = imageUrl;
 		failure = "";
 		status = "";

@@ -88,8 +88,8 @@ export const userIdSchema = brandedId("UserId");
 export type CharacterId = v.InferOutput<typeof characterIdSchema>;
 export const characterIdSchema = brandedId("CharacterId");
 
-export type CharacterImageUploadId = v.InferOutput<typeof characterImageUploadIdSchema>;
-export const characterImageUploadIdSchema = brandedId("CharacterImageUploadId");
+export type ImageUploadId = v.InferOutput<typeof imageUploadIdSchema>;
+export const imageUploadIdSchema = brandedId("ImageUploadId");
 
 export type CharacterIdParam = v.InferOutput<typeof characterIdParamSchema>;
 export const characterIdParamSchema = v.union([characterIdSchema, v.literal("new")]);
@@ -129,7 +129,7 @@ export const prepareAvatarImageSchema = v.object({
 
 export type CompleteCharacterImageSchema = v.InferOutput<typeof completeCharacterImageSchema>;
 export const completeCharacterImageSchema = v.object({
-	uploadId: characterImageUploadIdSchema
+	uploadId: imageUploadIdSchema
 });
 
 export type SaveAvatarSchema = v.InferOutput<typeof saveAvatarSchema>;
