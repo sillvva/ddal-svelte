@@ -1,10 +1,16 @@
 <script lang="ts">
 	import { BLANK_CHARACTER } from "#lib/constants.js";
-	import { CHARACTER_IMAGE_LIMITS, formatBytes } from "#lib/images/limits.js";
-	import { isPermanentCharacterImageKey, isTemporaryCharacterImageKey, keyFromPublicUrl } from "#lib/images/object-key.js";
-	import { resizeCharacterImage } from "#lib/images/resize.js";
+	import { AVATAR_IMAGE_LIMITS, CHARACTER_IMAGE_LIMITS, formatBytes } from "#lib/images/limits.js";
+	import {
+		isPermanentAvatarImageKey,
+		isPermanentCharacterImageKey,
+		isTemporaryAvatarImageKey,
+		isTemporaryCharacterImageKey,
+		keyFromPublicUrl
+	} from "#lib/images/object-key.js";
+	import { resizeAvatarImage, resizeCharacterImage } from "#lib/images/resize.js";
 	import * as API from "#lib/remote/index.js";
-	import type { CharacterId } from "#lib/schemas.js";
+	import type { CharacterId, ImageUploadId } from "#lib/schemas.js";
 	import { R2_PUBLIC_URL } from "$app/env/public";
 	import type { RemoteFormField } from "$app/server";
 	import { untrack } from "svelte";
@@ -12,7 +18,8 @@
 
 	type ImageSource = "url" | "upload";
 
-	interface Props {
+	interface CharacterProps {
+		purpose: "character";
 		field: RemoteFormField<string>;
 		characterId: CharacterId;
 		/** Saved portrait, used to pick the initial option before the field updates. */
@@ -20,29 +27,56 @@
 		onpending?: (pending: boolean) => void;
 	}
 
-	let { field, characterId, savedUrl = "", onpending }: Props = $props();
+	interface AvatarProps {
+		purpose: "avatar";
+		/** Saved profile picture. An empty value shows the placeholder until an upload finishes. */
+		savedUrl?: string;
+		onpending?: (pending: boolean) => void;
+		/** Verified `tmp/` object. The parent promotes it when the user saves. */
+		onstaged?: (staged: { uploadId: ImageUploadId; imageUrl: string }) => void;
+	}
+
+	type Props = CharacterProps | AvatarProps;
+
+	let props: Props = $props();
 
 	const sources = [
 		{ id: "url", label: "Image URL" },
 		{ id: "upload", label: "Upload" }
 	] as const satisfies { id: ImageSource; label: string }[];
 
+	function fieldValue() {
+		return props.purpose === "character" ? (props.field.value() ?? "") : "";
+	}
+
+	function setField(value: string) {
+		if (props.purpose === "character") props.field.set(value);
+	}
+
+	function storedKey(url: string) {
+		return keyFromPublicUrl(url, R2_PUBLIC_URL);
+	}
+
 	function isStoredImage(url: string) {
-		const key = keyFromPublicUrl(url, R2_PUBLIC_URL);
+		const key = storedKey(url);
 		if (!key) return false;
+		if (props.purpose === "avatar") return isTemporaryAvatarImageKey(key) || isPermanentAvatarImageKey(key);
 		// Staged uploads are public at img.dekok.app under tmp/ until save promotes them.
 		return isTemporaryCharacterImageKey(key) || isPermanentCharacterImageKey(key);
 	}
 
 	function sourceFor(url: string): ImageSource {
+		if (props.purpose === "avatar") return "upload";
 		if (!url || url === BLANK_CHARACTER) return "url";
-		const key = keyFromPublicUrl(url, R2_PUBLIC_URL);
+		const key = storedKey(url);
 		// A saved portrait opens on Upload. A staged tmp/ URL is shown and submitted as a URL; save copies it.
 		if (key && isPermanentCharacterImageKey(key)) return "upload";
 		return "url";
 	}
 
-	const startingUrl = untrack(() => field.value() || savedUrl);
+	const startingUrl = untrack(() =>
+		props.purpose === "character" ? fieldValue() || props.savedUrl || "" : props.savedUrl || ""
+	);
 	const startingSource = sourceFor(startingUrl);
 	let source = $state<ImageSource>(startingSource);
 	let urlDraft = $state(startingSource === "url" ? startingUrl : "");
@@ -54,19 +88,38 @@
 	let dragDepth = $state(0);
 
 	const acceptingDrop = $derived(dragDepth > 0 && !uploading);
-	const acceptedTypes: ReadonlySet<string> = new Set(CHARACTER_IMAGE_LIMITS.acceptedInputTypes);
-
-	const preview = $derived(localPreview || field.value() || uploadedUrl || BLANK_CHARACTER);
+	const acceptedTypes = $derived<ReadonlySet<string>>(
+		new Set(props.purpose === "character" ? CHARACTER_IMAGE_LIMITS.acceptedInputTypes : AVATAR_IMAGE_LIMITS.acceptedInputTypes)
+	);
+	const preview = $derived.by(() => {
+		if (localPreview) return localPreview;
+		if (props.purpose === "character") return props.field.value() || uploadedUrl || BLANK_CHARACTER;
+		return uploadedUrl || props.savedUrl || BLANK_CHARACTER;
+	});
 	const imgurWarning = $derived(
-		source === "url" && field.value()?.includes("imgur")
+		props.purpose === "character" && source === "url" && props.field.value()?.includes("imgur")
 			? "Images from imgur may not appear when sharing links due to rate limiting"
 			: undefined
 	);
-	const help = `JPEG, PNG, WebP, or GIF up to ${formatBytes(CHARACTER_IMAGE_LIMITS.maxOriginalBytes)}. Drop an image here or choose a file.`;
+	const help = $derived(
+		props.purpose === "character"
+			? `JPEG, PNG, WebP, or GIF up to ${formatBytes(CHARACTER_IMAGE_LIMITS.maxOriginalBytes)}. Drop an image here or choose a file.`
+			: `JPEG, PNG, WebP, or GIF up to ${formatBytes(AVATAR_IMAGE_LIMITS.maxOriginalBytes)}. The picture is cropped to a square. Drop an image here or choose a file.`
+	);
+	const statusId = $derived(props.purpose === "character" ? "character-image-status" : "avatar-image-status");
+	const groupLabel = $derived(
+		props.purpose === "character" ? "Character portrait. Drop an image to upload." : "Profile picture. Drop an image to upload."
+	);
+	const previewClass = $derived(
+		props.purpose === "character"
+			? "size-32 shrink-0 rounded-lg border border-base-content/20 object-cover object-top"
+			: "size-32 shrink-0 rounded-full border border-base-content/20 object-cover object-center"
+	);
+	const alt = $derived(props.purpose === "character" ? "Character portrait" : "Profile picture");
 
 	function setPending(pending: boolean) {
 		uploading = pending;
-		onpending?.(pending);
+		props.onpending?.(pending);
 	}
 
 	function remember(current: string) {
@@ -75,31 +128,35 @@
 	}
 
 	function choose(next: ImageSource) {
-		if (uploading || next === source) return;
-		remember(field.value() ?? "");
+		if (props.purpose !== "character" || uploading || next === source) return;
+		remember(fieldValue());
 
 		source = next;
 		failure = "";
 		status = "";
-		if (next === "url") field.set(urlDraft);
-		else field.set(uploadedUrl);
+		if (next === "url") setField(urlDraft);
+		else setField(uploadedUrl);
 	}
 
 	function showUpload() {
-		if (source === "upload") return;
-		remember(field.value() ?? "");
+		if (props.purpose !== "character" || source === "upload") return;
+		remember(fieldValue());
 		source = "upload";
-		field.set(uploadedUrl);
+		setField(uploadedUrl);
 	}
 
-	/** Put a staged `tmp/` URL in the URL input, which is what save submits. */
-	function useImageUrl(imageUrl: string) {
+	/** Put a staged `tmp/` URL in the URL input, which is what character save submits. */
+	function useImageUrl(imageUrl: string, uploadId: ImageUploadId) {
 		uploadedUrl = imageUrl;
-		urlDraft = imageUrl;
-		source = "url";
 		failure = "";
 		status = "";
-		field.set(imageUrl);
+		if (props.purpose === "character") {
+			urlDraft = imageUrl;
+			source = "url";
+			setField(imageUrl);
+			return;
+		}
+		props.onstaged?.({ uploadId, imageUrl });
 	}
 
 	function fileFromDataTransfer(transfer: DataTransfer | null) {
@@ -159,16 +216,22 @@
 		let previewUrl = "";
 
 		try {
-			const resized = await resizeCharacterImage(file);
+			const resized = props.purpose === "character" ? await resizeCharacterImage(file) : await resizeAvatarImage(file);
 			previewUrl = URL.createObjectURL(resized.blob);
 			localPreview = previewUrl;
 
 			status = "Uploading image…";
-			const prepared = await API.characters.actions.prepareCharacterImage({
-				characterId,
-				contentType: resized.contentType,
-				bytes: resized.blob.size
-			});
+			const prepared =
+				props.purpose === "character"
+					? await API.characters.actions.prepareCharacterImage({
+							characterId: props.characterId,
+							contentType: resized.contentType,
+							bytes: resized.blob.size
+						})
+					: await API.images.actions.prepareAvatarImage({
+							contentType: resized.contentType,
+							bytes: resized.blob.size
+						});
 			if (!prepared.ok) {
 				failure = prepared.error.message;
 				return;
@@ -184,13 +247,16 @@
 				return;
 			}
 
-			const completed = await API.characters.actions.completeCharacterImage({ uploadId: prepared.data.uploadId });
+			const completed =
+				props.purpose === "character"
+					? await API.characters.actions.completeCharacterImage({ uploadId: prepared.data.uploadId })
+					: await API.images.actions.completeAvatarImage({ uploadId: prepared.data.uploadId });
 			if (!completed.ok) {
 				failure = completed.error.message;
 				return;
 			}
 
-			useImageUrl(completed.data.imageUrl);
+			useImageUrl(completed.data.imageUrl, prepared.data.uploadId);
 		} catch (error) {
 			failure =
 				error instanceof TypeError
@@ -213,7 +279,7 @@
 		acceptingDrop ? "border-primary bg-primary/10" : "border-transparent"
 	]}
 	role="group"
-	aria-label="Character portrait. Drop an image to upload."
+	aria-label={groupLabel}
 	ondragenter={onDragEnter}
 	ondragover={onDragOver}
 	ondragleave={onDragLeave}
@@ -226,28 +292,9 @@
 			Drop image to upload
 		</div>
 	{/if}
-	<img
-		src={preview}
-		alt="Character portrait"
-		class="size-32 shrink-0 rounded-lg border border-base-content/20 object-cover object-top"
-	/>
+	<img src={preview} {alt} class={previewClass} />
 	<div class="flex min-w-0 flex-1 flex-col gap-2">
-		<div class="join" role="radiogroup" aria-label="Portrait">
-			{#each sources as option (option.id)}
-				<button
-					type="button"
-					class={["btn join-item btn-sm", source === option.id && "btn-primary"]}
-					aria-pressed={source === option.id}
-					disabled={uploading}
-					onclick={() => choose(option.id)}
-				>
-					{option.label}
-				</button>
-			{/each}
-		</div>
-		{#if source === "url"}
-			<Input {field} type="url" label="Portrait" placeholder="https://" warning={imgurWarning} />
-		{:else}
+		{#snippet uploadControls()}
 			<div class="mt-2">
 				<label
 					class={[
@@ -260,23 +307,45 @@
 						class="sr-only"
 						type="file"
 						accept="image/jpeg,image/png,image/webp,image/gif"
-						aria-describedby="character-image-status"
+						aria-describedby={statusId}
 						disabled={uploading}
 						onchange={onFile}
 					/>
 				</label>
 			</div>
 			{#if uploading && status}
-				<p id="character-image-status" class="flex items-center gap-2 text-pretty text-neutral-500">
+				<p id={statusId} class="flex items-center gap-2 text-pretty text-neutral-500">
 					<span class="loading loading-xs"></span>
 					{status}
 				</p>
 			{:else if failure}
-				<p id="character-image-status" class="rounded-lg bg-error px-2 py-1 text-pretty text-error-content">{failure}</p>
+				<p id={statusId} class="rounded-lg bg-error px-2 py-1 text-pretty text-error-content">{failure}</p>
 			{:else}
-				<p id="character-image-status" class="text-pretty text-neutral-500">{help}</p>
+				<p id={statusId} class="text-pretty text-neutral-500">{help}</p>
 			{/if}
-			<Input {field} type="hidden" />
+		{/snippet}
+		{#if props.purpose === "character"}
+			<div class="join" role="radiogroup" aria-label="Portrait">
+				{#each sources as option (option.id)}
+					<button
+						type="button"
+						class={["btn join-item btn-sm", source === option.id && "btn-primary"]}
+						aria-pressed={source === option.id}
+						disabled={uploading}
+						onclick={() => choose(option.id)}
+					>
+						{option.label}
+					</button>
+				{/each}
+			</div>
+			{#if source === "url"}
+				<Input field={props.field} type="url" label="Portrait" placeholder="https://" warning={imgurWarning} />
+			{:else}
+				{@render uploadControls()}
+				<Input field={props.field} type="hidden" />
+			{/if}
+		{:else}
+			{@render uploadControls()}
 		{/if}
 	</div>
 </div>

@@ -1,17 +1,20 @@
+import { PROVIDERS } from "#lib/constants.js";
+import { CHARACTER_IMAGE_LIMITS } from "#lib/images/limits.js";
 import {
 	imagePublicUrl,
 	isPermanentCharacterImageKey,
+	isPermanentImageKey,
+	ownedAvatarKey,
 	ownedPermanentKey,
 	TEMPORARY_IMAGE_PREFIX,
 	userIdFromPermanentKey
 } from "#lib/images/object-key.js";
-import { CHARACTER_IMAGE_LIMITS } from "#lib/images/limits.js";
 import type { CharacterId, UserId } from "#lib/schemas.js";
 import { runQuery, type Transaction } from "#lib/server/db/index.js";
-import { characterImageUploads, characters, pendingObjectDeletions } from "#lib/server/db/schema.js";
+import { account, imageUploads, characters, pendingObjectDeletions, user } from "#lib/server/db/schema.js";
 import { ImageUploadError } from "#lib/server/images/errors.js";
 import { R2_PUBLIC_URL } from "$app/env/public";
-import { and, eq, inArray, or, sql } from "drizzle-orm";
+import { and, eq, inArray, isNull, or, sql } from "drizzle-orm";
 import { Effect } from "effect";
 import { v7 } from "uuid";
 
@@ -20,6 +23,10 @@ function integer(value: unknown) {
 	return Number.isFinite(parsed) ? parsed : 0;
 }
 
+/**
+ * Serializes portrait quota updates and avatar replacement for one account.
+ * The lock id stays `character-image:` so both purposes take the same lock.
+ */
 export function lockPortraitUser(tx: Transaction, userId: UserId) {
 	return Effect.tryPromise({
 		try: () => tx.execute(sql`select pg_advisory_xact_lock(hashtextextended(${`character-image:${userId}`}, 0))`),
@@ -29,6 +36,7 @@ export function lockPortraitUser(tx: Transaction, userId: UserId) {
 
 /**
  * Quota is the sum of `character.image_bytes` for saved portraits.
+ * Avatars are capped per object and are not included.
  * Presigned URLs only write `tmp/` objects, which are not counted and are removed by the bucket lifecycle rule.
  * The check runs under `lockPortraitUser`, in the same transaction that updates `image_bytes`.
  */
@@ -55,8 +63,32 @@ export function assertPortraitQuota(tx: Transaction, userId: UserId, characterId
 	});
 }
 
+/** Linked Google or Discord accounts own the profile image. Passkey-only accounts do not. */
+export function assertCustomAvatarAllowed(tx: Transaction, userId: UserId) {
+	return Effect.gen(function* () {
+		const linked = yield* runQuery(
+			tx
+				.select({ id: account.id })
+				.from(account)
+				.where(
+					and(
+						eq(account.userId, userId),
+						inArray(
+							account.providerId,
+							PROVIDERS.map((provider) => provider.id)
+						)
+					)
+				)
+				.limit(1)
+		);
+		if (linked.length > 0) {
+			return yield* new ImageUploadError("Profile pictures from a linked sign-in provider can't be replaced here.", 403);
+		}
+	});
+}
+
 export function scheduleDeletions(tx: Transaction, keys: readonly string[]) {
-	const unique = [...new Set(keys.filter(isPermanentCharacterImageKey))];
+	const unique = [...new Set(keys.filter(isPermanentImageKey))];
 	if (!unique.length) return Effect.void;
 	return runQuery(
 		tx
@@ -67,17 +99,22 @@ export function scheduleDeletions(tx: Transaction, keys: readonly string[]) {
 }
 
 export function clearScheduledDeletions(tx: Transaction, keys: readonly string[]) {
-	const unique = [...new Set(keys.filter(isPermanentCharacterImageKey))];
+	const unique = [...new Set(keys.filter(isPermanentImageKey))];
 	if (!unique.length) return Effect.void;
 	return runQuery(tx.delete(pendingObjectDeletions).where(inArray(pendingObjectDeletions.objectKey, unique))).pipe(Effect.asVoid);
 }
 
 export function permanentKeyInUse(tx: Transaction, key: string) {
-	if (!isPermanentCharacterImageKey(key)) return Effect.succeed(false);
+	if (!isPermanentImageKey(key)) return Effect.succeed(false);
 	const imageUrl = imagePublicUrl(key, R2_PUBLIC_URL);
-	return runQuery(tx.select({ id: characters.id }).from(characters).where(eq(characters.imageUrl, imageUrl)).limit(1)).pipe(
-		Effect.map((rows) => rows.length > 0)
-	);
+	return Effect.gen(function* () {
+		const portraits = yield* runQuery(
+			tx.select({ id: characters.id }).from(characters).where(eq(characters.imageUrl, imageUrl)).limit(1)
+		);
+		if (portraits.length > 0) return true;
+		const owners = yield* runQuery(tx.select({ id: user.id }).from(user).where(eq(user.image, imageUrl)).limit(1));
+		return owners.length > 0;
+	});
 }
 
 /**
@@ -115,20 +152,38 @@ export function ownedBytesForSave(tx: Transaction, userId: UserId, characterId: 
 	});
 }
 
+export function promoteAvatarUploadRow(tx: Transaction, userId: UserId, permanentKey: string) {
+	const temporaryKey = `${TEMPORARY_IMAGE_PREFIX}${permanentKey}`;
+	return runQuery(
+		tx
+			.update(imageUploads)
+			.set({ objectKey: permanentKey, completedAt: new Date() })
+			.where(
+				and(
+					eq(imageUploads.userId, userId),
+					eq(imageUploads.purpose, "avatar"),
+					isNull(imageUploads.characterId),
+					or(eq(imageUploads.objectKey, permanentKey), eq(imageUploads.objectKey, temporaryKey))
+				)
+			)
+			.returning({ bytes: imageUploads.bytes })
+	).pipe(Effect.map((rows) => rows[0] ?? null));
+}
+
 export function promoteUploadRow(tx: Transaction, userId: UserId, characterId: CharacterId, permanentKey: string) {
 	const temporaryKey = `${TEMPORARY_IMAGE_PREFIX}${permanentKey}`;
 	return runQuery(
 		tx
-			.update(characterImageUploads)
+			.update(imageUploads)
 			.set({ objectKey: permanentKey, completedAt: new Date() })
 			.where(
 				and(
-					eq(characterImageUploads.userId, userId),
-					eq(characterImageUploads.characterId, characterId),
-					or(eq(characterImageUploads.objectKey, permanentKey), eq(characterImageUploads.objectKey, temporaryKey))
+					eq(imageUploads.userId, userId),
+					eq(imageUploads.characterId, characterId),
+					or(eq(imageUploads.objectKey, permanentKey), eq(imageUploads.objectKey, temporaryKey))
 				)
 			)
-			.returning({ bytes: characterImageUploads.bytes })
+			.returning({ bytes: imageUploads.bytes })
 	).pipe(Effect.map((rows) => rows[0] ?? null));
 }
 
@@ -143,9 +198,9 @@ export function collectCharacterKeys(tx: Transaction, userId: UserId, characterI
 		);
 		const uploads = yield* runQuery(
 			tx
-				.select({ objectKey: characterImageUploads.objectKey })
-				.from(characterImageUploads)
-				.where(and(eq(characterImageUploads.userId, userId), eq(characterImageUploads.characterId, characterId)))
+				.select({ objectKey: imageUploads.objectKey })
+				.from(imageUploads)
+				.where(and(eq(imageUploads.userId, userId), eq(imageUploads.characterId, characterId)))
 		);
 		const keys = new Set<string>();
 		for (const row of uploads) {
@@ -163,18 +218,20 @@ export function collectUserKeys(tx: Transaction, userId: UserId) {
 			tx.select({ id: characters.id, imageUrl: characters.imageUrl }).from(characters).where(eq(characters.userId, userId))
 		);
 		const uploads = yield* runQuery(
-			tx
-				.select({ objectKey: characterImageUploads.objectKey })
-				.from(characterImageUploads)
-				.where(eq(characterImageUploads.userId, userId))
+			tx.select({ objectKey: imageUploads.objectKey }).from(imageUploads).where(eq(imageUploads.userId, userId))
 		);
+		const [accountRow] = yield* runQuery(tx.select({ image: user.image }).from(user).where(eq(user.id, userId)).limit(1));
 		const keys = new Set<string>();
 		for (const row of uploads) {
-			if (isPermanentCharacterImageKey(row.objectKey)) keys.add(row.objectKey);
+			if (isPermanentImageKey(row.objectKey)) keys.add(row.objectKey);
 		}
 		for (const portrait of portraits) {
 			const key = ownedPermanentKey(userId, portrait.id, portrait.imageUrl, R2_PUBLIC_URL);
 			if (key) keys.add(key);
+		}
+		if (accountRow?.image) {
+			const avatar = ownedAvatarKey(userId, accountRow.image, R2_PUBLIC_URL);
+			if (avatar) keys.add(avatar);
 		}
 		return [...keys];
 	});

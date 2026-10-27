@@ -11,6 +11,9 @@ export const TEMPORARY_IMAGE_PREFIX = "tmp/";
 const permanentKeyPattern =
 	/^users\/[0-9a-f-]{36}\/characters\/[0-9a-f-]{36}\/[0-9a-f]{8}-[0-9a-f]{4}-7[0-9a-f]{3}-[0-9a-f]{4}-[0-9a-f]{12}\.(webp|jpg)$/iu;
 
+const permanentAvatarKeyPattern =
+	/^users\/[0-9a-f-]{36}\/avatar\/[0-9a-f]{8}-[0-9a-f]{4}-7[0-9a-f]{3}-[0-9a-f]{4}-[0-9a-f]{12}\.(webp|jpg)$/iu;
+
 export function characterImagePrefix(userId: string, characterId: string) {
 	return `users/${userId}/characters/${characterId}/`;
 }
@@ -45,8 +48,44 @@ export function isTemporaryCharacterImageKey(key: string) {
 	return key.startsWith(TEMPORARY_IMAGE_PREFIX) && isPermanentCharacterImageKey(key.slice(TEMPORARY_IMAGE_PREFIX.length));
 }
 
+export function avatarImagePrefix(userId: string) {
+	return `users/${userId}/avatar/`;
+}
+
+export function permanentAvatarImageKey(userId: string, uploadId: string, contentType: StoredImageContentType) {
+	return `${avatarImagePrefix(userId)}${uploadId}.${extensionForStoredImage(contentType)}`;
+}
+
+export function temporaryAvatarImageKey(userId: string, uploadId: string, contentType: StoredImageContentType) {
+	return `${TEMPORARY_IMAGE_PREFIX}${permanentAvatarImageKey(userId, uploadId, contentType)}`;
+}
+
+export function isPermanentAvatarImageKey(key: string) {
+	return permanentAvatarKeyPattern.test(key) && !key.includes("..");
+}
+
+export function isTemporaryAvatarImageKey(key: string) {
+	return key.startsWith(TEMPORARY_IMAGE_PREFIX) && isPermanentAvatarImageKey(key.slice(TEMPORARY_IMAGE_PREFIX.length));
+}
+
+/** Permanent portrait or avatar key issued by this app. */
+export function isPermanentImageKey(key: string) {
+	return isPermanentCharacterImageKey(key) || isPermanentAvatarImageKey(key);
+}
+
+/** `tmp/` portrait or avatar key. The bucket lifecycle rule deletes this prefix. */
+export function isTemporaryImageKey(key: string) {
+	return key.startsWith(TEMPORARY_IMAGE_PREFIX) && isPermanentImageKey(key.slice(TEMPORARY_IMAGE_PREFIX.length));
+}
+
 export function permanentKeyForTemporary(key: string) {
 	if (!isTemporaryCharacterImageKey(key)) return null;
+	return key.slice(TEMPORARY_IMAGE_PREFIX.length);
+}
+
+/** Permanent key for a staged portrait or avatar, when `key` is one of ours. */
+export function permanentImageKeyForTemporary(key: string) {
+	if (!isTemporaryImageKey(key)) return null;
 	return key.slice(TEMPORARY_IMAGE_PREFIX.length);
 }
 
@@ -61,9 +100,20 @@ export function isOwnedTemporaryImageKey(userId: string, characterId: string, ke
 	return permanent !== null && isOwnedCharacterImageKey(userId, characterId, permanent);
 }
 
-/** User id embedded in a permanent portrait key, when the key matches the server's shape. */
+export function isOwnedAvatarImageKey(userId: string, key: string) {
+	const prefix = avatarImagePrefix(userId);
+	if (!key.startsWith(prefix) || key.includes("..")) return false;
+	return uploadFilePattern.test(key.slice(prefix.length));
+}
+
+export function isOwnedTemporaryAvatarImageKey(userId: string, key: string) {
+	if (!isTemporaryAvatarImageKey(key)) return false;
+	return isOwnedAvatarImageKey(userId, key.slice(TEMPORARY_IMAGE_PREFIX.length));
+}
+
+/** User id embedded in a permanent portrait or avatar key, when the key matches the server's shape. */
 export function userIdFromPermanentKey(key: string) {
-	if (!isPermanentCharacterImageKey(key)) return null;
+	if (!isPermanentImageKey(key)) return null;
 	return key.split("/")[1] ?? null;
 }
 
@@ -106,5 +156,11 @@ export function keyFromPublicUrl(imageUrl: string, publicBase: string) {
 export function ownedPermanentKey(userId: string, characterId: string, imageUrl: string, publicBase: string) {
 	const key = keyFromPublicUrl(imageUrl, publicBase);
 	if (!key || !isPermanentCharacterImageKey(key) || !isOwnedCharacterImageKey(userId, characterId, key)) return null;
+	return key;
+}
+
+export function ownedAvatarKey(userId: string, imageUrl: string, publicBase: string) {
+	const key = keyFromPublicUrl(imageUrl, publicBase);
+	if (!key || !isPermanentAvatarImageKey(key) || !isOwnedAvatarImageKey(userId, key)) return null;
 	return key;
 }
