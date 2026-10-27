@@ -3,6 +3,8 @@ import * as API from "#lib/remote/index.js";
 import { characterIdParamSchema, editCharacterSchema } from "#lib/schemas.js";
 import { guardedForm, guardedQuery, refreshAll } from "#lib/server/effect/guarded.js";
 import { CharacterService } from "#lib/server/effect/services/characters.js";
+import { StorageService } from "#lib/server/effect/services/storage.js";
+import { ImageUploadError } from "#lib/server/images/errors.js";
 import { isValidUrl } from "#lib/server/effect/util.js";
 import type { StandardSchemaV1 } from "@standard-schema/spec";
 import { invalid, redirect } from "@sveltejs/kit";
@@ -27,20 +29,26 @@ export const get = guardedQuery(characterIdParamSchema, function* (input, { even
 
 export const save = guardedForm(editCharacterSchema, function* (input, { user, issue }) {
 	const Characters = yield* CharacterService;
+	const Storage = yield* StorageService;
 
 	const { firstLog, ...data } = input;
 
-	const preexisting = yield* Characters.get
-		.all(user.id, { characterId: data.id })
-		.pipe(Effect.map((characters) => characters.length > 0));
+	const existing = yield* Characters.get.all(user.id, { characterId: data.id, includeLogs: false });
+	const preexisting = existing.length > 0;
 
 	const issues: StandardSchemaV1.Issue[] = [];
 
-	if (data.imageUrl) {
+	if (!data.imageUrl) data.imageUrl = BLANK_CHARACTER;
+
+	const stored = yield* Storage.resolveForSave({
+		userId: user.id,
+		characterId: data.id,
+		imageUrl: data.imageUrl
+	}).pipe(Effect.tapError((error) => Effect.fail(invalid(issue.imageUrl(error.message)))));
+
+	if (!stored.owned && data.imageUrl !== BLANK_CHARACTER) {
 		const result = yield* isValidUrl(data.imageUrl);
 		if (!result) issues.push(issue.imageUrl("URL appears to be broken"));
-	} else {
-		data.imageUrl = BLANK_CHARACTER;
 	}
 
 	if (data.characterSheetUrl) {
@@ -50,7 +58,13 @@ export const save = guardedForm(editCharacterSchema, function* (input, { user, i
 
 	if (issues.length) invalid(...issues);
 
-	const result = yield* Characters.save(data, user.id).pipe(Effect.tapError((err) => Effect.fail(invalid(err.message))));
+	data.imageUrl = stored.imageUrl;
+
+	const result = yield* Characters.save(data, user.id, stored.copy).pipe(
+		Effect.tapError((err) => Effect.fail(invalid(err instanceof ImageUploadError ? issue.imageUrl(err.message) : err.message)))
+	);
+
+	yield* Storage.cleanupAfterSave(stored.copy?.from ?? null);
 
 	if (preexisting) {
 		yield* refreshAll(API.characters.queries.get({ param: data.id }).refresh());

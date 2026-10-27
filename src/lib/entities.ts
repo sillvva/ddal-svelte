@@ -170,6 +170,7 @@ export function defaultCharacter(user: LocalsUser): FullCharacterData {
 		class: "",
 		campaign: "",
 		imageUrl: "",
+		imageBytes: 0,
 		characterSheetUrl: "",
 		userId: user.id,
 		user: user,

@@ -1,5 +1,6 @@
 import { BLANK_CHARACTER } from "#lib/constants.js";
 import { characterIdSchema } from "#lib/schemas.js";
+import { fetchPublic } from "#lib/server/effect/util.js";
 import { run } from "#lib/server/effect/runtime.js";
 import { CharacterService } from "#lib/server/effect/services/characters.js";
 import { Resvg } from "@resvg/resvg-js";
@@ -49,6 +50,36 @@ async function readStaticImage(pathname: string) {
 	}
 }
 
+async function readLimited(response: Response, maxBytes: number) {
+	const declared = Number(response.headers.get("content-length") ?? "0");
+	if (Number.isFinite(declared) && declared > maxBytes) {
+		await response.body?.cancel().catch(() => undefined);
+		return null;
+	}
+
+	if (!response.body) {
+		const bytes = Buffer.from(await response.arrayBuffer());
+		return bytes.byteLength > maxBytes ? null : bytes;
+	}
+
+	const reader = response.body.getReader();
+	const chunks: Uint8Array[] = [];
+	let total = 0;
+	for (;;) {
+		const { done, value } = await reader.read();
+		if (done) break;
+		if (!value) continue;
+		total += value.byteLength;
+		if (total > maxBytes) {
+			await reader.cancel().catch(() => undefined);
+			return null;
+		}
+		chunks.push(value);
+	}
+
+	return Buffer.concat(chunks);
+}
+
 function isLocalImage(imageUrl: string, origin: string) {
 	if (imageUrl.startsWith("/")) return true;
 
@@ -67,7 +98,7 @@ function isLocalImage(imageUrl: string, origin: string) {
 }
 
 async function resolvePortrait(imageUrl: string, origin: string) {
-	if (!imageUrl || imageUrl === BLANK_CHARACTER || imageUrl.includes(".webp")) return blankCharacter;
+	if (!imageUrl || imageUrl === BLANK_CHARACTER) return blankCharacter;
 
 	if (isLocalImage(imageUrl, origin)) {
 		const pathname = imageUrl.startsWith("/") ? imageUrl : new URL(imageUrl).pathname;
@@ -75,14 +106,24 @@ async function resolvePortrait(imageUrl: string, origin: string) {
 	}
 
 	try {
-		const response = await fetch(imageUrl);
-		if (!response.ok) return blankCharacter;
+		const response = await fetchPublic(imageUrl, "GET");
+		if (!response?.ok) return blankCharacter;
 
 		const headerMime = response.headers.get("content-type")?.split(";")[0]?.trim();
 		const mime = headerMime === "image/jpg" ? "image/jpeg" : headerMime || mimeForImage(new URL(imageUrl).pathname);
-		if (!mime.startsWith("image/") || mime === "image/webp") return blankCharacter;
+		if (!mime.startsWith("image/") || mime === "image/svg+xml") {
+			await response.body?.cancel().catch(() => undefined);
+			return blankCharacter;
+		}
 
-		return imageDataUri(Buffer.from(await response.arrayBuffer()), mime);
+		const bytes = await readLimited(response, 8 * 1024 * 1024);
+		if (!bytes) return blankCharacter;
+		if (mime === "image/webp") {
+			const jpeg = await sharp(bytes).jpeg({ quality: 85 }).toBuffer();
+			return imageDataUri(jpeg, "image/jpeg");
+		}
+
+		return imageDataUri(bytes, mime);
 	} catch {
 		return blankCharacter;
 	}

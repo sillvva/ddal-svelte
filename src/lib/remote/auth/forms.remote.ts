@@ -2,6 +2,7 @@ import { onboardingSchema } from "#lib/schemas.js";
 import { FailedError, type ErrorParams } from "#lib/server/effect/errors.js";
 import { guardedForm } from "#lib/server/effect/guarded.js";
 import { AuthService } from "#lib/server/effect/services/auth.js";
+import { StorageService } from "#lib/server/effect/services/storage.js";
 import { invalid, redirect } from "@sveltejs/kit";
 import { Data, Effect } from "effect";
 
@@ -27,7 +28,9 @@ export const deleteAccount = guardedForm(function* ({ user, event }) {
 	if (event.locals.session?.impersonatedBy) return yield* new ImpersonatingError();
 
 	const Auth = yield* AuthService;
+	const Storage = yield* StorageService;
 	yield* Auth.user.delete(user.id);
+	yield* Storage.purgePending();
 
 	yield* Effect.tryPromise({
 		try: () =>
@@ -55,7 +58,9 @@ export const completeOnboarding = guardedForm(
 
 export const cancelOnboarding = guardedForm(function* ({ user, event }) {
 	const Auth = yield* AuthService;
+	const Storage = yield* StorageService;
 	yield* Auth.user.delete(user.id);
+	yield* Storage.purgePending();
 
 	yield* Effect.tryPromise({
 		try: () =>

@@ -12,8 +12,9 @@ import { AuthService } from "./services/auth";
 import { CharacterService } from "./services/characters";
 import { DMService } from "./services/dms";
 import { LogService } from "./services/logs";
+import { StorageService } from "./services/storage";
 
-export type Services = CharacterService | LogService | DMService | AdminService | AuthService;
+export type Services = CharacterService | LogService | DMService | AdminService | AuthService | StorageService;
 export type AppRuntime = ManagedRuntime.ManagedRuntime<Services, never>;
 
 export const createAppRuntime = () => {
@@ -24,7 +25,8 @@ export const createAppRuntime = () => {
 		AdminService.layer,
 		CharacterService.layer,
 		DMService.layer,
-		LogService.layer
+		LogService.layer,
+		StorageService.layer
 	);
 
 	const appLayer = serviceLayer.pipe(Layer.provide(dbLayer));

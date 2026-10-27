@@ -165,7 +165,8 @@
 									const date = formatDate(new Date(log.showDate), log.timezone);
 									return `‣ [${date}] ${log.name}`;
 								});
-							alert(`${dmLogs.length} DM logs will be unassigned from this character:\n\n${dmLogs.join("\n")}`);
+							if (dmLogs.length > 0)
+								alert(`${dmLogs.length} DM logs will be unassigned from this character:\n\n${dmLogs.join("\n")}`);
 
 							global.pageLoader = true;
 							const result = await API.characters.actions.deleteCharacter(character.id);
