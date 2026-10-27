@@ -35,8 +35,11 @@ import { parse } from "../util";
 
 const PASSKEY_SIGNUP_NAME = "New Adventurer";
 
-/** `"admin"` requires an admin. `"onboarding"` allows only unfinished passkey signups. `null` is any signed-in user. */
-export type GuardAccess = "admin" | "onboarding" | null;
+/**
+ * `"admin"` requires a finished admin. `"onboarding"` allows only unfinished signups.
+ * `"any"` allows a signed-in user whether or not onboarding is finished. `null` requires a finished account.
+ */
+export type GuardAccess = "admin" | "onboarding" | "any" | null;
 
 class AuthError extends Data.TaggedError("AuthError")<ErrorParams> {
 	constructor(err: unknown) {
@@ -185,7 +188,7 @@ export class AuthService extends Context.Service<AuthService>()("AuthService", {
 					});
 				}
 
-				if (access !== "onboarding" && !auth.user.onboarded) {
+				if (access !== "onboarding" && access !== "any" && !auth.user.onboarded) {
 					return yield* new RedirectError({
 						message: "Finish creating your account",
 						redirectTo: "/onboarding"

@@ -13,6 +13,11 @@
 	await API.auth.queries.onboarding();
 
 	let avatarUploading = $state(false);
+	let initialData = {
+		name: "",
+		email: "",
+		uploadId: undefined
+	};
 </script>
 
 <Head title="Create your account" />
@@ -27,7 +32,13 @@
 	</div>
 
 	<div class="w-full max-w-md">
-		<RemoteForm schema={onboardingSchema} form={API.auth.forms.completeOnboarding} successMessage={false}>
+		<RemoteForm
+			schema={onboardingSchema}
+			form={API.auth.forms.completeOnboarding}
+			successMessage={false}
+			data={initialData}
+			navBlockMessage={null}
+		>
 			{#snippet children(ctx)}
 				{const { form } = $derived(ctx)}
 				<Control class="col-span-12">
