@@ -294,54 +294,7 @@
 	{/if}
 	<img src={preview} {alt} class={previewClass} />
 	<div class="flex min-w-0 flex-1 flex-col gap-2">
-		{#if props.purpose === "character"}
-			<div class="join" role="radiogroup" aria-label="Portrait">
-				{#each sources as option (option.id)}
-					<button
-						type="button"
-						class={["btn join-item btn-sm", source === option.id && "btn-primary"]}
-						aria-pressed={source === option.id}
-						disabled={uploading}
-						onclick={() => choose(option.id)}
-					>
-						{option.label}
-					</button>
-				{/each}
-			</div>
-			{#if source === "url"}
-				<Input field={props.field} type="url" label="Portrait" placeholder="https://" warning={imgurWarning} />
-			{:else}
-				<div class="mt-2">
-					<label
-						class={[
-							"btn btn-outline btn-sm focus-within:outline-2 focus-within:outline-offset-2 focus-within:outline-current",
-							uploading && "pointer-events-none opacity-50"
-						]}
-					>
-						{uploading ? "Uploading image…" : "Choose image"}
-						<input
-							class="sr-only"
-							type="file"
-							accept="image/jpeg,image/png,image/webp,image/gif"
-							aria-describedby={statusId}
-							disabled={uploading}
-							onchange={onFile}
-						/>
-					</label>
-				</div>
-				{#if uploading && status}
-					<p id={statusId} class="flex items-center gap-2 text-pretty text-neutral-500">
-						<span class="loading loading-xs"></span>
-						{status}
-					</p>
-				{:else if failure}
-					<p id={statusId} class="rounded-lg bg-error px-2 py-1 text-pretty text-error-content">{failure}</p>
-				{:else}
-					<p id={statusId} class="text-pretty text-neutral-500">{help}</p>
-				{/if}
-				<Input field={props.field} type="hidden" />
-			{/if}
-		{:else}
+		{#snippet uploadControls()}
 			<div class="mt-2">
 				<label
 					class={[
@@ -370,6 +323,29 @@
 			{:else}
 				<p id={statusId} class="text-pretty text-neutral-500">{help}</p>
 			{/if}
+		{/snippet}
+		{#if props.purpose === "character"}
+			<div class="join" role="radiogroup" aria-label="Portrait">
+				{#each sources as option (option.id)}
+					<button
+						type="button"
+						class={["btn join-item btn-sm", source === option.id && "btn-primary"]}
+						aria-pressed={source === option.id}
+						disabled={uploading}
+						onclick={() => choose(option.id)}
+					>
+						{option.label}
+					</button>
+				{/each}
+			</div>
+			{#if source === "url"}
+				<Input field={props.field} type="url" label="Portrait" placeholder="https://" warning={imgurWarning} />
+			{:else}
+				{@render uploadControls()}
+				<Input field={props.field} type="hidden" />
+			{/if}
+		{:else}
+			{@render uploadControls()}
 		{/if}
 	</div>
 </div>
