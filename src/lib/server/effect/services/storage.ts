@@ -292,6 +292,60 @@ export function copyVerifiedAvatar(tx: Transaction, userId: UserId, staged: Stag
 	});
 }
 
+/**
+ * Promotes a verified avatar from `tmp/` to its permanent key.
+ * Call inside the transaction that writes `user.image`, after `lockPortraitUser`.
+ * This does not update the user row. `copied.permanentKey` is set as soon as the
+ * object is copied, so the caller can abandon it if that transaction rolls back.
+ */
+export function promoteStagedAvatar(
+	tx: Transaction,
+	userId: UserId,
+	uploadId: ImageUploadId,
+	copied: { permanentKey: string | null }
+) {
+	return Effect.gen(function* () {
+		yield* assertCustomAvatarAllowed(tx, userId);
+
+		const found = yield* runQuery(
+			tx
+				.select()
+				.from(imageUploads)
+				.where(and(eq(imageUploads.id, uploadId), eq(imageUploads.userId, userId), eq(imageUploads.purpose, "avatar")))
+				.limit(1)
+		);
+		const upload = found[0];
+		if (
+			!upload ||
+			upload.characterId !== null ||
+			!isTemporaryAvatarImageKey(upload.objectKey) ||
+			!isOwnedTemporaryAvatarImageKey(userId, upload.objectKey) ||
+			!isStoredImageContentType(upload.contentType)
+		) {
+			return yield* new ImageUploadError("Upload that image again before saving.");
+		}
+
+		const permanent = permanentImageKeyForTemporary(upload.objectKey);
+		if (!permanent) return yield* new ImageUploadError("Upload that image again before saving.");
+
+		const [current] = yield* runQuery(tx.select({ image: user.image }).from(user).where(eq(user.id, userId)).limit(1));
+		if (!current) return yield* new ImageUploadError("Upload was not found", 404);
+
+		const previousKey = current.image ? ownedAvatarKey(userId, current.image, R2_PUBLIC_URL) : null;
+
+		yield* copyVerifiedAvatar(tx, userId, { from: upload.objectKey, to: permanent });
+		copied.permanentKey = permanent;
+
+		if (previousKey && previousKey !== permanent) yield* scheduleDeletions(tx, [previousKey]);
+		yield* clearScheduledDeletions(tx, [permanent]);
+
+		const promoted = yield* promoteAvatarUploadRow(tx, userId, permanent);
+		if (!promoted) return yield* new ImageUploadError("Upload that image again before saving.");
+
+		return { imageUrl: imagePublicUrl(permanent, R2_PUBLIC_URL), temporaryKey: upload.objectKey };
+	});
+}
+
 const signPut = Effect.fn("StorageService.signPut")(function* (key: string, contentType: StoredImageContentType, bytes: number) {
 	return yield* Effect.tryPromise({
 		try: () =>
@@ -599,60 +653,24 @@ export class StorageService extends Context.Service<StorageService>()("StorageSe
 			 * Closing the dialog without calling this leaves the staged object for the bucket lifecycle rule.
 			 */
 			saveAvatar: Effect.fn("StorageService.saveAvatar")(function* (userId: UserId, uploadId: ImageUploadId) {
-				let copiedKey: string | null = null;
+				const copied = { permanentKey: null as string | null };
 				let tmpKey: string | null = null;
 
 				const saved = yield* transaction(
 					Effect.fn(function* (tx) {
 						yield* lockPortraitUser(tx, userId);
-						yield* assertCustomAvatarAllowed(tx, userId);
+						const promoted = yield* promoteStagedAvatar(tx, userId, uploadId, copied);
+						tmpKey = promoted.temporaryKey;
 
-						const found = yield* runQuery(
-							tx
-								.select()
-								.from(imageUploads)
-								.where(and(eq(imageUploads.id, uploadId), eq(imageUploads.userId, userId), eq(imageUploads.purpose, "avatar")))
-								.limit(1)
-						);
-						const upload = found[0];
-						if (
-							!upload ||
-							upload.characterId !== null ||
-							!isTemporaryAvatarImageKey(upload.objectKey) ||
-							!isOwnedTemporaryAvatarImageKey(userId, upload.objectKey) ||
-							!isStoredImageContentType(upload.contentType)
-						) {
-							return yield* new ImageUploadError("Upload that image again before saving.");
-						}
-
-						const permanent = permanentImageKeyForTemporary(upload.objectKey);
-						if (!permanent) return yield* new ImageUploadError("Upload that image again before saving.");
-
-						const [current] = yield* runQuery(tx.select({ image: user.image }).from(user).where(eq(user.id, userId)).limit(1));
-						if (!current) return yield* new ImageUploadError("Upload was not found", 404);
-
-						const previousKey = current.image ? ownedAvatarKey(userId, current.image, R2_PUBLIC_URL) : null;
-
-						yield* copyVerifiedAvatar(tx, userId, { from: upload.objectKey, to: permanent });
-						copiedKey = permanent;
-						tmpKey = upload.objectKey;
-
-						if (previousKey && previousKey !== permanent) yield* scheduleDeletions(tx, [previousKey]);
-						yield* clearScheduledDeletions(tx, [permanent]);
-
-						const promoted = yield* promoteAvatarUploadRow(tx, userId, permanent);
-						if (!promoted) return yield* new ImageUploadError("Upload that image again before saving.");
-
-						const imageUrl = imagePublicUrl(permanent, R2_PUBLIC_URL);
 						const updated = yield* runQuery(
-							tx.update(user).set({ image: imageUrl }).where(eq(user.id, userId)).returning({ id: user.id })
+							tx.update(user).set({ image: promoted.imageUrl }).where(eq(user.id, userId)).returning({ id: user.id })
 						);
 						if (!updated[0]) return yield* new ImageUploadError("Could not store the uploaded image.", 500);
-						return { imageUrl };
+						return { imageUrl: promoted.imageUrl };
 					})
 				).pipe(
 					Effect.tapError(() => {
-						const orphanKey = copiedKey;
+						const orphanKey = copied.permanentKey;
 						if (!orphanKey) return Effect.void;
 						return abandonStagedObject(userId, orphanKey).pipe(
 							Effect.catch((error) => AppLog.error("StorageService.saveAvatar staged cleanup", { message: error.message }))

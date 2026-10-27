@@ -415,7 +415,12 @@ export const localsUserSchema = v.object({
 export type OnboardingSchema = v.InferOutput<typeof onboardingSchema>;
 export const onboardingSchema = v.object({
 	name: v.pipe(requiredString, shortString),
-	email: emailSchema
+	email: emailSchema,
+	/** Empty when the passkey signup did not choose a profile picture. */
+	uploadId: v.pipe(
+		v.optional(v.union([imageUploadIdSchema, v.literal("")]), ""),
+		v.transform((id): ImageUploadId | null => (id === "" ? null : id))
+	)
 });
 
 export type LocalsSession = v.InferOutput<typeof localsSessionSchema>;

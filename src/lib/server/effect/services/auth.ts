@@ -1,11 +1,12 @@
 import { BLANK_CHARACTER, PASSKEY_PLACEHOLDER_EMAIL_DOMAIN, PROVIDERS } from "#lib/constants.js";
 import { ownedAvatarKey } from "#lib/images/object-key.js";
-import { emailSchema, localsSessionSchema, localsUserSchema, type UserId } from "#lib/schemas.js";
+import { emailSchema, localsSessionSchema, localsUserSchema, type OnboardingSchema, type UserId } from "#lib/schemas.js";
 import { DBService, runQuery } from "#lib/server/db/index.js";
 import type { User } from "#lib/server/db/schema.js";
 import * as schema from "#lib/server/db/schema.js";
 import { AuthTokenError, RedirectError, type ErrorParams } from "#lib/server/effect/errors.js";
 import { AppLog } from "#lib/server/effect/logging.js";
+import { promoteStagedAvatar, StorageService } from "#lib/server/effect/services/storage.js";
 import { ImageUploadError } from "#lib/server/images/errors.js";
 import { clearScheduledDeletions, collectUserKeys, lockPortraitUser, scheduleDeletions } from "#lib/server/images/portrait-db.js";
 import {
@@ -356,21 +357,49 @@ export class AuthService extends Context.Service<AuthService>()("AuthService", {
 			/**
 			 * Mutations
 			 */
-			completeOnboarding: Effect.fn("AuthService.completeOnboarding")(function* (
-				userId: UserId,
-				data: Pick<User, "name" | "email">
-			) {
+			completeOnboarding: Effect.fn("AuthService.completeOnboarding")(function* (userId: UserId, data: OnboardingSchema) {
 				const parsed = v.safeParse(emailSchema, data.email);
 				if (!parsed.success) return yield* new UpdateUserError("Enter a valid email address");
 				const email = parsed.output;
+				const profile = { name: data.name.trim(), email, onboarded: true };
+				const whereUnfinished = and(eq(schema.user.id, userId), eq(schema.user.onboarded, false));
 
-				return yield* runQuery(
-					db
-						.update(schema.user)
-						.set({ name: data.name.trim(), email, onboarded: true })
-						.where(and(eq(schema.user.id, userId), eq(schema.user.onboarded, false)))
-						.returning()
-				).pipe(
+				const uploadId = data.uploadId;
+				const saved = !uploadId
+					? runQuery(db.update(schema.user).set(profile).where(whereUnfinished).returning())
+					: Effect.gen(function* () {
+							const Storage = yield* StorageService;
+							const copied = { permanentKey: null as string | null };
+							let temporaryKey: string | null = null;
+							const rows = yield* transaction(
+								Effect.fn(function* (tx) {
+									yield* lockPortraitUser(tx, userId);
+									const promoted = yield* promoteStagedAvatar(tx, userId, uploadId, copied);
+									temporaryKey = promoted.temporaryKey;
+									return yield* runQuery(
+										tx
+											.update(schema.user)
+											.set({ ...profile, image: promoted.imageUrl })
+											.where(whereUnfinished)
+											.returning()
+									);
+								})
+							).pipe(
+								Effect.tapError(() => {
+									const orphanKey = copied.permanentKey;
+									if (!orphanKey) return Effect.void;
+									return Storage.abandonStagedObject(userId, orphanKey).pipe(
+										Effect.catch((error) =>
+											AppLog.error("AuthService.completeOnboarding staged cleanup", { message: error.message })
+										)
+									);
+								})
+							);
+							yield* Storage.cleanupAfterSave(temporaryKey);
+							return rows;
+						});
+
+				return yield* saved.pipe(
 					Effect.flatMap((users) =>
 						isTupleOf(users, 1) ? Effect.succeed(users[0]) : Effect.fail(new UpdateUserError("Failed to finish account setup"))
 					),
