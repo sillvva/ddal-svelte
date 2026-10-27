@@ -141,6 +141,22 @@
 					.join("")
 					.slice(0, 2) || ""
 			)}
+			{#snippet avatar()}
+				{#if user.image}
+					<img
+						src={user.image}
+						alt={user.name}
+						class="rounded-full object-cover object-center"
+						onerror={(e) => {
+							const img = e.currentTarget as HTMLImageElement;
+							img.onerror = null;
+							img.src = BLANK_CHARACTER;
+						}}
+					/>
+				{:else if initials}
+					<span class="text-xl font-bold text-primary-content uppercase">{initials}</span>
+				{/if}
+			{/snippet}
 			{#if canEditAvatar}
 				<button
 					type="button"
@@ -148,20 +164,7 @@
 					aria-label="Change profile picture"
 					onclick={openAvatar}
 				>
-					{#if user.image}
-						<img
-							src={user.image}
-							alt=""
-							class="rounded-full object-cover object-center"
-							onerror={(e) => {
-								const img = e.currentTarget as HTMLImageElement;
-								img.onerror = null;
-								img.src = BLANK_CHARACTER;
-							}}
-						/>
-					{:else if initials}
-						<span class="text-xl font-bold text-primary-content uppercase">{initials}</span>
-					{/if}
+					{@render avatar()}
 					<span
 						class="pointer-events-none absolute inset-0 flex items-center justify-center rounded-full bg-black/50 text-white opacity-0 transition-opacity group-hover/avatar:opacity-100 group-focus-visible/avatar:opacity-100"
 						aria-hidden="true"
@@ -173,20 +176,7 @@
 				<div
 					class="group/avatar avatar flex h-9 w-9 items-center justify-center overflow-hidden rounded-full bg-primary ring-3 ring-primary ring-offset-2 ring-offset-base-100"
 				>
-					{#if user.image}
-						<img
-							src={user.image}
-							alt={user.name}
-							class="rounded-full object-cover object-center"
-							onerror={(e) => {
-								const img = e.currentTarget as HTMLImageElement;
-								img.onerror = null;
-								img.src = BLANK_CHARACTER;
-							}}
-						/>
-					{:else if initials}
-						<span class="text-xl font-bold text-primary-content uppercase">{initials}</span>
-					{/if}
+					{@render avatar()}
 				</div>
 			{/if}
 			<div class="flex-1">
@@ -411,19 +401,6 @@
 		])}
 	>
 		<div class="relative modal-box cursor-default bg-base-100 drop-shadow-lg">
-			<button
-				type="button"
-				class="btn absolute top-2 right-2 btn-circle btn-ghost btn-sm"
-				onclick={closeAvatar}
-				aria-label="Close"
-				disabled={avatarUploading || avatarSavePending}
-			>
-				<span class="iconify mdi--close"></span>
-			</button>
-			<h3 id="avatar-title" class="pr-8 text-lg font-bold text-base-content">Profile picture</h3>
-			<p id="avatar-description" class="mt-1 text-sm text-base-content/70">
-				Save replaces your profile picture. Closing leaves it unchanged.
-			</p>
 			{#if avatarOpen}
 				<ImageUpload
 					purpose="avatar"
