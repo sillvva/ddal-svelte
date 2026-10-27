@@ -22,9 +22,9 @@
 </script>
 
 <svelte:boundary>
+	{#snippet failed(error)}<Error {error} boundary="edit-character-log" />{/snippet}
 	{const character = $derived(await API.characters.queries.get({ param: params.characterId }))}
 	{const { magicItems, storyAwards } = $derived(getItemEntities(character, { excludeDropped: true, lastLogId: params.logId }))}
-
 	{const schema = logSchema}
 	{const form = API.logs.forms.saveCharacter}
 	{const firstLog = $derived(page.url.searchParams.get("firstLog") === "true")}
@@ -33,7 +33,6 @@
 		await API.logs.forms.character({ character: { id: character.id, name: character.name }, logId: params.logId, firstLog })
 	)}
 
-	{#snippet failed(error)}<Error {error} boundary="edit-character-log" />{/snippet}
 	<Head title={`${log.name || "New Log"} - ${character.name}`} />
 
 	<NavMenu

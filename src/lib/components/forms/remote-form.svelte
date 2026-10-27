@@ -1,12 +1,9 @@
-<script
-	lang="ts"
-	generics="Input extends RemoteFormInput = RemoteFormInput"
->
-	import type { RemoteFormInput } from '$app/server';
-	import { dev } from '$app/env';
-	import { navigating, page } from "$app/state";
+<script lang="ts" generics="Input extends RemoteFormInput = RemoteFormInput">
 	import Debug from "#lib/components/debug.svelte";
 	import { configureForm, errorToast, successToast, type GenericForm, type RemoteFormOptions } from "#lib/factories.svelte.js";
+	import { dev } from "$app/env";
+	import type { RemoteFormInput } from "$app/server";
+	import { navigating, page } from "$app/state";
 	import { isTupleOfAtLeast } from "@sillvva/utils";
 	import { setContext, type Snippet } from "svelte";
 
@@ -23,17 +20,17 @@
 	const configured = setContext(
 		"configured-form",
 		configureForm(() => ({
-		...rest,
-		formEl,
-		navBlockMessage: rest.navBlockMessage || "You have unsaved changes. Are you sure you want to leave?",
-		onresult: (ctx) => {
-			if (ctx.success && successMessage !== false) {
-				successToast(successMessage || `${form.fields.name?.value() || "Form"} saved successfully`);
-			} else if (ctx.error) {
-				errorToast(ctx.error);
+			...rest,
+			formEl,
+			navBlockMessage: rest.navBlockMessage || "You have unsaved changes. Are you sure you want to leave?",
+			onresult: (ctx) => {
+				if (ctx.success && successMessage !== false) {
+					successToast(successMessage || `${form.fields.name?.value() || "Form"} saved successfully`);
+				} else if (ctx.error) {
+					errorToast(ctx.error);
+				}
+				rest.onresult?.(ctx);
 			}
-			rest.onresult?.(ctx);
-		}
 		}))
 	);
 
@@ -51,8 +48,12 @@
 	<form {...attributes} bind:this={formEl}>
 		<fieldset
 			class="grid grid-cols-12 gap-x-4"
-			disabled={submitting || !!navigating.to && navigating.to.url.pathname !== page.url.pathname}
-		>{@render children?.(configured())}</fieldset>
+			disabled={submitting || (!!navigating.to && navigating.to.url.pathname !== page.url.pathname)}
+		>
+			{#if Object.keys(form.fields.value() || {}).length > 0}
+				{@render children?.(configured())}
+			{/if}
+		</fieldset>
 	</form>
 
 	{#if dev}
