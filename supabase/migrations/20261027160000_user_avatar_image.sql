@@ -1,10 +1,7 @@
 -- Profile pictures for accounts that do not sign in with OAuth.
 -- Staged uploads still live under `tmp/` and expire via the existing bucket lifecycle rule.
--- Avatar bytes share the per-user quota with saved portraits (`user.image_bytes` + `character.image_bytes`).
-
-alter table "public"."user" add column "image_bytes" integer not null default 0;
-
-alter table "public"."user" add constraint "user_image_bytes_nonnegative" check ("image_bytes" >= 0);
+-- Each account has at most one avatar, capped when the upload is signed, so avatar bytes
+-- are not added to the portrait quota and are not stored on `user`.
 
 alter table "public"."character_image_upload" alter column "character_id" drop not null;
 

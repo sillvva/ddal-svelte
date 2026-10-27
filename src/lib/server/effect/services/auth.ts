@@ -387,31 +387,21 @@ export class AuthService extends Context.Service<AuthService>()("AuthService", {
 									Effect.fn(function* (tx) {
 										yield* lockPortraitUser(tx, userId);
 										const rows = yield* runQuery(
-											tx
-												.select({ image: schema.user.image, imageBytes: schema.user.imageBytes })
-												.from(schema.user)
-												.where(eq(schema.user.id, userId))
-												.limit(1)
+											tx.select({ image: schema.user.image }).from(schema.user).where(eq(schema.user.id, userId)).limit(1)
 										);
 										const current = rows[0];
 										if (!current) return yield* new UpdateUserError("Failed to update user");
 
 										const previousKey = current.image ? ownedAvatarKey(userId, current.image, R2_PUBLIC_URL) : null;
 										const nextKey = data.image ? ownedAvatarKey(userId, data.image, R2_PUBLIC_URL) : null;
-										// Avatar bytes are recorded only by the avatar save. Reject pointing the profile at some other object.
+										// A new avatar is stored only by the avatar save. Reject pointing the profile at some other object.
 										if (nextKey && nextKey !== previousKey) {
 											return yield* new ImageUploadError("Upload that image again before saving.");
 										}
 										if (previousKey && previousKey !== nextKey) yield* scheduleDeletions(tx, [previousKey]);
 										if (nextKey) yield* clearScheduledDeletions(tx, [nextKey]);
 
-										return yield* runQuery(
-											tx
-												.update(schema.user)
-												.set({ ...data, imageBytes: nextKey ? current.imageBytes : 0 })
-												.where(eq(schema.user.id, userId))
-												.returning()
-										);
+										return yield* runQuery(tx.update(schema.user).set(data).where(eq(schema.user.id, userId)).returning());
 									})
 								);
 

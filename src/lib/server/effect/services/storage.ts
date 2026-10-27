@@ -32,7 +32,6 @@ import { AppLog } from "#lib/server/effect/logging.js";
 import { ImageUploadError } from "#lib/server/images/errors.js";
 import {
 	assertCustomAvatarAllowed,
-	assertImageQuota,
 	assertPortraitQuota,
 	clearScheduledDeletions,
 	listPendingDeletions,
@@ -396,9 +395,10 @@ export class StorageService extends Context.Service<StorageService>()("StorageSe
 		return {
 			/**
 			 * Reserves a `tmp/` object and returns a presigned PUT.
-			 * Quota here is a fast check against saved portraits and avatars. The authoritative check
-			 * runs again under the same advisory lock when the image is saved. A presigned URL cannot
-			 * write a permanent key, so discarding the reservation cannot free quota for an object that stays.
+			 * Portrait quota here is a fast check against saved portraits. The authoritative check runs
+			 * again under the same advisory lock when the portrait is saved. Avatars are not part of that
+			 * quota. A presigned URL cannot write a permanent key, so discarding the reservation cannot
+			 * free quota for an object that stays.
 			 */
 			prepare: Effect.fn("StorageService.prepare")(function* (input: PrepareImageInput) {
 				yield* purgePendingObjects();
@@ -424,11 +424,6 @@ export class StorageService extends Context.Service<StorageService>()("StorageSe
 							yield* assertPortraitQuota(tx, input.userId, input.characterId, input.bytes);
 						} else {
 							yield* assertCustomAvatarAllowed(tx, input.userId);
-							const [accountRow] = yield* runQuery(
-								tx.select({ imageBytes: user.imageBytes }).from(user).where(eq(user.id, input.userId)).limit(1)
-							);
-							if (!accountRow) return yield* new ImageUploadError("Upload was not found", 404);
-							yield* assertImageQuota(tx, input.userId, accountRow.imageBytes, input.bytes);
 						}
 
 						const [recent] = yield* runQuery(
@@ -651,13 +646,10 @@ export class StorageService extends Context.Service<StorageService>()("StorageSe
 						const permanent = permanentImageKeyForTemporary(upload.objectKey);
 						if (!permanent) return yield* new ImageUploadError("Upload that image again before saving.");
 
-						const [current] = yield* runQuery(
-							tx.select({ image: user.image, imageBytes: user.imageBytes }).from(user).where(eq(user.id, userId)).limit(1)
-						);
+						const [current] = yield* runQuery(tx.select({ image: user.image }).from(user).where(eq(user.id, userId)).limit(1));
 						if (!current) return yield* new ImageUploadError("Upload was not found", 404);
 
 						const previousKey = current.image ? ownedAvatarKey(userId, current.image, R2_PUBLIC_URL) : null;
-						yield* assertImageQuota(tx, userId, current.imageBytes, upload.bytes);
 
 						yield* copyVerifiedAvatar(tx, userId, { from: upload.objectKey, to: permanent });
 						copiedKey = permanent;
@@ -671,11 +663,7 @@ export class StorageService extends Context.Service<StorageService>()("StorageSe
 
 						const imageUrl = imagePublicUrl(permanent, R2_PUBLIC_URL);
 						const updated = yield* runQuery(
-							tx
-								.update(user)
-								.set({ image: imageUrl, imageBytes: promoted.bytes })
-								.where(eq(user.id, userId))
-								.returning({ id: user.id })
+							tx.update(user).set({ image: imageUrl }).where(eq(user.id, userId)).returning({ id: user.id })
 						);
 						if (!updated[0]) return yield* new ImageUploadError("Could not store the uploaded image.", 500);
 						return { imageUrl };

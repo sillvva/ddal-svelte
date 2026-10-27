@@ -32,8 +32,6 @@ export const user = pg.pgTable("user", {
 		.notNull()
 		.$default(() => false),
 	image: pg.text(),
-	/** Byte size of this user's avatar object in R2. Provider and other external URLs stay at 0. */
-	imageBytes: pg.integer("image_bytes").notNull().default(0),
 	/** False until a passkey-first signup submits a username and email. */
 	onboarded: pg.boolean().notNull().default(true),
 	role: role().notNull().default("user"),

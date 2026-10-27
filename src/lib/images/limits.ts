@@ -1,9 +1,3 @@
-/**
- * Total bytes of saved portraits and avatars per account.
- * Unsaved `tmp/` uploads do not count.
- */
-export const USER_IMAGE_QUOTA_BYTES = 20 * 1024 * 1024;
-
 /** Limits for character portraits stored in R2. */
 export const CHARACTER_IMAGE_LIMITS = {
 	/** Largest file the browser will read before resizing. */
@@ -14,8 +8,8 @@ export const CHARACTER_IMAGE_LIMITS = {
 	maxEdgePx: 800,
 	/** Reject decoded images above this pixel count before drawing them. */
 	maxPixels: 24_000_000,
-	/** See `USER_IMAGE_QUOTA_BYTES`. Portraits and avatars share this budget. */
-	quotaBytes: USER_IMAGE_QUOTA_BYTES,
+	/** Total bytes of saved portraits per account. Unsaved `tmp/` uploads do not count. Avatars are separate. */
+	quotaBytes: 20 * 1024 * 1024,
 	/** Issued upload rows per account, portraits and avatars together. */
 	maxUploadsPerWindow: 20,
 	rateWindowMs: 60 * 60 * 1000,
@@ -27,7 +21,7 @@ export const CHARACTER_IMAGE_LIMITS = {
 /**
  * Profile pictures for accounts that do not sign in with OAuth.
  * The browser center-crops to a square and scales the long edge down to `maxEdgePx`.
- * Stored bytes count toward `USER_IMAGE_QUOTA_BYTES`.
+ * One avatar per account, so these bytes are not part of `CHARACTER_IMAGE_LIMITS.quotaBytes`.
  */
 export const AVATAR_IMAGE_LIMITS = {
 	maxOriginalBytes: CHARACTER_IMAGE_LIMITS.maxOriginalBytes,

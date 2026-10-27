@@ -24,7 +24,7 @@ function integer(value: unknown) {
 }
 
 /**
- * Serializes portrait and avatar quota updates for one account.
+ * Serializes portrait quota updates and avatar replacement for one account.
  * The lock id stays `character-image:` so both purposes take the same lock.
  */
 export function lockPortraitUser(tx: Transaction, userId: UserId) {
@@ -35,40 +35,19 @@ export function lockPortraitUser(tx: Transaction, userId: UserId) {
 }
 
 /**
- * Saved portrait bytes plus the account's avatar bytes.
+ * Quota is the sum of `character.image_bytes` for saved portraits.
+ * Avatars are capped per object and are not included.
  * Presigned URLs only write `tmp/` objects, which are not counted and are removed by the bucket lifecycle rule.
+ * The check runs under `lockPortraitUser`, in the same transaction that updates `image_bytes`.
  */
-export function savedImageBytes(tx: Transaction, userId: UserId) {
+export function assertPortraitQuota(tx: Transaction, userId: UserId, characterId: CharacterId, nextBytes: number) {
 	return Effect.gen(function* () {
-		const [portraits] = yield* runQuery(
+		const [stored] = yield* runQuery(
 			tx
 				.select({ total: sql<number>`coalesce(sum(${characters.imageBytes}), 0)::int` })
 				.from(characters)
 				.where(eq(characters.userId, userId))
 		);
-		const [accountRow] = yield* runQuery(
-			tx.select({ imageBytes: user.imageBytes }).from(user).where(eq(user.id, userId)).limit(1)
-		);
-		return integer(portraits?.total) + integer(accountRow?.imageBytes);
-	});
-}
-
-/**
- * `credit` is the byte size already stored for the object this save replaces.
- * The check runs under `lockPortraitUser`, in the same transaction that updates the byte columns.
- */
-export function assertImageQuota(tx: Transaction, userId: UserId, credit: number, nextBytes: number) {
-	return Effect.gen(function* () {
-		const used = yield* savedImageBytes(tx, userId);
-		if (nextBytes > credit && used - credit + nextBytes > CHARACTER_IMAGE_LIMITS.quotaBytes) {
-			return yield* new ImageUploadError("This image would exceed your 20 MB storage limit.", 413);
-		}
-	});
-}
-
-/** Quota for a portrait save. `credit` is that character's current `image_bytes`. */
-export function assertPortraitQuota(tx: Transaction, userId: UserId, characterId: CharacterId, nextBytes: number) {
-	return Effect.gen(function* () {
 		const [current] = yield* runQuery(
 			tx
 				.select({ imageBytes: characters.imageBytes })
@@ -76,7 +55,11 @@ export function assertPortraitQuota(tx: Transaction, userId: UserId, characterId
 				.where(and(eq(characters.id, characterId), eq(characters.userId, userId)))
 				.limit(1)
 		);
-		yield* assertImageQuota(tx, userId, current?.imageBytes ?? 0, nextBytes);
+		const credit = current?.imageBytes ?? 0;
+		const used = integer(stored?.total);
+		if (nextBytes > credit && used - credit + nextBytes > CHARACTER_IMAGE_LIMITS.quotaBytes) {
+			return yield* new ImageUploadError("This image would exceed your 20 MB storage limit.", 413);
+		}
 	});
 }
 
