@@ -28,6 +28,7 @@ import type { CharacterId, ImageUploadId, UserId } from "#lib/schemas.js";
 import { runQuery, type Transaction } from "#lib/server/db/index.js";
 import { DBService } from "#lib/server/db/index.js";
 import { imageUploads, characters, user } from "#lib/server/db/schema.js";
+import { serializeError } from "#lib/server/effect/errors.js";
 import { AppLog } from "#lib/server/effect/logging.js";
 import { ImageUploadError } from "#lib/server/images/errors.js";
 import {
@@ -673,7 +674,12 @@ export class StorageService extends Context.Service<StorageService>()("StorageSe
 						const orphanKey = copied.permanentKey;
 						if (!orphanKey) return Effect.void;
 						return abandonStagedObject(userId, orphanKey).pipe(
-							Effect.catch((error) => AppLog.error("StorageService.saveAvatar staged cleanup", { message: error.message }))
+							Effect.catch((error) =>
+								AppLog.error("StorageService.saveAvatar staged cleanup", {
+									message: error.message,
+									error: serializeError(error)
+								})
+							)
 						);
 					})
 				);

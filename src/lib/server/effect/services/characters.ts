@@ -11,7 +11,7 @@ import {
 	type Transaction
 } from "#lib/server/db/index.js";
 import { characters, logs } from "#lib/server/db/schema.js";
-import type { ErrorParams } from "#lib/server/effect/errors.js";
+import { serializeError, type ErrorParams } from "#lib/server/effect/errors.js";
 import { AppLog } from "#lib/server/effect/logging.js";
 import { ImageUploadError } from "#lib/server/images/errors.js";
 import {
@@ -76,7 +76,9 @@ export class CharacterService extends Context.Service<CharacterService>()("Chara
 						Effect.flatMap((character) =>
 							character ? Effect.succeed(parseCharacter(character)) : Effect.fail(new CharacterNotFoundError())
 						),
-						Effect.tapError(() => AppLog.debug("CharacterService.get.one", { characterId, includeLogs }))
+						Effect.tapError((error) =>
+							AppLog.debug("CharacterService.get.one", { characterId, includeLogs, error: serializeError(error) })
+						)
 					);
 				}),
 
@@ -95,7 +97,9 @@ export class CharacterService extends Context.Service<CharacterService>()("Chara
 						})
 					).pipe(
 						Effect.map((characters) => characters.map(parseCharacter)),
-						Effect.tapError(() => AppLog.debug("CharacterService.get.all", { userId, includeLogs }))
+						Effect.tapError((error) =>
+							AppLog.debug("CharacterService.get.all", { userId, includeLogs, error: serializeError(error) })
+						)
 					);
 
 					const event = getRequestEvent();
@@ -120,7 +124,9 @@ export class CharacterService extends Context.Service<CharacterService>()("Chara
 								name: { NOT: PlaceholderName }
 							}
 						})
-					).pipe(Effect.tapError(() => AppLog.debug("CharacterService.get.select", { userId })));
+					).pipe(
+						Effect.tapError((error) => AppLog.debug("CharacterService.get.select", { userId, error: serializeError(error) }))
+					);
 				})
 			},
 
@@ -180,9 +186,16 @@ export class CharacterService extends Context.Service<CharacterService>()("Chara
 						return Effect.gen(function* () {
 							const Storage = yield* StorageService;
 							yield* Storage.abandonStagedObject(userId, orphanKey);
-						}).pipe(Effect.catch((error) => AppLog.error("CharacterService.save staged cleanup", { message: error.message })));
+						}).pipe(
+							Effect.catch((error) =>
+								AppLog.error("CharacterService.save staged cleanup", {
+									message: error.message,
+									error: serializeError(error)
+								})
+							)
+						);
 					}),
-					Effect.tapError(() => AppLog.debug("CharacterService.save", { userId, data }))
+					Effect.tapError((error) => AppLog.debug("CharacterService.save", { userId, data, error: serializeError(error) }))
 				);
 			}),
 
@@ -222,7 +235,9 @@ export class CharacterService extends Context.Service<CharacterService>()("Chara
 						isTupleOf(result, 1) ? Effect.succeed(result[0]) : Effect.fail(new DeleteCharacterError())
 					),
 					Effect.tap((result) => AppLog.info("CharacterService.delete", { characterId, userId, result })),
-					Effect.tapError(() => AppLog.debug("CharacterService.delete", { characterId, userId }))
+					Effect.tapError((error) =>
+						AppLog.debug("CharacterService.delete", { characterId, userId, error: serializeError(error) })
+					)
 				);
 			})
 		};
