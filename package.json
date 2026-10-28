@@ -13,6 +13,7 @@
 		"op:db:diff": "op run --environment 4iuxdmr3wcxhjj7m7gd4qen46u -- sh -c 'supabase db diff --db-url \"$REMOTE_DB_URL\"'",
 		"op:db:push": "op run --environment 4iuxdmr3wcxhjj7m7gd4qen46u -- sh -c 'supabase db push --db-url \"$REMOTE_DB_URL\"'",
 		"op:db:dump": "op run --environment 4iuxdmr3wcxhjj7m7gd4qen46u -- sh -c 'supabase db dump --data-only -f supabase/seed.sql --db-url \"$REMOTE_DB_URL\"'",
+		"op:db:backup": "op run --environment 4iuxdmr3wcxhjj7m7gd4qen46u -- sh -c 'dir=supabase/backups/$(date +%Y%m%d-%H%M%S) && mkdir -p \"$dir\" && supabase db dump --db-url \"$REMOTE_DB_URL\" --role-only -f \"$dir/roles.sql\" && supabase db dump --db-url \"$REMOTE_DB_URL\" -f \"$dir/schema.sql\" && supabase db dump --db-url \"$REMOTE_DB_URL\" --data-only --use-copy -f \"$dir/data.sql\"'",
 		"db:push:local": "supabase db push --local",
 		"db:pull:local": "supabase db pull --local",
 		"db:reset:local": "supabase db reset",
