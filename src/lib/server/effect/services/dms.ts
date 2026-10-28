@@ -2,9 +2,8 @@ import type { DungeonMasterFormSchema, DungeonMasterId, LocalsUser, UserId } fro
 import { userDMLogIncludes } from "#lib/server/db/includes.js";
 import { DBService, runQuery, type InferQueryResult, type Transaction } from "#lib/server/db/index.js";
 import { dungeonMasters, type DungeonMaster } from "#lib/server/db/schema.js";
-import type { ErrorParams } from "#lib/server/effect/errors.js";
+import { serializeError, type ErrorParams } from "#lib/server/effect/errors.js";
 import { AppLog } from "#lib/server/effect/logging.js";
-import { serializeError } from "#lib/server/effect/serialize-error.js";
 import { isTupleOf, sorter } from "@sillvva/utils";
 import { and, EmptyFilter, eq } from "drizzle-orm";
 import { Context, Data, Effect, Layer } from "effect";

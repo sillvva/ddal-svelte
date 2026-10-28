@@ -28,8 +28,8 @@ import type { CharacterId, ImageUploadId, UserId } from "#lib/schemas.js";
 import { runQuery, type Transaction } from "#lib/server/db/index.js";
 import { DBService } from "#lib/server/db/index.js";
 import { imageUploads, characters, user } from "#lib/server/db/schema.js";
+import { serializeError } from "#lib/server/effect/errors.js";
 import { AppLog } from "#lib/server/effect/logging.js";
-import { serializeError } from "#lib/server/effect/serialize-error.js";
 import { ImageUploadError } from "#lib/server/images/errors.js";
 import {
 	assertCustomAvatarAllowed,

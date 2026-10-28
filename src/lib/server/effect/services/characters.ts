@@ -11,9 +11,8 @@ import {
 	type Transaction
 } from "#lib/server/db/index.js";
 import { characters, logs } from "#lib/server/db/schema.js";
-import type { ErrorParams } from "#lib/server/effect/errors.js";
+import { serializeError, type ErrorParams } from "#lib/server/effect/errors.js";
 import { AppLog } from "#lib/server/effect/logging.js";
-import { serializeError } from "#lib/server/effect/serialize-error.js";
 import { ImageUploadError } from "#lib/server/images/errors.js";
 import {
 	assertPortraitQuota,

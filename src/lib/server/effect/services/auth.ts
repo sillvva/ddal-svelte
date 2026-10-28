@@ -4,9 +4,8 @@ import { emailSchema, localsSessionSchema, localsUserSchema, type OnboardingSche
 import { DBService, runQuery } from "#lib/server/db/index.js";
 import type { User } from "#lib/server/db/schema.js";
 import * as schema from "#lib/server/db/schema.js";
-import { AuthTokenError, RedirectError, type ErrorParams } from "#lib/server/effect/errors.js";
+import { AuthTokenError, RedirectError, serializeError, type ErrorParams } from "#lib/server/effect/errors.js";
 import { AppLog } from "#lib/server/effect/logging.js";
-import { serializeError } from "#lib/server/effect/serialize-error.js";
 import { promoteStagedAvatar, StorageService } from "#lib/server/effect/services/storage.js";
 import { ImageUploadError } from "#lib/server/images/errors.js";
 import { clearScheduledDeletions, collectUserKeys, lockPortraitUser, scheduleDeletions } from "#lib/server/images/portrait-db.js";

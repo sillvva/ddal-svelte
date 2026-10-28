@@ -21,9 +21,8 @@ import {
 	type Transaction
 } from "#lib/server/db/index.js";
 import { characters, dungeonMasters, logs, magicItems, storyAwards } from "#lib/server/db/schema.js";
-import type { ErrorParams } from "#lib/server/effect/errors.js";
+import { serializeError, type ErrorParams } from "#lib/server/effect/errors.js";
 import { AppLog } from "#lib/server/effect/logging.js";
-import { serializeError } from "#lib/server/effect/serialize-error.js";
 import { getRequestEvent } from "$app/server";
 import { isTupleOf } from "@sillvva/utils";
 import { and, eq, exists, inArray, isNull, notInArray, or } from "drizzle-orm";
