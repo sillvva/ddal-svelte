@@ -23,111 +23,113 @@
 </script>
 
 <svelte:boundary>
-	{const log = $derived(
-		await API.logs.forms.dm({
-			param: { logId: params.logId }
-		})
-	)}
-
 	{#snippet failed(error)}<Error {error} boundary="edit-dm-log" />{/snippet}
-	<Head title={log.name || "New Log"} />
+	{#if params.logId}
+		{const log = $derived(
+			await API.logs.forms.dm({
+				param: { logId: params.logId }
+			})
+		)}
 
-	<NavMenu
-		crumbs={[
-			{ title: "DM Logs", url: "/dm-logs" },
-			{ title: log.name || "New Log", url: `/dm-logs/${log.id}` }
-		]}
-	/>
+		<Head title={log.name || "New Log"} />
 
-	{let data = $derived(proxify(log))}
-	<RemoteForm {schema} {form} {data} {initialErrors}>
-		{#snippet children(ctx)}
-			{const { form, initial } = $derived(ctx)}
-			<Input field={form.fields.id} type="hidden" />
-			<Input field={form.fields.timezone} hidden />
-			<Control class="col-span-12 sm:col-span-7">
-				<Input field={form.fields.name} label="Title" required />
-			</Control>
-			<Control class="col-span-12 sm:col-span-5">
-				<DateInput field={form.fields.date} initial={initial.date} label="Date" timezone={data.timezone} />
-			</Control>
-			<Control class="col-span-12 sm:col-span-7">
-				{const characters = $derived(await API.characters.queries.getAllSelect())}
-				<Combobox
-					label="Assigned Character"
-					valueField={form.fields.characterId}
-					inputField={form.fields.characterName}
-					values={characters.map((char) => ({ value: char.id, label: char.name }))}
-					required={!!data.appliedDate}
-					onselect={() => {
-						data.appliedDate = data.date || new Date().getTime();
-					}}
-					clearable
-					onclear={() => {
-						data.appliedDate = 0;
-					}}
-				/>
-			</Control>
-			<Control class="col-span-12 sm:col-span-5">
-				<DateInput
-					field={form.fields.appliedDate}
-					initial={initial.appliedDate}
-					label="Assigned Date"
-					min={data.date}
-					required={!!data.characterId}
-					timezone={data.timezone}
-				/>
-			</Control>
-			{let season = $derived(log.experience ? 1 : log.acp ? 8 : 9)}
-			<Control class="col-span-12 sm:col-span-4">
-				<InputWrapper type="select" labelFor="season" label="Season">
-					<select
-						id="season"
-						bind:value={season}
-						class="select-bordered select w-full max-sm:text-base"
-						onchange={() => {
-							data.experience = 0;
-							data.acp = 0;
-							data.level = 0;
-							data.tcp = 0;
+		<NavMenu
+			crumbs={[
+				{ title: "DM Logs", url: "/dm-logs" },
+				{ title: log.name || "New Log", url: `/dm-logs/${log.id}` }
+			]}
+		/>
+
+		{let data = $derived(proxify(log))}
+		<RemoteForm {schema} {form} {data} {initialErrors}>
+			{#snippet children(ctx)}
+				{const { form, initial } = $derived(ctx)}
+				<Input field={form.fields.id} type="hidden" />
+				<Input field={form.fields.timezone} hidden />
+				<Control class="col-span-12 sm:col-span-7">
+					<Input field={form.fields.name} label="Title" required />
+				</Control>
+				<Control class="col-span-12 sm:col-span-5">
+					<DateInput field={form.fields.date} initial={initial.date} label="Date" timezone={data.timezone} />
+				</Control>
+				<Control class="col-span-12 sm:col-span-7">
+					{const characters = $derived(await API.characters.queries.getAllSelect())}
+					<Combobox
+						label="Assigned Character"
+						valueField={form.fields.characterId}
+						inputField={form.fields.characterName}
+						values={characters.map((char) => ({ value: char.id, label: char.name }))}
+						required={!!data.appliedDate}
+						onselect={() => {
+							data.appliedDate = data.date || new Date().getTime();
 						}}
-					>
-						<option value={9}>Season 9+ (Level)</option>
-						<option value={8}>Season 8 (ACP/TCP)</option>
-						<option value={1}>Season 1-7 (Experience)</option>
-					</select>
-				</InputWrapper>
-			</Control>
-			{#if season === 1}
+						clearable
+						onclear={() => {
+							data.appliedDate = 0;
+						}}
+					/>
+				</Control>
+				<Control class="col-span-12 sm:col-span-5">
+					<DateInput
+						field={form.fields.appliedDate}
+						initial={initial.appliedDate}
+						label="Assigned Date"
+						min={data.date}
+						required={!!data.characterId}
+						timezone={data.timezone}
+					/>
+				</Control>
+				{let season = $derived(log.experience ? 1 : log.acp ? 8 : 9)}
 				<Control class="col-span-12 sm:col-span-4">
-					<Input field={form.fields.experience} type="number" label="Experience" />
+					<InputWrapper type="select" labelFor="season" label="Season">
+						<select
+							id="season"
+							bind:value={season}
+							class="select-bordered select w-full max-sm:text-base"
+							onchange={() => {
+								data.experience = 0;
+								data.acp = 0;
+								data.level = 0;
+								data.tcp = 0;
+							}}
+						>
+							<option value={9}>Season 9+ (Level)</option>
+							<option value={8}>Season 8 (ACP/TCP)</option>
+							<option value={1}>Season 1-7 (Experience)</option>
+						</select>
+					</InputWrapper>
 				</Control>
-			{/if}
-			{#if season === 9}
-				<Control class="col-span-12 sm:col-span-4">
-					<Input field={form.fields.level} type="number" label="Level" />
-				</Control>
-			{/if}
-			{#if season === 8}
+				{#if season === 1}
+					<Control class="col-span-12 sm:col-span-4">
+						<Input field={form.fields.experience} type="number" label="Experience" />
+					</Control>
+				{/if}
+				{#if season === 9}
+					<Control class="col-span-12 sm:col-span-4">
+						<Input field={form.fields.level} type="number" label="Level" />
+					</Control>
+				{/if}
+				{#if season === 8}
+					<Control class="col-span-6 sm:col-span-2">
+						<Input field={form.fields.acp} type="number" label="ACP" />
+					</Control>
+					<Control class="col-span-6 sm:col-span-2">
+						<Input field={form.fields.tcp} type="number" label="TCP" />
+					</Control>
+				{/if}
 				<Control class="col-span-6 sm:col-span-2">
-					<Input field={form.fields.acp} type="number" label="ACP" />
+					<Input field={form.fields.gold} type="number" label="Gold" />
 				</Control>
 				<Control class="col-span-6 sm:col-span-2">
-					<Input field={form.fields.tcp} type="number" label="TCP" />
+					<Input field={form.fields.dtd} type="number" label="Downtime" />
 				</Control>
-			{/if}
-			<Control class="col-span-6 sm:col-span-2">
-				<Input field={form.fields.gold} type="number" label="Gold" />
-			</Control>
-			<Control class="col-span-6 sm:col-span-2">
-				<Input field={form.fields.dtd} type="number" label="Downtime" />
-			</Control>
-			<Control class="col-span-12">
-				<MarkdownInput field={form.fields.description} maxLength={5000} maxRows={20} preview />
-			</Control>
-			<AddDropItems form={ctx}>
-				<Submit form={ctx}>Save Log</Submit>
-			</AddDropItems>
-		{/snippet}
-	</RemoteForm>
+				<Control class="col-span-12">
+					<MarkdownInput field={form.fields.description} maxLength={5000} maxRows={20} preview />
+				</Control>
+				<AddDropItems form={ctx}>
+					<Submit form={ctx}>Save Log</Submit>
+				</AddDropItems>
+			{/snippet}
+		</RemoteForm>
+	{/if}
 </svelte:boundary>
