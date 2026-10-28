@@ -6,6 +6,7 @@ import type { User } from "#lib/server/db/schema.js";
 import * as schema from "#lib/server/db/schema.js";
 import { AuthTokenError, RedirectError, type ErrorParams } from "#lib/server/effect/errors.js";
 import { AppLog } from "#lib/server/effect/logging.js";
+import { serializeError } from "#lib/server/effect/serialize-error.js";
 import { promoteStagedAvatar, StorageService } from "#lib/server/effect/services/storage.js";
 import { ImageUploadError } from "#lib/server/images/errors.js";
 import { clearScheduledDeletions, collectUserKeys, lockPortraitUser, scheduleDeletions } from "#lib/server/images/portrait-db.js";
@@ -393,7 +394,10 @@ export class AuthService extends Context.Service<AuthService>()("AuthService", {
 									if (!orphanKey) return Effect.void;
 									return Storage.abandonStagedObject(userId, orphanKey).pipe(
 										Effect.catch((error) =>
-											AppLog.error("AuthService.completeOnboarding staged cleanup", { message: error.message })
+											AppLog.error("AuthService.completeOnboarding staged cleanup", {
+												message: error.message,
+												error: serializeError(error)
+											})
 										)
 									);
 								})
@@ -407,7 +411,9 @@ export class AuthService extends Context.Service<AuthService>()("AuthService", {
 						isTupleOf(users, 1) ? Effect.succeed(users[0]) : Effect.fail(new UpdateUserError("Failed to finish account setup"))
 					),
 					Effect.tap((result) => AppLog.info("AuthService.completeOnboarding", { userId, result })),
-					Effect.tapError(() => AppLog.debug("AuthService.completeOnboarding", { userId, data }))
+					Effect.tapError((error) =>
+						AppLog.debug("AuthService.completeOnboarding", { userId, data, error: serializeError(error) })
+					)
 				);
 			}),
 			user: {
@@ -442,7 +448,7 @@ export class AuthService extends Context.Service<AuthService>()("AuthService", {
 							isTupleOf(users, 1) ? Effect.succeed(users[0]) : Effect.fail(new UpdateUserError("Failed to update user"))
 						),
 						Effect.tap((result) => AppLog.info("AuthService.user.update", { userId, result })),
-						Effect.tapError(() => AppLog.debug("AuthService.user.update", { userId, data }))
+						Effect.tapError((error) => AppLog.debug("AuthService.user.update", { userId, data, error: serializeError(error) }))
 					);
 				}),
 				delete: Effect.fn("AuthService.user.delete")(function* (userId: UserId) {
@@ -479,7 +485,7 @@ export class AuthService extends Context.Service<AuthService>()("AuthService", {
 					).pipe(
 						Effect.flatMap((result) => (isTupleOf(result, 1) ? Effect.succeed(result[0]) : Effect.fail(new DeleteUserError()))),
 						Effect.tap((result) => AppLog.info("AuthService.user.delete", { userId, result })),
-						Effect.tapError(() => AppLog.debug("AuthService.user.delete", { userId }))
+						Effect.tapError((error) => AppLog.debug("AuthService.user.delete", { userId, error: serializeError(error) }))
 					);
 				})
 			}

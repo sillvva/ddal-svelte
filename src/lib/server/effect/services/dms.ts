@@ -4,6 +4,7 @@ import { DBService, runQuery, type InferQueryResult, type Transaction } from "#l
 import { dungeonMasters, type DungeonMaster } from "#lib/server/db/schema.js";
 import type { ErrorParams } from "#lib/server/effect/errors.js";
 import { AppLog } from "#lib/server/effect/logging.js";
+import { serializeError } from "#lib/server/effect/serialize-error.js";
 import { isTupleOf, sorter } from "@sillvva/utils";
 import { and, EmptyFilter, eq } from "drizzle-orm";
 import { Context, Data, Effect, Layer } from "effect";
@@ -49,7 +50,7 @@ export class DMService extends Context.Service<DMService>()("DMService", {
 				})
 			).pipe(
 				Effect.flatMap((dm) => (dm ? Effect.succeed(dm) : Effect.fail(new DMNotFoundError()))),
-				Effect.tapError(() => AppLog.debug("DMService.get.one", { dmId, userId, includeLogs }))
+				Effect.tapError((error) => AppLog.debug("DMService.get.one", { dmId, userId, includeLogs, error: serializeError(error) }))
 			);
 		});
 
@@ -71,7 +72,9 @@ export class DMService extends Context.Service<DMService>()("DMService", {
 				Effect.map((dms) => dms.toSorted((a, b) => sorter(a.isUser, b.isUser) || sorter(a.name, b.name))),
 				// Add the user DM if there isn't one already
 				Effect.flatMap((dms) => (!dms[0]?.isUser ? addUserDM(user, dms) : Effect.succeed(dms))),
-				Effect.tapError(() => AppLog.debug("DMService.get.all", { userId: user.id, includeLogs }))
+				Effect.tapError((error) =>
+					AppLog.debug("DMService.get.all", { userId: user.id, includeLogs, error: serializeError(error) })
+				)
 			);
 		});
 
@@ -93,10 +96,11 @@ export class DMService extends Context.Service<DMService>()("DMService", {
 					}
 				})
 			).pipe(
-				Effect.tapError(() =>
+				Effect.tapError((error) =>
 					AppLog.debug("DMService.get.fuzzySearch", {
 						userId,
-						...(isUser ? { isUser } : { name: dm.name.trim() || undefined, DCI: dm.DCI || undefined })
+						...(isUser ? { isUser } : { name: dm.name.trim() || undefined, DCI: dm.DCI || undefined }),
+						error: serializeError(error)
 					})
 				)
 			);
@@ -122,7 +126,7 @@ export class DMService extends Context.Service<DMService>()("DMService", {
 			).pipe(
 				Effect.flatMap((dms) => (isTupleOf(dms, 1) ? Effect.succeed(dms[0]) : Effect.fail(new SaveDMError("Failed to save DM")))),
 				Effect.tap((result) => AppLog.info("DMService.save", { userId: user.id, result })),
-				Effect.tapError(() => AppLog.debug("DMService.save", { userId: user.id, data }))
+				Effect.tapError((error) => AppLog.debug("DMService.save", { userId: user.id, data, error: serializeError(error) }))
 			);
 		});
 
@@ -165,7 +169,7 @@ export class DMService extends Context.Service<DMService>()("DMService", {
 					isTupleOf(result, 1) ? Effect.succeed(result[0]) : Effect.fail(new DeleteDMError("Unable to delete DM"))
 				),
 				Effect.tap((result) => AppLog.info("DMService.delete", { dmId: dm.id, userId, result })),
-				Effect.tapError(() => AppLog.debug("DMService.delete", { dmId: dm.id, userId }))
+				Effect.tapError((error) => AppLog.debug("DMService.delete", { dmId: dm.id, userId, error: serializeError(error) }))
 			);
 		});
 
