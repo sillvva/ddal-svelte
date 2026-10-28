@@ -121,7 +121,7 @@ export interface RemoteFormOptions<Input extends RemoteFormInput = RemoteFormInp
 	key?: FormId<Input>;
 	data?: Input;
 	initialErrors?: boolean;
-	navBlockMessage?: string;
+	navBlockMessage?: string | null;
 	onissues?: (ctx: { readonly issues: RemoteFormIssue[] }) => unknown;
 	onsubmit?: <T>(ctx: { readonly dirty: boolean; readonly form: HTMLFormElement; readonly data: Input }) => Awaitable<T>;
 	onresult?: (ctx: {
@@ -265,7 +265,7 @@ export function configureForm<Input extends RemoteFormInput = RemoteFormInput>(g
 
 	beforeNavigate((ev) => {
 		if (ev.shallow) return;
-		if ((dirty || issues) && navBlockMessage && !confirm(navBlockMessage)) ev.cancel();
+		if ((dirty || issues) && navBlockMessage && navBlockMessage.length > 0 && !confirm(navBlockMessage)) ev.cancel();
 	});
 
 	return () => ({

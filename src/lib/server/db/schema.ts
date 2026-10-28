@@ -1,14 +1,5 @@
 import type { ProviderId } from "#lib/constants.js";
-import type {
-	AppLogId,
-	CharacterId,
-	CharacterImageUploadId,
-	DungeonMasterId,
-	ItemId,
-	LogId,
-	PasskeyId,
-	UserId
-} from "#lib/schemas.js";
+import type { AppLogId, CharacterId, ImageUploadId, DungeonMasterId, ItemId, LogId, PasskeyId, UserId } from "#lib/schemas.js";
 import type { Annotations } from "#lib/server/effect/logging.js";
 import { eq, isNotNull } from "drizzle-orm";
 import * as pg from "drizzle-orm/pg-core";
@@ -202,18 +193,20 @@ export const characters = pg.pgTable(
 	(table) => [pg.index("Character_userId_idx").on(table.userId)]
 );
 
-export type CharacterImageUpload = typeof characterImageUploads.$inferSelect;
-export type InsertCharacterImageUpload = typeof characterImageUploads.$inferInsert;
-export const characterImageUploads = pg.pgTable(
-	"character_image_upload",
+export type ImageUpload = typeof imageUploads.$inferSelect;
+export type InsertImageUpload = typeof imageUploads.$inferInsert;
+export const imageUploads = pg.pgTable(
+	"image_upload",
 	{
-		id: pg.uuid().primaryKey().$type<CharacterImageUploadId>(),
+		id: pg.uuid().primaryKey().$type<ImageUploadId>(),
 		userId: pg
 			.uuid("user_id")
 			.notNull()
 			.$type<UserId>()
 			.references(() => user.id, { onUpdate: "cascade", onDelete: "cascade" }),
-		characterId: pg.uuid("character_id").notNull().$type<CharacterId>(),
+		/** Set for portrait uploads. Null for avatar uploads. */
+		characterId: pg.uuid("character_id").$type<CharacterId>(),
+		purpose: pg.text("purpose").$type<"character" | "avatar">().notNull().default("character"),
 		objectKey: pg.text("object_key").notNull().unique(),
 		bytes: pg.integer().notNull(),
 		contentType: pg.text("content_type").notNull(),
@@ -224,8 +217,8 @@ export const characterImageUploads = pg.pgTable(
 		completedAt: pg.timestamp("completed_at", { mode: "date", withTimezone: true })
 	},
 	(table) => [
-		pg.index("character_image_upload_user_created_idx").on(table.userId, table.createdAt),
-		pg.index("character_image_upload_character_idx").on(table.characterId)
+		pg.index("image_upload_user_created_idx").on(table.userId, table.createdAt),
+		pg.index("image_upload_character_idx").on(table.characterId)
 	]
 );
 

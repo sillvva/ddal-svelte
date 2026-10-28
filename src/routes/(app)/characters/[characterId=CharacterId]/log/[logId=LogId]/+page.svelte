@@ -29,164 +29,170 @@
 	{const form = API.logs.forms.saveCharacter}
 	{const firstLog = $derived(page.url.searchParams.get("firstLog") === "true")}
 	{const initialErrors = $derived(params.logId !== "new")}
-	{const log = $derived(
-		await API.logs.forms.character({ character: { id: character.id, name: character.name }, logId: params.logId, firstLog })
-	)}
+	{#if params.logId}
+		{const log = $derived(
+			await API.logs.forms.character({
+				character: { id: character.id, name: character.name },
+				logId: params.logId,
+				firstLog
+			})
+		)}
 
-	<Head title={`${log.name || "New Log"} - ${character.name}`} />
+		<Head title={`${log.name || "New Log"} - ${character.name}`} />
 
-	<NavMenu
-		crumbs={[
-			{ title: "Characters", url: "/characters" },
-			{ title: character.name, url: `/characters/${character.id}` },
-			{ title: log.name || "New Log", url: `/characters/${character.id}/log/${log.id}` }
-		]}
-	/>
+		<NavMenu
+			crumbs={[
+				{ title: "Characters", url: "/characters" },
+				{ title: character.name, url: `/characters/${character.id}` },
+				{ title: log.name || "New Log", url: `/characters/${character.id}/log/${log.id}` }
+			]}
+		/>
 
-	{let data = $derived(proxify(log))}
-	<RemoteForm {schema} {form} {data} {initialErrors}>
-		{#snippet children(ctx)}
-			{const { form, initial } = $derived(ctx)}
-			<Input field={form.fields.id} hidden />
-			<Input field={form.fields.characterId} hidden />
-			<Input field={form.fields.characterName} hidden />
-			<Input field={form.fields.appliedDate} type="number" hidden />
-			<Input field={form.fields.timezone} hidden />
-			{#if !firstLog}
-				<Control class="col-span-12 sm:col-span-2 md:col-span-3 lg:col-span-4">
-					<InputWrapper field={form.fields.type} as="select" label="Log Type">
-						<select
-							{...form.fields.type.as("select")}
-							class={["select-bordered select w-full max-sm:text-base", data.type !== "game" && "text-xs!"]}
-						>
-							<option value="game">Game</option>
-							<option value="nongame">Non-Game (Purchase, Trade, etc)</option>
-						</select>
-					</InputWrapper>
-				</Control>
-			{/if}
-			<Control class={["col-span-12", !firstLog ? "sm:col-span-5 lg:col-span-4" : "sm:col-span-6 md:col-span-7 lg:col-span-8"]}>
-				<Input
-					field={form.fields.name}
-					type="text"
-					label="Title"
-					placeholder={firstLog ? "Introduction, Character Creation, etc." : ""}
-					required
-				/>
-			</Control>
-			<Control class={["col-span-12", !firstLog ? "sm:col-span-5 md:col-span-4" : "sm:col-span-6 md:col-span-5 lg:col-span-4"]}>
-				<DateInput field={form.fields.date} initial={initial.date} label="Date" timezone={data.timezone} />
-			</Control>
-			{let season = $derived(log.experience ? 1 : log.acp ? 8 : 9)}
-			{#if data.type === "game"}
+		{let data = $derived(proxify(log))}
+		<RemoteForm {schema} {form} {data} {initialErrors}>
+			{#snippet children(ctx)}
+				{const { form, initial } = $derived(ctx)}
+				<Input field={form.fields.id} hidden />
+				<Input field={form.fields.characterId} hidden />
+				<Input field={form.fields.characterName} hidden />
+				<Input field={form.fields.appliedDate} type="number" hidden />
+				<Input field={form.fields.timezone} hidden />
 				{#if !firstLog}
-					{const dms = $derived(await API.dms.queries.getAllWithoutLogs())}
-					{const request = $derived(await API.app.queries.request())}
-					{const user = $derived(request.user!)}
-					<Control class="col-span-12 sm:col-span-6">
-						<Combobox
-							label="DM Name"
-							valueField={form.fields.dm.id}
-							inputField={form.fields.dm.name}
-							values={dms.map((dm) => ({
-								value: dm.id,
-								label: dm.name,
-								itemLabel: dm.name + (dm.isUser ? ` (Me)` : "") + (dm.DCI ? ` (${dm.DCI})` : "")
-							})) || []}
-							allowCustom
-							onselect={({ selected }) => {
-								const id = (selected?.value || v7()) as DungeonMasterId;
-								const name = selected?.label;
-								data.dm = dms.find((dm) => dm.id === id) || (name ? { ...data.dm, id, name } : defaultDM(user.id));
-							}}
-							clearable
-							onclear={() => (data.dm = defaultDM(user.id))}
-							link={data.dm.id && data.dm.name ? `/dms/${data.dm.id}` : ""}
-							placeholder={dms.find((dm) => dm.isUser)?.name || user.name}
-						/>
+					<Control class="col-span-12 sm:col-span-2 md:col-span-3 lg:col-span-4">
+						<InputWrapper field={form.fields.type} as="select" label="Log Type">
+							<select
+								{...form.fields.type.as("select")}
+								class={["select-bordered select w-full max-sm:text-base", data.type !== "game" && "text-xs!"]}
+							>
+								<option value="game">Game</option>
+								<option value="nongame">Non-Game (Purchase, Trade, etc)</option>
+							</select>
+						</InputWrapper>
 					</Control>
-					<Control class="col-span-12 sm:col-span-6">
-						<Input
-							field={form.fields.dm.DCI}
-							type="text"
-							disabled={!data.dm.name}
-							placeholder={data.dm.name ? undefined : dms.find((dm) => dm.isUser)?.DCI}
-							label="DM DCI"
-						/>
-						{#if !data.dm.name}
-							<Input field={form.fields.dm.DCI} hidden />
-						{/if}
+				{/if}
+				<Control class={["col-span-12", !firstLog ? "sm:col-span-5 lg:col-span-4" : "sm:col-span-6 md:col-span-7 lg:col-span-8"]}>
+					<Input
+						field={form.fields.name}
+						type="text"
+						label="Title"
+						placeholder={firstLog ? "Introduction, Character Creation, etc." : ""}
+						required
+					/>
+				</Control>
+				<Control class={["col-span-12", !firstLog ? "sm:col-span-5 md:col-span-4" : "sm:col-span-6 md:col-span-5 lg:col-span-4"]}>
+					<DateInput field={form.fields.date} initial={initial.date} label="Date" timezone={data.timezone} />
+				</Control>
+				{let season = $derived(log.experience ? 1 : log.acp ? 8 : 9)}
+				{#if data.type === "game"}
+					{#if !firstLog}
+						{const dms = $derived(await API.dms.queries.getAllWithoutLogs())}
+						{const request = $derived(await API.app.queries.request())}
+						{const user = $derived(request.user!)}
+						<Control class="col-span-12 sm:col-span-6">
+							<Combobox
+								label="DM Name"
+								valueField={form.fields.dm.id}
+								inputField={form.fields.dm.name}
+								values={dms.map((dm) => ({
+									value: dm.id,
+									label: dm.name,
+									itemLabel: dm.name + (dm.isUser ? ` (Me)` : "") + (dm.DCI ? ` (${dm.DCI})` : "")
+								})) || []}
+								allowCustom
+								onselect={({ selected }) => {
+									const id = (selected?.value || v7()) as DungeonMasterId;
+									const name = selected?.label;
+									data.dm = dms.find((dm) => dm.id === id) || (name ? { ...data.dm, id, name } : defaultDM(user.id));
+								}}
+								clearable
+								onclear={() => (data.dm = defaultDM(user.id))}
+								link={data.dm.id && data.dm.name ? `/dms/${data.dm.id}` : ""}
+								placeholder={dms.find((dm) => dm.isUser)?.name || user.name}
+							/>
+						</Control>
+						<Control class="col-span-12 sm:col-span-6">
+							<Input
+								field={form.fields.dm.DCI}
+								type="text"
+								disabled={!data.dm.name}
+								placeholder={data.dm.name ? undefined : dms.find((dm) => dm.isUser)?.DCI}
+								label="DM DCI"
+							/>
+							{#if !data.dm.name}
+								<Input field={form.fields.dm.DCI} hidden />
+							{/if}
+						</Control>
+					{:else}
+						<Input field={form.fields.dm.id} hidden />
+						<Input field={form.fields.dm.name} hidden />
+						<Input field={form.fields.dm.DCI} hidden />
+					{/if}
+					<Input field={form.fields.dm.userId} hidden />
+					<Input field={form.fields.dm.isUser} type="checkbox" hidden />
+					<Control class="col-span-12 sm:col-span-4">
+						<InputWrapper type="select" labelFor="season" label="Season">
+							<select
+								id="season"
+								bind:value={season}
+								class="select-bordered select w-full max-sm:text-base"
+								onchange={() => {
+									data.experience = 0;
+									data.acp = 0;
+									data.level = 0;
+									data.tcp = 0;
+								}}
+							>
+								<option value={9}>Season 9+ (Level)</option>
+								<option value={8}>Season 8 (ACP/TCP)</option>
+								<option value={1}>Season 1-7 (Experience)</option>
+							</select>
+						</InputWrapper>
 					</Control>
+					{#if season === 1}
+						<Control class="col-span-12 sm:col-span-4">
+							<Input field={form.fields.experience} type="number" label="Experience" />
+						</Control>
+					{/if}
+					{#if season === 8}
+						<Control class="col-span-6 sm:col-span-2">
+							<Input field={form.fields.acp} type="number" label="ACP" />
+						</Control>
+					{/if}
+					{#if season === 9}
+						<Control class="col-span-12 sm:col-span-4">
+							<Input
+								field={form.fields.level}
+								type="number"
+								label="Level"
+								max={Math.max(form.fields.level.value() || 0, 20 - character.totalLevel)}
+							/>
+						</Control>
+					{/if}
 				{:else}
 					<Input field={form.fields.dm.id} hidden />
 					<Input field={form.fields.dm.name} hidden />
 					<Input field={form.fields.dm.DCI} hidden />
+					<Input field={form.fields.dm.userId} hidden />
+					<Input field={form.fields.dm.isUser} type="checkbox" hidden />
 				{/if}
-				<Input field={form.fields.dm.userId} hidden />
-				<Input field={form.fields.dm.isUser} type="checkbox" hidden />
-				<Control class="col-span-12 sm:col-span-4">
-					<InputWrapper type="select" labelFor="season" label="Season">
-						<select
-							id="season"
-							bind:value={season}
-							class="select-bordered select w-full max-sm:text-base"
-							onchange={() => {
-								data.experience = 0;
-								data.acp = 0;
-								data.level = 0;
-								data.tcp = 0;
-							}}
-						>
-							<option value={9}>Season 9+ (Level)</option>
-							<option value={8}>Season 8 (ACP/TCP)</option>
-							<option value={1}>Season 1-7 (Experience)</option>
-						</select>
-					</InputWrapper>
-				</Control>
-				{#if season === 1}
-					<Control class="col-span-12 sm:col-span-4">
-						<Input field={form.fields.experience} type="number" label="Experience" />
+				{#if season === 8 || data.type === "nongame"}
+					<Control class={data.type === "game" ? "col-span-6 sm:col-span-2" : "col-span-4"}>
+						<Input field={form.fields.tcp} type="number" label="TCP" />
 					</Control>
 				{/if}
-				{#if season === 8}
-					<Control class="col-span-6 sm:col-span-2">
-						<Input field={form.fields.acp} type="number" label="ACP" />
-					</Control>
-				{/if}
-				{#if season === 9}
-					<Control class="col-span-12 sm:col-span-4">
-						<Input
-							field={form.fields.level}
-							type="number"
-							label="Level"
-							max={Math.max(form.fields.level.value() || 0, 20 - character.totalLevel)}
-						/>
-					</Control>
-				{/if}
-			{:else}
-				<Input field={form.fields.dm.id} hidden />
-				<Input field={form.fields.dm.name} hidden />
-				<Input field={form.fields.dm.DCI} hidden />
-				<Input field={form.fields.dm.userId} hidden />
-				<Input field={form.fields.dm.isUser} type="checkbox" hidden />
-			{/if}
-			{#if season === 8 || data.type === "nongame"}
 				<Control class={data.type === "game" ? "col-span-6 sm:col-span-2" : "col-span-4"}>
-					<Input field={form.fields.tcp} type="number" label="TCP" />
+					<Input field={form.fields.gold} type="number" label="Gold" />
 				</Control>
-			{/if}
-			<Control class={data.type === "game" ? "col-span-6 sm:col-span-2" : "col-span-4"}>
-				<Input field={form.fields.gold} type="number" label="Gold" />
-			</Control>
-			<Control class={data.type === "game" ? "col-span-6 sm:col-span-2" : "col-span-4"}>
-				<Input field={form.fields.dtd} type="number" label="Downtime" />
-			</Control>
-			<Control class="col-span-12 w-full">
-				<MarkdownInput field={form.fields.description} maxRows={20} maxLength={5000} preview />
-			</Control>
-			<AddDropItems form={ctx} {magicItems} {storyAwards}>
-				<Submit form={ctx}>Save Log</Submit>
-			</AddDropItems>
-		{/snippet}
-	</RemoteForm>
+				<Control class={data.type === "game" ? "col-span-6 sm:col-span-2" : "col-span-4"}>
+					<Input field={form.fields.dtd} type="number" label="Downtime" />
+				</Control>
+				<Control class="col-span-12 w-full">
+					<MarkdownInput field={form.fields.description} maxRows={20} maxLength={5000} preview />
+				</Control>
+				<AddDropItems form={ctx} {magicItems} {storyAwards}>
+					<Submit form={ctx}>Save Log</Submit>
+				</AddDropItems>
+			{/snippet}
+		</RemoteForm>
+	{/if}
 </svelte:boundary>

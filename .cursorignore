@@ -1,0 +1,10 @@
+# Environment files (keep committed examples readable)
+.env
+.env.*
+!.env.example.local
+!.env.example.development.local
+!.env.example.production.local
+
+# Supabase local data
+supabase/seed.sql
+supabase/backups/*

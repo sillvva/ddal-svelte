@@ -21,7 +21,7 @@ import {
 	type Transaction
 } from "#lib/server/db/index.js";
 import { characters, dungeonMasters, logs, magicItems, storyAwards } from "#lib/server/db/schema.js";
-import type { ErrorParams } from "#lib/server/effect/errors.js";
+import { serializeError, type ErrorParams } from "#lib/server/effect/errors.js";
 import { AppLog } from "#lib/server/effect/logging.js";
 import { getRequestEvent } from "$app/server";
 import { isTupleOf } from "@sillvva/utils";
@@ -134,7 +134,7 @@ const getCharacterLog = Effect.fn("LogService.get.one")(function* (logId: LogId,
 		})
 	).pipe(
 		Effect.map((log) => log && parseLog(log)),
-		Effect.tapError(() => AppLog.debug("LogService.get.one", { logId, userId }))
+		Effect.tapError((error) => AppLog.debug("LogService.get.one", { logId, userId, error: serializeError(error) }))
 	);
 });
 
@@ -149,7 +149,7 @@ const getDMLogs = Effect.fn("LogService.get.dm")(function* (userId: UserId, db: 
 		})
 	).pipe(
 		Effect.map((logs) => logs.map(parseLog)),
-		Effect.tapError(() => AppLog.debug("LogService.get.dm", { userId }))
+		Effect.tapError((error) => AppLog.debug("LogService.get.dm", { userId, error: serializeError(error) }))
 	);
 
 	const event = getRequestEvent();
@@ -170,7 +170,7 @@ const getAllLogs = Effect.fn("LogService.get.all")(function* (userId: UserId, db
 				date: "asc"
 			}
 		})
-	).pipe(Effect.tapError(() => AppLog.debug("LogService.get.all", { userId })));
+	).pipe(Effect.tapError((error) => AppLog.debug("LogService.get.all", { userId, error: serializeError(error) })));
 });
 
 const validateLogDM = Effect.fn("validateLogDM")(function* (log: LogSchema, user: LocalsUser) {
@@ -437,7 +437,7 @@ const deleteLog = Effect.fn("LogService.delete")(function* (logId: LogId, userId
 	).pipe(
 		Effect.flatMap((logs) => (isTupleOf(logs, 1) ? Effect.succeed(logs[0]) : Effect.fail(new DeleteLogError()))),
 		Effect.tap((result) => AppLog.info("LogService.delete", { logId, userId, result })),
-		Effect.tapError(() => AppLog.debug("LogService.delete", { logId, userId }))
+		Effect.tapError((error) => AppLog.debug("LogService.delete", { logId, userId, error: serializeError(error) }))
 	);
 });
 
@@ -473,7 +473,9 @@ export class LogService extends Context.Service<LogService>()("LogService", {
 					})
 				).pipe(
 					Effect.tap((result) => AppLog.info("LogService.save", { logId: log.id, userId: user.id, result })),
-					Effect.tapError(() => AppLog.debug("LogService.save", { logId: log.id, userId: user.id, log }))
+					Effect.tapError((error) =>
+						AppLog.debug("LogService.save", { logId: log.id, userId: user.id, log, error: serializeError(error) })
+					)
 				);
 			}),
 			delete: Effect.fn("LogService.delete")(function* (logId: LogId, userId: UserId) {

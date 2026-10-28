@@ -22,7 +22,10 @@
 		configureForm(() => ({
 			...rest,
 			formEl,
-			navBlockMessage: rest.navBlockMessage || "You have unsaved changes. Are you sure you want to leave?",
+			navBlockMessage:
+				rest.navBlockMessage === null
+					? null
+					: rest.navBlockMessage || "You have unsaved changes. Are you sure you want to leave?",
 			onresult: (ctx) => {
 				if (ctx.success && successMessage !== false) {
 					successToast(successMessage || `${form.fields.name?.value() || "Form"} saved successfully`);

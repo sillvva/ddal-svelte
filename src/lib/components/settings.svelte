@@ -1,8 +1,10 @@
 <script lang="ts">
 	import { authClient } from "#lib/auth.js";
+	import ImageUpload from "#lib/components/forms/image-upload.svelte";
 	import { BLANK_CHARACTER, PROVIDERS } from "#lib/constants.js";
 	import { errorToast } from "#lib/factories.svelte.js";
 	import * as API from "#lib/remote/index.js";
+	import type { ImageUploadId } from "#lib/schemas.js";
 	import { getGlobal } from "#lib/stores.svelte.js";
 	import { hotkey, parseEffectResult } from "#lib/util.js";
 	import { getLocalTimeZone } from "@internationalized/date";
@@ -23,6 +25,12 @@
 	let deleteConfirmOpen = $state(false);
 	let confirmation = $state("");
 	let deleteAccountForm = $state<HTMLFormElement | null>(null);
+	let avatarOpen = $state(false);
+	let avatarUploading = $state(false);
+	let stagedAvatar = $state<{ uploadId: ImageUploadId; imageUrl: string } | null>(null);
+
+	const canEditAvatar = $derived(!!user && user.accounts.length === 0);
+	const avatarSavePending = $derived(!!API.images.actions.saveAvatar.pending);
 
 	const userIdSegment = $derived(user?.id.split("-").at(-1) ?? "");
 	const confirmationMatches = $derived(
@@ -48,6 +56,27 @@
 	function closeDeleteConfirm() {
 		deleteConfirmOpen = false;
 		confirmation = "";
+	}
+
+	function openAvatar() {
+		if (!canEditAvatar || avatarUploading || avatarSavePending) return;
+		stagedAvatar = null;
+		avatarOpen = true;
+	}
+
+	function closeAvatar() {
+		if (avatarUploading || avatarSavePending) return;
+		avatarOpen = false;
+		stagedAvatar = null;
+	}
+
+	async function saveAvatar() {
+		if (!stagedAvatar || avatarUploading || avatarSavePending) return;
+		const result = await API.images.actions.saveAvatar({ uploadId: stagedAvatar.uploadId });
+		const parsed = await parseEffectResult(result);
+		if (!parsed) return;
+		avatarOpen = false;
+		stagedAvatar = null;
 	}
 
 	const userAccounts = $derived(user ? await API.auth.queries.getAccounts() : []);
@@ -105,16 +134,14 @@
 		data-open={open}
 	>
 		<div class="flex items-center gap-4 py-4 pl-2">
-			<div
-				class="group/avatar avatar flex h-9 w-9 items-center justify-center overflow-hidden rounded-full bg-primary ring-3 ring-primary ring-offset-2 ring-offset-base-100"
-			>
-				{const nameParts = $derived(user.name.split(" "))}
-				{const initials = $derived(
-					nameParts
-						.map((n) => (n[0] || "") + (nameParts.length === 1 ? n[1] : ""))
-						.join("")
-						.slice(0, 2) || ""
-				)}
+			{const nameParts = $derived(user.name.split(" "))}
+			{const initials = $derived(
+				nameParts
+					.map((n) => (n[0] || "") + (nameParts.length === 1 ? n[1] : ""))
+					.join("")
+					.slice(0, 2) || ""
+			)}
+			{#snippet avatar()}
 				{#if user.image}
 					<img
 						src={user.image}
@@ -129,7 +156,29 @@
 				{:else if initials}
 					<span class="text-xl font-bold text-primary-content uppercase">{initials}</span>
 				{/if}
-			</div>
+			{/snippet}
+			{#if canEditAvatar}
+				<button
+					type="button"
+					class="group/avatar avatar relative flex h-9 w-9 cursor-pointer items-center justify-center overflow-hidden rounded-full bg-primary ring-3 ring-primary ring-offset-2 ring-offset-base-100 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary"
+					aria-label="Change profile picture"
+					onclick={openAvatar}
+				>
+					{@render avatar()}
+					<span
+						class="pointer-events-none absolute inset-0 flex items-center justify-center rounded-full bg-black/50 text-white opacity-0 transition-opacity group-hover/avatar:opacity-100 group-focus-visible/avatar:opacity-100"
+						aria-hidden="true"
+					>
+						<span class="iconify size-4 mdi--pencil"></span>
+					</span>
+				</button>
+			{:else}
+				<div
+					class="group/avatar avatar flex h-9 w-9 items-center justify-center overflow-hidden rounded-full bg-primary ring-3 ring-primary ring-offset-2 ring-offset-base-100"
+				>
+					{@render avatar()}
+				</div>
+			{/if}
 			<div class="flex-1">
 				<div class="ellipsis-nowrap font-medium">{user.name}</div>
 				<div class="ellipsis-nowrap text-xs font-medium text-gray-500 dark:text-gray-400">
@@ -336,6 +385,53 @@
 		role="none"
 		data-open={open}
 	></div>
+
+	<dialog
+		class="modal bg-base-300/25!"
+		open={avatarOpen || undefined}
+		{@attach hotkey([
+			[
+				"Escape",
+				() => {
+					if (avatarOpen) closeAvatar();
+				}
+			]
+		])}
+	>
+		<div class="relative modal-box cursor-default bg-base-100 drop-shadow-lg">
+			{#if avatarOpen}
+				<ImageUpload
+					purpose="avatar"
+					savedUrl={user.image || ""}
+					onpending={(pending) => (avatarUploading = pending)}
+					onstaged={(staged) => (stagedAvatar = staged)}
+				/>
+			{/if}
+			<div class="modal-action">
+				<button type="button" class="btn" onclick={closeAvatar} disabled={avatarUploading || avatarSavePending}>Cancel</button>
+				<button
+					type="button"
+					class="btn btn-primary"
+					onclick={saveAvatar}
+					disabled={!stagedAvatar || avatarUploading || avatarSavePending}
+				>
+					{#if avatarSavePending}
+						<span class="iconify size-5 animate-spin mdi--loading"></span>
+					{/if}
+					Save
+				</button>
+			</div>
+		</div>
+		<button
+			type="button"
+			class="modal-backdrop"
+			onclick={closeAvatar}
+			aria-label="Close"
+			disabled={avatarUploading || avatarSavePending}
+		>
+			✕
+		</button>
+	</dialog>
 
 	<dialog
 		class="modal bg-base-300/25!"

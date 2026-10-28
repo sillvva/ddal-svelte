@@ -1,11 +1,14 @@
 import { BLANK_CHARACTER, PASSKEY_PLACEHOLDER_EMAIL_DOMAIN, PROVIDERS } from "#lib/constants.js";
-import { emailSchema, localsSessionSchema, localsUserSchema, type UserId } from "#lib/schemas.js";
+import { ownedAvatarKey } from "#lib/images/object-key.js";
+import { emailSchema, localsSessionSchema, localsUserSchema, type OnboardingSchema, type UserId } from "#lib/schemas.js";
 import { DBService, runQuery } from "#lib/server/db/index.js";
 import type { User } from "#lib/server/db/schema.js";
 import * as schema from "#lib/server/db/schema.js";
-import { AuthTokenError, RedirectError, type ErrorParams } from "#lib/server/effect/errors.js";
+import { AuthTokenError, RedirectError, serializeError, type ErrorParams } from "#lib/server/effect/errors.js";
 import { AppLog } from "#lib/server/effect/logging.js";
-import { collectUserKeys, scheduleDeletions } from "#lib/server/images/portrait-db.js";
+import { promoteStagedAvatar, StorageService } from "#lib/server/effect/services/storage.js";
+import { ImageUploadError } from "#lib/server/images/errors.js";
+import { clearScheduledDeletions, collectUserKeys, lockPortraitUser, scheduleDeletions } from "#lib/server/images/portrait-db.js";
 import {
 	AUTH_SECRET,
 	DISABLE_SIGNUPS,
@@ -14,7 +17,7 @@ import {
 	GOOGLE_CLIENT_ID,
 	GOOGLE_CLIENT_SECRET
 } from "$app/env/private";
-import { PUBLIC_URL } from "$app/env/public";
+import { PUBLIC_URL, R2_PUBLIC_URL } from "$app/env/public";
 import { getRequestEvent } from "$app/server";
 import { drizzleAdapter } from "@better-auth/drizzle-adapter/relations-v2";
 import { getAuthenticatorName, passkey } from "@better-auth/passkey";
@@ -32,8 +35,11 @@ import { parse } from "../util";
 
 const PASSKEY_SIGNUP_NAME = "New Adventurer";
 
-/** `"admin"` requires an admin. `"onboarding"` allows only unfinished passkey signups. `null` is any signed-in user. */
-export type GuardAccess = "admin" | "onboarding" | null;
+/**
+ * `"admin"` requires a finished admin. `"onboarding"` allows only unfinished signups.
+ * `"any"` allows a signed-in user whether or not onboarding is finished. `null` requires a finished account.
+ */
+export type GuardAccess = "admin" | "onboarding" | "any" | null;
 
 class AuthError extends Data.TaggedError("AuthError")<ErrorParams> {
 	constructor(err: unknown) {
@@ -182,7 +188,7 @@ export class AuthService extends Context.Service<AuthService>()("AuthService", {
 					});
 				}
 
-				if (access !== "onboarding" && !auth.user.onboarded) {
+				if (access !== "onboarding" && access !== "any" && !auth.user.onboarded) {
 					return yield* new RedirectError({
 						message: "Finish creating your account",
 						redirectTo: "/onboarding"
@@ -354,36 +360,94 @@ export class AuthService extends Context.Service<AuthService>()("AuthService", {
 			/**
 			 * Mutations
 			 */
-			completeOnboarding: Effect.fn("AuthService.completeOnboarding")(function* (
-				userId: UserId,
-				data: Pick<User, "name" | "email">
-			) {
+			completeOnboarding: Effect.fn("AuthService.completeOnboarding")(function* (userId: UserId, data: OnboardingSchema) {
 				const parsed = v.safeParse(emailSchema, data.email);
 				if (!parsed.success) return yield* new UpdateUserError("Enter a valid email address");
 				const email = parsed.output;
+				const profile = { name: data.name.trim(), email, onboarded: true };
+				const whereUnfinished = and(eq(schema.user.id, userId), eq(schema.user.onboarded, false));
 
-				return yield* runQuery(
-					db
-						.update(schema.user)
-						.set({ name: data.name.trim(), email, onboarded: true })
-						.where(and(eq(schema.user.id, userId), eq(schema.user.onboarded, false)))
-						.returning()
-				).pipe(
+				const uploadId = data.uploadId;
+				const saved = !uploadId
+					? runQuery(db.update(schema.user).set(profile).where(whereUnfinished).returning())
+					: Effect.gen(function* () {
+							const Storage = yield* StorageService;
+							const copied = { permanentKey: null as string | null };
+							let temporaryKey: string | null = null;
+							const rows = yield* transaction(
+								Effect.fn(function* (tx) {
+									yield* lockPortraitUser(tx, userId);
+									const promoted = yield* promoteStagedAvatar(tx, userId, uploadId, copied);
+									temporaryKey = promoted.temporaryKey;
+									return yield* runQuery(
+										tx
+											.update(schema.user)
+											.set({ ...profile, image: promoted.imageUrl })
+											.where(whereUnfinished)
+											.returning()
+									);
+								})
+							).pipe(
+								Effect.tapError(() => {
+									const orphanKey = copied.permanentKey;
+									if (!orphanKey) return Effect.void;
+									return Storage.abandonStagedObject(userId, orphanKey).pipe(
+										Effect.catch((error) =>
+											AppLog.error("AuthService.completeOnboarding staged cleanup", {
+												message: error.message,
+												error: serializeError(error)
+											})
+										)
+									);
+								})
+							);
+							yield* Storage.cleanupAfterSave(temporaryKey);
+							return rows;
+						});
+
+				return yield* saved.pipe(
 					Effect.flatMap((users) =>
 						isTupleOf(users, 1) ? Effect.succeed(users[0]) : Effect.fail(new UpdateUserError("Failed to finish account setup"))
 					),
 					Effect.tap((result) => AppLog.info("AuthService.completeOnboarding", { userId, result })),
-					Effect.tapError(() => AppLog.debug("AuthService.completeOnboarding", { userId, data }))
+					Effect.tapError((error) =>
+						AppLog.debug("AuthService.completeOnboarding", { userId, data, error: serializeError(error) })
+					)
 				);
 			}),
 			user: {
 				update: Effect.fn("AuthService.user.update")(function* (userId: UserId, data: Partial<Pick<User, "name" | "image">>) {
-					return yield* runQuery(db.update(schema.user).set(data).where(eq(schema.user.id, userId)).returning()).pipe(
+					const write =
+						data.image === undefined
+							? runQuery(db.update(schema.user).set(data).where(eq(schema.user.id, userId)).returning())
+							: transaction(
+									Effect.fn(function* (tx) {
+										yield* lockPortraitUser(tx, userId);
+										const rows = yield* runQuery(
+											tx.select({ image: schema.user.image }).from(schema.user).where(eq(schema.user.id, userId)).limit(1)
+										);
+										const current = rows[0];
+										if (!current) return yield* new UpdateUserError("Failed to update user");
+
+										const previousKey = current.image ? ownedAvatarKey(userId, current.image, R2_PUBLIC_URL) : null;
+										const nextKey = data.image ? ownedAvatarKey(userId, data.image, R2_PUBLIC_URL) : null;
+										// A new avatar is stored only by the avatar save. Reject pointing the profile at some other object.
+										if (nextKey && nextKey !== previousKey) {
+											return yield* new ImageUploadError("Upload that image again before saving.");
+										}
+										if (previousKey && previousKey !== nextKey) yield* scheduleDeletions(tx, [previousKey]);
+										if (nextKey) yield* clearScheduledDeletions(tx, [nextKey]);
+
+										return yield* runQuery(tx.update(schema.user).set(data).where(eq(schema.user.id, userId)).returning());
+									})
+								);
+
+					return yield* write.pipe(
 						Effect.flatMap((users) =>
 							isTupleOf(users, 1) ? Effect.succeed(users[0]) : Effect.fail(new UpdateUserError("Failed to update user"))
 						),
 						Effect.tap((result) => AppLog.info("AuthService.user.update", { userId, result })),
-						Effect.tapError(() => AppLog.debug("AuthService.user.update", { userId, data }))
+						Effect.tapError((error) => AppLog.debug("AuthService.user.update", { userId, data, error: serializeError(error) }))
 					);
 				}),
 				delete: Effect.fn("AuthService.user.delete")(function* (userId: UserId) {
@@ -420,7 +484,7 @@ export class AuthService extends Context.Service<AuthService>()("AuthService", {
 					).pipe(
 						Effect.flatMap((result) => (isTupleOf(result, 1) ? Effect.succeed(result[0]) : Effect.fail(new DeleteUserError()))),
 						Effect.tap((result) => AppLog.info("AuthService.user.delete", { userId, result })),
-						Effect.tapError(() => AppLog.debug("AuthService.user.delete", { userId }))
+						Effect.tapError((error) => AppLog.debug("AuthService.user.delete", { userId, error: serializeError(error) }))
 					);
 				})
 			}
