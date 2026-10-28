@@ -1,4 +1,5 @@
 import { defaultLogSchema, logDataToSchema } from "#lib/entities.js";
+import * as API from "#lib/remote/index.js";
 import {
 	characterIdSchema,
 	characterLogSchema,
@@ -9,7 +10,7 @@ import {
 	type LogSchemaIn
 } from "#lib/schemas.js";
 import { RedirectError, redirectOnFail } from "#lib/server/effect/errors.js";
-import { guardedForm, guardedQuery } from "#lib/server/effect/guarded.js";
+import { guardedForm, guardedQuery, refreshAll } from "#lib/server/effect/guarded.js";
 import { CharacterService } from "#lib/server/effect/services/characters.js";
 import { DMNotFoundError, DMService } from "#lib/server/effect/services/dms.js";
 import { LogNotFoundError, LogService } from "#lib/server/effect/services/logs.js";
@@ -103,6 +104,8 @@ export const saveCharacter = guardedForm("unchecked", function* (input: LogSchem
 	});
 	yield* Logs.save(result, user).pipe(Effect.tapError((err) => Effect.fail(invalid(err.message))));
 
+	yield* refreshAll(API.characters.queries.get({ param: character.id, newRedirect: true }).refresh());
+
 	redirect(303, `/characters/${character.id}`);
 });
 
@@ -138,6 +141,8 @@ export const saveDM = guardedForm("unchecked", function* (input: DmLogSchemaIn, 
 	};
 
 	yield* Logs.save(log, user).pipe(Effect.tapError((err) => Effect.fail(invalid(err.message))));
+
+	yield* refreshAll(API.logs.queries.getDmLogs().refresh());
 
 	redirect(303, `/dm-logs`);
 });
