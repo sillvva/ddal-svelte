@@ -239,6 +239,15 @@ test("passkey user walks through the app and is deleted with their images", asyn
 			await expect(magicItems(page)).toContainText(itemName);
 		});
 
+		await test.step("a backdated log cannot drop an item acquired later", async () => {
+			await page.getByRole("link", { name: "New Log" }).click();
+			await page.waitForURL(new RegExp(`/characters/${characterId}/log/new`));
+			await expect(page.getByRole("button", { name: "Remove Magic Item" })).toBeVisible();
+			await setLogYear(page, "2015");
+			await expect(page.getByRole("button", { name: "Remove Magic Item" })).toHaveCount(0);
+			await page.goto(`/characters/${characterId}`);
+		});
+
 		await test.step("create a non-game log", async () => {
 			await page.getByRole("link", { name: "New Log" }).click();
 			await page.getByLabel("Log Type").selectOption("nongame");
@@ -371,6 +380,12 @@ test("passkey user walks through the app and is deleted with their images", asyn
 		await context.close();
 	}
 });
+
+async function setLogYear(page: Page, year: string) {
+	const segment = page.getByRole("spinbutton", { name: "year" });
+	await segment.click();
+	await segment.pressSequentially(year);
+}
 
 async function assignCharacter(page: Page, name: string) {
 	const assigned = page.getByLabel("Assigned Character");
