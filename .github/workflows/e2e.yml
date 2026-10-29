@@ -1,0 +1,60 @@
+# Manual only. This does not run on pull requests, so a missing secret cannot fail existing CI.
+# It boots local Supabase (its own database) and the Vite dev server, then runs the Playwright suite.
+# Image uploads use the test bucket. Set these repository secrets before dispatching:
+#   E2E_R2_BUCKET, E2E_R2_ENDPOINT, E2E_R2_PUBLIC_URL, E2E_R2_ACCESS_KEY_ID, E2E_R2_SECRET_ACCESS_KEY
+# The bucket CORS rule must allow PUT from http://localhost:5173.
+name: e2e
+
+on:
+  workflow_dispatch:
+
+jobs:
+  e2e:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: pnpm/action-setup@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: pnpm
+
+      - uses: supabase/setup-cli@v1
+        with:
+          version: latest
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Start local Supabase
+        run: supabase start
+
+      - name: Install Chromium
+        run: pnpm exec playwright install --with-deps chromium
+
+      - name: Require the test image bucket
+        env:
+          E2E_R2_BUCKET: ${{ secrets.E2E_R2_BUCKET }}
+        run: test -n "$E2E_R2_BUCKET" || { echo "Set the E2E_R2_* secrets before running this workflow."; exit 1; }
+
+      - name: Run the suite
+        env:
+          E2E_ALLOW_LOCAL: "1"
+          PUBLIC_URL: http://localhost:5173
+          DATABASE_URL: postgresql://postgres:postgres@127.0.0.1:54322/postgres
+          AUTH_SECRET: local-e2e-auth-secret
+          GOOGLE_CLIENT_ID: local-e2e
+          GOOGLE_CLIENT_SECRET: local-e2e
+          DISCORD_CLIENT_ID: local-e2e
+          DISCORD_CLIENT_SECRET: local-e2e
+          DISABLE_SIGNUPS: "false"
+          LOG_LEVEL: error
+          R2_BUCKET: ${{ secrets.E2E_R2_BUCKET }}
+          R2_ENDPOINT: ${{ secrets.E2E_R2_ENDPOINT }}
+          R2_PUBLIC_URL: ${{ secrets.E2E_R2_PUBLIC_URL }}
+          R2_ACCESS_KEY_ID: ${{ secrets.E2E_R2_ACCESS_KEY_ID }}
+          R2_SECRET_ACCESS_KEY: ${{ secrets.E2E_R2_SECRET_ACCESS_KEY }}
+        run: pnpm test:e2e

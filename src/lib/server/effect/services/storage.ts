@@ -22,7 +22,8 @@ import {
 	permanentImageKeyForTemporary,
 	permanentKeyForTemporary,
 	temporaryAvatarImageKey,
-	temporaryCharacterImageKey
+	temporaryCharacterImageKey,
+	userIdFromPermanentKey
 } from "#lib/images/object-key.js";
 import type { CharacterId, ImageUploadId, UserId } from "#lib/schemas.js";
 import { DBService, runQuery, type Transaction } from "#lib/server/db/index.js";
@@ -53,6 +54,7 @@ import {
 	DeleteObjectCommand,
 	GetObjectCommand,
 	HeadObjectCommand,
+	ListObjectsV2Command,
 	PutObjectCommand,
 	S3Client
 } from "@aws-sdk/client-s3";
@@ -375,47 +377,81 @@ export class StorageService extends Context.Service<StorageService>()("StorageSe
 	make: Effect.fn("StorageService")(function* () {
 		const { db, transaction } = yield* DBService;
 
-		/** Retries permanent-object deletes. Uses the service's transaction so callers do not depend on DBService. */
+		const listPrefix = Effect.fn("StorageService.listPrefix")(function* (prefix: string) {
+			const keys: string[] = [];
+			let token: string | undefined;
+			do {
+				const page = yield* Effect.tryPromise({
+					try: () =>
+						client.send(
+							new ListObjectsV2Command({
+								Bucket: R2_BUCKET,
+								Prefix: prefix,
+								ContinuationToken: token
+							})
+						),
+					catch: (cause) => new ImageUploadError("Could not list stored images", 500, cause)
+				});
+				for (const object of page.Contents ?? []) {
+					if (object.Key) keys.push(object.Key);
+				}
+				token = page.IsTruncated ? page.NextContinuationToken : undefined;
+			} while (token);
+			return keys;
+		});
+
+		/**
+		 * Deletes every object queued in `pending_object_deletion`.
+		 * Each key is attempted once per call. A failure stays queued for a later call.
+		 */
 		const purgePendingObjects = Effect.fn("StorageService.purgePendingObjects")(function* () {
-			const pending = yield* transaction((tx) => listPendingDeletions(tx, 20)).pipe(
-				Effect.catch((error) =>
-					AppLog.error("StorageService.purgePendingObjects", { message: error.message }).pipe(Effect.as([]))
-				)
-			);
+			const attempted = new Set<string>();
 
-			for (const row of pending) {
-				let failure = "";
-				yield* transaction(
-					Effect.fn(function* (tx) {
-						const userId = userIdForDeletion(row.objectKey);
-						if (!userId || !isPermanentImageKey(row.objectKey)) {
-							yield* removePendingDeletion(tx, row.objectKey);
-							return;
-						}
+			for (let batch = 0; batch < 20; batch++) {
+				const pending = yield* transaction((tx) => listPendingDeletions(tx, 50)).pipe(
+					Effect.catch((error) =>
+						AppLog.error("StorageService.purgePendingObjects", { message: error.message }).pipe(Effect.as([]))
+					)
+				);
+				const fresh = pending.filter((row) => !attempted.has(row.objectKey));
+				if (!fresh.length) return;
 
-						yield* lockPortraitUser(tx, userId);
-						const current = yield* lockPendingDeletion(tx, row.objectKey);
-						if (!current) return;
+				for (const row of fresh) {
+					attempted.add(row.objectKey);
+					let failure = "";
+					yield* transaction(
+						Effect.fn(function* (tx) {
+							const userId = userIdForDeletion(row.objectKey);
+							// Staged `tmp/` keys are not queued. Drop anything else without deleting the object.
+							if (!userId || !isPermanentImageKey(row.objectKey)) {
+								yield* removePendingDeletion(tx, row.objectKey);
+								return;
+							}
 
-						// A portrait saved again after this key was queued. Keep the object and drop the request.
-						if (yield* permanentKeyInUse(tx, current.objectKey)) {
-							yield* clearScheduledDeletions(tx, [current.objectKey]);
-							return;
-						}
+							yield* lockPortraitUser(tx, userId);
+							const current = yield* lockPendingDeletion(tx, row.objectKey);
+							if (!current) return;
 
-						const deleted = yield* Effect.result(deleteStoredObject(current.objectKey));
-						if (Result.isSuccess(deleted)) {
-							yield* removePendingDeletion(tx, current.objectKey);
-							return;
-						}
+							// A portrait or avatar saved again after this key was queued. Keep the object and drop the request.
+							if (isPermanentImageKey(current.objectKey) && (yield* permanentKeyInUse(tx, current.objectKey))) {
+								yield* clearScheduledDeletions(tx, [current.objectKey]);
+								return;
+							}
 
-						failure = errorMessage(deleted.failure);
-						yield* notePendingFailure(tx, current.objectKey);
-					})
-				).pipe(Effect.catch((error) => AppLog.error("StorageService.purgePendingObjects", { message: error.message })));
+							const deleted = yield* Effect.result(deleteStoredObject(current.objectKey));
+							if (Result.isSuccess(deleted)) {
+								yield* removePendingDeletion(tx, current.objectKey);
+								return;
+							}
 
-				if (failure) {
-					yield* AppLog.error("StorageService.purgePendingObjects", { message: failure, key: row.objectKey });
+							failure = errorMessage(deleted.failure);
+							yield* notePendingFailure(tx, current.objectKey);
+						})
+					).pipe(Effect.catch((error) => AppLog.error("StorageService.purgePendingObjects", { message: error.message })));
+
+					if (failure) {
+						yield* AppLog.error("StorageService.purgePendingObjects", { message: failure, key: row.objectKey });
+					}
 				}
 			}
 		});
@@ -701,6 +737,22 @@ export class StorageService extends Context.Service<StorageService>()("StorageSe
 
 			purgePending: Effect.fn("StorageService.purgePending")(function* () {
 				yield* purgePendingObjects();
+			}),
+
+			/**
+			 * Permanent portraits and avatars stored for this account.
+			 * Listing is best-effort for objects whose upload row was already removed.
+			 * Staged `tmp/` uploads are omitted; the bucket lifecycle rule deletes that prefix.
+			 */
+			listOwnedImageKeys: Effect.fn("StorageService.listOwnedImageKeys")(function* (userId: UserId) {
+				const prefix = `users/${userId}/`;
+				const keys = new Set<string>();
+				const found = yield* listPrefix(prefix);
+				for (const key of found) {
+					if (!key.startsWith(prefix) || !isPermanentImageKey(key) || userIdFromPermanentKey(key) !== userId) continue;
+					keys.add(key);
+				}
+				return [...keys];
 			}),
 
 			abandonStagedObject
