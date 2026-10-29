@@ -66,9 +66,10 @@ export const save = guardedForm(editCharacterSchema, function* (input, { user, i
 
 	yield* Storage.cleanupAfterSave(stored.copy?.from ?? null);
 
-	if (preexisting) {
-		yield* refreshAll(API.characters.queries.get({ param: data.id }).refresh());
-	}
+	yield* refreshAll(
+		API.characters.queries.portraitStorage().refresh(),
+		...(preexisting ? [API.characters.queries.get({ param: data.id }).refresh()] : [])
+	);
 
 	if (firstLog && !preexisting) {
 		redirect(303, `/characters/${result.id}/log/new?firstLog=true`);

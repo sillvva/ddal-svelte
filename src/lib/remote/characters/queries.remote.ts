@@ -4,6 +4,7 @@ import { RedirectError } from "#lib/server/effect/errors.js";
 import { guardedQuery } from "#lib/server/effect/guarded.js";
 import { run } from "#lib/server/effect/runtime.js";
 import { CharacterService } from "#lib/server/effect/services/characters.js";
+import { StorageService } from "#lib/server/effect/services/storage.js";
 import { getRequestEvent, query } from "$app/server";
 import { redirect } from "@sveltejs/kit";
 import * as v from "valibot";
@@ -16,6 +17,12 @@ export const getAll = guardedQuery(function* ({ user }) {
 export const getAllSelect = guardedQuery(function* ({ user }) {
 	const Characters = yield* CharacterService;
 	return yield* Characters.get.select(user.id);
+});
+
+/** Saved character portraits counted toward the account storage quota. */
+export const portraitStorage = guardedQuery(function* ({ user }) {
+	const Storage = yield* StorageService;
+	return yield* Storage.portraitUsage(user.id);
 });
 
 // eslint-disable-next-line custom/enforce-guarded-functions

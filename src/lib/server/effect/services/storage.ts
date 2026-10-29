@@ -43,6 +43,7 @@ import {
 	promoteAvatarUploadRow,
 	removePendingDeletion,
 	scheduleDeletions,
+	sumPortraitBytes,
 	userIdForDeletion
 } from "#lib/server/images/portrait-db.js";
 import {
@@ -438,6 +439,12 @@ export class StorageService extends Context.Service<StorageService>()("StorageSe
 		});
 
 		return {
+			/** Saved portrait bytes against the account quota. Unsaved `tmp/` uploads are not included. */
+			portraitUsage: Effect.fn("StorageService.portraitUsage")(function* (userId: UserId) {
+				const usedBytes = yield* sumPortraitBytes(db, userId);
+				return { usedBytes, quotaBytes: CHARACTER_IMAGE_LIMITS.quotaBytes };
+			}),
+
 			/**
 			 * Reserves a `tmp/` object and returns a presigned PUT.
 			 * Portrait quota here is a fast check against saved portraits. The authoritative check runs

@@ -10,7 +10,7 @@ import {
 	userIdFromPermanentKey
 } from "#lib/images/object-key.js";
 import type { CharacterId, UserId } from "#lib/schemas.js";
-import { runQuery, type Transaction } from "#lib/server/db/index.js";
+import { runQuery, type Database, type Transaction } from "#lib/server/db/index.js";
 import { account, imageUploads, characters, pendingObjectDeletions, user } from "#lib/server/db/schema.js";
 import { ImageUploadError } from "#lib/server/images/errors.js";
 import { R2_PUBLIC_URL } from "$app/env/public";
@@ -35,19 +35,26 @@ export function lockPortraitUser(tx: Transaction, userId: UserId) {
 }
 
 /**
- * Quota is the sum of `character.image_bytes` for saved portraits.
+ * Saved portrait bytes for one account.
  * Avatars are capped per object and are not included.
- * Presigned URLs only write `tmp/` objects, which are not counted and are removed by the bucket lifecycle rule.
+ * Presigned URLs only write `tmp/` objects, which are not counted.
+ */
+export function sumPortraitBytes(executor: Database | Transaction, userId: UserId) {
+	return runQuery(
+		executor
+			.select({ total: sql<number>`coalesce(sum(${characters.imageBytes}), 0)::int` })
+			.from(characters)
+			.where(eq(characters.userId, userId))
+	).pipe(Effect.map((rows) => integer(rows[0]?.total)));
+}
+
+/**
+ * Quota is the sum of `character.image_bytes` for saved portraits.
  * The check runs under `lockPortraitUser`, in the same transaction that updates `image_bytes`.
  */
 export function assertPortraitQuota(tx: Transaction, userId: UserId, characterId: CharacterId, nextBytes: number) {
 	return Effect.gen(function* () {
-		const [stored] = yield* runQuery(
-			tx
-				.select({ total: sql<number>`coalesce(sum(${characters.imageBytes}), 0)::int` })
-				.from(characters)
-				.where(eq(characters.userId, userId))
-		);
+		const used = yield* sumPortraitBytes(tx, userId);
 		const [current] = yield* runQuery(
 			tx
 				.select({ imageBytes: characters.imageBytes })
@@ -56,7 +63,6 @@ export function assertPortraitQuota(tx: Transaction, userId: UserId, characterId
 				.limit(1)
 		);
 		const credit = current?.imageBytes ?? 0;
-		const used = integer(stored?.total);
 		if (nextBytes > credit && used - credit + nextBytes > CHARACTER_IMAGE_LIMITS.quotaBytes) {
 			return yield* new ImageUploadError("This image would exceed your 20 MB storage limit.", 413);
 		}
