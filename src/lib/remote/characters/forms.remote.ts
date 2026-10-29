@@ -1,6 +1,6 @@
 import { BLANK_CHARACTER } from "#lib/constants.js";
 import * as API from "#lib/remote/index.js";
-import { characterIdParamSchema, editCharacterSchema } from "#lib/schemas.js";
+import { characterIdParamSchema, draftCacheKey, editCharacterSchema } from "#lib/schemas.js";
 import { guardedForm, guardedQuery, refreshAll } from "#lib/server/effect/guarded.js";
 import { CharacterService } from "#lib/server/effect/services/characters.js";
 import { StorageService } from "#lib/server/effect/services/storage.js";
@@ -9,11 +9,22 @@ import { isValidUrl } from "#lib/server/effect/util.js";
 import type { StandardSchemaV1 } from "@standard-schema/spec";
 import { invalid, redirect } from "@sveltejs/kit";
 import { Effect } from "effect";
+import * as v from "valibot";
 import * as queries from "./queries.remote";
 
-export const get = guardedQuery(characterIdParamSchema, function* (input, { event }) {
+const newCharacterQuery = v.object({
+	param: characterIdParamSchema,
+	draft: draftCacheKey
+});
+
+export const get = guardedQuery(newCharacterQuery, function* (input, { event }) {
 	const firstLog = event.locals.app.characters.firstLog;
-	const character = yield* Effect.tryPromise(() => queries.get({ param: input }));
+	// `queries.get` mints the id when `param` is "new". That call has to carry `draft`,
+	// or this wrapper re-runs and still receives the id from the previous visit.
+	// Existing characters keep the key the rest of the app refreshes.
+	const character = yield* Effect.tryPromise(() =>
+		queries.get(input.param === "new" ? { param: input.param, draft: input.draft } : { param: input.param })
+	);
 
 	return {
 		id: character.id,
@@ -23,7 +34,7 @@ export const get = guardedQuery(characterIdParamSchema, function* (input, { even
 		campaign: character.campaign,
 		characterSheetUrl: character.characterSheetUrl,
 		imageUrl: character.imageUrl === BLANK_CHARACTER ? "" : character.imageUrl,
-		firstLog: firstLog && input === "new"
+		firstLog: firstLog && input.param === "new"
 	};
 });
 
@@ -66,9 +77,14 @@ export const save = guardedForm(editCharacterSchema, function* (input, { user, i
 
 	yield* Storage.cleanupAfterSave(stored.copy?.from ?? null);
 
+	// The character page reads `get({ param, newRedirect: true })`. The log page reads
+	// `get({ param })`. Those are different cache keys, and an explicit refresh skips
+	// invalidateAll, so a save has to refresh both or the page keeps the previous character.
 	yield* refreshAll(
 		API.characters.queries.portraitStorage().refresh(),
-		...(preexisting ? [API.characters.queries.get({ param: data.id }).refresh()] : [])
+		API.characters.queries.getAll().refresh(),
+		API.characters.queries.get({ param: result.id }).refresh(),
+		API.characters.queries.get({ param: result.id, newRedirect: true }).refresh()
 	);
 
 	if (firstLog && !preexisting) {

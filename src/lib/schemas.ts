@@ -1,6 +1,7 @@
 import type { FullCharacterData } from "#lib/server/effect/services/characters.js";
 import { omit } from "@sillvva/utils";
 import * as v from "valibot";
+import { itemTimelineIssues } from "./entities.js";
 import { AVATAR_IMAGE_LIMITS, CHARACTER_IMAGE_LIMITS, STORED_IMAGE_CONTENT_TYPES } from "./images/limits";
 import { BLANK_CHARACTER, PASSKEY_PLACEHOLDER_EMAIL_DOMAIN, PROVIDERS, themeGroups, themes } from "./constants";
 
@@ -77,10 +78,21 @@ export const nullableDate = v.pipe(
 	v.transform((input) => (input ? new Date(input) : null)),
 	v.nullable(v.date())
 );
+// `supportedValuesOf("timeZone")` lists canonical IANA names. Hosts whose zone is
+// Etc/UTC — containers and GitHub Actions included — report that zone as "UTC"
+// from `getLocalTimeZone()`, and "UTC" is not in the canonical list.
+const ianaTimeZones = new Set([...Intl.supportedValuesOf("timeZone"), "UTC"]);
+
 export const timezoneSchema = v.pipe(
 	v.string(),
-	v.check((input) => input === "" || Intl.supportedValuesOf("timeZone").includes(input), "Invalid timezone")
+	v.check((input) => input === "" || ianaTimeZones.has(input), "Invalid timezone")
 );
+
+/**
+ * Cache key only. A query that mints an id for a "new" route stores that id under its
+ * arguments. A value that changes after each save makes the next visit mint a different id.
+ */
+export const draftCacheKey = v.optional(v.string(), "");
 
 export type UserId = v.InferOutput<typeof userIdSchema>;
 export const userIdSchema = brandedId("UserId");
@@ -248,6 +260,27 @@ export const characterLogSchema = (character: FullCharacterData) =>
 				return character.totalTcp + input.tcp - logTCP >= 0;
 			}, `Cannot reduce total TCP to less than 0. Current: ${character.totalTcp}`),
 			["tcp"]
+		),
+		v.forward(
+			v.check((input) => {
+				const issue = itemTimelineIssues(character.logs, input).find((item) => item.field === "magicItemsLost");
+				return !issue;
+			}, "This item is not held on this log's date"),
+			["magicItemsLost"]
+		),
+		v.forward(
+			v.check((input) => {
+				const issue = itemTimelineIssues(character.logs, input).find((item) => item.field === "storyAwardsLost");
+				return !issue;
+			}, "This item is not held on this log's date"),
+			["storyAwardsLost"]
+		),
+		v.forward(
+			v.check((input) => {
+				const issue = itemTimelineIssues(character.logs, input).find((item) => item.field === "date");
+				return !issue;
+			}, "An item gained in this log is dropped in an earlier log"),
+			["date"]
 		)
 	);
 
@@ -312,6 +345,30 @@ export const dMLogSchema = (characters: FullCharacterData[] = []) =>
 				return character.totalTcp + input.tcp - logTCP >= 0;
 			}, "Cannot reduce character's total TCP to less than 0"),
 			["tcp"]
+		),
+		v.forward(
+			v.check((input) => {
+				const character = characters.find((entry) => entry.id === input.characterId);
+				if (!character) return true;
+				return !itemTimelineIssues(character.logs, input).some((item) => item.field === "magicItemsLost");
+			}, "This item is not held on this log's date"),
+			["magicItemsLost"]
+		),
+		v.forward(
+			v.check((input) => {
+				const character = characters.find((entry) => entry.id === input.characterId);
+				if (!character) return true;
+				return !itemTimelineIssues(character.logs, input).some((item) => item.field === "storyAwardsLost");
+			}, "This item is not held on this log's date"),
+			["storyAwardsLost"]
+		),
+		v.forward(
+			v.check((input) => {
+				const character = characters.find((entry) => entry.id === input.characterId);
+				if (!character) return true;
+				return !itemTimelineIssues(character.logs, input).some((item) => item.field === "date");
+			}, "An item gained in this log is dropped in an earlier log"),
+			["appliedDate"]
 		)
 	);
 

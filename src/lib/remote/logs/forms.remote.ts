@@ -4,6 +4,7 @@ import {
 	characterIdSchema,
 	characterLogSchema,
 	dMLogSchema,
+	draftCacheKey,
 	logIdParamSchema,
 	orEmpty,
 	type DmLogSchemaIn,
@@ -26,7 +27,8 @@ const characterLogFormSchema = v.object({
 		name: v.string()
 	}),
 	logId: logIdParamSchema,
-	firstLog: v.optional(v.boolean(), false)
+	firstLog: v.optional(v.boolean(), false),
+	draft: draftCacheKey
 });
 
 export const character = guardedQuery(characterLogFormSchema, function* (input, { user }) {
@@ -59,7 +61,8 @@ export const character = guardedQuery(characterLogFormSchema, function* (input, 
 const dmLogFormSchema = v.object({
 	param: v.object({
 		logId: logIdParamSchema
-	})
+	}),
+	draft: draftCacheKey
 });
 
 export const dm = guardedQuery(dmLogFormSchema, function* (input, { user }) {
@@ -104,7 +107,12 @@ export const saveCharacter = guardedForm("unchecked", function* (input: LogSchem
 	});
 	yield* Logs.save(result, user).pipe(Effect.tapError((err) => Effect.fail(invalid(err.message))));
 
-	yield* refreshAll(API.characters.queries.get({ param: character.id, newRedirect: true }).refresh());
+	// Character detail uses `newRedirect: true`. The log form uses the key without it.
+	// Refreshing only one leaves the other page on the character from before this log.
+	yield* refreshAll(
+		API.characters.queries.get({ param: character.id }).refresh(),
+		API.characters.queries.get({ param: character.id, newRedirect: true }).refresh()
+	);
 
 	redirect(303, `/characters/${character.id}`);
 });

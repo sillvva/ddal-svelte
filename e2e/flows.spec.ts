@@ -11,6 +11,7 @@ import {
 	logIdFromHref,
 	openSettings,
 	saveStorageState,
+	settleNavigations,
 	uploadAvatar,
 	uploadCharacterImage
 } from "./ui.ts";
@@ -24,6 +25,7 @@ test("passkey user walks through the app and is deleted with their images", asyn
 	const handle = `e2e-${stamp}`;
 	const email = `${handle}@example.com`;
 	const characterName = `E2E ${stamp}`;
+	const secondCharacterName = `E2E Companion ${stamp}`;
 	const dmName = `E2E Guest ${stamp}`;
 	const editedDmName = `${dmName} Edited`;
 	const gainTitle = `E2E Item Gain ${stamp}`;
@@ -31,10 +33,12 @@ test("passkey user walks through the app and is deleted with their images", asyn
 	const purchaseTitle = `E2E Purchase ${stamp}`;
 	const lossTitle = `E2E Item Loss ${stamp}`;
 	const dmLogTitle = `E2E DM Session ${stamp}`;
+	const secondDmLogTitle = `E2E DM Session Two ${stamp}`;
 	const itemName = `Cloak of E2E ${stamp}`;
 
 	const context = await browser.newContext();
 	const page = await context.newPage();
+	settleNavigations(page);
 	const dialogs = acceptDialogs(page);
 	await installPasskeyAuthenticator(context);
 
@@ -157,13 +161,42 @@ test("passkey user walks through the app and is deleted with their images", asyn
 			await expect(page.getByText("Fighter")).toBeVisible();
 		});
 
+		await test.step("create a second character", async () => {
+			await page.goto("/characters");
+			const create = page.getByRole("link", { name: /New/ }).filter({ visible: true });
+			await expect(create).toHaveAttribute("href", /draft=/);
+			await create.click();
+			await page.waitForURL(/\/characters\/new\/edit/);
+
+			const starting = page.getByRole("checkbox", { name: "Create Starting Log" });
+			if (await starting.isChecked()) await starting.uncheck();
+			await page.getByLabel("Character Name").fill(secondCharacterName);
+			await page.getByLabel("Campaign").fill("E2E Campaign");
+			await page.getByLabel("Species").fill("Dwarf");
+			await page.getByLabel("Class").fill("Cleric");
+			await page.getByRole("button", { name: "Save Character" }).click();
+			await page.waitForURL(/\/characters\/[0-9a-f-]{36}$/iu);
+			const secondId = characterIdFromUrl(page.url()) ?? "";
+			expect(secondId).not.toBe("");
+			expect(secondId).not.toBe(characterId);
+
+			await page.goto("/characters");
+			const firstLink = page.getByRole("link", { name: characterName }).filter({ visible: true });
+			const secondLink = page.getByRole("link", { name: secondCharacterName }).filter({ visible: true });
+			await expect(firstLink).toBeVisible();
+			await expect(secondLink).toBeVisible();
+			expect(await firstLink.getAttribute("href")).not.toBe(await secondLink.getAttribute("href"));
+			await firstLink.click();
+			await page.waitForURL(new RegExp(`/characters/${characterId}$`));
+		});
+
 		await test.step("edit the character and leave a staged portrait unsaved", async () => {
 			await page.getByRole("link", { name: "Edit" }).click();
 			await page.waitForURL(new RegExp(`/characters/${characterId}/edit$`));
 			await page.getByLabel("Class").fill("Wizard");
 			await page.getByRole("button", { name: "Save Character" }).click();
 			await page.waitForURL(new RegExp(`/characters/${characterId}$`));
-			await expect(page.getByText("Wizard")).toBeVisible();
+			await expect(page.getByText("Elf Wizard")).toBeVisible();
 
 			await page.goto(`/characters/${characterId}/edit`);
 			const form = page.locator("form").filter({ has: page.getByRole("button", { name: "Save Character" }) });
@@ -206,6 +239,15 @@ test("passkey user walks through the app and is deleted with their images", asyn
 			await expect(magicItems(page)).toContainText(itemName);
 		});
 
+		await test.step("a backdated log cannot drop an item acquired later", async () => {
+			await page.getByRole("link", { name: "New Log" }).click();
+			await page.waitForURL(new RegExp(`/characters/${characterId}/log/new`));
+			await expect(page.getByRole("button", { name: "Remove Magic Item" })).toBeVisible();
+			await setLogYear(page, "2015");
+			await expect(page.getByRole("button", { name: "Remove Magic Item" })).toHaveCount(0);
+			await page.goto(`/characters/${characterId}`);
+		});
+
 		await test.step("create a non-game log", async () => {
 			await page.getByRole("link", { name: "New Log" }).click();
 			await page.getByLabel("Log Type").selectOption("nongame");
@@ -214,7 +256,7 @@ test("passkey user walks through the app and is deleted with their images", asyn
 			await page.getByRole("button", { name: "Save Log" }).click();
 			await page.waitForURL(new RegExp(`/characters/${characterId}$`));
 			await expect(page.getByRole("link", { name: purchaseTitle })).toBeVisible();
-			await expect(page.getByText("25")).toBeVisible();
+			await expect(page.getByText("25", { exact: true })).toBeVisible();
 		});
 
 		await test.step("remove the magic item in a later log", async () => {
@@ -244,16 +286,34 @@ test("passkey user walks through the app and is deleted with their images", asyn
 			await expect(page.getByRole("link", { name: purchaseTitle })).toHaveCount(0);
 		});
 
-		await test.step("create a DM log assigned to the character", async () => {
-			await page.goto("/dm-logs/new");
+		await test.step("create two DM logs assigned to the character", async () => {
+			await page.goto("/dm-logs");
+			await page.getByRole("link", { name: "New Log" }).filter({ visible: true }).click();
+			await page.waitForURL(/\/dm-logs\/new/);
 			await page.getByLabel("Title").fill(dmLogTitle);
-			await page.getByLabel("Assigned Character").fill(characterName);
-			await page.getByRole("option", { name: characterName }).click();
+			await assignCharacter(page, characterName);
 			await page.getByRole("button", { name: "Save Log" }).click();
 			await page.waitForURL(/\/dm-logs$/);
-			const dmLogLink = page.locator('a[href^="/dm-logs/"]', { hasText: dmLogTitle });
-			await expect(dmLogLink).toBeVisible();
-			expect(logIdFromHref(await dmLogLink.getAttribute("href"))).not.toBe("");
+
+			const createAnother = page.getByRole("link", { name: "New Log" }).filter({ visible: true });
+			await expect(createAnother).toHaveAttribute("href", /draft=/);
+			await createAnother.click();
+			await page.waitForURL(/\/dm-logs\/new\?draft=/);
+			await page.getByLabel("Title").fill(secondDmLogTitle);
+			await assignCharacter(page, characterName);
+			await page.getByRole("button", { name: "Save Log" }).click();
+			await page.waitForURL(/\/dm-logs$/);
+
+			// Mobile and desktop lists both render each link; only one copy is visible.
+			const firstLog = page.locator('a[href^="/dm-logs/"]', { hasText: dmLogTitle }).filter({ visible: true });
+			const secondLog = page.locator('a[href^="/dm-logs/"]', { hasText: secondDmLogTitle }).filter({ visible: true });
+			await expect(firstLog).toBeVisible();
+			await expect(secondLog).toBeVisible();
+			const firstHref = await firstLog.getAttribute("href");
+			const secondHref = await secondLog.getAttribute("href");
+			expect(logIdFromHref(firstHref)).not.toBe("");
+			expect(logIdFromHref(secondHref)).not.toBe("");
+			expect(firstHref).not.toBe(secondHref);
 		});
 
 		await test.step("edit the DM", async () => {
@@ -264,7 +324,7 @@ test("passkey user walks through the app and is deleted with their images", asyn
 			await page.waitForURL(/\/dms$/);
 			const editedDm = page.locator(`a[href="/dms/${dmId}"]`, { hasText: editedDmName });
 			await expect(editedDm).toBeVisible();
-			await expect(page.getByText("424242")).toBeVisible();
+			await expect(page.getByRole("cell", { name: "424242" })).toBeVisible();
 		});
 
 		await test.step("delete the DM after its log is gone", async () => {
@@ -292,8 +352,13 @@ test("passkey user walks through the app and is deleted with their images", asyn
 
 		await test.step("delete the account and prove its images are gone", async () => {
 			await openSettings(page, handle);
-			const danger = page.locator("aside#settings .collapse").filter({ hasText: "Danger Zone" });
-			await danger.locator('input[type="checkbox"]').check({ force: true });
+			// The account settings collapse wraps this one, so both contain the "Danger Zone" text.
+			// DaisyUI stretches an invisible checkbox over the title. Its box is not a reliable click target.
+			const danger = page.locator("aside#settings .collapse").filter({ hasText: "Danger Zone" }).last();
+			await danger.locator('input[type="checkbox"]').evaluate((node) => {
+				if (!(node instanceof HTMLInputElement)) throw new Error("Danger Zone toggle is not a checkbox");
+				node.checked = true;
+			});
 			await danger.getByRole("button", { name: "Delete account" }).click();
 
 			const segment = (await page.locator("dialog span.text-error").innerText()).trim();
@@ -316,15 +381,27 @@ test("passkey user walks through the app and is deleted with their images", asyn
 	}
 });
 
+async function setLogYear(page: Page, year: string) {
+	const segment = page.getByRole("spinbutton", { name: "year" });
+	await segment.click();
+	await segment.pressSequentially(year);
+}
+
+async function assignCharacter(page: Page, name: string) {
+	const assigned = page.getByLabel("Assigned Character");
+	// Bits UI opens this combobox on keydown, not on a programmatic value change.
+	await assigned.fill(name);
+	await assigned.press("ArrowDown");
+	await page.getByRole("option", { name }).click();
+}
+
 function headerAvatar(page: Page) {
 	return page.locator("header button img");
 }
 
 function magicItems(page: Page) {
-	return page
-		.locator("h4")
-		.filter({ hasText: /^Magic Items$/ })
-		.locator("xpath=following-sibling::p[1]");
+	// The heading sits in a wrapper; the item list is the wrapper's next sibling, not the heading's.
+	return page.getByRole("heading", { name: "Magic Items", exact: true }).locator("xpath=../following-sibling::p[1]");
 }
 
 function keyFromUrl(imageUrl: string | null) {

@@ -24,17 +24,18 @@
 <svelte:boundary>
 	{#snippet failed(error)}<Error {error} boundary="edit-character-log" />{/snippet}
 	{const character = $derived(await API.characters.queries.get({ param: params.characterId }))}
-	{const { magicItems, storyAwards } = $derived(getItemEntities(character, { excludeDropped: true, lastLogId: params.logId }))}
 	{const schema = logSchema}
 	{const form = API.logs.forms.saveCharacter}
 	{const firstLog = $derived(page.url.searchParams.get("firstLog") === "true")}
+	{const draft = $derived(page.url.searchParams.get("draft") ?? "")}
 	{const initialErrors = $derived(params.logId !== "new")}
 	{#if params.logId}
 		{const log = $derived(
 			await API.logs.forms.character({
 				character: { id: character.id, name: character.name },
 				logId: params.logId,
-				firstLog
+				firstLog,
+				draft
 			})
 		)}
 
@@ -62,6 +63,7 @@
 						<InputWrapper field={form.fields.type} as="select" label="Log Type">
 							<select
 								{...form.fields.type.as("select")}
+								id={form.fields.type.as("select").name}
 								class={["select-bordered select w-full max-sm:text-base", data.type !== "game" && "text-xs!"]}
 							>
 								<option value="game">Game</option>
@@ -80,8 +82,25 @@
 					/>
 				</Control>
 				<Control class={["col-span-12", !firstLog ? "sm:col-span-5 md:col-span-4" : "sm:col-span-6 md:col-span-5 lg:col-span-4"]}>
-					<DateInput field={form.fields.date} initial={initial.date} label="Date" timezone={data.timezone} />
+					<DateInput
+						field={form.fields.date}
+						initial={initial.date}
+						label="Date"
+						timezone={data.timezone}
+						onchange={(timestamp) => {
+							const available = getItemEntities(character, { excludeDropped: true, logId: log.id, asOf: timestamp });
+							const itemIds = new Set<string>(available.magicItems.map((item) => item.id));
+							const awardIds = new Set<string>(available.storyAwards.map((item) => item.id));
+							const itemsLost = form.fields.magicItemsLost.value().filter((id) => !!id && itemIds.has(id));
+							const awardsLost = form.fields.storyAwardsLost.value().filter((id) => !!id && awardIds.has(id));
+							if (itemsLost.length !== form.fields.magicItemsLost.value().length) form.fields.magicItemsLost.set(itemsLost);
+							if (awardsLost.length !== form.fields.storyAwardsLost.value().length) form.fields.storyAwardsLost.set(awardsLost);
+						}}
+					/>
 				</Control>
+				{const { magicItems, storyAwards } = $derived(
+					getItemEntities(character, { excludeDropped: true, logId: log.id, asOf: form.fields.date.value() })
+				)}
 				{let season = $derived(log.experience ? 1 : log.acp ? 8 : 9)}
 				{#if data.type === "game"}
 					{#if !firstLog}

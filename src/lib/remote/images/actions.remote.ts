@@ -21,9 +21,12 @@ export const completeAvatarImage = guardedCommand(
 	"any"
 );
 
-export const saveAvatar = guardedCommand(saveAvatarSchema, function* (input, { user }) {
+export const saveAvatar = guardedCommand(saveAvatarSchema, function* (input, { user, event }) {
 	const Storage = yield* StorageService;
 	const saved = yield* Storage.saveAvatar(user.id, input.uploadId);
+	// `request()` returns the user hooks loaded at the start of this request.
+	// Publishing that copy would leave the header on the previous avatar.
+	if (event.locals.user) event.locals.user.image = saved.imageUrl;
 	yield* refreshAll(request().refresh());
 	return saved;
 });
