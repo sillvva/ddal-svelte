@@ -102,7 +102,7 @@ The suite stops before it creates anything unless all of these are true:
 - `DATABASE_URL` uses that same kind of host (local Supabase is `127.0.0.1:54322`)
 - `DATABASE_URL` is not the same string as `REMOTE_DB_URL`
 
-Staging is rejected because it shares production's database. A global setup step and `pnpm test:e2e:cleanup` delete leftover `e2e-` users, their rows, and their stored images if a run crashes. Account deletion removes permanent avatars and portraits immediately. Unsaved `tmp/` uploads are left for the bucket lifecycle rule (about a day); the cleanup script still deletes those objects for `e2e-` users so a crashed run does not leave files in the test bucket.
+Staging is rejected because it shares production's database. A local `op run` environment also sets `REMOTE_DB_URL`; that is fine as long as `DATABASE_URL` is the local database and the two strings differ. A global setup step and `pnpm op:test:e2e:cleanup` delete leftover `e2e-` users, their rows, and their stored images if a run crashes. Account deletion removes permanent avatars and portraits immediately. Unsaved `tmp/` uploads are left for the bucket lifecycle rule (about a day); the cleanup script still deletes those objects for `e2e-` users so a crashed run does not leave files in the test bucket.
 
 ### Setup
 
@@ -113,7 +113,7 @@ supabase start
 pnpm db:push:local
 ```
 
-2. Point `.env.development.local` at that database (`DATABASE_URL`, `PUBLIC_URL=http://localhost:5173`) and use the separate test image bucket in the `R2_*` variables. The bucket must allow `PUT` from `http://localhost:5173`. Do not point `DATABASE_URL` at production or staging.
+2. Local runs take `DATABASE_URL`, `PUBLIC_URL`, `REMOTE_DB_URL`, and the `R2_*` variables from the same 1Password environment as `pnpm op:dev`. `DATABASE_URL` must be the local Supabase database. The image bucket must allow `PUT` from `http://localhost:5173`.
 
 3. Install browsers once:
 
@@ -124,18 +124,18 @@ pnpm exec playwright install chromium
 ### Run
 
 ```bash
-E2E_ALLOW_LOCAL=1 pnpm test:e2e
+pnpm op:test:e2e
 ```
 
-`pnpm test:e2e` starts the Vite dev server when one is not already running. Set `E2E_SKIP_WEBSERVER=1` to use a server you started yourself. The app origin has to match `PUBLIC_URL` so the virtual passkey is issued for the local relying party.
+`pnpm op:test:e2e` sets `E2E_ALLOW_LOCAL=1`, loads that 1Password environment, and starts the Vite dev server with the same variables when one is not already running. Set `E2E_SKIP_WEBSERVER=1` to use a server you started yourself with `pnpm op:dev`. The app origin has to match `PUBLIC_URL` so the virtual passkey is issued for the local relying party.
 
 Clean up users left behind by a crashed run:
 
 ```bash
-E2E_ALLOW_LOCAL=1 pnpm test:e2e:cleanup
+pnpm op:test:e2e:cleanup
 ```
 
-`pnpm test:e2e:guard` checks the environment guard without touching the database.
+`pnpm test:e2e` and `pnpm test:e2e:cleanup` stay available for CI, where the variables are already exported. `pnpm test:e2e:guard` checks the environment guard without touching the database.
 
 A manual GitHub Actions workflow (`.github/workflows/e2e.yml`, `workflow_dispatch` only) can run the same suite with local Supabase. It does not run on pull requests. Image uploads need the `E2E_R2_*` repository secrets.
 

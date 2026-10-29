@@ -33,6 +33,17 @@ export default defineConfig({
 				command: `pnpm exec vite dev --host ${base.hostname} --port ${port} --strictPort`,
 				url: baseURL,
 				reuseExistingServer: !process.env.CI,
-				timeout: 120_000
+				timeout: 120_000,
+				// `op run` injects DATABASE_URL, PUBLIC_URL, and the R2 variables into this process.
+				// The dev server must receive that same environment. CI exports the variables before `pnpm test:e2e`.
+				env: inheritedEnv()
 			}
 });
+
+function inheritedEnv() {
+	const env: Record<string, string> = {};
+	for (const [key, value] of Object.entries(process.env)) {
+		if (typeof value === "string") env[key] = value;
+	}
+	return env;
+}
