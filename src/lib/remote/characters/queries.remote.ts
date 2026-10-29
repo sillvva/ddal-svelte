@@ -19,7 +19,7 @@ export const getAllSelect = guardedQuery(function* ({ user }) {
 	return yield* Characters.get.select(user.id);
 });
 
-/** Saved character portraits counted toward the account storage quota. */
+/** Saved character portraits counted toward the account storage quota. Admins have no cap. */
 export const portraitStorage = guardedQuery(function* ({ user }) {
 	const Storage = yield* StorageService;
 	return yield* Storage.portraitUsage(user.id);

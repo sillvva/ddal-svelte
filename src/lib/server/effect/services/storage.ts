@@ -40,6 +40,7 @@ import {
 	lockPortraitUser,
 	notePendingFailure,
 	permanentKeyInUse,
+	portraitQuotaBytes,
 	promoteAvatarUploadRow,
 	removePendingDeletion,
 	scheduleDeletions,
@@ -439,10 +440,11 @@ export class StorageService extends Context.Service<StorageService>()("StorageSe
 		});
 
 		return {
-			/** Saved portrait bytes against the account quota. Unsaved `tmp/` uploads are not included. */
+			/** Saved portrait bytes against the account quota. `quotaBytes` is null for admins. Unsaved `tmp/` uploads are not included. */
 			portraitUsage: Effect.fn("StorageService.portraitUsage")(function* (userId: UserId) {
 				const usedBytes = yield* sumPortraitBytes(db, userId);
-				return { usedBytes, quotaBytes: CHARACTER_IMAGE_LIMITS.quotaBytes };
+				const quotaBytes = yield* portraitQuotaBytes(db, userId);
+				return { usedBytes, quotaBytes };
 			}),
 
 			/**

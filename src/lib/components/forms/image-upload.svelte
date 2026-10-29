@@ -319,24 +319,26 @@
 							<p class="text-xs text-neutral-500">Storage usage is unavailable.</p>
 						{/snippet}
 						{@const storage = await API.characters.queries.portraitStorage()}
-						{@const usage = portraitStorageView(storage.usedBytes, storage.quotaBytes)}
-						<div class="flex max-w-60 flex-1 flex-col gap-1">
-							<div class="flex items-baseline justify-end gap-3 text-xs text-neutral-500">
-								<span id="character-portrait-storage-label">{usage.usedLabel}/{usage.quotaLabel} used ({usage.percent}%)</span>
+						{#if storage.quotaBytes !== null}
+							{@const usage = portraitStorageView(storage.usedBytes, storage.quotaBytes)}
+							<div class="flex max-w-60 flex-1 flex-col gap-1">
+								<div class="flex items-baseline justify-end gap-3 text-xs text-neutral-500">
+									<span id="character-portrait-storage-label">{usage.usedLabel}/{usage.quotaLabel} used ({usage.percent}%)</span>
+								</div>
+								<progress
+									class={[
+										"progress",
+										usage.tone === "error" && "progress-error",
+										usage.tone === "warning" && "progress-warning",
+										usage.tone === "primary" && "progress-primary"
+									]}
+									value={storage.usedBytes}
+									max={storage.quotaBytes}
+									aria-labelledby="character-portrait-storage-label"
+									aria-valuetext={`${usage.usedLabel} of ${usage.quotaLabel} used, ${usage.percent}%`}
+								></progress>
 							</div>
-							<progress
-								class={[
-									"progress",
-									usage.tone === "error" && "progress-error",
-									usage.tone === "warning" && "progress-warning",
-									usage.tone === "primary" && "progress-primary"
-								]}
-								value={storage.usedBytes}
-								max={storage.quotaBytes}
-								aria-labelledby="character-portrait-storage-label"
-								aria-valuetext={`${usage.usedLabel} of ${usage.quotaLabel} used, ${usage.percent}%`}
-							></progress>
-						</div>
+						{/if}
 					</svelte:boundary>
 				{/if}
 			</div>

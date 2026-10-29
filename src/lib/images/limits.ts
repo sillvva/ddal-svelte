@@ -8,7 +8,7 @@ export const CHARACTER_IMAGE_LIMITS = {
 	maxEdgePx: 800,
 	/** Reject decoded images above this pixel count before drawing them. */
 	maxPixels: 24_000_000,
-	/** Total bytes of saved portraits per account. Unsaved `tmp/` uploads do not count. Avatars are separate. */
+	/** Total bytes of saved portraits per account. Admin accounts are exempt. Unsaved `tmp/` uploads do not count. Avatars are separate. */
 	quotaBytes: 20 * 1024 * 1024,
 	/** Issued upload rows per account, portraits and avatars together. */
 	maxUploadsPerWindow: 20,
