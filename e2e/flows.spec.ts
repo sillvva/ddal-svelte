@@ -18,7 +18,7 @@ import {
 
 test.describe.configure({ mode: "serial" });
 
-test("passkey user walks through the app and is deleted with their images", async ({ browser }) => {
+test("End-to-end passkey user flow", async ({ browser }) => {
 	assertLocalE2E(process.env);
 
 	const stamp = Date.now().toString(36);
