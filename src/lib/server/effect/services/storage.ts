@@ -9,7 +9,6 @@ import {
 	imagePublicUrl,
 	isOwnedAvatarImageKey,
 	isOwnedCharacterImageKey,
-	isAppImageKey,
 	isOwnedTemporaryAvatarImageKey,
 	isOwnedTemporaryImageKey,
 	isPermanentCharacterImageKey,
@@ -24,8 +23,7 @@ import {
 	permanentKeyForTemporary,
 	temporaryAvatarImageKey,
 	temporaryCharacterImageKey,
-	userIdFromImageKey,
-	userImagePrefixes
+	userIdFromPermanentKey
 } from "#lib/images/object-key.js";
 import type { CharacterId, ImageUploadId, UserId } from "#lib/schemas.js";
 import { DBService, runQuery, type Transaction } from "#lib/server/db/index.js";
@@ -423,13 +421,9 @@ export class StorageService extends Context.Service<StorageService>()("StorageSe
 					let failure = "";
 					yield* transaction(
 						Effect.fn(function* (tx) {
-							if (!isAppImageKey(row.objectKey)) {
-								yield* removePendingDeletion(tx, row.objectKey);
-								return;
-							}
-
 							const userId = userIdForDeletion(row.objectKey);
-							if (!userId) {
+							// Staged `tmp/` keys are not queued. Drop anything else without deleting the object.
+							if (!userId || !isPermanentImageKey(row.objectKey)) {
 								yield* removePendingDeletion(tx, row.objectKey);
 								return;
 							}
@@ -746,17 +740,17 @@ export class StorageService extends Context.Service<StorageService>()("StorageSe
 			}),
 
 			/**
-			 * Every portrait, avatar, and staged upload stored for this account.
+			 * Permanent portraits and avatars stored for this account.
 			 * Listing is best-effort for objects whose upload row was already removed.
+			 * Staged `tmp/` uploads are omitted; the bucket lifecycle rule deletes that prefix.
 			 */
 			listOwnedImageKeys: Effect.fn("StorageService.listOwnedImageKeys")(function* (userId: UserId) {
+				const prefix = `users/${userId}/`;
 				const keys = new Set<string>();
-				for (const prefix of userImagePrefixes(userId)) {
-					const found = yield* listPrefix(prefix);
-					for (const key of found) {
-						if (!key.startsWith(prefix) || !isAppImageKey(key) || userIdFromImageKey(key) !== userId) continue;
-						keys.add(key);
-					}
+				const found = yield* listPrefix(prefix);
+				for (const key of found) {
+					if (!key.startsWith(prefix) || !isPermanentImageKey(key) || userIdFromPermanentKey(key) !== userId) continue;
+					keys.add(key);
 				}
 				return [...keys];
 			}),

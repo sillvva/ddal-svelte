@@ -4,8 +4,7 @@ const uploadFilePattern = /^[0-9a-f]{8}-[0-9a-f]{4}-7[0-9a-f]{3}-[0-9a-f]{4}-[0-
 
 /**
  * Unsaved browser uploads live under this prefix.
- * Deleting the account removes these objects immediately. A bucket lifecycle rule
- * (configured on the bucket, not by the app) is the backstop if that delete never runs.
+ * An R2 lifecycle rule (configured on the bucket, not by the app) deletes them after about a day.
  */
 export const TEMPORARY_IMAGE_PREFIX = "tmp/";
 
@@ -74,14 +73,9 @@ export function isPermanentImageKey(key: string) {
 	return isPermanentCharacterImageKey(key) || isPermanentAvatarImageKey(key);
 }
 
-/** `tmp/` portrait or avatar key. Account deletion removes it; the bucket lifecycle rule is the backstop. */
+/** `tmp/` portrait or avatar key. The bucket lifecycle rule deletes this prefix. */
 export function isTemporaryImageKey(key: string) {
 	return key.startsWith(TEMPORARY_IMAGE_PREFIX) && isPermanentImageKey(key.slice(TEMPORARY_IMAGE_PREFIX.length));
-}
-
-/** Portrait or avatar key this app is willing to store or delete. */
-export function isAppImageKey(key: string) {
-	return isPermanentImageKey(key) || isTemporaryImageKey(key);
 }
 
 export function permanentKeyForTemporary(key: string) {
@@ -117,22 +111,10 @@ export function isOwnedTemporaryAvatarImageKey(userId: string, key: string) {
 	return isOwnedAvatarImageKey(userId, key.slice(TEMPORARY_IMAGE_PREFIX.length));
 }
 
-/** User id embedded in a permanent or staged portrait/avatar key, when the key matches the server's shape. */
-export function userIdFromImageKey(key: string) {
-	const permanent = isTemporaryImageKey(key) ? key.slice(TEMPORARY_IMAGE_PREFIX.length) : key;
-	if (!isPermanentImageKey(permanent)) return null;
-	return permanent.split("/")[1] ?? null;
-}
-
 /** User id embedded in a permanent portrait or avatar key, when the key matches the server's shape. */
 export function userIdFromPermanentKey(key: string) {
 	if (!isPermanentImageKey(key)) return null;
-	return userIdFromImageKey(key);
-}
-
-/** Storage prefixes that hold one account's portraits, avatar, and staged uploads. */
-export function userImagePrefixes(userId: string) {
-	return [`users/${userId}/`, `${TEMPORARY_IMAGE_PREFIX}users/${userId}/`] as const;
+	return key.split("/")[1] ?? null;
 }
 
 export function imagePublicUrl(key: string, publicBase: string) {

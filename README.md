@@ -102,11 +102,11 @@ The suite stops before it creates anything unless all of these are true:
 - `DATABASE_URL` uses that same kind of host (local Supabase is `127.0.0.1:54322`)
 - `DATABASE_URL` is not the same string as `REMOTE_DB_URL`
 
-Staging is rejected because it shares production's database. A global setup step and `pnpm test:e2e:cleanup` delete leftover `e2e-` users, their rows, and their stored images (avatars, portraits, and `tmp/` uploads) if a run crashes.
+Staging is rejected because it shares production's database. A global setup step and `pnpm test:e2e:cleanup` delete leftover `e2e-` users, their rows, and their stored images if a run crashes. Account deletion removes permanent avatars and portraits immediately. Unsaved `tmp/` uploads are left for the bucket lifecycle rule (about a day); the cleanup script still deletes those objects for `e2e-` users so a crashed run does not leave files in the test bucket.
 
 ### Setup
 
-1. Start local Supabase and apply migrations, including `supabase/migrations/20261029160000_pending_temporary_image_keys.sql`:
+1. Start local Supabase and apply migrations:
 
 ```bash
 supabase start

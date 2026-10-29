@@ -303,10 +303,12 @@ test("passkey user walks through the app and is deleted with their images", asyn
 			await page.waitForURL((url) => url.pathname === "/");
 			await expect(page.getByRole("button", { name: "Sign in with Passkey" })).toBeVisible();
 
-			for (const key of [imageKeys.replacedAvatar, imageKeys.character, imageKeys.staged]) {
+			for (const key of [imageKeys.replacedAvatar, imageKeys.character]) {
 				await waitUntilMissing(key);
 			}
-			await expect.poll(() => listUserObjects(userId)).toEqual([]);
+			// Unsaved `tmp/` uploads are left for the bucket lifecycle rule (about a day).
+			await expect.poll(() => objectExists(imageKeys.staged)).toBe(true);
+			await expect.poll(async () => (await listUserObjects(userId)).filter((key) => !key.startsWith("tmp/"))).toEqual([]);
 			await assertUserGone(userId);
 		});
 	} finally {

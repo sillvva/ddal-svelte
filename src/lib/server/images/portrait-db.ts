@@ -2,12 +2,12 @@ import { PROVIDERS } from "#lib/constants.js";
 import { CHARACTER_IMAGE_LIMITS, formatStorageBytes } from "#lib/images/limits.js";
 import {
 	imagePublicUrl,
-	isAppImageKey,
+	isPermanentCharacterImageKey,
 	isPermanentImageKey,
 	ownedAvatarKey,
 	ownedPermanentKey,
 	TEMPORARY_IMAGE_PREFIX,
-	userIdFromImageKey
+	userIdFromPermanentKey
 } from "#lib/images/object-key.js";
 import type { CharacterId, UserId } from "#lib/schemas.js";
 import { runQuery, type Database, type Transaction } from "#lib/server/db/index.js";
@@ -107,7 +107,7 @@ export function assertCustomAvatarAllowed(tx: Transaction, userId: UserId) {
 }
 
 export function scheduleDeletions(tx: Transaction, keys: readonly string[]) {
-	const unique = [...new Set(keys.filter(isAppImageKey))];
+	const unique = [...new Set(keys.filter(isPermanentImageKey))];
 	if (!unique.length) return Effect.void;
 	return runQuery(
 		tx
@@ -223,7 +223,7 @@ export function collectCharacterKeys(tx: Transaction, userId: UserId, characterI
 		);
 		const keys = new Set<string>();
 		for (const row of uploads) {
-			if (isAppImageKey(row.objectKey)) keys.add(row.objectKey);
+			if (isPermanentCharacterImageKey(row.objectKey)) keys.add(row.objectKey);
 		}
 		const current = characterRows[0] ? ownedPermanentKey(userId, characterId, characterRows[0].imageUrl, R2_PUBLIC_URL) : null;
 		if (current) keys.add(current);
@@ -242,7 +242,7 @@ export function collectUserKeys(tx: Transaction, userId: UserId) {
 		const [accountRow] = yield* runQuery(tx.select({ image: user.image }).from(user).where(eq(user.id, userId)).limit(1));
 		const keys = new Set<string>();
 		for (const row of uploads) {
-			if (isAppImageKey(row.objectKey)) keys.add(row.objectKey);
+			if (isPermanentImageKey(row.objectKey)) keys.add(row.objectKey);
 		}
 		for (const portrait of portraits) {
 			const key = ownedPermanentKey(userId, portrait.id, portrait.imageUrl, R2_PUBLIC_URL);
@@ -294,6 +294,6 @@ export function notePendingFailure(tx: Transaction, objectKey: string) {
 }
 
 export function userIdForDeletion(key: string) {
-	const userId = userIdFromImageKey(key);
+	const userId = userIdFromPermanentKey(key);
 	return userId ? (userId as UserId) : null;
 }
