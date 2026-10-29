@@ -1,8 +1,6 @@
-# Manual only. This does not run on pull requests, so a missing secret cannot fail existing CI.
-# It boots local Supabase (its own database) and the Vite dev server, then runs the Playwright suite.
-# Image uploads use the test bucket. Set these repository secrets before dispatching:
-#   E2E_R2_BUCKET, E2E_R2_ENDPOINT, E2E_R2_PUBLIC_URL, E2E_R2_ACCESS_KEY_ID, E2E_R2_SECRET_ACCESS_KEY
-# The bucket CORS rule must allow PUT from http://localhost:5173.
+# Manual only. This does not run on pull requests.
+# It boots local Supabase (its own database), a local MinIO bucket, and the Vite dev server,
+# then runs the Playwright suite. No repository secrets are required.
 name: e2e
 
 on:
@@ -32,13 +30,27 @@ jobs:
       - name: Start local Supabase
         run: supabase start
 
+      - name: Start local S3
+        run: |
+          docker run -d --name e2e-minio \
+            -p 9000:9000 \
+            -e MINIO_ROOT_USER=e2eaccess \
+            -e MINIO_ROOT_PASSWORD=e2esecretkey123 \
+            -e MINIO_API_CORS_ALLOW_ORIGIN=http://localhost:5173,http://127.0.0.1:5173 \
+            bitnamilegacy/minio:2024.12.18
+          for _ in $(seq 1 40); do
+            if curl -sf http://127.0.0.1:9000/minio/health/live >/dev/null; then
+              break
+            fi
+            sleep 2
+          done
+          curl -sf http://127.0.0.1:9000/minio/health/live >/dev/null
+          docker exec e2e-minio mc alias set local http://127.0.0.1:9000 e2eaccess e2esecretkey123
+          docker exec e2e-minio mc mb --ignore-existing local/e2e
+          docker exec e2e-minio mc anonymous set download local/e2e
+
       - name: Install Chromium
         run: pnpm exec playwright install --with-deps chromium
-
-      - name: Require the test image bucket
-        env:
-          E2E_R2_BUCKET: ${{ secrets.E2E_R2_BUCKET }}
-        run: test -n "$E2E_R2_BUCKET" || { echo "Set the E2E_R2_* secrets before running this workflow."; exit 1; }
 
       - name: Run the suite
         env:
@@ -52,9 +64,9 @@ jobs:
           DISCORD_CLIENT_SECRET: local-e2e
           DISABLE_SIGNUPS: "false"
           LOG_LEVEL: error
-          R2_BUCKET: ${{ secrets.E2E_R2_BUCKET }}
-          R2_ENDPOINT: ${{ secrets.E2E_R2_ENDPOINT }}
-          R2_PUBLIC_URL: ${{ secrets.E2E_R2_PUBLIC_URL }}
-          R2_ACCESS_KEY_ID: ${{ secrets.E2E_R2_ACCESS_KEY_ID }}
-          R2_SECRET_ACCESS_KEY: ${{ secrets.E2E_R2_SECRET_ACCESS_KEY }}
+          R2_BUCKET: e2e
+          R2_ENDPOINT: http://127.0.0.1:9000
+          R2_PUBLIC_URL: http://127.0.0.1:9000/e2e
+          R2_ACCESS_KEY_ID: e2eaccess
+          R2_SECRET_ACCESS_KEY: e2esecretkey123
         run: pnpm test:e2e

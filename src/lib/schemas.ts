@@ -77,9 +77,14 @@ export const nullableDate = v.pipe(
 	v.transform((input) => (input ? new Date(input) : null)),
 	v.nullable(v.date())
 );
+// `supportedValuesOf("timeZone")` lists canonical IANA names. Hosts whose zone is
+// Etc/UTC — containers and GitHub Actions included — report that zone as "UTC"
+// from `getLocalTimeZone()`, and "UTC" is not in the canonical list.
+const ianaTimeZones = new Set([...Intl.supportedValuesOf("timeZone"), "UTC"]);
+
 export const timezoneSchema = v.pipe(
 	v.string(),
-	v.check((input) => input === "" || Intl.supportedValuesOf("timeZone").includes(input), "Invalid timezone")
+	v.check((input) => input === "" || ianaTimeZones.has(input), "Invalid timezone")
 );
 
 export type UserId = v.InferOutput<typeof userIdSchema>;

@@ -76,6 +76,8 @@
 	{const { user } = $derived(await API.app.queries.request())}
 	{const character = $derived(await API.characters.queries.get(queryParams))}
 	{const myCharacter = $derived(character.userId === user?.id)}
+	{const newLogDraft = $derived(character.logs.at(-1)?.id ?? character.id)}
+	{const newLogHref = $derived(`/characters/${character.id}/log/new?draft=${encodeURIComponent(newLogDraft)}`)}
 	{const search = $derived(
 		new EntitySearchFactory(character.logs, page.url.searchParams.get(searchKey) ?? page.state.search?.[searchKey] ?? "")
 	)}
@@ -311,14 +313,14 @@
 			<div class="flex w-full gap-2 sm:max-w-md print:hidden">
 				{#if myCharacter}
 					<a
-						href={`/characters/${character.id}/log/new`}
+						href={newLogHref}
 						class="btn btn-primary max-sm:hidden sm:px-3 sm:btn-sm"
 						aria-label="New Log"
 						{@attach hotkey([
 							[
 								"n",
 								() => {
-									goto(`/characters/${character.id}/log/new`);
+									goto(newLogHref);
 								}
 							]
 						])}
@@ -329,7 +331,7 @@
 				<Search name={searchKey} placeholder="Search Logs" />
 				{#if myCharacter}
 					<a
-						href={`/characters/${character.id}/log/new`}
+						href={newLogHref}
 						class="btn btn-primary sm:hidden sm:px-3 sm:btn-sm"
 						aria-label="New Log"
 					>
@@ -383,10 +385,10 @@
 			<div class="flex flex-col gap-4 py-20 text-center">
 				<div>No logs found.</div>
 				<p>
-					<a href="/characters/{character.id}/log/new" class="btn btn-primary">Create a Game Log</a>
+					<a href={newLogHref} class="btn btn-primary">Create a Game Log</a>
 				</p>
 				<p>
-					<a href="/characters/{character.id}/log/new?firstLog=true" class="btn btn-primary">Create an Intro Log</a>
+					<a href="{newLogHref}&firstLog=true" class="btn btn-primary">Create an Intro Log</a>
 				</p>
 			</div>
 		</section>

@@ -66,9 +66,14 @@ export const save = guardedForm(editCharacterSchema, function* (input, { user, i
 
 	yield* Storage.cleanupAfterSave(stored.copy?.from ?? null);
 
+	// The character page reads `get({ param, newRedirect: true })`. The log page reads
+	// `get({ param })`. Those are different cache keys, and an explicit refresh skips
+	// invalidateAll, so a save has to refresh both or the page keeps the previous character.
 	yield* refreshAll(
 		API.characters.queries.portraitStorage().refresh(),
-		...(preexisting ? [API.characters.queries.get({ param: data.id }).refresh()] : [])
+		API.characters.queries.getAll().refresh(),
+		API.characters.queries.get({ param: result.id }).refresh(),
+		API.characters.queries.get({ param: result.id, newRedirect: true }).refresh()
 	);
 
 	if (firstLog && !preexisting) {

@@ -137,7 +137,7 @@ pnpm op:test:e2e:cleanup
 
 `pnpm test:e2e` and `pnpm test:e2e:cleanup` stay available for CI, where the variables are already exported. `pnpm test:e2e:guard` checks the environment guard without touching the database.
 
-A manual GitHub Actions workflow (`.github/workflows/e2e.yml`, `workflow_dispatch` only) can run the same suite with local Supabase. It does not run on pull requests. Image uploads need the `E2E_R2_*` repository secrets.
+A manual GitHub Actions workflow (`.github/workflows/e2e.yml`, `workflow_dispatch` only) runs the same suite with local Supabase and a local MinIO bucket. It does not run on pull requests and does not need repository secrets. The MinIO root user, bucket, and CORS origin exist only for that job. Browser uploads use path-style URLs on `http://127.0.0.1:9000`, and `MINIO_API_CORS_ALLOW_ORIGIN` allows `PUT` from `http://localhost:5173`.
 
 ## Linting & Formatting
 

@@ -14,6 +14,39 @@ export async function installPasskeyAuthenticator(context: BrowserContext) {
 	await context.credentials.install();
 }
 
+/**
+ * Vite serves the client as deferred modules, so a locator can be visible in the
+ * server-rendered HTML before Svelte has attached event handlers. Clicks in that
+ * window do nothing. `window.__svelte` is created by an inline script before those
+ * handlers exist. Svelte 5 marks a hydrated element with an `events` symbol once
+ * the handler is actually attached.
+ */
+export async function waitForHydration(page: Page) {
+	await page.waitForFunction(
+		() =>
+			[...document.querySelectorAll("button, a, input, select, textarea")].some((element) =>
+				Object.getOwnPropertySymbols(element).some((symbol) => symbol.description === "events")
+			),
+		undefined,
+		{ timeout: 30_000 }
+	);
+}
+
+/** Full page loads (`goto` and `location` navigations) must hydrate before the next click. */
+export function settleNavigations(page: Page) {
+	const goto = page.goto.bind(page);
+	const waitForURL = page.waitForURL.bind(page);
+	page.goto = async (url, options) => {
+		const response = await goto(url, options);
+		await waitForHydration(page);
+		return response;
+	};
+	page.waitForURL = async (url, options) => {
+		await waitForURL(url, options);
+		await waitForHydration(page);
+	};
+}
+
 export function acceptDialogs(page: Page) {
 	let nextPrompt: string | null = null;
 	page.on("dialog", async (dialog) => {
@@ -61,7 +94,9 @@ export async function uploadCharacterImage(scope: Locator) {
 		mimeType: "image/png",
 		buffer: PNG
 	});
-	const portrait = scope.getByLabel("Portrait");
+	// A finished upload is written into the Portrait text field. `getByLabel("Portrait")`
+	// also matches the drop target and the Upload/URL toggle.
+	const portrait = scope.getByRole("textbox", { name: "Portrait", exact: true });
 	await expect
 		.poll(
 			async () => {

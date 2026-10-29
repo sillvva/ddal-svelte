@@ -26,8 +26,8 @@ export function getItemEntities(
 	const magicItems: MagicItem[] = [];
 	const storyAwards: StoryAward[] = [];
 
-	if (lastLogId === "new") return { magicItems: [], storyAwards: [] };
-
+	// A new log has no id yet. No saved log matches "new", so every existing log is included
+	// and its items can be dropped. Stopping here would hide the drop button on that form.
 	let lastLog = false;
 	character.logs
 		.toSorted((a, b) => sorter(a.date, b.date))

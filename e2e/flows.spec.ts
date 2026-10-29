@@ -11,6 +11,7 @@ import {
 	logIdFromHref,
 	openSettings,
 	saveStorageState,
+	settleNavigations,
 	uploadAvatar,
 	uploadCharacterImage
 } from "./ui.ts";
@@ -35,6 +36,7 @@ test("passkey user walks through the app and is deleted with their images", asyn
 
 	const context = await browser.newContext();
 	const page = await context.newPage();
+	settleNavigations(page);
 	const dialogs = acceptDialogs(page);
 	await installPasskeyAuthenticator(context);
 
@@ -163,7 +165,7 @@ test("passkey user walks through the app and is deleted with their images", asyn
 			await page.getByLabel("Class").fill("Wizard");
 			await page.getByRole("button", { name: "Save Character" }).click();
 			await page.waitForURL(new RegExp(`/characters/${characterId}$`));
-			await expect(page.getByText("Wizard")).toBeVisible();
+			await expect(page.getByText("Elf Wizard")).toBeVisible();
 
 			await page.goto(`/characters/${characterId}/edit`);
 			const form = page.locator("form").filter({ has: page.getByRole("button", { name: "Save Character" }) });
@@ -214,7 +216,7 @@ test("passkey user walks through the app and is deleted with their images", asyn
 			await page.getByRole("button", { name: "Save Log" }).click();
 			await page.waitForURL(new RegExp(`/characters/${characterId}$`));
 			await expect(page.getByRole("link", { name: purchaseTitle })).toBeVisible();
-			await expect(page.getByText("25")).toBeVisible();
+			await expect(page.getByText("25", { exact: true })).toBeVisible();
 		});
 
 		await test.step("remove the magic item in a later log", async () => {
@@ -247,11 +249,15 @@ test("passkey user walks through the app and is deleted with their images", asyn
 		await test.step("create a DM log assigned to the character", async () => {
 			await page.goto("/dm-logs/new");
 			await page.getByLabel("Title").fill(dmLogTitle);
-			await page.getByLabel("Assigned Character").fill(characterName);
+			const assigned = page.getByLabel("Assigned Character");
+			// Bits UI opens this combobox on keydown, not on a programmatic value change.
+			await assigned.fill(characterName);
+			await assigned.press("ArrowDown");
 			await page.getByRole("option", { name: characterName }).click();
 			await page.getByRole("button", { name: "Save Log" }).click();
 			await page.waitForURL(/\/dm-logs$/);
-			const dmLogLink = page.locator('a[href^="/dm-logs/"]', { hasText: dmLogTitle });
+			// Mobile and desktop lists both render this link; only one is visible at the desktop viewport.
+			const dmLogLink = page.locator('a[href^="/dm-logs/"]', { hasText: dmLogTitle }).filter({ visible: true });
 			await expect(dmLogLink).toBeVisible();
 			expect(logIdFromHref(await dmLogLink.getAttribute("href"))).not.toBe("");
 		});
@@ -264,7 +270,7 @@ test("passkey user walks through the app and is deleted with their images", asyn
 			await page.waitForURL(/\/dms$/);
 			const editedDm = page.locator(`a[href="/dms/${dmId}"]`, { hasText: editedDmName });
 			await expect(editedDm).toBeVisible();
-			await expect(page.getByText("424242")).toBeVisible();
+			await expect(page.getByRole("cell", { name: "424242" })).toBeVisible();
 		});
 
 		await test.step("delete the DM after its log is gone", async () => {
@@ -292,8 +298,13 @@ test("passkey user walks through the app and is deleted with their images", asyn
 
 		await test.step("delete the account and prove its images are gone", async () => {
 			await openSettings(page, handle);
-			const danger = page.locator("aside#settings .collapse").filter({ hasText: "Danger Zone" });
-			await danger.locator('input[type="checkbox"]').check({ force: true });
+			// The account settings collapse wraps this one, so both contain the "Danger Zone" text.
+			// DaisyUI stretches an invisible checkbox over the title. Its box is not a reliable click target.
+			const danger = page.locator("aside#settings .collapse").filter({ hasText: "Danger Zone" }).last();
+			await danger.locator('input[type="checkbox"]').evaluate((node) => {
+				if (!(node instanceof HTMLInputElement)) throw new Error("Danger Zone toggle is not a checkbox");
+				node.checked = true;
+			});
 			await danger.getByRole("button", { name: "Delete account" }).click();
 
 			const segment = (await page.locator("dialog span.text-error").innerText()).trim();
@@ -321,10 +332,8 @@ function headerAvatar(page: Page) {
 }
 
 function magicItems(page: Page) {
-	return page
-		.locator("h4")
-		.filter({ hasText: /^Magic Items$/ })
-		.locator("xpath=following-sibling::p[1]");
+	// The heading sits in a wrapper; the item list is the wrapper's next sibling, not the heading's.
+	return page.getByRole("heading", { name: "Magic Items", exact: true }).locator("xpath=../following-sibling::p[1]");
 }
 
 function keyFromUrl(imageUrl: string | null) {

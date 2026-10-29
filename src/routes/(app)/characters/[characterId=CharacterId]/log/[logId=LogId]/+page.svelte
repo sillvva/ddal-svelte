@@ -28,13 +28,15 @@
 	{const schema = logSchema}
 	{const form = API.logs.forms.saveCharacter}
 	{const firstLog = $derived(page.url.searchParams.get("firstLog") === "true")}
+	{const draft = $derived(page.url.searchParams.get("draft") ?? "")}
 	{const initialErrors = $derived(params.logId !== "new")}
 	{#if params.logId}
 		{const log = $derived(
 			await API.logs.forms.character({
 				character: { id: character.id, name: character.name },
 				logId: params.logId,
-				firstLog
+				firstLog,
+				draft
 			})
 		)}
 
@@ -62,6 +64,7 @@
 						<InputWrapper field={form.fields.type} as="select" label="Log Type">
 							<select
 								{...form.fields.type.as("select")}
+								id={form.fields.type.as("select").name}
 								class={["select-bordered select w-full max-sm:text-base", data.type !== "game" && "text-xs!"]}
 							>
 								<option value="game">Game</option>
