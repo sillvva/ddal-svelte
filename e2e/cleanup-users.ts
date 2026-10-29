@@ -158,7 +158,7 @@ export async function userIdForSessionCookies(cookies: { name: string; value: st
 		// better-auth stores the raw token in `session.sessionToken` and sets
 		// `better-auth.session_token` to `${token}.${base64Signature}`.
 		if (!cookie.name.toLowerCase().includes("session_token")) continue;
-		let value = cookie.value;
+		let value;
 		try {
 			value = decodeURIComponent(cookie.value);
 		} catch {
