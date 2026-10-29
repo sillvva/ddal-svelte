@@ -1,5 +1,5 @@
 import { defaultCharacter } from "#lib/entities.js";
-import { characterIdParamSchema } from "#lib/schemas.js";
+import { characterIdParamSchema, draftCacheKey } from "#lib/schemas.js";
 import { RedirectError } from "#lib/server/effect/errors.js";
 import { guardedQuery } from "#lib/server/effect/guarded.js";
 import { run } from "#lib/server/effect/runtime.js";
@@ -29,14 +29,18 @@ export const portraitStorage = guardedQuery(function* ({ user }) {
 export const get = query(
 	v.object({
 		param: characterIdParamSchema,
-		newRedirect: v.optional(v.boolean(), false)
+		newRedirect: v.optional(v.boolean(), false),
+		draft: draftCacheKey
 	}),
 	(input) =>
 		run(function* () {
 			const Character = yield* CharacterService;
 			const { locals } = getRequestEvent();
 
-			if (input.param === "new" && input.newRedirect) redirect(302, "/characters/new/edit");
+			if (input.param === "new" && input.newRedirect) {
+				const draft = input.draft ? `?draft=${encodeURIComponent(input.draft)}` : "";
+				redirect(302, `/characters/new/edit${draft}`);
+			}
 
 			const character =
 				input.param === "new"

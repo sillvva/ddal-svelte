@@ -4,6 +4,7 @@ import {
 	characterIdSchema,
 	characterLogSchema,
 	dMLogSchema,
+	draftCacheKey,
 	logIdParamSchema,
 	orEmpty,
 	type DmLogSchemaIn,
@@ -27,12 +28,7 @@ const characterLogFormSchema = v.object({
 	}),
 	logId: logIdParamSchema,
 	firstLog: v.optional(v.boolean(), false),
-	/**
-	 * Cache key only. A new log's id is generated inside this query, and the arguments
-	 * are the cache key. Without a value that changes after each save, every visit to
-	 * `/log/new` reuses that id and the next save overwrites the previous log.
-	 */
-	draft: v.optional(v.string(), "")
+	draft: draftCacheKey
 });
 
 export const character = guardedQuery(characterLogFormSchema, function* (input, { user }) {
@@ -65,7 +61,8 @@ export const character = guardedQuery(characterLogFormSchema, function* (input, 
 const dmLogFormSchema = v.object({
 	param: v.object({
 		logId: logIdParamSchema
-	})
+	}),
+	draft: draftCacheKey
 });
 
 export const dm = guardedQuery(dmLogFormSchema, function* (input, { user }) {

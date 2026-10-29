@@ -25,6 +25,7 @@ test("passkey user walks through the app and is deleted with their images", asyn
 	const handle = `e2e-${stamp}`;
 	const email = `${handle}@example.com`;
 	const characterName = `E2E ${stamp}`;
+	const secondCharacterName = `E2E Companion ${stamp}`;
 	const dmName = `E2E Guest ${stamp}`;
 	const editedDmName = `${dmName} Edited`;
 	const gainTitle = `E2E Item Gain ${stamp}`;
@@ -32,6 +33,7 @@ test("passkey user walks through the app and is deleted with their images", asyn
 	const purchaseTitle = `E2E Purchase ${stamp}`;
 	const lossTitle = `E2E Item Loss ${stamp}`;
 	const dmLogTitle = `E2E DM Session ${stamp}`;
+	const secondDmLogTitle = `E2E DM Session Two ${stamp}`;
 	const itemName = `Cloak of E2E ${stamp}`;
 
 	const context = await browser.newContext();
@@ -159,6 +161,35 @@ test("passkey user walks through the app and is deleted with their images", asyn
 			await expect(page.getByText("Fighter")).toBeVisible();
 		});
 
+		await test.step("create a second character", async () => {
+			await page.goto("/characters");
+			const create = page.getByRole("link", { name: /New/ }).filter({ visible: true });
+			await expect(create).toHaveAttribute("href", /draft=/);
+			await create.click();
+			await page.waitForURL(/\/characters\/new\/edit/);
+
+			const starting = page.getByRole("checkbox", { name: "Create Starting Log" });
+			if (await starting.isChecked()) await starting.uncheck();
+			await page.getByLabel("Character Name").fill(secondCharacterName);
+			await page.getByLabel("Campaign").fill("E2E Campaign");
+			await page.getByLabel("Species").fill("Dwarf");
+			await page.getByLabel("Class").fill("Cleric");
+			await page.getByRole("button", { name: "Save Character" }).click();
+			await page.waitForURL(/\/characters\/[0-9a-f-]{36}$/iu);
+			const secondId = characterIdFromUrl(page.url()) ?? "";
+			expect(secondId).not.toBe("");
+			expect(secondId).not.toBe(characterId);
+
+			await page.goto("/characters");
+			const firstLink = page.getByRole("link", { name: characterName }).filter({ visible: true });
+			const secondLink = page.getByRole("link", { name: secondCharacterName }).filter({ visible: true });
+			await expect(firstLink).toBeVisible();
+			await expect(secondLink).toBeVisible();
+			expect(await firstLink.getAttribute("href")).not.toBe(await secondLink.getAttribute("href"));
+			await firstLink.click();
+			await page.waitForURL(new RegExp(`/characters/${characterId}$`));
+		});
+
 		await test.step("edit the character and leave a staged portrait unsaved", async () => {
 			await page.getByRole("link", { name: "Edit" }).click();
 			await page.waitForURL(new RegExp(`/characters/${characterId}/edit$`));
@@ -246,20 +277,34 @@ test("passkey user walks through the app and is deleted with their images", asyn
 			await expect(page.getByRole("link", { name: purchaseTitle })).toHaveCount(0);
 		});
 
-		await test.step("create a DM log assigned to the character", async () => {
-			await page.goto("/dm-logs/new");
+		await test.step("create two DM logs assigned to the character", async () => {
+			await page.goto("/dm-logs");
+			await page.getByRole("link", { name: "New Log" }).filter({ visible: true }).click();
+			await page.waitForURL(/\/dm-logs\/new/);
 			await page.getByLabel("Title").fill(dmLogTitle);
-			const assigned = page.getByLabel("Assigned Character");
-			// Bits UI opens this combobox on keydown, not on a programmatic value change.
-			await assigned.fill(characterName);
-			await assigned.press("ArrowDown");
-			await page.getByRole("option", { name: characterName }).click();
+			await assignCharacter(page, characterName);
 			await page.getByRole("button", { name: "Save Log" }).click();
 			await page.waitForURL(/\/dm-logs$/);
-			// Mobile and desktop lists both render this link; only one is visible at the desktop viewport.
-			const dmLogLink = page.locator('a[href^="/dm-logs/"]', { hasText: dmLogTitle }).filter({ visible: true });
-			await expect(dmLogLink).toBeVisible();
-			expect(logIdFromHref(await dmLogLink.getAttribute("href"))).not.toBe("");
+
+			const createAnother = page.getByRole("link", { name: "New Log" }).filter({ visible: true });
+			await expect(createAnother).toHaveAttribute("href", /draft=/);
+			await createAnother.click();
+			await page.waitForURL(/\/dm-logs\/new\?draft=/);
+			await page.getByLabel("Title").fill(secondDmLogTitle);
+			await assignCharacter(page, characterName);
+			await page.getByRole("button", { name: "Save Log" }).click();
+			await page.waitForURL(/\/dm-logs$/);
+
+			// Mobile and desktop lists both render each link; only one copy is visible.
+			const firstLog = page.locator('a[href^="/dm-logs/"]', { hasText: dmLogTitle }).filter({ visible: true });
+			const secondLog = page.locator('a[href^="/dm-logs/"]', { hasText: secondDmLogTitle }).filter({ visible: true });
+			await expect(firstLog).toBeVisible();
+			await expect(secondLog).toBeVisible();
+			const firstHref = await firstLog.getAttribute("href");
+			const secondHref = await secondLog.getAttribute("href");
+			expect(logIdFromHref(firstHref)).not.toBe("");
+			expect(logIdFromHref(secondHref)).not.toBe("");
+			expect(firstHref).not.toBe(secondHref);
 		});
 
 		await test.step("edit the DM", async () => {
@@ -326,6 +371,14 @@ test("passkey user walks through the app and is deleted with their images", asyn
 		await context.close();
 	}
 });
+
+async function assignCharacter(page: Page, name: string) {
+	const assigned = page.getByLabel("Assigned Character");
+	// Bits UI opens this combobox on keydown, not on a programmatic value change.
+	await assigned.fill(name);
+	await assigned.press("ArrowDown");
+	await page.getByRole("option", { name }).click();
+}
 
 function headerAvatar(page: Page) {
 	return page.locator("header button img");

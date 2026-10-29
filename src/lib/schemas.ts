@@ -87,6 +87,12 @@ export const timezoneSchema = v.pipe(
 	v.check((input) => input === "" || ianaTimeZones.has(input), "Invalid timezone")
 );
 
+/**
+ * Cache key only. A query that mints an id for a "new" route stores that id under its
+ * arguments. A value that changes after each save makes the next visit mint a different id.
+ */
+export const draftCacheKey = v.optional(v.string(), "");
+
 export type UserId = v.InferOutput<typeof userIdSchema>;
 export const userIdSchema = brandedId("UserId");
 
