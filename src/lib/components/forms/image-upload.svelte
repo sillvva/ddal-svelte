@@ -1,6 +1,6 @@
 <script lang="ts">
 	import { BLANK_CHARACTER } from "#lib/constants.js";
-	import { AVATAR_IMAGE_LIMITS, CHARACTER_IMAGE_LIMITS, formatBytes } from "#lib/images/limits.js";
+	import { AVATAR_IMAGE_LIMITS, CHARACTER_IMAGE_LIMITS, formatBytes, portraitStorageView } from "#lib/images/limits.js";
 	import {
 		isPermanentAvatarImageKey,
 		isPermanentCharacterImageKey,
@@ -116,29 +116,6 @@
 			: "size-32 shrink-0 rounded-full border border-base-content/20 object-cover object-center"
 	);
 	const alt = $derived(props.purpose === "character" ? "Character portrait" : "Profile picture");
-
-	function formatStorageBytes(bytes: number) {
-		if (bytes <= 0) return "0 MB";
-		return formatBytes(bytes);
-	}
-
-	function storageTone(ratio: number) {
-		if (ratio >= 1) return "error" as const;
-		if (ratio >= 0.8) return "warning" as const;
-		return "primary" as const;
-	}
-
-	function portraitStorageView(usedBytes: number, quotaBytes: number) {
-		const remainingBytes = Math.max(0, quotaBytes - usedBytes);
-		const ratio = quotaBytes > 0 ? usedBytes / quotaBytes : 1;
-		return {
-			percent: Math.min(100, Math.round(ratio * 100)),
-			tone: storageTone(ratio),
-			usedLabel: usedBytes,
-			quotaLabel: formatStorageBytes(quotaBytes),
-			remainingLabel: formatStorageBytes(remainingBytes)
-		};
-	}
 
 	function setPending(pending: boolean) {
 		uploading = pending;

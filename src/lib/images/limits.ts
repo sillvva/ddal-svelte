@@ -45,3 +45,26 @@ export function formatBytes(bytes: number) {
 	const rounded = Math.round(megabytes * 10) / 10;
 	return `${rounded} MB`;
 }
+
+export function formatStorageBytes(bytes: number) {
+	if (bytes <= 0) return "0 MB";
+	return formatBytes(bytes);
+}
+
+export function storageTone(ratio: number) {
+	if (ratio >= 1) return "error" as const;
+	if (ratio >= 0.8) return "warning" as const;
+	return "primary" as const;
+}
+
+export function portraitStorageView(usedBytes: number, quotaBytes: number) {
+	const remainingBytes = Math.max(0, quotaBytes - usedBytes);
+	const ratio = quotaBytes > 0 ? usedBytes / quotaBytes : 1;
+	return {
+		percent: Math.min(100, Math.round(ratio * 100)),
+		tone: storageTone(ratio),
+		usedLabel: usedBytes,
+		quotaLabel: formatStorageBytes(quotaBytes),
+		remainingLabel: formatStorageBytes(remainingBytes)
+	};
+}

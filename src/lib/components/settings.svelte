@@ -3,6 +3,7 @@
 	import ImageUpload from "#lib/components/forms/image-upload.svelte";
 	import { BLANK_CHARACTER, PROVIDERS } from "#lib/constants.js";
 	import { errorToast } from "#lib/factories.svelte.js";
+	import { portraitStorageView } from "#lib/images/limits.ts";
 	import * as API from "#lib/remote/index.js";
 	import type { ImageUploadId } from "#lib/schemas.js";
 	import { getGlobal } from "#lib/stores.svelte.js";
@@ -222,6 +223,31 @@
 			<input type="checkbox" class="lg:hidden" />
 			<div class="collapse-title px-2 font-semibold lg:hidden">Account Settings</div>
 			<div class="collapse-content px-0 pb-0">
+				<svelte:boundary>
+					{#snippet failed()}
+						<p class="text-xs text-neutral-500">Storage usage is unavailable.</p>
+					{/snippet}
+					{@const storage = await API.characters.queries.portraitStorage()}
+					{@const usage = portraitStorageView(storage.usedBytes, storage.quotaBytes)}
+					<div class="my-2 flex flex-1 flex-col gap-1 px-2">
+						<div class="flex items-baseline justify-between gap-3 text-xs text-neutral-500">
+							<span id="character-portrait-storage-label">Image storage used</span>
+							<span>{usage.usedLabel}/{usage.quotaLabel} ({usage.percent}%)</span>
+						</div>
+						<progress
+							class={[
+								"progress",
+								usage.tone === "error" && "progress-error",
+								usage.tone === "warning" && "progress-warning",
+								usage.tone === "primary" && "progress-primary"
+							]}
+							value={storage.usedBytes}
+							max={storage.quotaBytes}
+							aria-labelledby="character-portrait-storage-label"
+							aria-valuetext={`${usage.usedLabel} of ${usage.quotaLabel} used, ${usage.percent}%`}
+						></progress>
+					</div>
+				</svelte:boundary>
 				<ul class="menu w-full menu-lg px-0 [&_li>*]:px-2">
 					<li class="menu-title">
 						<span class="font-bold">Linked Accounts</span>
