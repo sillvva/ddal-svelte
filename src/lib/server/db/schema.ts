@@ -223,8 +223,9 @@ export const imageUploads = pg.pgTable(
 );
 
 /**
- * Permanent R2 keys whose objects still need to be deleted.
+ * R2 keys whose objects still need to be deleted.
  * Rows have no user foreign key, so they survive account deletion and can be retried later.
+ * Both permanent portraits/avatars and staged `tmp/` uploads are recorded here.
  */
 export const pendingObjectDeletions = pg.pgTable(
 	"pending_object_deletion",

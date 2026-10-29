@@ -89,6 +89,56 @@ bun run preview
 npm run preview
 ```
 
+## End-to-end tests
+
+Playwright signs up a disposable passkey user (`e2e-<timestamp>`), walks through characters, logs, magic items, and DMs, then deletes the account. Each run uses the local database only. It does not reset the database and it never reads `REMOTE_DB_URL`.
+
+### Safeguards
+
+The suite stops before it creates anything unless all of these are true:
+
+- `E2E_ALLOW_LOCAL=1` (or `true`)
+- `PUBLIC_URL` is `http://localhost`, `http://127.0.0.1`, or another local host
+- `DATABASE_URL` uses that same kind of host (local Supabase is `127.0.0.1:54322`)
+- `DATABASE_URL` is not the same string as `REMOTE_DB_URL`
+
+Staging is rejected because it shares production's database. A global setup step and `pnpm test:e2e:cleanup` delete leftover `e2e-` users, their rows, and their stored images (avatars, portraits, and `tmp/` uploads) if a run crashes.
+
+### Setup
+
+1. Start local Supabase and apply migrations, including `supabase/migrations/20261029160000_pending_temporary_image_keys.sql`:
+
+```bash
+supabase start
+pnpm db:push:local
+```
+
+2. Point `.env.development.local` at that database (`DATABASE_URL`, `PUBLIC_URL=http://localhost:5173`) and use the separate test image bucket in the `R2_*` variables. The bucket must allow `PUT` from `http://localhost:5173`. Do not point `DATABASE_URL` at production or staging.
+
+3. Install browsers once:
+
+```bash
+pnpm exec playwright install chromium
+```
+
+### Run
+
+```bash
+E2E_ALLOW_LOCAL=1 pnpm test:e2e
+```
+
+`pnpm test:e2e` starts the Vite dev server when one is not already running. Set `E2E_SKIP_WEBSERVER=1` to use a server you started yourself. The app origin has to match `PUBLIC_URL` so the virtual passkey is issued for the local relying party.
+
+Clean up users left behind by a crashed run:
+
+```bash
+E2E_ALLOW_LOCAL=1 pnpm test:e2e:cleanup
+```
+
+`pnpm test:e2e:guard` checks the environment guard without touching the database.
+
+A manual GitHub Actions workflow (`.github/workflows/e2e.yml`, `workflow_dispatch` only) can run the same suite with local Supabase. It does not run on pull requests. Image uploads need the `E2E_R2_*` repository secrets.
+
 ## Linting & Formatting
 
 ```bash

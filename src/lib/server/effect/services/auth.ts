@@ -451,11 +451,23 @@ export class AuthService extends Context.Service<AuthService>()("AuthService", {
 					);
 				}),
 				delete: Effect.fn("AuthService.user.delete")(function* (userId: UserId) {
+					const Storage = yield* StorageService;
+					// Objects with no upload row (a failed tmp cleanup) are only visible by listing.
+					// A list failure still deletes every key recorded in the database.
+					const listed = yield* Storage.listOwnedImageKeys(userId).pipe(
+						Effect.catch((error) =>
+							AppLog.error("AuthService.user.delete list images", { message: error.message, userId }).pipe(
+								Effect.as([] as string[])
+							)
+						)
+					);
+
 					return yield* transaction(
 						Effect.fn(function* (tx) {
-							// Record permanent object keys before the user row (and its characters) disappear.
+							yield* lockPortraitUser(tx, userId);
+							// Record portrait, avatar, and staged tmp/ keys before the user row disappears.
 							const keys = yield* collectUserKeys(tx, userId);
-							yield* scheduleDeletions(tx, keys);
+							yield* scheduleDeletions(tx, [...keys, ...listed]);
 
 							// Logs reference dungeon masters with ON DELETE RESTRICT, so they must go before the user row.
 							yield* runQuery(
