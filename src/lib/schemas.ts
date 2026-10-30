@@ -12,9 +12,9 @@ function brandedId<T extends string>(name: T) {
 
 const string = v.pipe(v.string(), v.trim());
 export const requiredString = v.pipe(string, v.regex(/^.*(\p{L}|\p{N})+.*$/u, "Required"));
-export const shortString = v.pipe(string, v.maxLength(64));
-export const text = v.pipe(string, v.maxLength(2000));
-export const largeText = v.pipe(string, v.maxLength(5000));
+export const shortString = v.pipe(string, v.maxGraphemes(64));
+export const text = v.pipe(string, v.maxGraphemes(2000));
+export const largeText = v.pipe(string, v.maxGraphemes(5000));
 export const uuidV7 = v.pipe(
 	v.string(),
 	v.regex(/^[\da-f]{8}-[\da-f]{4}-7[\da-f]{3}-[\da-f]{4}-[\da-f]{12}$/iu, "ID is missing or invalid")
