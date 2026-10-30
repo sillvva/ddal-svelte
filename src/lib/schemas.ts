@@ -261,27 +261,15 @@ export const characterLogSchema = (character: FullCharacterData) =>
 			}, `Cannot reduce total TCP to less than 0. Current: ${character.totalTcp}`),
 			["tcp"]
 		),
-		v.forward(
-			v.check((input) => {
-				const issue = itemTimelineIssues(character.logs, input).find((item) => item.field === "magicItemsLost");
-				return !issue;
-			}, "This item is not held on this log's date"),
-			["magicItemsLost"]
-		),
-		v.forward(
-			v.check((input) => {
-				const issue = itemTimelineIssues(character.logs, input).find((item) => item.field === "storyAwardsLost");
-				return !issue;
-			}, "This item is not held on this log's date"),
-			["storyAwardsLost"]
-		),
-		v.forward(
-			v.check((input) => {
-				const issue = itemTimelineIssues(character.logs, input).find((item) => item.field === "date");
-				return !issue;
-			}, "An item gained in this log is dropped in an earlier log"),
-			["date"]
-		)
+		v.check((input) => {
+			return !itemTimelineIssues(character.logs, input).some((item) => item.field === "magicItemsLost");
+		}, "A magic item in this log is dropped before it has been obtained"),
+		v.check((input) => {
+			return !itemTimelineIssues(character.logs, input).some((item) => item.field === "storyAwardsLost");
+		}, "A story award in this log is dropped before it has been obtained"),
+		v.check((input) => {
+			return !itemTimelineIssues(character.logs, input).some((item) => item.field === "date");
+		}, "A magic item or story award gained in this log is dropped in an earlier log"),
 	);
 
 export const dMLogSchema = (characters: FullCharacterData[] = []) =>
@@ -346,16 +334,6 @@ export const dMLogSchema = (characters: FullCharacterData[] = []) =>
 			}, "Cannot reduce character's total TCP to less than 0"),
 			["tcp"]
 		),
-		v.check((input) => {
-			const character = characters.find((entry) => entry.id === input.characterId);
-			if (!character) return true;
-			return !itemTimelineIssues(character.logs, input).some((item) => item.field === "magicItemsLost");
-		}, "A magic item in this log is not obtained by this log's date"),
-		v.check((input) => {
-			const character = characters.find((entry) => entry.id === input.characterId);
-			if (!character) return true;
-			return !itemTimelineIssues(character.logs, input).some((item) => item.field === "storyAwardsLost");
-		}, "A story award in this log is not obtained by this log's date"),
 		v.check((input) => {
 			const character = characters.find((entry) => entry.id === input.characterId);
 			if (!character) return true;

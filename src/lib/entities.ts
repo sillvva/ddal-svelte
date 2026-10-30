@@ -7,6 +7,7 @@ import { BLANK_CHARACTER, PlaceholderName } from "./constants";
 import {
 	type CharacterId,
 	type DungeonMasterId,
+	type ItemId,
 	type LocalsUser,
 	type LogId,
 	type LogSchema,
@@ -74,36 +75,38 @@ export function getItemEntities(
 }
 
 export type ItemTimelineIssue = {
+	id: ItemId;
 	field: "magicItemsLost" | "storyAwardsLost" | "date";
+	type: "gained" | "dropped";
 	message: string;
 };
 
 const dropBeforeAcquisition = "Can't drop an item before it was acquired";
 const alreadyDropped = "This item was already dropped in an earlier log";
-const gainAfterDrop = "An item gained in this log is dropped in an earlier log";
+const gainAfterDrop = "This item was dropped in an earlier log";
 
 /** Reject a drop dated before the item was acquired, including after the log's date moves. */
 export function itemTimelineIssues(
 	logs: FullCharacterData["logs"],
 	input: {
-		id: string;
+		id: LogId;
 		isDmLog?: boolean;
 		date: Date;
 		appliedDate?: Date | null;
-		magicItemsGained: readonly { id: string }[];
-		magicItemsLost: readonly string[];
-		storyAwardsGained: readonly { id: string }[];
-		storyAwardsLost: readonly string[];
+		magicItemsGained: readonly { id: ItemId }[];
+		magicItemsLost: readonly ItemId[];
+		storyAwardsGained: readonly { id: ItemId }[];
+		storyAwardsLost: readonly ItemId[];
 	}
 ): ItemTimelineIssue[] {
 	const inputTime = input.isDmLog ? (input.appliedDate ?? input.date).getTime() : input.date.getTime();
 	const events: {
-		id: string;
+		id: LogId;
 		time: number;
-		magicGained: string[];
-		magicLost: string[];
-		storyGained: string[];
-		storyLost: string[];
+		magicGained: ItemId[];
+		magicLost: ItemId[];
+		storyGained: ItemId[];
+		storyLost: ItemId[];
 	}[] = logs
 		.filter((log) => log.id !== input.id)
 		.map((log) => ({
@@ -125,31 +128,31 @@ export function itemTimelineIssues(
 	});
 	events.sort((a, b) => sorter(a.time, b.time) || sorter(a.id, b.id));
 
-	const gained = new Map<string, "magic" | "story">();
-	const held = new Set<string>();
+	const gained = new Map<ItemId, "magic" | "story">();
+	const held = new Set<ItemId>();
 	const issues: ItemTimelineIssue[] = [];
 	const seen = new Set<string>();
 	const add = (issue: ItemTimelineIssue) => {
-		const key = `${issue.field}:${issue.message}`;
+		const key = `${issue.id}:${issue.field}:${issue.message}`;
 		if (seen.has(key)) return;
 		seen.add(key);
 		issues.push(issue);
 	};
 
 	const noteDrop = (
-		id: string,
+		id: ItemId,
 		kind: "magic" | "story",
 		isInput: boolean,
-		inputGained: readonly { id: string }[],
+		inputGained: readonly { id: ItemId }[],
 		field: "magicItemsLost" | "storyAwardsLost"
 	) => {
 		if (gained.get(id) !== kind) {
-			if (isInput) add({ field, message: dropBeforeAcquisition });
-			else if (inputGained.some((item) => item.id === id)) add({ field: "date", message: gainAfterDrop });
+			if (isInput) add({ id, field, message: dropBeforeAcquisition, type: "dropped" });
+			else if (inputGained.some((item) => item.id === id)) add({ id, field: "date", message: gainAfterDrop, type: "gained" });
 			return;
 		}
 		if (!held.has(id)) {
-			if (isInput) add({ field, message: alreadyDropped });
+			if (isInput) add({ id, field, message: alreadyDropped, type: "dropped" });
 			return;
 		}
 		held.delete(id);

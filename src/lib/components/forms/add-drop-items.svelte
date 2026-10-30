@@ -1,22 +1,26 @@
 <script lang="ts">
+	import { itemTimelineIssues } from "#lib/entities.ts";
 	import type { GenericForm } from "#lib/factories.svelte.js";
-	import type { DmLogSchemaIn, ItemId, ItemSchema, LogSchema, LogSchemaIn } from "#lib/schemas.js";
+	import type { DmLogSchemaIn, ItemId, ItemSchema, LogId, LogSchema, LogSchemaIn } from "#lib/schemas.js";
+	import type { FullCharacterData } from "#lib/server/effect/services/characters.ts";
 	import { isDefined, sorter } from "@sillvva/utils";
 	import { type Snippet } from "svelte";
 	import { v7 } from "uuid";
 	import Control from "./control.svelte";
+	import FieldMessage from "./field-message.svelte";
 	import InputWrapper from "./input-wrapper.svelte";
 	import Input from "./input.svelte";
 	import MarkdownInput from "./md-input.svelte";
 
 	interface Props {
 		form: GenericForm<LogSchemaIn | DmLogSchemaIn>;
+		character?: FullCharacterData;
 		magicItems?: ItemSchema[];
 		storyAwards?: ItemSchema[];
 		children?: Snippet;
 	}
 
-	let { form: configuredForm, magicItems = [], storyAwards = [], children }: Props = $props();
+	let { form: configuredForm, character, magicItems = [], storyAwards = [], children }: Props = $props();
 
 	const { form } = $derived(configuredForm);
 
@@ -30,6 +34,16 @@
 	);
 	const remainingItems = $derived(sortedItems.filter((item) => !form.fields.magicItemsLost.value().includes(item.id)));
 	const remainingAwards = $derived(sortedAwards.filter((item) => !form.fields.storyAwardsLost.value().includes(item.id)));
+
+	const date = $derived(form.fields.date.value());
+	const itemIssues = $derived(character && date ? itemTimelineIssues(character.logs, {
+		id: form.fields.id.value() as LogId,
+		date: new Date(date),
+		magicItemsGained: form.fields.magicItemsGained.value().map((item) => ({ id: item!.id as ItemId })),
+		magicItemsLost: form.fields.magicItemsLost.value().map((item) => item as ItemId),
+		storyAwardsGained: form.fields.storyAwardsGained.value().map((item) => ({ id: item!.id as ItemId })),
+		storyAwardsLost: form.fields.storyAwardsLost.value().map((item) => item as ItemId)
+	}) : []);
 
 	const itemButtons = $derived([
 		"Magic Items",
@@ -141,6 +155,9 @@
 								<span class="iconify size-6 mdi--trash-can"></span>
 							</button>
 						</div>
+						{#if itemIssues.some((issue) => issue.id === field.id.value() && issue.type === "gained")}
+							<FieldMessage type="text" name={field.name.as("text").name} issues={itemIssues.filter((issue) => issue.id === field.id.value() && issue.type === "gained")} />
+						{/if}
 						<Control>
 							<MarkdownInput field={field.description} maxRows={8} maxLength={2000} preview />
 						</Control>
@@ -192,6 +209,9 @@
 								<span class="iconify size-6 mdi--trash-can"></span>
 							</button>
 						</div>
+						{#if itemIssues.some((issue) => issue.id === field.value() && issue.type === "dropped")}
+							<FieldMessage type="select" name={field.as("select").name} issues={itemIssues.filter((issue) => issue.id === field.value() && issue.type === "dropped")} />
+						{/if}
 						<div class="text-sm">
 							{items.find((item) => field.value() === item.id)?.description || ""}
 						</div>
