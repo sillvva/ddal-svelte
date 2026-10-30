@@ -2,7 +2,7 @@ import type { FullCharacterData } from "#lib/server/effect/services/characters.j
 import { omit } from "@sillvva/utils";
 import * as v from "valibot";
 import { BLANK_CHARACTER, PASSKEY_PLACEHOLDER_EMAIL_DOMAIN, PROVIDERS, themeGroups, themes } from "./constants";
-import { itemTimelineIssues } from "./entities.js";
+import { itemTimelineIssues, type ItemTimelineIssue } from "./entities.js";
 import { AVATAR_IMAGE_LIMITS, CHARACTER_IMAGE_LIMITS, STORED_IMAGE_CONTENT_TYPES } from "./images/limits";
 
 export type BrandedType = v.InferOutput<ReturnType<typeof brandedId>>;
@@ -229,6 +229,52 @@ export const dmLogSchema = v.object({
 	isDmLog: v.optional(v.boolean(), true)
 });
 
+function objectIssuePath<T extends object>(input: T, key: keyof T & string): v.ObjectPathItem {
+	return {
+		type: "object",
+		origin: "value",
+		input: input as Record<string, unknown>,
+		key,
+		value: input[key]
+	};
+}
+
+function arrayIssuePath<T>(input: readonly T[], key: number): v.ArrayPathItem {
+	return {
+		type: "array",
+		origin: "value",
+		input,
+		key,
+		value: input[key]
+	};
+}
+
+/** Path of the specific gained or dropped item a timeline issue belongs to. */
+function timelineIssuePath(
+	input: LogSchema | DmLogSchema,
+	issue: ItemTimelineIssue
+): [v.IssuePathItem, ...v.IssuePathItem[]] | undefined {
+	if (issue.field === "date") {
+		const magicIndex = input.magicItemsGained.findIndex((item) => item.id === issue.id);
+		const storyIndex = magicIndex < 0 ? input.storyAwardsGained.findIndex((item) => item.id === issue.id) : -1;
+		const key = magicIndex >= 0 ? "magicItemsGained" : storyIndex >= 0 ? "storyAwardsGained" : undefined;
+		if (!key) return undefined;
+
+		const index = key === "magicItemsGained" ? magicIndex : storyIndex;
+		const items = input[key];
+		const item = items[index];
+		if (!item) return undefined;
+
+		return [objectIssuePath(input, key), arrayIssuePath(items, index), objectIssuePath(item, "name")];
+	}
+
+	const list = input[issue.field];
+	const index = list.indexOf(issue.id);
+	if (index < 0) return undefined;
+
+	return [objectIssuePath(input, issue.field), arrayIssuePath(list, index)];
+}
+
 export const characterLogSchema = (character: FullCharacterData) =>
 	v.pipe(
 		logSchema,
@@ -261,15 +307,14 @@ export const characterLogSchema = (character: FullCharacterData) =>
 			}, `Cannot reduce total TCP to less than 0. Current: ${character.totalTcp}`),
 			["tcp"]
 		),
-		v.check((input) => {
-			return !itemTimelineIssues(character.logs, input).some((item) => item.field === "magicItemsLost");
-		}, "A magic item in this log is dropped before it has been obtained"),
-		v.check((input) => {
-			return !itemTimelineIssues(character.logs, input).some((item) => item.field === "storyAwardsLost");
-		}, "A story award in this log is dropped before it has been obtained"),
-		v.check((input) => {
-			return !itemTimelineIssues(character.logs, input).some((item) => item.field === "date");
-		}, "A magic item or story award gained in this log is dropped in an earlier log"),
+		v.rawCheck(({ dataset, addIssue }) => {
+			if (!dataset.typed) return;
+
+			for (const issue of itemTimelineIssues(character.logs, dataset.value)) {
+				const path = timelineIssuePath(dataset.value, issue);
+				addIssue(path ? { message: issue.message, path } : { message: issue.message });
+			}
+		})
 	);
 
 export const dMLogSchema = (characters: FullCharacterData[] = []) =>
@@ -334,11 +379,17 @@ export const dMLogSchema = (characters: FullCharacterData[] = []) =>
 			}, "Cannot reduce character's total TCP to less than 0"),
 			["tcp"]
 		),
-		v.check((input) => {
-			const character = characters.find((entry) => entry.id === input.characterId);
-			if (!character) return true;
-			return !itemTimelineIssues(character.logs, input).some((item) => item.field === "date");
-		}, "A magic item or story award gained in this log is dropped in an earlier log"),
+		v.rawCheck(({ dataset, addIssue }) => {
+			if (!dataset.typed) return;
+
+			const character = characters.find((c) => c.id === dataset.value.characterId);
+			if (!character) return;
+
+			for (const issue of itemTimelineIssues(character.logs, dataset.value)) {
+				const path = timelineIssuePath(dataset.value, issue);
+				addIssue(path ? { message: issue.message, path } : { message: issue.message });
+			}
+		})
 	);
 
 export type AppCookie = v.InferOutput<typeof appCookieSchema>;
