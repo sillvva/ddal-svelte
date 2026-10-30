@@ -4,7 +4,7 @@ A SvelteKit 5 application for managing D&D Adventurers League campaigns, with lo
 
 ## Prerequisites
 
-- **Node.js** v22 or later
+- **Node.js** v26 or later
 - **Bun** v1.2.19+ (recommended), or [pnpm](https://pnpm.io/) / [npm](https://www.npmjs.com/)
 - [Supabase CLI](https://supabase.com/docs/guides/cli) (for local database)
 - [Docker](https://www.docker.com/) (optional, for running Supabase locally)
