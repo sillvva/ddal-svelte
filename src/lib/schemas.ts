@@ -1,9 +1,9 @@
 import type { FullCharacterData } from "#lib/server/effect/services/characters.js";
 import { omit } from "@sillvva/utils";
 import * as v from "valibot";
+import { BLANK_CHARACTER, PASSKEY_PLACEHOLDER_EMAIL_DOMAIN, PROVIDERS, themeGroups, themes } from "./constants";
 import { itemTimelineIssues } from "./entities.js";
 import { AVATAR_IMAGE_LIMITS, CHARACTER_IMAGE_LIMITS, STORED_IMAGE_CONTENT_TYPES } from "./images/limits";
-import { BLANK_CHARACTER, PASSKEY_PLACEHOLDER_EMAIL_DOMAIN, PROVIDERS, themeGroups, themes } from "./constants";
 
 export type BrandedType = v.InferOutput<ReturnType<typeof brandedId>>;
 function brandedId<T extends string>(name: T) {
@@ -346,30 +346,21 @@ export const dMLogSchema = (characters: FullCharacterData[] = []) =>
 			}, "Cannot reduce character's total TCP to less than 0"),
 			["tcp"]
 		),
-		v.forward(
-			v.check((input) => {
-				const character = characters.find((entry) => entry.id === input.characterId);
-				if (!character) return true;
-				return !itemTimelineIssues(character.logs, input).some((item) => item.field === "magicItemsLost");
-			}, "This item is not held on this log's date"),
-			["magicItemsLost"]
-		),
-		v.forward(
-			v.check((input) => {
-				const character = characters.find((entry) => entry.id === input.characterId);
-				if (!character) return true;
-				return !itemTimelineIssues(character.logs, input).some((item) => item.field === "storyAwardsLost");
-			}, "This item is not held on this log's date"),
-			["storyAwardsLost"]
-		),
-		v.forward(
-			v.check((input) => {
-				const character = characters.find((entry) => entry.id === input.characterId);
-				if (!character) return true;
-				return !itemTimelineIssues(character.logs, input).some((item) => item.field === "date");
-			}, "An item gained in this log is dropped in an earlier log"),
-			["appliedDate"]
-		)
+		v.check((input) => {
+			const character = characters.find((entry) => entry.id === input.characterId);
+			if (!character) return true;
+			return !itemTimelineIssues(character.logs, input).some((item) => item.field === "magicItemsLost");
+		}, "A magic item in this log is not obtained by this log's date"),
+		v.check((input) => {
+			const character = characters.find((entry) => entry.id === input.characterId);
+			if (!character) return true;
+			return !itemTimelineIssues(character.logs, input).some((item) => item.field === "storyAwardsLost");
+		}, "A story award in this log is not obtained by this log's date"),
+		v.check((input) => {
+			const character = characters.find((entry) => entry.id === input.characterId);
+			if (!character) return true;
+			return !itemTimelineIssues(character.logs, input).some((item) => item.field === "date");
+		}, "A magic item or story award gained in this log is dropped in an earlier log"),
 	);
 
 export type AppCookie = v.InferOutput<typeof appCookieSchema>;

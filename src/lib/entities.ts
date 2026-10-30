@@ -14,7 +14,7 @@ import {
 } from "./schemas";
 
 /** Date this log applies to the character. Assigned DM logs use their applied date. */
-export function logTimelineTime(log: {
+export function logTimestamp(log: {
 	showDate?: Date | string | number | null;
 	isDmLog?: boolean;
 	appliedDate?: Date | string | number | null;
@@ -39,7 +39,7 @@ export function getItemEntities(
 	options?: {
 		/** Log being edited or created. Its own gains and drops are not inventory yet. */
 		logId?: string;
-		/** Timeline date of that log. Later logs are excluded. */
+		/** Date/Timestamp of that log. Later logs are excluded. */
 		asOf?: Date | number | string;
 		excludeDropped?: boolean;
 	}
@@ -53,8 +53,8 @@ export function getItemEntities(
 
 	const logs = character.logs
 		.filter((log) => log.id !== logId)
-		.filter((log) => !current || logIsBefore({ id: log.id, time: logTimelineTime(log) }, current))
-		.toSorted((a, b) => sorter(logTimelineTime(a), logTimelineTime(b)) || sorter(a.id, b.id));
+		.filter((log) => !current || logIsBefore({ id: log.id, time: logTimestamp(log) }, current))
+		.toSorted((a, b) => sorter(logTimestamp(a), logTimestamp(b)) || sorter(a.id, b.id));
 
 	for (const log of logs) {
 		magicItems.push(...log.magicItemsGained);
@@ -108,7 +108,7 @@ export function itemTimelineIssues(
 		.filter((log) => log.id !== input.id)
 		.map((log) => ({
 			id: log.id,
-			time: logTimelineTime(log),
+			time: logTimestamp(log),
 			magicGained: log.magicItemsGained.map((item) => item.id),
 			magicLost: log.magicItemsLost.map((item) => item.id),
 			storyGained: log.storyAwardsGained.map((item) => item.id),
