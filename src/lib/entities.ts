@@ -146,15 +146,22 @@ export function itemTimelineIssues(
 		inputGained: readonly { id: ItemId }[],
 		field: "magicItemsLost" | "storyAwardsLost"
 	) => {
+		// Item is treated as a new item, because it hasn't been gained in a 
+		// previous log (undefined) or it was gained as a different kind
 		if (gained.get(id) !== kind) {
+			// We're dropping an item that was never gained
 			if (isInput) add({ id, field, message: dropBeforeAcquisition, type: "dropped" });
+			// The item was gained after it was dropped, or gained in the same log
 			else if (inputGained.some((item) => item.id === id)) add({ id, field: "date", message: gainAfterDrop, type: "gained" });
 			return;
 		}
+		// Item is not new, but no longer held
 		if (!held.has(id)) {
+			// We're dropping an item that was already dropped
 			if (isInput) add({ id, field, message: alreadyDropped, type: "dropped" });
 			return;
 		}
+		// Item is still held, so we can now delete it from the held set
 		held.delete(id);
 	};
 
