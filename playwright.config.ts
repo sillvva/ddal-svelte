@@ -1,3 +1,4 @@
+/// <reference types="node" />
 import { defineConfig, devices } from "@playwright/test";
 import { assertLocalE2E, loadLocalEnv, localBaseURL } from "./e2e/env.ts";
 

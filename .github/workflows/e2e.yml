@@ -1,10 +1,19 @@
-# Manual only. This does not run on pull requests.
+# Runs on pull requests to main and on demand.
 # It boots local Supabase (its own database), a local MinIO bucket, and the Vite dev server,
-# then runs the Playwright suite. No repository secrets are required.
+# then runs the Playwright suite. No repository secrets are required, so fork PRs work with
+# `pull_request`. Do not switch to `pull_request_target`, which would run fork code with secrets.
 name: e2e
 
 on:
   workflow_dispatch:
+  pull_request:
+    branches: [main]
+    paths-ignore:
+      - "**.md"
+
+concurrency:
+  group: e2e-${{ github.ref }}
+  cancel-in-progress: true
 
 jobs:
   e2e:

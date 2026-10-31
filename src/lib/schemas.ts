@@ -2,7 +2,7 @@ import type { FullCharacterData } from "#lib/server/effect/services/characters.j
 import { omit } from "@sillvva/utils";
 import * as v from "valibot";
 import { BLANK_CHARACTER, PASSKEY_PLACEHOLDER_EMAIL_DOMAIN, PROVIDERS, themeGroups, themes } from "./constants";
-import { itemTimelineIssues, type ItemTimelineIssue } from "./entities.js";
+import { itemTimelineIssues, type ItemTimelineIssue, type TimelineLog } from "./entities.js";
 import { AVATAR_IMAGE_LIMITS, CHARACTER_IMAGE_LIMITS, STORED_IMAGE_CONTENT_TYPES } from "./images/limits";
 
 export type BrandedType = v.InferOutput<ReturnType<typeof brandedId>>;
@@ -275,7 +275,12 @@ function timelineIssuePath(
 	return [objectIssuePath(input, issue.field), arrayIssuePath(list, index)];
 }
 
-export const characterLogSchema = (character: FullCharacterData) =>
+/** The character totals and logs a submitted log is checked against. */
+export type LogTarget = Pick<FullCharacterData, "id" | "totalLevel" | "totalGold" | "totalTcp"> & {
+	logs: readonly (TimelineLog & { acp: number; level: number; gold: number; tcp: number })[];
+};
+
+export const characterLogSchema = (character: LogTarget) =>
 	v.pipe(
 		logSchema,
 		v.check((input) => !input.isDmLog, "Only character logs can be saved here."),
@@ -317,15 +322,16 @@ export const characterLogSchema = (character: FullCharacterData) =>
 		})
 	);
 
-export const dMLogSchema = (characters: FullCharacterData[] = []) =>
+/** `characters` must hold only characters the saving user owns. */
+export const dMLogSchema = (characters: readonly LogTarget[] = []) =>
 	v.pipe(
 		dmLogSchema,
 		v.check((input) => input.isDmLog, "Only DM logs can be saved here."),
 		v.forward(
-			v.check((input) => {
-				const characterIds = characters.map((c) => c.id);
-				return !input.characterId || !characterIds.length || characterIds.includes(input.characterId);
-			}, "Character not found"),
+			v.check(
+				(input) => !input.characterId || characters.some((c) => c.id === input.characterId),
+				"Character not found"
+			),
 			["characterId"]
 		),
 		v.forward(

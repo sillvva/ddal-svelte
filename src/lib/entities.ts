@@ -25,6 +25,11 @@ export function logTimestamp(log: {
 	return new Date(value).getTime();
 }
 
+/** Code unit order, which is creation order for uuid v7. `sorter` collates digit runs numerically. */
+function compareIds(a: string, b: string) {
+	return a < b ? -1 : a > b ? 1 : 0;
+}
+
 /**
  * Same timestamp: the lower log id comes first. Uuid v7 ids increase with creation time,
  * so a newly minted log sorts after existing logs that share its timestamp.
@@ -32,7 +37,7 @@ export function logTimestamp(log: {
 export function logIsBefore(candidate: { id: string; time: number }, current: { id: string; time: number }) {
 	const byTime = sorter(candidate.time, current.time);
 	if (byTime !== 0) return byTime < 0;
-	return sorter(candidate.id, current.id) < 0;
+	return compareIds(candidate.id, current.id) < 0;
 }
 
 export function getItemEntities(
@@ -55,7 +60,7 @@ export function getItemEntities(
 	const logs = character.logs
 		.filter((log) => log.id !== logId)
 		.filter((log) => !current || logIsBefore({ id: log.id, time: logTimestamp(log) }, current))
-		.toSorted((a, b) => sorter(logTimestamp(a), logTimestamp(b)) || sorter(a.id, b.id));
+		.toSorted((a, b) => sorter(logTimestamp(a), logTimestamp(b)) || compareIds(a.id, b.id));
 
 	for (const log of logs) {
 		magicItems.push(...log.magicItemsGained);
@@ -81,13 +86,21 @@ export type ItemTimelineIssue = {
 	message: string;
 };
 
-const dropBeforeAcquisition = "Can't drop an item before it was acquired";
-const alreadyDropped = "This item was already dropped in an earlier log";
-const gainAfterDrop = "This item was dropped in an earlier log";
+export const dropBeforeAcquisition = "Can't drop an item before it was acquired";
+export const alreadyDropped = "This item was already dropped in an earlier log";
+export const gainAfterDrop = "This item was dropped in an earlier log";
+
+export type TimelineLog = Parameters<typeof logTimestamp>[0] & {
+	id: LogId;
+	magicItemsGained: readonly { id: ItemId }[];
+	magicItemsLost: readonly { id: ItemId }[];
+	storyAwardsGained: readonly { id: ItemId }[];
+	storyAwardsLost: readonly { id: ItemId }[];
+};
 
 /** Reject a drop dated before the item was acquired, including after the log's date moves. */
 export function itemTimelineIssues(
-	logs: FullCharacterData["logs"],
+	logs: readonly TimelineLog[],
 	input: {
 		id: LogId;
 		isDmLog?: boolean;
@@ -126,7 +139,7 @@ export function itemTimelineIssues(
 		storyGained: input.storyAwardsGained.map((item) => item.id),
 		storyLost: [...input.storyAwardsLost]
 	});
-	events.sort((a, b) => sorter(a.time, b.time) || sorter(a.id, b.id));
+	events.sort((a, b) => sorter(a.time, b.time) || compareIds(a.id, b.id));
 
 	const gained = new Map<ItemId, "magic" | "story">();
 	const held = new Set<ItemId>();

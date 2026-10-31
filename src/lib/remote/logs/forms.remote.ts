@@ -12,7 +12,7 @@ import {
 } from "#lib/schemas.js";
 import { RedirectError, redirectOnFail } from "#lib/server/effect/errors.js";
 import { guardedForm, guardedQuery, refreshAll } from "#lib/server/effect/guarded.js";
-import { CharacterService } from "#lib/server/effect/services/characters.js";
+import { CharacterNotFoundError, CharacterService } from "#lib/server/effect/services/characters.js";
 import { DMNotFoundError, DMService } from "#lib/server/effect/services/dms.js";
 import { LogNotFoundError, LogService } from "#lib/server/effect/services/logs.js";
 import { formParse, parse } from "#lib/server/effect/util.js";
@@ -38,6 +38,8 @@ export const character = guardedQuery(characterLogFormSchema, function* (input, 
 
 	const logId = input.logId;
 	const logData = logId !== "new" ? yield* Logs.get.one(logId, user.id) : undefined;
+	if (logId !== "new" && !logData) return yield* new LogNotFoundError();
+
 	const log = logData
 		? logDataToSchema(user.id, logData)
 		: defaultLogSchema(user.id, {
@@ -45,9 +47,9 @@ export const character = guardedQuery(characterLogFormSchema, function* (input, 
 				defaults: input.firstLog ? { name: "Character Creation" } : undefined
 			});
 
-	if (logId !== "new") {
-		if (!log.id) return yield* new LogNotFoundError();
+	if (logData) {
 		if (log.isDmLog) return yield* new RedirectError({ message: "Redirecting to DM log", redirectTo: `/dm-logs/${log.id}` });
+		if (log.characterId !== input.character.id) return yield* new LogNotFoundError();
 	}
 
 	return {
@@ -77,12 +79,11 @@ export const dm = guardedQuery(dmLogFormSchema, function* (input, { user }) {
 
 	const logId = input.param.logId;
 	const logData = logId !== "new" ? yield* Logs.get.one(logId, user.id) : undefined;
+	if (logId !== "new" && !logData) return yield* new LogNotFoundError();
+
 	const log = logData ? logDataToSchema(user.id, logData) : defaultLogSchema(user.id, { defaults: { dm: userDM } });
 
-	if (logId !== "new") {
-		if (!log.id) return yield* new LogNotFoundError();
-		if (!log.isDmLog) redirect(302, `/characters/${log.characterId}/log/${log.id}`);
-	}
+	if (logData && !log.isDmLog) redirect(302, `/characters/${log.characterId}/log/${log.id}`);
 
 	return {
 		...omit(log, ["dm"]),
@@ -97,9 +98,13 @@ export const saveCharacter = guardedForm("unchecked", function* (input: LogSchem
 	const Logs = yield* LogService;
 
 	const characterId = yield* redirectOnFail(parse(characterIdSchema, input.characterId), "/characters", 302);
-	const character = yield* Characters.get
-		.one(characterId)
-		.pipe(Effect.tapError((err) => Effect.fail(invalid(issue.characterId(err.message)))));
+	const character = yield* Characters.get.one(characterId).pipe(
+		Effect.filterOrFail(
+			(character) => character.userId === user.id,
+			() => new CharacterNotFoundError()
+		),
+		Effect.tapError((err) => Effect.fail(invalid(issue.characterId(err.message))))
+	);
 
 	const result = yield* formParse(characterLogSchema(character), {
 		...input,

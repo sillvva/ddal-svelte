@@ -2,7 +2,7 @@ import { BLANK_CHARACTER } from "#lib/constants.js";
 import * as API from "#lib/remote/index.js";
 import { characterIdParamSchema, draftCacheKey, editCharacterSchema } from "#lib/schemas.js";
 import { guardedForm, guardedQuery, refreshAll } from "#lib/server/effect/guarded.js";
-import { CharacterService } from "#lib/server/effect/services/characters.js";
+import { CharacterNotFoundError, CharacterService } from "#lib/server/effect/services/characters.js";
 import { StorageService } from "#lib/server/effect/services/storage.js";
 import { ImageUploadError } from "#lib/server/images/errors.js";
 import { isValidUrl } from "#lib/server/effect/util.js";
@@ -17,7 +17,7 @@ const newCharacterQuery = v.object({
 	draft: draftCacheKey
 });
 
-export const get = guardedQuery(newCharacterQuery, function* (input, { event }) {
+export const get = guardedQuery(newCharacterQuery, function* (input, { event, user }) {
 	const firstLog = event.locals.app.characters.firstLog;
 	// `queries.get` mints the id when `param` is "new". That call has to carry `draft`,
 	// or this wrapper re-runs and still receives the id from the previous visit.
@@ -25,6 +25,8 @@ export const get = guardedQuery(newCharacterQuery, function* (input, { event }) 
 	const character = yield* Effect.tryPromise(() =>
 		queries.get(input.param === "new" ? { param: input.param, draft: input.draft } : { param: input.param })
 	);
+	// Character pages are public, so `queries.get` does not filter by owner.
+	if (character.userId !== user.id) return yield* new CharacterNotFoundError();
 
 	return {
 		id: character.id,

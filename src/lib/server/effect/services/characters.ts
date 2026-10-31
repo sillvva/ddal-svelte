@@ -170,7 +170,7 @@ export class CharacterService extends Context.Service<CharacterService>()("Chara
 								.onConflictDoUpdate({
 									target: characters.id,
 									set: buildConflictUpdateColumns(characters, ["id", "userId", "createdAt"], true),
-									where: eq(characters.userId, userId)
+									setWhere: eq(characters.userId, userId)
 								})
 								.returning()
 						);
