@@ -14,7 +14,7 @@ export default defineConfig({
 	testMatch: "*.spec.ts",
 	// Local runs use the list reporter. printSteps keeps each test.step() on its own line
 	// while the test is still running. CI stays on the default dot reporter.
-	reporter: process.env.CI ? "dot" : [["list", { printSteps: true }]],
+	reporter: process.env.CI ? "list" : [["list", { printSteps: true }]],
 	fullyParallel: false,
 	workers: 1,
 	forbidOnly: !!process.env.CI,
