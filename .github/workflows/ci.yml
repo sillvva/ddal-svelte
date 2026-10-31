@@ -1,0 +1,50 @@
+# Fast checks that need no database, bucket, browser, or repository secrets.
+# The Playwright suite stays in the e2e workflow.
+name: ci
+
+on:
+  pull_request:
+    paths-ignore:
+      - "**.md"
+  push:
+    branches: [main, development]
+    paths-ignore:
+      - "**.md"
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  check:
+    # Same-repo PRs from a branch in `push.branches` already get a push run on the same commit.
+    if: >-
+      github.event_name != 'pull_request' ||
+      github.event.pull_request.head.repo.full_name != github.repository ||
+      !contains(fromJSON('["main", "development"]'), github.head_ref)
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: pnpm/action-setup@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 26
+          cache: pnpm
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Unit tests
+        run: pnpm test:unit
+
+      - name: Lint
+        run: pnpm lint
+
+      - name: Type check
+        run: pnpm check
+
+      - name: Type check e2e helpers
+        run: pnpm exec tsc -p e2e/tsconfig.json

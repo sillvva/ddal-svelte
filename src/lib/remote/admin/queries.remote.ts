@@ -5,7 +5,7 @@ import { run } from "#lib/server/effect/runtime.js";
 import { AdminService, validKeys } from "#lib/server/effect/services/admin.js";
 import { getTrace } from "#lib/util.js";
 import { DateTime, Effect } from "effect";
-import { createHighlighter } from "shiki";
+import { getSingletonHighlighter } from "shiki";
 import * as v from "valibot";
 
 // eslint-disable-next-line custom/enforce-guarded-functions
@@ -24,7 +24,7 @@ export const getAppLogs = guardedQuery(
 		const Admin = yield* AdminService;
 
 		const mode = event.locals.app.settings.mode;
-		const highlighter = yield* Effect.tryPromise(() => createHighlighter(highlighterConfig));
+		const highlighter = yield* Effect.tryPromise(() => getSingletonHighlighter(highlighterConfig));
 
 		const { logs, metadata } = yield* Admin.get.logs(search).pipe(
 			Effect.map(({ logs, metadata }) => ({

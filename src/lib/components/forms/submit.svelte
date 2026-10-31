@@ -21,7 +21,6 @@
 	{name}
 	{value}
 	class="btn w-full text-primary-content btn-primary disabled:bg-primary disabled:opacity-50 max-sm:text-base sm:w-auto"
-	aria-label="Submit"
 	disabled={submitting || disabled}
 >
 	{#if submitting}

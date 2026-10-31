@@ -1,10 +1,10 @@
-import { magicBytesMatch } from "#lib/images/magic.js";
 import {
 	AVATAR_IMAGE_LIMITS,
 	CHARACTER_IMAGE_LIMITS,
 	isStoredImageContentType,
 	type StoredImageContentType
 } from "#lib/images/limits.js";
+import { magicBytesMatch } from "#lib/images/magic.js";
 import {
 	imagePublicUrl,
 	isOwnedAvatarImageKey,
@@ -22,12 +22,12 @@ import {
 	permanentImageKeyForTemporary,
 	permanentKeyForTemporary,
 	temporaryAvatarImageKey,
-	temporaryCharacterImageKey
+	temporaryCharacterImageKey,
+	userIdFromPermanentKey
 } from "#lib/images/object-key.js";
 import type { CharacterId, ImageUploadId, UserId } from "#lib/schemas.js";
-import { runQuery, type Transaction } from "#lib/server/db/index.js";
-import { DBService } from "#lib/server/db/index.js";
-import { imageUploads, characters, user } from "#lib/server/db/schema.js";
+import { DBService, runQuery, type Transaction } from "#lib/server/db/index.js";
+import { characters, imageUploads, user } from "#lib/server/db/schema.js";
 import { serializeError } from "#lib/server/effect/errors.js";
 import { AppLog } from "#lib/server/effect/logging.js";
 import { ImageUploadError } from "#lib/server/images/errors.js";
@@ -40,22 +40,25 @@ import {
 	lockPortraitUser,
 	notePendingFailure,
 	permanentKeyInUse,
+	portraitQuotaBytes,
 	promoteAvatarUploadRow,
 	removePendingDeletion,
 	scheduleDeletions,
+	sumPortraitBytes,
 	userIdForDeletion
 } from "#lib/server/images/portrait-db.js";
+import { R2_ACCESS_KEY_ID, R2_BUCKET, R2_ENDPOINT, R2_SECRET_ACCESS_KEY } from "$app/env/private";
+import { R2_PUBLIC_URL } from "$app/env/public";
 import {
 	CopyObjectCommand,
 	DeleteObjectCommand,
 	GetObjectCommand,
 	HeadObjectCommand,
+	ListObjectsV2Command,
 	PutObjectCommand,
 	S3Client
 } from "@aws-sdk/client-s3";
 import { getSignedUrl } from "@aws-sdk/s3-request-presigner";
-import { R2_ACCESS_KEY_ID, R2_BUCKET, R2_ENDPOINT, R2_SECRET_ACCESS_KEY } from "$app/env/private";
-import { R2_PUBLIC_URL } from "$app/env/public";
 import { and, eq, gt, sql } from "drizzle-orm";
 import { Context, Effect, Layer, Result } from "effect";
 import { v7 } from "uuid";
@@ -183,24 +186,27 @@ const readMagicBytes = Effect.fn("StorageService.readMagicBytes")(function* (key
 });
 
 /** Confirms the staged object exists, matches the signed size and type, and has the right magic bytes. */
-export function verifyStoredObject(key: string, bytes: number, contentType: StoredImageContentType, maxBytes: number) {
-	return Effect.gen(function* () {
-		if (bytes < 1 || bytes > maxBytes) {
-			return yield* new ImageUploadError("The uploaded file did not match the allowed size or type.", 400);
-		}
+export const verifyStoredObject = Effect.fn("StorageService.verifyStoredObject")(function* (
+	key: string,
+	bytes: number,
+	contentType: StoredImageContentType,
+	maxBytes: number
+) {
+	if (bytes < 1 || bytes > maxBytes) {
+		return yield* new ImageUploadError("The uploaded file did not match the allowed size or type.", 400);
+	}
 
-		const head = yield* headObject(key);
-		const actualType = head.ContentType?.split(";")[0]?.trim().toLowerCase();
-		if (head.ContentLength !== bytes || actualType !== contentType) {
-			return yield* new ImageUploadError("The uploaded file did not match the allowed size or type.", 400);
-		}
+	const head = yield* headObject(key);
+	const actualType = head.ContentType?.split(";")[0]?.trim().toLowerCase();
+	if (head.ContentLength !== bytes || actualType !== contentType) {
+		return yield* new ImageUploadError("The uploaded file did not match the allowed size or type.", 400);
+	}
 
-		const magic = yield* readMagicBytes(key);
-		if (!magicBytesMatch(contentType, magic)) {
-			return yield* new ImageUploadError("The uploaded file did not match the allowed size or type.", 400);
-		}
-	});
-}
+	const magic = yield* readMagicBytes(key);
+	if (!magicBytesMatch(contentType, magic)) {
+		return yield* new ImageUploadError("The uploaded file did not match the allowed size or type.", 400);
+	}
+});
 
 const copyObject = Effect.fn("StorageService.copyObject")(function* (from: string, to: string) {
 	if (!isTemporaryImageKey(from) || permanentImageKeyForTemporary(from) !== to) {
@@ -263,35 +269,37 @@ export function copyVerifiedStage(tx: Transaction, userId: UserId, characterId: 
  * Re-checks a staged avatar, then copies it to its permanent key.
  * Call this while holding the image advisory lock, before `user.image` points at `staged.to`.
  */
-export function copyVerifiedAvatar(tx: Transaction, userId: UserId, staged: StagedCharacterImage) {
-	return Effect.gen(function* () {
-		if (!isOwnedTemporaryAvatarImageKey(userId, staged.from) || !isOwnedAvatarImageKey(userId, staged.to)) {
-			return yield* new ImageUploadError("Upload that image again before saving.");
-		}
-		if (permanentImageKeyForTemporary(staged.from) !== staged.to) {
-			return yield* new ImageUploadError("Upload that image again before saving.");
-		}
+export const copyVerifiedAvatar = Effect.fn("StorageService.copyVerifiedAvatar")(function* (
+	tx: Transaction,
+	userId: UserId,
+	staged: StagedCharacterImage
+) {
+	if (!isOwnedTemporaryAvatarImageKey(userId, staged.from) || !isOwnedAvatarImageKey(userId, staged.to)) {
+		return yield* new ImageUploadError("Upload that image again before saving.");
+	}
+	if (permanentImageKeyForTemporary(staged.from) !== staged.to) {
+		return yield* new ImageUploadError("Upload that image again before saving.");
+	}
 
-		const rows = yield* runQuery(
-			tx
-				.select()
-				.from(imageUploads)
-				.where(and(eq(imageUploads.objectKey, staged.from), eq(imageUploads.userId, userId), eq(imageUploads.purpose, "avatar")))
-				.limit(1)
-		);
-		const upload = rows[0];
-		if (!upload || upload.characterId !== null || !isStoredImageContentType(upload.contentType)) {
-			return yield* new ImageUploadError("Upload that image again before saving.");
-		}
+	const rows = yield* runQuery(
+		tx
+			.select()
+			.from(imageUploads)
+			.where(and(eq(imageUploads.objectKey, staged.from), eq(imageUploads.userId, userId), eq(imageUploads.purpose, "avatar")))
+			.limit(1)
+	);
+	const upload = rows[0];
+	if (!upload || upload.characterId !== null || !isStoredImageContentType(upload.contentType)) {
+		return yield* new ImageUploadError("Upload that image again before saving.");
+	}
 
-		const filename = staged.to.split("/").pop() ?? "";
-		const uploadId = filename.replace(/\.(webp|jpg)$/iu, "");
-		if (upload.id !== uploadId) return yield* new ImageUploadError("Upload that image again before saving.");
+	const filename = staged.to.split("/").pop() ?? "";
+	const uploadId = filename.replace(/\.(webp|jpg)$/iu, "");
+	if (upload.id !== uploadId) return yield* new ImageUploadError("Upload that image again before saving.");
 
-		yield* verifyStoredObject(staged.from, upload.bytes, upload.contentType, AVATAR_IMAGE_LIMITS.maxStoredBytes);
-		yield* copyObject(staged.from, staged.to);
-	});
-}
+	yield* verifyStoredObject(staged.from, upload.bytes, upload.contentType, AVATAR_IMAGE_LIMITS.maxStoredBytes);
+	yield* copyObject(staged.from, staged.to);
+});
 
 /**
  * Promotes a verified avatar from `tmp/` to its permanent key.
@@ -299,53 +307,51 @@ export function copyVerifiedAvatar(tx: Transaction, userId: UserId, staged: Stag
  * This does not update the user row. `copied.permanentKey` is set as soon as the
  * object is copied, so the caller can abandon it if that transaction rolls back.
  */
-export function promoteStagedAvatar(
+export const promoteStagedAvatar = Effect.fn("StorageService.promoteStagedAvatar")(function* (
 	tx: Transaction,
 	userId: UserId,
 	uploadId: ImageUploadId,
 	copied: { permanentKey: string | null }
 ) {
-	return Effect.gen(function* () {
-		yield* assertCustomAvatarAllowed(tx, userId);
+	yield* assertCustomAvatarAllowed(tx, userId);
 
-		const found = yield* runQuery(
-			tx
-				.select()
-				.from(imageUploads)
-				.where(and(eq(imageUploads.id, uploadId), eq(imageUploads.userId, userId), eq(imageUploads.purpose, "avatar")))
-				.limit(1)
-		);
-		const upload = found[0];
-		if (
-			!upload ||
-			upload.characterId !== null ||
-			!isTemporaryAvatarImageKey(upload.objectKey) ||
-			!isOwnedTemporaryAvatarImageKey(userId, upload.objectKey) ||
-			!isStoredImageContentType(upload.contentType)
-		) {
-			return yield* new ImageUploadError("Upload that image again before saving.");
-		}
+	const found = yield* runQuery(
+		tx
+			.select()
+			.from(imageUploads)
+			.where(and(eq(imageUploads.id, uploadId), eq(imageUploads.userId, userId), eq(imageUploads.purpose, "avatar")))
+			.limit(1)
+	);
+	const upload = found[0];
+	if (
+		!upload ||
+		upload.characterId !== null ||
+		!isTemporaryAvatarImageKey(upload.objectKey) ||
+		!isOwnedTemporaryAvatarImageKey(userId, upload.objectKey) ||
+		!isStoredImageContentType(upload.contentType)
+	) {
+		return yield* new ImageUploadError("Upload that image again before saving.");
+	}
 
-		const permanent = permanentImageKeyForTemporary(upload.objectKey);
-		if (!permanent) return yield* new ImageUploadError("Upload that image again before saving.");
+	const permanent = permanentImageKeyForTemporary(upload.objectKey);
+	if (!permanent) return yield* new ImageUploadError("Upload that image again before saving.");
 
-		const [current] = yield* runQuery(tx.select({ image: user.image }).from(user).where(eq(user.id, userId)).limit(1));
-		if (!current) return yield* new ImageUploadError("Upload was not found", 404);
+	const [current] = yield* runQuery(tx.select({ image: user.image }).from(user).where(eq(user.id, userId)).limit(1));
+	if (!current) return yield* new ImageUploadError("Upload was not found", 404);
 
-		const previousKey = current.image ? ownedAvatarKey(userId, current.image, R2_PUBLIC_URL) : null;
+	const previousKey = current.image ? ownedAvatarKey(userId, current.image, R2_PUBLIC_URL) : null;
 
-		yield* copyVerifiedAvatar(tx, userId, { from: upload.objectKey, to: permanent });
-		copied.permanentKey = permanent;
+	yield* copyVerifiedAvatar(tx, userId, { from: upload.objectKey, to: permanent });
+	copied.permanentKey = permanent;
 
-		if (previousKey && previousKey !== permanent) yield* scheduleDeletions(tx, [previousKey]);
-		yield* clearScheduledDeletions(tx, [permanent]);
+	if (previousKey && previousKey !== permanent) yield* scheduleDeletions(tx, [previousKey]);
+	yield* clearScheduledDeletions(tx, [permanent]);
 
-		const promoted = yield* promoteAvatarUploadRow(tx, userId, permanent);
-		if (!promoted) return yield* new ImageUploadError("Upload that image again before saving.");
+	const promoted = yield* promoteAvatarUploadRow(tx, userId, permanent);
+	if (!promoted) return yield* new ImageUploadError("Upload that image again before saving.");
 
-		return { imageUrl: imagePublicUrl(permanent, R2_PUBLIC_URL), temporaryKey: upload.objectKey };
-	});
-}
+	return { imageUrl: imagePublicUrl(permanent, R2_PUBLIC_URL), temporaryKey: upload.objectKey };
+});
 
 const signPut = Effect.fn("StorageService.signPut")(function* (key: string, contentType: StoredImageContentType, bytes: number) {
 	return yield* Effect.tryPromise({
@@ -371,47 +377,81 @@ export class StorageService extends Context.Service<StorageService>()("StorageSe
 	make: Effect.fn("StorageService")(function* () {
 		const { db, transaction } = yield* DBService;
 
-		/** Retries permanent-object deletes. Uses the service's transaction so callers do not depend on DBService. */
+		const listPrefix = Effect.fn("StorageService.listPrefix")(function* (prefix: string) {
+			const keys: string[] = [];
+			let token: string | undefined;
+			do {
+				const page = yield* Effect.tryPromise({
+					try: () =>
+						client.send(
+							new ListObjectsV2Command({
+								Bucket: R2_BUCKET,
+								Prefix: prefix,
+								ContinuationToken: token
+							})
+						),
+					catch: (cause) => new ImageUploadError("Could not list stored images", 500, cause)
+				});
+				for (const object of page.Contents ?? []) {
+					if (object.Key) keys.push(object.Key);
+				}
+				token = page.IsTruncated ? page.NextContinuationToken : undefined;
+			} while (token);
+			return keys;
+		});
+
+		/**
+		 * Deletes every object queued in `pending_object_deletion`.
+		 * Each key is attempted once per call. A failure stays queued for a later call.
+		 */
 		const purgePendingObjects = Effect.fn("StorageService.purgePendingObjects")(function* () {
-			const pending = yield* transaction((tx) => listPendingDeletions(tx, 20)).pipe(
-				Effect.catch((error) =>
-					AppLog.error("StorageService.purgePendingObjects", { message: error.message }).pipe(Effect.as([]))
-				)
-			);
+			const attempted = new Set<string>();
 
-			for (const row of pending) {
-				let failure = "";
-				yield* transaction(
-					Effect.fn(function* (tx) {
-						const userId = userIdForDeletion(row.objectKey);
-						if (!userId || !isPermanentImageKey(row.objectKey)) {
-							yield* removePendingDeletion(tx, row.objectKey);
-							return;
-						}
+			for (let batch = 0; batch < 20; batch++) {
+				const pending = yield* transaction((tx) => listPendingDeletions(tx, 50)).pipe(
+					Effect.catch((error) =>
+						AppLog.error("StorageService.purgePendingObjects", { message: error.message }).pipe(Effect.as([]))
+					)
+				);
+				const fresh = pending.filter((row) => !attempted.has(row.objectKey));
+				if (!fresh.length) return;
 
-						yield* lockPortraitUser(tx, userId);
-						const current = yield* lockPendingDeletion(tx, row.objectKey);
-						if (!current) return;
+				for (const row of fresh) {
+					attempted.add(row.objectKey);
+					let failure = "";
+					yield* transaction(
+						Effect.fn(function* (tx) {
+							const userId = userIdForDeletion(row.objectKey);
+							// Staged `tmp/` keys are not queued. Drop anything else without deleting the object.
+							if (!userId || !isPermanentImageKey(row.objectKey)) {
+								yield* removePendingDeletion(tx, row.objectKey);
+								return;
+							}
 
-						// A portrait saved again after this key was queued. Keep the object and drop the request.
-						if (yield* permanentKeyInUse(tx, current.objectKey)) {
-							yield* clearScheduledDeletions(tx, [current.objectKey]);
-							return;
-						}
+							yield* lockPortraitUser(tx, userId);
+							const current = yield* lockPendingDeletion(tx, row.objectKey);
+							if (!current) return;
 
-						const deleted = yield* Effect.result(deleteStoredObject(current.objectKey));
-						if (Result.isSuccess(deleted)) {
-							yield* removePendingDeletion(tx, current.objectKey);
-							return;
-						}
+							// A portrait or avatar saved again after this key was queued. Keep the object and drop the request.
+							if (isPermanentImageKey(current.objectKey) && (yield* permanentKeyInUse(tx, current.objectKey))) {
+								yield* clearScheduledDeletions(tx, [current.objectKey]);
+								return;
+							}
 
-						failure = errorMessage(deleted.failure);
-						yield* notePendingFailure(tx, current.objectKey);
-					})
-				).pipe(Effect.catch((error) => AppLog.error("StorageService.purgePendingObjects", { message: error.message })));
+							const deleted = yield* Effect.result(deleteStoredObject(current.objectKey));
+							if (Result.isSuccess(deleted)) {
+								yield* removePendingDeletion(tx, current.objectKey);
+								return;
+							}
 
-				if (failure) {
-					yield* AppLog.error("StorageService.purgePendingObjects", { message: failure, key: row.objectKey });
+							failure = errorMessage(deleted.failure);
+							yield* notePendingFailure(tx, current.objectKey);
+						})
+					).pipe(Effect.catch((error) => AppLog.error("StorageService.purgePendingObjects", { message: error.message })));
+
+					if (failure) {
+						yield* AppLog.error("StorageService.purgePendingObjects", { message: failure, key: row.objectKey });
+					}
 				}
 			}
 		});
@@ -438,6 +478,13 @@ export class StorageService extends Context.Service<StorageService>()("StorageSe
 		});
 
 		return {
+			/** Saved portrait bytes against the account quota. `quotaBytes` is null for admins. Unsaved `tmp/` uploads are not included. */
+			portraitUsage: Effect.fn("StorageService.portraitUsage")(function* (userId: UserId) {
+				const usedBytes = yield* sumPortraitBytes(db, userId);
+				const quotaBytes = yield* portraitQuotaBytes(db, userId);
+				return { usedBytes, quotaBytes };
+			}),
+
 			/**
 			 * Reserves a `tmp/` object and returns a presigned PUT.
 			 * Portrait quota here is a fast check against saved portraits. The authoritative check runs
@@ -690,6 +737,22 @@ export class StorageService extends Context.Service<StorageService>()("StorageSe
 
 			purgePending: Effect.fn("StorageService.purgePending")(function* () {
 				yield* purgePendingObjects();
+			}),
+
+			/**
+			 * Permanent portraits and avatars stored for this account.
+			 * Listing is best-effort for objects whose upload row was already removed.
+			 * Staged `tmp/` uploads are omitted; the bucket lifecycle rule deletes that prefix.
+			 */
+			listOwnedImageKeys: Effect.fn("StorageService.listOwnedImageKeys")(function* (userId: UserId) {
+				const prefix = `users/${userId}/`;
+				const keys = new Set<string>();
+				const found = yield* listPrefix(prefix);
+				for (const key of found) {
+					if (!key.startsWith(prefix) || !isPermanentImageKey(key) || userIdFromPermanentKey(key) !== userId) continue;
+					keys.add(key);
+				}
+				return [...keys];
 			}),
 
 			abandonStagedObject

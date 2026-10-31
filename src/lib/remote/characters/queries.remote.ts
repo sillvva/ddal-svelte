@@ -1,9 +1,10 @@
 import { defaultCharacter } from "#lib/entities.js";
-import { characterIdParamSchema } from "#lib/schemas.js";
+import { characterIdParamSchema, draftCacheKey } from "#lib/schemas.js";
 import { RedirectError } from "#lib/server/effect/errors.js";
 import { guardedQuery } from "#lib/server/effect/guarded.js";
 import { run } from "#lib/server/effect/runtime.js";
 import { CharacterService } from "#lib/server/effect/services/characters.js";
+import { StorageService } from "#lib/server/effect/services/storage.js";
 import { getRequestEvent, query } from "$app/server";
 import { redirect } from "@sveltejs/kit";
 import * as v from "valibot";
@@ -18,18 +19,28 @@ export const getAllSelect = guardedQuery(function* ({ user }) {
 	return yield* Characters.get.select(user.id);
 });
 
+/** Saved character portraits counted toward the account storage quota. Admins have no cap. */
+export const portraitStorage = guardedQuery(function* ({ user }) {
+	const Storage = yield* StorageService;
+	return yield* Storage.portraitUsage(user.id);
+});
+
 // eslint-disable-next-line custom/enforce-guarded-functions
 export const get = query(
 	v.object({
 		param: characterIdParamSchema,
-		newRedirect: v.optional(v.boolean(), false)
+		newRedirect: v.optional(v.boolean(), false),
+		draft: draftCacheKey
 	}),
 	(input) =>
 		run(function* () {
 			const Character = yield* CharacterService;
 			const { locals } = getRequestEvent();
 
-			if (input.param === "new" && input.newRedirect) redirect(302, "/characters/new/edit");
+			if (input.param === "new" && input.newRedirect) {
+				const draft = input.draft ? `?draft=${encodeURIComponent(input.draft)}` : "";
+				redirect(302, `/characters/new/edit${draft}`);
+			}
 
 			const character =
 				input.param === "new"

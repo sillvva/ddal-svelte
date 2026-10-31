@@ -1,0 +1,94 @@
+# Runs on pull requests to main and on demand.
+# It boots local Supabase (its own database), a local MinIO bucket, and the Vite dev server,
+# then runs the Playwright suite. No repository secrets are required, so fork PRs work with
+# `pull_request`. Do not switch to `pull_request_target`, which would run fork code with secrets.
+name: e2e
+
+on:
+  workflow_dispatch:
+  pull_request:
+    branches: [main]
+    paths-ignore:
+      - "**.md"
+
+concurrency:
+  group: e2e-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  e2e:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: pnpm/action-setup@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 26
+          cache: pnpm
+
+      - uses: supabase/setup-cli@v1
+        with:
+          version: latest
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Start local Supabase
+        run: supabase start
+
+      - name: Start local S3
+        run: |
+          docker run -d --name e2e-minio \
+            -p 9000:9000 \
+            -e MINIO_ROOT_USER=e2eaccess \
+            -e MINIO_ROOT_PASSWORD=e2esecretkey123 \
+            -e MINIO_API_CORS_ALLOW_ORIGIN=http://localhost:5173,http://127.0.0.1:5173 \
+            bitnamilegacy/minio:2024.12.18
+          for _ in $(seq 1 40); do
+            if curl -sf http://127.0.0.1:9000/minio/health/live >/dev/null; then
+              break
+            fi
+            sleep 2
+          done
+          curl -sf http://127.0.0.1:9000/minio/health/live >/dev/null
+          docker exec e2e-minio mc alias set local http://127.0.0.1:9000 e2eaccess e2esecretkey123
+          docker exec e2e-minio mc mb --ignore-existing local/e2e
+          docker exec e2e-minio mc anonymous set download local/e2e
+
+      - name: Install Chromium
+        run: pnpm exec playwright install --with-deps chromium
+
+      - name: Run the suite
+        env:
+          E2E_ALLOW_LOCAL: "1"
+          PUBLIC_URL: http://localhost:5173
+          DATABASE_URL: postgresql://postgres:postgres@127.0.0.1:54322/postgres
+          AUTH_SECRET: local-e2e-auth-secret
+          GOOGLE_CLIENT_ID: local-e2e
+          GOOGLE_CLIENT_SECRET: local-e2e
+          DISCORD_CLIENT_ID: local-e2e
+          DISCORD_CLIENT_SECRET: local-e2e
+          DISABLE_SIGNUPS: "false"
+          LOG_LEVEL: error
+          R2_BUCKET: e2e
+          R2_ENDPOINT: http://127.0.0.1:9000
+          R2_PUBLIC_URL: http://127.0.0.1:9000/e2e
+          R2_ACCESS_KEY_ID: e2eaccess
+          R2_SECRET_ACCESS_KEY: e2esecretkey123
+        run: pnpm test:e2e
+
+      # A flaky test that passes on retry leaves the job green, so this can't be `failure()`.
+      # Playwright keeps output only for failed attempts, so passing runs upload nothing.
+      - name: Upload failed-attempt traces
+        if: ${{ !cancelled() }}
+        uses: actions/upload-artifact@v4
+        with:
+          name: playwright-results
+          path: |
+            e2e/.state/test-results/
+            !e2e/.state/test-results/.last-run.json
+          if-no-files-found: ignore
+          retention-days: 7

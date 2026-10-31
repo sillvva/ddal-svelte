@@ -104,6 +104,11 @@ export function getRelativeTime(date: Date | number, lang = navigator.language):
 	return rtf.format(-Math.floor(deltaSeconds / divisor), unit);
 }
 
+/** Latest id. Uuid v7 values sort in creation order. */
+export function newestDraftId(ids: readonly string[]) {
+	return ids.toSorted().at(-1) ?? "";
+}
+
 export function unknownErrorMessage(error: unknown): string {
 	if (typeof error === "string") return error;
 	else if (typeof error === "object" && error !== null && "message" in error && typeof error.message === "string")

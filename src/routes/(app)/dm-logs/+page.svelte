@@ -11,7 +11,7 @@
 	import * as API from "#lib/remote/index.js";
 	import type { FullLogData } from "#lib/server/effect/services/logs.js";
 	import { getGlobal } from "#lib/stores.svelte.js";
-	import { createTransition, download, formatDate, hotkey, parseEffectResult } from "#lib/util.js";
+	import { createTransition, download, formatDate, hotkey, newestDraftId, parseEffectResult } from "#lib/util.js";
 	import { sorter } from "@sillvva/utils";
 	import { SvelteSet } from "svelte/reactivity";
 
@@ -27,7 +27,6 @@
 		const parsed = await parseEffectResult(result);
 		if (parsed) {
 			successToast(`${log.name} deleted`);
-			await API.logs.queries.getDmLogs().refresh();
 		} else {
 			deletingLog.delete(log.id);
 		}
@@ -43,6 +42,7 @@
 	{const sortedResults = $derived(
 		search.results.toSorted((a, b) => (global.app.dmLogs.sort === "asc" ? sorter(a.date, b.date) : sorter(b.date, a.date)))
 	)}
+	{const newLogHref = $derived(`/dm-logs/new?draft=${encodeURIComponent(newestDraftId(logs.map((log) => log.id)))}`)}
 
 	<Head title="{user?.name}'s DM Logs" />
 
@@ -64,14 +64,14 @@
 	<div class="flex gap-2 sm:justify-between">
 		<div class="flex gap-2 max-sm:flex-1 sm:w-96">
 			<a
-				href="/dm-logs/new"
+				href={newLogHref}
 				class="btn btn-primary btn-sm max-sm:hidden"
 				aria-label="New Log"
 				{@attach hotkey([
 					[
 						"n",
 						() => {
-							goto(`/dm-logs/new`);
+							goto(newLogHref);
 						}
 					]
 				])}
@@ -79,7 +79,7 @@
 				New Log <kbd class="kbd kbd-sm max-sm:hover-none:hidden text-base-content">N</kbd>
 			</a>
 			<Search name={searchKey} placeholder="Search by name, class, items, etc." />
-			<a href="/dm-logs/new" class="btn btn-primary inline-flex sm:hidden" aria-label="New Log">
+			<a href={newLogHref} class="btn btn-primary inline-flex sm:hidden" aria-label="New Log">
 				<span class="iconify mdi--plus inline size-6"></span>
 			</a>
 		</div>
@@ -259,7 +259,7 @@
 							<td colSpan={5} class="py-20 text-center">
 								<p class="mb-4">You have no DM logs.</p>
 								<p>
-									<a href="/dm-logs/new" class="btn btn-primary">Create one now</a>
+									<a href={newLogHref} class="btn btn-primary">Create one now</a>
 								</p>
 							</td>
 						</tr>

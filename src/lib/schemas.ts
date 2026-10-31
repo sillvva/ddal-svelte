@@ -1,8 +1,9 @@
 import type { FullCharacterData } from "#lib/server/effect/services/characters.js";
 import { omit } from "@sillvva/utils";
 import * as v from "valibot";
-import { AVATAR_IMAGE_LIMITS, CHARACTER_IMAGE_LIMITS, STORED_IMAGE_CONTENT_TYPES } from "./images/limits";
 import { BLANK_CHARACTER, PASSKEY_PLACEHOLDER_EMAIL_DOMAIN, PROVIDERS, themeGroups, themes } from "./constants";
+import { itemTimelineIssues, type ItemTimelineIssue, type TimelineLog } from "./entities.js";
+import { AVATAR_IMAGE_LIMITS, CHARACTER_IMAGE_LIMITS, STORED_IMAGE_CONTENT_TYPES } from "./images/limits";
 
 export type BrandedType = v.InferOutput<ReturnType<typeof brandedId>>;
 function brandedId<T extends string>(name: T) {
@@ -11,9 +12,9 @@ function brandedId<T extends string>(name: T) {
 
 const string = v.pipe(v.string(), v.trim());
 export const requiredString = v.pipe(string, v.regex(/^.*(\p{L}|\p{N})+.*$/u, "Required"));
-export const shortString = v.pipe(string, v.maxLength(64));
-export const text = v.pipe(string, v.maxLength(2000));
-export const largeText = v.pipe(string, v.maxLength(5000));
+export const shortString = v.pipe(string, v.maxGraphemes(64));
+export const text = v.pipe(string, v.maxGraphemes(2000));
+export const largeText = v.pipe(string, v.maxGraphemes(5000));
 export const uuidV7 = v.pipe(
 	v.string(),
 	v.regex(/^[\da-f]{8}-[\da-f]{4}-7[\da-f]{3}-[\da-f]{4}-[\da-f]{12}$/iu, "ID is missing or invalid")
@@ -77,10 +78,21 @@ export const nullableDate = v.pipe(
 	v.transform((input) => (input ? new Date(input) : null)),
 	v.nullable(v.date())
 );
+// `supportedValuesOf("timeZone")` lists canonical IANA names. Hosts whose zone is
+// Etc/UTC — containers and GitHub Actions included — report that zone as "UTC"
+// from `getLocalTimeZone()`, and "UTC" is not in the canonical list.
+const ianaTimeZones = new Set([...Intl.supportedValuesOf("timeZone"), "UTC"]);
+
 export const timezoneSchema = v.pipe(
 	v.string(),
-	v.check((input) => input === "" || Intl.supportedValuesOf("timeZone").includes(input), "Invalid timezone")
+	v.check((input) => input === "" || ianaTimeZones.has(input), "Invalid timezone")
 );
+
+/**
+ * Cache key only. A query that mints an id for a "new" route stores that id under its
+ * arguments. A value that changes after each save makes the next visit mint a different id.
+ */
+export const draftCacheKey = v.optional(v.string(), "");
 
 export type UserId = v.InferOutput<typeof userIdSchema>;
 export const userIdSchema = brandedId("UserId");
@@ -217,7 +229,58 @@ export const dmLogSchema = v.object({
 	isDmLog: v.optional(v.boolean(), true)
 });
 
-export const characterLogSchema = (character: FullCharacterData) =>
+function objectIssuePath<T extends object>(input: T, key: keyof T & string): v.ObjectPathItem {
+	return {
+		type: "object",
+		origin: "value",
+		input: input as Record<string, unknown>,
+		key,
+		value: input[key]
+	};
+}
+
+function arrayIssuePath<T>(input: readonly T[], key: number): v.ArrayPathItem {
+	return {
+		type: "array",
+		origin: "value",
+		input,
+		key,
+		value: input[key]
+	};
+}
+
+/** Path of the specific gained or dropped item a timeline issue belongs to. */
+function timelineIssuePath(
+	input: LogSchema | DmLogSchema,
+	issue: ItemTimelineIssue
+): [v.IssuePathItem, ...v.IssuePathItem[]] | undefined {
+	if (issue.field === "date") {
+		const magicIndex = input.magicItemsGained.findIndex((item) => item.id === issue.id);
+		const storyIndex = magicIndex < 0 ? input.storyAwardsGained.findIndex((item) => item.id === issue.id) : -1;
+		const key = magicIndex >= 0 ? "magicItemsGained" : storyIndex >= 0 ? "storyAwardsGained" : undefined;
+		if (!key) return undefined;
+
+		const index = key === "magicItemsGained" ? magicIndex : storyIndex;
+		const items = input[key];
+		const item = items[index];
+		if (!item) return undefined;
+
+		return [objectIssuePath(input, key), arrayIssuePath(items, index), objectIssuePath(item, "name")];
+	}
+
+	const list = input[issue.field];
+	const index = list.indexOf(issue.id);
+	if (index < 0) return undefined;
+
+	return [objectIssuePath(input, issue.field), arrayIssuePath(list, index)];
+}
+
+/** The character totals and logs a submitted log is checked against. */
+export type LogTarget = Pick<FullCharacterData, "id" | "totalLevel" | "totalGold" | "totalTcp"> & {
+	logs: readonly (TimelineLog & { acp: number; level: number; gold: number; tcp: number })[];
+};
+
+export const characterLogSchema = (character: LogTarget) =>
 	v.pipe(
 		logSchema,
 		v.check((input) => !input.isDmLog, "Only character logs can be saved here."),
@@ -248,18 +311,27 @@ export const characterLogSchema = (character: FullCharacterData) =>
 				return character.totalTcp + input.tcp - logTCP >= 0;
 			}, `Cannot reduce total TCP to less than 0. Current: ${character.totalTcp}`),
 			["tcp"]
-		)
+		),
+		v.rawCheck(({ dataset, addIssue }) => {
+			if (!dataset.typed) return;
+
+			for (const issue of itemTimelineIssues(character.logs, dataset.value)) {
+				const path = timelineIssuePath(dataset.value, issue);
+				addIssue(path ? { message: issue.message, path } : { message: issue.message });
+			}
+		})
 	);
 
-export const dMLogSchema = (characters: FullCharacterData[] = []) =>
+/** `characters` must hold only characters the saving user owns. */
+export const dMLogSchema = (characters: readonly LogTarget[] = []) =>
 	v.pipe(
 		dmLogSchema,
 		v.check((input) => input.isDmLog, "Only DM logs can be saved here."),
 		v.forward(
-			v.check((input) => {
-				const characterIds = characters.map((c) => c.id);
-				return !input.characterId || !characterIds.length || characterIds.includes(input.characterId);
-			}, "Character not found"),
+			v.check(
+				(input) => !input.characterId || characters.some((c) => c.id === input.characterId),
+				"Character not found"
+			),
 			["characterId"]
 		),
 		v.forward(
@@ -312,7 +384,18 @@ export const dMLogSchema = (characters: FullCharacterData[] = []) =>
 				return character.totalTcp + input.tcp - logTCP >= 0;
 			}, "Cannot reduce character's total TCP to less than 0"),
 			["tcp"]
-		)
+		),
+		v.rawCheck(({ dataset, addIssue }) => {
+			if (!dataset.typed) return;
+
+			const character = characters.find((c) => c.id === dataset.value.characterId);
+			if (!character) return;
+
+			for (const issue of itemTimelineIssues(character.logs, dataset.value)) {
+				const path = timelineIssuePath(dataset.value, issue);
+				addIssue(path ? { message: issue.message, path } : { message: issue.message });
+			}
+		})
 	);
 
 export type AppCookie = v.InferOutput<typeof appCookieSchema>;

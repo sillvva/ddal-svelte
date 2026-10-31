@@ -10,6 +10,15 @@ SET xmloption = content;
 SET client_min_messages = warning;
 SET row_security = off;
 
+-- Current Supabase Postgres images no longer pre-create these schemas. CREATE EXTENSION
+-- ... WITH SCHEMA requires the schema to exist already, so a fresh `supabase start` failed
+-- at pgsodium. Production already applied this migration; the IF NOT EXISTS clauses are a
+-- no-op where the schemas are present.
+CREATE SCHEMA IF NOT EXISTS "pgsodium";
+CREATE SCHEMA IF NOT EXISTS "graphql";
+CREATE SCHEMA IF NOT EXISTS "extensions";
+CREATE SCHEMA IF NOT EXISTS "vault";
+
 CREATE EXTENSION IF NOT EXISTS "pgsodium" WITH SCHEMA "pgsodium";
 
 CREATE SCHEMA IF NOT EXISTS "public";

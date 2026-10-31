@@ -4,7 +4,7 @@ A SvelteKit 5 application for managing D&D Adventurers League campaigns, with lo
 
 ## Prerequisites
 
-- **Node.js** v22 or later
+- **Node.js** v26 or later
 - **Bun** v1.2.19+ (recommended), or [pnpm](https://pnpm.io/) / [npm](https://www.npmjs.com/)
 - [Supabase CLI](https://supabase.com/docs/guides/cli) (for local database)
 - [Docker](https://www.docker.com/) (optional, for running Supabase locally)
@@ -88,6 +88,56 @@ bun run preview
 # or
 npm run preview
 ```
+
+## End-to-end tests
+
+Playwright signs up a disposable passkey user (`e2e-<timestamp>`), walks through characters, logs, magic items, and DMs, then deletes the account. Each run uses the local database only. It does not reset the database and it never reads `REMOTE_DB_URL`.
+
+### Safeguards
+
+The suite stops before it creates anything unless all of these are true:
+
+- `E2E_ALLOW_LOCAL=1` (or `true`)
+- `PUBLIC_URL` is `http://localhost`, `http://127.0.0.1`, or another local host
+- `DATABASE_URL` uses that same kind of host (local Supabase is `127.0.0.1:54322`)
+- `DATABASE_URL` is not the same string as `REMOTE_DB_URL`
+
+Staging is rejected because it shares production's database. A local `op run` environment also sets `REMOTE_DB_URL`; that is fine as long as `DATABASE_URL` is the local database and the two strings differ. A global setup step and `pnpm op:test:e2e:cleanup` delete leftover `e2e-` users, their rows, and their stored images if a run crashes. Account deletion removes permanent avatars and portraits immediately. Unsaved `tmp/` uploads are left for the bucket lifecycle rule (about a day); the cleanup script still deletes those objects for `e2e-` users so a crashed run does not leave files in the test bucket.
+
+### Setup
+
+1. Start local Supabase and apply migrations:
+
+```bash
+supabase start
+pnpm db:push:local
+```
+
+2. Local runs take `DATABASE_URL`, `PUBLIC_URL`, `REMOTE_DB_URL`, and the `R2_*` variables from the same 1Password environment as `pnpm op:dev`. `DATABASE_URL` must be the local Supabase database. The image bucket must allow `PUT` from `http://localhost:5173`.
+
+3. Install browsers once:
+
+```bash
+pnpm exec playwright install chromium
+```
+
+### Run
+
+```bash
+pnpm op:test:e2e
+```
+
+`pnpm op:test:e2e` sets `E2E_ALLOW_LOCAL=1`, loads that 1Password environment, and starts the Vite dev server with the same variables when one is not already running. Set `E2E_SKIP_WEBSERVER=1` to use a server you started yourself with `pnpm op:dev`. The app origin has to match `PUBLIC_URL` so the virtual passkey is issued for the local relying party.
+
+Clean up users left behind by a crashed run:
+
+```bash
+pnpm op:test:e2e:cleanup
+```
+
+`pnpm test:e2e` and `pnpm test:e2e:cleanup` stay available for CI, where the variables are already exported. `pnpm test:e2e:guard` checks the environment guard without touching the database.
+
+A GitHub Actions workflow (`.github/workflows/e2e.yml`) runs the same suite with local Supabase and a local MinIO bucket on pull requests to `main`, and on demand through `workflow_dispatch`. It skips pull requests that only change Markdown, and it does not need repository secrets. A separate `ci.yml` workflow runs unit tests, lint, and type checks on every pull request and on pushes to `main` and `development`. The MinIO root user, bucket, and CORS origin exist only for that job. Browser uploads use path-style URLs on `http://127.0.0.1:9000`, and `MINIO_API_CORS_ALLOW_ORIGIN` allows `PUT` from `http://localhost:5173`.
 
 ## Linting & Formatting
 

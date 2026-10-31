@@ -1,7 +1,7 @@
 <script lang="ts">
 	import { highlighterConfig, highlighterThemeDark, highlighterThemeLight } from "#lib/constants.js";
 	import { getGlobal } from "#lib/stores.svelte.js";
-	import { createHighlighter } from "shiki";
+	import { getSingletonHighlighter } from "shiki";
 
 	type Props = {
 		title?: string;
@@ -14,7 +14,7 @@
 
 	let tooltip = $state("Copy to clipboard");
 
-	const highlighter = await createHighlighter(highlighterConfig);
+	const highlighter = await getSingletonHighlighter(highlighterConfig);
 	const stringified = $derived(JSON.stringify(data ?? {}, null, 2));
 
 	async function copyCode() {
@@ -30,17 +30,17 @@
 	);
 </script>
 
-<div class="debug-container relative rounded-lg p-4 bg-slate-800">
+<div class="debug-container relative rounded-lg bg-slate-800 p-4">
 	{#if data}
 		<button
 			type="button"
-			class="copy-btn absolute right-2 top-2 rounded aspect-square pt-2 tooltip tooltip-left bg-slate-700 px-2 py-1 text-xs font-medium text-slate-100 hover:bg-slate-600"
+			class="copy-btn tooltip absolute tooltip-left top-2 right-2 aspect-square rounded bg-slate-700 px-2 py-1 pt-2 text-xs font-medium text-slate-100 hover:bg-slate-600"
 			aria-label="Copy to clipboard"
 			data-tip={tooltip}
 			onclick={copyCode}
 			onmouseleave={() => setTimeout(() => (tooltip = "Copy to clipboard"), 1000)}
 		>
-			<span class="iconify mdi--content-copy size-4"></span>
+			<span class="iconify size-4 mdi--content-copy"></span>
 		</button>
 	{/if}
 	{#if title}
@@ -66,5 +66,9 @@
 	.highlighted :global(pre) {
 		background-color: transparent !important;
 		white-space: pre-wrap !important;
+
+		:global(.line > span) {
+			white-space: pre;
+		}
 	}
 </style>

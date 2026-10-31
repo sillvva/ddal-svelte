@@ -1,6 +1,6 @@
 <script lang="ts">
 	import { dev } from '$app/env';
-	import { onNavigate } from "$app/navigation";
+	import { afterNavigate, onNavigate } from "$app/navigation";
 	import * as API from "#lib/remote/index.js";
 	import { getGlobal, getLogger } from "#lib/stores.svelte.js";
 	import { Toaster } from "svelte-sonner";
@@ -14,7 +14,9 @@
 	const request = await API.app.queries.request();
 	global.app = request.app;
 
+	// `data-navigating` lets e2e tests wait out client-side navigations: SvelteKit updates the URL before the new page renders.
 	onNavigate(({ complete, from, to, shallow }) => {
+		document.documentElement.toggleAttribute("data-navigating", true);
 		if (shallow) return;
 		if (!document.startViewTransition) return;
 		if (from?.url.pathname === to?.url.pathname) return;
@@ -24,6 +26,10 @@
 				await complete;
 			});
 		});
+	});
+
+	afterNavigate(() => {
+		document.documentElement.removeAttribute("data-navigating");
 	});
 </script>
 
