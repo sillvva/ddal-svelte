@@ -1,7 +1,7 @@
 <script lang="ts">
 	import { highlighterConfig, highlighterThemeDark, highlighterThemeLight } from "#lib/constants.js";
 	import { getGlobal } from "#lib/stores.svelte.js";
-	import { createHighlighter } from "shiki";
+	import { getSingletonHighlighter } from "shiki";
 
 	type Props = {
 		title?: string;
@@ -14,7 +14,7 @@
 
 	let tooltip = $state("Copy to clipboard");
 
-	const highlighter = await createHighlighter(highlighterConfig);
+	const highlighter = await getSingletonHighlighter(highlighterConfig);
 	const stringified = $derived(JSON.stringify(data ?? {}, null, 2));
 
 	async function copyCode() {
