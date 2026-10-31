@@ -2,14 +2,14 @@ import { characterIdSchema, completeCharacterImageSchema, prepareCharacterImageS
 import { guardedCommand, refreshAll } from "#lib/server/effect/guarded.js";
 import { CharacterService } from "#lib/server/effect/services/characters.js";
 import { StorageService } from "#lib/server/effect/services/storage.js";
-import { portraitStorage } from "./queries.remote.js";
+import { getAll, getAllSelect, portraitStorage } from "./queries.remote.js";
 
 export const deleteCharacter = guardedCommand(characterIdSchema, function* (id, { user }) {
 	const Characters = yield* CharacterService;
 	const Storage = yield* StorageService;
 	const removed = yield* Characters.delete(id, user.id);
 	yield* Storage.purgePending();
-	yield* refreshAll(portraitStorage().refresh());
+	yield* refreshAll(portraitStorage().refresh(), getAll().refresh(), getAllSelect().refresh());
 	return removed;
 });
 
