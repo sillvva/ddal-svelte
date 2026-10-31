@@ -13,7 +13,8 @@ import {
 	saveStorageState,
 	settleNavigations,
 	uploadAvatar,
-	uploadCharacterImage
+	uploadCharacterImage,
+	waitForHydration
 } from "./ui.ts";
 
 test.describe.configure({ mode: "serial" });
@@ -327,6 +328,14 @@ test("End-to-end passkey user flow", async ({ browser }) => {
 			await expect(page.getByRole("cell", { name: "424242" })).toBeVisible();
 		});
 
+		await test.step("reload each page and confirm it hydrates", async () => {
+			const paths = await pagesToReload(page, characterId);
+			const markers = { characterName, secondCharacterName, editedDmName, dmLogTitle, secondDmLogTitle, dmId };
+			for (const path of paths) {
+				await test.step(`reload ${path}`, () => expectFullReload(page, path, markers));
+			}
+		});
+
 		await test.step("delete the DM after its log is gone", async () => {
 			await page.goto(`/characters/${characterId}`);
 			await page.locator("tbody").filter({ hasText: editedGainTitle }).getByRole("button", { name: "Delete Log" }).click();
@@ -402,6 +411,155 @@ function headerAvatar(page: Page) {
 function magicItems(page: Page) {
 	// The heading sits in a wrapper; the item list is the wrapper's next sibling, not the heading's.
 	return page.getByRole("heading", { name: "Magic Items", exact: true }).locator("xpath=../following-sibling::p[1]");
+}
+
+const RECORD_ID = "[0-9a-f-]{36}";
+
+interface ReloadMarkers {
+	characterName: string;
+	secondCharacterName: string;
+	editedDmName: string;
+	dmLogTitle: string;
+	secondDmLogTitle: string;
+	dmId: string;
+}
+
+/** Every saved record, plus the empty create forms, that this user can open. */
+async function pagesToReload(page: Page, characterId: string) {
+	await page.goto("/characters");
+	const characterIds = idsFromPaths(await anchorPaths(page), new RegExp(`^/characters/(${RECORD_ID})$`, "iu"));
+	expect(characterIds, "Character list did not link to the characters created in this run").toContain(characterId);
+
+	const records = new Set<string>();
+	for (const id of characterIds) {
+		await page.goto(`/characters/${id}`);
+		for (const path of await anchorPaths(page)) {
+			if (new RegExp(`^/characters/${id}/log/${RECORD_ID}$`, "iu").test(path)) records.add(path);
+			if (new RegExp(`^/dm-logs/${RECORD_ID}$`, "iu").test(path)) records.add(path);
+		}
+	}
+
+	await page.goto("/dm-logs");
+	for (const path of await anchorPaths(page)) {
+		if (new RegExp(`^/dm-logs/${RECORD_ID}$`, "iu").test(path)) records.add(path);
+	}
+
+	await page.goto("/dms");
+	const dmIds = idsFromPaths(await anchorPaths(page), new RegExp(`^/dms/(${RECORD_ID})$`, "iu"));
+	expect(dmIds, "DM list did not link to a DM").not.toEqual([]);
+
+	return [
+		"/characters",
+		...characterIds.map((id) => `/characters/${id}`),
+		...characterIds.map((id) => `/characters/${id}/edit`),
+		"/characters/new/edit",
+		...[...records].sort(),
+		...characterIds.map((id) => `/characters/${id}/log/new`),
+		"/dm-logs",
+		"/dm-logs/new",
+		"/dms",
+		...dmIds.map((id) => `/dms/${id}`)
+	];
+}
+
+async function anchorPaths(page: Page) {
+	const hrefs = await page.locator("a[href]").evaluateAll((anchors) => anchors.map((anchor) => anchor.getAttribute("href") ?? ""));
+	return hrefs.map((href) => href.split(/[?#]/)[0] ?? "").filter((path) => path.startsWith("/"));
+}
+
+function idsFromPaths(paths: string[], pattern: RegExp) {
+	const ids = new Set<string>();
+	for (const path of paths) {
+		const id = path.match(pattern)?.[1];
+		if (id) ids.add(id);
+	}
+	return [...ids].sort();
+}
+
+/**
+ * `goto` is already a full document load. Reloading again is the refresh a user
+ * does from the address bar, which re-runs SSR and then hydrates that HTML.
+ */
+async function expectFullReload(page: Page, path: string, markers: ReloadMarkers) {
+	await page.goto(path);
+	const failures: string[] = [];
+	const onPageError = (error: Error) => failures.push(error.message);
+	const onConsole = (message: { type(): string; text(): string }) => {
+		const type = message.type();
+		if ((type === "error" || type === "warning") && /hydrat/i.test(message.text())) failures.push(message.text());
+	};
+	page.on("pageerror", onPageError);
+	page.on("console", onConsole);
+	try {
+		const response = await page.reload({ waitUntil: "load" });
+		expect(response?.ok(), `${path} reloaded with status ${response?.status() ?? "missing"}`).toBe(true);
+		await waitForHydration(page);
+		expect(new URL(page.url()).pathname, path).toBe(path);
+		await expect(page.getByRole("heading", { name: "Rolled a Natural 1!" })).toHaveCount(0);
+		await expect(page.getByRole("heading", { name: "4D4: Not Found!" })).toHaveCount(0);
+		await expect(page.getByRole("heading", { name: /^Error( \d+)?!$/ })).toHaveCount(0);
+		await expectPageReady(page, path, markers);
+		expect(failures, `${path} failed during reload\n${failures.join("\n")}`).toEqual([]);
+	} finally {
+		page.off("pageerror", onPageError);
+		page.off("console", onConsole);
+	}
+}
+
+async function expectPageReady(page: Page, path: string, markers: ReloadMarkers) {
+	if (path === "/characters") {
+		await expect(page.getByRole("link", { name: markers.characterName }).filter({ visible: true })).toBeVisible();
+		await expect(page.getByRole("link", { name: markers.secondCharacterName }).filter({ visible: true })).toBeVisible();
+		return;
+	}
+
+	if (new RegExp(`^/characters/${RECORD_ID}$`, "iu").test(path)) {
+		await expect(page.getByRole("link", { name: "Edit", exact: true })).toBeVisible();
+		return;
+	}
+
+	if (path === "/characters/new/edit" || new RegExp(`^/characters/${RECORD_ID}/edit$`, "iu").test(path)) {
+		await expect(page.getByRole("button", { name: "Save Character" })).toBeVisible();
+		await expect(page.getByLabel("Character Name")).toBeVisible();
+		return;
+	}
+
+	if (path === "/dm-logs") {
+		await expect(page.locator('a[href^="/dm-logs/"]', { hasText: markers.dmLogTitle }).filter({ visible: true })).toBeVisible();
+		await expect(
+			page.locator('a[href^="/dm-logs/"]', { hasText: markers.secondDmLogTitle }).filter({ visible: true })
+		).toBeVisible();
+		return;
+	}
+
+	if (
+		path === "/dm-logs/new" ||
+		new RegExp(`^/dm-logs/${RECORD_ID}$`, "iu").test(path) ||
+		new RegExp(`/log/(new|${RECORD_ID})$`, "iu").test(path)
+	) {
+		await expect(page.getByRole("button", { name: "Save Log" })).toBeVisible();
+		await expect(page.getByLabel("Title")).toBeVisible();
+		return;
+	}
+
+	if (path === "/dms") {
+		await expect(page.locator('a[href^="/dms/"]', { hasText: markers.editedDmName }).filter({ visible: true })).toBeVisible();
+		return;
+	}
+
+	if (path === `/dms/${markers.dmId}`) {
+		await expect(page.getByRole("button", { name: "Save DM" })).toBeVisible();
+		await expect(page.getByLabel("DM Name")).toHaveValue(markers.editedDmName);
+		return;
+	}
+
+	if (new RegExp(`^/dms/${RECORD_ID}$`, "iu").test(path)) {
+		await expect(page.getByRole("button", { name: "Save DM" })).toBeVisible();
+		await expect(page.getByLabel("DM Name")).toBeVisible();
+		return;
+	}
+
+	throw new Error(`No reload assertion for ${path}`);
 }
 
 function keyFromUrl(imageUrl: string | null) {
