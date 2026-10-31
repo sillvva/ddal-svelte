@@ -32,7 +32,21 @@ export async function waitForHydration(page: Page) {
 	);
 }
 
-/** Full page loads (`goto` and `location` navigations) must hydrate before the next click. */
+/**
+ * SvelteKit pushes the new URL before the destination page loads its data and renders,
+ * so a matched URL doesn't mean the navigation is done. The root layout sets
+ * `data-navigating` on `<html>` from `onNavigate` until `afterNavigate`.
+ */
+export async function waitForClientNavigation(page: Page) {
+	await page.waitForFunction(() => !document.documentElement.hasAttribute("data-navigating"), undefined, {
+		timeout: 30_000
+	});
+}
+
+/**
+ * Full page loads (`goto` and `location` navigations) must hydrate before the next click,
+ * and client-side navigations must finish before the next `goto` or they can abort it.
+ */
 export function settleNavigations(page: Page) {
 	const goto = page.goto.bind(page);
 	const waitForURL = page.waitForURL.bind(page);
@@ -43,6 +57,7 @@ export function settleNavigations(page: Page) {
 	};
 	page.waitForURL = async (url, options) => {
 		await waitForURL(url, options);
+		await waitForClientNavigation(page);
 		await waitForHydration(page);
 	};
 }
