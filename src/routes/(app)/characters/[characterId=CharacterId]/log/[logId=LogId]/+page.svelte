@@ -101,7 +101,7 @@
 				{const { magicItems, storyAwards } = $derived(
 					getItemEntities(character, { excludeDropped: true, logId: log.id, asOf: form.fields.date.value() })
 				)}
-				{let season = $derived(log.experience ? 1 : log.acp ? 8 : 9)}
+				{let season = $state(log.experience ? 1 : log.acp ? 8 : 9)}
 				{#if data.type === "game"}
 					{#if !firstLog}
 						{const dms = $derived(await API.dms.queries.getAllWithoutLogs())}

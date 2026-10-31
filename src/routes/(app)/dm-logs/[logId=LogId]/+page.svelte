@@ -82,7 +82,7 @@
 						timezone={data.timezone}
 					/>
 				</Control>
-				{let season = $derived(log.experience ? 1 : log.acp ? 8 : 9)}
+				{let season = $state(log.experience ? 1 : log.acp ? 8 : 9)}
 				<Control class="col-span-12 sm:col-span-4">
 					<InputWrapper type="select" labelFor="season" label="Season">
 						<select
