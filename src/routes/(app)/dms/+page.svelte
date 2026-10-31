@@ -83,7 +83,6 @@
 													const parsed = await parseEffectResult(result);
 													if (parsed) {
 														successToast(`${dm.name} deleted`);
-														await API.dms.queries.getAll().refresh();
 													} else {
 														deletingDM.delete(dm.id);
 													}

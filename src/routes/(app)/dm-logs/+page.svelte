@@ -27,7 +27,6 @@
 		const parsed = await parseEffectResult(result);
 		if (parsed) {
 			successToast(`${log.name} deleted`);
-			await API.logs.queries.getDmLogs().refresh();
 		} else {
 			deletingLog.delete(log.id);
 		}

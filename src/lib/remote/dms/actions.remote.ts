@@ -1,6 +1,7 @@
+import * as API from "#lib/remote/index.js";
 import { dungeonMasterIdSchema } from "#lib/schemas.js";
 import { type ErrorParams } from "#lib/server/effect/errors.js";
-import { guardedCommand } from "#lib/server/effect/guarded.js";
+import { guardedCommand, refreshAll } from "#lib/server/effect/guarded.js";
 import { DMService } from "#lib/server/effect/services/dms.js";
 import { Data } from "effect";
 
@@ -16,5 +17,7 @@ export const deleteDM = guardedCommand(dungeonMasterIdSchema, function* (id, { u
 	const dm = yield* DMs.get.one(id, user.id, false);
 	if (dm.isUser) return yield* new DeleteUserDMError();
 
-	return yield* DMs.delete(dm, user.id);
+	const removed = yield* DMs.delete(dm, user.id);
+	yield* refreshAll(API.dms.queries.getAll().refresh(), API.dms.queries.getAllWithoutLogs().refresh());
+	return removed;
 });

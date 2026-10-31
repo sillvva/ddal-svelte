@@ -451,7 +451,7 @@ const deleteLog = Effect.fn("LogService.delete")(function* (logId: LogId, userId
 		db
 			.delete(logs)
 			.where(and(eq(logs.id, logId), ownedLogSql(db, userId)))
-			.returning({ id: logs.id })
+			.returning({ id: logs.id, characterId: logs.characterId, dungeonMasterId: logs.dungeonMasterId })
 	).pipe(
 		Effect.flatMap((logs) => (isTupleOf(logs, 1) ? Effect.succeed(logs[0]) : Effect.fail(new DeleteLogError()))),
 		Effect.tap((result) => AppLog.info("LogService.delete", { logId, userId, result })),
