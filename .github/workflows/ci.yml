@@ -17,6 +17,11 @@ concurrency:
 
 jobs:
   check:
+    # Same-repo PRs from a branch in `push.branches` already get a push run on the same commit.
+    if: >-
+      github.event_name != 'pull_request' ||
+      github.event.pull_request.head.repo.full_name != github.repository ||
+      !contains(fromJSON('["main", "development"]'), github.head_ref)
     runs-on: ubuntu-latest
     timeout-minutes: 10
     steps:
