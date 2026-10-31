@@ -4,6 +4,7 @@ import type { ExtendedLogData, FullLogData, LogData, LogSummaryData } from "#lib
 import { omit, sorter } from "@sillvva/utils";
 import { v7 } from "uuid";
 import { BLANK_CHARACTER, PlaceholderName } from "./constants";
+import { alreadyDropped, dropBeforeAcquisition, gainAfterDrop } from "./item-timeline-messages";
 import {
 	type CharacterId,
 	type DungeonMasterId,
@@ -86,9 +87,7 @@ export type ItemTimelineIssue = {
 	message: string;
 };
 
-export const dropBeforeAcquisition = "Can't drop an item before it was acquired";
-export const alreadyDropped = "This item was already dropped in an earlier log";
-export const gainAfterDrop = "This item was dropped in an earlier log";
+export { alreadyDropped, dropBeforeAcquisition, gainAfterDrop };
 
 export type TimelineLog = Parameters<typeof logTimestamp>[0] & {
 	id: LogId;

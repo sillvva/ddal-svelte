@@ -1,11 +1,13 @@
 import type { Page } from "@playwright/test";
-import { characterRow, dmRow, logIdsForCharacter, logRow, userDmId } from "./db.ts";
+import { dropBeforeAcquisition } from "../src/lib/item-timeline-messages.ts";
+import { characterRow, dmRow, logIdsForCharacter, logRow, magicItemRow, magicItemsGainedIn, userDmId } from "./db.ts";
 import { expect, test, type TestUser } from "./fixtures.ts";
 import {
 	createCharacter,
 	createDmLog,
 	createGameLog,
 	dmIdOnCharacterPage,
+	dmLogIdOnList,
 	fillCharacterForm,
 	fillDmLog,
 	fillGameLog,
@@ -107,6 +109,22 @@ test("another user can't open, edit, or delete your logs, DMs, or DM logs", asyn
 		expect(await logRow(records.logId)).toMatchObject({ name: records.logTitle, characterId: records.characterId });
 	});
 
+	await test.step("a log save aimed at the owner's DM is rejected", async () => {
+		const before = await logIdsForCharacter(intruderCharacterId);
+		await fillGameLog(page, intruderCharacterId, { title: `E2E Hijack Log DM ${intruder.handle}` });
+		const response = await submitTampered(
+			page,
+			"saveCharacter",
+			(fields) => {
+				fields.dm = { id: records.dmId, name: `E2E Hijacked DM ${intruder.handle}`, DCI: "", userId: intruder.id, isUser: false };
+			},
+			() => saveLog(page)
+		);
+		expect(response.body).toContain("Could not save Dungeon Master");
+		expect(await dmRow(records.dmId)).toMatchObject({ name: records.dmName, userId: owner.id });
+		expect(await logIdsForCharacter(intruderCharacterId)).toEqual(before);
+	});
+
 	await test.step("a new log cannot be added to the owner's character", async () => {
 		const before = await logIdsForCharacter(records.characterId);
 		await fillGameLog(page, intruderCharacterId, { title: `E2E Planted ${intruder.handle}` });
@@ -161,5 +179,67 @@ test("another user can't open, edit, or delete your logs, DMs, or DM logs", asyn
 		const result = await callCommand(page, "src/lib/remote/dms/actions.remote.ts", "deleteDM", records.dmId);
 		expect(result.ok).toBe(false);
 		expect(await dmRow(records.dmId)).not.toBeNull();
+	});
+});
+
+test("another user can't claim or drop your items", async ({ users }) => {
+	const owner = await users.signUp({ label: "owner" });
+	const intruder = await users.signUp({ label: "intruder" });
+	const itemName = `Ring of E2E ${owner.handle}`;
+	const ownerCharacterId = await createCharacter(owner.page, { name: `E2E Item Owner ${owner.handle}` });
+	const gainLogId = await createGameLog(owner.page, ownerCharacterId, {
+		title: `E2E Ring Gain ${owner.handle}`,
+		gained: [itemName]
+	});
+	const [item] = await magicItemsGainedIn(gainLogId);
+	if (!item) throw new Error("The gain log did not store its magic item");
+	const unchanged = { name: itemName, logGainedId: gainLogId, logLostId: null };
+	const { page } = intruder;
+	const intruderCharacterId = await createCharacter(page, { name: `E2E Item Intruder ${intruder.handle}` });
+
+	await test.step("a log can't claim and rename the owner's item", async () => {
+		await fillGameLog(page, intruderCharacterId, { title: `E2E Item Claim ${intruder.handle}` });
+		const response = await submitTampered(
+			page,
+			"saveCharacter",
+			(fields) => {
+				fields.magicItemsGained = [{ id: item.id, name: `E2E Stolen ${intruder.handle}`, description: "" }];
+			},
+			() => saveLog(page)
+		);
+		expect(response.body).toContain("Could not save items");
+		expect(await magicItemRow(item.id)).toMatchObject(unchanged);
+		expect(await logIdsForCharacter(intruderCharacterId)).toEqual([]);
+	});
+
+	await test.step("a character log can't drop the owner's item", async () => {
+		await fillGameLog(page, intruderCharacterId, { title: `E2E Item Drop ${intruder.handle}` });
+		const response = await submitTampered(
+			page,
+			"saveCharacter",
+			(fields) => {
+				fields.magicItemsLost = [item.id];
+			},
+			() => saveLog(page)
+		);
+		expect(response.body).toContain(dropBeforeAcquisition);
+		expect(await magicItemRow(item.id)).toMatchObject(unchanged);
+	});
+
+	await test.step("an unassigned DM log can't drop the owner's item", async () => {
+		const title = `E2E Item Drop DM ${intruder.handle}`;
+		await fillDmLog(page, { title });
+		await submitTampered(
+			page,
+			"saveDM",
+			(fields) => {
+				fields.magicItemsLost = [item.id];
+			},
+			() => saveLog(page)
+		);
+		// The DM log saves without the drop, since it has no character inventory.
+		await page.waitForURL(/\/dm-logs$/);
+		await dmLogIdOnList(page, title);
+		expect(await magicItemRow(item.id)).toMatchObject(unchanged);
 	});
 });

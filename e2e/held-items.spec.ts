@@ -1,12 +1,8 @@
+import { alreadyDropped, dropBeforeAcquisition, gainAfterDrop } from "../src/lib/item-timeline-messages.ts";
 import { logRow, magicItemRow, magicItemsGainedIn } from "./db.ts";
 import { expect, test } from "./fixtures.ts";
 import { createCharacter, createGameLog, fillGameLog, saveLog, setLogYear } from "./records.ts";
 import { submitTampered, type FormFields } from "./remote.ts";
-
-// Must match the messages exported from src/lib/entities.ts.
-const dropBeforeAcquisition = "Can't drop an item before it was acquired";
-const alreadyDropped = "This item was already dropped in an earlier log";
-const gainAfterDrop = "This item was dropped in an earlier log";
 
 const DAY = 86_400_000;
 
