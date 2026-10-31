@@ -1,5 +1,6 @@
 import { parseLog } from "#lib/entities.js";
 import type {
+	CharacterId,
 	DungeonMasterId,
 	DungeonMasterSchema,
 	ItemsGainedSchema,
@@ -118,6 +119,35 @@ const userLogsConfig = {
 
 export type UserLogData = InferQueryResult<"logs", typeof userLogsConfig>;
 
+/** SQL twin of `characterLogFilter` and `dmLogFilter`, for writes. */
+const ownedLogSql = (db: Database | Transaction, userId: UserId) =>
+	or(
+		and(
+			eq(logs.isDmLog, false),
+			exists(
+				db
+					.select()
+					.from(characters)
+					.where(and(eq(characters.id, logs.characterId), eq(characters.userId, userId)))
+			)
+		),
+		and(
+			eq(logs.isDmLog, true),
+			exists(
+				db
+					.select()
+					.from(dungeonMasters)
+					.where(
+						and(
+							eq(dungeonMasters.id, logs.dungeonMasterId),
+							eq(dungeonMasters.userId, userId),
+							eq(dungeonMasters.isUser, true)
+						)
+					)
+			)
+		)
+	);
+
 // Getters
 const getCharacterLog = Effect.fn("LogService.get.one")(function* (logId: LogId, userId: UserId, db: Database | Transaction) {
 	if (logId === "new") return undefined;
@@ -219,7 +249,8 @@ const upsertLogDM = Effect.fn("upsertLogDM")(function* (tx: Transaction, log: Lo
 			.values(validated)
 			.onConflictDoUpdate({
 				target: dungeonMasters.id,
-				set: buildConflictUpdateColumns(dungeonMasters, ["name", "DCI"])
+				set: buildConflictUpdateColumns(dungeonMasters, ["name", "DCI"]),
+				setWhere: eq(dungeonMasters.userId, user.id)
 			})
 			.returning()
 	).pipe(
@@ -261,7 +292,8 @@ const upsertLog = Effect.fn("upsertLog")(function* (tx: Transaction, log: LogSch
 			})
 			.onConflictDoUpdate({
 				target: logs.id,
-				set: buildConflictUpdateColumns(logs, ["id", "createdAt", "isDmLog"], true)
+				set: buildConflictUpdateColumns(logs, ["id", "createdAt", "isDmLog"], true),
+				setWhere: ownedLogSql(tx, user.id)
 			})
 			.returning()
 	);
@@ -272,12 +304,14 @@ const upsertLog = Effect.fn("upsertLog")(function* (tx: Transaction, log: LogSch
 		[
 			...itemsCRUD(tx, {
 				logId: result.id,
+				characterId: result.characterId,
 				table: magicItems,
 				gained: log.magicItemsGained,
 				lost: log.magicItemsLost
 			}),
 			...itemsCRUD(tx, {
 				logId: result.id,
+				characterId: result.characterId,
 				table: storyAwards,
 				gained: log.storyAwardsGained,
 				lost: log.storyAwardsLost
@@ -330,6 +364,8 @@ export const addMissingTimeZones = Effect.fn("addMissingTimeZones")(function* (
 
 interface CRUDItemParams {
 	logId: LogId;
+	/** An unassigned DM log has no character inventory, so it cannot drop items. */
+	characterId: CharacterId | null;
 	gained: ItemsGainedSchema;
 	lost: ItemsLostSchema;
 }
@@ -343,9 +379,9 @@ interface CRUDStoryAwardParams extends CRUDItemParams {
 }
 
 function itemsCRUD(tx: Transaction, params: CRUDMagicItemParams | CRUDStoryAwardParams) {
-	const { logId, table, gained, lost } = params;
+	const { logId, characterId, table, gained, lost } = params;
 
-	const effects: Effect.Effect<void, DrizzleError>[] = [];
+	const effects: Effect.Effect<void, DrizzleError | SaveLogError>[] = [];
 	const itemIds = gained.map((item) => item.id).filter(Boolean);
 
 	effects.push(
@@ -369,8 +405,14 @@ function itemsCRUD(tx: Transaction, params: CRUDMagicItemParams | CRUDStoryAward
 					)
 					.onConflictDoUpdate({
 						target: table.id,
-						set: buildConflictUpdateColumns(table, ["name", "description"])
+						set: buildConflictUpdateColumns(table, ["name", "description"]),
+						setWhere: eq(table.logGainedId, logId)
 					})
+					.returning({ id: table.id })
+			).pipe(
+				Effect.flatMap((saved) =>
+					saved.length === gained.length ? Effect.void : Effect.fail(new SaveLogError("Could not save items"))
+				)
 			)
 		);
 	}
@@ -384,13 +426,19 @@ function itemsCRUD(tx: Transaction, params: CRUDMagicItemParams | CRUDStoryAward
 		)
 	);
 
-	if (lost.length) {
+	if (lost.length && characterId) {
 		effects.push(
 			runQuery(
 				tx
 					.update(table)
 					.set({ logLostId: logId })
-					.where(and(isNull(table.logLostId), inArray(table.id, lost)))
+					.where(
+						and(
+							isNull(table.logLostId),
+							inArray(table.id, lost),
+							inArray(table.logGainedId, tx.select({ id: logs.id }).from(logs).where(eq(logs.characterId, characterId)))
+						)
+					)
 			)
 		);
 	}
@@ -402,37 +450,7 @@ const deleteLog = Effect.fn("LogService.delete")(function* (logId: LogId, userId
 	return yield* runQuery(
 		db
 			.delete(logs)
-			.where(
-				and(
-					eq(logs.id, logId),
-					or(
-						and(
-							eq(logs.isDmLog, false),
-							exists(
-								db
-									.select()
-									.from(characters)
-									.where(and(eq(characters.id, logs.characterId), eq(characters.userId, userId)))
-							)
-						),
-						and(
-							eq(logs.isDmLog, true),
-							exists(
-								db
-									.select()
-									.from(dungeonMasters)
-									.where(
-										and(
-											eq(dungeonMasters.id, logs.dungeonMasterId),
-											eq(dungeonMasters.userId, userId),
-											eq(dungeonMasters.isUser, true)
-										)
-									)
-							)
-						)
-					)
-				)
-			)
+			.where(and(eq(logs.id, logId), ownedLogSql(db, userId)))
 			.returning({ id: logs.id })
 	).pipe(
 		Effect.flatMap((logs) => (isTupleOf(logs, 1) ? Effect.succeed(logs[0]) : Effect.fail(new DeleteLogError()))),

@@ -12,6 +12,7 @@
 	import * as API from "#lib/remote/index.js";
 	import { editCharacterSchema } from "#lib/schemas.js";
 	import { getGlobal } from "#lib/stores.svelte.js";
+	import { page } from "$app/state";
 
 	let { params } = $props();
 
@@ -19,7 +20,8 @@
 
 	const schema = editCharacterSchema;
 	const form = API.characters.forms.save;
-	const character = $derived(await API.characters.forms.get(params.characterId));
+	const draft = $derived(page.url.searchParams.get("draft") ?? "");
+	const character = $derived(await API.characters.forms.get({ param: params.characterId, draft }));
 	const initialErrors = $derived(params.characterId !== "new");
 
 	let data = $derived(proxify(character));

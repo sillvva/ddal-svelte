@@ -15,3 +15,7 @@ replica.db*
 metadata
 drizzle
 .pnpm-store
+e2e/.state/
+/test-results/
+/playwright-report/
+/blob-report/

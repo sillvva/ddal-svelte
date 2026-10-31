@@ -14,12 +14,14 @@
 	import { proxify } from "#lib/factories.svelte.js";
 	import * as API from "#lib/remote/index.js";
 	import { dmLogSchema } from "#lib/schemas.js";
+	import { page } from "$app/state";
 
 	const { params } = $props();
 
 	const schema = dmLogSchema;
 	const form = API.logs.forms.saveDM;
 	const initialErrors = $derived(params.logId !== "new");
+	const draft = $derived(page.url.searchParams.get("draft") ?? "");
 </script>
 
 <svelte:boundary>
@@ -27,7 +29,8 @@
 	{#if params.logId}
 		{const log = $derived(
 			await API.logs.forms.dm({
-				param: { logId: params.logId }
+				param: { logId: params.logId },
+				draft
 			})
 		)}
 
@@ -79,7 +82,7 @@
 						timezone={data.timezone}
 					/>
 				</Control>
-				{let season = $derived(log.experience ? 1 : log.acp ? 8 : 9)}
+				{let season = $state(log.experience ? 1 : log.acp ? 8 : 9)}
 				<Control class="col-span-12 sm:col-span-4">
 					<InputWrapper type="select" labelFor="season" label="Season">
 						<select

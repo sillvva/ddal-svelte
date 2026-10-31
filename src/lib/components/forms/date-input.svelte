@@ -17,6 +17,7 @@
 		timezone?: string;
 		required?: boolean;
 		description?: string;
+		onchange?: (timestamp: number) => void;
 	}
 
 	const earliest = new Date(2014, 0).getTime();
@@ -30,6 +31,7 @@
 		timezone,
 		required,
 		description,
+		onchange,
 		...rest
 	}: Props = $props();
 
@@ -69,8 +71,10 @@
 			const newValue = clamp(val, minDateValue, maxDateValue);
 			const date = newValue.toDate(tz);
 			field.set(date.getTime());
+			onchange?.(date.getTime());
 		} else {
 			field.set(0);
+			onchange?.(0);
 		}
 	}}
 	minValue={minValue}

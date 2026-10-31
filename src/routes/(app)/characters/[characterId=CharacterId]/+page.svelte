@@ -76,6 +76,8 @@
 	{const { user } = $derived(await API.app.queries.request())}
 	{const character = $derived(await API.characters.queries.get(queryParams))}
 	{const myCharacter = $derived(character.userId === user?.id)}
+	{const newLogDraft = $derived(character.logs.at(-1)?.id ?? character.id)}
+	{const newLogHref = $derived(`/characters/${character.id}/log/new?draft=${encodeURIComponent(newLogDraft)}`)}
 	{const search = $derived(
 		new EntitySearchFactory(character.logs, page.url.searchParams.get(searchKey) ?? page.state.search?.[searchKey] ?? "")
 	)}
@@ -311,14 +313,14 @@
 			<div class="flex w-full gap-2 sm:max-w-md print:hidden">
 				{#if myCharacter}
 					<a
-						href={`/characters/${character.id}/log/new`}
+						href={newLogHref}
 						class="btn btn-primary max-sm:hidden sm:px-3 sm:btn-sm"
 						aria-label="New Log"
 						{@attach hotkey([
 							[
 								"n",
 								() => {
-									goto(`/characters/${character.id}/log/new`);
+									goto(newLogHref);
 								}
 							]
 						])}
@@ -329,7 +331,7 @@
 				<Search name={searchKey} placeholder="Search Logs" />
 				{#if myCharacter}
 					<a
-						href={`/characters/${character.id}/log/new`}
+						href={newLogHref}
 						class="btn btn-primary sm:hidden sm:px-3 sm:btn-sm"
 						aria-label="New Log"
 					>
@@ -382,12 +384,14 @@
 		<section class="rounded-lg bg-base-200">
 			<div class="flex flex-col gap-4 py-20 text-center">
 				<div>No logs found.</div>
-				<p>
-					<a href="/characters/{character.id}/log/new" class="btn btn-primary">Create a Game Log</a>
-				</p>
-				<p>
-					<a href="/characters/{character.id}/log/new?firstLog=true" class="btn btn-primary">Create an Intro Log</a>
-				</p>
+				{#if myCharacter}
+					<p>
+						<a href={newLogHref} class="btn btn-primary">Create a Game Log</a>
+					</p>
+					<p>
+						<a href="{newLogHref}&firstLog=true" class="btn btn-primary">Create an Intro Log</a>
+					</p>
+				{/if}
 			</div>
 		</section>
 	{:else}
@@ -404,9 +408,10 @@
 					>
 						<div
 							class="swipe-container"
-							{@attach swipeAction({
-								right: () => deleteLog(log)
-							})}
+							{@attach myCharacter &&
+								swipeAction({
+									right: () => deleteLog(log)
+								})}
 						>
 							<div class="content bg-base-200">
 								{#if myCharacter}
@@ -493,12 +498,13 @@
 									{#if log.storyAwardsGained.length > 0 || log.storyAwardsLost.length > 0}
 										{#each log.storyAwardsGained as mi (mi.id)}
 											<div class="mt-2 text-sm whitespace-pre-wrap">
-												<a
-													href={`/characters/${log.characterId}/log/${log.id}`}
-													class="row-link pr-2 font-semibold dark:text-white print:block"
+												<svelte:element
+													this={myCharacter ? "a" : "span"}
+													href={myCharacter ? `/characters/${log.characterId}/log/${log.id}` : undefined}
+													class={[myCharacter && "row-link", "pr-2 font-semibold dark:text-white print:block"]}
 												>
 													{mi.name}{mi.description ? ":" : ""}
-												</a>
+												</svelte:element>
 												{#if mi.description}
 													<Markdown content={mi.description || ""} />
 												{/if}
@@ -512,9 +518,11 @@
 									{/if}
 								</div>
 							</div>
-							<button class="action right bg-error text-white" aria-label="Delete Log">
-								<span class="iconify size-6 mdi--trash-can"></span>
-							</button>
+							{#if myCharacter}
+								<button class="action right bg-error text-white" aria-label="Delete Log">
+									<span class="iconify size-6 mdi--trash-can"></span>
+								</button>
+							{/if}
 						</div>
 					</li>
 				{/each}
@@ -696,12 +704,16 @@
 								<td colSpan={100} class="max-w-[calc(100vw-50px)] pt-0 text-sm print:p-2 print:text-xs">
 									{#if log.description?.trim()}
 										<h4 class="text-base font-semibold">
-											<a
-												href={log.isDmLog ? `/dm-logs/${log.id}` : `/characters/${log.characterId}/log/${log.id}`}
-												class="row-link"
-											>
+											{#if myCharacter}
+												<a
+													href={log.isDmLog ? `/dm-logs/${log.id}` : `/characters/${log.characterId}/log/${log.id}`}
+													class="row-link"
+												>
+													Notes:
+												</a>
+											{:else}
 												Notes:
-											</a>
+											{/if}
 										</h4>
 										<Markdown content={log.description} />
 									{/if}
@@ -718,12 +730,13 @@
 									{#if log.storyAwardsGained.length > 0 || log.storyAwardsLost.length > 0}
 										{#each log.storyAwardsGained as mi (mi.id)}
 											<div class="mt-2 text-sm whitespace-pre-wrap">
-												<a
-													href={`/characters/${log.characterId}/log/${log.id}`}
-													class="row-link pr-2 font-semibold dark:text-white print:block"
+												<svelte:element
+													this={myCharacter ? "a" : "span"}
+													href={myCharacter ? `/characters/${log.characterId}/log/${log.id}` : undefined}
+													class={[myCharacter && "row-link", "pr-2 font-semibold dark:text-white print:block"]}
 												>
 													{mi.name}{mi.description ? ":" : ""}
-												</a>
+												</svelte:element>
 												{#if mi.description}
 													<Markdown content={mi.description || ""} />
 												{/if}

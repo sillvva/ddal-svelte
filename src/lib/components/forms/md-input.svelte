@@ -24,14 +24,8 @@
 	const segmenter = new Intl.Segmenter();
 	const graphemes = $derived(typeof value === "string" ? [...segmenter.segment(value)] : []);
 	const graphemeCount = $derived(graphemes.length);
-	const largeGraphemeCount = $derived(graphemes.filter((grapheme) => grapheme.segment.length > 1).length);
 
 	const markdownTip = "Supports Markdown and HTML. Scripting, media, and form tags are not allowed for security reasons.";
-	const graphemeTip = $derived(
-		largeGraphemeCount
-			? `You have actually used ${graphemeCount} characters, but ${largeGraphemeCount} special characters like emojis count as more than one.`
-			: undefined
-	);
 </script>
 
 <label for={name} class="fieldset-legend">
@@ -75,11 +69,8 @@
 			</span>
 		{/if}
 		{#if !issues?.length && maxLength}
-			<span class="tooltip tooltip-bottom flex items-center gap-1" data-tip={graphemeTip}>
-				{value.length.toLocaleString()} / {maxLength.toLocaleString()}
-				{#if graphemeTip}
-					<span class="iconify mdi--question-mark-circle"></span>
-				{/if}
+			<span class="tooltip tooltip-bottom flex items-center gap-1">
+				{graphemeCount.toLocaleString()} / {maxLength.toLocaleString()}
 			</span>
 		{/if}
 	</label>

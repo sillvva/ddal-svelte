@@ -9,7 +9,7 @@
 	import { EntitySearchFactory } from "#lib/factories.svelte.js";
 	import * as API from "#lib/remote/index.js";
 	import { getGlobal } from "#lib/stores.svelte.js";
-	import { createTransition, download, hotkey } from "#lib/util.js";
+	import { createTransition, download, hotkey, newestDraftId } from "#lib/util.js";
 	import { sorter } from "@sillvva/utils";
 
 	const global = getGlobal();
@@ -24,6 +24,9 @@
 	)}
 	{const sortedResults = $derived(
 		search.results.toSorted((a, b) => sorter(b.score, a.score) || sorter(a.totalLevel, b.totalLevel) || sorter(a.name, b.name))
+	)}
+	{const newCharacterHref = $derived(
+		`/characters/new/edit?draft=${encodeURIComponent(newestDraftId(characters.map((character) => character.id)))}`
 	)}
 
 	<Head title="{user?.name}'s Characters" />
@@ -56,13 +59,13 @@
 		<div class="flex flex-wrap justify-between gap-2">
 			<div class="flex gap-2 max-sm:w-full sm:max-md:flex-1 md:w-md">
 				<a
-					href="/characters/new/edit"
+					href={newCharacterHref}
 					class="btn btn-primary btn-sm max-sm:hidden"
 					{@attach hotkey([
 						[
 							"n",
 							() => {
-								goto(`/characters/new/edit`);
+								goto(newCharacterHref);
 							}
 						]
 					])}
@@ -71,7 +74,7 @@
 					<kbd class="kbd kbd-sm max-md:hover-none:hidden text-base-content">N</kbd>
 				</a>
 				<Search name={searchKey} placeholder="Search by name, class, items, etc." />
-				<a href="/characters/new/edit" class="btn btn-primary sm:hidden" aria-label="New Character">
+				<a href={newCharacterHref} class="btn btn-primary sm:hidden" aria-label="New Character">
 					<span class="iconify mdi--plus inline size-6"></span>
 				</a>
 				<button

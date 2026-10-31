@@ -1,6 +1,6 @@
 <script lang="ts">
 	import { BLANK_CHARACTER } from "#lib/constants.js";
-	import { AVATAR_IMAGE_LIMITS, CHARACTER_IMAGE_LIMITS, formatBytes } from "#lib/images/limits.js";
+	import { AVATAR_IMAGE_LIMITS, CHARACTER_IMAGE_LIMITS, formatBytes, portraitStorageView } from "#lib/images/limits.js";
 	import {
 		isPermanentAvatarImageKey,
 		isPermanentCharacterImageKey,
@@ -103,8 +103,8 @@
 	);
 	const help = $derived(
 		props.purpose === "character"
-			? `JPEG, PNG, WebP, or GIF up to ${formatBytes(CHARACTER_IMAGE_LIMITS.maxOriginalBytes)}. Drop an image here or choose a file.`
-			: `JPEG, PNG, WebP, or GIF up to ${formatBytes(AVATAR_IMAGE_LIMITS.maxOriginalBytes)}. The picture is cropped to a square. Drop an image here or choose a file.`
+			? `JPEG, PNG, WebP, or GIF up to ${formatBytes(CHARACTER_IMAGE_LIMITS.maxOriginalBytes)}.`
+			: `JPEG, PNG, WebP, or GIF up to ${formatBytes(AVATAR_IMAGE_LIMITS.maxOriginalBytes)}. The picture is cropped to a square.`
 	);
 	const statusId = $derived(props.purpose === "character" ? "character-image-status" : "avatar-image-status");
 	const groupLabel = $derived(
@@ -275,7 +275,7 @@
 
 <div
 	class={[
-		"relative mt-2 flex flex-1 flex-col gap-3 rounded-lg border border-dashed p-3 sm:flex-row sm:items-start",
+		"relative mt-2 flex flex-1 gap-3 rounded-lg border border-dashed sm:items-start",
 		acceptingDrop ? "border-primary bg-primary/10" : "border-transparent"
 	]}
 	role="group"
@@ -295,14 +295,15 @@
 	<img src={preview} {alt} class={previewClass} />
 	<div class="flex min-w-0 flex-1 flex-col gap-2">
 		{#snippet uploadControls()}
-			<div class="mt-2">
+			<div class="mt-2 flex items-center gap-14 max-sm:gap-2">
 				<label
 					class={[
 						"btn btn-outline btn-sm focus-within:outline-2 focus-within:outline-offset-2 focus-within:outline-current",
 						uploading && "pointer-events-none opacity-50"
 					]}
 				>
-					{uploading ? "Uploading image…" : "Choose image"}
+					<span class="sm:hidden">{uploading ? "Uploading" : "Choose"}</span>
+					<span class="max-sm:hidden">{uploading ? "Uploading image…" : "Choose image"}</span>
 					<input
 						class="sr-only"
 						type="file"
@@ -312,6 +313,34 @@
 						onchange={onFile}
 					/>
 				</label>
+				{#if props.purpose === "character"}
+					<svelte:boundary>
+						{#snippet failed()}
+							<p class="text-xs text-neutral-500">Storage usage is unavailable.</p>
+						{/snippet}
+						{@const storage = await API.characters.queries.portraitStorage()}
+						{#if storage.quotaBytes !== null}
+							{@const usage = portraitStorageView(storage.usedBytes, storage.quotaBytes)}
+							<div class="flex max-w-60 flex-1 flex-col gap-1">
+								<div class="flex items-baseline justify-end gap-3 text-xs text-neutral-500">
+									<span id="character-portrait-storage-label">{usage.usedLabel}/{usage.quotaLabel} used ({usage.percent}%)</span>
+								</div>
+								<progress
+									class={[
+										"progress",
+										usage.tone === "error" && "progress-error",
+										usage.tone === "warning" && "progress-warning",
+										usage.tone === "primary" && "progress-primary"
+									]}
+									value={storage.usedBytes}
+									max={storage.quotaBytes}
+									aria-labelledby="character-portrait-storage-label"
+									aria-valuetext={`${usage.usedLabel} of ${usage.quotaLabel} used, ${usage.percent}%`}
+								></progress>
+							</div>
+						{/if}
+					</svelte:boundary>
+				{/if}
 			</div>
 			{#if uploading && status}
 				<p id={statusId} class="flex items-center gap-2 text-pretty text-neutral-500">
@@ -321,7 +350,9 @@
 			{:else if failure}
 				<p id={statusId} class="rounded-lg bg-error px-2 py-1 text-pretty text-error-content">{failure}</p>
 			{:else}
-				<p id={statusId} class="text-pretty text-neutral-500">{help}</p>
+				<p id={statusId} class="text-pretty text-neutral-500">
+					{help} <span class="max-sm:hidden">Drop an image here or choose a file.</span>
+				</p>
 			{/if}
 		{/snippet}
 		{#if props.purpose === "character"}
