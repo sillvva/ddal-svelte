@@ -97,7 +97,14 @@ export const handleError: HandleServerError = (input) => {
 		return;
 	}
 
-	report("Internal Error", { error, url: event.url.href, status: 500, kind });
+	console.error("Unknnown Server Error:", error);
+	if (error instanceof Error) console.error(error.stack);
+	report(error ? String(error) : "Unknown Error", {
+		stack: error instanceof Error ? error.stack : undefined,
+		url: event.url.href,
+		status: 500,
+		kind
+	});
 };
 
 export const init: ServerInit = () => {

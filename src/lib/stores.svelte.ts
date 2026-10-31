@@ -89,8 +89,8 @@ class Logger {
 			return err;
 		}
 
-		console.error(error);
-		if (message !== "Something went wrong") {
+		console.error(boundary, error);
+		if (message !== "Something went wrong" && message !== "Internal Error") {
 			logClientError(err);
 		}
 
