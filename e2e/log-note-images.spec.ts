@@ -8,11 +8,12 @@ import {
 	closeSettings,
 	dropFile,
 	noteImageUrls,
-	openSettings,
 	notesField,
+	openSettings,
 	pasteFile,
 	pngFile,
 	TEXT_FILE,
+	waitForHydration,
 	waitForNoteImages
 } from "./ui.ts";
 
@@ -252,29 +253,58 @@ test("log notes: portraits and note images share one storage limit", async ({ us
 	const { page, handle } = await users.signUp({ label: "sharedquota" });
 	const characterId = await createCharacter(page, { name: "Shared Quota" });
 	const quota = 50 * 1024 * 1024;
-	const limitMessage = "would exceed your 50 MB image storage limit.";
+	const limitMessage = "These note images would exceed your 50 MB image storage limit.";
+
+	let first = "";
+	let imageBytes = 0;
+	let logId = "";
 
 	await test.step("a staged note image can't be saved once portraits fill the limit", async () => {
-		await fillGameLog(page, characterId, { title: "Over Quota" });
-		await pasteImage(page, "late.png", 1);
+		await fillGameLog(page, characterId, { title: "At The Limit" });
+		first = await pasteImage(page, "first.png", 1);
+		imageBytes = (await uploadRowForKey(keyFromUrl(first)))?.bytes ?? 0;
+		expect(imageBytes).toBeGreaterThan(0);
 		await setCharacterImageBytes(characterId, quota);
 		await saveLog(page);
-		await expect(fieldIssue(page, "description")).toContainText(`These note images ${limitMessage}`);
+		await expect(fieldIssue(page, "description")).toContainText(limitMessage);
 		await expect(page).toHaveURL(/\/log\/new/u);
 	});
 
-	await test.step("new note uploads are refused while the limit is full", async () => {
-		await pasteFile(notesField(page), pngFile("another.png"));
-		await expect(page.locator('[data-sonner-toast][data-type="error"]')).toContainText(limitMessage);
-		expect(noteImageUrls(await notesField(page).inputValue())).toHaveLength(1);
+	await test.step("with room for exactly that image, the save goes through", async () => {
+		await setCharacterImageBytes(characterId, quota - imageBytes);
+		logId = (await saveAndReturn(page, characterId, "At The Limit")) ?? "";
+		first = publicUrl(permanentOf(keyFromUrl(first)));
+		expect(await logImageKeys(logId)).toEqual([keyFromUrl(first)]);
 	});
 
-	await test.step("freeing portrait space lets the note image save", async () => {
-		await setCharacterImageBytes(characterId, quota - 1024 * 1024);
+	await test.step("at the limit, adding another image is refused", async () => {
+		await page.goto(`/characters/${characterId}/log/${logId}`);
+		await pasteImage(page, "extra.png", 2);
+		await saveLog(page);
+		await expect(fieldIssue(page, "description")).toContainText(limitMessage);
+	});
+
+	await test.step("at the limit, swapping the image for one of the same size saves", async () => {
+		await page.goto(`/characters/${characterId}/log/${logId}`);
+		await notesField(page).fill("Swapped");
+		const second = await pasteImage(page, "second.png", 1);
 		await saveAndReturn(page, characterId);
+		const secondKey = permanentOf(keyFromUrl(second));
+		expect(await logImageKeys(logId)).toEqual([secondKey]);
+		await waitUntilMissing(keyFromUrl(first));
+	});
+
+	await test.step("over the limit, a save that adds no images still goes through", async () => {
+		await setCharacterImageBytes(characterId, quota);
+		await page.goto(`/characters/${characterId}/log/${logId}`);
+		await page.getByLabel("Title").fill("Renamed Over The Limit");
+		await saveAndReturn(page, characterId, "Renamed Over The Limit");
 	});
 
 	await test.step("settings counts both types against the one limit", async () => {
+		await setCharacterImageBytes(characterId, quota - 1024 * 1024);
+		await page.reload();
+		await waitForHydration(page);
 		await openSettings(page, handle);
 		await expect(page.locator("aside#settings")).toContainText(/Image storage used\s*49 MB\/50 MB \(98%\)/u);
 		const breakdown = page.locator("aside#settings #image-storage-breakdown");

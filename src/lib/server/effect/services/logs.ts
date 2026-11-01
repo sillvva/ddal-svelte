@@ -492,7 +492,7 @@ export class LogService extends Context.Service<LogService>()("LogService", {
 					Effect.fn(function* (tx) {
 						// Serializes note image reference changes for this account with other saves, deletes, and the purge step.
 						yield* lockPortraitUser(tx, user.id);
-						const notes = yield* promoteNoteImages(tx, user.id, log.description, copied);
+						const notes = yield* promoteNoteImages(tx, user.id, log.id, log.description, copied);
 						temporaryKeys = notes.temporaryKeys;
 
 						const result = yield* upsertLog(tx, { ...log, description: notes.description }, user).pipe(Effect.provide(DMTx(tx)));

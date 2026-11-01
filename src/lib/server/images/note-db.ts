@@ -2,7 +2,7 @@ import { isPermanentNoteImageKey, TEMPORARY_IMAGE_PREFIX } from "#lib/images/obj
 import type { LogId, UserId } from "#lib/schemas.js";
 import { runQuery, type Database, type Transaction } from "#lib/server/db/index.js";
 import { imageUploads, logImages } from "#lib/server/db/schema.js";
-import { and, eq, inArray, isNull, notInArray, notLike, sql } from "drizzle-orm";
+import { and, eq, exists, inArray, isNull, ne, notInArray, notLike, or, sql, type SQL } from "drizzle-orm";
 import { Effect } from "effect";
 import { clearScheduledDeletions } from "./portrait-db";
 
@@ -11,8 +11,7 @@ function integer(value: unknown) {
 	return Number.isFinite(parsed) ? parsed : 0;
 }
 
-/** Saved note image bytes for one account. Unsaved `tmp/` uploads are not counted. */
-export function sumNoteBytes(executor: Database | Transaction, userId: UserId) {
+function sumOwnedNoteBytes(executor: Database | Transaction, userId: UserId, counted: SQL | undefined) {
 	return runQuery(
 		executor
 			.select({ total: sql<number>`coalesce(sum(${imageUploads.bytes}), 0)::int` })
@@ -21,10 +20,51 @@ export function sumNoteBytes(executor: Database | Transaction, userId: UserId) {
 				and(
 					eq(imageUploads.userId, userId),
 					eq(imageUploads.purpose, "note"),
-					notLike(imageUploads.objectKey, `${TEMPORARY_IMAGE_PREFIX}%`)
+					notLike(imageUploads.objectKey, `${TEMPORARY_IMAGE_PREFIX}%`),
+					counted
 				)
 			)
 	).pipe(Effect.map((rows) => integer(rows[0]?.total)));
+}
+
+/**
+ * Saved note image bytes for one account: images at least one log still references.
+ * An image stops counting as soon as its last reference goes, while it waits in `pending_object_deletion`.
+ * Unsaved `tmp/` uploads are not counted.
+ */
+export function sumNoteBytes(executor: Database | Transaction, userId: UserId) {
+	return sumOwnedNoteBytes(
+		executor,
+		userId,
+		exists(
+			executor
+				.select({ one: sql`1` })
+				.from(logImages)
+				.where(eq(logImages.uploadId, imageUploads.id))
+		)
+	);
+}
+
+/**
+ * What `sumNoteBytes` will be once `logId` references exactly `permanentKeys`: images another log
+ * references, plus the already promoted images in `permanentKeys`. Staged images promoted by the same
+ * save are not included. Run under `lockPortraitUser`.
+ */
+export function sumNoteBytesAfterSave(tx: Transaction, userId: UserId, logId: LogId, permanentKeys: readonly string[]) {
+	const keys = [...new Set(permanentKeys.filter(isPermanentNoteImageKey))];
+	return sumOwnedNoteBytes(
+		tx,
+		userId,
+		or(
+			exists(
+				tx
+					.select({ one: sql`1` })
+					.from(logImages)
+					.where(and(eq(logImages.uploadId, imageUploads.id), ne(logImages.logId, logId)))
+			),
+			keys.length ? inArray(imageUploads.objectKey, keys) : undefined
+		)
+	);
 }
 
 /**
@@ -76,7 +116,7 @@ export function syncLogImages(tx: Transaction, userId: UserId, logId: LogId, per
 	});
 }
 
-/** Drops the upload row once its permanent object is deleted, so its bytes leave the note quota. */
+/** Drops the upload row once its permanent object is deleted. */
 export function forgetNoteUpload(tx: Transaction, key: string) {
 	if (!isPermanentNoteImageKey(key)) return Effect.void;
 	return runQuery(tx.delete(imageUploads).where(and(eq(imageUploads.objectKey, key), eq(imageUploads.purpose, "note")))).pipe(

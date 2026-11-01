@@ -122,8 +122,8 @@ export async function logImageKeys(logId: string) {
 
 export async function uploadRowForKey(objectKey: string) {
 	const rows = await withSql(
-		(sql) => sql<{ id: string; userId: string; purpose: string }[]>`
-			select id, user_id as "userId", purpose from image_upload where object_key = ${objectKey}
+		(sql) => sql<{ id: string; userId: string; purpose: string; bytes: number }[]>`
+			select id, user_id as "userId", purpose, bytes from image_upload where object_key = ${objectKey}
 		`
 	);
 	return rows[0] ?? null;

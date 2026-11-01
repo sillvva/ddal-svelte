@@ -31,7 +31,7 @@ import {
 	uploadIdFromImageKey,
 	userIdFromPermanentKey
 } from "#lib/images/object-key.js";
-import type { CharacterId, ImageUploadId, UserId } from "#lib/schemas.js";
+import type { CharacterId, ImageUploadId, LogId, UserId } from "#lib/schemas.js";
 import { DBService, runQuery, type Transaction } from "#lib/server/db/index.js";
 import { characters, imageUploads, user } from "#lib/server/db/schema.js";
 import { serializeError } from "#lib/server/effect/errors.js";
@@ -51,7 +51,7 @@ import {
 	userIdForDeletion
 } from "#lib/server/images/portrait-db.js";
 import { forgetNoteUpload } from "#lib/server/images/note-db.js";
-import { assertNoteQuota, assertPortraitQuota, imageStorageUsage } from "#lib/server/images/quota-db.js";
+import { assertNoteSaveQuota, assertPortraitQuota, imageStorageUsage } from "#lib/server/images/quota-db.js";
 import { R2_ACCESS_KEY_ID, R2_BUCKET, R2_ENDPOINT, R2_SECRET_ACCESS_KEY } from "$app/env/private";
 import { R2_PUBLIC_URL } from "$app/env/public";
 import {
@@ -386,6 +386,7 @@ export const promoteStagedAvatar = Effect.fn("StorageService.promoteStagedAvatar
 export const promoteNoteImages = Effect.fn("StorageService.promoteNoteImages")(function* (
 	tx: Transaction,
 	userId: UserId,
+	logId: LogId,
 	description: string,
 	copied: string[]
 ) {
@@ -431,9 +432,11 @@ export const promoteNoteImages = Effect.fn("StorageService.promoteNoteImages")(f
 		pending.push({ from, to, id: upload.id, bytes: upload.bytes, contentType: upload.contentType });
 	}
 
-	yield* assertNoteQuota(
+	yield* assertNoteSaveQuota(
 		tx,
 		userId,
+		logId,
+		ownedKeys,
 		pending.reduce((total, upload) => total + upload.bytes, 0)
 	);
 
@@ -602,10 +605,11 @@ export class StorageService extends Context.Service<StorageService>()("StorageSe
 
 			/**
 			 * Reserves a `tmp/` object and returns a presigned PUT.
-			 * The image storage quota here is a fast check against saved portraits and note images. The
-			 * authoritative check runs again under the same advisory lock when the character or log is saved.
-			 * Avatars are not part of that quota. A presigned URL cannot write a permanent key, so discarding the reservation cannot
-			 * free quota for an object that stays.
+			 * Portraits get a fast image storage quota check here. The authoritative check runs again under the
+			 * same advisory lock when the character is saved. Note images are only checked when a log save
+			 * promotes them, because that save may also drop images and free the room they need. Avatars are not
+			 * part of the quota. A presigned URL cannot write a permanent key, so discarding the reservation
+			 * cannot free quota for an object that stays.
 			 */
 			prepare: Effect.fn("StorageService.prepare")(function* (input: PrepareImageInput) {
 				yield* purgePendingObjects();
@@ -630,8 +634,6 @@ export class StorageService extends Context.Service<StorageService>()("StorageSe
 							yield* assertPortraitQuota(tx, input.userId, input.characterId, input.bytes);
 						} else if (input.purpose === "avatar") {
 							yield* assertCustomAvatarAllowed(tx, input.userId);
-						} else {
-							yield* assertNoteQuota(tx, input.userId, input.bytes);
 						}
 
 						// Note uploads have their own hourly budget, so a note full of images does not use up portrait uploads.
