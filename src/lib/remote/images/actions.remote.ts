@@ -1,5 +1,10 @@
 import { request } from "#lib/remote/app/queries.remote.js";
-import { completeCharacterImageSchema, prepareAvatarImageSchema, prepareNoteImageSchema, saveAvatarSchema } from "#lib/schemas.js";
+import {
+	completeCharacterImageSchema,
+	prepareAvatarImageSchema,
+	prepareNoteImageSchema,
+	saveAvatarSchema
+} from "#lib/schemas.js";
 import { guardedCommand, refreshAll } from "#lib/server/effect/guarded.js";
 import { StorageService } from "#lib/server/effect/services/storage.js";
 

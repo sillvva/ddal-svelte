@@ -399,7 +399,9 @@ export const promoteNoteImages = Effect.fn("StorageService.promoteNoteImages")(f
 
 	const staged = [...new Set(references.filter((ref) => ref.temporary).map((ref) => ref.key))];
 	if (staged.some((key) => !isOwnedTemporaryNoteImageKey(userId, key))) {
-		return yield* new ImageUploadError("An image in the notes was not uploaded from this account. Remove it and upload it again.");
+		return yield* new ImageUploadError(
+			"An image in the notes was not uploaded from this account. Remove it and upload it again."
+		);
 	}
 
 	const permanentFor = new Map<string, string>();
@@ -651,7 +653,10 @@ export class StorageService extends Context.Service<StorageService>()("StorageSe
 								)
 						);
 						if (integer(recent?.total) >= rate.maxUploadsPerWindow) {
-							return yield* new ImageUploadError(`You can upload ${rate.maxUploadsPerWindow} images per hour. Try again later.`, 429);
+							return yield* new ImageUploadError(
+								`You can upload ${rate.maxUploadsPerWindow} images per hour. Try again later.`,
+								429
+							);
 						}
 
 						const uploadId = v7() as ImageUploadId;

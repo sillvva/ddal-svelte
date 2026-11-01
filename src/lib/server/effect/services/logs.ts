@@ -495,9 +495,7 @@ export class LogService extends Context.Service<LogService>()("LogService", {
 						const notes = yield* promoteNoteImages(tx, user.id, log.description, copied);
 						temporaryKeys = notes.temporaryKeys;
 
-						const result = yield* upsertLog(tx, { ...log, description: notes.description }, user).pipe(
-							Effect.provide(DMTx(tx))
-						);
+						const result = yield* upsertLog(tx, { ...log, description: notes.description }, user).pipe(Effect.provide(DMTx(tx)));
 						yield* syncLogImages(tx, user.id, result.id, notes.permanentKeys);
 						return result;
 					})
