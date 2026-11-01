@@ -1,6 +1,7 @@
 import { v7 } from "uuid";
 import * as v from "valibot";
 import { describe, expect, it } from "vitest";
+import { dropBeforeAcquisition } from "./item-timeline-messages";
 import {
 	characterLogSchema,
 	characterSchema,
@@ -116,7 +117,7 @@ describe("characterLogSchema", () => {
 
 	it("rejects dropping an item the character never gained", () => {
 		const result = v.safeParse(characterLogSchema(target()), logInput({ magicItemsLost: [v7()] }));
-		expect(issueMessages(result)).toEqual(["Can't drop an item before it was acquired"]);
+		expect(issueMessages(result)).toEqual([dropBeforeAcquisition]);
 	});
 });
 
