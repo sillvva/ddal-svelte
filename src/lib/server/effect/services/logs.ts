@@ -24,12 +24,15 @@ import {
 import { characters, dungeonMasters, logs, magicItems, storyAwards } from "#lib/server/db/schema.js";
 import { serializeError, type ErrorParams } from "#lib/server/effect/errors.js";
 import { AppLog } from "#lib/server/effect/logging.js";
+import { syncLogImages } from "#lib/server/images/note-db.js";
+import { lockPortraitUser } from "#lib/server/images/portrait-db.js";
 import { getRequestEvent } from "$app/server";
 import { isTupleOf } from "@sillvva/utils";
 import { and, eq, exists, inArray, isNull, notInArray, or } from "drizzle-orm";
 import { Context, Data, Effect, Layer } from "effect";
 import { v7 } from "uuid";
 import { DMService, DMTx } from "./dms";
+import { promoteNoteImages, StorageService } from "./storage";
 
 export class LogNotFoundError extends Data.TaggedError("LogNotFoundError")<ErrorParams> {
 	constructor(err?: unknown) {
@@ -481,19 +484,46 @@ export class LogService extends Context.Service<LogService>()("LogService", {
 			 */
 
 			save: Effect.fn("LogService.save")(function* (log: LogSchema, user: LocalsUser) {
-				return yield* transaction(
+				const Storage = yield* StorageService;
+				const copied: string[] = [];
+				let temporaryKeys: string[] = [];
+
+				const saved = yield* transaction(
 					Effect.fn(function* (tx) {
-						return yield* upsertLog(tx, log, user).pipe(Effect.provide(DMTx(tx)));
+						// Serializes note image reference changes for this account with other saves, deletes, and the purge step.
+						yield* lockPortraitUser(tx, user.id);
+						const notes = yield* promoteNoteImages(tx, user.id, log.id, log.description, copied);
+						temporaryKeys = notes.temporaryKeys;
+
+						const result = yield* upsertLog(tx, { ...log, description: notes.description }, user).pipe(Effect.provide(DMTx(tx)));
+						yield* syncLogImages(tx, user.id, result.id, notes.permanentKeys);
+						return result;
 					})
 				).pipe(
 					Effect.tap((result) => AppLog.info("LogService.save", { logId: log.id, userId: user.id, result })),
+					Effect.tapError(() =>
+						Effect.forEach(copied, (key) => Storage.abandonStagedObject(user.id, key), { discard: true }).pipe(
+							Effect.catch((error) =>
+								AppLog.error("LogService.save staged cleanup", { message: error.message, error: serializeError(error) })
+							)
+						)
+					),
 					Effect.tapError((error) =>
 						AppLog.debug("LogService.save", { logId: log.id, userId: user.id, log, error: serializeError(error) })
 					)
 				);
+
+				yield* Storage.cleanupAfterSave(temporaryKeys);
+				return saved;
 			}),
+			/** Cascades the log's `log_image` rows. Call `StorageService.purgePending` afterwards to delete orphaned note images. */
 			delete: Effect.fn("LogService.delete")(function* (logId: LogId, userId: UserId) {
-				return yield* deleteLog(logId, userId, db);
+				return yield* transaction(
+					Effect.fn(function* (tx) {
+						yield* lockPortraitUser(tx, userId);
+						return yield* deleteLog(logId, userId, tx);
+					})
+				);
 			})
 		};
 	})()

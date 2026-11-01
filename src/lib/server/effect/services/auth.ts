@@ -477,7 +477,7 @@ export class AuthService extends Context.Service<AuthService>()("AuthService", {
 					return yield* transaction(
 						Effect.fn(function* (tx) {
 							yield* lockPortraitUser(tx, userId);
-							// Record permanent portrait and avatar keys before the user row disappears.
+							// Record permanent portrait, avatar, and note image keys before the user row disappears.
 							const keys = yield* collectUserKeys(tx, userId);
 							yield* scheduleDeletions(tx, [...keys, ...listed]);
 

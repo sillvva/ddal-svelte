@@ -193,6 +193,7 @@ export const characters = pg.pgTable(
 	(table) => [pg.index("Character_userId_idx").on(table.userId)]
 );
 
+export type ImageUploadPurpose = "character" | "avatar" | "note";
 export type ImageUpload = typeof imageUploads.$inferSelect;
 export type InsertImageUpload = typeof imageUploads.$inferInsert;
 export const imageUploads = pg.pgTable(
@@ -204,9 +205,9 @@ export const imageUploads = pg.pgTable(
 			.notNull()
 			.$type<UserId>()
 			.references(() => user.id, { onUpdate: "cascade", onDelete: "cascade" }),
-		/** Set for portrait uploads. Null for avatar uploads. */
+		/** Set for portrait uploads. Null for avatar and note uploads. */
 		characterId: pg.uuid("character_id").$type<CharacterId>(),
-		purpose: pg.text("purpose").$type<"character" | "avatar">().notNull().default("character"),
+		purpose: pg.text("purpose").$type<ImageUploadPurpose>().notNull().default("character"),
 		objectKey: pg.text("object_key").notNull().unique(),
 		bytes: pg.integer().notNull(),
 		contentType: pg.text("content_type").notNull(),
@@ -401,6 +402,33 @@ export const storyAwards = pg.pgTable(
 		pg.index("StoryAward_logGainedId_idx").on(table.logGainedId),
 		pg.index("StoryAward_logLostId_idx").on(table.logLostId)
 	]
+);
+
+/**
+ * One row per note image per log that references it. Log saves sync these rows to the notes.
+ * A database trigger queues an upload's permanent object in `pending_object_deletion` when its last row is deleted,
+ * including rows removed by cascade when a log, character, or account is deleted.
+ */
+export type LogImage = typeof logImages.$inferSelect;
+export const logImages = pg.pgTable(
+	"log_image",
+	{
+		logId: pg
+			.uuid("log_id")
+			.notNull()
+			.$type<LogId>()
+			.references(() => logs.id, { onUpdate: "cascade", onDelete: "cascade" }),
+		uploadId: pg
+			.uuid("upload_id")
+			.notNull()
+			.$type<ImageUploadId>()
+			.references(() => imageUploads.id, { onUpdate: "cascade", onDelete: "cascade" }),
+		createdAt: pg
+			.timestamp("created_at", { mode: "date", withTimezone: true })
+			.notNull()
+			.$default(() => new Date())
+	},
+	(table) => [pg.primaryKey({ columns: [table.logId, table.uploadId] }), pg.index("log_image_upload_idx").on(table.uploadId)]
 );
 
 const logLevel = pg.pgEnum("logLevel", ["ALL", "FATAL", "ERROR", "WARN", "INFO", "DEBUG", "TRACE", "OFF"]);

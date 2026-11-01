@@ -3,7 +3,7 @@
 	import ImageUpload from "#lib/components/forms/image-upload.svelte";
 	import { BLANK_CHARACTER, PROVIDERS } from "#lib/constants.js";
 	import { errorToast } from "#lib/factories.svelte.js";
-	import { portraitStorageView } from "#lib/images/limits.ts";
+	import { imageStorageView } from "#lib/images/limits.ts";
 	import * as API from "#lib/remote/index.js";
 	import type { ImageUploadId } from "#lib/schemas.js";
 	import { getGlobal } from "#lib/stores.svelte.js";
@@ -227,12 +227,12 @@
 					{#snippet failed()}
 						<p class="mb-4 text-xs text-neutral-500">Storage usage is unavailable.</p>
 					{/snippet}
-					{@const storage = await API.characters.queries.portraitStorage()}
+					{@const storage = await API.images.queries.storage()}
 					{#if storage.quotaBytes !== null}
-						{@const usage = portraitStorageView(storage.usedBytes, storage.quotaBytes)}
+						{@const usage = imageStorageView({ ...storage, quotaBytes: storage.quotaBytes })}
 						<div class="my-2 flex flex-1 flex-col gap-1 px-2">
 							<div class="flex items-baseline justify-between gap-3 text-xs text-neutral-500">
-								<span id="character-portrait-storage-label">Image storage used</span>
+								<span id="image-storage-label">Image storage used</span>
 								<span>{usage.usedLabel}/{usage.quotaLabel} ({usage.percent}%)</span>
 							</div>
 							<progress
@@ -242,11 +242,16 @@
 									usage.tone === "warning" && "progress-warning",
 									usage.tone === "primary" && "progress-primary"
 								]}
-								value={storage.usedBytes}
-								max={storage.quotaBytes}
-								aria-labelledby="character-portrait-storage-label"
+								value={usage.usedBytes}
+								max={usage.quotaBytes}
+								aria-labelledby="image-storage-label"
+								aria-describedby="image-storage-breakdown"
 								aria-valuetext={`${usage.usedLabel} of ${usage.quotaLabel} used, ${usage.percent}%`}
 							></progress>
+							<div id="image-storage-breakdown" class="flex flex-wrap justify-between gap-x-3 text-xs text-neutral-500">
+								<span>Characters: {usage.portraitsLabel}</span>
+								<span>Notes: {usage.notesLabel}</span>
+							</div>
 						</div>
 					{/if}
 				</svelte:boundary>

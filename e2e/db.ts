@@ -101,6 +101,46 @@ export async function userDmId(userId: string) {
 	return id;
 }
 
+export async function logDescription(id: string) {
+	const rows = await withSql((sql) => sql<{ description: string }[]>`select description from log where id = ${id}`);
+	return rows[0]?.description ?? null;
+}
+
+/** Object keys of the note images `log_image` records for a log. */
+export async function logImageKeys(logId: string) {
+	const rows = await withSql(
+		(sql) => sql<{ objectKey: string }[]>`
+			select upload.object_key as "objectKey"
+			from log_image
+			join image_upload upload on upload.id = log_image.upload_id
+			where log_image.log_id = ${logId}
+			order by upload.object_key
+		`
+	);
+	return rows.map((row) => row.objectKey);
+}
+
+export async function uploadRowForKey(objectKey: string) {
+	const rows = await withSql(
+		(sql) => sql<{ id: string; userId: string; purpose: string; bytes: number }[]>`
+			select id, user_id as "userId", purpose, bytes from image_upload where object_key = ${objectKey}
+		`
+	);
+	return rows[0] ?? null;
+}
+
+export async function pendingDeletion(objectKey: string) {
+	const rows = await withSql(
+		(sql) => sql<{ id: string }[]>`select id from pending_object_deletion where object_key = ${objectKey}`
+	);
+	return rows.length > 0;
+}
+
+/** Stands in for saved portraits without uploading megabytes of images. */
+export async function setCharacterImageBytes(characterId: string, bytes: number) {
+	await withSql((sql) => sql`update character set image_bytes = ${bytes} where id = ${characterId}`);
+}
+
 export async function setBanned(userId: string, banned: boolean) {
 	await withSql((sql) => sql`update "user" set banned = ${banned} where id = ${userId}`);
 }

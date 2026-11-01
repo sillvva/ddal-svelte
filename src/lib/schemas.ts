@@ -3,7 +3,7 @@ import { omit } from "@sillvva/utils";
 import * as v from "valibot";
 import { BLANK_CHARACTER, PASSKEY_PLACEHOLDER_EMAIL_DOMAIN, PROVIDERS, themeGroups, themes } from "./constants";
 import { itemTimelineIssues, type ItemTimelineIssue, type TimelineLog } from "./entities.js";
-import { AVATAR_IMAGE_LIMITS, CHARACTER_IMAGE_LIMITS, STORED_IMAGE_CONTENT_TYPES } from "./images/limits";
+import { AVATAR_IMAGE_LIMITS, CHARACTER_IMAGE_LIMITS, NOTE_IMAGE_LIMITS, STORED_IMAGE_CONTENT_TYPES } from "./images/limits";
 
 export type BrandedType = v.InferOutput<ReturnType<typeof brandedId>>;
 function brandedId<T extends string>(name: T) {
@@ -137,6 +137,12 @@ export type PrepareAvatarImageSchema = v.InferOutput<typeof prepareAvatarImageSc
 export const prepareAvatarImageSchema = v.object({
 	contentType: storedImageContentTypeSchema,
 	bytes: v.pipe(v.number(), v.integer(), v.minValue(1), v.maxValue(AVATAR_IMAGE_LIMITS.maxStoredBytes))
+});
+
+export type PrepareNoteImageSchema = v.InferOutput<typeof prepareNoteImageSchema>;
+export const prepareNoteImageSchema = v.object({
+	contentType: storedImageContentTypeSchema,
+	bytes: v.pipe(v.number(), v.integer(), v.minValue(1), v.maxValue(NOTE_IMAGE_LIMITS.maxStoredBytes))
 });
 
 export type CompleteCharacterImageSchema = v.InferOutput<typeof completeCharacterImageSchema>;
