@@ -1,8 +1,8 @@
 <script lang="ts">
 	import Error from "#lib/components/error.svelte";
 	import Combobox from "#lib/components/forms/combobox.svelte";
-	import ImageUpload from "#lib/components/forms/image-upload.svelte";
 	import Control from "#lib/components/forms/control.svelte";
+	import ImageUpload from "#lib/components/forms/image-upload.svelte";
 	import Input from "#lib/components/forms/input.svelte";
 	import RemoteForm from "#lib/components/forms/remote-form.svelte";
 	import Submit from "#lib/components/forms/submit.svelte";
