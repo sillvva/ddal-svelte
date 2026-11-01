@@ -1,5 +1,5 @@
 <script lang="ts">
-	import { dev } from '$app/env';
+	import { dev } from "$app/env";
 	import { afterNavigate, onNavigate } from "$app/navigation";
 	import * as API from "#lib/remote/index.js";
 	import { getGlobal, getLogger } from "#lib/stores.svelte.js";
@@ -41,7 +41,7 @@
 	<div class="fixed right-0 bottom-0 z-50">
 		<div class="*:bg-lime-700 *:p-1 *:text-xs *:font-bold *:text-white">
 			<div class="xs:hidden">xxs</div>
-			<div class="xs:max-sm:block hidden">xs</div>
+			<div class="hidden xs:max-sm:block">xs</div>
 			<div class="hidden sm:max-md:block">sm</div>
 			<div class="hidden md:max-lg:block">md</div>
 			<div class="hidden lg:max-xl:block">lg</div>

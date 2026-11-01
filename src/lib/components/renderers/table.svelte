@@ -8,4 +8,4 @@
 	let { children } = $props();
 </script>
 
-<table class="mb-4 table w-full overflow-hidden rounded-lg">{@render children?.()}</table>
+<table class="table mb-4 w-full overflow-hidden rounded-lg">{@render children?.()}</table>

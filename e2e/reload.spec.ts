@@ -80,7 +80,9 @@ async function pagesToReload(page: Page, characterId: string) {
 }
 
 async function anchorPaths(page: Page) {
-	const hrefs = await page.locator("a[href]").evaluateAll((anchors) => anchors.map((anchor) => anchor.getAttribute("href") ?? ""));
+	const hrefs = await page
+		.locator("a[href]")
+		.evaluateAll((anchors) => anchors.map((anchor) => anchor.getAttribute("href") ?? ""));
 	return hrefs.map((href) => href.split(/[?#]/)[0] ?? "").filter((path) => path.startsWith("/"));
 }
 

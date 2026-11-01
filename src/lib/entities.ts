@@ -158,7 +158,7 @@ export function itemTimelineIssues(
 		inputGained: readonly { id: ItemId }[],
 		field: "magicItemsLost" | "storyAwardsLost"
 	) => {
-		// Item is treated as a new item, because it hasn't been gained in a 
+		// Item is treated as a new item, because it hasn't been gained in a
 		// previous log (undefined) or it was gained as a different kind
 		if (gained.get(id) !== kind) {
 			// We're dropping an item that was never gained

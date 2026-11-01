@@ -329,11 +329,7 @@
 				{/if}
 				<Search name={searchKey} placeholder="Search Logs" />
 				{#if myCharacter}
-					<a
-						href={newLogHref}
-						class="btn btn-primary sm:hidden sm:px-3 sm:btn-sm"
-						aria-label="New Log"
-					>
+					<a href={newLogHref} class="btn btn-primary sm:hidden sm:px-3 sm:btn-sm" aria-label="New Log">
 						<span class="iconify size-6 mdi--plus"></span>
 					</a>
 					<button

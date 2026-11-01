@@ -10,10 +10,7 @@ const EXCLUDE = ["/auth"];
 
 // Manifest paths are relative to the base path. `resolve` prefixes that base for build files;
 // `asset` does the same for `static` files, including a configured assets host.
-const ASSETS: string[] = [
-	...immutable.map((entry) => resolve(entry.path as Path)),
-	...assets.map((entry) => asset(entry.path))
-];
+const ASSETS: string[] = [...immutable.map((entry) => resolve(entry.path as Path)), ...assets.map((entry) => asset(entry.path))];
 
 self.addEventListener("install", (event) => {
 	async function addFilesToCache() {

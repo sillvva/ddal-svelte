@@ -8,7 +8,7 @@
 
 <footer
 	class={[
-		"footer footer-center border-base-300 text-base-content z-16 border-t p-4 max-sm:py-2 max-sm:text-xs print:hidden",
+		"z-16 footer footer-center border-t border-base-300 p-4 text-base-content max-sm:py-2 max-sm:text-xs print:hidden",
 		fixed ? "sticky right-0 bottom-0 left-0" : "relative"
 	]}
 >

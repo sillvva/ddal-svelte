@@ -76,11 +76,11 @@
 					]
 				])}
 			>
-				New Log <kbd class="kbd kbd-sm max-sm:hover-none:hidden text-base-content">N</kbd>
+				New Log <kbd class="kbd kbd-sm text-base-content max-sm:hover-none:hidden">N</kbd>
 			</a>
 			<Search name={searchKey} placeholder="Search by name, class, items, etc." />
-			<a href={newLogHref} class="btn btn-primary inline-flex sm:hidden" aria-label="New Log">
-				<span class="iconify mdi--plus inline size-6"></span>
+			<a href={newLogHref} class="btn inline-flex btn-primary sm:hidden" aria-label="New Log">
+				<span class="iconify inline size-6 mdi--plus"></span>
 			</a>
 		</div>
 		<div class="flex gap-2">
@@ -96,9 +96,9 @@
 				tabindex="0"
 			>
 				{#if global.app.dmLogs.descriptions}
-					<span class="iconify mdi--eye size-5 max-md:size-6"></span>
+					<span class="iconify size-5 mdi--eye max-md:size-6"></span>
 				{:else}
-					<span class="iconify mdi--eye-off size-5 max-md:size-6"></span>
+					<span class="iconify size-5 mdi--eye-off max-md:size-6"></span>
 				{/if}
 				<span class="max-sm:hidden">Notes</span>
 			</button>
@@ -110,7 +110,7 @@
 				aria-label="Sort"
 			>
 				<span
-					class="iconify data-[sort=asc]:mdi--sort-calendar-ascending data-[sort=desc]:mdi--sort-calendar-descending size-5 max-md:size-6"
+					class="iconify size-5 data-[sort=asc]:mdi--sort-calendar-ascending data-[sort=desc]:mdi--sort-calendar-descending max-md:size-6"
 					data-sort={global.app.dmLogs.sort}
 				></span>
 			</button>
@@ -137,7 +137,7 @@
 						<div class="content bg-base-200">
 							<a
 								href={log.isDmLog ? `/dm-logs/${log.id}` : `/characters/${log.characterId}/log/${log.id}`}
-								class="row-link text-secondary-content font-semibold whitespace-pre-wrap"
+								class="row-link font-semibold whitespace-pre-wrap text-secondary-content"
 								aria-label="Edit Log"
 							>
 								<SearchResults text={log.name} terms={search.terms} />
@@ -234,7 +234,7 @@
 							</div>
 						</div>
 						<button class="action right bg-error text-white" aria-label="Delete Log">
-							<span class="iconify mdi--trash-can size-6"></span>
+							<span class="iconify size-6 mdi--trash-can"></span>
 						</button>
 					</div>
 				</li>
@@ -242,7 +242,7 @@
 		</ul>
 
 		<!-- Desktop List -->
-		<div class="bg-base-200 w-full overflow-x-auto rounded-lg max-sm:hidden print:block!">
+		<div class="w-full overflow-x-auto rounded-lg bg-base-200 max-sm:hidden print:block!">
 			<table class="linked-table table w-full">
 				<thead>
 					<tr class="bg-base-300 text-base-content/70">
@@ -277,7 +277,7 @@
 								<td class="static! align-top">
 									<a
 										href={log.isDmLog ? `/dm-logs/${log.id}` : `/characters/${log.characterId}/log/${log.id}`}
-										class="row-link text-secondary-content font-semibold whitespace-pre-wrap"
+										class="row-link font-semibold whitespace-pre-wrap text-secondary-content"
 										aria-label="Edit Log"
 									>
 										<SearchResults text={log.name} terms={search.terms} />
@@ -389,11 +389,11 @@
 									<div class="flex flex-col gap-2">
 										<button
 											type="button"
-											class="btn btn-error btn-sm touch-hitbox"
+											class="btn touch-hitbox btn-error btn-sm"
 											aria-label="Delete Log"
 											onclick={() => deleteLog(log)}
 										>
-											<span class="iconify mdi--trash-can size-4"></span>
+											<span class="iconify size-4 mdi--trash-can"></span>
 										</button>
 									</div>
 								</td>

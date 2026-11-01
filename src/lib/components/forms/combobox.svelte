@@ -1,6 +1,6 @@
 <script lang="ts">
-	import type { RemoteFormField } from '$app/server';
-	import { dev } from '$app/env';
+	import { dev } from "$app/env";
+	import type { RemoteFormField } from "$app/server";
 	import { Combobox } from "bits-ui";
 	import Debug from "../debug.svelte";
 	import FieldMessage from "./field-message.svelte";
@@ -109,7 +109,7 @@
 	type="single"
 	bind:value={() => valueField.value(), (val) => valueField.set(val)}
 	bind:open
-	disabled={disabled}
+	{disabled}
 	onValueChange={(sel) => {
 		const item = filtered.find((item) => item.value === sel);
 		if (!isValueField) inputField.set(item?.label || item?.value || "");
@@ -119,12 +119,12 @@
 	}}
 	onOpenChange={() => {
 		setTimeout(() => {
-				if (!open) {
-					if (changed) {
-						if (!allowCustom && !selectedItem) clear();
-						changed = false;
-					}
+			if (!open) {
+				if (changed) {
+					if (!allowCustom && !selectedItem) clear();
+					changed = false;
 				}
+			}
 		}, 50);
 	}}
 >
@@ -138,14 +138,14 @@
 		{#if dev}
 			<button
 				type="button"
-				class="btn btn-xs btn-ghost h-4.5"
+				class="btn h-4.5 btn-ghost btn-xs"
 				aria-label="Open Calendar"
 				onclick={(ev) => {
 					ev.preventDefault();
 					debug = !debug;
 				}}
 			>
-				<span class="iconify mdi--information-outline size-4"></span>
+				<span class="iconify size-4 mdi--information-outline"></span>
 			</button>
 		{/if}
 	</label>
@@ -170,9 +170,9 @@
 						onblur?.(ev.currentTarget);
 					}}
 					aria-invalid={issues?.length ? "true" : undefined}
-					class="input join-item focus:border-primary w-full max-sm:text-base"
-					required={required}
-					placeholder={placeholder}
+					class="input join-item w-full focus:border-primary max-sm:text-base"
+					{required}
+					{placeholder}
 				>
 					{#snippet child({ props })}
 						<input {...props} {...inputField.as("text")} aria-invalid={invalid} />
@@ -180,7 +180,7 @@
 				</Combobox.Input>
 			</label>
 			{#if (showOnEmpty || input?.trim()) && filtered.length}
-				<Combobox.ContentStatic class="menu dropdown-content bg-base-200 z-10 w-full rounded-lg p-2 shadow-sm">
+				<Combobox.ContentStatic class="menu dropdown-content z-10 w-full rounded-lg bg-base-200 p-2 shadow-sm">
 					{#snippet child({ props })}
 						<ul {...props}>
 							{#each filtered.slice(0, 8) as item (item.value)}
@@ -188,9 +188,9 @@
 									value={item.value}
 									label={item.label}
 									class={[
-										"hover:bg-base-content/25 rounded-lg",
+										"rounded-lg hover:bg-base-content/25",
 										"data-highlighted:bg-base-content/25",
-										"data-selected:bg-primary data-selected:text-primary-content data-selected:font-bold"
+										"data-selected:bg-primary data-selected:font-bold data-selected:text-primary-content"
 									]}
 									role="option"
 								>
@@ -210,7 +210,7 @@
 		</div>
 		{#if input && clearable}
 			<button
-				class="btn join-item border-base-content/20 border px-2"
+				class="btn join-item border border-base-content/20 px-2"
 				type="button"
 				onclick={(ev) => {
 					ev.preventDefault();
@@ -218,22 +218,17 @@
 				}}
 				aria-label="Clear"
 			>
-				<span class="iconify mdi--close size-6 bg-red-500"></span>
+				<span class="iconify size-6 bg-red-500 mdi--close"></span>
 			</button>
 		{/if}
 		{#if link}
-			<a href={link} class="btn join-item border-base-content/20 border px-2" role="button" target="_blank" aria-label="Edit">
-				<span class="iconify mdi--pencil size-6"></span>
+			<a href={link} class="btn join-item border border-base-content/20 px-2" role="button" target="_blank" aria-label="Edit">
+				<span class="iconify size-6 mdi--pencil"></span>
 			</a>
 		{/if}
 	</div>
 
-	<FieldMessage
-		name={name}
-		type="select"
-		description={description}
-		issues={issues}
-	/>
+	<FieldMessage {name} type="select" {description} {issues} />
 
 	{#if !isValueField}
 		<Input field={valueField} hidden />

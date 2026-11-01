@@ -73,7 +73,12 @@ test("another user can't edit or delete your character", async ({ users }) => {
 	});
 
 	await test.step("a delete aimed at the character is rejected", async () => {
-		const result = await callCommand(intruder.page, "src/lib/remote/characters/actions.remote.ts", "deleteCharacter", characterId);
+		const result = await callCommand(
+			intruder.page,
+			"src/lib/remote/characters/actions.remote.ts",
+			"deleteCharacter",
+			characterId
+		);
 		expect(result.ok).toBe(false);
 		expect(await characterRow(characterId)).toMatchObject(unchanged);
 	});

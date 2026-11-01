@@ -20,8 +20,8 @@
 
 	let debouncing = $state(false);
 	const debouncedSearch = debounce((query: string) => {
-			params.s = query.trim() || null;
-			debouncing = false;
+		params.s = query.trim() || null;
+		debouncing = false;
 	}, 400);
 
 	const formatter = new Intl.DateTimeFormat(navigator.language, {
@@ -61,7 +61,7 @@
 	<section class="flex flex-col gap-1">
 		<div class="flex w-full gap-2 sm:max-w-md md:max-w-md">
 			<search class="flex flex-1">
-				<div class="focus-within:outline-primary join flex flex-1 items-center rounded-lg focus-within:outline-2">
+				<div class="join flex flex-1 items-center rounded-lg focus-within:outline-2 focus-within:outline-primary">
 					<input
 						type="text"
 						id="log-search"
@@ -70,17 +70,17 @@
 							debouncing = true;
 							debouncedSearch.call(e.currentTarget.value);
 						}}
-						class="input sm:input-sm join-item flex-1 max-sm:rounded-r-lg"
+						class="input join-item flex-1 max-sm:rounded-r-lg sm:input-sm"
 						aria-label="Search"
 						placeholder={baseSearch.query ?? ""}
 					/>
 					<div class="tooltip max-sm:hidden" data-tip="Syntax Reference">
 						<button
-							class="btn sm:btn-sm join-item border-base-content/20 border"
+							class="btn join-item border border-base-content/20 sm:btn-sm"
 							aria-label="Syntax Reference"
 							onclick={openSyntaxReference}
 						>
-							<span class="iconify mdi--help-circle size-6 sm:size-4"></span>
+							<span class="iconify size-6 mdi--help-circle sm:size-4"></span>
 						</button>
 					</div>
 				</div>
@@ -88,8 +88,8 @@
 		</div>
 		{#if logsQuery.current?.metadata?.hasErrors}
 			{#each logsQuery.current.metadata.errors as error, i (i)}
-				<div class="alert alert-error mt-1 w-fit rounded-lg py-1">
-					<span class="iconify mdi--alert-circle size-6"></span>
+				<div class="mt-1 alert w-fit rounded-lg py-1 alert-error">
+					<span class="iconify size-6 mdi--alert-circle"></span>
 					{error.message} at position {error.position}: <kbd>{error.value}</kbd>
 				</div>
 			{/each}
@@ -104,20 +104,20 @@
 		<LoadingPanel />
 	{:else if logsQuery.current.logs.length}
 		<section class="overflow-x-auto rounded-lg">
-			<table class="bg-base-200 table w-full leading-5 max-sm:border-separate max-sm:border-spacing-y-2">
+			<table class="table w-full bg-base-200 leading-5 max-sm:border-separate max-sm:border-spacing-y-2">
 				<thead class="max-sm:hidden">
 					<tr class="bg-base-300 text-base-content/70">
 						<td>Label</td>
 						<td class="text-center max-sm:hidden">Level</td>
 						<td class="max-sm:hidden">Timestamp</td>
-						<td class="max-xs:hidden w-0"></td>
+						<td class="w-0 max-xs:hidden"></td>
 					</tr>
 				</thead>
 				{#each logsQuery.current.logs as log (log.id)}
 					{#snippet actions()}
 						<div class="sm:tooltip sm:tooltip-left" data-tip="Toggle details">
 							<button
-								class="btn btn-sm btn-primary"
+								class="btn btn-primary btn-sm"
 								aria-label="Toggle details"
 								onclick={() => {
 									const row = document.querySelector(`tbody:has(tr[data-id="${log.id}"])`) as HTMLTableRowElement | null;
@@ -129,7 +129,7 @@
 						</div>
 						<div class="sm:tooltip sm:tooltip-left" data-tip="Delete log">
 							<button
-								class="btn btn-sm btn-error"
+								class="btn btn-error btn-sm"
 								aria-label="Delete log"
 								onclick={async () => {
 									const result = await API.admin.actions.deleteAppLog(log.id).updates(
@@ -148,9 +148,9 @@
 					{/snippet}
 					<tbody
 						class={[
-							"group data-[details=true]:bg-base-200 scroll-mt-16 border-t border-neutral-500/20 first:border-0 data-[deleting=true]:hidden data-[details=true]:opacity-100",
+							"group scroll-mt-16 border-t border-neutral-500/20 first:border-0 data-[deleting=true]:hidden data-[details=true]:bg-base-200 data-[details=true]:opacity-100",
 							Date.now() - log.timestamp.getTime() > 24 * 60 * 60 * 1000 &&
-								"bg-base-100/50 hover:bg-base-200 opacity-60 hover:opacity-100"
+								"bg-base-100/50 opacity-60 hover:bg-base-200 hover:opacity-100"
 						]}
 						data-details={false}
 					>
@@ -167,13 +167,13 @@
 											<span class="text-base-content group-data-[details=true]:hidden sm:hidden">
 												{getRelativeTime(log.timestamp)}
 											</span>
-											<span class="text-base-content/60 hidden flex-1 max-sm:group-data-[details=true]:block">
+											<span class="hidden flex-1 text-base-content/60 max-sm:group-data-[details=true]:block">
 												{formatter.format(log.timestamp)}
 											</span>
 											by
 											<span class="text-base-content">{log.annotations.username || "Unknown"}</span>
 										</div>
-										<div class="xs:hidden flex gap-2">
+										<div class="flex gap-2 xs:hidden">
 											{@render actions()}
 										</div>
 									</div>
@@ -196,7 +196,7 @@
 							<td colspan="4">
 								<div class="grid grid-cols-1 gap-4">
 									{#if log.stack}
-										<div class="bg-base-100 rounded-lg p-6">
+										<div class="rounded-lg bg-base-100 p-6">
 											<h3 class="mb-2 text-lg font-bold">Stack</h3>
 											<pre class="overflow-x-scroll">{log.stack}</pre>
 										</div>
@@ -210,8 +210,8 @@
 			</table>
 		</section>
 	{:else}
-		<section class="bg-base-200 flex h-40 flex-col items-center justify-center rounded-lg">
-			<div class="text-base-content/60 text-lg">No logs found</div>
+		<section class="flex h-40 flex-col items-center justify-center rounded-lg bg-base-200">
+			<div class="text-lg text-base-content/60">No logs found</div>
 		</section>
 	{/if}
 </svelte:boundary>

@@ -1,5 +1,5 @@
 <script lang="ts">
-	import type { RemoteFormFieldType, RemoteFormFieldValue } from '$app/server';
+	import type { RemoteFormFieldType, RemoteFormFieldValue } from "$app/server";
 	import { isTupleOfAtLeast } from "@sillvva/utils";
 
 	interface Props {
@@ -17,18 +17,18 @@
 
 {#if type === "checkbox"}
 	{#if issues && isTupleOfAtLeast(issues, 1)}
-		<span class="bg-error text-error-content rounded-lg px-2 py-1 text-pretty">{issues[0].message}</span>
+		<span class="rounded-lg bg-error px-2 py-1 text-pretty text-error-content">{issues[0].message}</span>
 	{:else if warning}
-		<span class="bg-warning text-warning-content rounded-lg px-2 py-1 text-pretty">{warning}</span>
+		<span class="rounded-lg bg-warning px-2 py-1 text-pretty text-warning-content">{warning}</span>
 	{:else if description}
 		<span class="text-pretty text-neutral-500">{description}</span>
 	{/if}
 {:else if type !== "hidden"}
 	<label for={name} class="fieldset-label">
 		{#if issues && isTupleOfAtLeast(issues, 1)}
-			<span class="bg-error text-error-content rounded-lg px-2 py-1 text-pretty">{issues[0].message}</span>
+			<span class="rounded-lg bg-error px-2 py-1 text-pretty text-error-content">{issues[0].message}</span>
 		{:else if warning}
-			<span class="bg-warning text-warning-content rounded-lg px-2 py-1 text-pretty">{warning}</span>
+			<span class="rounded-lg bg-warning px-2 py-1 text-pretty text-warning-content">{warning}</span>
 		{:else if description}
 			<span class="text-pretty text-neutral-500">{description}</span>
 		{:else}

@@ -28,7 +28,7 @@
 	<div class="flex w-full gap-2 sm:max-w-md md:max-w-md">
 		<Search name={searchKey} placeholder="Search by name, email, role, etc." />
 	</div>
-	<span class="badge bg-base-300 text-base-content badge-lg">
+	<span class="badge bg-base-300 badge-lg text-base-content">
 		{#if results.length < (users.length ?? 0)}
 			Showing {results.length} of
 		{/if}
@@ -38,14 +38,14 @@
 
 {#if results.length}
 	<section class="overflow-x-auto rounded-lg">
-		<table class="linked-table bg-base-200 table w-full leading-5 max-sm:border-separate max-sm:border-spacing-y-2">
+		<table class="linked-table table w-full bg-base-200 leading-5 max-sm:border-separate max-sm:border-spacing-y-2">
 			<thead class="max-sm:hidden">
 				<tr class="bg-base-300 text-base-content/70">
 					<td></td>
 					<td>Name</td>
 					<td class="text-center max-sm:hidden">Role</td>
 					<td class="text-center max-sm:hidden">Characters</td>
-					<td class="max-xs:hidden w-0"></td>
+					<td class="w-0 max-xs:hidden"></td>
 				</tr>
 			</thead>
 			<tbody>
@@ -53,7 +53,7 @@
 					<tr data-banned={user.banned} class="data-[banned=true]:bg-error/10">
 						<td class="pr-0 align-top transition-colors sm:pr-2">
 							<div class="avatar">
-								<div class="mask mask-squircle bg-primary size-12">
+								<div class="mask size-12 bg-primary mask-squircle">
 									{#if user.image}
 										<img
 											src={user.image}
@@ -69,22 +69,22 @@
 											}}
 										/>
 									{:else}
-										<span class="iconify mdi--account size-12"></span>
+										<span class="iconify size-12 mdi--account"></span>
 									{/if}
 								</div>
 							</div>
 						</td>
 						<td>
 							{user.name}
-							<div class="text-base-content/60 max-w-60 text-xs not-hover:truncate max-md:max-w-40">
+							<div class="max-w-60 text-xs text-base-content/60 not-hover:truncate max-md:max-w-40">
 								{user.email}
 							</div>
 							{#if user.banned}
-								<div class="text-base-content/60 max-w-60 text-xs not-hover:truncate max-md:max-w-40">
+								<div class="max-w-60 text-xs text-base-content/60 not-hover:truncate max-md:max-w-40">
 									Banned: {user.banReason}
 								</div>
 							{:else}
-								<div class="text-base-content/60 text-xs sm:hidden">
+								<div class="text-xs text-base-content/60 sm:hidden">
 									Characters: {user.characters}
 								</div>
 							{/if}
@@ -109,7 +109,7 @@
 									<input {...impersonateForm.fields.userId.as("hidden", user.id)} />
 									<button
 										type="submit"
-										class="btn btn-sm btn-primary"
+										class="btn btn-primary btn-sm"
 										aria-label="Impersonate {user.name}"
 										disabled={user.role === "admin" || user.banned}
 									>
@@ -149,7 +149,7 @@
 									>
 										<input {...banForm.fields.userId.as("hidden", user.id)} />
 										<input {...banForm.fields.banReason.as("text")} hidden />
-										<button type="submit" class="btn btn-sm btn-error" aria-label="Ban {user.name}">
+										<button type="submit" class="btn btn-error btn-sm" aria-label="Ban {user.name}">
 											<span class="iconify mdi--ban"></span>
 										</button>
 									</form>
@@ -191,7 +191,7 @@
 		</table>
 	</section>
 {:else}
-	<section class="bg-base-200 flex h-40 flex-col items-center justify-center rounded-lg">
-		<div class="text-base-content/60 text-lg">No users found</div>
+	<section class="flex h-40 flex-col items-center justify-center rounded-lg bg-base-200">
+		<div class="text-lg text-base-content/60">No users found</div>
 	</section>
 {/if}

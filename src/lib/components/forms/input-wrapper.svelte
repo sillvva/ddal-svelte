@@ -1,5 +1,5 @@
 <script lang="ts">
-	import type { RemoteFormField, RemoteFormFieldType, RemoteFormFieldValue } from '$app/server';
+	import type { RemoteFormField, RemoteFormFieldType, RemoteFormFieldValue } from "$app/server";
 	import type { Snippet } from "svelte";
 	import type { HTMLInputAttributes } from "svelte/elements";
 	import FieldMessage from "./field-message.svelte";
@@ -48,10 +48,4 @@
 {/if}
 {@render children?.()}
 
-<FieldMessage
-	name={name}
-	type={type}
-	description={description}
-	warning={warning}
-	issues={issues}
-/>
+<FieldMessage {name} {type} {description} {warning} {issues} />
