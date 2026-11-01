@@ -35,6 +35,11 @@ import { parse } from "../util";
 
 const PASSKEY_SIGNUP_NAME = "New Adventurer";
 
+function bannedUserMessage(banReason: string | null | undefined) {
+	const reason = banReason?.trim();
+	return reason ? `You have been banned from this application. Reason: ${reason}` : "You have been banned from this application.";
+}
+
 /**
  * `"admin"` requires a finished admin. `"onboarding"` allows only unfinished signups.
  * `"any"` allows a signed-in user whether or not onboarding is finished. `null` requires a finished account.
@@ -150,7 +155,9 @@ export class AuthService extends Context.Service<AuthService>()("AuthService", {
 						}
 					}
 				}),
-				admin(),
+				admin({
+					bannedUserMessage: (user) => bannedUserMessage(user.banReason)
+				}),
 				lastLoginMethod(),
 				sveltekitCookies(getRequestEvent)
 			],
@@ -161,6 +168,9 @@ export class AuthService extends Context.Service<AuthService>()("AuthService", {
 			},
 			session: {
 				expiresIn: Duration.toSeconds("30 days")
+			},
+			onAPIError: {
+				errorURL: "/"
 			},
 			advanced: {
 				database: {
@@ -175,9 +185,10 @@ export class AuthService extends Context.Service<AuthService>()("AuthService", {
 				const auth = yield* authenticate();
 
 				if (auth.user.banned) {
+					const description = encodeURIComponent(bannedUserMessage(auth.user.banReason));
 					return yield* new RedirectError({
 						message: "Banned",
-						redirectTo: "/"
+						redirectTo: `/?error=banned_user&error_description=${description}`
 					});
 				}
 
