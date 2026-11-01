@@ -1,5 +1,6 @@
 import postgres from "postgres";
-import { readState } from "./state.ts";
+import { assertLocalE2E, loadLocalEnv } from "./env.ts";
+import { readState, resetState } from "./state.ts";
 import { deleteObject, isAppImageKey, keyFromPublicUrl, listUserObjects } from "./storage.ts";
 
 const EMPTY_ID = "00000000-0000-7000-8000-000000000000";
@@ -33,6 +34,16 @@ export async function cleanupLeftoverE2EUsers(): Promise<CleanupResult> {
 	} finally {
 		await sql.end();
 	}
+}
+
+export async function globalCleanup() {
+	loadLocalEnv();
+	assertLocalE2E(process.env);
+	const result = await cleanupLeftoverE2EUsers();
+	if (result.users || result.objects) {
+		console.log(`Cleared ${result.users} leftover e2e user(s) and ${result.objects} stored image(s) before the run.`);
+	}
+	resetState();
 }
 
 async function deleteUserData(sql: postgres.Sql, userId: string) {
