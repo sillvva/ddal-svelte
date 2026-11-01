@@ -59,9 +59,7 @@ export async function logRow(id: string) {
 }
 
 export async function logIdsForCharacter(characterId: string) {
-	const rows = await withSql(
-		(sql) => sql<{ id: string }[]>`select id from log where "characterId" = ${characterId} order by id`
-	);
+	const rows = await withSql((sql) => sql<{ id: string }[]>`select id from log where "characterId" = ${characterId} order by id`);
 	return rows.map((row) => row.id);
 }
 

@@ -1,7 +1,7 @@
 import { expect, test } from "./fixtures.ts";
-import { fillCharacterForm, keyFromUrl } from "./records.ts";
+import { characterIdFromUrl, fillCharacterForm, keyFromUrl } from "./records.ts";
 import { objectExists, waitUntilMissing } from "./storage.ts";
-import { characterIdFromUrl, uploadCharacterImage } from "./ui.ts";
+import { uploadCharacterImage } from "./ui.ts";
 
 test("characters: create, portrait, edit, search, and delete", async ({ users }) => {
 	const { page, handle } = await users.signUp({ label: "characters" });

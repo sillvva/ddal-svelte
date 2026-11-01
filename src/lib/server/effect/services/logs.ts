@@ -138,11 +138,7 @@ const ownedLogSql = (db: Database | Transaction, userId: UserId) =>
 					.select()
 					.from(dungeonMasters)
 					.where(
-						and(
-							eq(dungeonMasters.id, logs.dungeonMasterId),
-							eq(dungeonMasters.userId, userId),
-							eq(dungeonMasters.isUser, true)
-						)
+						and(eq(dungeonMasters.id, logs.dungeonMasterId), eq(dungeonMasters.userId, userId), eq(dungeonMasters.isUser, true))
 					)
 			)
 		)

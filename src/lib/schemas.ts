@@ -328,10 +328,7 @@ export const dMLogSchema = (characters: readonly LogTarget[] = []) =>
 		dmLogSchema,
 		v.check((input) => input.isDmLog, "Only DM logs can be saved here."),
 		v.forward(
-			v.check(
-				(input) => !input.characterId || characters.some((c) => c.id === input.characterId),
-				"Character not found"
-			),
+			v.check((input) => !input.characterId || characters.some((c) => c.id === input.characterId), "Character not found"),
 			["characterId"]
 		),
 		v.forward(

@@ -47,7 +47,7 @@
 	</NavMenu>
 
 	{#if !characters.length}
-		<section class="bg-base-200 rounded-lg">
+		<section class="rounded-lg bg-base-200">
 			<div class="py-20 text-center">
 				<p class="mb-4">No characters found.</p>
 				<p>
@@ -71,14 +71,14 @@
 					])}
 				>
 					New <span class="max-md:hidden">Character</span>
-					<kbd class="kbd kbd-sm max-md:hover-none:hidden text-base-content">N</kbd>
+					<kbd class="kbd kbd-sm text-base-content max-md:hover-none:hidden">N</kbd>
 				</a>
 				<Search name={searchKey} placeholder="Search by name, class, items, etc." />
 				<a href={newCharacterHref} class="btn btn-primary sm:hidden" aria-label="New Character">
-					<span class="iconify mdi--plus inline size-6"></span>
+					<span class="iconify inline size-6 mdi--plus"></span>
 				</a>
 				<button
-					class="btn data-[enabled=true]:btn-primary xs:hidden inline-flex"
+					class="btn inline-flex data-[enabled=true]:btn-primary xs:hidden"
 					data-enabled={global.app.characters.magicItems}
 					onclick={() => {
 						global.app.characters.magicItems = !global.app.characters.magicItems;
@@ -88,16 +88,16 @@
 					tabindex="0"
 				>
 					{#if global.app.characters.magicItems}
-						<span class="iconify mdi--shield-sword size-6"></span>
+						<span class="iconify size-6 mdi--shield-sword"></span>
 					{:else}
-						<span class="iconify mdi--shield-sword-outline size-6"></span>
+						<span class="iconify size-6 mdi--shield-sword-outline"></span>
 					{/if}
 				</button>
 			</div>
 			<div class="flex justify-end gap-2 max-sm:mb-2 max-sm:w-full">
 				{#if global.app.characters.display != "grid"}
 					<button
-						class="btn data-[enabled=true]:btn-primary sm:btn-sm max-xs:hidden"
+						class="btn data-[enabled=true]:btn-primary max-xs:hidden sm:btn-sm"
 						data-enabled={global.app.characters.magicItems}
 						onclick={() =>
 							createTransition(async () => {
@@ -108,18 +108,18 @@
 						tabindex="0"
 					>
 						{#if global.app.characters.magicItems}
-							<span class="iconify mdi--eye max-xs:hidden size-5 sm:max-md:hidden"></span>
-							<span class="iconify mdi--shield-sword xs:max-sm:hidden size-6 md:hidden"></span>
+							<span class="iconify size-5 mdi--eye max-xs:hidden sm:max-md:hidden"></span>
+							<span class="iconify size-6 mdi--shield-sword xs:max-sm:hidden md:hidden"></span>
 						{:else}
-							<span class="iconify mdi--eye-off max-xs:hidden size-5 sm:max-md:hidden"></span>
-							<span class="iconify mdi--shield-sword-outline xs:max-sm:hidden size-6 md:hidden"></span>
+							<span class="iconify size-5 mdi--eye-off max-xs:hidden sm:max-md:hidden"></span>
+							<span class="iconify size-6 mdi--shield-sword-outline xs:max-sm:hidden md:hidden"></span>
 						{/if}
 						<span class="max-xs:hidden sm:max-md:hidden">Magic Items</span>
 					</button>
 				{/if}
 				<div class="join max-xs:hidden">
 					<button
-						class="btn join-item data-[display=list]:btn-primary data-[display=grid]:hover:btn-primary sm:btn-sm"
+						class="btn join-item data-[display=grid]:hover:btn-primary data-[display=list]:btn-primary sm:btn-sm"
 						data-display={global.app.characters.display}
 						onclick={() =>
 							createTransition(() => {
@@ -128,7 +128,7 @@
 						onkeypress={() => null}
 						aria-label="List View"
 					>
-						<span class="iconify mdi--format-list-text size-4"></span>
+						<span class="iconify size-4 mdi--format-list-text"></span>
 					</button>
 					<button
 						class="btn join-item data-[display=grid]:btn-primary data-[display=list]:hover:btn-primary sm:btn-sm"
@@ -140,7 +140,7 @@
 						onkeypress={() => null}
 						aria-label="Grid View"
 					>
-						<span class="iconify mdi--view-grid size-4"></span>
+						<span class="iconify size-4 mdi--view-grid"></span>
 					</button>
 				</div>
 			</div>
@@ -148,10 +148,10 @@
 
 		<div class="max-sm:-mt-4">
 			<div
-				class="xs:data-[display=grid]:hidden w-full overflow-x-auto rounded-lg data-[display=grid]:block"
+				class="w-full overflow-x-auto rounded-lg data-[display=grid]:block xs:data-[display=grid]:hidden"
 				data-display={global.app.characters.display}
 			>
-				<table class="linked-table bg-base-200 table w-full leading-5 max-sm:border-separate max-sm:border-spacing-y-2">
+				<table class="linked-table table w-full bg-base-200 leading-5 max-sm:border-separate max-sm:border-spacing-y-2">
 					<thead class="max-md:hidden">
 						<tr class="bg-base-300 text-base-content/70">
 							<td class="w-18"></td>
@@ -166,7 +166,7 @@
 							<tr class="group/row">
 								<td class="pr-0 align-top transition-colors sm:pr-2">
 									<div class="avatar">
-										<div class="mask mask-squircle bg-primary size-12" style:view-transition-name={"image-" + character.id}>
+										<div class="mask size-12 bg-primary mask-squircle" style:view-transition-name={"image-" + character.id}>
 											{#if character.imageUrl}
 												{#key character.imageUrl}
 													<img
@@ -179,7 +179,7 @@
 													/>
 												{/key}
 											{:else}
-												<span class="iconify mdi--account size-12"></span>
+												<span class="iconify size-12 mdi--account"></span>
 											{/if}
 										</div>
 									</div>
@@ -197,7 +197,7 @@
 										/>
 										<SearchResults text={character.class} terms={search.terms} />
 									</div>
-									<div class="max-sm:text-base-content/70 mb-2 text-sm md:hidden">
+									<div class="mb-2 text-sm max-sm:text-base-content/70 md:hidden">
 										<SearchResults text={character.campaign} terms={search.terms} />
 									</div>
 									{#if (character.match.has("magicItems") || global.app.characters.magicItems) && character.magicItems.length}
@@ -246,12 +246,12 @@
 
 			{#snippet grid(results: typeof sortedResults)}
 				<div
-					class="xs:data-[display=grid]:grid hidden w-full grid-cols-[repeat(auto-fill,minmax(200px,1fr))] gap-4"
+					class="hidden w-full grid-cols-[repeat(auto-fill,minmax(200px,1fr))] gap-4 xs:data-[display=grid]:grid"
 					data-display={global.app.characters.display}
 				>
 					{#each results as character (character.id)}
 						<div
-							class="card linked-card card-compact bg-base-200 row-span-4 grid grid-rows-subgrid gap-1 pb-3 text-center shadow-xl transition-transform duration-200 motion-safe:hover:scale-105"
+							class="card-compact linked-card card row-span-4 grid grid-rows-subgrid gap-1 bg-base-200 pb-3 text-center shadow-xl transition-transform duration-200 motion-safe:hover:scale-105"
 							style:view-transition-name={"image-" + character.id}
 						>
 							<figure class="relative mb-2 aspect-square overflow-hidden">
@@ -273,7 +273,7 @@
 									</div>
 								{/if}
 							</figure>
-							<h2 class="card-title ellipsis-nowrap block px-4 text-sm text-balance dark:text-white">
+							<h2 class="card-title block ellipsis-nowrap px-4 text-sm text-balance dark:text-white">
 								<a href={`/characters/${character.id}`} class="card-link">
 									<SearchResults text={character.name} terms={search.terms} />
 								</a>
@@ -295,7 +295,7 @@
 			{:else}
 				{#each [...new Set(sortedResults.map((c) => c.tier))].sort(sorter) as tier, index (tier)}
 					<h2
-						class="font-vecna max-xs:data-[display=grid]:hidden pt-6 pb-2 text-3xl font-bold data-[display=list]:hidden data-[index=0]:pt-0 dark:text-white"
+						class="pt-6 pb-2 font-vecna text-3xl font-bold data-[display=list]:hidden data-[index=0]:pt-0 max-xs:data-[display=grid]:hidden dark:text-white"
 						data-display={global.app.characters.display}
 						data-index={index}
 					>

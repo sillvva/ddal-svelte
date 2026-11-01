@@ -52,7 +52,7 @@
 
 <Dialog.Root bind:open={() => open, setOpen}>
 	<Dialog.Trigger
-		class="hover-hover:md:input hover-hover:md:gap-4 hover-hover:md:cursor-text touch-hitbox h-10 w-auto"
+		class="touch-hitbox h-10 w-auto hover-hover:md:input hover-hover:md:cursor-text hover-hover:md:gap-4"
 		aria-label="Search"
 		{@attach hotkey([
 			[
@@ -69,8 +69,8 @@
 			]
 		])}
 	>
-		<span class="hover-hover:md:text-base-content/60 flex items-center gap-1">
-			<span class="iconify mdi--magnify hover-hover:md:size-4 hover-none:w-10 size-6 max-md:w-10"></span>
+		<span class="flex items-center gap-1 hover-hover:md:text-base-content/60">
+			<span class="iconify size-6 mdi--magnify max-md:w-10 hover-hover:md:size-4 hover-none:w-10"></span>
 			<span class="hover-hover:max-md:hidden hover-none:hidden">Search</span>
 		</span>
 		<span class="hover-hover:max-md:hidden hover-none:hidden">
@@ -81,18 +81,18 @@
 		</span>
 	</Dialog.Trigger>
 	<Dialog.Portal>
-		<Dialog.Overlay class="bg-base-300/75! modal modal-open">
-			<Dialog.Content class="modal-box bg-base-100 relative cursor-default overflow-y-hidden px-4 py-5 drop-shadow-lg sm:p-6">
+		<Dialog.Overlay class="modal modal-open bg-base-300/75!">
+			<Dialog.Content class="relative modal-box cursor-default overflow-y-hidden bg-base-100 px-4 py-5 drop-shadow-lg sm:p-6">
 				<Dialog.Title class="sr-only">Command Search</Dialog.Title>
 				<Dialog.Description class="sr-only">This is the command menu. Use the arrow keys to navigate.</Dialog.Description>
 				<Command.Root label="Command Menu" bind:this={command} bind:value={selected} class="flex flex-col gap-4" loop>
 					<Command.Input bind:ref={input}>
 						{#snippet child({ props })}
 							<div
-								class="join focus-within:border-primary border-input *:focus:border-primary rounded-lg border *:border-y-0 *:first:border-l-0 *:last:border-r-0"
+								class="join rounded-lg border border-input *:border-y-0 *:first:border-l-0 *:last:border-r-0 focus-within:border-primary *:focus:border-primary"
 							>
 								<label class="input join-item flex w-full flex-1 items-center gap-2 max-sm:text-base">
-									<span class="iconify mdi--magnify size-6"></span>
+									<span class="iconify size-6 mdi--magnify"></span>
 									<input
 										{...props}
 										type="search"
@@ -122,7 +122,7 @@
 										<Command.Separator class="divider mt-2 mb-0" />
 									{/if}
 									<Command.Group value={section.title} class={[!section.items.length && "hidden"]}>
-										<Command.GroupHeading class="menu-title text-base-content/60 px-5">
+										<Command.GroupHeading class="menu-title px-5 text-base-content/60">
 											{section.title}
 										</Command.GroupHeading>
 										<Command.GroupItems class="menu flex w-full flex-col py-0">
@@ -138,7 +138,7 @@
 																<li {...props}>
 																	<a href={item.url} class="gap-3" onclick={(ev) => ev.preventDefault()}>
 																		{#if item.type === "character"}
-																			<span class="mask mask-squircle bg-primary h-12 max-w-12 min-w-12">
+																			<span class="mask h-12 max-w-12 min-w-12 bg-primary mask-squircle">
 																				<img
 																					src={item.imageUrl}
 																					class="size-full object-cover object-top transition-all"
@@ -149,21 +149,21 @@
 																				<div>
 																					<SearchResults text={item.name} terms={search.terms} />
 																				</div>
-																				<div class="text-base-content/70 text-xs">
+																				<div class="text-xs text-base-content/70">
 																					Level {item.totalLevel}
 																					<SearchResults text={item.race} terms={search.terms} />
 																					<SearchResults text={item.class} terms={search.terms} />
 																				</div>
 																				{#if search.query.length >= 2}
 																					{#if item.score && search.terms.length}
-																						<div class="text-base-content/70 text-xs">
+																						<div class="text-xs text-base-content/70">
 																							Match Score: {Math.round(item.score * 100) / 100}
 																						</div>
 																					{/if}
 																					{#if item.match.has("magicItems")}
 																						<div class="flex flex-col text-xs">
 																							<span class="pt-1 font-bold whitespace-nowrap">Magic Items:</span>
-																							<span class="text-base-content/70 flex-1 text-xs leading-4">
+																							<span class="flex-1 text-xs leading-4 text-base-content/70">
 																								<SearchResults
 																									text={item.magicItems.map((mi) => mi.name)}
 																									terms={search.terms}
@@ -176,7 +176,7 @@
 																					{#if item.match.has("storyAwards")}
 																						<div class="flex flex-col text-xs">
 																							<span class="pt-1 font-bold whitespace-nowrap">Story Awards:</span>
-																							<span class="text-base-content/70 flex-1 text-xs leading-4">
+																							<span class="flex-1 text-xs leading-4 text-base-content/70">
 																								<SearchResults
 																									text={item.storyAwards.map((sa) => sa.name)}
 																									terms={search.terms}
@@ -193,9 +193,9 @@
 																				<div>
 																					<SearchResults text={item.name} terms={search.terms} />
 																				</div>
-																				<div class="text-base-content/70 flex gap-2">
+																				<div class="flex gap-2 text-base-content/70">
 																					<span class="text-xs">{new Date(item.date).toLocaleDateString()}</span>
-																					<Separator.Root orientation="vertical" class="border-base-content/50 border-l" />
+																					<Separator.Root orientation="vertical" class="border-l border-base-content/50" />
 																					{#if item.character}
 																						<span class="text-xs">
 																							<SearchResults text={item.character.name} terms={search.terms} />
@@ -203,19 +203,19 @@
 																					{:else}
 																						<span class="text-xs italic">Unassigned</span>
 																					{/if}
-																					<Separator.Root orientation="vertical" class="border-base-content/50 border-l" />
+																					<Separator.Root orientation="vertical" class="border-l border-base-content/50" />
 																					<span class="text-xs">{item.gold.toLocaleString()} gp</span>
 																				</div>
 																				{#if search.query.length >= 2}
 																					{#if item.score && search.terms.length}
-																						<div class="text-base-content/70 text-xs">
+																						<div class="text-xs text-base-content/70">
 																							Match Score: {Math.round(item.score * 100) / 100}
 																						</div>
 																					{/if}
 																					{#if item.match.has("dm")}
 																						<div class="flex gap-1 text-xs">
 																							<span class="font-bold whitespace-nowrap">DM:</span>
-																							<span class="text-base-content/70 flex-1">
+																							<span class="flex-1 text-base-content/70">
 																								<SearchResults text={item.dm.name} terms={search.terms} />
 																							</span>
 																						</div>
@@ -223,7 +223,7 @@
 																					{#if item.match.has("magicItemsGained")}
 																						<div class="flex flex-col text-xs">
 																							<span class="pt-1 font-bold whitespace-nowrap">Magic Items:</span>
-																							<span class="text-base-content/70 flex-1">
+																							<span class="flex-1 text-base-content/70">
 																								<SearchResults
 																									text={item.magicItemsGained.map((mi) => mi.name)}
 																									terms={search.terms}
@@ -236,7 +236,7 @@
 																					{#if item.match.has("storyAwardsGained")}
 																						<div class="flex flex-col text-xs">
 																							<span class="pt-1 font-bold whitespace-nowrap">Story Awards:</span>
-																							<span class="text-base-content/70 flex-1">
+																							<span class="flex-1 text-base-content/70">
 																								<SearchResults
 																									text={item.storyAwardsGained.map((sa) => sa.name)}
 																									terms={search.terms}

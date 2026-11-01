@@ -54,7 +54,10 @@ test("DMs and DM logs: assign, edit, delete, and unassign", async ({ users }) =>
 		await page.goto(`/dms/${dmId}`);
 		await expect(page.getByRole("button", { name: "Delete DM" })).toHaveCount(0);
 		const result = await callCommand(page, "src/lib/remote/dms/actions.remote.ts", "deleteDM", dmId);
-		expect(result).toMatchObject({ ok: false, error: { message: expect.stringContaining("You cannot delete a DM that has logs") } });
+		expect(result).toMatchObject({
+			ok: false,
+			error: { message: expect.stringContaining("You cannot delete a DM that has logs") }
+		});
 		expect(await dmRow(dmId)).not.toBeNull();
 	});
 

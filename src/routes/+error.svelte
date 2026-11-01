@@ -1,5 +1,5 @@
 <script lang="ts">
-	import { browser, dev } from '$app/env';
+	import { browser, dev } from "$app/env";
 	import { page } from "$app/state";
 	import Debug from "#lib/components/debug.svelte";
 	import * as API from "#lib/remote/index.js";
@@ -50,7 +50,7 @@
 <Layout>
 	<div class="flex flex-1 flex-col items-center justify-center p-4">
 		{#if !display}
-			<div class="font-vecna mb-12 flex flex-col items-center text-3xl font-bold sm:text-5xl md:text-6xl">
+			<div class="mb-12 flex flex-col items-center font-vecna text-3xl font-bold sm:text-5xl md:text-6xl">
 				<img src="/images/confused-goblin.webp" alt="Error" class="mb-2 size-80 max-lg:size-65 max-sm:size-50" />
 				{#if page.status === 404}
 					<h2>4D4: Not Found!</h2>
@@ -59,13 +59,10 @@
 				{/if}
 			</div>
 		{/if}
-		<div class={["alert mb-4 flex w-full max-w-3xl gap-4 shadow-lg", invalidParams() ? "alert-warning" : "alert-error"]}>
-			<span class="iconify mdi--alert-circle max-xs:hidden size-6"></span>
+		<div class={["mb-4 alert flex w-full max-w-3xl gap-4 shadow-lg", invalidParams() ? "alert-warning" : "alert-error"]}>
+			<span class="iconify size-6 mdi--alert-circle max-xs:hidden"></span>
 			<div
-				class={[
-					"flex flex-1 gap-2",
-					(page.error && page.error.message.length >= 150 || invalidParams()) && "max-md:flex-col"
-				]}
+				class={["flex flex-1 gap-2", ((page.error && page.error.message.length >= 150) || invalidParams()) && "max-md:flex-col"]}
 			>
 				<div class="flex flex-1 flex-col justify-center">
 					<h3 class="font-bold">
@@ -88,10 +85,7 @@
 				</div>
 				{#if !display}
 					<div class="flex items-center gap-2 max-sm:self-end">
-						<button
-							class="btn btn-sm max-sm:hidden"
-							onclick={() => display = true}
-						>View details</button>
+						<button class="btn btn-sm max-sm:hidden" onclick={() => (display = true)}>View details</button>
 					</div>
 				{/if}
 			</div>

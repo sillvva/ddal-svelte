@@ -9,4 +9,4 @@
 	const { children, attributes }: Props = $props();
 </script>
 
-<h6 {...attributes} class="text-md ellipsis-nowrap mb-2">{@render children?.()}</h6>
+<h6 {...attributes} class="text-md mb-2 ellipsis-nowrap">{@render children?.()}</h6>

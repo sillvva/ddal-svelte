@@ -1,6 +1,6 @@
 <script lang="ts">
-	import type { RemoteFormField } from '$app/server';
-	import { dev } from '$app/env';
+	import type { RemoteFormField } from "$app/server";
+	import { dev } from "$app/env";
 	import { getGlobal } from "#lib/stores.svelte.js";
 	import { parseAbsolute, type DateValue } from "@internationalized/date";
 	import { isTupleOfAtLeast } from "@sillvva/utils";
@@ -60,25 +60,26 @@
 	}
 </script>
 
-<Input field={field} type="number" hidden />
+<Input {field} type="number" hidden />
 <DatePicker.Root
 	granularity="minute"
 	{...rest}
-	bind:value={() => value
-		? clamp(dateToCalendar(value), minDateValue, maxDateValue)
-		: undefined, (val) => {
-		if (val) {
-			const newValue = clamp(val, minDateValue, maxDateValue);
-			const date = newValue.toDate(tz);
-			field.set(date.getTime());
-			onchange?.(date.getTime());
-		} else {
-			field.set(0);
-			onchange?.(0);
+	bind:value={
+		() => (value ? clamp(dateToCalendar(value), minDateValue, maxDateValue) : undefined),
+		(val) => {
+			if (val) {
+				const newValue = clamp(val, minDateValue, maxDateValue);
+				const date = newValue.toDate(tz);
+				field.set(date.getTime());
+				onchange?.(date.getTime());
+			} else {
+				field.set(0);
+				onchange?.(0);
+			}
 		}
-	}}
-	minValue={minValue}
-	maxValue={maxValue}
+	}
+	{minValue}
+	{maxValue}
 >
 	<DatePicker.Label class="fieldset-legend">
 		<span>
@@ -90,14 +91,14 @@
 		{#if dev}
 			<button
 				type="button"
-				class="btn btn-xs btn-ghost h-4.5"
+				class="btn h-4.5 btn-ghost btn-xs"
 				aria-label="Open Calendar"
 				onclick={(ev) => {
 					ev.preventDefault();
 					debug = !debug;
 				}}
 			>
-				<span class="iconify mdi--information-outline size-4"></span>
+				<span class="iconify size-4 mdi--information-outline"></span>
 			</button>
 		{/if}
 	</DatePicker.Label>
@@ -105,27 +106,27 @@
 		{#snippet children({ segments })}
 			{#each segments as { part, value }, i (i)}
 				<DatePicker.Segment
-					part={part}
-					class="focus-visible:outline-primary aria-[valuetext=Empty]:text-base-content/70 rounded-xs py-1 outline-offset-4"
+					{part}
+					class="rounded-xs py-1 outline-offset-4 focus-visible:outline-primary aria-[valuetext=Empty]:text-base-content/70"
 				>
 					{value}
 				</DatePicker.Segment>
 			{/each}
 			<DatePicker.Trigger class="ml-auto inline-flex items-center justify-center">
-				<span class="iconify mdi--calendar size-6"></span>
+				<span class="iconify size-6 mdi--calendar"></span>
 			</DatePicker.Trigger>
 		{/snippet}
 	</DatePicker.Input>
 	<DatePicker.Content class="z-10000 mt-2">
-		<DatePicker.Calendar class="shadow-popover border-base-300 bg-base-200 rounded-lg border p-5.5">
+		<DatePicker.Calendar class="shadow-popover rounded-lg border border-base-300 bg-base-200 p-5.5">
 			{#snippet children({ months, weekdays })}
 				<DatePicker.Header class="flex items-center justify-between">
 					<DatePicker.PrevButton
-						class="iconify mdi--chevron-left inline-flex size-10 items-center justify-center transition-all"
+						class="iconify inline-flex size-10 items-center justify-center transition-all mdi--chevron-left"
 					/>
 					<DatePicker.Heading class="text-lg" />
 					<DatePicker.NextButton
-						class="iconify mdi--chevron-right inline-flex size-10 items-center justify-center transition-all"
+						class="iconify inline-flex size-10 items-center justify-center transition-all mdi--chevron-right"
 					/>
 				</DatePicker.Header>
 				<div class="flex flex-col space-y-4 pt-4 sm:flex-row sm:space-y-0 sm:space-x-4">
@@ -134,7 +135,7 @@
 							<DatePicker.GridHead>
 								<DatePicker.GridRow class="mb-1 flex w-full justify-between">
 									{#each weekdays as day, i (i)}
-										<DatePicker.HeadCell class="text-base-content/50 w-10 rounded-md text-xs font-normal!">
+										<DatePicker.HeadCell class="w-10 rounded-md text-xs font-normal! text-base-content/50">
 											<div>{day.slice(0, 2)}</div>
 										</DatePicker.HeadCell>
 									{/each}
@@ -144,23 +145,19 @@
 								{#each month.weeks as weekDates, i (i)}
 									<DatePicker.GridRow class="flex w-full">
 										{#each weekDates as date, j (j)}
-											<DatePicker.Cell
-												date={date}
-												month={month.value}
-												class="relative size-10 p-0! text-center text-sm"
-											>
+											<DatePicker.Cell {date} month={month.value} class="relative size-10 p-0! text-center text-sm">
 												<DatePicker.Day
 													class={[
 														"rounded-9px group relative inline-flex size-10 items-center justify-center whitespace-nowrap",
 														"border border-transparent bg-transparent p-0 text-sm font-normal transition-all",
 														"hover:border-base-content/50 data-outside-month:pointer-events-none",
-														"data-disabled:text-base-content/30 data-disabled:pointer-events-none",
+														"data-disabled:pointer-events-none data-disabled:text-base-content/30",
 														"data-selected:bg-base-300 data-selected:font-medium",
 														"data-unavailable:text-base-content/30 data-unavailable:line-through"
 													]}
 												>
 													<div
-														class="group-data-selected:bg-base-content/50 absolute top-1.25 size-1 rounded-full transition-all not-group-data-today:hidden"
+														class="absolute top-1.25 size-1 rounded-full transition-all not-group-data-today:hidden group-data-selected:bg-base-content/50"
 													></div>
 													{date.day}
 												</DatePicker.Day>

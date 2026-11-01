@@ -33,7 +33,7 @@
 	</section>
 
 	<section>
-		<div class="bg-base-200 w-full overflow-x-auto rounded-lg">
+		<div class="w-full overflow-x-auto rounded-lg bg-base-200">
 			<table class="linked-table table w-full">
 				<thead>
 					<tr class="bg-base-300 text-base-content/70">
@@ -56,7 +56,7 @@
 								<td>
 									<a
 										href="/dms/{dm.id}"
-										class="text-secondary-content row-link text-left font-semibold whitespace-pre-wrap"
+										class="row-link text-left font-semibold whitespace-pre-wrap text-secondary-content"
 										aria-label="Edit DM"
 									>
 										<SearchResults text={dm.name} terms={search.terms} />
@@ -74,7 +74,7 @@
 										{#if dm.logs.length == 0 && !dm.isUser}
 											<button
 												type="button"
-												class="btn btn-error sm:btn-sm touch-hitbox"
+												class="btn touch-hitbox btn-error sm:btn-sm"
 												aria-label="Delete DM"
 												onclick={async () => {
 													if (!confirm(`Are you sure you want to delete ${dm.name}? This action cannot be undone.`)) return;

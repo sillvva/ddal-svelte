@@ -30,7 +30,8 @@
 		"test:e2e:cleanup": "node --experimental-strip-types e2e/cleanup.ts",
 		"test:e2e:guard": "node --experimental-strip-types e2e/guard-check.ts",
 		"op:test:e2e": "op run --environment 4iuxdmr3wcxhjj7m7gd4qen46u -- env E2E_ALLOW_LOCAL=1 pnpm test:e2e",
-		"op:test:e2e:cleanup": "op run --environment 4iuxdmr3wcxhjj7m7gd4qen46u -- env E2E_ALLOW_LOCAL=1 pnpm test:e2e:cleanup"
+		"op:test:e2e:cleanup": "op run --environment 4iuxdmr3wcxhjj7m7gd4qen46u -- env E2E_ALLOW_LOCAL=1 pnpm test:e2e:cleanup",
+		"op:test": "pnpm test:unit && pnpm op:test:e2e"
 	},
 	"devDependencies": {
 		"@eslint/js": "^10.0.1",
