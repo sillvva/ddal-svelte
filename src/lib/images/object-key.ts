@@ -14,6 +14,9 @@ const permanentKeyPattern =
 const permanentAvatarKeyPattern =
 	/^users\/[0-9a-f-]{36}\/avatar\/[0-9a-f]{8}-[0-9a-f]{4}-7[0-9a-f]{3}-[0-9a-f]{4}-[0-9a-f]{12}\.(webp|jpg)$/iu;
 
+const permanentNoteKeyPattern =
+	/^users\/[0-9a-f-]{36}\/notes\/[0-9a-f]{8}-[0-9a-f]{4}-7[0-9a-f]{3}-[0-9a-f]{4}-[0-9a-f]{12}\.(webp|jpg)$/iu;
+
 export function characterImagePrefix(userId: string, characterId: string) {
 	return `users/${userId}/characters/${characterId}/`;
 }
@@ -68,12 +71,50 @@ export function isTemporaryAvatarImageKey(key: string) {
 	return key.startsWith(TEMPORARY_IMAGE_PREFIX) && isPermanentAvatarImageKey(key.slice(TEMPORARY_IMAGE_PREFIX.length));
 }
 
-/** Permanent portrait or avatar key issued by this app. */
-export function isPermanentImageKey(key: string) {
-	return isPermanentCharacterImageKey(key) || isPermanentAvatarImageKey(key);
+/** Log note images live per account, since one image can be referenced by several of that account's logs. */
+export function noteImagePrefix(userId: string) {
+	return `users/${userId}/notes/`;
 }
 
-/** `tmp/` portrait or avatar key. The bucket lifecycle rule deletes this prefix. */
+export function permanentNoteImageKey(userId: string, uploadId: string, contentType: StoredImageContentType) {
+	return `${noteImagePrefix(userId)}${uploadId}.${extensionForStoredImage(contentType)}`;
+}
+
+export function temporaryNoteImageKey(userId: string, uploadId: string, contentType: StoredImageContentType) {
+	return `${TEMPORARY_IMAGE_PREFIX}${permanentNoteImageKey(userId, uploadId, contentType)}`;
+}
+
+export function isPermanentNoteImageKey(key: string) {
+	return permanentNoteKeyPattern.test(key) && !key.includes("..");
+}
+
+export function isTemporaryNoteImageKey(key: string) {
+	return key.startsWith(TEMPORARY_IMAGE_PREFIX) && isPermanentNoteImageKey(key.slice(TEMPORARY_IMAGE_PREFIX.length));
+}
+
+export function isOwnedNoteImageKey(userId: string, key: string) {
+	const prefix = noteImagePrefix(userId);
+	if (!key.startsWith(prefix) || key.includes("..")) return false;
+	return uploadFilePattern.test(key.slice(prefix.length));
+}
+
+export function isOwnedTemporaryNoteImageKey(userId: string, key: string) {
+	if (!isTemporaryNoteImageKey(key)) return false;
+	return isOwnedNoteImageKey(userId, key.slice(TEMPORARY_IMAGE_PREFIX.length));
+}
+
+/** Upload id embedded in a note image key's filename. */
+export function uploadIdFromImageKey(key: string) {
+	const filename = key.split("/").pop() ?? "";
+	return filename.replace(/\.(webp|jpg)$/iu, "");
+}
+
+/** Permanent portrait, avatar, or note image key issued by this app. */
+export function isPermanentImageKey(key: string) {
+	return isPermanentCharacterImageKey(key) || isPermanentAvatarImageKey(key) || isPermanentNoteImageKey(key);
+}
+
+/** `tmp/` portrait, avatar, or note image key. The bucket lifecycle rule deletes this prefix. */
 export function isTemporaryImageKey(key: string) {
 	return key.startsWith(TEMPORARY_IMAGE_PREFIX) && isPermanentImageKey(key.slice(TEMPORARY_IMAGE_PREFIX.length));
 }

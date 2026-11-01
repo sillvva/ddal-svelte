@@ -17,6 +17,7 @@ import { DMNotFoundError, DMService } from "#lib/server/effect/services/dms.js";
 import { LogNotFoundError, LogService } from "#lib/server/effect/services/logs.js";
 import { formParse, parse } from "#lib/server/effect/util.js";
 import { omit } from "@sillvva/utils";
+import type { StandardSchemaV1 } from "@standard-schema/spec";
 import { invalid, redirect } from "@sveltejs/kit";
 import { Effect } from "effect";
 import * as v from "valibot";
@@ -93,6 +94,11 @@ export const dm = guardedQuery(dmLogFormSchema, function* (input, { user }) {
 	};
 });
 
+/** Note image problems belong to the notes field. Everything else stays a form-level issue. */
+function saveIssue(err: { _tag: string; message: string }, issue: { description: (message: string) => StandardSchemaV1.Issue }) {
+	return err._tag === "ImageUploadError" ? issue.description(err.message) : err.message;
+}
+
 export const saveCharacter = guardedForm("unchecked", function* (input: LogSchemaIn, { user, issue, event }) {
 	const Characters = yield* CharacterService;
 	const Logs = yield* LogService;
@@ -110,7 +116,7 @@ export const saveCharacter = guardedForm("unchecked", function* (input: LogSchem
 		...input,
 		timezone: input.timezone || event.locals.app.settings.timezone
 	});
-	yield* Logs.save(result, user).pipe(Effect.tapError((err) => Effect.fail(invalid(err.message))));
+	yield* Logs.save(result, user).pipe(Effect.tapError((err) => Effect.fail(invalid(saveIssue(err, issue)))));
 
 	// Character detail uses `newRedirect: true`. The log form uses the key without it.
 	// Refreshing only one leaves the other page on the character from before this log.
@@ -153,7 +159,7 @@ export const saveDM = guardedForm("unchecked", function* (input: DmLogSchemaIn, 
 		dm: userDM
 	};
 
-	yield* Logs.save(log, user).pipe(Effect.tapError((err) => Effect.fail(invalid(err.message))));
+	yield* Logs.save(log, user).pipe(Effect.tapError((err) => Effect.fail(invalid(saveIssue(err, issue)))));
 
 	yield* refreshAll(API.logs.queries.getDmLogs().refresh());
 

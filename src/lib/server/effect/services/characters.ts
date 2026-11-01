@@ -202,6 +202,8 @@ export class CharacterService extends Context.Service<CharacterService>()("Chara
 			delete: Effect.fn("CharacterService.delete")(function* (characterId: CharacterId, userId: UserId) {
 				return yield* transaction(
 					Effect.fn(function* (tx) {
+						// Deleting the character cascades its logs and their `log_image` rows, which queues orphaned note images.
+						yield* lockPortraitUser(tx, userId);
 						const keys = yield* collectCharacterKeys(tx, userId, characterId);
 						yield* scheduleDeletions(tx, keys);
 

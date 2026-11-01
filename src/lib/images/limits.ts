@@ -32,6 +32,28 @@ export const AVATAR_IMAGE_LIMITS = {
 	acceptedInputTypes: CHARACTER_IMAGE_LIMITS.acceptedInputTypes
 } as const;
 
+/**
+ * Images pasted or dropped into log notes.
+ * Bytes count against `quotaBytes` once a log save promotes them out of `tmp/`, and stop counting
+ * when no log of the owner references them any more.
+ */
+export const NOTE_IMAGE_LIMITS = {
+	maxOriginalBytes: 8 * 1024 * 1024,
+	maxStoredBytes: Math.floor(0.5 * 1024 * 1024),
+	maxEdgePx: 1200,
+	maxPixels: CHARACTER_IMAGE_LIMITS.maxPixels,
+	/** Total bytes of saved note images per account. Admin accounts are exempt. Separate from portraits. */
+	quotaBytes: 50 * 1024 * 1024,
+	/** Distinct uploaded images one note may reference. Pending uploads count toward this in the browser. */
+	maxImagesPerNote: 10,
+	/** Uploads one notes field runs at once. */
+	maxConcurrentUploads: 3,
+	/** Issued note upload rows per account. Counted separately from portraits and avatars. */
+	maxUploadsPerWindow: 60,
+	rateWindowMs: CHARACTER_IMAGE_LIMITS.rateWindowMs,
+	acceptedInputTypes: CHARACTER_IMAGE_LIMITS.acceptedInputTypes
+} as const;
+
 export const STORED_IMAGE_CONTENT_TYPES = ["image/webp", "image/jpeg"] as const;
 export type StoredImageContentType = (typeof STORED_IMAGE_CONTENT_TYPES)[number];
 

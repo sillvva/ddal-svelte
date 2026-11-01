@@ -4,6 +4,7 @@ import {
 	imagePublicUrl,
 	isPermanentCharacterImageKey,
 	isPermanentImageKey,
+	isPermanentNoteImageKey,
 	ownedAvatarKey,
 	ownedPermanentKey,
 	TEMPORARY_IMAGE_PREFIX,
@@ -11,7 +12,7 @@ import {
 } from "#lib/images/object-key.js";
 import type { CharacterId, UserId } from "#lib/schemas.js";
 import { runQuery, type Database, type Transaction } from "#lib/server/db/index.js";
-import { account, imageUploads, characters, pendingObjectDeletions, user } from "#lib/server/db/schema.js";
+import { account, imageUploads, characters, logImages, pendingObjectDeletions, user } from "#lib/server/db/schema.js";
 import { ImageUploadError } from "#lib/server/images/errors.js";
 import { R2_PUBLIC_URL } from "$app/env/public";
 import { and, eq, inArray, isNull, or, sql } from "drizzle-orm";
@@ -127,6 +128,17 @@ export function permanentKeyInUse(tx: Transaction, key: string) {
 	if (!isPermanentImageKey(key)) return Effect.succeed(false);
 	const imageUrl = imagePublicUrl(key, R2_PUBLIC_URL);
 	return Effect.gen(function* () {
+		if (isPermanentNoteImageKey(key)) {
+			const references = yield* runQuery(
+				tx
+					.select({ logId: logImages.logId })
+					.from(logImages)
+					.innerJoin(imageUploads, eq(imageUploads.id, logImages.uploadId))
+					.where(eq(imageUploads.objectKey, key))
+					.limit(1)
+			);
+			return references.length > 0;
+		}
 		const portraits = yield* runQuery(
 			tx.select({ id: characters.id }).from(characters).where(eq(characters.imageUrl, imageUrl)).limit(1)
 		);
