@@ -4,7 +4,17 @@ import { expect, test } from "./fixtures.ts";
 import { createCharacter, fieldIssue, fillGameLog, keyFromUrl, logIdOnCharacterPage, saveLog } from "./records.ts";
 import { callCommand } from "./remote.ts";
 import { deleteObject, objectExists, waitUntilMissing } from "./storage.ts";
-import { dropFile, noteImageUrls, notesField, pasteFile, pngFile, TEXT_FILE, waitForNoteImages } from "./ui.ts";
+import {
+	closeSettings,
+	dropFile,
+	noteImageUrls,
+	openSettings,
+	notesField,
+	pasteFile,
+	pngFile,
+	TEXT_FILE,
+	waitForNoteImages
+} from "./ui.ts";
 
 const STAGED_NOTE_PUT = /\/tmp\/users\/[0-9a-f-]{36}\/notes\//iu;
 
@@ -33,7 +43,7 @@ async function pasteImage(page: Page, name: string, expected: number) {
 }
 
 test("log notes: pasted and dropped images, promotion on save, and removal", async ({ users }) => {
-	const { page } = await users.signUp({ label: "noteimages" });
+	const { page, handle } = await users.signUp({ label: "noteimages" });
 	const characterId = await createCharacter(page, { name: "Note Images" });
 	await fillGameLog(page, characterId, { title: "Pasted Images" });
 	const notes = notesField(page);
@@ -103,6 +113,16 @@ test("log notes: pasted and dropped images, promotion on save, and removal", asy
 		expect(await logImageKeys(logId)).toEqual([...permanent].sort());
 		for (const key of permanent) expect(await objectExists(key)).toBe(true);
 		for (const key of staged) await waitUntilMissing(key);
+	});
+
+	await test.step("settings storage usage counts the saved note images next to character portraits", async () => {
+		await openSettings(page, handle);
+		const breakdown = page.locator("aside#settings #image-storage-breakdown");
+		await expect(breakdown).toContainText("Characters: 0 MB/20 MB");
+		await expect(breakdown).toContainText(/Notes: \d+(\.\d+)? [KM]B\/50 MB/u);
+		await expect(breakdown).not.toContainText("Notes: 0 MB");
+		await expect(page.locator("aside#settings")).toContainText(/Image storage used\s*\d+(\.\d+)? [KM]B\/70 MB/u);
+		await closeSettings(page);
 	});
 
 	await test.step("removing an image from the notes and saving purges its object", async () => {

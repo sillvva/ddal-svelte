@@ -53,7 +53,7 @@ import {
 	sumPortraitBytes,
 	userIdForDeletion
 } from "#lib/server/images/portrait-db.js";
-import { assertNoteQuota, forgetNoteUpload } from "#lib/server/images/note-db.js";
+import { assertNoteQuota, forgetNoteUpload, noteQuotaBytes, sumNoteBytes } from "#lib/server/images/note-db.js";
 import { R2_ACCESS_KEY_ID, R2_BUCKET, R2_ENDPOINT, R2_SECRET_ACCESS_KEY } from "$app/env/private";
 import { R2_PUBLIC_URL } from "$app/env/public";
 import {
@@ -597,11 +597,15 @@ export class StorageService extends Context.Service<StorageService>()("StorageSe
 		});
 
 		return {
-			/** Saved portrait bytes against the account quota. `quotaBytes` is null for admins. Unsaved `tmp/` uploads are not included. */
-			portraitUsage: Effect.fn("StorageService.portraitUsage")(function* (userId: UserId) {
-				const usedBytes = yield* sumPortraitBytes(db, userId);
-				const quotaBytes = yield* portraitQuotaBytes(db, userId);
-				return { usedBytes, quotaBytes };
+			/**
+			 * Saved portrait and note image bytes against their separate account quotas.
+			 * `quotaBytes` is null for admins. Unsaved `tmp/` uploads are not included.
+			 */
+			imageUsage: Effect.fn("StorageService.imageUsage")(function* (userId: UserId) {
+				return {
+					portraits: { usedBytes: yield* sumPortraitBytes(db, userId), quotaBytes: yield* portraitQuotaBytes(db, userId) },
+					notes: { usedBytes: yield* sumNoteBytes(db, userId), quotaBytes: yield* noteQuotaBytes(db, userId) }
+				};
 			}),
 
 			/**

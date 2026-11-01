@@ -10,6 +10,7 @@ export const deleteLog = guardedCommand(logIdSchema, function* (id, { user }) {
 	const removed = yield* Logs.delete(id, user.id);
 	yield* Storage.purgePending();
 	yield* refreshAll(
+		API.images.queries.storage().refresh(),
 		API.logs.queries.getDmLogs().refresh(),
 		API.dms.queries.getAll().refresh(),
 		API.dms.queries.get(removed.dungeonMasterId).refresh(),

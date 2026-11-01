@@ -79,14 +79,41 @@ export function storageTone(ratio: number) {
 	return "primary" as const;
 }
 
-export function portraitStorageView(usedBytes: number, quotaBytes: number) {
-	const remainingBytes = Math.max(0, quotaBytes - usedBytes);
-	const ratio = quotaBytes > 0 ? usedBytes / quotaBytes : 1;
+export interface StorageUsage {
+	usedBytes: number;
+	quotaBytes: number;
+}
+
+function storageRatio({ usedBytes, quotaBytes }: StorageUsage) {
+	return quotaBytes > 0 ? usedBytes / quotaBytes : 1;
+}
+
+function storagePercent(ratio: number) {
+	return Math.min(100, Math.round(ratio * 100));
+}
+
+function storageCategoryView(usage: StorageUsage) {
+	const ratio = storageRatio(usage);
 	return {
-		percent: Math.min(100, Math.round(ratio * 100)),
+		...usage,
+		percent: storagePercent(ratio),
 		tone: storageTone(ratio),
-		usedLabel: usedBytes,
-		quotaLabel: formatStorageBytes(quotaBytes),
-		remainingLabel: formatStorageBytes(remainingBytes)
+		usedLabel: formatStorageBytes(usage.usedBytes),
+		quotaLabel: formatStorageBytes(usage.quotaBytes)
+	};
+}
+
+/**
+ * Portraits and note images have separate quotas, so the combined bar alone can look half empty
+ * while one category is already full. The combined tone follows whichever is closest to its cap.
+ */
+export function imageStorageView(portraits: StorageUsage, notes: StorageUsage) {
+	const total = { usedBytes: portraits.usedBytes + notes.usedBytes, quotaBytes: portraits.quotaBytes + notes.quotaBytes };
+	const worstRatio = Math.max(storageRatio(total), storageRatio(portraits), storageRatio(notes));
+	return {
+		...storageCategoryView(total),
+		tone: storageTone(worstRatio),
+		portraits: storageCategoryView(portraits),
+		notes: storageCategoryView(notes)
 	};
 }

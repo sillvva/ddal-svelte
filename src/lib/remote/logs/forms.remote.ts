@@ -121,6 +121,7 @@ export const saveCharacter = guardedForm("unchecked", function* (input: LogSchem
 	// Character detail uses `newRedirect: true`. The log form uses the key without it.
 	// Refreshing only one leaves the other page on the character from before this log.
 	yield* refreshAll(
+		API.images.queries.storage().refresh(),
 		API.characters.queries.get({ param: character.id }).refresh(),
 		API.characters.queries.get({ param: character.id, newRedirect: true }).refresh()
 	);
@@ -161,7 +162,7 @@ export const saveDM = guardedForm("unchecked", function* (input: DmLogSchemaIn, 
 
 	yield* Logs.save(log, user).pipe(Effect.tapError((err) => Effect.fail(invalid(saveIssue(err, issue)))));
 
-	yield* refreshAll(API.logs.queries.getDmLogs().refresh());
+	yield* refreshAll(API.images.queries.storage().refresh(), API.logs.queries.getDmLogs().refresh());
 
 	redirect(303, `/dm-logs`);
 });
