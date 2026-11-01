@@ -15,13 +15,13 @@ import { serializeError, type ErrorParams } from "#lib/server/effect/errors.js";
 import { AppLog } from "#lib/server/effect/logging.js";
 import { ImageUploadError } from "#lib/server/images/errors.js";
 import {
-	assertPortraitQuota,
 	clearScheduledDeletions,
 	collectCharacterKeys,
 	lockPortraitUser,
 	ownedBytesForSave,
 	scheduleDeletions
 } from "#lib/server/images/portrait-db.js";
+import { assertPortraitQuota } from "#lib/server/images/quota-db.js";
 import { getRequestEvent } from "$app/server";
 import { R2_PUBLIC_URL } from "$app/env/public";
 import { isTupleOf } from "@sillvva/utils";

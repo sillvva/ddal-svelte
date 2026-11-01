@@ -228,11 +228,8 @@
 						<p class="mb-4 text-xs text-neutral-500">Storage usage is unavailable.</p>
 					{/snippet}
 					{@const storage = await API.images.queries.storage()}
-					{#if storage.portraits.quotaBytes !== null && storage.notes.quotaBytes !== null}
-						{@const usage = imageStorageView(
-							{ usedBytes: storage.portraits.usedBytes, quotaBytes: storage.portraits.quotaBytes },
-							{ usedBytes: storage.notes.usedBytes, quotaBytes: storage.notes.quotaBytes }
-						)}
+					{#if storage.quotaBytes !== null}
+						{@const usage = imageStorageView({ ...storage, quotaBytes: storage.quotaBytes })}
 						<div class="my-2 flex flex-1 flex-col gap-1 px-2">
 							<div class="flex items-baseline justify-between gap-3 text-xs text-neutral-500">
 								<span id="image-storage-label">Image storage used</span>
@@ -252,14 +249,8 @@
 								aria-valuetext={`${usage.usedLabel} of ${usage.quotaLabel} used, ${usage.percent}%`}
 							></progress>
 							<div id="image-storage-breakdown" class="flex flex-wrap justify-between gap-x-3 text-xs text-neutral-500">
-								<span
-									class={[usage.portraits.tone === "error" && "text-error", usage.portraits.tone === "warning" && "text-warning"]}
-								>
-									Characters: {usage.portraits.usedLabel}/{usage.portraits.quotaLabel}
-								</span>
-								<span class={[usage.notes.tone === "error" && "text-error", usage.notes.tone === "warning" && "text-warning"]}>
-									Notes: {usage.notes.usedLabel}/{usage.notes.quotaLabel}
-								</span>
+								<span>Characters: {usage.portraitsLabel}</span>
+								<span>Notes: {usage.notesLabel}</span>
 							</div>
 						</div>
 					{/if}

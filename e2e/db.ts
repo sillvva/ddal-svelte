@@ -136,6 +136,11 @@ export async function pendingDeletion(objectKey: string) {
 	return rows.length > 0;
 }
 
+/** Stands in for saved portraits without uploading megabytes of images. */
+export async function setCharacterImageBytes(characterId: string, bytes: number) {
+	await withSql((sql) => sql`update character set image_bytes = ${bytes} where id = ${characterId}`);
+}
+
 export async function setBanned(userId: string, banned: boolean) {
 	await withSql((sql) => sql`update "user" set banned = ${banned} where id = ${userId}`);
 }

@@ -1,3 +1,11 @@
+/**
+ * One storage budget per account, shared by saved character portraits and saved note images.
+ * Admin accounts are exempt. Unsaved `tmp/` uploads and avatars do not count.
+ */
+export const IMAGE_STORAGE_LIMITS = {
+	quotaBytes: 50 * 1024 * 1024
+} as const;
+
 /** Limits for character portraits stored in R2. */
 export const CHARACTER_IMAGE_LIMITS = {
 	/** Largest file the browser will read before resizing. */
@@ -8,8 +16,6 @@ export const CHARACTER_IMAGE_LIMITS = {
 	maxEdgePx: 800,
 	/** Reject decoded images above this pixel count before drawing them. */
 	maxPixels: 24_000_000,
-	/** Total bytes of saved portraits per account. Admin accounts are exempt. Unsaved `tmp/` uploads do not count. Avatars are separate. */
-	quotaBytes: 20 * 1024 * 1024,
 	/** Issued upload rows per account, portraits and avatars together. */
 	maxUploadsPerWindow: 20,
 	rateWindowMs: 60 * 60 * 1000,
@@ -21,7 +27,7 @@ export const CHARACTER_IMAGE_LIMITS = {
 /**
  * Profile pictures for accounts that do not sign in with OAuth.
  * The browser center-crops to a square and scales the long edge down to `maxEdgePx`.
- * One avatar per account, so these bytes are not part of `CHARACTER_IMAGE_LIMITS.quotaBytes`.
+ * One avatar per account, so these bytes are not part of `IMAGE_STORAGE_LIMITS.quotaBytes`.
  */
 export const AVATAR_IMAGE_LIMITS = {
 	maxOriginalBytes: CHARACTER_IMAGE_LIMITS.maxOriginalBytes,
@@ -34,7 +40,7 @@ export const AVATAR_IMAGE_LIMITS = {
 
 /**
  * Images pasted or dropped into log notes.
- * Bytes count against `quotaBytes` once a log save promotes them out of `tmp/`, and stop counting
+ * Bytes count against `IMAGE_STORAGE_LIMITS.quotaBytes` once a log save promotes them out of `tmp/`, and stop counting
  * when no log of the owner references them any more.
  */
 export const NOTE_IMAGE_LIMITS = {
@@ -42,8 +48,6 @@ export const NOTE_IMAGE_LIMITS = {
 	maxStoredBytes: Math.floor(0.5 * 1024 * 1024),
 	maxEdgePx: 1200,
 	maxPixels: CHARACTER_IMAGE_LIMITS.maxPixels,
-	/** Total bytes of saved note images per account. Admin accounts are exempt. Separate from portraits. */
-	quotaBytes: 50 * 1024 * 1024,
 	/** Distinct uploaded images one note may reference. Pending uploads count toward this in the browser. */
 	maxImagesPerNote: 10,
 	/** Uploads one notes field runs at once. */
@@ -79,41 +83,23 @@ export function storageTone(ratio: number) {
 	return "primary" as const;
 }
 
-export interface StorageUsage {
-	usedBytes: number;
+export interface ImageStorageUsage {
+	portraitBytes: number;
+	noteBytes: number;
 	quotaBytes: number;
 }
 
-function storageRatio({ usedBytes, quotaBytes }: StorageUsage) {
-	return quotaBytes > 0 ? usedBytes / quotaBytes : 1;
-}
-
-function storagePercent(ratio: number) {
-	return Math.min(100, Math.round(ratio * 100));
-}
-
-function storageCategoryView(usage: StorageUsage) {
-	const ratio = storageRatio(usage);
+export function imageStorageView({ portraitBytes, noteBytes, quotaBytes }: ImageStorageUsage) {
+	const usedBytes = portraitBytes + noteBytes;
+	const ratio = quotaBytes > 0 ? usedBytes / quotaBytes : 1;
 	return {
-		...usage,
-		percent: storagePercent(ratio),
+		usedBytes,
+		quotaBytes,
+		percent: Math.min(100, Math.round(ratio * 100)),
 		tone: storageTone(ratio),
-		usedLabel: formatStorageBytes(usage.usedBytes),
-		quotaLabel: formatStorageBytes(usage.quotaBytes)
-	};
-}
-
-/**
- * Portraits and note images have separate quotas, so the combined bar alone can look half empty
- * while one category is already full. The combined tone follows whichever is closest to its cap.
- */
-export function imageStorageView(portraits: StorageUsage, notes: StorageUsage) {
-	const total = { usedBytes: portraits.usedBytes + notes.usedBytes, quotaBytes: portraits.quotaBytes + notes.quotaBytes };
-	const worstRatio = Math.max(storageRatio(total), storageRatio(portraits), storageRatio(notes));
-	return {
-		...storageCategoryView(total),
-		tone: storageTone(worstRatio),
-		portraits: storageCategoryView(portraits),
-		notes: storageCategoryView(notes)
+		usedLabel: formatStorageBytes(usedBytes),
+		quotaLabel: formatStorageBytes(quotaBytes),
+		portraitsLabel: formatStorageBytes(portraitBytes),
+		notesLabel: formatStorageBytes(noteBytes)
 	};
 }

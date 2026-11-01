@@ -1,5 +1,5 @@
 import type { Page, Route } from "@playwright/test";
-import { logDescription, logImageKeys, pendingDeletion, uploadRowForKey } from "./db.ts";
+import { logDescription, logImageKeys, pendingDeletion, setCharacterImageBytes, uploadRowForKey } from "./db.ts";
 import { expect, test } from "./fixtures.ts";
 import { createCharacter, fieldIssue, fillGameLog, keyFromUrl, logIdOnCharacterPage, saveLog } from "./records.ts";
 import { callCommand } from "./remote.ts";
@@ -118,10 +118,10 @@ test("log notes: pasted and dropped images, promotion on save, and removal", asy
 	await test.step("settings storage usage counts the saved note images next to character portraits", async () => {
 		await openSettings(page, handle);
 		const breakdown = page.locator("aside#settings #image-storage-breakdown");
-		await expect(breakdown).toContainText("Characters: 0 MB/20 MB");
-		await expect(breakdown).toContainText(/Notes: \d+(\.\d+)? [KM]B\/50 MB/u);
+		await expect(breakdown).toContainText("Characters: 0 MB");
+		await expect(breakdown).toContainText(/Notes: \d+(\.\d+)? [KM]B/u);
 		await expect(breakdown).not.toContainText("Notes: 0 MB");
-		await expect(page.locator("aside#settings")).toContainText(/Image storage used\s*\d+(\.\d+)? [KM]B\/70 MB/u);
+		await expect(page.locator("aside#settings")).toContainText(/Image storage used\s*\d+(\.\d+)? [KM]B\/50 MB/u);
 		await closeSettings(page);
 	});
 
@@ -245,5 +245,41 @@ test("log notes: another user can't promote or claim my staged image, and expire
 		await notesField(owner.page).fill("Removed");
 		await saveAndReturn(owner.page, ownerCharacter);
 		await waitUntilMissing(permanentOf(stagedKey));
+	});
+});
+
+test("log notes: portraits and note images share one storage limit", async ({ users }) => {
+	const { page, handle } = await users.signUp({ label: "sharedquota" });
+	const characterId = await createCharacter(page, { name: "Shared Quota" });
+	const quota = 50 * 1024 * 1024;
+	const limitMessage = "would exceed your 50 MB image storage limit.";
+
+	await test.step("a staged note image can't be saved once portraits fill the limit", async () => {
+		await fillGameLog(page, characterId, { title: "Over Quota" });
+		await pasteImage(page, "late.png", 1);
+		await setCharacterImageBytes(characterId, quota);
+		await saveLog(page);
+		await expect(fieldIssue(page, "description")).toContainText(`These note images ${limitMessage}`);
+		await expect(page).toHaveURL(/\/log\/new/u);
+	});
+
+	await test.step("new note uploads are refused while the limit is full", async () => {
+		await pasteFile(notesField(page), pngFile("another.png"));
+		await expect(page.locator('[data-sonner-toast][data-type="error"]')).toContainText(limitMessage);
+		expect(noteImageUrls(await notesField(page).inputValue())).toHaveLength(1);
+	});
+
+	await test.step("freeing portrait space lets the note image save", async () => {
+		await setCharacterImageBytes(characterId, quota - 1024 * 1024);
+		await saveAndReturn(page, characterId);
+	});
+
+	await test.step("settings counts both types against the one limit", async () => {
+		await openSettings(page, handle);
+		await expect(page.locator("aside#settings")).toContainText(/Image storage used\s*49 MB\/50 MB \(98%\)/u);
+		const breakdown = page.locator("aside#settings #image-storage-breakdown");
+		await expect(breakdown).toContainText("Characters: 49 MB");
+		await expect(breakdown).toContainText(/Notes: \d+ KB/u);
+		await closeSettings(page);
 	});
 });

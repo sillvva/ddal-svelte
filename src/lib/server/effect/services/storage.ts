@@ -39,21 +39,19 @@ import { AppLog } from "#lib/server/effect/logging.js";
 import { ImageUploadError } from "#lib/server/images/errors.js";
 import {
 	assertCustomAvatarAllowed,
-	assertPortraitQuota,
 	clearScheduledDeletions,
 	listPendingDeletions,
 	lockPendingDeletion,
 	lockPortraitUser,
 	notePendingFailure,
 	permanentKeyInUse,
-	portraitQuotaBytes,
 	promoteAvatarUploadRow,
 	removePendingDeletion,
 	scheduleDeletions,
-	sumPortraitBytes,
 	userIdForDeletion
 } from "#lib/server/images/portrait-db.js";
-import { assertNoteQuota, forgetNoteUpload, noteQuotaBytes, sumNoteBytes } from "#lib/server/images/note-db.js";
+import { forgetNoteUpload } from "#lib/server/images/note-db.js";
+import { assertNoteQuota, assertPortraitQuota, imageStorageUsage } from "#lib/server/images/quota-db.js";
 import { R2_ACCESS_KEY_ID, R2_BUCKET, R2_ENDPOINT, R2_SECRET_ACCESS_KEY } from "$app/env/private";
 import { R2_PUBLIC_URL } from "$app/env/public";
 import {
@@ -597,22 +595,16 @@ export class StorageService extends Context.Service<StorageService>()("StorageSe
 		});
 
 		return {
-			/**
-			 * Saved portrait and note image bytes against their separate account quotas.
-			 * `quotaBytes` is null for admins. Unsaved `tmp/` uploads are not included.
-			 */
+			/** Saved portrait and note image bytes against the shared quota. `quotaBytes` is null for admins. Unsaved `tmp/` uploads are not included. */
 			imageUsage: Effect.fn("StorageService.imageUsage")(function* (userId: UserId) {
-				return {
-					portraits: { usedBytes: yield* sumPortraitBytes(db, userId), quotaBytes: yield* portraitQuotaBytes(db, userId) },
-					notes: { usedBytes: yield* sumNoteBytes(db, userId), quotaBytes: yield* noteQuotaBytes(db, userId) }
-				};
+				return yield* imageStorageUsage(db, userId);
 			}),
 
 			/**
 			 * Reserves a `tmp/` object and returns a presigned PUT.
-			 * Portrait quota here is a fast check against saved portraits. The authoritative check runs
-			 * again under the same advisory lock when the portrait is saved. Avatars are not part of that
-			 * quota. A presigned URL cannot write a permanent key, so discarding the reservation cannot
+			 * The image storage quota here is a fast check against saved portraits and note images. The
+			 * authoritative check runs again under the same advisory lock when the character or log is saved.
+			 * Avatars are not part of that quota. A presigned URL cannot write a permanent key, so discarding the reservation cannot
 			 * free quota for an object that stays.
 			 */
 			prepare: Effect.fn("StorageService.prepare")(function* (input: PrepareImageInput) {
