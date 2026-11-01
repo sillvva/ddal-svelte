@@ -239,13 +239,14 @@
 			</div>
 		{/if}
 		<img src={preview} {alt} class={previewClass} />
+		<p id={statusId} class="sr-only" role="status">{failure || (uploading ? status : "")}</p>
 		<div class="flex min-w-0 flex-1 flex-col gap-2">
 			<InputWrapper
 				type="url"
 				label="Portrait"
 				labelFor={props.field.as("url").name}
-				fieldErrors={props.field.issues()?.map((issue) => issue.message)}
-				description={help}
+				fieldErrors={failure ? [failure] : props.field.issues()?.map((issue) => issue.message)}
+				description={uploading && status ? status : help}
 			>
 				<div class="join">
 					<label
@@ -270,11 +271,12 @@
 					</label>
 					<input
 						{...props.field.as("url")}
-						aria-invalid={!!props.field.issues()?.length || undefined}
+						aria-invalid={!!failure || !!props.field.issues()?.length || undefined}
 						id={props.field.as("url").name}
 						class="input join-item w-full user-invalid:border-error focus:border-primary focus:aria-[invalid]:border-error max-sm:text-base"
 						placeholder="https://"
 						autocomplete="off"
+						oninput={() => (failure = "")}
 					/>
 				</div>
 			</InputWrapper>
@@ -299,19 +301,25 @@
 		</div>
 
 		<div class="flex w-full shrink-0 flex-col items-center gap-1 overflow-hidden text-center" data-name="Drop instructions">
-			{#if uploadedUrl}
-				<p class="w-full text-[14px] leading-5 font-medium text-base-content">Uploaded image</p>
-				<p class="w-full text-[12px] leading-4.5 font-normal text-base-content/70">{uploadedUrl}</p>
-			{:else}
-				<p class="w-full text-[14px] leading-5 font-medium text-base-content">Drag and drop your image here</p>
+			<p class="w-full text-[14px] leading-5 font-medium text-base-content">
+				{uploadedUrl && !failure && !uploading ? "Uploaded image" : "Drag and drop your image here"}
+			</p>
+			<div id={statusId} class="w-full" role="status">
 				{#if failure}
 					<p class="w-full rounded-lg bg-error p-2 text-[12px] leading-4.5 text-balance text-error-content">
 						{failure}
 					</p>
+				{:else if uploading && status}
+					<p class="flex w-full items-center justify-center gap-2 text-[12px] leading-4.5 font-normal text-base-content/70">
+						<span class="loading loading-xs"></span>
+						{status}
+					</p>
+				{:else if uploadedUrl}
+					<p class="w-full text-[12px] leading-4.5 font-normal text-base-content/70">{uploadedUrl}</p>
 				{:else}
 					<p class="w-full text-[12px] leading-4.5 font-normal text-base-content/70">{help}</p>
 				{/if}
-			{/if}
+			</div>
 		</div>
 
 		<label

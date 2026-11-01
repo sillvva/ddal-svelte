@@ -8,6 +8,20 @@ const PNG = Buffer.from(
 	"base64"
 );
 
+export interface FilePayload {
+	name: string;
+	mimeType: string;
+	buffer: Buffer;
+}
+
+export type UploadMethod = "browse" | "drop";
+
+export function pngFile(name: string): FilePayload {
+	return { name, mimeType: "image/png", buffer: PNG };
+}
+
+export const TEXT_FILE: FilePayload = { name: "notes.txt", mimeType: "text/plain", buffer: Buffer.from("Not an image") };
+
 export const storageStatePath = "e2e/.state/storage.json";
 
 export async function installPasskeyAuthenticator(context: BrowserContext) {
@@ -80,50 +94,95 @@ export function acceptDialogs(page: Page) {
 	};
 }
 
-export async function uploadAvatar(scope: Locator) {
-	await scope.locator('input[type="file"]').setInputFiles({
-		name: "avatar.png",
-		mimeType: "image/png",
-		buffer: PNG
-	});
+/**
+ * Starts an OS-style file drag over `target`. Playwright's `dragTo` only moves elements
+ * already on the page, so the drag events are dispatched with a `DataTransfer` built here.
+ */
+export async function dragFile(target: Locator, file: FilePayload) {
+	const dataTransfer = await target.page().evaluateHandle(
+		({ name, mimeType, base64 }) => {
+			const bytes = Uint8Array.from(atob(base64), (char) => char.charCodeAt(0));
+			const transfer = new DataTransfer();
+			transfer.items.add(new File([bytes], name, { type: mimeType }));
+			return transfer;
+		},
+		{ name: file.name, mimeType: file.mimeType, base64: file.buffer.toString("base64") }
+	);
+	await target.dispatchEvent("dragenter", { dataTransfer });
+	await target.dispatchEvent("dragover", { dataTransfer });
+	return {
+		async drop() {
+			await target.dispatchEvent("drop", { dataTransfer });
+			await dataTransfer.dispose();
+		},
+		async leave() {
+			await target.dispatchEvent("dragleave", { dataTransfer });
+			await dataTransfer.dispose();
+		}
+	};
+}
+
+export async function dropFile(target: Locator, file: FilePayload) {
+	const drag = await dragFile(target, file);
+	await drag.drop();
+}
+
+async function chooseFile(dropZone: Locator, file: FilePayload, method: UploadMethod) {
+	if (method === "drop") await dropFile(dropZone, file);
+	else await dropZone.locator('input[type="file"]').setInputFiles(file);
+}
+
+export function avatarDropZone(scope: Locator) {
+	return scope.getByRole("region", { name: "Image drop zone" });
+}
+
+export function portraitDropZone(scope: Locator) {
+	return scope.getByRole("group", { name: /^Character portrait\b/ });
+}
+
+export function portraitField(scope: Locator) {
+	// The field message is a second `<label>`, so its help text or error follows "Portrait" in the name.
+	return scope.getByRole("textbox", { name: /^Portrait\b/ });
+}
+
+export async function uploadAvatar(scope: Locator, method: UploadMethod = "browse") {
+	const dropZone = avatarDropZone(scope);
+	const preview = dropZone.getByRole("img", { name: "Profile picture" });
+	await chooseFile(dropZone, pngFile("avatar.png"), method);
 	await expect
 		.poll(
 			async () => {
-				const error = scope.locator("p.bg-error");
+				const error = dropZone.locator("p.bg-error");
 				if (await error.count()) return `error:${await error.first().innerText()}`;
-				const src = await scope.getByRole("img", { name: "Profile picture" }).getAttribute("src");
-				return src ?? "";
+				return (await preview.getAttribute("src")) ?? "";
 			},
 			{ timeout: 30_000 }
 		)
 		.toMatch(/\/tmp\/users\//);
-	const src = await scope.getByRole("img", { name: "Profile picture" }).getAttribute("src");
+	const src = await preview.getAttribute("src");
 	if (!src) throw new Error("Avatar preview did not expose a stored URL");
+	await expect(dropZone.getByText("Uploaded image", { exact: true })).toBeVisible();
+	await expect(dropZone.getByText(src, { exact: true })).toBeVisible();
 	return src;
 }
 
-export async function uploadCharacterImage(scope: Locator) {
-	await scope.getByRole("button", { name: "Upload", exact: true }).click();
-	await scope.locator('input[type="file"]').setInputFiles({
-		name: "portrait.png",
-		mimeType: "image/png",
-		buffer: PNG
-	});
-	// A finished upload is written into the Portrait text field. `getByLabel("Portrait")`
-	// also matches the drop target and the Upload/URL toggle.
-	const portrait = scope.getByRole("textbox", { name: "Portrait", exact: true });
+export async function uploadCharacterImage(scope: Locator, method: UploadMethod = "browse") {
+	const dropZone = portraitDropZone(scope);
+	const portrait = portraitField(scope);
+	await chooseFile(dropZone, pngFile("portrait.png"), method);
 	await expect
 		.poll(
 			async () => {
-				const error = scope.locator("p.bg-error");
+				const error = dropZone.locator(".bg-error");
 				if (await error.count()) return `error:${await error.first().innerText()}`;
-				if ((await portrait.count()) === 0) return "";
-				return portrait.inputValue({ timeout: 1_000 });
+				return portrait.inputValue();
 			},
 			{ timeout: 30_000 }
 		)
 		.toMatch(/\/tmp\/users\//);
-	return portrait.inputValue();
+	const src = await portrait.inputValue();
+	await expect(dropZone.getByRole("img", { name: "Character portrait", exact: true })).toHaveAttribute("src", src);
+	return src;
 }
 
 export async function openSettings(page: Page, handle: string) {
