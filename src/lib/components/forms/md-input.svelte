@@ -128,7 +128,9 @@
 				headers: { "content-type": prepared.data.contentType }
 			});
 			if (!uploaded.ok) {
-				throw new Error(uploaded.status === 403 ? "Storage rejected the upload. Try the image again." : "The upload did not finish.");
+				throw new Error(
+					uploaded.status === 403 ? "Storage rejected the upload. Try the image again." : "The upload did not finish."
+				);
 			}
 
 			const completed = await API.images.actions.completeNoteImage({ uploadId: prepared.data.uploadId });
@@ -244,7 +246,9 @@
 {#if !preview || mode !== "preview"}
 	<label for={name} class="fieldset-label justify-between">
 		{#if issues?.length}
-			<span class="rounded-lg bg-error px-2 py-1 text-pretty text-error-content">{issues}</span>
+			<span class="rounded-lg bg-error px-2 py-1 text-pretty text-error-content"
+				>{issues.map((issue) => issue.message).join(" ")}</span
+			>
 		{:else if pending > 0}
 			<span class="flex items-center gap-2" role="status">
 				<span class="loading loading-xs"></span>
