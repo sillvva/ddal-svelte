@@ -141,13 +141,3 @@ export async function saveStorageState(context: BrowserContext) {
 	mkdirSync(dirname(storageStatePath), { recursive: true });
 	await context.storageState({ path: storageStatePath });
 }
-
-export function characterIdFromUrl(url: string) {
-	const match = new URL(url).pathname.match(/^\/characters\/([0-9a-f-]{36})$/iu);
-	return match?.[1] ?? null;
-}
-
-export function logIdFromHref(href: string | null) {
-	const match = href?.match(/\/log\/([0-9a-f-]{36})/iu) ?? href?.match(/^\/dm-logs\/([0-9a-f-]{36})/iu);
-	return match?.[1] ?? null;
-}

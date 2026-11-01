@@ -1,6 +1,5 @@
 import { expect, type Page } from "@playwright/test";
 import { keyFromPublicUrl } from "./storage.ts";
-import { characterIdFromUrl, logIdFromHref } from "./ui.ts";
 
 export const RECORD_ID = "[0-9a-f-]{36}";
 
@@ -29,6 +28,11 @@ export async function createCharacter(page: Page, fields: CharacterFields) {
 	const id = characterIdFromUrl(page.url());
 	if (!id) throw new Error(`Saving ${fields.name} did not open its character page`);
 	return id;
+}
+
+export function characterIdFromUrl(url: string) {
+	const match = new URL(url).pathname.match(/^\/characters\/([0-9a-f-]{36})$/iu);
+	return match?.[1] ?? null;
 }
 
 export interface GameLogFields {
@@ -118,6 +122,11 @@ export async function dmIdOnCharacterPage(page: Page, dmName: string) {
 	const id = (await page.getByRole("link", { name: dmName, exact: true }).getAttribute("href"))?.split("/").pop() ?? "";
 	expect(id, `No DM link named ${dmName}`).toMatch(new RegExp(`^${RECORD_ID}$`, "iu"));
 	return id;
+}
+
+export function logIdFromHref(href: string | null) {
+	const match = href?.match(/\/log\/([0-9a-f-]{36})/iu) ?? href?.match(/^\/dm-logs\/([0-9a-f-]{36})/iu);
+	return match?.[1] ?? null;
 }
 
 export async function setLogYear(page: Page, year: string) {
