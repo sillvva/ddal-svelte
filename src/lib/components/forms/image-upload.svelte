@@ -218,28 +218,28 @@
 	}
 </script>
 
-<div
-	class={[
-		"relative mt-2 flex flex-1 gap-3 rounded-lg border border-dashed sm:items-start",
-		acceptingDrop ? "border-primary bg-primary/10" : "border-transparent"
-	]}
-	role="group"
-	aria-label={groupLabel}
-	ondragenter={onDragEnter}
-	ondragover={onDragOver}
-	ondragleave={onDragLeave}
-	ondrop={onDrop}
->
-	{#if acceptingDrop}
-		<div
-			class="pointer-events-none absolute inset-0 z-10 flex items-center justify-center rounded-lg bg-primary/15 text-sm font-medium text-primary"
-		>
-			Drop image to upload
-		</div>
-	{/if}
-	<img src={preview} {alt} class={previewClass} />
-	<div class={["flex min-w-0 flex-1 flex-col gap-2", props.purpose === "avatar" && "h-full justify-center"]}>
-		{#if props.purpose === "character"}
+{#if props.purpose === "character"}
+	<div
+		class={[
+			"relative mt-2 flex flex-1 gap-3 rounded-lg p-2 outline outline-dashed sm:items-start",
+			acceptingDrop ? "bg-primary/10 outline-primary" : "outline-base-content/20"
+		]}
+		role="group"
+		aria-label={groupLabel}
+		ondragenter={onDragEnter}
+		ondragover={onDragOver}
+		ondragleave={onDragLeave}
+		ondrop={onDrop}
+	>
+		{#if acceptingDrop}
+			<div
+				class="pointer-events-none absolute inset-0 z-10 flex items-center justify-center rounded-lg bg-primary/15 text-sm font-medium text-primary"
+			>
+				Drop image to upload
+			</div>
+		{/if}
+		<img src={preview} {alt} class={previewClass} />
+		<div class="flex min-w-0 flex-1 flex-col gap-2">
 			<InputWrapper
 				type="url"
 				label="Portrait"
@@ -278,34 +278,61 @@
 					/>
 				</div>
 			</InputWrapper>
-		{:else}
-			<div class="mt-2 flex items-center gap-14 max-sm:gap-2">
-				<label class={["btn btn-primary btn-sm", uploading && "pointer-events-none opacity-50"]}>
-					<span class="iconify mdi--folder-open-outline"></span>
-					<span class="sm:hidden">{uploading ? "Uploading" : "Browse"}</span>
-					<span class="max-sm:hidden">{uploading ? "Uploading image…" : "Browse files"}</span>
-					<input
-						class="sr-only"
-						type="file"
-						accept="image/jpeg,image/png,image/webp,image/gif"
-						aria-describedby={statusId}
-						disabled={uploading}
-						onchange={onFile}
-					/>
-				</label>
-			</div>
-			{#if uploading && status}
-				<p id={statusId} class="flex items-center gap-2 text-pretty text-neutral-500">
-					<span class="loading loading-xs"></span>
-					{status}
-				</p>
-			{:else if failure}
-				<p id={statusId} class="rounded-lg bg-error px-2 py-1 text-pretty text-error-content">{failure}</p>
-			{:else}
-				<p id={statusId} class="text-pretty text-neutral-500">
-					{help} <span class="max-sm:hidden">Drop an image here or choose a file.</span>
-				</p>
-			{/if}
-		{/if}
+		</div>
 	</div>
-</div>
+{:else}
+	<div
+		class={[
+			"flex min-h-50.5 flex-col items-center justify-center gap-4 overflow-hidden rounded-[10px] border border-dashed p-6 transition-colors",
+			failure ? "border-error bg-error/10" : "border-primary"
+		]}
+		data-name="Image drop zone"
+		role="region"
+		aria-label="Image drop zone"
+		ondragenter={onDragEnter}
+		ondragover={onDragOver}
+		ondragleave={onDragLeave}
+		ondrop={onDrop}
+	>
+		<div class="flex shrink-0 items-center justify-center overflow-hidden rounded-xl" data-name="Upload symbol">
+			<img src={preview} {alt} class={previewClass} />
+		</div>
+
+		<div class="flex w-full shrink-0 flex-col items-center gap-1 overflow-hidden text-center" data-name="Drop instructions">
+			{#if uploadedUrl}
+				<p class="w-full text-[14px] leading-5 font-medium text-base-content">Uploaded image</p>
+				<p class="w-full text-[12px] leading-4.5 font-normal text-base-content/70">{uploadedUrl}</p>
+			{:else}
+				<p class="w-full text-[14px] leading-5 font-medium text-base-content">Drag and drop your image here</p>
+				{#if failure}
+					<p class="w-full rounded-lg bg-error p-2 text-[12px] leading-4.5 text-balance text-error-content">
+						{failure}
+					</p>
+				{:else}
+					<p class="w-full text-[12px] leading-4.5 font-normal text-base-content/70">{help}</p>
+				{/if}
+			{/if}
+		</div>
+
+		<label
+			class={[
+				"btn btn-primary focus-within:outline-2 focus-within:outline-offset-2 focus-within:outline-primary",
+				uploading && "pointer-events-none opacity-50"
+			]}
+		>
+			<span class="iconify mdi--folder-open-outline"></span>
+			{#if uploading}
+				<span class="xs:hidden">Uploading</span>
+			{/if}
+			<span class="max-xs:hidden">{uploading ? "Uploading image…" : "Browse"}</span>
+			<input
+				class="sr-only"
+				type="file"
+				accept="image/jpeg,image/png,image/webp,image/gif"
+				aria-describedby={statusId}
+				disabled={uploading}
+				onchange={onFile}
+			/>
+		</label>
+	</div>
+{/if}
