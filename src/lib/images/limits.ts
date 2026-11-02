@@ -92,10 +92,15 @@ export interface ImageStorageUsage {
 export function imageStorageView({ portraitBytes, noteBytes, quotaBytes }: ImageStorageUsage) {
 	const usedBytes = portraitBytes + noteBytes;
 	const ratio = quotaBytes > 0 ? usedBytes / quotaBytes : 1;
+	const portraitPercent = quotaBytes > 0 ? Math.min(100, (portraitBytes / quotaBytes) * 100) : 0;
+	const notePercent = quotaBytes > 0 ? Math.min(100 - portraitPercent, (noteBytes / quotaBytes) * 100) : 0;
 	return {
 		usedBytes,
 		quotaBytes,
 		percent: Math.min(100, Math.round(ratio * 100)),
+		/** Bar segment widths. Unrounded, and together never more than 100. */
+		portraitPercent,
+		notePercent,
 		tone: storageTone(ratio),
 		usedLabel: formatStorageBytes(usedBytes),
 		quotaLabel: formatStorageBytes(quotaBytes),

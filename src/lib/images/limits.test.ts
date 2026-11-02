@@ -36,4 +36,20 @@ describe("imageStorageView", () => {
 		expect(view.percent).toBe(100);
 		expect(view.tone).toBe("error");
 	});
+
+	it("splits the bar into portrait and note segments", () => {
+		const view = imageStorageView({ portraitBytes: 5 * MB, noteBytes: 10 * MB, quotaBytes });
+		expect(view.portraitPercent).toBe(10);
+		expect(view.notePercent).toBe(20);
+	});
+
+	it("keeps the segments within the bar when over quota", () => {
+		const view = imageStorageView({ portraitBytes: 40 * MB, noteBytes: 40 * MB, quotaBytes });
+		expect(view.portraitPercent).toBe(80);
+		expect(view.notePercent).toBe(20);
+
+		const portraitsOnly = imageStorageView({ portraitBytes: 60 * MB, noteBytes: 5 * MB, quotaBytes });
+		expect(portraitsOnly.portraitPercent).toBe(100);
+		expect(portraitsOnly.notePercent).toBe(0);
+	});
 });

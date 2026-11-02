@@ -230,27 +230,57 @@
 					{@const storage = await API.images.queries.storage()}
 					{#if storage.quotaBytes !== null}
 						{@const usage = imageStorageView({ ...storage, quotaBytes: storage.quotaBytes })}
-						<div class="my-2 flex flex-1 flex-col gap-1 px-2">
+						{@const colors = {
+							primary: {
+								portraits: "bg-blue-900",
+								notes: "bg-blue-600"
+							},
+							warning: {
+								portraits: "bg-yellow-900",
+								notes: "bg-yellow-600"
+							},
+							error: {
+								portraits: "bg-red-900",
+								notes: "bg-red-600"
+							}
+						}}
+						<ul class="menu w-full menu-lg px-0 [&_li>*]:px-2">
+							<li class="menu-title">
+								<span class="font-bold">Image Storage Usage</span>
+							</li>
+						</ul>
+						<div class="mb-2 flex flex-1 flex-col gap-1 px-2">
 							<div class="flex items-baseline justify-between gap-3 text-xs text-neutral-500">
-								<span id="image-storage-label">Image storage used</span>
-								<span>{usage.usedLabel}/{usage.quotaLabel} ({usage.percent}%)</span>
+								<span id="image-storage-label" class="text-base-content">{usage.percent}% used</span>
+								<span class="text-base-content">
+									{usage.usedLabel} / {usage.quotaLabel}
+								</span>
 							</div>
-							<progress
-								class={[
-									"progress",
-									usage.tone === "error" && "progress-error",
-									usage.tone === "warning" && "progress-warning",
-									usage.tone === "primary" && "progress-primary"
-								]}
-								value={usage.usedBytes}
-								max={usage.quotaBytes}
+							<div
+								class="flex h-2 w-full overflow-hidden rounded-box bg-base-content/20"
+								role="meter"
+								aria-valuemin={0}
+								aria-valuemax={usage.quotaBytes}
+								aria-valuenow={Math.min(usage.usedBytes, usage.quotaBytes)}
 								aria-labelledby="image-storage-label"
 								aria-describedby="image-storage-breakdown"
 								aria-valuetext={`${usage.usedLabel} of ${usage.quotaLabel} used, ${usage.percent}%`}
-							></progress>
+							>
+								<div
+									class={["h-full transition-[width]", colors[usage.tone].portraits]}
+									style:width="{usage.portraitPercent}%"
+								></div>
+								<div class={["h-full transition-[width]", colors[usage.tone].notes]} style:width="{usage.notePercent}%"></div>
+							</div>
 							<div id="image-storage-breakdown" class="flex flex-wrap justify-between gap-x-3 text-xs text-neutral-500">
-								<span>Characters: {usage.portraitsLabel}</span>
-								<span>Notes: {usage.notesLabel}</span>
+								<span class="flex items-center gap-1">
+									<span class={["size-2 rounded-full", colors[usage.tone].portraits]} aria-hidden="true"></span>
+									Characters: {usage.portraitsLabel}
+								</span>
+								<span class="flex items-center gap-1">
+									<span class={["size-2 rounded-full", colors[usage.tone].notes]} aria-hidden="true"></span>
+									Notes: {usage.notesLabel}
+								</span>
 							</div>
 						</div>
 					{/if}
