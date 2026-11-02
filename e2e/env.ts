@@ -87,7 +87,7 @@ export async function assertAppEnvMatches(baseURL: string, env: E2EEnv) {
 		if (actual?.replace(/\/+$/, "") === expected.replace(/\/+$/, "")) continue;
 		throw new E2EGuardError(
 			`Refusing to run e2e. The app at ${origin} has ${name}=${actual ?? "<unset>"}, but the tests have ${name}=${expected}. ` +
-				`Playwright reused a server started with a different environment. Stop whatever is listening on ${origin}, including forwarded ports, and rerun.`
+				`Playwright reused a server started with a different environment. Stop whatever is listening on ${origin} with 'pnpm dev:kill' and rerun.`
 		);
 	}
 }
