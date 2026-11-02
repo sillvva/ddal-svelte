@@ -9,11 +9,11 @@ export const IMAGE_STORAGE_LIMITS = {
 /** Limits for character portraits stored in R2. */
 export const CHARACTER_IMAGE_LIMITS = {
 	/** Largest file the browser will read before resizing. */
-	maxOriginalBytes: 2 * 1024 * 1024,
+	maxOriginalBytes: 8 * 1024 * 1024,
 	/** Largest object accepted into the bucket. Enforced again when the upload is confirmed. */
 	maxStoredBytes: Math.floor(0.5 * 1024 * 1024),
 	/** Longest edge after the browser resize. The portrait keeps its aspect ratio. */
-	maxEdgePx: 800,
+	maxEdgePx: 1000,
 	/** Reject decoded images above this pixel count before drawing them. */
 	maxPixels: 24_000_000,
 	/** Issued upload rows per account, portraits and avatars together. */
@@ -32,7 +32,7 @@ export const CHARACTER_IMAGE_LIMITS = {
 export const AVATAR_IMAGE_LIMITS = {
 	maxOriginalBytes: CHARACTER_IMAGE_LIMITS.maxOriginalBytes,
 	/** 256px WebP or JPEG stays under this after the quality steps in the resizer. */
-	maxStoredBytes: 100 * 1024,
+	maxStoredBytes: CHARACTER_IMAGE_LIMITS.maxStoredBytes,
 	maxEdgePx: 256,
 	maxPixels: CHARACTER_IMAGE_LIMITS.maxPixels,
 	acceptedInputTypes: CHARACTER_IMAGE_LIMITS.acceptedInputTypes
@@ -44,9 +44,9 @@ export const AVATAR_IMAGE_LIMITS = {
  * when no log of the owner references them any more.
  */
 export const NOTE_IMAGE_LIMITS = {
-	maxOriginalBytes: 8 * 1024 * 1024,
-	maxStoredBytes: Math.floor(0.5 * 1024 * 1024),
-	maxEdgePx: 1200,
+	maxOriginalBytes: CHARACTER_IMAGE_LIMITS.maxOriginalBytes,
+	maxStoredBytes: CHARACTER_IMAGE_LIMITS.maxStoredBytes,
+	maxEdgePx: CHARACTER_IMAGE_LIMITS.maxEdgePx,
 	maxPixels: CHARACTER_IMAGE_LIMITS.maxPixels,
 	/** Distinct uploaded images one note may reference. Pending uploads count toward this in the browser. */
 	maxImagesPerNote: 10,
