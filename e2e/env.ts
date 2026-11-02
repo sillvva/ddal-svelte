@@ -19,7 +19,11 @@ export interface E2EEnv {
 	PLAYWRIGHT_BASE_URL?: string;
 	DATABASE_URL?: string;
 	REMOTE_DB_URL?: string;
+	R2_PUBLIC_URL?: string;
 }
+
+/** Public variables the app and the test process must agree on. Specs build and parse URLs from them. */
+const SHARED_PUBLIC_ENV = ["PUBLIC_URL", "R2_PUBLIC_URL"] as const;
 
 export function loadLocalEnv(root = process.cwd()) {
 	for (const file of ENV_FILES) {
@@ -63,6 +67,29 @@ export function assertLocalE2E(env: E2EEnv) {
 
 export function localBaseURL() {
 	return process.env.PLAYWRIGHT_BASE_URL || process.env.PUBLIC_URL || "http://localhost:5173";
+}
+
+/**
+ * Outside CI, Playwright reuses any server already listening on the base URL, including
+ * one started with a different environment or a port forwarded from another machine.
+ * SvelteKit serves the app's public variables at `/_app/env.js`.
+ */
+export async function assertAppEnvMatches(baseURL: string, env: E2EEnv) {
+	const origin = new URL(baseURL).origin;
+	const response = await fetch(new URL("/_app/env.js", origin));
+	if (!response.ok) throw new E2EGuardError(`Refusing to run e2e. ${origin}/_app/env.js answered ${response.status}.`);
+	const source = await response.text();
+	for (const name of SHARED_PUBLIC_ENV) {
+		const expected = env[name];
+		if (!expected) continue;
+		const literal = source.match(new RegExp(`\\b${name}:("(?:[^"\\\\]|\\\\.)*")`))?.[1];
+		const actual = literal ? (JSON.parse(literal) as string) : undefined;
+		if (actual?.replace(/\/+$/, "") === expected.replace(/\/+$/, "")) continue;
+		throw new E2EGuardError(
+			`Refusing to run e2e. The app at ${origin} has ${name}=${actual ?? "<unset>"}, but the tests have ${name}=${expected}. ` +
+				`Playwright reused a server started with a different environment. Stop whatever is listening on ${origin}, including forwarded ports, and rerun.`
+		);
+	}
 }
 
 function assertLocalHttpUrl(value: string, label: string) {

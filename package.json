@@ -9,6 +9,8 @@
 		"clean:install": "rm -rf node_modules pnpm-lock.yaml && pnpm install",
 		"clean:dev": "rm -rf .svelte-kit && pnpm dev",
 		"dev": "pnpm start:supabase && vite dev",
+		"dev:process": "lsof -i :5173",
+		"dev:kill": "kill -9 $(lsof -t -i :5173)",
 		"op:dev": "pnpm start:supabase && op run --environment 4iuxdmr3wcxhjj7m7gd4qen46u -- vite dev",
 		"op:db:diff": "op run --environment 4iuxdmr3wcxhjj7m7gd4qen46u -- sh -c 'supabase db diff --db-url \"$REMOTE_DB_URL\"'",
 		"op:db:push": "op run --environment 4iuxdmr3wcxhjj7m7gd4qen46u -- sh -c 'supabase db push --db-url \"$REMOTE_DB_URL\"'",
