@@ -122,7 +122,10 @@ test("log notes: pasted and dropped images, promotion on save, and removal", asy
 		await expect(breakdown).toContainText("Characters: 0 MB");
 		await expect(breakdown).toContainText(/Notes: \d+(\.\d+)? [KM]B/u);
 		await expect(breakdown).not.toContainText("Notes: 0 MB");
-		await expect(page.locator("aside#settings")).toContainText(/Image storage used\s*\d+(\.\d+)? [KM]B\/50 MB/u);
+		await expect(page.locator("aside#settings").getByRole("meter")).toHaveAttribute(
+			"aria-valuetext",
+			/^\d+(\.\d+)? [KM]B of 50 MB used, \d+%$/u
+		);
 		await closeSettings(page);
 	});
 
@@ -306,7 +309,7 @@ test("log notes: portraits and note images share one storage limit", async ({ us
 		await page.reload();
 		await waitForHydration(page);
 		await openSettings(page, handle);
-		await expect(page.locator("aside#settings")).toContainText(/Image storage used\s*49 MB\/50 MB \(98%\)/u);
+		await expect(page.locator("aside#settings").getByRole("meter")).toHaveAttribute("aria-valuetext", "49 MB of 50 MB used, 98%");
 		const breakdown = page.locator("aside#settings #image-storage-breakdown");
 		await expect(breakdown).toContainText("Characters: 49 MB");
 		await expect(breakdown).toContainText(/Notes: \d+ KB/u);
