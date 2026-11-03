@@ -2,10 +2,13 @@ import { findNoteImageUrls } from "#lib/images/note-images.js";
 import type { DungeonMasterId, ItemId, LogDraftData, UserId } from "#lib/schemas.js";
 import { v7 } from "uuid";
 
-/** How many drafts one account can keep. Expired rows are removed before this is checked. */
+/** How many drafts one account can keep. Expired drafts don't count. */
 export const LOG_DRAFT_LIMIT = 50;
 
-/** A draft disappears this long after it was last saved. Editing starts the window over. */
+/**
+ * A draft disappears this long after it was last saved. Editing starts the window over.
+ * The `delete_expired_log_drafts` database function repeats this as `interval '14 days'`.
+ */
 export const LOG_DRAFT_TTL_MS = 14 * 24 * 60 * 60 * 1000;
 
 export function logDraftExpiryCutoff(now = Date.now()) {

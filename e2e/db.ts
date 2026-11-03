@@ -159,7 +159,22 @@ export async function logDraftRow(id: string) {
 	return rows[0] ?? null;
 }
 
-/** Ages a draft past its 14-day lifetime without waiting for the sweep. */
+/** Runs what the daily `delete-expired-log-drafts` pg_cron job runs. Returns the number deleted. */
+export async function deleteExpiredLogDrafts() {
+	const rows = await withSql((sql) => sql<{ deleted: number }[]>`select public.delete_expired_log_drafts() as deleted`);
+	return rows[0]?.deleted ?? 0;
+}
+
+export async function logDraftExpiryJob() {
+	const rows = await withSql(
+		(sql) => sql<{ schedule: string; command: string; active: boolean }[]>`
+			select schedule, command, active from cron.job where jobname = 'delete-expired-log-drafts'
+		`
+	);
+	return rows;
+}
+
+/** Ages a draft past its 14-day lifetime without waiting for the daily cleanup job. */
 export async function expireLogDraft(id: string) {
 	await withSql((sql) => sql`update log_draft set updated_at = now() - interval '15 days' where id = ${id}`);
 }

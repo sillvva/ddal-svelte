@@ -8,7 +8,7 @@ import { AppLog } from "#lib/server/effect/logging.js";
 import { parse } from "#lib/server/effect/util.js";
 import { R2_PUBLIC_URL } from "$app/env/public";
 import { isTupleOf } from "@sillvva/utils";
-import { and, eq, gte, lt, sql } from "drizzle-orm";
+import { and, eq, gte, sql } from "drizzle-orm";
 import { Context, Data, Effect, Layer } from "effect";
 import { v7 } from "uuid";
 
@@ -23,13 +23,11 @@ function integer(value: unknown) {
 	return Number.isFinite(parsed) ? parsed : 0;
 }
 
-/** Rows past the lifetime are treated as gone even before the sweep deletes them. */
+/**
+ * Rows past the lifetime are treated as gone. The daily `delete-expired-log-drafts` pg_cron job
+ * deletes them later (`supabase/migrations/20261103190000_log_draft_expiry_cron.sql`).
+ */
 const notExpired = () => gte(logDrafts.updatedAt, logDraftExpiryCutoff());
-
-const deleteExpiredOn = (executor: Database | Transaction) =>
-	runQuery(
-		executor.delete(logDrafts).where(lt(logDrafts.updatedAt, logDraftExpiryCutoff())).returning({ id: logDrafts.id })
-	).pipe(Effect.map((rows) => rows.length));
 
 const countDrafts = (executor: Database | Transaction, userId: UserId) =>
 	runQuery(
@@ -66,15 +64,6 @@ export class LogDraftService extends Context.Service<LogDraftService>()("LogDraf
 	make: Effect.fn("LogDraftService")(function* () {
 		const { db, transaction } = yield* DBService;
 
-		const deleteExpired = Effect.fn("LogDraftService.deleteExpired")(function* () {
-			return yield* deleteExpiredOn(db).pipe(
-				Effect.tap((count) => (count ? AppLog.info("LogDraftService.deleteExpired", { count }) : Effect.void)),
-				Effect.tapError((error) =>
-					AppLog.error("LogDraftService.deleteExpired", { message: error.message, error: serializeError(error) })
-				)
-			);
-		});
-
 		/** Any signed-in user can read a draft by id. */
 		const read = Effect.fn("LogDraftService.read")(function* (id: LogDraftId) {
 			return yield* runQuery(
@@ -109,7 +98,6 @@ export class LogDraftService extends Context.Service<LogDraftService>()("LogDraf
 			return yield* transaction(
 				Effect.fn(function* (tx) {
 					yield* lockDraftUser(tx, user.id);
-					yield* deleteExpiredOn(tx);
 					const count = yield* countDrafts(tx, user.id);
 					if (count >= LOG_DRAFT_LIMIT) {
 						return yield* new LogDraftError(
@@ -164,7 +152,7 @@ export class LogDraftService extends Context.Service<LogDraftService>()("LogDraf
 			);
 		});
 
-		return { deleteExpired, read, readOwned, create, update, remove };
+		return { read, readOwned, create, update, remove };
 	})()
 }) {
 	static readonly layer = Layer.effect(this, this.make);

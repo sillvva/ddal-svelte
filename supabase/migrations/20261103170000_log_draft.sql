@@ -6,7 +6,7 @@
 -- in the notes as links; new uploads are refused because a draft expires.
 --
 -- The share link is `/draft/<id>`. Editing keeps the same id and sets `updated_at`, which
--- restarts the 14-day lifetime. The app deletes rows once `updated_at` is older than 14 days.
+-- restarts the 14-day lifetime. A daily pg_cron job deletes expired rows (20261103190000).
 
 create table "public"."log_draft" (
 	"id" uuid not null,

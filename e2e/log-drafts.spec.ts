@@ -1,5 +1,15 @@
 import type { ConsoleMessage, Locator, Page } from "@playwright/test";
-import { dmsForUser, expireLogDraft, insertDm, logDraftRow, logIdsForCharacter, logRow, magicItemsGainedIn } from "./db.ts";
+import {
+	deleteExpiredLogDrafts,
+	dmsForUser,
+	expireLogDraft,
+	insertDm,
+	logDraftExpiryJob,
+	logDraftRow,
+	logIdsForCharacter,
+	logRow,
+	magicItemsGainedIn
+} from "./db.ts";
 import { expect, test } from "./fixtures.ts";
 import {
 	addedItemCards,
@@ -261,5 +271,16 @@ test("log drafts: share as a DM, open the link, fill a log, and keep edits with 
 		await page.goto(`/characters/${characterId}`);
 		await expect(page.getByRole("link", { name: "New Log" })).toBeVisible();
 		await expect(newLogMenu(page)).toHaveCount(0);
+	});
+
+	await test.step("the daily database job deletes expired drafts and keeps live ones", async () => {
+		expect(await logDraftExpiryJob()).toEqual([
+			{ schedule: "0 4 * * *", command: "select public.delete_expired_log_drafts()", active: true }
+		]);
+		// Reads only hide an expired draft. Deleting it is the job's work.
+		expect(await logDraftRow(copiedId)).not.toBeNull();
+		expect(await deleteExpiredLogDrafts()).toBeGreaterThanOrEqual(1);
+		expect(await logDraftRow(copiedId)).toBeNull();
+		expect(await logDraftRow(draftId)).not.toBeNull();
 	});
 });
