@@ -4,6 +4,7 @@ import { DBService } from "#lib/server/db/index.js";
 import { AppLog } from "#lib/server/effect/logging.js";
 import { createAppRuntime, run } from "#lib/server/effect/runtime.js";
 import { AuthService } from "#lib/server/effect/services/auth.js";
+import { LogDraftService } from "#lib/server/effect/services/log-drafts.js";
 import { building } from "$app/env";
 import { sequence, type Handle, type HandleServerError, type ServerInit } from "@sveltejs/kit/hooks";
 import { svelteKitHandler } from "better-auth/svelte-kit";
@@ -107,16 +108,34 @@ export const handleError: HandleServerError = (input) => {
 	});
 };
 
+/** Deletes drafts that have not been edited in 14 days. Reads also delete expired rows. */
+function sweepExpiredLogDrafts() {
+	void appRuntime
+		.runPromise(
+			Effect.gen(function* () {
+				const Drafts = yield* LogDraftService;
+				return yield* Drafts.deleteExpired();
+			})
+		)
+		.catch((err) => {
+			console.error("Could not delete expired log drafts:", err);
+		});
+}
+
 export const init: ServerInit = () => {
 	if (globalThis.initialized) return;
 	globalThis.initialized = true;
 
 	console.log("Initializing server...");
+	sweepExpiredLogDrafts();
+	const logDraftSweep = setInterval(sweepExpiredLogDrafts, 60 * 60 * 1000);
+	logDraftSweep.unref();
 
 	const gracefulShutdown = async (signal: string) => {
 		console.log("\nShut down signal received:", chalk.bold(signal));
 
 		try {
+			clearInterval(logDraftSweep);
 			console.log("Disposing app runtime...");
 			await appRuntime.dispose();
 			console.log("Ending DB connection...");

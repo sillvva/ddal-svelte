@@ -1,4 +1,5 @@
 <script lang="ts">
+	import CopyLogDraft from "#lib/components/copy-log-draft.svelte";
 	import Error from "#lib/components/error.svelte";
 	import AddDropItems from "#lib/components/forms/add-drop-items.svelte";
 	import Combobox from "#lib/components/forms/combobox.svelte";
@@ -11,7 +12,9 @@
 	import Submit from "#lib/components/forms/submit.svelte";
 	import Head from "#lib/components/head.svelte";
 	import NavMenu from "#lib/components/nav-menu.svelte";
+	import PopulateLogDraft from "#lib/components/populate-log-draft.svelte";
 	import { defaultDM, getItemEntities } from "#lib/entities.js";
+	import { seasonForAdvancement } from "#lib/log-draft.js";
 	import { proxify } from "#lib/factories.svelte.js";
 	import * as API from "#lib/remote/index.js";
 	import { type DungeonMasterId, logSchema } from "#lib/schemas.js";
@@ -29,6 +32,7 @@
 	{const schema = logSchema}
 	{const form = API.logs.forms.saveCharacter}
 	{const firstLog = $derived(page.url.searchParams.get("firstLog") === "true")}
+	{const fromDraft = $derived(page.url.searchParams.get("fromDraft") === "1")}
 	{const draft = $derived(page.url.searchParams.get("draft") ?? "")}
 	{const initialErrors = $derived(params.logId !== "new")}
 	{#if params.logId}
@@ -49,12 +53,31 @@
 				{ title: character.name, url: `/characters/${character.id}` },
 				{ title: log.name || "New Log", url: `/characters/${character.id}/log/${log.id}` }
 			]}
-		/>
+		>
+			{#snippet actions()}
+				{#if params.logId !== "new"}
+					<CopyLogDraft logId={params.logId} />
+				{/if}
+			{/snippet}
+		</NavMenu>
 
 		{let data = $derived(proxify(log))}
 		<RemoteForm {schema} {form} {data} {initialErrors}>
 			{#snippet children(ctx)}
 				{const { form, initial } = $derived(ctx)}
+				{let season = $state(seasonForAdvancement(log))}
+				{#if params.logId === "new" && !firstLog}
+					<div class="col-span-12 mb-2">
+						<PopulateLogDraft
+							form={ctx}
+							{data}
+							auto={fromDraft}
+							onapplied={(draft) => {
+								season = seasonForAdvancement(draft);
+							}}
+						/>
+					</div>
+				{/if}
 				<Input field={form.fields.id} hidden />
 				<Input field={form.fields.characterId} hidden />
 				<Input field={form.fields.characterName} hidden />
@@ -103,7 +126,6 @@
 				{const { magicItems, storyAwards } = $derived(
 					getItemEntities(character, { excludeDropped: true, logId: log.id, asOf: form.fields.date.value() })
 				)}
-				{let season = $state(log.experience ? 1 : log.acp ? 8 : 9)}
 				{#if data.type === "game"}
 					{#if !firstLog}
 						{const dms = $derived(await API.dms.queries.getAllWithoutLogs())}

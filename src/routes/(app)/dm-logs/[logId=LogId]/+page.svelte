@@ -1,4 +1,5 @@
 <script lang="ts">
+	import CopyLogDraft from "#lib/components/copy-log-draft.svelte";
 	import Error from "#lib/components/error.svelte";
 	import AddDropItems from "#lib/components/forms/add-drop-items.svelte";
 	import Combobox from "#lib/components/forms/combobox.svelte";
@@ -43,7 +44,13 @@
 				{ title: "DM Logs", url: "/dm-logs" },
 				{ title: log.name || "New Log", url: `/dm-logs/${log.id}` }
 			]}
-		/>
+		>
+			{#snippet actions()}
+				{#if params.logId !== "new"}
+					<CopyLogDraft logId={params.logId} />
+				{/if}
+			{/snippet}
+		</NavMenu>
 
 		{let data = $derived(proxify(log))}
 		<RemoteForm {schema} {form} {data} {initialErrors}>

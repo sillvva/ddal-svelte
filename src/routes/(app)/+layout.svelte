@@ -8,6 +8,7 @@
 	import { BLANK_CHARACTER } from "#lib/constants.js";
 	import * as API from "#lib/remote/index.js";
 	import { getGlobal } from "#lib/stores.svelte.js";
+	import { logDraftMemory } from "#lib/log-draft-storage.svelte.js";
 	import { hotkey, parseEffectResult } from "#lib/util.js";
 	import { afterNavigate, goto } from "$app/navigation";
 	import { navigating, page } from "$app/state";
@@ -37,6 +38,7 @@
 	}
 
 	onMount(() => {
+		logDraftMemory().load();
 		const hasCookie = document.cookie.includes("session-token");
 		if (!user && hasCookie) location.reload();
 	});

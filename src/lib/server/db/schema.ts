@@ -1,5 +1,16 @@
 import type { ProviderId } from "#lib/constants.js";
-import type { AppLogId, CharacterId, ImageUploadId, DungeonMasterId, ItemId, LogId, PasskeyId, UserId } from "#lib/schemas.js";
+import type {
+	AppLogId,
+	CharacterId,
+	DungeonMasterId,
+	ImageUploadId,
+	ItemId,
+	LogDraftData,
+	LogDraftId,
+	LogId,
+	PasskeyId,
+	UserId
+} from "#lib/schemas.js";
 import type { Annotations } from "#lib/server/effect/logging.js";
 import { eq, isNotNull } from "drizzle-orm";
 import * as pg from "drizzle-orm/pg-core";
@@ -429,6 +440,36 @@ export const logImages = pg.pgTable(
 			.$default(() => new Date())
 	},
 	(table) => [pg.primaryKey({ columns: [table.logId, table.uploadId] }), pg.index("log_image_upload_idx").on(table.uploadId)]
+);
+
+/**
+ * A log prepared for someone else to copy into their own character.
+ * `data` is a log draft payload (no log id, character, or image rows). The link is this row's id.
+ * Rows are removed 14 days after `updated_at`. Editing the draft resets that clock.
+ */
+export type LogDraft = typeof logDrafts.$inferSelect;
+export type InsertLogDraft = typeof logDrafts.$inferInsert;
+export const logDrafts = pg.pgTable(
+	"log_draft",
+	{
+		id: pg.uuid().primaryKey().$type<LogDraftId>(),
+		userId: pg
+			.uuid("user_id")
+			.notNull()
+			.$type<UserId>()
+			.references(() => user.id, { onUpdate: "cascade", onDelete: "cascade" }),
+		data: pg.jsonb().$type<LogDraftData>().notNull(),
+		createdAt: pg
+			.timestamp("created_at", { mode: "date", withTimezone: true })
+			.notNull()
+			.$default(() => new Date()),
+		updatedAt: pg
+			.timestamp("updated_at", { mode: "date", withTimezone: true })
+			.notNull()
+			.$default(() => new Date())
+			.$onUpdateFn(() => new Date())
+	},
+	(table) => [pg.index("log_draft_user_id_idx").on(table.userId), pg.index("log_draft_updated_at_idx").on(table.updatedAt)]
 );
 
 const logLevel = pg.pgEnum("logLevel", ["ALL", "FATAL", "ERROR", "WARN", "INFO", "DEBUG", "TRACE", "OFF"]);
