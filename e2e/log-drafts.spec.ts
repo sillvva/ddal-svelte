@@ -1,10 +1,10 @@
 import type { ConsoleMessage, Locator, Page } from "@playwright/test";
 import {
+	cronJob,
 	deleteExpiredLogDrafts,
 	dmsForUser,
 	expireLogDraft,
 	insertDm,
-	logDraftExpiryJob,
 	logDraftRow,
 	logIdsForCharacter,
 	logRow,
@@ -274,7 +274,7 @@ test("log drafts: share as a DM, open the link, fill a log, and keep edits with 
 	});
 
 	await test.step("the daily database job deletes expired drafts and keeps live ones", async () => {
-		expect(await logDraftExpiryJob()).toEqual([
+		expect(await cronJob("delete-expired-log-drafts")).toEqual([
 			{ schedule: "0 4 * * *", command: "select public.delete_expired_log_drafts()", active: true }
 		]);
 		// Reads only hide an expired draft. Deleting it is the job's work.

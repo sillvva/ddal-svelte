@@ -165,13 +165,43 @@ export async function deleteExpiredLogDrafts() {
 	return rows[0]?.deleted ?? 0;
 }
 
-export async function logDraftExpiryJob() {
-	const rows = await withSql(
-		(sql) => sql<{ schedule: string; command: string; active: boolean }[]>`
-			select schedule, command, active from cron.job where jobname = 'delete-expired-log-drafts'
-		`
-	);
-	return rows;
+export interface CronJobRow {
+	schedule: string;
+	command: string;
+	active: boolean;
+}
+
+export async function cronJob(name: string) {
+	return withSql((sql) => sql<CronJobRow[]>`select schedule, command, active from cron.job where jobname = ${name}`);
+}
+
+/** Adds app log rows dated `ageMs` before now, in UTC like the app writes them. Returns their ids. */
+export async function insertAppLogs(label: string, ages: readonly number[]) {
+	const ids = ages.map(() => v7());
+	await withSql(async (sql) => {
+		for (const [index, ageMs] of ages.entries()) {
+			await sql`
+				insert into applog (id, label, level, annotations, "timestamp")
+				values (${ids[index] ?? ""}, ${label}, 'INFO', '{}'::jsonb, (now() at time zone 'utc') - ${`${ageMs} milliseconds`}::interval)
+			`;
+		}
+	});
+	return ids;
+}
+
+export async function appLogIds(label: string) {
+	const rows = await withSql((sql) => sql<{ id: string }[]>`select id from applog where label = ${label} order by id`);
+	return rows.map((row) => row.id);
+}
+
+export async function deleteAppLogs(label: string) {
+	await withSql((sql) => sql`delete from applog where label = ${label}`);
+}
+
+/** Runs what the daily `delete-expired-applogs` pg_cron job runs. Returns the number deleted. */
+export async function deleteExpiredAppLogs() {
+	const rows = await withSql((sql) => sql<{ deleted: number }[]>`select public.delete_expired_applogs() as deleted`);
+	return rows[0]?.deleted ?? 0;
 }
 
 /** Ages a draft past its 14-day lifetime without waiting for the daily cleanup job. */
