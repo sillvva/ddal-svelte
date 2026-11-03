@@ -204,6 +204,46 @@ export async function deleteExpiredAppLogs() {
 	return rows[0]?.deleted ?? 0;
 }
 
+/** A bare user row for database-only tests. The `e2e-` name lets the run cleanup remove it. */
+export async function insertBareUser(handle: string) {
+	const id = v7();
+	await withSql((sql) => sql`insert into "user" (id, name, email) values (${id}, ${handle}, ${`${handle}@example.com`})`);
+	return id;
+}
+
+export async function deleteUser(id: string) {
+	await withSql((sql) => sql`delete from "user" where id = ${id}`);
+}
+
+/**
+ * Adds sessions whose `expires` is `offsetMs` from now, in UTC like the app writes it.
+ * A negative offset is a session that already expired. Returns their ids.
+ */
+export async function insertSessions(userId: string, offsets: readonly number[]) {
+	const ids = offsets.map(() => v7());
+	await withSql(async (sql) => {
+		for (const [index, offsetMs] of offsets.entries()) {
+			const id = ids[index] ?? "";
+			await sql`
+				insert into session (id, "sessionToken", "userId", expires)
+				values (${id}, ${`e2e-${id}`}, ${userId}, (now() at time zone 'utc') + ${`${offsetMs} milliseconds`}::interval)
+			`;
+		}
+	});
+	return ids;
+}
+
+export async function sessionIds(userId: string) {
+	const rows = await withSql((sql) => sql<{ id: string }[]>`select id from session where "userId" = ${userId} order by id`);
+	return rows.map((row) => row.id);
+}
+
+/** Runs what the daily `delete-expired-sessions` pg_cron job runs. Returns the number deleted. */
+export async function deleteExpiredSessions() {
+	const rows = await withSql((sql) => sql<{ deleted: number }[]>`select public.delete_expired_sessions() as deleted`);
+	return rows[0]?.deleted ?? 0;
+}
+
 /** Ages a draft past its 14-day lifetime without waiting for the daily cleanup job. */
 export async function expireLogDraft(id: string) {
 	await withSql((sql) => sql`update log_draft set updated_at = now() - interval '15 days' where id = ${id}`);
