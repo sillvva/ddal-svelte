@@ -1,6 +1,4 @@
 <script lang="ts">
-	import { goto } from "$app/navigation";
-	import { page } from "$app/state";
 	import Head from "#lib/components/head.svelte";
 	import Items from "#lib/components/items.svelte";
 	import Markdown from "#lib/components/markdown.svelte";
@@ -12,6 +10,8 @@
 	import type { FullLogData } from "#lib/server/effect/services/logs.js";
 	import { getGlobal } from "#lib/stores.svelte.js";
 	import { createTransition, download, formatDate, hotkey, newestDraftId, parseEffectResult } from "#lib/util.js";
+	import { goto } from "$app/navigation";
+	import { page } from "$app/state";
 	import { sorter } from "@sillvva/utils";
 	import { SvelteSet } from "svelte/reactivity";
 
@@ -137,7 +137,7 @@
 						<div class="content bg-base-200">
 							<a
 								href={log.isDmLog ? `/dm-logs/${log.id}` : `/characters/${log.characterId}/log/${log.id}`}
-								class="row-link font-semibold whitespace-pre-wrap text-secondary-content"
+								class="row-link font-semibold whitespace-pre-wrap text-secondary"
 								aria-label="Edit Log"
 							>
 								<SearchResults text={log.name} terms={search.terms} />
@@ -148,7 +148,7 @@
 							{#if log.character}
 								<p class="text-sm font-normal">
 									<span class="font-semibold">Character:</span>
-									<a href="/characters/{log.character.id}" class="text-secondary-content">
+									<a href="/characters/{log.character.id}" class="text-secondary">
 										<SearchResults text={log.character.name} terms={search.terms} />
 									</a>
 								</p>
@@ -277,7 +277,7 @@
 								<td class="static! align-top">
 									<a
 										href={log.isDmLog ? `/dm-logs/${log.id}` : `/characters/${log.characterId}/log/${log.id}`}
-										class="row-link font-semibold whitespace-pre-wrap text-secondary-content"
+										class="row-link font-semibold whitespace-pre-wrap text-secondary"
 										aria-label="Edit Log"
 									>
 										<SearchResults text={log.name} terms={search.terms} />
@@ -288,7 +288,7 @@
 									{#if log.character}
 										<p class="text-sm font-normal">
 											<span class="font-semibold">Character:</span>
-											<a href="/characters/{log.character.id}" class="text-secondary-content">
+											<a href="/characters/{log.character.id}" class="text-secondary">
 												<SearchResults text={log.character.name} terms={search.terms} />
 											</a>
 										</p>

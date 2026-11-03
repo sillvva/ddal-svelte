@@ -1,5 +1,4 @@
 <script lang="ts">
-	import { goto } from "$app/navigation";
 	import Error from "#lib/components/error.svelte";
 	import Control from "#lib/components/forms/control.svelte";
 	import Input from "#lib/components/forms/input.svelte";
@@ -12,6 +11,7 @@
 	import { dungeonMasterFormSchema } from "#lib/schemas.js";
 	import { getGlobal } from "#lib/stores.svelte.js";
 	import { parseEffectResult } from "#lib/util.js";
+	import { goto } from "$app/navigation";
 
 	let { params } = $props();
 
@@ -98,7 +98,7 @@
 							<tr>
 								<td class="max-xs:px-2">
 									<div class="flex flex-col gap-1">
-										<a href={`/characters/${log.character?.id}/log/${log.id}`} class="text-secondary-content lg:hidden">
+										<a href={`/characters/${log.character?.id}/log/${log.id}`} class="text-secondary lg:hidden">
 											{log.name}
 										</a>
 										<div class="min-w-max">
@@ -110,14 +110,14 @@
 								<td class="max-lg:hidden">
 									<a
 										href={log.isDmLog ? `/dm-logs/${log.id}` : `/characters/${log.character?.id}/log/${log.id}`}
-										class="text-secondary-content"
+										class="text-secondary"
 									>
 										{log.name}
 									</a>
 								</td>
 								<td class="max-xs:px-2">
 									{#if log.character?.name}
-										<a href={`/characters/${log.character?.id}?s=${log.id}`} class="text-secondary-content">
+										<a href={`/characters/${log.character?.id}?s=${log.id}`} class="text-secondary">
 											{log.character?.name}
 										</a>
 									{/if}

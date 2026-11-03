@@ -26,7 +26,7 @@
 					{#if bc.url && bc.title}
 						{#if bc.url !== crumbs.at(-1)?.url}
 							<li>
-								<a href={bc.url} class="text-secondary-content">
+								<a href={bc.url} class="text-secondary">
 									{bc.title}
 								</a>
 							</li>

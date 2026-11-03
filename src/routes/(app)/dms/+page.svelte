@@ -1,5 +1,4 @@
 <script lang="ts">
-	import { page } from "$app/state";
 	import Head from "#lib/components/head.svelte";
 	import NavMenu from "#lib/components/nav-menu.svelte";
 	import SearchResults from "#lib/components/search-results.svelte";
@@ -7,6 +6,7 @@
 	import { EntitySearchFactory, successToast } from "#lib/factories.svelte.js";
 	import * as API from "#lib/remote/index.js";
 	import { parseEffectResult } from "#lib/util.js";
+	import { page } from "$app/state";
 	import { sorter } from "@sillvva/utils";
 	import { SvelteSet } from "svelte/reactivity";
 
@@ -56,7 +56,7 @@
 								<td>
 									<a
 										href="/dms/{dm.id}"
-										class="row-link text-left font-semibold whitespace-pre-wrap text-secondary-content"
+										class="row-link text-left font-semibold whitespace-pre-wrap text-secondary"
 										aria-label="Edit DM"
 									>
 										<SearchResults text={dm.name} terms={search.terms} />

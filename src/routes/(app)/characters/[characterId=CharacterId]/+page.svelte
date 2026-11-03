@@ -227,7 +227,7 @@
 									href={character.characterSheetUrl}
 									target="_blank"
 									rel="noreferrer noopner"
-									class="font-semibold text-secondary-content dark:not-print:drop-shadow-xs"
+									class="font-semibold text-secondary dark:not-print:drop-shadow-xs"
 								>
 									Character Sheet
 								</a>
@@ -412,7 +412,7 @@
 								{#if myCharacter}
 									<a
 										href={log.isDmLog ? `/dm-logs/${log.id}` : `/characters/${log.characterId}/log/${log.id}`}
-										class="row-link font-semibold whitespace-pre-wrap text-secondary-content"
+										class="row-link font-semibold whitespace-pre-wrap text-secondary"
 									>
 										<SearchResults text={log.name} terms={search.terms} />
 									</a>
@@ -428,7 +428,7 @@
 									<p class="text-sm font-normal">
 										<span class="font-semibold dark:text-white">DM:</span>
 										{#if myCharacter}
-											<a href="/dms/{log.dm.id}" class="text-secondary-content">{log.dm.name}</a>
+											<a href="/dms/{log.dm.id}" class="text-secondary">{log.dm.name}</a>
 										{:else}
 											{log.dm.name}
 										{/if}
@@ -549,7 +549,7 @@
 									{#if myCharacter}
 										<a
 											href={log.isDmLog ? `/dm-logs/${log.id}` : `/characters/${log.characterId}/log/${log.id}`}
-											class="row-link font-semibold whitespace-pre-wrap text-secondary-content"
+											class="row-link font-semibold whitespace-pre-wrap text-secondary"
 										>
 											<SearchResults text={log.name} terms={search.terms} />
 										</a>
@@ -565,7 +565,7 @@
 										<p class="text-sm font-normal">
 											<span class="font-semibold dark:text-white">DM:</span>
 											{#if myCharacter}
-												<a href="/dms/{log.dm.id}" class="text-secondary-content">{log.dm.name}</a>
+												<a href="/dms/{log.dm.id}" class="text-secondary">{log.dm.name}</a>
 											{:else}
 												{log.dm.name}
 											{/if}
