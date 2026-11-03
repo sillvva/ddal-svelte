@@ -1,4 +1,5 @@
 import postgres from "postgres";
+import { v7 } from "uuid";
 
 export async function withSql<T>(fn: (sql: postgres.Sql) => Promise<T>) {
 	const databaseUrl = process.env.DATABASE_URL;
@@ -139,6 +140,51 @@ export async function pendingDeletion(objectKey: string) {
 /** Stands in for saved portraits without uploading megabytes of images. */
 export async function setCharacterImageBytes(characterId: string, bytes: number) {
 	await withSql((sql) => sql`update character set image_bytes = ${bytes} where id = ${characterId}`);
+}
+
+export interface LogDraftRow {
+	id: string;
+	userId: string;
+	data: {
+		name: string;
+		date: number | null;
+		description: string;
+		dm: { name: string; DCI: string };
+		magicItemsGained: { id: string; name: string }[];
+	};
+}
+
+export async function logDraftRow(id: string) {
+	const rows = await withSql((sql) => sql<LogDraftRow[]>`select id, user_id as "userId", data from log_draft where id = ${id}`);
+	return rows[0] ?? null;
+}
+
+/** Ages a draft past its 14-day lifetime without waiting for the sweep. */
+export async function expireLogDraft(id: string) {
+	await withSql((sql) => sql`update log_draft set updated_at = now() - interval '15 days' where id = ${id}`);
+}
+
+export async function dmsForUser(userId: string) {
+	return withSql(
+		(sql) => sql<DmRow[]>`
+			select id, name, "DCI", user_id as "userId", is_user as "isUser"
+			from dungeonmaster
+			where user_id = ${userId}
+			order by name
+		`
+	);
+}
+
+/** App ids are UUIDv7, and the log form rejects any other DM id. */
+export async function insertDm(userId: string, name: string, DCI: string) {
+	const id = v7();
+	await withSql(
+		(sql) => sql`
+			insert into dungeonmaster (id, name, "DCI", user_id, is_user)
+			values (${id}, ${name}, ${DCI}, ${userId}, false)
+		`
+	);
+	return id;
 }
 
 export async function setBanned(userId: string, banned: boolean) {
