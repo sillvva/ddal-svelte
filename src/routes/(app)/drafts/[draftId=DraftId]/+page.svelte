@@ -12,8 +12,8 @@
 	import LogDraftShare from "#lib/components/log-draft-share.svelte";
 	import NavMenu from "#lib/components/nav-menu.svelte";
 	import { proxify, successToast } from "#lib/factories.svelte.js";
-	import { LOG_DRAFT_LIMIT, seasonForAdvancement } from "#lib/log-draft.js";
 	import { logDraftMemory } from "#lib/log-draft-storage.svelte.js";
+	import { LOG_DRAFT_LIMIT, seasonForAdvancement } from "#lib/log-draft.js";
 	import * as API from "#lib/remote/index.js";
 	import { logDraftSchema, type LogDraftId } from "#lib/schemas.js";
 	import { parseEffectResult } from "#lib/util.js";
@@ -57,17 +57,24 @@
 
 	{#if savedId}
 		{const shared = $derived(await API.drafts.queries.read(savedId))}
-		<div class="mb-4 flex flex-col gap-3 rounded-lg bg-base-200 p-4">
-			<p class="text-sm">
-				Players open this link, then fill a new log from the draft. It works until
-				<span class="font-semibold">{new Date(shared.expiresAt).toLocaleDateString([], { dateStyle: "medium" })}</span>, and
-				saving again restarts the 14 days. You can keep up to {LOG_DRAFT_LIMIT} drafts.
+		<div class="mb-4 flex flex-col gap-3 rounded-lg bg-base-300 p-4">
+			<p class="flex items-start gap-4 text-sm leading-6">
+				<span class="mt-0.5 iconify size-5 mdi--info-circle-outline"></span>
+				<span class="flex-1">
+					Players open this link, then fill a new log from the draft. It works until
+					<span class="font-semibold">{new Date(shared.expiresAt).toLocaleDateString([], { dateStyle: "medium" })}</span>, and
+					saving again restarts the 14 days. You can keep up to {LOG_DRAFT_LIMIT} drafts at a time.
+				</span>
 			</p>
 			<LogDraftShare id={savedId} />
 		</div>
 	{:else}
-		<p class="mb-4 text-sm">
-			Players get the title, date, DM, advancement, treasure, downtime, items, and notes. Images can't be added to a draft.
+		<p class="mb-4 alert flex items-start gap-4 bg-base-300 text-sm leading-6">
+			<span class="mt-0.5 iconify size-5 mdi--info-circle-outline"></span>
+			<span class="flex-1">
+				Players get the title, date, DM, advancement, treasure, downtime, items, and notes. Images can be added to a draft as
+				markdown, but they can't be uploaded by pasting or dragging and dropping.
+			</span>
 		</p>
 	{/if}
 
@@ -78,22 +85,22 @@
 			{let season = $state(seasonForAdvancement(draft))}
 			<Input field={form.fields.id} hidden />
 			<Input field={form.fields.timezone} hidden />
-			<Control class="col-span-12 sm:col-span-4">
+			<Control class="col-span-12 sm:col-span-2 md:col-span-3 lg:col-span-4">
 				<InputWrapper field={form.fields.type} as="select" label="Log Type">
 					<select
 						{...form.fields.type.as("select")}
 						id={form.fields.type.as("select").name}
-						class="select-bordered select w-full"
+						class={["select-bordered select w-full max-sm:text-base", data.type !== "game" && "text-xs!"]}
 					>
 						<option value="game">Game</option>
 						<option value="nongame">Non-Game (Purchase, Trade, etc)</option>
 					</select>
 				</InputWrapper>
 			</Control>
-			<Control class="col-span-12 sm:col-span-8">
+			<Control class="col-span-12 sm:col-span-5 lg:col-span-4">
 				<Input field={form.fields.name} label="Title" required />
 			</Control>
-			<Control class="col-span-12 sm:col-span-5">
+			<Control class="col-span-12 sm:col-span-5 md:col-span-4">
 				<DateInput field={form.fields.date} initial={initial.date ?? 0} label="Date" timezone={data.timezone} />
 			</Control>
 			{#if data.type === "game"}
@@ -108,7 +115,7 @@
 						<select
 							id="season"
 							bind:value={season}
-							class="select-bordered select w-full"
+							class="select-bordered select w-full max-sm:text-base"
 							onchange={() => {
 								data.experience = 0;
 								data.acp = 0;
