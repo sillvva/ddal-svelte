@@ -18,6 +18,8 @@
 
 	const { params } = $props();
 
+	let notesUploading = $state(false);
+
 	const schema = dmLogSchema;
 	const form = API.logs.forms.saveDM;
 	const initialErrors = $derived(params.logId !== "new");
@@ -127,10 +129,17 @@
 					<Input field={form.fields.dtd} type="number" label="Downtime" />
 				</Control>
 				<Control class="col-span-12">
-					<MarkdownInput field={form.fields.description} maxLength={5000} maxRows={20} preview />
+					<MarkdownInput
+						field={form.fields.description}
+						maxLength={5000}
+						maxRows={20}
+						preview
+						images
+						onpending={(count) => (notesUploading = count > 0)}
+					/>
 				</Control>
 				<AddDropItems form={ctx}>
-					<Submit form={ctx}>Save Log</Submit>
+					<Submit form={ctx} disabled={notesUploading}>Save Log</Submit>
 				</AddDropItems>
 			{/snippet}
 		</RemoteForm>

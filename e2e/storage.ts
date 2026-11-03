@@ -2,8 +2,9 @@ import { DeleteObjectCommand, HeadObjectCommand, ListObjectsV2Command, S3Client 
 
 const UUID = "[0-9a-f-]{36}";
 const FILE = "[0-9a-f]{8}-[0-9a-f]{4}-7[0-9a-f]{3}-[0-9a-f]{4}-[0-9a-f]{12}\\.(webp|jpg)";
-const PERMANENT = new RegExp(`^(users/${UUID}/characters/${UUID}/${FILE}|users/${UUID}/avatar/${FILE})$`, "iu");
-const TEMPORARY = new RegExp(`^tmp/(users/${UUID}/characters/${UUID}/${FILE}|users/${UUID}/avatar/${FILE})$`, "iu");
+const SHAPES = `users/${UUID}/characters/${UUID}/${FILE}|users/${UUID}/avatar/${FILE}|users/${UUID}/notes/${FILE}`;
+const PERMANENT = new RegExp(`^(${SHAPES})$`, "iu");
+const TEMPORARY = new RegExp(`^tmp/(${SHAPES})$`, "iu");
 
 let client: S3Client | null = null;
 

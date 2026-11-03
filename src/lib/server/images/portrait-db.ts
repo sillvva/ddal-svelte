@@ -1,9 +1,9 @@
 import { PROVIDERS } from "#lib/constants.js";
-import { CHARACTER_IMAGE_LIMITS, formatStorageBytes } from "#lib/images/limits.js";
 import {
 	imagePublicUrl,
 	isPermanentCharacterImageKey,
 	isPermanentImageKey,
+	isPermanentNoteImageKey,
 	ownedAvatarKey,
 	ownedPermanentKey,
 	TEMPORARY_IMAGE_PREFIX,
@@ -11,7 +11,7 @@ import {
 } from "#lib/images/object-key.js";
 import type { CharacterId, UserId } from "#lib/schemas.js";
 import { runQuery, type Database, type Transaction } from "#lib/server/db/index.js";
-import { account, imageUploads, characters, pendingObjectDeletions, user } from "#lib/server/db/schema.js";
+import { account, imageUploads, characters, logImages, pendingObjectDeletions, user } from "#lib/server/db/schema.js";
 import { ImageUploadError } from "#lib/server/images/errors.js";
 import { R2_PUBLIC_URL } from "$app/env/public";
 import { and, eq, inArray, isNull, or, sql } from "drizzle-orm";
@@ -24,7 +24,7 @@ function integer(value: unknown) {
 }
 
 /**
- * Serializes portrait quota updates and avatar replacement for one account.
+ * Serializes image storage quota updates, note image references, and avatar replacement for one account.
  * The lock id stays `character-image:` so both purposes take the same lock.
  */
 export function lockPortraitUser(tx: Transaction, userId: UserId) {
@@ -46,40 +46,6 @@ export function sumPortraitBytes(executor: Database | Transaction, userId: UserI
 			.from(characters)
 			.where(eq(characters.userId, userId))
 	).pipe(Effect.map((rows) => integer(rows[0]?.total)));
-}
-
-/**
- * Saved-portrait byte cap for this account.
- * Admins return `null` and are not limited. Everyone else uses `CHARACTER_IMAGE_LIMITS.quotaBytes`.
- */
-export function portraitQuotaBytes(executor: Database | Transaction, userId: UserId) {
-	return runQuery(executor.select({ role: user.role }).from(user).where(eq(user.id, userId)).limit(1)).pipe(
-		Effect.map((rows) => (rows[0]?.role === "admin" ? null : CHARACTER_IMAGE_LIMITS.quotaBytes))
-	);
-}
-
-/**
- * Quota is the sum of `character.image_bytes` for saved portraits.
- * Admin accounts have no cap. The check runs under `lockPortraitUser`, in the same transaction that updates `image_bytes`.
- */
-export function assertPortraitQuota(tx: Transaction, userId: UserId, characterId: CharacterId, nextBytes: number) {
-	return Effect.gen(function* () {
-		const quotaBytes = yield* portraitQuotaBytes(tx, userId);
-		if (quotaBytes === null) return;
-
-		const used = yield* sumPortraitBytes(tx, userId);
-		const [current] = yield* runQuery(
-			tx
-				.select({ imageBytes: characters.imageBytes })
-				.from(characters)
-				.where(and(eq(characters.id, characterId), eq(characters.userId, userId)))
-				.limit(1)
-		);
-		const credit = current?.imageBytes ?? 0;
-		if (nextBytes > credit && used - credit + nextBytes > quotaBytes) {
-			return yield* new ImageUploadError(`This image would exceed your ${formatStorageBytes(quotaBytes)} storage limit.`, 413);
-		}
-	});
 }
 
 /** Linked Google or Discord accounts own the profile image. Passkey-only accounts do not. */
@@ -127,6 +93,17 @@ export function permanentKeyInUse(tx: Transaction, key: string) {
 	if (!isPermanentImageKey(key)) return Effect.succeed(false);
 	const imageUrl = imagePublicUrl(key, R2_PUBLIC_URL);
 	return Effect.gen(function* () {
+		if (isPermanentNoteImageKey(key)) {
+			const references = yield* runQuery(
+				tx
+					.select({ logId: logImages.logId })
+					.from(logImages)
+					.innerJoin(imageUploads, eq(imageUploads.id, logImages.uploadId))
+					.where(eq(imageUploads.objectKey, key))
+					.limit(1)
+			);
+			return references.length > 0;
+		}
 		const portraits = yield* runQuery(
 			tx.select({ id: characters.id }).from(characters).where(eq(characters.imageUrl, imageUrl)).limit(1)
 		);

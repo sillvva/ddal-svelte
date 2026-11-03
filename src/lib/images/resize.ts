@@ -1,4 +1,10 @@
-import { AVATAR_IMAGE_LIMITS, CHARACTER_IMAGE_LIMITS, formatBytes, type StoredImageContentType } from "#lib/images/limits.js";
+import {
+	AVATAR_IMAGE_LIMITS,
+	CHARACTER_IMAGE_LIMITS,
+	formatBytes,
+	NOTE_IMAGE_LIMITS,
+	type StoredImageContentType
+} from "#lib/images/limits.js";
 
 export interface ResizedImage {
 	blob: Blob;
@@ -106,4 +112,9 @@ export function resizeCharacterImage(file: File) {
 /** Avatar resize: center square, longest edge at most 256px. */
 export function resizeAvatarImage(file: File) {
 	return resizeImage(file, AVATAR_IMAGE_LIMITS, "cover");
+}
+
+/** Note image resize: longest edge at most 1200px, original aspect ratio kept. */
+export function resizeNoteImage(file: File) {
+	return resizeImage(file, NOTE_IMAGE_LIMITS, "contain");
 }

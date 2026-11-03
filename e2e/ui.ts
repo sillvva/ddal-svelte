@@ -185,6 +185,52 @@ export async function uploadCharacterImage(scope: Locator, method: UploadMethod 
 	return src;
 }
 
+export function notesField(page: Page) {
+	// The field message is a second `<label>`, so its help text or error follows "Notes" in the name.
+	return page.getByRole("textbox", { name: /^Notes\b/ });
+}
+
+/** Pastes a file into `target` the way a browser does for a copied image. */
+export async function pasteFile(target: Locator, file: FilePayload) {
+	await target.evaluate(
+		(element, { name, mimeType, base64 }) => {
+			const bytes = Uint8Array.from(atob(base64), (char) => char.charCodeAt(0));
+			const transfer = new DataTransfer();
+			transfer.items.add(new File([bytes], name, { type: mimeType }));
+			element.dispatchEvent(new ClipboardEvent("paste", { clipboardData: transfer, bubbles: true, cancelable: true }));
+		},
+		{ name: file.name, mimeType: file.mimeType, base64: file.buffer.toString("base64") }
+	);
+}
+
+const NOTE_IMAGE_URL = /\]\((https?:\/\/[^)\s]+\/users\/[0-9a-f-]{36}\/notes\/[^)\s]+)\)/giu;
+
+/** Note image URLs in Markdown image syntax, in order. */
+export function noteImageUrls(markdown: string) {
+	return [...markdown.matchAll(NOTE_IMAGE_URL)].map((match) => match[1] ?? "");
+}
+
+/**
+ * Waits until no upload placeholder is left in the notes and `count` note images are present.
+ * A failed upload removes its placeholder and shows a toast, so the toast text is part of the poll.
+ */
+export async function waitForNoteImages(page: Page, count: number) {
+	const field = notesField(page);
+	await expect
+		.poll(
+			async () => {
+				const toast = page.locator('[data-sonner-toast][data-type="error"]');
+				if (await toast.count()) return `toast:${await toast.first().innerText()}`;
+				const value = await field.inputValue();
+				if (value.includes("![Uploading image-")) return "uploading";
+				return noteImageUrls(value).length;
+			},
+			{ timeout: 30_000 }
+		)
+		.toBe(count);
+	return noteImageUrls(await field.inputValue());
+}
+
 export async function openSettings(page: Page, handle: string) {
 	await page.getByRole("button", { name: handle, exact: true }).click();
 	await expect(page.locator("aside#settings")).toHaveAttribute("data-open", "true");

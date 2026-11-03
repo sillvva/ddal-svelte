@@ -104,7 +104,7 @@
 				</div>
 			</div>
 		{/if}
-		{#if !home.error || home.error.code !== "BANNED"}
+		{#if !home.error || home.error.code !== "BANNED_USER"}
 			{#each PROVIDERS as provider (provider.id)}
 				<button
 					class="relative flex h-16 items-center gap-4 rounded-lg bg-base-200 px-8 py-4 text-base-content transition-colors hover:bg-base-300 max-xs:h-12 max-xs:justify-center max-xs:px-4"

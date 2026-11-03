@@ -16,6 +16,31 @@ function isRemoteCall(url: URL, name: string) {
 	return url.pathname.includes("/_app/remote/") && url.pathname.endsWith(`/${name}`);
 }
 
+/** An unenhanced remote form posts natively to its `action`, `?/remote=<hash>/<name>[/<key>]`. */
+function isNativeRemoteSubmit(url: URL, name: string) {
+	return url.searchParams.get("/remote")?.split("/")[1] === name;
+}
+
+/**
+ * Async Svelte hydrates a page's `await` blocks after the layout, so `waitForHydration` can pass
+ * while the form is still server HTML and a click submits it natively. `RemoteForm` spreads a
+ * delegated `oninput` onto the `<form>`, which Svelte records under its `events` symbol.
+ */
+async function waitForRemoteForm(page: Page, name: string) {
+	await page.waitForFunction(
+		(name) =>
+			[...document.forms].some((form) => {
+				const action = form.getAttribute("action");
+				if (!action) return false;
+				const id = new URL(action, location.href).searchParams.get("/remote");
+				if (id?.split("/")[1] !== name) return false;
+				return Object.getOwnPropertySymbols(form).some((symbol) => symbol.description === "events");
+			}),
+		name,
+		{ timeout: 30_000 }
+	);
+}
+
 function rewriteBinaryForm(body: Buffer, edit: (fields: FormFields) => void) {
 	const version = body.readUInt8(0);
 	const headerLength = body.readUInt32LE(1);
@@ -79,13 +104,19 @@ export async function submitTampered(
 	edit: (fields: FormFields) => void,
 	submit: () => Promise<void>
 ): Promise<FormResponse> {
+	await waitForRemoteForm(page, name);
 	const tamper = await tamperWithForm(page, name, edit);
 	try {
-		const answered = page.waitForResponse(
-			(response) => response.request().method() === "POST" && isRemoteCall(new URL(response.url()), name)
-		);
+		const answered = page.waitForResponse((response) => {
+			if (response.request().method() !== "POST") return false;
+			const url = new URL(response.url());
+			return isRemoteCall(url, name) || isNativeRemoteSubmit(url, name);
+		});
 		await submit();
 		const response = await answered;
+		if (isNativeRemoteSubmit(new URL(response.url()), name)) {
+			throw new Error(`The ${name} form submitted natively, before it was enhanced`);
+		}
 		if (tamper.rewritten !== 1) throw new Error(`Expected one ${name} submission to be rewritten, got ${tamper.rewritten}`);
 		return { status: response.status(), body: await response.text() };
 	} finally {

@@ -15,13 +15,13 @@ import { serializeError, type ErrorParams } from "#lib/server/effect/errors.js";
 import { AppLog } from "#lib/server/effect/logging.js";
 import { ImageUploadError } from "#lib/server/images/errors.js";
 import {
-	assertPortraitQuota,
 	clearScheduledDeletions,
 	collectCharacterKeys,
 	lockPortraitUser,
 	ownedBytesForSave,
 	scheduleDeletions
 } from "#lib/server/images/portrait-db.js";
+import { assertPortraitQuota } from "#lib/server/images/quota-db.js";
 import { getRequestEvent } from "$app/server";
 import { R2_PUBLIC_URL } from "$app/env/public";
 import { isTupleOf } from "@sillvva/utils";
@@ -202,6 +202,8 @@ export class CharacterService extends Context.Service<CharacterService>()("Chara
 			delete: Effect.fn("CharacterService.delete")(function* (characterId: CharacterId, userId: UserId) {
 				return yield* transaction(
 					Effect.fn(function* (tx) {
+						// Deleting the character cascades its logs and their `log_image` rows, which queues orphaned note images.
+						yield* lockPortraitUser(tx, userId);
 						const keys = yield* collectCharacterKeys(tx, userId, characterId);
 						yield* scheduleDeletions(tx, keys);
 

@@ -19,6 +19,8 @@
 	import { v7 } from "uuid";
 
 	let { params } = $props();
+
+	let notesUploading = $state(false);
 </script>
 
 <svelte:boundary>
@@ -206,10 +208,17 @@
 					<Input field={form.fields.dtd} type="number" label="Downtime" />
 				</Control>
 				<Control class="col-span-12 w-full">
-					<MarkdownInput field={form.fields.description} maxRows={20} maxLength={5000} preview />
+					<MarkdownInput
+						field={form.fields.description}
+						maxRows={20}
+						maxLength={5000}
+						preview
+						images
+						onpending={(count) => (notesUploading = count > 0)}
+					/>
 				</Control>
 				<AddDropItems form={ctx} {magicItems} {storyAwards}>
-					<Submit form={ctx}>Save Log</Submit>
+					<Submit form={ctx} disabled={notesUploading}>Save Log</Submit>
 				</AddDropItems>
 			{/snippet}
 		</RemoteForm>
