@@ -126,7 +126,11 @@ export function applyDraftToLog<T extends DraftFillTarget>(
 	log.gold = draft.gold;
 	log.dtd = draft.dtd;
 	log.description = draft.description;
-	log.dm = matchDraftDm(dms, draft.dm, userId);
+	// Non-game logs hide the DM fields, so a carried-over name would silently create a DM record.
+	log.dm =
+		draft.type === "game"
+			? matchDraftDm(dms, draft.dm, userId)
+			: { id: v7() as DungeonMasterId, name: "", DCI: "", userId, isUser: false };
 	log.magicItemsGained = draft.magicItemsGained.map((item) => ({
 		id: v7() as ItemId,
 		name: item.name,

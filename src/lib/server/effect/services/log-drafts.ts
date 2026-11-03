@@ -1,4 +1,4 @@
-import { draftDescriptionHasNewImages, LOG_DRAFT_LIMIT, logDraftExpiryCutoff } from "#lib/log-draft.js";
+import { draftDescriptionHasNewImages, LOG_DRAFT_LIMIT, LOG_DRAFT_TTL_MS, logDraftExpiryCutoff } from "#lib/log-draft.js";
 import type { LocalsUser, LogDraftData, LogDraftId, UserId } from "#lib/schemas.js";
 import { logDraftDataSchema } from "#lib/schemas.js";
 import { DBService, runQuery, type Database, type Transaction } from "#lib/server/db/index.js";
@@ -8,7 +8,7 @@ import { AppLog } from "#lib/server/effect/logging.js";
 import { parse } from "#lib/server/effect/util.js";
 import { R2_PUBLIC_URL } from "$app/env/public";
 import { isTupleOf } from "@sillvva/utils";
-import { and, eq, lt, sql } from "drizzle-orm";
+import { and, eq, gte, lt, sql } from "drizzle-orm";
 import { Context, Data, Effect, Layer } from "effect";
 import { v7 } from "uuid";
 
@@ -23,35 +23,44 @@ function integer(value: unknown) {
 	return Number.isFinite(parsed) ? parsed : 0;
 }
 
+/** Rows past the lifetime are treated as gone even before the sweep deletes them. */
+const notExpired = () => gte(logDrafts.updatedAt, logDraftExpiryCutoff());
+
 const deleteExpiredOn = (executor: Database | Transaction) =>
-	runQuery(executor.delete(logDrafts).where(lt(logDrafts.updatedAt, logDraftExpiryCutoff())));
+	runQuery(
+		executor.delete(logDrafts).where(lt(logDrafts.updatedAt, logDraftExpiryCutoff())).returning({ id: logDrafts.id })
+	).pipe(Effect.map((rows) => rows.length));
 
 const countDrafts = (executor: Database | Transaction, userId: UserId) =>
 	runQuery(
 		executor
 			.select({ count: sql<number>`count(*)::int` })
 			.from(logDrafts)
-			.where(eq(logDrafts.userId, userId))
+			.where(and(eq(logDrafts.userId, userId), notExpired()))
 	).pipe(Effect.map((rows) => integer(rows[0]?.count)));
+
+/** Serializes draft creation per account so two requests cannot both pass the count check. */
+const lockDraftUser = (tx: Transaction, userId: UserId) =>
+	Effect.tryPromise({
+		try: () => tx.execute(sql`select pg_advisory_xact_lock(hashtextextended(${`log-draft:${userId}`}, 0))`),
+		catch: (cause) => new LogDraftError("Could not save draft", 500, cause)
+	});
 
 function assertNoNewImages(data: LogDraftData) {
 	if (!draftDescriptionHasNewImages(data.description, R2_PUBLIC_URL)) return Effect.void;
 	return Effect.fail(new LogDraftError("Images can't be uploaded to a log draft."));
 }
 
-const readRow = (executor: Database | Transaction, id: LogDraftId) =>
-	runQuery(executor.select().from(logDrafts).where(eq(logDrafts.id, id)).limit(1)).pipe(
-		Effect.flatMap((rows) =>
-			isTupleOf(rows, 1) ? Effect.succeed(rows[0]) : Effect.fail(new LogDraftError("Draft not found", 404))
-		)
-	);
+const notFound = () => new LogDraftError("Draft not found", 404);
 
 function withData(row: LogDraft) {
 	return parse(logDraftDataSchema, row.data).pipe(
 		Effect.mapError((error) => new LogDraftError("Draft could not be read", 500, error)),
-		Effect.map((data) => ({ ...row, data }))
+		Effect.map((data) => ({ ...row, data, expiresAt: row.updatedAt.getTime() + LOG_DRAFT_TTL_MS }))
 	);
 }
+
+export type LogDraftRecord = Effect.Success<ReturnType<typeof withData>>;
 
 export class LogDraftService extends Context.Service<LogDraftService>()("LogDraftService", {
 	make: Effect.fn("LogDraftService")(function* () {
@@ -59,32 +68,47 @@ export class LogDraftService extends Context.Service<LogDraftService>()("LogDraf
 
 		const deleteExpired = Effect.fn("LogDraftService.deleteExpired")(function* () {
 			return yield* deleteExpiredOn(db).pipe(
+				Effect.tap((count) => (count ? AppLog.info("LogDraftService.deleteExpired", { count }) : Effect.void)),
 				Effect.tapError((error) =>
 					AppLog.error("LogDraftService.deleteExpired", { message: error.message, error: serializeError(error) })
 				)
 			);
 		});
 
+		/** Any signed-in user can read a draft by id. */
 		const read = Effect.fn("LogDraftService.read")(function* (id: LogDraftId) {
-			yield* deleteExpiredOn(db);
-			return yield* readRow(db, id).pipe(
+			return yield* runQuery(
+				db
+					.select()
+					.from(logDrafts)
+					.where(and(eq(logDrafts.id, id), notExpired()))
+					.limit(1)
+			).pipe(
+				Effect.flatMap((rows) => (isTupleOf(rows, 1) ? Effect.succeed(rows[0]) : Effect.fail(notFound()))),
 				Effect.flatMap(withData),
 				Effect.tapError((error) => AppLog.debug("LogDraftService.read", { id, error: serializeError(error) }))
 			);
 		});
 
+		/** Only the creator can open a draft for editing. Others get the same 404 as a missing draft. */
 		const readOwned = Effect.fn("LogDraftService.readOwned")(function* (id: LogDraftId, userId: UserId) {
 			const row = yield* read(id);
-			if (row.userId !== userId) return yield* new LogDraftError("Draft not found", 404);
+			if (row.userId !== userId) return yield* notFound();
 			return row;
 		});
 
+		const validate = (data: LogDraftData) =>
+			assertNoNewImages(data).pipe(
+				Effect.andThen(parse(logDraftDataSchema, data)),
+				Effect.mapError((error) => (error instanceof LogDraftError ? error : new LogDraftError(error.message)))
+			);
+
 		const create = Effect.fn("LogDraftService.create")(function* (user: LocalsUser, data: LogDraftData) {
-			yield* assertNoNewImages(data);
-			const validated = yield* parse(logDraftDataSchema, data).pipe(Effect.mapError((error) => new LogDraftError(error.message)));
+			const validated = yield* validate(data);
 
 			return yield* transaction(
 				Effect.fn(function* (tx) {
+					yield* lockDraftUser(tx, user.id);
 					yield* deleteExpiredOn(tx);
 					const count = yield* countDrafts(tx, user.id);
 					if (count >= LOG_DRAFT_LIMIT) {
@@ -94,9 +118,11 @@ export class LogDraftService extends Context.Service<LogDraftService>()("LogDraf
 					}
 
 					const now = new Date();
-					const id = v7() as LogDraftId;
 					const rows = yield* runQuery(
-						tx.insert(logDrafts).values({ id, userId: user.id, data: validated, createdAt: now, updatedAt: now }).returning()
+						tx
+							.insert(logDrafts)
+							.values({ id: v7() as LogDraftId, userId: user.id, data: validated, createdAt: now, updatedAt: now })
+							.returning()
 					);
 					if (!isTupleOf(rows, 1)) return yield* new LogDraftError("Could not save draft", 500);
 					return yield* withData(rows[0]);
@@ -107,24 +133,19 @@ export class LogDraftService extends Context.Service<LogDraftService>()("LogDraf
 			);
 		});
 
+		/** Keeps the id, so the link and QR code stay valid. An expired draft cannot be revived. */
 		const update = Effect.fn("LogDraftService.update")(function* (user: LocalsUser, id: LogDraftId, data: LogDraftData) {
-			yield* assertNoNewImages(data);
-			const validated = yield* parse(logDraftDataSchema, data).pipe(Effect.mapError((error) => new LogDraftError(error.message)));
+			const validated = yield* validate(data);
 
-			return yield* transaction(
-				Effect.fn(function* (tx) {
-					yield* deleteExpiredOn(tx);
-					const rows = yield* runQuery(
-						tx
-							.update(logDrafts)
-							.set({ data: validated, updatedAt: new Date() })
-							.where(and(eq(logDrafts.id, id), eq(logDrafts.userId, user.id)))
-							.returning()
-					);
-					if (!isTupleOf(rows, 1)) return yield* new LogDraftError("Draft not found", 404);
-					return yield* withData(rows[0]);
-				})
+			return yield* runQuery(
+				db
+					.update(logDrafts)
+					.set({ data: validated, updatedAt: new Date() })
+					.where(and(eq(logDrafts.id, id), eq(logDrafts.userId, user.id), notExpired()))
+					.returning()
 			).pipe(
+				Effect.flatMap((rows) => (isTupleOf(rows, 1) ? Effect.succeed(rows[0]) : Effect.fail(notFound()))),
+				Effect.flatMap(withData),
 				Effect.tap((result) => AppLog.info("LogDraftService.update", { id: result.id, userId: user.id })),
 				Effect.tapError((error) => AppLog.debug("LogDraftService.update", { id, userId: user.id, error: serializeError(error) }))
 			);
@@ -137,9 +158,7 @@ export class LogDraftService extends Context.Service<LogDraftService>()("LogDraf
 					.where(and(eq(logDrafts.id, id), eq(logDrafts.userId, userId)))
 					.returning({ id: logDrafts.id })
 			).pipe(
-				Effect.flatMap((rows) =>
-					isTupleOf(rows, 1) ? Effect.succeed(rows[0]) : Effect.fail(new LogDraftError("Draft not found", 404))
-				),
+				Effect.flatMap((rows) => (isTupleOf(rows, 1) ? Effect.succeed(rows[0]) : Effect.fail(notFound()))),
 				Effect.tap((result) => AppLog.info("LogDraftService.remove", { id: result.id, userId })),
 				Effect.tapError((error) => AppLog.debug("LogDraftService.remove", { id, userId, error: serializeError(error) }))
 			);

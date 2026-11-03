@@ -174,6 +174,31 @@ describe("applyDraftToLog", () => {
 		expect(log.dm.userId).toBe(otherUserId);
 		expect(log.dm.isUser).toBe(false);
 	});
+
+	it("does not carry a DM onto a non-game log", () => {
+		const log = target();
+		const known = dm({ name: "Ada", DCI: "123" });
+		const draft = logToDraftData({
+			name: "Shopping",
+			timezone: "UTC",
+			type: "nongame",
+			experience: 0,
+			acp: 0,
+			tcp: 0,
+			level: 0,
+			gold: -50,
+			dtd: 0,
+			description: "",
+			dm: { name: "Ada", DCI: "123" },
+			magicItemsGained: [],
+			storyAwardsGained: []
+		});
+		applyDraftToLog(log, draft, [known], userId);
+		expect(log.type).toBe("nongame");
+		expect(log.dm.id).not.toBe(known.id);
+		expect(log.dm.name).toBe("");
+		expect(log.dm.DCI).toBe("");
+	});
 });
 
 describe("draft images", () => {

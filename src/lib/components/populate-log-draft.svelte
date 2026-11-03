@@ -1,20 +1,18 @@
 <script lang="ts">
-	import { applyDraftToLog } from "#lib/log-draft.js";
+	import type { OwnedDm } from "#lib/log-draft.js";
 	import { logDraftMemory } from "#lib/log-draft-storage.svelte.js";
 	import * as API from "#lib/remote/index.js";
-	import type { LogDraftData, LogSchemaIn } from "#lib/schemas.js";
-	import type { GenericForm } from "#lib/factories.svelte.js";
+	import type { LogDraftData, UserId } from "#lib/schemas.js";
 	import { onMount } from "svelte";
 
 	interface Props {
-		form: GenericForm<LogSchemaIn>;
-		data: LogSchemaIn;
-		/** Fill the form once, when it was opened from New Log from Draft. */
+		/** Fill the form once on mount, for New Log from Draft. */
 		auto?: boolean;
-		onapplied?: (draft: LogDraftData) => void;
+		/** The page applies the draft to its own form data. Nothing is saved here. */
+		onapply: (draft: LogDraftData, dms: readonly OwnedDm[], userId: UserId) => void;
 	}
 
-	let { form, data, auto = false, onapplied }: Props = $props();
+	let { auto = false, onapply }: Props = $props();
 
 	const memory = logDraftMemory();
 	let applying = $state(false);
@@ -24,30 +22,29 @@
 		if (!stored || applying) return;
 		applying = true;
 		try {
-			const [dms, request] = await Promise.all([API.dms.queries.getAllWithoutLogs(), API.app.queries.request()]);
-			const user = request.user;
+			const [dms, { user }] = await Promise.all([API.dms.queries.getAllWithoutLogs(), API.app.queries.request()]);
 			if (!user) return;
-			applyDraftToLog(data, stored.data, dms, user.id);
-			form.form.fields.set(data);
-			onapplied?.(stored.data);
+			onapply(stored.data, dms, user.id);
 		} finally {
 			applying = false;
 		}
 	}
 
-	// Runs after the log form has its own fields, so this fill is not replaced by the blank log.
 	onMount(() => {
 		memory.load();
-		if (!auto || !memory.current) return;
-		void apply();
+		if (auto && memory.current) void apply();
 	});
 </script>
 
 {#if memory.hydrated && memory.current}
-	<button type="button" class="btn btn-sm" disabled={applying} onclick={() => void apply()}>
-		{#if applying}
-			<span class="loading loading-xs"></span>
-		{/if}
-		Populate from draft
-	</button>
+	<div class="flex flex-wrap items-center gap-2 rounded-lg bg-base-200 px-3 py-2 text-sm">
+		<span class="iconify size-5 mdi--file-document-edit-outline"></span>
+		<span class="flex-1">Draft available: <span class="font-semibold">{memory.current.data.name}</span></span>
+		<button type="button" class="btn btn-sm" disabled={applying} onclick={() => void apply()}>
+			{#if applying}
+				<span class="loading loading-xs"></span>
+			{/if}
+			Populate from draft
+		</button>
+	</div>
 {/if}

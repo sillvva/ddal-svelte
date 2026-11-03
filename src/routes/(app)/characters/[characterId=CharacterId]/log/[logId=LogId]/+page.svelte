@@ -14,8 +14,8 @@
 	import NavMenu from "#lib/components/nav-menu.svelte";
 	import PopulateLogDraft from "#lib/components/populate-log-draft.svelte";
 	import { defaultDM, getItemEntities } from "#lib/entities.js";
-	import { seasonForAdvancement } from "#lib/log-draft.js";
 	import { proxify } from "#lib/factories.svelte.js";
+	import { applyDraftToLog, seasonForAdvancement } from "#lib/log-draft.js";
 	import * as API from "#lib/remote/index.js";
 	import { type DungeonMasterId, logSchema } from "#lib/schemas.js";
 	import { page } from "$app/state";
@@ -69,10 +69,10 @@
 				{#if params.logId === "new" && !firstLog}
 					<div class="col-span-12 mb-2">
 						<PopulateLogDraft
-							form={ctx}
-							{data}
 							auto={fromDraft}
-							onapplied={(draft) => {
+							onapply={(draft, dms, userId) => {
+								applyDraftToLog(data, draft, dms, userId);
+								form.fields.set(data);
 								season = seasonForAdvancement(draft);
 							}}
 						/>

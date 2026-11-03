@@ -4,6 +4,7 @@
 	import { page } from "$app/state";
 	import { clipboard } from "@svelteuidev/composables";
 	import { fromAction } from "svelte/attachments";
+	import { topLayerDialog } from "./dialog.js";
 	import QrCode from "./qr-code.svelte";
 
 	interface Props {
@@ -14,10 +15,6 @@
 
 	let qrOpen = $state(false);
 	const link = $derived(`${page.url.origin}${logDraftPath(id)}`);
-
-	function close() {
-		qrOpen = false;
-	}
 </script>
 
 <div class="flex flex-wrap gap-2">
@@ -27,19 +24,27 @@
 		onclick={() => successToast("Draft link copied")}
 		{@attach fromAction(clipboard, () => link)}
 	>
+		<span class="iconify size-4 mdi--link-variant"></span>
 		Copy link
 	</button>
-	<button type="button" class="btn btn-sm" onclick={() => (qrOpen = true)}>Show QR code</button>
+	<button type="button" class="btn btn-sm" onclick={() => (qrOpen = true)}>
+		<span class="iconify size-4 mdi--qrcode"></span>
+		Show QR code
+	</button>
 </div>
 
 {#if qrOpen}
-	<dialog class="modal modal-open" aria-labelledby="draft-qr-title">
-		<div class="modal-box flex flex-col items-center gap-4">
+	<dialog class="modal" aria-labelledby="draft-qr-title" {@attach topLayerDialog(() => (qrOpen = false))}>
+		<div class="modal-box flex w-fit flex-col items-center gap-4">
 			<h3 id="draft-qr-title" class="text-lg font-semibold">Scan to open this draft</h3>
 			<QrCode value={link} />
-			<p class="text-center text-xs break-all">{link}</p>
-			<button type="button" class="btn btn-sm" onclick={close}>Close</button>
+			<p class="max-w-56 text-center text-xs break-all">{link}</p>
+			<form method="dialog">
+				<button class="btn btn-sm">Close</button>
+			</form>
 		</div>
-		<button type="button" class="modal-backdrop" onclick={close} aria-label="Close">close</button>
+		<form method="dialog" class="modal-backdrop">
+			<button aria-label="Close">close</button>
+		</form>
 	</dialog>
 {/if}

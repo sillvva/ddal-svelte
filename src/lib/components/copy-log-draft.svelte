@@ -1,42 +1,44 @@
 <script lang="ts">
 	import { successToast } from "#lib/factories.svelte.js";
-	import { logDraftMemory } from "#lib/log-draft-storage.svelte.js";
+	import { logDraftMemory, type StoredLogDraft } from "#lib/log-draft-storage.svelte.js";
 	import * as API from "#lib/remote/index.js";
 	import type { LogId } from "#lib/schemas.js";
 	import { parseEffectResult } from "#lib/util.js";
+	import { topLayerDialog } from "./dialog.js";
 	import LogDraftShare from "./log-draft-share.svelte";
 
 	interface Props {
-		logId: string;
+		logId: LogId;
+		/** Icon-only button for log lists. */
 		compact?: boolean;
 	}
 
 	let { logId, compact = false }: Props = $props();
 
 	let pending = $state(false);
-	let shareId = $state<string | null>(null);
+	let copied = $state.raw<StoredLogDraft | null>(null);
 
 	async function copyDraft() {
 		if (pending) return;
 		pending = true;
-		const result = await API.drafts.actions.copyFromLog(logId as LogId);
-		const saved = await parseEffectResult(result);
-		pending = false;
-		if (!saved) return;
-		logDraftMemory().save(saved);
-		shareId = saved.id;
-		successToast("Draft saved in this browser");
-	}
-
-	function close() {
-		shareId = null;
+		try {
+			const result = await API.drafts.actions.copyFromLog(logId);
+			const saved = await parseEffectResult(result);
+			if (!saved) return;
+			logDraftMemory().save(saved);
+			copied = saved;
+			successToast("Draft saved in this browser");
+		} finally {
+			pending = false;
+		}
 	}
 </script>
 
 <button
 	type="button"
-	class={["btn", compact ? "btn-sm" : "h-9 btn-sm"]}
+	class={["btn btn-sm", compact ? "touch-hitbox" : "h-9"]}
 	aria-label="Copy as draft"
+	title="Copy as draft"
 	disabled={pending}
 	onclick={copyDraft}
 >
@@ -49,17 +51,24 @@
 	{/if}
 </button>
 
-{#if shareId}
-	<dialog class="modal modal-open" aria-labelledby="copy-draft-title">
+{#if copied}
+	<dialog class="modal" aria-labelledby="copy-draft-title-{copied.id}" {@attach topLayerDialog(() => (copied = null))}>
 		<div class="modal-box flex flex-col gap-4">
-			<h3 id="copy-draft-title" class="text-lg font-semibold">Draft link</h3>
+			<h3 id="copy-draft-title-{copied.id}" class="text-lg font-semibold">Draft created</h3>
 			<p class="text-sm">
-				Share this link, or open a character and choose New Log from Draft. The link lasts 14 days after the last edit.
+				This draft is saved in this browser. Open a character and choose <span class="font-semibold">New Log from Draft</span>, or
+				share the link. The link lasts 14 days after the last edit.
 			</p>
-			<LogDraftShare id={shareId} />
-			<a class="link text-sm text-secondary" href="/drafts/{shareId}">Edit draft</a>
-			<button type="button" class="btn w-fit btn-sm" onclick={close}>Close</button>
+			<LogDraftShare id={copied.id} />
+			<div class="flex justify-between gap-2">
+				<a class="btn btn-ghost btn-sm" href="/drafts/{copied.id}">Edit draft</a>
+				<form method="dialog">
+					<button class="btn btn-sm">Close</button>
+				</form>
+			</div>
 		</div>
-		<button type="button" class="modal-backdrop" onclick={close} aria-label="Close">close</button>
+		<form method="dialog" class="modal-backdrop">
+			<button aria-label="Close">close</button>
+		</form>
 	</dialog>
 {/if}

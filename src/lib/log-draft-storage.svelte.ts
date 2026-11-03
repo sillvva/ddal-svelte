@@ -8,7 +8,15 @@ const STORAGE_KEY = "ddal.log-draft";
 export interface StoredLogDraft {
 	id: LogDraftId;
 	data: LogDraftData;
+	/** Epoch ms. The browser copy is dropped at the same time the server draft expires. */
+	expiresAt: number;
 }
+
+const storedSchema = v.object({
+	id: logDraftIdSchema,
+	data: logDraftDataSchema,
+	expiresAt: v.number()
+});
 
 let current = $state.raw<StoredLogDraft | null>(null);
 let hydrated = $state(false);
@@ -20,20 +28,17 @@ function parseStored(raw: string): StoredLogDraft | null {
 	} catch {
 		return null;
 	}
-	if (!json || typeof json !== "object") return null;
-	const record = json as { id?: unknown; data?: unknown };
-	const id = v.safeParse(logDraftIdSchema, record.id);
-	const data = v.safeParse(logDraftDataSchema, record.data);
-	if (!id.success || !data.success) return null;
-	return { id: id.output, data: data.output };
+	const parsed = v.safeParse(storedSchema, json);
+	if (!parsed.success || parsed.output.expiresAt <= Date.now()) return null;
+	return parsed.output;
 }
 
 function load() {
 	if (!browser) return;
-	hydrated = true;
 	const raw = localStorage.getItem(STORAGE_KEY);
 	current = raw ? parseStored(raw) : null;
 	if (raw && !current) localStorage.removeItem(STORAGE_KEY);
+	hydrated = true;
 }
 
 function save(draft: StoredLogDraft) {
@@ -52,7 +57,10 @@ function clear() {
 	hydrated = true;
 }
 
-/** Browser copy of a shared draft. Module state is only written in the browser. */
+/**
+ * Browser copy of a shared draft. Module state is only written in the browser, so SSR never
+ * sees a draft and the split button only appears after `load()` runs on mount.
+ */
 export function logDraftMemory() {
 	return {
 		get hydrated() {

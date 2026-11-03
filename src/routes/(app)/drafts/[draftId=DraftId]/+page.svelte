@@ -11,9 +11,9 @@
 	import Head from "#lib/components/head.svelte";
 	import LogDraftShare from "#lib/components/log-draft-share.svelte";
 	import NavMenu from "#lib/components/nav-menu.svelte";
-	import { successToast } from "#lib/factories.svelte.js";
-	import { proxify } from "#lib/factories.svelte.js";
-	import { LOG_DRAFT_LIMIT } from "#lib/log-draft.js";
+	import { proxify, successToast } from "#lib/factories.svelte.js";
+	import { LOG_DRAFT_LIMIT, seasonForAdvancement } from "#lib/log-draft.js";
+	import { logDraftMemory } from "#lib/log-draft-storage.svelte.js";
 	import * as API from "#lib/remote/index.js";
 	import { logDraftSchema, type LogDraftId } from "#lib/schemas.js";
 	import { parseEffectResult } from "#lib/util.js";
@@ -21,6 +21,7 @@
 
 	const { params } = $props();
 
+	const savedId = $derived(params.draftId === "new" ? null : params.draftId);
 	let removing = $state(false);
 
 	async function removeDraft(id: LogDraftId) {
@@ -33,6 +34,8 @@
 			removing = false;
 			return;
 		}
+		const memory = logDraftMemory();
+		if (memory.current?.id === id) memory.clear();
 		successToast("Draft deleted");
 		await goto("/dm-logs");
 	}
@@ -52,27 +55,27 @@
 		]}
 	/>
 
-	{#if params.draftId !== "new"}
+	{#if savedId}
+		{const shared = $derived(await API.drafts.queries.read(savedId))}
 		<div class="mb-4 flex flex-col gap-3 rounded-lg bg-base-200 p-4">
 			<p class="text-sm">
-				Players open this link, then fill a new log from the draft. The link lasts 14 days after the last edit. You can keep up to {LOG_DRAFT_LIMIT}
-				drafts.
+				Players open this link, then fill a new log from the draft. It works until
+				<span class="font-semibold">{new Date(shared.expiresAt).toLocaleDateString([], { dateStyle: "medium" })}</span>, and
+				saving again restarts the 14 days. You can keep up to {LOG_DRAFT_LIMIT} drafts.
 			</p>
-			<LogDraftShare id={params.draftId} />
+			<LogDraftShare id={savedId} />
 		</div>
+	{:else}
+		<p class="mb-4 text-sm">
+			Players get the title, date, DM, advancement, treasure, downtime, items, and notes. Images can't be added to a draft.
+		</p>
 	{/if}
 
 	{let data = $derived(proxify(draft))}
-	<RemoteForm
-		schema={logDraftSchema}
-		form={API.drafts.forms.save}
-		{data}
-		initialErrors={params.draftId !== "new"}
-		successMessage={false}
-	>
+	<RemoteForm schema={logDraftSchema} form={API.drafts.forms.save} {data} initialErrors={!!savedId} successMessage="Draft saved">
 		{#snippet children(ctx)}
 			{const { form, initial } = $derived(ctx)}
-			{let season = $state(draft.experience ? 1 : draft.acp ? 8 : 9)}
+			{let season = $state(seasonForAdvancement(draft))}
 			<Input field={form.fields.id} hidden />
 			<Input field={form.fields.timezone} hidden />
 			<Control class="col-span-12 sm:col-span-4">
@@ -162,15 +165,9 @@
 			</Control>
 			<GainedItems form={ctx}>
 				<Submit form={ctx}>Save Draft</Submit>
-				{#if params.draftId !== "new"}
-					<button
-						type="button"
-						class="btn btn-error"
-						disabled={removing}
-						onclick={() => removeDraft(params.draftId as LogDraftId)}
-					>
-						Delete draft
-					</button>
+				{#if savedId}
+					{const id = savedId}
+					<button type="button" class="btn btn-error" disabled={removing} onclick={() => removeDraft(id)}> Delete draft </button>
 				{/if}
 			</GainedItems>
 		{/snippet}
