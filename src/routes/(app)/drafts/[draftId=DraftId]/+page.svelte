@@ -174,7 +174,7 @@
 				<Submit form={ctx}>Save Draft</Submit>
 				{#if savedId}
 					{const id = savedId}
-					<button type="button" class="btn btn-error" disabled={removing} onclick={() => removeDraft(id)}> Delete draft </button>
+					<button type="button" class="btn btn-error" disabled={removing} onclick={() => removeDraft(id)}>Delete Draft</button>
 				{/if}
 			</GainedItems>
 		{/snippet}

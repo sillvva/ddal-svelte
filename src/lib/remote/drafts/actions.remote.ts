@@ -19,7 +19,5 @@ export const copyFromLog = guardedCommand(logIdSchema, function* (logId, { user 
 
 export const remove = guardedCommand(logDraftIdSchema, function* (id, { user }) {
 	const Drafts = yield* LogDraftService;
-	const removed = yield* Drafts.remove(id, user.id);
-	yield* refreshAll(API.drafts.queries.read(id).refresh());
-	return removed;
+	return yield* Drafts.remove(id, user.id);
 });
