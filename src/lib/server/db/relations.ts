@@ -7,6 +7,7 @@ export const relations = defineRelations(schema, (r) => ({
 		sessions: r.many.session(),
 		characters: r.many.characters(),
 		dungeonMasters: r.many.dungeonMasters(),
+		logDrafts: r.many.logDrafts(),
 		passkeys: r.many.passkey()
 	},
 	account: {
@@ -74,6 +75,12 @@ export const relations = defineRelations(schema, (r) => ({
 			from: r.magicItems.logLostId,
 			to: r.logs.id,
 			alias: "magicItemsLost"
+		})
+	},
+	logDrafts: {
+		user: r.one.user({
+			from: r.logDrafts.userId,
+			to: r.user.id
 		})
 	},
 	storyAwards: {

@@ -1,4 +1,5 @@
 import postgres from "postgres";
+import { v7 } from "uuid";
 
 export async function withSql<T>(fn: (sql: postgres.Sql) => Promise<T>) {
 	const databaseUrl = process.env.DATABASE_URL;
@@ -139,6 +140,136 @@ export async function pendingDeletion(objectKey: string) {
 /** Stands in for saved portraits without uploading megabytes of images. */
 export async function setCharacterImageBytes(characterId: string, bytes: number) {
 	await withSql((sql) => sql`update character set image_bytes = ${bytes} where id = ${characterId}`);
+}
+
+export interface LogDraftRow {
+	id: string;
+	userId: string;
+	data: {
+		name: string;
+		date: number | null;
+		description: string;
+		dm: { name: string; DCI: string };
+		magicItemsGained: { id: string; name: string }[];
+	};
+}
+
+export async function logDraftRow(id: string) {
+	const rows = await withSql((sql) => sql<LogDraftRow[]>`select id, user_id as "userId", data from log_draft where id = ${id}`);
+	return rows[0] ?? null;
+}
+
+/** Runs what the daily `delete-expired-log-drafts` pg_cron job runs. Returns the number deleted. */
+export async function deleteExpiredLogDrafts() {
+	const rows = await withSql((sql) => sql<{ deleted: number }[]>`select public.delete_expired_log_drafts() as deleted`);
+	return rows[0]?.deleted ?? 0;
+}
+
+export interface CronJobRow {
+	schedule: string;
+	command: string;
+	active: boolean;
+}
+
+export async function cronJob(name: string) {
+	return withSql((sql) => sql<CronJobRow[]>`select schedule, command, active from cron.job where jobname = ${name}`);
+}
+
+/** Adds app log rows dated `ageMs` before now, in UTC like the app writes them. Returns their ids. */
+export async function insertAppLogs(label: string, ages: readonly number[]) {
+	const ids = ages.map(() => v7());
+	await withSql(async (sql) => {
+		for (const [index, ageMs] of ages.entries()) {
+			await sql`
+				insert into applog (id, label, level, annotations, "timestamp")
+				values (${ids[index] ?? ""}, ${label}, 'INFO', '{}'::jsonb, (now() at time zone 'utc') - ${`${ageMs} milliseconds`}::interval)
+			`;
+		}
+	});
+	return ids;
+}
+
+export async function appLogIds(label: string) {
+	const rows = await withSql((sql) => sql<{ id: string }[]>`select id from applog where label = ${label} order by id`);
+	return rows.map((row) => row.id);
+}
+
+export async function deleteAppLogs(label: string) {
+	await withSql((sql) => sql`delete from applog where label = ${label}`);
+}
+
+/** Runs what the daily `delete-expired-applogs` pg_cron job runs. Returns the number deleted. */
+export async function deleteExpiredAppLogs() {
+	const rows = await withSql((sql) => sql<{ deleted: number }[]>`select public.delete_expired_applogs() as deleted`);
+	return rows[0]?.deleted ?? 0;
+}
+
+/** A bare user row for database-only tests. The `e2e-` name lets the run cleanup remove it. */
+export async function insertBareUser(handle: string) {
+	const id = v7();
+	await withSql((sql) => sql`insert into "user" (id, name, email) values (${id}, ${handle}, ${`${handle}@example.com`})`);
+	return id;
+}
+
+export async function deleteUser(id: string) {
+	await withSql((sql) => sql`delete from "user" where id = ${id}`);
+}
+
+/**
+ * Adds sessions whose `expires` is `offsetMs` from now, in UTC like the app writes it.
+ * A negative offset is a session that already expired. Returns their ids.
+ */
+export async function insertSessions(userId: string, offsets: readonly number[]) {
+	const ids = offsets.map(() => v7());
+	await withSql(async (sql) => {
+		for (const [index, offsetMs] of offsets.entries()) {
+			const id = ids[index] ?? "";
+			await sql`
+				insert into session (id, "sessionToken", "userId", expires)
+				values (${id}, ${`e2e-${id}`}, ${userId}, (now() at time zone 'utc') + ${`${offsetMs} milliseconds`}::interval)
+			`;
+		}
+	});
+	return ids;
+}
+
+export async function sessionIds(userId: string) {
+	const rows = await withSql((sql) => sql<{ id: string }[]>`select id from session where "userId" = ${userId} order by id`);
+	return rows.map((row) => row.id);
+}
+
+/** Runs what the daily `delete-expired-sessions` pg_cron job runs. Returns the number deleted. */
+export async function deleteExpiredSessions() {
+	const rows = await withSql((sql) => sql<{ deleted: number }[]>`select public.delete_expired_sessions() as deleted`);
+	return rows[0]?.deleted ?? 0;
+}
+
+/** Ages a draft past its 14-day lifetime without waiting for the daily cleanup job. */
+export async function expireLogDraft(id: string) {
+	await withSql((sql) => sql`update log_draft set updated_at = now() - interval '15 days' where id = ${id}`);
+}
+
+export async function dmsForUser(userId: string) {
+	return withSql(
+		(sql) => sql<DmRow[]>`
+			select id, name, "DCI", user_id as "userId", is_user as "isUser"
+			from dungeonmaster
+			where user_id = ${userId}
+			order by name
+		`
+	);
+}
+
+/** App ids are UUIDv7, and the log form rejects any other DM id. */
+export async function insertDm(userId: string, name: string, DCI: string) {
+	const id = v7();
+	await withSql(
+		(sql) => sql`
+			insert into dungeonmaster (id, name, "DCI", user_id, is_user)
+			values (${id}, ${name}, ${DCI}, ${userId}, false)
+		`
+	);
+	return id;
 }
 
 export async function setBanned(userId: string, banned: boolean) {

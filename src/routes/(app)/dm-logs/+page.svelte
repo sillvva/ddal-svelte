@@ -1,16 +1,17 @@
 <script lang="ts">
+	import CopyLogDraft from "#lib/components/copy-log-draft.svelte";
 	import Head from "#lib/components/head.svelte";
 	import Items from "#lib/components/items.svelte";
 	import Markdown from "#lib/components/markdown.svelte";
 	import NavMenu from "#lib/components/nav-menu.svelte";
+	import SplitButton from "#lib/components/split-button.svelte";
 	import SearchResults from "#lib/components/search-results.svelte";
 	import Search from "#lib/components/search.svelte";
 	import { EntitySearchFactory, successToast, swipeAction } from "#lib/factories.svelte.js";
 	import * as API from "#lib/remote/index.js";
 	import type { FullLogData } from "#lib/server/effect/services/logs.js";
 	import { getGlobal } from "#lib/stores.svelte.js";
-	import { createTransition, download, formatDate, hotkey, newestDraftId, parseEffectResult } from "#lib/util.js";
-	import { goto } from "$app/navigation";
+	import { createTransition, download, formatDate, newestDraftId, parseEffectResult } from "#lib/util.js";
 	import { page } from "$app/state";
 	import { sorter } from "@sillvva/utils";
 	import { SvelteSet } from "svelte/reactivity";
@@ -43,6 +44,7 @@
 		search.results.toSorted((a, b) => (global.app.dmLogs.sort === "asc" ? sorter(a.date, b.date) : sorter(b.date, a.date)))
 	)}
 	{const newLogHref = $derived(`/dm-logs/new?draft=${encodeURIComponent(newestDraftId(logs.map((log) => log.id)))}`)}
+	{const newLogOptions = $derived([{ href: "/drafts/new", label: "New Player Draft" }] as const)}
 
 	<Head title="{user?.name}'s DM Logs" />
 
@@ -63,25 +65,9 @@
 
 	<div class="flex gap-2 sm:justify-between">
 		<div class="flex gap-2 max-sm:flex-1 sm:w-96">
-			<a
-				href={newLogHref}
-				class="btn btn-primary btn-sm max-sm:hidden"
-				aria-label="New Log"
-				{@attach hotkey([
-					[
-						"n",
-						() => {
-							goto(newLogHref);
-						}
-					]
-				])}
-			>
-				New Log <kbd class="kbd kbd-sm text-base-content max-sm:hover-none:hidden">N</kbd>
-			</a>
+			<SplitButton href={newLogHref} label="New Log" options={newLogOptions} shortcut class="max-sm:hidden" />
 			<Search name={searchKey} placeholder="Search by name, class, items, etc." />
-			<a href={newLogHref} class="btn inline-flex btn-primary sm:hidden" aria-label="New Log">
-				<span class="iconify inline size-6 mdi--plus"></span>
-			</a>
+			<SplitButton href={newLogHref} label="New Log" options={newLogOptions} compact class="sm:hidden" />
 		</div>
 		<div class="flex gap-2">
 			<button
@@ -135,13 +121,16 @@
 						})}
 					>
 						<div class="content bg-base-200">
-							<a
-								href={log.isDmLog ? `/dm-logs/${log.id}` : `/characters/${log.characterId}/log/${log.id}`}
-								class="row-link font-semibold whitespace-pre-wrap text-secondary"
-								aria-label="Edit Log"
-							>
-								<SearchResults text={log.name} terms={search.terms} />
-							</a>
+							<div class="flex items-start justify-between gap-2">
+								<a
+									href={log.isDmLog ? `/dm-logs/${log.id}` : `/characters/${log.characterId}/log/${log.id}`}
+									class="row-link font-semibold whitespace-pre-wrap text-secondary"
+									aria-label="Edit Log"
+								>
+									<SearchResults text={log.name} terms={search.terms} />
+								</a>
+								<CopyLogDraft logId={log.id} compact />
+							</div>
 							<p class="text-netural-content text-xs font-normal whitespace-nowrap">
 								{new Date(log.date).toLocaleString([], { dateStyle: "medium", timeStyle: "short" })}
 							</p>
@@ -258,9 +247,9 @@
 						<tr>
 							<td colSpan={5} class="py-20 text-center">
 								<p class="mb-4">You have no DM logs.</p>
-								<p>
-									<a href={newLogHref} class="btn btn-primary">Create one now</a>
-								</p>
+								<div class="flex justify-center">
+									<SplitButton href={newLogHref} label="Create one now" options={newLogOptions} />
+								</div>
 							</td>
 						</tr>
 					</tbody>
@@ -387,6 +376,7 @@
 								<!-- Delete -->
 								<td class="w-8 align-top print:hidden">
 									<div class="flex flex-col gap-2">
+										<CopyLogDraft logId={log.id} compact />
 										<button
 											type="button"
 											class="btn touch-hitbox btn-error btn-sm"

@@ -1,5 +1,6 @@
 <script lang="ts">
 	import { authClient } from "#lib/auth.js";
+	import CopyLogDraft from "#lib/components/copy-log-draft.svelte";
 	import Error from "#lib/components/error.svelte";
 	import Head from "#lib/components/head.svelte";
 	import Items from "#lib/components/items.svelte";
@@ -7,10 +8,12 @@
 	import NavMenu from "#lib/components/nav-menu.svelte";
 	import SearchResults from "#lib/components/search-results.svelte";
 	import Search from "#lib/components/search.svelte";
+	import SplitButton from "#lib/components/split-button.svelte";
 	import { EntitySearchFactory, successToast, swipeAction } from "#lib/factories.svelte.js";
 	import * as API from "#lib/remote/index.js";
 	import type { FullCharacterData } from "#lib/server/effect/services/characters.js";
 	import type { FullLogData } from "#lib/server/effect/services/logs.js";
+	import { logDraftMemory } from "#lib/log-draft-storage.svelte.js";
 	import { getGlobal } from "#lib/stores.svelte.js";
 	import { createTransition, formatDate, hotkey, parseEffectResult } from "#lib/util.js";
 	import { goto } from "$app/navigation";
@@ -18,12 +21,20 @@
 	import { slugify, sorter } from "@sillvva/utils";
 	import { clipboard, download } from "@svelteuidev/composables";
 	import { onMount } from "svelte";
-	import { fromAction } from "svelte/attachments";
+	import { fromAction, type Attachment } from "svelte/attachments";
 	import { SvelteSet } from "svelte/reactivity";
 
 	const { params } = $props();
 
 	const global = getGlobal();
+	const draftMemory = logDraftMemory();
+	let draftReady = $state(false);
+	const hasStoredDraft = $derived(draftReady && draftMemory.current !== null);
+
+	/** SSR can't see browser storage, so the split button waits until this markup has hydrated. */
+	const showStoredDraft: Attachment = () => {
+		draftReady = true;
+	};
 
 	let deletingLog = new SvelteSet<string>();
 	const searchKey = "s";
@@ -58,6 +69,7 @@
 	}
 
 	onMount(async () => {
+		draftMemory.load();
 		const { user } = await API.app.queries.request();
 		if (global.app.settings.autoWebAuthn && !user) {
 			authClient.signIn.passkey({
@@ -77,6 +89,8 @@
 	{const myCharacter = $derived(character.userId === user?.id)}
 	{const newLogDraft = $derived(character.logs.at(-1)?.id ?? character.id)}
 	{const newLogHref = $derived(`/characters/${character.id}/log/new?draft=${encodeURIComponent(newLogDraft)}`)}
+	{const fromDraftHref = $derived(`${newLogHref}&fromDraft=1`)}
+	{const newLogOptions = $derived([{ href: fromDraftHref, label: "New Log from Draft" }] as const)}
 	{const search = $derived(
 		new EntitySearchFactory(character.logs, page.url.searchParams.get(searchKey) ?? page.state.search?.[searchKey] ?? "")
 	)}
@@ -309,29 +323,37 @@
 
 	{#if character.logs.length}
 		<div class="mt-4 flex flex-wrap gap-2 print:hidden" {@attach scroller(search)}>
-			<div class="flex w-full gap-2 sm:max-w-md print:hidden">
+			<div class="flex w-full gap-2 sm:max-w-md print:hidden" {@attach showStoredDraft}>
 				{#if myCharacter}
-					<a
-						href={newLogHref}
-						class="btn btn-primary max-sm:hidden sm:px-3 sm:btn-sm"
-						aria-label="New Log"
-						{@attach hotkey([
-							[
-								"n",
-								() => {
-									goto(newLogHref);
-								}
-							]
-						])}
-					>
-						New Log <kbd class="kbd kbd-sm text-base-content max-sm:hover-none:hidden">N</kbd>
-					</a>
+					{#if hasStoredDraft}
+						<SplitButton href={newLogHref} label="New Log" options={newLogOptions} shortcut class="max-sm:hidden" />
+					{:else}
+						<a
+							href={newLogHref}
+							class="btn btn-primary max-sm:hidden sm:px-3 sm:btn-sm"
+							aria-label="New Log"
+							{@attach hotkey([
+								[
+									"n",
+									() => {
+										goto(newLogHref);
+									}
+								]
+							])}
+						>
+							New Log <kbd class="kbd kbd-sm text-base-content max-sm:hover-none:hidden">N</kbd>
+						</a>
+					{/if}
 				{/if}
 				<Search name={searchKey} placeholder="Search Logs" />
 				{#if myCharacter}
-					<a href={newLogHref} class="btn btn-primary sm:hidden sm:px-3 sm:btn-sm" aria-label="New Log">
-						<span class="iconify size-6 mdi--plus"></span>
-					</a>
+					{#if hasStoredDraft}
+						<SplitButton href={newLogHref} label="New Log" options={newLogOptions} compact class="sm:hidden" />
+					{:else}
+						<a href={newLogHref} class="btn btn-primary sm:hidden sm:px-3 sm:btn-sm" aria-label="New Log">
+							<span class="iconify size-6 mdi--plus"></span>
+						</a>
+					{/if}
 					<button
 						class="btn data-[desc=true]:btn-primary sm:hidden"
 						data-desc={global.app.log.descriptions}
@@ -380,9 +402,13 @@
 			<div class="flex flex-col gap-4 py-20 text-center">
 				<div>No logs found.</div>
 				{#if myCharacter}
-					<p>
-						<a href={newLogHref} class="btn btn-primary">Create a Game Log</a>
-					</p>
+					<div class="flex justify-center" {@attach showStoredDraft}>
+						{#if hasStoredDraft}
+							<SplitButton href={newLogHref} label="Create a Game Log" options={newLogOptions} />
+						{:else}
+							<a href={newLogHref} class="btn btn-primary">Create a Game Log</a>
+						{/if}
+					</div>
 					<p>
 						<a href="{newLogHref}&firstLog=true" class="btn btn-primary">Create an Intro Log</a>
 					</p>
@@ -410,12 +436,15 @@
 						>
 							<div class="content bg-base-200">
 								{#if myCharacter}
-									<a
-										href={log.isDmLog ? `/dm-logs/${log.id}` : `/characters/${log.characterId}/log/${log.id}`}
-										class="row-link font-semibold whitespace-pre-wrap text-secondary"
-									>
-										<SearchResults text={log.name} terms={search.terms} />
-									</a>
+									<div class="flex items-start justify-between gap-2">
+										<a
+											href={log.isDmLog ? `/dm-logs/${log.id}` : `/characters/${log.characterId}/log/${log.id}`}
+											class="row-link font-semibold whitespace-pre-wrap text-secondary"
+										>
+											<SearchResults text={log.name} terms={search.terms} />
+										</a>
+										<CopyLogDraft logId={log.id} compact />
+									</div>
 								{:else}
 									<span class="font-semibold whitespace-pre-wrap">
 										<SearchResults text={log.name} terms={search.terms} />
@@ -677,6 +706,7 @@
 								{#if myCharacter}
 									<td class="w-8 align-top print:hidden">
 										<div class="flex flex-col justify-center gap-2">
+											<CopyLogDraft logId={log.id} compact />
 											<button
 												type="button"
 												class="btn touch-hitbox btn-error btn-sm"
