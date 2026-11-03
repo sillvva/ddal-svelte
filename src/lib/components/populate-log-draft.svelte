@@ -16,6 +16,8 @@
 
 	const memory = logDraftMemory();
 	let applying = $state(false);
+	/** SSR can't see browser storage, so the bar renders only after this component has hydrated. */
+	let mounted = $state(false);
 
 	async function apply() {
 		const stored = memory.current;
@@ -32,11 +34,12 @@
 
 	onMount(() => {
 		memory.load();
+		mounted = true;
 		if (auto && memory.current) void apply();
 	});
 </script>
 
-{#if memory.hydrated && memory.current}
+{#if mounted && memory.current}
 	<div class="flex flex-wrap items-center gap-2 rounded-lg bg-base-200 px-3 py-2 text-sm">
 		<span class="iconify size-5 mdi--file-document-edit-outline"></span>
 		<span class="flex-1">Draft available: <span class="font-semibold">{memory.current.data.name}</span></span>

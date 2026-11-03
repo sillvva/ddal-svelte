@@ -19,7 +19,6 @@ const storedSchema = v.object({
 });
 
 let current = $state.raw<StoredLogDraft | null>(null);
-let hydrated = $state(false);
 
 function parseStored(raw: string): StoredLogDraft | null {
 	let json: unknown;
@@ -38,7 +37,6 @@ function load() {
 	const raw = localStorage.getItem(STORAGE_KEY);
 	current = raw ? parseStored(raw) : null;
 	if (raw && !current) localStorage.removeItem(STORAGE_KEY);
-	hydrated = true;
 }
 
 function save(draft: StoredLogDraft) {
@@ -47,25 +45,20 @@ function save(draft: StoredLogDraft) {
 	if (!stored) return;
 	localStorage.setItem(STORAGE_KEY, JSON.stringify(stored));
 	current = stored;
-	hydrated = true;
 }
 
 function clear() {
 	if (!browser) return;
 	localStorage.removeItem(STORAGE_KEY);
 	current = null;
-	hydrated = true;
 }
 
 /**
  * Browser copy of a shared draft. Module state is only written in the browser, so SSR never
- * sees a draft and the split button only appears after `load()` runs on mount.
+ * sees a draft. Markup that depends on it must wait until it has hydrated.
  */
 export function logDraftMemory() {
 	return {
-		get hydrated() {
-			return hydrated;
-		},
 		get current() {
 			return current;
 		},

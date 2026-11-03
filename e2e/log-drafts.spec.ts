@@ -1,4 +1,4 @@
-import type { Page } from "@playwright/test";
+import type { ConsoleMessage, Locator, Page } from "@playwright/test";
 import { dmsForUser, expireLogDraft, insertDm, logDraftRow, logIdsForCharacter, logRow, magicItemsGainedIn } from "./db.ts";
 import { expect, test } from "./fixtures.ts";
 import {
@@ -33,6 +33,25 @@ function storedDraftId(page: Page) {
 
 function successToast(page: Page, message: string) {
 	return page.locator("[data-sonner-toast]").filter({ hasText: message });
+}
+
+/**
+ * SSR can't see the browser copy of a draft, so markup that depends on it must still hydrate cleanly.
+ * `ready` is something that only renders once the stored draft is read.
+ */
+async function expectCleanHydration(page: Page, path: string, ready: () => Locator) {
+	const errors: string[] = [];
+	const onConsole = (message: ConsoleMessage) => {
+		if (/hydrat/i.test(message.text())) errors.push(message.text());
+	};
+	page.on("console", onConsole);
+	try {
+		await page.goto(path);
+		await expect(ready()).toBeVisible();
+	} finally {
+		page.off("console", onConsole);
+	}
+	expect(errors, `${path} failed to hydrate`).toEqual([]);
 }
 
 /** The header split button. Empty lists repeat it, and the narrow layout's copy is hidden. */
@@ -158,7 +177,7 @@ test("log drafts: share as a DM, open the link, fill a log, and keep edits with 
 
 	await test.step("New Log from Draft fills the form without saving it", async () => {
 		const { page } = player;
-		await page.goto(`/characters/${characterId}`);
+		await expectCleanHydration(page, `/characters/${characterId}`, () => newLogMenu(page));
 		await newLogMenu(page).click();
 		await page.getByRole("link", { name: "New Log from Draft" }).click();
 		await page.waitForURL(new RegExp(`/characters/${characterId}/log/new\\?.*fromDraft=1`));
@@ -194,8 +213,9 @@ test("log drafts: share as a DM, open the link, fill a log, and keep edits with 
 		await page.goto(`/draft/${draftId}`);
 		await expect(successToast(page, "A log draft is available")).toBeVisible();
 
-		await page.goto(`/characters/${newcomerCharacter}/log/new`);
-		await page.getByRole("button", { name: "Populate from draft" }).click();
+		const populate = () => page.getByRole("button", { name: "Populate from draft" });
+		await expectCleanHydration(page, `/characters/${newcomerCharacter}/log/new`, populate);
+		await populate().click();
 		await expect(page.getByLabel("Title")).toHaveValue(draftTitle);
 		await expect(page.getByLabel("DM Name")).toHaveValue(draftDmName);
 		await saveLog(page);

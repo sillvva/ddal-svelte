@@ -21,14 +21,20 @@
 	import { slugify, sorter } from "@sillvva/utils";
 	import { clipboard, download } from "@svelteuidev/composables";
 	import { onMount } from "svelte";
-	import { fromAction } from "svelte/attachments";
+	import { fromAction, type Attachment } from "svelte/attachments";
 	import { SvelteSet } from "svelte/reactivity";
 
 	const { params } = $props();
 
 	const global = getGlobal();
 	const draftMemory = logDraftMemory();
-	const hasStoredDraft = $derived(draftMemory.hydrated && draftMemory.current !== null);
+	let draftReady = $state(false);
+	const hasStoredDraft = $derived(draftReady && draftMemory.current !== null);
+
+	/** SSR can't see browser storage, so the split button waits until this markup has hydrated. */
+	const showStoredDraft: Attachment = () => {
+		draftReady = true;
+	};
 
 	let deletingLog = new SvelteSet<string>();
 	const searchKey = "s";
@@ -317,7 +323,7 @@
 
 	{#if character.logs.length}
 		<div class="mt-4 flex flex-wrap gap-2 print:hidden" {@attach scroller(search)}>
-			<div class="flex w-full gap-2 sm:max-w-md print:hidden">
+			<div class="flex w-full gap-2 sm:max-w-md print:hidden" {@attach showStoredDraft}>
 				{#if myCharacter}
 					{#if hasStoredDraft}
 						<SplitButton href={newLogHref} label="New Log" options={newLogOptions} shortcut class="max-sm:hidden" />
@@ -396,7 +402,7 @@
 			<div class="flex flex-col gap-4 py-20 text-center">
 				<div>No logs found.</div>
 				{#if myCharacter}
-					<div class="flex justify-center">
+					<div class="flex justify-center" {@attach showStoredDraft}>
 						{#if hasStoredDraft}
 							<SplitButton href={newLogHref} label="Create a Game Log" options={newLogOptions} />
 						{:else}
