@@ -78,7 +78,7 @@ jobs:
           R2_PUBLIC_URL: http://127.0.0.1:9000/e2e
           R2_ACCESS_KEY_ID: e2eaccess
           R2_SECRET_ACCESS_KEY: e2esecretkey123
-        run: pnpm test:e2e
+        run: pnpm test
 
       # A flaky test that passes on retry leaves the job green, so this can't be `failure()`.
       # Playwright keeps output only for failed attempts, so passing runs upload nothing.
