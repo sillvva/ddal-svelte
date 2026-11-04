@@ -1,4 +1,6 @@
 #!/bin/bash
+"$(dirname "$0")/check-supabase-ports.sh" || exit 1
+
 if pgrep -f "Docker" >/dev/null; then
   echo "Docker is already running."
 else
