@@ -1,32 +1,36 @@
-<script lang="ts">
-	import type { OwnedDm } from "#lib/log-draft.js";
+<script lang="ts" generics="Kind extends LogDraftKind">
 	import { logDraftMemory } from "#lib/log-draft-storage.svelte.js";
-	import * as API from "#lib/remote/index.js";
-	import type { LogDraftData, UserId } from "#lib/schemas.js";
+	import type { LogDraftData, LogDraftKind } from "#lib/schemas.js";
 	import { onMount } from "svelte";
 
+	type Draft = Extract<LogDraftData, { kind: Kind }>;
+
 	interface Props {
+		/** Only drafts of this kind are offered. */
+		kind: Kind;
 		/** Fill the form once on mount, for New Log from Draft. */
 		auto?: boolean;
 		/** The page applies the draft to its own form data. Nothing is saved here. */
-		onapply: (draft: LogDraftData, dms: readonly OwnedDm[], userId: UserId) => void;
+		onapply: (draft: Draft) => void | Promise<void>;
 	}
 
-	let { auto = false, onapply }: Props = $props();
+	let { kind, auto = false, onapply }: Props = $props();
+
+	function isKind(data: LogDraftData): data is Draft {
+		return data.kind === kind;
+	}
 
 	const memory = logDraftMemory();
+	const stored = $derived(memory.current && isKind(memory.current.data) ? memory.current.data : null);
 	let applying = $state(false);
 	/** SSR can't see browser storage, so the bar renders only after this component has hydrated. */
 	let mounted = $state(false);
 
 	async function apply() {
-		const stored = memory.current;
 		if (!stored || applying) return;
 		applying = true;
 		try {
-			const [dms, { user }] = await Promise.all([API.dms.queries.getAllWithoutLogs(), API.app.queries.request()]);
-			if (!user) return;
-			onapply(stored.data, dms, user.id);
+			await onapply(stored);
 		} finally {
 			applying = false;
 		}
@@ -35,14 +39,14 @@
 	onMount(() => {
 		memory.load();
 		mounted = true;
-		if (auto && memory.current) void apply();
+		if (auto && stored) void apply();
 	});
 </script>
 
-{#if mounted && memory.current}
+{#if mounted && stored}
 	<div class="flex flex-wrap items-center gap-2 rounded-lg bg-base-200 px-3 py-2 text-sm">
 		<span class="iconify size-5 mdi--file-document-edit-outline"></span>
-		<span class="flex-1">Draft available: <span class="font-semibold">{memory.current.data.name}</span></span>
+		<span class="flex-1">Draft available: <span class="font-semibold">{stored.name}</span></span>
 		<button type="button" class="btn btn-sm" disabled={applying} onclick={() => void apply()}>
 			{#if applying}
 				<span class="loading loading-xs"></span>

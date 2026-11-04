@@ -242,71 +242,56 @@ export type LogDraftIdParam = v.InferOutput<typeof logDraftIdParamSchema>;
 export const logDraftIdParamSchema = v.union([logDraftIdSchema, v.literal("new")]);
 
 /**
- * Log date as epoch milliseconds, or 0 when a draft has no date.
- * A non-zero value is checked with the log date schema. 0 is stored as "no date".
+ * Fields every draft shares: a log without a log id, date, character, or dropped items.
+ * The date is set when the log is created from the draft. Field limits come from `logSchema`.
  */
-const draftDate = v.pipe(
-	v.number(),
-	v.rawCheck(({ dataset, addIssue }) => {
-		if (!dataset.typed || dataset.value === 0) return;
-		const parsed = v.safeParse(logSchema.entries.date, dataset.value);
-		if (parsed.success) return;
-		for (const issue of parsed.issues) addIssue({ message: issue.message });
-	}),
-	v.transform((value) => (value === 0 ? null : v.parse(logSchema.entries.date, value).getTime()))
-);
+const logDraftEntries = {
+	name: logSchema.entries.name,
+	timezone: logSchema.entries.timezone,
+	type: logSchema.entries.type,
+	experience: logSchema.entries.experience,
+	acp: logSchema.entries.acp,
+	tcp: logSchema.entries.tcp,
+	level: logSchema.entries.level,
+	gold: logSchema.entries.gold,
+	dtd: logSchema.entries.dtd,
+	description: logSchema.entries.description,
+	magicItemsGained: logSchema.entries.magicItemsGained,
+	storyAwardsGained: logSchema.entries.storyAwardsGained
+};
 
-/** A shareable log without a log id, character, or dropped items. Field limits come from `logSchema`. */
+/** Drafts saved before DM drafts existed have no kind and were all character drafts. */
+const characterDraftEntries = {
+	kind: v.optional(v.literal("character"), "character"),
+	...logDraftEntries,
+	dm: v.object({
+		name: logSchema.entries.dm.entries.name,
+		DCI: logSchema.entries.dm.entries.DCI
+	})
+};
+
+/** A DM log's DM is always the user saving it, so a DM draft carries no DM. */
+const dmDraftEntries = {
+	kind: v.literal("dm"),
+	...logDraftEntries
+};
+
+/** Which new log form a draft fills. */
+export type LogDraftKind = LogDraftData["kind"];
+
+const logDraftEditorId = v.union([logDraftIdSchema, v.literal("")]);
+
 export type LogDraftSchema = v.InferOutput<typeof logDraftSchema>;
 export type LogDraftSchemaIn = v.InferInput<typeof logDraftSchema>;
-export const logDraftSchema = v.object({
-	id: v.union([logDraftIdSchema, v.literal("")]),
-	name: logSchema.entries.name,
-	date: draftDate,
-	timezone: logSchema.entries.timezone,
-	type: logSchema.entries.type,
-	experience: logSchema.entries.experience,
-	acp: logSchema.entries.acp,
-	tcp: logSchema.entries.tcp,
-	level: logSchema.entries.level,
-	gold: logSchema.entries.gold,
-	dtd: logSchema.entries.dtd,
-	description: logSchema.entries.description,
-	dm: v.object({
-		name: logSchema.entries.dm.entries.name,
-		DCI: logSchema.entries.dm.entries.DCI
-	}),
-	magicItemsGained: logSchema.entries.magicItemsGained,
-	storyAwardsGained: logSchema.entries.storyAwardsGained
-});
+export const logDraftSchema = v.variant("kind", [
+	v.object({ id: logDraftEditorId, ...characterDraftEntries }),
+	v.object({ id: logDraftEditorId, ...dmDraftEntries })
+]);
 
-/**
- * Draft payload stored in `log_draft.data` and in the player's browser.
- * `date` is epoch milliseconds, or null when the draft was copied without a date.
- * This accepts that stored shape. The editor schema above is what turns a form's `0` into null.
- */
-const storedDraftDate = v.nullable(v.pipe(v.number(), v.minValue(new Date(2014, 0).getTime(), "Date must be 2014 or later")));
-
+/** Draft payload stored in `log_draft.data` and in the player's browser. */
 export type LogDraftData = v.InferOutput<typeof logDraftDataSchema>;
-export const logDraftDataSchema = v.object({
-	name: logSchema.entries.name,
-	date: storedDraftDate,
-	timezone: logSchema.entries.timezone,
-	type: logSchema.entries.type,
-	experience: logSchema.entries.experience,
-	acp: logSchema.entries.acp,
-	tcp: logSchema.entries.tcp,
-	level: logSchema.entries.level,
-	gold: logSchema.entries.gold,
-	dtd: logSchema.entries.dtd,
-	description: logSchema.entries.description,
-	dm: v.object({
-		name: logSchema.entries.dm.entries.name,
-		DCI: logSchema.entries.dm.entries.DCI
-	}),
-	magicItemsGained: logSchema.entries.magicItemsGained,
-	storyAwardsGained: logSchema.entries.storyAwardsGained
-});
+export type CharacterLogDraftData = Extract<LogDraftData, { kind: "character" }>;
+export const logDraftDataSchema = v.variant("kind", [v.object(characterDraftEntries), v.object(dmDraftEntries)]);
 
 function objectIssuePath<T extends object>(input: T, key: keyof T & string): v.ObjectPathItem {
 	return {

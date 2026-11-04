@@ -146,10 +146,12 @@ export interface LogDraftRow {
 	id: string;
 	userId: string;
 	data: {
+		/** Missing on drafts saved before DM and character drafts were told apart. */
+		kind?: "character" | "dm";
 		name: string;
-		date: number | null;
 		description: string;
-		dm: { name: string; DCI: string };
+		/** Character drafts only. */
+		dm?: { name: string; DCI: string };
 		magicItemsGained: { id: string; name: string }[];
 	};
 }

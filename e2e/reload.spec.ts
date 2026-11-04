@@ -45,7 +45,13 @@ test("every page survives a full reload and hydrates", async ({ users }) => {
 		return new URL(page.url()).pathname.split("/").pop() ?? "";
 	});
 
-	const paths = [...(await pagesToReload(page, characterId)), "/drafts/new", `/drafts/${draftId}`, `/draft/${draftId}`];
+	const paths = [
+		...(await pagesToReload(page, characterId)),
+		"/drafts",
+		"/drafts/new",
+		`/drafts/${draftId}`,
+		`/draft/${draftId}`
+	];
 	for (const path of paths) {
 		await test.step(`reload ${path}`, () => expectFullReload(page, path, markers));
 	}
@@ -185,6 +191,11 @@ async function expectPageReady(page: Page, path: string, markers: ReloadMarkers)
 	if (new RegExp(`^/dms/${RECORD_ID}$`, "iu").test(path)) {
 		await expect(page.getByRole("button", { name: "Save DM" })).toBeVisible();
 		await expect(page.getByLabel("DM Name")).toBeVisible();
+		return;
+	}
+
+	if (path === "/drafts") {
+		await expect(page.locator('a[href^="/drafts/"]', { hasText: markers.draftTitle })).toBeVisible();
 		return;
 	}
 

@@ -183,7 +183,7 @@
 		const files = imageFiles(event instanceof DragEvent ? event.dataTransfer : event.clipboardData);
 		if (!files.length) return false;
 		event.preventDefault();
-		errorToast("Images can't be added to a log draft.");
+		errorToast("Images can't be uploaded to a log draft.");
 		return true;
 	}
 

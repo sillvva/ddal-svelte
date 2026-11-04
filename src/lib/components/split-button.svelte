@@ -21,10 +21,10 @@
 	let { href, label, options, compact = false, shortcut = false, class: className }: Props = $props();
 </script>
 
-<div class={["join", className]}>
+<div class={["relative inline-flex", className]}>
 	<a
 		{href}
-		class={["btn join-item btn-primary", compact ? "inline-flex" : "btn-sm"]}
+		class={["btn rounded-e-none border-e-0 btn-primary", compact ? "inline-flex" : "btn-sm"]}
 		aria-label={label}
 		{@attach !compact && shortcut ? hotkey([["n", () => goto(href)]]) : () => {}}
 	>
@@ -37,17 +37,24 @@
 			{/if}
 		{/if}
 	</a>
-	<div class="dropdown dropdown-end join-item">
+	<!-- static so the menu positions against the whole split button, not just the chevron -->
+	<div class="dropdown static">
 		<button
 			type="button"
 			tabindex="0"
-			class={["btn join-item px-2 btn-primary", compact ? "" : "btn-sm"]}
+			class={["btn rounded-s-none border-s-primary-content/25 px-2 btn-primary", compact ? "" : "btn-sm"]}
 			aria-label="More new log options"
 			aria-haspopup="menu"
 		>
 			<span class="iconify size-5 mdi--chevron-down"></span>
 		</button>
-		<ul tabindex="-1" class="menu dropdown-content z-30 mt-1 w-52 rounded-box bg-base-200 p-2 shadow-lg">
+		<ul
+			tabindex="-1"
+			class={[
+				"menu dropdown-content top-full z-30 mt-1 w-max min-w-full rounded-box bg-base-200 p-2 shadow-lg",
+				compact ? "end-0" : "start-0"
+			]}
+		>
 			{#each options as option (option.href)}
 				<li>
 					<a href={option.href}>{option.label}</a>

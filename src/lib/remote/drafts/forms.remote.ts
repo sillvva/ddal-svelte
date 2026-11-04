@@ -25,8 +25,8 @@ export const load = guardedQuery(loadSchema, function* (input, { user, event }) 
 		);
 		return {
 			id: "" as const,
+			kind: "character" as const,
 			name: "",
-			date: Date.now(),
 			timezone: event.locals.app.settings.timezone,
 			type: "game" as const,
 			experience: 0,
@@ -43,12 +43,7 @@ export const load = guardedQuery(loadSchema, function* (input, { user, event }) 
 	}
 
 	const row = yield* Drafts.readOwned(input.draftId, user.id);
-	return {
-		id: row.id,
-		...row.data,
-		date: row.data.date ?? 0,
-		dm: { name: row.data.dm.name, DCI: row.data.dm.DCI }
-	};
+	return { id: row.id, ...row.data };
 });
 
 export const save = guardedForm("unchecked", function* (input: LogDraftSchemaIn, { user, issue, event }) {
@@ -68,6 +63,10 @@ export const save = guardedForm("unchecked", function* (input: LogDraftSchemaIn,
 		Effect.tapError((err) => Effect.fail(invalid(err.message)))
 	);
 
-	yield* refreshAll(API.drafts.queries.read(saved.id).refresh(), API.drafts.forms.load({ draftId: saved.id }).refresh());
+	yield* refreshAll(
+		API.drafts.queries.read(saved.id).refresh(),
+		API.drafts.queries.getAll().refresh(),
+		API.drafts.forms.load({ draftId: saved.id }).refresh()
+	);
 	redirect(303, `/drafts/${saved.id}`);
 });

@@ -14,6 +14,7 @@ import { expect, test } from "./fixtures.ts";
 import {
 	addedItemCards,
 	createCharacter,
+	createDmLog,
 	createGameLog,
 	errorToast,
 	logIdOnCharacterPage,
@@ -69,6 +70,141 @@ function newLogMenu(page: Page) {
 	return page.getByRole("button", { name: "More new log options" }).first();
 }
 
+/** Copies the open log as a draft and returns the new draft's id. */
+async function copyOpenLog(page: Page) {
+	await page.getByRole("button", { name: "Copy as draft" }).click();
+	const dialog = page.getByRole("dialog", { name: "Draft created" });
+	await expect(dialog).toBeVisible();
+	const href = (await dialog.getByRole("link", { name: "Edit draft" }).getAttribute("href")) ?? "";
+	const id = href.replace(/^\/drafts\//u, "");
+	expect(id).toMatch(new RegExp(`^${RECORD_ID}$`, "iu"));
+	return { dialog, id };
+}
+
+test("log drafts: a DM log draft only fills a new DM log, and a character log draft only fills a character log", async ({
+	users
+}) => {
+	const { page, handle } = await users.signUp({ label: "draftkind" });
+	const characterId = await createCharacter(page, { name: `E2E Kind Hero ${handle}` });
+	const characterLogTitle = `E2E Kind Character Log ${handle}`;
+	const dmLogTitle = `E2E Kind DM Log ${handle}`;
+	await createGameLog(page, characterId, { title: characterLogTitle });
+	const dmLogId = await createDmLog(page, { title: dmLogTitle, level: 1 });
+	const populate = () => page.getByRole("button", { name: "Populate from draft" });
+
+	await test.step("copying a DM log makes a DM draft", async () => {
+		await page.goto(`/dm-logs/${dmLogId}`);
+		const { dialog, id } = await copyOpenLog(page);
+		await expect(dialog.getByText("Open DM Logs")).toBeVisible();
+		const row = await logDraftRow(id);
+		expect(row?.data.kind).toBe("dm");
+		expect(row?.data).not.toHaveProperty("dm");
+		expect(row?.data).not.toHaveProperty("date");
+		expect(await storedDraftId(page)).toBe(id);
+		await dialog.getByRole("button", { name: "Close" }).first().click();
+	});
+
+	await test.step("a DM draft fills a new DM log from the DM Logs menu", async () => {
+		await expectCleanHydration(page, "/dm-logs", () => newLogMenu(page));
+		await newLogMenu(page).click();
+		await page.getByRole("link", { name: "New Log from Draft" }).click();
+		await page.waitForURL(/\/dm-logs\/new\?.*fromDraft=1/);
+		await expect(page.getByLabel("Title")).toHaveValue(dmLogTitle);
+		await expect(page.getByLabel("Level")).toHaveValue("1");
+	});
+
+	await test.step("a DM draft is not offered on a character log", async () => {
+		await page.goto(`/characters/${characterId}`);
+		await expect(page.getByRole("link", { name: "New Log" })).toBeVisible();
+		await expect(newLogMenu(page)).toHaveCount(0);
+
+		await page.goto(`/characters/${characterId}/log/new`);
+		await expect(page.getByRole("button", { name: "Save Log" })).toBeVisible();
+		await expect(populate()).toHaveCount(0);
+	});
+
+	await test.step("copying a character log makes a character draft that replaces the DM draft", async () => {
+		const [logId] = await logIdsForCharacter(characterId);
+		await page.goto(`/characters/${characterId}/log/${logId}`);
+		const { dialog, id } = await copyOpenLog(page);
+		await expect(dialog.getByText("Open a character")).toBeVisible();
+		expect((await logDraftRow(id))?.data.kind).toBe("character");
+		expect(await storedDraftId(page)).toBe(id);
+		await dialog.getByRole("button", { name: "Close" }).first().click();
+
+		await expectCleanHydration(page, `/characters/${characterId}/log/new`, populate);
+		await populate().click();
+		await expect(page.getByLabel("Title")).toHaveValue(characterLogTitle);
+	});
+
+	await test.step("a character draft is not offered on a DM log", async () => {
+		await page.goto("/dm-logs/new");
+		await expect(page.getByRole("button", { name: "Save Log" })).toBeVisible();
+		await expect(populate()).toHaveCount(0);
+
+		await page.goto("/dm-logs");
+		await newLogMenu(page).click();
+		await expect(page.getByRole("link", { name: "New Player Draft" })).toBeVisible();
+		await expect(page.getByRole("link", { name: "New Log from Draft" })).toHaveCount(0);
+	});
+});
+
+test("log drafts: the Drafts page lists live drafts with the quota and expiry reminder", async ({ users }) => {
+	const { page, handle } = await users.signUp({ label: "draftlist" });
+	const firstTitle = `E2E Listed Draft ${handle}`;
+	const secondTitle = `E2E Expiring Draft ${handle}`;
+	const draftLink = (title: string) => page.locator('a[href^="/drafts/"]', { hasText: title });
+
+	async function saveDraft(title: string) {
+		await page.goto("/drafts");
+		await page.getByRole("link", { name: "New Player Draft" }).click();
+		await page.waitForURL(/\/drafts\/new$/);
+		await page.getByLabel("Title").fill(title);
+		await page.getByRole("button", { name: "Save Draft" }).click();
+		await page.waitForURL(DRAFT_PATH);
+		return draftIdFromUrl(page.url());
+	}
+
+	await test.step("the menu links to an empty Drafts page", async () => {
+		await page.goto("/characters");
+		await page.getByRole("link", { name: "Drafts", exact: true }).filter({ visible: true }).first().click();
+		await page.waitForURL(/\/drafts$/);
+		await expect(page.getByText("You have no drafts.")).toBeVisible();
+		await expect(page.getByText("0 / 50")).toBeVisible();
+		await expect(page.getByText("Drafts expire automatically 14 days after they were last saved.")).toBeVisible();
+	});
+
+	const [firstId, secondId] = await test.step("saved drafts are listed, newest first, with the quota", async () => {
+		const ids = [await saveDraft(firstTitle), await saveDraft(secondTitle)] as const;
+		await page.goto("/drafts");
+		await expect(page.getByText("2 / 50")).toBeVisible();
+		await expect(draftLink(firstTitle)).toHaveAttribute("href", `/drafts/${ids[0]}`);
+		await expect(page.locator("tbody a.row-link")).toHaveText([secondTitle, firstTitle]);
+		await expect(page.getByText("Player Log").first()).toBeVisible();
+		return ids;
+	});
+
+	await test.step("deleting from the list removes the draft", async () => {
+		await page
+			.getByRole("row")
+			.filter({ has: draftLink(firstTitle) })
+			.getByRole("button", { name: "Delete Draft" })
+			.click();
+		await expect(successToast(page, `${firstTitle} deleted`)).toBeVisible();
+		await expect(draftLink(firstTitle)).toHaveCount(0);
+		await expect(page.getByText("1 / 50")).toBeVisible();
+		expect(await logDraftRow(firstId)).toBeNull();
+	});
+
+	await test.step("expired drafts drop off the list and the quota", async () => {
+		await expireLogDraft(secondId);
+		await page.goto("/drafts");
+		await expect(draftLink(secondTitle)).toHaveCount(0);
+		await expect(page.getByText("You have no drafts.")).toBeVisible();
+		await expect(page.getByText("0 / 50")).toBeVisible();
+	});
+});
+
 test("log drafts: share as a DM, open the link, fill a log, and keep edits with the owner", async ({ users }) => {
 	const dm = await users.signUp({ label: "draftdm" });
 	const player = await users.signUp({ label: "draftplayer" });
@@ -94,7 +230,7 @@ test("log drafts: share as a DM, open the link, fill a log, and keep edits with 
 	await test.step("the draft form refuses images", async () => {
 		const { page } = dm;
 		await pasteFile(notesField(page), pngFile("map.png"));
-		await expect(errorToast(page, "Images can't be added to a log draft.")).toBeVisible();
+		await expect(errorToast(page, "Images can't be uploaded to a log draft.")).toBeVisible();
 		await expect(notesField(page)).toHaveValue("");
 
 		const prepared = await callCommand(page, "src/lib/remote/images/actions.remote.ts", "prepareNoteImage", {
@@ -124,7 +260,12 @@ test("log drafts: share as a DM, open the link, fill a log, and keep edits with 
 		const row = await logDraftRow(draftId);
 		expect(row).toMatchObject({
 			userId: dm.id,
-			data: { name: draftTitle, dm: { name: draftDmName, DCI: draftDci }, description: "Recovered the idol." }
+			data: {
+				kind: "character",
+				name: draftTitle,
+				dm: { name: draftDmName, DCI: draftDci },
+				description: "Recovered the idol."
+			}
 		});
 		expect(row?.data.magicItemsGained.map((item) => item.name)).toEqual([itemName]);
 
@@ -261,7 +402,8 @@ test("log drafts: share as a DM, open the link, fill a log, and keep edits with 
 		expect(copiedId).toMatch(new RegExp(`^${RECORD_ID}$`, "iu"));
 
 		const row = await logDraftRow(copiedId);
-		expect(row).toMatchObject({ userId: player.id, data: { name: draftTitle, date: null } });
+		expect(row).toMatchObject({ userId: player.id, data: { name: draftTitle } });
+		expect(row?.data).not.toHaveProperty("date");
 		expect(row?.data.description).toMatch(/!\[idol\]\(http/u);
 		expect(await storedDraftId(page)).toBe(copiedId);
 

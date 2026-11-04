@@ -8,15 +8,25 @@
 	import SearchResults from "#lib/components/search-results.svelte";
 	import Search from "#lib/components/search.svelte";
 	import { EntitySearchFactory, successToast, swipeAction } from "#lib/factories.svelte.js";
+	import { logDraftMemory } from "#lib/log-draft-storage.svelte.js";
 	import * as API from "#lib/remote/index.js";
 	import type { FullLogData } from "#lib/server/effect/services/logs.js";
 	import { getGlobal } from "#lib/stores.svelte.js";
 	import { createTransition, download, formatDate, newestDraftId, parseEffectResult } from "#lib/util.js";
 	import { page } from "$app/state";
 	import { sorter } from "@sillvva/utils";
+	import type { Attachment } from "svelte/attachments";
 	import { SvelteSet } from "svelte/reactivity";
 
 	const global = getGlobal();
+	const draftMemory = logDraftMemory();
+	let draftReady = $state(false);
+	const hasStoredDraft = $derived(draftReady && draftMemory.current?.data.kind === "dm");
+
+	/** SSR can't see browser storage, so the draft option waits until this markup has hydrated. */
+	const showStoredDraft: Attachment = () => {
+		draftReady = true;
+	};
 
 	let deletingLog = new SvelteSet<string>();
 	const searchKey = "s";
@@ -44,7 +54,10 @@
 		search.results.toSorted((a, b) => (global.app.dmLogs.sort === "asc" ? sorter(a.date, b.date) : sorter(b.date, a.date)))
 	)}
 	{const newLogHref = $derived(`/dm-logs/new?draft=${encodeURIComponent(newestDraftId(logs.map((log) => log.id)))}`)}
-	{const newLogOptions = $derived([{ href: "/drafts/new", label: "New Player Draft" }] as const)}
+	{const newLogOptions = $derived([
+		...(hasStoredDraft ? [{ href: `${newLogHref}&fromDraft=1`, label: "New Log from Draft" }] : []),
+		{ href: "/drafts/new", label: "New Player Draft" }
+	])}
 
 	<Head title="{user?.name}'s DM Logs" />
 
@@ -64,7 +77,7 @@
 	</NavMenu>
 
 	<div class="flex gap-2 sm:justify-between">
-		<div class="flex gap-2 max-sm:flex-1 sm:w-96">
+		<div class="flex gap-2 max-sm:flex-1 sm:w-96" {@attach showStoredDraft}>
 			<SplitButton href={newLogHref} label="New Log" options={newLogOptions} shortcut class="max-sm:hidden" />
 			<Search name={searchKey} placeholder="Search by name, class, items, etc." />
 			<SplitButton href={newLogHref} label="New Log" options={newLogOptions} compact class="sm:hidden" />
@@ -247,7 +260,7 @@
 						<tr>
 							<td colSpan={5} class="py-20 text-center">
 								<p class="mb-4">You have no DM logs.</p>
-								<div class="flex justify-center">
+								<div class="flex justify-center" {@attach showStoredDraft}>
 									<SplitButton href={newLogHref} label="Create one now" options={newLogOptions} />
 								</div>
 							</td>

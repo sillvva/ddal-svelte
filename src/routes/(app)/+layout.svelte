@@ -81,6 +81,7 @@
 				<a href="/characters" class="ml-8 p-2 max-md:hidden">Character Logs</a>
 				<a href="/dm-logs" class="p-2 max-md:hidden">DM Logs</a>
 				<a href="/dms" class="p-2 max-md:hidden">DMs</a>
+				<a href="/drafts" class="p-2 max-md:hidden">Drafts</a>
 			{/if}
 			<div class="flex-1 max-md:hidden"></div>
 			<div class={["flex items-center", user?.role === "admin" ? "gap-2" : "gap-4"]}>

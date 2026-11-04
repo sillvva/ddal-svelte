@@ -13,13 +13,13 @@ export const copyFromLog = guardedCommand(logIdSchema, function* (logId, { user 
 	if (!log) return yield* new LogNotFoundError();
 
 	const saved = yield* Drafts.create(user, logToDraftData(log));
-	yield* refreshAll(API.drafts.queries.read(saved.id).refresh());
+	yield* refreshAll(API.drafts.queries.read(saved.id).refresh(), API.drafts.queries.getAll().refresh());
 	return { id: saved.id, data: saved.data, expiresAt: saved.expiresAt };
 });
 
 export const remove = guardedCommand(logDraftIdSchema, function* (id, { user }) {
 	const Drafts = yield* LogDraftService;
 	const removed = yield* Drafts.remove(id, user.id);
-	yield* refreshAll(API.drafts.queries.read(id).refresh());
+	yield* refreshAll(API.drafts.queries.getAll().refresh());
 	return removed;
 });
