@@ -1,6 +1,7 @@
 <script lang="ts">
 	import Error from "#lib/components/error.svelte";
 	import Head from "#lib/components/head.svelte";
+	import LogDraftFaq from "#lib/components/log-draft-faq.svelte";
 	import NavMenu from "#lib/components/nav-menu.svelte";
 	import StoreLogDraft from "#lib/components/store-log-draft.svelte";
 	import { logDraftMemory } from "#lib/log-draft-storage.svelte.js";
@@ -48,6 +49,10 @@
 			{/if}
 		</div>
 	</section>
+
+	<div class="mt-8">
+		<LogDraftFaq />
+	</div>
 
 	{#key draft.id}
 		<StoreLogDraft draft={{ id: draft.id, data: draft.data, expiresAt: draft.expiresAt }} />
