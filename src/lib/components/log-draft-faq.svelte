@@ -15,7 +15,7 @@
 			<div class="collapse-content text-sm">
 				<p>
 					Fill in a session's log once and share it with your table. Each player then fills a new log on their own character from
-					it, instead of typing the title, date, DM, advancement, treasure, downtime, items, and notes themselves.
+					it, instead of typing the title, DM, advancement, treasure, downtime, items, and notes themselves.
 				</p>
 			</div>
 		</details>
@@ -24,14 +24,13 @@
 			<summary class="collapse-title font-semibold">How do I create a draft?</summary>
 			<div class="collapse-content flex flex-col gap-2 text-sm">
 				<p>
-					On <a class="link" href="/dm-logs">DM Logs</a>, open the arrow next to <span class="font-semibold">New Log</span> and
-					choose <span class="font-semibold">New Player Draft</span>. The form starts with today's date and your own DM name and
-					DCI. Choose <span class="font-semibold">Save Draft</span> to get the link.
+					Choose <span class="font-semibold">New Player Draft</span> on the <a class="link" href="/drafts">Drafts</a> page, or from
+					the arrow next to <span class="font-semibold">New Log</span> on <a class="link" href="/dm-logs">DM Logs</a>. The form
+					starts with your own DM name and DCI. Choose <span class="font-semibold">Save Draft</span> to get the link.
 				</p>
 				<p>
-					You can also choose <span class="font-semibold">Copy as draft</span> on a log you already saved, from DM Logs or a character.
-					The draft gets everything except the date, the character, and any items the log dropped. That copy is also kept in your
-					browser, so you can use it on your own characters.
+					<span class="font-semibold">Copy as draft</span> on one of your DM logs makes a DM log draft instead. It leaves out the DM,
+					and it fills a new DM log for whoever saves it, who becomes that log's DM.
 				</p>
 			</div>
 		</details>
@@ -40,8 +39,9 @@
 			<summary class="collapse-title font-semibold">How do I share it?</summary>
 			<div class="collapse-content text-sm">
 				<p>
-					After saving, use <span class="font-semibold">Copy link</span> or <span class="font-semibold">Show QR code</span>. Both
-					open this page. Anyone signed in who has the link can open the draft.
+					After saving, use <span class="font-semibold">Copy link</span> or <span class="font-semibold">Show QR code</span>. The
+					Drafts page also has a copy link button for each draft. The link opens this page, and anyone signed in who has it can open
+					the draft.
 				</p>
 			</div>
 		</details>
@@ -50,8 +50,9 @@
 			<summary class="collapse-title font-semibold">How long does a draft last?</summary>
 			<div class="collapse-content text-sm">
 				<p>
-					{ttlDays} days after you last saved it. Saving it again starts the {ttlDays} days over and keeps the same link. Once it
-					expires the link shows "Draft not found", and the draft is deleted. Logs players already saved from it are not affected.
+					{ttlDays} days after you last saved it. Saving it again starts the {ttlDays} days over and keeps the same link. The Drafts
+					page shows how many days each draft has left. Once it expires the link shows "Draft not found", and the draft is deleted.
+					Logs players already saved from it are not affected.
 				</p>
 			</div>
 		</details>
@@ -60,7 +61,8 @@
 			<summary class="collapse-title font-semibold">How many drafts can I keep?</summary>
 			<div class="collapse-content text-sm">
 				<p>
-					Up to {LOG_DRAFT_LIMIT} at a time. Expired drafts don't count. At the limit, delete a draft before creating another.
+					Up to {LOG_DRAFT_LIMIT} at a time, counted on the Drafts page. Expired drafts don't count. At the limit, delete a draft
+					before creating another.
 				</p>
 			</div>
 		</details>
@@ -69,9 +71,9 @@
 			<summary class="collapse-title font-semibold">How do I edit or delete a draft?</summary>
 			<div class="collapse-content flex flex-col gap-2 text-sm">
 				<p>
-					Only you can. Open the draft's link and choose <span class="font-semibold">Edit draft</span>, then
-					<span class="font-semibold">Save Draft</span> or <span class="font-semibold">Delete draft</span>. There is no list of your
-					drafts, so keep the link.
+					Only you can. The Drafts page lists your drafts: open one to edit it and choose <span class="font-semibold">Save Draft</span>,
+					or delete it there or with <span class="font-semibold">Delete draft</span> in the editor. Opening your own draft's link also
+					shows <span class="font-semibold">Edit draft</span>.
 				</p>
 				<p>
 					Deleting stops the link working. A player who opened the link earlier keeps the copy in their browser until it expires or
@@ -84,8 +86,8 @@
 			<summary class="collapse-title font-semibold">Can a draft include images?</summary>
 			<div class="collapse-content text-sm">
 				<p>
-					You can't upload images to a draft's notes. <span class="font-semibold">Copy as draft</span> keeps image links that are already
-					saved on the log you copy.
+					You can type image links into a draft's notes as Markdown, but you can't paste, drop, or upload images there.
+					<span class="font-semibold">Copy as draft</span> keeps image links already saved on the log you copy.
 				</p>
 			</div>
 		</details>
@@ -114,7 +116,28 @@
 				</p>
 				<p>
 					Check the log and save it. Nothing is saved until you do. The draft stays in your browser, so you can use it on another
-					character too.
+					character too. A DM log draft fills a new DM log on <a class="link" href="/dm-logs">DM Logs</a> instead.
+				</p>
+			</div>
+		</details>
+
+		<details class="collapse-arrow collapse border border-base-300 bg-base-100">
+			<summary class="collapse-title font-semibold">Can I copy one of my own logs to another character?</summary>
+			<div class="collapse-content flex flex-col gap-2 text-sm">
+				<p>
+					Yes. On one of your characters, use <span class="font-semibold">Copy as draft</span> on a log: the copy icon in the log list,
+					or the button on the log's page. The draft keeps the log type, title, DM name and DCI, advancement, gold, downtime, notes,
+					including image links already in them, and the magic items and story awards gained. It leaves out the date, the character,
+					and anything the log lost.
+				</p>
+				<p>
+					The draft is saved in this browser, and you get a link and QR code to share it. Like any draft, it lasts {ttlDays} days after
+					its last save, counts toward your {LOG_DRAFT_LIMIT}, and is listed on the Drafts page. Then open your other character and
+					choose <span class="font-semibold">New Log from Draft</span>, or <span class="font-semibold">Populate from draft</span> on a
+					new log. The DM is matched against your own DM records by DCI, then name, so it normally finds the same DM.
+				</p>
+				<p>
+					A DM log assigned to the character copies as a DM log draft, which only fills a new DM log.
 				</p>
 			</div>
 		</details>
@@ -123,8 +146,8 @@
 			<summary class="collapse-title font-semibold">What gets filled in?</summary>
 			<div class="collapse-content text-sm">
 				<p>
-					The log type, title, advancement, gold, downtime, notes, magic items, and story awards. The date is filled in when the
-					draft has one; otherwise the log keeps its own. These replace whatever was in those fields.
+					The log type, title, advancement, gold, downtime, notes, magic items, and story awards. These replace whatever was in
+					those fields. Drafts have no date, so the log keeps its own.
 				</p>
 			</div>
 		</details>
