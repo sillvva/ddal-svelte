@@ -4,7 +4,7 @@
 	import NavMenu from "#lib/components/nav-menu.svelte";
 	import { successToast } from "#lib/factories.svelte.js";
 	import { logDraftMemory } from "#lib/log-draft-storage.svelte.js";
-	import { LOG_DRAFT_TTL_MS, logDraftPath } from "#lib/log-draft.js";
+	import { logDraftPath } from "#lib/log-draft.js";
 	import * as API from "#lib/remote/index.js";
 	import type { LogDraftId } from "#lib/schemas.js";
 	import { getGlobal } from "#lib/stores.svelte.js";
@@ -15,7 +15,6 @@
 	import { SvelteSet } from "svelte/reactivity";
 
 	const DAY_MS = 24 * 60 * 60 * 1000;
-	const TTL_DAYS = LOG_DRAFT_TTL_MS / DAY_MS;
 
 	const global = getGlobal();
 	let deletingDraft = new SvelteSet<LogDraftId>();
@@ -61,15 +60,12 @@
 		</p>
 	</div>
 
-	<p class="alert flex items-start gap-4 bg-base-300 text-sm leading-6">
-		<span class="mt-0.5 iconify size-5 mdi--info-circle-outline"></span>
-		<span class="flex-1">
-			Drafts expire automatically {TTL_DAYS} days after they were last saved. Saving a draft again restarts the {TTL_DAYS} days.
-			{#if atLimit}
-				You have reached the limit. Delete a draft before creating another.
-			{/if}
-		</span>
-	</p>
+	{#if atLimit}
+		<p class="alert flex items-start gap-4 bg-base-300 text-sm leading-6">
+			<span class="mt-0.5 iconify size-5 mdi--info-circle-outline"></span>
+			<span class="flex-1"> You have reached the limit. Delete a draft before creating another. </span>
+		</p>
+	{/if}
 
 	<section>
 		<div class="w-full overflow-x-auto rounded-lg bg-base-200">
