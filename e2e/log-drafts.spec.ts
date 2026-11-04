@@ -14,6 +14,7 @@ import { expect, test } from "./fixtures.ts";
 import {
 	addedItemCards,
 	createCharacter,
+	createDmLog,
 	createGameLog,
 	errorToast,
 	logIdOnCharacterPage,
@@ -68,6 +69,82 @@ async function expectCleanHydration(page: Page, path: string, ready: () => Locat
 function newLogMenu(page: Page) {
 	return page.getByRole("button", { name: "More new log options" }).first();
 }
+
+/** Copies the open log as a draft and returns the new draft's id. */
+async function copyOpenLog(page: Page) {
+	await page.getByRole("button", { name: "Copy as draft" }).click();
+	const dialog = page.getByRole("dialog", { name: "Draft created" });
+	await expect(dialog).toBeVisible();
+	const href = (await dialog.getByRole("link", { name: "Edit draft" }).getAttribute("href")) ?? "";
+	const id = href.replace(/^\/drafts\//u, "");
+	expect(id).toMatch(new RegExp(`^${RECORD_ID}$`, "iu"));
+	return { dialog, id };
+}
+
+test("log drafts: a DM log draft only fills a new DM log, and a character log draft only fills a character log", async ({
+	users
+}) => {
+	const { page, handle } = await users.signUp({ label: "draftkind" });
+	const characterId = await createCharacter(page, { name: `E2E Kind Hero ${handle}` });
+	const characterLogTitle = `E2E Kind Character Log ${handle}`;
+	const dmLogTitle = `E2E Kind DM Log ${handle}`;
+	await createGameLog(page, characterId, { title: characterLogTitle });
+	const dmLogId = await createDmLog(page, { title: dmLogTitle, level: 1 });
+	const populate = () => page.getByRole("button", { name: "Populate from draft" });
+
+	await test.step("copying a DM log makes a DM draft", async () => {
+		await page.goto(`/dm-logs/${dmLogId}`);
+		const { dialog, id } = await copyOpenLog(page);
+		await expect(dialog.getByText("Open DM Logs")).toBeVisible();
+		expect((await logDraftRow(id))?.data.kind).toBe("dm");
+		expect(await storedDraftId(page)).toBe(id);
+		await dialog.getByRole("button", { name: "Close" }).first().click();
+	});
+
+	await test.step("a DM draft fills a new DM log from the DM Logs menu", async () => {
+		await expectCleanHydration(page, "/dm-logs", () => newLogMenu(page));
+		await newLogMenu(page).click();
+		await page.getByRole("link", { name: "New Log from Draft" }).click();
+		await page.waitForURL(/\/dm-logs\/new\?.*fromDraft=1/);
+		await expect(page.getByLabel("Title")).toHaveValue(dmLogTitle);
+		await expect(page.getByLabel("Level")).toHaveValue("1");
+	});
+
+	await test.step("a DM draft is not offered on a character log", async () => {
+		await page.goto(`/characters/${characterId}`);
+		await expect(page.getByRole("link", { name: "New Log" })).toBeVisible();
+		await expect(newLogMenu(page)).toHaveCount(0);
+
+		await page.goto(`/characters/${characterId}/log/new`);
+		await expect(page.getByRole("button", { name: "Save Log" })).toBeVisible();
+		await expect(populate()).toHaveCount(0);
+	});
+
+	await test.step("copying a character log makes a character draft that replaces the DM draft", async () => {
+		const [logId] = await logIdsForCharacter(characterId);
+		await page.goto(`/characters/${characterId}/log/${logId}`);
+		const { dialog, id } = await copyOpenLog(page);
+		await expect(dialog.getByText("Open a character")).toBeVisible();
+		expect((await logDraftRow(id))?.data.kind).toBe("character");
+		expect(await storedDraftId(page)).toBe(id);
+		await dialog.getByRole("button", { name: "Close" }).first().click();
+
+		await expectCleanHydration(page, `/characters/${characterId}/log/new`, populate);
+		await populate().click();
+		await expect(page.getByLabel("Title")).toHaveValue(characterLogTitle);
+	});
+
+	await test.step("a character draft is not offered on a DM log", async () => {
+		await page.goto("/dm-logs/new");
+		await expect(page.getByRole("button", { name: "Save Log" })).toBeVisible();
+		await expect(populate()).toHaveCount(0);
+
+		await page.goto("/dm-logs");
+		await newLogMenu(page).click();
+		await expect(page.getByRole("link", { name: "New Player Draft" })).toBeVisible();
+		await expect(page.getByRole("link", { name: "New Log from Draft" })).toHaveCount(0);
+	});
+});
 
 test("log drafts: share as a DM, open the link, fill a log, and keep edits with the owner", async ({ users }) => {
 	const dm = await users.signUp({ label: "draftdm" });
@@ -124,7 +201,12 @@ test("log drafts: share as a DM, open the link, fill a log, and keep edits with 
 		const row = await logDraftRow(draftId);
 		expect(row).toMatchObject({
 			userId: dm.id,
-			data: { name: draftTitle, dm: { name: draftDmName, DCI: draftDci }, description: "Recovered the idol." }
+			data: {
+				kind: "character",
+				name: draftTitle,
+				dm: { name: draftDmName, DCI: draftDci },
+				description: "Recovered the idol."
+			}
 		});
 		expect(row?.data.magicItemsGained.map((item) => item.name)).toEqual([itemName]);
 

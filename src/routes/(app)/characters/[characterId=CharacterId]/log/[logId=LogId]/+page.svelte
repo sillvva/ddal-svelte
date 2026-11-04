@@ -69,9 +69,12 @@
 				{#if params.logId === "new" && !firstLog}
 					<div class="col-span-12 mb-2">
 						<PopulateLogDraft
+							kind="character"
 							auto={fromDraft}
-							onapply={(draft, dms, userId) => {
-								applyDraftToLog(data, draft, dms, userId);
+							onapply={async (draft) => {
+								const [dms, { user }] = await Promise.all([API.dms.queries.getAllWithoutLogs(), API.app.queries.request()]);
+								if (!user) return;
+								applyDraftToLog(data, draft, dms, user.id);
 								form.fields.set(data);
 								season = seasonForAdvancement(draft);
 							}}

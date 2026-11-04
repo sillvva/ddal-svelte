@@ -80,15 +80,14 @@ export function matchDraftDm(dms: readonly OwnedDm[], draft: DraftDmIdentity, us
 }
 
 /**
- * Fields a character log keeps when a draft is applied.
- * Optionals match the log form input, where omitted numbers and the log type have defaults.
+ * Fields a DM log keeps when a draft is applied.
+ * Optionals match the log form input, where omitted numbers have defaults.
  */
 export interface DraftFillTarget {
 	id: string;
 	name: string;
 	date: number;
 	timezone: string;
-	type?: "game" | "nongame";
 	experience?: number;
 	acp?: number;
 	tcp?: number;
@@ -96,6 +95,13 @@ export interface DraftFillTarget {
 	gold?: number;
 	dtd?: number;
 	description?: string;
+	magicItemsGained?: { id: string; name: string; description: string }[];
+	storyAwardsGained?: { id: string; name: string; description: string }[];
+}
+
+/** Fields a character log keeps when a draft is applied. The log type also has a default. */
+export interface CharacterDraftFillTarget extends DraftFillTarget {
+	type?: "game" | "nongame";
 	dm: {
 		id: string;
 		name?: string;
@@ -103,25 +109,17 @@ export interface DraftFillTarget {
 		userId: string;
 		isUser?: boolean;
 	};
-	magicItemsGained?: { id: string; name: string; description: string }[];
-	storyAwardsGained?: { id: string; name: string; description: string }[];
 }
 
 /**
- * Copy a draft onto a new log for review.
- * Keeps the log id, and the log's date when the draft has none. Item ids are new so two players
+ * Copy a draft onto a new DM log for review. The DM is always the user saving it.
+ * Keeps the log id, and the log's date when the draft has none. Item ids are new so two people
  * can save the same draft without sharing magic-item rows.
  */
-export function applyDraftToLog<T extends DraftFillTarget>(
-	log: T,
-	draft: LogDraftData,
-	dms: readonly OwnedDm[],
-	userId: UserId
-): T {
+export function applyDraftToDmLog<T extends DraftFillTarget>(log: T, draft: LogDraftData): T {
 	log.name = draft.name;
 	if (draft.date) log.date = draft.date;
 	log.timezone = draft.timezone || log.timezone;
-	log.type = draft.type;
 	log.experience = draft.experience;
 	log.acp = draft.acp;
 	log.tcp = draft.tcp;
@@ -129,11 +127,6 @@ export function applyDraftToLog<T extends DraftFillTarget>(
 	log.gold = draft.gold;
 	log.dtd = draft.dtd;
 	log.description = draft.description;
-	// Non-game logs hide the DM fields, so a carried-over name would silently create a DM record.
-	log.dm =
-		draft.type === "game"
-			? matchDraftDm(dms, draft.dm, userId)
-			: { id: v7() as DungeonMasterId, name: "", DCI: "", userId, isUser: false };
 	log.magicItemsGained = draft.magicItemsGained.map((item) => ({
 		id: v7() as ItemId,
 		name: item.name,
@@ -147,8 +140,26 @@ export function applyDraftToLog<T extends DraftFillTarget>(
 	return log;
 }
 
+/** Copy a draft onto a new character log for review, matching its DM against the player's own. */
+export function applyDraftToLog<T extends CharacterDraftFillTarget>(
+	log: T,
+	draft: LogDraftData,
+	dms: readonly OwnedDm[],
+	userId: UserId
+): T {
+	applyDraftToDmLog(log, draft);
+	log.type = draft.type;
+	// Non-game logs hide the DM fields, so a carried-over name would silently create a DM record.
+	log.dm =
+		draft.type === "game"
+			? matchDraftDm(dms, draft.dm, userId)
+			: { id: v7() as DungeonMasterId, name: "", DCI: "", userId, isUser: false };
+	return log;
+}
+
 /** A saved log turned into a draft: no log id, character, date, or dropped items. */
 export function logToDraftData(log: {
+	isDmLog: boolean;
 	name: string;
 	timezone: string | null;
 	type: "game" | "nongame";
@@ -164,6 +175,7 @@ export function logToDraftData(log: {
 	storyAwardsGained: { id: ItemId; name: string; description: string }[];
 }): LogDraftData {
 	return {
+		kind: log.isDmLog ? "dm" : "character",
 		name: log.name,
 		date: null,
 		timezone: log.timezone || "",

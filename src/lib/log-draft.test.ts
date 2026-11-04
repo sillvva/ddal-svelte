@@ -5,10 +5,12 @@ import { v7 } from "uuid";
 import { describe, expect, it } from "vitest";
 import * as v from "valibot";
 import {
+	applyDraftToDmLog,
 	applyDraftToLog,
 	draftDescriptionHasNewImages,
 	logToDraftData,
 	matchDraftDm,
+	type CharacterDraftFillTarget,
 	type DraftFillTarget,
 	type OwnedDm
 } from "./log-draft";
@@ -49,7 +51,7 @@ function draftInput(overrides: Record<string, unknown> = {}) {
 	};
 }
 
-function target(): DraftFillTarget {
+function target(): CharacterDraftFillTarget {
 	return {
 		id: v7(),
 		name: "",
@@ -88,6 +90,76 @@ describe("log draft schema", () => {
 	it("rejects notes past the log notes limit", () => {
 		expect(v.safeParse(logDraftSchema, draftInput({ description: "A".repeat(5001) })).success).toBe(false);
 	});
+
+	it("treats a draft without a kind as a character draft", () => {
+		expect(v.parse(logDraftSchema, draftInput()).kind).toBe("character");
+		expect(v.parse(logDraftSchema, draftInput({ kind: "dm" })).kind).toBe("dm");
+		expect(v.safeParse(logDraftSchema, draftInput({ kind: "other" })).success).toBe(false);
+	});
+});
+
+describe("logToDraftData", () => {
+	const saved = {
+		name: "Session",
+		timezone: "UTC",
+		type: "game" as const,
+		experience: 0,
+		acp: 0,
+		tcp: 0,
+		level: 1,
+		gold: 0,
+		dtd: 0,
+		description: "",
+		dm: { name: "Ada", DCI: "" },
+		magicItemsGained: [],
+		storyAwardsGained: []
+	};
+
+	it("marks a copied DM log as a DM draft and a character log as a character draft", () => {
+		expect(logToDraftData({ ...saved, isDmLog: true }).kind).toBe("dm");
+		expect(logToDraftData({ ...saved, isDmLog: false }).kind).toBe("character");
+	});
+});
+
+describe("applyDraftToDmLog", () => {
+	it("fills the shared fields, keeps the log id, and remints items", () => {
+		const log: DraftFillTarget = {
+			id: v7(),
+			name: "",
+			date: Date.UTC(2026, 0, 2),
+			timezone: "UTC",
+			magicItemsGained: [],
+			storyAwardsGained: []
+		};
+		const logId = log.id;
+		const itemId = v7() as ItemId;
+		const draft = logToDraftData({
+			isDmLog: true,
+			name: "Hosted",
+			timezone: "UTC",
+			type: "game",
+			experience: 0,
+			acp: 4,
+			tcp: 2,
+			level: 0,
+			gold: 75,
+			dtd: 10,
+			description: "Ran it",
+			dm: { name: "Me", DCI: "" },
+			magicItemsGained: [],
+			storyAwardsGained: [{ id: itemId, name: "Award", description: "" }]
+		});
+
+		applyDraftToDmLog(log, draft);
+
+		expect(log.id).toBe(logId);
+		expect(log.date).toBe(Date.UTC(2026, 0, 2));
+		expect(log).toMatchObject({ name: "Hosted", acp: 4, tcp: 2, gold: 75, dtd: 10, description: "Ran it" });
+		expect(log.storyAwardsGained?.[0]?.name).toBe("Award");
+		expect(log.storyAwardsGained?.[0]?.id).not.toBe(itemId);
+		expect(log).not.toHaveProperty("dm");
+		expect(log).not.toHaveProperty("type");
+	});
 });
 
 describe("matchDraftDm", () => {
@@ -123,6 +195,7 @@ describe("applyDraftToLog", () => {
 		const logId = log.id;
 		const itemId = v7() as ItemId;
 		const draft = logToDraftData({
+			isDmLog: false,
 			name: "Shared",
 			timezone: "UTC",
 			type: "game",
@@ -155,6 +228,7 @@ describe("applyDraftToLog", () => {
 		const log = target();
 		const when = Date.UTC(2024, 3, 4);
 		const draft = logToDraftData({
+			isDmLog: false,
 			name: "Dated",
 			timezone: "UTC",
 			type: "game",
@@ -179,6 +253,7 @@ describe("applyDraftToLog", () => {
 		const log = target();
 		const known = dm({ name: "Ada", DCI: "123" });
 		const draft = logToDraftData({
+			isDmLog: false,
 			name: "Shopping",
 			timezone: "UTC",
 			type: "nongame",

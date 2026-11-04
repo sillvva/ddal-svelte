@@ -256,11 +256,16 @@ const draftDate = v.pipe(
 	v.transform((value) => (value === 0 ? null : v.parse(logSchema.entries.date, value).getTime()))
 );
 
+/** Which new log form a draft fills. Drafts saved before this existed were all character drafts. */
+export type LogDraftKind = v.InferOutput<typeof logDraftKindSchema>;
+export const logDraftKindSchema = v.optional(v.picklist(["character", "dm"]), "character");
+
 /** A shareable log without a log id, character, or dropped items. Field limits come from `logSchema`. */
 export type LogDraftSchema = v.InferOutput<typeof logDraftSchema>;
 export type LogDraftSchemaIn = v.InferInput<typeof logDraftSchema>;
 export const logDraftSchema = v.object({
 	id: v.union([logDraftIdSchema, v.literal("")]),
+	kind: logDraftKindSchema,
 	name: logSchema.entries.name,
 	date: draftDate,
 	timezone: logSchema.entries.timezone,
@@ -289,6 +294,7 @@ const storedDraftDate = v.nullable(v.pipe(v.number(), v.minValue(new Date(2014, 
 
 export type LogDraftData = v.InferOutput<typeof logDraftDataSchema>;
 export const logDraftDataSchema = v.object({
+	kind: logDraftKindSchema,
 	name: logSchema.entries.name,
 	date: storedDraftDate,
 	timezone: logSchema.entries.timezone,

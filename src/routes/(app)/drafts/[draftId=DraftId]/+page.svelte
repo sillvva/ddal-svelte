@@ -45,6 +45,7 @@
 	{#snippet failed(error)}<Error {error} boundary="edit-log-draft" />{/snippet}
 	{const draft = $derived(await API.drafts.forms.load({ draftId: params.draftId }))}
 	{const title = $derived(draft.name || "New Player Draft")}
+	{const isDm = $derived(draft.kind === "dm")}
 
 	<Head {title} />
 
@@ -61,7 +62,8 @@
 			<p class="flex items-start gap-4 text-sm leading-6">
 				<span class="mt-0.5 iconify size-5 mdi--info-circle-outline"></span>
 				<span class="flex-1">
-					Players open this link, then fill a new log from the draft. It works until
+					{isDm ? "Open this link, then fill a new DM log from the draft." : "Players open this link, then fill a new log from the draft."}
+					It works until
 					<span class="font-semibold">{new Date(shared.expiresAt).toLocaleDateString([], { dateStyle: "medium" })}</span>, and
 					saving again restarts the 14 days. You can keep up to {LOG_DRAFT_LIMIT} drafts at a time.
 				</span>
@@ -84,32 +86,42 @@
 			{const { form, initial } = $derived(ctx)}
 			{let season = $state(seasonForAdvancement(draft))}
 			<Input field={form.fields.id} hidden />
+			<Input field={form.fields.kind} hidden />
 			<Input field={form.fields.timezone} hidden />
-			<Control class="col-span-12 sm:col-span-2 md:col-span-3 lg:col-span-4">
-				<InputWrapper field={form.fields.type} as="select" label="Log Type">
-					<select
-						{...form.fields.type.as("select")}
-						id={form.fields.type.as("select").name}
-						class={["select-bordered select w-full max-sm:text-base", data.type !== "game" && "text-xs!"]}
-					>
-						<option value="game">Game</option>
-						<option value="nongame">Non-Game (Purchase, Trade, etc)</option>
-					</select>
-				</InputWrapper>
-			</Control>
-			<Control class="col-span-12 sm:col-span-5 lg:col-span-4">
+			{#if isDm}
+				<Input field={form.fields.type} hidden />
+			{:else}
+				<Control class="col-span-12 sm:col-span-2 md:col-span-3 lg:col-span-4">
+					<InputWrapper field={form.fields.type} as="select" label="Log Type">
+						<select
+							{...form.fields.type.as("select")}
+							id={form.fields.type.as("select").name}
+							class={["select-bordered select w-full max-sm:text-base", data.type !== "game" && "text-xs!"]}
+						>
+							<option value="game">Game</option>
+							<option value="nongame">Non-Game (Purchase, Trade, etc)</option>
+						</select>
+					</InputWrapper>
+				</Control>
+			{/if}
+			<Control class={["col-span-12", isDm ? "sm:col-span-7" : "sm:col-span-5 lg:col-span-4"]}>
 				<Input field={form.fields.name} label="Title" required />
 			</Control>
-			<Control class="col-span-12 sm:col-span-5 md:col-span-4">
+			<Control class={["col-span-12", isDm ? "sm:col-span-5" : "sm:col-span-5 md:col-span-4"]}>
 				<DateInput field={form.fields.date} initial={initial.date ?? 0} label="Date" timezone={data.timezone} />
 			</Control>
 			{#if data.type === "game"}
-				<Control class="col-span-12 sm:col-span-6">
-					<Input field={form.fields.dm.name} label="DM Name" />
-				</Control>
-				<Control class="col-span-12 sm:col-span-6">
-					<Input field={form.fields.dm.DCI} label="DM DCI" />
-				</Control>
+				{#if isDm}
+					<Input field={form.fields.dm.name} hidden />
+					<Input field={form.fields.dm.DCI} hidden />
+				{:else}
+					<Control class="col-span-12 sm:col-span-6">
+						<Input field={form.fields.dm.name} label="DM Name" />
+					</Control>
+					<Control class="col-span-12 sm:col-span-6">
+						<Input field={form.fields.dm.DCI} label="DM DCI" />
+					</Control>
+				{/if}
 				<Control class="col-span-12 sm:col-span-4">
 					<InputWrapper type="select" labelFor="season" label="Season">
 						<select

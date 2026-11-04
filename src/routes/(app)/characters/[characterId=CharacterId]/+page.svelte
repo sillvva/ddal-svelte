@@ -29,7 +29,7 @@
 	const global = getGlobal();
 	const draftMemory = logDraftMemory();
 	let draftReady = $state(false);
-	const hasStoredDraft = $derived(draftReady && draftMemory.current !== null);
+	const hasStoredDraft = $derived(draftReady && draftMemory.current?.data.kind === "character");
 
 	/** SSR can't see browser storage, so the split button waits until this markup has hydrated. */
 	const showStoredDraft: Attachment = () => {

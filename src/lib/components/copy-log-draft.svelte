@@ -56,8 +56,8 @@
 		<div class="modal-box flex flex-col gap-4">
 			<h3 id="copy-draft-title-{copied.id}" class="text-lg font-semibold">Draft created</h3>
 			<p class="text-sm">
-				This draft is saved in this browser. Open a character and choose <span class="font-semibold">New Log from Draft</span>, or
-				share the link. The link lasts 14 days after the last edit.
+				This draft is saved in this browser. {copied.data.kind === "dm" ? "Open DM Logs" : "Open a character"} and choose
+				<span class="font-semibold">New Log from Draft</span>, or share the link. The link lasts 14 days after the last edit.
 			</p>
 			<LogDraftShare id={copied.id} />
 			<div class="flex justify-between gap-2">
