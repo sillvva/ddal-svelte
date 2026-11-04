@@ -171,7 +171,8 @@ test("log drafts: the Drafts page lists live drafts with the quota and expiry re
 		await page.waitForURL(/\/drafts$/);
 		await expect(page.getByText("You have no drafts.")).toBeVisible();
 		await expect(page.getByText("0 / 50")).toBeVisible();
-		await expect(page.getByText("Drafts expire automatically 14 days after they were last saved.")).toBeVisible();
+		await page.getByText("How long does a draft last?").click();
+		await expect(page.getByText("14 days after you last saved it.")).toBeVisible();
 	});
 
 	const [firstId, secondId] = await test.step("saved drafts are listed, newest first, with the quota", async () => {
