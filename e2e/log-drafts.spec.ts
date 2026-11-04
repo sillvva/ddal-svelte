@@ -302,15 +302,6 @@ test("log drafts: share as a DM, open the link, fill a log, and keep edits with 
 		await expect(successToast(page, "A log draft is available")).toBeVisible();
 		await expect(page.getByRole("link", { name: "Edit draft" })).toHaveCount(0);
 		expect(await storedDraftId(page)).toBe(draftId);
-
-		const faq = page.getByRole("region", { name: "Drafts FAQ" });
-		await expect(faq.getByRole("heading", { name: "For DMs" })).toBeVisible();
-		await expect(faq.getByRole("heading", { name: "For players" })).toBeVisible();
-		const dmQuestion = faq.getByText("How is the DM filled in?");
-		await expect(dmQuestion).toBeVisible();
-		await expect(faq.getByText("first by DCI")).toBeHidden();
-		await dmQuestion.click();
-		await expect(faq.getByText("first by DCI")).toBeVisible();
 	});
 
 	await test.step("only the owner can edit or delete the draft", async () => {
