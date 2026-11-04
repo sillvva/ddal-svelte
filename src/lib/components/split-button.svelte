@@ -52,7 +52,7 @@
 			tabindex="-1"
 			class={[
 				"menu dropdown-content top-full z-30 mt-1 w-max min-w-full rounded-box bg-base-200 p-2 shadow-lg",
-				compact ? "end-0" : "start-0"
+				compact ? "inset-e-0" : "inset-s-0"
 			]}
 		>
 			{#each options as option (option.href)}
