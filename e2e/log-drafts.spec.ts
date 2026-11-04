@@ -94,7 +94,7 @@ test("log drafts: share as a DM, open the link, fill a log, and keep edits with 
 	await test.step("the draft form refuses images", async () => {
 		const { page } = dm;
 		await pasteFile(notesField(page), pngFile("map.png"));
-		await expect(errorToast(page, "Images can't be added to a log draft.")).toBeVisible();
+		await expect(errorToast(page, "Images can't be uploaded to a log draft.")).toBeVisible();
 		await expect(notesField(page)).toHaveValue("");
 
 		const prepared = await callCommand(page, "src/lib/remote/images/actions.remote.ts", "prepareNoteImage", {
