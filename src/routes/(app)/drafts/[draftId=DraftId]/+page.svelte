@@ -61,10 +61,13 @@
 			<p class="flex items-start gap-4 text-sm leading-6">
 				<span class="mt-0.5 iconify size-5 mdi--info-circle-outline"></span>
 				<span class="flex-1">
-					{isDm ? "Open this link, then fill a new DM log from the draft." : "Players open this link, then fill a new log from the draft."}
+					{isDm
+						? "Open this link, then fill a new DM log from the draft."
+						: "Players open this link, then fill a new log from the draft."}
 					It works until
 					<span class="font-semibold">{new Date(shared.expiresAt).toLocaleDateString([], { dateStyle: "medium" })}</span>, and
-					saving again restarts the 14 days. You can keep up to {LOG_DRAFT_LIMIT} drafts at a time.
+					saving again restarts the 14 days. You can keep up to {LOG_DRAFT_LIMIT} drafts at a time. Click one of the buttons below to
+					share the draft with others.
 				</span>
 			</p>
 			<LogDraftShare id={savedId} />
@@ -73,24 +76,24 @@
 		<p class="mb-4 alert flex items-start gap-4 bg-base-300 text-sm leading-6">
 			<span class="mt-0.5 iconify size-5 mdi--info-circle-outline"></span>
 			<span class="flex-1">
-				Players get the title, DM, advancement, treasure, downtime, items, and notes. Images can be added to a draft as
-				markdown, but they can't be uploaded by pasting or dragging and dropping.
+				Players get the title, DM, advancement, treasure, downtime, items, and notes. Images can be added to a draft as markdown,
+				but they can't be uploaded by pasting or dragging and dropping.
 			</span>
 		</p>
 	{/if}
 
 	{let data = $derived(proxify(draft))}
 	<RemoteForm schema={logDraftSchema} form={API.drafts.forms.save} {data} initialErrors={!!savedId} successMessage="Draft saved">
-			{#snippet children(ctx)}
-				{const { form } = $derived(ctx)}
-				{let season = $state(seasonForAdvancement(draft))}
-				<Input field={form.fields.id} hidden />
-				<Input field={form.fields.kind} hidden />
-				<Input field={form.fields.timezone} hidden />
-				{#if isDm}
-					<Input field={form.fields.type} hidden />
-				{:else}
-					<Control class="col-span-12 sm:col-span-5 md:col-span-4">
+		{#snippet children(ctx)}
+			{const { form } = $derived(ctx)}
+			{let season = $state(seasonForAdvancement(draft))}
+			<Input field={form.fields.id} hidden />
+			<Input field={form.fields.kind} hidden />
+			<Input field={form.fields.timezone} hidden />
+			{#if isDm}
+				<Input field={form.fields.type} hidden />
+			{:else}
+				<Control class="col-span-12 sm:col-span-5 md:col-span-4">
 					<InputWrapper field={form.fields.type} as="select" label="Log Type">
 						<select
 							{...form.fields.type.as("select")}
