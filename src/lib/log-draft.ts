@@ -1,5 +1,5 @@
 import { findNoteImageUrls } from "#lib/images/note-images.js";
-import type { DungeonMasterId, ItemId, LogDraftData, UserId } from "#lib/schemas.js";
+import type { CharacterLogDraftData, DungeonMasterId, ItemId, LogDraftData, UserId } from "#lib/schemas.js";
 import { v7 } from "uuid";
 
 /** How many drafts one account can keep. Expired drafts don't count. */
@@ -86,7 +86,6 @@ export function matchDraftDm(dms: readonly OwnedDm[], draft: DraftDmIdentity, us
 export interface DraftFillTarget {
 	id: string;
 	name: string;
-	date: number;
 	timezone: string;
 	experience?: number;
 	acp?: number;
@@ -113,12 +112,11 @@ export interface CharacterDraftFillTarget extends DraftFillTarget {
 
 /**
  * Copy a draft onto a new DM log for review. The DM is always the user saving it.
- * Keeps the log id, and the log's date when the draft has none. Item ids are new so two people
- * can save the same draft without sharing magic-item rows.
+ * Keeps the log id and date. Item ids are new so two people can save the same draft
+ * without sharing magic-item rows.
  */
 export function applyDraftToDmLog<T extends DraftFillTarget>(log: T, draft: LogDraftData): T {
 	log.name = draft.name;
-	if (draft.date) log.date = draft.date;
 	log.timezone = draft.timezone || log.timezone;
 	log.experience = draft.experience;
 	log.acp = draft.acp;
@@ -143,7 +141,7 @@ export function applyDraftToDmLog<T extends DraftFillTarget>(log: T, draft: LogD
 /** Copy a draft onto a new character log for review, matching its DM against the player's own. */
 export function applyDraftToLog<T extends CharacterDraftFillTarget>(
 	log: T,
-	draft: LogDraftData,
+	draft: CharacterLogDraftData,
 	dms: readonly OwnedDm[],
 	userId: UserId
 ): T {
@@ -157,7 +155,7 @@ export function applyDraftToLog<T extends CharacterDraftFillTarget>(
 	return log;
 }
 
-/** A saved log turned into a draft: no log id, character, date, or dropped items. */
+/** A saved log turned into a draft: no log id, character, date, or dropped items. DM logs drop the DM too. */
 export function logToDraftData(log: {
 	isDmLog: boolean;
 	name: string;
@@ -174,10 +172,8 @@ export function logToDraftData(log: {
 	magicItemsGained: { id: ItemId; name: string; description: string }[];
 	storyAwardsGained: { id: ItemId; name: string; description: string }[];
 }): LogDraftData {
-	return {
-		kind: log.isDmLog ? "dm" : "character",
+	const shared = {
 		name: log.name,
-		date: null,
 		timezone: log.timezone || "",
 		type: log.type,
 		experience: log.experience,
@@ -187,7 +183,6 @@ export function logToDraftData(log: {
 		gold: log.gold,
 		dtd: log.dtd,
 		description: log.description,
-		dm: { name: log.dm.name, DCI: log.dm.DCI },
 		magicItemsGained: log.magicItemsGained.map((item) => ({
 			id: item.id,
 			name: item.name,
@@ -199,4 +194,6 @@ export function logToDraftData(log: {
 			description: item.description || ""
 		}))
 	};
+	if (log.isDmLog) return { kind: "dm", ...shared };
+	return { kind: "character", ...shared, dm: { name: log.dm.name, DCI: log.dm.DCI } };
 }

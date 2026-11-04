@@ -1,21 +1,27 @@
-<script lang="ts">
+<script lang="ts" generics="Kind extends LogDraftKind">
 	import { logDraftMemory } from "#lib/log-draft-storage.svelte.js";
 	import type { LogDraftData, LogDraftKind } from "#lib/schemas.js";
 	import { onMount } from "svelte";
 
+	type Draft = Extract<LogDraftData, { kind: Kind }>;
+
 	interface Props {
 		/** Only drafts of this kind are offered. */
-		kind: LogDraftKind;
+		kind: Kind;
 		/** Fill the form once on mount, for New Log from Draft. */
 		auto?: boolean;
 		/** The page applies the draft to its own form data. Nothing is saved here. */
-		onapply: (draft: LogDraftData) => void | Promise<void>;
+		onapply: (draft: Draft) => void | Promise<void>;
 	}
 
 	let { kind, auto = false, onapply }: Props = $props();
 
+	function isKind(data: LogDraftData): data is Draft {
+		return data.kind === kind;
+	}
+
 	const memory = logDraftMemory();
-	const stored = $derived(memory.current?.data.kind === kind ? memory.current : null);
+	const stored = $derived(memory.current && isKind(memory.current.data) ? memory.current.data : null);
 	let applying = $state(false);
 	/** SSR can't see browser storage, so the bar renders only after this component has hydrated. */
 	let mounted = $state(false);
@@ -24,7 +30,7 @@
 		if (!stored || applying) return;
 		applying = true;
 		try {
-			await onapply(stored.data);
+			await onapply(stored);
 		} finally {
 			applying = false;
 		}
@@ -40,7 +46,7 @@
 {#if mounted && stored}
 	<div class="flex flex-wrap items-center gap-2 rounded-lg bg-base-200 px-3 py-2 text-sm">
 		<span class="iconify size-5 mdi--file-document-edit-outline"></span>
-		<span class="flex-1">Draft available: <span class="font-semibold">{stored.data.name}</span></span>
+		<span class="flex-1">Draft available: <span class="font-semibold">{stored.name}</span></span>
 		<button type="button" class="btn btn-sm" disabled={applying} onclick={() => void apply()}>
 			{#if applying}
 				<span class="loading loading-xs"></span>

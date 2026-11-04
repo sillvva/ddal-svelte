@@ -1,7 +1,6 @@
 <script lang="ts">
 	import Error from "#lib/components/error.svelte";
 	import Control from "#lib/components/forms/control.svelte";
-	import DateInput from "#lib/components/forms/date-input.svelte";
 	import GainedItems from "#lib/components/forms/gained-items.svelte";
 	import InputWrapper from "#lib/components/forms/input-wrapper.svelte";
 	import Input from "#lib/components/forms/input.svelte";
@@ -74,7 +73,7 @@
 		<p class="mb-4 alert flex items-start gap-4 bg-base-300 text-sm leading-6">
 			<span class="mt-0.5 iconify size-5 mdi--info-circle-outline"></span>
 			<span class="flex-1">
-				Players get the title, date, DM, advancement, treasure, downtime, items, and notes. Images can be added to a draft as
+				Players get the title, DM, advancement, treasure, downtime, items, and notes. Images can be added to a draft as
 				markdown, but they can't be uploaded by pasting or dragging and dropping.
 			</span>
 		</p>
@@ -82,16 +81,16 @@
 
 	{let data = $derived(proxify(draft))}
 	<RemoteForm schema={logDraftSchema} form={API.drafts.forms.save} {data} initialErrors={!!savedId} successMessage="Draft saved">
-		{#snippet children(ctx)}
-			{const { form, initial } = $derived(ctx)}
-			{let season = $state(seasonForAdvancement(draft))}
-			<Input field={form.fields.id} hidden />
-			<Input field={form.fields.kind} hidden />
-			<Input field={form.fields.timezone} hidden />
-			{#if isDm}
-				<Input field={form.fields.type} hidden />
-			{:else}
-				<Control class="col-span-12 sm:col-span-2 md:col-span-3 lg:col-span-4">
+			{#snippet children(ctx)}
+				{const { form } = $derived(ctx)}
+				{let season = $state(seasonForAdvancement(draft))}
+				<Input field={form.fields.id} hidden />
+				<Input field={form.fields.kind} hidden />
+				<Input field={form.fields.timezone} hidden />
+				{#if isDm}
+					<Input field={form.fields.type} hidden />
+				{:else}
+					<Control class="col-span-12 sm:col-span-5 md:col-span-4">
 					<InputWrapper field={form.fields.type} as="select" label="Log Type">
 						<select
 							{...form.fields.type.as("select")}
@@ -104,17 +103,11 @@
 					</InputWrapper>
 				</Control>
 			{/if}
-			<Control class={["col-span-12", isDm ? "sm:col-span-7" : "sm:col-span-5 lg:col-span-4"]}>
+			<Control class={["col-span-12", !isDm && "sm:col-span-7 md:col-span-8"]}>
 				<Input field={form.fields.name} label="Title" required />
 			</Control>
-			<Control class={["col-span-12", isDm ? "sm:col-span-5" : "sm:col-span-5 md:col-span-4"]}>
-				<DateInput field={form.fields.date} initial={initial.date ?? 0} label="Date" timezone={data.timezone} />
-			</Control>
 			{#if data.type === "game"}
-				{#if isDm}
-					<Input field={form.fields.dm.name} hidden />
-					<Input field={form.fields.dm.DCI} hidden />
-				{:else}
+				{#if !isDm}
 					<Control class="col-span-12 sm:col-span-6">
 						<Input field={form.fields.dm.name} label="DM Name" />
 					</Control>
@@ -160,8 +153,10 @@
 					</Control>
 				{/if}
 			{:else}
-				<Input field={form.fields.dm.name} hidden />
-				<Input field={form.fields.dm.DCI} hidden />
+				{#if !isDm}
+					<Input field={form.fields.dm.name} hidden />
+					<Input field={form.fields.dm.DCI} hidden />
+				{/if}
 				<Input field={form.fields.experience} type="number" hidden />
 				<Input field={form.fields.acp} type="number" hidden />
 				<Input field={form.fields.level} type="number" hidden />

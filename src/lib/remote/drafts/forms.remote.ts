@@ -27,7 +27,6 @@ export const load = guardedQuery(loadSchema, function* (input, { user, event }) 
 			id: "" as const,
 			kind: "character" as const,
 			name: "",
-			date: Date.now(),
 			timezone: event.locals.app.settings.timezone,
 			type: "game" as const,
 			experience: 0,
@@ -44,12 +43,7 @@ export const load = guardedQuery(loadSchema, function* (input, { user, event }) 
 	}
 
 	const row = yield* Drafts.readOwned(input.draftId, user.id);
-	return {
-		id: row.id,
-		...row.data,
-		date: row.data.date ?? 0,
-		dm: { name: row.data.dm.name, DCI: row.data.dm.DCI }
-	};
+	return { id: row.id, ...row.data };
 });
 
 export const save = guardedForm("unchecked", function* (input: LogDraftSchemaIn, { user, issue, event }) {

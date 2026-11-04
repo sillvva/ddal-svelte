@@ -96,7 +96,10 @@ test("log drafts: a DM log draft only fills a new DM log, and a character log dr
 		await page.goto(`/dm-logs/${dmLogId}`);
 		const { dialog, id } = await copyOpenLog(page);
 		await expect(dialog.getByText("Open DM Logs")).toBeVisible();
-		expect((await logDraftRow(id))?.data.kind).toBe("dm");
+		const row = await logDraftRow(id);
+		expect(row?.data.kind).toBe("dm");
+		expect(row?.data).not.toHaveProperty("dm");
+		expect(row?.data).not.toHaveProperty("date");
 		expect(await storedDraftId(page)).toBe(id);
 		await dialog.getByRole("button", { name: "Close" }).first().click();
 	});
@@ -390,7 +393,8 @@ test("log drafts: share as a DM, open the link, fill a log, and keep edits with 
 		expect(copiedId).toMatch(new RegExp(`^${RECORD_ID}$`, "iu"));
 
 		const row = await logDraftRow(copiedId);
-		expect(row).toMatchObject({ userId: player.id, data: { name: draftTitle, date: null } });
+		expect(row).toMatchObject({ userId: player.id, data: { name: draftTitle } });
+		expect(row?.data).not.toHaveProperty("date");
 		expect(row?.data.description).toMatch(/!\[idol\]\(http/u);
 		expect(await storedDraftId(page)).toBe(copiedId);
 

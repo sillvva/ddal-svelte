@@ -1,6 +1,6 @@
 import { imagePublicUrl, permanentNoteImageKey, temporaryNoteImageKey } from "#lib/images/object-key.js";
 import type { DungeonMasterId, ItemId, UserId } from "#lib/schemas.js";
-import { logDraftSchema } from "#lib/schemas.js";
+import { logDraftDataSchema, logDraftSchema } from "#lib/schemas.js";
 import { v7 } from "uuid";
 import { describe, expect, it } from "vitest";
 import * as v from "valibot";
@@ -34,7 +34,6 @@ function draftInput(overrides: Record<string, unknown> = {}) {
 	return {
 		id: "",
 		name: "Candlekeep",
-		date: Date.UTC(2024, 5, 1, 18),
 		timezone: "UTC",
 		type: "game" as const,
 		experience: 0,
@@ -51,7 +50,7 @@ function draftInput(overrides: Record<string, unknown> = {}) {
 	};
 }
 
-function target(): CharacterDraftFillTarget {
+function target(): CharacterDraftFillTarget & { date: number } {
 	return {
 		id: v7(),
 		name: "",
@@ -72,10 +71,10 @@ function target(): CharacterDraftFillTarget {
 }
 
 describe("log draft schema", () => {
-	it("accepts a draft and stores an empty date as null", () => {
-		const parsed = v.parse(logDraftSchema, draftInput({ date: 0 }));
-		expect(parsed.date).toBeNull();
+	it("accepts a draft and drops a date", () => {
+		const parsed = v.parse(logDraftSchema, draftInput({ date: Date.UTC(2024, 5, 1, 18) }));
 		expect(parsed.name).toBe("Candlekeep");
+		expect(parsed).not.toHaveProperty("date");
 	});
 
 	it("rejects a title past the log name limit", () => {
@@ -83,8 +82,17 @@ describe("log draft schema", () => {
 		expect(v.safeParse(logDraftSchema, draftInput({ name: "A".repeat(64) })).success).toBe(true);
 	});
 
-	it("rejects a date before 2014", () => {
-		expect(v.safeParse(logDraftSchema, draftInput({ date: Date.UTC(2013, 11, 31) })).success).toBe(false);
+	it("requires a DM on a character draft and drops one from a DM draft", () => {
+		expect(v.safeParse(logDraftSchema, draftInput({ dm: undefined })).success).toBe(false);
+		const parsed = v.parse(logDraftSchema, draftInput({ kind: "dm" }));
+		expect(parsed).not.toHaveProperty("dm");
+		expect(v.parse(logDraftSchema, draftInput({ kind: "dm", dm: undefined })).kind).toBe("dm");
+	});
+
+	it("reads a stored DM draft saved with a DM and date", () => {
+		const parsed = v.parse(logDraftDataSchema, draftInput({ kind: "dm", date: Date.UTC(2024, 5, 1) }));
+		expect(parsed).not.toHaveProperty("dm");
+		expect(parsed).not.toHaveProperty("date");
 	});
 
 	it("rejects notes past the log notes limit", () => {
@@ -119,11 +127,18 @@ describe("logToDraftData", () => {
 		expect(logToDraftData({ ...saved, isDmLog: true }).kind).toBe("dm");
 		expect(logToDraftData({ ...saved, isDmLog: false }).kind).toBe("character");
 	});
+
+	it("keeps the DM only on a character draft, and never the date", () => {
+		const dmDraft = logToDraftData({ ...saved, isDmLog: true });
+		expect(dmDraft).not.toHaveProperty("dm");
+		expect(dmDraft).not.toHaveProperty("date");
+		expect(logToDraftData({ ...saved, isDmLog: false })).toMatchObject({ dm: { name: "Ada", DCI: "" } });
+	});
 });
 
 describe("applyDraftToDmLog", () => {
-	it("fills the shared fields, keeps the log id, and remints items", () => {
-		const log: DraftFillTarget = {
+	it("fills the shared fields, keeps the log id and date, and remints items", () => {
+		const log: DraftFillTarget & { date: number } = {
 			id: v7(),
 			name: "",
 			date: Date.UTC(2026, 0, 2),
@@ -189,12 +204,18 @@ describe("matchDraftDm", () => {
 	});
 });
 
+function characterDraft(log: Parameters<typeof logToDraftData>[0]) {
+	const draft = logToDraftData(log);
+	if (draft.kind !== "character") throw new Error("Expected a character draft");
+	return draft;
+}
+
 describe("applyDraftToLog", () => {
-	it("keeps the log id and date when the draft has no date, and remints items", () => {
+	it("keeps the log id and date, and remints items", () => {
 		const log = target();
 		const logId = log.id;
 		const itemId = v7() as ItemId;
-		const draft = logToDraftData({
+		const draft = characterDraft({
 			isDmLog: false,
 			name: "Shared",
 			timezone: "UTC",
@@ -210,7 +231,6 @@ describe("applyDraftToLog", () => {
 			magicItemsGained: [{ id: itemId, name: "Ring", description: "" }],
 			storyAwardsGained: []
 		});
-		expect(draft.date).toBeNull();
 
 		const known = dm({ name: "Ada", DCI: "" });
 		applyDraftToLog(log, draft, [known], userId);
@@ -224,12 +244,11 @@ describe("applyDraftToLog", () => {
 		expect(log.magicItemsGained?.[0]?.id).not.toBe(itemId);
 	});
 
-	it("uses the draft date when the draft has one", () => {
+	it("gives a player without a matching DM a new DM record of their own", () => {
 		const log = target();
-		const when = Date.UTC(2024, 3, 4);
-		const draft = logToDraftData({
+		const draft = characterDraft({
 			isDmLog: false,
-			name: "Dated",
+			name: "Unknown DM",
 			timezone: "UTC",
 			type: "game",
 			experience: 0,
@@ -243,8 +262,8 @@ describe("applyDraftToLog", () => {
 			magicItemsGained: [],
 			storyAwardsGained: []
 		});
-		applyDraftToLog(log, { ...draft, date: when }, [], otherUserId);
-		expect(log.date).toBe(when);
+		applyDraftToLog(log, draft, [], otherUserId);
+		expect(log.dm).toMatchObject({ name: "New", DCI: "5" });
 		expect(log.dm.userId).toBe(otherUserId);
 		expect(log.dm.isUser).toBe(false);
 	});
@@ -252,7 +271,7 @@ describe("applyDraftToLog", () => {
 	it("does not carry a DM onto a non-game log", () => {
 		const log = target();
 		const known = dm({ name: "Ada", DCI: "123" });
-		const draft = logToDraftData({
+		const draft = characterDraft({
 			isDmLog: false,
 			name: "Shopping",
 			timezone: "UTC",
