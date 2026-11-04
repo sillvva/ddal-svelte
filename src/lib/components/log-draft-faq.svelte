@@ -40,8 +40,7 @@
 			<div class="collapse-content text-sm">
 				<p>
 					After saving, use <span class="font-semibold">Copy link</span> or <span class="font-semibold">Show QR code</span>. The
-					Drafts page also has a copy link button for each draft. The link opens this page, and anyone signed in who has it can open
-					the draft.
+					Drafts page also has a copy link button for each draft. Anyone signed in who has the link can open the draft's page.
 				</p>
 			</div>
 		</details>
@@ -100,7 +99,7 @@
 			<summary class="collapse-title font-semibold">What happens when I open a draft link?</summary>
 			<div class="collapse-content text-sm">
 				<p>
-					The draft is saved in this browser until the date shown above. A browser holds one draft at a time, so opening another
+					The draft is saved in this browser until it expires, on the date shown on the draft's page. A browser holds one draft at a time, so opening another
 					draft's link replaces it. Nothing is added to your characters yet.
 				</p>
 			</div>
