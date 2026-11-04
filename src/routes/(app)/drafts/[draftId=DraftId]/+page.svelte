@@ -37,7 +37,7 @@
 		const memory = logDraftMemory();
 		if (memory.current?.id === id) memory.clear();
 		successToast("Draft deleted");
-		await goto("/dm-logs");
+		await goto("/drafts");
 	}
 </script>
 
@@ -51,7 +51,7 @@
 
 	<NavMenu
 		crumbs={[
-			{ title: "DM Logs", url: "/dm-logs" },
+			{ title: "Drafts", url: "/drafts" },
 			{ title, url: `/drafts/${params.draftId}` }
 		]}
 	/>

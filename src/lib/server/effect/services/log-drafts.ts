@@ -8,7 +8,7 @@ import { AppLog } from "#lib/server/effect/logging.js";
 import { parse } from "#lib/server/effect/util.js";
 import { R2_PUBLIC_URL } from "$app/env/public";
 import { isTupleOf } from "@sillvva/utils";
-import { and, eq, gte, sql } from "drizzle-orm";
+import { and, desc, eq, gte, sql } from "drizzle-orm";
 import { Context, Data, Effect, Layer } from "effect";
 import { v7 } from "uuid";
 
@@ -86,6 +86,20 @@ export class LogDraftService extends Context.Service<LogDraftService>()("LogDraf
 			return row;
 		});
 
+		/** The user's live drafts, most recently saved first. */
+		const list = Effect.fn("LogDraftService.list")(function* (userId: UserId) {
+			return yield* runQuery(
+				db
+					.select()
+					.from(logDrafts)
+					.where(and(eq(logDrafts.userId, userId), notExpired()))
+					.orderBy(desc(logDrafts.updatedAt))
+			).pipe(
+				Effect.flatMap((rows) => Effect.forEach(rows, withData)),
+				Effect.tapError((error) => AppLog.debug("LogDraftService.list", { userId, error: serializeError(error) }))
+			);
+		});
+
 		const validate = (data: LogDraftData) =>
 			assertNoNewImages(data).pipe(
 				Effect.andThen(parse(logDraftDataSchema, data)),
@@ -152,7 +166,7 @@ export class LogDraftService extends Context.Service<LogDraftService>()("LogDraf
 			);
 		});
 
-		return { read, readOwned, create, update, remove };
+		return { read, readOwned, list, create, update, remove };
 	})()
 }) {
 	static readonly layer = Layer.effect(this, this.make);

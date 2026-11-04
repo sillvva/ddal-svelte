@@ -9,7 +9,8 @@ export const defaultImage = "https://ddal.dekok.app/images/barovia-gate.webp";
 export const searchSections = [
 	{ title: "Characters", url: "/characters" },
 	{ title: "DM Logs", url: "/dm-logs" },
-	{ title: "DMs", url: "/dms" }
+	{ title: "DMs", url: "/dms" },
+	{ title: "Drafts", url: "/drafts" }
 ] as const;
 
 export const BLANK_CHARACTER = `/images/blank-character.jpg` as const;

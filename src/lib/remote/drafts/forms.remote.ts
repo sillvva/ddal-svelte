@@ -69,6 +69,10 @@ export const save = guardedForm("unchecked", function* (input: LogDraftSchemaIn,
 		Effect.tapError((err) => Effect.fail(invalid(err.message)))
 	);
 
-	yield* refreshAll(API.drafts.queries.read(saved.id).refresh(), API.drafts.forms.load({ draftId: saved.id }).refresh());
+	yield* refreshAll(
+		API.drafts.queries.read(saved.id).refresh(),
+		API.drafts.queries.getAll().refresh(),
+		API.drafts.forms.load({ draftId: saved.id }).refresh()
+	);
 	redirect(303, `/drafts/${saved.id}`);
 });

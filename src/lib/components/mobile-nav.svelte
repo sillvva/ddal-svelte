@@ -27,6 +27,13 @@
 		<span class="iconify size-6 mdi--account-group"></span>
 		<span class="dock-label uppercase">DMs</span>
 	</a>
+	<a
+		href="/drafts"
+		class={["flex h-full flex-col items-center justify-center text-xs", page.url.pathname.startsWith("/drafts") && "dock-active"]}
+	>
+		<span class="iconify size-6 mdi--file-document-edit"></span>
+		<span class="dock-label uppercase">Drafts</span>
+	</a>
 	{#if user?.role === "admin"}
 		<a
 			href="/admin/users"

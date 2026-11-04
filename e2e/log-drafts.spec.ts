@@ -146,6 +146,62 @@ test("log drafts: a DM log draft only fills a new DM log, and a character log dr
 	});
 });
 
+test("log drafts: the Drafts page lists live drafts with the quota and expiry reminder", async ({ users }) => {
+	const { page, handle } = await users.signUp({ label: "draftlist" });
+	const firstTitle = `E2E Listed Draft ${handle}`;
+	const secondTitle = `E2E Expiring Draft ${handle}`;
+	const draftLink = (title: string) => page.locator('a[href^="/drafts/"]', { hasText: title });
+
+	async function saveDraft(title: string) {
+		await page.goto("/drafts");
+		await page.getByRole("link", { name: "New Player Draft" }).click();
+		await page.waitForURL(/\/drafts\/new$/);
+		await page.getByLabel("Title").fill(title);
+		await page.getByRole("button", { name: "Save Draft" }).click();
+		await page.waitForURL(DRAFT_PATH);
+		return draftIdFromUrl(page.url());
+	}
+
+	await test.step("the menu links to an empty Drafts page", async () => {
+		await page.goto("/characters");
+		await page.getByRole("link", { name: "Drafts", exact: true }).filter({ visible: true }).first().click();
+		await page.waitForURL(/\/drafts$/);
+		await expect(page.getByText("You have no drafts.")).toBeVisible();
+		await expect(page.getByText("0 / 50")).toBeVisible();
+		await expect(page.getByText("Drafts expire automatically 14 days after they were last saved.")).toBeVisible();
+	});
+
+	const [firstId, secondId] = await test.step("saved drafts are listed, newest first, with the quota", async () => {
+		const ids = [await saveDraft(firstTitle), await saveDraft(secondTitle)] as const;
+		await page.goto("/drafts");
+		await expect(page.getByText("2 / 50")).toBeVisible();
+		await expect(draftLink(firstTitle)).toHaveAttribute("href", `/drafts/${ids[0]}`);
+		await expect(page.locator("tbody a.row-link")).toHaveText([secondTitle, firstTitle]);
+		await expect(page.getByText("Player Log").first()).toBeVisible();
+		return ids;
+	});
+
+	await test.step("deleting from the list removes the draft", async () => {
+		await page
+			.getByRole("row")
+			.filter({ has: draftLink(firstTitle) })
+			.getByRole("button", { name: "Delete Draft" })
+			.click();
+		await expect(successToast(page, `${firstTitle} deleted`)).toBeVisible();
+		await expect(draftLink(firstTitle)).toHaveCount(0);
+		await expect(page.getByText("1 / 50")).toBeVisible();
+		expect(await logDraftRow(firstId)).toBeNull();
+	});
+
+	await test.step("expired drafts drop off the list and the quota", async () => {
+		await expireLogDraft(secondId);
+		await page.goto("/drafts");
+		await expect(draftLink(secondTitle)).toHaveCount(0);
+		await expect(page.getByText("You have no drafts.")).toBeVisible();
+		await expect(page.getByText("0 / 50")).toBeVisible();
+	});
+});
+
 test("log drafts: share as a DM, open the link, fill a log, and keep edits with the owner", async ({ users }) => {
 	const dm = await users.signUp({ label: "draftdm" });
 	const player = await users.signUp({ label: "draftplayer" });
