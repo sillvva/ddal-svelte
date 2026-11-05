@@ -153,7 +153,7 @@
 			{#if home.signupsEnabled}
 				<button
 					type="button"
-					class="text-center text-sm font-semibold text-secondary-content underline-offset-2 hover:underline disabled:opacity-60"
+					class="text-center text-sm font-semibold text-secondary underline-offset-2 hover:underline disabled:opacity-60"
 					onclick={() => void createAccountWithPasskey()}
 					disabled={passkeyPending}
 				>

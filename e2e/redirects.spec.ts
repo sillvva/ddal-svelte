@@ -10,7 +10,7 @@ async function expectSignInFor(page: Page, path: string) {
 
 test("logged-out visitors are sent to sign in", async ({ users }) => {
 	const { page } = await users.visitor();
-	for (const path of ["/characters", "/dm-logs", "/dms", "/onboarding"]) {
+	for (const path of ["/characters", "/dm-logs", "/dms", "/drafts", "/onboarding"]) {
 		await test.step(path, async () => {
 			await page.goto(path);
 			await expectSignInFor(page, path);

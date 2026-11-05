@@ -187,7 +187,8 @@ export async function uploadCharacterImage(scope: Locator, method: UploadMethod 
 
 export function notesField(page: Page) {
 	// The field message is a second `<label>`, so its help text or error follows "Notes" in the name.
-	return page.getByRole("textbox", { name: /^Notes\b/ });
+	// Magic item cards have their own Notes fields, named `magicItemsGained[n].description`.
+	return page.getByRole("textbox", { name: /^Notes\b/ }).and(page.locator('[name^="description"]'));
 }
 
 /** Pastes a file into `target` the way a browser does for a copied image. */

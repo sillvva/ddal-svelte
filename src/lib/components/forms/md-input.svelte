@@ -26,11 +26,23 @@
 		maxLength?: number;
 		/** Paste or drop image files to upload them into the notes as Markdown images. */
 		images?: boolean;
+		/** Refuse pasted or dropped images instead of uploading them. */
+		rejectImages?: boolean;
 		/** Called with the number of image uploads still running. */
 		onpending?: (count: number) => void;
 	}
 
-	let { field, preview = false, minRows, maxRows, maxLength, images = false, onpending, ...rest }: Props = $props();
+	let {
+		field,
+		preview = false,
+		minRows,
+		maxRows,
+		maxLength,
+		images = false,
+		rejectImages = false,
+		onpending,
+		...rest
+	}: Props = $props();
 
 	let mode = $state("edit");
 	let pending = $state(0);
@@ -166,7 +178,17 @@
 		for (const file of files.slice(0, Math.max(0, slots))) void uploadImage(file);
 	}
 
+	function refuseImageTransfer(event: ClipboardEvent | DragEvent) {
+		if (!rejectImages || !isFileTransfer(event instanceof DragEvent ? event.dataTransfer : event.clipboardData)) return false;
+		const files = imageFiles(event instanceof DragEvent ? event.dataTransfer : event.clipboardData);
+		if (!files.length) return false;
+		event.preventDefault();
+		errorToast("Images can't be uploaded to a log draft.");
+		return true;
+	}
+
 	function onpaste(event: ClipboardEvent) {
+		if (refuseImageTransfer(event)) return;
 		if (!images) return;
 		const files = imageFiles(event.clipboardData);
 		if (!files.length) return;
@@ -175,12 +197,21 @@
 	}
 
 	function ondragenter(event: DragEvent) {
+		if (rejectImages && isFileTransfer(event.dataTransfer)) {
+			event.preventDefault();
+			return;
+		}
 		if (!images || !isFileTransfer(event.dataTransfer)) return;
 		event.preventDefault();
 		dragDepth += 1;
 	}
 
 	function ondragover(event: DragEvent) {
+		if (rejectImages && isFileTransfer(event.dataTransfer)) {
+			event.preventDefault();
+			if (event.dataTransfer) event.dataTransfer.dropEffect = "none";
+			return;
+		}
 		if (!images || !isFileTransfer(event.dataTransfer)) return;
 		event.preventDefault();
 		if (event.dataTransfer) event.dataTransfer.dropEffect = "copy";
@@ -191,6 +222,7 @@
 	}
 
 	function ondrop(event: DragEvent) {
+		if (refuseImageTransfer(event)) return;
 		if (!images || !isFileTransfer(event.dataTransfer)) return;
 		event.preventDefault();
 		dragDepth = 0;

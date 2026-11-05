@@ -235,6 +235,64 @@ export const dmLogSchema = v.object({
 	isDmLog: v.optional(v.boolean(), true)
 });
 
+export type LogDraftId = v.InferOutput<typeof logDraftIdSchema>;
+export const logDraftIdSchema = brandedId("LogDraftId");
+
+export type LogDraftIdParam = v.InferOutput<typeof logDraftIdParamSchema>;
+export const logDraftIdParamSchema = v.union([logDraftIdSchema, v.literal("new")]);
+
+/**
+ * Fields every draft shares: a log without a log id, date, character, or dropped items.
+ * The date is set when the log is created from the draft. Field limits come from `logSchema`.
+ */
+const logDraftEntries = {
+	name: logSchema.entries.name,
+	timezone: logSchema.entries.timezone,
+	type: logSchema.entries.type,
+	experience: logSchema.entries.experience,
+	acp: logSchema.entries.acp,
+	tcp: logSchema.entries.tcp,
+	level: logSchema.entries.level,
+	gold: logSchema.entries.gold,
+	dtd: logSchema.entries.dtd,
+	description: logSchema.entries.description,
+	magicItemsGained: logSchema.entries.magicItemsGained,
+	storyAwardsGained: logSchema.entries.storyAwardsGained
+};
+
+/** Drafts saved before DM drafts existed have no kind and were all character drafts. */
+const characterDraftEntries = {
+	kind: v.optional(v.literal("character"), "character"),
+	...logDraftEntries,
+	dm: v.object({
+		name: logSchema.entries.dm.entries.name,
+		DCI: logSchema.entries.dm.entries.DCI
+	})
+};
+
+/** A DM log's DM is always the user saving it, so a DM draft carries no DM. */
+const dmDraftEntries = {
+	kind: v.literal("dm"),
+	...logDraftEntries
+};
+
+/** Which new log form a draft fills. */
+export type LogDraftKind = LogDraftData["kind"];
+
+const logDraftEditorId = v.union([logDraftIdSchema, v.literal("")]);
+
+export type LogDraftSchema = v.InferOutput<typeof logDraftSchema>;
+export type LogDraftSchemaIn = v.InferInput<typeof logDraftSchema>;
+export const logDraftSchema = v.variant("kind", [
+	v.object({ id: logDraftEditorId, ...characterDraftEntries }),
+	v.object({ id: logDraftEditorId, ...dmDraftEntries })
+]);
+
+/** Draft payload stored in `log_draft.data` and in the player's browser. */
+export type LogDraftData = v.InferOutput<typeof logDraftDataSchema>;
+export type CharacterLogDraftData = Extract<LogDraftData, { kind: "character" }>;
+export const logDraftDataSchema = v.variant("kind", [v.object(characterDraftEntries), v.object(dmDraftEntries)]);
+
 function objectIssuePath<T extends object>(input: T, key: keyof T & string): v.ObjectPathItem {
 	return {
 		type: "object",

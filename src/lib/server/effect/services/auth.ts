@@ -283,17 +283,13 @@ export class AuthService extends Context.Service<AuthService>()("AuthService", {
 												accountId: id
 											}
 										})
-										.then((r) =>
-											r.user.name && r.user.email && r.user.image
-												? {
-														id,
-														providerId,
-														name: r.user.name,
-														email: r.user.email,
-														image: r.user.image
-													}
-												: undefined
-										),
+										.then((r) => ({
+											id,
+											providerId,
+											name: r.user.name ?? "Unknown",
+											email: r.user.email ?? "Unknown",
+											image: r.user.image ?? BLANK_CHARACTER
+										})),
 								catch: (error) => {
 									// Check if this is a Better Auth token refresh error
 									const isBetterAuthError =

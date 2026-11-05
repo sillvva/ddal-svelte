@@ -8,6 +8,7 @@
 	import { BLANK_CHARACTER } from "#lib/constants.js";
 	import * as API from "#lib/remote/index.js";
 	import { getGlobal } from "#lib/stores.svelte.js";
+	import { logDraftMemory } from "#lib/log-draft-storage.svelte.js";
 	import { hotkey, parseEffectResult } from "#lib/util.js";
 	import { afterNavigate, goto } from "$app/navigation";
 	import { navigating, page } from "$app/state";
@@ -37,6 +38,7 @@
 	}
 
 	onMount(() => {
+		logDraftMemory().load();
 		const hasCookie = document.cookie.includes("session-token");
 		if (!user && hasCookie) location.reload();
 	});
@@ -48,7 +50,7 @@
 		in:fade={{ duration: 100, delay: 0 }}
 		out:fade={{ duration: 200 }}
 	>
-		<span class="loading w-16 loading-spinner text-secondary-content"></span>
+		<span class="loading w-16 loading-spinner text-secondary"></span>
 	</div>
 {/if}
 
@@ -79,6 +81,7 @@
 				<a href="/characters" class="ml-8 p-2 max-md:hidden">Character Logs</a>
 				<a href="/dm-logs" class="p-2 max-md:hidden">DM Logs</a>
 				<a href="/dms" class="p-2 max-md:hidden">DMs</a>
+				<a href="/drafts" class="p-2 max-md:hidden">Drafts</a>
 			{/if}
 			<div class="flex-1 max-md:hidden"></div>
 			<div class={["flex items-center", user?.role === "admin" ? "gap-2" : "gap-4"]}>
@@ -175,7 +178,7 @@
 					<h3 id="modal-title" class="cursor-text text-lg font-bold text-base-content">
 						{#if page.state.modal.goto}
 							<a
-								class="flex items-center gap-2 text-secondary-content"
+								class="flex items-center gap-2 text-secondary"
 								href={page.state.modal.goto}
 								onclick={async (e) => {
 									e.preventDefault();
@@ -211,7 +214,7 @@
 			<div class="modal-box glass">
 				{#if loadingImage}
 					<div class="flex h-40 flex-col items-center justify-center rounded-lg">
-						<span class="loading w-16 loading-spinner text-secondary-content"></span>
+						<span class="loading w-16 loading-spinner text-secondary"></span>
 					</div>
 				{/if}
 

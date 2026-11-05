@@ -181,7 +181,7 @@
 			{#each nonConsumables as mi (mi.id)}<span
 					role={mi.description || search ? "button" : "presentation"}
 					class="inline pr-2 pl-2 first:pl-0"
-					class:text-secondary-content={mi.description}
+					class:text-secondary={mi.description}
 					onclick={() => onclick(mi)}
 					onkeypress={() => null}
 				>
@@ -191,7 +191,7 @@
 				<span
 					role={mi.description || search ? "button" : "presentation"}
 					class={["inline pr-2 pl-2 first:pl-0", formatting ? "text-base-content/75 italic" : null]}
-					class:text-secondary-content={mi.description}
+					class:text-secondary={mi.description}
 					onclick={() => onclick(mi)}
 					onkeypress={() => null}
 				>

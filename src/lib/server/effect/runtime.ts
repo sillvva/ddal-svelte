@@ -11,10 +11,11 @@ import { AdminService } from "./services/admin";
 import { AuthService } from "./services/auth";
 import { CharacterService } from "./services/characters";
 import { DMService } from "./services/dms";
+import { LogDraftService } from "./services/log-drafts";
 import { LogService } from "./services/logs";
 import { StorageService } from "./services/storage";
 
-export type Services = CharacterService | LogService | DMService | AdminService | AuthService | StorageService;
+export type Services = CharacterService | LogService | LogDraftService | DMService | AdminService | AuthService | StorageService;
 export type AppRuntime = ManagedRuntime.ManagedRuntime<Services, never>;
 
 export const createAppRuntime = () => {
@@ -26,6 +27,7 @@ export const createAppRuntime = () => {
 		CharacterService.layer,
 		DMService.layer,
 		LogService.layer,
+		LogDraftService.layer,
 		StorageService.layer
 	);
 

@@ -6,5 +6,7 @@ const uuidV7 = v.pipe(v.string(), v.regex(/^[\da-f]{8}-[\da-f]{4}-7[\da-f]{3}-[\
 export const params = defineParams({
 	CharacterId: v.union([v.pipe(uuidV7, v.brand("CharacterId")), v.literal("new")]),
 	DMId: v.pipe(uuidV7, v.brand("DungeonMasterId")),
+	DraftId: v.union([v.pipe(uuidV7, v.brand("LogDraftId")), v.literal("new")]),
+	LogDraftId: v.pipe(uuidV7, v.brand("LogDraftId")),
 	LogId: v.union([v.pipe(uuidV7, v.brand("LogId")), v.literal("new")])
 });

@@ -1,4 +1,5 @@
 <script lang="ts">
+	import CopyLogDraft from "#lib/components/copy-log-draft.svelte";
 	import Error from "#lib/components/error.svelte";
 	import AddDropItems from "#lib/components/forms/add-drop-items.svelte";
 	import Combobox from "#lib/components/forms/combobox.svelte";
@@ -11,7 +12,9 @@
 	import Submit from "#lib/components/forms/submit.svelte";
 	import Head from "#lib/components/head.svelte";
 	import NavMenu from "#lib/components/nav-menu.svelte";
+	import PopulateLogDraft from "#lib/components/populate-log-draft.svelte";
 	import { proxify } from "#lib/factories.svelte.js";
+	import { applyDraftToDmLog, seasonForAdvancement } from "#lib/log-draft.js";
 	import * as API from "#lib/remote/index.js";
 	import { dmLogSchema } from "#lib/schemas.js";
 	import { page } from "$app/state";
@@ -24,6 +27,7 @@
 	const form = API.logs.forms.saveDM;
 	const initialErrors = $derived(params.logId !== "new");
 	const draft = $derived(page.url.searchParams.get("draft") ?? "");
+	const fromDraft = $derived(page.url.searchParams.get("fromDraft") === "1");
 </script>
 
 <svelte:boundary>
@@ -43,12 +47,32 @@
 				{ title: "DM Logs", url: "/dm-logs" },
 				{ title: log.name || "New Log", url: `/dm-logs/${log.id}` }
 			]}
-		/>
+		>
+			{#snippet actions()}
+				{#if params.logId !== "new"}
+					<CopyLogDraft logId={params.logId} />
+				{/if}
+			{/snippet}
+		</NavMenu>
 
 		{let data = $derived(proxify(log))}
 		<RemoteForm {schema} {form} {data} {initialErrors}>
 			{#snippet children(ctx)}
 				{const { form, initial } = $derived(ctx)}
+				{let season = $state(seasonForAdvancement(log))}
+				{#if params.logId === "new"}
+					<div class="col-span-12 mb-2">
+						<PopulateLogDraft
+							kind="dm"
+							auto={fromDraft}
+							onapply={(draft) => {
+								applyDraftToDmLog(data, draft);
+								form.fields.set(data);
+								season = seasonForAdvancement(draft);
+							}}
+						/>
+					</div>
+				{/if}
 				<Input field={form.fields.id} type="hidden" />
 				<Input field={form.fields.timezone} hidden />
 				<Control class="col-span-12 sm:col-span-7">
@@ -84,7 +108,6 @@
 						timezone={data.timezone}
 					/>
 				</Control>
-				{let season = $state(log.experience ? 1 : log.acp ? 8 : 9)}
 				<Control class="col-span-12 sm:col-span-4">
 					<InputWrapper type="select" labelFor="season" label="Season">
 						<select

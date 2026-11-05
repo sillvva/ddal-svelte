@@ -10,6 +10,7 @@ interface ReloadMarkers {
 	dmLogTitle: string;
 	secondDmLogTitle: string;
 	dmId: string;
+	draftTitle: string;
 }
 
 test("every page survives a full reload and hydrates", async ({ users }) => {
@@ -21,7 +22,8 @@ test("every page survives a full reload and hydrates", async ({ users }) => {
 		dmName: `E2E Guest ${handle}`,
 		dmLogTitle: `E2E DM Session ${handle}`,
 		secondDmLogTitle: `E2E DM Session Two ${handle}`,
-		dmId: ""
+		dmId: "",
+		draftTitle: `E2E Draft ${handle}`
 	};
 
 	const characterId = await test.step("create characters, logs, and DM logs", async () => {
@@ -35,7 +37,21 @@ test("every page survives a full reload and hydrates", async ({ users }) => {
 		return id;
 	});
 
-	const paths = await pagesToReload(page, characterId);
+	const draftId = await test.step("create a log draft", async () => {
+		await page.goto("/drafts/new");
+		await page.getByLabel("Title").fill(markers.draftTitle);
+		await page.getByRole("button", { name: "Save Draft" }).click();
+		await page.waitForURL(new RegExp(`/drafts/${RECORD_ID}$`, "iu"));
+		return new URL(page.url()).pathname.split("/").pop() ?? "";
+	});
+
+	const paths = [
+		...(await pagesToReload(page, characterId)),
+		"/drafts",
+		"/drafts/new",
+		`/drafts/${draftId}`,
+		`/draft/${draftId}`
+	];
 	for (const path of paths) {
 		await test.step(`reload ${path}`, () => expectFullReload(page, path, markers));
 	}
@@ -175,6 +191,22 @@ async function expectPageReady(page: Page, path: string, markers: ReloadMarkers)
 	if (new RegExp(`^/dms/${RECORD_ID}$`, "iu").test(path)) {
 		await expect(page.getByRole("button", { name: "Save DM" })).toBeVisible();
 		await expect(page.getByLabel("DM Name")).toBeVisible();
+		return;
+	}
+
+	if (path === "/drafts") {
+		await expect(page.locator('a[href^="/drafts/"]', { hasText: markers.draftTitle })).toBeVisible();
+		return;
+	}
+
+	if (path === "/drafts/new" || new RegExp(`^/drafts/${RECORD_ID}$`, "iu").test(path)) {
+		await expect(page.getByRole("button", { name: "Save Draft" })).toBeVisible();
+		await expect(page.getByLabel("Title")).toBeVisible();
+		return;
+	}
+
+	if (new RegExp(`^/draft/${RECORD_ID}$`, "iu").test(path)) {
+		await expect(page.getByRole("heading", { name: markers.draftTitle })).toBeVisible();
 		return;
 	}
 
