@@ -742,12 +742,10 @@ export class StorageService extends Context.Service<StorageService>()("StorageSe
 				imageUrl: string;
 			}) {
 				const key = input.imageUrl ? keyFromPublicUrl(input.imageUrl, R2_PUBLIC_URL) : null;
-				if (
-					key &&
-					(isTemporaryImageKey(key) || isPermanentImageKey(key)) &&
-					!isTemporaryCharacterImageKey(key) &&
-					!isPermanentCharacterImageKey(key)
-				) {
+				// Only block temporary (staged) non-character-purpose image keys.
+				// Permanent public CDN URLs from other app sections (notes, avatars, etc.) are
+				// treated as external URLs, the same as any other https:// image link.
+				if (key && isTemporaryImageKey(key) && !isTemporaryCharacterImageKey(key)) {
 					return yield* new ImageUploadError("Upload that image again before saving.");
 				}
 				if (key && (isTemporaryCharacterImageKey(key) || isPermanentCharacterImageKey(key))) {
