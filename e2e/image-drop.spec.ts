@@ -3,6 +3,7 @@ import { keyFromUrl } from "./records.ts";
 import {
 	avatarDropZone,
 	dragFile,
+	dragUrl,
 	dropFile,
 	pngFile,
 	portraitDropZone,
@@ -43,6 +44,15 @@ test("character portrait: drag feedback, rejected drops, and dropped uploads", a
 		const staged = keyFromUrl(await uploadCharacterImage(form, "drop"));
 		expect(staged.startsWith("tmp/")).toBe(true);
 		await expect(dropZone.getByText("Drop image to upload", { exact: true })).toBeHidden();
+	});
+
+	await test.step("dropping a web image fills the portrait URL", async () => {
+		const url = "https://example.com/web-portrait.png";
+		const drag = await dragUrl(dropZone, url);
+		await expect(dropZone.getByText("Drop image to upload", { exact: true })).toBeVisible();
+		await drag.drop();
+		await expect(portrait).toHaveValue(url);
+		await expect(dropZone.getByRole("img", { name: "Character portrait" })).toHaveAttribute("src", url);
 	});
 });
 

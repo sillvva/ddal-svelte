@@ -7,6 +7,7 @@ import { deleteObject, objectExists, waitUntilMissing } from "./storage.ts";
 import {
 	closeSettings,
 	dropFile,
+	dropUrl,
 	noteImageUrls,
 	notesField,
 	openSettings,
@@ -102,6 +103,14 @@ test("log notes: pasted and dropped images, promotion on save, and removal", asy
 		await dropFile(notes, TEXT_FILE);
 		await expect(page.locator('[data-sonner-toast][data-type="error"]')).toContainText("Drop a JPEG, PNG, WebP, or GIF image.");
 		expect(noteImageUrls(await notes.inputValue())).toHaveLength(2);
+	});
+
+	await test.step("dropping a web image inserts Markdown with its URL", async () => {
+		const url = "https://example.com/web-map.png";
+		const before = await notes.inputValue();
+		await page.getByLabel("Title").focus();
+		await dropUrl(notes, url);
+		await expect(notes).toHaveValue(`${before}\n![web-map](${url})`);
 	});
 
 	await test.step("saving promotes the staged images to permanent keys", async () => {
