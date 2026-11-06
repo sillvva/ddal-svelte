@@ -38,7 +38,8 @@
 		<h2 class="text-xl font-semibold">{draft.data.name || "Log draft"}</h2>
 		<p>
 			This draft is saved in this browser. {isDm ? "Open DM Logs" : "Open a character"} and choose
-			<span class="font-semibold">New Log from Draft</span>, or use <span class="font-semibold">Populate from draft</span> on a new
+			<span class="font-semibold">New Log from Draft</span>, or use <span class="font-semibold">Populate from draft</span> on a
+			new
 			{isDm ? "DM log" : "character log"}. Nothing is saved until you save that log.
 		</p>
 		<p class="text-sm text-base-content/70">

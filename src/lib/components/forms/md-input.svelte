@@ -1,5 +1,6 @@
 <script lang="ts">
 	import { errorToast } from "#lib/factories.svelte.js";
+	import { imageAltFromUrl, imageUrlFromDataTransfer, isFileDrag, isImageUrlDrag } from "#lib/images/drag-url.js";
 	import { NOTE_IMAGE_LIMITS } from "#lib/images/limits.js";
 	import {
 		distinctNoteImageKeys,
@@ -60,7 +61,9 @@
 
 	const markdownTip = $derived(
 		"Supports Markdown and HTML. Scripting, media, and form tags are not allowed for security reasons." +
-			(images ? " Paste or drop images to upload them." : "")
+			(images
+				? " Paste or drop images to upload them. Drop a web image to insert its URL."
+				: " Drop a web image to insert its URL.")
 	);
 	const acceptedTypes: ReadonlySet<string> = new Set(NOTE_IMAGE_LIMITS.acceptedInputTypes);
 
@@ -74,10 +77,6 @@
 
 	function imageFiles(transfer: DataTransfer | null) {
 		return transfer ? [...transfer.files].filter((file) => acceptedTypes.has(file.type)) : [];
-	}
-
-	function isFileTransfer(transfer: DataTransfer | null) {
-		return !!transfer && [...transfer.types].includes("Files");
 	}
 
 	function setPending(delta: number) {
@@ -179,7 +178,7 @@
 	}
 
 	function refuseImageTransfer(event: ClipboardEvent | DragEvent) {
-		if (!rejectImages || !isFileTransfer(event instanceof DragEvent ? event.dataTransfer : event.clipboardData)) return false;
+		if (!rejectImages || !isFileDrag(event instanceof DragEvent ? event.dataTransfer : event.clipboardData)) return false;
 		const files = imageFiles(event instanceof DragEvent ? event.dataTransfer : event.clipboardData);
 		if (!files.length) return false;
 		event.preventDefault();
@@ -197,22 +196,26 @@
 	}
 
 	function ondragenter(event: DragEvent) {
-		if (rejectImages && isFileTransfer(event.dataTransfer)) {
+		if (rejectImages && isFileDrag(event.dataTransfer)) {
 			event.preventDefault();
 			return;
 		}
-		if (!images || !isFileTransfer(event.dataTransfer)) return;
+		const fileDrag = images && isFileDrag(event.dataTransfer);
+		const urlDrag = isImageUrlDrag(event.dataTransfer);
+		if (!fileDrag && !urlDrag) return;
 		event.preventDefault();
 		dragDepth += 1;
 	}
 
 	function ondragover(event: DragEvent) {
-		if (rejectImages && isFileTransfer(event.dataTransfer)) {
+		if (rejectImages && isFileDrag(event.dataTransfer)) {
 			event.preventDefault();
 			if (event.dataTransfer) event.dataTransfer.dropEffect = "none";
 			return;
 		}
-		if (!images || !isFileTransfer(event.dataTransfer)) return;
+		const fileDrag = images && isFileDrag(event.dataTransfer);
+		const urlDrag = isImageUrlDrag(event.dataTransfer);
+		if (!fileDrag && !urlDrag) return;
 		event.preventDefault();
 		if (event.dataTransfer) event.dataTransfer.dropEffect = "copy";
 	}
@@ -223,15 +226,22 @@
 
 	function ondrop(event: DragEvent) {
 		if (refuseImageTransfer(event)) return;
-		if (!images || !isFileTransfer(event.dataTransfer)) return;
-		event.preventDefault();
-		dragDepth = 0;
-		const files = imageFiles(event.dataTransfer);
-		if (!files.length) {
-			errorToast("Drop a JPEG, PNG, WebP, or GIF image.");
+		if (images && isFileDrag(event.dataTransfer)) {
+			event.preventDefault();
+			dragDepth = 0;
+			const files = imageFiles(event.dataTransfer);
+			if (!files.length) {
+				errorToast("Drop a JPEG, PNG, WebP, or GIF image.");
+				return;
+			}
+			startUploads(files);
 			return;
 		}
-		startUploads(files);
+		const url = imageUrlFromDataTransfer(event.dataTransfer);
+		if (!url) return;
+		event.preventDefault();
+		dragDepth = 0;
+		insertPlaceholder(noteImageMarkdown(imageAltFromUrl(url), url));
 	}
 </script>
 

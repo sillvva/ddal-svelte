@@ -127,6 +127,40 @@ export async function dropFile(target: Locator, file: FilePayload) {
 	await drag.drop();
 }
 
+/**
+ * Starts a web-image-style drag (uri-list + html img) over `target`.
+ * Used for drops that should fill a URL field or insert Markdown, not upload bytes.
+ */
+export async function dragUrl(target: Locator, url: string, html?: string) {
+	const dataTransfer = await target.page().evaluateHandle(
+		({ href, markup }) => {
+			const transfer = new DataTransfer();
+			transfer.setData("text/uri-list", href);
+			transfer.setData("text/plain", href);
+			transfer.setData("text/html", markup);
+			return transfer;
+		},
+		{ href: url, markup: html ?? `<img src="${url}" alt="dragged">` }
+	);
+	await target.dispatchEvent("dragenter", { dataTransfer });
+	await target.dispatchEvent("dragover", { dataTransfer });
+	return {
+		async drop() {
+			await target.dispatchEvent("drop", { dataTransfer });
+			await dataTransfer.dispose();
+		},
+		async leave() {
+			await target.dispatchEvent("dragleave", { dataTransfer });
+			await dataTransfer.dispose();
+		}
+	};
+}
+
+export async function dropUrl(target: Locator, url: string, html?: string) {
+	const drag = await dragUrl(target, url, html);
+	await drag.drop();
+}
+
 async function chooseFile(dropZone: Locator, file: FilePayload, method: UploadMethod) {
 	if (method === "drop") await dropFile(dropZone, file);
 	else await dropZone.locator('input[type="file"]').setInputFiles(file);

@@ -1,5 +1,6 @@
 <script lang="ts">
 	import { BLANK_CHARACTER } from "#lib/constants.js";
+	import { imageUrlFromDataTransfer, isFileDrag, isImageUrlDrag } from "#lib/images/drag-url.js";
 	import { AVATAR_IMAGE_LIMITS, CHARACTER_IMAGE_LIMITS, formatBytes } from "#lib/images/limits.js";
 	import {
 		isPermanentAvatarImageKey,
@@ -77,12 +78,14 @@
 	});
 	const help = $derived(
 		props.purpose === "character"
-			? `JPEG, PNG, WebP, or GIF up to ${formatBytes(CHARACTER_IMAGE_LIMITS.maxOriginalBytes)}. Drop an image to upload.`
+			? `JPEG, PNG, WebP, or GIF up to ${formatBytes(CHARACTER_IMAGE_LIMITS.maxOriginalBytes)}. Drop an image file to upload, or a web image to fill the URL.`
 			: `JPEG, PNG, WebP, or GIF up to ${formatBytes(AVATAR_IMAGE_LIMITS.maxOriginalBytes)}.`
 	);
 	const statusId = $derived(props.purpose === "character" ? "character-image-status" : "avatar-image-status");
 	const groupLabel = $derived(
-		props.purpose === "character" ? "Character portrait. Drop an image to upload." : "Profile picture. Drop an image to upload."
+		props.purpose === "character"
+			? "Character portrait. Drop an image file to upload, or a web image to fill the URL."
+			: "Profile picture. Drop an image file to upload."
 	);
 	const previewClass = $derived(
 		props.purpose === "character"
@@ -113,18 +116,18 @@
 		return [...transfer.files].find((file) => acceptedTypes.has(file.type)) ?? null;
 	}
 
-	function isFileDrag(transfer: DataTransfer | null) {
-		return !!transfer && [...transfer.types].includes("Files");
+	function isAcceptableDrag(transfer: DataTransfer | null) {
+		return isFileDrag(transfer) || (props.purpose === "character" && isImageUrlDrag(transfer));
 	}
 
 	function onDragEnter(event: DragEvent) {
-		if (!isFileDrag(event.dataTransfer) || uploading) return;
+		if (!isAcceptableDrag(event.dataTransfer) || uploading) return;
 		event.preventDefault();
 		dragDepth += 1;
 	}
 
 	function onDragOver(event: DragEvent) {
-		if (!isFileDrag(event.dataTransfer) || uploading) return;
+		if (!isAcceptableDrag(event.dataTransfer) || uploading) return;
 		event.preventDefault();
 		if (event.dataTransfer) event.dataTransfer.dropEffect = "copy";
 	}
@@ -140,11 +143,21 @@
 		dragDepth = 0;
 		if (uploading) return;
 		const file = fileFromDataTransfer(event.dataTransfer);
-		if (!file) {
-			failure = "Drop a JPEG, PNG, WebP, or GIF image.";
+		if (file) {
+			void uploadFile(file);
 			return;
 		}
-		void uploadFile(file);
+		if (props.purpose === "character") {
+			const url = imageUrlFromDataTransfer(event.dataTransfer);
+			if (url) {
+				setField(url);
+				failure = "";
+				status = "";
+				uploadedUrl = "";
+				return;
+			}
+		}
+		failure = "Drop a JPEG, PNG, WebP, or GIF image.";
 	}
 
 	async function onFile(event: Event) {
