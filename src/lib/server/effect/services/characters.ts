@@ -11,7 +11,7 @@ import {
 	type Transaction
 } from "#lib/server/db/index.js";
 import { characters, logs } from "#lib/server/db/schema.js";
-import { serializeError, type ErrorParams } from "#lib/server/effect/errors.js";
+import { logGetter, logSetter, serializeError, type ErrorParams } from "#lib/server/effect/errors.js";
 import { AppLog } from "#lib/server/effect/logging.js";
 import { ImageUploadError } from "#lib/server/images/errors.js";
 import {
@@ -22,8 +22,8 @@ import {
 	scheduleDeletions
 } from "#lib/server/images/portrait-db.js";
 import { assertPortraitQuota } from "#lib/server/images/quota-db.js";
-import { getRequestEvent } from "$app/server";
 import { R2_PUBLIC_URL } from "$app/env/public";
+import { getRequestEvent } from "$app/server";
 import { isTupleOf } from "@sillvva/utils";
 import { and, eq, exists } from "drizzle-orm";
 import { Context, Data, Effect, Layer } from "effect";
@@ -63,185 +63,181 @@ export class CharacterService extends Context.Service<CharacterService>()("Chara
 			 */
 
 			get: {
-				one: Effect.fn("CharacterService.get.one")(function* (characterId: CharacterId, includeLogs = true) {
-					return yield* runQuery(
-						db.query.characters.findFirst({
-							with: characterIncludes(includeLogs),
-							where: {
-								id: { eq: characterId },
-								user: { banned: { eq: false } }
-							}
-						})
-					).pipe(
-						Effect.flatMap((character) =>
-							character ? Effect.succeed(parseCharacter(character)) : Effect.fail(new CharacterNotFoundError())
-						),
-						Effect.tapError((error) =>
-							AppLog.debug("CharacterService.get.one", { characterId, includeLogs, error: serializeError(error) })
-						)
-					);
-				}),
+				one: Effect.fn("CharacterService.get.one")(
+					function* (characterId: CharacterId, includeLogs: boolean = true) {
+						return yield* runQuery(
+							db.query.characters.findFirst({
+								with: characterIncludes(includeLogs),
+								where: {
+									id: { eq: characterId },
+									user: { banned: { eq: false } }
+								}
+							})
+						).pipe(
+							Effect.flatMap((character) =>
+								character ? Effect.succeed(parseCharacter(character)) : Effect.fail(new CharacterNotFoundError())
+							)
+						);
+					},
+					(effect, characterId, includeLogs?) => logGetter(effect, "CharacterService.get.one", { characterId, includeLogs })
+				),
 
-				all: Effect.fn("CharacterService.get.all")(function* (
-					userId: UserId,
-					{ characterId, includeLogs = true }: { characterId?: CharacterId; includeLogs?: boolean } = {}
-				) {
-					const characters = yield* runQuery(
-						db.query.characters.findMany({
-							with: characterIncludes(includeLogs),
-							where: {
-								userId: { eq: userId },
-								name: { NOT: PlaceholderName },
-								...(characterId && { id: { eq: characterId } })
-							}
-						})
-					).pipe(
-						Effect.map((characters) => characters.map(parseCharacter)),
-						Effect.tapError((error) =>
-							AppLog.debug("CharacterService.get.all", { userId, includeLogs, error: serializeError(error) })
-						)
-					);
+				all: Effect.fn("CharacterService.get.all")(
+					function* (
+						userId: UserId,
+						{ characterId, includeLogs = true }: { characterId?: CharacterId; includeLogs?: boolean } = {}
+					) {
+						const characters = yield* runQuery(
+							db.query.characters.findMany({
+								with: characterIncludes(includeLogs),
+								where: {
+									userId: { eq: userId },
+									name: { NOT: PlaceholderName },
+									...(characterId && { id: { eq: characterId } })
+								}
+							})
+						).pipe(Effect.map((characters) => characters.map(parseCharacter)));
 
-					const event = getRequestEvent();
-					const timezone = event.locals.app.settings.timezone;
-					if (timezone) {
-						const logRecords = characters.flatMap((character) => character.logs);
-						yield* addMissingTimeZones(db, timezone, logRecords);
-					}
+						const event = getRequestEvent();
+						const timezone = event.locals.app.settings.timezone;
+						if (timezone) {
+							const logRecords = characters.flatMap((character) => character.logs);
+							yield* addMissingTimeZones(db, timezone, logRecords);
+						}
 
-					return characters;
-				}),
+						return characters;
+					},
+					(effect, userId, options?) => logGetter(effect, "CharacterService.get.all", { userId, ...options })
+				),
 
-				select: Effect.fn("CharacterService.get.select")(function* (userId: UserId) {
-					return yield* runQuery(
-						db.query.characters.findMany({
-							columns: {
-								id: true,
-								name: true
-							},
-							where: {
-								userId: { eq: userId },
-								name: { NOT: PlaceholderName }
-							}
-						})
-					).pipe(
-						Effect.tapError((error) => AppLog.debug("CharacterService.get.select", { userId, error: serializeError(error) }))
-					);
-				})
+				select: Effect.fn("CharacterService.get.select")(
+					function* (userId: UserId) {
+						return yield* runQuery(
+							db.query.characters.findMany({
+								columns: {
+									id: true,
+									name: true
+								},
+								where: {
+									userId: { eq: userId },
+									name: { NOT: PlaceholderName }
+								}
+							})
+						);
+					},
+					(effect, userId) => logGetter(effect, "CharacterService.get.select", { userId })
+				)
 			},
 
 			/**
 			 * Mutations
 			 */
 
-			save: Effect.fn("CharacterService.save")(function* (
-				data: CharacterSchema,
-				userId: UserId,
-				staged: StagedCharacterImage | null = null
-			) {
-				if (!data.id) yield* new SaveCharacterError("No character ID provided", { status: 400 });
+			save: Effect.fn("CharacterService.save")(
+				function* (data: CharacterSchema, userId: UserId, staged: StagedCharacterImage | null = null) {
+					if (!data.id) yield* new SaveCharacterError("No character ID provided", { status: 400 });
 
-				let copiedKey: string | null = null;
-				return yield* transaction(
-					Effect.fn(function* (tx) {
-						yield* lockPortraitUser(tx, userId);
-						if (staged && imagePublicUrl(staged.to, R2_PUBLIC_URL) !== data.imageUrl) {
-							return yield* new ImageUploadError("Upload that image again before saving.");
-						}
-						if (staged) {
-							yield* copyVerifiedStage(tx, userId, data.id, staged);
-							copiedKey = staged.to;
-						}
+					let copiedKey: string | null = null;
+					return yield* transaction(
+						Effect.fn(function* (tx) {
+							yield* lockPortraitUser(tx, userId);
+							if (staged && imagePublicUrl(staged.to, R2_PUBLIC_URL) !== data.imageUrl) {
+								return yield* ImageUploadError.reupload("The image URL does not match the staged upload.");
+							}
+							if (staged) {
+								yield* copyVerifiedStage(tx, userId, data.id, staged);
+								copiedKey = staged.to;
+							}
 
-						const imageBytes = yield* ownedBytesForSave(tx, userId, data.id, data.imageUrl);
-						yield* assertPortraitQuota(tx, userId, data.id, imageBytes.bytes);
-						if (imageBytes.previousKey) yield* scheduleDeletions(tx, [imageBytes.previousKey]);
-						if (imageBytes.nextKey) yield* clearScheduledDeletions(tx, [imageBytes.nextKey]);
+							const imageBytes = yield* ownedBytesForSave(tx, userId, data.id, data.imageUrl);
+							yield* assertPortraitQuota(tx, userId, data.id, imageBytes.bytes);
+							if (imageBytes.previousKey) yield* scheduleDeletions(tx, [imageBytes.previousKey]);
+							if (imageBytes.nextKey) yield* clearScheduledDeletions(tx, [imageBytes.nextKey]);
 
-						return yield* runQuery(
-							tx
-								.insert(characters)
-								.values({
-									...data,
-									imageBytes: imageBytes.bytes,
-									id: data.id === "new" ? undefined : data.id,
-									userId
-								})
-								.onConflictDoUpdate({
-									target: characters.id,
-									set: buildConflictUpdateColumns(characters, ["id", "userId", "createdAt"], true),
-									setWhere: eq(characters.userId, userId)
-								})
-								.returning()
-						);
-					})
-				).pipe(
-					Effect.flatMap((saved) =>
-						isTupleOf(saved, 1) ? Effect.succeed(saved[0]) : Effect.fail(new SaveCharacterError("Failed to save character"))
-					),
-					Effect.tap((result) => AppLog.info("CharacterService.save", { userId, result })),
-					Effect.tapError(() => {
-						const orphanKey = copiedKey;
-						if (!orphanKey) return Effect.void;
-						return Effect.gen(function* () {
-							const Storage = yield* StorageService;
-							yield* Storage.abandonStagedObject(userId, orphanKey);
-						}).pipe(
-							Effect.catch((error) =>
-								AppLog.error("CharacterService.save staged cleanup", {
-									message: error.message,
-									error: serializeError(error)
-								})
-							)
-						);
-					}),
-					Effect.tapError((error) => AppLog.debug("CharacterService.save", { userId, data, error: serializeError(error) }))
-				);
-			}),
+							return yield* runQuery(
+								tx
+									.insert(characters)
+									.values({
+										...data,
+										imageBytes: imageBytes.bytes,
+										id: data.id === "new" ? undefined : data.id,
+										userId
+									})
+									.onConflictDoUpdate({
+										target: characters.id,
+										set: buildConflictUpdateColumns(characters, ["id", "userId", "createdAt"], true),
+										setWhere: eq(characters.userId, userId)
+									})
+									.returning()
+							);
+						})
+					).pipe(
+						Effect.flatMap((saved) =>
+							isTupleOf(saved, 1) ? Effect.succeed(saved[0]) : Effect.fail(new SaveCharacterError("Failed to save character"))
+						),
+						Effect.tap((result) => AppLog.info("CharacterService.save", { userId, result })),
+						Effect.tapError(() => {
+							const orphanKey = copiedKey;
+							if (!orphanKey) return Effect.void;
+							return Effect.gen(function* () {
+								const Storage = yield* StorageService;
+								yield* Storage.abandonStagedObject(userId, orphanKey);
+							}).pipe(
+								Effect.catch((error) =>
+									AppLog.error("CharacterService.save staged cleanup", {
+										message: error.message,
+										error: serializeError(error)
+									})
+								)
+							);
+						})
+					);
+				},
+				(effect, data, userId, staged) => logSetter(effect, "CharacterService.save", { data, userId, staged })
+			),
 
-			delete: Effect.fn("CharacterService.delete")(function* (characterId: CharacterId, userId: UserId) {
-				return yield* transaction(
-					Effect.fn(function* (tx) {
-						// Deleting the character cascades its logs and their `log_image` rows, which queues orphaned note images.
-						yield* lockPortraitUser(tx, userId);
-						const keys = yield* collectCharacterKeys(tx, userId, characterId);
-						yield* scheduleDeletions(tx, keys);
+			delete: Effect.fn("CharacterService.delete")(
+				function* (characterId: CharacterId, userId: UserId) {
+					return yield* transaction(
+						Effect.fn(function* (tx) {
+							// Deleting the character cascades its logs and their `log_image` rows, which queues orphaned note images.
+							yield* lockPortraitUser(tx, userId);
+							const keys = yield* collectCharacterKeys(tx, userId, characterId);
+							yield* scheduleDeletions(tx, keys);
 
-						yield* runQuery(
-							tx
-								.update(logs)
-								.set({ characterId: null, appliedDate: null })
-								.where(
-									and(
-										eq(logs.characterId, characterId),
-										eq(logs.isDmLog, true),
-										exists(
-											db
-												.select()
-												.from(characters)
-												.where(and(eq(characters.id, characterId), eq(characters.userId, userId)))
+							yield* runQuery(
+								tx
+									.update(logs)
+									.set({ characterId: null, appliedDate: null })
+									.where(
+										and(
+											eq(logs.characterId, characterId),
+											eq(logs.isDmLog, true),
+											exists(
+												db
+													.select()
+													.from(characters)
+													.where(and(eq(characters.id, characterId), eq(characters.userId, userId)))
+											)
 										)
 									)
-								)
-						);
+							);
 
-						return yield* runQuery(
-							tx
-								.delete(characters)
-								.where(and(eq(characters.id, characterId), eq(characters.userId, userId)))
-								.returning({ id: characters.id })
-						);
-					})
-				).pipe(
-					Effect.flatMap((result) =>
-						isTupleOf(result, 1) ? Effect.succeed(result[0]) : Effect.fail(new DeleteCharacterError())
-					),
-					Effect.tap((result) => AppLog.info("CharacterService.delete", { characterId, userId, result })),
-					Effect.tapError((error) =>
-						AppLog.debug("CharacterService.delete", { characterId, userId, error: serializeError(error) })
-					)
-				);
-			})
+							return yield* runQuery(
+								tx
+									.delete(characters)
+									.where(and(eq(characters.id, characterId), eq(characters.userId, userId)))
+									.returning({ id: characters.id })
+							);
+						})
+					).pipe(
+						Effect.flatMap((result) =>
+							isTupleOf(result, 1) ? Effect.succeed(result[0]) : Effect.fail(new DeleteCharacterError())
+						)
+					);
+				},
+				(effect, characterId, userId) => logSetter(effect, "CharacterService.delete", { characterId, userId })
+			)
 		};
 	})()
 }) {

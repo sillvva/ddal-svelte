@@ -2,6 +2,7 @@ import type { FullPathname } from "#lib/constants.js";
 import type { NumericRange } from "#lib/util.js";
 import { isInstanceOfClass } from "@sillvva/utils";
 import { Cause, Data, Effect } from "effect";
+import { AppLog } from "./logging";
 
 export interface ErrorParams {
 	message: string;
@@ -26,6 +27,24 @@ export function isTaggedError(error: unknown): error is InstanceType<ErrorClass>
 		"_tag" in error &&
 		typeof error._tag === "string"
 	);
+}
+
+export function logGetter<A, E extends { readonly message: string }, R>(
+	effect: Effect.Effect<A, E, R>,
+	label: string,
+	context: Record<string, unknown>
+) {
+	return effect.pipe(
+		Effect.tapError((error) => AppLog.error(label, { ...context, message: error.message, error: serializeError(error) }))
+	);
+}
+
+export function logSetter<A, E extends { readonly message: string }, R>(
+	effect: Effect.Effect<A, E, R>,
+	label: string,
+	context: Record<string, unknown>
+) {
+	return logGetter(effect, label, context).pipe(Effect.tap((result) => AppLog.debug(label, { result, ...context })));
 }
 
 export class FailedError extends Data.TaggedError("FailedError")<ErrorParams> {

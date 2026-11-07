@@ -3,8 +3,7 @@ import type { LocalsUser, LogDraftData, LogDraftId, UserId } from "#lib/schemas.
 import { logDraftDataSchema } from "#lib/schemas.js";
 import { DBService, runQuery, type Database, type Transaction } from "#lib/server/db/index.js";
 import { logDrafts, type LogDraft } from "#lib/server/db/schema.js";
-import { serializeError, type ErrorParams } from "#lib/server/effect/errors.js";
-import { AppLog } from "#lib/server/effect/logging.js";
+import { logGetter, logSetter, type ErrorParams } from "#lib/server/effect/errors.js";
 import { parse } from "#lib/server/effect/util.js";
 import { R2_PUBLIC_URL } from "$app/env/public";
 import { isTupleOf } from "@sillvva/utils";
@@ -65,40 +64,45 @@ export class LogDraftService extends Context.Service<LogDraftService>()("LogDraf
 		const { db, transaction } = yield* DBService;
 
 		/** Any signed-in user can read a draft by id. */
-		const read = Effect.fn("LogDraftService.read")(function* (id: LogDraftId) {
-			return yield* runQuery(
-				db
-					.select()
-					.from(logDrafts)
-					.where(and(eq(logDrafts.id, id), notExpired()))
-					.limit(1)
-			).pipe(
-				Effect.flatMap((rows) => (isTupleOf(rows, 1) ? Effect.succeed(rows[0]) : Effect.fail(notFound()))),
-				Effect.flatMap(withData),
-				Effect.tapError((error) => AppLog.debug("LogDraftService.read", { id, error: serializeError(error) }))
-			);
-		});
+		const read = Effect.fn("LogDraftService.read")(
+			function* (id: LogDraftId) {
+				return yield* runQuery(
+					db
+						.select()
+						.from(logDrafts)
+						.where(and(eq(logDrafts.id, id), notExpired()))
+						.limit(1)
+				).pipe(
+					Effect.flatMap((rows) => (isTupleOf(rows, 1) ? Effect.succeed(rows[0]) : Effect.fail(notFound()))),
+					Effect.flatMap(withData)
+				);
+			},
+			(effect, id) => logGetter(effect, "LogDraftService.read", { id })
+		);
 
 		/** Only the creator can open a draft for editing. Others get the same 404 as a missing draft. */
-		const readOwned = Effect.fn("LogDraftService.readOwned")(function* (id: LogDraftId, userId: UserId) {
-			const row = yield* read(id);
-			if (row.userId !== userId) return yield* notFound();
-			return row;
-		});
+		const readOwned = Effect.fn("LogDraftService.readOwned")(
+			function* (id: LogDraftId, userId: UserId) {
+				const row = yield* read(id);
+				if (row.userId !== userId) return yield* notFound();
+				return row;
+			},
+			(effect, id, userId) => logGetter(effect, "LogDraftService.readOwned", { id, userId })
+		);
 
 		/** The user's live drafts, most recently saved first. */
-		const list = Effect.fn("LogDraftService.list")(function* (userId: UserId) {
-			return yield* runQuery(
-				db
-					.select()
-					.from(logDrafts)
-					.where(and(eq(logDrafts.userId, userId), notExpired()))
-					.orderBy(desc(logDrafts.updatedAt))
-			).pipe(
-				Effect.flatMap((rows) => Effect.forEach(rows, withData)),
-				Effect.tapError((error) => AppLog.debug("LogDraftService.list", { userId, error: serializeError(error) }))
-			);
-		});
+		const list = Effect.fn("LogDraftService.list")(
+			function* (userId: UserId) {
+				return yield* runQuery(
+					db
+						.select()
+						.from(logDrafts)
+						.where(and(eq(logDrafts.userId, userId), notExpired()))
+						.orderBy(desc(logDrafts.updatedAt))
+				).pipe(Effect.flatMap((rows) => Effect.forEach(rows, withData)));
+			},
+			(effect, userId) => logGetter(effect, "LogDraftService.list", { userId })
+		);
 
 		const validate = (data: LogDraftData) =>
 			assertNoNewImages(data).pipe(
@@ -106,65 +110,65 @@ export class LogDraftService extends Context.Service<LogDraftService>()("LogDraf
 				Effect.mapError((error) => (error instanceof LogDraftError ? error : new LogDraftError(error.message)))
 			);
 
-		const create = Effect.fn("LogDraftService.create")(function* (user: LocalsUser, data: LogDraftData) {
-			const validated = yield* validate(data);
+		const create = Effect.fn("LogDraftService.create")(
+			function* (user: LocalsUser, data: LogDraftData) {
+				const validated = yield* validate(data);
 
-			return yield* transaction(
-				Effect.fn(function* (tx) {
-					yield* lockDraftUser(tx, user.id);
-					const count = yield* countDrafts(tx, user.id);
-					if (count >= LOG_DRAFT_LIMIT) {
-						return yield* new LogDraftError(
-							`You can keep up to ${LOG_DRAFT_LIMIT} log drafts. Delete one before creating another.`
+				return yield* transaction(
+					Effect.fn(function* (tx) {
+						yield* lockDraftUser(tx, user.id);
+						const count = yield* countDrafts(tx, user.id);
+						if (count >= LOG_DRAFT_LIMIT) {
+							return yield* new LogDraftError(
+								`You can keep up to ${LOG_DRAFT_LIMIT} log drafts. Delete one before creating another.`
+							);
+						}
+
+						const now = new Date();
+						const rows = yield* runQuery(
+							tx
+								.insert(logDrafts)
+								.values({ id: v7() as LogDraftId, userId: user.id, data: validated, createdAt: now, updatedAt: now })
+								.returning()
 						);
-					}
-
-					const now = new Date();
-					const rows = yield* runQuery(
-						tx
-							.insert(logDrafts)
-							.values({ id: v7() as LogDraftId, userId: user.id, data: validated, createdAt: now, updatedAt: now })
-							.returning()
-					);
-					if (!isTupleOf(rows, 1)) return yield* new LogDraftError("Could not save draft", 500);
-					return yield* withData(rows[0]);
-				})
-			).pipe(
-				Effect.tap((result) => AppLog.info("LogDraftService.create", { id: result.id, userId: user.id })),
-				Effect.tapError((error) => AppLog.debug("LogDraftService.create", { userId: user.id, error: serializeError(error) }))
-			);
-		});
+						if (!isTupleOf(rows, 1)) return yield* new LogDraftError("Could not save draft", 500);
+						return yield* withData(rows[0]);
+					})
+				);
+			},
+			(effect, user, data) => logSetter(effect, "LogDraftService.create", { userId: user.id, data })
+		);
 
 		/** Keeps the id, so the link and QR code stay valid. An expired draft cannot be revived. */
-		const update = Effect.fn("LogDraftService.update")(function* (user: LocalsUser, id: LogDraftId, data: LogDraftData) {
-			const validated = yield* validate(data);
+		const update = Effect.fn("LogDraftService.update")(
+			function* (user: LocalsUser, id: LogDraftId, data: LogDraftData) {
+				const validated = yield* validate(data);
 
-			return yield* runQuery(
-				db
-					.update(logDrafts)
-					.set({ data: validated, updatedAt: new Date() })
-					.where(and(eq(logDrafts.id, id), eq(logDrafts.userId, user.id), notExpired()))
-					.returning()
-			).pipe(
-				Effect.flatMap((rows) => (isTupleOf(rows, 1) ? Effect.succeed(rows[0]) : Effect.fail(notFound()))),
-				Effect.flatMap(withData),
-				Effect.tap((result) => AppLog.info("LogDraftService.update", { id: result.id, userId: user.id })),
-				Effect.tapError((error) => AppLog.debug("LogDraftService.update", { id, userId: user.id, error: serializeError(error) }))
-			);
-		});
+				return yield* runQuery(
+					db
+						.update(logDrafts)
+						.set({ data: validated, updatedAt: new Date() })
+						.where(and(eq(logDrafts.id, id), eq(logDrafts.userId, user.id), notExpired()))
+						.returning()
+				).pipe(
+					Effect.flatMap((rows) => (isTupleOf(rows, 1) ? Effect.succeed(rows[0]) : Effect.fail(notFound()))),
+					Effect.flatMap(withData)
+				);
+			},
+			(effect, user, id, data) => logSetter(effect, "LogDraftService.update", { userId: user.id, id, data })
+		);
 
-		const remove = Effect.fn("LogDraftService.remove")(function* (id: LogDraftId, userId: UserId) {
-			return yield* runQuery(
-				db
-					.delete(logDrafts)
-					.where(and(eq(logDrafts.id, id), eq(logDrafts.userId, userId)))
-					.returning({ id: logDrafts.id })
-			).pipe(
-				Effect.flatMap((rows) => (isTupleOf(rows, 1) ? Effect.succeed(rows[0]) : Effect.fail(notFound()))),
-				Effect.tap((result) => AppLog.info("LogDraftService.remove", { id: result.id, userId })),
-				Effect.tapError((error) => AppLog.debug("LogDraftService.remove", { id, userId, error: serializeError(error) }))
-			);
-		});
+		const remove = Effect.fn("LogDraftService.remove")(
+			function* (id: LogDraftId, userId: UserId) {
+				return yield* runQuery(
+					db
+						.delete(logDrafts)
+						.where(and(eq(logDrafts.id, id), eq(logDrafts.userId, userId)))
+						.returning({ id: logDrafts.id })
+				).pipe(Effect.flatMap((rows) => (isTupleOf(rows, 1) ? Effect.succeed(rows[0]) : Effect.fail(notFound()))));
+			},
+			(effect, id, userId) => logSetter(effect, "LogDraftService.remove", { id, userId })
+		);
 
 		return { read, readOwned, list, create, update, remove };
 	})()

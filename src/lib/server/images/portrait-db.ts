@@ -139,7 +139,7 @@ export function ownedBytesForSave(tx: Transaction, userId: UserId, characterId: 
 
 		if (nextKey && nextKey !== currentKey) {
 			const promoted = yield* promoteUploadRow(tx, userId, characterId, nextKey);
-			if (!promoted) return yield* new ImageUploadError("Upload that image again before saving.");
+			if (!promoted) return yield* ImageUploadError.reupload("The upload record for this image was not found.");
 			return { bytes: promoted.bytes, nextKey, previousKey: currentKey };
 		}
 

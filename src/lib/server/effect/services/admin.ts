@@ -2,7 +2,7 @@ import type { AppLogId, UserId } from "#lib/schemas.js";
 import { DBService, runQuery, type Filter, type Transaction, type TRSchema } from "#lib/server/db/index.js";
 import type { relations } from "#lib/server/db/relations.js";
 import { appLogs, type InsertAppLog } from "#lib/server/db/schema.js";
-import { type ErrorParams } from "#lib/server/effect/errors.js";
+import { logGetter, logSetter, type ErrorParams } from "#lib/server/effect/errors.js";
 import { DrizzleSearchParser } from "@sillvva/search/drizzle";
 import { isTupleOf, sorter } from "@sillvva/utils";
 import { EmptyFilter, eq, sql } from "drizzle-orm";
@@ -36,53 +36,62 @@ export class AdminService extends Context.Service<AdminService>()("AdminService"
 			 */
 
 			get: {
-				user: Effect.fn("AdminService.get.user")(function* (userId: UserId) {
-					return yield* runQuery(
-						db.query.user.findFirst({
-							where: {
-								id: {
-									eq: userId
+				user: Effect.fn("AdminService.get.user")(
+					function* (userId: UserId) {
+						return yield* runQuery(
+							db.query.user.findFirst({
+								where: {
+									id: {
+										eq: userId
+									}
 								}
-							}
-						})
-					).pipe(Effect.flatMap((user) => (user ? Effect.succeed(user) : Effect.fail(new UserNotFoundError()))));
-				}),
-				users: Effect.fn("AdminService.get.users")(function* () {
-					return yield* runQuery(
-						db.query.user.findMany({
-							with: {
-								accounts: {
-									columns: {
-										providerId: true
+							})
+						).pipe(Effect.flatMap((user) => (user ? Effect.succeed(user) : Effect.fail(new UserNotFoundError()))));
+					},
+					(effect, userId) => logGetter(effect, "AdminService.get.user", { userId })
+				),
+				users: Effect.fn("AdminService.get.users")(
+					function* () {
+						return yield* runQuery(
+							db.query.user.findMany({
+								with: {
+									accounts: {
+										columns: {
+											providerId: true
+										}
+									},
+									characters: {
+										columns: {
+											id: true
+										}
 									}
 								},
-								characters: {
-									columns: {
-										id: true
+								where: {
+									role: {
+										ne: "admin"
 									}
 								}
-							},
-							where: {
-								role: {
-									ne: "admin"
-								}
-							}
-						})
-					).pipe(Effect.map((users) => users.sort((a, b) => sorter(a.name.toLowerCase(), b.name.toLowerCase()))));
-				}),
-				logs: Effect.fn("AdminService.get.logs")(function* (search: string = "") {
-					const { where, orderBy, metadata } = search.trim() ? logSearch.parse(search.trim()) : {};
+							})
+						).pipe(Effect.map((users) => users.sort((a, b) => sorter(a.name.toLowerCase(), b.name.toLowerCase()))));
+					},
+					(effect) => logGetter(effect, "AdminService.get.users", {})
+				),
+				logs: Effect.fn("AdminService.get.logs")(
+					function* (search: string = "") {
+						const { where, orderBy, metadata } = search.trim() ? logSearch.parse(search.trim()) : {};
 
-					return yield* runQuery(
-						db.query.appLogs.findMany({
-							where: where ?? EmptyFilter,
-							orderBy: {
-								...orderBy,
-								timestamp: "desc"
-							}
-						})
-					).pipe(Effect.map((logs) => ({ logs, metadata })));
-				})
+						return yield* runQuery(
+							db.query.appLogs.findMany({
+								where: where ?? EmptyFilter,
+								orderBy: {
+									...orderBy,
+									timestamp: "desc"
+								}
+							})
+						).pipe(Effect.map((logs) => ({ logs, metadata })));
+					},
+					(effect, search) => logGetter(effect, "AdminService.get.logs", { search })
+				)
 			},
 
 			/**
@@ -136,11 +145,14 @@ export class AdminService extends Context.Service<AdminService>()("AdminService"
 					Effect.flatMap((logs) => (isTupleOf(logs, 1) ? Effect.succeed(logs[0]) : Effect.fail(new SaveAppLogError())))
 				);
 			}),
-			deleteLog: Effect.fn("AdminService.deleteLog")(function* (logId: AppLogId) {
-				return yield* runQuery(db.delete(appLogs).where(eq(appLogs.id, logId)).returning({ id: appLogs.id })).pipe(
-					Effect.flatMap((logs) => (isTupleOf(logs, 1) ? Effect.succeed(logs[0]) : Effect.fail(new DeleteLogError())))
-				);
-			})
+			deleteLog: Effect.fn("AdminService.deleteLog")(
+				function* (logId: AppLogId) {
+					return yield* runQuery(db.delete(appLogs).where(eq(appLogs.id, logId)).returning({ id: appLogs.id })).pipe(
+						Effect.flatMap((logs) => (isTupleOf(logs, 1) ? Effect.succeed(logs[0]) : Effect.fail(new DeleteLogError())))
+					);
+				},
+				(effect, logId) => logSetter(effect, "AdminService.deleteLog", { logId })
+			)
 		};
 	})()
 }) {

@@ -4,7 +4,14 @@ import { emailSchema, localsSessionSchema, localsUserSchema, type OnboardingSche
 import { DBService, runQuery } from "#lib/server/db/index.js";
 import type { User } from "#lib/server/db/schema.js";
 import * as schema from "#lib/server/db/schema.js";
-import { AuthTokenError, RedirectError, serializeError, type ErrorParams } from "#lib/server/effect/errors.js";
+import {
+	AuthTokenError,
+	logGetter,
+	logSetter,
+	RedirectError,
+	serializeError,
+	type ErrorParams
+} from "#lib/server/effect/errors.js";
 import { AppLog } from "#lib/server/effect/logging.js";
 import { promoteStagedAvatar, StorageService } from "#lib/server/effect/services/storage.js";
 import { ImageUploadError } from "#lib/server/images/errors.js";
@@ -220,293 +227,308 @@ export class AuthService extends Context.Service<AuthService>()("AuthService", {
 			 * Queries
 			 */
 			get: {
-				session: Effect.fn("AuthService.get.session")(function* () {
-					const event = getRequestEvent();
+				session: Effect.fn("AuthService.get.session")(
+					function* () {
+						const event = getRequestEvent();
 
-					const result = yield* Effect.tryPromise({
-						try: () => auth.api.getSession({ headers: event.request.headers }),
-						catch: (err) => new AuthError(err)
-					});
+						const result = yield* Effect.tryPromise({
+							try: () => auth.api.getSession({ headers: event.request.headers }),
+							catch: (err) => new AuthError(err)
+						});
 
-					return {
-						session: result?.session && (yield* parse(localsSessionSchema, result.session)),
-						user:
-							result?.user &&
-							(yield* runQuery(
-								db.query.user.findFirst({
-									with: {
-										accounts: {
-											columns: {
-												id: true,
-												accountId: true,
-												providerId: true,
-												scope: true,
-												createdAt: true,
-												updatedAt: true
+						return {
+							session: result?.session && (yield* parse(localsSessionSchema, result.session)),
+							user:
+								result?.user &&
+								(yield* runQuery(
+									db.query.user.findFirst({
+										with: {
+											accounts: {
+												columns: {
+													id: true,
+													accountId: true,
+													providerId: true,
+													scope: true,
+													createdAt: true,
+													updatedAt: true
+												},
+												where: {
+													providerId: {
+														in: PROVIDERS.map((p) => p.id)
+													}
+												}
 											},
-											where: {
-												providerId: {
-													in: PROVIDERS.map((p) => p.id)
+											passkeys: {
+												columns: {
+													id: true,
+													name: true,
+													createdAt: true
 												}
 											}
 										},
-										passkeys: {
-											columns: {
-												id: true,
-												name: true,
-												createdAt: true
+										where: {
+											id: {
+												eq: result.user.id as UserId
 											}
 										}
-									},
-									where: {
-										id: {
-											eq: result.user.id as UserId
+									})
+								)),
+							auth
+						};
+					},
+					(effect) => logGetter(effect, "AuthService.get.session", {})
+				),
+				accounts: Effect.fn("AuthService.get.accounts")(
+					function* () {
+						const event = getRequestEvent();
+						const user = event.locals.user;
+
+						const tasks =
+							user?.accounts.map(({ id, providerId }) =>
+								Effect.tryPromise({
+									try: () =>
+										auth.api
+											.accountInfo({
+												headers: event.request.headers,
+												query: {
+													accountId: id
+												}
+											})
+											.then((r) => ({
+												id,
+												providerId,
+												name: r.user.name ?? "Unknown",
+												email: r.user.email ?? "Unknown",
+												image: r.user.image ?? BLANK_CHARACTER
+											})),
+									catch: (error) => {
+										// Check if this is a Better Auth token refresh error
+										const isBetterAuthError =
+											error instanceof APIError ||
+											(typeof error === "object" &&
+												error !== null &&
+												"code" in error &&
+												typeof error.code === "string" &&
+												error.code === "FAILED_TO_GET_ACCESS_TOKEN");
+
+										if (isBetterAuthError) {
+											// Get provider name for error message
+											const provider = PROVIDERS.find((p) => p.id === providerId);
+											const providerName = provider?.name ?? "your OAuth provider";
+
+											return new AuthTokenError(`Your session with ${providerName} has expired. Please sign in again.`, error);
 										}
+
+										// For other errors, return a generic error with context
+										return new Error(`Failed to fetch account info for ${providerId}: ${String(error)}`);
 									}
-								})
-							)),
-						auth
-					};
-				}),
-				accounts: Effect.fn("AuthService.get.accounts")(function* () {
-					const event = getRequestEvent();
-					const user = event.locals.user;
-
-					const tasks =
-						user?.accounts.map(({ id, providerId }) =>
-							Effect.tryPromise({
-								try: () =>
-									auth.api
-										.accountInfo({
-											headers: event.request.headers,
-											query: {
-												accountId: id
-											}
-										})
-										.then((r) => ({
-											id,
-											providerId,
-											name: r.user.name ?? "Unknown",
-											email: r.user.email ?? "Unknown",
-											image: r.user.image ?? BLANK_CHARACTER
-										})),
-								catch: (error) => {
-									// Check if this is a Better Auth token refresh error
-									const isBetterAuthError =
-										error instanceof APIError ||
-										(typeof error === "object" &&
-											error !== null &&
-											"code" in error &&
-											typeof error.code === "string" &&
-											error.code === "FAILED_TO_GET_ACCESS_TOKEN");
-
-									if (isBetterAuthError) {
-										// Get provider name for error message
-										const provider = PROVIDERS.find((p) => p.id === providerId);
-										const providerName = provider?.name ?? "your OAuth provider";
-
-										return new AuthTokenError(`Your session with ${providerName} has expired. Please sign in again.`, error);
-									}
-
-									// For other errors, return a generic error with context
-									return new Error(`Failed to fetch account info for ${providerId}: ${String(error)}`);
-								}
-							}).pipe(
-								// Log non-auth errors and convert them to undefined so we can skip them
-								Effect.catchIf(
-									(e) => !(e instanceof AuthTokenError),
-									(error) =>
-										AppLog.error("Failed to fetch account info", { id, providerId, error }).pipe(
-											Effect.as(undefined as undefined)
-										)
+								}).pipe(
+									// Log non-auth errors and convert them to undefined so we can skip them
+									Effect.catchIf(
+										(e) => !(e instanceof AuthTokenError),
+										(error) =>
+											AppLog.error("Failed to fetch account info", { id, providerId, error }).pipe(
+												Effect.as(undefined as undefined)
+											)
+									)
 								)
-							)
-						) ?? [];
+							) ?? [];
 
-					// Run every account lookup and keep both successes and failures.
-					const results = yield* Effect.all(tasks, { mode: "result" });
+						// Run every account lookup and keep both successes and failures.
+						const results = yield* Effect.all(tasks, { mode: "result" });
 
-					// Check if any result is an AuthTokenError
-					for (const result of results) {
-						if (Result.isFailure(result) && result.failure instanceof AuthTokenError) {
-							// Sign out the user
-							yield* Effect.tryPromise(() =>
-								auth.api.signOut({
-									headers: event.request.headers
-								})
-							).pipe(Effect.ignore);
+						// Check if any result is an AuthTokenError
+						for (const result of results) {
+							if (Result.isFailure(result) && result.failure instanceof AuthTokenError) {
+								// Sign out the user
+								yield* Effect.tryPromise(() =>
+									auth.api.signOut({
+										headers: event.request.headers
+									})
+								).pipe(Effect.ignore);
 
-							// Redirect to login with error message
-							return yield* new RedirectError({
-								message: result.failure.message,
-								redirectTo: `/?error=session_expired&error_description=${encodeURIComponent(result.failure.message)}`
-							});
+								// Redirect to login with error message
+								return yield* new RedirectError({
+									message: result.failure.message,
+									redirectTo: `/?error=session_expired&error_description=${encodeURIComponent(result.failure.message)}`
+								});
+							}
 						}
-					}
 
-					// Filter successful results
-					const accounts = results
-						.filter(Result.isSuccess)
-						.map((r) => r.success)
-						.filter(isDefined);
+						// Filter successful results
+						const accounts = results
+							.filter(Result.isSuccess)
+							.map((r) => r.success)
+							.filter(isDefined);
 
-					return accounts;
-				}),
-				emailTaken: Effect.fn("AuthService.get.emailTaken")(function* (email: string, userId: UserId) {
-					const matches = yield* runQuery(
-						db
-							.select({ id: schema.user.id })
-							.from(schema.user)
-							.where(and(sql`lower(${schema.user.email}) = ${email.toLowerCase()}`, ne(schema.user.id, userId)))
-							.limit(1)
-					);
-					return matches.length > 0;
-				})
+						return accounts;
+					},
+					(effect) => logGetter(effect, "AuthService.get.accounts", {})
+				),
+				emailTaken: Effect.fn("AuthService.get.emailTaken")(
+					function* (email: string, userId: UserId) {
+						const matches = yield* runQuery(
+							db
+								.select({ id: schema.user.id })
+								.from(schema.user)
+								.where(and(sql`lower(${schema.user.email}) = ${email.toLowerCase()}`, ne(schema.user.id, userId)))
+								.limit(1)
+						);
+						return matches.length > 0;
+					},
+					(effect, email, userId) => logGetter(effect, "AuthService.get.emailTaken", { email, userId })
+				)
 			},
 
 			/**
 			 * Mutations
 			 */
-			completeOnboarding: Effect.fn("AuthService.completeOnboarding")(function* (userId: UserId, data: OnboardingSchema) {
-				const parsed = v.safeParse(emailSchema, data.email);
-				if (!parsed.success) return yield* new UpdateUserError("Enter a valid email address");
-				const email = parsed.output;
-				const profile = { name: data.name.trim(), email, onboarded: true };
-				const whereUnfinished = and(eq(schema.user.id, userId), eq(schema.user.onboarded, false));
+			completeOnboarding: Effect.fn("AuthService.completeOnboarding")(
+				function* (userId: UserId, data: OnboardingSchema) {
+					const parsed = v.safeParse(emailSchema, data.email);
+					if (!parsed.success) return yield* new UpdateUserError("Enter a valid email address");
+					const email = parsed.output;
+					const profile = { name: data.name.trim(), email, onboarded: true };
+					const whereUnfinished = and(eq(schema.user.id, userId), eq(schema.user.onboarded, false));
 
-				const uploadId = data.uploadId;
-				const saved = !uploadId
-					? runQuery(db.update(schema.user).set(profile).where(whereUnfinished).returning())
-					: Effect.gen(function* () {
-							const Storage = yield* StorageService;
-							const copied = { permanentKey: null as string | null };
-							let temporaryKey: string | null = null;
-							const rows = yield* transaction(
-								Effect.fn(function* (tx) {
-									yield* lockPortraitUser(tx, userId);
-									const promoted = yield* promoteStagedAvatar(tx, userId, uploadId, copied);
-									temporaryKey = promoted.temporaryKey;
-									return yield* runQuery(
-										tx
-											.update(schema.user)
-											.set({ ...profile, image: promoted.imageUrl })
-											.where(whereUnfinished)
-											.returning()
-									);
-								})
-							).pipe(
-								Effect.tapError(() => {
-									const orphanKey = copied.permanentKey;
-									if (!orphanKey) return Effect.void;
-									return Storage.abandonStagedObject(userId, orphanKey).pipe(
-										Effect.catch((error) =>
-											AppLog.error("AuthService.completeOnboarding staged cleanup", {
-												message: error.message,
-												error: serializeError(error)
-											})
-										)
-									);
-								})
-							);
-							yield* Storage.cleanupAfterSave(temporaryKey);
-							return rows;
-						});
-
-				return yield* saved.pipe(
-					Effect.flatMap((users) =>
-						isTupleOf(users, 1) ? Effect.succeed(users[0]) : Effect.fail(new UpdateUserError("Failed to finish account setup"))
-					),
-					Effect.tap((result) => AppLog.info("AuthService.completeOnboarding", { userId, result })),
-					Effect.tapError((error) =>
-						AppLog.debug("AuthService.completeOnboarding", { userId, data, error: serializeError(error) })
-					)
-				);
-			}),
-			user: {
-				update: Effect.fn("AuthService.user.update")(function* (userId: UserId, data: Partial<Pick<User, "name" | "image">>) {
-					const write =
-						data.image === undefined
-							? runQuery(db.update(schema.user).set(data).where(eq(schema.user.id, userId)).returning())
-							: transaction(
+					const uploadId = data.uploadId;
+					const saved = !uploadId
+						? runQuery(db.update(schema.user).set(profile).where(whereUnfinished).returning())
+						: Effect.gen(function* () {
+								const Storage = yield* StorageService;
+								const copied = { permanentKey: null as string | null };
+								let temporaryKey: string | null = null;
+								const rows = yield* transaction(
 									Effect.fn(function* (tx) {
 										yield* lockPortraitUser(tx, userId);
-										const rows = yield* runQuery(
-											tx.select({ image: schema.user.image }).from(schema.user).where(eq(schema.user.id, userId)).limit(1)
+										const promoted = yield* promoteStagedAvatar(tx, userId, uploadId, copied);
+										temporaryKey = promoted.temporaryKey;
+										return yield* runQuery(
+											tx
+												.update(schema.user)
+												.set({ ...profile, image: promoted.imageUrl })
+												.where(whereUnfinished)
+												.returning()
 										);
-										const current = rows[0];
-										if (!current) return yield* new UpdateUserError("Failed to update user");
-
-										const previousKey = current.image ? ownedAvatarKey(userId, current.image, R2_PUBLIC_URL) : null;
-										const nextKey = data.image ? ownedAvatarKey(userId, data.image, R2_PUBLIC_URL) : null;
-										// A new avatar is stored only by the avatar save. Reject pointing the profile at some other object.
-										if (nextKey && nextKey !== previousKey) {
-											return yield* new ImageUploadError("Upload that image again before saving.");
-										}
-										if (previousKey && previousKey !== nextKey) yield* scheduleDeletions(tx, [previousKey]);
-										if (nextKey) yield* clearScheduledDeletions(tx, [nextKey]);
-
-										return yield* runQuery(tx.update(schema.user).set(data).where(eq(schema.user.id, userId)).returning());
+									})
+								).pipe(
+									Effect.tapError(() => {
+										const orphanKey = copied.permanentKey;
+										if (!orphanKey) return Effect.void;
+										return Storage.abandonStagedObject(userId, orphanKey).pipe(
+											Effect.catch((error) =>
+												AppLog.error("AuthService.completeOnboarding staged cleanup", {
+													message: error.message,
+													error: serializeError(error)
+												})
+											)
+										);
 									})
 								);
+								yield* Storage.cleanupAfterSave(temporaryKey);
+								return rows;
+							});
 
-					return yield* write.pipe(
+					return yield* saved.pipe(
 						Effect.flatMap((users) =>
-							isTupleOf(users, 1) ? Effect.succeed(users[0]) : Effect.fail(new UpdateUserError("Failed to update user"))
-						),
-						Effect.tap((result) => AppLog.info("AuthService.user.update", { userId, result })),
-						Effect.tapError((error) => AppLog.debug("AuthService.user.update", { userId, data, error: serializeError(error) }))
-					);
-				}),
-				delete: Effect.fn("AuthService.user.delete")(function* (userId: UserId) {
-					const Storage = yield* StorageService;
-					// Permanent objects with no upload row are only visible by listing.
-					// Staged `tmp/` uploads are left for the bucket lifecycle rule.
-					// A list failure still deletes every permanent key recorded in the database.
-					const listed = yield* Storage.listOwnedImageKeys(userId).pipe(
-						Effect.catch((error) =>
-							AppLog.error("AuthService.user.delete list images", { message: error.message, userId }).pipe(
-								Effect.as([] as string[])
-							)
+							isTupleOf(users, 1) ? Effect.succeed(users[0]) : Effect.fail(new UpdateUserError("Failed to finish account setup"))
 						)
 					);
+				},
+				(effect, userId, data) => logSetter(effect, "AuthService.completeOnboarding", { userId, data })
+			),
+			user: {
+				update: Effect.fn("AuthService.user.update")(
+					function* (userId: UserId, data: Partial<Pick<User, "name" | "image">>) {
+						const write =
+							data.image === undefined
+								? runQuery(db.update(schema.user).set(data).where(eq(schema.user.id, userId)).returning())
+								: transaction(
+										Effect.fn(function* (tx) {
+											yield* lockPortraitUser(tx, userId);
+											const rows = yield* runQuery(
+												tx.select({ image: schema.user.image }).from(schema.user).where(eq(schema.user.id, userId)).limit(1)
+											);
+											const current = rows[0];
+											if (!current) return yield* new UpdateUserError("Failed to update user");
 
-					return yield* transaction(
-						Effect.fn(function* (tx) {
-							yield* lockPortraitUser(tx, userId);
-							// Record permanent portrait, avatar, and note image keys before the user row disappears.
-							const keys = yield* collectUserKeys(tx, userId);
-							yield* scheduleDeletions(tx, [...keys, ...listed]);
+											const previousKey = current.image ? ownedAvatarKey(userId, current.image, R2_PUBLIC_URL) : null;
+											const nextKey = data.image ? ownedAvatarKey(userId, data.image, R2_PUBLIC_URL) : null;
+											// A new avatar is stored only by the avatar save. Reject pointing the profile at some other object.
+											if (nextKey && nextKey !== previousKey) {
+												return yield* ImageUploadError.reupload("New profile pictures must be saved through the image uploader.");
+											}
+											if (previousKey && previousKey !== nextKey) yield* scheduleDeletions(tx, [previousKey]);
+											if (nextKey) yield* clearScheduledDeletions(tx, [nextKey]);
 
-							// Logs reference dungeon masters with ON DELETE RESTRICT, so they must go before the user row.
-							yield* runQuery(
-								tx.delete(schema.logs).where(
-									or(
-										exists(
-											db
-												.select()
-												.from(schema.dungeonMasters)
-												.where(
-													and(eq(schema.dungeonMasters.id, schema.logs.dungeonMasterId), eq(schema.dungeonMasters.userId, userId))
-												)
-										),
-										exists(
-											db
-												.select()
-												.from(schema.characters)
-												.where(and(eq(schema.characters.id, schema.logs.characterId), eq(schema.characters.userId, userId)))
+											return yield* runQuery(tx.update(schema.user).set(data).where(eq(schema.user.id, userId)).returning());
+										})
+									);
+
+						return yield* write.pipe(
+							Effect.flatMap((users) =>
+								isTupleOf(users, 1) ? Effect.succeed(users[0]) : Effect.fail(new UpdateUserError("Failed to update user"))
+							)
+						);
+					},
+					(effect, userId, data) => logSetter(effect, "AuthService.user.update", { userId, data })
+				),
+				delete: Effect.fn("AuthService.user.delete")(
+					function* (userId: UserId) {
+						const Storage = yield* StorageService;
+						// Permanent objects with no upload row are only visible by listing.
+						// Staged `tmp/` uploads are left for the bucket lifecycle rule.
+						// A list failure still deletes every permanent key recorded in the database.
+						const listed = yield* Storage.listOwnedImageKeys(userId).pipe(
+							Effect.catch((error) =>
+								AppLog.error("AuthService.user.delete list images", { message: error.message, userId }).pipe(
+									Effect.as([] as string[])
+								)
+							)
+						);
+
+						return yield* transaction(
+							Effect.fn(function* (tx) {
+								yield* lockPortraitUser(tx, userId);
+								// Record permanent portrait, avatar, and note image keys before the user row disappears.
+								const keys = yield* collectUserKeys(tx, userId);
+								yield* scheduleDeletions(tx, [...keys, ...listed]);
+
+								// Logs reference dungeon masters with ON DELETE RESTRICT, so they must go before the user row.
+								yield* runQuery(
+									tx.delete(schema.logs).where(
+										or(
+											exists(
+												db
+													.select()
+													.from(schema.dungeonMasters)
+													.where(
+														and(
+															eq(schema.dungeonMasters.id, schema.logs.dungeonMasterId),
+															eq(schema.dungeonMasters.userId, userId)
+														)
+													)
+											),
+											exists(
+												db
+													.select()
+													.from(schema.characters)
+													.where(and(eq(schema.characters.id, schema.logs.characterId), eq(schema.characters.userId, userId)))
+											)
 										)
 									)
-								)
-							);
+								);
 
-							return yield* runQuery(tx.delete(schema.user).where(eq(schema.user.id, userId)).returning({ id: schema.user.id }));
-						})
-					).pipe(
-						Effect.flatMap((result) => (isTupleOf(result, 1) ? Effect.succeed(result[0]) : Effect.fail(new DeleteUserError()))),
-						Effect.tap((result) => AppLog.info("AuthService.user.delete", { userId, result })),
-						Effect.tapError((error) => AppLog.debug("AuthService.user.delete", { userId, error: serializeError(error) }))
-					);
-				})
+								return yield* runQuery(
+									tx.delete(schema.user).where(eq(schema.user.id, userId)).returning({ id: schema.user.id })
+								);
+							})
+						).pipe(
+							Effect.flatMap((result) => (isTupleOf(result, 1) ? Effect.succeed(result[0]) : Effect.fail(new DeleteUserError())))
+						);
+					},
+					(effect, userId) => logSetter(effect, "AuthService.user.delete", { userId })
+				)
 			}
 		};
 	})()
