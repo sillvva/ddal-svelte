@@ -13,8 +13,10 @@ import {
 	imagePublicUrl,
 	isOwnedNoteImageKey,
 	isOwnedTemporaryNoteImageKey,
+	isPermanentCharacterImageKey,
 	isPermanentImageKey,
 	isPermanentNoteImageKey,
+	isTemporaryCharacterImageKey,
 	isTemporaryImageKey,
 	isTemporaryNoteImageKey,
 	permanentImageKeyForTemporary,
@@ -63,6 +65,14 @@ describe("note image keys", () => {
 		expect(isPermanentNoteImageKey(`users/${userId}/notes/not-a-uuid.webp`)).toBe(false);
 		expect(isPermanentNoteImageKey(`users/${userId}/notes/../avatar/${uploadId}.webp`)).toBe(false);
 		expect(isTemporaryNoteImageKey(`users/${userId}/notes/${uploadId}.webp`)).toBe(false);
+	});
+
+	it("is not classified as a character image key (permanent or temporary)", () => {
+		// resolveForSave uses this invariant to pass permanent note image URLs through
+		// as external URLs rather than rejecting them.
+		const { permanent, temporary } = noteKeys();
+		expect(isPermanentCharacterImageKey(permanent)).toBe(false);
+		expect(isTemporaryCharacterImageKey(temporary)).toBe(false);
 	});
 
 	it("only treats the account's own keys as owned", () => {

@@ -2,8 +2,7 @@ import type { DungeonMasterFormSchema, DungeonMasterId, LocalsUser, UserId } fro
 import { userDMLogIncludes } from "#lib/server/db/includes.js";
 import { DBService, runQuery, type InferQueryResult, type Transaction } from "#lib/server/db/index.js";
 import { dungeonMasters, logs, type DungeonMaster } from "#lib/server/db/schema.js";
-import { serializeError, type ErrorParams } from "#lib/server/effect/errors.js";
-import { AppLog } from "#lib/server/effect/logging.js";
+import { logErrors, logResults, type ErrorParams } from "#lib/server/effect/errors.js";
 import { isTupleOf, sorter } from "@sillvva/utils";
 import { and, EmptyFilter, eq } from "drizzle-orm";
 import { Context, Data, Effect, Layer } from "effect";
@@ -32,146 +31,147 @@ export class DMService extends Context.Service<DMService>()("DMService", {
 	make: Effect.fn("DMService")(function* () {
 		const { db } = yield* DBService;
 
-		const getOne = Effect.fn("DMService.get.one")(function* (dmId: DungeonMasterId, userId: UserId, includeLogs = true) {
-			return yield* runQuery(
-				db.query.dungeonMasters.findFirst({
-					with: {
-						logs: {
-							...userDMLogIncludes,
-							limit: includeLogs ? undefined : 0,
-							orderBy: { date: "desc" }
+		const getOne = Effect.fn("DMService.get.one")(
+			function* (dmId: DungeonMasterId, userId: UserId, includeLogs: boolean = true) {
+				return yield* runQuery(
+					db.query.dungeonMasters.findFirst({
+						with: {
+							logs: {
+								...userDMLogIncludes,
+								limit: includeLogs ? undefined : 0,
+								orderBy: { date: "desc" }
+							}
+						},
+						where: {
+							id: { eq: dmId },
+							userId: { eq: userId }
 						}
-					},
-					where: {
-						id: { eq: dmId },
-						userId: { eq: userId }
-					}
-				})
-			).pipe(
-				Effect.flatMap((dm) => (dm ? Effect.succeed(dm) : Effect.fail(new DMNotFoundError()))),
-				Effect.tapError((error) => AppLog.debug("DMService.get.one", { dmId, userId, includeLogs, error: serializeError(error) }))
-			);
-		});
+					})
+				).pipe(Effect.flatMap((dm) => (dm ? Effect.succeed(dm) : Effect.fail(new DMNotFoundError()))));
+			},
+			(effect, dmId, userId, includeLogs?) => logErrors(effect, "DMService.get.one", { dmId, userId, includeLogs })
+		);
 
-		const getAll = Effect.fn("DMService.get.all")(function* (user: LocalsUser, includeLogs = true) {
-			return yield* runQuery(
-				db.query.dungeonMasters.findMany({
-					with: {
-						logs: {
-							...userDMLogIncludes,
-							limit: includeLogs ? undefined : 0
+		const getAll = Effect.fn("DMService.get.all")(
+			function* (user: LocalsUser, includeLogs: boolean = true) {
+				return yield* runQuery(
+					db.query.dungeonMasters.findMany({
+						with: {
+							logs: {
+								...userDMLogIncludes,
+								limit: includeLogs ? undefined : 0
+							}
+						},
+						where: {
+							userId: { eq: user.id }
 						}
-					},
-					where: {
-						userId: { eq: user.id }
-					}
-				})
-			).pipe(
-				// Sort the DMs by isUser and name
-				Effect.map((dms) => dms.toSorted((a, b) => sorter(a.isUser, b.isUser) || sorter(a.name, b.name))),
-				// Add the user DM if there isn't one already
-				Effect.flatMap((dms) => (!dms[0]?.isUser ? addUserDM(user, dms) : Effect.succeed(dms))),
-				Effect.tapError((error) =>
-					AppLog.debug("DMService.get.all", { userId: user.id, includeLogs, error: serializeError(error) })
-				)
-			);
-		});
-
-		const fuzzySearch = Effect.fn("DMService.get.fuzzySearch")(function* (
-			userId: UserId,
-			isUser: boolean,
-			dm: Pick<DungeonMaster, "name" | "DCI">
-		) {
-			return yield* runQuery(
-				db.query.dungeonMasters.findFirst({
-					where: {
-						userId: { eq: userId },
-						...(isUser
-							? { isUser }
-							: {
-									name: dm.name.trim() || EmptyFilter,
-									DCI: dm.DCI || EmptyFilter
-								})
-					}
-				})
-			).pipe(
-				Effect.tapError((error) =>
-					AppLog.debug("DMService.get.fuzzySearch", {
-						userId,
-						...(isUser ? { isUser } : { name: dm.name.trim() || undefined, DCI: dm.DCI || undefined }),
-						error: serializeError(error)
 					})
-				)
-			);
-		});
+				).pipe(
+					// Sort the DMs by isUser and name
+					Effect.map((dms) => dms.toSorted((a, b) => sorter(a.isUser, b.isUser) || sorter(a.name, b.name))),
+					// Add the user DM if there isn't one already
+					Effect.flatMap((dms) => (!dms[0]?.isUser ? addUserDM(user, dms) : Effect.succeed(dms)))
+				);
+			},
+			(effect, user, includeLogs?) => logErrors(effect, "DMService.get.all", { user, includeLogs })
+		);
 
-		const save = Effect.fn("DMService.save")(function* (user: LocalsUser, data: DungeonMasterFormSchema) {
-			const dm = yield* getOne(data.id, user.id).pipe(Effect.catch((err) => Effect.fail(new SaveDMError(err.message))));
-
-			if (!data.name.trim()) {
-				if (dm.isUser) data.name = user.name;
-				else return yield* new SaveDMError("Name is required", { status: 400, field: "name" });
-			}
-
-			return yield* runQuery(
-				db
-					.update(dungeonMasters)
-					.set({
-						name: data.name,
-						DCI: data.DCI
+		const fuzzySearch = Effect.fn("DMService.get.fuzzySearch")(
+			function* (userId: UserId, isUser: boolean, dm: Pick<DungeonMaster, "name" | "DCI">) {
+				return yield* runQuery(
+					db.query.dungeonMasters.findFirst({
+						where: {
+							userId: { eq: userId },
+							...(isUser
+								? { isUser }
+								: {
+										name: dm.name.trim() || EmptyFilter,
+										DCI: dm.DCI || EmptyFilter
+									})
+						}
 					})
-					.where(and(eq(dungeonMasters.id, data.id), eq(dungeonMasters.userId, user.id)))
-					.returning()
-			).pipe(
-				Effect.flatMap((dms) => (isTupleOf(dms, 1) ? Effect.succeed(dms[0]) : Effect.fail(new SaveDMError("Failed to save DM")))),
-				Effect.tap((result) => AppLog.info("DMService.save", { userId: user.id, result })),
-				Effect.tapError((error) => AppLog.debug("DMService.save", { userId: user.id, data, error: serializeError(error) }))
-			);
-		});
-
-		const addUserDM = Effect.fn("DMService.addUserDM")(function* (user: LocalsUser, dms: UserDM[]) {
-			const existing = yield* runQuery(
-				db.query.dungeonMasters.findFirst({
-					where: {
-						userId: { eq: user.id },
-						isUser: true
-					}
+				);
+			},
+			(effect, userId, isUser, dm) =>
+				logErrors(effect, "DMService.get.fuzzySearch", {
+					userId,
+					...(isUser ? { isUser } : { name: dm.name.trim() || undefined, DCI: dm.DCI || undefined })
 				})
-			);
+		);
 
-			const result = yield* runQuery(
-				existing
-					? db.update(dungeonMasters).set({ name: user.name }).where(eq(dungeonMasters.id, existing.id)).returning()
-					: db.insert(dungeonMasters).values({ name: user.name, DCI: "", userId: user.id, isUser: true }).returning()
-			).pipe(
-				Effect.flatMap((dms) =>
-					isTupleOf(dms, 1)
-						? Effect.succeed({ ...dms[0], logs: [] as UserDM["logs"] })
-						: Effect.fail(new SaveDMError("Failed to create DM"))
-				),
-				Effect.tap((result) => AppLog.info("DMService.addUserDM", { result }))
-			);
+		const save = Effect.fn("DMService.save")(
+			function* (user: LocalsUser, data: DungeonMasterFormSchema) {
+				const dm = yield* getOne(data.id, user.id).pipe(Effect.catch((err) => Effect.fail(new SaveDMError(err.message))));
 
-			return dms.toSpliced(0, 0, result);
-		});
+				if (!data.name.trim()) {
+					if (dm.isUser) data.name = user.name;
+					else return yield* new SaveDMError("Name is required", { status: 400, field: "name" });
+				}
 
-		const deleteDM = Effect.fn("DMService.delete")(function* (dm: Pick<DungeonMaster, "id">, userId: UserId) {
-			const dmLogs = yield* runQuery(db.select({ id: logs.id }).from(logs).where(eq(logs.dungeonMasterId, dm.id)).limit(1));
-			if (dmLogs.length) return yield* new DeleteDMError("You cannot delete a DM that has logs", { status: 400 });
+				return yield* runQuery(
+					db
+						.update(dungeonMasters)
+						.set({
+							name: data.name,
+							DCI: data.DCI
+						})
+						.where(and(eq(dungeonMasters.id, data.id), eq(dungeonMasters.userId, user.id)))
+						.returning()
+				).pipe(
+					Effect.flatMap((dms) =>
+						isTupleOf(dms, 1) ? Effect.succeed(dms[0]) : Effect.fail(new SaveDMError("Failed to save DM"))
+					)
+				);
+			},
+			(effect, user, data) => logResults(effect, "DMService.save", { userId: user.id, data })
+		);
 
-			return yield* runQuery(
-				db
-					.delete(dungeonMasters)
-					.where(and(eq(dungeonMasters.id, dm.id), eq(dungeonMasters.userId, userId)))
-					.returning({ id: dungeonMasters.id })
-			).pipe(
-				Effect.flatMap((result) =>
-					isTupleOf(result, 1) ? Effect.succeed(result[0]) : Effect.fail(new DeleteDMError("Unable to delete DM"))
-				),
-				Effect.tap((result) => AppLog.info("DMService.delete", { dmId: dm.id, userId, result })),
-				Effect.tapError((error) => AppLog.debug("DMService.delete", { dmId: dm.id, userId, error: serializeError(error) }))
-			);
-		});
+		const addUserDM = Effect.fn("DMService.addUserDM")(
+			function* (user: LocalsUser, dms: UserDM[]) {
+				const existing = yield* runQuery(
+					db.query.dungeonMasters.findFirst({
+						where: {
+							userId: { eq: user.id },
+							isUser: true
+						}
+					})
+				);
+
+				const result = yield* runQuery(
+					existing
+						? db.update(dungeonMasters).set({ name: user.name }).where(eq(dungeonMasters.id, existing.id)).returning()
+						: db.insert(dungeonMasters).values({ name: user.name, DCI: "", userId: user.id, isUser: true }).returning()
+				).pipe(
+					Effect.flatMap((dms) =>
+						isTupleOf(dms, 1)
+							? Effect.succeed({ ...dms[0], logs: [] as UserDM["logs"] })
+							: Effect.fail(new SaveDMError("Failed to create DM"))
+					)
+				);
+
+				return dms.toSpliced(0, 0, result);
+			},
+			(effect, user, dms) => logResults(effect, "DMService.addUserDM", { user, dms })
+		);
+
+		const deleteDM = Effect.fn("DMService.delete")(
+			function* (dm: Pick<DungeonMaster, "id">, userId: UserId) {
+				const dmLogs = yield* runQuery(db.select({ id: logs.id }).from(logs).where(eq(logs.dungeonMasterId, dm.id)).limit(1));
+				if (dmLogs.length) return yield* new DeleteDMError("You cannot delete a DM that has logs", { status: 400 });
+
+				return yield* runQuery(
+					db
+						.delete(dungeonMasters)
+						.where(and(eq(dungeonMasters.id, dm.id), eq(dungeonMasters.userId, userId)))
+						.returning({ id: dungeonMasters.id })
+				).pipe(
+					Effect.flatMap((result) =>
+						isTupleOf(result, 1) ? Effect.succeed(result[0]) : Effect.fail(new DeleteDMError("Unable to delete DM"))
+					)
+				);
+			},
+			(effect, dm, userId) => logResults(effect, "DMService.delete", { dmId: dm.id, userId })
+		);
 
 		return {
 			/**

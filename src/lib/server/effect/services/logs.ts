@@ -22,7 +22,7 @@ import {
 	type Transaction
 } from "#lib/server/db/index.js";
 import { characters, dungeonMasters, logs, magicItems, storyAwards } from "#lib/server/db/schema.js";
-import { serializeError, type ErrorParams } from "#lib/server/effect/errors.js";
+import { logErrors, logResults, serializeError, type ErrorParams } from "#lib/server/effect/errors.js";
 import { AppLog } from "#lib/server/effect/logging.js";
 import { syncLogImages } from "#lib/server/images/note-db.js";
 import { lockPortraitUser } from "#lib/server/images/portrait-db.js";
@@ -445,18 +445,17 @@ function itemsCRUD(tx: Transaction, params: CRUDMagicItemParams | CRUDStoryAward
 	return effects;
 }
 
-const deleteLog = Effect.fn("LogService.delete")(function* (logId: LogId, userId: UserId, db: Database | Transaction) {
-	return yield* runQuery(
-		db
-			.delete(logs)
-			.where(and(eq(logs.id, logId), ownedLogSql(db, userId)))
-			.returning({ id: logs.id, characterId: logs.characterId, dungeonMasterId: logs.dungeonMasterId })
-	).pipe(
-		Effect.flatMap((logs) => (isTupleOf(logs, 1) ? Effect.succeed(logs[0]) : Effect.fail(new DeleteLogError()))),
-		Effect.tap((result) => AppLog.info("LogService.delete", { logId, userId, result })),
-		Effect.tapError((error) => AppLog.debug("LogService.delete", { logId, userId, error: serializeError(error) }))
-	);
-});
+const deleteLog = Effect.fn("LogService.delete")(
+	function* (logId: LogId, userId: UserId, db: Database | Transaction) {
+		return yield* runQuery(
+			db
+				.delete(logs)
+				.where(and(eq(logs.id, logId), ownedLogSql(db, userId)))
+				.returning({ id: logs.id, characterId: logs.characterId, dungeonMasterId: logs.dungeonMasterId })
+		).pipe(Effect.flatMap((logs) => (isTupleOf(logs, 1) ? Effect.succeed(logs[0]) : Effect.fail(new DeleteLogError()))));
+	},
+	(effect, logId, userId) => logResults(effect, "LogService.delete", { logId, userId })
+);
 
 export class LogService extends Context.Service<LogService>()("LogService", {
 	make: Effect.fn("LogService")(function* () {
@@ -468,63 +467,76 @@ export class LogService extends Context.Service<LogService>()("LogService", {
 			 */
 
 			get: {
-				one: Effect.fn("LogService.get.one")(function* (logId: LogId, userId: UserId) {
-					return yield* getCharacterLog(logId, userId, db);
-				}),
-				dm: Effect.fn("LogService.get.dm")(function* (userId) {
-					return yield* getDMLogs(userId, db);
-				}),
-				all: Effect.fn("LogService.get.all")(function* (userId) {
-					return yield* getAllLogs(userId, db);
-				})
+				one: Effect.fn("LogService.get.one")(
+					function* (logId: LogId, userId: UserId) {
+						return yield* getCharacterLog(logId, userId, db);
+					},
+					(effect, logId, userId) => logErrors(effect, "LogService.get.one", { logId, userId })
+				),
+				dm: Effect.fn("LogService.get.dm")(
+					function* (userId) {
+						return yield* getDMLogs(userId, db);
+					},
+					(effect, userId) => logErrors(effect, "LogService.get.dm", { userId })
+				),
+				all: Effect.fn("LogService.get.all")(
+					function* (userId) {
+						return yield* getAllLogs(userId, db);
+					},
+					(effect, userId) => logErrors(effect, "LogService.get.all", { userId })
+				)
 			},
 
 			/**
 			 * Mutations
 			 */
 
-			save: Effect.fn("LogService.save")(function* (log: LogSchema, user: LocalsUser) {
-				const Storage = yield* StorageService;
-				const copied: string[] = [];
-				let temporaryKeys: string[] = [];
+			save: Effect.fn("LogService.save")(
+				function* (log: LogSchema, user: LocalsUser) {
+					const Storage = yield* StorageService;
+					const copied: string[] = [];
+					let temporaryKeys: string[] = [];
 
-				const saved = yield* transaction(
-					Effect.fn(function* (tx) {
-						// Serializes note image reference changes for this account with other saves, deletes, and the purge step.
-						yield* lockPortraitUser(tx, user.id);
-						const notes = yield* promoteNoteImages(tx, user.id, log.id, log.description, copied);
-						temporaryKeys = notes.temporaryKeys;
+					const saved = yield* transaction(
+						Effect.fn(function* (tx) {
+							// Serializes note image reference changes for this account with other saves, deletes, and the purge step.
+							yield* lockPortraitUser(tx, user.id);
+							const notes = yield* promoteNoteImages(tx, user.id, log.id, log.description, copied);
+							temporaryKeys = notes.temporaryKeys;
 
-						const result = yield* upsertLog(tx, { ...log, description: notes.description }, user).pipe(Effect.provide(DMTx(tx)));
-						yield* syncLogImages(tx, user.id, result.id, notes.permanentKeys);
-						return result;
-					})
-				).pipe(
-					Effect.tap((result) => AppLog.info("LogService.save", { logId: log.id, userId: user.id, result })),
-					Effect.tapError(() =>
-						Effect.forEach(copied, (key) => Storage.abandonStagedObject(user.id, key), { discard: true }).pipe(
-							Effect.catch((error) =>
-								AppLog.error("LogService.save staged cleanup", { message: error.message, error: serializeError(error) })
+							const result = yield* upsertLog(tx, { ...log, description: notes.description }, user).pipe(
+								Effect.provide(DMTx(tx))
+							);
+							yield* syncLogImages(tx, user.id, result.id, notes.permanentKeys);
+							return result;
+						})
+					).pipe(
+						Effect.tapError(() =>
+							Effect.forEach(copied, (key) => Storage.abandonStagedObject(user.id, key), { discard: true }).pipe(
+								Effect.catch((error) =>
+									AppLog.error("LogService.save staged cleanup", { message: error.message, error: serializeError(error) })
+								)
 							)
 						)
-					),
-					Effect.tapError((error) =>
-						AppLog.debug("LogService.save", { logId: log.id, userId: user.id, log, error: serializeError(error) })
-					)
-				);
+					);
 
-				yield* Storage.cleanupAfterSave(temporaryKeys);
-				return saved;
-			}),
+					yield* Storage.cleanupAfterSave(temporaryKeys);
+					return saved;
+				},
+				(effect, log, user) => logResults(effect, "LogService.save", { logId: log.id, userId: user.id, log })
+			),
 			/** Cascades the log's `log_image` rows. Call `StorageService.purgePending` afterwards to delete orphaned note images. */
-			delete: Effect.fn("LogService.delete")(function* (logId: LogId, userId: UserId) {
-				return yield* transaction(
-					Effect.fn(function* (tx) {
-						yield* lockPortraitUser(tx, userId);
-						return yield* deleteLog(logId, userId, tx);
-					})
-				);
-			})
+			delete: Effect.fn("LogService.delete")(
+				function* (logId: LogId, userId: UserId) {
+					return yield* transaction(
+						Effect.fn(function* (tx) {
+							yield* lockPortraitUser(tx, userId);
+							return yield* deleteLog(logId, userId, tx);
+						})
+					);
+				},
+				(effect, logId, userId) => logResults(effect, "LogService.delete", { logId, userId })
+			)
 		};
 	})()
 }) {
