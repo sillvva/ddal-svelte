@@ -1,9 +1,9 @@
 import type { FullCharacterData } from "#lib/server/effect/services/characters.js";
-import { omit } from "@sillvva/utils";
+import { omit, sorter } from "@sillvva/utils";
 import * as v from "valibot";
 import { BLANK_CHARACTER, PASSKEY_PLACEHOLDER_EMAIL_DOMAIN, PROVIDERS, themeGroups, themes } from "./constants";
-import { itemTimelineIssues, type ItemTimelineIssue, type TimelineLog } from "./entities.js";
 import { AVATAR_IMAGE_LIMITS, CHARACTER_IMAGE_LIMITS, NOTE_IMAGE_LIMITS, STORED_IMAGE_CONTENT_TYPES } from "./images/limits";
+import type { FullLogData } from "./server/effect/services/logs";
 
 export type BrandedType = v.InferOutput<ReturnType<typeof brandedId>>;
 function brandedId<T extends string>(name: T) {
@@ -293,6 +293,114 @@ export type LogDraftData = v.InferOutput<typeof logDraftDataSchema>;
 export type CharacterLogDraftData = Extract<LogDraftData, { kind: "character" }>;
 export const logDraftDataSchema = v.variant("kind", [v.object(characterDraftEntries), v.object(dmDraftEntries)]);
 
+export const dropBeforeAcquisition = "Can't drop an item before it was acquired";
+export const alreadyDropped = "This item was already dropped in an earlier log";
+export const gainAfterDrop = "This item was dropped in an earlier log";
+
+export type ItemTimelineIssue = {
+	id: ItemId;
+	field: "magicItemsLost" | "storyAwardsLost" | "date";
+	type: "gained" | "dropped";
+	message: string;
+};
+
+export type TimelineLog = Pick<FullLogData, "id" | "showDate" | "isDmLog" | "appliedDate" | "date"> & {
+	magicItemsGained: readonly { id: ItemId }[];
+	magicItemsLost: readonly { id: ItemId }[];
+	storyAwardsGained: readonly { id: ItemId }[];
+	storyAwardsLost: readonly { id: ItemId }[];
+};
+
+export function logTimestamp(log: TimelineLog) {
+	const value = log.showDate ?? (log.isDmLog && log.appliedDate ? log.appliedDate : log.date);
+	return new Date(value).getTime();
+}
+
+/** Reject a drop dated before the item was acquired, including after the log's date moves. */
+export function itemTimelineIssues(logs: readonly TimelineLog[], input: Omit<LogSchema, "dm">): ItemTimelineIssue[] {
+	const inputTime = input.isDmLog ? (input.appliedDate ?? input.date).getTime() : input.date.getTime();
+	const events: {
+		id: LogId;
+		time: number;
+		magicGained: ItemId[];
+		magicLost: ItemId[];
+		storyGained: ItemId[];
+		storyLost: ItemId[];
+	}[] = logs
+		.filter((log) => log.id !== input.id)
+		.map((log) => ({
+			id: log.id,
+			time: logTimestamp(log),
+			magicGained: log.magicItemsGained.map((item) => item.id),
+			magicLost: log.magicItemsLost.map((item) => item.id),
+			storyGained: log.storyAwardsGained.map((item) => item.id),
+			storyLost: log.storyAwardsLost.map((item) => item.id)
+		}));
+
+	events.push({
+		id: input.id,
+		time: inputTime,
+		magicGained: input.magicItemsGained.map((item) => item.id),
+		magicLost: [...input.magicItemsLost],
+		storyGained: input.storyAwardsGained.map((item) => item.id),
+		storyLost: [...input.storyAwardsLost]
+	});
+	events.sort((a, b) => sorter(a.time, b.time) || sorter(a.id, b.id));
+
+	const gained = new Map<ItemId, "magic" | "story">();
+	const held = new Set<ItemId>();
+	const issues: ItemTimelineIssue[] = [];
+	const seen = new Set<string>();
+	const add = (issue: ItemTimelineIssue) => {
+		const key = `${issue.id}:${issue.field}:${issue.message}`;
+		if (seen.has(key)) return;
+		seen.add(key);
+		issues.push(issue);
+	};
+
+	const noteDrop = (
+		id: ItemId,
+		kind: "magic" | "story",
+		isInput: boolean,
+		inputGained: readonly { id: ItemId }[],
+		field: "magicItemsLost" | "storyAwardsLost"
+	) => {
+		// Item is treated as a new item, because it hasn't been gained in a
+		// previous log (undefined) or it was gained as a different kind
+		if (gained.get(id) !== kind) {
+			// We're dropping an item that was never gained
+			if (isInput) add({ id, field, message: dropBeforeAcquisition, type: "dropped" });
+			// The item was gained after it was dropped, or gained in the same log
+			else if (inputGained.some((item) => item.id === id)) add({ id, field: "date", message: gainAfterDrop, type: "gained" });
+			return;
+		}
+		// Item is not new, but no longer held
+		if (!held.has(id)) {
+			// We're dropping an item that was already dropped
+			if (isInput) add({ id, field, message: alreadyDropped, type: "dropped" });
+			return;
+		}
+		// Item is still held, so we can now delete it from the held set
+		held.delete(id);
+	};
+
+	for (const event of events) {
+		const isInput = event.id === input.id;
+		for (const id of event.magicLost) noteDrop(id, "magic", isInput, input.magicItemsGained, "magicItemsLost");
+		for (const id of event.storyLost) noteDrop(id, "story", isInput, input.storyAwardsGained, "storyAwardsLost");
+		for (const id of event.magicGained) {
+			gained.set(id, "magic");
+			held.add(id);
+		}
+		for (const id of event.storyGained) {
+			gained.set(id, "story");
+			held.add(id);
+		}
+	}
+
+	return issues;
+}
+
 function objectIssuePath<T extends object>(input: T, key: keyof T & string): v.ObjectPathItem {
 	return {
 		type: "object",
@@ -339,12 +447,7 @@ function timelineIssuePath(
 	return [objectIssuePath(input, issue.field), arrayIssuePath(list, index)];
 }
 
-/** The character totals and logs a submitted log is checked against. */
-export type LogTarget = Pick<FullCharacterData, "id" | "totalLevel" | "totalGold" | "totalTcp"> & {
-	logs: readonly (TimelineLog & { acp: number; level: number; gold: number; tcp: number })[];
-};
-
-export const characterLogSchema = (character: LogTarget) =>
+export const characterLogSchema = (character: FullCharacterData) =>
 	v.pipe(
 		logSchema,
 		v.check((input) => !input.isDmLog, "Only character logs can be saved here."),
@@ -387,7 +490,7 @@ export const characterLogSchema = (character: LogTarget) =>
 	);
 
 /** `characters` must hold only characters the saving user owns. */
-export const dMLogSchema = (characters: readonly LogTarget[] = []) =>
+export const dMLogSchema = (characters: readonly FullCharacterData[] = []) =>
 	v.pipe(
 		dmLogSchema,
 		v.check((input) => input.isDmLog, "Only DM logs can be saved here."),
