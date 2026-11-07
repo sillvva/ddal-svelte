@@ -204,7 +204,9 @@ export const characters = pg.pgTable(
 	(table) => [pg.index("Character_userId_idx").on(table.userId)]
 );
 
-export type ImageUploadPurpose = "character" | "avatar" | "note";
+export const imageUploadPurpose = pg.pgEnum("imageUploadPurpose", ["character", "avatar", "note"]);
+
+export type ImageUploadPurpose = (typeof imageUploadPurpose.enumValues)[number];
 export type ImageUpload = typeof imageUploads.$inferSelect;
 export type InsertImageUpload = typeof imageUploads.$inferInsert;
 export const imageUploads = pg.pgTable(
@@ -218,7 +220,7 @@ export const imageUploads = pg.pgTable(
 			.references(() => user.id, { onUpdate: "cascade", onDelete: "cascade" }),
 		/** Set for portrait uploads. Null for avatar and note uploads. */
 		characterId: pg.uuid("character_id").$type<CharacterId>(),
-		purpose: pg.text("purpose").$type<ImageUploadPurpose>().notNull().default("character"),
+		purpose: imageUploadPurpose().notNull().default("character"),
 		objectKey: pg.text("object_key").notNull().unique(),
 		bytes: pg.integer().notNull(),
 		contentType: pg.text("content_type").notNull(),

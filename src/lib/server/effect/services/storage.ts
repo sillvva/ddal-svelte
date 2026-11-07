@@ -33,7 +33,7 @@ import {
 } from "#lib/images/object-key.js";
 import type { CharacterId, ImageUploadId, LogId, UserId } from "#lib/schemas.js";
 import { DBService, runQuery, type Transaction } from "#lib/server/db/index.js";
-import { characters, imageUploads, user } from "#lib/server/db/schema.js";
+import { imageUploads, user } from "#lib/server/db/schema.js";
 import { logErrors, logResults } from "#lib/server/effect/errors.js";
 import { AppLog } from "#lib/server/effect/logging.js";
 import { ImageUploadError } from "#lib/server/images/errors.js";
@@ -64,7 +64,7 @@ import {
 	S3Client
 } from "@aws-sdk/client-s3";
 import { getSignedUrl } from "@aws-sdk/s3-request-presigner";
-import { and, eq, gt, inArray, isNull, ne, sql } from "drizzle-orm";
+import { and, eq, gt, ne, sql } from "drizzle-orm";
 import { Context, Effect, Layer, Result } from "effect";
 import { v7 } from "uuid";
 
@@ -259,16 +259,20 @@ export function copyVerifiedStage(tx: Transaction, userId: UserId, characterId: 
 			return yield* ImageUploadError.reupload("The image's storage location does not match its upload.");
 		}
 
-		const rows = yield* runQuery(
-			tx
-				.select()
-				.from(imageUploads)
-				.where(
-					and(eq(imageUploads.objectKey, staged.from), eq(imageUploads.userId, userId), eq(imageUploads.characterId, characterId))
-				)
-				.limit(1)
+		const upload = yield* runQuery(
+			tx.query.imageUploads.findFirst({
+				columns: {
+					id: true,
+					bytes: true,
+					contentType: true
+				},
+				where: {
+					objectKey: { eq: staged.from },
+					userId: { eq: userId },
+					characterId: { eq: characterId }
+				}
+			})
 		);
-		const upload = rows[0];
 		if (!upload) return yield* ImageUploadError.reupload("The upload record for this image was not found.");
 		if (!isStoredImageContentType(upload.contentType)) return yield* ImageUploadError.reupload("Invalid image type.");
 
@@ -294,14 +298,21 @@ export const copyVerifiedAvatar = Effect.fn("StorageService.copyVerifiedAvatar")
 			return yield* ImageUploadError.reupload("The image's storage location does not match its upload.");
 		}
 
-		const rows = yield* runQuery(
-			tx
-				.select()
-				.from(imageUploads)
-				.where(and(eq(imageUploads.objectKey, staged.from), eq(imageUploads.userId, userId), eq(imageUploads.purpose, "avatar")))
-				.limit(1)
+		const upload = yield* runQuery(
+			tx.query.imageUploads.findFirst({
+				columns: {
+					id: true,
+					bytes: true,
+					contentType: true,
+					characterId: true
+				},
+				where: {
+					objectKey: { eq: staged.from },
+					userId: { eq: userId },
+					purpose: { eq: "avatar" }
+				}
+			})
 		);
-		const upload = rows[0];
 		if (!upload) return yield* ImageUploadError.reupload("The upload record for this image was not found.");
 		if (upload.characterId !== null) return yield* ImageUploadError.reupload("The image was not uploaded as a profile picture.");
 		if (!isStoredImageContentType(upload.contentType)) return yield* ImageUploadError.reupload("Invalid image type.");
@@ -326,14 +337,22 @@ export const promoteStagedAvatar = Effect.fn("StorageService.promoteStagedAvatar
 	function* (tx: Transaction, userId: UserId, uploadId: ImageUploadId, copied: { permanentKey: string | null }) {
 		yield* assertCustomAvatarAllowed(tx, userId);
 
-		const found = yield* runQuery(
-			tx
-				.select()
-				.from(imageUploads)
-				.where(and(eq(imageUploads.id, uploadId), eq(imageUploads.userId, userId), eq(imageUploads.purpose, "avatar")))
-				.limit(1)
+		const upload = yield* runQuery(
+			tx.query.imageUploads.findFirst({
+				columns: {
+					id: true,
+					bytes: true,
+					contentType: true,
+					characterId: true,
+					objectKey: true
+				},
+				where: {
+					id: { eq: uploadId },
+					userId: { eq: userId },
+					purpose: { eq: "avatar" }
+				}
+			})
 		);
-		const upload = found[0];
 		if (!upload) return yield* ImageUploadError.reupload("The upload record for this image was not found.");
 		if (upload.characterId !== null) return yield* ImageUploadError.reupload("The image was not uploaded as a profile picture.");
 		if (!isTemporaryAvatarImageKey(upload.objectKey)) {
@@ -347,7 +366,16 @@ export const promoteStagedAvatar = Effect.fn("StorageService.promoteStagedAvatar
 		const permanent = permanentImageKeyForTemporary(upload.objectKey);
 		if (!permanent) return yield* ImageUploadError.reupload("The image's storage location is invalid.");
 
-		const [current] = yield* runQuery(tx.select({ image: user.image }).from(user).where(eq(user.id, userId)).limit(1));
+		const current = yield* runQuery(
+			tx.query.user.findFirst({
+				columns: {
+					image: true
+				},
+				where: {
+					id: { eq: userId }
+				}
+			})
+		);
 		if (!current) return yield* new ImageUploadError("Upload was not found", 404);
 
 		const previousKey = current.image ? ownedAvatarKey(userId, current.image, R2_PUBLIC_URL) : null;
@@ -395,19 +423,23 @@ export const promoteNoteImages = Effect.fn("StorageService.promoteNoteImages")(
 			const to = permanentImageKeyForTemporary(from);
 			if (!to) return yield* new ImageUploadError(NOTE_IMAGE_GONE);
 
-			const [upload] = yield* runQuery(
-				tx
-					.select()
-					.from(imageUploads)
-					.where(
-						and(
-							eq(imageUploads.userId, userId),
-							eq(imageUploads.purpose, "note"),
-							isNull(imageUploads.characterId),
-							inArray(imageUploads.objectKey, [from, to])
-						)
-					)
-					.limit(1)
+			const upload = yield* runQuery(
+				tx.query.imageUploads.findFirst({
+					columns: {
+						id: true,
+						bytes: true,
+						contentType: true,
+						objectKey: true
+					},
+					where: {
+						userId: { eq: userId },
+						purpose: { eq: "note" },
+						characterId: {
+							isNull: true
+						},
+						objectKey: { in: [from, to] }
+					}
+				})
 			);
 			if (!upload || upload.id !== uploadIdFromImageKey(from) || !isStoredImageContentType(upload.contentType)) {
 				return yield* new ImageUploadError(NOTE_IMAGE_GONE);
@@ -617,10 +649,16 @@ export class StorageService extends Context.Service<StorageService>()("StorageSe
 							yield* lockPortraitUser(tx, input.userId);
 
 							if (input.purpose === "character") {
-								const existing = yield* runQuery(
-									tx.select({ userId: characters.userId }).from(characters).where(eq(characters.id, input.characterId)).limit(1)
+								const character = yield* runQuery(
+									tx.query.characters.findFirst({
+										columns: {
+											userId: true
+										},
+										where: {
+											id: { eq: input.characterId }
+										}
+									})
 								);
-								const character = existing[0];
 								if (character && character.userId !== input.userId) {
 									return yield* new ImageUploadError("Character not found", 404);
 								}
@@ -686,14 +724,14 @@ export class StorageService extends Context.Service<StorageService>()("StorageSe
 
 			complete: Effect.fn("StorageService.complete")(
 				function* (userId: UserId, uploadId: ImageUploadId, purpose?: PrepareImageInput["purpose"]) {
-					const found = yield* runQuery(
-						db
-							.select()
-							.from(imageUploads)
-							.where(and(eq(imageUploads.id, uploadId), eq(imageUploads.userId, userId)))
-							.limit(1)
+					const upload = yield* runQuery(
+						db.query.imageUploads.findFirst({
+							where: {
+								id: { eq: uploadId },
+								userId: { eq: userId }
+							}
+						})
 					);
-					const upload = found[0];
 					if (!upload || (purpose !== undefined && upload.purpose !== purpose)) {
 						return yield* new ImageUploadError("Upload was not found", 404);
 					}
@@ -747,20 +785,19 @@ export class StorageService extends Context.Service<StorageService>()("StorageSe
 							const permanent = permanentKeyForTemporary(key);
 							if (!permanent) return yield* ImageUploadError.reupload("The image's storage location is invalid.");
 
-							const rows = yield* runQuery(
-								db
-									.select()
-									.from(imageUploads)
-									.where(
-										and(
-											eq(imageUploads.objectKey, key),
-											eq(imageUploads.userId, input.userId),
-											eq(imageUploads.characterId, input.characterId)
-										)
-									)
-									.limit(1)
+							const upload = yield* runQuery(
+								db.query.imageUploads.findFirst({
+									columns: {
+										bytes: true,
+										contentType: true
+									},
+									where: {
+										objectKey: { eq: key },
+										userId: { eq: input.userId },
+										characterId: { eq: input.characterId }
+									}
+								})
 							);
-							const upload = rows[0];
 							if (!upload) return yield* ImageUploadError.reupload("The upload record for this image was not found.");
 							if (!isStoredImageContentType(upload.contentType)) return yield* ImageUploadError.reupload("Invalid image type.");
 
@@ -772,14 +809,18 @@ export class StorageService extends Context.Service<StorageService>()("StorageSe
 							} satisfies ResolvedCharacterImage;
 						}
 
-						const currentRows = yield* runQuery(
-							db
-								.select({ imageUrl: characters.imageUrl, imageBytes: characters.imageBytes })
-								.from(characters)
-								.where(and(eq(characters.id, input.characterId), eq(characters.userId, input.userId)))
-								.limit(1)
+						const current = yield* runQuery(
+							db.query.characters.findFirst({
+								columns: {
+									imageUrl: true,
+									imageBytes: true
+								},
+								where: {
+									id: { eq: input.characterId },
+									userId: { eq: input.userId }
+								}
+							})
 						);
-						const current = currentRows[0];
 						const currentKey = current
 							? ownedPermanentKey(input.userId, input.characterId, current.imageUrl, R2_PUBLIC_URL)
 							: null;
