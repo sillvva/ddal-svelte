@@ -175,7 +175,6 @@ export class CharacterService extends Context.Service<CharacterService>()("Chara
 						Effect.flatMap((saved) =>
 							isTupleOf(saved, 1) ? Effect.succeed(saved[0]) : Effect.fail(new SaveCharacterError("Failed to save character"))
 						),
-						Effect.tap((result) => AppLog.info("CharacterService.save", { userId, result })),
 						Effect.tapError(() => {
 							const orphanKey = copiedKey;
 							if (!orphanKey) return Effect.void;

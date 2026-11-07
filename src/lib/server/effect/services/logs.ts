@@ -511,7 +511,6 @@ export class LogService extends Context.Service<LogService>()("LogService", {
 							return result;
 						})
 					).pipe(
-						Effect.tap((result) => AppLog.info("LogService.save", { logId: log.id, userId: user.id, result })),
 						Effect.tapError(() =>
 							Effect.forEach(copied, (key) => Storage.abandonStagedObject(user.id, key), { discard: true }).pipe(
 								Effect.catch((error) =>
