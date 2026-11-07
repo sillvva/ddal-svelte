@@ -1,4 +1,4 @@
-import { alreadyDropped, dropBeforeAcquisition, gainAfterDrop } from "../src/lib/item-timeline-messages.ts";
+import { alreadyDropped, dropBeforeAcquisition, gainAfterDrop } from "../src/lib/schemas.ts";
 import { logRow, magicItemRow, magicItemsGainedIn } from "./db.ts";
 import { expect, test } from "./fixtures.ts";
 import { createCharacter, createGameLog, fillGameLog, saveLog, setLogYear } from "./records.ts";

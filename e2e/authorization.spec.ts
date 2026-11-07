@@ -1,5 +1,5 @@
 import type { Page } from "@playwright/test";
-import { dropBeforeAcquisition } from "../src/lib/item-timeline-messages.ts";
+import { dropBeforeAcquisition } from "../src/lib/schemas.ts";
 import { characterRow, dmRow, logIdsForCharacter, logRow, magicItemRow, magicItemsGainedIn, userDmId } from "./db.ts";
 import { expect, test, type TestUser } from "./fixtures.ts";
 import {
