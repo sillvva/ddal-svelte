@@ -1,18 +1,23 @@
 import { formatStorageBytes, IMAGE_STORAGE_LIMITS } from "#lib/images/limits.js";
 import type { CharacterId, LogId, UserId } from "#lib/schemas.js";
 import { runQuery, type Database, type Transaction } from "#lib/server/db/index.js";
-import { characters, user } from "#lib/server/db/schema.js";
 import { ImageUploadError } from "#lib/server/images/errors.js";
-import { and, eq } from "drizzle-orm";
 import { Effect } from "effect";
 import { sumNoteBytes, sumNoteBytesAfterSave } from "./note-db";
 import { sumPortraitBytes } from "./portrait-db";
 
 /** Shared portrait and note image byte cap for this account. Admins return `null` and are not limited. */
 export function imageQuotaBytes(executor: Database | Transaction, userId: UserId) {
-	return runQuery(executor.select({ role: user.role }).from(user).where(eq(user.id, userId)).limit(1)).pipe(
-		Effect.map((rows) => (rows[0]?.role === "admin" ? null : IMAGE_STORAGE_LIMITS.quotaBytes))
-	);
+	return runQuery(
+		executor.query.user.findFirst({
+			columns: {
+				role: true
+			},
+			where: {
+				id: { eq: userId }
+			}
+		})
+	).pipe(Effect.map((row) => (row?.role === "admin" ? null : IMAGE_STORAGE_LIMITS.quotaBytes)));
 }
 
 /** Saved portrait and note image bytes against the shared quota. Unsaved `tmp/` uploads are not counted. */
@@ -39,12 +44,16 @@ export function assertPortraitQuota(tx: Transaction, userId: UserId, characterId
 		const { portraitBytes, noteBytes, quotaBytes } = yield* imageStorageUsage(tx, userId);
 		if (quotaBytes === null) return;
 
-		const [current] = yield* runQuery(
-			tx
-				.select({ imageBytes: characters.imageBytes })
-				.from(characters)
-				.where(and(eq(characters.id, characterId), eq(characters.userId, userId)))
-				.limit(1)
+		const current = yield* runQuery(
+			tx.query.characters.findFirst({
+				columns: {
+					imageBytes: true
+				},
+				where: {
+					id: { eq: characterId },
+					userId: { eq: userId }
+				}
+			})
 		);
 		const credit = current?.imageBytes ?? 0;
 		if (nextBytes > credit && portraitBytes + noteBytes - credit + nextBytes > quotaBytes) {

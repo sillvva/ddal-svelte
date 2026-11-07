@@ -8,7 +8,8 @@ export const relations = defineRelations(schema, (r) => ({
 		characters: r.many.characters(),
 		dungeonMasters: r.many.dungeonMasters(),
 		logDrafts: r.many.logDrafts(),
-		passkeys: r.many.passkey()
+		passkeys: r.many.passkey(),
+		imageUploads: r.many.imageUploads()
 	},
 	account: {
 		user: r.one.user({
@@ -33,7 +34,32 @@ export const relations = defineRelations(schema, (r) => ({
 			from: r.characters.userId,
 			to: r.user.id
 		}),
-		logs: r.many.logs()
+		logs: r.many.logs(),
+		imageUploads: r.many.imageUploads()
+	},
+	imageUploads: {
+		user: r.one.user({
+			from: r.imageUploads.userId,
+			to: r.user.id,
+			optional: false
+		}),
+		character: r.one.characters({
+			from: r.imageUploads.characterId,
+			to: r.characters.id
+		}),
+		logImages: r.many.logImages()
+	},
+	logImages: {
+		log: r.one.logs({
+			from: r.logImages.logId,
+			to: r.logs.id,
+			optional: false
+		}),
+		upload: r.one.imageUploads({
+			from: r.logImages.uploadId,
+			to: r.imageUploads.id,
+			optional: false
+		})
 	},
 	dungeonMasters: {
 		user: r.one.user({
@@ -63,7 +89,8 @@ export const relations = defineRelations(schema, (r) => ({
 		}),
 		storyAwardsLost: r.many.storyAwards({
 			alias: "storyAwardsLost"
-		})
+		}),
+		images: r.many.logImages()
 	},
 	magicItems: {
 		logGained: r.one.logs({

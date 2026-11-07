@@ -11,7 +11,7 @@ import {
 } from "#lib/images/object-key.js";
 import type { CharacterId, UserId } from "#lib/schemas.js";
 import { runQuery, type Database, type Transaction } from "#lib/server/db/index.js";
-import { account, imageUploads, characters, logImages, pendingObjectDeletions, user } from "#lib/server/db/schema.js";
+import { characters, imageUploads, pendingObjectDeletions, user } from "#lib/server/db/schema.js";
 import { ImageUploadError } from "#lib/server/images/errors.js";
 import { R2_PUBLIC_URL } from "$app/env/public";
 import { and, eq, inArray, isNull, or, sql } from "drizzle-orm";
@@ -41,10 +41,14 @@ export function lockPortraitUser(tx: Transaction, userId: UserId) {
  */
 export function sumPortraitBytes(executor: Database | Transaction, userId: UserId) {
 	return runQuery(
-		executor
-			.select({ total: sql<number>`coalesce(sum(${characters.imageBytes}), 0)::int` })
-			.from(characters)
-			.where(eq(characters.userId, userId))
+		executor.query.characters.findMany({
+			extras: {
+				total: sql<number>`coalesce(sum(${characters.imageBytes}), 0)::int`
+			},
+			where: {
+				userId: { eq: userId }
+			}
+		})
 	).pipe(Effect.map((rows) => integer(rows[0]?.total)));
 }
 
@@ -52,21 +56,17 @@ export function sumPortraitBytes(executor: Database | Transaction, userId: UserI
 export function assertCustomAvatarAllowed(tx: Transaction, userId: UserId) {
 	return Effect.gen(function* () {
 		const linked = yield* runQuery(
-			tx
-				.select({ id: account.id })
-				.from(account)
-				.where(
-					and(
-						eq(account.userId, userId),
-						inArray(
-							account.providerId,
-							PROVIDERS.map((provider) => provider.id)
-						)
-					)
-				)
-				.limit(1)
+			tx.query.account.findFirst({
+				columns: {
+					id: true
+				},
+				where: {
+					userId: { eq: userId },
+					providerId: { in: PROVIDERS.map((provider) => provider.id) }
+				}
+			})
 		);
-		if (linked.length > 0) {
+		if (linked) {
 			return yield* new ImageUploadError("Profile pictures from a linked sign-in provider can't be replaced here.", 403);
 		}
 	});
@@ -95,14 +95,18 @@ export function permanentKeyInUse(tx: Transaction, key: string) {
 	return Effect.gen(function* () {
 		if (isPermanentNoteImageKey(key)) {
 			const references = yield* runQuery(
-				tx
-					.select({ logId: logImages.logId })
-					.from(logImages)
-					.innerJoin(imageUploads, eq(imageUploads.id, logImages.uploadId))
-					.where(eq(imageUploads.objectKey, key))
-					.limit(1)
+				tx.query.logImages.findFirst({
+					columns: {
+						logId: true
+					},
+					where: {
+						upload: {
+							objectKey: { eq: key }
+						}
+					}
+				})
 			);
-			return references.length > 0;
+			return references ? true : false;
 		}
 		const portraits = yield* runQuery(
 			tx.select({ id: characters.id }).from(characters).where(eq(characters.imageUrl, imageUrl)).limit(1)
@@ -120,18 +124,18 @@ export function permanentKeyInUse(tx: Transaction, key: string) {
  */
 export function ownedBytesForSave(tx: Transaction, userId: UserId, characterId: CharacterId, imageUrl: string) {
 	return Effect.gen(function* () {
-		const existing = yield* runQuery(
-			tx
-				.select({
-					imageUrl: characters.imageUrl,
-					imageBytes: characters.imageBytes,
-					userId: characters.userId
-				})
-				.from(characters)
-				.where(eq(characters.id, characterId))
-				.limit(1)
+		const current = yield* runQuery(
+			tx.query.characters.findFirst({
+				columns: {
+					imageUrl: true,
+					imageBytes: true,
+					userId: true
+				},
+				where: {
+					id: { eq: characterId }
+				}
+			})
 		);
-		const current = existing[0];
 		if (current && current.userId !== userId) return yield* new ImageUploadError("Character not found", 404);
 
 		const nextKey = ownedPermanentKey(userId, characterId, imageUrl, R2_PUBLIC_URL);
@@ -185,24 +189,33 @@ export function promoteUploadRow(tx: Transaction, userId: UserId, characterId: C
 
 export function collectCharacterKeys(tx: Transaction, userId: UserId, characterId: CharacterId) {
 	return Effect.gen(function* () {
-		const characterRows = yield* runQuery(
-			tx
-				.select({ imageUrl: characters.imageUrl })
-				.from(characters)
-				.where(and(eq(characters.id, characterId), eq(characters.userId, userId)))
-				.limit(1)
+		const character = yield* runQuery(
+			tx.query.characters.findFirst({
+				columns: {
+					imageUrl: true
+				},
+				where: {
+					id: { eq: characterId },
+					userId: { eq: userId }
+				}
+			})
 		);
 		const uploads = yield* runQuery(
-			tx
-				.select({ objectKey: imageUploads.objectKey })
-				.from(imageUploads)
-				.where(and(eq(imageUploads.userId, userId), eq(imageUploads.characterId, characterId)))
+			tx.query.imageUploads.findMany({
+				columns: {
+					objectKey: true
+				},
+				where: {
+					userId: { eq: userId },
+					characterId: { eq: characterId }
+				}
+			})
 		);
 		const keys = new Set<string>();
-		for (const row of uploads) {
-			if (isPermanentCharacterImageKey(row.objectKey)) keys.add(row.objectKey);
+		for (const upload of uploads) {
+			if (isPermanentCharacterImageKey(upload.objectKey)) keys.add(upload.objectKey);
 		}
-		const current = characterRows[0] ? ownedPermanentKey(userId, characterId, characterRows[0].imageUrl, R2_PUBLIC_URL) : null;
+		const current = character ? ownedPermanentKey(userId, characterId, character.imageUrl, R2_PUBLIC_URL) : null;
 		if (current) keys.add(current);
 		return [...keys];
 	});
@@ -211,12 +224,36 @@ export function collectCharacterKeys(tx: Transaction, userId: UserId, characterI
 export function collectUserKeys(tx: Transaction, userId: UserId) {
 	return Effect.gen(function* () {
 		const portraits = yield* runQuery(
-			tx.select({ id: characters.id, imageUrl: characters.imageUrl }).from(characters).where(eq(characters.userId, userId))
+			tx.query.characters.findMany({
+				columns: {
+					id: true,
+					imageUrl: true
+				},
+				where: {
+					userId: { eq: userId }
+				}
+			})
 		);
 		const uploads = yield* runQuery(
-			tx.select({ objectKey: imageUploads.objectKey }).from(imageUploads).where(eq(imageUploads.userId, userId))
+			tx.query.imageUploads.findMany({
+				columns: {
+					objectKey: true
+				},
+				where: {
+					userId: { eq: userId }
+				}
+			})
 		);
-		const [accountRow] = yield* runQuery(tx.select({ image: user.image }).from(user).where(eq(user.id, userId)).limit(1));
+		const account = yield* runQuery(
+			tx.query.user.findFirst({
+				columns: {
+					image: true
+				},
+				where: {
+					id: { eq: userId }
+				}
+			})
+		);
 		const keys = new Set<string>();
 		for (const row of uploads) {
 			if (isPermanentImageKey(row.objectKey)) keys.add(row.objectKey);
@@ -225,8 +262,8 @@ export function collectUserKeys(tx: Transaction, userId: UserId) {
 			const key = ownedPermanentKey(userId, portrait.id, portrait.imageUrl, R2_PUBLIC_URL);
 			if (key) keys.add(key);
 		}
-		if (accountRow?.image) {
-			const avatar = ownedAvatarKey(userId, accountRow.image, R2_PUBLIC_URL);
+		if (account?.image) {
+			const avatar = ownedAvatarKey(userId, account.image, R2_PUBLIC_URL);
 			if (avatar) keys.add(avatar);
 		}
 		return [...keys];
@@ -235,14 +272,16 @@ export function collectUserKeys(tx: Transaction, userId: UserId) {
 
 export function listPendingDeletions(tx: Transaction, limit: number) {
 	return runQuery(
-		tx
-			.select({
-				id: pendingObjectDeletions.id,
-				objectKey: pendingObjectDeletions.objectKey
-			})
-			.from(pendingObjectDeletions)
-			.orderBy(pendingObjectDeletions.createdAt)
-			.limit(limit)
+		tx.query.pendingObjectDeletions.findMany({
+			columns: {
+				id: true,
+				objectKey: true
+			},
+			orderBy: {
+				createdAt: "asc"
+			},
+			limit
+		})
 	);
 }
 
