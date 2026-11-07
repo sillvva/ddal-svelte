@@ -3,7 +3,7 @@ import type { LocalsUser, LogDraftData, LogDraftId, UserId } from "#lib/schemas.
 import { logDraftDataSchema } from "#lib/schemas.js";
 import { DBService, runQuery, type Database, type Transaction } from "#lib/server/db/index.js";
 import { logDrafts, type LogDraft } from "#lib/server/db/schema.js";
-import { logGetter, logSetter, type ErrorParams } from "#lib/server/effect/errors.js";
+import { logErrors, logResults, type ErrorParams } from "#lib/server/effect/errors.js";
 import { parse } from "#lib/server/effect/util.js";
 import { R2_PUBLIC_URL } from "$app/env/public";
 import { isTupleOf } from "@sillvva/utils";
@@ -77,7 +77,7 @@ export class LogDraftService extends Context.Service<LogDraftService>()("LogDraf
 					Effect.flatMap(withData)
 				);
 			},
-			(effect, id) => logGetter(effect, "LogDraftService.read", { id })
+			(effect, id) => logErrors(effect, "LogDraftService.read", { id })
 		);
 
 		/** Only the creator can open a draft for editing. Others get the same 404 as a missing draft. */
@@ -87,7 +87,7 @@ export class LogDraftService extends Context.Service<LogDraftService>()("LogDraf
 				if (row.userId !== userId) return yield* notFound();
 				return row;
 			},
-			(effect, id, userId) => logGetter(effect, "LogDraftService.readOwned", { id, userId })
+			(effect, id, userId) => logErrors(effect, "LogDraftService.readOwned", { id, userId })
 		);
 
 		/** The user's live drafts, most recently saved first. */
@@ -101,7 +101,7 @@ export class LogDraftService extends Context.Service<LogDraftService>()("LogDraf
 						.orderBy(desc(logDrafts.updatedAt))
 				).pipe(Effect.flatMap((rows) => Effect.forEach(rows, withData)));
 			},
-			(effect, userId) => logGetter(effect, "LogDraftService.list", { userId })
+			(effect, userId) => logErrors(effect, "LogDraftService.list", { userId })
 		);
 
 		const validate = (data: LogDraftData) =>
@@ -136,7 +136,7 @@ export class LogDraftService extends Context.Service<LogDraftService>()("LogDraf
 					})
 				);
 			},
-			(effect, user, data) => logSetter(effect, "LogDraftService.create", { userId: user.id, data })
+			(effect, user, data) => logResults(effect, "LogDraftService.create", { userId: user.id, data })
 		);
 
 		/** Keeps the id, so the link and QR code stay valid. An expired draft cannot be revived. */
@@ -155,7 +155,7 @@ export class LogDraftService extends Context.Service<LogDraftService>()("LogDraf
 					Effect.flatMap(withData)
 				);
 			},
-			(effect, user, id, data) => logSetter(effect, "LogDraftService.update", { userId: user.id, id, data })
+			(effect, user, id, data) => logResults(effect, "LogDraftService.update", { userId: user.id, id, data })
 		);
 
 		const remove = Effect.fn("LogDraftService.remove")(
@@ -167,7 +167,7 @@ export class LogDraftService extends Context.Service<LogDraftService>()("LogDraf
 						.returning({ id: logDrafts.id })
 				).pipe(Effect.flatMap((rows) => (isTupleOf(rows, 1) ? Effect.succeed(rows[0]) : Effect.fail(notFound()))));
 			},
-			(effect, id, userId) => logSetter(effect, "LogDraftService.remove", { id, userId })
+			(effect, id, userId) => logResults(effect, "LogDraftService.remove", { id, userId })
 		);
 
 		return { read, readOwned, list, create, update, remove };

@@ -6,8 +6,8 @@ import type { User } from "#lib/server/db/schema.js";
 import * as schema from "#lib/server/db/schema.js";
 import {
 	AuthTokenError,
-	logGetter,
-	logSetter,
+	logErrors,
+	logResults,
 	RedirectError,
 	serializeError,
 	type ErrorParams
@@ -276,7 +276,7 @@ export class AuthService extends Context.Service<AuthService>()("AuthService", {
 							auth
 						};
 					},
-					(effect) => logGetter(effect, "AuthService.get.session", {})
+					(effect) => logErrors(effect, "AuthService.get.session", {})
 				),
 				accounts: Effect.fn("AuthService.get.accounts")(
 					function* () {
@@ -363,7 +363,7 @@ export class AuthService extends Context.Service<AuthService>()("AuthService", {
 
 						return accounts;
 					},
-					(effect) => logGetter(effect, "AuthService.get.accounts", {})
+					(effect) => logErrors(effect, "AuthService.get.accounts", {})
 				),
 				emailTaken: Effect.fn("AuthService.get.emailTaken")(
 					function* (email: string, userId: UserId) {
@@ -376,7 +376,7 @@ export class AuthService extends Context.Service<AuthService>()("AuthService", {
 						);
 						return matches.length > 0;
 					},
-					(effect, email, userId) => logGetter(effect, "AuthService.get.emailTaken", { email, userId })
+					(effect, email, userId) => logErrors(effect, "AuthService.get.emailTaken", { email, userId })
 				)
 			},
 
@@ -435,7 +435,7 @@ export class AuthService extends Context.Service<AuthService>()("AuthService", {
 						)
 					);
 				},
-				(effect, userId, data) => logSetter(effect, "AuthService.completeOnboarding", { userId, data })
+				(effect, userId, data) => logResults(effect, "AuthService.completeOnboarding", { userId, data })
 			),
 			user: {
 				update: Effect.fn("AuthService.user.update")(
@@ -471,7 +471,7 @@ export class AuthService extends Context.Service<AuthService>()("AuthService", {
 							)
 						);
 					},
-					(effect, userId, data) => logSetter(effect, "AuthService.user.update", { userId, data })
+					(effect, userId, data) => logResults(effect, "AuthService.user.update", { userId, data })
 				),
 				delete: Effect.fn("AuthService.user.delete")(
 					function* (userId: UserId) {
@@ -527,7 +527,7 @@ export class AuthService extends Context.Service<AuthService>()("AuthService", {
 							Effect.flatMap((result) => (isTupleOf(result, 1) ? Effect.succeed(result[0]) : Effect.fail(new DeleteUserError())))
 						);
 					},
-					(effect, userId) => logSetter(effect, "AuthService.user.delete", { userId })
+					(effect, userId) => logResults(effect, "AuthService.user.delete", { userId })
 				)
 			}
 		};

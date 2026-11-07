@@ -2,7 +2,7 @@ import type { DungeonMasterFormSchema, DungeonMasterId, LocalsUser, UserId } fro
 import { userDMLogIncludes } from "#lib/server/db/includes.js";
 import { DBService, runQuery, type InferQueryResult, type Transaction } from "#lib/server/db/index.js";
 import { dungeonMasters, logs, type DungeonMaster } from "#lib/server/db/schema.js";
-import { logGetter, logSetter, type ErrorParams } from "#lib/server/effect/errors.js";
+import { logErrors, logResults, type ErrorParams } from "#lib/server/effect/errors.js";
 import { isTupleOf, sorter } from "@sillvva/utils";
 import { and, EmptyFilter, eq } from "drizzle-orm";
 import { Context, Data, Effect, Layer } from "effect";
@@ -49,7 +49,7 @@ export class DMService extends Context.Service<DMService>()("DMService", {
 					})
 				).pipe(Effect.flatMap((dm) => (dm ? Effect.succeed(dm) : Effect.fail(new DMNotFoundError()))));
 			},
-			(effect, dmId, userId, includeLogs?) => logGetter(effect, "DMService.get.one", { dmId, userId, includeLogs })
+			(effect, dmId, userId, includeLogs?) => logErrors(effect, "DMService.get.one", { dmId, userId, includeLogs })
 		);
 
 		const getAll = Effect.fn("DMService.get.all")(
@@ -73,7 +73,7 @@ export class DMService extends Context.Service<DMService>()("DMService", {
 					Effect.flatMap((dms) => (!dms[0]?.isUser ? addUserDM(user, dms) : Effect.succeed(dms)))
 				);
 			},
-			(effect, user, includeLogs?) => logGetter(effect, "DMService.get.all", { user, includeLogs })
+			(effect, user, includeLogs?) => logErrors(effect, "DMService.get.all", { user, includeLogs })
 		);
 
 		const fuzzySearch = Effect.fn("DMService.get.fuzzySearch")(
@@ -93,7 +93,7 @@ export class DMService extends Context.Service<DMService>()("DMService", {
 				);
 			},
 			(effect, userId, isUser, dm) =>
-				logGetter(effect, "DMService.get.fuzzySearch", {
+				logErrors(effect, "DMService.get.fuzzySearch", {
 					userId,
 					...(isUser ? { isUser } : { name: dm.name.trim() || undefined, DCI: dm.DCI || undefined })
 				})
@@ -123,7 +123,7 @@ export class DMService extends Context.Service<DMService>()("DMService", {
 					)
 				);
 			},
-			(effect, user, data) => logSetter(effect, "DMService.save", { userId: user.id, data })
+			(effect, user, data) => logResults(effect, "DMService.save", { userId: user.id, data })
 		);
 
 		const addUserDM = Effect.fn("DMService.addUserDM")(
@@ -151,7 +151,7 @@ export class DMService extends Context.Service<DMService>()("DMService", {
 
 				return dms.toSpliced(0, 0, result);
 			},
-			(effect, user, dms) => logSetter(effect, "DMService.addUserDM", { user, dms })
+			(effect, user, dms) => logResults(effect, "DMService.addUserDM", { user, dms })
 		);
 
 		const deleteDM = Effect.fn("DMService.delete")(
@@ -170,7 +170,7 @@ export class DMService extends Context.Service<DMService>()("DMService", {
 					)
 				);
 			},
-			(effect, dm, userId) => logSetter(effect, "DMService.delete", { dmId: dm.id, userId })
+			(effect, dm, userId) => logResults(effect, "DMService.delete", { dmId: dm.id, userId })
 		);
 
 		return {

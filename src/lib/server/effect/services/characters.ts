@@ -11,7 +11,7 @@ import {
 	type Transaction
 } from "#lib/server/db/index.js";
 import { characters, logs } from "#lib/server/db/schema.js";
-import { logGetter, logSetter, serializeError, type ErrorParams } from "#lib/server/effect/errors.js";
+import { logErrors, logResults, serializeError, type ErrorParams } from "#lib/server/effect/errors.js";
 import { AppLog } from "#lib/server/effect/logging.js";
 import { ImageUploadError } from "#lib/server/images/errors.js";
 import {
@@ -79,7 +79,7 @@ export class CharacterService extends Context.Service<CharacterService>()("Chara
 							)
 						);
 					},
-					(effect, characterId, includeLogs?) => logGetter(effect, "CharacterService.get.one", { characterId, includeLogs })
+					(effect, characterId, includeLogs?) => logErrors(effect, "CharacterService.get.one", { characterId, includeLogs })
 				),
 
 				all: Effect.fn("CharacterService.get.all")(
@@ -107,7 +107,7 @@ export class CharacterService extends Context.Service<CharacterService>()("Chara
 
 						return characters;
 					},
-					(effect, userId, options?) => logGetter(effect, "CharacterService.get.all", { userId, ...options })
+					(effect, userId, options?) => logErrors(effect, "CharacterService.get.all", { userId, ...options })
 				),
 
 				select: Effect.fn("CharacterService.get.select")(
@@ -125,7 +125,7 @@ export class CharacterService extends Context.Service<CharacterService>()("Chara
 							})
 						);
 					},
-					(effect, userId) => logGetter(effect, "CharacterService.get.select", { userId })
+					(effect, userId) => logErrors(effect, "CharacterService.get.select", { userId })
 				)
 			},
 
@@ -192,7 +192,7 @@ export class CharacterService extends Context.Service<CharacterService>()("Chara
 						})
 					);
 				},
-				(effect, data, userId, staged) => logSetter(effect, "CharacterService.save", { data, userId, staged })
+				(effect, data, userId, staged) => logResults(effect, "CharacterService.save", { data, userId, staged })
 			),
 
 			delete: Effect.fn("CharacterService.delete")(
@@ -235,7 +235,7 @@ export class CharacterService extends Context.Service<CharacterService>()("Chara
 						)
 					);
 				},
-				(effect, characterId, userId) => logSetter(effect, "CharacterService.delete", { characterId, userId })
+				(effect, characterId, userId) => logResults(effect, "CharacterService.delete", { characterId, userId })
 			)
 		};
 	})()

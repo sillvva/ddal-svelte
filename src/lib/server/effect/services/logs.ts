@@ -22,7 +22,7 @@ import {
 	type Transaction
 } from "#lib/server/db/index.js";
 import { characters, dungeonMasters, logs, magicItems, storyAwards } from "#lib/server/db/schema.js";
-import { logGetter, logSetter, serializeError, type ErrorParams } from "#lib/server/effect/errors.js";
+import { logErrors, logResults, serializeError, type ErrorParams } from "#lib/server/effect/errors.js";
 import { AppLog } from "#lib/server/effect/logging.js";
 import { syncLogImages } from "#lib/server/images/note-db.js";
 import { lockPortraitUser } from "#lib/server/images/portrait-db.js";
@@ -454,7 +454,7 @@ const deleteLog = Effect.fn("LogService.delete")(
 				.returning({ id: logs.id, characterId: logs.characterId, dungeonMasterId: logs.dungeonMasterId })
 		).pipe(Effect.flatMap((logs) => (isTupleOf(logs, 1) ? Effect.succeed(logs[0]) : Effect.fail(new DeleteLogError()))));
 	},
-	(effect, logId, userId) => logSetter(effect, "LogService.delete", { logId, userId })
+	(effect, logId, userId) => logResults(effect, "LogService.delete", { logId, userId })
 );
 
 export class LogService extends Context.Service<LogService>()("LogService", {
@@ -471,19 +471,19 @@ export class LogService extends Context.Service<LogService>()("LogService", {
 					function* (logId: LogId, userId: UserId) {
 						return yield* getCharacterLog(logId, userId, db);
 					},
-					(effect, logId, userId) => logGetter(effect, "LogService.get.one", { logId, userId })
+					(effect, logId, userId) => logErrors(effect, "LogService.get.one", { logId, userId })
 				),
 				dm: Effect.fn("LogService.get.dm")(
 					function* (userId) {
 						return yield* getDMLogs(userId, db);
 					},
-					(effect, userId) => logGetter(effect, "LogService.get.dm", { userId })
+					(effect, userId) => logErrors(effect, "LogService.get.dm", { userId })
 				),
 				all: Effect.fn("LogService.get.all")(
 					function* (userId) {
 						return yield* getAllLogs(userId, db);
 					},
-					(effect, userId) => logGetter(effect, "LogService.get.all", { userId })
+					(effect, userId) => logErrors(effect, "LogService.get.all", { userId })
 				)
 			},
 
@@ -523,7 +523,7 @@ export class LogService extends Context.Service<LogService>()("LogService", {
 					yield* Storage.cleanupAfterSave(temporaryKeys);
 					return saved;
 				},
-				(effect, log, user) => logSetter(effect, "LogService.save", { logId: log.id, userId: user.id, log })
+				(effect, log, user) => logResults(effect, "LogService.save", { logId: log.id, userId: user.id, log })
 			),
 			/** Cascades the log's `log_image` rows. Call `StorageService.purgePending` afterwards to delete orphaned note images. */
 			delete: Effect.fn("LogService.delete")(
@@ -535,7 +535,7 @@ export class LogService extends Context.Service<LogService>()("LogService", {
 						})
 					);
 				},
-				(effect, logId, userId) => logSetter(effect, "LogService.delete", { logId, userId })
+				(effect, logId, userId) => logResults(effect, "LogService.delete", { logId, userId })
 			)
 		};
 	})()

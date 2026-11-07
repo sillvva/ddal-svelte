@@ -2,7 +2,7 @@ import type { AppLogId, UserId } from "#lib/schemas.js";
 import { DBService, runQuery, type Filter, type Transaction, type TRSchema } from "#lib/server/db/index.js";
 import type { relations } from "#lib/server/db/relations.js";
 import { appLogs, type InsertAppLog } from "#lib/server/db/schema.js";
-import { logGetter, logSetter, type ErrorParams } from "#lib/server/effect/errors.js";
+import { logErrors, type ErrorParams } from "#lib/server/effect/errors.js";
 import { DrizzleSearchParser } from "@sillvva/search/drizzle";
 import { isTupleOf, sorter } from "@sillvva/utils";
 import { EmptyFilter, eq, sql } from "drizzle-orm";
@@ -48,7 +48,7 @@ export class AdminService extends Context.Service<AdminService>()("AdminService"
 							})
 						).pipe(Effect.flatMap((user) => (user ? Effect.succeed(user) : Effect.fail(new UserNotFoundError()))));
 					},
-					(effect, userId) => logGetter(effect, "AdminService.get.user", { userId })
+					(effect, userId) => logErrors(effect, "AdminService.get.user", { userId })
 				),
 				users: Effect.fn("AdminService.get.users")(
 					function* () {
@@ -74,7 +74,7 @@ export class AdminService extends Context.Service<AdminService>()("AdminService"
 							})
 						).pipe(Effect.map((users) => users.sort((a, b) => sorter(a.name.toLowerCase(), b.name.toLowerCase()))));
 					},
-					(effect) => logGetter(effect, "AdminService.get.users", {})
+					(effect) => logErrors(effect, "AdminService.get.users", {})
 				),
 				logs: Effect.fn("AdminService.get.logs")(
 					function* (search: string = "") {
@@ -90,7 +90,7 @@ export class AdminService extends Context.Service<AdminService>()("AdminService"
 							})
 						).pipe(Effect.map((logs) => ({ logs, metadata })));
 					},
-					(effect, search) => logGetter(effect, "AdminService.get.logs", { search })
+					(effect, search) => logErrors(effect, "AdminService.get.logs", { search })
 				)
 			},
 
@@ -151,7 +151,7 @@ export class AdminService extends Context.Service<AdminService>()("AdminService"
 						Effect.flatMap((logs) => (isTupleOf(logs, 1) ? Effect.succeed(logs[0]) : Effect.fail(new DeleteLogError())))
 					);
 				},
-				(effect, logId) => logSetter(effect, "AdminService.deleteLog", { logId })
+				(effect, logId) => logErrors(effect, "AdminService.deleteLog", { logId })
 			)
 		};
 	})()

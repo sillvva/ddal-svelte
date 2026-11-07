@@ -29,7 +29,7 @@ export function isTaggedError(error: unknown): error is InstanceType<ErrorClass>
 	);
 }
 
-export function logGetter<A, E extends { readonly message: string }, R>(
+export function logErrors<A, E extends { readonly message: string }, R>(
 	effect: Effect.Effect<A, E, R>,
 	label: string,
 	context: Record<string, unknown>
@@ -39,12 +39,12 @@ export function logGetter<A, E extends { readonly message: string }, R>(
 	);
 }
 
-export function logSetter<A, E extends { readonly message: string }, R>(
+export function logResults<A, E extends { readonly message: string }, R>(
 	effect: Effect.Effect<A, E, R>,
 	label: string,
 	context: Record<string, unknown>
 ) {
-	return logGetter(effect, label, context).pipe(Effect.tap((result) => AppLog.debug(label, { result, ...context })));
+	return logErrors(effect, label, context).pipe(Effect.tap((result) => AppLog.debug(label, { result, ...context })));
 }
 
 export class FailedError extends Data.TaggedError("FailedError")<ErrorParams> {

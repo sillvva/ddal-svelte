@@ -34,7 +34,7 @@ import {
 import type { CharacterId, ImageUploadId, LogId, UserId } from "#lib/schemas.js";
 import { DBService, runQuery, type Transaction } from "#lib/server/db/index.js";
 import { characters, imageUploads, user } from "#lib/server/db/schema.js";
-import { logGetter, logSetter } from "#lib/server/effect/errors.js";
+import { logErrors, logResults } from "#lib/server/effect/errors.js";
 import { AppLog } from "#lib/server/effect/logging.js";
 import { ImageUploadError } from "#lib/server/images/errors.js";
 import { forgetNoteUpload } from "#lib/server/images/note-db.js";
@@ -155,13 +155,6 @@ function isByteSource(body: unknown): body is ByteSource {
 	return typeof body.transformToByteArray === "function";
 }
 
-function errorMessage(cause: unknown) {
-	if (typeof cause === "object" && cause !== null && "message" in cause && typeof cause.message === "string") {
-		return cause.message;
-	}
-	return "Could not delete the stored image";
-}
-
 function assertDeletable(key: string) {
 	if (isPermanentImageKey(key) || isTemporaryImageKey(key)) return Effect.void;
 	return Effect.fail(new ImageUploadError("Refusing to delete an object outside image storage", 500));
@@ -226,7 +219,7 @@ export const verifyStoredObject = Effect.fn("StorageService.verifyStoredObject")
 		}
 	},
 	(effect, key, bytes, contentType, maxBytes) =>
-		logGetter(effect, "StorageService.verifyStoredObject", { key, bytes, contentType, maxBytes })
+		logErrors(effect, "StorageService.verifyStoredObject", { key, bytes, contentType, maxBytes })
 );
 
 const copyObject = Effect.fn("StorageService.copyObject")(function* (from: string, to: string) {
@@ -285,7 +278,7 @@ export function copyVerifiedStage(tx: Transaction, userId: UserId, characterId: 
 
 		yield* verifyStoredObject(staged.from, upload.bytes, upload.contentType, CHARACTER_IMAGE_LIMITS.maxStoredBytes);
 		yield* copyObject(staged.from, staged.to);
-	}).pipe((effect) => logSetter(effect, "StorageService.copyVerifiedStage", { userId, characterId, staged }));
+	}).pipe((effect) => logErrors(effect, "StorageService.copyVerifiedStage", { userId, characterId, staged }));
 }
 
 /**
@@ -320,7 +313,7 @@ export const copyVerifiedAvatar = Effect.fn("StorageService.copyVerifiedAvatar")
 		yield* verifyStoredObject(staged.from, upload.bytes, upload.contentType, AVATAR_IMAGE_LIMITS.maxStoredBytes);
 		yield* copyObject(staged.from, staged.to);
 	},
-	(effect, _tx, userId, staged) => logSetter(effect, "StorageService.copyVerifiedAvatar", { userId, staged })
+	(effect, _tx, userId, staged) => logErrors(effect, "StorageService.copyVerifiedAvatar", { userId, staged })
 );
 
 /**
@@ -370,7 +363,7 @@ export const promoteStagedAvatar = Effect.fn("StorageService.promoteStagedAvatar
 
 		return { imageUrl: imagePublicUrl(permanent, R2_PUBLIC_URL), temporaryKey: upload.objectKey };
 	},
-	(effect, _tx, userId, uploadId) => logSetter(effect, "StorageService.promoteStagedAvatar", { userId, uploadId })
+	(effect, _tx, userId, uploadId) => logErrors(effect, "StorageService.promoteStagedAvatar", { userId, uploadId })
 );
 
 /**
@@ -459,7 +452,7 @@ export const promoteNoteImages = Effect.fn("StorageService.promoteNoteImages")(
 			temporaryKeys: pending.map((upload) => upload.from)
 		} satisfies PromotedNoteImages;
 	},
-	(effect, _tx, userId, logId) => logSetter(effect, "StorageService.promoteNoteImages", { userId, logId })
+	(effect, _tx, userId, logId) => logErrors(effect, "StorageService.promoteNoteImages", { userId, logId })
 );
 
 const signPut = Effect.fn("StorageService.signPut")(function* (key: string, contentType: StoredImageContentType, bytes: number) {
@@ -527,7 +520,6 @@ export class StorageService extends Context.Service<StorageService>()("StorageSe
 
 				for (const row of fresh) {
 					attempted.add(row.objectKey);
-					let failure = "";
 					yield* transaction(
 						Effect.fn(function* (tx) {
 							const userId = userIdForDeletion(row.objectKey);
@@ -555,31 +547,31 @@ export class StorageService extends Context.Service<StorageService>()("StorageSe
 								return;
 							}
 
-							failure = errorMessage(deleted.failure);
 							yield* notePendingFailure(tx, current.objectKey);
 						})
-					).pipe(Effect.catch((error) => AppLog.error("StorageService.purgePendingObjects", { message: error.message })));
-
-					if (failure) {
-						yield* AppLog.error("StorageService.purgePendingObjects", { message: failure, key: row.objectKey });
-					}
+					).pipe(
+						Effect.catch((error) =>
+							AppLog.error("StorageService.purgePendingObjects", { message: error.message, key: row.objectKey })
+						)
+					);
 				}
 			}
 		});
 
-		const cleanupSavedObject = Effect.fn("StorageService.cleanupAfterSave")(function* (
-			tmpKeys: string | null | readonly string[]
-		) {
-			const keys = tmpKeys === null ? [] : typeof tmpKeys === "string" ? [tmpKeys] : tmpKeys;
-			for (const tmpKey of keys) {
-				if (!isTemporaryImageKey(tmpKey)) continue;
-				yield* deleteStoredObject(tmpKey).pipe(
-					Effect.catch((error) => AppLog.error("StorageService.cleanupAfterSave", { message: error.message, key: tmpKey }))
-				);
-			}
+		const cleanupSavedObject = Effect.fn("StorageService.cleanupAfterSave")(
+			function* (tmpKeys: string | null | readonly string[]) {
+				const keys = tmpKeys === null ? [] : typeof tmpKeys === "string" ? [tmpKeys] : tmpKeys;
+				for (const tmpKey of keys) {
+					if (!isTemporaryImageKey(tmpKey)) continue;
+					yield* deleteStoredObject(tmpKey).pipe(
+						Effect.catch((error) => AppLog.error("StorageService.cleanupAfterSave", { message: error.message, key: tmpKey }))
+					);
+				}
 
-			yield* purgePendingObjects();
-		});
+				yield* purgePendingObjects();
+			},
+			(effect, tmpKeys) => logErrors(effect, "StorageService.cleanupAfterSave", { tmpKeys })
+		);
 
 		const abandonStagedObject = Effect.fn("StorageService.abandonStagedObject")(
 			function* (userId: UserId, key: string) {
@@ -592,7 +584,7 @@ export class StorageService extends Context.Service<StorageService>()("StorageSe
 				);
 				yield* purgePendingObjects();
 			},
-			(effect, userId, key) => logSetter(effect, "StorageService.abandonStagedObject", { userId, key })
+			(effect, userId, key) => logErrors(effect, "StorageService.abandonStagedObject", { userId, key })
 		);
 
 		return {
@@ -601,7 +593,7 @@ export class StorageService extends Context.Service<StorageService>()("StorageSe
 				function* (userId: UserId) {
 					return yield* imageStorageUsage(db, userId);
 				},
-				(effect, userId) => logGetter(effect, "StorageService.imageUsage", { userId })
+				(effect, userId) => logErrors(effect, "StorageService.imageUsage", { userId })
 			),
 
 			/**
@@ -689,7 +681,7 @@ export class StorageService extends Context.Service<StorageService>()("StorageSe
 						contentType: input.contentType
 					};
 				},
-				(effect, input) => logSetter(effect, "StorageService.prepare", input)
+				(effect, input) => logResults(effect, "StorageService.prepare", input)
 			),
 
 			complete: Effect.fn("StorageService.complete")(
@@ -738,7 +730,7 @@ export class StorageService extends Context.Service<StorageService>()("StorageSe
 					// `tmp/` objects are public on the image host until save copies them, or the lifecycle rule deletes them.
 					return { imageUrl: imagePublicUrl(upload.objectKey, R2_PUBLIC_URL) };
 				},
-				(effect, userId, uploadId, purpose) => logSetter(effect, "StorageService.complete", { userId, uploadId, purpose })
+				(effect, userId, uploadId, purpose) => logResults(effect, "StorageService.complete", { userId, uploadId, purpose })
 			),
 
 			resolveForSave: Effect.fn("StorageService.resolveForSave")(
@@ -810,7 +802,7 @@ export class StorageService extends Context.Service<StorageService>()("StorageSe
 						copy: null
 					} satisfies ResolvedCharacterImage;
 				},
-				(effect, input) => logSetter(effect, "StorageService.resolveForSave", input)
+				(effect, input) => logResults(effect, "StorageService.resolveForSave", input)
 			),
 
 			/**
@@ -851,7 +843,7 @@ export class StorageService extends Context.Service<StorageService>()("StorageSe
 					yield* cleanupSavedObject(tmpKey);
 					return saved;
 				},
-				(effect, userId, uploadId) => logSetter(effect, "StorageService.saveAvatar", { userId, uploadId })
+				(effect, userId, uploadId) => logResults(effect, "StorageService.saveAvatar", { userId, uploadId })
 			),
 
 			purgePending: Effect.fn("StorageService.purgePending")(function* () {
@@ -874,7 +866,7 @@ export class StorageService extends Context.Service<StorageService>()("StorageSe
 					}
 					return [...keys];
 				},
-				(effect, userId) => logGetter(effect, "StorageService.listOwnedImageKeys", { userId })
+				(effect, userId) => logErrors(effect, "StorageService.listOwnedImageKeys", { userId })
 			),
 
 			abandonStagedObject
