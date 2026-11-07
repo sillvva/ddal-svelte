@@ -1,7 +1,7 @@
 import type { DungeonMasterFormSchema, DungeonMasterId, LocalsUser, UserId } from "#lib/schemas.js";
 import { userDMLogIncludes } from "#lib/server/db/includes.js";
 import { DBService, runQuery, type InferQueryResult, type Transaction } from "#lib/server/db/index.js";
-import { dungeonMasters, logs, type DungeonMaster } from "#lib/server/db/schema.js";
+import { dungeonMasters, type DungeonMaster } from "#lib/server/db/schema.js";
 import { logErrors, logResults, type ErrorParams } from "#lib/server/effect/errors.js";
 import { isTupleOf, sorter } from "@sillvva/utils";
 import { and, EmptyFilter, eq } from "drizzle-orm";
@@ -156,8 +156,17 @@ export class DMService extends Context.Service<DMService>()("DMService", {
 
 		const deleteDM = Effect.fn("DMService.delete")(
 			function* (dm: Pick<DungeonMaster, "id">, userId: UserId) {
-				const dmLogs = yield* runQuery(db.select({ id: logs.id }).from(logs).where(eq(logs.dungeonMasterId, dm.id)).limit(1));
-				if (dmLogs.length) return yield* new DeleteDMError("You cannot delete a DM that has logs", { status: 400 });
+				const dmLogs = yield* runQuery(
+					db.query.logs.findFirst({
+						columns: {
+							id: true
+						},
+						where: {
+							dungeonMasterId: { eq: dm.id }
+						}
+					})
+				);
+				if (dmLogs) return yield* new DeleteDMError("You cannot delete a DM that has logs", { status: 400 });
 
 				return yield* runQuery(
 					db

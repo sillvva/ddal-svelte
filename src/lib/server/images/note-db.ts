@@ -2,7 +2,7 @@ import { isPermanentNoteImageKey, TEMPORARY_IMAGE_PREFIX } from "#lib/images/obj
 import type { LogId, UserId } from "#lib/schemas.js";
 import { runQuery, type Database, type Transaction } from "#lib/server/db/index.js";
 import { imageUploads, logImages } from "#lib/server/db/schema.js";
-import { and, eq, exists, inArray, isNull, ne, notInArray, notLike, or, sql, type SQL } from "drizzle-orm";
+import { and, eq, exists, inArray, ne, notInArray, notLike, or, sql, type SQL } from "drizzle-orm";
 import { Effect } from "effect";
 import { clearScheduledDeletions } from "./portrait-db";
 
@@ -78,17 +78,18 @@ export function syncLogImages(tx: Transaction, userId: UserId, logId: LogId, per
 		const keys = [...new Set(permanentKeys.filter(isPermanentNoteImageKey))];
 		const uploads = keys.length
 			? yield* runQuery(
-					tx
-						.select({ id: imageUploads.id, objectKey: imageUploads.objectKey })
-						.from(imageUploads)
-						.where(
-							and(
-								eq(imageUploads.userId, userId),
-								eq(imageUploads.purpose, "note"),
-								isNull(imageUploads.characterId),
-								inArray(imageUploads.objectKey, keys)
-							)
-						)
+					tx.query.imageUploads.findMany({
+						columns: {
+							id: true,
+							objectKey: true
+						},
+						where: {
+							userId: { eq: userId },
+							purpose: { eq: "note" },
+							characterId: { isNull: true },
+							objectKey: { in: keys }
+						}
+					})
 				)
 			: [];
 		const uploadIds = uploads.map((upload) => upload.id);

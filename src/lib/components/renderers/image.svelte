@@ -1,4 +1,6 @@
 <script lang="ts">
+	import { goto } from "$app/navigation";
+
 	interface Props {
 		href?: string;
 		title?: string;
@@ -10,18 +12,23 @@
 
 	const dText = $derived(typeof text === "string" ? text.split(":") : text);
 	const alt = $derived(dText[0]);
-	const aspect = $derived(dText.includes("no-aspect") ? "" : "aspect-video");
+
+	function openModal(e: MouseEvent) {
+		e.preventDefault();
+		goto("", {
+			shallow: true,
+			state: { modal: { type: "image", name: title ?? "", imageUrl: href } }
+		});
+	}
 </script>
 
-<figure class="mt-6 mb-6 flex flex-col">
-	<a
-		{href}
-		target="_blank"
-		rel="noreferrer noopener"
-		class="relative mx-auto mb-2 flex w-full max-w-[800px] justify-center {aspect}"
-		aria-labelledby={id}
-	>
-		<img src={href} {title} {alt} {id} class="object-cover md:object-contain" />
-	</a>
-	<figcaption class="block text-center text-sm text-white/70">Click to open full screen</figcaption>
-</figure>
+<a
+	{href}
+	target="_blank"
+	rel="noreferrer noopener"
+	class="md-image relative mb-2 flex max-h-100 justify-start"
+	aria-labelledby={id}
+	onclick={openModal}
+>
+	<img src={href} {title} {alt} {id} class="max-h-100 object-cover md:object-contain" />
+</a>

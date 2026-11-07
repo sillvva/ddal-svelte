@@ -6,9 +6,9 @@
 	import MobileNav from "#lib/components/mobile-nav.svelte";
 	import Settings from "#lib/components/settings.svelte";
 	import { BLANK_CHARACTER } from "#lib/constants.js";
+	import { logDraftMemory } from "#lib/log-draft-storage.svelte.js";
 	import * as API from "#lib/remote/index.js";
 	import { getGlobal } from "#lib/stores.svelte.js";
-	import { logDraftMemory } from "#lib/log-draft-storage.svelte.js";
 	import { hotkey, parseEffectResult } from "#lib/util.js";
 	import { afterNavigate, goto } from "$app/navigation";
 	import { navigating, page } from "$app/state";
@@ -218,14 +218,16 @@
 					</div>
 				{/if}
 
-				<img
-					src={page.state.modal.imageUrl}
-					alt={page.state.modal.name}
-					class="relative max-h-dvh w-full max-w-(--breakpoint-xs)"
-					id="modal-content"
-					onloadstart={() => (loadingImage = true)}
-					onload={() => (loadingImage = false)}
-				/>
+				<a href={page.state.modal.imageUrl} target="_blank" rel="noreferrer noopener">
+					<img
+						src={page.state.modal.imageUrl}
+						alt={page.state.modal.name}
+						class="relative max-h-dvh w-full max-w-(--breakpoint-xs)"
+						id="modal-content"
+						onloadstart={() => (loadingImage = true)}
+						onload={() => (loadingImage = false)}
+					/>
+				</a>
 			</div>
 		{/if}
 
