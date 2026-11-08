@@ -4,18 +4,4 @@ allowBuilds:
 minimumReleaseAge: 1440 # 24 hours
 minimumReleaseAgeStrict: false
 minimumReleaseAgeExclude:
-  - "@sveltejs/kit"
-  - "@sveltejs/adapter-node"
-  - drizzle-orm@1.0.0-rc.5
-  - drizzle-kit@1.0.0-rc.5
-  - "@better-auth/core@1.7.16"
-  - "@better-auth/drizzle-adapter@1.7.16"
-  - "@better-auth/kysely-adapter@1.7.16"
-  - "@better-auth/memory-adapter@1.7.16"
-  - "@better-auth/mongo-adapter@1.7.16"
-  - "@better-auth/passkey@1.7.16"
-  - "@better-auth/prisma-adapter@1.7.16"
-  - "@better-auth/telemetry@1.7.16"
-  - better-auth@1.7.16
-  - better-call@1.4.5
-  - '@sillvva/utils@0.9.2'
+  - "@sillvva/utils@0.9.2"
