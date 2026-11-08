@@ -4,6 +4,7 @@ import * as v from "valibot";
 import { BLANK_CHARACTER, PASSKEY_PLACEHOLDER_EMAIL_DOMAIN, PROVIDERS, themeGroups, themes } from "./constants";
 import { defaultTimelineLog, logSort } from "./entities";
 import { AVATAR_IMAGE_LIMITS, CHARACTER_IMAGE_LIMITS, NOTE_IMAGE_LIMITS, STORED_IMAGE_CONTENT_TYPES } from "./images/limits";
+import { alreadyDropped, dropBeforeAcquisition, gainAfterDrop } from "./item-timeline-messages";
 import type { FullLogData } from "./server/effect/services/logs";
 
 export type BrandedType = v.InferOutput<ReturnType<typeof brandedId>>;
@@ -294,9 +295,7 @@ export type LogDraftData = v.InferOutput<typeof logDraftDataSchema>;
 export type CharacterLogDraftData = Extract<LogDraftData, { kind: "character" }>;
 export const logDraftDataSchema = v.variant("kind", [v.object(characterDraftEntries), v.object(dmDraftEntries)]);
 
-export const dropBeforeAcquisition = "Can't drop an item before it was acquired";
-export const alreadyDropped = "This item was already dropped in an earlier log";
-export const gainAfterDrop = "This item was dropped in an earlier log";
+export { alreadyDropped, dropBeforeAcquisition, gainAfterDrop };
 
 export type ItemTimelineIssue = {
 	id: ItemId;
