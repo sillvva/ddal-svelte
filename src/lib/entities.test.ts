@@ -1,6 +1,6 @@
 import { v7 } from "uuid";
 import { describe, expect, it } from "vitest";
-import { defaultLogSchema, logIsBefore } from "./entities";
+import { defaultLogSchema, defaultTimelineLog, logIsBefore } from "./entities";
 import {
 	alreadyDropped,
 	dropBeforeAcquisition,
@@ -58,11 +58,13 @@ function messages(issues: ItemTimelineIssue[]) {
 
 describe("logIsBefore", () => {
 	it("orders logs with the same timestamp by uuid creation order", () => {
-		const first = { id: "01a1928a-e1db-7622-b55b-02da10ae134d", time: 1 };
-		const second = { id: "01a1928a-e1db-7622-b55b-0bcdd08f7aa9", time: 1 };
+		const first = defaultTimelineLog({ id: "01a1928a-e1db-7622-b55b-02da10ae134d" as LogId, date: new Date(1) });
+		const second = defaultTimelineLog({ id: "01a1928a-e1db-7622-b55b-0bcdd08f7aa9" as LogId, date: new Date(1) });
 		expect(logIsBefore(first, second)).toBe(true);
 		expect(logIsBefore(second, first)).toBe(false);
-		expect(logIsBefore({ ...second, time: 0 }, first)).toBe(true);
+		expect(
+			logIsBefore(defaultTimelineLog({ id: "01a1928a-e1db-7622-b55b-0bcdd08f7aa9" as LogId, date: new Date(0) }), first)
+		).toBe(true);
 	});
 });
 

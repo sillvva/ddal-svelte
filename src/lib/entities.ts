@@ -4,24 +4,30 @@ import type { ExtendedLogData, FullLogData, LogData, LogSummaryData } from "#lib
 import { omit, sorter } from "@sillvva/utils";
 import { v7 } from "uuid";
 import { BLANK_CHARACTER, PlaceholderName } from "./constants";
-import type { CharacterId, DungeonMasterId, LocalsUser, LogId, LogSchema, UserId } from "./schemas";
-import { logTimestamp } from "./schemas";
+import type { CharacterId, DungeonMasterId, LocalsUser, LogId, LogSchema, TimelineLog, UserId } from "./schemas";
+
+export function logSort(a: TimelineLog, b: TimelineLog) {
+	return sorter(logTimestamp(a), logTimestamp(b)) || sorter(a.id, b.id);
+}
+
+export function logTimestamp(log: Pick<TimelineLog, "showDate" | "isDmLog" | "appliedDate" | "date">) {
+	const value = log.showDate ?? (log.isDmLog && log.appliedDate ? log.appliedDate : log.date);
+	return new Date(value).getTime();
+}
 
 /**
  * Same timestamp: the lower log id comes first. Uuid v7 ids increase with creation time,
  * so a newly minted log sorts after existing logs that share its timestamp.
  */
-export function logIsBefore(candidate: { id: string; time: number }, current: { id: string; time: number }) {
-	const byTime = sorter(candidate.time, current.time);
-	if (byTime !== 0) return byTime < 0;
-	return sorter(candidate.id, current.id) < 0;
+export function logIsBefore(candidate: TimelineLog, current: TimelineLog) {
+	return logSort(candidate, current) < 0;
 }
 
 export function getItemEntities(
 	character: Pick<FullCharacterData, "logs">,
 	options?: {
 		/** Log being edited or created. Its own gains and drops are not inventory yet. */
-		logId?: string;
+		logId?: LogId;
 		/** Date/Timestamp of that log. Later logs are excluded. */
 		asOf?: Date | number | string;
 		excludeDropped?: boolean;
@@ -29,15 +35,18 @@ export function getItemEntities(
 ) {
 	const { logId = "", asOf, excludeDropped = false } = options || {};
 	const currentTime = asOf === undefined || asOf === "" ? undefined : new Date(asOf).getTime();
-	const current = logId && currentTime !== undefined && !Number.isNaN(currentTime) ? { id: logId, time: currentTime } : undefined;
+	const current =
+		logId && currentTime !== undefined && !Number.isNaN(currentTime)
+			? defaultTimelineLog({ id: logId, date: new Date(currentTime) })
+			: undefined;
 
 	let magicItems: MagicItem[] = [];
 	let storyAwards: StoryAward[] = [];
 
 	const logs = character.logs
 		.filter((log) => log.id !== logId)
-		.filter((log) => !current || logIsBefore({ id: log.id, time: logTimestamp(log) }, current))
-		.toSorted((a, b) => sorter(logTimestamp(a), logTimestamp(b)) || sorter(a.id, b.id));
+		.filter((log) => !current || logIsBefore(log, current))
+		.toSorted(logSort);
 
 	for (const log of logs) {
 		magicItems.push(...log.magicItemsGained);
@@ -205,6 +214,25 @@ export function defaultLogSchema(
 		storyAwardsGained: [],
 		storyAwardsLost: [],
 		...options?.defaults
+	};
+}
+
+export function defaultTimelineLog(
+	log: Pick<LogSchema, "id" | "date"> &
+		Partial<
+			Pick<LogSchema, "isDmLog" | "appliedDate" | "magicItemsGained" | "magicItemsLost" | "storyAwardsGained" | "storyAwardsLost">
+		>
+): TimelineLog {
+	return {
+		id: log.id,
+		date: new Date(log.date),
+		showDate: log.isDmLog && log.appliedDate ? log.appliedDate : log.date,
+		isDmLog: log.isDmLog ?? false,
+		appliedDate: log.appliedDate ?? null,
+		magicItemsGained: log.magicItemsGained ?? [],
+		magicItemsLost: log.magicItemsLost?.map((id) => ({ id })) ?? [],
+		storyAwardsGained: log.storyAwardsGained ?? [],
+		storyAwardsLost: log.storyAwardsLost?.map((id) => ({ id })) ?? []
 	};
 }
 

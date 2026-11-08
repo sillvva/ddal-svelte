@@ -1,7 +1,8 @@
 import type { FullCharacterData } from "#lib/server/effect/services/characters.js";
-import { omit, sorter } from "@sillvva/utils";
+import { omit } from "@sillvva/utils";
 import * as v from "valibot";
 import { BLANK_CHARACTER, PASSKEY_PLACEHOLDER_EMAIL_DOMAIN, PROVIDERS, themeGroups, themes } from "./constants";
+import { defaultTimelineLog, logSort } from "./entities";
 import { AVATAR_IMAGE_LIMITS, CHARACTER_IMAGE_LIMITS, NOTE_IMAGE_LIMITS, STORED_IMAGE_CONTENT_TYPES } from "./images/limits";
 import type { FullLogData } from "./server/effect/services/logs";
 
@@ -311,42 +312,9 @@ export type TimelineLog = Pick<FullLogData, "id" | "showDate" | "isDmLog" | "app
 	storyAwardsLost: readonly { id: ItemId }[];
 };
 
-export function logTimestamp(log: TimelineLog) {
-	const value = log.showDate ?? (log.isDmLog && log.appliedDate ? log.appliedDate : log.date);
-	return new Date(value).getTime();
-}
-
 /** Reject a drop dated before the item was acquired, including after the log's date moves. */
 export function itemTimelineIssues(logs: readonly TimelineLog[], input: Omit<LogSchema, "dm">): ItemTimelineIssue[] {
-	const inputTime = input.isDmLog ? (input.appliedDate ?? input.date).getTime() : input.date.getTime();
-	const events: {
-		id: LogId;
-		time: number;
-		magicGained: ItemId[];
-		magicLost: ItemId[];
-		storyGained: ItemId[];
-		storyLost: ItemId[];
-	}[] = logs
-		.filter((log) => log.id !== input.id)
-		.map((log) => ({
-			id: log.id,
-			time: logTimestamp(log),
-			magicGained: log.magicItemsGained.map((item) => item.id),
-			magicLost: log.magicItemsLost.map((item) => item.id),
-			storyGained: log.storyAwardsGained.map((item) => item.id),
-			storyLost: log.storyAwardsLost.map((item) => item.id)
-		}));
-
-	events.push({
-		id: input.id,
-		time: inputTime,
-		magicGained: input.magicItemsGained.map((item) => item.id),
-		magicLost: [...input.magicItemsLost],
-		storyGained: input.storyAwardsGained.map((item) => item.id),
-		storyLost: [...input.storyAwardsLost]
-	});
-	events.sort((a, b) => sorter(a.time, b.time) || sorter(a.id, b.id));
-
+	const events = [...logs.filter((log) => log.id !== input.id), defaultTimelineLog(input)].toSorted(logSort);
 	const gained = new Map<ItemId, "magic" | "story">();
 	const held = new Set<ItemId>();
 	const issues: ItemTimelineIssue[] = [];
@@ -386,15 +354,15 @@ export function itemTimelineIssues(logs: readonly TimelineLog[], input: Omit<Log
 
 	for (const event of events) {
 		const isInput = event.id === input.id;
-		for (const id of event.magicLost) noteDrop(id, "magic", isInput, input.magicItemsGained, "magicItemsLost");
-		for (const id of event.storyLost) noteDrop(id, "story", isInput, input.storyAwardsGained, "storyAwardsLost");
-		for (const id of event.magicGained) {
-			gained.set(id, "magic");
-			held.add(id);
+		for (const item of event.magicItemsLost) noteDrop(item.id, "magic", isInput, input.magicItemsGained, "magicItemsLost");
+		for (const item of event.storyAwardsLost) noteDrop(item.id, "story", isInput, input.storyAwardsGained, "storyAwardsLost");
+		for (const item of event.magicItemsGained) {
+			gained.set(item.id, "magic");
+			held.add(item.id);
 		}
-		for (const id of event.storyGained) {
-			gained.set(id, "story");
-			held.add(id);
+		for (const item of event.storyAwardsGained) {
+			gained.set(item.id, "story");
+			held.add(item.id);
 		}
 	}
 
