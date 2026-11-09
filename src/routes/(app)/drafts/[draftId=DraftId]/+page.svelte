@@ -12,7 +12,7 @@
 	import NavMenu from "#lib/components/nav-menu.svelte";
 	import { proxify, successToast } from "#lib/factories.svelte.js";
 	import { logDraftMemory } from "#lib/log-draft-storage.svelte.js";
-	import { LOG_DRAFT_LIMIT, seasonForAdvancement } from "#lib/log-draft.js";
+	import { LOG_DRAFT_LIMIT, advancementType } from "#lib/log-draft.js";
 	import * as API from "#lib/remote/index.js";
 	import { logDraftSchema, type LogDraftId } from "#lib/schemas.js";
 	import { parseEffectResult } from "#lib/util.js";
@@ -86,7 +86,7 @@
 	<RemoteForm schema={logDraftSchema} form={API.drafts.forms.save} {data} initialErrors={!!savedId} successMessage="Draft saved">
 		{#snippet children(ctx)}
 			{const { form } = $derived(ctx)}
-			{let season = $state(seasonForAdvancement(draft))}
+			{let advType = $state(advancementType(draft))}
 			<Input field={form.fields.id} hidden />
 			<Input field={form.fields.kind} hidden />
 			<Input field={form.fields.timezone} hidden />
@@ -119,10 +119,10 @@
 					</Control>
 				{/if}
 				<Control class="col-span-12 sm:col-span-4">
-					<InputWrapper type="select" labelFor="season" label="Season">
+					<InputWrapper type="select" labelFor="adv-type" label="Advancement Type">
 						<select
-							id="season"
-							bind:value={season}
+							id="adv-type"
+							bind:value={advType}
 							class="select-bordered select w-full max-sm:text-base"
 							onchange={() => {
 								data.experience = 0;
@@ -131,23 +131,23 @@
 								data.tcp = 0;
 							}}
 						>
-							<option value={9}>Season 9+ (Level)</option>
-							<option value={8}>Season 8 (ACP/TCP)</option>
-							<option value={1}>Season 1-7 (Experience)</option>
+							<option value="level">Level</option>
+							<option value="acp">ACP/TCP</option>
+							<option value="experience">Experience</option>
 						</select>
 					</InputWrapper>
 				</Control>
-				{#if season === 1}
+				{#if advType === "experience"}
 					<Control class="col-span-12 sm:col-span-4">
 						<Input field={form.fields.experience} type="number" label="Experience" />
 					</Control>
 				{/if}
-				{#if season === 9}
+				{#if advType === "level"}
 					<Control class="col-span-12 sm:col-span-4">
 						<Input field={form.fields.level} type="number" label="Level" />
 					</Control>
 				{/if}
-				{#if season === 8}
+				{#if advType === "acp"}
 					<Control class="col-span-6 sm:col-span-2">
 						<Input field={form.fields.acp} type="number" label="ACP" />
 					</Control>
@@ -164,7 +164,7 @@
 				<Input field={form.fields.acp} type="number" hidden />
 				<Input field={form.fields.level} type="number" hidden />
 			{/if}
-			{#if season === 8 || data.type === "nongame"}
+			{#if advType === "acp" || data.type === "nongame"}
 				{#if data.type !== "game"}
 					<Control class="col-span-4">
 						<Input field={form.fields.tcp} type="number" label="TCP" />

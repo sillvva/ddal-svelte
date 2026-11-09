@@ -30,10 +30,10 @@ export function logDraftPath(id: string) {
 	return `/draft/${id}` as const;
 }
 
-export function seasonForAdvancement(values: { experience: number; acp: number }): 1 | 8 | 9 {
-	if (values.experience) return 1;
-	if (values.acp) return 8;
-	return 9;
+export function advancementType(values: { experience: number; acp: number }): "experience" | "acp" | "level" {
+	if (values.experience) return "experience";
+	if (values.acp) return "acp";
+	return "level";
 }
 
 /** DM fields a draft carries. The record id stays with the creator and is not shared. */

@@ -15,7 +15,7 @@
 	import PopulateLogDraft from "#lib/components/populate-log-draft.svelte";
 	import { defaultDM, getItemEntities } from "#lib/entities.js";
 	import { proxify } from "#lib/factories.svelte.js";
-	import { applyDraftToLog, seasonForAdvancement } from "#lib/log-draft.js";
+	import { advancementType, applyDraftToLog } from "#lib/log-draft.js";
 	import * as API from "#lib/remote/index.js";
 	import { type DungeonMasterId, logSchema } from "#lib/schemas.js";
 	import { page } from "$app/state";
@@ -65,7 +65,7 @@
 		<RemoteForm {schema} {form} {data} {initialErrors}>
 			{#snippet children(ctx)}
 				{const { form, initial } = $derived(ctx)}
-				{let season = $state(seasonForAdvancement(log))}
+				{let advType = $state(advancementType(log))}
 				{#if params.logId === "new" && !firstLog}
 					<div class="col-span-12 mb-2">
 						<PopulateLogDraft
@@ -76,7 +76,7 @@
 								if (!user) return;
 								applyDraftToLog(data, draft, dms, user.id);
 								form.fields.set(data);
-								season = seasonForAdvancement(draft);
+								advType = advancementType(draft);
 							}}
 						/>
 					</div>
@@ -176,10 +176,10 @@
 					<Input field={form.fields.dm.userId} hidden />
 					<Input field={form.fields.dm.isUser} type="checkbox" hidden />
 					<Control class="col-span-12 sm:col-span-4">
-						<InputWrapper type="select" labelFor="season" label="Season">
+						<InputWrapper type="select" labelFor="adv-type" label="Advancement Type">
 							<select
-								id="season"
-								bind:value={season}
+								id="adv-type"
+								bind:value={advType}
 								class="select-bordered select w-full max-sm:text-base"
 								onchange={() => {
 									data.experience = 0;
@@ -188,23 +188,23 @@
 									data.tcp = 0;
 								}}
 							>
-								<option value={9}>Season 9+ (Level)</option>
-								<option value={8}>Season 8 (ACP/TCP)</option>
-								<option value={1}>Season 1-7 (Experience)</option>
+								<option value="level">Level</option>
+								<option value="acp">ACP/TCP</option>
+								<option value="experience">Experience</option>
 							</select>
 						</InputWrapper>
 					</Control>
-					{#if season === 1}
+					{#if advType === "experience"}
 						<Control class="col-span-12 sm:col-span-4">
 							<Input field={form.fields.experience} type="number" label="Experience" />
 						</Control>
 					{/if}
-					{#if season === 8}
+					{#if advType === "acp"}
 						<Control class="col-span-6 sm:col-span-2">
 							<Input field={form.fields.acp} type="number" label="ACP" />
 						</Control>
 					{/if}
-					{#if season === 9}
+					{#if advType === "level"}
 						<Control class="col-span-12 sm:col-span-4">
 							<Input
 								field={form.fields.level}
@@ -221,7 +221,7 @@
 					<Input field={form.fields.dm.userId} hidden />
 					<Input field={form.fields.dm.isUser} type="checkbox" hidden />
 				{/if}
-				{#if season === 8 || data.type === "nongame"}
+				{#if advType === "acp" || data.type === "nongame"}
 					<Control class={data.type === "game" ? "col-span-6 sm:col-span-2" : "col-span-4"}>
 						<Input field={form.fields.tcp} type="number" label="TCP" />
 					</Control>
