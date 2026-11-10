@@ -231,12 +231,15 @@
 					<p class="flex-1 text-sm font-semibold">
 						{character.race}
 						{character.class}
+						{#if !myCharacter}
+							• Character of {character.user?.name}
+						{/if}
 					</p>
 					<p class="flex-1 text-sm">
 						{character.campaign}
 						{#if character.characterSheetUrl}
 							<span class="print:hidden">
-								-
+								•
 								<a
 									href={character.characterSheetUrl}
 									target="_blank"
