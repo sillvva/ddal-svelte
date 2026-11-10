@@ -1,7 +1,7 @@
 <script lang="ts">
-	import type { RemoteFormField } from "$app/server";
-	import { dev } from "$app/env";
 	import { getGlobal } from "#lib/stores.svelte.js";
+	import { dev } from "$app/env";
+	import type { RemoteFormField } from "$app/server";
 	import { parseAbsolute, type DateValue } from "@internationalized/date";
 	import { isTupleOfAtLeast } from "@sillvva/utils";
 	import { DatePicker, type DatePickerRootProps } from "bits-ui";
@@ -41,6 +41,7 @@
 
 	const tz = $derived(timezone || global.app.settings.timezone);
 	const issues = $derived(field.issues());
+	const invalid = $derived(!!issues?.length || undefined);
 	const attributes = $derived(field.as("number"));
 	const name = $derived("name" in attributes ? attributes.name : undefined);
 	const value = $derived(field.value() || 0);
@@ -102,7 +103,12 @@
 			</button>
 		{/if}
 	</DatePicker.Label>
-	<DatePicker.Input class="input inline-flex w-full items-center gap-1 px-3 select-none max-sm:text-base sm:text-xs">
+	<DatePicker.Input
+		class={[
+			"input inline-flex w-full items-center gap-1 px-3 select-none max-sm:text-base sm:text-xs",
+			invalid ? "border-error" : "border-base-content/20"
+		]}
+	>
 		{#snippet children({ segments })}
 			{#each segments as { part, value }, i (i)}
 				<DatePicker.Segment
@@ -175,7 +181,7 @@
 </DatePicker.Root>
 <label for={name} class="fieldset-label">
 	{#if issues && isTupleOfAtLeast(issues, 1)}
-		<span class="text-error">{issues[0]}</span>
+		<span class="text-error">{issues[0].message}</span>
 	{:else if description}
 		<span class="text-neutral-500">{description}</span>
 	{:else}
