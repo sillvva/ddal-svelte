@@ -11,3 +11,11 @@
 </script>
 
 <a {href} {title} target="_blank" rel="noreferrer noopener" class="text-secondary">{@render children?.()}</a>
+
+<style>
+	a[target="_blank"]:not(:empty):not(:has(*:not(:global(span))))::after {
+		content: "↗";
+		margin-inline-start: 0.125rem;
+		display: inline-block;
+	}
+</style>

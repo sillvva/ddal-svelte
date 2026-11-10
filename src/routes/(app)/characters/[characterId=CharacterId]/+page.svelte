@@ -10,10 +10,10 @@
 	import Search from "#lib/components/search.svelte";
 	import SplitButton from "#lib/components/split-button.svelte";
 	import { EntitySearchFactory, successToast, swipeAction } from "#lib/factories.svelte.js";
+	import { logDraftMemory } from "#lib/log-draft-storage.svelte.js";
 	import * as API from "#lib/remote/index.js";
 	import type { FullCharacterData } from "#lib/server/effect/services/characters.js";
 	import type { FullLogData } from "#lib/server/effect/services/logs.js";
-	import { logDraftMemory } from "#lib/log-draft-storage.svelte.js";
 	import { getGlobal } from "#lib/stores.svelte.js";
 	import { createTransition, formatDate, hotkey, parseEffectResult } from "#lib/util.js";
 	import { goto } from "$app/navigation";
@@ -782,3 +782,11 @@
 		</section>
 	{/if}
 </svelte:boundary>
+
+<style>
+	a[target="_blank"]:not(:empty):not(:has(*:not(:global(span))))::after {
+		content: "↗";
+		margin-inline-start: 0.125rem;
+		display: inline-block;
+	}
+</style>
