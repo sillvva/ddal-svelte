@@ -29,7 +29,7 @@ const getData = Effect.fn("GetData")(function* (user: LocalsUser) {
 	const DMs = yield* DMService;
 	const Logs = yield* LogService;
 
-	const characters = yield* Characters.get.all(user.id, { includeLogs: false });
+	const characters = yield* Characters.get.all(user.id);
 	const dms = yield* DMs.get.all(user);
 	const logs = yield* Logs.get.all(user.id);
 
