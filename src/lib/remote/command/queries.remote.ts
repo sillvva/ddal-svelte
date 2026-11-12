@@ -3,7 +3,7 @@ import type { LogLevel } from "#lib/entities.ts";
 import type { LocalsUser } from "#lib/schemas.js";
 import { guardedQuery } from "#lib/server/effect/guarded.js";
 import { AppLog } from "#lib/server/effect/logging.js";
-import { CharacterService } from "#lib/server/effect/services/characters.js";
+import { CharacterService, type FullCharacterData } from "#lib/server/effect/services/characters.js";
 import { DMService } from "#lib/server/effect/services/dms.js";
 import { LogService } from "#lib/server/effect/services/logs.js";
 import { sorter } from "@sillvva/utils";
@@ -42,6 +42,7 @@ const getData = Effect.fn("GetData")(function* (user: LocalsUser) {
 						({
 							...character,
 							logLevels: [] as LogLevel[],
+							logs: [] as FullCharacterData["logs"],
 							type: "character",
 							url: `/characters/${character.id}`
 						}) as const
