@@ -1,5 +1,6 @@
 <script lang="ts" generics="T extends PathnameWithSearchOrHash | RouteIdWithSearchOrHash">
-	import { hotkey, resolveRoute, type Route, type RouteArgs } from "#lib/util.js";
+	import { hotkey } from "#lib/attachments.js";
+	import { resolveRoute, type Route, type RouteArgs } from "#lib/util.js";
 	import { goto } from "$app/navigation";
 	import { resolve } from "$app/paths";
 	import type { PathnameWithSearchOrHash, RouteIdWithSearchOrHash } from "$app/types";

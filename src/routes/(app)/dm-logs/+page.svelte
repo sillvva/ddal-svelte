@@ -13,18 +13,11 @@
 	import * as API from "#lib/remote/index.js";
 	import type { FullLogData } from "#lib/server/effect/services/logs.js";
 	import { getGlobal } from "#lib/stores.svelte.js";
-	import {
-		createTransition,
-		download,
-		formatDate,
-		newestDraftId,
-		parseEffectResult,
-		type Route,
-		type RouteParams
-	} from "#lib/util.js";
+	import { createTransition, formatDate, newestDraftId, parseEffectResult, type Route, type RouteParams } from "#lib/util.js";
 	import { page } from "$app/state";
 	import { sorter } from "@sillvva/utils";
-	import type { Attachment } from "svelte/attachments";
+	import { download } from "@svelteuidev/composables";
+	import { fromAction, type Attachment } from "svelte/attachments";
 	import { SvelteSet } from "svelte/reactivity";
 
 	const global = getGlobal();
@@ -83,7 +76,7 @@
 		{#snippet menu()}
 			<li role="menuitem">
 				<button
-					{@attach download(() => ({
+					{@attach fromAction(download, () => ({
 						filename: "dm-logs.json",
 						blob: new Blob([JSON.stringify(logs)])
 					}))}

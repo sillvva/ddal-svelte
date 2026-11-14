@@ -1,10 +1,10 @@
 <script lang="ts">
+	import { topLayerDialog } from "#lib/attachments.js";
 	import { successToast } from "#lib/factories.svelte.js";
 	import { logDraftMemory, type StoredLogDraft } from "#lib/log-draft-storage.svelte.js";
 	import * as API from "#lib/remote/index.js";
 	import type { LogId } from "#lib/schemas.js";
 	import { parseEffectResult } from "#lib/util.js";
-	import { topLayerDialog } from "./dialog.js";
 	import Link from "./link.svelte";
 	import LogDraftShare from "./log-draft-share.svelte";
 

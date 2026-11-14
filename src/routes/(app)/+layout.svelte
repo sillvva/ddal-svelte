@@ -1,4 +1,5 @@
 <script lang="ts">
+	import { hotkey } from "#lib/attachments.js";
 	import CommandTray from "#lib/components/command-tray.svelte";
 	import Error from "#lib/components/error.svelte";
 	import Footer from "#lib/components/footer.svelte";
@@ -10,7 +11,7 @@
 	import { logDraftMemory } from "#lib/log-draft-storage.svelte.js";
 	import * as API from "#lib/remote/index.js";
 	import { getGlobal } from "#lib/stores.svelte.js";
-	import { hotkey, parseEffectResult } from "#lib/util.js";
+	import { parseEffectResult } from "#lib/util.js";
 	import { afterNavigate, goto } from "$app/navigation";
 	import { navigating, page } from "$app/state";
 	import { wait } from "@sillvva/utils";

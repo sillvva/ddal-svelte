@@ -1,4 +1,5 @@
 <script lang="ts">
+	import { hotkey } from "#lib/attachments.js";
 	import { authClient } from "#lib/auth.js";
 	import CopyLogDraft from "#lib/components/copy-log-draft.svelte";
 	import Error from "#lib/components/error.svelte";
@@ -16,7 +17,7 @@
 	import type { FullCharacterData } from "#lib/server/effect/services/characters.js";
 	import type { FullLogData } from "#lib/server/effect/services/logs.js";
 	import { getGlobal } from "#lib/stores.svelte.js";
-	import { createTransition, formatDate, hotkey, parseEffectResult, type RouteParams } from "#lib/util.js";
+	import { createTransition, formatDate, parseEffectResult, type RouteParams } from "#lib/util.js";
 	import { goto } from "$app/navigation";
 	import { resolve } from "$app/paths";
 	import { page } from "$app/state";

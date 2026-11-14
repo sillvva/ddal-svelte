@@ -1,4 +1,5 @@
 <script lang="ts">
+	import { hotkey } from "#lib/attachments.js";
 	import Head from "#lib/components/head.svelte";
 	import Items from "#lib/components/items.svelte";
 	import Link from "#lib/components/link.svelte";
@@ -8,12 +9,14 @@
 	import { EntitySearchFactory } from "#lib/factories.svelte.js";
 	import * as API from "#lib/remote/index.js";
 	import { getGlobal } from "#lib/stores.svelte.js";
-	import { createTransition, download, hotkey, newestDraftId } from "#lib/util.js";
+	import { createTransition, newestDraftId } from "#lib/util.js";
 	import { goto } from "$app/navigation";
 	import { resolve } from "$app/paths";
 	import { page } from "$app/state";
 	import type { PathnameWithSearchOrHash } from "$app/types";
 	import { sorter } from "@sillvva/utils";
+	import { download } from "@svelteuidev/composables";
+	import { fromAction } from "svelte/attachments";
 
 	const global = getGlobal();
 	const searchKey = "s";
@@ -38,7 +41,7 @@
 		{#snippet menu()}
 			<li role="menuitem">
 				<button
-					{@attach download(() => ({
+					{@attach fromAction(download, () => ({
 						filename: "characters.json",
 						blob: new Blob([JSON.stringify(characters)])
 					}))}

@@ -1,7 +1,8 @@
 <script lang="ts">
+	import { hotkey } from "#lib/attachments.js";
 	import { themeGroups, themes, type Themes } from "#lib/constants.js";
 	import { getGlobal } from "#lib/stores.svelte.js";
-	import { createTransition, hotkey } from "#lib/util.js";
+	import { createTransition } from "#lib/util.js";
 	import { MediaQuery } from "svelte/reactivity";
 
 	const global = getGlobal();

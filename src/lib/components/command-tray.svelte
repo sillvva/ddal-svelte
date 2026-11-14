@@ -1,9 +1,9 @@
 <script lang="ts">
+	import { hotkey } from "#lib/attachments.js";
 	import { searchSections } from "#lib/constants.js";
 	import { GlobalSearchFactory } from "#lib/factories.svelte.js";
 	import type { SearchData } from "#lib/remote/command/index.js";
 	import * as API from "#lib/remote/index.js";
-	import { hotkey } from "#lib/util.js";
 	import { goto } from "$app/navigation";
 	import { Command, Dialog, Separator } from "bits-ui";
 	import { untrack } from "svelte";
