@@ -33,12 +33,16 @@ export type RouteArgs<R extends Route> = Parameters<typeof resolve<R>>;
 export type RouteParams<R extends Route> = RouteArgs<R> extends [route: unknown, params: infer P] ? P : undefined;
 
 /**
+ * The `params` prop for a given `href`. Route IDs with dynamic segments require `params`;
+ * pathnames and static route IDs take none.
+ */
+export type RouteParamsProp<R extends Route> = RouteArgs<R> extends [route: unknown, params: infer P] ? { params: P } : { params?: undefined };
+
+/**
  * Distributes over every route so each crumb's `params` is checked against its own `href`.
  * Route IDs with dynamic segments require `params`; pathnames take none.
  */
-export type Crumb<R extends Route = Route> = R extends Route
-	? { title: string; href: R } & (RouteArgs<R> extends [route: unknown, params: infer P] ? { params: P } : { params?: undefined })
-	: never;
+export type Crumb<R extends Route = Route> = R extends Route ? { title: string; href: R } & RouteParamsProp<R> : never;
 
 export function resolveRoute<R extends Route>(href: R, params?: unknown) {
 	return resolve(...([href, params].filter((arg) => arg !== undefined) as RouteArgs<R>));

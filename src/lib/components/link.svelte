@@ -1,11 +1,7 @@
-<script lang="ts" generics="T extends PathnameWithSearchOrHash | RouteIdWithSearchOrHash">
-	import { resolve } from "$app/paths";
-	import type { PathnameWithSearchOrHash, RouteIdWithSearchOrHash } from "$app/types";
+<script lang="ts" generics="T extends Route">
+	import { resolveRoute, type Route, type RouteParamsProp } from "#lib/util.js";
 	import type { Snippet } from "svelte";
 	import type { HTMLAnchorAttributes } from "svelte/elements";
-
-	type Args = Parameters<typeof resolve<T>>;
-	type Params = Args extends [route: unknown, params: infer P] ? P : undefined;
 
 	let {
 		href,
@@ -14,11 +10,10 @@
 		...props
 	}: Omit<HTMLAnchorAttributes, "href"> & {
 		href: T;
-		params?: Params;
 		children: Snippet;
-	} = $props();
+	} & RouteParamsProp<T> = $props();
 
-	const resolved = $derived(resolve(...([href, params].filter((arg) => arg !== undefined) as Args)));
+	const resolved = $derived(resolveRoute(href, params));
 </script>
 
 <a href={resolved} {...props}>{@render children()}</a>

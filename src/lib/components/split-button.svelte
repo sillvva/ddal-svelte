@@ -1,27 +1,17 @@
-<script lang="ts" generics="T extends PathnameWithSearchOrHash | RouteIdWithSearchOrHash">
+<script lang="ts" generics="T extends Route">
 	import { hotkey } from "#lib/attachments.js";
-	import { resolveRoute, type Route, type RouteArgs } from "#lib/util.js";
+	import { resolveRoute, type Route, type RouteParamsProp } from "#lib/util.js";
 	import { goto } from "$app/navigation";
-	import { resolve } from "$app/paths";
-	import type { PathnameWithSearchOrHash, RouteIdWithSearchOrHash } from "$app/types";
 	import Link from "./link.svelte";
-
-	type Args = Parameters<typeof resolve<T>>;
-	type Params = Args extends [route: unknown, params: infer P] ? P : undefined;
 
 	/**
 	 * Distributes over every route so each option's `params` is checked against its own `href`.
 	 * Route IDs with dynamic segments require `params`; pathnames take none.
 	 */
-	type Option<R extends Route = Route> = R extends Route
-		? { href: R; label: string } & (RouteArgs<R> extends [route: unknown, params: infer P]
-				? { params: P }
-				: { params?: undefined })
-		: never;
+	type Option<R extends Route = Route> = R extends Route ? { href: R; label: string } & RouteParamsProp<R> : never;
 
-	interface Props {
+	type Props = {
 		href: T;
-		params?: Params;
 		label: string;
 		options: readonly Option[];
 		/** Icon-only main button, for the narrow layout. */
@@ -29,17 +19,19 @@
 		/** Bind the N shortcut to the main button. */
 		shortcut?: boolean;
 		class?: string;
-	}
+	} & RouteParamsProp<T>;
 
 	let { href, params, label, options, compact = false, shortcut = false, class: className }: Props = $props();
 
 	const resolved = $derived(resolveRoute(href, params));
+	// Destructuring widens `params` to `unknown`; `Props` already guarantees it matches `href`.
+	const paramsProp = $derived({ params } as unknown as RouteParamsProp<T>);
 </script>
 
 <div class={["relative inline-flex", className]}>
 	<Link
 		{href}
-		{params}
+		{...paramsProp}
 		class={["btn rounded-e-none border-e-0 btn-primary", compact ? "inline-flex" : "btn-sm"]}
 		aria-label={label}
 		{@attach !compact && shortcut ? hotkey([["n", () => goto(resolved)]]) : () => {}}

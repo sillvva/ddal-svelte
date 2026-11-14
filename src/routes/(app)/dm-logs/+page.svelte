@@ -285,7 +285,7 @@
 							<td colSpan={5} class="py-20 text-center">
 								<p class="mb-4">You have no DM logs.</p>
 								<div class="flex justify-center" {@attach showStoredDraft}>
-									<SplitButton href={newLogHref} label="Create one now" options={newLogOptions} />
+									<SplitButton href={newLogHref} params={newLogParams} label="Create one now" options={newLogOptions} />
 								</div>
 							</td>
 						</tr>
