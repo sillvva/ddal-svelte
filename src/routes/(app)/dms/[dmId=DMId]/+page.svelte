@@ -5,6 +5,7 @@
 	import RemoteForm from "#lib/components/forms/remote-form.svelte";
 	import Submit from "#lib/components/forms/submit.svelte";
 	import Head from "#lib/components/head.svelte";
+	import Link from "#lib/components/link.svelte";
 	import NavMenu from "#lib/components/nav-menu.svelte";
 	import { successToast } from "#lib/factories.svelte.js";
 	import * as API from "#lib/remote/index.js";
@@ -12,6 +13,7 @@
 	import { getGlobal } from "#lib/stores.svelte.js";
 	import { parseEffectResult } from "#lib/util.js";
 	import { goto } from "$app/navigation";
+	import { resolve } from "$app/paths";
 
 	let { params } = $props();
 
@@ -34,8 +36,8 @@
 
 	<NavMenu
 		crumbs={[
-			{ title: "DMs", url: "/dms" },
-			{ title: dm.name, url: `/dms/${dm.id}` }
+			{ title: "DMs", href: "dms" },
+			{ title: dm.name, href: "/(app)/dms/[dmId=DMId]", params: { dmId: dm.id } }
 		]}
 	/>
 
@@ -72,7 +74,7 @@
 						const parsed = await parseEffectResult(result);
 						if (parsed) {
 							successToast(`${dm.name} deleted`);
-							goto("/dms");
+							goto(resolve("dms"));
 						}
 						global.pageLoader = false;
 					}}
@@ -95,12 +97,27 @@
 					</thead>
 					<tbody>
 						{#each dm.logs as log (log.id)}
+							{#snippet logLink()}
+								{#if log.isDmLog}
+									<Link href="/(app)/dm-logs/[logId=LogId]" params={{ logId: log.id }} class="text-secondary lg:hidden">
+										{log.name}
+									</Link>
+								{:else if log.character?.id}
+									<Link
+										href="/(app)/characters/[characterId=CharacterId]/log/[logId=LogId]"
+										params={{ characterId: log.character.id, logId: log.id }}
+										class="text-secondary lg:hidden"
+									>
+										{log.name}
+									</Link>
+								{:else}
+									{log.name}
+								{/if}
+							{/snippet}
 							<tr>
 								<td class="max-xs:px-2">
 									<div class="flex flex-col gap-1">
-										<a href={`/characters/${log.character?.id}/log/${log.id}`} class="text-secondary lg:hidden">
-											{log.name}
-										</a>
+										{@render logLink()}
 										<div class="min-w-max">
 											{new Date(log.date).toLocaleString([], { dateStyle: "medium", timeStyle: "short" })}
 										</div>
@@ -108,18 +125,17 @@
 									</div>
 								</td>
 								<td class="max-lg:hidden">
-									<a
-										href={log.isDmLog ? `/dm-logs/${log.id}` : `/characters/${log.character?.id}/log/${log.id}`}
-										class="text-secondary"
-									>
-										{log.name}
-									</a>
+									{@render logLink()}
 								</td>
 								<td class="max-xs:px-2">
-									{#if log.character?.name}
-										<a href={`/characters/${log.character?.id}?s=${log.id}`} class="text-secondary">
+									{#if log.character?.name && log.character?.id}
+										<Link
+											href="/(app)/characters/[characterId=CharacterId]"
+											params={{ characterId: log.character.id }}
+											class="text-secondary"
+										>
 											{log.character?.name}
-										</a>
+										</Link>
 									{/if}
 								</td>
 								{#if dm.isUser}

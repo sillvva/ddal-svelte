@@ -5,6 +5,7 @@
 	import type { LogId } from "#lib/schemas.js";
 	import { parseEffectResult } from "#lib/util.js";
 	import { topLayerDialog } from "./dialog.js";
+	import Link from "./link.svelte";
 	import LogDraftShare from "./log-draft-share.svelte";
 
 	interface Props {
@@ -61,7 +62,8 @@
 			</p>
 			<LogDraftShare id={copied.id} />
 			<div class="flex justify-between gap-2">
-				<a class="btn btn-ghost btn-sm" href="/drafts/{copied.id}">Edit draft</a>
+				<Link class="btn btn-ghost btn-sm" href="/(app)/drafts/[draftId=DraftId]" params={{ draftId: copied.id }}>Edit draft</Link
+				>
 				<form method="dialog">
 					<button class="btn btn-sm">Close</button>
 				</form>

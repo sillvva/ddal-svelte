@@ -17,6 +17,7 @@
 	import { logDraftSchema, type LogDraftId } from "#lib/schemas.js";
 	import { parseEffectResult } from "#lib/util.js";
 	import { goto } from "$app/navigation";
+	import { resolve } from "$app/paths";
 
 	const { params } = $props();
 
@@ -36,7 +37,7 @@
 		const memory = logDraftMemory();
 		if (memory.current?.id === id) memory.clear();
 		successToast("Draft deleted");
-		await goto("/drafts");
+		await goto(resolve("drafts"));
 	}
 </script>
 
@@ -50,8 +51,8 @@
 
 	<NavMenu
 		crumbs={[
-			{ title: "Drafts", url: "/drafts" },
-			{ title, url: `/drafts/${params.draftId}` }
+			{ title: "Drafts", href: "drafts" },
+			{ title, href: "/(app)/drafts/[draftId=DraftId]", params: { draftId: params.draftId } }
 		]}
 	/>
 

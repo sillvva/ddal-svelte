@@ -44,8 +44,8 @@
 
 		<NavMenu
 			crumbs={[
-				{ title: "DM Logs", url: "/dm-logs" },
-				{ title: log.name || "New Log", url: `/dm-logs/${log.id}` }
+				{ title: "DM Logs", href: "dm-logs" },
+				{ title: log.name || "New Log", href: "/(app)/dm-logs/[logId=LogId]", params: { logId: log.id } }
 			]}
 		>
 			{#snippet actions()}

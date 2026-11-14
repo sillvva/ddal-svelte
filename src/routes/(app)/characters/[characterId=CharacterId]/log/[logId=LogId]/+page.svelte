@@ -49,9 +49,13 @@
 
 		<NavMenu
 			crumbs={[
-				{ title: "Characters", url: "/characters" },
-				{ title: character.name, url: `/characters/${character.id}` },
-				{ title: log.name || "New Log", url: `/characters/${character.id}/log/${log.id}` }
+				{ title: "Characters", href: "characters" },
+				{ title: character.name, href: "/(app)/characters/[characterId=CharacterId]", params: { characterId: character.id } },
+				{
+					title: log.name || "New Log",
+					href: "/(app)/characters/[characterId=CharacterId]/log/[logId=LogId]",
+					params: { characterId: character.id, logId: log.id }
+				}
 			]}
 		>
 			{#snippet actions()}

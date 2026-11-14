@@ -1,5 +1,6 @@
 <script lang="ts">
 	import { LOG_DRAFT_LIMIT, LOG_DRAFT_TTL_MS } from "#lib/log-draft.js";
+	import Link from "./link.svelte";
 
 	const ttlDays = LOG_DRAFT_TTL_MS / (24 * 60 * 60 * 1000);
 </script>
@@ -26,9 +27,9 @@
 				<div class="collapse-content flex flex-col gap-2 text-sm">
 					<p>
 						Choose <span class="font-semibold">New Player Draft</span> on the
-						<a class="text-secondary" href="/drafts">Drafts</a>
+						<Link class="text-secondary" href="drafts">Drafts</Link>
 						page, or from the arrow next to <span class="font-semibold">New Log</span> on
-						<a class="text-secondary" href="/dm-logs">DM Logs</a>. The form starts with your own DM name and DCI. Choose
+						<Link class="text-secondary" href="dm-logs">DM Logs</Link>. The form starts with your own DM name and DCI. Choose
 						<span class="font-semibold">Save Draft</span> to get the link.
 					</p>
 					<p>
@@ -120,7 +121,7 @@
 					</p>
 					<p>
 						Check the log and save it. Nothing is saved until you do. The draft stays in your browser, so you can use it on
-						another character too. A DM log draft fills a new DM log on <a class="text-secondary" href="/dm-logs">DM Logs</a> instead.
+						another character too. A DM log draft fills a new DM log on <Link class="text-secondary" href="dm-logs">DM Logs</Link> instead.
 					</p>
 				</div>
 			</details>

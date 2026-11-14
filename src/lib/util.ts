@@ -1,4 +1,6 @@
 import { goto } from "$app/navigation";
+import { resolve } from "$app/paths";
+import type { PathnameWithSearchOrHash, RouteIdWithSearchOrHash } from "$app/types";
 import { getLocalTimeZone } from "@internationalized/date";
 import { isObject, wait } from "@sillvva/utils";
 import type { StandardSchemaV1 } from "@standard-schema/spec";
@@ -25,14 +27,25 @@ type LessThan<N extends number, Acc extends number[] = []> = N extends Acc["leng
  */
 export type NumericRange<Start extends number, End extends number> = Exclude<End | LessThan<End>, LessThan<Start>>;
 
-export type Crumb = {
-	title: string;
-	url: string;
-};
-
 export type HTMLEvent<T extends Element> = Event & {
 	currentTarget: EventTarget & T;
 };
+
+export type Route = PathnameWithSearchOrHash | RouteIdWithSearchOrHash;
+export type RouteArgs<R extends Route> = Parameters<typeof resolve<R>>;
+export type RouteParams<R extends Route> = RouteArgs<R> extends [route: unknown, params: infer P] ? P : undefined;
+
+/**
+ * Distributes over every route so each crumb's `params` is checked against its own `href`.
+ * Route IDs with dynamic segments require `params`; pathnames take none.
+ */
+export type Crumb<R extends Route = Route> = R extends Route
+	? { title: string; href: R } & (RouteArgs<R> extends [route: unknown, params: infer P] ? { params: P } : { params?: undefined })
+	: never;
+
+export function resolveRoute<R extends Route>(href: R, params?: unknown) {
+	return resolve(...([href, params].filter((arg) => arg !== undefined) as RouteArgs<R>));
+}
 
 export async function createTransition(action: ViewTransitionCallback, after?: () => Awaitable<void>, afterDelay = 0) {
 	if (!document.startViewTransition) action();

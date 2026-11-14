@@ -1,8 +1,7 @@
 <script lang="ts">
-	import { goto } from "$app/navigation";
-	import { page } from "$app/state";
 	import Head from "#lib/components/head.svelte";
 	import Items from "#lib/components/items.svelte";
+	import Link from "#lib/components/link.svelte";
 	import NavMenu from "#lib/components/nav-menu.svelte";
 	import SearchResults from "#lib/components/search-results.svelte";
 	import Search from "#lib/components/search.svelte";
@@ -10,6 +9,10 @@
 	import * as API from "#lib/remote/index.js";
 	import { getGlobal } from "#lib/stores.svelte.js";
 	import { createTransition, download, hotkey, newestDraftId } from "#lib/util.js";
+	import { goto } from "$app/navigation";
+	import { resolve } from "$app/paths";
+	import { page } from "$app/state";
+	import type { PathnameWithSearchOrHash } from "$app/types";
 	import { sorter } from "@sillvva/utils";
 
 	const global = getGlobal();
@@ -26,12 +29,12 @@
 		search.results.toSorted((a, b) => sorter(b.score, a.score) || sorter(a.totalLevel, b.totalLevel) || sorter(a.name, b.name))
 	)}
 	{const newCharacterHref = $derived(
-		`/characters/new/edit?draft=${encodeURIComponent(newestDraftId(characters.map((character) => character.id)))}`
+		`characters/new/edit?draft=${encodeURIComponent(newestDraftId(characters.map((character) => character.id)))}` as const satisfies PathnameWithSearchOrHash
 	)}
 
 	<Head title="{user?.name}'s Characters" />
 
-	<NavMenu base crumbs={[{ title: "Characters", url: "/characters" }]}>
+	<NavMenu base crumbs={[{ title: "Characters", href: "characters" }]}>
 		{#snippet menu()}
 			<li role="menuitem">
 				<button
@@ -51,32 +54,32 @@
 			<div class="py-20 text-center">
 				<p class="mb-4">No characters found.</p>
 				<p>
-					<a href="/characters/new/edit" class="btn btn-primary">Create your first character</a>
+					<Link href="characters/new/edit" class="btn btn-primary">Create your first character</Link>
 				</p>
 			</div>
 		</section>
 	{:else}
 		<div class="flex flex-wrap justify-between gap-2">
 			<div class="flex gap-2 max-sm:w-full sm:max-md:flex-1 md:w-md">
-				<a
+				<Link
 					href={newCharacterHref}
 					class="btn btn-primary btn-sm max-sm:hidden"
 					{@attach hotkey([
 						[
 							"n",
 							() => {
-								goto(newCharacterHref);
+								goto(resolve(newCharacterHref));
 							}
 						]
 					])}
 				>
 					New <span class="max-md:hidden">Character</span>
 					<kbd class="kbd kbd-sm text-base-content max-md:hover-none:hidden">N</kbd>
-				</a>
+				</Link>
 				<Search name={searchKey} placeholder="Search by name, class, items, etc." />
-				<a href={newCharacterHref} class="btn btn-primary sm:hidden" aria-label="New Character">
+				<Link href={newCharacterHref} class="btn btn-primary sm:hidden" aria-label="New Character">
 					<span class="iconify inline size-6 mdi--plus"></span>
-				</a>
+				</Link>
 				<button
 					class="btn inline-flex data-[enabled=true]:btn-primary xs:hidden"
 					data-enabled={global.app.characters.magicItems}
@@ -186,9 +189,14 @@
 								</td>
 								<td>
 									<div class="text-base font-bold whitespace-pre-wrap text-black sm:text-xl dark:text-white">
-										<a href={`/characters/${character.id}`} aria-label={character.name} class="row-link">
+										<Link
+											href="/(app)/characters/[characterId=CharacterId]"
+											params={{ characterId: character.id }}
+											aria-label={character.name}
+											class="row-link"
+										>
 											<SearchResults text={character.name} terms={search.terms} />
-										</a>
+										</Link>
 									</div>
 									<div class="text-sm text-balance whitespace-pre-wrap sm:text-sm">
 										<span class="inline pr-1 md:hidden">Level {character.totalLevel}</span><SearchResults
@@ -274,9 +282,9 @@
 								{/if}
 							</figure>
 							<h2 class="card-title block ellipsis-nowrap px-4 text-sm text-balance dark:text-white">
-								<a href={`/characters/${character.id}`} class="card-link">
+								<Link href="/(app)/characters/[characterId=CharacterId]" params={{ characterId: character.id }} class="card-link">
 									<SearchResults text={character.name} terms={search.terms} />
-								</a>
+								</Link>
 							</h2>
 							<p class="px-4 text-xs text-balance">
 								<SearchResults text={`${character.race} ${character.class}`} terms={search.terms} />

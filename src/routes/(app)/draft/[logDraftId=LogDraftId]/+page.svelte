@@ -1,6 +1,7 @@
 <script lang="ts">
 	import Error from "#lib/components/error.svelte";
 	import Head from "#lib/components/head.svelte";
+	import Link from "#lib/components/link.svelte";
 	import LogDraftFaq from "#lib/components/log-draft-faq.svelte";
 	import NavMenu from "#lib/components/nav-menu.svelte";
 	import StoreLogDraft from "#lib/components/store-log-draft.svelte";
@@ -29,8 +30,8 @@
 
 	<NavMenu
 		crumbs={[
-			isDm ? { title: "DM Logs", url: "/dm-logs" } : { title: "Characters", url: "/characters" },
-			{ title: draft.data.name || "Log draft", url: `/draft/${draft.id}` }
+			isDm ? { title: "DM Logs", href: "dm-logs" } : { title: "Characters", href: "characters" },
+			{ title: draft.data.name || "Log draft", href: "/(app)/draft/[logDraftId=LogDraftId]", params: { logDraftId: draft.id } }
 		]}
 	/>
 
@@ -47,12 +48,12 @@
 		</p>
 		<div class="flex flex-wrap gap-2">
 			{#if isDm}
-				<a class="btn w-fit btn-primary btn-sm" href="/dm-logs">Go to DM Logs</a>
+				<Link href="dm-logs" class="btn w-fit btn-primary btn-sm">Go to DM Logs</Link>
 			{:else}
-				<a class="btn w-fit btn-primary btn-sm" href="/characters">Choose a character</a>
+				<Link href="characters" class="btn w-fit btn-primary btn-sm">Choose a character</Link>
 			{/if}
 			{#if draft.owner}
-				<a class="btn w-fit btn-sm" href="/drafts/{draft.id}">Edit draft</a>
+				<Link href="/(app)/drafts/[draftId=DraftId]" params={{ draftId: draft.id }} class="btn w-fit btn-sm">Edit draft</Link>
 			{/if}
 		</div>
 	</section>

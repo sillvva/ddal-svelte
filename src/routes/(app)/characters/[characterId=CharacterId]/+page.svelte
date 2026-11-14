@@ -4,6 +4,7 @@
 	import Error from "#lib/components/error.svelte";
 	import Head from "#lib/components/head.svelte";
 	import Items from "#lib/components/items.svelte";
+	import Link from "#lib/components/link.svelte";
 	import Markdown from "#lib/components/markdown.svelte";
 	import NavMenu from "#lib/components/nav-menu.svelte";
 	import SearchResults from "#lib/components/search-results.svelte";
@@ -15,8 +16,9 @@
 	import type { FullCharacterData } from "#lib/server/effect/services/characters.js";
 	import type { FullLogData } from "#lib/server/effect/services/logs.js";
 	import { getGlobal } from "#lib/stores.svelte.js";
-	import { createTransition, formatDate, hotkey, parseEffectResult } from "#lib/util.js";
+	import { createTransition, formatDate, hotkey, parseEffectResult, type RouteParams } from "#lib/util.js";
 	import { goto } from "$app/navigation";
+	import { resolve } from "$app/paths";
 	import { page } from "$app/state";
 	import { slugify, sorter } from "@sillvva/utils";
 	import { clipboard, download } from "@svelteuidev/composables";
@@ -88,9 +90,18 @@
 	{const character = $derived(await API.characters.queries.get(queryParams))}
 	{const myCharacter = $derived(character.userId === user?.id)}
 	{const newLogDraft = $derived(character.logs.at(-1)?.id ?? character.id)}
-	{const newLogHref = $derived(`/characters/${character.id}/log/new?draft=${encodeURIComponent(newLogDraft)}`)}
-	{const fromDraftHref = $derived(`${newLogHref}&fromDraft=1`)}
-	{const newLogOptions = $derived([{ href: fromDraftHref, label: "New Log from Draft" }] as const)}
+	{const newLogHref = $derived(
+		`/(app)/characters/[characterId=CharacterId]/log/[logId=LogId]?draft=${encodeURIComponent(newLogDraft)}` as const
+	)}
+	{const newLogParams = $derived<RouteParams<typeof newLogHref>>({ characterId: character.id, logId: "new" })}
+	{const fromDraftHref = $derived(`${newLogHref}&fromDraft=1` as const)}
+	{const newLogOptions = $derived([
+		{
+			href: fromDraftHref,
+			params: { characterId: character.id, logId: "new" } satisfies RouteParams<typeof fromDraftHref>,
+			label: "New Log from Draft"
+		}
+	] as const)}
 	{const search = $derived(
 		new EntitySearchFactory(character.logs, page.url.searchParams.get(searchKey) ?? page.state.search?.[searchKey] ?? "")
 	)}
@@ -110,12 +121,16 @@
 		<NavMenu
 			hideMenuActions={!myCharacter}
 			crumbs={[
-				{ title: "Characters", url: "/characters" },
-				{ title: character.name, url: `/characters/${character.id}` }
+				{ title: "Characters", href: "characters" },
+				{ title: character.name, href: "/(app)/characters/[characterId=CharacterId]", params: { characterId: character.id } }
 			]}
 		>
 			{#snippet actions()}
-				<a href={`/characters/${character.id}/edit`} class="btn h-9 btn-primary btn-sm max-sm:hidden">Edit</a>
+				<Link
+					href="/(app)/characters/[characterId=CharacterId]/edit"
+					params={{ characterId: character.id }}
+					class="btn h-9 btn-primary btn-sm max-sm:hidden">Edit</Link
+				>
 				<button
 					aria-label="Share Character"
 					class="btn h-9 btn-sm max-sm:hidden"
@@ -126,7 +141,9 @@
 				</button>
 			{/snippet}
 			{#snippet menu()}
-				<li role="menuitem" class="sm:hidden"><a href={`/characters/${character.id}/edit`}>Edit</a></li>
+				<li role="menuitem" class="sm:hidden">
+					<Link href="/(app)/characters/[characterId=CharacterId]/edit" params={{ characterId: character.id }}>Edit</Link>
+				</li>
 				<li role="menuitem" class="sm:hidden">
 					<button
 						onclick={() => successToast("Character URL copied to clipboard")}
@@ -156,14 +173,17 @@
 					</li>
 				{/if}
 				<li role="menuitem">
-					<a
-						href={`/characters/${character.id}/og-image.jpg`}
+					<Link
+						href="/(app)/characters/[characterId=CharacterId]/og-image.jpg"
+						params={{ characterId: character.id }}
 						target="_blank"
 						onclick={(e) => {
 							e.preventDefault();
 							triggerImageModal(character, `/characters/${character.id}/og-image.jpg`);
-						}}>Social Media Image</a
+						}}
 					>
+						Social Media Image
+					</Link>
 				</li>
 				<li role="menuitem">
 					<button
@@ -188,7 +208,7 @@
 							const parsed = await parseEffectResult(result);
 							if (parsed) {
 								successToast(`${character.name} deleted`);
-								await goto("/characters");
+								await goto(resolve("characters"));
 							}
 							global.pageLoader = false;
 						}}
@@ -329,33 +349,53 @@
 			<div class="flex w-full gap-2 sm:max-w-md print:hidden" {@attach showStoredDraft}>
 				{#if myCharacter}
 					{#if hasStoredDraft}
-						<SplitButton href={newLogHref} label="New Log" options={newLogOptions} shortcut class="max-sm:hidden" />
-					{:else}
-						<a
+						<SplitButton
 							href={newLogHref}
+							params={newLogParams}
+							label="New Log"
+							options={newLogOptions}
+							shortcut
+							class="max-sm:hidden"
+						/>
+					{:else}
+						<Link
+							href={newLogHref}
+							params={newLogParams}
 							class="btn btn-primary max-sm:hidden sm:px-3 sm:btn-sm"
 							aria-label="New Log"
 							{@attach hotkey([
 								[
 									"n",
 									() => {
-										goto(newLogHref);
+										goto(resolve(newLogHref, newLogParams));
 									}
 								]
 							])}
 						>
 							New Log <kbd class="kbd kbd-sm text-base-content max-sm:hover-none:hidden">N</kbd>
-						</a>
+						</Link>
 					{/if}
 				{/if}
 				<Search name={searchKey} placeholder="Search Logs" />
 				{#if myCharacter}
 					{#if hasStoredDraft}
-						<SplitButton href={newLogHref} label="New Log" options={newLogOptions} compact class="sm:hidden" />
+						<SplitButton
+							href={newLogHref}
+							params={newLogParams}
+							label="New Log"
+							options={newLogOptions}
+							compact
+							class="sm:hidden"
+						/>
 					{:else}
-						<a href={newLogHref} class="btn btn-primary sm:hidden sm:px-3 sm:btn-sm" aria-label="New Log">
+						<Link
+							href={newLogHref}
+							params={newLogParams}
+							class="btn btn-primary sm:hidden sm:px-3 sm:btn-sm"
+							aria-label="New Log"
+						>
 							<span class="iconify size-6 mdi--plus"></span>
-						</a>
+						</Link>
 					{/if}
 					<button
 						class="btn data-[desc=true]:btn-primary sm:hidden"
@@ -407,13 +447,13 @@
 				{#if myCharacter}
 					<div class="flex justify-center" {@attach showStoredDraft}>
 						{#if hasStoredDraft}
-							<SplitButton href={newLogHref} label="Create a Game Log" options={newLogOptions} />
+							<SplitButton href={newLogHref} params={newLogParams} label="Create a Game Log" options={newLogOptions} />
 						{:else}
-							<a href={newLogHref} class="btn btn-primary">Create a Game Log</a>
+							<Link href={newLogHref} params={newLogParams} class="btn btn-primary">Create a Game Log</Link>
 						{/if}
 					</div>
 					<p>
-						<a href="{newLogHref}&firstLog=true" class="btn btn-primary">Create an Intro Log</a>
+						<Link href="{newLogHref}&firstLog=true" params={newLogParams} class="btn btn-primary">Create an Intro Log</Link>
 					</p>
 				{/if}
 			</div>
@@ -579,12 +619,23 @@
 									data-desc={hasDescription && global.app.log.descriptions}
 								>
 									{#if myCharacter}
-										<a
-											href={log.isDmLog ? `/dm-logs/${log.id}` : `/characters/${log.characterId}/log/${log.id}`}
-											class="row-link font-semibold whitespace-pre-wrap text-secondary"
-										>
-											<SearchResults text={log.name} terms={search.terms} />
-										</a>
+										{#if log.isDmLog}
+											<Link
+												href="/(app)/dm-logs/[logId=LogId]"
+												params={{ logId: log.id }}
+												class="row-link font-semibold whitespace-pre-wrap text-secondary"
+											>
+												<SearchResults text={log.name} terms={search.terms} />
+											</Link>
+										{:else if log.characterId}
+											<Link
+												href="/(app)/characters/[characterId=CharacterId]/log/[logId=LogId]"
+												params={{ characterId: log.characterId, logId: log.id }}
+												class="row-link font-semibold whitespace-pre-wrap text-secondary"
+											>
+												<SearchResults text={log.name} terms={search.terms} />
+											</Link>
+										{/if}
 									{:else}
 										<span class="font-semibold whitespace-pre-wrap">
 											<SearchResults text={log.name} terms={search.terms} />
@@ -597,7 +648,9 @@
 										<p class="text-sm font-normal">
 											<span class="font-semibold dark:text-white">DM:</span>
 											{#if myCharacter}
-												<a href="/dms/{log.dm.id}" class="text-secondary">{log.dm.name}</a>
+												<Link href="/(app)/dms/[dmId=DMId]" params={{ dmId: log.dm.id }} class="text-secondary">
+													{log.dm.name}
+												</Link>
 											{:else}
 												{log.dm.name}
 											{/if}
@@ -733,12 +786,17 @@
 									{#if log.description?.trim()}
 										<h4 class="text-base font-semibold">
 											{#if myCharacter}
-												<a
-													href={log.isDmLog ? `/dm-logs/${log.id}` : `/characters/${log.characterId}/log/${log.id}`}
-													class="row-link"
-												>
-													Notes:
-												</a>
+												{#if log.isDmLog}
+													<Link href="/(app)/dm-logs/[logId=LogId]" params={{ logId: log.id }} class="row-link">Notes:</Link>
+												{:else if log.characterId}
+													<Link
+														href="/(app)/characters/[characterId=CharacterId]/log/[logId=LogId]"
+														params={{ characterId: log.characterId, logId: log.id }}
+														class="row-link"
+													>
+														Notes:
+													</Link>
+												{/if}
 											{:else}
 												Notes:
 											{/if}

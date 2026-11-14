@@ -1,5 +1,6 @@
 <script lang="ts">
 	import Head from "#lib/components/head.svelte";
+	import Link from "#lib/components/link.svelte";
 	import NavMenu from "#lib/components/nav-menu.svelte";
 	import SearchResults from "#lib/components/search-results.svelte";
 	import Search from "#lib/components/search.svelte";
@@ -26,7 +27,7 @@
 
 	<Head title="{user?.name}'s DMs" />
 
-	<NavMenu base crumbs={[{ title: "DMs", url: "/dms" }]} />
+	<NavMenu base crumbs={[{ title: "DMs", href: "dms" }]} />
 
 	<section class="flex max-sm:flex-1 sm:max-w-96">
 		<Search name={searchKey} placeholder="Search" />
@@ -54,13 +55,14 @@
 						{#each sortedResults as dm (dm.id)}
 							<tr class="data-[deleting=true]:hidden" data-deleting={deletingDM.has(dm.id)}>
 								<td>
-									<a
-										href="/dms/{dm.id}"
+									<Link
+										href="/(app)/dms/[dmId=DMId]"
+										params={{ dmId: dm.id }}
 										class="row-link text-left font-semibold whitespace-pre-wrap text-secondary"
 										aria-label="Edit DM"
 									>
 										<SearchResults text={dm.name} terms={search.terms} />
-									</a>
+									</Link>
 									<div class="xs:hidden">
 										{#if dm.DCI}
 											<p class="text-xs text-gray-500">DCI: <SearchResults text={dm.DCI} terms={search.terms} /></p>

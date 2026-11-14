@@ -32,10 +32,14 @@
 
 <NavMenu
 	crumbs={[
-		{ title: "Characters", url: "/characters" },
+		{ title: "Characters", href: "characters" },
 		// excluded for new character, due to empty name
-		{ title: character.name, url: `/characters/${character.id}` },
-		{ title: params.characterId === "new" ? "New Character" : "Edit", url: `/characters/${character.id}/edit` }
+		{ title: character.name, href: "/(app)/characters/[characterId=CharacterId]", params: { characterId: character.id } },
+		{
+			title: params.characterId === "new" ? "New Character" : "Edit",
+			href: "/(app)/characters/[characterId=CharacterId]/edit",
+			params: { characterId: character.id }
+		}
 	]}
 />
 
