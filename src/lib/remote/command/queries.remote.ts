@@ -79,12 +79,12 @@ const getData = Effect.fn("GetData")(function* (user: LocalsUser) {
 							type: "log",
 							showDate: log.isDmLog ? log.appliedDate || log.date : log.date,
 							link: (log.isDmLog
-								? { href: `dm-logs?s=${log.id}` }
+								? ({ href: `dm-logs?s=${log.id}` } satisfies CommandTrayLink)
 								: log.character
-									? {
+									? ({
 											href: `/(app)/characters/[characterId=CharacterId]?s=${log.id}`,
 											params: { characterId: log.character.id }
-										}
+										} satisfies CommandTrayLink)
 									: { href: "characters" }) satisfies CommandTrayLink
 						}) as const
 				)
