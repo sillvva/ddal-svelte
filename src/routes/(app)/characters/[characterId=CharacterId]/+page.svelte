@@ -18,7 +18,14 @@
 	import type { FullCharacterData } from "#lib/server/effect/services/characters.js";
 	import type { FullLogData } from "#lib/server/effect/services/logs.js";
 	import { getGlobal } from "#lib/stores.svelte.js";
-	import { createTransition, formatDate, parseEffectResult, type RouteParams } from "#lib/util.js";
+	import {
+		createTransition,
+		formatDate,
+		parseEffectResult,
+		type Route,
+		type RouteParams,
+		type SplitButtonOption
+	} from "#lib/util.js";
 	import { goto } from "$app/navigation";
 	import { resolve } from "$app/paths";
 	import { page } from "$app/state";
@@ -93,17 +100,17 @@
 	{const myCharacter = $derived(character.userId === user?.id)}
 	{const newLogDraft = $derived(character.logs.at(-1)?.id ?? character.id)}
 	{const newLogHref = $derived(
-		`/(app)/characters/[characterId=CharacterId]/log/[logId=LogId]?draft=${encodeURIComponent(newLogDraft)}` as const
+		`/(app)/characters/[characterId=CharacterId]/log/[logId=LogId]?draft=${encodeURIComponent(newLogDraft)}` satisfies Route
 	)}
 	{const newLogParams = $derived<RouteParams<typeof newLogHref>>({ characterId: character.id, logId: "new" })}
-	{const fromDraftHref = $derived(`${newLogHref}&fromDraft=1` as const)}
-	{const newLogOptions = $derived([
+	{const fromDraftHref = $derived(`${newLogHref}&fromDraft=1` satisfies Route)}
+	{const newLogOptions = $derived<SplitButtonOption<typeof fromDraftHref>[]>([
 		{
 			href: fromDraftHref,
-			params: { characterId: character.id, logId: "new" } satisfies RouteParams<typeof fromDraftHref>,
+			params: { characterId: character.id, logId: "new" },
 			label: "New Log from Draft"
 		}
-	] as const)}
+	])}
 	{const search = $derived(
 		new EntitySearchFactory(character.logs, page.url.searchParams.get(searchKey) ?? page.state.search?.[searchKey] ?? "")
 	)}

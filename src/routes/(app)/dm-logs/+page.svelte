@@ -13,7 +13,15 @@
 	import * as API from "#lib/remote/index.js";
 	import type { FullLogData } from "#lib/server/effect/services/logs.js";
 	import { getGlobal } from "#lib/stores.svelte.js";
-	import { createTransition, formatDate, newestDraftId, parseEffectResult, type Route, type RouteParams } from "#lib/util.js";
+	import {
+		createTransition,
+		formatDate,
+		newestDraftId,
+		parseEffectResult,
+		type Route,
+		type RouteParams,
+		type SplitButtonOption
+	} from "#lib/util.js";
 	import { page } from "$app/state";
 	import { sorter } from "@sillvva/utils";
 	import { download } from "@svelteuidev/composables";
@@ -56,16 +64,16 @@
 		search.results.toSorted((a, b) => (global.app.dmLogs.sort === "asc" ? sorter(a.date, b.date) : sorter(b.date, a.date)))
 	)}
 	{const newLogHref = $derived(
-		`/(app)/dm-logs/[logId=LogId]?draft=${encodeURIComponent(newestDraftId(logs.map((log) => log.id)))}` as const satisfies Route
+		`/(app)/dm-logs/[logId=LogId]?draft=${encodeURIComponent(newestDraftId(logs.map((log) => log.id)))}` satisfies Route
 	)}
 	{const newLogParams = $derived({ logId: "new" } satisfies RouteParams<typeof newLogHref>)}
-	{const newLogFromDraftHref = $derived(`${newLogHref}&fromDraft=1` as const satisfies Route)}
-	{const newPlayerDraftHref = $derived("/(app)/drafts/[draftId=DraftId]" as const satisfies Route)}
-	{const newLogOptions = $derived([
+	{const newLogFromDraftHref = $derived(`${newLogHref}&fromDraft=1` satisfies Route)}
+	{const newPlayerDraftHref = $derived("/(app)/drafts/[draftId=DraftId]" satisfies Route)}
+	{const newLogOptions = $derived<SplitButtonOption<typeof newLogHref | typeof newPlayerDraftHref>[]>([
 		...(hasStoredDraft ? [{ href: newLogFromDraftHref, params: newLogParams, label: "New Log from Draft" }] : []),
 		{
 			href: newPlayerDraftHref,
-			params: { draftId: "new" } satisfies RouteParams<typeof newPlayerDraftHref>,
+			params: { draftId: "new" },
 			label: "New Player Draft"
 		}
 	])}

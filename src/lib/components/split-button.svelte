@@ -1,19 +1,13 @@
 <script lang="ts" generics="T extends Route">
 	import { hotkey } from "#lib/attachments.js";
-	import { resolveRoute, type Route, type RouteParamsProp } from "#lib/util.js";
+	import { resolveRoute, type Route, type RouteParamsProp, type SplitButtonOption } from "#lib/util.js";
 	import { goto } from "$app/navigation";
 	import Link from "./link.svelte";
-
-	/**
-	 * Distributes over every route so each option's `params` is checked against its own `href`.
-	 * Route IDs with dynamic segments require `params`; pathnames take none.
-	 */
-	type Option<R extends Route = Route> = R extends Route ? { href: R; label: string } & RouteParamsProp<R> : never;
 
 	type Props = {
 		href: T;
 		label: string;
-		options: readonly Option[];
+		options: readonly SplitButtonOption[];
 		/** Icon-only main button, for the narrow layout. */
 		compact?: boolean;
 		/** Bind the N shortcut to the main button. */
