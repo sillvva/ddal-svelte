@@ -107,8 +107,8 @@ The app is at [http://localhost:5173](http://localhost:5173), unless `PUBLIC_URL
 - `pnpm op:test:e2e` — Playwright through `op run`, with `E2E_ALLOW_LOCAL=1`. Details are in the next section.
 - `pnpm op:test:e2e:cleanup` — delete leftover `e2e-` users through `op run`.
 - `pnpm test:e2e:guard` — run the e2e environment guard without touching the database.
-- `pnpm db:push:local` — `supabase db push --local`. Applies migrations to the local database.
-- `pnpm db:reset:local` — refuse to reset if something other than Docker is listening on the local Supabase ports, then `supabase db reset --local`.
+- `pnpm db:push:local` — `supabase db push`. Applies migrations to the local database.
+- `pnpm db:reset:local` — refuse to reset if something other than Docker is listening on the local Supabase ports, then `supabase db reset`.
 - `pnpm op:db:diff` — `supabase db diff` against `REMOTE_DB_URL`, via `op run`.
 - `pnpm op:db:push` — `supabase db push` against `REMOTE_DB_URL`, via `op run`.
 - `pnpm op:db:dump` — data-only dump of `REMOTE_DB_URL` written to `supabase/seed.sql`.
