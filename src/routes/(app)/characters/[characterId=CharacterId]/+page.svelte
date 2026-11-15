@@ -11,6 +11,7 @@
 	import SearchResults from "#lib/components/search-results.svelte";
 	import Search from "#lib/components/search.svelte";
 	import SplitButton from "#lib/components/split-button.svelte";
+	import { BLANK_CHARACTER } from "#lib/constants.js";
 	import { EntitySearchFactory, successToast, swipeAction } from "#lib/factories.svelte.js";
 	import { logDraftMemory } from "#lib/log-draft-storage.svelte.js";
 	import * as API from "#lib/remote/index.js";
@@ -130,8 +131,10 @@
 				<Link
 					href="/(app)/characters/[characterId=CharacterId]/edit"
 					params={{ characterId: character.id }}
-					class="btn h-9 btn-primary btn-sm max-sm:hidden">Edit</Link
+					class="btn h-9 btn-primary btn-sm max-sm:hidden"
 				>
+					Edit
+				</Link>
 				<button
 					aria-label="Share Character"
 					class="btn h-9 btn-sm max-sm:hidden"
@@ -158,10 +161,12 @@
 						{@attach fromAction(download, () => ({
 							filename: `${slugify(character.name)}.json`,
 							blob: new Blob([JSON.stringify(character)])
-						}))}>Export</button
+						}))}
 					>
+						Export
+					</button>
 				</li>
-				{#if character.imageUrl}
+				{#if character.imageUrl && !character.imageUrl.includes(BLANK_CHARACTER)}
 					<li role="menuitem" class="xs:hidden">
 						<a
 							href={character.imageUrl}
@@ -169,8 +174,10 @@
 							onclick={(e) => {
 								e.preventDefault();
 								triggerImageModal(character);
-							}}>Character Image</a
+							}}
 						>
+							Character Image
+						</a>
 					</li>
 				{/if}
 				<li role="menuitem">
