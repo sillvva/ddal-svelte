@@ -4,3 +4,4 @@
 .env
 seed*.sql
 backups/
+snippets/
