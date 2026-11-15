@@ -4,13 +4,13 @@
 	import { GlobalSearchFactory } from "#lib/factories.svelte.js";
 	import type { SearchData } from "#lib/remote/command/index.js";
 	import * as API from "#lib/remote/index.js";
-	import { resolveCommandTrayLink } from "#lib/util.js";
+	import { resolveRoute } from "#lib/util.js";
 	import { goto } from "$app/navigation";
 	import { Command, Dialog, Separator } from "bits-ui";
 	import { untrack } from "svelte";
 	import SearchResults from "./search-results.svelte";
 
-	const defaultSelected: string = resolveCommandTrayLink(searchSections[0]);
+	const defaultSelected = resolveRoute(searchSections[0].href);
 
 	let open = $state(false);
 	let selected = $state(defaultSelected);
@@ -130,7 +130,7 @@
 											{#snippet child({ props })}
 												<ul {...props}>
 													{#each section.items as item ("id" in item ? item.id : item.name)}
-														{@const itemUrl = resolveCommandTrayLink(item.link)}
+														{@const itemUrl = resolveRoute(item.link.href, "params" in item.link ? item.link.params : undefined)}
 														<Command.Item
 															value={itemUrl}
 															onSelect={() => select(itemUrl)}

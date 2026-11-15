@@ -53,16 +53,11 @@ export type SplitButtonOption<R extends Route = Route> = R extends Route
 	? { href: R; label: string } & RouteParamsProp<R>
 	: never;
 
-export function resolveRoute<R extends Route>(href: R, params?: unknown) {
-	return resolve(...([href, params].filter((arg) => arg !== undefined) as RouteArgs<R>));
-}
-
 /** Serializable route target for command-tray items (resolved on the client). */
 export type CommandTrayLink<R extends Route = Route> = R extends Route ? { href: R } & RouteParamsProp<R> : never;
 
-/** Resolve a command-tray link on the client so paths respect the current page URL. */
-export function resolveCommandTrayLink(link: CommandTrayLink) {
-	return resolveRoute(link.href, link.params);
+export function resolveRoute<R extends Route>(href: R, params?: unknown) {
+	return resolve(...([href, params].filter((arg) => arg !== undefined) as RouteArgs<R>));
 }
 
 export async function createTransition(action: ViewTransitionCallback, after?: () => Awaitable<void>, afterDelay = 0) {
