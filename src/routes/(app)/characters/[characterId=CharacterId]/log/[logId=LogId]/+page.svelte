@@ -18,6 +18,7 @@
 	import { advancementType, applyDraftToLog } from "#lib/log-draft.js";
 	import * as API from "#lib/remote/index.js";
 	import { type DungeonMasterId, logSchema } from "#lib/schemas.js";
+	import { resolve } from "$app/paths";
 	import { page } from "$app/state";
 	import { v7 } from "uuid";
 
@@ -156,7 +157,7 @@
 								}}
 								clearable
 								onclear={() => (data.dm = defaultDM(user.id))}
-								link={data.dm.id && data.dm.name ? `/dms/${data.dm.id}` : ""}
+								link={data.dm.id && data.dm.name ? resolve("/(app)/dms/[dmId=DMId]", { dmId: data.dm.id }) : ""}
 								placeholder={dms.find((dm) => dm.isUser)?.name || user.name}
 							/>
 						</Control>

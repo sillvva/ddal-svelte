@@ -6,6 +6,7 @@ import { AppLog } from "#lib/server/effect/logging.js";
 import { CharacterService, type FullCharacterData } from "#lib/server/effect/services/characters.js";
 import { DMService } from "#lib/server/effect/services/dms.js";
 import { LogService } from "#lib/server/effect/services/logs.js";
+import type { CommandTrayLink } from "#lib/util.js";
 import { sorter } from "@sillvva/utils";
 import { Effect } from "effect";
 
@@ -17,7 +18,7 @@ const sectionData = {
 			({
 				type: "section",
 				name: section.title,
-				url: section.url
+				link: { href: section.href } satisfies CommandTrayLink
 			}) as const
 	)
 };
@@ -44,7 +45,10 @@ const getData = Effect.fn("GetData")(function* (user: LocalsUser) {
 							logLevels: [] as LogLevel[],
 							logs: [] as FullCharacterData["logs"],
 							type: "character",
-							url: `/characters/${character.id}`
+							link: {
+								href: "/(app)/characters/[characterId=CharacterId]",
+								params: { characterId: character.id }
+							} satisfies CommandTrayLink
 						}) as const
 				)
 				.toSorted((a, b) => sorter(b.lastLog, a.lastLog))
@@ -57,7 +61,10 @@ const getData = Effect.fn("GetData")(function* (user: LocalsUser) {
 						({
 							...dm,
 							type: "dm",
-							url: `/dms/${dm.id}`
+							link: {
+								href: "/(app)/dms/[dmId=DMId]",
+								params: { dmId: dm.id }
+							} satisfies CommandTrayLink
 						}) as const
 				)
 				.toSorted((a, b) => sorter(a.name, b.name))
@@ -71,7 +78,14 @@ const getData = Effect.fn("GetData")(function* (user: LocalsUser) {
 							...log,
 							type: "log",
 							showDate: log.isDmLog ? log.appliedDate || log.date : log.date,
-							url: log.isDmLog ? `/dm-logs?s=${log.id}` : `/characters/${log.character?.id}?s=${log.id}`
+							link: (log.isDmLog
+								? { href: `dm-logs?s=${log.id}` }
+								: log.character
+									? {
+											href: `/(app)/characters/[characterId=CharacterId]?s=${log.id}`,
+											params: { characterId: log.character.id }
+										}
+									: { href: "characters" }) satisfies CommandTrayLink
 						}) as const
 				)
 				.toSorted((a, b) => sorter(b.showDate, a.showDate))

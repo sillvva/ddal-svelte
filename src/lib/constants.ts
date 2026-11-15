@@ -7,10 +7,10 @@ export const defaultDescription = "A tool for tracking your Adventurers League c
 export const defaultImage = "https://ddal.dekok.app/images/barovia-gate.webp";
 
 export const searchSections = [
-	{ title: "Characters", url: "/characters" },
-	{ title: "DM Logs", url: "/dm-logs" },
-	{ title: "DMs", url: "/dms" },
-	{ title: "Drafts", url: "/drafts" }
+	{ title: "Characters", href: "characters" },
+	{ title: "DM Logs", href: "dm-logs" },
+	{ title: "DMs", href: "dms" },
+	{ title: "Drafts", href: "drafts" }
 ] as const;
 
 export const BLANK_CHARACTER = `/images/blank-character.jpg` as const;

@@ -495,12 +495,23 @@
 							<div class="content bg-base-200">
 								{#if myCharacter}
 									<div class="flex items-start justify-between gap-2">
-										<a
-											href={log.isDmLog ? `/dm-logs/${log.id}` : `/characters/${log.characterId}/log/${log.id}`}
-											class="row-link font-semibold whitespace-pre-wrap text-secondary"
-										>
-											<SearchResults text={log.name} terms={search.terms} />
-										</a>
+										{#if log.isDmLog}
+											<Link
+												href="/(app)/dm-logs/[logId=LogId]"
+												params={{ logId: log.id }}
+												class="row-link font-semibold whitespace-pre-wrap text-secondary"
+											>
+												<SearchResults text={log.name} terms={search.terms} />
+											</Link>
+										{:else if log.characterId}
+											<Link
+												href="/(app)/characters/[characterId=CharacterId]/log/[logId=LogId]"
+												params={{ characterId: log.characterId, logId: log.id }}
+												class="row-link font-semibold whitespace-pre-wrap text-secondary"
+											>
+												<SearchResults text={log.name} terms={search.terms} />
+											</Link>
+										{/if}
 										<CopyLogDraft logId={log.id} compact />
 									</div>
 								{:else}
@@ -515,7 +526,9 @@
 									<p class="text-sm font-normal">
 										<span class="font-semibold dark:text-white">DM:</span>
 										{#if myCharacter}
-											<a href="/dms/{log.dm.id}" class="text-secondary">{log.dm.name}</a>
+											<Link href="/(app)/dms/[dmId=DMId]" params={{ dmId: log.dm.id }} class="text-secondary">
+												{log.dm.name}
+											</Link>
 										{:else}
 											{log.dm.name}
 										{/if}
@@ -582,7 +595,12 @@
 											<div class="mt-2 text-sm whitespace-pre-wrap">
 												<svelte:element
 													this={myCharacter ? "a" : "span"}
-													href={myCharacter ? `/characters/${log.characterId}/log/${log.id}` : undefined}
+													href={myCharacter && log.characterId
+														? resolve("/(app)/characters/[characterId=CharacterId]/log/[logId=LogId]", {
+																characterId: log.characterId,
+																logId: log.id
+															})
+														: undefined}
 													class={[myCharacter && "row-link", "pr-2 font-semibold dark:text-white print:block"]}
 												>
 													{mi.name}{mi.description ? ":" : ""}
@@ -833,7 +851,12 @@
 											<div class="mt-2 text-sm whitespace-pre-wrap">
 												<svelte:element
 													this={myCharacter ? "a" : "span"}
-													href={myCharacter ? `/characters/${log.characterId}/log/${log.id}` : undefined}
+													href={myCharacter && log.characterId
+														? resolve("/(app)/characters/[characterId=CharacterId]/log/[logId=LogId]", {
+																characterId: log.characterId,
+																logId: log.id
+															})
+														: undefined}
 													class={[myCharacter && "row-link", "pr-2 font-semibold dark:text-white print:block"]}
 												>
 													{mi.name}{mi.description ? ":" : ""}
