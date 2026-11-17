@@ -5,12 +5,12 @@
 	import { parseAbsolute, type DateValue } from "@internationalized/date";
 	import { isTupleOfAtLeast } from "@sillvva/utils";
 	import { DatePicker, type DatePickerRootProps } from "bits-ui";
+	import { untrack } from "svelte";
 	import Debug from "../debug.svelte";
 	import Input from "./input.svelte";
 
 	interface Props extends Omit<DatePickerRootProps, "value" | "minValue" | "maxValue"> {
 		field: RemoteFormField<number>;
-		initial?: number;
 		label: string;
 		min?: number;
 		max?: number;
@@ -24,7 +24,6 @@
 
 	let {
 		field,
-		initial = 0,
 		label,
 		min = earliest,
 		max = new Date().getTime(),
@@ -45,6 +44,7 @@
 	const attributes = $derived(field.as("number"));
 	const name = $derived("name" in attributes ? attributes.name : undefined);
 	const value = $derived(field.value() || 0);
+	const initial = untrack(() => value);
 	const minDateValue = $derived(dateToCalendar(Math.max(min, earliest)));
 	const maxDateValue = $derived(dateToCalendar(max));
 	const minValue = $derived(minDateValue.set({ hour: 0, minute: 0, second: 0, millisecond: 0 }));

@@ -69,7 +69,7 @@
 		{let data = $derived(proxify(log))}
 		<RemoteForm {schema} {form} {data} {initialErrors}>
 			{#snippet children(ctx)}
-				{const { form, initial } = $derived(ctx)}
+				{const { form } = $derived(ctx)}
 				{let advType = $state(advancementType(log))}
 				{#if params.logId === "new" && !firstLog}
 					<div class="col-span-12 mb-2">
@@ -117,7 +117,6 @@
 				<Control class={["col-span-12", !firstLog ? "sm:col-span-5 md:col-span-4" : "sm:col-span-6 md:col-span-5 lg:col-span-4"]}>
 					<DateInput
 						field={form.fields.date}
-						initial={initial.date}
 						label="Date"
 						timezone={data.timezone}
 						onchange={(timestamp) => {

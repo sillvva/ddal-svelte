@@ -1,6 +1,7 @@
 <script lang="ts">
 	import Error from "#lib/components/error.svelte";
 	import Control from "#lib/components/forms/control.svelte";
+	import DateInput from "#lib/components/forms/date-input.svelte";
 	import GainedItems from "#lib/components/forms/gained-items.svelte";
 	import InputWrapper from "#lib/components/forms/input-wrapper.svelte";
 	import Input from "#lib/components/forms/input.svelte";
@@ -46,6 +47,8 @@
 	{const draft = $derived(await API.drafts.forms.load({ draftId: params.draftId }))}
 	{const title = $derived(draft.name || "New Player Draft")}
 	{const isDm = $derived(draft.kind === "dm")}
+	<!-- A copied log has no date. Editing it must not add one. -->
+	{const hasDate = $derived(draft.date !== undefined)}
 
 	<Head {title} />
 
@@ -77,8 +80,8 @@
 		<p class="mb-4 alert flex items-start gap-4 bg-base-300 text-sm leading-6">
 			<span class="mt-0.5 iconify size-5 mdi--info-circle-outline"></span>
 			<span class="flex-1">
-				Players get the title, DM, advancement, treasure, downtime, items, and notes. Images can be added to a draft as markdown,
-				but they can't be uploaded by pasting or dragging and dropping.
+				Players get the title, date, DM, advancement, treasure, downtime, items, and notes. Images can be added to a draft as
+				markdown, but they can't be uploaded by pasting or dragging and dropping.
 			</span>
 		</p>
 	{/if}
@@ -94,7 +97,7 @@
 			{#if isDm}
 				<Input field={form.fields.type} hidden />
 			{:else}
-				<Control class="col-span-12 sm:col-span-5 md:col-span-4">
+				<Control class={["col-span-12", hasDate ? "sm:col-span-2 md:col-span-3 lg:col-span-4" : "sm:col-span-5 md:col-span-4"]}>
 					<InputWrapper field={form.fields.type} as="select" label="Log Type">
 						<select
 							{...form.fields.type.as("select")}
@@ -107,9 +110,19 @@
 					</InputWrapper>
 				</Control>
 			{/if}
-			<Control class={["col-span-12", !isDm && "sm:col-span-7 md:col-span-8"]}>
+			<Control
+				class={[
+					"col-span-12",
+					hasDate ? (isDm ? "sm:col-span-7" : "sm:col-span-5 lg:col-span-4") : !isDm && "sm:col-span-7 md:col-span-8"
+				]}
+			>
 				<Input field={form.fields.name} label="Title" required />
 			</Control>
+			{#if hasDate}
+				<Control class={["col-span-12", isDm ? "sm:col-span-5" : "sm:col-span-5 md:col-span-4"]}>
+					<DateInput field={form.fields.date} label="Date" timezone={data.timezone} />
+				</Control>
+			{/if}
 			{#if data.type === "game"}
 				{#if !isDm}
 					<Control class="col-span-12 sm:col-span-6">

@@ -17,7 +17,7 @@
 				<div class="collapse-content text-sm">
 					<p>
 						Fill in a session's log once and share it with your table. Each player then fills a new log on their own character
-						from it, instead of typing the title, DM, advancement, treasure, downtime, items, and notes themselves.
+						from it, instead of typing the title, date, DM, advancement, treasure, downtime, items, and notes themselves.
 					</p>
 				</div>
 			</details>
@@ -29,12 +29,13 @@
 						Choose <span class="font-semibold">New Player Draft</span> on the
 						<Link class="text-secondary" href="drafts">Drafts</Link>
 						page, or from the arrow next to <span class="font-semibold">New Log</span> on
-						<Link class="text-secondary" href="dm-logs">DM Logs</Link>. The form starts with your own DM name and DCI. Choose
+						<Link class="text-secondary" href="dm-logs">DM Logs</Link>. The form starts with your own DM name and DCI, and today's
+						date. Choose
 						<span class="font-semibold">Save Draft</span> to get the link.
 					</p>
 					<p>
 						<span class="font-semibold">Copy as draft</span> on one of your DM logs makes a DM log draft instead. It leaves out the
-						DM, and it fills a new DM log for whoever saves it, who becomes that log's DM.
+						DM and the date, and it fills a new DM log for whoever saves it, who becomes that log's DM.
 					</p>
 				</div>
 			</details>
@@ -150,8 +151,8 @@
 				<summary class="collapse-title font-semibold">What gets filled in?</summary>
 				<div class="collapse-content text-sm">
 					<p>
-						The log type, title, advancement, gold, downtime, notes, magic items, and story awards. These replace whatever was in
-						those fields. Drafts have no date, so the log keeps its own.
+						The log type, title, date, advancement, gold, downtime, notes, magic items, and story awards. These replace whatever
+						was in those fields. A draft copied from a log has no date, so the new log keeps its own.
 					</p>
 				</div>
 			</details>

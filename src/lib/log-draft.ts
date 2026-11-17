@@ -86,6 +86,7 @@ export function matchDraftDm(dms: readonly OwnedDm[], draft: DraftDmIdentity, us
 export interface DraftFillTarget {
 	id: string;
 	name: string;
+	date: number;
 	timezone: string;
 	experience?: number;
 	acp?: number;
@@ -112,11 +113,12 @@ export interface CharacterDraftFillTarget extends DraftFillTarget {
 
 /**
  * Copy a draft onto a new DM log for review. The DM is always the user saving it.
- * Keeps the log id and date. Item ids are new so two people can save the same draft
- * without sharing magic-item rows.
+ * Keeps the log id, and the log's date when the draft has none. Item ids are new so two people
+ * can save the same draft without sharing magic-item rows.
  */
 export function applyDraftToDmLog<T extends DraftFillTarget>(log: T, draft: LogDraftData): T {
 	log.name = draft.name;
+	if (draft.date) log.date = draft.date;
 	log.timezone = draft.timezone || log.timezone;
 	log.experience = draft.experience;
 	log.acp = draft.acp;

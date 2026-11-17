@@ -58,7 +58,7 @@
 		{let data = $derived(proxify(log))}
 		<RemoteForm {schema} {form} {data} {initialErrors}>
 			{#snippet children(ctx)}
-				{const { form, initial } = $derived(ctx)}
+				{const { form } = $derived(ctx)}
 				{let advType = $state(advancementType(log))}
 				{#if params.logId === "new"}
 					<div class="col-span-12 mb-2">
@@ -79,7 +79,7 @@
 					<Input field={form.fields.name} label="Title" required />
 				</Control>
 				<Control class="col-span-12 sm:col-span-5">
-					<DateInput field={form.fields.date} initial={initial.date} label="Date" timezone={data.timezone} />
+					<DateInput field={form.fields.date} label="Date" timezone={data.timezone} />
 				</Control>
 				<Control class="col-span-12 sm:col-span-7">
 					{const characters = $derived(await API.characters.queries.getAllSelect())}
@@ -101,7 +101,6 @@
 				<Control class="col-span-12 sm:col-span-5">
 					<DateInput
 						field={form.fields.appliedDate}
-						initial={initial.appliedDate}
 						label="Assigned Date"
 						min={data.date}
 						required={!!data.characterId}

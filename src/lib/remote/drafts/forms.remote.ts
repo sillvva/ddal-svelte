@@ -27,6 +27,7 @@ export const load = guardedQuery(loadSchema, function* (input, { user, event }) 
 			id: "" as const,
 			kind: "character" as const,
 			name: "",
+			date: Date.now(),
 			timezone: event.locals.app.settings.timezone,
 			type: "game" as const,
 			experience: 0,

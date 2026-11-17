@@ -244,11 +244,26 @@ export type LogDraftIdParam = v.InferOutput<typeof logDraftIdParamSchema>;
 export const logDraftIdParamSchema = v.union([logDraftIdSchema, v.literal("new")]);
 
 /**
- * Fields every draft shares: a log without a log id, date, character, or dropped items.
- * The date is set when the log is created from the draft. Field limits come from `logSchema`.
+ * Log date as epoch milliseconds. Drafts started with New Player Draft have one.
+ * Copied logs don't, so a log filled from them keeps its own date.
+ */
+const draftDate = v.pipe(v.number("Required"), v.minValue(new Date(2014, 0).getTime(), "Date must be 2014 or later"));
+
+/** Drafts saved while the date was nullable stored `null` for "no date". */
+const storedDraftDate = v.optional(
+	v.pipe(
+		v.nullable(draftDate),
+		v.transform((value) => value ?? undefined)
+	)
+);
+
+/**
+ * Fields every draft shares: a log without a log id, character, or dropped items.
+ * Field limits come from `logSchema`.
  */
 const logDraftEntries = {
 	name: logSchema.entries.name,
+	date: v.optional(draftDate),
 	timezone: logSchema.entries.timezone,
 	type: logSchema.entries.type,
 	experience: logSchema.entries.experience,
@@ -293,7 +308,10 @@ export const logDraftSchema = v.variant("kind", [
 /** Draft payload stored in `log_draft.data` and in the player's browser. */
 export type LogDraftData = v.InferOutput<typeof logDraftDataSchema>;
 export type CharacterLogDraftData = Extract<LogDraftData, { kind: "character" }>;
-export const logDraftDataSchema = v.variant("kind", [v.object(characterDraftEntries), v.object(dmDraftEntries)]);
+export const logDraftDataSchema = v.variant("kind", [
+	v.object({ ...characterDraftEntries, date: storedDraftDate }),
+	v.object({ ...dmDraftEntries, date: storedDraftDate })
+]);
 
 export { alreadyDropped, dropBeforeAcquisition, gainAfterDrop };
 
