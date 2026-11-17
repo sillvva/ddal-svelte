@@ -266,6 +266,9 @@ test("log drafts: share as a DM, open the link, fill a log, and keep edits with 
 		await page.getByRole("button", { name: "Save Draft" }).click();
 		await page.waitForURL(DRAFT_PATH);
 		draftId = draftIdFromUrl(page.url());
+		// The edit step looks for its own "Draft saved" toast.
+		await successToast(page, "Draft saved").getByRole("button", { name: "Close toast" }).click();
+		await expect(successToast(page, "Draft saved")).toHaveCount(0);
 
 		const row = await logDraftRow(draftId);
 		expect(row?.data.date).toBeGreaterThan(opened - 10 * 60 * 1000);
