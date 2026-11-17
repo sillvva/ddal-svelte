@@ -104,7 +104,7 @@
 	)}
 	{const newLogParams = $derived<RouteParams<typeof newLogHref>>({ characterId: character.id, logId: "new" })}
 	{const fromDraftHref = $derived(`${newLogHref}&fromDraft=1` satisfies Route)}
-	{const newLogOptions = $derived<SplitButtonOption<typeof fromDraftHref>[]>([
+	{const newLogOptions = $derived<SplitButtonOption[]>([
 		{
 			href: fromDraftHref,
 			params: { characterId: character.id, logId: "new" },

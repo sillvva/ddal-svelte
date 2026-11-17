@@ -66,10 +66,10 @@
 	{const newLogHref = $derived(
 		`/(app)/dm-logs/[logId=LogId]?draft=${encodeURIComponent(newestDraftId(logs.map((log) => log.id)))}` satisfies Route
 	)}
-	{const newLogParams = $derived({ logId: "new" } satisfies RouteParams<typeof newLogHref>)}
+	{const newLogParams = $derived<RouteParams<typeof newLogHref>>({ logId: "new" })}
 	{const newLogFromDraftHref = $derived(`${newLogHref}&fromDraft=1` satisfies Route)}
 	{const newPlayerDraftHref = $derived("/(app)/drafts/[draftId=DraftId]" satisfies Route)}
-	{const newLogOptions = $derived<SplitButtonOption<typeof newLogHref | typeof newPlayerDraftHref>[]>([
+	{const newLogOptions = $derived<SplitButtonOption[]>([
 		...(hasStoredDraft ? [{ href: newLogFromDraftHref, params: newLogParams, label: "New Log from Draft" }] : []),
 		{
 			href: newPlayerDraftHref,
