@@ -76,14 +76,6 @@
 			</p>
 			<LogDraftShare id={savedId} />
 		</div>
-	{:else}
-		<p class="mb-4 alert flex items-start gap-4 bg-base-300 text-sm leading-6">
-			<span class="mt-0.5 iconify size-5 mdi--info-circle-outline"></span>
-			<span class="flex-1">
-				Players get the title, date, DM, advancement, treasure, downtime, items, and notes. Images can be added to a draft as
-				markdown, but they can't be uploaded by pasting or dragging and dropping.
-			</span>
-		</p>
 	{/if}
 
 	{let data = $derived(proxify(draft))}
