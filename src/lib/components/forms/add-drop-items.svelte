@@ -52,7 +52,10 @@
 </script>
 
 <div
-	class="col-span-12 flex flex-col justify-between gap-8 bg-base-100 pt-8 md:sticky md:top-19 md:z-10 md:flex-row md:pb-4 md:max-lg:gap-4"
+	class={[
+		"col-span-12 flex flex-col justify-between gap-8 bg-base-100 pt-8",
+		"max-md:mb-8 max-md:gap-4 md:sticky md:top-19 md:z-10 md:flex-row md:pb-4 md:max-lg:gap-4"
+	]}
 >
 	{@render children?.()}
 	<div class="flex flex-1 flex-col gap-4 sm:flex-row md:max-w-fit">
