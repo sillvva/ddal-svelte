@@ -188,7 +188,7 @@ export function insertTable(value: string, _start: number, end: number): TextEdi
 /** Wraps the selection in a collapsible `<details>` block and selects its summary. */
 export function insertDetails(value: string, start: number, end: number): TextEdit {
 	const content = value.slice(start, end).trim() || "Details";
-	const block = `<details>\n<summary>Summary</summary>\n\n${content}\n\n</details>`;
+	const block = `<details>\n<summary>\nSummary\n</summary>\n\n${content}\n\n</details>`;
 	return insertBlock(value, start, end, block, "Summary");
 }
 

@@ -98,7 +98,7 @@ describe("block inserts", () => {
 
 	it("wraps the selection in details", () => {
 		const edit = insertDetails("before\nhidden\nafter", 7, 13);
-		expect(edit.value).toBe("before\n\n<details>\n<summary>Summary</summary>\n\nhidden\n\n</details>\n\nafter");
+		expect(edit.value).toBe("before\n\n<details>\n<summary>\nSummary\n</summary>\n\nhidden\n\n</details>\n\nafter");
 		expect(edit.value.slice(edit.start, edit.end)).toBe("Summary");
 	});
 });
