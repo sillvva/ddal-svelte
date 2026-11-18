@@ -2,20 +2,30 @@
 	import CopyLogDraft from "#lib/components/copy-log-draft.svelte";
 	import Head from "#lib/components/head.svelte";
 	import Items from "#lib/components/items.svelte";
+	import Link from "#lib/components/link.svelte";
 	import Markdown from "#lib/components/markdown.svelte";
 	import NavMenu from "#lib/components/nav-menu.svelte";
-	import SplitButton from "#lib/components/split-button.svelte";
 	import SearchResults from "#lib/components/search-results.svelte";
 	import Search from "#lib/components/search.svelte";
+	import SplitButton from "#lib/components/split-button.svelte";
 	import { EntitySearchFactory, successToast, swipeAction } from "#lib/factories.svelte.js";
 	import { logDraftMemory } from "#lib/log-draft-storage.svelte.js";
 	import * as API from "#lib/remote/index.js";
 	import type { FullLogData } from "#lib/server/effect/services/logs.js";
 	import { getGlobal } from "#lib/stores.svelte.js";
-	import { createTransition, download, formatDate, newestDraftId, parseEffectResult } from "#lib/util.js";
+	import {
+		createTransition,
+		formatDate,
+		newestDraftId,
+		parseEffectResult,
+		type Route,
+		type RouteParams,
+		type SplitButtonOption
+	} from "#lib/util.js";
 	import { page } from "$app/state";
 	import { sorter } from "@sillvva/utils";
-	import type { Attachment } from "svelte/attachments";
+	import { download } from "@svelteuidev/composables";
+	import { fromAction, type Attachment } from "svelte/attachments";
 	import { SvelteSet } from "svelte/reactivity";
 
 	const global = getGlobal();
@@ -53,19 +63,28 @@
 	{const sortedResults = $derived(
 		search.results.toSorted((a, b) => (global.app.dmLogs.sort === "asc" ? sorter(a.date, b.date) : sorter(b.date, a.date)))
 	)}
-	{const newLogHref = $derived(`/dm-logs/new?draft=${encodeURIComponent(newestDraftId(logs.map((log) => log.id)))}`)}
-	{const newLogOptions = $derived([
-		...(hasStoredDraft ? [{ href: `${newLogHref}&fromDraft=1`, label: "New Log from Draft" }] : []),
-		{ href: "/drafts/new", label: "New Player Draft" }
+	{const newLogHref = $derived(
+		`/(app)/dm-logs/[logId=LogId]?draft=${encodeURIComponent(newestDraftId(logs.map((log) => log.id)))}` satisfies Route
+	)}
+	{const newLogParams = $derived<RouteParams<typeof newLogHref>>({ logId: "new" })}
+	{const newLogFromDraftHref = $derived(`${newLogHref}&fromDraft=1` satisfies Route)}
+	{const newPlayerDraftHref = $derived("/(app)/drafts/[draftId=DraftId]" satisfies Route)}
+	{const newLogOptions = $derived<SplitButtonOption[]>([
+		...(hasStoredDraft ? [{ href: newLogFromDraftHref, params: newLogParams, label: "New Log from Draft" }] : []),
+		{
+			href: newPlayerDraftHref,
+			params: { draftId: "new" },
+			label: "New Player Draft"
+		}
 	])}
 
 	<Head title="{user?.name}'s DM Logs" />
 
-	<NavMenu base crumbs={[{ title: "DM Logs", url: "/dm-logs" }]}>
+	<NavMenu base crumbs={[{ title: "DM Logs", href: "dm-logs" }]}>
 		{#snippet menu()}
 			<li role="menuitem">
 				<button
-					{@attach download(() => ({
+					{@attach fromAction(download, () => ({
 						filename: "dm-logs.json",
 						blob: new Blob([JSON.stringify(logs)])
 					}))}
@@ -78,9 +97,16 @@
 
 	<div class="flex gap-2 sm:justify-between">
 		<div class="flex gap-2 max-sm:flex-1 sm:w-96" {@attach showStoredDraft}>
-			<SplitButton href={newLogHref} label="New Log" options={newLogOptions} shortcut class="max-sm:hidden" />
+			<SplitButton
+				href={newLogHref}
+				params={newLogParams}
+				label="New Log"
+				options={newLogOptions}
+				shortcut
+				class="max-sm:hidden"
+			/>
 			<Search name={searchKey} placeholder="Search by name, class, items, etc." />
-			<SplitButton href={newLogHref} label="New Log" options={newLogOptions} compact class="sm:hidden" />
+			<SplitButton href={newLogHref} params={newLogParams} label="New Log" options={newLogOptions} compact class="sm:hidden" />
 		</div>
 		<div class="flex gap-2">
 			<button
@@ -135,13 +161,14 @@
 					>
 						<div class="content bg-base-200">
 							<div class="flex items-start justify-between gap-2">
-								<a
-									href={log.isDmLog ? `/dm-logs/${log.id}` : `/characters/${log.characterId}/log/${log.id}`}
+								<Link
+									href="/(app)/dm-logs/[logId=LogId]"
+									params={{ logId: log.id }}
 									class="row-link font-semibold whitespace-pre-wrap text-secondary"
 									aria-label="Edit Log"
 								>
 									<SearchResults text={log.name} terms={search.terms} />
-								</a>
+								</Link>
 								<CopyLogDraft logId={log.id} compact />
 							</div>
 							<p class="text-netural-content text-xs font-normal whitespace-nowrap">
@@ -150,9 +177,13 @@
 							{#if log.character}
 								<p class="text-sm font-normal">
 									<span class="font-semibold">Character:</span>
-									<a href="/characters/{log.character.id}" class="text-secondary">
+									<Link
+										href="/(app)/characters/[characterId=CharacterId]"
+										params={{ characterId: log.character.id }}
+										class="text-secondary"
+									>
 										<SearchResults text={log.character.name} terms={search.terms} />
-									</a>
+									</Link>
 								</p>
 							{/if}
 							<div class="text-sm">
@@ -216,12 +247,13 @@
 								{#if log.storyAwardsGained.length > 0 || log.storyAwardsLost.length > 0}
 									{#each log.storyAwardsGained as mi (mi.id)}
 										<div class="mt-2 text-sm whitespace-pre-wrap">
-											<a
-												href={`/characters/${log.characterId}/log/${log.id}`}
+											<Link
+												href="/(app)/dm-logs/[logId=LogId]"
+												params={{ logId: log.id }}
 												class="row-link pr-2 font-semibold dark:text-white print:block"
 											>
 												{mi.name}{mi.description ? ":" : ""}
-											</a>
+											</Link>
 											{#if mi.description}
 												<Markdown content={mi.description || ""} />
 											{/if}
@@ -261,7 +293,7 @@
 							<td colSpan={5} class="py-20 text-center">
 								<p class="mb-4">You have no DM logs.</p>
 								<div class="flex justify-center" {@attach showStoredDraft}>
-									<SplitButton href={newLogHref} label="Create one now" options={newLogOptions} />
+									<SplitButton href={newLogHref} params={newLogParams} label="Create one now" options={newLogOptions} />
 								</div>
 							</td>
 						</tr>
@@ -277,22 +309,27 @@
 								data-deleting={deletingLog.has(log.id)}
 							>
 								<td class="static! align-top">
-									<a
-										href={log.isDmLog ? `/dm-logs/${log.id}` : `/characters/${log.characterId}/log/${log.id}`}
+									<Link
+										href="/(app)/dm-logs/[logId=LogId]"
+										params={{ logId: log.id }}
 										class="row-link font-semibold whitespace-pre-wrap text-secondary"
 										aria-label="Edit Log"
 									>
 										<SearchResults text={log.name} terms={search.terms} />
-									</a>
+									</Link>
 									<p class="text-netural-content text-xs font-normal whitespace-nowrap">
 										{formatDate(new Date(log.date), log.timezone)}
 									</p>
 									{#if log.character}
 										<p class="text-sm font-normal">
 											<span class="font-semibold">Character:</span>
-											<a href="/characters/{log.character.id}" class="text-secondary">
+											<Link
+												href="/(app)/characters/[characterId=CharacterId]"
+												params={{ characterId: log.character.id }}
+												class="text-secondary"
+											>
 												<SearchResults text={log.character.name} terms={search.terms} />
-											</a>
+											</Link>
 										</p>
 									{/if}
 									<!-- Mobile Details -->
@@ -411,7 +448,7 @@
 								<td colSpan={3} class="pt-0">
 									{#if log.description?.trim()}
 										<h4 class="text-base font-semibold">
-											<a href={`/dm-logs/${log.id}`} class="row-link">Notes:</a>
+											<Link href="/(app)/dm-logs/[logId=LogId]" params={{ logId: log.id }} class="row-link">Notes:</Link>
 										</h4>
 										<Markdown content={log.description} />
 									{/if}
@@ -428,9 +465,13 @@
 									{#if log.storyAwardsGained.length > 0 || log.storyAwardsLost.length > 0}
 										{#each log.storyAwardsGained as mi (mi.id)}
 											<div class="mt-2 text-sm whitespace-pre-wrap">
-												<a href={`/dm-logs/${log.id}`} class="row-link pr-2 font-semibold dark:text-white print:block">
+												<Link
+													href="/(app)/dm-logs/[logId=LogId]"
+													params={{ logId: log.id }}
+													class="row-link pr-2 font-semibold dark:text-white print:block"
+												>
 													{mi.name}{mi.description ? ":" : ""}
-												</a>
+												</Link>
 												{#if mi.description}
 													<Markdown content={mi.description || ""} />
 												{/if}

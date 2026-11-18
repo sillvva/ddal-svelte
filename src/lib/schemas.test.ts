@@ -1,21 +1,26 @@
 import { v7 } from "uuid";
 import * as v from "valibot";
 import { describe, expect, it } from "vitest";
-import { dropBeforeAcquisition } from "./item-timeline-messages";
 import {
 	characterLogSchema,
 	characterSchema,
 	dMLogSchema,
+	dropBeforeAcquisition,
 	shortString,
 	text,
 	type CharacterId,
 	type DmLogSchemaIn,
 	type LogSchemaIn,
-	type LogTarget
+	type TimelineLog
 } from "./schemas";
+import type { FullCharacterData } from "./server/effect/services/characters";
 
 /** One grapheme, eleven UTF-16 code units. */
 const FAMILY = "👨‍👩‍👧‍👦";
+
+export type LogTarget = Pick<FullCharacterData, "id" | "totalLevel" | "totalGold" | "totalTcp"> & {
+	logs: readonly (TimelineLog & { acp: number; level: number; gold: number; tcp: number })[];
+};
 
 function issueMessages(result: { success: boolean; issues?: readonly { message: string }[] }) {
 	return result.success ? [] : (result.issues ?? []).map((issue) => issue.message);
@@ -55,8 +60,13 @@ function logInput(overrides: Partial<LogSchemaIn> = {}): LogSchemaIn {
 	};
 }
 
-function target(overrides: Partial<LogTarget> = {}): LogTarget {
-	return { id: v7() as CharacterId, totalLevel: 1, totalGold: 0, totalTcp: 0, logs: [], ...overrides };
+/**
+ * The schemas read only the fields in `LogTarget`, so the fixture builds just those
+ * and widens to the full character type the schema factories accept.
+ */
+function target(overrides: Partial<LogTarget> = {}): FullCharacterData {
+	const minimal: LogTarget = { id: v7() as CharacterId, totalLevel: 1, totalGold: 0, totalTcp: 0, logs: [], ...overrides };
+	return minimal as unknown as FullCharacterData;
 }
 
 describe("grapheme limits", () => {

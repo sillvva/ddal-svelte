@@ -1,4 +1,5 @@
 <script lang="ts">
+	import { hotkey } from "#lib/attachments.js";
 	import { authClient } from "#lib/auth.js";
 	import ImageUpload from "#lib/components/forms/image-upload.svelte";
 	import { BLANK_CHARACTER, PROVIDERS } from "#lib/constants.js";
@@ -7,7 +8,7 @@
 	import * as API from "#lib/remote/index.js";
 	import type { ImageUploadId } from "#lib/schemas.js";
 	import { getGlobal } from "#lib/stores.svelte.js";
-	import { hotkey, parseEffectResult } from "#lib/util.js";
+	import { parseEffectResult } from "#lib/util.js";
 	import { getLocalTimeZone } from "@internationalized/date";
 	import { isTupleOfAtLeast } from "@sillvva/utils";
 	import { onMount, tick } from "svelte";

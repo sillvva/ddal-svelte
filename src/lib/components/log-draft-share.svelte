@@ -1,10 +1,10 @@
 <script lang="ts">
+	import { topLayerDialog } from "#lib/attachments.js";
 	import { successToast } from "#lib/factories.svelte.js";
 	import { logDraftPath } from "#lib/log-draft.js";
 	import { page } from "$app/state";
 	import { clipboard } from "@svelteuidev/composables";
 	import { fromAction } from "svelte/attachments";
-	import { topLayerDialog } from "./dialog.js";
 	import QrCode from "./qr-code.svelte";
 
 	interface Props {

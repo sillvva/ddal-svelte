@@ -149,6 +149,8 @@ export interface LogDraftRow {
 		/** Missing on drafts saved before DM and character drafts were told apart. */
 		kind?: "character" | "dm";
 		name: string;
+		/** Epoch milliseconds. Only drafts started with New Player Draft have one. */
+		date?: number;
 		description: string;
 		/** Character drafts only. */
 		dm?: { name: string; DCI: string };

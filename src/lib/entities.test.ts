@@ -1,26 +1,32 @@
 import { v7 } from "uuid";
 import { describe, expect, it } from "vitest";
+import { defaultLogSchema, defaultTimelineLog, logIsBefore } from "./entities";
 import {
 	alreadyDropped,
 	dropBeforeAcquisition,
 	gainAfterDrop,
 	itemTimelineIssues,
-	logIsBefore,
+	type ItemId,
 	type ItemTimelineIssue,
-	type TimelineLog
-} from "./entities";
-import type { ItemId, LogId } from "./schemas";
+	type LogId,
+	type LogSchema,
+	type TimelineLog,
+	type UserId
+} from "./schemas";
 
 const day = (n: number) => new Date(Date.UTC(2024, 0, n));
+const userId = () => v7() as UserId;
 const itemId = () => v7() as ItemId;
 const logId = () => v7() as LogId;
 
 function log(date: Date, items: { id?: LogId; gained?: ItemId[]; lost?: ItemId[]; awards?: ItemId[] } = {}): TimelineLog {
 	return {
+		...defaultLogSchema(userId()),
 		id: items.id ?? logId(),
 		date,
 		isDmLog: false,
 		appliedDate: null,
+		showDate: date,
 		magicItemsGained: (items.gained ?? []).map((id) => ({ id })),
 		magicItemsLost: (items.lost ?? []).map((id) => ({ id })),
 		storyAwardsGained: (items.awards ?? []).map((id) => ({ id })),
@@ -32,13 +38,14 @@ function input(
 	date: Date,
 	items: { id?: LogId; gained?: ItemId[]; lost?: ItemId[]; lostAwards?: ItemId[] } = {},
 	dm?: { appliedDate: Date | null }
-) {
+): LogSchema {
 	return {
+		...defaultLogSchema(userId()),
 		id: items.id ?? logId(),
 		date,
 		isDmLog: !!dm,
 		appliedDate: dm?.appliedDate ?? null,
-		magicItemsGained: (items.gained ?? []).map((id) => ({ id })),
+		magicItemsGained: (items.gained ?? []).map((id) => ({ id, name: "", description: "" })),
 		magicItemsLost: items.lost ?? [],
 		storyAwardsGained: [],
 		storyAwardsLost: items.lostAwards ?? []
@@ -51,11 +58,13 @@ function messages(issues: ItemTimelineIssue[]) {
 
 describe("logIsBefore", () => {
 	it("orders logs with the same timestamp by uuid creation order", () => {
-		const first = { id: "01a1928a-e1db-7622-b55b-02da10ae134d", time: 1 };
-		const second = { id: "01a1928a-e1db-7622-b55b-0bcdd08f7aa9", time: 1 };
+		const first = defaultTimelineLog({ id: "01a1928a-e1db-7622-b55b-02da10ae134d" as LogId, date: new Date(1) });
+		const second = defaultTimelineLog({ id: "01a1928a-e1db-7622-b55b-0bcdd08f7aa9" as LogId, date: new Date(1) });
 		expect(logIsBefore(first, second)).toBe(true);
 		expect(logIsBefore(second, first)).toBe(false);
-		expect(logIsBefore({ ...second, time: 0 }, first)).toBe(true);
+		expect(
+			logIsBefore(defaultTimelineLog({ id: "01a1928a-e1db-7622-b55b-0bcdd08f7aa9" as LogId, date: new Date(0) }), first)
+		).toBe(true);
 	});
 });
 

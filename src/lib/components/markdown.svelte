@@ -14,6 +14,7 @@
 	import list from "#lib/components/renderers/list.svelte";
 	import listitem from "#lib/components/renderers/listitem.svelte";
 	import paragraph from "#lib/components/renderers/paragraph.svelte";
+	import strong from "#lib/components/renderers/strong.svelte";
 	import table from "#lib/components/renderers/table.svelte";
 	import tablebody from "#lib/components/renderers/tablebody.svelte";
 	import tablecell from "#lib/components/renderers/tablecell.svelte";
@@ -69,6 +70,7 @@
 			tablebody,
 			tablerow,
 			tablecell,
+			strong,
 			html: {
 				iframe: null,
 				audio: null,

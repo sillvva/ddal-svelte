@@ -4,6 +4,7 @@
 	import { errorToast } from "#lib/factories.svelte.js";
 	import * as API from "#lib/remote/index.js";
 	import { getGlobal } from "#lib/stores.svelte.js";
+	import { resolve } from "$app/paths";
 	import { page } from "$app/state";
 	import { onMount } from "svelte";
 
@@ -23,7 +24,7 @@
 
 	function afterPasskeySignIn(signedIn: boolean) {
 		if (signedIn) {
-			window.location.href = home.redirectTo || "/characters";
+			window.location.href = home.redirectTo || resolve("characters");
 			return;
 		}
 		passkeyPending = false;
@@ -52,7 +53,7 @@
 		showPasskeyWarning = true;
 		const { data, error } = await authClient.passkey.addPasskey({ createSession: true });
 		if (data) {
-			window.location.href = "/onboarding";
+			window.location.href = resolve("onboarding");
 			return;
 		}
 		passkeyPending = false;
@@ -112,7 +113,7 @@
 						console.log("Signing in with", provider.name);
 						const { error } = await authClient.signIn.social({
 							provider: provider.id,
-							callbackURL: home.redirectTo || "/characters"
+							callbackURL: home.redirectTo || resolve("characters")
 						});
 						if (error) {
 							console.error(error);

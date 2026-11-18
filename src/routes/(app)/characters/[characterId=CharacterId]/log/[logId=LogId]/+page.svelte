@@ -15,9 +15,10 @@
 	import PopulateLogDraft from "#lib/components/populate-log-draft.svelte";
 	import { defaultDM, getItemEntities } from "#lib/entities.js";
 	import { proxify } from "#lib/factories.svelte.js";
-	import { applyDraftToLog, seasonForAdvancement } from "#lib/log-draft.js";
+	import { advancementType, applyDraftToLog } from "#lib/log-draft.js";
 	import * as API from "#lib/remote/index.js";
 	import { type DungeonMasterId, logSchema } from "#lib/schemas.js";
+	import { resolve } from "$app/paths";
 	import { page } from "$app/state";
 	import { v7 } from "uuid";
 
@@ -49,9 +50,13 @@
 
 		<NavMenu
 			crumbs={[
-				{ title: "Characters", url: "/characters" },
-				{ title: character.name, url: `/characters/${character.id}` },
-				{ title: log.name || "New Log", url: `/characters/${character.id}/log/${log.id}` }
+				{ title: "Characters", href: "characters" },
+				{ title: character.name, href: "/(app)/characters/[characterId=CharacterId]", params: { characterId: character.id } },
+				{
+					title: log.name || "New Log",
+					href: "/(app)/characters/[characterId=CharacterId]/log/[logId=LogId]",
+					params: { characterId: character.id, logId: log.id }
+				}
 			]}
 		>
 			{#snippet actions()}
@@ -64,8 +69,8 @@
 		{let data = $derived(proxify(log))}
 		<RemoteForm {schema} {form} {data} {initialErrors}>
 			{#snippet children(ctx)}
-				{const { form, initial } = $derived(ctx)}
-				{let season = $state(seasonForAdvancement(log))}
+				{const { form } = $derived(ctx)}
+				{let advType = $state(advancementType(log))}
 				{#if params.logId === "new" && !firstLog}
 					<div class="col-span-12 mb-2">
 						<PopulateLogDraft
@@ -76,7 +81,7 @@
 								if (!user) return;
 								applyDraftToLog(data, draft, dms, user.id);
 								form.fields.set(data);
-								season = seasonForAdvancement(draft);
+								advType = advancementType(draft);
 							}}
 						/>
 					</div>
@@ -112,7 +117,6 @@
 				<Control class={["col-span-12", !firstLog ? "sm:col-span-5 md:col-span-4" : "sm:col-span-6 md:col-span-5 lg:col-span-4"]}>
 					<DateInput
 						field={form.fields.date}
-						initial={initial.date}
 						label="Date"
 						timezone={data.timezone}
 						onchange={(timestamp) => {
@@ -152,7 +156,7 @@
 								}}
 								clearable
 								onclear={() => (data.dm = defaultDM(user.id))}
-								link={data.dm.id && data.dm.name ? `/dms/${data.dm.id}` : ""}
+								link={data.dm.id && data.dm.name ? resolve("/(app)/dms/[dmId=DMId]", { dmId: data.dm.id }) : ""}
 								placeholder={dms.find((dm) => dm.isUser)?.name || user.name}
 							/>
 						</Control>
@@ -176,10 +180,10 @@
 					<Input field={form.fields.dm.userId} hidden />
 					<Input field={form.fields.dm.isUser} type="checkbox" hidden />
 					<Control class="col-span-12 sm:col-span-4">
-						<InputWrapper type="select" labelFor="season" label="Season">
+						<InputWrapper type="select" labelFor="adv-type" label="Advancement Type">
 							<select
-								id="season"
-								bind:value={season}
+								id="adv-type"
+								bind:value={advType}
 								class="select-bordered select w-full max-sm:text-base"
 								onchange={() => {
 									data.experience = 0;
@@ -188,23 +192,23 @@
 									data.tcp = 0;
 								}}
 							>
-								<option value={9}>Season 9+ (Level)</option>
-								<option value={8}>Season 8 (ACP/TCP)</option>
-								<option value={1}>Season 1-7 (Experience)</option>
+								<option value="level">Level</option>
+								<option value="acp">ACP/TCP</option>
+								<option value="experience">Experience</option>
 							</select>
 						</InputWrapper>
 					</Control>
-					{#if season === 1}
+					{#if advType === "experience"}
 						<Control class="col-span-12 sm:col-span-4">
 							<Input field={form.fields.experience} type="number" label="Experience" />
 						</Control>
 					{/if}
-					{#if season === 8}
+					{#if advType === "acp"}
 						<Control class="col-span-6 sm:col-span-2">
 							<Input field={form.fields.acp} type="number" label="ACP" />
 						</Control>
 					{/if}
-					{#if season === 9}
+					{#if advType === "level"}
 						<Control class="col-span-12 sm:col-span-4">
 							<Input
 								field={form.fields.level}
@@ -221,7 +225,7 @@
 					<Input field={form.fields.dm.userId} hidden />
 					<Input field={form.fields.dm.isUser} type="checkbox" hidden />
 				{/if}
-				{#if season === 8 || data.type === "nongame"}
+				{#if advType === "acp" || data.type === "nongame"}
 					<Control class={data.type === "game" ? "col-span-6 sm:col-span-2" : "col-span-4"}>
 						<Input field={form.fields.tcp} type="number" label="TCP" />
 					</Control>

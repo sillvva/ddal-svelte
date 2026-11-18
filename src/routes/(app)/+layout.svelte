@@ -1,7 +1,9 @@
 <script lang="ts">
+	import { hotkey } from "#lib/attachments.js";
 	import CommandTray from "#lib/components/command-tray.svelte";
 	import Error from "#lib/components/error.svelte";
 	import Footer from "#lib/components/footer.svelte";
+	import Link from "#lib/components/link.svelte";
 	import Markdown from "#lib/components/markdown.svelte";
 	import MobileNav from "#lib/components/mobile-nav.svelte";
 	import Settings from "#lib/components/settings.svelte";
@@ -9,7 +11,7 @@
 	import { logDraftMemory } from "#lib/log-draft-storage.svelte.js";
 	import * as API from "#lib/remote/index.js";
 	import { getGlobal } from "#lib/stores.svelte.js";
-	import { hotkey, parseEffectResult } from "#lib/util.js";
+	import { parseEffectResult } from "#lib/util.js";
 	import { afterNavigate, goto } from "$app/navigation";
 	import { navigating, page } from "$app/state";
 	import { wait } from "@sillvva/utils";
@@ -66,7 +68,7 @@
 			<div class="inline max-w-10 shrink-0 grow md:hidden"></div>
 			<div class="inline max-w-10 shrink-0 grow md:hidden"></div>
 
-			<a href={user ? "/characters" : "/"} class="flex flex-1 items-center justify-center gap-1 md:flex-none">
+			<Link href={user ? "characters" : ""} class="flex flex-1 items-center justify-center gap-1 md:flex-none">
 				<img
 					src="/images/{global.app.settings.mode === 'dark' ? 'dragon' : 'dragon-dark'}.webp"
 					alt="Dragon"
@@ -76,12 +78,12 @@
 					<div class="text-base leading-4 text-base-content">Adventurers League</div>
 					<div class="text-3xl leading-7">Log Sheet</div>
 				</h1>
-			</a>
+			</Link>
 			{#if user}
-				<a href="/characters" class="ml-8 p-2 max-md:hidden">Character Logs</a>
-				<a href="/dm-logs" class="p-2 max-md:hidden">DM Logs</a>
-				<a href="/dms" class="p-2 max-md:hidden">DMs</a>
-				<a href="/drafts" class="p-2 max-md:hidden">Drafts</a>
+				<Link href="characters" class="ml-8 p-2 max-md:hidden">Character Logs</Link>
+				<Link href="dm-logs" class="p-2 max-md:hidden">DM Logs</Link>
+				<Link href="dms" class="p-2 max-md:hidden">DMs</Link>
+				<Link href="drafts" class="p-2 max-md:hidden">Drafts</Link>
 			{/if}
 			<div class="flex-1 max-md:hidden"></div>
 			<div class={["flex items-center", user?.role === "admin" ? "gap-2" : "gap-4"]}>
@@ -89,9 +91,9 @@
 					<CommandTray />
 
 					{#if user.role === "admin"}
-						<a href="/admin/users" class="btn mr-1 btn-ghost p-2 max-md:hidden" aria-label="Admin">
+						<Link href="admin/users" class="btn mr-1 btn-ghost p-2 max-md:hidden" aria-label="Admin">
 							<span class="iconify size-6 mdi--administrator"></span>
-						</a>
+						</Link>
 					{/if}
 
 					<!-- Avatar -->
@@ -122,13 +124,13 @@
 						</button>
 					</div>
 				{:else}
-					<a
-						href={`/?redirect=${encodeURIComponent(`${page.url.pathname}${page.url.search}`)}`}
+					<Link
+						href={`?redirect=${encodeURIComponent(`${page.url.pathname}${page.url.search}`)}`}
 						class="btn btn-ghost max-md:px-0"
 					>
 						<span class="iconify size-6 mdi--log-in"></span>
 						Sign In
-					</a>
+					</Link>
 				{/if}
 			</div>
 		</nav>

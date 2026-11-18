@@ -1,5 +1,5 @@
 <script lang="ts">
-	import { hotkey } from "#lib/util.js";
+	import { hotkey } from "#lib/attachments.js";
 	import { goto } from "$app/navigation";
 	import { page } from "$app/state";
 	import { debounce } from "@sillvva/utils";

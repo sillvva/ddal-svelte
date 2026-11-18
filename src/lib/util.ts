@@ -1,11 +1,10 @@
 import { goto } from "$app/navigation";
+import { resolve } from "$app/paths";
+import type { PathnameWithSearchOrHash, RouteIdWithSearchOrHash } from "$app/types";
 import { getLocalTimeZone } from "@internationalized/date";
 import { isObject, wait } from "@sillvva/utils";
 import type { StandardSchemaV1 } from "@standard-schema/spec";
 import { isHttpError } from "@sveltejs/kit";
-import { hotkey as hk, type HotkeyItem } from "@svelteuidev/composables";
-import { tick } from "svelte";
-import type { Attachment } from "svelte/attachments";
 import type { FullPathname } from "./constants";
 import { errorToast } from "./factories.svelte";
 import type { ClientEffectResult, EffectFailure } from "./server/effect/runtime";
@@ -25,49 +24,46 @@ type LessThan<N extends number, Acc extends number[] = []> = N extends Acc["leng
  */
 export type NumericRange<Start extends number, End extends number> = Exclude<End | LessThan<End>, LessThan<Start>>;
 
-export type Crumb = {
-	title: string;
-	url: string;
-};
-
 export type HTMLEvent<T extends Element> = Event & {
 	currentTarget: EventTarget & T;
 };
+
+export type Route = PathnameWithSearchOrHash | RouteIdWithSearchOrHash;
+export type RouteArgs<R extends Route> = Parameters<typeof resolve<R>>;
+export type RouteParams<R extends Route> = RouteArgs<R> extends [route: unknown, params: infer P] ? P : undefined;
+
+/**
+ * The `params` prop for a given `href`. Route IDs with dynamic segments require `params`;
+ * pathnames and static route IDs take none.
+ */
+export type RouteParamsProp<R extends Route> =
+	RouteArgs<R> extends [route: unknown, params: infer P] ? { params: P } : { params?: undefined };
+
+/**
+ * Distributes over every route so each crumb's `params` is checked against its own `href`.
+ * Route IDs with dynamic segments require `params`; pathnames take none.
+ */
+export type Crumb<R extends Route = Route> = R extends Route ? { title: string; href: R } & RouteParamsProp<R> : never;
+
+/**
+ * Distributes over every route so each option's `params` is checked against its own `href`.
+ * Route IDs with dynamic segments require `params`; pathnames take none.
+ */
+export type SplitButtonOption<R extends Route = Route> = R extends Route
+	? { href: R; label: string } & RouteParamsProp<R>
+	: never;
+
+/** Serializable route target for command-tray items (resolved on the client). */
+export type CommandTrayLink<R extends Route = Route> = R extends Route ? { href: R } & RouteParamsProp<R> : never;
+
+export function resolveRoute<R extends Route>(href: R, params?: unknown) {
+	return resolve(...([href, params].filter((arg) => arg !== undefined) as RouteArgs<R>));
+}
 
 export async function createTransition(action: ViewTransitionCallback, after?: () => Awaitable<void>, afterDelay = 0) {
 	if (!document.startViewTransition) action();
 	else document.startViewTransition(action);
 	if (after) wait(afterDelay).then(after);
-}
-
-export function hotkey(hotkeys: HotkeyItem[]): Attachment<HTMLElement | Document> {
-	return (node: HTMLElement | Document) => {
-		if (node instanceof Document) node = node.body;
-		return hk(node, hotkeys).destroy;
-	};
-}
-
-export function download(params: () => { blob: Blob; filename: string }) {
-	return (node: HTMLElement) => {
-		const click = async () => {
-			const { blob, filename } = params();
-			try {
-				const anchor = document.createElement("a");
-				const url = URL.createObjectURL(blob);
-				anchor.href = url;
-				anchor.download = filename || "";
-				document.body.appendChild(anchor);
-				anchor.click();
-				await tick();
-				document.body.removeChild(anchor);
-				URL.revokeObjectURL(url);
-				node.dispatchEvent(new CustomEvent("download", { detail: { blob: blob, filename: filename } }));
-			} catch {
-				node.dispatchEvent(new CustomEvent("download-error", { detail: { blob: blob, filename: filename } }));
-			}
-		};
-		node.addEventListener("click", click, true);
-	};
 }
 
 export function getTrace(error: string) {

@@ -2,8 +2,10 @@ import type { FullCharacterData } from "#lib/server/effect/services/characters.j
 import { omit } from "@sillvva/utils";
 import * as v from "valibot";
 import { BLANK_CHARACTER, PASSKEY_PLACEHOLDER_EMAIL_DOMAIN, PROVIDERS, themeGroups, themes } from "./constants";
-import { itemTimelineIssues, type ItemTimelineIssue, type TimelineLog } from "./entities.js";
+import { defaultTimelineLog, logSort } from "./entities";
 import { AVATAR_IMAGE_LIMITS, CHARACTER_IMAGE_LIMITS, NOTE_IMAGE_LIMITS, STORED_IMAGE_CONTENT_TYPES } from "./images/limits";
+import { alreadyDropped, dropBeforeAcquisition, gainAfterDrop } from "./item-timeline-messages";
+import type { FullLogData } from "./server/effect/services/logs";
 
 export type BrandedType = v.InferOutput<ReturnType<typeof brandedId>>;
 function brandedId<T extends string>(name: T) {
@@ -242,11 +244,26 @@ export type LogDraftIdParam = v.InferOutput<typeof logDraftIdParamSchema>;
 export const logDraftIdParamSchema = v.union([logDraftIdSchema, v.literal("new")]);
 
 /**
- * Fields every draft shares: a log without a log id, date, character, or dropped items.
- * The date is set when the log is created from the draft. Field limits come from `logSchema`.
+ * Log date as epoch milliseconds. Drafts started with New Player Draft have one.
+ * Copied logs don't, so a log filled from them keeps its own date.
+ */
+const draftDate = v.pipe(v.number("Required"), v.minValue(new Date(2014, 0).getTime(), "Date must be 2014 or later"));
+
+/** Drafts saved while the date was nullable stored `null` for "no date". */
+const storedDraftDate = v.optional(
+	v.pipe(
+		v.nullable(draftDate),
+		v.transform((value) => value ?? undefined)
+	)
+);
+
+/**
+ * Fields every draft shares: a log without a log id, character, or dropped items.
+ * Field limits come from `logSchema`.
  */
 const logDraftEntries = {
 	name: logSchema.entries.name,
+	date: v.optional(draftDate),
 	timezone: logSchema.entries.timezone,
 	type: logSchema.entries.type,
 	experience: logSchema.entries.experience,
@@ -291,7 +308,83 @@ export const logDraftSchema = v.variant("kind", [
 /** Draft payload stored in `log_draft.data` and in the player's browser. */
 export type LogDraftData = v.InferOutput<typeof logDraftDataSchema>;
 export type CharacterLogDraftData = Extract<LogDraftData, { kind: "character" }>;
-export const logDraftDataSchema = v.variant("kind", [v.object(characterDraftEntries), v.object(dmDraftEntries)]);
+export const logDraftDataSchema = v.variant("kind", [
+	v.object({ ...characterDraftEntries, date: storedDraftDate }),
+	v.object({ ...dmDraftEntries, date: storedDraftDate })
+]);
+
+export { alreadyDropped, dropBeforeAcquisition, gainAfterDrop };
+
+export type ItemTimelineIssue = {
+	id: ItemId;
+	field: "magicItemsLost" | "storyAwardsLost" | "date";
+	type: "gained" | "dropped";
+	message: string;
+};
+
+export type TimelineLog = Pick<FullLogData, "id" | "showDate" | "isDmLog" | "appliedDate" | "date"> & {
+	magicItemsGained: readonly { id: ItemId }[];
+	magicItemsLost: readonly { id: ItemId }[];
+	storyAwardsGained: readonly { id: ItemId }[];
+	storyAwardsLost: readonly { id: ItemId }[];
+};
+
+/** Reject a drop dated before the item was acquired, including after the log's date moves. */
+export function itemTimelineIssues(logs: readonly TimelineLog[], input: Omit<LogSchema, "dm">): ItemTimelineIssue[] {
+	const events = [...logs.filter((log) => log.id !== input.id), defaultTimelineLog(input)].toSorted(logSort);
+	const gained = new Map<ItemId, "magic" | "story">();
+	const held = new Set<ItemId>();
+	const issues: ItemTimelineIssue[] = [];
+	const seen = new Set<string>();
+	const add = (issue: ItemTimelineIssue) => {
+		const key = `${issue.id}:${issue.field}:${issue.message}`;
+		if (seen.has(key)) return;
+		seen.add(key);
+		issues.push(issue);
+	};
+
+	const noteDrop = (
+		id: ItemId,
+		kind: "magic" | "story",
+		isInput: boolean,
+		inputGained: readonly { id: ItemId }[],
+		field: "magicItemsLost" | "storyAwardsLost"
+	) => {
+		// Item is treated as a new item, because it hasn't been gained in a
+		// previous log (undefined) or it was gained as a different kind
+		if (gained.get(id) !== kind) {
+			// We're dropping an item that was never gained
+			if (isInput) add({ id, field, message: dropBeforeAcquisition, type: "dropped" });
+			// The item was gained after it was dropped, or gained in the same log
+			else if (inputGained.some((item) => item.id === id)) add({ id, field: "date", message: gainAfterDrop, type: "gained" });
+			return;
+		}
+		// Item is not new, but no longer held
+		if (!held.has(id)) {
+			// We're dropping an item that was already dropped
+			if (isInput) add({ id, field, message: alreadyDropped, type: "dropped" });
+			return;
+		}
+		// Item is still held, so we can now delete it from the held set
+		held.delete(id);
+	};
+
+	for (const event of events) {
+		const isInput = event.id === input.id;
+		for (const item of event.magicItemsLost) noteDrop(item.id, "magic", isInput, input.magicItemsGained, "magicItemsLost");
+		for (const item of event.storyAwardsLost) noteDrop(item.id, "story", isInput, input.storyAwardsGained, "storyAwardsLost");
+		for (const item of event.magicItemsGained) {
+			gained.set(item.id, "magic");
+			held.add(item.id);
+		}
+		for (const item of event.storyAwardsGained) {
+			gained.set(item.id, "story");
+			held.add(item.id);
+		}
+	}
+
+	return issues;
+}
 
 function objectIssuePath<T extends object>(input: T, key: keyof T & string): v.ObjectPathItem {
 	return {
@@ -339,12 +432,7 @@ function timelineIssuePath(
 	return [objectIssuePath(input, issue.field), arrayIssuePath(list, index)];
 }
 
-/** The character totals and logs a submitted log is checked against. */
-export type LogTarget = Pick<FullCharacterData, "id" | "totalLevel" | "totalGold" | "totalTcp"> & {
-	logs: readonly (TimelineLog & { acp: number; level: number; gold: number; tcp: number })[];
-};
-
-export const characterLogSchema = (character: LogTarget) =>
+export const characterLogSchema = (character: FullCharacterData) =>
 	v.pipe(
 		logSchema,
 		v.check((input) => !input.isDmLog, "Only character logs can be saved here."),
@@ -387,7 +475,7 @@ export const characterLogSchema = (character: LogTarget) =>
 	);
 
 /** `characters` must hold only characters the saving user owns. */
-export const dMLogSchema = (characters: readonly LogTarget[] = []) =>
+export const dMLogSchema = (characters: readonly FullCharacterData[] = []) =>
 	v.pipe(
 		dmLogSchema,
 		v.check((input) => input.isDmLog, "Only DM logs can be saved here."),

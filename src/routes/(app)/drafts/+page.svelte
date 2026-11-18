@@ -1,5 +1,6 @@
 <script lang="ts">
 	import Head from "#lib/components/head.svelte";
+	import Link from "#lib/components/link.svelte";
 	import LogDraftFaq from "#lib/components/log-draft-faq.svelte";
 	import NavMenu from "#lib/components/nav-menu.svelte";
 	import { successToast } from "#lib/factories.svelte.js";
@@ -46,13 +47,13 @@
 
 	<Head title="{user?.name}'s Drafts" />
 
-	<NavMenu base crumbs={[{ title: "Drafts", url: "/drafts" }]} />
+	<NavMenu base crumbs={[{ title: "Drafts", href: "drafts" }]} />
 
 	<div class="flex items-center justify-between gap-2">
 		{#if atLimit}
 			<button type="button" class="btn btn-primary sm:btn-sm" disabled>New Player Draft</button>
 		{:else}
-			<a href="/drafts/new" class="btn btn-primary sm:btn-sm">New Player Draft</a>
+			<Link href="drafts/new" class="btn btn-primary sm:btn-sm">New Player Draft</Link>
 		{/if}
 		<p class="text-sm">
 			<span class={["font-semibold", atLimit && "text-error"]}>{visible.length} / {limit}</span>
@@ -84,7 +85,7 @@
 						<tr>
 							<td colSpan={5} class="py-20 text-center">
 								<p class="mb-4">You have no drafts.</p>
-								<a href="/drafts/new" class="btn btn-primary">Create one now</a>
+								<Link href="drafts/new" class="btn btn-primary">Create one now</Link>
 							</td>
 						</tr>
 					{:else}
@@ -92,13 +93,14 @@
 							{const remaining = $derived(daysLeft(draft.expiresAt))}
 							<tr>
 								<td>
-									<a
-										href="/drafts/{draft.id}"
+									<Link
+										href="/(app)/drafts/[draftId=DraftId]"
+										params={{ draftId: draft.id }}
 										class="row-link text-left font-semibold whitespace-pre-wrap text-secondary"
 										aria-label="Edit {draft.name || 'Untitled draft'}"
 									>
 										{draft.name || "Untitled draft"}
-									</a>
+									</Link>
 									{#if draft.type === "nongame"}
 										<p class="text-xs">Non-Game</p>
 									{/if}

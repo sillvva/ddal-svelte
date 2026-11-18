@@ -14,7 +14,7 @@
 	import NavMenu from "#lib/components/nav-menu.svelte";
 	import PopulateLogDraft from "#lib/components/populate-log-draft.svelte";
 	import { proxify } from "#lib/factories.svelte.js";
-	import { applyDraftToDmLog, seasonForAdvancement } from "#lib/log-draft.js";
+	import { advancementType, applyDraftToDmLog } from "#lib/log-draft.js";
 	import * as API from "#lib/remote/index.js";
 	import { dmLogSchema } from "#lib/schemas.js";
 	import { page } from "$app/state";
@@ -44,8 +44,8 @@
 
 		<NavMenu
 			crumbs={[
-				{ title: "DM Logs", url: "/dm-logs" },
-				{ title: log.name || "New Log", url: `/dm-logs/${log.id}` }
+				{ title: "DM Logs", href: "dm-logs" },
+				{ title: log.name || "New Log", href: "/(app)/dm-logs/[logId=LogId]", params: { logId: log.id } }
 			]}
 		>
 			{#snippet actions()}
@@ -58,8 +58,8 @@
 		{let data = $derived(proxify(log))}
 		<RemoteForm {schema} {form} {data} {initialErrors}>
 			{#snippet children(ctx)}
-				{const { form, initial } = $derived(ctx)}
-				{let season = $state(seasonForAdvancement(log))}
+				{const { form } = $derived(ctx)}
+				{let advType = $state(advancementType(log))}
 				{#if params.logId === "new"}
 					<div class="col-span-12 mb-2">
 						<PopulateLogDraft
@@ -68,7 +68,7 @@
 							onapply={(draft) => {
 								applyDraftToDmLog(data, draft);
 								form.fields.set(data);
-								season = seasonForAdvancement(draft);
+								advType = advancementType(draft);
 							}}
 						/>
 					</div>
@@ -79,7 +79,7 @@
 					<Input field={form.fields.name} label="Title" required />
 				</Control>
 				<Control class="col-span-12 sm:col-span-5">
-					<DateInput field={form.fields.date} initial={initial.date} label="Date" timezone={data.timezone} />
+					<DateInput field={form.fields.date} label="Date" timezone={data.timezone} />
 				</Control>
 				<Control class="col-span-12 sm:col-span-7">
 					{const characters = $derived(await API.characters.queries.getAllSelect())}
@@ -101,7 +101,6 @@
 				<Control class="col-span-12 sm:col-span-5">
 					<DateInput
 						field={form.fields.appliedDate}
-						initial={initial.appliedDate}
 						label="Assigned Date"
 						min={data.date}
 						required={!!data.characterId}
@@ -109,10 +108,10 @@
 					/>
 				</Control>
 				<Control class="col-span-12 sm:col-span-4">
-					<InputWrapper type="select" labelFor="season" label="Season">
+					<InputWrapper type="select" labelFor="adv-type" label="Advancement Type">
 						<select
-							id="season"
-							bind:value={season}
+							id="adv-type"
+							bind:value={advType}
 							class="select-bordered select w-full max-sm:text-base"
 							onchange={() => {
 								data.experience = 0;
@@ -121,23 +120,23 @@
 								data.tcp = 0;
 							}}
 						>
-							<option value={9}>Season 9+ (Level)</option>
-							<option value={8}>Season 8 (ACP/TCP)</option>
-							<option value={1}>Season 1-7 (Experience)</option>
+							<option value="level">Level</option>
+							<option value="acp">ACP/TCP</option>
+							<option value="experience">Experience</option>
 						</select>
 					</InputWrapper>
 				</Control>
-				{#if season === 1}
+				{#if advType === "experience"}
 					<Control class="col-span-12 sm:col-span-4">
 						<Input field={form.fields.experience} type="number" label="Experience" />
 					</Control>
 				{/if}
-				{#if season === 9}
+				{#if advType === "level"}
 					<Control class="col-span-12 sm:col-span-4">
 						<Input field={form.fields.level} type="number" label="Level" />
 					</Control>
 				{/if}
-				{#if season === 8}
+				{#if advType === "acp"}
 					<Control class="col-span-6 sm:col-span-2">
 						<Input field={form.fields.acp} type="number" label="ACP" />
 					</Control>

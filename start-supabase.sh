@@ -42,4 +42,4 @@ else
   fi
   echo ""
 fi
-supabase start
+pnpm op:run supabase start

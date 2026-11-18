@@ -1,3 +1,4 @@
+import { hotkey as hk, type HotkeyItem } from "@svelteuidev/composables";
 import type { Attachment } from "svelte/attachments";
 
 /**
@@ -13,5 +14,12 @@ export function topLayerDialog(onclose: () => void): Attachment<HTMLDialogElemen
 			dialog.removeEventListener("close", onclose);
 			if (dialog.open) dialog.close();
 		};
+	};
+}
+
+export function hotkey(hotkeys: HotkeyItem[]): Attachment<HTMLElement | Document> {
+	return (node) => {
+		if (node instanceof Document) node = node.body;
+		return hk(node, hotkeys).destroy;
 	};
 }

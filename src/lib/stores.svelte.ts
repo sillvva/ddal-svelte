@@ -58,7 +58,7 @@ export class Global {
 export const [getGlobal] = createContext(() => new Global());
 
 class Logger {
-	private _lastLog: { label: string; timestamp: number } = $state.raw({ label: "", timestamp: 0 });
+	private _lastLog: { label: string; timestamp: number } = { label: "", timestamp: 0 };
 
 	private hasKey<K extends string>(obj: unknown, key: K): obj is Record<K, unknown> {
 		return obj !== null && typeof obj === "object" && key in obj;
@@ -84,14 +84,16 @@ class Logger {
 
 		if (!browser) return err;
 		// Prevent logging the same error within 5 seconds
-		if (now - this._lastLog.timestamp < 5000 && message === this._lastLog.label) {
-			this._lastLog = { label: message, timestamp: now };
-			return err;
-		}
+		const isDuplicate = now - this._lastLog.timestamp < 5000 && message === this._lastLog.label;
+		this._lastLog = { label: message, timestamp: now };
+		if (isDuplicate) return err;
 
 		console.error(boundary, error);
 		if (message !== "Something went wrong" && message !== "Internal Error") {
-			logClientError(err);
+			// Commands must not run during rendering, and a failed report must not surface as a new error.
+			setTimeout(() => {
+				logClientError(err).catch((reportError: unknown) => console.warn("Failed to report client error", reportError));
+			});
 		}
 
 		return err;

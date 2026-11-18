@@ -180,7 +180,7 @@
 				</Combobox.Input>
 			</label>
 			{#if (showOnEmpty || input?.trim()) && filtered.length}
-				<Combobox.ContentStatic class="menu dropdown-content z-10 w-full rounded-lg bg-base-200 p-2 shadow-sm">
+				<Combobox.ContentStatic class="dropdown-content menu z-10 w-full rounded-lg bg-base-200 p-2 shadow-sm">
 					{#snippet child({ props })}
 						<ul {...props}>
 							{#each filtered.slice(0, 8) as item (item.value)}

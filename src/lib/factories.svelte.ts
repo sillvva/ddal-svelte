@@ -240,8 +240,9 @@ export function configureForm<Input extends RemoteFormInput = RemoteFormInput>(g
 		if (allIssues) lastIssues = allIssues;
 		else return;
 
-		const invalid = formEl?.querySelector(":is(input, select, textarea):not(.hidden, [type=hidden], :disabled)[aria-invalid]") as
-			HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement | null | undefined;
+		const invalid = formEl?.querySelector<HTMLElement>(
+			":is(input, select, textarea):not(.hidden, [type=hidden], :disabled)[aria-invalid]"
+		);
 		invalid?.focus();
 
 		if (

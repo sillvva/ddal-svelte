@@ -1,15 +1,16 @@
 <script lang="ts">
-	import { goto } from "$app/navigation";
+	import { hotkey } from "#lib/attachments.js";
 	import { searchSections } from "#lib/constants.js";
 	import { GlobalSearchFactory } from "#lib/factories.svelte.js";
-	import * as API from "#lib/remote/index.js";
 	import type { SearchData } from "#lib/remote/command/index.js";
-	import { hotkey } from "#lib/util.js";
+	import * as API from "#lib/remote/index.js";
+	import { resolveRoute } from "#lib/util.js";
+	import { goto } from "$app/navigation";
 	import { Command, Dialog, Separator } from "bits-ui";
 	import { untrack } from "svelte";
 	import SearchResults from "./search-results.svelte";
 
-	const defaultSelected: string = searchSections[0].url;
+	const defaultSelected = resolveRoute(searchSections[0].href);
 
 	let open = $state(false);
 	let selected = $state(defaultSelected);
@@ -81,7 +82,7 @@
 		</span>
 	</Dialog.Trigger>
 	<Dialog.Portal>
-		<Dialog.Overlay class="modal modal-open bg-base-300/75!">
+		<Dialog.Overlay class="modal-open modal bg-base-300/75!">
 			<Dialog.Content class="relative modal-box cursor-default overflow-y-hidden bg-base-100 px-4 py-5 drop-shadow-lg sm:p-6">
 				<Dialog.Title class="sr-only">Command Search</Dialog.Title>
 				<Dialog.Description class="sr-only">This is the command menu. Use the arrow keys to navigate.</Dialog.Description>
@@ -129,14 +130,15 @@
 											{#snippet child({ props })}
 												<ul {...props}>
 													{#each section.items as item ("id" in item ? item.id : item.name)}
+														{@const itemUrl = resolveRoute(item.link.href, "params" in item.link ? item.link.params : undefined)}
 														<Command.Item
-															value={item.url}
-															onSelect={() => select(item.url)}
+															value={itemUrl}
+															onSelect={() => select(itemUrl)}
 															class="flex gap-4 rounded-lg data-selected:bg-neutral-500/25"
 														>
 															{#snippet child({ props })}
 																<li {...props}>
-																	<a href={item.url} class="gap-3" onclick={(ev) => ev.preventDefault()}>
+																	<a href={itemUrl} class="gap-3" onclick={(ev) => ev.preventDefault()}>
 																		{#if item.type === "character"}
 																			<span class="mask h-12 max-w-12 min-w-12 bg-primary mask-squircle">
 																				<img

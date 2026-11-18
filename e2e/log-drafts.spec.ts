@@ -65,6 +65,11 @@ async function expectCleanHydration(page: Page, path: string, ready: () => Locat
 	expect(errors, `${path} failed to hydrate`).toEqual([]);
 }
 
+/** The date picker. Its label also holds the dev-only calendar debug button. */
+function dateField(page: Page) {
+	return page.getByRole("group", { name: /^Date\b/u });
+}
+
 /** The header split button. Empty lists repeat it, and the narrow layout's copy is hidden. */
 function newLogMenu(page: Page) {
 	return page.getByRole("button", { name: "More new log options" }).first();
@@ -216,6 +221,8 @@ test("log drafts: share as a DM, open the link, fill a log, and keep edits with 
 	const draftDci = "7310042001";
 	const itemName = `E2E Draft Sword ${dm.handle}`;
 	const playerDmName = `E2E Known DM ${player.handle}`;
+	// A past date, so a log that kept its own "now" default can't pass for one filled from the draft.
+	const draftDate = Date.UTC(2025, 2, 15, 19, 30);
 	let draftId = "";
 
 	await test.step("a DM starts a player draft from the New Log menu", async () => {
@@ -226,6 +233,7 @@ test("log drafts: share as a DM, open the link, fill a log, and keep edits with 
 		await page.waitForURL(/\/drafts\/new$/);
 		await expect(page.getByLabel("DM Name")).not.toHaveValue("");
 		await expect(page.getByLabel("Assigned Character")).toHaveCount(0);
+		await expect(dateField(page)).toBeVisible();
 	});
 
 	await test.step("the draft form refuses images", async () => {
@@ -254,11 +262,17 @@ test("log drafts: share as a DM, open the link, fill a log, and keep edits with 
 		await notesField(page).fill("Recovered the idol.");
 		await page.getByRole("button", { name: "Add Magic Item" }).first().click();
 		await addedItemCards(page).first().getByLabel("Name").fill(itemName);
+		const opened = Date.now();
 		await page.getByRole("button", { name: "Save Draft" }).click();
 		await page.waitForURL(DRAFT_PATH);
 		draftId = draftIdFromUrl(page.url());
+		// The edit step looks for its own "Draft saved" toast.
+		await successToast(page, "Draft saved").getByRole("button", { name: "Close toast" }).click();
+		await expect(successToast(page, "Draft saved")).toHaveCount(0);
 
 		const row = await logDraftRow(draftId);
+		expect(row?.data.date).toBeGreaterThan(opened - 10 * 60 * 1000);
+		expect(row?.data.date).toBeLessThanOrEqual(Date.now());
 		expect(row).toMatchObject({
 			userId: dm.id,
 			data: {
@@ -279,13 +293,21 @@ test("log drafts: share as a DM, open the link, fill a log, and keep edits with 
 		await expect(qr).toHaveCount(0);
 	});
 
-	await test.step("editing keeps the same link", async () => {
+	await test.step("editing keeps the same link, and the date is saved with the draft", async () => {
 		const { page } = dm;
+		await expect(dateField(page)).toBeVisible();
 		await page.getByLabel("Gold").fill("200");
-		await page.getByRole("button", { name: "Save Draft" }).click();
+		await submitTampered(
+			page,
+			"save",
+			(fields) => {
+				fields.date = draftDate;
+			},
+			() => page.getByRole("button", { name: "Save Draft" }).click()
+		);
 		await expect(successToast(page, "Draft saved")).toBeVisible();
 		expect(new URL(page.url()).pathname).toBe(`/drafts/${draftId}`);
-		await expect.poll(async () => (await logDraftRow(draftId))?.data).toMatchObject({ gold: 200 });
+		await expect.poll(async () => (await logDraftRow(draftId))?.data).toMatchObject({ gold: 200, date: draftDate });
 	});
 
 	let characterId = "";
@@ -351,7 +373,7 @@ test("log drafts: share as a DM, open the link, fill a log, and keep edits with 
 		await page.waitForURL(new RegExp(`/characters/${characterId}$`));
 
 		const logId = await logIdOnCharacterPage(page, draftTitle);
-		expect((await logRow(logId))?.dungeonMasterId).toBe(knownDmId);
+		expect(await logRow(logId)).toMatchObject({ dungeonMasterId: knownDmId, date: new Date(draftDate) });
 		const items = await magicItemsGainedIn(logId);
 		expect(items.map((item) => item.name)).toEqual([itemName]);
 		const draftItemId = (await logDraftRow(draftId))?.data.magicItemsGained[0]?.id;
@@ -376,7 +398,7 @@ test("log drafts: share as a DM, open the link, fill a log, and keep edits with 
 		const created = (await dmsForUser(newcomer.id)).filter((row) => !row.isUser);
 		expect(created).toMatchObject([{ name: draftDmName, DCI: draftDci, userId: newcomer.id, isUser: false }]);
 		const logId = await logIdOnCharacterPage(page, draftTitle);
-		expect((await logRow(logId))?.dungeonMasterId).toBe(created[0]?.id);
+		expect(await logRow(logId)).toMatchObject({ dungeonMasterId: created[0]?.id, date: new Date(draftDate) });
 	});
 
 	let copiedId = "";
@@ -402,6 +424,27 @@ test("log drafts: share as a DM, open the link, fill a log, and keep edits with 
 		await dialog.getByRole("button", { name: "Close" }).first().click();
 		await page.goto(`/characters/${characterId}`);
 		await expect(newLogMenu(page)).toBeVisible();
+	});
+
+	await test.step("a copied draft has no date to edit, and its log keeps its own date", async () => {
+		const { page } = player;
+		await page.goto(`/drafts/${copiedId}`);
+		await expect(page.getByLabel("Title")).toHaveValue(draftTitle);
+		await expect(dateField(page)).toHaveCount(0);
+
+		await page.goto(`/characters/${characterId}`);
+		await newLogMenu(page).click();
+		await page.getByRole("link", { name: "New Log from Draft" }).click();
+		await page.waitForURL(new RegExp(`/characters/${characterId}/log/new\\?.*fromDraft=1`));
+		await expect(page.getByLabel("Title")).toHaveValue(draftTitle);
+		const opened = Date.now();
+		await saveLog(page);
+		await page.waitForURL(new RegExp(`/characters/${characterId}$`));
+
+		const logIds = await logIdsForCharacter(characterId);
+		expect(logIds).toHaveLength(3);
+		const saved = await logRow(logIds[2] ?? "");
+		expect(saved?.date.getTime()).toBeGreaterThan(opened - 10 * 60 * 1000);
 	});
 
 	await test.step("an expired draft is gone, and the browser copy goes with it", async () => {

@@ -1,6 +1,7 @@
 <script lang="ts">
 	import Error from "#lib/components/error.svelte";
 	import Control from "#lib/components/forms/control.svelte";
+	import DateInput from "#lib/components/forms/date-input.svelte";
 	import GainedItems from "#lib/components/forms/gained-items.svelte";
 	import InputWrapper from "#lib/components/forms/input-wrapper.svelte";
 	import Input from "#lib/components/forms/input.svelte";
@@ -12,11 +13,12 @@
 	import NavMenu from "#lib/components/nav-menu.svelte";
 	import { proxify, successToast } from "#lib/factories.svelte.js";
 	import { logDraftMemory } from "#lib/log-draft-storage.svelte.js";
-	import { LOG_DRAFT_LIMIT, seasonForAdvancement } from "#lib/log-draft.js";
+	import { LOG_DRAFT_LIMIT, advancementType } from "#lib/log-draft.js";
 	import * as API from "#lib/remote/index.js";
 	import { logDraftSchema, type LogDraftId } from "#lib/schemas.js";
 	import { parseEffectResult } from "#lib/util.js";
 	import { goto } from "$app/navigation";
+	import { resolve } from "$app/paths";
 
 	const { params } = $props();
 
@@ -36,7 +38,7 @@
 		const memory = logDraftMemory();
 		if (memory.current?.id === id) memory.clear();
 		successToast("Draft deleted");
-		await goto("/drafts");
+		await goto(resolve("drafts"));
 	}
 </script>
 
@@ -45,13 +47,15 @@
 	{const draft = $derived(await API.drafts.forms.load({ draftId: params.draftId }))}
 	{const title = $derived(draft.name || "New Player Draft")}
 	{const isDm = $derived(draft.kind === "dm")}
+	<!-- A copied log has no date. Editing it must not add one. -->
+	{const hasDate = $derived(draft.date !== undefined)}
 
 	<Head {title} />
 
 	<NavMenu
 		crumbs={[
-			{ title: "Drafts", url: "/drafts" },
-			{ title, url: `/drafts/${params.draftId}` }
+			{ title: "Drafts", href: "drafts" },
+			{ title, href: "/(app)/drafts/[draftId=DraftId]", params: { draftId: params.draftId } }
 		]}
 	/>
 
@@ -72,28 +76,20 @@
 			</p>
 			<LogDraftShare id={savedId} />
 		</div>
-	{:else}
-		<p class="mb-4 alert flex items-start gap-4 bg-base-300 text-sm leading-6">
-			<span class="mt-0.5 iconify size-5 mdi--info-circle-outline"></span>
-			<span class="flex-1">
-				Players get the title, DM, advancement, treasure, downtime, items, and notes. Images can be added to a draft as markdown,
-				but they can't be uploaded by pasting or dragging and dropping.
-			</span>
-		</p>
 	{/if}
 
 	{let data = $derived(proxify(draft))}
 	<RemoteForm schema={logDraftSchema} form={API.drafts.forms.save} {data} initialErrors={!!savedId} successMessage="Draft saved">
 		{#snippet children(ctx)}
 			{const { form } = $derived(ctx)}
-			{let season = $state(seasonForAdvancement(draft))}
+			{let advType = $state(advancementType(draft))}
 			<Input field={form.fields.id} hidden />
 			<Input field={form.fields.kind} hidden />
 			<Input field={form.fields.timezone} hidden />
 			{#if isDm}
 				<Input field={form.fields.type} hidden />
 			{:else}
-				<Control class="col-span-12 sm:col-span-5 md:col-span-4">
+				<Control class={["col-span-12", hasDate ? "sm:col-span-2 md:col-span-3 lg:col-span-4" : "sm:col-span-5 md:col-span-4"]}>
 					<InputWrapper field={form.fields.type} as="select" label="Log Type">
 						<select
 							{...form.fields.type.as("select")}
@@ -106,9 +102,19 @@
 					</InputWrapper>
 				</Control>
 			{/if}
-			<Control class={["col-span-12", !isDm && "sm:col-span-7 md:col-span-8"]}>
+			<Control
+				class={[
+					"col-span-12",
+					hasDate ? (isDm ? "sm:col-span-7" : "sm:col-span-5 lg:col-span-4") : !isDm && "sm:col-span-7 md:col-span-8"
+				]}
+			>
 				<Input field={form.fields.name} label="Title" required />
 			</Control>
+			{#if hasDate}
+				<Control class={["col-span-12", isDm ? "sm:col-span-5" : "sm:col-span-5 md:col-span-4"]}>
+					<DateInput field={form.fields.date} label="Date" timezone={data.timezone} />
+				</Control>
+			{/if}
 			{#if data.type === "game"}
 				{#if !isDm}
 					<Control class="col-span-12 sm:col-span-6">
@@ -119,10 +125,10 @@
 					</Control>
 				{/if}
 				<Control class="col-span-12 sm:col-span-4">
-					<InputWrapper type="select" labelFor="season" label="Season">
+					<InputWrapper type="select" labelFor="adv-type" label="Advancement Type">
 						<select
-							id="season"
-							bind:value={season}
+							id="adv-type"
+							bind:value={advType}
 							class="select-bordered select w-full max-sm:text-base"
 							onchange={() => {
 								data.experience = 0;
@@ -131,23 +137,23 @@
 								data.tcp = 0;
 							}}
 						>
-							<option value={9}>Season 9+ (Level)</option>
-							<option value={8}>Season 8 (ACP/TCP)</option>
-							<option value={1}>Season 1-7 (Experience)</option>
+							<option value="level">Level</option>
+							<option value="acp">ACP/TCP</option>
+							<option value="experience">Experience</option>
 						</select>
 					</InputWrapper>
 				</Control>
-				{#if season === 1}
+				{#if advType === "experience"}
 					<Control class="col-span-12 sm:col-span-4">
 						<Input field={form.fields.experience} type="number" label="Experience" />
 					</Control>
 				{/if}
-				{#if season === 9}
+				{#if advType === "level"}
 					<Control class="col-span-12 sm:col-span-4">
 						<Input field={form.fields.level} type="number" label="Level" />
 					</Control>
 				{/if}
-				{#if season === 8}
+				{#if advType === "acp"}
 					<Control class="col-span-6 sm:col-span-2">
 						<Input field={form.fields.acp} type="number" label="ACP" />
 					</Control>
@@ -164,7 +170,7 @@
 				<Input field={form.fields.acp} type="number" hidden />
 				<Input field={form.fields.level} type="number" hidden />
 			{/if}
-			{#if season === 8 || data.type === "nongame"}
+			{#if advType === "acp" || data.type === "nongame"}
 				{#if data.type !== "game"}
 					<Control class="col-span-4">
 						<Input field={form.fields.tcp} type="number" label="TCP" />
