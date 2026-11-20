@@ -15,7 +15,7 @@ A SvelteKit 5 application for managing D&D Adventurers League campaigns, with a 
 - **[pnpm](https://pnpm.io/) 11.8.0**, the version pinned in `packageManager`
 - [1Password CLI](https://developer.1password.com/docs/cli/) 2.41.0 or newer, for the `op:*` scripts
 - [Supabase CLI](https://supabase.com/docs/guides/cli) 3.x (applies the migrations; the Supabase stack is not used)
-- [Docker](https://www.docker.com/) with Compose (runs the local Postgres)
+- [OrbStack](https://orbstack.dev/) on macOS (`brew install orbstack`), or Docker Engine with Compose on Linux. Runs the local Postgres. On macOS the scripts start OrbStack if it isn't running.
 - Optional: `psql` (`brew install libpq`). The scripts use the `psql` inside the container, so the host copy is only for your own queries.
 
 Bun and npm can install the dependencies, but the scripts call `pnpm`. Use pnpm.
@@ -64,7 +64,7 @@ The example files are the authoritative list. These are the ones that matter loc
 
 Production is plain Postgres 18 with pg_cron, built from `docker/postgres/Dockerfile`. `docker-compose.yml` builds that same file, so local matches production. The Supabase CLI is used only to apply and create migrations. `supabase start` is no longer used.
 
-From a fresh clone, with Docker running:
+From a fresh clone:
 
 ```bash
 pnpm install
