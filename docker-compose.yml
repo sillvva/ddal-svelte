@@ -1,0 +1,26 @@
+# Local development database. Same image as production (docker/postgres/Dockerfile).
+# Manage it with the `db:local:*` pnpm scripts. See README.md.
+services:
+  db:
+    build:
+      context: docker/postgres
+    image: ddal-postgres:18.7
+    container_name: ddal-postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: postgres
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-postgres}
+    ports:
+      - "127.0.0.1:${POSTGRES_PORT:-5433}:5432"
+    volumes:
+      - ddal-pgdata:/var/lib/postgresql
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres -d postgres"]
+      interval: 5s
+      timeout: 5s
+      retries: 20
+      start_period: 10s
+
+volumes:
+  ddal-pgdata:

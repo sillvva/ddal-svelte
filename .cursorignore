@@ -5,6 +5,6 @@
 !.env.example.development.local
 !.env.example.production.local
 
-# Supabase local data
+# Local database seed and backups
 supabase/seed.sql
 supabase/backups/*
