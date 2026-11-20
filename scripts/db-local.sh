@@ -10,6 +10,33 @@ export POSTGRES_PASSWORD="$PASSWORD"
 export POSTGRES_PORT="${POSTGRES_PORT:-5433}"
 DB_URL="postgresql://postgres:${PASSWORD}@127.0.0.1:${POSTGRES_PORT}/postgres"
 
+DOCKER_START_TIMEOUT="${DOCKER_START_TIMEOUT:-120}"
+
+ensure_docker() {
+  command -v docker >/dev/null 2>&1 || { echo "Error: docker not found. Install Docker Desktop (macOS) or Docker Engine." >&2; exit 1; }
+  docker info >/dev/null 2>&1 && return 0
+
+  if [ "$(uname -s)" != "Darwin" ] || [ -n "${CI:-}" ]; then
+    echo "Error: the Docker daemon is not reachable. Start Docker and try again." >&2
+    exit 1
+  fi
+
+  echo "Docker is not running. Starting Docker Desktop..."
+  open -a Docker 2>/dev/null || { echo "Error: Docker app not found. Please install Docker Desktop." >&2; exit 1; }
+  local waited=0
+  until docker info >/dev/null 2>&1; do
+    if [ "$waited" -ge "$DOCKER_START_TIMEOUT" ]; then
+      echo "Error: Docker did not become ready within ${DOCKER_START_TIMEOUT}s. Check Docker Desktop and try again." >&2
+      exit 1
+    fi
+    sleep 2
+    waited=$((waited + 2))
+  done
+  echo "Docker is ready (took ${waited}s)."
+}
+
+ensure_docker
+
 compose() { docker compose "$@"; }
 psql_in() { compose exec -T db psql -U postgres -d postgres -v ON_ERROR_STOP=1 "$@"; }
 
