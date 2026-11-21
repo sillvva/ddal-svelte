@@ -75,10 +75,10 @@
 				<summary class="collapse-title font-semibold">How do I edit or delete a draft?</summary>
 				<div class="collapse-content flex flex-col gap-2 text-sm">
 					<p>
-						Only you can. The Drafts page lists your drafts: open one to edit it and choose <span class="font-semibold"
-							>Save Draft</span
-						>, or delete it there or with <span class="font-semibold">Delete draft</span> in the editor. Opening your own draft's
-						link also shows <span class="font-semibold">Edit draft</span>.
+						Only you can. The Drafts page lists your drafts: open one to edit it and choose <span class="font-semibold">
+							Save Draft
+						</span>, or delete it there or with <span class="font-semibold">Delete draft</span> in the editor. Opening your own
+						draft's link also shows <span class="font-semibold">Edit draft</span>.
 					</p>
 					<p>
 						Deleting stops the link working. A player who opened the link earlier keeps the copy in their browser until it expires

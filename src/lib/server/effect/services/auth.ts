@@ -186,6 +186,41 @@ export class AuthService extends Context.Service<AuthService>()("AuthService", {
 			}
 		});
 
+		const loadLocalsUser = (userId: UserId) =>
+			runQuery(
+				db.query.user.findFirst({
+					with: {
+						accounts: {
+							columns: {
+								id: true,
+								accountId: true,
+								providerId: true,
+								scope: true,
+								createdAt: true,
+								updatedAt: true
+							},
+							where: {
+								providerId: {
+									in: PROVIDERS.map((p) => p.id)
+								}
+							}
+						},
+						passkeys: {
+							columns: {
+								id: true,
+								name: true,
+								createdAt: true
+							}
+						}
+					},
+					where: {
+						id: {
+							eq: userId
+						}
+					}
+				})
+			);
+
 		return {
 			api: auth.api,
 			guard: Effect.fn("AuthService.guard")(function* (access: GuardAccess = null) {
@@ -238,45 +273,20 @@ export class AuthService extends Context.Service<AuthService>()("AuthService", {
 
 						return {
 							session: result?.session && (yield* parse(localsSessionSchema, result.session)),
-							user:
-								result?.user &&
-								(yield* runQuery(
-									db.query.user.findFirst({
-										with: {
-											accounts: {
-												columns: {
-													id: true,
-													accountId: true,
-													providerId: true,
-													scope: true,
-													createdAt: true,
-													updatedAt: true
-												},
-												where: {
-													providerId: {
-														in: PROVIDERS.map((p) => p.id)
-													}
-												}
-											},
-											passkeys: {
-												columns: {
-													id: true,
-													name: true,
-													createdAt: true
-												}
-											}
-										},
-										where: {
-											id: {
-												eq: result.user.id as UserId
-											}
-										}
-									})
-								)),
+							user: result?.user && (yield* loadLocalsUser(result.user.id as UserId)),
 							auth
 						};
 					},
 					(effect) => logErrors(effect, "AuthService.get.session", {})
+				),
+				locals: Effect.fn("AuthService.get.locals")(
+					function* (userId: UserId, session: unknown) {
+						return {
+							session: yield* parse(localsSessionSchema, session),
+							user: yield* loadLocalsUser(userId)
+						};
+					},
+					(effect, userId) => logErrors(effect, "AuthService.get.locals", { userId })
 				),
 				accounts: Effect.fn("AuthService.get.accounts")(
 					function* () {

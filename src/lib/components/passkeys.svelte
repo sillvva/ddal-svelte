@@ -10,6 +10,7 @@
 	const passkeys = $derived(user?.passkeys || []);
 
 	$effect(() => {
+		if (!user) return;
 		if (global.app.settings.autoWebAuthn !== passkeys.length > 0) {
 			global.app.settings.autoWebAuthn = passkeys.length > 0;
 		}

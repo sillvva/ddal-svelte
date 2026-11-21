@@ -1,10 +1,10 @@
 <script lang="ts">
-	import { page } from "$app/state";
 	import Head from "#lib/components/head.svelte";
 	import Search from "#lib/components/search.svelte";
 	import { BLANK_CHARACTER } from "#lib/constants.js";
 	import { errorToast, successToast } from "#lib/factories.svelte.js";
 	import * as API from "#lib/remote/index.js";
+	import { page } from "$app/state";
 	import { JSONSearchParser } from "@sillvva/search/json";
 	import { toJSObjectNotation } from "@sillvva/utils";
 
@@ -96,7 +96,9 @@
 								{const impersonateForm = $derived(API.admin.forms.impersonateUser.for(user.id))}
 								<form
 									{...impersonateForm.enhance(async ({ submit }) => {
-										await submit();
+										if (await submit()) {
+											void API.auth.queries.getAccounts().refresh();
+										}
 
 										const issues = impersonateForm.fields.issues();
 										if (issues?.length) {

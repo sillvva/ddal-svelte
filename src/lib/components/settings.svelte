@@ -188,8 +188,17 @@
 				</div>
 			</div>
 			{#if session?.impersonatedBy}
-				<form {...API.admin.forms.stopImpersonating} class="tooltip tooltip-left" data-tip="Stop impersonating">
-					<button type="submit" class="btn p-3 btn-primary" aria-label="Stop impersonating" onclick={() => (open = false)}>
+				<form
+					{...API.admin.forms.stopImpersonating.enhance(async ({ submit }) => {
+						open = false;
+						if (await submit()) {
+							void API.auth.queries.getAccounts().refresh();
+						}
+					})}
+					class="tooltip tooltip-left"
+					data-tip="Stop impersonating"
+				>
+					<button type="submit" class="btn p-3 btn-primary" aria-label="Stop impersonating">
 						<span class="iconify size-5 mdi--account-switch"></span>
 					</button>
 				</form>
