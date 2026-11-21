@@ -1,6 +1,8 @@
 #!/usr/bin/env bash
-# Local Postgres helper. Usage: scripts/db-local.sh <up|down|reset|migrate|restore|psql|nuke|diff [-f name]>
-# Overrides: POSTGRES_PASSWORD (default postgres), POSTGRES_PORT (default 5433).
+# Local Postgres helper. Usage: scripts/db-local.sh <up|down|reset|migrate|restore|psql|nuke|diff [-f name]|diff-remote>
+# diff-remote diffs against REMOTE_DB_URL (production), read-only; run it through op run (pnpm op:db:diff).
+# Overrides: POSTGRES_PASSWORD (default postgres), POSTGRES_PORT (default 5433), REMOTE_DB_HOST_IP and
+# DIFF_DOCKER_ARGS (diff-remote only: see the README).
 set -euo pipefail
 
 cd "$(dirname "$0")/.."
@@ -72,39 +74,94 @@ reset_schema() {
   migrate
 }
 
-# Diff the migrations against the local database, using a throwaway Postgres built from the same
-# image (not Supabase's shadow DB, whose extensions and grants differ from production). The output is
-# the SQL that brings the migrations up to the local schema. migra runs in a small cached image.
+# Diff the migrations against a database, using a throwaway Postgres built from the same image (not
+# Supabase's shadow DB, whose extensions and grants differ from production). The output is the SQL that
+# brings the migrations up to the target's schema (public, with grants; migra is unaware of the
+# supabase_migrations and cron schemas). migra runs in a small cached image.
+#   diff_schema local        target = the local database. `-f name` writes a migration file.
+#   diff_schema remote       target = REMOTE_DB_URL (production): drift detection. Read-only; prints only.
+SHADOW=""
+SHADOW_NET=""
+LOCAL_CONTAINER=""
+
 cleanup_shadow() {
-  docker rm -f "$SHADOW" >/dev/null 2>&1 || true
-  docker network disconnect "$SHADOW_NET" "$LOCAL_CONTAINER" >/dev/null 2>&1 || true
-  docker network rm "$SHADOW_NET" >/dev/null 2>&1 || true
+  [ -z "$SHADOW" ] || docker rm -f "$SHADOW" >/dev/null 2>&1 || true
+  if [ -n "$SHADOW_NET" ]; then
+    [ -z "$LOCAL_CONTAINER" ] || docker network disconnect "$SHADOW_NET" "$LOCAL_CONTAINER" >/dev/null 2>&1 || true
+    docker network rm "$SHADOW_NET" >/dev/null 2>&1 || true
+  fi
 }
 
-diff_local() {
+# Print an IPv4 address for $1, resolved on the host (the host's resolver knows tailnet names; a
+# container's may not). Prints nothing if it cannot be resolved.
+resolve_host() {
+  local host=$1
+  if [[ $host =~ ^[0-9]+\.[0-9]+\.[0-9]+\.[0-9]+$ ]]; then
+    echo "$host"
+  elif command -v dscacheutil >/dev/null 2>&1; then
+    dscacheutil -q host -a name "$host" | awk '/^ip_address:/ { print $2; exit }'
+  elif command -v getent >/dev/null 2>&1; then
+    getent ahostsv4 "$host" | awk '{ print $1; exit }'
+  fi
+}
+
+diff_schema() {
+  local mode=$1
+  shift
   local name=""
-  if [ "${1:-}" = "-f" ]; then
+  if [ "$mode" = local ] && [ "${1:-}" = "-f" ]; then
     name="${2:-}"
     [ -n "$name" ] || { echo "Usage: $0 diff [-f name]" >&2; exit 2; }
   elif [ $# -gt 0 ]; then
-    echo "Usage: $0 diff [-f name]" >&2
+    if [ "$mode" = local ]; then echo "Usage: $0 diff [-f name]" >&2; else echo "Usage: $0 diff-remote" >&2; fi
     exit 2
   fi
 
+  # Extra `docker run` arguments for the migra container (e.g. --dns, --add-host) go in DIFF_DOCKER_ARGS.
   SHADOW="ddal-postgres-shadow-$$"
   SHADOW_NET="ddal-shadow-net-$$"
-  LOCAL_CONTAINER=$(compose ps -q db)
-  [ -n "$LOCAL_CONTAINER" ] || { echo "Error: the local database is not running. Run pnpm db:local:up first." >&2; exit 1; }
-  local local_name
-  local_name=$(docker inspect -f '{{.Name}}' "$LOCAL_CONTAINER")
-  local_name=${local_name#/}
+  local -a migra_args=(--rm --network "$SHADOW_NET" -e PYTHONWARNINGS=ignore -e SHADOW_URL -e TARGET_URL)
+  local target_url target_desc
 
   trap cleanup_shadow EXIT
+
+  if [ "$mode" = local ]; then
+    LOCAL_CONTAINER=$(compose ps -q db)
+    [ -n "$LOCAL_CONTAINER" ] || { echo "Error: the local database is not running. Run pnpm db:local:up first." >&2; exit 1; }
+    local local_name
+    local_name=$(docker inspect -f '{{.Name}}' "$LOCAL_CONTAINER")
+    local_name=${local_name#/}
+    target_url="postgresql://postgres:${PASSWORD}@${local_name}:5432/postgres"
+    target_desc="the local database"
+  else
+    # shellcheck source=remote-db.sh
+    source "$(dirname "$0")/remote-db.sh"
+    parse_remote_url || exit 1
+    target_url=$REMOTE_URL_SQLALCHEMY
+    target_desc="production"
+    # Never write to the target, even if migra changed: every session it opens is read-only.
+    migra_args+=(-e "PGOPTIONS=-c default_transaction_read_only=on")
+    # The container may not resolve or route tailnet names, so resolve on the host and pin the name.
+    # The container reaches the address through the host's network stack (and so its Tailscale routes).
+    local ip="${REMOTE_DB_HOST_IP:-}"
+    [ -n "$ip" ] || ip=$(resolve_host "$REMOTE_HOST")
+    if [ -z "$ip" ]; then
+      echo "Error: cannot resolve '$REMOTE_HOST' on this machine. Is Tailscale connected? To skip name resolution, set REMOTE_DB_HOST_IP." >&2
+      exit 1
+    fi
+    if [[ $ip == 127.* ]]; then
+      migra_args+=(--add-host "${REMOTE_HOST}:host-gateway") # an SSH tunnel or port-forward on the host
+    elif ! [[ $REMOTE_HOST =~ ^[0-9]+\.[0-9]+\.[0-9]+\.[0-9]+$ ]]; then
+      migra_args+=(--add-host "${REMOTE_HOST}:${ip}")
+    fi
+  fi
+  # shellcheck disable=SC2206
+  migra_args+=(${DIFF_DOCKER_ARGS:-})
 
   compose build db >&2
   docker build -q -t ddal-migra docker/migra >/dev/null
   docker network create "$SHADOW_NET" >/dev/null
-  docker network connect "$SHADOW_NET" "$LOCAL_CONTAINER"
+  [ -z "$LOCAL_CONTAINER" ] || docker network connect "$SHADOW_NET" "$LOCAL_CONTAINER"
 
   docker run -d --name "$SHADOW" --network "$SHADOW_NET" \
     -e POSTGRES_PASSWORD=shadow \
@@ -119,11 +176,29 @@ diff_local() {
       || { echo "Error: migration failed on the shadow database: $f" >&2; exit 1; }
   done
 
+  # The URLs travel in the environment of the container, not in the command line, so the password
+  # never shows in `ps` or `docker ps`.
+  export SHADOW_URL="postgresql://postgres:shadow@${SHADOW}:5432/postgres"
+  export TARGET_URL="$target_url"
+
+  if [ "$mode" = remote ]; then
+    # Fail early and clearly if production is unreachable, and prove the session is read-only.
+    docker run "${migra_args[@]}" --entrypoint python ddal-migra -c '
+import os, sys, psycopg2
+c = psycopg2.connect(os.environ["TARGET_URL"], connect_timeout=15)
+cur = c.cursor()
+cur.execute("show default_transaction_read_only")
+sys.exit(0 if cur.fetchone()[0] == "on" else 3)' \
+      || {
+        echo "Error: cannot open a read-only session to production from a container. Check that Tailscale is" >&2
+        echo "connected and that ${REMOTE_HOST}:${REMOTE_PORT} is reachable. See DIFF_DOCKER_ARGS in the README." >&2
+        exit 1
+      }
+  fi
+
   local out status=0
-  out=$(docker run --rm --network "$SHADOW_NET" -e PYTHONWARNINGS=ignore ddal-migra \
-    --unsafe --with-privileges --schema public \
-    "postgresql://postgres:shadow@${SHADOW}:5432/postgres" \
-    "postgresql://postgres:${PASSWORD}@${local_name}:5432/postgres") || status=$?
+  out=$(docker run "${migra_args[@]}" --entrypoint sh ddal-migra -c \
+    'exec migra --unsafe --with-privileges --schema public "$SHADOW_URL" "$TARGET_URL"') || status=$?
   # migra exits 2 when differences were found.
   if [ "$status" -ne 0 ] && [ "$status" -ne 2 ]; then
     echo "Error: migra failed (exit $status)." >&2
@@ -131,7 +206,7 @@ diff_local() {
   fi
 
   if [ -z "$out" ]; then
-    echo "No differences: the migrations match the local database." >&2
+    echo "No differences: the migrations match ${target_desc}." >&2
     return 0
   fi
   if [ -n "$name" ]; then
@@ -171,12 +246,16 @@ case "${1:-}" in
     ;;
   diff)
     shift
-    diff_local "$@"
+    diff_schema local "$@"
+    ;;
+  diff-remote)
+    shift
+    diff_schema remote "$@"
     ;;
   psql) compose exec db psql -U postgres -d postgres ;;
   nuke) compose down -v ;;
   *)
-    echo "Usage: $0 <up|down|reset|migrate|restore|psql|nuke|diff [-f name]>" >&2
+    echo "Usage: $0 <up|down|reset|migrate|restore|psql|nuke|diff [-f name]|diff-remote>" >&2
     exit 2
     ;;
 esac
