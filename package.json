@@ -45,7 +45,8 @@
 		"db:local:psql": "./scripts/db-local.sh psql",
 		"db:local:nuke": "./scripts/db-local.sh nuke",
 		"db:migration:new": "supabase migration new",
-		"db:local:diff": "./scripts/db-local.sh diff"
+		"db:local:diff": "./scripts/db-local.sh diff",
+		"db:local:pull": "./scripts/db-local.sh diff -f remote_schema"
 	},
 	"devDependencies": {
 		"@eslint/js": "^10.0.1",

@@ -20,6 +20,166 @@ ensure_docker
 compose() { docker compose "$@"; }
 psql_in() { compose exec -T db psql -U postgres -d postgres -v ON_ERROR_STOP=1 "$@"; }
 
+# After diff -f writes a migration file, record it in the local DB like migration up / db pull would.
+record_local_migration_applied() {
+  local file=$1 name=$2
+  local version
+  version=$(basename "$file")
+  version=${version%%_*}
+
+  psql_in -q <<'SQL'
+CREATE SCHEMA IF NOT EXISTS supabase_migrations;
+CREATE TABLE IF NOT EXISTS supabase_migrations.schema_migrations (version text NOT NULL PRIMARY KEY);
+ALTER TABLE supabase_migrations.schema_migrations ADD COLUMN IF NOT EXISTS statements text[];
+ALTER TABLE supabase_migrations.schema_migrations ADD COLUMN IF NOT EXISTS name text;
+SQL
+
+  python3 - "$file" "$version" "$name" <<'PY' | psql_in -q
+import re
+import sys
+
+def split_sql(sql: str) -> list[str]:
+    statements: list[str] = []
+    current: list[str] = []
+    i = 0
+    length = len(sql)
+    in_single = False
+    in_double = False
+    in_line_comment = False
+    in_block_comment = False
+    dollar_delim = None
+
+    while i < length:
+        c = sql[i]
+        nxt = sql[i + 1] if i + 1 < length else ""
+
+        if in_line_comment:
+            current.append(c)
+            if c == "\n":
+                in_line_comment = False
+            i += 1
+            continue
+
+        if in_block_comment:
+            current.append(c)
+            if c == "*" and nxt == "/":
+                current.append(nxt)
+                i += 2
+                in_block_comment = False
+            else:
+                i += 1
+            continue
+
+        if dollar_delim is not None:
+            if sql.startswith(dollar_delim, i):
+                current.append(dollar_delim)
+                i += len(dollar_delim)
+                dollar_delim = None
+            else:
+                current.append(c)
+                i += 1
+            continue
+
+        if in_single:
+            current.append(c)
+            if c == "'" and nxt == "'":
+                current.append(nxt)
+                i += 2
+                continue
+            if c == "'":
+                in_single = False
+            i += 1
+            continue
+
+        if in_double:
+            current.append(c)
+            if c == '"' and nxt == '"':
+                current.append(nxt)
+                i += 2
+                continue
+            if c == '"':
+                in_double = False
+            i += 1
+            continue
+
+        if c == "-" and nxt == "-":
+            current.append(c)
+            current.append(nxt)
+            i += 2
+            in_line_comment = True
+            continue
+
+        if c == "/" and nxt == "*":
+            current.append(c)
+            current.append(nxt)
+            i += 2
+            in_block_comment = True
+            continue
+
+        if c == "'":
+            in_single = True
+            current.append(c)
+            i += 1
+            continue
+
+        if c == '"':
+            in_double = True
+            current.append(c)
+            i += 1
+            continue
+
+        if c == "$":
+            m = re.match(r"\$[^$]*\$", sql[i:])
+            if m:
+                dollar_delim = m.group(0)
+                current.append(dollar_delim)
+                i += len(dollar_delim)
+                continue
+
+        if c == ";":
+            stmt = "".join(current).strip()
+            if stmt:
+                statements.append(stmt)
+            current = []
+            i += 1
+            continue
+
+        current.append(c)
+        i += 1
+
+    stmt = "".join(current).strip()
+    if stmt:
+        statements.append(stmt)
+    return statements
+
+
+def dollar_tag(text: str, prefix: str) -> str:
+    tag = prefix
+    n = 0
+    while f"${tag}$" in text:
+        tag = f"{prefix}{n}"
+        n += 1
+    return tag
+
+
+path, version, name = sys.argv[1:4]
+content = open(path, encoding="utf-8").read()
+stmts = split_sql(content)
+array_elems = []
+for idx, stmt in enumerate(stmts):
+    tag = dollar_tag(stmt, f"stmt{idx}")
+    array_elems.append(f"${tag}${stmt}${tag}$")
+array_sql = "ARRAY[" + ", ".join(array_elems) + "]" if array_elems else "NULL"
+ver = version.replace("'", "''")
+nam = name.replace("'", "''")
+print(
+    f"INSERT INTO supabase_migrations.schema_migrations(version, name, statements)\n"
+    f"VALUES ('{ver}', '{nam}', {array_sql})\n"
+    f"ON CONFLICT DO NOTHING;"
+)
+PY
+}
+
 up() {
   compose up -d --build --wait
 }
@@ -214,6 +374,8 @@ sys.exit(0 if cur.fetchone()[0] == "on" else 3)' \
     file="supabase/migrations/$(date -u +%Y%m%d%H%M%S)_${name}.sql"
     printf '%s\n' "$out" >"$file"
     echo "Wrote $file. Review it before applying." >&2
+    record_local_migration_applied "$file" "$name"
+    echo "Recorded it in the local migration history (db:local:migrate will not re-apply it)." >&2
   else
     printf '%s\n' "$out"
   fi
