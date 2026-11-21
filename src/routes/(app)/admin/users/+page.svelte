@@ -7,6 +7,7 @@
 	import { page } from "$app/state";
 	import { JSONSearchParser } from "@sillvva/search/json";
 	import { toJSObjectNotation } from "@sillvva/utils";
+	import { tick } from "svelte";
 
 	const searchKey = "s";
 	const search = $derived(page.url.searchParams.get(searchKey) ?? page.state.search?.[searchKey] ?? "");
@@ -121,13 +122,6 @@
 								{#if !user.banned}
 									{const banForm = $derived(API.admin.forms.banUser.for(user.id))}
 									<form
-										onsubmit={(e) => {
-											e.preventDefault();
-											const banReason = prompt("Reason for ban");
-											if (!banReason?.trim()) return errorToast("Reason is required");
-											banForm.fields.banReason.set(banReason);
-											e.currentTarget.requestSubmit();
-										}}
 										{...banForm.enhance(async ({ submit }) => {
 											await submit().updates(
 												API.admin.queries
@@ -151,7 +145,19 @@
 									>
 										<input {...banForm.fields.userId.as("hidden", user.id)} />
 										<input {...banForm.fields.banReason.as("text")} hidden />
-										<button type="submit" class="btn btn-error btn-sm" aria-label="Ban {user.name}">
+										<button
+											type="button"
+											class="btn btn-error btn-sm"
+											aria-label="Ban {user.name}"
+											onclick={async (e) => {
+												const form = e.currentTarget.form;
+												const banReason = prompt("Reason for ban")?.trim();
+												if (!banReason) return errorToast("Reason is required");
+												banForm.fields.banReason.set(banReason);
+												await tick();
+												form?.requestSubmit();
+											}}
+										>
 											<span class="iconify mdi--ban"></span>
 										</button>
 									</form>

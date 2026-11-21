@@ -1,5 +1,6 @@
 import { test as base, expect, type Browser, type BrowserContext, type Page } from "@playwright/test";
 import { userIdForSessionCookies } from "./cleanup-users.ts";
+import { setUserRole } from "./db.ts";
 import { assertLocalE2E } from "./env.ts";
 import { rememberUser } from "./state.ts";
 import { acceptDialogs, installPasskeyAuthenticator, settleNavigations } from "./ui.ts";
@@ -21,6 +22,8 @@ export interface SignUpOptions {
 	label?: string;
 	/** Leave the account on `/onboarding`. */
 	onboard?: boolean;
+	/** Promote the account to admin before finishing onboarding. */
+	role?: "user" | "admin";
 }
 
 let sequence = 0;
@@ -56,6 +59,7 @@ export async function signUpUser(browser: Browser, options: SignUpOptions = {}):
 	const id = (await userIdForSessionCookies(await context.cookies())) ?? "";
 	expect(id, "The new session did not resolve to a user id").not.toBe("");
 	rememberUser(id);
+	if (options.role === "admin") await setUserRole(id, "admin");
 
 	const handle = ["e2e", options.label, uniqueStamp()].filter(Boolean).join("-");
 	const email = `${handle}@example.com`;

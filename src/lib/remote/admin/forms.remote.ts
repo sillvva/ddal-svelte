@@ -71,12 +71,15 @@ export const banUser = guardedForm(
 		if (user.role === "admin") throw invalid("Cannot ban admins");
 		if (user.banned) throw invalid("User is already banned");
 
-		return yield* Effect.tryPromise(() =>
+		const banned = yield* Effect.tryPromise(() =>
 			Auth.api.banUser({
 				body: { userId, banReason },
 				headers: event.request.headers
 			})
 		);
+
+		yield* refreshAll(getUsers().refresh());
+		return banned;
 	},
 	"admin"
 );
@@ -86,12 +89,15 @@ export const unbanUser = guardedForm(
 	function* ({ userId }, { event }) {
 		const Auth = yield* AuthService;
 
-		return yield* Effect.tryPromise(() =>
+		const unbanned = yield* Effect.tryPromise(() =>
 			Auth.api.unbanUser({
 				body: { userId },
 				headers: event.request.headers
 			})
 		);
+
+		yield* refreshAll(getUsers().refresh());
+		return unbanned;
 	},
 	"admin"
 );

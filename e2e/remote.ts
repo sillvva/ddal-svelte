@@ -28,14 +28,21 @@ function isNativeRemoteSubmit(url: URL, name: string) {
  */
 async function waitForRemoteForm(page: Page, name: string) {
 	await page.waitForFunction(
-		(name) =>
-			[...document.forms].some((form) => {
+		(name) => {
+			const hasEvents = (el: Element) => Object.getOwnPropertySymbols(el).some((symbol) => symbol.description === "events");
+			return [...document.forms].some((form) => {
 				const action = form.getAttribute("action");
 				if (!action) return false;
 				const id = new URL(action, location.href).searchParams.get("/remote");
 				if (id?.split("/")[1] !== name) return false;
-				return Object.getOwnPropertySymbols(form).some((symbol) => symbol.description === "events");
-			}),
+				if (hasEvents(form)) return true;
+				// Plain `{...form.enhance(...)}` registers a submit listener via attachment rather than
+				// a delegated `events` symbol, so check a hydrated element inside the same `<main>` scope.
+				if (form.querySelector("fieldset")) return false;
+				const scope = form.closest("main");
+				return !!scope && [...scope.querySelectorAll("form, button, a, input, select, textarea")].some(hasEvents);
+			});
+		},
 		name,
 		{ timeout: 30_000 }
 	);
