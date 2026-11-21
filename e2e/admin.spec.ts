@@ -15,13 +15,14 @@ function toast(page: Page, message: string | RegExp) {
 
 async function searchUsers(page: Page, query: string) {
 	const input = page.getByPlaceholder("Search by name, email, role, etc.");
-	await input.fill(query);
+	await input.fill(`"${query}"`);
 }
 
 test("admin access: only admins can open admin pages and call admin endpoints", async ({ users }) => {
 	const admin = await users.signUp({ label: "admin", role: "admin" });
 	const otherAdmin = await users.signUp({ label: "adminb", role: "admin" });
 	const member = await users.signUp({ label: "member" });
+	const otherMember = await users.signUp({ label: "memberb" });
 	const visitor = await users.visitor();
 
 	await test.step("logged-out visitors are sent to sign in", async () => {
@@ -63,11 +64,13 @@ test("admin access: only admins can open admin pages and call admin endpoints", 
 		await page.waitForURL(/\/admin\/users$/);
 
 		await expect(userRow(page, member.handle)).toBeVisible();
+		await expect(userRow(page, otherMember.handle)).toBeVisible();
 		await expect(userRow(page, admin.handle)).toHaveCount(0);
 		await expect(userRow(page, otherAdmin.handle)).toHaveCount(0);
 
 		await searchUsers(page, member.handle);
 		await expect(userRow(page, member.handle)).toBeVisible();
+		await expect(userRow(page, otherMember.handle)).toHaveCount(0);
 		await expect(page.getByText(/^Showing 1 of \d+ users$/)).toBeVisible();
 
 		await page.getByRole("tab", { name: "Logs", exact: true }).click();
@@ -345,7 +348,7 @@ test("admin logs: searching, toggling details, and deleting app logs", async ({ 
 		await page.goto("/admin/logs");
 
 		await test.step("search filters to the matching log and toggles its details", async () => {
-			await page.locator("#log-search").fill(`label:${label}`);
+			await page.locator("#log-search").fill(`label:"${label}"`);
 			const logBody = page.locator("tbody").filter({ hasText: label });
 			await expect(logBody).toBeVisible();
 			await expect(logBody).toHaveAttribute("data-details", "false");

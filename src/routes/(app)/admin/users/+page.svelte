@@ -10,7 +10,7 @@
 	import { tick } from "svelte";
 
 	const searchKey = "s";
-	const search = $derived(page.url.searchParams.get(searchKey) ?? page.state.search?.[searchKey] ?? "");
+	const search = $derived(page.state.search?.[searchKey] ?? page.url.searchParams.get(searchKey) ?? "");
 
 	const users = $derived(await API.admin.queries.getUsers());
 	const parser = $derived(

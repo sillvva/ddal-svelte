@@ -26,7 +26,7 @@
 	{const { user } = $derived(await API.app.queries.request())}
 	{const characters = $derived(await API.characters.queries.getAll())}
 	{const search = $derived(
-		new EntitySearchFactory(characters, page.url.searchParams.get(searchKey) ?? page.state.search?.[searchKey] ?? "")
+		new EntitySearchFactory(characters, page.state.search?.[searchKey] ?? page.url.searchParams.get(searchKey) ?? "")
 	)}
 	{const sortedResults = $derived(
 		search.results.toSorted((a, b) => sorter(b.score, a.score) || sorter(a.totalLevel, b.totalLevel) || sorter(a.name, b.name))

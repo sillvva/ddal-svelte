@@ -23,6 +23,8 @@ const signout = Effect.fn("SignOut")(function* (event: RequestEvent) {
 		catch: (err) => new FailedError("sign out", err)
 	}).pipe(Effect.catch(() => Effect.void));
 
+	event.locals.session = undefined;
+	event.locals.user = undefined;
 	yield* refreshAll(request().refresh());
 	redirect(302, "/");
 });
@@ -44,12 +46,22 @@ export const deleteAccount = guardedForm(function* ({ user, event }) {
 
 export const completeOnboarding = guardedForm(
 	onboardingSchema,
-	function* (input, { user, issue }) {
+	function* (input, { user, event, issue }) {
 		const Auth = yield* AuthService;
 		const taken = yield* Auth.get.emailTaken(input.email, user.id);
 		if (taken) invalid(issue.email("An account with this email already exists"));
 
-		yield* Auth.completeOnboarding(user.id, input);
+		const updated = yield* Auth.completeOnboarding(user.id, input);
+		if (event.locals.user) {
+			event.locals.user = {
+				...event.locals.user,
+				name: updated.name,
+				email: updated.email,
+				image: updated.image,
+				onboarded: updated.onboarded,
+				updatedAt: updated.updatedAt
+			};
+		}
 		yield* refreshAll(request().refresh());
 		redirect(303, "/characters");
 	},
