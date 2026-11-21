@@ -78,7 +78,14 @@ export function settleNavigations(page: Page) {
 
 export function acceptDialogs(page: Page) {
 	let nextPrompt: string | null = null;
+	let dismissNextDialog = false;
 	page.on("dialog", async (dialog) => {
+		if (dismissNextDialog) {
+			dismissNextDialog = false;
+			nextPrompt = null;
+			await dialog.dismiss();
+			return;
+		}
 		if (dialog.type() === "prompt") {
 			const value = nextPrompt ?? dialog.defaultValue();
 			nextPrompt = null;
@@ -90,6 +97,9 @@ export function acceptDialogs(page: Page) {
 	return {
 		promptNext(value: string) {
 			nextPrompt = value;
+		},
+		dismissNext() {
+			dismissNextDialog = true;
 		}
 	};
 }

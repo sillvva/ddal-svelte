@@ -186,7 +186,13 @@ export async function insertAppLogs(label: string, ages: readonly number[]) {
 		for (const [index, ageMs] of ages.entries()) {
 			await sql`
 				insert into applog (id, label, level, annotations, "timestamp")
-				values (${ids[index] ?? ""}, ${label}, 'INFO', '{}'::jsonb, (now() at time zone 'utc') - ${`${ageMs} milliseconds`}::interval)
+				values (
+					${ids[index] ?? ""},
+					${label},
+					'INFO',
+					'{"routeId": null, "extra": {}}'::jsonb,
+					(now() at time zone 'utc') - ${`${ageMs} milliseconds`}::interval
+				)
 			`;
 		}
 	});
@@ -278,4 +284,22 @@ export async function insertDm(userId: string, name: string, DCI: string) {
 
 export async function setBanned(userId: string, banned: boolean) {
 	await withSql((sql) => sql`update "user" set banned = ${banned} where id = ${userId}`);
+}
+
+export async function setUserRole(userId: string, role: "user" | "admin") {
+	await withSql((sql) => sql`update "user" set role = ${role} where id = ${userId}`);
+}
+
+export interface UserStatusRow {
+	id: string;
+	role: "user" | "admin";
+	banned: boolean;
+	banReason: string | null;
+}
+
+export async function userStatus(userId: string) {
+	const rows = await withSql(
+		(sql) => sql<UserStatusRow[]>`select id, role, banned, ban_reason as "banReason" from "user" where id = ${userId}`
+	);
+	return rows[0] ?? null;
 }

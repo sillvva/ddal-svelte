@@ -62,8 +62,9 @@
 			</p>
 			<LogDraftShare id={copied.id} />
 			<div class="flex justify-between gap-2">
-				<Link class="btn btn-ghost btn-sm" href="/(app)/drafts/[draftId=DraftId]" params={{ draftId: copied.id }}>Edit draft</Link
-				>
+				<Link class="btn btn-ghost btn-sm" href="/(app)/drafts/[draftId=DraftId]" params={{ draftId: copied.id }}>
+					Edit draft
+				</Link>
 				<form method="dialog">
 					<button class="btn btn-sm">Close</button>
 				</form>

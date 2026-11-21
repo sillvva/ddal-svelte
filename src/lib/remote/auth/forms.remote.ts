@@ -1,9 +1,10 @@
+import { request } from "#lib/remote/app/queries.remote.js";
 import { onboardingSchema } from "#lib/schemas.js";
 import { FailedError, type ErrorParams } from "#lib/server/effect/errors.js";
-import { guardedForm } from "#lib/server/effect/guarded.js";
+import { guardedForm, refreshAll } from "#lib/server/effect/guarded.js";
 import { AuthService } from "#lib/server/effect/services/auth.js";
 import { StorageService } from "#lib/server/effect/services/storage.js";
-import { invalid, redirect } from "@sveltejs/kit";
+import { invalid, redirect, type RequestEvent } from "@sveltejs/kit";
 import { Data, Effect } from "effect";
 
 class ImpersonatingError extends Data.TaggedError("ImpersonatingError")<ErrorParams> {
@@ -12,16 +13,24 @@ class ImpersonatingError extends Data.TaggedError("ImpersonatingError")<ErrorPar
 	}
 }
 
-export const signOut = guardedForm(function* ({ event }) {
+const signout = Effect.fn("SignOut")(function* (event: RequestEvent) {
 	const Auth = yield* AuthService;
+	yield* Effect.tryPromise({
+		try: () =>
+			Auth.api.signOut({
+				headers: event.request.headers
+			}),
+		catch: (err) => new FailedError("sign out", err)
+	}).pipe(Effect.catch(() => Effect.void));
 
-	yield* Effect.tryPromise(() =>
-		Auth.api.signOut({
-			headers: event.request.headers
-		})
-	);
-
+	event.locals.session = undefined;
+	event.locals.user = undefined;
+	yield* refreshAll(request().refresh());
 	redirect(302, "/");
+});
+
+export const signOut = guardedForm(function* ({ event }) {
+	yield* signout(event);
 });
 
 export const deleteAccount = guardedForm(function* ({ user, event }) {
@@ -32,25 +41,28 @@ export const deleteAccount = guardedForm(function* ({ user, event }) {
 	yield* Auth.user.delete(user.id);
 	yield* Storage.purgePending();
 
-	yield* Effect.tryPromise({
-		try: () =>
-			Auth.api.signOut({
-				headers: event.request.headers
-			}),
-		catch: (err) => new FailedError("sign out", err)
-	}).pipe(Effect.catch(() => Effect.void));
-
-	redirect(302, "/");
+	yield* signout(event);
 });
 
 export const completeOnboarding = guardedForm(
 	onboardingSchema,
-	function* (input, { user, issue }) {
+	function* (input, { user, event, issue }) {
 		const Auth = yield* AuthService;
 		const taken = yield* Auth.get.emailTaken(input.email, user.id);
 		if (taken) invalid(issue.email("An account with this email already exists"));
 
-		yield* Auth.completeOnboarding(user.id, input);
+		const updated = yield* Auth.completeOnboarding(user.id, input);
+		if (event.locals.user) {
+			event.locals.user = {
+				...event.locals.user,
+				name: updated.name,
+				email: updated.email,
+				image: updated.image,
+				onboarded: updated.onboarded,
+				updatedAt: updated.updatedAt
+			};
+		}
+		yield* refreshAll(request().refresh());
 		redirect(303, "/characters");
 	},
 	"onboarding"
@@ -62,13 +74,5 @@ export const cancelOnboarding = guardedForm(function* ({ user, event }) {
 	yield* Auth.user.delete(user.id);
 	yield* Storage.purgePending();
 
-	yield* Effect.tryPromise({
-		try: () =>
-			Auth.api.signOut({
-				headers: event.request.headers
-			}),
-		catch: (err) => new FailedError("sign out", err)
-	}).pipe(Effect.catch(() => Effect.void));
-
-	redirect(302, "/");
+	yield* signout(event);
 }, "onboarding");

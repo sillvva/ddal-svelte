@@ -643,9 +643,9 @@
 {#if !preview || mode !== "preview"}
 	<label for={name} class="fieldset-label justify-between">
 		{#if issues?.length}
-			<span class="rounded-lg bg-error px-2 py-1 text-pretty text-error-content"
-				>{issues.map((issue) => issue.message).join(" ")}</span
-			>
+			<span class="rounded-lg bg-error px-2 py-1 text-pretty text-error-content">
+				{issues.map((issue) => issue.message).join(" ")}
+			</span>
 		{:else if pending > 0}
 			<span class="flex items-center gap-2" role="status">
 				<span class="loading loading-xs"></span>

@@ -112,7 +112,7 @@
 		}
 	])}
 	{const search = $derived(
-		new EntitySearchFactory(character.logs, page.url.searchParams.get(searchKey) ?? page.state.search?.[searchKey] ?? "")
+		new EntitySearchFactory(character.logs, page.state.search?.[searchKey] ?? page.url.searchParams.get(searchKey) ?? "")
 	)}
 	{const sortedResults = $derived(search.results.toSorted((a, b) => sorter(a.showDate, b.showDate)))}
 

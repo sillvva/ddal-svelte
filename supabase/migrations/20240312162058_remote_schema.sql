@@ -14,12 +14,12 @@ SET row_security = off;
 -- ... WITH SCHEMA requires the schema to exist already, so a fresh `supabase start` failed
 -- at pgsodium. Production already applied this migration; the IF NOT EXISTS clauses are a
 -- no-op where the schemas are present.
-CREATE SCHEMA IF NOT EXISTS "pgsodium";
-CREATE SCHEMA IF NOT EXISTS "graphql";
-CREATE SCHEMA IF NOT EXISTS "extensions";
-CREATE SCHEMA IF NOT EXISTS "vault";
+-- CREATE SCHEMA IF NOT EXISTS "pgsodium";
+-- CREATE SCHEMA IF NOT EXISTS "graphql";
+-- CREATE SCHEMA IF NOT EXISTS "extensions";
+-- CREATE SCHEMA IF NOT EXISTS "vault";
 
-CREATE EXTENSION IF NOT EXISTS "pgsodium" WITH SCHEMA "pgsodium";
+-- CREATE EXTENSION IF NOT EXISTS "pgsodium" WITH SCHEMA "pgsodium";
 
 CREATE SCHEMA IF NOT EXISTS "public";
 
@@ -27,17 +27,17 @@ ALTER SCHEMA "public" OWNER TO "pg_database_owner";
 
 COMMENT ON SCHEMA "public" IS 'standard public schema';
 
-CREATE EXTENSION IF NOT EXISTS "pg_graphql" WITH SCHEMA "graphql";
+-- CREATE EXTENSION IF NOT EXISTS "pg_graphql" WITH SCHEMA "graphql";
 
-CREATE EXTENSION IF NOT EXISTS "pg_stat_statements" WITH SCHEMA "extensions";
+-- CREATE EXTENSION IF NOT EXISTS "pg_stat_statements" WITH SCHEMA "extensions";
 
-CREATE EXTENSION IF NOT EXISTS "pgcrypto" WITH SCHEMA "extensions";
+-- CREATE EXTENSION IF NOT EXISTS "pgcrypto" WITH SCHEMA "extensions";
 
-CREATE EXTENSION IF NOT EXISTS "pgjwt" WITH SCHEMA "extensions";
+-- CREATE EXTENSION IF NOT EXISTS "pgjwt" WITH SCHEMA "extensions";
 
-CREATE EXTENSION IF NOT EXISTS "supabase_vault" WITH SCHEMA "vault";
+-- CREATE EXTENSION IF NOT EXISTS "supabase_vault" WITH SCHEMA "vault";
 
-CREATE EXTENSION IF NOT EXISTS "uuid-ossp" WITH SCHEMA "extensions";
+-- CREATE EXTENSION IF NOT EXISTS "uuid-ossp" WITH SCHEMA "extensions";
 
 CREATE OR REPLACE FUNCTION "public"."delete_expired_sessions"() RETURNS "trigger"
     LANGUAGE "plpgsql"

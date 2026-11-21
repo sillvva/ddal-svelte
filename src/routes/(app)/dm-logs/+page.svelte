@@ -58,7 +58,7 @@
 	{const { user } = $derived(await API.app.queries.request())}
 	{const logs = $derived(await API.logs.queries.getDmLogs())}
 	{const search = $derived(
-		new EntitySearchFactory(logs, page.url.searchParams.get(searchKey) ?? page.state.search?.[searchKey] ?? "")
+		new EntitySearchFactory(logs, page.state.search?.[searchKey] ?? page.url.searchParams.get(searchKey) ?? "")
 	)}
 	{const sortedResults = $derived(
 		search.results.toSorted((a, b) => (global.app.dmLogs.sort === "asc" ? sorter(a.date, b.date) : sorter(b.date, a.date)))
