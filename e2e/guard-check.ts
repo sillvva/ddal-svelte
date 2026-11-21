@@ -4,7 +4,7 @@ import { assertLocalE2E, E2EGuardError } from "./env.ts";
 const local = {
 	E2E_ALLOW_LOCAL: "1",
 	PUBLIC_URL: "http://localhost:5173",
-	DATABASE_URL: "postgresql://postgres:postgres@127.0.0.1:54322/postgres"
+	DATABASE_URL: "postgresql://postgres:postgres@127.0.0.1:5433/postgres"
 };
 
 function rejects(env: Parameters<typeof assertLocalE2E>[0], pattern: RegExp) {
@@ -44,7 +44,7 @@ assert.doesNotThrow(() =>
 	assertLocalE2E({
 		...local,
 		PLAYWRIGHT_BASE_URL: "http://localhost:5173",
-		DATABASE_URL: "postgresql://postgres:postgres@localhost:54322/postgres"
+		DATABASE_URL: "postgresql://postgres:postgres@localhost:5433/postgres"
 	})
 );
 
