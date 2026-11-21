@@ -77,17 +77,17 @@ The database listens on `127.0.0.1:5433` (override with `POSTGRES_PORT`). The pa
 | Script | What it does |
 | --- | --- |
 | `pnpm db:local:up` / `db:local:down` | Start (building if needed, waits until healthy) or stop the container. Data is kept. |
-| `pnpm db:local:reset` | Drop the `public` and `supabase_migrations` schemas and pg_cron, create roles, re-apply all migrations, then seed. |
+| `pnpm db:local:reset` | Drop the `public` and `supabase_migrations` schemas and pg_cron, create roles, re-apply all migrations, then load `supabase/seed.sql` if it exists. A seed that touches Supabase-only schemas (`auth`, `storage`, ...) is refused with a message; regenerate it with `pnpm op:db:dump`, delete it, or run `SKIP_SEED=1 pnpm db:local:reset`. |
 | `pnpm db:local:migrate` | Apply new migrations only. |
 | `pnpm db:local:restore` | Reset, then load `data.sql` from the newest `supabase/backups/<timestamp>/` (see `pnpm op:db:backup`). |
 | `pnpm db:local:psql` | `psql` shell in the container. |
 | `pnpm db:local:nuke` | Stop and delete the volume. The next `reset` starts empty. |
 | `pnpm db:migration:new <name>` | `supabase migration new`: create an empty migration file in `supabase/migrations`. |
-| `pnpm db:local:diff` | `supabase db diff` against the local database. Needs the Supabase CLI's shadow-database containers. |
+| `pnpm db:local:diff [-f name]` | SQL that brings `supabase/migrations` up to the local schema. It applies the roles and migrations to a throwaway container built from the same image, then diffs it against the local database with [migra](https://github.com/djrobstep/migra) (a small pinned image, `docker/migra`, built on first use). Prints to stdout, or with `-f name` writes `supabase/migrations/<timestamp>_name.sql`. Right after a reset it reports no differences. Review the output before applying it. |
 
 Migrations were written for Supabase, so `docker/postgres/roles.sql` creates the `anon`, `authenticated`, and `service_role` roles they grant to (NOLOGIN, no other use). Run it before the migrations on any new database, including production. The migrations use no other Supabase-only roles or schemas.
 
-To work on a new migration: `pnpm db:migration:new add_thing`, edit the file, then `pnpm db:local:migrate`.
+To work on a new migration, either write it by hand (`pnpm db:migration:new add_thing`, edit, `pnpm db:local:migrate`), or change the local schema and capture it with `pnpm db:local:diff -f add_thing`. Don't use `supabase db diff`: its shadow database is Supabase's Postgres image, so the diff is full of Supabase extension and grant noise.
 
 ### Connect Dataflare
 
@@ -125,10 +125,10 @@ The app is at [http://localhost:5173](http://localhost:5173), unless `PUBLIC_URL
 - `pnpm op:test:e2e:cleanup` — delete leftover `e2e-` users through `op run`.
 - `pnpm test:e2e:guard` — run the e2e environment guard without touching the database.
 - `pnpm db:local:*` — local database scripts, listed in [Local database](#local-database).
-- `pnpm op:db:diff` — `supabase db diff` against `REMOTE_DB_URL`, via `op run`.
+- `pnpm op:db:diff` — `supabase db diff` against `REMOTE_DB_URL`, via `op run`. It uses Supabase's shadow image, so expect noise against plain Postgres.
 - `pnpm op:db:push` — `supabase db push` against `REMOTE_DB_URL`, via `op run`.
-- `pnpm op:db:dump` — data-only dump of `REMOTE_DB_URL` written to `supabase/seed.sql`.
-- `pnpm op:db:backup` — roles, schema, and data dumps of `REMOTE_DB_URL` under `supabase/backups/<timestamp>/`.
+- `pnpm op:db:dump` — data-only dump of the `public` schema of `REMOTE_DB_URL` written to `supabase/seed.sql`, using `pg_dump` 18 from the `postgres:18.7-trixie` image (the Supabase CLI's `pg_dump` can't read a Postgres 18 server). `db:local:reset` loads it.
+- `pnpm op:db:backup` — roles, schema, and data dumps of `REMOTE_DB_URL` under `supabase/backups/<timestamp>/`, with the same `pg_dump`.
 
 `pnpm test:e2e` and `pnpm test:e2e:cleanup` are the same Playwright commands without `op run`, for CI where the variables are already in the environment. Other scripts are in `package.json`.
 

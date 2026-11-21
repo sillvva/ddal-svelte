@@ -31,8 +31,8 @@
 		"op:test": "pnpm test:unit && pnpm op:test:e2e",
 		"op:db:diff": "pnpm op:run sh -c 'supabase db diff --remote=\"$REMOTE_DB_URL\"'",
 		"op:db:push": "pnpm op:run sh -c 'supabase db push --remote=\"$REMOTE_DB_URL\"'",
-		"op:db:dump": "pnpm op:run sh -c 'supabase db dump --data-only -f supabase/seed.sql --remote=\"$REMOTE_DB_URL\"'",
-		"op:db:backup": "pnpm op:run sh -c 'dir=supabase/backups/$(date +%Y%m%d-%H%M%S) && mkdir -p \"$dir\" && supabase db dump --remote=\"$REMOTE_DB_URL\" --role-only -f \"$dir/roles.sql\" && supabase db dump --remote=\"$REMOTE_DB_URL\" -f \"$dir/schema.sql\" && supabase db dump --remote=\"$REMOTE_DB_URL\" --data-only --use-copy --schema public -f \"$dir/data.sql\"'",
+		"op:db:dump": "pnpm op:run ./scripts/db-dump.sh seed",
+		"op:db:backup": "pnpm op:run ./scripts/db-dump.sh backup",
 		"db:local:up": "./scripts/db-local.sh up",
 		"db:local:down": "./scripts/db-local.sh down",
 		"db:local:reset": "./scripts/db-local.sh reset",
@@ -41,7 +41,7 @@
 		"db:local:psql": "./scripts/db-local.sh psql",
 		"db:local:nuke": "./scripts/db-local.sh nuke",
 		"db:migration:new": "supabase migration new",
-		"db:local:diff": "sh -c 'supabase db diff --remote \"postgresql://postgres:${POSTGRES_PASSWORD:-postgres}@127.0.0.1:${POSTGRES_PORT:-5433}/postgres\"'"
+		"db:local:diff": "./scripts/db-local.sh diff"
 	},
 	"devDependencies": {
 		"@eslint/js": "^10.0.1",
