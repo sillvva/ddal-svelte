@@ -1,8 +1,10 @@
 import { query } from "$app/server";
 import { highlighterConfig, highlighterThemeDark, highlighterThemeLight } from "#lib/constants.js";
+import { userIdSchema } from "#lib/schemas.js";
 import { guardedQuery } from "#lib/server/effect/guarded.js";
 import { run } from "#lib/server/effect/runtime.js";
 import { AdminService, validKeys } from "#lib/server/effect/services/admin.js";
+import { StorageService } from "#lib/server/effect/services/storage.js";
 import { getTrace } from "#lib/util.js";
 import { DateTime, Effect } from "effect";
 import { getSingletonHighlighter } from "shiki";
@@ -64,3 +66,17 @@ export const getUsers = guardedQuery(function* () {
 		)
 	);
 }, "admin");
+
+export const getUserDetail = guardedQuery(
+	userIdSchema,
+	function* (userId) {
+		const Admin = yield* AdminService;
+		const Storage = yield* StorageService;
+
+		const user = yield* Admin.get.userDetail(userId);
+		const storage = yield* Storage.imageUsage(userId);
+
+		return { ...user, storage };
+	},
+	"admin"
+);
