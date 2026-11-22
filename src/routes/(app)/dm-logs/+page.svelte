@@ -11,6 +11,7 @@
 	import { EntitySearchFactory, successToast, swipeAction } from "#lib/factories.svelte.js";
 	import { logDraftMemory } from "#lib/log-draft-storage.svelte.js";
 	import * as API from "#lib/remote/index.js";
+	import { getPageSearchValue } from "#lib/search.js";
 	import type { FullLogData } from "#lib/server/effect/services/logs.js";
 	import { getGlobal } from "#lib/stores.svelte.js";
 	import {
@@ -57,9 +58,7 @@
 <svelte:boundary>
 	{const { user } = $derived(await API.app.queries.request())}
 	{const logs = $derived(await API.logs.queries.getDmLogs())}
-	{const search = $derived(
-		new EntitySearchFactory(logs, page.state.search?.[searchKey] ?? page.url.searchParams.get(searchKey) ?? "")
-	)}
+	{const search = $derived(new EntitySearchFactory(logs, getPageSearchValue(page, searchKey)))}
 	{const sortedResults = $derived(
 		search.results.toSorted((a, b) => (global.app.dmLogs.sort === "asc" ? sorter(a.date, b.date) : sorter(b.date, a.date)))
 	)}

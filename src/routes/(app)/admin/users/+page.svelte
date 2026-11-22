@@ -4,13 +4,14 @@
 	import { BLANK_CHARACTER } from "#lib/constants.js";
 	import { errorToast, successToast } from "#lib/factories.svelte.js";
 	import * as API from "#lib/remote/index.js";
+	import { getPageSearchValue } from "#lib/search.js";
 	import { page } from "$app/state";
 	import { JSONSearchParser } from "@sillvva/search/json";
 	import { toJSObjectNotation } from "@sillvva/utils";
 	import { tick } from "svelte";
 
 	const searchKey = "s";
-	const search = $derived(page.state.search?.[searchKey] ?? page.url.searchParams.get(searchKey) ?? "");
+	const search = $derived(getPageSearchValue(page, searchKey));
 
 	const users = $derived(await API.admin.queries.getUsers());
 	const parser = $derived(

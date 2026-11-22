@@ -3,15 +3,23 @@ import type { UserDM } from "#lib/server/effect/services/dms.js";
 import type { FullLogData, LogSummaryData, UserLogData } from "#lib/server/effect/services/logs.js";
 import { beforeNavigate } from "$app/navigation";
 import type { RemoteForm, RemoteFormInput, RemoteFormIssue } from "$app/server";
-import { debounce, deepEqual, isDefined, substrCount, type MapKeys, type Prettify } from "@sillvva/utils";
+import { debounce, deepEqual, isDefined, type MapKeys, type Prettify } from "@sillvva/utils";
 import type { StandardSchemaV1 } from "@standard-schema/spec";
 import { Duration } from "effect";
-import escapeRegex from "regexp.escape";
 import { getContext, hasContext, onMount, setContext, tick, untrack } from "svelte";
 import { toast } from "svelte-sonner";
 import { SvelteMap } from "svelte/reactivity";
 import { v7 } from "uuid";
 import type { SearchData } from "./remote/command";
+import {
+	buildLogSearchIndex,
+	matchIndexedEntity,
+	scoreSearchMatch,
+	tokenizeSearchQuery,
+	WHOLE_QUERY_MULTIPLIER,
+	type MatchResult,
+	type SearchToken
+} from "./search";
 import { unknownErrorMessage } from "./util";
 
 export function successToast(message: string) {
@@ -286,24 +294,16 @@ export function configureForm<Input extends RemoteFormInput = RemoteFormInput>(g
 	});
 }
 
-type WordToken = { type: "word"; value: string };
-type PhraseToken = { type: "phrase"; value: string };
-type Token = WordToken | PhraseToken;
-
 class BaseSearchFactory<TData extends Array<unknown>> {
-	private EXCLUDED_SEARCH_WORDS = new Set(["and", "or", "to", "in", "a", "an", "the", "of"]);
 	private DEBOUNCE_TIME = 300 as const;
 	private MIN_QUERY_LENGTH = 2 as const;
-	private SCORE_PRECISION = 10 as const;
-	private POSITION_BONUS_MAX = 0.5 as const;
-	private WORD_BOUNDARY_BONUS = 0.3 as const;
-	protected WHOLE_QUERY_MULTIPLIER = 2 as const;
+	protected WHOLE_QUERY_MULTIPLIER = WHOLE_QUERY_MULTIPLIER;
 
 	protected _tdata = $state.raw([] as unknown as TData);
 	protected _query = $state.raw<string>("");
-	protected _tokens = $state.raw<Token[]>([]);
+	protected _tokens = $state.raw<SearchToken[]>([]);
 
-	private _matchCache = new Map<string, { matches: Set<string>; score: number }>();
+	protected _matchCache = new Map<string, MatchResult>();
 
 	private _debouncedTokens = debounce((query: string) => {
 		this._tokens = this.tokenize(query);
@@ -335,73 +335,12 @@ class BaseSearchFactory<TData extends Array<unknown>> {
 		return this._tokens.map((t) => t.value);
 	}
 
-	private tokenCheck(tokenValue: string) {
-		return tokenValue.length > 1 && !this.EXCLUDED_SEARCH_WORDS.has(tokenValue);
-	}
-
 	private tokenize(query: string) {
-		if (query.trim().length < this.MIN_QUERY_LENGTH) return [];
-
-		const tokens: Token[] = [];
-		const regex = /"([^"]+)"|([\w-]+)/g;
-
-		let match: RegExpExecArray | null;
-		while ((match = regex.exec(query)) !== null) {
-			const [, phrase, word] = match;
-
-			if (word && this.tokenCheck(word)) {
-				tokens.push({ type: "word", value: word });
-			} else if (phrase && this.tokenCheck(phrase)) {
-				tokens.push({ type: "phrase", value: phrase });
-			}
-		}
-
-		return tokens;
+		return tokenizeSearchQuery(query);
 	}
 
 	protected hasMatch(item: string) {
-		const cacheKey = `${item}:${this._tokens.map((t) => t.value).join(",")}`;
-
-		if (this._matchCache.has(cacheKey)) {
-			return this._matchCache.get(cacheKey)!;
-		}
-
-		const itemLower = item.toLowerCase();
-		const matches = new Set<string>();
-
-		let score = 0;
-		for (const token of this._tokens) {
-			let subtotal = 0;
-			const tokenLower = token.value.toLowerCase();
-
-			const oc = substrCount(itemLower, tokenLower);
-			if (!oc) continue;
-			subtotal += oc;
-
-			const index = itemLower.indexOf(tokenLower);
-			subtotal += Math.max(0, this.POSITION_BONUS_MAX - (index / itemLower.length) * this.POSITION_BONUS_MAX);
-
-			const escapedTerm = escapeRegex(token.value);
-			if (new RegExp(`\\b${escapedTerm}\\b`, "i").test(item)) {
-				subtotal += this.WORD_BOUNDARY_BONUS;
-			}
-
-			if (token.type === "phrase") {
-				const phraseMultiplier = (token.value.split(/\s+/).length + 2) / 2;
-				subtotal *= phraseMultiplier;
-			}
-
-			score += subtotal;
-			matches.add(token.value);
-		}
-
-		if (matches.size === this._tokens.length) score *= this.WHOLE_QUERY_MULTIPLIER;
-
-		score = Math.round((score / this._tokens.length) * this.SCORE_PRECISION) / this.SCORE_PRECISION;
-
-		const result = { matches, score };
-		this._matchCache.set(cacheKey, result);
-		return result;
+		return scoreSearchMatch(item, this._tokens, this._matchCache);
 	}
 
 	protected getCharacterIndex(item: FullCharacterData) {
@@ -422,17 +361,7 @@ class BaseSearchFactory<TData extends Array<unknown>> {
 	}
 
 	protected getLogIndex(item: FullLogData | LogSummaryData | UserLogData) {
-		return {
-			id: item.id,
-			index: new Map([
-				["id", [item.id]],
-				["name", [item.name]],
-				["character", [item.character?.name || ""]],
-				["dm", [item.dm?.name || ""]],
-				["magicItemsGained", item.magicItemsGained.map((mi) => mi.name)],
-				["storyAwardsGained", item.storyAwardsGained.map((sa) => sa.name)]
-			] as const satisfies [keyof typeof item, string[]][])
-		};
+		return buildLogSearchIndex(item);
 	}
 
 	protected getDMIndex(item: UserDM) {
@@ -620,38 +549,16 @@ export class EntitySearchFactory<
 					};
 				}
 
-				let totalScore = 0;
-
 				const index = this._indexMap.get(entry.id) as Map<TDataKeys, string[]>;
 				if (!index) return null;
 
-				const matches = new Set<string>();
-				const matchedTokens = new Set<string>();
-				const matchTypes = new Set<TDataKeys>();
-
-				for (const [key, values] of index) {
-					for (const value of values) {
-						const matchResult = this.hasMatch(value);
-						if (matchResult.matches.size) {
-							totalScore += matchResult.score;
-							matches.add(value);
-							matchResult.matches.forEach((match) => matchedTokens.add(match));
-							matchTypes.add(key);
-						}
-					}
-				}
-
-				if (matches.size === 1 && matchedTokens.size !== this._tokens.length) {
-					totalScore *= 0;
-					matches.clear();
-				}
-				if (matches.size === 0) return null;
-				if (matchedTokens.size === this._tokens.length) totalScore *= this.WHOLE_QUERY_MULTIPLIER;
+				const matched = matchIndexedEntity(index, this._tokens, this._matchCache);
+				if (!matched) return null;
 
 				return {
 					...entry,
-					score: totalScore,
-					match: matchTypes
+					score: matched.score,
+					match: matched.match
 				};
 			})
 			.filter(isDefined);

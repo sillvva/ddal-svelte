@@ -1,11 +1,11 @@
 <script lang="ts">
 	import { hotkey } from "#lib/attachments.js";
-	import { goto } from "$app/navigation";
+	import { getPageSearchValue } from "#lib/search.js";
+	import { afterNavigate, goto } from "$app/navigation";
 	import { page } from "$app/state";
 	import { debounce } from "@sillvva/utils";
 	import { onMount } from "svelte";
 	import type { HTMLInputAttributes } from "svelte/elements";
-	import { SvelteURL } from "svelte/reactivity";
 
 	let {
 		name = "s",
@@ -13,31 +13,48 @@
 		...rest
 	}: Omit<HTMLInputAttributes, "class" | "name" | "value"> & { name?: string } = $props();
 
-	const url = new SvelteURL(page.url.href);
-	const value = $derived(url.searchParams.get(name) ?? "");
+	const searchValue = $derived(getPageSearchValue(page, name));
+	let draft = $state<string | null>(null);
+	const value = $derived(draft ?? searchValue);
 	let ref: HTMLInputElement;
+	let internalNav = 0;
 
 	const updateValue = debounce((val: string) => {
-		updateSearch(val);
+		void updateSearch(val);
 	}, 300);
 
-	function updateSearch(val: string, replace: boolean = false) {
-		if (replace) {
-			goto(url, {
+	async function updateSearch(val: string, replace: boolean = false) {
+		const nextUrl = new URL((page.shallow?.url ?? page.url).href);
+		if (val) nextUrl.searchParams.set(name, val);
+		else nextUrl.searchParams.delete(name);
+
+		internalNav += 1;
+		try {
+			await goto(nextUrl, {
 				shallow: true,
-				replace: true,
+				replace,
 				state: { ...page.state, search: { ...page.state.search, [name]: val } }
 			});
-		} else {
-			goto(url, {
-				shallow: true,
-				state: { ...page.state, search: { ...page.state.search, [name]: val } }
-			});
+		} finally {
+			internalNav -= 1;
+			if (draft === val) draft = null;
 		}
 	}
 
+	afterNavigate(() => {
+		if (internalNav === 0) {
+			updateValue.cancel();
+			draft = null;
+		}
+	});
+
 	onMount(() => {
-		if (value) updateSearch(value, true);
+		if (searchValue && page.state.search?.[name] === undefined) {
+			void updateSearch(searchValue, true);
+		}
+		return () => {
+			updateValue.cancel();
+		};
 	});
 </script>
 
@@ -47,12 +64,16 @@
 	onsubmit={(e) => {
 		e.preventDefault();
 		updateValue.cancel();
-		updateSearch(ref.value);
+		const val = ref.value;
+		draft = val;
+		void updateSearch(val);
 	}}
 >
 	<search
-		class="input flex w-full items-center gap-2 focus-within:border-primary max-sm:*:text-base sm:input-sm noscript:pr-0"
-		class:pr-0={!!value.trim()}
+		class={[
+			"input flex w-full items-center gap-2 focus-within:border-primary max-sm:*:text-base sm:input-sm noscript:pr-0",
+			!!value.trim() && "pr-0"
+		]}
 		{@attach hotkey([
 			[
 				"/",
@@ -70,25 +91,21 @@
 			class="w-full flex-1"
 			aria-label={rest.placeholder || "Search"}
 			oninput={(e) => {
-				const val = (e.target as HTMLInputElement).value;
-				if (val) {
-					url.searchParams.set(name, val);
-					updateValue.call(val);
-				} else {
-					url.searchParams.delete(name);
-					updateValue.call("");
-				}
+				const val = e.currentTarget.value;
+				draft = val;
+				updateValue.call(val);
 			}}
 			{...rest}
 		/>
 		<span class="noscript:hidden">
-			{#if value?.trim()}
+			{#if value.trim()}
 				<button
 					type="button"
 					class="btn btn-ghost btn-sm"
 					onclick={() => {
-						url.searchParams.delete(name);
-						updateSearch("");
+						updateValue.cancel();
+						draft = "";
+						void updateSearch("");
 					}}
 					aria-label="Clear Search"
 				>

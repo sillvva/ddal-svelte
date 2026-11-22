@@ -15,6 +15,7 @@
 	import { EntitySearchFactory, successToast, swipeAction } from "#lib/factories.svelte.js";
 	import { logDraftMemory } from "#lib/log-draft-storage.svelte.js";
 	import * as API from "#lib/remote/index.js";
+	import { getPageSearchValue } from "#lib/search.js";
 	import type { FullCharacterData } from "#lib/server/effect/services/characters.js";
 	import type { FullLogData } from "#lib/server/effect/services/logs.js";
 	import { getGlobal } from "#lib/stores.svelte.js";
@@ -111,9 +112,7 @@
 			label: "New Log from Draft"
 		}
 	])}
-	{const search = $derived(
-		new EntitySearchFactory(character.logs, page.state.search?.[searchKey] ?? page.url.searchParams.get(searchKey) ?? "")
-	)}
+	{const search = $derived(new EntitySearchFactory(character.logs, getPageSearchValue(page, searchKey)))}
 	{const sortedResults = $derived(search.results.toSorted((a, b) => sorter(a.showDate, b.showDate)))}
 
 	{#snippet failed(error)}
