@@ -8,5 +8,6 @@ export const params = defineParams({
 	DMId: v.pipe(uuidV7, v.brand("DungeonMasterId")),
 	DraftId: v.union([v.pipe(uuidV7, v.brand("LogDraftId")), v.literal("new")]),
 	LogDraftId: v.pipe(uuidV7, v.brand("LogDraftId")),
-	LogId: v.union([v.pipe(uuidV7, v.brand("LogId")), v.literal("new")])
+	LogId: v.union([v.pipe(uuidV7, v.brand("LogId")), v.literal("new")]),
+	UserId: v.pipe(uuidV7, v.brand("UserId"))
 });

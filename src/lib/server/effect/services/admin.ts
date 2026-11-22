@@ -1,16 +1,32 @@
+import { summarizeSessions } from "#lib/admin-user.js";
+import { PlaceholderName } from "#lib/constants.js";
+import { parseCharacter } from "#lib/entities.js";
 import type { AppLogId, UserId } from "#lib/schemas.js";
+import { characterIncludes } from "#lib/server/db/includes.js";
 import { DBService, runQuery, type Filter, type Transaction, type TRSchema } from "#lib/server/db/index.js";
 import type { relations } from "#lib/server/db/relations.js";
 import { appLogs, type InsertAppLog } from "#lib/server/db/schema.js";
 import { logErrors, type ErrorParams } from "#lib/server/effect/errors.js";
 import { DrizzleSearchParser } from "@sillvva/search/drizzle";
-import { isTupleOf, sorter } from "@sillvva/utils";
+import { isDefined, isTupleOf, sorter } from "@sillvva/utils";
 import { EmptyFilter, eq, sql } from "drizzle-orm";
 import { Context, Data, DateTime, Effect, Layer } from "effect";
 
 export class UserNotFoundError extends Data.TaggedError("UserNotFoundError")<ErrorParams> {
 	constructor(err?: unknown) {
 		super({ message: "User not found", status: 404, cause: err });
+	}
+}
+
+export class SessionNotFoundError extends Data.TaggedError("SessionNotFoundError")<ErrorParams> {
+	constructor(err?: unknown) {
+		super({ message: "Session not found", status: 404, cause: err });
+	}
+}
+
+export class ProtectedUserError extends Data.TaggedError("ProtectedUserError")<ErrorParams> {
+	constructor(message: string) {
+		super({ message, status: 403 });
 	}
 }
 
@@ -75,6 +91,118 @@ export class AdminService extends Context.Service<AdminService>()("AdminService"
 						).pipe(Effect.map((users) => users.sort((a, b) => sorter(a.name.toLowerCase(), b.name.toLowerCase()))));
 					},
 					(effect) => logErrors(effect, "AdminService.get.users", {})
+				),
+				/**
+				 * Profile, linked providers, passkeys, characters and sessions for the admin user page.
+				 * Credentials, tokens and session tokens are never selected.
+				 */
+				userDetail: Effect.fn("AdminService.get.userDetail")(
+					function* (userId: UserId) {
+						const now = DateTime.toDate(yield* DateTime.now);
+
+						const found = yield* runQuery(
+							db.query.user.findFirst({
+								columns: {
+									id: true,
+									name: true,
+									email: true,
+									emailVerified: true,
+									image: true,
+									role: true,
+									onboarded: true,
+									banned: true,
+									banReason: true,
+									banExpires: true,
+									createdAt: true
+								},
+								with: {
+									accounts: {
+										columns: { id: true, providerId: true, createdAt: true },
+										orderBy: { createdAt: "asc" }
+									},
+									passkeys: {
+										columns: { id: true, name: true, deviceType: true, backedUp: true, createdAt: true },
+										orderBy: { createdAt: "asc" }
+									},
+									characters: {
+										with: characterIncludes(true),
+										orderBy: { createdAt: "desc" }
+									},
+									sessions: {
+										columns: {
+											id: true,
+											ipAddress: true,
+											userAgent: true,
+											expiresAt: true,
+											createdAt: true,
+											impersonatedBy: true
+										}
+									}
+								},
+								where: {
+									id: {
+										eq: userId
+									}
+								}
+							})
+						);
+						if (!found) return yield* new UserNotFoundError();
+
+						const { sessions, characters, ...user } = found;
+						const summary = summarizeSessions(sessions, now);
+
+						// `session.impersonated_by` is an untyped uuid column that references `user.id`.
+						const impersonatorIds = [...new Set(summary.active.map((s) => s.impersonatedBy).filter(isDefined))] as UserId[];
+						const impersonators = impersonatorIds.length
+							? yield* runQuery(
+									db.query.user.findMany({
+										columns: { id: true, name: true },
+										where: { id: { in: impersonatorIds } }
+									})
+								)
+							: [];
+						const impersonatorNames = new Map<string, string>(impersonators.map((u) => [u.id, u.name]));
+
+						// Level is derived from the logs, like on the characters page. Draft placeholders are not real characters.
+						const characterCards = characters
+							.filter((character) => character.name !== PlaceholderName)
+							.map(parseCharacter)
+							.map((character) => ({
+								id: character.id,
+								name: character.name,
+								race: character.race,
+								class: character.class,
+								imageUrl: character.imageUrl,
+								totalLevel: character.totalLevel
+							}));
+
+						return {
+							...user,
+							characters: characterCards,
+							lastSessionAt: summary.lastSessionAt,
+							sessions: summary.active.map((session) => ({
+								...session,
+								impersonatedByName: session.impersonatedBy ? (impersonatorNames.get(session.impersonatedBy) ?? null) : null
+							}))
+						};
+					},
+					(effect, userId) => logErrors(effect, "AdminService.get.userDetail", { userId })
+				),
+				/** The stored token is needed to call better-auth's revoke API, so it stays on the server. Scoped to the user so an id cannot reach another account's session. */
+				userSession: Effect.fn("AdminService.get.userSession")(
+					function* (userId: UserId, sessionId: string) {
+						const found = yield* runQuery(
+							db.query.session.findFirst({
+								columns: { id: true, token: true },
+								where: {
+									id: { eq: sessionId },
+									userId: { eq: userId }
+								}
+							})
+						);
+						return found ?? (yield* new SessionNotFoundError());
+					},
+					(effect, userId, sessionId) => logErrors(effect, "AdminService.get.userSession", { userId, sessionId })
 				),
 				logs: Effect.fn("AdminService.get.logs")(
 					function* (search: string = "") {

@@ -1,3 +1,4 @@
+import { adminDeleteUserSchema, matchesDeleteConfirmation, protectedUserReason } from "#lib/admin-user.js";
 import { request } from "#lib/remote/app/queries.remote.js";
 import { getAll as getAllCharacters } from "#lib/remote/characters/queries.remote.js";
 import { storage } from "#lib/remote/images/queries.remote.js";
@@ -5,6 +6,7 @@ import { requiredString, userIdSchema, type UserId } from "#lib/schemas.js";
 import { guardedForm, refreshAll } from "#lib/server/effect/guarded.js";
 import { AdminService } from "#lib/server/effect/services/admin.js";
 import { AuthService } from "#lib/server/effect/services/auth.js";
+import { StorageService } from "#lib/server/effect/services/storage.js";
 import { invalid, redirect } from "@sveltejs/kit";
 import { Effect } from "effect";
 import * as v from "valibot";
@@ -98,6 +100,36 @@ export const unbanUser = guardedForm(
 
 		yield* refreshAll(getUsers().refresh());
 		return unbanned;
+	},
+	"admin"
+);
+
+/**
+ * Deletes another user's account the way the self-serve `deleteAccount` does: `Auth.user.delete` queues the
+ * user's R2 keys in `pending_object_deletion`, then `purgePending` removes the objects. Admins are refused,
+ * and the admin must type the last segment of the user id, which the server checks again.
+ */
+export const deleteUser = guardedForm(
+	adminDeleteUserSchema,
+	function* ({ userId, confirmation }, { issue }) {
+		const Auth = yield* AuthService;
+		const Admin = yield* AdminService;
+		const Storage = yield* StorageService;
+
+		const user = yield* Admin.get.user(userId).pipe(Effect.catch((err) => Effect.die(invalid(err.message))));
+
+		const reason = protectedUserReason(user, "delete");
+		if (reason) throw invalid(reason);
+
+		if (!matchesDeleteConfirmation(userId, confirmation)) {
+			throw invalid(issue.confirmation("Enter the last segment of the user ID to confirm"));
+		}
+
+		yield* Auth.user.delete(userId);
+		yield* Storage.purgePending();
+
+		yield* refreshAll(getUsers().refresh());
+		redirect(303, "/admin/users");
 	},
 	"admin"
 );

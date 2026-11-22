@@ -1,5 +1,6 @@
 <script lang="ts">
 	import Head from "#lib/components/head.svelte";
+	import Link from "#lib/components/link.svelte";
 	import Search from "#lib/components/search.svelte";
 	import { BLANK_CHARACTER } from "#lib/constants.js";
 	import { errorToast, successToast } from "#lib/factories.svelte.js";
@@ -77,7 +78,7 @@
 							</div>
 						</td>
 						<td>
-							{user.name}
+							<Link href="/(app)/admin/users/[id=UserId]" params={{ id: user.id }} class="row-link">{user.name}</Link>
 							<div class="max-w-60 text-xs text-base-content/60 not-hover:truncate max-md:max-w-40">
 								{user.email}
 							</div>
