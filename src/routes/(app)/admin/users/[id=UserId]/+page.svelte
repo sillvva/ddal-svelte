@@ -1,9 +1,9 @@
 <script lang="ts">
 	import { matchesDeleteConfirmation, deleteConfirmationSegment } from "#lib/admin-user.js";
 	import { hotkey } from "#lib/attachments.js";
-	import Breadcrumbs from "#lib/components/breadcrumbs.svelte";
 	import Head from "#lib/components/head.svelte";
 	import Link from "#lib/components/link.svelte";
+	import NavMenu from "#lib/components/nav-menu.svelte";
 	import { BLANK_CHARACTER, PROVIDERS } from "#lib/constants.js";
 	import { errorToast, successToast } from "#lib/factories.svelte.js";
 	import { imageStorageView } from "#lib/images/limits.js";
@@ -83,7 +83,7 @@
 
 <Head title={user.name} />
 
-<Breadcrumbs
+<NavMenu
 	crumbs={[
 		{ title: "Users", href: "admin/users" },
 		{ title: user.name, href: "/(app)/admin/users/[id=UserId]", params: { id: user.id } }

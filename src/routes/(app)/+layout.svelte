@@ -1,5 +1,6 @@
 <script lang="ts">
 	import { hotkey } from "#lib/attachments.js";
+	import AdminMenu from "#lib/components/admin-menu.svelte";
 	import CommandTray from "#lib/components/command-tray.svelte";
 	import Error from "#lib/components/error.svelte";
 	import Footer from "#lib/components/footer.svelte";
@@ -91,9 +92,9 @@
 					<CommandTray />
 
 					{#if user.role === "admin"}
-						<Link href="admin/users" class="btn mr-1 btn-ghost p-2 max-md:hidden" aria-label="Admin">
+						<AdminMenu id="admin-menu" class="btn mr-1 btn-ghost p-2 max-md:hidden">
 							<span class="iconify size-6 mdi--administrator"></span>
-						</Link>
+						</AdminMenu>
 					{/if}
 
 					<!-- Avatar -->

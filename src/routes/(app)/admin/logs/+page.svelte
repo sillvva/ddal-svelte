@@ -3,6 +3,7 @@
 	import Debug from "#lib/components/debug.svelte";
 	import Head from "#lib/components/head.svelte";
 	import LoadingPanel from "#lib/components/loading-panel.svelte";
+	import NavMenu from "#lib/components/nav-menu.svelte";
 	import { successToast } from "#lib/factories.svelte.js";
 	import * as API from "#lib/remote/index.js";
 	import { getRelativeTime, parseEffectResult } from "#lib/util.js";
@@ -53,6 +54,8 @@
 </script>
 
 <Head title="App Logs" />
+
+<NavMenu base crumbs={[{ title: "Logs", href: "admin/logs" }]} />
 
 <svelte:boundary>
 	{const baseSearch = $derived(await API.admin.queries.getBaseSearch())}

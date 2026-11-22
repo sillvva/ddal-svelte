@@ -1,6 +1,7 @@
 <script lang="ts">
 	import Head from "#lib/components/head.svelte";
 	import Link from "#lib/components/link.svelte";
+	import NavMenu from "#lib/components/nav-menu.svelte";
 	import Search from "#lib/components/search.svelte";
 	import { BLANK_CHARACTER } from "#lib/constants.js";
 	import { errorToast, successToast } from "#lib/factories.svelte.js";
@@ -26,6 +27,8 @@
 </script>
 
 <Head title="Users" />
+
+<NavMenu base crumbs={[{ title: "Users", href: "admin/users" }]} />
 
 <section class="flex flex-wrap items-center justify-between gap-2 max-sm:justify-end">
 	<div class="flex w-full gap-2 sm:max-w-md md:max-w-md">
