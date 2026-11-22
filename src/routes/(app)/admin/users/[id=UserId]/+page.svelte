@@ -11,6 +11,7 @@
 	import { getGlobal } from "#lib/stores.svelte.js";
 	import { formatDate, parseEffectResult } from "#lib/util.js";
 	import { toJSObjectNotation } from "@sillvva/utils";
+	import { tick } from "svelte";
 	import { SvelteSet } from "svelte/reactivity";
 
 	const { params } = $props();
@@ -20,6 +21,9 @@
 
 	const user = $derived(await API.admin.queries.getUserDetail(params.id));
 	const isAdmin = $derived(user.role === "admin");
+	const impersonateForm = $derived(API.admin.forms.impersonateUser.for(user.id));
+	const banForm = $derived(API.admin.forms.banUser.for(user.id));
+	const unbanForm = $derived(API.admin.forms.unbanUser.for(user.id));
 	const usage = $derived(
 		user.storage.quotaBytes === null ? null : imageStorageView({ ...user.storage, quotaBytes: user.storage.quotaBytes })
 	);
@@ -90,39 +94,142 @@
 	]}
 />
 
-<section class="flex flex-wrap items-center gap-4 rounded-lg bg-base-200 p-4">
-	<div class="avatar">
-		<div class="mask size-16 bg-primary mask-squircle">
-			{#if user.image}
-				<img
-					src={user.image}
-					width={64}
-					height={64}
-					class="size-full object-cover object-top"
-					alt={user.name}
-					onerror={(e) => {
-						const img = e.currentTarget as HTMLImageElement;
-						img.onerror = null;
-						img.src = BLANK_CHARACTER;
-					}}
-				/>
-			{:else}
-				<span class="iconify size-16 mdi--account"></span>
+<section class="flex flex-col gap-4 rounded-lg bg-base-200 p-4 sm:flex-row sm:items-center sm:justify-between">
+	<div class="flex min-w-0 items-start gap-4">
+		<div class="avatar shrink-0">
+			<div class="mask size-16 bg-primary mask-squircle">
+				{#if user.image}
+					<img
+						src={user.image}
+						width={64}
+						height={64}
+						class="size-full object-cover object-top"
+						alt={user.name}
+						onerror={(e) => {
+							const img = e.currentTarget as HTMLImageElement;
+							img.onerror = null;
+							img.src = BLANK_CHARACTER;
+						}}
+					/>
+				{:else}
+					<span class="iconify size-16 mdi--account"></span>
+				{/if}
+			</div>
+		</div>
+		<div class="min-w-0 flex-1">
+			<h1 class="flex flex-wrap items-center gap-2 text-2xl font-bold">
+				{user.name}
+				<span class="badge badge-outline">{user.role.toLocaleUpperCase()}</span>
+				{#if user.banned}
+					<span class="badge badge-error">Banned</span>
+				{/if}
+			</h1>
+			<p class="truncate text-sm text-base-content/70">{user.email}</p>
+			<p class="sm:truncate-none truncate font-mono text-xs text-base-content/50 sm:break-all" title={user.id}>{user.id}</p>
+			{#if user.banned}
+				<p class="text-xs text-error">Banned: {user.banReason ?? "No reason given"}</p>
 			{/if}
 		</div>
 	</div>
-	<div class="min-w-0 flex-1">
-		<h1 class="flex flex-wrap items-center gap-2 text-2xl font-bold">
-			{user.name}
-			<span class="badge badge-outline">{user.role.toLocaleUpperCase()}</span>
-			{#if user.banned}
-				<span class="badge badge-error">Banned</span>
-			{/if}
-		</h1>
-		<p class="truncate text-sm text-base-content/70">{user.email}</p>
-		<p class="font-mono text-xs break-all text-base-content/50">{user.id}</p>
-		{#if user.banned}
-			<p class="text-xs text-error">Banned: {user.banReason ?? "No reason given"}</p>
+	<div class="grid w-full grid-cols-2 gap-2 sm:flex sm:w-auto sm:flex-wrap">
+		<form
+			class="min-w-0"
+			{...impersonateForm.enhance(async ({ submit }) => {
+				if (await submit()) {
+					void API.auth.queries.getAccounts().refresh();
+				}
+
+				const issues = impersonateForm.fields.issues();
+				if (issues?.length) {
+					issues.forEach((issue) => errorToast(issue.message));
+				}
+			})}
+		>
+			<input {...impersonateForm.fields.userId.as("hidden", user.id)} />
+			<button
+				type="submit"
+				class="btn w-full btn-primary sm:w-auto"
+				disabled={isAdmin || user.banned}
+				aria-label="Impersonate {user.name}"
+			>
+				<span class="iconify mdi--account-switch"></span>
+				Impersonate
+			</button>
+		</form>
+		{#if !user.banned}
+			<form
+				class="min-w-0"
+				{...banForm.enhance(async ({ submit }) => {
+					await submit().updates(
+						API.admin.queries.getUserDetail(params.id).withOverride((detail) => ({
+							...detail,
+							banned: true,
+							banReason: banForm.fields.banReason.value() ?? null
+						})),
+						API.admin.queries
+							.getUsers()
+							.withOverride((users) =>
+								users.map((u) =>
+									u.id === user.id ? { ...u, banned: true, banReason: banForm.fields.banReason.value() ?? null } : u
+								)
+							)
+					);
+
+					const issues = banForm.fields.allIssues();
+					if (issues?.length) {
+						issues.forEach((issue) => errorToast(`${toJSObjectNotation(issue.path) || "Error"}: ${issue.message}`));
+					} else {
+						successToast(`${user.name} has been banned`);
+					}
+				})}
+			>
+				<input {...banForm.fields.userId.as("hidden", user.id)} />
+				<input {...banForm.fields.banReason.as("text")} hidden />
+				<button
+					type="button"
+					class="btn w-full btn-error sm:w-auto"
+					disabled={isAdmin}
+					aria-label="Ban {user.name}"
+					onclick={async (e) => {
+						const form = e.currentTarget.form;
+						const banReason = prompt("Reason for ban")?.trim();
+						if (!banReason) return errorToast("Reason is required");
+						banForm.fields.banReason.set(banReason);
+						await tick();
+						form?.requestSubmit();
+					}}
+				>
+					<span class="iconify mdi--ban"></span>
+					Ban
+				</button>
+			</form>
+		{:else}
+			<form
+				class="col-span-2 min-w-0 sm:col-span-1"
+				{...unbanForm.enhance(async ({ submit }) => {
+					if (!confirm(`Are you sure you want to unban ${user.name}?`)) return;
+
+					await submit().updates(
+						API.admin.queries.getUserDetail(params.id).withOverride((detail) => ({ ...detail, banned: false, banReason: null })),
+						API.admin.queries
+							.getUsers()
+							.withOverride((users) => users.map((u) => (u.id === user.id ? { ...u, banned: false, banReason: null } : u)))
+					);
+
+					const issues = unbanForm.fields.allIssues();
+					if (issues?.length) {
+						issues.forEach((issue) => errorToast(`${toJSObjectNotation(issue.path) || "Error"}: ${issue.message}`));
+					} else {
+						successToast(`${user.name} has been unbanned`);
+					}
+				})}
+			>
+				<input {...unbanForm.fields.userId.as("hidden", user.id)} />
+				<button type="submit" class="btn w-full btn-success sm:w-auto" disabled={isAdmin} aria-label="Unban {user.name}">
+					<span class="iconify mdi--check"></span>
+					Unban
+				</button>
+			</form>
 		{/if}
 	</div>
 </section>
