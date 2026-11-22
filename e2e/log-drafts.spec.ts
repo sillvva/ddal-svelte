@@ -327,6 +327,16 @@ test("log drafts: share as a DM, open the link, fill a log, and keep edits with 
 		expect(await storedDraftId(page)).toBe(draftId);
 	});
 
+	await test.step("the draft link picks a character and opens a preloaded new log", async () => {
+		const { page } = player;
+		await page.goto(`/draft/${draftId}`);
+		await expect(page.getByLabel("Character")).toBeVisible();
+		await page.getByRole("button", { name: "Start new log with draft" }).click();
+		await page.waitForURL(new RegExp(`/characters/${characterId}/log/new\\?.*fromDraft=1`));
+		await expect(page.getByLabel("Title")).toHaveValue(draftTitle);
+		expect(await logIdsForCharacter(characterId)).toHaveLength(1);
+	});
+
 	await test.step("only the owner can edit or delete the draft", async () => {
 		const { page } = player;
 		await page.goto(`/drafts/${draftId}`);
