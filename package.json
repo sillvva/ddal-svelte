@@ -29,6 +29,7 @@
 		"op:test:e2e": "pnpm op:run env E2E_ALLOW_LOCAL=1 pnpm test:e2e",
 		"op:test:e2e:cleanup": "pnpm op:run env E2E_ALLOW_LOCAL=1 pnpm test:e2e:cleanup",
 		"op:test": "pnpm test:unit && pnpm op:test:e2e",
+		"op:worktree:setup": "./scripts/worktree-setup.sh",
 		"op:db:diff": "pnpm op:run ./scripts/db-local.sh diff-remote",
 		"op:db:push": "pnpm op:run ./scripts/db-push.sh --yes",
 		"op:db:push:dry": "pnpm op:run ./scripts/db-push.sh --dry-run",

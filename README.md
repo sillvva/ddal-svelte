@@ -82,6 +82,7 @@ The database listens on `127.0.0.1:5433` (override with `POSTGRES_PORT`). The pa
 | `pnpm db:local:migrate` | Apply new migrations only. |
 | `pnpm db:local:restore` | Reset, then load `data.sql` from the newest `supabase/backups/<timestamp>/` (see `pnpm op:db:backup`). |
 | `pnpm op:db:local:restore` | `db:local:restore`, then empty the dev R2 bucket (see below). |
+| `pnpm worktree:setup` | Set up a new git worktree. Copies `.env.example.*local` to `.env.*local` (never overwriting), stops database containers started from other worktrees (the compose file pins the container name and port, so only one can run; volumes are kept; skip with `SKIP_STOP_OTHERS=1`), runs `pnpm op:db:backup`, then `pnpm op:db:local:restore`, which starts this worktree's container. |
 | `pnpm db:local:psql` | `psql` shell in the container. |
 | `pnpm db:local:nuke` | Stop and delete the volume. The next `reset` starts empty. |
 | `pnpm db:migration:new <name>` | `supabase migration new`: create an empty migration file in `supabase/migrations`. |
