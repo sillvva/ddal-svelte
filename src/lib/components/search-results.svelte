@@ -1,4 +1,6 @@
 <script lang="ts">
+	import escapeRegex from "regexp.escape";
+
 	interface Props {
 		text?: string | string[] | null;
 		terms?: string[];
@@ -9,8 +11,9 @@
 
 	let { text = "", terms = [], filtered = false, separator = " | ", matches = 1 }: Props = $props();
 
-	const regexes = $derived(terms.map((term) => new RegExp(term, "gi")));
-	const regex = $derived(terms.length ? new RegExp(terms.join("|"), "gi") : null);
+	const regexes = $derived(terms.map((term) => new RegExp(escapeRegex(term), "gi")));
+	const regex = $derived(terms.length ? new RegExp(terms.map(escapeRegex).join("|"), "gi") : null);
+	const testRegex = $derived(terms.length ? new RegExp(`^(?:${terms.map(escapeRegex).join("|")})$`, "i") : null);
 
 	const items = $derived(Array.isArray(text) ? text : text?.split(separator) || []);
 	const filteredItems = $derived(
@@ -39,9 +42,9 @@
 	});
 </script>
 
-{#if parts.length && regex}
+{#if parts.length && testRegex}
 	{#each parts as part, i (i)}
-		{#if regex.test(part)}
+		{#if testRegex.test(part)}
 			<span class="bg-primary px-1 font-semibold text-primary-content">{part}</span>
 		{:else}
 			{part}

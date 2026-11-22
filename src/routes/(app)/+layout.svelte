@@ -184,8 +184,8 @@
 								href={page.state.modal.goto}
 								onclick={async (e) => {
 									e.preventDefault();
-									await closeModal();
 									const { href } = e.currentTarget;
+									await closeModal();
 									try {
 										await goto(href);
 									} catch {
