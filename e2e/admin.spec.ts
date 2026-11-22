@@ -487,7 +487,9 @@ test("admin user detail: profile, session revocation, and deleting a user", asyn
 			userId: otherAdmin.id
 		});
 		expect(result.ok).toBe(false);
-		expect(result.error?.message).toBe("Cannot revoke sessions of admin accounts");
+		// Command errors carry the pretty-printed cause, so the message is prefixed with the error tag.
+		expect(result.error?.message).toContain("Cannot revoke sessions of admin accounts");
+		expect(result.error?.status).toBe(403);
 		expect(await sessionIds(otherAdmin.id)).toEqual(sessionsBefore);
 	});
 
