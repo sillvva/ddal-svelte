@@ -1,3 +1,4 @@
+import { computeOrphanedObjects, matchesOrphanSweepConfirmation, type BucketObject } from "#lib/admin-storage.js";
 import {
 	AVATAR_IMAGE_LIMITS,
 	CHARACTER_IMAGE_LIMITS,
@@ -37,11 +38,19 @@ import { imageUploads, user } from "#lib/server/db/schema.js";
 import { logErrors, logResults } from "#lib/server/effect/errors.js";
 import { AppLog } from "#lib/server/effect/logging.js";
 import { ImageUploadError } from "#lib/server/images/errors.js";
-import { forgetNoteUpload } from "#lib/server/images/note-db.js";
+import { forgetNoteUpload, forgetOrphanedNoteUploads } from "#lib/server/images/note-db.js";
+import {
+	createOrphanSweepToken,
+	executeOrphanDeletion,
+	verifyOrphanSweepToken,
+	type OrphanDeletionError
+} from "#lib/server/images/orphan-sweep.js";
 import {
 	assertCustomAvatarAllowed,
 	clearScheduledDeletions,
+	findReferencedPermanentKeys,
 	listPendingDeletions,
+	listReferencedPermanentKeys,
 	lockPendingDeletion,
 	lockPortraitUser,
 	notePendingFailure,
@@ -52,11 +61,12 @@ import {
 	userIdForDeletion
 } from "#lib/server/images/portrait-db.js";
 import { assertNoteSaveQuota, assertPortraitQuota, imageStorageUsage } from "#lib/server/images/quota-db.js";
-import { R2_ACCESS_KEY_ID, R2_BUCKET, R2_ENDPOINT, R2_SECRET_ACCESS_KEY } from "$app/env/private";
+import { AUTH_SECRET, R2_ACCESS_KEY_ID, R2_BUCKET, R2_ENDPOINT, R2_SECRET_ACCESS_KEY } from "$app/env/private";
 import { R2_PUBLIC_URL } from "$app/env/public";
 import {
 	CopyObjectCommand,
 	DeleteObjectCommand,
+	DeleteObjectsCommand,
 	GetObjectCommand,
 	HeadObjectCommand,
 	ListObjectsV2Command,
@@ -172,6 +182,38 @@ const deleteStoredObject = Effect.fn("StorageService.deleteStoredObject")(functi
 		},
 		catch: (cause) => new ImageUploadError("Could not delete the stored image", 500, cause)
 	});
+});
+
+const deleteStoredObjectsBatch = Effect.fn("StorageService.deleteStoredObjectsBatch")(function* (keys: readonly string[]) {
+	if (!keys.length) return { deletedKeys: [] as string[], errors: [] as OrphanDeletionError[] };
+	for (const key of keys) {
+		if (!isPermanentImageKey(key)) {
+			return yield* new ImageUploadError("Refusing to delete an object outside permanent image storage", 500);
+		}
+	}
+
+	const result = yield* Effect.tryPromise({
+		try: () =>
+			client.send(
+				new DeleteObjectsCommand({
+					Bucket: R2_BUCKET,
+					Delete: {
+						Objects: keys.map((Key) => ({ Key })),
+						Quiet: false
+					}
+				})
+			),
+		catch: (cause) => new ImageUploadError("Could not delete orphaned objects from storage", 500, cause)
+	});
+
+	const deletedKeys = (result.Deleted ?? []).map((entry) => entry.Key).filter((key): key is string => Boolean(key));
+	const errors: OrphanDeletionError[] = (result.Errors ?? []).map((error) => ({
+		key: error.Key ?? "",
+		code: error.Code ?? "Error",
+		message: error.Message ?? "Unknown error"
+	}));
+
+	return { deletedKeys, errors };
 });
 
 const headObject = Effect.fn("StorageService.headObject")(function* (key: string) {
@@ -511,8 +553,8 @@ export class StorageService extends Context.Service<StorageService>()("StorageSe
 	make: Effect.fn("StorageService")(function* () {
 		const { db, transaction } = yield* DBService;
 
-		const listPrefix = Effect.fn("StorageService.listPrefix")(function* (prefix: string) {
-			const keys: string[] = [];
+		const listPrefixObjects = Effect.fn("StorageService.listPrefixObjects")(function* (prefix: string) {
+			const objects: BucketObject[] = [];
 			let token: string | undefined;
 			do {
 				const page = yield* Effect.tryPromise({
@@ -527,11 +569,58 @@ export class StorageService extends Context.Service<StorageService>()("StorageSe
 					catch: (cause) => new ImageUploadError("Could not list stored images", 500, cause)
 				});
 				for (const object of page.Contents ?? []) {
-					if (object.Key) keys.push(object.Key);
+					if (object.Key) {
+						objects.push({
+							key: object.Key,
+							bytes: integer(object.Size),
+							lastModified: object.LastModified ?? null
+						});
+					}
 				}
 				token = page.IsTruncated ? page.NextContinuationToken : undefined;
 			} while (token);
-			return keys;
+			return objects;
+		});
+
+		const listPrefix = Effect.fn("StorageService.listPrefix")(function* (prefix: string) {
+			const objects = yield* listPrefixObjects(prefix);
+			return objects.map((object) => object.key);
+		});
+
+		const purgeOnePendingObject = Effect.fn("StorageService.purgeOnePendingObject")(function* (objectKey: string) {
+			return yield* transaction(
+				Effect.fn(function* (tx) {
+					const userId = userIdForDeletion(objectKey);
+					// Staged `tmp/` keys are not queued. Drop anything else without deleting the object.
+					if (!userId || !isPermanentImageKey(objectKey)) {
+						const existing = yield* lockPendingDeletion(tx, objectKey);
+						if (!existing) return { status: "missing" as const };
+						yield* removePendingDeletion(tx, objectKey);
+						return { status: "dropped-invalid" as const };
+					}
+
+					yield* lockPortraitUser(tx, userId);
+					const current = yield* lockPendingDeletion(tx, objectKey);
+					if (!current) return { status: "missing" as const };
+
+					// A portrait or avatar saved again, or a note image referenced again, after this key was queued.
+					// Keep the object and drop the request.
+					if (isPermanentImageKey(current.objectKey) && (yield* permanentKeyInUse(tx, current.objectKey))) {
+						yield* clearScheduledDeletions(tx, [current.objectKey]);
+						return { status: "in-use" as const };
+					}
+
+					const deleted = yield* Effect.result(deleteStoredObject(current.objectKey));
+					if (Result.isSuccess(deleted)) {
+						yield* removePendingDeletion(tx, current.objectKey);
+						yield* forgetNoteUpload(tx, current.objectKey);
+						return { status: "deleted" as const };
+					}
+
+					yield* notePendingFailure(tx, current.objectKey);
+					return { status: "failed" as const, message: deleted.failure.message };
+				})
+			);
 		});
 
 		/**
@@ -552,36 +641,7 @@ export class StorageService extends Context.Service<StorageService>()("StorageSe
 
 				for (const row of fresh) {
 					attempted.add(row.objectKey);
-					yield* transaction(
-						Effect.fn(function* (tx) {
-							const userId = userIdForDeletion(row.objectKey);
-							// Staged `tmp/` keys are not queued. Drop anything else without deleting the object.
-							if (!userId || !isPermanentImageKey(row.objectKey)) {
-								yield* removePendingDeletion(tx, row.objectKey);
-								return;
-							}
-
-							yield* lockPortraitUser(tx, userId);
-							const current = yield* lockPendingDeletion(tx, row.objectKey);
-							if (!current) return;
-
-							// A portrait or avatar saved again, or a note image referenced again, after this key was queued.
-							// Keep the object and drop the request.
-							if (isPermanentImageKey(current.objectKey) && (yield* permanentKeyInUse(tx, current.objectKey))) {
-								yield* clearScheduledDeletions(tx, [current.objectKey]);
-								return;
-							}
-
-							const deleted = yield* Effect.result(deleteStoredObject(current.objectKey));
-							if (Result.isSuccess(deleted)) {
-								yield* removePendingDeletion(tx, current.objectKey);
-								yield* forgetNoteUpload(tx, current.objectKey);
-								return;
-							}
-
-							yield* notePendingFailure(tx, current.objectKey);
-						})
-					).pipe(
+					yield* purgeOnePendingObject(row.objectKey).pipe(
 						Effect.catch((error) =>
 							AppLog.error("StorageService.purgePendingObjects", { message: error.message, key: row.objectKey })
 						)
@@ -890,6 +950,158 @@ export class StorageService extends Context.Service<StorageService>()("StorageSe
 			purgePending: Effect.fn("StorageService.purgePending")(function* () {
 				yield* purgePendingObjects();
 			}),
+
+			getPendingDeletionQueue: Effect.fn("StorageService.getPendingDeletionQueue")(
+				function* () {
+					const items = yield* listPendingDeletions(db);
+					return { bucket: R2_BUCKET, items };
+				},
+				(effect) => logErrors(effect, "StorageService.getPendingDeletionQueue", {})
+			),
+
+			retryPendingDeletion: Effect.fn("StorageService.retryPendingDeletion")(
+				function* (objectKey: string) {
+					const outcome = yield* purgeOnePendingObject(objectKey);
+					if (outcome.status === "failed") {
+						yield* AppLog.error("StorageService.retryPendingDeletion", {
+							bucket: R2_BUCKET,
+							objectKey,
+							outcome
+						});
+					} else {
+						yield* AppLog.info("StorageService.retryPendingDeletion", {
+							bucket: R2_BUCKET,
+							objectKey,
+							outcome
+						});
+					}
+					return outcome;
+				},
+				(effect, objectKey) => logErrors(effect, "StorageService.retryPendingDeletion", { objectKey })
+			),
+
+			removePendingDeletion: Effect.fn("StorageService.removePendingDeletion")(
+				function* (objectKey: string) {
+					const removed = yield* transaction(
+						Effect.fn(function* (tx) {
+							const existing = yield* lockPendingDeletion(tx, objectKey);
+							if (!existing) return false;
+							yield* removePendingDeletion(tx, objectKey);
+							return true;
+						})
+					);
+					yield* AppLog.info("StorageService.removePendingDeletion", {
+						bucket: R2_BUCKET,
+						objectKey,
+						removed
+					});
+					return { removed };
+				},
+				(effect, objectKey) => logErrors(effect, "StorageService.removePendingDeletion", { objectKey })
+			),
+
+			/**
+			 * Dry-run scan of permanent keys in `R2_BUCKET` that are not referenced by `character.image_url`,
+			 * `user.image`, `image_upload.object_key`, or `pending_object_deletion`. Skips `tmp/`.
+			 * Returns an HMAC-signed token binding the exact key list to this bucket, admin, and scan time.
+			 */
+			scanOrphanedObjects: Effect.fn("StorageService.scanOrphanedObjects")(
+				function* (adminUserId: UserId) {
+					// Permanent image keys live under `users/`; `tmp/` is skipped both by prefix and in `computeOrphanedObjects`.
+					const objects = yield* listPrefixObjects("users/");
+					const referencedKeys = yield* listReferencedPermanentKeys(db);
+					const summary = computeOrphanedObjects(objects, referencedKeys);
+					const issuedAt = Date.now();
+					const token = createOrphanSweepToken(
+						{
+							bucket: R2_BUCKET,
+							userId: adminUserId,
+							issuedAt,
+							keys: summary.orphans.map((object) => object.key)
+						},
+						AUTH_SECRET
+					);
+
+					return {
+						bucket: R2_BUCKET,
+						scannedAt: new Date(issuedAt),
+						issuedAt,
+						token,
+						scannedPermanentCount: summary.scannedPermanentCount,
+						totalBytes: summary.totalBytes,
+						orphans: summary.orphans
+					};
+				},
+				(effect, adminUserId) => logErrors(effect, "StorageService.scanOrphanedObjects", { adminUserId })
+			),
+
+			/**
+			 * Deletes orphaned permanent objects that came from a confirmed dry run.
+			 * Verifies the signed dry-run token and confirmation text on the server, re-checks each batch
+			 * against the database right before deleting, deletes in batches of at most 1000 via `DeleteObjects`,
+			 * and logs the outcome.
+			 */
+			deleteOrphanedObjects: Effect.fn("StorageService.deleteOrphanedObjects")(
+				function* (
+					adminUserId: UserId,
+					input: { keys: readonly string[]; token: string; issuedAt: number; confirmation: string }
+				) {
+					const verified = verifyOrphanSweepToken(
+						{
+							bucket: R2_BUCKET,
+							userId: adminUserId,
+							issuedAt: input.issuedAt,
+							keys: input.keys,
+							token: input.token
+						},
+						AUTH_SECRET
+					);
+					if (!verified.ok) {
+						return yield* new ImageUploadError(verified.reason, 400);
+					}
+
+					if (!matchesOrphanSweepConfirmation(R2_BUCKET, verified.keys.length, input.confirmation)) {
+						return yield* new ImageUploadError("Confirmation text does not match.", 400);
+					}
+
+					const result = yield* executeOrphanDeletion(verified.keys, {
+						findReferenced: (batch) => transaction((tx) => findReferencedPermanentKeys(tx, batch)),
+						deleteBatch: (batch) =>
+							deleteStoredObjectsBatch(batch).pipe(
+								Effect.tap((result) =>
+									// The object is gone, so drop the stale upload rows of deleted note images.
+									transaction((tx) => forgetOrphanedNoteUploads(tx, result.deletedKeys))
+								)
+							)
+					});
+
+					const logPayload = {
+						bucket: R2_BUCKET,
+						requestedCount: result.requestedCount,
+						deletedCount: result.deletedCount,
+						skippedCount: result.skippedCount,
+						failedCount: result.failedCount,
+						deletedKeys: result.deletedKeys.slice(0, 100),
+						deletedKeysTruncated: result.deletedKeys.length > 100,
+						skippedKeys: result.skippedKeys.slice(0, 100),
+						skippedKeysTruncated: result.skippedKeys.length > 100,
+						errors: result.errors.slice(0, 100)
+					};
+
+					if (result.failedCount > 0) {
+						yield* AppLog.error("StorageService.deleteOrphanedObjects", logPayload);
+					} else {
+						yield* AppLog.info("StorageService.deleteOrphanedObjects", logPayload);
+					}
+
+					return { bucket: R2_BUCKET, ...result };
+				},
+				(effect, adminUserId, input) =>
+					logErrors(effect, "StorageService.deleteOrphanedObjects", {
+						adminUserId,
+						keyCount: input.keys.length
+					})
+			),
 
 			/**
 			 * Permanent portraits, avatars, and note images stored for this account.

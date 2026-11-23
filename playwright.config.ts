@@ -16,7 +16,8 @@ export default defineConfig({
 	// while the test is still running.
 	reporter: process.env.CI ? "list" : [["list", { printSteps: true }]],
 	fullyParallel: false,
-	workers: 1,
+	// Run with 4 workers locally, or 50% of available cores on CI
+	workers: process.env.CI ? "50%" : 4,
 	forbidOnly: !!process.env.CI,
 	retries: process.env.CI ? 1 : 0,
 	timeout: 240_000,

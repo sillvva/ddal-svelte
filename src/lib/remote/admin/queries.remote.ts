@@ -80,3 +80,8 @@ export const getUserDetail = guardedQuery(
 	},
 	"admin"
 );
+
+export const getPendingDeletions = guardedQuery(function* () {
+	const Storage = yield* StorageService;
+	return yield* Storage.getPendingDeletionQueue();
+}, "admin");
