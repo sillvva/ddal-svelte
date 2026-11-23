@@ -8,8 +8,9 @@
 	import SearchResults from "#lib/components/search-results.svelte";
 	import Search from "#lib/components/search.svelte";
 	import SplitButton from "#lib/components/split-button.svelte";
+	import { isUnassignedDmLogWithRewards } from "#lib/entities.js";
 	import { EntitySearchFactory, successToast, swipeAction } from "#lib/factories.svelte.js";
-	import { logDraftMemory } from "#lib/log-draft-storage.svelte.js";
+	import { logDraftMemory } from "#lib/log-draft.svelte.js";
 	import * as API from "#lib/remote/index.js";
 	import { getPageSearchValue } from "#lib/search.js";
 	import type { FullLogData } from "#lib/server/effect/services/logs.js";
@@ -58,7 +59,10 @@
 <svelte:boundary>
 	{const { user } = $derived(await API.app.queries.request())}
 	{const logs = $derived(await API.logs.queries.getDmLogs())}
-	{const search = $derived(new EntitySearchFactory(logs, getPageSearchValue(page, searchKey)))}
+	{const listedLogs = $derived(
+		global.app.dmLogs.unassignedRewards ? logs.filter((log) => isUnassignedDmLogWithRewards(log)) : logs
+	)}
+	{const search = $derived(new EntitySearchFactory(listedLogs, getPageSearchValue(page, searchKey)))}
 	{const sortedResults = $derived(
 		search.results.toSorted((a, b) => (global.app.dmLogs.sort === "asc" ? sorter(a.date, b.date) : sorter(b.date, a.date)))
 	)}
@@ -109,6 +113,23 @@
 		</div>
 		<div class="flex gap-2">
 			<button
+				class="btn data-[enabled=true]:btn-primary sm:btn-sm"
+				data-enabled={global.app.dmLogs.unassignedRewards}
+				onclick={() => {
+					global.app.dmLogs.unassignedRewards = !global.app.dmLogs.unassignedRewards;
+				}}
+				onkeypress={() => null}
+				aria-label="Unassigned logs with rewards"
+				aria-pressed={global.app.dmLogs.unassignedRewards}
+				tabindex="0"
+			>
+				<span
+					class="iconify size-5 data-[enabled=true]:mdi--account-clock data-[enabled=false]:mdi--account-clock-outline max-md:size-6"
+					data-enabled={global.app.dmLogs.unassignedRewards}
+				></span>
+				<span class="max-sm:hidden">Unassigned</span>
+			</button>
+			<button
 				class="btn data-[desc=true]:btn-primary sm:btn-sm"
 				data-desc={global.app.dmLogs.descriptions}
 				onclick={() =>
@@ -142,6 +163,9 @@
 	</div>
 
 	<section>
+		{#if global.app.dmLogs.unassignedRewards && logs.length > 0 && listedLogs.length === 0}
+			<p class="mb-4 text-center text-sm sm:hidden">No unassigned DM logs with rewards.</p>
+		{/if}
 		<!-- Mobile List -->
 		<ul class="overflow-hidden rounded-lg sm:hidden print:hidden">
 			{#each sortedResults as log (log.id)}
@@ -294,6 +318,14 @@
 								<div class="flex justify-center" {@attach showStoredDraft}>
 									<SplitButton href={newLogHref} params={newLogParams} label="Create one now" options={newLogOptions} />
 								</div>
+							</td>
+						</tr>
+					</tbody>
+				{:else if global.app.dmLogs.unassignedRewards && listedLogs.length === 0}
+					<tbody>
+						<tr>
+							<td colSpan={5} class="py-20 text-center">
+								<p>No unassigned DM logs with rewards.</p>
 							</td>
 						</tr>
 					</tbody>

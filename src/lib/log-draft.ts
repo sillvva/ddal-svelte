@@ -1,6 +1,22 @@
 import { findNoteImageUrls } from "#lib/images/note-images.js";
-import type { CharacterLogDraftData, DungeonMasterId, ItemId, LogDraftData, UserId } from "#lib/schemas.js";
+import type { CharacterId, CharacterLogDraftData, DungeonMasterId, ItemId, LogDraftData, UserId } from "#lib/schemas.js";
+import { newestDraftId } from "#lib/util.js";
 import { v7 } from "uuid";
+
+export const LOG_DRAFT_CHARACTER_STORAGE_KEY = "ddal.log-draft-character";
+
+type CharacterDraftLogs = { id: CharacterId; logs: readonly { id: string }[] };
+
+/** Remote-query cache key for a character's new-log form, matching the character page. */
+export function characterLogDraftCacheKey(character: CharacterDraftLogs) {
+	return newestDraftId(character.logs.map((log) => log.id)) || character.id;
+}
+
+/** Same query string as **New Log from Draft** on a character page. */
+export function characterNewLogFromDraftPath(character: CharacterDraftLogs) {
+	const draft = encodeURIComponent(characterLogDraftCacheKey(character));
+	return `/characters/${character.id}/log/new?draft=${draft}&fromDraft=1` as const;
+}
 
 /** How many drafts one account can keep. Expired drafts don't count. */
 export const LOG_DRAFT_LIMIT = 50;

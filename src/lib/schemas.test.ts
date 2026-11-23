@@ -1,6 +1,7 @@
 import { v7 } from "uuid";
 import * as v from "valibot";
 import { describe, expect, it } from "vitest";
+import { dmLogRewardsNoAssignmentMessage } from "./entities";
 import {
 	characterLogSchema,
 	characterSchema,
@@ -132,7 +133,8 @@ describe("characterLogSchema", () => {
 });
 
 describe("dMLogSchema", () => {
-	const assigned = (characterId: string) => dmLogInput({ characterId, appliedDate: Date.UTC(2024, 0, 2) });
+	const assigned = (characterId: string) =>
+		dmLogInput({ characterId, appliedDate: Date.UTC(2024, 0, 2), level: 1 });
 
 	it("accepts a character the user owns", () => {
 		const owned = target();
@@ -151,5 +153,16 @@ describe("dMLogSchema", () => {
 		const owned = target({ totalLevel: 20 });
 		const result = v.safeParse(dMLogSchema([owned]), { ...assigned(owned.id), level: 1 });
 		expect(issueMessages(result)).toEqual(["Cannot increase level above 20"]);
+	});
+
+	it("rejects assigning a character when the log has no rewards", () => {
+		const owned = target();
+		const result = v.safeParse(dMLogSchema([owned]), dmLogInput({ characterId: owned.id, appliedDate: Date.UTC(2024, 0, 2) }));
+		expect(issueMessages(result)).toEqual([dmLogRewardsNoAssignmentMessage]);
+	});
+
+	it("allows assigning a character when the log has rewards", () => {
+		const owned = target();
+		expect(v.safeParse(dMLogSchema([owned]), { ...assigned(owned.id), level: 1 }).success).toBe(true);
 	});
 });

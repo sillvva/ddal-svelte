@@ -4,7 +4,7 @@
 	import LogDraftFaq from "#lib/components/log-draft-faq.svelte";
 	import NavMenu from "#lib/components/nav-menu.svelte";
 	import { successToast } from "#lib/factories.svelte.js";
-	import { logDraftMemory } from "#lib/log-draft-storage.svelte.js";
+	import { logDraftMemory } from "#lib/log-draft.svelte.js";
 	import { logDraftPath } from "#lib/log-draft.js";
 	import * as API from "#lib/remote/index.js";
 	import type { LogDraftId } from "#lib/schemas.js";

@@ -12,7 +12,7 @@
 	import LogDraftShare from "#lib/components/log-draft-share.svelte";
 	import NavMenu from "#lib/components/nav-menu.svelte";
 	import { proxify, successToast } from "#lib/factories.svelte.js";
-	import { logDraftMemory } from "#lib/log-draft-storage.svelte.js";
+	import { logDraftMemory } from "#lib/log-draft.svelte.js";
 	import { LOG_DRAFT_LIMIT, advancementType } from "#lib/log-draft.js";
 	import * as API from "#lib/remote/index.js";
 	import { logDraftSchema, type LogDraftId } from "#lib/schemas.js";

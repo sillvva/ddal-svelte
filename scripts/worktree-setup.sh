@@ -30,21 +30,52 @@ copy_env_files() {
   shopt -u nullglob
 }
 
-# Containers of the `db` service from compose projects whose working directory is not this one.
+# Containers holding the pinned `ddal-postgres` name or running the `db` service from other
+# compose projects (outside this worktree). Matching by container name catches containers whose
+# image was rebuilt or retagged so `ancestor=ddal-postgres:18.7` no longer matches.
 stop_other_worktree_dbs() {
   [ -z "${SKIP_STOP_OTHERS:-}" ] || { echo "SKIP_STOP_OTHERS is set. Leaving other databases running."; return 0; }
   ensure_docker
 
-  local id dir project
+  local current_project id dir project resolved_dir
+  current_project=$(docker compose config | awk '$1 == "name:" { print $2; exit }')
+
   while IFS= read -r id; do
     [ -n "$id" ] || continue
-    dir=$(docker inspect -f '{{ index .Config.Labels "com.docker.compose.project.working_dir" }}' "$id")
-    [ -n "$dir" ] && [ "$(cd "$dir" 2>/dev/null && pwd -P || echo "$dir")" != "$ROOT" ] || continue
-    project=$(docker inspect -f '{{ index .Config.Labels "com.docker.compose.project" }}' "$id")
-    echo "Stopping database of another worktree: $dir (compose project $project)"
-    # The other worktree may be gone; fall back to removing the container (the volume is kept).
-    docker compose --project-name "$project" --project-directory "$dir" down 2>/dev/null || docker rm -f "$id" >/dev/null
-  done < <(docker ps -aq --filter "label=com.docker.compose.service=db" --filter "ancestor=ddal-postgres:18.7")
+    dir=$(docker inspect -f '{{ index .Config.Labels "com.docker.compose.project.working_dir" }}' "$id" 2>/dev/null || true)
+    project=$(docker inspect -f '{{ index .Config.Labels "com.docker.compose.project" }}' "$id" 2>/dev/null || true)
+    if [ -n "$dir" ] && resolved_dir=$(cd "$dir" 2>/dev/null && pwd -P); then
+      :
+    else
+      resolved_dir="$dir"
+    fi
+
+    if [ -n "$project" ] && [ "$project" = "$current_project" ] && [ "$resolved_dir" = "$ROOT" ]; then
+      continue
+    fi
+
+    if [ -n "$dir" ] || [ -n "$project" ]; then
+      echo "Stopping database of another worktree: ${dir:-<unknown>} (compose project ${project:-<none>})"
+    else
+      echo "Removing conflicting container ddal-postgres ($id)"
+    fi
+
+    # Bring the other compose project down cleanly when possible (keeping its volume),
+    # then fall back to removing the container directly if it is still present.
+    if [ -n "$project" ] && [ -n "$dir" ] && [ -d "$dir" ]; then
+      docker compose --project-name "$project" --project-directory "$dir" down </dev/null 2>/dev/null || true
+    elif [ -n "$project" ]; then
+      docker compose --project-name "$project" down </dev/null 2>/dev/null || true
+    fi
+    if docker container inspect "$id" >/dev/null 2>&1; then
+      docker rm -f "$id" >/dev/null
+    fi
+  done < <(
+    {
+      docker ps -aq --filter "name=^/?ddal-postgres$" 2>/dev/null || true
+      docker ps -aq --filter "label=com.docker.compose.service=db" --filter "ancestor=ddal-postgres:18.7" 2>/dev/null || true
+    } | sort -u
+  )
 }
 
 copy_env_files

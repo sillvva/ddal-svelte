@@ -1,5 +1,13 @@
 import { browser } from "$app/env";
-import { logDraftDataSchema, logDraftIdSchema, type LogDraftData, type LogDraftId } from "#lib/schemas.js";
+import { LOG_DRAFT_CHARACTER_STORAGE_KEY } from "#lib/log-draft.js";
+import {
+	characterIdSchema,
+	logDraftDataSchema,
+	logDraftIdSchema,
+	type CharacterId,
+	type LogDraftData,
+	type LogDraftId
+} from "#lib/schemas.js";
 import * as v from "valibot";
 
 const STORAGE_KEY = "ddal.log-draft";
@@ -66,4 +74,17 @@ export function logDraftMemory() {
 		save,
 		clear
 	};
+}
+
+export function readLastLogDraftCharacterId(): CharacterId | null {
+	if (!browser) return null;
+	const raw = localStorage.getItem(LOG_DRAFT_CHARACTER_STORAGE_KEY);
+	if (!raw) return null;
+	const parsed = v.safeParse(characterIdSchema, raw);
+	return parsed.success ? parsed.output : null;
+}
+
+export function saveLastLogDraftCharacterId(id: CharacterId) {
+	if (!browser) return;
+	localStorage.setItem(LOG_DRAFT_CHARACTER_STORAGE_KEY, id);
 }

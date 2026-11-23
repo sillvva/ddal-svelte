@@ -2,7 +2,7 @@ import type { FullCharacterData } from "#lib/server/effect/services/characters.j
 import { omit } from "@sillvva/utils";
 import * as v from "valibot";
 import { BLANK_CHARACTER, PASSKEY_PLACEHOLDER_EMAIL_DOMAIN, PROVIDERS, themeGroups, themes } from "./constants";
-import { defaultTimelineLog, logSort } from "./entities";
+import { defaultTimelineLog, dmLogHasRewards, dmLogRewardsNoAssignmentMessage, logSort } from "./entities";
 import { AVATAR_IMAGE_LIMITS, CHARACTER_IMAGE_LIMITS, NOTE_IMAGE_LIMITS, STORED_IMAGE_CONTENT_TYPES } from "./images/limits";
 import { alreadyDropped, dropBeforeAcquisition, gainAfterDrop } from "./item-timeline-messages";
 import type { FullLogData } from "./server/effect/services/logs";
@@ -492,6 +492,10 @@ export const dMLogSchema = (characters: readonly FullCharacterData[] = []) =>
 			["appliedDate"]
 		),
 		v.forward(
+			v.check((input) => !input.characterId || dmLogHasRewards(input), dmLogRewardsNoAssignmentMessage),
+			["characterId"]
+		),
+		v.forward(
 			v.check(
 				(input) => !input.appliedDate || input.appliedDate.getTime() >= input.date.getTime(),
 				"Applied date must be after log date"
@@ -578,7 +582,8 @@ export const appCookieSchema = v.optional(
 		dmLogs: v.optional(
 			v.object({
 				sort: v.optional(v.picklist(["asc", "desc"]), "asc"),
-				descriptions: v.optional(v.boolean(), false)
+				descriptions: v.optional(v.boolean(), false),
+				unassignedRewards: v.optional(v.boolean(), false)
 			}),
 			{}
 		)
