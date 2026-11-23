@@ -1,6 +1,6 @@
 <script lang="ts">
 	import { successToast } from "#lib/factories.svelte.js";
-	import { logDraftMemory, type StoredLogDraft } from "#lib/log-draft-storage.svelte.js";
+	import { logDraftMemory, type StoredLogDraft } from "#lib/log-draft.svelte.js";
 	import { onMount } from "svelte";
 
 	interface Props {

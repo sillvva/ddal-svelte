@@ -6,7 +6,7 @@
 	import LogDraftFaq from "#lib/components/log-draft-faq.svelte";
 	import NavMenu from "#lib/components/nav-menu.svelte";
 	import StoreLogDraft from "#lib/components/store-log-draft.svelte";
-	import { logDraftMemory } from "#lib/log-draft-storage.svelte.js";
+	import { logDraftMemory } from "#lib/log-draft.svelte.js";
 	import * as API from "#lib/remote/index.js";
 
 	const { params } = $props();

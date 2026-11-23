@@ -9,7 +9,7 @@
 	import MobileNav from "#lib/components/mobile-nav.svelte";
 	import Settings from "#lib/components/settings.svelte";
 	import { BLANK_CHARACTER } from "#lib/constants.js";
-	import { logDraftMemory } from "#lib/log-draft-storage.svelte.js";
+	import { logDraftMemory } from "#lib/log-draft.svelte.js";
 	import * as API from "#lib/remote/index.js";
 	import { getGlobal } from "#lib/stores.svelte.js";
 	import { parseEffectResult } from "#lib/util.js";

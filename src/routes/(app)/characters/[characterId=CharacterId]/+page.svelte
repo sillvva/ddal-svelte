@@ -13,7 +13,7 @@
 	import SplitButton from "#lib/components/split-button.svelte";
 	import { BLANK_CHARACTER } from "#lib/constants.js";
 	import { EntitySearchFactory, successToast, swipeAction } from "#lib/factories.svelte.js";
-	import { logDraftMemory } from "#lib/log-draft-storage.svelte.js";
+	import { logDraftMemory } from "#lib/log-draft.svelte.js";
 	import * as API from "#lib/remote/index.js";
 	import { getPageSearchValue } from "#lib/search.js";
 	import type { FullCharacterData } from "#lib/server/effect/services/characters.js";

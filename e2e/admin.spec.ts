@@ -18,6 +18,15 @@ function userRow(page: Page, handle: string) {
 	return page.locator("tbody tr").filter({ hasText: handle });
 }
 
+function adminMenuButton(page: Page) {
+	return page.getByRole("button", { name: "Admin", exact: true });
+}
+
+async function openAdminPage(page: Page, name: "Users" | "Logs") {
+	await adminMenuButton(page).click();
+	await page.locator("#admin-menu").getByRole("link", { name, exact: true }).click();
+}
+
 function toast(page: Page, message: string | RegExp) {
 	return page.locator("[data-sonner-toast]").filter({ hasText: message });
 }
@@ -46,7 +55,7 @@ test("admin access: only admins can open admin pages and call admin endpoints", 
 	});
 
 	await test.step("regular users do not see admin navigation and are redirected from admin pages", async () => {
-		await expect(member.page.getByRole("link", { name: "Admin", exact: true })).toHaveCount(0);
+		await expect(adminMenuButton(member.page)).toHaveCount(0);
 		for (const path of ["/admin/users", "/admin/logs"]) {
 			await member.page.goto(path);
 			await expect(member.page).toHaveURL(/\/characters$/);
@@ -67,9 +76,8 @@ test("admin access: only admins can open admin pages and call admin endpoints", 
 
 	await test.step("admins can navigate admin pages and search non-admin users", async () => {
 		const { page } = admin;
-		const adminLink = page.getByRole("link", { name: "Admin", exact: true });
-		await expect(adminLink).toBeVisible();
-		await adminLink.click();
+		await expect(adminMenuButton(page)).toBeVisible();
+		await openAdminPage(page, "Users");
 		await page.waitForURL(/\/admin\/users$/);
 
 		await expect(userRow(page, member.handle)).toBeVisible();
@@ -82,9 +90,9 @@ test("admin access: only admins can open admin pages and call admin endpoints", 
 		await expect(userRow(page, otherMember.handle)).toHaveCount(0);
 		await expect(page.getByText(/^Showing 1 of \d+ users$/)).toBeVisible();
 
-		await page.getByRole("tab", { name: "Logs", exact: true }).click();
+		await openAdminPage(page, "Logs");
 		await page.waitForURL(/\/admin\/logs$/);
-		await page.getByRole("tab", { name: "Users", exact: true }).click();
+		await openAdminPage(page, "Users");
 		await page.waitForURL(/\/admin\/users$/);
 	});
 });
@@ -115,7 +123,7 @@ test("admin impersonation: impersonating a user switches sessions and stopping r
 		await expect(page.getByRole("link", { name: targetCharacterName }).filter({ visible: true })).toBeVisible();
 		await expect(page.getByRole("link", { name: adminCharacterName })).toHaveCount(0);
 		await expect(page.getByRole("button", { name: target.handle, exact: true })).toBeVisible();
-		await expect(page.getByRole("link", { name: "Admin", exact: true })).toHaveCount(0);
+		await expect(adminMenuButton(page)).toHaveCount(0);
 	});
 
 	await test.step("while impersonating, admin routes are blocked and target records are editable", async () => {
@@ -148,7 +156,7 @@ test("admin impersonation: impersonating a user switches sessions and stopping r
 		await page.waitForURL(/\/admin\/users$/);
 
 		await expect(page.getByRole("button", { name: admin.handle, exact: true })).toBeVisible();
-		await expect(page.getByRole("link", { name: "Admin", exact: true })).toBeVisible();
+		await expect(adminMenuButton(page)).toBeVisible();
 
 		await openSettings(page, admin.handle);
 		const settings = page.locator("aside#settings");

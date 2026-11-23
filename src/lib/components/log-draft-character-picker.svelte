@@ -1,7 +1,7 @@
 <script lang="ts">
 	import Link from "#lib/components/link.svelte";
-	import { characterNewLogFromDraftPath } from "#lib/log-draft-character-pick.js";
-	import { readLastLogDraftCharacterId, saveLastLogDraftCharacterId } from "#lib/log-draft-character-pick.svelte.js";
+	import { characterNewLogFromDraftPath } from "#lib/log-draft.js";
+	import { readLastLogDraftCharacterId, saveLastLogDraftCharacterId } from "#lib/log-draft.svelte.js";
 	import type { FullCharacterData } from "#lib/server/effect/services/characters.js";
 	import type { CharacterId } from "#lib/schemas.js";
 	import { onMount } from "svelte";

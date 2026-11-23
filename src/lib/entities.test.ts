@@ -1,11 +1,19 @@
 import { v7 } from "uuid";
 import { describe, expect, it } from "vitest";
-import { defaultLogSchema, defaultTimelineLog, logIsBefore } from "./entities";
+import {
+	defaultLogSchema,
+	defaultTimelineLog,
+	dmLogHasRewards,
+	isUnassignedDmLog,
+	isUnassignedDmLogWithRewards,
+	logIsBefore
+} from "./entities";
 import {
 	alreadyDropped,
 	dropBeforeAcquisition,
 	gainAfterDrop,
 	itemTimelineIssues,
+	type CharacterId,
 	type ItemId,
 	type ItemTimelineIssue,
 	type LogId,
@@ -150,5 +158,53 @@ describe("itemTimelineIssues", () => {
 		const gain = log(day(1), { gained: [cloak] });
 		const drop = log(day(2), { lost: [cloak] });
 		expect(itemTimelineIssues([gain, drop], input(day(3), { id: drop.id, lost: [cloak] }))).toEqual([]);
+	});
+});
+
+function rewardsLog(overrides: Partial<LogSchema> = {}): LogSchema {
+	return {
+		...defaultLogSchema(userId(), { defaults: { isDmLog: true, characterId: null, appliedDate: null, name: "Session" } }),
+		...overrides
+	};
+}
+
+describe("dmLogHasRewards", () => {
+	it("is false when every reward field is empty", () => {
+		expect(dmLogHasRewards(rewardsLog())).toBe(false);
+	});
+
+	it.each([
+		["experience", { experience: 100 }],
+		["acp", { acp: 1 }],
+		["level", { level: 1 }],
+		["gold", { gold: 50 }],
+		["tcp", { tcp: 2 }],
+		["dtd", { dtd: 3 }],
+		["magic items", { magicItemsGained: [{ id: itemId(), name: "Wand", description: "" }] }],
+		["story awards", { storyAwardsGained: [{ id: itemId(), name: "Hero", description: "" }] }]
+	])("is true when the log has %s", (_label, overrides) => {
+		expect(dmLogHasRewards(rewardsLog(overrides))).toBe(true);
+	});
+});
+
+describe("isUnassignedDmLog", () => {
+	it("is true without a character or applied date", () => {
+		expect(isUnassignedDmLog(rewardsLog())).toBe(true);
+	});
+
+	it("is false when a character is selected", () => {
+		expect(isUnassignedDmLog(rewardsLog({ characterId: v7() as CharacterId }))).toBe(false);
+	});
+
+	it("is false when only an applied date is set", () => {
+		expect(isUnassignedDmLog(rewardsLog({ appliedDate: new Date() }))).toBe(false);
+	});
+});
+
+describe("isUnassignedDmLogWithRewards", () => {
+	it("requires both unassigned and rewards", () => {
+		expect(isUnassignedDmLogWithRewards(rewardsLog({ level: 1 }))).toBe(true);
+		expect(isUnassignedDmLogWithRewards(rewardsLog({ characterId: v7() as CharacterId, level: 1 }))).toBe(false);
+		expect(isUnassignedDmLogWithRewards(rewardsLog())).toBe(false);
 	});
 });
