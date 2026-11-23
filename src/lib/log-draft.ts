@@ -1,7 +1,11 @@
 import { findNoteImageUrls } from "#lib/images/note-images.js";
 import type { CharacterId, CharacterLogDraftData, DungeonMasterId, ItemId, LogDraftData, UserId } from "#lib/schemas.js";
-import { newestDraftId } from "#lib/util.js";
 import { v7 } from "uuid";
+
+/** Latest id. Uuid v7 values sort in creation order. */
+function newestDraftId(ids: readonly string[]) {
+	return ids.toSorted().at(-1) ?? "";
+}
 
 export const LOG_DRAFT_CHARACTER_STORAGE_KEY = "ddal.log-draft-character";
 
