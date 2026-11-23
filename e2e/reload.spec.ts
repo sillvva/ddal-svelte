@@ -32,7 +32,7 @@ test("every page survives a full reload and hydrates", async ({ users }) => {
 		await createGameLog(page, id, { title: `E2E Item Gain ${handle}`, dm: markers.dmName, gained: [`Cloak ${handle}`] });
 		markers.dmId = await dmIdOnCharacterPage(page, markers.dmName);
 		await createGameLog(page, id, { title: `E2E Purchase ${handle}`, type: "nongame", gold: 25 });
-		await createDmLog(page, { title: markers.dmLogTitle, character: characterName });
+		await createDmLog(page, { title: markers.dmLogTitle, character: characterName, level: 1 });
 		await createDmLog(page, { title: markers.secondDmLogTitle });
 		return id;
 	});

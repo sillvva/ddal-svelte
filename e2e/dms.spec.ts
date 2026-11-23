@@ -23,6 +23,7 @@ test("DMs and DM logs: assign, edit, delete, and unassign", async ({ users }) =>
 		await page.waitForURL(/\/dm-logs\/new/);
 		await page.getByLabel("Title").fill(dmLogTitle);
 		await assignCharacter(page, characterName);
+		await page.getByLabel("Level").fill("1");
 		await page.getByRole("button", { name: "Save Log" }).click();
 		await page.waitForURL(/\/dm-logs$/);
 
@@ -32,6 +33,7 @@ test("DMs and DM logs: assign, edit, delete, and unassign", async ({ users }) =>
 		await page.waitForURL(/\/dm-logs\/new\?draft=/);
 		await page.getByLabel("Title").fill(secondDmLogTitle);
 		await assignCharacter(page, characterName);
+		await page.getByLabel("Level").fill("1");
 		await page.getByRole("button", { name: "Save Log" }).click();
 		await page.waitForURL(/\/dm-logs$/);
 
