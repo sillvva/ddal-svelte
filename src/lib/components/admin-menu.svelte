@@ -18,7 +18,8 @@
 
 	const items = [
 		{ title: "Users", href: "admin/users", path: "/admin/users" },
-		{ title: "Logs", href: "admin/logs", path: "/admin/logs" }
+		{ title: "Logs", href: "admin/logs", path: "/admin/logs" },
+		{ title: "Storage", href: "admin/storage", path: "/admin/storage" }
 	] as const;
 
 	function close() {
