@@ -15,9 +15,9 @@ export default defineConfig({
 	// Local runs use the list reporter. printSteps keeps each test.step() on its own line
 	// while the test is still running.
 	reporter: process.env.CI ? "list" : [["list", { printSteps: true }]],
-	fullyParallel: false,
 	// Run with 4 workers locally, or 50% of available cores on CI
 	workers: process.env.CI ? "50%" : 4,
+	fullyParallel: true,
 	forbidOnly: !!process.env.CI,
 	retries: process.env.CI ? 1 : 0,
 	timeout: 240_000,
