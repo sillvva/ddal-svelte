@@ -23,6 +23,38 @@ export function logIsBefore(candidate: TimelineLog, current: TimelineLog) {
 	return logSort(candidate, current) < 0;
 }
 
+export const dmLogRewardsNoAssignmentMessage = "This log has no rewards to apply to a character";
+
+export type DmLogRewardsInput = Pick<
+	LogSchema,
+	"experience" | "acp" | "level" | "gold" | "tcp" | "dtd" | "magicItemsGained" | "storyAwardsGained"
+>;
+
+export function dmLogHasRewards(log: DmLogRewardsInput): boolean {
+	return (
+		log.experience > 0 ||
+		log.acp > 0 ||
+		log.level > 0 ||
+		log.gold !== 0 ||
+		log.tcp !== 0 ||
+		log.dtd !== 0 ||
+		log.magicItemsGained.length > 0 ||
+		log.storyAwardsGained.length > 0
+	);
+}
+
+type UnassignedDmLogInput = Pick<LogSchema, "characterId" | "appliedDate"> | Pick<FullLogData, "character" | "appliedDate">;
+
+export function isUnassignedDmLog(log: UnassignedDmLogInput): boolean {
+	if ("character" in log && log.character) return false;
+	if ("characterId" in log && log.characterId) return false;
+	return !log.appliedDate;
+}
+
+export function isUnassignedDmLogWithRewards(log: UnassignedDmLogInput & DmLogRewardsInput): boolean {
+	return isUnassignedDmLog(log) && dmLogHasRewards(log);
+}
+
 export function getItemEntities(
 	character: Pick<FullCharacterData, "logs">,
 	options?: {

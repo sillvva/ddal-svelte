@@ -1,5 +1,5 @@
 <script lang="ts" generics="Kind extends LogDraftKind">
-	import { logDraftMemory } from "#lib/log-draft-storage.svelte.js";
+	import { logDraftMemory } from "#lib/log-draft.svelte.js";
 	import type { LogDraftData, LogDraftKind } from "#lib/schemas.js";
 	import { onMount } from "svelte";
 

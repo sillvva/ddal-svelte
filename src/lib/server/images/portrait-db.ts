@@ -1,3 +1,4 @@
+import { collectReferencedPermanentKeys } from "#lib/admin-storage.js";
 import { PROVIDERS } from "#lib/constants.js";
 import {
 	imagePublicUrl,
@@ -11,10 +12,10 @@ import {
 } from "#lib/images/object-key.js";
 import type { CharacterId, UserId } from "#lib/schemas.js";
 import { runQuery, type Database, type Transaction } from "#lib/server/db/index.js";
-import { characters, imageUploads, pendingObjectDeletions, user } from "#lib/server/db/schema.js";
+import { characters, imageUploads, logImages, pendingObjectDeletions, user } from "#lib/server/db/schema.js";
 import { ImageUploadError } from "#lib/server/images/errors.js";
 import { R2_PUBLIC_URL } from "$app/env/public";
-import { and, eq, inArray, isNull, or, sql } from "drizzle-orm";
+import { and, eq, exists, inArray, isNotNull, isNull, ne, notLike, or, sql } from "drizzle-orm";
 import { Effect } from "effect";
 import { v7 } from "uuid";
 
@@ -32,6 +33,21 @@ export function lockPortraitUser(tx: Transaction, userId: UserId) {
 		try: () => tx.execute(sql`select pg_advisory_xact_lock(hashtextextended(${`character-image:${userId}`}, 0))`),
 		catch: (cause) => new ImageUploadError("Could not reserve storage", 500, cause)
 	});
+}
+
+/** Acquires the portrait advisory lock for multiple users in sorted order in a single query. */
+export function lockPortraitUsers(tx: Transaction, userIds: readonly UserId[]) {
+	const unique = [...new Set(userIds)].sort();
+	if (!unique.length) return Effect.void;
+	const values = sql.join(
+		unique.map((userId) => sql`(${`character-image:${userId}`})`),
+		sql`, `
+	);
+	return Effect.tryPromise({
+		try: () =>
+			tx.execute(sql`select pg_advisory_xact_lock(hashtextextended(v.lock_key, 0)) from (values ${values}) as v(lock_key)`),
+		catch: (cause) => new ImageUploadError("Could not reserve storage", 500, cause)
+	}).pipe(Effect.asVoid);
 }
 
 /**
@@ -266,19 +282,117 @@ export function collectUserKeys(tx: Transaction, userId: UserId) {
 	});
 }
 
-export function listPendingDeletions(tx: Transaction, limit: number) {
+export function listPendingDeletions(executor: Database | Transaction, limit?: number) {
 	return runQuery(
-		tx.query.pendingObjectDeletions.findMany({
+		executor.query.pendingObjectDeletions.findMany({
 			columns: {
 				id: true,
-				objectKey: true
+				objectKey: true,
+				createdAt: true,
+				attempts: true
 			},
 			orderBy: {
 				createdAt: "asc"
 			},
-			limit
+			...(limit !== undefined ? { limit } : {})
 		})
 	);
+}
+
+/**
+ * Upload rows that still reference their object. Portrait and avatar uploads always do. A note upload only
+ * does while a `log_image` row exists, so a promoted note image that lost its rows without being purged is an orphan.
+ */
+function uploadStillReferenced(executor: Database | Transaction) {
+	return or(
+		ne(imageUploads.purpose, "note"),
+		exists(
+			executor
+				.select({ one: sql`1` })
+				.from(logImages)
+				.where(eq(logImages.uploadId, imageUploads.id))
+		)
+	);
+}
+
+/**
+ * All permanent R2 keys currently referenced by `character.image_url`, `user.image`,
+ * `image_upload.object_key` (note uploads only while a `log_image` row exists), or `pending_object_deletion.object_key`.
+ */
+export function listReferencedPermanentKeys(executor: Database | Transaction) {
+	return Effect.gen(function* () {
+		const characterRows = yield* runQuery(
+			executor.select({ imageUrl: characters.imageUrl }).from(characters).where(ne(characters.imageUrl, ""))
+		);
+		const userRows = yield* runQuery(
+			executor
+				.select({ image: user.image })
+				.from(user)
+				.where(and(isNotNull(user.image), ne(user.image, "")))
+		);
+		const uploadRows = yield* runQuery(
+			executor
+				.select({ objectKey: imageUploads.objectKey })
+				.from(imageUploads)
+				.where(and(notLike(imageUploads.objectKey, `${TEMPORARY_IMAGE_PREFIX}%`), uploadStillReferenced(executor)))
+		);
+		const pendingRows = yield* runQuery(
+			executor.select({ objectKey: pendingObjectDeletions.objectKey }).from(pendingObjectDeletions)
+		);
+
+		return collectReferencedPermanentKeys(
+			{
+				characterImageUrls: characterRows.map((row) => row.imageUrl),
+				userImages: userRows.map((row) => row.image),
+				imageUploadKeys: uploadRows.map((row) => row.objectKey),
+				pendingDeletionKeys: pendingRows.map((row) => row.objectKey)
+			},
+			R2_PUBLIC_URL
+		);
+	});
+}
+
+/**
+ * Re-checks which permanent keys from `keys` are currently referenced in the database.
+ * Acquires the portrait advisory lock for every affected user first so in-flight saves commit before reading.
+ */
+export function findReferencedPermanentKeys(tx: Transaction, keys: readonly string[]) {
+	const permanentKeys = [...new Set(keys.filter(isPermanentImageKey))];
+	if (!permanentKeys.length) return Effect.succeed(new Set<string>());
+
+	return Effect.gen(function* () {
+		const userIds = permanentKeys.map(userIdForDeletion).filter((id): id is UserId => id !== null);
+		yield* lockPortraitUsers(tx, userIds);
+
+		const urls = permanentKeys.map((key) => imagePublicUrl(key, R2_PUBLIC_URL));
+
+		const characterRows = yield* runQuery(
+			tx.select({ imageUrl: characters.imageUrl }).from(characters).where(inArray(characters.imageUrl, urls))
+		);
+		const userRows = yield* runQuery(tx.select({ image: user.image }).from(user).where(inArray(user.image, urls)));
+		const uploadRows = yield* runQuery(
+			tx
+				.select({ objectKey: imageUploads.objectKey })
+				.from(imageUploads)
+				.where(and(inArray(imageUploads.objectKey, permanentKeys), uploadStillReferenced(tx)))
+		);
+		const pendingRows = yield* runQuery(
+			tx
+				.select({ objectKey: pendingObjectDeletions.objectKey })
+				.from(pendingObjectDeletions)
+				.where(inArray(pendingObjectDeletions.objectKey, permanentKeys))
+		);
+
+		return collectReferencedPermanentKeys(
+			{
+				characterImageUrls: characterRows.map((row) => row.imageUrl),
+				userImages: userRows.map((row) => row.image),
+				imageUploadKeys: uploadRows.map((row) => row.objectKey),
+				pendingDeletionKeys: pendingRows.map((row) => row.objectKey)
+			},
+			R2_PUBLIC_URL
+		);
+	});
 }
 
 export function lockPendingDeletion(tx: Transaction, objectKey: string) {

@@ -1,5 +1,6 @@
 <script lang="ts">
 	import { hotkey } from "#lib/attachments.js";
+	import AdminMenu from "#lib/components/admin-menu.svelte";
 	import CommandTray from "#lib/components/command-tray.svelte";
 	import Error from "#lib/components/error.svelte";
 	import Footer from "#lib/components/footer.svelte";
@@ -8,7 +9,7 @@
 	import MobileNav from "#lib/components/mobile-nav.svelte";
 	import Settings from "#lib/components/settings.svelte";
 	import { BLANK_CHARACTER } from "#lib/constants.js";
-	import { logDraftMemory } from "#lib/log-draft-storage.svelte.js";
+	import { logDraftMemory } from "#lib/log-draft.svelte.js";
 	import * as API from "#lib/remote/index.js";
 	import { getGlobal } from "#lib/stores.svelte.js";
 	import { parseEffectResult } from "#lib/util.js";
@@ -91,9 +92,9 @@
 					<CommandTray />
 
 					{#if user.role === "admin"}
-						<Link href="admin/users" class="btn mr-1 btn-ghost p-2 max-md:hidden" aria-label="Admin">
+						<AdminMenu id="admin-menu" class="btn mr-1 btn-ghost p-2 max-md:hidden">
 							<span class="iconify size-6 mdi--administrator"></span>
-						</Link>
+						</AdminMenu>
 					{/if}
 
 					<!-- Avatar -->
@@ -184,8 +185,8 @@
 								href={page.state.modal.goto}
 								onclick={async (e) => {
 									e.preventDefault();
-									await closeModal();
 									const { href } = e.currentTarget;
+									await closeModal();
 									try {
 										await goto(href);
 									} catch {

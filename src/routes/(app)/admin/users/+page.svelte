@@ -1,16 +1,19 @@
 <script lang="ts">
 	import Head from "#lib/components/head.svelte";
+	import Link from "#lib/components/link.svelte";
+	import NavMenu from "#lib/components/nav-menu.svelte";
 	import Search from "#lib/components/search.svelte";
 	import { BLANK_CHARACTER } from "#lib/constants.js";
 	import { errorToast, successToast } from "#lib/factories.svelte.js";
 	import * as API from "#lib/remote/index.js";
+	import { getPageSearchValue } from "#lib/search.js";
 	import { page } from "$app/state";
 	import { JSONSearchParser } from "@sillvva/search/json";
 	import { toJSObjectNotation } from "@sillvva/utils";
 	import { tick } from "svelte";
 
 	const searchKey = "s";
-	const search = $derived(page.state.search?.[searchKey] ?? page.url.searchParams.get(searchKey) ?? "");
+	const search = $derived(getPageSearchValue(page, searchKey));
 
 	const users = $derived(await API.admin.queries.getUsers());
 	const parser = $derived(
@@ -24,6 +27,8 @@
 </script>
 
 <Head title="Users" />
+
+<NavMenu base crumbs={[{ title: "Users", href: "admin/users" }]} />
 
 <section class="flex flex-wrap items-center justify-between gap-2 max-sm:justify-end">
 	<div class="flex w-full gap-2 sm:max-w-md md:max-w-md">
@@ -76,7 +81,7 @@
 							</div>
 						</td>
 						<td>
-							{user.name}
+							<Link href="/(app)/admin/users/[id=UserId]" params={{ id: user.id }} class="row-link">{user.name}</Link>
 							<div class="max-w-60 text-xs text-base-content/60 not-hover:truncate max-md:max-w-40">
 								{user.email}
 							</div>

@@ -8,6 +8,7 @@
 	import Search from "#lib/components/search.svelte";
 	import { EntitySearchFactory } from "#lib/factories.svelte.js";
 	import * as API from "#lib/remote/index.js";
+	import { getPageSearchValue } from "#lib/search.js";
 	import { getGlobal } from "#lib/stores.svelte.js";
 	import { createTransition, newestDraftId } from "#lib/util.js";
 	import { goto } from "$app/navigation";
@@ -25,9 +26,7 @@
 <svelte:boundary>
 	{const { user } = $derived(await API.app.queries.request())}
 	{const characters = $derived(await API.characters.queries.getAll())}
-	{const search = $derived(
-		new EntitySearchFactory(characters, page.state.search?.[searchKey] ?? page.url.searchParams.get(searchKey) ?? "")
-	)}
+	{const search = $derived(new EntitySearchFactory(characters, getPageSearchValue(page, searchKey)))}
 	{const sortedResults = $derived(
 		search.results.toSorted((a, b) => sorter(b.score, a.score) || sorter(a.totalLevel, b.totalLevel) || sorter(a.name, b.name))
 	)}

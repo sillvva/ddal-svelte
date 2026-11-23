@@ -1,11 +1,10 @@
 <script lang="ts">
-	import type { LogId } from "#lib/schemas.js";
+	import { consolidateItems, getItemSortName, isConsumableItem, type ConsolidatedItem } from "#lib/search.js";
 	import type { MagicItem, StoryAward } from "#lib/server/db/schema.js";
 	import { goto } from "$app/navigation";
 	import { page } from "$app/state";
 	import { sorter } from "@sillvva/utils";
-	import { SvelteMap } from "svelte/reactivity";
-	import { queryParameters, ssp } from "sveltekit-search-params";
+	import escapeRegex from "regexp.escape";
 	import SearchResults from "./search-results.svelte";
 
 	type Item = MagicItem | StoryAward;
@@ -45,51 +44,10 @@
 		search = false
 	}: WithType | WithTitle = $props();
 
-	const params = queryParameters(
-		{
-			s: ssp.string()
-		},
-		{
-			showDefaults: false,
-			pushHistory: false
-		}
-	);
+	const isStoryAward = $derived(Boolean((title || type)?.startsWith("Story Awards")));
+	const isMagicItems = $derived(Boolean((title || type)?.startsWith("Magic Items")));
 
-	const sorterName = (name: string) =>
-		sort
-			? name
-					.replace(/^\d+(x|×)? ?/, "")
-					.replace("Spell Scroll", "Scroll")
-					.replace(/^(\w+)s/, "$1")
-					.replace(/^(A|An|The) /, "")
-			: name;
-	const isConsumable = (name: string) =>
-		(title || type)?.startsWith("Magic Items") &&
-		name
-			.trim()
-			.match(
-				/^(\d+(x|×)? )?((Potion|(?:Spell )?Scroll|Charm|Oil|Elixir)s? of)|Alchemist('?s)? Fire|Antitoxin|Spellwrought Tattoo|Elemental Gem/
-			);
-	const itemQty = (item: { name: string }) => parseInt(item.name.match(/^(\d+)x? /)?.[1] || "1");
-	const fixName = (name: string, qty = 1) => {
-		if ((title || type)?.startsWith("Story Awards")) return name;
-
-		let val = name
-			.trim()
-			.replace(/^\d+(x|×)? ?/, "")
-			.replace(/^(Potion|(?:Spell )?Scroll|Charm|Oil|Elixir)s/, "$1")
-			.replace("Spell Scroll", "Scroll");
-
-		if (qty > 1) {
-			if (isConsumable(name)) val = val.replace(/^(Potion|(?:Spell )?Scroll|Charm|Oil|Elixir)( .+)$/, "$1s$2");
-			val = `${qty}× ${val}`;
-		} else {
-			val = val;
-		}
-		return val;
-	};
-
-	const regexes = $derived(terms.map((term) => new RegExp(term, "gi")));
+	const regexes = $derived(terms.map((term) => new RegExp(escapeRegex(term), "gi")));
 
 	const filteredItems = $derived(
 		items.filter(
@@ -100,57 +58,47 @@
 		)
 	);
 
-	const consolidatedItems = $derived.by(() => {
-		const itemsMap = new SvelteMap<string, number>();
-		return (filteredItems.length ? filteredItems : items).reduce(
-			(acc, item) => {
-				const name = fixName(item.name);
-				const qty = itemQty(item);
-				const desc = item.description?.trim().slice(0, 25);
-				const key = `${name || ""}_${desc || ""}`;
-
-				const existingIndex = itemsMap.get(key);
-				if (existingIndex !== undefined && acc[existingIndex]) {
-					const existingQty = itemQty(acc[existingIndex]!);
-					acc[existingIndex]!.name = fixName(name, existingQty + qty);
-					acc[existingIndex]!.ids.push(item.logGainedId);
-				} else {
-					item.name = fixName(item.name, qty);
-					itemsMap.set(key, acc.length);
-					acc.push(Object.assign(item, { ids: [item.logGainedId] }));
-				}
-
-				return acc;
-			},
-			[] as (Item & { ids: LogId[] })[]
-		);
-	});
+	const consolidatedItems = $derived(consolidateItems(filteredItems.length ? filteredItems : items, { isStoryAward }));
 
 	const sortedItems = $derived(
-		sort ? consolidatedItems.toSorted((a, b) => sorter(sorterName(a.name), sorterName(b.name))) : consolidatedItems
+		sort ? consolidatedItems.toSorted((a, b) => sorter(getItemSortName(a.name), getItemSortName(b.name))) : consolidatedItems
 	);
 
-	const nonConsumables = $derived(sortedItems.filter((item) => !isConsumable(item.name)));
-	const consumables = $derived(sortedItems.filter((item) => isConsumable(item.name)));
+	const nonConsumables = $derived(sortedItems.filter((item) => !isConsumableItem(item.name, isMagicItems)));
+	const consumables = $derived(sortedItems.filter((item) => isConsumableItem(item.name, isMagicItems)));
 
-	function onclick(item: Item & { ids: LogId[] }) {
-		if (item.description) {
-			const url = new URL(page.url.href);
-			url.searchParams.set("s", item.ids.join(" "));
+	function onclick(item: ConsolidatedItem<Item>) {
+		const description = item.description?.trim();
+		if (description) {
+			const url = new URL((page.shallow?.url ?? page.url).href);
+			url.searchParams.set("s", item.searchName);
 
-			goto("", {
+			void goto("", {
 				shallow: true,
 				state: {
+					...page.state,
 					modal: {
 						type: "text",
 						name: item.name,
-						description: item.description,
+						description,
 						goto: search ? url.toString() : undefined
 					}
 				}
 			});
 		} else if (search) {
-			params.s = item.ids.join(",");
+			const url = new URL((page.shallow?.url ?? page.url).href);
+			url.searchParams.set("s", item.searchName);
+
+			void goto(url, {
+				shallow: true,
+				state: {
+					...page.state,
+					search: {
+						...page.state.search,
+						s: item.searchName
+					}
+				}
+			});
 		}
 	}
 </script>
@@ -179,9 +127,8 @@
 	>
 		{#if items.length}
 			{#each nonConsumables as mi (mi.id)}<span
-					role={mi.description || search ? "button" : "presentation"}
-					class="inline pr-2 pl-2 first:pl-0"
-					class:text-secondary={mi.description}
+					role={mi.description?.trim() || search ? "button" : "presentation"}
+					class={["inline pr-2 pl-2 first:pl-0", mi.description?.trim() && "text-secondary"]}
 					onclick={() => onclick(mi)}
 					onkeypress={() => null}
 				>
@@ -189,9 +136,12 @@
 				</span>
 			{/each}{#each consumables as mi (mi.id)}
 				<span
-					role={mi.description || search ? "button" : "presentation"}
-					class={["inline pr-2 pl-2 first:pl-0", formatting ? "text-base-content/75 italic" : null]}
-					class:text-secondary={mi.description}
+					role={mi.description?.trim() || search ? "button" : "presentation"}
+					class={[
+						"inline pr-2 pl-2 first:pl-0",
+						formatting && "text-base-content/75 italic",
+						mi.description?.trim() && "text-secondary"
+					]}
 					onclick={() => onclick(mi)}
 					onkeypress={() => null}
 				>

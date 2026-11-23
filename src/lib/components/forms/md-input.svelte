@@ -433,9 +433,9 @@
 <label for={name} class="fieldset-legend">
 	<span>Notes</span>
 </label>
-<div class="@container">
+<div>
 	<div
-		class="flex flex-col rounded-t-lg border border-b-0 border-base-content/20 bg-base-200 [--tw-border-opacity:0.2] @2xl:flex-row @2xl:items-center @2xl:justify-between"
+		class="flex flex-wrap items-center justify-between rounded-t-lg border border-b-0 border-base-content/20 bg-base-200 [--tw-border-opacity:0.2]"
 	>
 		{#if preview}
 			<div class="tabs-boxed tabs">
@@ -443,11 +443,7 @@
 				<input type="radio" role="tab" class="tab rounded-md!" aria-label="Preview" bind:group={mode} value="preview" />
 			</div>
 		{/if}
-		<div
-			role="group"
-			aria-label="Formatting"
-			class={["flex flex-wrap items-center gap-0.5 p-1", preview && "border-t border-base-content/10 @2xl:border-t-0"]}
-		>
+		<div role="group" aria-label="Formatting" class="flex flex-wrap items-center gap-0.5 p-1">
 			{@render tool("Bold", "mdi--format-bold", inline("bold"))}
 			{@render tool("Italic", "mdi--format-italic", inline("italic"))}
 			{@render tool("Strikethrough", "mdi--format-strikethrough-variant", inline("strikethrough"))}
@@ -670,5 +666,11 @@
 		resize: none;
 		min-height: calc(var(--minRows, 3lh) + 1rem + 2px);
 		max-height: calc(var(--maxRows, 50lh) + 1rem + 2px);
+	}
+
+	@media (width < 40rem) {
+		textarea {
+			max-height: calc(min(var(--maxRows, 50lh), 12lh) + 1rem + 2px);
+		}
 	}
 </style>

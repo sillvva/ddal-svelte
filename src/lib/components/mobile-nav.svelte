@@ -1,6 +1,7 @@
 <script lang="ts">
 	import * as API from "#lib/remote/index.js";
 	import { page } from "$app/state";
+	import AdminMenu from "./admin-menu.svelte";
 	import Link from "./link.svelte";
 
 	const { user } = $derived(await API.app.queries.request());
@@ -36,8 +37,9 @@
 		<span class="dock-label uppercase">Drafts</span>
 	</Link>
 	{#if user?.role === "admin"}
-		<Link
-			href="admin/users"
+		<AdminMenu
+			id="admin-menu-mobile"
+			placement="top"
 			class={[
 				"flex h-full flex-col items-center justify-center text-xs",
 				page.url.pathname.startsWith("/admin") && "dock-active"
@@ -45,6 +47,6 @@
 		>
 			<span class="iconify size-6 mdi--administrator-outline"></span>
 			<span class="dock-label uppercase">Admin</span>
-		</Link>
+		</AdminMenu>
 	{/if}
 </nav>

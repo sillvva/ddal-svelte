@@ -13,8 +13,48 @@ interface ReloadMarkers {
 	draftTitle: string;
 }
 
-test("every page survives a full reload and hydrates", async ({ users }) => {
-	const { page, handle } = await users.signUp({ label: "reload" });
+interface RecordReloadSeed {
+	markers: ReloadMarkers;
+	paths: string[];
+}
+
+test("character routes survive a full reload", async ({ users }) => {
+	const { page, handle } = await users.signUp({ label: "reloadchars" });
+	const { markers, paths } = await seedRecordReloadWorld(page, handle);
+	await assertPathsReload(
+		page,
+		paths.filter((path) => path.startsWith("/characters")),
+		markers
+	);
+});
+
+test("DM log routes survive a full reload", async ({ users }) => {
+	const { page, handle } = await users.signUp({ label: "reloaddmlogs" });
+	const { markers, paths } = await seedRecordReloadWorld(page, handle);
+	await assertPathsReload(
+		page,
+		paths.filter((path) => path.startsWith("/dm-logs")),
+		markers
+	);
+});
+
+test("DM routes survive a full reload", async ({ users }) => {
+	const { page, handle } = await users.signUp({ label: "reloaddms" });
+	const { markers, paths } = await seedRecordReloadWorld(page, handle);
+	await assertPathsReload(
+		page,
+		paths.filter((path) => path.startsWith("/dms")),
+		markers
+	);
+});
+
+test("draft routes survive a full reload", async ({ users }) => {
+	const { page, handle } = await users.signUp({ label: "reloaddrafts" });
+	const { draftId, markers } = await seedDraftReloadWorld(page, handle);
+	await assertPathsReload(page, ["/drafts", "/drafts/new", `/drafts/${draftId}`, `/draft/${draftId}`], markers);
+});
+
+async function seedRecordReloadWorld(page: Page, handle: string): Promise<RecordReloadSeed> {
 	const characterName = `E2E Reload ${handle}`;
 	const markers: ReloadMarkers = {
 		characterName,
@@ -23,7 +63,7 @@ test("every page survives a full reload and hydrates", async ({ users }) => {
 		dmLogTitle: `E2E DM Session ${handle}`,
 		secondDmLogTitle: `E2E DM Session Two ${handle}`,
 		dmId: "",
-		draftTitle: `E2E Draft ${handle}`
+		draftTitle: ""
 	};
 
 	const characterId = await test.step("create characters, logs, and DM logs", async () => {
@@ -32,30 +72,43 @@ test("every page survives a full reload and hydrates", async ({ users }) => {
 		await createGameLog(page, id, { title: `E2E Item Gain ${handle}`, dm: markers.dmName, gained: [`Cloak ${handle}`] });
 		markers.dmId = await dmIdOnCharacterPage(page, markers.dmName);
 		await createGameLog(page, id, { title: `E2E Purchase ${handle}`, type: "nongame", gold: 25 });
-		await createDmLog(page, { title: markers.dmLogTitle, character: characterName });
+		await createDmLog(page, { title: markers.dmLogTitle, character: characterName, level: 1 });
 		await createDmLog(page, { title: markers.secondDmLogTitle });
 		return id;
 	});
 
+	const paths = await pagesToReload(page, characterId);
+	return { markers, paths };
+}
+
+async function seedDraftReloadWorld(page: Page, handle: string): Promise<{ draftId: string; markers: ReloadMarkers }> {
+	const draftTitle = `E2E Draft ${handle}`;
+	const markers: ReloadMarkers = {
+		characterName: "",
+		secondCharacterName: "",
+		dmName: "",
+		dmLogTitle: "",
+		secondDmLogTitle: "",
+		dmId: "",
+		draftTitle
+	};
+
 	const draftId = await test.step("create a log draft", async () => {
 		await page.goto("/drafts/new");
-		await page.getByLabel("Title").fill(markers.draftTitle);
+		await page.getByLabel("Title").fill(draftTitle);
 		await page.getByRole("button", { name: "Save Draft" }).click();
 		await page.waitForURL(new RegExp(`/drafts/${RECORD_ID}$`, "iu"));
 		return new URL(page.url()).pathname.split("/").pop() ?? "";
 	});
 
-	const paths = [
-		...(await pagesToReload(page, characterId)),
-		"/drafts",
-		"/drafts/new",
-		`/drafts/${draftId}`,
-		`/draft/${draftId}`
-	];
+	return { draftId, markers };
+}
+
+async function assertPathsReload(page: Page, paths: string[], markers: ReloadMarkers) {
 	for (const path of paths) {
 		await test.step(`reload ${path}`, () => expectFullReload(page, path, markers));
 	}
-});
+}
 
 /** Every saved record, plus the empty create forms, that this user can open. */
 async function pagesToReload(page: Page, characterId: string) {

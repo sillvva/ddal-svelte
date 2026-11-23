@@ -17,9 +17,9 @@ source "$(dirname "$0")/remote-db.sh"
 
 for arg in "$@"; do
   case "$arg" in
-    --dry-run | --include-all) ;;
+    --dry-run | --include-all | --yes) ;;
     *)
-      echo "Usage: $0 [--dry-run] [--include-all]" >&2
+      echo "Usage: $0 [--dry-run] [--include-all] [--yes]" >&2
       exit 2
       ;;
   esac

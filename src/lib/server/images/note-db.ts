@@ -2,7 +2,7 @@ import { isPermanentNoteImageKey, TEMPORARY_IMAGE_PREFIX } from "#lib/images/obj
 import type { LogId, UserId } from "#lib/schemas.js";
 import { runQuery, type Database, type Transaction } from "#lib/server/db/index.js";
 import { imageUploads, logImages } from "#lib/server/db/schema.js";
-import { and, eq, exists, inArray, ne, notInArray, notLike, or, sql, type SQL } from "drizzle-orm";
+import { and, eq, exists, inArray, ne, notExists, notInArray, notLike, or, sql, type SQL } from "drizzle-orm";
 import { Effect } from "effect";
 import { clearScheduledDeletions } from "./portrait-db";
 
@@ -115,6 +115,29 @@ export function syncLogImages(tx: Transaction, userId: UserId, logId: LogId, per
 
 		return uploads.map((upload) => upload.objectKey);
 	});
+}
+
+/**
+ * Drops the upload rows of note images the orphan sweep just deleted. Rows that gained a `log_image`
+ * reference in the meantime are kept.
+ */
+export function forgetOrphanedNoteUploads(tx: Transaction, keys: readonly string[]) {
+	const noteKeys = [...new Set(keys.filter(isPermanentNoteImageKey))];
+	if (!noteKeys.length) return Effect.void;
+	return runQuery(
+		tx.delete(imageUploads).where(
+			and(
+				inArray(imageUploads.objectKey, noteKeys),
+				eq(imageUploads.purpose, "note"),
+				notExists(
+					tx
+						.select({ one: sql`1` })
+						.from(logImages)
+						.where(eq(logImages.uploadId, imageUploads.id))
+				)
+			)
+		)
+	).pipe(Effect.asVoid);
 }
 
 /** Drops the upload row once its permanent object is deleted. */
