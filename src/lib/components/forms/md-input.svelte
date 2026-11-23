@@ -671,4 +671,10 @@
 		min-height: calc(var(--minRows, 3lh) + 1rem + 2px);
 		max-height: calc(var(--maxRows, 50lh) + 1rem + 2px);
 	}
+
+	@media (width < 40rem) {
+		textarea {
+			max-height: calc(min(var(--maxRows, 50lh), 12lh) + 1rem + 2px);
+		}
+	}
 </style>
