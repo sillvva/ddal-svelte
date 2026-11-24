@@ -7,7 +7,7 @@
 		"clean:circular": "ds src --exclude-types",
 		"clean:install": "rm -rf node_modules pnpm-lock.yaml && pnpm install",
 		"clean:dev": "rm -rf .svelte-kit && pnpm dev",
-		"op:run": "FORCE_COLOR=1 op run --environment 4iuxdmr3wcxhjj7m7gd4qen46u --",
+		"op:run": "FORCE_COLOR=1 ddal-run --",
 		"dev": "pnpm db:local:up && vite dev",
 		"op:dev": "pnpm db:local:up && pnpm op:run vite dev",
 		"dev:process": "lsof -i :5173",
