@@ -126,6 +126,7 @@ type FormId<Input> = Input extends { id: infer Id } ? (Id extends string | numbe
 export interface RemoteFormOptions<Input extends RemoteFormInput = RemoteFormInput> {
 	form: RemoteForm<Input, unknown>;
 	schema?: StandardSchemaV1<Input, unknown>;
+	preflight?: boolean;
 	key?: FormId<Input>;
 	data?: Input;
 	initialErrors?: boolean;
@@ -145,6 +146,7 @@ export function configureForm<Input extends RemoteFormInput = RemoteFormInput>(g
 	const {
 		form: remoteForm,
 		schema,
+		preflight = false,
 		data: formData,
 		key: formKey,
 		initialErrors: initialErrorsProp,
@@ -159,7 +161,7 @@ export function configureForm<Input extends RemoteFormInput = RemoteFormInput>(g
 	const data = $derived((formData ?? {}) as FormData);
 	const key = $derived(formKey ?? ((data.id ?? v7()) as FormId<Input>));
 
-	const form = $derived(schema ? remoteForm.for(key).preflight(schema) : remoteForm.for(key));
+	const form = $derived(schema && preflight ? remoteForm.for(key).preflight(schema) : remoteForm.for(key));
 
 	let initial = $state.raw(
 		use({
@@ -207,9 +209,17 @@ export function configureForm<Input extends RemoteFormInput = RemoteFormInput>(g
 			}),
 			{
 				onsubmit: focusInvalid,
-				oninput: () => {
-					if (lastIssues) debouncedValidate.call();
-				}
+				...(preflight
+					? {
+							oninput: () => {
+								if (lastIssues) debouncedValidate.call();
+							}
+						}
+					: {
+							onchange: () => {
+								if (lastIssues) validate().then(focusInvalid);
+							}
+						})
 			}
 		)
 	);
@@ -236,7 +246,7 @@ export function configureForm<Input extends RemoteFormInput = RemoteFormInput>(g
 	const debouncedValidate = debounce(validate, 300);
 
 	async function validate(reset = false) {
-		await form.validate({ all: true, preflightOnly: true });
+		await form.validate({ all: true, preflightOnly: preflight });
 		if (allIssues && onissues && !deepEqual(lastIssues, allIssues)) onissues({ issues: allIssues });
 		if (allIssues) lastIssues = allIssues;
 		else if (reset) lastIssues = undefined;
