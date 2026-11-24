@@ -27,7 +27,9 @@ export const LOG_DRAFT_LIMIT = 50;
 
 /**
  * A draft disappears this long after it was last saved. Editing starts the window over.
- * The `delete_expired_log_drafts` database function repeats this as `interval '14 days'`.
+ * The `delete_expired_log_drafts` database function repeats this as `interval '14 days'`
+ * (`supabase/migrations/20261103190000_log_draft_expiry_cron.sql`). Change this constant
+ * and that SQL interval together.
  */
 export const LOG_DRAFT_TTL_MS = 14 * 24 * 60 * 60 * 1000;
 

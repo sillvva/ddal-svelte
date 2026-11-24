@@ -104,7 +104,7 @@ export async function resizeImage(file: File, limits: ResizeImageLimits, fit: Re
 	}
 }
 
-/** Portrait resize: longest edge at most 800px, original aspect ratio kept. */
+/** Portrait resize: longest edge at most 1000px, original aspect ratio kept. */
 export function resizeCharacterImage(file: File) {
 	return resizeImage(file, CHARACTER_IMAGE_LIMITS, "contain");
 }
@@ -114,7 +114,7 @@ export function resizeAvatarImage(file: File) {
 	return resizeImage(file, AVATAR_IMAGE_LIMITS, "cover");
 }
 
-/** Note image resize: longest edge at most 1200px, original aspect ratio kept. */
+/** Note image resize: longest edge at most 1000px, original aspect ratio kept. */
 export function resizeNoteImage(file: File) {
 	return resizeImage(file, NOTE_IMAGE_LIMITS, "contain");
 }
