@@ -5,7 +5,6 @@ services:
     build:
       context: docker/postgres
     image: ddal-postgres:18.7
-    container_name: ddal-postgres
     restart: unless-stopped
     environment:
       POSTGRES_DB: postgres
