@@ -1,11 +1,24 @@
 #!/usr/bin/env bash
 # Local Postgres helper. Usage: scripts/db-local.sh <up|down|reset|migrate|restore|psql|nuke|diff [-f name]|diff-remote>
 # diff-remote diffs against REMOTE_DB_URL (production), read-only; run it through op run (pnpm op:db:diff).
-# Overrides: POSTGRES_PASSWORD (default postgres), POSTGRES_PORT (default 5433), REMOTE_DB_HOST_IP and
+# Overrides: POSTGRES_PASSWORD (default postgres), POSTGRES_PORT (from the environment, else .env.local,
+# else 5433), REMOTE_DB_HOST_IP and
 # DIFF_DOCKER_ARGS (diff-remote only: see the README).
 set -euo pipefail
 
 cd "$(dirname "$0")/.."
+
+if [ -z "${POSTGRES_PORT:-}" ] && [ -f .env.local ]; then
+  _port_line=$(grep -m1 '^POSTGRES_PORT=' .env.local 2>/dev/null || true)
+  if [ -n "$_port_line" ]; then
+    POSTGRES_PORT=${_port_line#POSTGRES_PORT=}
+    POSTGRES_PORT=${POSTGRES_PORT#\"}
+    POSTGRES_PORT=${POSTGRES_PORT%\"}
+    POSTGRES_PORT=${POSTGRES_PORT#\'}
+    POSTGRES_PORT=${POSTGRES_PORT%\'}
+  fi
+  unset _port_line
+fi
 
 PASSWORD="${POSTGRES_PASSWORD:-postgres}"
 export POSTGRES_PASSWORD="$PASSWORD"

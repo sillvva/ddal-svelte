@@ -47,5 +47,11 @@ assert.doesNotThrow(() =>
 		DATABASE_URL: "postgresql://postgres:postgres@localhost:5433/postgres"
 	})
 );
+assert.doesNotThrow(() =>
+	assertLocalE2E({
+		...local,
+		DATABASE_URL: "postgresql://postgres:postgres@127.0.0.1:5447/postgres"
+	})
+);
 
 console.log("e2e environment guard checks passed");

@@ -51,7 +51,8 @@ pnpm install
 
 The example files are the authoritative list. These are the ones that matter locally:
 
-- `DATABASE_URL` — Postgres connection string. The local database is `postgresql://postgres:postgres@127.0.0.1:5433/postgres`, which is already set in the development and production example files.
+- `DATABASE_URL` — Postgres connection string. The example files use `postgresql://postgres:postgres@127.0.0.1:5433/postgres`. In a git worktree, `pnpm op:worktree:setup` updates the port in `.env.development.local` and `.env.production.local` to match `POSTGRES_PORT` in `.env.local` (see [Local database](#local-database)).
+- `POSTGRES_PORT` — optional in `.env.local`. Host port for the local Postgres container. The main checkout defaults to `5433` when unset; each worktree gets a stable port in `5440`–`5539` from its path hash.
 - `PUBLIC_URL` — public origin of the app, and the base URL better-auth uses. The development example is `http://localhost:5173`. The production example is `http://localhost:4173` (Vite preview).
 - `REMOTE_DB_URL` — remote Postgres URL used by the `op:db:*` scripts. End-to-end guards also require this string to differ from the local `DATABASE_URL`. It is not in the example files; the 1Password environment supplies it.
 - `R2_BUCKET`, `R2_ENDPOINT`, `R2_PUBLIC_URL`, `R2_ACCESS_KEY_ID`, `R2_SECRET_ACCESS_KEY` — Cloudflare R2, for portraits, avatars, and note images.
@@ -72,7 +73,7 @@ pnpm db:local:reset   # build + start Postgres, create roles, apply every migrat
 pnpm dev              # starts the database if needed, then vite
 ```
 
-The database listens on `127.0.0.1:5433` (override with `POSTGRES_PORT`). The password is `postgres` (override with `POSTGRES_PASSWORD`; then update `DATABASE_URL` to match). Data lives in the `ddal-svelte_ddal-pgdata` volume, mounted at `/var/lib/postgresql`.
+Each checkout's Compose project has its own volume. The main repository listens on `127.0.0.1:5433` by default. A linked worktree stores `POSTGRES_PORT` in `.env.local` (and updates `DATABASE_URL` in `.env.development.local` and `.env.production.local` to match) so several local databases can run at once on different ports. `scripts/db-local.sh` reads `POSTGRES_PORT` from the environment, falling back to `.env.local` and then `5433`. The password is `postgres` (override with `POSTGRES_PASSWORD`; then update `DATABASE_URL` to match). Data lives in a per-project `ddal-pgdata` volume, mounted at `/var/lib/postgresql`.
 
 | Script | What it does |
 | --- | --- |
@@ -82,7 +83,7 @@ The database listens on `127.0.0.1:5433` (override with `POSTGRES_PORT`). The pa
 | `pnpm db:local:migrate` | Apply new migrations only. |
 | `pnpm db:local:restore` | Reset, then load `data.sql` from the newest `supabase/backups/<timestamp>/` (see `pnpm op:db:backup`). |
 | `pnpm op:db:local:restore` | `db:local:restore`, then empty the dev R2 bucket (see below). |
-| `pnpm worktree:setup` | Set up a new git worktree. Copies `.env.example.*local` to `.env.*local` (never overwriting), stops database containers started from other worktrees (the compose file pins the container name and port, so only one can run; volumes are kept; skip with `SKIP_STOP_OTHERS=1`), runs `pnpm op:db:backup`, then `pnpm op:db:local:restore`, which starts this worktree's container. |
+| `pnpm op:worktree:setup` | Set up a new git worktree. Copies `.env.example.*local` to `.env.*local` (never overwriting), assigns `POSTGRES_PORT` in `.env.local` when missing and updates `DATABASE_URL` in `.env.development.local` and `.env.production.local` (worktrees only; main checkout keeps 5433), optionally stops other worktrees' database containers with `STOP_OTHERS=1` (volumes are kept), runs `pnpm op:db:backup`, then `pnpm op:db:local:restore`, which starts this worktree's container. |
 | `pnpm db:local:psql` | `psql` shell in the container. |
 | `pnpm db:local:nuke` | Stop and delete the volume. The next `reset` starts empty. |
 | `pnpm db:migration:new <name>` | `supabase migration new`: create an empty migration file in `supabase/migrations`. |
@@ -97,7 +98,7 @@ To work on a new migration, either write it by hand (`pnpm db:migration:new add_
 
 ### Connect Dataflare
 
-Add a PostgreSQL connection: host `127.0.0.1`, port `5433`, database `postgres`, user `postgres`, password `postgres`, SSL off. Or use the URL `postgresql://postgres:postgres@127.0.0.1:5433/postgres`.
+Add a PostgreSQL connection: host `127.0.0.1`, port from `POSTGRES_PORT` in `.env.local` (or `5433` in the main checkout), database `postgres`, user `postgres`, password `postgres`, SSL off. Or use the same host, port, and credentials in a `postgresql://` URL.
 
 ## Development
 
@@ -150,7 +151,7 @@ The suite stops before it creates anything unless all of these are true:
 
 - `E2E_ALLOW_LOCAL=1` (or `true`)
 - `PUBLIC_URL` is `http://localhost`, `http://127.0.0.1`, or another local host
-- `DATABASE_URL` uses that same kind of host (the local database is `127.0.0.1:5433`)
+- `DATABASE_URL` uses a local host such as `127.0.0.1` or `localhost` (any local port is allowed; worktrees often use `5440`–`5539`)
 - `DATABASE_URL` is not the same string as `REMOTE_DB_URL`
 
 Staging is rejected because it shares production's database. A local `op run` environment also sets `REMOTE_DB_URL`; that is fine as long as `DATABASE_URL` is the local database and the two strings differ. A global setup step and `pnpm op:test:e2e:cleanup` delete leftover `e2e-` users, their rows, and their stored images if a run crashes. Account deletion removes permanent avatars and portraits immediately. Unsaved `tmp/` uploads are left for the bucket lifecycle rule (about a day); the cleanup script still deletes those objects for `e2e-` users so a crashed run does not leave files in the test bucket.
