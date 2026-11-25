@@ -73,7 +73,8 @@ test("DMs and DM logs: assign, edit, delete, and unassign", async ({ users }) =>
 	await test.step("delete the DM after its log is gone", async () => {
 		await page.goto(`/characters/${characterId}`);
 		await page.locator("tbody").filter({ hasText: gainTitle }).getByRole("button", { name: "Delete Log" }).click();
-		await expect(page.getByRole("link", { name: gainTitle })).toHaveCount(0);
+		await expect(page.locator("[data-sonner-toast]").filter({ hasText: `${gainTitle} deleted` })).toBeVisible();
+		await expect(page.locator("tbody").filter({ hasText: gainTitle })).toHaveCount(0);
 
 		await page.goto("/dms");
 		await page.locator("tr").filter({ hasText: editedDmName }).getByRole("button", { name: "Delete DM" }).click();
