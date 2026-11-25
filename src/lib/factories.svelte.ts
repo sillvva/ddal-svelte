@@ -63,63 +63,32 @@ export function proxify<T>(object: T) {
 	return _;
 }
 
-export function use<T>(
-	args:
-		| (() => T)
-		| {
-				/** Depedencies to track */
-				track: () => T;
-				/** Effects that run once each during SSR and hydration */
-				ssr?: (value: T) => unknown;
-				/** Effects that run once during mount */
-				mount?: (value: T) => unknown;
-				/** Effects that run on dependency change, before the DOM updates */
-				pre?: (current: T, previous: T) => void | (() => void);
-				/** Effects that run on dependency change, after the DOM updates */
-				effect?: (current: T, previous: T) => void | (() => void);
-		  }
-) {
-	if (typeof args === "function") return $state.snapshot(args());
-
-	const initial = args.track();
-	let mounted = false;
-	let pre_v = initial;
-	let prev = initial;
-
-	args.ssr?.(initial);
-
-	if (args.pre) {
-		$effect.pre(() => {
-			const current = args.track();
-			$state.snapshot(current);
-			return untrack(() => {
-				if (!mounted) return;
-				const cleanup = args.pre?.(current, pre_v);
-				pre_v = current;
-				return cleanup;
-			});
-		});
-	}
-
-	$effect(() => {
-		const current = args.effect ? args.track() : untrack(() => args.track());
-		if (args.effect) $state.snapshot(current);
-		return untrack(() => {
-			if (!mounted) {
-				if (args.mount) args.mount(current);
-				return void (mounted = true);
-			}
-			const cleanup = args.effect?.(current, prev);
-			prev = current;
-			return cleanup;
-		});
-	});
-
-	return $state.snapshot(initial);
-}
-
 export type GenericFormConfig<T extends RemoteFormInput = RemoteFormInput> = ReturnType<typeof configureForm<T>>;
 export type GenericForm<T extends RemoteFormInput = RemoteFormInput> = ReturnType<GenericFormConfig<T>>;
+
+function isEmptyInput(value: unknown): boolean {
+	return value == null || typeof value !== "object" || Object.keys(value).length === 0;
+}
+
+/**
+ * `enhance()` returns the Kit instance. Copy its enumerable attributes (and the
+ * attachment symbol, which object spread drops) onto a new object so `onsubmit`
+ * / `onchange` are not written onto that instance.
+ */
+function formElementAttributes<T extends object, H extends object>(enhanced: T, handlers: H): T & H {
+	const attributes = { ...enhanced, ...handlers };
+	const source = enhanced as Record<symbol, unknown>;
+	const target = attributes as Record<symbol, unknown>;
+	for (const symbol of Object.getOwnPropertySymbols(enhanced)) {
+		Object.defineProperty(target, symbol, {
+			configurable: true,
+			enumerable: true,
+			writable: true,
+			value: source[symbol]
+		});
+	}
+	return attributes as T & H;
+}
 
 type FormId<Input> = Input extends { id: infer Id } ? (Id extends string | number ? Id : string | number) : string | number;
 
@@ -159,17 +128,22 @@ export function configureForm<Input extends RemoteFormInput = RemoteFormInput>(g
 
 	type FormData = Input extends undefined ? Record<string, never> : Input;
 	const data = $derived((formData ?? {}) as FormData);
-	const key = $derived(formKey ?? ((data.id ?? v7()) as FormId<Input>));
+	// A new uuid on every key re-evaluation would be a new `.for()` instance. Keep one fallback.
+	const fallbackKey = v7() as FormId<Input>;
+	const key = $derived((formKey ?? data.id ?? fallbackKey) as FormId<Input>);
 
 	const form = $derived(schema && preflight ? remoteForm.for(key).preflight(schema) : remoteForm.for(key));
 
-	let initial = $state.raw(
-		use({
-			track: () => data,
-			ssr: (data) => form.fields.set(data),
-			pre: (data) => form.fields.set(data)
-		})
-	);
+	const firstSnapshot = untrack(() => $state.snapshot(data));
+	let initial = $state.raw(firstSnapshot);
+	// Kit registers `.for(key)` in an `$effect.pre`. A preload fork can commit a different
+	// instance whose input is still `{}`. Remember which instance we seeded and fill any empty one.
+	let seededForm = untrack(() => {
+		form.fields.set(data);
+		return form;
+	});
+	let lastDataSnapshot = firstSnapshot;
+	let validatedFor: typeof form | undefined;
 
 	let touched = $state.raw(false);
 	let submitting = $state.raw(false);
@@ -177,11 +151,11 @@ export function configureForm<Input extends RemoteFormInput = RemoteFormInput>(g
 	let dirty = $derived(!deepEqual(initial, $state.snapshot(form.fields.value())));
 
 	const attributes = $derived(
-		Object.assign(
-			form.enhance(async (form) => {
+		formElementAttributes(
+			form.enhance(async (submittedForm) => {
 				if (submitting) return;
-				const formEl = form.element;
-				const data = form.fields.value();
+				const formEl = submittedForm.element;
+				const data = submittedForm.fields.value();
 
 				const bf = !onsubmit || (await onsubmit({ dirty, form: formEl, data }));
 				if (!bf) return;
@@ -190,10 +164,10 @@ export function configureForm<Input extends RemoteFormInput = RemoteFormInput>(g
 				const wasDirty = dirty;
 				try {
 					dirty = false;
-					const success = await form.submit();
+					const success = await submittedForm.submit();
 					submitted = true;
 
-					onresult?.({ success, result: form.result, issues: allIssues });
+					onresult?.({ success, result: submittedForm.result, issues: allIssues });
 					if (allIssues) onissues?.({ issues: allIssues });
 
 					if (!success) {
@@ -230,17 +204,40 @@ export function configureForm<Input extends RemoteFormInput = RemoteFormInput>(g
 	const initialErrors = $derived(initialErrorsProp ?? !!data?.id);
 	let lastIssues = $state.raw<RemoteFormIssue[] | undefined>();
 
-	use({
-		track: () => form,
-		mount: async () => {
-			if (initialErrors) await validate().then(focusInvalid);
-		},
-		effect: () => {
-			form.fields.set(data);
-			initial = $state.snapshot(data);
-			touched = false;
-			if (initialErrors) validate(true).then(focusInvalid);
-		}
+	$effect.pre(() => {
+		const instance = form;
+		const next = data;
+		const snap = $state.snapshot(next);
+		const fieldsNow = instance.fields.value();
+
+		untrack(() => {
+			const swapped = instance !== seededForm;
+			const emptied = isEmptyInput(fieldsNow) && !isEmptyInput(snap) && !touched && !submitting;
+			if (swapped || emptied) {
+				instance.fields.set(next);
+				initial = snap;
+				touched = false;
+				seededForm = instance;
+				lastDataSnapshot = snap;
+				return;
+			}
+
+			if (!deepEqual(snap, lastDataSnapshot)) {
+				lastDataSnapshot = snap;
+				// `fields.value()` is a clone. Skip the write when it already matches the new data
+				// so a keystroke on the shared object does not assign over itself.
+				if (!deepEqual(fieldsNow, snap)) instance.fields.set(next);
+			}
+		});
+	});
+
+	$effect(() => {
+		const instance = form;
+		untrack(() => {
+			if (!initialErrors || !instance || validatedFor === instance) return;
+			validatedFor = instance;
+			void validate(true).then(focusInvalid);
+		});
 	});
 
 	const debouncedValidate = debounce(validate, 300);

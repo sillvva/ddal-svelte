@@ -17,6 +17,9 @@
 
 	const { form } = $derived(configuredForm);
 	const newItem = () => ({ id: v7() as ItemId, name: "", description: "" });
+	function fieldItems<T>(value: T[] | null | undefined): T[] {
+		return value ?? [];
+	}
 	const buttons = $derived(
 		form.fields.type.value() === "game"
 			? ([
@@ -42,14 +45,14 @@
 					class="btn join-item min-w-fit flex-2 basis-0 cursor-default justify-between gap-3 border-base-200! bg-base-300!"
 				>
 					<span>{label}</span>
-					{#if gained.value().length > 0}
-						<span class="badge rounded-sm badge-outline badge-success">{gained.value().length}</span>
+					{#if fieldItems(gained.value()).length > 0}
+						<span class="badge rounded-sm badge-outline badge-success">{fieldItems(gained.value()).length}</span>
 					{/if}
 				</button>
 				<button
 					type="button"
 					class="btn join-item min-w-fit"
-					onclick={() => gained.set([...gained.value(), newItem()])}
+					onclick={() => gained.set([...fieldItems(gained.value()), newItem()])}
 					aria-label="Add {label}"
 				>
 					<span class="iconify mdi--plus"></span>
@@ -60,11 +63,11 @@
 </div>
 
 <div class="col-span-12 grid grid-cols-12 gap-4 dark:text-white">
-	{#each form.fields.magicItemsGained.value().filter(isDefined) as item, index (item.id)}
+	{#each fieldItems(form.fields.magicItemsGained.value()).filter(isDefined) as item, index (item.id)}
 		{@render card("Magic Item", form.fields.magicItemsGained, index)}
 	{/each}
 	{#if form.fields.type.value() === "game"}
-		{#each form.fields.storyAwardsGained.value().filter(isDefined) as item, index (item.id)}
+		{#each fieldItems(form.fields.storyAwardsGained.value()).filter(isDefined) as item, index (item.id)}
 			{@render card("Story Award", form.fields.storyAwardsGained, index)}
 		{/each}
 	{/if}
@@ -87,7 +90,7 @@
 						aria-label="Delete Entry"
 						onclick={(event: Event) => {
 							event.preventDefault();
-							gained.set(gained.value().filter((entry) => entry?.id !== field.id.value()));
+							gained.set(fieldItems(gained.value()).filter((entry) => entry?.id !== field.id.value()));
 						}}
 					>
 						<span class="iconify size-6 mdi--trash-can"></span>
