@@ -111,6 +111,16 @@ export interface RemoteFormOptions<Input extends RemoteFormInput = RemoteFormInp
 	formEl?: HTMLFormElement;
 }
 
+/**
+ * Creates a reactive controller around a SvelteKit `RemoteForm` instance.
+ *
+ * Manages `.for(key)` instance scoping, optional client-side preflight validation,
+ * initial data seeding and prop synchronization, dirty/touched/submitting state,
+ * enhanced submission handling, invalid-field focus, and unsaved-changes navigation guards.
+ *
+ * @param getProps Reactive getter returning form options so updates propagate via `$derived`.
+ * @returns A getter returning the reactive form state, `<form>` attributes, and helper methods.
+ */
 export function configureForm<Input extends RemoteFormInput = RemoteFormInput>(getProps: () => RemoteFormOptions<Input>) {
 	const {
 		form: remoteForm,
@@ -132,8 +142,10 @@ export function configureForm<Input extends RemoteFormInput = RemoteFormInput>(g
 	const fallbackKey = v7() as FormId<Input>;
 	const key = $derived((formKey ?? data.id ?? fallbackKey) as FormId<Input>);
 
+	// Scope the remote form to `key`, attaching client-side schema validation when `preflight` is enabled.
 	const form = $derived(schema && preflight ? remoteForm.for(key).preflight(schema) : remoteForm.for(key));
 
+	// Capture the initial data snapshot untracked as the baseline for dirty checks and prop-change detection.
 	const firstSnapshot = untrack(() => $state.snapshot(data));
 	let initial = $state.raw(firstSnapshot);
 	// Kit registers `.for(key)` in an `$effect.pre`. A preload fork can commit a different
@@ -143,6 +155,7 @@ export function configureForm<Input extends RemoteFormInput = RemoteFormInput>(g
 		return form;
 	});
 	let lastDataSnapshot = firstSnapshot;
+	// Tracks which form instance has already run initial validation so it only triggers once per instance.
 	let validatedFor: typeof form | undefined;
 
 	let touched = $state.raw(false);
@@ -150,6 +163,7 @@ export function configureForm<Input extends RemoteFormInput = RemoteFormInput>(g
 	let submitted = $state.raw(false);
 	let dirty = $derived(!deepEqual(initial, $state.snapshot(form.fields.value())));
 
+	// Build spreadable `<form>` attributes with enhanced submission and live re-validation handlers.
 	const attributes = $derived(
 		formElementAttributes(
 			form.enhance(async (submittedForm) => {
@@ -157,12 +171,14 @@ export function configureForm<Input extends RemoteFormInput = RemoteFormInput>(g
 				const formEl = submittedForm.element;
 				const data = submittedForm.fields.value();
 
+				// Allow the consumer's `onsubmit` hook to cancel submission by returning a falsy value.
 				const bf = !onsubmit || (await onsubmit({ dirty, form: formEl, data }));
 				if (!bf) return;
 
 				submitting = true;
 				const wasDirty = dirty;
 				try {
+					// Clear `dirty` before submitting so a redirect on success is not blocked by `beforeNavigate`.
 					dirty = false;
 					const success = await submittedForm.submit();
 					submitted = true;
@@ -183,6 +199,8 @@ export function configureForm<Input extends RemoteFormInput = RemoteFormInput>(g
 			}),
 			{
 				onsubmit: focusInvalid,
+				// After issues have appeared, re-validate on input (debounced) for preflight schemas
+				// or on change (with focus management) for server-side validation.
 				...(preflight
 					? {
 							oninput: () => {
@@ -201,9 +219,12 @@ export function configureForm<Input extends RemoteFormInput = RemoteFormInput>(g
 	const result = $derived(form.result);
 	const issues = $derived(form.fields.issues());
 	const allIssues = $derived(form.fields.allIssues());
+	// Default to validating existing records (those with an `id`) on load unless explicitly configured.
 	const initialErrors = $derived(initialErrorsProp ?? !!data?.id);
+	// Remembers the most recent issues to gate live re-validation and deduplicate `onissues` callbacks.
 	let lastIssues = $state.raw<RemoteFormIssue[] | undefined>();
 
+	// Synchronize `form.fields` before DOM updates when the form instance swaps or external `data` changes.
 	$effect.pre(() => {
 		const instance = form;
 		const next = data;
@@ -211,6 +232,7 @@ export function configureForm<Input extends RemoteFormInput = RemoteFormInput>(g
 		const fieldsNow = instance.fields.value();
 
 		untrack(() => {
+			// Re-seed when the `.for(key)` instance changed or was unexpectedly emptied prior to user interaction.
 			const swapped = instance !== seededForm;
 			const emptied = isEmptyInput(fieldsNow) && !isEmptyInput(snap) && !touched && !submitting;
 			if (swapped || emptied) {
@@ -231,6 +253,7 @@ export function configureForm<Input extends RemoteFormInput = RemoteFormInput>(g
 		});
 	});
 
+	// Run initial validation once per form instance when `initialErrors` is enabled.
 	$effect(() => {
 		const instance = form;
 		untrack(() => {
@@ -242,6 +265,7 @@ export function configureForm<Input extends RemoteFormInput = RemoteFormInput>(g
 
 	const debouncedValidate = debounce(validate, 300);
 
+	/** Validates all fields, notifies `onissues` when issues change, and updates `lastIssues`. */
 	async function validate(reset = false) {
 		await form.validate({ all: true, preflightOnly: preflight });
 		if (allIssues && onissues && !deepEqual(lastIssues, allIssues)) onissues({ issues: allIssues });
@@ -249,6 +273,7 @@ export function configureForm<Input extends RemoteFormInput = RemoteFormInput>(g
 		else if (reset) lastIssues = undefined;
 	}
 
+	/** Waits for DOM updates and focuses the first visible, enabled control marked `aria-invalid`. */
 	async function focusInvalid() {
 		await tick();
 
@@ -260,6 +285,7 @@ export function configureForm<Input extends RemoteFormInput = RemoteFormInput>(g
 		);
 		invalid?.focus();
 
+		// Warn when disabled fields may have caused missing/undefined validation failures.
 		if (
 			formEl?.querySelector(":is(input, select, textarea):disabled") &&
 			allIssues?.some((issue) => issue.message.includes("undefined"))
@@ -271,6 +297,7 @@ export function configureForm<Input extends RemoteFormInput = RemoteFormInput>(g
 		}
 	}
 
+	// Mark the form as touched on the first focus inside `formEl`.
 	onMount(() => {
 		const handleFocusIn = () => void (touched = true);
 		formEl?.addEventListener("focusin", handleFocusIn);
@@ -279,11 +306,13 @@ export function configureForm<Input extends RemoteFormInput = RemoteFormInput>(g
 		};
 	});
 
+	// Prompt before non-shallow navigation when the form has unsaved changes or active issues.
 	beforeNavigate((ev) => {
 		if (ev.shallow) return;
 		if ((dirty || issues) && navBlockMessage && navBlockMessage.length > 0 && !confirm(navBlockMessage)) ev.cancel();
 	});
 
+	// Return a getter so callers can reactively read the latest derived values (e.g., via `$derived(configured())`).
 	return () => ({
 		form,
 		attributes,
@@ -297,6 +326,7 @@ export function configureForm<Input extends RemoteFormInput = RemoteFormInput>(g
 		allIssues,
 		validate,
 		debouncedValidate,
+		/** Resets all form fields back to the `initial` snapshot. */
 		reset: () => form.fields.set(initial)
 	});
 }
