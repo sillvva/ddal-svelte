@@ -1,5 +1,6 @@
 import adapter from "@sveltejs/adapter-node";
 import { sveltekit } from "@sveltejs/kit/vite";
+import { svelteDevtools } from "@sveltejs/vite-devtools-svelte";
 import tailwindcss from "@tailwindcss/vite";
 import { defineConfig } from "vite";
 import devtoolsJson from "vite-plugin-devtools-json";
@@ -7,13 +8,15 @@ import devtoolsJson from "vite-plugin-devtools-json";
 export default defineConfig({
 	plugins: [
 		tailwindcss(),
+		svelteDevtools(),
 		sveltekit({
 			// adapter-auto only supports some environments, see https://kit.svelte.dev/docs/adapter-auto for a list.
 			// If your environment is not supported or you settled on a specific environment, switch out the adapter.
 			// See https://kit.svelte.dev/docs/adapters for more information about adapters.
 			adapter: adapter(),
 			experimental: {
-				remoteFunctions: true
+				remoteFunctions: true,
+				forkPreloads: true
 			},
 			compilerOptions: {
 				experimental: {
@@ -29,6 +32,10 @@ export default defineConfig({
 		},
 		watch: {
 			ignored: ["**/.env", "**/.env.*"]
-		}
+		},
+		forwardConsole: false
+	},
+	devtools: {
+		apply: "serve"
 	}
 });

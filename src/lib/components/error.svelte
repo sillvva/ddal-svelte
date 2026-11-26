@@ -1,5 +1,4 @@
 <script lang="ts">
-	import { use } from "#lib/factories.svelte.js";
 	import * as API from "#lib/remote/index.js";
 	import { getLogger } from "#lib/stores.svelte.js";
 	import { dev } from "$app/env";
@@ -17,7 +16,7 @@
 
 	const os = useOs();
 	const logger = getLogger();
-	const err = use(() => logger.log(error, boundary));
+	const err = $derived(logger.log(error, boundary));
 
 	let display = $state(!dev);
 </script>

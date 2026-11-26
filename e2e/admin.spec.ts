@@ -33,7 +33,10 @@ function toast(page: Page, message: string | RegExp) {
 
 async function searchUsers(page: Page, query: string) {
 	const input = page.getByPlaceholder("Search by name, email, role, etc.");
-	await input.fill(`"${query}"`);
+	const quoted = `"${query}"`;
+	await input.fill(quoted);
+	// Admin search debounces 300ms before shallow ?s= navigation; wait so a later search cannot abort clicks.
+	await expect.poll(() => new URL(page.url()).searchParams.get("s")).toBe(quoted);
 }
 
 test("admin access: only admins can open admin pages and call admin endpoints", async ({ users }) => {

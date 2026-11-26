@@ -235,6 +235,35 @@ export function notesField(page: Page) {
 	return page.getByRole("textbox", { name: /^Notes\b/ }).and(page.locator('[name^="description"]'));
 }
 
+/**
+ * Character log edit/new form: nested `{#await}` blocks (character, log, DM list, etc.) must
+ * finish before interacting with notes. `Save Log` and `DM Name` only render after the last await.
+ */
+export async function waitForLogFormReady(page: Page) {
+	await waitForClientNavigation(page);
+	await waitForHydration(page);
+
+	const title = page.getByLabel("Title");
+	const date = page.getByRole("group", { name: /^Date\b/u });
+	const save = page.getByRole("button", { name: "Save Log" });
+	const notes = notesField(page);
+	const logType = page.getByLabel("Log Type");
+
+	await expect
+		.poll(async () => {
+			if (!(await title.isVisible())) return "title";
+			if (!(await date.isVisible())) return "date";
+			if (!(await notes.isVisible())) return "notes";
+			if (!(await save.isVisible()) || !(await save.isEnabled())) return "save";
+			if ((await logType.count()) > 0 && (await logType.inputValue()) === "game") {
+				const dm = page.getByLabel("DM Name");
+				if (!(await dm.isVisible()) || !(await dm.isEnabled())) return "dm";
+			}
+			return "ready";
+		})
+		.toBe("ready");
+}
+
 /** Pastes a file into `target` the way a browser does for a copied image. */
 export async function pasteFile(target: Locator, file: FilePayload) {
 	await target.evaluate(

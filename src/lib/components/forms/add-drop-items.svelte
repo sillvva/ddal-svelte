@@ -22,14 +22,20 @@
 
 	const newItem = () => ({ id: v7() as ItemId, name: "", description: "" }) satisfies LogSchema["magicItemsGained"][number];
 
+	function fieldItems<T>(value: T[] | null | undefined): T[] {
+		return value ?? [];
+	}
+
 	const sortedItems = $derived(
 		magicItems.toSorted((a, b) => sorter(a.name.replace(/^\d+x? ?/, ""), b.name.replace(/^\d+x? ?/, "")))
 	);
 	const sortedAwards = $derived(
 		storyAwards.toSorted((a, b) => sorter(a.name.replace(/^\d+x? ?/, ""), b.name.replace(/^\d+x? ?/, "")))
 	);
-	const remainingItems = $derived(sortedItems.filter((item) => !form.fields.magicItemsLost.value().includes(item.id)));
-	const remainingAwards = $derived(sortedAwards.filter((item) => !form.fields.storyAwardsLost.value().includes(item.id)));
+	const remainingItems = $derived(sortedItems.filter((item) => !fieldItems(form.fields.magicItemsLost.value()).includes(item.id)));
+	const remainingAwards = $derived(
+		sortedAwards.filter((item) => !fieldItems(form.fields.storyAwardsLost.value()).includes(item.id))
+	);
 
 	const itemButtons = $derived([
 		"Magic Items",
@@ -68,14 +74,14 @@
 				>
 					<span>{label}</span>
 					<span class="flex flex-row gap-1">
-						{#if gained.value().length > 0}
+						{#if fieldItems(gained.value()).length > 0}
 							<span class="badge rounded-sm badge-outline badge-success max-xs:px-1">
-								{gained.value().length}
+								{fieldItems(gained.value()).length}
 							</span>
 						{/if}
-						{#if lost.value().length > 0}
+						{#if fieldItems(lost.value()).length > 0}
 							<span class="badge rounded-sm badge-outline badge-error max-xs:px-1">
-								{lost.value().length}
+								{fieldItems(lost.value()).length}
 							</span>
 						{/if}
 					</span>
@@ -84,7 +90,7 @@
 					type="button"
 					class="btn join-item min-w-fit max-md:flex-1 max-md:px-0 max-md:data-[remaining=0]:flex-2"
 					data-remaining={remaining.length}
-					onclick={() => gained.set([...gained.value(), newItem()])}
+					onclick={() => gained.set([...fieldItems(gained.value()), newItem()])}
 					aria-label="Add Magic Item"
 				>
 					<span class="iconify mdi--plus max-md:size-6"></span>
@@ -94,7 +100,7 @@
 						type="button"
 						class="btn join-item min-w-fit max-md:flex-1 max-md:px-0"
 						onclick={() => {
-							if (remaining[0]) lost.set([...lost.value(), remaining[0].id]);
+							if (remaining[0]) lost.set([...fieldItems(lost.value()), remaining[0].id]);
 						}}
 						aria-label="Remove Magic Item"
 					>
@@ -108,7 +114,7 @@
 
 <div class="col-span-12 grid grid-cols-12 gap-4 dark:text-white">
 	{#each cards as [entity, items, gainedField, lostField], index (index)}
-		{#each gainedField.value().filter(isDefined) as item, index (item.id)}
+		{#each fieldItems(gainedField.value()).filter(isDefined) as item, index (item.id)}
 			{const title = $derived(entity === "magicItems" ? "Magic Item" : "Story Award")}
 			{const field = $derived(
 				entity === "magicItems" ? form.fields.magicItemsGained[index] : form.fields.storyAwardsGained[index]
@@ -131,11 +137,11 @@
 									if (field) {
 										if (entity === "magicItems")
 											form.fields.magicItemsGained.set(
-												form.fields.magicItemsGained.value().filter((it) => it?.id !== field.id.value())
+												fieldItems(form.fields.magicItemsGained.value()).filter((it) => it?.id !== field.id.value())
 											);
 										else
 											form.fields.storyAwardsGained.set(
-												form.fields.storyAwardsGained.value().filter((it) => it?.id !== field.id.value())
+												fieldItems(form.fields.storyAwardsGained.value()).filter((it) => it?.id !== field.id.value())
 											);
 									}
 								}}
@@ -151,10 +157,10 @@
 				</div>
 			{/if}
 		{/each}
-		{#each lostField.value().filter(isDefined) as id, index (id)}
+		{#each fieldItems(lostField.value()).filter(isDefined) as id, index (id)}
 			{const title = $derived(entity === "magicItems" ? "Magic Item" : "Story Award")}
 			{const arrValue = $derived(
-				entity === "magicItems" ? form.fields.magicItemsLost.value() : form.fields.storyAwardsLost.value()
+				fieldItems(entity === "magicItems" ? form.fields.magicItemsLost.value() : form.fields.storyAwardsLost.value())
 			)}
 			{const field = $derived(entity === "magicItems" ? form.fields.magicItemsLost[index] : form.fields.storyAwardsLost[index])}
 
@@ -185,9 +191,13 @@
 									ev.preventDefault();
 									if (field) {
 										if (entity === "magicItems")
-											form.fields.magicItemsLost.set(form.fields.magicItemsLost.value().filter((it) => it !== field.value()));
+											form.fields.magicItemsLost.set(
+												fieldItems(form.fields.magicItemsLost.value()).filter((it) => it !== field.value())
+											);
 										else
-											form.fields.storyAwardsLost.set(form.fields.storyAwardsLost.value().filter((it) => it !== field.value()));
+											form.fields.storyAwardsLost.set(
+												fieldItems(form.fields.storyAwardsLost.value()).filter((it) => it !== field.value())
+											);
 									}
 								}}
 								aria-label="Delete Entry"

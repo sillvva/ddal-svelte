@@ -15,6 +15,7 @@ import {
 	pngFile,
 	TEXT_FILE,
 	waitForHydration,
+	waitForLogFormReady,
 	waitForNoteImages
 } from "./ui.ts";
 
@@ -37,6 +38,7 @@ async function saveAndReturn(page: Page, characterId: string, title?: string) {
 }
 
 async function pasteImage(page: Page, name: string, expected: number) {
+	await waitForLogFormReady(page);
 	await pasteFile(notesField(page), pngFile(name));
 	const urls = await waitForNoteImages(page, expected);
 	const url = urls.at(-1);

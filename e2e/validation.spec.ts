@@ -17,7 +17,7 @@ test("character form: grapheme limit and required fields", async ({ users }) => 
 		await page.goto("/characters/new/edit");
 		await fillCharacterForm(page, { name: graphemes65 });
 		await saveCharacter.click();
-		await expect(fieldIssue(page, "name")).toContainText(/graphemes/i);
+		await expect(fieldIssue(page, "name")).toContainText("Invalid length: Expected <=64 but received 65");
 		await expect(page).toHaveURL(/\/characters\/new\/edit/);
 	});
 
@@ -50,7 +50,7 @@ test("character form: grapheme limit and required fields", async ({ users }) => 
 			},
 			() => saveCharacter.click()
 		);
-		expect(response.body).toMatch(/graphemes/i);
+		expect(response.body).toContain("Invalid length");
 		expect(await characterRow(characterId)).toMatchObject({ name: graphemes64 });
 	});
 
@@ -105,7 +105,7 @@ test("log form: level cap, required title, and grapheme limit", async ({ users }
 	await test.step("a 65-grapheme title is rejected, and 64 saves", async () => {
 		await fillGameLog(page, characterId, { title: graphemes65 });
 		await saveLog(page);
-		await expect(fieldIssue(page, "name")).toContainText(/graphemes/i);
+		await expect(fieldIssue(page, "name")).toContainText("Invalid length: Expected <=64 but received 65");
 		await expect(page).toHaveURL(newLogUrl);
 
 		await page.getByLabel("Title").fill(graphemes64);
@@ -124,7 +124,7 @@ test("log form: level cap, required title, and grapheme limit", async ({ users }
 			},
 			() => saveLog(page)
 		);
-		expect(response.body).toMatch(/graphemes/i);
+		expect(response.body).toContain("Invalid length");
 		await expect(page).toHaveURL(newLogUrl);
 	});
 });

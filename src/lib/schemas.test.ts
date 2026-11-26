@@ -78,7 +78,7 @@ describe("grapheme limits", () => {
 
 	it("allows 64 graphemes and rejects 65 in a short string", () => {
 		expect(v.safeParse(shortString, "A".repeat(64)).success).toBe(true);
-		expect(issueMessages(v.safeParse(shortString, "A".repeat(65)))).toEqual([expect.stringMatching(/graphemes/i)]);
+		expect(issueMessages(v.safeParse(shortString, "A".repeat(65)))).toEqual(["Invalid length: Expected <=64 but received 65"]);
 	});
 
 	it("allows 2000 graphemes and rejects 2001 in text", () => {
@@ -89,7 +89,7 @@ describe("grapheme limits", () => {
 	it("applies the limit to an emoji-heavy character name", () => {
 		expect(v.safeParse(characterSchema, character({ name: `A${FAMILY.repeat(63)}` })).success).toBe(true);
 		const tooLong = v.safeParse(characterSchema, character({ name: `A${FAMILY.repeat(64)}` }));
-		expect(issueMessages(tooLong)).toEqual([expect.stringMatching(/graphemes/i)]);
+		expect(issueMessages(tooLong)).toEqual(["Invalid length: Expected <=64 but received 65"]);
 	});
 
 	it("applies the limit to an emoji-heavy log title", () => {

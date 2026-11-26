@@ -1,4 +1,4 @@
-import type { Page, Route } from "@playwright/test";
+import type { Page, Request, Route } from "@playwright/test";
 import * as devalue from "devalue";
 
 /** SvelteKit `BINARY_FORM_CONTENT_TYPE`. */
@@ -24,7 +24,7 @@ function isNativeRemoteSubmit(url: URL, name: string) {
 /**
  * Async Svelte hydrates a page's `await` blocks after the layout, so `waitForHydration` can pass
  * while the form is still server HTML and a click submits it natively. `RemoteForm` spreads a
- * delegated `oninput` onto the `<form>`, which Svelte records under its `events` symbol.
+ * delegated `oninput` or `onchange` onto the `<form>`, which Svelte records under its `events` symbol.
  */
 async function waitForRemoteForm(page: Page, name: string) {
 	await page.waitForFunction(
@@ -46,6 +46,15 @@ async function waitForRemoteForm(page: Page, name: string) {
 		name,
 		{ timeout: 30_000 }
 	);
+}
+
+function isValidateOnly(body: Buffer | null) {
+	if (!body || body.byteLength < BINARY_FORM_PREFIX) return false;
+	const headerLength = body.readUInt32LE(1);
+	if (body.byteLength < BINARY_FORM_PREFIX + headerLength) return false;
+	const header = body.subarray(BINARY_FORM_PREFIX, BINARY_FORM_PREFIX + headerLength).toString("utf8");
+	const decoded: unknown = devalue.parse(header, { File: (value: unknown) => value });
+	return Array.isArray(decoded) && isRecord(decoded[1]) && decoded[1].validate_only === true;
 }
 
 function rewriteBinaryForm(body: Buffer, edit: (fields: FormFields) => void) {
@@ -74,23 +83,29 @@ function rewriteBinaryForm(body: Buffer, edit: (fields: FormFields) => void) {
  * Returns the number of submissions that were rewritten.
  */
 export async function tamperWithForm(page: Page, name: string, edit: (fields: FormFields) => void) {
-	let rewritten = 0;
+	const rewrittenRequests = new Set<Request>();
 	const matches = (url: URL) => isRemoteCall(url, name);
 	const handler = async (route: Route) => {
 		const request = route.request();
 		const body = request.postDataBuffer();
-		if (request.method() !== "POST" || !body || request.headers()["content-type"] !== BINARY_FORM_CONTENT_TYPE) {
+		if (
+			request.method() !== "POST" ||
+			!body ||
+			request.headers()["content-type"] !== BINARY_FORM_CONTENT_TYPE ||
+			isValidateOnly(body)
+		) {
 			await route.fallback();
 			return;
 		}
-		rewritten += 1;
+		rewrittenRequests.add(request);
 		await route.continue({ postData: rewriteBinaryForm(body, edit) });
 	};
 	await page.route(matches, handler);
 	return {
 		get rewritten() {
-			return rewritten;
+			return rewrittenRequests.size;
 		},
+		wasRewritten: (request: Request) => rewrittenRequests.has(request),
 		dispose: () => page.unroute(matches, handler)
 	};
 }
@@ -117,7 +132,8 @@ export async function submitTampered(
 		const answered = page.waitForResponse((response) => {
 			if (response.request().method() !== "POST") return false;
 			const url = new URL(response.url());
-			return isRemoteCall(url, name) || isNativeRemoteSubmit(url, name);
+			if (isRemoteCall(url, name)) return tamper.wasRewritten(response.request());
+			return isNativeRemoteSubmit(url, name);
 		});
 		await submit();
 		const response = await answered;
