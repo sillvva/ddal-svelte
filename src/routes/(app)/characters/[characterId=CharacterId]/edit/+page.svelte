@@ -10,7 +10,6 @@
 	import NavMenu from "#lib/components/nav-menu.svelte";
 	import { proxify } from "#lib/factories.svelte.js";
 	import * as API from "#lib/remote/index.js";
-	import { editCharacterSchema } from "#lib/schemas.js";
 	import { getGlobal } from "#lib/stores.svelte.js";
 	import { page } from "$app/state";
 
@@ -18,8 +17,6 @@
 
 	const global = getGlobal();
 
-	const schema = editCharacterSchema;
-	const form = API.characters.forms.save;
 	const draft = $derived(page.url.searchParams.get("draft") ?? "");
 	const character = $derived(await API.characters.forms.get({ param: params.characterId, draft }));
 	const initialErrors = $derived(params.characterId !== "new");
@@ -45,7 +42,7 @@
 
 <svelte:boundary>
 	{#snippet failed(error)}<Error {error} boundary="edit-character" />{/snippet}
-	<RemoteForm {schema} {form} {data} {initialErrors}>
+	<RemoteForm form={API.characters.forms.save} {data} {initialErrors}>
 		{#snippet children(ctx)}
 			{const { form } = $derived(ctx)}
 			<Input field={form.fields.id} type="hidden" />

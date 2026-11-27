@@ -16,15 +16,12 @@
 	import { proxify } from "#lib/factories.svelte.js";
 	import { advancementType, applyDraftToDmLog } from "#lib/log-draft.js";
 	import * as API from "#lib/remote/index.js";
-	import { dmLogSchema } from "#lib/schemas.js";
 	import { page } from "$app/state";
 
 	const { params } = $props();
 
 	let notesUploading = $state(false);
 
-	const schema = dmLogSchema;
-	const form = API.logs.forms.saveDM;
 	const initialErrors = $derived(params.logId !== "new");
 	const draft = $derived(page.url.searchParams.get("draft") ?? "");
 	const fromDraft = $derived(page.url.searchParams.get("fromDraft") === "1");
@@ -56,7 +53,7 @@
 		</NavMenu>
 
 		{let data = $derived(proxify(log))}
-		<RemoteForm {schema} {form} {data} {initialErrors}>
+		<RemoteForm form={API.logs.forms.saveDM} {data} {initialErrors}>
 			{#snippet children(ctx)}
 				{const { form } = $derived(ctx)}
 				{let advType = $state(advancementType(log))}

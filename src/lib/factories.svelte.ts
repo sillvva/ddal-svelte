@@ -95,7 +95,6 @@ type FormId<Input> = Input extends { id: infer Id } ? (Id extends string | numbe
 export interface RemoteFormOptions<Input extends RemoteFormInput = RemoteFormInput> {
 	form: RemoteForm<Input, unknown>;
 	schema?: StandardSchemaV1<Input, unknown>;
-	preflight?: boolean;
 	key?: FormId<Input>;
 	data?: Input;
 	initialErrors?: boolean;
@@ -125,7 +124,6 @@ export function configureForm<Input extends RemoteFormInput = RemoteFormInput>(g
 	const {
 		form: remoteForm,
 		schema,
-		preflight = false,
 		data: formData,
 		key: formKey,
 		initialErrors: initialErrorsProp,
@@ -143,7 +141,7 @@ export function configureForm<Input extends RemoteFormInput = RemoteFormInput>(g
 	const key = $derived((formKey ?? data.id ?? fallbackKey) as FormId<Input>);
 
 	// Scope the remote form to `key`, attaching client-side schema validation when `preflight` is enabled.
-	const form = $derived(schema && preflight ? remoteForm.for(key).preflight(schema) : remoteForm.for(key));
+	const form = $derived(schema ? remoteForm.for(key).preflight(schema) : remoteForm.for(key));
 
 	// Capture the initial data snapshot untracked as the baseline for dirty checks and prop-change detection.
 	const firstSnapshot = untrack(() => $state.snapshot(data));
@@ -201,7 +199,7 @@ export function configureForm<Input extends RemoteFormInput = RemoteFormInput>(g
 				onsubmit: focusInvalid,
 				// After issues have appeared, re-validate on input (debounced) for preflight schemas
 				// or on change (with focus management) for server-side validation.
-				...(preflight
+				...(schema
 					? {
 							oninput: () => {
 								if (lastIssues) debouncedValidate.call();
@@ -267,7 +265,7 @@ export function configureForm<Input extends RemoteFormInput = RemoteFormInput>(g
 
 	/** Validates all fields, notifies `onissues` when issues change, and updates `lastIssues`. */
 	async function validate(reset = false) {
-		await form.validate({ all: true, preflightOnly: preflight });
+		await form.validate({ all: true, preflightOnly: !!schema });
 		if (allIssues && onissues && !deepEqual(lastIssues, allIssues)) onissues({ issues: allIssues });
 		if (allIssues) lastIssues = allIssues;
 		else if (reset) lastIssues = undefined;

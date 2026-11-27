@@ -17,7 +17,7 @@
 	import { proxify } from "#lib/factories.svelte.js";
 	import { advancementType, applyDraftToLog } from "#lib/log-draft.js";
 	import * as API from "#lib/remote/index.js";
-	import { type DungeonMasterId, logSchema } from "#lib/schemas.js";
+	import { type DungeonMasterId } from "#lib/schemas.js";
 	import { resolve } from "$app/paths";
 	import { page } from "$app/state";
 	import { v7 } from "uuid";
@@ -30,8 +30,6 @@
 <svelte:boundary>
 	{#snippet failed(error)}<Error {error} boundary="edit-character-log" />{/snippet}
 	{const character = $derived(await API.characters.queries.get({ param: params.characterId }))}
-	{const schema = logSchema}
-	{const form = API.logs.forms.saveCharacter}
 	{const firstLog = $derived(page.url.searchParams.get("firstLog") === "true")}
 	{const fromDraft = $derived(page.url.searchParams.get("fromDraft") === "1")}
 	{const draft = $derived(page.url.searchParams.get("draft") ?? "")}
@@ -67,7 +65,7 @@
 		</NavMenu>
 
 		{let data = $derived(proxify(log))}
-		<RemoteForm {schema} {form} {data} {initialErrors}>
+		<RemoteForm form={API.logs.forms.saveCharacter} {data} {initialErrors}>
 			{#snippet children(ctx)}
 				{const { form } = $derived(ctx)}
 				{let advType = $state(advancementType(log))}

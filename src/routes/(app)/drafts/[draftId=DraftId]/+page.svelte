@@ -12,10 +12,10 @@
 	import LogDraftShare from "#lib/components/log-draft-share.svelte";
 	import NavMenu from "#lib/components/nav-menu.svelte";
 	import { proxify, successToast } from "#lib/factories.svelte.js";
-	import { logDraftMemory } from "#lib/log-draft.svelte.js";
 	import { LOG_DRAFT_LIMIT, advancementType } from "#lib/log-draft.js";
+	import { logDraftMemory } from "#lib/log-draft.svelte.js";
 	import * as API from "#lib/remote/index.js";
-	import { logDraftSchema, type LogDraftId } from "#lib/schemas.js";
+	import { type LogDraftId } from "#lib/schemas.js";
 	import { parseEffectResult } from "#lib/util.js";
 	import { goto } from "$app/navigation";
 	import { resolve } from "$app/paths";
@@ -79,7 +79,7 @@
 	{/if}
 
 	{let data = $derived(proxify(draft))}
-	<RemoteForm schema={logDraftSchema} form={API.drafts.forms.save} {data} initialErrors={!!savedId} successMessage="Draft saved">
+	<RemoteForm form={API.drafts.forms.save} {data} initialErrors={!!savedId} successMessage="Draft saved">
 		{#snippet children(ctx)}
 			{const { form } = $derived(ctx)}
 			{let advType = $state(advancementType(draft))}

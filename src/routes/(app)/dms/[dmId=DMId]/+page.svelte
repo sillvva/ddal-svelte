@@ -9,7 +9,6 @@
 	import NavMenu from "#lib/components/nav-menu.svelte";
 	import { successToast } from "#lib/factories.svelte.js";
 	import * as API from "#lib/remote/index.js";
-	import { dungeonMasterFormSchema } from "#lib/schemas.js";
 	import { getGlobal } from "#lib/stores.svelte.js";
 	import { parseEffectResult } from "#lib/util.js";
 	import { goto } from "$app/navigation";
@@ -18,8 +17,6 @@
 	let { params } = $props();
 
 	const global = getGlobal();
-	const schema = dungeonMasterFormSchema;
-	const form = API.dms.forms.save;
 </script>
 
 <svelte:boundary>
@@ -41,7 +38,7 @@
 		]}
 	/>
 
-	<RemoteForm {schema} {form} {data} initialErrors>
+	<RemoteForm form={API.dms.forms.save} {data} initialErrors>
 		{#snippet children(ctx)}
 			{const { form } = $derived(ctx)}
 			<Input field={form.fields.id} type="hidden" />
