@@ -37,7 +37,7 @@
 		}))
 	);
 
-	const { form, attributes, issues, dirty, touched, submitting, result } = $derived(configured());
+	const { form, attributes, issues, isDirty, isTouched, isSubmitting, result } = $derived(configured());
 </script>
 
 <div class="flex flex-col gap-4">
@@ -51,7 +51,7 @@
 	<form {...attributes} bind:this={formEl}>
 		<fieldset
 			class="grid grid-cols-12 gap-x-4"
-			disabled={submitting || (!!navigating.to && navigating.to.url.pathname !== page.url.pathname)}
+			disabled={isSubmitting || (!!navigating.to && navigating.to.url.pathname !== page.url.pathname)}
 		>
 			{#if Object.keys(form.fields.value() || {}).length > 0}
 				{@render children?.(configured())}
@@ -62,8 +62,8 @@
 	{#if dev}
 		<Debug
 			data={{
-				dirty,
-				touched,
+				isDirty,
+				isTouched,
 				data: form.fields.value(),
 				result,
 				issues: form.fields.allIssues()

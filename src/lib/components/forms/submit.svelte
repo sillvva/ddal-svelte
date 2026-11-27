@@ -1,6 +1,6 @@
 <script lang="ts" generics="Input extends RemoteFormInput = RemoteFormInput">
-	import type { RemoteFormInput } from "$app/server";
 	import type { GenericForm } from "#lib/factories.svelte.js";
+	import type { RemoteFormInput } from "$app/server";
 	import { type Snippet } from "svelte";
 
 	interface Props {
@@ -13,7 +13,7 @@
 
 	let { form, name, value = "Save", disabled = false, children }: Props = $props();
 
-	const { submitting } = $derived(form);
+	const { isSubmitting } = $derived(form);
 </script>
 
 <button
@@ -21,9 +21,9 @@
 	{name}
 	{value}
 	class="btn w-full text-primary-content btn-primary disabled:bg-primary disabled:opacity-50 max-sm:text-base sm:w-auto"
-	disabled={submitting || disabled}
+	disabled={isSubmitting || disabled}
 >
-	{#if submitting}
+	{#if isSubmitting}
 		<span class="loading"></span>
 	{/if}
 	{@render children?.()}
