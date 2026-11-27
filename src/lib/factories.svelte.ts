@@ -310,15 +310,21 @@ export function configureForm<Input extends RemoteFormInput = RemoteFormInput>(g
 		if ((dirty || issues) && navBlockMessage && navBlockMessage.length > 0 && !confirm(navBlockMessage)) ev.cancel();
 	});
 
+	const initialData = $derived(initial);
+	const isDirty = $derived(dirty);
+	const isTouched = $derived(touched);
+	const isSubmitting = $derived(submitting);
+	const isSubmitted = $derived(submitted);
+
 	// Return a getter so callers can reactively read the latest derived values (e.g., via `$derived(configured())`).
 	return () => ({
 		form,
 		attributes,
-		initial,
-		touched,
-		dirty,
-		submitting,
-		submitted,
+		initialData,
+		isTouched,
+		isDirty,
+		isSubmitting,
+		isSubmitted,
 		result,
 		issues,
 		allIssues,
